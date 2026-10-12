@@ -56,3 +56,31 @@
 - 附件支持
 - 反向链接面板
 - PWA
+
+## drama-factory「AI 短剧工坊」
+
+**定位**：短剧生产管理与剧本生成系统，服务短剧内容团队的立项到剧本初稿全流程。
+
+**技术栈**：Java 21 + Spring Boot 3.3.5 + Maven；Spring Data JPA + H2 文件库（可平滑切换 PostgreSQL/MySQL）；企业级分层 controller / service / repository / model / dto；内置 Web 控制台由 Spring 静态托管；JUnit 5 + MockMvc 集成测试；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 drama-factory/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+
+**功能模块**：
+
+1. 短剧项目管理
+2. 剧集管理
+3. 角色管理
+4. 场景管理
+5. 基于大纲的四场式剧本自动生成（开场钩子 / 冲突升级 / 反转 / 高潮收尾，每场带英文视频生成提示词）
+6. 全局统计
+
+**状态**：工程化 v1（2026-10-13 完成，mvn test 全量 4 例通过、可执行 jar 打包成功、真实服务冒烟全过）。
+
+**里程碑记录**：
+
+- 工程化 v1（2026-10-13）：Spring Boot 分层架构落地，项目/剧集/角色/场景 CRUD、四场式剧本生成、Web 控制台、CI 与多阶段 Dockerfile 就绪
+
+**后续计划**：
+
+- 接入真实大模型生成剧本
+- 对接视频生成管线
+- 审核流状态机
+- 多用户与权限

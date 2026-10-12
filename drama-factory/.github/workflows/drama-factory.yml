@@ -1,0 +1,31 @@
+name: drama-factory CI
+
+on:
+  push:
+    paths:
+      - "drama-factory/**"
+      - ".github/workflows/drama-factory.yml"
+  pull_request:
+    paths:
+      - "drama-factory/**"
+      - ".github/workflows/drama-factory.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drama-factory
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Build and verify
+        run: mvn -B verify

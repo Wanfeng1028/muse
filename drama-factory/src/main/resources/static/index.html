@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 短剧工坊 · 控制台</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>🎬 AI 短剧工坊</h1>
+  <div class="stats">
+    <div class="stat-card"><span class="stat-label">项目</span><span class="stat-value" id="stat-projects">0</span></div>
+    <div class="stat-card"><span class="stat-label">剧集</span><span class="stat-value" id="stat-episodes">0</span></div>
+    <div class="stat-card"><span class="stat-label">角色</span><span class="stat-value" id="stat-characters">0</span></div>
+    <div class="stat-card"><span class="stat-label">场景</span><span class="stat-value" id="stat-scenes">0</span></div>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <section class="panel">
+      <h2>项目列表</h2>
+      <ul id="project-list" class="project-list"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>新建项目</h2>
+      <form id="project-form" class="form">
+        <label>标题<input type="text" id="project-title" required placeholder="例如：逆袭千金"></label>
+        <label>类型<input type="text" id="project-genre" placeholder="例如：都市/爽文"></label>
+        <label>简介<textarea id="project-synopsis" rows="3" placeholder="一句话概括故事"></textarea></label>
+        <label>目标集数<input type="number" id="project-target-episodes" min="1" value="20"></label>
+        <button type="submit">创建项目</button>
+      </form>
+    </section>
+  </aside>
+
+  <section class="content">
+    <div id="project-detail" class="panel hidden">
+      <h2 id="project-detail-title">项目详情</h2>
+      <p id="project-detail-meta" class="meta"></p>
+      <p id="project-detail-synopsis" class="synopsis"></p>
+
+      <div class="two-col">
+        <div class="col">
+          <h3>剧集</h3>
+          <div id="episode-list" class="list-box"></div>
+
+          <h4>新建剧集</h4>
+          <form id="episode-form" class="form">
+            <label>集数<input type="number" id="episode-no" min="1" required></label>
+            <label>标题<input type="text" id="episode-title"></label>
+            <label>大纲<textarea id="episode-outline" rows="3"></textarea></label>
+            <label>时长（秒）<input type="number" id="episode-duration" min="0"></label>
+            <button type="submit">添加剧集</button>
+          </form>
+        </div>
+
+        <div class="col">
+          <h3>角色</h3>
+          <div id="character-list" class="list-box"></div>
+
+          <h4>新建角色</h4>
+          <form id="character-form" class="form">
+            <label>姓名<input type="text" id="character-name" required></label>
+            <label>定位
+              <select id="character-role">
+                <option value="LEAD">主角</option>
+                <option value="SUPPORTING" selected>配角</option>
+                <option value="EXTRA">群演</option>
+              </select>
+            </label>
+            <label>描述<textarea id="character-description" rows="2"></textarea></label>
+            <label>特征<input type="text" id="character-traits" placeholder="例如：冷傲、腹黑"></label>
+            <button type="submit">添加角色</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="empty-hint" class="panel empty-hint">请选择或创建一个项目</div>
+  </section>
+</main>
+
+<template id="scene-form-template">
+  <form class="form scene-form">
+    <label>场号<input type="number" class="scene-no" min="1" required></label>
+    <label>地点<input type="text" class="scene-location"></label>
+    <label>时间<input type="text" class="scene-time"></label>
+    <label>描述<textarea class="scene-description" rows="2"></textarea></label>
+    <label>对白<textarea class="scene-dialogue" rows="2"></textarea></label>
+    <label>提示词<textarea class="scene-prompt" rows="2"></textarea></label>
+    <button type="submit">添加场景</button>
+  </form>
+</template>
+
+<script src="/app.js"></script>
+</body>
+</html>

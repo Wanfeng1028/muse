@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: drama-factory
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/drama-factory}
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+server:
+  port: ${PORT:8081}
