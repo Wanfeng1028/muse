@@ -1,0 +1,15 @@
+/build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.o
+*.a
+*.db
+*.db-journal
+docseek.db
+.env
+.DS_Store
+.vscode/
+.idea/
+compile_commands.json

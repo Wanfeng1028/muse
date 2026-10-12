@@ -1,0 +1,32 @@
+name: docseek CI
+
+on:
+  push:
+    paths:
+      - "docseek/**"
+      - ".github/workflows/docseek.yml"
+  pull_request:
+    paths:
+      - "docseek/**"
+      - ".github/workflows/docseek.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cmake and g++
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
+
+      - name: Configure
+        working-directory: docseek
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        working-directory: docseek
+        run: cmake --build build
+
+      - name: Test
+        working-directory: docseek
+        run: ctest --test-dir build --output-on-failure

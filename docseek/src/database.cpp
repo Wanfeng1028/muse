@@ -1,0 +1,406 @@
+// src/database.cpp
+#include "docseek/database.h"
+
+#include <sqlite3.h>
+
+#include <chrono>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace docseek {
+
+namespace {
+
+// 简单的 SQL 执行封装，出错抛 runtime_error
+void execSql(sqlite3* db, const char* sql) {
+    char* errmsg = nullptr;
+    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &errmsg);
+    if (rc != SQLITE_OK) {
+        std::string msg = errmsg ? errmsg : "unknown error";
+        if (errmsg) sqlite3_free(errmsg);
+        throw std::runtime_error("sqlite exec failed: " + msg);
+    }
+}
+
+// Stmt RAII 封装
+class Stmt {
+public:
+    Stmt(sqlite3* db, const char* sql) : db_(db) {
+        int rc = sqlite3_prepare_v2(db_, sql, -1, &stmt_, nullptr);
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error(std::string("sqlite prepare failed: ") +
+                                     sqlite3_errmsg(db_));
+        }
+    }
+    ~Stmt() {
+        if (stmt_) sqlite3_finalize(stmt_);
+    }
+    Stmt(const Stmt&) = delete;
+    Stmt& operator=(const Stmt&) = delete;
+
+    void bindText(int idx, const std::string& v) {
+        int rc = sqlite3_bind_text(stmt_, idx, v.c_str(),
+                                   static_cast<int>(v.size()), SQLITE_TRANSIENT);
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error(std::string("sqlite bind text failed: ") +
+                                     sqlite3_errmsg(db_));
+        }
+    }
+    void bindInt64(int idx, int64_t v) {
+        int rc = sqlite3_bind_int64(stmt_, idx, v);
+        if (rc != SQLITE_OK) {
+            throw std::runtime_error(std::string("sqlite bind int64 failed: ") +
+                                     sqlite3_errmsg(db_));
+        }
+    }
+    // 返回 true 表示有一行；false 表示结束
+    bool step() {
+        int rc = sqlite3_step(stmt_);
+        if (rc == SQLITE_ROW) return true;
+        if (rc == SQLITE_DONE) return false;
+        throw std::runtime_error(std::string("sqlite step failed: ") +
+                                 sqlite3_errmsg(db_));
+    }
+    void exec() {
+        int rc = sqlite3_step(stmt_);
+        if (rc != SQLITE_DONE) {
+            throw std::runtime_error(std::string("sqlite step failed: ") +
+                                     sqlite3_errmsg(db_));
+        }
+    }
+
+    int64_t columnInt64(int idx) { return sqlite3_column_int64(stmt_, idx); }
+
+    double columnDouble(int idx) { return sqlite3_column_double(stmt_, idx); }
+
+    std::string columnText(int idx) {
+        const unsigned char* p = sqlite3_column_text(stmt_, idx);
+        if (!p) return std::string();
+        int n = sqlite3_column_bytes(stmt_, idx);
+        return std::string(reinterpret_cast<const char*>(p), static_cast<size_t>(n));
+    }
+
+    bool columnIsNull(int idx) {
+        return sqlite3_column_type(stmt_, idx) == SQLITE_NULL;
+    }
+
+private:
+    sqlite3* db_ = nullptr;
+    sqlite3_stmt* stmt_ = nullptr;
+};
+
+}  // namespace
+
+std::string utcNowIso() {
+    using namespace std::chrono;
+    auto now = system_clock::now();
+    std::time_t t = system_clock::to_time_t(now);
+    std::tm tm_utc{};
+#if defined(_WIN32)
+    gmtime_s(&tm_utc, &t);
+#else
+    gmtime_r(&t, &tm_utc);
+#endif
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
+    return std::string(buf);
+}
+
+struct Database::Impl {
+    sqlite3* db = nullptr;
+    std::string path;
+};
+
+Database::Database() : impl_(std::make_unique<Impl>()) {}
+
+Database Database::open(const std::string& path) {
+    Database d;
+    d.impl_->path = path;
+
+    // 若路径中包含目录，确保父目录存在（":memory:" 等特殊情况跳过）
+    if (path != ":memory:") {
+        std::filesystem::path p(path);
+        std::filesystem::path parent = p.parent_path();
+        if (!parent.empty()) {
+            std::error_code ec;
+            std::filesystem::create_directories(parent, ec);
+            if (ec) {
+                throw std::runtime_error("无法创建数据库目录: " + parent.string() +
+                                         " (" + ec.message() + ")");
+            }
+        }
+    }
+
+    sqlite3* db = nullptr;
+    int rc = sqlite3_open(path.c_str(), &db);
+    if (rc != SQLITE_OK) {
+        std::string msg = db ? sqlite3_errmsg(db) : "unknown error";
+        if (db) sqlite3_close(db);
+        throw std::runtime_error("无法打开数据库: " + msg);
+    }
+    d.impl_->db = db;
+
+    try {
+        execSql(db, "PRAGMA journal_mode=WAL;");
+        execSql(db, "PRAGMA foreign_keys=ON;");
+        execSql(db,
+                "CREATE TABLE IF NOT EXISTS documents("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "path TEXT NOT NULL UNIQUE,"
+                "title TEXT NOT NULL,"
+                "mtime INTEGER NOT NULL,"
+                "size INTEGER NOT NULL,"
+                "indexed_at TEXT NOT NULL);");
+        execSql(db,
+                "CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5("
+                "title, content, tokenize='unicode61');");
+    } catch (...) {
+        sqlite3_close(db);
+        d.impl_->db = nullptr;
+        throw;
+    }
+
+    return d;
+}
+
+Database::~Database() {
+    if (impl_ && impl_->db) {
+        sqlite3_close(impl_->db);
+        impl_->db = nullptr;
+    }
+}
+
+Database::Database(Database&& other) noexcept : impl_(std::move(other.impl_)) {
+    if (!impl_) impl_ = std::make_unique<Impl>();
+}
+
+Database& Database::operator=(Database&& other) noexcept {
+    if (this != &other) {
+        if (impl_ && impl_->db) {
+            sqlite3_close(impl_->db);
+            impl_->db = nullptr;
+        }
+        impl_ = std::move(other.impl_);
+        if (!impl_) impl_ = std::make_unique<Impl>();
+    }
+    return *this;
+}
+
+void Database::upsert(const std::string& path, const std::string& title,
+                      const std::string& content, int64_t mtime, int64_t size) {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+
+    execSql(db, "BEGIN IMMEDIATE;");
+    try {
+        int64_t id = 0;
+        bool exists = false;
+        {
+            Stmt s(db, "SELECT id FROM documents WHERE path=?;");
+            s.bindText(1, path);
+            if (s.step()) {
+                id = s.columnInt64(0);
+                exists = true;
+            }
+        }
+
+        std::string now = utcNowIso();
+        if (exists) {
+            Stmt s(db,
+                   "UPDATE documents SET title=?, mtime=?, size=?, indexed_at=? "
+                   "WHERE id=?;");
+            s.bindText(1, title);
+            s.bindInt64(2, mtime);
+            s.bindInt64(3, size);
+            s.bindText(4, now);
+            s.bindInt64(5, id);
+            s.exec();
+        } else {
+            Stmt s(db,
+                   "INSERT INTO documents(path, title, mtime, size, indexed_at) "
+                   "VALUES(?,?,?,?,?);");
+            s.bindText(1, path);
+            s.bindText(2, title);
+            s.bindInt64(3, mtime);
+            s.bindInt64(4, size);
+            s.bindText(5, now);
+            s.exec();
+            id = sqlite3_last_insert_rowid(db);
+        }
+
+        // 先删后插，同步 rowid
+        {
+            Stmt s(db, "DELETE FROM documents_fts WHERE rowid=?;");
+            s.bindInt64(1, id);
+            s.exec();
+        }
+        {
+            Stmt s(db,
+                   "INSERT INTO documents_fts(rowid, title, content) VALUES(?,?,?);");
+            s.bindInt64(1, id);
+            s.bindText(2, title);
+            s.bindText(3, content);
+            s.exec();
+        }
+
+        execSql(db, "COMMIT;");
+    } catch (...) {
+        try {
+            execSql(db, "ROLLBACK;");
+        } catch (...) {
+        }
+        throw;
+    }
+}
+
+bool Database::removeByPath(const std::string& path) {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+
+    execSql(db, "BEGIN IMMEDIATE;");
+    try {
+        int64_t id = 0;
+        bool exists = false;
+        {
+            Stmt s(db, "SELECT id FROM documents WHERE path=?;");
+            s.bindText(1, path);
+            if (s.step()) {
+                id = s.columnInt64(0);
+                exists = true;
+            }
+        }
+        if (!exists) {
+            execSql(db, "COMMIT;");
+            return false;
+        }
+        {
+            Stmt s(db, "DELETE FROM documents_fts WHERE rowid=?;");
+            s.bindInt64(1, id);
+            s.exec();
+        }
+        {
+            Stmt s(db, "DELETE FROM documents WHERE id=?;");
+            s.bindInt64(1, id);
+            s.exec();
+        }
+        execSql(db, "COMMIT;");
+        return true;
+    } catch (...) {
+        try {
+            execSql(db, "ROLLBACK;");
+        } catch (...) {
+        }
+        throw;
+    }
+}
+
+std::vector<Document> Database::list() {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+
+    std::vector<Document> out;
+    Stmt s(db,
+           "SELECT id,path,title,mtime,size,indexed_at FROM documents ORDER BY id;");
+    while (s.step()) {
+        Document d;
+        d.id = s.columnInt64(0);
+        d.path = s.columnText(1);
+        d.title = s.columnText(2);
+        d.mtime = s.columnInt64(3);
+        d.size = s.columnInt64(4);
+        d.indexed_at = s.columnText(5);
+        out.push_back(std::move(d));
+    }
+    return out;
+}
+
+std::optional<Document> Database::findByPath(const std::string& path) {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+
+    Stmt s(db,
+           "SELECT id,path,title,mtime,size,indexed_at FROM documents WHERE path=?;");
+    s.bindText(1, path);
+    if (!s.step()) return std::nullopt;
+    Document d;
+    d.id = s.columnInt64(0);
+    d.path = s.columnText(1);
+    d.title = s.columnText(2);
+    d.mtime = s.columnInt64(3);
+    d.size = s.columnInt64(4);
+    d.indexed_at = s.columnText(5);
+    return d;
+}
+
+std::vector<Hit> Database::searchFts(const std::string& match_query, int limit) {
+    std::vector<Hit> out;
+    if (match_query.empty()) return out;
+
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+
+    int effLimit = limit <= 0 ? 20 : limit;
+
+    Stmt s(db,
+           "SELECT d.id, d.path, d.title, "
+           "snippet(documents_fts, 1, '', '', '…', 30), "
+           "-bm25(documents_fts) "
+           "FROM documents_fts JOIN documents d ON d.id = documents_fts.rowid "
+           "WHERE documents_fts MATCH ? ORDER BY 5 DESC LIMIT ?;");
+    s.bindText(1, match_query);
+    s.bindInt64(2, effLimit);
+
+    while (s.step()) {
+        Hit h;
+        h.doc_id = s.columnInt64(0);
+        h.path = s.columnText(1);
+        h.title = s.columnText(2);
+        h.snippet = s.columnIsNull(3) ? std::string() : s.columnText(3);
+        h.score = s.columnDouble(4);
+        out.push_back(std::move(h));
+    }
+    return out;
+}
+
+int64_t Database::docCount() {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+    Stmt s(db, "SELECT COUNT(*) FROM documents;");
+    if (s.step()) return s.columnInt64(0);
+    return 0;
+}
+
+int64_t Database::totalBytes() {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+    Stmt s(db, "SELECT COALESCE(SUM(size),0) FROM documents;");
+    if (s.step()) return s.columnInt64(0);
+    return 0;
+}
+
+int64_t Database::dbFileBytes() {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+    Stmt s(db, "PRAGMA database_list;");
+    std::string file;
+    while (s.step()) {
+        // 列：seq, name, file
+        std::string name = s.columnText(1);
+        if (name == "main") {
+            file = s.columnText(2);
+            break;
+        }
+    }
+    if (file.empty()) return -1;
+    std::error_code ec;
+    auto sz = std::filesystem::file_size(file, ec);
+    if (ec) return -1;
+    return static_cast<int64_t>(sz);
+}
+
+}  // namespace docseek

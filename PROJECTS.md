@@ -168,3 +168,32 @@
 - 多渠道告警（邮件/短信/企业微信）
 - 公开状态页
 - 分布式探针
+
+## docseek「文溯 DocSeek · 本地全文检索引擎」
+
+**定位**：本地文档全文检索引擎 CLI，覆盖目录爬取、增量索引、相关性搜索与索引维护的完整流程。
+
+**技术栈**：C++17 + CMake；SQLite FTS5（unicode61，amalgamation vendored 于 third_party/sqlite3）；GoogleTest（FetchContent）单元+集成测试；多阶段 Dockerfile；GitHub Actions CI 暂置于 docseek/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+
+**功能模块**：
+
+1. 递归目录索引（txt/md/markdown/text，大小写不敏感；二进制与超大文件自动跳过；隐藏目录跳过）
+2. 基于 mtime+size 的增量更新（新增/更新/未变分别计数）
+3. 全文搜索（FTS5 MATCH，隐式 AND，BM25 相关性排序，30 token 摘要片段）
+4. 已删除文件自动清理（index 末尾自动 prune，另有 prune 命令）
+5. 索引统计（文档数、内容总字节、库文件大小）
+6. JSON 输出（--json，便于脚本集成）
+7. 灵活配置（--db > DOCSEEK_DB > $HOME/.local/share/docseek/docseek.db）
+
+**状态**：工程化 v1（2026-10-13 完成，构建零错误、GoogleTest 15 例全过、ctest 通过、真实 CLI 冒烟全链路验证：索引/增量更新/prune/搜索/统计/JSON/错误码）。
+
+**里程碑记录**：
+
+- 工程化 v1（2026-10-13）：Database（SQLite+FTS5 手动同步）/ Indexer（递归爬取+增量）/ Searcher（查询构造）三层库 + docseek CLI（index/search/stats/prune）+ 15 例测试 + CI 与多阶段 Dockerfile 就绪
+
+**后续计划**：
+
+- HTML/PDF/Office 文本提取
+- 中文分词优化（unicode61 按字切分）
+- HTTP 服务模式
+- 文件变更实时监控
