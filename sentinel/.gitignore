@@ -1,0 +1,9 @@
+/sentinel
+data/
+*.db*
+.env
+dist/
+*.log
+.DS_Store
+.idea/
+.vscode/

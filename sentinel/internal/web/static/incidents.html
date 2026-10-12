@@ -1,0 +1,394 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel · 事件页</title>
+  <!-- 样式与 index 保持统一风格 -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background: #f6f8fa;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 0 24px;
+    }
+
+    /* 顶栏 — 与 index 完全一致 */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid #d0d7de;
+      margin-bottom: 24px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.5px;
+      color: #0969da;
+      text-decoration: none;
+    }
+
+    .logo:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      background: #0969da;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 0.95rem;
+    }
+
+    .topbar-right a {
+      color: #24292f;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .topbar-right a:hover {
+      background: #eaeef2;
+      color: #0969da;
+    }
+
+    /* 主内容区 */
+    .container {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .page-header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #1f2328;
+      letter-spacing: -0.3px;
+    }
+
+    /* 筛选栏 */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: #ffffff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: 1px solid #d0d7de;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .filter-bar label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1f2328;
+      white-space: nowrap;
+    }
+
+    .filter-bar select {
+      padding: 6px 32px 6px 12px;
+      font-size: 0.95rem;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      background-color: #ffffff;
+      color: #1f2328;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236e7781' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 16px;
+      min-width: 200px;
+    }
+
+    .filter-bar select:focus {
+      outline: 2px solid #0969da;
+      outline-offset: 1px;
+      border-color: #0969da;
+    }
+
+    /* 表格卡片 */
+    .table-wrapper {
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 12px;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      margin-bottom: 32px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      min-width: 900px;
+    }
+
+    thead {
+      background: #f6f8fa;
+      border-bottom: 1px solid #d0d7de;
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 18px;
+      font-weight: 600;
+      color: #1f2328;
+      font-size: 0.85rem;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #eaeef2;
+      color: #1f2328;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #f6f8fa;
+    }
+
+    /* 状态 / 空态 */
+    .empty-message {
+      text-align: center;
+      padding: 48px 24px;
+      color: #6e7781;
+      font-size: 1rem;
+      font-style: italic;
+    }
+
+    /* 错误文本截断 */
+    .error-cell {
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #cf222e;
+      font-weight: 500;
+    }
+
+    /* 持续时间样式 */
+    .duration-badge {
+      display: inline-block;
+      background: #eaeef2;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1f2328;
+      white-space: nowrap;
+    }
+
+    /* 监控名称 */
+    .monitor-name {
+      font-weight: 600;
+      color: #0969da;
+    }
+
+    /* 加载/错误占位 */
+    .loading-row td {
+      text-align: center;
+      padding: 40px;
+      color: #6e7781;
+    }
+
+    /* 响应式微调 */
+    @media (max-width: 640px) {
+      body { padding: 0 16px; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .topbar-right { flex-wrap: wrap; }
+      .page-header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body onload="initIncidentsPage()">
+
+  <!-- 顶栏：与 index 完全一致 -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="logo">Sentinel</a>
+      <span class="badge">监控</span>
+    </div>
+    <nav class="topbar-right">
+      <a href="/">仪表盘</a>
+      <a href="/incidents.html" style="background:#eaeef2; color:#0969da;">事件</a>
+      <a href="/settings">设置</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1>事件记录</h1>
+    </div>
+
+    <!-- 筛选栏：监控选择 -->
+    <div class="filter-bar">
+      <label for="f-monitor">监控</label>
+      <select id="f-monitor" aria-label="按监控筛选事件">
+        <option value="all" selected>全部监控</option>
+        <!-- 选项由 JS 动态填充，此处保留全部作为默认 -->
+      </select>
+    </div>
+
+    <!-- 事件表格 -->
+    <div class="table-wrapper">
+      <table id="incident-table">
+        <thead>
+          <tr>
+            <th>监控</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>持续时长</th>
+            <th>起始错误</th>
+          </tr>
+        </thead>
+        <tbody id="incident-tbody">
+          <!-- 数据由 initIncidentsPage() 渲染 -->
+          <tr class="loading-row">
+            <td colspan="5">加载事件数据…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- 脚本：事件页逻辑 -->
+  <script>
+    (function() {
+      // ---------- 模拟数据 ----------
+      const MONITORS = [
+        { id: 'mon-1', name: 'API 网关' },
+        { id: 'mon-2', name: '用户服务' },
+        { id: 'mon-3', name: '订单服务' },
+        { id: 'mon-4', name: '支付服务' },
+        { id: 'mon-5', name: '消息队列' }
+      ];
+
+      const INCIDENTS = [
+        { monitorId: 'mon-1', startTime: '2025-03-18T08:12:00Z', endTime: '2025-03-18T08:34:00Z', startError: '连接超时 (504)' },
+        { monitorId: 'mon-2', startTime: '2025-03-18T09:05:00Z', endTime: '2025-03-18T09:42:00Z', startError: '数据库连接池耗尽' },
+        { monitorId: 'mon-1', startTime: '2025-03-18T10:20:00Z', endTime: '2025-03-18T10:25:00Z', startError: '请求频率超限' },
+        { monitorId: 'mon-3', startTime: '2025-03-18T11:00:00Z', endTime: '2025-03-18T11:55:00Z', startError: '服务不可用 (503)' },
+        { monitorId: 'mon-4', startTime: '2025-03-18T12:30:00Z', endTime: '2025-03-18T12:48:00Z', startError: '证书过期' },
+        { monitorId: 'mon-2', startTime: '2025-03-18T14:10:00Z', endTime: '2025-03-18T14:30:00Z', startError: '响应超时 (5s)' },
+        { monitorId: 'mon-5', startTime: '2025-03-18T15:05:00Z', endTime: '2025-03-18T15:22:00Z', startError: '磁盘空间不足' },
+        { monitorId: 'mon-1', startTime: '2025-03-18T16:40:00Z', endTime: '2025-03-18T16:58:00Z', startError: '上游服务无响应' },
+        { monitorId: 'mon-3', startTime: '2025-03-18T18:15:00Z', endTime: '2025-03-18T18:35:00Z', startError: '缓存穿透' },
+        { monitorId: 'mon-4', startTime: '2025-03-18T20:00:00Z', endTime: '2025-03-18T20:12:00Z', startError: '第三方 API 限流' }
+      ];
+
+      // ---------- 工具函数 ----------
+      // 时长格式化：将毫秒转为人类可读 (如 "2小时15分钟", "8分钟", "45秒")
+      function humanizeDuration(ms) {
+        if (ms < 0) return '—';
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+          const remainHours = hours % 24;
+          return remainHours > 0 ? `${days}天 ${remainHours}小时` : `${days}天`;
+        }
+        if (hours > 0) {
+          const remainMinutes = minutes % 60;
+          return remainMinutes > 0 ? `${hours}小时 ${remainMinutes}分钟` : `${hours}小时`;
+        }
+        if (minutes > 0) {
+          const remainSeconds = seconds % 60;
+          return remainSeconds > 0 ? `${minutes}分钟 ${remainSeconds}秒` : `${minutes}分钟`;
+        }
+        return `${seconds}秒`;
+      }
+
+      // 格式化时间为 "YYYY-MM-DD HH:mm"
+      function formatDateTime(isoString) {
+        if (!isoString) return '—';
+        try {
+          const d = new Date(isoString);
+          if (isNaN(d.getTime())) return isoString;
+          const pad = (n) => n.toString().padStart(2, '0');
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch {
+          return isoString;
+        }
+      }
+
+      // 根据监控ID获取名称
+      function getMonitorName(monitorId) {
+        const monitor = MONITORS.find(m => m.id === monitorId);
+        return monitor ? monitor.name : monitorId;
+      }
+
+      // ---------- 渲染表格 ----------
+      function renderTable(incidents, tbody) {
+        if (!incidents || incidents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="empty-message">暂无事件记录</td></tr>`;
+          return;
+        }
+
+        const rows = incidents.map(inc => {
+          const monitorName = getMonitorName(inc.monitorId);
+          const startFormatted = formatDateTime(inc.startTime);
+          const endFormatted = formatDateTime(inc.endTime);
+          const startDate = new Date(inc.startTime);
+          const endDate = new Date(inc.endTime);
+          let durationMs = 0;
+          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+            durationMs = endDate - startDate;
+          }
+          const durationHuman = humanizeDuration(durationMs);
+
+          // 安全转义错误文本（简单转义）
+          const safeError = inc.startError
+            ? inc.startError.replace(/[&<>"]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;

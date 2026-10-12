@@ -1,0 +1,607 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel · 监控管理</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #f5f7fb;
+      color: #1e293b;
+      line-height: 1.5;
+      padding: 0 24px 40px;
+    }
+    /* 顶栏 (与 index 一致) */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      margin: 0 -24px 28px;
+      padding: 0 32px;
+      height: 64px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      border-bottom: 1px solid #e9eef3;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 1.2rem;
+      letter-spacing: -0.01em;
+      color: #0b2b4a;
+    }
+    .logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e5eff;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #4b5b6b;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover {
+      color: #1e5eff;
+    }
+    .nav-links .active {
+      color: #1e5eff;
+      font-weight: 600;
+      position: relative;
+    }
+    .nav-links .active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #1e5eff;
+      border-radius: 2px;
+    }
+    .user-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #2c3e50;
+      font-size: 0.9rem;
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      background: #d9e6ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #1e5eff;
+      font-size: 0.9rem;
+    }
+
+    /* 主布局 */
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* 卡片通用 */
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 18px -8px rgba(0, 20, 45, 0.08), 0 0 0 1px #edf2f7;
+      padding: 24px 28px;
+      transition: box-shadow 0.2s;
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #0b2b4a;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: #1e5eff;
+      border-radius: 4px;
+    }
+
+    /* 表单 */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 18px 22px;
+      align-items: end;
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-field label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #4e5f70;
+      letter-spacing: 0.01em;
+    }
+    .form-field input,
+    .form-field select {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1.5px solid #dfe7ef;
+      background: #ffffff;
+      font-size: 0.9rem;
+      transition: border 0.15s, box-shadow 0.15s;
+      outline: none;
+      font-family: inherit;
+      color: #1e293b;
+    }
+    .form-field input:focus,
+    .form-field select:focus {
+      border-color: #1e5eff;
+      box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.15);
+    }
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 8px;
+    }
+    .checkbox-field input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #1e5eff;
+      margin: 0;
+      cursor: pointer;
+    }
+    .checkbox-field label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+    }
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #1e293b;
+      border: 1.5px solid #d0dae6;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: #1e5eff;
+      color: white;
+      border: 1.5px solid #1e5eff;
+      box-shadow: 0 6px 12px -4px rgba(30, 94, 255, 0.3);
+    }
+    .btn-primary:hover {
+      background: #0a4ae0;
+      border-color: #0a4ae0;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #cdd9e9;
+      color: #2b3e50;
+    }
+    .btn-outline:hover {
+      background: #f0f4fa;
+      border-color: #a0b5cc;
+    }
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      border-radius: 30px;
+      font-weight: 500;
+    }
+    .btn-danger {
+      color: #c2414a;
+      border-color: #f3d1d4;
+    }
+    .btn-danger:hover {
+      background: #fff5f6;
+      border-color: #e6a6ae;
+    }
+    #btn-cancel-edit {
+      display: none;
+    }
+
+    /* 表格 */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid #eef3f9;
+    }
+    #monitor-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 1000px;
+      background: white;
+    }
+    #monitor-table thead th {
+      text-align: left;
+      padding: 16px 16px;
+      background: #f9fcff;
+      font-weight: 600;
+      color: #2d4055;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1.5px solid #e2ebf3;
+      white-space: nowrap;
+    }
+    #monitor-table tbody td {
+      padding: 16px 16px;
+      border-bottom: 1px solid #eef3f9;
+      vertical-align: middle;
+      color: #1b2a3a;
+    }
+    #monitor-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    #monitor-table tbody tr:hover {
+      background: #fafdff;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #e6f7e6;
+      color: #1e7b3c;
+    }
+    .status-badge.down {
+      background: #fee9e9;
+      color: #c2414a;
+    }
+    .status-badge.paused {
+      background: #f0f2f5;
+      color: #5e6e7e;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2e9e4a;
+    }
+    .status-badge.down .status-dot {
+      background: #c2414a;
+    }
+    .status-badge.paused .status-dot {
+      background: #8b9aab;
+    }
+    .uptime-cell {
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #1e5eff;
+    }
+    .actions-cell {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* 编辑状态高亮 */
+    .editing-highlight {
+      background-color: #f2f8ff;
+      box-shadow: inset 0 0 0 2px #1e5eff1a;
+    }
+
+    .empty-row td {
+      text-align: center;
+      color: #7a8b9c;
+      padding: 40px !important;
+      font-style: italic;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      body { padding: 0 16px 30px; }
+      .topbar { padding: 0 18px; }
+      .card { padding: 20px 18px; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body onload="initMonitorsPage()">
+
+<!-- 顶栏 与 index 保持一致 -->
+<header class="topbar">
+  <div class="logo-area">
+    <span class="logo-icon">S</span>
+    <span>Sentinel</span>
+  </div>
+  <nav class="nav-links">
+    <a href="/index.html">总览</a>
+    <a href="/monitors.html" class="active">监控管理</a>
+    <a href="/alerts.html">告警</a>
+    <a href="/settings.html">设置</a>
+  </nav>
+  <div class="user-area">
+    <span>管理员</span>
+    <div class="avatar">管</div>
+  </div>
+</header>
+
+<div class="page-container">
+
+  <!-- 新建 / 编辑监控表单 -->
+  <section class="card" id="monitor-form-card">
+    <div class="card-title" id="form-title">新建监控</div>
+    <form id="m-form" onsubmit="event.preventDefault(); submitMonitorForm();">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="m-name">名称</label>
+          <input type="text" id="m-name" name="m-name" placeholder="例如：官网首页" autocomplete="off" required>
+        </div>
+        <div class="form-field">
+          <label for="m-kind">类型</label>
+          <select id="m-kind" name="m-kind">
+            <option value="http">HTTP</option>
+            <option value="tcp">TCP</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="m-target">目标</label>
+          <input type="text" id="m-target" name="m-target" placeholder="https://example.com 或 host:port" required>
+        </div>
+        <div class="form-field">
+          <label for="m-method">方法</label>
+          <select id="m-method" name="m-method">
+            <option value="GET">GET</option>
+            <option value="HEAD">HEAD</option>
+            <option value="POST">POST</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="m-expected">预期状态码 / 响应</label>
+          <input type="text" id="m-expected" name="m-expected" placeholder="200 或 任意" value="200">
+        </div>
+        <div class="form-field">
+          <label for="m-timeout">超时 (秒)</label>
+          <input type="number" id="m-timeout" name="m-timeout" value="10" min="1" step="1">
+        </div>
+        <div class="form-field">
+          <label for="m-interval">间隔 (秒)</label>
+          <input type="number" id="m-interval" name="m-interval" value="60" min="5" step="1">
+        </div>
+        <div class="form-field">
+          <label for="m-webhook">Webhook 地址 (可选)</label>
+          <input type="url" id="m-webhook" name="m-webhook" placeholder="https://hooks.example.com/...">
+        </div>
+        <div class="checkbox-field">
+          <input type="checkbox" id="m-enabled" name="m-enabled" checked>
+          <label for="m-enabled">启用监控</label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="btn-submit">创建监控</button>
+        <button type="button" class="btn btn-outline" id="btn-cancel-edit" onclick="cancelEditMode()">取消编辑</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 监控列表 -->
+  <section class="card">
+    <div class="card-title">监控列表</div>
+    <div class="table-wrapper">
+      <table id="monitor-table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>目标</th>
+            <th>间隔</th>
+            <th>状态</th>
+            <th>24h 可用率</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="monitor-tbody">
+          <!-- 动态渲染 -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ---------- 模拟数据 ----------
+  let monitors = [
+    {
+      id: 'mon_1',
+      name: '官网首页',
+      kind: 'http',
+      target: 'https://sentinel.example.com',
+      method: 'GET',
+      expected: '200',
+      timeout: 10,
+      interval: 60,
+      enabled: true,
+      webhook: '',
+      status: 'up',          // up / down / paused
+      uptime24h: 99.97
+    },
+    {
+      id: 'mon_2',
+      name: 'API 网关',
+      kind: 'http',
+      target: 'https://api.example.com/health',
+      method: 'HEAD',
+      expected: '200',
+      timeout: 5,
+      interval: 30,
+      enabled: true,
+      webhook: 'https://hooks.example.com/alert',
+      status: 'up',
+      uptime24h: 100.00
+    },
+    {
+      id: 'mon_3',
+      name: '数据库端口',
+      kind: 'tcp',
+      target: 'db.internal:5432',
+      method: 'GET',
+      expected: 'open',
+      timeout: 3,
+      interval: 120,
+      enabled: false,
+      webhook: '',
+      status: 'paused',
+      uptime24h: 98.45
+    },
+    {
+      id: 'mon_4',
+      name: '支付服务',
+      kind: 'http',
+      target: 'https://pay.example.com/status',
+      method: 'GET',
+      expected: '200',
+      timeout: 8,
+      interval: 45,
+      enabled: true,
+      webhook: 'https://hooks.example.com/pay',
+      status: 'down',
+      uptime24h: 87.12
+    }
+  ];
+
+  // 编辑状态
+  let editingId = null;
+
+  // ---------- 工具函数 ----------
+  function getStatusText(status) {
+    if (status === 'up') return '正常';
+    if (status === 'down') return '故障';
+    return '已暂停';
+  }
+
+  function getStatusClass(status) {
+    if (status === 'up') return 'status-badge';
+    if (status === 'down') return 'status-badge down';
+    return 'status-badge paused';
+  }
+
+  // 格式化可用率
+  function formatUptime(value) {
+    if (value === null || value === undefined) return '—';
+    return value.toFixed(2) + '%';
+  }
+
+  // ---------- 渲染表格 ----------
+  function renderMonitorTable() {
+    const tbody = document.getElementById('monitor-tbody');
+    if (!tbody) return;
+
+    if (monitors.length === 0) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="7">暂无监控项，请点击上方「新建监控」添加</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    monitors.forEach(mon => {
+      const statusClass = getStatusClass(mon.status);
+      const statusText = getStatusText(mon.status);
+      const enabledLabel = mon.enabled ? '' : ' (已禁用)';
+      const uptimeDisplay = formatUptime(mon.uptime24h);
+
+      html += `
+        <tr data-id="${mon.id}">
+          <td><strong>${escapeHtml(mon.name)}</strong>${enabledLabel}</td>
+          <td>${mon.kind.toUpperCase()}</td>
+          <td style="max-width:200px; word-break:break-all;">${escapeHtml(mon.target)}</td>
+          <td>${mon.interval}s</td>
+          <td><span class="${statusClass}"><span class="status-dot"></span>${statusText}</span></td>
+          <td class="uptime-cell">${uptimeDisplay}</td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn btn-outline btn-sm" onclick="checkNow('${mon.id}')">立即检查</button>
+              <button class="btn btn-outline btn-sm" onclick="editMonitor('${mon.id}')">编辑</button>
+              <button class="btn btn-outline btn-sm btn-danger" onclick="deleteMonitor('${mon.id}')">删除</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  }
+
+  // 简单的转义
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ---------- 表单重置（新建模式）----------
+  function resetFormToCreateMode() {
+    document.getElementById('form-title').innerText = '新建监控';
+    document.getElementById('m-form').reset();
+    // 设置默认值
+    document.getElementById('m-kind').value = 'http';
+    document.getElementById('m-method').value = 'GET';
+    document.getElementById('m-expected').value = '200';
+    document.getElementById('m-timeout').value = '10';
+    document.getElementById('m-interval').value = '60';
+    document.getElementById('m-enabled').checked = true;
+    document.getElementById('m-webhook').value = '';
+    document.getElementById('btn-submit').innerText = '创建监控';
+    document.getElementById('btn-cancel-edit').style.display = 'none';
+    editingId = null;
+
+    // 移除表格高亮
+    document.querySelectorAll('#monitor-table tbody tr').forEach(tr => tr.classList.remove('editing-highlight'));
+  }
+
+  // ----------

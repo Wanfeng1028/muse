@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>哨兵 Sentinel · 仪表盘</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body onload="initDashboard()">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🚨 哨兵 Sentinel</span>
+    </div>
+    <nav class="nav">
+      <a href="/" class="active">仪表盘</a>
+      <a href="/monitors">监控管理</a>
+      <a href="/incidents">事件</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- 概览卡片区 -->
+    <section id="overview" class="overview-grid">
+      <div class="card" data-key="total">
+        <div class="card-label">监控总数</div>
+        <div class="card-value" id="ov-total">–</div>
+      </div>
+      <div class="card" data-key="enabled">
+        <div class="card-label">已启用</div>
+        <div class="card-value" id="ov-enabled">–</div>
+      </div>
+      <div class="card up" data-key="up">
+        <div class="card-label">正常</div>
+        <div class="card-value" id="ov-up">–</div>
+      </div>
+      <div class="card down" data-key="down">
+        <div class="card-label">异常</div>
+        <div class="card-value" id="ov-down">–</div>
+      </div>
+      <div class="card unknown" data-key="unknown">
+        <div class="card-label">未知</div>
+        <div class="card-value" id="ov-unknown">–</div>
+      </div>
+      <div class="card" data-key="checks_24h">
+        <div class="card-label">24小时检查</div>
+        <div class="card-value" id="ov-checks-24h">–</div>
+      </div>
+      <div class="card" data-key="incidents_7d">
+        <div class="card-label">近7天事件</div>
+        <div class="card-value" id="ov-incidents-7d">–</div>
+      </div>
+    </section>
+
+    <!-- 监控状态列表 -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>监控状态</h2>
+      </div>
+      <div id="monitor-list" class="monitor-list">
+        <!-- 由 app.js 渲染 -->
+      </div>
+    </section>
+
+    <!-- 近7天事件 -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2>近 7 天事件</h2>
+      </div>
+      <div id="recent-incidents" class="incident-list">
+        <!-- 由 app.js 渲染 -->
+      </div>
+    </section>
+  </main>
+</body>
+</html>

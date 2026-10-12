@@ -11,6 +11,7 @@
 | [drama-factory](./drama-factory) | 「AI 短剧工坊」——短剧生产管理与剧本生成系统。Java 21 + Spring Boot 3.3 + Spring Data JPA + H2，企业级分层架构，内置 Web 控制台。功能：项目/剧集/角色/场景管理、基于大纲的四场式剧本自动生成（每场带英文视频生成提示词）、全局统计。 | 工程化 v1 |
 | [mini-os](./mini-os) | 「网页操作系统」——浏览器里的桌面操作系统。Rust + Axum 0.7 + WebSocket + rusqlite（bundled SQLite）后端，原生 HTML/CSS/JS 可拖拽多窗口桌面。功能：虚拟文件系统 CRUD、应用注册表（文件管理器/编辑器/终端/设置/关于）、主题与壁纸持久化、WebSocket echo、统计。 | 工程化 v1 |
 | [ledger](./ledger) | 「钱迹 · 个人财务管家」——个人财务管理系统。Python + FastAPI + SQLAlchemy 2.0（aiosqlite）+ SQLite，Jinja2 SSR Web UI（服务端渲染 SVG 图表）。功能：多账户记账、分类体系、月度预算与超支预警、统计分析、CSV 导入导出、周期账单提醒。 | 工程化 v1 |
+| [sentinel](./sentinel) | 「哨兵 Sentinel」——站点可用性监控。Go 单二进制：HTTP(S)/TCP 双协议检查、证书到期天数、定时调度、状态翻转自动生成停机事件并 webhook 通知、可用率与延迟统计、内嵌 Web UI（三页：仪表盘/监控管理/事件）。 | 工程化 v1 |
 
 ## 如何运行
 
@@ -85,6 +86,18 @@ make dev
 ```
 
 启动后打开 http://127.0.0.1:8100 即可使用。构建、测试与 Docker 的完整说明见 [ledger/README.md](./ledger/README.md)。
+
+### sentinel
+
+进入项目目录并构建启动服务（需 Go 1.23+）：
+
+```bash
+cd sentinel
+make build
+./sentinel
+```
+
+启动后打开 http://127.0.0.1:8200 即可使用。构建、测试与 Docker 的完整说明见 [sentinel/README.md](./sentinel/README.md)。
 
 ## 目录约定
 
