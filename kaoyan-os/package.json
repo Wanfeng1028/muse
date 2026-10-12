@@ -1,0 +1,20 @@
+{
+  "name": "kaoyan-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "考研指挥舱 Kaoyan OS —— 全栈考研复习管理系统（Fastify + React + TypeScript）",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:server": "pnpm --filter @kaoyan/server run dev",
+    "dev:web": "pnpm --filter @kaoyan/web run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r --if-present run test",
+    "lint": "pnpm -r --if-present run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

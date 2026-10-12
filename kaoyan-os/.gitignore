@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.tsbuildinfo
