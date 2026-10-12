@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}账户{% endblock %}
+
+{% block content %}
+<h1>账户</h1>
+
+<div id="account-grid" class="account-grid">
+  {% for acc in accounts %}
+  <div class="account-card" data-id="{{ acc.id }}">
+    <div class="account-card-header">
+      <span class="account-name">{{ acc.name }}</span>
+      <span class="account-type-badge">
+        {{ {'cash':'现金','savings':'储蓄卡','credit':'信用卡','ewallet':'电子钱包','investment':'投资账户'}[acc.type] }}
+      </span>
+    </div>
+    <div class="account-balance">
+      <span class="balance-amount">{{ acc.balance_cents|fmt_money }}</span>
+      <span class="balance-currency">{{ acc.currency }}</span>
+    </div>
+    {% if acc.note %}
+    <div class="account-note">{{ acc.note }}</div>
+    {% endif %}
+    <div class="account-actions">
+      <button class="btn-del-account" data-id="{{ acc.id }}">归档</button>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">暂无账户，请使用下方表单新增。</div>
+  {% endfor %}
+</div>
+
+<h2>新增账户</h2>
+<form id="acc-form" class="form">
+  <div class="form-row">
+    <label for="a-name">名称</label>
+    <input type="text" id="a-name" name="name" required>
+  </div>
+  <div class="form-row">
+    <label for="a-type">类型</label>
+    <select id="a-type" name="type">
+      <option value="cash">现金</option>
+      <option value="savings">储蓄卡</option>
+      <option value="credit">信用卡</option>
+      <option value="ewallet">电子钱包</option>
+      <option value="investment">投资账户</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="a-currency">币种</label>
+    <select id="a-currency" name="currency">
+      <option value="CNY">CNY</option>
+      <option value="USD">USD</option>
+      <option value="EUR">EUR</option>
+      <option value="JPY">JPY</option>
+      <option value="HKD">HKD</option>
+      <option value="GBP">GBP</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="a-opening">初始余额</label>
+    <input type="number" id="a-opening" name="opening" step="0.01" value="0">
+  </div>
+  <div class="form-row">
+    <label for="a-note">备注</label>
+    <input type="text" id="a-note" name="note">
+  </div>
+  <div class="form-actions">
+    <button type="submit">提交</button>
+  </div>
+</form>
+{% endblock %}

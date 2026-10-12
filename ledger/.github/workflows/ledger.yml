@@ -1,0 +1,27 @@
+name: ledger CI
+
+on:
+  push:
+    paths:
+      - "ledger/**"
+      - ".github/workflows/ledger.yml"
+  pull_request:
+    paths:
+      - "ledger/**"
+      - ".github/workflows/ledger.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ledger
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: pytest

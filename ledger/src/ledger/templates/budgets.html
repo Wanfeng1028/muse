@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}预算{% endblock %}
+{% block content %}
+<h1>预算</h1>
+
+<div class="toolbar">
+  <label for="month">月份</label>
+  <input type="month" id="month" value="{{ month }}" onchange="location.href='?month='+this.value">
+</div>
+
+<div id="budget-list">
+  {% for b in items %}
+  <div class="budget-row">
+    <div class="budget-head">
+      <span class="budget-cat">{{ b.category_name }}</span>
+      <span class="budget-amount">预算 {{ b.amount_cents|fmt_money }}</span>
+      <span class="budget-spent">已花费 {{ b.spent_cents|fmt_money }}</span>
+      <span class="budget-remaining">剩余 {{ b.remaining_cents|fmt_money }}</span>
+      <button type="button" class="btn-del-budget" data-id="{{ b.id }}">删除</button>
+    </div>
+    <div class="bar{% if b.pct > 100 %} over{% endif %}">
+      <i style="width:{{ b.pct if b.pct <= 100 else 100 }}%"></i>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty">本月暂无预算</div>
+  {% endfor %}
+</div>
+
+<h2>新增预算</h2>
+<form id="b-form">
+  <div class="form-row">
+    <label for="b-category">分类</label>
+    <select id="b-category" required></select>
+  </div>
+  <div class="form-row">
+    <label for="b-amount">金额</label>
+    <input type="number" id="b-amount" step="0.01" required>
+  </div>
+  <input type="hidden" id="b-month" value="{{ month }}">
+  <button type="submit">保存</button>
+</form>
+{% endblock %}

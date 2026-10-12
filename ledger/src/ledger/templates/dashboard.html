@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}仪表盘{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>仪表盘</h1>
+  <div class="month-picker">
+    <input type="month" id="month" value="{{ month }}" onchange="location.href='?month=' + this.value">
+  </div>
+</div>
+
+<div class="summary-cards">
+  <div class="card card-income">
+    <div class="card-label">本月收入</div>
+    <div class="card-value">{{ fmt_money(summary.income_cents) }}</div>
+    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔</div>
+  </div>
+  <div class="card card-expense">
+    <div class="card-label">本月支出</div>
+    <div class="card-value">{{ fmt_money(summary.expense_cents) }}</div>
+    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔</div>
+  </div>
+  <div class="card card-net">
+    <div class="card-label">本月结余</div>
+    <div class="card-value">{{ fmt_money(summary.net_cents) }}</div>
+    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔</div>
+  </div>
+</div>
+
+<div class="charts">
+  <div class="chart-panel">
+    <h2>收支趋势</h2>
+    <div class="chart-box">{{ trend_svg|safe }}</div>
+  </div>
+  <div class="chart-panel">
+    <h2>分类占比</h2>
+    <div class="chart-box">{{ cat_svg|safe }}</div>
+  </div>
+</div>
+
+<div class="quick-links">
+  <h2>快捷入口</h2>
+  <div class="quick-link-grid">
+    <a class="quick-link" href="/transactions">记一笔</a>
+    <a class="quick-link" href="/accounts">新账户</a>
+    <a class="quick-link" href="/budgets">定预算</a>
+    <a class="quick-link" href="/import">导数据</a>
+  </div>
+</div>
+{% endblock %}

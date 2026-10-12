@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}分类{% endblock %}
+{% block content %}
+<h1>分类</h1>
+
+<div class="grid-2">
+  <section>
+    <h2>支出分类</h2>
+    <ul id="cat-expense">
+      {% for c in grouped.expense %}
+      <li data-id="{{ c.id }}">
+        <span class="cat-icon">{{ c.icon }}</span>
+        <span class="cat-name">{{ c.name }}</span>
+        <span class="cat-dot" style="background:{{ c.color }}"></span>
+        <button class="btn-del-category" data-id="{{ c.id }}">删除</button>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>收入分类</h2>
+    <ul id="cat-income">
+      {% for c in grouped.income %}
+      <li data-id="{{ c.id }}">
+        <span class="cat-icon">{{ c.icon }}</span>
+        <span class="cat-name">{{ c.name }}</span>
+        <span class="cat-dot" style="background:{{ c.color }}"></span>
+        <button class="btn-del-category" data-id="{{ c.id }}">删除</button>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+<h2>新增分类</h2>
+<form id="cat-form">
+  <label for="c-name">名称</label>
+  <input id="c-name" name="name" type="text" required>
+
+  <label for="c-kind">类型</label>
+  <select id="c-kind" name="kind">
+    <option value="expense">支出</option>
+    <option value="income">收入</option>
+  </select>
+
+  <label for="c-icon">图标</label>
+  <input id="c-icon" name="icon" type="text" placeholder="表情">
+
+  <label for="c-color">颜色</label>
+  <input id="c-color" name="color" type="color" value="#3b82f6">
+
+  <label for="c-sort">排序</label>
+  <input id="c-sort" name="sort" type="number" value="0">
+
+  <button type="submit">提交</button>
+</form>
+{% endblock %}

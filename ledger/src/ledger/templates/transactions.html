@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}交易{% endblock %}
+{% block content %}
+<h1>交易</h1>
+
+<section class="card">
+  <div class="filters">
+    <select id="f-type">
+      <option value="">全部</option>
+      <option value="income">收入</option>
+      <option value="expense">支出</option>
+      <option value="transfer">转账</option>
+    </select>
+    <select id="f-account">
+      <option value="">全部</option>
+      {% for a in accounts %}
+      <option value="{{ a.id }}">{{ a.name }}</option>
+      {% endfor %}
+    </select>
+    <select id="f-category">
+      <option value="">全部</option>
+      {% for c in categories_grouped.expense %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+      {% endfor %}
+      {% for c in categories_grouped.income %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="date" id="f-from">
+    <input type="date" id="f-to">
+    <input type="text" id="f-q" placeholder="搜索备注">
+    <button id="btn-search" type="button">查询</button>
+  </div>
+</section>
+
+<section class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>类型</th>
+        <th>账户</th>
+        <th>分类</th>
+        <th>金额</th>
+        <th>备注</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="tx-body"></tbody>
+  </table>
+  <div class="pagination">
+    <button id="btn-prev" type="button">上一页</button>
+    <span id="page-info"></span>
+    <button id="btn-next" type="button">下一页</button>
+  </div>
+</section>
+
+<h2>记一笔</h2>
+<section class="card">
+  <form id="tx-form">
+    <select id="t-type">
+      <option value="expense">支出</option>
+      <option value="income">收入</option>
+      <option value="transfer">转账</option>
+    </select>
+    <select id="t-account">
+      {% for a in accounts %}
+      <option value="{{ a.id }}">{{ a.name }}</option>
+      {% endfor %}
+    </select>
+    <div id="t-to-row">
+      <select id="t-to">
+        {% for a in accounts %}
+        <option value="{{ a.id }}">{{ a.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="t-category-row">
+      <select id="t-category">
+        {% for c in categories_grouped.expense %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+        {% for c in categories_grouped.income %}
+        <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <input type="number" id="t-amount" step="0.01" placeholder="金额">
+    <input type="date" id="t-date">
+    <input type="text" id="t-note" placeholder="备注">
+    <button type="submit">保存</button>
+  </form>
+</section>
+{% endblock %}

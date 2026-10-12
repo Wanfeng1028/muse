@@ -1,0 +1,32 @@
+# ledger 项目 Makefile
+# 约定：所有 Python 命令均通过项目内 .venv 执行，避免污染全局环境
+
+.PHONY: install dev run test lint fmt clean
+
+# 创建虚拟环境并以可编辑模式安装项目及开发依赖
+install:
+	python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+
+# 启动开发服务器（热重载，监听 127.0.0.1:8100）
+dev:
+	.venv/bin/uvicorn ledger.main:app --reload --host 127.0.0.1 --port 8100
+
+# 以模块方式直接运行应用（生产/本地运行入口）
+run:
+	.venv/bin/python -m ledger
+
+# 运行测试套件
+test:
+	.venv/bin/pytest
+
+# 静态代码检查
+lint:
+	.venv/bin/ruff check src tests
+
+# 代码格式化
+fmt:
+	.venv/bin/ruff format src tests
+
+# 清理虚拟环境、数据库文件与缓存
+clean:
+	rm -rf .venv data/*.db __pycache__

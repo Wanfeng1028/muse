@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}导入导出{% endblock %}
+
+{% block content %}
+<h1>导入导出</h1>
+
+<section>
+  <h2>CSV 导入</h2>
+  <input type="file" id="import-file" accept=".csv">
+  <button id="btn-upload">上传</button>
+  <div id="import-result"></div>
+  <p>
+    CSV 列：date,type,account,category,amount,note。
+    type 可填 收入/支出/转账 或 income/expense/transfer；amount 为元。
+  </p>
+</section>
+
+<section>
+  <h2>CSV 导出</h2>
+  <input type="date" id="exp-from">
+  <input type="date" id="exp-to">
+  <button id="btn-export">下载 CSV</button>
+</section>
+{% endblock %}

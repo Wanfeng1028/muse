@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}钱迹 · 个人财务管家{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a class="logo" href="/">💰 钱迹</a>
+      <nav>
+        <a href="/">仪表盘</a>
+        <a href="/transactions">交易</a>
+        <a href="/accounts">账户</a>
+        <a href="/categories">分类</a>
+        <a href="/budgets">预算</a>
+        <a href="/recurring">周期账单</a>
+        <a href="/import">导入导出</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <p>钱迹 Ledger · 本地 SQLite 记账</p>
+  </footer>
+</body>
+</html>
