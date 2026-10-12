@@ -1,0 +1,154 @@
+import type { FastifyInstance } from 'fastify';
+import type { DatabaseSync } from 'node:sqlite';
+import {
+  type CreateFocusInput,
+  type FocusSession,
+  type FocusStats,
+  type SubjectKey,
+  isSubjectKey,
+} from '@kaoyan/shared';
+import { todayStr, addDays, nowIso } from '../db';
+
+// 查询参数类型
+interface FocusQuery {
+  limit?: string;
+}
+
+interface StatsQuery {
+  days?: string;
+}
+
+// 数据库行类型
+interface FocusRow {
+  id: number;
+  subject: string;
+  minutes: number;
+  started_at: string;
+  note: string | null;
+}
+
+interface DaySumRow {
+  day: string;
+  minutes: number;
+}
+
+// 将数据库行映射为 FocusSession
+function mapFocus(row: FocusRow): FocusSession {
+  return {
+    id: row.id,
+    subject: row.subject as SubjectKey,
+    minutes: row.minutes,
+    startedAt: row.started_at,
+    note: row.note === null ? null : row.note,
+  };
+}
+
+export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): void {
+  // GET /api/focus —— 按 started_at 降序返回专注记录
+  app.get<{ Querystring: FocusQuery }>('/api/focus', (req, reply) => {
+    let limit = 50;
+    if (req.query.limit !== undefined) {
+      const parsed = Number(req.query.limit);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        limit = Math.min(Math.floor(parsed), 500);
+      }
+    }
+    const rows = db
+      .prepare(
+        'SELECT id, subject, minutes, started_at, note FROM focus_sessions ORDER BY started_at DESC LIMIT ?'
+      )
+      .all(limit) as unknown as FocusRow[];
+    return reply.send(rows.map(mapFocus));
+  });
+
+  // POST /api/focus —— 新增一条专注记录
+  app.post<{ Body: CreateFocusInput }>('/api/focus', (req, reply) => {
+    const body = req.body ?? ({} as CreateFocusInput);
+    const { subject, minutes, startedAt, note } = body;
+
+    // 校验 subject
+    if (!isSubjectKey(subject)) {
+      return reply.code(400).send({ error: 'invalid subject' });
+    }
+    // 校验 minutes 为 1~1440 整数
+    if (
+      typeof minutes !== 'number' ||
+      !Number.isInteger(minutes) ||
+      minutes < 1 ||
+      minutes > 1440
+    ) {
+      return reply.code(400).send({ error: 'minutes must be an integer between 1 and 1440' });
+    }
+
+    const finalStartedAt = startedAt ?? nowIso();
+    const finalNote = note === undefined ? null : note;
+
+    const result = db
+      .prepare(
+        'INSERT INTO focus_sessions (subject, minutes, started_at, note) VALUES (?, ?, ?, ?)'
+      )
+      .run(subject, minutes, finalStartedAt, finalNote);
+
+    const id = Number(result.lastInsertRowid);
+    const session: FocusSession = {
+      id,
+      subject,
+      minutes,
+      startedAt: finalStartedAt,
+      note: finalNote === null ? null : finalNote,
+    };
+    return reply.code(201).send(session);
+  });
+
+  // GET /api/focus/stats —— 返回专注统计
+  app.get<{ Querystring: StatsQuery }>('/api/focus/stats', (req, reply) => {
+    let days = 7;
+    if (req.query.days !== undefined) {
+      const parsed = Number(req.query.days);
+      if (Number.isFinite(parsed)) {
+        days = Math.min(Math.max(Math.floor(parsed), 1), 31);
+      }
+    }
+
+    const today = todayStr();
+    const startDate = addDays(today, -(days - 1));
+
+    // 按日期分组统计（使用 started_at 前 10 位）
+    const dayRows = db
+      .prepare(
+        "SELECT substr(started_at, 1, 10) AS day, SUM(minutes) AS minutes " +
+          'FROM focus_sessions WHERE substr(started_at, 1, 10) >= ? ' +
+          'GROUP BY day'
+      )
+      .all(startDate) as unknown as DaySumRow[];
+
+    const dayMap = new Map<string, number>();
+    for (const r of dayRows) {
+      dayMap.set(r.day, Number(r.minutes));
+    }
+
+    // 组装最近 days 天（含今天）按日期升序
+    const daysArr: { date: string; minutes: number }[] = [];
+    for (let i = 0; i < days; i++) {
+      const date = addDays(startDate, i);
+      daysArr.push({ date, minutes: dayMap.get(date) ?? 0 });
+    }
+
+    const todayMinutes = dayMap.get(today) ?? 0;
+    const weekMinutes = daysArr.reduce((sum, d) => sum + d.minutes, 0);
+
+    // 全部历史总和
+    const totalRow = db
+      .prepare('SELECT COALESCE(SUM(minutes), 0) AS total FROM focus_sessions')
+      .get() as unknown as { total: number };
+    const totalMinutes = Number(totalRow.total);
+
+    const stats: FocusStats = {
+      days: daysArr,
+      todayMinutes,
+      weekMinutes,
+      totalMinutes,
+    };
+    return reply.send(stats);
+  });
+}
