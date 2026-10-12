@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>考研指挥舱 · Kaoyan OS</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- 侧边栏：品牌、导航与倒计时 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">考研指挥舱</div>
+        <div class="brand-sub">Kaoyan OS</div>
+      </div>
+      <nav class="nav">
+        <a class="nav-item" href="#/dashboard" data-route="dashboard">仪表盘</a>
+        <a class="nav-item" href="#/plan" data-route="plan">复习计划</a>
+        <a class="nav-item" href="#/focus" data-route="focus">专注计时</a>
+        <a class="nav-item" href="#/mistakes" data-route="mistakes">错题本</a>
+        <a class="nav-item" href="#/words" data-route="words">单词 SRS</a>
+        <a class="nav-item" href="#/exams" data-route="exams">真题统计</a>
+      </nav>
+      <div class="side-foot">
+        <div id="countdown">距初试 -- 天</div>
+      </div>
+    </aside>
+
+    <!-- 主内容区：顶栏与视图容器 -->
+    <div class="main">
+      <header class="topbar">
+        <div id="topTitle">仪表盘</div>
+        <div id="topDate"></div>
+      </header>
+      <main id="view"></main>
+    </div>
+  </div>
+
+  <!-- 本地脚本，按依赖顺序加载 -->
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/plan.js"></script>
+  <script src="js/pomodoro.js"></script>
+  <script src="js/mistakes.js"></script>
+  <script src="js/srs.js"></script>
+  <script src="js/exam.js"></script>
+</body>
+</html>
