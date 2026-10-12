@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第二大脑</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">第二大脑</div>
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="搜索笔记…" autocomplete="off">
+    </div>
+    <button id="btn-new" class="btn btn-primary">新建笔记</button>
+    <div class="sidebar-section">
+      <h3>标签</h3>
+      <ul id="tag-list" class="tag-list"></ul>
+    </div>
+    <div class="sidebar-section">
+      <h3>统计</h3>
+      <div id="stats-box" class="stats-box">
+        <div class="stat"><span class="stat-num" id="stat-notes">0</span><span class="stat-label">笔记</span></div>
+        <div class="stat"><span class="stat-num" id="stat-tags">0</span><span class="stat-label">标签</span></div>
+        <div class="stat"><span class="stat-num" id="stat-links">0</span><span class="stat-label">链接</span></div>
+        <div class="stat"><span class="stat-num" id="stat-words">0</span><span class="stat-label">字数</span></div>
+      </div>
+    </div>
+    <button id="btn-graph" class="btn btn-secondary">图谱视图</button>
+  </aside>
+
+  <section class="list-pane">
+    <div class="list-header">
+      <h2>笔记</h2>
+      <span id="list-count" class="list-count"></span>
+    </div>
+    <ul id="note-list" class="note-list"></ul>
+  </section>
+
+  <section class="editor-pane">
+    <div id="editor-view">
+      <div class="editor-header">
+        <input type="text" id="editor-title" class="editor-title" placeholder="标题">
+        <div class="editor-actions">
+          <button id="btn-save" class="btn btn-primary">保存</button>
+          <button id="btn-delete" class="btn btn-danger">删除</button>
+        </div>
+      </div>
+      <div class="editor-meta">
+        <label class="meta-field">
+          <span>标签（逗号分隔）</span>
+          <input type="text" id="editor-tags" placeholder="tag1, tag2">
+        </label>
+        <label class="meta-field meta-check">
+          <input type="checkbox" id="editor-pinned">
+          <span>置顶</span>
+        </label>
+      </div>
+      <div class="editor-tabs">
+        <button id="btn-preview" class="tab-btn">预览</button>
+        <span class="tab-hint">使用 [[标题]] 创建双链</span>
+      </div>
+      <div class="editor-body-wrap">
+        <textarea id="editor-body" class="editor-body" placeholder="开始书写…"></textarea>
+        <div id="preview-box" class="preview-box" hidden></div>
+      </div>
+      <div class="wiki-hint">
+        <strong>双链提示：</strong>在正文中使用 <code>[[笔记标题]]</code> 即可建立双向链接，链接会显示在预览中，并可跳转至对应笔记。
+      </div>
+    </div>
+
+    <div id="graph-view" class="graph-view" hidden>
+      <div class="graph-header">
+        <h2>知识图谱</h2>
+        <button id="btn-graph-close" class="btn btn-secondary">返回编辑</button>
+      </div>
+      <canvas id="graph-canvas" width="800" height="600"></canvas>
+      <p class="graph-desc">节点代表笔记，连线代表 <code>[[双链]]</code> 引用关系。拖拽节点可调整位置，双击节点打开对应笔记。</p>
+    </div>
+  </section>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+name: second-brain CI
+
+on:
+  push:
+    paths:
+      - "second-brain/**"
+      - ".github/workflows/second-brain.yml"
+  pull_request:
+    paths:
+      - "second-brain/**"
+      - ".github/workflows/second-brain.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: second-brain
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - run: go mod download
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build ./cmd/server
