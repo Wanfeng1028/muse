@@ -1,0 +1,422 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type {
+  ExamRecord,
+  ExamTrendPoint,
+  SubjectKey,
+  CreateExamInput,
+} from '@kaoyan/shared';
+import { SUBJECTS } from '@kaoyan/shared';
+import { api } from '../api';
+
+// 科目 key -> 名称 映射
+const SUBJECT_NAME: Record<SubjectKey, string> = SUBJECTS.reduce(
+  (acc, s) => {
+    acc[s.key] = s.name;
+    return acc;
+  },
+  {} as Record<SubjectKey, string>
+);
+
+// 科目筛选类型：'all' 或具体科目
+type SubjectFilter = 'all' | SubjectKey;
+
+export default function Exams() {
+  // 记录表科目筛选
+  const [subjectFilter, setSubjectFilter] = useState<SubjectFilter>('all');
+  // 趋势图科目
+  const [trendSubject, setTrendSubject] = useState<SubjectKey>('math');
+
+  // 记录列表状态
+  const [records, setRecords] = useState<ExamRecord[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const [recordsError, setRecordsError] = useState<string | null>(null);
+
+  // 趋势数据状态
+  const [trend, setTrend] = useState<ExamTrendPoint[]>([]);
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [trendError, setTrendError] = useState<string | null>(null);
+
+  // 新增表单状态
+  const [form, setForm] = useState<CreateExamInput>({
+    subject: 'math',
+    paper: '',
+    score: 0,
+    totalScore: 0,
+    durationMinutes: 0,
+    takenAt: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // 加载记录表
+  const loadRecords = useCallback(async () => {
+    setRecordsLoading(true);
+    setRecordsError(null);
+    try {
+      const data = await api.listExams(subjectFilter);
+      setRecords(data);
+    } catch (e) {
+      setRecordsError(e instanceof Error ? e.message : '加载失败');
+    } finally {
+      setRecordsLoading(false);
+    }
+  }, [subjectFilter]);
+
+  // 加载趋势数据
+  const loadTrend = useCallback(async () => {
+    setTrendLoading(true);
+    setTrendError(null);
+    try {
+      const data = await api.examTrend(trendSubject);
+      setTrend(data);
+    } catch (e) {
+      setTrendError(e instanceof Error ? e.message : '加载失败');
+    } finally {
+      setTrendLoading(false);
+    }
+  }, [trendSubject]);
+
+  // 依赖变化时重新加载
+  useEffect(() => {
+    loadRecords();
+  }, [loadRecords]);
+
+  useEffect(() => {
+    loadTrend();
+  }, [loadTrend]);
+
+  // 提交新增表单
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    if (!form.paper.trim()) {
+      setFormError('请填写试卷名称');
+      return;
+    }
+    if (form.totalScore <= 0) {
+      setFormError('满分需大于 0');
+      return;
+    }
+    if (form.score < 0 || form.score > form.totalScore) {
+      setFormError('得分需在 0 与满分之间');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload: CreateExamInput = {
+        subject: form.subject,
+        paper: form.paper.trim(),
+        score: form.score,
+        totalScore: form.totalScore,
+        durationMinutes: form.durationMinutes,
+      };
+      if (form.takenAt) payload.takenAt = form.takenAt;
+      await api.createExam(payload);
+      // 重置表单（保留科目）
+      setForm((prev) => ({
+        subject: prev.subject,
+        paper: '',
+        score: 0,
+        totalScore: 0,
+        durationMinutes: 0,
+        takenAt: '',
+      }));
+      await loadRecords();
+      await loadTrend();
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : '提交失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 删除记录
+  const handleDelete = async (id: number) => {
+    try {
+      await api.deleteExam(id);
+      await loadRecords();
+      await loadTrend();
+    } catch (e) {
+      setRecordsError(e instanceof Error ? e.message : '删除失败');
+    }
+  };
+
+  // 计算得分率显示
+  const rateOf = (r: ExamRecord) =>
+    r.totalScore > 0 ? `${((r.score / r.totalScore) * 100).toFixed(1)}%` : '-';
+
+  // 生成 SVG polyline 点坐标
+  const trendChart = useMemo(() => {
+    const W = 600;
+    const H = 180;
+    const padX = 40;
+    const padY = 24;
+    if (trend.length === 0) return null;
+    const innerW = W - padX * 2;
+    const innerH = H - padY * 2;
+    const n = trend.length;
+    const stepX = n > 1 ? innerW / (n - 1) : 0;
+    const points = trend.map((p, i) => {
+      const x = padX + (n > 1 ? i * stepX : innerW / 2);
+      const rate = Math.max(0, Math.min(1, p.rate));
+      const y = padY + innerH * (1 - rate);
+      return { x, y, rate, point: p };
+    });
+    const polyline = points.map((p) => `${p.x},${p.y}`).join(' ');
+    return { W, H, points, polyline };
+  }, [trend]);
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <h1>真题统计</h1>
+      </div>
+
+      {/* 新增真题记录表单 */}
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>新增真题记录</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <label>
+              科目
+              <select
+                className="select"
+                value={form.subject}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    subject: e.target.value as SubjectKey,
+                  }))
+                }
+              >
+                {SUBJECTS.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              试卷
+              <input
+                className="input"
+                type="text"
+                placeholder="如 2025 年数学一真题"
+                value={form.paper}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, paper: e.target.value }))
+                }
+              />
+            </label>
+
+            <label>
+              得分
+              <input
+                className="input"
+                type="number"
+                min={0}
+                value={form.score}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, score: Number(e.target.value) }))
+                }
+              />
+            </label>
+
+            <label>
+              满分
+              <input
+                className="input"
+                type="number"
+                min={0}
+                value={form.totalScore}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, totalScore: Number(e.target.value) }))
+                }
+              />
+            </label>
+
+            <label>
+              时长(分钟)
+              <input
+                className="input"
+                type="number"
+                min={0}
+                value={form.durationMinutes}
+                onChange={(e) =>
+                  setForm((p) => ({
+                    ...p,
+                    durationMinutes: Number(e.target.value),
+                  }))
+                }
+              />
+            </label>
+
+            <label>
+              考试日期
+              <input
+                className="input"
+                type="date"
+                value={form.takenAt ?? ''}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, takenAt: e.target.value }))
+                }
+              />
+            </label>
+          </div>
+
+          {formError && <div className="error-box">{formError}</div>}
+
+          <div className="form-row" style={{ marginTop: 12 }}>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={submitting}
+            >
+              {submitting ? '提交中…' : '添加记录'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* 趋势图 */}
+      <div className="card">
+        <div className="form-row" style={{ justifyContent: 'space-between' }}>
+          <h2 style={{ margin: 0 }}>得分率趋势</h2>
+          <label>
+            科目{' '}
+            <select
+              className="select"
+              value={trendSubject}
+              onChange={(e) => setTrendSubject(e.target.value as SubjectKey)}
+            >
+              {SUBJECTS.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {trendLoading ? (
+          <div className="loading">加载中…</div>
+        ) : trendError ? (
+          <div className="error-box">{trendError}</div>
+        ) : trendChart ? (
+          <svg
+            width="100%"
+            viewBox={`0 0 ${trendChart.W} ${trendChart.H}`}
+            style={{ display: 'block', marginTop: 12 }}
+          >
+            {/* 坐标轴底线 */}
+            <line
+              x1={40}
+              y1={156}
+              x2={560}
+              y2={156}
+              stroke="#d8dce6"
+              strokeWidth={1}
+            />
+            {/* 折线 */}
+            <polyline
+              points={trendChart.polyline}
+              fill="none"
+              stroke="var(--c-math, #4f7cff)"
+              strokeWidth={2}
+            />
+            {/* 圆点与百分比标注 */}
+            {trendChart.points.map((p, i) => (
+              <g key={i}>
+                <circle cx={p.x} cy={p.y} r={4} fill="#4f7cff" />
+                <text
+                  x={p.x}
+                  y={p.y - 8}
+                  fontSize={12}
+                  textAnchor="middle"
+                  fill="#333"
+                >
+                  {(p.rate * 100).toFixed(0)}%
+                </text>
+              </g>
+            ))}
+          </svg>
+        ) : (
+          <div className="empty">暂无数据</div>
+        )}
+      </div>
+
+      {/* 记录表 */}
+      <div className="card">
+        <div className="form-row" style={{ justifyContent: 'space-between' }}>
+          <h2 style={{ margin: 0 }}>考试记录</h2>
+          <label>
+            筛选{' '}
+            <select
+              className="select"
+              value={subjectFilter}
+              onChange={(e) =>
+                setSubjectFilter(e.target.value as SubjectFilter)
+              }
+            >
+              <option value="all">全部</option>
+              {SUBJECTS.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {recordsLoading ? (
+          <div className="loading">加载中…</div>
+        ) : recordsError ? (
+          <div className="error-box">{recordsError}</div>
+        ) : records.length === 0 ? (
+          <div className="empty">暂无记录</div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>科目</th>
+                <th>试卷</th>
+                <th>得分</th>
+                <th>得分率</th>
+                <th>时长</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((r) => (
+                <tr key={r.id}>
+                  <td>{r.takenAt}</td>
+                  <td>
+                    <span className={`badge badge-${r.subject}`}>
+                      {SUBJECT_NAME[r.subject]}
+                    </span>
+                  </td>
+                  <td>{r.paper}</td>
+                  <td>
+                    {r.score}/{r.totalScore}
+                  </td>
+                  <td>{rateOf(r)}</td>
+                  <td>{r.durationMinutes} 分钟</td>
+                  <td>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(r.id)}
+                    >
+                      删除
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
