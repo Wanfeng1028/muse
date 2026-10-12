@@ -1,0 +1,27 @@
+name: kaoyan-os CI
+
+on:
+  push:
+    paths:
+      - "kaoyan-os/**"
+      - ".github/workflows/kaoyan-os.yml"
+  pull_request:
+    paths:
+      - "kaoyan-os/**"
+      - ".github/workflows/kaoyan-os.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kaoyan-os
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm -r run build
+      - run: pnpm -r --if-present run test
