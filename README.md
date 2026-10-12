@@ -9,6 +9,7 @@
 | [kaoyan-os](./kaoyan-os) | 「考研指挥舱」——全栈考研复习管理系统。pnpm monorepo：Fastify 5 + TypeScript + SQLite 后端，Vite 6 + React 18 前端，packages/shared 共享类型。六大模块：复习计划、番茄专注、错题本、单词 SRS、真题统计、仪表盘。 | 工程化 v1 |
 | [second-brain](./second-brain) | 「第二大脑」——个人知识库系统。Go 单二进制：net/http + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI。功能：笔记 CRUD、标签、全文搜索相关性排序、[[双链]] 与知识图谱、Markdown 预览、统计。 | 工程化 v1 |
 | [drama-factory](./drama-factory) | 「AI 短剧工坊」——短剧生产管理与剧本生成系统。Java 21 + Spring Boot 3.3 + Spring Data JPA + H2，企业级分层架构，内置 Web 控制台。功能：项目/剧集/角色/场景管理、基于大纲的四场式剧本自动生成（每场带英文视频生成提示词）、全局统计。 | 工程化 v1 |
+| [mini-os](./mini-os) | 「网页操作系统」——浏览器里的桌面操作系统。Rust + Axum 0.7 + WebSocket + rusqlite（bundled SQLite）后端，原生 HTML/CSS/JS 可拖拽多窗口桌面。功能：虚拟文件系统 CRUD、应用注册表（文件管理器/编辑器/终端/设置/关于）、主题与壁纸持久化、WebSocket echo、统计。 | 工程化 v1 |
 
 ## 如何运行
 
@@ -60,6 +61,17 @@ mvn spring-boot:run
 ```
 
 启动后打开 http://localhost:8081 即可使用控制台。构建、测试与 Docker 的完整说明见 [drama-factory/README.md](./drama-factory/README.md)。
+
+### mini-os
+
+进入项目目录并启动服务（需 Rust 工具链）：
+
+```bash
+cd mini-os
+cargo run
+```
+
+启动后打开 http://localhost:8090 即可进入桌面。构建、测试与 Docker 的完整说明见 [mini-os/README.md](./mini-os/README.md)。
 
 ## 目录约定
 

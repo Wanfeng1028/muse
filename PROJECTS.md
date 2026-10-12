@@ -84,3 +84,30 @@
 - 对接视频生成管线
 - 审核流状态机
 - 多用户与权限
+
+## mini-os「网页操作系统」
+
+**定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。
+
+**技术栈**：Rust + Axum 0.7（含 WebSocket）+ Tokio + rusqlite 0.32（bundled SQLite）；前端原生 HTML/CSS/JS（无框架）；cargo test 集成测试 8 例、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+
+**功能模块**：
+
+1. 虚拟文件系统（文件夹/文件 CRUD，SQLite 持久化，种子数据 Desktop/Documents/welcome.txt/notes.txt）
+2. 应用注册表（文件管理器、文本编辑器、终端、设置、关于 5 个内置应用）
+3. 可拖拽多窗口桌面 + 任务栏 + 开始菜单 + 时钟
+4. 主题/壁纸设置持久化
+5. WebSocket（连接先发 hello，文本消息 echo 回显）
+6. 统计（文件/文件夹数、字节数）
+
+**状态**：工程化 v1（2026-10-13 完成，cargo test 8 例全过、clippy 零警告、release 单二进制真实服务冒烟全过）。
+
+**里程碑记录**：
+
+- 工程化 v1（2026-10-13）：Axum + rusqlite 后端落地，虚拟文件系统 API、5 应用桌面前端、WebSocket 协议、CI 与多阶段 Dockerfile 就绪
+
+**后续计划**：
+
+- 文件上传/下载
+- 多用户与权限
+- 应用商店（插件化）

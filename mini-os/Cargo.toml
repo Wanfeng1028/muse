@@ -1,0 +1,17 @@
+[package]
+name = "mini-os"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "mini-os"
+path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.7", features = ["ws"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.5", features = ["fs", "cors"] }
