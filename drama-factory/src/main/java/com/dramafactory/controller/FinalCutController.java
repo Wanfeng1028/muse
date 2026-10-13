@@ -2,6 +2,8 @@ package com.dramafactory.controller;
 
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.FinalCutService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api")
+@Tag(name = "FinalCuts", description = "剧集成片剪辑与人工质检接口")
 public class FinalCutController {
 
     private final FinalCutService finalCutService;
@@ -40,6 +43,7 @@ public class FinalCutController {
      * @return 剪辑结果
      */
     @PostMapping("/episodes/{episodeId}/final-cuts")
+    @Operation(summary = "执行成片剪辑")
     public ResponseEntity<Records.FinalCutResponse> createFinalCut(@PathVariable Long episodeId) {
         Records.FinalCutResponse response = finalCutService.buildFinalCut(episodeId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -52,6 +56,7 @@ public class FinalCutController {
      * @return 成片剪辑列表
      */
     @GetMapping("/episodes/{episodeId}/final-cuts")
+    @Operation(summary = "查询剧集下的成片剪辑列表")
     public List<Records.FinalCutResponse> listFinalCutsByEpisode(@PathVariable Long episodeId) {
         return finalCutService.listByEpisode(episodeId);
     }
@@ -63,6 +68,7 @@ public class FinalCutController {
      * @return 成片剪辑详情
      */
     @GetMapping("/final-cuts/{id}")
+    @Operation(summary = "按 ID 查询成片剪辑")
     public Records.FinalCutResponse getFinalCut(@PathVariable Long id) {
         return finalCutService.get(id);
     }
@@ -75,6 +81,7 @@ public class FinalCutController {
      * @return 更新后的成片详情
      */
     @PostMapping("/final-cuts/{id}/qc")
+    @Operation(summary = "提交成片人工质检结论")
     public Records.FinalCutResponse qcFinalCut(@PathVariable Long id,
                                                @Valid @RequestBody Records.QcRequest request) {
         return finalCutService.qc(id, request);

@@ -40,6 +40,18 @@ management:
       exposure:
         include: prometheus
 
+# v2.5 生产级补强第 4 轮：OpenAPI 文档端点。
+# /v3/api-docs 与 /swagger-ui/** 默认公开——JwtAuthFilter 只拦 /api/**，这两个路径不在里面。
+# 生产环境不要把本服务直接暴露到公网，否则接口文档会被人随手翻。
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+    docExpansion: none
+
 drama:
   script:
     llm:

@@ -3,6 +3,8 @@ package com.dramafactory.controller;
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.EpisodeService;
 import com.dramafactory.service.ScriptService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@Tag(name = "Episodes", description = "剧集的增删改查与剧本生成接口")
 public class EpisodeController {
 
     private final EpisodeService episodeService;
@@ -29,11 +32,13 @@ public class EpisodeController {
     }
 
     @GetMapping("/api/projects/{projectId}/episodes")
+    @Operation(summary = "查询项目下的剧集列表")
     public List<Records.EpisodeResponse> listByProject(@PathVariable Long projectId) {
         return episodeService.listByProject(projectId);
     }
 
     @PostMapping("/api/projects/{projectId}/episodes")
+    @Operation(summary = "创建剧集")
     public ResponseEntity<Records.EpisodeResponse> create(
             @PathVariable Long projectId,
             @Valid @RequestBody Records.EpisodeRequest request) {
@@ -42,11 +47,13 @@ public class EpisodeController {
     }
 
     @GetMapping("/api/episodes/{id}")
+    @Operation(summary = "按 ID 查询剧集")
     public Records.EpisodeResponse get(@PathVariable Long id) {
         return episodeService.get(id);
     }
 
     @PutMapping("/api/episodes/{id}")
+    @Operation(summary = "更新剧集")
     public Records.EpisodeResponse update(
             @PathVariable Long id,
             @Valid @RequestBody Records.EpisodeRequest request) {
@@ -54,12 +61,14 @@ public class EpisodeController {
     }
 
     @DeleteMapping("/api/episodes/{id}")
+    @Operation(summary = "删除剧集")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         episodeService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/api/episodes/{id}/generate-script")
+    @Operation(summary = "生成剧集剧本")
     public Records.GenerateScriptResponse generateScript(@PathVariable Long id,
                                                          @RequestParam(defaultValue = "ai") String mode) {
         return scriptService.generate(id, mode);

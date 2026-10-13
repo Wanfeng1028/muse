@@ -2,6 +2,8 @@ package com.dramafactory.controller;
 
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.ChatService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Chat", description = "AI 对话接口")
 public class ChatController {
 
     private final ChatService chatService;
@@ -32,6 +35,7 @@ public class ChatController {
      * @return 模型回复
      */
     @PostMapping("/chat")
+    @Operation(summary = "发送一轮对话")
     public ResponseEntity<Records.ChatResponse> chat(
             @Valid @RequestBody Records.ChatRequest request) {
         return ResponseEntity.ok(chatService.chat(request));

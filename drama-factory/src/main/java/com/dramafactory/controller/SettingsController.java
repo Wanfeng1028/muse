@@ -1,6 +1,8 @@
 package com.dramafactory.controller;
 
 import com.dramafactory.service.SettingsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +20,7 @@ import java.util.Set;
  */
 @RestController
 @RequestMapping("/api/settings")
+@Tag(name = "Settings", description = "系统设置中心接口")
 public class SettingsController {
 
     private final SettingsService settingsService;
@@ -34,6 +37,7 @@ public class SettingsController {
      * @return {schema, values}
      */
     @GetMapping("")
+    @Operation(summary = "查询设置项与当前值")
     public Map<String, Object> get() {
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("schema", settingsService.schema());
@@ -48,6 +52,7 @@ public class SettingsController {
      * @return 掩码视图；非法键返回 400
      */
     @PutMapping("")
+    @Operation(summary = "保存设置项")
     public ResponseEntity<Map<String, Object>> put(@RequestBody Map<String, String> patch) {
         Set<String> allowed = settingsService.allowedKeys();
         Map<String, String> cleaned = new LinkedHashMap<>();
@@ -75,6 +80,7 @@ public class SettingsController {
      * @return {provider}
      */
     @GetMapping("/effective-provider")
+    @Operation(summary = "查询当前生效的视频通道")
     public Map<String, Object> effectiveProvider() {
         String provider = environment.getProperty("drama.video.provider", "mock");
         return Map.of("provider", provider);

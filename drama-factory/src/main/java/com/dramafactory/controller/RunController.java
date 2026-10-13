@@ -2,6 +2,9 @@ package com.dramafactory.controller;
 
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.RunService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +32,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/runs")
+@Tag(name = "Runs", description = "运行引擎的创建、控制与查询")
 public class RunController {
 
     private static final Logger log = LoggerFactory.getLogger(RunController.class);
@@ -51,6 +55,7 @@ public class RunController {
      * @return 计划预览
      */
     @PostMapping("/preview")
+    @Operation(summary = "预览运行计划")
     public Records.PlanPreview preview(@Valid @RequestBody PreviewRequest request) {
         log.info("预览 Run 计划，goal 长度={}", request.goal().length());
         return runService.planPreview(request.goal());
@@ -63,6 +68,7 @@ public class RunController {
      * @return 201 与新建 runId
      */
     @PostMapping("")
+    @Operation(summary = "创建并启动运行")
     public ResponseEntity<Map<String, Long>> create(@Valid @RequestBody CreateRunRequest request) {
         log.info("创建 Run，goal 长度={}，集数={}", request.goal().length(), request.plan().episodes().size());
         Long runId = runService.createRun(request.goal(), request.plan());
@@ -75,6 +81,7 @@ public class RunController {
      * @return Run 响应列表
      */
     @GetMapping("")
+    @Operation(summary = "列出全部运行")
     public List<Records.RunResponse> list() {
         List<Records.RunResponse> result = new ArrayList<>();
         for (var run : runService.listRuns()) {
@@ -90,6 +97,7 @@ public class RunController {
      * @return Run 详情
      */
     @GetMapping("/{id}")
+    @Operation(summary = "按 ID 查询运行详情")
     public Records.RunDetailResponse detail(@PathVariable Long id) {
         return runService.getRun(id);
     }
@@ -101,6 +109,7 @@ public class RunController {
      * @return 更新后的 Run 详情
      */
     @PostMapping("/{id}/pause")
+    @Operation(summary = "暂停运行")
     public Records.RunDetailResponse pause(@PathVariable Long id) {
         runService.pause(id);
         return runService.getRun(id);
@@ -113,6 +122,7 @@ public class RunController {
      * @return 更新后的 Run 详情
      */
     @PostMapping("/{id}/resume")
+    @Operation(summary = "恢复运行")
     public Records.RunDetailResponse resume(@PathVariable Long id) {
         runService.resume(id);
         return runService.getRun(id);
@@ -125,6 +135,7 @@ public class RunController {
      * @return 更新后的 Run 详情
      */
     @PostMapping("/{id}/cancel")
+    @Operation(summary = "取消运行")
     public Records.RunDetailResponse cancel(@PathVariable Long id) {
         runService.cancel(id);
         return runService.getRun(id);
@@ -138,6 +149,7 @@ public class RunController {
      * @return 更新后的 Run 详情
      */
     @PostMapping("/{id}/steps/{stepId}/retry")
+    @Operation(summary = "重试某个步骤")
     public Records.RunDetailResponse retry(@PathVariable Long id, @PathVariable Long stepId) {
         runService.retryStep(id, stepId);
         return runService.getRun(id);
@@ -151,6 +163,7 @@ public class RunController {
      * @return 更新后的 Run 详情
      */
     @PostMapping("/{id}/approve")
+    @Operation(summary = "审批运行")
     public Records.RunDetailResponse approve(@PathVariable Long id,
                                              @RequestBody(required = false) ApproveRequest request) {
         boolean approved = request != null && Boolean.TRUE.equals(request.approved());
@@ -167,6 +180,7 @@ public class RunController {
      * @return 201 与新 runId
      */
     @PostMapping("/{id}/rerun")
+    @Operation(summary = "基于某次运行重跑")
     public ResponseEntity<Map<String, Long>> rerun(@PathVariable Long id,
                                                    @RequestBody(required = false) Records.RerunRequest request) {
         String goal = request == null ? null : request.goal();
@@ -180,6 +194,7 @@ public class RunController {
      * @return 统计响应
      */
     @GetMapping("/stats")
+    @Operation(summary = "查询运行统计")
     public Records.RunStatsResponse stats() {
         return runService.stats();
     }
@@ -193,9 +208,10 @@ public class RunController {
      * @return 日志内容与下次偏移
      */
     @GetMapping("/{id}/steps/{stepId}/logs")
+    @Operation(summary = "增量读取步骤日志")
     public Records.LogReadResponse logs(@PathVariable Long id,
                                         @PathVariable Long stepId,
-                                        @RequestParam(name = "offset", defaultValue = "0") long offset) {
+                                        @Parameter(description = "起始字节偏移，负数按 0 处理") @RequestParam(name = "offset", defaultValue = "0") long offset) {
         return runService.readStepLog(id, stepId, offset);
     }
 

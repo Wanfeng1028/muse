@@ -4,6 +4,8 @@ import com.dramafactory.service.PresetService;
 import com.dramafactory.service.ProviderService;
 import com.dramafactory.service.ProviderService.ModelDto;
 import com.dramafactory.service.ProviderService.ProviderDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/providers")
+@Tag(name = "Providers", description = "媒体供应商与模型的增删改查接口")
 public class ProviderController {
 
     private final ProviderService providerService;
@@ -66,12 +69,14 @@ public class ProviderController {
     /* ---------- 供应商 ---------- */
 
     @GetMapping
+    @Operation(summary = "查询供应商列表")
     public List<ProviderDto> listProviders(@RequestParam(required = false) String module) {
         return providerService.listProviders(module);
     }
 
     /** 供应商模块清单：VIDEO/IMAGE/MUSIC/TTS/AVATAR */
     @GetMapping("/modules")
+    @Operation(summary = "查询供应商模块清单")
     public List<Map<String, String>> listModules() {
         return List.of(
                 Map.of("id", "VIDEO", "label", "视频"),
@@ -83,6 +88,7 @@ public class ProviderController {
     }
 
     @PostMapping
+    @Operation(summary = "创建供应商")
     public ResponseEntity<ProviderDto> createProvider(@RequestBody ProviderCreateRequest req) {
         if (req.name() == null || req.name().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -93,6 +99,7 @@ public class ProviderController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "更新供应商")
     public ResponseEntity<ProviderDto> updateProvider(@PathVariable Long id,
                                                       @RequestBody ProviderUpdateRequest req) {
         if (req.name() == null || req.name().trim().isEmpty()) {
@@ -104,6 +111,7 @@ public class ProviderController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "删除供应商")
     public ResponseEntity<Void> deleteProvider(@PathVariable Long id) {
         providerService.deleteProvider(id);
         return ResponseEntity.noContent().build();
@@ -112,6 +120,7 @@ public class ProviderController {
     /* ---------- 模型 ---------- */
 
     @PostMapping("/{id}/models")
+    @Operation(summary = "新增供应商模型")
     public ResponseEntity<ModelDto> addModel(@PathVariable Long id,
                                              @RequestBody ModelUpsertRequest req) {
         if (req.displayName() == null || req.displayName().trim().isEmpty()) {
@@ -123,6 +132,7 @@ public class ProviderController {
     }
 
     @PutMapping("/{id}/models/{modelId}")
+    @Operation(summary = "更新供应商模型")
     public ResponseEntity<ModelDto> updateModel(@PathVariable Long id,
                                                 @PathVariable Long modelId,
                                                 @RequestBody ModelUpsertRequest req) {
@@ -137,6 +147,7 @@ public class ProviderController {
     }
 
     @DeleteMapping("/{id}/models/{modelId}")
+    @Operation(summary = "删除供应商模型")
     public ResponseEntity<Void> deleteModel(@PathVariable Long id,
                                             @PathVariable Long modelId) {
         providerService.deleteModel(id, modelId);
@@ -147,6 +158,7 @@ public class ProviderController {
 
     /** 供应商预设模板：base URL 与模型 id 预填，用户只填 key */
     @GetMapping("/presets")
+    @Operation(summary = "查询供应商预设模板")
     public List<PresetService.Preset> listPresets(@RequestParam(required = false) String module) {
         return presetService.listPresets(module);
     }
@@ -156,6 +168,7 @@ public class ProviderController {
 
     /** 从预设创建供应商：用户只填自己的 key */
     @PostMapping("/from-preset")
+    @Operation(summary = "从预设创建供应商")
     public ResponseEntity<ProviderDto> createFromPreset(@RequestBody FromPresetRequest req) {
         if (req.presetId() == null || req.presetId().trim().isEmpty()
                 || req.apiKey() == null || req.apiKey().trim().isEmpty()) {

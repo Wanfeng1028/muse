@@ -4,6 +4,8 @@ import com.dramafactory.dto.Records;
 import com.dramafactory.service.VideoTaskService;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "VideoTasks", description = "分镜视频任务的提交、查询与重试接口")
 public class VideoTaskController {
 
     private final VideoTaskService videoTaskService;
@@ -33,6 +36,7 @@ public class VideoTaskController {
      */
     @PostMapping("/shots/{shotId}/video-tasks")
     @RateLimiter(name = "videoSubmit", fallbackMethod = "submitRateLimited")
+    @Operation(summary = "提交单个分镜的视频任务")
     public ResponseEntity<Records.VideoTaskResponse> submitForShot(@PathVariable Long shotId) {
         Records.SubmitOutcome outcome = videoTaskService.submit(shotId);
         HttpStatus status = outcome.created() ? HttpStatus.CREATED : HttpStatus.OK;
@@ -46,22 +50,26 @@ public class VideoTaskController {
      */
     @PostMapping("/episodes/{episodeId}/video-tasks/submit-all")
     @RateLimiter(name = "videoSubmit", fallbackMethod = "submitAllRateLimited")
+    @Operation(summary = "批量提交剧集下全部分镜的视频任务")
     public ResponseEntity<List<Records.VideoTaskResponse>> submitAllForEpisode(@PathVariable Long episodeId) {
         List<Records.VideoTaskResponse> responses = videoTaskService.submitAllForEpisode(episodeId);
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/shots/{shotId}/video-tasks")
+    @Operation(summary = "查询分镜下的视频任务列表")
     public ResponseEntity<List<Records.VideoTaskResponse>> listByShot(@PathVariable Long shotId) {
         return ResponseEntity.ok(videoTaskService.listByShot(shotId));
     }
 
     @GetMapping("/video-tasks/{taskId}")
+    @Operation(summary = "按 ID 查询视频任务")
     public ResponseEntity<Records.VideoTaskResponse> get(@PathVariable Long taskId) {
         return ResponseEntity.ok(videoTaskService.get(taskId));
     }
 
     @PostMapping("/video-tasks/{taskId}/retry")
+    @Operation(summary = "重试视频任务")
     public ResponseEntity<Records.VideoTaskResponse> retry(@PathVariable Long taskId) {
         return ResponseEntity.ok(videoTaskService.retry(taskId));
     }

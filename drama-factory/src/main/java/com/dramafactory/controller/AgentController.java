@@ -4,6 +4,8 @@ import com.dramafactory.dto.Records;
 import com.dramafactory.model.PromptTemplate;
 import com.dramafactory.model.AgentType;
 import com.dramafactory.service.PromptTemplateService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +24,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/agents")
+@Tag(name = "Agents", description = "Agent 信息、Prompt 模板更新与视频通道查询接口")
 public class AgentController {
 
     private static final List<String> AVAILABLE_CHANNELS = List.of("mock", "qwen", "agnes");
@@ -40,6 +43,7 @@ public class AgentController {
      * @return Agent 信息列表
      */
     @GetMapping("")
+    @Operation(summary = "查询全部 Agent 信息")
     public List<Records.AgentInfo> list() {
         List<Records.AgentInfo> result = new ArrayList<>();
         for (AgentType type : AgentType.values()) {
@@ -56,6 +60,7 @@ public class AgentController {
      * @return 更新后的 Agent 信息
      */
     @PutMapping("/{type}/template")
+    @Operation(summary = "更新 Agent 的 Prompt 模板")
     public ResponseEntity<Records.AgentInfo> updateTemplate(@PathVariable("type") String type,
                                                             @RequestBody Map<String, String> body) {
         AgentType agentType = parseType(type);
@@ -76,6 +81,7 @@ public class AgentController {
      * @return 通道信息
      */
     @GetMapping("/channels")
+    @Operation(summary = "查询视频通道信息")
     public Records.ChannelInfo channels() {
         String current = environment.getProperty("drama.video.provider", "mock");
         String note = "修改 settings.json 中 drama.video.provider 即可运行时切换；环境变量优先级更高。";

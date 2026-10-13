@@ -3,6 +3,8 @@ package com.dramafactory.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @RestController
+@Tag(name = "Auth", description = "认证请求代理到账号服务")
 public class AuthProxyController {
 
     private static final Set<String> HOP_BY_HOP = new HashSet<>(Set.of(
@@ -54,6 +57,7 @@ public class AuthProxyController {
     }
 
     @RequestMapping("/api/auth/**")
+    @Operation(summary = "代理认证请求到账号服务")
     public ResponseEntity<byte[]> proxy(HttpServletRequest request) {
         String method = request.getMethod();
         String path = extractPath(request);

@@ -3,6 +3,17 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，
 版本号使用项目内版本（`v2.x`）。
 
+## [v2.5] - 2026-10-14
+
+### Added
+- OpenAPI 文档：springdoc-openapi 2.6.0（Boot 3.3.x 官方兼容版本），GET /v3/api-docs（JSON/YAML）与 /swagger-ui.html，全部 Controller 补 @Tag/@Operation（注：注解在 v2.5 同轮另一批交付，此处先记条目）。
+- 依赖自动更新：新增 .github/dependabot.yml（maven / github-actions / docker，每周一）。
+- 运维手册实质补齐：docs/OPERATIONS.md 由 stub 补成完整手册（部署/配置/备份恢复/升级/日志/监控告警/API 文档/故障排查/已知限制）。
+- 测试：新增 OpenApiDocsTest（/v3/api-docs 实质断言 + swagger-ui 可达）。
+
+### Docs
+- 新增 docs/dod-v2.5.md 发版对照报告。
+
 ## [v2.4] - 2026-10-14
 
 ### Added

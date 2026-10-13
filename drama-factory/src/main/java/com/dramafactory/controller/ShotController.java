@@ -3,6 +3,8 @@ package com.dramafactory.controller;
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.ScriptSplitterService;
 import com.dramafactory.service.ShotService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Shots", description = "分镜的查询、新增、修改、删除与排序接口")
 public class ShotController {
 
     private final ShotService shotService;
@@ -43,6 +46,7 @@ public class ShotController {
      * @return 分镜响应列表
      */
     @GetMapping("/episodes/{episodeId}/shots")
+    @Operation(summary = "查询剧集下的分镜列表")
     public List<Records.ShotResponse> listShots(@PathVariable Long episodeId) {
         return shotService.listByEpisode(episodeId);
     }
@@ -55,6 +59,7 @@ public class ShotController {
      * @return 201 状态及新建的分镜响应
      */
     @PostMapping("/episodes/{episodeId}/shots")
+    @Operation(summary = "新增分镜")
     public ResponseEntity<Records.ShotResponse> createShot(@PathVariable Long episodeId,
                                                            @Valid @RequestBody Records.ShotRequest request) {
         Records.ShotResponse response = shotService.create(episodeId, request);
@@ -69,6 +74,7 @@ public class ShotController {
      * @return 更新后的分镜响应
      */
     @PutMapping("/shots/{id}")
+    @Operation(summary = "更新分镜")
     public Records.ShotResponse updateShot(@PathVariable Long id,
                                            @Valid @RequestBody Records.ShotRequest request) {
         return shotService.update(id, request);
@@ -81,6 +87,7 @@ public class ShotController {
      * @return 204 无内容响应
      */
     @DeleteMapping("/shots/{id}")
+    @Operation(summary = "删除分镜")
     public ResponseEntity<Void> deleteShot(@PathVariable Long id) {
         shotService.delete(id);
         return ResponseEntity.noContent().build();
@@ -94,6 +101,7 @@ public class ShotController {
      * @return 新建的分镜列表
      */
     @PostMapping("/episodes/{episodeId}/shots/from-script")
+    @Operation(summary = "从剧本拆分分镜")
     public ResponseEntity<List<Records.ShotResponse>> splitFromScript(
             @PathVariable Long episodeId,
             @Valid @RequestBody Records.ScriptSplitRequest request) {
@@ -111,6 +119,7 @@ public class ShotController {
      * @return 新建的分镜列表
      */
     @PostMapping("/episodes/{episodeId}/shots/batch")
+    @Operation(summary = "批量替换分镜")
     public ResponseEntity<List<Records.ShotResponse>> replaceShots(
             @PathVariable Long episodeId,
             @Valid @RequestBody Records.ShotBatchRequest request) {
@@ -127,6 +136,7 @@ public class ShotController {
      * @return 排序后的分镜响应列表
      */
     @PostMapping("/episodes/{episodeId}/shots/reorder")
+    @Operation(summary = "重排分镜顺序")
     public List<Records.ShotResponse> reorderShots(@PathVariable Long episodeId,
                                                    @RequestBody Records.ReorderRequest request) {
         shotService.reorder(episodeId, request.shotIds());

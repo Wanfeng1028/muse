@@ -6,6 +6,8 @@ import com.dramafactory.model.VideoTask;
 import com.dramafactory.repository.FinalCutRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.FfmpegService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -27,6 +29,7 @@ import java.nio.file.Paths;
  */
 @RestController
 @RequestMapping("/media")
+@Tag(name = "Media", description = "视频文件与海报帧的读取接口")
 public class MediaController {
 
     /** 媒体文件存储根目录，可通过配置项 drama.storage 覆盖 */
@@ -65,6 +68,7 @@ public class MediaController {
      * @return 视频资源响应
      */
     @GetMapping("/videos/{taskId}")
+    @Operation(summary = "获取视频任务的视频文件")
     public ResponseEntity<Resource> getVideo(@PathVariable Long taskId) {
         // 查询视频任务，不存在则抛出异常
         VideoTask task = videoTaskRepository.findById(taskId)
@@ -93,6 +97,7 @@ public class MediaController {
      * @return 视频资源响应
      */
     @GetMapping("/finals/{id}")
+    @Operation(summary = "获取成片的视频文件")
     public ResponseEntity<Resource> getFinal(@PathVariable Long id) {
         // 查询成片，不存在则抛出异常
         FinalCut finalCut = finalCutRepository.findById(id)
@@ -144,6 +149,7 @@ public class MediaController {
      * @return 海报图片资源响应
      */
     @GetMapping("/finals/{id}/poster.jpg")
+    @Operation(summary = "获取成片的海报帧")
     public ResponseEntity<Resource> getFinalPoster(@PathVariable Long id) {
         FinalCut finalCut = finalCutRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FinalCut", id));

@@ -13,6 +13,8 @@ import com.dramafactory.repository.SceneRepository;
 import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.RunService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +29,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/runs")
+@Tag(name = "RunArtifacts", description = "查询一次运行下的全部产物")
 public class RunArtifactController {
 
     private final RunService runService;
@@ -58,6 +61,7 @@ public class RunArtifactController {
      */
     @GetMapping("/{id}/artifacts")
     @Transactional(readOnly = true)
+    @Operation(summary = "查询运行的全部产物")
     public Records.RunArtifactsResponse artifacts(@PathVariable("id") Long id) {
         Records.RunDetailResponse run;
         try {
