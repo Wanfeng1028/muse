@@ -1,0 +1,47 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+out/
+*.hprof
+
+# Kotlin
+.kotlin/
+
+# Compose Desktop
+release/
+*.dmg
+*.msi
+*.deb
+*.rpm
+*.pkg
+
+# IDEA / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse / VSCode
+.classpath
+.project
+.settings/
+.vscode/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 环境与本地数据
+.env
+*.local
+/data/
+/logs/
+*.log
+
+# JVM
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar

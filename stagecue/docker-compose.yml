@@ -1,0 +1,27 @@
+# 舞监台 StageCue —— 仅编排 server（desktopApp 是本地 GUI，不进 compose）
+#
+# 构建 jar 的命令（在仓库根目录执行）：
+#   ./gradlew :server:installDist
+#   或 ./gradlew :server:shadowJar （如后续接入 shadow 插件）
+# 本 compose 直接挂载 installDist 产物目录并运行其中的启动脚本。
+
+services:
+  server:
+    image: eclipse-temurin:21-jre
+    container_name: stagecue-server
+    working_dir: /app
+    # 使用 Gradle application 插件生成的启动脚本；构建产物位于 server/build/install/server/
+    command: ["/app/bin/server"]
+    ports:
+      - "${STAGECUE_PORT:-8080}:8080"
+    environment:
+      STAGECUE_PORT: "8080"
+      STAGECUE_HOST: "0.0.0.0"
+      STAGECUE_DATA_DIR: "/app/data"
+      STAGECUE_LOG_LEVEL: "${STAGECUE_LOG_LEVEL:-INFO}"
+    volumes:
+      # 挂载 Gradle installDist 生成的启动脚本与依赖
+      - ./server/build/install/server:/app:ro
+      # 持久化数据目录
+      - ./data:/app/data
+    restart: unless-stopped

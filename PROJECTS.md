@@ -357,3 +357,30 @@
 **状态**：v1 核心完成（2026-10-13）：DSL 解析/校验/本地化/布局算法全部单测通过（24/24），示例剧本冒烟报出 5 个问题全部命中，分支图布局算法已可视化验证。UI 源码完成但沙箱环境无法构建桌面二进制（Gradle daemon IPC 故障 + 手工 kotlinc 的 compose 插件后端崩溃），UI 截图待正常环境补拍——未虚报验收。
 
 **发版对照**：`interlude/docs/PRODUCTION_CHECKLIST_REPORT.md`——核心达到生产级基础；未通过项（集成测试、结构化日志、.bak 备份、Dependabot、运维手册）均有排期或声明为已知限制。
+
+## stagecue「舞监台 StageCue」
+
+**定位**：小型剧团/脱口秀/校园演出的多端同步演出控台——时间轴 cue 编排（音频/灯光/字幕/演员提示）+ 导演台/返听屏/灯光台毫秒级时钟同步 + 排练模式 + 离线优先。QLab 只支持 Mac 闭源贵，开源里没有跨平台中文友好的。
+
+**技术栈**：Kotlin Multiplatform + Compose Multiplatform 1.8.2（桌面导演台）+ Ktor 3.1.3（CIO 引擎同步服务）；Gradle 8.10.2 构建；Kotlin 2.2.10 / JDK 21。
+
+**技术含金量**：
+1. NTP 式时钟同步：`ClockEstimator` 最小延迟样本启发式，毫秒级多端对齐
+2. 幂等事件广播：`msgId` 作幂等键 + `EventDeduper` 滑动窗口，重复触发不 double-fire
+3. 离线操作日志：`OpLogStore`（`append(type, cueId, detail)`），重连可回放
+4. 类型安全 WS 协议：`WsMessage` sealed interface + `@SerialName` snake_case discriminator
+
+**视觉**：「黑场」——深炭黑 #17130F + 追光金 #E0A83E + 幕布红 #9E2B25；去 AI 味：无紫渐变、无渐变标题。
+
+**功能模块**：
+
+1. 时间轴 cue 编排器：cue 列表、手动触发/预备、音频播放（WAV）
+2. 多端同步：WebSocket 时钟同步 + CueFired/CueArmed 广播（移动端接口已留 `ClientRole.MONITOR/LIGHTING`）
+3. 导演台 UI：cue 列表 + 事件日志 + 传输控制条 + 服务器时钟显示
+4. 离线优先：本地操作日志（内存版，File 版待接）
+
+**状态**：v0.1.0（2026-10-13）：`:shared` 25/25 单测通过，`:server` 10/10 单测通过，WS 冒烟 8/8 通过（双客户端 Welcome/时钟同步/CueFired 广播/幂等）。桌面端全量编译通过（含 Compose UI）；运行时截图因 VM 缺 `libXtst.so.6` 系统库无法验收——未虚报。
+
+**发版对照**：`stagecue/docs/PRODUCTION_REPORT_v0.1.0.md`——13/22 通过；未通过项（SQLite 迁移、/metrics、备份实测、限流等）均有排期或声明为已知限制。
+
+**已知限制**：Gradle daemon 本 VM 无法运行（改 kotlinc 直接验证）；服务端用 CIO 非 Netty（Netty 在本 VM 误用 KQueue）；排练模式为 UI 占位；音频仅 WAV。
