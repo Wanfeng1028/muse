@@ -1,0 +1,519 @@
+/* ==========================================================================
+   app.css —— drama-factory 现代 AI 软件视觉语言（v5.1）
+   对标 Linear / Cursor / ChatGPT：实色、发丝级细边框、克制单强调色。
+   禁：玻璃拟态（零 backdrop-filter）、霓虹辉光、大面积渐变、emoji 图标。
+   在 Tabler 1.6.1 之上做视觉升级，不替换组件库。
+   ========================================================================== */
+
+:root {
+  /* 暖炭深色主题（沿用 v4.1） */
+  --bg: #1c1917;
+  --bg-elev: #242019;
+  --surface: #292524;
+  --surface-2: #2e2a26;
+  --border: #3a352f;          /* 发丝级细边框 */
+  --border-soft: #322e29;
+  --text: #e7e5e4;
+  --text-2: #a8a29e;
+  --text-3: #78716c;
+  /* 克制的一个强调色：降饱和蓝 */
+  --accent: #4a6fa5;
+  --accent-hover: #5a7fb5;
+  --accent-soft: rgba(74, 111, 165, 0.14);
+  --green: #5f8a5f;
+  --amber: #b98a3e;
+  --red: #b0564a;
+  /* 等宽字体：时间码 / 快捷键 / 标签 */
+  --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --sidebar-w: 228px;
+  --topbar-h: 54px;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-feature-settings: "cv11";
+}
+
+/* ---- 应用框架 ---- */
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.app-content {
+  flex: 1;
+  padding: 28px 32px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---- 左侧窄导航栏 ---- */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-soft);
+  background: var(--bg-elev);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 16px 12px;
+}
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 16px;
+  font-weight: 650;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+.sidebar-brand .mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  padding: 12px 10px 4px;
+  font-family: var(--mono);
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 13.5px;
+  border: 1px solid transparent;
+}
+.sidebar-link:hover {
+  color: var(--text);
+  background: var(--surface);
+  text-decoration: none;
+}
+.sidebar-link.active {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--border-soft);
+}
+.sidebar-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.sidebar-link .kbd {
+  margin-left: auto;
+}
+.sidebar-foot {
+  margin-top: auto;
+  padding: 12px 10px 4px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* ---- 顶栏 + 全局搜索 ---- */
+.topbar {
+  height: var(--topbar-h);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-elev);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.topbar-title {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 550;
+  white-space: nowrap;
+}
+.search-trigger {
+  flex: 1;
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  color: var(--text-3);
+  font-size: 13px;
+  cursor: pointer;
+  margin: 0 auto;
+}
+.search-trigger:hover {
+  border-color: var(--border);
+  color: var(--text-2);
+}
+.search-trigger svg {
+  width: 14px;
+  height: 14px;
+}
+.search-trigger .kbd {
+  margin-left: auto;
+}
+
+/* ---- kbd 快捷键标签（等宽） ---- */
+.kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.btn .kbd {
+  margin-left: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---- 命令面板 ---- */
+.cmd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 9, 0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding-top: 16vh;
+}
+.cmd-panel {
+  width: 640px;
+  max-width: calc(100vw - 32px);
+  max-height: 60vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.cmd-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.cmd-input-row svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.cmd-input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+.cmd-input::placeholder {
+  color: var(--text-3);
+}
+.cmd-list {
+  overflow-y: auto;
+  padding: 6px;
+}
+.cmd-group-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  padding: 8px 10px 4px;
+}
+.cmd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.cmd-item svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.cmd-item .kbd {
+  margin-left: auto;
+}
+.cmd-item.selected,
+.cmd-item:hover {
+  background: var(--accent-soft);
+}
+.cmd-item.selected svg,
+.cmd-item:hover svg {
+  color: var(--accent);
+}
+.cmd-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ---- 内容区排版：慷慨留白、克制密度 ---- */
+.page-head {
+  margin-bottom: 24px;
+}
+.page-head .pretitle {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.page-head h1, .page-head h2 {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.page-head p {
+  color: var(--text-2);
+  font-size: 13.5px;
+  margin: 6px 0 0;
+  max-width: 640px;
+}
+
+/* 卡片：实色 + 发丝边框，零阴影 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.card-header {
+  border-bottom: 1px solid var(--border-soft);
+  background: transparent;
+}
+
+/* 等宽：时间码 / 标签 / 数字 */
+.mono, .timecode, .badge {
+  font-family: var(--mono);
+}
+.timecode {
+  font-size: 12px;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+}
+
+/* 徽标：实色淡底，无辉光 */
+.badge {
+  font-weight: 550;
+  letter-spacing: 0.02em;
+}
+
+/* 按钮：实色强调，不许渐变 */
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* 表单：发丝边框 */
+.form-control, .form-select {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+}
+.form-control:focus, .form-select:focus {
+  background: var(--bg-elev);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---- AI 工作区（首页） ---- */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .workspace { grid-template-columns: 1fr; }
+}
+.ws-chat {
+  min-height: 0;
+}
+.ws-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: calc(var(--topbar-h) + 20px);
+}
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+}
+.stat-row:last-child {
+  border-bottom: 0;
+}
+.stat-row .k {
+  color: var(--text-2);
+}
+.stat-row .v {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.ep-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13px;
+}
+.ep-row:last-child {
+  border-bottom: 0;
+}
+.ep-row .t {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 看板统计：3 列（确保 Bootstrap 网格失效时仍有布局） */
+#statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+#statsRow > [class*="col-"] {
+  width: auto;
+  max-width: none;
+  padding: 0;
+}
+@media (max-width: 860px) {
+  #statsRow { grid-template-columns: 1fr; }
+}
+
+/* 成片卡片：海报图约束比例 */
+#finalsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+#finalsList > [class*="col-"] {
+  width: auto;
+  max-width: none;
+  padding: 0;
+}
+#finalsList .card-img-top {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}
+#finalsList .card {
+  overflow: hidden;
+}
+#finalsList video.w-100 {
+  max-height: 480px;
+  background: #000;
+}
+
+/* Modal 默认隐藏（确保 Tabler 样式未覆盖时也能正常工作） */
+.modal:not(.show) {
+  display: none;
+}
+
+/* 对话卡片头：选择器行占满宽度 */
+.card-header .row.w-100 {
+  flex: 1;
+  margin: 0;
+}
+
+/* 分镜网格：3 列卡片（覆盖 Tabler datagrid，确保布局稳定） */
+#slateGrid.datagrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+#slateGrid.datagrid .card {
+  margin-bottom: 0;
+}
+
+/* 旧导航栏由 shell.js 移除；残留隐藏兜底 */
+header.navbar {
+  display: none !important;
+}
+
+/* 响应式：窄屏收起侧边栏为顶栏 */
+@media (max-width: 860px) {
+  .sidebar {
+    position: fixed;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .sidebar.open {
+    transform: none;
+  }
+  .app-content {
+    padding: 20px 16px;
+  }
+}

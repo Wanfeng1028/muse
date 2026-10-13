@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 对话 · AI 短剧工坊</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css">
+<link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/app.css">
 </head>
 <body>
 <header class="navbar navbar-expand-md navbar-dark d-print-none">
@@ -29,32 +30,24 @@
   </div>
 </header>
 
-<div class="page-wrapper">
-  <div class="page-header d-print-none">
-    <div class="container-xl">
-      <div class="row g-2 align-items-center">
-        <div class="col">
-          <div class="page-pretitle">编剧助手 · SCREENWRITER</div>
-          <h2 class="page-title">AI 对话</h2>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="page-head">
+  <div class="pretitle">编剧助手 · SCREENWRITER</div>
+  <h1>AI 对话</h1>
+  <p>和 AI 编剧聊剧本、拆分镜、优化提示词，确认后直接落库。</p>
+</div>
 
-  <div class="page-body">
-    <div class="container-xl">
-      <div class="alert alert-warning" role="alert">
-        对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。
-      </div>
+<div class="alert alert-warning" role="alert" style="margin-bottom:16px;">
+  对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。
+</div>
 
       <div class="card">
-        <div class="card-header">
-          <div class="row g-2 w-100">
-            <div class="col-md-6">
+        <div class="card-body border-bottom">
+          <div class="d-flex gap-3 flex-wrap">
+            <div class="flex-fill" style="min-width:200px;">
               <label class="form-label">项目</label>
               <select id="projectSelect" class="form-select"></select>
             </div>
-            <div class="col-md-6">
+            <div class="flex-fill" style="min-width:200px;">
               <label class="form-label">目标剧集（确认落库用）</label>
               <select id="episodeSelect" class="form-select"></select>
             </div>
@@ -73,18 +66,16 @@
             <textarea id="chatInput" class="form-control" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
           </div>
           <div class="d-flex justify-content-between align-items-center">
-            <span class="text-secondary small">Ctrl + Enter 发送</span>
+            <span class="text-secondary small"><span class="kbd">Ctrl+Enter</span> 发送</span>
             <button id="sendBtn" class="btn btn-primary">发送</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
 <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js"></script>
-<script src="/chat.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+  <script src="/chat.js"></script>
 </body>
 </html>

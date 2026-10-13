@@ -513,6 +513,21 @@ async function init() {
   bindEvents();
   await loadProjects();
   const psel = document.getElementById('projectSelect');
+  /* 支持 ?episodeId= 直达指定剧集（工作区跳转用） */
+  const qEpisodeId = new URLSearchParams(window.location.search).get('episodeId');
+  if (qEpisodeId) {
+    for (const p of state.projects) {
+      psel.value = String(p.id);
+      await loadEpisodes();
+      const hit = state.episodes.find(x => String(x.id) === String(qEpisodeId));
+      if (hit) {
+        document.getElementById('episodeSelect').value = String(hit.id);
+        updateEpisodeMeta();
+        await loadShots();
+        return;
+      }
+    }
+  }
   if (state.projects.length) {
     psel.value = String(state.projects[0].id);
     await loadEpisodes();

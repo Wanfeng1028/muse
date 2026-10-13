@@ -4,49 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>成片库 · AI 短剧工坊</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css">
+<link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/app.css">
 </head>
 <body>
 <div class="page">
-  <div class="page-wrapper">
-    <header class="navbar navbar-expand-md d-print-none">
-      <div class="container-xl">
-        <div class="navbar-brand navbar-brand-autodark">
-          <span class="fs-3 fw-bold">AI 短剧工坊</span>
-        </div>
-        <div class="navbar-nav flex-row order-md-last">
-          <div class="nav-item">
-            <a href="/index.html" class="nav-link">控制台首页</a>
-          </div>
-          <div class="nav-item">
-            <a href="/storyboard.html" class="nav-link">分镜板</a>
-          </div>
-          <div class="nav-item">
-            <a href="/tasks.html" class="nav-link">任务队列</a>
-          </div>
-          <div class="nav-item">
-            <a href="/finals.html" class="nav-link active">成片库</a>
-          </div>
-          <div class="nav-item">
-            <a href="/pipeline.html" class="nav-link">生产看板</a>
-          </div>
-          <div class="nav-item">
-            <a href="/chat.html" class="nav-link">AI 对话</a>
-          </div>
-          </div>
-        </div>
-      </div>
-    </header>
+<div class="page-head">
+  <div class="pretitle">成片 · FINAL CUT</div>
+  <h1>成片库</h1>
+  <p>拼接好的成片，预览、下载、送质检。</p>
+</div>
 
-    <div class="page-body">
-      <div class="container-xl">
-        <div class="page-header mb-3">
-          <div class="row align-items-center">
-            <div class="col">
-              <div class="text-secondary text-uppercase small mb-1">成片 · FINAL CUT</div>
-              <h1 class="page-title mb-0">成片库</h1>
-            </div>
             <div class="col-auto">
               <div class="d-flex flex-wrap gap-2">
                 <select id="projectSelect" class="form-select w-auto"></select>
@@ -54,18 +23,13 @@
                 <button id="generateBtn" class="btn btn-primary">生成成片</button>
               </div>
             </div>
-          </div>
-        </div>
 
         <p id="hint" class="text-secondary mb-3"></p>
 
         <section id="finalsList" class="row row-cards"></section>
-      </div>
-    </div>
-  </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js"></script>
-<script src="/finals.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+  <script src="/finals.js"></script>
 </body>
 </html>
