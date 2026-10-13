@@ -4,25 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>生产看板 · AI 短剧工坊</title>
-<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/v2.css">
 </head>
 <body>
 <header class="topbar">
-  <div class="topbar-left">
-    <span class="brand">AI 短剧工坊</span>
-    <nav class="nav">
-      <a href="/" class="nav-link">项目</a>
-      <a href="/pipeline" class="nav-link active">生产看板</a>
-      <a href="/storyboard" class="nav-link">分镜板</a>
-      <a href="/tasks" class="nav-link">任务</a>
-      <a href="/final" class="nav-link">成片库</a>
-    </nav>
-  </div>
-  <div class="topbar-right">
-    <select id="projectSelect" class="select"></select>
-    <button id="refreshBtn" class="btn btn-sm">刷新</button>
-  </div>
+  <nav class="topnav">
+    <a href="/index.html">控制台首页</a>
+    <a href="/storyboard.html">分镜板</a>
+    <a href="/tasks.html">任务队列</a>
+    <a href="/finals.html">成片库</a>
+    <a href="/pipeline.html" class="active">生产看板</a>
+  </nav>
 </header>
 
 <main class="container">
@@ -40,6 +33,6 @@
 </main>
 
 <div id="toast" class="toast"></div>
-<script src="/static/pipeline.js"></script>
+<script src="/pipeline.js"></script>
 </body>
 </html>

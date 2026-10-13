@@ -5,6 +5,7 @@ import com.dramafactory.model.FinalCut;
 import com.dramafactory.model.VideoTask;
 import com.dramafactory.repository.FinalCutRepository;
 import com.dramafactory.repository.VideoTaskRepository;
+import com.dramafactory.service.FfmpegService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -37,6 +38,9 @@ public class MediaController {
     /** 成片仓储 */
     private final FinalCutRepository finalCutRepository;
 
+    /** ffmpeg 服务，用于抽取海报帧 */
+    private final FfmpegService ffmpegService;
+
     /**
      * 构造器注入依赖。
      *
@@ -46,10 +50,12 @@ public class MediaController {
      */
     public MediaController(@Value("${drama.storage:./data/media}") String storageDir,
                            VideoTaskRepository videoTaskRepository,
-                           FinalCutRepository finalCutRepository) {
+                           FinalCutRepository finalCutRepository,
+                           FfmpegService ffmpegService) {
         this.storageDir = storageDir;
         this.videoTaskRepository = videoTaskRepository;
         this.finalCutRepository = finalCutRepository;
+        this.ffmpegService = ffmpegService;
     }
 
     /**
@@ -127,5 +133,40 @@ public class MediaController {
         }
 
         return new FileSystemResource(target);
+    }
+
+    /**
+     * 获取指定成片的海报帧（JPEG）。
+     * <p>从成片视频第 1 秒处抽取一帧，结果缓存为 {@code <filePath>.poster.jpg}，
+     * 缓存命中时直接返回，不重复抽取。</p>
+     *
+     * @param id 成片 ID
+     * @return 海报图片资源响应
+     */
+    @GetMapping("/finals/{id}/poster.jpg")
+    public ResponseEntity<Resource> getFinalPoster(@PathVariable Long id) {
+        FinalCut finalCut = finalCutRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("FinalCut", id));
+
+        Path videoPath = Paths.get(finalCut.getFilePath());
+        Path posterPath = Paths.get(finalCut.getFilePath() + ".poster.jpg");
+
+        if (!Files.exists(posterPath) || !Files.isRegularFile(posterPath)) {
+            try {
+                ffmpegService.extractPoster(videoPath, posterPath);
+            } catch (Exception ex) {
+                throw new ResourceNotFoundException("FinalCut", id);
+            }
+        }
+
+        Resource resource = loadSafe(posterPath.toString());
+        if (!resource.exists() || !resource.isReadable()) {
+            throw new ResourceNotFoundException("FinalCut", id);
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"poster.jpg\"")
+                .body(resource);
     }
 }

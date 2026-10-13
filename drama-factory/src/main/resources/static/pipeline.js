@@ -1,297 +1,342 @@
 (function () {
   'use strict';
 
-  function toast(msg, kind) {
-    var el = document.getElementById('toast');
-    if (!el) { alert(msg); return; }
-    el.textContent = msg;
-    el.className = 'toast' + (kind ? ' toast-' + kind : '');
-    el.hidden = false;
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { el.hidden = true; }, 3200);
-  }
-
-  async function api(method, url, body) {
-    var opt = { method: method, headers: {} };
-    if (body !== undefined) {
-      opt.headers['Content-Type'] = 'application/json';
-      opt.body = JSON.stringify(body);
-    }
-    var res;
-    try {
-      res = await fetch(url, opt);
-    } catch (e) {
-      toast('网络请求失败：' + url, 'danger');
-      throw e;
-    }
-    if (!res.ok) {
-      var text = '';
-      try { text = await res.text(); } catch (e2) {}
-      toast('请求出错 ' + res.status + '：' + (text || url), 'danger');
-      throw new Error('HTTP ' + res.status);
-    }
-    if (res.status === 204) return null;
-    var ct = res.headers.get('content-type') || '';
-    if (ct.indexOf('application/json') === -1) return null;
-    return res.json();
-  }
-
   var state = {
     projects: [],
-    currentProjectId: null,
+    projectId: null,
     pipeline: null
   };
 
   var FINAL_CUT_LABELS = {
-    NONE: '无',
-    EDITING: '剪辑中',
-    DONE: '已完成',
+    READY: '已完成',
+    BUILDING: '剪辑中',
     FAILED: '失败',
     PENDING: '待处理'
   };
 
-  function finalCutText(status) {
-    if (!status) return '无';
-    var key = String(status).toUpperCase();
-    return FINAL_CUT_LABELS[key] || String(status);
+  function finalCutKey(v) {
+    return v ? String(v).toUpperCase() : '';
   }
 
-  function finalCutClass(status) {
-    if (!status) return 'badge-muted';
-    var key = String(status).toUpperCase();
-    if (key === 'DONE') return 'badge-success';
-    if (key === 'FAILED') return 'badge-danger';
-    if (key === 'EDITING' || key === 'PENDING') return 'badge-warning';
+  function finalCutText(v) {
+    var k = finalCutKey(v);
+    if (!k) return '未开始';
+    return FINAL_CUT_LABELS[k] || v;
+  }
+
+  function finalCutClass(v) {
+    var k = finalCutKey(v);
+    if (k === 'READY') return 'badge-success';
+    if (k === 'BUILDING') return 'badge-info';
+    if (k === 'FAILED') return 'badge-danger';
+    if (k === 'PENDING') return 'badge-warning';
     return 'badge-muted';
   }
 
   function episodeIsStuck(ep) {
-    var failed = ep.failedTasks || 0;
-    var pending = ep.pendingTasks || 0;
-    var processing = ep.processingTasks || 0;
-    var done = ep.doneTasks || 0;
-    var shots = ep.shotCount || 0;
+    if (!ep) return false;
+    var failed = Number(ep.failedTasks || 0);
+    var pending = Number(ep.pendingTasks || 0);
+    var processing = Number(ep.processingTasks || 0);
+    var done = Number(ep.doneTasks || 0);
+    var shots = Number(ep.shotCount || 0);
     if (failed > 0) return true;
-    // 分镜数 > 已完成任务数 表示还有镜头没有产出视频
     if (shots > 0 && done < shots && pending === 0 && processing === 0) return true;
+    if (finalCutKey(ep.finalCutStatus) === 'FAILED') return true;
     return false;
+  }
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () {
+      el.classList.remove('show');
+    }, 2600);
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    return fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    });
+  }
+
+  function pad2(n) {
+    n = Number(n) || 0;
+    return n < 10 ? '0' + n : String(n);
   }
 
   function renderProjectSelect() {
     var sel = document.getElementById('projectSelect');
+    if (!sel) return;
     sel.innerHTML = '';
-    if (!state.projects.length) {
-      var o = document.createElement('option');
-      o.value = '';
-      o.textContent = '（无项目）';
-      sel.appendChild(o);
-      sel.disabled = true;
-      return;
-    }
-    sel.disabled = false;
     state.projects.forEach(function (p) {
       var opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = (p.title || p.name || ('项目 ' + p.id));
-      if (String(p.id) === String(state.currentProjectId)) opt.selected = true;
+      opt.textContent = p.title || ('项目 ' + p.id);
+      if (String(p.id) === String(state.projectId)) opt.selected = true;
       sel.appendChild(opt);
     });
+  }
+
+  function loadProjects() {
+    return api('/api/projects').then(function (data) {
+      state.projects = (data && data.projects) || data || [];
+      if (!state.projectId && state.projects.length) {
+        state.projectId = state.projects[0].id;
+      }
+      renderProjectSelect();
+    }).catch(function (err) {
+      toast('加载项目失败：' + err.message);
+    });
+  }
+
+  function loadPipeline() {
+    if (!state.projectId) {
+      state.pipeline = null;
+      renderPipeline();
+      return Promise.resolve();
+    }
+    return api('/api/projects/' + encodeURIComponent(state.projectId) + '/pipeline').then(function (data) {
+      state.pipeline = data;
+      renderPipeline();
+    }).catch(function (err) {
+      toast('加载生产线失败：' + err.message);
+    });
+  }
+
+  function refreshAll() {
+    return loadProjects().then(loadPipeline);
   }
 
   function renderPipeline() {
     var board = document.getElementById('board');
     var empty = document.getElementById('boardEmpty');
-    // 空状态节点是 #board 的子节点，清空 innerHTML 会把它 detach；
-    // 先暂存，渲染结束后再按需放回，避免二次调用时取不到而抛错。
-    if (empty && empty.parentNode) empty.parentNode.removeChild(empty);
-    board.innerHTML = '';
+    var titleEl = document.getElementById('projectTitle');
+    var metaEl = document.getElementById('projectMeta');
+    if (!board) return;
 
     var data = state.pipeline;
-    if (!data || !data.episodes || !data.episodes.length) {
+
+    if (titleEl) {
+      titleEl.textContent = (data && data.title) || '生产看板';
+    }
+
+    var episodes = (data && data.episodes) || [];
+
+    var stuckCount = 0;
+    episodes.forEach(function (ep) {
+      if (episodeIsStuck(ep)) stuckCount++;
+    });
+
+    if (metaEl) {
+      metaEl.innerHTML = '共 <span class="timecode">' + pad2(episodes.length) + '</span> 集，卡点 <span class="timecode">' + pad2(stuckCount) + '</span> 集。';
+    }
+
+    // detach empty placeholder so we can re-insert it if needed
+    if (empty && empty.parentNode) {
+      empty.parentNode.removeChild(empty);
+    }
+
+    // clear previously rendered frames
+    var old = board.querySelectorAll('.film-frame');
+    for (var i = 0; i < old.length; i++) {
+      board.removeChild(old[i]);
+    }
+
+    if (!episodes.length) {
       if (empty) {
+        empty.textContent = '还没有剧集数据。';
         board.appendChild(empty);
-        empty.hidden = false;
       }
       return;
     }
-    if (empty) {
-      board.appendChild(empty);
-      empty.hidden = true;
-    }
 
-    document.getElementById('projectTitle').textContent = data.title || '生产看板';
-    var total = data.episodes.length;
-    var stuck = data.episodes.filter(episodeIsStuck).length;
-    document.getElementById('projectMeta').textContent =
-      '共 ' + total + ' 集，卡点 ' + stuck + ' 集。';
-
-    data.episodes.forEach(function (ep) {
-      board.appendChild(renderEpisodeCard(ep));
+    episodes.forEach(function (ep, idx) {
+      var frame = renderEpisodeCard(ep, idx);
+      board.appendChild(frame);
     });
   }
 
-  function renderEpisodeCard(ep) {
-    var card = document.createElement('div');
-    card.className = 'pipeline-card' + (episodeIsStuck(ep) ? ' is-stuck' : '');
+  function renderEpisodeCard(ep, idx) {
+    ep = ep || {};
+    var tasks = ep.tasks || {};
+    var shots = Number(ep.shotCount || 0);
+    var pending = Number(ep.pendingTasks || 0);
+    var rendering = Number(ep.processingTasks || 0);
+    var done = Number(ep.doneTasks || 0);
+    var failed = Number(ep.failedTasks || 0);
 
-    var head = document.createElement('div');
-    head.className = 'pipeline-head';
+    var stuck = episodeIsStuck(ep);
 
-    var titleWrap = document.createElement('div');
-    titleWrap.className = 'pipeline-title';
+    var frame = document.createElement('div');
+    frame.className = 'film-frame' + (stuck ? ' is-stuck' : '');
 
-    var noSpan = document.createElement('span');
-    noSpan.className = 'ep-no';
-    noSpan.textContent = '第 ' + (ep.episodeNo != null ? ep.episodeNo : '?') + ' 集';
-    titleWrap.appendChild(noSpan);
+    // top perforation
+    var perfTop = document.createElement('div');
+    perfTop.className = 'film-perf';
+    frame.appendChild(perfTop);
 
-    var tSpan = document.createElement('span');
-    tSpan.className = 'ep-title';
-    tSpan.textContent = ep.title || '（未命名）';
-    titleWrap.appendChild(tSpan);
+    // title row
+    var titleRow = document.createElement('div');
+    titleRow.className = 'film-title';
 
-    var stBadge = document.createElement('span');
-    stBadge.className = 'badge badge-muted';
-    stBadge.textContent = ep.status || '未开始';
-    titleWrap.appendChild(stBadge);
+    var epNo = document.createElement('span');
+    epNo.className = 'timecode';
+    var num = (typeof ep.episodeNo !== 'undefined' && ep.episodeNo !== null)
+      ? ep.episodeNo
+      : (idx + 1);
+    epNo.textContent = 'EP' + pad2(num);
+    titleRow.appendChild(epNo);
 
-    if (episodeIsStuck(ep)) {
-      var stuck = document.createElement('span');
-      stuck.className = 'stuck-mark';
-      stuck.textContent = '卡点';
-      titleWrap.appendChild(stuck);
+    var titleText = document.createElement('span');
+    titleText.textContent = ep.title || ('第 ' + pad2(num) + ' 集');
+    titleRow.appendChild(titleText);
+
+    var statusBadge = document.createElement('span');
+    statusBadge.className = 'badge badge-muted';
+    statusBadge.textContent = (ep.status || 'DRAFT').toString().toUpperCase();
+    titleRow.appendChild(statusBadge);
+
+    if (stuck) {
+      var stuckTag = document.createElement('span');
+      stuckTag.className = 'stuck-tag';
+      stuckTag.textContent = '卡点';
+      titleRow.appendChild(stuckTag);
     }
 
-    head.appendChild(titleWrap);
-    card.appendChild(head);
+    frame.appendChild(titleRow);
 
-    var flow = document.createElement('div');
-    flow.className = 'pipeline-flow';
+    // strip with stages
+    var strip = document.createElement('div');
+    strip.className = 'film-strip';
 
-    // 阶段一：分镜
-    var stageShots = document.createElement('div');
-    stageShots.className = 'stage';
-    stageShots.appendChild(stageLabel('分镜'));
-    stageShots.appendChild(stageValue(String(ep.shotCount || 0) + ' 个镜头'));
-    flow.appendChild(stageShots);
+    // stage 1: storyboard
+    var stage1 = document.createElement('div');
+    stage1.className = 'f-stage';
+    var l1 = document.createElement('div');
+    l1.className = 'f-stage-label';
+    l1.textContent = '分镜';
+    var v1 = document.createElement('div');
+    v1.className = 'f-stage-value';
+    v1.innerHTML = '<span class="timecode">' + shots + '</span> 个镜头';
+    stage1.appendChild(l1);
+    stage1.appendChild(v1);
+    strip.appendChild(stage1);
 
-    flow.appendChild(arrow());
+    var arrow1 = document.createElement('div');
+    arrow1.className = 'f-arrow';
+    arrow1.textContent = '→';
+    strip.appendChild(arrow1);
 
-    // 阶段二：视频任务
-    var stageTasks = document.createElement('div');
-    stageTasks.className = 'stage';
-    stageTasks.appendChild(stageLabel('视频任务'));
-    var taskWrap = document.createElement('div');
-    taskWrap.className = 'task-stats';
-    taskWrap.appendChild(taskStat('待提交', ep.pendingTasks || 0, 'badge-muted'));
-    taskWrap.appendChild(taskStat('生成中', ep.processingTasks || 0, 'badge-info'));
-    taskWrap.appendChild(taskStat('已完成', ep.doneTasks || 0, 'badge-success'));
-    taskWrap.appendChild(taskStat('失败', ep.failedTasks || 0, (ep.failedTasks || 0) > 0 ? 'badge-danger' : 'badge-muted'));
-    stageTasks.appendChild(taskWrap);
-    flow.appendChild(stageTasks);
+    // stage 2: video tasks
+    var stage2 = document.createElement('div');
+    stage2.className = 'f-stage';
+    var l2 = document.createElement('div');
+    l2.className = 'f-stage-label';
+    l2.textContent = '视频任务';
+    var v2 = document.createElement('div');
+    v2.className = 'task-stats';
 
-    flow.appendChild(arrow());
+    function makeStat(label, count, extraClass) {
+      var span = document.createElement('span');
+      span.className = 'task-stat' + (extraClass ? ' ' + extraClass : '');
+      var lbl = document.createElement('span');
+      lbl.textContent = label + ' ';
+      var numSpan = document.createElement('span');
+      numSpan.className = 'badge ' + (extraClass || 'badge-muted');
+      numSpan.textContent = String(count);
+      span.appendChild(lbl);
+      span.appendChild(numSpan);
+      return span;
+    }
 
-    // 阶段三：成片
-    var stageFinal = document.createElement('div');
-    stageFinal.className = 'stage';
-    stageFinal.appendChild(stageLabel('成片'));
-    var finalBadge = document.createElement('span');
-    finalBadge.className = 'badge ' + finalCutClass(ep.finalCutStatus);
-    finalBadge.textContent = finalCutText(ep.finalCutStatus);
-    stageFinal.appendChild(finalBadge);
-    flow.appendChild(stageFinal);
+    v2.appendChild(makeStat('待提交', pending, 'badge-muted'));
+    v2.appendChild(makeStat('生成中', rendering, 'badge-info'));
+    v2.appendChild(makeStat('已完成', done, 'badge-success'));
+    v2.appendChild(makeStat('失败', failed, failed > 0 ? 'badge-danger' : 'badge-muted'));
 
-    card.appendChild(flow);
+    stage2.appendChild(l2);
+    stage2.appendChild(v2);
+    strip.appendChild(stage2);
 
+    var arrow2 = document.createElement('div');
+    arrow2.className = 'f-arrow';
+    arrow2.textContent = '→';
+    strip.appendChild(arrow2);
+
+    // stage 3: final cut
+    var stage3 = document.createElement('div');
+    stage3.className = 'f-stage';
+    var l3 = document.createElement('div');
+    l3.className = 'f-stage-label';
+    l3.textContent = '成片';
+    var badge3 = document.createElement('span');
+    badge3.className = 'badge ' + finalCutClass(ep.finalCutStatus);
+    badge3.textContent = finalCutText(ep.finalCutStatus);
+    stage3.appendChild(l3);
+    stage3.appendChild(badge3);
+    strip.appendChild(stage3);
+
+    frame.appendChild(strip);
+
+    // actions
     var actions = document.createElement('div');
-    actions.className = 'pipeline-actions';
-    var link = document.createElement('a');
-    link.className = 'btn btn-link';
-    link.href = '/storyboard.html?episodeId=' + encodeURIComponent(ep.episodeId);
-    link.textContent = '打开分镜板';
-    actions.appendChild(link);
-    var linkTasks = document.createElement('a');
-    linkTasks.className = 'btn btn-link';
-    linkTasks.href = '/tasks.html?episodeId=' + encodeURIComponent(ep.episodeId);
-    linkTasks.textContent = '查看任务';
-    actions.appendChild(linkTasks);
-    var linkFinals = document.createElement('a');
-    linkFinals.className = 'btn btn-link';
-    linkFinals.href = '/finals.html?episodeId=' + encodeURIComponent(ep.episodeId);
-    linkFinals.textContent = '成片库';
-    actions.appendChild(linkFinals);
-    card.appendChild(actions);
+    actions.className = 'film-actions';
 
-    return card;
-  }
+    var epId = encodeURIComponent(ep.episodeId != null ? ep.episodeId : '');
 
-  function stageLabel(text) {
-    var el = document.createElement('div');
-    el.className = 'stage-label';
-    el.textContent = text;
-    return el;
-  }
+    var a1 = document.createElement('a');
+    a1.className = 'btn btn-sm';
+    a1.href = '/storyboard.html?episodeId=' + epId;
+    a1.textContent = '打开分镜板';
+    actions.appendChild(a1);
 
-  function stageValue(text) {
-    var el = document.createElement('div');
-    el.className = 'stage-value';
-    el.textContent = text;
-    return el;
-  }
+    var a2 = document.createElement('a');
+    a2.className = 'btn btn-sm';
+    a2.href = '/tasks.html?episodeId=' + epId;
+    a2.textContent = '查看任务';
+    actions.appendChild(a2);
 
-  function arrow() {
-    var el = document.createElement('div');
-    el.className = 'stage-arrow';
-    el.textContent = '→';
-    return el;
-  }
+    var a3 = document.createElement('a');
+    a3.className = 'btn btn-sm';
+    a3.href = '/finals.html?episodeId=' + epId;
+    a3.textContent = '成片库';
+    actions.appendChild(a3);
 
-  function taskStat(label, value, badgeClass) {
-    var el = document.createElement('span');
-    el.className = 'task-stat ' + badgeClass;
-    el.textContent = label + ' ' + value;
-    return el;
-  }
+    frame.appendChild(actions);
 
-  async function loadProjects() {
-    var list = await api('GET', '/api/projects');
-    state.projects = Array.isArray(list) ? list : (list && list.items) || [];
-    if (!state.currentProjectId && state.projects.length) {
-      state.currentProjectId = state.projects[0].id;
-    }
-    renderProjectSelect();
-  }
+    // bottom perforation
+    var perfBottom = document.createElement('div');
+    perfBottom.className = 'film-perf';
+    frame.appendChild(perfBottom);
 
-  async function loadPipeline() {
-    if (!state.currentProjectId) {
-      state.pipeline = null;
-      renderPipeline();
-      document.getElementById('projectMeta').textContent = '还没有可查看的项目。';
-      return;
-    }
-    var data = await api('GET', '/api/projects/' + encodeURIComponent(state.currentProjectId) + '/pipeline');
-    state.pipeline = data;
-    renderPipeline();
-  }
-
-  async function refreshAll() {
-    try {
-      await loadProjects();
-      await loadPipeline();
-    } catch (e) {
-      // 错误提示已在 api() 中处理
-    }
+    return frame;
   }
 
   function bind() {
-    document.getElementById('projectSelect').addEventListener('change', function (e) {
-      state.currentProjectId = e.target.value || null;
-      loadPipeline().catch(function () {});
-    });
-    document.getElementById('refreshBtn').addEventListener('click', function () {
-      refreshAll();
-    });
+    var sel = document.getElementById('projectSelect');
+    if (sel) {
+      sel.addEventListener('change', function () {
+        state.projectId = sel.value;
+        loadPipeline();
+      });
+    }
+
+    var refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function () {
+        refreshAll();
+      });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function () {

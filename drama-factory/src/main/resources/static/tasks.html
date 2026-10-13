@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>任务队列 - AI 短剧工坊</title>
-<link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/v2.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>任务队列 · AI 短剧工坊</title>
+  <link rel="stylesheet" href="/v2.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header class="topbar">
+  <header class="topbar">
   <nav class="topnav">
     <a href="/index.html">控制台首页</a>
     <a href="/storyboard.html">分镜板</a>
@@ -21,54 +21,31 @@
   </div>
 </header>
 
-<main class="page">
-  <div class="page-head">
-    <h1 class="page-title">任务队列</h1>
-    <div class="filters">
-      <label class="field">
-        <span class="field-label">项目</span>
-        <select id="projectSelect"><option value="">加载中…</option></select>
-      </label>
-      <label class="field">
-        <span class="field-label">剧集</span>
-        <select id="episodeSelect"><option value="">-</option></select>
-      </label>
-      <label class="field">
-        <span class="field-label">分镜</span>
-        <select id="shotSelect"><option value="">-</option></select>
-      </label>
-      <button id="refreshBtn" class="btn btn-secondary" type="button">刷新</button>
+  <main class="page">
+    <div class="page-head">
+      <h1 class="page-title">任务队列</h1>
+      <div class="kicker">渲染队列 · RENDER QUEUE</div>
     </div>
-  </div>
 
-  <div id="hint" class="hint" hidden></div>
+    <section class="filters">
+      <label>项目
+        <select id="projectSelect"></select>
+      </label>
+      <label>剧集
+        <select id="episodeSelect"></select>
+      </label>
+      <label>分镜
+        <select id="shotSelect"></select>
+      </label>
+      <button id="refreshBtn" class="btn btn-sm">刷新</button>
+    </section>
 
-  <section class="panel">
-    <div class="panel-head">
-      <h2 class="panel-title">视频生成任务</h2>
-      <span id="taskCount" class="panel-sub">0 条</span>
-    </div>
-    <div class="table-wrap">
-      <table class="data-table" id="taskTable">
-        <thead>
-          <tr>
-            <th>任务ID</th>
-            <th>所属分镜</th>
-            <th>提供方</th>
-            <th>状态</th>
-            <th>尝试次数</th>
-            <th>错误信息</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="taskBody">
-          <tr><td colspan="7" class="empty-cell">请选择分镜后查看任务</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</main>
+    <p id="hint" class="hint"></p>
 
-<script src="/tasks.js"></script>
+    <div class="task-summary"><span id="taskCount" class="panel-sub"></span></div>
+    <div id="taskGrid" class="task-grid"></div>
+  </main>
+
+  <script src="/tasks.js"></script>
 </body>
 </html>

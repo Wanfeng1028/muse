@@ -398,7 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('project-form').addEventListener('submit', createProject);
   $('episode-form').addEventListener('submit', createEpisode);
   $('character-form').addEventListener('submit', createCharacter);
-  $('scene-form').addEventListener('submit', createScene);
+  var _sf = $('scene-form');
+  if (_sf) _sf.addEventListener('submit', createScene);
 
   loadStats();
   loadProjects();

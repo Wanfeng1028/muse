@@ -1,432 +1,472 @@
-(function () {
-  'use strict';
+const SHOT_SIZE_LABEL = {
+  wide: '远景',
+  full: '全景',
+  medium: '中景',
+  closeup: '特写',
+  extreme_closeup: '大特写'
+};
 
-  var API_BASE = '';
+const CAMERA_MOVE_LABEL = {
+  static: '固定机位',
+  pan: '摇镜',
+  tilt: '俯仰',
+  dolly: '推拉',
+  zoom: '变焦',
+  handheld: '手持'
+};
 
-  function api(path, options) {
-    options = options || {};
-    var cfg = {
-      method: options.method || 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    };
-    if (options.body !== undefined) {
-      cfg.body = JSON.stringify(options.body);
-    }
-    return fetch(API_BASE + path, cfg).then(function (res) {
-      return res.text().then(function (text) {
-        var data = null;
-        if (text) {
-          try { data = JSON.parse(text); } catch (e) { data = text; }
-        }
-        if (!res.ok) {
-          var msg = (data && data.message) ? data.message : ('请求失败 ' + res.status);
-          throw new Error(msg);
-        }
-        return data;
-      });
-    });
+const state = {
+  projects: [],
+  episodes: [],
+  shots: [],
+  tasks: [],
+  editingId: null
+};
+
+async function api(path, options) {
+  const res = await fetch(path, Object.assign({
+    headers: { 'Content-Type': 'application/json' }
+  }, options || {}));
+  if (!res.ok) {
+    let msg = '请求失败';
+    try {
+      const data = await res.json();
+      if (data && data.detail) msg = data.detail;
+    } catch (e) {}
+    throw new Error(msg);
   }
+  if (res.status === 204) return null;
+  return res.json();
+}
 
-  var SHOT_SIZE_LABEL = {
-    TE_XIE: '特写',
-    JIN_JING: '近景',
-    ZHONG_JING: '中景',
-    QUAN_JING: '全景',
-    YUAN_JING: '远景'
-  };
-  var CAMERA_MOVE_LABEL = {
-    GU_DING: '固定机位',
-    TUI: '推镜头',
-    LA: '拉镜头',
-    YAO: '摇镜头',
-    YI: '移镜头',
-    GEN: '跟镜头',
-    SHENG_JIANG: '升降'
-  };
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-  var state = {
-    projects: [],
-    episodes: [],
-    projectId: '',
-    episodeId: '',
-    shots: [],
-    taskMap: {},
-    editingId: null
-  };
-
-  function $(id) { return document.getElementById(id); }
-
-  function toast(msg, isError) {
-    var el = $('toast');
-    el.textContent = msg;
-    el.className = 'toast' + (isError ? ' toast-error' : '');
-    el.classList.remove('hidden');
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { el.classList.add('hidden'); }, 3200);
+function statusClass(status) {
+  switch (String(status || '').toUpperCase()) {
+    case 'PENDING': return 'badge-pending';
+    case 'PROCESSING': return 'badge-processing';
+    case 'DONE': return 'badge-done';
+    case 'FAILED': return 'badge-failed';
+    default: return 'badge-muted';
   }
+}
 
-  function escapeHtml(s) {
-    if (s === null || s === undefined) return '';
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function getProjectId() {
+  const el = document.getElementById('projectSelect');
+  return el ? el.value : '';
+}
+
+function getEpisodeId() {
+  const el = document.getElementById('episodeSelect');
+  return el ? el.value : '';
+}
+
+async function loadProjects() {
+  const sel = document.getElementById('projectSelect');
+  try {
+    const projects = await api('/api/projects');
+    state.projects = projects || [];
+    sel.innerHTML = '<option value="">选择项目</option>' + state.projects
+      .map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name || p.title || p.id)}</option>`)
+      .join('');
+  } catch (e) {
+    showToast(e.message);
   }
+}
 
-  function statusClass(label) {
-    if (!label) return 'badge';
-    var l = String(label);
-    if (l.indexOf('完成') >= 0 || l.indexOf('成功') >= 0 || l === 'DONE') return 'badge badge-success';
-    if (l.indexOf('处理') >= 0 || l.indexOf('进行') >= 0 || l.indexOf('生成') >= 0 || l === 'PROCESSING') return 'badge badge-info';
-    if (l.indexOf('失败') >= 0 || l.indexOf('错误') >= 0 || l === 'FAILED') return 'badge badge-danger';
-    if (l.indexOf('待') >= 0 || l.indexOf('排队') >= 0 || l === 'PENDING') return 'badge badge-warning';
-    return 'badge';
-  }
-
-  function loadProjects() {
-    return api('/api/projects').then(function (list) {
-      state.projects = Array.isArray(list) ? list : [];
-      var sel = $('projectSelect');
-      if (!state.projects.length) {
-        sel.innerHTML = '<option value="">无项目</option>';
-        return;
-      }
-      var html = '<option value="">请选择项目</option>';
-      state.projects.forEach(function (p) {
-        var pid = p.id !== undefined ? p.id : p.projectId;
-        var title = p.title || p.name || ('项目 ' + pid);
-        html += '<option value="' + escapeHtml(pid) + '">' + escapeHtml(title) + '</option>';
-      });
-      sel.innerHTML = html;
-      // 自动选中首个项目并加载其剧集
-      var firstPid = state.projects[0].id !== undefined ? state.projects[0].id : state.projects[0].projectId;
-      state.projectId = firstPid;
-      sel.value = firstPid;
-      return loadEpisodes(firstPid);
-    }).catch(function (err) {
-      toast('项目加载失败：' + err.message, true);
-    });
-  }
-
-  function loadEpisodes(pid) {
-    var sel = $('episodeSelect');
-    state.episodes = [];
-    state.episodeId = '';
-    sel.innerHTML = '<option value="">加载中…</option>';
-    $('episodeMeta').textContent = '';
-    if (!pid) {
-      sel.innerHTML = '<option value="">请选择项目</option>';
-      renderShots();
-      return Promise.resolve();
-    }
-    return api('/api/projects/' + encodeURIComponent(pid) + '/episodes').then(function (list) {
-      state.episodes = Array.isArray(list) ? list : [];
-      if (!state.episodes.length) {
-        sel.innerHTML = '<option value="">无剧集</option>';
-        renderShots();
-        return;
-      }
-      var html = '<option value="">请选择剧集</option>';
-      state.episodes.forEach(function (e) {
-        var eid = e.id !== undefined ? e.id : e.episodeId;
-        var label = '第' + (e.episodeNo !== undefined ? e.episodeNo : '?') + '集';
-        if (e.title) label += ' · ' + e.title;
-        html += '<option value="' + escapeHtml(eid) + '">' + escapeHtml(label) + '</option>';
-      });
-      sel.innerHTML = html;
-      // 自动选中首个剧集并加载分镜
-      var firstEid = state.episodes[0].id !== undefined ? state.episodes[0].id : state.episodes[0].episodeId;
-      state.episodeId = firstEid;
-      state.taskMap = {};
-      sel.value = firstEid;
-      updateEpisodeMeta();
-      return loadShots();
-    }).catch(function (err) {
-      sel.innerHTML = '<option value="">加载失败</option>';
-      toast('剧集加载失败：' + err.message, true);
-      renderShots();
-    });
-  }
-
-  function currentEpisode() {
-    for (var i = 0; i < state.episodes.length; i++) {
-      var eid = state.episodes[i].id !== undefined ? state.episodes[i].id : state.episodes[i].episodeId;
-      if (String(eid) === String(state.episodeId)) return state.episodes[i];
-    }
-    return null;
-  }
-
-  function updateEpisodeMeta() {
-    var ep = currentEpisode();
-    var el = $('episodeMeta');
-    if (!ep) { el.textContent = ''; return; }
-    var parts = [];
-    if (ep.status) parts.push('状态：' + ep.status);
-    if (ep.shotCount !== undefined) parts.push('分镜 ' + ep.shotCount + ' 个');
-    el.textContent = parts.join(' ｜ ');
-  }
-
-  function loadShots() {
-    var eid = state.episodeId;
-    if (!eid) { state.shots = []; state.taskMap = {}; renderShots(); return Promise.resolve(); }
-    return api('/api/episodes/' + encodeURIComponent(eid) + '/shots').then(function (list) {
-      state.shots = Array.isArray(list) ? list : [];
-      state.shots.sort(function (a, b) {
-        return (a.shotNo || 0) - (b.shotNo || 0);
-      });
-      return loadTasksForShots();
-    }).then(function () {
-      renderShots();
-    }).catch(function (err) {
-      toast('分镜加载失败：' + err.message, true);
-      state.shots = [];
-      renderShots();
-    });
-  }
-
-  function loadTasksForShots() {
-    var jobs = state.shots.map(function (shot) {
-      var sid = shot.id !== undefined ? shot.id : shot.shotId;
-      return api('/api/shots/' + encodeURIComponent(sid) + '/video-tasks').then(function (tasks) {
-        var list = Array.isArray(tasks) ? tasks : [];
-        var latest = null;
-        list.forEach(function (t) {
-          if (!latest) { latest = t; return; }
-          var ta = t.createdAt || t.id || 0;
-          var la = latest.createdAt || latest.id || 0;
-          if (ta > la) latest = t;
-        });
-        state.taskMap[sid] = latest;
-      }).catch(function () {
-        state.taskMap[sid] = null;
-      });
-    });
-    return Promise.all(jobs);
-  }
-
-  function renderShots() {
-    var tbody = $('shotTbody');
-    updateEpisodeMeta();
-    if (!state.episodeId) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty">请选择项目与剧集</td></tr>';
-      return;
-    }
-    if (!state.shots.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty">本集暂无分镜，点击"添加分镜"新建</td></tr>';
-      return;
-    }
-    var html = '';
-    state.shots.forEach(function (shot, idx) {
-      var sid = shot.id !== undefined ? shot.id : shot.shotId;
-      var task = state.taskMap[sid];
-      var taskLabel = task ? (task.statusLabel || task.status || '—') : '未生成';
-      var taskCls = task ? statusClass(task.statusLabel || task.status) : 'badge badge-muted';
-      var duration = shot.durationSeconds !== undefined && shot.durationSeconds !== null ? shot.durationSeconds : '';
-      html += '<tr data-sid="' + escapeHtml(sid) + '">';
-      html += '<td>' + escapeHtml(shot.shotNo) + '</td>';
-      html += '<td>' + escapeHtml(SHOT_SIZE_LABEL[shot.shotSize] || shot.shotSize || '') + '</td>';
-      html += '<td>' + escapeHtml(CAMERA_MOVE_LABEL[shot.cameraMove] || shot.cameraMove || '') + '</td>';
-      html += '<td>' + escapeHtml(duration) + '</td>';
-      html += '<td class="cell-text">' + escapeHtml(shot.description || '') + '</td>';
-      html += '<td class="cell-text">' + escapeHtml(shot.dialogue || '') + '</td>';
-      html += '<td class="cell-text">' + escapeHtml(shot.videoPrompt || '') + '</td>';
-      html += '<td><span class="' + taskCls + '">' + escapeHtml(taskLabel) + '</span></td>';
-      html += '<td class="ops">';
-      html += '<button class="btn btn-sm" data-act="up" ' + (idx === 0 ? 'disabled' : '') + '>上移</button>';
-      html += '<button class="btn btn-sm" data-act="down" ' + (idx === state.shots.length - 1 ? 'disabled' : '') + '>下移</button>';
-      html += '<button class="btn btn-sm" data-act="edit">编辑</button>';
-      html += '<button class="btn btn-sm btn-danger" data-act="del">删除</button>';
-      html += '<button class="btn btn-sm btn-primary" data-act="gen">生成视频</button>';
-      html += '</td>';
-      html += '</tr>';
-    });
-    tbody.innerHTML = html;
-  }
-
-  function findShot(sid) {
-    for (var i = 0; i < state.shots.length; i++) {
-      var id = state.shots[i].id !== undefined ? state.shots[i].id : state.shots[i].shotId;
-      if (String(id) === String(sid)) return state.shots[i];
-    }
-    return null;
-  }
-
-  function openForm(shot) {
-    state.editingId = shot ? (shot.id !== undefined ? shot.id : shot.shotId) : null;
-    $('formTitle').textContent = shot ? ('编辑分镜 #' + shot.shotNo) : '添加分镜';
-    $('shotId').value = state.editingId || '';
-    $('shotNo').value = shot ? (shot.shotNo || '') : (state.shots.length ? (state.shots[state.shots.length - 1].shotNo || 0) + 1 : 1);
-    $('shotSize').value = shot && shot.shotSize ? shot.shotSize : 'ZHONG_JING';
-    $('cameraMove').value = shot && shot.cameraMove ? shot.cameraMove : 'GU_DING';
-    $('durationSeconds').value = shot && shot.durationSeconds !== undefined ? shot.durationSeconds : 3;
-    $('description').value = shot && shot.description ? shot.description : '';
-    $('dialogue').value = shot && shot.dialogue ? shot.dialogue : '';
-    $('videoPrompt').value = shot && shot.videoPrompt ? shot.videoPrompt : '';
-    $('formError').textContent = '';
-    $('formPanel').classList.remove('hidden');
-    $('shotNo').focus();
-  }
-
-  function closeForm() {
-    state.editingId = null;
-    $('formPanel').classList.add('hidden');
-    $('shotForm').reset();
-    $('shotId').value = '';
-  }
-
-  function collectForm() {
-    return {
-      shotNo: parseInt($('shotNo').value, 10) || 0,
-      shotSize: $('shotSize').value,
-      cameraMove: $('cameraMove').value,
-      description: $('description').value.trim(),
-      durationSeconds: parseFloat($('durationSeconds').value) || 0,
-      dialogue: $('dialogue').value.trim(),
-      videoPrompt: $('videoPrompt').value.trim()
-    };
-  }
-
-  function saveShot(e) {
-    e.preventDefault();
-    var eid = state.episodeId;
-    if (!eid) { $('formError').textContent = '请先选择剧集'; return; }
-    var body = collectForm();
-    if (!body.shotNo) { $('formError').textContent = '镜号必填'; return; }
-    var editing = state.editingId;
-    var p;
-    if (editing) {
-      p = api('/api/shots/' + encodeURIComponent(editing), { method: 'PUT', body: body });
-    } else {
-      p = api('/api/episodes/' + encodeURIComponent(eid) + '/shots', { method: 'POST', body: body });
-    }
-    p.then(function () {
-      toast(editing ? '分镜已更新' : '分镜已添加');
-      closeForm();
-      return loadShots();
-    }).catch(function (err) {
-      $('formError').textContent = err.message;
-      toast('保存失败：' + err.message, true);
-    });
-  }
-
-  function deleteShot(sid) {
-    var shot = findShot(sid);
-    var label = shot ? ('镜号 ' + shot.shotNo) : ('ID ' + sid);
-    if (!window.confirm('确定删除分镜 ' + label + ' 吗？此操作不可撤销。')) return;
-    api('/api/shots/' + encodeURIComponent(sid), { method: 'DELETE' }).then(function () {
-      toast('分镜已删除');
-      return loadShots();
-    }).catch(function (err) {
-      toast('删除失败：' + err.message, true);
-    });
-  }
-
-  function reorder(newOrder) {
-    var eid = state.episodeId;
-    var ids = newOrder.map(function (s) {
-      return s.id !== undefined ? s.id : s.shotId;
-    });
-    api('/api/episodes/' + encodeURIComponent(eid) + '/shots/reorder', {
-      method: 'POST',
-      body: { shotIds: ids }
-    }).then(function () {
-      return loadShots();
-    }).catch(function (err) {
-      toast('排序失败：' + err.message, true);
-      renderShots();
-    });
-  }
-
-  function moveShot(sid, dir) {
-    var idx = -1;
-    for (var i = 0; i < state.shots.length; i++) {
-      var id = state.shots[i].id !== undefined ? state.shots[i].id : state.shots[i].shotId;
-      if (String(id) === String(sid)) { idx = i; break; }
-    }
-    if (idx < 0) return;
-    var target = idx + dir;
-    if (target < 0 || target >= state.shots.length) return;
-    var arr = state.shots.slice();
-    var tmp = arr[idx];
-    arr[idx] = arr[target];
-    arr[target] = tmp;
-    arr.forEach(function (s, i) { s.shotNo = i + 1; });
-    state.shots = arr;
+async function loadEpisodes() {
+  const sel = document.getElementById('episodeSelect');
+  const pid = getProjectId();
+  state.episodes = [];
+  if (!pid) {
+    sel.innerHTML = '<option value="">选择剧集</option>';
     renderShots();
-    reorder(arr);
+    return;
+  }
+  try {
+    const episodes = await api(`/api/projects/${encodeURIComponent(pid)}/episodes`);
+    state.episodes = episodes || [];
+    sel.innerHTML = '<option value="">选择剧集</option>' + state.episodes
+      .map(ep => `<option value="${escapeHtml(ep.id)}">${escapeHtml(ep.title || ep.name || ('第' + ep.number + '集'))}</option>`)
+      .join('');
+  } catch (e) {
+    showToast(e.message);
+  }
+  renderShots();
+}
+
+function updateEpisodeMeta() {
+  const meta = document.getElementById('episodeMeta');
+  if (!meta) return;
+  const eid = getEpisodeId();
+  const ep = state.episodes.find(x => String(x.id) === String(eid));
+  if (!ep) {
+    meta.textContent = '';
+    return;
+  }
+  const parts = [];
+  if (ep.title || ep.name) parts.push(ep.title || ep.name);
+  if (ep.summary) parts.push(ep.summary);
+  meta.textContent = parts.join(' · ');
+}
+
+async function loadShots() {
+  const pid = getProjectId();
+  const eid = getEpisodeId();
+  if (!pid || !eid) {
+    state.shots = [];
+    state.tasks = [];
+    renderShots();
+    return;
+  }
+  try {
+    const shots = await api(`/api/episodes/${encodeURIComponent(eid)}/shots`);
+    state.shots = shots || [];
+    await loadTasksForShots();
+  } catch (e) {
+    showToast(e.message);
+  }
+  renderShots();
+}
+
+async function loadTasksForShots() {
+  state.taskMap = {};
+  if (!state.shots.length) return;
+  await Promise.all(state.shots.map(async (shot) => {
+    const sid = shot.id;
+    try {
+      const list = await api(`/api/shots/${encodeURIComponent(sid)}/video-tasks`);
+      const tasks = Array.isArray(list) ? list : [];
+      let latest = null;
+      tasks.forEach((t) => {
+        if (!latest) { latest = t; return; }
+        const ta = t.createdAt || t.id || 0;
+        const la = latest.createdAt || latest.id || 0;
+        if (ta > la) latest = t;
+      });
+      state.taskMap[sid] = latest;
+    } catch (e) {
+      state.taskMap[sid] = null;
+    }
+  }));
+}
+
+function taskForShot(shotId) {
+  return (state.taskMap && state.taskMap[shotId]) || null;
+}
+
+function toTimecode(seconds) {
+  const total = Math.max(0, Math.round(Number(seconds) || 0));
+  const mm = String(Math.floor(total / 60)).padStart(2, '0');
+  const ss = String(total % 60).padStart(2, '0');
+  return `${mm}:${ss}`;
+}
+
+function renderShots() {
+  const grid = document.getElementById('slateGrid');
+  if (!grid) return;
+
+  const pid = getProjectId();
+  const eid = getEpisodeId();
+
+  if (!pid || !eid) {
+    grid.innerHTML = '<div class="empty">请选择项目与剧集</div>';
+    return;
   }
 
-  function genVideo(sid) {
-    api('/api/shots/' + encodeURIComponent(sid) + '/video-tasks', { method: 'POST', body: {} }).then(function () {
-      toast('已提交视频生成任务');
-      return loadShots();
-    }).catch(function (err) {
-      toast('提交失败：' + err.message, true);
+  if (!state.shots.length) {
+    grid.innerHTML = '<div class="empty">本集暂无分镜，点击“添加分镜”新建</div>';
+    return;
+  }
+
+  const lastIndex = state.shots.length - 1;
+
+  grid.innerHTML = state.shots.map((shot, index) => {
+    const no = String(index + 1).padStart(2, '0');
+    const sizeLabel = shot.shotSizeLabel || SHOT_SIZE_LABEL[shot.shotSize] || shot.shotSize || '';
+    const moveLabel = shot.cameraMoveLabel || CAMERA_MOVE_LABEL[shot.cameraMove] || shot.cameraMove || '';
+    const task = taskForShot(shot.id);
+    const vStatus = task ? task.status : null;
+
+    const badges = [];
+    if (sizeLabel) badges.push(`<span class="badge">${escapeHtml(sizeLabel)}</span>`);
+    if (moveLabel) badges.push(`<span class="badge">${escapeHtml(moveLabel)}</span>`);
+
+    const descHtml = shot.description
+      ? `<p class="slate-desc">${escapeHtml(shot.description)}</p>`
+      : '';
+    const dialogueHtml = shot.dialogue
+      ? `<p class="slate-dialogue">${escapeHtml(shot.dialogue)}</p>`
+      : '';
+    const promptHtml = shot.videoPrompt
+      ? `<p class="slate-prompt">${escapeHtml(shot.videoPrompt)}</p>`
+      : '';
+
+    const statusText = task
+      ? escapeHtml(task.statusLabel || task.status || '未知')
+      : '未生成';
+
+    const upDisabled = index === 0 ? ' disabled' : '';
+    const downDisabled = index === lastIndex ? ' disabled' : '';
+
+    return `
+<article class="slate-card" data-sid="${escapeHtml(shot.id)}">
+  <div class="slate-strip">
+    <span class="slate-no">${escapeHtml(no)}</span>
+    <span class="slate-strip-label">场记板</span>
+  </div>
+  <div class="slate-body">
+    <div class="slate-badges">${badges.join('')}</div>
+    ${descHtml}
+    ${dialogueHtml}
+    ${promptHtml}
+    <div class="slate-foot">
+      <span class="timecode">${escapeHtml(toTimecode(shot.durationSeconds))}</span>
+      <span class="badge ${statusClass(vStatus)}">${statusText}</span>
+    </div>
+    <div class="slate-actions">
+      <button class="btn btn-sm" data-act="up"${upDisabled}>上移</button>
+      <button class="btn btn-sm" data-act="down"${downDisabled}>下移</button>
+      <button class="btn btn-sm" data-act="edit">编辑</button>
+      <button class="btn btn-sm btn-danger" data-act="del">删除</button>
+      <button class="btn btn-sm btn-primary" data-act="gen">生成视频</button>
+    </div>
+  </div>
+</article>`;
+  }).join('');
+}
+
+function openForm(shot) {
+  const panel = document.getElementById('formPanel');
+  const title = document.getElementById('formTitle');
+  document.getElementById('shotId').value = shot ? shot.id : '';
+  document.getElementById('shotNo').value = shot ? (shot.shotNo || '') : (state.shots.length + 1);
+  document.getElementById('shotSize').value = shot ? (shot.shotSize || '') : '';
+  document.getElementById('cameraMove').value = shot ? (shot.cameraMove || '') : '';
+  document.getElementById('durationSeconds').value = shot ? (shot.durationSeconds || '') : '';
+  document.getElementById('description').value = shot ? (shot.description || '') : '';
+  document.getElementById('dialogue').value = shot ? (shot.dialogue || '') : '';
+  document.getElementById('videoPrompt').value = shot ? (shot.videoPrompt || '') : '';
+  document.getElementById('formError').textContent = '';
+  title.textContent = shot ? '编辑分镜' : '添加分镜';
+  state.editingId = shot ? shot.id : null;
+  panel.hidden = false;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeForm() {
+  const panel = document.getElementById('formPanel');
+  panel.hidden = true;
+  state.editingId = null;
+  document.getElementById('shotForm').reset();
+  document.getElementById('shotId').value = '';
+  document.getElementById('formError').textContent = '';
+}
+
+function collectForm() {
+  return {
+    shotNo: Number(document.getElementById('shotNo').value) || 0,
+    shotSize: document.getElementById('shotSize').value || null,
+    cameraMove: document.getElementById('cameraMove').value || null,
+    durationSeconds: Number(document.getElementById('durationSeconds').value) || 0,
+    description: document.getElementById('description').value.trim(),
+    dialogue: document.getElementById('dialogue').value.trim(),
+    videoPrompt: document.getElementById('videoPrompt').value.trim()
+  };
+}
+
+async function saveShot(event) {
+  event.preventDefault();
+  const errEl = document.getElementById('formError');
+  errEl.textContent = '';
+  const pid = getProjectId();
+  const eid = getEpisodeId();
+  if (!pid || !eid) {
+    errEl.textContent = '请先选择项目与剧集';
+    return;
+  }
+  const payload = collectForm();
+  const id = document.getElementById('shotId').value;
+  try {
+    if (id) {
+      await api(`/api/shots/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      showToast('分镜已更新');
+    } else {
+      await api(`/api/episodes/${encodeURIComponent(eid)}/shots`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      showToast('分镜已添加');
+    }
+    closeForm();
+    await loadShots();
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+async function deleteShot(id) {
+  if (!confirm('确定删除该分镜？')) return;
+  try {
+    await api(`/api/shots/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    showToast('分镜已删除');
+    await loadShots();
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+async function reorder(ids) {
+  const eid = getEpisodeId();
+  if (!eid) { showToast('请先选择剧集'); return; }
+  try {
+    await api(`/api/episodes/${encodeURIComponent(eid)}/shots/reorder`, {
+      method: 'POST',
+      body: JSON.stringify({ shotIds: ids })
+    });
+    await loadShots();
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+function moveShot(id, dir) {
+  const ids = state.shots.map(s => s.id);
+  const index = ids.findIndex(x => String(x) === String(id));
+  if (index < 0) return;
+  const target = index + dir;
+  if (target < 0 || target >= ids.length) return;
+  const tmp = ids[index];
+  ids[index] = ids[target];
+  ids[target] = tmp;
+  reorder(ids);
+}
+
+async function genVideo(id) {
+  try {
+    await api(`/api/shots/${encodeURIComponent(id)}/video-tasks`, { method: 'POST', body: '{}' });
+    showToast('已提交生成任务');
+    await loadShots();
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+async function submitAll() {
+  const eid = getEpisodeId();
+  if (!eid) {
+    showToast('请先选择剧集');
+    return;
+  }
+  try {
+    await api(`/api/episodes/${encodeURIComponent(eid)}/video-tasks/submit-all`, { method: 'POST', body: '{}' });
+    showToast('已提交本集全部任务');
+    await loadShots();
+  } catch (e) {
+    showToast(e.message);
+  }
+}
+
+function bindEvents() {
+  const addBtn = document.getElementById('addBtn');
+  const submitAllBtn = document.getElementById('submitAllBtn');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const form = document.getElementById('shotForm');
+  const projectSelect = document.getElementById('projectSelect');
+  const episodeSelect = document.getElementById('episodeSelect');
+  const grid = document.getElementById('slateGrid');
+
+  if (addBtn) addBtn.addEventListener('click', () => openForm(null));
+  if (submitAllBtn) submitAllBtn.addEventListener('click', submitAll);
+  if (refreshBtn) refreshBtn.addEventListener('click', () => loadShots());
+  if (cancelBtn) cancelBtn.addEventListener('click', closeForm);
+  if (form) form.addEventListener('submit', saveShot);
+
+  if (projectSelect) {
+    projectSelect.addEventListener('change', async () => {
+      await loadEpisodes();
+      updateEpisodeMeta();
+      await loadShots();
     });
   }
 
-  function submitAll() {
-    var eid = state.episodeId;
-    if (!eid) { toast('请先选择剧集', true); return; }
-    if (!state.shots.length) { toast('本集暂无分镜', true); return; }
-    if (!window.confirm('为本集全部 ' + state.shots.length + ' 个分镜提交视频生成任务？')) return;
-    api('/api/episodes/' + encodeURIComponent(eid) + '/video-tasks/submit-all', { method: 'POST', body: {} }).then(function () {
-      toast('已提交本集全部任务');
-      return loadShots();
-    }).catch(function (err) {
-      toast('提交失败：' + err.message, true);
+  if (episodeSelect) {
+    episodeSelect.addEventListener('change', async () => {
+      updateEpisodeMeta();
+      await loadShots();
     });
   }
 
-  function bindEvents() {
-    $('projectSelect').addEventListener('change', function () {
-      state.projectId = this.value;
-      loadEpisodes(state.projectId);
-    });
-    $('episodeSelect').addEventListener('change', function () {
-      state.episodeId = this.value;
-      state.taskMap = {};
-      loadShots();
-    });
-    $('addBtn').addEventListener('click', function () {
-      if (!state.episodeId) { toast('请先选择剧集', true); return; }
-      openForm(null);
-    });
-    $('submitAllBtn').addEventListener('click', submitAll);
-    $('refreshBtn').addEventListener('click', function () {
-      if (state.episodeId) loadShots();
-      else toast('请先选择剧集', true);
-    });
-    $('cancelBtn').addEventListener('click', closeForm);
-    $('shotForm').addEventListener('submit', saveShot);
-
-    $('shotTbody').addEventListener('click', function (ev) {
-      var btn = ev.target.closest('button[data-act]');
+  if (grid) {
+    grid.addEventListener('click', (event) => {
+      const btn = event.target.closest('button[data-act]');
       if (!btn) return;
-      var tr = btn.closest('tr');
-      if (!tr) return;
-      var sid = tr.getAttribute('data-sid');
-      var act = btn.getAttribute('data-act');
+      const card = btn.closest('[data-sid]');
+      if (!card) return;
+      const sid = card.getAttribute('data-sid');
+      const act = btn.getAttribute('data-act');
       if (act === 'up') moveShot(sid, -1);
       else if (act === 'down') moveShot(sid, 1);
       else if (act === 'edit') {
-        var shot = findShot(sid);
+        const shot = state.shots.find(s => String(s.id) === String(sid));
         if (shot) openForm(shot);
-      }
-      else if (act === 'del') deleteShot(sid);
+      } else if (act === 'del') deleteShot(sid);
       else if (act === 'gen') genVideo(sid);
     });
   }
+}
 
-  function init() {
-    bindEvents();
-    loadProjects();
+function fillSelects() {
+  const sizeSel = document.getElementById('shotSize');
+  const moveSel = document.getElementById('cameraMove');
+  if (sizeSel && !sizeSel.options.length) {
+    sizeSel.innerHTML = '<option value="">选择景别</option>' + Object.keys(SHOT_SIZE_LABEL)
+      .map(k => `<option value="${escapeHtml(k)}">${escapeHtml(SHOT_SIZE_LABEL[k])}</option>`)
+      .join('');
   }
+  if (moveSel && !moveSel.options.length) {
+    moveSel.innerHTML = '<option value="">选择运镜</option>' + Object.keys(CAMERA_MOVE_LABEL)
+      .map(k => `<option value="${escapeHtml(k)}">${escapeHtml(CAMERA_MOVE_LABEL[k])}</option>`)
+      .join('');
+  }
+}
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+async function init() {
+  fillSelects();
+  bindEvents();
+  await loadProjects();
+  const psel = document.getElementById('projectSelect');
+  if (state.projects.length) {
+    psel.value = String(state.projects[0].id);
+    await loadEpisodes();
+    const esel = document.getElementById('episodeSelect');
+    if (state.episodes.length) {
+      esel.value = String(state.episodes[0].id);
+    }
   }
-})();
+  updateEpisodeMeta();
+  await loadShots();
+}
+
+init();

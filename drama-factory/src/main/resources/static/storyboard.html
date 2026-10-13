@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>分镜板 · AI 短剧工坊</title>
-<link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="/v2.css">
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <header class="topbar">
@@ -18,95 +18,66 @@
   </nav>
 </header>
 
-<main class="page">
+<main class="container">
+  <p class="kicker">场记板 · CLAPPERBOARD</p>
+
   <div class="selectors">
-    <label>项目
-      <select id="projectSelect"><option value="">加载中…</option></select>
-    </label>
-    <label>剧集
-      <select id="episodeSelect"><option value="">请选择项目</option></select>
-    </label>
-    <span id="episodeMeta" class="meta"></span>
+    <select id="projectSelect"></select>
+    <select id="episodeSelect"></select>
+    <span id="episodeMeta" class="episode-meta"></span>
   </div>
 
   <div class="toolbar">
-    <button id="addBtn" class="btn btn-primary" type="button">添加分镜</button>
-    <button id="submitAllBtn" class="btn" type="button">为本集全部提交视频任务</button>
-    <button id="refreshBtn" class="btn" type="button">刷新</button>
+    <button id="addBtn" class="btn btn-primary">添加分镜</button>
+    <button id="submitAllBtn" class="btn">全部提交</button>
+    <button id="refreshBtn" class="btn">刷新</button>
   </div>
 
-  <div id="formPanel" class="form-panel hidden">
-    <h3 id="formTitle">添加分镜</h3>
+  <section id="formPanel" class="form-panel" hidden>
+    <h2 id="formTitle">添加分镜</h2>
     <form id="shotForm">
-      <input type="hidden" id="shotId" value="">
-      <div class="form-grid">
-        <label>镜号
-          <input type="number" id="shotNo" min="1" step="1" required>
-        </label>
-        <label>景别
-          <select id="shotSize">
-            <option value="TE_XIE">特写</option>
-            <option value="JIN_JING">近景</option>
-            <option value="ZHONG_JING">中景</option>
-            <option value="QUAN_JING">全景</option>
-            <option value="YUAN_JING">远景</option>
-          </select>
-        </label>
-        <label>运镜
-          <select id="cameraMove">
-            <option value="GU_DING">固定机位</option>
-            <option value="TUI">推镜头</option>
-            <option value="LA">拉镜头</option>
-            <option value="YAO">摇镜头</option>
-            <option value="YI">移镜头</option>
-            <option value="GEN">跟镜头</option>
-            <option value="SHENG_JIANG">升降</option>
-          </select>
-        </label>
-        <label>时长（秒）
-          <input type="number" id="durationSeconds" min="0" step="0.1" value="3">
-        </label>
-        <label class="span-2">画面描述
-          <textarea id="description" rows="2"></textarea>
-        </label>
-        <label class="span-2">对白/旁白
-          <textarea id="dialogue" rows="2"></textarea>
-        </label>
-        <label class="span-2">视频生成提示词
-          <textarea id="videoPrompt" rows="3"></textarea>
-        </label>
+      <input type="hidden" id="shotId">
+      <div class="form-row">
+        <label for="shotNo">镜号</label>
+        <input type="number" id="shotNo" min="1">
       </div>
+      <div class="form-row">
+        <label for="shotSize">景别</label>
+        <select id="shotSize"></select>
+      </div>
+      <div class="form-row">
+        <label for="cameraMove">运镜</label>
+        <select id="cameraMove"></select>
+      </div>
+      <div class="form-row">
+        <label for="durationSeconds">时长（秒）</label>
+        <input type="number" id="durationSeconds" min="0" step="0.1">
+      </div>
+      <div class="form-row">
+        <label for="description">画面描述</label>
+        <textarea id="description" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="dialogue">对白</label>
+        <textarea id="dialogue" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="videoPrompt">视频提示词</label>
+        <textarea id="videoPrompt" rows="3"></textarea>
+      </div>
+      <p id="formError" class="form-error"></p>
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">保存</button>
         <button type="button" id="cancelBtn" class="btn">取消</button>
-        <span id="formError" class="error"></span>
       </div>
     </form>
-  </div>
+  </section>
 
-  <div class="table-wrap">
-    <table class="data-table" id="shotTable">
-      <thead>
-        <tr>
-          <th style="width:64px">镜号</th>
-          <th style="width:80px">景别</th>
-          <th style="width:90px">运镜</th>
-          <th style="width:80px">时长(秒)</th>
-          <th>画面描述</th>
-          <th>对白/旁白</th>
-          <th>视频提示词</th>
-          <th style="width:120px">视频状态</th>
-          <th style="width:280px">操作</th>
-        </tr>
-      </thead>
-      <tbody id="shotTbody">
-        <tr><td colspan="9" class="empty">请选择项目与剧集</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="slateGrid" class="slate-grid"></div>
 </main>
 
-<div id="toast" class="toast hidden"></div>
+<div id="toast" class="toast"></div>
+
 <script src="/storyboard.js"></script>
 </body>
 </html>

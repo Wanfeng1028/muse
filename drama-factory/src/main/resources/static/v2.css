@@ -955,7 +955,11 @@ label{color:var(--text-2);font-size:13px;}
 .film-frame:hover{border-color:var(--line-strong);}
 
 .film-frame .frame-title,
-.film-frame .ep-title{
+.film-frame .ep-title,
+.film-frame .film-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
   font-size:13px;
   font-weight:700;
   letter-spacing:-.01em;
@@ -1145,3 +1149,20 @@ label{color:var(--text-2);font-size:13px;}
   .toast{right:12px;left:12px;bottom:12px;max-width:none;}
 }
 
+/* 集成修正：与 JS 渲染结构对齐 */
+.task-progress > .bar.is-failed{
+  background:var(--danger);
+}
+.final-poster .badge{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:2;
+}
+.slate-strip .slate-no{
+  background:#0E0E11;
+  border:1px solid rgba(255,255,255,.85);
+  border-radius:4px;
+  padding:0 10px;
+  line-height:1.5;
+}

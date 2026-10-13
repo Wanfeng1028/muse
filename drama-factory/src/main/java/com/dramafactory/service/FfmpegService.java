@@ -331,4 +331,27 @@ public class FfmpegService {
             throw new FfmpegException("无法解析时长: " + firstLine, e);
         }
     }
+
+    /**
+     * 从视频中抽取成片海报帧。
+     * <p>使用 ffmpeg 从视频第 1 秒处抽取一帧，输出为 JPEG 图片。
+     * 命令格式：{@code -ss 1 -i <video> -vframes 1 -q:v 3 <posterJpg>}，
+     * 超时时间为 60 秒，失败时抛出 {@link FfmpegException}。</p>
+     *
+     * @param video     输入视频文件路径
+     * @param posterJpg 输出海报图片（JPEG）路径
+     * @throws FfmpegException 当 ffmpeg 抽取失败或超时时抛出
+     */
+    public void extractPoster(Path video, Path posterJpg) {
+        List<String> cmd = List.of(
+                ffmpeg,
+                "-y",
+                "-ss", "1",
+                "-i", video.toString(),
+                "-vframes", "1",
+                "-q:v", "3",
+                posterJpg.toString()
+        );
+        run(cmd, 60);
+    }
 }

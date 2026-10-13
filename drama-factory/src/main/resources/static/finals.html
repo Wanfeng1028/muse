@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>成片库 - AI 短剧工坊</title>
-<link rel="stylesheet" href="/style.css">
+<title>成片库 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/v2.css">
 </head>
 <body>
@@ -20,23 +19,20 @@
 
 <main class="page">
   <div class="page-head">
-    <h1>成片库</h1>
+    <div>
+      <div class="kicker">成片 · FINAL CUT</div>
+      <h1 class="page-title">成片库</h1>
+    </div>
     <div class="controls">
-      <label>项目
-        <select id="projectSelect"></select>
-      </label>
-      <label>剧集
-        <select id="episodeSelect"></select>
-      </label>
+      <select id="projectSelect"></select>
+      <select id="episodeSelect"></select>
       <button id="generateBtn" class="btn btn-primary">生成成片</button>
     </div>
   </div>
 
-  <p id="hint" class="hint" hidden></p>
+  <p id="hint" class="hint"></p>
 
-  <section id="finalsList" class="finals-list">
-    <p class="empty">请先选择项目和剧集。</p>
-  </section>
+  <section id="finalsList" class="final-grid"></section>
 </main>
 
 <script src="/finals.js"></script>
