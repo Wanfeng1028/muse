@@ -54,6 +54,7 @@
     clearTimeout(el._t);
     el._t = setTimeout(function () {
       el.classList.remove('show');
+      el.textContent = '';
     }, 2600);
   }
 

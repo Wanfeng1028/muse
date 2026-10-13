@@ -546,6 +546,11 @@ label{color:var(--text-2);font-size:13px;}
   text-align:left;
 }
 
+/* 空 toast 不渲染：避免右下角出现无内容的悬浮胶囊 */
+.toast:empty{
+  display:none;
+}
+
 /* ============ timecode ============ */
 .timecode{
   font-family:var(--font-mono);

@@ -65,7 +65,7 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+  el._t = setTimeout(() => { el.classList.remove('show'); el.textContent = ''; }, 2600);
 }
 
 function getProjectId() {
@@ -122,7 +122,7 @@ function updateEpisodeMeta() {
     return;
   }
   const parts = [];
-  if (ep.title || ep.name) parts.push(ep.title || ep.name);
+  // 剧集标题已显示在下拉框中，此处只展示简介，避免标题重复渲染
   if (ep.summary) parts.push(ep.summary);
   meta.textContent = parts.join(' · ');
 }
