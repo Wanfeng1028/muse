@@ -59,7 +59,7 @@
 
 ## drama-factory「AI 短剧工坊」
 
-**定位**：短剧生产管理与剧本生成系统，服务短剧内容团队的立项到剧本初稿全流程。
+**定位**：短剧生产管理与剧本生成系统，v2 打通从剧本到成片的完整生产管线（剧本→分镜→AI 视频生成→ffmpeg 剪辑成片）。
 
 **技术栈**：Java 21 + Spring Boot 3.3.5 + Maven；Spring Data JPA + H2 文件库（可平滑切换 PostgreSQL/MySQL）；企业级分层 controller / service / repository / model / dto；内置 Web 控制台由 Spring 静态托管；JUnit 5 + MockMvc 集成测试；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 drama-factory/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
@@ -71,17 +71,21 @@
 4. 场景管理
 5. 基于大纲的四场式剧本自动生成（开场钩子 / 冲突升级 / 反转 / 高潮收尾，每场带英文视频生成提示词）
 6. 全局统计
+7. 分镜管理（分集→分镜 CRUD + 排序）
+8. 视频生成任务（Agnes agnes-video-2.5-flash / Mock 双 Provider，异步状态机 + 指数退避重试）
+9. 剪辑成片（ffmpeg 拼接 + SRT 字幕烧录 + H.264 mp4，预览/下载）
+10. 生产看板（项目→分集→分镜→任务→成片全流程状态）
 
-**状态**：工程化 v1（2026-10-13 完成，mvn test 全量 4 例通过、可执行 jar 打包成功、真实服务冒烟全过）。
+**状态**：v2 生产管线（2026-10-13 完成，mvn test 11 例全过、ffmpeg 真实链路冒烟通过、Web 新页面视觉验收通过）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Spring Boot 分层架构落地，项目/剧集/角色/场景 CRUD、四场式剧本生成、Web 控制台、CI 与多阶段 Dockerfile 就绪
+- v2 生产管线（2026-10-13）：分镜管理、视频生成任务状态机（Agnes/Mock）、ffmpeg 剪辑成片、生产看板、4 个 Web 新页面；mvn test 11 例全过
 
 **后续计划**：
 
 - 接入真实大模型生成剧本
-- 对接视频生成管线
 - 审核流状态机
 - 多用户与权限
 
