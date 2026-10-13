@@ -171,7 +171,7 @@
         row.className = 'ep-row';
         row.innerHTML = '<span class="t">第 ' + esc(p.episodeNo) + ' 集' +
           (p.title ? ' · ' + esc(p.title) : '') + '</span>' +
-          '<a class="btn btn-sm btn-outline-primary" href="/qc.html?finalCutId=' + p.cutId + '">去质检</a>';
+          '<a class="btn btn-sm btn-outline-primary" href="/qc.html?id=' + p.cutId + '">去质检</a>';
         box.appendChild(row);
       });
     } catch (e) { /* 忽略 */ }
@@ -226,6 +226,14 @@
         if (sel) sel.dispatchEvent(new Event('change'));
       } catch (err) { toast('创建失败：' + err.message); }
     });
+
+    /* 左侧项目选择器变化时同步右侧面板 */
+    var ps = $('projectSelect');
+    if (ps) {
+      ps.addEventListener('change', function () {
+        if (ps.value) selectProject(ps.value);
+      });
+    }
 
     loadProjects();
   }
