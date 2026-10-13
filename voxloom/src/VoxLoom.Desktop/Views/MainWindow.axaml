@@ -1,0 +1,106 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:VoxLoom.Desktop.ViewModels"
+        xmlns:views="using:VoxLoom.Desktop.Views"
+        x:Class="VoxLoom.Desktop.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="声纹工坊 VoxLoom"
+        Width="1280" Height="760"
+        MinWidth="960" MinHeight="560"
+        Background="#1C1A17"
+        Foreground="#E8E2D5">
+
+  <Grid ColumnDefinitions="*,320" RowDefinitions="Auto,*">
+
+    <!-- 顶部工具栏 -->
+    <Border Grid.Row="0" Grid.ColumnSpan="2" Classes="toolbar">
+      <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Left">
+        <TextBlock Text="声纹工坊" Classes="h1" VerticalAlignment="Center" Margin="2,0,12,0"/>
+        <TextBlock Text="{Binding ProjectName}" Classes="muted" VerticalAlignment="Center" Margin="0,0,16,0"/>
+        <Button Content="载入演示" Command="{Binding LoadDemoCommand}"/>
+        <Button Content="导入音频" Command="{Binding ImportAudioCommand}"/>
+        <Button Content="导入转写稿" Command="{Binding ImportTranscriptCommand}"/>
+        <Button Content="删除选中词" Command="{Binding DeleteSelectedCommand}"/>
+        <Button Content="弱化语气词" Command="{Binding WeakenFillersCommand}"/>
+        <Button Content="导出音频" Command="{Binding ExportAudioCommand}"/>
+        <Button Content="导出 EDL" Command="{Binding ExportEdlCommand}"/>
+      </StackPanel>
+    </Border>
+
+    <!-- 左侧：波形 + 状态栏 -->
+    <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="*,Auto">
+      <Border Grid.Row="0" Classes="panel" Margin="8,8,4,4" Padding="0">
+        <views:WaveformView x:Name="Waveform"/>
+      </Border>
+      <Border Grid.Row="1" Classes="statusbar" Margin="8,0,4,8">
+        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Left">
+          <TextBlock Text="{Binding StatusText}" TextWrapping="NoWrap"/>
+          <TextBlock Text="{Binding AudioFilePath}" Classes="muted" VerticalAlignment="Center"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!-- 右侧：转写稿列表 -->
+    <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,*" Margin="4,8,8,8">
+      <Border Grid.Row="0" Classes="panel" Padding="8,6">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <TextBlock Text="转写稿" Classes="h1"/>
+          <TextBlock Classes="muted" VerticalAlignment="Center">
+            <TextBlock.Text>
+              <MultiBinding StringFormat="共 {0} 个词">
+                <Binding Path="Words.Count"/>
+              </MultiBinding>
+            </TextBlock.Text>
+          </TextBlock>
+        </StackPanel>
+      </Border>
+
+      <ListBox Grid.Row="1"
+               x:Name="WordList"
+               ItemsSource="{Binding Words}"
+               SelectionMode="Multiple, Toggle"
+               Background="#26221D"
+               BorderBrush="#3A342C"
+               BorderThickness="1"
+               Margin="0,4,0,0">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:WordViewModel">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <TextBlock Grid.Column="0"
+                         Text="{Binding TimeLabel}"
+                         Classes="muted"
+                         Margin="0,0,8,0"
+                         VerticalAlignment="Center"/>
+              <Border Grid.Column="1"
+                      CornerRadius="2"
+                      Padding="4,1"
+                      HorizontalAlignment="Left">
+                <Border.Background>
+                  <SolidColorBrush Color="#E8833A" Opacity="0.22"/>
+                </Border.Background>
+                <Border.IsVisible>
+                  <Binding Path="IsFiller"/>
+                </Border.IsVisible>
+                <TextBlock Text="{Binding Text}" Foreground="#E8E2D5"/>
+              </Border>
+              <TextBlock Grid.Column="1"
+                         Text="{Binding Text}"
+                         VerticalAlignment="Center">
+                <TextBlock.IsVisible>
+                  <Binding Path="IsFiller" Converter="{x:Static BoolConverters.Not}"/>
+                </TextBlock.IsVisible>
+              </TextBlock>
+              <TextBlock Grid.Column="2"
+                         Text="已选"
+                         Classes="accent"
+                         FontSize="10"
+                         Margin="6,0,0,0"
+                         VerticalAlignment="Center"
+                         IsVisible="{Binding IsSelected}"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Grid>
+  </Grid>
+</Window>

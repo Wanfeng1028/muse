@@ -1,0 +1,48 @@
+name: CI
+
+"on":
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        # 可选扩展：macos-latest 也可加入矩阵，取消下一行注释即可
+        # os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    # 为什么 CI 不用 dotnet test：xunit testhost 在某些 Linux CI 沙箱中 IPC 通道不通会导致卡死/失败，
+    # 因此改用 tests/VoxLoom.SmokeRunner 反射直跑 [Fact] 测试；本地开发仍可正常使用 dotnet test。
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+            ${{ runner.os == 'Windows' && format('{0}\.nuget\packages', env.USERPROFILE) || '' }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj', '**/*.sln') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore VoxLoom.sln
+
+      - name: Build (Release)
+        run: dotnet build VoxLoom.sln -c Release --no-restore
+
+      - name: Run smoke tests (SmokeRunner)
+        run: dotnet run --project tests/VoxLoom.SmokeRunner -c Release --no-build
