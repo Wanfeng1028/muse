@@ -1,5 +1,28 @@
-/* drama-factory theme.css — Tabler 1.6.1 之上的最小覆盖层。
-   只做布局宽度与表格密度微调；按钮/卡片/徽标的视觉质感全部来自 Tabler 原生组件。 */
+/* ---- 深色暖炭化（v4.1）：去"黑底霓虹"AI 味 ----
+   诊断：Tabler 默认深色 = 冷调近纯黑底 oklch(20.46% 0 0) + 高饱和亮蓝主色 oklch(54.6% 0.1724 254.2)
+         + 近纯白字 oklch(92.19% 0 0)。
+   修法：只覆盖深色主题变量，不换库、不动结构、不动 API。零毛玻璃（无 backdrop-filter 属性）。
+   调参前后对照表见 docs/DESIGN.md。 */
+[data-bs-theme="dark"] {
+  --tblr-body-bg: #1c1917;          /* 暖炭底：拒绝纯黑 #000 与冷蓝黑 */
+  --tblr-body-bg-rgb: 28, 25, 23;
+  --tblr-body-color: #ede8e2;       /* 米白正文（对比度 ~13.8:1） */
+  --tblr-body-color-rgb: 237, 232, 226;
+  --tblr-bg-surface: #262220;       /* 卡片底：比页面高半档明度，靠微差分层 */
+  --tblr-muted: #b8b0a6;            /* 柔和暖灰（对比度 ~7.2:1） */
+  --tblr-muted-rgb: 184, 176, 166;
+  --tblr-border-color: #3a3532;     /* 低对比暖灰线，分割线不抢视觉 */
+  --tblr-primary: #4a6fa5;          /* 降饱和蓝：去霓虹，保留品牌识别 */
+  --tblr-primary-rgb: 74, 111, 165;
+  --tblr-success: #5e8c61;          /* 苔绿：收敛 */
+  --tblr-success-rgb: 94, 140, 97;
+  --tblr-danger: #b5544c;           /* 陶土红：收敛 */
+  --tblr-danger-rgb: 181, 84, 76;
+  --tblr-warning: #c98a3f;          /* 赭橙：与暖调一致 */
+  --tblr-warning-rgb: 201, 138, 63;
+}
+
+/* ---- 以下为 v4 原有：布局宽度与表格密度微调 ---- */
 .page-wrapper .container-xl {
   max-width: 1320px;
 }
