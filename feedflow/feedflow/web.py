@@ -1,4 +1,7 @@
-"""Web 蓝图：服务端渲染页面 + OPML 导入导出。"""
+"""Web 蓝图：服务端渲染页面 + OPML 导入导出。
+
+v1.2：新增摘要（digest）与兴趣设置页面。
+"""
 from __future__ import annotations
 
 import sqlite3
@@ -14,7 +17,7 @@ from flask import (
     url_for,
 )
 
-from . import opml, store
+from . import opml, ranking, store
 
 bp = Blueprint("web", __name__)
 
@@ -156,3 +159,87 @@ def healthz():
         __import__("json").dumps(payload, ensure_ascii=False),
         mimetype="application/json",
     )
+
+
+@bp.get("/digest")
+def digest_page():
+    """摘要页：按兴趣权重取 N 篇未读文章。"""
+    db_path = _cfg()["db_path"]
+    n = ranking.get_digest_n(db_path, default=int(_cfg().get("digest_n") or 20))
+    if n <= 0:
+        n = 20
+    items = ranking.get_digest(db_path, n)
+    return render_template(
+        "digest.html",
+        items=items,
+        n=n,
+        today=datetime.now(UTC).date().isoformat(),
+    )
+
+
+@bp.get("/settings/interests")
+def interests_page():
+    """兴趣设置页：关键词、源权重、摘要篇数。"""
+    db_path = _cfg()["db_path"]
+    keywords = ranking.get_keywords(db_path)
+    feed_weights = ranking.get_feed_weights(db_path)
+    digest_n = ranking.get_digest_n(db_path, default=int(_cfg().get("digest_n") or 20))
+    saved = request.args.get("saved")
+    err = request.args.get("err")
+    return render_template(
+        "interests.html",
+        keywords=keywords,
+        feed_weights=feed_weights,
+        digest_n=digest_n,
+        saved=saved,
+        err=err,
+    )
+
+
+@bp.post("/settings/interests/keywords")
+def interests_add_keyword():
+    """新增兴趣关键词。"""
+    db_path = _cfg()["db_path"]
+    kw = (request.form.get("keyword") or "").strip()
+    if not kw:
+        return redirect(url_for("web.interests_page", err="empty"))
+    try:
+        ranking.add_keyword(db_path, kw)
+    except ValueError:
+        return redirect(url_for("web.interests_page", err="empty"))
+    return redirect(url_for("web.interests_page", saved="1"))
+
+
+@bp.post("/settings/interests/keywords/<int:kid>/delete")
+def interests_delete_keyword(kid: int):
+    """删除兴趣关键词。"""
+    db_path = _cfg()["db_path"]
+    ranking.delete_keyword(db_path, kid)
+    return redirect(url_for("web.interests_page", saved="1"))
+
+
+@bp.post("/settings/interests/feeds/<int:fid>/weight")
+def interests_set_weight(fid: int):
+    """设置某个源的兴趣权重。"""
+    db_path = _cfg()["db_path"]
+    raw = (request.form.get("weight") or "").strip()
+    try:
+        w = float(raw)
+        ranking.set_feed_weight(db_path, fid, w)
+    except (ValueError, TypeError):
+        return redirect(url_for("web.interests_page", err="weight"))
+    return redirect(url_for("web.interests_page", saved="1"))
+
+
+@bp.post("/settings/interests/digest_n")
+def interests_set_digest_n():
+    """设置摘要页文章数量。"""
+    db_path = _cfg()["db_path"]
+    raw = (request.form.get("n") or "").strip()
+    try:
+        n = int(raw)
+        assert n >= 1
+        ranking.set_setting(db_path, "digest_n", n)
+    except (ValueError, TypeError, AssertionError):
+        return redirect(url_for("web.interests_page", err="n"))
+    return redirect(url_for("web.interests_page", saved="1"))

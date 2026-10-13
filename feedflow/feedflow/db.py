@@ -212,6 +212,36 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "CREATE INDEX IF NOT EXISTS idx_articles_cluster ON articles(cluster_id)",
         ],
     ),
+    (
+        2,
+        "新增关键词/来源权重/通用设置表（v1.2 重要性排序）",
+        [
+            (
+                "CREATE TABLE IF NOT EXISTS keywords (\n"
+                "    id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+                "    keyword TEXT NOT NULL UNIQUE,\n"
+                "    weight REAL NOT NULL DEFAULT 1.0,\n"
+                "    created_at TEXT NOT NULL\n"
+                ")"
+            ),
+            (
+                "CREATE TABLE IF NOT EXISTS feed_weights (\n"
+                "    feed_id INTEGER PRIMARY KEY REFERENCES feeds(id) ON DELETE CASCADE,\n"
+                "    weight REAL NOT NULL DEFAULT 1.0,\n"
+                "    learned REAL NOT NULL DEFAULT 1.0,\n"
+                "    updated_at TEXT NOT NULL\n"
+                ")"
+            ),
+            (
+                "CREATE TABLE IF NOT EXISTS settings (\n"
+                "    key TEXT PRIMARY KEY,\n"
+                "    value TEXT NOT NULL DEFAULT '',\n"
+                "    updated_at TEXT NOT NULL\n"
+                ")"
+            ),
+            "CREATE INDEX IF NOT EXISTS idx_keywords_keyword ON keywords(keyword)",
+        ],
+    ),
 ]
 
 

@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}兴趣设置 · feedflow{% endblock %}
+{% block content %}
+<style>
+  .ip-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 16px 64px;
+    text-align: left;
+    font-family: system-ui, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: #1C1A17;
+  }
+  .ip-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    letter-spacing: 0.01em;
+  }
+  .ip-lead {
+    font-size: 14px;
+    color: #6B6459;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+  .ip-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid #E7E2D6;
+    border-left: 3px solid #C2410C;
+    border-radius: 8px;
+    background: #FAFAF7;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .ip-banner.ok {
+    border-left-color: #4D7C0F;
+    color: #33520A;
+  }
+  .ip-banner.err {
+    border-left-color: #C2410C;
+    color: #7C2D12;
+  }
+  .ip-banner svg {
+    flex: none;
+  }
+  .ip-card {
+    background: #FAFAF7;
+    border: 1px solid #E7E2D6;
+    border-radius: 12px;
+    padding: 20px 20px 22px;
+    margin-bottom: 20px;
+  }
+  .ip-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .ip-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .ip-card-note {
+    font-size: 13px;
+    color: #6B6459;
+    line-height: 1.65;
+    margin: 0 0 16px;
+  }
+  .ip-form-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .ip-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 14px;
+    color: #1C1A17;
+    background: #FFFFFF;
+    border: 1px solid #E7E2D6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    outline: none;
+  }
+  .ip-input:focus {
+    border-color: #C2410C;
+    box-shadow: 0 0 0 2px rgba(194, 65, 12, 0.12);
+  }
+  .ip-input.num {
+    width: 96px;
+    flex: none;
+    text-align: right;
+  }
+  .ip-btn {
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 10px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ip-btn-primary {
+    background: #C2410C;
+    color: #FFFFFF;
+    border-color: #C2410C;
+  }
+  .ip-btn-primary:hover {
+    background: #A8370A;
+    border-color: #A8370A;
+  }
+  .ip-btn-ghost {
+    background: #FAFAF7;
+    color: #6B6459;
+    border-color: #E7E2D6;
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+  .ip-btn-ghost:hover {
+    color: #C2410C;
+    border-color: #C2410C;
+  }
+  .ip-empty {
+    font-size: 14px;
+    color: #8A8275;
+    margin: 4px 0 0;
+  }
+  .ip-list {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    border-top: 1px solid #E7E2D6;
+  }
+  .ip-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #E7E2D6;
+    font-size: 14px;
+  }
+  .ip-kw {
+    font-family: "Songti SC", Georgia, "Times New Roman", serif;
+    font-size: 15px;
+    color: #1C1A17;
+    word-break: break-all;
+  }
+  .ip-kw-weight {
+    font-family: system-ui, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-size: 12px;
+    color: #8A8275;
+    margin-left: 8px;
+  }
+  .ip-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 14px;
+  }
+  .ip-table th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: #8A8275;
+    padding: 0 0 8px;
+    border-bottom: 1px solid #E7E2D6;
+    white-space: nowrap;
+  }
+  .ip-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #E7E2D6;
+    vertical-align: middle;
+  }
+  .ip-table .col-feed {
+    width: 44%;
+  }
+  .ip-table .col-learned {
+    width: 20%;
+  }
+  .ip-table .col-weight {
+    width: 36%;
+  }
+  .ip-feed-name {
+    font-family: "Songti SC", Georgia, "Times New Roman", serif;
+    font-size: 15px;
+    color: #1C1A17;
+    word-break: break-word;
+  }
+  .ip-learned {
+    font-variant-numeric: tabular-nums;
+    color: #6B6459;
+  }
+  .ip-learned.dim {
+    color: #A39B8C;
+  }
+  .ip-weight-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .ip-section-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ip-sub {
+    font-size: 12px;
+    color: #8A8275;
+    margin: 6px 0 0;
+    line-height: 1.5;
+  }
+</style>
+
+<div class="ip-page">
+  <h1 class="ip-title">兴趣设置</h1>
+  <p class="ip-lead">这里决定「今日必读」怎么排。改完立刻生效。</p>
+
+  {% if saved == "1" %}
+  <div class="ip-banner ok" role="status">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 6L9 17l-5-5"/>
+    </svg>
+    <span>已保存。</span>
+  </div>
+  {% endif %}
+
+  {% if err %}
+  <div class="ip-banner err" role="alert">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 8v5"/>
+      <path d="M12 16h.01"/>
+    </svg>
+    <span>
+      {% if err == "empty" %}关键词不能为空。
+      {% elif err == "weight" %}权重必须是 0.1 到 5 之间的数字。
+      {% elif err == "n" %}篇数必须是大于 0 的整数。
+      {% else %}保存失败，请重试。{% endif %}
+    </span>
+  </div>
+  {% endif %}
+
+  <!-- 卡片 1：关键词 -->
+  <section class="ip-card">
+    <div class="ip-card-head">
+      <h2 class="ip-card-title">关键词</h2>
+    </div>
+    <p class="ip-card-note">标题或正文里出现这些词的文章会排前面。权重越大加分越多，默认 1。</p>
+
+    <form class="ip-form-row" method="post" action="/settings/interests/keywords">
+      <input class="ip-input" type="text" name="keyword" placeholder="比如：人工智能" autocomplete="off" maxlength="60" required>
+      <button class="ip-btn ip-btn-primary" type="submit">添加</button>
+    </form>
+
+    {% if keywords and keywords|length > 0 %}
+    <ul class="ip-list">
+      {% for kw in keywords %}
+      <li>
+        <span>
+          <span class="ip-kw">{{ kw.keyword }}</span><span class="ip-kw-weight">（权重 {{ kw.weight }}）</span>
+        </span>
+        <form method="post" action="/settings/interests/keywords/{{ kw.id }}/delete">
+          <button class="ip-btn ip-btn-ghost" type="submit">删除</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="ip-empty">还没加关键词</p>
+    {% endif %}
+  </section>
+
+  <!-- 卡片 2：来源权重 -->
+  <section class="ip-card">
+    <div class="ip-card-head">
+      <h2 class="ip-card-title">来源权重</h2>
+    </div>
+    <p class="ip-card-note">手动调某个源的分量，0.1 到 5，默认 1。「平时表现」是系统根据你的已读和星标算的，1 是平均线。</p>
+
+    {% if feed_weights and feed_weights|length > 0 %}
+    <table class="ip-table">
+      <thead>
+        <tr>
+          <th class="col-feed">来源</th>
+          <th class="col-learned">平时表现</th>
+          <th class="col-weight">手动权重</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fw in feed_weights %}
+        <tr>
+          <td class="col-feed"><span class="ip-feed-name">{{ fw.title }}</span></td>
+          <td class="col-learned">
+            {% if fw.learned is not none %}
+              <span class="ip-learned">{{ "%.2f"|format(fw.learned) }}</span>
+            {% else %}
+              <span class="ip-learned dim">—</span>
+            {% endif %}
+          </td>
+          <td class="col-weight">
+            <form class="ip-weight-form" method="post" action="/settings/interests/feeds/{{ fw.feed_id }}/weight">
+              <input class="ip-input num" type="number" name="weight" step="0.1" min="0.1" max="5" value="{{ fw.weight }}" required>
+              <button class="ip-btn ip-btn-ghost" type="submit">保存</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="ip-empty">还没订阅任何来源</p>
+    {% endif %}
+  </section>
+
+  <!-- 卡片 3：每天看几篇 -->
+  <section class="ip-card">
+    <div class="ip-card-head">
+      <h2 class="ip-card-title">每天看几篇</h2>
+    </div>
+    <p class="ip-card-note">今日必读每天最多列几篇，默认 20。</p>
+
+    <form class="ip-section-form" method="post" action="/settings/interests/digest_n">
+      <input class="ip-input num" type="number" name="n" min="1" step="1" value="{{ digest_n }}" required>
+      <button class="ip-btn ip-btn-primary" type="submit">保存</button>
+    </form>
+    <p class="ip-sub">这个数字只影响「今日必读」，不影响全部文章的浏览。</p>
+  </section>
+</div>
+{% endblock %}
