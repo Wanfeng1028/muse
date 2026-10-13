@@ -84,6 +84,7 @@
         <label for="pm-module">所属模块</label>
         <select id="pm-module">
           <option value="VIDEO">视频</option>
+          <option value="TEXT">文本</option>
           <option value="IMAGE">图片</option>
           <option value="MUSIC">音乐</option>
           <option value="TTS">TTS 语音</option>
@@ -148,6 +149,23 @@
 <script src="/vendor/lucide.min.js"></script>
 <script src="/shell.js"></script>
 <script src="/agents.js"></script>
+<div id="preset-modal" class="pv-modal is-hidden">
+  <div class="pv-dialog">
+    <div class="pv-dialog-head"><span id="preset-title">从预设添加</span></div>
+    <div class="pv-dialog-body" id="preset-list"></div>
+    <div class="pv-dialog-foot">
+      <button type="button" class="btn btn-quiet" id="preset-cancel">关闭</button>
+    </div>
+  </div>
+</div>
+<style>
+.preset-card{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.preset-card h4{margin:0 0 4px;font-size:14px}
+.preset-card .mono{font-size:12px;color:var(--text-2)}
+.preset-models{margin:8px 0;font-size:13px;color:var(--text-2)}
+.preset-keyrow{display:flex;gap:8px;margin-top:8px}
+.preset-keyrow input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:14px}
+</style>
 <script src="/providers.js"></script>
 </body>
 </html>

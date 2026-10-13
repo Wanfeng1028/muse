@@ -1,0 +1,45 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/auth}
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+# JWT：密钥必须来自环境变量 AUTH_JWT_SECRET，缺失则拒绝启动
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET:}
+    access-ttl-seconds: 900
+    refresh-ttl-seconds: 604800
+
+# OAuth 应用凭证（全空则对应渠道返回 501，handshake 未实测）
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8082/api/auth/oauth/google/callback}
+  github:
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
+    redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:8082/api/auth/oauth/github/callback}
+  apple:
+    client-id: ${APPLE_CLIENT_ID:}
+    team-id: ${APPLE_TEAM_ID:}
+    key-id: ${APPLE_KEY_ID:}
+    private-key: ${APPLE_PRIVATE_KEY:}
+    redirect-uri: ${APPLE_REDIRECT_URI:http://localhost:8082/api/auth/oauth/apple/callback}
+
+logging:
+  level:
+    com.dramaauth: INFO

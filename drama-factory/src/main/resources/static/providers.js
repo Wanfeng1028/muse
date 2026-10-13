@@ -44,6 +44,7 @@
 
   var MODULES = [
     { id: "VIDEO", label: "视频" },
+    { id: "TEXT", label: "文本" },
     { id: "IMAGE", label: "图片" },
     { id: "MUSIC", label: "音乐" },
     { id: "TTS", label: "TTS 语音" },
@@ -105,7 +106,10 @@
       if (!count) {
         html += '<p class="hint">暂无' + esc(mod.label) + "供应商</p>";
       }
-      html += '<div style="margin:4px 0 20px"><button type="button" class="btn btn-quiet btn-sm pv-provider-add" data-module="' +
+      html += '<div style="margin:4px 0 20px;display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="btn btn-quiet btn-sm pv-preset-add" data-module="' + esc(mod.id) +
+        '"><i data-lucide="sparkles"></i> 从预设添加</button>' +
+        '<button type="button" class="btn btn-quiet btn-sm pv-provider-add" data-module="' +
         esc(mod.id) + '"><i data-lucide="plus"></i> 添加' + esc(mod.label) + "供应商</button></div>";
     }
     listEl.innerHTML = html;
@@ -178,6 +182,11 @@
     var dels = listEl.querySelectorAll(".pv-del");
     for (var k = 0; k < dels.length; k++) {
       dels[k].onclick = function () { onDeleteProvider(this.getAttribute("data-pid")); };
+    }
+
+    var presetAdds = listEl.querySelectorAll(".pv-preset-add");
+    for (var r = 0; r < presetAdds.length; r++) {
+      presetAdds[r].onclick = function () { openPresetPicker(this.getAttribute("data-module")); };
     }
 
     var provAdds = listEl.querySelectorAll(".pv-provider-add");
@@ -331,6 +340,80 @@
     });
   }
 
+  var presetModal = document.getElementById("preset-modal");
+
+  function openPresetPicker(module) {
+    var title = document.getElementById("preset-title");
+    var listBox = document.getElementById("preset-list");
+    if (title) title.textContent = "从预设添加" + moduleLabel(module) + "供应商";
+    if (listBox) listBox.innerHTML = '<p class="hint">加载预设中…</p>';
+    openModal(presetModal);
+    api("GET", "/api/providers/presets?module=" + encodeURIComponent(module), null, function (status, data) {
+      if (!(status >= 200 && status < 300 && Array.isArray(data))) {
+        if (listBox) listBox.innerHTML = '<p class="hint">预设加载失败</p>';
+        return;
+      }
+      if (!data.length) {
+        if (listBox) listBox.innerHTML = '<p class="hint">该模块暂无预设，可手动添加</p>';
+        return;
+      }
+      var h = "";
+      for (var i = 0; i < data.length; i++) {
+        h += renderPreset(data[i]);
+      }
+      if (listBox) {
+        listBox.innerHTML = h;
+        var adds = listBox.querySelectorAll(".preset-add");
+        for (var j = 0; j < adds.length; j++) {
+          adds[j].onclick = onPresetAdd;
+        }
+      }
+      icons();
+    });
+  }
+
+  function renderPreset(p) {
+    var h = '<div class="preset-card" data-preset="' + esc(p.id) + '">';
+    h += "<h4>" + esc(p.name) + "</h4>";
+    if (p.description) h += '<p class="hint">' + esc(p.description) + "</p>";
+    if (p.apiAddress) h += '<div class="mono">' + esc(p.apiAddress) + "</div>";
+    if (p.models && p.models.length) {
+      h += '<div class="preset-models">';
+      for (var i = 0; i < p.models.length; i++) {
+        var m = p.models[i];
+        h += "<div>" + esc(m.displayName) + ' <span class="mono">' + esc(m.modelId) + "</span></div>";
+      }
+      h += "</div>";
+    }
+    h += '<div class="preset-keyrow">';
+    h += '<input type="password" class="preset-key" placeholder="粘贴你的 API Key" />';
+    h += '<button type="button" class="btn btn-primary btn-sm preset-add">添加</button>';
+    h += "</div></div>";
+    return h;
+  }
+
+  function onPresetAdd() {
+    var card = this.closest(".preset-card");
+    var presetId = card.getAttribute("data-preset");
+    var keyInput = card.querySelector(".preset-key");
+    var key = (keyInput.value || "").trim();
+    if (!key) { toast("请先粘贴 API Key", "error"); keyInput.focus(); return; }
+    this.disabled = true;
+    api("POST", "/api/providers/from-preset", { presetId: presetId, apiKey: key }, function (status) {
+      if (status >= 200 && status < 300) {
+        toast("已添加", "success");
+        closeModal(presetModal);
+        loadProviders();
+      } else if (status === 404) {
+        toast("预设不存在", "error");
+      } else {
+        toast("添加失败", "error");
+      }
+      var btn = card.querySelector(".preset-add");
+      if (btn) btn.disabled = false;
+    });
+  }
+
   function openModelModal(pid, mid) {
     editingModelProviderId = pid;
     editingModelId = mid || null;
@@ -439,6 +522,11 @@
     providerModal.onclick = function (e) {
       if (e.target === providerModal) closeModal(providerModal);
     };
+    var presetCancel = document.getElementById("preset-cancel");
+    if (presetCancel) presetCancel.onclick = function () { closeModal(presetModal); };
+    if (presetModal) presetModal.onclick = function (e) {
+      if (e.target === presetModal) closeModal(presetModal);
+    };
     modelModal.onclick = function (e) {
       if (e.target === modelModal) closeModal(modelModal);
     };
@@ -446,6 +534,7 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" || e.keyCode === 27) {
         if (!providerModal.classList.contains("is-hidden")) closeModal(providerModal);
+        if (presetModal && !presetModal.classList.contains("is-hidden")) closeModal(presetModal);
         if (!modelModal.classList.contains("is-hidden")) closeModal(modelModal);
       }
     });

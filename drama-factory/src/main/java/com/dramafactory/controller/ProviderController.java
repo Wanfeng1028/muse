@@ -1,5 +1,6 @@
 package com.dramafactory.controller;
 
+import com.dramafactory.service.PresetService;
 import com.dramafactory.service.ProviderService;
 import com.dramafactory.service.ProviderService.ModelDto;
 import com.dramafactory.service.ProviderService.ProviderDto;
@@ -27,8 +28,11 @@ public class ProviderController {
 
     private final ProviderService providerService;
 
-    public ProviderController(ProviderService providerService) {
+    private final PresetService presetService;
+
+    public ProviderController(ProviderService providerService, PresetService presetService) {
         this.providerService = providerService;
+        this.presetService = presetService;
     }
 
     /* ---------- 请求体 ---------- */
@@ -71,6 +75,7 @@ public class ProviderController {
     public List<Map<String, String>> listModules() {
         return List.of(
                 Map.of("id", "VIDEO", "label", "视频"),
+                Map.of("id", "TEXT", "label", "文本"),
                 Map.of("id", "IMAGE", "label", "图片"),
                 Map.of("id", "MUSIC", "label", "音乐"),
                 Map.of("id", "TTS", "label", "TTS 语音"),
@@ -136,5 +141,26 @@ public class ProviderController {
                                             @PathVariable Long modelId) {
         providerService.deleteModel(id, modelId);
         return ResponseEntity.noContent().build();
+    }
+
+    /* ---------- 预设 ---------- */
+
+    /** 供应商预设模板：base URL 与模型 id 预填，用户只填 key */
+    @GetMapping("/presets")
+    public List<PresetService.Preset> listPresets(@RequestParam(required = false) String module) {
+        return presetService.listPresets(module);
+    }
+
+    public record FromPresetRequest(String presetId, String apiKey) {
+    }
+
+    /** 从预设创建供应商：用户只填自己的 key */
+    @PostMapping("/from-preset")
+    public ResponseEntity<ProviderDto> createFromPreset(@RequestBody FromPresetRequest req) {
+        if (req.presetId() == null || req.presetId().trim().isEmpty()
+                || req.apiKey() == null || req.apiKey().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(presetService.createFromPreset(req.presetId().trim(), req.apiKey()));
     }
 }

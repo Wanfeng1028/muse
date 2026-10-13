@@ -79,3 +79,8 @@ resilience4j:
         limit-for-period: 10
         limit-refresh-period: 10s
         timeout-duration: 0s
+
+# 资源方 JWT 验签：与 auth-service 共用 AUTH_JWT_SECRET；为空=开放模式
+auth:
+  jwt:
+    secret: ${AUTH_JWT_SECRET:}

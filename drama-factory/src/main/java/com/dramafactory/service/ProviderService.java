@@ -20,7 +20,7 @@ import java.util.List;
 public class ProviderService {
 
     /** 供应商模块：视频 / 图片 / 音乐 / TTS 语音 / 数字人 */
-    public static final List<String> MODULES = List.of("VIDEO", "IMAGE", "MUSIC", "TTS", "AVATAR");
+    public static final List<String> MODULES = List.of("VIDEO", "TEXT", "IMAGE", "MUSIC", "TTS", "AVATAR");
 
     private final MediaProviderRepository providerRepository;
     private final ProviderModelRepository modelRepository;

@@ -1,6 +1,9 @@
-# drama-factory 一键启动
+# drama-factory 一键启动（含 auth 微服务 + nginx）
 #
-# 首次启动后打开 http://localhost:8081 → 进入「设置」页填写各平台 Key。
+# 首次：
+#   cp .env.example .env   # 填 AUTH_JWT_SECRET（openssl rand -base64 48）
+#   docker compose up -d --build
+# 打开 http://localhost → 主服务；/api/auth/* → auth-service。
 # 本机目录 ./data 已加入 .gitignore，不会提交到仓库。
 #
 # 常用命令：
@@ -10,17 +13,58 @@
 #
 # 说明：VIDEO_PROVIDER=mock 表示使用 mock 通道（不烧真钱，先跑通链路）。
 #       改为 qwen / agnes 即切换到对应真实通道。
+#       AUTH_JWT_SECRET 为空时主服务 API 为开放模式（仅适合单机）；
+#       auth-service 缺失该密钥则拒绝启动。
 
 services:
+  auth:
+    build: ./auth-service
+    expose:
+      - "8082"
+    env_file:
+      - .env
+    environment:
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - APPLE_CLIENT_ID=${APPLE_CLIENT_ID:-}
+      - APPLE_TEAM_ID=${APPLE_TEAM_ID:-}
+      - APPLE_KEY_ID=${APPLE_KEY_ID:-}
+      - APPLE_PRIVATE_KEY=${APPLE_PRIVATE_KEY:-}
+    volumes:
+      - ./auth-data:/app/data
+    restart: unless-stopped
+
   app:
     build: .
+    expose:
+      - "8081"
     ports:
       - "8081:8081"
     volumes:
       - ./data:/app/data
+    env_file:
+      - .env
     environment:
       PORT: "8081"
+      # 与 auth-service 共用密钥做 JWT 验签；为空=开放模式
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-}
       # 视频通道：mock 先跑通链路；改 qwen / agnes 即切换通道
       VIDEO_PROVIDER: "mock"
       DRAMA_STORAGE: "/app/data/media"
+    restart: unless-stopped
+    depends_on:
+      - auth
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth
+      - app
     restart: unless-stopped
