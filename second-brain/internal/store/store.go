@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Wanfeng1028/muse/second-brain/internal/review"
 	_ "modernc.org/sqlite"
 )
 
@@ -126,6 +127,15 @@ func createSchema(db *sql.DB) error {
 			target_title TEXT NOT NULL,
 			target_id INTEGER REFERENCES notes(id) ON DELETE SET NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS reviews (
+			note_id INTEGER PRIMARY KEY REFERENCES notes(id) ON DELETE CASCADE,
+			ef REAL NOT NULL DEFAULT 2.5,
+			interval_days INTEGER NOT NULL DEFAULT 0,
+			repetitions INTEGER NOT NULL DEFAULT 0,
+			due_date TEXT NOT NULL,
+			last_reviewed_at TEXT,
+			reviewed_count INTEGER NOT NULL DEFAULT 0
+		)`,
 	}
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {
@@ -205,6 +215,11 @@ func (s *Store) CreateNote(n Note) (Note, error) {
 	}
 	// 回填：其他笔记的 links 可能指向本笔记标题。
 	if err := resolveBacklinks(tx, n.Title, id); err != nil {
+		return Note{}, err
+	}
+	st := review.InitialState(time.Now())
+	if _, err := tx.Exec(`INSERT INTO reviews(note_id, ef, interval_days, repetitions, due_date) VALUES(?,?,?,?,?)`,
+		id, st.EF, st.IntervalDays, st.Repetitions, st.DueDate); err != nil {
 		return Note{}, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -729,3 +744,5 @@ func resolveBacklinks(tx *sql.Tx, title string, noteID int64) error {
 	)
 	return err
 }
+
+// 复习相关函数见 review.go。

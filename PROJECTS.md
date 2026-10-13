@@ -55,7 +55,7 @@
 
 ## second-brain「第二大脑」
 
-**定位**：个人知识库系统，支持笔记、标签、搜索、双链与知识图谱，构建可生长的个人知识网络。
+**定位**：个人知识库系统，支持笔记、标签、搜索、双链与知识图谱，构建可生长的个人知识网络。**灵魂功能**：会主动帮你复习的第二大脑——SM-2 遗忘曲线调度 + 抽认卡复习流 + 每日回顾推送。
 
 **技术栈**：Go 1.23 单二进制；标准库 net/http 提供 HTTP 服务，modernc.org/sqlite 作为纯 Go SQLite 驱动；go:embed 内嵌 Web UI 静态资源；go test 覆盖单元测试与集成测试；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 second-brain/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
@@ -67,15 +67,19 @@
 4. [[双链]]与知识图谱
 5. Markdown 渲染与预览
 6. 统计概览
+7. 主动复习引擎（v0.2.0）：SM-2 间隔重复（`internal/review` 纯函数包）、`reviews` 表（建笔记自动建行，due=次日）、到期队列 `GET /api/review/queue`、评分 `POST /api/review/{id}`（忘记0/困难3/良好4/简单5）、统计 `GET /api/review/stats`（待复习数/7日量/平均EF/连续天数）、每日回顾 `GET /api/review/digest`、抽认卡复习 UI（正面/翻面/四档评分/完成态）+ 首页横幅 + 侧边栏 badge
 
-**状态**：工程化 v1（2026-10-13 完成，构建、vet、全量测试与真实服务冒烟均已跑通）。
+**状态**：v0.2.0「主动复习引擎」（2026-10-13）：go build/vet/test 全过（api/store/review/markdown/search 五包）；真实服务冒烟：建笔记→队列→评分推进（间隔 1→6 天）→统计→digest 全链路；5 张真实截图（home/review-front/review-back/review-graded/review-done）亲眼验收通过。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：单二进制架构落地，内嵌 Web UI、SQLite 持久化、双链与图谱能力、CI 与多阶段构建就绪
+- v0.2.0 主动复习引擎（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；SM-2 纯函数包 + 6 确定性单测；`reviews` 表与 4 组 API + store/api 集成测试；抽认卡复习视图 + 每日回顾 digest；Web 三件套一致性重建——修了 v1 遗留的 4 个真实 bug（①JS/HTML id 全错位致 UI 不可用；②`GET /` 被 Go FileServer 对 `/index.html` 发 301 到 `./` 致首页打不开，改直读文件；③`review.go` 在 rows 未关闭时嵌套查询，`:memory:` 下换连接报 no such table；④CSS 的 display 规则覆盖 `[hidden]` 致翻面/完成态同屏）；README 补复习章节 + API 表 + 截图；CHANGELOG.md 新增
 
 **后续计划**：
 
+- 外部推送（邮件/微信）v0.3
+- 多用户复习隔离
 - 数据导入/导出
 - 附件支持
 - 反向链接面板

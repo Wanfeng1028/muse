@@ -7,7 +7,7 @@
 | 项目 | 说明 | 状态 |
 | --- | --- | --- |
 | [kaoyan-os](./kaoyan-os) | 「考研指挥舱」——全栈考研复习管理系统。pnpm monorepo：Fastify 5 + TypeScript + SQLite 后端，Vite 6 + React 18 前端，packages/shared 共享类型。六大模块：复习计划、番茄专注、错题本、单词 SRS、真题统计、仪表盘。 | 工程化 v1 |
-| [second-brain](./second-brain) | 「第二大脑」——个人知识库系统。Go 单二进制：net/http + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI。功能：笔记 CRUD、标签、全文搜索相关性排序、[[双链]] 与知识图谱、Markdown 预览、统计。 | 工程化 v1 |
+| [second-brain](./second-brain) | 「第二大脑」——个人知识库系统。Go 单二进制：net/http + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI。功能：笔记 CRUD、标签、全文搜索相关性排序、[[双链]] 与知识图谱、Markdown 预览、统计；v0.2.0 灵魂功能「主动复习引擎」：SM-2 间隔重复 + 抽认卡复习流 + 每日回顾，笔记写完第二天自动进入复习。 | v0.2.0 |
 | [drama-factory](./drama-factory) | 「AI 短剧工坊」——短剧生产管理与剧本生成系统。Java 21 + Spring Boot 3.3 + Spring Data JPA + H2，企业级分层架构，内置 Web 控制台。v2 打通剧本→分镜→AI 视频生成→ffmpeg 剪辑成片完整管线：分镜管理、视频任务状态机（mock/agnes 双 provider）→成片剪辑（拼接+SRT 字幕烧录）、生产看板。v2.1 生产级补强：Flyway 版本化迁移、提交幂等、优雅关闭。 | 工程化 v2.1 |
 | [mini-os](./mini-os) | 「网页操作系统」——浏览器里的桌面操作系统。Rust + Axum 0.7 + WebSocket + rusqlite（bundled SQLite）后端，原生 HTML/CSS/JS 可拖拽多窗口桌面。功能：虚拟文件系统 CRUD、应用注册表（文件管理器/编辑器/终端/设置/关于）、主题与壁纸持久化、WebSocket echo、统计。 | 工程化 v1 |
 | [ledger](./ledger) | 「钱迹 · 个人财务管家」——个人财务管理系统。Python + FastAPI + SQLAlchemy 2.0（aiosqlite）+ SQLite，Jinja2 SSR Web UI（服务端渲染 SVG 图表）。功能：多账户记账、分类体系、月度预算与超支预警、统计分析、CSV 导入导出、周期账单提醒。 | 工程化 v1 |

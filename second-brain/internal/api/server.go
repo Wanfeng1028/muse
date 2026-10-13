@@ -205,6 +205,9 @@ func NewServer(st *store.Store) http.Handler {
 		writeJSON(w, http.StatusOK, g)
 	})
 
+	// 复习引擎路由（见 review.go）
+	RegisterReviewRoutes(mux, st)
+
 	// 静态文件服务，根路径返回 index.html
 	staticFS, err := fs.Sub(web.StaticFS(), ".")
 	if err != nil {
@@ -220,9 +223,15 @@ func NewServer(st *store.Store) http.Handler {
 				return
 			}
 		}
-		r2 := r.Clone(r.Context())
-		r2.URL.Path = "/index.html"
-		fileServer.ServeHTTP(w, r2)
+		// 注意：不能用 fileServer serve "/index.html"——Go 的 FileServer 会把
+		// 形如 /index.html 的路径 301 重定向到 ./，故直接读文件写入。
+		data, err := fs.ReadFile(staticFS, "index.html")
+		if err != nil {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(data)
 	})
 
 	return mux

@@ -1,243 +1,289 @@
-// second-brain 前端主逻辑（原生 JS，无框架）
+// second-brain app.js — 原生 JS，无框架
 
-// 全局状态
-const state = {
-  notes: [],        // 当前列表中的笔记
-  currentId: null,  // 当前选中的笔记 id
-  tag: ""           // 当前过滤标签（空字符串表示全部）
-};
-
-// 统一封装 fetch，返回 JSON
+// ---------- 工具 ----------
 async function api(path, opts = {}) {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...opts
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`API ${path} 失败: ${res.status} ${text}`);
-  }
-  // 204 无内容
+  const conf = { headers: { "Content-Type": "application/json" }, ...opts };
+  if (conf.body && typeof conf.body !== "string") conf.body = JSON.stringify(conf.body);
+  const res = await fetch(path, conf);
   if (res.status === 204) return null;
-  return res.json();
+  let data = null;
+  const text = await res.text();
+  if (text) {
+    try { data = JSON.parse(text); } catch { data = text; }
+  }
+  if (!res.ok) {
+    const msg = (data && data.error) || (typeof data === "string" && data) || `请求失败 (${res.status})`;
+    throw new Error(msg);
+  }
+  return data;
 }
 
-// 获取 DOM 元素的快捷方法
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const $ = (id) => document.getElementById(id);
 
-// 加载笔记列表（按 tag 过滤）
+// ---------- 状态 ----------
+const state = {
+  notes: [],
+  currentId: null,
+  tag: "",
+  view: "editor",
+};
+
+// ---------- 视图切换 ----------
+function showView(name) {
+  state.view = name;
+  ["editor", "graph", "review"].forEach((v) => {
+    const el = $("editor-view");
+    if (!el) return;
+  });
+  const views = { editor: $("editor-view"), graph: $("graph-view"), review: $("review-view") };
+  Object.entries(views).forEach(([k, el]) => {
+    if (el) el.hidden = k !== name;
+  });
+  const navNotes = $("nav-notes");
+  const navReview = $("nav-review");
+  if (navNotes) navNotes.classList.toggle("is-active", name === "editor" || name === "graph");
+  if (navReview) navReview.classList.toggle("is-active", name === "review");
+}
+window.__sbShowView = showView;
+
+// ---------- 列表 ----------
 async function loadNotes() {
+  const q = state.tag ? `?tag=${encodeURIComponent(state.tag)}` : "";
   try {
-    const q = state.tag ? `?tag=${encodeURIComponent(state.tag)}` : "";
     const data = await api(`/api/notes${q}`);
-    state.notes = Array.isArray(data) ? data : (data.notes || []);
-    renderList();
+    state.notes = Array.isArray(data) ? data : (data && data.notes) || [];
   } catch (e) {
-    console.error(e);
-    $("list").innerHTML = `<div class="error">加载笔记失败: ${e.message}</div>`;
+    state.notes = [];
+    console.error("加载笔记失败", e);
   }
+  renderList();
 }
 
-// 渲染笔记列表
 function renderList() {
-  const list = $("list");
+  const listEl = $("note-list");
+  const countEl = $("list-count");
+  const titleEl = $("list-title");
+  if (!listEl) return;
+
+  if (titleEl) titleEl.textContent = state.tag ? `#${state.tag}` : "全部笔记";
+  if (countEl) countEl.textContent = `共 ${state.notes.length} 篇`;
+
   if (!state.notes.length) {
-    list.innerHTML = `<div class="empty">暂无笔记</div>`;
+    listEl.innerHTML = `<div class="empty-hint">还没有笔记，点上面「新建」写一条吧</div>`;
     return;
   }
-  list.innerHTML = state.notes.map(n => {
-    const active = n.id === state.currentId ? " active" : "";
-    const tags = (n.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
-    const preview = (n.content || "").slice(0, 60).replace(/\n/g, " ");
-    return `
-      <div class="note-item${active}" data-id="${n.id}">
-        <div class="note-title">${escapeHtml(n.title || "(无标题)")}</div>
-        <div class="note-preview">${escapeHtml(preview)}</div>
-        <div class="note-tags">${tags}</div>
+
+  listEl.innerHTML = state.notes
+    .map((n) => {
+      const tags = (n.tags || []).map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join("");
+      const body = (n.body || "").slice(0, 60).replace(/\s+/g, " ");
+      const date = n.updated_at ? new Date(n.updated_at).toLocaleDateString("zh-CN") : "";
+      const active = n.id === state.currentId ? " is-active" : "";
+      return `<div class="note-item${active}" data-id="${n.id}">
+        <div class="note-item-title">${escapeHtml(n.title || "无标题")}</div>
+        <div class="note-item-body">${escapeHtml(body)}</div>
+        <div class="note-item-foot">
+          <div class="note-item-tags">${tags}</div>
+          <div class="note-item-date">${escapeHtml(date)}</div>
+        </div>
       </div>`;
-  }).join("");
+    })
+    .join("");
 
-  // 绑定点击事件
-  list.querySelectorAll(".note-item").forEach(el => {
-    el.addEventListener("click", () => selectNote(el.dataset.id));
+  listEl.querySelectorAll(".note-item").forEach((el) => {
+    el.addEventListener("click", () => selectNote(Number(el.dataset.id)));
   });
 }
 
-// 加载所有标签
-async function loadTags() {
-  try {
-    const data = await api("/api/tags");
-    const tags = Array.isArray(data) ? data : (data.tags || []);
-    renderTags(tags);
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-// 渲染标签栏
-function renderTags(tags) {
-  const box = $("tags");
-  const all = `<span class="tag${state.tag === "" ? " active" : ""}" data-tag="">全部</span>`;
-  const items = tags.map(t => {
-    const name = typeof t === "string" ? t : t.name;
-    const count = typeof t === "string" ? "" : ` (${t.count})`;
-    const active = state.tag === name ? " active" : "";
-    return `<span class="tag${active}" data-tag="${escapeHtml(name)}">${escapeHtml(name)}${count}</span>`;
-  }).join("");
-  box.innerHTML = all + items;
-
-  box.querySelectorAll(".tag").forEach(el => {
-    el.addEventListener("click", () => {
-      state.tag = el.dataset.tag || "";
-      loadNotes();
-      loadTags();
-    });
-  });
-}
-
-// 加载统计信息
-async function loadStats() {
-  try {
-    const s = await api("/api/stats");
-    const parts = [];
-    if (s.notes != null) parts.push(`笔记 ${s.notes}`);
-    if (s.tags != null) parts.push(`标签 ${s.tags}`);
-    if (s.links != null) parts.push(`链接 ${s.links}`);
-    $("stats").textContent = parts.join(" · ") || "";
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-// 选中笔记，填充编辑器
+// ---------- 选中笔记 ----------
 async function selectNote(id) {
-  state.currentId = id;
   try {
-    const n = await api(`/api/notes/${encodeURIComponent(id)}`);
-    $("title").value = n.title || "";
-    $("content").value = n.content || "";
-    $("tags-input").value = (n.tags || []).join(", ");
-    // 隐藏预览
-    $("preview").style.display = "none";
-    $("content").style.display = "";
-    // 刷新列表高亮
+    const n = await api(`/api/notes/${id}`);
+    state.currentId = n.id;
+    if ($("editor-title")) $("editor-title").value = n.title || "";
+    if ($("editor-body")) $("editor-body").value = n.body || "";
+    if ($("editor-tags")) $("editor-tags").value = (n.tags || []).join(", ");
+    if ($("editor-pinned")) $("editor-pinned").checked = !!n.pinned;
+    const pv = $("preview-box");
+    const body = $("editor-body");
+    if (pv) pv.hidden = true;
+    if (body) body.hidden = false;
     renderList();
   } catch (e) {
-    alert("加载笔记失败: " + e.message);
+    alert("打开失败：" + e.message);
   }
 }
 
-// 新建笔记（清空编辑器）
+// ---------- 新建 / 保存 / 删除 ----------
 function newNote() {
   state.currentId = null;
-  $("title").value = "";
-  $("content").value = "";
-  $("tags-input").value = "";
-  $("preview").style.display = "none";
-  $("content").style.display = "";
+  if ($("editor-title")) $("editor-title").value = "";
+  if ($("editor-body")) $("editor-body").value = "";
+  if ($("editor-tags")) $("editor-tags").value = "";
+  if ($("editor-pinned")) $("editor-pinned").checked = false;
+  const pv = $("preview-box");
+  const body = $("editor-body");
+  if (pv) pv.hidden = true;
+  if (body) body.hidden = false;
   renderList();
-  $("title").focus();
+  if ($("editor-title")) $("editor-title").focus();
 }
 
-// 保存笔记（POST 新建 / PUT 更新）
 async function saveNote() {
-  const title = $("title").value.trim();
-  const content = $("content").value;
-  const tagsRaw = $("tags-input").value;
-  // 逗号拆分标签，去空白、去重
-  const tags = tagsRaw
-    .split(",")
-    .map(t => t.trim())
-    .filter(Boolean);
-  const payload = { title, content, tags };
+  const title = ($("editor-title")?.value || "").trim();
+  const body = $("editor-body")?.value || "";
+  const rawTags = ($("editor-tags")?.value || "").split(",");
+  const tags = [...new Set(rawTags.map((t) => t.trim()).filter(Boolean))];
+  const pinned = !!$("editor-pinned")?.checked;
 
+  if (!title && !body.trim()) {
+    alert("标题和内容都是空的，先写点啥吧");
+    return;
+  }
+
+  const payload = { title, body, tags, pinned };
   try {
     let saved;
     if (state.currentId) {
-      saved = await api(`/api/notes/${encodeURIComponent(state.currentId)}`, {
-        method: "PUT",
-        body: JSON.stringify(payload)
-      });
+      saved = await api(`/api/notes/${state.currentId}`, { method: "PUT", body: payload });
     } else {
-      saved = await api("/api/notes", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+      saved = await api("/api/notes", { method: "POST", body: payload });
     }
-    if (saved && saved.id != null) state.currentId = saved.id;
-    await loadNotes();
-    await loadTags();
-    await loadStats();
-    await drawGraph();
+    if (saved && saved.id) state.currentId = saved.id;
+    await Promise.all([loadNotes(), loadTags(), loadStats()]);
+    if (state.view === "graph") drawGraph();
   } catch (e) {
-    alert("保存失败: " + e.message);
+    alert("保存失败：" + e.message);
   }
 }
 
-// 删除当前笔记
 async function deleteNote() {
   if (!state.currentId) {
-    alert("没有选中的笔记");
+    alert("还没选中笔记呢");
     return;
   }
-  if (!confirm("确定删除该笔记吗？")) return;
+  if (!confirm("确定要删掉这条笔记吗？删了就找不回来了。")) return;
   try {
-    await api(`/api/notes/${encodeURIComponent(state.currentId)}`, { method: "DELETE" });
+    await api(`/api/notes/${state.currentId}`, { method: "DELETE" });
     state.currentId = null;
-    $("title").value = "";
-    $("content").value = "";
-    $("tags-input").value = "";
-    await loadNotes();
-    await loadTags();
-    await loadStats();
-    await drawGraph();
+    if ($("editor-title")) $("editor-title").value = "";
+    if ($("editor-body")) $("editor-body").value = "";
+    if ($("editor-tags")) $("editor-tags").value = "";
+    if ($("editor-pinned")) $("editor-pinned").checked = false;
+    await Promise.all([loadNotes(), loadTags(), loadStats()]);
   } catch (e) {
-    alert("删除失败: " + e.message);
+    alert("删除失败：" + e.message);
   }
 }
 
-// 搜索
+// ---------- 搜索 ----------
+let searchTimer = null;
+
 async function doSearch() {
-  const q = $("search").value.trim();
+  const q = ($("search-input")?.value || "").trim();
   if (!q) {
     await loadNotes();
     return;
   }
   try {
     const data = await api(`/api/search?q=${encodeURIComponent(q)}`);
-    state.notes = Array.isArray(data) ? data : (data.results || data.notes || []);
-    renderList();
+    state.notes = Array.isArray(data) ? data : (data && data.notes) || [];
   } catch (e) {
-    alert("搜索失败: " + e.message);
+    console.error("搜索失败", e);
+    state.notes = [];
+  }
+  renderList();
+}
+
+// ---------- 标签 ----------
+async function loadTags() {
+  try {
+    const data = await api("/api/tags");
+    state.tags = Array.isArray(data) ? data : (data && data.tags) || [];
+  } catch (e) {
+    state.tags = [];
+  }
+  renderTags();
+}
+
+function renderTags() {
+  const el = $("tag-list");
+  if (!el) return;
+  const allActive = state.tag === "" ? " is-active" : "";
+  const total = state.notes.length;
+  let html = `<span class="chip tag-chip${allActive}" data-tag="">全部</span>`;
+  html += (state.tags || [])
+    .map((t) => {
+      const name = typeof t === "string" ? t : t.name;
+      const count = typeof t === "string" ? "" : t.count;
+      const active = state.tag === name ? " is-active" : "";
+      return `<span class="chip tag-chip${active}" data-tag="${escapeHtml(name)}">${escapeHtml(name)}${count != null ? ` <b>${count}</b>` : ""}</span>`;
+    })
+    .join("");
+  el.innerHTML = html;
+
+  el.querySelectorAll(".tag-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      state.tag = chip.dataset.tag || "";
+      if ($("search-input")) $("search-input").value = "";
+      loadNotes();
+      renderTags();
+    });
+  });
+}
+
+// ---------- 统计 ----------
+async function loadStats() {
+  try {
+    const s = await api("/api/stats");
+    if ($("stat-notes")) $("stat-notes").textContent = s.notes ?? 0;
+    if ($("stat-tags")) $("stat-tags").textContent = s.tags ?? 0;
+    if ($("stat-links")) $("stat-links").textContent = s.links ?? 0;
+    if ($("stat-words")) $("stat-words").textContent = s.words ?? 0;
+  } catch (e) {
+    console.error("统计加载失败", e);
   }
 }
 
-// 切换预览（Markdown → HTML）
+// ---------- 预览 ----------
 async function togglePreview() {
-  if (!state.currentId) {
-    alert("请先保存或选中一篇笔记");
+  const pv = $("preview-box");
+  const body = $("editor-body");
+  if (!pv || !body) return;
+
+  if (!pv.hidden) {
+    pv.hidden = true;
+    body.hidden = false;
     return;
   }
-  const preview = $("preview");
-  const content = $("content");
-  if (preview.style.display === "block") {
-    preview.style.display = "none";
-    content.style.display = "";
+  if (!state.currentId) {
+    alert("先保存再预览吧");
     return;
   }
   try {
-    const data = await api(`/api/notes/${encodeURIComponent(state.currentId)}/preview`);
-    preview.innerHTML = (data && (data.html || data.content)) || "<em>无内容</em>";
-    preview.style.display = "block";
-    content.style.display = "none";
+    const data = await api(`/api/notes/${state.currentId}/preview`);
+    const html = typeof data === "string" ? data : (data && data.html) || "";
+    pv.innerHTML = html;
+    pv.hidden = false;
+    body.hidden = true;
   } catch (e) {
-    alert("预览失败: " + e.message);
+    alert("预览失败：" + e.message);
   }
 }
 
-// 绘制关系图（圆形布局）
+// ---------- 图谱 ----------
 async function drawGraph() {
-  const canvas = $("graph");
+  const canvas = $("graph-canvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
@@ -245,17 +291,19 @@ async function drawGraph() {
   try {
     data = await api("/api/graph");
   } catch (e) {
-    console.error("加载图谱失败", e);
+    console.error("图谱加载失败", e);
     return;
   }
 
-  const nodes = Array.isArray(data) ? data : (data.nodes || []);
+  const nodes = (data && data.nodes) || [];
   const edges = (data && data.edges) || [];
 
-  // 自适应画布尺寸
-  const wrap = canvas.parentElement;
-  const w = canvas.width = wrap.clientWidth || 400;
-  const h = canvas.height = wrap.clientHeight || 400;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 800;
+  const h = canvas.clientHeight || 500;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = "#fafafa";
@@ -265,29 +313,25 @@ async function drawGraph() {
     ctx.fillStyle = "#999";
     ctx.font = "14px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("暂无图谱数据", w / 2, h / 2);
+    ctx.fillText("还没有笔记，画不出图", w / 2, h / 2);
     return;
   }
 
-  // 圆形布局
   const cx = w / 2;
   const cy = h / 2;
-  const radius = Math.max(40, Math.min(w, h) / 2 - 40);
+  const R = Math.min(w, h) / 2 - 60;
   const pos = {};
   nodes.forEach((n, i) => {
     const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
-    pos[n.id] = {
-      x: cx + radius * Math.cos(angle),
-      y: cy + radius * Math.sin(angle)
-    };
+    pos[n.id] = { x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) };
   });
 
-  // 画连线
-  ctx.strokeStyle = "#bbb";
+  // 连线
+  ctx.strokeStyle = "#c8c8c8";
   ctx.lineWidth = 1;
-  edges.forEach(e => {
-    const a = pos[e.source != null ? e.source : e.from];
-    const b = pos[e.target != null ? e.target : e.to];
+  edges.forEach((e) => {
+    const a = pos[e.source ?? e.from];
+    const b = pos[e.target ?? e.to];
     if (!a || !b) return;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
@@ -295,72 +339,89 @@ async function drawGraph() {
     ctx.stroke();
   });
 
-  // 画节点与标题
-  nodes.forEach(n => {
+  // 节点
+  nodes.forEach((n) => {
     const p = pos[n.id];
-    if (!p) return;
-    // 节点圆
+    const isCur = n.id === state.currentId;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
-    ctx.fillStyle = n.id === state.currentId ? "#e63946" : "#457b9d";
+    ctx.arc(p.x, p.y, isCur ? 10 : 7, 0, Math.PI * 2);
+    ctx.fillStyle = isCur ? "#2b7de9" : "#7aa9e0";
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // 标题
     ctx.fillStyle = "#333";
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    let title = n.title || "(无标题)";
-    if (title.length > 8) title = title.slice(0, 8) + "…";
-    ctx.fillText(title, p.x, p.y + 18);
+    ctx.textBaseline = "top";
+    const label = (n.title || "无标题").slice(0, 10);
+    ctx.fillText(label, p.x, p.y + 12);
   });
 }
 
-// 简单 HTML 转义，避免 XSS
-function escapeHtml(str) {
-  return String(str == null ? "" : str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-// 绑定 index.html 中的 id 事件
+// ---------- 事件绑定 ----------
 function bindEvents() {
-  const bind = (id, evt, fn) => {
-    const el = $(id);
-    if (el) el.addEventListener(evt, fn);
-  };
+  $("btn-new")?.addEventListener("click", newNote);
+  $("btn-save")?.addEventListener("click", saveNote);
+  $("btn-delete")?.addEventListener("click", deleteNote);
+  $("btn-preview")?.addEventListener("click", togglePreview);
 
-  bind("new", "click", newNote);
-  bind("save", "click", saveNote);
-  bind("delete", "click", deleteNote);
-  bind("preview-btn", "click", togglePreview);
-  bind("search-btn", "click", doSearch);
-  bind("search", "keydown", (e) => { if (e.key === "Enter") doSearch(); });
-  bind("refresh", "click", () => { loadNotes(); loadTags(); loadStats(); drawGraph(); });
+  $("btn-graph")?.addEventListener("click", () => {
+    showView("graph");
+    drawGraph();
+  });
+  $("btn-graph-close")?.addEventListener("click", () => showView("editor"));
 
-  // 窗口尺寸变化时重绘图谱
-  window.addEventListener("resize", () => {
-    clearTimeout(window.__graphTimer);
-    window.__graphTimer = setTimeout(drawGraph, 200);
+  $("btn-review-exit")?.addEventListener("click", () => showView("editor"));
+
+  const search = $("search-input");
+  if (search) {
+    search.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        clearTimeout(searchTimer);
+        doSearch();
+      }
+    });
+    search.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(doSearch, 300);
+    });
+  }
+
+  $("nav-notes")?.addEventListener("click", () => showView("editor"));
+  $("nav-review")?.addEventListener("click", () => {
+    showView("review");
+    window.__sbStartReview?.();
   });
 }
 
-// 初始化
+// ---------- 初始化 ----------
 async function init() {
   bindEvents();
   await Promise.all([loadNotes(), loadTags(), loadStats()]);
-  await drawGraph();
+  showView("editor");
 }
 
-// DOM 就绪后启动
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", init);
 } else {
   init();
 }
+
+/*
+用到的 id 清单：
+  editor-view, graph-view, review-view
+  nav-notes, nav-review
+  note-list, list-count, list-title
+  search-input
+  tag-list
+  editor-title, editor-body, editor-tags, editor-pinned
+  preview-box
+  btn-new, btn-save, btn-delete, btn-preview
+  btn-graph, btn-graph-close
+  btn-review-exit
+  graph-canvas
+  stat-notes, stat-tags, stat-links, stat-words
+*/

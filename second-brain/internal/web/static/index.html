@@ -14,6 +14,18 @@
       <input type="text" id="search-input" placeholder="搜索笔记…" autocomplete="off">
     </div>
     <button id="btn-new" class="btn btn-primary">新建笔记</button>
+    <nav class="sidebar-section">
+      <h3>导航</h3>
+      <ul id="nav-list" class="nav-list">
+        <li><button id="nav-notes" class="nav-item is-active" type="button">全部笔记</button></li>
+        <li>
+          <button id="nav-review" class="nav-item" type="button">
+            今日复习
+            <span id="review-badge" class="nav-badge">0</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
     <div class="sidebar-section">
       <h3>标签</h3>
       <ul id="tag-list" class="tag-list"></ul>
@@ -32,7 +44,7 @@
 
   <section class="list-pane">
     <div class="list-header">
-      <h2>笔记</h2>
+      <h2 id="list-title">笔记</h2>
       <span id="list-count" class="list-count"></span>
     </div>
     <ul id="note-list" class="note-list"></ul>
@@ -70,6 +82,53 @@
       </div>
     </div>
 
+    <div id="review-view" class="review-view" hidden>
+      <div class="review-header">
+        <h2>今日复习</h2>
+        <span id="review-progress" class="review-progress">0 / 0</span>
+        <button id="btn-review-exit" class="btn btn-secondary" type="button">退出复习</button>
+      </div>
+
+      <div id="review-card" class="review-card">
+        <div id="review-front" class="review-face">
+          <div class="review-face-label">正面</div>
+          <h3 id="review-title" class="review-title">没有待复习的笔记</h3>
+          <p id="review-snippet" class="review-snippet">新建一些笔记，它们会按记忆节奏出现在这里。</p>
+          <div id="review-tags" class="review-tags"></div>
+          <button id="btn-flip" class="btn btn-primary" type="button">翻面看全文</button>
+        </div>
+        <div id="review-back" class="review-face" hidden>
+          <div class="review-face-label">背面</div>
+          <div id="review-full" class="review-full"></div>
+          <button id="btn-unflip" class="btn btn-secondary" type="button">收起</button>
+        </div>
+      </div>
+
+      <div id="review-grading" class="review-grading">
+        <button id="grade-0" class="grade-btn grade-0" type="button">
+          <span class="grade-title">忘记</span>
+          <span class="grade-sub">忘记/明天再看</span>
+        </button>
+        <button id="grade-3" class="grade-btn grade-3" type="button">
+          <span class="grade-title">困难</span>
+          <span class="grade-sub">困难/间隔缩短</span>
+        </button>
+        <button id="grade-4" class="grade-btn grade-4" type="button">
+          <span class="grade-title">良好</span>
+          <span class="grade-sub">良好/按节奏推进</span>
+        </button>
+        <button id="grade-5" class="grade-btn grade-5" type="button">
+          <span class="grade-title">简单</span>
+          <span class="grade-sub">简单/间隔拉长</span>
+        </button>
+      </div>
+
+      <div id="review-done" class="review-done" hidden>
+        <h3 id="review-done-text">今天的复习做完了。</h3>
+        <button id="btn-digest" class="btn btn-primary" type="button">再看一遍今日回顾</button>
+      </div>
+    </div>
+
     <div id="graph-view" class="graph-view" hidden>
       <div class="graph-header">
         <h2>知识图谱</h2>
@@ -82,5 +141,67 @@
 </div>
 
 <script src="/static/app.js"></script>
+<script src="/static/review.js"></script>
+
+<!--
+ID 对照表
+=========
+搜索与全局
+  search-input        侧边栏搜索输入框，用于过滤笔记列表
+  btn-new             新建笔记按钮
+  nav-notes           导航：切回全部笔记列表
+  nav-review          导航：进入今日复习视图，含复习徽标
+  review-badge        今日待复习数量徽标
+  tag-list            标签列表容器，由 JS 渲染
+  stats-box           统计区域容器（静态展示）
+  stat-notes          统计：笔记数
+  stat-tags           统计：标签数
+  stat-links          统计：双链数
+  stat-words          统计：总字数
+  btn-graph           打开图谱视图
+
+列表区
+  list-title          列表标题（"笔记"/标签名等）
+  list-count          列表条数
+  note-list           笔记列表容器，由 JS 渲染
+
+编辑视图
+  editor-view         编辑视图根容器
+  editor-title        笔记标题输入
+  btn-save            保存按钮
+  btn-delete          删除按钮
+  editor-tags         标签输入（逗号分隔）
+  editor-pinned       置顶复选框
+  btn-preview         预览切换按钮
+  editor-body         正文文本域
+  preview-box         预览渲染容器
+
+复习视图
+  review-view         复习视图根容器（默认 hidden）
+  review-progress     复习进度（如 "2 / 5"）
+  btn-review-exit     退出复习按钮
+  review-card         抽认卡容器
+  review-front        卡片正面
+  review-title        正面标题
+  review-snippet      正面摘要
+  review-tags         正面标签
+  btn-flip            翻面看全文按钮
+  review-back         卡片背面（默认 hidden）
+  review-full         背面全文预览
+  btn-unflip          收起按钮
+  review-grading      四档评分区
+  grade-0             评分：忘记
+  grade-3             评分：困难
+  grade-4             评分：良好
+  grade-5             评分：简单
+  review-done         完成态容器（默认 hidden）
+  review-done-text    完成文案
+  btn-digest          再看一遍今日回顾按钮
+
+图谱视图
+  graph-view          图谱视图根容器（默认 hidden）
+  btn-graph-close     返回编辑按钮
+  graph-canvas        图谱画布
+-->
 </body>
 </html>
