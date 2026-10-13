@@ -11,13 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +58,6 @@ public class ChatService {
 
     private final SurrogateAuthClient surrogateAuthClient;
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
     private final String model;
     private final int maxTokens;
 
@@ -75,43 +67,8 @@ public class ChatService {
                        @Value("${drama.chat.max-tokens:2000}") int maxTokens) {
         this.surrogateAuthClient = surrogateAuthClient;
         this.objectMapper = objectMapper;
-        this.httpClient = newHttpClient();
         this.model = model;
         this.maxTokens = maxTokens;
-    }
-
-    /**
-     * 构造带出口代理的 HttpClient。
-     *
-     * <p>显式从 {@code HTTPS_PROXY} 解析代理并设置，而不依赖 JVM 全局
-     * ProxySelector——某些受管环境下全局选择器可能被覆盖或不生效。</p>
-     */
-    static java.net.http.HttpClient newHttpClient() {
-        java.net.http.HttpClient.Builder builder = java.net.http.HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15));
-        String proxyUrl = System.getenv("HTTPS_PROXY");
-        if (proxyUrl == null || proxyUrl.isBlank()) {
-            proxyUrl = System.getenv("https_proxy");
-        }
-        if (proxyUrl != null && !proxyUrl.isBlank()) {
-            try {
-                URI uri = URI.create(proxyUrl.trim());
-                String host = uri.getHost();
-                int port = uri.getPort() > 0 ? uri.getPort() : 3128;
-                if (host != null && !host.isBlank()
-                        && !host.equalsIgnoreCase("localhost") && !host.equals("127.0.0.1")) {
-                    // 只处理需要认证的中转：本地中转（127.0.0.1）无需认证，直接指定即可
-                    builder.proxy(ProxySelector.of(new InetSocketAddress(host, port)));
-                    log.info("ChatService HttpClient 使用显式代理 {}:{}", host, port);
-                } else if (host != null && !host.isBlank()) {
-                    builder.proxy(ProxySelector.of(new InetSocketAddress(host, port)));
-                    log.info("ChatService HttpClient 使用本地中转 {}:{}", host, port);
-                }
-            } catch (Exception e) {
-                log.warn("解析 HTTPS_PROXY 失败，HttpClient 直连: {}", e.getMessage());
-            }
-        }
-        return builder.build();
     }
 
     /**
@@ -167,64 +124,17 @@ public class ChatService {
         return node;
     }
 
-    /**
+        /**
      * 调用微信 ChatAPI，返回 choices[0].message.content。
-     * 与 ScriptSplitterService.callModel 同模式：鉴权头经代理注入，不打印凭证。
+     *
+     * <p>传输层走 {@link LlmTransport}（Apache HttpClient 5，预先代理认证），
+     * 原因见该类 JavaDoc。鉴权头经代理注入，不打印凭证。</p>
      */
     private String callModel(ObjectNode body) {
-        String requestBody;
-        try {
-            requestBody = objectMapper.writeValueAsString(body);
-        } catch (Exception e) {
-            throw new RuntimeException("构建对话请求体失败: " + e.getMessage(), e);
-        }
-
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(URI.create(CHAT_URL))
-                .timeout(Duration.ofSeconds(90))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody));
-
-        Map.Entry<String, String> authHeader = surrogateAuthClient.authHeader(CHAT_URL, CREDENTIAL);
-        if (authHeader != null) {
-            builder.header(authHeader.getKey(), authHeader.getValue());
-        }
-
-        HttpResponse<String> response;
-        try {
-            response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
-            throw new RuntimeException("调用对话大模型失败: " + e.getMessage(), e);
-        }
-
-        int status = response.statusCode();
-        String responseBody = response.body();
-        if (status < 200 || status >= 300) {
-            String preview = responseBody == null ? "" : responseBody;
-            if (preview.length() > 300) {
-                preview = preview.substring(0, 300);
-            }
-            throw new RuntimeException("调用对话大模型失败，状态码 " + status + "，响应: " + preview);
-        }
-
-        String content;
-        try {
-            JsonNode root = objectMapper.readTree(responseBody);
-            JsonNode choices = root.get("choices");
-            if (choices == null || !choices.isArray() || choices.isEmpty()) {
-                throw new RuntimeException("大模型返回内容为空");
-            }
-            JsonNode message = choices.get(0).get("message");
-            content = message == null || message.get("content") == null
-                    ? null : message.get("content").asText();
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("解析对话大模型响应失败: " + e.getMessage(), e);
-        }
-        if (content == null || content.isBlank()) {
-            throw new RuntimeException("大模型返回内容为空");
-        }
-        return content;
+        String json = body.toString();
+        Map.Entry<String, String> authHeader =
+                surrogateAuthClient.authHeader(CHAT_URL, CREDENTIAL);
+        return LlmTransport.postJson(CHAT_URL, json, authHeader, 90);
     }
+
 }

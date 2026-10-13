@@ -45,7 +45,7 @@
     el.toast.innerHTML = '<div class="d-flex"><div class="toast-body">' + escapeHtml(message) + '</div>' +
       '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
     if (!toastInstance) {
-      toastInstance = new bootstrap.Toast(el.toast, { delay: 4000 });
+      toastInstance = new tabler.Toast(el.toast, { delay: 4000 });
     }
     toastInstance.show();
   }

@@ -21,6 +21,11 @@
     </properties>
 
     <dependencies>
+        <!-- 版本由 spring-boot-dependencies BOM 统一管理（httpclient5 5.3.1 + httpcore5 5.2.5 一致组合） -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

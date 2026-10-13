@@ -117,11 +117,24 @@ public final class Records {
     ) {
     }
 
+    /**
+     * 剧本生成响应（v2.3）。
+     *
+     * @param episodeId 剧集 ID
+     * @param sceneCount 场景数
+     * @param scriptText 完整剧本文本
+     * @param source 生成来源：{@code ai}（大模型生成）、{@code template}（模板生成）、
+     *               {@code template-fallback}（AI 失败降级为模板生成）
+     * @param model 使用的大模型名，模板生成时为 null
+     * @param latencyMs 生成耗时（毫秒）
+     */
     public static record GenerateScriptResponse(
             Long episodeId,
             int sceneCount,
-            String scriptText
-    ) {
+            String scriptText,
+            String source,
+            String model,
+            long latencyMs) {
     }
 
     public static record ErrorResponse(

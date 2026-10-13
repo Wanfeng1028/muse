@@ -31,7 +31,7 @@ async function api(path, options) {
     let msg = '请求失败';
     try {
       const data = await res.json();
-      if (data && data.detail) msg = data.detail;
+      if (data && (data.detail || data.message)) msg = data.detail || data.message;
     } catch (e) {}
     throw new Error(msg);
   }
@@ -154,6 +154,59 @@ async function loadShots() {
   }
   renderShots();
 }
+// 生成剧本：mode 为 'ai' 或 'template'，成功后刷新分镜列表并展示来源信息
+// 查看剧本：拉取本集场景列表，渲染到 modal 并打开；无剧本时提示先生成
+async function viewScript() {
+  const episodeId = getEpisodeId();
+  if (!episodeId) { showToast('请先选择剧集'); return; }
+  try {
+    const scenes = await api('/api/episodes/' + episodeId + '/scenes');
+    const body = document.getElementById('viewScriptBody');
+    const meta = document.getElementById('viewScriptMeta');
+    if (!scenes || !scenes.length) {
+      meta.textContent = '';
+      body.innerHTML = '<p class="text-secondary m-0">本集还没有剧本，先点「AI 生成剧本」或「模板生成」。<\/p>';
+    } else {
+      meta.textContent = '共 ' + scenes.length + ' 场';
+      body.innerHTML = scenes.map(s =>
+        '<div class="mb-3"><div class="fw-bold">第 ' + s.sceneNo + ' 场 · '
+        + escapeHtml(s.location || '') + ' · ' + escapeHtml(s.timeOfDay || '') + '</div>'
+        + '<div class="text-secondary small">画面：' + escapeHtml(s.description || '') + '</div>'
+        + (s.dialogue ? '<div class="small" style="white-space:pre-wrap;">' + escapeHtml(s.dialogue) + '</div>' : '')
+        + '</div>'
+      ).join('');
+    }
+    const modalEl = document.getElementById('viewScriptModal');
+    const modal = tabler.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  } catch (e) { showToast('剧本加载失败：' + e.message); }
+}
+async function generateScript(mode) {
+  const episodeId = getEpisodeId();
+  if (!episodeId) { showToast('请先选择剧集'); return; }
+  const btn = document.getElementById(mode === 'ai' ? 'aiScriptBtn' : 'tplScriptBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '生成中…';
+  try {
+    const res = await api('/api/episodes/' + episodeId + '/generate-script?mode=' + mode, { method: 'POST' });
+    await loadShots();
+    const srcLabel = res.source === 'ai' ? 'AI 生成'
+      : res.source === 'template-fallback' ? '模板生成（AI 不可用，已自动降级）' : '模板生成';
+    const meta = document.getElementById('scriptMeta');
+    meta.hidden = false;
+    meta.textContent = '本次剧本：' + srcLabel + ' · ' + (res.model || '模板')
+      + ' · 共 ' + res.sceneCount + ' 场 · 耗时 ' + (res.latencyMs / 1000).toFixed(1) + 's';
+    showToast('剧本生成完成，共 ' + res.sceneCount + ' 场（' + srcLabel + '）');
+    viewScript();
+  } catch (e) {
+    showToast('剧本生成失败：' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
 
 async function loadTasksForShots() {
   state.taskMap = {};
@@ -400,7 +453,7 @@ function openScriptModal() {
   if (errEl) errEl.textContent = '';
   const modalEl = document.getElementById('scriptModal');
   if (modalEl && window.bootstrap) {
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const modal = tabler.Modal.getOrCreateInstance(modalEl);
     modal.show();
   }
 }
@@ -430,7 +483,7 @@ async function submitScript() {
     showToast(`AI 已拆出 ${n} 个分镜并落库`);
     const modalEl = document.getElementById('scriptModal');
     if (modalEl && window.bootstrap) {
-      bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      tabler.Modal.getOrCreateInstance(modalEl).hide();
     }
     await loadShots();
   } catch (e) {
@@ -454,6 +507,9 @@ function bindEvents() {
   if (addBtn) addBtn.addEventListener('click', () => openForm(null));
   const fromScriptBtn = document.getElementById('fromScriptBtn');
   if (fromScriptBtn) fromScriptBtn.addEventListener('click', openScriptModal);
+  if (aiScriptBtn) aiScriptBtn.addEventListener('click', () => generateScript('ai'));
+  if (tplScriptBtn) tplScriptBtn.addEventListener('click', () => generateScript('template'));
+if (viewScriptBtn) viewScriptBtn.addEventListener('click', viewScript);
   const scriptSubmitBtn = document.getElementById('scriptSubmitBtn');
   if (scriptSubmitBtn) scriptSubmitBtn.addEventListener('click', submitScript);
   if (submitAllBtn) submitAllBtn.addEventListener('click', submitAll);

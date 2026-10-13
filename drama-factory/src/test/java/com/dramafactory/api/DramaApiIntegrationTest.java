@@ -89,11 +89,13 @@ class DramaApiIntegrationTest {
         JsonNode episodeNode = objectMapper.readTree(createEpisodeResult.getResponse().getContentAsString());
         long episodeId = episodeNode.get("id").asLong();
 
-        // 7) POST /api/episodes/{episodeId}/generate-script -> 200, sceneCount=4, scriptText 含 "第1场"
-        mockMvc.perform(post("/api/episodes/{episodeId}/generate-script", episodeId))
+        // 7) POST /api/episodes/{episodeId}/generate-script?mode=template -> 200, sceneCount=4, scriptText 含 "第1场"
+        //    （用 template 模式保证集成测试确定性，不依赖外部 AI）
+        mockMvc.perform(post("/api/episodes/{episodeId}/generate-script?mode=template", episodeId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sceneCount").value(4))
-                .andExpect(jsonPath("$.scriptText").value(org.hamcrest.Matchers.containsString("第1场")));
+                .andExpect(jsonPath("$.scriptText").value(org.hamcrest.Matchers.containsString("第1场")))
+                .andExpect(jsonPath("$.source").value("template"));
 
         // 8) GET /api/episodes/{episodeId}/scenes -> 200, length=4
         mockMvc.perform(get("/api/episodes/{episodeId}/scenes", episodeId))

@@ -73,6 +73,11 @@ ffmpeg 剪辑（按镜号拼接 + SRT 字幕烧录）
 ### 成片质检
 ![成片质检](docs/screenshots/qc.png)
 
+### v2.3 AI 编剧引擎
+![AI 生成剧本按钮](docs/screenshots/storyboard-v23-buttons.png)
+
+![查看剧本（真实 AI 生成的四场剧本）](docs/screenshots/storyboard-v23-script-modal.png)
+
 ## 技术栈
 
 | 类别 | 选型 |

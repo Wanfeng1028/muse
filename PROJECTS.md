@@ -104,7 +104,7 @@
 9. 剪辑成片（ffmpeg 按镜号拼接 + SRT 字幕烧录 + 时长探测，/media 在线预览与下载）
 10. 生产看板（分镜→视频任务→成片三阶段横向流水线，卡点剧集标红）
 
-**状态**：工程化 v2.2（2026-10-13：DoD 第 2 轮——结构化日志 + request_id 全链路、Resilience4j 超时熔断、提交接口限流、Docker Compose 一键部署；mvn test 26/26 全过；真实 jar 冒烟：request_id 透传/错误体/可读+JSON 日志、10 次内提交放行第 11 次 429 + Retry-After、调度日志带 poll-xxx；发版对照报告 docs/dod-v2.2.md）。
+**状态**：工程化 v2.3「AI 编剧引擎」（2026-10-13：真实 DeepSeek 接入剧本生成——LlmScriptService（鲁棒 JSON 解析+严格四场校验+指数退避重试）/ LlmTransport（Apache HttpClient 5 预先代理认证+无代理直连）/ CLI 回退（HTTP 失败改调 chat.py，$HOME/user.home 自动探测）；`?mode=ai/template` + 降级；响应 source/model/latencyMs；前端三按钮+额度提示+「查看剧本」modal；mvn test 38/38 全过；真实冒烟：ai 模式 source=ai 拿回 4 场连贯剧本（CLI 回退路径，日志可观测）；视觉验收亲眼通过（按钮行/modal 真实剧本渲染），附带修了全站 `bootstrap.Modal/Toast` 误用既有 bug（实为 `tabler.*`）；发版对照报告 docs/dod-v2.3.md）。
 
 **UI 重设计 v3**（2026-10-13 完成）：新视觉概念「剪辑室 / 场记板」——分镜板改为场记板卡片墙（斜条纹板条 + 等宽大字镜号 + 景别/运镜 badge + 对白引用 + 时间码），任务队列改为任务卡片 + 进度条，成片库改为海报卡片墙（后端新增 `GET /media/finals/{id}/poster.jpg`，ffmpeg 从成片 1 秒处抽帧），生产看板改为横向胶片管线（齿孔装饰 + 卡点集暖橙描边）；配色近黑 #0E0E11 + 钨丝灯暖橙 #E8590C + 米白文字，Noto Sans SC + 等宽字体；设计决策见 docs/DESIGN.md；mvn test 12 例全过（含新增 MediaPosterTest）；4 页真实数据截图已亲眼验收通过；另修复 v2 遗留 bug（首页 scene-form 空绑定导致项目列表加载失败）。
 
@@ -120,7 +120,7 @@
 
 - UI 去 AI 味研究轮（2026-10-13）：用户 verdict"还是 AI 味"，点名对标 ChatGPT / Claude / Grok / Gemini。9 张真实产品截图亲眼拆解（ChatGPT×3 深/浅/侧边栏、Claude×2 深/浅暖纸+衬线+珊瑚点睛、Grok×2 纯黑白零强调色、Gemini×2 窄 rail+工具菜单），结论见 `drama-factory/docs/UI-RESEARCH.md`：四家共性是"藏"（藏快捷键/配置/说明/边框/彩色），我们的 AI 味来自"秀"（导航 kbd chips、双语 pretitle、徽标滥用、卡片阵列、版本水印等 15 条诊断），P0/P1/P2 改版清单共 15 项 → 已由改版轮全部落地（见下）
 - UI 去 AI 味改版轮（2026-10-13）：按 UI-RESEARCH.md 第五节 15 项清单 P0→P1→P2 逐条落地——删双语 pretitle/导航 kbd chips/版本水印/顶栏搜索条；composer 大圆角+圆形内置发送钮（chat.js 发送逻辑经 Playwright 回归验证：点击发送/Ctrl+Enter/快捷 chips 均正常）；分镜改 filmstrip 列表行；徽标清零改小圆点+文字；强调色只留主行动按钮；标题区只剩一行 20px 标题；表格操作列 hover 化；配额提示降级为输入框下方小字；等宽只留时间码/时长；工作区右侧去卡片化；边框降对比；命令面板去图标。验收时抓出 1 个真 bug（#slateGrid 残留 datagrid 类致 filmstrip 挤成三列）已修；7 页真实数据（《最后一班地铁》）重截亲眼验收；mvn test 26/26 全绿
-- 接入真实大模型生成剧本
+- v2.3「AI 编剧引擎」（2026-10-13）：真实 DeepSeek-V4-Flash 接入剧本生成（大纲→严格四场式剧本），模板生成器降级为兜底。传输层实测攻坚：沙箱按进程限制 Java TCP 出站（python 可通），遂定型 HTTP 主用 + CLI 回退（chat.py）双通道；代理密码轮换→每次调用实时重读环境变量。前端三按钮（AI 生成/模板生成/查看剧本）+额度小字+来源/模型/耗时展示；「查看剧本」modal 生成后自动打开。mvn test 38/38；真实冒烟 ai 模式 source=ai（14s，4 场连贯：暴雨街头→废弃仓库→警局审讯室→地下停车场）；视觉验收亲眼通过；附带修全站 `bootstrap.*`→`tabler.*` 误用。发版对照报告 docs/dod-v2.3.md
 - DoD 未通过项排期（见 docs/dod-v2.2.md：第 3 轮 指标告警/鉴权/备份恢复/运维手册；第 4 轮 OpenAPI/CHANGELOG/Dependabot；第 5 轮敏感数据策略/降级策略文档/单测比例/user 字段）
 - 审核流状态机
 - 多用户与权限

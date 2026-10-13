@@ -33,6 +33,16 @@ server:
   shutdown: graceful
 
 drama:
+  script:
+    llm:
+      enabled: ${DRAMA_SCRIPT_LLM_ENABLED:true}
+      model: ${DRAMA_SCRIPT_LLM_MODEL:Deepseek-v4-flash}
+      max-tokens: ${DRAMA_SCRIPT_LLM_MAX_TOKENS:3000}
+      timeout-seconds: ${DRAMA_SCRIPT_LLM_TIMEOUT_SECONDS:120}
+      max-retries: ${DRAMA_SCRIPT_LLM_MAX_RETRIES:2}
+      # CLI 回退：受限环境（Java 出站被拦截）下 HTTP 失败时改调 chat.py；
+      # 为空则自动探测 ~/workspace/skills/weixin-chatapi/bin/chat.py，探测不到则无回退
+      cli-path: ${DRAMA_SCRIPT_LLM_CLI_PATH:}
   video:
     provider: ${VIDEO_PROVIDER:mock}
     poll-interval-ms: ${VIDEO_POLL_MS:10000}

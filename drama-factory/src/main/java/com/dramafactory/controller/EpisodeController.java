@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,7 +60,8 @@ public class EpisodeController {
     }
 
     @PostMapping("/api/episodes/{id}/generate-script")
-    public Records.GenerateScriptResponse generateScript(@PathVariable Long id) {
-        return scriptService.generate(id);
+    public Records.GenerateScriptResponse generateScript(@PathVariable Long id,
+                                                         @RequestParam(defaultValue = "ai") String mode) {
+        return scriptService.generate(id, mode);
     }
 }
