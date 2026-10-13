@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>设置中心 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css" />
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">设置中心</h1>
+      <p class="page-sub">运行参数与密钥配置（标记"需重启"的字段在重启后生效）</p>
+    </div>
+    <button class="btn btn-primary" id="settings-save">
+      <i data-lucide="save"></i><span>保存全部</span>
+    </button>
+  </header>
+
+  <section class="card">
+    <div class="card-head">
+      <h2 class="card-title">配置项</h2>
+      <span class="badge badge-muted" id="settings-count"></span>
+    </div>
+
+    <div class="state-loading" id="settings-loading">
+      <i data-lucide="loader-circle"></i>
+      <span>正在加载配置…</span>
+    </div>
+
+    <div class="state-empty is-hidden" id="settings-empty">
+      <i data-lucide="settings"></i>
+      <span>暂无可配置项</span>
+    </div>
+
+    <div class="state-error is-hidden" id="settings-error">
+      <i data-lucide="triangle-alert"></i>
+      <span id="settings-error-text">加载失败</span>
+      <button class="btn btn-ghost" id="settings-retry">重试</button>
+    </div>
+
+    <form class="settings-form is-hidden" id="settings-form" autocomplete="off"></form>
+  </section>
+</main>
+
+<script src="/vendor/lucide.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/settings.js"></script>
+</body>
+</html>

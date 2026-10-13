@@ -15,38 +15,62 @@
     '<line x1="21" y1="4" x2="24" y2="10"/>' +
     '<polygon points="14,20 14,26 20,23" fill="currentColor" stroke="none"/></svg>';
 
-  /* ---- 内联 SVG 图标（线性，1.7px 描边，无 emoji） ---- */
+  /* ---- 图标：Lucide（/vendor/lucide.min.js 本地包），名称映射 ---- */
   var ICONS = {
-    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>',
-    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>',
-    film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 10h4M3 14h4M17 10h4M17 14h4"/></svg>',
-    tasks: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 5 1 1 2-2M3.5 11l1 1 2-2M3.5 17l1 1 2-2"/></svg>',
-    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8.5 12.5 2.5 2.5 5-5.5"/></svg>',
-    chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M21 20H3"/></svg>',
-    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 16-7-7 16-2.5-6.5L4 11z"/></svg>',
-    spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>',
-    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="19.1" y2="4.9"/></svg>',
-    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+    home: 'home', chat: 'message-circle', film: 'clapperboard', tasks: 'list-checks',
+    check: 'badge-check', chart: 'bar-chart-3', search: 'search', plus: 'plus',
+    send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
+    runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings'
   };
+
+  function iconHtml(name) {
+    return '<i data-lucide="' + (ICONS[name] || 'circle') + '" class="nav-icon"></i>';
+  }
+
+  /* Lucide 按需加载（老页面未引入时动态注入），加载后刷新图标 */
+  function ensureLucide(cb) {
+    if (window.lucide && window.lucide.createIcons) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = '/vendor/lucide.min.js';
+    s.onload = function () { cb(); };
+    s.onerror = function () { cb(); };
+    document.head.appendChild(s);
+  }
+  function refreshIcons() {
+    if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }
+  }
 
   /* ---- 主题切换：深色显示太阳（点按切亮色），亮色显示月亮（点按切深色） ---- */
   function renderThemeIcon() {
     var btn = document.getElementById('themeToggle');
     if (!btn) return;
     var t = document.documentElement.getAttribute('data-bs-theme');
-    btn.innerHTML = (t === 'dark') ? ICONS.sun : ICONS.moon;
+    btn.innerHTML = (t === 'dark') ? iconHtml('sun') : iconHtml('moon');
+    refreshIcons();
   }
 
   var NAV = [
     { id: 'index', href: '/index.html', label: 'AI 工作区', icon: 'home', kbd: 'G H' },
     { id: 'chat', href: '/chat.html', label: 'AI 对话', icon: 'chat', kbd: 'G C' },
+    { id: 'runs', href: '/runs.html', label: '运行列表', icon: 'runs', kbd: 'G R' },
+    { id: 'agents', href: '/agents.html', label: 'Agent 机队', icon: 'agents' },
     { id: 'storyboard', href: '/storyboard.html', label: '分镜板', icon: 'film', kbd: 'G S' },
     { id: 'tasks', href: '/tasks.html', label: '任务队列', icon: 'tasks', kbd: 'G T' },
     { id: 'finals', href: '/finals.html', label: '成片库', icon: 'check', kbd: 'G F' },
-    { id: 'pipeline', href: '/pipeline.html', label: '生产看板', icon: 'chart', kbd: 'G P' }
+    { id: 'pipeline', href: '/pipeline.html', label: '生产看板', icon: 'chart', kbd: 'G P' },
+    { id: 'settings', href: '/settings.html', label: '设置', icon: 'settings' }
   ];
+
+  /* 侧边栏分组 */
+  var NAV_GROUPS = [
+    { label: '创作', ids: ['index', 'chat'] },
+    { label: '运行', ids: ['runs', 'agents'] },
+    { label: '生产', ids: ['storyboard', 'tasks', 'finals', 'pipeline'] }
+  ];
+  function navById(id) {
+    for (var i = 0; i < NAV.length; i++) { if (NAV[i].id === id) return NAV[i]; }
+    return null;
+  }
 
   function currentId() {
     var p = window.location.pathname;
@@ -54,6 +78,7 @@
       if (p.endsWith('/' + NAV[i].id + '.html') || p === NAV[i].href) return NAV[i].id;
     }
     if (p.endsWith('/qc.html')) return 'finals';
+    if (p.endsWith('/run-detail.html')) return 'runs';
     return 'index';
   }
 
@@ -77,15 +102,11 @@
     aside.id = 'sidebar';
     aside.innerHTML =
       '<div class="sidebar-brand"><span class="logo-mark">' + LOGO_MARK + '</span><span>AI 短剧工坊</span></div>' +
-      '<div class="sidebar-label">创作</div>' +
-      '<nav class="sidebar-nav">' +
-        navLink(NAV[0], cur) + navLink(NAV[1], cur) +
-      '</nav>' +
-      '<div class="sidebar-label">生产</div>' +
-      '<nav class="sidebar-nav">' +
-        navLink(NAV[2], cur) + navLink(NAV[3], cur) + navLink(NAV[4], cur) + navLink(NAV[5], cur) +
-      '</nav>' +
-      '<div class="sidebar-footer"><button id="themeToggle" class="theme-toggle" title="切换亮色/深色" aria-label="切换主题"></button></div>';
+      navGroupsHtml(cur) +
+      '<div class="sidebar-footer">' +
+        '<a class="sidebar-link' + (cur === 'settings' ? ' active' : '') + '" href="/settings.html">' + iconHtml('settings') + '<span>设置</span></a>' +
+        '<button id="themeToggle" class="theme-toggle" title="切换亮色/深色" aria-label="切换主题"></button>' +
+      '</div>';
 
     /* 主列 */
     var main = document.createElement('div');
@@ -127,18 +148,34 @@
       };
     }
     renderThemeIcon();
+    ensureLucide(refreshIcons);
   }
 
   function navLink(n, cur) {
+    if (!n) return '';
     return '<a class="sidebar-link' + (n.id === cur ? ' active' : '') + '" href="' + n.href + '">' +
-      ICONS[n.icon] + '<span>' + n.label + '</span></a>';
+      iconHtml(n.icon) + '<span>' + n.label + '</span></a>';
+  }
+
+  function navGroupsHtml(cur) {
+    var html = '';
+    for (var g = 0; g < NAV_GROUPS.length; g++) {
+      html += '<div class="sidebar-label">' + NAV_GROUPS[g].label + '</div><nav class="sidebar-nav">';
+      for (var i = 0; i < NAV_GROUPS[g].ids.length; i++) {
+        html += navLink(navById(NAV_GROUPS[g].ids[i]), cur);
+      }
+      html += '</nav>';
+    }
+    return html;
   }
 
   function pageTitle(id) {
     var titles = {
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
-      tasks: '任务队列', finals: '成片库', pipeline: '生产看板'
+      tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
+      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', settings: '设置'
     };
+    if (window.location.pathname.endsWith('/run-detail.html')) return '运行详情';
     return titles[id] || 'AI 短剧工坊';
   }
 
@@ -156,7 +193,8 @@
         { label: '从剧本生成分镜', hint: '分镜板', icon: 'spark', run: function () { location.href = '/storyboard.html#act=from-script'; } },
         { label: '提交本集全部任务', hint: '分镜板', icon: 'send', run: function () { location.href = '/storyboard.html#act=submit-all'; } },
         { label: '生成成片', hint: '成片库', icon: 'film', run: function () { location.href = '/finals.html#act=generate'; } },
-        { label: '打开 AI 对话', hint: '工作区', icon: 'chat', kbd: modK(), run: function () { location.href = '/chat.html'; } }
+        { label: '打开 AI 对话', hint: '工作区', icon: 'chat', kbd: modK(), run: function () { location.href = '/chat.html'; } },
+        { label: '新建运行', hint: '运行列表', icon: 'runs', run: function () { location.href = '/runs.html#act=new-run'; } }
       ] }
     ];
   }

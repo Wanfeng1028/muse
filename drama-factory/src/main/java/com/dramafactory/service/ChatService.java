@@ -1,7 +1,6 @@
 package com.dramafactory.service;
 
 import com.dramafactory.dto.Records;
-import com.dramafactory.service.video.SurrogateAuthClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -56,16 +55,16 @@ public class ChatService {
                     + "硬性要求：每个镜头的画面必须有明显区别，禁止连续多镜使用同一场景与同一机位景别；景别与运镜要形成节奏变化。"
                     + "当用户说「调整第N镜……」时，在保留其余镜头的前提下修改该镜，并重新输出完整更新后的 ```json 代码块。";
 
-    private final SurrogateAuthClient surrogateAuthClient;
+    private final CredentialResolver credentialResolver;
     private final ObjectMapper objectMapper;
     private final String model;
     private final int maxTokens;
 
-    public ChatService(SurrogateAuthClient surrogateAuthClient,
+    public ChatService(CredentialResolver credentialResolver,
                        ObjectMapper objectMapper,
                        @Value("${drama.chat.model:Deepseek-v4-flash}") String model,
                        @Value("${drama.chat.max-tokens:2000}") int maxTokens) {
-        this.surrogateAuthClient = surrogateAuthClient;
+        this.credentialResolver = credentialResolver;
         this.objectMapper = objectMapper;
         this.model = model;
         this.maxTokens = maxTokens;
@@ -133,7 +132,7 @@ public class ChatService {
     private String callModel(ObjectNode body) {
         String json = body.toString();
         Map.Entry<String, String> authHeader =
-                surrogateAuthClient.authHeader(CHAT_URL, CREDENTIAL);
+                credentialResolver.chatAuth();
         return LlmTransport.postJson(CHAT_URL, json, authHeader, 90);
     }
 

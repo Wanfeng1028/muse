@@ -1,6 +1,7 @@
 package com.dramafactory.service.video;
 
 import com.dramafactory.model.Shot;
+import com.dramafactory.service.CredentialResolver;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,7 +35,7 @@ public class AgnesVideoProvider implements VideoProvider {
     private static final String MODEL = "agnes-video-2.5-flash";
 
     /** 代理鉴权客户端，用于注入请求头。 */
-    private final SurrogateAuthClient surrogateAuthClient;
+    private final CredentialResolver credentialResolver;
 
     /** HTTP 客户端，连接超时 15 秒。 */
     private final HttpClient httpClient;
@@ -45,10 +46,10 @@ public class AgnesVideoProvider implements VideoProvider {
     /**
      * 构造器注入代理鉴权客户端，并初始化 HTTP 客户端。
      *
-     * @param surrogateAuthClient 代理鉴权客户端
+     * @param credentialResolver 凭证解析器（用户 Key 优先，回退平台凭证）
      */
-    public AgnesVideoProvider(SurrogateAuthClient surrogateAuthClient) {
-        this.surrogateAuthClient = surrogateAuthClient;
+    public AgnesVideoProvider(CredentialResolver credentialResolver) {
+        this.credentialResolver = credentialResolver;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
@@ -109,7 +110,7 @@ public class AgnesVideoProvider implements VideoProvider {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
 
         // 注入鉴权头
-        Map.Entry<String, String> auth = surrogateAuthClient.authHeader(SUBMIT_URL);
+        Map.Entry<String, String> auth = credentialResolver.agnesAuth(SUBMIT_URL);
         builder.header(auth.getKey(), auth.getValue());
 
         HttpResponse<String> response;
@@ -168,7 +169,7 @@ public class AgnesVideoProvider implements VideoProvider {
                 .GET();
 
         // 注入鉴权头
-        Map.Entry<String, String> auth = surrogateAuthClient.authHeader(url);
+        Map.Entry<String, String> auth = credentialResolver.agnesAuth(url);
         builder.header(auth.getKey(), auth.getValue());
 
         HttpResponse<String> response;

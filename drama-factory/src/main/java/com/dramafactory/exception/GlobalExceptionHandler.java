@@ -55,6 +55,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Records.ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        Records.ErrorResponse body = new Records.ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                LocalDateTime.now(),
+                MDC.get("request_id")
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Records.ErrorResponse> handleGeneric(Exception ex) {
         String message = ex.getMessage();

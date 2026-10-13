@@ -1,6 +1,7 @@
 package com.dramafactory.service.video;
 
 import com.dramafactory.model.Shot;
+import com.dramafactory.service.CredentialResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,15 +37,13 @@ public class QwenVideoProvider implements VideoProvider {
     /** 视频尺寸（16:9，已实测可提交） */
     private static final String SIZE = "832*480";
 
-    /** authd 中的凭证名称 */
-    private static final String CREDENTIAL_NAME = "custom.qwen-cloud-cn";
 
-    private final SurrogateAuthClient surrogateAuthClient;
+    private final CredentialResolver credentialResolver;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
-    public QwenVideoProvider(SurrogateAuthClient surrogateAuthClient, ObjectMapper objectMapper) {
-        this.surrogateAuthClient = surrogateAuthClient;
+    public QwenVideoProvider(CredentialResolver credentialResolver, ObjectMapper objectMapper) {
+        this.credentialResolver = credentialResolver;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
@@ -101,7 +100,7 @@ public class QwenVideoProvider implements VideoProvider {
         }
 
         // 注入鉴权头（不打印任何凭证）
-        Map.Entry<String, String> auth = surrogateAuthClient.authHeader(SUBMIT_URL, CREDENTIAL_NAME);
+        Map.Entry<String, String> auth = credentialResolver.dashscopeAuth(SUBMIT_URL);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(SUBMIT_URL))
@@ -156,7 +155,7 @@ public class QwenVideoProvider implements VideoProvider {
         String url = TASK_URL_PREFIX + encodedId;
 
         // 注入鉴权头（不打印任何凭证）
-        Map.Entry<String, String> auth = surrogateAuthClient.authHeader(url, CREDENTIAL_NAME);
+        Map.Entry<String, String> auth = credentialResolver.dashscopeAuth(url);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))

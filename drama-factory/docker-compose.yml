@@ -1,0 +1,26 @@
+# drama-factory 一键启动
+#
+# 首次启动后打开 http://localhost:8081 → 进入「设置」页填写各平台 Key。
+# 本机目录 ./data 已加入 .gitignore，不会提交到仓库。
+#
+# 常用命令：
+#   启动/更新：docker compose up -d --build
+#   查看日志： docker compose logs -f
+#   停止：     docker compose down
+#
+# 说明：VIDEO_PROVIDER=mock 表示使用 mock 通道（不烧真钱，先跑通链路）。
+#       改为 qwen / agnes 即切换到对应真实通道。
+
+services:
+  app:
+    build: .
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./data:/app/data
+    environment:
+      PORT: "8081"
+      # 视频通道：mock 先跑通链路；改 qwen / agnes 即切换通道
+      VIDEO_PROVIDER: "mock"
+      DRAMA_STORAGE: "/app/data/media"
+    restart: unless-stopped

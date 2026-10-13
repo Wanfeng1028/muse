@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent 机队 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css" />
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Agent 机队</h1>
+      <p class="page-sub">5 个专用 Agent 的提示词模板、选用模型与降级策略（改后对新 Run 生效）</p>
+    </div>
+  </header>
+
+  <section class="card" id="channel-card">
+    <div class="card-head">
+      <h2 class="card-title">视频通道</h2>
+      <span class="badge badge-accent" id="channel-current">加载中…</span>
+    </div>
+    <div class="channel-switch" id="channel-switch"></div>
+    <p class="hint" id="channel-note"></p>
+  </section>
+
+  <section id="agents-region" aria-live="polite">
+    <div class="state-loading" id="agents-loading">
+      <i data-lucide="loader-circle"></i>
+      <span>正在加载 Agent 机队…</span>
+    </div>
+    <div class="state-empty is-hidden" id="agents-empty">
+      <i data-lucide="bot"></i>
+      <span>暂无 Agent 配置</span>
+    </div>
+    <div class="state-error is-hidden" id="agents-error">
+      <i data-lucide="triangle-alert"></i>
+      <span id="agents-error-text">加载失败</span>
+      <button class="btn btn-ghost" id="agents-retry">重试</button>
+    </div>
+    <div class="agent-grid is-hidden" id="agent-grid"></div>
+  </section>
+</main>
+
+<script src="/vendor/lucide.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/agents.js"></script>
+</body>
+</html>

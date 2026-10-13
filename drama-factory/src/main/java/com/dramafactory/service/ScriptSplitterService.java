@@ -10,7 +10,6 @@ import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.repository.EpisodeRepository;
 import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
-import com.dramafactory.service.video.SurrogateAuthClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -55,7 +54,7 @@ public class ScriptSplitterService {
     private final EpisodeRepository episodeRepository;
     private final ShotRepository shotRepository;
     private final VideoTaskRepository videoTaskRepository;
-    private final SurrogateAuthClient surrogateAuthClient;
+    private final CredentialResolver credentialResolver;
     private final ObjectMapper objectMapper;
     private final String model;
     private final int maxTokens;
@@ -63,14 +62,14 @@ public class ScriptSplitterService {
     public ScriptSplitterService(EpisodeRepository episodeRepository,
                                  ShotRepository shotRepository,
                                  VideoTaskRepository videoTaskRepository,
-                                 SurrogateAuthClient surrogateAuthClient,
+                                 CredentialResolver credentialResolver,
                                  ObjectMapper objectMapper,
                                  @Value("${drama.script-splitter.model:Deepseek-v4-flash}") String model,
                                  @Value("${drama.script-splitter.max-tokens:3000}") int maxTokens) {
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
         this.videoTaskRepository = videoTaskRepository;
-        this.surrogateAuthClient = surrogateAuthClient;
+        this.credentialResolver = credentialResolver;
         this.objectMapper = objectMapper;
         this.model = model;
         this.maxTokens = maxTokens;
@@ -209,7 +208,7 @@ public class ScriptSplitterService {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody));
 
         // 注入鉴权头（不打印凭证）
-        Map.Entry<String, String> authHeader = surrogateAuthClient.authHeader(SPLIT_URL, CREDENTIAL);
+        Map.Entry<String, String> authHeader = credentialResolver.chatAuth();
         if (authHeader != null) {
             builder.header(authHeader.getKey(), authHeader.getValue());
         }

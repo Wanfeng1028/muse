@@ -17,6 +17,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,7 @@ public class VideoTaskService {
     private final ApplicationContext applicationContext;
     private final EpisodeStatusFlowService episodeStatusFlowService;
 
+    private final Environment environment;
     private final String providerName;
     private final long pollIntervalMs;
     private final int maxAttempts;
@@ -62,6 +64,7 @@ public class VideoTaskService {
                             FfmpegService ffmpegService,
                             ApplicationContext applicationContext,
                             EpisodeStatusFlowService episodeStatusFlowService,
+                            Environment environment,
                             @Value("${drama.video.provider:mock}") String providerName,
                             @Value("${drama.video.poll-interval-ms:10000}") long pollIntervalMs,
                             @Value("${drama.video.max-attempts:8}") int maxAttempts,
@@ -71,6 +74,7 @@ public class VideoTaskService {
         this.ffmpegService = ffmpegService;
         this.applicationContext = applicationContext;
         this.episodeStatusFlowService = episodeStatusFlowService;
+        this.environment = environment;
         this.providerName = providerName;
         this.pollIntervalMs = pollIntervalMs;
         this.maxAttempts = maxAttempts;
@@ -80,11 +84,16 @@ public class VideoTaskService {
     /**
      * 根据 providerName 从容器中获取对应的视频提供者。
      */
+    /**
+     * 根据 providerName 从容器中获取对应的视频提供者。
+     * 通道名优先读运行时 Environment（settings.json 可即时覆盖），回退构造器注入的默认值；环境变量优先级最高。
+     */
     private VideoProvider provider() {
-        if ("agnes".equals(providerName)) {
+        String name = environment.getProperty("drama.video.provider", providerName);
+        if ("agnes".equals(name)) {
             return applicationContext.getBean("agnesVideoProvider", VideoProvider.class);
         }
-        if ("qwen".equals(providerName)) {
+        if ("qwen".equals(name)) {
             return applicationContext.getBean("qwenVideoProvider", VideoProvider.class);
         }
         return applicationContext.getBean("mockVideoProvider", VideoProvider.class);

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>运行详情 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <div style="flex:1;min-width:0">
+      <h1 id="runGoal">加载中…</h1>
+      <div class="meta-grid" id="runMeta" style="margin-top:6px"></div>
+    </div>
+    <div class="actions" id="controlArea"></div>
+  </div>
+
+  <div id="bannerArea"></div>
+  <div id="detailBody"><div class="loading"><span class="spinner"></span>加载中…</div></div>
+
+  <div class="section" id="artifactsSection" hidden>
+    <h2 class="section-title"><i data-lucide="package"></i>产物</h2>
+    <div id="artifactsArea"></div>
+  </div>
+
+  <div class="section" id="summarySection" hidden>
+    <h2 class="section-title"><i data-lucide="receipt"></i>汇总</h2>
+    <div class="card" id="summaryArea"></div>
+  </div>
+</div>
+
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <span class="t" id="drawerTitle">日志</span>
+    <button class="btn btn-ghost btn-sm" id="drawerClose"><i data-lucide="x"></i>关闭</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot" id="drawerFoot"></div>
+</aside>
+
+<div id="toast-host"></div>
+<script src="/vendor/lucide.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/run-detail.js"></script>
+</body>
+</html>

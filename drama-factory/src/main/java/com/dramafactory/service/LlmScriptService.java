@@ -1,7 +1,6 @@
 package com.dramafactory.service;
 
 import com.dramafactory.model.Episode;
-import com.dramafactory.service.video.SurrogateAuthClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -54,7 +53,7 @@ public class LlmScriptService {
             引用大纲关键词；对白符合短剧爽点节奏，不说空话。
             """;
 
-    private final SurrogateAuthClient surrogateAuthClient;
+    private final CredentialResolver credentialResolver;
     private final ObjectMapper objectMapper;
     private final boolean enabled;
     private final String model;
@@ -69,7 +68,7 @@ public class LlmScriptService {
     /**
      * Spring 构造器。
      *
-     * @param surrogateAuthClient 鉴权客户端
+     * @param credentialResolver 凭证解析器（用户 Key 优先，回退平台凭证）
      * @param objectMapper        JSON 序列化器
      * @param enabled             是否启用 AI 剧本生成
      * @param model               模型名
@@ -82,7 +81,7 @@ public class LlmScriptService {
     /**
      * 构造器（Spring 通过 @Value 注入配置；测试可直接传参实例化）。
      *
-     * @param surrogateAuthClient 鉴权客户端
+     * @param credentialResolver 凭证解析器（用户 Key 优先，回退平台凭证）
      * @param objectMapper        JSON 序列化器
      * @param enabled             是否启用 AI 剧本生成
      * @param model               模型名
@@ -91,7 +90,7 @@ public class LlmScriptService {
      * @param maxRetries          最大重试次数
      * @param cliPath             CLI 回退路径（为空则自动探测）
      */
-    public LlmScriptService(SurrogateAuthClient surrogateAuthClient,
+    public LlmScriptService(CredentialResolver credentialResolver,
                             ObjectMapper objectMapper,
                             @Value("${drama.script.llm.enabled:true}") boolean enabled,
                             @Value("${drama.script.llm.model:Deepseek-v4-flash}") String model,
@@ -99,7 +98,7 @@ public class LlmScriptService {
                             @Value("${drama.script.llm.timeout-seconds:120}") int timeoutSeconds,
                             @Value("${drama.script.llm.max-retries:2}") int maxRetries,
                             @Value("${drama.script.llm.cli-path:}") String cliPath) {
-        this.surrogateAuthClient = surrogateAuthClient;
+        this.credentialResolver = credentialResolver;
         this.objectMapper = objectMapper;
         this.enabled = enabled;
         this.model = model;
@@ -287,7 +286,7 @@ public class LlmScriptService {
         try {
             String json = body.toString();
             Map.Entry<String, String> authHeader =
-                    surrogateAuthClient.authHeader(CHAT_URL, CREDENTIAL);
+                    credentialResolver.chatAuth();
             return LlmTransport.postJson(CHAT_URL, json, authHeader, timeoutSeconds);
         } catch (RuntimeException httpEx) {
             if (effectiveCliPath == null) {

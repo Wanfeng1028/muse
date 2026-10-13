@@ -67,6 +67,22 @@ public class VideoTask {
     @Column(length = 1000)
     private String localPath;
 
+    /** 消耗 token 数（V3 Harness），可空：提供方未返回用量时为 null */
+    @Column(name = "tokens_used")
+    private Long tokensUsed;
+
+    /** 消耗费用（分），可空：未知时为 null，不估算 */
+    @Column(name = "cost_cents")
+    private Long costCents;
+
+    /** 费用是否为估算值 */
+    @Column(name = "cost_estimated")
+    private Boolean costEstimated = false;
+
+    /** 实际使用的模型/通道名，最长 100 字符 */
+    @Column(name = "model_used", length = 100)
+    private String modelUsed;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 
@@ -171,6 +187,38 @@ public class VideoTask {
 
     public void setLocalPath(String localPath) {
         this.localPath = localPath;
+    }
+
+    public Long getTokensUsed() {
+        return tokensUsed;
+    }
+
+    public void setTokensUsed(Long tokensUsed) {
+        this.tokensUsed = tokensUsed;
+    }
+
+    public Long getCostCents() {
+        return costCents;
+    }
+
+    public void setCostCents(Long costCents) {
+        this.costCents = costCents;
+    }
+
+    public Boolean getCostEstimated() {
+        return costEstimated;
+    }
+
+    public void setCostEstimated(Boolean costEstimated) {
+        this.costEstimated = costEstimated;
+    }
+
+    public String getModelUsed() {
+        return modelUsed;
+    }
+
+    public void setModelUsed(String modelUsed) {
+        this.modelUsed = modelUsed;
     }
 
     public LocalDateTime getCreatedAt() {
