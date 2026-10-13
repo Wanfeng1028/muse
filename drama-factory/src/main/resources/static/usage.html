@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用量统计 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css">
+<style>
+.bar-row{display:flex;align-items:center;gap:12px;padding:6px 0;}
+.bar-date{width:110px;flex:none;color:var(--text-2);font-size:13px;}
+.bar-track{flex:1;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+.bar-fill{display:block;height:100%;border-radius:3px;background:var(--ink);}
+.bar-value{width:120px;flex:none;text-align:right;font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-head">
+      <h1>用量统计</h1>
+      <p class="subtitle">Token 与费用估算 · 仅统计真实发生的调用</p>
+    </header>
+
+    <section class="section">
+      <p class="usage-strip" id="usage-strip">加载中…</p>
+    </section>
+
+    <section class="section">
+      <h2>按模型</h2>
+      <div class="state state-loading" id="by-model-loading">加载中…</div>
+      <div class="state state-empty" id="by-model-empty" hidden>暂无用量数据，先跑一次运行吧</div>
+      <div class="state state-error" id="by-model-error" hidden>加载失败</div>
+      <table class="table" id="by-model-table" hidden>
+        <thead>
+          <tr>
+            <th>模型</th>
+            <th>Token</th>
+            <th>费用估算</th>
+            <th>任务数</th>
+          </tr>
+        </thead>
+        <tbody id="usage-by-model"></tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>近 30 天</h2>
+      <div class="state state-loading" id="by-day-loading">加载中…</div>
+      <div class="state state-empty" id="by-day-empty" hidden>暂无用量数据，先跑一次运行吧</div>
+      <div class="state state-error" id="by-day-error" hidden>加载失败</div>
+      <div class="bars" id="usage-by-day" hidden></div>
+    </section>
+
+    <section class="section">
+      <h2>按运行</h2>
+      <div class="state state-loading" id="by-run-loading">加载中…</div>
+      <div class="state state-empty" id="by-run-empty" hidden>暂无用量数据，先跑一次运行吧</div>
+      <div class="state state-error" id="by-run-error" hidden>加载失败</div>
+      <table class="table" id="by-run-table" hidden>
+        <thead>
+          <tr>
+            <th>运行</th>
+            <th>目标</th>
+            <th>Token</th>
+            <th>费用估算</th>
+            <th>创建时间</th>
+          </tr>
+        </thead>
+        <tbody id="usage-by-run"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/shell.js"></script>
+  <script src="/usage.js"></script>
+</body>
+</html>
+

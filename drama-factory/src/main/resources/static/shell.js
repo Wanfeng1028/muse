@@ -54,6 +54,7 @@
     { id: 'chat', href: '/chat.html', label: 'AI 对话', icon: 'chat', kbd: 'G C' },
     { id: 'runs', href: '/runs.html', label: '运行列表', icon: 'runs', kbd: 'G R' },
     { id: 'agents', href: '/agents.html', label: 'Agent 机队', icon: 'agents' },
+    { id: 'usage', href: '/usage.html', label: '用量统计', icon: 'chart' },
     { id: 'storyboard', href: '/storyboard.html', label: '分镜板', icon: 'film', kbd: 'G S' },
     { id: 'tasks', href: '/tasks.html', label: '任务队列', icon: 'tasks', kbd: 'G T' },
     { id: 'finals', href: '/finals.html', label: '成片库', icon: 'check', kbd: 'G F' },
@@ -64,7 +65,7 @@
   /* 侧边栏分组 */
   var NAV_GROUPS = [
     { label: '创作', ids: ['index', 'chat'] },
-    { label: '运行', ids: ['runs', 'agents'] },
+    { label: '运行', ids: ['runs', 'agents', 'usage'] },
     { label: '生产', ids: ['storyboard', 'tasks', 'finals', 'pipeline'] }
   ];
   function navById(id) {
@@ -205,7 +206,7 @@
     var titles = {
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
-      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', settings: '设置'
+      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', usage: '用量统计', settings: '设置'
     };
     if (window.location.pathname.endsWith('/run-detail.html')) return '运行详情';
     return titles[id] || 'AI 短剧工坊';

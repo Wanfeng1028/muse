@@ -5,6 +5,8 @@ import com.dramafactory.model.RunStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import com.dramafactory.service.UsageService;
+import org.springframework.data.domain.Pageable;
 
 /**
  * {@link Run} 仓库。
@@ -18,4 +20,9 @@ public interface RunRepository extends JpaRepository<Run, Long> {
      * @return 该状态的运行列表
      */
     List<Run> findByStatusOrderByCreatedAtAsc(RunStatus status);
+
+
+    List<UsageService.RunRow> findTop20ByOrderByCreatedAtDesc();
+
+    List<UsageService.RunRow> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

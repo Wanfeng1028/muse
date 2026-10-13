@@ -1,25 +1,25 @@
-/* ---- 深色暖炭化（v4.1）：去"黑底霓虹"AI 味 ----
+/* ---- 深色中性化：自然灰黑，无偏暖无偏蓝 ---- */
    诊断：Tabler 默认深色 = 冷调近纯黑底 oklch(20.46% 0 0) + 高饱和亮蓝主色 oklch(54.6% 0.1724 254.2)
          + 近纯白字 oklch(92.19% 0 0)。
    修法：只覆盖深色主题变量，不换库、不动结构、不动 API。零毛玻璃（无 backdrop-filter 属性）。
    调参前后对照表见 docs/DESIGN.md。 */
 [data-bs-theme="dark"] {
-  --tblr-body-bg: #1c1917;          /* 暖炭底：拒绝纯黑 #000 与冷蓝黑 */
-  --tblr-body-bg-rgb: 28, 25, 23;
-  --tblr-body-color: #ede8e2;       /* 米白正文（对比度 ~13.8:1） */
-  --tblr-body-color-rgb: 237, 232, 226;
-  --tblr-bg-surface: #262220;       /* 卡片底：比页面高半档明度，靠微差分层 */
-  --tblr-muted: #b8b0a6;            /* 柔和暖灰（对比度 ~7.2:1） */
-  --tblr-muted-rgb: 184, 176, 166;
-  --tblr-border-color: #3a3532;     /* 低对比暖灰线，分割线不抢视觉 */
-  --tblr-primary: #4a6fa5;          /* 降饱和蓝：去霓虹，保留品牌识别 */
-  --tblr-primary-rgb: 74, 111, 165;
-  --tblr-success: #5e8c61;          /* 苔绿：收敛 */
-  --tblr-success-rgb: 94, 140, 97;
-  --tblr-danger: #b5544c;           /* 陶土红：收敛 */
-  --tblr-danger-rgb: 181, 84, 76;
-  --tblr-warning: #c98a3f;          /* 赭橙：与暖调一致 */
-  --tblr-warning-rgb: 201, 138, 63;
+  --tblr-body-bg: #16161A;
+  --tblr-body-bg-rgb: 22,22,26;
+  --tblr-body-color: #EDEDEF;
+  --tblr-body-color-rgb: 237,237,239;
+  --tblr-bg-surface: #202027;
+  --tblr-muted: #A1A1AA;
+  --tblr-muted-rgb: 161,161,170;
+  --tblr-border-color: rgba(255,255,255,.08);
+  --tblr-primary: #FFFFFF;
+  --tblr-primary-rgb: 255,255,255;
+  --tblr-success: #4ADE80;
+  --tblr-success-rgb: 74,222,128;
+  --tblr-danger: #F87171;
+  --tblr-danger-rgb: 248,113,113;
+  --tblr-warning: #FBBF24;
+  --tblr-warning-rgb: 251,191,36;
 }
 
 /* ---- 以下为 v4 原有：布局宽度与表格密度微调 ---- */
@@ -53,22 +53,22 @@
   display: block;
 }
 
-/* ---- 亮色暖白：Tabler 变量同步 ---- */
+/* ---- 亮色纯白：Tabler 变量同步 ---- */
 [data-bs-theme="light"] {
-  --tblr-body-bg: #F8F7F4;
-  --tblr-body-bg-rgb: 248, 247, 244;
-  --tblr-body-color: #201C16;
-  --tblr-body-color-rgb: 32, 28, 22;
+  --tblr-body-bg: #FFFFFF;
+  --tblr-body-bg-rgb: 255,255,255;
+  --tblr-body-color: #111111;
+  --tblr-body-color-rgb: 17,17,17;
   --tblr-bg-surface: #FFFFFF;
-  --tblr-border-color: rgba(30, 25, 15, .14);
-  --tblr-muted: #6E665A;
-  --tblr-muted-rgb: 110, 102, 90;
-  --tblr-primary: #4a6fa5;
-  --tblr-primary-rgb: 74, 111, 165;
-  --tblr-success: #4E7A51;
-  --tblr-success-rgb: 78, 122, 81;
-  --tblr-danger: #A6493F;
-  --tblr-danger-rgb: 166, 73, 63;
-  --tblr-warning: #9E742E;
-  --tblr-warning-rgb: 158, 116, 46;
+  --tblr-border-color: rgba(0,0,0,.08);
+  --tblr-muted: #555555;
+  --tblr-muted-rgb: 85,85,85;
+  --tblr-primary: #111111;
+  --tblr-primary-rgb: 17,17,17;
+  --tblr-success: #16803C;
+  --tblr-success-rgb: 22,128,60;
+  --tblr-danger: #DC2626;
+  --tblr-danger-rgb: 220,38,38;
+  --tblr-warning: #B45309;
+  --tblr-warning-rgb: 180,83,9;
 }

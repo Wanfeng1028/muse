@@ -6,23 +6,23 @@
    ========================================================================== */
 
 :root {
-  /* 暖炭深色主题（沿用 v4.1） */
-  --bg: #1c1917;
-  --bg-elev: #242019;
-  --surface: #292524;
-  --surface-2: #2e2a26;
-  --border: #2e2a26;          /* 发丝级细边框 */
-  --border-soft: #292524;
-  --text: #e7e5e4;
-  --text-2: #a8a29e;
-  --text-3: #78716c;
-  /* 克制的一个强调色：降饱和蓝 */
-  --accent: #4a6fa5;
-  --accent-hover: #5a7fb5;
-  --accent-soft: rgba(74, 111, 165, 0.14);
-  --green: #5f8a5f;
-  --amber: #b98a3e;
-  --red: #b0564a;
+  /* 中性灰黑深色主题（默认） */
+  --bg: #16161A;
+  --bg-elev: #1C1C21;
+  --surface: #202027;
+  --surface-2: #26262E;
+  --border: rgba(255,255,255,.08);
+  --border-soft: rgba(255,255,255,.06);
+  --text: #EDEDEF;
+  --text-2: #A1A1AA;
+  --text-3: #71717A;
+  /* 强调色即墨色/白色（随主题反转） */
+  --accent: #FFFFFF;
+  --accent-hover: #EDEDEF;
+  --accent-soft: rgba(255,255,255,.08);
+  --green: #4ADE80;
+  --amber: #FBBF24;
+  --red: #F87171;
   /* 等宽字体：时间码 / 快捷键 / 标签 */
   --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
   --radius: 8px;
@@ -616,37 +616,37 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
   color: var(--text-3);
 }
 
-/* ---- 亮色暖白主题（默认）：低对比和谐 + 留白 + 字距 ---- */
+/* ---- 亮色纯白主题：自然中性 ---- */
 [data-bs-theme="light"] {
-  --bg: #F8F7F4;
-  --bg-elev: #F1EFEA;
+  --bg: #FFFFFF;
+  --bg-elev: #F7F7F8;
   --surface: #FFFFFF;
-  --surface-2: #F4F2ED;
-  --border: rgba(30, 25, 15, .14);
-  --border-soft: rgba(30, 25, 15, .08);
-  --text: #201C16;
-  --text-2: #6E665A;
-  --text-3: #9A917F;
+  --surface-2: #F4F4F5;
+  --border: rgba(0,0,0,.08);
+  --border-soft: rgba(0,0,0,.06);
+  --text: #111111;
+  --text-2: #555555;
+  --text-3: #999999;
 
-  --accent: #4a6fa5;
-  --accent-hover: #3E5F92;
-  --accent-soft: rgba(74, 111, 165, .12);
+  --accent: #111111;
+  --accent-hover: #000000;
+  --accent-soft: rgba(0,0,0,.06);
 
-  --green: #4E7A51;
-  --amber: #9E742E;
-  --red: #A6493F;
+  --green: #16803C;
+  --amber: #B45309;
+  --red: #DC2626;
 
-  --ink: #2B2620;
+  --ink: #111111;
   --ink-text: #FFFFFF;
-  --ink-hover: #342E26;
-  --shadow-card: 0 1px 2px rgba(60, 50, 30, .05);
+  --ink-hover: #000000;
+  --shadow-card: 0 1px 2px rgba(0,0,0,.04);
 }
 
-/* ---- 深色主题补齐按钮变量（主按钮深色下反转为暖纸底 + 墨字） ---- */
+/* ---- 深色主题按钮变量（主按钮深色下为白底 + 黑字） ---- */
 [data-bs-theme="dark"] {
-  --ink: #EDE8E2;
-  --ink-text: #201C16;
-  --ink-hover: #FFFFFF;
+  --ink: #FFFFFF;
+  --ink-text: #111111;
+  --ink-hover: #EDEDEF;
 }
 
 /* ---- 主题切换钮（侧边栏底部） ---- */

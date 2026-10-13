@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import com.dramafactory.service.UsageService;
 
 /**
  * 视频生成任务数据访问层。
@@ -56,4 +57,17 @@ public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
      * 用于幂等提交：判断是否存在 PENDING / PROCESSING 的进行中任务。
      */
     Optional<VideoTask> findFirstByShotIdAndStatusInOrderByIdAsc(Long shotId, Collection<VideoTaskStatus> statuses);
+
+
+    @Query("SELECT SUM(v.tokensUsed) FROM VideoTask v")
+    Long sumTokensUsed();
+
+    @Query("SELECT SUM(v.costCents) FROM VideoTask v")
+    Long sumCostCents();
+
+    @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt FROM VideoTask v")
+    List<UsageService.VideoTaskRow> findAllForModelUsage();
+
+    @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt FROM VideoTask v WHERE v.createdAt >= :from")
+    List<UsageService.VideoTaskRow> findForDailyUsage(@Param("from") LocalDateTime from);
 }
