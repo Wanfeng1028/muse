@@ -249,6 +249,27 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 		maxWatermark = since[incrementalCol]
 	}
 
+	// 批量事务：每 batchSize 行提交一次，大幅减少 WAL fsync 次数。
+	// batchSize <= 0 时 validate 已置为 5000，这里再兜底一次。
+	batchSize := cfg.Sync.BatchSize
+	if batchSize <= 0 {
+		batchSize = 5000
+	}
+	tx, err := st.DB.Begin()
+	if err != nil {
+		return ts, fmt.Errorf("开启批量事务失败: %w", err)
+	}
+	// 出错回滚并返回原错误
+	rollback := func() { _ = tx.Rollback() }
+	processed := 0
+	commitBatch := func() error {
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+		tx, err = st.DB.Begin()
+		return err
+	}
+
 	for _, row := range rows {
 		// 取出主键值
 		pkRaw, ok := row[pkCol]
@@ -269,14 +290,16 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 		hash := HashRow(pk, colNames, vals)
 
 		// 查询现有记录
-		existHash, existSource, existDeleted, found, err := st.GetHash(ti.Name, pkCol, pk)
+		existHash, existSource, existDeleted, found, err := st.GetHash(tx, ti.Name, pkCol, pk)
 		if err != nil {
+			rollback()
 			return ts, fmt.Errorf("查询已有哈希失败: %w", err)
 		}
 
 		if !found {
 			// 插入
-			if err := st.UpsertRow(ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+			if err := st.UpsertRow(tx, ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+				rollback()
 				return ts, fmt.Errorf("插入失败: %w", err)
 			}
 			ts.Inserted++
@@ -289,11 +312,12 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 				case "priority":
 					if PriorityIndex(cfg.Sync.Priority, sc.Name) < PriorityIndex(cfg.Sync.Priority, existSource) {
 						// 本源优先，覆盖并记录自动解决
-						if err := st.UpsertRow(ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+						if err := st.UpsertRow(tx, ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+							rollback()
 							return ts, fmt.Errorf("覆盖写入失败: %w", err)
 						}
 						ts.Updated++
-						if _, err := st.RecordConflict(store.Conflict{
+						if _, err := st.RecordConflict(tx, store.Conflict{
 							TableName: ti.Name,
 							PK:        pk,
 							SourceA:   existSource,
@@ -302,11 +326,12 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 							Status:    "resolved_auto",
 							CreatedAt: nowRFC3339(),
 						}); err != nil {
+							rollback()
 							return ts, fmt.Errorf("记录冲突失败: %w", err)
 						}
 					} else {
 						// 本源优先级低，挂起冲突
-						if _, err := st.RecordConflict(store.Conflict{
+						if _, err := st.RecordConflict(tx, store.Conflict{
 							TableName: ti.Name,
 							PK:        pk,
 							SourceA:   existSource,
@@ -315,13 +340,14 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 							Status:    "pending",
 							CreatedAt: nowRFC3339(),
 						}); err != nil {
+							rollback()
 							return ts, fmt.Errorf("记录冲突失败: %w", err)
 						}
 						ts.Conflicts++
 					}
 				case "manual":
 					// 手动模式，记录冲突并跳过
-					if _, err := st.RecordConflict(store.Conflict{
+					if _, err := st.RecordConflict(tx, store.Conflict{
 						TableName: ti.Name,
 						PK:        pk,
 						SourceA:   existSource,
@@ -330,18 +356,20 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 						Status:    "pending",
 						CreatedAt: nowRFC3339(),
 					}); err != nil {
+						rollback()
 						return ts, fmt.Errorf("记录冲突失败: %w", err)
 					}
 					ts.Conflicts++
 				default:
 					// 默认按 priority 处理
 					if PriorityIndex(cfg.Sync.Priority, sc.Name) < PriorityIndex(cfg.Sync.Priority, existSource) {
-						if err := st.UpsertRow(ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+						if err := st.UpsertRow(tx, ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+							rollback()
 							return ts, fmt.Errorf("覆盖写入失败: %w", err)
 						}
 						ts.Updated++
 					} else {
-						if _, err := st.RecordConflict(store.Conflict{
+						if _, err := st.RecordConflict(tx, store.Conflict{
 							TableName: ti.Name,
 							PK:        pk,
 							SourceA:   existSource,
@@ -350,6 +378,7 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 							Status:    "pending",
 							CreatedAt: nowRFC3339(),
 						}); err != nil {
+							rollback()
 							return ts, fmt.Errorf("记录冲突失败: %w", err)
 						}
 						ts.Conflicts++
@@ -358,11 +387,13 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 			} else {
 				// 同源内容变化，直接更新；若该主键有 pending 冲突（此前他源挑战被挂起），
 				// 本源重新写入视为自动胜出，标记 resolved_auto
-				if err := st.UpsertRow(ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+				if err := st.UpsertRow(tx, ti.Name, pkCol, pk, colNames, vals, hash, sc.Name); err != nil {
+					rollback()
 					return ts, fmt.Errorf("更新失败: %w", err)
 				}
 				ts.Updated++
-				if n, err := st.ResolveConflictsByPK(ti.Name, pk, "resolved_auto"); err != nil {
+				if n, err := st.ResolveConflictsByPK(tx, ti.Name, pk, "resolved_auto"); err != nil {
+					rollback()
 					return ts, fmt.Errorf("自动解决冲突失败: %w", err)
 				} else {
 					ts.Conflicts += int(n)
@@ -386,17 +417,28 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 				}
 			}
 		}
+
+		// 批量提交
+		processed++
+		if processed%batchSize == 0 {
+			if err := commitBatch(); err != nil {
+				rollback()
+				return ts, fmt.Errorf("批量提交失败: %w", err)
+			}
+		}
 	}
 
 	// 全量模式下处理删除
 	if fullMode {
 		for pk := range seenPKs {
 			if cfg.Sync.SoftDelete {
-				if err := st.MarkDeleted(ti.Name, pkCol, pk); err != nil {
+				if err := st.MarkDeleted(tx, ti.Name, pkCol, pk); err != nil {
+					rollback()
 					return ts, fmt.Errorf("标记删除失败: %w", err)
 				}
 			} else {
-				if err := st.DeleteRow(ti.Name, pkCol, pk); err != nil {
+				if err := st.DeleteRow(tx, ti.Name, pkCol, pk); err != nil {
+					rollback()
 					return ts, fmt.Errorf("删除失败: %w", err)
 				}
 			}
@@ -404,6 +446,11 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 		}
 	}
 
+	// 提交最后一段批量事务；水位线在提交成功后写回
+	if err := tx.Commit(); err != nil {
+		rollback()
+		return ts, fmt.Errorf("提交批量事务失败: %w", err)
+	}
 	// 写回水位线
 	if incrementalCol != "" && maxWatermark != "" {
 		if err := st.SetWatermark(sc.Name, ti.Name, incrementalCol, maxWatermark); err != nil {

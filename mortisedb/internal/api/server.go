@@ -331,7 +331,7 @@ func (s *server) handleResolveConflict(w http.ResponseWriter, r *http.Request) {
 	hash := syncpkg.HashRow(req.PK, outCols, outVals)
 
 	// 执行 upsert
-	if err := s.st.UpsertRow(req.Table, req.PKCol, req.PK, outCols, outVals, hash, sourceB); err != nil {
+	if err := s.st.UpsertRow(s.st.DB, req.Table, req.PKCol, req.PK, outCols, outVals, hash, sourceB); err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Errorf("写入冲突行失败: %w", err))
 		return
 	}

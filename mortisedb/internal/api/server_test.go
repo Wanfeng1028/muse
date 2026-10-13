@@ -44,10 +44,10 @@ func newTestServer(t *testing.T) (*store.Store, http.Handler) {
 	if err := st.EnsureTable("users", "id", cols); err != nil {
 		t.Fatalf("建表失败: %v", err)
 	}
-	if err := st.UpsertRow("users", "id", int64(1), []string{"id", "name", "age"}, []any{int64(1), "张三", int64(30)}, "h1", "srcA"); err != nil {
+	if err := st.UpsertRow(st.DB, "users", "id", int64(1), []string{"id", "name", "age"}, []any{int64(1), "张三", int64(30)}, "h1", "srcA"); err != nil {
 		t.Fatalf("插入失败: %v", err)
 	}
-	if err := st.UpsertRow("users", "id", int64(2), []string{"id", "name", "age"}, []any{int64(2), "李四", int64(25)}, "h2", "srcA"); err != nil {
+	if err := st.UpsertRow(st.DB, "users", "id", int64(2), []string{"id", "name", "age"}, []any{int64(2), "李四", int64(25)}, "h2", "srcA"); err != nil {
 		t.Fatalf("插入失败: %v", err)
 	}
 	cfg := config.DefaultConfig()

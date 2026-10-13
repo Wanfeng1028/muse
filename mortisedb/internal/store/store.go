@@ -23,6 +23,14 @@ type Store struct {
 	DB *sql.DB
 }
 
+// dbtx 是 *sql.DB 与 *sql.Tx 的公共子集，供同步批量事务使用。
+// 批量同步时传入 *sql.Tx，普通调用传入 Store.DB。
+type dbtx interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+}
+
 // Open 打开数据库。":memory:" 走内存库；文件库先建父目录。
 func Open(path string) (*Store, error) {
 	if path == "" {
@@ -144,7 +152,7 @@ func (s *Store) EnsureTable(table, pkCol string, cols []infer.Column) error {
 }
 
 // UpsertRow 插入或更新一行（按主键冲突）。
-func (s *Store) UpsertRow(table, pkCol string, pkVal any, cols []string, vals []any, hash, source string) error {
+func (s *Store) UpsertRow(q dbtx, table, pkCol string, pkVal any, cols []string, vals []any, hash, source string) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 	allCols := make([]string, 0, len(cols)+4)
 	allCols = append(allCols, cols...)
@@ -176,14 +184,14 @@ func (s *Store) UpsertRow(table, pkCol string, pkVal any, cols []string, vals []
 		quoteIdent(pkCol),
 		strings.Join(updates, ", "),
 	)
-	if _, err := s.DB.Exec(stmt, allVals...); err != nil {
+	if _, err := q.Exec(stmt, allVals...); err != nil {
 		return fmt.Errorf("写入行失败: %w", err)
 	}
 	return nil
 }
 
 // GetHash 读取指定主键行的 hash、来源与删除标记。
-func (s *Store) GetHash(table, pkCol string, pkVal any) (hash, source string, deleted bool, found bool, err error) {
+func (s *Store) GetHash(q dbtx, table, pkCol string, pkVal any) (hash, source string, deleted bool, found bool, err error) {
 	stmt := fmt.Sprintf(
 		"SELECT %s, %s, %s FROM %s WHERE %s = ?",
 		quoteIdent("_m_hash"), quoteIdent("_m_source"), quoteIdent("_m_deleted"),
@@ -194,7 +202,7 @@ func (s *Store) GetHash(table, pkCol string, pkVal any) (hash, source string, de
 		src sql.NullString
 		del sql.NullInt64
 	)
-	row := s.DB.QueryRow(stmt, pkVal)
+	row := q.QueryRow(stmt, pkVal)
 	if err := row.Scan(&h, &src, &del); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", "", false, false, nil
@@ -227,18 +235,18 @@ func (s *Store) ExistingPKs(table, pkCol, source string) (map[string]bool, error
 }
 
 // MarkDeleted 标记软删除。
-func (s *Store) MarkDeleted(table, pkCol string, pkVal any) error {
+func (s *Store) MarkDeleted(q dbtx, table, pkCol string, pkVal any) error {
 	stmt := fmt.Sprintf("UPDATE %s SET %s = 1 WHERE %s = ?", quoteIdent(table), quoteIdent("_m_deleted"), quoteIdent(pkCol))
-	if _, err := s.DB.Exec(stmt, pkVal); err != nil {
+	if _, err := q.Exec(stmt, pkVal); err != nil {
 		return fmt.Errorf("软删除失败: %w", err)
 	}
 	return nil
 }
 
 // DeleteRow 物理删除一行。
-func (s *Store) DeleteRow(table, pkCol string, pkVal any) error {
+func (s *Store) DeleteRow(q dbtx, table, pkCol string, pkVal any) error {
 	stmt := fmt.Sprintf("DELETE FROM %s WHERE %s = ?", quoteIdent(table), quoteIdent(pkCol))
-	if _, err := s.DB.Exec(stmt, pkVal); err != nil {
+	if _, err := q.Exec(stmt, pkVal); err != nil {
 		return fmt.Errorf("删除失败: %w", err)
 	}
 	return nil
@@ -386,8 +394,8 @@ type Conflict struct {
 }
 
 // RecordConflict 记录一条冲突，返回新 id。
-func (s *Store) RecordConflict(c Conflict) (int64, error) {
-	res, err := s.DB.Exec(
+func (s *Store) RecordConflict(q dbtx, c Conflict) (int64, error) {
+	res, err := q.Exec(
 		`INSERT INTO "_m_conflicts" ("table_name","pk","source_a","source_b","row_json","status","created_at","resolved_at")
 		 VALUES (?,?,?,?,?,?,?,?)`,
 		c.TableName, c.PK, c.SourceA, c.SourceB, c.RowJSON, c.Status, c.CreatedAt, c.ResolvedAt,
@@ -469,9 +477,9 @@ func (s *Store) ResolveConflict(id int64, status string) error {
 }
 
 // ResolveConflictsByPK 将指定表+主键的所有 pending 冲突标记为目标状态，返回影响行数。
-func (s *Store) ResolveConflictsByPK(table, pk, status string) (int64, error) {
+func (s *Store) ResolveConflictsByPK(q dbtx, table, pk, status string) (int64, error) {
 	now := time.Now().UTC().Format(time.RFC3339)
-	res, err := s.DB.Exec(
+	res, err := q.Exec(
 		`UPDATE "_m_conflicts" SET "status"=?, "resolved_at"=? WHERE "table_name"=? AND "pk"=? AND "status"='pending'`,
 		status, now, table, pk,
 	)

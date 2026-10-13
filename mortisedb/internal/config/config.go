@@ -34,6 +34,7 @@ type SyncPolicy struct {
 	Conflict   string   `yaml:"conflict"`
 	Priority   []string `yaml:"priority"`
 	SoftDelete bool     `yaml:"soft_delete"`
+	BatchSize  int      `yaml:"batch_size"`
 }
 
 // ViewConfig 描述一个视图定义。
@@ -70,6 +71,7 @@ func DefaultConfig() *Config {
 		Sync: SyncPolicy{
 			Conflict:   "priority",
 			SoftDelete: true,
+			BatchSize:  5000,
 		},
 	}
 }
@@ -118,6 +120,9 @@ func (c *Config) validate() error {
 	}
 	if c.Sync.Conflict != "priority" && c.Sync.Conflict != "manual" {
 		return fmt.Errorf("sync.conflict 非法取值 %q，仅支持 priority|manual", c.Sync.Conflict)
+	}
+	if c.Sync.BatchSize <= 0 {
+		c.Sync.BatchSize = 5000
 	}
 
 	seen := make(map[string]bool, len(c.Sources))
