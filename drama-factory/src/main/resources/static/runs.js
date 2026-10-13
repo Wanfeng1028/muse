@@ -52,7 +52,13 @@
     if (!iso) return '—';
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '—';
-    return d.toLocaleString('zh-CN', { hour12: false });
+    function p(n) {
+      return n < 10 ? '0' + n : '' + n;
+    }
+    return (
+      d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+      ' ' + p(d.getHours()) + ':' + p(d.getMinutes())
+    );
   }
 
   /* run/step status -> badge class */

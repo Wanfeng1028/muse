@@ -52,6 +52,14 @@
     return (m < 10 ? '0' + m : '' + m) + ':' + (sec < 10 ? '0' + sec : '' + sec);
   }
 
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
   function statusBadge(status) {
     switch (status) {
       case 'PENDING':
@@ -85,7 +93,7 @@
 
       document.getElementById('qcDuration').textContent = toTimecode(data.durationSeconds);
       document.getElementById('qcCreated').textContent = data.createdAt
-        ? new Date(data.createdAt).toLocaleString('zh-CN')
+        ? fmtTime(data.createdAt)
         : '-';
       document.getElementById('qcEpisode').textContent = data.episodeId
         ? ('剧集 #' + data.episodeId)
