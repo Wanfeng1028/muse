@@ -26,6 +26,7 @@
   - `http.Server` 增加 `ReadHeaderTimeout=10s`、`ReadTimeout=30s`、`WriteTimeout=60s`、`IdleTimeout=120s`。
   - 关闭流程结构化日志化：停新请求 → `Shutdown(30s)` → `scheduler.Stop()` 等待在途同步 → `PRAGMA wal_checkpoint(TRUNCATE)`（失败仅 warn）→ `st.Close()`。
 - **10 万行负载验证支撑**：`scripts/loadtest.sh` 生成 CSV/JSON/SQLite 三源各 10 万行 + `mortise-load.yaml`（含跨源 JOIN 视图 `v_load_join`），脚本只生成与自检，手动计时见 `docs/LOADTEST.md`。
+- **同步批量事务**：`syncOneTable` 行循环包进事务，每 `sync.batch_size`（默认 5000）行提交一次；出错 Rollback；水位线仍在最终 Commit 成功后写回。实测 2 vCPU VM 上 30 万行 265.89s（约 1128 行/秒），相对逐行自动提交（约 38 行/秒）约 30 倍提升；跨源 JOIN 10 万行 452ms。详见 `docs/LOADTEST.md`。
 
 ### 变更
 
