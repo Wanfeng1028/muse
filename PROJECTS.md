@@ -310,6 +310,35 @@
 - Postgres/MySQL 只读源、冲突 Webhook 通知、视图定时物化、CSV 增量导入 API
 - 端到端自动化测试、backup 子命令、/metrics 指标
 
+## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」
+
+**定位**：中文播客/有声书创作者的文字剪辑工作站——转写稿当时间轴，文字删改自动生成音频剪辑方案（保留呼吸节奏），语气词一键弱化，EDL 导出供 Premiere/Reaper 精修。Descript 闭源英文优先，开源侧中文文字剪辑是空位。
+
+**技术栈**：C#/.NET 8 + Avalonia UI 12.1.4（跨平台桌面）+ 自研 VoxLoom.Core（无 UI 依赖）；CommunityToolkit.Mvvm；xunit（testhost 在 VM 上 IPC 不通，改用 SmokeRunner 反射直跑）；GitHub Actions CI（ubuntu+windows）。
+
+**功能模块**：
+
+1. 音频导入（WAV）+ WaveformLod 多级波形金字塔，万级采样点流畅渲染
+2. 转写稿导入：Whisper JSON / LRC / 纯文本；RuleBasedAligner 规则对齐（能量检测精修），文字↔音频双向定位
+3. 文字删除/替换 → 音频剪辑：EditPlan + Delete/Replace/Attenuate 三种 op，过零点拼接 + 短交叉淡化防爆音，冲突检测抛 EditConflictException
+4. 语气词（嗯/那个/对吧）检测 + 一键弱化（-12dB，首尾 50ms raised-cosine 过渡，保留呼吸节奏而非静音）
+5. EDL（CMX3600）导出；演示模式 `--demo-wav` / `--screenshot`（Xvfb 离屏抓屏）
+
+**视觉**：「录音棚调音台」——深板岩 #1C1A17 底、纸色 #EDE6D6 波形、橙色 #E8833A 高亮；去 AI 味：无紫渐变、无 emoji 图标、无营销腔文案。
+
+**状态**：v0.1.0（2026-10-13 完成，commit 2df8304）：dotnet build（Debug/Release）全过；测试 44/44（含端到端链路 导入→对齐→删除→弱化→导出）；桌面 UI 在 Xvfb 下真实渲染截图已亲眼验收（docs/screenshots/main.png）；修了 dpsk 生成的 10+ 处跨文件 API 对不齐 + Avalonia.Generators 需 Roslyn 4.14 而 SDK 自带 4.11 的 InitializeComponent 坑（改用 AvaloniaXamlLoader.Load）。
+
+**发版对照**：`voxloom/docs/PRODUCTION_CHECKLIST_REPORT.md`——有条件发版，18 项未通过均有排期（v1.1：结构化日志/错误处理策略文档/备份恢复/运维手册/CHANGELOG/Dependabot/文档同步；v2：指标告警/限流熔断/故障演练）。
+
+**里程碑记录**：
+
+- v0.1.0（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；Core 库 dpsk 生成 + 编排验收；UI Round D 生成后 2 轮修复额度用尽仍有残留，编排者亲自做跨文件 reconciliation 收尾
+
+**后续计划**：
+
+- v1.1：MP3/FLAC/M4A 导入、结构化日志、错误处理策略文档、备份恢复、运维手册、Dependabot
+- v2：ONNX 本地声学模型精对齐 + 内置转写、多轨口误自动推荐最自然一版
+
 ## interlude「幕间 Interlude · 分支叙事的 linter」
 
 **定位**：给独立游戏叙事设计师/互动小说/剧本杀作者的开源桌面工具——分支叙事的 linter。Twine 太简单无校验，articy:draft 闭源贵，开源侧真空。

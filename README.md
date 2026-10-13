@@ -17,6 +17,7 @@
 | [linkshort](./linkshort) | 「短链 LinkShort」——自托管短链服务。Go 单二进制：chi v5 路由 + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI + skip2/go-qrcode 二维码。功能：短链创建（自动 base62/自定义 slug）、302 跳转计数与访问日志、统计（总览/30 天曲线/Top 链接/Top Referer）、过期 410、启用开关、二维码 PNG、CSV 导入导出、API Key 鉴权、Web UI 四页（仪表盘/链接管理/详情/新建）。 | 工程化 v1 |
 | [mortisedb](./mortisedb) | 「榫卯 MortiseDB」——NAS 玩家/小团队的本地多源数据拼装层。Go 单二进制：modernc.org/sqlite（纯 Go）+ go:embed 内嵌 Web UI。功能：YAML 声明式映射 SQLite/CSV/JSON/目录为表（schema 推断）、增量同步（updated_at 水位线+哈希兜底）、冲突策略（源优先级/手动）、类 SQL 视图（运行/导出 CSV）、定时任务+运行历史。 | 工程化 v1 |
 | [interlude](./interlude) | 「幕间 Interlude」——分支叙事的 linter：给独立游戏叙事设计师/互动小说/剧本杀作者的开源桌面工具。Kotlin + Compose Desktop。自研叙事 DSL（行号精确报错）、一致性校验引擎（死路/不可达节点/变量未初始化/条件永假，5 条规则）、可视化分支图（层次化布局）、本地化文本抽取回填。 | v1 核心完成 |
+| [voxloom](./voxloom) | 「声纹工坊 VoxLoom」——中文播客/有声书的文字剪辑工作站。C#/.NET 8 + Avalonia 跨平台桌面：转写稿当时间轴，文字删改自动生成音频剪辑（过零点防爆音），语气词一键弱化（-12dB），EDL 导出供 Premiere/Reaper 精修。自研 Core 库（WAV/波形金字塔/对齐/剪辑引擎）。 | v0.1.0 |
 
 ## 如何运行
 
@@ -166,6 +167,18 @@ go build -o mortisedb ./cmd/mortisedb
 ```
 
 配置、API 表、发版对照报告见 [mortisedb/README.md](./mortisedb/README.md) 与 [mortisedb/docs/PRODUCTION_CHECKLIST.md](./mortisedb/docs/PRODUCTION_CHECKLIST.md)。
+
+### voxloom
+
+进入项目目录，构建并运行桌面端（需 .NET 8 SDK）：
+
+```bash
+cd voxloom
+dotnet build VoxLoom.sln
+dotnet run --project src/VoxLoom.Desktop
+```
+
+启动后点「载入演示」即走完 导入→对齐→删除→弱化→导出 全链路。测试用 SmokeRunner 直跑：`dotnet run --project tests/VoxLoom.SmokeRunner`。完整说明见 [voxloom/README.md](./voxloom/README.md)，发版对照报告见 [voxloom/docs/PRODUCTION_CHECKLIST_REPORT.md](./voxloom/docs/PRODUCTION_CHECKLIST_REPORT.md)。
 
 ## 目录约定
 
