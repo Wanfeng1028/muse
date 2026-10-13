@@ -1,0 +1,32 @@
+# drama-factory 一键部署：docker compose up -d --build
+# 数据持久化在 ./data（含 H2 文件库与媒体文件），日志轮转 10m x 3
+services:
+  app:
+    build: .
+    image: drama-factory:latest
+    container_name: drama-factory
+    ports:
+      - "${PORT:-8081}:8081"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          memory: 512M

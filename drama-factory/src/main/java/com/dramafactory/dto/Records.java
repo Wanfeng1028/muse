@@ -128,7 +128,8 @@ public final class Records {
             int status,
             String error,
             String message,
-            LocalDateTime timestamp
+            LocalDateTime timestamp,
+            String requestId
     ) {
     }
 
@@ -140,6 +141,74 @@ public final class Records {
             Integer durationSeconds,
             String dialogue,
             String videoPrompt
+    ) {
+    }
+
+    /**
+     * 从剧本原文拆分分镜的请求体。
+     */
+    public static record ScriptSplitRequest(
+            @NotBlank String scriptText
+    ) {
+    }
+
+    /**
+     * 成片质检请求体：verdict 只能是 APPROVED（通过）或 REJECTED（打回）。
+     */
+    public static record QcRequest(
+            @NotBlank String verdict,
+            String note
+    ) {
+    }
+
+    /**
+     * AI 对话的一条历史消息。
+     */
+    public static record ChatMessage(
+            String role,
+            String content
+    ) {
+    }
+
+    /**
+     * AI 对话请求体：message 为本轮用户输入，history 为此前多轮（role/content），
+     * episodeId 可选，用于把对话锚定到某个剧集。
+     */
+    public static record ChatRequest(
+            @NotBlank String message,
+            Long episodeId,
+            List<ChatMessage> history
+    ) {
+    }
+
+    /**
+     * AI 对话响应体。
+     */
+    public static record ChatResponse(
+            String reply,
+            String model
+    ) {
+    }
+
+    /**
+     * 对话确认后批量落库的分镜项：景别/运镜用中文标签，由后端映射为枚举。
+     */
+    public static record ShotBatchItem(
+            @NotNull Integer shotNo,
+            String shotSize,
+            String cameraMove,
+            String description,
+            Integer durationSeconds,
+            String dialogue,
+            String videoPrompt
+    ) {
+    }
+
+    /**
+     * 批量落库分镜的请求体（替换该剧集全部旧分镜）。
+     */
+    public static record ShotBatchRequest(
+            @NotNull List<ShotBatchItem> shots
     ) {
     }
 
@@ -200,6 +269,9 @@ public final class Records {
             String statusLabel,
             Double durationSeconds,
             String errorMessage,
+            String qcStatus,
+            String qcNote,
+            LocalDateTime qcAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -225,4 +297,22 @@ public final class Records {
             List<PipelineEpisodeView> episodes
     ) {
     }
+
+    /**
+     * 生产统计：分镜完成率 = 拥有 DONE 视频任务的分镜数 / 分镜总数；
+     * 任务成功率 = DONE 任务数 / (DONE + FAILED) 任务数；
+     * 累计渲染时长 = 所有 DONE 任务对应分镜的 durationSeconds 之和。
+     */
+    public static record ProductionStatsResponse(
+            Long projectId,
+            long shotCount,
+            long shotsCompleted,
+            double shotCompletionRate,
+            long tasksDone,
+            long tasksFailed,
+            double taskSuccessRate,
+            long totalRenderSeconds
+    ) {
+    }
 }
+

@@ -13,6 +13,7 @@ import com.dramafactory.service.video.VideoProvider;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +30,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -45,6 +47,7 @@ public class VideoTaskService {
     private final ShotRepository shotRepository;
     private final FfmpegService ffmpegService;
     private final ApplicationContext applicationContext;
+    private final EpisodeStatusFlowService episodeStatusFlowService;
 
     private final String providerName;
     private final long pollIntervalMs;
@@ -58,6 +61,7 @@ public class VideoTaskService {
                             ShotRepository shotRepository,
                             FfmpegService ffmpegService,
                             ApplicationContext applicationContext,
+                            EpisodeStatusFlowService episodeStatusFlowService,
                             @Value("${drama.video.provider:mock}") String providerName,
                             @Value("${drama.video.poll-interval-ms:10000}") long pollIntervalMs,
                             @Value("${drama.video.max-attempts:8}") int maxAttempts,
@@ -66,6 +70,7 @@ public class VideoTaskService {
         this.shotRepository = shotRepository;
         this.ffmpegService = ffmpegService;
         this.applicationContext = applicationContext;
+        this.episodeStatusFlowService = episodeStatusFlowService;
         this.providerName = providerName;
         this.pollIntervalMs = pollIntervalMs;
         this.maxAttempts = maxAttempts;
@@ -78,6 +83,9 @@ public class VideoTaskService {
     private VideoProvider provider() {
         if ("agnes".equals(providerName)) {
             return applicationContext.getBean("agnesVideoProvider", VideoProvider.class);
+        }
+        if ("qwen".equals(providerName)) {
+            return applicationContext.getBean("qwenVideoProvider", VideoProvider.class);
         }
         return applicationContext.getBean("mockVideoProvider", VideoProvider.class);
     }
@@ -168,6 +176,7 @@ public class VideoTaskService {
     @Transactional
     public void processDueTasks() {
         pollInFlight.set(true);
+        MDC.put("request_id", "poll-" + UUID.randomUUID().toString().substring(0, 8));
         try {
             LocalDateTime now = LocalDateTime.now();
             List<VideoTask> due = videoTaskRepository
@@ -189,6 +198,7 @@ public class VideoTaskService {
                 videoTaskRepository.save(task);
             });
         } finally {
+            MDC.clear();
             pollInFlight.set(false);
         }
     }
@@ -230,6 +240,7 @@ public class VideoTaskService {
         Integer durationSeconds = task.getShot().getDurationSeconds();
         int seconds = durationSeconds != null ? durationSeconds : 5;
         String providerTaskId = provider().submit(task.getShot(), seconds);
+        log.info("视频任务已提交：taskId={}，shotId={}，providerTaskId={}", task.getId(), task.getShot().getId(), providerTaskId);
         task.setProviderTaskId(providerTaskId);
         task.setStatus(VideoTaskStatus.PROCESSING);
         task.setNextRetryAt(LocalDateTime.now().plusNanos((pollIntervalMs) * 1_000_000L));
@@ -241,8 +252,14 @@ public class VideoTaskService {
     private void doPoll(VideoTask task) throws Exception {
         ProbeResult result = provider().poll(task.getProviderTaskId());
         switch (result.status()) {
-            case COMPLETED -> downloadVideo(task, result.videoUrl());
-            case FAILED -> failOrRetry(task, result.errorMessage());
+            case COMPLETED -> {
+                log.info("视频任务完成：taskId={}，shotId={}", task.getId(), task.getShot().getId());
+                downloadVideo(task, result.videoUrl());
+            }
+            case FAILED -> {
+                log.warn("视频任务提供方返回失败：taskId={}，shotId={}，原因={}", task.getId(), task.getShot().getId(), result.errorMessage());
+                failOrRetry(task, result.errorMessage());
+            }
             case QUEUED, PROCESSING -> task.setNextRetryAt(LocalDateTime.now().plusNanos((pollIntervalMs) * 1_000_000L));
         }
     }
@@ -281,6 +298,14 @@ public class VideoTaskService {
         task.setLocalPath(out.toString());
         task.setVideoUrl(url);
         task.setStatus(VideoTaskStatus.DONE);
+
+        // 视频任务完成：尝试推进剧集状态（全部镜头 DONE → GENERATED）
+        try {
+            Long episodeId = task.getShot().getEpisode().getId();
+            episodeStatusFlowService.refreshAfterTaskDone(episodeId);
+        } catch (Exception e) {
+            log.warn("刷新剧集状态失败（不影响任务完成）: {}", e.getMessage());
+        }
     }
 
     /**
@@ -291,6 +316,7 @@ public class VideoTaskService {
         task.setErrorMessage(err);
         if (task.getAttempts() >= maxAttempts) {
             task.setStatus(VideoTaskStatus.FAILED);
+            log.warn("视频任务达到最大重试次数，标记失败：taskId={}，shotId={}，最后错误={}", task.getId(), task.getShot().getId(), err);
         }
         task.setNextRetryAt(LocalDateTime.now().plusNanos(computeBackoffMs(task.getAttempts()) * 1_000_000L));
     }

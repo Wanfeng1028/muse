@@ -40,3 +40,32 @@ drama:
   storage: ${DRAMA_STORAGE:./data/media}
   ffmpeg: ${FFMPEG_PATH:ffmpeg}
   ffprobe: ${FFPROBE_PATH:ffprobe}
+
+logging:
+  # JSON 结构化日志：设置环境变量 SPRING_PROFILES_ACTIVE=json 即切换为 Logstash JSON 输出（含 request_id）
+  level:
+    com.dramafactory: INFO
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      agnes:
+        sliding-window-size: 10
+        minimum-number-of-calls: 4
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        permitted-number-of-calls-in-half-open-state: 2
+  timelimiter:
+    instances:
+      agnes:
+        # 单次 provider 调用超时上限；HttpClient 自身另有 60s 请求超时
+        timeout-duration: 90s
+  ratelimiter:
+    instances:
+      videoSubmit:
+        # 视频任务提交接口：每 10 秒最多 10 次，超限立即返回 429
+        limit-for-period: 10
+        limit-refresh-period: 10s
+        timeout-duration: 0s

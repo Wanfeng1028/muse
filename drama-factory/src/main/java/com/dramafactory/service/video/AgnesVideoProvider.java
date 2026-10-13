@@ -21,7 +21,7 @@ import java.util.Map;
  * Agnes 视频生成 API 对接实现。
  * 负责向 Agnes 提交视频生成任务并轮询任务状态。
  */
-@Component("agnesVideoProvider")
+@Component("agnesRawVideoProvider")
 public class AgnesVideoProvider implements VideoProvider {
 
     /** Agnes 视频生成接口地址（提交任务）。 */

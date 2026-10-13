@@ -11,6 +11,9 @@ RUN mvn -q -B package -DskipTests
 # 运行阶段：仅包含 JRE，减小镜像体积
 FROM eclipse-temurin:21-jre
 WORKDIR /app
+# 剪辑成片与 mock 视频生成需要 ffmpeg；compose 健康检查需要 curl
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg curl \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /src/target/drama-factory-1.0.0.jar /app/app.jar
 ENV PORT=8081
 VOLUME ["/app/data"]

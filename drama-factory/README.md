@@ -151,6 +151,61 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 docker build -t drama-factory .
 docker run -p 8081:8081 -v $(pwd)/storage:/storage drama-factory
 
+## Docker Compose 一键部署
+
+### 前置要求
+
+- 已安装 Docker（20.10+）
+- 已安装 Docker Compose 插件（`docker compose` 子命令可用）
+
+### 三步启动
+
+```bash
+# 1. 准备环境变量文件（可按需修改 PORT、VIDEO_PROVIDER 等）
+cp .env.example .env
+
+# 2. 构建镜像并后台启动（首次构建会拉取依赖与安装 ffmpeg，耗时较长）
+docker compose up -d --build
+
+# 3. 访问服务
+#    http://localhost:8081
+```
+
+### 数据卷说明
+
+- `./data` 目录挂载到容器内 `/app/data`，用于持久化：
+  - H2 文件数据库（`drama-factory.mv.db` 等）
+  - 媒体文件（mock 生成的测试片段、剪辑成片等）
+- 容器删除或重建不会丢失数据；如需彻底重置，删除 `./data` 目录即可（见下方 `down -v` 说明）。
+
+### 常用命令
+
+```bash
+# 实时查看日志（含 request_id，便于全链路排查）
+docker compose logs -f app
+
+# 停止并移除容器（保留 ./data 数据）
+docker compose down
+
+# 停止并清空数据卷（⚠️ 会删除 H2 数据库与所有媒体文件，不可恢复）
+docker compose down -v
+
+# 查看容器健康状态
+docker compose ps
+```
+
+### 开启 JSON 结构化日志
+
+默认输出为可读 pattern（含 MDC request_id）。如需切换为 Logstash JSON 输出（含 `service` 与 `request_id` 字段，便于接入 ELK/Loki）：
+
+1. 编辑 `.env`，取消以下行的注释：
+   ```bash
+   SPRING_PROFILES_ACTIVE=json
+   ```
+2. 重建并重启容器使配置生效：
+   ```bash
+   docker compose up -d --build
+
 ## API 概览
 
 ### 基础

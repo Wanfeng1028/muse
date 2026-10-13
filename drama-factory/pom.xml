@@ -46,6 +46,24 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- 结构化日志：Logstash JSON encoder（SPRING_PROFILES_ACTIVE=json 时输出 JSON 日志） -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>8.0</version>
+        </dependency>
+
+        <!-- Resilience4j：熔断 / 超时 / 限流（2.4.0 兼容 Spring Boot 3） -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-spring-boot3</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

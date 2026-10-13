@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  日志配置：
+  - 默认：可读 console 输出（含 request_id）
+  - JSON 模式：设置环境变量 SPRING_PROFILES_ACTIVE=json 即切换为 Logstash JSON 结构化日志
+-->
+<configuration>
+
+    <!-- 应用名，从 Spring 环境读取，默认 drama-factory -->
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="drama-factory"/>
+
+    <!-- 可读文本 console -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{request_id}] - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Logstash JSON 结构化 console -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"${APP_NAME}"}</customFields>
+            <includeMdc>true</includeMdc>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 默认 profile：可读 console -->
+    <springProfile name="!json">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- json profile：Logstash JSON 结构化日志，用 SPRING_PROFILES_ACTIVE=json 开启 -->
+    <springProfile name="json">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_JSON"/>
+        </root>
+    </springProfile>
+
+</configuration>
