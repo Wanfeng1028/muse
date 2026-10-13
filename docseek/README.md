@@ -1,8 +1,8 @@
 # 文溯 DocSeek · 本地全文检索引擎
 
-**版本：v0.2.0**
+**版本：v0.3.0**
 
-DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。
+DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，**中文分词采用 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器**，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。检索侧为**混合检索 v1**：BM25 基础分 + AND→OR 回退 + 标题/短语加成重排序。
 
 ---
 
@@ -55,7 +55,8 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
 | 语言标准 | C++17 |
 | 构建系统 | CMake >= 3.28 |
 | 编译器 | GCC |
-| 检索内核 | SQLite FTS5（`unicode61` 分词器） |
+| 检索内核 | SQLite FTS5 + **cppjieba 中文分词器**（v0.3.0 起；v0.2.0 及之前为 `unicode61`） |
+| 混合检索 | BM25 + AND→OR 回退 + 标题/短语加成重排序（v0.3.0 起） |
 | SQLite 来源 | amalgamation，vendored 于 `third_party/sqlite3` |
 | 测试框架 | GoogleTest v1.14.0（通过 FetchContent 拉取，**需联网**） |
 | 文件监控 | Linux inotify |
@@ -152,6 +153,13 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 2. 环境变量 `DOCSEEK_DB`
 3. 默认路径 `$HOME/.local/share/docseek/docseek.db`
 
+## 环境变量
+
+| 变量 | 说明 |
+|---|---|
+| `DOCSEEK_DB` | 数据库文件路径（优先级见上） |
+| `DOCSEEK_DICT_DIR` | cppjieba 词典目录。找不到词典时建库/打开会直接报错并列出尝试过的路径；定位顺序：`DOCSEEK_DICT_DIR` → 可执行文件 `../share/docseek/dict` → 可执行文件同级 `dict/` → 编译期默认（构建目录 `dict/`） |
+
 ---
 
 ## Docker
@@ -185,14 +193,14 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 
 ## 已知局限
 
-- **中文分词**：FTS5 的 `unicode61` 分词器默认不对 CJK 做分词，中文会按连续字串整体成为一个 token。因此**子串式中文检索**（例如用“检索”去搜索“全文检索……”）可能没有结果；而**精确 token** 或 **ASCII 关键词** 的检索是正常的。
-- 中文分词优化已在后续计划中。
+- **中文分词（v0.3.0 已解决）**：v0.2.0 及之前 FTS5 的 `unicode61` 分词器不对 CJK 做分词，中文子串检索（如用"检索"搜"全文检索"）无结果。v0.3.0 起引入 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器，建索引/查询双侧一致切词；旧库打开时自动迁移（`PRAGMA user_version` 2→3，重建 FTS 索引）。评测见 [docs/eval.md](docs/eval.md)，10 个中文查询 Top-1 全部符合预期。
 - 当前仅支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`），尚不支持 HTML / PDF / Office 等格式的文本提取。
+- cppjieba 加载词典时会向 stderr 输出一些 limonp 日志噪音，不影响功能。
 
 ---
 
 ## 后续计划
 
 - HTML / PDF / Office 文档的文本提取
-- 中文分词优化
+- 结构化日志与运维手册（生产级补齐）
 - 多用户支持

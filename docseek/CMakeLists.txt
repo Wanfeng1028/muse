@@ -2,7 +2,7 @@
 # 统一契约：C++17 / CMake >= 3.28 / GCC / 命名空间 docseek / 版本 0.2.0
 cmake_minimum_required(VERSION 3.28)
 
-project(docseek VERSION 0.2.0 LANGUAGES C CXX)
+project(docseek VERSION 0.3.0 LANGUAGES C CXX)
 
 # 强制 C++17 标准，关闭编译器扩展以保证可移植性
 set(CMAKE_CXX_STANDARD 17)
@@ -13,6 +13,20 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Threads REQUIRED)
 
 # ---------------------------------------------------------------------------
+# cppjieba：C++ 中文分词（MIT，yanyiwu/cppjieba）
+# 版本选择：v5.6.2（5.6.x 稳定系列；若上游缺失该 tag 可改用 v5.6.0，API 一致）
+# 纯头文件库，只需 include 路径；词典文件在构建期复制到 build/dict/
+# ---------------------------------------------------------------------------
+include(FetchContent)
+FetchContent_Declare(
+  cppjieba
+  GIT_REPOSITORY https://github.com/yanyiwu/cppjieba.git
+  GIT_TAG v5.6.2
+  GIT_SUBMODULES_RECURSE TRUE
+)
+FetchContent_MakeAvailable(cppjieba)
+
+# ---------------------------------------------------------------------------
 # sqlite3_static：静态库，启用 FTS5 全文检索与线程安全模式
 # ---------------------------------------------------------------------------
 add_library(sqlite3_static STATIC
@@ -21,7 +35,7 @@ add_library(sqlite3_static STATIC
 target_include_directories(sqlite3_static PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqlite3
 )
-target_compile_definitions(sqlite3_static PRIVATE
+target_compile_definitions(sqlite3_static PUBLIC
   SQLITE_ENABLE_FTS5
   SQLITE_THREADSAFE=1
 )
@@ -58,10 +72,14 @@ add_library(docseek_core STATIC
   src/http_server.cpp
   src/watcher.cpp
   src/service.cpp
+  src/dict.cpp
+  src/jieba_tokenizer.cpp
 )
 target_include_directories(docseek_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_BINARY_DIR}/generated
+  ${cppjieba_SOURCE_DIR}/include
+  ${cppjieba_SOURCE_DIR}/deps/limonp/include
 )
 target_link_libraries(docseek_core PUBLIC
   sqlite3_static
@@ -70,6 +88,33 @@ target_link_libraries(docseek_core PUBLIC
 if(NOT MSVC)
   target_compile_options(docseek_core PRIVATE -Wall -Wextra)
 endif()
+
+# ---------------------------------------------------------------------------
+# cppjieba 词典部署：构建期复制到 build/dict/；安装期装到 share/docseek/dict/
+# 运行时词典定位见 src/dict.cpp resolveDictDir()：环境变量 DOCSEEK_DICT_DIR
+# > 可执行文件 ../share/docseek/dict > 可执行文件同级 dict/ > 编译期默认路径
+# ---------------------------------------------------------------------------
+add_custom_target(docseek_copy_dict ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/dict"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${cppjieba_SOURCE_DIR}/dict/jieba.dict.utf8"
+    "${cppjieba_SOURCE_DIR}/dict/hmm_model.utf8"
+    "${cppjieba_SOURCE_DIR}/dict/idf.utf8"
+    "${cppjieba_SOURCE_DIR}/dict/stop_words.utf8"
+    "${CMAKE_CURRENT_BINARY_DIR}/dict/"
+  COMMENT "复制 cppjieba 词典到构建目录"
+)
+add_dependencies(docseek_core docseek_copy_dict)
+target_compile_definitions(docseek_core PRIVATE
+  DOCSEEK_DICT_DIR_DEFAULT="${CMAKE_CURRENT_BINARY_DIR}/dict"
+)
+install(FILES
+  "${cppjieba_SOURCE_DIR}/dict/jieba.dict.utf8"
+  "${cppjieba_SOURCE_DIR}/dict/hmm_model.utf8"
+  "${cppjieba_SOURCE_DIR}/dict/idf.utf8"
+  "${cppjieba_SOURCE_DIR}/dict/stop_words.utf8"
+  DESTINATION share/docseek/dict
+)
 
 # ---------------------------------------------------------------------------
 # docseek：命令行可执行文件（index / search / stats / prune / serve / help / version）
@@ -103,11 +148,17 @@ add_executable(docseek_tests
   tests/test_http_server.cpp
   tests/test_watcher.cpp
   tests/test_service.cpp
+  tests/test_tokenizer.cpp
+  tests/test_hybrid.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core
   gtest_main
 )
+target_compile_definitions(docseek_tests PRIVATE
+  DOCSEEK_DICT_DIR_DEFAULT="${CMAKE_CURRENT_BINARY_DIR}/dict"
+)
+add_dependencies(docseek_tests docseek_copy_dict)
 
 add_test(NAME docseek_tests COMMAND docseek_tests)
 

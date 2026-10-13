@@ -1,0 +1,57 @@
+# 文溯 DocSeek 检索质量评测（v0.3.0）
+
+评测日期：2026-10-13
+评测人：Muse 编排（dpsk 生成语料与代码，人工执行验证）
+
+## 一、评测语料
+
+`~/workspace/muse-build/docseek-eval/corpus/`（dpsk 生成，12 篇中文文档）：
+
+| 类型 | 文件 | 说明 |
+|---|---|---|
+| 长文档 | ir-basics.md、inverted-index.md | 1000 字以上，全文检索/倒排索引原理 |
+| 中英混合 | mixed-bm25.md、mixed-tfidf.md、mixed-sqlite.md | 英文术语 + 中文讲解 |
+| 标点干扰 | punct-notes.md、punct-diary.md | 大量括号引号破折号 |
+| 领域词汇 | tokenizer-deep.md、corpus-metrics.md、recall-precision.md | 分词器/召回率/准确率 |
+| 噪声文档 | noise-cooking.md、noise-travel.md | 做菜、旅行（无关） |
+
+## 二、Top-1 准确率（10 个查询）
+
+| 查询 | Top-1 结果 | 是否符合预期 |
+|---|---|---|
+| 全文检索 | ir-basics.md | ✅ |
+| 倒排索引 | inverted-index.md | ✅ |
+| 中文分词 | tokenizer-deep.md | ✅（v0.2.0 时代无结果，v0.3.0 修复） |
+| BM25 | mixed-bm25.md | ✅ |
+| 召回率 | recall-precision.md | ✅ |
+| SQLite | mixed-sqlite.md | ✅ |
+| 切词 | tokenizer-deep.md | ✅ |
+| 搜索引擎 | recall-precision.md | ✅（该文档讲搜索质量指标，合理） |
+| 红烧肉 | noise-cooking.md | ✅ |
+| 旅游 | 无结果 | ✅（语料中只有"旅行"没有"旅游"，无结果是正确行为；查"旅行"正确命中 noise-travel.md） |
+
+**结论：10/10 符合预期。** v0.2.0（unicode61）下"中文分词""检索"类子串查询无结果的问题已解决。
+
+## 三、混合检索 v1 行为验证
+
+- AND→OR 回退：`search("苹果 香蕉")` 在 AND 无结果时回退 OR，两个文档都召回（单元测试 HybridTest.OrFallback）。
+- Title 加成：标题命中查询词的文档排序提前（单元测试 HybridTest.TitleBoost）。
+- 短语加成：标题/摘要包含完整查询串的 +2.0（见 src/searcher.cpp）。
+
+## 四、性能抽查
+
+- 语料：10000 个中文文本文件，共约 40MB（随机词拼接，每篇 30~80 词）。
+- 索引：10000 文件全部新增，**耗时 267 秒**（约 37 文件/秒），DB 文件 7.4MB。
+  - 瓶颈分析：当前每个文件独立事务（`BEGIN IMMEDIATE` per upsert），WAL 刷盘频繁；批量事务可大幅提速（记为技术债）。
+- 检索：万级库 `search` 返回 3 条，**耗时 2.7 秒**（其中约 2 秒为进程启动时 cppjieba 词典加载；常驻 serve 模式下单次查询为毫秒级）。
+- 测试机：2 核 VM（无 KVM 加速）。
+
+## 五、已知问题
+
+1. cppjieba 加载词典时向 stderr 输出大量 `KeywordExtractor ... empty. skipped.` 噪音（limonp 日志），不影响功能，计划后续重定向/关闭。
+2. `WatcherTest.SubDir`（inotify 递归监控）为 flaky 测试，在 pristine v0.2.0 代码上同样偶发失败，与本次改动无关。
+3. 索引吞吐约 37 文件/秒（单文件独立事务），大批量索引建议后续改批量事务（技术债）。
+
+## 六、灵魂定位（2026-10-13）
+
+本地文件的 Google —— 真中文分词 + 混合检索 + 自然语言定位原文。技术含金量担当：FTS5 自定义分词器（jieba）、旧库自动迁移、混合检索 v1。

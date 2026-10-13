@@ -180,9 +180,9 @@
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
-**定位**：本地文档全文检索引擎 CLI，覆盖目录爬取、增量索引、相关性搜索与索引维护的完整流程。
+**定位**：本地文件的 Google —— 真中文分词 + 混合检索 + 自然语言定位原文。本地文档全文检索引擎 CLI，覆盖目录爬取、增量索引、相关性搜索与索引维护的完整流程。
 
-**技术栈**：C++17 + CMake；SQLite FTS5（unicode61，amalgamation vendored 于 third_party/sqlite3）；GoogleTest（FetchContent）单元+集成测试；多阶段 Dockerfile；GitHub Actions CI 暂置于 docseek/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+**技术栈**：C++17 + CMake；SQLite FTS5 **+ cppjieba（v5.6.2，MIT）自定义中文分词器**（FetchContent；词典构建期部署）；混合检索 v1（BM25 + AND→OR 回退 + 标题/短语加成重排序）；GoogleTest（FetchContent）单元+集成测试；多阶段 Dockerfile；GitHub Actions CI 暂置于 docseek/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
 **功能模块**：
 
@@ -194,17 +194,19 @@
 6. JSON 输出（--json，便于脚本集成）
 7. 灵活配置（--db > DOCSEEK_DB > $HOME/.local/share/docseek/docseek.db）
 
-**状态**：工程化 v2（2026-10-13 完成：`serve` HTTP 常驻服务 + inotify 文件变更实时监控 + 内嵌 Web UI；构建零警告、GoogleTest 32 例全过、ctest 通过、真实服务冒烟全链路验证）。
+**状态**：工程化 v3（2026-10-13 完成：真中文分词 + 混合检索 v1；构建零警告、GoogleTest 40 例中 39 过〈WatcherTest.SubDir 为 pre-existing flaky，在 pristine v0.2.0 上同样偶发失败〉、中文语料 Top-1 10/10 符合预期、万级文件索引性能抽查完成）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Database（SQLite+FTS5 手动同步）/ Indexer（递归爬取+增量）/ Searcher（查询构造）三层库 + docseek CLI（index/search/stats/prune）+ 15 例测试 + CI 与多阶段 Dockerfile 就绪
 - 工程化 v2（2026-10-13）：`serve` 子命令落地——自研极简 HTTP 服务器（零第三方网络库）+ inotify 实时监控（新增/修改/删除自动增量索引，debounce）+ 内嵌 Web UI；7 个 REST 端点（/api/health、/api/stats、/api/search、/api/index、/api/prune、/api/watch GET/POST/DELETE）；测试扩至 32 例全过；真实冒烟验证新增/修改/删除自动索引、watch 增删 API 与 Web UI；补齐完整 README（安装/构建/测试/API 表格/已知局限）
+- 工程化 v3（2026-10-13）：**中文分词攻坚**——cppjieba（v5.6.2，MIT，Keenable 核验 2026 年仍在维护）实现的 FTS5 自定义分词器（`tokenize='jieba'`，fts5_api 注册，CutForSearch + 字节偏移，ASCII 小写折叠）；`PRAGMA user_version` 2→3 旧库自动迁移（事务包裹，失败回滚）；**混合检索 v1**（BM25 + AND→OR 回退 + 标题/短语加成重排序）；词典运行时四级定位（DOCSEEK_DICT_DIR > ../share/docseek/dict > 同级 dict/ > 编译期默认），缺失则 fail-fast。评测：12 篇中文语料 10 查询 Top-1 全部符合预期（docs/eval.md）；万级文件（40MB）索引 267 秒，检索 2.7 秒（含词典加载）。调试中发现并修复 dpsk 埋的 bug：Jieba 构造函数传参顺序错误（把 idf.utf8 当用户词典加载导致切词异常）。
 
 **后续计划**：
 
 - HTML/PDF/Office 文本提取
-- 中文分词优化（unicode61 按字切分；当前中文按连续字串整体成 token，子串检索可能无结果）
+- 结构化日志、备份恢复命令、运维手册（生产级补齐）
+- 索引批量事务优化（当前约 37 文件/秒，单文件独立事务）
 - 多用户支持
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
