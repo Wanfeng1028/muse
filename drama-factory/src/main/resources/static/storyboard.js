@@ -49,13 +49,22 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-function statusBadgeClass(status) {
-  switch (String(status || '').toUpperCase()) {
-    case 'PENDING': return 'bg-yellow-lt';
-    case 'PROCESSING': return 'bg-blue-lt';
-    case 'DONE': return 'bg-green-lt';
-    case 'FAILED': return 'bg-red-lt';
-    default: return 'bg-secondary-lt';
+function statusLine(status, text) {
+  const key = String(status || '').toUpperCase();
+  const label = text !== undefined && text !== null && text !== ''
+    ? String(text)
+    : null;
+  switch (key) {
+    case 'DONE':
+      return `<span class="status-line"><span class="status-dot dot-green"></span>${escapeHtml(label || '已完成')}</span>`;
+    case 'PROCESSING':
+      return `<span class="status-line"><span class="status-dot dot-blue"></span>${escapeHtml(label || '生成中')}</span>`;
+    case 'PENDING':
+      return `<span class="status-line"><span class="status-dot dot-amber"></span>${escapeHtml(label || '待提交')}</span>`;
+    case 'FAILED':
+      return `<span class="status-line"><span class="status-dot dot-red"></span>${escapeHtml(label || '失败')}</span>`;
+    default:
+      return `<span class="status-line"><span class="status-dot dot-gray"></span>${escapeHtml(label || '未生成')}</span>`;
   }
 }
 
@@ -205,48 +214,41 @@ function renderShots() {
     const task = taskForShot(shot.id);
     const vStatus = task ? task.status : null;
 
-    const badges = [];
-    if (sizeLabel) badges.push(`<span class="badge bg-blue-lt me-1">${escapeHtml(sizeLabel)}</span>`);
-    if (moveLabel) badges.push(`<span class="badge bg-orange-lt me-1">${escapeHtml(moveLabel)}</span>`);
+    const metaParts = [];
+    if (sizeLabel) metaParts.push(escapeHtml(sizeLabel));
+    if (moveLabel) metaParts.push(escapeHtml(moveLabel));
+    metaParts.push(`时长 ${escapeHtml(toTimecode(shot.durationSeconds))}`);
+    const metaHtml = `<div class="shot-meta">${metaParts.join(' · ')}</div>`;
 
     const descHtml = shot.description
-      ? `<div class="mb-2"><div class="text-secondary small">画面描述</div><div>${escapeHtml(shot.description)}</div></div>`
+      ? `<div class="shot-desc">${escapeHtml(shot.description)}</div>`
       : '';
     const dialogueHtml = shot.dialogue
-      ? `<div class="mb-2"><div class="text-secondary small">对白</div><div>${escapeHtml(shot.dialogue)}</div></div>`
-      : '';
-    const promptHtml = shot.videoPrompt
-      ? `<div class="mb-2"><div class="text-secondary small">视频提示词</div><div>${escapeHtml(shot.videoPrompt)}</div></div>`
+      ? `<div class="shot-sub">对白：${escapeHtml(shot.dialogue)}</div>`
       : '';
 
     const statusText = task
-      ? escapeHtml(task.statusLabel || task.status || '未知')
-      : '未生成';
+      ? (task.statusLabel || task.status || '未知')
+      : null;
 
     const upDisabled = index === 0 ? ' disabled' : '';
     const downDisabled = index === lastIndex ? ' disabled' : '';
 
     return `
-<div class="card mb-3" data-sid="${escapeHtml(shot.id)}">
-  <div class="card-header">
-    <h3 class="card-title">镜号 ${escapeHtml(no)}</h3>
-    <div class="card-actions">
-      ${badges.join('')}
-    </div>
-  </div>
-  <div class="card-body">
+<div class="shot-row" data-sid="${escapeHtml(shot.id)}">
+  <div class="shot-no">${escapeHtml(no)}</div>
+  <div class="shot-main">
     ${descHtml}
     ${dialogueHtml}
-    ${promptHtml}
-    <div class="d-flex align-items-center gap-2 mb-3">
-      <span class="badge bg-secondary-lt">时长 ${escapeHtml(toTimecode(shot.durationSeconds))}</span>
-      <span class="badge ${statusBadgeClass(vStatus)}">${statusText}</span>
-    </div>
-    <div class="btn-list">
-      <button class="btn btn-sm btn-outline-secondary" data-act="up"${upDisabled}>上移</button>
-      <button class="btn btn-sm btn-outline-secondary" data-act="down"${downDisabled}>下移</button>
-      <button class="btn btn-sm btn-secondary" data-act="edit">编辑</button>
-      <button class="btn btn-sm btn-danger" data-act="del">删除</button>
+    ${metaHtml}
+  </div>
+  <div class="shot-side">
+    ${statusLine(vStatus, statusText)}
+    <div class="shot-actions">
+      <button class="btn btn-sm btn-quiet" data-act="up"${upDisabled}>上移</button>
+      <button class="btn btn-sm btn-quiet" data-act="down"${downDisabled}>下移</button>
+      <button class="btn btn-sm btn-quiet" data-act="edit">编辑</button>
+      <button class="btn btn-sm btn-quiet" data-act="del">删除</button>
       <button class="btn btn-sm btn-primary" data-act="gen">生成视频</button>
     </div>
   </div>

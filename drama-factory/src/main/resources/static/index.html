@@ -12,18 +12,12 @@
 <!-- shell.js 注入侧边栏 + 顶栏 + 命令面板 -->
 
 <div class="page-head">
-  <div class="pretitle">AI 工作区 · WORKSPACE</div>
   <h1>和 AI 一起做短剧</h1>
-  <p>左侧和 AI 编剧聊剧本、拆分镜；右侧实时看到生产状态。按 <span class="kbd">Ctrl+K</span> 唤起命令面板。</p>
 </div>
 
 <div class="workspace">
   <!-- 左：AI 对话（一级入口） -->
   <section class="ws-chat">
-    <div class="alert alert-warning" role="alert" style="margin-bottom:16px;">
-      对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。
-    </div>
-
     <div class="card">
       <div class="card-body border-bottom">
         <div class="d-flex gap-3 flex-wrap">
@@ -46,86 +40,59 @@
           <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词">优化第1镜的视频提示词</button>
         </div>
 
-        <div class="mb-2">
-          <textarea id="chatInput" class="form-control" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
+        <div class="composer mb-2">
+          <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
+          <button id="sendBtn" class="composer-send" type="button" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
         </div>
-        <div class="d-flex justify-content-between align-items-center">
-          <span class="text-secondary small"><span class="kbd">Ctrl+Enter</span></span>
-          <button id="sendBtn" class="btn btn-primary">发送</button>
-        </div>
+        <div class="quota-note">对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。</div>
       </div>
     </div>
   </section>
 
   <!-- 右：生产概览 -->
   <aside class="ws-side">
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">生产概览</h3>
-      </div>
-      <div class="card-body" id="ws-stats">
-        <div class="stat-row"><span class="k">分镜完成率</span><span class="v" id="ws-shot-rate">—</span></div>
-        <div class="stat-row"><span class="k">任务成功率</span><span class="v" id="ws-task-rate">—</span></div>
-        <div class="stat-row"><span class="k">累计渲染时长</span><span class="v" id="ws-render-time">—</span></div>
-        <div class="stat-row"><span class="k">待质检成片</span><span class="v" id="ws-pending-qc">—</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title">项目</h3>
+    <section class="ws-block">
+      <h4 class="ws-block-title">生产概览</h4>
+      <div class="stat-row"><span class="k">分镜完成率</span><span class="v" id="ws-shot-rate">—</span></div>
+      <div class="stat-row"><span class="k">任务成功率</span><span class="v" id="ws-task-rate">—</span></div>
+      <div class="stat-row"><span class="k">累计渲染时长</span><span class="v" id="ws-render-time">—</span></div>
+      <div class="stat-row"><span class="k">待质检成片</span><span class="v" id="ws-pending-qc">—</span></div>
+    </section>
+    <section class="ws-block">
+      <h4 class="ws-block-title"><span>项目与剧集</span></h4>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="text-secondary small">项目</span>
         <button class="btn btn-sm" id="ws-new-project-btn" type="button">新建</button>
       </div>
-      <div class="card-body">
-        <div id="ws-project-list" class="d-flex flex-column gap-2"></div>
-        <form id="ws-project-form" style="display:none;" class="mt-2">
-          <div class="mb-2">
-            <input type="text" class="form-control" id="ws-project-title" required placeholder="项目标题，例如：逆袭千金">
-          </div>
-          <div class="mb-2">
-            <input type="text" class="form-control" id="ws-project-genre" placeholder="类型，例如：都市/爽文">
-          </div>
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">创建</button>
-            <button type="button" class="btn btn-sm" id="ws-project-cancel">取消</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title">剧集</h3>
+      <div id="ws-project-list"></div>
+      <form id="ws-project-form" style="display:none;" class="mt-2">
+        <div class="mb-2"><input type="text" class="form-control" id="ws-project-title" required placeholder="项目标题，例如：逆袭千金"></div>
+        <div class="mb-2"><input type="text" class="form-control" id="ws-project-genre" placeholder="类型，例如：都市/爽文"></div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-secondary btn-sm">创建</button>
+          <button type="button" class="btn btn-sm" id="ws-project-cancel">取消</button>
+        </div>
+      </form>
+      <div class="d-flex justify-content-between align-items-center mb-1 mt-3">
+        <span class="text-secondary small">剧集</span>
         <button class="btn btn-sm" id="ws-new-episode-btn" type="button">新建</button>
       </div>
-      <div class="card-body">
-        <div id="ws-episode-list" class="d-flex flex-column gap-2"></div>
-        <form id="ws-episode-form" style="display:none;" class="mt-2">
-          <div class="row g-2 mb-2">
-            <div class="col-4">
-              <input type="number" class="form-control" id="ws-episode-no" min="1" required placeholder="集号">
-            </div>
-            <div class="col-8">
-              <input type="text" class="form-control" id="ws-episode-title" placeholder="标题（可选）">
-            </div>
-          </div>
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary btn-sm">创建</button>
-            <button type="button" class="btn btn-sm" id="ws-episode-cancel">取消</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title">待质检</h3>
-        <a class="btn btn-sm btn-outline-primary" href="/finals.html">去成片库</a>
-      </div>
-      <div class="card-body" id="ws-qc-list">
-        <p class="text-secondary small m-0">暂无待质检成片</p>
-      </div>
-    </div>
+      <div id="ws-episode-list"></div>
+      <form id="ws-episode-form" style="display:none;" class="mt-2">
+        <div class="row g-2 mb-2">
+          <div class="col-4"><input type="number" class="form-control" id="ws-episode-no" min="1" required placeholder="集号"></div>
+          <div class="col-8"><input type="text" class="form-control" id="ws-episode-title" placeholder="标题（可选）"></div>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-secondary btn-sm">创建</button>
+          <button type="button" class="btn btn-sm" id="ws-episode-cancel">取消</button>
+        </div>
+      </form>
+    </section>
+    <section class="ws-block">
+      <h4 class="ws-block-title"><span>待质检</span><a href="/finals.html" class="text-secondary small" style="text-decoration:none;">去成片库</a></h4>
+      <div id="ws-qc-list"><p class="text-secondary small m-0">暂无待质检成片</p></div>
+    </section>
   </aside>
 </div>
 

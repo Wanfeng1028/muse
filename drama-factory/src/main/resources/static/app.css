@@ -11,8 +11,8 @@
   --bg-elev: #242019;
   --surface: #292524;
   --surface-2: #2e2a26;
-  --border: #3a352f;          /* 发丝级细边框 */
-  --border-soft: #322e29;
+  --border: #2e2a26;          /* 发丝级细边框 */
+  --border-soft: #292524;
   --text: #e7e5e4;
   --text-2: #a8a29e;
   --text-3: #78716c;
@@ -101,7 +101,6 @@ html, body {
   letter-spacing: 0.08em;
   color: var(--text-3);
   padding: 12px 10px 4px;
-  font-family: var(--mono);
 }
 .sidebar-link {
   display: flex;
@@ -130,16 +129,6 @@ html, body {
   flex-shrink: 0;
   opacity: 0.85;
 }
-.sidebar-link .kbd {
-  margin-left: auto;
-}
-.sidebar-foot {
-  margin-top: auto;
-  padding: 12px 10px 4px;
-  border-top: 1px solid var(--border-soft);
-  font-size: 12px;
-  color: var(--text-3);
-}
 
 /* ---- 顶栏 + 全局搜索 ---- */
 .topbar {
@@ -160,32 +149,6 @@ html, body {
   font-weight: 550;
   white-space: nowrap;
 }
-.search-trigger {
-  flex: 1;
-  max-width: 480px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
-  padding: 6px 10px;
-  color: var(--text-3);
-  font-size: 13px;
-  cursor: pointer;
-  margin: 0 auto;
-}
-.search-trigger:hover {
-  border-color: var(--border);
-  color: var(--text-2);
-}
-.search-trigger svg {
-  width: 14px;
-  height: 14px;
-}
-.search-trigger .kbd {
-  margin-left: auto;
-}
 
 /* ---- kbd 快捷键标签（等宽） ---- */
 .kbd {
@@ -199,12 +162,6 @@ html, body {
   background: var(--surface);
   color: var(--text-2);
   white-space: nowrap;
-}
-.btn .kbd {
-  margin-left: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.75);
 }
 
 /* ---- 命令面板 ---- */
@@ -279,11 +236,13 @@ html, body {
   font-size: 13.5px;
   cursor: pointer;
 }
-.cmd-item svg {
-  width: 15px;
-  height: 15px;
+.cmd-hint {
+  font-size: 12px;
   color: var(--text-3);
-  flex-shrink: 0;
+  margin-left: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cmd-item .kbd {
   margin-left: auto;
@@ -307,31 +266,17 @@ html, body {
 .page-head {
   margin-bottom: 24px;
 }
-.page-head .pretitle {
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-3);
-  margin-bottom: 6px;
-}
 .page-head h1, .page-head h2 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 650;
   letter-spacing: -0.01em;
   margin: 0;
-}
-.page-head p {
-  color: var(--text-2);
-  font-size: 13.5px;
-  margin: 6px 0 0;
-  max-width: 640px;
 }
 
 /* 卡片：实色 + 发丝边框，零阴影 */
 .card {
   background: var(--surface);
-  border: 1px solid var(--border-soft);
+  border: 1px solid transparent;
   border-radius: 10px;
   box-shadow: none;
 }
@@ -341,7 +286,7 @@ html, body {
 }
 
 /* 等宽：时间码 / 标签 / 数字 */
-.mono, .timecode, .badge {
+.mono, .timecode {
   font-family: var(--mono);
 }
 .timecode {
@@ -416,7 +361,6 @@ html, body {
   flex-shrink: 1;
 }
 .stat-row .v {
-  font-family: var(--mono);
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
@@ -491,15 +435,18 @@ html, body {
   margin: 0;
 }
 
-/* 分镜网格：3 列卡片（覆盖 Tabler datagrid，确保布局稳定） */
-#slateGrid.datagrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
-}
-#slateGrid.datagrid .card {
-  margin-bottom: 0;
-}
+/* 分镜 filmstrip 行 */
+.shot-row{display:flex;gap:14px;align-items:flex-start;padding:14px 4px;border-bottom:1px solid var(--border-soft);}
+.shot-row:last-child{border-bottom:0;}
+.shot-no{font-family:var(--mono);font-size:12px;color:var(--text-3);width:40px;flex-shrink:0;padding-top:3px;}
+.shot-main{flex:1;min-width:0;}
+.shot-desc{font-size:13.5px;line-height:1.65;margin-bottom:4px;}
+.shot-sub{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:4px;}
+.shot-meta{font-size:12px;color:var(--text-3);}
+.shot-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;}
+.shot-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.btn-quiet{background:transparent;border:1px solid transparent;color:var(--text-2);}
+.btn-quiet:hover{background:var(--surface);color:var(--text);border-color:transparent;}
 
 /* 旧导航栏由 shell.js 移除；残留隐藏兜底 */
 header.navbar {
@@ -521,3 +468,34 @@ header.navbar {
     padding: 20px 16px;
   }
 }
+
+/* ---- composer ---- */
+.composer{position:relative;background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:24px;padding:14px 62px 14px 16px;}
+.composer textarea{display:block;width:100%;background:transparent;border:0;box-shadow:none;padding:0;resize:none;color:var(--text);font-size:14px;line-height:1.6;}
+.composer textarea:focus{background:transparent;border:0;box-shadow:none;outline:0;color:var(--text);}
+.composer-send{position:absolute;right:12px;bottom:12px;width:36px;height:36px;border-radius:50%;background:var(--accent);border:0;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+.composer-send:hover{background:var(--accent-hover);}
+.composer-send:disabled{opacity:.45;cursor:default;}
+.composer-send svg{width:16px;height:16px;}
+.chip{border-radius:999px;}
+.quota-note{font-size:12px;color:var(--text-3);margin:10px 2px 0;}
+
+/* ---- 状态小圆点 ---- */
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px;flex-shrink:0;}
+.dot-green{background:#5f8a5f;}.dot-amber{background:#b98a3e;}.dot-red{background:#b0564a;}.dot-blue{background:#4a6fa5;}.dot-gray{background:#78716c;}
+.status-line{display:inline-flex;align-items:center;font-size:13px;color:var(--text-2);white-space:nowrap;}
+
+/* ---- 工作区右侧去卡片化 ---- */
+.ws-block{padding:2px 0 14px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);}
+.ws-block:last-child{border-bottom:0;margin-bottom:0;}
+.ws-block-title{font-size:12px;font-weight:600;color:var(--text-3);margin:0 0 6px;display:flex;align-items:center;justify-content:space-between;}
+.ws-plain-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-soft);font-size:13px;}
+.ws-plain-row:last-child{border-bottom:0;}
+
+/* ---- 表格操作 hover ---- */
+.row-actions .secondary-action{opacity:0;transition:opacity .15s ease;}
+tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-action{opacity:1;}
+
+/* ---- 对话消息中性化 ---- */
+.chat-bubble-user{background:var(--surface-2);color:var(--text);border-radius:14px;}
+.chat-msg-assistant{color:var(--text);line-height:1.7;}

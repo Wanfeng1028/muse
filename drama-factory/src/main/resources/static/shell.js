@@ -65,8 +65,7 @@
       '<div class="sidebar-label">生产</div>' +
       '<nav class="sidebar-nav">' +
         navLink(NAV[2], cur) + navLink(NAV[3], cur) + navLink(NAV[4], cur) + navLink(NAV[5], cur) +
-      '</nav>' +
-      '<div class="sidebar-foot"><span class="mono">v5.1</span> · 去玩具化构建</div>';
+      '</nav>';
 
     /* 主列 */
     var main = document.createElement('div');
@@ -75,11 +74,7 @@
     var topbar = document.createElement('header');
     topbar.className = 'topbar';
     topbar.innerHTML =
-      '<span class="topbar-title">' + pageTitle(cur) + '</span>' +
-      '<button class="search-trigger" id="searchTrigger" type="button">' +
-        ICONS.search + '<span>搜索页面、操作…</span>' +
-        '<span class="kbd">' + modK() + '</span>' +
-      '</button>';
+      '<span class="topbar-title">' + pageTitle(cur) + '</span>';
 
     var content = document.createElement('main');
     content.className = 'app-content';
@@ -100,14 +95,11 @@
       if (n.nodeName === 'SCRIPT') { body.appendChild(n); }
       else { content.appendChild(n); }
     });
-
-    document.getElementById('searchTrigger').addEventListener('click', openPalette);
   }
 
   function navLink(n, cur) {
     return '<a class="sidebar-link' + (n.id === cur ? ' active' : '') + '" href="' + n.href + '">' +
-      ICONS[n.icon] + '<span>' + n.label + '</span>' +
-      '<span class="kbd">' + n.kbd + '</span></a>';
+      ICONS[n.icon] + '<span>' + n.label + '</span></a>';
   }
 
   function pageTitle(id) {
@@ -195,8 +187,8 @@
         lastGroup = it.group;
       }
       html += '<button class="cmd-item' + (i === selectedIdx ? ' selected' : '') + '" data-i="' + i + '">' +
-        ICONS[it.icon] + '<span>' + it.label + '</span>' +
-        '<span class="timecode" style="color:var(--text-3)">' + (it.hint || '') + '</span>' +
+        '<span>' + it.label + '</span>' +
+        '<span class="cmd-hint">' + (it.hint || '') + '</span>' +
         (it.kbd ? '<span class="kbd">' + it.kbd + '</span>' : '') + '</button>';
     });
     list.innerHTML = html;

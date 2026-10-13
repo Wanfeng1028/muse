@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN" data-bs-theme="dark">
 <head>
@@ -33,9 +34,7 @@
     </div>
   </header>
 <div class="page-head">
-  <div class="pretitle">场记板 · CLAPPERBOARD</div>
   <h1>分镜板</h1>
-  <p>管理分镜、从剧本生成分镜、提交 AI 视频任务。</p>
 </div>
 
 
@@ -58,8 +57,8 @@
         </div>
 
         <div class="mb-3 d-flex flex-wrap gap-2">
-          <button id="addBtn" class="btn btn-primary">添加分镜</button>
-          <button id="fromScriptBtn" class="btn btn-outline-primary">从剧本生成分镜</button>
+          <button id="addBtn" class="btn btn-secondary">添加分镜</button>
+          <button id="fromScriptBtn" class="btn btn-secondary">从剧本生成分镜</button>
           <button id="submitAllBtn" class="btn btn-outline-secondary">全部提交</button>
           <button id="refreshBtn" class="btn btn-ghost-secondary">刷新</button>
         </div>
@@ -110,7 +109,7 @@
           </div>
         </div>
 
-        <div id="slateGrid" class="datagrid"></div>
+        <div id="slateGrid"></div>
 
         <div class="modal modal-blur fade" id="scriptModal" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -144,3 +143,4 @@
   <script src="/storyboard.js"></script>
 </body>
 </html>
+

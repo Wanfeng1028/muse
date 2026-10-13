@@ -1,3 +1,4 @@
+
 const SHOT_SIZE_LABEL = {
   CLOSE_UP: "特写",
   MEDIUM: "中景",
@@ -48,18 +49,18 @@ function clearChildren(el) {
   }
 }
 
-function statusBadgeClass(status) {
+function statusDotHtml(status) {
   switch (status) {
     case "PENDING":
-      return "badge bg-yellow-lt";
+      return '<span class="status-line"><span class="status-dot dot-amber"></span>待提交</span>';
     case "PROCESSING":
-      return "badge bg-blue-lt";
+      return '<span class="status-line"><span class="status-dot dot-blue"></span>生成中</span>';
     case "DONE":
-      return "badge bg-green-lt";
+      return '<span class="status-line"><span class="status-dot dot-green"></span>已完成</span>';
     case "FAILED":
-      return "badge bg-red-lt";
+      return '<span class="status-line"><span class="status-dot dot-red"></span>失败</span>';
     default:
-      return "badge bg-yellow-lt";
+      return '<span class="status-line"><span class="status-dot dot-amber"></span>待提交</span>';
   }
 }
 
@@ -88,21 +89,6 @@ function statusProgressWidth(status) {
       return "100%";
     default:
       return "8%";
-  }
-}
-
-function statusLabelOf(status) {
-  switch (status) {
-    case "PENDING":
-      return "待提交";
-    case "PROCESSING":
-      return "生成中";
-    case "DONE":
-      return "已完成";
-    case "FAILED":
-      return "失败";
-    default:
-      return status || "未知";
   }
 }
 
@@ -252,8 +238,7 @@ function renderTasks() {
     title.className = "card-title";
     title.textContent = "#" + task.id;
     const badge = document.createElement("span");
-    badge.className = statusBadgeClass(task.status);
-    badge.textContent = statusLabelOf(task.status);
+    badge.innerHTML = statusDotHtml(task.status);
     header.appendChild(title);
     header.appendChild(badge);
     card.appendChild(header);
@@ -367,3 +352,4 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+

@@ -1,3 +1,4 @@
+
 (function () {
   'use strict';
 
@@ -54,13 +55,13 @@
   function statusBadge(status) {
     switch (status) {
       case 'PENDING':
-        return { cls: 'bg-yellow-lt', text: '待质检' };
+        return { dot: 'dot-amber', text: '待质检' };
       case 'APPROVED':
-        return { cls: 'bg-green-lt', text: '已通过' };
+        return { dot: 'dot-green', text: '已通过' };
       case 'REJECTED':
-        return { cls: 'bg-red-lt', text: '已打回' };
+        return { dot: 'dot-red', text: '已打回' };
       default:
-        return { cls: 'bg-secondary-lt', text: status || '未知' };
+        return { dot: 'dot-gray', text: status || '未知' };
     }
   }
 
@@ -80,8 +81,7 @@
 
       var badgeEl = document.getElementById('qcStatusBadge');
       var badge = statusBadge(data.qcStatus);
-      badgeEl.className = 'badge ' + badge.cls;
-      badgeEl.textContent = badge.text;
+      badgeEl.innerHTML = '<span class="status-line"><span class="status-dot ' + badge.dot + '"></span>' + escapeHtml(badge.text) + '</span>';
 
       document.getElementById('qcDuration').textContent = toTimecode(data.durationSeconds);
       document.getElementById('qcCreated').textContent = data.createdAt

@@ -1,3 +1,4 @@
+
 (function () {
   'use strict';
 
@@ -24,13 +25,14 @@
     return FINAL_CUT_LABELS[k] || v;
   }
 
-  function finalCutClass(v) {
-    var k = finalCutKey(v);
-    if (k === 'READY') return 'bg-green-lt';
-    if (k === 'BUILDING') return 'bg-blue-lt';
-    if (k === 'FAILED') return 'bg-red-lt';
-    if (k === 'PENDING') return 'bg-yellow-lt';
-    return 'bg-secondary-lt';
+  function statusLine(dotClass, text) {
+    var s = document.createElement('span');
+    s.className = 'status-line';
+    var d = document.createElement('span');
+    d.className = 'status-dot ' + dotClass;
+    s.appendChild(d);
+    s.appendChild(document.createTextNode(text));
+    return s;
   }
 
   function episodeIsStuck(ep) {
@@ -160,7 +162,7 @@
     });
 
     if (metaEl) {
-      metaEl.innerHTML = '共 <span class="text-primary fw-bold">' + pad2(episodes.length) + '</span> 集，卡点 <span class="text-primary fw-bold">' + pad2(stuckCount) + '</span> 集。';
+      metaEl.innerHTML = '共 <span class="fw-bold">' + pad2(episodes.length) + '</span> 集，卡点 <span class="fw-bold">' + pad2(stuckCount) + '</span> 集。';
     }
 
     body.innerHTML = '';
@@ -199,7 +201,7 @@
 
     var tdNo = document.createElement('td');
     tdNo.className = 'text-nowrap';
-    tdNo.textContent = 'EP' + pad2(num);
+    tdNo.textContent = '第 ' + num + ' 集';
     tr.appendChild(tdNo);
 
     var tdTitle = document.createElement('td');
@@ -208,18 +210,24 @@
     titleStrong.textContent = ep.title || ('第 ' + pad2(num) + ' 集');
     tdTitle.appendChild(titleStrong);
     if (stuck) {
-      var stuckBadge = document.createElement('span');
-      stuckBadge.className = 'badge bg-orange-lt ms-2';
-      stuckBadge.textContent = '卡点';
+      var stuckBadge = statusLine('dot-amber', '卡点');
+      stuckBadge.className = 'status-line ms-2';
       tdTitle.appendChild(stuckBadge);
     }
     tr.appendChild(tdTitle);
 
     var tdStatus = document.createElement('td');
-    var statusBadge = document.createElement('span');
-    statusBadge.className = 'badge bg-secondary-lt';
-    statusBadge.textContent = (ep.status || 'DRAFT').toString().toUpperCase();
-    tdStatus.appendChild(statusBadge);
+    var epStatusKey = (ep.status || '').toString().toUpperCase();
+    var epStatusText = (ep.status || 'DRAFT').toString().toUpperCase();
+    var epStatusDot = 'dot-gray';
+    var epStatusLabel = epStatusText;
+    if (epStatusKey === 'DRAFT') { epStatusDot = 'dot-gray'; epStatusLabel = '草稿'; }
+    else if (epStatusKey === 'SCRIPTED') { epStatusDot = 'dot-blue'; epStatusLabel = '已编剧'; }
+    else if (epStatusKey === 'GENERATING') { epStatusDot = 'dot-amber'; epStatusLabel = '生成中'; }
+    else if (epStatusKey === 'GENERATED') { epStatusDot = 'dot-green'; epStatusLabel = '已生成'; }
+    else if (epStatusKey === 'REVIEWED') { epStatusDot = 'dot-green'; epStatusLabel = '已过审'; }
+    var statusLineEl = statusLine(epStatusDot, epStatusLabel);
+    tdStatus.appendChild(statusLineEl);
     tr.appendChild(tdStatus);
 
     var tdShots = document.createElement('td');
@@ -230,48 +238,52 @@
     var tdTasks = document.createElement('td');
     tdTasks.className = 'text-nowrap';
 
-    function makeStat(label, count, cls) {
-      var span = document.createElement('span');
-      span.className = 'badge ' + cls + ' me-1';
-      span.textContent = label + ' ' + count;
+    function makeStat(label, count, dotClass) {
+      var span = statusLine(dotClass, label + ' ' + count);
+      span.className = 'status-line me-2';
       return span;
     }
 
-    tdTasks.appendChild(makeStat('待提交', pending, 'bg-secondary-lt'));
-    tdTasks.appendChild(makeStat('生成中', rendering, 'bg-blue-lt'));
-    tdTasks.appendChild(makeStat('已完成', done, 'bg-green-lt'));
-    tdTasks.appendChild(makeStat('失败', failed, failed > 0 ? 'bg-red-lt' : 'bg-secondary-lt'));
+    tdTasks.appendChild(makeStat('待提交', pending, 'dot-gray'));
+    tdTasks.appendChild(makeStat('生成中', rendering, 'dot-blue'));
+    tdTasks.appendChild(makeStat('已完成', done, 'dot-green'));
+    tdTasks.appendChild(makeStat('失败', failed, failed > 0 ? 'dot-red' : 'dot-gray'));
     tr.appendChild(tdTasks);
 
     var tdFinal = document.createElement('td');
     tdFinal.className = 'text-nowrap';
-    var finalBadge = document.createElement('span');
-    finalBadge.className = 'badge ' + finalCutClass(ep.finalCutStatus);
-    finalBadge.textContent = finalCutText(ep.finalCutStatus);
+    var fk = finalCutKey(ep.finalCutStatus);
+    var finalDot = 'dot-gray';
+    var finalLabel = finalCutText(ep.finalCutStatus);
+    if (fk === 'READY') { finalDot = 'dot-green'; finalLabel = '已完成'; }
+    else if (fk === 'BUILDING') { finalDot = 'dot-blue'; finalLabel = '剪辑中'; }
+    else if (fk === 'FAILED') { finalDot = 'dot-red'; finalLabel = '失败'; }
+    else if (fk === 'PENDING') { finalDot = 'dot-amber'; finalLabel = '待处理'; }
+    var finalBadge = statusLine(finalDot, finalLabel);
     tdFinal.appendChild(finalBadge);
     tr.appendChild(tdFinal);
 
     var tdActions = document.createElement('td');
     tdActions.className = 'text-end';
     var btnGroup = document.createElement('div');
-    btnGroup.className = 'btn-list justify-content-end';
+    btnGroup.className = 'btn-list justify-content-end row-actions';
 
     var epId = encodeURIComponent(ep.episodeId != null ? ep.episodeId : '');
 
     var a1 = document.createElement('a');
-    a1.className = 'btn btn-sm btn-outline-secondary';
+    a1.className = 'btn btn-sm btn-secondary';
     a1.href = '/storyboard.html?episodeId=' + epId;
     a1.textContent = '打开分镜板';
     btnGroup.appendChild(a1);
 
     var a2 = document.createElement('a');
-    a2.className = 'btn btn-sm btn-outline-secondary';
+    a2.className = 'btn btn-sm btn-quiet secondary-action';
     a2.href = '/tasks.html?episodeId=' + epId;
     a2.textContent = '查看任务';
     btnGroup.appendChild(a2);
 
     var a3 = document.createElement('a');
-    a3.className = 'btn btn-sm btn-outline-secondary';
+    a3.className = 'btn btn-sm btn-quiet secondary-action';
     a3.href = '/finals.html?episodeId=' + epId;
     a3.textContent = '成片库';
     btnGroup.appendChild(a3);
@@ -304,3 +316,4 @@
     refreshAll();
   });
 })();
+

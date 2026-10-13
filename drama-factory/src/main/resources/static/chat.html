@@ -31,13 +31,7 @@
 </header>
 
 <div class="page-head">
-  <div class="pretitle">编剧助手 · SCREENWRITER</div>
   <h1>AI 对话</h1>
-  <p>和 AI 编剧聊剧本、拆分镜、优化提示词，确认后直接落库。</p>
-</div>
-
-<div class="alert alert-warning" role="alert" style="margin-bottom:16px;">
-  对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。
 </div>
 
       <div class="card">
@@ -62,13 +56,11 @@
             <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词">优化第1镜的视频提示词</button>
           </div>
 
-          <div class="mb-2">
-            <textarea id="chatInput" class="form-control" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
+          <div class="composer mb-2">
+            <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
+            <button id="sendBtn" class="composer-send" type="button" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
           </div>
-          <div class="d-flex justify-content-between align-items-center">
-            <span class="text-secondary small"><span class="kbd">Ctrl+Enter</span></span>
-            <button id="sendBtn" class="btn btn-primary">发送</button>
-          </div>
+          <div class="quota-note">对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。</div>
         </div>
       </div>
 

@@ -37,12 +37,12 @@
 
   function statusBadge(status) {
     var map = {
-      DRAFT: ['secondary', '草稿'], SCRIPTED: ['info', '已编剧'],
-      GENERATING: ['warning', '生成中'], GENERATED: ['primary', '已生成'],
-      REVIEWED: ['success', '已过审']
+      DRAFT: ['dot-gray', '草稿'], SCRIPTED: ['dot-blue', '已编剧'],
+      GENERATING: ['dot-amber', '生成中'], GENERATED: ['dot-green', '已生成'],
+      REVIEWED: ['dot-green', '已过审']
     };
-    var m = map[status] || ['secondary', status || '未知'];
-    return '<span class="badge bg-' + m[0] + '">' + esc(m[1]) + '</span>';
+    var m = map[status] || ['dot-gray', status || '未知'];
+    return '<span class="status-line"><span class="status-dot ' + m[0] + '"></span>' + esc(m[1]) + '</span>';
   }
 
   /* ---- 项目 ---- */
@@ -66,9 +66,9 @@
     list.forEach(function (p) {
       var a = document.createElement('a');
       a.href = '#';
-      a.className = 'ep-row' + (p.id === state.projectId ? ' active' : '');
+      a.className = 'ws-plain-row' + (p.id === state.projectId ? ' active' : '');
       a.style.cssText = 'text-decoration:none;color:inherit;border-radius:6px;padding:8px 10px;' +
-        (p.id === state.projectId ? 'background:var(--accent-soft);' : '');
+        (p.id === state.projectId ? 'background:var(--surface-2);' : '');
       a.innerHTML = '<span class="t"><strong>' + esc(p.title) + '</strong>' +
         '<br><span class="text-secondary small">' + esc(p.genre || '未分类') + '</span></span>';
       a.addEventListener('click', function (e) { e.preventDefault(); selectProject(p.id); });
@@ -113,11 +113,11 @@
       }
       list.forEach(function (ep) {
         var row = document.createElement('div');
-        row.className = 'ep-row';
+        row.className = 'ws-plain-row';
         row.innerHTML = '<span class="t">第 ' + esc(ep.episodeNo) + ' 集' +
           (ep.title ? ' · ' + esc(ep.title) : '') + '</span>' +
           statusBadge(ep.status) +
-          '<a class="btn btn-sm btn-ghost-primary" href="/storyboard.html?episodeId=' + ep.id + '">分镜</a>';
+          '<a class="btn btn-sm btn-quiet" href="/storyboard.html?episodeId=' + ep.id + '">分镜</a>';
         box.appendChild(row);
       });
     } catch (e) { toast('剧集加载失败：' + e.message); }
@@ -168,10 +168,10 @@
       box.innerHTML = '';
       pending.forEach(function (p) {
         var row = document.createElement('div');
-        row.className = 'ep-row';
+        row.className = 'ws-plain-row';
         row.innerHTML = '<span class="t">第 ' + esc(p.episodeNo) + ' 集' +
           (p.title ? ' · ' + esc(p.title) : '') + '</span>' +
-          '<a class="btn btn-sm btn-outline-primary" href="/qc.html?id=' + p.cutId + '">去质检</a>';
+          '<a class="btn btn-sm btn-quiet" href="/qc.html?id=' + p.cutId + '">去质检</a>';
         box.appendChild(row);
       });
     } catch (e) { /* 忽略 */ }
@@ -244,3 +244,4 @@
     init();
   }
 })();
+

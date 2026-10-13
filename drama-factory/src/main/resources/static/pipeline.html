@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN" data-bs-theme="dark">
 <head>
@@ -11,9 +12,7 @@
 <body>
 <div class="page">
 <div class="page-head">
-  <div class="pretitle">生产线 · PRODUCTION LINE</div>
   <h1 id="projectTitle">生产看板</h1>
-  <p>项目生产进度与统计一目了然。</p>
 </div>
 
         <div class="card mb-3">
@@ -24,7 +23,7 @@
                 <select id="projectSelect" class="form-select"></select>
               </div>
               <div class="col-md-auto">
-                <button id="refreshBtn" type="button" class="btn btn-primary">刷新</button>
+                <button id="refreshBtn" type="button" class="btn btn-secondary">刷新</button>
               </div>
               <div class="col-md">
                 <p id="projectMeta" class="text-secondary mb-0"></p>
@@ -37,45 +36,24 @@
           <div class="col-sm-4">
             <div class="card card-sm">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-primary text-white avatar">镜</span>
-                  </div>
-                  <div class="col">
-                    <div class="font-weight-medium" id="statShotRate">-</div>
-                    <div class="text-secondary" id="statShotDetail">分镜完成率</div>
-                  </div>
-                </div>
+                <div class="font-weight-medium" id="statShotRate">-</div>
+                <div class="text-secondary" id="statShotDetail">分镜完成率</div>
               </div>
             </div>
           </div>
           <div class="col-sm-4">
             <div class="card card-sm">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-green text-white avatar">任</span>
-                  </div>
-                  <div class="col">
-                    <div class="font-weight-medium" id="statTaskRate">-</div>
-                    <div class="text-secondary" id="statTaskDetail">任务成功率</div>
-                  </div>
-                </div>
+                <div class="font-weight-medium" id="statTaskRate">-</div>
+                <div class="text-secondary" id="statTaskDetail">任务成功率</div>
               </div>
             </div>
           </div>
           <div class="col-sm-4">
             <div class="card card-sm">
               <div class="card-body">
-                <div class="row align-items-center">
-                  <div class="col-auto">
-                    <span class="bg-orange text-white avatar">时</span>
-                  </div>
-                  <div class="col">
-                    <div class="font-weight-medium" id="statRenderTime">-</div>
-                    <div class="text-secondary">累计渲染时长</div>
-                  </div>
-                </div>
+                <div class="font-weight-medium" id="statRenderTime">-</div>
+                <div class="text-secondary">累计渲染时长</div>
               </div>
             </div>
           </div>
@@ -114,3 +92,4 @@
   <script src="/pipeline.js"></script>
 </body>
 </html>
+

@@ -1,3 +1,4 @@
+
 const state = {
   projects: [],
   episodes: [],
@@ -28,23 +29,31 @@ function setHint(text) {
 }
 
 function statusBadge(status) {
-  const map = {
-    READY: "badge bg-green-lt",
-    BUILDING: "badge bg-yellow-lt",
-    FAILED: "badge bg-red-lt",
-    PENDING: "badge bg-blue-lt",
-  };
-  return map[status] || "badge bg-secondary-lt";
+  switch (status) {
+    case "READY":
+      return '<span class="status-line"><span class="status-dot dot-green"></span>已完成</span>';
+    case "BUILDING":
+      return '<span class="status-line"><span class="status-dot dot-blue"></span>剪辑中</span>';
+    case "FAILED":
+      return '<span class="status-line"><span class="status-dot dot-red"></span>失败</span>';
+    case "PENDING":
+      return '<span class="status-line"><span class="status-dot dot-amber"></span>待处理</span>';
+    default:
+      return '<span class="status-line"><span class="status-dot dot-gray"></span>' + (status || "") + '</span>';
+  }
 }
 
 function qcBadge(qcStatus) {
-  const map = {
-    PENDING: ["badge bg-yellow-lt", "待质检"],
-    APPROVED: ["badge bg-green-lt", "已通过"],
-    REJECTED: ["badge bg-red-lt", "已打回"],
-  };
-  const hit = map[qcStatus];
-  return hit || ["badge bg-secondary-lt", qcStatus || "未知"];
+  switch (qcStatus) {
+    case "PENDING":
+      return '<span class="status-line"><span class="status-dot dot-amber"></span>待质检</span>';
+    case "APPROVED":
+      return '<span class="status-line"><span class="status-dot dot-green"></span>已通过</span>';
+    case "REJECTED":
+      return '<span class="status-line"><span class="status-dot dot-red"></span>已打回</span>';
+    default:
+      return '<span class="status-line"><span class="status-dot dot-gray"></span>' + (qcStatus || "未知") + '</span>';
+  }
 }
 
 function statusNote(status) {
@@ -216,8 +225,9 @@ function renderFinals() {
     poster.appendChild(img);
 
     const badge = document.createElement("span");
-    badge.className = statusBadge(status) + " position-absolute top-0 end-0 m-2";
-    badge.textContent = fc.statusLabel || status;
+    badge.className = "position-absolute top-0 end-0 m-2";
+    badge.style.cssText = "background:rgba(20,18,16,.72);border-radius:8px;padding:3px 8px;";
+    badge.innerHTML = statusBadge(status);
     poster.appendChild(badge);
 
     card.appendChild(poster);
@@ -279,15 +289,14 @@ function renderFinals() {
       actions.appendChild(dl);
 
       const qcLink = document.createElement("a");
-      qcLink.className = "btn btn-sm btn-outline-warning";
+      qcLink.className = "btn btn-sm btn-quiet";
       qcLink.href = "/qc.html?id=" + fc.id;
-      const qcInfo = qcBadge(fc.qcStatus);
       qcLink.textContent = fc.qcStatus === "PENDING" ? "去质检" : "查看质检";
       actions.appendChild(qcLink);
 
       const qcBadgeEl = document.createElement("span");
-      qcBadgeEl.className = qcInfo[0] + " ms-1";
-      qcBadgeEl.textContent = qcInfo[1];
+      qcBadgeEl.innerHTML = qcBadge(fc.qcStatus);
+      qcBadgeEl.className = "ms-1";
       meta.appendChild(qcBadgeEl);
     }
 
@@ -312,3 +321,4 @@ el("episodeSelect").addEventListener("change", async (e) => {
 el("generateBtn").addEventListener("click", generateFinalCut);
 
 loadProjects();
+

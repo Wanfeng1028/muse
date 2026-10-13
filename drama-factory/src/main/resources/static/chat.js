@@ -1,3 +1,4 @@
+/* P0-4: 发送按钮已改为 composer 内圆形按钮（id=sendBtn 不变），Ctrl+Enter 快捷发送保留 */
 (function () {
   'use strict';
 
@@ -118,14 +119,14 @@
     if (role === 'user') {
       wrap.className = 'd-flex justify-content-end mb-2';
       const bubble = document.createElement('div');
-      bubble.className = 'bg-primary text-white rounded p-2';
+      bubble.className = 'chat-bubble-user p-2';
       bubble.style.maxWidth = '75%';
       bubble.innerHTML = renderMarkdown(text);
       wrap.appendChild(bubble);
     } else if (role === 'assistant') {
       wrap.className = 'd-flex justify-content-start mb-2';
       const bubble = document.createElement('div');
-      bubble.className = 'bg-dark rounded p-2';
+      bubble.className = 'chat-msg-assistant p-2';
       bubble.style.maxWidth = '75%';
       bubble.innerHTML = renderMarkdown(text);
       wrap.appendChild(bubble);
@@ -191,7 +192,7 @@
     });
     card.innerHTML = '<div class="card-header">分镜预览（可修改后落库）</div>' +
       '<div class="card-body">' + body +
-      '<button id="confirmShots" class="btn btn-success">确认落库</button></div>';
+      '<button id="confirmShots" class="btn btn-primary">确认落库</button></div>';
 
     const lastAssistant = el.chatLog.lastElementChild;
     if (lastAssistant && lastAssistant.parentNode === el.chatLog) {
@@ -247,7 +248,7 @@
       addMessage('status', '已落库 ' + shots.length + ' 个分镜 → 去分镜板查看');
       const linkWrap = document.createElement('div');
       linkWrap.className = 'mb-2';
-      linkWrap.innerHTML = '<a class="btn btn-sm btn-outline-primary" href="/storyboard.html">去分镜板查看</a>';
+      linkWrap.innerHTML = '<a class="btn btn-sm btn-quiet" href="/storyboard.html">去分镜板查看</a>';
       el.chatLog.appendChild(linkWrap);
       scrollToBottom();
       btn.disabled = false;

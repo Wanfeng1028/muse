@@ -118,6 +118,8 @@
 
 **后续计划**：
 
+- UI 去 AI 味研究轮（2026-10-13）：用户 verdict"还是 AI 味"，点名对标 ChatGPT / Claude / Grok / Gemini。9 张真实产品截图亲眼拆解（ChatGPT×3 深/浅/侧边栏、Claude×2 深/浅暖纸+衬线+珊瑚点睛、Grok×2 纯黑白零强调色、Gemini×2 窄 rail+工具菜单），结论见 `drama-factory/docs/UI-RESEARCH.md`：四家共性是"藏"（藏快捷键/配置/说明/边框/彩色），我们的 AI 味来自"秀"（导航 kbd chips、双语 pretitle、徽标滥用、卡片阵列、版本水印等 15 条诊断），P0/P1/P2 改版清单共 15 项 → 已由改版轮全部落地（见下）
+- UI 去 AI 味改版轮（2026-10-13）：按 UI-RESEARCH.md 第五节 15 项清单 P0→P1→P2 逐条落地——删双语 pretitle/导航 kbd chips/版本水印/顶栏搜索条；composer 大圆角+圆形内置发送钮（chat.js 发送逻辑经 Playwright 回归验证：点击发送/Ctrl+Enter/快捷 chips 均正常）；分镜改 filmstrip 列表行；徽标清零改小圆点+文字；强调色只留主行动按钮；标题区只剩一行 20px 标题；表格操作列 hover 化；配额提示降级为输入框下方小字；等宽只留时间码/时长；工作区右侧去卡片化；边框降对比；命令面板去图标。验收时抓出 1 个真 bug（#slateGrid 残留 datagrid 类致 filmstrip 挤成三列）已修；7 页真实数据（《最后一班地铁》）重截亲眼验收；mvn test 26/26 全绿
 - 接入真实大模型生成剧本
 - DoD 未通过项排期（见 docs/dod-v2.2.md：第 3 轮 指标告警/鉴权/备份恢复/运维手册；第 4 轮 OpenAPI/CHANGELOG/Dependabot；第 5 轮敏感数据策略/降级策略文档/单测比例/user 字段）
 - 审核流状态机
