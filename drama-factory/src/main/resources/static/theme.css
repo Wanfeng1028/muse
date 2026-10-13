@@ -52,3 +52,23 @@
   object-fit: cover;
   display: block;
 }
+
+/* ---- 亮色暖纸：Tabler 变量暖化 ---- */
+[data-bs-theme="light"] {
+  --tblr-body-bg: #F5F4EE;
+  --tblr-body-bg-rgb: 245, 244, 238;
+  --tblr-body-color: #211C15;
+  --tblr-body-color-rgb: 33, 28, 21;
+  --tblr-bg-surface: #FAF8F3;
+  --tblr-border-color: #E2DCCF;
+  --tblr-muted: #6F6558;
+  --tblr-muted-rgb: 111, 101, 88;
+  --tblr-primary: #4a6fa5;
+  --tblr-primary-rgb: 74, 111, 165;
+  --tblr-success: #4E7A51;
+  --tblr-success-rgb: 78, 122, 81;
+  --tblr-danger: #A6493F;
+  --tblr-danger-rgb: 166, 73, 63;
+  --tblr-warning: #9E742E;
+  --tblr-warning-rgb: 158, 116, 46;
+}

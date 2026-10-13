@@ -17,8 +17,18 @@
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 16-7-7 16-2.5-6.5L4 11z"/></svg>',
-    spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>'
+    spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="19.1" y2="4.9"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
   };
+
+  /* ---- 主题切换：深色显示太阳（点按切亮色），亮色显示月亮（点按切深色） ---- */
+  function renderThemeIcon() {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    var t = document.documentElement.getAttribute('data-bs-theme');
+    btn.innerHTML = (t === 'dark') ? ICONS.sun : ICONS.moon;
+  }
 
   var NAV = [
     { id: 'index', href: '/index.html', label: 'AI 工作区', icon: 'home', kbd: 'G H' },
@@ -65,7 +75,8 @@
       '<div class="sidebar-label">生产</div>' +
       '<nav class="sidebar-nav">' +
         navLink(NAV[2], cur) + navLink(NAV[3], cur) + navLink(NAV[4], cur) + navLink(NAV[5], cur) +
-      '</nav>';
+      '</nav>' +
+      '<div class="sidebar-footer"><button id="themeToggle" class="theme-toggle" title="切换亮色/深色" aria-label="切换主题"></button></div>';
 
     /* 主列 */
     var main = document.createElement('div');
@@ -95,6 +106,18 @@
       if (n.nodeName === 'SCRIPT') { body.appendChild(n); }
       else { content.appendChild(n); }
     });
+
+    /* 主题切换：翻转 data-bs-theme 并持久化到 localStorage */
+    var themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+      themeToggle.onclick = function () {
+        var next = (document.documentElement.getAttribute('data-bs-theme') === 'dark') ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-bs-theme', next);
+        try { localStorage.setItem('df-theme', next); } catch (e) {}
+        renderThemeIcon();
+      };
+    }
+    renderThemeIcon();
   }
 
   function navLink(n, cur) {

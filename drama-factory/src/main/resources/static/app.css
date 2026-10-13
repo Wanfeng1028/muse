@@ -604,3 +604,28 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
   font-size: 12px;
   color: var(--text-3);
 }
+
+/* ---- 亮色暖纸主题（默认）：对标 Claude 浅色暖纸 ---- */
+[data-bs-theme="light"] {
+  --bg: #F5F4EE;
+  --bg-elev: #EBE7DB;
+  --surface: #FAF8F3;
+  --surface-2: #F0ECE2;
+  --border: #E2DCCF;
+  --border-soft: #EAE5D8;
+  --text: #211C15;
+  --text-2: #6F6558;
+  --text-3: #9C9284;
+  --accent: #4a6fa5;
+  --accent-hover: #3E5F92;
+  --accent-soft: rgba(74, 111, 165, .12);
+  --green: #4E7A51;
+  --amber: #9E742E;
+  --red: #A6493F;
+}
+
+/* ---- 主题切换钮（侧边栏底部） ---- */
+.sidebar-footer{margin-top:auto;padding:10px 10px 4px;border-top:1px solid var(--border-soft);}
+.theme-toggle{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--text-2);cursor:pointer;font-size:13px;}
+.theme-toggle:hover{background:var(--surface);color:var(--text);}
+.theme-toggle svg{width:16px;height:16px;}
