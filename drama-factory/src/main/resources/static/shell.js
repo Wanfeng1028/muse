@@ -20,7 +20,8 @@
     home: 'home', chat: 'message-circle', film: 'clapperboard', tasks: 'list-checks',
     check: 'badge-check', chart: 'bar-chart-3', search: 'search', plus: 'plus',
     send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
-    runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings'
+    runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings',
+    images: 'image', music: 'music', avatar: 'scan-face'
   };
 
   function iconHtml(name) {
@@ -52,6 +53,9 @@
   var NAV = [
     { id: 'index', href: '/index.html', label: 'AI 工作区', icon: 'home', kbd: 'G H' },
     { id: 'chat', href: '/chat.html', label: 'AI 对话', icon: 'chat', kbd: 'G C' },
+    { id: 'images', href: '/images.html', label: 'AI 图片', icon: 'images' },
+    { id: 'music', href: '/music.html', label: 'AI 音乐', icon: 'music' },
+    { id: 'avatar', href: '/avatar.html', label: '数字人', icon: 'avatar' },
     { id: 'runs', href: '/runs.html', label: '运行列表', icon: 'runs', kbd: 'G R' },
     { id: 'agents', href: '/agents.html', label: 'Agent 机队', icon: 'agents' },
     { id: 'usage', href: '/usage.html', label: '用量统计', icon: 'chart' },
@@ -64,7 +68,7 @@
 
   /* 侧边栏分组 */
   var NAV_GROUPS = [
-    { label: '创作', ids: ['index', 'chat'] },
+    { label: '创作', ids: ['index', 'chat', 'images', 'music', 'avatar'] },
     { label: '运行', ids: ['runs', 'agents', 'usage'] },
     { label: '生产', ids: ['storyboard', 'tasks', 'finals', 'pipeline'] }
   ];
@@ -206,7 +210,8 @@
     var titles = {
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
-      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', usage: '用量统计', settings: '设置'
+      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', usage: '用量统计', settings: '设置',
+      images: 'AI 图片', music: 'AI 音乐', avatar: '数字人'
     };
     if (window.location.pathname.endsWith('/run-detail.html')) return '运行详情';
     return titles[id] || 'AI 短剧工坊';

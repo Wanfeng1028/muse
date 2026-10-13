@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 图片 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css" />
+<style>
+.fld{margin-bottom:14px}
+.fld>label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px}
+.fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:14px}
+.fld textarea{min-height:96px;resize:vertical}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.byok-empty{border:1px dashed var(--border);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.byok-preview{max-width:280px;border-radius:8px;border:1px solid var(--border);margin-top:8px}
+.gen-foot{display:flex;align-items:center;gap:12px;margin-top:4px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">AI 图片</h1>
+      <p class="page-sub">用你自己的 API 生成剧照、海报与分镜参考图（BYOK）</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-head"><h2 class="card-title">生成</h2></div>
+    <div style="padding:16px 20px">
+      <div class="fld">
+        <label for="img-prompt">提示词</label>
+        <textarea id="img-prompt" placeholder="描述你想要的画面…"></textarea>
+      </div>
+      <div class="fld">
+        <label for="img-model">模型</label>
+        <select id="img-model"></select>
+        <div id="img-empty" class="byok-empty" hidden></div>
+      </div>
+      <div class="fld-row">
+        <div class="fld">
+          <label for="img-ratio">比例</label>
+          <select id="img-ratio">
+            <option value="1:1">1:1</option>
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label for="img-size">尺寸</label>
+          <select id="img-size">
+            <option value="1024">1024</option>
+            <option value="2048">2048</option>
+          </select>
+        </div>
+      </div>
+      <div class="fld">
+        <label for="img-ref">参考图（可选）</label>
+        <input id="img-ref" type="file" accept="image/*" />
+        <img id="img-preview" class="byok-preview" hidden alt="参考图预览" />
+      </div>
+      <div class="gen-foot">
+        <button type="button" class="btn btn-primary" id="img-generate">生成图片</button>
+        <span class="hint" id="img-hint"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/vendor/lucide.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/byok.js"></script>
+<script>
+(function () {
+  "use strict";
+  var currentModel = null;
+  function init() {
+    Byok.loadModels("IMAGE", {
+      select: document.getElementById("img-model"),
+      emptyBox: document.getElementById("img-empty"),
+      generateBtn: document.getElementById("img-generate"),
+      hint: document.getElementById("img-hint"),
+      onChange: function (it) { currentModel = it; }
+    });
+    var ref = document.getElementById("img-ref");
+    var preview = document.getElementById("img-preview");
+    ref.onchange = function () {
+      var f = ref.files && ref.files[0];
+      if (!f) { preview.hidden = true; return; }
+      preview.src = URL.createObjectURL(f);
+      preview.hidden = false;
+    };
+    document.getElementById("img-generate").onclick = function () {
+      Byok.notYetReady(currentModel && currentModel.model.displayName);
+    };
+    Byok.icons();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>

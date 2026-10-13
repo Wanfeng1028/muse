@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>数字人 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css" />
+<style>
+.fld{margin-bottom:14px}
+.fld>label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px}
+.fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:14px}
+.fld textarea{min-height:96px;resize:vertical}
+.byok-empty{border:1px dashed var(--border);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.byok-preview{max-width:280px;border-radius:8px;border:1px solid var(--border);margin-top:8px}
+.file-name{font-size:13px;color:var(--text-2);margin-top:6px}
+.gen-foot{display:flex;align-items:center;gap:12px;margin-top:4px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">数字人</h1>
+      <p class="page-sub">人物图 + 音频 + TTS 音色，生成数字人播报（BYOK）</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-head"><h2 class="card-title">生成</h2></div>
+    <div style="padding:16px 20px">
+      <div class="fld">
+        <label for="av-photo">人物图</label>
+        <input id="av-photo" type="file" accept="image/*" />
+        <img id="av-preview" class="byok-preview" hidden alt="人物图预览" />
+      </div>
+      <div class="fld">
+        <label for="av-audio">音频</label>
+        <input id="av-audio" type="file" accept="audio/*" />
+        <div id="av-audio-name" class="file-name"></div>
+      </div>
+      <div class="fld">
+        <label for="av-voice">TTS 音色</label>
+        <select id="av-voice"></select>
+        <div id="av-empty" class="byok-empty" hidden></div>
+      </div>
+      <div class="fld">
+        <label for="av-script">文案</label>
+        <textarea id="av-script" placeholder="数字人要说的内容…"></textarea>
+      </div>
+      <div class="gen-foot">
+        <button type="button" class="btn btn-primary" id="av-generate">生成数字人视频</button>
+        <span class="hint" id="av-hint"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/vendor/lucide.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/byok.js"></script>
+<script>
+(function () {
+  "use strict";
+  var currentModel = null;
+  function init() {
+    Byok.loadModels("AVATAR", {
+      select: document.getElementById("av-voice"),
+      emptyBox: document.getElementById("av-empty"),
+      generateBtn: document.getElementById("av-generate"),
+      hint: document.getElementById("av-hint"),
+      onChange: function (it) { currentModel = it; }
+    });
+    var photo = document.getElementById("av-photo");
+    var preview = document.getElementById("av-preview");
+    photo.onchange = function () {
+      var f = photo.files && photo.files[0];
+      if (!f) { preview.hidden = true; return; }
+      preview.src = URL.createObjectURL(f);
+      preview.hidden = false;
+    };
+    var audio = document.getElementById("av-audio");
+    var audioName = document.getElementById("av-audio-name");
+    audio.onchange = function () {
+      var f = audio.files && audio.files[0];
+      audioName.textContent = f ? f.name : "";
+    };
+    document.getElementById("av-generate").onclick = function () {
+      Byok.notYetReady(currentModel && currentModel.model.displayName);
+    };
+    Byok.icons();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>

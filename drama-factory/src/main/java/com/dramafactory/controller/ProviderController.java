@@ -1,0 +1,140 @@
+package com.dramafactory.controller;
+
+import com.dramafactory.service.ProviderService;
+import com.dramafactory.service.ProviderService.ModelDto;
+import com.dramafactory.service.ProviderService.ProviderDto;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 媒体供应商卡片制接口。
+ * 注意：任何响应都不会包含 apiKey 原文。
+ */
+@RestController
+@RequestMapping("/api/providers")
+public class ProviderController {
+
+    private final ProviderService providerService;
+
+    public ProviderController(ProviderService providerService) {
+        this.providerService = providerService;
+    }
+
+    /* ---------- 请求体 ---------- */
+
+    public record ProviderCreateRequest(
+            String name,
+            String module,
+            String description,
+            String apiKey,
+            String apiAddress
+    ) {}
+
+    public record ProviderUpdateRequest(
+            String name,
+            String module,
+            String description,
+            String apiKey,
+            String apiAddress,
+            Boolean enabled
+    ) {}
+
+    public record ModelUpsertRequest(
+            String displayName,
+            String modelId,
+            String scale,
+            String description,
+            Integer concurrency,
+            Boolean enabled
+    ) {}
+
+    /* ---------- 供应商 ---------- */
+
+    @GetMapping
+    public List<ProviderDto> listProviders(@RequestParam(required = false) String module) {
+        return providerService.listProviders(module);
+    }
+
+    /** 供应商模块清单：VIDEO/IMAGE/MUSIC/TTS/AVATAR */
+    @GetMapping("/modules")
+    public List<Map<String, String>> listModules() {
+        return List.of(
+                Map.of("id", "VIDEO", "label", "视频"),
+                Map.of("id", "IMAGE", "label", "图片"),
+                Map.of("id", "MUSIC", "label", "音乐"),
+                Map.of("id", "TTS", "label", "TTS 语音"),
+                Map.of("id", "AVATAR", "label", "数字人"));
+    }
+
+    @PostMapping
+    public ResponseEntity<ProviderDto> createProvider(@RequestBody ProviderCreateRequest req) {
+        if (req.name() == null || req.name().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        ProviderDto dto = providerService.createProvider(
+                req.name(), req.module(), req.description(), req.apiKey(), req.apiAddress());
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProviderDto> updateProvider(@PathVariable Long id,
+                                                      @RequestBody ProviderUpdateRequest req) {
+        if (req.name() == null || req.name().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        ProviderDto dto = providerService.updateProvider(
+                id, req.name(), req.module(), req.description(), req.apiKey(), req.apiAddress(), req.enabled());
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProvider(@PathVariable Long id) {
+        providerService.deleteProvider(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /* ---------- 模型 ---------- */
+
+    @PostMapping("/{id}/models")
+    public ResponseEntity<ModelDto> addModel(@PathVariable Long id,
+                                             @RequestBody ModelUpsertRequest req) {
+        if (req.displayName() == null || req.displayName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        ModelDto dto = providerService.addModel(
+                id, req.displayName(), req.modelId(), req.scale(), req.description(), req.concurrency());
+        return ResponseEntity.ok(dto);
+    }
+
+    @PutMapping("/{id}/models/{modelId}")
+    public ResponseEntity<ModelDto> updateModel(@PathVariable Long id,
+                                                @PathVariable Long modelId,
+                                                @RequestBody ModelUpsertRequest req) {
+        if (req.displayName() == null || req.displayName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        // provider_id 由路径决定，请求体里即便传了 provider_id 也忽略
+        ModelDto dto = providerService.updateModel(
+                id, modelId, req.displayName(), req.modelId(),
+                req.scale(), req.description(), req.concurrency(), req.enabled());
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}/models/{modelId}")
+    public ResponseEntity<Void> deleteModel(@PathVariable Long id,
+                                            @PathVariable Long modelId) {
+        providerService.deleteModel(id, modelId);
+        return ResponseEntity.noContent().build();
+    }
+}

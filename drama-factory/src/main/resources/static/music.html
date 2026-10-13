@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 音乐 · Drama Factory</title>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css" />
+<style>
+.fld{margin-bottom:14px}
+.fld>label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px}
+.fld input[type=text],.fld textarea,.fld select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:14px}
+.fld textarea{min-height:96px;resize:vertical}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:999px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--text-2);border-radius:999px;padding:6px 18px;font-size:13px;cursor:pointer}
+.seg button.is-active{background:var(--ink);color:var(--ink-text)}
+.check-row{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text-2)}
+.byok-empty{border:1px dashed var(--border);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.gen-foot{display:flex;align-items:center;gap:12px;margin-top:4px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">AI 音乐</h1>
+      <p class="page-sub">用你自己的 API 生成配乐与主题曲（BYOK）</p>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-head"><h2 class="card-title">生成</h2></div>
+    <div style="padding:16px 20px">
+      <div class="fld">
+        <label>模式</label>
+        <div class="seg" id="mus-seg">
+          <button type="button" class="is-active" data-mode="simple">简易</button>
+          <button type="button" data-mode="custom">自定义</button>
+        </div>
+      </div>
+      <div class="fld">
+        <div class="check-row">
+          <input id="mus-instrumental" type="checkbox" />
+          <label for="mus-instrumental" style="margin:0">纯音乐（无歌词）</label>
+        </div>
+      </div>
+      <div class="fld">
+        <label for="mus-prompt">提示词 / 歌词</label>
+        <textarea id="mus-prompt" placeholder="描述风格、情绪，或粘贴歌词…"></textarea>
+      </div>
+      <div class="fld">
+        <label for="mus-model">模型</label>
+        <select id="mus-model"></select>
+        <div id="mus-empty" class="byok-empty" hidden></div>
+      </div>
+      <div class="gen-foot">
+        <button type="button" class="btn btn-primary" id="mus-generate">生成音乐</button>
+        <span class="hint" id="mus-hint"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/vendor/lucide.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/byok.js"></script>
+<script>
+(function () {
+  "use strict";
+  var currentModel = null;
+  function init() {
+    Byok.loadModels("MUSIC", {
+      select: document.getElementById("mus-model"),
+      emptyBox: document.getElementById("mus-empty"),
+      generateBtn: document.getElementById("mus-generate"),
+      hint: document.getElementById("mus-hint"),
+      onChange: function (it) { currentModel = it; }
+    });
+    var seg = document.getElementById("mus-seg");
+    var btns = seg.querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].onclick = function () {
+        for (var j = 0; j < btns.length; j++) btns[j].classList.remove("is-active");
+        this.classList.add("is-active");
+      };
+    }
+    document.getElementById("mus-generate").onclick = function () {
+      Byok.notYetReady(currentModel && currentModel.model.displayName);
+    };
+    Byok.icons();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+</body>
+</html>
