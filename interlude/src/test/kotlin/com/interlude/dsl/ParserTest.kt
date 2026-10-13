@@ -1,6 +1,7 @@
 
 package com.interlude.dsl
 
+import com.interlude.dsl.extractPlaceholders
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

@@ -1,0 +1,46 @@
+
+# 幕间示例剧本
+
+scene prologue:
+    text "雨下了一整夜，站台上只剩一盏灯。"
+    choice "走向候车室" -> hall
+    choice "留在站台" -> platform
+
+scene hall:
+    text "候车室里，暖气片发出一声叹息。"
+    setvar met_stranger = true
+    choice "和陌生人搭话" -> stranger
+    jump exit
+
+scene platform:
+    text "雨水打湿了鞋尖。"
+    choice "返回候车室" -> hall
+
+scene stranger:
+    text "陌生人抬起头。"
+    choice "报上姓名" -> ending_a
+    choice "沉默" -> ending_b
+
+scene exit:
+    text "你推开门，走进夜色。"
+    end
+
+scene ending_a:
+    text "他笑了笑，说出你的名字。"
+    end
+
+scene ending_b:
+    text "你们谁都没有说话。"
+    end
+
+scene orphan:
+    text "这一幕永远不会被看到。"
+    if missing_flag == true
+        text "而且它引用了未初始化的变量。"
+    end
+    end
+
+scene deadend:
+    text "这条路没有出口。"
+    text "也没有跳转。"
+    text "就这样停在这里。"
