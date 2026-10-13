@@ -6,6 +6,15 @@
 (function () {
   'use strict';
 
+  /* ---- 品牌 Logo：场记板 + 播放三角（SVG mark，随主题 currentColor） ---- */
+  var LOGO_MARK = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="4" y="10" width="24" height="18" rx="2"/>' +
+    '<line x1="4" y1="16" x2="28" y2="16"/>' +
+    '<line x1="9" y1="4" x2="12" y2="10"/>' +
+    '<line x1="15" y1="4" x2="18" y2="10"/>' +
+    '<line x1="21" y1="4" x2="24" y2="10"/>' +
+    '<polygon points="14,20 14,26 20,23" fill="currentColor" stroke="none"/></svg>';
+
   /* ---- 内联 SVG 图标（线性，1.7px 描边，无 emoji） ---- */
   var ICONS = {
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>',
@@ -67,7 +76,7 @@
     aside.className = 'sidebar';
     aside.id = 'sidebar';
     aside.innerHTML =
-      '<div class="sidebar-brand"><span class="mark">剧</span><span>AI 短剧工坊</span></div>' +
+      '<div class="sidebar-brand"><span class="logo-mark">' + LOGO_MARK + '</span><span>AI 短剧工坊</span></div>' +
       '<div class="sidebar-label">创作</div>' +
       '<nav class="sidebar-nav">' +
         navLink(NAV[0], cur) + navLink(NAV[1], cur) +

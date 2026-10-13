@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI 工作区 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/app.css">
@@ -69,6 +70,11 @@
     <button id="sendBtn" class="composer-send" type="button" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
   <div class="quota-note">对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。</div>
+
+  <section class="ws-recent" id="ws-recent" aria-label="最近动态">
+    <div class="ws-recent-title">最近动态</div>
+    <div id="ws-recent-list"><div class="ws-recent-empty">暂无动态，先从上面的输入框开始。</div></div>
+  </section>
 </main>
 
 <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>

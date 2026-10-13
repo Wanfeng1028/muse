@@ -56,6 +56,7 @@
       state.projectId = sel.value || null;
       await loadEpisodes();
       loadStatusStrip();
+      loadRecentActivity();
     } catch (e) { toast('项目加载失败：' + e.message); }
   }
 
@@ -129,12 +130,97 @@
     return pending;
   }
 
+  /* ---- 最近动态（真实记录，最多 5 条） ---- */
+  function formatRecentTime(v) {
+    var t = new Date(v);
+    if (isNaN(t.getTime())) return '';
+    var diff = Date.now() - t.getTime();
+    if (diff < 0) diff = 0;
+    var min = Math.floor(diff / 60000);
+    if (diff < 3600000) return (min < 1 ? 1 : min) + ' 分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+    if (diff < 2592000000) return Math.floor(diff / 86400000) + ' 天前';
+    return (t.getMonth() + 1) + '月' + t.getDate() + '日';
+  }
+
+  function pickCutTime(cut) {
+    if (!cut) return '';
+    return cut.createdAt || cut.updatedAt || cut.createTime || '';
+  }
+
+  function qcDot(qcStatus) {
+    if (qcStatus === 'APPROVED') return 'is-success';
+    return 'is-waiting';
+  }
+
+  function qcText(qcStatus) {
+    if (qcStatus === 'APPROVED') return '质检通过';
+    if (qcStatus === 'REJECTED') return '质检未通过';
+    if (qcStatus === 'PENDING') return '待质检';
+    return '成片已生成';
+  }
+
+  async function loadRecentActivity() {
+    var listEl = document.getElementById('ws-recent-list');
+    if (!listEl || !state.projectId) return;
+    try {
+      var episodes = await api('/api/projects/' + state.projectId + '/episodes');
+      if (!Array.isArray(episodes)) episodes = [];
+      var cuts = [];
+      for (var i = 0; i < episodes.length; i++) {
+        var ep = episodes[i] || {};
+        var epNo = (ep.episodeNo != null ? ep.episodeNo : (i + 1));
+        try {
+          var epCuts = await api('/api/episodes/' + ep.id + '/final-cuts');
+          if (!Array.isArray(epCuts)) epCuts = [];
+          for (var j = 0; j < epCuts.length; j++) {
+            var c = epCuts[j] || {};
+            cuts.push({
+              epNo: epNo,
+              time: pickCutTime(c),
+              cls: qcDot(c.qcStatus),
+              text: qcText(c.qcStatus)
+            });
+          }
+        } catch (e) { /* 单集失败不影响整体，静默 */ }
+      }
+      cuts.sort(function (a, b) {
+        var ta = a.time ? new Date(a.time).getTime() : 0;
+        var tb = b.time ? new Date(b.time).getTime() : 0;
+        if (isNaN(ta)) ta = 0;
+        if (isNaN(tb)) tb = 0;
+        return tb - ta;
+      });
+      var items = cuts.slice(0, 5);
+      if (!items.length) {
+        for (var k = 0; k < episodes.length && items.length < 5; k++) {
+          var e2 = episodes[k] || {};
+          var n2 = (e2.episodeNo != null ? e2.episodeNo : (k + 1));
+          items.push({ epNo: n2, time: '', cls: 'is-waiting', text: '剧集已创建' });
+        }
+      }
+      if (!items.length) return;
+      var html = '';
+      for (var m = 0; m < items.length; m++) {
+        var it = items[m];
+        var timeStr = it.time ? formatRecentTime(it.time) : '';
+        html += '<div class="ws-recent-item">'
+          + '<span class="ws-recent-dot ' + it.cls + '"></span>'
+          + '<span class="ws-recent-text"><span class="ws-recent-name">第 ' + esc(it.epNo) + ' 集</span> · ' + esc(it.text) + '</span>'
+          + '<span class="ws-recent-time">' + esc(timeStr) + '</span>'
+          + '</div>';
+      }
+      listEl.innerHTML = html;
+    } catch (e) { /* 静默保留空状态 */ }
+  }
+
   function selectProject(id) {
     state.projectId = id || null;
     var sel = $('projectSelect');
     if (sel && sel.value !== String(id)) sel.value = String(id);
     loadEpisodes();
     loadStatusStrip();
+    loadRecentActivity();
   }
 
   /* ---- 新建表单 ---- */

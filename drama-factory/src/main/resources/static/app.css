@@ -77,18 +77,19 @@ html, body {
   font-size: 15px;
   letter-spacing: 0.01em;
 }
-.sidebar-brand .mark {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background: var(--accent);
-  color: #fff;
+.sidebar-brand .logo-mark {
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--text);
   flex-shrink: 0;
+}
+.sidebar-brand .logo-mark svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 .sidebar-nav {
   display: flex;
@@ -605,23 +606,37 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
   color: var(--text-3);
 }
 
-/* ---- 亮色暖纸主题（默认）：对标 Claude 浅色暖纸 ---- */
+/* ---- 亮色暖白主题（默认）：低对比和谐 + 留白 + 字距 ---- */
 [data-bs-theme="light"] {
-  --bg: #F5F4EE;
-  --bg-elev: #EBE7DB;
-  --surface: #FAF8F3;
-  --surface-2: #F0ECE2;
-  --border: #E2DCCF;
-  --border-soft: #EAE5D8;
-  --text: #211C15;
-  --text-2: #6F6558;
-  --text-3: #9C9284;
+  --bg: #F8F7F4;
+  --bg-elev: #F1EFEA;
+  --surface: #FFFFFF;
+  --surface-2: #F4F2ED;
+  --border: rgba(30, 25, 15, .14);
+  --border-soft: rgba(30, 25, 15, .08);
+  --text: #201C16;
+  --text-2: #6E665A;
+  --text-3: #9A917F;
+
   --accent: #4a6fa5;
   --accent-hover: #3E5F92;
   --accent-soft: rgba(74, 111, 165, .12);
+
   --green: #4E7A51;
   --amber: #9E742E;
   --red: #A6493F;
+
+  --ink: #2B2620;
+  --ink-text: #FFFFFF;
+  --ink-hover: #342E26;
+  --shadow-card: 0 1px 2px rgba(60, 50, 30, .05);
+}
+
+/* ---- 深色主题补齐按钮变量（主按钮深色下反转为暖纸底 + 墨字） ---- */
+[data-bs-theme="dark"] {
+  --ink: #EDE8E2;
+  --ink-text: #201C16;
+  --ink-hover: #FFFFFF;
 }
 
 /* ---- 主题切换钮（侧边栏底部） ---- */
@@ -629,3 +644,138 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
 .theme-toggle{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--text-2);cursor:pointer;font-size:13px;}
 .theme-toggle:hover{background:var(--surface);color:var(--text);}
 .theme-toggle svg{width:16px;height:16px;}
+
+/* ---------- 主按钮：墨色 pill（去方形） ---------- */
+.btn.btn-primary {
+  background: var(--ink);
+  color: var(--ink-text);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-weight: 500;
+  letter-spacing: .02em;
+}
+.btn.btn-primary:hover,
+.btn.btn-primary:focus-visible {
+  background: var(--ink-hover);
+  border-color: var(--ink-hover);
+  color: var(--ink-text);
+  box-shadow: none;
+}
+.btn.btn-primary:active {
+  background: var(--ink-hover);
+  border-color: var(--ink-hover);
+  color: var(--ink-text);
+  box-shadow: none;
+}
+.btn.btn-primary:disabled,
+.btn.btn-primary.disabled {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ink-text);
+  opacity: .45;
+}
+
+/* ---------- 次级按钮：透明底 + hairline ---------- */
+.btn.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.btn.btn-secondary:hover,
+.btn.btn-secondary:focus-visible {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: none;
+}
+.btn.btn-secondary:active {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* ---------- 小尺寸按钮：保留 pill 感 ---------- */
+.btn.btn-primary.btn-sm {
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+.btn.btn-secondary.btn-sm {
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+/* ---------- 首页建议 chips ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: .01em;
+  cursor: pointer;
+}
+.chip:hover,
+.chip:focus-visible {
+  border-color: rgba(30, 25, 15, .2);
+  color: var(--text-2);
+  background: transparent;
+}
+
+/* ---------- 圆形发送钮保持正圆 ---------- */
+.composer-send {
+  border-radius: 999px;
+}
+
+/* ---------- 最近动态列表 ---------- */
+.ws-recent {
+  margin-top: 28px;
+}
+.ws-recent-title {
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+.ws-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13.5px;
+}
+.ws-recent-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex: none;
+}
+.ws-recent-dot.is-success { background: var(--green); }
+.ws-recent-dot.is-running { background: var(--accent); }
+.ws-recent-dot.is-waiting { background: var(--amber); }
+.ws-recent-text {
+  color: var(--text-2);
+}
+.ws-recent-text .ws-recent-name {
+  color: var(--text);
+}
+.ws-recent-time {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.ws-recent-empty {
+  font-size: 13px;
+  color: var(--text-3);
+}
