@@ -898,3 +898,16 @@ table.data td .actions {
   margin: 0;
   padding: 0;
 }
+
+/* ---------- 阅读器全幅布局 ---------- */
+/* 阅读器页通过 base.html 的 main_class block 使用 .page-full，
+   摆脱 .page 的 900px 居中容器限制，三栏撑满视口宽度。 */
+.page-full {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell {
+  width: 100%;
+}

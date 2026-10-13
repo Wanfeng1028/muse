@@ -11,17 +11,17 @@
       <button type="submit">搜索</button>
     </form>
     {% if q %}
-      <p class="search-meta">“{{ q }}” 共找到 {{ results|length }} 条结果</p>
+      <p class="search-meta">“{{ q }}” 共找到 {{ articles|length }} 条结果</p>
     {% endif %}
   </header>
 
   {% if not q %}
     <p class="empty-hint">在上面输入关键词，回车即可搜索已抓取的文章。</p>
-  {% elif not results %}
+  {% elif not articles %}
     <p class="empty-hint">没有找到和“{{ q }}”相关的文章。换个词试试，或者先去订阅页添加几个源。</p>
   {% else %}
     <ul class="search-list">
-      {% for a in results %}
+      {% for a in articles %}
         <li class="search-item">
           <h2 class="search-title">
             <a href="/?article={{ a.id }}">{{ a.title or '(无标题)' }}</a>

@@ -251,7 +251,9 @@
   }
 
   function refreshAll() {
-    return Promise.all([loadFolders(), loadFeeds()]);
+    // 先加载分组再加载订阅表：renderFeedsTable 依赖 state.folders 做分组名映射，
+    // 并发会导致表格先渲染而分组列全显示"未分组"。
+    return loadFolders().then(loadFeeds);
   }
 
   function findFeed(id) {

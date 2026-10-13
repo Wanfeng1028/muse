@@ -349,7 +349,11 @@ def mark_all_read(db_path, feed_id=None, folder_id=None, scope="unread"):
 
 
 def search_articles(db_path, q, limit=50):
-    """FTS5 全文检索，返回 dict 列表（含 feed_title）。"""
+    """FTS5 全文检索，返回 dict 列表（含 feed_title）。
+
+    trigram 分词器无法处理短于 3 个字符的查询（形不成 trigram），
+    这类短查询退化为 LIKE 匹配，保证单字/双字也能搜到结果。
+    """
     if q is None:
         return []
     q = q.strip()
@@ -358,22 +362,37 @@ def search_articles(db_path, q, limit=50):
     q = q.replace('"', "")
     if not q:
         return []
+    columns = (
+        "a.id, a.feed_id, a.guid, a.title, a.author, a.link, a.summary,"
+        " a.content_html, a.content_text, a.published_at, a.fetched_at,"
+        " a.is_read, a.is_starred, f.title AS feed_title"
+    )
     conn = get_conn(db_path)
     try:
-        rows = conn.execute(
-            """
-            SELECT a.id, a.feed_id, a.guid, a.title, a.author, a.link, a.summary,
-                   a.content_html, a.content_text, a.published_at, a.fetched_at,
-                   a.is_read, a.is_starred, f.title AS feed_title
-              FROM articles_fts
-              JOIN articles a ON a.id = articles_fts.rowid
-              JOIN feeds f ON f.id = a.feed_id
-             WHERE articles_fts MATCH ?
-             ORDER BY rank
-             LIMIT ?
-            """,
-            (q, limit),
-        ).fetchall()
+        if len(q) < 3:
+            like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            rows = conn.execute(
+                f"""SELECT {columns}
+                      FROM articles a
+                      JOIN feeds f ON f.id = a.feed_id
+                     WHERE a.title LIKE ? ESCAPE '\\'
+                        OR a.content_text LIKE ? ESCAPE '\\'
+                        OR a.author LIKE ? ESCAPE '\\'
+                     ORDER BY a.published_at DESC
+                     LIMIT ?""",
+                (like, like, like, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                f"""SELECT {columns}
+                      FROM articles_fts
+                      JOIN articles a ON a.id = articles_fts.rowid
+                      JOIN feeds f ON f.id = a.feed_id
+                     WHERE articles_fts MATCH ?
+                     ORDER BY rank
+                     LIMIT ?""",
+                (q, limit),
+            ).fetchall()
         return [dict(r) for r in rows]
     finally:
         conn.close()
