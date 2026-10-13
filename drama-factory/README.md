@@ -175,7 +175,7 @@ docker run -p 8081:8081 -v $(pwd)/storage:/storage drama-factory
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| POST | `/api/shots/{sid}/video-tasks` | 为单个分镜创建视频生成任务 |
+| POST | `/api/shots/{sid}/video-tasks` | 为单个分镜创建视频生成任务（幂等：已有 PENDING/PROCESSING 任务时返回 200 并复用，首次创建返回 201） |
 | POST | `/api/episodes/{eid}/video-tasks/submit-all` | 为整集所有分镜批量提交任务 |
 | GET | `/api/shots/{sid}/video-tasks` | 查询某分镜下的所有任务 |
 | POST | `/api/video-tasks/{id}/retry` | 手动重试失败任务 |
@@ -206,7 +206,47 @@ docker run -p 8081:8081 -v $(pwd)/storage:/storage drama-factory
 - 数据默认存放在 H2 文件库，路径由 `DB_URL` 指定；切换 PostgreSQL / MySQL 只需替换驱动与连接串。
 - 媒体文件（分镜视频、成片 mp4）落在 `drama.storage` 指定的目录下，按任务 / 成片 ID 命名，元数据存数据库，文件本身不进库。
 - 视频任务状态由后台轮询更新，服务重启后未完成的任务会继续被轮询接管。
+- 优雅关闭：`server.shutdown=graceful`，收到 SIGTERM 后在途的一轮轮询最多等待 25 秒收尾，调度器 `await-termination` 上限 30 秒。
 - 成片依赖 ffmpeg / ffprobe，请在运行环境里确保这两个可执行文件可用，或用 `drama.ffmpeg` / `drama.ffprobe` 指定绝对路径。
+
+## 数据库迁移（Flyway）
+
+本项目使用 [Flyway](https://documentation.red-gate.com/flyway) 对数据库 schema 进行版本化管理。
+`schema` 的唯一事实来源是 `src/main/resources/db/migration/` 下的迁移脚本，
+JPA 的 `ddl-auto` 已固定为 `validate`，仅做校验，**不再由 Hibernate 自动改表**。
+
+### V1 基线
+
+`V1__baseline.sql` 是项目首个迁移，内容为 Hibernate `ddl-auto=create` 在 H2 2.2.224 上
+实际导出的完整 schema（7 张表：`DRAMA_PROJECTS`、`DRAMA_CHARACTERS`、`EPISODES`、`SCENES`、
+`SHOTS`、`FINAL_CUTS`、`VIDEO_TASKS`，含全部主键、外键与枚举列）。
+
+- **全新库**：启动时完整执行 V1，创建全部表。
+- **已存在的老库**（此前由 `ddl-auto=update` 建好）：配合 `spring.flyway.baseline-on-migrate: true`，
+  首次启动时 Flyway 检测到非空 schema 且无 `flyway_schema_history` 表，会自动做基线，
+  **跳过 V1 的执行**，仅记录基线版本，从而避免"表已存在"的冲突。此后所有新迁移从 V2 起正常执行。
+
+### 新增迁移脚本命名规范
+
+```
+V{n}__{描述}.sql
+```
+
+- `V` 前缀 + 递增整数版本号 + 双下划线 + 下划线分隔的描述，例如：
+  - `V2__add_episode_publish_date.sql`
+  - `V3__create_asset_table.sql`
+- 版本号必须严格递增且唯一，Flyway 会按版本号顺序执行。
+- **已发布/已执行的脚本禁止修改**（Flyway 会校验 checksum，改动会导致启动失败）；
+  如需修正，请新增一个更高版本的迁移脚本。
+
+### 回滚策略
+
+Flyway **社区版不支持自动回滚**（`undo` 属于 Teams 版特性）。因此：
+
+- 上线前务必在预发/测试环境验证迁移脚本。
+- 若某次迁移有问题，**不要**修改历史脚本，而是新增一个递增迁移（如 `V4__fix_xxx.sql`）
+  来纠正 schema 或数据。
+- 生产环境对破坏性变更（删列、改类型）建议采用"扩展-迁移-收缩"模式，分多次发布完成。
 
 ## 路线图
 

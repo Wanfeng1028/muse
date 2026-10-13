@@ -8,21 +8,35 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     open-in-view: false
     properties:
       hibernate:
         format_sql: false
+  flyway:
+    # 启用 Flyway 版本化迁移
+    enabled: true
+    # 老库首次启动时以基线方式接入，不重跑 V1；新库完整执行 V1
+    baseline-on-migrate: true
+  task:
+    scheduling:
+      shutdown:
+        # 应用关闭时等待调度线程池中在途任务执行完毕
+        await-termination: true
+        # 等待在途任务完成的最长时间，超过则强制关闭
+        await-termination-period: 30s
 
 server:
   port: ${PORT:8081}
+  # 优雅关闭：收到关闭信号后先停止接收新请求，等待在途请求处理完成再退出
+  shutdown: graceful
 
 drama:
   video:
-    provider: ${VIDEO_PROVIDER:mock}   # 视频生成提供方：mock 为离线演示/测试，agnes 为真实视频生成
-    poll-interval-ms: ${VIDEO_POLL_MS:10000}  # 任务轮询间隔，单位毫秒
-    max-attempts: ${VIDEO_MAX_ATTEMPTS:8}      # 单个任务最大尝试次数（包含指数退避重试）
-  storage: ${DRAMA_STORAGE:./data/media}      # 视频片段、字幕和成片的存储根目录
-  ffmpeg: ${FFMPEG_PATH:ffmpeg}               # ffmpeg 可执行文件路径
-  ffprobe: ${FFPROBE_PATH:ffprobe}             # ffprobe 可执行文件路径
+    provider: ${VIDEO_PROVIDER:mock}
+    poll-interval-ms: ${VIDEO_POLL_MS:10000}
+    max-attempts: ${VIDEO_MAX_ATTEMPTS:8}
+  storage: ${DRAMA_STORAGE:./data/media}
+  ffmpeg: ${FFMPEG_PATH:ffmpeg}
+  ffprobe: ${FFPROBE_PATH:ffprobe}

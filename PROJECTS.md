@@ -76,7 +76,7 @@
 9. 剪辑成片（ffmpeg 按镜号拼接 + SRT 字幕烧录 + 时长探测，/media 在线预览与下载）
 10. 生产看板（分镜→视频任务→成片三阶段横向流水线，卡点剧集标红）
 
-**状态**：工程化 v2（2026-10-13 完成：mvn test 11 例全过——含全链路集成测试建项目→建剧集→建分镜→排序→批量提交→轮询 DONE→生成成片→看板断言；真实 jar 冒烟全链路验证：5 分镜→5 任务 DONE→成片 READY 22 秒；4 页 Web 控制台真实截图已逐张视觉验收通过）。
+**状态**：工程化 v2.1（2026-10-13：v2 管线 + DoD 第 1 轮三项——Flyway 版本化迁移/提交幂等/优雅关闭；mvn test 20 例全过；真实 jar 冒烟：Flyway 基线 SUCCESS、提交 201→200 幂等、SIGTERM 优雅关闭；4 页 Web 控制台真实截图已逐张视觉验收通过）。
 
 **UI 重设计 v3**（2026-10-13 完成）：新视觉概念「剪辑室 / 场记板」——分镜板改为场记板卡片墙（斜条纹板条 + 等宽大字镜号 + 景别/运镜 badge + 对白引用 + 时间码），任务队列改为任务卡片 + 进度条，成片库改为海报卡片墙（后端新增 `GET /media/finals/{id}/poster.jpg`，ffmpeg 从成片 1 秒处抽帧），生产看板改为横向胶片管线（齿孔装饰 + 卡点集暖橙描边）；配色近黑 #0E0E11 + 钨丝灯暖橙 #E8590C + 米白文字，Noto Sans SC + 等宽字体；设计决策见 docs/DESIGN.md；mvn test 12 例全过（含新增 MediaPosterTest）；4 页真实数据截图已亲眼验收通过；另修复 v2 遗留 bug（首页 scene-form 空绑定导致项目列表加载失败）。
 
@@ -84,11 +84,12 @@
 
 - 工程化 v1（2026-10-13）：Spring Boot 分层架构落地，项目/剧集/角色/场景 CRUD、四场式剧本生成、Web 控制台、CI 与多阶段 Dockerfile 就绪
 - 工程化 v2（2026-10-13）：短剧生产管线落地——分镜管理、视频任务状态机（mock/agnes 双 provider）、ffmpeg 剪辑成片（拼接+字幕烧录）、生产看板四页 Web UI；`drama.*` 配置全环境变量化（application.yml）；生产级 DoD 对照报告 docs/dod-v2.md（含未通过项排期表）；视觉验收亲手抓出并修复 2 个 bug（pipeline 看板二次渲染抛错致空白、pipeline.html 漏引 v2.css 致卡片无样式）
+- 生产级补强 v2.1（2026-10-13，DoD 第 1 轮三项全交付）：Flyway 版本化迁移（V1__baseline.sql 由 Hibernate 实际 DDL 导出，ddl-auto→validate，baseline-on-migrate 兼容老库）+ 提交幂等（同 shot PENDING/PROCESSING 去重，首次 201/重复 200）+ 优雅关闭（server.shutdown=graceful + 调度器 await-termination 30s + 轮询在途收尾钩子 25s）；mvn test 20/20 全过；真实 jar 冒烟验证 Flyway 基线/幂等 201→200/优雅关闭日志；发版对照报告 docs/dod-v2.1.md
 
 **后续计划**：
 
 - 接入真实大模型生成剧本
-- DoD 未通过项排期（见 docs/dod-v2.md §7：提交幂等、Flyway 版本化迁移、Resilience4j 超时熔断、Docker Compose、结构化日志+request_id 等）
+- DoD 未通过项排期（见 docs/dod-v2.1.md：第 2 轮 Resilience4j 超时熔断、Docker Compose、结构化日志+request_id；第 3 轮指标告警/鉴权/备份恢复/运维手册；第 4 轮资源限制/OpenAPI/CHANGELOG/Dependabot；第 5 轮敏感数据策略/降级/单测比例/user 字段）
 - 审核流状态机
 - 多用户与权限
 

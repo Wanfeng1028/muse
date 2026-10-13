@@ -182,6 +182,14 @@ public final class Records {
     ) {
     }
 
+    /**
+     * 提交结果封装：task 为最终返回给客户端的任务视图；created 表示本次调用是否真正新建了任务。
+     * 幂等命中已存在 PENDING/PROCESSING 任务时 created=false；新建时 created=true。
+     * Controller 可据此选择 REST 状态码（新建 201，命中 200）。
+     */
+    public static record SubmitOutcome(VideoTaskResponse task, boolean created) {
+    }
+
     public static record FinalCutResponse(
             Long id,
             Long episodeId,

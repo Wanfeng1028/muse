@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,4 +50,10 @@ public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
      */
     @Query("select t from VideoTask t where t.shot.episode.id = :episodeId")
     List<VideoTask> findByEpisodeId(@Param("episodeId") Long episodeId);
+
+    /**
+     * 查询指定 Shot 下处于给定状态集合中的第一条任务（按 id 升序）。
+     * 用于幂等提交：判断是否存在 PENDING / PROCESSING 的进行中任务。
+     */
+    Optional<VideoTask> findFirstByShotIdAndStatusInOrderByIdAsc(Long shotId, Collection<VideoTaskStatus> statuses);
 }

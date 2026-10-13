@@ -98,7 +98,7 @@ class VideoTaskStateMachineTest {
     void submitCreatesPendingTask() {
         Long shotId = createShot();
 
-        Records.VideoTaskResponse task = videoTaskService.submit(shotId);
+        Records.VideoTaskResponse task = videoTaskService.submit(shotId).task();
 
         Assertions.assertNotNull(task, "提交后应返回任务对象");
         Assertions.assertNotNull(task.id(), "任务应已持久化并拥有主键");
@@ -119,7 +119,7 @@ class VideoTaskStateMachineTest {
         Long shotId = createShot();
         mockVideoProvider.setReadyAfterMs(0);
 
-        Records.VideoTaskResponse submitted = videoTaskService.submit(shotId);
+        Records.VideoTaskResponse submitted = videoTaskService.submit(shotId).task();
         Long taskId = submitted.id();
 
         // 第一次调度：PENDING -> PROCESSING，触发 mock 生成
@@ -153,7 +153,7 @@ class VideoTaskStateMachineTest {
         mockVideoProvider.setReadyAfterMs(0);
         mockVideoProvider.setFailNext(true);
 
-        Records.VideoTaskResponse submitted = videoTaskService.submit(shotId);
+        Records.VideoTaskResponse submitted = videoTaskService.submit(shotId).task();
         Long taskId = submitted.id();
 
         // 第一次调度：PENDING -> PROCESSING

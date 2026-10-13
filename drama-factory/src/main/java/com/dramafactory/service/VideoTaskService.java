@@ -10,6 +10,9 @@ import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.video.VideoProvider.ProbeResult;
 import com.dramafactory.service.video.RateLimitedException;
 import com.dramafactory.service.video.VideoProvider;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,6 +29,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 视频生成任务状态机服务。
@@ -34,6 +38,8 @@ import java.util.List;
  */
 @Service
 public class VideoTaskService {
+
+    private static final Logger log = LoggerFactory.getLogger(VideoTaskService.class);
 
     private final VideoTaskRepository videoTaskRepository;
     private final ShotRepository shotRepository;
@@ -44,6 +50,9 @@ public class VideoTaskService {
     private final long pollIntervalMs;
     private final int maxAttempts;
     private final String storageDir;
+
+    /** 轮询方法是否正在执行中，用于关闭时等待在途任务收尾。 */
+    private final AtomicBoolean pollInFlight = new AtomicBoolean(false);
 
     public VideoTaskService(VideoTaskRepository videoTaskRepository,
                             ShotRepository shotRepository,
@@ -75,9 +84,18 @@ public class VideoTaskService {
 
     /**
      * 为指定镜头提交一个视频生成任务。
+     * 幂等语义：若该镜头已存在 PENDING / PROCESSING 的进行中任务，则直接返回该任务且 created=false；
+     * 否则新建任务并返回 created=true。
+     * 并发限制说明：本实现为 check-then-insert，单实例部署下可接受；极端并发下存在竞态，
+     * 未加数据库层唯一约束或悲观锁，如需强一致请补充相应 DB 约束。
      */
     @Transactional
-    public Records.VideoTaskResponse submit(Long shotId) {
+    public Records.SubmitOutcome submit(Long shotId) {
+        var existing = videoTaskRepository.findFirstByShotIdAndStatusInOrderByIdAsc(
+                shotId, List.of(VideoTaskStatus.PENDING, VideoTaskStatus.PROCESSING));
+        if (existing.isPresent()) {
+            return new Records.SubmitOutcome(toResponse(existing.get()), false);
+        }
         Shot shot = shotRepository.findById(shotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Shot", shotId));
         VideoTask task = new VideoTask();
@@ -86,7 +104,7 @@ public class VideoTaskService {
         task.setStatus(VideoTaskStatus.PENDING);
         task.setAttempts(0);
         task.setNextRetryAt(LocalDateTime.now());
-        return toResponse(videoTaskRepository.save(task));
+        return new Records.SubmitOutcome(toResponse(videoTaskRepository.save(task)), true);
     }
 
     /**
@@ -97,7 +115,7 @@ public class VideoTaskService {
         List<Shot> shots = shotRepository.findByEpisodeIdOrderByShotNoAsc(episodeId);
         List<Records.VideoTaskResponse> result = new ArrayList<>();
         for (Shot shot : shots) {
-            result.add(submit(shot.getId()));
+            result.add(submit(shot.getId()).task());
         }
         return result;
     }
@@ -149,25 +167,60 @@ public class VideoTaskService {
     @Scheduled(fixedDelayString = "${drama.video.poll-interval-ms:10000}")
     @Transactional
     public void processDueTasks() {
-        LocalDateTime now = LocalDateTime.now();
-        List<VideoTask> due = videoTaskRepository
-                .findByStatusInAndNextRetryAtLessThanEqualOrderByIdAsc(
-                        List.of(VideoTaskStatus.PENDING, VideoTaskStatus.PROCESSING), now);
+        pollInFlight.set(true);
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            List<VideoTask> due = videoTaskRepository
+                    .findByStatusInAndNextRetryAtLessThanEqualOrderByIdAsc(
+                            List.of(VideoTaskStatus.PENDING, VideoTaskStatus.PROCESSING), now);
 
-        due.stream().limit(20).forEach(task -> {
-            try {
-                if (task.getStatus() == VideoTaskStatus.PENDING) {
-                    doSubmit(task);
-                } else {
-                    doPoll(task);
+            due.stream().limit(20).forEach(task -> {
+                try {
+                    if (task.getStatus() == VideoTaskStatus.PENDING) {
+                        doSubmit(task);
+                    } else {
+                        doPoll(task);
+                    }
+                } catch (RateLimitedException e) {
+                    task.setNextRetryAt(now.plusSeconds(Math.max(e.getRetryAfterSeconds(), 30)));
+                } catch (Exception e) {
+                    failOrRetry(task, e.getMessage());
                 }
-            } catch (RateLimitedException e) {
-                task.setNextRetryAt(now.plusSeconds(Math.max(e.getRetryAfterSeconds(), 30)));
-            } catch (Exception e) {
-                failOrRetry(task, e.getMessage());
+                videoTaskRepository.save(task);
+            });
+        } finally {
+            pollInFlight.set(false);
+        }
+    }
+
+    /**
+     * 应用关闭收尾钩子：等待在途的一轮 processDueTasks 执行完毕，最多等待 25 秒。
+     * 轮询单轮上限处理 20 个任务，mock provider 下远小于此时限；超时后不再等待直接返回，
+     * 由外层调度器的 await-termination 做最终兜底。
+     * 真实 agnes provider 下单个任务可能耗时较长，超时熔断是后续 DoD 轮次事项，此处如实注明。
+     */
+    @PreDestroy
+    public void awaitPollCompletion() {
+        if (!pollInFlight.get()) {
+            log.info("关闭收尾：无在途轮询任务，直接返回");
+            return;
+        }
+        log.info("关闭收尾：检测到在途轮询任务，开始等待其收尾（最多 25 秒）");
+        long deadline = System.currentTimeMillis() + 25_000L;
+        while (pollInFlight.get() && System.currentTimeMillis() < deadline) {
+            try {
+                Thread.sleep(200L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("关闭收尾：等待在途轮询任务时被中断，提前返回");
+                return;
             }
-            videoTaskRepository.save(task);
-        });
+        }
+        if (pollInFlight.get()) {
+            log.warn("关闭收尾：等待在途轮询任务超时（25 秒），不再等待直接返回，交由调度器 await-termination 兜底");
+        } else {
+            log.info("关闭收尾：在途轮询任务已完成");
+        }
     }
 
     /**
