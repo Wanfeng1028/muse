@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
 )
 
 // Logger 是并发安全的结构化日志器。
@@ -90,7 +92,8 @@ func (r *statusRecorder) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
 }
 
-// RequestIDMiddleware 生成请求 ID、放入 context，并记录访问日志。
+// RequestIDMiddleware 生成请求 ID、放入 context，并记录访问日志与 HTTP 指标。
+// route 使用 r.Pattern() 获取路径模板（Go 1.22+），空则回退到 path。
 func RequestIDMiddleware(next http.Handler, logger *Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -99,6 +102,7 @@ func RequestIDMiddleware(next http.Handler, logger *Logger) http.Handler {
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rec, r.WithContext(ctx))
 		dur := time.Since(start).Milliseconds()
+
 		logger.Info("访问", map[string]any{
 			"request_id":  id,
 			"method":      r.Method,
@@ -106,5 +110,14 @@ func RequestIDMiddleware(next http.Handler, logger *Logger) http.Handler {
 			"status":      rec.status,
 			"duration_ms": dur,
 		})
+
+		// HTTP 指标埋点（route 取 ServeMux 匹配到的路径模板，避免高基数）
+		routeStr := r.Pattern
+		if routeStr == "" {
+			routeStr = r.URL.Path
+		}
+		m := metrics.Default()
+		m.Inc("mortise_http_requests_total", r.Method, routeStr, fmt.Sprintf("%d", rec.status))
+		m.Observe("mortise_http_request_duration_seconds", time.Since(start).Seconds(), r.Method, routeStr)
 	})
 }

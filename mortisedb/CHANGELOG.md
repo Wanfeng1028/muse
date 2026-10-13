@@ -1,78 +1,91 @@
-# 更新日志
+# 变更日志
 
-本文件记录 MortiseDB 的所有重要变更。
+本文件记录 MortiseDB 的重要变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
-版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
-
-## [未发布]
-
-## [0.1.0] - 2026-10-13
-
-首个公开版本。MortiseDB 是一个面向多数据源的同步与视图中间层，本版本奠定了连接、同步、冲突处理、视图、调度与操作界面的完整基础能力。
+## [1.1.0] - 2026-10-13
 
 ### 新增
 
-#### 连接器
-- 新增 4 种数据源连接器：
-  - **MySQL 连接器**：支持库表结构发现、全量与增量读取。
-  - **PostgreSQL 连接器**：支持 schema 隔离与逻辑复制位点读取。
-  - **SQLite 连接器**：支持本地文件库接入，适用于边缘与嵌入式场景。
-  - **REST API 连接器**：支持基于 HTTP 的 JSON 数据源接入，可配置分页与鉴权。
-- 连接器统一抽象接口，支持连接测试、字段类型映射与元数据探查。
-- 连接配置支持环境变量与密钥引用，避免凭据明文落盘。
+- **`/metrics` Prometheus 端点**：手写 text exposition（`text/plain; version=0.0.4`，仅标准库，无新依赖）。
+  - 指标清单：
+    - `mortise_build_info{version="1.1.0"}` = 1
+    - `mortise_sync_rows_total{source,table,op}`，op ∈ inserted/updated/deleted/skipped/conflicts
+    - `mortise_sync_runs_total{job,status}`，status ∈ ok/error
+    - `mortise_sync_last_duration_seconds{source}`
+    - `mortise_view_duration_seconds_count{view}` / `mortise_view_duration_seconds_sum{view}`
+    - `mortise_view_last_duration_seconds{view}`
+    - `mortise_watermark_lag_seconds{source,table}`（抓取时实时计算）
+    - `mortise_conflicts_pending`（抓取时查询）、`mortise_conflicts_total`
+    - `mortise_http_requests_total{method,route,status}`、`mortise_http_request_duration_seconds_sum/count{method,route}`
+    - `mortise_db_size_bytes`（抓取时 `os.Stat`）、`mortise_uptime_seconds`
+  - 埋点位置：sync 层累加 `rows_total` 与 `runs_total`；API 层 `handleViewRows`/`handleQuery` 计时（view label 分别为视图名与 `adhoc`）；`store.RecordConflict` 直接递增 `conflicts_total`。
+- **`backup` / `restore` 子命令**：
+  - `mortisedb backup [--config PATH] [--output PATH]`：使用 SQLite `VACUUM INTO` 做在线一致性快照，输出文件/大小/SHA256/耗时，同时生成 `<备份>.meta.json`。
+  - `mortisedb restore --from <文件> [--config PATH] [--force]`：先 `Verify`（只读打开 + `PRAGMA integrity_check` + 检查 `_m_watermarks` 表），目标非空且无 `--force` 拒绝，`--force` 时旧库改名为 `*.bak-<时间戳>` 留底再原子替换。
+- **优雅关闭补强**：
+  - `http.Server` 增加 `ReadHeaderTimeout=10s`、`ReadTimeout=30s`、`WriteTimeout=60s`、`IdleTimeout=120s`。
+  - 关闭流程结构化日志化：停新请求 → `Shutdown(30s)` → `scheduler.Stop()` 等待在途同步 → `PRAGMA wal_checkpoint(TRUNCATE)`（失败仅 warn）→ `st.Close()`。
+- **10 万行负载验证支撑**：`scripts/loadtest.sh` 生成 CSV/JSON/SQLite 三源各 10 万行 + `mortise-load.yaml`（含跨源 JOIN 视图 `v_load_join`），脚本只生成与自检，手动计时见 `docs/LOADTEST.md`。
 
-#### 增量同步
-- 新增增量同步能力，基于水位线（watermark）记录同步位点。
-- 支持按时间戳、自增主键与自定义游标字段进行增量识别。
-- 支持同步位点持久化与断点续传，任务中断后可从中断处恢复。
-- 支持全量初始化 + 增量追平的组合同步模式。
+### 变更
 
-#### 冲突策略
-- 新增可配置的冲突处理策略：
-  - `source-wins`：以数据源为准覆盖目标。
-  - `target-wins`：保留目标已有数据。
-  - `latest-wins`：按时间戳取较新记录。
-  - `manual`：冲突记录进入待处理队列，由人工裁决。
-- 冲突事件可记录明细，包含冲突字段、双方取值与最终决策。
+- `api.Version` 由 `0.1.0` 升级为 `1.1.0`。
 
-#### 视图
-- 新增视图能力，可将多个数据源的表映射为统一逻辑视图。
-- 支持字段重命名、类型转换、字段裁剪与简单表达式派生列。
-- 支持视图级查询接口，屏蔽底层数据源差异。
-- 视图定义支持版本化管理与变更校验。
+## [0.1.0] - 2026-01-01
 
-#### 调度
-- 新增任务调度模块，支持 Cron 表达式与固定间隔两种触发方式。
-- 支持任务依赖编排，可配置前置任务成功后触发。
-- 支持并发度控制、失败重试与超时中断。
-- 提供调度执行历史与运行状态查询。
+首个可用版本。功能范围以源码实际为准：
 
-#### Web UI
-- 新增 Web 管理界面，覆盖连接管理、同步任务、视图配置、调度计划与运行日志。
-- 提供任务运行状态看板与失败任务告警提示。
-- 支持冲突待处理队列的可视化查看与人工裁决操作。
-- 界面支持简体中文。
+### 连接器
 
-#### CLI
-- 新增命令行工具 `mortise`，覆盖全部核心能力，命令如下：
-  - `mortise init`：初始化配置目录与默认配置文件。
-  - `mortise connector list`：列出已注册的连接器类型。
-  - `mortise connector test`：测试指定连接是否可用。
-  - `mortise source add|list|remove`：管理数据源连接。
-  - `mortise sync create|list|run|status`：创建、查看、执行同步任务并查询状态。
-  - `mortise sync resume`：从上次位点恢复增量同步。
-  - `mortise conflict list|resolve`：查看冲突记录并执行裁决。
-  - `mortise view create|list|query`：创建、查看与查询视图。
-  - `mortise schedule add|list|enable|disable`：管理调度计划。
-  - `mortise serve`：启动 Web UI 与后台调度服务。
-  - `mortise version`：输出版本信息。
-- CLI 支持 `--config` 指定配置文件，支持 `--json` 输出便于脚本集成。
+- YAML 声明式配置，支持 `sqlite` / `csv` / `json` / `dir` 四种数据源。
+- 每个源通过 `primary_key` 指定主键；`sqlite` 通过 `tables` 映射 `source/target/primary_key`。
+- schema 推断：CSV 采样推断列类型，JSON 按值类型推断，SQLite 读取 `PRAGMA table_info` 声明类型。
+- 类型统一为 `INTEGER` / `REAL` / `TEXT` / `DATETIME` / `BOOLEAN` 五种。
 
-### 说明
+### 增量同步
 
-- 本版本为 0.x 系列，配置结构与 CLI 参数在 1.0 之前可能发生不兼容变更。
-- 增量同步依赖数据源具备可靠的游标字段，若源表无可用游标，请使用全量同步模式。
+- `incremental: hash`（默认）：基于行内容 sha256 做全量比对。
+- `incremental: "column:<列名>"`：按列水位线增量拉取，水位线存储在 `_m_watermarks`。
+- 全量模式下通过对比源端主键集合检测删除，软删除写入 `_m_deleted=1`。
 
-[未发布]: https://example.com/mortisedb/compare/v0.1.0...HEAD
-[0.1.0]: https://example.com/mortisedb/releases/tag/v0.1.0
+### 冲突策略
+
+- `sync.conflict: priority`：按 `sync.priority` 列表判定胜出方，落败方记为 `pending`，胜出方记 `resolved_auto`。
+- `sync.conflict: manual`：跨源冲突一律 `pending`，交由人工处理。
+- 冲突写入 `_m_conflicts`，字段 `source_a`（现有方）、`source_b`（挑战方）。
+- 本源重写同一主键时，自动将该主键的 `pending` 冲突标记为 `resolved_auto`。
+
+### 查询视图
+
+- 视图定义保存于 `_m_views`（名称、SQL、描述、创建时间）。
+- 支持保存、列出、运行、删除视图。
+- 运行视图支持导出 CSV（`GET /api/views/{name}/rows?format=csv`）。
+
+### 调度
+
+- 按 `jobs` 配置的 `interval` 周期执行同步。
+- 运行历史写入 `_m_runs`（新增/更新/删除/冲突/错误）。
+- Job 名自动带源名后缀（`<job>:<source>`），方便按源查询上次同步时间。
+
+### CLI
+
+`mortisedb` 提供六个子命令：`init` / `sync` / `query` / `views` / `serve` / `status`。
+
+### Web UI
+
+五页（go:embed 内嵌静态资源）：首页、表浏览、视图、冲突、运行记录。
+
+### 生产级基础
+
+- `Migrate()` 建立系统表（`_m_runs` / `_m_conflicts` / `_m_views` / `_m_watermarks`）。
+- 结构化 JSON 日志 + `request_id` 中间件。
+- `GET /api/health` 健康检查。
+
+## [Unreleased]
+
+### 后续版本
+
+- HTTP / WebDAV 数据源连接器。
+- 视图物化（物化视图 + 刷新策略）。
+- 冲突批量操作。
+- 单文件加密。

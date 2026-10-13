@@ -1,5 +1,5 @@
 // Package main 是 MortiseDB「榫卯」的命令行入口。
-// 提供 init/sync/query/views/serve/status 子命令。
+// 提供 init/sync/query/views/serve/status/backup/restore 子命令。
 package main
 
 import (
@@ -22,8 +22,10 @@ import (
 	"time"
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/api"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/backup"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	mortiselog "github.com/Wanfeng1028/muse/mortisedb/internal/log"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/scheduler"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 	syncpkg "github.com/Wanfeng1028/muse/mortisedb/internal/sync"
@@ -113,6 +115,10 @@ func main() {
 		runServe(args)
 	case "status":
 		runStatus(args)
+	case "backup":
+		runBackup(args)
+	case "restore":
+		runRestore(args)
 	case "help", "-h", "--help":
 		printUsage()
 	default:
@@ -128,13 +134,15 @@ func printUsage() {
 	fmt.Println("用法: mortisedb <子命令> [参数]")
 	fmt.Println()
 	fmt.Println("子命令:")
-	fmt.Println("  init    生成示例配置、目录与示例数据源")
-	fmt.Println("  sync    执行一次同步")
-	fmt.Println("  query   执行单条 SQL 查询")
-	fmt.Println("  views   视图管理 (list/add/drop)")
-	fmt.Println("  serve   启动 HTTP 服务与调度器")
-	fmt.Println("  status  打印系统状态")
-	fmt.Println("  help    显示帮助")
+	fmt.Println("  init     生成示例配置、目录与示例数据源")
+	fmt.Println("  sync     执行一次同步")
+	fmt.Println("  query    执行单条 SQL 查询")
+	fmt.Println("  views    视图管理 (list/add/drop)")
+	fmt.Println("  serve    启动 HTTP 服务与调度器")
+	fmt.Println("  status   打印系统状态")
+	fmt.Println("  backup   在线备份数据库 (VACUUM INTO)")
+	fmt.Println("  restore  从备份恢复数据库")
+	fmt.Println("  help     显示帮助")
 }
 
 // runInit 初始化项目目录结构。
@@ -372,7 +380,7 @@ func runViews(args []string) {
 	}
 }
 
-// runServe 启动 HTTP 服务与调度器。
+// runServe 启动 HTTP 服务与调度器（含优雅关闭）。
 func runServe(args []string) {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	configPath := fs.String("config", "", "配置文件路径")
@@ -388,12 +396,15 @@ func runServe(args []string) {
 		fmt.Fprintf(os.Stderr, "打开数据库失败: %v\n", err)
 		os.Exit(1)
 	}
-	defer st.Close()
+	// 注意：不再 defer st.Close()，由关闭流程显式控制顺序
 
 	if err := st.Migrate(); err != nil {
 		fmt.Fprintf(os.Stderr, "迁移失败: %v\n", err)
 		os.Exit(1)
 	}
+
+	// 注册标准指标
+	metrics.Default().RegisterStandard()
 
 	logger := mortiselog.New(os.Stdout, "info")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -404,28 +415,63 @@ func runServe(args []string) {
 
 	handler := api.NewServer(st, cfg, logger)
 	srv := &http.Server{
-		Addr:    cfg.Addr,
-		Handler: handler,
+		Addr:              cfg.Addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	// 优雅关闭
+	shutdownDone := make(chan struct{})
 	go func() {
+		defer close(shutdownDone)
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
-		fmt.Println("\n收到退出信号，正在关闭...")
-		cancel()
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		logger.Info("收到退出信号，开始优雅关闭", nil)
+
+		// 步骤 1：停止接收新请求，等待在途请求完成（最多 30 秒）
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer shutdownCancel()
-		_ = srv.Shutdown(shutdownCtx)
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			logger.Warn("HTTP Shutdown 超时或失败", map[string]any{"error": err.Error()})
+		} else {
+			logger.Info("HTTP 服务已停止接收请求并完成在途请求", nil)
+		}
+
+		// 步骤 2：取消调度器 ctx，并等待在途同步任务完成
+		// scheduler.Stop() 会 cancel 并 wg.Wait()，其内部正在执行的 Sync 无法被 ctx 中断，
+		// 因此会等待当前表写完后再退出循环（符合预期）。
+		cancel()
+		logger.Info("等待在途同步任务完成", nil)
+		sch.Stop()
+		logger.Info("调度器已停止", nil)
+
+		// 步骤 3：WAL checkpoint（失败仅 warn）
+		if _, err := st.DB.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+			logger.Warn("WAL checkpoint 失败", map[string]any{"error": err.Error()})
+		} else {
+			logger.Info("WAL checkpoint 完成", nil)
+		}
+
+		// 步骤 4：关闭数据库
+		if err := st.Close(); err != nil {
+			logger.Warn("关闭数据库失败", map[string]any{"error": err.Error()})
+		} else {
+			logger.Info("数据库已关闭", nil)
+		}
 	}()
 
-	fmt.Printf("MortiseDB 服务启动于 %s\n", cfg.Addr)
+	logger.Info("MortiseDB 服务启动", map[string]any{"addr": cfg.Addr, "version": api.Version})
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		fmt.Fprintf(os.Stderr, "服务错误: %v\n", err)
 		os.Exit(1)
 	}
-	sch.Stop()
+
+	// 等待关闭流程完成
+	<-shutdownDone
 	fmt.Println("已停止")
 }
 
@@ -498,6 +544,93 @@ func runStatus(args []string) {
 		fmt.Fprintf(os.Stderr, "列出冲突失败: %v\n", err)
 	} else {
 		fmt.Printf("待处理冲突数: %d\n", len(conflicts))
+	}
+}
+
+// runBackup 执行在线备份。
+func runBackup(args []string) {
+	fs := flag.NewFlagSet("backup", flag.ExitOnError)
+	configPath := fs.String("config", "", "配置文件路径")
+	output := fs.String("output", "", "输出路径（默认 ./backups/mortise-<UTC时间戳>.db）")
+	_ = fs.Parse(args)
+
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "加载配置失败: %v\n", err)
+		os.Exit(1)
+	}
+	if cfg.Database == ":memory:" {
+		fmt.Fprintln(os.Stderr, "内存库不支持备份")
+		os.Exit(1)
+	}
+
+	outPath := *output
+	if outPath == "" {
+		ts := time.Now().UTC().Format("20060102T150405Z")
+		outPath = filepath.Join("backups", fmt.Sprintf("mortise-%s.db", ts))
+	}
+
+	start := time.Now()
+	meta, err := backup.Backup(cfg.Database, outPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "备份失败: %v\n", err)
+		os.Exit(1)
+	}
+	elapsed := time.Since(start)
+
+	fmt.Println("备份完成:")
+	fmt.Printf("  文件:    %s\n", outPath)
+	fmt.Printf("  大小:    %d 字节\n", meta.SizeBytes)
+	fmt.Printf("  SHA256:  %s\n", meta.SHA256)
+	fmt.Printf("  耗时:    %s\n", elapsed)
+	fmt.Printf("  元信息:  %s.meta.json\n", outPath)
+}
+
+// runRestore 从备份恢复。
+func runRestore(args []string) {
+	fs := flag.NewFlagSet("restore", flag.ExitOnError)
+	configPath := fs.String("config", "", "配置文件路径")
+	from := fs.String("from", "", "备份文件路径（必填）")
+	force := fs.Bool("force", false, "目标存在且非空时强制覆盖（旧库改名 .bak-<时间戳> 留底）")
+	_ = fs.Parse(args)
+
+	if *from == "" {
+		fmt.Fprintln(os.Stderr, "必须使用 --from 指定备份文件")
+		os.Exit(1)
+	}
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "加载配置失败: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := backup.Restore(*from, cfg.Database, *force); err != nil {
+		fmt.Fprintf(os.Stderr, "恢复失败: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("恢复完成: %s -> %s\n", *from, cfg.Database)
+
+	// 打开恢复后的库，打印表数与水位线条数作为一致性证据
+	st, err := store.Open(cfg.Database)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "打开恢复库失败: %v\n", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+
+	tables, err := st.Tables()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "列出表失败: %v\n", err)
+		return
+	}
+	fmt.Printf("  用户表数:   %d\n", len(tables))
+	for _, t := range tables {
+		if cnt, err := st.TableCount(t); err == nil {
+			fmt.Printf("    %s: %d 行\n", t, cnt)
+		}
+	}
+	if wms, err := st.ListWatermarks(); err == nil {
+		fmt.Printf("  水位线条数: %d\n", len(wms))
 	}
 }
 

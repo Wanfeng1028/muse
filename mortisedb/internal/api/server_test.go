@@ -10,6 +10,8 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -18,6 +20,7 @@ import (
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/log"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 	syncpkg "github.com/Wanfeng1028/muse/mortisedb/internal/sync"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/views"
@@ -224,6 +227,70 @@ func TestViewsCreateAndRunCSV(t *testing.T) {
 	}
 }
 
+// TestMetricsAfterSync 使用内存库 + CSV 连接器做一次同步，断言 /metrics 暴露 sync_rows_total。
+func TestMetricsAfterSync(t *testing.T) {
+	// 准备临时 CSV
+	dir := t.TempDir()
+	csvPath := filepath.Join(dir, "orders.csv")
+	content := "order_id,user_id,amount,updated_at\n" +
+		"1,u001,10.5,2026-01-01 00:00:00\n" +
+		"2,u002,20.0,2026-01-01 00:01:00\n" +
+		"3,u003,30.0,2026-01-01 00:02:00\n"
+	if err := os.WriteFile(csvPath, []byte(content), 0o644); err != nil {
+		t.Fatalf("写 CSV 失败: %v", err)
+	}
+
+	st, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("打开内存库失败: %v", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		t.Fatalf("迁移失败: %v", err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.Sources = []config.SourceConfig{
+		{
+			Name:        "csv_orders",
+			Type:        "csv",
+			Path:        csvPath,
+			Table:       "orders",
+			PrimaryKey:  "order_id",
+			Incremental: "column:updated_at",
+		},
+	}
+
+	// 确保标准指标已注册
+	metrics.Default().RegisterStandard()
+
+	if _, err := syncpkg.Sync(cfg, st, nil, "test"); err != nil {
+		t.Fatalf("同步失败: %v", err)
+	}
+
+	logger := log.New(io.Discard, "info")
+	srv := NewServer(st, cfg, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	rec := httptest.NewRecorder()
+	srv.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("期望 200，得到 %d，body=%s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "mortise_sync_rows_total") {
+		t.Fatalf("/metrics 未包含 mortise_sync_rows_total，body=%s", body)
+	}
+	// 3 行插入
+	if !strings.Contains(body, `op="inserted"`) {
+		t.Fatalf("/metrics 未包含 inserted 系列，body=%s", body)
+	}
+	// 至少出现一次 3 计数
+	if !strings.Contains(body, "} 3") {
+		t.Fatalf("/metrics 未包含期望的计数值 3，body=%s", body)
+	}
+}
+
 // 确保未使用的 import 被引用
 var (
 	_ = context.Background
@@ -231,7 +298,6 @@ var (
 	_ = fs.FS(nil)
 	_ = strconv.Itoa
 	_ = time.Now
-	_ = syncpkg.HashRow
 	_ = views.Add
 	_ = web.StaticFS
 )

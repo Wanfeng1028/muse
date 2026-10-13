@@ -8,13 +8,16 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/connector"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/log"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 	syncpkg "github.com/Wanfeng1028/muse/mortisedb/internal/sync"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/views"
@@ -22,18 +25,20 @@ import (
 )
 
 // Version 为 API 版本号。
-var Version = "0.1.0"
+var Version = "1.1.0"
 
 // server 保存 API 依赖。
 type server struct {
-	st     *store.Store
-	cfg    *config.Config
-	logger *log.Logger
+	st         *store.Store
+	cfg        *config.Config
+	logger     *log.Logger
+	dbPath     string
+	startedAt  time.Time
 }
 
 // NewServer 构造 HTTP 处理器。
 func NewServer(st *store.Store, cfg *config.Config, logger *log.Logger) http.Handler {
-	s := &server{st: st, cfg: cfg, logger: logger}
+	s := &server{st: st, cfg: cfg, logger: logger, dbPath: cfg.Database, startedAt: time.Now()}
 	mux := http.NewServeMux()
 
 	// 健康检查
@@ -59,6 +64,8 @@ func NewServer(st *store.Store, cfg *config.Config, logger *log.Logger) http.Han
 	mux.HandleFunc("GET /api/views/{name}/rows", s.handleViewRows)
 	// 自由查询
 	mux.HandleFunc("POST /api/query", s.handleQuery)
+	// 指标
+	mux.HandleFunc("GET /metrics", s.handleMetrics)
 
 	// 静态资源与首页
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(web.StaticFS())))
@@ -83,6 +90,65 @@ func writeError(w http.ResponseWriter, status int, err error) {
 // handleHealth 返回健康状态。
 func (s *server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "version": Version})
+}
+
+// handleMetrics 输出 Prometheus 指标文本。抓取时实时计算水位线滞后、待处理冲突、库大小与运行时长。
+func (s *server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	m := metrics.Default()
+
+	// 水位线滞后：抓取时实时计算
+	if s.st != nil {
+		if wms, err := s.st.ListWatermarks(); err == nil {
+			now := time.Now()
+			for _, wm := range wms {
+				ts, ok := parseWatermarkTime(wm.Value)
+				if !ok {
+					continue
+				}
+				lag := now.Sub(ts).Seconds()
+				if lag < 0 {
+					lag = 0
+				}
+				m.Set("mortise_watermark_lag_seconds", lag, wm.Source, wm.Table)
+			}
+		}
+	}
+
+	// 待处理冲突数
+	if s.st != nil {
+		if conflicts, err := s.st.ListConflicts("pending"); err == nil {
+			m.Set("mortise_conflicts_pending", float64(len(conflicts)))
+		}
+	}
+
+	// 数据库文件大小（内存库为 0，不设置）
+	if s.dbPath != "" && s.dbPath != ":memory:" {
+		if info, err := os.Stat(s.dbPath); err == nil {
+			m.Set("mortise_db_size_bytes", float64(info.Size()))
+		}
+	}
+
+	// 运行时长
+	m.Set("mortise_uptime_seconds", time.Since(s.startedAt).Seconds())
+
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(m.Render()))
+}
+
+// parseWatermarkTime 尝试按 RFC3339 与 "2006-01-02 15:04:05" 解析水位线时间。
+func parseWatermarkTime(v string) (time.Time, bool) {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return time.Time{}, false
+	}
+	if t, err := time.Parse(time.RFC3339, v); err == nil {
+		return t, true
+	}
+	if t, err := time.Parse("2006-01-02 15:04:05", v); err == nil {
+		return t, true
+	}
+	return time.Time{}, false
 }
 
 // sourceTableInfo 数据源表信息。
@@ -367,13 +433,19 @@ func (s *server) handleDropView(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// handleViewRows 执行视图查询。
+// handleViewRows 执行视图查询（含耗时指标）。
 func (s *server) handleViewRows(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 	format := r.URL.Query().Get("format")
 	limit := parseLimit(r.URL.Query().Get("limit"), 500)
 
+	start := time.Now()
 	cols, rows, err := views.Run(s.st, name, limit)
+	dur := time.Since(start).Seconds()
+	m := metrics.Default()
+	m.Observe("mortise_view_duration_seconds", dur, name)
+	m.Set("mortise_view_last_duration_seconds", dur, name)
+
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -404,7 +476,7 @@ func (s *server) handleViewRows(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"columns": cols, "rows": rows})
 }
 
-// handleQuery 执行自由查询。
+// handleQuery 执行自由查询（含耗时指标，view 标签固定为 adhoc）。
 func (s *server) handleQuery(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		SQL   string `json:"sql"`
@@ -417,7 +489,13 @@ func (s *server) handleQuery(w http.ResponseWriter, r *http.Request) {
 	if req.Limit <= 0 {
 		req.Limit = 500
 	}
+	start := time.Now()
 	cols, rows, err := s.st.Query(req.SQL)
+	dur := time.Since(start).Seconds()
+	m := metrics.Default()
+	m.Observe("mortise_view_duration_seconds", dur, "adhoc")
+	m.Set("mortise_view_last_duration_seconds", dur, "adhoc")
+
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return

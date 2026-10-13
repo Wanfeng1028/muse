@@ -12,6 +12,7 @@ import (
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/connector"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 )
 
@@ -97,10 +98,10 @@ func Sync(cfg *config.Config, st *store.Store, sourceNames []string, jobName str
 				jobLabel = jobName + ":" + sc.Name
 			}
 			_ = st.RecordRun(store.RunRecord{
-				Job:       jobLabel,
-				StartedAt: nowRFC3339(),
+				Job:        jobLabel,
+				StartedAt:  nowRFC3339(),
 				FinishedAt: nowRFC3339(),
-				Error:     err.Error(),
+				Error:      err.Error(),
 			})
 			if firstErr == nil {
 				firstErr = err
@@ -116,6 +117,7 @@ func Sync(cfg *config.Config, st *store.Store, sourceNames []string, jobName str
 // syncOneSource 同步单个源
 func syncOneSource(cfg *config.Config, st *store.Store, sc config.SourceConfig, jobName string, srcStats *SourceStats) error {
 	startedAt := nowRFC3339()
+	startTime := time.Now()
 
 	src, err := connector.Open(sc)
 	if err != nil {
@@ -165,6 +167,20 @@ func syncOneSource(cfg *config.Config, st *store.Store, sc config.SourceConfig, 
 		Deleted:    totalDeleted,
 		Conflicts:  totalConflicts,
 	})
+
+	// 指标埋点：按表累加 rows_total 各 op；记录 duration 与 runs_total{ok}
+	m := metrics.Default()
+	for _, ts := range srcStats.Tables {
+		m.Add("mortise_sync_rows_total", float64(ts.Inserted), sc.Name, ts.Table, "inserted")
+		m.Add("mortise_sync_rows_total", float64(ts.Updated), sc.Name, ts.Table, "updated")
+		m.Add("mortise_sync_rows_total", float64(ts.Deleted), sc.Name, ts.Table, "deleted")
+		m.Add("mortise_sync_rows_total", float64(ts.Skipped), sc.Name, ts.Table, "skipped")
+		m.Add("mortise_sync_rows_total", float64(ts.Conflicts), sc.Name, ts.Table, "conflicts")
+	}
+	dur := time.Since(startTime).Seconds()
+	m.Set("mortise_sync_last_duration_seconds", dur, sc.Name)
+	m.Inc("mortise_sync_runs_total", jobLabel, "ok")
+
 	return nil
 }
 

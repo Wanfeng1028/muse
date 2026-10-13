@@ -12,6 +12,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
 )
 
 // ErrNotFound 表示查询的记录不存在。
@@ -189,7 +190,7 @@ func (s *Store) GetHash(table, pkCol string, pkVal any) (hash, source string, de
 		quoteIdent(table), quoteIdent(pkCol),
 	)
 	var (
-		h  sql.NullString
+		h   sql.NullString
 		src sql.NullString
 		del sql.NullInt64
 	)
@@ -270,6 +271,42 @@ func (s *Store) SetWatermark(source, table, column, value string) error {
 		return fmt.Errorf("写入水位线失败: %w", err)
 	}
 	return nil
+}
+
+// ListWatermarks 列出所有水位线（source、table、column、value）。
+func (s *Store) ListWatermarks() ([]Watermark, error) {
+	rows, err := s.DB.Query(
+		`SELECT "source","table_name","column_name","value" FROM "_m_watermarks" ORDER BY "source","table_name","column_name"`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("查询水位线失败: %w", err)
+	}
+	defer rows.Close()
+	var result []Watermark
+	for rows.Next() {
+		var w Watermark
+		var src, tbl, col, val sql.NullString
+		if err := rows.Scan(&src, &tbl, &col, &val); err != nil {
+			return nil, fmt.Errorf("扫描水位线失败: %w", err)
+		}
+		w.Source = src.String
+		w.Table = tbl.String
+		w.Column = col.String
+		w.Value = val.String
+		result = append(result, w)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("遍历水位线失败: %w", err)
+	}
+	return result, nil
+}
+
+// Watermark 表示一条水位线记录。
+type Watermark struct {
+	Source string
+	Table  string
+	Column string
+	Value  string
 }
 
 // RunRecord 表示一次同步运行的记录。
@@ -362,6 +399,8 @@ func (s *Store) RecordConflict(c Conflict) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("获取冲突 id 失败: %w", err)
 	}
+	// 累计冲突计数（CLI 与 API 双路径覆盖）
+	metrics.Default().Inc("mortise_conflicts_total")
 	return id, nil
 }
 

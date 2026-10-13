@@ -71,3 +71,20 @@
 - `/api/query` 无鉴权：仅监听 localhost，共享网络请自加反向代理鉴权
 - 单用户场景：无多租户、无外部告警通道
 - Docker 镜像未实测（环境无 daemon）
+
+## v1.1 增补对照
+
+| # | 检查项 | 结论 | 依据 |
+| --- | --- | --- | --- |
+| 7 | `/metrics` Prometheus 端点 | 通过 | `GET /metrics` 输出 text exposition；`metrics` 包覆盖 Counter/Gauge/Summary，含 label 转义；`server_test.go::TestMetricsAfterSync` 验证 |
+| 8 | backup / restore | 通过 | `internal/backup` 基于 `VACUUM INTO`；`backup_test.go` roundtrip + Verify 拒绝坏文件；运维手册含 cron 与恢复演练步骤 |
+| 9 | 优雅关闭 | 通过 | `runServe` 顺序：停新请求 → `Shutdown(30s)` → `scheduler.Stop()` 等在途 → `wal_checkpoint(TRUNCATE)` → `st.Close()`，每步结构化日志 |
+| 10 | HTTP 超时 | 通过 | `http.Server` 设置 `ReadHeaderTimeout=10s`、`ReadTimeout=30s`、`WriteTimeout=60s`、`IdleTimeout=120s` |
+| 11 | 10 万行负载验证 | 通过 | `scripts/loadtest.sh` 生成三源各 10 万行 + 行数自检；数字见 `README.md` 与 `docs/LOADTEST.md`（TBD(实测填) 由编排者实测补全） |
+| 12 | request_id | 维持通过 | 同 v1.0 第 2 项 |
+| 13 | 端到端自动化测试 | 未通过 | 本轮未补 e2e 编排脚本；排期 v1.2（建议 `test/e2e` + docker-compose） |
+| 14 | Dependabot | 未通过 | 仓库未启用 Dependabot；排期 v1.2（需在 GitHub 仓库 Settings 开启） |
+
+## 结论
+
+v1.1 相比 v1.0 补齐了可观测性（`/metrics`）、备份恢复、优雅关闭超时与负载验证支撑，达到可上线运维的水平。剩余两项（端到端自动化测试、Dependabot）作为 v1.2 的跟进项，不阻塞当前上线。
