@@ -1,0 +1,644 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文溯 DocSeek · 全文检索服务</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f4f6f9;
+    color: #1f2733;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  header.top {
+    text-align: center;
+    padding: 16px 0 24px;
+  }
+  header.top h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #10263f;
+    letter-spacing: 0.5px;
+  }
+  header.top .sub {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #6b7785;
+  }
+  .card {
+    background: #ffffff;
+    border: 1px solid #e3e8ef;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(16, 38, 63, 0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #10263f;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2 .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2f7cf6;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  input[type="text"], select {
+    flex: 1 1 200px;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid #ccd4de;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1f2733;
+    background: #fbfcfe;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: #2f7cf6;
+    box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+  }
+  select {
+    flex: 0 0 auto;
+    width: 110px;
+  }
+  button {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #2f7cf6;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    white-space: nowrap;
+  }
+  button:hover { background: #1e68e0; }
+  button:active { background: #1758c4; }
+  button.ghost {
+    background: #eef2f8;
+    color: #2f5b8f;
+  }
+  button.ghost:hover { background: #e0e8f4; }
+  button.danger {
+    background: #fdecec;
+    color: #c0392b;
+    padding: 5px 12px;
+    font-size: 13px;
+  }
+  button.danger:hover { background: #f9d7d5; }
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .results {
+    margin-top: 16px;
+  }
+  .result-item {
+    border: 1px solid #e8edf4;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fcfdff;
+  }
+  .result-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .result-idx {
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    background: #6b8fd6;
+    border-radius: 6px;
+    padding: 1px 6px;
+  }
+  .result-title {
+    font-weight: 600;
+    color: #10263f;
+    word-break: break-all;
+  }
+  .result-score {
+    font-size: 12px;
+    color: #2f7cf6;
+    background: #eef4ff;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin-left: auto;
+  }
+  .result-path {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #7a8798;
+    word-break: break-all;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  .result-snippet {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #46505e;
+    word-break: break-word;
+  }
+  .result-snippet em {
+    font-style: normal;
+    background: #fff3c4;
+    color: #7a5a00;
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+  .empty {
+    text-align: center;
+    color: #93a0b0;
+    padding: 18px 0;
+    font-size: 13px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    background: #f7f9fc;
+    border: 1px solid #e8edf4;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .stat-box .label {
+    font-size: 12px;
+    color: #7a8798;
+  }
+  .stat-box .value {
+    margin-top: 4px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #10263f;
+    word-break: break-all;
+  }
+  .watch-list {
+    margin-top: 14px;
+  }
+  .watch-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid #e8edf4;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: #fcfdff;
+  }
+  .watch-item .path {
+    flex: 1 1 auto;
+    word-break: break-all;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13px;
+    color: #33404f;
+  }
+  .hint {
+    font-size: 12px;
+    color: #93a0b0;
+    margin-top: 10px;
+  }
+  .msg {
+    margin-top: 12px;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: none;
+  }
+  .msg.ok {
+    display: block;
+    background: #eaf7ee;
+    color: #1e7a3c;
+    border: 1px solid #c9ebd3;
+  }
+  .msg.err {
+    display: block;
+    background: #fdecec;
+    color: #c0392b;
+    border: 1px solid #f5cfcc;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>文溯 DocSeek · 全文检索服务</h1>
+    <div class="sub">本地全文检索引擎 · 常驻 HTTP 服务 · 实时文件监控</div>
+  </header>
+
+  <!-- ① 搜索 -->
+  <section class="card">
+    <h2><span class="dot"></span>搜索</h2>
+    <div class="row">
+      <input type="text" id="q" placeholder="输入关键词，例如：机器学习" autocomplete="off">
+      <select id="limit">
+        <option value="10">10 条</option>
+        <option value="20" selected>20 条</option>
+        <option value="50">50 条</option>
+      </select>
+      <button id="btnSearch">搜索</button>
+    </div>
+    <div class="results" id="results">
+      <div class="empty">输入关键词后点击“搜索”查看结果</div>
+    </div>
+  </section>
+
+  <!-- ② 服务状态 -->
+  <section class="card">
+    <h2><span class="dot"></span>服务状态</h2>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="label">文档数</div>
+        <div class="value" id="statDocs">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">索引字节</div>
+        <div class="value" id="statBytes">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">监控目录数</div>
+        <div class="value" id="statWatches">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">运行秒数</div>
+        <div class="value" id="statUptime">-</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="ghost" id="btnStats">刷新状态</button>
+    </div>
+  </section>
+
+  <!-- ③ 索引与监控 -->
+  <section class="card">
+    <h2><span class="dot"></span>索引与监控</h2>
+
+    <div class="row">
+      <input type="text" id="indexPath" placeholder="要建立索引的文件或目录路径" autocomplete="off">
+      <button id="btnIndex">建立索引</button>
+    </div>
+    <div class="msg" id="indexMsg"></div>
+
+    <div class="row" style="margin-top:16px;">
+      <input type="text" id="watchPath" placeholder="要实时监控的目录路径" autocomplete="off">
+      <button id="btnWatch">添加监控</button>
+    </div>
+    <div class="msg" id="watchMsg"></div>
+
+    <div class="watch-list" id="watchList">
+      <div class="empty">暂无监控目录</div>
+    </div>
+    <div class="hint">提示：监控目录发生变化时会自动增量索引（带防抖合并）。</div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var API = {
+    search: "/api/search",
+    stats: "/api/stats",
+    index: "/api/index",
+    watch: "/api/watch"
+  };
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function showMsg(el, text, ok) {
+    if (!el) { return; }
+    el.textContent = text;
+    el.className = "msg " + (ok ? "ok" : "err");
+  }
+
+  function hideMsg(el) {
+    if (!el) { return; }
+    el.className = "msg";
+    el.textContent = "";
+  }
+
+  function escapeHtml(s) {
+    if (s === null || s === undefined) { return ""; }
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  // 将摘要中的 <b>...</b> 或 <em>...</em> 高亮标记安全转换为 <em>，
+  // 其余文本一律转义，防止注入。
+  function renderSnippet(raw) {
+    if (!raw) { return ""; }
+    var text = String(raw);
+    var out = "";
+    var i = 0;
+    var re = /<\s*(b|em|strong)\s*>([\s\S]*?)<\s*\/\s*\1\s*>/gi;
+    var m;
+    while ((m = re.exec(text)) !== null) {
+      out += escapeHtml(text.slice(i, m.index));
+      out += "<em>" + escapeHtml(m[2]) + "</em>";
+      i = m.index + m[0].length;
+    }
+    out += escapeHtml(text.slice(i));
+    return out;
+  }
+
+  function requestJSON(method, url, body) {
+    var opts = {
+      method: method,
+      headers: { "Accept": "application/json" }
+    };
+    if (body !== undefined && body !== null) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(url, opts).then(function (resp) {
+      return resp.text().then(function (text) {
+        var data = null;
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            data = { error: "服务返回了非 JSON 响应（HTTP " + resp.status + "）" };
+          }
+        } else {
+          data = {};
+        }
+        if (!resp.ok) {
+          var emsg = (data && data.error) ? data.error : ("请求失败（HTTP " + resp.status + "）");
+          throw new Error(emsg);
+        }
+        if (data && data.error) {
+          throw new Error(data.error);
+        }
+        return data;
+      });
+    });
+  }
+
+  function formatBytes(n) {
+    if (n === null || n === undefined || isNaN(n)) { return "-"; }
+    var v = Number(n);
+    if (v < 1024) { return v + " B"; }
+    var units = ["KB", "MB", "GB", "TB"];
+    var u = -1;
+    do {
+      v = v / 1024;
+      u++;
+    } while (v >= 1024 && u < units.length - 1);
+    return v.toFixed(2) + " " + units[u];
+  }
+
+  function formatUptime(sec) {
+    if (sec === null || sec === undefined || isNaN(sec)) { return "-"; }
+    var s = Math.floor(Number(sec));
+    var d = Math.floor(s / 86400);
+    var h = Math.floor((s % 86400) / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var ss = s % 60;
+    var parts = [];
+    if (d > 0) { parts.push(d + " 天"); }
+    if (h > 0 || d > 0) { parts.push(h + " 时"); }
+    if (m > 0 || h > 0 || d > 0) { parts.push(m + " 分"); }
+    parts.push(ss + " 秒");
+    return parts.join(" ");
+  }
+
+  // ---------- 搜索 ----------
+  function doSearch() {
+    var q = $("q").value.trim();
+    var limit = parseInt($("limit").value, 10) || 20;
+    var box = $("results");
+    if (!q) {
+      box.innerHTML = '<div class="empty">请输入关键词后再搜索</div>';
+      return;
+    }
+    box.innerHTML = '<div class="empty">搜索中…</div>';
+    var btn = $("btnSearch");
+    btn.disabled = true;
+    var url = API.search + "?q=" + encodeURIComponent(q) + "&limit=" + limit;
+    requestJSON("GET", url).then(function (data) {
+      renderResults(data, q);
+    }).catch(function (err) {
+      box.innerHTML = '<div class="empty">搜索失败</div>';
+      alert("搜索失败：" + err.message);
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+  function renderResults(data, q) {
+    var box = $("results");
+    var items = [];
+    if (Array.isArray(data)) {
+      items = data;
+    } else if (data && Array.isArray(data.results)) {
+      items = data.results;
+    } else if (data && Array.isArray(data.hits)) {
+      items = data.hits;
+    }
+    if (items.length === 0) {
+      box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的文档</div>';
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i] || {};
+      var idx = i + 1;
+      var title = it.title ? it.title : "(无标题)";
+      var path = it.path ? it.path : "";
+      var score = (it.score !== undefined && it.score !== null) ? Number(it.score).toFixed(4) : "-";
+      var snippet = it.snippet ? it.snippet : "";
+      html += '<div class="result-item">';
+      html += '<div class="result-head">';
+      html += '<span class="result-idx">' + idx + '</span>';
+      html += '<span class="result-title">' + escapeHtml(title) + '</span>';
+      html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
+      html += '</div>';
+      html += '<div class="result-path">' + escapeHtml(path) + '</div>';
+      if (snippet) {
+        html += '<div class="result-snippet">' + renderSnippet(snippet) + '</div>';
+      }
+      html += '</div>';
+    }
+    box.innerHTML = html;
+  }
+
+  // ---------- 服务状态 ----------
+  function refreshStats() {
+    var btn = $("btnStats");
+    btn.disabled = true;
+    requestJSON("GET", API.stats).then(function (data) {
+      var docs = (data.documents !== undefined) ? data.documents :
+                 ((data.doc_count !== undefined) ? data.doc_count : (data.count));
+      var bytes = (data.index_bytes !== undefined) ? data.index_bytes :
+                  ((data.bytes !== undefined) ? data.bytes : (data.size_bytes));
+      var watches = (data.watches !== undefined) ? data.watches :
+                    ((data.watch_count !== undefined) ? data.watch_count :
+                    (data.watched_dirs));
+      var uptime = (data.uptime_seconds !== undefined) ? data.uptime_seconds :
+                   ((data.uptime !== undefined) ? data.uptime : (data.uptime_secs));
+
+      $("statDocs").textContent = (docs !== undefined && docs !== null) ? docs : "-";
+      $("statBytes").textContent = (bytes !== undefined && bytes !== null) ? formatBytes(bytes) : "-";
+      $("statWatches").textContent = (watches !== undefined && watches !== null) ? watches : "-";
+      $("statUptime").textContent = (uptime !== undefined && uptime !== null) ? formatUptime(uptime) : "-";
+    }).catch(function (err) {
+      alert("获取服务状态失败：" + err.message);
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+  // ---------- 建立索引 ----------
+  function doIndex() {
+    var p = $("indexPath").value.trim();
+    var msg = $("indexMsg");
+    if (!p) {
+      showMsg(msg, "请输入要建立索引的文件或目录路径", false);
+      return;
+    }
+    var btn = $("btnIndex");
+    btn.disabled = true;
+    hideMsg(msg);
+    requestJSON("POST", API.index, { path: p }).then(function (data) {
+      var scanned = (data.scanned !== undefined) ? data.scanned : 0;
+      var added = (data.added !== undefined) ? data.added : 0;
+      var updated = (data.updated !== undefined) ? data.updated : 0;
+      var extra = "";
+      if (data.removed !== undefined) {
+        extra += "，移除 " + data.removed;
+      }
+      if (data.skipped !== undefined) {
+        extra += "，跳过 " + data.skipped;
+      }
+      showMsg(msg, "索引完成：扫描 " + scanned + "，新增 " + added + "，更新 " + updated + extra, true);
+      refreshStats();
+    }).catch(function (err) {
+      showMsg(msg, "建立索引失败：" + err.message, false);
+      alert("建立索引失败：" + err.message);
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+  // ---------- 监控 ----------
+  function renderWatches(paths) {
+    var box = $("watchList");
+    if (!paths || paths.length === 0) {
+      box.innerHTML = '<div class="empty">暂无监控目录</div>';
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < paths.length; i++) {
+      var p = paths[i];
+      html += '<div class="watch-item">';
+      html += '<span class="path">' + escapeHtml(p) + '</span>';
+      html += '<button class="danger" data-path="' + escapeHtml(p) + '">移除</button>';
+      html += '</div>';
+    }
+    box.innerHTML = html;
+    var btns = box.querySelectorAll("button.danger");
+    for (var j = 0; j < btns.length; j++) {
+      btns[j].addEventListener("click", onRemoveWatch);
+    }
+  }
+
+  function loadWatches() {
+    requestJSON("GET", API.watch).then(function (data) {
+      var paths = [];
+      if (Array.isArray(data)) {
+        paths = data;
+      } else if (data && Array.isArray(data.paths)) {
+        paths = data.paths;
+      } else if (data && Array.isArray(data.watches)) {
+        paths = data.watches;
+      }
+      renderWatches(paths);
+    }).catch(function (err) {
+      alert("获取监控目录失败：" + err.message);
+    });
+  }
+
+  function addWatch() {
+    var p = $("watchPath").value.trim();
+    var msg = $("watchMsg");
+    if (!p) {
+      showMsg(msg, "请输入要监控的目录路径", false);
+      return;
+    }
+    var btn = $("btnWatch");
+    btn.disabled = true;
+    hideMsg(msg);
+    requestJSON("POST", API.watch, { path: p }).then(function (data) {
+      showMsg(msg, "已添加监控：" + p, true);
+      $("watchPath").value = "";
+      if (data && Array.isArray(data.paths)) {
+        renderWatches(data.paths);
+      } else {
+        loadWatches();
+      }
+      refreshStats();
+    }).catch(function (err) {
+      showMsg(msg, "添加监控失败：" + err.message, false);
+      alert("添加监控失败：" + err.message);
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+  function onRemoveWatch(ev) {
+    var btn = ev.currentTarget;
+    var p = btn.getAttribute("data-path");
+    if (!p) { return; }
+    btn.disabled = true;
+    var url = API.watch + "?path=" + encodeURIComponent(p);
+    requestJSON("DELETE", url).then(function (data) {
+      if (data && Array.isArray(data.paths)) {
+        renderWatches(data.paths);
+      } else {
+        loadWatches();
+      }
+      refreshStats();
+    }).catch(function (err) {
+      btn.dis

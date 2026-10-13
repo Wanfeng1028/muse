@@ -2,7 +2,9 @@
 #include "docseek/database.h"
 #include "docseek/indexer.h"
 #include "docseek/searcher.h"
+#include "docseek/service.h"
 
+#include <csignal>
 #include <cstdlib>
 #include <cstdint>
 #include <cstdio>
@@ -17,7 +19,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.1.0";
+constexpr const char* kVersion = "0.2.0";
 
 struct GlobalOpts {
     std::string dbPath;
@@ -33,6 +35,13 @@ struct IndexCmdOpts {
 struct SearchCmdOpts {
     std::string query;
     int limit = 20;
+};
+
+struct ServeCmdOpts {
+    int port = 8080;
+    std::vector<std::string> watchDirs;
+    std::vector<std::string> exts;
+    int64_t maxMb = 5;
 };
 
 // 按优先级解析数据库路径
@@ -109,6 +118,8 @@ void printUsage() {
         "                   全文搜索，默认返回前 20 条\n"
         "  stats            显示索引统计信息\n"
         "  prune            清理磁盘上已不存在的文件的索引记录\n"
+        "  serve [--port N] [--watch DIR]... [--ext .txt,.md] [--max-mb N]\n"
+        "                   启动 HTTP 检索服务（默认端口 8080，--port 0 自动分配）；--watch 可重复，指定文件变更实时监控目录\n"
         "  help             显示本帮助\n"
         "  version          显示版本\n"
         "\n"
@@ -116,7 +127,9 @@ void printUsage() {
         "  docseek index ~/notes --ext .md,.txt --max-mb 10\n"
         "  docseek search 全文检索 --limit 5\n"
         "  docseek --json stats\n"
-        "  docseek --db /tmp/docseek.db prune\n";
+        "  docseek --db /tmp/docseek.db prune\n"
+        "  docseek serve --port 8080 --watch ~/notes\n"
+        "  docseek --db /data/docseek.db serve --port 0 --watch /data/docs --watch /data/notes\n";
 }
 
 // 保证扩展名以 '.' 开头
@@ -239,6 +252,40 @@ int cmdPrune(docseek::Database& db, bool json) {
     return 0;
 }
 
+static docseek::Service* g_service = nullptr;
+
+void serveSigHandler(int) {
+    if (g_service) g_service->stop();
+}
+
+int cmdServe(docseek::Database& db, const ServeCmdOpts& o) {
+    docseek::IndexOptions iopts;
+    if (!o.exts.empty()) {
+        iopts.extensions.clear();
+        for (const auto& e : o.exts) iopts.extensions.push_back(normalizeExt(e));
+    }
+    if (o.maxMb > 0) iopts.maxFileBytes = o.maxMb * 1024 * 1024;
+
+    docseek::ServeOptions sopts;
+    sopts.port = o.port;
+    sopts.watchDirs = o.watchDirs;
+    sopts.indexOpts = iopts;
+
+    docseek::Service svc(db, sopts);
+    g_service = &svc;
+
+    std::signal(SIGINT, serveSigHandler);
+    std::signal(SIGTERM, serveSigHandler);
+
+    std::cout << "文溯 DocSeek 服务启动，监听端口 "
+              << (o.port == 0 ? std::string("自动分配") : std::to_string(o.port))
+              << "，按 Ctrl+C 停止。\n";
+    svc.run();
+    std::cout << "服务已停止。\n";
+    g_service = nullptr;
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -246,6 +293,7 @@ int main(int argc, char** argv) {
     std::string command;
     IndexCmdOpts indexOpts;
     SearchCmdOpts searchOpts;
+    ServeCmdOpts serveOpts;
     std::vector<std::string> searchParts;
 
     // 参数解析
@@ -266,20 +314,28 @@ int main(int argc, char** argv) {
         } else if (a == "--version" || a == "-v") {
             std::cout << "文溯 DocSeek v" << kVersion << "\n";
             return 0;
-        } else if (a == "--ext" && command == "index") {
+        } else if (a == "--ext" && (command == "index" || command == "serve")) {
             if (i + 1 >= argc) {
                 std::cerr << "错误：--ext 需要参数\n";
                 return 1;
             }
             auto parts = splitExts(argv[++i]);
-            for (auto& p : parts) indexOpts.exts.push_back(p);
-        } else if (a == "--max-mb" && command == "index") {
+            if (command == "serve") {
+                for (auto& p : parts) serveOpts.exts.push_back(p);
+            } else {
+                for (auto& p : parts) indexOpts.exts.push_back(p);
+            }
+        } else if (a == "--max-mb" && (command == "index" || command == "serve")) {
             if (i + 1 >= argc) {
                 std::cerr << "错误：--max-mb 需要参数\n";
                 return 1;
             }
             try {
-                indexOpts.maxMb = std::stoll(argv[++i]);
+                if (command == "serve") {
+                    serveOpts.maxMb = std::stoll(argv[++i]);
+                } else {
+                    indexOpts.maxMb = std::stoll(argv[++i]);
+                }
             } catch (...) {
                 std::cerr << "错误：--max-mb 参数无效\n";
                 return 1;
@@ -296,6 +352,27 @@ int main(int argc, char** argv) {
                 return 1;
             }
             if (searchOpts.limit <= 0) searchOpts.limit = 20;
+        } else if (a == "--port" && command == "serve") {
+            if (i + 1 >= argc) {
+                std::cerr << "错误：--port 需要参数\n";
+                return 1;
+            }
+            try {
+                serveOpts.port = static_cast<int>(std::stoll(argv[++i]));
+            } catch (...) {
+                std::cerr << "错误：--port 参数无效\n";
+                return 1;
+            }
+            if (serveOpts.port < 0) {
+                std::cerr << "错误：--port 参数无效\n";
+                return 1;
+            }
+        } else if (a == "--watch" && command == "serve") {
+            if (i + 1 >= argc) {
+                std::cerr << "错误：--watch 需要参数\n";
+                return 1;
+            }
+            serveOpts.watchDirs.push_back(argv[++i]);
         } else if (!a.empty() && a[0] == '-' && a != "-") {
             std::cerr << "错误：未知选项 " << a << "\n";
             printUsage();
@@ -347,7 +424,7 @@ int main(int argc, char** argv) {
         }
     }
     if (command != "index" && command != "search" &&
-        command != "stats" && command != "prune") {
+        command != "stats" && command != "prune" && command != "serve") {
         std::cerr << "错误：未知命令 " << command << "\n";
         printUsage();
         return 1;
@@ -361,6 +438,7 @@ int main(int argc, char** argv) {
         if (command == "search") return cmdSearch(db, searchOpts, g.json);
         if (command == "stats") return cmdStats(db, g.json);
         if (command == "prune") return cmdPrune(db, g.json);
+        if (command == "serve") return cmdServe(db, serveOpts);
     } catch (const std::exception& e) {
         std::cerr << "错误：" << e.what() << "\n";
         return 2;

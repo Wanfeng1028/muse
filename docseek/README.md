@@ -1,18 +1,198 @@
+# 文溯 DocSeek · 本地全文检索引擎
+
+**版本：v0.2.0**
+
+DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。
+
+---
+
+## 项目简介
+
+DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）提供快速、可脚本化、可常驻的全文检索能力。
+
+- **CLI 形态**：`docseek index` / `search` / `stats` / `prune` 等命令，适合脚本、批处理与一次性检索。
+- **服务形态**：`docseek serve` 启动一个自研的极简 HTTP 服务器（仅依赖 POSIX sockets 与 C++ 标准库），提供检索 API 与内嵌 Web UI，同时用 inotify 监控目录变更。
+
+---
+
+## 功能特性
+
+### CLI（v1）
+
+- `index <path>... [--ext .txt,.md] [--max-mb N]`
+  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text`（扩展名大小写不敏感）。
+  - 自动跳过二进制文件与超过 `--max-mb` 限制的超大文件。
+  - 跳过隐藏目录。
+  - 基于 **mtime + size** 的增量更新：未变化的文件不会重复索引。
+- `search <query...> [--limit N]`
+  - 使用 FTS5 `MATCH`，多个词之间为**隐式 AND**。
+  - **BM25** 相关性排序。
+  - 返回 **30 token 摘要片段**。
+- `stats`：查看索引统计信息。
+- `prune`：清理失效/无效记录。
+- `help` / `version`：帮助与版本信息。
+- 全局选项：
+  - `--db PATH`：指定数据库路径。
+  - `--json`：以 JSON 格式输出结果。
+- 退出码：`0` 成功 / `1` 参数错误 / `2` 运行期错误。
+
+### 服务（v2 新增）
+
+- `docseek serve [--port N] [--watch DIR]... [--ext ...] [--max-mb N]`
+  - `--port 0` 表示自动分配端口。
+  - 启动 HTTP 检索服务。
+  - 启动 inotify 实时监控：对新增 / 修改 / 删除的文件自动进行增量索引（带 debounce 去抖）。
+  - `Ctrl+C` 优雅停止。
+- HTTP API 与内嵌 Web UI（详见下方 API 表格）。
+- Web UI 由 `web/index.html` 内嵌为 C++ 字符串直接提供，无需额外静态文件部署。
+
+---
+
+## 技术栈
+
+| 组件 | 说明 |
+| --- | --- |
+| 语言标准 | C++17 |
+| 构建系统 | CMake >= 3.28 |
+| 编译器 | GCC |
+| 检索内核 | SQLite FTS5（`unicode61` 分词器） |
+| SQLite 来源 | amalgamation，vendored 于 `third_party/sqlite3` |
+| 测试框架 | GoogleTest v1.14.0（通过 FetchContent 拉取，**需联网**） |
+| 文件监控 | Linux inotify |
+| HTTP 服务器 | 自研极简实现，仅 POSIX sockets + 标准库，零第三方网络库 |
+| Web UI | `web/index.html` 内嵌为 C++ 字符串 |
+
+---
+
+## 前置依赖
+
+- Linux（inotify 与 POSIX sockets 依赖）
+- GCC（支持 C++17）
+- CMake >= 3.28
+- 构建测试时需要网络（FetchContent 拉取 GoogleTest v1.14.0）
+
+---
+
+## 构建
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
+```
+
+构建产物：
+
+- `build/docseek`：主程序
+- `build/docseek_tests`：测试程序
+
+---
+
+## 测试
+
+```bash
+ctest --test-dir build
+```
+
+共 **32 个测试用例**，覆盖 **九个套件**：Database / Indexer / Searcher / HTTP 服务 / Watcher / Service 等。
+
+---
+
+## 使用
+
+### CLI 示例
+
+```bash
+# 索引一个目录（默认扩展名）
+docseek index ./docs
+
+# 指定扩展名与单文件大小上限
+docseek index ./notes --ext .txt,.md --max-mb 10
+
+# 检索（隐式 AND，BM25 排序）
+docseek search 全文检索 引擎 --limit 10
+
+# 指定数据库并输出 JSON
+docseek --db /tmp/docseek.db --json search 关键词
+
+# 查看统计 / 清理
+docseek stats
+docseek prune
+```
+
+### serve 示例
+
+```bash
+# 启动服务，自动分配端口，监控一个目录
+docseek serve --port 0 --watch ./docs
+
+# 指定端口与扩展名
+docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
+```
+
+### HTTP API
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/` | Web 检索界面 |
+| GET | `/api/health` | 健康检查 |
+| GET | `/api/stats` | 索引统计信息 |
+| GET | `/api/search?q=关键词&limit=20` | 全文检索 |
+| POST | `/api/index` | 索引指定路径，请求体：`{"path":"..."}` |
+| POST | `/api/prune` | 清理无效记录 |
+| GET | `/api/watch` | 查询当前监控目录 |
+| POST | `/api/watch` | 新增监控目录，请求体：`{"path":"..."}`；成功返回 `{"added":true,"dir":"...","dirs":[...]}` |
+| DELETE | `/api/watch?path=...` | 移除监控目录 |
+
+---
+
+## 数据库路径配置
+
+数据库路径的优先级（从高到低）：
+
+1. 命令行选项 `--db PATH`
+2. 环境变量 `DOCSEEK_DB`
+3. 默认路径 `$HOME/.local/share/docseek/docseek.db`
+
+---
+
+## Docker
+
+项目提供多阶段构建的 `Dockerfile`：
+
+- **构建阶段**：完成编译。
+- **运行阶段**：仅保留二进制与必要的运行库，减小镜像体积。
+
+---
+
+## 项目结构
+
+```
 .
 ├── CMakeLists.txt
-├── include/docseek/
-│   ├── database.h
-│   ├── indexer.h
-│   └── searcher.h
-├── src/
-│   ├── database.cpp
-│   ├── indexer.cpp
-│   ├── searcher.cpp
-│   └── main.cpp
-├── tests/
-│   ├── test_database.cpp
-│   ├── test_indexer.cpp
-│   └── test_searcher.cpp
-└── third_party/sqlite3/
-    ├── sqlite3.c
-    └── sqlite3.h
+├── Dockerfile
+├── docseek/
+│   └── .github/          # GitHub Actions 配置（暂置于此，待迁移）
+├── src/                  # 源码
+├── tests/                # GoogleTest 测试
+├── third_party/
+│   └── sqlite3/          # SQLite amalgamation（vendored）
+└── web/
+    └── index.html        # 内嵌 Web UI
+```
+
+> **CI 说明**：GitHub Actions 配置当前暂置于 `docseek/.github`，待仓库根目录的 workflow 权限补齐后迁移至仓库根目录。
+
+---
+
+## 已知局限
+
+- **中文分词**：FTS5 的 `unicode61` 分词器默认不对 CJK 做分词，中文会按连续字串整体成为一个 token。因此**子串式中文检索**（例如用“检索”去搜索“全文检索……”）可能没有结果；而**精确 token** 或 **ASCII 关键词** 的检索是正常的。
+- 中文分词优化已在后续计划中。
+- 当前仅支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`），尚不支持 HTML / PDF / Office 等格式的文本提取。
+
+---
+
+## 后续计划
+
+- HTML / PDF / Office 文档的文本提取
+- 中文分词优化
+- 多用户支持

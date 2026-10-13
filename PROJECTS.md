@@ -185,15 +185,15 @@
 6. JSON 输出（--json，便于脚本集成）
 7. 灵活配置（--db > DOCSEEK_DB > $HOME/.local/share/docseek/docseek.db）
 
-**状态**：工程化 v1（2026-10-13 完成，构建零错误、GoogleTest 15 例全过、ctest 通过、真实 CLI 冒烟全链路验证：索引/增量更新/prune/搜索/统计/JSON/错误码）。
+**状态**：工程化 v2（2026-10-13 完成：`serve` HTTP 常驻服务 + inotify 文件变更实时监控 + 内嵌 Web UI；构建零警告、GoogleTest 32 例全过、ctest 通过、真实服务冒烟全链路验证）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Database（SQLite+FTS5 手动同步）/ Indexer（递归爬取+增量）/ Searcher（查询构造）三层库 + docseek CLI（index/search/stats/prune）+ 15 例测试 + CI 与多阶段 Dockerfile 就绪
+- 工程化 v2（2026-10-13）：`serve` 子命令落地——自研极简 HTTP 服务器（零第三方网络库）+ inotify 实时监控（新增/修改/删除自动增量索引，debounce）+ 内嵌 Web UI；7 个 REST 端点（/api/health、/api/stats、/api/search、/api/index、/api/prune、/api/watch GET/POST/DELETE）；测试扩至 32 例全过；真实冒烟验证新增/修改/删除自动索引、watch 增删 API 与 Web UI；补齐完整 README（安装/构建/测试/API 表格/已知局限）
 
 **后续计划**：
 
 - HTML/PDF/Office 文本提取
-- 中文分词优化（unicode61 按字切分）
-- HTTP 服务模式
-- 文件变更实时监控
+- 中文分词优化（unicode61 按字切分；当前中文按连续字串整体成 token，子串检索可能无结果）
+- 多用户支持

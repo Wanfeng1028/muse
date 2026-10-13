@@ -12,7 +12,7 @@
 | [mini-os](./mini-os) | 「网页操作系统」——浏览器里的桌面操作系统。Rust + Axum 0.7 + WebSocket + rusqlite（bundled SQLite）后端，原生 HTML/CSS/JS 可拖拽多窗口桌面。功能：虚拟文件系统 CRUD、应用注册表（文件管理器/编辑器/终端/设置/关于）、主题与壁纸持久化、WebSocket echo、统计。 | 工程化 v1 |
 | [ledger](./ledger) | 「钱迹 · 个人财务管家」——个人财务管理系统。Python + FastAPI + SQLAlchemy 2.0（aiosqlite）+ SQLite，Jinja2 SSR Web UI（服务端渲染 SVG 图表）。功能：多账户记账、分类体系、月度预算与超支预警、统计分析、CSV 导入导出、周期账单提醒。 | 工程化 v1 |
 | [sentinel](./sentinel) | 「哨兵 Sentinel」——站点可用性监控。Go 单二进制：HTTP(S)/TCP 双协议检查、证书到期天数、定时调度、状态翻转自动生成停机事件并 webhook 通知、可用率与延迟统计、内嵌 Web UI（三页：仪表盘/监控管理/事件）。 | 工程化 v1 |
-| [docseek](./docseek) | 「文溯 DocSeek」——本地全文检索引擎 CLI。C++17 + CMake + SQLite FTS5（unicode61）。功能：递归目录索引、基于 mtime+size 的增量更新、BM25 相关性搜索与摘要片段、已删除文件自动清理、索引统计、JSON 输出。 | 工程化 v1 |
+| [docseek](./docseek) | 「文溯 DocSeek」——本地全文检索引擎 CLI + HTTP 服务。C++17 + CMake + SQLite FTS5（unicode61）。功能：递归目录索引、基于 mtime+size 的增量更新、BM25 相关性搜索与摘要片段、已删除文件自动清理、索引统计、JSON 输出；v2 新增 `serve` 常驻服务（自研 HTTP 服务器 + inotify 文件变更实时监控 + 内嵌 Web UI）。 | 工程化 v2 |
 
 ## 如何运行
 
@@ -116,6 +116,12 @@ cmake --build build -j
 ./build/docseek index ~/docs
 ./build/docseek search "关键词"
 ./build/docseek stats
+```
+
+启动 HTTP 检索服务（inotify 实时监控目录变更并自动增量索引，附带 Web 界面）：
+
+```bash
+./build/docseek serve --port 8080 --watch ~/docs
 ```
 
 测试、Docker 与命令详解见 [docseek/README.md](./docseek/README.md)。
