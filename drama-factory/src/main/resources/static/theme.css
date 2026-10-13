@@ -1,0 +1,31 @@
+/* drama-factory theme.css — Tabler 1.6.1 之上的最小覆盖层。
+   只做布局宽度与表格密度微调；按钮/卡片/徽标的视觉质感全部来自 Tabler 原生组件。 */
+.page-wrapper .container-xl {
+  max-width: 1320px;
+}
+
+.table-vcenter td,
+.table-vcenter th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.card-table > :not(caption) > * > * {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.row-cards > [class*="col-"] {
+  margin-bottom: 1rem;
+}
+
+.datagrid .card {
+  margin-bottom: 0.75rem;
+}
+
+.poster-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}

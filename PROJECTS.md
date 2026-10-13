@@ -1,5 +1,25 @@
 # 项目登记册
 
+## 各项目 UI 组件库一览
+
+| 项目 | UI 形态 | 组件库 | 备注 |
+| --- | --- | --- | --- |
+| kaoyan-os | Web（React 18） | 无（手写 CSS） | — |
+| second-brain | Web（Go） | 无（手写 CSS） | — |
+| mini-os | Web（Rust） | 无（手写 CSS） | — |
+| ledger | Web（Python 模板） | 无（手写 CSS） | — |
+| sentinel | Web（Go） | 无（手写 CSS） | — |
+| docseek | Web（C++ serve） | 无（手写 HTML/CSS） | — |
+| feedflow | Web（Flask 模板） | 无（手写 CSS） | — |
+| linkshort | Web（Go） | 无（手写 CSS） | — |
+| mortisedb | Web（Go） | 无（手写 CSS） | — |
+| interlude | 无 Web UI（Kotlin） | — | — |
+| stagecue | 无 Web UI（Kotlin） | — | — |
+| voxloom | 桌面（C#/Avalonia） | 无 Web 组件库 | — |
+| drama-factory | Web | Tabler 1.6.1 | 仓库内唯一使用第三方前端组件库的项目 |
+
+> 选型铁律（2026-10-13 用户亲定）：每个项目的 UI 组件库尽量不要一样。后续新项目或重设计选型前，必须先查此表避重。
+
 ## kaoyan-os「考研指挥舱」
 
 **定位**：全栈考研复习管理系统，服务考研备考全流程。
@@ -16,6 +36,10 @@
 6. 仪表盘（初试倒计时与全局概览）
 
 **状态**：工程化 v1（2026-10-13 完成全栈重构，后端 API 与前端构建、集成测试均已跑通）。
+
+**UI 重设计 v4（Tabler 组件库）**
+
+2026-10-13：v3 手写玻璃拟态被用户判定为典型 AI 味并禁用；三步选型后改用 Tabler 1.6.1（一句话理由：基于 Bootstrap 5 的管理后台 UI 套件，天生控制台气质，深色模式开箱即用）。5 页全部改用 Tabler 原生组件，API 一字未动，theme.css 仅做容器宽度与表格密度微调；全站无 backdrop-filter；mvn test 20/20 全过；5 页真实数据截图亲眼验收通过；设计决策见 docs/DESIGN.md。
 
 **里程碑记录**：
 

@@ -1,51 +1,84 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>任务队列 · AI 短剧工坊</title>
-  <link rel="stylesheet" href="/v2.css">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css">
+  <link rel="stylesheet" href="/theme.css">
 </head>
 <body>
-  <header class="topbar">
-  <nav class="topnav">
-    <a href="/index.html">控制台首页</a>
-    <a href="/storyboard.html">分镜板</a>
-    <a href="/tasks.html" class="active">任务队列</a>
-    <a href="/finals.html">成片库</a>
-    <a href="/pipeline.html">生产看板</a>
-  </nav>
-  <div class="topbar-right">
-    <span class="provider-note">当前提供方：mock（离线演示）</span>
-  </div>
-</header>
+  <div class="page">
+    <header class="navbar navbar-expand-md d-print-none">
+      <div class="container-xl">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="切换导航">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+          <a href="/index.html" class="navbar-brand-text">AI 短剧工坊</a>
+        </div>
+        <div class="collapse navbar-collapse" id="navbar-menu">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="/index.html">控制台首页</a></li>
+            <li class="nav-item"><a class="nav-link" href="/storyboard.html">分镜板</a></li>
+            <li class="nav-item active"><a class="nav-link active" href="/tasks.html">任务队列</a></li>
+            <li class="nav-item"><a class="nav-link" href="/finals.html">成片库</a></li>
+            <li class="nav-item"><a class="nav-link" href="/pipeline.html">生产看板</a></li>
+          </ul>
+          <div class="navbar-nav flex-row order-md-last ms-md-auto">
+            <span class="navbar-text">当前提供方：mock（离线演示）</span>
+          </div>
+        </div>
+      </div>
+    </header>
 
-  <main class="page">
-    <div class="page-head">
-      <h1 class="page-title">任务队列</h1>
-      <div class="kicker">渲染队列 · RENDER QUEUE</div>
+    <div class="page-wrapper">
+      <div class="page-body">
+        <div class="container-xl">
+          <div class="page-header mb-3">
+            <div class="row align-items-center">
+              <div class="col">
+                <div class="page-pretitle">渲染队列 · RENDER QUEUE</div>
+                <h1 class="page-title">任务队列</h1>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                  <label class="form-label" for="projectSelect">项目</label>
+                  <select id="projectSelect" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="episodeSelect">剧集</label>
+                  <select id="episodeSelect" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="shotSelect">分镜</label>
+                  <select id="shotSelect" class="form-select"></select>
+                </div>
+                <div class="col-md-1">
+                  <button id="refreshBtn" class="btn btn-primary w-100">刷新</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="hint" class="alert alert-info mb-3" style="display:none;" role="alert"></div>
+
+          <div class="d-flex align-items-center mb-2">
+            <span id="taskCount" class="text-secondary"></span>
+          </div>
+
+          <div id="taskGrid" class="row row-cards"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <section class="filters">
-      <label>项目
-        <select id="projectSelect"></select>
-      </label>
-      <label>剧集
-        <select id="episodeSelect"></select>
-      </label>
-      <label>分镜
-        <select id="shotSelect"></select>
-      </label>
-      <button id="refreshBtn" class="btn btn-sm">刷新</button>
-    </section>
-
-    <p id="hint" class="hint"></p>
-
-    <div class="task-summary"><span id="taskCount" class="panel-sub"></span></div>
-    <div id="taskGrid" class="task-grid"></div>
-  </main>
-
+  <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js"></script>
   <script src="/tasks.js"></script>
 </body>
 </html>

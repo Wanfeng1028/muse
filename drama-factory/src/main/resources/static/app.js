@@ -67,23 +67,29 @@ function renderProjects(list) {
   const box = $('project-list');
   box.innerHTML = '';
   if (!list.length) {
-    box.innerHTML = '<p class="empty">暂无项目</p>';
+    box.innerHTML = '<p class="text-secondary m-0">暂无项目</p>';
     return;
   }
   list.forEach(p => {
     const div = document.createElement('div');
-    div.className = 'card project-card' + (p.id === currentProjectId ? ' active' : '');
+    div.className = 'card mb-0' + (p.id === currentProjectId ? ' border-primary' : '');
     div.innerHTML = `
-      <div class="card-title">${escapeHtml(p.title)}</div>
-      <div class="card-sub">${p.genre ? escapeHtml(p.genre) : '未分类'} · ${p.status}</div>
-      <div class="card-meta">剧集 ${p.episodeCount} · 角色 ${p.characterCount}</div>
+      <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="fw-bold">${escapeHtml(p.title)}</div>
+            <div class="text-secondary small">${p.genre ? escapeHtml(p.genre) : '未分类'} · ${p.status}</div>
+            <div class="text-secondary small">剧集 ${p.episodeCount} · 角色 ${p.characterCount}</div>
+          </div>
+          <div class="btn-list">
+            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+          </div>
+        </div>
+      </div>
     `;
+    div.style.cursor = 'pointer';
     div.onclick = () => selectProject(p.id);
-    const del = document.createElement('button');
-    del.className = 'btn-danger btn-sm';
-    del.textContent = '删除';
-    del.onclick = (ev) => { ev.stopPropagation(); deleteProject(p.id); };
-    div.appendChild(del);
+    div.querySelector('[data-action="delete"]').onclick = (ev) => { ev.stopPropagation(); deleteProject(p.id); };
     box.appendChild(div);
   });
 }
@@ -94,8 +100,8 @@ async function selectProject(id) {
   await loadProjects();
   await loadEpisodes(id);
   await loadCharacters(id);
-  $('episode-panel').style.display = 'block';
-  $('character-panel').style.display = 'block';
+  $('project-detail').style.display = 'block';
+  $('empty-hint').style.display = 'none';
   $('scene-panel').style.display = 'none';
   $('script-box').textContent = '';
 }
@@ -106,7 +112,7 @@ async function createProject(ev) {
     title: $('project-title').value.trim(),
     genre: $('project-genre').value.trim() || null,
     synopsis: $('project-synopsis').value.trim() || null,
-    targetEpisodes: $('project-target').value ? parseInt($('project-target').value) : null
+    targetEpisodes: $('project-target-episodes').value ? parseInt($('project-target-episodes').value) : null
   };
   if (!body.title) { showMessage('请填写标题'); return; }
   try {
@@ -127,9 +133,8 @@ async function deleteProject(id) {
     if (currentProjectId === id) {
       currentProjectId = null;
       currentEpisodeId = null;
-      $('episode-panel').style.display = 'none';
-      $('character-panel').style.display = 'none';
-      $('scene-panel').style.display = 'none';
+      $('project-detail').style.display = 'none';
+      $('empty-hint').style.display = 'block';
     }
     await loadProjects();
     await loadStats();
@@ -153,27 +158,30 @@ function renderEpisodes(list) {
   const box = $('episode-list');
   box.innerHTML = '';
   if (!list.length) {
-    box.innerHTML = '<p class="empty">暂无剧集</p>';
+    box.innerHTML = '<p class="text-secondary m-0">暂无剧集</p>';
     return;
   }
   list.forEach(ep => {
     const div = document.createElement('div');
-    div.className = 'card episode-card' + (ep.id === currentEpisodeId ? ' active' : '');
+    div.className = 'card mb-0' + (ep.id === currentEpisodeId ? ' border-primary' : '');
     div.innerHTML = `
-      <div class="card-title">第 ${ep.episodeNo} 集 ${ep.title ? '· ' + escapeHtml(ep.title) : ''}</div>
-      <div class="card-sub">${ep.status} · 场景 ${ep.sceneCount}</div>
+      <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="fw-bold">第 ${ep.episodeNo} 集 ${ep.title ? '· ' + escapeHtml(ep.title) : ''}</div>
+            <div class="text-secondary small">${ep.status} · 场景 ${ep.sceneCount}</div>
+          </div>
+          <div class="btn-list">
+            <button class="btn btn-primary btn-sm" data-action="generate">生成剧本</button>
+            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+          </div>
+        </div>
+      </div>
     `;
+    div.style.cursor = 'pointer';
     div.onclick = () => selectEpisode(ep.id);
-    const gen = document.createElement('button');
-    gen.className = 'btn-primary btn-sm';
-    gen.textContent = '生成剧本';
-    gen.onclick = (ev) => { ev.stopPropagation(); generateScript(ep.id); };
-    const del = document.createElement('button');
-    del.className = 'btn-danger btn-sm';
-    del.textContent = '删除';
-    del.onclick = (ev) => { ev.stopPropagation(); deleteEpisode(ep.id); };
-    div.appendChild(gen);
-    div.appendChild(del);
+    div.querySelector('[data-action="generate"]').onclick = (ev) => { ev.stopPropagation(); generateScript(ep.id); };
+    div.querySelector('[data-action="delete"]').onclick = (ev) => { ev.stopPropagation(); deleteEpisode(ep.id); };
     box.appendChild(div);
   });
 }
@@ -239,22 +247,27 @@ function renderCharacters(list) {
   const box = $('character-list');
   box.innerHTML = '';
   if (!list.length) {
-    box.innerHTML = '<p class="empty">暂无角色</p>';
+    box.innerHTML = '<p class="text-secondary m-0">暂无角色</p>';
     return;
   }
   list.forEach(c => {
     const div = document.createElement('div');
-    div.className = 'card character-card';
+    div.className = 'card mb-0';
     div.innerHTML = `
-      <div class="card-title">${escapeHtml(c.name)}</div>
-      <div class="card-sub">${c.role || 'SUPPORTING'}</div>
-      <div class="card-meta">${c.traits ? escapeHtml(c.traits) : ''}</div>
+      <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="fw-bold">${escapeHtml(c.name)}</div>
+            <div class="text-secondary small">${c.role || 'SUPPORTING'}</div>
+            <div class="text-secondary small">${c.traits ? escapeHtml(c.traits) : ''}</div>
+          </div>
+          <div class="btn-list">
+            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+          </div>
+        </div>
+      </div>
     `;
-    const del = document.createElement('button');
-    del.className = 'btn-danger btn-sm';
-    del.textContent = '删除';
-    del.onclick = () => deleteCharacter(c.id);
-    div.appendChild(del);
+    div.querySelector('[data-action="delete"]').onclick = () => deleteCharacter(c.id);
     box.appendChild(div);
   });
 }
@@ -265,7 +278,7 @@ async function createCharacter(ev) {
   const body = {
     name: $('character-name').value.trim(),
     role: $('character-role').value || null,
-    description: $('character-desc').value.trim() || null,
+    description: $('character-description').value.trim() || null,
     traits: $('character-traits').value.trim() || null
   };
   if (!body.name) { showMessage('请填写角色名'); return; }
@@ -308,23 +321,28 @@ function renderScenes(list) {
   const box = $('scene-list');
   box.innerHTML = '';
   if (!list.length) {
-    box.innerHTML = '<p class="empty">暂无场景，可点击「生成剧本」</p>';
+    box.innerHTML = '<p class="text-secondary m-0">暂无场景，可点击「生成剧本」</p>';
     return;
   }
   list.forEach(s => {
     const div = document.createElement('div');
-    div.className = 'card scene-card';
+    div.className = 'card mb-0';
     div.innerHTML = `
-      <div class="card-title">场景 ${s.sceneNo} · ${escapeHtml(s.location || '')} · ${escapeHtml(s.timeOfDay || '')}</div>
-      <div class="scene-desc">画面：${escapeHtml(s.description || '')}</div>
-      <div class="scene-dialogue">对白：${escapeHtml(s.dialogue || '')}</div>
-      <div class="scene-prompt">提示词：${escapeHtml(s.prompt || '')}</div>
+      <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div class="fw-bold">场景 ${s.sceneNo} · ${escapeHtml(s.location || '')} · ${escapeHtml(s.timeOfDay || '')}</div>
+            <div class="text-secondary small">画面：${escapeHtml(s.description || '')}</div>
+            <div class="text-secondary small">对白：${escapeHtml(s.dialogue || '')}</div>
+            <div class="text-secondary small">提示词：${escapeHtml(s.prompt || '')}</div>
+          </div>
+          <div class="btn-list">
+            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+          </div>
+        </div>
+      </div>
     `;
-    const del = document.createElement('button');
-    del.className = 'btn-danger btn-sm';
-    del.textContent = '删除';
-    del.onclick = () => deleteScene(s.id);
-    div.appendChild(del);
+    div.querySelector('[data-action="delete"]').onclick = () => deleteScene(s.id);
     box.appendChild(div);
   });
 }

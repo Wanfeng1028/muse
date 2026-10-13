@@ -29,12 +29,12 @@ function setHint(text) {
 
 function statusBadge(status) {
   const map = {
-    READY: "badge badge-ready",
-    BUILDING: "badge badge-building",
-    FAILED: "badge badge-failed",
-    PENDING: "badge badge-pending",
+    READY: "badge bg-green-lt",
+    BUILDING: "badge bg-yellow-lt",
+    FAILED: "badge bg-red-lt",
+    PENDING: "badge bg-blue-lt",
   };
-  return map[status] || "badge";
+  return map[status] || "badge bg-secondary-lt";
 }
 
 function statusNote(status) {
@@ -167,16 +167,18 @@ function renderFinals() {
 
   if (!state.episodeId) {
     const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "请先选择项目和剧集。";
+    empty.className = "col-12";
+    empty.innerHTML =
+      '<div class="alert alert-info" role="alert">请先选择项目和剧集。</div>';
     list.appendChild(empty);
     return;
   }
 
   if (!state.finals || state.finals.length === 0) {
     const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "这个剧集还没有成片，点右上角“生成成片”开始剪辑。";
+    empty.className = "col-12";
+    empty.innerHTML =
+      '<div class="alert alert-info" role="alert">这个剧集还没有成片，点右上角“生成成片”开始剪辑。</div>';
     list.appendChild(empty);
     return;
   }
@@ -184,13 +186,17 @@ function renderFinals() {
   state.finals.forEach((fc) => {
     const status = fc.status || "PENDING";
 
-    const card = document.createElement("article");
-    card.className = "final-card";
+    const col = document.createElement("div");
+    col.className = "col-sm-6 col-lg-4 col-xl-3";
+
+    const card = document.createElement("div");
+    card.className = "card";
 
     const poster = document.createElement("div");
-    poster.className = "final-poster";
+    poster.className = "position-relative";
 
     const img = document.createElement("img");
+    img.className = "card-img-top";
     img.src = "/media/finals/" + fc.id + "/poster.jpg";
     img.alt = "成片海报";
     img.loading = "lazy";
@@ -200,24 +206,25 @@ function renderFinals() {
     poster.appendChild(img);
 
     const badge = document.createElement("span");
-    badge.className = statusBadge(status);
+    badge.className = statusBadge(status) + " position-absolute top-0 end-0 m-2";
     badge.textContent = fc.statusLabel || status;
     poster.appendChild(badge);
 
     card.appendChild(poster);
 
-    const info = document.createElement("div");
-    info.className = "final-info";
+    const body = document.createElement("div");
+    body.className = "card-body";
 
     const title = document.createElement("h3");
+    title.className = "card-title mb-2";
     title.textContent = fc.title || "成片 " + fc.id;
-    info.appendChild(title);
+    body.appendChild(title);
 
     const meta = document.createElement("div");
-    meta.className = "final-meta";
+    meta.className = "d-flex flex-wrap gap-2 text-secondary small mb-2";
 
     const dur = document.createElement("span");
-    dur.className = "timecode";
+    dur.className = "font-monospace";
     dur.textContent = "时长 " + formatDuration(fc.durationSeconds);
     meta.appendChild(dur);
 
@@ -225,18 +232,18 @@ function renderFinals() {
     created.textContent = "创建 " + formatTime(fc.createdAt);
     meta.appendChild(created);
 
-    info.appendChild(meta);
+    body.appendChild(meta);
 
     const note = statusNote(status);
     if (note) {
       const p = document.createElement("p");
-      p.className = "final-card-note";
+      p.className = "text-secondary small mb-2";
       p.textContent = note;
-      info.appendChild(p);
+      body.appendChild(p);
     }
 
     const actions = document.createElement("div");
-    actions.className = "final-actions";
+    actions.className = "d-flex flex-wrap gap-2";
 
     if (status === "READY") {
       const playBtn = document.createElement("button");
@@ -245,6 +252,7 @@ function renderFinals() {
       playBtn.setAttribute("data-play", "");
       playBtn.addEventListener("click", () => {
         const video = document.createElement("video");
+        video.className = "w-100";
         video.controls = true;
         video.autoplay = true;
         video.src = "/media/finals/" + fc.id;
@@ -261,10 +269,11 @@ function renderFinals() {
       actions.appendChild(dl);
     }
 
-    info.appendChild(actions);
-    card.appendChild(info);
+    body.appendChild(actions);
+    card.appendChild(body);
+    col.appendChild(card);
 
-    list.appendChild(card);
+    list.appendChild(col);
   });
 }
 

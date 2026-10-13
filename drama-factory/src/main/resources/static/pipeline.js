@@ -26,11 +26,11 @@
 
   function finalCutClass(v) {
     var k = finalCutKey(v);
-    if (k === 'READY') return 'badge-success';
-    if (k === 'BUILDING') return 'badge-info';
-    if (k === 'FAILED') return 'badge-danger';
-    if (k === 'PENDING') return 'badge-warning';
-    return 'badge-muted';
+    if (k === 'READY') return 'bg-green-lt';
+    if (k === 'BUILDING') return 'bg-blue-lt';
+    if (k === 'FAILED') return 'bg-red-lt';
+    if (k === 'PENDING') return 'bg-yellow-lt';
+    return 'bg-secondary-lt';
   }
 
   function episodeIsStuck(ep) {
@@ -119,11 +119,11 @@
   }
 
   function renderPipeline() {
-    var board = document.getElementById('board');
+    var body = document.getElementById('pipelineBody');
     var empty = document.getElementById('boardEmpty');
     var titleEl = document.getElementById('projectTitle');
     var metaEl = document.getElementById('projectMeta');
-    if (!board) return;
+    if (!body) return;
 
     var data = state.pipeline;
 
@@ -139,37 +139,28 @@
     });
 
     if (metaEl) {
-      metaEl.innerHTML = '共 <span class="timecode">' + pad2(episodes.length) + '</span> 集，卡点 <span class="timecode">' + pad2(stuckCount) + '</span> 集。';
+      metaEl.innerHTML = '共 <span class="text-primary fw-bold">' + pad2(episodes.length) + '</span> 集，卡点 <span class="text-primary fw-bold">' + pad2(stuckCount) + '</span> 集。';
     }
 
-    // detach empty placeholder so we can re-insert it if needed
-    if (empty && empty.parentNode) {
-      empty.parentNode.removeChild(empty);
-    }
-
-    // clear previously rendered frames
-    var old = board.querySelectorAll('.film-frame');
-    for (var i = 0; i < old.length; i++) {
-      board.removeChild(old[i]);
-    }
+    body.innerHTML = '';
 
     if (!episodes.length) {
       if (empty) {
+        empty.classList.remove('d-none');
         empty.textContent = '还没有剧集数据。';
-        board.appendChild(empty);
       }
       return;
     }
 
+    if (empty) empty.classList.add('d-none');
+
     episodes.forEach(function (ep, idx) {
-      var frame = renderEpisodeCard(ep, idx);
-      board.appendChild(frame);
+      body.appendChild(renderEpisodeRow(ep, idx));
     });
   }
 
-  function renderEpisodeCard(ep, idx) {
+  function renderEpisodeRow(ep, idx) {
     ep = ep || {};
-    var tasks = ep.tasks || {};
     var shots = Number(ep.shotCount || 0);
     var pending = Number(ep.pendingTasks || 0);
     var rendering = Number(ep.processingTasks || 0);
@@ -178,149 +169,96 @@
 
     var stuck = episodeIsStuck(ep);
 
-    var frame = document.createElement('div');
-    frame.className = 'film-frame' + (stuck ? ' is-stuck' : '');
-
-    // top perforation
-    var perfTop = document.createElement('div');
-    perfTop.className = 'film-perf';
-    frame.appendChild(perfTop);
-
-    // title row
-    var titleRow = document.createElement('div');
-    titleRow.className = 'film-title';
-
-    var epNo = document.createElement('span');
-    epNo.className = 'timecode';
     var num = (typeof ep.episodeNo !== 'undefined' && ep.episodeNo !== null)
       ? ep.episodeNo
       : (idx + 1);
-    epNo.textContent = 'EP' + pad2(num);
-    titleRow.appendChild(epNo);
 
-    var titleText = document.createElement('span');
-    titleText.textContent = ep.title || ('第 ' + pad2(num) + ' 集');
-    titleRow.appendChild(titleText);
+    var tr = document.createElement('tr');
+    if (stuck) tr.classList.add('table-warning');
 
-    var statusBadge = document.createElement('span');
-    statusBadge.className = 'badge badge-muted';
-    statusBadge.textContent = (ep.status || 'DRAFT').toString().toUpperCase();
-    titleRow.appendChild(statusBadge);
+    var tdNo = document.createElement('td');
+    tdNo.className = 'text-nowrap';
+    tdNo.textContent = 'EP' + pad2(num);
+    tr.appendChild(tdNo);
 
+    var tdTitle = document.createElement('td');
+    var titleStrong = document.createElement('div');
+    titleStrong.className = 'fw-medium';
+    titleStrong.textContent = ep.title || ('第 ' + pad2(num) + ' 集');
+    tdTitle.appendChild(titleStrong);
     if (stuck) {
-      var stuckTag = document.createElement('span');
-      stuckTag.className = 'stuck-tag';
-      stuckTag.textContent = '卡点';
-      titleRow.appendChild(stuckTag);
+      var stuckBadge = document.createElement('span');
+      stuckBadge.className = 'badge bg-orange-lt ms-2';
+      stuckBadge.textContent = '卡点';
+      tdTitle.appendChild(stuckBadge);
     }
+    tr.appendChild(tdTitle);
 
-    frame.appendChild(titleRow);
+    var tdStatus = document.createElement('td');
+    var statusBadge = document.createElement('span');
+    statusBadge.className = 'badge bg-secondary-lt';
+    statusBadge.textContent = (ep.status || 'DRAFT').toString().toUpperCase();
+    tdStatus.appendChild(statusBadge);
+    tr.appendChild(tdStatus);
 
-    // strip with stages
-    var strip = document.createElement('div');
-    strip.className = 'film-strip';
+    var tdShots = document.createElement('td');
+    tdShots.className = 'text-end text-nowrap';
+    tdShots.innerHTML = '<span class="fw-bold">' + shots + '</span> <span class="text-secondary">个镜头</span>';
+    tr.appendChild(tdShots);
 
-    // stage 1: storyboard
-    var stage1 = document.createElement('div');
-    stage1.className = 'f-stage';
-    var l1 = document.createElement('div');
-    l1.className = 'f-stage-label';
-    l1.textContent = '分镜';
-    var v1 = document.createElement('div');
-    v1.className = 'f-stage-value';
-    v1.innerHTML = '<span class="timecode">' + shots + '</span> 个镜头';
-    stage1.appendChild(l1);
-    stage1.appendChild(v1);
-    strip.appendChild(stage1);
+    var tdTasks = document.createElement('td');
+    tdTasks.className = 'text-nowrap';
 
-    var arrow1 = document.createElement('div');
-    arrow1.className = 'f-arrow';
-    arrow1.textContent = '→';
-    strip.appendChild(arrow1);
-
-    // stage 2: video tasks
-    var stage2 = document.createElement('div');
-    stage2.className = 'f-stage';
-    var l2 = document.createElement('div');
-    l2.className = 'f-stage-label';
-    l2.textContent = '视频任务';
-    var v2 = document.createElement('div');
-    v2.className = 'task-stats';
-
-    function makeStat(label, count, extraClass) {
+    function makeStat(label, count, cls) {
       var span = document.createElement('span');
-      span.className = 'task-stat' + (extraClass ? ' ' + extraClass : '');
-      var lbl = document.createElement('span');
-      lbl.textContent = label + ' ';
-      var numSpan = document.createElement('span');
-      numSpan.className = 'badge ' + (extraClass || 'badge-muted');
-      numSpan.textContent = String(count);
-      span.appendChild(lbl);
-      span.appendChild(numSpan);
+      span.className = 'badge ' + cls + ' me-1';
+      span.textContent = label + ' ' + count;
       return span;
     }
 
-    v2.appendChild(makeStat('待提交', pending, 'badge-muted'));
-    v2.appendChild(makeStat('生成中', rendering, 'badge-info'));
-    v2.appendChild(makeStat('已完成', done, 'badge-success'));
-    v2.appendChild(makeStat('失败', failed, failed > 0 ? 'badge-danger' : 'badge-muted'));
+    tdTasks.appendChild(makeStat('待提交', pending, 'bg-secondary-lt'));
+    tdTasks.appendChild(makeStat('生成中', rendering, 'bg-blue-lt'));
+    tdTasks.appendChild(makeStat('已完成', done, 'bg-green-lt'));
+    tdTasks.appendChild(makeStat('失败', failed, failed > 0 ? 'bg-red-lt' : 'bg-secondary-lt'));
+    tr.appendChild(tdTasks);
 
-    stage2.appendChild(l2);
-    stage2.appendChild(v2);
-    strip.appendChild(stage2);
+    var tdFinal = document.createElement('td');
+    tdFinal.className = 'text-nowrap';
+    var finalBadge = document.createElement('span');
+    finalBadge.className = 'badge ' + finalCutClass(ep.finalCutStatus);
+    finalBadge.textContent = finalCutText(ep.finalCutStatus);
+    tdFinal.appendChild(finalBadge);
+    tr.appendChild(tdFinal);
 
-    var arrow2 = document.createElement('div');
-    arrow2.className = 'f-arrow';
-    arrow2.textContent = '→';
-    strip.appendChild(arrow2);
-
-    // stage 3: final cut
-    var stage3 = document.createElement('div');
-    stage3.className = 'f-stage';
-    var l3 = document.createElement('div');
-    l3.className = 'f-stage-label';
-    l3.textContent = '成片';
-    var badge3 = document.createElement('span');
-    badge3.className = 'badge ' + finalCutClass(ep.finalCutStatus);
-    badge3.textContent = finalCutText(ep.finalCutStatus);
-    stage3.appendChild(l3);
-    stage3.appendChild(badge3);
-    strip.appendChild(stage3);
-
-    frame.appendChild(strip);
-
-    // actions
-    var actions = document.createElement('div');
-    actions.className = 'film-actions';
+    var tdActions = document.createElement('td');
+    tdActions.className = 'text-end';
+    var btnGroup = document.createElement('div');
+    btnGroup.className = 'btn-list justify-content-end';
 
     var epId = encodeURIComponent(ep.episodeId != null ? ep.episodeId : '');
 
     var a1 = document.createElement('a');
-    a1.className = 'btn btn-sm';
+    a1.className = 'btn btn-sm btn-outline-secondary';
     a1.href = '/storyboard.html?episodeId=' + epId;
     a1.textContent = '打开分镜板';
-    actions.appendChild(a1);
+    btnGroup.appendChild(a1);
 
     var a2 = document.createElement('a');
-    a2.className = 'btn btn-sm';
+    a2.className = 'btn btn-sm btn-outline-secondary';
     a2.href = '/tasks.html?episodeId=' + epId;
     a2.textContent = '查看任务';
-    actions.appendChild(a2);
+    btnGroup.appendChild(a2);
 
     var a3 = document.createElement('a');
-    a3.className = 'btn btn-sm';
+    a3.className = 'btn btn-sm btn-outline-secondary';
     a3.href = '/finals.html?episodeId=' + epId;
     a3.textContent = '成片库';
-    actions.appendChild(a3);
+    btnGroup.appendChild(a3);
 
-    frame.appendChild(actions);
+    tdActions.appendChild(btnGroup);
+    tr.appendChild(tdActions);
 
-    // bottom perforation
-    var perfBottom = document.createElement('div');
-    perfBottom.className = 'film-perf';
-    frame.appendChild(perfBottom);
-
-    return frame;
+    return tr;
   }
 
   function bind() {

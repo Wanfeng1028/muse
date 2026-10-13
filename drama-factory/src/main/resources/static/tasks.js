@@ -32,8 +32,14 @@ async function api(path, options) {
 function showHint(message, isError) {
   const el = $("hint");
   if (!el) return;
-  el.textContent = message || "";
-  el.classList.toggle("is-error", Boolean(isError));
+  if (!message) {
+    el.textContent = "";
+    el.style.display = "none";
+    return;
+  }
+  el.textContent = message;
+  el.className = "alert mb-3 " + (isError ? "alert-danger" : "alert-info");
+  el.style.display = "";
 }
 
 function clearChildren(el) {
@@ -42,25 +48,53 @@ function clearChildren(el) {
   }
 }
 
-function statusClass(status) {
+function statusBadgeClass(status) {
   switch (status) {
     case "PENDING":
-      return "badge-pending";
+      return "badge bg-yellow-lt";
     case "PROCESSING":
-      return "badge-processing";
+      return "badge bg-blue-lt";
     case "DONE":
-      return "badge-done";
+      return "badge bg-green-lt";
     case "FAILED":
-      return "badge-failed";
+      return "badge bg-red-lt";
     default:
-      return "badge-pending";
+      return "badge bg-yellow-lt";
+  }
+}
+
+function statusProgressClass(status) {
+  switch (status) {
+    case "PROCESSING":
+      return "progress-bar progress-bar-indeterminate bg-blue";
+    case "DONE":
+      return "progress-bar bg-green";
+    case "FAILED":
+      return "progress-bar bg-red";
+    default:
+      return "progress-bar bg-yellow";
+  }
+}
+
+function statusProgressWidth(status) {
+  switch (status) {
+    case "PENDING":
+      return "8%";
+    case "PROCESSING":
+      return "55%";
+    case "DONE":
+      return "100%";
+    case "FAILED":
+      return "100%";
+    default:
+      return "8%";
   }
 }
 
 function statusLabelOf(status) {
   switch (status) {
     case "PENDING":
-      return "等待中";
+      return "待提交";
     case "PROCESSING":
       return "生成中";
     case "DONE":
@@ -191,77 +225,83 @@ function renderTasks() {
   }
 
   if (!tasks.length) {
+    const emptyWrap = document.createElement("div");
+    emptyWrap.className = "col-12";
     const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "当前分镜下没有任务";
-    grid.appendChild(empty);
+    empty.className = "card";
+    const emptyBody = document.createElement("div");
+    emptyBody.className = "card-body text-secondary";
+    emptyBody.textContent = "当前分镜下没有任务";
+    empty.appendChild(emptyBody);
+    emptyWrap.appendChild(empty);
+    grid.appendChild(emptyWrap);
     return;
   }
 
   tasks.forEach((task) => {
-    const card = document.createElement("article");
-    card.className = "task-card";
+    const col = document.createElement("div");
+    col.className = "col-md-6 col-lg-4";
+
+    const card = document.createElement("div");
+    card.className = "card";
     card.dataset.status = task.status;
 
-    const top = document.createElement("div");
-    top.className = "task-top";
-    const timecode = document.createElement("span");
-    timecode.className = "timecode";
-    timecode.textContent = "#" + task.id;
+    const header = document.createElement("div");
+    header.className = "card-header";
+    const title = document.createElement("h3");
+    title.className = "card-title";
+    title.textContent = "#" + task.id;
     const badge = document.createElement("span");
-    badge.className = "badge " + statusClass(task.status);
+    badge.className = statusBadgeClass(task.status);
     badge.textContent = statusLabelOf(task.status);
-    top.appendChild(timecode);
-    top.appendChild(badge);
-    card.appendChild(top);
+    header.appendChild(title);
+    header.appendChild(badge);
+    card.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "card-body";
 
     const shotLine = document.createElement("div");
-    shotLine.className = "task-shot";
+    shotLine.className = "text-secondary mb-2";
     shotLine.textContent = findShotLabel(task.shotId);
-    card.appendChild(shotLine);
+    body.appendChild(shotLine);
 
-    const progressWrap = document.createElement("div");
-    progressWrap.className = "task-progress";
+    const progress = document.createElement("div");
+    progress.className = "progress progress-sm mb-3";
     const bar = document.createElement("div");
-    bar.className = "bar";
-    if (task.status === "PENDING") {
-      bar.style.width = "8%";
-    } else if (task.status === "PROCESSING") {
-      bar.style.width = "55%";
-      progressWrap.classList.add("is-processing");
-    } else if (task.status === "DONE") {
-      bar.style.width = "100%";
-    } else if (task.status === "FAILED") {
-      bar.style.width = "100%";
-      bar.classList.add("is-failed");
-    } else {
-      bar.style.width = "8%";
-    }
-    progressWrap.appendChild(bar);
-    card.appendChild(progressWrap);
+    bar.className = statusProgressClass(task.status);
+    bar.setAttribute("role", "progressbar");
+    bar.setAttribute("aria-valuenow", statusProgressWidth(task.status));
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+    bar.style.width = statusProgressWidth(task.status);
+    progress.appendChild(bar);
+    body.appendChild(progress);
 
     const meta = document.createElement("div");
-    meta.className = "task-meta";
+    meta.className = "d-flex justify-content-between text-secondary";
     const provider = document.createElement("span");
     provider.textContent = task.provider || "mock";
     const attempts = document.createElement("span");
     attempts.textContent = "尝试 " + (task.attempts != null ? task.attempts : 1) + " 次";
     meta.appendChild(provider);
     meta.appendChild(attempts);
-    card.appendChild(meta);
+    body.appendChild(meta);
 
     if (task.errorMessage) {
-      const err = document.createElement("p");
-      err.className = "task-err";
+      const err = document.createElement("div");
+      err.className = "alert alert-danger mt-2 mb-0";
       err.textContent = task.errorMessage;
-      card.appendChild(err);
+      body.appendChild(err);
     }
+
+    card.appendChild(body);
 
     if (task.status === "DONE") {
       const actions = document.createElement("div");
-      actions.className = "task-actions";
+      actions.className = "card-footer";
       const link = document.createElement("a");
-      link.className = "btn btn-sm";
+      link.className = "btn btn-outline-secondary btn-sm";
       link.href = "/media/videos/" + task.id;
       link.target = "_blank";
       link.rel = "noopener";
@@ -270,16 +310,17 @@ function renderTasks() {
       card.appendChild(actions);
     } else if (task.status === "FAILED") {
       const actions = document.createElement("div");
-      actions.className = "task-actions";
+      actions.className = "card-footer";
       const btn = document.createElement("button");
-      btn.className = "btn btn-sm btn-danger";
+      btn.className = "btn btn-danger btn-sm";
       btn.textContent = "重试";
       btn.addEventListener("click", () => retryTask(task.id));
       actions.appendChild(btn);
       card.appendChild(actions);
     }
 
-    grid.appendChild(card);
+    col.appendChild(card);
+    grid.appendChild(col);
   });
 }
 

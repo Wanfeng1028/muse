@@ -1,83 +1,133 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-bs-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>分镜板 · AI 短剧工坊</title>
-<link rel="stylesheet" href="/v2.css">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
 </head>
 <body>
-<header class="topbar">
-  <nav class="topnav">
-    <a href="/index.html">控制台首页</a>
-    <a href="/storyboard.html" class="active">分镜板</a>
-    <a href="/tasks.html">任务队列</a>
-    <a href="/finals.html">成片库</a>
-    <a href="/pipeline.html">生产看板</a>
-  </nav>
-</header>
+<div class="page">
+  <header class="navbar navbar-expand-md navbar-dark d-print-none">
+    <div class="container-xl">
+      <div class="navbar-brand navbar-brand-autodark">
+        <span class="fs-3 fw-bold">AI 短剧工坊</span>
+      </div>
+      <div class="navbar-nav flex-row order-md-last">
+        <div class="nav-item d-none d-md-flex me-2">
+          <span class="text-secondary">分镜板</span>
+        </div>
+      </div>
+      <div class="collapse navbar-collapse show">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="/index.html">控制台首页</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/storyboard.html">分镜板</a></li>
+          <li class="nav-item"><a class="nav-link" href="/tasks.html">任务队列</a></li>
+          <li class="nav-item"><a class="nav-link" href="/finals.html">成片库</a></li>
+          <li class="nav-item"><a class="nav-link" href="/pipeline.html">生产看板</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
 
-<main class="container">
-  <p class="kicker">场记板 · CLAPPERBOARD</p>
+  <div class="page-wrapper">
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <div class="text-secondary text-uppercase mb-1">场记板 · CLAPPERBOARD</div>
+            <h2 class="page-title">分镜板</h2>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="selectors">
-    <select id="projectSelect"></select>
-    <select id="episodeSelect"></select>
-    <span id="episodeMeta" class="episode-meta"></span>
+    <div class="page-body">
+      <div class="container-xl">
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label" for="projectSelect">项目</label>
+                <select id="projectSelect" class="form-select"></select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="episodeSelect">剧集</label>
+                <select id="episodeSelect" class="form-select"></select>
+              </div>
+              <div class="col-md-4">
+                <span id="episodeMeta" class="text-secondary"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3 d-flex flex-wrap gap-2">
+          <button id="addBtn" class="btn btn-primary">添加分镜</button>
+          <button id="submitAllBtn" class="btn btn-outline-secondary">全部提交</button>
+          <button id="refreshBtn" class="btn btn-ghost-secondary">刷新</button>
+        </div>
+
+        <div id="formPanel" class="card mb-3" hidden>
+          <div class="card-header">
+            <h3 class="card-title" id="formTitle">添加分镜</h3>
+          </div>
+          <div class="card-body">
+            <form id="shotForm">
+              <input type="hidden" id="shotId">
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label" for="shotNo">镜号</label>
+                  <input type="number" class="form-control" id="shotNo" min="1">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="shotSize">景别</label>
+                  <select id="shotSize" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="cameraMove">运镜</label>
+                  <select id="cameraMove" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" for="durationSeconds">时长（秒）</label>
+                  <input type="number" class="form-control" id="durationSeconds" min="0" step="0.1">
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="description">画面描述</label>
+                  <textarea id="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="dialogue">对白</label>
+                  <textarea id="dialogue" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label" for="videoPrompt">视频提示词</label>
+                  <textarea id="videoPrompt" class="form-control" rows="3"></textarea>
+                </div>
+              </div>
+              <div id="formError" class="text-danger mt-2"></div>
+              <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="button" id="cancelBtn" class="btn btn-outline-secondary">取消</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div id="slateGrid" class="datagrid"></div>
+
+      </div>
+    </div>
   </div>
+</div>
 
-  <div class="toolbar">
-    <button id="addBtn" class="btn btn-primary">添加分镜</button>
-    <button id="submitAllBtn" class="btn">全部提交</button>
-    <button id="refreshBtn" class="btn">刷新</button>
-  </div>
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+  <div id="toast" class="alert alert-info" role="alert" hidden></div>
+</div>
 
-  <section id="formPanel" class="form-panel" hidden>
-    <h2 id="formTitle">添加分镜</h2>
-    <form id="shotForm">
-      <input type="hidden" id="shotId">
-      <div class="form-row">
-        <label for="shotNo">镜号</label>
-        <input type="number" id="shotNo" min="1">
-      </div>
-      <div class="form-row">
-        <label for="shotSize">景别</label>
-        <select id="shotSize"></select>
-      </div>
-      <div class="form-row">
-        <label for="cameraMove">运镜</label>
-        <select id="cameraMove"></select>
-      </div>
-      <div class="form-row">
-        <label for="durationSeconds">时长（秒）</label>
-        <input type="number" id="durationSeconds" min="0" step="0.1">
-      </div>
-      <div class="form-row">
-        <label for="description">画面描述</label>
-        <textarea id="description" rows="3"></textarea>
-      </div>
-      <div class="form-row">
-        <label for="dialogue">对白</label>
-        <textarea id="dialogue" rows="2"></textarea>
-      </div>
-      <div class="form-row">
-        <label for="videoPrompt">视频提示词</label>
-        <textarea id="videoPrompt" rows="3"></textarea>
-      </div>
-      <p id="formError" class="form-error"></p>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">保存</button>
-        <button type="button" id="cancelBtn" class="btn">取消</button>
-      </div>
-    </form>
-  </section>
-
-  <div id="slateGrid" class="slate-grid"></div>
-</main>
-
-<div id="toast" class="toast"></div>
-
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js"></script>
 <script src="/storyboard.js"></script>
 </body>
 </html>

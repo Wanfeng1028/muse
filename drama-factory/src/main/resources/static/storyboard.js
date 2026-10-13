@@ -49,13 +49,13 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-function statusClass(status) {
+function statusBadgeClass(status) {
   switch (String(status || '').toUpperCase()) {
-    case 'PENDING': return 'badge-pending';
-    case 'PROCESSING': return 'badge-processing';
-    case 'DONE': return 'badge-done';
-    case 'FAILED': return 'badge-failed';
-    default: return 'badge-muted';
+    case 'PENDING': return 'bg-yellow-lt';
+    case 'PROCESSING': return 'bg-blue-lt';
+    case 'DONE': return 'bg-green-lt';
+    case 'FAILED': return 'bg-red-lt';
+    default: return 'bg-secondary-lt';
   }
 }
 
@@ -63,9 +63,9 @@ function showToast(msg) {
   const el = document.getElementById('toast');
   if (!el) return;
   el.textContent = msg;
-  el.classList.add('show');
+  el.hidden = false;
   clearTimeout(el._t);
-  el._t = setTimeout(() => { el.classList.remove('show'); el.textContent = ''; }, 2600);
+  el._t = setTimeout(() => { el.hidden = true; el.textContent = ''; }, 2600);
 }
 
 function getProjectId() {
@@ -187,12 +187,12 @@ function renderShots() {
   const eid = getEpisodeId();
 
   if (!pid || !eid) {
-    grid.innerHTML = '<div class="empty">请选择项目与剧集</div>';
+    grid.innerHTML = '<div class="alert alert-info">请选择项目与剧集</div>';
     return;
   }
 
   if (!state.shots.length) {
-    grid.innerHTML = '<div class="empty">本集暂无分镜，点击“添加分镜”新建</div>';
+    grid.innerHTML = '<div class="alert alert-info">本集暂无分镜，点击“添加分镜”新建</div>';
     return;
   }
 
@@ -206,17 +206,17 @@ function renderShots() {
     const vStatus = task ? task.status : null;
 
     const badges = [];
-    if (sizeLabel) badges.push(`<span class="badge">${escapeHtml(sizeLabel)}</span>`);
-    if (moveLabel) badges.push(`<span class="badge">${escapeHtml(moveLabel)}</span>`);
+    if (sizeLabel) badges.push(`<span class="badge bg-blue-lt me-1">${escapeHtml(sizeLabel)}</span>`);
+    if (moveLabel) badges.push(`<span class="badge bg-orange-lt me-1">${escapeHtml(moveLabel)}</span>`);
 
     const descHtml = shot.description
-      ? `<p class="slate-desc">${escapeHtml(shot.description)}</p>`
+      ? `<div class="mb-2"><div class="text-secondary small">画面描述</div><div>${escapeHtml(shot.description)}</div></div>`
       : '';
     const dialogueHtml = shot.dialogue
-      ? `<p class="slate-dialogue">${escapeHtml(shot.dialogue)}</p>`
+      ? `<div class="mb-2"><div class="text-secondary small">对白</div><div>${escapeHtml(shot.dialogue)}</div></div>`
       : '';
     const promptHtml = shot.videoPrompt
-      ? `<p class="slate-prompt">${escapeHtml(shot.videoPrompt)}</p>`
+      ? `<div class="mb-2"><div class="text-secondary small">视频提示词</div><div>${escapeHtml(shot.videoPrompt)}</div></div>`
       : '';
 
     const statusText = task
@@ -227,29 +227,30 @@ function renderShots() {
     const downDisabled = index === lastIndex ? ' disabled' : '';
 
     return `
-<article class="slate-card" data-sid="${escapeHtml(shot.id)}">
-  <div class="slate-strip">
-    <span class="slate-no">${escapeHtml(no)}</span>
-    <span class="slate-strip-label">场记板</span>
+<div class="card mb-3" data-sid="${escapeHtml(shot.id)}">
+  <div class="card-header">
+    <h3 class="card-title">镜号 ${escapeHtml(no)}</h3>
+    <div class="card-actions">
+      ${badges.join('')}
+    </div>
   </div>
-  <div class="slate-body">
-    <div class="slate-badges">${badges.join('')}</div>
+  <div class="card-body">
     ${descHtml}
     ${dialogueHtml}
     ${promptHtml}
-    <div class="slate-foot">
-      <span class="timecode">${escapeHtml(toTimecode(shot.durationSeconds))}</span>
-      <span class="badge ${statusClass(vStatus)}">${statusText}</span>
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="badge bg-secondary-lt">时长 ${escapeHtml(toTimecode(shot.durationSeconds))}</span>
+      <span class="badge ${statusBadgeClass(vStatus)}">${statusText}</span>
     </div>
-    <div class="slate-actions">
-      <button class="btn btn-sm" data-act="up"${upDisabled}>上移</button>
-      <button class="btn btn-sm" data-act="down"${downDisabled}>下移</button>
-      <button class="btn btn-sm" data-act="edit">编辑</button>
+    <div class="btn-list">
+      <button class="btn btn-sm btn-outline-secondary" data-act="up"${upDisabled}>上移</button>
+      <button class="btn btn-sm btn-outline-secondary" data-act="down"${downDisabled}>下移</button>
+      <button class="btn btn-sm btn-secondary" data-act="edit">编辑</button>
       <button class="btn btn-sm btn-danger" data-act="del">删除</button>
       <button class="btn btn-sm btn-primary" data-act="gen">生成视频</button>
     </div>
   </div>
-</article>`;
+</div>`;
   }).join('');
 }
 
