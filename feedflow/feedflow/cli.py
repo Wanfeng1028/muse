@@ -4,6 +4,8 @@
     serve        启动 Web 服务
     fetch        对到期的源抓取一次后退出
     import-opml  从 OPML 文件导入订阅源
+    backup       对数据库做一次热备份
+    restore      从备份文件恢复数据库
 """
 
 import argparse
@@ -11,6 +13,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
+from . import backup as backup_module
 from . import config as config_module
 from . import db as db_module
 from . import fetcher, store
@@ -89,6 +92,28 @@ def _cmd_import_opml(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_backup(args: argparse.Namespace) -> int:
+    """对数据库做一次热备份。"""
+    cfg = config_module.load()
+    db_path = args.db or cfg["db_path"]
+    target = backup_module.backup(db_path, cfg["backup_dir"])
+    print(f"备份完成：{target}")
+    return 0
+
+
+def _cmd_restore(args: argparse.Namespace) -> int:
+    """从备份文件恢复数据库。"""
+    cfg = config_module.load()
+    db_path = args.db or cfg["db_path"]
+    path = Path(args.file)
+    if not path.exists():
+        print(f"文件不存在：{path}", file=sys.stderr)
+        return 1
+    backup_module.restore(str(path), db_path)
+    print(f"恢复完成：{path} -> {db_path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """构造 argparse 解析器。"""
     parser = argparse.ArgumentParser(
@@ -114,6 +139,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_import = sub.add_parser("import-opml", help="导入 OPML 文件")
     p_import.add_argument("file", help="OPML 文件路径")
     p_import.set_defaults(func=_cmd_import_opml)
+
+    p_backup = sub.add_parser("backup", help="对数据库做一次热备份")
+    p_backup.set_defaults(func=_cmd_backup)
+
+    p_restore = sub.add_parser("restore", help="从备份文件恢复数据库")
+    p_restore.add_argument("file", help="备份文件路径")
+    p_restore.set_defaults(func=_cmd_restore)
 
     return parser
 

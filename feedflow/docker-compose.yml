@@ -1,0 +1,35 @@
+# feedflow「信流」自托管 RSS 阅读器
+# 数据持久化目录：./data（宿主机当前目录下的 data 文件夹）
+# 该目录会挂载到容器内 /app/data，SQLite 数据库与备份文件都存放在这里，
+# 因此升级/重建容器不会丢失数据。备份时只需拷贝 ./data 即可。
+services:
+  feedflow:
+    build: .
+    container_name: feedflow
+    # 容器内应用监听 8300，映射到宿主机 8300
+    ports:
+      - "8300:8300"
+    # 数据持久化：./data -> /app/data
+    volumes:
+      - ./data:/app/data
+    # 优先从 .env.example 读取环境变量（如果项目根目录存在该文件）
+    env_file:
+      - .env.example
+    # 关键环境变量兜底，未在 env_file 中提供时生效
+    environment:
+      FEEDFLOW_DB: /app/data/feedflow.db
+      FEEDFLOW_HOST: 0.0.0.0
+      FEEDFLOW_PORT: "8300"
+      FEEDFLOW_FETCH_INTERVAL: "15"
+      FEEDFLOW_USER_AGENT: feedflow/1.0 (+https://github.com/feedflow)
+      FEEDFLOW_FETCH_TIMEOUT: "15"
+      FEEDFLOW_FETCH_RETRIES: "2"
+      FEEDFLOW_LOG_LEVEL: INFO
+      FEEDFLOW_BACKUP_DIR: /app/data/backups
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8300/healthz',timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

@@ -1,6 +1,7 @@
 """数据访问层：所有函数首参为 db_path，返回 dict 或 dict 列表。"""
 from datetime import UTC, datetime, timedelta
 
+from . import dedup
 from .db import get_conn, write_lock
 
 
@@ -192,23 +193,33 @@ def delete_feed(db_path, feed_id):
             conn.close()
 
 
-def set_fetch_result(db_path, feed_id, status, error, etag, modified):
-    """抓取后更新源状态。"""
+def set_fetch_result(db_path, feed_id, status, error, etag, modified,
+                     error_kind="", failures=None):
+    """抓取后更新源状态。failures 为 None 时不更新 consecutive_failures。"""
     with write_lock:
         conn = get_conn(db_path)
         try:
+            sets = [
+                "last_fetched_at = ?",
+                "last_status = ?",
+                "last_error = ?",
+                "last_error_kind = ?",
+                "etag = ?",
+                "modified = ?",
+            ]
+            params = [_now_iso(), status, error or "", error_kind or "",
+                      etag or "", modified or ""]
+            if failures is not None:
+                sets.append("consecutive_failures = ?")
+                params.append(failures)
+            params.append(feed_id)
             conn.execute(
-                "UPDATE feeds SET last_fetched_at = ?, last_status = ?, last_error = ?, "
-                "etag = ?, modified = ? WHERE id = ?",
-                (_now_iso(), status, error or "", etag or "", modified or "", feed_id),
+                f"UPDATE feeds SET {', '.join(sets)} WHERE id = ?",
+                params,
             )
             conn.commit()
         finally:
             conn.close()
-
-
-# ---------------- articles ----------------
-
 def article_exists(db_path, feed_id, guid):
     """判断文章是否已存在。"""
     conn = get_conn(db_path)
@@ -224,25 +235,35 @@ def article_exists(db_path, feed_id, guid):
 
 def insert_article(db_path, feed_id, guid, title, author, link, summary,
                    content_html, content_text, published_at):
-    """插入文章，返回 id。"""
+    """插入文章，返回 id。插入前计算 SimHash 并尝试归入去重簇。"""
+    text = dedup.get_text_for({"title": title, "content_text": content_text})
+    simhash_hex = dedup.simhash(text)
+    cluster_id = dedup.find_or_create_cluster(db_path, simhash_hex, text)
     with write_lock:
         conn = get_conn(db_path)
         try:
             cur = conn.execute(
                 """
                 INSERT INTO articles(feed_id, guid, title, author, link, summary,
-                                     content_html, content_text, published_at, fetched_at)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     content_html, content_text, published_at, fetched_at,
+                                     simhash, cluster_id)
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (feed_id, guid, title, author, link, summary,
-                 content_html, content_text, published_at, _now_iso()),
+                 content_html, content_text, published_at, _now_iso(),
+                 simhash_hex, cluster_id),
             )
+            new_id = cur.lastrowid
+            # 未命中已有簇时，把自己作为该簇的代表（cluster_id 指向自身）。
+            if cluster_id is None:
+                conn.execute(
+                    "UPDATE articles SET cluster_id = ? WHERE id = ?",
+                    (new_id, new_id),
+                )
             conn.commit()
-            return cur.lastrowid
+            return new_id
         finally:
             conn.close()
-
-
 def _scope_clause(scope):
     if scope == "unread":
         return "a.is_read = 0"
@@ -253,7 +274,7 @@ def _scope_clause(scope):
 
 def list_articles(db_path, scope="unread", feed_id=None, folder_id=None,
                   limit=50, offset=0):
-    """列出文章，返回 (total, rows)。rows 含 feed_title，按 published_at 倒序 NULL 排后。"""
+    """列出文章，返回 (total, rows)。rows 含 feed_title 与簇大小，按 published_at 倒序 NULL 排后。"""
     conn = get_conn(db_path)
     try:
         where = [_scope_clause(scope)]
@@ -273,7 +294,9 @@ def list_articles(db_path, scope="unread", feed_id=None, folder_id=None,
         sql = (
             "SELECT a.id, a.feed_id, a.guid, a.title, a.author, a.link, a.summary, "
             "a.content_html, a.content_text, a.published_at, a.fetched_at, "
-            "a.is_read, a.is_starred, f.title AS feed_title "
+            "a.is_read, a.is_starred, a.simhash, a.cluster_id, "
+            "(SELECT COUNT(*) FROM articles c WHERE c.cluster_id = a.cluster_id) AS cluster_size, "
+            "f.title AS feed_title "
             f"{base} "
             "ORDER BY a.published_at IS NULL, a.published_at DESC, a.id DESC "
             "LIMIT ? OFFSET ?"
@@ -282,8 +305,6 @@ def list_articles(db_path, scope="unread", feed_id=None, folder_id=None,
         return total, [dict(r) for r in rows]
     finally:
         conn.close()
-
-
 def get_article(db_path, article_id):
     """取单篇文章全字段 + feed_title，无则 None。"""
     conn = get_conn(db_path)
@@ -465,3 +486,51 @@ def due_feeds(db_path, now_iso, default_interval):
             result.append(feed)
     return result
 
+
+def get_cluster_members(db_path, cluster_id, exclude_id=None):
+    """返回同簇其他文章（id/title/feed_title/published_at），按 published_at 排序。"""
+    conn = get_conn(db_path)
+    try:
+        sql = (
+            "SELECT a.id AS id, a.title AS title, f.title AS feed_title, "
+            "a.published_at AS published_at "
+            "FROM articles a JOIN feeds f ON f.id = a.feed_id "
+            "WHERE a.cluster_id = ? "
+        )
+        params = [cluster_id]
+        if exclude_id is not None:
+            sql += "AND a.id != ? "
+            params.append(exclude_id)
+        sql += "ORDER BY a.published_at IS NULL, a.published_at ASC, a.id ASC"
+        rows = conn.execute(sql, params).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_job_state(db_path, key):
+    """读取 job_state 中的值，不存在则返回 None。"""
+    conn = get_conn(db_path)
+    try:
+        row = conn.execute(
+            "SELECT value FROM job_state WHERE key = ?", (key,)
+        ).fetchone()
+        return row["value"] if row else None
+    finally:
+        conn.close()
+
+
+def set_job_state(db_path, key, value):
+    """写入或更新 job_state 中的值。"""
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            conn.execute(
+                "INSERT INTO job_state(key, value, updated_at) VALUES(?, ?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value, "
+                "updated_at = excluded.updated_at",
+                (key, value, _now_iso()),
+            )
+            conn.commit()
+        finally:
+            conn.close()

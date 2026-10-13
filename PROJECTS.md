@@ -227,10 +227,12 @@
 **视觉**：「旧报纸」阅读气质——纸白 #FAFAF7、墨色 #1C1A17、暖灰分隔线、点睛柿色 #C2410C；UI 系统无衬线栈、正文衬线；8pt 间距、圆角 8px。
 
 **状态**：工程化 v1（2026-10-13 完成，pytest 35 例全过、ruff 全洁、真实服务冒烟：订阅添加→立即抓取→3 篇文章入库→标已读/星标→搜索→OPML 往返→CLI fetch 全链路验证）。
+**生产级补强 v1.1**（2026-10-13）：抓取健壮性（urllib 超时/指数退避重试/失败分类 timeout·dns·http_4xx·http_5xx·parse_error·unknown、连续失败计数）、调度可靠性（job_state 持久化、启动补跑、misfire_grace_time、单源异常隔离）、结构化 JSON 日志（request_id 全链路）、/healthz、配置环境变量化 + 启动校验、DB 迁移版本化（PRAGMA user_version）、备份恢复 CLI（保留最近 7 个）、docker-compose 一键部署、docs/OPERATIONS.md 运维手册；**灵魂功能起步**：SimHash + Jaccard 两阶段相似文章去重聚类，同事件多源报道折叠显示（"还有 N 篇相似报道"）。pytest 46 例全过、ruff 全洁、真实服务冒烟（抓取→去重聚类→折叠显示→阅读）全链路验证通过。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Flask 应用工厂 + 蓝图分层落地，订阅/抓取/阅读/搜索/OPML/统计全模块、Jinja2 三栏阅读器前端、CI 与 Dockerfile 就绪
+- 生产级补强 v1.1（2026-10-13）：抓取超时/重试/失败分类、调度状态持久化与补跑、结构化日志 + /healthz、配置校验、DB 迁移、备份恢复、docker-compose、运维手册；SimHash + Jaccard 两阶段去重聚类与折叠显示上线
 
 **后续计划**：
 

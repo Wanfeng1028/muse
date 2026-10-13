@@ -1,6 +1,9 @@
 """Web 蓝图：服务端渲染页面 + OPML 导入导出。"""
 from __future__ import annotations
 
+import sqlite3
+from datetime import UTC, datetime
+
 from flask import (
     Blueprint,
     Response,
@@ -112,3 +115,44 @@ def search_page():
     articles = store.search_articles(db_path, q) if q.strip() else []
     return render_template("search.html", q=q, articles=articles)
 
+
+@bp.get("/healthz")
+def healthz():
+    """健康检查：返回服务、数据库与调度器状态。"""
+    db_path = _cfg()["db_path"]
+
+    # 数据库探活：执行 SELECT 1
+    db_status = "ok"
+    try:
+        conn = sqlite3.connect(db_path)
+        try:
+            conn.execute("SELECT 1")
+        finally:
+            conn.close()
+    except Exception:  # noqa: BLE001  # 探活失败视为 degraded，故意宽捕获
+        db_status = "error"
+
+    # 调度器状态：从 feedflow.scheduler._scheduler 判断
+    scheduler_status = "disabled"
+    try:
+        from . import scheduler as _scheduler
+
+        sched = getattr(_scheduler, "_scheduler", None)
+        if sched is not None and getattr(sched, "running", False):
+            scheduler_status = "running"
+    except Exception:  # noqa: BLE001  # 导入或属性异常时保持 disabled
+        scheduler_status = "disabled"
+
+    status = "ok" if db_status == "ok" else "degraded"
+
+    payload = {
+        "status": status,
+        "version": "0.2.0",
+        "db": db_status,
+        "scheduler": scheduler_status,
+        "now": datetime.now(UTC).isoformat(),
+    }
+    return Response(
+        __import__("json").dumps(payload, ensure_ascii=False),
+        mimetype="application/json",
+    )

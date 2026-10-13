@@ -84,21 +84,54 @@ function initReader() {
     if (!arts.length) {
       html = `<p class="empty-hint">没有文章</p>`;
     } else {
-      for (const a of arts) {
+      const renderItem = (a) => {
         const cls = "article-item" + (state.selectedId === a.id ? " active" : "") + (a.is_read ? "" : " unread");
-        html += `<div class="${cls}" data-id="${a.id}">`;
-        html += `<div class="art-title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? " ★" : ""}</div>`;
-        html += `<div class="art-meta">${escapeHtml(a.feed_title || "")} · ${fmtTime(a.published_at || a.fetched_at)}</div>`;
-        html += `</div>`;
+        let h = `<div class="${cls}" data-id="${a.id}">`;
+        h += `<div class="art-title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? " ★" : ""}</div>`;
+        h += `<div class="art-meta">${escapeHtml(a.feed_title || "")} · ${fmtTime(a.published_at || a.fetched_at)}</div>`;
+        h += `</div>`;
+        return h;
+      };
+      const seenClusters = new Set();
+      for (const a of arts) {
+        const cid = a.cluster_id;
+        const csize = a.cluster_size || 0;
+        if (cid != null && csize > 1) {
+          if (seenClusters.has(cid)) continue;
+          seenClusters.add(cid);
+          const cluster = arts.filter(x => x.cluster_id === cid);
+          const others = cluster.slice(1);
+          html += renderItem(a);
+          if (others.length) {
+            const groupId = "cluster-" + cid;
+            html += `<div class="cluster-toggle" data-target="${groupId}" style="font-size:12px;color:#888;text-align:left;cursor:pointer;padding:2px 8px;user-select:none;">▸ 还有 ${others.length} 篇相似报道</div>`;
+            html += `<div class="cluster-group" id="${groupId}" style="display:none;">`;
+            for (const o of others) html += renderItem(o);
+            html += `</div>`;
+          }
+        } else {
+          html += renderItem(a);
+        }
       }
     }
     elList.innerHTML = html;
     elList.querySelectorAll("[data-id]").forEach(n => n.addEventListener("click", () => {
       openArticle(parseInt(n.dataset.id, 10));
     }));
+    elList.querySelectorAll(".cluster-toggle").forEach(t => t.addEventListener("click", () => {
+      const target = document.getElementById(t.dataset.target);
+      if (!target) return;
+      const expanded = target.style.display !== "none";
+      if (expanded) {
+        target.style.display = "none";
+        t.textContent = "▸ 还有 " + target.children.length + " 篇相似报道";
+      } else {
+        target.style.display = "";
+        t.textContent = "▾ 收起相似报道";
+      }
+    }));
     if (elMoreWrap) elMoreWrap.hidden = true;
   }
-
   // 打开文章，自动标已读
   async function openArticle(id) {
     let a;

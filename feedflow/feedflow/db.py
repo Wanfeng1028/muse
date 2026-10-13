@@ -136,6 +136,10 @@ def init_db(db_path) -> None:
         )
 
         conn.commit()
+
+        # 执行版本化迁移（幂等）
+        run_migrations(conn)
+        conn.commit()
     finally:
         conn.close()
 
@@ -178,3 +182,123 @@ def query_one(db_path, sql, params=()):
         return dict(row) if row is not None else None
     finally:
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# 版本化迁移（PRAGMA user_version）
+# ---------------------------------------------------------------------------
+
+
+MIGRATIONS: list[tuple[int, str, list[str]]] = [
+    (
+        1,
+        "新增 simhash/cluster_id/last_error_kind/consecutive_failures 及 job_state 表",
+        [
+            # articles 新增列
+            "ALTER TABLE articles ADD COLUMN simhash TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE articles ADD COLUMN cluster_id INTEGER",
+            # feeds 新增列
+            "ALTER TABLE feeds ADD COLUMN last_error_kind TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE feeds ADD COLUMN consecutive_failures INTEGER NOT NULL DEFAULT 0",
+            # job_state 表
+            (
+                "CREATE TABLE IF NOT EXISTS job_state (\n"
+                "    key TEXT PRIMARY KEY,\n"
+                "    value TEXT NOT NULL DEFAULT '',\n"
+                "    updated_at TEXT NOT NULL DEFAULT ''\n"
+                ")"
+            ),
+            # 索引
+            "CREATE INDEX IF NOT EXISTS idx_articles_cluster ON articles(cluster_id)",
+        ],
+    ),
+]
+
+
+
+
+def _column_exists(conn: sqlite3.Connection, table: str, column: str) -> bool:
+    """检查指定表是否存在指定列。"""
+    try:
+        rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    except sqlite3.DatabaseError:
+        return False
+    for row in rows:
+        # row 可能是 sqlite3.Row 或 tuple，兼容取值
+        try:
+            name = row["name"]
+        except (TypeError, IndexError):
+            name = row[1]
+        if name == column:
+            return True
+    return False
+
+
+def _parse_add_column(sql: str) -> tuple[str, str] | None:
+    """从 ``ALTER TABLE x ADD COLUMN y ...`` 语句解析出 (table, column)。
+
+    解析失败返回 None（此时按普通语句执行）。
+    """
+    tokens = sql.strip().split()
+    if len(tokens) < 6:
+        return None
+    if tokens[0].upper() != "ALTER" or tokens[1].upper() != "TABLE":
+        return None
+    if tokens[3].upper() != "ADD" or tokens[4].upper() != "COLUMN":
+        return None
+    table = tokens[2].strip('`"[]')
+    column = tokens[5].strip('`"[],')
+    if not table or not column:
+        return None
+    return table, column
+
+
+def _apply_statements(conn: sqlite3.Connection, statements: list[str]) -> None:
+    """执行一组迁移语句。
+
+    对 ``ALTER TABLE ... ADD COLUMN`` 语句先检查列是否已存在，已存在则跳过；
+    其余语句直接执行（建议使用 ``IF NOT EXISTS`` 保证幂等）。
+    """
+    for sql in statements:
+        parsed = _parse_add_column(sql)
+        if parsed is not None:
+            table, column = parsed
+            if _column_exists(conn, table, column):
+                # 老库已包含该列，跳过以避免 duplicate column 错误。
+                continue
+        try:
+            conn.execute(sql)
+        except sqlite3.OperationalError as exc:
+            # 对加列语句，若仍因"列已存在"报错，也视作已应用。
+            if parsed is not None and "duplicate column" in str(exc).lower():
+                continue
+            raise
+
+
+def _get_user_version(conn: sqlite3.Connection) -> int:
+    """读取 PRAGMA user_version。"""
+    row = conn.execute("PRAGMA user_version").fetchone()
+    if row is None:
+        return 0
+    try:
+        return int(row[0])
+    except (TypeError, ValueError, IndexError):
+        return 0
+
+
+def _set_user_version(conn: sqlite3.Connection, version: int) -> None:
+    """设置 PRAGMA user_version（SQLite 不支持参数绑定，需拼接整数）。"""
+    conn.execute(f"PRAGMA user_version = {int(version)}")
+
+
+def run_migrations(conn: sqlite3.Connection) -> int:
+    """依次执行缺失的迁移版本，返回执行后的 user_version。"""
+    current = _get_user_version(conn)
+    target = current
+    for version, _description, statements in sorted(MIGRATIONS, key=lambda m: m[0]):
+        if version <= current:
+            continue
+        _apply_statements(conn, statements)
+        target = version
+        _set_user_version(conn, target)
+    return target
