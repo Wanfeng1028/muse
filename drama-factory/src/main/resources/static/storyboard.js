@@ -388,6 +388,57 @@ async function submitAll() {
   }
 }
 
+function openScriptModal() {
+  const eid = getEpisodeId();
+  if (!eid) {
+    showToast('请先选择剧集');
+    return;
+  }
+  const errEl = document.getElementById('scriptError');
+  if (errEl) errEl.textContent = '';
+  const modalEl = document.getElementById('scriptModal');
+  if (modalEl && window.bootstrap) {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  }
+}
+
+async function submitScript() {
+  const eid = getEpisodeId();
+  if (!eid) {
+    showToast('请先选择剧集');
+    return;
+  }
+  const textEl = document.getElementById('scriptText');
+  const errEl = document.getElementById('scriptError');
+  const btn = document.getElementById('scriptSubmitBtn');
+  const scriptText = textEl ? textEl.value.trim() : '';
+  if (!scriptText) {
+    if (errEl) errEl.textContent = '请粘贴剧本原文';
+    return;
+  }
+  if (btn) btn.disabled = true;
+  if (errEl) errEl.textContent = '';
+  try {
+    const shots = await api(`/api/episodes/${encodeURIComponent(eid)}/shots/from-script`, {
+      method: 'POST',
+      body: JSON.stringify({ scriptText })
+    });
+    const n = Array.isArray(shots) ? shots.length : 0;
+    showToast(`AI 已拆出 ${n} 个分镜并落库`);
+    const modalEl = document.getElementById('scriptModal');
+    if (modalEl && window.bootstrap) {
+      bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    }
+    await loadShots();
+  } catch (e) {
+    if (errEl) errEl.textContent = e.message;
+    else showToast(e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 function bindEvents() {
   const addBtn = document.getElementById('addBtn');
   const submitAllBtn = document.getElementById('submitAllBtn');
@@ -399,6 +450,10 @@ function bindEvents() {
   const grid = document.getElementById('slateGrid');
 
   if (addBtn) addBtn.addEventListener('click', () => openForm(null));
+  const fromScriptBtn = document.getElementById('fromScriptBtn');
+  if (fromScriptBtn) fromScriptBtn.addEventListener('click', openScriptModal);
+  const scriptSubmitBtn = document.getElementById('scriptSubmitBtn');
+  if (scriptSubmitBtn) scriptSubmitBtn.addEventListener('click', submitScript);
   if (submitAllBtn) submitAllBtn.addEventListener('click', submitAll);
   if (refreshBtn) refreshBtn.addEventListener('click', () => loadShots());
   if (cancelBtn) cancelBtn.addEventListener('click', closeForm);

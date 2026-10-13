@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 对话 · AI 短剧工坊</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/css/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body>
+<header class="navbar navbar-expand-md navbar-dark d-print-none">
+  <div class="container-xl">
+    <a class="navbar-brand" href="/index.html">AI 短剧工坊</a>
+    <div class="navbar-nav flex-row order-md-last">
+      <div class="nav-item d-none d-md-flex me-2">
+        <span class="text-secondary small align-self-center">编剧助手</span>
+      </div>
+    </div>
+    <div class="collapse navbar-collapse show" id="navbar-menu">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="/index.html">控制台首页</a></li>
+        <li class="nav-item"><a class="nav-link" href="/storyboard.html">分镜板</a></li>
+        <li class="nav-item"><a class="nav-link" href="/tasks.html">任务队列</a></li>
+        <li class="nav-item"><a class="nav-link" href="/finals.html">成片库</a></li>
+        <li class="nav-item"><a class="nav-link" href="/pipeline.html">生产看板</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/chat.html">AI 对话</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="page-wrapper">
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">编剧助手 · SCREENWRITER</div>
+          <h2 class="page-title">AI 对话</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="container-xl">
+      <div class="alert alert-warning" role="alert">
+        对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="row g-2 w-100">
+            <div class="col-md-6">
+              <label class="form-label">项目</label>
+              <select id="projectSelect" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">目标剧集（确认落库用）</label>
+              <select id="episodeSelect" class="form-select"></select>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="chatLog" class="mb-3" style="min-height:320px; max-height:52vh; overflow-y:auto;"></div>
+
+          <div class="mb-3 d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-sm chip" data-text="写一个3镜小剧本">写一个3镜小剧本</button>
+            <button type="button" class="btn btn-sm chip" data-text="把上面的剧本拆成…">把上面的剧本拆成…</button>
+            <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词">优化第1镜的视频提示词</button>
+          </div>
+
+          <div class="mb-2">
+            <textarea id="chatInput" class="form-control" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-secondary small">Ctrl + Enter 发送</span>
+            <button id="sendBtn" class="btn btn-primary">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.6.1/dist/js/tabler.min.js"></script>
+<script src="/chat.js"></script>
+</body>
+</html>

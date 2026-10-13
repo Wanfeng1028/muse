@@ -48,4 +48,15 @@ public class PipelineController {
     public List<Records.PipelineProjectView> getAllPipelines() {
         return pipelineService.listAllPipelines();
     }
+
+    /**
+     * 获取指定项目的生产统计：分镜完成率、任务成功率、累计渲染时长。
+     *
+     * @param projectId 项目 ID
+     * @return 生产统计视图
+     */
+    @GetMapping("/projects/{projectId}/stats")
+    public Records.ProductionStatsResponse getProductionStats(@PathVariable Long projectId) {
+        return pipelineService.getProductionStats(projectId);
+    }
 }

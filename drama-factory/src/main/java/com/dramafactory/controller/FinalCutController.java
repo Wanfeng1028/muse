@@ -2,11 +2,13 @@ package com.dramafactory.controller;
 
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.FinalCutService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -63,5 +65,18 @@ public class FinalCutController {
     @GetMapping("/final-cuts/{id}")
     public Records.FinalCutResponse getFinalCut(@PathVariable Long id) {
         return finalCutService.get(id);
+    }
+
+    /**
+     * 成片人工质检：通过（APPROVED）→ 剧集 REVIEWED；打回（REJECTED）→ 剧集回退 SCRIPTED 返工。
+     *
+     * @param id      成片 ID
+     * @param request 质检结论与备注
+     * @return 更新后的成片详情
+     */
+    @PostMapping("/final-cuts/{id}/qc")
+    public Records.FinalCutResponse qcFinalCut(@PathVariable Long id,
+                                               @Valid @RequestBody Records.QcRequest request) {
+        return finalCutService.qc(id, request);
     }
 }

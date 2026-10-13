@@ -1,0 +1,155 @@
+(function () {
+  'use strict';
+
+  var params = new URLSearchParams(window.location.search);
+  var qcId = params.get('id');
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  async function api(path, options) {
+    var res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...(options || {})
+    });
+    var data = null;
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = null;
+    }
+    if (!res.ok) {
+      throw new Error((data && data.message) || '请求失败');
+    }
+    return data;
+  }
+
+  var toastTimer = null;
+  function showToast(message) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.remove('show');
+    }, 2600);
+  }
+
+  function toTimecode(seconds) {
+    if (seconds === null || seconds === undefined || isNaN(seconds)) return '-';
+    var s = Math.max(0, Math.floor(Number(seconds)));
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' + m : '' + m) + ':' + (sec < 10 ? '0' + sec : '' + sec);
+  }
+
+  function statusBadge(status) {
+    switch (status) {
+      case 'PENDING':
+        return { cls: 'bg-yellow-lt', text: '待质检' };
+      case 'APPROVED':
+        return { cls: 'bg-green-lt', text: '已通过' };
+      case 'REJECTED':
+        return { cls: 'bg-red-lt', text: '已打回' };
+      default:
+        return { cls: 'bg-secondary-lt', text: status || '未知' };
+    }
+  }
+
+  var current = null;
+
+  async function loadQc() {
+    if (!qcId) {
+      showToast('缺少成片 ID');
+      return;
+    }
+    try {
+      var data = await api('/api/final-cuts/' + encodeURIComponent(qcId));
+      current = data;
+
+      var titleEl = document.getElementById('qcTitle');
+      titleEl.textContent = data.title || ('成片 #' + qcId);
+
+      var badgeEl = document.getElementById('qcStatusBadge');
+      var badge = statusBadge(data.qcStatus);
+      badgeEl.className = 'badge ' + badge.cls;
+      badgeEl.textContent = badge.text;
+
+      document.getElementById('qcDuration').textContent = toTimecode(data.durationSeconds);
+      document.getElementById('qcCreated').textContent = data.createdAt
+        ? new Date(data.createdAt).toLocaleString('zh-CN')
+        : '-';
+      document.getElementById('qcEpisode').textContent = data.episodeId
+        ? ('剧集 #' + data.episodeId)
+        : '-';
+
+      var video = document.getElementById('qcVideo');
+      video.src = '/media/finals/' + encodeURIComponent(qcId);
+
+      var form = document.getElementById('qcForm');
+      var noteView = document.getElementById('qcNoteView');
+      var noteText = document.getElementById('qcNoteText');
+
+      if (data.qcStatus && data.qcStatus !== 'PENDING') {
+        form.style.display = 'none';
+        noteView.style.display = '';
+        noteText.textContent = data.qcNote ? data.qcNote : '（无备注）';
+      } else {
+        form.style.display = '';
+        noteView.style.display = 'none';
+        document.getElementById('qcNote').value = data.qcNote || '';
+      }
+    } catch (err) {
+      showToast(err.message || '加载失败');
+    }
+  }
+
+  async function submitVerdict(verdict) {
+    if (!qcId) {
+      showToast('缺少成片 ID');
+      return;
+    }
+    var noteEl = document.getElementById('qcNote');
+    var note = noteEl ? noteEl.value.trim() : '';
+    try {
+      await api('/api/final-cuts/' + encodeURIComponent(qcId) + '/qc', {
+        method: 'POST',
+        body: JSON.stringify({ verdict: verdict, note: note })
+      });
+      showToast(verdict === 'APPROVED' ? '已通过质检' : '已打回');
+      await loadQc();
+    } catch (err) {
+      showToast(err.message || '操作失败');
+    }
+  }
+
+  function init() {
+    var approveBtn = document.getElementById('approveBtn');
+    var rejectBtn = document.getElementById('rejectBtn');
+    if (approveBtn) {
+      approveBtn.addEventListener('click', function () {
+        submitVerdict('APPROVED');
+      });
+    }
+    if (rejectBtn) {
+      rejectBtn.addEventListener('click', function () {
+        submitVerdict('REJECTED');
+      });
+    }
+    loadQc();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

@@ -26,6 +26,7 @@
           <li class="nav-item"><a class="nav-link" href="/tasks.html">任务队列</a></li>
           <li class="nav-item"><a class="nav-link" href="/finals.html">成片库</a></li>
           <li class="nav-item"><a class="nav-link" href="/pipeline.html">生产看板</a></li>
+          <li class="nav-item"><a class="nav-link" href="/chat.html">AI 对话</a></li>
         </ul>
       </div>
     </div>
@@ -66,6 +67,7 @@
 
         <div class="mb-3 d-flex flex-wrap gap-2">
           <button id="addBtn" class="btn btn-primary">添加分镜</button>
+          <button id="fromScriptBtn" class="btn btn-outline-primary">从剧本生成分镜</button>
           <button id="submitAllBtn" class="btn btn-outline-secondary">全部提交</button>
           <button id="refreshBtn" class="btn btn-ghost-secondary">刷新</button>
         </div>
@@ -117,6 +119,29 @@
         </div>
 
         <div id="slateGrid" class="datagrid"></div>
+
+        <div class="modal modal-blur fade" id="scriptModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">从剧本生成分镜</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label" for="scriptText">剧本原文</label>
+                  <textarea id="scriptText" class="form-control" rows="10"
+                    placeholder="粘贴剧本原文，AI 将按起承转合拆成结构化分镜（镜号/景别/运镜/画面/时长/对白/提示词），并替换本集现有分镜。"></textarea>
+                </div>
+                <div id="scriptError" class="text-danger"></div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="scriptSubmitBtn">AI 拆分并落库</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>

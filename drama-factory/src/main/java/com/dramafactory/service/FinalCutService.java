@@ -34,6 +34,7 @@ public class FinalCutService {
     private final VideoTaskRepository videoTaskRepository;
     private final SubtitleService subtitleService;
     private final FfmpegService ffmpegService;
+    private final EpisodeStatusFlowService episodeStatusFlowService;
     private final String storageDir;
 
     /**
@@ -45,6 +46,7 @@ public class FinalCutService {
                            VideoTaskRepository videoTaskRepository,
                            SubtitleService subtitleService,
                            FfmpegService ffmpegService,
+                           EpisodeStatusFlowService episodeStatusFlowService,
                            @Value("${drama.storage:./data/media}") String storageDir) {
         this.finalCutRepository = finalCutRepository;
         this.episodeRepository = episodeRepository;
@@ -52,6 +54,7 @@ public class FinalCutService {
         this.videoTaskRepository = videoTaskRepository;
         this.subtitleService = subtitleService;
         this.ffmpegService = ffmpegService;
+        this.episodeStatusFlowService = episodeStatusFlowService;
         this.storageDir = storageDir;
     }
 
@@ -146,6 +149,35 @@ public class FinalCutService {
     }
 
     /**
+     * 成片质检：通过 → 剧集 REVIEWED；打回 → 剧集回退到 SCRIPTED（返工重拍），打回原因记在成片上。
+     * verdict 只能是 APPROVED 或 REJECTED。
+     */
+    @Transactional
+    public Records.FinalCutResponse qc(Long id, Records.QcRequest req) {
+        FinalCut fc = finalCutRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("FinalCut", id));
+        if (fc.getStatus() != FinalCutStatus.READY) {
+            throw new IllegalStateException("成片尚未完成，无法质检");
+        }
+        String verdict = req.verdict() == null ? "" : req.verdict().trim().toUpperCase();
+        if (!"APPROVED".equals(verdict) && !"REJECTED".equals(verdict)) {
+            throw new IllegalArgumentException("verdict 只能是 APPROVED 或 REJECTED");
+        }
+        fc.setQcStatus(verdict);
+        fc.setQcNote(req.note());
+        fc.setQcAt(java.time.LocalDateTime.now());
+        finalCutRepository.save(fc);
+
+        Long episodeId = fc.getEpisode().getId();
+        if ("APPROVED".equals(verdict)) {
+            episodeStatusFlowService.markQcApproved(episodeId);
+        } else {
+            episodeStatusFlowService.markQcRejected(episodeId, req.note());
+        }
+        return toResponse(fc);
+    }
+
+    /**
      * 实体 → DTO 映射。
      */
     private Records.FinalCutResponse toResponse(FinalCut fc) {
@@ -163,6 +195,9 @@ public class FinalCutService {
                 fc.getStatus() == null ? null : fc.getStatus().getLabel(),
                 fc.getDurationSeconds(),
                 fc.getErrorMessage(),
+                fc.getQcStatus(),
+                fc.getQcNote(),
+                fc.getQcAt(),
                 fc.getCreatedAt(),
                 fc.getUpdatedAt()
         );

@@ -114,8 +114,29 @@
     });
   }
 
+  function loadStats() {
+    if (!state.projectId) return Promise.resolve();
+    return api('/api/projects/' + encodeURIComponent(state.projectId) + '/stats').then(function (s) {
+      var shotRate = document.getElementById('statShotRate');
+      var shotDetail = document.getElementById('statShotDetail');
+      var taskRate = document.getElementById('statTaskRate');
+      var taskDetail = document.getElementById('statTaskDetail');
+      var renderTime = document.getElementById('statRenderTime');
+      if (shotRate) shotRate.textContent = Math.round((s.shotCompletionRate || 0) * 100) + '%';
+      if (shotDetail) shotDetail.textContent = '分镜完成率（' + (s.shotsCompleted || 0) + '/' + (s.shotCount || 0) + '）';
+      if (taskRate) taskRate.textContent = Math.round((s.taskSuccessRate || 0) * 100) + '%';
+      if (taskDetail) taskDetail.textContent = '任务成功率（' + (s.tasksDone || 0) + ' 成功/' + (s.tasksFailed || 0) + ' 失败）';
+      if (renderTime) {
+        var secs = s.totalRenderSeconds || 0;
+        renderTime.textContent = Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0');
+      }
+    }).catch(function (err) {
+      toast('加载统计失败：' + err.message);
+    });
+  }
+
   function refreshAll() {
-    return loadProjects().then(loadPipeline);
+    return loadProjects().then(loadPipeline).then(loadStats);
   }
 
   function renderPipeline() {
@@ -266,7 +287,7 @@
     if (sel) {
       sel.addEventListener('change', function () {
         state.projectId = sel.value;
-        loadPipeline();
+        loadPipeline().then(loadStats);
       });
     }
 

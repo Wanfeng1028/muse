@@ -37,6 +37,16 @@ function statusBadge(status) {
   return map[status] || "badge bg-secondary-lt";
 }
 
+function qcBadge(qcStatus) {
+  const map = {
+    PENDING: ["badge bg-yellow-lt", "待质检"],
+    APPROVED: ["badge bg-green-lt", "已通过"],
+    REJECTED: ["badge bg-red-lt", "已打回"],
+  };
+  const hit = map[qcStatus];
+  return hit || ["badge bg-secondary-lt", qcStatus || "未知"];
+}
+
 function statusNote(status) {
   if (status === "BUILDING") return "正在剪辑生成中，请稍候…";
   if (status === "FAILED") return "生成失败，请重试。";
@@ -267,6 +277,18 @@ function renderFinals() {
       dl.setAttribute("download", "");
       dl.textContent = "下载 MP4";
       actions.appendChild(dl);
+
+      const qcLink = document.createElement("a");
+      qcLink.className = "btn btn-sm btn-outline-warning";
+      qcLink.href = "/qc.html?id=" + fc.id;
+      const qcInfo = qcBadge(fc.qcStatus);
+      qcLink.textContent = fc.qcStatus === "PENDING" ? "去质检" : "查看质检";
+      actions.appendChild(qcLink);
+
+      const qcBadgeEl = document.createElement("span");
+      qcBadgeEl.className = qcInfo[0] + " ms-1";
+      qcBadgeEl.textContent = qcInfo[1];
+      meta.appendChild(qcBadgeEl);
     }
 
     body.appendChild(actions);

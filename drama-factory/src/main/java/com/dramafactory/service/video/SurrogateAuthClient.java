@@ -37,14 +37,13 @@ public class SurrogateAuthClient {
     /** 允许请求的 host 白名单。 */
     private static final Set<String> ALLOWED_HOSTS = Set.of(
             "apihub.agnes-ai.com",
-            "apihub.agens-ai.com"
+            "apihub.agens-ai.com",
+            "chatapi.weixin.qq.com",
+            "dashscope.aliyuncs.com"
     );
 
-    /** 凭证名称，用于请求体与响应匹配。 */
-    private static final String CREDENTIAL_NAME = "custom.agnes-ai";
-
-    /** 请求体（固定内容）。 */
-    private static final String REQUEST_BODY = "{\"name\":\"" + CREDENTIAL_NAME + "\"}";
+    /** 默认凭证名称（Agnes），保持原有单参数方法的行为不变。 */
+    private static final String DEFAULT_CREDENTIAL_NAME = "custom.agnes-ai";
 
     /** bearer_header 放置方式的标识。 */
     private static final String PLACEMENT_BEARER_HEADER = "bearer_header";
@@ -75,8 +74,23 @@ public class SurrogateAuthClient {
      * @throws IllegalArgumentException 当 url 为 null、无法解析或 host 不在白名单时抛出
      */
     public Map.Entry<String, String> authHeader(String url) {
+        return authHeader(url, DEFAULT_CREDENTIAL_NAME);
+    }
+
+    /**
+     * 根据目标 URL 与指定凭证名称获取认证头。
+     *
+     * @param url            目标请求地址
+     * @param credentialName authd 中的凭证名称，例如 custom.qwen-cloud-cn、custom.weixin-chatapi
+     * @return 头名称到取值的映射条目
+     * @throws IllegalArgumentException 当 url 为 null、无法解析、host 不在白名单或 credentialName 为空时抛出
+     */
+    public Map.Entry<String, String> authHeader(String url, String credentialName) {
         if (url == null || url.isBlank()) {
             throw new IllegalArgumentException("url 不能为空");
+        }
+        if (credentialName == null || credentialName.isBlank()) {
+            throw new IllegalArgumentException("credentialName 不能为空");
         }
         String host;
         try {
@@ -87,21 +101,22 @@ public class SurrogateAuthClient {
         if (host == null || !ALLOWED_HOSTS.contains(host)) {
             throw new IllegalArgumentException("url 的 host 不在白名单内: " + host);
         }
-        return requestSurrogateHeader();
+        return requestSurrogateHeader(credentialName);
     }
 
     /**
-     * 通过 Unix socket 向 authd 请求 surrogate，并构造认证头。
+     * 通过 Unix socket 向 authd 请求指定凭证的 surrogate，并构造认证头。
      *
+     * @param credentialName authd 中的凭证名称
      * @return 头名称与头值组成的条目
      */
-    private Map.Entry<String, String> requestSurrogateHeader() {
+    private Map.Entry<String, String> requestSurrogateHeader(String credentialName) {
         String socketPath = System.getenv(SOCKET_ENV);
         if (socketPath == null || socketPath.isBlank()) {
             socketPath = DEFAULT_SOCKET_PATH;
         }
 
-        String rawResponse = exchange(socketPath);
+        String rawResponse = exchange(socketPath, credentialName);
         HttpResponse parsed = parseHttpResponse(rawResponse);
 
         if (parsed.statusCode != 200) {
@@ -117,9 +132,10 @@ public class SurrogateAuthClient {
      * @param socketPath socket 路径
      * @return 原始 HTTP 响应字符串（ISO-8859-1 解码，保留字节完整性）
      */
-    private String exchange(String socketPath) {
+    private String exchange(String socketPath, String credentialName) {
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
-        byte[] bodyBytes = REQUEST_BODY.getBytes(StandardCharsets.UTF_8);
+        String body = "{\"name\":\"" + credentialName + "\"}";
+        byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
 
         StringBuilder headerBuilder = new StringBuilder();
         headerBuilder.append("POST /v1/credentials/surrogate HTTP/1.1\r\n");

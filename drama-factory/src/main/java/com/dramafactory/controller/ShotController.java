@@ -1,6 +1,7 @@
 package com.dramafactory.controller;
 
 import com.dramafactory.dto.Records;
+import com.dramafactory.service.ScriptSplitterService;
 import com.dramafactory.service.ShotService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,14 +26,14 @@ import java.util.List;
 public class ShotController {
 
     private final ShotService shotService;
+    private final ScriptSplitterService scriptSplitterService;
 
     /**
-     * 构造器注入分镜服务。
-     *
-     * @param shotService 分镜服务
+     * 构造器注入分镜服务与剧本拆分服务。
      */
-    public ShotController(ShotService shotService) {
+    public ShotController(ShotService shotService, ScriptSplitterService scriptSplitterService) {
         this.shotService = shotService;
+        this.scriptSplitterService = scriptSplitterService;
     }
 
     /**
@@ -83,6 +84,39 @@ public class ShotController {
     public ResponseEntity<Void> deleteShot(@PathVariable Long id) {
         shotService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 从剧本原文 AI 拆分分镜：粘贴剧本 → 大模型拆成结构化分镜 → 落库（替换该剧集旧分镜）。
+     *
+     * @param episodeId 剧集 ID
+     * @param request   剧本原文
+     * @return 新建的分镜列表
+     */
+    @PostMapping("/episodes/{episodeId}/shots/from-script")
+    public ResponseEntity<List<Records.ShotResponse>> splitFromScript(
+            @PathVariable Long episodeId,
+            @Valid @RequestBody Records.ScriptSplitRequest request) {
+        List<Records.ShotResponse> result =
+                scriptSplitterService.splitFromScript(episodeId, request.scriptText());
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    /**
+     * 批量落库分镜（替换该剧集全部旧分镜）：供"AI 对话"页使用，
+     * 用户在对话里逐镜调整确认后，前端把最终分镜数组直接发过来落库。
+     *
+     * @param episodeId 剧集 ID
+     * @param request   确认后的分镜列表（景别/运镜为中文标签）
+     * @return 新建的分镜列表
+     */
+    @PostMapping("/episodes/{episodeId}/shots/batch")
+    public ResponseEntity<List<Records.ShotResponse>> replaceShots(
+            @PathVariable Long episodeId,
+            @Valid @RequestBody Records.ShotBatchRequest request) {
+        List<Records.ShotResponse> result =
+                scriptSplitterService.replaceShots(episodeId, request.shots());
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     /**

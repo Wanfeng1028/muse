@@ -52,6 +52,20 @@ public class FinalCut {
     @Column(length = 2000)
     private String errorMessage;
 
+    /**
+     * 质检状态：PENDING（待质检）、APPROVED（通过）、REJECTED（打回）。
+     * 新建成片默认为 PENDING。
+     */
+    @Column(length = 20)
+    private String qcStatus;
+
+    /** 质检备注 / 打回原因 */
+    @Column(length = 2000)
+    private String qcNote;
+
+    /** 质检时间 */
+    private LocalDateTime qcAt;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 
@@ -62,12 +76,15 @@ public class FinalCut {
     public FinalCut() {
     }
 
-    /** 持久化前自动填充创建时间与更新时间 */
+    /** 持久化前自动填充创建时间与更新时间，新建时质检状态默认为待质检 */
     @PrePersist
     public void onCreate() {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        if (this.qcStatus == null) {
+            this.qcStatus = "PENDING";
+        }
     }
 
     /** 更新前自动刷新更新时间 */
@@ -130,6 +147,30 @@ public class FinalCut {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    public String getQcStatus() {
+        return qcStatus;
+    }
+
+    public void setQcStatus(String qcStatus) {
+        this.qcStatus = qcStatus;
+    }
+
+    public String getQcNote() {
+        return qcNote;
+    }
+
+    public void setQcNote(String qcNote) {
+        this.qcNote = qcNote;
+    }
+
+    public LocalDateTime getQcAt() {
+        return qcAt;
+    }
+
+    public void setQcAt(LocalDateTime qcAt) {
+        this.qcAt = qcAt;
     }
 
     public LocalDateTime getCreatedAt() {

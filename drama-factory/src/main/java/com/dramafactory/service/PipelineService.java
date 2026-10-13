@@ -49,8 +49,7 @@ public class PipelineService {
      * @return 项目维度的聚合视图
      */
     @Transactional(readOnly = true)
-    public Records.PipelineProjectView getProjectPipeline(Long projectId) {
-        // 查询项目，不存在则抛出异常
+    public Records.PipelineProjectView getProjectPipeline(Long projectId) {        // 查询项目，不存在则抛出异常
         DramaProject project = dramaProjectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("DramaProject", projectId));
 
@@ -64,6 +63,60 @@ public class PipelineService {
         }
 
         return new Records.PipelineProjectView(project.getId(), project.getTitle(), episodeViews);
+    }
+
+    /**
+     * 获取单个项目的生产统计：分镜完成率、任务成功率、累计渲染时长。
+     *
+     * @param projectId 项目 ID
+     * @return 生产统计视图
+     */
+    @Transactional(readOnly = true)
+    public Records.ProductionStatsResponse getProductionStats(Long projectId) {
+        // 项目不存在则抛异常
+        dramaProjectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("DramaProject", projectId));
+
+        List<Episode> episodes = episodeRepository.findByProjectIdOrderByEpisodeNoAsc(projectId);
+
+        long shotCount = 0;
+        long shotsCompleted = 0;
+        long tasksDone = 0;
+        long tasksFailed = 0;
+        long totalRenderSeconds = 0;
+
+        for (Episode episode : episodes) {
+            Long episodeId = episode.getId();
+            List<com.dramafactory.model.Shot> shots =
+                    shotRepository.findByEpisodeIdOrderByShotNoAsc(episodeId);
+            shotCount += shots.size();
+            for (com.dramafactory.model.Shot shot : shots) {
+                boolean done = videoTaskRepository.findFirstByShotIdOrderByIdDesc(shot.getId())
+                        .map(t -> t.getStatus() == com.dramafactory.model.VideoTaskStatus.DONE)
+                        .orElse(false);
+                if (done) {
+                    shotsCompleted++;
+                    if (shot.getDurationSeconds() != null) {
+                        totalRenderSeconds += shot.getDurationSeconds();
+                    }
+                }
+            }
+            for (VideoTask task : videoTaskRepository.findByEpisodeId(episodeId)) {
+                if (task.getStatus() == com.dramafactory.model.VideoTaskStatus.DONE) {
+                    tasksDone++;
+                } else if (task.getStatus() == com.dramafactory.model.VideoTaskStatus.FAILED) {
+                    tasksFailed++;
+                }
+            }
+        }
+
+        double shotCompletionRate = shotCount == 0 ? 0.0 : (double) shotsCompleted / shotCount;
+        long decided = tasksDone + tasksFailed;
+        double taskSuccessRate = decided == 0 ? 0.0 : (double) tasksDone / decided;
+
+        return new Records.ProductionStatsResponse(
+                projectId, shotCount, shotsCompleted, shotCompletionRate,
+                tasksDone, tasksFailed, taskSuccessRate, totalRenderSeconds);
     }
 
     /**

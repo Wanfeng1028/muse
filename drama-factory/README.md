@@ -67,6 +67,12 @@ ffmpeg 剪辑（按镜号拼接 + SRT 字幕烧录）
 ### 生产看板
 ![生产看板](docs/screenshots/pipeline.png)
 
+### AI 对话
+![AI 对话](docs/screenshots/chat.png)
+
+### 成片质检
+![成片质检](docs/screenshots/qc.png)
+
 ## 技术栈
 
 | 类别 | 选型 |
