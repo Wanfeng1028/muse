@@ -6,14 +6,38 @@
  * @param {object} opts fetch 选项
  * @returns {Promise<any>}
  */
-async function api(path, opts = {}) {
-  const res = await fetch(path, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {})
-    },
-    ...opts
-  });
+// API Token：首次 401 时弹窗索取，存 sessionStorage。
+function sentinelToken() {
+  return sessionStorage.getItem('sentinel_token') || '';
+}
+
+function askSentinelToken() {
+  if (typeof window.__sentinelAskToken === 'function') {
+    return window.__sentinelAskToken();
+  }
+  const t = prompt('需要 API Token 才能访问（SENTINEL_API_TOKEN），请输入：');
+  if (t) sessionStorage.setItem('sentinel_token', t.trim());
+  return Promise.resolve();
+}
+window.__sentinelAskToken = window.__sentinelAskToken || null;
+
+async function api(path, opts = {}, _retried) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(opts.headers || {})
+  };
+  const token = sentinelToken();
+  // 公开状态页接口不带 token
+  if (token && !path.startsWith('/api/status/')) {
+    headers['Authorization'] = 'Bearer ' + token;
+  }
+  const res = await fetch(path, { ...opts, headers });
+
+  if (res.status === 401 && !_retried && !path.startsWith('/api/status/')) {
+    const r = askSentinelToken();
+    if (r && r.then) await r;
+    if (sentinelToken()) return api(path, opts, true);
+  }
 
   if (!res.ok) {
     let msg = String(res.status);

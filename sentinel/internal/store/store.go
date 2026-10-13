@@ -1,4 +1,4 @@
-// Package store 提供 Sentinel 监控系统所有数据表（monitors/checks/incidents）
+// Package store 提供 Sentinel 监控系统所有数据表（monitors/checks/incidents/users/tenants）
 // 的持久化访问接口，基于 database/sql 与 SQLite。
 package store
 
@@ -19,6 +19,8 @@ type Monitor struct {
 	TimeoutSec     int
 	IntervalSec    int
 	Enabled        int
+	TenantID       int64
+	IsPublic       int
 	WebhookURL     string
 	CreatedAt      string
 	UpdatedAt      string
@@ -47,6 +49,15 @@ type Incident struct {
 	MonitorName string
 }
 
+// User 对应 users 表的一行记录。
+type User struct {
+	ID        int64
+	TenantID  int64
+	Name      string
+	TokenHash string
+	CreatedAt string
+}
+
 // Store 封装所有数据库操作。
 type Store struct {
 	db *sql.DB
@@ -67,10 +78,10 @@ func (s *Store) CreateMonitor(m Monitor) (int64, error) {
 	now := utcNow()
 	res, err := s.db.Exec(
 		`INSERT INTO monitors
-			(name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, webhook_url, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			(name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Kind, m.Target, m.Method, m.ExpectedStatus, m.TimeoutSec,
-		m.IntervalSec, m.Enabled, m.WebhookURL, now, now,
+		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, now, now,
 	)
 	if err != nil {
 		return 0, err
@@ -82,10 +93,11 @@ func (s *Store) CreateMonitor(m Monitor) (int64, error) {
 func (s *Store) GetMonitor(id int64) (Monitor, error) {
 	var m Monitor
 	err := s.db.QueryRow(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, webhook_url, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at
 		 FROM monitors WHERE id = ?`, id,
 	).Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
-		&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.WebhookURL, &m.CreatedAt, &m.UpdatedAt)
+		&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
+		&m.WebhookURL, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Monitor{}, sql.ErrNoRows
@@ -98,7 +110,7 @@ func (s *Store) GetMonitor(id int64) (Monitor, error) {
 // ListMonitors 按 id 升序返回全部 monitor。
 func (s *Store) ListMonitors() ([]Monitor, error) {
 	rows, err := s.db.Query(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, webhook_url, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at
 		 FROM monitors ORDER BY id ASC`)
 	if err != nil {
 		return nil, err
@@ -109,7 +121,34 @@ func (s *Store) ListMonitors() ([]Monitor, error) {
 	for rows.Next() {
 		var m Monitor
 		if err := rows.Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
-			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.WebhookURL, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
+			&m.WebhookURL, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ListMonitorsByTenant 按 id 升序返回指定租户下的全部 monitor。
+func (s *Store) ListMonitorsByTenant(tenantID int64) ([]Monitor, error) {
+	rows, err := s.db.Query(
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at
+		 FROM monitors WHERE tenant_id = ? ORDER BY id ASC`, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []Monitor
+	for rows.Next() {
+		var m Monitor
+		if err := rows.Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
+			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
+			&m.WebhookURL, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -125,10 +164,10 @@ func (s *Store) UpdateMonitor(id int64, m Monitor) error {
 	res, err := s.db.Exec(
 		`UPDATE monitors SET
 			name = ?, kind = ?, target = ?, method = ?, expected_status = ?, timeout_sec = ?,
-			interval_sec = ?, enabled = ?, webhook_url = ?, updated_at = ?
+			interval_sec = ?, enabled = ?, tenant_id = ?, is_public = ?, webhook_url = ?, updated_at = ?
 		 WHERE id = ?`,
 		m.Name, m.Kind, m.Target, m.Method, m.ExpectedStatus, m.TimeoutSec,
-		m.IntervalSec, m.Enabled, m.WebhookURL, utcNow(), id,
+		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, utcNow(), id,
 	)
 	if err != nil {
 		return err
@@ -406,4 +445,53 @@ func (s *Store) CheckCount(monitorID int64) (int, error) {
 		return 0, err
 	}
 	return n, nil
+}
+
+// CreateUser 插入一条 user 记录，自动填充 created_at，返回自增 ID。
+func (s *Store) CreateUser(tenantID int64, name, tokenHash string) (int64, error) {
+	res, err := s.db.Exec(
+		`INSERT INTO users (tenant_id, name, token_hash, created_at) VALUES (?, ?, ?, ?)`,
+		tenantID, name, tokenHash, utcNow(),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+// ListUsers 按 id 升序返回全部 user。
+func (s *Store) ListUsers() ([]User, error) {
+	rows, err := s.db.Query(
+		`SELECT id, tenant_id, name, token_hash, created_at FROM users ORDER BY id ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.TenantID, &u.Name, &u.TokenHash, &u.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// EnsureDefaultTenant 保证默认租户（id=1, name='default'）存在，幂等。
+// tenants 表 COUNT=0 时插入；已存在则不重复插入。
+func (s *Store) EnsureDefaultTenant() error {
+	var n int
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM tenants`).Scan(&n); err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	_, err := s.db.Exec(`INSERT OR IGNORE INTO tenants (id, name) VALUES (1, 'default')`)
+	return err
 }

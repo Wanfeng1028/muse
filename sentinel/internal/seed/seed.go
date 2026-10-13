@@ -23,6 +23,7 @@ func EnsureSeed(s *store.Store) {
 
 	examples := []store.Monitor{
 		{
+			TenantID:       1,
 			Name:           "示例站点",
 			Kind:           "http",
 			Target:         "https://example.com",
@@ -36,6 +37,7 @@ func EnsureSeed(s *store.Store) {
 			UpdatedAt:      now,
 		},
 		{
+			TenantID:       1,
 			Name:           "示例 TCP 端口",
 			Kind:           "tcp",
 			Target:         "example.com:80",

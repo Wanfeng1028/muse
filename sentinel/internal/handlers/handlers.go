@@ -7,32 +7,43 @@ import (
 	"encoding/json"
 	"errors"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"sentinel/internal/log"
+	"sentinel/internal/metrics"
+	"sentinel/internal/middleware"
 	"sentinel/internal/scheduler"
 	"sentinel/internal/store"
 	"sentinel/internal/web"
 )
 
-// Server 持有 store 与 scheduler 依赖。
+// Server 持有 store、scheduler 与认证中间件依赖。
 type Server struct {
-	store *store.Store
-	sched *scheduler.Scheduler
+	store        *store.Store
+	sched        *scheduler.Scheduler
+	auth         *middleware.Auth
+	checkRetries int
 }
 
 // New 构造 Server。
-func New(st *store.Store, sc *scheduler.Scheduler) *Server {
-	return &Server{store: st, sched: sc}
+func New(st *store.Store, sc *scheduler.Scheduler, checkRetries int) *Server {
+	return &Server{store: st, sched: sc, auth: middleware.NewAuth(st), checkRetries: checkRetries}
 }
 
-// Routes 返回全部路由。
+// Routes 返回全部路由（含中间件链）。
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 
-	// 健康检查
+	// 健康检查与运维端点
 	mux.HandleFunc("GET /api/health", s.handleHealth)
+	mux.HandleFunc("GET /healthz", s.handleHealthz)
+	mux.HandleFunc("GET /api/healthz", s.handleHealthz)
+	mux.HandleFunc("GET /readyz", s.handleReadyz)
+	mux.HandleFunc("GET /api/readyz", s.handleReadyz)
+	mux.HandleFunc("GET /api/metrics", s.handleMetrics)
 
 	// 监控目标
 	mux.HandleFunc("GET /api/monitors", s.handleListMonitors)
@@ -52,13 +63,21 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /{$}", s.handleIndex)
 	mux.HandleFunc("GET /monitors", s.handleMonitorsPage)
 	mux.HandleFunc("GET /incidents", s.handleIncidentsPage)
+	mux.HandleFunc("GET /profile", s.handleProfilePage)
+	mux.HandleFunc("GET /status/{slug}", s.handleStatusPage)
 	subStatic, err := fs.Sub(web.FS, "static")
 	if err != nil {
 		panic(err)
 	}
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(subStatic))))
 
-	return mux
+	s.RegisterSoulRoutes(mux)
+
+	// 中间件链：RequestID -> Logging -> Auth -> mux
+	exact := []string{"/healthz", "/readyz", "/api/healthz", "/api/readyz", "/api/health",
+		"/", "/monitors", "/incidents", "/profile"}
+	prefix := []string{"/api/status/", "/status/", "/static/"}
+	return middleware.RequestID(middleware.Logging(s.auth.Middleware(exact, prefix)(mux)))
 }
 
 // ---------- 通用辅助 ----------
@@ -83,6 +102,15 @@ func parseID(r *http.Request) (int64, bool) {
 		return 0, false
 	}
 	return id, true
+}
+
+// logErr 记录错误日志，统一携带 request_id、handler 与 err。
+func logErr(r *http.Request, handler string, err error) {
+	slog.Error("handler error",
+		"request_id", log.RequestIDFrom(r.Context()),
+		"handler", handler,
+		"err", err,
+	)
 }
 
 // monitorInput 是创建/更新监控目标的请求体。
@@ -219,6 +247,8 @@ func monitorJSON(m store.Monitor) map[string]interface{} {
 		"interval_sec":    m.IntervalSec,
 		"enabled":         m.Enabled,
 		"webhook_url":     m.WebhookURL,
+		"tenant_id":       m.TenantID,
+		"is_public":       m.IsPublic,
 		"created_at":      m.CreatedAt,
 		"updated_at":      m.UpdatedAt,
 	}
@@ -249,15 +279,58 @@ func (s *Server) handleIncidentsPage(w http.ResponseWriter, r *http.Request) {
 	s.serveStaticFile(w, "incidents.html", "text/html; charset=utf-8")
 }
 
+// handleProfilePage 渲染用户资料页。
+func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
+	s.serveStaticFile(w, "profile.html", "text/html; charset=utf-8")
+}
+
+// handleStatusPage 渲染公开状态页，slug 需非空且合法。
+func (s *Server) handleStatusPage(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	if strings.TrimSpace(slug) == "" {
+		logErr(r, "handleStatusPage", errors.New("empty slug"))
+		writeErr(w, http.StatusBadRequest, "无效的状态页标识")
+		return
+	}
+	s.serveStaticFile(w, "status.html", "text/html; charset=utf-8")
+}
+
 // ---------- API 处理器 ----------
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "version": "0.1.0"})
 }
 
+// handleHealthz 简单存活探针。
+func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// handleReadyz 就绪探针，依赖数据库 Ping。
+func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
+	if err := s.store.Ping(); err != nil {
+		logErr(r, "handleReadyz", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not ready"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
+}
+
+// handleMetrics 输出 Prometheus 文本格式指标。
+func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(metrics.Default.RenderPrometheus()))
+}
+
 func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {
-	monitors, err := s.store.ListMonitors()
+	tenantID := middleware.TenantIDFrom(r.Context())
+	if tenantID <= 0 {
+		tenantID = 1
+	}
+	monitors, err := s.store.ListMonitorsByTenant(tenantID)
 	if err != nil {
+		logErr(r, "handleListMonitors", err)
 		writeErr(w, http.StatusInternalServerError, "读取监控列表失败")
 		return
 	}
@@ -286,21 +359,30 @@ func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 	var in monitorInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		logErr(r, "handleCreateMonitor", err)
 		writeErr(w, http.StatusBadRequest, "请求体 JSON 解析失败")
 		return
 	}
 	m := in.toMonitor()
+	if tid := middleware.TenantIDFrom(r.Context()); tid > 0 {
+		m.TenantID = tid
+	} else {
+		m.TenantID = 1
+	}
 	if err := validateMonitor(&m); err != nil {
+		logErr(r, "handleCreateMonitor", err)
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	id, err := s.store.CreateMonitor(m)
 	if err != nil {
+		logErr(r, "handleCreateMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "创建监控失败")
 		return
 	}
 	created, err := s.store.GetMonitor(id)
 	if err != nil {
+		logErr(r, "handleCreateMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "读取新建监控失败")
 		return
 	}
@@ -310,6 +392,7 @@ func (s *Server) handleCreateMonitor(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleGetMonitor(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r)
 	if !ok {
+		logErr(r, "handleGetMonitor", errors.New("invalid monitor id"))
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
@@ -319,6 +402,7 @@ func (s *Server) handleGetMonitor(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleGetMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "读取监控失败")
 		return
 	}
@@ -338,6 +422,7 @@ func (s *Server) handleGetMonitor(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r)
 	if !ok {
+		logErr(r, "handleUpdateMonitor", errors.New("invalid monitor id"))
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
@@ -346,16 +431,24 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleUpdateMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "读取监控失败")
 		return
 	}
 	var in monitorInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		logErr(r, "handleUpdateMonitor", err)
 		writeErr(w, http.StatusBadRequest, "请求体 JSON 解析失败")
 		return
 	}
 	m := in.toMonitor()
+	if tid := middleware.TenantIDFrom(r.Context()); tid > 0 {
+		m.TenantID = tid
+	} else {
+		m.TenantID = 1
+	}
 	if err := validateMonitor(&m); err != nil {
+		logErr(r, "handleUpdateMonitor", err)
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -364,11 +457,13 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleUpdateMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "更新监控失败")
 		return
 	}
 	updated, err := s.store.GetMonitor(id)
 	if err != nil {
+		logErr(r, "handleUpdateMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "读取更新后的监控失败")
 		return
 	}
@@ -378,6 +473,7 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDeleteMonitor(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r)
 	if !ok {
+		logErr(r, "handleDeleteMonitor", errors.New("invalid monitor id"))
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
@@ -386,6 +482,7 @@ func (s *Server) handleDeleteMonitor(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleDeleteMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "删除监控失败")
 		return
 	}
@@ -395,6 +492,7 @@ func (s *Server) handleDeleteMonitor(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleCheckNow(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r)
 	if !ok {
+		logErr(r, "handleCheckNow", errors.New("invalid monitor id"))
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
@@ -403,15 +501,17 @@ func (s *Server) handleCheckNow(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleCheckNow", err)
 		writeErr(w, http.StatusInternalServerError, "读取监控失败")
 		return
 	}
-	c, err := s.sched.CheckNow(id)
+	c, err := s.sched.CheckNow(id, s.checkRetries)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleCheckNow", err)
 		writeErr(w, http.StatusInternalServerError, "执行检查失败")
 		return
 	}
@@ -421,6 +521,7 @@ func (s *Server) handleCheckNow(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleListChecks(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r)
 	if !ok {
+		logErr(r, "handleListChecks", errors.New("invalid monitor id"))
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
@@ -429,6 +530,7 @@ func (s *Server) handleListChecks(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleListChecks", err)
 		writeErr(w, http.StatusInternalServerError, "读取监控失败")
 		return
 	}
@@ -446,6 +548,7 @@ func (s *Server) handleListChecks(w http.ResponseWriter, r *http.Request) {
 	}
 	checks, err := s.store.ListChecks(id, limit)
 	if err != nil {
+		logErr(r, "handleListChecks", err)
 		writeErr(w, http.StatusInternalServerError, "读取检查记录失败")
 		return
 	}
@@ -463,6 +566,7 @@ func (s *Server) handleListChecks(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(r)
 	if !ok {
+		logErr(r, "handleStats", errors.New("invalid monitor id"))
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
@@ -471,6 +575,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
 		}
+		logErr(r, "handleStats", err)
 		writeErr(w, http.StatusInternalServerError, "读取监控失败")
 		return
 	}
@@ -488,6 +593,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	uptime, avgLat, total, downInc, err := s.store.MonitorStats(id, days)
 	if err != nil {
+		logErr(r, "handleStats", err)
 		writeErr(w, http.StatusInternalServerError, "统计失败")
 		return
 	}
@@ -520,6 +626,7 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 	}
 	incidents, err := s.store.ListIncidents(monitorID, limit)
 	if err != nil {
+		logErr(r, "handleListIncidents", err)
 		writeErr(w, http.StatusInternalServerError, "读取事件失败")
 		return
 	}
@@ -549,6 +656,7 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	total, enabled, up, down, unknown, checks24h, incidents7d, err := s.store.Overview()
 	if err != nil {
+		logErr(r, "handleOverview", err)
 		writeErr(w, http.StatusInternalServerError, "概览统计失败")
 		return
 	}

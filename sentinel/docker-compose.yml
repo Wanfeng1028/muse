@@ -1,0 +1,36 @@
+services:
+  sentinel:
+    # 本地构建镜像，Dockerfile 放在仓库根目录
+    build: .
+    container_name: sentinel
+    # 对外暴露 8200，宿主机映射到容器同端口
+    ports:
+      - "8200:8200"
+    volumes:
+      # 数据库和运行数据落盘，容器重建不丢
+      - sentinel-data:/app/data
+      # 自动备份输出目录
+      - sentinel-backups:/app/backups
+    # 从 .env 读取配置，变量缺失时走代码默认值
+    env_file: .env
+    environment:
+      # 容器内必须监听 0.0.0.0，否则宿主机访问不到
+      SENTINEL_HOST: 0.0.0.0
+    # 挂掉自动重启，手动 stop 时不重启
+    restart: unless-stopped
+    # 单实例资源上限，防止检查风暴拖垮宿主机
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    # 日志轮转，避免磁盘被写满
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  sentinel-data:
+  sentinel-backups:

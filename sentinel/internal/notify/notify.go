@@ -3,57 +3,84 @@ package notify
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
+
+	"sentinel/internal/log"
 )
 
-// Notifier 负责发送 webhook 通知
-// WebhookURL 为全局默认的 webhook 地址
+// Notifier 承载全局 Webhook 地址。
 type Notifier struct {
 	WebhookURL string
 }
 
-// Send 发送 webhook 通知
-// webhookURL 非空时优先使用，否则回退到 n.WebhookURL
-// 两者都为空时直接返回
-// 失败仅记录日志，不重试
-func (n Notifier) Send(webhookURL, event, name, target, at, errMsg string) {
+// payload 是发送到 Webhook 的 JSON 结构。
+type payload struct {
+	Event   string `json:"event"`
+	Name    string `json:"name"`
+	Target  string `json:"target"`
+	At      string `json:"at"`
+	ErrMsg  string `json:"err_msg,omitempty"`
+	Service string `json:"service"`
+}
+
+// Send 发送事件通知。monitor 级 webhook 优先，全局回退；两者皆空则跳过。
+// 最多 3 次尝试，退避 1s、2s、4s；最终失败返回 error。
+func (n Notifier) Send(webhookURL, event, name, target, at, errMsg string) error {
 	url := webhookURL
 	if url == "" {
 		url = n.WebhookURL
 	}
 	if url == "" {
-		return
+		return nil
 	}
 
-	// 构造通知负载
-	payload := map[string]string{
-		"event":   event,
-		"monitor": name,
-		"target":  target,
-		"at":      at,
-		"error":   errMsg,
-	}
-
-	// 序列化为 JSON
-	body, err := json.Marshal(payload)
+	body, err := json.Marshal(payload{
+		Event:   event,
+		Name:    name,
+		Target:  target,
+		At:      at,
+		ErrMsg:  errMsg,
+		Service: "sentinel",
+	})
 	if err != nil {
-		log.Printf("notify: 序列化 payload 失败: %v", err)
-		return
+		return fmt.Errorf("序列化通知失败: %w", err)
 	}
 
-	// 5 秒超时的 HTTP 客户端
-	client := http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Post(url, "application/json", bytes.NewReader(body))
-	if err != nil {
-		log.Printf("notify: 发送 webhook 失败 url=%s err=%v", url, err)
-		return
-	}
-	defer resp.Body.Close()
+	client := &http.Client{Timeout: 10 * time.Second}
 
-	// 非 2xx 也记录日志
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		log.Printf("notify: webhook 返回非 2xx url=%s status=%d", url, resp.StatusCode)
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+		if err != nil {
+			return fmt.Errorf("构造通知请求失败: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err == nil {
+			_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
+			_ = resp.Body.Close()
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				return nil
+			}
+			err = fmt.Errorf("非 2xx 状态码: %d", resp.StatusCode)
+		}
+
+		lastErr = err
+		log.Logger().Warn("发送 Webhook 失败",
+			"url", url,
+			"attempt", attempt+1,
+			"error", err,
+		)
+
+		if attempt < 2 {
+			backoff := time.Duration(1<<uint(attempt)) * time.Second
+			time.Sleep(backoff)
+		}
 	}
+
+	return fmt.Errorf("Webhook 发送失败: %w", lastErr)
 }

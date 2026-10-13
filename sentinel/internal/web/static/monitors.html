@@ -565,6 +565,7 @@
           <td class="uptime-cell">${uptimeDisplay}</td>
           <td>
             <div class="actions-cell">
+              <a class="btn btn-outline btn-sm" href="/profile?id=${mon.id}">健康档案</a>
               <button class="btn btn-outline btn-sm" onclick="checkNow('${mon.id}')">立即检查</button>
               <button class="btn btn-outline btn-sm" onclick="editMonitor('${mon.id}')">编辑</button>
               <button class="btn btn-outline btn-sm btn-danger" onclick="deleteMonitor('${mon.id}')">删除</button>

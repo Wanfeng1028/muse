@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -16,7 +18,20 @@ import (
 	"sentinel/internal/store"
 )
 
-// newTestServer 构建测试用 Server：临时库 + store + 空 notify 的 scheduler
+// testToken 测试用 Bearer token 明文。
+const testToken = "test-token"
+
+// isWhitelisted 判断路径是否属于免鉴权白名单。
+func isWhitelisted(path string) bool {
+	switch path {
+	case "/api/healthz", "/api/readyz", "/api/health":
+		return true
+	}
+	return strings.HasPrefix(path, "/api/status/")
+}
+
+// newTestServer 构建测试用 Server：临时库 + store + 空 notify 的 scheduler。
+// 同时向 users 表插入一个 token_hash=sha256("test-token") 的用户。
 func newTestServer(t *testing.T) (*Server, *store.Store) {
 	t.Helper()
 	dir := t.TempDir()
@@ -27,21 +42,38 @@ func newTestServer(t *testing.T) (*Server, *store.Store) {
 	}
 	t.Cleanup(func() { _ = sqlDB.Close() })
 	st := store.New(sqlDB)
+	if err := st.EnsureDefaultTenant(); err != nil {
+		t.Fatalf("EnsureDefaultTenant: %v", err)
+	}
+	sum := sha256.Sum256([]byte(testToken))
+	tokenHash := hex.EncodeToString(sum[:])
+	if _, err := st.CreateUser(1, "tester", tokenHash); err != nil {
+		t.Fatalf("CreateUser: %v", err)
+	}
 	sc := scheduler.New(st, func(webhookURL, event, name, target, at, errMsg string) {
 		// 测试中通知为空实现
-	})
-	srv := New(st, sc)
+	}, 10, 5, 2)
+	srv := New(st, sc, 2)
 	return srv, st
 }
 
-// doJSON 发起 JSON 请求并返回响应与解码后的 map
+// newReq 构造请求：对 /api/* 非白名单路径自动带 Bearer token。
+func newReq(method, path string, body io.Reader) *http.Request {
+	req := httptest.NewRequest(method, path, body)
+	if strings.HasPrefix(path, "/api/") && !isWhitelisted(path) {
+		req.Header.Set("Authorization", "Bearer "+testToken)
+	}
+	return req
+}
+
+// doJSON 发起 JSON 请求并返回响应与解码后的 map。
 func doJSON(t *testing.T, h http.Handler, method, path string, body string) (*httptest.ResponseRecorder, map[string]any) {
 	t.Helper()
 	var rdr io.Reader
 	if body != "" {
 		rdr = strings.NewReader(body)
 	}
-	req := httptest.NewRequest(method, path, rdr)
+	req := newReq(method, path, rdr)
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -92,7 +124,7 @@ func TestMonitorCRUD(t *testing.T) {
 	}
 
 	// 列表应含 1 条且 last_ok 为 null
-	req := httptest.NewRequest(http.MethodGet, "/api/monitors", nil)
+	req := newReq(http.MethodGet, "/api/monitors", nil)
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {

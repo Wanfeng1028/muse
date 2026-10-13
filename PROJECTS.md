@@ -148,31 +148,35 @@
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
-**定位**：站点与服务可用性监控系统，覆盖监控目标管理、定时检查、停机事件与可用率统计的完整运维流程。
+**定位**：站点与服务可用性监控系统，覆盖监控目标管理、定时检查、停机事件与可用率统计的完整运维流程。**灵魂功能**：站点健康档案——每个站点可用性画像、月度 SLA 报告、一键生成公开状态页。
 
-**技术栈**：Go 1.23 单二进制；标准库 net/http 提供 HTTP 服务，modernc.org/sqlite 作为纯 Go SQLite 驱动；go:embed 内嵌 Web UI 静态资源；go test 覆盖存储/检查器/HTTP 层测试；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 sentinel/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+**技术栈**：Go 1.23 单二进制；标准库 net/http 提供 HTTP 服务，modernc.org/sqlite 作为纯 Go SQLite 驱动；go:embed 内嵌 Web UI 静态资源；go test 覆盖存储/检查器/HTTP 层/备份测试；Dockerfile 多阶段构建 + docker-compose 一键部署；GitHub Actions CI 暂置于 sentinel/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
 **功能模块**：
 
 1. 监控目标管理（HTTP(S)/TCP 双协议、期望状态码、超时、检查间隔、启用开关）
-2. 定时检查调度器（每 5 秒轮询，按目标间隔并发检查）
-3. 检查记录（状态码、延迟毫秒、HTTPS 证书剩余天数）
+2. 定时检查调度器（可配 tick/并发上限/重试次数，目标级 inflight 防堆积）
+3. 检查记录（状态码、延迟毫秒、HTTPS 证书剩余天数，失败指数退避重试）
 4. 状态翻转自动生成停机事件（down 创建、recovered 关闭并计算时长）
-5. Webhook 告警通知（目标级或全局，状态翻转时推送）
-6. 统计分析（可用率、平均延迟、检查总数、停机次数）
-7. Web UI（仪表盘/监控管理/事件 三页）
+5. Webhook 告警通知（目标级或全局，失败重试 3 次）
+6. 站点健康档案（/profile：7/30 天可用性、延迟 p50/p95/p99、30 天每日可用性条形图、证书剩余天数）
+7. 月度 SLA 报告（uptime/检查数/事件数/总宕机时长/99.9% 目标达标判定）
+8. 公开状态页（一键生成 /status/{slug}，免鉴权对外展示）
+9. 生产级：slog 结构化日志（request_id 全链路）、/healthz /readyz、优雅关闭、Prometheus /api/metrics、DB 迁移版本化（v1→v2）、API Token 鉴权、tenant/user 多用户、自动备份 + `-restore` 一键恢复、docs/OPERATIONS.md 运维手册
+10. Web UI（仪表盘/监控管理/事件/健康档案/公开状态页）
 
-**状态**：工程化 v1（2026-10-13 完成，构建、vet、gofmt、全量测试与真实服务冒烟均已跑通；冒烟验证了 down→incident→recovered→incident 关闭的完整事件流）。
+**状态**：生产级 v0.2.0（2026-10-13）：构建、vet、gofmt、全量测试（backup/checker/handlers/store）与真实服务冒烟均已跑通；冒烟验证了 鉴权(401/200)→加监控→故障→incident→恢复→事件关闭、备份→删库→-restore 恢复、健康档案/SLA/公开状态页 API 全链路；发版对照报告见 sentinel/docs/RELEASE_CHECKLIST.md。已知限制：单实例（SQLite）、webhook 失败最多重试 3 次。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：单二进制架构落地，检查器/调度器/事件流、内嵌 Web UI、CI 与多阶段构建就绪
+- 生产级 v0.2.0（2026-10-13）：全量生产级改造（可观测性/可靠性/数据/部署/安全/可维护性）+ 灵魂功能（健康档案/月度 SLA/公开状态页）；CHANGELOG 见 sentinel/CHANGELOG.md
 
 **后续计划**：
 
 - 多渠道告警（邮件/短信/企业微信）
-- 公开状态页
-- 分布式探针
+- 分布式探针（多实例需先换 PostgreSQL）
+- 状态页自定义主题与订阅通知
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 

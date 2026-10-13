@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>站点健康档案 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+  .page-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 8px 0 20px; }
+  .page-head h1 { font-size: 22px; font-weight: 600; margin: 0; color: #111827; }
+  .kind-badge { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: #eef1f5; color: #4b5563; text-transform: lowercase; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.up { background: #10b981; }
+  .dot.down { background: #ef4444; }
+  .dot.unknown { background: #9ca3af; }
+  .pub-toggle { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4b5563; }
+  .pub-toggle input { width: 16px; height: 16px; accent-color: #10b981; }
+
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(17,24,39,.05); }
+  .card .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+  .card .value { font-size: 22px; font-weight: 600; color: #111827; font-variant-numeric: tabular-nums; }
+
+  .panel { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(17,24,39,.05); }
+  .panel h2 { font-size: 14px; font-weight: 600; margin: 0 0 14px; color: #111827; }
+
+  .pbar { display: grid; grid-template-columns: 48px 1fr 68px; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 13px; }
+  .pbar .track { height: 8px; background: #eef1f5; border-radius: 4px; overflow: hidden; }
+  .pbar .fill { height: 100%; background: #10b981; }
+  .pbar .num { text-align: right; color: #374151; font-variant-numeric: tabular-nums; }
+
+  .daily { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding: 8px 0; }
+  .daily .bar { flex: 1; min-width: 4px; background: #10b981; border-radius: 2px 2px 0 0; transition: opacity .15s; }
+  .daily .bar:hover { opacity: .75; }
+  .daily .bar.warn { background: #f59e0b; }
+  .daily .bar.bad { background: #ef4444; }
+  .daily-legend { display: flex; gap: 16px; font-size: 12px; color: #6b7280; margin-top: 6px; }
+  .daily-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  .sla-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .sla-row input[type=month] { padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: inherit; }
+  .sla-row button { padding: 6px 14px; border: none; border-radius: 6px; background: #10b981; color: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .sla-row button:hover { background: #0ea371; }
+  .sla-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .sla-grid { grid-template-columns: repeat(2, 1fr); } }
+  .sla-item { font-size: 13px; }
+  .sla-item .k { color: #6b7280; font-size: 12px; margin-bottom: 4px; }
+  .sla-item .v { color: #111827; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .met-yes { color: #10b981; }
+  .met-no { color: #ef4444; }
+  .err { color: #ef4444; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/"><span class="brand-mark"></span>哨兵 Sentinel</a>
+    <nav class="nav">
+      <a href="/">总览</a>
+      <a href="/monitors">监控管理</a>
+      <a href="/incidents">事件</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="page-head">
+    <span class="dot unknown" id="statusDot"></span>
+    <h1 id="siteName">加载中…</h1>
+    <span class="kind-badge" id="kindBadge">—</span>
+    <label class="pub-toggle">
+      <input type="checkbox" id="pubCheck"> 设为公开
+    </label>
+  </div>
+
+  <div id="errBox" class="err" style="margin-bottom:12px;"></div>
+
+  <div class="cards">
+    <div class="card"><div class="label">7 天可用性</div><div class="value" id="m7">—</div></div>
+    <div class="card"><div class="label">30 天可用性</div><div class="value" id="m30">—</div></div>
+    <div class="card"><div class="label">延迟 p95</div><div class="value" id="mp95">—</div></div>
+    <div class="card"><div class="label">30 天事件数</div><div class="value" id="mInc">—</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>延迟分位</h2>
+    <div class="pbar">
+      <div>p50</div>
+      <div class="track"><div class="fill" id="f50" style="width:0"></div></div>
+      <div class="num" id="n50">—</div>
+    </div>
+    <div class="pbar">
+      <div>p95</div>
+      <div class="track"><div class="fill" id="f95" style="width:0"></div></div>
+      <div class="num" id="n95">—</div>
+    </div>
+    <div class="pbar">
+      <div>p99</div>
+      <div class="track"><div class="fill" id="f99" style="width:0"></div></div>
+      <div class="num" id="n99">—</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>30 天每日可用性</h2>
+    <div class="daily" id="daily"></div>
+    <div class="daily-legend">
+      <span><i class="swatch" style="background:#10b981"></i>≥ 99%</span>
+      <span><i class="swatch" style="background:#f59e0b"></i>95% ~ 99%</span>
+      <span><i class="swatch" style="background:#ef4444"></i>&lt; 95%</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>月度 SLA</h2>
+    <div class="sla-row">
+      <input type="month" id="slaMonth">
+      <button id="slaBtn">查询</button>
+    </div>
+    <div class="sla-grid">
+      <div class="sla-item"><div class="k">可用性</div><div class="v" id="slaUp">—</div></div>
+      <div class="sla-item"><div class="k">检查次数</div><div class="v" id="slaChecks">—</div></div>
+      <div class="sla-item"><div class="k">宕机事件</div><div class="v" id="slaInc">—</div></div>
+      <div class="sla-item"><div class="k">总宕机时长</div><div class="v" id="slaDown">—</div></div>
+      <div class="sla-item"><div class="k">SLA 目标</div><div class="v" id="slaTarget">—</div></div>
+      <div class="sla-item"><div class="k">是否达标</div><div class="v" id="slaMet">—</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var TOKEN_KEY = 'sentinel_token';
+  function getToken() {
+    return sessionStorage.getItem(TOKEN_KEY) || '';
+  }
+  function askToken() {
+    if (typeof window.__sentinelAskToken === 'function') {
+      return window.__sentinelAskToken();
+    }
+    var t = prompt('请输入 API Token');
+    if (t) sessionStorage.setItem(TOKEN_KEY, t);
+    return t || '';
+  }
+  async function api(path, opts) {
+    opts = opts || {};
+    var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    var t = getToken();
+    if (t) headers['Authorization'] = 'Bearer ' + t;
+    var res = await fetch(path, Object.assign({}, opts, { headers: headers }));
+    if (res.status === 401) {
+      var nt = askToken();
+      if (nt) {
+        headers['Authorization'] = 'Bearer ' + nt;
+        res = await fetch(path, Object.assign({}, opts, { headers: headers }));
+      }
+    }
+    if (!res.ok) {
+      var msg = await res.text().catch(function () { return ''; });
+      throw new Error(res.status + ' ' + (msg || res.statusText));
+    }
+    return res.json();
+  }
+
+  function qs(name) {
+    return new URLSearchParams(location.search).get(name);
+  }
+  function pct(v) {
+    if (v === null || v === undefined) return '—';
+    return v.toFixed(2) + '%';
+  }
+  function ms(v) {
+    if (v === null || v === undefined) return '—';
+    return Math.round(v) + ' ms';
+  }
+  function fmtDur(sec) {
+    if (!sec) return '0 秒';
+    var d = Math.floor(sec / 86400);
+    var h = Math.floor((sec % 86400) / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var s = Math.floor(sec % 60);
+    var parts = [];
+    if (d) parts.push(d + ' 天');
+    if (h) parts.push(h + ' 小时');
+    if (m) parts.push(m + ' 分');
+    if (!d && !h) parts.push(s + ' 秒');
+    return parts.join(' ');
+  }
+
+  var monitorId = qs('id');
+  if (!monitorId) {
+    document.getElementById('errBox').textContent = '缺少 id 参数，请在 URL 加上 ?id=1';
+    return;
+  }
+
+  var dot = document.getElementById('statusDot');
+
+  function setStatus(status) {
+    dot.className = 'dot ' + (status || 'unknown');
+  }
+
+  async function loadProfile() {
+    try {
+      var d = await api('/api/monitors/' + encodeURIComponent(monitorId) + '/profile');
+      var m = d.monitor || {};
+      document.getElementById('siteName').textContent = m.name || ('#' + monitorId);
+      document.getElementById('kindBadge').textContent = m.kind || '—';
+      var cur = d.current ? (d.current.ok ? 'up' : 'down') : 'unknown';
+      setStatus(cur);
+      document.getElementById('pubCheck').checked = !!m.is_public;
+
+      document.getElementById('m7').textContent = pct(d.uptime_7d);
+      document.getElementById('m30').textContent = pct(d.uptime_30d);
+      document.getElementById('mp95').textContent = d.latency ? ms(d.latency.p95) : '—';
+      document.getElementById('mInc').textContent = (d.incidents_30d == null ? '—' : d.incidents_30d);
+
+      var lat = d.latency || { p50: 0, p95: 0, p99: 0 };
+      var maxv = Math.max(lat.p99 || 0, 1);
+      function setBar(id, val) {
+        document.getElementById('f' + id).style.width = Math.min(100, (val / maxv) * 100) + '%';
+        document.getElementById('n' + id).textContent = ms(val);
+      }
+      setBar('50', lat.p50 || 0);
+      setBar('95', lat.p95 || 0);
+      setBar('99', lat.p99 || 0);
+
+      var daily = document.getElementById('daily');
+      daily.innerHTML = '';
+      (d.daily || []).forEach(function (day) {
+        var bar = document.createElement('div');
+        var v = day.uptime_pct == null ? 0 : day.uptime_pct;
+        bar.className = 'bar';
+        if (v < 95) bar.className += ' bad';
+        else if (v < 99) bar.className += ' warn';
+        bar.style.height = Math.max(2, Math.min(100, v)) + '%';
+        bar.title = day.date + ' · 可用性 ' + v.toFixed(2) + '% · 检查 ' + day.checks + ' 次 · 失败 ' + day.failures + ' 次';
+        daily.appendChild(bar);
+      });
+    } catch (e) {
+      document.getElementById('errBox').textContent = '加载失败：' + e.message;
+    }
+  }
+
+  async function loadSLA(month) {
+    try {
+      var d = await api('/api/monitors/' + encodeURIComponent(monitorId) + '/sla?month=' + encodeURIComponent(month));
+      document.getElementById('slaUp').textContent = pct(d.uptime_pct);
+      document.getElementById('slaChecks').textContent = d.total_checks;
+      document.getElementById('slaInc').textContent = d.down_incidents;
+      document.getElementById('slaDown').textContent = fmtDur(d.total_downtime_sec);
+      document.getElementById('slaTarget').textContent = (d.sla_target || 99.9) + '%';
+      var met = document.getElementById('slaMet');
+      met.textContent = d.met ? '达标' : '未达标';
+      met.className = 'v ' + (d.met ? 'met-yes' : 'met-no');
+    } catch (e) {
+      document.getElementById('errBox').textContent = 'SLA 加载失败：' + e.message;
+    }
+  }
+
+  function thisMonth() {
+    var d = new Date();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    return d.getFullYear() + '-' + mm;
+  }
+
+  document.getElementById('pubCheck').addEventListener('change', async function (e) {
+    var val = e.target.checked ? 1 : 0;
+    try {
+      await api('/api/monitors/' + encodeURIComponent(monitorId) + '/public', {
+        method: 'PUT',
+        body: JSON.stringify({ is_public: val })
+      });
+    } catch (err) {
+      document.getElementById('errBox').textContent = '保存公开设置失败：' + err.message;
+      e.target.checked = !e.target.checked;
+    }
+  });
+
+  document.getElementById('slaBtn').addEventListener('click', function () {
+    loadSLA(document.getElementById('slaMonth').value || thisMonth());
+  });
+
+  var initMonth = thisMonth();
+  document.getElementById('slaMonth').value = initMonth;
+  loadProfile();
+  loadSLA(initMonth);
+})();
+</script>
+</body>
+</html>

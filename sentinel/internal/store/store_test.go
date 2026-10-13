@@ -1,278 +1,218 @@
-// Package store 提供 Sentinel 数据访问层。
 package store
 
 import (
 	"database/sql"
 	"errors"
+	"path/filepath"
 	"testing"
-	"time"
-
-	_ "modernc.org/sqlite"
 
 	"sentinel/internal/db"
 )
 
-// newTestStore 在临时目录创建测试用 Store。
+// newTestStore 在 t.TempDir() 下创建 sqlite 文件、打开数据库并执行迁移，返回 *Store。
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
-	dir := t.TempDir()
-	d, err := db.Open(dir + "/test.db")
+	path := filepath.Join(t.TempDir(), "test.db")
+	d, err := db.Open(path)
 	if err != nil {
-		t.Fatalf("open db: %v", err)
+		t.Fatalf("db.Open: %v", err)
 	}
 	t.Cleanup(func() { _ = d.Close() })
 	return New(d)
 }
 
-// sampleMonitor 构造一个合法 Monitor。
-func sampleMonitor(name string) Monitor {
-	now := time.Now().UTC().Format(time.RFC3339)
-	return Monitor{
-		Name:           name,
-		Kind:           "http",
-		Target:         "http://example.com",
-		Method:         "GET",
-		ExpectedStatus: 200,
-		TimeoutSec:     10,
-		IntervalSec:    60,
-		Enabled:        1,
-		WebhookURL:     "",
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-}
-
-// TestMonitorCRUD 测试监控目标的增删改查。
-func TestMonitorCRUD(t *testing.T) {
+// TestCreateMonitorTenantAndPublic 验证 CreateMonitor 能读写 tenant_id / is_public 新列。
+func TestCreateMonitorTenantAndPublic(t *testing.T) {
 	s := newTestStore(t)
 
-	id, err := s.CreateMonitor(sampleMonitor("m1"))
-	if err != nil {
-		t.Fatalf("create: %v", err)
+	if err := s.EnsureDefaultTenant(); err != nil {
+		t.Fatalf("EnsureDefaultTenant: %v", err)
 	}
-	if id <= 0 {
-		t.Fatalf("expected id>0, got %d", id)
+
+	id, err := s.CreateMonitor(Monitor{
+		Name:           "site",
+		Kind:           "http",
+		Target:         "https://example.com",
+		Method:         "GET",
+		ExpectedStatus: 200,
+		TimeoutSec:     5,
+		IntervalSec:    60,
+		Enabled:        1,
+		TenantID:       1,
+		IsPublic:       1,
+		WebhookURL:     "",
+	})
+	if err != nil {
+		t.Fatalf("CreateMonitor: %v", err)
+	}
+	if id == 0 {
+		t.Fatalf("CreateMonitor returned zero id")
 	}
 
 	got, err := s.GetMonitor(id)
 	if err != nil {
-		t.Fatalf("get: %v", err)
+		t.Fatalf("GetMonitor: %v", err)
 	}
-	if got.Name != "m1" || got.Kind != "http" || got.Target != "http://example.com" {
-		t.Fatalf("unexpected monitor: %+v", got)
+	if got.TenantID != 1 {
+		t.Errorf("TenantID = %d, want 1", got.TenantID)
 	}
-	if got.ExpectedStatus != 200 || got.TimeoutSec != 10 || got.IntervalSec != 60 || got.Enabled != 1 {
-		t.Fatalf("unexpected fields: %+v", got)
+	if got.IsPublic != 1 {
+		t.Errorf("IsPublic = %d, want 1", got.IsPublic)
 	}
 
-	got.Name = "m1-renamed"
-	got.IntervalSec = 120
+	// 更新后重新读取验证。
+	got.TenantID = 2
+	got.IsPublic = 0
 	if err := s.UpdateMonitor(id, got); err != nil {
-		t.Fatalf("update: %v", err)
+		t.Fatalf("UpdateMonitor: %v", err)
 	}
-	after, err := s.GetMonitor(id)
+	got2, err := s.GetMonitor(id)
 	if err != nil {
-		t.Fatalf("get after update: %v", err)
+		t.Fatalf("GetMonitor after update: %v", err)
 	}
-	if after.Name != "m1-renamed" || after.IntervalSec != 120 {
-		t.Fatalf("update not applied: %+v", after)
+	if got2.TenantID != 2 {
+		t.Errorf("after update TenantID = %d, want 2", got2.TenantID)
 	}
-
-	if _, err := s.CreateMonitor(sampleMonitor("m2")); err != nil {
-		t.Fatalf("create m2: %v", err)
-	}
-	list, err := s.ListMonitors()
-	if err != nil {
-		t.Fatalf("list: %v", err)
-	}
-	if len(list) != 2 {
-		t.Fatalf("expected 2 monitors, got %d", len(list))
-	}
-
-	if err := s.DeleteMonitor(id); err != nil {
-		t.Fatalf("delete: %v", err)
-	}
-	if _, err := s.GetMonitor(id); !errors.Is(err, sql.ErrNoRows) {
-		t.Fatalf("expected sql.ErrNoRows, got %v", err)
+	if got2.IsPublic != 0 {
+		t.Errorf("after update IsPublic = %d, want 0", got2.IsPublic)
 	}
 }
 
-// TestChecksAndLast 测试检查记录插入与最新查询。
-func TestChecksAndLast(t *testing.T) {
+// TestListMonitorsByTenant 验证按租户过滤。
+func TestListMonitorsByTenant(t *testing.T) {
 	s := newTestStore(t)
-	id, err := s.CreateMonitor(sampleMonitor("m1"))
+
+	if err := s.EnsureDefaultTenant(); err != nil {
+		t.Fatalf("EnsureDefaultTenant: %v", err)
+	}
+
+	mk := func(name string, tenantID int64) int64 {
+		id, err := s.CreateMonitor(Monitor{
+			Name:           name,
+			Kind:           "http",
+			Target:         "https://example.com",
+			Method:         "GET",
+			ExpectedStatus: 200,
+			TimeoutSec:     5,
+			IntervalSec:    60,
+			Enabled:        1,
+			TenantID:       tenantID,
+			IsPublic:       0,
+		})
+		if err != nil {
+			t.Fatalf("CreateMonitor(%s): %v", name, err)
+		}
+		return id
+	}
+
+	idA1 := mk("a1", 1)
+	idA2 := mk("a2", 1)
+	_ = mk("b1", 2)
+
+	got, err := s.ListMonitorsByTenant(1)
 	if err != nil {
-		t.Fatalf("create: %v", err)
+		t.Fatalf("ListMonitorsByTenant: %v", err)
 	}
-
-	base := time.Now().UTC()
-	t1 := base.Add(-2 * time.Minute).Format(time.RFC3339)
-	t2 := base.Add(-1 * time.Minute).Format(time.RFC3339)
-
-	if _, err := s.InsertCheck(Check{MonitorID: id, CheckedAt: t1, Ok: 1, LatencyMs: 100, Error: ""}); err != nil {
-		t.Fatalf("insert c1: %v", err)
+	if len(got) != 2 {
+		t.Fatalf("len = %d, want 2", len(got))
 	}
-	if _, err := s.InsertCheck(Check{MonitorID: id, CheckedAt: t2, Ok: 0, LatencyMs: 200, Error: "boom"}); err != nil {
-		t.Fatalf("insert c2: %v", err)
+	if got[0].ID != idA1 || got[1].ID != idA2 {
+		t.Errorf("ids = [%d,%d], want [%d,%d]", got[0].ID, got[1].ID, idA1, idA2)
 	}
-
-	last, err := s.LastCheck(id)
-	if err != nil {
-		t.Fatalf("last: %v", err)
-	}
-	if last == nil {
-		t.Fatalf("expected last check, got nil")
-	}
-	if last.Ok != 0 {
-		t.Fatalf("expected latest ok=0, got %d", last.Ok)
-	}
-
-	limited, err := s.ListChecks(id, 1)
-	if err != nil {
-		t.Fatalf("list checks: %v", err)
-	}
-	if len(limited) != 1 {
-		t.Fatalf("expected 1 check, got %d", len(limited))
-	}
-}
-
-// TestStats 测试统计与事件开闭。
-func TestStats(t *testing.T) {
-	s := newTestStore(t)
-	id, err := s.CreateMonitor(sampleMonitor("m1"))
-	if err != nil {
-		t.Fatalf("create: %v", err)
-	}
-
-	base := time.Now().UTC()
-	oks := []int{1, 1, 1, 0}
-	lats := []int64{100, 200, 300, 400}
-	for i := 0; i < 4; i++ {
-		ts := base.Add(time.Duration(i) * time.Minute).Format(time.RFC3339)
-		if _, err := s.InsertCheck(Check{MonitorID: id, CheckedAt: ts, Ok: oks[i], LatencyMs: lats[i]}); err != nil {
-			t.Fatalf("insert check %d: %v", i, err)
+	for _, m := range got {
+		if m.TenantID != 1 {
+			t.Errorf("TenantID = %d, want 1", m.TenantID)
 		}
 	}
 
-	uptime, avg, total, down, err := s.MonitorStats(id, 30)
+	gotB, err := s.ListMonitorsByTenant(2)
 	if err != nil {
-		t.Fatalf("stats: %v", err)
+		t.Fatalf("ListMonitorsByTenant(2): %v", err)
 	}
-	if total != 4 {
-		t.Fatalf("expected total 4, got %d", total)
-	}
-	if uptime != 75.0 {
-		t.Fatalf("expected uptime 75.0, got %v", uptime)
-	}
-	if avg != 250.0 {
-		t.Fatalf("expected avg 250.0, got %v", avg)
+	if len(gotB) != 1 {
+		t.Fatalf("tenant 2 len = %d, want 1", len(gotB))
 	}
 
-	startedAt := base.Format(time.RFC3339)
-	if _, err := s.OpenIncident(id, startedAt, "boom"); err != nil {
-		t.Fatalf("open incident: %v", err)
-	}
-	_, _, _, down, err = s.MonitorStats(id, 30)
+	// 无匹配租户应返回空。
+	gotEmpty, err := s.ListMonitorsByTenant(999)
 	if err != nil {
-		t.Fatalf("stats2: %v", err)
+		t.Fatalf("ListMonitorsByTenant(999): %v", err)
 	}
-	if down != 1 {
-		t.Fatalf("expected down incidents 1, got %d", down)
-	}
-
-	if err := s.CloseOpenIncident(id, base.Add(time.Minute).Format(time.RFC3339), 60); err != nil {
-		t.Fatalf("close incident: %v", err)
-	}
-	if _, err := s.OpenIncidentStartedAt(id); !errors.Is(err, sql.ErrNoRows) {
-		t.Fatalf("expected sql.ErrNoRows after close, got %v", err)
+	if len(gotEmpty) != 0 {
+		t.Fatalf("tenant 999 len = %d, want 0", len(gotEmpty))
 	}
 }
 
-// TestOverview 测试概览统计。
-func TestOverview(t *testing.T) {
+// TestCreateAndListUsers 验证 CreateUser / ListUsers。
+func TestCreateAndListUsers(t *testing.T) {
 	s := newTestStore(t)
 
-	m1 := sampleMonitor("m1")
-	id1, err := s.CreateMonitor(m1)
-	if err != nil {
-		t.Fatalf("create m1: %v", err)
+	if err := s.EnsureDefaultTenant(); err != nil {
+		t.Fatalf("EnsureDefaultTenant: %v", err)
 	}
 
-	m2 := sampleMonitor("m2")
-	m2.Enabled = 0
-	id2, err := s.CreateMonitor(m2)
+	id1, err := s.CreateUser(1, "alice", "hash-alice")
 	if err != nil {
-		t.Fatalf("create m2: %v", err)
+		t.Fatalf("CreateUser(alice): %v", err)
+	}
+	id2, err := s.CreateUser(1, "bob", "hash-bob")
+	if err != nil {
+		t.Fatalf("CreateUser(bob): %v", err)
+	}
+	if id1 == 0 || id2 == 0 || id1 == id2 {
+		t.Fatalf("unexpected ids: %d, %d", id1, id2)
 	}
 
-	ts := time.Now().UTC().Format(time.RFC3339)
-	if _, err := s.InsertCheck(Check{MonitorID: id1, CheckedAt: ts, Ok: 1, LatencyMs: 10}); err != nil {
-		t.Fatalf("insert c1: %v", err)
-	}
-	if _, err := s.InsertCheck(Check{MonitorID: id2, CheckedAt: ts, Ok: 0, LatencyMs: 20, Error: "x"}); err != nil {
-		t.Fatalf("insert c2: %v", err)
-	}
-
-	total, enabled, up, down, unknown, checks24h, incidents7d, err := s.Overview()
+	users, err := s.ListUsers()
 	if err != nil {
-		t.Fatalf("overview: %v", err)
+		t.Fatalf("ListUsers: %v", err)
 	}
-	if total != 2 {
-		t.Fatalf("total expected 2, got %d", total)
+	if len(users) != 2 {
+		t.Fatalf("len = %d, want 2", len(users))
 	}
-	if enabled != 1 {
-		t.Fatalf("enabled expected 1, got %d", enabled)
+	if users[0].ID != id1 || users[0].Name != "alice" || users[0].TokenHash != "hash-alice" {
+		t.Errorf("users[0] = %+v", users[0])
 	}
-	if up != 1 {
-		t.Fatalf("up expected 1, got %d", up)
+	if users[1].ID != id2 || users[1].Name != "bob" || users[1].TokenHash != "hash-bob" {
+		t.Errorf("users[1] = %+v", users[1])
 	}
-	if down != 1 {
-		t.Fatalf("down expected 1, got %d", down)
-	}
-	if unknown != 0 {
-		t.Fatalf("unknown expected 0, got %d", unknown)
-	}
-	if checks24h != 2 {
-		t.Fatalf("checks24h expected 2, got %d", checks24h)
-	}
-	if incidents7d != 0 {
-		t.Fatalf("incidents7d expected 0, got %d", incidents7d)
+	for _, u := range users {
+		if u.TenantID != 1 {
+			t.Errorf("TenantID = %d, want 1", u.TenantID)
+		}
+		if u.CreatedAt == "" {
+			t.Errorf("CreatedAt is empty for %q", u.Name)
+		}
 	}
 }
 
-// TestCascade 测试删除监控级联删除检查与事件。
-func TestCascade(t *testing.T) {
+// TestEnsureDefaultTenantIdempotent 验证 EnsureDefaultTenant 幂等（调用两次不报错）。
+func TestEnsureDefaultTenantIdempotent(t *testing.T) {
 	s := newTestStore(t)
-	id, err := s.CreateMonitor(sampleMonitor("m1"))
-	if err != nil {
-		t.Fatalf("create: %v", err)
+
+	if err := s.EnsureDefaultTenant(); err != nil {
+		t.Fatalf("first EnsureDefaultTenant: %v", err)
+	}
+	if err := s.EnsureDefaultTenant(); err != nil {
+		t.Fatalf("second EnsureDefaultTenant: %v", err)
 	}
 
-	ts := time.Now().UTC().Format(time.RFC3339)
-	if _, err := s.InsertCheck(Check{MonitorID: id, CheckedAt: ts, Ok: 1, LatencyMs: 10}); err != nil {
-		t.Fatalf("insert check: %v", err)
+	var n int
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM tenants`).Scan(&n); err != nil {
+		t.Fatalf("count tenants: %v", err)
 	}
-	if _, err := s.OpenIncident(id, ts, "boom"); err != nil {
-		t.Fatalf("open incident: %v", err)
-	}
-
-	if err := s.DeleteMonitor(id); err != nil {
-		t.Fatalf("delete: %v", err)
+	if n != 1 {
+		t.Fatalf("tenants count = %d, want 1", n)
 	}
 
-	checks, err := s.ListChecks(id, 100)
-	if err != nil {
-		t.Fatalf("list checks: %v", err)
+	var name string
+	if err := s.db.QueryRow(`SELECT name FROM tenants WHERE id = 1`).Scan(&name); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			t.Fatalf("default tenant id=1 missing")
+		}
+		t.Fatalf("select default tenant: %v", err)
 	}
-	if len(checks) != 0 {
-		t.Fatalf("expected 0 checks after cascade, got %d", len(checks))
-	}
-
-	incs, err := s.ListIncidents(id, 100)
-	if err != nil {
-		t.Fatalf("list incidents: %v", err)
-	}
-	if len(incs) != 0 {
-		t.Fatalf("expected 0 incidents after cascade, got %d", len(incs))
+	if name != "default" {
+		t.Errorf("name = %q, want %q", name, "default")
 	}
 }

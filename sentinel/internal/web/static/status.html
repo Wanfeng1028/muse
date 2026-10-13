@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>服务状态 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 20px 64px; }
+  .banner { padding: 18px 20px; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 500; margin-bottom: 20px; }
+  .banner.ok { background: #10b981; }
+  .banner.bad { background: #ef4444; }
+  .banner .sub { font-size: 12px; opacity: .9; font-weight: 400; margin-top: 4px; }
+  .list { background: #fff; border-radius: 10px; box-shadow: 0 1px 2px rgba(17,24,39,.05); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #f1f3f6; font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .dot.up { background: #10b981; }
+  .dot.down { background: #ef4444; }
+  .dot.unknown { background: #9ca3af; }
+  .row .name { color: #111827; font-weight: 500; }
+  .row .kind { font-size: 12px; color: #6b7280; }
+  .row .right { margin-left: auto; text-align: right; font-size: 12px; color: #6b7280; font-variant-numeric: tabular-nums; }
+  .row .right .up { color: #374151; font-size: 13px; }
+  .foot { text-align: center; margin-top: 24px; font-size: 12px; color: #9ca3af; }
+  .empty { padding: 24px 18px; color: #6b7280; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="brand"><span class="brand-mark"></span><span id="pageTitle">服务状态</span></span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="banner ok" id="banner">加载中…<div class="sub" id="bannerSub"></div></div>
+  <div class="list" id="list"><div class="empty">加载中…</div></div>
+  <div class="foot">由哨兵 Sentinel 提供</div>
+</div>
+
+<script>
+(function () {
+  function pct(v) {
+    if (v === null || v === undefined) return '—';
+    return v.toFixed(2) + '%';
+  }
+  function relTime(iso) {
+    if (!iso) return '尚未检查';
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return '—';
+    var diff = Math.floor((Date.now() - t) / 1000);
+    if (diff < 60) return diff + ' 秒前';
+    if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+    return Math.floor(diff / 86400) + ' 天前';
+  }
+
+  var parts = location.pathname.split('/').filter(Boolean);
+  var slug = parts.length ? decodeURIComponent(parts[parts.length - 1]) : '';
+  if (!slug) {
+    document.getElementById('list').innerHTML = '<div class="empty">缺少 slug</div>';
+    return;
+  }
+
+  fetch('/api/status/' + encodeURIComponent(slug))
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (d) {
+      document.getElementById('pageTitle').textContent = d.title || '服务状态';
+      document.title = (d.title || '服务状态') + ' · 哨兵 Sentinel';
+
+      var monitors = d.monitors || [];
+      var anyDown = monitors.some(function (m) { return m.status === 'down'; });
+      var banner = document.getElementById('banner');
+      if (anyDown) {
+        banner.className = 'banner bad';
+        banner.firstChild.nodeValue = '部分服务异常';
+        document.getElementById('bannerSub').textContent = '有 ' + monitors.filter(function (m) { return m.status === 'down'; }).length + ' 个服务处于宕机状态';
+      } else {
+        banner.className = 'banner ok';
+        banner.firstChild.nodeValue = '所有服务运行正常';
+        document.getElementById('bannerSub').textContent = '共 ' + monitors.length + ' 个服务';
+      }
+
+      var list = document.getElementById('list');
+      if (!monitors.length) {
+        list.innerHTML = '<div class="empty">还没有公开的监控项</div>';
+        return;
+      }
+      list.innerHTML = '';
+      monitors.forEach(function (m) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        var status = m.status || 'unknown';
+        var kindText = m.kind || '';
+        var latency = m.latency_ms != null ? (' · ' + Math.round(m.latency_ms) + ' ms') : '';
+        row.innerHTML =
+          '<span class="dot ' + status + '"></span>' +
+          '<span class="name"></span>' +
+          '<span class="kind"></span>' +
+          '<span class="right"><span class="up"></span><br>' + relTime(m.last_checked_at) + latency + '</span>';
+        row.querySelector('.name').textContent = m.name || ('#' + m.id);
+        row.querySelector('.kind').textContent = kindText;
+        row.querySelector('.up').textContent = '30 天可用性 ' + pct(m.uptime_30d);
+        list.appendChild(row);
+      });
+    })
+    .catch(function (e) {
+      document.getElementById('banner').className = 'banner bad';
+      document.getElementById('banner').firstChild.nodeValue = '加载失败';
+      document.getElementById('bannerSub').textContent = e.message;
+      document.getElementById('list').innerHTML = '<div class="empty">无法加载状态数据</div>';
+    });
+})();
+</script>
+</body>
+</html>
