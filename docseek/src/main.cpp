@@ -1,6 +1,8 @@
 // src/main.cpp —— 文溯 DocSeek 命令行入口
 #include "docseek/database.h"
 #include "docseek/indexer.h"
+#include "docseek/locator.h"
+#include "docseek/query_parser.h"
 #include "docseek/searcher.h"
 #include "docseek/service.h"
 
@@ -15,11 +17,15 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 #include <vector>
+#if defined(__linux__)
+#include <unistd.h>  // isatty
+#endif
 
 namespace {
 
-constexpr const char* kVersion = "0.2.0";
+constexpr const char* kVersion = "0.4.0";
 
 struct GlobalOpts {
     std::string dbPath;
@@ -35,6 +41,11 @@ struct IndexCmdOpts {
 struct SearchCmdOpts {
     std::string query;
     int limit = 20;
+};
+
+struct LocateCmdOpts {
+    std::string query;
+    int limit = 5;
 };
 
 struct ServeCmdOpts {
@@ -116,6 +127,8 @@ void printUsage() {
         "                   建立或更新索引（可指定多个文件或目录）\n"
         "  search <query...> [--limit N]\n"
         "                   全文搜索，默认返回前 20 条\n"
+        "  locate <query...> [--limit N]\n"
+        "                   自然语言定位原文：问句直达文件:行号，默认返回前 5 段\n"
         "  stats            显示索引统计信息\n"
         "  prune            清理磁盘上已不存在的文件的索引记录\n"
         "  serve [--port N] [--watch DIR]... [--ext .txt,.md] [--max-mb N]\n"
@@ -126,6 +139,7 @@ void printUsage() {
         "示例：\n"
         "  docseek index ~/notes --ext .md,.txt --max-mb 10\n"
         "  docseek search 全文检索 --limit 5\n"
+        "  docseek locate \"退款流程写在哪一段\"\n"
         "  docseek --json stats\n"
         "  docseek --db /tmp/docseek.db prune\n"
         "  docseek serve --port 8080 --watch ~/notes\n"
@@ -224,6 +238,116 @@ int cmdSearch(docseek::Database& db, const SearchCmdOpts& o, bool json) {
     return 0;
 }
 
+// ASCII 大小写不敏感查找（返回字节偏移，找不到返回 npos）。
+size_t findCaseInsensitive(const std::string& hay, const std::string& needle, size_t from) {
+    if (needle.empty() || from >= hay.size()) return std::string::npos;
+    // 小写拷贝比较（ASCII 部分）。
+    auto lower = [](const std::string& s) {
+        std::string o = s;
+        for (char& c : o) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return o;
+    };
+    std::string h = lower(hay.substr(from));
+    std::string n = lower(needle);
+    size_t p = h.find(n);
+    return p == std::string::npos ? p : from + p;
+}
+
+// 高亮一行中的命中词（useColor 且为 tty 时加 ANSI 红色）。
+std::string highlightLine(const std::string& line, const std::vector<std::string>& terms, bool useColor) {
+    if (!useColor || terms.empty()) return line;
+    // 按长度降序，单次扫描：每个位置优先匹配最长词。
+    std::vector<std::string> sorted = terms;
+    std::sort(sorted.begin(), sorted.end(),
+              [](const std::string& a, const std::string& b) { return a.size() > b.size(); });
+    std::string out;
+    out.reserve(line.size() + 32);
+    size_t i = 0;
+    while (i < line.size()) {
+        size_t bestLen = 0;
+        for (const auto& t : sorted) {
+            if (t.empty() || i + t.size() > line.size()) continue;
+            if (findCaseInsensitive(line, t, i) == i) {
+                if (t.size() > bestLen) bestLen = t.size();
+            }
+        }
+        if (bestLen > 0) {
+            out += "\033[31m";
+            out.append(line, i, bestLen);
+            out += "\033[0m";
+            i += bestLen;
+        } else {
+            out.push_back(line[i]);
+            ++i;
+        }
+    }
+    return out;
+}
+
+int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
+    docseek::Searcher searcher(db);
+    docseek::Locator locator(db, searcher);
+    docseek::LocateOptions lopts;
+    lopts.limit = o.limit;
+    std::vector<docseek::Passage> anchors = locator.locate(o.query, lopts);
+    docseek::ParsedQuery pq = docseek::parseNaturalQuery(o.query);
+
+    if (json) {
+        std::cout << "{\"query\":\"" << jsonEscape(o.query) << "\",\"keywords\":[";
+        for (size_t i = 0; i < pq.keywords.size(); ++i) {
+            if (i) std::cout << ",";
+            std::cout << "\"" << jsonEscape(pq.keywords[i]) << "\"";
+        }
+        std::cout << "],\"anchors\":[";
+        for (size_t i = 0; i < anchors.size(); ++i) {
+            const auto& a = anchors[i];
+            if (i) std::cout << ",";
+            std::cout << "{"
+                      << "\"doc_id\":" << a.doc_id << ","
+                      << "\"path\":\"" << jsonEscape(a.path) << "\","
+                      << "\"line_start\":" << a.line_start << ","
+                      << "\"line_end\":" << a.line_end << ","
+                      << "\"score\":" << std::fixed << std::setprecision(3) << a.score << ","
+                      << "\"matched_terms\":[";
+            for (size_t j = 0; j < a.matched_terms.size(); ++j) {
+                if (j) std::cout << ",";
+                std::cout << "\"" << jsonEscape(a.matched_terms[j]) << "\"";
+            }
+            std::cout << "],\"text\":\"" << jsonEscape(a.text) << "\"}";
+        }
+        std::cout << "]}\n";
+        return 0;
+    }
+
+    if (anchors.empty()) {
+        std::cout << "没有找到与 \"" << o.query << "\" 相关的原文段落。\n"
+                  << "换个说法再问一次试试（比如直接说关键词）。\n";
+        return 0;
+    }
+#if defined(__linux__)
+    bool useColor = ::isatty(STDOUT_FILENO) != 0;
+#else
+    bool useColor = false;
+#endif
+    std::vector<std::string> terms = pq.keywords;
+    terms.insert(terms.end(), pq.phrases.begin(), pq.phrases.end());
+    for (size_t i = 0; i < anchors.size(); ++i) {
+        const auto& a = anchors[i];
+        std::cout << (i + 1) << ". " << a.path << ":" << a.line_start << "-" << a.line_end
+                  << "  （评分 " << std::fixed << std::setprecision(3) << a.score << "）\n";
+        std::istringstream iss(a.text);
+        std::string line;
+        int ln = a.line_start;
+        while (std::getline(iss, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            std::cout << "    " << ln << " | " << highlightLine(line, terms, useColor) << "\n";
+            ++ln;
+        }
+        std::cout << "\n";
+    }
+    return 0;
+}
+
 int cmdStats(docseek::Database& db, bool json) {
     int64_t docs = db.docCount();
     int64_t total = db.totalBytes();
@@ -293,8 +417,10 @@ int main(int argc, char** argv) {
     std::string command;
     IndexCmdOpts indexOpts;
     SearchCmdOpts searchOpts;
+    LocateCmdOpts locateOpts;
     ServeCmdOpts serveOpts;
     std::vector<std::string> searchParts;
+    std::vector<std::string> locateParts;
 
     // 参数解析
     for (int i = 1; i < argc; ++i) {
@@ -340,18 +466,24 @@ int main(int argc, char** argv) {
                 std::cerr << "错误：--max-mb 参数无效\n";
                 return 1;
             }
-        } else if (a == "--limit" && command == "search") {
+        } else if (a == "--limit" && (command == "search" || command == "locate")) {
             if (i + 1 >= argc) {
                 std::cerr << "错误：--limit 需要参数\n";
                 return 1;
             }
             try {
-                searchOpts.limit = static_cast<int>(std::stoll(argv[++i]));
+                int v = static_cast<int>(std::stoll(argv[++i]));
+                if (command == "locate") {
+                    locateOpts.limit = v;
+                    if (locateOpts.limit <= 0) locateOpts.limit = 5;
+                } else {
+                    searchOpts.limit = v;
+                    if (searchOpts.limit <= 0) searchOpts.limit = 20;
+                }
             } catch (...) {
                 std::cerr << "错误：--limit 参数无效\n";
                 return 1;
             }
-            if (searchOpts.limit <= 0) searchOpts.limit = 20;
         } else if (a == "--port" && command == "serve") {
             if (i + 1 >= argc) {
                 std::cerr << "错误：--port 需要参数\n";
@@ -384,6 +516,8 @@ int main(int argc, char** argv) {
                 indexOpts.roots.push_back(a);
             } else if (command == "search") {
                 searchParts.push_back(a);
+            } else if (command == "locate") {
+                locateParts.push_back(a);
             } else {
                 std::cerr << "错误：命令 " << command << " 不接受额外参数\n";
                 return 1;
@@ -423,7 +557,20 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
-    if (command != "index" && command != "search" &&
+    if (command == "locate") {
+        std::ostringstream oss;
+        for (size_t i = 0; i < locateParts.size(); ++i) {
+            if (i) oss << " ";
+            oss << locateParts[i];
+        }
+        locateOpts.query = oss.str();
+        if (locateOpts.query.empty()) {
+            std::cerr << "错误：locate 命令需要查询字符串\n";
+            printUsage();
+            return 1;
+        }
+    }
+    if (command != "index" && command != "search" && command != "locate" &&
         command != "stats" && command != "prune" && command != "serve") {
         std::cerr << "错误：未知命令 " << command << "\n";
         printUsage();
@@ -436,6 +583,7 @@ int main(int argc, char** argv) {
 
         if (command == "index") return cmdIndex(db, indexOpts, g.json);
         if (command == "search") return cmdSearch(db, searchOpts, g.json);
+        if (command == "locate") return cmdLocate(db, locateOpts, g.json);
         if (command == "stats") return cmdStats(db, g.json);
         if (command == "prune") return cmdPrune(db, g.json);
         if (command == "serve") return cmdServe(db, serveOpts);

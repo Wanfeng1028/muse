@@ -311,4 +311,14 @@ int registerJiebaTokenizer(sqlite3* db) {
     return SQLITE_OK;
 }
 
+const cppjieba::Jieba* jiebaInstance() {
+    if (!ensureJieba()) return nullptr;
+    return g_jieba;
+}
+
+std::string jiebaInitError() {
+    ensureJieba();
+    return g_jiebaInitError;
+}
+
 }  // namespace docseek

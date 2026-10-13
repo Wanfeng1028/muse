@@ -1,0 +1,19 @@
+#pragma once
+
+#include <string>
+#include <vector>
+
+namespace docseek {
+
+// 自然语言查询解析结果。
+struct ParsedQuery {
+    std::vector<std::string> keywords;  // 去重保序
+    std::vector<std::string> phrases;   // 引号短语，去重保序
+    bool passageIntent = false;         // 是否明确要"段落/原文"
+};
+
+// 解析自然语言查询：抽取引号短语、删除疑问/语气词、jieba 分词过滤、兜底切分。
+// 空输入（去空白后为空）返回空 ParsedQuery。
+ParsedQuery parseNaturalQuery(const std::string& raw);
+
+}  // namespace docseek

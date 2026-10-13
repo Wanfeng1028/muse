@@ -501,6 +501,18 @@ int64_t Database::docCount() {
     return 0;
 }
 
+std::optional<std::string> Database::getContentById(int64_t doc_id) {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+    Stmt s(db, "SELECT content FROM documents_fts WHERE rowid=?;");
+    s.bindInt64(1, doc_id);
+    if (s.step()) {
+        if (s.columnIsNull(0)) return std::nullopt;
+        return s.columnText(0);
+    }
+    return std::nullopt;
+}
+
 int64_t Database::totalBytes() {
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");

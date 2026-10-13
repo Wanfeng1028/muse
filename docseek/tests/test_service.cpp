@@ -162,7 +162,7 @@ TEST_F(SvcFixture, Health) {
     std::string resp = httpGet(svc_->port(), "/api/health");
     EXPECT_EQ(statusCode(resp), 200);
     EXPECT_NE(resp.find("\"ok\":true"), std::string::npos);
-    EXPECT_NE(resp.find("0.2.0"), std::string::npos);
+    EXPECT_NE(resp.find("0.4.0"), std::string::npos);
 }
 
 // 索引与检索端到端。
@@ -182,6 +182,25 @@ TEST_F(SvcFixture, IndexAndSearch) {
 
     // 缺少 q 参数应返回 400。
     std::string badResp = httpGet(port, "/api/search");
+    EXPECT_EQ(statusCode(badResp), 400);
+}
+
+// 自然语言定位接口端到端。
+TEST_F(SvcFixture, LocateApi) {
+    ASSERT_GT(svc_->port(), 0);
+    int port = svc_->port();
+
+    std::string body = "{\"path\":\"" + base_.string() + "\"}";
+    httpPost(port, "/api/index", body);
+
+    std::string resp = httpGet(port, "/api/locate?q=" + urlEncode("全文检索在哪一段") + "&limit=3");
+    EXPECT_EQ(statusCode(resp), 200);
+    EXPECT_NE(resp.find("anchors"), std::string::npos);
+    EXPECT_NE(resp.find("doc1.txt"), std::string::npos);
+    EXPECT_NE(resp.find("line_start"), std::string::npos);
+
+    // 缺少 q 参数应返回 400。
+    std::string badResp = httpGet(port, "/api/locate");
     EXPECT_EQ(statusCode(badResp), 400);
 }
 

@@ -48,7 +48,26 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
 
 ---
 
-## 技术栈
+### 自然语言定位（v0.4.0 新增）
+
+不用想关键词，直接用平时说话的方式问，文溯把你带到原文那一段：
+
+```bash
+docseek locate "退款流程写在哪一段"
+# 1. /docs/退款政策.md:5-9  （评分 0.812）
+#     5 | 七天无理由退款：自签收起 7 天内可申请全额退款。
+#     6 | 退款流程：App 内"我的→订单→申请退款"，客服 24 小时内审核。
+```
+
+![locate 终端截图](docs/screenshots/locate-cli.png)
+
+- `search` 给你文档列表；`locate` 给你**文件:行号锚点 + 命中词高亮的原文段落**。
+- 离线运行：中文疑问句规则解析 → jieba 关键词抽取 → 混合召回 → 段落滑动窗口重排序 → 行号锚定，无模型、无 GPU。
+- Web 服务同样可用：首页"自然语言定位"卡片，或 `GET /api/locate?q=...`。
+
+![locate 网页截图](docs/screenshots/locate-web.png)
+
+为什么不用 ripgrep / Everything / 云 AI 问答：ripgrep 要你先想好关键词、给的是行不是段落；Everything 只认文件名；云 AI 要上传文档（涉密场景出局）且给的是生成答案不是原文锚点。文溯四条同时满足：离线、中文、自然语言、返回原文位置。
 
 | 组件 | 说明 |
 | --- | --- |
@@ -111,6 +130,10 @@ docseek index ./notes --ext .txt,.md --max-mb 10
 # 检索（隐式 AND，BM25 排序）
 docseek search 全文检索 引擎 --limit 10
 
+# 自然语言定位原文（v0.4.0）：问句直达文件:行号
+docseek locate "退款流程写在哪一段"
+docseek --json locate "退火温度 450℃ 是哪篇笔记写的" --limit 3
+
 # 指定数据库并输出 JSON
 docseek --db /tmp/docseek.db --json search 关键词
 
@@ -137,6 +160,7 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 | GET | `/api/health` | 健康检查 |
 | GET | `/api/stats` | 索引统计信息 |
 | GET | `/api/search?q=关键词&limit=20` | 全文检索 |
+| GET | `/api/locate?q=自然语言问题&limit=5` | 自然语言定位原文，返回文件:行号锚点与高亮段落 |
 | POST | `/api/index` | 索引指定路径，请求体：`{"path":"..."}` |
 | POST | `/api/prune` | 清理无效记录 |
 | GET | `/api/watch` | 查询当前监控目录 |

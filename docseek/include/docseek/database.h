@@ -54,6 +54,8 @@ public:
     std::vector<Hit> searchFts(const std::string& match_query, int limit);
     // 返回文档总数。
     int64_t docCount();
+    // 按文档 id 取 FTS 全文 content；不存在返回 std::nullopt。
+    std::optional<std::string> getContentById(int64_t doc_id);
     // 返回所有文档大小之和（字节）。
     int64_t totalBytes();
     // 返回数据库文件本身占用的字节数。

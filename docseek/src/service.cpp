@@ -20,6 +20,8 @@
 #include "docseek/http_server.h"
 #include "docseek/indexer.h"
 #include "docseek/searcher.h"
+#include "docseek/locator.h"
+#include "docseek/query_parser.h"
 #include "docseek/watcher.h"
 #include "web_ui.h"
 
@@ -153,7 +155,7 @@ public:
 
         server_->onGet("/api/health", [this](const HttpRequest&) {
             std::lock_guard<std::mutex> lk(dbMutex_);
-            return HttpResponse::json("{\"ok\":true,\"version\":\"0.2.0\"}");
+            return HttpResponse::json("{\"ok\":true,\"version\":\"0.4.0\"}");
         });
 
         server_->onGet("/api/stats", [this](const HttpRequest&) {
@@ -204,6 +206,55 @@ public:
                     << "\",\"title\":\"" << jsonEscape(h.title)
                     << "\",\"snippet\":\"" << jsonEscape(h.snippet)
                     << "\",\"score\":" << formatScore(h.score) << "}";
+            }
+            oss << "]}";
+            return HttpResponse::json(oss.str());
+        });
+
+        server_->onGet("/api/locate", [this](const HttpRequest& req) {
+            std::lock_guard<std::mutex> lk(dbMutex_);
+            auto it = req.query.find("q");
+            if (it == req.query.end() || it->second.empty()) {
+                return HttpResponse::json("{\"error\":\"缺少查询参数 q\"}", 400);
+            }
+            std::string q = it->second;
+            int limit = 5;
+            auto lit = req.query.find("limit");
+            if (lit != req.query.end() && !lit->second.empty()) {
+                try {
+                    int parsed = std::stoi(lit->second);
+                    if (parsed >= 1 && parsed <= 100) limit = parsed;
+                } catch (...) {
+                    limit = 5;
+                }
+            }
+            ParsedQuery pq = parseNaturalQuery(q);
+            Searcher searcher(db_);
+            Locator locator(db_, searcher);
+            LocateOptions lopts;
+            lopts.limit = limit;
+            std::vector<Passage> anchors = locator.locate(q, lopts);
+            std::ostringstream oss;
+            oss << "{\"query\":\"" << jsonEscape(q) << "\",\"keywords\":[";
+            for (size_t i = 0; i < pq.keywords.size(); ++i) {
+                if (i) oss << ',';
+                oss << '"' << jsonEscape(pq.keywords[i]) << '"';
+            }
+            oss << "],\"anchors\":[";
+            for (size_t i = 0; i < anchors.size(); ++i) {
+                const Passage& a = anchors[i];
+                if (i) oss << ',';
+                oss << "{\"doc_id\":" << a.doc_id
+                    << ",\"path\":\"" << jsonEscape(a.path)
+                    << "\",\"line_start\":" << a.line_start
+                    << ",\"line_end\":" << a.line_end
+                    << ",\"score\":" << formatScore(a.score)
+                    << ",\"matched_terms\":[";
+                for (size_t j = 0; j < a.matched_terms.size(); ++j) {
+                    if (j) oss << ',';
+                    oss << '"' << jsonEscape(a.matched_terms[j]) << '"';
+                }
+                oss << "],\"text\":\"" << jsonEscape(a.text) << "\"}";
             }
             oss << "]}";
             return HttpResponse::json(oss.str());

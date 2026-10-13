@@ -229,13 +229,21 @@
 6. JSON 输出（--json，便于脚本集成）
 7. 灵活配置（--db > DOCSEEK_DB > $HOME/.local/share/docseek/docseek.db）
 
-**状态**：工程化 v3（2026-10-13 完成：真中文分词 + 混合检索 v1；构建零警告、GoogleTest 40 例中 39 过〈WatcherTest.SubDir 为 pre-existing flaky，在 pristine v0.2.0 上同样偶发失败〉、中文语料 Top-1 10/10 符合预期、万级文件索引性能抽查完成）。
+**状态**：工程化 v4「自然语言定位原文」（2026-10-13 完成：`locate` 子命令——中文疑问句规则解析（query_parser）+ jieba 关键词抽取 → 混合召回 → 段落滑动窗口重排序（passage_ranker）→ 行号锚定（locator）；CLI 带行号原文段落 + 命中词 ANSI 高亮 + --json；`GET /api/locate`；Web UI 新增"自然语言定位"卡片；构建零警告、GoogleTest 48/48 全过〈含新增 test_locate 9 例与 SvcFixture.LocateApi〉、10 查询定位评测 10/10；2 张真实截图亲眼验收通过）。
+
+**发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`——有条件发版，13 项未通过/部分通过均为已知缺口且有排期（v0.5：结构化日志/指标告警/backup-restore/OPERATIONS.md/compose/Dependabot/限流）。
+
+**修 bug（本轮视觉验收附带抓出）**：
+1. web/index.html 的 `<script>` 自 v2 起在 `btn.dis` 处被截断，导致整页 JS 解析失败、所有按钮无响应——本轮补全并补上事件绑定与初始化（node --check 验证通过）。
+2. 同文件第 1 行混入 markdown 代码围栏 ` ```html `，页面顶部渲染出多余文本——已删除。
+3. refreshStats 字段映射与 /api/stats 实际返回对不上（total_bytes/uptime_sec/watched_dirs），服务状态卡片显示 "-"——已对齐。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Database（SQLite+FTS5 手动同步）/ Indexer（递归爬取+增量）/ Searcher（查询构造）三层库 + docseek CLI（index/search/stats/prune）+ 15 例测试 + CI 与多阶段 Dockerfile 就绪
 - 工程化 v2（2026-10-13）：`serve` 子命令落地——自研极简 HTTP 服务器（零第三方网络库）+ inotify 实时监控（新增/修改/删除自动增量索引，debounce）+ 内嵌 Web UI；7 个 REST 端点（/api/health、/api/stats、/api/search、/api/index、/api/prune、/api/watch GET/POST/DELETE）；测试扩至 32 例全过；真实冒烟验证新增/修改/删除自动索引、watch 增删 API 与 Web UI；补齐完整 README（安装/构建/测试/API 表格/已知局限）
 - 工程化 v3（2026-10-13）：**中文分词攻坚**——cppjieba（v5.6.2，MIT，Keenable 核验 2026 年仍在维护）实现的 FTS5 自定义分词器（`tokenize='jieba'`，fts5_api 注册，CutForSearch + 字节偏移，ASCII 小写折叠）；`PRAGMA user_version` 2→3 旧库自动迁移（事务包裹，失败回滚）；**混合检索 v1**（BM25 + AND→OR 回退 + 标题/短语加成重排序）；词典运行时四级定位（DOCSEEK_DICT_DIR > ../share/docseek/dict > 同级 dict/ > 编译期默认），缺失则 fail-fast。评测：12 篇中文语料 10 查询 Top-1 全部符合预期（docs/eval.md）；万级文件（40MB）索引 267 秒，检索 2.7 秒（含词典加载）。调试中发现并修复 dpsk 埋的 bug：Jieba 构造函数传参顺序错误（把 idf.utf8 当用户词典加载导致切词异常）。
+- 工程化 v4「自然语言定位原文」（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；query_parser（中文疑问句规则解析 + 疑问词删除表 + 引号短语抽取）/ passage_ranker（滑动窗口段落切分 + 四维加权打分 + 行号锚定）/ locator（混合召回→段落重排）三新模块 + Database::getContentById + jieba 单例只读接口；`locate` CLI（行号段落 + ANSI 高亮 + --json）+ `GET /api/locate` + Web"自然语言定位"卡片（延续现有视觉系统）；CHANGELOG.md 新建；docs/eval.md 第七节 10 查询评测 10/10；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md；CLI/Web 真实截图各 1 张亲眼验收；修了 v2 遗留的 3 个真实 bug（Web JS 截断致全页失效、首行 ```html 围栏、refreshStats 字段映射错位）
 
 **后续计划**：
 

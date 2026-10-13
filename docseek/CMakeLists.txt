@@ -2,7 +2,7 @@
 # 统一契约：C++17 / CMake >= 3.28 / GCC / 命名空间 docseek / 版本 0.2.0
 cmake_minimum_required(VERSION 3.28)
 
-project(docseek VERSION 0.3.0 LANGUAGES C CXX)
+project(docseek VERSION 0.4.0 LANGUAGES C CXX)
 
 # 强制 C++17 标准，关闭编译器扩展以保证可移植性
 set(CMAKE_CXX_STANDARD 17)
@@ -74,6 +74,9 @@ add_library(docseek_core STATIC
   src/service.cpp
   src/dict.cpp
   src/jieba_tokenizer.cpp
+  src/query_parser.cpp
+  src/passage_ranker.cpp
+  src/locator.cpp
 )
 target_include_directories(docseek_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -145,6 +148,7 @@ add_executable(docseek_tests
   tests/test_database.cpp
   tests/test_indexer.cpp
   tests/test_searcher.cpp
+  tests/test_locate.cpp
   tests/test_http_server.cpp
   tests/test_watcher.cpp
   tests/test_service.cpp

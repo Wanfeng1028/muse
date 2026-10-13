@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -165,6 +164,16 @@
     word-break: break-all;
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   }
+  .result-loc {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #7a8798;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  .result-loc b {
+    color: #2f5b8f;
+    font-weight: 600;
+  }
   .result-snippet {
     margin-top: 8px;
     font-size: 13px;
@@ -278,6 +287,24 @@
     </div>
   </section>
 
+  <!-- ④ 自然语言定位 -->
+  <section class="card">
+    <h2><span class="dot"></span>自然语言定位</h2>
+    <div class="row">
+      <input type="text" id="lq" placeholder="用平时说话的方式提问，例如：退款流程写在哪一段" autocomplete="off">
+      <select id="llimit">
+        <option value="3">3 段</option>
+        <option value="5" selected>5 段</option>
+        <option value="10">10 段</option>
+      </select>
+      <button id="btnLocate">定位</button>
+    </div>
+    <div class="hint">不用想关键词，直接问；文溯把你带到原文那一段（文件:行号）。</div>
+    <div class="results" id="locateResults">
+      <div class="empty">提问后，这里会列出原文段落与行号</div>
+    </div>
+  </section>
+
   <!-- ② 服务状态 -->
   <section class="card">
     <h2><span class="dot"></span>服务状态</h2>
@@ -336,7 +363,8 @@
     search: "/api/search",
     stats: "/api/stats",
     index: "/api/index",
-    watch: "/api/watch"
+    watch: "/api/watch",
+    locate: "/api/locate"
   };
 
   function $(id) {
@@ -511,13 +539,16 @@
     requestJSON("GET", API.stats).then(function (data) {
       var docs = (data.documents !== undefined) ? data.documents :
                  ((data.doc_count !== undefined) ? data.doc_count : (data.count));
-      var bytes = (data.index_bytes !== undefined) ? data.index_bytes :
-                  ((data.bytes !== undefined) ? data.bytes : (data.size_bytes));
+      var bytes = (data.total_bytes !== undefined) ? data.total_bytes :
+                  ((data.index_bytes !== undefined) ? data.index_bytes :
+                  ((data.bytes !== undefined) ? data.bytes : (data.size_bytes)));
       var watches = (data.watches !== undefined) ? data.watches :
                     ((data.watch_count !== undefined) ? data.watch_count :
                     (data.watched_dirs));
-      var uptime = (data.uptime_seconds !== undefined) ? data.uptime_seconds :
-                   ((data.uptime !== undefined) ? data.uptime : (data.uptime_secs));
+      if (Array.isArray(watches)) { watches = watches.length; }
+      var uptime = (data.uptime_sec !== undefined) ? data.uptime_sec :
+                   ((data.uptime_seconds !== undefined) ? data.uptime_seconds :
+                   ((data.uptime !== undefined) ? data.uptime : (data.uptime_secs)));
 
       $("statDocs").textContent = (docs !== undefined && docs !== null) ? docs : "-";
       $("statBytes").textContent = (bytes !== undefined && bytes !== null) ? formatBytes(bytes) : "-";
@@ -641,4 +672,105 @@
       }
       refreshStats();
     }).catch(function (err) {
-      btn.dis
+      alert("移除监控失败：" + err.message);
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+  // ---------- 自然语言定位 ----------
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
+  }
+
+  function highlightTerms(text, terms) {
+    var esc = escapeHtml(text);
+    if (!terms || terms.length === 0) { return esc; }
+    var sorted = terms.slice().sort(function (a, b) { return b.length - a.length; });
+    for (var i = 0; i < sorted.length; i++) {
+      var t = sorted[i];
+      if (!t) { continue; }
+      var re = new RegExp(escapeRegExp(escapeHtml(t)), "gi");
+      esc = esc.replace(re, "<em>$&</em>");
+    }
+    return esc;
+  }
+
+  function doLocate() {
+    var q = $("lq").value.trim();
+    var limit = parseInt($("llimit").value, 10) || 5;
+    var box = $("locateResults");
+    if (!q) {
+      box.innerHTML = '<div class="empty">请先输入问题</div>';
+      return;
+    }
+    box.innerHTML = '<div class="empty">定位中…</div>';
+    var btn = $("btnLocate");
+    btn.disabled = true;
+    var url = API.locate + "?q=" + encodeURIComponent(q) + "&limit=" + limit;
+    requestJSON("GET", url).then(function (data) {
+      renderAnchors(data, q);
+    }).catch(function (err) {
+      box.innerHTML = '<div class="empty">定位失败</div>';
+      alert("定位失败：" + err.message);
+    }).then(function () {
+      btn.disabled = false;
+    });
+  }
+
+  function renderAnchors(data, q) {
+    var box = $("locateResults");
+    var anchors = (data && Array.isArray(data.anchors)) ? data.anchors : [];
+    var keywords = (data && Array.isArray(data.keywords)) ? data.keywords : [];
+    if (anchors.length === 0) {
+      box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的原文段落，换个说法试试</div>';
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < anchors.length; i++) {
+      var a = anchors[i] || {};
+      var idx = i + 1;
+      var path = a.path ? a.path : "";
+      var ls = (a.line_start !== undefined) ? a.line_start : "-";
+      var le = (a.line_end !== undefined) ? a.line_end : "-";
+      var score = (a.score !== undefined && a.score !== null) ? Number(a.score).toFixed(3) : "-";
+      var terms = (a.matched_terms && a.matched_terms.length) ? a.matched_terms : keywords;
+      var text = a.text ? a.text : "";
+      html += '<div class="result-item">';
+      html += '<div class="result-head">';
+      html += '<span class="result-idx">' + idx + '</span>';
+      html += '<span class="result-title">' + escapeHtml(path) + '</span>';
+      html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
+      html += '</div>';
+      html += '<div class="result-loc">第 <b>' + escapeHtml(String(ls)) + '</b>–<b>' + escapeHtml(String(le)) + '</b> 行</div>';
+      if (text) {
+        html += '<div class="result-snippet">' + highlightTerms(text, terms) + "</div>";
+      }
+      html += "</div>";
+    }
+    // 换行保留：段落内换行转 <br>
+    html = html.split("\n").join("<br>");
+    box.innerHTML = html;
+  }
+
+  // ---------- 事件绑定与初始化 ----------
+  function bindEnter(inputId, fn) {
+    $(inputId).addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { fn(); }
+    });
+  }
+  $("btnSearch").addEventListener("click", doSearch);
+  bindEnter("q", doSearch);
+  $("btnStats").addEventListener("click", refreshStats);
+  $("btnIndex").addEventListener("click", doIndex);
+  bindEnter("indexPath", doIndex);
+  $("btnWatch").addEventListener("click", addWatch);
+  bindEnter("watchPath", addWatch);
+  $("btnLocate").addEventListener("click", doLocate);
+  bindEnter("lq", doLocate);
+  loadWatches();
+  refreshStats();
+})();
+</script>
+</body>
+</html>
