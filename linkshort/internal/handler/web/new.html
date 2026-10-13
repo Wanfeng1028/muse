@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新建短链 · 短链</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="key-banner" class="key-banner" hidden>
+  还没有设置访问密钥。请到终端查看服务启动日志里的 Admin Key，然后点这里输入。
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path>
+        <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path>
+      </svg>
+      <span>短链</span>
+    </div>
+    <nav>
+      <a href="index.html" data-nav="dashboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        仪表盘
+      </a>
+      <a href="links.html" data-nav="links">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+        链接管理
+      </a>
+      <a href="new.html" data-nav="new">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        新建短链
+      </a>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="link-btn" id="change-key">更换密钥</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">新建短链</div>
+      <div class="topbar-meta">把长链接变成短地址</div>
+    </header>
+
+    <section class="panel">
+      <form id="new-form" class="form">
+        <div class="field">
+          <label for="url">目标 URL <span class="req">*</span></label>
+          <input class="input mono" type="url" id="url" required placeholder="https://example.com/一段很长的地址">
+          <div class="hint">必须以 http:// 或 https:// 开头</div>
+        </div>
+
+        <div class="field">
+          <label for="slug">自定义短码（选填）</label>
+          <input class="input mono" type="text" id="slug" placeholder="留空会自动生成，例如 abc123">
+          <div class="hint">只能用字母、数字、下划线、短横线</div>
+        </div>
+
+        <div class="field">
+          <label for="title">备注标题（选填）</label>
+          <input class="input" type="text" id="title" placeholder="方便自己辨认，例如：春季活动页">
+        </div>
+
+        <div class="field">
+          <label for="expires">过期日期（选填）</label>
+          <input class="input mono" type="datetime-local" id="expires">
+          <div class="hint">到期后访问会显示已过期</div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="submit-btn">生成短链</button>
+          <span class="form-err" id="form-err"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel result-panel" id="result-panel" hidden>
+      <div class="panel-head"><h2>生成成功</h2></div>
+      <div class="result">
+        <div class="result-short">
+          <a class="mono big" id="result-short" target="_blank" rel="noopener"></a>
+          <button class="btn" id="copy-result">复制</button>
+        </div>
+        <div class="qr-wrap small">
+          <img id="result-qr" alt="二维码" width="180" height="180">
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/new.js"></script>
+</body>
+</html>

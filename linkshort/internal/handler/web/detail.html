@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>链接详情 · 短链</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="key-banner" class="key-banner" hidden>
+  还没有设置访问密钥。请到终端查看服务启动日志里的 Admin Key，然后点这里输入。
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path>
+        <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path>
+      </svg>
+      <span>短链</span>
+    </div>
+    <nav>
+      <a href="index.html" data-nav="dashboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        仪表盘
+      </a>
+      <a href="links.html" data-nav="links">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+        链接管理
+      </a>
+      <a href="new.html" data-nav="new">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        新建短链
+      </a>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="link-btn" id="change-key">更换密钥</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">链接详情</div>
+      <div class="topbar-meta"><a href="links.html" class="link-btn">← 返回列表</a></div>
+    </header>
+
+    <section class="panel" id="info-panel">
+      <div class="panel-head">
+        <h2 id="link-title">加载中…</h2>
+      </div>
+      <div class="kv">
+        <div class="kv-row">
+          <div class="kv-key">长链接</div>
+          <div class="kv-val"><a id="link-url" class="url" target="_blank" rel="noopener"></a></div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">短地址</div>
+          <div class="kv-val">
+            <span class="mono" id="link-short"></span>
+            <button class="btn tiny" id="copy-short">复制</button>
+          </div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">创建时间</div>
+          <div class="kv-val mono" id="link-created"></div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">到期时间</div>
+          <div class="kv-val mono" id="link-expires"></div>
+        </div>
+        <div class="kv-row">
+          <div class="kv-key">启用</div>
+          <div class="kv-val"><label class="switch"><input type="checkbox" id="link-enabled"><span></span></label></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="two-col">
+      <section class="panel">
+        <div class="panel-head"><h2>二维码</h2></div>
+        <div class="qr-wrap">
+          <img id="qr-img" alt="二维码" width="240" height="240">
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>本链最近 30 天点击</h2></div>
+        <div class="chart" id="link-chart"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head"><h2>来源 Top</h2></div>
+      <table class="table" id="referer-table">
+        <thead>
+          <tr><th>来源</th><th style="width:90px" class="right">点击</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/detail.js"></script>
+</body>
+</html>

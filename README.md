@@ -14,6 +14,7 @@
 | [sentinel](./sentinel) | 「哨兵 Sentinel」——站点可用性监控。Go 单二进制：HTTP(S)/TCP 双协议检查、证书到期天数、定时调度、状态翻转自动生成停机事件并 webhook 通知、可用率与延迟统计、内嵌 Web UI（三页：仪表盘/监控管理/事件）。 | 工程化 v1 |
 | [docseek](./docseek) | 「文溯 DocSeek」——本地全文检索引擎 CLI + HTTP 服务。C++17 + CMake + SQLite FTS5（unicode61）。功能：递归目录索引、基于 mtime+size 的增量更新、BM25 相关性搜索与摘要片段、已删除文件自动清理、索引统计、JSON 输出；v2 新增 `serve` 常驻服务（自研 HTTP 服务器 + inotify 文件变更实时监控 + 内嵌 Web UI）。 | 工程化 v2 |
 | [feedflow](./feedflow) | 「信流 FeedFlow」——自托管 RSS 阅读器。Python + Flask 3.1 + feedparser + trafilatura + APScheduler + SQLite FTS5（trigram 中文全文搜索）。功能：订阅源管理（分组/抓取间隔/启用开关）、APScheduler 后台定时抓取、trafilatura 正文提取（失败回落摘要）、三栏桌面式阅读器（未读/星标/全部过滤、快捷键 j/k/m/s）、FTS5 全文搜索、OPML 导入/导出、统计页。 | 工程化 v1 |
+| [linkshort](./linkshort) | 「短链 LinkShort」——自托管短链服务。Go 单二进制：chi v5 路由 + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI + skip2/go-qrcode 二维码。功能：短链创建（自动 base62/自定义 slug）、302 跳转计数与访问日志、统计（总览/30 天曲线/Top 链接/Top Referer）、过期 410、启用开关、二维码 PNG、CSV 导入导出、API Key 鉴权、Web UI 四页（仪表盘/链接管理/详情/新建）。 | 工程化 v1 |
 
 ## 如何运行
 
@@ -138,6 +139,17 @@ make run
 ```
 
 启动后打开 http://127.0.0.1:8300 即可使用。手动抓取一次、OPML 导入、构建、测试与 Docker 的完整说明见 [feedflow/README.md](./feedflow/README.md)。
+
+### linkshort
+
+进入项目目录，构建并启动服务（需 Go 1.23+，首次启动会自动生成管理 API Key 并打印到日志）：
+
+```bash
+cd linkshort
+make run
+```
+
+启动后打开 http://localhost:8080/ui/ 即可使用。配置、API 表、测试与 Docker 的完整说明见 [linkshort/README.md](./linkshort/README.md)。
 
 ## 目录约定
 

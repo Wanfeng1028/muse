@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>仪表盘 · 短链</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="key-banner" class="key-banner" hidden>
+  还没有设置访问密钥。请到终端查看服务启动日志里的 Admin Key，然后点这里输入。
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path>
+        <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path>
+      </svg>
+      <span>短链</span>
+    </div>
+    <nav>
+      <a href="index.html" data-nav="dashboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        仪表盘
+      </a>
+      <a href="links.html" data-nav="links">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+        链接管理
+      </a>
+      <a href="new.html" data-nav="new">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        新建短链
+      </a>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="link-btn" id="change-key">更换密钥</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">仪表盘</div>
+      <div class="topbar-meta"><span id="total-links">—</span> 条短链</div>
+    </header>
+
+    <section class="cards">
+      <div class="card">
+        <div class="card-label">短链总数</div>
+        <div class="card-value mono" id="stat-links">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">总点击数</div>
+        <div class="card-value mono" id="stat-total">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">今天被点了多少次</div>
+        <div class="card-value mono" id="stat-today">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">启用中</div>
+        <div class="card-value mono" id="stat-enabled">—</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>最近 30 天点击</h2>
+      </div>
+      <div class="chart" id="daily-chart"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>点击最多的短链</h2>
+      </div>
+      <table class="table" id="top-links">
+        <thead>
+          <tr>
+            <th style="width:130px">短码</th>
+            <th>标题</th>
+            <th style="width:90px" class="right">点击</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/dashboard.js"></script>
+</body>
+</html>

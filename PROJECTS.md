@@ -229,3 +229,35 @@
 - fever / Google Reader API 兼容
 - 移动端阅读优化
 - 全文 RSS 输出
+
+## linkshort「短链 LinkShort · 自托管短链服务」
+
+**定位**：自托管短链服务，把长链接变成短地址；单二进制 + SQLite + 内嵌 Web UI，跑起来就能用。
+
+**技术栈**：Go 1.23 单二进制；chi v5.3.2 路由（组件库多元化：与 second-brain/sentinel 的标准库 net/http 错开），modernc.org/sqlite v1.34.5（纯 Go SQLite 驱动，无需 cgo）；skip2/go-qrcode 服务端生成二维码 PNG；go:embed 内嵌 Web UI；go test（24 例）、go vet、gofmt；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 linkshort/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。选型经三步调研：dpsk 出候选清单与对比维度（chi/gin/echo/fiber、skip2/go-qrcode/boombuler/yeqown）→ Keenable 核验时效性（chi v5.3.2 2026-09 发布、活跃维护；qrcode 为短链场景事实标准）→ go get 实际安装验证通过。选 chi 而非 gin/echo：一句话——单二进制小服务，chi 零第三方依赖、纯 net/http 兼容，与"一个二进制跑起来"的气质最贴合。
+
+**功能模块**：
+
+1. 短链创建（自动 base62 短码 / 自定义 slug，目标 URL 校验）
+2. 302 跳转（访问计数 + 访问日志：时间/IP 哈希/UA/Referer）
+3. 统计分析（总览、30 天点击曲线、Top 链接、Top Referer）
+4. 过期时间（到期访问返回 410）
+5. 启用/禁用开关
+6. 二维码 PNG（服务端生成）
+7. CSV 导入/导出
+8. API Key 鉴权（X-API-Key 头或 ?key= 参数）
+9. Web UI 四页：仪表盘 / 链接管理（搜索/排序/分页/导入导出）/ 详情（含二维码与单链统计）/ 新建
+
+**视觉**：「快递面单 / 邮政标签」——米白 #F7F3EC 底、墨黑 #1F1B16、邮戳红 #B3402A 点睛、牛皮纸卡 #EDE6D6、邮票齿孔装饰边、短码与数字用等宽字体；去 AI 味：无紫渐变、无渐变标题、无三栏特性格、无 emoji 图标、无"赋能/极致体验"类文案。
+
+**状态**：工程化 v1（2026-10-13 完成，go test 24 例全过、vet/gofmt 全洁、真实服务冒烟：建链→302 跳转→点击计数→二维码→统计→CSV 往返全链路验证；4 张 Web UI 真实截图已亲眼验收）。
+
+**里程碑记录**：
+
+- 工程化 v1（2026-10-13）：chi 路由 + 分层架构落地（config/db/model/store/handler/util/qr），短链 CRUD/跳转/统计/二维码/导入导出全模块、内嵌四页 Web UI、CI 与多阶段 Dockerfile 就绪
+
+**后续计划**：
+
+- 密码保护短链
+- 访问地域统计
+- 公开 API 文档页
