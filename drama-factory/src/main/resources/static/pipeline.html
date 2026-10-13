@@ -4,39 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>生产看板 · AI 短剧工坊</title>
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/v2.css">
 </head>
 <body>
 <header class="topbar">
-  <nav class="topnav">
-    <a href="/index.html">控制台首页</a>
-    <a href="/storyboard.html">分镜板</a>
-    <a href="/tasks.html">任务队列</a>
-    <a href="/finals.html">成片库</a>
-    <a href="/pipeline.html" class="active">生产看板</a>
-  </nav>
+  <div class="topbar-left">
+    <span class="brand">AI 短剧工坊</span>
+    <nav class="nav">
+      <a href="/" class="nav-link">项目</a>
+      <a href="/pipeline" class="nav-link active">生产看板</a>
+      <a href="/storyboard" class="nav-link">分镜板</a>
+      <a href="/tasks" class="nav-link">任务</a>
+      <a href="/final" class="nav-link">成片库</a>
+    </nav>
+  </div>
   <div class="topbar-right">
-    <label class="inline-field">
-      <span>项目</span>
-      <select id="projectSelect"></select>
-    </label>
-    <button id="refreshBtn" class="btn">刷新</button>
+    <select id="projectSelect" class="select"></select>
+    <button id="refreshBtn" class="btn btn-sm">刷新</button>
   </div>
 </header>
 
-<main class="page">
-  <section class="page-head">
-    <h1 id="projectTitle">生产看板</h1>
-    <p id="projectMeta" class="muted">选择一个项目查看各剧集的流水线状态。</p>
-  </section>
+<main class="container">
+  <div class="page-head">
+    <div>
+      <div class="kicker">生产线 · PRODUCTION LINE</div>
+      <h1 id="projectTitle" class="page-title">生产看板</h1>
+    </div>
+    <p id="projectMeta" class="muted"></p>
+  </div>
 
-  <section id="board" class="board">
+  <section id="board" class="film">
     <div class="empty" id="boardEmpty">还没有剧集数据。</div>
   </section>
 </main>
 
-<div id="toast" class="toast" hidden></div>
-
-<script src="/pipeline.js"></script>
+<div id="toast" class="toast"></div>
+<script src="/static/pipeline.js"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 - **失败注入** — 通过（mock 视频提供者的 failNext 路径已被测试覆盖，能验证重试与最终 FAILED 落库）。
 - **错误处理策略** — 未通过（指数退避重试 max-attempts=8 已实现且可配，状态机不允许非法跃迁；但 submit 未做重复检查，重复提交同一 Shot 会重复建任务，无幂等；降级策略目前只有"失败即 FAILED"，没有备用 provider 切换）。
 - **数据库迁移版本化** — 未通过（H2 ddl-auto=update 会自动改表结构，生产环境换库或改字段时不可控、不可回滚，没有 Flyway/Liquibase）。
-- **健康检查端点** — 未通过（没有 /api/health 或 Spring Actuator，容器和负载均衡无法探活）。
+- **健康检查端点** — 通过（`GET /api/health` 返回 {"status":"ok"}，容器可探活；未用 Actuator，指标类探针暂无）。
 - **优雅关闭** — 未通过（没配 server.shutdown=graceful，也没处理正在轮询中的 VideoTask 收尾，重启可能丢在途任务状态）。
 
 ## 2. 可观测性
@@ -49,7 +49,6 @@
 
 | 条目 | 严重度 | 计划 | 预计轮次 |
 | --- | --- | --- | --- |
-| 健康检查端点（Actuator /api/health） | 高 | 加 spring-boot-starter-actuator，暴露 health/info | 第 1 轮 |
 | 提交幂等（同一 Shot 重复提交去重） | 高 | submit 前检查该 Shot 是否已有 PENDING/PROCESSING 任务 | 第 1 轮 |
 | 优雅关闭 | 高 | 配 server.shutdown=graceful + 在途任务收尾钩子 | 第 1 轮 |
 | 数据库迁移版本化 | 高 | 引入 Flyway，把 ddl-auto 改为 validate | 第 1 轮 |
