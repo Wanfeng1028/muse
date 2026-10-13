@@ -32,6 +32,14 @@ server:
   # 优雅关闭：收到关闭信号后先停止接收新请求，等待在途请求处理完成再退出
   shutdown: graceful
 
+management:
+  # v2.4 生产级补强第 3 轮：只暴露 prometheus 端点（/actuator/prometheus），
+  # 供 Prometheus 抓取；不经过 /api/**，不受 JwtAuthFilter 鉴权影响
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
 drama:
   script:
     llm:

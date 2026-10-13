@@ -21,6 +21,14 @@ public interface RunRepository extends JpaRepository<Run, Long> {
      */
     List<Run> findByStatusOrderByCreatedAtAsc(RunStatus status);
 
+    /**
+     * 按状态计数（指标采集用）。
+     *
+     * @param status 运行状态
+     * @return 该状态的运行数量
+     */
+    long countByStatus(RunStatus status);
+
 
     List<UsageService.RunRow> findTop20ByOrderByCreatedAtDesc();
 

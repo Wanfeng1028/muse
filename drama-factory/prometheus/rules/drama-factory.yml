@@ -1,0 +1,73 @@
+# drama-factory 告警规则
+# 说明：
+#   - http_server_requests_seconds_count 是 Spring Boot Actuator 暴露的 Counter，
+#     Counter 必须用 rate()/increase()，不能直接比较瞬时值。
+#   - 5xx 占比 = 5xx 速率 / 全部请求速率，分母为 0 时用 > 0 过滤避免 NaN。
+#   - dramafactory_* 是业务指标，其中 *_total 为 Counter，Gauge 为瞬时值。
+
+groups:
+  - name: drama-factory-availability
+    rules:
+      - alert: DramaFactoryHighErrorRate
+        # 5 分钟内 5xx 占全部请求的比例 > 5%，持续 5 分钟
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count[5m]))
+          ) > 0.05
+          and
+          sum(rate(http_server_requests_seconds_count[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: drama-factory
+        annotations:
+          summary: "drama-factory HTTP 5xx 错误率过高"
+          description: >-
+            最近 5 分钟内 5xx 响应占比已超过 5%（当前值 {{ $value | humanizePercentage }}）。
+            请检查 /actuator/health、应用日志（按 request_id 检索）以及下游依赖
+            （DeepSeek 接口、ffmpeg 剪辑、H2 数据库）是否异常。
+
+  - name: drama-factory-business
+    rules:
+      - alert: DramaFactoryVideoQueueBacklog
+        # 视频任务积压：PENDING + PROCESSING 总数 > 20 持续 15 分钟
+        expr: dramafactory_video_tasks_queued > 20
+        for: 15m
+        labels:
+          severity: warning
+          service: drama-factory
+        annotations:
+          summary: "drama-factory 视频任务队列积压"
+          description: >-
+            当前排队中（PENDING+PROCESSING）的视频任务数为 {{ $value }}，已超过 20 并持续 15 分钟。
+            请确认视频生成工作线程是否存活、ffmpeg 是否卡住，或上游提交量是否突增。
+
+      - alert: DramaFactoryApprovalStuck
+        # 有 Run 卡在等待审批超过 2 小时
+        expr: dramafactory_runs_waiting_approval > 0
+        for: 2h
+        labels:
+          severity: warning
+          service: drama-factory
+        annotations:
+          summary: "drama-factory 有 Run 长时间等待人工审批"
+          description: >-
+            当前有 {{ $value }} 个 Run 处于等待审批状态且已持续 2 小时以上。
+            请登录前端进入「Run 详情页」查看待审批内容并完成审批或驳回；
+            若为误报请检查审批流程是否被阻塞。
+
+      - alert: DramaFactoryRunFailures
+        # 1 小时内 failed 状态的 Run 数量净增 > 3（Gauge 用 delta，不用 increase）
+        expr: delta(dramafactory_runs_by_status{status="failed"}[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          service: drama-factory
+        annotations:
+          summary: "drama-factory 近期 Run 失败次数偏多"
+          description: >-
+            最近 1 小时内新增失败 Run 数为 {{ $value }}，已超过阈值 3。
+            请到生产看板查看失败 Run 列表，结合结构化日志中的 request_id 定位失败原因
+            （编剧 LLM 调用、视频任务、剪辑构建等环节）。

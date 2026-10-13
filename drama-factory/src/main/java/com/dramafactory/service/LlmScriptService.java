@@ -2,6 +2,7 @@ package com.dramafactory.service;
 
 import com.dramafactory.model.Episode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.dramafactory.metrics.DramaMetrics;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -54,6 +55,8 @@ public class LlmScriptService {
             """;
 
     private final CredentialResolver credentialResolver;
+    /** v2.4 指标埋点：LLM 调用次数/耗时。 */
+    private final DramaMetrics dramaMetrics;
     private final ObjectMapper objectMapper;
     private final boolean enabled;
     private final String model;
@@ -97,8 +100,10 @@ public class LlmScriptService {
                             @Value("${drama.script.llm.max-tokens:3000}") int maxTokens,
                             @Value("${drama.script.llm.timeout-seconds:120}") int timeoutSeconds,
                             @Value("${drama.script.llm.max-retries:2}") int maxRetries,
-                            @Value("${drama.script.llm.cli-path:}") String cliPath) {
+                            @Value("${drama.script.llm.cli-path:}") String cliPath,
+                            DramaMetrics dramaMetrics) {
         this.credentialResolver = credentialResolver;
+        this.dramaMetrics = dramaMetrics;
         this.objectMapper = objectMapper;
         this.enabled = enabled;
         this.model = model;
@@ -183,6 +188,21 @@ public class LlmScriptService {
      * @throws LlmScriptUnavailableException 未启用 / 调用失败 / 返回格式无效
      */
     public LlmScriptResult generate(Episode episode, String charactersSummary) {
+        long start = System.currentTimeMillis();
+        try {
+            LlmScriptResult result = doGenerate(episode, charactersSummary);
+            dramaMetrics.recordScriptLlm(result.model(), System.currentTimeMillis() - start, true);
+            return result;
+        } catch (RuntimeException e) {
+            dramaMetrics.recordScriptLlm(model, System.currentTimeMillis() - start, false);
+            throw e;
+        }
+    }
+
+    /**
+     * generate 的实际执行体（指标 wrapper 之外）。
+     */
+    private LlmScriptResult doGenerate(Episode episode, String charactersSummary) {
         if (!enabled) {
             throw new LlmScriptUnavailableException("AI 剧本生成未启用（drama.script.llm.enabled=false）");
         }

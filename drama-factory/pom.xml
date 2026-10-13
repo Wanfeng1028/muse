@@ -64,6 +64,15 @@
             <artifactId>resilience4j-spring-boot3</artifactId>
             <version>2.4.0</version>
         </dependency>
+        <!-- v2.4 生产级补强第 3 轮：指标与告警 —— Actuator + Prometheus 注册表 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>

@@ -9,3 +9,17 @@ spring:
       ddl-auto: create-drop
     show-sql: false
     open-in-view: false
+
+management:
+  # 测试环境同样暴露 prometheus 端点（与主 application.yml 保持一致；
+  # 本项目的测试 classpath 上 test yml 会屏蔽 main yml，故此处需重复声明）
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+  # Spring Boot 测试默认关闭所有 metrics export（test property source 置
+  # management.defaults.metrics.export.enabled=false），此处显式打开 prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true

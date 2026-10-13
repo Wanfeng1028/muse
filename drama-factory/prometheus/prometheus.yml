@@ -1,0 +1,45 @@
+# drama-factory Prometheus 抓取配置示例
+# 用法：
+#   prometheus --config.file=prometheus.yml
+# 或 Docker：
+#   docker run --rm -p 9090:9090 \
+#     -v "$PWD/prometheus.yml:/etc/prometheus/prometheus.yml" \
+#     -v "$PWD/rules:/etc/prometheus/rules" \
+#     prom/prometheus --config.file=/etc/prometheus/prometheus.yml
+#
+# 前提：drama-factory 已启动，且 /actuator/prometheus 可访问。
+#   端点：GET http://localhost:8081/actuator/prometheus
+#   注意：该端点无鉴权（JwtAuthFilter 只拦 /api/**），不要直接暴露到公网。
+
+global:
+  # 与 scrape_interval 一致，保证 rate()/increase() 有足够采样点
+  scrape_interval: 15s
+  # 规则求值频率，通常与 scrape_interval 相同
+  evaluation_interval: 15s
+  # 给所有时序打的外部标签，便于多环境区分
+  external_labels:
+    service: drama-factory
+
+# 告警规则文件（见 prometheus/rules/drama-factory.yml）
+rule_files:
+  - "rules/drama-factory.yml"
+
+scrape_configs:
+  - job_name: drama-factory
+    # 15s 抓取一次，业务指标 Gauge 由 @Scheduled(30s) 刷新内存快照，
+    # 抓取时不会打 DB，因此 15s 间隔是安全的。
+    scrape_interval: 15s
+    metrics_path: /actuator/prometheus
+    scheme: http
+    static_configs:
+      - targets:
+          - localhost:8081
+        labels:
+          instance: drama-factory-local
+
+# 可选：Alertmanager 接入后取消注释，让告警真正发出去
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#             - localhost:9093

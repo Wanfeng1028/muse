@@ -12,6 +12,7 @@ import com.dramafactory.repository.FinalCutRepository;
 import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.exception.ResourceNotFoundException;
+import com.dramafactory.metrics.DramaMetrics;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,8 @@ public class FinalCutService {
     private final FfmpegService ffmpegService;
     private final EpisodeStatusFlowService episodeStatusFlowService;
     private final String storageDir;
+    /** v2.4 指标埋点：成片构建次数/耗时。 */
+    private final DramaMetrics dramaMetrics;
 
     /**
      * 构造器注入所有依赖。
@@ -47,7 +50,8 @@ public class FinalCutService {
                            SubtitleService subtitleService,
                            FfmpegService ffmpegService,
                            EpisodeStatusFlowService episodeStatusFlowService,
-                           @Value("${drama.storage:./data/media}") String storageDir) {
+                           @Value("${drama.storage:./data/media}") String storageDir,
+                           DramaMetrics dramaMetrics) {
         this.finalCutRepository = finalCutRepository;
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
@@ -56,14 +60,31 @@ public class FinalCutService {
         this.ffmpegService = ffmpegService;
         this.episodeStatusFlowService = episodeStatusFlowService;
         this.storageDir = storageDir;
+        this.dramaMetrics = dramaMetrics;
+    }
+
+    /**
+     * 为指定剧集构建成片（指标 wrapper：记录构建次数与耗时）。
+     * 事务边界在此方法上，内层 doBuildFinalCut 与其同事务。
+     */
+    @Transactional
+    public Records.FinalCutResponse buildFinalCut(Long episodeId) {
+        long start = System.currentTimeMillis();
+        try {
+            Records.FinalCutResponse resp = doBuildFinalCut(episodeId);
+            dramaMetrics.recordFinalCutBuild(System.currentTimeMillis() - start, true);
+            return resp;
+        } catch (RuntimeException e) {
+            dramaMetrics.recordFinalCutBuild(System.currentTimeMillis() - start, false);
+            throw e;
+        }
     }
 
     /**
      * 为指定剧集构建成片：拼接分镜片段 + 烧录字幕 → H.264 mp4。
      * 构建过程若失败，会将成片状态置为 FAILED 并记录错误信息后抛出异常。
      */
-    @Transactional
-    public Records.FinalCutResponse buildFinalCut(Long episodeId) {
+    private Records.FinalCutResponse doBuildFinalCut(Long episodeId) {
         // 校验剧集是否存在
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode", episodeId));

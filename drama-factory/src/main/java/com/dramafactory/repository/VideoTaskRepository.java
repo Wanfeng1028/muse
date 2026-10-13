@@ -18,6 +18,14 @@ import com.dramafactory.service.UsageService;
 public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
 
     /**
+     * 按状态计数（指标采集用）。
+     *
+     * @param status 任务状态
+     * @return 该状态的任务数量
+     */
+    long countByStatus(VideoTaskStatus status);
+
+    /**
      * 查询处于指定状态集合、且下次重试时间已到（早于等于给定时间）的任务，按主键升序排列。
      * 用于后台调度重试。
      *

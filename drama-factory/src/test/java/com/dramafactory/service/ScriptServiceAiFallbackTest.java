@@ -31,7 +31,9 @@ class ScriptServiceAiFallbackTest {
         int callCount = 0;
 
         FailingLlmScriptService() {
-            super(null, new ObjectMapper(), true, "test-model", 3000, 120, 0, null);
+            super(null, new ObjectMapper(), true, "test-model", 3000, 120, 0, null,
+                    new com.dramafactory.metrics.DramaMetrics(
+                            new io.micrometer.core.instrument.simple.SimpleMeterRegistry(), null, null));
         }
 
         @Override

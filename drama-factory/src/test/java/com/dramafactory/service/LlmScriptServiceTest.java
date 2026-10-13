@@ -1,9 +1,11 @@
 package com.dramafactory.service;
 
+import com.dramafactory.metrics.DramaMetrics;
 import com.dramafactory.model.DramaProject;
 import com.dramafactory.model.Episode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -31,7 +33,8 @@ class LlmScriptServiceTest {
         int callCount = 0;
 
         StubLlmScriptService(List<String> responses, boolean throwAlways, int maxRetries) {
-            super(null, new ObjectMapper(), true, "test-model", 3000, 120, maxRetries, null);
+            super(null, new ObjectMapper(), true, "test-model", 3000, 120, maxRetries, null,
+                    new DramaMetrics(new SimpleMeterRegistry(), null, null));
             this.responses = responses;
             this.throwAlways = throwAlways;
         }
@@ -110,7 +113,8 @@ class LlmScriptServiceTest {
         };
         // 使用一个 enabled=false 的桩：重写构造参数不方便，改用匿名子类方式
         LlmScriptService disabled = new LlmScriptService(null, new ObjectMapper(), false,
-                "test-model", 3000, 120, 0, null) {
+                "test-model", 3000, 120, 0, null,
+                new DramaMetrics(new SimpleMeterRegistry(), null, null)) {
             @Override
             String callModel(ObjectNode body) {
                 fail("callModel should not be invoked when disabled");
