@@ -412,10 +412,14 @@ html, body {
 }
 .stat-row .k {
   color: var(--text-2);
+  min-width: 0;
+  flex-shrink: 1;
 }
 .stat-row .v {
   font-family: var(--mono);
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .ep-row {
   display: flex;
