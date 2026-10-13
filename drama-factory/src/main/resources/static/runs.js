@@ -91,10 +91,11 @@
       var s = await req('/api/runs/stats');
       if (!s || s.totalRuns == null) { bar.innerHTML = ''; return; }
       var rate = s.successRate == null ? '—' : (Math.round(Number(s.successRate) * 1000) / 10) + '%';
+      bar.className = 'stats-strip';
       bar.innerHTML =
-        '<div class="stat"><div class="k">总运行数</div><div class="v">' + esc(s.totalRuns) + '</div></div>' +
-        '<div class="stat"><div class="k">成功率</div><div class="v">' + esc(rate) + '</div></div>' +
-        '<div class="stat"><div class="k">平均耗时</div><div class="v">' + esc(fmtDuration(s.avgDurationMs)) + '</div></div>';
+        '总运行数 ' + esc(s.totalRuns) + '<span class="sep">·</span>' +
+        '成功率 ' + esc(rate) + '<span class="sep">·</span>' +
+        '平均耗时 ' + esc(fmtDuration(s.avgDurationMs));
       if (window.lucide) lucide.createIcons();
     } catch (e) {
       bar.innerHTML = '';
