@@ -197,3 +197,35 @@
 - HTML/PDF/Office 文本提取
 - 中文分词优化（unicode61 按字切分；当前中文按连续字串整体成 token，子串检索可能无结果）
 - 多用户支持
+
+## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
+
+**定位**：自托管 RSS 阅读器，覆盖订阅管理、定时抓取、正文提取、三栏阅读、全文搜索与 OPML 导入导出的完整流程。
+
+**技术栈**：Python 3.11+ + Flask 3.1.3 + feedparser 6.0.14（RSS/Atom 解析）+ trafilatura 2.2.0（正文提取）+ APScheduler 3.11.3（进程内定时调度）+ SQLite FTS5（trigram tokenizer，中英文全文搜索）；pytest（35 例）、ruff、Dockerfile、GitHub Actions CI（暂置 feedflow/.github，待 token 补齐 workflow 权限后迁移至仓库根目录）。选型经三步调研：dpsk 出候选清单与对比维度 → Keenable 核验版本时效性（Flask 3.1.3 / feedparser 6.0.14 / trafilatura 2.2.0 / APScheduler 3.11.3 均为 2026 年内最新稳定版）→ venv 实际安装验证通过。选 Flask 而非 FastAPI：单进程自托管阅读器，Flask + Jinja2 直出三栏阅读器页面足够轻，异步抓取并非瓶颈。
+
+**功能模块**：
+
+1. 订阅源管理（新建/编辑/删除、分组、抓取间隔、启用开关、立即抓取）
+2. APScheduler 后台定时抓取（每 60 秒检查到期源，etag/modified 条件请求）
+3. 文章入库（guid 去重、发布时间解析）
+4. trafilatura 正文提取（失败回落摘要去标签文本）
+5. 三栏桌面式阅读器（分组/源树、文章列表、阅读区；未读/星标/全部过滤；快捷键 j/k/m/s）
+6. SQLite FTS5 全文搜索（trigram，中文按字可搜）
+7. OPML 导入/导出
+8. 统计页（订阅数/文章数/未读/今日新增/各源状态）
+
+**视觉**：「旧报纸」阅读气质——纸白 #FAFAF7、墨色 #1C1A17、暖灰分隔线、点睛柿色 #C2410C；UI 系统无衬线栈、正文衬线；8pt 间距、圆角 8px。
+
+**状态**：工程化 v1（2026-10-13 完成，pytest 35 例全过、ruff 全洁、真实服务冒烟：订阅添加→立即抓取→3 篇文章入库→标已读/星标→搜索→OPML 往返→CLI fetch 全链路验证）。
+
+**里程碑记录**：
+
+- 工程化 v1（2026-10-13）：Flask 应用工厂 + 蓝图分层落地，订阅/抓取/阅读/搜索/OPML/统计全模块、Jinja2 三栏阅读器前端、CI 与 Dockerfile 就绪
+
+**后续计划**：
+
+- trafilatura 抓取超时收敛（当前单篇最坏等待较长）
+- fever / Google Reader API 兼容
+- 移动端阅读优化
+- 全文 RSS 输出

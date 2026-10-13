@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}OPML 导入导出 · FeedFlow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>OPML 导入导出</h1>
+  <p class="page-sub">OPML 是一种订阅清单文件，别的阅读器能导出，这里能导入；这里的订阅也能导出，带到别处去。</p>
+</div>
+
+<div class="opml-grid">
+
+  <section class="card">
+    <h2 class="card-title">导出</h2>
+    <p class="card-desc">把所有分组和订阅源打包成一个 .opml 文件下载下来。文章和已读状态不包含在内，只有分组名字、源标题和源地址。</p>
+    <a class="btn btn-primary" href="/opml/export">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3v12"></path>
+        <path d="M7 10l5 5 5-5"></path>
+        <path d="M4 20h16"></path>
+      </svg>
+      下载 OPML 文件
+    </a>
+  </section>
+
+  <section class="card">
+    <h2 class="card-title">导入</h2>
+    <p class="card-desc">选择一个 .opml 或 .xml 文件上传。里面每个 outline 的地址都会被建成一个订阅源；标题已经存在的源会自动跳过，不会重复添加。</p>
+    <form class="opml-form" method="post" action="/opml/import" enctype="multipart/form-data">
+      <label class="file-field">
+        <input type="file" name="file" accept=".opml,.xml,text/xml,text/x-opml,application/xml">
+        <span class="file-hint">点击选择文件</span>
+      </label>
+      <button type="submit" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 21V9"></path>
+          <path d="M7 14l5-5 5 5"></path>
+          <path d="M4 4h16"></path>
+        </svg>
+        上传并导入
+      </button>
+    </form>
+  </section>
+
+</div>
+
+<style>
+  .opml-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+  }
+  @media (max-width: 720px) {
+    .opml-grid { grid-template-columns: 1fr; }
+  }
+  .opml-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .file-field {
+    display: block;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 24px 16px;
+    text-align: center;
+    background: var(--paper);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .file-field:hover { border-color: var(--accent); }
+  .file-field input[type="file"] {
+    display: block;
+    width: 100%;
+    font: inherit;
+    color: var(--ink);
+  }
+  .file-hint {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}统计 · 信流{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+  <header class="page-head">
+    <h1>统计</h1>
+    <p class="page-sub">订阅源、文章与抓取状态一览。</p>
+  </header>
+
+  <section class="stat-cards" aria-label="总览">
+    <div class="stat-card">
+      <div class="stat-label">订阅源</div>
+      <div class="stat-value">{{ stats.feeds }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">文章总数</div>
+      <div class="stat-value">{{ stats.articles }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">未读</div>
+      <div class="stat-value stat-accent">{{ stats.unread }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">今日新增</div>
+      <div class="stat-value">{{ stats.today_added }}</div>
+    </div>
+  </section>
+
+  <section class="stats-table-wrap" aria-label="各源未读">
+    <h2 class="section-title">各源未读</h2>
+    {% if stats.per_feed %}
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th scope="col">源名</th>
+          <th scope="col" class="col-num">未读数</th>
+          <th scope="col">最后抓取状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in stats.per_feed %}
+        <tr>
+          <td class="cell-title">
+            <a href="/?feed_id={{ f.id }}">{{ f.title }}</a>
+          </td>
+          <td class="col-num">
+            {% if f.unread > 0 %}
+              <span class="unread-pill">{{ f.unread }}</span>
+            {% else %}
+              <span class="muted">0</span>
+            {% endif %}
+          </td>
+          <td class="cell-status">
+            {% set st = f.last_status or '' %}
+            {% if st == 'ok' %}
+              <span class="status status-ok">正常</span>
+            {% elif st == 'error' %}
+              <span class="status status-error">出错</span>
+            {% else %}
+              <span class="status status-idle">未抓取</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-hint">还没有订阅源，先去<a href="/feeds">订阅管理</a>添加一个。</p>
+    {% endif %}
+  </section>
+</div>
+
+<style>
+  .stats-page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+  }
+
+  .page-head {
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line, #E7E2D6);
+    padding-bottom: 16px;
+  }
+
+  .page-head h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink, #1C1A17);
+    margin: 0 0 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .page-sub {
+    margin: 0;
+    font-size: 13px;
+    color: #6B655B;
+  }
+
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--paper, #FAFAF7);
+    border: 1px solid var(--line, #E7E2D6);
+    border-radius: 8px;
+    padding: 20px 18px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: #6B655B;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--ink, #1C1A17);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-value.stat-accent {
+    color: var(--accent, #C2410C);
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink, #1C1A17);
+    margin: 0 0 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .stats-table-wrap {
+    border-top: 1px solid var(--line, #E7E2D6);
+    padding-top: 24px;
+  }
+
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .stats-table th,
+  .stats-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line, #E7E2D6);
+  }
+
+  .stats-table th {
+    font-weight: 500;
+    font-size: 12px;
+    color: #6B655B;
+    letter-spacing: 0.5px;
+  }
+
+  .stats-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .stats-table .col-num {
+    text-align: right;
+    width: 96px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cell-title a {
+    color: var(--ink, #1C1A17);
+    text-decoration: none;
+  }
+
+  .cell-title a:hover {
+    color: var(--accent, #C2410C);
+  }
+
+  .unread-pill {
+    display: inline-block;
+    min-width: 24px;
+    padding: 1px 8px;
+    border-radius: 8px;
+    background: var(--accent, #C2410C);
+    color: #FAFAF7;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+
+  .muted {
+    color: #A39C8F;
+  }
+
+  .status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+  }
+
+  .status-ok {
+    color: #3F6212;
+    background: #F3F6EC;
+    border-color: #DCE5CB;
+  }
+
+  .status-error {
+    color: var(--accent, #C2410C);
+    background: #FBF1EC;
+    border-color: #F0D6C8;
+  }
+
+  .status-idle {
+    color: #6B655B;
+    background: #F5F2EA;
+    border-color: var(--line, #E7E2D6);
+  }
+
+  .empty-hint {
+    font-size: 14px;
+    color: #6B655B;
+    margin: 8px 0 0;
+  }
+
+  .empty-hint a {
+    color: var(--accent, #C2410C);
+    text-decoration: none;
+  }
+
+  .empty-hint a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 720px) {
+    .stat-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .stats-page {
+      padding: 20px 16px 32px;
+    }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}搜索 · 信流{% endblock %}
+
+{% block content %}
+<div class="page-search">
+  <header class="search-head">
+    <h1>搜索</h1>
+    <form class="search-form" method="get" action="/search">
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="输入关键词" autofocus>
+      <button type="submit">搜索</button>
+    </form>
+    {% if q %}
+      <p class="search-meta">“{{ q }}” 共找到 {{ results|length }} 条结果</p>
+    {% endif %}
+  </header>
+
+  {% if not q %}
+    <p class="empty-hint">在上面输入关键词，回车即可搜索已抓取的文章。</p>
+  {% elif not results %}
+    <p class="empty-hint">没有找到和“{{ q }}”相关的文章。换个词试试，或者先去订阅页添加几个源。</p>
+  {% else %}
+    <ul class="search-list">
+      {% for a in results %}
+        <li class="search-item">
+          <h2 class="search-title">
+            <a href="/?article={{ a.id }}">{{ a.title or '(无标题)' }}</a>
+          </h2>
+          <div class="search-sub">
+            <span class="search-feed">{{ a.feed_title or '未知来源' }}</span>
+            {% if a.published_at %}
+              <span class="search-time">{{ a.published_at[:16].replace('T', ' ') }}</span>
+            {% endif %}
+          </div>
+          <p class="search-snippet">{{ (a.content_text or a.summary or '')[:120] }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+<style>
+  .page-search { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .search-head h1 { font-size: 22px; font-weight: 600; margin: 0 0 16px; color: #1C1A17; }
+  .search-form { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-form input[type="text"] {
+    flex: 1; padding: 8px 12px; font-size: 14px;
+    border: 1px solid #E7E2D6; border-radius: 8px;
+    background: #FAFAF7; color: #1C1A17;
+  }
+  .search-form input[type="text"]:focus {
+    outline: none; border-color: #C2410C;
+  }
+  .search-form button {
+    padding: 8px 16px; font-size: 14px; cursor: pointer;
+    border: 1px solid #C2410C; border-radius: 8px;
+    background: #C2410C; color: #FAFAF7;
+  }
+  .search-form button:hover { background: #a8360a; border-color: #a8360a; }
+  .search-meta { color: #6b655c; font-size: 13px; margin: 0 0 24px; }
+  .empty-hint { color: #6b655c; font-size: 14px; padding: 24px 0; }
+
+  .search-list { list-style: none; margin: 0; padding: 0; }
+  .search-item {
+    padding: 16px 0; border-top: 1px solid #E7E2D6;
+  }
+  .search-item:last-child { border-bottom: 1px solid #E7E2D6; }
+  .search-title { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
+  .search-title a { color: #1C1A17; text-decoration: none; }
+  .search-title a:hover { color: #C2410C; }
+  .search-sub { font-size: 12px; color: #6b655c; margin-bottom: 8px; display: flex; gap: 12px; }
+  .search-feed { color: #C2410C; }
+  .search-snippet {
+    font-family: "Songti SC", Georgia, "Times New Roman", serif;
+    font-size: 14px; line-height: 1.7; color: #3a352e; margin: 0;
+  }
+</style>
+{% endblock %}

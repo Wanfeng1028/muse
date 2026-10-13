@@ -13,6 +13,7 @@
 | [ledger](./ledger) | 「钱迹 · 个人财务管家」——个人财务管理系统。Python + FastAPI + SQLAlchemy 2.0（aiosqlite）+ SQLite，Jinja2 SSR Web UI（服务端渲染 SVG 图表）。功能：多账户记账、分类体系、月度预算与超支预警、统计分析、CSV 导入导出、周期账单提醒。 | 工程化 v1 |
 | [sentinel](./sentinel) | 「哨兵 Sentinel」——站点可用性监控。Go 单二进制：HTTP(S)/TCP 双协议检查、证书到期天数、定时调度、状态翻转自动生成停机事件并 webhook 通知、可用率与延迟统计、内嵌 Web UI（三页：仪表盘/监控管理/事件）。 | 工程化 v1 |
 | [docseek](./docseek) | 「文溯 DocSeek」——本地全文检索引擎 CLI + HTTP 服务。C++17 + CMake + SQLite FTS5（unicode61）。功能：递归目录索引、基于 mtime+size 的增量更新、BM25 相关性搜索与摘要片段、已删除文件自动清理、索引统计、JSON 输出；v2 新增 `serve` 常驻服务（自研 HTTP 服务器 + inotify 文件变更实时监控 + 内嵌 Web UI）。 | 工程化 v2 |
+| [feedflow](./feedflow) | 「信流 FeedFlow」——自托管 RSS 阅读器。Python + Flask 3.1 + feedparser + trafilatura + APScheduler + SQLite FTS5（trigram 中文全文搜索）。功能：订阅源管理（分组/抓取间隔/启用开关）、APScheduler 后台定时抓取、trafilatura 正文提取（失败回落摘要）、三栏桌面式阅读器（未读/星标/全部过滤、快捷键 j/k/m/s）、FTS5 全文搜索、OPML 导入/导出、统计页。 | 工程化 v1 |
 
 ## 如何运行
 
@@ -125,6 +126,18 @@ cmake --build build -j
 ```
 
 测试、Docker 与命令详解见 [docseek/README.md](./docseek/README.md)。
+
+### feedflow
+
+进入项目目录，安装依赖并启动服务（需 Python 3.11+）：
+
+```bash
+cd feedflow
+make install
+make run
+```
+
+启动后打开 http://127.0.0.1:8300 即可使用。手动抓取一次、OPML 导入、构建、测试与 Docker 的完整说明见 [feedflow/README.md](./feedflow/README.md)。
 
 ## 目录约定
 

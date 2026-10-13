@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}信流 FeedFlow{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('web.index') }}">信流 FeedFlow</a>
+    <nav class="mainnav">
+      <a href="{{ url_for('web.index') }}" class="{% if request.path == '/' %}active{% endif %}">阅读器</a>
+      <a href="{{ url_for('web.feeds_page') }}" class="{% if request.path.startswith('/feeds') %}active{% endif %}">订阅管理</a>
+      <a href="{{ url_for('web.stats_page') }}" class="{% if request.path.startswith('/stats') %}active{% endif %}">统计</a>
+      <a href="{{ url_for('web.opml_page') }}" class="{% if request.path.startswith('/opml') %}active{% endif %}">OPML</a>
+    </nav>
+    <form class="searchbox" method="get" action="{{ url_for('web.search_page') }}">
+      <svg class="searchbox-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+      </svg>
+      <input type="search" name="q" value="{{ request.args.get('q','') }}" placeholder="搜索文章" aria-label="搜索文章">
+    </form>
+  </div>
+</header>
+
+<main class="page">
+{% block content %}{% endblock %}
+</main>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

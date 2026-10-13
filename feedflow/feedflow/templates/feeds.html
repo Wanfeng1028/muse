@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+{% block title %}订阅管理 - FeedFlow{% endblock %}
+{% block content %}
+<style>
+  .mgmt-head { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px; }
+  .mgmt-head h1 { font-size:18px; font-weight:600; letter-spacing:.02em; }
+  .mgmt-head .hint { font-size:12px; color:#8A8172; }
+
+  .panel { background:#FFFFFF; border:1px solid #E7E2D6; border-radius:8px; padding:16px; margin-bottom:24px; }
+  .panel-title { font-size:13px; font-weight:600; color:#1C1A17; margin-bottom:12px; letter-spacing:.03em; }
+
+  .row-form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .row-form input[type=text], .row-form input[type=url], .row-form input[type=number], .row-form select {
+    height:32px; padding:0 10px; border:1px solid #E7E2D6; border-radius:8px; background:#FAFAF7;
+    font:inherit; font-size:13px; color:#1C1A17; outline:none;
+  }
+  .row-form input[type=url] { flex:1; min-width:220px; }
+  .row-form input:focus, .row-form select:focus { border-color:#C2410C; }
+  .row-form label { font-size:12px; color:#6B6355; }
+
+  .btn { height:32px; padding:0 14px; border-radius:8px; border:1px solid #E7E2D6; background:#FFFFFF;
+    color:#1C1A17; font:inherit; font-size:13px; cursor:pointer; transition:background .12s, border-color .12s; }
+  .btn:hover { background:#F4F0E6; }
+  .btn.primary { background:#C2410C; border-color:#C2410C; color:#FFFFFF; }
+  .btn.primary:hover { background:#A6360A; }
+  .btn.danger { color:#A6360A; }
+  .btn.danger:hover { background:#FBF0EA; border-color:#E7C6B6; }
+  .btn.small { height:26px; padding:0 10px; font-size:12px; }
+
+  table.feeds { width:100%; border-collapse:collapse; font-size:13px; }
+  table.feeds th, table.feeds td { text-align:left; padding:10px 8px; border-bottom:1px solid #E7E2D6; vertical-align:middle; }
+  table.feeds th { font-weight:600; color:#6B6355; font-size:12px; letter-spacing:.04em; text-transform:none; }
+  table.feeds tr:last-child td { border-bottom:none; }
+  table.feeds td.title { font-weight:500; color:#1C1A17; }
+  table.feeds td.title a { color:#1C1A17; text-decoration:none; }
+  table.feeds td.title a:hover { text-decoration:underline; }
+  table.feeds td.muted { color:#8A8172; }
+  table.feeds td.num { font-variant-numeric:tabular-nums; }
+  table.feeds td.actions { white-space:nowrap; }
+  table.feeds td.actions .btn { margin-right:4px; }
+
+  .status-ok { color:#3F7A3A; }
+  .status-error { color:#A6360A; }
+  .status-none { color:#B4AC9C; }
+
+  .unread-badge { display:inline-block; min-width:20px; padding:1px 7px; border-radius:10px;
+    background:#F4EFE4; color:#6B6355; font-size:11px; text-align:center; font-variant-numeric:tabular-nums; }
+  .unread-badge.hot { background:#C2410C; color:#FFFFFF; }
+
+  .edit-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .edit-row input, .edit-row select { height:26px; padding:0 8px; border:1px solid #E7E2D6; border-radius:6px;
+    background:#FAFAF7; font:inherit; font-size:12px; color:#1C1A17; outline:none; }
+  .edit-row input:focus, .edit-row select:focus { border-color:#C2410C; }
+
+  ul.groups { list-style:none; padding:0; margin:0; }
+  ul.groups li { display:flex; align-items:center; gap:8px; padding:8px 4px; border-bottom:1px solid #E7E2D6; font-size:13px; }
+  ul.groups li:last-child { border-bottom:none; }
+  ul.groups li .name { flex:1; color:#1C1A17; }
+  ul.groups li .name input { height:26px; padding:0 8px; border:1px solid #E7E2D6; border-radius:6px;
+    background:#FAFAF7; font:inherit; font-size:13px; color:#1C1A17; outline:none; width:100%; max-width:260px; }
+  ul.groups li .name input:focus { border-color:#C2410C; }
+
+  .empty { color:#8A8172; font-size:13px; padding:16px 4px; }
+  .toast { position:fixed; right:24px; bottom:24px; background:#1C1A17; color:#FAFAF7; padding:10px 16px;
+    border-radius:8px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s; }
+  .toast.show { opacity:1; }
+</style>
+
+<div class="mgmt-head">
+  <h1>订阅管理</h1>
+  <span class="hint">添加源、调整分组与抓取间隔</span>
+</div>
+
+<div class="panel">
+  <div class="panel-title">添加订阅</div>
+  <form class="row-form" id="add-feed-form" onsubmit="return false;">
+    <input type="url" id="new-feed-url" placeholder="https://example.com/feed.xml" required>
+    <label for="new-feed-folder">分组</label>
+    <select id="new-feed-folder">
+      <option value="">未分组</option>
+    </select>
+    <label for="new-feed-interval">间隔(分)</label>
+    <input type="number" id="new-feed-interval" min="0" step="1" value="0" style="width:80px;">
+    <button class="btn primary" id="add-feed-btn">添加</button>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-title">订阅列表</div>
+  <div id="feeds-table-wrap">
+    <div class="empty">加载中…</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">分组管理</div>
+  <form class="row-form" id="add-folder-form" onsubmit="return false;" style="margin-bottom:12px;">
+    <input type="text" id="new-folder-name" placeholder="分组名称" required style="flex:1;min-width:200px;">
+    <button class="btn primary" id="add-folder-btn">新建分组</button>
+  </form>
+  <ul class="groups" id="groups-list">
+    <li class="empty">加载中…</li>
+  </ul>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var state = { folders: [], feeds: [] };
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+
+  function api(method, url, body) {
+    var opts = { method: method, headers: { 'Accept': 'application/json' } };
+    if (body !== undefined) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(url, opts).then(function (res) {
+      if (res.status === 204) return null;
+      return res.json().catch(function () { return null; }).then(function (data) {
+        if (!res.ok) {
+          var msg = (data && data.error) ? data.error : ('请求失败 (' + res.status + ')');
+          throw new Error(msg);
+        }
+        return data;
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function folderName(id) {
+    if (!id) return '未分组';
+    for (var i = 0; i < state.folders.length; i++) {
+      if (state.folders[i].id === id) return state.folders[i].name;
+    }
+    return '未分组';
+  }
+
+  function statusCell(feed) {
+    if (!feed.last_status) return '<span class="status-none">未抓取</span>';
+    if (feed.last_status === 'ok') return '<span class="status-ok">正常</span>';
+    return '<span class="status-error" title="' + escapeHtml(feed.last_error || '') + '">失败</span>';
+  }
+
+  function renderFeedsTable() {
+    var wrap = document.getElementById('feeds-table-wrap');
+    if (!state.feeds.length) {
+      wrap.innerHTML = '<div class="empty">还没有订阅。在上面添加一个源试试。</div>';
+      return;
+    }
+    var rows = state.feeds.map(function (f) {
+      return '<tr data-id="' + f.id + '">' +
+        '<td class="title"><a href="' + escapeHtml(f.site_url || '#') + '" target="_blank" rel="noopener">' +
+          escapeHtml(f.title || f.feed_url) + '</a>' +
+          '<div class="muted" style="font-size:11px;margin-top:2px;">' + escapeHtml(f.feed_url) + '</div></td>' +
+        '<td class="muted">' + escapeHtml(folderName(f.folder_id)) + '</td>' +
+        '<td class="muted num">' + (f.interval_min ? f.interval_min + ' 分' : '默认') + '</td>' +
+        '<td>' + statusCell(f) + '</td>' +
+        '<td class="num"><span class="unread-badge' + (f.unread > 0 ? ' hot' : '') + '">' + (f.unread || 0) + '</span></td>' +
+        '<td class="actions">' +
+          '<button class="btn small" data-act="fetch" data-id="' + f.id + '">抓取</button>' +
+          '<button class="btn small" data-act="edit" data-id="' + f.id + '">编辑</button>' +
+          '<button class="btn small danger" data-act="delete" data-id="' + f.id + '">删除</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    wrap.innerHTML = '<table class="feeds"><thead><tr>' +
+      '<th>标题</th><th>分组</th><th>间隔</th><th>状态</th><th>未读</th><th>操作</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  function renderEditRow(feed) {
+    var tr = document.querySelector('tr[data-id="' + feed.id + '"]');
+    if (!tr) return;
+    var folderOpts = ['<option value="">未分组</option>'];
+    state.folders.forEach(function (fo) {
+      folderOpts.push('<option value="' + fo.id + '"' + (fo.id === feed.folder_id ? ' selected' : '') + '>' +
+        escapeHtml(fo.name) + '</option>');
+    });
+    tr.innerHTML = '<td colspan="6">' +
+      '<div class="edit-row">' +
+        '<input type="text" data-field="title" value="' + escapeHtml(feed.title) + '" placeholder="标题" style="width:220px;">' +
+        '<select data-field="folder_id">' + folderOpts.join('') + '</select>' +
+        '<input type="number" data-field="interval_min" min="0" step="1" value="' + (feed.interval_min || 0) + '" style="width:80px;" title="间隔(分)">' +
+        '<select data-field="enabled">' +
+          '<option value="1"' + (feed.enabled ? ' selected' : '') + '>启用</option>' +
+          '<option value="0"' + (!feed.enabled ? ' selected' : '') + '>停用</option>' +
+        '</select>' +
+        '<button class="btn small primary" data-act="save" data-id="' + feed.id + '">保存</button>' +
+        '<button class="btn small" data-act="cancel" data-id="' + feed.id + '">取消</button>' +
+      '</div>' +
+    '</td>';
+  }
+
+  function renderGroups() {
+    var list = document.getElementById('groups-list');
+    if (!state.folders.length) {
+      list.innerHTML = '<li class="empty">还没有分组。</li>';
+      return;
+    }
+    list.innerHTML = state.folders.map(function (fo) {
+      return '<li data-id="' + fo.id + '">' +
+        '<span class="name">' + escapeHtml(fo.name) +
+          ' <span class="muted" style="font-size:11px;color:#8A8172;">· ' + (fo.unread || 0) + ' 未读</span></span>' +
+        '<button class="btn small" data-act="rename" data-id="' + fo.id + '">重命名</button>' +
+        '<button class="btn small danger" data-act="delete" data-id="' + fo.id + '">删除</button>' +
+      '</li>';
+    }).join('');
+  }
+
+  function renderFolderSelects() {
+    var sel = document.getElementById('new-feed-folder');
+    var cur = sel.value;
+    var opts = ['<option value="">未分组</option>'];
+    state.folders.forEach(function (fo) {
+      opts.push('<option value="' + fo.id + '">' + escapeHtml(fo.name) + '</option>');
+    });
+    sel.innerHTML = opts.join('');
+    sel.value = cur;
+  }
+
+  function loadFolders() {
+    return api('GET', '/api/folders').then(function (data) {
+      state.folders = data || [];
+      renderFolderSelects();
+      renderGroups();
+    });
+  }
+
+  function loadFeeds() {
+    return api('GET', '/api/feeds').then(function (data) {
+      state.feeds = (data && data.feeds) ? data.feeds : (Array.isArray(data) ? data : []);
+      renderFeedsTable();
+    }).catch(function (err) {
+      document.getElementById('feeds-table-wrap').innerHTML =
+        '<div class="empty">加载失败：' + escapeHtml(err.message) + '</div>';
+    });
+  }
+
+  function refreshAll() {
+    return Promise.all([loadFolders(), loadFeeds()]);
+  }
+
+  function findFeed(id) {
+    for (var i = 0; i < state.feeds.length; i++) {
+      if (state.feeds[i].id === id) return state.feeds[i];
+    }
+    return null;
+  }
+
+  // Add feed
+  document.getElementById('add-feed-btn').addEventListener('click', function () {
+    var url = document.getElementById('new-feed-url').value.trim();
+    if (!url) { toast('请填写订阅地址'); return; }
+    var folderVal = document.getElementById('new-feed-folder').value;
+    var intervalVal = parseInt(document.getElementById('new-feed-interval').value, 10);
+    if (isNaN(intervalVal) || intervalVal < 0) intervalVal = 0;
+    var payload = { feed_url: url, interval_min: intervalVal };
+    if (folderVal) payload.folder_id = parseInt(folderVal, 10);
+    api('POST', '/api/feeds', payload).then(function () {
+      document.getElementById('new-feed-url').value = '';
+      document.getElementById('new-feed-interval').value = '0';
+      toast('已添加订阅');
+      return refreshAll();
+    }).catch(function (err) {
+      toast(err.message);
+    });
+  });
+
+  // Add folder
+  document.getElementById('add-folder-btn').addEventListener('click', function () {
+    var name = document.getElementById('new-folder-name').value.trim();
+    if (!name) { toast('请填写分组名称'); return; }
+    api('POST', '/api/folders', { name: name }).then(function () {
+      document.getElementById('new-folder-name').value = '';
+      toast('已新建分组');
+      return loadFolders();
+    }).catch(function (err) {
+      toast(err.message);
+    });
+  });
+
+  // Delegated clicks on feeds table
+  document.getElementById('feeds-table-wrap').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var id = parseInt(btn.getAttribute('data-id'), 10);
+    if (act === 'fetch') {
+      btn.disabled = true;
+      btn.textContent = '抓取中';
+      api('POST', '/api/feeds/' + id + '/fetch').then(function (res) {
+        if (res && res.status === 'ok') toast('抓取完成，新增 ' + (res.added || 0) + ' 篇');
+        else toast('抓取失败：' + ((res && res.error) || '未知错误'));
+        return refreshAll();
+      }).catch(function (err) {
+        toast(err.message);
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = '抓取';
+      });
+    } else if (act === 'edit') {
+      var f = findFeed(id);
+      if (f) renderEditRow(f);
+    } else if (act === 'cancel') {
+      renderFeedsTable();
+    } else if (act === 'save') {
+      var tr = document.querySelector('tr[data-id="' + id + '"]');
+      if (!tr) return;
+      var title = tr.querySelector('[data-field="title"]').value;
+      var folderVal = tr.querySelector('[data-field="folder_id"]').value;
+      var intervalVal = parseInt(tr.querySelector('[data-field="interval_min"]').value, 10);
+      if (isNaN(intervalVal) || intervalVal < 0) intervalVal = 0;
+      var enabledVal = parseInt(tr.querySelector('[data-field="enabled"]').value, 10);
+      var payload = {
+        title: title,
+        folder_id: folderVal ? parseInt(folderVal, 10) : null,
+        interval_min: intervalVal,
+        enabled: enabledVal
+      };
+      api('PUT', '/api/feeds/' + id, payload).then(function () {
+        toast('已保存');
+        return refreshAll();
+      }).catch(function (err) {
+        toast(err.message);
+      });
+    } else if (act === 'delete') {
+      if (!confirm('删除该订阅及其全部文章？')) return;
+      api('DELETE', '/api/feeds/' + id).then(function () {
+        toast('已删除');
+        return refreshAll();
+      }).catch(function (err) {
+        toast(err.message);
+      });
+    }
+  });
+
+  // Delegated clicks on groups list
+  document.getElementById('groups-list').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var id = parseInt(btn.getAttribute('data-id'), 10);
+    var li = btn.closest('li');
+    if (act === 'rename') {
+      var nameSpan = li.querySelector('.name');
+      var current = nameSpan.textContent.trim().split(' · ')[0];
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.value = current;
+      nameSpan.innerHTML = '';
+      nameSpan.appendChild(input);
+      input.focus();
+      input.select();
+      function commit() {
+        var newName = input.value.trim();
+        if (!newName || newName === current) { loadFolders(); return; }
+        api('PUT', '/api/folders/' + id, { name: newName }).then(function () {
+          toast('已重命名');
+          return refreshAll();
+        }).catch(function (err) {
+          toast(err.message);
+          loadFolders();
+        });
+      }
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        else if (ev.key === 'Escape') { loadFolders(); }
+      });
+      input.addEventListener('blur', commit);
+    } else if (act === 'delete') {
+      if (!confirm('删除该分组？组内订阅会变为未分组。')) return;
+      api('DELETE', '/api/folders/' + id).then(function () {
+        toast('已删除分组');
+        return refreshAll();
+      }).catch(function (err) {
+        toast(err.message);
+      });
+    }
+  });
+
+  refreshAll();
+})();
+</script>
+{% endblock %}

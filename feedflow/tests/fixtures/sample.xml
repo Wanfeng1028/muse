@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>测试博客</title>
+    <link>https://example.com</link>
+    <description>测试博客的 RSS 订阅源</description>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 03 Mar 2025 12:00:00 +0800</lastBuildDate>
+    <item>
+      <title>中文测试文章</title>
+      <link>https://example.com/posts/zhongwen-ceshi-wenzhang</link>
+      <description>这是一篇中文测试文章的摘要，用于验证 RSS 2.0 示例 feed 中的 pubDate 与 description 字段。</description>
+      <pubDate>Mon, 03 Mar 2025 10:00:00 +0800</pubDate>
+      <guid isPermaLink="false">https://example.com/posts/zhongwen-ceshi-wenzhang</guid>
+    </item>
+    <item>
+      <title>Hello World Post</title>
+      <link>https://example.com/posts/hello-world-post</link>
+      <description>A short summary for the Hello World Post.</description>
+      <pubDate>Sun, 02 Mar 2025 09:30:00 +0800</pubDate>
+      <guid isPermaLink="false">https://example.com/posts/hello-world-post</guid>
+      <content:encoded><![CDATA[<h1>Hello World Post</h1><p>This is the full HTML content for the Hello World Post.</p><p>It is provided via the <code>content:encoded</code> element.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>无发布日期文章</title>
+      <link>https://example.com/posts/no-pubdate-post</link>
+      <description>这篇文章没有 pubDate，guid 直接使用 link 作为唯一标识。</description>
+      <guid>https://example.com/posts/no-pubdate-post</guid>
+    </item>
+  </channel>
+</rss>
