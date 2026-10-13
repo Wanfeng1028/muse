@@ -15,6 +15,7 @@
 | [docseek](./docseek) | 「文溯 DocSeek」——本地全文检索引擎 CLI + HTTP 服务。C++17 + CMake + SQLite FTS5（unicode61）。功能：递归目录索引、基于 mtime+size 的增量更新、BM25 相关性搜索与摘要片段、已删除文件自动清理、索引统计、JSON 输出；v2 新增 `serve` 常驻服务（自研 HTTP 服务器 + inotify 文件变更实时监控 + 内嵌 Web UI）。 | 工程化 v2 |
 | [feedflow](./feedflow) | 「信流 FeedFlow」——自托管 RSS 阅读器。Python + Flask 3.1 + feedparser + trafilatura + APScheduler + SQLite FTS5（trigram 中文全文搜索）。功能：订阅源管理（分组/抓取间隔/启用开关）、APScheduler 后台定时抓取、trafilatura 正文提取（失败回落摘要）、三栏桌面式阅读器（未读/星标/全部过滤、快捷键 j/k/m/s）、FTS5 全文搜索、OPML 导入/导出、统计页。 | 工程化 v1 |
 | [linkshort](./linkshort) | 「短链 LinkShort」——自托管短链服务。Go 单二进制：chi v5 路由 + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI + skip2/go-qrcode 二维码。功能：短链创建（自动 base62/自定义 slug）、302 跳转计数与访问日志、统计（总览/30 天曲线/Top 链接/Top Referer）、过期 410、启用开关、二维码 PNG、CSV 导入导出、API Key 鉴权、Web UI 四页（仪表盘/链接管理/详情/新建）。 | 工程化 v1 |
+| [mortisedb](./mortisedb) | 「榫卯 MortiseDB」——NAS 玩家/小团队的本地多源数据拼装层。Go 单二进制：modernc.org/sqlite（纯 Go）+ go:embed 内嵌 Web UI。功能：YAML 声明式映射 SQLite/CSV/JSON/目录为表（schema 推断）、增量同步（updated_at 水位线+哈希兜底）、冲突策略（源优先级/手动）、类 SQL 视图（运行/导出 CSV）、定时任务+运行历史。 | 工程化 v1 |
 
 ## 如何运行
 
@@ -150,6 +151,20 @@ make run
 ```
 
 启动后打开 http://localhost:8080/ui/ 即可使用。配置、API 表、测试与 Docker 的完整说明见 [linkshort/README.md](./linkshort/README.md)。
+
+### mortisedb
+
+进入项目目录，构建并初始化（需 Go 1.23+）：
+
+```bash
+cd mortisedb
+go build -o mortisedb ./cmd/mortisedb
+./mortisedb init      # 生成 mortise.yaml 与示例数据源
+./mortisedb sync      # 按配置同步所有源
+./mortisedb serve     # 启动 Web UI，默认 http://localhost:8421
+```
+
+配置、API 表、发版对照报告见 [mortisedb/README.md](./mortisedb/README.md) 与 [mortisedb/docs/PRODUCTION_CHECKLIST.md](./mortisedb/docs/PRODUCTION_CHECKLIST.md)。
 
 ## 目录约定
 

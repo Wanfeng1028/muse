@@ -1,0 +1,83 @@
+# MortiseDB 示例配置文件
+# 环境变量 MORTISE_DB / MORTISE_ADDR 可覆盖 database / addr
+
+# 数据库文件路径
+database: ./data/mortise.db
+# HTTP 服务监听地址
+addr: ":8421"
+
+# 冲突处理策略
+sync:
+  # conflict: priority 时按 priority 列表顺序优先；manual 时全部挂起人工处理
+  conflict: priority
+  # 冲突优先级（越靠前越优先）
+  priority: [shop_orders, legacy]
+  # 全量同步时源中已删除的记录是否软删除（true）或直接物理删除（false）
+  soft_delete: true
+
+# 数据源列表
+sources:
+  # ① CSV 数据源
+  - name: shop_orders
+    type: csv
+    path: ./sources/orders.csv
+    table: orders
+    primary_key: order_id
+    # 增量方式：column:列名 或 hash
+    incremental: "column:updated_at"
+    options:
+      delimiter: ","
+
+  # ② JSON 数据源
+  - name: app_users
+    type: json
+    path: ./sources/users.json
+    table: users
+    primary_key: id
+    incremental: hash
+    options:
+      # JSON 根路径，空表示顶层就是数组
+      root: "data.users"
+
+  # ③ SQLite 数据源
+  - name: legacy
+    type: sqlite
+    path: ./sources/legacy.db
+    tables:
+      - source: customers
+        target: customers
+        primary_key: id
+
+  # ④ 目录数据源
+  - name: nas_files
+    type: dir
+    path: ./sources/files
+    table: files
+    primary_key: path
+
+# 视图定义
+views:
+  - name: recent_orders
+    description: 近 7 天订单关联用户信息
+    sql: |
+      SELECT o.order_id, o.amount, o.updated_at, u.name AS user_name, u.email AS user_email
+      FROM "orders" o
+      LEFT JOIN "users" u ON o.user_id = u.id
+      WHERE o.updated_at >= datetime('now', '-7 days')
+
+  - name: table_row_counts
+    description: 各表行数统计
+    sql: |
+      SELECT 'orders' AS table_name, COUNT(*) AS rows FROM "orders" WHERE _m_deleted = 0
+      UNION ALL
+      SELECT 'users', COUNT(*) FROM "users" WHERE _m_deleted = 0
+      UNION ALL
+      SELECT 'customers', COUNT(*) FROM "customers" WHERE _m_deleted = 0
+      UNION ALL
+      SELECT 'files', COUNT(*) FROM "files" WHERE _m_deleted = 0
+
+# 定时任务
+jobs:
+  - name: hourly
+    interval: 1h
+    sources: [shop_orders, app_users]

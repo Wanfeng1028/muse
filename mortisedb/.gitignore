@@ -1,0 +1,37 @@
+# Compiled binary
+/mortisedb
+
+# Build output
+bin/
+
+# Runtime data
+data/
+
+# SQLite database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Environment variables
+.env
+
+# User data under sources/ (keep sample data)
+# Ignore everything in sources/ except CSV files (example data)
+sources/*
+!sources/*.csv
+
+# Logs
+*.log
+
+# Test coverage
+coverage.out
+
+# macOS
+.DS_Store
+
+# JetBrains IDEs
+.idea/
+
+# VS Code
+.vscode/

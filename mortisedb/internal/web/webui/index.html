@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>榫卯 MortiseDB</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="brand">
+    <div class="logo-mark" aria-hidden="true">
+      <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="34" height="34" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M6 10 H30 M6 14 H30 M6 18 H22 M6 22 H22 M6 26 H30" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M22 18 V22 M26 18 V22" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>榫卯 MortiseDB</h1>
+      <p class="subtitle">本地数据拼装层</p>
+    </div>
+  </div>
+  <nav class="tabs" id="main-tabs">
+    <button class="tab active" data-tab="overview">总览</button>
+    <button class="tab" data-tab="sync">同步</button>
+    <button class="tab" data-tab="data">数据</button>
+    <button class="tab" data-tab="views">视图</button>
+    <button class="tab" data-tab="conflicts">冲突</button>
+  </nav>
+</header>
+
+<main class="container">
+
+  <section id="section-overview" class="section active">
+    <h2>总览</h2>
+    <div class="panel">
+      <h3>数据源</h3>
+      <div id="source-cards" class="source-cards"></div>
+    </div>
+    <div class="panel">
+      <h3>最近运行</h3>
+      <table id="recent-runs">
+        <thead>
+          <tr>
+            <th>ID</th><th>任务</th><th>开始</th><th>结束</th>
+            <th>新增</th><th>更新</th><th>删除</th><th>冲突</th><th>错误</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="section-sync" class="section">
+    <h2>同步</h2>
+    <div class="panel">
+      <div class="row">
+        <label for="sync-sources">选择数据源（可多选，不选则全部）：</label>
+        <select id="sync-sources" multiple size="6"></select>
+      </div>
+      <div class="row">
+        <button id="btn-sync" class="primary">立即同步</button>
+        <span id="sync-status" class="status"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>运行历史</h3>
+      <table id="runs-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>任务</th><th>开始</th><th>结束</th>
+            <th>新增</th><th>更新</th><th>删除</th><th>冲突</th><th>错误</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="section-data" class="section">
+    <h2>数据</h2>
+    <div class="panel">
+      <div class="row">
+        <label for="table-select">选择表：</label>
+        <select id="table-select"></select>
+        <button id="btn-refresh-data">刷新</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div id="data-grid" class="grid-wrap"></div>
+    </div>
+  </section>
+
+  <section id="section-views" class="section">
+    <h2>视图</h2>
+    <div class="panel">
+      <h3>已保存视图</h3>
+      <div id="view-list" class="view-list"></div>
+    </div>
+    <div class="panel">
+      <h3>SQL 编辑器</h3>
+      <div class="row">
+        <input id="view-name" type="text" placeholder="视图名称（保存时必填）">
+        <button id="btn-run-sql">运行</button>
+        <button id="btn-save-view" class="primary">保存视图</button>
+      </div>
+      <textarea id="sql-editor" rows="8" placeholder="SELECT * FROM ..."></textarea>
+      <div class="row">
+        <a id="btn-export-csv" href="#" class="button-like">导出 CSV</a>
+      </div>
+    </div>
+    <div class="panel">
+      <div id="view-grid" class="grid-wrap"></div>
+    </div>
+  </section>
+
+  <section id="section-conflicts" class="section">
+    <h2>冲突</h2>
+    <div class="panel">
+      <table id="conflicts-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>表</th><th>主键</th><th>来源 A</th><th>来源 B</th>
+            <th>状态</th><th>创建时间</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+services:
+  mortisedb:
+    build: .
+    ports:
+      - "8421:8421"
+    volumes:
+      - ./data:/app/data
+      - ./sources:/app/sources:ro
+    environment:
+      MORTISE_ADDR: ":8421"
+    restart: unless-stopped

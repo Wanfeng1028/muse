@@ -274,3 +274,33 @@
 - 密码保护短链
 - 访问地域统计
 - 公开 API 文档页
+
+## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
+
+**定位**：NAS 玩家/小团队的本地多源数据拼装层——把 SQLite/CSV/JSON/本地目录声明式映射成表，增量同步 + 冲突策略 + 类 SQL 查询视图 + 本地优先（数据落文件、可 Git 版本化）。Airbyte/dbt 对个人太重，Metabase 只读不解决拼装，这是真空位。
+
+**技术栈**：Go 1.23 单二进制；modernc.org/sqlite v1.34.2（纯 Go，无 CGO）；标准库 net/http；go:embed 内嵌 Web UI；gopkg.in/yaml.v3 配置；go test + go vet；Dockerfile 多阶段构建。
+
+**功能模块**：
+
+1. 声明式连接器：SQLite/CSV/JSON/目录 → 表映射（YAML），主键定义，schema 自动推断与类型统一（INTEGER/REAL/TEXT/DATETIME/BOOLEAN）
+2. 增量同步：updated_at 水位线（日期格式双边规范化后比较）+ 全量哈希比对兜底；软删除（_m_deleted）
+3. 冲突策略：按源优先级自动裁决 / 挂起手动处理（_m_conflicts，source_a=现有方、source_b=挑战方）/ 本源重写自动 resolved
+4. 查询视图：类 SQL 保存为视图，Web 运行、导出 CSV/API（_m_views）
+5. 调度：定时同步任务 + 运行历史（_m_runs，Job 带源名后缀方便按源查上次同步）
+6. CLI + 内嵌 Web UI（总览/同步/数据/视图/冲突五页）
+
+**视觉**：「宣纸 + 榫卯」——宣纸 #F4EFE3 底、墨 #211C15、木赭 #8A5A33、朱砂 #B3402A 点睛、导航下榫卯线纹装饰、SVG 榫卯线稿 logo；去 AI 味：无紫渐变、无一切居中、无三栏特性格、无 emoji 图标。
+
+**状态**：工程化 v1（2026-10-13 完成，go build/vet/test 全过；真实冒烟：3 异构源同步→跨源 JOIN→水位线增量→冲突策略全链路验证；5 张 Web UI 真实截图已亲眼验收，修了 3 轮真实 bug：tab 切换失效、API 大小写字段错位、table.grid CSS 错位）。
+
+**发版对照**：`mortisedb/docs/PRODUCTION_CHECKLIST.md`——有条件发版，6 项未通过均为已知限制且有排期（端到端自动化测试、优雅关闭、metrics、backup 子命令、Dependabot、10 万行负载验证）。
+
+**里程碑记录**：
+
+- 工程化 v1（2026-10-13）：31 个文件 dpsk 生成 + 编排验收；修 5 个后端 bug（含跨源删除误删、dir 根目录计行、水位线日期格式）；Web UI app.js 按真实 API 契约重写
+
+**后续计划**：
+
+- Postgres/MySQL 只读源、冲突 Webhook 通知、视图定时物化、CSV 增量导入 API
+- 端到端自动化测试、backup 子命令、/metrics 指标
