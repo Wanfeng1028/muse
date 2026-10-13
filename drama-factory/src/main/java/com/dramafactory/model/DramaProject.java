@@ -43,6 +43,14 @@ public class DramaProject {
     /** 目标集数 */
     private Integer targetEpisodes;
 
+    /**
+     * 归属用户 id：JWT 的 sub；开放模式（无 AUTH_JWT_SECRET）或单机使用时为 "local"。
+     * v2.6 多用户地基：子实体（Episode/Scene/Shot/VideoTask/FinalCut/Run）不单独加 owner，
+     * 它们只能经由项目 API 访问，项目级隔离即覆盖整个 API 面。
+     */
+    @Column(name = "owner_id", nullable = false)
+    private String ownerId;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 
@@ -53,12 +61,15 @@ public class DramaProject {
     public DramaProject() {
     }
 
-    /** 持久化前初始化时间戳 */
+    /** 持久化前初始化时间戳；ownerId 为空时回退为 "local"（开放模式/单机默认用户） */
     @PrePersist
     public void prePersist() {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        if (this.ownerId == null || this.ownerId.isBlank()) {
+            this.ownerId = "local";
+        }
     }
 
     /** 更新前刷新更新时间 */
@@ -113,6 +124,14 @@ public class DramaProject {
 
     public void setTargetEpisodes(Integer targetEpisodes) {
         this.targetEpisodes = targetEpisodes;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
     public LocalDateTime getCreatedAt() {

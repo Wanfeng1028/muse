@@ -26,6 +26,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Records.ErrorResponse> handleForbidden(ForbiddenException ex) {
+        Records.ErrorResponse body = new Records.ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                ex.getMessage(),
+                LocalDateTime.now(),
+                MDC.get("request_id")
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Records.ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = "Validation failed";

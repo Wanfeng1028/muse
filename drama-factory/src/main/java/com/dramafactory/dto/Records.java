@@ -41,7 +41,8 @@ public final class Records {
             long episodeCount,
             long characterCount,
             LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            String ownerId
     ) {
     }
 

@@ -1,8 +1,10 @@
 package com.dramafactory.service;
 
+import com.dramafactory.config.CurrentUser;
 import com.dramafactory.dto.Records.ProjectRequest;
 import com.dramafactory.dto.Records.ProjectResponse;
 import com.dramafactory.dto.Records.StatsResponse;
+import com.dramafactory.exception.ForbiddenException;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.DramaProject;
 import com.dramafactory.model.ProjectStatus;
@@ -19,6 +21,9 @@ import java.util.List;
 
 /**
  * 项目服务：负责短剧项目的增删改查与全局统计。
+ *
+ * <p>v2.6 多用户地基：Episode / Scene / Shot / VideoTask / FinalCut / Run 这些子实体
+ * 本轮不加 owner，它们只能经由项目 API 访问，项目级隔离即覆盖整个 API 面。
  */
 @Service
 public class ProjectService {
@@ -27,18 +32,21 @@ public class ProjectService {
     private final EpisodeRepository episodeRepository;
     private final DramaCharacterRepository characterRepository;
     private final SceneRepository sceneRepository;
+    private final CurrentUser currentUser;
 
     public ProjectService(DramaProjectRepository projectRepository,
                           EpisodeRepository episodeRepository,
                           DramaCharacterRepository characterRepository,
-                          SceneRepository sceneRepository) {
+                          SceneRepository sceneRepository,
+                          CurrentUser currentUser) {
         this.projectRepository = projectRepository;
         this.episodeRepository = episodeRepository;
         this.characterRepository = characterRepository;
         this.sceneRepository = sceneRepository;
+        this.currentUser = currentUser;
     }
 
-    /** 创建项目，status 默认 DRAFT，targetEpisodes 默认 20 */
+    /** 创建项目，status 默认 DRAFT，targetEpisodes 默认 20；归属当前用户 */
     @Transactional
     public ProjectResponse create(ProjectRequest request) {
         DramaProject project = new DramaProject();
@@ -47,22 +55,21 @@ public class ProjectService {
         project.setSynopsis(request.synopsis());
         project.setStatus(request.status() != null ? request.status() : ProjectStatus.DRAFT);
         project.setTargetEpisodes(request.targetEpisodes() != null ? request.targetEpisodes() : 20);
+        project.setOwnerId(currentUser.currentUserId());
         DramaProject saved = projectRepository.save(project);
         return toResponse(saved);
     }
 
-    /** 按 id 查询项目 */
+    /** 按 id 查询项目：只能看自己的，别人的返回 403 */
     @Transactional(readOnly = true)
     public ProjectResponse get(Long id) {
-        DramaProject project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
-        return toResponse(project);
+        return toResponse(requireOwnedProject(id));
     }
 
-    /** 列出全部项目（按 id 升序） */
+    /** 列出当前用户的项目（按 id 升序） */
     @Transactional(readOnly = true)
     public List<ProjectResponse> list() {
-        List<DramaProject> projects = projectRepository.findAll(Sort.by("id"));
+        List<DramaProject> projects = projectRepository.findByOwnerId(currentUser.currentUserId(), Sort.by("id"));
         List<ProjectResponse> result = new ArrayList<>(projects.size());
         for (DramaProject project : projects) {
             result.add(toResponse(project));
@@ -70,11 +77,10 @@ public class ProjectService {
         return result;
     }
 
-    /** 更新项目 */
+    /** 更新项目：只能改自己的 */
     @Transactional
     public ProjectResponse update(Long id, ProjectRequest request) {
-        DramaProject project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        DramaProject project = requireOwnedProject(id);
         project.setTitle(request.title());
         project.setGenre(request.genre());
         project.setSynopsis(request.synopsis());
@@ -88,15 +94,14 @@ public class ProjectService {
         return toResponse(saved);
     }
 
-    /** 删除项目 */
+    /** 删除项目：只能删自己的 */
     @Transactional
     public void delete(Long id) {
-        DramaProject project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        DramaProject project = requireOwnedProject(id);
         projectRepository.delete(project);
     }
 
-    /** 全局统计：四张表的记录数 */
+    /** 全局统计：四张表的记录数（多用户下"全局"口径暂未定，本轮保持行为不变） */
     @Transactional(readOnly = true)
     public StatsResponse stats() {
         long projects = projectRepository.count();
@@ -120,7 +125,18 @@ public class ProjectService {
                 episodeCount,
                 characterCount,
                 project.getCreatedAt(),
-                project.getUpdatedAt()
+                project.getUpdatedAt(),
+                project.getOwnerId()
         );
+    }
+
+    /** 按 id 取项目并校验归属：不存在→404，不是自己的→403 */
+    private DramaProject requireOwnedProject(Long id) {
+        DramaProject project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        if (!currentUser.currentUserId().equals(project.getOwnerId())) {
+            throw new ForbiddenException("Project", id);
+        }
+        return project;
     }
 }

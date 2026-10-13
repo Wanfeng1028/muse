@@ -90,10 +90,46 @@ public class ScriptSplitterService {
         // 2. 调用大模型
         String content = callModel(scriptText);
 
-        // 3. 剥离 markdown 代码围栏
+        // 3+4. 剥离围栏、解析并校验为 Shot 列表（纯逻辑，可单测）
+        List<Shot> shots = parseShotsJson(episode, content);
+
+        // 5. 删除该剧集旧分镜（先删关联的视频任务）
+        List<Shot> oldShots = shotRepository.findByEpisodeIdOrderByShotNoAsc(episodeId);
+        for (Shot oldShot : oldShots) {
+            videoTaskRepository.deleteAll(videoTaskRepository.findByShotIdOrderByIdDesc(oldShot.getId()));
+            shotRepository.delete(oldShot);
+        }
+
+        // 6. 落库
+        List<Shot> saved = new ArrayList<>();
+        for (Shot shot : shots) {
+            saved.add(shotRepository.save(shot));
+        }
+
+        // 7. 更新剧集状态
+        episode.setStatus(EpisodeStatus.SCRIPTED);
+        episodeRepository.save(episode);
+
+        // 8. 返回响应
+        List<Records.ShotResponse> responses = new ArrayList<>(saved.size());
+        for (Shot shot : saved) {
+            responses.add(toResponse(shot));
+        }
+        return responses;
+    }
+
+    /**
+     * 把大模型返回的文本解析校验为 Shot 实体列表（不落库）。
+     *
+     * <p>包可见 purely 为单测留的缝：stripCodeFence → JSON 数组解析 → 逐项字段校验
+     * （shotSize/cameraMove 非法即抛 RuntimeException，shotNo/durationSeconds 缺省补值）。
+     * 从 splitFromScript 原样抽出，行为不变。
+     */
+    List<Shot> parseShotsJson(Episode episode, String content) {
+        // 剥离 markdown 代码围栏
         String json = stripCodeFence(content);
 
-        // 4. 解析为 JSON 数组
+        // 解析为 JSON 数组
         ArrayNode array;
         try {
             JsonNode root = objectMapper.readTree(json);
@@ -110,15 +146,8 @@ public class ScriptSplitterService {
             throw new RuntimeException("大模型未拆出任何分镜");
         }
 
-        // 5. 删除该剧集旧分镜（先删关联的视频任务）
-        List<Shot> oldShots = shotRepository.findByEpisodeIdOrderByShotNoAsc(episodeId);
-        for (Shot oldShot : oldShots) {
-            videoTaskRepository.deleteAll(videoTaskRepository.findByShotIdOrderByIdDesc(oldShot.getId()));
-            shotRepository.delete(oldShot);
-        }
-
-        // 6. 遍历 JSON 数组建 Shot
-        List<Shot> saved = new ArrayList<>();
+        // 遍历 JSON 数组建 Shot
+        List<Shot> shots = new ArrayList<>();
         int index = 0;
         for (JsonNode node : array) {
             index++;
@@ -160,19 +189,9 @@ public class ScriptSplitterService {
             int duration = (durationNode != null && durationNode.isInt()) ? durationNode.asInt() : 5;
             shot.setDurationSeconds(duration);
 
-            saved.add(shotRepository.save(shot));
+            shots.add(shot);
         }
-
-        // 7. 更新剧集状态
-        episode.setStatus(EpisodeStatus.SCRIPTED);
-        episodeRepository.save(episode);
-
-        // 8. 返回响应
-        List<Records.ShotResponse> responses = new ArrayList<>(saved.size());
-        for (Shot shot : saved) {
-            responses.add(toResponse(shot));
-        }
-        return responses;
+        return shots;
     }
 
     /**
@@ -256,9 +275,9 @@ public class ScriptSplitterService {
     }
 
     /**
-     * 去掉首尾可能存在的 markdown 代码围栏。
+     * 去掉首尾可能存在的 markdown 代码围栏。包可见，供单测。
      */
-    private String stripCodeFence(String content) {
+    static String stripCodeFence(String content) {
         String trimmed = content.trim();
         if (trimmed.startsWith("```")) {
             int firstNewline = trimmed.indexOf('\n');
@@ -276,9 +295,9 @@ public class ScriptSplitterService {
     }
 
     /**
-     * 安全读取文本字段，缺失或非文本时返回 null。
+     * 安全读取文本字段，缺失或非文本时返回 null。包可见，供单测。
      */
-    private String text(JsonNode node, String field) {
+    static String text(JsonNode node, String field) {
         JsonNode value = node.get(field);
         if (value == null || value.isNull()) {
             return null;
