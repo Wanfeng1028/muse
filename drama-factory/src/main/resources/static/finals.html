@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成片库 - AI 短剧工坊</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/v2.css">
+</head>
+<body>
+<header class="topbar">
+  <nav class="topnav">
+    <a href="/index.html">控制台首页</a>
+    <a href="/storyboard.html">分镜板</a>
+    <a href="/tasks.html">任务队列</a>
+    <a href="/finals.html" class="active">成片库</a>
+    <a href="/pipeline.html">生产看板</a>
+  </nav>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <h1>成片库</h1>
+    <div class="controls">
+      <label>项目
+        <select id="projectSelect"></select>
+      </label>
+      <label>剧集
+        <select id="episodeSelect"></select>
+      </label>
+      <button id="generateBtn" class="btn btn-primary">生成成片</button>
+    </div>
+  </div>
+
+  <p id="hint" class="hint" hidden></p>
+
+  <section id="finalsList" class="finals-list">
+    <p class="empty">请先选择项目和剧集。</p>
+  </section>
+</main>
+
+<script src="/finals.js"></script>
+</body>
+</html>

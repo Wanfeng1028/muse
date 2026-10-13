@@ -17,3 +17,12 @@ spring:
 
 server:
   port: ${PORT:8081}
+
+drama:
+  video:
+    provider: ${VIDEO_PROVIDER:mock}   # 视频生成提供方：mock 为离线演示/测试，agnes 为真实视频生成
+    poll-interval-ms: ${VIDEO_POLL_MS:10000}  # 任务轮询间隔，单位毫秒
+    max-attempts: ${VIDEO_MAX_ATTEMPTS:8}      # 单个任务最大尝试次数（包含指数退避重试）
+  storage: ${DRAMA_STORAGE:./data/media}      # 视频片段、字幕和成片的存储根目录
+  ffmpeg: ${FFMPEG_PATH:ffmpeg}               # ffmpeg 可执行文件路径
+  ffprobe: ${FFPROBE_PATH:ffprobe}             # ffprobe 可执行文件路径

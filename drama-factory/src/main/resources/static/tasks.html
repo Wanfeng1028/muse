@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务队列 - AI 短剧工坊</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/v2.css">
+</head>
+<body>
+<header class="topbar">
+  <nav class="topnav">
+    <a href="/index.html">控制台首页</a>
+    <a href="/storyboard.html">分镜板</a>
+    <a href="/tasks.html" class="active">任务队列</a>
+    <a href="/finals.html">成片库</a>
+    <a href="/pipeline.html">生产看板</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="provider-note">当前提供方：mock（离线演示）</span>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <h1 class="page-title">任务队列</h1>
+    <div class="filters">
+      <label class="field">
+        <span class="field-label">项目</span>
+        <select id="projectSelect"><option value="">加载中…</option></select>
+      </label>
+      <label class="field">
+        <span class="field-label">剧集</span>
+        <select id="episodeSelect"><option value="">-</option></select>
+      </label>
+      <label class="field">
+        <span class="field-label">分镜</span>
+        <select id="shotSelect"><option value="">-</option></select>
+      </label>
+      <button id="refreshBtn" class="btn btn-secondary" type="button">刷新</button>
+    </div>
+  </div>
+
+  <div id="hint" class="hint" hidden></div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">视频生成任务</h2>
+      <span id="taskCount" class="panel-sub">0 条</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table" id="taskTable">
+        <thead>
+          <tr>
+            <th>任务ID</th>
+            <th>所属分镜</th>
+            <th>提供方</th>
+            <th>状态</th>
+            <th>尝试次数</th>
+            <th>错误信息</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="taskBody">
+          <tr><td colspan="7" class="empty-cell">请选择分镜后查看任务</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="/tasks.js"></script>
+</body>
+</html>

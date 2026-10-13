@@ -1,21 +1,6 @@
 # AI 短剧工坊 Drama Factory
 
-面向短剧内容团队的**生产管理与剧本生成系统**。以项目为单位组织短剧资产，覆盖剧集、角色、场景的全流程管理，并内置基于大纲的**四场式剧本自动生成**能力，为每一场输出可直接用于视频生成的英文提示词。系统采用企业级分层架构，内置 Web 控制台，开箱即用。
-
----
-
-## 简介
-
-短剧创作通常涉及大量分散的素材与文档：项目设定、分集大纲、角色小传、场景描述、分镜提示词等。Drama Factory 将这些要素统一收敛到一套结构化的数据模型中，让创作与制作团队在同一个工作台上完成从立项到剧本初稿的完整链路。
-
-核心设计目标：
-
-- **结构化生产管理**：以「项目 → 剧集 → 角色 / 场景」的层级组织内容资产，便于检索、复用与协作。
-- **大纲驱动生成**：输入故事大纲，自动产出符合短剧节奏的**四场式**剧本结构，并附带英文视频生成提示词。
-- **企业级工程规范**：清晰的分层边界、DTO 与实体分离、可平滑切换的持久化方案。
-- **内置控制台**：无需单独部署前端，静态资源由 Spring 直接托管，启动即可访问。
-
----
+面向短剧内容团队的**生产管理与剧本生成系统**。以项目为单位组织短剧资产，覆盖剧集、角色、场景的全流程管理，内置基于大纲的**四场式剧本自动生成**，并打通了从剧本到成片的完整生产管线：分镜拆解、视频生成任务调度、ffmpeg 剪辑合成、成片管理。系统采用企业级分层架构，内置 Web 控制台，开箱即用。
 
 ## 功能
 
@@ -25,28 +10,62 @@
 ### 剧集管理
 按项目组织分集内容，维护集号、标题、剧情概要等字段，支撑连续剧集的编排。
 
-### 角色管理
-维护项目下的角色档案，包括姓名、身份定位、性格特征与人物关系描述，为剧本生成提供人物约束。
-
-### 场景管理
-维护场景条目，记录场景名称、地点、时间与氛围描述，作为剧本分场的环境依据。
-
 ### 基于大纲的四场式剧本自动生成
-输入故事大纲，系统按短剧叙事节奏输出四场结构：
+输入故事大纲，系统按短剧叙事节奏输出四场结构（开场钩子/冲突升级/反转/高潮收尾），每一场均附带**英文视频生成提示词**。
 
-| 场次 | 叙事功能 | 输出内容 |
-| --- | --- | --- |
-| 第一场 | 开场钩子 | 快速建立悬念与观看动机 |
-| 第二场 | 冲突升级 | 推动矛盾深化，抬高张力 |
-| 第三场 | 反转 | 打破预期，重构情境 |
-| 第四场 | 高潮收尾 | 情绪释放与结局落点 |
+### 分镜管理
+在剧集下拆分镜，字段包括镜号、景别、运镜、画面描述、时长（秒）、对白/旁白、视频生成提示词。支持增删改查与镜号排序，排序结果直接决定后续视频拼接顺序。
 
-每一场均附带**英文视频生成提示词**，可直接用于下游视频生成流程。
+### 视频生成任务
+按分镜创建视频生成任务，对接 Agnes `agnes-video-2.5-flash`（https://apihub.agnes-ai.com）。任务走异步状态机：`PENDING → PROCESSING → DONE / FAILED`，后台定时轮询任务状态，失败按指数退避重试，遇到 429 限流时自动退避等待。
+
+Provider 做了接口抽象：
+
+- `AgnesVideoProvider`：真实调用 Agnes 接口。
+- `MockVideoProvider`：离线演示用，不联网也能跑通全流程。
+
+默认使用 mock，配置 `drama.video.provider=agnes` 切换到真实接口。
+
+### 剪辑成片
+ffmpeg 流水线：按镜号拼接分镜片段，根据分镜对白自动生成 SRT 字幕并烧录，输出 H.264 mp4。成片文件可列表、预览、下载。
+
+### 生产看板
+按 项目 → 分集 → 分镜 → 视频任务 → 成片 的层级展示全流程状态，一眼看清哪一步卡住了。
 
 ### 全局统计
 汇总项目、剧集、角色、场景等维度的数量指标，提供整体生产进度概览。
 
----
+## 生产管线
+
+剧本（四场式生成）
+      │
+      ▼
+分镜拆解（镜号 / 景别 / 运镜 / 画面描述 / 时长 / 对白 / 提示词）
+      │
+      ▼
+视频生成（Agnes 或 Mock，异步任务 + 轮询 + 退避重试）
+      │
+      ▼
+ffmpeg 剪辑（按镜号拼接 + SRT 字幕烧录）
+      │
+      ▼
+成片 mp4
+
+## 界面预览
+
+以下为真实运行截图。
+
+### 分镜板
+![分镜板](docs/screenshots/storyboard.png)
+
+### 任务队列
+![任务队列](docs/screenshots/tasks.png)
+
+### 成片库
+![成片库](docs/screenshots/finals.png)
+
+### 生产看板
+![生产看板](docs/screenshots/pipeline.png)
 
 ## 技术栈
 
@@ -56,153 +75,143 @@
 | 框架 | Spring Boot 3.3 |
 | 持久化 | Spring Data JPA |
 | 数据库 | H2（文件库，可平滑切换 PostgreSQL / MySQL） |
-| 架构 | 企业级分层：controller / service / repository / model / dto |
+| 视频生成 | Agnes agnes-video-2.5-flash（可切换 Mock） |
+| 剪辑 | ffmpeg / ffprobe |
 | 前端 | 内置 Web 控制台（static 静态资源由 Spring 直接托管） |
 | 构建 | Maven |
 
----
-
 ## 目录结构
 
-```
-drama-factory
-├── src
-│   ├── main
-│   │   ├── java
-│   │   │   └── com/drama/factory
-│   │   │       ├── controller        # 对外 HTTP 接口
-│   │   │       ├── service           # 业务逻辑
-│   │   │       ├── repository        # 数据访问（Spring Data JPA）
-│   │   │       ├── model             # 实体模型
-│   │   │       ├── dto               # 请求 / 响应数据传输对象
-│   │   │       └── DramaFactoryApplication.java
-│   │   └── resources
-│   │       ├── application.yml       # 应用配置
-│   │       └── static                # 内置 Web 控制台静态资源
-│   └── test
-│       └── java                      # 单元测试与集成测试
-├── pom.xml
-└── README.md
-```
+src/main/java/.../
+├── controller/           # REST 控制器（项目 / 剧集 / 分镜 / 视频任务 / 成片 / 看板 / 统计）
+├── service/              # 业务服务
+│   ├── video/            # 视频生成 Provider 抽象、Agnes 实现、Mock 实现、任务轮询与重试
+│   ├── script/           # 四场式剧本生成
+│   └── edit/             # ffmpeg 剪辑流水线（拼接 + 字幕烧录）
+├── repository/           # JPA 仓储
+├── domain/               # 实体与枚举
+└── config/               # 配置绑定
 
----
+src/main/resources/
+├── application.yml
+└── static/               # Web 控制台
+    ├── index.html
+    ├── storyboard.html   # 分镜板
+    ├── tasks.html        # 任务队列
+    ├── finals.html       # 成片库
+    └── pipeline.html     # 生产看板
 
 ## 快速开始
 
-### 环境要求
-
-- JDK 21
-- Maven 3.9+
-
-### 启动步骤
-
-```bash
-# 克隆项目后进入根目录
 mvn spring-boot:run
-```
+启动后访问 http://localhost:8081。
 
-启动完成后，打开浏览器访问内置控制台：
-
-```
-http://localhost:8081
-```
-
----
+默认使用 Mock 视频 Provider，不需要任何外部账号即可跑通「生成剧本 → 拆镜 → 出视频任务 → 出成片」的完整链路（需要本机装好 ffmpeg）。
 
 ## 配置
 
-应用支持通过环境变量覆盖关键配置，便于在不同环境间迁移。
+### 基础
 
 | 环境变量 | 说明 | 默认值 |
 | --- | --- | --- |
 | `PORT` | 服务监听端口 | `8081` |
 | `DB_URL` | 数据库连接地址 | H2 文件库路径（本地默认） |
 
-示例：
+### 视频生成
 
-```bash
-PORT=9090 DB_URL=jdbc:postgresql://localhost:5432/drama mvn spring-boot:run
-```
+| 配置项 | 环境变量 | 说明 | 默认值 |
+| --- | --- | --- | --- |
+| `drama.video.provider` | `VIDEO_PROVIDER` | 视频 Provider，`mock` 或 `agnes` | `mock` |
+| `drama.video.poll-interval-ms` | `VIDEO_POLL_MS` | 任务状态轮询间隔（毫秒） | `10000` |
+| `drama.video.max-attempts` | `VIDEO_MAX_ATTEMPTS` | 单个任务最大尝试次数（指数退避，429 额外退避） | `8` |
 
-> 切换至 PostgreSQL / MySQL 时，需在 `pom.xml` 中引入对应驱动，并将 `DB_URL` 指向目标实例。JPA 层无需改动。
+### 存储与剪辑
 
----
+| 配置项 | 环境变量 | 说明 | 默认值 |
+| --- | --- | --- | --- |
+| `drama.storage` | `DRAMA_STORAGE` | 媒体文件根目录（分镜视频、成片） | `./data/media` |
+| `drama.ffmpeg` | `FFMPEG_PATH` | ffmpeg 可执行文件路径 | `ffmpeg` |
+| `drama.ffprobe` | `FFPROBE_PATH` | ffprobe 可执行文件路径 | `ffprobe` |
 
-## 构建与发布
+所有配置均可用 `--drama.video.provider=agnes` 这类命令行参数或 `VIDEO_PROVIDER=agnes` 环境变量覆盖。
 
-```bash
-# 打包为可执行 jar
-mvn package
-```
+## 构建
 
-产物位于 `target/` 目录下，可直接运行：
-
-```bash
-java -jar target/drama-factory-*.jar
-```
-
----
-
-## 测试
-
-```bash
-# 运行单元测试
-mvn test
-
-# 运行完整校验（含测试与打包校验）
-mvn verify
-```
-
----
+mvn clean package
+java -jar target/drama-factory.jar
 
 ## Docker
 
-项目提供容器化部署方式，构建镜像后以环境变量注入配置：
+FROM eclipse-temurin:21-jre
+# 镜像内需包含 ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+COPY target/drama-factory.jar app.jar
+ENTRYPOINT ["java", "-jar", "/app.jar"]
 
-```bash
-# 构建镜像
-docker build -t drama-factory:latest .
-
-# 运行容器
-docker run -d \
-  -p 8081:8081 \
-  -e PORT=8081 \
-  -e DB_URL=jdbc:h2:file:/data/drama \
-  -v drama-data:/data \
-  --name drama-factory \
-  drama-factory:latest
-```
-
-> 生产环境建议将 `DB_URL` 指向外部 PostgreSQL / MySQL 实例，并通过挂载卷持久化数据。
-
----
+docker build -t drama-factory .
+docker run -p 8081:8081 -v $(pwd)/storage:/storage drama-factory
 
 ## API 概览
+
+### 基础
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/health` | 服务健康检查 |
 | GET / POST | `/api/projects` | 查询 / 创建短剧项目 |
-| GET / POST | `/api/episodes` | 查询 / 创建剧集 |
-| GET / POST | `/api/characters` | 查询 / 创建角色 |
-| GET / POST | `/api/scenes` | 查询 / 创建场景 |
-| POST | `/api/generate-script` | 基于大纲生成四场式剧本（含英文视频提示词） |
+| GET / POST | `/api/projects/{id}/episodes` | 查询 / 创建剧集 |
+| POST | `/api/episodes/{id}/generate-script` | 基于大纲生成四场式剧本 |
 | GET | `/api/stats` | 全局统计信息 |
 
----
+### 分镜
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET / POST | `/api/episodes/{eid}/shots` | 查询 / 创建某集的分镜 |
+| PUT / DELETE | `/api/shots/{id}` | 更新 / 删除分镜 |
+| POST | `/api/episodes/{eid}/shots/reorder` | 按传入镜号顺序重排分镜 |
+
+### 视频生成任务
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/shots/{sid}/video-tasks` | 为单个分镜创建视频生成任务 |
+| POST | `/api/episodes/{eid}/video-tasks/submit-all` | 为整集所有分镜批量提交任务 |
+| GET | `/api/shots/{sid}/video-tasks` | 查询某分镜下的所有任务 |
+| POST | `/api/video-tasks/{id}/retry` | 手动重试失败任务 |
+
+### 成片
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST / GET | `/api/episodes/{eid}/final-cuts` | 触发剪辑 / 查询某集成片列表 |
+| GET | `/api/final-cuts/{id}` | 查询单个成片详情 |
+
+### 看板
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/projects/{pid}/pipeline` | 某项目的全流程状态 |
+| GET | `/api/pipelines` | 所有项目的管线概览 |
+
+### 媒体
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/media/videos/{taskId}` | 获取某任务生成的视频文件 |
+| GET | `/media/finals/{id}` | 获取成片文件（支持预览与下载） |
 
 ## 数据说明
 
-- **存储方式**：默认使用 H2 文件数据库，数据落盘持久化，重启不丢失。
-- **平滑迁移**：得益于 Spring Data JPA 的抽象，切换至 PostgreSQL / MySQL 仅需调整依赖与 `DB_URL`，业务代码无需修改。
-- **数据层级**：项目为顶层容器，剧集、角色、场景均归属于具体项目，统计接口按此层级聚合。
-- **剧本生成结果**：生成的四场剧本与英文提示词随剧集内容一并保存，可反复查阅与导出。
-
----
+- 数据默认存放在 H2 文件库，路径由 `DB_URL` 指定；切换 PostgreSQL / MySQL 只需替换驱动与连接串。
+- 媒体文件（分镜视频、成片 mp4）落在 `drama.storage` 指定的目录下，按任务 / 成片 ID 命名，元数据存数据库，文件本身不进库。
+- 视频任务状态由后台轮询更新，服务重启后未完成的任务会继续被轮询接管。
+- 成片依赖 ffmpeg / ffprobe，请在运行环境里确保这两个可执行文件可用，或用 `drama.ffmpeg` / `drama.ffprobe` 指定绝对路径。
 
 ## 路线图
 
-- **接入真实大模型生成**：将当前基于大纲的结构化生成流程对接实际模型服务，提升剧本内容的丰富度与多样性。
-- **对接视频生成**：把每场的英文提示词直接投递至视频生成管线，打通从剧本到成片的链路。
-- **审核流**：为剧本与分集内容引入多级审核状态机，支持提交、退回、通过等流转。
-- **多用户**：引入账号体系与权限模型，支持团队成员按角色分工协作。
+- ~~**对接视频生成**：把每场的英文提示词直接投递至视频生成管线，打通从剧本到成片的链路。~~（v2 已完成：Agnes / Mock Provider + 异步任务 + ffmpeg 剪辑成片）
+- **审核流**：为剧本与分集内容引入多级审核状态机。
+- **多用户**：引入账号体系与权限模型。
+- **配音与配乐**：成片阶段接入 TTS 与背景音乐轨。
+- **剪辑模板**：支持片头片尾、转场、水印等可配置的剪辑模板。

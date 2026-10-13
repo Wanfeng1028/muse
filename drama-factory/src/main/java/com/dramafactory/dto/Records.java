@@ -4,10 +4,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.dramafactory.model.ProjectStatus;
 import com.dramafactory.model.EpisodeStatus;
 import com.dramafactory.model.CharacterRole;
+import com.dramafactory.model.ShotSize;
+import com.dramafactory.model.CameraMove;
+import com.dramafactory.model.VideoTaskStatus;
+import com.dramafactory.model.FinalCutStatus;
 
 public final class Records {
 
@@ -124,6 +129,92 @@ public final class Records {
             String error,
             String message,
             LocalDateTime timestamp
+    ) {
+    }
+
+    public static record ShotRequest(
+            @NotNull Integer shotNo,
+            ShotSize shotSize,
+            CameraMove cameraMove,
+            String description,
+            Integer durationSeconds,
+            String dialogue,
+            String videoPrompt
+    ) {
+    }
+
+    public static record ShotResponse(
+            Long id,
+            Long episodeId,
+            Integer shotNo,
+            ShotSize shotSize,
+            String shotSizeLabel,
+            CameraMove cameraMove,
+            String cameraMoveLabel,
+            String description,
+            Integer durationSeconds,
+            String dialogue,
+            String videoPrompt,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+    }
+
+    public static record ReorderRequest(
+            List<Long> shotIds
+    ) {
+    }
+
+    public static record VideoTaskResponse(
+            Long id,
+            Long shotId,
+            String provider,
+            String providerTaskId,
+            VideoTaskStatus status,
+            String statusLabel,
+            Integer attempts,
+            String videoUrl,
+            Boolean hasLocalFile,
+            String errorMessage,
+            LocalDateTime nextRetryAt,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+    }
+
+    public static record FinalCutResponse(
+            Long id,
+            Long episodeId,
+            String title,
+            String filePath,
+            String fileName,
+            FinalCutStatus status,
+            String statusLabel,
+            Double durationSeconds,
+            String errorMessage,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+    }
+
+    public static record PipelineEpisodeView(
+            Long episodeId,
+            Integer episodeNo,
+            String title,
+            String status,
+            long shotCount,
+            long pendingTasks,
+            long processingTasks,
+            long doneTasks,
+            long failedTasks,
+            String finalCutStatus
+    ) {
+    }
+
+    public static record PipelineProjectView(
+            Long projectId,
+            String title,
+            List<PipelineEpisodeView> episodes
     ) {
     }
 }
