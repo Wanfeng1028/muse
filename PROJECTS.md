@@ -338,13 +338,14 @@
 
 **视觉**：「宣纸 + 榫卯」——宣纸 #F4EFE3 底、墨 #211C15、木赭 #8A5A33、朱砂 #B3402A 点睛、导航下榫卯线纹装饰、SVG 榫卯线稿 logo；去 AI 味：无紫渐变、无一切居中、无三栏特性格、无 emoji 图标。
 
-**状态**：工程化 v1（2026-10-13 完成，go build/vet/test 全过；真实冒烟：3 异构源同步→跨源 JOIN→水位线增量→冲突策略全链路验证；5 张 Web UI 真实截图已亲眼验收，修了 3 轮真实 bug：tab 切换失效、API 大小写字段错位、table.grid CSS 错位）。
+**状态**：生产级 v1.1.0（2026-10-13）：`/metrics` Prometheus 端点（13 个指标，手写 exposition）+ `backup`/`restore` 子命令（VACUUM INTO 在线快照）+ 优雅关闭补强（HTTP 超时 + 在途等待 + WAL checkpoint）+ **同步批量事务**（`sync.batch_size` 默认 5000，10 万行从约 38 行/秒提至约 1128 行/秒，约 30 倍）+ 10 万行 × 3 源负载实测落盘（`docs/LOADTEST.md`：30 万行 265.89s，跨源 JOIN 10 万行 452ms）；go build/vet/test 全过。
 
-**发版对照**：`mortisedb/docs/PRODUCTION_CHECKLIST.md`——有条件发版，6 项未通过均为已知限制且有排期（端到端自动化测试、优雅关闭、metrics、backup 子命令、Dependabot、10 万行负载验证）。
+**发版对照**：`mortisedb/docs/PRODUCTION_CHECKLIST.md`——v1.1 增补对照 14 项：通过 12 项（含 /metrics、backup/restore、优雅关闭、HTTP 超时、负载验证），未通过 2 项（端到端自动化测试、Dependabot）排期 v1.2。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：31 个文件 dpsk 生成 + 编排验收；修 5 个后端 bug（含跨源删除误删、dir 根目录计行、水位线日期格式）；Web UI app.js 按真实 API 契约重写
+- 生产级 v1.1.0（2026-10-13）：`dbtx` 接口重构（`*sql.DB`/`*sql.Tx` 公共子集）+ `syncOneTable` 批量事务（每 5000 行提交、出错回滚、水位线最终提交后写回）+ `sync.batch_size` 配置；真实负载验证倒逼出的性能修复（优化前 10 万行需约 44 分钟）；CHANGELOG/LOADTEST.md/README 实测数据齐备
 
 **后续计划**：
 

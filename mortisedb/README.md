@@ -197,12 +197,14 @@ cd ./loadtest-work
 /usr/bin/time -v mortisedb query --config mortise-load.yaml "SELECT COUNT(*) FROM v_load_join"
 ```
 
-结果（由编排者实测填写，详见 `docs/LOADTEST.md`）：
+结果（2026-10-13 实测，2 vCPU 弱 VM，详见 `docs/LOADTEST.md`）：
 
 | 阶段 | 耗时 | 峰值内存 |
 | --- | --- | --- |
-| 三源全量同步 | TBD(实测填) | TBD(实测填) |
-| 跨源 JOIN 视图查询 | TBD(实测填) | TBD(实测填) |
+| 三源全量同步（30 万行） | 265.89s（约 1128 行/秒） | 162 MB |
+| 跨源 JOIN 视图查询（10 万行） | 452ms | — |
+
+> 优化前后对比：逐行自动提交约 38 行/秒 → 批量事务（`sync.batch_size` 默认 5000）约 1128 行/秒，约 30 倍。
 
 ## 路线图
 
@@ -211,7 +213,8 @@ cd ./loadtest-work
 - ✅ `/metrics` Prometheus 端点（13 个指标，手写 exposition，无新依赖）。
 - ✅ `backup` / `restore` 子命令（`VACUUM INTO` 在线一致性快照 + 元信息）。
 - ✅ 优雅关闭补强（HTTP 超时 + 在途等待 + WAL checkpoint）。
-- ✅ 10 万行负载验证支撑（`scripts/loadtest.sh` + `docs/LOADTEST.md`）。
+- ✅ 10 万行负载验证支撑（`scripts/loadtest.sh` + `docs/LOADTEST.md` 实测：30 万行 265.89s，跨源 JOIN 10 万行 452ms）。
+- ✅ 同步批量事务（`sync.batch_size` 默认 5000：`dbtx` 接口 + 每批提交/出错回滚；约 38 行/秒 → 约 1128 行/秒）。
 - ✅ `request_id` 与结构化日志维持通过。
 
 ### 后续版本
