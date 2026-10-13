@@ -71,6 +71,10 @@ public final class EgressProxyConfig {
                 @Override
                 public List<Proxy> select(URI uri) {
                     String h = uri.getHost();
+                    // URI.getHost() 对 IPv6 字面量返回带方括号的 "[::1]"，先去掉括号再比对
+                    if (h != null && h.startsWith("[") && h.endsWith("]")) {
+                        h = h.substring(1, h.length() - 1);
+                    }
                     if (h == null || h.equalsIgnoreCase("localhost")
                             || h.equals("127.0.0.1") || h.equals("::1")) {
                         return List.of(Proxy.NO_PROXY);

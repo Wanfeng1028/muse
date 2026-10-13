@@ -51,6 +51,8 @@ services:
       PORT: "8081"
       # 与 auth-service 共用密钥做 JWT 验签；为空=开放模式
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-}
+      # 账号微服务地址（docker 内用服务名）
+      AUTH_SERVICE_URL: "http://auth:8082"
       # 视频通道：mock 先跑通链路；改 qwen / agnes 即切换通道
       VIDEO_PROVIDER: "mock"
       DRAMA_STORAGE: "/app/data/media"

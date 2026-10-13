@@ -49,6 +49,7 @@ html, body {
 }
 .app-content {
   flex: 1;
+  box-sizing: border-box;
   padding: 28px 32px;
   max-width: 1200px;
   width: 100%;

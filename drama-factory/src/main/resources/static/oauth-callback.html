@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>授权中 · Drama Factory</title>
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/auth.css">
+</head>
+<body class="auth-page">
+<main class="auth-wrap">
+  <div class="oauth-status">
+    <span class="spinner" aria-hidden="true"></span>
+    <p class="oauth-status-text" id="status-text">正在完成登录…</p>
+  </div>
+</main>
+
+<script src="/auth.js"></script>
+<script>
+(function () {
+  var text = document.getElementById('status-text');
+  var q = new URLSearchParams(location.search);
+  var provider = q.get('provider');
+  var code = q.get('code');
+  var state = q.get('state');
+
+  function setText(t) { text.textContent = t; }
+
+  var allowed = ['google', 'github', 'apple'];
+  if (!provider || !code || !state || allowed.indexOf(provider) < 0) {
+    setText('授权信息不完整');
+    return;
+  }
+
+  Auth.oauthCallback(provider, code, state).then(function () {
+    location.href = '/index.html';
+  }).catch(function (err) {
+    if (err && err.code === 'OAUTH_NOT_CONFIGURED') {
+      setText('该渠道未配置');
+    } else {
+      setText(err && err.message ? err.message : '登录失败');
+    }
+  });
+})();
+</script>
+</body>
+</html>

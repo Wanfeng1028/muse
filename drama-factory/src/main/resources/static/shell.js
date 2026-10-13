@@ -6,6 +6,22 @@
 (function () {
   'use strict';
 
+  /* ---- 账号鉴权守卫：非游客页先验登录，未登录跳 login.html ----
+     auth.js 动态注入（各页无需改 script 引入）；login/register/oauth-callback 为游客页。 */
+  (function authGuard() {
+    var p = window.location.pathname;
+    var guests = ['/login.html', '/register.html', '/oauth-callback.html'];
+    for (var i = 0; i < guests.length; i++) {
+      if (p === guests[i]) return;
+    }
+    var s = document.createElement('script');
+    s.src = '/auth.js';
+    s.onload = function () {
+      if (window.Auth && typeof window.Auth.requireAuth === 'function') window.Auth.requireAuth();
+    };
+    document.head.appendChild(s);
+  })();
+
   /* ---- 品牌 Logo：场记板 + 播放三角（SVG mark，随主题 currentColor） ---- */
   var LOGO_MARK = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<rect x="4" y="10" width="24" height="18" rx="2"/>' +
@@ -21,7 +37,7 @@
     check: 'badge-check', chart: 'bar-chart-3', search: 'search', plus: 'plus',
     send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
     runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings',
-    images: 'image', music: 'music', avatar: 'scan-face'
+    images: 'image', music: 'music', avatar: 'scan-face', user: 'user'
   };
 
   function iconHtml(name) {
@@ -63,7 +79,8 @@
     { id: 'tasks', href: '/tasks.html', label: '任务队列', icon: 'tasks', kbd: 'G T' },
     { id: 'finals', href: '/finals.html', label: '成片库', icon: 'check', kbd: 'G F' },
     { id: 'pipeline', href: '/pipeline.html', label: '生产看板', icon: 'chart', kbd: 'G P' },
-    { id: 'settings', href: '/settings.html', label: '设置', icon: 'settings' }
+    { id: 'settings', href: '/settings.html', label: '设置', icon: 'settings' },
+    { id: 'account', href: '/account.html', label: '账号', icon: 'user' }
   ];
 
   /* 侧边栏分组 */
@@ -110,6 +127,7 @@
       navGroupsHtml(cur) +
       '<div class="sidebar-footer">' +
         '<a class="sidebar-link' + (cur === 'settings' ? ' active' : '') + '" href="/settings.html">' + iconHtml('settings') + '<span>设置</span></a>' +
+        '<a class="sidebar-link' + (cur === 'account' ? ' active' : '') + '" href="/account.html">' + iconHtml('user') + '<span>账号</span></a>' +
         '<button id="themeToggle" class="theme-toggle" title="切换亮色/深色" aria-label="切换主题"></button>' +
         '<button id="sbToggle" class="theme-toggle" title="折叠侧边栏" aria-label="折叠侧边栏"></button>' +
       '</div>';

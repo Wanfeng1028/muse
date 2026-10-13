@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>账号 · Drama Factory</title>
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/auth.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1 class="page-title">账号</h1>
+  </div>
+
+    <section class="card">
+      <h2 class="card-title">个人资料</h2>
+      <div class="profile-row">
+        <div class="avatar-wrap" id="avatar-wrap"></div>
+        <div class="profile-fields">
+          <div class="profile-line">
+            <span class="profile-label">昵称</span>
+            <span class="profile-value" id="nickname-view">—</span>
+            <button class="btn btn-quiet btn-sm" type="button" id="nickname-edit">编辑</button>
+          </div>
+          <div class="profile-line" id="nickname-editor" hidden>
+            <input class="input" type="text" id="nickname-input" maxlength="40">
+            <button class="btn btn-primary btn-sm" type="button" id="nickname-save">保存</button>
+            <button class="btn btn-quiet btn-sm" type="button" id="nickname-cancel">取消</button>
+          </div>
+          <div class="profile-line">
+            <span class="profile-label">邮箱</span>
+            <span class="profile-value" id="email-view">—</span>
+          </div>
+          <div class="profile-line">
+            <span class="profile-label">角色</span>
+            <span class="profile-value" id="role-view">—</span>
+          </div>
+          <div class="inline-error" id="profile-error" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">账号与安全</h2>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">邮箱</span>
+          <button class="btn btn-quiet btn-sm" type="button" id="email-change-toggle">修改</button>
+        </div>
+        <form class="sec-form" id="email-form" hidden>
+          <label class="field">
+            <span class="field-label">新邮箱</span>
+            <input class="input" type="email" name="newEmail" autocomplete="email" required>
+          </label>
+          <label class="field">
+            <span class="field-label">当前密码</span>
+            <input class="input" type="password" name="password" autocomplete="current-password" required>
+          </label>
+          <div class="inline-error" id="email-error" hidden></div>
+          <div class="sec-actions">
+            <button class="btn btn-primary btn-sm" type="submit">保存</button>
+            <button class="btn btn-quiet btn-sm" type="button" data-cancel="email-form">取消</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">密码</span>
+          <button class="btn btn-quiet btn-sm" type="button" id="password-change-toggle">修改</button>
+        </div>
+        <form class="sec-form" id="password-form" hidden>
+          <label class="field">
+            <span class="field-label">旧密码</span>
+            <input class="input" type="password" name="oldPassword" autocomplete="current-password" required>
+          </label>
+          <label class="field">
+            <span class="field-label">新密码</span>
+            <input class="input" type="password" name="newPassword" autocomplete="new-password" required>
+            <span class="field-hint" id="pw-hint">至少 8 位，且包含字母和数字</span>
+          </label>
+          <div class="inline-error" id="password-error" hidden></div>
+          <div class="sec-actions">
+            <button class="btn btn-primary btn-sm" type="submit">保存</button>
+            <button class="btn btn-quiet btn-sm" type="button" data-cancel="password-form">取消</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="sec-block">
+        <div class="sec-head">
+          <span class="sec-name">登录会话</span>
+          <button class="btn btn-quiet btn-sm" type="button" id="sessions-refresh">刷新</button>
+        </div>
+        <div class="inline-error" id="sessions-error" hidden></div>
+        <ul class="session-list" id="session-list"></ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">个性化</h2>
+      <div class="theme-choices" id="theme-choices">
+        <label class="radio-row">
+          <input type="radio" name="theme" value="system">
+          <span>跟随系统</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="theme" value="light">
+          <span>浅色</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="theme" value="dark">
+          <span>深色</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">退出</h2>
+      <p class="sec-name">退出后需要重新登录才能访问。</p>
+      <button class="btn btn-quiet" type="button" id="logout-btn">退出登录</button>
+    </section>
+</div>
+
+<script src="/vendor/lucide.min.js"></script>
+<script src="/auth.js"></script>
+<script src="/shell.js"></script>
+<script src="/account.js"></script>
+</body>
+</html>

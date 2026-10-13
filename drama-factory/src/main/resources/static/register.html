@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>注册 · Drama Factory</title>
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/auth.css">
+</head>
+<body class="auth-page">
+<main class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">注册</h1>
+    <p class="auth-sub">创建你的账号。</p>
+
+    <form id="register-form" novalidate>
+      <label class="field">
+        <span class="field-label">邮箱</span>
+        <input class="input" type="email" name="email" autocomplete="email" required>
+        <span class="field-hint field-error" id="email-error" hidden></span>
+      </label>
+      <label class="field">
+        <span class="field-label">昵称</span>
+        <input class="input" type="text" name="nickname" autocomplete="nickname" required>
+      </label>
+      <label class="field">
+        <span class="field-label">密码</span>
+        <input class="input" type="password" name="password" autocomplete="new-password" required>
+        <span class="field-hint" id="pw-hint">至少 8 位，且包含字母和数字</span>
+      </label>
+      <label class="field">
+        <span class="field-label">确认密码</span>
+        <input class="input" type="password" name="confirm" autocomplete="new-password" required>
+        <span class="field-hint field-error" id="confirm-error" hidden></span>
+      </label>
+
+      <div class="form-error" id="form-error" hidden></div>
+
+      <button class="btn btn-primary btn-block" type="submit" id="submit-btn" disabled>注册</button>
+    </form>
+
+    <p class="auth-foot">已有账号？<a href="/login.html">去登录</a></p>
+  </div>
+</main>
+
+<script src="/auth.js"></script>
+<script>
+(function () {
+  Auth.guardGuest();
+
+  var form = document.getElementById('register-form');
+  var btn = document.getElementById('submit-btn');
+  var errBox = document.getElementById('form-error');
+  var emailErr = document.getElementById('email-error');
+  var confirmErr = document.getElementById('confirm-error');
+  var pwHint = document.getElementById('pw-hint');
+
+  function validPassword(pw) {
+    return typeof pw === 'string' && pw.length >= 8 && /[A-Za-z]/.test(pw) && /[0-9]/.test(pw);
+  }
+
+  function sync() {
+    var pw = form.password.value;
+    var cf = form.confirm.value;
+    var email = form.email.value.trim();
+    var nickname = form.nickname.value.trim();
+
+    var pwOk = validPassword(pw);
+    pwHint.classList.toggle('is-ok', pwOk && pw.length > 0);
+    pwHint.textContent = pwOk && pw.length > 0
+      ? '密码符合要求'
+      : '至少 8 位，且包含字母和数字';
+
+    if (cf && cf !== pw) {
+      confirmErr.textContent = '两次输入的密码不一致';
+      confirmErr.hidden = false;
+    } else {
+      confirmErr.hidden = true;
+      confirmErr.textContent = '';
+    }
+
+    var ok = email && nickname && pwOk && cf && cf === pw;
+    btn.disabled = !ok;
+  }
+
+  ['input', 'change'].forEach(function (ev) {
+    form.addEventListener(ev, sync);
+  });
+  sync();
+
+  function showErr(msg) {
+    errBox.textContent = msg || '注册失败';
+    errBox.hidden = false;
+  }
+  function clearErr() { errBox.hidden = true; errBox.textContent = ''; }
+
+  function nextPath() {
+    var q = new URLSearchParams(location.search);
+    var n = q.get('next');
+    if (n && n.charAt(0) === '/' && n.indexOf('//') !== 0) return n;
+    return '/index.html';
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearErr();
+    emailErr.hidden = true;
+
+    var email = form.email.value.trim();
+    var nickname = form.nickname.value.trim();
+    var password = form.password.value;
+
+    if (!validPassword(password)) { showErr('密码至少 8 位，且包含字母和数字'); return; }
+    if (password !== form.confirm.value) { showErr('两次输入的密码不一致'); return; }
+
+    btn.disabled = true;
+    Auth.register(email, password, nickname).then(function () {
+      return Auth.login(email, password);
+    }).then(function () {
+      location.href = nextPath();
+    }).catch(function (err) {
+      if (err && err.code === 'EMAIL_EXISTS') {
+        emailErr.textContent = '这个邮箱已经注册过了';
+        emailErr.hidden = false;
+      } else if (err && err.code === 'WEAK_PASSWORD') {
+        showErr(err.message || '密码至少 8 位，且包含字母和数字');
+      } else {
+        showErr(err && err.message ? err.message : '注册失败');
+      }
+      sync();
+    });
+  });
+})();
+</script>
+</body>
+</html>

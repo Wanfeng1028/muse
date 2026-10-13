@@ -49,6 +49,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        // /api/auth/** 由 AuthProxyController 代理到 auth-service，其自身负责鉴权；放行避免"登录前先要求登录"
+        if (path.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         if (!verifier.isEnabled()) {
             if (warned.compareAndSet(false, true)) {
                 log.warn("AUTH_JWT_SECRET 未配置，API 鉴权处于开放模式（仅适合单机本地使用）");
