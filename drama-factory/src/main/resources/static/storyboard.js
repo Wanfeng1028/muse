@@ -302,7 +302,7 @@ function renderShots() {
       <button class="btn btn-sm btn-quiet" data-act="down"${downDisabled}>下移</button>
       <button class="btn btn-sm btn-quiet" data-act="edit">编辑</button>
       <button class="btn btn-sm btn-quiet" data-act="del">删除</button>
-      <button class="btn btn-sm btn-primary" data-act="gen">生成视频</button>
+      <button class="btn btn-sm btn-secondary" data-act="gen">生成视频</button>
     </div>
   </div>
 </div>`;

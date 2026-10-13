@@ -64,12 +64,8 @@ a:hover{text-decoration:underline}
 .btn:hover{background:var(--surface-2);border-color:var(--text-3)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn .lucide,svg{width:15px;height:15px}
-.btn-primary{background:#2b2622;border-color:#2b2622;color:#f5f3f0}
-.btn-primary:hover{background:#3a332d;border-color:#3a332d}
-[data-bs-theme="light"] .btn-primary{background:#2b2622;border-color:#2b2622;color:#f5f3f0}
-[data-bs-theme="light"] .btn-primary:hover{background:#3f3830}
-.btn-danger{color:var(--red);border-color:var(--red)}
-.btn-danger:hover{background:var(--red-soft)}
+/* 按钮体系收敛（2026-10-13）：.btn-primary/.btn-danger 已删除，
+   统一由 app.css 的规范按钮体系接管（主=墨pill，次=安静款）。 */
 .btn-ghost{border-color:transparent}
 .btn-ghost:hover{background:var(--surface-2);border-color:var(--border)}
 .btn-sm{padding:4px 10px;font-size:12px;border-radius:8px}

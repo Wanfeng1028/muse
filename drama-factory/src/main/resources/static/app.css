@@ -67,7 +67,17 @@ html, body {
   top: 0;
   height: 100vh;
   padding: 16px 12px;
+  transition: width 200ms ease, padding 200ms ease;
 }
+
+/* 侧边栏折叠态：64px 窄栏，只留图标 */
+body.sb-collapsed .sidebar { width: 64px; padding: 16px 8px; }
+body.sb-collapsed .sidebar-brand span:last-child,
+body.sb-collapsed .sidebar-link span,
+body.sb-collapsed .sidebar-label { display: none; }
+body.sb-collapsed .sidebar-brand,
+body.sb-collapsed .sidebar-link { justify-content: center; padding-left: 0; padding-right: 0; }
+body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .sidebar-brand {
   display: flex;
   align-items: center;
@@ -706,6 +716,41 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
   padding: 5px 14px;
 }
 .btn.btn-secondary.btn-sm {
+  border-radius: 8px;
+  padding: 5px 12px;
+}
+
+/* ---------- 按钮体系收敛（2026-10-13）：全站只许两种按钮 ----------
+   主=墨色 pill（.btn-primary），次=安静款（.btn-secondary）。
+   以下为兜底：历史遗留的 danger/success/ghost/outline 类名若有漏网，
+   一律渲染为次按钮安静款，永不许出现红/绿/蓝按钮。 */
+.btn.btn-danger, .btn-danger,
+.btn.btn-success, .btn-success,
+.btn.btn-ghost, .btn-ghost,
+.btn.btn-ghost-secondary, .btn-ghost-secondary,
+.btn.btn-outline-secondary, .btn-outline-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  box-shadow: none;
+}
+.btn.btn-danger:hover, .btn-danger:hover,
+.btn.btn-success:hover, .btn-success:hover,
+.btn.btn-ghost:hover, .btn-ghost:hover,
+.btn.btn-ghost-secondary:hover, .btn-ghost-secondary:hover,
+.btn.btn-outline-secondary:hover, .btn-outline-secondary:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: none;
+}
+.btn.btn-danger.btn-sm, .btn-danger.btn-sm,
+.btn.btn-success.btn-sm, .btn-success.btn-sm,
+.btn.btn-ghost.btn-sm, .btn-ghost.btn-sm {
   border-radius: 8px;
   padding: 5px 12px;
 }

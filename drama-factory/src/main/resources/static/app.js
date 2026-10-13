@@ -82,7 +82,7 @@ function renderProjects(list) {
             <div class="text-secondary small">剧集 ${p.episodeCount} · 角色 ${p.characterCount}</div>
           </div>
           <div class="btn-list">
-            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+            <button class="btn btn-secondary btn-sm" data-action="delete">删除</button>
           </div>
         </div>
       </div>
@@ -173,7 +173,7 @@ function renderEpisodes(list) {
           </div>
           <div class="btn-list">
             <button class="btn btn-primary btn-sm" data-action="generate">生成剧本</button>
-            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+            <button class="btn btn-secondary btn-sm" data-action="delete">删除</button>
           </div>
         </div>
       </div>
@@ -262,7 +262,7 @@ function renderCharacters(list) {
             <div class="text-secondary small">${c.traits ? escapeHtml(c.traits) : ''}</div>
           </div>
           <div class="btn-list">
-            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+            <button class="btn btn-secondary btn-sm" data-action="delete">删除</button>
           </div>
         </div>
       </div>
@@ -337,7 +337,7 @@ function renderScenes(list) {
             <div class="text-secondary small">提示词：${escapeHtml(s.prompt || '')}</div>
           </div>
           <div class="btn-list">
-            <button class="btn btn-danger btn-sm" data-action="delete">删除</button>
+            <button class="btn btn-secondary btn-sm" data-action="delete">删除</button>
           </div>
         </div>
       </div>

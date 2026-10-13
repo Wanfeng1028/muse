@@ -250,7 +250,7 @@
 
     var toggle = document.createElement("button");
     toggle.type = "button";
-    toggle.className = "btn btn-ghost btn-sm";
+    toggle.className = "btn btn-secondary btn-sm";
     toggle.innerHTML = '<i data-lucide="eye"></i><span>查看模板</span>';
 
     var editBtn = document.createElement("button");
@@ -299,7 +299,7 @@
 
     var cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
-    cancelBtn.className = "btn btn-ghost btn-sm";
+    cancelBtn.className = "btn btn-secondary btn-sm";
     cancelBtn.innerHTML = '<i data-lucide="x"></i><span>取消</span>';
 
     var editorErr = document.createElement("p");

@@ -106,7 +106,39 @@
       '<div class="sidebar-footer">' +
         '<a class="sidebar-link' + (cur === 'settings' ? ' active' : '') + '" href="/settings.html">' + iconHtml('settings') + '<span>设置</span></a>' +
         '<button id="themeToggle" class="theme-toggle" title="切换亮色/深色" aria-label="切换主题"></button>' +
+        '<button id="sbToggle" class="theme-toggle" title="折叠侧边栏" aria-label="折叠侧边栏"></button>' +
       '</div>';
+
+    /* 侧边栏折叠：localStorage 持久化（df-sb），body.sb-collapsed 驱动 CSS */
+    (function () {
+      var sbVal = '0';
+      try { sbVal = localStorage.getItem('df-sb') || '0'; } catch (e) {}
+      if (sbVal === '1') document.body.classList.add('sb-collapsed');
+      function applySb() {
+        var collapsed = document.body.classList.contains('sb-collapsed');
+        var links = aside.querySelectorAll('.sidebar-link');
+        for (var i = 0; i < links.length; i++) {
+          var span = links[i].querySelector('span');
+          if (!span) continue;
+          if (collapsed) links[i].setAttribute('title', span.textContent);
+          else links[i].removeAttribute('title');
+        }
+        var btn = aside.querySelector('#sbToggle');
+        if (btn) {
+          btn.innerHTML = '<i data-lucide="' + (collapsed ? 'panel-left-open' : 'panel-left-close') + '" class="nav-icon"></i>';
+          btn.setAttribute('title', collapsed ? '展开侧边栏' : '折叠侧边栏');
+          btn.setAttribute('aria-label', collapsed ? '展开侧边栏' : '折叠侧边栏');
+          if (window.lucide && lucide.createIcons) lucide.createIcons();
+        }
+      }
+      var tgl = aside.querySelector('#sbToggle');
+      if (tgl) tgl.addEventListener('click', function () {
+        var next = document.body.classList.toggle('sb-collapsed');
+        try { localStorage.setItem('df-sb', next ? '1' : '0'); } catch (e) {}
+        applySb();
+      });
+      applySb();
+    })();
 
     /* 主列 */
     var main = document.createElement('div');

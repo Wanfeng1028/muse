@@ -91,18 +91,18 @@
     var html = '';
     var s = run.status;
     if (s === 'RUNNING') {
-      html += '<button class="btn" data-act="pause"><i data-lucide="pause"></i>暂停</button>';
-      html += '<button class="btn btn-danger" data-act="cancel"><i data-lucide="x-circle"></i>取消</button>';
+      html += '<button class="btn btn-secondary" data-act="pause"><i data-lucide="pause"></i>暂停</button>';
+      html += '<button class="btn btn-secondary" data-act="cancel"><i data-lucide="x-circle"></i>取消</button>';
     } else if (s === 'PAUSED') {
-      html += '<button class="btn btn-primary" data-act="resume"><i data-lucide="play"></i>继续</button>';
-      html += '<button class="btn btn-danger" data-act="cancel"><i data-lucide="x-circle"></i>取消</button>';
+      html += '<button class="btn btn-secondary" data-act="resume"><i data-lucide="play"></i>继续</button>';
+      html += '<button class="btn btn-secondary" data-act="cancel"><i data-lucide="x-circle"></i>取消</button>';
     } else if (s === 'WAITING_APPROVAL') {
-      html += '<button class="btn btn-primary" data-act="approve"><i data-lucide="check"></i>通过</button>';
-      html += '<button class="btn btn-danger" data-act="reject"><i data-lucide="x"></i>打回</button>';
+      html += '<button class="btn btn-secondary" data-act="approve"><i data-lucide="check"></i>通过</button>';
+      html += '<button class="btn btn-secondary" data-act="reject"><i data-lucide="x"></i>打回</button>';
     } else if (s === 'FAILED' || s === 'CANCELLED') {
       var hasFailed = (current && current.steps || []).some(function (st) { return st.status === 'FAILED'; });
-      if (hasFailed) html += '<button class="btn" data-act="retry-failed"><i data-lucide="rotate-cw"></i>重试失败步</button>';
-      html += '<button class="btn btn-primary" data-act="rerun"><i data-lucide="refresh-cw"></i>重跑</button>';
+      if (hasFailed) html += '<button class="btn btn-secondary" data-act="retry-failed"><i data-lucide="rotate-cw"></i>重试失败步</button>';
+      html += '<button class="btn btn-secondary" data-act="rerun"><i data-lucide="refresh-cw"></i>重跑</button>';
     }
     area.innerHTML = html;
     if (window.lucide) lucide.createIcons();
@@ -116,8 +116,8 @@
         '<i data-lucide="shield-check"></i>' +
         '<span class="msg">质检等待人工审批</span>' +
         '<input type="text" id="approveNote" placeholder="备注（可选）">' +
-        '<button class="btn btn-primary btn-sm" data-act="approve"><i data-lucide="check"></i>通过</button>' +
-        '<button class="btn btn-danger btn-sm" data-act="reject"><i data-lucide="x"></i>打回</button>' +
+        '<button class="btn btn-secondary btn-sm" data-act="approve"><i data-lucide="check"></i>通过</button>' +
+        '<button class="btn btn-secondary btn-sm" data-act="reject"><i data-lucide="x"></i>打回</button>' +
       '</div>';
     if (window.lucide) lucide.createIcons();
   }
@@ -153,7 +153,7 @@
       '<span class="spacer"></span>' +
       (step.latencyMs != null ? '<span class="dur">' + esc(fmtDuration(step.latencyMs)) + '</span>' : '') +
       badge(step.status, step.statusLabel) +
-      '<button class="btn btn-ghost btn-sm" data-logs="' + esc(step.id) + '"><i data-lucide="file-text"></i>日志</button>' +
+      '<button class="btn btn-secondary btn-sm" data-logs="' + esc(step.id) + '"><i data-lucide="file-text"></i>日志</button>' +
       '</div>';
 
     var body = '';
