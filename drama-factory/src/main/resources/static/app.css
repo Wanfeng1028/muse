@@ -711,9 +711,14 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
 }
 
 /* ---------- 小尺寸按钮：保留 pill 感 ---------- */
+/* 深色小按钮必须也是标准横向胶囊：min-width 保证宽高比，不许出现竖椭圆/方圆不分 */
 .btn.btn-primary.btn-sm {
   border-radius: 999px;
-  padding: 5px 14px;
+  padding: 6px 18px;
+  min-width: 78px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .btn.btn-secondary.btn-sm {
   border-radius: 8px;
