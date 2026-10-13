@@ -1,7 +1,6 @@
 /* ==========================================================================
-   workspace.js —— AI 工作区右侧生产概览（v5.1）
-   项目列表/新建、剧集列表/新建、生产统计、待质检。与左侧 chat.js 通过
-   projectSelect 的 change 事件同步所选项目。
+   workspace.js —— chat-first 工作区上下文同步（v6.0）
+   顶部状态条、项目/剧集选择器、新建表单、与 chat.js 通过 projectSelect 同步。
    ========================================================================== */
 (function () {
   'use strict';
@@ -35,199 +34,175 @@
     setTimeout(function () { t.className = 'toast'; }, 4000);
   }
 
-  function statusBadge(status) {
-    var map = {
-      DRAFT: ['dot-gray', '草稿'], SCRIPTED: ['dot-blue', '已编剧'],
-      GENERATING: ['dot-amber', '生成中'], GENERATED: ['dot-green', '已生成'],
-      REVIEWED: ['dot-green', '已过审']
-    };
-    var m = map[status] || ['dot-gray', status || '未知'];
-    return '<span class="status-line"><span class="status-dot ' + m[0] + '"></span>' + esc(m[1]) + '</span>';
-  }
-
-  /* ---- 项目 ---- */
+  /* ---- 项目选择器 ---- */
   async function loadProjects() {
     try {
       var list = await api('/api/projects');
-      renderProjects(list || []);
-      if (!state.projectId && list && list.length) {
-        selectProject(list[0].id, true);
+      var sel = $('projectSelect');
+      if (!sel) return;
+      sel.innerHTML = '';
+      if (!list || !list.length) {
+        sel.innerHTML = '<option value="">暂无项目</option>';
+        return;
       }
+      list.forEach(function (p) {
+        var o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.title + (p.genre ? ' · ' + p.genre : '');
+        sel.appendChild(o);
+      });
+      var prefer = state.projectId || sel.value || list[0].id;
+      sel.value = String(prefer);
+      state.projectId = sel.value || null;
+      await loadEpisodes();
+      loadStatusStrip();
     } catch (e) { toast('项目加载失败：' + e.message); }
   }
 
-  function renderProjects(list) {
-    var box = $('ws-project-list');
-    box.innerHTML = '';
-    if (!list.length) {
-      box.innerHTML = '<p class="text-secondary small m-0">暂无项目，先新建一个</p>';
-      return;
-    }
-    list.forEach(function (p) {
-      var a = document.createElement('a');
-      a.href = '#';
-      a.className = 'ws-plain-row' + (p.id === state.projectId ? ' active' : '');
-      a.style.cssText = 'text-decoration:none;color:inherit;border-radius:6px;padding:8px 10px;' +
-        (p.id === state.projectId ? 'background:var(--surface-2);' : '');
-      a.innerHTML = '<span class="t"><strong>' + esc(p.title) + '</strong>' +
-        '<br><span class="text-secondary small">' + esc(p.genre || '未分类') + '</span></span>';
-      a.addEventListener('click', function (e) { e.preventDefault(); selectProject(p.id); });
-      box.appendChild(a);
-    });
-  }
-
-  function selectProject(id, silent) {
-    state.projectId = id;
-    /* 同步左侧对话的项目选择器 */
-    var sel = $('projectSelect');
-    if (sel && sel.value !== String(id)) {
-      sel.value = String(id);
-      sel.dispatchEvent(new Event('change'));
-    }
-    loadProjectsSilent();
-    loadEpisodes();
-    loadStats();
-    loadPendingQc();
-  }
-
-  async function loadProjectsSilent() {
-    try {
-      var list = await api('/api/projects');
-      renderProjects(list || []);
-    } catch (e) { /* 忽略 */ }
-  }
-
-  /* ---- 剧集 ---- */
+  /* ---- 剧集选择器 ---- */
   async function loadEpisodes() {
-    var box = $('ws-episode-list');
+    var sel = $('episodeSelect');
+    if (!sel) return;
     if (!state.projectId) {
-      box.innerHTML = '<p class="text-secondary small m-0">先选择项目</p>';
+      sel.innerHTML = '<option value="">先选择项目</option>';
       return;
     }
     try {
       var list = await api('/api/projects/' + state.projectId + '/episodes');
-      box.innerHTML = '';
+      sel.innerHTML = '';
       if (!list || !list.length) {
-        box.innerHTML = '<p class="text-secondary small m-0">暂无剧集</p>';
+        sel.innerHTML = '<option value="">暂无剧集</option>';
         return;
       }
       list.forEach(function (ep) {
-        var row = document.createElement('div');
-        row.className = 'ws-plain-row';
-        row.innerHTML = '<span class="t">第 ' + esc(ep.episodeNo) + ' 集' +
-          (ep.title ? ' · ' + esc(ep.title) : '') + '</span>' +
-          statusBadge(ep.status) +
-          '<a class="btn btn-sm btn-quiet" href="/storyboard.html?episodeId=' + ep.id + '">分镜</a>';
-        box.appendChild(row);
+        var o = document.createElement('option');
+        o.value = ep.id;
+        o.textContent = '第 ' + ep.episodeNo + ' 集' + (ep.title ? ' · ' + ep.title : '');
+        sel.appendChild(o);
       });
     } catch (e) { toast('剧集加载失败：' + e.message); }
   }
 
-  /* ---- 生产统计 ---- */
-  async function loadStats() {
-    if (!state.projectId) return;
-    try {
-      var s = await api('/api/projects/' + state.projectId + '/stats');
-      $('ws-shot-rate').textContent =
-        Math.round((s.shotCompletionRate || 0) * 100) + '%（' + s.shotsCompleted + '/' + s.shotCount + '）';
-      var total = (s.tasksDone || 0) + (s.tasksFailed || 0);
-      $('ws-task-rate').textContent =
-        total ? Math.round((s.taskSuccessRate || 0) * 100) + '%（' + s.tasksDone + '/' + total + '）' : '—';
-      var secs = s.totalRenderSeconds || 0;
-      $('ws-render-time').textContent =
-        secs >= 60 ? Math.floor(secs / 60) + '分' + (secs % 60) + '秒' : secs + '秒';
-    } catch (e) { /* 忽略 */ }
-  }
-
-  /* ---- 待质检 ---- */
-  async function loadPendingQc() {
-    var box = $('ws-qc-list');
+  /* ---- 顶部状态条 ---- */
+  async function loadStatusStrip() {
+    var strip = $('ws-status-strip');
+    if (!strip) return;
     if (!state.projectId) {
-      box.innerHTML = '<p class="text-secondary small m-0">暂无待质检成片</p>';
+      strip.textContent = '分镜 — · 任务 — · 待质检 —';
       return;
     }
+    var shotsText = '分镜 —';
+    var tasksText = '任务 —';
+    var qcCount = null;
     try {
-      var view = await api('/api/projects/' + state.projectId + '/pipeline');
-      var eps = (view && view.episodes) || [];
-      var pending = [];
-      for (var i = 0; i < eps.length; i++) {
-        if (eps[i].finalCutStatus === 'READY') {
-          var cuts = await api('/api/episodes/' + eps[i].episodeId + '/final-cuts');
-          (cuts || []).forEach(function (c) {
-            if (c.qcStatus === 'PENDING') {
-              pending.push({ episodeNo: eps[i].episodeNo, title: eps[i].title, cutId: c.id });
-            }
-          });
-        }
+      var s = await api('/api/projects/' + state.projectId + '/stats');
+      var shotTotal = s.shotCount || 0;
+      var shotDone = s.shotsCompleted || 0;
+      shotsText = '分镜 ' + shotDone + '/' + shotTotal;
+      var taskTotal = (s.tasksDone || 0) + (s.tasksFailed || 0);
+      if (taskTotal > 0) {
+        tasksText = '任务 ' + (s.tasksDone || 0) + '/' + taskTotal + ' 成功';
+      } else {
+        tasksText = '任务 —';
       }
-      $('ws-pending-qc').textContent = pending.length ? pending.length + ' 个' : '0 个';
-      if (!pending.length) {
-        box.innerHTML = '<p class="text-secondary small m-0">暂无待质检成片</p>';
-        return;
-      }
-      box.innerHTML = '';
-      pending.forEach(function (p) {
-        var row = document.createElement('div');
-        row.className = 'ws-plain-row';
-        row.innerHTML = '<span class="t">第 ' + esc(p.episodeNo) + ' 集' +
-          (p.title ? ' · ' + esc(p.title) : '') + '</span>' +
-          '<a class="btn btn-sm btn-quiet" href="/qc.html?id=' + p.cutId + '">去质检</a>';
-        box.appendChild(row);
-      });
     } catch (e) { /* 忽略 */ }
+    try {
+      qcCount = await countPendingQc();
+    } catch (e) { /* 忽略 */ }
+    strip.textContent = shotsText + ' · ' + tasksText + ' · 待质检 ' +
+      (qcCount == null ? '—' : qcCount);
+  }
+
+  async function countPendingQc() {
+    if (!state.projectId) return 0;
+    var view = await api('/api/projects/' + state.projectId + '/pipeline');
+    var eps = (view && view.episodes) || [];
+    var pending = 0;
+    for (var i = 0; i < eps.length; i++) {
+      if (eps[i].finalCutStatus === 'READY') {
+        var cuts = await api('/api/episodes/' + eps[i].episodeId + '/final-cuts');
+        (cuts || []).forEach(function (c) {
+          if (c.qcStatus === 'PENDING') pending++;
+        });
+      }
+    }
+    return pending;
+  }
+
+  function selectProject(id) {
+    state.projectId = id || null;
+    var sel = $('projectSelect');
+    if (sel && sel.value !== String(id)) sel.value = String(id);
+    loadEpisodes();
+    loadStatusStrip();
   }
 
   /* ---- 新建表单 ---- */
   function init() {
+    var panel = $('ws-new-panel');
+    var toggle = $('ws-toggle-new');
+    if (toggle && panel) {
+      toggle.addEventListener('click', function () {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+
     var npb = $('ws-new-project-btn');
     var npf = $('ws-project-form');
-    npb.addEventListener('click', function () {
-      npf.style.display = npf.style.display === 'none' ? 'block' : 'none';
-    });
-    $('ws-project-cancel').addEventListener('click', function () { npf.style.display = 'none'; });
-    npf.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var title = $('ws-project-title').value.trim();
-      if (!title) { toast('请填写项目标题'); return; }
-      try {
-        var p = await api('/api/projects', { method: 'POST', body: {
-          title: title,
-          genre: $('ws-project-genre').value.trim() || null
-        }});
-        npf.reset();
-        npf.style.display = 'none';
-        await loadProjects();
-        if (p && p.id) selectProject(p.id);
-      } catch (err) { toast('创建失败：' + err.message); }
-    });
+    if (npb && npf) {
+      npb.addEventListener('click', function () {
+        npf.style.display = npf.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+    var npc = $('ws-project-cancel');
+    if (npc && npf) npc.addEventListener('click', function () { npf.style.display = 'none'; });
+    if (npf) {
+      npf.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var title = $('ws-project-title').value.trim();
+        if (!title) { toast('请填写项目标题'); return; }
+        try {
+          var p = await api('/api/projects', { method: 'POST', body: {
+            title: title,
+            genre: $('ws-project-genre').value.trim() || null
+          }});
+          npf.reset();
+          npf.style.display = 'none';
+          state.projectId = p && p.id ? String(p.id) : state.projectId;
+          await loadProjects();
+          if (panel) panel.style.display = 'none';
+        } catch (err) { toast('创建失败：' + err.message); }
+      });
+    }
 
     var neb = $('ws-new-episode-btn');
     var nef = $('ws-episode-form');
-    neb.addEventListener('click', function () {
-      if (!state.projectId) { toast('请先选择项目'); return; }
-      nef.style.display = nef.style.display === 'none' ? 'block' : 'none';
-    });
-    $('ws-episode-cancel').addEventListener('click', function () { nef.style.display = 'none'; });
-    nef.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      if (!state.projectId) { toast('请先选择项目'); return; }
-      var no = parseInt($('ws-episode-no').value, 10);
-      if (!no) { toast('请填写集号'); return; }
-      try {
-        await api('/api/projects/' + state.projectId + '/episodes', { method: 'POST', body: {
-          episodeNo: no,
-          title: $('ws-episode-title').value.trim() || null
-        }});
-        nef.reset();
-        nef.style.display = 'none';
-        await loadEpisodes();
-        /* 同步对话的剧集选择器 */
-        var sel = $('projectSelect');
-        if (sel) sel.dispatchEvent(new Event('change'));
-      } catch (err) { toast('创建失败：' + err.message); }
-    });
+    if (neb && nef) {
+      neb.addEventListener('click', function () {
+        if (!state.projectId) { toast('请先选择项目'); return; }
+        nef.style.display = nef.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+    var nec = $('ws-episode-cancel');
+    if (nec && nef) nec.addEventListener('click', function () { nef.style.display = 'none'; });
+    if (nef) {
+      nef.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!state.projectId) { toast('请先选择项目'); return; }
+        var no = parseInt($('ws-episode-no').value, 10);
+        if (!no) { toast('请填写集号'); return; }
+        try {
+          await api('/api/projects/' + state.projectId + '/episodes', { method: 'POST', body: {
+            episodeNo: no,
+            title: $('ws-episode-title').value.trim() || null
+          }});
+          nef.reset();
+          nef.style.display = 'none';
+          await loadEpisodes();
+        } catch (err) { toast('创建失败：' + err.message); }
+      });
+    }
 
-    /* 左侧项目选择器变化时同步右侧面板 */
     var ps = $('projectSelect');
     if (ps) {
       ps.addEventListener('change', function () {
@@ -244,4 +219,3 @@
     init();
   }
 })();
-

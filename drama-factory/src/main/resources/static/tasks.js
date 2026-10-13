@@ -1,4 +1,3 @@
-
 const SHOT_SIZE_LABEL = {
   CLOSE_UP: "特写",
   MEDIUM: "中景",
@@ -90,6 +89,11 @@ function statusProgressWidth(status) {
     default:
       return "8%";
   }
+}
+
+function statusProgressPercent(status) {
+  const w = statusProgressWidth(status);
+  return w;
 }
 
 function findShotLabel(shotId) {
@@ -211,48 +215,60 @@ function renderTasks() {
   }
 
   if (!tasks.length) {
-    const emptyWrap = document.createElement("div");
-    emptyWrap.className = "col-12";
     const empty = document.createElement("div");
-    empty.className = "card";
-    const emptyBody = document.createElement("div");
-    emptyBody.className = "card-body text-secondary";
-    emptyBody.textContent = "当前分镜下没有任务";
-    empty.appendChild(emptyBody);
-    emptyWrap.appendChild(empty);
-    grid.appendChild(emptyWrap);
+    empty.className = "text-secondary py-3";
+    empty.style.fontSize = "13px";
+    empty.textContent = "当前分镜下没有任务";
+    grid.appendChild(empty);
     return;
   }
 
   tasks.forEach((task) => {
-    const col = document.createElement("div");
-    col.className = "col-md-6 col-lg-4";
+    const row = document.createElement("div");
+    row.className = "py-3";
+    row.style.borderBottom = "1px solid var(--surface)";
+    row.dataset.status = task.status;
 
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.status = task.status;
+    // 第一行：状态 + 任务名 + 进度 + 操作
+    const top = document.createElement("div");
+    top.className = "d-flex align-items-center";
+    top.style.gap = "12px";
 
-    const header = document.createElement("div");
-    header.className = "card-header";
-    const title = document.createElement("h3");
-    title.className = "card-title";
-    title.textContent = "#" + task.id;
-    const badge = document.createElement("span");
-    badge.innerHTML = statusDotHtml(task.status);
-    header.appendChild(title);
-    header.appendChild(badge);
-    card.appendChild(header);
+    const left = document.createElement("div");
+    left.className = "d-flex align-items-center";
+    left.style.gap = "8px";
+    left.style.minWidth = "0";
+    left.style.flex = "1 1 auto";
 
-    const body = document.createElement("div");
-    body.className = "card-body";
+    const statusWrap = document.createElement("span");
+    statusWrap.innerHTML = statusDotHtml(task.status);
+    statusWrap.style.fontSize = "12px";
+    statusWrap.style.color = "var(--text-2)";
+    left.appendChild(statusWrap);
 
-    const shotLine = document.createElement("div");
-    shotLine.className = "text-secondary mb-2";
-    shotLine.textContent = findShotLabel(task.shotId);
-    body.appendChild(shotLine);
+    const name = document.createElement("span");
+    name.style.fontSize = "14px";
+    name.style.color = "var(--text)";
+    name.style.whiteSpace = "nowrap";
+    name.style.overflow = "hidden";
+    name.style.textOverflow = "ellipsis";
+    name.textContent = "任务 #" + task.id + " · " + findShotLabel(task.shotId);
+    left.appendChild(name);
+
+    top.appendChild(left);
+
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "d-flex align-items-center";
+    progressWrap.style.gap = "8px";
+    progressWrap.style.flex = "0 0 auto";
 
     const progress = document.createElement("div");
-    progress.className = "progress progress-sm mb-3";
+    progress.className = "progress";
+    progress.style.width = "120px";
+    progress.style.height = "4px";
+    progress.style.borderRadius = "2px";
+    progress.style.overflow = "hidden";
+
     const bar = document.createElement("div");
     bar.className = statusProgressClass(task.status);
     bar.setAttribute("role", "progressbar");
@@ -261,51 +277,69 @@ function renderTasks() {
     bar.setAttribute("aria-valuemax", "100");
     bar.style.width = statusProgressWidth(task.status);
     progress.appendChild(bar);
-    body.appendChild(progress);
+    progressWrap.appendChild(progress);
 
-    const meta = document.createElement("div");
-    meta.className = "d-flex justify-content-between text-secondary";
-    const provider = document.createElement("span");
-    provider.textContent = task.provider || "mock";
-    const attempts = document.createElement("span");
-    attempts.textContent = "尝试 " + (task.attempts != null ? task.attempts : 1) + " 次";
-    meta.appendChild(provider);
-    meta.appendChild(attempts);
-    body.appendChild(meta);
+    const pct = document.createElement("span");
+    pct.style.fontSize = "12px";
+    pct.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    pct.style.color = "var(--text-2)";
+    pct.style.minWidth = "40px";
+    pct.style.textAlign = "right";
+    pct.textContent = statusProgressPercent(task.status);
+    progressWrap.appendChild(pct);
 
-    if (task.errorMessage) {
-      const err = document.createElement("div");
-      err.className = "alert alert-danger mt-2 mb-0";
-      err.textContent = task.errorMessage;
-      body.appendChild(err);
-    }
-
-    card.appendChild(body);
+    top.appendChild(progressWrap);
 
     if (task.status === "DONE") {
-      const actions = document.createElement("div");
-      actions.className = "card-footer";
       const link = document.createElement("a");
-      link.className = "btn btn-outline-secondary btn-sm";
       link.href = "/media/videos/" + task.id;
       link.target = "_blank";
       link.rel = "noopener";
       link.textContent = "预览";
-      actions.appendChild(link);
-      card.appendChild(actions);
+      link.style.fontSize = "13px";
+      link.style.color = "var(--accent)";
+      link.style.textDecoration = "none";
+      link.style.flex = "0 0 auto";
+      top.appendChild(link);
     } else if (task.status === "FAILED") {
-      const actions = document.createElement("div");
-      actions.className = "card-footer";
-      const btn = document.createElement("button");
-      btn.className = "btn btn-danger btn-sm";
-      btn.textContent = "重试";
-      btn.addEventListener("click", () => retryTask(task.id));
-      actions.appendChild(btn);
-      card.appendChild(actions);
+      const link = document.createElement("a");
+      link.href = "javascript:void(0)";
+      link.textContent = "重试";
+      link.style.fontSize = "13px";
+      link.style.color = "var(--accent)";
+      link.style.textDecoration = "none";
+      link.style.cursor = "pointer";
+      link.style.flex = "0 0 auto";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        retryTask(task.id);
+      });
+      top.appendChild(link);
     }
 
-    col.appendChild(card);
-    grid.appendChild(col);
+    row.appendChild(top);
+
+    // 第二行：辅助信息
+    const meta = document.createElement("div");
+    meta.className = "mt-1";
+    meta.style.fontSize = "12px";
+    meta.style.color = "var(--text-3)";
+
+    const providerText = (task.provider || "mock");
+    const attemptsText = "尝试 " + (task.attempts != null ? task.attempts : 1) + " 次";
+    meta.appendChild(document.createTextNode("提供方 " + providerText + " · " + attemptsText));
+
+    if (task.errorMessage) {
+      const err = document.createElement("span");
+      err.style.color = "var(--danger, #b0453f)";
+      err.style.marginLeft = "6px";
+      err.textContent = " · " + task.errorMessage;
+      meta.appendChild(err);
+    }
+
+    row.appendChild(meta);
+
+    grid.appendChild(row);
   });
 }
 
@@ -352,4 +386,3 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
-

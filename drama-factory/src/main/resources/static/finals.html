@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN" data-bs-theme="dark">
 <head>
@@ -7,29 +6,26 @@
 <title>成片库 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
-  <link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/app.css">
 </head>
 <body>
 <div class="page">
-<div class="page-head">
-  <h1>成片库</h1>
-</div>
+  <div class="page-head">
+    <h1>成片库</h1>
+  </div>
 
-            <div class="col-auto">
-              <div class="d-flex flex-wrap gap-2">
-                <select id="projectSelect" class="form-select w-auto"></select>
-                <select id="episodeSelect" class="form-select w-auto"></select>
-                <button id="generateBtn" class="btn btn-primary">生成成片</button>
-              </div>
-            </div>
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+    <select id="projectSelect" class="form-select w-auto"></select>
+    <select id="episodeSelect" class="form-select w-auto"></select>
+    <button id="generateBtn" class="btn btn-primary">生成成片</button>
+  </div>
 
-        <p id="hint" class="text-secondary mb-3"></p>
+  <p id="hint" class="text-secondary mb-3"></p>
 
-        <section id="finalsList" class="row row-cards"></section>
+  <section id="finalsList"></section>
 </div>
 <script src="/tabler.min.js"></script>
 <script src="/shell.js"></script>
-  <script src="/finals.js"></script>
+<script src="/finals.js"></script>
 </body>
 </html>
-

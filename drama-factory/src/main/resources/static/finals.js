@@ -1,4 +1,3 @@
-
 const state = {
   projects: [],
   episodes: [],
@@ -180,131 +179,152 @@ async function generateFinalCut() {
   }
 }
 
+function renderEmpty(text) {
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "max-width:880px;padding:24px 0;color:var(--text-3);font-size:13px;";
+  wrap.textContent = text;
+  return wrap;
+}
+
 function renderFinals() {
   const list = el("finalsList");
   list.innerHTML = "";
 
   if (!state.episodeId) {
-    const empty = document.createElement("div");
-    empty.className = "col-12";
-    empty.innerHTML =
-      '<div class="alert alert-info" role="alert">请先选择项目和剧集。</div>';
-    list.appendChild(empty);
+    list.appendChild(renderEmpty("请先选择项目和剧集。"));
     return;
   }
 
   if (!state.finals || state.finals.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "col-12";
-    empty.innerHTML =
-      '<div class="alert alert-info" role="alert">这个剧集还没有成片，点右上角“生成成片”开始剪辑。</div>';
-    list.appendChild(empty);
+    list.appendChild(renderEmpty("这个剧集还没有成片，点击上方“生成成片”开始剪辑。"));
     return;
   }
 
-  state.finals.forEach((fc) => {
+  state.finals.forEach((fc, idx) => {
     const status = fc.status || "PENDING";
 
-    const col = document.createElement("div");
-    col.className = "col-sm-6 col-lg-4 col-xl-3";
-
-    const card = document.createElement("div");
-    card.className = "card";
+    const item = document.createElement("article");
+    item.style.cssText =
+      "max-width:880px;display:flex;flex-wrap:wrap;gap:20px;padding:20px 0;" +
+      (idx === 0 ? "" : "border-top:1px solid var(--surface);") +
+      (idx === state.finals.length - 1 ? "border-bottom:1px solid var(--surface);" : "");
 
     const poster = document.createElement("div");
-    poster.className = "position-relative";
+    poster.style.cssText =
+      "flex:0 0 400px;max-width:100%;width:400px;aspect-ratio:16/9;" +
+      "border-radius:10px;overflow:hidden;position:relative;background:#211d1b;";
 
     const img = document.createElement("img");
-    img.className = "card-img-top";
     img.src = "/media/finals/" + fc.id + "/poster.jpg";
     img.alt = "成片海报";
     img.loading = "lazy";
+    img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
     img.addEventListener("error", () => {
       img.style.display = "none";
     });
     poster.appendChild(img);
 
-    const badge = document.createElement("span");
-    badge.className = "position-absolute top-0 end-0 m-2";
-    badge.style.cssText = "background:rgba(20,18,16,.72);border-radius:8px;padding:3px 8px;";
-    badge.innerHTML = statusBadge(status);
-    poster.appendChild(badge);
-
-    card.appendChild(poster);
+    item.appendChild(poster);
 
     const body = document.createElement("div");
-    body.className = "card-body";
+    body.style.cssText = "flex:1 1 320px;min-width:0;display:flex;flex-direction:column;";
 
     const title = document.createElement("h3");
-    title.className = "card-title mb-2";
+    title.style.cssText = "font-size:18px;font-weight:600;margin:0 0 8px;color:var(--text);";
     title.textContent = fc.title || "成片 " + fc.id;
     body.appendChild(title);
 
     const meta = document.createElement("div");
-    meta.className = "d-flex flex-wrap gap-2 text-secondary small mb-2";
+    meta.style.cssText =
+      "font-size:13px;color:var(--text-2);display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;";
 
     const dur = document.createElement("span");
-    dur.className = "font-monospace";
     dur.textContent = "时长 " + formatDuration(fc.durationSeconds);
     meta.appendChild(dur);
+
+    const sep1 = document.createElement("span");
+    sep1.style.color = "var(--text-3)";
+    sep1.textContent = "·";
+    meta.appendChild(sep1);
 
     const created = document.createElement("span");
     created.textContent = "创建 " + formatTime(fc.createdAt);
     meta.appendChild(created);
+
+    const sep2 = document.createElement("span");
+    sep2.style.color = "var(--text-3)";
+    sep2.textContent = "·";
+    meta.appendChild(sep2);
+
+    const statusEl = document.createElement("span");
+    statusEl.innerHTML = statusBadge(status);
+    meta.appendChild(statusEl);
+
+    if (status === "READY") {
+      const sep3 = document.createElement("span");
+      sep3.style.color = "var(--text-3)";
+      sep3.textContent = "·";
+      meta.appendChild(sep3);
+
+      const qcEl = document.createElement("span");
+      qcEl.innerHTML = qcBadge(fc.qcStatus);
+      meta.appendChild(qcEl);
+    }
 
     body.appendChild(meta);
 
     const note = statusNote(status);
     if (note) {
       const p = document.createElement("p");
-      p.className = "text-secondary small mb-2";
+      p.style.cssText = "font-size:13px;color:var(--text-2);margin:0 0 8px;";
       p.textContent = note;
       body.appendChild(p);
     }
 
     const actions = document.createElement("div");
-    actions.className = "d-flex flex-wrap gap-2";
+    actions.style.cssText =
+      "display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:auto;padding-top:12px;";
 
     if (status === "READY") {
-      const playBtn = document.createElement("button");
-      playBtn.className = "btn btn-sm btn-primary";
-      playBtn.textContent = "播放";
-      playBtn.setAttribute("data-play", "");
-      playBtn.addEventListener("click", () => {
+      const playLink = document.createElement("button");
+      playLink.type = "button";
+      playLink.className = "btn-quiet";
+      playLink.style.cssText =
+        "background:none;border:0;padding:0;color:var(--text);font-size:15px;cursor:pointer;";
+      playLink.textContent = "播放";
+      playLink.addEventListener("click", () => {
         const video = document.createElement("video");
-        video.className = "w-100";
         video.controls = true;
         video.autoplay = true;
         video.src = "/media/finals/" + fc.id;
+        video.style.cssText = "width:100%;height:100%;display:block;background:#000;";
         poster.innerHTML = "";
         poster.appendChild(video);
       });
-      actions.appendChild(playBtn);
+      actions.appendChild(playLink);
 
       const dl = document.createElement("a");
-      dl.className = "btn btn-sm btn-secondary";
+      dl.className = "btn-quiet";
+      dl.style.cssText =
+        "background:none;border:0;padding:0;color:var(--text);font-size:15px;text-decoration:none;cursor:pointer;";
       dl.href = "/media/finals/" + fc.id;
       dl.setAttribute("download", "");
       dl.textContent = "下载 MP4";
       actions.appendChild(dl);
 
       const qcLink = document.createElement("a");
-      qcLink.className = "btn btn-sm btn-quiet";
+      qcLink.className = "btn-quiet";
+      qcLink.style.cssText =
+        "background:none;border:0;padding:0;color:var(--text);font-size:15px;text-decoration:none;cursor:pointer;";
       qcLink.href = "/qc.html?id=" + fc.id;
       qcLink.textContent = fc.qcStatus === "PENDING" ? "去质检" : "查看质检";
       actions.appendChild(qcLink);
-
-      const qcBadgeEl = document.createElement("span");
-      qcBadgeEl.innerHTML = qcBadge(fc.qcStatus);
-      qcBadgeEl.className = "ms-1";
-      meta.appendChild(qcBadgeEl);
     }
 
     body.appendChild(actions);
-    card.appendChild(body);
-    col.appendChild(card);
+    item.appendChild(body);
 
-    list.appendChild(col);
+    list.appendChild(item);
   });
 }
 
@@ -321,4 +341,3 @@ el("episodeSelect").addEventListener("change", async (e) => {
 el("generateBtn").addEventListener("click", generateFinalCut);
 
 loadProjects();
-
