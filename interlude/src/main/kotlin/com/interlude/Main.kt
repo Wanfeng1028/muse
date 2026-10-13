@@ -1,15 +1,7 @@
-
 package com.interlude
 
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
-import com.interlude.ui.App
+import com.interlude.ui.runApp
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "幕间 Interlude"
-    ) {
-        App()
-    }
+fun main() {
+    runApp()
 }

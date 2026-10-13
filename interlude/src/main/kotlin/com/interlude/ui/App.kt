@@ -30,10 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
 import com.interlude.dsl.Parser
 import com.interlude.dsl.ParseError
 import com.interlude.dsl.Story
 import com.interlude.dsl.Statement
+import com.interlude.dsl.Text
 import com.interlude.lint.Validator
 import com.interlude.lint.Issue
 import com.interlude.lint.Severity
@@ -353,7 +356,7 @@ private fun GraphPane(
                         )
                         Spacer(Modifier.height(4.dp))
                         val firstText = scene.statements
-                            .filterIsInstance<Statement.Text>()
+                            .filterIsInstance<Text>()
                             .firstOrNull()?.value ?: ""
                         Text(
                             firstText,
@@ -440,4 +443,15 @@ private fun loadSample(): String {
         if (f.exists()) return f.readText()
     }
     return ""
+}
+
+fun runApp() {
+    application {
+        Window(
+            onCloseRequest = { exitApplication() },
+            title = "幕间 Interlude"
+        ) {
+            App()
+        }
+    }
 }

@@ -306,3 +306,22 @@
 
 - Postgres/MySQL 只读源、冲突 Webhook 通知、视图定时物化、CSV 增量导入 API
 - 端到端自动化测试、backup 子命令、/metrics 指标
+
+## interlude「幕间 Interlude · 分支叙事的 linter」
+
+**定位**：给独立游戏叙事设计师/互动小说/剧本杀作者的开源桌面工具——分支叙事的 linter。Twine 太简单无校验，articy:draft 闭源贵，开源侧真空。
+
+**技术栈**：Kotlin 2.1.0 + Compose Multiplatform Desktop 1.7.3 + Gradle；手写递归下降 DSL 解析器；JUnit5（24 例全过）。
+
+**功能模块**：
+
+1. 叙事 DSL：scene/choice/jump/set/text/end，行号精确报错
+2. 一致性校验引擎：死路、不可达节点、变量未初始化、条件永假、跳转目标缺失（5 条规则，定位到行号）
+3. 可视化分支图：层次化布局，问题节点朱砂红圈注
+4. 本地化文本抽取与回填（保留 `{var}` 占位）
+
+**视觉**：「剧本排练室」——深墨底 #1B1712 + 暖纸黄 #E8DCC0 + 朱砂红 #C8402A；去 AI 味：无紫渐变、无渐变标题、无一切居中、无 emoji 图标。
+
+**状态**：v1 核心完成（2026-10-13）：DSL 解析/校验/本地化/布局算法全部单测通过（24/24），示例剧本冒烟报出 5 个问题全部命中，分支图布局算法已可视化验证。UI 源码完成但沙箱环境无法构建桌面二进制（Gradle daemon IPC 故障 + 手工 kotlinc 的 compose 插件后端崩溃），UI 截图待正常环境补拍——未虚报验收。
+
+**发版对照**：`interlude/docs/PRODUCTION_CHECKLIST_REPORT.md`——核心达到生产级基础；未通过项（集成测试、结构化日志、.bak 备份、Dependabot、运维手册）均有排期或声明为已知限制。
