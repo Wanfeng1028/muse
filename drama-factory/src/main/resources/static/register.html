@@ -11,8 +11,13 @@
 <body class="auth-page">
 <main class="auth-wrap">
   <div class="auth-card">
-    <h1 class="auth-title">注册</h1>
-    <p class="auth-sub">创建你的账号。</p>
+    <h1 class="auth-title">欢迎使用 AI 短剧工坊</h1>
+    <p class="auth-sub">从一句话灵感，到一部完整短剧。</p>
+
+    <div class="auth-seg" role="tablist">
+      <a class="auth-seg-item" href="/login.html" role="tab" aria-selected="false">登录</a>
+      <a class="auth-seg-item is-active" href="/register.html" role="tab" aria-selected="true">注册</a>
+    </div>
 
     <form id="register-form" novalidate>
       <label class="field">
@@ -26,12 +31,22 @@
       </label>
       <label class="field">
         <span class="field-label">密码</span>
-        <input class="input" type="password" name="password" autocomplete="new-password" required>
+        <div class="input-affix">
+          <input class="input" type="password" name="password" autocomplete="new-password" placeholder="至少 8 位，含字母和数字" required>
+          <button class="input-affix-btn" type="button" data-toggle-pw aria-label="显示密码">
+            <span class="icon" data-lucide="eye"></span>
+          </button>
+        </div>
         <span class="field-hint" id="pw-hint">至少 8 位，且包含字母和数字</span>
       </label>
       <label class="field">
         <span class="field-label">确认密码</span>
-        <input class="input" type="password" name="confirm" autocomplete="new-password" required>
+        <div class="input-affix">
+          <input class="input" type="password" name="confirm" autocomplete="new-password" placeholder="请再次输入密码" required>
+          <button class="input-affix-btn" type="button" data-toggle-pw aria-label="显示密码">
+            <span class="icon" data-lucide="eye"></span>
+          </button>
+        </div>
         <span class="field-hint field-error" id="confirm-error" hidden></span>
       </label>
 
@@ -41,13 +56,27 @@
     </form>
 
     <p class="auth-foot">已有账号？<a href="/login.html">去登录</a></p>
+    <p class="auth-terms">继续即代表同意《用户协议》与《隐私政策》</p>
   </div>
 </main>
 
+<script src="/vendor/lucide.min.js"></script>
 <script src="/auth.js"></script>
 <script>
 (function () {
   Auth.guardGuest();
+  document.querySelectorAll('[data-toggle-pw]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var wrap = b.closest('.input-affix');
+      var input = wrap ? wrap.querySelector('input') : null;
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      b.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+      b.innerHTML = '<span class="icon" data-lucide="' + (show ? 'eye-off' : 'eye') + '"></span>';
+      if (window.lucide) window.lucide.createIcons();
+    });
+  });
 
   var form = document.getElementById('register-form');
   var btn = document.getElementById('submit-btn');

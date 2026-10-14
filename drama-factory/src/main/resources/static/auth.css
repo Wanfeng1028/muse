@@ -1,6 +1,6 @@
 /* 账号体系样式：登录/注册/账号页。只用 DESIGN_SYSTEM tokens，零阴影，零渐变。 */
 
-/* ---------- 独立页（login/register/oauth-callback） ---------- */
+/* ---------- 独立页（login/register/oauth-callback）：Spark 式胶囊语言 ---------- */
 .auth-page {
   background: var(--bg);
   min-height: 100vh;
@@ -17,28 +17,82 @@
   box-shadow: none;
   padding: 32px 28px;
 }
-.auth-title { font-size: 24px; font-weight: 600; color: var(--text); margin: 0 0 6px; }
-.auth-sub { font-size: 14px; color: var(--text-2); margin: 0 0 24px; }
+.auth-title { font-size: 28px; font-weight: 700; color: var(--text); margin: 0 0 8px; line-height: 1.2; letter-spacing: -0.01em; }
+.auth-sub { font-size: 14px; color: var(--text-2); margin: 0 0 22px; }
+
+/* ---------- Segmented control（胶囊轨道 + 浮起选中项） ---------- */
+.auth-seg {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.auth-seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.auth-seg-item:hover { color: var(--text); }
+.auth-seg-item.is-active {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
 .auth-card .field { display: block; margin-bottom: 14px; }
 .field-label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
 .auth-card .input {
   width: 100%;
   background: var(--surface-2);
   border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-size: 15px;
   color: var(--text);
   box-sizing: border-box;
 }
 .auth-card .input:focus { outline: none; border-color: var(--text-3); }
 .auth-card .input::placeholder { color: var(--text-3); }
+
+/* 密码框：右侧眼睛按钮 */
+.input-affix { position: relative; }
+.input-affix .input { padding-right: 48px; }
+.input-affix-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 0;
+}
+.input-affix-btn:hover { color: var(--text); }
+.input-affix-btn .icon { width: 18px; height: 18px; }
+
 .field-hint { font-size: 12px; color: var(--text-3); margin-top: 6px; }
 .field-error, .form-error, .inline-error {
   font-size: 13px; color: var(--red); margin: 8px 0;
 }
-.btn-block { width: 100%; margin-top: 8px; }
+.btn-block { width: 100%; margin-top: 8px; border-radius: 999px; padding-top: 14px; padding-bottom: 14px; font-size: 15px; }
 .auth-forgot { text-align: right; margin-top: 10px; }
+.auth-forgot .btn-link { color: var(--text-2); font-size: 13px; }
 .auth-divider {
   display: flex; align-items: center; gap: 12px;
   margin: 22px 0 16px; font-size: 12px; color: var(--text-3);
@@ -46,19 +100,56 @@
 .auth-divider::before, .auth-divider::after {
   content: ""; flex: 1; border-top: 1px solid var(--border-soft);
 }
-.oauth-row { display: flex; gap: 10px; }
-.oauth-btn { flex: 1; justify-content: center; border-radius: 999px; padding-left: 14px; padding-right: 14px; background: var(--surface-2); }
-.oauth-btn .icon { width: 16px; height: 16px; }
+
+/* ---------- 第三方按钮：全宽大胶囊纵向排列 ---------- */
+.oauth-col { display: flex; flex-direction: column; gap: 10px; }
+.oauth-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-size: 15px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+}
+.oauth-btn .icon { width: 18px; height: 18px; }
+
+.oauth-btn[data-provider="google"] {
+  background: #FFFFFF;
+  color: #111111;
+  border-color: rgba(0,0,0,.08);
+}
+.oauth-btn[data-provider="apple"] {
+  background: #111111;
+  color: #FFFFFF;
+  border-color: #111111;
+}
+.oauth-btn[data-provider="github"] {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-soft);
+}
+
+[data-bs-theme="dark"] .oauth-btn[data-provider="google"] {
+  background: #FFFFFF;
+  color: #111111;
+  border-color: rgba(0,0,0,.08);
+}
+[data-bs-theme="dark"] .oauth-btn[data-provider="apple"] {
+  background: #FFFFFF;
+  color: #111111;
+  border-color: rgba(255,255,255,.08);
+}
+[data-bs-theme="dark"] .oauth-btn[data-provider="github"] {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border-soft);
+}
+
 .auth-foot { text-align: center; font-size: 13px; color: var(--text-2); margin: 20px 0 0; }
 .auth-foot a { color: var(--text); font-weight: 500; }
-.oauth-status { text-align: center; color: var(--text-2); font-size: 14px; }
-.oauth-status-text { margin-top: 12px; }
-.spinner {
-  width: 28px; height: 28px; margin: 0 auto;
-  border: 3px solid var(--border-soft); border-top-color: var(--text-2);
-  border-radius: 50%; animation: auth-spin 0.8s linear infinite;
-}
-@keyframes auth-spin { to { transform: rotate(360deg); } }
+.auth-terms { text-align: center; font-size: 12px; color: var(--text-3); margin: 12px 0 0; }
 
 /* ---------- 账号页 ---------- */
 [hidden] { display: none !important; }

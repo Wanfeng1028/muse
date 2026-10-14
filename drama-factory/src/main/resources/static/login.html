@@ -11,17 +11,27 @@
 <body class="auth-page">
 <main class="auth-wrap">
   <div class="auth-card">
-    <h1 class="auth-title">登录</h1>
-    <p class="auth-sub">用你的邮箱继续。</p>
+    <h1 class="auth-title">欢迎使用 AI 短剧工坊</h1>
+    <p class="auth-sub">从一句话灵感，到一部完整短剧。</p>
+
+    <div class="auth-seg" role="tablist">
+      <a class="auth-seg-item is-active" href="/login.html" role="tab" aria-selected="true">登录</a>
+      <a class="auth-seg-item" href="/register.html" role="tab" aria-selected="false">注册</a>
+    </div>
 
     <form id="login-form" novalidate>
       <label class="field">
         <span class="field-label">邮箱</span>
-        <input class="input" type="email" name="email" autocomplete="email" required>
+        <input class="input" type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
       </label>
       <label class="field">
         <span class="field-label">密码</span>
-        <input class="input" type="password" name="password" autocomplete="current-password" required>
+        <div class="input-affix">
+          <input class="input" type="password" name="password" autocomplete="current-password" placeholder="请输入密码" required>
+          <button class="input-affix-btn" type="button" data-toggle-pw aria-label="显示密码">
+            <span class="icon" data-lucide="eye"></span>
+          </button>
+        </div>
       </label>
 
       <div class="form-error" id="form-error" hidden></div>
@@ -30,24 +40,25 @@
     </form>
 
     <div class="auth-forgot">
-      <button class="btn btn-quiet btn-link" type="button" id="forgot-btn">忘记密码</button>
+      <button class="btn btn-quiet btn-link" type="button" id="forgot-btn">忘记密码？</button>
     </div>
 
-    <div class="auth-divider"><span>或</span></div>
+    <div class="auth-divider"><span>其他方式继续</span></div>
 
-    <div class="oauth-row">
-      <button class="btn btn-quiet oauth-btn" type="button" data-provider="google">
+    <div class="oauth-col">
+      <button class="btn oauth-btn" type="button" data-provider="google">
         <span class="icon" data-lucide="chrome"></span><span>Google</span>
       </button>
-      <button class="btn btn-quiet oauth-btn" type="button" data-provider="apple">
+      <button class="btn oauth-btn" type="button" data-provider="apple">
         <span class="icon" data-lucide="apple"></span><span>Apple</span>
       </button>
-      <button class="btn btn-quiet oauth-btn" type="button" data-provider="github">
+      <button class="btn oauth-btn" type="button" data-provider="github">
         <span class="icon" data-lucide="github"></span><span>GitHub</span>
       </button>
     </div>
 
     <p class="auth-foot">还没有账号？<a href="/register.html">去注册</a></p>
+    <p class="auth-terms">继续即代表同意《用户协议》与《隐私政策》</p>
   </div>
 </main>
 
@@ -121,6 +132,19 @@
     el.addEventListener('click', function () { modal.hidden = true; });
   });
 
+
+  document.querySelectorAll('[data-toggle-pw]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var wrap = b.closest('.input-affix');
+      var input = wrap ? wrap.querySelector('input') : null;
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      b.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+      b.innerHTML = '<span class="icon" data-lucide="' + (show ? 'eye-off' : 'eye') + '"></span>';
+      if (window.lucide) window.lucide.createIcons();
+    });
+  });
   if (window.lucide) window.lucide.createIcons();
 })();
 </script>
