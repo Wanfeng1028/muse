@@ -18,5 +18,8 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
 FROM debian:12-slim
 
 COPY --from=build /src/build/docseek /usr/local/bin/docseek
+# 词典必须跟镜像走：对应 resolveDictDir 的第二级定位
+# （可执行文件 ../share/docseek/dict），缺了它 serve 启动即报错。
+COPY --from=build /src/build/dict /usr/local/share/docseek/dict
 
 ENTRYPOINT ["docseek"]

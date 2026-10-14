@@ -84,6 +84,7 @@ const char* reasonPhrase(int status) {
     case 404: return "Not Found";
     case 405: return "Method Not Allowed";
     case 413: return "Payload Too Large";
+    case 429: return "Too Many Requests";
     case 500: return "Internal Server Error";
     default: return "OK";
   }
@@ -200,6 +201,12 @@ void sendResponse(int fd, const HttpResponse& resp) {
   out += resp.content_type;
   out += "\r\nContent-Length: ";
   out += std::to_string(resp.body.size());
+  for (const auto& kv : resp.headers) {
+    out += "\r\n";
+    out += kv.first;
+    out += ": ";
+    out += kv.second;
+  }
   out += "\r\nConnection: close\r\n\r\n";
   out += resp.body;
   writeAll(fd, out);

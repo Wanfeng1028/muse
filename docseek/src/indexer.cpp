@@ -143,101 +143,123 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
     }
 }
 
+// 批量提交阈值：每处理 N 个文件提交一次批量事务，兼顾速度与 WAL 文件大小。
+constexpr size_t kBatchCommitFiles = 500;
+
 // 索引一批 root（文件或目录）
 IndexStats Indexer::indexPaths(const std::vector<std::string>& roots) {
     IndexStats st;
     std::unordered_set<std::string> seen;
-
-    for (const auto& root : roots) {
-        std::error_code ec;
-        if (!fs::exists(root, ec)) {
-            if (st.errors.size() < kMaxErrors) {
-                st.errors.push_back(root + ": 路径不存在");
-            }
-            continue;
+    size_t batchCount = 0;
+    // 每处理一个文件记一次数，达到阈值就提交当前批量事务并开启新的。
+    // 注意：indexOneFile 内部已把异常转为 st.errors，只有 db 层致命错误才会抛到这里。
+    auto noteFileIndexed = [&]() {
+        if (++batchCount >= kBatchCommitFiles) {
+            db_.commitBatch();
+            db_.beginBatch();
+            batchCount = 0;
         }
-        if (fs::is_regular_file(root, ec)) {
-            indexOneFile(root, st, seen);
-            continue;
-        }
-        if (!fs::is_directory(root, ec)) {
-            // 非常规文件/目录（如设备等）直接跳过
-            st.skipped++;
-            continue;
-        }
+    };
 
-        // 递归遍历目录
-        fs::recursive_directory_iterator it(
-            root, fs::directory_options::skip_permission_denied, ec);
-        if (ec) {
-            if (st.errors.size() < kMaxErrors) {
-                st.errors.push_back(root + ": " + ec.message());
-            }
-            continue;
-        }
-        fs::recursive_directory_iterator end;
-
-        while (it != end) {
-            try {
-                const fs::directory_entry& entry = *it;
-
-                // 判断是否为符号链接
-                std::error_code lec;
-                bool isSymlink = fs::is_symlink(entry.symlink_status(lec));
-
-                if (isSymlink && !opts_.followSymlinks) {
-                    // 符号链接且不跟随：跳过，如果是目录则禁止递归
-                    if (fs::is_directory(entry.status(lec))) {
-                        it.disable_recursion_pending();
-                    }
-                    it.increment(ec);
-                    if (ec) {
-                        if (st.errors.size() < kMaxErrors) {
-                            st.errors.push_back(root + ": " + ec.message());
-                        }
-                        break;
-                    }
-                    continue;
-                }
-
-                std::error_code sec;
-                fs::file_status status = entry.status(sec);
-                if (sec) {
-                    if (st.errors.size() < kMaxErrors) {
-                        st.errors.push_back(entry.path().string() + ": " + sec.message());
-                    }
-                    it.increment(ec);
-                    if (ec) break;
-                    continue;
-                }
-
-                if (fs::is_directory(status)) {
-                    std::string name = entry.path().filename().string();
-                    if (!name.empty() && name[0] == '.') {
-                        it.disable_recursion_pending();
-                    }
-                } else if (fs::is_regular_file(status)) {
-                    indexOneFile(entry.path().string(), st, seen);
-                } else {
-                    st.skipped++;
-                }
-            } catch (const std::exception& e) {
+    db_.beginBatch();
+    try {
+        for (const auto& root : roots) {
+            std::error_code ec;
+            if (!fs::exists(root, ec)) {
                 if (st.errors.size() < kMaxErrors) {
-                    st.errors.push_back(std::string("遍历异常: ") + e.what());
+                    st.errors.push_back(root + ": 路径不存在");
                 }
+                continue;
+            }
+            if (fs::is_regular_file(root, ec)) {
+                indexOneFile(root, st, seen);
+                noteFileIndexed();
+                continue;
+            }
+            if (!fs::is_directory(root, ec)) {
+                // 非常规文件/目录（如设备等）直接跳过
+                st.skipped++;
+                continue;
             }
 
-            it.increment(ec);
+            // 递归遍历目录
+            fs::recursive_directory_iterator it(
+                root, fs::directory_options::skip_permission_denied, ec);
             if (ec) {
                 if (st.errors.size() < kMaxErrors) {
                     st.errors.push_back(root + ": " + ec.message());
                 }
-                break;
+                continue;
+            }
+            fs::recursive_directory_iterator end;
+
+            while (it != end) {
+                try {
+                    const fs::directory_entry& entry = *it;
+
+                    // 判断是否为符号链接
+                    std::error_code lec;
+                    bool isSymlink = fs::is_symlink(entry.symlink_status(lec));
+
+                    if (isSymlink && !opts_.followSymlinks) {
+                        // 符号链接且不跟随：跳过，如果是目录则禁止递归
+                        if (fs::is_directory(entry.status(lec))) {
+                            it.disable_recursion_pending();
+                        }
+                        it.increment(ec);
+                        if (ec) {
+                            if (st.errors.size() < kMaxErrors) {
+                                st.errors.push_back(root + ": " + ec.message());
+                            }
+                            break;
+                        }
+                        continue;
+                    }
+
+                    std::error_code sec;
+                    fs::file_status status = entry.status(sec);
+                    if (sec) {
+                        if (st.errors.size() < kMaxErrors) {
+                            st.errors.push_back(entry.path().string() + ": " + sec.message());
+                        }
+                        it.increment(ec);
+                        if (ec) break;
+                        continue;
+                    }
+
+                    if (fs::is_directory(status)) {
+                        std::string name = entry.path().filename().string();
+                        if (!name.empty() && name[0] == '.') {
+                            it.disable_recursion_pending();
+                        }
+                    } else if (fs::is_regular_file(status)) {
+                        indexOneFile(entry.path().string(), st, seen);
+                        noteFileIndexed();
+                    } else {
+                        st.skipped++;
+                    }
+                } catch (const std::exception& e) {
+                    if (st.errors.size() < kMaxErrors) {
+                        st.errors.push_back(std::string("遍历异常: ") + e.what());
+                    }
+                }
+
+                it.increment(ec);
+                if (ec) {
+                    if (st.errors.size() < kMaxErrors) {
+                        st.errors.push_back(root + ": " + ec.message());
+                    }
+                    break;
+                }
             }
         }
-    }
 
-    st.removed = pruneMissing();
+        st.removed = pruneMissing();
+    } catch (...) {
+        db_.abortBatch();
+        throw;
+    }
+    db_.commitBatch();
     return st;
 }
 

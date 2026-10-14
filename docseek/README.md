@@ -1,6 +1,6 @@
 # 文溯 DocSeek · 本地全文检索引擎
 
-**版本：v0.3.0**
+**版本：v0.5.0**
 
 DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，**中文分词采用 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器**，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。检索侧为**混合检索 v1**：BM25 基础分 + AND→OR 回退 + 标题/短语加成重排序。
 
@@ -30,6 +30,8 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
   - 返回 **30 token 摘要片段**。
 - `stats`：查看索引统计信息。
 - `prune`：清理失效/无效记录。
+- `backup <dest>`：在线备份数据库（SQLite backup API，不阻塞读写）。
+- `restore <src>`：用备份文件原子替换当前数据库（先校验有效性）。
 - `help` / `version`：帮助与版本信息。
 - 全局选项：
   - `--db PATH`：指定数据库路径。
@@ -112,7 +114,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
 ctest --test-dir build
 ```
 
-共 **32 个测试用例**，覆盖 **九个套件**：Database / Indexer / Searcher / HTTP 服务 / Watcher / Service 等。
+共 **62 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫等套件。
 
 ---
 
@@ -160,7 +162,8 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 | GET | `/api/health` | 健康检查 |
 | GET | `/api/stats` | 索引统计信息 |
 | GET | `/api/search?q=关键词&limit=20` | 全文检索 |
-| GET | `/api/locate?q=自然语言问题&limit=5` | 自然语言定位原文，返回文件:行号锚点与高亮段落 |
+| GET | `/api/locate?q=自然语言问题&limit=5` | 自然语言定位原文，返回文件:行号锚点与高亮段落（并发上限默认 4，超限回 429） |
+| GET | `/api/metrics` | 运行指标：查询量/延迟/Top 查询词/慢查询/限流拒绝数 |
 | POST | `/api/index` | 索引指定路径，请求体：`{"path":"..."}` |
 | POST | `/api/prune` | 清理无效记录 |
 | GET | `/api/watch` | 查询当前监控目录 |
@@ -183,6 +186,11 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 |---|---|
 | `DOCSEEK_DB` | 数据库文件路径（优先级见上） |
 | `DOCSEEK_DICT_DIR` | cppjieba 词典目录。找不到词典时建库/打开会直接报错并列出尝试过的路径；定位顺序：`DOCSEEK_DICT_DIR` → 可执行文件 `../share/docseek/dict` → 可执行文件同级 `dict/` → 编译期默认（构建目录 `dict/`） |
+| `DOCSEEK_LOG_LEVEL` | 日志级别：`debug`/`info`/`warn`/`error`，默认 `info` |
+| `DOCSEEK_SLOW_MS` | 慢查询阈值（毫秒），默认 `500`，超限记入 `/api/metrics` |
+| `DOCSEEK_LOCATE_CONCURRENCY` | `/api/locate` 最大并发数，默认 `4`，超限回 429 |
+| `DOCSEEK_LOCATE_WAIT_MS` | 拿不到并发槽位的最大等待（毫秒），默认 `2000` |
+| `DOCSEEK_JIEBA_VERBOSE` | 设为 `1` 恢复词典加载噪音日志（排障用） |
 
 ---
 
@@ -191,7 +199,15 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 项目提供多阶段构建的 `Dockerfile`：
 
 - **构建阶段**：完成编译。
-- **运行阶段**：仅保留二进制与必要的运行库，减小镜像体积。
+- **运行阶段**：仅保留二进制、词典与必要的运行库，减小镜像体积。
+
+一键部署（需要 Docker）：
+
+```bash
+cd docseek && docker compose up -d
+```
+
+compose 把 `./data` 挂载持久化数据库、`./docs` 只读挂载为演示语料，详见 `docker-compose.yml` 与 [docs/OPERATIONS.md](docs/OPERATIONS.md)。
 
 ---
 
@@ -219,12 +235,11 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 
 - **中文分词（v0.3.0 已解决）**：v0.2.0 及之前 FTS5 的 `unicode61` 分词器不对 CJK 做分词，中文子串检索（如用"检索"搜"全文检索"）无结果。v0.3.0 起引入 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器，建索引/查询双侧一致切词；旧库打开时自动迁移（`PRAGMA user_version` 2→3，重建 FTS 索引）。评测见 [docs/eval.md](docs/eval.md)，10 个中文查询 Top-1 全部符合预期。
 - 当前仅支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`），尚不支持 HTML / PDF / Office 等格式的文本提取。
-- cppjieba 加载词典时会向 stderr 输出一些 limonp 日志噪音，不影响功能。
+- ~~cppjieba 词典加载噪音~~（v0.5.0 已解决）：词典加载期的 limonp 噪音日志现已重定向到 `/dev/null`（`DOCSEEK_JIEBA_VERBOSE=1` 可恢复）。
 
 ---
 
 ## 后续计划
 
 - HTML / PDF / Office 文档的文本提取
-- 结构化日志与运维手册（生产级补齐）
 - 多用户支持

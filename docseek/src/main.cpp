@@ -25,7 +25,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.4.0";
+constexpr const char* kVersion = "0.5.0";
 
 struct GlobalOpts {
     std::string dbPath;
@@ -118,7 +118,7 @@ void printUsage() {
         "\n"
         "全局选项：\n"
         "  --db PATH        指定数据库文件路径（优先级高于环境变量 DOCSEEK_DB 与默认路径）\n"
-        "  --json           以 JSON 格式输出（适用于 search/stats/prune/index）\n"
+        "  --json           以 JSON 格式输出（适用于 search/stats/prune/index/backup/restore）\n"
         "  -h, --help       显示本帮助\n"
         "  -v, --version    显示版本\n"
         "\n"
@@ -131,6 +131,8 @@ void printUsage() {
         "                   自然语言定位原文：问句直达文件:行号，默认返回前 5 段\n"
         "  stats            显示索引统计信息\n"
         "  prune            清理磁盘上已不存在的文件的索引记录\n"
+        "  backup <dest>    在线备份数据库到 dest（SQLite backup API，备份时不阻塞写入）\n"
+        "  restore <src>    用备份文件 src 原子替换当前数据库（先校验有效性再替换）\n"
         "  serve [--port N] [--watch DIR]... [--ext .txt,.md] [--max-mb N]\n"
         "                   启动 HTTP 检索服务（默认端口 8080，--port 0 自动分配）；--watch 可重复，指定文件变更实时监控目录\n"
         "  help             显示本帮助\n"
@@ -143,7 +145,9 @@ void printUsage() {
         "  docseek --json stats\n"
         "  docseek --db /tmp/docseek.db prune\n"
         "  docseek serve --port 8080 --watch ~/notes\n"
-        "  docseek --db /data/docseek.db serve --port 0 --watch /data/docs --watch /data/notes\n";
+        "  docseek --db /data/docseek.db serve --port 0 --watch /data/docs --watch /data/notes\n"
+        "  docseek backup /data/docseek-backup.db\n"
+        "  docseek restore /data/docseek-backup.db\n";
 }
 
 // 保证扩展名以 '.' 开头
@@ -348,6 +352,63 @@ int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
     return 0;
 }
 
+int cmdBackup(docseek::Database& db, const std::string& dest, bool json) {
+    docseek::Database::backup(db.path(), dest);
+    std::error_code ec;
+    int64_t sz = static_cast<int64_t>(std::filesystem::file_size(dest, ec));
+    if (ec) sz = -1;
+    if (json) {
+        std::cout << "{\"dest\":\"" << jsonEscape(dest) << "\",\"bytes\":" << sz << "}\n";
+    } else {
+        std::cout << "备份完成：" << dest;
+        if (sz >= 0) std::cout << "（" << humanBytes(sz) << "）";
+        std::cout << "。\n";
+    }
+    return 0;
+}
+
+int cmdRestore(const std::string& src, const std::string& dbPath, bool json) {
+    // 1. 先校验备份文件有效性，无效直接拒绝，不碰当前库
+    if (!docseek::Database::isValidDocseekDb(src)) {
+        std::cerr << "错误：备份文件无效（不是有效的文溯数据库）：" << src << "\n";
+        return 2;
+    }
+    // 2. 复制到临时文件并验证可打开
+    std::string tmp = dbPath + ".restore_tmp";
+    std::error_code ec;
+    std::filesystem::copy_file(src, tmp,
+                               std::filesystem::copy_options::overwrite_existing, ec);
+    if (ec) {
+        std::cerr << "错误：复制备份文件失败：" << ec.message() << "\n";
+        return 2;
+    }
+    int64_t docs = 0;
+    try {
+        docseek::Database probe = docseek::Database::open(tmp);
+        docs = probe.docCount();
+    } catch (const std::exception& e) {
+        std::filesystem::remove(tmp, ec);
+        std::cerr << "错误：备份文件校验失败：" << e.what() << "\n";
+        return 2;
+    }
+    // 3. 原子替换：删旧库（含 WAL 模式的 -wal/-shm，它们属于旧库不能留），rename 到位
+    std::filesystem::remove(dbPath, ec);
+    std::filesystem::remove(dbPath + "-wal", ec);
+    std::filesystem::remove(dbPath + "-shm", ec);
+    std::filesystem::rename(tmp, dbPath, ec);
+    if (ec) {
+        std::cerr << "错误：替换数据库文件失败：" << ec.message() << "\n";
+        return 2;
+    }
+    if (json) {
+        std::cout << "{\"restored\":true,\"db\":\"" << jsonEscape(dbPath)
+                  << "\",\"documents\":" << docs << "}\n";
+    } else {
+        std::cout << "恢复完成：" << dbPath << "（" << docs << " 篇文档）。\n";
+    }
+    return 0;
+}
+
 int cmdStats(docseek::Database& db, bool json) {
     int64_t docs = db.docCount();
     int64_t total = db.totalBytes();
@@ -421,6 +482,8 @@ int main(int argc, char** argv) {
     ServeCmdOpts serveOpts;
     std::vector<std::string> searchParts;
     std::vector<std::string> locateParts;
+    std::string backupDest;
+    std::string restoreSrc;
 
     // 参数解析
     for (int i = 1; i < argc; ++i) {
@@ -518,6 +581,18 @@ int main(int argc, char** argv) {
                 searchParts.push_back(a);
             } else if (command == "locate") {
                 locateParts.push_back(a);
+            } else if (command == "backup") {
+                if (!backupDest.empty()) {
+                    std::cerr << "错误：backup 只接受一个目标路径\n";
+                    return 1;
+                }
+                backupDest = a;
+            } else if (command == "restore") {
+                if (!restoreSrc.empty()) {
+                    std::cerr << "错误：restore 只接受一个备份文件路径\n";
+                    return 1;
+                }
+                restoreSrc = a;
             } else {
                 std::cerr << "错误：命令 " << command << " 不接受额外参数\n";
                 return 1;
@@ -570,8 +645,19 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
+    if (command == "backup" && backupDest.empty()) {
+        std::cerr << "错误：backup 命令需要目标路径\n";
+        printUsage();
+        return 1;
+    }
+    if (command == "restore" && restoreSrc.empty()) {
+        std::cerr << "错误：restore 命令需要备份文件路径\n";
+        printUsage();
+        return 1;
+    }
     if (command != "index" && command != "search" && command != "locate" &&
-        command != "stats" && command != "prune" && command != "serve") {
+        command != "stats" && command != "prune" && command != "serve" &&
+        command != "backup" && command != "restore") {
         std::cerr << "错误：未知命令 " << command << "\n";
         printUsage();
         return 1;
@@ -579,6 +665,8 @@ int main(int argc, char** argv) {
 
     try {
         std::string dbPath = resolveDbPath(g.dbPath);
+        // restore 必须在打开当前库之前完成文件替换（否则 SQLite 句柄会占住旧文件）
+        if (command == "restore") return cmdRestore(restoreSrc, dbPath, g.json);
         docseek::Database db = docseek::Database::open(dbPath);
 
         if (command == "index") return cmdIndex(db, indexOpts, g.json);
@@ -586,6 +674,7 @@ int main(int argc, char** argv) {
         if (command == "locate") return cmdLocate(db, locateOpts, g.json);
         if (command == "stats") return cmdStats(db, g.json);
         if (command == "prune") return cmdPrune(db, g.json);
+        if (command == "backup") return cmdBackup(db, backupDest, g.json);
         if (command == "serve") return cmdServe(db, serveOpts);
     } catch (const std::exception& e) {
         std::cerr << "错误：" << e.what() << "\n";

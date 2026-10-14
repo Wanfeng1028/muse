@@ -250,9 +250,9 @@
 6. JSON 输出（--json，便于脚本集成）
 7. 灵活配置（--db > DOCSEEK_DB > $HOME/.local/share/docseek/docseek.db）
 
-**状态**：工程化 v4「自然语言定位原文」（2026-10-13 完成：`locate` 子命令——中文疑问句规则解析（query_parser）+ jieba 关键词抽取 → 混合召回 → 段落滑动窗口重排序（passage_ranker）→ 行号锚定（locator）；CLI 带行号原文段落 + 命中词 ANSI 高亮 + --json；`GET /api/locate`；Web UI 新增"自然语言定位"卡片；构建零警告、GoogleTest 48/48 全过〈含新增 test_locate 9 例与 SvcFixture.LocateApi〉、10 查询定位评测 10/10；2 张真实截图亲眼验收通过）。
+**状态**：工程化 v5「生产级补齐」（2026-10-15 完成：结构化日志 stderr JSON Lines + request_id 全链路（X-Request-Id 响应头）+ `GET /api/metrics`（查询量/延迟/Top 查询词/慢查询/限流拒绝数）+ `backup`/`restore` 子命令（SQLite backup API 在线热备，原子替换恢复）+ `/api/locate` 并发限流（默认 4，超限 429）+ 索引批量事务（每 500 文件提交，147 文件/秒，老基线 37 文件/秒）+ jieba 词典噪音重定向 + `docker-compose.yml` 一键部署 + `docs/OPERATIONS.md` + 仓库级 `.github/dependabot.yml`；构建零警告、测试 62/62 全过〈含新增 test_ops.cpp 14 例〉；backup/restore、kill -9、删库恢复、词典缺失四项真实演练全过；发版对照报告 v0.5.0：13 项缺口全部关闭）。
 
-**发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`——有条件发版，13 项未通过/部分通过均为已知缺口且有排期（v0.5：结构化日志/指标告警/backup-restore/OPERATIONS.md/compose/Dependabot/限流）。
+**发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。
 
 **修 bug（本轮视觉验收附带抓出）**：
 1. web/index.html 的 `<script>` 自 v2 起在 `btn.dis` 处被截断，导致整页 JS 解析失败、所有按钮无响应——本轮补全并补上事件绑定与初始化（node --check 验证通过）。
@@ -265,12 +265,11 @@
 - 工程化 v2（2026-10-13）：`serve` 子命令落地——自研极简 HTTP 服务器（零第三方网络库）+ inotify 实时监控（新增/修改/删除自动增量索引，debounce）+ 内嵌 Web UI；7 个 REST 端点（/api/health、/api/stats、/api/search、/api/index、/api/prune、/api/watch GET/POST/DELETE）；测试扩至 32 例全过；真实冒烟验证新增/修改/删除自动索引、watch 增删 API 与 Web UI；补齐完整 README（安装/构建/测试/API 表格/已知局限）
 - 工程化 v3（2026-10-13）：**中文分词攻坚**——cppjieba（v5.6.2，MIT，Keenable 核验 2026 年仍在维护）实现的 FTS5 自定义分词器（`tokenize='jieba'`，fts5_api 注册，CutForSearch + 字节偏移，ASCII 小写折叠）；`PRAGMA user_version` 2→3 旧库自动迁移（事务包裹，失败回滚）；**混合检索 v1**（BM25 + AND→OR 回退 + 标题/短语加成重排序）；词典运行时四级定位（DOCSEEK_DICT_DIR > ../share/docseek/dict > 同级 dict/ > 编译期默认），缺失则 fail-fast。评测：12 篇中文语料 10 查询 Top-1 全部符合预期（docs/eval.md）；万级文件（40MB）索引 267 秒，检索 2.7 秒（含词典加载）。调试中发现并修复 dpsk 埋的 bug：Jieba 构造函数传参顺序错误（把 idf.utf8 当用户词典加载导致切词异常）。
 - 工程化 v4「自然语言定位原文」（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；query_parser（中文疑问句规则解析 + 疑问词删除表 + 引号短语抽取）/ passage_ranker（滑动窗口段落切分 + 四维加权打分 + 行号锚定）/ locator（混合召回→段落重排）三新模块 + Database::getContentById + jieba 单例只读接口；`locate` CLI（行号段落 + ANSI 高亮 + --json）+ `GET /api/locate` + Web"自然语言定位"卡片（延续现有视觉系统）；CHANGELOG.md 新建；docs/eval.md 第七节 10 查询评测 10/10；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md；CLI/Web 真实截图各 1 张亲眼验收；修了 v2 遗留的 3 个真实 bug（Web JS 截断致全页失效、首行 ```html 围栏、refreshStats 字段映射错位）
+- 工程化 v5「生产级补齐」（2026-10-15）：logger/metrics/concurrency_guard 三新模块 + `wrapRequest` 统一请求包装（request_id 生成/结构化日志/指标记录/X-Request-Id）+ `GET /api/metrics` + `/api/locate` 并发守卫（ScopedSlot RAII）+ `Database::beginBatch/commitBatch/abortBatch`（嵌套防护+异常回滚）+ `Database::backup/isValidDocseekDb` + `backup`/`restore` CLI（含 restore 原子替换三步）+ `StderrSilencer`（jieba 噪音重定向）+ `docker-compose.yml` + Dockerfile 补拷词典（修运行镜像 serve 起不来）+ `.github/dependabot.yml`（仓库级）+ `docs/OPERATIONS.md` + 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`；测试 62/62 全过（含新增 test_ops.cpp 14 例：日志/指标/备份恢复/失败注入/批量事务/并发守卫）；真实演练：backup→删库→restore→检索、kill -9 重启、词典缺失 fail-fast；索引 1000 文件 6.8 秒（147 文件/秒，4 倍提升）。本轮抓真 bug 两处：dpsk 首版 logger 输出非法 JSON（key 无引号+首字段多逗号，strace 定位打回重修）；SvcFixture.Health 硬编码 0.4.0 改版本无关断言
 
 **后续计划**：
 
 - HTML/PDF/Office 文本提取
-- 结构化日志、备份恢复命令、运维手册（生产级补齐）
-- 索引批量事务优化（当前约 37 文件/秒，单文件独立事务）
 - 多用户支持
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」

@@ -116,6 +116,7 @@ std::string utcNowIso() {
 struct Database::Impl {
     sqlite3* db = nullptr;
     std::string path;
+    bool inBatch = false;  // true 表示调用方已 beginBatch，upsert/removeByPath 不再自行开事务
 };
 
 // 当前 schema 版本：3 = FTS5 使用 jieba 中文分词器；<3 为 unicode61 旧库。
@@ -322,7 +323,9 @@ void Database::upsert(const std::string& path, const std::string& title,
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
 
-    execSql(db, "BEGIN IMMEDIATE;");
+    // 批量事务内由调用方统一提交，此处不许嵌套 BEGIN。
+    bool outer = impl_->inBatch;
+    if (!outer) execSql(db, "BEGIN IMMEDIATE;");
     try {
         int64_t id = 0;
         bool exists = false;
@@ -374,11 +377,13 @@ void Database::upsert(const std::string& path, const std::string& title,
             s.exec();
         }
 
-        execSql(db, "COMMIT;");
+        if (!outer) execSql(db, "COMMIT;");
     } catch (...) {
-        try {
-            execSql(db, "ROLLBACK;");
-        } catch (...) {
+        if (!outer) {
+            try {
+                execSql(db, "ROLLBACK;");
+            } catch (...) {
+            }
         }
         throw;
     }
@@ -388,7 +393,8 @@ bool Database::removeByPath(const std::string& path) {
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
 
-    execSql(db, "BEGIN IMMEDIATE;");
+    bool outer = impl_->inBatch;
+    if (!outer) execSql(db, "BEGIN IMMEDIATE;");
     try {
         int64_t id = 0;
         bool exists = false;
@@ -401,7 +407,7 @@ bool Database::removeByPath(const std::string& path) {
             }
         }
         if (!exists) {
-            execSql(db, "COMMIT;");
+            if (!outer) execSql(db, "COMMIT;");
             return false;
         }
         {
@@ -414,15 +420,131 @@ bool Database::removeByPath(const std::string& path) {
             s.bindInt64(1, id);
             s.exec();
         }
-        execSql(db, "COMMIT;");
+        if (!outer) execSql(db, "COMMIT;");
         return true;
+    } catch (...) {
+        if (!outer) {
+            try {
+                execSql(db, "ROLLBACK;");
+            } catch (...) {
+            }
+        }
+        throw;
+    }
+}
+
+void Database::beginBatch() {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+    if (impl_->inBatch) throw std::runtime_error("批量事务已开启，不许嵌套 beginBatch");
+    execSql(db, "BEGIN IMMEDIATE;");
+    impl_->inBatch = true;
+}
+
+void Database::commitBatch() {
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+    if (!impl_->inBatch) throw std::runtime_error("未开启批量事务，不许 commitBatch");
+    try {
+        execSql(db, "COMMIT;");
+        impl_->inBatch = false;
     } catch (...) {
         try {
             execSql(db, "ROLLBACK;");
         } catch (...) {
         }
+        impl_->inBatch = false;
         throw;
     }
+}
+
+void Database::abortBatch() {
+    sqlite3* db = impl_->db;
+    if (!db || !impl_->inBatch) return;  // 空操作：避免掩盖调用方的原始异常
+    try {
+        execSql(db, "ROLLBACK;");
+    } catch (...) {
+    }
+    impl_->inBatch = false;
+}
+
+bool Database::inBatch() const {
+    return impl_ && impl_->inBatch;
+}
+
+std::string Database::path() const {
+    return impl_ ? impl_->path : std::string();
+}
+
+void Database::backup(const std::string& srcPath, const std::string& dstPath) {
+    // 目标父目录自动创建
+    if (dstPath != ":memory:") {
+        std::filesystem::path p(dstPath);
+        std::filesystem::path parent = p.parent_path();
+        if (!parent.empty()) {
+            std::error_code ec;
+            std::filesystem::create_directories(parent, ec);
+            if (ec) {
+                throw std::runtime_error("无法创建备份目录: " + parent.string() +
+                                         " (" + ec.message() + ")");
+            }
+        }
+    }
+    sqlite3* src = nullptr;
+    sqlite3* dst = nullptr;
+    // 先打开源（只读），再打开目标，任一失败都要关闭已打开的句柄
+    if (sqlite3_open_v2(srcPath.c_str(), &src, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
+        std::string msg = src ? sqlite3_errmsg(src) : "unknown error";
+        if (src) sqlite3_close(src);
+        throw std::runtime_error("备份：无法只读打开源数据库: " + msg);
+    }
+    if (sqlite3_open(dstPath.c_str(), &dst) != SQLITE_OK) {
+        std::string msg = dst ? sqlite3_errmsg(dst) : "unknown error";
+        if (dst) sqlite3_close(dst);
+        sqlite3_close(src);
+        throw std::runtime_error("备份：无法打开目标文件: " + msg);
+    }
+    sqlite3_backup* b = sqlite3_backup_init(dst, "main", src, "main");
+    if (!b) {
+        std::string msg = sqlite3_errmsg(dst);
+        sqlite3_close(dst);
+        sqlite3_close(src);
+        throw std::runtime_error("备份初始化失败: " + msg);
+    }
+    int rc = sqlite3_backup_step(b, -1);
+    sqlite3_backup_finish(b);
+    sqlite3_close(dst);
+    sqlite3_close(src);
+    if (rc != SQLITE_DONE) {
+        throw std::runtime_error("备份复制失败（rc=" + std::to_string(rc) + "）");
+    }
+}
+
+bool Database::isValidDocseekDb(const std::string& path) {
+    sqlite3* db = nullptr;
+    if (sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) != SQLITE_OK) {
+        if (db) sqlite3_close(db);
+        return false;
+    }
+    bool ok = false;
+    sqlite3_stmt* st = nullptr;
+    int uv = -1;
+    if (sqlite3_prepare_v2(db, "PRAGMA user_version;", -1, &st, nullptr) == SQLITE_OK) {
+        if (sqlite3_step(st) == SQLITE_ROW) uv = sqlite3_column_int(st, 0);
+        sqlite3_finalize(st);
+        st = nullptr;
+    }
+    // kSchemaVersion 在本文件匿名命名空间内定义（当前为 3）
+    if (uv >= 1 && uv <= kSchemaVersion) {
+        const char* sql =
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='documents' LIMIT 1;";
+        if (sqlite3_prepare_v2(db, sql, -1, &st, nullptr) == SQLITE_OK) {
+            ok = (sqlite3_step(st) == SQLITE_ROW);
+            sqlite3_finalize(st);
+        }
+    }
+    sqlite3_close(db);
+    return ok;
 }
 
 std::vector<Document> Database::list() {

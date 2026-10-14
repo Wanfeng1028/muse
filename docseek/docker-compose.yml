@@ -1,0 +1,26 @@
+# 文溯 DocSeek 一键部署（v0.5.0）
+# 用法：docker compose up -d
+# 数据卷 ./data 持久化数据库；./docs 以只读挂载作为演示语料（可换成自己的文档目录）。
+services:
+  docseek:
+    build: .
+    image: docseek:0.5.0
+    container_name: docseek
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+      - ./docs:/docs:ro
+    environment:
+      DOCSEEK_DB: /data/docseek.db
+      DOCSEEK_LOG_LEVEL: info
+      DOCSEEK_SLOW_MS: 500
+      DOCSEEK_LOCATE_CONCURRENCY: 4
+    command: ["serve", "--port", "8080", "--watch", "/docs"]
+    restart: unless-stopped
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

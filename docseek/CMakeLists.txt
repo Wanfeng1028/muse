@@ -77,6 +77,8 @@ add_library(docseek_core STATIC
   src/query_parser.cpp
   src/passage_ranker.cpp
   src/locator.cpp
+  src/logger.cpp
+  src/metrics.cpp
 )
 target_include_directories(docseek_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -154,6 +156,7 @@ add_executable(docseek_tests
   tests/test_service.cpp
   tests/test_tokenizer.cpp
   tests/test_hybrid.cpp
+  tests/test_ops.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

@@ -1,6 +1,19 @@
 ```markdown
 # Changelog
 
+## v0.5.0（2026-10-15）——生产级补齐
+
+- 结构化日志：stderr JSON Lines，`request_id` 全链路（`X-Request-Id` 响应头），`DOCSEEK_LOG_LEVEL` 控制级别。
+- `GET /api/metrics`：查询量/延迟/Top 查询词/慢查询（阈值 `DOCSEEK_SLOW_MS`）/限流拒绝数。
+- `backup` / `restore` 子命令：SQLite backup API 在线热备；恢复先校验有效性再原子替换（旧库 `-wal`/`-shm` 一并清理），垃圾文件拒绝（exit 2）。
+- `/api/locate` 并发限流：默认 4 并发，拿不到槽位超 `DOCSEEK_LOCATE_WAIT_MS` 回 429。
+- 索引批量事务：`Database::beginBatch/commitBatch/abortBatch`（嵌套防护 + 异常回滚），`indexPaths` 每 500 文件提交一次；实测 1000 文件 6.8 秒（约 147 文件/秒，老基线 37 文件/秒）。
+- cppjieba 词典加载噪音重定向到 `/dev/null`（`DOCSEEK_JIEBA_VERBOSE=1` 恢复）。
+- Docker：运行镜像补拷词典（之前漏了，serve 起不来）；新增 `docker-compose.yml` 一键部署。
+- 运维手册 `docs/OPERATIONS.md`；仓库级 `.github/dependabot.yml`（GitHub Actions 周检；CMake FetchContent 走季度人工检查）。
+- 发版对照报告：`docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`；对照报告 13 项全部通过。
+- 测试 62 例全过（含新增 tests/test_ops.cpp 14 例：日志/指标/备份恢复/失败注入/批量事务/并发守卫）。
+
 ## v0.4.0（2026-10-13）——自然语言定位原文
 
 - 新增 `locate` 子命令：自然语言提问直达文件:行号锚点（`docseek locate "退款流程写在哪一段"`），终端输出带行号原文段落 + 命中词 ANSI 高亮，支持 `--json`。

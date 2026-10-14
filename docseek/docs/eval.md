@@ -46,11 +46,11 @@
 - 检索：万级库 `search` 返回 3 条，**耗时 2.7 秒**（其中约 2 秒为进程启动时 cppjieba 词典加载；常驻 serve 模式下单次查询为毫秒级）。
 - 测试机：2 核 VM（无 KVM 加速）。
 
-## 五、已知问题
+## 五、已知问题（v0.5.0 更新）
 
-1. cppjieba 加载词典时向 stderr 输出大量 `KeywordExtractor ... empty. skipped.` 噪音（limonp 日志），不影响功能，计划后续重定向/关闭。
-2. `WatcherTest.SubDir`（inotify 递归监控）为 flaky 测试，在 pristine v0.2.0 代码上同样偶发失败，与本次改动无关。
-3. 索引吞吐约 37 文件/秒（单文件独立事务），大批量索引建议后续改批量事务（技术债）。
+1. ~~cppjieba 词典加载噪音~~ **已解决（v0.5.0）**：`src/jieba_tokenizer.cpp` 新增 `StderrSilencer`（RAII），在 `ensureJieba()` 构造期把 stderr 临时重定向到 `/dev/null`；`DOCSEEK_JIEBA_VERBOSE=1` 可恢复输出用于排障。实测 `docseek stats` 的 stderr 已无 `KeywordExtractor` 输出。
+2. `WatcherTest.SubDir`（inotify 递归监控）为 flaky 测试，在 pristine v0.2.0 代码上同样偶发失败，与本次改动无关（v0.5.0 全量 62 例中其余全部稳定通过）。
+3. ~~索引批量事务技术债~~ **已解决（v0.5.0）**：`Indexer::indexPaths` 改走批量事务（每 500 文件提交一次）；`Database` 新增 `beginBatch/commitBatch/abortBatch`（嵌套事务防护 + 异常回滚）。实测 1000 文件 6.8 秒（约 147 文件/秒，老基线 37 文件/秒，提升约 4 倍）。
 
 ## 六、灵魂定位（2026-10-13）
 

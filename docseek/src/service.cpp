@@ -4,6 +4,8 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -18,6 +20,9 @@
 
 #include "docseek/database.h"
 #include "docseek/http_server.h"
+#include "docseek/concurrency_guard.h"
+#include "docseek/logger.h"
+#include "docseek/metrics.h"
 #include "docseek/indexer.h"
 #include "docseek/searcher.h"
 #include "docseek/locator.h"
@@ -134,12 +139,51 @@ std::string formatScore(double s) {
     return oss.str();
 }
 
+// 毫秒数格式化为保留 1 位小数的字符串（日志与指标用）
+std::string formatMs(double ms) {
+    char buf[32];
+    std::snprintf(buf, sizeof(buf), "%.1f", ms);
+    return std::string(buf);
+}
+
+// 读整数环境变量：未设置/非法/<=0 时返回默认值
+int getEnvInt(const char* name, int def) {
+    const char* v = std::getenv(name);
+    if (v == nullptr || *v == '\0') return def;
+    try {
+        int n = std::stoi(v);
+        return n > 0 ? n : def;
+    } catch (...) {
+        return def;
+    }
+}
+
+// 读浮点环境变量：未设置/非法/<=0 时返回默认值
+double getEnvDouble(const char* name, double def) {
+    const char* v = std::getenv(name);
+    if (v == nullptr || *v == '\0') return def;
+    try {
+        double d = std::stod(v);
+        return d > 0 ? d : def;
+    } catch (...) {
+        return def;
+    }
+}
+
+// 并发守卫已移至 include/docseek/concurrency_guard.h（便于单元测试）。
+
 }  // namespace
 
 class Service::Impl {
 public:
     Impl(Database& db, ServeOptions opts)
-        : db_(db), opts_(std::move(opts)), startTime_(std::chrono::steady_clock::now()) {
+        : db_(db),
+          opts_(std::move(opts)),
+          startTime_(std::chrono::steady_clock::now()),
+          metrics_(getEnvDouble("DOCSEEK_SLOW_MS", 500.0)),
+          locateGuard_(getEnvInt("DOCSEEK_LOCATE_CONCURRENCY", 4)),
+          locateWaitMs_(getEnvInt("DOCSEEK_LOCATE_WAIT_MS", 2000)) {
+        setLevelFromEnv();  // 日志级别尽早生效（默认 info）
         for (const auto& dir : opts_.watchDirs) {
             std::error_code ec;
             if (!std::filesystem::exists(dir, ec) || ec) {
@@ -148,209 +192,295 @@ public:
         }
     }
 
+    // 统一请求包装：生成 request_id → 设 thread_local → 执行 → 记结构化日志/指标 →
+    // 响应挂 X-Request-Id 头 → 清 thread_local。
+    // recordMetrics=true 时按 endpoint 记录查询指标（查询词取 req.query["q"]）。
+    // fn 抛异常时记 error 日志后原样 rethrow（由 HttpServer 统一转 500）。
+    HttpResponse wrapRequest(const std::string& endpoint, const HttpRequest& req,
+                             bool recordMetrics,
+                             const std::function<HttpResponse()>& fn) {
+        std::string rid = newRequestId();
+        setRequestId(rid);
+        auto t0 = std::chrono::steady_clock::now();
+        log(Level::Debug, "http", "request start",
+            {{"method", req.method}, {"path", req.path}});
+        HttpResponse resp;
+        try {
+            resp = fn();
+        } catch (const std::exception& e) {
+            log(Level::Error, "http", "request failed",
+                {{"method", req.method}, {"path", req.path}, {"error", e.what()}});
+            clearRequestId();
+            throw;
+        } catch (...) {
+            log(Level::Error, "http", "request failed",
+                {{"method", req.method}, {"path", req.path}, {"error", "unknown"}});
+            clearRequestId();
+            throw;
+        }
+        auto t1 = std::chrono::steady_clock::now();
+        double latencyMs =
+            std::chrono::duration<double, std::milli>(t1 - t0).count();
+        log(Level::Info, "http", "request completed",
+            {{"method", req.method},
+             {"path", req.path},
+             {"status", std::to_string(resp.status)},
+             {"latency_ms", formatMs(latencyMs)}});
+        if (recordMetrics) {
+            std::string q;
+            auto it = req.query.find("q");
+            if (it != req.query.end()) q = it->second;
+            metrics_.recordQuery(endpoint, q, latencyMs);
+        }
+        resp.headers["X-Request-Id"] = rid;
+        clearRequestId();
+        return resp;
+    }
+
     void registerRoutes() {
-        server_->onGet("/", [this](const HttpRequest&) {
-            return HttpResponse::text(kWebUiHtml);
+        server_->onGet("/", [this](const HttpRequest& req) {
+            return wrapRequest("ui", req, false, [&]() -> HttpResponse {
+                return HttpResponse::text(kWebUiHtml);
+            });
         });
 
-        server_->onGet("/api/health", [this](const HttpRequest&) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            return HttpResponse::json("{\"ok\":true,\"version\":\"0.4.0\"}");
+        server_->onGet("/api/health", [this](const HttpRequest& req) {
+            return wrapRequest("health", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                return HttpResponse::json("{\"ok\":true,\"version\":\"0.5.0\"}");
+            });
         });
 
-        server_->onGet("/api/stats", [this](const HttpRequest&) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            auto now = std::chrono::steady_clock::now();
-            auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime_).count();
-            std::ostringstream oss;
-            oss << "{\"documents\":" << db_.docCount()
-                << ",\"total_bytes\":" << db_.totalBytes()
-                << ",\"db_bytes\":" << db_.dbFileBytes()
-                << ",\"uptime_sec\":" << uptime
-                << ",\"watched_dirs\":[";
-            std::vector<std::string> dirs = watcher_ ? watcher_->watched() : opts_.watchDirs;
-            for (size_t i = 0; i < dirs.size(); ++i) {
-                if (i) oss << ',';
-                oss << '"' << jsonEscape(dirs[i]) << '"';
-            }
-            oss << "]}";
-            return HttpResponse::json(oss.str());
+        server_->onGet("/api/stats", [this](const HttpRequest& req) {
+            return wrapRequest("stats", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                auto now = std::chrono::steady_clock::now();
+                auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime_).count();
+                std::ostringstream oss;
+                oss << "{\"documents\":" << db_.docCount()
+                    << ",\"total_bytes\":" << db_.totalBytes()
+                    << ",\"db_bytes\":" << db_.dbFileBytes()
+                    << ",\"uptime_sec\":" << uptime
+                    << ",\"watched_dirs\":[";
+                std::vector<std::string> dirs = watcher_ ? watcher_->watched() : opts_.watchDirs;
+                for (size_t i = 0; i < dirs.size(); ++i) {
+                    if (i) oss << ',';
+                    oss << '"' << jsonEscape(dirs[i]) << '"';
+                }
+                oss << "]}";
+                return HttpResponse::json(oss.str());
+            });
         });
 
         server_->onGet("/api/search", [this](const HttpRequest& req) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            auto it = req.query.find("q");
-            if (it == req.query.end() || it->second.empty()) {
-                return HttpResponse::json("{\"error\":\"缺少查询参数 q\"}", 400);
-            }
-            std::string q = it->second;
-            int limit = 20;
-            auto lit = req.query.find("limit");
-            if (lit != req.query.end() && !lit->second.empty()) {
-                try {
-                    int parsed = std::stoi(lit->second);
-                    if (parsed >= 1 && parsed <= 100) limit = parsed;
-                } catch (...) {
-                    limit = 20;
+            return wrapRequest("search", req, true, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                auto it = req.query.find("q");
+                if (it == req.query.end() || it->second.empty()) {
+                    return HttpResponse::json("{\"error\":\"缺少查询参数 q\"}", 400);
                 }
-            }
-            Searcher searcher(db_);
-            std::vector<Hit> hits = searcher.search(q, limit);
-            std::ostringstream oss;
-            oss << "{\"query\":\"" << jsonEscape(q) << "\",\"hits\":[";
-            for (size_t i = 0; i < hits.size(); ++i) {
-                const Hit& h = hits[i];
-                if (i) oss << ',';
-                oss << "{\"doc_id\":" << h.doc_id
-                    << ",\"path\":\"" << jsonEscape(h.path)
-                    << "\",\"title\":\"" << jsonEscape(h.title)
-                    << "\",\"snippet\":\"" << jsonEscape(h.snippet)
-                    << "\",\"score\":" << formatScore(h.score) << "}";
-            }
-            oss << "]}";
-            return HttpResponse::json(oss.str());
+                std::string q = it->second;
+                int limit = 20;
+                auto lit = req.query.find("limit");
+                if (lit != req.query.end() && !lit->second.empty()) {
+                    try {
+                        int parsed = std::stoi(lit->second);
+                        if (parsed >= 1 && parsed <= 100) limit = parsed;
+                    } catch (...) {
+                        limit = 20;
+                    }
+                }
+                Searcher searcher(db_);
+                std::vector<Hit> hits = searcher.search(q, limit);
+                std::ostringstream oss;
+                oss << "{\"query\":\"" << jsonEscape(q) << "\",\"hits\":[";
+                for (size_t i = 0; i < hits.size(); ++i) {
+                    const Hit& h = hits[i];
+                    if (i) oss << ',';
+                    oss << "{\"doc_id\":" << h.doc_id
+                        << ",\"path\":\"" << jsonEscape(h.path)
+                        << "\",\"title\":\"" << jsonEscape(h.title)
+                        << "\",\"snippet\":\"" << jsonEscape(h.snippet)
+                        << "\",\"score\":" << formatScore(h.score) << "}";
+                }
+                oss << "]}";
+                return HttpResponse::json(oss.str());
+            });
         });
 
         server_->onGet("/api/locate", [this](const HttpRequest& req) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            auto it = req.query.find("q");
-            if (it == req.query.end() || it->second.empty()) {
-                return HttpResponse::json("{\"error\":\"缺少查询参数 q\"}", 400);
-            }
-            std::string q = it->second;
-            int limit = 5;
-            auto lit = req.query.find("limit");
-            if (lit != req.query.end() && !lit->second.empty()) {
-                try {
-                    int parsed = std::stoi(lit->second);
-                    if (parsed >= 1 && parsed <= 100) limit = parsed;
-                } catch (...) {
-                    limit = 5;
+            return wrapRequest("locate", req, true, [&]() -> HttpResponse {
+                ScopedSlot slot(locateGuard_, locateWaitMs_);
+                if (!slot.held()) {
+                    metrics_.recordLocateRejected();
+                    log(Level::Warn, "http", "locate 并发限流拒绝",
+                        {{"wait_ms", std::to_string(locateWaitMs_)}});
+                    return HttpResponse::json("{\"error\":\"locate 并发已满，请稍后重试\"}", 429);
                 }
-            }
-            ParsedQuery pq = parseNaturalQuery(q);
-            Searcher searcher(db_);
-            Locator locator(db_, searcher);
-            LocateOptions lopts;
-            lopts.limit = limit;
-            std::vector<Passage> anchors = locator.locate(q, lopts);
-            std::ostringstream oss;
-            oss << "{\"query\":\"" << jsonEscape(q) << "\",\"keywords\":[";
-            for (size_t i = 0; i < pq.keywords.size(); ++i) {
-                if (i) oss << ',';
-                oss << '"' << jsonEscape(pq.keywords[i]) << '"';
-            }
-            oss << "],\"anchors\":[";
-            for (size_t i = 0; i < anchors.size(); ++i) {
-                const Passage& a = anchors[i];
-                if (i) oss << ',';
-                oss << "{\"doc_id\":" << a.doc_id
-                    << ",\"path\":\"" << jsonEscape(a.path)
-                    << "\",\"line_start\":" << a.line_start
-                    << ",\"line_end\":" << a.line_end
-                    << ",\"score\":" << formatScore(a.score)
-                    << ",\"matched_terms\":[";
-                for (size_t j = 0; j < a.matched_terms.size(); ++j) {
-                    if (j) oss << ',';
-                    oss << '"' << jsonEscape(a.matched_terms[j]) << '"';
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                auto it = req.query.find("q");
+                if (it == req.query.end() || it->second.empty()) {
+                    return HttpResponse::json("{\"error\":\"缺少查询参数 q\"}", 400);
                 }
-                oss << "],\"text\":\"" << jsonEscape(a.text) << "\"}";
-            }
-            oss << "]}";
-            return HttpResponse::json(oss.str());
+                std::string q = it->second;
+                int limit = 5;
+                auto lit = req.query.find("limit");
+                if (lit != req.query.end() && !lit->second.empty()) {
+                    try {
+                        int parsed = std::stoi(lit->second);
+                        if (parsed >= 1 && parsed <= 100) limit = parsed;
+                    } catch (...) {
+                        limit = 5;
+                    }
+                }
+                ParsedQuery pq = parseNaturalQuery(q);
+                Searcher searcher(db_);
+                Locator locator(db_, searcher);
+                LocateOptions lopts;
+                lopts.limit = limit;
+                std::vector<Passage> anchors = locator.locate(q, lopts);
+                std::ostringstream oss;
+                oss << "{\"query\":\"" << jsonEscape(q) << "\",\"keywords\":[";
+                for (size_t i = 0; i < pq.keywords.size(); ++i) {
+                    if (i) oss << ',';
+                    oss << '"' << jsonEscape(pq.keywords[i]) << '"';
+                }
+                oss << "],\"anchors\":[";
+                for (size_t i = 0; i < anchors.size(); ++i) {
+                    const Passage& a = anchors[i];
+                    if (i) oss << ',';
+                    oss << "{\"doc_id\":" << a.doc_id
+                        << ",\"path\":\"" << jsonEscape(a.path)
+                        << "\",\"line_start\":" << a.line_start
+                        << ",\"line_end\":" << a.line_end
+                        << ",\"score\":" << formatScore(a.score)
+                        << ",\"matched_terms\":[";
+                    for (size_t j = 0; j < a.matched_terms.size(); ++j) {
+                        if (j) oss << ',';
+                        oss << '"' << jsonEscape(a.matched_terms[j]) << '"';
+                    }
+                    oss << "],\"text\":\"" << jsonEscape(a.text) << "\"}";
+                }
+                oss << "]}";
+                return HttpResponse::json(oss.str());
+            });
+        });
+
+        server_->onGet("/api/metrics", [this](const HttpRequest& req) {
+            return wrapRequest("metrics", req, false, [&]() -> HttpResponse {
+                auto now = std::chrono::steady_clock::now();
+                auto uptime =
+                    std::chrono::duration_cast<std::chrono::seconds>(now - startTime_)
+                        .count();
+                return HttpResponse::json(
+                    metrics_.toJson(static_cast<uint64_t>(uptime)));
+            });
         });
 
         server_->onPost("/api/index", [this](const HttpRequest& req) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            auto pathOpt = extractJsonString(req.body, "path");
-            if (!pathOpt || pathOpt->empty()) {
-                return HttpResponse::json("{\"error\":\"缺少 path\"}", 400);
-            }
-            const std::string& path = *pathOpt;
-            std::error_code ec;
-            if (!std::filesystem::exists(path, ec) || ec) {
-                return HttpResponse::json("{\"error\":\"路径不存在\"}", 422);
-            }
-            Indexer indexer(db_, opts_.indexOpts);
-            IndexStats stats = indexer.indexPaths({path});
-            std::ostringstream oss;
-            oss << "{\"scanned\":" << stats.scanned
-                << ",\"added\":" << stats.added
-                << ",\"updated\":" << stats.updated
-                << ",\"unchanged\":" << stats.unchanged
-                << ",\"removed\":" << stats.removed
-                << ",\"skipped\":" << stats.skipped
-                << ",\"errors\":[";
-            for (size_t i = 0; i < stats.errors.size(); ++i) {
-                if (i) oss << ',';
-                oss << '"' << jsonEscape(stats.errors[i]) << '"';
-            }
-            oss << "]}";
-            return HttpResponse::json(oss.str());
+            return wrapRequest("index", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                auto pathOpt = extractJsonString(req.body, "path");
+                if (!pathOpt || pathOpt->empty()) {
+                    return HttpResponse::json("{\"error\":\"缺少 path\"}", 400);
+                }
+                const std::string& path = *pathOpt;
+                std::error_code ec;
+                if (!std::filesystem::exists(path, ec) || ec) {
+                    return HttpResponse::json("{\"error\":\"路径不存在\"}", 422);
+                }
+                Indexer indexer(db_, opts_.indexOpts);
+                IndexStats stats = indexer.indexPaths({path});
+                std::ostringstream oss;
+                oss << "{\"scanned\":" << stats.scanned
+                    << ",\"added\":" << stats.added
+                    << ",\"updated\":" << stats.updated
+                    << ",\"unchanged\":" << stats.unchanged
+                    << ",\"removed\":" << stats.removed
+                    << ",\"skipped\":" << stats.skipped
+                    << ",\"errors\":[";
+                for (size_t i = 0; i < stats.errors.size(); ++i) {
+                    if (i) oss << ',';
+                    oss << '"' << jsonEscape(stats.errors[i]) << '"';
+                }
+                oss << "]}";
+                return HttpResponse::json(oss.str());
+            });
         });
 
-        server_->onPost("/api/prune", [this](const HttpRequest&) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            Indexer indexer(db_, opts_.indexOpts);
-            size_t removed = indexer.pruneMissing();
-            std::ostringstream oss;
-            oss << "{\"removed\":" << removed << "}";
-            return HttpResponse::json(oss.str());
+        server_->onPost("/api/prune", [this](const HttpRequest& req) {
+            return wrapRequest("prune", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                Indexer indexer(db_, opts_.indexOpts);
+                size_t removed = indexer.pruneMissing();
+                std::ostringstream oss;
+                oss << "{\"removed\":" << removed << "}";
+                return HttpResponse::json(oss.str());
+            });
         });
 
-        server_->onGet("/api/watch", [this](const HttpRequest&) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            std::vector<std::string> dirs = watcher_ ? watcher_->watched() : opts_.watchDirs;
-            std::ostringstream oss;
-            oss << "{\"dirs\":[";
-            for (size_t i = 0; i < dirs.size(); ++i) {
-                if (i) oss << ',';
-                oss << '"' << jsonEscape(dirs[i]) << '"';
-            }
-            oss << "]}";
-            return HttpResponse::json(oss.str());
+        server_->onGet("/api/watch", [this](const HttpRequest& req) {
+            return wrapRequest("watch", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                std::vector<std::string> dirs = watcher_ ? watcher_->watched() : opts_.watchDirs;
+                std::ostringstream oss;
+                oss << "{\"dirs\":[";
+                for (size_t i = 0; i < dirs.size(); ++i) {
+                    if (i) oss << ',';
+                    oss << '"' << jsonEscape(dirs[i]) << '"';
+                }
+                oss << "]}";
+                return HttpResponse::json(oss.str());
+            });
         });
 
         server_->onPost("/api/watch", [this](const HttpRequest& req) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            auto pathOpt = extractJsonString(req.body, "path");
-            if (!pathOpt || pathOpt->empty()) {
-                return HttpResponse::json("{\"error\":\"缺少 path\"}", 400);
-            }
-            const std::string& path = *pathOpt;
-            if (!watcher_ || !watcher_->add(path)) {
-                return HttpResponse::json("{\"error\":\"目录不可用或不存在\"}", 422);
-            }
-            std::vector<std::string> dirs = watcher_->watched();
-            std::ostringstream oss;
-            oss << "{\"added\":true,\"dir\":\"" << jsonEscape(path) << "\",\"dirs\":[";
-            for (std::size_t i = 0; i < dirs.size(); ++i) {
-                if (i != 0) oss << ",";
-                oss << "\"" << jsonEscape(dirs[i]) << "\"";
-            }
-            oss << "]}";
-            return HttpResponse::json(oss.str());
+            return wrapRequest("watch", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                auto pathOpt = extractJsonString(req.body, "path");
+                if (!pathOpt || pathOpt->empty()) {
+                    return HttpResponse::json("{\"error\":\"缺少 path\"}", 400);
+                }
+                const std::string& path = *pathOpt;
+                if (!watcher_ || !watcher_->add(path)) {
+                    return HttpResponse::json("{\"error\":\"目录不可用或不存在\"}", 422);
+                }
+                std::vector<std::string> dirs = watcher_->watched();
+                std::ostringstream oss;
+                oss << "{\"added\":true,\"dir\":\"" << jsonEscape(path) << "\",\"dirs\":[";
+                for (std::size_t i = 0; i < dirs.size(); ++i) {
+                    if (i != 0) oss << ",";
+                    oss << "\"" << jsonEscape(dirs[i]) << "\"";
+                }
+                oss << "]}";
+                return HttpResponse::json(oss.str());
+            });
         });
 
         server_->onDelete("/api/watch", [this](const HttpRequest& req) {
-            std::lock_guard<std::mutex> lk(dbMutex_);
-            auto it = req.query.find("path");
-            if (it == req.query.end() || it->second.empty()) {
-                return HttpResponse::json("{\"error\":\"缺少 path\"}", 400);
-            }
-            const std::string& path = it->second;
-            if (!watcher_ || !watcher_->remove(path)) {
-                return HttpResponse::json("{\"error\":\"该目录不在监控中\"}", 404);
-            }
-            std::ostringstream oss;
-            oss << "{\"removed\":true,\"dir\":\"" << jsonEscape(path) << "\"}";
-            return HttpResponse::json(oss.str());
+            return wrapRequest("watch", req, false, [&]() -> HttpResponse {
+                std::lock_guard<std::mutex> lk(dbMutex_);
+                auto it = req.query.find("path");
+                if (it == req.query.end() || it->second.empty()) {
+                    return HttpResponse::json("{\"error\":\"缺少 path\"}", 400);
+                }
+                const std::string& path = it->second;
+                if (!watcher_ || !watcher_->remove(path)) {
+                    return HttpResponse::json("{\"error\":\"该目录不在监控中\"}", 404);
+                }
+                std::ostringstream oss;
+                oss << "{\"removed\":true,\"dir\":\"" << jsonEscape(path) << "\"}";
+                return HttpResponse::json(oss.str());
+            });
         });
     }
 
     Database& db_;
     ServeOptions opts_;
     std::chrono::steady_clock::time_point startTime_;
+    Metrics metrics_;                 // 查询指标（查询量/延迟/Top 查询词/慢查询）
+    ConcurrencyGuard locateGuard_;   // /api/locate 并发上限守卫
+    int locateWaitMs_ = 2000;        // 拿不到槽位时的最大等待毫秒数
     std::mutex dbMutex_;
     std::mutex runMutex_;
     std::condition_variable runCv_;
@@ -398,6 +528,9 @@ void Service::run() {
 
     impl_->server_->start(impl_->opts_.port);
     impl_->actualPort_ = impl_->server_->port();
+    log(Level::Info, "service", "服务已启动",
+        {{"port", std::to_string(impl_->actualPort_)},
+         {"version", "0.5.0"}});
 
     {
         std::unique_lock<std::mutex> lk(impl_->runMutex_);

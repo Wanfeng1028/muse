@@ -2,10 +2,17 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
 #include <mutex>
 #include <string>
 #include <vector>
+
+#if defined(__linux__)
+#include <unistd.h>
+#endif
 
 #include "cppjieba/Jieba.hpp"
 #include "docseek/dict.h"
@@ -26,6 +33,44 @@ cppjieba::Jieba* g_jieba = nullptr;
 std::once_flag g_jiebaOnce;
 std::string g_jiebaInitError;
 
+// RAII：构造时把 stderr（fd 2）重定向到 /dev/null，析构时恢复。
+// 用途：屏蔽 cppjieba/limonp 在加载词典时打印的大量噪音日志
+// （如 "KeywordExtractor ... empty. skipped."，见 docs/eval.md 已知问题 #1）。
+// 仅在 std::call_once 的单线程初始化路径使用，不考虑并发构造。
+// 设 DOCSEEK_JIEBA_VERBOSE=1 可关闭屏蔽，用于排障。
+class StderrSilencer {
+public:
+    StderrSilencer() {
+#if defined(__linux__)
+        const char* v = std::getenv("DOCSEEK_JIEBA_VERBOSE");
+        if (v && v[0] == '1') return;  // 排障模式：保留原始 stderr
+        std::fflush(stderr);
+        saved_ = ::dup(STDERR_FILENO);
+        if (saved_ < 0) return;
+        int devnull = ::open("/dev/null", O_WRONLY);
+        if (devnull < 0) return;
+        ::dup2(devnull, STDERR_FILENO);
+        ::close(devnull);
+#else
+        (void)0;
+#endif
+    }
+    ~StderrSilencer() {
+#if defined(__linux__)
+        if (saved_ >= 0) {
+            std::fflush(stderr);
+            ::dup2(saved_, STDERR_FILENO);
+            ::close(saved_);
+        }
+#endif
+    }
+    StderrSilencer(const StderrSilencer&) = delete;
+    StderrSilencer& operator=(const StderrSilencer&) = delete;
+
+private:
+    int saved_ = -1;
+};
+
 // 初始化全局 Jieba；成功返回 true。多次调用只初始化一次。
 bool ensureJieba() {
     std::call_once(g_jiebaOnce, []() {
@@ -40,6 +85,7 @@ bool ensureJieba() {
             //         stop_word_path)
             // 注意参数顺序：idf 与 stop_words 不能错位（曾因此把 idf 当用户
             // 词典加载，导致切词异常）。无用户词典时传空字符串。
+            StderrSilencer silence;  // 屏蔽 limonp 词典加载噪音（DOCSEEK_JIEBA_VERBOSE=1 恢复）
             g_jieba = new cppjieba::Jieba(dictPath, hmmPath, "",
                                           idfPath, stopPath);
         } catch (const std::exception& e) {

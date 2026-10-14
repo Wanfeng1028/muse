@@ -22,6 +22,7 @@ struct HttpResponse {
   int status = 200;                                                    // HTTP 状态码
   std::string content_type = "application/json; charset=utf-8";        // 默认 JSON 内容类型
   std::string body;                                                    // 响应体
+  std::map<std::string, std::string> headers;                          // 额外响应头（如 X-Request-Id）
 
   // 构造 JSON 响应（默认状态码 200）。
   static HttpResponse json(const std::string& body, int status = 200);

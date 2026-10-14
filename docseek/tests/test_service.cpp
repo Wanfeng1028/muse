@@ -162,7 +162,8 @@ TEST_F(SvcFixture, Health) {
     std::string resp = httpGet(svc_->port(), "/api/health");
     EXPECT_EQ(statusCode(resp), 200);
     EXPECT_NE(resp.find("\"ok\":true"), std::string::npos);
-    EXPECT_NE(resp.find("0.4.0"), std::string::npos);
+    // 版本号断言必须版本无关：每次发版都会 bump，不许再硬编码具体版本号
+    EXPECT_NE(resp.find("\"version\":\""), std::string::npos);
 }
 
 // 索引与检索端到端。

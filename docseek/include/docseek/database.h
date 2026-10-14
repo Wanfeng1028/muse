@@ -46,6 +46,24 @@ public:
     void upsert(const std::string& path, const std::string& title, const std::string& content, int64_t mtime, int64_t size);
     // 按路径删除文档及其 FTS 行，存在则返回 true。
     bool removeByPath(const std::string& path);
+    // 批量事务：beginBatch() 后，upsert/removeByPath 不再各自开事务，
+    // 由调用方统一 commitBatch() 提交；abortBatch() 回滚。
+    // 已在批量事务中再次 beginBatch() 抛 std::runtime_error；
+    // 未在批量事务中 commitBatch() 抛 std::runtime_error；
+    // abortBatch() 在未开事务时为空操作（避免掩盖调用方的原始异常）。
+    void beginBatch();
+    void commitBatch();
+    void abortBatch();
+    // 当前是否处于批量事务中。
+    bool inBatch() const;
+    // 返回 open() 时传入的数据库文件路径。
+    std::string path() const;
+    // 在线备份：用 SQLite backup API 把 srcPath 的库完整复制到 dstPath。
+    // dst 父目录不存在时自动创建；失败抛 std::runtime_error；不锁源库写入。
+    static void backup(const std::string& srcPath, const std::string& dstPath);
+    // 校验 path 是否为有效的文溯数据库：只读打开，检查 user_version
+    // 在 [1, 当前 schema 版本] 内且 documents 表存在。任何异常返回 false，不抛。
+    static bool isValidDocseekDb(const std::string& path);
     // 返回全部文档元数据，按 id 升序。
     std::vector<Document> list();
     // 按路径查询单个文档元数据，不存在返回 std::nullopt。

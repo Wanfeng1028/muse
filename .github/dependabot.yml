@@ -1,0 +1,10 @@
+# Dependabot 配置（仓库级）
+# 注意：Dependabot 不支持 CMake FetchContent，
+# cppjieba / googletest 的版本检查走季度人工流程，见 docseek/docs/OPERATIONS.md。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies"]
