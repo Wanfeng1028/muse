@@ -71,6 +71,7 @@
     { id: 'chat', href: '/chat.html', label: 'AI 对话', icon: 'chat', kbd: 'G C' },
     { id: 'images', href: '/images.html', label: 'AI 图片', icon: 'images' },
     { id: 'music', href: '/music.html', label: 'AI 音乐', icon: 'music' },
+    { id: 'mv', href: '/mv.html', label: 'AI MV', icon: 'film' },
     { id: 'avatar', href: '/avatar.html', label: '数字人', icon: 'avatar' },
     { id: 'runs', href: '/runs.html', label: '运行列表', icon: 'runs', kbd: 'G R' },
     { id: 'agents', href: '/agents.html', label: 'Agent 机队', icon: 'agents' },
@@ -85,7 +86,7 @@
 
   /* 侧边栏分组 */
   var NAV_GROUPS = [
-    { label: '创作', ids: ['index', 'chat', 'images', 'music', 'avatar'] },
+    { label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
     { label: '运行', ids: ['runs', 'agents', 'usage'] },
     { label: '生产', ids: ['storyboard', 'tasks', 'finals', 'pipeline'] }
   ];

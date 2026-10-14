@@ -166,6 +166,24 @@ public class MvController {
         }
     }
 
+    @GetMapping("/{id}/status")
+    public ResponseEntity<Map<String, Object>> status(@PathVariable Long id) {
+        try {
+            MvSong song = mvService.getById(id);
+            Map<String, Object> out = new HashMap<>();
+            out.put("id", song.getId());
+            out.put("status", song.getStatus());
+            out.put("runId", song.getRunId());
+            out.put("steps", mvService.getStepStatuses(song.getRunId()));
+            return ResponseEntity.ok(out);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "FAILED", "error", safe(e)));
+        }
+    }
+
     @GetMapping("/{id}/video")
     public ResponseEntity<Resource> video(@PathVariable Long id) {
         String sid = String.valueOf(id);

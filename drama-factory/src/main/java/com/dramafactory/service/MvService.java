@@ -111,6 +111,18 @@ public class MvService {
         return requireSong(mvSongId);
     }
 
+    @Transactional(readOnly = true)
+    public List<Map<String, String>> getStepStatuses(Long runId) {
+        List<Map<String, String>> out = new ArrayList<>();
+        for (AgentStep step : agentStepRepository.findByRunIdOrderBySeqNoAsc(runId)) {
+            Map<String, String> m = new HashMap<>();
+            m.put("agentType", step.getAgentType().name());
+            m.put("status", step.getStatus().name());
+            out.add(m);
+        }
+        return out;
+    }
+
     @Transactional
     public MvSong generateLyrics(Long mvSongId) {
         MvSong song = requireSong(mvSongId);
