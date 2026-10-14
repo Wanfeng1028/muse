@@ -138,16 +138,16 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <!-- v2.9 实测 73.6%，棘轮锁定 0.70，只升不降 -->
-                                            <minimum>0.70</minimum>
+                                            <!-- v2.10 实测 75.8%，棘轮锁定 0.75，只升不降 -->
+                                            <minimum>0.75</minimum>
 
 
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <!-- v2.9 里程碑：分支覆盖冲 55%；实测 57.3%，门禁锁定 0.55 -->
-                                            <minimum>0.55</minimum>
+                                            <!-- v2.10 里程碑：分支覆盖冲 60%；实测 60.8%，门禁锁定 0.60 -->
+                                            <minimum>0.60</minimum>
                                         </limit>
                                     </limits>
                                 </rule>

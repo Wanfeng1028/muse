@@ -7,11 +7,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+
+
 
 /**
  * AI 对话服务：控制台"AI 对话"页的后端。
@@ -60,15 +64,39 @@ public class ChatService {
     private final String model;
     private final int maxTokens;
 
+    /**
+     * 模型调用接缝：生产走 LlmTransport 真实网络，测试注入 stub。
+     * 包可见构造器参数，默认值为 lambda。
+     */
+    private final Function<ObjectNode, String> modelCaller;
+
+
+
+    @Autowired
     public ChatService(CredentialResolver credentialResolver,
                        ObjectMapper objectMapper,
                        @Value("${drama.chat.model:Deepseek-v4-flash}") String model,
                        @Value("${drama.chat.max-tokens:2000}") int maxTokens) {
+        this(credentialResolver, objectMapper, model, maxTokens,
+                body -> LlmTransport.postJson(CHAT_URL, body.toString(), credentialResolver.chatAuth(), 90));
+    }
+
+    /**
+     * 包可见构造器：测试注入 modelCaller stub，避免真实网络调用。
+     */
+    ChatService(CredentialResolver credentialResolver,
+                ObjectMapper objectMapper,
+                String model,
+                int maxTokens,
+                Function<ObjectNode, String> modelCaller) {
         this.credentialResolver = credentialResolver;
         this.objectMapper = objectMapper;
         this.model = model;
         this.maxTokens = maxTokens;
+        this.modelCaller = modelCaller;
     }
+
+
 
     /**
      * 一轮对话：system + 历史 + 本轮用户消息 → 模型回复。
@@ -107,8 +135,10 @@ public class ChatService {
         body.put("max_tokens", maxTokens);
         body.put("temperature", 0.7);
 
-        String reply = callModel(body);
+        String reply = modelCaller.apply(body);
         log.info("AI 对话完成，model={}，回复长度={}", model, reply.length());
+
+
         return new Records.ChatResponse(reply, model);
     }
 
@@ -123,17 +153,6 @@ public class ChatService {
         return node;
     }
 
-        /**
-     * 调用微信 ChatAPI，返回 choices[0].message.content。
-     *
-     * <p>传输层走 {@link LlmTransport}（Apache HttpClient 5，预先代理认证），
-     * 原因见该类 JavaDoc。鉴权头经代理注入，不打印凭证。</p>
-     */
-    private String callModel(ObjectNode body) {
-        String json = body.toString();
-        Map.Entry<String, String> authHeader =
-                credentialResolver.chatAuth();
-        return LlmTransport.postJson(CHAT_URL, json, authHeader, 90);
-    }
+
 
 }

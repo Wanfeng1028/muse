@@ -2,8 +2,8 @@
 
 ## ① 目标
 
-- **当前门禁：行覆盖（LINE）≥ 70%、分支覆盖（BRANCH）≥ 55%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.9 实测行 73.6%/分支 57.3%），只升不降。
-- **下一里程碑：v2.10 分支覆盖冲 60%**。
+- **当前门禁：行覆盖（LINE）≥ 75%、分支覆盖（BRANCH）≥ 60%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.10 实测行 75.8%/分支 60.8%），只升不降。
+- **下一里程碑：v2.11 分支覆盖冲 65%**。
 
 
 ## ② 口径
@@ -16,9 +16,9 @@
 
 | 指标 | 基线值 | 说明 |
 | --- | --- | --- |
-| 行覆盖（LINE） | 73.6%（v2.9 实测） | 全量 4764 行（3505/4764） |
-| 分支覆盖（BRANCH） | 57.3%（v2.9 实测，目标 55% 超额达成） | 全量 1880 分支（1078/1880） |
-| 门禁阈值 | 行 0.70 / 分支 0.55 | JaCoCo check，`verify` 阶段 |
+| 行覆盖（LINE） | 75.8%（v2.10 实测） | 全量 9593 行（7275/9593） |
+| 分支覆盖（BRANCH） | 60.8%（v2.10 实测，目标 60% 达成） | 全量 3760 分支（2286/3760） |
+| 门禁阈值 | 行 0.75 / 分支 0.60 | JaCoCo check，`verify` 阶段 |
 
 
 ## ④ 缺口表
@@ -31,7 +31,10 @@
 | video providers | 已补：MockVideoProvider 6 例 + 录制回放契约测试（commit 37149e3） | 剩余：Agnes/Qwen 真实 provider（需外部 API） | 待定 |
 | E2E | 已补：RunLifecycleE2eTest（commit 37149e3） | 剩余：跨服务长链路 | v2.9 |
 | `AuthProxyController` | 已补：可测性重构（HttpClient 构造器注入）+ 20 例代理分支测试；单类行 97.8%/分支 79.5%/方法 100% | 剩余：无 | — |
-| `ChatService` / `FinalCutService` / `VideoTaskService` | 未补 | 异常/边界分支缺口 | v2.10（分支覆盖冲 60%） |
+| `ChatService` | 已补：可测性接缝（Function 接缝 + 包可见构造器）+ 10 例；单类分支 100%（20/20） | 剩余：真实网络链路（沙箱无外网） | 沙箱外验证 |
+| `FinalCutService` | 已补：19+1 例；单类分支 100%（28/28）、行 100% | 剩余：无 | — |
+| `VideoTaskService` | 已补：37+6 例；单类分支 92.9%（39/42） | 剩余 3：awaitPollCompletion 超时 warn 路径 2、doPoll switch 隐式分支 1 | v2.11 评估 |
+| `RunLogService` | 已补：12 例；单类分支 81.8%（18/22） | 剩余 4：startsWith 防御分支（不可达）、read<=0、append/read IOException catch | —（防御性分支，接受未覆盖） |
 
 
 ## ⑤ v2.7 新增测试清单（40 例）
@@ -90,3 +93,21 @@
   - testConnection() 10 例：provider 不存在/非 VIDEO 模块/未知名称/null 名称/agnes 匹配探测/dashscope 匹配 qwen/mock 匹配/鉴权失败透传/checkedAt ISO 格式/null provider map 不抛 NPE
   - maskKey() 4 例：null/空/短 key/长 key 掩码
 
+## ⑤-3 v2.10 新增测试清单（85 例）
+
+- `ChatServiceTest` 新建 10 例（`com.dramafactory.service`）
+  - 消息校验 3 例：null/空白/超 4000 字
+  - 成功路径 7 例：body 形态（model/max_tokens/temperature）/历史截断取最后 12 条/null 与空白条目跳过/role 归一化/stub 异常透传/空历史/恰好 4000 字
+  - 附带生产代码改动：`Function<ObjectNode, String>` 可测性接缝 + 包可见 5 参构造器；public 构造器补 `@Autowired`（双构造器 Spring 坑，v2.9 AuthProxyController 同款）
+- `FinalCutServiceTest` 新建 20 例（`com.dramafactory.service`）
+  - buildFinalCut 8 例：剧集不存在/无分镜/分镜无 DONE 视频三变体/成功全链路/拼接失败/存储目录被占（checked 异常包装分支）
+  - qc 6 例：通过（verdict 归一化）/打回/未完成/非法 verdict/空 verdict/不存在
+  - get/listByShot/toResponse 6 例：不存在/空映射/fileName 提取与空路径
+- `VideoTaskServiceTest` +43（新建 37 + 追 6）
+  - computeBackoffMs 7 例：0/1/2/5/6/7/100（封顶 600000）
+  - submit 3 例：幂等命中/镜头不存在/新建；submitAllForEpisode 2 例；retry 3 例；get/listByShot 4 例
+  - processDueTasks 17 例：空/PENDING 提交（null 时长默认 5 秒）/8 秒/限流 45 秒与 5 秒取 max 30/失败重试/达上限 FAILED/轮询 COMPLETED 四种 URL 形态（正常秒数/非法秒数回退/无参数/& 截断）/refresh 异常吞掉/FAILED/QUEUED/HTTP 下载失败/URL 为 null
+  - 追 6 例：provider agnes/qwen 分支/doPoll PROCESSING 结果/toResponse 本地文件缺失/awaitPollCompletion 在途完成与被中断（反射改 pollInFlight + 线程）
+- `RunLogServiceTest` 新建 12 例（`com.dramafactory.service`）
+  - append 6 例：时间戳行/null 行/空 runId/空 seqNo/负 id/两次追加
+  - read 6 例：缺文件/负偏移/全量 eof/大文件分段（64KB 截断）/超界偏移/空 id
