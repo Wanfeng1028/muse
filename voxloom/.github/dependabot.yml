@@ -1,0 +1,9 @@
+
+# 注：暂放 voxloom/.github/，等仓库根 gh token 补 workflow 权限后随 CI 一起迁入根目录。
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

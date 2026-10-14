@@ -13,6 +13,7 @@ internal sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        Services.DesktopBoot.Initialize(args);
         if (args.Contains("--screenshot"))
         {
             RunScreenshotMode(args);

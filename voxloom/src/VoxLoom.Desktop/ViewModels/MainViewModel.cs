@@ -47,6 +47,30 @@ public sealed partial class MainViewModel : ObservableObject
 
     public AudioClip? CurrentClip => _clip;
 
+    private VoxLoom.Core.Backup.BackupManager? _backupManager;
+    private VoxLoom.Core.Backup.BackupManager BackupManager =>
+        _backupManager ??= new VoxLoom.Core.Backup.BackupManager(
+            Services.DesktopBoot.Config.BackupDirectory,
+            Services.DesktopBoot.Config.BackupRetentionCount,
+            Services.DesktopBoot.Logger);
+
+    /// <summary>破坏性操作前自动备份当前项目；备份失败只记日志、不阻断编辑。</summary>
+    private void AutoBackup(string reason)
+    {
+        if (_clip is null) return;
+        try
+        {
+            using var op = Services.DesktopBoot.Logger.BeginOperation("auto-backup");
+            var dir = StageProjectSnapshot(reason);
+            var record = BackupManager.CreateBackup(dir, ProjectName);
+            Services.DesktopBoot.Logger.Info("自动备份完成", new { reason, backupId = record.Id });
+        }
+        catch (Exception ex)
+        {
+            Services.DesktopBoot.Logger.Warning("自动备份失败，已跳过", new { reason }, ex);
+        }
+    }
+
     public IReadOnlyList<TimeRange> FillerRanges => _fillerRanges;
 
     public int SampleRate => _clip?.SampleRate ?? 44100;
@@ -78,11 +102,15 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ImportAudioAsync()
     {
-        var path = await PickOpenFileAsync("选择音频文件", "WAV 音频|*.wav|所有文件|*.*");
+        var path = await PickOpenFileAsync("选择音频文件", AudioImporter.OpenFileFilter);
         if (string.IsNullOrEmpty(path)) return;
+        AudioFormat format = AudioFormat.Wav;
         try
         {
-            var clip = await Task.Run(() => WavReader.Read(path));
+            format = AudioImporter.DetectFormat(path);
+            using var op = Services.DesktopBoot.Logger.BeginOperation("import-audio");
+            Services.DesktopBoot.Logger.Info("开始导入音频", new { path, format = AudioImporter.FormatDisplayName(format) });
+            var clip = await Task.Run(() => AudioImporter.Import(path));
             _clip = clip;
             _doc = null;
             _fillerRanges = new List<TimeRange>();
@@ -92,11 +120,13 @@ public sealed partial class MainViewModel : ObservableObject
             AudioFilePath = path;
             AudioDurationSeconds = clip.Duration.TotalSeconds;
             FillerCount = 0;
-            StatusText = $"已加载音频：{Path.GetFileName(path)}（{AudioDurationSeconds:F1} 秒），请再导入转写稿";
+            StatusText = $"已加载音频：{Path.GetFileName(path)}（{AudioImporter.FormatDisplayName(format)}，{AudioDurationSeconds:F1} 秒），请再导入转写稿";
+            Services.DesktopBoot.Logger.Info("音频导入完成", new { path, seconds = AudioDurationSeconds });
             RaiseWaveformInvalidated();
         }
         catch (Exception ex)
         {
+            Services.DesktopBoot.Logger.Error("导入音频失败", new { path }, ex);
             StatusText = $"加载音频失败：{ex.Message}";
         }
     }
@@ -153,6 +183,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         try
         {
+            AutoBackup("删除前自动备份");
             var ops = selected
                 .Select(w => (EditOp)new DeleteOp(new TimeRange(w.Start, w.End)))
                 .ToList();
@@ -193,6 +224,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return;
             }
 
+            AutoBackup("弱化语气词前自动备份");
             var ops = FillerWordDetector.ToAttenuateOps(_fillerRanges, -12f);
             _clip = new EditPlan(_clip, ops).Render();
             AudioDurationSeconds = _clip.Duration.TotalSeconds;
@@ -265,6 +297,77 @@ public sealed partial class MainViewModel : ObservableObject
         {
             StatusText = $"导出失败：{ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private async Task BackupProjectAsync()
+    {
+        if (_clip is null)
+        {
+            StatusText = "没有可备份的项目，请先加载音频。";
+            return;
+        }
+        try
+        {
+            using var op = Services.DesktopBoot.Logger.BeginOperation("backup-project");
+            var dir = await Task.Run(() => StageProjectSnapshot("手动备份"));
+            var record = await Task.Run(() => BackupManager.CreateBackup(dir, ProjectName));
+            Services.DesktopBoot.Logger.Info("项目备份完成", new { backupId = record.Id, projectName = ProjectName });
+            StatusText = $"已备份项目「{ProjectName}」（备份号 {record.Id}），共保留最近 {Services.DesktopBoot.Config.BackupRetentionCount} 份";
+        }
+        catch (Exception ex)
+        {
+            Services.DesktopBoot.Logger.Error("项目备份失败", new { projectName = ProjectName }, ex);
+            StatusText = $"备份失败：{ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RestoreProjectAsync()
+    {
+        var path = await PickOpenFileAsync("选择备份文件", "VoxLoom 备份|*.zip|所有文件|*.*");
+        if (string.IsNullOrEmpty(path)) return;
+        try
+        {
+            using var op = Services.DesktopBoot.Logger.BeginOperation("restore-project");
+            var backupId = Path.GetFileNameWithoutExtension(path);
+            var target = Path.Combine(Services.DesktopBoot.Config.ProjectsDirectory, $"restored-{backupId}");
+            await Task.Run(() => BackupManager.Restore(backupId, target));
+            var snapshot = await Task.Run(() => Services.ProjectSnapshot.Read(target));
+            if (snapshot is null)
+            {
+                StatusText = "恢复完成，但快照解析失败（可能不是 VoxLoom 项目备份）。";
+                return;
+            }
+            _clip = snapshot.Value.Clip;
+            _doc = snapshot.Value.Doc;
+            _fillerRanges = new List<TimeRange>();
+            _fillersDetected = false;
+            ProjectName = snapshot.Value.ProjectName;
+            AudioFilePath = null;
+            AudioDurationSeconds = _clip.Duration.TotalSeconds;
+            FillerCount = 0;
+            RefreshWords();
+            Services.DesktopBoot.Logger.Info("项目恢复完成", new { backupId, target });
+            StatusText = $"已从备份 {backupId} 恢复项目「{ProjectName}」";
+            RaiseWaveformInvalidated();
+        }
+        catch (Exception ex)
+        {
+            Services.DesktopBoot.Logger.Error("项目恢复失败", new { backupPath = path }, ex);
+            StatusText = $"恢复失败：{ex.Message}";
+        }
+    }
+
+    /// <summary>把当前内存中的项目落盘为快照目录，返回目录路径。</summary>
+    private string StageProjectSnapshot(string reason)
+    {
+        var safeName = string.Concat(ProjectName.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_'));
+        if (string.IsNullOrEmpty(safeName)) safeName = "project";
+        var dir = Path.Combine(Services.DesktopBoot.Config.ProjectsDirectory, $"{safeName}-{DateTime.Now:yyyyMMdd-HHmmss}");
+        Services.ProjectSnapshot.Write(dir, _clip!, _doc, ProjectName, AudioFilePath);
+        Services.DesktopBoot.Logger.Info("项目快照已落盘", new { reason, dir });
+        return dir;
     }
 
     private void MarkFillerWords()

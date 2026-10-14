@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+### Added（v1.1）
+- 音频导入：MP3 / FLAC / M4A 真实解码（WAV 继续走纯托管；压缩格式走外部 ffmpeg，缺失时给中文安装指引）
+- 结构化日志：JSON 行日志 + op_id 全链路关联 + 敏感字段脱敏 + 体积轮转（5MB/保留 10 份）
+- 自动备份 + 一键恢复：删除/弱化前自动备份，工具栏手动备份/恢复，zip + manifest + sha256 校验，保留最近 10 份
+- 配置与密钥分离：config.json + VOXLOOM_* 环境变量覆盖，配置文件禁密钥（启动校验，违规则退出码 2）
+- 运维手册 docs/OPERATIONS.md、可靠性策略 docs/RELIABILITY.md、敏感数据策略 docs/SECURITY_DATA.md、技术债 docs/TECH_DEBT.md
+- Dependabot（NuGet，每周）：voxloom/.github/dependabot.yml（待 gh token 补权限后迁仓库根）
+
+### Fixed（v1.1）
+- 日志轮转保留数多一个的 bug（先裁剪后建新文件导致稳态为 N+1）
+- NAudio 的 Mp3FileReader 在 Linux 上不可用（依赖 Msacm32.dll），MP3 改走 ffmpeg，移除 NAudio 依赖
+
 ## [0.1.0] - 2026-10-13
 
 首个可用版本：中文播客文字剪辑核心链路跑通。

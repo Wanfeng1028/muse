@@ -24,6 +24,8 @@
         <Button Content="弱化语气词" Command="{Binding WeakenFillersCommand}"/>
         <Button Content="导出音频" Command="{Binding ExportAudioCommand}"/>
         <Button Content="导出 EDL" Command="{Binding ExportEdlCommand}"/>
+        <Button Content="备份项目" Command="{Binding BackupProjectCommand}"/>
+        <Button Content="恢复项目" Command="{Binding RestoreProjectCommand}"/>
       </StackPanel>
     </Border>
 
