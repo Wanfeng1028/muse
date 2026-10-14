@@ -47,6 +47,14 @@ public class FfmpegService {
     }
 
     /**
+     * ffmpeg 可执行文件路径或命令名（供需要直接拼装命令的调用方使用）。
+     */
+    public String getFfmpeg() {
+        return ffmpeg;
+    }
+
+
+    /**
      * ffmpeg 执行异常，包装超时、非零退出码等错误。
      */
     public static class FfmpegException extends RuntimeException {

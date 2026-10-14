@@ -73,9 +73,9 @@ class ByokGenerateServiceTest {
     private ByokGenerateService service(Path dir, ByokGenerateService.DownloadSender sender) {
         return new ByokGenerateService(
                 providerRepository,
-                Map.of("dashscope-image", imageProvider),
-                Map.of("minimax-music", musicProvider),
-                Map.of("did-avatar", avatarProvider),
+                Map.of("dashscopeimageprovider", imageProvider),
+                Map.of("minimaxmusicprovider", musicProvider),
+                Map.of("didavatarprovider", avatarProvider),
                 dir.toString(),
                 sender);
     }
@@ -460,7 +460,7 @@ class ByokGenerateServiceTest {
 
         ByokGenerateService service = new ByokGenerateService(
                 providerRepository,
-                Map.of("DASHscope-IMAGE", imageProvider),
+                Map.of("DASHscopeImageProvider", imageProvider),
                 Map.of(),
                 Map.of(),
                 tempDir.toString(),

@@ -265,28 +265,40 @@ public class ByokGenerateService {
         return new GenerateResponse("SUCCEEDED", path, null);
     }
 
-    private static String matchImage(String lowerName) {
+    // 注意：返回值必须是 musicProvidersByName 等 Map 的 key，即 bean 名转小写
+    //（toNameMap 做的），写错一个字符就会导致"暂未接入"。改 bean 名时同步改这里。
+    static String matchImage(String lowerName) {
         if (lowerName.contains("dashscope") || lowerName.contains("qwen")
                 || lowerName.contains("万相") || lowerName.contains("通义")
                 || lowerName.contains("image")) {
-            return "dashscope-image";
+            return "dashscopeimageprovider";
         }
         return null;
     }
 
-    private static String matchMusic(String lowerName) {
+
+    // 注意：返回值必须是 musicProvidersByName 的 key，即 bean 名转小写
+    //（toNameMap 做的），写错一个字符就会导致"暂未接入"。改 bean 名时同步改这里。
+    static String matchMusic(String lowerName) {
         if (lowerName.contains("minimax")) {
-            return "minimax-music";
+            return "minimaxmusicprovider";
+        }
+        if (lowerName.contains("ace-step") || lowerName.contains("acestep")) {
+            return "acestepmusicprovider";
         }
         return null;
     }
 
-    private static String matchAvatar(String lowerName) {
+
+    // 注意：返回值必须是 avatarProvidersByName 的 key，即 bean 名转小写
+    //（toNameMap 做的），写错一个字符就会导致"暂未接入"。改 bean 名时同步改这里。
+    static String matchAvatar(String lowerName) {
         if (lowerName.contains("d-id") || lowerName.contains("did") || lowerName.contains("数字人")) {
-            return "did-avatar";
+            return "didavatarprovider";
         }
         return null;
     }
+
 
     private static void sleep(long millis) {
         try {

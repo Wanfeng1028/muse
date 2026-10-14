@@ -73,6 +73,15 @@ ffmpeg 剪辑（按镜号拼接 + SRT 字幕烧录）
 ### 成片质检
 ![成片质检](docs/screenshots/qc.png)
 
+### AI MV（v2 时间轴对齐）
+作词、分镜与渲染全部由歌词行时间戳驱动：时间轴展示区逐行列出每句歌词的起止时间码，分镜精确到每一句，字幕为逐行 SRT。
+
+![AI MV 作词](docs/screenshots/mv-v2-lyrics.png)
+
+![AI MV 时间轴](docs/screenshots/mv-v2-timeline.png)
+
+![AI MV 分镜](docs/screenshots/mv-v2-storyboard.png)
+
 ### v2.3 AI 编剧引擎
 ![AI 生成剧本按钮](docs/screenshots/storyboard-v23-buttons.png)
 

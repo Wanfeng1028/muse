@@ -42,7 +42,9 @@ public class MvService {
     private final MvLyricsService mvLyricsService;
     private final ByokGenerateService byokGenerateService;
     private final FfmpegService ffmpegService;
+    private final MvTimelineService mvTimelineService;
     private final ObjectMapper objectMapper;
+
 
     @Value("${drama.storage:./data/media}")
     private String storageDir;
@@ -53,6 +55,7 @@ public class MvService {
                      MvLyricsService mvLyricsService,
                      ByokGenerateService byokGenerateService,
                      FfmpegService ffmpegService,
+                     MvTimelineService mvTimelineService,
                      ObjectMapper objectMapper) {
         this.mvSongRepository = mvSongRepository;
         this.runRepository = runRepository;
@@ -60,8 +63,10 @@ public class MvService {
         this.mvLyricsService = mvLyricsService;
         this.byokGenerateService = byokGenerateService;
         this.ffmpegService = ffmpegService;
+        this.mvTimelineService = mvTimelineService;
         this.objectMapper = objectMapper;
     }
+
 
     @Transactional
     public Long create(String theme, String mood, String style) {
@@ -175,7 +180,11 @@ public class MvService {
 
             song.setAudioUrl(resp.url());
             song.setDurationMs(probeDuration(resp.url()));
+            MvTimelineService.Timeline timeline = mvTimelineService.align(
+                    readJson(song.getLyricsJson()), song.getDurationMs());
+            song.setTimelineJson(mvTimelineService.toJson(timeline));
             song.setStatus("COMPOSED");
+
             mvSongRepository.save(song);
             markStep(step, AgentStepStatus.SUCCEEDED, null);
             log.info("作曲完成 mvSongId={} audioUrl={}", mvSongId, resp.url());
@@ -197,27 +206,27 @@ public class MvService {
         AgentStep step = findStep(song.getRunId(), 3);
         markStep(step, AgentStepStatus.RUNNING, null);
         try {
-            JsonNode root = readJson(song.getLyricsJson());
-            JsonNode sections = root.path("sections");
+            MvTimelineService.Timeline timeline = loadTimeline(song);
             List<Map<String, String>> result = new ArrayList<>();
             String style = song.getStyle() == null ? "" : song.getStyle();
-            if (sections.isArray()) {
-                for (JsonNode s : sections) {
-                    String name = s.path("name").asText("");
-                    String lyrics = s.path("lyrics").asText("");
-                    String mood = s.path("mood").asText("");
-                    int est = s.path("estSeconds").asInt(20);
-                    String snippet = lyrics.length() > 30 ? lyrics.substring(0, 30) : lyrics;
-                    snippet = snippet.replace("\n", " ").trim();
-                    String visualPrompt = "MV 镜头，情绪：" + mood + "，画面：" + snippet
+            int lineNo = 0;
+            for (MvTimelineService.TimedSection sec : timeline.sections()) {
+                for (MvTimelineService.TimedLine line : sec.lines()) {
+                    lineNo++;
+                    String visualPrompt = "MV 镜头，情绪：" + sec.mood() + "，画面：" + line.text()
                             + "，电影感，" + style + " 风格";
                     Map<String, String> item = new LinkedHashMap<>();
-                    item.put("name", name);
+                    item.put("section", sec.name());
+                    item.put("line", String.valueOf(lineNo));
+                    item.put("text", line.text());
+                    item.put("startMs", String.valueOf(line.startMs()));
+                    item.put("endMs", String.valueOf(line.endMs()));
+                    item.put("durationMs", String.valueOf(line.endMs() - line.startMs()));
                     item.put("visualPrompt", visualPrompt);
-                    item.put("estSeconds", String.valueOf(est));
                     result.add(item);
                 }
             }
+
             markStep(step, AgentStepStatus.SUCCEEDED, null);
             return result;
         } catch (RuntimeException e) {
@@ -245,30 +254,25 @@ public class MvService {
         }
 
         try {
-            JsonNode root = readJson(song.getLyricsJson());
-            JsonNode sections = root.path("sections");
+            MvTimelineService.Timeline timeline = loadTimeline(song);
             List<Path> clips = new ArrayList<>();
             List<SectionTiming> timings = new ArrayList<>();
 
             markStep(videoStep, AgentStepStatus.RUNNING, null);
             int idx = 0;
-            long cursor = 0;
-            if (sections.isArray()) {
-                for (JsonNode s : sections) {
-                    int est = s.path("estSeconds").asInt(20);
-                    if (est < 1) {
-                        est = 1;
-                    }
-                    Path clip = workDir.resolve("clip_" + idx + ".mp4");
-                    // dryRun 与真实模式当前都使用测试片段：真实视频生成将在后续版本接入。
-                    ffmpegService.generateTestClip(clip, est);
-                    clips.add(clip);
-                    String lyrics = s.path("lyrics").asText("");
-                    timings.add(new SectionTiming(cursor, cursor + est * 1000L, lyrics));
-                    cursor += est * 1000L;
-                    idx++;
+            for (MvTimelineService.TimedSection sec : timeline.sections()) {
+                for (MvTimelineService.TimedLine line : sec.lines()) {
+                    timings.add(new SectionTiming(line.startMs(), line.endMs(), line.text()));
                 }
+                long secMs = sec.endMs() - sec.startMs();
+                int secSeconds = (int) Math.max(1, Math.round(secMs / 1000.0));
+                Path clip = workDir.resolve("clip_" + idx + ".mp4");
+                // dryRun 与真实模式当前都使用测试片段：真实视频生成将在后续版本接入。
+                ffmpegService.generateTestClip(clip, secSeconds);
+                clips.add(clip);
+                idx++;
             }
+
             if (clips.isEmpty()) {
                 throw new IllegalStateException("无分镜可渲染");
             }
@@ -317,7 +321,8 @@ public class MvService {
         }
     }
 
-    private record SectionTiming(long startMs, long endMs, String lyrics) {}
+    private record SectionTiming(long startMs, long endMs, String text) {}
+
 
     private MvSong requireSong(Long mvSongId) {
         Optional<MvSong> opt = mvSongRepository.findById(mvSongId);
@@ -327,18 +332,26 @@ public class MvService {
         return opt.get();
     }
 
+    /**
+     * 读取或按当前歌词/音频时长重算时间轴。compose 步骤已持久化 timelineJson，
+     * 这里重算保证 storyboard/render 永远拿到与 lyricsJson 一致的时间轴。
+     */
+    private MvTimelineService.Timeline loadTimeline(MvSong song) {
+        long total = song.getDurationMs() == null ? 0 : song.getDurationMs();
+        return mvTimelineService.align(readJson(song.getLyricsJson()), total);
+    }
+
     private AgentStep findStep(Long runId, int seqNo) {
         if (runId == null) {
             throw new IllegalStateException("Run 未关联");
         }
-        List<AgentStep> steps = agentStepRepository.findAll();
-        for (AgentStep s : steps) {
-            if (s.getRun() != null && runId.equals(s.getRun().getId())
-                    && s.getSeqNo() != null && s.getSeqNo() == seqNo) {
+        for (AgentStep s : agentStepRepository.findByRunIdOrderBySeqNoAsc(runId)) {
+            if (s.getSeqNo() != null && s.getSeqNo() == seqNo) {
                 return s;
             }
         }
         throw new IllegalStateException("步骤不存在：" + seqNo);
+
     }
 
     private void markStep(AgentStep step, AgentStepStatus status, String err) {
@@ -363,7 +376,8 @@ public class MvService {
         for (SectionTiming t : timings) {
             sb.append(i).append("\r\n");
             sb.append(formatSrtTime(t.startMs())).append(" --> ").append(formatSrtTime(t.endMs())).append("\r\n");
-            sb.append(t.lyrics() == null ? "" : t.lyrics()).append("\r\n\r\n");
+            sb.append(t.text() == null ? "" : t.text()).append("\r\n\r\n");
+
             i++;
         }
         try {
@@ -382,17 +396,11 @@ public class MvService {
     }
 
     private void muxAudio(Path video, Path audio, Path out) {
-        String ffmpeg = "ffmpeg";
-        try {
-            java.lang.reflect.Field f = FfmpegService.class.getDeclaredField("ffmpegPath");
-            f.setAccessible(true);
-            Object v = f.get(ffmpegService);
-            if (v instanceof String s && !s.isBlank()) {
-                ffmpeg = s;
-            }
-        } catch (Exception ignored) {
+        String ffmpeg = ffmpegService.getFfmpeg();
+        if (ffmpeg == null || ffmpeg.isBlank()) {
             ffmpeg = "ffmpeg";
         }
+
         List<String> cmd = List.of(
                 ffmpeg, "-y",
                 "-i", video.toString(),

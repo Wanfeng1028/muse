@@ -98,8 +98,9 @@ public class MvController {
             MvSong song = mvService.compose(id, providerId, modelId);
             return ResponseEntity.ok(Map.of(
                     "status", "SUCCEEDED",
-                    "audioUrl", song.getAudioUrl() == null ? "" : song.getAudioUrl()));
-        } catch (IllegalArgumentException e) {
+                    "audioUrl", song.getAudioUrl() == null ? "" : song.getAudioUrl(),
+                    "durationMs", song.getDurationMs() == null ? 0 : song.getDurationMs()));
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("status", "FAILED", "error", safe(e)));
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -112,9 +113,9 @@ public class MvController {
     @PostMapping("/{id}/storyboard")
     public ResponseEntity<Map<String, Object>> storyboard(@PathVariable Long id) {
         try {
-            List<Map<String, String>> sections = mvService.storyboard(id);
-            return ResponseEntity.ok(Map.of("status", "SUCCEEDED", "sections", sections));
-        } catch (IllegalArgumentException e) {
+            List<Map<String, String>> items = mvService.storyboard(id);
+            return ResponseEntity.ok(Map.of("status", "SUCCEEDED", "items", items));
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("status", "FAILED", "error", safe(e)));
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -132,7 +133,7 @@ public class MvController {
             return ResponseEntity.ok(Map.of(
                     "status", "SUCCEEDED",
                     "videoUrl", "/api/mv/" + id + "/video"));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("status", "FAILED", "error", safe(e)));
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -154,7 +155,9 @@ public class MvController {
             out.put("status", song.getStatus());
             out.put("audioUrl", song.getAudioUrl());
             out.put("durationMs", song.getDurationMs());
+            out.put("timelineJson", song.getTimelineJson() == null ? "" : song.getTimelineJson());
             out.put("runId", song.getRunId());
+
             return ResponseEntity.ok(out);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("status", "FAILED", "error", safe(e)));

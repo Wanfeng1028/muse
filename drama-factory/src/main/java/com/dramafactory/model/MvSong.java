@@ -44,6 +44,10 @@ public class MvSong {
     @Column(name = "duration_ms")
     private Integer durationMs;
 
+    @Column(name = "timeline_json", columnDefinition = "TEXT")
+    private String timelineJson;
+
+
     @Column(name = "status", nullable = false, length = 32)
     private String status = "DRAFT";
 
@@ -130,6 +134,15 @@ public class MvSong {
     public void setDurationMs(Integer durationMs) {
         this.durationMs = durationMs;
     }
+
+    public String getTimelineJson() {
+        return timelineJson;
+    }
+
+    public void setTimelineJson(String timelineJson) {
+        this.timelineJson = timelineJson;
+    }
+
 
     public String getStatus() {
         return status;

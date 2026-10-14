@@ -7,6 +7,13 @@
 
   function $(id) { return document.getElementById(id); }
 
+  function fmtT(ms) {
+    var total = Math.max(0, Math.round((ms || 0) / 1000));
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
   function chipValue(groupId) {
     var on = document.querySelector('#' + groupId + ' .chip.is-on');
     return on ? on.dataset.value : '';
@@ -57,7 +64,14 @@
       songId = created.id;
       return api('/api/mv/' + songId + '/lyrics', { method: 'POST' });
     }).then(function (res) {
-      renderLyrics(res.lyrics);
+      var parsed = null;
+      try {
+        parsed = JSON.parse(res.lyricsJson);
+      } catch (e) {
+        $('lyricsNote').textContent = '歌词解析失败';
+        return;
+      }
+      renderLyrics(parsed);
       $('lyricsNote').textContent = '';
       goStep(2);
     }).catch(function (e) {
@@ -92,16 +106,61 @@
     $('composeNote').textContent = '作曲中，可能需要几分钟…';
     api('/api/mv/' + songId + '/compose', { method: 'POST', body: JSON.stringify({}) })
       .then(function (res) {
-        var audioUrl = '/api/mv/' + songId + '/audio';
+        var audioUrl = res.audioUrl || '';
         $('audioEl').src = audioUrl;
         $('audioMeta').textContent = res.durationMs
           ? '时长约 ' + Math.round(res.durationMs / 1000) + ' 秒' : '';
         $('audioBar').classList.remove('is-hidden');
         $('composeNote').textContent = '';
+        return api('/api/mv/' + songId).then(function (detail) {
+          renderTimeline(detail);
+        }).catch(function () { /* 时间轴拉取失败不影响主流程 */ });
       })
       .catch(function (e) { $('composeNote').textContent = '作曲失败：' + e.message; })
       .finally(function () { btn.disabled = false; });
   });
+
+  function renderTimeline(detail) {
+    var box = $('timelineBox');
+    box.innerHTML = '';
+    var tl = null;
+    if (detail && detail.timelineJson) {
+      try { tl = JSON.parse(detail.timelineJson); } catch (e) { tl = null; }
+    }
+    if (!tl) { box.classList.add('is-hidden'); return; }
+    var totalMs = tl.totalMs || detail.durationMs || 0;
+    var wrap = document.createElement('div');
+    wrap.className = 'tl-box';
+    var head = document.createElement('div');
+    head.className = 'tl-head';
+    head.innerHTML = '<span>时间轴</span><span class="tl-total"></span>';
+    head.querySelector('.tl-total').textContent = '总长 ' + fmtT(totalMs);
+    wrap.appendChild(head);
+    (tl.sections || []).forEach(function (sec) {
+      var secEl = document.createElement('div');
+      secEl.className = 'tl-sec';
+      var secHead = document.createElement('div');
+      secHead.className = 'tl-sec-head';
+      secHead.innerHTML = '<span class="tl-sec-name"></span><span class="tl-mood"></span><span class="tl-sec-time"></span>';
+      secHead.querySelector('.tl-sec-name').textContent = sec.name || '';
+      secHead.querySelector('.tl-mood').textContent = sec.mood || '';
+      secHead.querySelector('.tl-sec-time').textContent =
+        fmtT(sec.startMs) + '–' + fmtT(sec.endMs);
+      secEl.appendChild(secHead);
+      (sec.lines || []).forEach(function (ln) {
+        var lineEl = document.createElement('div');
+        lineEl.className = 'tl-line';
+        lineEl.innerHTML = '<span class="tl-text"></span><span class="tl-time"></span>';
+        lineEl.querySelector('.tl-text').textContent = ln.text || '';
+        lineEl.querySelector('.tl-time').textContent =
+          fmtT(ln.startMs) + '–' + fmtT(ln.endMs);
+        secEl.appendChild(lineEl);
+      });
+      wrap.appendChild(secEl);
+    });
+    box.appendChild(wrap);
+    box.classList.remove('is-hidden');
+  }
 
   $('btnToStoryboard').addEventListener('click', function () { goStep(3); });
 
@@ -114,13 +173,21 @@
       .then(function (res) {
         var box = $('storyboardList');
         box.innerHTML = '';
-        (res.sections || []).forEach(function (s) {
+        (res.items || []).forEach(function (it, i) {
           var card = document.createElement('div');
           card.className = 'sb-card';
-          card.innerHTML = '<div class="sec-name"></div><textarea rows="3"></textarea><div class="cam"></div>';
-          card.querySelector('.sec-name').textContent = s.name || '';
-          card.querySelector('textarea').value = s.visualPrompt || '';
-          card.querySelector('.cam').textContent = '运镜：' + (s.camera || '—');
+          card.innerHTML =
+            '<div class="sb-head"><span class="sb-idx"></span>' +
+            '<span class="sb-sec"></span><span class="sb-time"></span></div>' +
+            '<div class="sb-line"></div>' +
+            '<textarea rows="3"></textarea>';
+          card.querySelector('.sb-idx').textContent = '第' + (i + 1) + '镜';
+          card.querySelector('.sb-sec').textContent = it.section || '';
+          var durSec = ((it.durationMs || 0) / 1000).toFixed(1);
+          card.querySelector('.sb-time').textContent =
+            fmtT(it.startMs) + '–' + fmtT(it.endMs) + '（共' + durSec + '秒）';
+          card.querySelector('.sb-line').textContent = it.text || '';
+          card.querySelector('textarea').value = it.visualPrompt || '';
           box.appendChild(card);
         });
         $('btnToRender').classList.remove('is-hidden');
@@ -198,6 +265,8 @@
     $('themeInput').value = '';
     $('lyricsSections').innerHTML = '';
     $('storyboardList').innerHTML = '';
+    $('timelineBox').innerHTML = '';
+    $('timelineBox').classList.add('is-hidden');
     $('audioBar').classList.add('is-hidden');
     $('btnToRender').classList.add('is-hidden');
     $('progressFill').style.width = '0%';

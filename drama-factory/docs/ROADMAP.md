@@ -11,6 +11,7 @@
 - [x] 供应商卡片制（按模块分组：视频/图片/音乐/TTS/数字人；单 Key，无号池）
 - [x] 新模块入口页：AI 图片 / AI 音乐 / 数字人（模型选择器初始为空，空状态 + 置灰按钮）
 - [x] UI 设计体系文档（docs/DESIGN_SYSTEM.md）
+- [x] 2026-10-14 AI MV v2「时间轴对齐」（SOUL-mv.md 技术点 #1）：MvTimelineService（code-point 加权→按音频时长缩放→800ms 钳制→舍入吸收）+ V12 timeline_json；compose 持久化时间轴，storyboard 逐行出分镜，render 逐行 SRT、成片时长=音频时长；前端时间轴展示区（等宽时间码）+ 3 个 v1 真 bug 修复；冒烟全链路 SUCCEEDED（final.mp4=8.0s=音频时长，26 条逐行字幕）；63 个新测试，覆盖率行 0.823/分支 0.727 门禁通过；对照报告 docs/dod-mv-v2.md；截图 docs/screenshots/mv-v2-*.png。
 - [x] 2026-10-14 AI MV 模式 v1：AgentType 新增 LYRICS/COMPOSE；MvSong 实体 + V8/V11 迁移；MvLyricsService（DeepSeek 作词）/ MvService（Run 编排：作词→作曲→分镜→视频→剪辑→质检）/ MvController（6 端点 + /status 轮询）；AceStepMusicProvider（BYOK 作曲渠道）；mv.html + mv.js（5 步创作流，深浅主题已验收）；侧边栏 AI MV 入口；测试 MvServiceTest(8)+MvControllerTest(5) 全绿；作曲渠道调研见 docs/mv-music-providers.md（MiniMax 存量可用，ACE-Step 推荐新用户，Suno 无官方 API）。
 
 ## 下一轮起，按优先级一轮一补
