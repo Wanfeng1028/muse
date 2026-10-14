@@ -55,6 +55,13 @@ public class ByokGenerateService {
     private final HttpClient downloadClient;
     private final DownloadSender downloadSender;
 
+    private com.dramafactory.service.AssetService assetService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setAssetService(com.dramafactory.service.AssetService assetService) {
+        this.assetService = assetService;
+    }
+
     @Autowired
     public ByokGenerateService(MediaProviderRepository providerRepository,
                                Map<String, ImageProvider> imageProviders,
@@ -181,6 +188,7 @@ public class ByokGenerateService {
         }
 
         String path = download(imageUrl, "image", "png");
+        registerAsset(path, com.dramafactory.model.AssetType.IMAGE, extractRunId(options), providerName, prompt);
         return new GenerateResponse("SUCCEEDED", path, null);
     }
 
@@ -205,6 +213,7 @@ public class ByokGenerateService {
         }
 
         String path = download(audioUrl, "music", "mp3");
+        registerAsset(path, com.dramafactory.model.AssetType.AUDIO, extractRunId(options), providerName, prompt);
         return new GenerateResponse("SUCCEEDED", path, null);
     }
 
@@ -252,6 +261,7 @@ public class ByokGenerateService {
         }
 
         String path = download(videoUrl, "avatar", "mp4");
+        registerAsset(path, com.dramafactory.model.AssetType.VIDEO, extractRunId(options), providerName, prompt);
         return new GenerateResponse("SUCCEEDED", path, null);
     }
 
@@ -378,5 +388,36 @@ public class ByokGenerateService {
             sb.append(RANDOM_ALPHABET.charAt(RANDOM.nextInt(RANDOM_ALPHABET.length())));
         }
         return "byok-" + subdir + "-" + ts + "-" + sb + "." + ext;
+    }
+
+    private Long extractRunId(java.util.Map<String, String> options) {
+        if (options == null) {
+            return null;
+        }
+        String raw = options.get("runId");
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(raw.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private void registerAsset(String path, com.dramafactory.model.AssetType type,
+                               Long runId, String provider, String prompt) {
+        if (assetService == null || path == null) {
+            return;
+        }
+        try {
+            java.nio.file.Path p = java.nio.file.Paths.get(storageDir, path.replaceFirst("^/api/byok/file/", "byok/"));
+            String mime = type == com.dramafactory.model.AssetType.IMAGE ? "image/png"
+                    : type == com.dramafactory.model.AssetType.AUDIO ? "audio/mpeg" : "video/mp4";
+            long size = java.nio.file.Files.exists(p) ? java.nio.file.Files.size(p) : 0L;
+            assetService.registerGenerated(path, type, mime, size, provider, prompt, runId);
+        } catch (Exception e) {
+            // 资产登记失败不阻断主流程
+        }
     }
 }
