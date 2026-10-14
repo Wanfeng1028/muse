@@ -10,6 +10,7 @@ import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.video.VideoProvider.ProbeResult;
 import com.dramafactory.service.video.RateLimitedException;
 import com.dramafactory.service.video.VideoProvider;
+import com.dramafactory.service.video.VideoProviderRouter;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,7 @@ public class VideoTaskService {
     private final EpisodeStatusFlowService episodeStatusFlowService;
 
     private final Environment environment;
+    private final VideoProviderRouter videoProviderRouter;
     private final String providerName;
     private final long pollIntervalMs;
     private final int maxAttempts;
@@ -65,6 +67,7 @@ public class VideoTaskService {
                             ApplicationContext applicationContext,
                             EpisodeStatusFlowService episodeStatusFlowService,
                             Environment environment,
+                            VideoProviderRouter videoProviderRouter,
                             @Value("${drama.video.provider:mock}") String providerName,
                             @Value("${drama.video.poll-interval-ms:10000}") long pollIntervalMs,
                             @Value("${drama.video.max-attempts:8}") int maxAttempts,
@@ -75,6 +78,7 @@ public class VideoTaskService {
         this.applicationContext = applicationContext;
         this.episodeStatusFlowService = episodeStatusFlowService;
         this.environment = environment;
+        this.videoProviderRouter = videoProviderRouter;
         this.providerName = providerName;
         this.pollIntervalMs = pollIntervalMs;
         this.maxAttempts = maxAttempts;
@@ -88,16 +92,7 @@ public class VideoTaskService {
      * 根据 providerName 从容器中获取对应的视频提供者。
      * 通道名优先读运行时 Environment（settings.json 可即时覆盖），回退构造器注入的默认值；环境变量优先级最高。
      */
-    private VideoProvider provider() {
-        String name = environment.getProperty("drama.video.provider", providerName);
-        if ("agnes".equals(name)) {
-            return applicationContext.getBean("agnesVideoProvider", VideoProvider.class);
-        }
-        if ("qwen".equals(name)) {
-            return applicationContext.getBean("qwenVideoProvider", VideoProvider.class);
-        }
-        return applicationContext.getBean("mockVideoProvider", VideoProvider.class);
-    }
+
 
     /**
      * 为指定镜头提交一个视频生成任务。
@@ -248,9 +243,14 @@ public class VideoTaskService {
     private void doSubmit(VideoTask task) {
         Integer durationSeconds = task.getShot().getDurationSeconds();
         int seconds = durationSeconds != null ? durationSeconds : 5;
-        String providerTaskId = provider().submit(task.getShot(), seconds);
-        log.info("视频任务已提交：taskId={}，shotId={}，providerTaskId={}", task.getId(), task.getShot().getId(), providerTaskId);
-        task.setProviderTaskId(providerTaskId);
+        VideoProviderRouter.RouteResult result = videoProviderRouter.submit(task.getShot(), seconds);
+        log.info("视频任务已提交：taskId={}，shotId={}，provider={}，providerTaskId={}", task.getId(), task.getShot().getId(), result.providerName(), result.providerTaskId());
+        if (result.fallbackReason() != null) {
+            log.warn("视频任务降级提交：taskId={}，原因={}", task.getId(), result.fallbackReason());
+            task.setFallbackReason(result.fallbackReason());
+        }
+        task.setProvider(result.providerName());
+        task.setProviderTaskId(result.providerTaskId());
         task.setStatus(VideoTaskStatus.PROCESSING);
         task.setNextRetryAt(LocalDateTime.now().plusNanos((pollIntervalMs) * 1_000_000L));
     }
@@ -259,7 +259,8 @@ public class VideoTaskService {
      * 轮询提供者任务状态。
      */
     private void doPoll(VideoTask task) throws Exception {
-        ProbeResult result = provider().poll(task.getProviderTaskId());
+        String providerNameForPoll = task.getProvider() != null ? task.getProvider() : "mock";
+        ProbeResult result = videoProviderRouter.providerFor(providerNameForPoll).poll(task.getProviderTaskId());
         switch (result.status()) {
             case COMPLETED -> {
                 log.info("视频任务完成：taskId={}，shotId={}", task.getId(), task.getShot().getId());
@@ -355,7 +356,8 @@ public class VideoTaskService {
                 t.getErrorMessage(),
                 t.getNextRetryAt(),
                 t.getCreatedAt(),
-                t.getUpdatedAt()
+                t.getUpdatedAt(),
+                t.getFallbackReason()
         );
     }
 }

@@ -181,9 +181,9 @@ public class SettingsService {
         list.add(field("dashscope.api-key", "DashScope API Key", "password", true, false, null,
                 "用于千问视频通道（wan2.5）"));
         list.add(field("agnes.api-key", "Agnes API Key", "password", true, false, null,
-                "用于 Agnes 降级通道"));
+                "用户自有 Agnes API，视频生成优先走此通道（免费 flash 模型）"));
         list.add(field("drama.video.provider", "默认视频通道", "select", false, false,
-                List.of("mock", "qwen", "agnes"), "默认 mock（本地模拟，不花钱）；改后立即生效"));
+                List.of("mock", "qwen", "agnes"), "默认 mock（本地模拟，不花钱）；选 agnes 走用户自有 API（免费优先），失败/限流/超时自动降级 qwen（DashScope BYOK）；mock 不降级；改后立即生效"));
         list.add(field("harness.qc.manual-approval", "质检人工审批", "boolean", false, false, null,
                 "默认开启；关闭后质检自动通过"));
         list.add(field("drama.video.max-attempts", "视频任务最大重试次数", "text", false, true, null,

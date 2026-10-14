@@ -268,7 +268,8 @@ public final class Records {
             String errorMessage,
             LocalDateTime nextRetryAt,
             LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            String fallbackReason
     ) {
     }
 

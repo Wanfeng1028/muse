@@ -43,6 +43,8 @@ public class VideoTask {
     @Column(length = 255)
     private String providerTaskId;
 
+    private String fallbackReason;
+
     /** 任务状态，枚举以字符串形式持久化，不可为空 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -147,6 +149,14 @@ public class VideoTask {
 
     public String getProviderTaskId() {
         return providerTaskId;
+    }
+
+    public String getFallbackReason() {
+        return fallbackReason;
+    }
+
+    public void setFallbackReason(String fallbackReason) {
+        this.fallbackReason = fallbackReason;
     }
 
     public void setProviderTaskId(String providerTaskId) {

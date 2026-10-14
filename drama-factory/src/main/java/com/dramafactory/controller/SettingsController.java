@@ -1,6 +1,7 @@
 package com.dramafactory.controller;
 
 import com.dramafactory.service.SettingsService;
+import com.dramafactory.service.video.VideoProviderRouter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.env.Environment;
@@ -25,10 +26,13 @@ public class SettingsController {
 
     private final SettingsService settingsService;
     private final Environment environment;
+    private final VideoProviderRouter videoProviderRouter;
 
-    public SettingsController(SettingsService settingsService, Environment environment) {
+    public SettingsController(SettingsService settingsService, Environment environment,
+                              VideoProviderRouter videoProviderRouter) {
         this.settingsService = settingsService;
         this.environment = environment;
+        this.videoProviderRouter = videoProviderRouter;
     }
 
     /**
@@ -83,6 +87,14 @@ public class SettingsController {
     @Operation(summary = "查询当前生效的视频通道")
     public Map<String, Object> effectiveProvider() {
         String provider = environment.getProperty("drama.video.provider", "mock");
-        return Map.of("provider", provider);
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("provider", provider);
+        resp.put("chain", videoProviderRouter.chain());
+        VideoProviderRouter.LastFallback lf = videoProviderRouter.lastFallback();
+        if (lf != null) {
+            resp.put("lastFallback", Map.of(
+                    "from", lf.from(), "to", lf.to(), "reason", lf.reason(), "at", lf.at().toString()));
+        }
+        return resp;
     }
 }

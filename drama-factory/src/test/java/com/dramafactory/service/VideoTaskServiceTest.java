@@ -10,6 +10,7 @@ import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.video.RateLimitedException;
 import com.dramafactory.service.video.VideoProvider;
+import com.dramafactory.service.video.VideoProviderRouter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -56,6 +58,7 @@ class VideoTaskServiceTest {
     private EpisodeStatusFlowService episodeStatusFlowService;
     private Environment environment;
     private VideoProvider mockProvider;
+    private VideoProviderRouter router;
 
     private VideoTaskService service;
 
@@ -68,6 +71,7 @@ class VideoTaskServiceTest {
         episodeStatusFlowService = mock(EpisodeStatusFlowService.class);
         environment = mock(Environment.class);
         mockProvider = mock(VideoProvider.class);
+        router = mock(VideoProviderRouter.class);
 
         service = new VideoTaskService(
                 videoTaskRepository,
@@ -76,6 +80,7 @@ class VideoTaskServiceTest {
                 applicationContext,
                 episodeStatusFlowService,
                 environment,
+                router,
                 "mock",
                 10000L,
                 3,
@@ -85,6 +90,10 @@ class VideoTaskServiceTest {
 
     private void stubMockProvider() {
         when(applicationContext.getBean("mockVideoProvider", VideoProvider.class)).thenReturn(mockProvider);
+        when(router.providerFor(anyString())).thenReturn(mockProvider);
+        when(router.submit(any(Shot.class), anyInt())).thenAnswer(inv ->
+                new VideoProviderRouter.RouteResult("mock",
+                        mockProvider.submit(inv.getArgument(0), inv.getArgument(1)), null));
     }
 
     private Episode newEpisode() {
@@ -605,34 +614,34 @@ class VideoTaskServiceTest {
     }
 
     @Test
-    void h1_provider_agnes_branch() {
-        when(environment.getProperty("drama.video.provider", "mock")).thenReturn("agnes");
-        when(applicationContext.getBean("agnesVideoProvider", VideoProvider.class)).thenReturn(mockProvider);
+    void h1_router_submit_agnes_noFallback() {
         Shot s = newShot(11L, 5);
         VideoTask t = newTask(21L, s, VideoTaskStatus.PENDING, 0);
         stubDue(t);
-        when(mockProvider.submit(s, 5)).thenReturn("a1");
+        when(router.submit(s, 5)).thenReturn(new VideoProviderRouter.RouteResult("agnes", "a1", null));
 
         service.processDueTasks();
 
         assertEquals(VideoTaskStatus.PROCESSING, t.getStatus());
+        assertEquals("agnes", t.getProvider());
         assertEquals("a1", t.getProviderTaskId());
-        verify(mockProvider).submit(s, 5);
+        assertNull(t.getFallbackReason());
     }
 
     @Test
-    void h2_provider_qwen_branch() {
-        when(environment.getProperty("drama.video.provider", "mock")).thenReturn("qwen");
-        when(applicationContext.getBean("qwenVideoProvider", VideoProvider.class)).thenReturn(mockProvider);
+    void h2_router_submit_fallback_qwen_recordsReason() {
         Shot s = newShot(11L, 5);
         VideoTask t = newTask(21L, s, VideoTaskStatus.PENDING, 0);
         stubDue(t);
-        when(mockProvider.submit(s, 5)).thenReturn("q1");
+        when(router.submit(s, 5)).thenReturn(
+                new VideoProviderRouter.RouteResult("qwen", "q1", "限流(429)，60秒后可重试"));
 
         service.processDueTasks();
 
         assertEquals(VideoTaskStatus.PROCESSING, t.getStatus());
-        verify(mockProvider).submit(s, 5);
+        assertEquals("qwen", t.getProvider());
+        assertEquals("q1", t.getProviderTaskId());
+        assertEquals("限流(429)，60秒后可重试", t.getFallbackReason());
     }
 
     @Test

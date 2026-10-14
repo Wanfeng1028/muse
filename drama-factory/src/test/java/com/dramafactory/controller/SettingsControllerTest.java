@@ -39,6 +39,9 @@ class SettingsControllerTest {
     @MockBean
     private SettingsService settingsService;
 
+    @MockBean
+    private com.dramafactory.service.video.VideoProviderRouter videoProviderRouter;
+
     @Test
     void getReturnsSchemaAndMaskedValues() throws Exception {
         when(settingsService.schema()).thenReturn(List.of(
