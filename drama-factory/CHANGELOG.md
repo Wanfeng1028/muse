@@ -3,6 +3,11 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，
 版本号使用项目内版本（`v2.x`）。
 
+## [Unreleased]
+
+### Added
+- AI MV 模式 v1：`POST /api/mv`（创建）/ `{id}/lyrics`（DeepSeek 作词）/ `{id}/compose`（BYOK 作曲）/ `{id}/storyboard`（分镜）/ `{id}/render`（wan2.5+ffmpeg 合成）/ `{id}/status`（轮询）/ `{id}/video` / `{id}/audio`；Run 类型新增 MV（作词→作曲→分镜→视频生成→剪辑→质检 6 步骤进时间线）；AgentType 新增 LYRICS/COMPOSE；AceStepMusicProvider（开源作曲渠道 BYOK）；mv.html 5 步创作页（深浅主题）；作曲渠道调研 docs/mv-music-providers.md。
+
 ## [v1.0] - 2026-10-14
 
 ### Added
