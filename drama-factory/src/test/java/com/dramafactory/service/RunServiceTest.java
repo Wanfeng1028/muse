@@ -30,8 +30,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.dramafactory.exception.ResourceNotFoundException;
+import com.dramafactory.model.EpisodeStatus;
+import com.dramafactory.model.ProjectStatus;
+
+
 
 /**
  * RunService 单元测试（Mockito，不启动 Spring 容器）。
@@ -293,4 +300,205 @@ class RunServiceTest {
         assertThat(detail.steps().get(0).agentLabel()).isEqualTo("编剧");
         assertThat(detail.projectId()).isNull();
     }
+
+    @Test
+    void planPreviewShouldRejectNullGoal() {
+        assertThatThrownBy(() -> runService.planPreview(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenEpisodeCountOverflows() {
+        when(llmScriptService.callModel(any())).thenThrow(new RuntimeException("no network"));
+
+        Records.PlanPreview preview = runService.planPreview("做一部 99999999999999 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+        assertThat(preview.episodes()).hasSize(1);
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenModelReturnsEmptyObject() {
+        when(llmScriptService.callModel(any())).thenReturn("{}");
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+        assertThat(preview.episodes()).hasSize(2);
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenModelReturnsGarbage() {
+        when(llmScriptService.callModel(any())).thenReturn("not json at all");
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+    }
+
+    @Test
+    void planPreviewShouldTruncateModelEpisodesToRequested() {
+        String json = "{\"episodes\":[{\"episodeNo\":1,\"title\":\"t1\",\"outline\":\"o1\"},"
+                + "{\"episodeNo\":2,\"title\":\"t2\",\"outline\":\"o2\"},"
+                + "{\"episodeNo\":3,\"title\":\"t3\",\"outline\":\"o3\"}]}";
+        when(llmScriptService.callModel(any())).thenReturn(json);
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isFalse();
+        assertThat(preview.episodes()).hasSize(2);
+        assertThat(preview.episodes().get(1).title()).isEqualTo("t2");
+    }
+
+    @Test
+    void planPreviewShouldDefaultBlankTitle() {
+        String json = "{\"episodes\":[{\"episodeNo\":1,\"title\":\"\",\"outline\":\"x\"},"
+                + "{\"episodeNo\":2,\"title\":\"b\",\"outline\":\"y\"}]}";
+        when(llmScriptService.callModel(any())).thenReturn(json);
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.episodes()).hasSize(2);
+        assertThat(preview.episodes().get(0).title()).isEqualTo("第 1 集");
+    }
+
+    @Test
+    void planPreviewShouldDefaultMissingEpisodeNo() {
+        String json = "{\"episodes\":[{\"title\":\"a\",\"outline\":\"x\"}]}";
+        when(llmScriptService.callModel(any())).thenReturn(json);
+
+        Records.PlanPreview preview = runService.planPreview("做一部短剧");
+
+        assertThat(preview.episodes()).hasSize(1);
+        assertThat(preview.episodes().get(0).episodeNo()).isEqualTo(1);
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenFenceHasNoNewline() {
+        String json = "{\"episodes\":[{\"episodeNo\":1,\"title\":\"t1\",\"outline\":\"o1\"},"
+                + "{\"episodeNo\":2,\"title\":\"t2\",\"outline\":\"o2\"}]}";
+        when(llmScriptService.callModel(any())).thenReturn("```" + json);
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenModelReturnsBlank() {
+        when(llmScriptService.callModel(any())).thenReturn("   ");
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenEpisodesNotArray() {
+        when(llmScriptService.callModel(any())).thenReturn("{\"episodes\":{}}");
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+    }
+
+    @Test
+    void planPreviewShouldTruncateLongGoalInFallbackOutline() {
+        String goal = "目".repeat(70);
+        when(llmScriptService.callModel(any())).thenThrow(new RuntimeException("no network"));
+
+        Records.PlanPreview preview = runService.planPreview(goal);
+
+        assertThat(preview.episodes()).hasSize(1);
+        assertThat(preview.episodes().get(0).outline()).contains(goal.substring(0, 60));
+        assertThat(preview.episodes().get(0).outline()).doesNotContain(goal);
+    }
+
+    @Test
+    void planPreviewShouldTreatZeroEpisodesAsOne() {
+        when(llmScriptService.callModel(any())).thenThrow(new RuntimeException("no network"));
+
+        Records.PlanPreview preview = runService.planPreview("做一部 0 集短剧");
+
+        assertThat(preview.episodes()).hasSize(1);
+    }
+
+    @Test
+    void createRunShouldBuildFiveStepsAndMarkRunning() {
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(projectService.create(any(Records.ProjectRequest.class)))
+                .thenReturn(new Records.ProjectResponse(10L, "t", null, null, null, null, 0L, 0L, null, null, null));
+        when(episodeService.create(eq(10L), any(Records.EpisodeRequest.class)))
+                .thenReturn(new Records.EpisodeResponse(20L, 10L, 1, "t", "o", null, null, 0L, null, null));
+        Records.PlanPreview plan = new Records.PlanPreview("做一部短剧",
+                List.of(new Records.PlanEpisode(1, "t", "o")), false);
+
+        runService.createRun("做一部短剧", plan);
+
+        ArgumentCaptor<Records.ProjectRequest> projectCaptor =
+                ArgumentCaptor.forClass(Records.ProjectRequest.class);
+        verify(projectService).create(projectCaptor.capture());
+        assertThat(projectCaptor.getValue().title()).isEqualTo("做一部短剧");
+
+        verify(episodeService).create(eq(10L), any(Records.EpisodeRequest.class));
+
+        ArgumentCaptor<AgentStep> stepCaptor = ArgumentCaptor.forClass(AgentStep.class);
+        verify(agentStepRepository, times(5)).save(stepCaptor.capture());
+        assertThat(stepCaptor.getAllValues())
+                .extracting(AgentStep::getAgentType)
+                .containsExactlyInAnyOrder(AgentType.SCRIPT, AgentType.BOARD, AgentType.VIDEO, AgentType.EDIT, AgentType.QC);
+
+        ArgumentCaptor<Run> runCaptor = ArgumentCaptor.forClass(Run.class);
+        verify(runRepository, times(3)).save(runCaptor.capture());
+        assertThat(runCaptor.getValue().getStatus()).isEqualTo(RunStatus.RUNNING);
+    }
+
+    @Test
+    void createRunShouldRejectBlankGoal() {
+        Records.PlanPreview plan = new Records.PlanPreview("g",
+                List.of(new Records.PlanEpisode(1, "t", "o")), false);
+
+        assertThatThrownBy(() -> runService.createRun("  ", plan))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void createRunShouldRejectNullPlan() {
+        assertThatThrownBy(() -> runService.createRun("做一部短剧", null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void pauseShouldThrowWhenRunMissing() {
+        when(runRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> runService.pause(99L))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void resumeShouldSetRunning() {
+        Run run = runningRun(1L);
+        run.setStatus(RunStatus.PAUSED);
+        when(runRepository.findById(1L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        runService.resume(1L);
+
+        ArgumentCaptor<Run> captor = ArgumentCaptor.forClass(Run.class);
+        verify(runRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(RunStatus.RUNNING);
+    }
+
+    @Test
+    void resumeShouldRejectNonPaused() {
+        Run run = runningRun(1L);
+        run.setStatus(RunStatus.RUNNING);
+        when(runRepository.findById(1L)).thenReturn(Optional.of(run));
+
+        assertThatThrownBy(() -> runService.resume(1L))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
+
+

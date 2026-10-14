@@ -132,6 +132,7 @@
 - DoD 未通过项新排期（见 docs/dod-v2.7.md：v2.8 E2E（Run 全链路端到端）、Agnes/Qwen provider 契约测试（录制回放）、分支覆盖冲 45%、stats() 聚合查询优化）
 - 上轮遗留三项已落地（2026-10-14，commit 37149e3）：Agnes/Qwen 录制回放契约测试（27 例，`VideoHttpGateway` 录制回放接缝）+ `RunLifecycleE2eTest`（Run 全生命周期多用户隔离 6 例）+ `ProjectService.stats()` N+1 消除（3 个 repository 新增 `countByOwner` 聚合查询）；全量 210 测试通过
 - **BYOK 连接自检**（2026-10-14，ROADMAP P0#1 子项，commit 394146e）：`VideoProvider.probeConnectivity()` 契约（default 返回 UNSUPPORTED）+ `POST /api/providers/{id}/test` + 供应商卡片「测试连接」按钮与状态徽标；Agnes/Qwen 采用"查询不存在探测任务"的负向探测（零费用：401/403=密钥无效、404=密钥有效，鉴权先行，已用 Keenable 核验两家官方文档错误表），mock 恒 OK，未接入模块/未知名称诚实返回 UNSUPPORTED（绝不假成功）；附带修 `submit`/`poll` 未配置密钥时的 NPE（改抛 `IllegalStateException` 明示）；`ResilientVideoProvider` 自检委托给被装饰方；测试 22 例（Agnes/Qwen 各 9 例契约 + 4 例 API，录制回放零真实网络）；`docs/connection-probe.md` 原理文档；agents.html 真实截图亲眼验收通过（`docs/screenshots/providers-test-connection.png`，README 已引用）；全量 **232** 测试通过
+- 生产级补强 **v2.8 第 7 轮「分支覆盖冲 45%」**（2026-10-14，DoD v2.8 排期最后一项）：9 批 dpsk 生成——LlmScriptServiceTest 8→34（validate/parseScenes/buildUserContent）、RunServiceTest 15→33（planPreview/createRun·pause·resume）、ScriptSplitterServiceTest 15→35（parse·strip/replaceShots）、RunExecutorTest 10→36（advanceRun 异常分支/QC 自动门/checkVideoStep/finalize）、ProviderServiceProbeTest 新建 14（testConnection/maskKey）；测试总数 232→**336** 全绿；行覆盖 58.5%→**71.0%**、分支 37.5%→**52.7%**（超额达成）；pom JaCoCo 新增 BRANCH 0.45 门禁、LINE 0.55→0.65 棘轮；发版对照报告 `docs/dod-v2.8.md`；已知缺口排期 v2.9（AuthProxyController 110 分支需 HttpClient 可注入重构、Agnes/Qwen 真实链路需外部 API）
 - 审核流状态机
 - 多用户与权限
 
