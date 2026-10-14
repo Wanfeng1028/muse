@@ -28,6 +28,35 @@
     });
   });
 
+  /* ---- 模式切换：AI 创作 / 导入音频 ---- */
+  var importMode = false;
+  $('modeTabs').addEventListener('click', function (e) {
+    var b = e.target.closest('.mode-tab');
+    if (!b) return;
+    document.querySelectorAll('#modeTabs .mode-tab').forEach(function (t) { t.classList.remove('is-on'); });
+    b.classList.add('is-on');
+    importMode = b.dataset.mode === 'import';
+    $('aiModePanel').classList.toggle('is-hidden', importMode);
+    $('importModePanel').classList.toggle('is-hidden', !importMode);
+  });
+
+  function markStepsSkipped() {
+    document.querySelectorAll('#steps .mv-step').forEach(function (li) {
+      var s = parseInt(li.dataset.step, 10);
+      if (s === 1 || s === 2) {
+        li.classList.add('is-skipped');
+        li.title = '已跳过（导入音频）';
+      }
+    });
+  }
+
+  function clearStepsSkipped() {
+    document.querySelectorAll('#steps .mv-step').forEach(function (li) {
+      li.classList.remove('is-skipped');
+      li.removeAttribute('title');
+    });
+  }
+
   function goStep(n) {
     document.querySelectorAll('#steps .mv-step').forEach(function (li) {
       var s = parseInt(li.dataset.step, 10);
@@ -164,6 +193,63 @@
 
   $('btnToStoryboard').addEventListener('click', function () { goStep(3); });
 
+  /* ---- 导入已有音频 ---- */
+  $('btnImport').addEventListener('click', function () {
+    var title = $('importTitle').value.trim();
+    var file = $('importFile').files[0];
+    if (!title) { $('importNote').textContent = '请填写歌曲标题'; return; }
+    if (!file) { $('importNote').textContent = '请选择音频文件'; return; }
+    var ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (['mp3', 'wav', 'm4a'].indexOf(ext) < 0) { $('importNote').textContent = '仅支持 mp3 / wav / m4a'; return; }
+    if (file.size > 100 * 1024 * 1024) { $('importNote').textContent = '文件超过 100MB 上限'; return; }
+    var btn = $('btnImport');
+    btn.disabled = true;
+    $('importNote').textContent = '上传中…';
+    var bar = $('uploadProgress');
+    bar.classList.remove('is-hidden');
+    $('uploadFill').style.width = '0%';
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('title', title);
+    fd.append('lyrics', $('importLyrics').value);
+    fd.append('mood', $('importMood').value);
+    fd.append('style', $('importStyle').value);
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/mv/import');
+    xhr.upload.addEventListener('progress', function (ev) {
+      if (ev.lengthComputable) {
+        $('uploadFill').style.width = Math.round(ev.loaded / ev.total * 100) + '%';
+      }
+    });
+    xhr.addEventListener('load', function () {
+      btn.disabled = false;
+      var res = null;
+      try { res = JSON.parse(xhr.responseText); } catch (e) { /* 忽略 */ }
+      if (xhr.status >= 200 && xhr.status < 300 && res && res.status === 'SUCCEEDED') {
+        songId = res.id;
+        $('importAudioEl').src = res.audioUrl || '';
+        $('importAudioMeta').textContent = res.durationMs
+          ? '时长约 ' + Math.round(res.durationMs / 1000) + ' 秒，已跳过作词作曲' : '已跳过作词作曲';
+        $('importAudioBar').classList.remove('is-hidden');
+        $('importNote').textContent = '';
+        bar.classList.add('is-hidden');
+        markStepsSkipped();
+      } else {
+        var msg = (res && res.error) || xhr.responseText || ('HTTP ' + xhr.status);
+        $('importNote').textContent = '导入失败：' + msg;
+        bar.classList.add('is-hidden');
+      }
+    });
+    xhr.addEventListener('error', function () {
+      btn.disabled = false;
+      $('importNote').textContent = '导入失败：网络错误';
+      bar.classList.add('is-hidden');
+    });
+    xhr.send(fd);
+  });
+
+  $('btnImportToStoryboard').addEventListener('click', function () { goStep(3); });
+
   /* ---- 步骤3：分镜 ---- */
   $('btnStoryboard').addEventListener('click', function () {
     if (!songId) return;
@@ -250,10 +336,11 @@
     var names = { LYRICS: '作词', COMPOSE: '作曲', BOARD: '分镜', VIDEO: '视频生成', EDIT: '剪辑', QC: '质检' };
     steps.forEach(function (s) {
       var li = document.createElement('li');
-      var dot = s.status === 'SUCCEEDED' ? '✓' : (s.status === 'FAILED' ? '✗' : '…');
+      var dot = s.status === 'SUCCEEDED' ? '✓' : (s.status === 'FAILED' ? '✗' : (s.status === 'SKIPPED' ? '⊘' : '…'));
       li.innerHTML = '<span></span><span class="st"></span>';
       li.children[0].textContent = dot + ' ' + (names[s.agentType] || s.agentType);
-      li.children[1].textContent = s.status || '';
+      var stText = { SUCCEEDED: '已完成', FAILED: '失败', SKIPPED: '已跳过', RUNNING: '进行中', PENDING: '待执行' }[s.status] || s.status || '';
+      li.children[1].textContent = stText;
       box.appendChild(li);
     });
   }
@@ -268,6 +355,13 @@
     $('timelineBox').innerHTML = '';
     $('timelineBox').classList.add('is-hidden');
     $('audioBar').classList.add('is-hidden');
+    $('importAudioBar').classList.add('is-hidden');
+    $('importTitle').value = '';
+    $('importFile').value = '';
+    $('importLyrics').value = '';
+    $('importNote').textContent = '';
+    $('uploadProgress').classList.add('is-hidden');
+    clearStepsSkipped();
     $('btnToRender').classList.add('is-hidden');
     $('progressFill').style.width = '0%';
     $('progressPct').textContent = '0%';

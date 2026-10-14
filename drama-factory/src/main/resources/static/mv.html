@@ -62,6 +62,17 @@
 .agent-list li{display:flex;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border-soft);color:var(--text-2)}
 .agent-list .st{margin-left:auto}
 .video-wrap video{width:100%;border-radius:8px;background:#000}
+.mode-tabs{display:flex;gap:10px;margin-bottom:16px}
+.mode-tab{flex:1;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);border-radius:10px;padding:14px;cursor:pointer;font-size:14px;text-align:left}
+.mode-tab .t{font-weight:600;color:var(--text);display:block;margin-bottom:4px}
+.mode-tab .d{font-size:12px;color:var(--text-3)}
+.mode-tab.is-on{border-color:var(--text);background:var(--surface)}
+.mode-tab.is-on .d{color:var(--text-2)}
+.mv-step.is-skipped .n{background:transparent;border:1px dashed var(--text-3);color:var(--text-3)}
+.mv-step.is-skipped{color:var(--text-3);text-decoration:line-through}
+input[type=file].mv-file{display:block;width:100%;font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px dashed var(--border);border-radius:8px;padding:12px;cursor:pointer}
+.mv-field input[type=text]{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px}
+.mv-field select{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px}
 .is-hidden{display:none!important}
 @media(max-width:768px){.mv-grid{grid-template-columns:1fr}}
 </style>
@@ -80,7 +91,18 @@
   </ol>
 
   <section class="mv-panel" data-panel="1">
-    <h2>写词</h2>
+    <h2>开始</h2>
+    <div class="mode-tabs" id="modeTabs">
+      <button type="button" class="mode-tab is-on" data-mode="ai">
+        <span class="t">AI 创作歌曲</span>
+        <span class="d">给主题，AI 作词作曲，一条龙生成</span>
+      </button>
+      <button type="button" class="mode-tab" data-mode="import">
+        <span class="t">导入已有音频</span>
+        <span class="d">有现成的歌，直接上传跳过作词作曲</span>
+      </button>
+    </div>
+    <div id="aiModePanel">
     <p class="mv-hint">给出主题、情绪和曲风，生成分段歌词。生成后可以逐段修改。</p>
     <div class="mv-grid">
       <div class="mv-field wide">
@@ -111,6 +133,56 @@
     <div class="mv-foot">
       <button class="btn btn-primary" id="btnLyrics" type="button">生成歌词</button>
       <span class="mv-note" id="lyricsNote"></span>
+    </div>
+    </div>
+    <div id="importModePanel" class="is-hidden">
+      <p class="mv-hint">上传音频文件（mp3 / wav / m4a，最大 100MB），自动进入资产库。歌词可选：填了按歌词做字幕时间轴，不填按纯音乐分镜。</p>
+      <div class="mv-grid">
+        <div class="mv-field wide">
+          <label for="importTitle">歌曲标题</label>
+          <input type="text" id="importTitle" placeholder="例如：归途的光">
+        </div>
+        <div class="mv-field wide">
+          <label for="importFile">音频文件</label>
+          <input type="file" class="mv-file" id="importFile" accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4">
+        </div>
+        <div class="mv-field">
+          <label for="importMood">情绪</label>
+          <select id="importMood">
+            <option value="抒情">抒情</option>
+            <option value="欢快">欢快</option>
+            <option value="激昂">激昂</option>
+            <option value="舒缓">舒缓</option>
+            <option value="热血">热血</option>
+          </select>
+        </div>
+        <div class="mv-field">
+          <label for="importStyle">曲风</label>
+          <select id="importStyle">
+            <option value="流行">流行</option>
+            <option value="民谣">民谣</option>
+            <option value="摇滚">摇滚</option>
+            <option value="电子">电子</option>
+            <option value="古风">古风</option>
+          </select>
+        </div>
+        <div class="mv-field wide">
+          <label for="importLyrics">歌词（可选）</label>
+          <textarea id="importLyrics" rows="5" placeholder="粘贴歌词，空行分段；不填则按纯音乐分镜"></textarea>
+        </div>
+      </div>
+      <div class="progress is-hidden" id="uploadProgress"><div class="progress-fill" id="uploadFill"></div></div>
+      <div class="mv-foot">
+        <button class="btn btn-primary" id="btnImport" type="button">上传并导入</button>
+        <span class="mv-note" id="importNote"></span>
+      </div>
+      <div class="is-hidden" id="importAudioBar" style="margin-top:12px">
+        <audio id="importAudioEl" controls preload="metadata" style="width:100%"></audio>
+        <div class="mv-foot">
+          <span class="mv-note" id="importAudioMeta"></span>
+          <button class="btn btn-primary" id="btnImportToStoryboard" type="button">进入分镜</button>
+        </div>
+      </div>
     </div>
   </section>
 
