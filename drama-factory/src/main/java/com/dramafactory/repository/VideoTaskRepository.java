@@ -78,4 +78,15 @@ public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
 
     @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt FROM VideoTask v WHERE v.createdAt >= :from")
     List<UsageService.VideoTaskRow> findForDailyUsage(@Param("from") LocalDateTime from);
+
+@Query("SELECT v.id AS id, v.provider AS provider, v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, " +
+       "v.costCents AS costCents, v.costEstimated AS costEstimated, v.status AS status, v.createdAt AS createdAt " +
+       "FROM VideoTask v WHERE v.createdAt >= :from")
+List<UsageService.RequestVideoRow> findForRequests(@Param("from") LocalDateTime from);
+
+@Query("SELECT DISTINCT v.provider FROM VideoTask v WHERE v.provider IS NOT NULL")
+List<String> findDistinctProviders();
+
+@Query("SELECT DISTINCT v.modelUsed FROM VideoTask v WHERE v.modelUsed IS NOT NULL")
+List<String> findDistinctModels();
 }

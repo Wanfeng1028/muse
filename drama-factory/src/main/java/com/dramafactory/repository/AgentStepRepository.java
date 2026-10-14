@@ -1,6 +1,7 @@
 package com.dramafactory.repository;
 
 import com.dramafactory.model.AgentStep;
+import com.dramafactory.model.AgentType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -40,4 +41,13 @@ public interface AgentStepRepository extends JpaRepository<AgentStep, Long> {
 
     @Query("SELECT s.agentType AS agentLabel, s.tokensUsed AS tokensUsed, s.costCents AS costCents, s.createdAt AS createdAt FROM AgentStep s WHERE s.createdAt >= :from")
     List<UsageService.AgentStepRow> findForDailyUsage(@Param("from") LocalDateTime from);
+
+@Query("SELECT s.id AS id, s.agentType AS agentLabel, s.tokensUsed AS tokensUsed, " +
+       "s.costCents AS costCents, s.costEstimated AS costEstimated, s.latencyMs AS latencyMs, " +
+       "s.status AS status, s.createdAt AS createdAt " +
+       "FROM AgentStep s WHERE s.createdAt >= :from")
+List<UsageService.RequestStepRow> findForRequests(@Param("from") LocalDateTime from);
+
+@Query("SELECT DISTINCT s.agentType FROM AgentStep s")
+List<AgentType> findDistinctAgentTypes();
 }

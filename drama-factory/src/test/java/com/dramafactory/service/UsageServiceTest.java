@@ -4,17 +4,21 @@ package com.dramafactory.service;
 import com.dramafactory.repository.AgentStepRepository;
 import com.dramafactory.repository.RunRepository;
 import com.dramafactory.model.AgentType;
+import com.dramafactory.model.AgentStepStatus;
+import com.dramafactory.model.VideoTaskStatus;
 import com.dramafactory.repository.VideoTaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
@@ -153,7 +157,110 @@ class UsageServiceTest {
         assertThat(r.goal()).hasSize(30);
     }
 
+    @Test
+    void requests_空库返回空集合() {
+        when(videoTaskRepository.findForRequests(any(LocalDateTime.class))).thenReturn(List.of());
+        when(agentStepRepository.findForRequests(any(LocalDateTime.class))).thenReturn(List.of());
+        List<UsageService.RequestUsage> result = usageService.requests(50, null, null, 30);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void requests_合并排序与过滤() {
+        LocalDateTime now = LocalDateTime.now();
+        when(videoTaskRepository.findForRequests(any(LocalDateTime.class))).thenReturn(List.of(
+                requestVideoRow(1L, "openai", "gpt-4o", 100L, 5L, false, VideoTaskStatus.DONE, now.minusHours(1)),
+                requestVideoRow(2L, "anthropic", "claude-3", 200L, 8L, false, VideoTaskStatus.DONE, now.minusHours(3))));
+        when(agentStepRepository.findForRequests(any(LocalDateTime.class))).thenReturn(List.of(
+                requestStepRow(3L, AgentType.VIDEO, 300L, 10L, false, 1200L, AgentStepStatus.SUCCEEDED, now.minusHours(2))));
+        List<UsageService.RequestUsage> all = usageService.requests(50, null, null, 30);
+        assertThat(all).hasSize(3);
+        assertThat(all.get(0).id()).isEqualTo(1L);
+        assertThat(all.get(1).id()).isEqualTo(3L);
+        assertThat(all.get(2).id()).isEqualTo(2L);
+
+        List<UsageService.RequestUsage> byProvider = usageService.requests(50, "openai", null, 30);
+        assertThat(byProvider).hasSize(1);
+        assertThat(byProvider.get(0).id()).isEqualTo(1L);
+
+        List<UsageService.RequestUsage> byModel = usageService.requests(50, null, "claude-3", 30);
+        assertThat(byModel).hasSize(1);
+        assertThat(byModel.get(0).id()).isEqualTo(2L);
+    }
+
+    @Test
+    void summary_带过滤按行求和() {
+        LocalDateTime now = LocalDateTime.now();
+        when(videoTaskRepository.findForRequests(any(LocalDateTime.class))).thenReturn(List.of(
+                requestVideoRow(1L, "openai", "gpt-4o", 100L, 5L, false, VideoTaskStatus.DONE, now),
+                requestVideoRow(2L, "openai", "gpt-4o", 200L, 8L, false, VideoTaskStatus.DONE, now)));
+        when(agentStepRepository.findForRequests(any(LocalDateTime.class))).thenReturn(List.of(
+                requestStepRow(3L, AgentType.VIDEO, 300L, 10L, false, 1200L, AgentStepStatus.SUCCEEDED, now)));
+        UsageService.UsageSummary s = usageService.summary("openai", "gpt-4o", 30);
+        assertThat(s.tokensTotal()).isEqualTo(300L);
+        assertThat(s.costCentsTotal()).isEqualTo(13L);
+        assertThat(s.taskCount()).isEqualTo(2L);
+        assertThat(s.stepCount()).isZero();
+        assertThat(s.requestCount()).isEqualTo(2L);
+    }
+
+    @Test
+    void byDay_带计数() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime ts = today.atTime(10, 0);
+        when(videoTaskRepository.findForDailyUsage(any(LocalDateTime.class))).thenReturn(List.of(
+                videoRow("gpt-4o", 100L, 5L, ts),
+                videoRow("gpt-4o", 50L, 2L, ts)));
+        when(agentStepRepository.findForDailyUsage(any(LocalDateTime.class))).thenReturn(List.of(
+                stepRow(AgentType.VIDEO, 30L, 1L, ts)));
+        List<UsageService.DailyUsage> result = usageService.byDay(30, null, null);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).videoCount()).isEqualTo(2L);
+        assertThat(result.get(0).stepCount()).isEqualTo(1L);
+    }
+
+    @Test
+    void filters_去重合并() {
+        when(videoTaskRepository.findDistinctProviders()).thenReturn(List.of("openai", "openai", "anthropic"));
+        when(videoTaskRepository.findDistinctModels()).thenReturn(List.of("gpt-4o", "gpt-4o"));
+        when(agentStepRepository.findDistinctAgentTypes()).thenReturn(List.of(AgentType.VIDEO));
+        UsageService.FilterOptions f = usageService.filters();
+        assertThat(f.providers()).containsExactly("anthropic", "openai");
+        assertThat(f.models()).contains("gpt-4o");
+        assertThat(f.models()).contains(AgentType.VIDEO.getLabel());
+    }
+
     // ==== 辅助工厂 ====
+
+    private static UsageService.RequestVideoRow requestVideoRow(Long id, String provider, String model,
+                                                         Long tokens, Long cost, Boolean estimated,
+                                                         VideoTaskStatus status, LocalDateTime createdAt) {
+        return new UsageService.RequestVideoRow() {
+            @Override public Long getId() { return id; }
+            @Override public String getProvider() { return provider; }
+            @Override public String getModelUsed() { return model; }
+            @Override public Long getTokensUsed() { return tokens; }
+            @Override public Long getCostCents() { return cost; }
+            @Override public Boolean getCostEstimated() { return estimated; }
+            @Override public VideoTaskStatus getStatus() { return status; }
+            @Override public LocalDateTime getCreatedAt() { return createdAt; }
+        };
+    }
+
+    private static UsageService.RequestStepRow requestStepRow(Long id, AgentType agentType, Long tokens, Long cost,
+                                                       Boolean estimated, Long latencyMs,
+                                                       AgentStepStatus status, LocalDateTime createdAt) {
+        return new UsageService.RequestStepRow() {
+            @Override public Long getId() { return id; }
+            @Override public AgentType getAgentLabel() { return agentType; }
+            @Override public Long getTokensUsed() { return tokens; }
+            @Override public Long getCostCents() { return cost; }
+            @Override public Boolean getCostEstimated() { return estimated; }
+            @Override public Long getLatencyMs() { return latencyMs; }
+            @Override public AgentStepStatus getStatus() { return status; }
+            @Override public LocalDateTime getCreatedAt() { return createdAt; }
+        };
+    }
 
     private static UsageService.VideoTaskRow videoRow(String model, Long tokens, Long cost, LocalDateTime createdAt) {
         return new UsageService.VideoTaskRow() {

@@ -4,6 +4,8 @@ package com.dramafactory.service;
 import com.dramafactory.repository.AgentStepRepository;
 import com.dramafactory.repository.RunRepository;
 import com.dramafactory.model.AgentType;
+import com.dramafactory.model.AgentStepStatus;
+import com.dramafactory.model.VideoTaskStatus;
 import com.dramafactory.repository.VideoTaskRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,9 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Token / 成本用量统计聚合服务。
@@ -49,6 +54,163 @@ public class UsageService {
      * taskCount 为 VideoTask 总数，runCount 为 Run 总数。
      */
     @Transactional(readOnly = true)
+    public UsageSummary summary(String provider, String model, int days) {
+        boolean noFilter = (provider == null || provider.isEmpty()) && (model == null || model.isEmpty()) && days <= 0;
+        if (noFilter) {
+            Long tokens = sumNullable(videoTaskRepository.sumTokensUsed(), agentStepRepository.sumTokensUsed());
+            Long cost = sumNullable(videoTaskRepository.sumCostCents(), agentStepRepository.sumCostCents());
+            long taskCount = videoTaskRepository.count();
+            long runCount = runRepository.count();
+            long stepCount = agentStepRepository.count();
+            long requestCount = taskCount + stepCount;
+            return new UsageSummary(tokens, cost, taskCount, runCount, stepCount, requestCount);
+        }
+        LocalDateTime from = days > 0 ? LocalDateTime.now().minusDays(days) : null;
+        List<RequestVideoRow> videoRows = videoTaskRepository.findForRequests(from != null ? from : LocalDateTime.MIN);
+        List<RequestStepRow> stepRows = agentStepRepository.findForRequests(from != null ? from : LocalDateTime.MIN);
+        Long tokens = null;
+        Long cost = null;
+        long taskCount = 0;
+        long stepCount = 0;
+        for (RequestVideoRow r : videoRows) {
+            if (provider != null && !provider.isEmpty() && !provider.equals(r.getProvider())) {
+                continue;
+            }
+            if (model != null && !model.isEmpty() && !model.equals(r.getModelUsed())) {
+                continue;
+            }
+            tokens = sumNullable(tokens, r.getTokensUsed());
+            cost = sumNullable(cost, r.getCostCents());
+            taskCount++;
+        }
+        for (RequestStepRow r : stepRows) {
+            if (provider != null && !provider.isEmpty()) {
+                continue;
+            }
+            String label = r.getAgentLabel() != null ? r.getAgentLabel().getLabel() : null;
+            if (model != null && !model.isEmpty() && !model.equals(label)) {
+                continue;
+            }
+            tokens = sumNullable(tokens, r.getTokensUsed());
+            cost = sumNullable(cost, r.getCostCents());
+            stepCount++;
+        }
+        long requestCount = taskCount + stepCount;
+        return new UsageSummary(tokens, cost, taskCount, 0L, stepCount, requestCount);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RequestUsage> requests(int limit, String provider, String model, int days) {
+        LocalDateTime from = days > 0 ? LocalDateTime.now().minusDays(days) : LocalDateTime.MIN;
+        List<RequestVideoRow> videoRows = videoTaskRepository.findForRequests(from);
+        List<RequestStepRow> stepRows = agentStepRepository.findForRequests(from);
+        List<RequestUsage> result = new ArrayList<>();
+        for (RequestVideoRow r : videoRows) {
+            if (r.getModelUsed() == null) {
+                continue;
+            }
+            if (provider != null && !provider.isEmpty() && !provider.equals(r.getProvider())) {
+                continue;
+            }
+            if (model != null && !model.isEmpty() && !model.equals(r.getModelUsed())) {
+                continue;
+            }
+            String status = r.getStatus() != null ? String.valueOf(r.getStatus()) : null;
+            result.add(new RequestUsage(r.getId(), "VIDEO_TASK", r.getCreatedAt(), r.getProvider(),
+                    r.getModelUsed(), r.getTokensUsed(), r.getCostCents(), r.getCostEstimated(),
+                    null, status));
+        }
+        for (RequestStepRow r : stepRows) {
+            if (provider != null && !provider.isEmpty()) {
+                continue;
+            }
+            String label = r.getAgentLabel() != null ? r.getAgentLabel().getLabel() : null;
+            if (model != null && !model.isEmpty() && !model.equals(label)) {
+                continue;
+            }
+            String status = r.getStatus() != null ? String.valueOf(r.getStatus()) : null;
+            result.add(new RequestUsage(r.getId(), "AGENT_STEP", r.getCreatedAt(), null,
+                    label, r.getTokensUsed(), r.getCostCents(), r.getCostEstimated(),
+                    r.getLatencyMs(), status));
+        }
+        result.sort((a, b) -> {
+            LocalDateTime ta = a.time();
+            LocalDateTime tb = b.time();
+            if (ta == null && tb == null) {
+                return 0;
+            }
+            if (ta == null) {
+                return 1;
+            }
+            if (tb == null) {
+                return -1;
+            }
+            return tb.compareTo(ta);
+        });
+        if (limit > 0 && result.size() > limit) {
+            return result.subList(0, limit);
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailyUsage> byDay(int days, String provider, String model) {
+        int effectiveDays = days <= 0 ? DEFAULT_DAYS : days;
+        LocalDateTime from = LocalDateTime.now().minusDays(effectiveDays);
+        List<VideoTaskRow> videoRows = videoTaskRepository.findForDailyUsage(from);
+        List<AgentStepRow> stepRows = agentStepRepository.findForDailyUsage(from);
+        Map<LocalDate, Long> tokenMap = new TreeMap<>();
+        Map<LocalDate, Long> costMap = new TreeMap<>();
+        Map<LocalDate, Long> videoCountMap = new TreeMap<>();
+        Map<LocalDate, Long> stepCountMap = new TreeMap<>();
+        for (VideoTaskRow r : videoRows) {
+            if (model != null && !model.isEmpty() && !model.equals(r.getModelUsed())) {
+                continue;
+            }
+            LocalDate d = r.getCreatedAt().toLocalDate();
+            tokenMap.merge(d, r.getTokensUsed() != null ? r.getTokensUsed() : 0L, Long::sum);
+            costMap.merge(d, r.getCostCents() != null ? r.getCostCents() : 0L, Long::sum);
+            videoCountMap.merge(d, 1L, Long::sum);
+        }
+        for (AgentStepRow r : stepRows) {
+            if (provider != null && !provider.isEmpty()) {
+                continue;
+            }
+            String label = r.getAgentLabel() != null ? r.getAgentLabel().getLabel() : null;
+            if (model != null && !model.isEmpty() && !model.equals(label)) {
+                continue;
+            }
+            LocalDate d = r.getCreatedAt().toLocalDate();
+            tokenMap.merge(d, r.getTokensUsed() != null ? r.getTokensUsed() : 0L, Long::sum);
+            costMap.merge(d, r.getCostCents() != null ? r.getCostCents() : 0L, Long::sum);
+            stepCountMap.merge(d, 1L, Long::sum);
+        }
+        Set<LocalDate> dates = new TreeSet<>();
+        dates.addAll(tokenMap.keySet());
+        dates.addAll(costMap.keySet());
+        dates.addAll(videoCountMap.keySet());
+        dates.addAll(stepCountMap.keySet());
+        List<DailyUsage> result = new ArrayList<>();
+        for (LocalDate d : dates) {
+            result.add(new DailyUsage(d, tokenMap.get(d), costMap.get(d),
+                    videoCountMap.getOrDefault(d, 0L), stepCountMap.getOrDefault(d, 0L)));
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public FilterOptions filters() {
+        List<String> providers = new ArrayList<>(new TreeSet<>(videoTaskRepository.findDistinctProviders()));
+        Set<String> modelSet = new TreeSet<>();
+        modelSet.addAll(videoTaskRepository.findDistinctModels());
+        for (AgentType t : agentStepRepository.findDistinctAgentTypes()) {
+            if (t != null) {
+                modelSet.add(t.getLabel());
+            }
+        }
+        return new FilterOptions(providers, new ArrayList<>(modelSet));
+    }
+
     public UsageSummary summary() {
         Long videoTokens = videoTaskRepository.sumTokensUsed();
         Long agentTokens = agentStepRepository.sumTokensUsed();
@@ -60,10 +222,12 @@ public class UsageService {
 
         long taskCount = videoTaskRepository.count();
         long runCount = runRepository.count();
+        long stepCount = agentStepRepository.count();
+        long requestCount = taskCount + stepCount;
 
-        log.debug("usage summary: tokensTotal={}, costCentsTotal={}, taskCount={}, runCount={}",
-                tokensTotal, costCentsTotal, taskCount, runCount);
-        return new UsageSummary(tokensTotal, costCentsTotal, taskCount, runCount);
+        log.debug("usage summary: tokensTotal={}, costCentsTotal={}, taskCount={}, runCount={}, stepCount={}, requestCount={}",
+                tokensTotal, costCentsTotal, taskCount, runCount, stepCount, requestCount);
+        return new UsageSummary(tokensTotal, costCentsTotal, taskCount, runCount, stepCount, requestCount);
     }
 
     /**
@@ -115,45 +279,8 @@ public class UsageService {
      */
     @Transactional(readOnly = true)
     public List<DailyUsage> byDay(int days) {
-        int effectiveDays = days <= 0 ? DEFAULT_DAYS : days;
-        LocalDate from = LocalDate.now().minusDays(effectiveDays - 1L);
-        LocalDateTime fromTime = from.atStartOfDay();
-
-        Map<LocalDate, DailyAccumulator> grouped = new LinkedHashMap<>();
-
-        List<VideoTaskRow> videoRows = videoTaskRepository.findForDailyUsage(fromTime);
-        for (VideoTaskRow row : videoRows) {
-            LocalDateTime createdAt = row.getCreatedAt();
-            if (createdAt == null) {
-                continue;
-            }
-            LocalDate date = createdAt.toLocalDate();
-            DailyAccumulator acc = grouped.computeIfAbsent(date, k -> new DailyAccumulator(k));
-            acc.tokens = sumNullable(acc.tokens, row.getTokensUsed());
-            acc.costCents = sumNullable(acc.costCents, row.getCostCents());
-        }
-
-        List<AgentStepRow> stepRows = agentStepRepository.findForDailyUsage(fromTime);
-        for (AgentStepRow row : stepRows) {
-            LocalDateTime createdAt = row.getCreatedAt();
-            if (createdAt == null) {
-                continue;
-            }
-            LocalDate date = createdAt.toLocalDate();
-            DailyAccumulator acc = grouped.computeIfAbsent(date, k -> new DailyAccumulator(k));
-            acc.tokens = sumNullable(acc.tokens, row.getTokensUsed());
-            acc.costCents = sumNullable(acc.costCents, row.getCostCents());
-        }
-
-        List<DailyUsage> result = new ArrayList<>(grouped.size());
-        for (DailyAccumulator acc : grouped.values()) {
-            result.add(new DailyUsage(acc.date, acc.tokens, acc.costCents));
-        }
-        result.sort(Comparator.comparing(DailyUsage::date));
-        log.debug("usage byDay: days={}, {} groups", effectiveDays, result.size());
-        return result;
+        return byDay(days, null, null);
     }
-
     /**
      * 按 Run 聚合，按 createdAt 倒序，默认取最近 20 条。
      * tokens 优先使用 Run.totalTokens，为空则回退到该 Run 下 AgentStep.tokensUsed 之和；
@@ -197,16 +324,22 @@ public class UsageService {
     // ==== 返回 DTO（service 层，供 controller 使用） ====
 
     /** 总量汇总。 */
-    public record UsageSummary(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount) {}
+    public record UsageSummary(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount, long stepCount, long requestCount) {}
 
     /** 按模型/Agent 类型聚合。 */
     public record ModelUsage(String model, Long tokens, Long costCents, long taskCount) {}
 
     /** 按天聚合。 */
-    public record DailyUsage(LocalDate date, Long tokens, Long costCents) {}
+    public record DailyUsage(LocalDate date, Long tokens, Long costCents, long videoCount, long stepCount) {}
 
     /** 按 Run 聚合。 */
     public record RunUsage(Long runId, String goal, Long tokens, Long costCents, LocalDateTime createdAt) {}
+
+public record RequestUsage(Long id, String kind, LocalDateTime time, String provider, String model,
+                           Long tokensUsed, Long costCents, Boolean costEstimated,
+                           Long latencyMs, String status) {}
+
+public record FilterOptions(List<String> providers, List<String> models) {}
 
     // ==== 内部累加器 ====
 
@@ -241,11 +374,35 @@ public class UsageService {
         LocalDateTime getCreatedAt();
     }
 
+    /** VideoTask 请求明细投影。 */
+    public interface RequestVideoRow {
+        Long getId();
+        String getProvider();
+        String getModelUsed();
+        Long getTokensUsed();
+        Long getCostCents();
+        Boolean getCostEstimated();
+        VideoTaskStatus getStatus();
+        LocalDateTime getCreatedAt();
+    }
+
     /** AgentStep 聚合用投影。 */
     public interface AgentStepRow {
         AgentType getAgentLabel();
         Long getTokensUsed();
         Long getCostCents();
+        LocalDateTime getCreatedAt();
+    }
+
+    /** AgentStep 请求明细投影。 */
+    public interface RequestStepRow {
+        Long getId();
+        AgentType getAgentLabel();
+        Long getTokensUsed();
+        Long getCostCents();
+        Boolean getCostEstimated();
+        Long getLatencyMs();
+        AgentStepStatus getStatus();
         LocalDateTime getCreatedAt();
     }
 

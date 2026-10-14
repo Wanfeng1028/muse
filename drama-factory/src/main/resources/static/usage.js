@@ -1,286 +1,470 @@
-
 (function () {
   'use strict';
 
-  var EM_DASH = '—';
+  var EM_DASH = '\u2014';
 
   function fmtNum(n) {
-    if (n === null || n === undefined || n === '') return EM_DASH;
+    if (n === null || n === undefined) return EM_DASH;
     var num = Number(n);
     if (!isFinite(num)) return EM_DASH;
     return num.toLocaleString('en-US');
   }
 
-  function fmtCost(costCents) {
-    if (costCents === null || costCents === undefined || costCents === '') return EM_DASH;
-    var c = Number(costCents);
-    if (!isFinite(c)) return EM_DASH;
-    return '¥' + (c / 100).toFixed(2);
+  function fmtCost(cents) {
+    if (cents === null || cents === undefined) return EM_DASH;
+    var num = Number(cents);
+    if (!isFinite(num)) return EM_DASH;
+    return '¥' + (num / 100).toFixed(2);
   }
 
-  function pad2(n) {
-    return n < 10 ? '0' + n : '' + n;
-  }
-
-  function fmtTime(iso) {
-    if (!iso) return EM_DASH;
-    var s = String(iso);
+  function fmtTime(s) {
+    if (!s) return EM_DASH;
     var d = new Date(s);
-    if (isNaN(d.getTime())) {
-      return s.length >= 16 ? s.slice(0, 16).replace('T', ' ') : s;
+    if (isNaN(d.getTime())) return EM_DASH;
+    function p(x) { return x < 10 ? '0' + x : '' + x; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+      ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function fmtDate(s) {
+    if (!s) return EM_DASH;
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    function p(x) { return x < 10 ? '0' + x : '' + x; }
+    return (d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  function truncate(s, n) {
+    if (s === null || s === undefined) return EM_DASH;
+    var str = String(s);
+    if (str.length <= n) return str;
+    return str.slice(0, n - 1) + '\u2026';
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+        var v = attrs[k];
+        if (v === null || v === undefined) continue;
+        if (k === 'class') {
+          node.className = v;
+        } else if (k === 'text') {
+          node.textContent = v;
+        } else if (k === 'style') {
+          node.setAttribute('style', v);
+        } else {
+          node.setAttribute(k, v);
+        }
+      }
     }
-    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
-      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-  }
-
-  function fmtDate(dateStr) {
-    if (!dateStr) return EM_DASH;
-    return String(dateStr);
-  }
-
-  function truncate(str, max) {
-    if (str === null || str === undefined) return EM_DASH;
-    var s = String(str);
-    if (s.length <= max) return s;
-    return s.slice(0, max) + '…';
-  }
-
-  function el(id) {
-    return document.getElementById(id);
-  }
-
-  function show(ids) {
-    for (var i = 0; i < ids.length; i++) {
-      var node = el(ids[i]);
-      if (node) node.hidden = false;
+    if (children && children.length) {
+      for (var i = 0; i < children.length; i++) {
+        var c = children[i];
+        if (c === null || c === undefined) continue;
+        if (typeof c === 'string') {
+          node.appendChild(document.createTextNode(c));
+        } else {
+          node.appendChild(c);
+        }
+      }
     }
+    return node;
   }
 
-  function hide(ids) {
-    for (var i = 0; i < ids.length; i++) {
-      var node = el(ids[i]);
-      if (node) node.hidden = true;
-    }
+  function show(id) {
+    var node = document.getElementById(id);
+    if (node) node.style.display = '';
+  }
+
+  function hide(id) {
+    var node = document.getElementById(id);
+    if (node) node.style.display = 'none';
   }
 
   function setState(prefix, state) {
-    var loading = el(prefix + '-loading');
-    var empty = el(prefix + '-empty');
-    var error = el(prefix + '-error');
-    if (loading) loading.hidden = state !== 'loading';
-    if (empty) empty.hidden = state !== 'empty';
-    if (error) error.hidden = state !== 'error';
+    hide(prefix + '-loading');
+    hide(prefix + '-empty');
+    hide(prefix + '-error');
+    if (state === 'loading') {
+      show(prefix + '-loading');
+    } else if (state === 'empty') {
+      show(prefix + '-empty');
+    } else if (state === 'error') {
+      show(prefix + '-error');
+    }
   }
 
   function getJSON(url) {
-    return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    });
+    return fetch(url, { headers: { 'Accept': 'application/json' } })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      });
   }
 
   function refreshIcons() {
-    try {
-      if (window.lucide && typeof window.lucide.createIcons === 'function') {
-        window.lucide.createIcons();
-      }
-    } catch (e) { /* ignore */ }
-  }
-
-  // ---------- summary strip ----------
-  function renderSummary(data) {
-    var strip = el('usage-strip');
-    if (!strip) return;
-    if (!data || typeof data !== 'object') {
-      strip.textContent = EM_DASH;
-      return;
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
     }
-    var parts = [];
-    parts.push('累计 Token ' + fmtNum(data.tokensTotal));
-    parts.push('累计费用约 ' + fmtCost(data.costCentsTotal));
-    parts.push('视频任务 ' + fmtNum(data.taskCount));
-    parts.push('运行 ' + fmtNum(data.runCount));
-    strip.textContent = parts.join(' · ');
-  }
-
-  // ---------- by model ----------
-  function renderByModel(rows) {
-    var tbody = el('usage-by-model');
-    var table = el('by-model-table');
-    if (!tbody || !table) return;
-
-    if (!Array.isArray(rows) || rows.length === 0) {
-      setState('by-model', 'empty');
-      table.hidden = true;
-      return;
-    }
-
-    tbody.innerHTML = '';
-    for (var i = 0; i < rows.length; i++) {
-      var r = rows[i] || {};
-      var tr = document.createElement('tr');
-
-      var tdModel = document.createElement('td');
-      tdModel.textContent = (r.model === null || r.model === undefined || r.model === '') ? EM_DASH : String(r.model);
-      tr.appendChild(tdModel);
-
-      var tdTokens = document.createElement('td');
-      tdTokens.textContent = fmtNum(r.tokens);
-      tr.appendChild(tdTokens);
-
-      var tdCost = document.createElement('td');
-      tdCost.textContent = fmtCost(r.costCents);
-      tr.appendChild(tdCost);
-
-      var tdTasks = document.createElement('td');
-      tdTasks.textContent = fmtNum(r.taskCount);
-      tr.appendChild(tdTasks);
-
-      tbody.appendChild(tr);
-    }
-
-    setState('by-model', 'ready');
-    table.hidden = false;
-  }
-
-  // ---------- by day ----------
-  function renderByDay(rows) {
-    var container = el('usage-by-day');
-    if (!container) return;
-
-    if (!Array.isArray(rows) || rows.length === 0) {
-      setState('by-day', 'empty');
-      container.hidden = true;
-      return;
-    }
-
-    var max = 0;
-    for (var i = 0; i < rows.length; i++) {
-      var t = rows[i] && rows[i].tokens;
-      var n = Number(t);
-      if (isFinite(n) && n > max) max = n;
-    }
-
-    container.innerHTML = '';
-    for (var j = 0; j < rows.length; j++) {
-      var r = rows[j] || {};
-      var row = document.createElement('div');
-      row.className = 'bar-row';
-
-      var dateEl = document.createElement('span');
-      dateEl.className = 'bar-date';
-      dateEl.textContent = fmtDate(r.date);
-      row.appendChild(dateEl);
-
-      var track = document.createElement('span');
-      track.className = 'bar-track';
-      var fill = document.createElement('span');
-      fill.className = 'bar-fill';
-      var tokensNum = Number(r.tokens);
-      var pct = 0;
-      if (max > 0 && isFinite(tokensNum) && tokensNum > 0) {
-        pct = (tokensNum / max) * 100;
-      }
-      fill.style.width = pct.toFixed(2) + '%';
-      track.appendChild(fill);
-      row.appendChild(track);
-
-      var valEl = document.createElement('span');
-      valEl.className = 'bar-value';
-      valEl.textContent = fmtNum(r.tokens);
-      row.appendChild(valEl);
-
-      container.appendChild(row);
-    }
-
-    setState('by-day', 'ready');
-    container.hidden = false;
-  }
-
-  // ---------- by run ----------
-  function renderByRun(rows) {
-    var tbody = el('usage-by-run');
-    var table = el('by-run-table');
-    if (!tbody || !table) return;
-
-    if (!Array.isArray(rows) || rows.length === 0) {
-      setState('by-run', 'empty');
-      table.hidden = true;
-      return;
-    }
-
-    tbody.innerHTML = '';
-    for (var i = 0; i < rows.length; i++) {
-      var r = rows[i] || {};
-      var tr = document.createElement('tr');
-
-      var tdRun = document.createElement('td');
-      tdRun.textContent = (r.runId === null || r.runId === undefined || r.runId === '') ? EM_DASH : String(r.runId);
-      tr.appendChild(tdRun);
-
-      var tdGoal = document.createElement('td');
-      tdGoal.textContent = truncate(r.goal, 30);
-      tr.appendChild(tdGoal);
-
-      var tdTokens = document.createElement('td');
-      tdTokens.textContent = fmtNum(r.tokens);
-      tr.appendChild(tdTokens);
-
-      var tdCost = document.createElement('td');
-      tdCost.textContent = fmtCost(r.costCents);
-      tr.appendChild(tdCost);
-
-      var tdTime = document.createElement('td');
-      tdTime.textContent = fmtTime(r.createdAt);
-      tr.appendChild(tdTime);
-
-      tbody.appendChild(tr);
-    }
-
-    setState('by-run', 'ready');
-    table.hidden = false;
   }
 
   function failState(prefix) {
     setState(prefix, 'error');
   }
 
-  // ---------- boot ----------
-  function boot() {
-    setState('by-model', 'loading');
-    setState('by-day', 'loading');
-    setState('by-run', 'loading');
+  var state = {
+    provider: '',
+    model: '',
+    days: 30,
+    metric: 'tokens',
+    byDayRows: []
+  };
 
-    var strip = el('usage-strip');
-    if (strip) strip.textContent = '加载中…';
+  function qs(id) {
+    return document.getElementById(id);
+  }
 
-    getJSON('/api/usage/summary')
-      .then(function (data) { renderSummary(data); })
+  function buildQuery(params) {
+    var parts = [];
+    for (var k in params) {
+      if (!Object.prototype.hasOwnProperty.call(params, k)) continue;
+      var v = params[k];
+      if (v === null || v === undefined || v === '') continue;
+      parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    }
+    return parts.length ? ('?' + parts.join('&')) : '';
+  }
+
+  function loadFilters() {
+    getJSON('/api/usage/filters')
+      .then(function (data) {
+        if (!data) return;
+        var providerSel = qs('filter-provider');
+        var modelSel = qs('filter-model');
+        var providers = data.providers || [];
+        var models = data.models || [];
+        var i;
+        for (i = 0; i < providers.length; i++) {
+          providerSel.appendChild(el('option', { value: providers[i], text: providers[i] }));
+        }
+        for (i = 0; i < models.length; i++) {
+          modelSel.appendChild(el('option', { value: models[i], text: models[i] }));
+        }
+      })
       .catch(function () {
-        if (strip) strip.textContent = EM_DASH;
+        /* 过滤项加载失败不影响主流程 */
       });
+  }
 
+  function loadSummary() {
+    setState('kpi', 'loading');
+    var url = '/api/usage/summary' + buildQuery({
+      provider: state.provider,
+      model: state.model,
+      days: state.days
+    });
+    getJSON(url)
+      .then(function (data) {
+        if (!data) {
+          setState('kpi', 'error');
+          return;
+        }
+        qs('kpi-cost').textContent = fmtCost(data.costCentsTotal);
+        qs('kpi-requests').textContent = fmtNum(data.requestCount);
+        qs('kpi-tokens').textContent = fmtNum(data.tokensTotal);
+        qs('kpi-cache-hit').textContent = EM_DASH;
+        setState('kpi', 'ready');
+      })
+      .catch(function () {
+        failState('kpi');
+      });
+  }
+
+  function loadTrend() {
+    setState('trend', 'loading');
+    var url = '/api/usage/by-day' + buildQuery({
+      days: state.days,
+      provider: state.provider,
+      model: state.model
+    });
+    getJSON(url)
+      .then(function (rows) {
+        state.byDayRows = rows || [];
+        renderTrend();
+      })
+      .catch(function () {
+        failState('trend');
+      });
+  }
+
+  function trendValue(row, metric) {
+    if (!row) return null;
+    if (metric === 'tokens') return row.tokens;
+    if (metric === 'requests') {
+      var vc = row.videoCount === null || row.videoCount === undefined ? 0 : Number(row.videoCount);
+      var sc = row.stepCount === null || row.stepCount === undefined ? 0 : Number(row.stepCount);
+      return vc + sc;
+    }
+    if (metric === 'cost') return row.costCents;
+    return null;
+  }
+
+  function renderTrend() {
+    var list = qs('trend-list');
+    while (list.firstChild) list.removeChild(list.firstChild);
+
+    var rows = state.byDayRows || [];
+    if (!rows.length) {
+      setState('trend', 'empty');
+      return;
+    }
+
+    var metric = state.metric;
+    var max = 0;
+    var i;
+    var vals = [];
+    for (i = 0; i < rows.length; i++) {
+      var v = trendValue(rows[i], metric);
+      var num = (v === null || v === undefined) ? null : Number(v);
+      vals.push(num);
+      if (num !== null && isFinite(num) && num > max) max = num;
+    }
+
+    for (i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var raw = vals[i];
+      var label;
+      if (raw === null || !isFinite(raw)) {
+        label = EM_DASH;
+      } else if (metric === 'cost') {
+        label = fmtCost(raw);
+      } else {
+        label = fmtNum(raw);
+      }
+
+      var pct = 0;
+      if (raw !== null && isFinite(raw) && max > 0) {
+        pct = (raw / max) * 100;
+        if (pct < 0) pct = 0;
+      }
+
+      var fill = el('div', { class: 'bar-fill' });
+      fill.style.width = pct + '%';
+
+      var track = el('div', { class: 'bar-track' }, [fill]);
+
+      var barRow = el('div', { class: 'bar-row' }, [
+        el('div', { class: 'bar-date', text: fmtDate(row.date) }),
+        track,
+        el('div', { class: 'bar-value', text: label })
+      ]);
+
+      list.appendChild(barRow);
+    }
+
+    setState('trend', 'ready');
+  }
+
+  function kindLabel(kind) {
+    if (kind === 'VIDEO_TASK') return '视频任务';
+    return 'Agent 步骤';
+  }
+
+  function speedLabel(row) {
+    var lat = row.latencyMs;
+    var tok = row.tokensUsed;
+    if (lat === null || lat === undefined || tok === null || tok === undefined) return EM_DASH;
+    var latNum = Number(lat);
+    var tokNum = Number(tok);
+    if (!isFinite(latNum) || !isFinite(tokNum)) return EM_DASH;
+    if (latNum <= 0) return EM_DASH;
+    var tps = Math.round(tokNum * 1000 / latNum);
+    if (!isFinite(tps)) return EM_DASH;
+    return '\u2248' + tps + ' tok/s';
+  }
+
+  function costEstimatedLabel(row) {
+    var base = fmtCost(row.costCents);
+    if (base === EM_DASH) return EM_DASH;
+    if (row.costEstimated === true) return '约' + base;
+    return base;
+  }
+
+  function loadRequests() {
+    setState('req', 'loading');
+    var url = '/api/usage/requests' + buildQuery({
+      limit: 50,
+      provider: state.provider,
+      model: state.model,
+      days: state.days
+    });
+    getJSON(url)
+      .then(function (rows) {
+        renderRequests(rows || []);
+      })
+      .catch(function () {
+        failState('req');
+      });
+  }
+
+  function renderRequests(rows) {
+    var tbody = qs('req-tbody');
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    if (!rows.length) {
+      setState('req', 'empty');
+      return;
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var tr = el('tr', null, [
+        el('td', { text: fmtTime(row.time) }),
+        el('td', { text: kindLabel(row.kind) }),
+        el('td', { text: row.provider === null || row.provider === undefined ? EM_DASH : row.provider }),
+        el('td', { text: row.model === null || row.model === undefined ? EM_DASH : row.model }),
+        el('td', { text: fmtNum(row.tokensUsed) }),
+        el('td', { text: costEstimatedLabel(row) }),
+        el('td', { text: speedLabel(row) })
+      ]);
+      tbody.appendChild(tr);
+    }
+
+    setState('req', 'ready');
+  }
+
+  function loadByModel() {
+    setState('model', 'loading');
     getJSON('/api/usage/by-model')
-      .then(function (rows) { renderByModel(rows); })
-      .catch(function () { failState('by-model'); });
+      .then(function (rows) {
+        renderByModel(rows || []);
+      })
+      .catch(function () {
+        failState('model');
+      });
+  }
 
-    getJSON('/api/usage/by-day?days=30')
-      .then(function (rows) { renderByDay(rows); })
-      .catch(function () { failState('by-day'); });
+  function renderByModel(rows) {
+    var tbody = qs('model-tbody');
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
+    if (!rows.length) {
+      setState('model', 'empty');
+      return;
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var tr = el('tr', null, [
+        el('td', { text: row.model === null || row.model === undefined ? EM_DASH : row.model }),
+        el('td', { text: fmtNum(row.tokens) }),
+        el('td', { text: fmtCost(row.costCents) }),
+        el('td', { text: fmtNum(row.taskCount) })
+      ]);
+      tbody.appendChild(tr);
+    }
+
+    setState('model', 'ready');
+  }
+
+  function loadByRun() {
+    setState('run', 'loading');
     getJSON('/api/usage/by-run?limit=20')
-      .then(function (rows) { renderByRun(rows); })
-      .catch(function () { failState('by-run'); });
+      .then(function (rows) {
+        renderByRun(rows || []);
+      })
+      .catch(function () {
+        failState('run');
+      });
+  }
 
+  function renderByRun(rows) {
+    var tbody = qs('run-tbody');
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    if (!rows.length) {
+      setState('run', 'empty');
+      return;
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var goalText = row.goal === null || row.goal === undefined ? EM_DASH : truncate(row.goal, 60);
+      var tr = el('tr', null, [
+        el('td', { text: row.runId === null || row.runId === undefined ? EM_DASH : String(row.runId) }),
+        el('td', { class: 'wrap', text: goalText }),
+        el('td', { text: fmtNum(row.tokens) }),
+        el('td', { text: fmtCost(row.costCents) }),
+        el('td', { text: fmtTime(row.createdAt) })
+      ]);
+      tbody.appendChild(tr);
+    }
+
+    setState('run', 'ready');
+  }
+
+  function loadFiltered() {
+    loadSummary();
+    loadTrend();
+    loadRequests();
+  }
+
+  function loadAll() {
+    loadFiltered();
+    loadByModel();
+    loadByRun();
+  }
+
+  function bindFilters() {
+    qs('filter-provider').addEventListener('change', function (e) {
+      state.provider = e.target.value || '';
+      loadFiltered();
+    });
+    qs('filter-model').addEventListener('change', function (e) {
+      state.model = e.target.value || '';
+      loadFiltered();
+    });
+    qs('filter-days').addEventListener('change', function (e) {
+      var v = parseInt(e.target.value, 10);
+      state.days = isFinite(v) ? v : 30;
+      loadFiltered();
+    });
+    qs('btn-refresh').addEventListener('click', function () {
+      loadAll();
+    });
+  }
+
+  function bindTabs() {
+    var tabs = document.querySelectorAll('.tab-btn');
+    for (var i = 0; i < tabs.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var metric = btn.getAttribute('data-metric');
+          if (!metric) return;
+          state.metric = metric;
+          for (var j = 0; j < tabs.length; j++) {
+            tabs[j].classList.remove('active');
+          }
+          btn.classList.add('active');
+          renderTrend();
+        });
+      })(tabs[i]);
+    }
+  }
+
+  function init() {
+    bindFilters();
+    bindTabs();
+    loadFilters();
+    loadAll();
     refreshIcons();
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    boot();
+    init();
   }
-
-  window.refreshIcons = refreshIcons;
 })();
-

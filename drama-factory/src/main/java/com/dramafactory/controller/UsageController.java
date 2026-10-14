@@ -29,10 +29,13 @@ public class UsageController {
 
     /** 总量汇总。 */
     @GetMapping("/summary")
-    @Operation(summary = "查询用量总量汇总")
-    public SummaryDto summary() {
-        UsageService.UsageSummary s = usageService.summary();
-        return new SummaryDto(s.tokensTotal(), s.costCentsTotal(), s.taskCount(), s.runCount());
+    @Operation(summary = "用量汇总（支持 provider/model/days 过滤）")
+    public SummaryDto summary(@RequestParam(required = false) String provider,
+                              @RequestParam(required = false) String model,
+                              @RequestParam(required = false, defaultValue = "0") int days) {
+        UsageService.UsageSummary s = usageService.summary(provider, model, days);
+        return new SummaryDto(s.tokensTotal(), s.costCentsTotal(), s.taskCount(), s.runCount(),
+                s.stepCount(), s.requestCount());
     }
 
     /** 按模型 / Agent 类型聚合。 */
@@ -46,15 +49,35 @@ public class UsageController {
 
     /** 按天聚合，默认 30 天。 */
     @GetMapping("/by-day")
-    @Operation(summary = "按天聚合用量")
-    public List<DayDto> byDay(@RequestParam(name = "days", defaultValue = "30") int days) {
-        return usageService.byDay(days).stream()
-                .map(d -> new DayDto(d.date(), d.tokens(), d.costCents()))
+    @Operation(summary = "按天聚合用量（支持 provider/model 过滤）")
+    public List<DayDto> byDay(@RequestParam(name = "days", defaultValue = "30") int days,
+                              @RequestParam(required = false) String provider,
+                              @RequestParam(required = false) String model) {
+        return usageService.byDay(days, provider, model).stream()
+                .map(d -> new DayDto(d.date(), d.tokens(), d.costCents(), d.videoCount(), d.stepCount()))
                 .toList();
     }
 
     /** 按 Run 聚合，默认 20 条。 */
-    @GetMapping("/by-run")
+    @GetMapping("/requests")
+@Operation(summary = "逐请求用量明细（合并 VideoTask 与 AgentStep）")
+public List<RequestDto> requests(@RequestParam(defaultValue = "50") int limit,
+                                 @RequestParam(required = false) String provider,
+                                 @RequestParam(required = false) String model,
+                                 @RequestParam(defaultValue = "30") int days) {
+    return usageService.requests(limit, provider, model, days).stream()
+            .map(r -> new RequestDto(r.id(), r.kind(), r.time(), r.provider(), r.model(),
+                    r.tokensUsed(), r.costCents(), r.costEstimated(), r.latencyMs(), r.status()))
+            .toList();
+}
+
+@GetMapping("/filters")
+@Operation(summary = "筛选器下拉数据（providers / models）")
+public UsageService.FilterOptions filters() {
+    return usageService.filters();
+}
+
+@GetMapping("/by-run")
     @Operation(summary = "按运行记录聚合用量")
     public List<RunDto> byRun(@RequestParam(name = "limit", defaultValue = "20") int limit) {
         return usageService.byRun(limit).stream()
@@ -65,14 +88,19 @@ public class UsageController {
     // ==== 返回 DTO ====
 
     /** 总量汇总 DTO。 */
-    public record SummaryDto(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount) {}
+    public record SummaryDto(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount,
+                         long stepCount, long requestCount) {}
 
     /** 按模型/Agent 类型聚合 DTO。 */
     public record ModelDto(String model, Long tokens, Long costCents, long taskCount) {}
 
     /** 按天聚合 DTO。 */
-    public record DayDto(LocalDate date, Long tokens, Long costCents) {}
+    public record DayDto(LocalDate date, Long tokens, Long costCents, long videoCount, long stepCount) {}
 
     /** 按 Run 聚合 DTO。 */
     public record RunDto(Long runId, String goal, Long tokens, Long costCents, LocalDateTime createdAt) {}
+
+public record RequestDto(Long id, String kind, LocalDateTime time, String provider, String model,
+                         Long tokensUsed, Long costCents, Boolean costEstimated,
+                         Long latencyMs, String status) {}
 }
