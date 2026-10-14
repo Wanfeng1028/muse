@@ -6,6 +6,7 @@ import com.dramafactory.service.CredentialResolver;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -40,6 +41,9 @@ public class AgnesVideoProvider implements VideoProvider {
     /** HTTP 客户端，连接超时 15 秒。 */
     private final HttpClient httpClient;
 
+    /** HTTP 发送接缝：生产走真实客户端，测试可注入录制回放。 */
+    private final VideoHttpGateway gateway;
+
     /** JSON 序列化/反序列化工具。 */
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -48,12 +52,36 @@ public class AgnesVideoProvider implements VideoProvider {
      *
      * @param credentialResolver 凭证解析器（用户 Key 优先，回退平台凭证）
      */
+    @Autowired
     public AgnesVideoProvider(CredentialResolver credentialResolver) {
+        this(credentialResolver, null);
+    }
+
+    /**
+     * 测试用构造器：注入录制回放的假网关（包可见，不许改成 public）。
+     *
+     * @param credentialResolver 凭证解析器
+     * @param gateway            为 null 时使用基于 httpClient 的默认网关
+     */
+    AgnesVideoProvider(CredentialResolver credentialResolver, VideoHttpGateway gateway) {
         this.credentialResolver = credentialResolver;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
+        this.gateway = gateway != null ? gateway : defaultGateway(this.httpClient);
     }
+
+    /**
+     * 基于真实 HttpClient 的默认网关。
+     */
+    private static VideoHttpGateway defaultGateway(HttpClient client) {
+        return request -> {
+            HttpResponse<String> resp = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return new VideoHttpGateway.GatewayResponse(resp.statusCode(), resp.body());
+        };
+    }
+
+
 
     @Override
     public String name() {
@@ -113,14 +141,16 @@ public class AgnesVideoProvider implements VideoProvider {
         Map.Entry<String, String> auth = credentialResolver.agnesAuth(SUBMIT_URL);
         builder.header(auth.getKey(), auth.getValue());
 
-        HttpResponse<String> response;
+        VideoHttpGateway.GatewayResponse response;
         try {
-            response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            response = gateway.exchange(builder.build());
         } catch (Exception e) {
             throw new RuntimeException("请求 Agnes 提交接口失败: " + e.getMessage(), e);
         }
 
         int status = response.statusCode();
+
+
         // 限流处理
         if (status == 429) {
             throw new RateLimitedException("agnes 限流", 60);
@@ -172,12 +202,14 @@ public class AgnesVideoProvider implements VideoProvider {
         Map.Entry<String, String> auth = credentialResolver.agnesAuth(url);
         builder.header(auth.getKey(), auth.getValue());
 
-        HttpResponse<String> response;
+        VideoHttpGateway.GatewayResponse response;
         try {
-            response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            response = gateway.exchange(builder.build());
         } catch (Exception e) {
             throw new RuntimeException("请求 Agnes 查询接口失败: " + e.getMessage(), e);
         }
+
+
 
         int status = response.statusCode();
         // 限流处理
