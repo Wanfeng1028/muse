@@ -52,7 +52,7 @@ fun DirectorScreen() {
     val serverTimeMs by client.serverTimeMs.collectAsState()
 
     var selectedCueId by remember { mutableStateOf<String?>(null) }
-    var rehearsal by remember { mutableStateOf(false) }
+    val rehearsal by client.rehearsalMode.collectAsState()
 
     // 首次进入连接
     LaunchedEffect(Unit) {
@@ -120,7 +120,8 @@ fun DirectorScreen() {
         TopStatusBar(
             showName = "舞台剧 · 未命名",
             connState = connState,
-            clockText = displayClock
+            clockText = displayClock,
+            rehearsal = rehearsal,
         )
         Divider(color = StageColors.DimGold, thickness = 1.dp)
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -147,7 +148,7 @@ fun DirectorScreen() {
         Divider(color = StageColors.DimGold, thickness = 1.dp)
         TransportBar(
             rehearsal = rehearsal,
-            onToggleRehearsal = { rehearsal = !rehearsal },
+            onToggleRehearsal = { client.setRehearsal(!rehearsal) },
             onArm = {
                 val id = selectedCueId ?: currentCueId
                 if (id != null) client.armCue(id) else client.log("未选中 cue，无法预备")
@@ -165,7 +166,8 @@ fun DirectorScreen() {
 private fun TopStatusBar(
     showName: String,
     connState: ConnState,
-    clockText: String
+    clockText: String,
+    rehearsal: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -183,6 +185,21 @@ private fun TopStatusBar(
         )
         Spacer(Modifier.width(24.dp))
         ConnectionIndicator(connState)
+        if (rehearsal) {
+            Spacer(Modifier.width(12.dp))
+            Box(
+                modifier = Modifier
+                    .background(StageColors.Curtain)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = "排练",
+                    color = StageColors.Chalk,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
         Spacer(Modifier.weight(1f))
         Text(
             text = clockText,

@@ -24,6 +24,12 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:1.5.18")
 
+    implementation("org.xerial:sqlite-jdbc:3.53.4.0")
+    implementation("org.flywaydb:flyway-core:10.21.0")
+    implementation("com.google.code.gson:gson:2.13.1")
+    implementation("io.micrometer:micrometer-core:1.17.1")
+    implementation("io.micrometer:micrometer-registry-prometheus:1.17.1")
+
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testImplementation("io.ktor:ktor-server-test-host:3.1.3")

@@ -8,8 +8,9 @@ StageCue 是一个开源的舞台监督工具：把 cue 表放到时间轴上，
 
 - **时间轴 cue 编排**：每个 cue 有编号、描述、触发时间，拖一下就能改顺序。
 - **多端毫秒级同步**：导演台按一下，返听屏、灯光台在同一帧收到信号。
-- **排练模式**：可以暂停、单步、回退到任意 cue，排练不用重头来。
+- **排练模式**：服务端真实开关（重启不丢失），排练触发打标、不驱动真实设备，导演台一键切换。
 - **离线优先**：本地存一份 show 数据，网络断了也能继续排练，连上后自动同步。
+- **持久化**：SQLite + Flyway 版本化迁移，旧版 show.json 自动导入。
 
 ## 对比
 
@@ -54,6 +55,12 @@ export PATH=~/workspace/toolchains/jdk/bin:$PATH
 
 导演台和同步服务之间跑一条 WebSocket，所有 cue 事件由服务端广播，客户端不做时间推算，避免时钟漂移。
 
+## 可观测性
+
+- `GET /healthz`：存活检查。
+- `GET /metrics`：Prometheus 文本格式指标（WS 连接、cue 触发/预备、HTTP 请求、DB 迁移数），详见 `docs/OPERATIONS.md`。
+- 日志：SLF4J + Logback，HTTP 请求带 `X-Request-Id`（CallId）全链路。
+
 ## 技术栈
 
 - **Kotlin Multiplatform**：一套 model / protocol 代码，桌面端和二期移动端共用。
@@ -68,9 +75,8 @@ export PATH=~/workspace/toolchains/jdk/bin:$PATH
 
 ## 已知限制
 
-- v1 只有桌面导演台，没有移动端。
-- 音频播放只支持 WAV，MP3 / FLAC 等二期再说。
-- 返听屏和灯光台的独立客户端在二期计划里。
+- 只有桌面导演台，没有移动端（返听屏/灯光台独立客户端在二期计划里）。
+- 音频播放支持 WAV / MP3。
 - 多人同时编辑同一份 show 暂不支持，先单导演。
 
 ## 许可

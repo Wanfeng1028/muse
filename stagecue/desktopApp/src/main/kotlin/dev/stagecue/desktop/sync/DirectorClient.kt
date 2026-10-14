@@ -11,6 +11,8 @@ import dev.stagecue.shared.protocol.CueArmed
 import dev.stagecue.shared.protocol.CueFired
 import dev.stagecue.shared.protocol.Error
 import dev.stagecue.shared.protocol.Hello
+import dev.stagecue.shared.protocol.RehearsalChanged
+import dev.stagecue.shared.protocol.SetRehearsal
 import dev.stagecue.shared.protocol.StateSnapshot
 import dev.stagecue.shared.protocol.TriggerCue
 import dev.stagecue.shared.protocol.Welcome
@@ -32,6 +34,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.util.UUID
 
 /** 连接状态 */
@@ -64,6 +69,10 @@ class DirectorClient {
     private val _serverTimeMs = MutableStateFlow<Long?>(null)
     val serverTimeMs: StateFlow<Long?> = _serverTimeMs
 
+    private val _rehearsalMode = MutableStateFlow(false)
+    /** 服务端排练模式状态（连接后从服务端同步） */
+    val rehearsalMode: StateFlow<Boolean> = _rehearsalMode
+
     private val client = HttpClient { install(WebSockets) }
     private val scope = CoroutineScope(Dispatchers.IO + Job())
     private val clockEstimator = ClockEstimator()
@@ -89,6 +98,7 @@ class DirectorClient {
                     send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(),
                         Hello(UUID.randomUUID().toString(), now, clientId, ClientRole.DIRECTOR, now))))
                     loadShow(host, port)
+                    loadRehearsalState(host, port)
                     startPing()
                     for (frame in incoming) {
                         if (frame is Frame.Text) handle(frame.readText())
@@ -144,6 +154,38 @@ class DirectorClient {
             } catch (t: Throwable) {
                 log("预备失败：${t.message}")
             }
+        }
+    }
+
+    /** 请求服务端切换排练模式；实际状态以服务端广播的 RehearsalChanged 为准 */
+    fun setRehearsal(enabled: Boolean) {
+        val s = session
+        if (s == null) {
+            log("未连接，无法切换排练模式")
+            return
+        }
+        scope.launch {
+            val now = System.currentTimeMillis()
+            try {
+                s.send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(),
+                    SetRehearsal(UUID.randomUUID().toString(), now, enabled))))
+                log(if (enabled) "已请求进入排练模式" else "已请求退出排练模式")
+            } catch (t: Throwable) {
+                log("切换排练模式失败：${t.message}")
+            }
+        }
+    }
+
+    private suspend fun loadRehearsalState(host: String, port: Int) {
+        try {
+            val body = client.get("http://$host:$port/api/rehearsal").bodyAsText()
+            val enabled = WsJson.json.parseToJsonElement(body).jsonObject["rehearsal"]?.jsonPrimitive?.booleanOrNull
+            if (enabled != null) {
+                _rehearsalMode.value = enabled
+                log(if (enabled) "服务端处于排练模式" else "服务端处于演出模式")
+            }
+        } catch (t: Throwable) {
+            log("读取排练模式失败：${t.message}")
         }
     }
 
@@ -209,6 +251,10 @@ class DirectorClient {
             }
             is StateSnapshot -> {
                 _states.value = msg.states
+            }
+            is RehearsalChanged -> {
+                _rehearsalMode.value = msg.enabled
+                log(if (msg.enabled) "已进入排练模式：触发仅做标记，不驱动真实设备" else "已退出排练模式")
             }
             is Error -> {
                 log("服务端错误 ${msg.code}：${msg.message}")

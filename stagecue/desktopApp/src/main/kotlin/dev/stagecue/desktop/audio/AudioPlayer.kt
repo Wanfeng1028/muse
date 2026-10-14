@@ -7,12 +7,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
+import javax.sound.sampled.AudioFormat
+import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Clip
 import javax.sound.sampled.FloatControl
+import javax.sound.sampled.UnsupportedAudioFileException
 
 /**
- * 本地音频播放：仅支持 WAV（v1 明确限制）。
+ * 本地音频播放：支持 WAV / MP3。
+ * MP3 经 mp3spi（SPI 自动发现）解码为 PCM_SIGNED 后播放。
  * 淡入通过 FloatControl MASTER_GAIN 协程渐变实现。
  * 文件缺失/格式不支持时记日志、不崩溃。
  */
@@ -31,7 +35,7 @@ object AudioPlayer {
                 logger?.invoke("音频文件不存在：$path")
                 return
             }
-            val stream = AudioSystem.getAudioInputStream(file)
+            val stream = decodeToPcm(path)
             val c = AudioSystem.getClip()
             c.open(stream)
             clip = c
@@ -71,8 +75,39 @@ object AudioPlayer {
                 c.start()
             }
         } catch (e: Throwable) {
-            logger?.invoke("音频播放失败：${e.message ?: e.javaClass.simpleName}（仅支持 WAV）")
+            logger?.invoke("音频播放失败：${e.message ?: e.javaClass.simpleName}（支持 WAV / MP3）")
             stopInternal()
+        }
+    }
+
+    /**
+     * 把音频文件解码为 PCM_SIGNED 流（WAV 直接返回，MP3 经 mp3spi 转码）。
+     * 供测试与排障用；调用方负责关闭返回的流。
+     * @throws UnsupportedAudioFileException 格式不支持
+     * @throws java.io.IOException 读取失败
+     */
+    @Throws(UnsupportedAudioFileException::class, java.io.IOException::class)
+    fun decodeToPcm(path: String): AudioInputStream {
+        val file = File(path)
+        val base = AudioSystem.getAudioInputStream(file)
+        if (base.format.encoding == AudioFormat.Encoding.PCM_SIGNED) {
+            return base
+        }
+        val src = base.format
+        val decoded = AudioFormat(
+            AudioFormat.Encoding.PCM_SIGNED,
+            src.sampleRate,
+            16,
+            src.channels,
+            src.channels * 2,
+            src.sampleRate,
+            false
+        )
+        try {
+            return AudioSystem.getAudioInputStream(decoded, base)
+        } catch (e: Exception) {
+            try { base.close() } catch (_: Exception) { /* ignore */ }
+            throw e
         }
     }
 

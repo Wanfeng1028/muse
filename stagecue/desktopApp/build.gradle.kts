@@ -20,6 +20,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
+    // MP3 解码：mp3spi（MpegAudioFileReader SPI）+ tritonus-share + jlayer（LGPL，运行时链接）
+    implementation("com.googlecode.soundlibs:mp3spi:1.9.5.4")
+    implementation("com.googlecode.soundlibs:tritonus-share:0.3.7.4")
+    implementation("javazoom:jlayer:1.0.1")
+
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
 }

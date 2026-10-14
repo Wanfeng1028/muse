@@ -447,8 +447,8 @@
 3. 导演台 UI：cue 列表 + 事件日志 + 传输控制条 + 服务器时钟显示
 4. 离线优先：本地操作日志（内存版，File 版待接）
 
-**状态**：v0.1.0（2026-10-13）：`:shared` 25/25 单测通过，`:server` 10/10 单测通过，WS 冒烟 8/8 通过（双客户端 Welcome/时钟同步/CueFired 广播/幂等）。桌面端全量编译通过（含 Compose UI）；运行时截图因 VM 缺 `libXtst.so.6` 系统库无法验收——未虚报。
+**状态**：v0.2.0（2026-10-15）：SQLite + Flyway 版本化迁移（旧 show.json 自动幂等导入）替代 JSON 文件存储；`GET /metrics`（Micrometer Prometheus，6 个指标）；备份→删库→恢复真实演练通过；启动配置非法值 fail-fast（exit 1）；排练模式后端真实实现（服务端持久化 + WS 广播 + 导演台联动）；MP3 解码（mp3spi + jlayer），WAV 回归通过。kotlinc 直接编译 + JUnit 全过（server/shared/desktop）。server 31/31、shared 29/29、desktop 音频测试 4/4、桌面 UI 全量编译通过
 
-**发版对照**：`stagecue/docs/PRODUCTION_REPORT_v0.1.0.md`——13/22 通过；未通过项（SQLite 迁移、/metrics、备份实测、限流等）均有排期或声明为已知限制。
+**发版对照**：`stagecue/docs/PRODUCTION_REPORT_v0.2.0.md`——v0.1.0 的 6 个未通过排期项本轮修复 5 个（剩限流熔断、Dependabot、告警、日志轮转/资源限制，均已记入 `stagecue/docs/TECH_DEBT.md`）。
 
-**已知限制**：Gradle daemon 本 VM 无法运行（改 kotlinc 直接验证）；服务端用 CIO 非 Netty（Netty 在本 VM 误用 KQueue）；排练模式为 UI 占位；音频仅 WAV。
+**已知限制**：Gradle daemon 本 VM 无法运行（改 kotlinc 直接验证）；服务端用 CIO 非 Netty（Netty 在本 VM 误用 KQueue）；桌面 UI 运行时截图因 VM 缺 libXtst.so.6 未验收；移动端返听屏二期。

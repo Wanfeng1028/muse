@@ -1,6 +1,9 @@
 package dev.stagecue.server
 
+import dev.stagecue.server.db.SqliteShowStore
+import dev.stagecue.server.metrics.StageMetrics
 import dev.stagecue.shared.protocol.*
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.response.respond
@@ -11,7 +14,7 @@ import io.ktor.websocket.*
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-fun Application.configureRoutes(store: ShowStore, hub: SyncHub) {
+fun Application.configureRoutes(store: SqliteShowStore, hub: SyncHub, metrics: StageMetrics) {
     // clientId -> 会话，用于 cue 事件广播
     val sessions = ConcurrentHashMap<String, WebSocketServerSession>()
 
@@ -32,8 +35,20 @@ fun Application.configureRoutes(store: ShowStore, hub: SyncHub) {
             call.respondText("{\"status\":\"ok\"}")
         }
 
+        get("/metrics") {
+            call.respondText(
+                metrics.scrape(),
+                ContentType.parse("text/plain; version=0.0.4; charset=utf-8")
+            )
+        }
+
         get("/api/show") {
+            metrics.showRequested()
             call.respond(HttpStatusCode.OK, store.getShow())
+        }
+
+        get("/api/rehearsal") {
+            call.respond(HttpStatusCode.OK, mapOf("rehearsal" to hub.rehearsalMode))
         }
 
         webSocket("/ws") {
@@ -69,6 +84,7 @@ fun Application.configureRoutes(store: ShowStore, hub: SyncHub) {
                         }
                         myClientId = msg.clientId
                         sessions[msg.clientId] = this
+                        metrics.wsConnected()
                         val welcome = hub.handleConnect(msg.clientId, msg.role)
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), welcome)))
                     }
@@ -78,6 +94,7 @@ fun Application.configureRoutes(store: ShowStore, hub: SyncHub) {
                     }
                     is TriggerCue -> {
                         val out = hub.handleTriggerCue(msg)
+                        if (out is CueFired) metrics.cueTriggered(rehearsal = out.rehearsal)
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), out)))
                         // 广播给其他客户端（触发者已收到直接回执）
                         if (out is CueFired) {
@@ -86,8 +103,14 @@ fun Application.configureRoutes(store: ShowStore, hub: SyncHub) {
                     }
                     is ArmCue -> {
                         val out = hub.handleArmCue(msg)
+                        metrics.cueArmed()
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), out)))
                         broadcastExcept(myClientId, out)
+                    }
+                    is SetRehearsal -> {
+                        val changed = hub.setRehearsal(msg.enabled)
+                        send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), changed)))
+                        broadcastExcept(myClientId, changed)
                     }
                     else -> {
                         val out = hub.handleUnknown(msg)
@@ -96,7 +119,10 @@ fun Application.configureRoutes(store: ShowStore, hub: SyncHub) {
                 }
             }
             } finally {
-                myClientId?.let { sessions.remove(it) }
+                myClientId?.let {
+                    sessions.remove(it)
+                    metrics.wsDisconnected()
+                }
             }
         }
     }

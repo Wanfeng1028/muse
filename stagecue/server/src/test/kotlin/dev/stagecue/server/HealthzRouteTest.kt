@@ -1,5 +1,8 @@
 package dev.stagecue.server
 
+import dev.stagecue.server.db.Database
+import dev.stagecue.server.db.SettingsStore
+import dev.stagecue.server.db.SqliteShowStore
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
@@ -17,27 +20,27 @@ class HealthzRouteTest {
 
     @Test
     fun `healthz returns ok`() = testApplication {
-        val store = ShowStore(tempDir)
+        val ds = Database.init(tempDir)
+        val store = SqliteShowStore(ds)
+        val settings = SettingsStore(ds)
         val hub = SyncHub()
-        application {
-            module(store, hub)
-        }
+        application { module(store, hub, settings) }
+
         val response = client.get("/healthz")
         assertEquals(HttpStatusCode.OK, response.status)
-        val body = response.bodyAsText()
-        assertTrue(body.contains("\"ok\""), "body should contain ok: $body")
+        assertTrue(response.bodyAsText().contains("\"ok\""), "body should contain ok")
     }
 
     @Test
     fun `api show returns default show`() = testApplication {
-        val store = ShowStore(tempDir)
+        val ds = Database.init(tempDir)
+        val store = SqliteShowStore(ds)
+        val settings = SettingsStore(ds)
         val hub = SyncHub()
-        application {
-            module(store, hub)
-        }
+        application { module(store, hub, settings) }
+
         val response = client.get("/api/show")
         assertEquals(HttpStatusCode.OK, response.status)
-        val body = response.bodyAsText()
-        assertTrue(body.contains("开场音乐"), "should include default cue: $body")
+        assertTrue(response.bodyAsText().contains("开场音乐"))
     }
 }

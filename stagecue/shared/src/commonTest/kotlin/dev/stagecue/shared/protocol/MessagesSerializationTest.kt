@@ -3,6 +3,7 @@ package dev.stagecue.shared.protocol
 import dev.stagecue.shared.model.CueState
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MessagesSerializationTest {
 
@@ -98,6 +99,42 @@ class MessagesSerializationTest {
         val text = json.encodeToString(WsMessage.serializer(), msg)
         val back = json.decodeFromString(WsMessage.serializer(), text)
         assertEquals(msg, back)
+    }
+
+    @Test
+    fun roundTripSetRehearsal() {
+        val msg: WsMessage = SetRehearsal(msgId = "m14", sentAtMs = 14000L, enabled = true)
+        val text = json.encodeToString(WsMessage.serializer(), msg)
+        val back = json.decodeFromString(WsMessage.serializer(), text)
+        assertEquals(msg, back)
+    }
+
+    @Test
+    fun roundTripRehearsalChanged() {
+        val msg: WsMessage = RehearsalChanged(msgId = "m15", sentAtMs = 15000L, enabled = false)
+        val text = json.encodeToString(WsMessage.serializer(), msg)
+        assertTrue(text.contains("\"kind\":\"rehearsal_changed\""), "expected kind in $text")
+        val back = json.decodeFromString(WsMessage.serializer(), text)
+        assertEquals(msg, back)
+    }
+
+    @Test
+    fun roundTripCueFiredRehearsal() {
+        val msg: WsMessage = CueFired(
+            msgId = "m16", sentAtMs = 16000L, cueId = "cue-1",
+            firedAtServerMs = 16100L, eventId = "evt-2", rehearsal = true
+        )
+        val text = json.encodeToString(WsMessage.serializer(), msg)
+        val back = json.decodeFromString(WsMessage.serializer(), text)
+        assertEquals(msg, back)
+    }
+
+    @Test
+    fun cueFiredWithoutRehearsalFieldDefaultsFalse() {
+        // 老版本消息没有 rehearsal 字段，反序列化必须兼容
+        val raw = """{"kind":"cue_fired","msgId":"m17","sentAtMs":17000,"cueId":"c","firedAtServerMs":17100,"eventId":"e"}"""
+        val msg = json.decodeFromString(WsMessage.serializer(), raw) as CueFired
+        assertEquals(false, msg.rehearsal)
     }
 
     @Test

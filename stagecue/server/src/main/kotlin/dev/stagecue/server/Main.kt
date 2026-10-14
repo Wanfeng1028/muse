@@ -1,5 +1,10 @@
 package dev.stagecue.server
 
+import dev.stagecue.server.config.ServerConfig
+import dev.stagecue.server.db.Database
+import dev.stagecue.server.db.SettingsStore
+import dev.stagecue.server.db.SqliteShowStore
+import dev.stagecue.server.metrics.StageMetrics
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -15,44 +20,52 @@ import io.ktor.server.websocket.WebSockets
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
-import java.io.File
 import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 
 private val log = LoggerFactory.getLogger("dev.stagecue.server.Main")
 
 fun main() {
-    val port = System.getenv("STAGECUE_PORT")?.toIntOrNull() ?: 8080
-    if (System.getenv("STAGECUE_PORT") == null) {
-        log.info("STAGECUE_PORT not set, defaulting to {}", port)
-    }
+    val config = ServerConfig.fromEnv().validateOrExit()
 
-    val dataDirPath = System.getenv("STAGECUE_DATA_DIR") ?: "./data"
-    if (System.getenv("STAGECUE_DATA_DIR") == null) {
-        log.info("STAGECUE_DATA_DIR not set, defaulting to {}", dataDirPath)
-    }
-    val dataDir = File(dataDirPath)
-    if (!dataDir.exists()) {
-        dataDir.mkdirs()
-    }
+    val ds = Database.init(config.dataDir)
+    val store = SqliteShowStore(ds)
+    val settings = SettingsStore(ds)
+    val hub = SyncHub(settings = settings)
+    val metrics = StageMetrics()
+    metrics.dbMigrationsApplied(Database.lastMigrationsApplied)
 
-    val store = ShowStore(dataDir)
-    val hub = SyncHub()
-
-    val server = embeddedServer(CIO, port = port, host = "0.0.0.0") {
-        module(store, hub)
+    val server = embeddedServer(CIO, port = config.port, host = config.host) {
+        module(store, hub, settings, metrics)
     }
 
     Runtime.getRuntime().addShutdownHook(Thread {
         log.info("Shutdown hook triggered, stopping server gracefully")
         server.stop(1000, 3000)
+        try {
+            store.close()
+        } catch (e: Exception) {
+            log.warn("Failed to close ShowStore", e)
+        }
+        try {
+            settings.close()
+        } catch (e: Exception) {
+            log.warn("Failed to close SettingsStore", e)
+        }
     })
 
-    log.info("StageCue server starting on port {} (data dir: {})", port, dataDir.absolutePath)
+    val dbFile = config.dataDir.resolve("stagecue.db").absolutePath
+    log.info(
+        "StageCue server starting on {}:{} (data dir: {}, db: {}, logLevel: {})",
+        config.host,
+        config.port,
+        config.dataDir.absolutePath,
+        dbFile,
+        config.logLevel,
+    )
     server.start(wait = true)
 }
 
-fun Application.module(store: ShowStore, hub: SyncHub) {
+fun Application.module(store: SqliteShowStore, hub: SyncHub, settings: SettingsStore, metrics: StageMetrics = StageMetrics()) {
     install(WebSockets) {
         pingPeriodMillis = 15_000
         timeoutMillis = 30_000
@@ -83,5 +96,5 @@ fun Application.module(store: ShowStore, hub: SyncHub) {
         mdc("call-id") { it.callId ?: "-" }
     }
 
-    configureRoutes(store, hub)
+    configureRoutes(store, hub, metrics)
 }

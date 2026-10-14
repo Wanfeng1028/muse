@@ -72,7 +72,9 @@ data class CueFired(
     override val sentAtMs: Long,
     val cueId: String,
     val firedAtServerMs: Long,
-    val eventId: String
+    val eventId: String,
+    /** 排练模式下触发为 true，执行端应只提示、不驱动真实设备。默认 false 兼容老消息。 */
+    val rehearsal: Boolean = false
 ) : WsMessage
 
 @Serializable
@@ -81,6 +83,22 @@ data class CueArmed(
     override val msgId: String,
     override val sentAtMs: Long,
     val cueId: String
+) : WsMessage
+
+@Serializable
+@SerialName("set_rehearsal")
+data class SetRehearsal(
+    override val msgId: String,
+    override val sentAtMs: Long,
+    val enabled: Boolean
+) : WsMessage
+
+@Serializable
+@SerialName("rehearsal_changed")
+data class RehearsalChanged(
+    override val msgId: String,
+    override val sentAtMs: Long,
+    val enabled: Boolean
 ) : WsMessage
 
 @Serializable
