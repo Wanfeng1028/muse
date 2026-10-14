@@ -30,6 +30,15 @@ func New(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
+// Ping 检查数据库连通性。
+func (s *Store) Ping() error {
+	var one int
+	if err := s.db.QueryRow("SELECT 1").Scan(&one); err != nil {
+		return fmt.Errorf("ping db: %w", err)
+	}
+	return nil
+}
+
 // nowUTC 返回当前 UTC 时间，统一入口便于测试替换。
 func nowUTC() time.Time { return time.Now().UTC() }
 
@@ -541,7 +550,8 @@ func (s *Store) TopReferers(n int) ([]model.NamedStat, error) {
 	return out, nil
 }
 
-// ImportCSV 从 CSV 读取短链并批量导入。列：slug,url,title,enabled,expires_at。
+// ImportCSV 从 CSV 读取短链并批量导入。
+// 列：slug,url,title,enabled,expires_at,max_visits,burn。
 // 首行若为表头（slug,url,...）会自动跳过。返回成功数、跳过数、错误列表。
 func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 	reader := csv.NewReader(r)
@@ -594,6 +604,32 @@ func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 			}
 			expiresAt = &t
 		}
+		var maxVisits *int64
+		if len(rec) > 5 && strings.TrimSpace(rec[5]) != "" {
+			v, perr := strconv.ParseInt(strings.TrimSpace(rec[5]), 10, 64)
+			if perr != nil || v < 1 || v > 1000000 {
+				errs = append(errs, fmt.Sprintf("line %d: invalid max_visits %q", lineNo, rec[5]))
+				skipped++
+				continue
+			}
+			maxVisits = &v
+		}
+		burn := false
+		if len(rec) > 6 && strings.TrimSpace(rec[6]) != "" {
+			v, perr := strconv.ParseBool(strings.TrimSpace(rec[6]))
+			if perr != nil {
+				errs = append(errs, fmt.Sprintf("line %d: invalid burn %q", lineNo, rec[6]))
+				skipped++
+				continue
+			}
+			burn = v
+		}
+		// burn 与 max_visits 互斥：burn=true 时 max_visits 只能为空或 1。
+		if burn && maxVisits != nil && *maxVisits != 1 {
+			errs = append(errs, fmt.Sprintf("line %d: burn cannot combine with max_visits != 1", lineNo))
+			skipped++
+			continue
+		}
 		if url == "" {
 			errs = append(errs, fmt.Sprintf("line %d: empty url", lineNo))
 			skipped++
@@ -605,7 +641,7 @@ func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 			continue
 		}
 
-		id, cerr := s.CreateLink(slug, url, title, expiresAt)
+		id, cerr := s.CreateLinkEx(slug, url, title, expiresAt, maxVisits, burn)
 		if cerr != nil {
 			errs = append(errs, fmt.Sprintf("line %d: create link: %v", lineNo, cerr))
 			skipped++
@@ -613,7 +649,7 @@ func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 		}
 		// 若导入数据里 enabled=false，则创建后再更新一次。
 		if !enabled {
-			if uerr := s.UpdateLink(id, title, false, expiresAt); uerr != nil {
+			if uerr := s.UpdateLinkEx(id, title, false, expiresAt, maxVisits, burn); uerr != nil {
 				errs = append(errs, fmt.Sprintf("line %d: update enabled: %v", lineNo, uerr))
 				skipped++
 				continue
@@ -624,7 +660,7 @@ func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 	return imported, skipped, errs
 }
 
-// ExportCSV 把所有短链按 slug,url,title,enabled,expires_at 导出到 w。
+// ExportCSV 把所有短链按 slug,url,title,enabled,expires_at,max_visits,burn 导出到 w。
 func (s *Store) ExportCSV(w io.Writer) error {
 	rows, err := s.db.Query(`SELECT ` + linkColumns + ` FROM links ORDER BY id ASC`)
 	if err != nil {
@@ -636,7 +672,7 @@ func (s *Store) ExportCSV(w io.Writer) error {
 
 	cw := csv.NewWriter(w)
 	// 写表头。
-	if err := cw.Write([]string{"slug", "url", "title", "enabled", "expires_at"}); err != nil {
+	if err := cw.Write([]string{"slug", "url", "title", "enabled", "expires_at", "max_visits", "burn"}); err != nil {
 		return fmt.Errorf("write header: %w", err)
 	}
 	for rows.Next() {
@@ -652,7 +688,15 @@ func (s *Store) ExportCSV(w io.Writer) error {
 		if l.ExpiresAt != nil {
 			expiresStr = formatTime(*l.ExpiresAt)
 		}
-		if err := cw.Write([]string{l.Slug, l.URL, l.Title, enabledStr, expiresStr}); err != nil {
+		maxVisitsStr := ""
+		if l.MaxVisits != nil {
+			maxVisitsStr = strconv.FormatInt(*l.MaxVisits, 10)
+		}
+		burnStr := "false"
+		if l.Burn {
+			burnStr = "true"
+		}
+		if err := cw.Write([]string{l.Slug, l.URL, l.Title, enabledStr, expiresStr, maxVisitsStr, burnStr}); err != nil {
 			return fmt.Errorf("write row: %w", err)
 		}
 	}

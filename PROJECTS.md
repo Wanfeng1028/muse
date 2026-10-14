@@ -328,6 +328,7 @@
 **视觉**：「快递面单 / 邮政标签」——米白 #F7F3EC 底、墨黑 #1F1B16、邮戳红 #B3402A 点睛、牛皮纸卡 #EDE6D6、邮票齿孔装饰边、短码与数字用等宽字体；去 AI 味：无紫渐变、无渐变标题、无三栏特性格、无 emoji 图标、无"赋能/极致体验"类文案。
 
 **状态**：工程化 v1（2026-10-13 完成，go test 24 例全过、vet/gofmt 全洁、真实服务冒烟：建链→302 跳转→点击计数→二维码→统计→CSV 往返全链路验证；4 张 Web UI 真实截图已亲眼验收）。
+**生产级补强 v1.2「可观测 + 限流 + 韧性」（2026-10-14）**：零依赖手写 Prometheus `/metrics`（请求/跳转/burn/限流拒绝计数、路由 label 归一化）；IP+Key 双维度令牌桶限流（429+Retry-After，/metrics 与探针免限流，RPS/BURST/开关走环境变量）；`/readyz` 就绪探针（DB ping 通 200 否则 503）+ `store.Ping()`；失败注入测试（关库后跳转/建链 500、health 200、readyz 503、metrics 200，全程不 panic）；CSV 导入导出扩展 7 列（兼容旧 5 列）；`docs/OPERATIONS.md` 运维手册（部署/备份恢复/升级/监控/排障/限流调参）；新增 24 例、`-race` 全过；真实服务冒烟 6 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`（结论可发版，v1.1 条件项全部关闭）。
 
 **生产级补强 v1.1「阅后即焚 + 限次访问」（2026-10-14，灵魂功能落地）**：`links` 新增 `max_visits`（NULL=不限）、`burn`（0/1）两列 + `PRAGMA user_version` 版本化迁移（v1→v2，老库自动 ALTER，实测老数据保留）；跳转语义：burn 链首次 302 后自动禁用、再访 410"链接已阅销毁"，max_visits=N 时前 N 次 302、第 N+1 次 410"链接已达访问上限"（burn 的 410 检查在禁用 404 之前）；`store.CreateLinkEx/UpdateLinkEx/MarkBurned`（旧签名保持委托不变）；API：POST/PATCH 接受 `max_visits`（1~1000000 正整数）、`burn`，非法组合 400；响应新增 `max_visits/burn/remaining` 字段；Web UI：新建页"限次访问"输入+"阅后即焚"复选框（互斥联动）、列表页"限制"列徽标（阅后即焚/已销毁/限N次·剩M次/不限）、详情页"访问限制"行+保存/清除；`go test ./...` 全过（新增 10 例：store 4 + handler 6）；真实服务冒烟全链路验证（302→410 语义、PATCH 改限次/清除、老库迁移）；3 张新截图亲眼验收通过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.1.md`（有条件发版：失败注入//metrics/运维手册/限流排期 v1.2，CSV 未带新字段）；CHANGELOG.md 新建。
 

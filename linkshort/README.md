@@ -90,6 +90,9 @@ docker run -d \
 | `LINKSHORT_DB` | `./data/linkshort.db` | SQLite 文件路径 |
 | `LINKSHORT_ADMIN_KEY` | 自动生成并打印到日志 | API Key 和管理入口密钥 |
 | `LINKSHORT_BASE_URL` | 空 | 拼短地址用的前缀，例如 `https://s.example.com` |
+| `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流速率，每秒补充的 token 数 |
+| `LINKSHORT_RATE_LIMIT_BURST` | `40` | 令牌桶容量，允许的突发请求数 |
+| `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否启用限流（IP + API Key 双维度） |
 
 `LINKSHORT_BASE_URL` 不填时，短地址用请求里的 Host 拼。
 
@@ -118,7 +121,9 @@ docker run -d \
 | POST | `/api/import` | 从 CSV 导入 | 是 |
 | GET | `/api/export.csv` | 导出 CSV | 是 |
 | GET | `/api/meta` | 服务元信息 | 是 |
-| GET | `/api/health` | 健康检查 | 是 |
+| GET | `/api/health` | 存活探针（进程活着即 200） | 是 |
+| GET | `/api/readyz` | 就绪探针（DB 通 200，否则 503） | 是 |
+| GET | `/metrics` | Prometheus 文本指标 | 否 |
 | GET | `/{slug}` | 302 跳转 | 否 |
 
 创建短链的例子：

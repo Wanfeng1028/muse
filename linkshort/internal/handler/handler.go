@@ -21,8 +21,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/Wanfeng1028/muse/linkshort/internal/config"
+	"github.com/Wanfeng1028/muse/linkshort/internal/metrics"
 	"github.com/Wanfeng1028/muse/linkshort/internal/model"
 	"github.com/Wanfeng1028/muse/linkshort/internal/qr"
+	"github.com/Wanfeng1028/muse/linkshort/internal/ratelimit"
 	"github.com/Wanfeng1028/muse/linkshort/internal/store"
 	"github.com/Wanfeng1028/muse/linkshort/internal/util"
 )
@@ -39,11 +41,18 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
+	// metrics 放在最外层，以便统计到包括 429 在内的所有请求。
+	r.Use(metrics.Default.Middleware)
+	// 限流：按 IP+API Key 双维度令牌桶；/metrics 与健康检查免限流。
+	r.Use(ratelimit.New(cfg.RateLimitRPS, cfg.RateLimitBurst, cfg.RateLimitEnabled).Middleware)
 
 	// 根路径跳转到 UI。
 	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/ui/", http.StatusFound)
 	})
+
+	// Prometheus 指标：仅计数器，无敏感信息，不走鉴权。
+	r.Get("/metrics", metrics.Default.Handler())
 
 	// Web UI：embed 前缀为 web/，用 fs.Sub 裁掉。
 	sub, err := fs.Sub(webFS, "web")
@@ -56,9 +65,12 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	// API 分组。
 	r.Route("/api", func(api chi.Router) {
 		api.Use(authMiddleware(cfg))
+		// 存活探针：进程活着即 200，不依赖 DB。
 		api.Get("/health", func(w http.ResponseWriter, req *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 		})
+		// 就绪探针：DB 连通才 200，否则 503。
+		api.Get("/readyz", func(w http.ResponseWriter, req *http.Request) { handleReadyz(w, req, st) })
 		api.Get("/meta", func(w http.ResponseWriter, req *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]any{"base_url": shortBaseURL(req, cfg)})
 		})
@@ -205,25 +217,31 @@ func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
 	link, err := st.GetLinkBySlug(slug)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
+			metrics.Default.IncRedirect("not_found")
 			http.Error(w, "短链不存在", http.StatusNotFound)
 			return
 		}
+		metrics.Default.IncRedirect("error")
 		http.Error(w, "服务器错误", http.StatusInternalServerError)
 		return
 	}
 	if link.Burn && !link.Enabled {
+		metrics.Default.IncRedirect("gone")
 		http.Error(w, "链接已阅销毁", http.StatusGone)
 		return
 	}
 	if !link.Enabled {
+		metrics.Default.IncRedirect("not_found")
 		http.Error(w, "短链不存在", http.StatusNotFound)
 		return
 	}
 	if link.ExpiresAt != nil && time.Now().After(*link.ExpiresAt) {
+		metrics.Default.IncRedirect("gone")
 		http.Error(w, "链接已过期", http.StatusGone)
 		return
 	}
 	if link.MaxVisits != nil && link.Clicks >= *link.MaxVisits {
+		metrics.Default.IncRedirect("gone")
 		http.Error(w, "链接已达访问上限", http.StatusGone)
 		return
 	}
@@ -239,9 +257,12 @@ func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
 	if link.Burn {
 		if err := st.MarkBurned(link.ID); err != nil {
 			log.Printf("handler: 标记阅后销毁失败 link=%d: %v", link.ID, err)
+		} else {
+			metrics.Default.IncBurned()
 		}
 	}
 
+	metrics.Default.IncRedirect("ok")
 	http.Redirect(w, r, link.URL, http.StatusFound)
 }
 
@@ -675,6 +696,16 @@ func parseIntDefault(s string, def int) int {
 		return def
 	}
 	return v
+}
+
+// handleReadyz 就绪探针：数据库 ping 通返回 200，否则 503。
+func handleReadyz(w http.ResponseWriter, req *http.Request, st *store.Store) {
+	if err := st.Ping(); err != nil {
+		log.Printf("handler: readyz 检查失败: %v", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": "db unreachable"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
 // 保证 io 引用（ImportCSV 需要 io.Reader，此处仅作编译期防呆）。
