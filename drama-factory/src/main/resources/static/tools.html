@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快捷工具 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1>快捷工具</h1>
+  </div>
+
+  <div class="row row-deck row-cards">
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title"><i data-lucide="tags"></i> 资产批量打标</h3>
+          <div class="mb-2">
+            <label class="form-check">
+              <input type="checkbox" class="form-check-input" id="tag-select-all">
+              <span class="form-check-label">全选</span>
+            </label>
+            <select class="form-select form-select-sm mt-2" id="tag-type-filter">
+              <option value="">全部类型</option>
+              <option value="IMAGE">图片</option>
+              <option value="AUDIO">音频</option>
+              <option value="VIDEO">视频</option>
+            </select>
+          </div>
+          <div id="tag-asset-list" class="mb-3" style="max-height:260px;overflow:auto;"></div>
+          <div class="mb-2">
+            <input type="text" class="form-control form-control-sm" id="tag-input" placeholder="标签，逗号分隔">
+          </div>
+          <div class="mb-2">
+            <select class="form-select form-select-sm" id="tag-mode">
+              <option value="merge">合并</option>
+              <option value="replace">替换</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" id="tag-btn">批量打标</button>
+          <div id="tag-result" class="mt-2 small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title"><i data-lucide="pencil"></i> 资产批量重命名</h3>
+          <div id="rename-list" class="mb-3" style="max-height:320px;overflow:auto;">
+            <div class="text-secondary small">请先在上方选择资产</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="rename-btn">批量重命名</button>
+          <div id="rename-result" class="mt-2 small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title"><i data-lucide="clapperboard"></i> 视频格式转换</h3>
+          <div class="mb-2">
+            <select class="form-select form-select-sm" id="convert-video"></select>
+          </div>
+          <div class="mb-2">
+            <select class="form-select form-select-sm" id="convert-format">
+              <option value="mp4">mp4</option>
+              <option value="webm">webm</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <input type="number" class="form-control form-control-sm" id="convert-width" placeholder="宽度（可选，144~3840）" min="144" max="3840">
+          </div>
+          <button class="btn btn-primary btn-sm" id="convert-btn">开始转换</button>
+          <div id="convert-result" class="mt-2 small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title"><i data-lucide="music"></i> 音频提取</h3>
+          <div class="mb-2">
+            <select class="form-select form-select-sm" id="extract-video"></select>
+          </div>
+          <div class="mb-2">
+            <select class="form-select form-select-sm" id="extract-format">
+              <option value="mp3">mp3</option>
+              <option value="wav">wav</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" id="extract-btn">提取音频</button>
+          <div id="extract-result" class="mt-2 small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title"><i data-lucide="download"></i> 分镜表导出</h3>
+          <div class="row g-2">
+            <div class="col-md-5">
+              <select class="form-select form-select-sm" id="export-project"></select>
+            </div>
+            <div class="col-md-5">
+              <select class="form-select form-select-sm" id="export-episode"></select>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary btn-sm w-100" id="export-btn">导出 CSV</button>
+            </div>
+          </div>
+          <div id="export-result" class="mt-2 small"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title"><i data-lucide="history"></i> 操作记录</h3>
+          <div class="mb-2">
+            <button class="btn btn-outline-secondary btn-sm" id="logs-refresh"><i data-lucide="refresh-cw"></i> 刷新</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-vcenter">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>工具</th>
+                  <th>操作</th>
+                  <th>参数</th>
+                  <th>结果</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="logs-body">
+                <tr><td colspan="6" class="text-secondary">加载中…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/tools.js"></script>
+</body>
+</html>
