@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +59,14 @@ public class ScriptSplitterService {
     private final ObjectMapper objectMapper;
     private final String model;
     private final int maxTokens;
+    private final HttpExchange httpExchange;
 
+    @FunctionalInterface
+    interface HttpExchange {
+        HttpResponse<String> send(HttpRequest request) throws Exception;
+    }
+
+    @Autowired
     public ScriptSplitterService(EpisodeRepository episodeRepository,
                                  ShotRepository shotRepository,
                                  VideoTaskRepository videoTaskRepository,
@@ -66,6 +74,24 @@ public class ScriptSplitterService {
                                  ObjectMapper objectMapper,
                                  @Value("${drama.script-splitter.model:Deepseek-v4-flash}") String model,
                                  @Value("${drama.script-splitter.max-tokens:3000}") int maxTokens) {
+        this(episodeRepository, shotRepository, videoTaskRepository, credentialResolver, objectMapper, model, maxTokens,
+                request -> {
+                    HttpClient client = HttpClient.newBuilder()
+                            .connectTimeout(Duration.ofSeconds(15))
+                            .build();
+                    return client.send(request, HttpResponse.BodyHandlers.ofString());
+                });
+    }
+
+    // 测试注入 HttpExchange stub，避免真实网络调用；不许改成 public
+    ScriptSplitterService(EpisodeRepository episodeRepository,
+                          ShotRepository shotRepository,
+                          VideoTaskRepository videoTaskRepository,
+                          CredentialResolver credentialResolver,
+                          ObjectMapper objectMapper,
+                          String model,
+                          int maxTokens,
+                          HttpExchange httpExchange) {
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
         this.videoTaskRepository = videoTaskRepository;
@@ -73,7 +99,9 @@ public class ScriptSplitterService {
         this.objectMapper = objectMapper;
         this.model = model;
         this.maxTokens = maxTokens;
+        this.httpExchange = httpExchange;
     }
+
 
     /**
      * 根据剧本原文拆分分镜并落库，返回新建分镜的响应列表。
@@ -198,11 +226,8 @@ public class ScriptSplitterService {
      * 调用微信 ChatAPI，返回 choices[0].message.content。
      */
     private String callModel(String scriptText) {
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15))
-                .build();
-
         ObjectNode body = objectMapper.createObjectNode();
+
         body.put("model", model);
         ArrayNode messages = body.putArray("messages");
         ObjectNode systemMsg = messages.addObject();
@@ -234,10 +259,11 @@ public class ScriptSplitterService {
 
         HttpResponse<String> response;
         try {
-            response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            response = httpExchange.send(builder.build());
         } catch (Exception e) {
             throw new RuntimeException("调用大模型失败: " + e.getMessage(), e);
         }
+
 
         int status = response.statusCode();
         String responseBody = response.body();
@@ -261,7 +287,7 @@ public class ScriptSplitterService {
                 throw new RuntimeException("大模型返回内容为空");
             }
             JsonNode contentNode = message.get("content");
-            content = contentNode == null ? null : contentNode.asText();
+            content = (contentNode == null || contentNode.isNull()) ? null : contentNode.asText();
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {

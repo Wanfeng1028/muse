@@ -2,8 +2,8 @@
 
 ## ① 目标
 
-- **当前门禁：行覆盖（LINE）≥ 75%、分支覆盖（BRANCH）≥ 60%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.10 实测行 75.8%/分支 60.8%），只升不降。
-- **下一里程碑：v2.11 分支覆盖冲 65%**。
+- **当前门禁：行覆盖（LINE）≥ 78%、分支覆盖（BRANCH）≥ 65%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.11 实测行 79.1%/分支 67.3%），只升不降。
+- **下一里程碑：v2.12 分支覆盖冲 70%**。
 
 
 ## ② 口径
@@ -16,9 +16,9 @@
 
 | 指标 | 基线值 | 说明 |
 | --- | --- | --- |
-| 行覆盖（LINE） | 75.8%（v2.10 实测） | 全量 9593 行（7275/9593） |
-| 分支覆盖（BRANCH） | 60.8%（v2.10 实测，目标 60% 达成） | 全量 3760 分支（2286/3760） |
-| 门禁阈值 | 行 0.75 / 分支 0.60 | JaCoCo check，`verify` 阶段 |
+| 行覆盖（LINE） | 79.1%（v2.11 实测） | 全量 4770 行（3774/4770） |
+| 分支覆盖（BRANCH） | 67.3%（v2.11 实测，目标 65% 超额达成） | 全量 1882 分支（1266/1882） |
+| 门禁阈值 | 行 0.78 / 分支 0.65 | JaCoCo check，`verify` 阶段 |
 
 
 ## ④ 缺口表
@@ -33,7 +33,11 @@
 | `AuthProxyController` | 已补：可测性重构（HttpClient 构造器注入）+ 20 例代理分支测试；单类行 97.8%/分支 79.5%/方法 100% | 剩余：无 | — |
 | `ChatService` | 已补：可测性接缝（Function 接缝 + 包可见构造器）+ 10 例；单类分支 100%（20/20） | 剩余：真实网络链路（沙箱无外网） | 沙箱外验证 |
 | `FinalCutService` | 已补：19+1 例；单类分支 100%（28/28）、行 100% | 剩余：无 | — |
-| `VideoTaskService` | 已补：37+6 例；单类分支 92.9%（39/42） | 剩余 3：awaitPollCompletion 超时 warn 路径 2、doPoll switch 隐式分支 1 | v2.11 评估 |
+| `VideoTaskService` | 已补：37+6 例；单类分支 92.9%（39/42） | 剩余 3：awaitPollCompletion 超时 warn 路径 2、doPoll switch 隐式分支 1 | v2.12 评估 |
+| `UsageService` | 已补：27 例；三参 summary/requests/byDay/byRun/filters/byModel 边界收敛 | 剩余：byDay/byRun 的防御性分支 | v2.12 |
+| `AgnesVideoProvider` | 已补：poll 边界 20 例（录制回放，零真实网络） | 剩余：submit 真实链路分支（需外部 API） | 待定 |
+| `ScriptSplitterService` | 已补：HttpExchange 可测性接缝 + callModel 16 例；附带修 JSON null content 真 bug | 剩余：真实网络链路 | 沙箱外验证 |
+| `EgressProxyConfig` | 已补：configureFromEnv(Map) 接缝 + 11 例（含 JVM 全局状态隔离） | 剩余：无 | — |
 | `RunLogService` | 已补：12 例；单类分支 81.8%（18/22） | 剩余 4：startsWith 防御分支（不可达）、read<=0、append/read IOException catch | —（防御性分支，接受未覆盖） |
 
 
@@ -111,3 +115,18 @@
 - `RunLogServiceTest` 新建 12 例（`com.dramafactory.service`）
   - append 6 例：时间戳行/null 行/空 runId/空 seqNo/负 id/两次追加
   - read 6 例：缺文件/负偏移/全量 eof/大文件分段（64KB 截断）/超界偏移/空 id
+
+## ⑤-4 v2.11 新增测试清单（74 例）
+
+- `UsageServiceTest` +27（`com.dramafactory.service`）
+  - summary 三参 10 例：全空/空字符串快速路径、days 正/非正过滤路径、video 行 provider-model 过滤与空 token、step 行 provider 跳过/label 为 null/model 不匹配
+  - requests 6 例：modelUsed 为 null 跳过、step label 为 null、step model 不匹配、video status 为 null、null 时间排序三态、limit 截断与非正
+  - byDay 5 例：video model 过滤、step provider 跳过、空 token 按 0 合并、负天数默认、step label 为 null
+  - byRun 3 例：limit<=0 默认 20（ArgumentCaptor）、Run 自带总量直用（verify never）、goal 为 null
+  - byModel 2 例 + filters 1 例：null model/label/类型跳过
+- `AgnesVideoProviderPollBranchTest` 新建 20 例（`com.dramafactory.service.video`，录制回放零真实网络）
+  - 鉴权缺失/网关异常/429/500 三形态/非法 JSON/无 status 与 status:null/completed 三取 URL/failed 三取错误信息/processing 进度三形态/taskId URL 编码
+- `ScriptSplitterCallModelTest` 新建 16 例（`com.dramafactory.service`）
+  - HttpExchange 可测性接缝（包可见 8 参构造器；public 构造器 @Autowired 委托）；鉴权头有/无、发送异常、500 三形态、非法 JSON、choices 缺失/非数组/空/message 为 null/content 为 null（真 bug 锁定）/空白、请求体形态、episode 状态推进
+- `EgressProxyConfigTest` 新建 11 例（`com.dramafactory.config`）
+  - configureFromEnv(Map) 接缝；无变量零副作用/大小写优先级/非法 URI/无 host/属性设置/默认端口/ProxySelector 本地与远端/userInfo 鉴权器/connectFailed；JVM 全局状态保存恢复

@@ -11,6 +11,8 @@ import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+
 
 /**
  * 出口代理配置：从环境变量读取代理并设为 JVM 全局代理。
@@ -39,14 +41,22 @@ public final class EgressProxyConfig {
      * {@code HttpClient} 之前代理已就绪。
      */
     public static void configureFromEnv() {
-        String proxyUrl = System.getenv("HTTPS_PROXY");
+        configureFromEnv(System.getenv());
+    }
+
+    /**
+     * 包可见重构接缝：测试注入环境变量映射。生产行为与原来逐字一致，不许改逻辑。
+     */
+    static void configureFromEnv(Map<String, String> env) {
+        String proxyUrl = env.get("HTTPS_PROXY");
         if (proxyUrl == null || proxyUrl.isBlank()) {
-            proxyUrl = System.getenv("https_proxy");
+            proxyUrl = env.get("https_proxy");
         }
         if (proxyUrl == null || proxyUrl.isBlank()) {
             log.info("未检测到 HTTPS_PROXY，直连外网");
             return;
         }
+
         try {
             URI uri = new URI(proxyUrl.trim());
             String host = uri.getHost();
