@@ -1,7 +1,7 @@
 use axum::body::to_bytes;
 use axum::http::{Request, StatusCode};
 use axum::Router;
-use mini_os::{build_app, init_state};
+use mini_os::{build_app, init_state, init_state_with};
 use serde_json::{json, Value};
 use tower::ServiceExt;
 
@@ -39,7 +39,7 @@ async fn health_returns_ok() {
     assert_eq!(resp.status(), StatusCode::OK);
     let json = body_json(resp).await;
     assert_eq!(json["status"], "ok");
-    assert_eq!(json["version"], "1.0.0");
+    assert_eq!(json["version"], "1.1.0");
 }
 
 #[tokio::test]
@@ -55,7 +55,11 @@ async fn apps_has_five_entries() {
         .map(|a| a["id"].as_str().unwrap().to_string())
         .collect();
     for expected in ["files", "editor", "terminal", "settings", "about"] {
-        assert!(ids.contains(&expected.to_string()), "missing app {}", expected);
+        assert!(
+            ids.contains(&expected.to_string()),
+            "missing app {}",
+            expected
+        );
     }
 }
 
@@ -188,5 +192,277 @@ async fn invalid_kind_returns_400() {
         Some(json!({"parentId": null, "name": "weird", "kind": "banana", "content": ""})),
     )
     .await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+// ---------- 上传/下载测试辅助 ----------
+
+fn test_app_with_limit(max_upload_bytes: u64) -> Router {
+    let state = init_state_with(":memory:", "static", max_upload_bytes);
+    build_app(state)
+}
+
+/// 手工构造 multipart/form-data 请求体
+fn multipart_body(boundary: &str, filename: &str, content_type: &str, data: &[u8]) -> Vec<u8> {
+    let mut body: Vec<u8> = Vec::new();
+    body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
+    body.extend_from_slice(
+        format!(
+            "Content-Disposition: form-data; name=\"file\"; filename=\"{}\"\r\n",
+            filename
+        )
+        .as_bytes(),
+    );
+    body.extend_from_slice(format!("Content-Type: {}\r\n\r\n", content_type).as_bytes());
+    body.extend_from_slice(data);
+    body.extend_from_slice(format!("\r\n--{}--\r\n", boundary).as_bytes());
+    body
+}
+
+async fn upload_request(
+    app: Router,
+    uri: &str,
+    filename: &str,
+    content_type: &str,
+    data: &[u8],
+) -> axum::response::Response {
+    let boundary = "test-boundary-12345";
+    let body = multipart_body(boundary, filename, content_type, data);
+    let req = Request::builder()
+        .method("POST")
+        .uri(uri)
+        .header(
+            "content-type",
+            format!("multipart/form-data; boundary={}", boundary),
+        )
+        .body(axum::body::Body::from(body))
+        .unwrap();
+    app.oneshot(req).await.unwrap()
+}
+
+async fn body_bytes(resp: axum::response::Response) -> Vec<u8> {
+    to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap()
+        .to_vec()
+}
+
+#[tokio::test]
+async fn upload_text_then_download_bytes_match() {
+    let app = test_app();
+    let data = "hello mini-os 上传测试\n第二行".as_bytes();
+
+    // 上传
+    let resp = upload_request(
+        app.clone(),
+        "/api/files/upload?path=/",
+        "greet.txt",
+        "text/plain",
+        data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let created = body_json(resp).await;
+    assert_eq!(created["name"], "greet.txt");
+    assert_eq!(created["size"], data.len() as u64);
+    let id = created["id"].as_i64().unwrap();
+
+    // 列表可见
+    let resp = request(app.clone(), "GET", "/api/fs", None).await;
+    let list = body_json(resp).await;
+    assert!(list
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|n| n["name"] == "greet.txt"));
+
+    // 下载字节一致
+    let resp = request(
+        app.clone(),
+        "GET",
+        "/api/files/download?path=/greet.txt",
+        None,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let cd = resp
+        .headers()
+        .get("content-disposition")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+    assert!(
+        cd.starts_with("attachment"),
+        "unexpected content-disposition: {}",
+        cd
+    );
+    let bytes = body_bytes(resp).await;
+    assert_eq!(bytes, data);
+
+    // 删除后下载 404
+    let resp = request(app.clone(), "DELETE", &format!("/api/fs/{}", id), None).await;
+    assert_eq!(resp.status(), StatusCode::NO_CONTENT);
+    let resp = request(app, "GET", "/api/files/download?path=/greet.txt", None).await;
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn upload_binary_roundtrip() {
+    let app = test_app();
+    // 非法 UTF-8 的二进制
+    let data: Vec<u8> = (0u8..=255u8).collect();
+    assert!(std::str::from_utf8(&data).is_err());
+
+    let resp = upload_request(
+        app.clone(),
+        "/api/files/upload",
+        "blob.bin",
+        "application/octet-stream",
+        &data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let created = body_json(resp).await;
+    assert_eq!(created["size"], 256u64);
+    // 二进制文件 JSON content 为空串
+    assert_eq!(created["content"], "");
+
+    let resp = request(app, "GET", "/api/files/download?path=/blob.bin", None).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(
+        resp.headers().get("content-type").unwrap(),
+        "application/octet-stream"
+    );
+    let bytes = body_bytes(resp).await;
+    assert_eq!(bytes, data);
+}
+
+#[tokio::test]
+async fn upload_to_subfolder_and_download() {
+    let app = test_app();
+    // 建目录
+    let resp = request(
+        app.clone(),
+        "POST",
+        "/api/fs",
+        Some(json!({"parentId": null, "name": "docs", "kind": "folder", "content": ""})),
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    let data = b"subfolder file";
+    let resp = upload_request(
+        app.clone(),
+        "/api/files/upload?path=/docs",
+        "a.txt",
+        "text/plain",
+        data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    let resp = request(
+        app.clone(),
+        "GET",
+        "/api/files/download?path=/docs/a.txt",
+        None,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(body_bytes(resp).await, data);
+
+    // 不存在的目录 400
+    let resp = upload_request(
+        app,
+        "/api/files/upload?path=/nope",
+        "b.txt",
+        "text/plain",
+        data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn upload_oversize_returns_413() {
+    let app = test_app_with_limit(1024);
+    let data = vec![b'x'; 2048];
+    let resp = upload_request(app, "/api/files/upload", "big.txt", "text/plain", &data).await;
+    assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn upload_path_traversal_rejected() {
+    let app = test_app();
+    let data = b"evil";
+    // 文件名含路径穿越
+    let resp = upload_request(
+        app.clone(),
+        "/api/files/upload",
+        "../../evil.txt",
+        "text/plain",
+        data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    // path 参数含 ..
+    let resp = upload_request(
+        app.clone(),
+        "/api/files/upload?path=/../",
+        "ok.txt",
+        "text/plain",
+        data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    // 确认没有写进去
+    let resp = request(app, "GET", "/api/fs", None).await;
+    let list = body_json(resp).await;
+    assert!(!list
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|n| n["name"] == "evil.txt"));
+}
+
+#[tokio::test]
+async fn upload_duplicate_name_returns_409() {
+    let app = test_app();
+    let data = b"one";
+    let resp = upload_request(
+        app.clone(),
+        "/api/files/upload",
+        "dup.txt",
+        "text/plain",
+        data,
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let resp = upload_request(app, "/api/files/upload", "dup.txt", "text/plain", data).await;
+    assert_eq!(resp.status(), StatusCode::CONFLICT);
+}
+
+#[tokio::test]
+async fn download_directory_returns_400() {
+    let app = test_app();
+    let resp = request(
+        app.clone(),
+        "POST",
+        "/api/fs",
+        Some(json!({"parentId": null, "name": "adir", "kind": "folder", "content": ""})),
+    )
+    .await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+    let resp = request(app, "GET", "/api/files/download?path=/adir", None).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn download_missing_returns_404() {
+    let app = test_app();
+    let resp = request(app, "GET", "/api/files/download?path=/not-here.txt", None).await;
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    let resp = request(test_app(), "GET", "/api/files/download", None).await;
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }

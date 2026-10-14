@@ -10,6 +10,10 @@
 - **应用注册表**：内置 5 个应用——文件管理器、文本编辑器、终端、设置、关于。
 - **设置持久化**：主题（theme）与壁纸（wallpaper）保存在 `settings` 表，刷新后保留。
 - **统计面板**：文件数、文件夹数、占用字节数。
+- **文件上传与下载**：`POST /api/files/upload?path=<目录>` 上传（multipart，单文件默认上限 50MB），`GET /api/files/download?path=<文件>` 流式下载；文件名消毒防路径穿越，二进制文件存 BLOB 列。
+
+
+
 - **WebSocket 通道**：连接建立后服务端主动下发欢迎消息，文本消息原样回显。
 - **桌面交互**：窗口拖拽、开始菜单、实时时钟、WebSocket 连接状态指示。
 
@@ -42,7 +46,10 @@ mini-os/
 │   ├── style.css        # 桌面与窗口样式
 │   └── app.js           # 窗口管理、文件管理器、编辑器、终端等
 ├── tests/
-│   └── api_test.rs      # 8 个集成测试
+│   └── api_test.rs      # 16 个集成测试
+
+
+
 ├── .env.example
 ├── .gitignore
 ├── Dockerfile
@@ -77,6 +84,10 @@ http://localhost:8090
 | `PORT` | `8090` | HTTP 服务监听端口 |
 | `DATABASE_PATH` | `data/mini-os.db` | SQLite 数据库文件路径，目录不存在时自动创建 |
 | `STATIC_DIR` | `static` | 静态资源目录，提供 `index.html` 等前端文件 |
+| `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
+
+
+
 
 参考 `.env.example` 可以快速了解可用变量。若使用进程管理器或容器，直接在启动环境中注入即可。
 
@@ -95,12 +106,18 @@ DATABASE_PATH=/var/lib/mini-os/mini-os.db STATIC_DIR=/opt/mini-os/static PORT=80
 ## 测试
 
 ```bash
-cargo test        # 运行 8 个集成测试
+cargo test        # 运行 16 个集成测试
+
+
+
 cargo clippy      # 静态检查
 cargo fmt         # 代码格式化
 ```
 
-集成测试覆盖健康检查、应用列表、文件系统 CRUD、设置读写与统计等接口行为。CI（`.github/workflows/mini-os.yml`）会在每次提交时依次执行 fmt、clippy、test 与 build。
+集成测试覆盖健康检查、应用列表、文件系统 CRUD、设置读写与统计、文件上传/下载（含超限 413、路径穿越拦截、同名 409、目录下载 400 等边界）等接口行为。CI（`.github/workflows/mini-os.yml`）会在每次提交时依次执行 fmt、clippy、test 与 build。
+
+
+
 
 ## Docker
 
@@ -125,7 +142,19 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 | GET | `/api/settings` | 读取设置 |
 | PUT | `/api/settings` | 更新设置（theme、wallpaper） |
 | GET | `/api/stats` | 统计信息：文件数、文件夹数、字节数 |
+| POST | `/api/files/upload?path=<目录>` | 文件上传（multipart/form-data，字段名 `file`） |
+| GET | `/api/files/download?path=<文件>` | 文件下载（流式，`Content-Disposition: attachment`） |
 | GET | `/ws` | WebSocket 连接入口 |
+
+## 界面截图
+
+![文件管理器](docs/screenshots/files-manager.png)
+![子目录浏览](docs/screenshots/files-folder.png)
+![上传成功](docs/screenshots/files-uploaded.png)
+![上传失败提示](docs/screenshots/files-error.png)
+
+
+
 
 ## WebSocket 协议
 
@@ -150,7 +179,10 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 ## 路线图
 
 - 多用户与鉴权
-- 文件上传与下载
+- ~~文件上传与下载~~（v1.1.0 已完成）
 - 应用商店，支持动态注册第三方应用
+
+
+
 
 欢迎提交 issue 与 pull request。

@@ -1,5 +1,5 @@
 // 程序入口：读取配置、初始化状态、构建路由并启动 HTTP 服务
-use mini_os::{build_app, config::Config, init_state};
+use mini_os::{build_app, config::Config, init_state_with};
 
 #[tokio::main]
 async fn main() {
@@ -7,7 +7,11 @@ async fn main() {
     let config = Config::from_env();
 
     // 初始化全局状态（打开数据库、建表、写入种子数据）
-    let state = init_state(&config.database_path, &config.static_dir);
+    let state = init_state_with(
+        &config.database_path,
+        &config.static_dir,
+        config.upload_max_bytes,
+    );
 
     // 构建 axum 应用路由
     let app = build_app(state);

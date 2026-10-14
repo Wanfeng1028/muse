@@ -118,8 +118,11 @@ function applyTheme(theme) {
 function applyWallpaper(wallpaper) {
   const desktop = document.getElementById('desktop');
   if (!desktop) return;
-  desktop.className = desktop.className.replace(/wallpaper-\S+/g, '').trim();
-  desktop.classList.add('wallpaper-' + wallpaper);
+  if (wallpaper !== 'ocean' && wallpaper !== 'sunset' && wallpaper !== 'forest') {
+    wallpaper = 'ocean';
+  }
+  desktop.classList.remove('wallpaper', 'ocean', 'sunset', 'forest');
+  desktop.classList.add('wallpaper', wallpaper);
 }
 
 // 更新时钟
@@ -331,7 +334,11 @@ function renderFiles(body) {
       <span class="files-path">/</span>
       <button class="btn-new-folder">新建文件夹</button>
       <button class="btn-new-file">新建文件</button>
+      <button class="btn-upload">上传</button>
+      <input type="file" class="file-input-hidden" multiple style="display:none">
     </div>
+    <div class="upload-progress hidden"><div class="upload-progress-bar"></div><span class="upload-progress-text"></span></div>
+    <div class="files-error hidden"></div>
     <div class="files-list"></div>
   `;
   const listEl = body.querySelector('.files-list');
@@ -372,9 +379,27 @@ function renderFiles(body) {
           }
         });
         row.appendChild(del);
+        if (node.kind === 'file') {
+          const dl = document.createElement('button');
+          dl.className = 'fs-download';
+          dl.textContent = '下载';
+          dl.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            clearError();
+            const dirPath = currentDirPath();
+            const fullPath = (dirPath === '/' ? '/' + node.name : dirPath.replace(/\/$/, '') + '/' + node.name);
+            const a = document.createElement('a');
+            a.href = '/api/files/download?path=' + encodeURIComponent(fullPath);
+            a.download = node.name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          });
+          row.appendChild(dl);
+        }
         row.addEventListener('dblclick', () => {
           if (node.kind === 'folder') {
-            current.parentStack.push({ id: current.parentId, name: pathEl.textContent });
+            current.parentStack.push({ id: current.parentId, name: node.name });
             current.parentId = node.id;
             updatePath();
             refresh();
@@ -394,11 +419,11 @@ function renderFiles(body) {
   }
 
   function updatePath() {
-    if (current.parentId === null) {
+    if (current.parentId === null || current.parentStack.length === 0) {
       pathEl.textContent = '/';
     } else {
-      // 简单展示父级 id 路径
-      pathEl.textContent = '/ #' + current.parentId;
+      const names = current.parentStack.map((p) => p.name);
+      pathEl.textContent = '/' + names.join('/');
     }
   }
 
@@ -438,6 +463,114 @@ function renderFiles(body) {
       refresh();
     } catch (e) {
       alert('创建失败: ' + e.message);
+    }
+  });
+
+  // ---- 上传 / 下载（v1.1.0 新增）----
+  const uploadInput = body.querySelector('.file-input-hidden');
+  const progressBox = body.querySelector('.upload-progress');
+  const progressBar = body.querySelector('.upload-progress-bar');
+  const progressText = body.querySelector('.upload-progress-text');
+  const errorBox = body.querySelector('.files-error');
+
+  // 当前目录的真实 path（由 updatePath 维护的 parentStack 拼出）
+  function currentDirPath() {
+    if (current.parentId === null || current.parentStack.length === 0) return '/';
+    return '/' + current.parentStack.map((p) => p.name).join('/');
+  }
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+  }
+  function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.add('hidden');
+  }
+
+  function uploadFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (files.length === 0) return;
+    clearError();
+    const dirPath = currentDirPath();
+    let idx = 0;
+
+    function next() {
+      if (idx >= files.length) {
+        progressBox.classList.add('hidden');
+        refresh();
+        return;
+      }
+      const f = files[idx++];
+      progressBox.classList.remove('hidden');
+      progressBar.style.width = '0%';
+      progressText.textContent = '上传中 ' + f.name + ' (0%)';
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/files/upload?path=' + encodeURIComponent(dirPath));
+      xhr.upload.addEventListener('progress', (ev) => {
+        if (ev.lengthComputable) {
+          const pct = Math.round((ev.loaded / ev.total) * 100);
+          progressBar.style.width = pct + '%';
+          progressText.textContent = '上传中 ' + f.name + ' (' + pct + '%)';
+        }
+      });
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 201) {
+          next();
+        } else {
+          let msg = 'HTTP ' + xhr.status;
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data && data.error) msg = data.error;
+          } catch (e) {}
+          progressBox.classList.add('hidden');
+          showError('上传失败（' + f.name + '）: ' + msg);
+          refresh();
+        }
+      });
+      xhr.addEventListener('error', () => {
+        progressBox.classList.add('hidden');
+        showError('上传失败（' + f.name + '）: 网络错误');
+        refresh();
+      });
+      const form = new FormData();
+      form.append('file', f, f.name);
+      xhr.send(form);
+    }
+    next();
+  }
+
+  body.querySelector('.btn-upload').addEventListener('click', () => {
+    clearError();
+    uploadInput.click();
+  });
+  uploadInput.addEventListener('change', () => {
+    uploadFiles(uploadInput.files);
+    uploadInput.value = '';
+  });
+
+  // 拖拽上传：拖到文件管理器窗口任意位置
+  let dragDepth = 0;
+  body.addEventListener('dragenter', (ev) => {
+    ev.preventDefault();
+    dragDepth++;
+    body.classList.add('files-dragover');
+  });
+  body.addEventListener('dragover', (ev) => {
+    ev.preventDefault();
+  });
+  body.addEventListener('dragleave', (ev) => {
+    ev.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) body.classList.remove('files-dragover');
+  });
+  body.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    dragDepth = 0;
+    body.classList.remove('files-dragover');
+    if (ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files.length > 0) {
+      uploadFiles(ev.dataTransfer.files);
     }
   });
 
@@ -693,7 +826,10 @@ function renderAbout(body) {
   body.innerHTML = `
     <div class="about">
       <div class="about-title">mini-os</div>
-      <div class="about-version">版本 1.0.0</div>
+      <div class="about-version">版本 1.1.0</div>
+
+
+
       <div class="about-stats">统计加载中...</div>
       <div class="about-desc">一个运行在网页里的迷你操作系统。</div>
     </div>

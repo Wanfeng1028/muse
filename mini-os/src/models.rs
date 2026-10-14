@@ -14,12 +14,16 @@ pub struct Node {
     pub name: String,
     /// 类型：只取 "file" 或 "folder"
     pub kind: String,
-    /// 文件内容（文件夹为空字符串）
+    /// 文件内容（文件夹为空字符串；二进制文件在 JSON 中为空串，真实字节走下载接口）
     pub content: String,
     /// 创建时间
     pub created_at: String,
     /// 更新时间
     pub updated_at: String,
+    /// 字节数（文件夹为 0）
+    pub size: i64,
+    /// MIME 类型（未设置时为 None）
+    pub mime_type: Option<String>,
 }
 
 /// 创建节点请求体

@@ -42,6 +42,32 @@ pub fn open_db(path: &str) -> rusqlite::Result<Connection> {
         [],
     )?;
 
+    // 幂等迁移：vfs_nodes 增加 content_blob / mime_type 列
+    {
+        let mut stmt = conn.prepare("PRAGMA table_info(vfs_nodes)")?;
+        let mut has_blob = false;
+        let mut has_mime = false;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == "content_blob" {
+                has_blob = true;
+            }
+            if name == "mime_type" {
+                has_mime = true;
+            }
+        }
+        drop(rows);
+        drop(stmt);
+
+        if !has_blob {
+            conn.execute("ALTER TABLE vfs_nodes ADD COLUMN content_blob BLOB", [])?;
+        }
+        if !has_mime {
+            conn.execute("ALTER TABLE vfs_nodes ADD COLUMN mime_type TEXT", [])?;
+        }
+    }
+
     Ok(conn)
 }
 

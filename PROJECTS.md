@@ -150,7 +150,7 @@
 
 **定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。
 
-**技术栈**：Rust + Axum 0.7（含 WebSocket）+ Tokio + rusqlite 0.32（bundled SQLite）；前端原生 HTML/CSS/JS（无框架）；cargo test 集成测试 8 例、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+**技术栈**：Rust + Axum 0.7（含 WebSocket + multipart）+ Tokio + rusqlite 0.32（bundled SQLite）；前端原生 HTML/CSS/JS（无框架）；cargo test 集成测试 16 例、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
 **功能模块**：
 
@@ -160,14 +160,18 @@
 4. 主题/壁纸设置持久化
 5. WebSocket（连接先发 hello，文本消息 echo 回显）
 6. 统计（文件/文件夹数、字节数）
+7. 文件上传与下载（v1.1.0）：`POST /api/files/upload?path=<目录>`（multipart，默认 50MB 上限可配）、`GET /api/files/download?path=<文件>`（64KB 分块流式）；`vfs_nodes` 新增 `content_blob`/`mime_type` 列；工具栏上传按钮 + 拖拽上传 + 行内下载 + 错误提示条
 
-**状态**：工程化 v1（2026-10-13 完成，cargo test 8 例全过、clippy 零警告、release 单二进制真实服务冒烟全过）。
+**状态**：v1.1.0（2026-10-15 完成，cargo test 16 例全过、clippy 零警告、真机冒烟 + 4 张真实截图视觉验收通过；发版对照报告 `mini-os/docs/PRODUCTION_CHECKLIST_REPORT_v1.1.0.md`）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Axum + rusqlite 后端落地，虚拟文件系统 API、5 应用桌面前端、WebSocket 协议、CI 与多阶段 Dockerfile 就绪
+- v1.1.0 文件上传下载（2026-10-15）：上传/下载双接口 + BLOB 存储迁移 + 前端上传/下载 UI；验收时顺带修复 2 个 v1 视觉 bug（`.hidden` 工具类缺失致开始菜单无法隐藏、壁纸切换类名 mismatch）
 
 **后续计划**：
+
+- v1.2（对照报告排期）：失败注入测试、migrations 版本化表、就绪探针 + 优雅关闭、结构化日志/request_id、运维手册（备份/资源限制/日志轮转）
 
 - 文件上传/下载
 - 多用户与权限
