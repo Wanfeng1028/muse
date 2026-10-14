@@ -189,14 +189,19 @@ async function generateScript(mode) {
   btn.disabled = true;
   btn.textContent = '生成中…';
   try {
-    const res = await api('/api/episodes/' + episodeId + '/generate-script?mode=' + mode, { method: 'POST' });
+    const skillSel = document.getElementById('skillSelect');
+    const skillId = skillSel && skillSel.value ? skillSel.value : '';
+    const url = '/api/episodes/' + episodeId + '/generate-script?mode=' + mode
+      + (skillId ? '&skillId=' + encodeURIComponent(skillId) : '');
+    const res = await api(url, { method: 'POST' });
     await loadShots();
     const srcLabel = res.source === 'ai' ? 'AI 生成'
       : res.source === 'template-fallback' ? '模板生成（AI 不可用，已自动降级）' : '模板生成';
     const meta = document.getElementById('scriptMeta');
     meta.hidden = false;
     meta.textContent = '本次剧本：' + srcLabel + ' · ' + (res.model || '模板')
-      + ' · 共 ' + res.sceneCount + ' 场 · 耗时 ' + (res.latencyMs / 1000).toFixed(1) + 's';
+      + ' · 共 ' + res.sceneCount + ' 场 · 耗时 ' + (res.latencyMs / 1000).toFixed(1) + 's'
+      + (res.usedSkill ? ' · Skill：' + res.usedSkill : '');
     showToast('剧本生成完成，共 ' + res.sceneCount + ' 场（' + srcLabel + '）');
     viewScript();
   } catch (e) {
@@ -205,6 +210,21 @@ async function generateScript(mode) {
     btn.disabled = false;
     btn.textContent = orig;
   }
+}
+
+async function loadSkillOptions() {
+  const sel = document.getElementById('skillSelect');
+  if (!sel) return;
+  try {
+    const list = await api('/api/skills/installed');
+    sel.innerHTML = '<option value="">不使用 Skill</option>';
+    (list || []).forEach(function (it) {
+      const opt = document.createElement('option');
+      opt.value = it.skill.id;
+      opt.textContent = it.skill.name + ' v' + it.install.version;
+      sel.appendChild(opt);
+    });
+  } catch (e) { /* 市场不可用时保持默认选项 */ }
 }
 
 
@@ -569,6 +589,7 @@ function fillSelects() {
 async function init() {
   fillSelects();
   bindEvents();
+  loadSkillOptions();
   await loadProjects();
   const psel = document.getElementById('projectSelect');
   /* 支持 ?episodeId= 直达指定剧集（工作区跳转用） */

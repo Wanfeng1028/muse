@@ -228,6 +228,20 @@ public class RunService {
      */
     @Transactional
     public Long createRun(String goal, Records.PlanPreview plan) {
+        return createRun(goal, plan, null, null);
+    }
+
+    /**
+     * 创建运行（支持为 SCRIPT/BOARD 步骤指定 Skill）。
+     *
+     * @param goal          自然语言目标
+     * @param plan          已确认的计划预览
+     * @param scriptSkillId SCRIPT 步骤使用的 Skill ID，可空
+     * @param boardSkillId  BOARD 步骤使用的 Skill ID，可空
+     * @return 新建 Run 的 ID
+     */
+    @Transactional
+    public Long createRun(String goal, Records.PlanPreview plan, Long scriptSkillId, Long boardSkillId) {
         if (goal == null || goal.isBlank()) {
             throw new IllegalArgumentException("目标不能为空");
         }
@@ -261,6 +275,12 @@ public class RunService {
                 step.setName(buildStepName(ep.episodeNo(), type));
                 step.setStatus(AgentStepStatus.PENDING);
                 step.setEpisodeId(episodeId);
+                if (type == AgentType.SCRIPT && scriptSkillId != null) {
+                    step.setSkillId(scriptSkillId);
+                }
+                if (type == AgentType.BOARD && boardSkillId != null) {
+                    step.setSkillId(boardSkillId);
+                }
                 step.setCostEstimated(false);
                 agentStepRepository.save(step);
             }

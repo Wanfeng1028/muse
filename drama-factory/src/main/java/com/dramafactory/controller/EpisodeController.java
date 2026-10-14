@@ -68,9 +68,10 @@ public class EpisodeController {
     }
 
     @PostMapping("/api/episodes/{id}/generate-script")
-    @Operation(summary = "生成剧集剧本")
+    @Operation(summary = "生成剧集剧本（可选 skillId 选用已安装 Skill）")
     public Records.GenerateScriptResponse generateScript(@PathVariable Long id,
-                                                         @RequestParam(defaultValue = "ai") String mode) {
-        return scriptService.generate(id, mode);
+                                                         @RequestParam(defaultValue = "ai") String mode,
+                                                         @RequestParam(required = false) Long skillId) {
+        return scriptService.generate(id, mode, skillId);
     }
 }

@@ -32,6 +32,7 @@ public class ScriptService {
     private final SceneRepository sceneRepository;
     private final LlmScriptService llmScriptService;
     private final CharacterService characterService;
+    private final SkillService skillService;
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
 
@@ -42,15 +43,18 @@ public class ScriptService {
      * @param sceneRepository    场景仓库
      * @param llmScriptService   大模型剧本生成服务
      * @param characterService   角色服务
+     * @param skillService       Skill 市场服务
      */
     public ScriptService(EpisodeRepository episodeRepository,
                          SceneRepository sceneRepository,
                          LlmScriptService llmScriptService,
-                         CharacterService characterService) {
+                         CharacterService characterService,
+                         SkillService skillService) {
         this.episodeRepository = episodeRepository;
         this.sceneRepository = sceneRepository;
         this.llmScriptService = llmScriptService;
         this.characterService = characterService;
+        this.skillService = skillService;
     }
 
     /**
@@ -60,7 +64,7 @@ public class ScriptService {
      * @return 生成结果
      */
     public Records.GenerateScriptResponse generate(Long episodeId) {
-        return generate(episodeId, "ai");
+        return generate(episodeId, "ai", null);
     }
 
     /**
@@ -72,12 +76,37 @@ public class ScriptService {
      */
     @Transactional
     public Records.GenerateScriptResponse generate(Long episodeId, String mode) {
+        return generate(episodeId, mode, null);
+    }
+
+    /**
+     * 生成剧本（支持选用已安装 Skill，其 prompt 模板将注入大模型 system prompt）。
+     *
+     * <p>skillId 非空时要求该 Skill 已安装，否则抛 IllegalArgumentException（不静默降级）。</p>
+     *
+     * @param episodeId 剧集 ID
+     * @param mode      生成模式：{@code ai} 或 {@code template}
+     * @param skillId   Skill ID，为空表示不使用 Skill
+     * @return 生成结果（含 usedSkill，未使用时为 null）
+     */
+    @Transactional
+    public Records.GenerateScriptResponse generate(Long episodeId, String mode, Long skillId) {
         if (!"ai".equals(mode) && !"template".equals(mode)) {
             throw new IllegalArgumentException("mode 只能是 ai 或 template");
         }
 
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode", episodeId));
+
+        SkillService.ResolvedSkill resolvedSkill = null;
+        if (skillId != null) {
+            java.util.Map<String, String> vars = new java.util.HashMap<>();
+            vars.put("剧集标题", episode.getTitle() == null ? "" : episode.getTitle());
+            vars.put("大纲", episode.getOutline() == null ? "" : episode.getOutline());
+            resolvedSkill = skillService.resolveForUse(skillId, vars);
+        }
+        String usedSkill = resolvedSkill == null ? null
+                : resolvedSkill.name() + " v" + resolvedSkill.version();
 
         sceneRepository.deleteByEpisodeId(episodeId);
 
@@ -90,8 +119,9 @@ public class ScriptService {
 
         if ("ai".equals(mode)) {
             String charactersSummary = buildCharactersSummary(episode);
+            String skillPrompt = resolvedSkill == null ? null : resolvedSkill.renderedPrompt();
             try {
-                LlmScriptService.LlmScriptResult result = llmScriptService.generate(episode, charactersSummary);
+                LlmScriptService.LlmScriptResult result = llmScriptService.generate(episode, charactersSummary, skillPrompt);
                 drafts = result.scenes();
                 source = "ai";
                 usedModel = result.model();
@@ -136,7 +166,7 @@ public class ScriptService {
 
         long latencyMs = System.currentTimeMillis() - t0;
         return new Records.GenerateScriptResponse(episodeId, drafts.size(), sb.toString(), source, usedModel, latencyMs,
-                promptTokens, completionTokens);
+                promptTokens, completionTokens, usedSkill);
     }
 
     /**

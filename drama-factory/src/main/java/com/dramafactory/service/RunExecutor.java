@@ -63,6 +63,7 @@ public class RunExecutor {
     private final RunLogService runLogService;
     private final Environment environment;
     private final ObjectMapper objectMapper;
+    private final SkillService skillService;
 
     public RunExecutor(RunRepository runRepository,
                        AgentStepRepository agentStepRepository,
@@ -73,7 +74,8 @@ public class RunExecutor {
                        FinalCutService finalCutService,
                        RunLogService runLogService,
                        Environment environment,
-                       ObjectMapper objectMapper) {
+                       ObjectMapper objectMapper,
+                       SkillService skillService) {
         this.runRepository = runRepository;
         this.agentStepRepository = agentStepRepository;
         this.videoTaskRepository = videoTaskRepository;
@@ -84,6 +86,7 @@ public class RunExecutor {
         this.runLogService = runLogService;
         this.environment = environment;
         this.objectMapper = objectMapper;
+        this.skillService = skillService;
     }
 
     /**
@@ -217,12 +220,15 @@ public class RunExecutor {
         }
     }
 
-    /** SCRIPT：调用 ScriptService.generate(episodeId, "ai")。 */
+    /** SCRIPT：调用 ScriptService.generate（支持步骤绑定的 Skill）。 */
     private void runScriptStep(Run run, AgentStep step) {
         Long episodeId = requireEpisodeId(step);
         LocalDateTime start = LocalDateTime.now();
 
-        Records.GenerateScriptResponse resp = scriptService.generate(episodeId, "ai");
+        Long skillId = step.getSkillId();
+        Records.GenerateScriptResponse resp = skillId == null
+                ? scriptService.generate(episodeId, "ai")
+                : scriptService.generate(episodeId, "ai", skillId);
         if (resp == null) {
             throw new IllegalStateException("ScriptService.generate 返回为空, episodeId=" + episodeId);
         }
@@ -244,14 +250,23 @@ public class RunExecutor {
         ObjectNode input = objectMapper.createObjectNode();
         input.put("episodeId", episodeId);
         input.put("mode", "ai");
+        if (skillId != null) {
+            input.put("skillId", skillId);
+        }
         ObjectNode output = objectMapper.createObjectNode();
         output.put("sceneCount", resp.sceneCount());
         output.put("source", resp.source());
         output.put("model", resp.model());
+        if (resp.usedSkill() != null) {
+            output.put("usedSkill", resp.usedSkill());
+        }
         recordToolCall(step, "ScriptService.generate", input, output, ms);
 
         runLogService.append(run.getId(), step.getSeqNo(),
                 "SCRIPT 完成: sceneCount=" + resp.sceneCount() + ", latencyMs=" + ms);
+        if (resp.usedSkill() != null) {
+            runLogService.append(run.getId(), step.getSeqNo(), "SCRIPT 使用 Skill: " + resp.usedSkill());
+        }
     }
 
     /** BOARD：读取上一步（同集 SCRIPT）的 outputSummary，调用 splitFromScript。 */
@@ -269,7 +284,16 @@ public class RunExecutor {
         }
 
         LocalDateTime start = LocalDateTime.now();
-        List<Records.ShotResponse> shots = scriptSplitterService.splitFromScript(episodeId, scriptText);
+        Long boardSkillId = step.getSkillId();
+        String boardUsedSkill = null;
+        List<Records.ShotResponse> shots;
+        if (boardSkillId == null) {
+            shots = scriptSplitterService.splitFromScript(episodeId, scriptText);
+        } else {
+            SkillService.ResolvedSkill resolved = skillService.resolveForUse(boardSkillId, java.util.Map.of());
+            shots = scriptSplitterService.splitFromScript(episodeId, scriptText, resolved.renderedPrompt());
+            boardUsedSkill = resolved.name() + " v" + resolved.version();
+        }
         if (shots == null) {
             throw new IllegalStateException("ScriptSplitterService.splitFromScript 返回为空, episodeId=" + episodeId);
         }
@@ -297,12 +321,21 @@ public class RunExecutor {
         ObjectNode input = objectMapper.createObjectNode();
         input.put("episodeId", episodeId);
         input.put("scriptLength", scriptText.length());
+        if (boardSkillId != null) {
+            input.put("skillId", boardSkillId);
+        }
         ObjectNode output = objectMapper.createObjectNode();
         output.put("shotCount", shots.size());
+        if (boardUsedSkill != null) {
+            output.put("usedSkill", boardUsedSkill);
+        }
         recordToolCall(step, "ScriptSplitterService.splitFromScript", input, output, ms);
 
         runLogService.append(run.getId(), step.getSeqNo(),
                 "BOARD 完成: " + shots.size() + " 个分镜");
+        if (boardUsedSkill != null) {
+            runLogService.append(run.getId(), step.getSeqNo(), "BOARD 使用 Skill: " + boardUsedSkill);
+        }
     }
 
     /** VIDEO：提交所有任务，本 tick 不结束 step，保持 RUNNING 等待后续 tick 轮询。 */

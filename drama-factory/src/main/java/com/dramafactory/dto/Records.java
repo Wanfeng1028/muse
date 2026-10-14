@@ -133,6 +133,7 @@ public final class Records {
      * @param latencyMs 生成耗时（毫秒）
      * @param promptTokens 输入 token 数（AI 生成时为真实值，否则 0）
      * @param completionTokens 输出 token 数（AI 生成时为真实值，否则 0）
+     * @param usedSkill 使用的 Skill（"名称 v版本"），未使用 Skill 时为 null
      */
     public static record GenerateScriptResponse(
             Long episodeId,
@@ -142,7 +143,8 @@ public final class Records {
             String model,
             long latencyMs,
             long promptTokens,
-            long completionTokens) {
+            long completionTokens,
+            String usedSkill) {
     }
 
     public static record ErrorResponse(
@@ -169,7 +171,8 @@ public final class Records {
      * 从剧本原文拆分分镜的请求体。
      */
     public static record ScriptSplitRequest(
-            @NotBlank String scriptText
+            @NotBlank String scriptText,
+            Long skillId
     ) {
     }
 

@@ -38,7 +38,7 @@
     send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
     runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings',
     images: 'image', music: 'music', avatar: 'scan-face', user: 'user',
-    layout: 'layout-grid',
+    layout: 'layout-grid', skills: 'puzzle',
   };
 
   function iconHtml(name) {
@@ -76,6 +76,7 @@
     { id: 'avatar', href: '/avatar.html', label: '数字人', icon: 'avatar' },
     { id: 'runs', href: '/runs.html', label: '运行列表', icon: 'runs', kbd: 'G R' },
     { id: 'agents', href: '/agents.html', label: 'Agent 机队', icon: 'agents' },
+    { id: 'skills', href: '/skills.html', label: 'Skill 市场', icon: 'skills' },
     { id: 'usage', href: '/usage.html', label: '用量统计', icon: 'chart' },
     { id: 'storyboard', href: '/storyboard.html', label: '分镜板', icon: 'film', kbd: 'G S' },
     { id: 'canvas', href: '/canvas.html', label: '分镜画布', icon: 'layout' },
@@ -89,7 +90,7 @@
   /* 侧边栏分组 */
   var NAV_GROUPS = [
     { label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
-    { label: '运行', ids: ['runs', 'agents', 'usage'] },
+    { label: '运行', ids: ['runs', 'agents', 'skills', 'usage'] },
     { label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'pipeline'] }
   ];
   function navById(id) {
@@ -232,7 +233,7 @@
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
       canvas: '分镜画布',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
-      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', usage: '用量统计', settings: '设置',
+      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', skills: 'Skill 市场', usage: '用量统计', settings: '设置',
       images: 'AI 图片', music: 'AI 音乐', avatar: '数字人',
       qc: '成片质检'
     };

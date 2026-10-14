@@ -69,7 +69,7 @@ class ScriptServiceAiFallbackTest {
 
         FailingLlmScriptService llm = new FailingLlmScriptService();
         ScriptService scriptService = new ScriptService(
-                episodeRepository, sceneRepository, llm, characterService);
+                episodeRepository, sceneRepository, llm, characterService, mock(SkillService.class));
 
         Records.GenerateScriptResponse response = scriptService.generate(1L, "ai");
 
@@ -86,7 +86,7 @@ class ScriptServiceAiFallbackTest {
 
         FailingLlmScriptService llm = new FailingLlmScriptService();
         ScriptService scriptService = new ScriptService(
-                episodeRepository, sceneRepository, llm, characterService);
+                episodeRepository, sceneRepository, llm, characterService, mock(SkillService.class));
 
         Records.GenerateScriptResponse response = scriptService.generate(1L, "template");
 
@@ -101,7 +101,7 @@ class ScriptServiceAiFallbackTest {
 
         FailingLlmScriptService llm = new FailingLlmScriptService();
         ScriptService scriptService = new ScriptService(
-                episodeRepository, sceneRepository, llm, characterService);
+                episodeRepository, sceneRepository, llm, characterService, mock(SkillService.class));
 
         assertThrows(IllegalArgumentException.class, () -> scriptService.generate(1L, "xx"));
     }
@@ -112,7 +112,7 @@ class ScriptServiceAiFallbackTest {
 
         FailingLlmScriptService llm = new FailingLlmScriptService();
         ScriptService scriptService = new ScriptService(
-                episodeRepository, sceneRepository, llm, characterService);
+                episodeRepository, sceneRepository, llm, characterService, mock(SkillService.class));
 
         assertThrows(ResourceNotFoundException.class, () -> scriptService.generate(99L, "ai"));
     }

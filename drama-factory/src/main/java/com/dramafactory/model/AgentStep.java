@@ -55,6 +55,10 @@ public class AgentStep {
     @Column(name = "episode_id")
     private Long episodeId;
 
+    /** 本步骤使用的 Skill ID，可空 */
+    @Column(name = "skill_id")
+    private Long skillId;
+
     /** 输入摘要 */
     @Lob
     @Column(name = "input_summary")
@@ -180,6 +184,24 @@ public class AgentStep {
 
     public void setEpisodeId(Long episodeId) {
         this.episodeId = episodeId;
+    }
+
+    /**
+     * 获取本步骤使用的 Skill ID。
+     *
+     * @return Skill ID，可空
+     */
+    public Long getSkillId() {
+        return skillId;
+    }
+
+    /**
+     * 设置本步骤使用的 Skill ID。
+     *
+     * @param skillId Skill ID，可空
+     */
+    public void setSkillId(Long skillId) {
+        this.skillId = skillId;
     }
 
     public String getInputSummary() {

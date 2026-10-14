@@ -58,6 +58,7 @@ class ScriptSplitterServiceTest {
                 shotRepository,
                 videoTaskRepository,
                 credentialResolver,
+                mock(SkillService.class),
                 objectMapper,
                 "Deepseek-v4-flash",
                 3000);

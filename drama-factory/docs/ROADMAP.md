@@ -38,6 +38,7 @@
 
 ### P2
 6. **Skill 市场**：Agent 技能/工作流的发布与安装。
+   - [x] 2026-10-15 落地：Skill/SkillVersion/SkillInstall/SkillRating 实体 + V15 迁移（含 agent_steps.skill_id）；4 个官方预设 Skill（分镜大师/短剧钩子开头/转场设计/爽点节奏）；/api/skills 发布/检索（搜索+tag+分类+排序）/详情/发版/安装（幂等，可升级降级）/卸载/评分/模板渲染；已安装 Skill 可在剧本（`POST /api/episodes/{id}/generate-script?skillId=`）与分镜（`POST /api/episodes/{id}/shots/from-script` body.skillId）生成时选用，prompt 模板注入大模型 system prompt（`【Skill 增强】`段）；Run 创建支持 scriptSkillId/boardSkillId，时间线记录"SCRIPT/BOARD 使用 Skill：名称 v版本"；`skills.html` 市场页（浏览/已安装/发布/详情弹窗，深浅主题）+ 分镜板 Skill 下拉框；docs/skill-market.md。新增测试 26 例（发布/安装/卸载/评分/版本升级全链路 MockMvc + prompt 透传单测），`mvn -o test` 917 全绿（含 26 例新增）。
 7. **快捷工具**：批量处理、格式转换等小工具集。
 8. **创作者计划**：创作者主页、分成/激励（需商业方案先行，技术后置）。
 

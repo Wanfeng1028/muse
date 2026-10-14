@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill 市场 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1>Skill 市场</h1>
+    <p class="text-secondary">Agent 技能的发布、安装与管理</p>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label" for="skillSearch">搜索</label>
+          <input type="text" class="form-control" id="skillSearch" placeholder="按名称、描述、作者搜索">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="skillCategory">分类</label>
+          <select class="form-select" id="skillCategory">
+            <option value="">全部</option>
+            <option value="SCRIPT">SCRIPT 编剧</option>
+            <option value="BOARD">BOARD 分镜</option>
+            <option value="VIDEO">VIDEO 视频</option>
+            <option value="EDIT">EDIT 剪辑</option>
+            <option value="GENERAL">GENERAL 通用</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="skillSort">排序</label>
+          <select class="form-select" id="skillSort">
+            <option value="popular">最受欢迎</option>
+            <option value="rating">评分最高</option>
+            <option value="newest">最新发布</option>
+            <option value="name">名称</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-3" id="skillTagRow"></div>
+      <div class="row g-3 mt-1" id="skillGrid"></div>
+      <div class="text-secondary text-center py-4" id="skillEmpty" hidden>没有找到匹配的 Skill</div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title">已安装</h3>
+    </div>
+    <div class="card-body">
+      <div id="installedList"></div>
+      <div class="text-secondary text-center py-4" id="installedEmpty" hidden>还没有安装任何 Skill，去市场逛逛吧</div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title">发布 Skill</h3>
+    </div>
+    <div class="card-body">
+      <form id="publishForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="pubName">名称</label>
+            <input type="text" class="form-control" id="pubName" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="pubSlug">唯一标识</label>
+            <input type="text" class="form-control" id="pubSlug" placeholder="小写字母/数字/短横线，如 hook-opener" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="pubDescription">描述</label>
+            <textarea class="form-control" id="pubDescription" rows="2"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="pubAuthor">作者</label>
+            <input type="text" class="form-control" id="pubAuthor">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="pubCategory">分类</label>
+            <select class="form-select" id="pubCategory">
+              <option value="SCRIPT">SCRIPT 编剧</option>
+              <option value="BOARD">BOARD 分镜</option>
+              <option value="VIDEO">VIDEO 视频</option>
+              <option value="EDIT">EDIT 剪辑</option>
+              <option value="GENERAL" selected>GENERAL 通用</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="pubIcon">图标</label>
+            <select class="form-select" id="pubIcon">
+              <option value="zap">zap</option>
+              <option value="flame">flame</option>
+              <option value="clapperboard">clapperboard</option>
+              <option value="scissors">scissors</option>
+              <option value="sparkles">sparkles</option>
+              <option value="puzzle" selected>puzzle</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="pubTags">标签</label>
+            <input type="text" class="form-control" id="pubTags" placeholder="逗号分隔，如 钩子,开场,短视频">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="pubPromptTemplate">Prompt 模板</label>
+            <textarea class="form-control" id="pubPromptTemplate" rows="4" placeholder="支持 {{变量名}} 占位，如：为{{topic}}写一个{{duration}}秒的开场钩子"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="pubChangelog">更新说明</label>
+            <input type="text" class="form-control" id="pubChangelog">
+          </div>
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary" id="publishBtn">发布</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+  <div id="toast" class="alert alert-info" role="alert" hidden></div>
+</div>
+
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/skills.js"></script>
+
+<div class="modal modal-blur fade" id="skillDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Skill 详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="skillDetailBody"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

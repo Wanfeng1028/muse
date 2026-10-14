@@ -64,6 +64,7 @@ class RunExecutorTest {
     private RunLogService runLogService;
     private Environment environment;
     private ObjectMapper objectMapper;
+    private SkillService skillService;
     private RunExecutor executor;
 
     @BeforeEach
@@ -78,9 +79,10 @@ class RunExecutorTest {
         runLogService = mock(RunLogService.class);
         environment = mock(Environment.class);
         objectMapper = new ObjectMapper();
+        skillService = mock(SkillService.class);
         executor = new RunExecutor(runRepository, agentStepRepository, videoTaskRepository,
                 scriptService, scriptSplitterService, videoTaskService, finalCutService,
-                runLogService, environment, objectMapper);
+                runLogService, environment, objectMapper, skillService);
     }
 
     /** 构造一个 RUNNING 状态的 Run，并 stub findById 返回它。 */
@@ -136,7 +138,7 @@ class RunExecutorTest {
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
         when(scriptService.generate(EPISODE_ID, "ai"))
                 .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
-                        "Deepseek-v4-flash", 100L, 1000L, 2000L));
+                        "Deepseek-v4-flash", 100L, 1000L, 2000L, null));
 
         executor.advanceRun(run);
 
@@ -1040,7 +1042,7 @@ class RunExecutorTest {
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
         when(scriptService.generate(EPISODE_ID, "ai"))
                 .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
-                        "Deepseek-v4-flash", 100L, 1000L, 2000L));
+                        "Deepseek-v4-flash", 100L, 1000L, 2000L, null));
 
         executor.advanceRun(run);
 
@@ -1060,7 +1062,7 @@ class RunExecutorTest {
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
         when(scriptService.generate(EPISODE_ID, "ai"))
                 .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
-                        "Deepseek-v4-flash", 100L, 1000L, 2000L));
+                        "Deepseek-v4-flash", 100L, 1000L, 2000L, null));
 
         executor.advanceRun(run);
 

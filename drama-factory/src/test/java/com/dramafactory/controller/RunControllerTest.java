@@ -87,7 +87,7 @@ class RunControllerTest {
 
     @Test
     void createShouldReturn201WithRunId() throws Exception {
-        when(runService.createRun(anyString(), any(Records.PlanPreview.class))).thenReturn(5L);
+        when(runService.createRun(anyString(), any(Records.PlanPreview.class), any(), any())).thenReturn(5L);
 
         mockMvc.perform(post("/api/runs")
                         .contentType(MediaType.APPLICATION_JSON)

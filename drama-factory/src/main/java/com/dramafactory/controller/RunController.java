@@ -71,7 +71,8 @@ public class RunController {
     @Operation(summary = "创建并启动运行")
     public ResponseEntity<Map<String, Long>> create(@Valid @RequestBody CreateRunRequest request) {
         log.info("创建 Run，goal 长度={}，集数={}", request.goal().length(), request.plan().episodes().size());
-        Long runId = runService.createRun(request.goal(), request.plan());
+        Long runId = runService.createRun(request.goal(), request.plan(),
+                request.scriptSkillId(), request.boardSkillId());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("runId", runId));
     }
 
@@ -229,9 +230,13 @@ public class RunController {
      *
      * @param goal 自然语言目标
      * @param plan 已确认的计划预览
+     * @param scriptSkillId 可选，SCRIPT 步骤使用的 Skill ID
+     * @param boardSkillId 可选，BOARD 步骤使用的 Skill ID
      */
     public record CreateRunRequest(@NotBlank(message = "goal 不能为空") String goal,
-                                   @NotNull(message = "plan 不能为空") Records.PlanPreview plan) {
+                                   @NotNull(message = "plan 不能为空") Records.PlanPreview plan,
+                                   Long scriptSkillId,
+                                   Long boardSkillId) {
     }
 
     /**

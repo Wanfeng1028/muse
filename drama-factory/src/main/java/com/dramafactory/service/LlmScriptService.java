@@ -254,10 +254,31 @@ public class LlmScriptService {
      * @return 生成结果
      * @throws LlmScriptUnavailableException 未启用 / 调用失败 / 返回格式无效
      */
+    /**
+     * 调用大模型生成剧本（无 Skill 增强，兼容旧调用）。
+     *
+     * @param episode           剧集实体
+     * @param charactersSummary 角色摘要（可为空字符串）
+     * @return 生成结果
+     * @throws LlmScriptUnavailableException 未启用 / 调用失败 / 返回格式无效
+     */
     public LlmScriptResult generate(Episode episode, String charactersSummary) {
+        return generate(episode, charactersSummary, null);
+    }
+
+    /**
+     * 调用大模型生成剧本（支持 Skill 增强）。
+     *
+     * @param episode           剧集实体
+     * @param charactersSummary 角色摘要（可为空字符串）
+     * @param skillPrompt       Skill 渲染后的 prompt，为空时不注入
+     * @return 生成结果
+     * @throws LlmScriptUnavailableException 未启用 / 调用失败 / 返回格式无效
+     */
+    public LlmScriptResult generate(Episode episode, String charactersSummary, String skillPrompt) {
         long start = System.currentTimeMillis();
         try {
-            LlmScriptResult result = doGenerate(episode, charactersSummary);
+            LlmScriptResult result = doGenerate(episode, charactersSummary, skillPrompt);
             dramaMetrics.recordScriptLlm(result.model(), System.currentTimeMillis() - start, true);
             return result;
         } catch (RuntimeException e) {
@@ -269,13 +290,13 @@ public class LlmScriptService {
     /**
      * generate 的实际执行体（指标 wrapper 之外）。
      */
-    private LlmScriptResult doGenerate(Episode episode, String charactersSummary) {
+    private LlmScriptResult doGenerate(Episode episode, String charactersSummary, String skillPrompt) {
         if (!enabled) {
             throw new LlmScriptUnavailableException("AI 剧本生成未启用（drama.script.llm.enabled=false）");
         }
 
         long start = System.currentTimeMillis();
-        ObjectNode body = buildRequestBody(episode, charactersSummary);
+        ObjectNode body = buildRequestBody(episode, charactersSummary, skillPrompt);
 
         int attempts = maxRetries + 1;
         RuntimeException lastCause = null;
@@ -313,7 +334,7 @@ public class LlmScriptService {
      * @param charactersSummary 角色摘要
      * @return JSON 请求体
      */
-    private ObjectNode buildRequestBody(Episode episode, String charactersSummary) {
+    private ObjectNode buildRequestBody(Episode episode, String charactersSummary, String skillPrompt) {
         ObjectNode root = objectMapper.createObjectNode();
         root.put("model", model);
 
@@ -321,7 +342,11 @@ public class LlmScriptService {
 
         ObjectNode systemMsg = messages.addObject();
         systemMsg.put("role", "system");
-        systemMsg.put("content", SYSTEM_PROMPT);
+        String systemContent = SYSTEM_PROMPT;
+        if (skillPrompt != null && !skillPrompt.isBlank()) {
+            systemContent = systemContent + "\n\n【Skill 增强】\n" + skillPrompt;
+        }
+        systemMsg.put("content", systemContent);
 
         ObjectNode userMsg = messages.addObject();
         userMsg.put("role", "user");

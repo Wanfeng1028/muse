@@ -56,6 +56,7 @@ public class ScriptSplitterService {
     private final ShotRepository shotRepository;
     private final VideoTaskRepository videoTaskRepository;
     private final CredentialResolver credentialResolver;
+    private final SkillService skillService;
     private final ObjectMapper objectMapper;
     private final String model;
     private final int maxTokens;
@@ -71,10 +72,12 @@ public class ScriptSplitterService {
                                  ShotRepository shotRepository,
                                  VideoTaskRepository videoTaskRepository,
                                  CredentialResolver credentialResolver,
+                                 SkillService skillService,
                                  ObjectMapper objectMapper,
                                  @Value("${drama.script-splitter.model:Deepseek-v4-flash}") String model,
                                  @Value("${drama.script-splitter.max-tokens:3000}") int maxTokens) {
-        this(episodeRepository, shotRepository, videoTaskRepository, credentialResolver, objectMapper, model, maxTokens,
+        this(episodeRepository, shotRepository, videoTaskRepository, credentialResolver, skillService,
+                objectMapper, model, maxTokens,
                 request -> {
                     HttpClient client = HttpClient.newBuilder()
                             .connectTimeout(Duration.ofSeconds(15))
@@ -88,6 +91,7 @@ public class ScriptSplitterService {
                           ShotRepository shotRepository,
                           VideoTaskRepository videoTaskRepository,
                           CredentialResolver credentialResolver,
+                          SkillService skillService,
                           ObjectMapper objectMapper,
                           String model,
                           int maxTokens,
@@ -96,6 +100,7 @@ public class ScriptSplitterService {
         this.shotRepository = shotRepository;
         this.videoTaskRepository = videoTaskRepository;
         this.credentialResolver = credentialResolver;
+        this.skillService = skillService;
         this.objectMapper = objectMapper;
         this.model = model;
         this.maxTokens = maxTokens;
@@ -108,6 +113,43 @@ public class ScriptSplitterService {
      */
     @Transactional
     public List<Records.ShotResponse> splitFromScript(Long episodeId, String scriptText) {
+        return splitFromScript(episodeId, scriptText, (Long) null);
+    }
+
+    /**
+     * 根据剧本原文拆分分镜并落库（支持选用已安装 Skill）。
+     *
+     * <p>skillId 非空时要求该 Skill 已安装，否则抛 IllegalArgumentException（不静默降级）。</p>
+     *
+     * @param episodeId  剧集 ID
+     * @param scriptText 剧本原文
+     * @param skillId    Skill ID，为空表示不使用 Skill
+     * @return 新建的分镜列表
+     */
+    @Transactional
+    public List<Records.ShotResponse> splitFromScript(Long episodeId, String scriptText, Long skillId) {
+        String skillPrompt = null;
+        if (skillId != null) {
+            // 先查出剧集标题供模板变量使用（参数校验在主方法内完成）
+            String title = episodeRepository.findById(episodeId)
+                    .map(Episode::getTitle).orElse("");
+            java.util.Map<String, String> vars = new java.util.HashMap<>();
+            vars.put("剧集标题", title == null ? "" : title);
+            skillPrompt = skillService.resolveForUse(skillId, vars).renderedPrompt();
+        }
+        return splitFromScript(episodeId, scriptText, skillPrompt);
+    }
+
+    /**
+     * 根据剧本原文拆分分镜并落库（直接传入渲染后的 Skill prompt）。
+     *
+     * @param episodeId   剧集 ID
+     * @param scriptText  剧本原文
+     * @param skillPrompt 渲染后的 Skill prompt，为空表示不使用 Skill
+     * @return 新建的分镜列表
+     */
+    @Transactional
+    public List<Records.ShotResponse> splitFromScript(Long episodeId, String scriptText, String skillPrompt) {
         // 1. 参数校验
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode", episodeId));
@@ -116,7 +158,7 @@ public class ScriptSplitterService {
         }
 
         // 2. 调用大模型
-        String content = callModel(scriptText);
+        String content = callModel(scriptText, skillPrompt);
 
         // 3+4. 剥离围栏、解析并校验为 Shot 列表（纯逻辑，可单测）
         List<Shot> shots = parseShotsJson(episode, content);
@@ -226,13 +268,28 @@ public class ScriptSplitterService {
      * 调用微信 ChatAPI，返回 choices[0].message.content。
      */
     private String callModel(String scriptText) {
+        return callModel(scriptText, null);
+    }
+
+    /**
+     * 调用微信 ChatAPI（支持 Skill 增强），返回 choices[0].message.content。
+     *
+     * @param scriptText  剧本原文
+     * @param skillPrompt Skill 渲染后的 prompt，为空时不注入
+     * @return 模型返回文本
+     */
+    private String callModel(String scriptText, String skillPrompt) {
         ObjectNode body = objectMapper.createObjectNode();
 
         body.put("model", model);
         ArrayNode messages = body.putArray("messages");
         ObjectNode systemMsg = messages.addObject();
         systemMsg.put("role", "system");
-        systemMsg.put("content", SYSTEM_PROMPT);
+        String systemContent = SYSTEM_PROMPT;
+        if (skillPrompt != null && !skillPrompt.isBlank()) {
+            systemContent = systemContent + "\n\n【Skill 增强】\n" + skillPrompt;
+        }
+        systemMsg.put("content", systemContent);
         ObjectNode userMsg = messages.addObject();
         userMsg.put("role", "user");
         userMsg.put("content", scriptText);

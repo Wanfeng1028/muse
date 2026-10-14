@@ -101,12 +101,12 @@ public class ShotController {
      * @return 新建的分镜列表
      */
     @PostMapping("/episodes/{episodeId}/shots/from-script")
-    @Operation(summary = "从剧本拆分分镜")
+    @Operation(summary = "从剧本拆分分镜（可选 skillId 选用已安装 Skill）")
     public ResponseEntity<List<Records.ShotResponse>> splitFromScript(
             @PathVariable Long episodeId,
             @Valid @RequestBody Records.ScriptSplitRequest request) {
         List<Records.ShotResponse> result =
-                scriptSplitterService.splitFromScript(episodeId, request.scriptText());
+                scriptSplitterService.splitFromScript(episodeId, request.scriptText(), request.skillId());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
