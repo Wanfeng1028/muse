@@ -38,7 +38,7 @@
     send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
     runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings',
     images: 'image', music: 'music', avatar: 'scan-face', user: 'user',
-    layout: 'layout-grid',
+    layout: 'layout-grid', tools: 'wrench',
   };
 
   function iconHtml(name) {
@@ -82,6 +82,7 @@
     { id: 'tasks', href: '/tasks.html', label: '任务队列', icon: 'tasks', kbd: 'G T' },
     { id: 'finals', href: '/finals.html', label: '成片库', icon: 'check', kbd: 'G F' },
     { id: 'pipeline', href: '/pipeline.html', label: '生产看板', icon: 'chart', kbd: 'G P' },
+    { id: 'tools', href: '/tools.html', label: '快捷工具', icon: 'tools' },
     { id: 'settings', href: '/settings.html', label: '设置', icon: 'settings' },
     { id: 'account', href: '/account.html', label: '账号', icon: 'user' }
   ];
@@ -90,7 +91,7 @@
   var NAV_GROUPS = [
     { label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
     { label: '运行', ids: ['runs', 'agents', 'usage'] },
-    { label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'pipeline'] }
+    { label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'pipeline', 'tools'] }
   ];
   function navById(id) {
     for (var i = 0; i < NAV.length; i++) { if (NAV[i].id === id) return NAV[i]; }

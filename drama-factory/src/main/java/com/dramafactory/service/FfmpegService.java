@@ -362,4 +362,72 @@ public class FfmpegService {
         );
         run(cmd, 60);
     }
+
+    /**
+     * 转换视频格式 / 压缩分辨率。
+     * <p>mp4 走 libx264+aac；webm 走 libvpx-vp9+libopus；maxWidth 非空时按比例缩放到该宽度。</p>
+     *
+     * @param input    输入视频
+     * @param output   输出视频
+     * @param format   目标格式：mp4 或 webm（其他值按 mp4 处理）
+     * @param maxWidth 目标宽度像素，可空
+     */
+    public void convertVideo(Path input, Path output, String format, Integer maxWidth) {
+        List<String> cmd = new ArrayList<>();
+        cmd.add(ffmpeg);
+        cmd.add("-y");
+        cmd.add("-i");
+        cmd.add(input.toString());
+        if (maxWidth != null) {
+            cmd.add("-vf");
+            cmd.add("scale=" + maxWidth + ":-2");
+        }
+        if ("webm".equalsIgnoreCase(format)) {
+            cmd.add("-c:v");
+            cmd.add("libvpx-vp9");
+            cmd.add("-b:v");
+            cmd.add("0");
+            cmd.add("-crf");
+            cmd.add("30");
+            cmd.add("-c:a");
+            cmd.add("libopus");
+        } else {
+            cmd.add("-c:v");
+            cmd.add("libx264");
+            cmd.add("-pix_fmt");
+            cmd.add("yuv420p");
+            cmd.add("-c:a");
+            cmd.add("aac");
+        }
+        cmd.add(output.toString());
+        run(cmd, 600);
+    }
+
+    /**
+     * 从视频提取音频。
+     * <p>mp3 走 libmp3lame；wav 走 pcm_s16le。</p>
+     *
+     * @param input  输入视频
+     * @param output 输出音频
+     * @param format 目标格式：mp3 或 wav（其他值按 mp3 处理）
+     */
+    public void extractAudio(Path input, Path output, String format) {
+        List<String> cmd = new ArrayList<>();
+        cmd.add(ffmpeg);
+        cmd.add("-y");
+        cmd.add("-i");
+        cmd.add(input.toString());
+        cmd.add("-vn");
+        if ("wav".equalsIgnoreCase(format)) {
+            cmd.add("-c:a");
+            cmd.add("pcm_s16le");
+        } else {
+            cmd.add("-c:a");
+            cmd.add("libmp3lame");
+            cmd.add("-q:a");
+            cmd.add("4");
+        }
+        cmd.add(output.toString());
+        run(cmd, 600);
+    }
 }

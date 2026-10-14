@@ -39,6 +39,7 @@
 ### P2
 6. **Skill 市场**：Agent 技能/工作流的发布与安装。
 7. **快捷工具**：批量处理、格式转换等小工具集。
+   - [x] 2026-10-15 落地：`tools.html` 卡片式 5 工具（资产批量打标/重命名、视频 mp4↔webm 转码+压缩、音频提取 mp3/wav、分镜表 CSV 导出、操作记录）；`POST /api/tools/*` + `GET /api/tools/op-logs`；`tool_op_log` 表（V16）；ffmpeg 复用 FfmpegService；产物自动入资产库。18 例测试全绿，深浅主题截图验收通过。详见 docs/quick-tools.md。
 8. **创作者计划**：创作者主页、分成/激励（需商业方案先行，技术后置）。
 
 ## 差异化（超越 pix6 的点，本项目独有）
