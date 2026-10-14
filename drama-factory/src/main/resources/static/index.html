@@ -29,9 +29,8 @@
     <div class="ws-new-block">
       <div class="ws-new-head">
         <span>新建项目</span>
-        <button class="btn btn-secondary btn-sm" id="ws-new-project-btn" type="button">展开</button>
       </div>
-      <form id="ws-project-form" style="display:none;" class="ws-new-form">
+      <form id="ws-project-form" class="ws-new-form">
         <div class="mb-2"><input type="text" class="form-control" id="ws-project-title" required placeholder="项目标题，例如：逆袭千金"></div>
         <div class="mb-2"><input type="text" class="form-control" id="ws-project-genre" placeholder="类型，例如：都市/爽文"></div>
         <div class="d-flex gap-2">
@@ -43,9 +42,8 @@
     <div class="ws-new-block">
       <div class="ws-new-head">
         <span>新建剧集</span>
-        <button class="btn btn-secondary btn-sm" id="ws-new-episode-btn" type="button">展开</button>
       </div>
-      <form id="ws-episode-form" style="display:none;" class="ws-new-form">
+      <form id="ws-episode-form" class="ws-new-form">
         <div class="row g-2 mb-2">
           <div class="col-4"><input type="number" class="form-control" id="ws-episode-no" min="1" required placeholder="集号"></div>
           <div class="col-8"><input type="text" class="form-control" id="ws-episode-title" placeholder="标题（可选）"></div>
@@ -70,11 +68,11 @@
     <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
     <button id="sendBtn" class="composer-send" type="button" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
-  <div class="quota-note">对话会消耗你的 DeepSeek API 额度（微信 ChatAPI），请按需使用。</div>
+  <div class="quota-note">对话会产生模型调用费用，请按需使用。</div>
 
   <section class="ws-recent" id="ws-recent" aria-label="最近动态">
     <div class="ws-recent-title">最近动态</div>
-    <div id="ws-recent-list"><div class="ws-recent-empty">暂无动态，先从上面的输入框开始。</div></div>
+    <div id="ws-recent-list"><div class="ws-recent-empty">暂无动态，从上面的输入框开始。</div></div>
   </section>
 </main>
 

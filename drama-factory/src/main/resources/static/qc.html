@@ -10,32 +10,17 @@
   <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css">
 </head>
 <body>
 <div class="page">
-  <header class="navbar navbar-expand-md d-print-none">
-    <div class="container-xl">
-      <a class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3" href="/">
-        AI 短剧工坊
-      </a>
-      <div class="navbar-nav flex-row order-md-last"></div>
-      <div class="collapse navbar-collapse show" id="navbar-menu">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="/index.html">控制台首页</a></li>
-          <li class="nav-item"><a class="nav-link" href="/storyboard.html">分镜板</a></li>
-          <li class="nav-item"><a class="nav-link" href="/tasks.html">任务队列</a></li>
-          <li class="nav-item"><a class="nav-link" href="/finals.html">成片库</a></li>
-          <li class="nav-item"><a class="nav-link" href="/pipeline.html">生产看板</a></li>
-          <li class="nav-item"><a class="nav-link" href="/chat.html">AI 对话</a></li>
-        </ul>
-      </div>
-    </div>
-  </header>
 <div class="page-head">
   <h1>成片质检</h1>
 </div>
 
-        <div class="card">
+<div class="state-empty is-hidden" id="qcEmpty"><i data-lucide="inbox"></i><span>未指定成片，请从成片库进入。</span></div>
+
+        <div class="card" id="qcCard">
           <div class="card-header">
             <h3 class="card-title" id="qcTitle">加载中…</h3>
             <div class="card-actions">

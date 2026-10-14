@@ -94,7 +94,8 @@
       esc(label) +
       "</span>" +
       (item.restartRequired ? restartBadge() : "") +
-      '<code class="form-key">' +
+      '<button type="button" class="form-key-toggle" title="显示配置键名" aria-label="显示配置键名">key</button>' +
+      '<code class="form-key is-hidden">' +
       esc(key) +
       "</code>";
     row.appendChild(labelWrap);
@@ -180,6 +181,13 @@
       control.appendChild(hint);
     }
 
+    var keyToggle = labelWrap.querySelector(".form-key-toggle");
+    var keyCode = labelWrap.querySelector(".form-key");
+    keyToggle.addEventListener("click", function () {
+      var hidden = keyCode.classList.toggle("is-hidden");
+      keyToggle.setAttribute("title", hidden ? "显示配置键名" : "隐藏配置键名");
+      keyToggle.setAttribute("aria-label", hidden ? "显示配置键名" : "隐藏配置键名");
+    });
     row.appendChild(control);
     return row;
   }

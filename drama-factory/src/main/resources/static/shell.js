@@ -99,7 +99,7 @@
     for (var i = 0; i < NAV.length; i++) {
       if (p.endsWith('/' + NAV[i].id + '.html') || p === NAV[i].href) return NAV[i].id;
     }
-    if (p.endsWith('/qc.html')) return 'finals';
+    if (p.endsWith('/qc.html')) return 'qc';
     if (p.endsWith('/run-detail.html')) return 'runs';
     return 'index';
   }
@@ -229,7 +229,8 @@
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
       runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', usage: '用量统计', settings: '设置',
-      images: 'AI 图片', music: 'AI 音乐', avatar: '数字人'
+      images: 'AI 图片', music: 'AI 音乐', avatar: '数字人',
+      qc: '成片质检'
     };
     if (window.location.pathname.endsWith('/run-detail.html')) return '运行详情';
     return titles[id] || 'AI 短剧工坊';
@@ -245,12 +246,12 @@
         return { label: '前往' + n.label, hint: n.label, icon: n.icon, kbd: n.kbd, run: function () { location.href = n.href; } };
       }) },
       { group: '操作', items: [
-        { label: '新建分镜', hint: '分镜板', icon: 'plus', run: function () { location.href = '/storyboard.html#act=new-shot'; } },
-        { label: '从剧本生成分镜', hint: '分镜板', icon: 'spark', run: function () { location.href = '/storyboard.html#act=from-script'; } },
-        { label: '提交本集全部任务', hint: '分镜板', icon: 'send', run: function () { location.href = '/storyboard.html#act=submit-all'; } },
-        { label: '生成成片', hint: '成片库', icon: 'film', run: function () { location.href = '/finals.html#act=generate'; } },
-        { label: '打开 AI 对话', hint: '工作区', icon: 'chat', kbd: modK(), run: function () { location.href = '/chat.html'; } },
-        { label: '新建运行', hint: '运行列表', icon: 'runs', run: function () { location.href = '/runs.html#act=new-run'; } }
+        { label: '新建分镜', hint: '分镜板', icon: 'plus', kbd: '1', run: function () { location.href = '/storyboard.html#act=new-shot'; } },
+        { label: '从剧本生成分镜', hint: '分镜板', icon: 'spark', kbd: '2', run: function () { location.href = '/storyboard.html#act=from-script'; } },
+        { label: '提交本集全部任务', hint: '分镜板', icon: 'send', kbd: '3', run: function () { location.href = '/storyboard.html#act=submit-all'; } },
+        { label: '生成成片', hint: '成片库', icon: 'film', kbd: '4', run: function () { location.href = '/finals.html#act=generate'; } },
+        { label: '打开 AI 对话', hint: 'AI 对话页', icon: 'chat', kbd: '5', run: function () { location.href = '/chat.html'; } },
+        { label: '新建运行', hint: '运行列表', icon: 'runs', kbd: '6', run: function () { location.href = '/runs.html#act=new-run'; } }
       ] }
     ];
   }
@@ -336,7 +337,13 @@
   function paletteKey(e) {
     if (e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, currentFlat.length - 1); renderPalette(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); renderPalette(); }
-    else if (e.key === 'Enter') {
+    else if (/^[1-6]$/.test(e.key) && document.getElementById('cmdInput').value.trim() === '') {
+      e.preventDefault();
+      var ops = currentFlat.filter(function (x) { return x.group === '操作'; });
+      var op = ops[Number(e.key) - 1];
+      closePalette();
+      if (op) op.run();
+    } else if (e.key === 'Enter') {
       e.preventDefault();
       var it = currentFlat[selectedIdx];
       closePalette();

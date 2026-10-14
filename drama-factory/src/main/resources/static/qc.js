@@ -77,7 +77,13 @@
 
   async function loadQc() {
     if (!qcId) {
-      showToast('缺少成片 ID');
+      var card = document.getElementById('qcCard');
+      var empty = document.getElementById('qcEmpty');
+      if (card) card.style.display = 'none';
+      if (empty) {
+        empty.classList.remove('is-hidden');
+        if (window.lucide) lucide.createIcons();
+      }
       return;
     }
     try {

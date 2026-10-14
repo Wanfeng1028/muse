@@ -181,8 +181,14 @@ async function generateFinalCut() {
 
 function renderEmpty(text) {
   const wrap = document.createElement("div");
-  wrap.style.cssText = "max-width:880px;padding:24px 0;color:var(--text-3);font-size:13px;";
-  wrap.textContent = text;
+  wrap.className = "state-empty";
+  const icon = document.createElement("i");
+  icon.setAttribute("data-lucide", "inbox");
+  wrap.appendChild(icon);
+  const span = document.createElement("span");
+  span.textContent = text;
+  wrap.appendChild(span);
+  if (window.lucide) lucide.createIcons();
   return wrap;
 }
 

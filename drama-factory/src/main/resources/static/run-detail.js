@@ -509,7 +509,8 @@
     bindEvents();
 
     if (!runId) {
-      $('#detailBody').innerHTML = '<div class="error-box">缺少运行 id 参数</div>';
+      $('#detailBody').innerHTML = '<div class="state-empty"><i data-lucide="inbox"></i><span>未指定运行，请从<a href="/runs.html">运行列表</a>进入。</span></div>';
+      if (window.lucide) lucide.createIcons();
       return;
     }
 

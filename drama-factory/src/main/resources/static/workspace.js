@@ -233,13 +233,7 @@
       });
     }
 
-    var npb = $('ws-new-project-btn');
     var npf = $('ws-project-form');
-    if (npb && npf) {
-      npb.addEventListener('click', function () {
-        npf.style.display = npf.style.display === 'none' ? 'block' : 'none';
-      });
-    }
     var npc = $('ws-project-cancel');
     if (npc && npf) npc.addEventListener('click', function () { npf.style.display = 'none'; });
     if (npf) {
@@ -261,14 +255,7 @@
       });
     }
 
-    var neb = $('ws-new-episode-btn');
     var nef = $('ws-episode-form');
-    if (neb && nef) {
-      neb.addEventListener('click', function () {
-        if (!state.projectId) { toast('请先选择项目'); return; }
-        nef.style.display = nef.style.display === 'none' ? 'block' : 'none';
-      });
-    }
     var nec = $('ws-episode-cancel');
     if (nec && nef) nec.addEventListener('click', function () { nef.style.display = 'none'; });
     if (nef) {

@@ -167,7 +167,8 @@
     if (!episodes.length) {
       if (empty) {
         empty.classList.remove('d-none');
-        empty.textContent = '还没有剧集数据。';
+        empty.innerHTML = '<i data-lucide="inbox"></i><span>暂无剧集数据。</span>';
+      if (window.lucide) lucide.createIcons();
       }
       return;
     }

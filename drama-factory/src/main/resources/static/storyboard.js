@@ -504,7 +504,7 @@ function bindEvents() {
   const episodeSelect = document.getElementById('episodeSelect');
   const grid = document.getElementById('slateGrid');
 
-  if (addBtn) addBtn.addEventListener('click', () => openForm(null));
+  if (addBtn) addBtn.addEventListener('click', () => { if (!getEpisodeId()) { showToast('请先选择剧集'); return; } openForm(null); });
   const fromScriptBtn = document.getElementById('fromScriptBtn');
   if (fromScriptBtn) fromScriptBtn.addEventListener('click', openScriptModal);
   if (aiScriptBtn) aiScriptBtn.addEventListener('click', () => generateScript('ai'));

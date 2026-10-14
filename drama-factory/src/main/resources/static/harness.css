@@ -285,6 +285,8 @@ table.tools th{background:transparent;color:var(--text-2);font-weight:500}
 .form-row:last-child{border-bottom:none}
 .form-label{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:8px}
 .form-label-text{font-size:13px;font-weight:600;color:var(--text)}
+.form-key-toggle{background:transparent;border:1px solid var(--border);border-radius:4px;font-size:11px;color:var(--text-3);padding:0 6px;cursor:pointer;line-height:18px}
+.form-key-toggle:hover{color:var(--text);border-color:var(--text-3)}
 .form-key{flex-basis:100%;font-size:11px;color:var(--text-2);font-family:var(--mono)}
 .form-control{display:flex;flex-direction:column;gap:8px}
 .form-divider{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:16px;

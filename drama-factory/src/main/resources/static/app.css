@@ -233,6 +233,10 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
   letter-spacing: 0.08em;
   color: var(--text-3);
   padding: 8px 10px 4px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
 }
 .cmd-item {
   display: flex;
@@ -605,6 +609,13 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
   max-height: 50vh;
   overflow-y: auto;
   margin-bottom: 16px;
+}
+.ws-chat-log:empty {
+  min-height: 0;
+  max-height: none;
+  margin-bottom: 0;
+  padding: 0;
+  border: 0;
 }
 
 .ws-chips {

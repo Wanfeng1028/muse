@@ -216,9 +216,9 @@ function renderTasks() {
 
   if (!tasks.length) {
     const empty = document.createElement("div");
-    empty.className = "text-secondary py-3";
-    empty.style.fontSize = "13px";
-    empty.textContent = "当前分镜下没有任务";
+    empty.className = "state-empty";
+    empty.innerHTML = '<i data-lucide="inbox"></i><span>暂无任务，先在分镜板添加分镜。</span>';
+    if (window.lucide) lucide.createIcons();
     grid.appendChild(empty);
     return;
   }

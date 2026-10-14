@@ -104,23 +104,25 @@
 
   /* ---------------- run list ---------------- */
   function renderEmpty() {
-    return '<div class="card empty">' +
+    return '<div class="state-empty">' +
       '<i data-lucide="inbox"></i>' +
-      '<div class="t">还没有运行，创建第一条 Run 吧</div>' +
-      '<div class="d">点击下方按钮，输入目标即可生成短剧计划并执行。</div>' +
+      '<span>暂无运行，点击下方按钮创建第一条。</span>' +
       '<button class="btn btn-primary" id="emptyNewBtn"><i data-lucide="plus"></i>新建运行</button>' +
       '</div>';
   }
 
   function renderRuns(runs) {
     var list = $('#listArea');
+    var toolbarBtn = $('#newRunBtn');
     if (!runs || !runs.length) {
       list.innerHTML = renderEmpty();
       if (window.lucide) lucide.createIcons();
       var b = $('#emptyNewBtn');
       if (b) b.addEventListener('click', openWizard);
+      if (toolbarBtn) toolbarBtn.style.display = 'none';
       return;
     }
+    if (toolbarBtn) toolbarBtn.style.display = '';
     var html = '<div class="run-list">';
     runs.forEach(function (r) {
       var badge = '<span class="badge ' + statusClass(r.status) + '"><span class="dot"></span>' + esc(r.statusLabel || r.status || '') + '</span>';
