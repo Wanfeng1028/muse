@@ -12,13 +12,13 @@
 | [mini-os](./mini-os) | 「网页操作系统」——浏览器里的桌面操作系统。Rust + Axum 0.7 + WebSocket + rusqlite（bundled SQLite）后端，原生 HTML/CSS/JS 可拖拽多窗口桌面。功能：虚拟文件系统 CRUD、应用注册表（文件管理器/编辑器/终端/设置/关于）、主题与壁纸持久化、WebSocket echo、统计。 | 工程化 v1 |
 | [ledger](./ledger) | 「钱迹 · 个人财务管家」——个人财务管理系统。Python + FastAPI + SQLAlchemy 2.0（aiosqlite）+ SQLite，Jinja2 SSR Web UI（服务端渲染 SVG 图表）。功能：多账户记账、分类体系、月度预算与超支预警、统计分析、CSV 导入导出、周期账单提醒。 | 工程化 v1 |
 | [sentinel](./sentinel) | 「哨兵 Sentinel」——站点可用性监控。Go 单二进制：HTTP(S)/TCP 双协议检查、证书到期天数、定时调度、状态翻转自动生成停机事件并 webhook 通知、可用率与延迟统计、内嵌 Web UI（三页：仪表盘/监控管理/事件）。 | 工程化 v1 |
-| [docseek](./docseek) | 「文溯 DocSeek」——本地中文全文检索引擎。C++17 + SQLite FTS5（cppjieba 真中文分词）+ 混合检索；v4 新增**自然语言定位原文**（`locate`：问句直达文件:行号锚点 + 命中词高亮段落，离线无模型）。功能：递归目录索引、增量更新、BM25 搜索、`serve` 常驻服务（inotify 实时监控 + Web UI）。 | 工程化 v4 |
+| [docseek](./docseek) | 「文溯 DocSeek」——本地中文全文检索引擎。C++17 + SQLite FTS5（cppjieba 真中文分词）+ 混合检索；v4 新增**自然语言定位原文**（`locate`：问句直达文件:行号锚点 + 命中词高亮段落，离线无模型）。功能：递归目录索引、增量更新、BM25 搜索、`serve` 常驻服务（inotify 实时监控 + Web UI）。 | v0.5.0 生产级补齐 |
 | [feedflow](./feedflow) | 「信流 FeedFlow」——自托管 RSS 阅读器。Python + Flask 3.1 + feedparser + trafilatura + APScheduler + SQLite FTS5（trigram 中文全文搜索）。功能：订阅源管理（分组/抓取间隔/启用开关）、APScheduler 后台定时抓取、trafilatura 正文提取（失败回落摘要）、三栏桌面式阅读器（未读/星标/全部过滤、快捷键 j/k/m/s）、FTS5 全文搜索、OPML 导入/导出、统计页；v1.2 灵魂功能：五维加权重要性排序 +「今日必读」页（每天最重要的 N 篇）+ 兴趣设置。 | 工程化 v1.2 |
 | [linkshort](./linkshort) | 「短链 LinkShort」——自托管短链服务。Go 单二进制：chi v5 路由 + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI + skip2/go-qrcode 二维码。功能：短链创建（自动 base62/自定义 slug）、302 跳转计数与访问日志、统计（总览/30 天曲线/Top 链接/Top Referer）、过期 410、启用开关、二维码 PNG、CSV 导入导出、API Key 鉴权、**限次访问**、**阅后即焚**、Web UI 四页（仪表盘/链接管理/详情/新建）、**Prometheus 指标**、**限流**、**就绪探针**。 | v1.2 可观测+限流+韧性 |
 | [mortisedb](./mortisedb) | 「榫卯 MortiseDB」——NAS 玩家/小团队的本地多源数据拼装层。Go 单二进制：modernc.org/sqlite（纯 Go）+ go:embed 内嵌 Web UI。功能：YAML 声明式映射 SQLite/CSV/JSON/目录为表（schema 推断）、增量同步（updated_at 水位线+哈希兜底）、冲突策略（源优先级/手动）、类 SQL 视图（运行/导出 CSV）、定时任务+运行历史。 | 工程化 v1 |
 | [interlude](./interlude) | 「幕间 Interlude」——分支叙事的 linter：给独立游戏叙事设计师/互动小说/剧本杀作者的开源桌面工具。Kotlin + Compose Desktop。自研叙事 DSL（行号精确报错）、一致性校验引擎（死路/不可达节点/变量未初始化/条件永假，5 条规则）、可视化分支图（层次化布局）、本地化文本抽取回填。 | v1 核心完成 |
-| [stagecue](./stagecue) | 「舞监台 StageCue」——小剧场/脱口秀/校园演出的多端同步演出控台。Kotlin Multiplatform + Compose Desktop + Ktor：时间轴 cue 编排、WebSocket 毫秒级时钟同步（NTP 式）、幂等事件广播、离线操作日志。QLab 的开源跨平台中文平替。 |
-| [voxloom](./voxloom) | 「声纹工坊 VoxLoom」——中文播客/有声书的文字剪辑工作站。C#/.NET 8 + Avalonia 跨平台桌面：转写稿当时间轴，文字删改自动生成音频剪辑（过零点防爆音），语气词一键弱化（-12dB），EDL 导出供 Premiere/Reaper 精修。自研 Core 库（WAV/波形金字塔/对齐/剪辑引擎）。 | v0.1.0 |
+| [stagecue](./stagecue) | 「舞监台 StageCue」——小剧场/脱口秀/校园演出的多端同步演出控台。Kotlin Multiplatform + Compose Desktop + Ktor：时间轴 cue 编排、WebSocket 毫秒级时钟同步（NTP 式）、幂等事件广播、离线操作日志。QLab 的开源跨平台中文平替。 | v0.2.0 |
+| [voxloom](./voxloom) | 「声纹工坊 VoxLoom」——中文播客/有声书的文字剪辑工作站。C#/.NET 8 + Avalonia 跨平台桌面：转写稿当时间轴，文字删改自动生成音频剪辑（过零点防爆音），语气词一键弱化（-12dB），EDL 导出供 Premiere/Reaper 精修。自研 Core 库（波形金字塔/对齐/剪辑引擎），MP3/FLAC/M4A 真实导入（ffmpeg 解码）。 | v1.1 生产级补齐 |
 
 ## 如何运行
 
@@ -192,7 +192,7 @@ cd stagecue
 ./gradlew :desktopApp:run      # 桌面导演台（自动连接 localhost:8080）
 ```
 
-完整说明见 [stagecue/README.md](./stagecue/README.md)，发版对照报告见 [stagecue/docs/PRODUCTION_REPORT_v0.1.0.md](./stagecue/docs/PRODUCTION_REPORT_v0.1.0.md)。
+完整说明见 [stagecue/README.md](./stagecue/README.md)，发版对照报告见 [stagecue/docs/PRODUCTION_REPORT_v0.2.0.md](./stagecue/docs/PRODUCTION_REPORT_v0.2.0.md)。
 
 ## 目录约定
 
