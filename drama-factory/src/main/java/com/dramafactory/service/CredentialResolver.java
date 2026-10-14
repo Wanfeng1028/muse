@@ -64,6 +64,44 @@ public class CredentialResolver {
         return surrogateAuthClient.authHeader(url);
     }
 
+    /**
+     * 解析 DashScope BYOK 鉴权头：卡片 key → 设置中心 → surrogate。
+     */
+    public Map.Entry<String, String> dashscopeByokAuth(String cardKey, String url) {
+        if (cardKey != null && !cardKey.isBlank()) {
+            return Map.entry("Authorization", "Bearer " + cardKey.trim());
+        }
+        String key = readKey("dashscope.api-key");
+        if (key != null) {
+            return Map.entry("Authorization", "Bearer " + key);
+        }
+        return surrogateAuthClient.authHeader(url, "custom.qwen-cloud-cn");
+    }
+
+    /**
+     * 解析 MiniMax 鉴权头：仅卡片 key 与设置中心 key，无 surrogate 通道。
+     */
+    public Map.Entry<String, String> minimaxAuth(String cardKey) {
+        String key = (cardKey != null && !cardKey.isBlank()) ? cardKey.trim() : readKey("minimax.api-key");
+        if (key != null) {
+            return Map.entry("Authorization", "Bearer " + key);
+        }
+        return null;
+    }
+
+    /**
+     * 解析 D-ID 鉴权头（Basic，用户名为 key）：仅卡片 key 与设置中心 key，无 surrogate 通道。
+     */
+    public Map.Entry<String, String> didAuth(String cardKey) {
+        String key = (cardKey != null && !cardKey.isBlank()) ? cardKey.trim() : readKey("did.api-key");
+        if (key == null) {
+            return null;
+        }
+        String basic = java.util.Base64.getEncoder()
+                .encodeToString((key + ":").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return Map.entry("Authorization", "Basic " + basic);
+    }
+
     private String readKey(String settingKey) {
         Map<String, String> all = settingsService.loadAll();
         String value = all.get(settingKey);

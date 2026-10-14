@@ -3,6 +3,17 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 风格，
 版本号使用项目内版本（`v2.x`）。
 
+## [v1.0] - 2026-10-14
+
+### Added
+- BYOK 真实生成调用（v1.0 最后一块）：`POST /api/byok/generate`（IMAGE/MUSIC/AVATAR 三模块，服务端阻塞轮询后落盘，返回本地 URL）+ `GET /api/byok/file/{module}/{filename}`（防路径穿越）。
+- DashScope 万相文生图：`wan2.5-t2i-preview`，async 提交+轮询（`X-DashScope-Async: enable`）；连接探针 `GET /tasks/__connectivity_probe__`（零费用，404=密钥有效/401=密钥无效）；真实出图已验证（1024×1024 PNG）。
+- MiniMax 音乐：`music-3.0` 同步调用（`base_resp.status_code==0` 成功）；探针非法 model 负向探测（4xx=密钥有效，零费用）。注：官方已公告 2026-08 起不对新用户开放、免费档停服，仅存量付费用户可用。
+- D-ID 数字人：talks 提交+轮询（文案驱动 TTS 或音频 URL 二选一，人物图需公网 URL）；探针 `GET /credits`（零费用）。
+- Key 解析顺序：通道卡片 → 设置中心（`dashscope.api-key`/`minimax.api-key`/`did.api-key`）→ surrogate（仅 DashScope，沿用现有白名单）。
+- 前端三页接真实接口：生成中禁用按钮+进度提示，失败显示脱敏错误；图片页预览、音乐页音频播放器、数字人页视频播放器；空 Key 保持诚实空状态。
+- 单元/契约测试 29 例（录制回放 + MockMvc），总数 515→544 全绿。
+
 ## [v2.9] - 2026-10-14
 
 ### Added

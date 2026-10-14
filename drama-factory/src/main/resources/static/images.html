@@ -96,7 +96,23 @@
       preview.hidden = false;
     };
     document.getElementById("img-generate").onclick = function () {
-      Byok.notYetReady(currentModel && currentModel.model.displayName);
+      var prompt = document.getElementById("img-prompt").value.trim();
+      if (!prompt) { Byok.toast("请填写提示词", "error"); return; }
+      var sizeSel = document.getElementById("img-size");
+      Byok.generate({
+        module: "IMAGE",
+        model: currentModel,
+        prompt: prompt,
+        options: { size: sizeSel ? sizeSel.value : "1024*1024" },
+        btn: document.getElementById("img-generate"),
+        hint: document.getElementById("img-hint"),
+        onDone: function (url) {
+          var preview = document.getElementById("img-preview");
+          preview.src = url;
+          preview.hidden = false;
+          Byok.toast("图片已生成", "success");
+        }
+      });
     };
     Byok.icons();
   }

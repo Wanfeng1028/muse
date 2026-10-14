@@ -89,7 +89,27 @@
       };
     }
     document.getElementById("mus-generate").onclick = function () {
-      Byok.notYetReady(currentModel && currentModel.model.displayName);
+      var prompt = document.getElementById("mus-prompt").value.trim();
+      if (!prompt) { Byok.toast("请填写提示词 / 歌词", "error"); return; }
+      var instrumental = document.getElementById("mus-instrumental").checked;
+      Byok.generate({
+        module: "MUSIC",
+        model: currentModel,
+        prompt: prompt,
+        options: { lyrics: prompt, instrumental: instrumental ? "true" : "false" },
+        btn: document.getElementById("mus-generate"),
+        hint: document.getElementById("mus-hint"),
+        onDone: function (url) {
+          var hint = document.getElementById("mus-hint");
+          hint.innerHTML = "";
+          var audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = url;
+          audio.style.maxWidth = "100%";
+          hint.appendChild(audio);
+          Byok.toast("音乐已生成", "success");
+        }
+      });
     };
     Byok.icons();
   }

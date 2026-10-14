@@ -39,7 +39,7 @@
         (providers || []).forEach(function (p) {
           if (!p.enabled) return;
           (p.models || []).forEach(function (m) {
-            if (m.enabled) models.push({ provider: p.name, model: m });
+            if (m.enabled) models.push({ providerId: p.id, provider: p.name, model: m });
           });
         });
         render(module, label, models, opts);
@@ -88,10 +88,52 @@
     toast("已选模型" + (modelName ? "「" + modelName + "」" : "") + "，生成调用下一轮上线", "info");
   }
 
+  /**
+   * 真实生成调用：POST /api/byok/generate，服务端阻塞轮询后返回产物 URL。
+   * opts: { module, model, prompt, options, btn, hint, onDone(url) }
+   * 生成中禁用按钮、hint 显示进度；失败 toast 显示脱敏错误；成功回调 onDone。
+   */
+  function generate(opts) {
+    var btn = opts.btn, hint = opts.hint;
+    if (!opts.model) { toast("请先选择模型", "error"); return; }
+    var body = {
+      module: opts.module,
+      providerId: opts.model.providerId,
+      modelId: opts.model.model.modelId,
+      prompt: opts.prompt,
+      options: opts.options || {}
+    };
+    if (btn) btn.disabled = true;
+    if (hint) hint.textContent = "生成中，请稍候…";
+    fetch("/api/byok/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+      .then(function (res) { return res.json().then(function (d) { return { ok: res.ok, d: d }; }); })
+      .then(function (r) {
+        if (btn) btn.disabled = false;
+        if (r.ok && r.d && r.d.status === "SUCCEEDED" && r.d.url) {
+          if (hint) hint.textContent = "";
+          if (typeof opts.onDone === "function") opts.onDone(r.d.url);
+        } else {
+          var msg = (r.d && r.d.error) || ("HTTP " + (r.ok ? 200 : "错误"));
+          if (hint) hint.textContent = "";
+          toast("生成失败：" + msg, "error");
+        }
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        if (hint) hint.textContent = "";
+        toast("生成请求失败：" + (err && err.message || err), "error");
+      });
+  }
+
   window.Byok = {
     MODULE_LABEL: MODULE_LABEL,
     loadModels: loadModels,
     notYetReady: notYetReady,
+    generate: generate,
     toast: toast,
     icons: icons
   };

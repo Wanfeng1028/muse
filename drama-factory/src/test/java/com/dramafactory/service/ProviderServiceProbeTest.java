@@ -29,7 +29,8 @@ class ProviderServiceProbeTest {
     }
 
     private ProviderService serviceWith(Map<String, VideoProvider> providers) {
-        return new ProviderService(providerRepository, modelRepository, providers);
+        return new ProviderService(providerRepository, modelRepository, providers,
+                Map.of(), Map.of(), Map.of());
     }
 
     private MediaProvider provider(Long id, String name, String module) {

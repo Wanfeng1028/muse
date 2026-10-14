@@ -18,6 +18,7 @@
 1. **BYOK 生成调用**：用户配好 API 后，图片/音乐/数字人页选模型即真实可用。
    需要先定协议方案（OpenAI 兼容优先 + 自定义映射兜底），不许点出假成功。
    - [x] 2026-10-14 视频供应商连接自检落地：`POST /api/providers/{id}/test` + 卡片"测试连接"按钮；Agnes/Qwen 用"查询不存在任务"的负向探测（零费用，401=密钥无效/404=密钥有效，已核验官方文档），mock 恒 OK，未接入模块诚实返回 UNSUPPORTED；见 docs/connection-probe.md。
+   - [x] 2026-10-14 图片/音乐/数字人真实生成调用落地：`POST /api/byok/generate`（服务端阻塞轮询后落盘，返回本地 URL）+ `GET /api/byok/file/{module}/{filename}`；DashScope 万相文生图（`wan2.5-t2i-preview`，async 提交+轮询，探针零费用 404=密钥有效）、MiniMax Music（`music-3.0`，同步调用；注：官方已公告 2026-08 起不对新用户开放，仅存量付费用户可用）、D-ID 数字人（talks 接口+轮询，探针 `GET /credits` 零费用）；Key 解析顺序 卡片→设置中心→surrogate（仅 DashScope）；前端三页接真实接口（进度态+结果展示），avatar 页 v1.0 改用公网 URL 输入；DashScope wan2.5 真实出图已验证（1024×1024 PNG）；测试 515→544 全绿。
 2. **账号体系**：邮箱注册登录（BCrypt）+ Google / Apple / GitHub OAuth；
    个人资料（几何/插画默认头像，禁字母头像）、账号与安全（改密码/改邮箱/会话管理）、
    个性化（主题/语言）；登录限流、密码强度、敏感操作二次验证。OAuth 无真实凭证前诚实标注未实测。

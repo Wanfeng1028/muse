@@ -30,10 +30,16 @@ public class ProviderService {
     private final MediaProviderRepository providerRepository;
     private final ProviderModelRepository modelRepository;
     private final Map<String, VideoProvider> videoProvidersByName;
+    private final Map<String, com.dramafactory.service.byok.ImageProvider> imageProvidersByName;
+    private final Map<String, com.dramafactory.service.byok.MusicProvider> musicProvidersByName;
+    private final Map<String, com.dramafactory.service.byok.AvatarProvider> avatarProvidersByName;
 
     public ProviderService(MediaProviderRepository providerRepository,
                            ProviderModelRepository modelRepository,
-                           Map<String, VideoProvider> videoProviders) {
+                           Map<String, VideoProvider> videoProviders,
+                           Map<String, com.dramafactory.service.byok.ImageProvider> imageProviders,
+                           Map<String, com.dramafactory.service.byok.MusicProvider> musicProviders,
+                           Map<String, com.dramafactory.service.byok.AvatarProvider> avatarProviders) {
         this.providerRepository = providerRepository;
         this.modelRepository = modelRepository;
         Map<String, VideoProvider> byName = new HashMap<>();
@@ -43,6 +49,27 @@ public class ProviderService {
             }
         }
         this.videoProvidersByName = Map.copyOf(byName);
+        Map<String, com.dramafactory.service.byok.ImageProvider> iByName = new HashMap<>();
+        if (imageProviders != null) {
+            for (var ip : imageProviders.values()) {
+                iByName.put(ip.name(), ip);
+            }
+        }
+        this.imageProvidersByName = Map.copyOf(iByName);
+        Map<String, com.dramafactory.service.byok.MusicProvider> mByName = new HashMap<>();
+        if (musicProviders != null) {
+            for (var mp : musicProviders.values()) {
+                mByName.put(mp.name(), mp);
+            }
+        }
+        this.musicProvidersByName = Map.copyOf(mByName);
+        Map<String, com.dramafactory.service.byok.AvatarProvider> aByName = new HashMap<>();
+        if (avatarProviders != null) {
+            for (var ap : avatarProviders.values()) {
+                aByName.put(ap.name(), ap);
+            }
+        }
+        this.avatarProvidersByName = Map.copyOf(aByName);
     }
 
     /* ==================== DTO ==================== */
@@ -247,17 +274,47 @@ public class ProviderService {
     public TestConnectionResponse testConnection(Long providerId) {
         MediaProvider p = providerRepository.findById(providerId)
                 .orElseThrow(() -> new ResourceNotFoundException("provider", providerId));
-        VideoProvider vp = null;
-        if ("VIDEO".equals(p.getModule())) {
-            vp = matchVideoProvider(p.getName());
-        }
         VideoProvider.ConnectivityResult result;
-        if (vp == null) {
-            result = new VideoProvider.ConnectivityResult(
-                    VideoProvider.ConnectivityStatus.UNSUPPORTED,
-                    "该供应商暂不支持连接自检（仅已接入的视频提供方支持）");
+        String module = p.getModule();
+        if ("VIDEO".equals(module)) {
+            VideoProvider vp = matchVideoProvider(p.getName());
+            if (vp == null) {
+                result = new VideoProvider.ConnectivityResult(
+                        VideoProvider.ConnectivityStatus.UNSUPPORTED,
+                        "该供应商暂不支持连接自检（仅已接入的视频提供方支持）");
+            } else {
+                result = vp.probeConnectivity();
+            }
+        } else if ("IMAGE".equals(module)) {
+            var ip = matchImageProvider(p.getName());
+            if (ip == null) {
+                result = new VideoProvider.ConnectivityResult(
+                        VideoProvider.ConnectivityStatus.UNSUPPORTED, "该图片供应商暂未接入生成实现");
+            } else {
+                var r = ip.probe(p.getApiKey(), p.getApiAddress());
+                result = new VideoProvider.ConnectivityResult(r.status(), r.detail());
+            }
+        } else if ("MUSIC".equals(module)) {
+            var mp = matchMusicProvider(p.getName());
+            if (mp == null) {
+                result = new VideoProvider.ConnectivityResult(
+                        VideoProvider.ConnectivityStatus.UNSUPPORTED, "该音乐供应商暂未接入生成实现");
+            } else {
+                var r = mp.probe(p.getApiKey(), p.getApiAddress());
+                result = new VideoProvider.ConnectivityResult(r.status(), r.detail());
+            }
+        } else if ("AVATAR".equals(module)) {
+            var ap = matchAvatarProvider(p.getName());
+            if (ap == null) {
+                result = new VideoProvider.ConnectivityResult(
+                        VideoProvider.ConnectivityStatus.UNSUPPORTED, "该数字人供应商暂未接入生成实现");
+            } else {
+                var r = ap.probe(p.getApiKey());
+                result = new VideoProvider.ConnectivityResult(r.status(), r.detail());
+            }
         } else {
-            result = vp.probeConnectivity();
+            result = new VideoProvider.ConnectivityResult(
+                    VideoProvider.ConnectivityStatus.UNSUPPORTED, "该模块暂不支持连接自检");
         }
         return new TestConnectionResponse(
                 result.status().name(),
@@ -279,6 +336,40 @@ public class ProviderService {
         }
         if (lower.contains("mock")) {
             return videoProvidersByName.get("mock");
+        }
+        return null;
+    }
+
+    private com.dramafactory.service.byok.ImageProvider matchImageProvider(String name) {
+        if (name == null) {
+            return null;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (lower.contains("dashscope") || lower.contains("qwen") || lower.contains("万相")
+                || lower.contains("通义") || lower.contains("image")) {
+            return imageProvidersByName.get("dashscope-image");
+        }
+        return null;
+    }
+
+    private com.dramafactory.service.byok.MusicProvider matchMusicProvider(String name) {
+        if (name == null) {
+            return null;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (lower.contains("minimax")) {
+            return musicProvidersByName.get("minimax-music");
+        }
+        return null;
+    }
+
+    private com.dramafactory.service.byok.AvatarProvider matchAvatarProvider(String name) {
+        if (name == null) {
+            return null;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (lower.contains("d-id") || lower.contains("did") || lower.contains("数字人")) {
+            return avatarProvidersByName.get("did-avatar");
         }
         return null;
     }
