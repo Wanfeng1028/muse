@@ -386,7 +386,7 @@
 
 **功能模块**：
 
-1. 音频导入（WAV）+ WaveformLod 多级波形金字塔，万级采样点流畅渲染
+1. 音频导入（WAV/MP3/FLAC/M4A：WAV 纯托管，压缩格式走 ffmpeg 真实解码）+ WaveformLod 多级波形金字塔，万级采样点流畅渲染
 2. 转写稿导入：Whisper JSON / LRC / 纯文本；RuleBasedAligner 规则对齐（能量检测精修），文字↔音频双向定位
 3. 文字删除/替换 → 音频剪辑：EditPlan + Delete/Replace/Attenuate 三种 op，过零点拼接 + 短交叉淡化防爆音，冲突检测抛 EditConflictException
 4. 语气词（嗯/那个/对吧）检测 + 一键弱化（-12dB，首尾 50ms raised-cosine 过渡，保留呼吸节奏而非静音）
@@ -394,18 +394,19 @@
 
 **视觉**：「录音棚调音台」——深板岩 #1C1A17 底、纸色 #EDE6D6 波形、橙色 #E8833A 高亮；去 AI 味：无紫渐变、无 emoji 图标、无营销腔文案。
 
-**状态**：v0.1.0（2026-10-13 完成，commit 2df8304）：dotnet build（Debug/Release）全过；测试 44/44（含端到端链路 导入→对齐→删除→弱化→导出）；桌面 UI 在 Xvfb 下真实渲染截图已亲眼验收（docs/screenshots/main.png）；修了 dpsk 生成的 10+ 处跨文件 API 对不齐 + Avalonia.Generators 需 Roslyn 4.14 而 SDK 自带 4.11 的 InitializeComponent 坑（改用 AvaloniaXamlLoader.Load）。
+**状态**：v1.1（2026-10-15 完成）：对照报告 18 项未通过中的 v1.1 部分全部补齐——MP3/FLAC/M4A 真实导入（ffmpeg 解码，NAudio 实测 Linux 不可用已弃用移除）、JSON 行结构化日志（op_id 全链路+脱敏+5MB 轮转）、自动备份+一键恢复（zip+manifest+sha256，删除/弱化前自动备份）、docs/OPERATIONS.md / RELIABILITY.md / SECURITY_DATA.md / TECH_DEBT.md、配置密钥分离（config.json+VOXLOOM_*，禁密钥键，违规则启动退出码 2）、.github/dependabot.yml（NuGet 每周，暂放项目内）；dotnet build 全过，测试 75/75（44 旧+31 新，SmokeRunner 反射直跑）；修了 dpsk 的 2 个真 bug（NAudio Mp3FileReader 跨平台不可用、日志轮转保留数 N+1）。
 
-**发版对照**：`voxloom/docs/PRODUCTION_CHECKLIST_REPORT.md`——有条件发版，18 项未通过均有排期（v1.1：结构化日志/错误处理策略文档/备份恢复/运维手册/CHANGELOG/Dependabot/文档同步；v2：指标告警/限流熔断/故障演练）。
+**发版对照**：`voxloom/docs/PRODUCTION_CHECKLIST_REPORT.md`（v1.0 快照）——v1.1 排期项已全部落地并测试通过；剩余 v2 项：指标告警、限流熔断、技术债清理轮、故障演练、真实负载验证。
 
 **里程碑记录**：
 
-- v0.1.0（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；Core 库 dpsk 生成 + 编排验收；UI Round D 生成后 2 轮修复额度用尽仍有残留，编排者亲自做跨文件 reconciliation 收尾
+- v0.1.0（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；Core 库 dpsk 生成 + 编排验收；UI Round D 生成后 2 轮修复额度用尽仍有残留，编排者亲自做跨文件 reconciliation 收尾；桌面 UI 在 Xvfb 下真实渲染截图已亲眼验收（docs/screenshots/main.png）
+- v1.1（2026-10-15）：生产级补齐（M/L 规格 9 项）。选型实测结论：NAudio.Flac（2015/net45，硬绑定 NAudio 1.7.3）在 net8.0 编译失败已证伪弃用；NAudio 2.2.1 Mp3FileReader 在 Linux 报 Msacm32.dll 缺失已证伪弃用并移除依赖；压缩格式统一走 ffmpeg 真实解码。测试夹具为 ffmpeg 真实生成的 440Hz 正弦（wav/mp3/flac/m4a）+ 随机字节损坏文件，无 demo 数据。
 
 **后续计划**：
 
-- v1.1：MP3/FLAC/M4A 导入、结构化日志、错误处理策略文档、备份恢复、运维手册、Dependabot
-- v2：ONNX 本地声学模型精对齐 + 内置转写、多轨口误自动推荐最自然一版
+- v1.2（候选）：备份 zip 加密选项、恢复前文件清单预览、控制台日志人读格式
+- v2：ONNX 本地声学模型精对齐 + 内置转写、指标告警、限流熔断、技术债清理轮、故障演练、多轨口误自动推荐最自然一版
 
 ## interlude「幕间 Interlude · 分支叙事的 linter」
 
