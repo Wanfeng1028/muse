@@ -87,7 +87,7 @@
 
 ## drama-factory「AI 短剧工坊」
 
-**定位**：短剧生产管理与剧本生成系统，v2 打通从剧本到成片的完整生产管线（剧本→分镜→AI 视频生成→ffmpeg 剪辑成片）。
+**定位**：短剧生产管理与剧本生成系统，v2 打通从剧本到成片的完整生产管线（剧本→分镜→AI 视频生成→ffmpeg 剪辑成片）。**AI MV 模式在建**：一句话主题出一支完整 AI MV（作词→作曲→分镜→视频生成→剪辑→质检），灵魂一页纸见 `drama-factory/docs/SOUL-mv.md`。
 
 **技术栈**：Java 21 + Spring Boot 3.3.5 + Maven；Spring Data JPA + H2 文件库（可平滑切换 PostgreSQL/MySQL）；企业级分层 controller / service / repository / model / dto；内置 Web 控制台由 Spring 静态托管；JUnit 5 集成测试（含 TestRestTemplate 全链路）；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 drama-factory/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 

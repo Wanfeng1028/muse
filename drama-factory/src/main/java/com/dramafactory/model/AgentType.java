@@ -8,7 +8,9 @@ public enum AgentType {
     BOARD("分镜"),
     VIDEO("视频生成"),
     EDIT("剪辑"),
-    QC("质检");
+    QC("质检"),
+    LYRICS("作词"),
+    COMPOSE("作曲");
 
     private final String label;
 

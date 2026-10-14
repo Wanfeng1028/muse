@@ -45,7 +45,7 @@ class AgentControllerTest {
 
         mockMvc.perform(get("/api/agents"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(5));
+                .andExpect(jsonPath("$.length()").value(7));
     }
 
     @Test

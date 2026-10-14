@@ -122,6 +122,8 @@ public class AgentController {
             case EDIT -> "ffmpeg（本地执行）";
             case QC -> Boolean.parseBoolean(environment.getProperty("harness.qc.manual-approval", "true"))
                     ? "人工终审" : "自动检查";
+            case LYRICS -> environment.getProperty("drama.script.llm.model", "Deepseek-v4-flash");
+            case COMPOSE -> "当前通道：" + environment.getProperty("drama.music.provider", "minimax");
         };
     }
 
@@ -138,6 +140,8 @@ public class AgentController {
             case VIDEO -> "Resilience4j 熔断 agnes + 失败重试";
             case EDIT -> "本地 ffmpeg，无降级";
             case QC -> "人工审批门兜底";
+            case LYRICS -> "LLM 失败则作词步骤标记失败，可重试";
+            case COMPOSE -> "作曲渠道失败可切换供应商重试";
         };
     }
 
