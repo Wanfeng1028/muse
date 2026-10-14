@@ -385,7 +385,7 @@ public class ByokGenerateService {
                 return hint;
             }
         }
-        return "bin";
+        throw new IllegalStateException("无法确定文件扩展名：url 与 extHint 均无合法扩展名：url=" + url + "，extHint=" + extHint);
     }
 
     private static boolean isAllowedExt(String ext) {

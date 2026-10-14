@@ -320,9 +320,8 @@ class ByokGenerateServiceTest {
     }
 
     @Test
-    void resolveExtensionShouldFallbackToBinWhenIllegalExt() {
+    void resolveExtensionShouldFallbackToHintWhenIllegalSuffix() {
         // 注：IMAGE 分支的 extHint 恒为 "png"（合法），因此非法后缀实际回退到 hint；
-        // "bin" 分支在当前三个调用点均不可达（hint 恒合法），此处锁定真实行为
         provider("通义万相");
         when(imageProvider.submit(anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new ImageProvider.SubmitResult("t1"));
@@ -347,6 +346,19 @@ class ByokGenerateServiceTest {
         ByokGenerateService.GenerateResponse resp = service.generate(req("IMAGE", Map.of()));
 
         assertTrue(resp.url().endsWith(".mp4"));
+    }
+
+    @Test
+    void resolveExtensionShouldThrowWhenNoLegalExtension() throws Exception {
+        java.lang.reflect.Method m = ByokGenerateService.class.getDeclaredMethod("resolveExtension", String.class, String.class);
+        m.setAccessible(true);
+        try {
+            m.invoke(null, "http://cdn/x/pic", "exe");
+            org.junit.jupiter.api.Assertions.fail("应当抛出 IllegalStateException");
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            assertTrue(e.getCause() instanceof IllegalStateException);
+            assertTrue(e.getCause().getMessage().contains("无法确定文件扩展名"));
+        }
     }
 
     // ---------- E. generateMusic（3 例） ----------
