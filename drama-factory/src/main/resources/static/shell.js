@@ -229,14 +229,15 @@
     return html;
   }
 
-  function pageTitle(id) {
+function pageTitle(id) {
     var titles = {
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
       canvas: '分镜画布',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
       runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', skills: 'Skill 市场', usage: '用量统计', settings: '设置',
       images: 'AI 图片', music: 'AI 音乐', avatar: '数字人',
-      qc: '成片质检'
+      qc: '成片质检',
+      mv: 'AI MV', tools: '快捷工具', account: '账号'
     };
     if (window.location.pathname.endsWith('/run-detail.html')) return '运行详情';
     return titles[id] || 'AI 短剧工坊';

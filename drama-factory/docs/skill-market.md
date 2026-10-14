@@ -56,3 +56,9 @@ toolCalls 的 input/output JSON 同样记录。
 全链路；分类筛选；slug 重复 400；非法评分 400。
 - `SkillScriptGenerateTest`（2）：Skill prompt 真实透传到
 `LlmScriptService.generate` 的第三个参数；不用 Skill 时传 null。
+
+## 界面截图（2026-10-15 视觉验收通过）
+
+![Skill 市场](screenshots/skills-light.png)
+
+![Skill 详情](screenshots/skills-detail-light.png)

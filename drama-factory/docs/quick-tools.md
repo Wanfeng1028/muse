@@ -27,3 +27,9 @@
 ## 测试
 
 `com.dramafactory.tools`：QuickToolsServiceTest（11）+ QuickToolsControllerTest（7），含真实 ffmpeg 端到端（生成片段→转码→探宽度→提音频）。
+
+## 界面截图（2026-10-15 视觉验收通过，带真实演示数据重拍）
+
+![快捷工具（浅色）](screenshots/tools-light.png)
+
+![快捷工具（深色）](screenshots/tools-dark.png)

@@ -34,6 +34,15 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
+function fmtDateTime(s) {
+  if (s === null || s === undefined || s === '') return '';
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return String(s);
+  var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+    + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
 function refreshIcons() {
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
     window.lucide.createIcons();
@@ -397,7 +406,7 @@ async function loadInstalled() {
               <span class="badge">${esc(install.version || '')}</span>
             </div>
             <div class="text-secondary small">
-              安装于 ${esc(install.installedAt || '')} · 可在分镜板生成剧本/分镜时选用
+              安装于 ${esc(fmtDateTime(install.installedAt))} · 可在分镜板生成剧本/分镜时选用
             </div>
           </div>
           <button class="btn btn-secondary btn-sm" data-uninstall="${skill.id}">卸载</button>

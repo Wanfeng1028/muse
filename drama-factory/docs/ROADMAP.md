@@ -39,8 +39,10 @@
 ### P2
 6. **Skill 市场**：Agent 技能/工作流的发布与安装。
    - [x] 2026-10-15 落地：Skill/SkillVersion/SkillInstall/SkillRating 实体 + V15 迁移（含 agent_steps.skill_id）；4 个官方预设 Skill（分镜大师/短剧钩子开头/转场设计/爽点节奏）；/api/skills 发布/检索（搜索+tag+分类+排序）/详情/发版/安装（幂等，可升级降级）/卸载/评分/模板渲染；已安装 Skill 可在剧本（`POST /api/episodes/{id}/generate-script?skillId=`）与分镜（`POST /api/episodes/{id}/shots/from-script` body.skillId）生成时选用，prompt 模板注入大模型 system prompt（`【Skill 增强】`段）；Run 创建支持 scriptSkillId/boardSkillId，时间线记录"SCRIPT/BOARD 使用 Skill：名称 v版本"；`skills.html` 市场页（浏览/已安装/发布/详情弹窗，深浅主题）+ 分镜板 Skill 下拉框；docs/skill-market.md。新增测试 26 例（发布/安装/卸载/评分/版本升级全链路 MockMvc + prompt 透传单测），`mvn -o test` 917 全绿（含 26 例新增）。
+   - [x] 2026-10-15 视觉验收补课：skills.html 之前**从未截图验收**（本轮亲眼验收通过）。抓出并修复 1 个真实 UI bug：已安装列表把 ISO 时间戳原文直接渲染（`安装于 2026-10-14T19:55:24.657036`）→ 加 `fmtDateTime` 格式化为 `YYYY-MM-DD HH:mm`（与 usage.js 风格一致）。截图 `docs/screenshots/skills-{light,dark,detail-light}.png`（4 官方 Skill 真实数据 + 已安装 1 个 + 5 星评价 1 条），已同步 README 界面预览。
 7. **快捷工具**：批量处理、格式转换等小工具集。
    - [x] 2026-10-15 落地：`tools.html` 卡片式 5 工具（资产批量打标/重命名、视频 mp4↔webm 转码+压缩、音频提取 mp3/wav、分镜表 CSV 导出、操作记录）；`POST /api/tools/*` + `GET /api/tools/op-logs`；`tool_op_log` 表（V16）；ffmpeg 复用 FfmpegService；产物自动入资产库。18 例测试全绿，深浅主题截图验收通过。详见 docs/quick-tools.md。
+   - [x] 2026-10-15 视觉验收返工：上一轮截图是**空数据状态**（"暂无资产/暂无视频资产/暂无项目"，不符合门面截图必须带真实数据的铁律），且截图未入仓。本轮造演示数据（图片+视频资产各 1、《霓虹夜行》项目+第 1 集）重拍深浅主题，已入 `docs/screenshots/tools-{light,dark}.png` 并同步 README。重拍时抓出并修复 1 个真实功能 bug：`tools.js` 的 `loadProjects()` 请求了带尾斜杠的 `/api/projects/`（Spring Boot 3 默认不匹配尾斜杠 → 404 → 下拉永远"暂无项目"，分镜表导出工具 UI 上不可用）→ 去掉尾斜杠。另修复 shell.js 顶栏标题缺失：`pageTitle` 映射漏了 `mv/tools/account` 三个 id（AI MV/快捷工具/账号三页顶栏错误显示"AI 短剧工坊"）→ 已补齐。
 8. **创作者计划**：创作者主页、分成/激励（需商业方案先行，技术后置）。
 
 ## 差异化（超越 pix6 的点，本项目独有）

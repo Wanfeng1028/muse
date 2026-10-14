@@ -90,6 +90,19 @@ ffmpeg 剪辑（按镜号拼接 + SRT 字幕烧录）
 ### 供应商连接自检
 ![供应商连接自检（BYOK 密钥真实探测）](docs/screenshots/providers-test-connection.png)
 
+### Skill 市场（P2-6）
+Agent 技能的发布、安装与管理：4 个官方预设 Skill（分镜大师/短剧钩子开头/转场设计/爽点节奏），
+已安装 Skill 可在剧本与分镜生成时选用（prompt 模板注入大模型 system prompt）。
+
+![Skill 市场](docs/screenshots/skills-light.png)
+
+![Skill 详情（含版本管理/评分/发布新版本）](docs/screenshots/skills-detail-light.png)
+
+### 快捷工具集（P2-7）
+资产批量打标/重命名、视频转码（mp4↔webm）、音频提取、分镜表 CSV 导出、操作记录。
+
+![快捷工具](docs/screenshots/tools-light.png)
+
 ## 技术栈
 
 | 类别 | 选型 |

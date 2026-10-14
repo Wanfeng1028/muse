@@ -131,7 +131,7 @@
 
   async function loadProjects() {
     try {
-      state.projects = await api("/api/projects/");
+      state.projects = await api("/api/projects");
     } catch (e) {
       state.projects = [];
     }
