@@ -5,12 +5,17 @@ import com.dramafactory.model.ProviderModel;
 import com.dramafactory.repository.MediaProviderRepository;
 import com.dramafactory.repository.ProviderModelRepository;
 import com.dramafactory.exception.ResourceNotFoundException;
+import com.dramafactory.service.video.VideoProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * 供应商卡片制服务：供应商与模型的增删改查。
@@ -24,11 +29,20 @@ public class ProviderService {
 
     private final MediaProviderRepository providerRepository;
     private final ProviderModelRepository modelRepository;
+    private final Map<String, VideoProvider> videoProvidersByName;
 
     public ProviderService(MediaProviderRepository providerRepository,
-                           ProviderModelRepository modelRepository) {
+                           ProviderModelRepository modelRepository,
+                           Map<String, VideoProvider> videoProviders) {
         this.providerRepository = providerRepository;
         this.modelRepository = modelRepository;
+        Map<String, VideoProvider> byName = new HashMap<>();
+        if (videoProviders != null) {
+            for (VideoProvider vp : videoProviders.values()) {
+                byName.put(vp.name(), vp);
+            }
+        }
+        this.videoProvidersByName = Map.copyOf(byName);
     }
 
     /* ==================== DTO ==================== */
@@ -211,6 +225,62 @@ public class ProviderService {
             throw new ResourceNotFoundException("model", modelId);
         }
         modelRepository.delete(m);
+    }
+
+    /**
+     * 连接自检响应。只报告真实探测结论，绝不伪造成功。
+     *
+     * @param status    自检状态名（OK / AUTH_FAILED / RATE_LIMITED / UNREACHABLE / PROVIDER_ERROR / UNSUPPORTED）
+     * @param detail    面向用户的说明（不含任何密钥原文或片段）
+     * @param checkedAt 检测时间（ISO_LOCAL_DATE_TIME）
+     */
+    public record TestConnectionResponse(String status, String detail, String checkedAt) {
+    }
+
+    /**
+     * 供应商连接自检：真实探测，只报告真实结论，绝不伪造成功。
+     *
+     * @param providerId 供应商 ID
+     * @return 自检结论
+     */
+    @Transactional(readOnly = true)
+    public TestConnectionResponse testConnection(Long providerId) {
+        MediaProvider p = providerRepository.findById(providerId)
+                .orElseThrow(() -> new ResourceNotFoundException("provider", providerId));
+        VideoProvider vp = null;
+        if ("VIDEO".equals(p.getModule())) {
+            vp = matchVideoProvider(p.getName());
+        }
+        VideoProvider.ConnectivityResult result;
+        if (vp == null) {
+            result = new VideoProvider.ConnectivityResult(
+                    VideoProvider.ConnectivityStatus.UNSUPPORTED,
+                    "该供应商暂不支持连接自检（仅已接入的视频提供方支持）");
+        } else {
+            result = vp.probeConnectivity();
+        }
+        return new TestConnectionResponse(
+                result.status().name(),
+                result.detail(),
+                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    }
+
+    private VideoProvider matchVideoProvider(String name) {
+        if (name == null) {
+            return null;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        if (lower.contains("agnes")) {
+            return videoProvidersByName.get("agnes");
+        }
+        if (lower.contains("qwen") || lower.contains("dashscope")
+                || lower.contains("万相") || lower.contains("通义")) {
+            return videoProvidersByName.get("qwen");
+        }
+        if (lower.contains("mock")) {
+            return videoProvidersByName.get("mock");
+        }
+        return null;
     }
 
     /* ==================== 内部工具 ==================== */

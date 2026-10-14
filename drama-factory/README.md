@@ -78,6 +78,9 @@ ffmpeg 剪辑（按镜号拼接 + SRT 字幕烧录）
 
 ![查看剧本（真实 AI 生成的四场剧本）](docs/screenshots/storyboard-v23-script-modal.png)
 
+### 供应商连接自检
+![供应商连接自检（BYOK 密钥真实探测）](docs/screenshots/providers-test-connection.png)
+
 ## 技术栈
 
 | 类别 | 选型 |

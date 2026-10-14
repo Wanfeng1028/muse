@@ -81,6 +81,11 @@ public class MockVideoProvider implements VideoProvider {
         return "mock";
     }
 
+    @Override
+    public ConnectivityResult probeConnectivity() {
+        return new ConnectivityResult(ConnectivityStatus.OK, "演示用提供方，无需真实连接");
+    }
+
     /**
      * 设置任务就绪所需耗时（毫秒），供测试使用。
      */

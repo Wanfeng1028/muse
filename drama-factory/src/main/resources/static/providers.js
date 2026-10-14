@@ -126,6 +126,7 @@
     h += "</div>";
     h += '<div style="display:flex;align-items:center;gap:8px">';
     h += '<input type="checkbox" class="pv-switch" data-pid="' + esc(p.id) + '"' + (p.enabled ? " checked" : "") + " />";
+    h += '<button type="button" class="btn btn-quiet btn-sm pv-test" data-pid="' + esc(p.id) + '"><i data-lucide="plug-zap"></i> 测试连接</button>';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-edit" data-pid="' + esc(p.id) + '"><i data-lucide="pencil"></i></button>';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-del" data-pid="' + esc(p.id) + '"><i data-lucide="trash-2"></i></button>';
     h += "</div>";
@@ -145,6 +146,7 @@
     h += '<div style="margin-top:8px">';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-model-add" data-pid="' + esc(p.id) + '"><i data-lucide="plus"></i> 手动添加</button>';
     h += "</div>";
+    h += '<div class="pv-test-result" style="margin-top:8px;font-size:12px" hidden></div>';
     h += "</article>";
     return h;
   }
@@ -182,6 +184,11 @@
     var dels = listEl.querySelectorAll(".pv-del");
     for (var k = 0; k < dels.length; k++) {
       dels[k].onclick = function () { onDeleteProvider(this.getAttribute("data-pid")); };
+    }
+
+    var tests = listEl.querySelectorAll(".pv-test");
+    for (var t = 0; t < tests.length; t++) {
+      tests[t].onclick = function () { onTestConnection(this); };
     }
 
     var presetAdds = listEl.querySelectorAll(".pv-preset-add");
@@ -246,6 +253,37 @@
       } else {
         toast("删除失败", "error");
       }
+    });
+  }
+
+  var PV_TEST_MAP = {
+    OK: ["var(--green-soft)", "var(--green)", "连接正常"],
+    AUTH_FAILED: ["var(--red-soft)", "var(--red)", "密钥无效"],
+    RATE_LIMITED: ["var(--amber-soft)", "var(--amber)", "触发限流"],
+    UNREACHABLE: ["var(--red-soft)", "var(--red)", "网络不可达"],
+    PROVIDER_ERROR: ["var(--red-soft)", "var(--red)", "服务方异常"],
+    UNSUPPORTED: ["var(--surface-2)", "var(--text-3)", "暂不支持"]
+  };
+
+  function onTestConnection(btn) {
+    var pid = btn.getAttribute("data-pid");
+    var card = btn.closest(".pv-card");
+    var box = card.querySelector(".pv-test-result");
+    btn.disabled = true;
+    box.hidden = false;
+    box.innerHTML = '<span class="hint">正在检测…</span>';
+    api("POST", "/api/providers/" + encodeURIComponent(pid) + "/test", null, function (status, data) {
+      btn.disabled = false;
+      if (status !== 200 || !data) {
+        box.innerHTML = '<span class="badge" style="background:var(--red-soft);color:var(--red)">检测失败</span>'
+          + ' <span class="hint">HTTP ' + esc(status) + '</span>';
+        icons();
+        return;
+      }
+      var entry = PV_TEST_MAP[data.status] || PV_TEST_MAP.UNSUPPORTED;
+      box.innerHTML = '<span class="badge" style="background:' + entry[0] + ';color:' + entry[1] + '">'
+        + esc(entry[2]) + '</span> <span class="hint">' + esc(data.detail || "") + '</span>';
+      icons();
     });
   }
 

@@ -67,6 +67,15 @@ public class ResilientVideoProvider implements VideoProvider {
     }
 
     /**
+     * 连接自检直接委托给被装饰的真实提供方：自检本身已做诚实分类，
+     * 不经过熔断/重试包装，避免把 AUTH_FAILED 等确定性结论误判为可重试故障。
+     */
+    @Override
+    public ConnectivityResult probeConnectivity() {
+        return delegate.probeConnectivity();
+    }
+
+    /**
      * 统一包装：同时应用熔断 + 超时。
      *
      * <p>注意 {@link TimeLimiter#decorateFutureSupplier} 需要运行在独立线程中，否则主线程阻塞

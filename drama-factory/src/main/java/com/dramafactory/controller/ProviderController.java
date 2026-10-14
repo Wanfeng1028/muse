@@ -176,4 +176,11 @@ public class ProviderController {
         }
         return ResponseEntity.ok(presetService.createFromPreset(req.presetId().trim(), req.apiKey()));
     }
+
+    /** 供应商连接自检：真实探测，只报告真实结论，不伪造成功 */
+    @PostMapping("/{id}/test")
+    @Operation(summary = "供应商连接自检")
+    public ProviderService.TestConnectionResponse testConnection(@PathVariable Long id) {
+        return providerService.testConnection(id);
+    }
 }

@@ -79,6 +79,45 @@ public class QwenVideoProvider implements VideoProvider {
 
 
 
+    /** 负向探测用的不存在任务 ID：仅用于探测，零费用。 */
+    private static final String PROBE_TASK_ID = "__connectivity_probe__";
+
+    @Override
+    public ConnectivityResult probeConnectivity() {
+        String url = TASK_URL_PREFIX + PROBE_TASK_ID;
+        Map.Entry<String, String> auth = credentialResolver.dashscopeAuth(url);
+        if (auth == null) {
+            return new ConnectivityResult(ConnectivityStatus.AUTH_FAILED,
+                    "未配置 DashScope 密钥：请先在设置中心填写 dashscope.api-key");
+        }
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(15))
+                .header(auth.getKey(), auth.getValue())
+                .GET();
+        try {
+            VideoHttpGateway.GatewayResponse resp = gateway.exchange(builder.build());
+            int code = resp.statusCode();
+            if (code == 404) {
+                return new ConnectivityResult(ConnectivityStatus.OK, "密钥有效，链路畅通");
+            }
+            if (code == 401 || code == 403) {
+                return new ConnectivityResult(ConnectivityStatus.AUTH_FAILED, "密钥无效或鉴权失败");
+            }
+            if (code == 429) {
+                return new ConnectivityResult(ConnectivityStatus.RATE_LIMITED, "触发提供方限流，请稍后再试");
+            }
+            if (code >= 200 && code < 300) {
+                return new ConnectivityResult(ConnectivityStatus.OK, "密钥有效，链路畅通");
+            }
+            return new ConnectivityResult(ConnectivityStatus.PROVIDER_ERROR,
+                    "服务方返回异常状态码：" + code);
+        } catch (Exception e) {
+            return new ConnectivityResult(ConnectivityStatus.UNREACHABLE,
+                    "网络不可达：请求发送失败（DNS 解析 / 连接超时 / 连接被拒）");
+        }
+    }
+
     @Override
     public String name() {
         return "qwen";
@@ -130,6 +169,9 @@ public class QwenVideoProvider implements VideoProvider {
 
         // 注入鉴权头（不打印任何凭证）
         Map.Entry<String, String> auth = credentialResolver.dashscopeAuth(SUBMIT_URL);
+        if (auth == null) {
+            throw new IllegalStateException("未配置 DashScope 密钥：请先在设置中心填写 dashscope.api-key");
+        }
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(SUBMIT_URL))
@@ -187,6 +229,9 @@ public class QwenVideoProvider implements VideoProvider {
 
         // 注入鉴权头（不打印任何凭证）
         Map.Entry<String, String> auth = credentialResolver.dashscopeAuth(url);
+        if (auth == null) {
+            throw new IllegalStateException("未配置 DashScope 密钥：请先在设置中心填写 dashscope.api-key");
+        }
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
