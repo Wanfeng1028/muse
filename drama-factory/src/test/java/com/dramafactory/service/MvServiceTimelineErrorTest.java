@@ -75,7 +75,7 @@ class MvServiceTimelineErrorTest {
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> mvService.storyboard(saved.getId()));
-        assertEquals("请先生成歌词", ex.getMessage());
+        assertEquals("请先生成歌词或导入音频", ex.getMessage());
     }
 
     @Test
@@ -88,7 +88,7 @@ class MvServiceTimelineErrorTest {
 
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> mvService.render(saved.getId(), true));
-        assertEquals("请先作曲", ex.getMessage());
+        assertEquals("请先作曲或导入音频", ex.getMessage());
     }
 
     @Test
