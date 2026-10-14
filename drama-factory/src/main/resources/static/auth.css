@@ -47,7 +47,7 @@
   content: ""; flex: 1; border-top: 1px solid var(--border-soft);
 }
 .oauth-row { display: flex; gap: 10px; }
-.oauth-btn { flex: 1; justify-content: center; }
+.oauth-btn { flex: 1; justify-content: center; border-radius: 999px; padding-left: 14px; padding-right: 14px; background: var(--surface-2); }
 .oauth-btn .icon { width: 16px; height: 16px; }
 .auth-foot { text-align: center; font-size: 13px; color: var(--text-2); margin: 20px 0 0; }
 .auth-foot a { color: var(--text); font-weight: 500; }
