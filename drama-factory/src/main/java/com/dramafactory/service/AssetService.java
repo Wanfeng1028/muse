@@ -45,21 +45,30 @@ public class AssetService {
     }
 
     /**
-     * 上传素材。
-     *
-     * @param file  上传的文件，不能为空
-     * @param tags  逗号分隔的标签，可空
-     * @param runId 关联的 Run id，可空
-     * @return 持久化后的 Asset
+     * 上传素材（默认 50MB 上限）。
      */
     @Transactional
     public Asset upload(MultipartFile file, String tags, Long runId) {
+        return upload(file, tags, runId, MAX_UPLOAD_BYTES);
+    }
+
+    /**
+     * 上传素材（自定义大小上限）。
+     *
+     * @param file     上传的文件，不能为空
+     * @param tags     逗号分隔的标签，可空
+     * @param runId    关联的 Run id，可空
+     * @param maxBytes 大小上限（字节）
+     * @return 持久化后的 Asset
+     */
+    @Transactional
+    public Asset upload(MultipartFile file, String tags, Long runId, long maxBytes) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("上传文件不能为空");
         }
         long size = file.getSize();
-        if (size > MAX_UPLOAD_BYTES) {
-            throw new IllegalArgumentException("上传文件超过大小限制（最大 50MB）");
+        if (size > maxBytes) {
+            throw new IllegalArgumentException("上传文件超过大小限制（最大 " + (maxBytes / 1024 / 1024) + "MB）");
         }
         String mimeType = file.getContentType();
         AssetType type = resolveType(mimeType);

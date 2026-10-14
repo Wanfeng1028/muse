@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,6 +52,30 @@ public class MvController {
             Long id = mvService.create(theme, mood, style);
             return ResponseEntity.ok(Map.of("status", "SUCCEEDED", "id", id));
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "FAILED", "error", safe(e)));
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "FAILED", "error", safe(e)));
+        }
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> importAudio(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("title") String title,
+            @RequestParam(value = "lyrics", required = false) String lyrics,
+            @RequestParam(value = "mood", required = false) String mood,
+            @RequestParam(value = "style", required = false) String style) {
+        try {
+            MvSong song = mvService.importAudio(file, title, lyrics, mood, style);
+            return ResponseEntity.ok(Map.of(
+                    "status", "SUCCEEDED",
+                    "id", song.getId(),
+                    "audioUrl", song.getAudioUrl() == null ? "" : song.getAudioUrl(),
+                    "durationMs", song.getDurationMs() == null ? 0 : song.getDurationMs()));
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("status", "FAILED", "error", safe(e)));
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -153,6 +178,7 @@ public class MvController {
             out.put("mood", song.getMood());
             out.put("style", song.getStyle());
             out.put("status", song.getStatus());
+            out.put("source", song.getSource());
             out.put("audioUrl", song.getAudioUrl());
             out.put("durationMs", song.getDurationMs());
             out.put("timelineJson", song.getTimelineJson() == null ? "" : song.getTimelineJson());

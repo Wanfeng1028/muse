@@ -164,6 +164,57 @@ public class MvTimelineService {
         return new Timeline(sections, totalMs, scale);
     }
 
+    /**
+     * 纯音乐时间轴：把总时长按 segmentMs 切段，每段一个空文本行（无字幕）。
+     */
+    public Timeline buildInstrumentalTimeline(long totalMs, long segmentMs) {
+        if (totalMs <= 0) {
+            throw new IllegalArgumentException("音频时长无效");
+        }
+        long seg = segmentMs > 0 ? segmentMs : 10000L;
+        List<TimedSection> sections = new ArrayList<>();
+        long cursor = 0L;
+        int n = 1;
+        while (cursor < totalMs) {
+            long end = Math.min(cursor + seg, totalMs);
+            TimedLine line = new TimedLine("段落 " + n, "", cursor, end);
+            sections.add(new TimedSection("段落 " + n, "", cursor, end, List.of(line)));
+            cursor = end;
+            n++;
+        }
+        return new Timeline(sections, totalMs, 1.0);
+    }
+
+    /**
+     * 把 toJson 的输出解析回 Timeline。
+     */
+    public Timeline fromJson(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(json);
+            long totalMs = root.path("totalMs").asLong(0L);
+            double scale = root.path("scaleFactor").asDouble(1.0);
+            List<TimedSection> sections = new ArrayList<>();
+            for (JsonNode s : root.path("sections")) {
+                List<TimedLine> lines = new ArrayList<>();
+                for (JsonNode l : s.path("lines")) {
+                    lines.add(new TimedLine(s.path("name").asText(""),
+                            l.path("text").asText(""), l.path("startMs").asLong(0L), l.path("endMs").asLong(0L)));
+                }
+                sections.add(new TimedSection(s.path("name").asText(""), s.path("mood").asText(""),
+                        s.path("startMs").asLong(0L), s.path("endMs").asLong(0L), lines));
+            }
+            if (sections.isEmpty()) {
+                throw new IllegalArgumentException("时间轴为空");
+            }
+            return new Timeline(sections, totalMs, scale);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("时间轴解析失败");
+        }
+    }
+
     public String toJson(Timeline t) {
         try {
             ObjectMapper mapper = new ObjectMapper();

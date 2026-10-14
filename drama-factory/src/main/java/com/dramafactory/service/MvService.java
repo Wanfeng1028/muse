@@ -11,6 +11,8 @@ import com.dramafactory.repository.MvSongRepository;
 import com.dramafactory.repository.RunRepository;
 import com.dramafactory.service.byok.ByokGenerateService;
 import com.dramafactory.exception.ResourceNotFoundException;
+import com.dramafactory.model.Asset;
+import com.dramafactory.repository.AssetRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -44,6 +47,8 @@ public class MvService {
     private final FfmpegService ffmpegService;
     private final MvTimelineService mvTimelineService;
     private final ObjectMapper objectMapper;
+    private final AssetService assetService;
+    private final AssetRepository assetRepository;
 
 
     @Value("${drama.storage:./data/media}")
@@ -56,7 +61,9 @@ public class MvService {
                      ByokGenerateService byokGenerateService,
                      FfmpegService ffmpegService,
                      MvTimelineService mvTimelineService,
-                     ObjectMapper objectMapper) {
+                     ObjectMapper objectMapper,
+                     AssetService assetService,
+                     AssetRepository assetRepository) {
         this.mvSongRepository = mvSongRepository;
         this.runRepository = runRepository;
         this.agentStepRepository = agentStepRepository;
@@ -65,6 +72,8 @@ public class MvService {
         this.ffmpegService = ffmpegService;
         this.mvTimelineService = mvTimelineService;
         this.objectMapper = objectMapper;
+        this.assetService = assetService;
+        this.assetRepository = assetRepository;
     }
 
 
@@ -79,6 +88,7 @@ public class MvService {
         song.setMood(mood);
         song.setStyle(style);
         song.setStatus("DRAFT");
+        song.setSource("AI");
         song = mvSongRepository.save(song);
 
         Run run = new Run();
@@ -111,6 +121,164 @@ public class MvService {
         return song.getId();
     }
 
+    /**
+     * 导入已有音频：上传音频 → 入资产库 → 建 Run（作词作曲标记为已跳过）→ 直接可进分镜。
+     * lyricsText 可空：有则按文本建歌词时间轴（字幕），无则走纯音乐分镜。
+     */
+    @Transactional
+    public MvSong importAudio(MultipartFile file, String title, String lyricsText, String mood, String style) {
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("标题不能为空");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("上传文件不能为空");
+        }
+        long size = file.getSize();
+        if (size > 100L * 1024 * 1024) {
+            throw new IllegalArgumentException("音频文件超过大小限制（最大 100MB）");
+        }
+        String originalName = file.getOriginalFilename();
+        String ext = "";
+        if (originalName != null && originalName.contains(".")) {
+            ext = originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
+        }
+        if (!ext.equals("mp3") && !ext.equals("wav") && !ext.equals("m4a")) {
+            throw new IllegalArgumentException("仅支持 mp3 / wav / m4a 音频文件");
+        }
+        String mime = file.getContentType();
+        if (mime != null && !mime.isBlank() && !mime.equals("application/octet-stream")) {
+            String m = mime.toLowerCase();
+            boolean ok = m.equals("audio/mpeg") || m.equals("audio/wav") || m.equals("audio/x-wav")
+                    || m.equals("audio/mp4") || m.equals("audio/x-m4a") || m.equals("audio/aac");
+            if (!ok) {
+                throw new IllegalArgumentException("不支持的音频类型：" + mime);
+            }
+        }
+
+        Asset asset = assetService.upload(file, "mv-audio", null, 100L * 1024 * 1024);
+        String audioUrl = "/api/assets/" + asset.getId() + "/file";
+
+        MvSong song = new MvSong();
+        song.setTheme(title.trim());
+        song.setMood(mood);
+        song.setStyle(style);
+        song.setSource("IMPORT");
+        song.setAudioUrl(audioUrl);
+        song.setStatus("IMPORTED");
+        song = mvSongRepository.save(song);
+
+        int durationMs = probeDuration(audioUrl);
+        if (durationMs <= 0) {
+            throw new IllegalStateException("无法读取音频时长");
+        }
+        song.setDurationMs(durationMs);
+
+        if (lyricsText != null && !lyricsText.isBlank()) {
+            String lyricsJson = buildLyricsJsonFromText(title.trim(), lyricsText);
+            song.setLyricsJson(lyricsJson);
+            MvTimelineService.Timeline timeline = mvTimelineService.align(
+                    readJson(lyricsJson), (long) durationMs);
+            song.setTimelineJson(mvTimelineService.toJson(timeline));
+        } else {
+            MvTimelineService.Timeline timeline =
+                    mvTimelineService.buildInstrumentalTimeline((long) durationMs, 10000L);
+            song.setTimelineJson(mvTimelineService.toJson(timeline));
+        }
+
+        Run run = new Run();
+        run.setGoal("AI MV（导入音频）: " + title.trim());
+        run.setStatus(RunStatus.RUNNING);
+        run = runRepository.save(run);
+
+        String skipNote = "已跳过作词作曲（用户导入音频）";
+        Object[][] stepDefs = new Object[][]{
+                {1, AgentType.LYRICS, "作词", true},
+                {2, AgentType.COMPOSE, "作曲", true},
+                {3, AgentType.BOARD, "分镜", false},
+                {4, AgentType.VIDEO, "视频生成", false},
+                {5, AgentType.EDIT, "剪辑", false},
+                {6, AgentType.QC, "质检", false}
+        };
+        for (Object[] def : stepDefs) {
+            AgentStep step = new AgentStep();
+            step.setRun(run);
+            step.setSeqNo((Integer) def[0]);
+            step.setAgentType((AgentType) def[1]);
+            step.setName((String) def[2]);
+            boolean skipped = (Boolean) def[3];
+            if (skipped) {
+                step.setStatus(AgentStepStatus.SKIPPED);
+                step.setOutputSummary(skipNote);
+            } else {
+                step.setStatus(AgentStepStatus.PENDING);
+            }
+            agentStepRepository.save(step);
+        }
+
+        song.setRunId(run.getId());
+        mvSongRepository.save(song);
+
+        log.info("MV 导入音频完成 mvSongId={} runId={} assetId={} durationMs={}",
+                song.getId(), run.getId(), asset.getId(), durationMs);
+        return song;
+    }
+
+    /**
+     * 把用户粘贴的纯文本歌词转成 lyricsJson：空行分段；无空行时每 4 行一段。
+     */
+    String buildLyricsJsonFromText(String title, String text) {
+        List<String> lines = new ArrayList<>();
+        for (String raw : text.split("\r?\n")) {
+            String t = raw.trim();
+            if (!t.isEmpty()) {
+                lines.add(t);
+            }
+        }
+        if (lines.isEmpty()) {
+            throw new IllegalArgumentException("歌词文本为空");
+        }
+        boolean hasBlank = text.contains("\n\n");
+        List<List<String>> groups = new ArrayList<>();
+        if (hasBlank) {
+            List<String> cur = new ArrayList<>();
+            for (String raw : text.split("\r?\n")) {
+                String t = raw.trim();
+                if (t.isEmpty()) {
+                    if (!cur.isEmpty()) {
+                        groups.add(cur);
+                        cur = new ArrayList<>();
+                    }
+                } else {
+                    cur.add(t);
+                }
+            }
+            if (!cur.isEmpty()) {
+                groups.add(cur);
+            }
+        } else {
+            for (int i = 0; i < lines.size(); i += 4) {
+                groups.add(new ArrayList<>(lines.subList(i, Math.min(i + 4, lines.size()))));
+            }
+        }
+        try {
+            com.fasterxml.jackson.databind.node.ObjectNode root = objectMapper.createObjectNode();
+            root.put("title", title == null ? "" : title);
+            com.fasterxml.jackson.databind.node.ArrayNode sections = root.putArray("sections");
+            int n = 1;
+            for (List<String> g : groups) {
+                com.fasterxml.jackson.databind.node.ObjectNode s = sections.addObject();
+                s.put("name", "段落 " + n);
+                s.put("mood", "");
+                s.put("estSeconds", Math.max(4, g.size() * 4));
+                s.put("lyrics", String.join("\n", g));
+                n++;
+            }
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new IllegalStateException("歌词解析失败");
+        }
+    }
+
     @Transactional(readOnly = true)
     public MvSong getById(Long mvSongId) {
         return requireSong(mvSongId);
@@ -131,6 +299,9 @@ public class MvService {
     @Transactional
     public MvSong generateLyrics(Long mvSongId) {
         MvSong song = requireSong(mvSongId);
+        if ("IMPORT".equals(song.getSource())) {
+            throw new IllegalStateException("导入音频模式不支持重新作词");
+        }
         AgentStep step = findStep(song.getRunId(), 1);
         markStep(step, AgentStepStatus.RUNNING, null);
         try {
@@ -153,6 +324,9 @@ public class MvService {
     @Transactional
     public MvSong compose(Long mvSongId, Long providerId, String modelId) {
         MvSong song = requireSong(mvSongId);
+        if ("IMPORT".equals(song.getSource())) {
+            throw new IllegalStateException("导入音频模式不支持作曲（已有用户音频）");
+        }
         if (song.getLyricsJson() == null || song.getLyricsJson().isBlank()) {
             throw new IllegalStateException("请先生成歌词");
         }
@@ -200,8 +374,9 @@ public class MvService {
     @Transactional
     public List<Map<String, String>> storyboard(Long mvSongId) {
         MvSong song = requireSong(mvSongId);
-        if (song.getLyricsJson() == null || song.getLyricsJson().isBlank()) {
-            throw new IllegalStateException("请先生成歌词");
+        if ((song.getTimelineJson() == null || song.getTimelineJson().isBlank())
+                && (song.getLyricsJson() == null || song.getLyricsJson().isBlank())) {
+            throw new IllegalStateException("请先生成歌词或导入音频");
         }
         AgentStep step = findStep(song.getRunId(), 3);
         markStep(step, AgentStepStatus.RUNNING, null);
@@ -213,8 +388,10 @@ public class MvService {
             for (MvTimelineService.TimedSection sec : timeline.sections()) {
                 for (MvTimelineService.TimedLine line : sec.lines()) {
                     lineNo++;
-                    String visualPrompt = "MV 镜头，情绪：" + sec.mood() + "，画面：" + line.text()
-                            + "，电影感，" + style + " 风格";
+                    String visualPrompt = line.text().isBlank()
+                            ? "纯音乐段落，" + style + " 风格，电影感"
+                            : "MV 镜头，情绪：" + sec.mood() + "，画面：" + line.text()
+                                    + "，电影感，" + style + " 风格";
                     Map<String, String> item = new LinkedHashMap<>();
                     item.put("section", sec.name());
                     item.put("line", String.valueOf(lineNo));
@@ -239,7 +416,7 @@ public class MvService {
     public MvSong render(Long mvSongId, boolean dryRun) {
         MvSong song = requireSong(mvSongId);
         if (song.getAudioUrl() == null || song.getAudioUrl().isBlank()) {
-            throw new IllegalStateException("请先作曲");
+            throw new IllegalStateException("请先作曲或导入音频");
         }
 
         AgentStep videoStep = findStep(song.getRunId(), 4);
@@ -282,18 +459,30 @@ public class MvService {
             Path concat = workDir.resolve("concat.mp4");
             ffmpegService.concatClips(clips, concat);
 
-            Path srt = workDir.resolve("subs.srt");
-            writeSrt(timings, srt);
-
             Path audio = resolveLocalAudio(song.getAudioUrl());
             Path muxed = workDir.resolve("muxed.mp4");
             muxAudio(concat, audio, muxed);
 
-            Path burned = workDir.resolve("burned.mp4");
-            ffmpegService.burnSubtitles(muxed, srt, burned);
+            List<SectionTiming> subTimings = new ArrayList<>();
+            for (SectionTiming t : timings) {
+                if (t.text() != null && !t.text().isBlank()) {
+                    subTimings.add(t);
+                }
+            }
 
             Path finalOut = workDir.resolve("final.mp4");
-            Files.move(burned, finalOut, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            if (subTimings.isEmpty()) {
+                // 纯音乐：无字幕，直接以混音结果为成片
+                Files.move(muxed, finalOut, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Path srt = workDir.resolve("subs.srt");
+                writeSrt(subTimings, srt);
+
+                Path burned = workDir.resolve("burned.mp4");
+                ffmpegService.burnSubtitles(muxed, srt, burned);
+
+                Files.move(burned, finalOut, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
             markStep(editStep, AgentStepStatus.SUCCEEDED, null);
 
             markStep(qcStep, AgentStepStatus.RUNNING, null);
@@ -337,6 +526,9 @@ public class MvService {
      * 这里重算保证 storyboard/render 永远拿到与 lyricsJson 一致的时间轴。
      */
     private MvTimelineService.Timeline loadTimeline(MvSong song) {
+        if (song.getTimelineJson() != null && !song.getTimelineJson().isBlank()) {
+            return mvTimelineService.fromJson(song.getTimelineJson());
+        }
         long total = song.getDurationMs() == null ? 0 : song.getDurationMs();
         return mvTimelineService.align(readJson(song.getLyricsJson()), total);
     }
@@ -366,8 +558,24 @@ public class MvService {
         String rel = audioUrl;
         if (rel.startsWith("/api/byok/file/")) {
             rel = rel.substring("/api/byok/file/".length());
+            return Paths.get(storageDir, "byok", rel);
         }
-        return Paths.get(storageDir, "byok", rel);
+        if (rel.startsWith("/api/assets/") && rel.endsWith("/file")) {
+            String idPart = rel.substring("/api/assets/".length(), rel.length() - "/file".length());
+            try {
+                Long assetId = Long.parseLong(idPart);
+                Asset asset = assetRepository.findById(assetId)
+                        .orElseThrow(() -> new IllegalStateException("音频资产不存在"));
+                String filePath = asset.getFilePath();
+                if (filePath == null || filePath.contains("..")) {
+                    throw new IllegalStateException("音频资产路径非法");
+                }
+                return Paths.get(storageDir, filePath);
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("音频地址格式错误");
+            }
+        }
+        throw new IllegalStateException("不支持的音频地址");
     }
 
     private void writeSrt(List<SectionTiming> timings, Path path) {

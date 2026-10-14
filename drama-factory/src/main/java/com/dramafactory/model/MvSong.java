@@ -47,6 +47,9 @@ public class MvSong {
     @Column(name = "timeline_json", columnDefinition = "TEXT")
     private String timelineJson;
 
+    @Column(name = "source", nullable = false, length = 16)
+    private String source = "AI";
+
 
     @Column(name = "status", nullable = false, length = 32)
     private String status = "DRAFT";
@@ -141,6 +144,14 @@ public class MvSong {
 
     public void setTimelineJson(String timelineJson) {
         this.timelineJson = timelineJson;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
 
