@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,16 +45,26 @@ public class AuthProxyController {
     private final ObjectMapper objectMapper;
     private final String authServiceUrl;
 
+    @Autowired // 多构造器时显式标记 Spring 注入入口（另一个包可见构造器仅供测试）
     public AuthProxyController(
             // 默认 [::1] 而非 localhost：本沙箱的出口透明代理只拦截 IPv4 回环，IPv6 直通；
             // 生产/docker 环境无此限制，可配 http://auth:8082 等任意地址
             @Value("${auth.service.url:http://[::1]:8082}") String authServiceUrl) {
+        this(authServiceUrl, defaultHttpClient());
+    }
+
+    /** 可测性重载：测试可注入 mock/真实 HttpClient。Spring 容器仍走上方的 @Value 构造器。 */
+    AuthProxyController(String authServiceUrl, HttpClient httpClient) {
         this.authServiceUrl = trimTrailingSlash(authServiceUrl);
-        this.httpClient = HttpClient.newBuilder()
+        this.httpClient = httpClient;
+        this.objectMapper = new ObjectMapper();
+    }
+
+    private static HttpClient defaultHttpClient() {
+        return HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
-        this.objectMapper = new ObjectMapper();
     }
 
     @RequestMapping("/api/auth/**")

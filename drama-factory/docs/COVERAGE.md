@@ -2,8 +2,8 @@
 
 ## ① 目标
 
-- **当前门禁：行覆盖（LINE）≥ 65%、分支覆盖（BRANCH）≥ 45%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.8 实测行 71.0%/分支 52.7%），只升不降。
-- **下一里程碑：v2.9 分支覆盖冲 55%**。
+- **当前门禁：行覆盖（LINE）≥ 70%、分支覆盖（BRANCH）≥ 55%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.9 实测行 73.6%/分支 57.3%），只升不降。
+- **下一里程碑：v2.10 分支覆盖冲 60%**。
 
 
 ## ② 口径
@@ -16,9 +16,9 @@
 
 | 指标 | 基线值 | 说明 |
 | --- | --- | --- |
-| 行覆盖（LINE） | 71.0%（v2.8 实测） | 全量 4766 行（3384/4766） |
-| 分支覆盖（BRANCH） | 52.7%（v2.8 实测，目标 45% 超额达成） | 全量 1880 分支（991/1880） |
-| 门禁阈值 | 行 0.65 / 分支 0.45 | JaCoCo check，`verify` 阶段 |
+| 行覆盖（LINE） | 73.6%（v2.9 实测） | 全量 4764 行（3505/4764） |
+| 分支覆盖（BRANCH） | 57.3%（v2.9 实测，目标 55% 超额达成） | 全量 1880 分支（1078/1880） |
+| 门禁阈值 | 行 0.70 / 分支 0.55 | JaCoCo check，`verify` 阶段 |
 
 
 ## ④ 缺口表
@@ -30,7 +30,8 @@
 | `LlmScriptService` | 已补：validate 9 例 + parseScenes 12 例 + buildUserContent 5 例 | 剩余：callModel 私有 HTTP/CLI 路径（需真实网络） | 沙箱外验证 |
 | video providers | 已补：MockVideoProvider 6 例 + 录制回放契约测试（commit 37149e3） | 剩余：Agnes/Qwen 真实 provider（需外部 API） | 待定 |
 | E2E | 已补：RunLifecycleE2eTest（commit 37149e3） | 剩余：跨服务长链路 | v2.9 |
-| `AuthProxyController` | 无（分支缺口 110） | proxy() 内 HttpClient 构造器新建，无法注入 mock | v2.9（可测性重构：构造器注入 HttpClient） |
+| `AuthProxyController` | 已补：可测性重构（HttpClient 构造器注入）+ 20 例代理分支测试；单类行 97.8%/分支 79.5%/方法 100% | 剩余：无 | — |
+| `ChatService` / `FinalCutService` / `VideoTaskService` | 未补 | 异常/边界分支缺口 | v2.10（分支覆盖冲 60%） |
 
 
 ## ⑤ v2.7 新增测试清单（40 例）
