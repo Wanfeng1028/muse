@@ -51,15 +51,15 @@ function clearChildren(el) {
 function statusDotHtml(status) {
   switch (status) {
     case "PENDING":
-      return '<span class="status-line"><span class="status-dot dot-amber"></span>待提交</span>';
+      return '<span class="status-pill sp-gray">待提交</span>';
     case "PROCESSING":
-      return '<span class="status-line"><span class="status-dot dot-blue"></span>生成中</span>';
+      return '<span class="status-pill sp-blue">生成中</span>';
     case "DONE":
-      return '<span class="status-line"><span class="status-dot dot-green"></span>已完成</span>';
+      return '<span class="status-pill sp-green">已完成</span>';
     case "FAILED":
-      return '<span class="status-line"><span class="status-dot dot-red"></span>失败</span>';
+      return '<span class="status-pill sp-red">失败</span>';
     default:
-      return '<span class="status-line"><span class="status-dot dot-amber"></span>待提交</span>';
+      return '<span class="status-pill sp-gray">待提交</span>';
   }
 }
 

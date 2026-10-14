@@ -25,12 +25,9 @@
     return FINAL_CUT_LABELS[k] || v;
   }
 
-  function statusLine(dotClass, text) {
+  function statusLine(spClass, text) {
     var s = document.createElement('span');
-    s.className = 'status-line';
-    var d = document.createElement('span');
-    d.className = 'status-dot ' + dotClass;
-    s.appendChild(d);
+    s.className = 'status-pill ' + spClass;
     s.appendChild(document.createTextNode(text));
     return s;
   }
@@ -210,8 +207,8 @@
     titleStrong.textContent = ep.title || ('第 ' + pad2(num) + ' 集');
     tdTitle.appendChild(titleStrong);
     if (stuck) {
-      var stuckBadge = statusLine('dot-amber', '卡点');
-      stuckBadge.className = 'status-line ms-2';
+      var stuckBadge = statusLine('sp-amber', '卡点');
+      stuckBadge.className = 'status-pill sp-amber ms-2';
       tdTitle.appendChild(stuckBadge);
     }
     tr.appendChild(tdTitle);
@@ -219,14 +216,14 @@
     var tdStatus = document.createElement('td');
     var epStatusKey = (ep.status || '').toString().toUpperCase();
     var epStatusText = (ep.status || 'DRAFT').toString().toUpperCase();
-    var epStatusDot = 'dot-gray';
+    var epStatusPill = 'sp-gray';
     var epStatusLabel = epStatusText;
-    if (epStatusKey === 'DRAFT') { epStatusDot = 'dot-gray'; epStatusLabel = '草稿'; }
-    else if (epStatusKey === 'SCRIPTED') { epStatusDot = 'dot-blue'; epStatusLabel = '已编剧'; }
-    else if (epStatusKey === 'GENERATING') { epStatusDot = 'dot-amber'; epStatusLabel = '生成中'; }
-    else if (epStatusKey === 'GENERATED') { epStatusDot = 'dot-green'; epStatusLabel = '已生成'; }
-    else if (epStatusKey === 'REVIEWED') { epStatusDot = 'dot-green'; epStatusLabel = '已过审'; }
-    var statusLineEl = statusLine(epStatusDot, epStatusLabel);
+    if (epStatusKey === 'DRAFT') { epStatusPill = 'sp-gray'; epStatusLabel = '草稿'; }
+    else if (epStatusKey === 'SCRIPTED') { epStatusPill = 'sp-blue'; epStatusLabel = '已编剧'; }
+    else if (epStatusKey === 'GENERATING') { epStatusPill = 'sp-amber'; epStatusLabel = '生成中'; }
+    else if (epStatusKey === 'GENERATED') { epStatusPill = 'sp-green'; epStatusLabel = '已生成'; }
+    else if (epStatusKey === 'REVIEWED') { epStatusPill = 'sp-green'; epStatusLabel = '已过审'; }
+    var statusLineEl = statusLine(epStatusPill, epStatusLabel);
     tdStatus.appendChild(statusLineEl);
     tr.appendChild(tdStatus);
 
@@ -238,28 +235,28 @@
     var tdTasks = document.createElement('td');
     tdTasks.className = 'text-nowrap';
 
-    function makeStat(label, count, dotClass) {
-      var span = statusLine(dotClass, label + ' ' + count);
-      span.className = 'status-line me-2';
+    function makeStat(label, count, spClass) {
+      var span = statusLine(spClass, label + ' ' + count);
+      span.className = 'status-pill ' + spClass + ' me-2';
       return span;
     }
 
-    tdTasks.appendChild(makeStat('待提交', pending, 'dot-gray'));
-    tdTasks.appendChild(makeStat('生成中', rendering, 'dot-blue'));
-    tdTasks.appendChild(makeStat('已完成', done, 'dot-green'));
-    tdTasks.appendChild(makeStat('失败', failed, failed > 0 ? 'dot-red' : 'dot-gray'));
+    tdTasks.appendChild(makeStat('待提交', pending, 'sp-gray'));
+    tdTasks.appendChild(makeStat('生成中', rendering, 'sp-blue'));
+    tdTasks.appendChild(makeStat('已完成', done, 'sp-green'));
+    tdTasks.appendChild(makeStat('失败', failed, failed > 0 ? 'sp-red' : 'sp-gray'));
     tr.appendChild(tdTasks);
 
     var tdFinal = document.createElement('td');
     tdFinal.className = 'text-nowrap';
     var fk = finalCutKey(ep.finalCutStatus);
-    var finalDot = 'dot-gray';
+    var finalPill = 'sp-gray';
     var finalLabel = finalCutText(ep.finalCutStatus);
-    if (fk === 'READY') { finalDot = 'dot-green'; finalLabel = '已完成'; }
-    else if (fk === 'BUILDING') { finalDot = 'dot-blue'; finalLabel = '剪辑中'; }
-    else if (fk === 'FAILED') { finalDot = 'dot-red'; finalLabel = '失败'; }
-    else if (fk === 'PENDING') { finalDot = 'dot-amber'; finalLabel = '待处理'; }
-    var finalBadge = statusLine(finalDot, finalLabel);
+    if (fk === 'READY') { finalPill = 'sp-green'; finalLabel = '已完成'; }
+    else if (fk === 'BUILDING') { finalPill = 'sp-blue'; finalLabel = '剪辑中'; }
+    else if (fk === 'FAILED') { finalPill = 'sp-red'; finalLabel = '失败'; }
+    else if (fk === 'PENDING') { finalPill = 'sp-amber'; finalLabel = '待处理'; }
+    var finalBadge = statusLine(finalPill, finalLabel);
     tdFinal.appendChild(finalBadge);
     tr.appendChild(tdFinal);
 

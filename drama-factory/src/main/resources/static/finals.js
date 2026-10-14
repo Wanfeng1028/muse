@@ -30,28 +30,28 @@ function setHint(text) {
 function statusBadge(status) {
   switch (status) {
     case "READY":
-      return '<span class="status-line"><span class="status-dot dot-green"></span>已完成</span>';
+      return '<span class="status-pill sp-green">已完成</span>';
     case "BUILDING":
-      return '<span class="status-line"><span class="status-dot dot-blue"></span>剪辑中</span>';
+      return '<span class="status-pill sp-blue">剪辑中</span>';
     case "FAILED":
-      return '<span class="status-line"><span class="status-dot dot-red"></span>失败</span>';
+      return '<span class="status-pill sp-red">失败</span>';
     case "PENDING":
-      return '<span class="status-line"><span class="status-dot dot-amber"></span>待处理</span>';
+      return '<span class="status-pill sp-amber">待处理</span>';
     default:
-      return '<span class="status-line"><span class="status-dot dot-gray"></span>' + (status || "") + '</span>';
+      return '<span class="status-pill sp-gray">' + (status || "") + '</span>';
   }
 }
 
 function qcBadge(qcStatus) {
   switch (qcStatus) {
     case "PENDING":
-      return '<span class="status-line"><span class="status-dot dot-amber"></span>待质检</span>';
+      return '<span class="status-pill sp-amber">待质检</span>';
     case "APPROVED":
-      return '<span class="status-line"><span class="status-dot dot-green"></span>已通过</span>';
+      return '<span class="status-pill sp-green">已通过</span>';
     case "REJECTED":
-      return '<span class="status-line"><span class="status-dot dot-red"></span>已打回</span>';
+      return '<span class="status-pill sp-red">已打回</span>';
     default:
-      return '<span class="status-line"><span class="status-dot dot-gray"></span>' + (qcStatus || "未知") + '</span>';
+      return '<span class="status-pill sp-gray">' + (qcStatus || "未知") + '</span>';
   }
 }
 

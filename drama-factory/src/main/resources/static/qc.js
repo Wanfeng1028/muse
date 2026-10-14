@@ -89,7 +89,7 @@
 
       var badgeEl = document.getElementById('qcStatusBadge');
       var badge = statusBadge(data.qcStatus);
-      badgeEl.innerHTML = '<span class="status-line"><span class="status-dot ' + badge.dot + '"></span>' + escapeHtml(badge.text) + '</span>';
+      badgeEl.innerHTML = '<span class="status-pill ' + badge.dot.replace('dot-', 'sp-') + '">' + escapeHtml(badge.text) + '</span>';
 
       document.getElementById('qcDuration').textContent = toTimecode(data.durationSeconds);
       document.getElementById('qcCreated').textContent = data.createdAt

@@ -56,15 +56,15 @@ function statusLine(status, text) {
     : null;
   switch (key) {
     case 'DONE':
-      return `<span class="status-line"><span class="status-dot dot-green"></span>${escapeHtml(label || '已完成')}</span>`;
+      return `<span class="status-pill sp-green">${escapeHtml(label || '已完成')}</span>`;
     case 'PROCESSING':
-      return `<span class="status-line"><span class="status-dot dot-blue"></span>${escapeHtml(label || '生成中')}</span>`;
+      return `<span class="status-pill sp-blue">${escapeHtml(label || '生成中')}</span>`;
     case 'PENDING':
-      return `<span class="status-line"><span class="status-dot dot-amber"></span>${escapeHtml(label || '待提交')}</span>`;
+      return `<span class="status-pill sp-gray">${escapeHtml(label || '待提交')}</span>`;
     case 'FAILED':
-      return `<span class="status-line"><span class="status-dot dot-red"></span>${escapeHtml(label || '失败')}</span>`;
+      return `<span class="status-pill sp-red">${escapeHtml(label || '失败')}</span>`;
     default:
-      return `<span class="status-line"><span class="status-dot dot-gray"></span>${escapeHtml(label || '未生成')}</span>`;
+      return `<span class="status-pill sp-gray">${escapeHtml(label || '未生成')}</span>`;
   }
 }
 
