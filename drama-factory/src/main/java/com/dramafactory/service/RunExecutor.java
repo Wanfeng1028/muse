@@ -232,7 +232,10 @@ public class RunExecutor {
         step.setLatencyMs(ms);
         step.setStatus(AgentStepStatus.SUCCEEDED);
         step.setEndedAt(LocalDateTime.now());
-        step.setTokensUsed(null);
+        step.setPromptTokens(resp.promptTokens());
+        step.setCompletionTokens(resp.completionTokens());
+        step.setCachedTokens(0L);
+        step.setTokensUsed(resp.promptTokens() + resp.completionTokens());
         step.setCostCents(null);
         step.setCostEstimated(false);
         agentStepRepository.save(step);
@@ -283,7 +286,10 @@ public class RunExecutor {
         step.setLatencyMs(ms);
         step.setStatus(AgentStepStatus.SUCCEEDED);
         step.setEndedAt(LocalDateTime.now());
-        step.setTokensUsed(null);
+        step.setPromptTokens(0L);
+        step.setCompletionTokens(0L);
+        step.setCachedTokens(0L);
+        step.setTokensUsed(0L);
         step.setCostCents(null);
         step.setCostEstimated(false);
         agentStepRepository.save(step);
@@ -390,7 +396,10 @@ public class RunExecutor {
 
         step.setOutputSummary(sb.toString());
         step.setLatencyMs(totalMs);
-        step.setTokensUsed(null);
+        step.setPromptTokens(0L);
+        step.setCompletionTokens(0L);
+        step.setCachedTokens(0L);
+        step.setTokensUsed(0L);
         if (anyUnknownCost) {
             step.setCostCents(null);
         } else {
@@ -427,7 +436,10 @@ public class RunExecutor {
         step.setLatencyMs(ms);
         step.setStatus(AgentStepStatus.SUCCEEDED);
         step.setEndedAt(LocalDateTime.now());
-        step.setTokensUsed(null);
+        step.setPromptTokens(0L);
+        step.setCompletionTokens(0L);
+        step.setCachedTokens(0L);
+        step.setTokensUsed(0L);
         step.setCostCents(null);
         step.setCostEstimated(false);
         agentStepRepository.save(step);
@@ -480,7 +492,10 @@ public class RunExecutor {
             step.setStatus(AgentStepStatus.SUCCEEDED);
             step.setOutputSummary("qc=APPROVED, filePath=" + filePath + ", size=" + f.length());
             step.setEndedAt(LocalDateTime.now());
-            step.setTokensUsed(null);
+            step.setPromptTokens(0L);
+            step.setCompletionTokens(0L);
+            step.setCachedTokens(0L);
+            step.setTokensUsed(0L);
             step.setCostCents(null);
             step.setCostEstimated(false);
             agentStepRepository.save(step);

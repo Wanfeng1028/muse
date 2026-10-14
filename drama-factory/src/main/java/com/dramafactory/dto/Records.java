@@ -131,6 +131,8 @@ public final class Records {
      *               {@code template-fallback}（AI 失败降级为模板生成）
      * @param model 使用的大模型名，模板生成时为 null
      * @param latencyMs 生成耗时（毫秒）
+     * @param promptTokens 输入 token 数（AI 生成时为真实值，否则 0）
+     * @param completionTokens 输出 token 数（AI 生成时为真实值，否则 0）
      */
     public static record GenerateScriptResponse(
             Long episodeId,
@@ -138,7 +140,9 @@ public final class Records {
             String scriptText,
             String source,
             String model,
-            long latencyMs) {
+            long latencyMs,
+            long promptTokens,
+            long completionTokens) {
     }
 
     public static record ErrorResponse(

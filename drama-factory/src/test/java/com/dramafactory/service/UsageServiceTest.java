@@ -621,6 +621,9 @@ class UsageServiceTest {
             @Override public String getProvider() { return provider; }
             @Override public String getModelUsed() { return model; }
             @Override public Long getTokensUsed() { return tokens; }
+            @Override public Long getPromptTokens() { return 0L; }
+            @Override public Long getCompletionTokens() { return 0L; }
+            @Override public Long getCachedTokens() { return 0L; }
             @Override public Long getCostCents() { return cost; }
             @Override public Boolean getCostEstimated() { return estimated; }
             @Override public VideoTaskStatus getStatus() { return status; }
@@ -635,6 +638,9 @@ class UsageServiceTest {
             @Override public Long getId() { return id; }
             @Override public AgentType getAgentLabel() { return agentType; }
             @Override public Long getTokensUsed() { return tokens; }
+            @Override public Long getPromptTokens() { return 0L; }
+            @Override public Long getCompletionTokens() { return 0L; }
+            @Override public Long getCachedTokens() { return 0L; }
             @Override public Long getCostCents() { return cost; }
             @Override public Boolean getCostEstimated() { return estimated; }
             @Override public Long getLatencyMs() { return latencyMs; }

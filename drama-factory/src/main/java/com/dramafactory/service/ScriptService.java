@@ -85,6 +85,8 @@ public class ScriptService {
         List<ScriptGenerator.SceneDraft> drafts;
         String source;
         String usedModel = null;
+        long promptTokens = 0;
+        long completionTokens = 0;
 
         if ("ai".equals(mode)) {
             String charactersSummary = buildCharactersSummary(episode);
@@ -93,6 +95,8 @@ public class ScriptService {
                 drafts = result.scenes();
                 source = "ai";
                 usedModel = result.model();
+                promptTokens = result.promptTokens();
+                completionTokens = result.completionTokens();
             } catch (LlmScriptUnavailableException e) {
                 log.warn("AI 剧本生成失败，降级为模板生成：{}", e.getMessage());
                 drafts = scriptGenerator.generate(episode);
@@ -131,7 +135,8 @@ public class ScriptService {
         episodeRepository.save(episode);
 
         long latencyMs = System.currentTimeMillis() - t0;
-        return new Records.GenerateScriptResponse(episodeId, drafts.size(), sb.toString(), source, usedModel, latencyMs);
+        return new Records.GenerateScriptResponse(episodeId, drafts.size(), sb.toString(), source, usedModel, latencyMs,
+                promptTokens, completionTokens);
     }
 
     /**

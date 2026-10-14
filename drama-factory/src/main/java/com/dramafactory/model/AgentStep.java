@@ -70,9 +70,21 @@ public class AgentStep {
     @Column(name = "tool_calls_json")
     private String toolCallsJson;
 
-    /** 消耗 token，可空 */
+    /** 消耗 token 总数，可空；新代码优先用 prompt/completion 拆分字段 */
     @Column(name = "tokens_used")
     private Long tokensUsed;
+
+    /** prompt token 数，可空 */
+    @Column(name = "prompt_tokens")
+    private Long promptTokens;
+
+    /** completion token 数，可空 */
+    @Column(name = "completion_tokens")
+    private Long completionTokens;
+
+    /** 缓存命中 token 数，可空 */
+    @Column(name = "cached_tokens")
+    private Long cachedTokens;
 
     /** 消耗（分），可空 */
     @Column(name = "cost_cents")
@@ -200,6 +212,30 @@ public class AgentStep {
 
     public void setTokensUsed(Long tokensUsed) {
         this.tokensUsed = tokensUsed;
+    }
+
+    public Long getPromptTokens() {
+        return promptTokens;
+    }
+
+    public void setPromptTokens(Long promptTokens) {
+        this.promptTokens = promptTokens;
+    }
+
+    public Long getCompletionTokens() {
+        return completionTokens;
+    }
+
+    public void setCompletionTokens(Long completionTokens) {
+        this.completionTokens = completionTokens;
+    }
+
+    public Long getCachedTokens() {
+        return cachedTokens;
+    }
+
+    public void setCachedTokens(Long cachedTokens) {
+        this.cachedTokens = cachedTokens;
     }
 
     public Long getCostCents() {

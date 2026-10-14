@@ -67,9 +67,21 @@ public class VideoTask {
     @Column(length = 1000)
     private String localPath;
 
-    /** 消耗 token 数（V3 Harness），可空：提供方未返回用量时为 null */
+    /** 消耗 token 总数（V3 Harness），可空：提供方未返回用量时为 null；新代码优先用 prompt/completion 拆分字段 */
     @Column(name = "tokens_used")
     private Long tokensUsed;
+
+    /** prompt token 数，可空：提供方未返回用量时为 null */
+    @Column(name = "prompt_tokens")
+    private Long promptTokens;
+
+    /** completion token 数，可空：提供方未返回用量时为 null */
+    @Column(name = "completion_tokens")
+    private Long completionTokens;
+
+    /** 缓存命中 token 数，可空：提供方不支持时为 null */
+    @Column(name = "cached_tokens")
+    private Long cachedTokens;
 
     /** 消耗费用（分），可空：未知时为 null，不估算 */
     @Column(name = "cost_cents")
@@ -195,6 +207,30 @@ public class VideoTask {
 
     public void setTokensUsed(Long tokensUsed) {
         this.tokensUsed = tokensUsed;
+    }
+
+    public Long getPromptTokens() {
+        return promptTokens;
+    }
+
+    public void setPromptTokens(Long promptTokens) {
+        this.promptTokens = promptTokens;
+    }
+
+    public Long getCompletionTokens() {
+        return completionTokens;
+    }
+
+    public void setCompletionTokens(Long completionTokens) {
+        this.completionTokens = completionTokens;
+    }
+
+    public Long getCachedTokens() {
+        return cachedTokens;
+    }
+
+    public void setCachedTokens(Long cachedTokens) {
+        this.cachedTokens = cachedTokens;
     }
 
     public Long getCostCents() {

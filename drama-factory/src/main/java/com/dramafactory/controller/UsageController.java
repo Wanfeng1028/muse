@@ -35,7 +35,8 @@ public class UsageController {
                               @RequestParam(required = false, defaultValue = "0") int days) {
         UsageService.UsageSummary s = usageService.summary(provider, model, days);
         return new SummaryDto(s.tokensTotal(), s.costCentsTotal(), s.taskCount(), s.runCount(),
-                s.stepCount(), s.requestCount());
+                s.stepCount(), s.requestCount(), s.promptTokensTotal(), s.completionTokensTotal(),
+                s.cachedTokensTotal(), s.cacheHitRate());
     }
 
     /** 按模型 / Agent 类型聚合。 */
@@ -67,7 +68,8 @@ public List<RequestDto> requests(@RequestParam(defaultValue = "50") int limit,
                                  @RequestParam(defaultValue = "30") int days) {
     return usageService.requests(limit, provider, model, days).stream()
             .map(r -> new RequestDto(r.id(), r.kind(), r.time(), r.provider(), r.model(),
-                    r.tokensUsed(), r.costCents(), r.costEstimated(), r.latencyMs(), r.status()))
+                    r.tokensUsed(), r.promptTokens(), r.completionTokens(), r.cachedTokens(),
+                    r.costCents(), r.costEstimated(), r.latencyMs(), r.status()))
             .toList();
 }
 
@@ -89,7 +91,8 @@ public UsageService.FilterOptions filters() {
 
     /** 总量汇总 DTO。 */
     public record SummaryDto(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount,
-                         long stepCount, long requestCount) {}
+                         long stepCount, long requestCount, Long promptTokensTotal, Long completionTokensTotal,
+                         Long cachedTokensTotal, Double cacheHitRate) {}
 
     /** 按模型/Agent 类型聚合 DTO。 */
     public record ModelDto(String model, Long tokens, Long costCents, long taskCount) {}
@@ -101,6 +104,7 @@ public UsageService.FilterOptions filters() {
     public record RunDto(Long runId, String goal, Long tokens, Long costCents, LocalDateTime createdAt) {}
 
 public record RequestDto(Long id, String kind, LocalDateTime time, String provider, String model,
-                         Long tokensUsed, Long costCents, Boolean costEstimated,
+                         Long tokensUsed, Long promptTokens, Long completionTokens, Long cachedTokens,
+                         Long costCents, Boolean costEstimated,
                          Long latencyMs, String status) {}
 }

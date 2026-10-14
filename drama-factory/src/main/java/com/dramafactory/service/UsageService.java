@@ -63,7 +63,11 @@ public class UsageService {
             long runCount = runRepository.count();
             long stepCount = agentStepRepository.count();
             long requestCount = taskCount + stepCount;
-            return new UsageSummary(tokens, cost, taskCount, runCount, stepCount, requestCount);
+            Long promptTotal = sumNullable(videoTaskRepository.sumPromptTokens(), agentStepRepository.sumPromptTokens());
+            Long completionTotal = sumNullable(videoTaskRepository.sumCompletionTokens(), agentStepRepository.sumCompletionTokens());
+            Long cachedTotal = sumNullable(videoTaskRepository.sumCachedTokens(), agentStepRepository.sumCachedTokens());
+            return new UsageSummary(tokens, cost, taskCount, runCount, stepCount, requestCount,
+                    promptTotal, completionTotal, cachedTotal, cacheHitRate(cachedTotal, promptTotal, completionTotal));
         }
         LocalDateTime from = days > 0 ? LocalDateTime.now().minusDays(days) : null;
         List<RequestVideoRow> videoRows = videoTaskRepository.findForRequests(from != null ? from : LocalDateTime.MIN);
@@ -96,7 +100,8 @@ public class UsageService {
             stepCount++;
         }
         long requestCount = taskCount + stepCount;
-        return new UsageSummary(tokens, cost, taskCount, 0L, stepCount, requestCount);
+        return new UsageSummary(tokens, cost, taskCount, 0L, stepCount, requestCount,
+                null, null, null, 0.0);
     }
 
     @Transactional(readOnly = true)
@@ -117,7 +122,8 @@ public class UsageService {
             }
             String status = r.getStatus() != null ? String.valueOf(r.getStatus()) : null;
             result.add(new RequestUsage(r.getId(), "VIDEO_TASK", r.getCreatedAt(), r.getProvider(),
-                    r.getModelUsed(), r.getTokensUsed(), r.getCostCents(), r.getCostEstimated(),
+                    r.getModelUsed(), r.getTokensUsed(), r.getPromptTokens(), r.getCompletionTokens(), r.getCachedTokens(),
+                    r.getCostCents(), r.getCostEstimated(),
                     null, status));
         }
         for (RequestStepRow r : stepRows) {
@@ -130,7 +136,8 @@ public class UsageService {
             }
             String status = r.getStatus() != null ? String.valueOf(r.getStatus()) : null;
             result.add(new RequestUsage(r.getId(), "AGENT_STEP", r.getCreatedAt(), null,
-                    label, r.getTokensUsed(), r.getCostCents(), r.getCostEstimated(),
+                    label, r.getTokensUsed(), r.getPromptTokens(), r.getCompletionTokens(), r.getCachedTokens(),
+                    r.getCostCents(), r.getCostEstimated(),
                     r.getLatencyMs(), status));
         }
         result.sort((a, b) -> {
@@ -225,9 +232,13 @@ public class UsageService {
         long stepCount = agentStepRepository.count();
         long requestCount = taskCount + stepCount;
 
-        log.debug("usage summary: tokensTotal={}, costCentsTotal={}, taskCount={}, runCount={}, stepCount={}, requestCount={}",
-                tokensTotal, costCentsTotal, taskCount, runCount, stepCount, requestCount);
-        return new UsageSummary(tokensTotal, costCentsTotal, taskCount, runCount, stepCount, requestCount);
+        Long promptTotal = sumNullable(videoTaskRepository.sumPromptTokens(), agentStepRepository.sumPromptTokens());
+        Long completionTotal = sumNullable(videoTaskRepository.sumCompletionTokens(), agentStepRepository.sumCompletionTokens());
+        Long cachedTotal = sumNullable(videoTaskRepository.sumCachedTokens(), agentStepRepository.sumCachedTokens());
+        log.debug("usage summary: tokensTotal={}, costCentsTotal={}, taskCount={}, runCount={}, stepCount={}, requestCount={}, promptTotal={}, completionTotal={}, cachedTotal={}",
+                tokensTotal, costCentsTotal, taskCount, runCount, stepCount, requestCount, promptTotal, completionTotal, cachedTotal);
+        return new UsageSummary(tokensTotal, costCentsTotal, taskCount, runCount, stepCount, requestCount,
+                promptTotal, completionTotal, cachedTotal, cacheHitRate(cachedTotal, promptTotal, completionTotal));
     }
 
     /**
@@ -312,6 +323,17 @@ public class UsageService {
     }
 
     /** 非空求和：两者都为 null 返回 null，否则返回有效值之和。 */
+    private static Double cacheHitRate(Long cached, Long prompt, Long completion) {
+        long c = cached == null ? 0L : cached;
+        long p = prompt == null ? 0L : prompt;
+        long co = completion == null ? 0L : completion;
+        long total = c + p + co;
+        if (total <= 0) {
+            return 0.0;
+        }
+        return (double) c / total;
+    }
+
     private static Long sumNullable(Long a, Long b) {
         if (a == null && b == null) {
             return null;
@@ -324,7 +346,8 @@ public class UsageService {
     // ==== 返回 DTO（service 层，供 controller 使用） ====
 
     /** 总量汇总。 */
-    public record UsageSummary(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount, long stepCount, long requestCount) {}
+    public record UsageSummary(Long tokensTotal, Long costCentsTotal, long taskCount, long runCount, long stepCount, long requestCount,
+                               Long promptTokensTotal, Long completionTokensTotal, Long cachedTokensTotal, Double cacheHitRate) {}
 
     /** 按模型/Agent 类型聚合。 */
     public record ModelUsage(String model, Long tokens, Long costCents, long taskCount) {}
@@ -336,7 +359,8 @@ public class UsageService {
     public record RunUsage(Long runId, String goal, Long tokens, Long costCents, LocalDateTime createdAt) {}
 
 public record RequestUsage(Long id, String kind, LocalDateTime time, String provider, String model,
-                           Long tokensUsed, Long costCents, Boolean costEstimated,
+                           Long tokensUsed, Long promptTokens, Long completionTokens, Long cachedTokens,
+                           Long costCents, Boolean costEstimated,
                            Long latencyMs, String status) {}
 
 public record FilterOptions(List<String> providers, List<String> models) {}
@@ -380,6 +404,9 @@ public record FilterOptions(List<String> providers, List<String> models) {}
         String getProvider();
         String getModelUsed();
         Long getTokensUsed();
+        Long getPromptTokens();
+        Long getCompletionTokens();
+        Long getCachedTokens();
         Long getCostCents();
         Boolean getCostEstimated();
         VideoTaskStatus getStatus();
@@ -399,6 +426,9 @@ public record FilterOptions(List<String> providers, List<String> models) {}
         Long getId();
         AgentType getAgentLabel();
         Long getTokensUsed();
+        Long getPromptTokens();
+        Long getCompletionTokens();
+        Long getCachedTokens();
         Long getCostCents();
         Boolean getCostEstimated();
         Long getLatencyMs();

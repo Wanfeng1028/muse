@@ -70,6 +70,15 @@ public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
     @Query("SELECT SUM(v.tokensUsed) FROM VideoTask v")
     Long sumTokensUsed();
 
+    @Query("SELECT SUM(v.promptTokens) FROM VideoTask v")
+    Long sumPromptTokens();
+
+    @Query("SELECT SUM(v.completionTokens) FROM VideoTask v")
+    Long sumCompletionTokens();
+
+    @Query("SELECT SUM(v.cachedTokens) FROM VideoTask v")
+    Long sumCachedTokens();
+
     @Query("SELECT SUM(v.costCents) FROM VideoTask v")
     Long sumCostCents();
 
@@ -80,6 +89,7 @@ public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
     List<UsageService.VideoTaskRow> findForDailyUsage(@Param("from") LocalDateTime from);
 
 @Query("SELECT v.id AS id, v.provider AS provider, v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, " +
+       "v.promptTokens AS promptTokens, v.completionTokens AS completionTokens, v.cachedTokens AS cachedTokens, " +
        "v.costCents AS costCents, v.costEstimated AS costEstimated, v.status AS status, v.createdAt AS createdAt " +
        "FROM VideoTask v WHERE v.createdAt >= :from")
 List<UsageService.RequestVideoRow> findForRequests(@Param("from") LocalDateTime from);

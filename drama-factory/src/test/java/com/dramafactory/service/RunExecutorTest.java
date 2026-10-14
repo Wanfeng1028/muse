@@ -136,7 +136,7 @@ class RunExecutorTest {
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
         when(scriptService.generate(EPISODE_ID, "ai"))
                 .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
-                        "Deepseek-v4-flash", 100L));
+                        "Deepseek-v4-flash", 100L, 1000L, 2000L));
 
         executor.advanceRun(run);
 
@@ -1040,7 +1040,7 @@ class RunExecutorTest {
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
         when(scriptService.generate(EPISODE_ID, "ai"))
                 .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
-                        "Deepseek-v4-flash", 100L));
+                        "Deepseek-v4-flash", 100L, 1000L, 2000L));
 
         executor.advanceRun(run);
 
@@ -1060,7 +1060,7 @@ class RunExecutorTest {
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
         when(scriptService.generate(EPISODE_ID, "ai"))
                 .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
-                        "Deepseek-v4-flash", 100L));
+                        "Deepseek-v4-flash", 100L, 1000L, 2000L));
 
         executor.advanceRun(run);
 

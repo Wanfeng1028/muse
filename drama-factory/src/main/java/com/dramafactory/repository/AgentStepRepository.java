@@ -27,6 +27,15 @@ public interface AgentStepRepository extends JpaRepository<AgentStep, Long> {
     @Query("SELECT SUM(s.tokensUsed) FROM AgentStep s")
     Long sumTokensUsed();
 
+    @Query("SELECT SUM(s.promptTokens) FROM AgentStep s")
+    Long sumPromptTokens();
+
+    @Query("SELECT SUM(s.completionTokens) FROM AgentStep s")
+    Long sumCompletionTokens();
+
+    @Query("SELECT SUM(s.cachedTokens) FROM AgentStep s")
+    Long sumCachedTokens();
+
     @Query("SELECT SUM(s.costCents) FROM AgentStep s")
     Long sumCostCents();
 
@@ -43,6 +52,7 @@ public interface AgentStepRepository extends JpaRepository<AgentStep, Long> {
     List<UsageService.AgentStepRow> findForDailyUsage(@Param("from") LocalDateTime from);
 
 @Query("SELECT s.id AS id, s.agentType AS agentLabel, s.tokensUsed AS tokensUsed, " +
+       "s.promptTokens AS promptTokens, s.completionTokens AS completionTokens, s.cachedTokens AS cachedTokens, " +
        "s.costCents AS costCents, s.costEstimated AS costEstimated, s.latencyMs AS latencyMs, " +
        "s.status AS status, s.createdAt AS createdAt " +
        "FROM AgentStep s WHERE s.createdAt >= :from")

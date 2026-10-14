@@ -172,11 +172,78 @@ public class LlmScriptService {
     /**
      * AI 剧本生成结果。
      *
-     * @param scenes    生成的 4 场场景草稿
-     * @param model     使用的模型名
-     * @param latencyMs 耗时（毫秒）
+     * @param scenes           生成的 4 场场景草稿
+     * @param model            使用的模型名
+     * @param latencyMs        耗时（毫秒）
+     * @param promptTokens     输入 token 数（usage 解析不到记 0）
+     * @param completionTokens 输出 token 数（usage 解析不到记 0）
      */
-    public record LlmScriptResult(List<ScriptGenerator.SceneDraft> scenes, String model, long latencyMs) {
+    public record LlmScriptResult(List<ScriptGenerator.SceneDraft> scenes, String model, long latencyMs,
+                                  long promptTokens, long completionTokens) {
+    }
+
+    /**
+     * 模型调用结果：content 文本 + token 用量。
+     * usage 解析失败时 promptTokens/completionTokens 为 0（诚实记 0，不编造）。
+     */
+    public record ModelCallResult(String content, long promptTokens, long completionTokens) {
+    }
+
+    /**
+     * 调用大模型并解析用量。包可见且非 final，便于测试子类覆盖。
+     *
+     * <p>默认实现：走 HTTP（与 {@link #callModel} 同样的传输与 CLI 回退逻辑），
+     * 解析 OpenAI 兼容响应的 {@code choices[0].message.content} 与 {@code usage}；
+     * 若响应不是 OpenAI 格式，则整体当 content 处理、用量记 0（保持旧行为）。</p>
+     *
+     * @param body 请求体
+     * @return content 文本与 token 用量
+     */
+    ModelCallResult callModelWithUsage(ObjectNode body) {
+        try {
+            String json = body.toString();
+            Map.Entry<String, String> authHeader = credentialResolver.chatAuth();
+            String responseBody = LlmTransport.postJson(CHAT_URL, json, authHeader, timeoutSeconds);
+            return parseChatResponse(responseBody);
+        } catch (RuntimeException httpEx) {
+            if (effectiveCliPath == null) {
+                throw httpEx;
+            }
+            log.warn("HTTP 传输失败，改用 CLI 回退: {}", httpEx.getMessage());
+            String content = callModelViaCli(body);
+            return new ModelCallResult(content, 0, 0);
+        }
+    }
+
+    /**
+     * 解析 OpenAI 兼容的 chat completion 响应，提取 content 与 usage。
+     * 非 OpenAI 格式时整体当 content、用量记 0。包可见，便于测试。
+     */
+    ModelCallResult parseChatResponse(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            throw new LlmScriptUnavailableException("AI 返回为空");
+        }
+        JsonNode root;
+        try {
+            root = objectMapper.readTree(responseBody);
+        } catch (IOException e) {
+            // 不是 JSON：整体当 content，保持旧行为
+            return new ModelCallResult(responseBody, 0, 0);
+        }
+        JsonNode choices = root.path("choices");
+        String content;
+        if (choices.isArray() && choices.size() > 0) {
+            content = choices.get(0).path("message").path("content").asText(null);
+            if (content == null) {
+                content = responseBody;
+            }
+        } else {
+            content = responseBody;
+        }
+        JsonNode usage = root.path("usage");
+        long promptTokens = usage.path("prompt_tokens").asLong(0);
+        long completionTokens = usage.path("completion_tokens").asLong(0);
+        return new ModelCallResult(content, promptTokens, completionTokens);
     }
 
     /**
@@ -214,11 +281,13 @@ public class LlmScriptService {
         RuntimeException lastCause = null;
         for (int attempt = 0; attempt < attempts; attempt++) {
             try {
-                String content = callModel(body);
-                List<ScriptGenerator.SceneDraft> scenes = parseScenes(content);
+                ModelCallResult callResult = callModelWithUsage(body);
+                List<ScriptGenerator.SceneDraft> scenes = parseScenes(callResult.content());
                 long latencyMs = System.currentTimeMillis() - start;
-                log.info("AI 剧本生成成功：model={}, 耗时={}ms, 场数={}", model, latencyMs, scenes.size());
-                return new LlmScriptResult(scenes, model, latencyMs);
+                log.info("AI 剧本生成成功：model={}, 耗时={}ms, 场数={}, promptTokens={}, completionTokens={}",
+                        model, latencyMs, scenes.size(), callResult.promptTokens(), callResult.completionTokens());
+                return new LlmScriptResult(scenes, model, latencyMs,
+                        callResult.promptTokens(), callResult.completionTokens());
             } catch (RuntimeException e) {
                 lastCause = e;
                 log.warn("AI 剧本生成第 {} 次尝试失败：{}", attempt + 1, e.getMessage());

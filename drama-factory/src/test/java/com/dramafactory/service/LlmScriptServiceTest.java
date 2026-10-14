@@ -48,13 +48,13 @@ class LlmScriptServiceTest {
         }
 
         @Override
-        String callModel(ObjectNode body) {
+        LlmScriptService.ModelCallResult callModelWithUsage(ObjectNode body) {
             callCount++;
             if (throwAlways) {
                 throw new RuntimeException("stub failure");
             }
             int idx = Math.min(callCount - 1, responses.size() - 1);
-            return responses.get(idx);
+            return new LlmScriptService.ModelCallResult(responses.get(idx), 0, 0);
         }
     }
 
@@ -124,7 +124,7 @@ class LlmScriptServiceTest {
                 "test-model", 3000, 120, 0, null,
                 new DramaMetrics(new SimpleMeterRegistry(), null, null)) {
             @Override
-            String callModel(ObjectNode body) {
+            LlmScriptService.ModelCallResult callModelWithUsage(ObjectNode body) {
                 fail("callModel should not be invoked when disabled");
                 return null;
             }
@@ -221,7 +221,7 @@ class LlmScriptServiceTest {
     void parseScenes_nullContent_throws() {
         StubLlmScriptService stub = new StubLlmScriptService(List.of("x"), false, 0) {
             @Override
-            String callModel(ObjectNode body) {
+            LlmScriptService.ModelCallResult callModelWithUsage(ObjectNode body) {
                 return null;
             }
         };
@@ -318,9 +318,9 @@ class LlmScriptServiceTest {
         }
 
         @Override
-        String callModel(ObjectNode body) {
+        LlmScriptService.ModelCallResult callModelWithUsage(ObjectNode body) {
             lastBody = body;
-            return super.callModel(body);
+            return super.callModelWithUsage(body);
         }
     }
 
@@ -502,16 +502,50 @@ class LlmScriptServiceTest {
         StubLlmScriptService stub = new StubLlmScriptService(
                 List.of(VALID_JSON), false, 1) {
             @Override
-            String callModel(ObjectNode body) {
+            LlmScriptService.ModelCallResult callModelWithUsage(ObjectNode body) {
                 callCount++;
                 if (callCount == 1) {
                     throw new RuntimeException("transient failure");
                 }
-                return VALID_JSON;
+                return new LlmScriptService.ModelCallResult(VALID_JSON, 0, 0);
             }
         };
         LlmScriptService.LlmScriptResult result = stub.generate(buildEpisode(), "chars");
         assertEquals(4, result.scenes().size());
         assertEquals(2, stub.callCount);
+    }
+
+    @Test
+    void parseChatResponseExtractsUsage() {
+        LlmScriptService service = new StubLlmScriptService(List.of(VALID_JSON), false, 0);
+        String json = "{\"choices\":[{\"message\":{\"content\":\"hello\"}}],"
+                + "\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":22,\"total_tokens\":33}}";
+        LlmScriptService.ModelCallResult r = service.parseChatResponse(json);
+        assertEquals("hello", r.content());
+        assertEquals(11, r.promptTokens());
+        assertEquals(22, r.completionTokens());
+    }
+
+    @Test
+    void parseChatResponseNonJsonFallsBack() {
+        LlmScriptService service = new StubLlmScriptService(List.of(VALID_JSON), false, 0);
+        LlmScriptService.ModelCallResult r = service.parseChatResponse("plain text body");
+        assertEquals("plain text body", r.content());
+        assertEquals(0, r.promptTokens());
+        assertEquals(0, r.completionTokens());
+    }
+
+    @Test
+    void generateCarriesTokenSplit() {
+        StubLlmScriptService stub = new StubLlmScriptService(List.of(VALID_JSON), false, 0) {
+            @Override
+            LlmScriptService.ModelCallResult callModelWithUsage(ObjectNode body) {
+                return new LlmScriptService.ModelCallResult(VALID_JSON, 100, 200);
+            }
+        };
+        LlmScriptService.LlmScriptResult result = stub.generate(buildEpisode(), "chars");
+        assertEquals(4, result.scenes().size());
+        assertEquals(100, result.promptTokens());
+        assertEquals(200, result.completionTokens());
     }
 }
