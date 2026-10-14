@@ -499,11 +499,11 @@ header.navbar {
 
 /* ---- 状态 pill（纯展示，不可点击）：pill 几何照按钮规范，语义 tint 配色 ---- */
 .status-pill{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 18px;min-width:64px;font-size:13px;font-weight:500;white-space:nowrap;cursor:default;pointer-events:none;user-select:none;border:1px solid transparent}
-.sp-gray{background:color-mix(in srgb,#78716c 13%,transparent);color:#78716c;border-color:color-mix(in srgb,#78716c 30%,transparent)}
-.sp-blue{background:color-mix(in srgb,#4a6fa5 13%,transparent);color:#4a6fa5;border-color:color-mix(in srgb,#4a6fa5 30%,transparent)}
-.sp-green{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green);border-color:color-mix(in srgb,var(--green) 32%,transparent)}
-.sp-red{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 30%,transparent)}
-.sp-amber{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 32%,transparent)}
+.sp-gray{background:#E7E5E4;color:#111111;border-color:#D6D3D1}
+.sp-blue{background:#DBEAFE;color:#111111;border-color:#BFDBFE}
+.sp-green{background:#DCFCE7;color:#111111;border-color:#BBF7D0}
+.sp-red{background:#FEE2E2;color:#111111;border-color:#FECACA}
+.sp-amber{background:#FEF3C7;color:#111111;border-color:#FDE68A}
 
 /* ---- 剧集管线表：窄视口下横向滚动，不挤压换行 ---- */
 #pipelineTable{min-width:900px;}
