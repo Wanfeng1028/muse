@@ -12,4 +12,11 @@ public interface DramaCharacterRepository extends JpaRepository<DramaCharacter, 
     List<DramaCharacter> findByProjectIdOrderByIdAsc(Long projectId);
 
     long countByProjectId(Long projectId);
+
+    /**
+     * 按归属用户聚合统计角色数（替代 N+1 逐项目 count）。
+     */
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT COUNT(c) FROM DramaCharacter c WHERE c.project.ownerId = :ownerId")
+    long countByOwner(@org.springframework.data.repository.query.Param("ownerId") String ownerId);
 }

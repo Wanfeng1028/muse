@@ -7,7 +7,6 @@ import com.dramafactory.dto.Records.StatsResponse;
 import com.dramafactory.exception.ForbiddenException;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.DramaProject;
-import com.dramafactory.model.Episode;
 import com.dramafactory.model.ProjectStatus;
 import com.dramafactory.repository.DramaCharacterRepository;
 import com.dramafactory.repository.DramaProjectRepository;
@@ -111,28 +110,12 @@ public class ProjectService {
     public StatsResponse stats() {
         String ownerId = currentUser.currentUserId();
         long projectCount = projectRepository.countByOwnerId(ownerId);
-        List<DramaProject> owned = projectRepository.findByOwnerId(ownerId, Sort.by("id"));
-        long episodeCount = 0;
-        long characterCount = 0;
-        long sceneCount = 0;
-        for (DramaProject project : owned) {
-            Long pid = project.getId();
-            if (pid == null) {
-                continue;
-            }
-            episodeCount += episodeRepository.countByProjectId(pid);
-            characterCount += characterRepository.countByProjectId(pid);
-            List<Episode> episodes = episodeRepository.findByProjectIdOrderByEpisodeNoAsc(pid);
-            for (Episode ep : episodes) {
-                Long eid = ep.getId();
-                if (eid == null) {
-                    continue;
-                }
-                sceneCount += sceneRepository.countByEpisodeId(eid);
-            }
-        }
+        long episodeCount = episodeRepository.countByOwner(ownerId);
+        long characterCount = characterRepository.countByOwner(ownerId);
+        long sceneCount = sceneRepository.countByOwner(ownerId);
         return new StatsResponse(projectCount, episodeCount, characterCount, sceneCount);
     }
+
 
     /** 实体转响应 DTO，填充关联计数 */
     private ProjectResponse toResponse(DramaProject project) {
