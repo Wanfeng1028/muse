@@ -505,6 +505,10 @@ header.navbar {
 .sp-red{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 30%,transparent)}
 .sp-amber{background:color-mix(in srgb,var(--amber) 14%,transparent);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 32%,transparent)}
 
+/* ---- 剧集管线表：窄视口下横向滚动，不挤压换行 ---- */
+#pipelineTable{min-width:900px;}
+#pipelineTable th,#pipelineTable td{white-space:nowrap;}
+
 /* ---- 工作区右侧去卡片化 ---- */
 .ws-block{padding:2px 0 14px;margin-bottom:14px;border-bottom:1px solid var(--border-soft);}
 .ws-block:last-child{border-bottom:0;margin-bottom:0;}
