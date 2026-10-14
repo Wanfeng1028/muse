@@ -37,7 +37,8 @@
     check: 'badge-check', chart: 'bar-chart-3', search: 'search', plus: 'plus',
     send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
     runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings',
-    images: 'image', music: 'music', avatar: 'scan-face', user: 'user'
+    images: 'image', music: 'music', avatar: 'scan-face', user: 'user',
+    layout: 'layout-grid',
   };
 
   function iconHtml(name) {
@@ -77,6 +78,7 @@
     { id: 'agents', href: '/agents.html', label: 'Agent 机队', icon: 'agents' },
     { id: 'usage', href: '/usage.html', label: '用量统计', icon: 'chart' },
     { id: 'storyboard', href: '/storyboard.html', label: '分镜板', icon: 'film', kbd: 'G S' },
+    { id: 'canvas', href: '/canvas.html', label: '分镜画布', icon: 'layout' },
     { id: 'tasks', href: '/tasks.html', label: '任务队列', icon: 'tasks', kbd: 'G T' },
     { id: 'finals', href: '/finals.html', label: '成片库', icon: 'check', kbd: 'G F' },
     { id: 'pipeline', href: '/pipeline.html', label: '生产看板', icon: 'chart', kbd: 'G P' },
@@ -88,7 +90,7 @@
   var NAV_GROUPS = [
     { label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
     { label: '运行', ids: ['runs', 'agents', 'usage'] },
-    { label: '生产', ids: ['storyboard', 'tasks', 'finals', 'pipeline'] }
+    { label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'pipeline'] }
   ];
   function navById(id) {
     for (var i = 0; i < NAV.length; i++) { if (NAV[i].id === id) return NAV[i]; }
@@ -228,6 +230,7 @@
   function pageTitle(id) {
     var titles = {
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
+      canvas: '分镜画布',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
       runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', usage: '用量统计', settings: '设置',
       images: 'AI 图片', music: 'AI 音乐', avatar: '数字人',
