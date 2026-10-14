@@ -25,9 +25,12 @@
 
 ### P1
 3. **用量采集补齐**：prompt/completion token 拆分、缓存命中统计（需改 VideoTask/AgentStep 采集管线 + DB 字段，工作量大，单独立项）。
-4. **画布**：分镜/成片的可视化编排画布（对标 pix6 画布）。
+   - [x] 2026-10-14 落地：VideoTask/AgentStep 加 prompt_tokens/completion_tokens/cached_tokens（V7 迁移，老数据默认 0）；LlmScriptService 解析 OpenAI 兼容 usage 并透传落库；BYOK 无用量返回诚实记 0；/api/usage/summary 加拆分 + 缓存命中率、/api/usage/requests 明细带拆分字段。
+4. **画布**：分镜/成片的可视化编排画布（对标 pix6 画布）。（等审计 agent 收工后再动前端）
 4. **资产库**：图片/音频/视频素材统一管理（上传、打标、复用）。
+   - [x] 2026-10-14 落地：Asset 实体 + V9 迁移；/api/assets 上传（50MB/类型校验/防穿越）/列表（筛选+搜索）/打标/删除/复用/文件流；BYOK 生成产物自动入资产库。
 5. **模板/配方库**：提示词模板、风格配方一键复用。
+   - [x] 2026-10-14 落地：PromptRecipe 实体 + V10 迁移；/api/recipes CRUD + render（{{变量}} 替换）+ apply（target=SCRIPT/BOARD，usageCount+1）；5 套风格配方预设（赛博/水墨/胶片/日系/写实）含模型参数。
 
 ### P2
 6. **Skill 市场**：Agent 技能/工作流的发布与安装。
