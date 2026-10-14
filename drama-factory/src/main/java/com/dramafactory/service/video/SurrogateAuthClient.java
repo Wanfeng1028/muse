@@ -2,6 +2,7 @@ package com.dramafactory.service.video;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
@@ -53,13 +54,33 @@ public class SurrogateAuthClient {
 
     private final ObjectMapper objectMapper;
 
+    private final SocketExchange socketExchange;
+
+    /**
+     * Unix socket 交换接缝：生产环境走真实 SocketChannel，测试注入桩。
+     * 包可见，仅供测试使用。
+     */
+    @FunctionalInterface
+    interface SocketExchange {
+        String exchange(String socketPath, String credentialName) throws IOException;
+    }
+
     /**
      * 构造器注入 ObjectMapper（Spring Boot 自带）。
      *
      * @param objectMapper Jackson 解析器
      */
+    @Autowired
     public SurrogateAuthClient(ObjectMapper objectMapper) {
+        this(objectMapper, null);
+    }
+
+    /**
+     * 包可见构造器：测试注入 socket 交换桩。
+     */
+    SurrogateAuthClient(ObjectMapper objectMapper, SocketExchange socketExchange) {
         this.objectMapper = objectMapper;
+        this.socketExchange = socketExchange != null ? socketExchange : this::realExchange;
     }
 
     /**
@@ -116,7 +137,12 @@ public class SurrogateAuthClient {
             socketPath = DEFAULT_SOCKET_PATH;
         }
 
-        String rawResponse = exchange(socketPath, credentialName);
+        String rawResponse;
+        try {
+            rawResponse = socketExchange.exchange(socketPath, credentialName);
+        } catch (IOException e) {
+            throw new IllegalStateException("与 authd 通信失败", e);
+        }
         HttpResponse parsed = parseHttpResponse(rawResponse);
 
         if (parsed.statusCode != 200) {
@@ -132,7 +158,7 @@ public class SurrogateAuthClient {
      * @param socketPath socket 路径
      * @return 原始 HTTP 响应字符串（ISO-8859-1 解码，保留字节完整性）
      */
-    private String exchange(String socketPath, String credentialName) {
+    private String realExchange(String socketPath, String credentialName) throws IOException {
         UnixDomainSocketAddress address = UnixDomainSocketAddress.of(socketPath);
         String body = "{\"name\":\"" + credentialName + "\"}";
         byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
@@ -161,8 +187,6 @@ public class SurrogateAuthClient {
                 buffer.write(chunk, 0, read);
             }
             return buffer.toString(StandardCharsets.ISO_8859_1);
-        } catch (IOException e) {
-            throw new IllegalStateException("与 authd 通信失败", e);
         }
     }
 

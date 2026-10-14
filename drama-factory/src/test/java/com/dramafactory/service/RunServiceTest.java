@@ -499,6 +499,353 @@ class RunServiceTest {
         assertThatThrownBy(() -> runService.resume(1L))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void markSucceededShouldReturnEarlyWhenNoSteps() {
+        Run run = runningRun(20L);
+        when(runRepository.findById(20L)).thenReturn(Optional.of(run));
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(20L)).thenReturn(Collections.emptyList());
+
+        runService.markSucceededIfAllDone(20L);
+
+        assertThat(run.getStatus()).isEqualTo(RunStatus.RUNNING);
+        verify(runRepository, never()).save(any(Run.class));
+    }
+
+    @Test
+    void markSucceededShouldReturnEarlyWhenStepRunning() {
+        Run run = runningRun(21L);
+        when(runRepository.findById(21L)).thenReturn(Optional.of(run));
+        AgentStep ok = new AgentStep();
+        ok.setStatus(AgentStepStatus.SUCCEEDED);
+        AgentStep running = new AgentStep();
+        running.setStatus(AgentStepStatus.RUNNING);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(21L)).thenReturn(List.of(ok, running));
+
+        runService.markSucceededIfAllDone(21L);
+
+        assertThat(run.getStatus()).isEqualTo(RunStatus.RUNNING);
+        verify(runRepository, never()).save(any(Run.class));
+    }
+
+    @Test
+    void markSucceededShouldAggregateTotalsAndMarkSucceeded() {
+        Run run = runningRun(22L);
+        when(runRepository.findById(22L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AgentStep a = new AgentStep();
+        a.setStatus(AgentStepStatus.SUCCEEDED);
+        a.setTokensUsed(100L);
+        a.setCostCents(5L);
+        AgentStep b = new AgentStep();
+        b.setStatus(AgentStepStatus.SKIPPED);
+        b.setTokensUsed(null);
+        b.setCostCents(null);
+        AgentStep c = new AgentStep();
+        c.setStatus(AgentStepStatus.SUCCEEDED);
+        c.setTokensUsed(50L);
+        c.setCostCents(null);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(22L)).thenReturn(List.of(a, b, c));
+
+        runService.markSucceededIfAllDone(22L);
+
+        assertThat(run.getTotalTokens()).isEqualTo(150L);
+        assertThat(run.getTotalCostCents()).isEqualTo(5L);
+        assertThat(run.getStatus()).isEqualTo(RunStatus.SUCCEEDED);
+        verify(runRepository, times(2)).save(any(Run.class));
+    }
+
+    @Test
+    void cancelShouldAcceptWaitingApproval() {
+        Run run = runningRun(23L);
+        run.setStatus(RunStatus.WAITING_APPROVAL);
+        when(runRepository.findById(23L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(23L)).thenReturn(Collections.emptyList());
+
+        runService.cancel(23L);
+
+        ArgumentCaptor<Run> captor = ArgumentCaptor.forClass(Run.class);
+        verify(runRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(RunStatus.CANCELLED);
+    }
+
+    @Test
+    void cancelShouldTolerateNullEpisodeId() {
+        Run run = runningRun(24L);
+        when(runRepository.findById(24L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        AgentStep step = new AgentStep();
+        step.setId(240L);
+        step.setStatus(AgentStepStatus.PENDING);
+        step.setEpisodeId(null);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(24L)).thenReturn(List.of(step));
+        when(agentStepRepository.save(any(AgentStep.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        runService.cancel(24L);
+
+        assertThat(step.getStatus()).isEqualTo(AgentStepStatus.CANCELLED);
+        verify(videoTaskRepository, never()).findByEpisodeId(any());
+    }
+
+    @Test
+    void cancelShouldNotFailSucceededVideoTask() {
+        Run run = runningRun(25L);
+        when(runRepository.findById(25L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        AgentStep step = new AgentStep();
+        step.setId(250L);
+        step.setStatus(AgentStepStatus.SUCCEEDED);
+        step.setEpisodeId(500L);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(25L)).thenReturn(List.of(step));
+        VideoTask done = new VideoTask();
+        done.setId(501L);
+        done.setStatus(com.dramafactory.model.VideoTaskStatus.DONE);
+        when(videoTaskRepository.findByEpisodeId(500L)).thenReturn(List.of(done));
+
+        runService.cancel(25L);
+
+        assertThat(done.getStatus()).isEqualTo(com.dramafactory.model.VideoTaskStatus.DONE);
+        verify(videoTaskRepository, never()).save(any(VideoTask.class));
+    }
+
+    @Test
+    void rerunShouldUseOldGoalWhenOverrideNull() {
+        Run run = runningRun(30L);
+        run.setStatus(RunStatus.SUCCEEDED);
+        run.setPlanJson("{\"goal\":\"旧目标\",\"fallback\":false,\"episodes\":[{\"episodeNo\":1,\"title\":\"t\",\"outline\":\"o\"}]}");
+        when(runRepository.findById(30L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(projectService.create(any(Records.ProjectRequest.class)))
+                .thenReturn(new Records.ProjectResponse(10L, "t", null, null, null, null, 0L, 0L, null, null, null));
+        when(episodeService.create(eq(10L), any(Records.EpisodeRequest.class)))
+                .thenReturn(new Records.EpisodeResponse(20L, 10L, 1, "t", "o", null, null, 0L, null, null));
+
+        runService.rerun(30L, null);
+
+        ArgumentCaptor<Run> runCaptor = ArgumentCaptor.forClass(Run.class);
+        verify(runRepository, times(3)).save(runCaptor.capture());
+        assertThat(runCaptor.getAllValues().get(0).getGoal()).isEqualTo("做一部 2 集短剧");
+    }
+
+    @Test
+    void rerunShouldUseOldGoalWhenOverrideBlank() {
+        Run run = runningRun(31L);
+        run.setStatus(RunStatus.SUCCEEDED);
+        run.setPlanJson("{\"goal\":\"旧目标\",\"fallback\":false,\"episodes\":[{\"episodeNo\":1,\"title\":\"t\",\"outline\":\"o\"}]}");
+        when(runRepository.findById(31L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(projectService.create(any(Records.ProjectRequest.class)))
+                .thenReturn(new Records.ProjectResponse(10L, "t", null, null, null, null, 0L, 0L, null, null, null));
+        when(episodeService.create(eq(10L), any(Records.EpisodeRequest.class)))
+                .thenReturn(new Records.EpisodeResponse(20L, 10L, 1, "t", "o", null, null, 0L, null, null));
+
+        runService.rerun(31L, "   ");
+
+        ArgumentCaptor<Run> runCaptor = ArgumentCaptor.forClass(Run.class);
+        verify(runRepository, times(3)).save(runCaptor.capture());
+        assertThat(runCaptor.getAllValues().get(0).getGoal()).isEqualTo("做一部 2 集短剧");
+    }
+
+    @Test
+    void rerunShouldParsePlanJsonForFailedRun() {
+        Run run = runningRun(32L);
+        run.setStatus(RunStatus.FAILED);
+        run.setPlanJson("{\"goal\":\"旧目标\",\"fallback\":false,\"episodes\":["
+                + "{\"episodeNo\":1,\"title\":\"a\",\"outline\":\"x\"},"
+                + "{\"episodeNo\":2,\"title\":\"b\",\"outline\":\"y\"}]}");
+        when(runRepository.findById(32L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(projectService.create(any(Records.ProjectRequest.class)))
+                .thenReturn(new Records.ProjectResponse(10L, "t", null, null, null, null, 0L, 0L, null, null, null));
+        when(episodeService.create(eq(10L), any(Records.EpisodeRequest.class)))
+                .thenReturn(new Records.EpisodeResponse(20L, 10L, 1, "t", "o", null, null, 0L, null, null));
+
+        runService.rerun(32L, "新目标");
+
+        verify(episodeService, times(2)).create(eq(10L), any(Records.EpisodeRequest.class));
+        verify(agentStepRepository, times(10)).save(any(AgentStep.class));
+    }
+
+    @Test
+    void rerunShouldFallbackSingleEpisodeWhenPlanJsonNull() {
+        Run run = runningRun(33L);
+        run.setStatus(RunStatus.SUCCEEDED);
+        run.setPlanJson(null);
+        when(runRepository.findById(33L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(projectService.create(any(Records.ProjectRequest.class)))
+                .thenReturn(new Records.ProjectResponse(10L, "t", null, null, null, null, 0L, 0L, null, null, null));
+        when(episodeService.create(eq(10L), any(Records.EpisodeRequest.class)))
+                .thenReturn(new Records.EpisodeResponse(20L, 10L, 1, "t", "o", null, null, 0L, null, null));
+
+        runService.rerun(33L, null);
+
+        verify(episodeService, times(1)).create(eq(10L), any(Records.EpisodeRequest.class));
+    }
+
+    @Test
+    void rerunShouldFallbackSingleEpisodeWhenPlanJsonInvalid() {
+        Run run = runningRun(34L);
+        run.setStatus(RunStatus.SUCCEEDED);
+        run.setPlanJson("not json at all");
+        when(runRepository.findById(34L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(projectService.create(any(Records.ProjectRequest.class)))
+                .thenReturn(new Records.ProjectResponse(10L, "t", null, null, null, null, 0L, 0L, null, null, null));
+        when(episodeService.create(eq(10L), any(Records.EpisodeRequest.class)))
+                .thenReturn(new Records.EpisodeResponse(20L, 10L, 1, "t", "o", null, null, 0L, null, null));
+
+        runService.rerun(34L, null);
+
+        verify(episodeService, times(1)).create(eq(10L), any(Records.EpisodeRequest.class));
+    }
+
+    @Test
+    void approveShouldPassWhenRunningQcStepExists() {
+        Run run = runningRun(40L);
+        run.setStatus(RunStatus.WAITING_APPROVAL);
+        when(runRepository.findById(40L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AgentStep qc = new AgentStep();
+        qc.setId(400L);
+        qc.setAgentType(AgentType.QC);
+        qc.setStatus(AgentStepStatus.RUNNING);
+        qc.setEpisodeId(50L);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(40L)).thenReturn(List.of(qc));
+        when(agentStepRepository.save(any(AgentStep.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        com.dramafactory.model.FinalCut fc = new com.dramafactory.model.FinalCut();
+        fc.setId(700L);
+        when(finalCutRepository.findFirstByEpisodeIdOrderByIdDesc(50L)).thenReturn(Optional.of(fc));
+
+        runService.approve(40L, true, "ok");
+
+        verify(finalCutService).qc(eq(700L), any(Records.QcRequest.class));
+        assertThat(qc.getStatus()).isEqualTo(AgentStepStatus.SUCCEEDED);
+        assertThat(run.getStatus()).isEqualTo(RunStatus.RUNNING);
+    }
+
+    @Test
+    void approveShouldFailWhenOnlyPendingQcStep() {
+        Run run = runningRun(41L);
+        run.setStatus(RunStatus.WAITING_APPROVAL);
+        when(runRepository.findById(41L)).thenReturn(Optional.of(run));
+        when(runRepository.save(any(Run.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AgentStep qc = new AgentStep();
+        qc.setId(410L);
+        qc.setAgentType(AgentType.QC);
+        qc.setStatus(AgentStepStatus.PENDING);
+        qc.setEpisodeId(51L);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(41L)).thenReturn(List.of(qc));
+        when(agentStepRepository.save(any(AgentStep.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        com.dramafactory.model.FinalCut fc = new com.dramafactory.model.FinalCut();
+        fc.setId(701L);
+        when(finalCutRepository.findFirstByEpisodeIdOrderByIdDesc(51L)).thenReturn(Optional.of(fc));
+
+        runService.approve(41L, false, "不行");
+
+        verify(finalCutService).qc(eq(701L), any(Records.QcRequest.class));
+        assertThat(qc.getStatus()).isEqualTo(AgentStepStatus.FAILED);
+        assertThat(qc.getErrorMessage()).isEqualTo("不行");
+        assertThat(run.getStatus()).isEqualTo(RunStatus.FAILED);
+    }
+
+    @Test
+    void approveShouldThrowWhenNoQcStep() {
+        Run run = runningRun(42L);
+        run.setStatus(RunStatus.WAITING_APPROVAL);
+        when(runRepository.findById(42L)).thenReturn(Optional.of(run));
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(42L)).thenReturn(Collections.emptyList());
+
+        assertThatThrownBy(() -> runService.approve(42L, true, "ok"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void retryStepShouldResetButKeepSucceededRunStatus() {
+        Run run = runningRun(43L);
+        run.setStatus(RunStatus.SUCCEEDED);
+        AgentStep step = new AgentStep();
+        step.setId(430L);
+        step.setRun(run);
+        step.setStatus(AgentStepStatus.SUCCEEDED);
+        when(runRepository.findById(43L)).thenReturn(Optional.of(run));
+        when(agentStepRepository.findById(430L)).thenReturn(Optional.of(step));
+        when(agentStepRepository.save(any(AgentStep.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        runService.retryStep(43L, 430L);
+
+        assertThat(step.getStatus()).isEqualTo(AgentStepStatus.PENDING);
+        assertThat(run.getStatus()).isEqualTo(RunStatus.SUCCEEDED);
+        verify(runRepository, never()).save(any(Run.class));
+    }
+
+    @Test
+    void requireRunShouldRejectNullId() {
+        assertThatThrownBy(() -> runService.pause(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void toRunResponseShouldHandleNullStatus() {
+        Run run = new Run();
+        run.setId(50L);
+        run.setGoal("g");
+        run.setStatus(null);
+
+        Records.RunResponse resp = RunService.toRunResponse(run);
+
+        assertThat(resp.status()).isNull();
+        assertThat(resp.statusLabel()).isNull();
+    }
+
+    @Test
+    void toStepResponseShouldHandleNullLabels() {
+        AgentStep step = new AgentStep();
+        step.setId(60L);
+        step.setSeqNo(1);
+        step.setAgentType(null);
+        step.setStatus(null);
+
+        Records.AgentStepResponse resp = RunService.toStepResponse(step);
+
+        assertThat(resp.agentLabel()).isNull();
+        assertThat(resp.statusLabel()).isNull();
+    }
+
+    @Test
+    void toDetailResponseShouldHandleNullSteps() {
+        Run run = runningRun(51L);
+
+        Records.RunDetailResponse detail = RunService.toDetailResponse(run, null);
+
+        assertThat(detail.steps()).isEmpty();
+    }
+
+    @Test
+    void statsShouldReturnZeroWhenNoOwnedProjects() {
+        when(currentUser.currentUserId()).thenReturn("u1");
+        when(projectRepository.findByOwnerId(eq("u1"), any(Sort.class))).thenReturn(Collections.emptyList());
+        when(runRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Records.RunStatsResponse stats = runService.stats();
+
+        assertThat(stats.totalRuns()).isEqualTo(0);
+        assertThat(stats.successRate()).isEqualTo(0.0);
+    }
+
+    @Test
+    void planPreviewShouldFallbackWhenBracesInverted() {
+        when(llmScriptService.callModel(any())).thenReturn("}{");
+
+        Records.PlanPreview preview = runService.planPreview("做一部 2 集短剧");
+
+        assertThat(preview.fallback()).isTrue();
+        assertThat(preview.episodes()).hasSize(2);
+    }
 }
-
-

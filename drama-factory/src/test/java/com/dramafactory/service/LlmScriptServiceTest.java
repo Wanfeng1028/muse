@@ -386,8 +386,132 @@ class LlmScriptServiceTest {
         assertEquals(4, result.scenes().size());
         assertTrue(userContentOf(stub.lastBody).contains("未命名"));
     }
+
+    // validate：model 传 null（不是空白串）→ 抛 IllegalStateException
+    @Test
+    void validate_rejectsNullModel() {
+        LlmScriptService service = directService(true, null, 3000, 120, 0, null);
+        assertThrows(IllegalStateException.class, service::validate);
+    }
+
+    // validate：cliPath 传空白串 "  " → 视为空走自动探测，不抛错
+    @Test
+    void validate_blankCliPath_treatedAsEmpty() {
+        LlmScriptService service = directService(true, "m", 3000, 120, 0, "  ");
+        assertDoesNotThrow(service::validate);
+    }
+
+    // parseScenes：有花括号但 JSON 截断 → 抛异常且 message 含"JSON 解析失败"
+    @Test
+    void parseScenes_truncatedJson_throwsWithParseFailureMessage() {
+        StubLlmScriptService stub = new StubLlmScriptService(List.of("{\"scenes\": [}"), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("JSON 解析失败"));
+    }
+
+    // parseScenes：5 场 scenes → message 含"应为 4"
+    @Test
+    void parseScenes_fiveScenes_throws() {
+        String content = "{\"scenes\":[" + oneScene(1) + "," + oneScene(2) + "," + oneScene(3)
+                + "," + oneScene(4) + "," + oneScene(4) + "]}";
+        StubLlmScriptService stub = new StubLlmScriptService(List.of(content), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("应为 4"));
+    }
+
+    // parseScenes：sceneNo 为 0 → message 含"sceneNo 越界"
+    @Test
+    void parseScenes_sceneNoZero_throws() {
+        String content = "{\"scenes\":[" + oneScene(1).replace("\"sceneNo\":1", "\"sceneNo\":0") + "," + oneScene(2) + "," + oneScene(3) + "," + oneScene(4) + "]}";
+        StubLlmScriptService stub = new StubLlmScriptService(List.of(content), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("sceneNo 越界"));
+    }
+
+    // parseScenes：location 为 null → message 含"location 为空"
+    @Test
+    void parseScenes_nullLocation_throws() {
+        String content = "{\"scenes\":[" + oneScene(1).replace("\"location\":\"LOC1\"", "\"location\":null") + "," + oneScene(2) + "," + oneScene(3) + "," + oneScene(4) + "]}";
+        StubLlmScriptService stub = new StubLlmScriptService(List.of(content), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("location 为空"));
+    }
+
+    // parseScenes：description 为 null → message 含"description 为空"
+    @Test
+    void parseScenes_nullDescription_throws() {
+        String content = "{\"scenes\":[" + oneScene(1).replace("\"description\":\"D1\"", "\"description\":null") + "," + oneScene(2) + "," + oneScene(3) + "," + oneScene(4) + "]}";
+        StubLlmScriptService stub = new StubLlmScriptService(List.of(content), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("description 为空"));
+    }
+
+    // parseScenes：dialogue 为 null → message 含"dialogue 为空"
+    @Test
+    void parseScenes_nullDialogue_throws() {
+        String content = "{\"scenes\":[" + oneScene(1).replace("\"dialogue\":\"DL1\"", "\"dialogue\":null") + "," + oneScene(2) + "," + oneScene(3) + "," + oneScene(4) + "]}";
+        StubLlmScriptService stub = new StubLlmScriptService(List.of(content), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("dialogue 为空"));
+    }
+
+    // parseScenes：纯字符串数组走"数组分支"，message 含"第 1 场不是对象"
+    @Test
+    void parseScenes_stringArray_throwsNotObject() {
+        StubLlmScriptService stub = new StubLlmScriptService(
+                List.of("[\"a\",\"b\",\"c\",\"d\"]"), false, 0);
+        LlmScriptUnavailableException ex = assertThrows(LlmScriptUnavailableException.class,
+                () -> stub.generate(buildEpisode(), "chars"));
+        assertNotNull(ex.getCause(), "应有 cause 链");
+        assertTrue(ex.getCause().getMessage().contains("第 1 场不是对象"));
+    }
+
+    // buildUserContent：outline 传 null（只 setId 不 setOutline）→ 含"无大纲，请自由发挥"
+    @Test
+    void buildUserContent_nullOutline_usesFreeStyleHint() {
+        Episode episode = new Episode();
+        episode.setId(9L);
+        CapturingLlmScriptService stub = new CapturingLlmScriptService();
+        stub.generate(episode, "chars");
+        assertTrue(userContentOf(stub.lastBody).contains("无大纲，请自由发挥"));
+    }
+
+    // buildUserContent：charactersSummary 非空 → 含"角色表：张三"
+    @Test
+    void buildUserContent_nonBlankCharactersSummary_includesCastLine() {
+        CapturingLlmScriptService stub = new CapturingLlmScriptService();
+        stub.generate(buildEpisode(), "张三：主角");
+        assertTrue(userContentOf(stub.lastBody).contains("角色表：张三"));
+    }
+
+    // doGenerate 重试：maxRetries=1，第一次抛 RuntimeException，第二次返回 VALID_JSON → 成功且 callCount==2
+    @Test
+    void retriesAfterRuntimeExceptionThenSucceeds() {
+        StubLlmScriptService stub = new StubLlmScriptService(
+                List.of(VALID_JSON), false, 1) {
+            @Override
+            String callModel(ObjectNode body) {
+                callCount++;
+                if (callCount == 1) {
+                    throw new RuntimeException("transient failure");
+                }
+                return VALID_JSON;
+            }
+        };
+        LlmScriptService.LlmScriptResult result = stub.generate(buildEpisode(), "chars");
+        assertEquals(4, result.scenes().size());
+        assertEquals(2, stub.callCount);
+    }
 }
-
-
-
-

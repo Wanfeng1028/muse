@@ -2,8 +2,8 @@
 
 ## ① 目标
 
-- **当前门禁：行覆盖（LINE）≥ 78%、分支覆盖（BRANCH）≥ 65%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.11 实测行 79.1%/分支 67.3%），只升不降。
-- **下一里程碑：v2.12 分支覆盖冲 70%**。
+- **当前门禁：行覆盖（LINE）≥ 80%、分支覆盖（BRANCH）≥ 68%**，由 JaCoCo `check` 在 `verify` 阶段强制执行，未达标即构建失败。棘轮值按实测锁定（v2.12 实测行 80.5%/分支 68.7%），只升不降。
+- **下一里程碑：v2.13 分支覆盖冲 70%**（差 30 个分支）。
 
 
 ## ② 口径
@@ -16,9 +16,9 @@
 
 | 指标 | 基线值 | 说明 |
 | --- | --- | --- |
-| 行覆盖（LINE） | 79.1%（v2.11 实测） | 全量 4770 行（3774/4770） |
-| 分支覆盖（BRANCH） | 67.3%（v2.11 实测，目标 65% 超额达成） | 全量 1882 分支（1266/1882） |
-| 门禁阈值 | 行 0.78 / 分支 0.65 | JaCoCo check，`verify` 阶段 |
+| 行覆盖（LINE） | 80.5%（v2.12 实测） | 全量 5499 行（4429/5499） |
+| 分支覆盖（BRANCH） | 68.7%（v2.12 实测；70% 目标未达成，差 30 分支） | 全量 2328 分支（1599/2328） |
+| 门禁阈值 | 行 0.80 / 分支 0.68 | JaCoCo check，`verify` 阶段 |
 
 
 ## ④ 缺口表
@@ -26,8 +26,14 @@
 | 类 | 当前覆盖 | 缺口原因 | 排期 |
 | --- | --- | --- | --- |
 | `LlmTransport` | 已补：纯函数 + HttpExecutor 契约测试 17 例 | 剩余缺口：真实代理链路（沙箱无外网） | 沙箱外验证 |
-| `RunExecutor` | 已补：全 mock 编排测试 10 例 + advanceRun/各 step 异常分支 13 例 + QC 自动门/checkVideoStep/finalize 13 例 | 剩余：@Scheduled tick 真实调度 | v2.9 |
-| `LlmScriptService` | 已补：validate 9 例 + parseScenes 12 例 + buildUserContent 5 例 | 剩余：callModel 私有 HTTP/CLI 路径（需真实网络） | 沙箱外验证 |
+| `RunService` | 已补：v2.12 追加 21 例（markSucceededIfAllDone/cancel/rerun/approve/retryStep/requireRun/toXxx/stats/sanitizeJson）；单类分支 89.1%（164/184） | 剩余 20：BYOK 相关与防御性分支 | v2.13 |
+| `RunExecutor` | 已补：v2.12 追加 12 例（tick 异常吞没/审批门默认/ QC 空文件/EDIT 空 filePath/recordToolCall 合并与重建/finalize）；单类分支 87.3%（138/158） | 剩余：@Scheduled tick 真实调度、不可达防御分支 | — |
+| `LlmScriptService` | 已补：v2.12 追加 12 例（validate null/blank cliPath、parseScenes 截断 JSON/5 场/sceneNo 越界/null 字段/纯数组、buildUserContent null outline、doGenerate 重试）；单类分支 73.2%（101/138） | 剩余：callModel 真实 HTTP/CLI 路径（需真实网络） | 沙箱外验证 |
+| `ByokGenerateService` | 已补：v2.12 新增 DownloadSender 接缝 + 28 例；单类分支 71.3%（97/136）、行 87.0% | 剩余 39：超时 deadline 分支（150s/240s 不可测）、"bin" 回退分支不可达（建议删除） | v2.13 |
+| `SurrogateAuthClient` | 已补：v2.12 新增 SocketExchange 接缝 + 19 例；单类分支 80.4%（37/46） | 剩余：真实 Unix socket 链路 | 沙箱外验证 |
+| `ProviderService` | 缺口：56 分支（BYOK probe 相关新增） | 待补 | v2.13 |
+| `DashScopeImageProvider` | 缺口：37 分支 | 待补（真实网络链路需录制回放） | v2.13 |
+| `ByokController` | 缺口：30 分支 | 待补 | v2.13 |
 | video providers | 已补：MockVideoProvider 6 例 + 录制回放契约测试（commit 37149e3） | 剩余：Agnes/Qwen 真实 provider（需外部 API） | 待定 |
 | E2E | 已补：RunLifecycleE2eTest（commit 37149e3） | 剩余：跨服务长链路 | v2.9 |
 | `AuthProxyController` | 已补：可测性重构（HttpClient 构造器注入）+ 20 例代理分支测试；单类行 97.8%/分支 79.5%/方法 100% | 剩余：无 | — |

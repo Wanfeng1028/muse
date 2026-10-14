@@ -844,5 +844,266 @@ class RunExecutorTest {
         assertEquals("RuntimeException", saved.getErrorMessage());
     }
 
-}
+    // N1. steps 里只有一个 FAILED 步骤：current==null 且非全终态成功、无 RUNNING VIDEO/QC → 直接返回
+    @Test
+    void advanceRun_singleFailedStepNoPending_returns() {
+        Run run = runningRun();
+        AgentStep failed = new AgentStep();
+        failed.setId(101L);
+        failed.setSeqNo(1);
+        failed.setAgentType(AgentType.SCRIPT);
+        failed.setStatus(AgentStepStatus.FAILED);
+        failed.setEpisodeId(EPISODE_ID);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(failed));
 
+        assertDoesNotThrow(() -> executor.advanceRun(run));
+
+        verify(agentStepRepository, never()).save(any());
+        verify(runRepository, never()).save(any());
+    }
+
+    // N2. tick：findByStatusOrderByCreatedAtAsc 返回 [runningRun]，但内层 findById 抛异常 → 不向外抛
+    @Test
+    void tick_innerFindByIdThrows_swallowed() {
+        Run run = new Run();
+        run.setId(RUN_ID);
+        run.setStatus(RunStatus.RUNNING);
+        when(runRepository.findByStatusOrderByCreatedAtAsc(RunStatus.RUNNING)).thenReturn(List.of(run));
+        when(runRepository.findById(RUN_ID)).thenThrow(new RuntimeException("inner db down"));
+
+        assertDoesNotThrow(() -> executor.tick());
+    }
+
+    // N3. isQcManualApproval：environment.getProperty 不 stub 返回 null → 默认启用人工审批
+    @Test
+    void advanceRun_qcManualApprovalPropertyNull_defaultsToApproval() {
+        Run run = runningRun();
+        AgentStep qcStep = pendingStep(102L, 1, AgentType.QC);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(qcStep));
+
+        executor.advanceRun(run);
+
+        AgentStep savedStep = captureLastSavedStep();
+        assertEquals(AgentStepStatus.RUNNING, savedStep.getStatus());
+
+        Run savedRun = captureLastSavedRun();
+        assertEquals(RunStatus.WAITING_APPROVAL, savedRun.getStatus());
+    }
+
+    // N4. runQcStep：EDIT 输出 filePath 指向 0 字节文件 → QC FAILED 且 errorMessage 含"文件不存在或为空"
+    @Test
+    void advanceRun_qcEmptyFile_fails(@TempDir Path dir) throws Exception {
+        Path empty = dir.resolve("empty.mp4");
+        Files.write(empty, new byte[0]);
+        Run run = runningRun();
+        when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
+
+        AgentStep editStep = new AgentStep();
+        editStep.setId(103L);
+        editStep.setSeqNo(4);
+        editStep.setAgentType(AgentType.EDIT);
+        editStep.setStatus(AgentStepStatus.SUCCEEDED);
+        editStep.setEpisodeId(EPISODE_ID);
+        editStep.setOutputSummary("finalCutId=9, status=READY, filePath=" + empty.toString());
+
+        AgentStep qcStep = pendingStep(104L, 5, AgentType.QC);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(editStep, qcStep));
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.FAILED, saved.getStatus());
+        assertTrue(saved.getErrorMessage().contains("文件不存在或为空"));
+
+        Run savedRun = captureLastSavedRun();
+        assertEquals(RunStatus.FAILED, savedRun.getStatus());
+    }
+
+    // N5. runEditStep：buildFinalCut 返回 filePath=null → EDIT SUCCEEDED 且 outputSummary 不含 "filePath="
+    @Test
+    void advanceRun_editNullFilePath_noFilePathInSummary() {
+        Run run = runningRun();
+        AgentStep step = pendingStep(105L, 1, AgentType.EDIT);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(step));
+        when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
+        when(finalCutService.buildFinalCut(EPISODE_ID))
+                .thenReturn(new Records.FinalCutResponse(9L, EPISODE_ID, "t", null, "x.mp4",
+                        FinalCutStatus.READY, "已完成", 60.0, null, null, null, null, null, null));
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.SUCCEEDED, saved.getStatus());
+        assertNotNull(saved.getOutputSummary());
+        assertTrue(saved.getOutputSummary().contains("finalCutId=9"));
+        assertTrue(!saved.getOutputSummary().contains("filePath="));
+    }
+
+    // N6. checkVideoStep：findByEpisodeId 返回 null → advanceRun 抛 IllegalStateException
+    @Test
+    void advanceRun_videoTasksNull_throws() {
+        Run run = runningRun();
+        AgentStep videoStep = new AgentStep();
+        videoStep.setId(106L);
+        videoStep.setSeqNo(1);
+        videoStep.setAgentType(AgentType.VIDEO);
+        videoStep.setStatus(AgentStepStatus.RUNNING);
+        videoStep.setEpisodeId(EPISODE_ID);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(videoStep));
+        when(videoTaskRepository.findByEpisodeId(EPISODE_ID)).thenReturn(null);
+
+        assertThrows(IllegalStateException.class, () -> executor.advanceRun(run));
+    }
+
+    // N7. safeMessage：scriptService.generate 抛 new RuntimeException("   ") → errorMessage 为 "RuntimeException"
+    @Test
+    void advanceRun_stepExceptionBlankMessage_usesClassName() {
+        Run run = runningRun();
+        AgentStep step = pendingStep(107L, 1, AgentType.SCRIPT);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(step));
+        when(scriptService.generate(eq(EPISODE_ID), eq("ai")))
+                .thenThrow(new RuntimeException("   "));
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.FAILED, saved.getStatus());
+        assertEquals("RuntimeException", saved.getErrorMessage());
+    }
+
+    // N8. findPreviousStepOfType：seqNo=null 的候选被跳过，匹配到 seqNo=1 的 SCRIPT → BOARD SUCCEEDED
+    @Test
+    void advanceRun_boardSkipsNullSeqNoPreviousScript_succeeds() {
+        Run run = runningRun();
+        AgentStep scriptNullSeq = new AgentStep();
+        scriptNullSeq.setId(108L);
+        scriptNullSeq.setSeqNo(null);
+        scriptNullSeq.setAgentType(AgentType.SCRIPT);
+        scriptNullSeq.setStatus(AgentStepStatus.SUCCEEDED);
+        scriptNullSeq.setEpisodeId(EPISODE_ID);
+        scriptNullSeq.setOutputSummary("无用");
+
+        AgentStep scriptSeq1 = new AgentStep();
+        scriptSeq1.setId(109L);
+        scriptSeq1.setSeqNo(1);
+        scriptSeq1.setAgentType(AgentType.SCRIPT);
+        scriptSeq1.setStatus(AgentStepStatus.SUCCEEDED);
+        scriptSeq1.setEpisodeId(EPISODE_ID);
+        scriptSeq1.setOutputSummary("剧本正文");
+
+        AgentStep boardStep = pendingStep(110L, 2, AgentType.BOARD);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID))
+                .thenReturn(List.of(scriptNullSeq, scriptSeq1, boardStep));
+        when(scriptSplitterService.splitFromScript(EPISODE_ID, "剧本正文")).thenReturn(List.of());
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.SUCCEEDED, saved.getStatus());
+        assertEquals("shotCount=0, shotNos=", saved.getOutputSummary());
+        verify(scriptSplitterService).splitFromScript(EPISODE_ID, "剧本正文");
+    }
+
+    // N9. extractFilePath：EDIT outputSummary 以 filePath 结尾（无逗号）→ 走 editOutput.length() 分支，QC SUCCEEDED
+    @Test
+    void advanceRun_qcFilePathAtEnd_succeeds(@TempDir Path dir) throws Exception {
+        Path f = dir.resolve("final.mp4");
+        Files.write(f, "data".getBytes());
+        Run run = runningRun();
+        when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
+
+        AgentStep editStep = new AgentStep();
+        editStep.setId(111L);
+        editStep.setSeqNo(4);
+        editStep.setAgentType(AgentType.EDIT);
+        editStep.setStatus(AgentStepStatus.SUCCEEDED);
+        editStep.setEpisodeId(EPISODE_ID);
+        editStep.setOutputSummary("finalCutId=9, status=READY, filePath=" + f.toString());
+
+        AgentStep qcStep = pendingStep(112L, 5, AgentType.QC);
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(editStep, qcStep));
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.SUCCEEDED, saved.getStatus());
+        assertTrue(saved.getOutputSummary().contains("qc=APPROVED"));
+    }
+
+    // N10. recordToolCall：SCRIPT 预置合法 JSON 数组 → 执行后解析长度为 2
+    @Test
+    void advanceRun_scriptMergesExistingToolCalls() throws Exception {
+        Run run = runningRun();
+        AgentStep step = pendingStep(113L, 1, AgentType.SCRIPT);
+        step.setToolCallsJson("[{\"tool\":\"old\"}]");
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(step));
+        when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
+        when(scriptService.generate(EPISODE_ID, "ai"))
+                .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
+                        "Deepseek-v4-flash", 100L));
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.SUCCEEDED, saved.getStatus());
+        var node = objectMapper.readTree(saved.getToolCallsJson());
+        assertEquals(2, node.size());
+    }
+
+    // N11. recordToolCall：SCRIPT 预置损坏 JSON → 执行后解析长度为 1
+    @Test
+    void advanceRun_scriptCorruptToolCallsRebuilt() throws Exception {
+        Run run = runningRun();
+        AgentStep step = pendingStep(114L, 1, AgentType.SCRIPT);
+        step.setToolCallsJson("corrupt{{{");
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(step));
+        when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
+        when(scriptService.generate(EPISODE_ID, "ai"))
+                .thenReturn(new Records.GenerateScriptResponse(EPISODE_ID, 3, "剧本正文", "ai",
+                        "Deepseek-v4-flash", 100L));
+
+        executor.advanceRun(run);
+
+        AgentStep saved = captureLastSavedStep();
+        assertEquals(AgentStepStatus.SUCCEEDED, saved.getStatus());
+        var node = objectMapper.readTree(saved.getToolCallsJson());
+        assertEquals(1, node.size());
+    }
+
+    // N12. finalizeRun：VIDEO 成本未知但 costEstimated=false → totalCostCents=0（不是 null），totalTokens=100
+    @Test
+    void advanceRun_finalizeVideoUnknownCostButNotEstimated_zeroTotalCost() {
+        Run run = runningRun();
+
+        AgentStep s1 = new AgentStep();
+        s1.setId(115L);
+        s1.setSeqNo(1);
+        s1.setAgentType(AgentType.SCRIPT);
+        s1.setStatus(AgentStepStatus.SUCCEEDED);
+        s1.setEpisodeId(EPISODE_ID);
+        s1.setTokensUsed(100L);
+        s1.setCostCents(50L);
+
+        AgentStep s2 = new AgentStep();
+        s2.setId(116L);
+        s2.setSeqNo(2);
+        s2.setAgentType(AgentType.VIDEO);
+        s2.setStatus(AgentStepStatus.SUCCEEDED);
+        s2.setEpisodeId(EPISODE_ID);
+        s2.setTokensUsed(null);
+        s2.setCostCents(null);
+        s2.setCostEstimated(false);
+
+        when(agentStepRepository.findByRunIdOrderBySeqNoAsc(RUN_ID)).thenReturn(List.of(s1, s2));
+
+        executor.advanceRun(run);
+
+        Run savedRun = captureLastSavedRun();
+        assertEquals(RunStatus.SUCCEEDED, savedRun.getStatus());
+        assertEquals(100L, savedRun.getTotalTokens());
+        // SCRIPT 的 50 分计入，VIDEO 未估算不置 null（区别于 F1 的未知成本置 null）
+        assertNotNull(savedRun.getTotalCostCents());
+        assertEquals(50L, savedRun.getTotalCostCents());
+    }
+
+}

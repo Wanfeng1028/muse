@@ -2,9 +2,12 @@ package com.dramafactory.service.byok;
 
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.MediaProvider;
+
 import com.dramafactory.repository.MediaProviderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,18 +37,39 @@ public class ByokGenerateService {
     private static final String RANDOM_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
+
+    /**
+     * HTTP 下载发送器接缝：生产环境走 JDK HttpClient，测试注入桩。
+     * 包可见，仅供测试使用。
+     */
+    @FunctionalInterface
+    interface DownloadSender {
+        HttpResponse<InputStream> send(HttpRequest request) throws IOException, InterruptedException;
+    }
+
     private final MediaProviderRepository providerRepository;
     private final Map<String, ImageProvider> imageProvidersByName;
     private final Map<String, MusicProvider> musicProvidersByName;
     private final Map<String, AvatarProvider> avatarProvidersByName;
     private final String storageDir;
     private final HttpClient downloadClient;
+    private final DownloadSender downloadSender;
 
+    @Autowired
     public ByokGenerateService(MediaProviderRepository providerRepository,
                                Map<String, ImageProvider> imageProviders,
                                Map<String, MusicProvider> musicProviders,
                                Map<String, AvatarProvider> avatarProviders,
                                @Value("${drama.storage:./data/media}") String storageDir) {
+        this(providerRepository, imageProviders, musicProviders, avatarProviders, storageDir, null);
+    }
+
+    ByokGenerateService(MediaProviderRepository providerRepository,
+                        Map<String, ImageProvider> imageProviders,
+                        Map<String, MusicProvider> musicProviders,
+                        Map<String, AvatarProvider> avatarProviders,
+                        String storageDir,
+                        DownloadSender downloadSender) {
         this.providerRepository = providerRepository;
         this.imageProvidersByName = toNameMap(imageProviders);
         this.musicProvidersByName = toNameMap(musicProviders);
@@ -54,7 +78,13 @@ public class ByokGenerateService {
         this.downloadClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
+        this.downloadSender = downloadSender != null ? downloadSender : this::sendViaClient;
     }
+
+    private HttpResponse<InputStream> sendViaClient(HttpRequest request) throws IOException, InterruptedException {
+        return downloadClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    }
+
 
     private static <T> Map<String, T> toNameMap(Map<String, T> source) {
         if (source == null || source.isEmpty()) {
@@ -265,7 +295,9 @@ public class ByokGenerateService {
                     .timeout(Duration.ofSeconds(30))
                     .GET()
                     .build();
-            response = downloadClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+            response = downloadSender.send(request);
+
         } catch (IOException e) {
             throw new RuntimeException("产物下载失败：" + e.getMessage());
         } catch (InterruptedException e) {
