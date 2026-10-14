@@ -183,7 +183,7 @@ class ScriptSplitterServiceTest {
     }
 
     @Test
-    void parseShotsJson_invalidCameraMove_labelYieldsNullCameraMove() {
+    void parseShotsJson_invalidCameraMove_throwsWithClearMessage() {
         String content = """
                 [
                   {
@@ -198,11 +198,10 @@ class ScriptSplitterServiceTest {
                 ]
                 """;
 
-        List<Shot> shots = service.parseShotsJson(episode(), content);
-
-        assertEquals(1, shots.size());
-        assertNull(shots.get(0).getCameraMove(),
-                "CameraMove.fromLabel returns null for invalid labels; no exception expected");
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> service.parseShotsJson(episode(), content));
+        assertEquals("第 1 个分镜的字段 cameraMove 非法: 旋转飞行", ex.getMessage());
+        assertTrue(ex.getMessage().contains("第 1 个分镜"));
     }
 
     @Test

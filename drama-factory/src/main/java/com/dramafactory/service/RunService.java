@@ -3,17 +3,22 @@ package com.dramafactory.service;
 import com.dramafactory.model.AgentStep;
 import com.dramafactory.model.AgentStepStatus;
 import com.dramafactory.model.AgentType;
+import com.dramafactory.model.DramaProject;
 import com.dramafactory.model.Episode;
 import com.dramafactory.model.FinalCut;
 import com.dramafactory.model.Run;
 import com.dramafactory.model.RunStatus;
 import com.dramafactory.model.VideoTask;
 import com.dramafactory.model.VideoTaskStatus;
+
+import com.dramafactory.config.CurrentUser;
 import com.dramafactory.repository.AgentStepRepository;
+import com.dramafactory.repository.DramaProjectRepository;
 import com.dramafactory.repository.EpisodeRepository;
 import com.dramafactory.repository.FinalCutRepository;
 import com.dramafactory.repository.RunRepository;
 import com.dramafactory.repository.VideoTaskRepository;
+
 import com.dramafactory.dto.Records;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,6 +28,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +36,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Harness Run 引擎核心服务。
@@ -61,6 +69,8 @@ public class RunService {
     private final RunLogService runLogService;
     private final ObjectMapper objectMapper;
     private final String scriptModel;
+    private final CurrentUser currentUser;
+    private final DramaProjectRepository projectRepository;
 
     public RunService(RunRepository runRepository,
                       AgentStepRepository agentStepRepository,
@@ -73,7 +83,9 @@ public class RunService {
                       FinalCutService finalCutService,
                       RunLogService runLogService,
                       ObjectMapper objectMapper,
-                      @Value("${drama.script.llm.model:Deepseek-v4-flash}") String scriptModel) {
+                      @Value("${drama.script.llm.model:Deepseek-v4-flash}") String scriptModel,
+                      CurrentUser currentUser,
+                      DramaProjectRepository projectRepository) {
         this.runRepository = runRepository;
         this.agentStepRepository = agentStepRepository;
         this.episodeRepository = episodeRepository;
@@ -86,6 +98,8 @@ public class RunService {
         this.runLogService = runLogService;
         this.objectMapper = objectMapper;
         this.scriptModel = scriptModel;
+        this.currentUser = currentUser;
+        this.projectRepository = projectRepository;
     }
 
     /**
@@ -554,12 +568,23 @@ public class RunService {
 
     /**
      * 统计：总数、成功、失败、成功率、平均耗时。
+     *
+     * <p>只统计当前用户名下项目的 run；projectId 为空或归属他人的 run 不计入。
      */
     @Transactional(readOnly = true)
     public Records.RunStatsResponse stats() {
         List<Run> all = new ArrayList<>();
         runRepository.findAll().forEach(all::add);
+        String ownerId = currentUser.currentUserId();
+        Set<Long> ownedProjectIds = new HashSet<>();
+        for (DramaProject p : projectRepository.findByOwnerId(ownerId, Sort.by("id"))) {
+            if (p.getId() != null) {
+                ownedProjectIds.add(p.getId());
+            }
+        }
+        all.removeIf(r -> r.getProjectId() == null || !ownedProjectIds.contains(r.getProjectId()));
         long total = all.size();
+
         long succeeded = 0;
         long failed = 0;
         long durationSum = 0;

@@ -1,13 +1,16 @@
 package com.dramafactory.service;
 
+import com.dramafactory.config.CurrentUser;
 import com.dramafactory.dto.Records;
 import com.dramafactory.model.AgentStep;
 import com.dramafactory.model.AgentStepStatus;
 import com.dramafactory.model.AgentType;
 import com.dramafactory.model.Run;
 import com.dramafactory.model.RunStatus;
+import com.dramafactory.model.DramaProject;
 import com.dramafactory.model.VideoTask;
 import com.dramafactory.repository.AgentStepRepository;
+import com.dramafactory.repository.DramaProjectRepository;
 import com.dramafactory.repository.EpisodeRepository;
 import com.dramafactory.repository.FinalCutRepository;
 import com.dramafactory.repository.RunRepository;
@@ -15,6 +18,7 @@ import com.dramafactory.repository.VideoTaskRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
@@ -24,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,6 +48,8 @@ class RunServiceTest {
     private EpisodeService episodeService;
     private FinalCutService finalCutService;
     private RunLogService runLogService;
+    private CurrentUser currentUser;
+    private DramaProjectRepository projectRepository;
     private RunService runService;
 
     @BeforeEach
@@ -57,9 +64,12 @@ class RunServiceTest {
         episodeService = mock(EpisodeService.class);
         finalCutService = mock(FinalCutService.class);
         runLogService = mock(RunLogService.class);
+        currentUser = mock(CurrentUser.class);
+        projectRepository = mock(DramaProjectRepository.class);
         runService = new RunService(runRepository, agentStepRepository, episodeRepository,
                 finalCutRepository, videoTaskRepository, llmScriptService, projectService,
-                episodeService, finalCutService, runLogService, new ObjectMapper(), "Deepseek-v4-flash");
+                episodeService, finalCutService, runLogService, new ObjectMapper(), "Deepseek-v4-flash",
+                currentUser, projectRepository);
     }
 
     private Run runningRun(long id) {
@@ -241,11 +251,22 @@ class RunServiceTest {
 
     @Test
     void statsShouldComputeSuccessRate() {
+        // 新口径：只统计当前用户名下项目的 run
+        when(currentUser.currentUserId()).thenReturn("u1");
+        DramaProject owned = new DramaProject();
+        owned.setId(5L);
+        when(projectRepository.findByOwnerId(eq("u1"), any(Sort.class))).thenReturn(List.of(owned));
+
         Run ok = runningRun(11L);
         ok.setStatus(RunStatus.SUCCEEDED);
+        ok.setProjectId(5L);
         Run bad = runningRun(12L);
         bad.setStatus(RunStatus.FAILED);
-        when(runRepository.findAll()).thenReturn(List.of(ok, bad));
+        bad.setProjectId(5L);
+        Run others = runningRun(13L);
+        others.setStatus(RunStatus.SUCCEEDED);
+        others.setProjectId(9L);
+        when(runRepository.findAll()).thenReturn(List.of(ok, bad, others));
 
         Records.RunStatsResponse stats = runService.stats();
 

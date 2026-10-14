@@ -12,4 +12,8 @@ public interface DramaProjectRepository extends JpaRepository<DramaProject, Long
 
     /** 按归属用户查项目列表：/api/projects 只走这一条，保证多用户隔离。 */
     List<DramaProject> findByOwnerId(String ownerId, Sort sort);
+
+    /** 按归属用户计项目数：stats() 多用户口径用。 */
+    long countByOwnerId(String ownerId);
 }
+

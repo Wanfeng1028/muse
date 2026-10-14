@@ -51,19 +51,31 @@ public enum CameraMove {
     /**
      * 根据中文标签解析运镜枚举，忽略大小写与首尾空白。
      *
+     * <p>规则：
+     * <ul>
+     *   <li>label 为 null → 返回 null；</li>
+     *   <li>label.trim() 为空 → 返回 null；</li>
+     *   <li>非空且无匹配枚举 → 抛出 IllegalArgumentException（异常信息使用原始 label）。</li>
+     * </ul>
+     *
      * @param label 中文标签
-     * @return 匹配的枚举；若无匹配返回 null
+     * @return 匹配的枚举；label 为 null 或空白时返回 null
+     * @throws IllegalArgumentException 非空标签但无匹配枚举
      */
     public static CameraMove fromLabel(String label) {
         if (label == null) {
             return null;
         }
         String trimmed = label.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
         for (CameraMove move : values()) {
             if (move.label.equalsIgnoreCase(trimmed)) {
                 return move;
             }
         }
-        return null;
+        throw new IllegalArgumentException("未知的运镜标签: " + label);
     }
+
 }

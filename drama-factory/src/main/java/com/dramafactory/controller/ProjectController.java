@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Tag(name = "Projects", description = "项目的增删改查与全局统计接口")
+@Tag(name = "Projects", description = "项目的增删改查与统计接口")
+
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -62,8 +63,9 @@ public class ProjectController {
     }
 
     @GetMapping("/api/stats")
-    @Operation(summary = "查询全局统计")
+    @Operation(summary = "查询当前用户的项目统计")
     public Records.StatsResponse stats() {
+
         return projectService.stats();
     }
 }

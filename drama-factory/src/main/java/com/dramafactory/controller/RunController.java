@@ -194,8 +194,9 @@ public class RunController {
      * @return 统计响应
      */
     @GetMapping("/stats")
-    @Operation(summary = "查询运行统计")
+    @Operation(summary = "查询当前用户的运行统计")
     public Records.RunStatsResponse stats() {
+
         return runService.stats();
     }
 

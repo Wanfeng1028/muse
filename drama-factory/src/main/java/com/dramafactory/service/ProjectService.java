@@ -7,6 +7,7 @@ import com.dramafactory.dto.Records.StatsResponse;
 import com.dramafactory.exception.ForbiddenException;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.DramaProject;
+import com.dramafactory.model.Episode;
 import com.dramafactory.model.ProjectStatus;
 import com.dramafactory.repository.DramaCharacterRepository;
 import com.dramafactory.repository.DramaProjectRepository;
@@ -101,14 +102,36 @@ public class ProjectService {
         projectRepository.delete(project);
     }
 
-    /** 全局统计：四张表的记录数（多用户下"全局"口径暂未定，本轮保持行为不变） */
+    /**
+     * 按当前用户隔离统计：只统计当前用户名下项目及其剧集/角色/场景数。
+     *
+     * <p>开放模式下 currentUserId() 恒为 "local"，与旧全局口径行为一致；用户无项目时全 0。
+     */
     @Transactional(readOnly = true)
     public StatsResponse stats() {
-        long projects = projectRepository.count();
-        long episodes = episodeRepository.count();
-        long characters = characterRepository.count();
-        long scenes = sceneRepository.count();
-        return new StatsResponse(projects, episodes, characters, scenes);
+        String ownerId = currentUser.currentUserId();
+        long projectCount = projectRepository.countByOwnerId(ownerId);
+        List<DramaProject> owned = projectRepository.findByOwnerId(ownerId, Sort.by("id"));
+        long episodeCount = 0;
+        long characterCount = 0;
+        long sceneCount = 0;
+        for (DramaProject project : owned) {
+            Long pid = project.getId();
+            if (pid == null) {
+                continue;
+            }
+            episodeCount += episodeRepository.countByProjectId(pid);
+            characterCount += characterRepository.countByProjectId(pid);
+            List<Episode> episodes = episodeRepository.findByProjectIdOrderByEpisodeNoAsc(pid);
+            for (Episode ep : episodes) {
+                Long eid = ep.getId();
+                if (eid == null) {
+                    continue;
+                }
+                sceneCount += sceneRepository.countByEpisodeId(eid);
+            }
+        }
+        return new StatsResponse(projectCount, episodeCount, characterCount, sceneCount);
     }
 
     /** 实体转响应 DTO，填充关联计数 */
