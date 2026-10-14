@@ -161,6 +161,21 @@ mortise_sync_rows_total{source="orders_csv",table="orders",op="skipped"} 0
 
 > `TBD(实测填)`：编排者可在目标机器上 `curl` 后把真实输出片段贴到此处。
 
+## 视图自动注册
+
+`mortise.yaml` 的 `views` 段声明的视图，会在 `mortisedb sync` 与 `serve` 启动时自动注册进 `_m_views`（幂等，可重复运行）：
+
+```bash
+./mortisedb sync
+# 视图自动注册: 新增 2，更新 0，清理 0
+
+# 随时手动触发
+./mortisedb views sync
+./mortisedb views list
+```
+
+规则：YAML 里改了 SQL/描述 → 自动更新；删掉某条声明 → 自动清理；你在 CLI（`views add`）或 Web/API 里手工建的视图标为 `manual`，永远不会被清理。注意注册时不做 SQL 试运行（表可能还没同步出来），跑视图时才会真正校验。
+
 ## 备份与恢复
 
 ### 备份
@@ -206,6 +221,26 @@ cd ./loadtest-work
 
 > 优化前后对比：逐行自动提交约 38 行/秒 → 批量事务（`sync.batch_size` 默认 5000）约 1128 行/秒，约 30 倍。
 
+## 端到端验证
+
+`scripts/e2e.sh` 是一键端到端编排（bash + curl，无额外依赖）：
+
+```bash
+bash scripts/e2e.sh ./e2e-work
+```
+
+它用一份真实感的茶叶小店数据（10 行订单 CSV + 8 个会员 JSON）走完：写 YAML → `sync`（断言视图自动注册 `新增 2`）→ `views list`（断言两个视图名）→ 全行查询（断言 10 行）→ 改 YAML（断言 `新增 1，更新 1`）→ 删声明（断言 `清理 1` 且 `views list` 不再含它）→ 起 `serve` 调 `/api/views` → CSV 导出（断言 10 行数据且含"龙井"）。本轮实测 `E2E PASS`。
+
+## 一键部署
+
+```bash
+docker compose up -d --build
+docker compose ps        # 看 health 列
+docker compose logs -f mortisedb
+```
+
+compose 文件含健康检查（`wget` 探 `/api/health`）、资源限制（512m 内存 / 1 核）与日志轮转（10m×3）。数据落在 `./data/mortise.db`，`down` 不丢。升级/排障见 `docs/OPERATIONS.md` §1。
+
 ## 路线图
 
 ### v1.1（已交付）
@@ -216,6 +251,12 @@ cd ./loadtest-work
 - ✅ 10 万行负载验证支撑（`scripts/loadtest.sh` + `docs/LOADTEST.md` 实测：30 万行 265.89s，跨源 JOIN 10 万行 452ms）。
 - ✅ 同步批量事务（`sync.batch_size` 默认 5000：`dbtx` 接口 + 每批提交/出错回滚；约 38 行/秒 → 约 1128 行/秒）。
 - ✅ `request_id` 与结构化日志维持通过。
+
+### v1.2（已交付）
+
+- ✅ YAML 声明视图自动注册（`sync`/`serve`/`views sync` 幂等注册 + 更新 + 清理；`_m_views.origin` 区分 yaml/manual，老库自动迁移）。
+- ✅ 端到端编排脚本 `scripts/e2e.sh`（真实数据 + 断言，实测 E2E PASS）。
+- ✅ docker-compose 一键部署强化（健康检查 + 资源限制 + 日志轮转；`docs/OPERATIONS.md` 补部署/升级/排障）。
 
 ### 后续版本
 

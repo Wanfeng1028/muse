@@ -363,19 +363,20 @@
 
 **视觉**：「宣纸 + 榫卯」——宣纸 #F4EFE3 底、墨 #211C15、木赭 #8A5A33、朱砂 #B3402A 点睛、导航下榫卯线纹装饰、SVG 榫卯线稿 logo；去 AI 味：无紫渐变、无一切居中、无三栏特性格、无 emoji 图标。
 
-**状态**：生产级 v1.1.0（2026-10-13）：`/metrics` Prometheus 端点（13 个指标，手写 exposition）+ `backup`/`restore` 子命令（VACUUM INTO 在线快照）+ 优雅关闭补强（HTTP 超时 + 在途等待 + WAL checkpoint）+ **同步批量事务**（`sync.batch_size` 默认 5000，10 万行从约 38 行/秒提至约 1128 行/秒，约 30 倍）+ 10 万行 × 3 源负载实测落盘（`docs/LOADTEST.md`：30 万行 265.89s，跨源 JOIN 10 万行 452ms）；go build/vet/test 全过。
+**状态**：生产级 v1.2.0（2026-10-15）：YAML 声明视图自动注册（`views.SyncFromConfig`，sync/serve/views sync 幂等注册+更新+清理，`_m_views.origin` 区分 yaml/manual，老库自动迁移）+ `scripts/e2e.sh` 端到端编排（实测 E2E PASS）+ docker-compose 一键部署强化（健康检查/资源限制 512m·1 核/日志轮转 10m×3；`docs/OPERATIONS.md` 补部署/升级/排障）；go build/vet/test 全过（12 包）。
 
-**发版对照**：`mortisedb/docs/PRODUCTION_CHECKLIST.md`——v1.1 增补对照 14 项：通过 12 项（含 /metrics、backup/restore、优雅关闭、HTTP 超时、负载验证），未通过 2 项（端到端自动化测试、Dependabot）排期 v1.2。
+**发版对照**：`mortisedb/docs/PRODUCTION_CHECKLIST_REPORT_v1.2.0.md`——v1.2 增补：端到端自动化测试通过（v1.1 遗留项关闭）、视图自动注册通过、compose 一键部署通过（静态校验，未实测 docker run，本机无 daemon）；Dependabot 仍未通过（需用户在 GitHub Settings 手动开启，超出 agent 权限）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：31 个文件 dpsk 生成 + 编排验收；修 5 个后端 bug（含跨源删除误删、dir 根目录计行、水位线日期格式）；Web UI app.js 按真实 API 契约重写
 - 生产级 v1.1.0（2026-10-13）：`dbtx` 接口重构（`*sql.DB`/`*sql.Tx` 公共子集）+ `syncOneTable` 批量事务（每 5000 行提交、出错回滚、水位线最终提交后写回）+ `sync.batch_size` 配置；真实负载验证倒逼出的性能修复（优化前 10 万行需约 44 分钟）；CHANGELOG/LOADTEST.md/README 实测数据齐备
+- 生产级 v1.2.0（2026-10-15）：dpsk 分 5 批生成 + 编排修 3 处机械问题——e2e.sh 的 COUNT(*) 行数断言 bug、views_test import 缺 fmt、LOADTEST 锚定文本偏差；YAML 声明视图自动注册（`views.SyncFromConfig`，sync/serve/views sync 幂等注册+更新+清理，`_m_views.origin` 区分 yaml/manual，老库自动迁移）；`scripts/e2e.sh` 端到端编排实测 E2E PASS（10 行订单 CSV + 8 会员 JSON → sync 新增 orders 10/users 8 → 视图自动注册新增 2 → 改 YAML 新增 1 更新 1 → 删声明清理 1 → serve → CSV 导出 10 行）；docker-compose 一键部署强化（健康检查/资源限制 512m·1 核/日志轮转 10m×3，`docs/OPERATIONS.md` 补部署/升级/排障）；视图页真实截图更新（`docs/screenshots/views.png`，真实数据：4 城市销售额）；go build/vet/test 全过（12 包）
 
 **后续计划**：
 
 - Postgres/MySQL 只读源、冲突 Webhook 通知、视图定时物化、CSV 增量导入 API
-- 端到端自动化测试、backup 子命令、/metrics 指标
+- Dependabot（等用户在 GitHub Settings 手动开启）
 
 ## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」
 

@@ -1,7 +1,3 @@
-mkdir -p /backup/mortisedb/$(date +%F)
-sqlite3 data/mortise.db ".backup '/backup/mortisedb/$(date +%F)/mortise.db'"
-cp mortise.yaml /backup/mortisedb/$(date +%F)/mortise.yaml
-
 # MortiseDB 运维手册
 
 本文档面向运维人员，覆盖日常巡检、故障处理、备份恢复与告警思路。
@@ -19,6 +15,67 @@ mortisedb serve --config /etc/mortise/mortise.yaml
 2. 执行 `Migrate()` 建内部系统表（`_m_runs`、`_m_conflicts`、`_m_views`、`_m_watermarks`）。
 3. 启动调度器（按 `jobs` 配置周期性执行同步）。
 4. 监听 `addr`（默认 `:8421`）。
+
+### Docker Compose 一键部署
+
+适合单机快速起服务，无需在宿主机装 Go 环境；镜像由仓库根目录 `Dockerfile` 多阶段构建（golang:1.23-alpine 编译 → alpine:3.20 运行），产物为 `/app/mortisedb`。
+
+**前置准备**
+
+- `./mortise.yaml`：从 `mortise.yaml.example` 复制后按需修改（数据源、jobs、addr 等）。若不存在，容器内不会有该文件，`serve` 会使用环境变量默认值（`MORTISE_ADDR=:8421`、`MORTISE_DB=/app/data/mortise.db`）。
+- `./sources/`：放入你的数据源文件（以只读方式挂进容器 `/app/sources`）。
+- `./data/`：无需手动创建，首次启动会自动生成；SQLite 数据库文件为 `./data/mortise.db`。
+
+**启动与查看**
+
+```bash
+# 构建并后台启动
+docker compose up -d --build
+
+# 查看服务状态（含 health 列）
+docker compose ps
+
+# 跟随日志
+docker compose logs -f mortisedb
+
+# 停止（数据保留在 ./data 卷中，down 不会丢数据）
+docker compose down
+```
+
+**升级**
+
+改完代码或拉到新版本后，重新构建并重建容器：
+
+```bash
+docker compose up -d --build
+```
+
+注意：compose 会先 build 再 recreate，本编排为单副本，重建过程中会有秒级服务中断；对可用性要求高的场景请在外部做流量切换或改为多副本方案。
+
+**Compose 专属排障**
+
+```bash
+# 查看容器健康状态（healthy / unhealthy / starting）
+docker inspect mortisedb --format '{{.State.Health.Status}}'
+
+# 查看最近一次健康检查的输出
+docker inspect mortisedb --format '{{json .State.Health}}'
+```
+
+- 刚启动时若看到 `starting` 或 `unhealthy`，先确认是否仍在 `start_period`（15s）内；健康检查探针为 `wget -qO- http://127.0.0.1:8421/api/health`，服务未监听前会失败。
+- 宿主机端口冲突：修改 `docker-compose.yml` 中 `ports` 映射，例如把 `"8421:8421"` 改为 `"18421:8421"`，再 `docker compose up -d`。
+- `./data` 权限问题：容器内进程以 root 运行并写入 `/app/data`，宿主机对应目录需对当前用户可写（或提前 `chown`/`chmod`）；否则会出现数据库无法创建/写入的报错。
+- 容器反复重启：先看 `docker compose logs mortisedb`，常见原因是 `mortise.yaml` 配置错误或数据源路径不存在。
+
+**资源限制与日志**
+
+`docker-compose.yml` 默认限制：
+
+- `mem_limit: 512m`：容器内存上限，超出可能被 OOM kill。
+- `cpus: 1.0`：CPU 配额（等价 1 核）。
+- 日志轮转：`json-file` 驱动，`max-size: 10m`、`max-file: 3`，单文件最大 10MB、最多保留 3 个。
+
+以上均按需调整；调大内存/CPU 前请确认宿主机余量，调小日志上限可降低磁盘占用。
 
 ### 停止
 
@@ -199,5 +256,6 @@ mortisedb query --config /etc/mortise/mortise.yaml \
 
 ## 6. 版本历史
 
+- **1.2.0**：YAML 声明视图自动注册（sync/serve/views sync 幂等注册+清理，_m_views 新增 origin 列）、e2e 编排脚本（scripts/e2e.sh）、docker-compose 一键部署（健康检查+资源限制+日志轮转）。
 - **1.1.0**：新增 `/metrics`、`backup`/`restore` 子命令、优雅关闭补强（HTTP 超时 + WAL checkpoint + 在途等待）、10 万行负载验证。
 - **0.1.0**：首个可用版本（多源同步、冲突策略、视图、调度、Web UI）。

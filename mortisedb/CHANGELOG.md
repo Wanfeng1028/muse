@@ -2,6 +2,22 @@
 
 本文件记录 MortiseDB 的重要变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.2.0] - 2026-10-15
+
+### 新增
+
+- **YAML 声明视图自动注册**：`views.SyncFromConfig`——`mortisedb sync` / `serve` 启动时把 `mortise.yaml` 的 `views` 段幂等注册进 `_m_views`（新增/更新计数打印），YAML 改名/改 SQL 自动更新，删声明自动清理；`mortisedb views sync` 可手动触发。
+  - `_m_views` 新增 `origin` 列（`yaml`/`manual`，老库 `Migrate()` 自动补列回填 `manual`）：手工 `views add` 与 API 创建的视图永不参与清理。
+  - 注册时不做 SQL 试运行（目标表可能尚未同步），合法性由运行时与 `views add` 的试运行兜底。
+- **端到端编排脚本** `scripts/e2e.sh`：茶叶小店真实感数据（10 行订单 CSV + 8 会员 JSON）→ 写 YAML → sync → views list 断言 → 行数断言 → YAML 改/删演练（更新/清理计数断言）→ 起 serve 调 `/api/views` → CSV 导出断言 10 行；本轮实测 E2E PASS。
+- **docker-compose 一键部署强化**：健康检查（busybox wget 探 `/api/health`，失败仅标记 unhealthy）、资源限制（`mem_limit: 512m`、`cpus: 1.0`）、日志轮转（json-file 10m×3）；`docs/OPERATIONS.md` 新增 compose 部署/升级/排障节。
+
+### 变更
+
+- `api.Version` 由 `1.1.0` 升级为 `1.2.0`。
+- `docs/OPERATIONS.md`：删除文件顶部事故残留的裸 shell 命令三行；版本历史追加 1.2.0。
+- `docs/LOADTEST.md` §7：视图自动注册已知限制已解除（v1.2 落地）。
+
 ## [1.1.0] - 2026-10-13
 
 ### 新增

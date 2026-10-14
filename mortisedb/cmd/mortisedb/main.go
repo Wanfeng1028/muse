@@ -137,7 +137,7 @@ func printUsage() {
 	fmt.Println("  init     生成示例配置、目录与示例数据源")
 	fmt.Println("  sync     执行一次同步")
 	fmt.Println("  query    执行单条 SQL 查询")
-	fmt.Println("  views    视图管理 (list/add/drop)")
+	fmt.Println("  views    视图管理 (list/add/drop/sync)")
 	fmt.Println("  serve    启动 HTTP 服务与调度器")
 	fmt.Println("  status   打印系统状态")
 	fmt.Println("  backup   在线备份数据库 (VACUUM INTO)")
@@ -234,6 +234,14 @@ func runSync(args []string) {
 		os.Exit(1)
 	}
 
+	// 同步成功后，把 YAML 声明的视图幂等注册进 _m_views。
+	// 注册失败只告警，不把同步判失败（数据已落盘）。
+	if added, updated, removed, verr := views.SyncFromConfig(cfg, st); verr != nil {
+		fmt.Fprintf(os.Stderr, "视图自动注册失败（同步数据不受影响）: %v\n", verr)
+	} else {
+		fmt.Printf("视图自动注册: 新增 %d，更新 %d，清理 %d\n", added, updated, removed)
+	}
+
 	fmt.Println("同步完成:")
 	for _, ss := range results {
 		fmt.Printf("源 [%s]\n", ss.Source)
@@ -311,7 +319,7 @@ func formatCell(v any) string {
 // runViews 视图管理。
 func runViews(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "用法: mortisedb views <list|add|drop> [...]")
+		fmt.Fprintln(os.Stderr, "用法: mortisedb views <list|add|drop|sync> [...]")
 		os.Exit(1)
 	}
 	sub := args[0]
@@ -353,6 +361,13 @@ func runViews(args []string) {
 			fmt.Fprintf(tw, "%s\t%s\t%s\n", v.Name, v.Description, v.SQL)
 		}
 		tw.Flush()
+	case "sync":
+		added, updated, removed, err := views.SyncFromConfig(cfg, st)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "视图注册失败: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("视图自动注册: 新增 %d，更新 %d，清理 %d\n", added, updated, removed)
 	case "add":
 		if len(rest) < 3 {
 			fmt.Fprintln(os.Stderr, "用法: mortisedb views add <名称> <SQL> <描述>")
@@ -409,6 +424,13 @@ func runServe(args []string) {
 	logger := mortiselog.New(os.Stdout, "info")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// 启动时注册 YAML 声明的视图（幂等）；失败只记日志，不阻止启动。
+	if added, updated, removed, verr := views.SyncFromConfig(cfg, st); verr != nil {
+		logger.Warn("视图自动注册失败", map[string]any{"error": verr.Error()})
+	} else {
+		logger.Info("视图自动注册完成", map[string]any{"added": added, "updated": updated, "removed": removed})
+	}
 
 	sch := scheduler.New(cfg, st, logger)
 	sch.Start(ctx)

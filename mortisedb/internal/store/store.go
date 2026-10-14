@@ -96,7 +96,8 @@ func (s *Store) Migrate() error {
 			"name" TEXT PRIMARY KEY,
 			"sql" TEXT,
 			"description" TEXT,
-			"created_at" TEXT
+			"created_at" TEXT,
+			"origin" TEXT NOT NULL DEFAULT 'manual'
 		)`,
 		`CREATE TABLE IF NOT EXISTS "_m_watermarks" (
 			"source" TEXT,
@@ -109,6 +110,36 @@ func (s *Store) Migrate() error {
 	for _, stmt := range stmts {
 		if _, err := s.DB.Exec(stmt); err != nil {
 			return fmt.Errorf("建表失败: %w", err)
+		}
+	}
+	// v1.2 兼容迁移：老库的 "_m_views" 表可能没有 "origin" 列，
+	// 通过 PRAGMA table_info 检查，缺失时补加该列（幂等，已存在则跳过）。
+	hasOrigin := false
+	rows, err := s.DB.Query(`PRAGMA table_info("_m_views")`)
+	if err != nil {
+		return fmt.Errorf("检查视图表结构失败: %w", err)
+	}
+	for rows.Next() {
+		var cid int
+		var name, colType string
+		var notNull, pk int
+		var dfltValue sql.NullString
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &dfltValue, &pk); err != nil {
+			rows.Close()
+			return fmt.Errorf("扫描视图表结构失败: %w", err)
+		}
+		if name == "origin" {
+			hasOrigin = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return fmt.Errorf("遍历视图表结构失败: %w", err)
+	}
+	rows.Close()
+	if !hasOrigin {
+		if _, err := s.DB.Exec(`ALTER TABLE "_m_views" ADD COLUMN "origin" TEXT NOT NULL DEFAULT 'manual'`); err != nil {
+			return fmt.Errorf("迁移视图表 origin 列失败: %w", err)
 		}
 	}
 	return nil
@@ -499,13 +530,14 @@ type View struct {
 	SQL         string `json:"sql"`
 	Description string `json:"description"`
 	CreatedAt   string `json:"created_at"`
+	Origin      string `json:"origin"`
 }
 
 // SaveView 保存或更新视图定义。
 func (s *Store) SaveView(name, sqlStr, desc string) error {
 	now := time.Now().UTC().Format(time.RFC3339)
 	_, err := s.DB.Exec(
-		`INSERT INTO "_m_views" ("name","sql","description","created_at") VALUES (?,?,?,?)
+		`INSERT INTO "_m_views" ("name","sql","description","created_at","origin") VALUES (?,?,?,?,'manual')
 		 ON CONFLICT("name") DO UPDATE SET "sql"=excluded."sql", "description"=excluded."description"`,
 		name, sqlStr, desc, now,
 	)
@@ -515,10 +547,25 @@ func (s *Store) SaveView(name, sqlStr, desc string) error {
 	return nil
 }
 
+// SaveYAMLView 保存或更新来自 YAML 声明的视图定义，origin 标记为 yaml。
+// 同名手工视图被 YAML 声明覆盖时，origin 转为 yaml 是预期行为。
+func (s *Store) SaveYAMLView(name, sqlStr, desc string) error {
+	now := time.Now().UTC().Format(time.RFC3339)
+	_, err := s.DB.Exec(
+		`INSERT INTO "_m_views" ("name","sql","description","created_at","origin") VALUES (?,?,?,?,'yaml')
+		 ON CONFLICT("name") DO UPDATE SET "sql"=excluded."sql", "description"=excluded."description", "origin"=excluded."origin"`,
+		name, sqlStr, desc, now,
+	)
+	if err != nil {
+		return fmt.Errorf("保存 YAML 视图失败: %w", err)
+	}
+	return nil
+}
+
 // ListViews 列出所有视图。
 func (s *Store) ListViews() ([]View, error) {
 	rows, err := s.DB.Query(
-		`SELECT "name","sql","description","created_at" FROM "_m_views" ORDER BY "name"`,
+		`SELECT "name","sql","description","created_at","origin" FROM "_m_views" ORDER BY "name"`,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("查询视图失败: %w", err)
@@ -527,14 +574,15 @@ func (s *Store) ListViews() ([]View, error) {
 	var result []View
 	for rows.Next() {
 		var v View
-		var name, sqlStr, desc, ca sql.NullString
-		if err := rows.Scan(&name, &sqlStr, &desc, &ca); err != nil {
+		var name, sqlStr, desc, ca, origin sql.NullString
+		if err := rows.Scan(&name, &sqlStr, &desc, &ca, &origin); err != nil {
 			return nil, fmt.Errorf("扫描视图失败: %w", err)
 		}
 		v.Name = name.String
 		v.SQL = sqlStr.String
 		v.Description = desc.String
 		v.CreatedAt = ca.String
+		v.Origin = origin.String
 		result = append(result, v)
 	}
 	if err := rows.Err(); err != nil {
@@ -562,10 +610,10 @@ func (s *Store) DropView(name string) error {
 // GetView 获取视图，不存在返回 ErrNotFound。
 func (s *Store) GetView(name string) (View, error) {
 	var v View
-	var nameS, sqlStr, desc, ca sql.NullString
+	var nameS, sqlStr, desc, ca, origin sql.NullString
 	err := s.DB.QueryRow(
-		`SELECT "name","sql","description","created_at" FROM "_m_views" WHERE "name"=?`, name,
-	).Scan(&nameS, &sqlStr, &desc, &ca)
+		`SELECT "name","sql","description","created_at","origin" FROM "_m_views" WHERE "name"=?`, name,
+	).Scan(&nameS, &sqlStr, &desc, &ca, &origin)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return View{}, ErrNotFound
@@ -576,6 +624,7 @@ func (s *Store) GetView(name string) (View, error) {
 	v.SQL = sqlStr.String
 	v.Description = desc.String
 	v.CreatedAt = ca.String
+	v.Origin = origin.String
 	return v, nil
 }
 

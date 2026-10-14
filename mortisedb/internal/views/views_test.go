@@ -1,9 +1,11 @@
 package views
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 )
 
@@ -24,6 +26,179 @@ func newTestStore(t *testing.T) *store.Store {
 		t.Fatalf("插入失败: %v", err)
 	}
 	return st
+}
+
+func TestSyncFromConfigRegisterAndList(t *testing.T) {
+	st := newTestStore(t)
+	cfg := &config.Config{
+		Views: []config.ViewConfig{
+			{Name: "v_users_active", SQL: `SELECT "id","name" FROM "users" WHERE _m_deleted = 0`, Description: "活跃用户"},
+			{Name: "v_user_count", SQL: `SELECT COUNT(*) AS c FROM "users"`, Description: "用户总数"},
+		},
+	}
+
+	added, updated, removed, err := SyncFromConfig(cfg, st)
+	if err != nil {
+		t.Fatalf("SyncFromConfig 失败: %v", err)
+	}
+	if added != 2 || updated != 0 || removed != 0 {
+		t.Fatalf("计数错误: added=%d updated=%d removed=%d", added, updated, removed)
+	}
+
+	views, err := st.ListViews()
+	if err != nil {
+		t.Fatalf("ListViews 失败: %v", err)
+	}
+	if len(views) != 2 {
+		t.Fatalf("期望 2 个视图，实际 %d", len(views))
+	}
+	for _, v := range views {
+		if v.Origin != "yaml" {
+			t.Fatalf("视图 %q Origin=%q，期望 yaml", v.Name, v.Origin)
+		}
+	}
+
+	cols, rows, err := Run(st, "v_users_active", 0)
+	if err != nil {
+		t.Fatalf("Run 失败: %v", err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("期望 2 行，实际 %d", len(rows))
+	}
+	hasID, hasName := false, false
+	for _, c := range cols {
+		if c == "id" {
+			hasID = true
+		}
+		if c == "name" {
+			hasName = true
+		}
+	}
+	if !hasID || !hasName {
+		t.Fatalf("列缺失: %v", cols)
+	}
+}
+
+func TestSyncFromConfigIdempotent(t *testing.T) {
+	st := newTestStore(t)
+	cfg := &config.Config{
+		Views: []config.ViewConfig{
+			{Name: "v_users_active", SQL: `SELECT "id","name" FROM "users" WHERE _m_deleted = 0`, Description: "活跃用户"},
+			{Name: "v_user_count", SQL: `SELECT COUNT(*) AS c FROM "users"`, Description: "用户总数"},
+		},
+	}
+
+	if _, _, _, err := SyncFromConfig(cfg, st); err != nil {
+		t.Fatalf("首次 SyncFromConfig 失败: %v", err)
+	}
+	added, updated, removed, err := SyncFromConfig(cfg, st)
+	if err != nil {
+		t.Fatalf("二次 SyncFromConfig 失败: %v", err)
+	}
+	if added != 0 || updated != 0 || removed != 0 {
+		t.Fatalf("幂等失败: added=%d updated=%d removed=%d", added, updated, removed)
+	}
+
+	views, err := st.ListViews()
+	if err != nil {
+		t.Fatalf("ListViews 失败: %v", err)
+	}
+	if len(views) != 2 {
+		t.Fatalf("期望 2 个视图，实际 %d", len(views))
+	}
+}
+
+func TestSyncFromConfigUpdateSQL(t *testing.T) {
+	st := newTestStore(t)
+	cfg := &config.Config{
+		Views: []config.ViewConfig{
+			{Name: "v_users_active", SQL: `SELECT "id","name" FROM "users" WHERE _m_deleted = 0`, Description: "活跃用户"},
+			{Name: "v_user_count", SQL: `SELECT COUNT(*) AS c FROM "users"`, Description: "用户总数"},
+		},
+	}
+	if _, _, _, err := SyncFromConfig(cfg, st); err != nil {
+		t.Fatalf("首次 SyncFromConfig 失败: %v", err)
+	}
+
+	newSQL := `SELECT "name" FROM "users" WHERE _m_deleted = 0`
+	newDesc := "活跃用户名字"
+	cfg.Views[0].SQL = newSQL
+	cfg.Views[0].Description = newDesc
+
+	added, updated, removed, err := SyncFromConfig(cfg, st)
+	if err != nil {
+		t.Fatalf("二次 SyncFromConfig 失败: %v", err)
+	}
+	if added != 0 || updated != 1 || removed != 0 {
+		t.Fatalf("计数错误: added=%d updated=%d removed=%d", added, updated, removed)
+	}
+
+	v, err := st.GetView("v_users_active")
+	if err != nil {
+		t.Fatalf("GetView 失败: %v", err)
+	}
+	if v.SQL != newSQL {
+		t.Fatalf("SQL 未更新: %q", v.SQL)
+	}
+	if v.Description != newDesc {
+		t.Fatalf("描述未更新: %q", v.Description)
+	}
+}
+
+func TestSyncFromConfigCleanupKeepsManual(t *testing.T) {
+	st := newTestStore(t)
+	if err := Add(st, "v_manual", `SELECT "id" FROM "users"`, "手工"); err != nil {
+		t.Fatalf("Add 手工视图失败: %v", err)
+	}
+
+	cfg := &config.Config{
+		Views: []config.ViewConfig{
+			{Name: "v_a", SQL: `SELECT "id" FROM "users"`, Description: "A"},
+			{Name: "v_b", SQL: `SELECT "name" FROM "users"`, Description: "B"},
+		},
+	}
+	if _, _, _, err := SyncFromConfig(cfg, st); err != nil {
+		t.Fatalf("首次 SyncFromConfig 失败: %v", err)
+	}
+
+	cfg.Views = cfg.Views[:1] // 只剩 v_a
+	added, updated, removed, err := SyncFromConfig(cfg, st)
+	if err != nil {
+		t.Fatalf("二次 SyncFromConfig 失败: %v", err)
+	}
+	if added != 0 || updated != 0 || removed != 1 {
+		t.Fatalf("计数错误: added=%d updated=%d removed=%d", added, updated, removed)
+	}
+
+	if _, err := st.GetView("v_b"); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("v_b 应被清理，实际 err=%v", err)
+	}
+	if _, err := st.GetView("v_a"); err != nil {
+		t.Fatalf("v_a 应存在，实际 err=%v", err)
+	}
+	manual, err := st.GetView("v_manual")
+	if err != nil {
+		t.Fatalf("v_manual 应存在，实际 err=%v", err)
+	}
+	if manual.Origin != "manual" {
+		t.Fatalf("v_manual Origin=%q，期望 manual", manual.Origin)
+	}
+}
+
+func TestSyncFromConfigBadSQL(t *testing.T) {
+	st := newTestStore(t)
+	cfg := &config.Config{
+		Views: []config.ViewConfig{
+			{Name: "v_bad", SQL: `DELETE FROM "users"`, Description: ""},
+		},
+	}
+	_, _, _, err := SyncFromConfig(cfg, st)
+	if err == nil {
+		t.Fatalf("期望错误，实际 nil")
+	}
+	if _, getErr := st.GetView("v_bad"); !errors.Is(getErr, store.ErrNotFound) {
+		t.Fatalf("v_bad 不应存在，实际 err=%v", getErr)
+	}
 }
 
 func TestAddValidView(t *testing.T) {

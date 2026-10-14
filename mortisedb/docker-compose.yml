@@ -1,11 +1,38 @@
+# MortiseDB「榫卯」一键部署
+# 用法：docker compose up -d --build
+#
+# 说明：
+# - 本文件只跑 MortiseDB 单二进制（多阶段构建产物 /app/mortisedb），不引入任何外部数据库/中间件。
+# - SQLite 数据库文件落在 ./data 卷中（容器内 MORTISE_DB=/app/data/mortise.db）。
+# - 镜像基础为 alpine:3.20，自带 busybox wget，healthcheck 无需额外安装 curl。
+# - healthcheck 失败只会把容器标记为 unhealthy，不会触发自动重启（restart 策略不感知健康状态），
+#   如需自愈请在上层编排/监控侧处理。
 services:
   mortisedb:
     build: .
+    image: mortisedb:1.2.0
+    container_name: mortisedb
     ports:
       - "8421:8421"
     volumes:
       - ./data:/app/data
       - ./sources:/app/sources:ro
+      - ./mortise.yaml:/app/mortise.yaml:ro   # 挂载你自己的配置（不存在则容器内无此文件，serve 用 ENV 默认值）
     environment:
       MORTISE_ADDR: ":8421"
+      MORTISE_DB: "/app/data/mortise.db"
+      TZ: "Asia/Shanghai"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8421/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 512m
+    cpus: 1.0

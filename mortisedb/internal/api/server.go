@@ -25,7 +25,7 @@ import (
 )
 
 // Version 为 API 版本号。
-var Version = "1.1.0"
+var Version = "1.2.0"
 
 // server 保存 API 依赖。
 type server struct {

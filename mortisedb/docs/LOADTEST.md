@@ -40,7 +40,7 @@ cd ./loadtest-work
 ```bash
 mortisedb query --config mortise-load.yaml \
   "SELECT COUNT(*) FROM (SELECT o.order_id, o.amount, u.name FROM orders o LEFT JOIN users u ON o.user_id = u.user_id WHERE o._m_deleted = 0 AND u._m_deleted = 0)"
-# 实测：100000 行，wall 452ms（v_load_join 的 SQL 等价体；views list 未自动注册，见 §7）
+# 实测：100000 行，wall 452ms（v_load_join；v1.2 起 YAML 声明视图已自动注册进 _m_views，本次为等价 SQL 直查计时口径不变）
 ```
 
 ## 5. 结果（2026-10-13 实测）
@@ -72,4 +72,4 @@ v1.1 在 2 vCPU / 8GB 的弱 VM 上：30 万行三源同步 265.89s（峰值 RSS
 
 - connector.go 中 CSV/JSON/SQLite 三源均把整表结果累积在内存 `[]Row` 中返回，10 万行量级内存约 20-120 MB（详见 `scripts/loadtest.sh` 顶部注释）。更大数据量（百万行以上）需要后续改为流式处理。
 - SQLite 源的水位线过滤在 Go 侧做（`matchSince`），不下推 SQL WHERE，数据量大时增量同步仍会全表扫描。
-- `views list` 不会自动注册 yaml 里声明的视图（实测为空），本次用等价 SQL 直查计时；视图自动注册是后续事项。
+- ~~`views list` 不会自动注册 yaml 里声明的视图~~ —— v1.2 已落地自动注册（`views.SyncFromConfig`，见 README「视图自动注册」节），本轮计时口径仍为等价 SQL 直查。

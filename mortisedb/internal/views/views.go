@@ -3,9 +3,11 @@
 package views
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 )
 
@@ -72,4 +74,85 @@ func Run(st *store.Store, name string, limit int) ([]string, [][]any, error) {
 		return nil, nil, fmt.Errorf("执行视图失败: %w", err)
 	}
 	return cols, rows, nil
+}
+
+// SyncFromConfig 把配置中 views 段声明的视图幂等注册进 _m_views。
+// - 不存在的声明 → 新增（origin=yaml），added++
+// - 已存在且 SQL 或描述变化 → 更新，updated++
+// - 已存在且完全相同 → 不动（幂等）
+// - 库中 origin=yaml 但配置里已删除的 → 清理，removed++
+// - 手工视图（origin=manual）永不清理
+// 注意：不做 SQL 试运行——注册时目标表可能尚未同步出来，合法性由 Run 时与 views add 的试运行兜底。
+// 返回 (added, updated, removed, err)。
+func SyncFromConfig(cfg *config.Config, st *store.Store) (added, updated, removed int, err error) {
+	if cfg == nil {
+		return 0, 0, 0, fmt.Errorf("配置为空")
+	}
+	if st == nil {
+		return 0, 0, 0, fmt.Errorf("store 为空")
+	}
+
+	// 声明名集合，用于后续清理判定。
+	declared := make(map[string]struct{}, len(cfg.Views))
+
+	for i, vc := range cfg.Views {
+		name := strings.TrimSpace(vc.Name)
+		if name == "" {
+			return 0, 0, 0, fmt.Errorf("第 %d 个视图声明缺少名称", i+1)
+		}
+		// SQL 去空白后必须以 SELECT 开头（大小写不敏感）。
+		trimmedSQL := strings.TrimSpace(vc.SQL)
+		if len(trimmedSQL) < 6 || !strings.EqualFold(trimmedSQL[:6], "SELECT") {
+			return 0, 0, 0, fmt.Errorf("视图 %q 的 SQL 必须以 SELECT 开头", name)
+		}
+
+		// 同名声明重复视为配置错误，提前暴露。
+		if _, dup := declared[name]; dup {
+			return 0, 0, 0, fmt.Errorf("视图 %q 在配置中重复声明", name)
+		}
+		declared[name] = struct{}{}
+
+		// 存原始声明值（不 trim），保证"改空白也算变更"可检测。
+		sqlStr := vc.SQL
+		desc := vc.Description
+
+		existing, getErr := st.GetView(name)
+		if errors.Is(getErr, store.ErrNotFound) {
+			if err := st.SaveYAMLView(name, sqlStr, desc); err != nil {
+				return added, updated, removed, fmt.Errorf("注册视图 %q 失败: %w", name, err)
+			}
+			added++
+			continue
+		}
+		if getErr != nil {
+			return added, updated, removed, fmt.Errorf("查询视图 %q 失败: %w", name, getErr)
+		}
+		// 已存在：SQL 或描述变化则更新。
+		if existing.SQL != sqlStr || existing.Description != desc {
+			if err := st.SaveYAMLView(name, sqlStr, desc); err != nil {
+				return added, updated, removed, fmt.Errorf("更新视图 %q 失败: %w", name, err)
+			}
+			updated++
+		}
+	}
+
+	// 清理：库中 origin=yaml 但配置里已删除的。
+	views, listErr := st.ListViews()
+	if listErr != nil {
+		return added, updated, removed, fmt.Errorf("列举视图失败: %w", listErr)
+	}
+	for _, v := range views {
+		if v.Origin != "yaml" {
+			continue
+		}
+		if _, ok := declared[v.Name]; ok {
+			continue
+		}
+		if err := st.DropView(v.Name); err != nil {
+			return added, updated, removed, fmt.Errorf("清理视图 %q 失败: %w", v.Name, err)
+		}
+		removed++
+	}
+
+	return added, updated, removed, nil
 }
