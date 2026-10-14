@@ -1,20 +1,24 @@
 package com.dramafactory.exception;
 
 import com.dramafactory.dto.Records;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import java.time.LocalDateTime;
 
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseBody
     public ResponseEntity<Records.ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
         Records.ErrorResponse body = new Records.ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
@@ -27,6 +31,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ForbiddenException.class)
+    @ResponseBody
     public ResponseEntity<Records.ErrorResponse> handleForbidden(ForbiddenException ex) {
         Records.ErrorResponse body = new Records.ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
@@ -39,6 +44,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
     public ResponseEntity<Records.ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = "Validation failed";
         FieldError fieldError = ex.getBindingResult().getFieldError();
@@ -56,6 +62,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseBody
     public ResponseEntity<Records.ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         Records.ErrorResponse body = new Records.ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
@@ -68,6 +75,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalStateException.class)
+    @ResponseBody
     public ResponseEntity<Records.ErrorResponse> handleIllegalState(IllegalStateException ex) {
         Records.ErrorResponse body = new Records.ErrorResponse(
                 HttpStatus.CONFLICT.value(),
@@ -79,8 +87,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Object handleNoResource(NoResourceFoundException ex, HttpServletRequest req) {
+        if (wantsHtml(req)) {
+            return "forward:/error/404.html";
+        }
+        Records.ErrorResponse body = new Records.ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                LocalDateTime.now(),
+                MDC.get("request_id")
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Records.ErrorResponse> handleGeneric(Exception ex) {
+    public Object handleGeneric(Exception ex, HttpServletRequest req) {
+        if (wantsHtml(req)) {
+            return "forward:/error/500.html";
+        }
         String message = ex.getMessage();
         if (message == null || message.isBlank()) {
             message = ex.getClass().getSimpleName();
@@ -93,6 +119,13 @@ public class GlobalExceptionHandler {
                 MDC.get("request_id")
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    private boolean wantsHtml(HttpServletRequest req) {
+        String uri = req.getRequestURI();
+        if (uri != null && uri.startsWith("/api/")) return false;
+        String accept = req.getHeader("Accept");
+        return accept != null && accept.contains("text/html");
     }
 }
 
