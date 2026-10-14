@@ -70,7 +70,18 @@
           <div class="hint">到期后访问会显示已过期</div>
         </div>
 
+        <div class="field">
+          <label for="max-visits">限次访问（选填）</label>
+          <input class="input mono" type="number" id="max-visits" min="1" max="1000000" placeholder="例如 10，留空不限次数">
+          <div class="hint">达到次数后访问会显示已达上限</div>
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="burn"> 阅后即焚</label>
+          <div class="hint">勾选后链接只能被访问一次，首次访问后自动失效（与限次访问互斥）</div>
+        </div>
+
         <div class="form-actions">
+
           <button type="submit" class="btn primary" id="submit-btn">生成短链</button>
           <span class="form-err" id="form-err"></span>
         </div>

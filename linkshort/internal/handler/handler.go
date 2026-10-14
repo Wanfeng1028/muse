@@ -135,6 +135,9 @@ type linkJSON struct {
 	CreatedAt string  `json:"created_at"`
 	UpdatedAt string  `json:"updated_at"`
 	ShortURL  string  `json:"short_url"`
+	MaxVisits *int64  `json:"max_visits"`
+	Burn      bool    `json:"burn"`
+	Remaining *int64  `json:"remaining"`
 }
 
 func toLinkJSON(l *model.Link, base string) linkJSON {
@@ -142,6 +145,20 @@ func toLinkJSON(l *model.Link, base string) linkJSON {
 	if l.ExpiresAt != nil {
 		s := l.ExpiresAt.UTC().Format(time.RFC3339)
 		exp = &s
+	}
+	var remaining *int64
+	if l.MaxVisits != nil {
+		r := *l.MaxVisits - l.Clicks
+		if r < 0 {
+			r = 0
+		}
+		remaining = &r
+	} else if l.Burn {
+		r := int64(0)
+		if l.Enabled {
+			r = 1
+		}
+		remaining = &r
 	}
 	return linkJSON{
 		ID:        l.ID,
@@ -154,6 +171,9 @@ func toLinkJSON(l *model.Link, base string) linkJSON {
 		CreatedAt: l.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt: l.UpdatedAt.UTC().Format(time.RFC3339),
 		ShortURL:  base + "/" + l.Slug,
+		MaxVisits: l.MaxVisits,
+		Burn:      l.Burn,
+		Remaining: remaining,
 	}
 }
 
@@ -177,6 +197,9 @@ func parseID(r *http.Request) (int64, bool) {
 
 // ---------- 短链跳转 ----------
 
+// handleRedirect 处理短链跳转。
+// 并发说明：两次并发访问可能都通过 clicks 检查（单连接串行写入缓解，
+// 未做分布式锁，文档已注明）。
 func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
 	slug := chi.URLParam(r, "slug")
 	link, err := st.GetLinkBySlug(slug)
@@ -188,12 +211,20 @@ func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
 		http.Error(w, "服务器错误", http.StatusInternalServerError)
 		return
 	}
+	if link.Burn && !link.Enabled {
+		http.Error(w, "链接已阅销毁", http.StatusGone)
+		return
+	}
 	if !link.Enabled {
 		http.Error(w, "短链不存在", http.StatusNotFound)
 		return
 	}
 	if link.ExpiresAt != nil && time.Now().After(*link.ExpiresAt) {
 		http.Error(w, "链接已过期", http.StatusGone)
+		return
+	}
+	if link.MaxVisits != nil && link.Clicks >= *link.MaxVisits {
+		http.Error(w, "链接已达访问上限", http.StatusGone)
 		return
 	}
 
@@ -203,6 +234,12 @@ func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
 	referer := truncate(r.Referer(), 512)
 	if err := st.RecordVisit(link.ID, ipHash, ua, referer); err != nil {
 		log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
+	}
+
+	if link.Burn {
+		if err := st.MarkBurned(link.ID); err != nil {
+			log.Printf("handler: 标记阅后销毁失败 link=%d: %v", link.ID, err)
+		}
 	}
 
 	http.Redirect(w, r, link.URL, http.StatusFound)
@@ -237,6 +274,8 @@ type createLinkReq struct {
 	Slug      string  `json:"slug"`
 	Title     string  `json:"title"`
 	ExpiresAt *string `json:"expires_at"`
+	MaxVisits *int64  `json:"max_visits"`
+	Burn      bool    `json:"burn"`
 }
 
 func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
@@ -273,11 +312,25 @@ func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, c
 		expiresAt = &t
 	}
 
-	id, err := st.CreateLink(req.Slug, req.URL, req.Title, expiresAt)
+	if req.MaxVisits != nil && *req.MaxVisits < 1 {
+		writeError(w, http.StatusBadRequest, "max_visits 必须为正整数")
+		return
+	}
+	if req.MaxVisits != nil && *req.MaxVisits > 1000000 {
+		writeError(w, http.StatusBadRequest, "max_visits 过大")
+		return
+	}
+	if req.Burn && req.MaxVisits != nil && *req.MaxVisits != 1 {
+		writeError(w, http.StatusBadRequest, "阅后即焚不能与限次访问同时设置")
+		return
+	}
+
+	id, err := st.CreateLinkEx(req.Slug, req.URL, req.Title, expiresAt, req.MaxVisits, req.Burn)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	link, err := st.GetLink(id)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "读取新建链接失败")
@@ -345,6 +398,8 @@ type patchLinkReq struct {
 	Title     *string         `json:"title"`
 	Enabled   *bool           `json:"enabled"`
 	ExpiresAt json.RawMessage `json:"expires_at"`
+	MaxVisits json.RawMessage `json:"max_visits"`
+	Burn      *bool           `json:"burn"`
 }
 
 func handlePatchLink(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
@@ -401,10 +456,37 @@ func handlePatchLink(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		}
 	}
 
-	if err := st.UpdateLink(id, title, enabled, expiresAt); err != nil {
+	maxVisits := existing.MaxVisits
+	if len(req.MaxVisits) > 0 {
+		if string(req.MaxVisits) == "null" {
+			maxVisits = nil
+		} else {
+			var mv int64
+			if err := json.Unmarshal(req.MaxVisits, &mv); err != nil {
+				writeError(w, http.StatusBadRequest, "max_visits 格式错误")
+				return
+			}
+			if mv < 1 || mv > 1000000 {
+				writeError(w, http.StatusBadRequest, "max_visits 必须为正整数且不超过 1000000")
+				return
+			}
+			maxVisits = &mv
+		}
+	}
+	burn := existing.Burn
+	if req.Burn != nil {
+		burn = *req.Burn
+	}
+	if burn && maxVisits != nil && *maxVisits != 1 {
+		writeError(w, http.StatusBadRequest, "阅后即焚不能与限次访问同时设置")
+		return
+	}
+
+	if err := st.UpdateLinkEx(id, title, enabled, expiresAt, maxVisits, burn); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 	updated, err := st.GetLink(id)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "读取更新结果失败")

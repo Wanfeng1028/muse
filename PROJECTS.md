@@ -327,15 +327,19 @@
 
 **状态**：工程化 v1（2026-10-13 完成，go test 24 例全过、vet/gofmt 全洁、真实服务冒烟：建链→302 跳转→点击计数→二维码→统计→CSV 往返全链路验证；4 张 Web UI 真实截图已亲眼验收）。
 
+**生产级补强 v1.1「阅后即焚 + 限次访问」（2026-10-14，灵魂功能落地）**：`links` 新增 `max_visits`（NULL=不限）、`burn`（0/1）两列 + `PRAGMA user_version` 版本化迁移（v1→v2，老库自动 ALTER，实测老数据保留）；跳转语义：burn 链首次 302 后自动禁用、再访 410"链接已阅销毁"，max_visits=N 时前 N 次 302、第 N+1 次 410"链接已达访问上限"（burn 的 410 检查在禁用 404 之前）；`store.CreateLinkEx/UpdateLinkEx/MarkBurned`（旧签名保持委托不变）；API：POST/PATCH 接受 `max_visits`（1~1000000 正整数）、`burn`，非法组合 400；响应新增 `max_visits/burn/remaining` 字段；Web UI：新建页"限次访问"输入+"阅后即焚"复选框（互斥联动）、列表页"限制"列徽标（阅后即焚/已销毁/限N次·剩M次/不限）、详情页"访问限制"行+保存/清除；`go test ./...` 全过（新增 10 例：store 4 + handler 6）；真实服务冒烟全链路验证（302→410 语义、PATCH 改限次/清除、老库迁移）；3 张新截图亲眼验收通过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.1.md`（有条件发版：失败注入//metrics/运维手册/限流排期 v1.2，CSV 未带新字段）；CHANGELOG.md 新建。
+
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：chi 路由 + 分层架构落地（config/db/model/store/handler/util/qr），短链 CRUD/跳转/统计/二维码/导入导出全模块、内嵌四页 Web UI、CI 与多阶段 Dockerfile 就绪
+- v1.1 阅后即焚 + 限次访问（2026-10-14）：灵魂定位核心功能落地；dpsk 4 批生成（数据层/HTTP 层/前端/文档），回喂 2 轮修签名错配，编排手工修 3 处机械问题（残留分隔符、strconv→itoa、围栏残留）
 
 **后续计划**：
 
 - 密码保护短链
 - 访问地域统计
 - 公开 API 文档页
+- v1.2：失败注入测试、/metrics、运维手册、限流、CSV 带新字段
 
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 

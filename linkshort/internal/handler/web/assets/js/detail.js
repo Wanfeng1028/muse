@@ -87,8 +87,61 @@
       }
     }
 
+    var limitsText = document.getElementById("link-limits-text");
+    var editMaxVisits = document.getElementById("edit-maxvisits");
+    var editBurn = document.getElementById("edit-burn");
+    if (limitsText) {
+      if (data.burn) {
+        limitsText.textContent = data.enabled ? "阅后即焚（待访问，一次性）" : "阅后即焚（已销毁）";
+      } else if (data.max_visits != null) {
+        limitsText.textContent = "限 " + data.max_visits + " 次，剩余 " + (data.remaining != null ? data.remaining : "—") + " 次";
+      } else {
+        limitsText.textContent = "无限制";
+      }
+    }
+    if (editBurn) {
+      editBurn.checked = !!data.burn;
+    }
+    if (editMaxVisits) {
+      editMaxVisits.value = data.max_visits != null ? data.max_visits : "";
+    }
+    var saveLimits = document.getElementById("save-limits");
+    var clearLimits = document.getElementById("clear-limits");
+    if (saveLimits) {
+      saveLimits.addEventListener("click", function () {
+        var mvVal = (editMaxVisits && editMaxVisits.value) ? parseInt(editMaxVisits.value, 10) : null;
+        var body = {
+          max_visits: (mvVal && mvVal >= 1) ? mvVal : null,
+          burn: editBurn ? !!editBurn.checked : false
+        };
+        api("/api/links/" + encodeURIComponent(id), {
+          method: "PATCH",
+          body: body
+        }).then(function () {
+          toast("已更新");
+          loadDetail();
+        }).catch(function (err) {
+          toast(err && err.message ? err.message : "更新失败");
+        });
+      });
+    }
+    if (clearLimits) {
+      clearLimits.addEventListener("click", function () {
+        api("/api/links/" + encodeURIComponent(id), {
+          method: "PATCH",
+          body: { max_visits: null, burn: false }
+        }).then(function () {
+          toast("已清除");
+          loadDetail();
+        }).catch(function (err) {
+          toast(err && err.message ? err.message : "清除失败");
+        });
+      });
+    }
+
     // 二维码
     var qr = document.getElementById("qr-img");
+
     if (qr) {
       qr.src = "/api/links/" + encodeURIComponent(id) + "/qrcode.png?size=240&key=" + encodeURIComponent(API_KEY);
     }

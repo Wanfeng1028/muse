@@ -14,8 +14,21 @@
   var resultShort = document.getElementById("result-short");
   var copyResult = document.getElementById("copy-result");
   var resultQr = document.getElementById("result-qr");
+  var maxVisitsEl = document.getElementById("max-visits");
+  var burnEl = document.getElementById("burn");
 
   if (!form) return;
+
+  if (burnEl && maxVisitsEl) {
+    burnEl.addEventListener("change", function () {
+      maxVisitsEl.disabled = burnEl.checked;
+      if (burnEl.checked) {
+        maxVisitsEl.value = "";
+      }
+    });
+  }
+
+
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -39,6 +52,15 @@
         body.expires_at = d.toISOString();
       }
     }
+
+    if (maxVisitsEl && !maxVisitsEl.disabled && maxVisitsEl.value) {
+      var mv = parseInt(maxVisitsEl.value, 10);
+      if (mv >= 1) body.max_visits = mv;
+    }
+    if (burnEl && burnEl.checked) {
+      body.burn = true;
+    }
+
 
     if (submitBtn) {
       submitBtn.disabled = true;

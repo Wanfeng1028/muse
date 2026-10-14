@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -267,5 +268,174 @@ func TestImportExportCSV(t *testing.T) {
 	}
 	if imported2 != imported {
 		t.Errorf("二次导入行数不一致: 期望 %d，实际 %d", imported, imported2)
+	}
+}
+
+func TestMigrate_版本与新列(t *testing.T) {
+	d, err := db.Open(":memory:")
+	if err != nil {
+		t.Fatalf("db.Open 失败: %v", err)
+	}
+	defer d.Close()
+
+	var v int
+	if err := d.QueryRow("PRAGMA user_version").Scan(&v); err != nil {
+		t.Fatalf("查询 user_version 失败: %v", err)
+	}
+	if v != 2 {
+		t.Errorf("user_version 期望 2，实际 %d", v)
+	}
+
+	rows, err := d.Query("PRAGMA table_info(links)")
+	if err != nil {
+		t.Fatalf("查询 table_info 失败: %v", err)
+	}
+	defer rows.Close()
+
+	cols := make(map[string]bool)
+	for rows.Next() {
+		var (
+			cid       int
+			name      string
+			ctype     string
+			notnull   int
+			dfltValue any
+			pk        int
+		)
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+			t.Fatalf("扫描 table_info 失败: %v", err)
+		}
+		cols[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("遍历 table_info 失败: %v", err)
+	}
+	if !cols["max_visits"] {
+		t.Errorf("links 表缺少 max_visits 列")
+	}
+	if !cols["burn"] {
+		t.Errorf("links 表缺少 burn 列")
+	}
+}
+
+func TestCreateLinkEx_限次与阅后即焚(t *testing.T) {
+	st := newTestStore(t)
+
+	mv := int64(3)
+	id1, err := st.CreateLinkEx("t-mv", "https://example.com/1", "", nil, &mv, false)
+	if err != nil {
+		t.Fatalf("CreateLinkEx 限次失败: %v", err)
+	}
+	l1, err := st.GetLink(id1)
+	if err != nil {
+		t.Fatalf("GetLink 限次失败: %v", err)
+	}
+	if l1.MaxVisits == nil {
+		t.Errorf("MaxVisits 期望非 nil")
+	} else if *l1.MaxVisits != 3 {
+		t.Errorf("MaxVisits 期望 3，实际 %d", *l1.MaxVisits)
+	}
+	if l1.Burn {
+		t.Errorf("Burn 期望 false，实际 true")
+	}
+
+	id2, err := st.CreateLinkEx("t-burn", "https://example.com/2", "", nil, nil, true)
+	if err != nil {
+		t.Fatalf("CreateLinkEx 阅后即焚失败: %v", err)
+	}
+	l2, err := st.GetLink(id2)
+	if err != nil {
+		t.Fatalf("GetLink 阅后即焚失败: %v", err)
+	}
+	if !l2.Burn {
+		t.Errorf("Burn 期望 true，实际 false")
+	}
+	if l2.MaxVisits != nil {
+		t.Errorf("MaxVisits 期望 nil，实际 %d", *l2.MaxVisits)
+	}
+
+	id3, err := st.CreateLink("t-old", "https://example.com/3", "", nil)
+	if err != nil {
+		t.Fatalf("CreateLink 失败: %v", err)
+	}
+	l3, err := st.GetLink(id3)
+	if err != nil {
+		t.Fatalf("GetLink 旧接口失败: %v", err)
+	}
+	if l3.MaxVisits != nil {
+		t.Errorf("旧 CreateLink MaxVisits 期望 nil，实际 %d", *l3.MaxVisits)
+	}
+	if l3.Burn {
+		t.Errorf("旧 CreateLink Burn 期望 false，实际 true")
+	}
+}
+
+func TestMarkBurned(t *testing.T) {
+	st := newTestStore(t)
+
+	idBurn, err := st.CreateLinkEx("t-mb-burn", "https://example.com/burn", "", nil, nil, true)
+	if err != nil {
+		t.Fatalf("CreateLinkEx 失败: %v", err)
+	}
+	if err := st.MarkBurned(idBurn); err != nil {
+		t.Fatalf("MarkBurned 失败: %v", err)
+	}
+	lb, err := st.GetLink(idBurn)
+	if err != nil {
+		t.Fatalf("GetLink 失败: %v", err)
+	}
+	if lb.Enabled {
+		t.Errorf("MarkBurned 后 Enabled 期望 false，实际 true")
+	}
+
+	idNoBurn, err := st.CreateLinkEx("t-mb-noburn", "https://example.com/noburn", "", nil, nil, false)
+	if err != nil {
+		t.Fatalf("CreateLinkEx 失败: %v", err)
+	}
+	if err := st.MarkBurned(idNoBurn); !errors.Is(err, ErrNotFound) {
+		t.Errorf("非 burn 链接 MarkBurned 期望 ErrNotFound，实际 %v", err)
+	}
+}
+
+func TestUpdateLinkEx(t *testing.T) {
+	st := newTestStore(t)
+
+	id, err := st.CreateLink("t-upd", "https://example.com/upd", "", nil)
+	if err != nil {
+		t.Fatalf("CreateLink 失败: %v", err)
+	}
+
+	mv := int64(5)
+	if err := st.UpdateLinkEx(id, "新标题", true, nil, &mv, true); err != nil {
+		t.Fatalf("UpdateLinkEx 设置失败: %v", err)
+	}
+	l1, err := st.GetLink(id)
+	if err != nil {
+		t.Fatalf("GetLink 失败: %v", err)
+	}
+	if l1.Title != "新标题" {
+		t.Errorf("Title 期望 %q，实际 %q", "新标题", l1.Title)
+	}
+	if l1.MaxVisits == nil {
+		t.Errorf("MaxVisits 期望非 nil")
+	} else if *l1.MaxVisits != 5 {
+		t.Errorf("MaxVisits 期望 5，实际 %d", *l1.MaxVisits)
+	}
+	if !l1.Burn {
+		t.Errorf("Burn 期望 true，实际 false")
+	}
+
+	if err := st.UpdateLinkEx(id, "", true, nil, nil, false); err != nil {
+		t.Fatalf("UpdateLinkEx 清除失败: %v", err)
+	}
+	l2, err := st.GetLink(id)
+	if err != nil {
+		t.Fatalf("GetLink 失败: %v", err)
+	}
+	if l2.MaxVisits != nil {
+		t.Errorf("MaxVisits 期望 nil，实际 %d", *l2.MaxVisits)
+	}
+	if l2.Burn {
+		t.Errorf("Burn 期望 false，实际 true")
 	}
 }

@@ -52,7 +52,8 @@
     if (!items.length) {
       var tr = document.createElement("tr");
       var td = document.createElement("td");
-      td.colSpan = 6;
+      td.colSpan = 7;
+
       td.style.color = "#888";
       td.textContent = "没有匹配的短链";
       tr.appendChild(td);
@@ -124,8 +125,26 @@
         tdExp.textContent = it.expires_at ? fmtDate(it.expires_at) : "长期";
         tr2.appendChild(tdExp);
 
+        var tdLimit = document.createElement("td");
+        var tag = document.createElement("span");
+        if (it.burn) {
+          tag.className = "tag tag-stamp";
+          tag.textContent = it.enabled ? "阅后即焚" : "已销毁";
+        } else if (it.max_visits != null) {
+          var rem = it.remaining != null ? it.remaining : 0;
+          tag.className = "tag " + (rem <= 0 ? "tag-muted" : "tag-kraft");
+          tag.textContent = "限" + it.max_visits + "次·剩" + rem + "次";
+        } else {
+          tag.className = "tag tag-muted";
+          tag.textContent = "不限";
+        }
+        tdLimit.appendChild(tag);
+        tr2.appendChild(tdLimit);
+
         // 操作：复制 / 删除
         var tdAct = document.createElement("td");
+
+
 
         var copyBtn = document.createElement("button");
         copyBtn.className = "btn tiny";

@@ -369,3 +369,238 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+func TestCreateLink_限次与阅后即焚(t *testing.T) {
+	srv := newTestServer(t)
+	body := map[string]any{
+		"url":        "https://example.com",
+		"max_visits": 3,
+	}
+	resp, data := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, body)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("status=%d body=%s", resp.StatusCode, data)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data)
+	}
+	if mv, ok := m["max_visits"].(float64); !ok || int64(mv) != 3 {
+		t.Fatalf("max_visits=%v", m["max_visits"])
+	}
+	if rem, ok := m["remaining"].(float64); !ok || int64(rem) != 3 {
+		t.Fatalf("remaining=%v", m["remaining"])
+	}
+
+	body2 := map[string]any{
+		"url":  "https://example.com",
+		"burn": true,
+	}
+	resp2, data2 := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, body2)
+	if resp2.StatusCode != http.StatusCreated {
+		t.Fatalf("status=%d body=%s", resp2.StatusCode, data2)
+	}
+	var m2 map[string]any
+	if err := json.Unmarshal(data2, &m2); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data2)
+	}
+	if b, ok := m2["burn"].(bool); !ok || !b {
+		t.Fatalf("burn=%v", m2["burn"])
+	}
+	if rem, ok := m2["remaining"].(float64); !ok || int64(rem) != 1 {
+		t.Fatalf("remaining=%v", m2["remaining"])
+	}
+}
+
+func TestCreateLink_非法限次(t *testing.T) {
+	srv := newTestServer(t)
+	resp, _ := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url":        "https://example.com",
+		"max_visits": 0,
+	})
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("max_visits=0 status=%d", resp.StatusCode)
+	}
+	resp2, _ := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url":        "https://example.com",
+		"max_visits": -5,
+	})
+	if resp2.StatusCode != http.StatusBadRequest {
+		t.Fatalf("max_visits=-5 status=%d", resp2.StatusCode)
+	}
+	resp3, _ := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url":        "https://example.com",
+		"burn":       true,
+		"max_visits": 3,
+	})
+	if resp3.StatusCode != http.StatusBadRequest {
+		t.Fatalf("burn+max_visits=3 status=%d", resp3.StatusCode)
+	}
+}
+
+func TestRedirect_限次达限返回410(t *testing.T) {
+	srv := newTestServer(t)
+	resp, data := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url":        "https://example.com",
+		"max_visits": 2,
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", resp.StatusCode, data)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data)
+	}
+	slug, _ := m["slug"].(string)
+	if slug == "" {
+		t.Fatalf("slug empty")
+	}
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	for i := 0; i < 2; i++ {
+		r, err := client.Get(srv.URL + "/" + slug)
+		if err != nil {
+			t.Fatalf("get err=%v", err)
+		}
+		r.Body.Close()
+		if r.StatusCode != http.StatusFound {
+			t.Fatalf("visit %d status=%d", i+1, r.StatusCode)
+		}
+	}
+	r3, err := client.Get(srv.URL + "/" + slug)
+	if err != nil {
+		t.Fatalf("get err=%v", err)
+	}
+	r3.Body.Close()
+	if r3.StatusCode != http.StatusGone {
+		t.Fatalf("third visit status=%d", r3.StatusCode)
+	}
+}
+
+func TestRedirect_阅后即焚(t *testing.T) {
+	srv := newTestServer(t)
+	resp, data := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url":  "https://example.com",
+		"burn": true,
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", resp.StatusCode, data)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data)
+	}
+	slug, _ := m["slug"].(string)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	r1, err := client.Get(srv.URL + "/" + slug)
+	if err != nil {
+		t.Fatalf("get err=%v", err)
+	}
+	r1.Body.Close()
+	if r1.StatusCode != http.StatusFound {
+		t.Fatalf("first visit status=%d", r1.StatusCode)
+	}
+	r2, err := client.Get(srv.URL + "/" + slug)
+	if err != nil {
+		t.Fatalf("get err=%v", err)
+	}
+	r2.Body.Close()
+	if r2.StatusCode != http.StatusGone {
+		t.Fatalf("second visit status=%d", r2.StatusCode)
+	}
+}
+
+func TestRedirect_已阅销毁优先于禁用404(t *testing.T) {
+	srv := newTestServer(t)
+	resp, data := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url":  "https://example.com",
+		"burn": true,
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", resp.StatusCode, data)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data)
+	}
+	slug, _ := m["slug"].(string)
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	r1, err := client.Get(srv.URL + "/" + slug)
+	if err != nil {
+		t.Fatalf("get err=%v", err)
+	}
+	r1.Body.Close()
+	if r1.StatusCode != http.StatusFound {
+		t.Fatalf("first visit status=%d", r1.StatusCode)
+	}
+	r2, err := client.Get(srv.URL + "/" + slug)
+	if err != nil {
+		t.Fatalf("get err=%v", err)
+	}
+	r2.Body.Close()
+	if r2.StatusCode != http.StatusGone {
+		t.Fatalf("second visit status=%d want 410", r2.StatusCode)
+	}
+}
+
+func TestPatch_限次更新(t *testing.T) {
+	srv := newTestServer(t)
+	resp, data := doJSON(t, http.MethodPost, srv.URL+"/api/links", testKey, map[string]any{
+		"url": "https://example.com",
+	})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create status=%d body=%s", resp.StatusCode, data)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data)
+	}
+	id, ok := m["id"].(float64)
+	if !ok {
+		t.Fatalf("id missing: %v", m)
+	}
+
+	resp2, data2 := doJSON(t, http.MethodPatch, srv.URL+"/api/links/"+itoa(int64(id)), testKey, map[string]any{
+		"max_visits": 5,
+	})
+	if resp2.StatusCode != http.StatusOK {
+		t.Fatalf("patch status=%d body=%s", resp2.StatusCode, data2)
+	}
+	var m2 map[string]any
+	if err := json.Unmarshal(data2, &m2); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data2)
+	}
+	if mv, ok := m2["max_visits"].(float64); !ok || int64(mv) != 5 {
+		t.Fatalf("max_visits=%v", m2["max_visits"])
+	}
+	if rem, ok := m2["remaining"].(float64); !ok || int64(rem) != 5 {
+		t.Fatalf("remaining=%v", m2["remaining"])
+	}
+
+	resp3, data3 := doJSON(t, http.MethodPatch, srv.URL+"/api/links/"+itoa(int64(id)), testKey, map[string]any{
+		"max_visits": nil,
+	})
+	if resp3.StatusCode != http.StatusOK {
+		t.Fatalf("patch null status=%d body=%s", resp3.StatusCode, data3)
+	}
+	var m3 map[string]any
+	if err := json.Unmarshal(data3, &m3); err != nil {
+		t.Fatalf("unmarshal err=%v body=%s", err, data3)
+	}
+	if m3["max_visits"] != nil {
+		t.Fatalf("max_visits should be null, got %v", m3["max_visits"])
+	}
+}

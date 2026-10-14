@@ -63,12 +63,14 @@ func scanLink(scanner interface {
 		l         model.Link
 		enabled   int64
 		expiresAt sql.NullString
+		maxVisits sql.NullInt64
+		burn      int64
 		createdAt string
 		updatedAt string
 	)
 	if err := scanner.Scan(
 		&l.ID, &l.Slug, &l.URL, &l.Title, &l.Clicks,
-		&enabled, &expiresAt, &createdAt, &updatedAt,
+		&enabled, &expiresAt, &maxVisits, &burn, &createdAt, &updatedAt,
 	); err != nil {
 		return nil, err
 	}
@@ -88,10 +90,17 @@ func scanLink(scanner interface {
 		return nil, fmt.Errorf("parse expires_at: %w", err)
 	}
 	l.ExpiresAt = exp
+	if maxVisits.Valid {
+		v := maxVisits.Int64
+		l.MaxVisits = &v
+	} else {
+		l.MaxVisits = nil
+	}
+	l.Burn = burn != 0
 	return &l, nil
 }
 
-const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, created_at, updated_at`
+const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, created_at, updated_at`
 
 // CreateLink 创建短链。slug 为空时内部生成 6 位随机 slug，冲突时重试并加长。
 // validURL 校验目标 URL：必须 http/https 开头且长度不超过 2048。
@@ -103,6 +112,12 @@ func validURL(u string) bool {
 }
 
 func (s *Store) CreateLink(slug, url, title string, expiresAt *time.Time) (int64, error) {
+	return s.CreateLinkEx(slug, url, title, expiresAt, nil, false)
+}
+
+// CreateLinkEx 与 CreateLink 逻辑一致，额外支持 maxVisits 与 burn。
+// maxVisits 为 nil 表示不限次数；burn 为 true 表示第一次成功跳转后自动禁用。
+func (s *Store) CreateLinkEx(slug, url, title string, expiresAt *time.Time, maxVisits *int64, burn bool) (int64, error) {
 	if !validURL(url) {
 		return 0, errors.New("url must start with http:// or https://")
 	}
@@ -112,6 +127,14 @@ func (s *Store) CreateLink(slug, url, title string, expiresAt *time.Time) (int64
 	if expiresAt != nil {
 		expStr = sql.NullString{String: formatTime(*expiresAt), Valid: true}
 	}
+	var mv sql.NullInt64
+	if maxVisits != nil {
+		mv = sql.NullInt64{Int64: *maxVisits, Valid: true}
+	}
+	burnInt := int64(0)
+	if burn {
+		burnInt = 1
+	}
 
 	// 用户指定 slug 的分支。
 	if slug != "" {
@@ -119,9 +142,9 @@ func (s *Store) CreateLink(slug, url, title string, expiresAt *time.Time) (int64
 			return 0, util.ErrInvalidSlug
 		}
 		res, err := s.db.Exec(
-			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, created_at, updated_at)
-			 VALUES (?, ?, ?, 0, 1, ?, ?, ?)`,
-			slug, url, title, expStr, nowStr, nowStr,
+			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, max_visits, burn, created_at, updated_at)
+			 VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?, ?)`,
+			slug, url, title, expStr, mv, burnInt, nowStr, nowStr,
 		)
 		if err != nil {
 			return 0, fmt.Errorf("insert link: %w", err)
@@ -149,9 +172,9 @@ func (s *Store) CreateLink(slug, url, title string, expiresAt *time.Time) (int64
 			return 0, fmt.Errorf("generate slug: %w", err)
 		}
 		res, err := s.db.Exec(
-			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, created_at, updated_at)
-			 VALUES (?, ?, ?, 0, 1, ?, ?, ?)`,
-			generated, url, title, expStr, nowStr, nowStr,
+			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, max_visits, burn, created_at, updated_at)
+			 VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?, ?)`,
+			generated, url, title, expStr, mv, burnInt, nowStr, nowStr,
 		)
 		if err == nil {
 			id, lerr := res.LastInsertId()
@@ -264,6 +287,12 @@ func (s *Store) ListLinks(search string, page, perPage int, orderBy string) ([]*
 
 // UpdateLink 更新短链的 title、enabled、expiresAt 字段。
 func (s *Store) UpdateLink(id int64, title string, enabled bool, expiresAt *time.Time) error {
+	return s.UpdateLinkEx(id, title, enabled, expiresAt, nil, false)
+}
+
+// UpdateLinkEx 更新短链的 title、enabled、expiresAt、maxVisits、burn 字段。
+// maxVisits 为 nil 表示不限次数；burn 为 true 表示阅后即焚。
+func (s *Store) UpdateLinkEx(id int64, title string, enabled bool, expiresAt *time.Time, maxVisits *int64, burn bool) error {
 	var expStr sql.NullString
 	if expiresAt != nil {
 		expStr = sql.NullString{String: formatTime(*expiresAt), Valid: true}
@@ -272,12 +301,40 @@ func (s *Store) UpdateLink(id int64, title string, enabled bool, expiresAt *time
 	if enabled {
 		en = 1
 	}
+	var mv sql.NullInt64
+	if maxVisits != nil {
+		mv = sql.NullInt64{Int64: *maxVisits, Valid: true}
+	}
+	burnInt := int64(0)
+	if burn {
+		burnInt = 1
+	}
 	res, err := s.db.Exec(
-		`UPDATE links SET title = ?, enabled = ?, expires_at = ?, updated_at = ? WHERE id = ?`,
-		title, en, expStr, formatTime(nowUTC()), id,
+		`UPDATE links SET title = ?, enabled = ?, expires_at = ?, max_visits = ?, burn = ?, updated_at = ? WHERE id = ?`,
+		title, en, expStr, mv, burnInt, formatTime(nowUTC()), id,
 	)
 	if err != nil {
 		return fmt.Errorf("update link: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// MarkBurned 将 burn=1 的链接置为 disabled（阅后即焚）。
+// 目标不存在或 burn != 1 时返回 ErrNotFound。
+func (s *Store) MarkBurned(id int64) error {
+	res, err := s.db.Exec(
+		`UPDATE links SET enabled = 0, updated_at = ? WHERE id = ? AND burn = 1`,
+		formatTime(nowUTC()), id,
+	)
+	if err != nil {
+		return fmt.Errorf("mark burned: %w", err)
 	}
 	n, err := res.RowsAffected()
 	if err != nil {

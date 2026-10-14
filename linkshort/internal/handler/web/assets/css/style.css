@@ -469,3 +469,28 @@ a:hover { color: var(--stamp); }
   .kv-row { grid-template-columns: 1fr; }
   .table .url { max-width: 180px; }
 }
+
+/* 访问限制徽标：邮戳红 / 牛皮纸 / 灰 */
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.tag-stamp {
+  color: var(--stamp);
+  border: 1px solid var(--stamp);
+  background: transparent;
+}
+.tag-kraft {
+  color: var(--ink);
+  background: var(--kraft);
+}
+.tag-muted {
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
