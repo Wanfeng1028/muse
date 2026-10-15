@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Wanfeng1028/muse/second-brain/internal/config"
 	"github.com/Wanfeng1028/muse/second-brain/internal/markdown"
 	"github.com/Wanfeng1028/muse/second-brain/internal/search"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
@@ -16,7 +17,7 @@ import (
 )
 
 // NewServer 创建并返回配置好全部路由的 HTTP handler。
-func NewServer(st *store.Store) http.Handler {
+func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux := http.NewServeMux()
 
 	// 健康检查
@@ -213,6 +214,9 @@ func NewServer(st *store.Store) http.Handler {
 
 	// 导出路由（见 export.go）
 	RegisterExportRoutes(mux, st)
+
+	// 推送路由（见 push.go）
+	RegisterPushRoutes(mux, st, cfg)
 
 	// 静态文件服务，根路径返回 index.html
 	staticFS, err := fs.Sub(web.StaticFS(), ".")

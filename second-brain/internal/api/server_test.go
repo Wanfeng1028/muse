@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Wanfeng1028/muse/second-brain/internal/config"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
 
@@ -17,7 +18,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 		t.Fatalf("store.Open: %v", err)
 	}
 	t.Cleanup(func() { _ = st.Close() })
-	return httptest.NewServer(NewServer(st))
+	return httptest.NewServer(NewServer(st, config.Load()))
 }
 
 func doJSON(t *testing.T, srv *httptest.Server, method, path string, body any) *http.Response {

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Wanfeng1028/muse/second-brain/internal/config"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
 
@@ -23,7 +24,7 @@ func newAttachTestServer(t *testing.T) (*httptest.Server, *store.Store) {
 	}
 	st.SetAttachDir(t.TempDir())
 	t.Cleanup(func() { _ = st.Close() })
-	return httptest.NewServer(NewServer(st)), st
+	return httptest.NewServer(NewServer(st, config.Load())), st
 }
 
 func createNoteViaAPI(t *testing.T, srv *httptest.Server, title string) int64 {

@@ -1193,3 +1193,134 @@ code {
 .export-actions .btn {
   width: 100%;
 }
+
+/* 推送设置页 */
+}
+}
+
+.push-view {
+  padding: 20px 24px;
+  text-align: left;
+}
+
+.push-desc {
+  margin: 0 0 16px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.push-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 10px);
+  padding: 16px 18px;
+  max-width: 640px;
+}
+
+.push-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.push-label {
+  width: 120px;
+  flex: 0 0 120px;
+  text-align: left;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.push-row input[type="text"] {
+  flex: 1 1 auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.push-row input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
+.push-hint {
+  margin: 4px 0 14px;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.push-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.push-save-tip {
+  color: var(--success);
+  font-size: 13px;
+}
+
+.push-test-result {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-2);
+  min-height: 18px;
+}
+
+.push-test-result.is-ok {
+  color: var(--success);
+}
+
+.push-test-result.is-fail {
+  color: var(--danger);
+}
+
+.push-section-title {
+  margin: 24px 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: left;
+}
+
+.push-history-table {
+  width: 100%;
+  max-width: 760px;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 10px);
+  overflow: hidden;
+}
+
+.push-history-table th {
+  text-align: left;
+  padding: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.push-history-table td {
+  text-align: left;
+  padding: 8px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.push-history-table tbody tr:nth-child(even) {
+  background: var(--surface-2);
+}
+
+.push-history-empty {
+  margin: 10px 0 0;
+  color: var(--text-3);
+  font-size: 13px;
+}

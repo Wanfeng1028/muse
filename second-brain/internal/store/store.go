@@ -151,6 +151,20 @@ func createSchema(db *sql.DB) error {
 			created_at TEXT NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_attachments_note_id ON attachments(note_id)`,
+		`CREATE TABLE IF NOT EXISTS push_settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL,
+			updated_at TEXT NOT NULL
+		)`,
+		`CREATE TABLE IF NOT EXISTS push_log (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			date TEXT NOT NULL,
+			channel TEXT NOT NULL,
+			status TEXT NOT NULL,
+			detail TEXT NOT NULL DEFAULT '',
+			created_at TEXT NOT NULL
+		)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_push_log_date_channel ON push_log(date, channel)`,
 	}
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {

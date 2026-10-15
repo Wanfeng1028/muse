@@ -24,6 +24,7 @@
             <span id="review-badge" class="nav-badge">0</span>
           </button>
         </li>
+        <li><button id="nav-push" class="nav-item" type="button">推送设置</button></li>
       </ul>
     </nav>
     <div class="sidebar-section">
@@ -148,6 +149,65 @@
       </div>
     </div>
 
+    <div id="push-view" class="push-view" hidden>
+      <p class="push-desc">
+        每天到点把到期复习的笔记推到你邮箱或 webhook。SMTP 密码和 webhook 密钥只认服务器环境变量，页面里不填也不显示。
+      </p>
+
+      <form id="push-form" class="push-form" onsubmit="return false;">
+        <div class="push-row">
+          <label class="push-label" for="push-enabled">启用推送</label>
+          <input id="push-enabled" type="checkbox" />
+        </div>
+        <div class="push-row">
+          <label class="push-label" for="push-time">推送时间</label>
+          <input id="push-time" type="text" placeholder="08:30" />
+        </div>
+        <div class="push-row">
+          <label class="push-label" for="push-timezone">时区</label>
+          <input id="push-timezone" type="text" placeholder="Asia/Shanghai" />
+        </div>
+        <div class="push-row">
+          <label class="push-label" for="push-mail-to">收件邮箱</label>
+          <input id="push-mail-to" type="text" placeholder="you@example.com" />
+        </div>
+        <div class="push-row">
+          <label class="push-label" for="push-smtp-host">SMTP 主机</label>
+          <input id="push-smtp-host" type="text" placeholder="smtp.example.com:587" />
+        </div>
+        <div class="push-row">
+          <label class="push-label" for="push-smtp-from">发件地址</label>
+          <input id="push-smtp-from" type="text" placeholder="brain@example.com" />
+        </div>
+        <div class="push-row">
+          <label class="push-label" for="push-webhook-url">Webhook 地址</label>
+          <input id="push-webhook-url" type="text" placeholder="https://example.com/hook" />
+        </div>
+        <p class="push-hint">SMTP 密码与 webhook 密钥在服务器环境变量里配（SB_SMTP_PASS / SB_PUSH_WEBHOOK_SECRET），这里不填。</p>
+        <div class="push-actions">
+          <button id="btn-push-save" class="btn btn-primary" type="button">保存设置</button>
+          <button id="btn-push-test-smtp" class="btn btn-secondary" type="button">测试 SMTP 通道</button>
+          <button id="btn-push-test-webhook" class="btn btn-secondary" type="button">测试 Webhook 通道</button>
+          <span id="push-save-tip" class="push-save-tip"></span>
+        </div>
+        <div id="push-test-result" class="push-test-result"></div>
+      </form>
+
+      <h3 class="push-section-title">推送历史</h3>
+      <table id="push-history-table" class="push-history-table">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>通道</th>
+            <th>状态</th>
+            <th>详情</th>
+          </tr>
+        </thead>
+        <tbody id="push-history-body"></tbody>
+      </table>
+      <p id="push-history-empty" class="push-history-empty">还没有推送记录</p>
+    </div>
+
     <div id="graph-view" class="graph-view" hidden>
       <div class="graph-header">
         <h2>知识图谱</h2>
@@ -170,6 +230,25 @@ ID 对照表
   btn-new             新建笔记按钮
   nav-notes           导航：切回全部笔记列表
   nav-review          导航：进入今日复习视图，含复习徽标
+  nav-push            导航：进入推送设置视图
+
+推送设置
+  push-view             推送设置视图根容器（默认 hidden）
+  push-enabled          启用推送 checkbox
+  push-time             每日推送时间输入框（HH:MM）
+  push-timezone         时区输入框
+  push-mail-to          收件邮箱输入框
+  push-smtp-host        SMTP 主机输入框
+  push-smtp-from        发件地址输入框
+  push-webhook-url      Webhook 地址输入框
+  btn-push-save         保存推送设置按钮
+  push-save-tip         保存成功行内提示
+  btn-push-test-smtp    测试 SMTP 通道按钮
+  btn-push-test-webhook 测试 Webhook 通道按钮
+  push-test-result      通道测试结果区
+  push-history-table    推送历史表格
+  push-history-body     推送历史表格 tbody
+  push-history-empty    推送历史空状态提示
   review-badge        今日待复习数量徽标
   tag-list            标签列表容器，由 JS 渲染
   stats-box           统计区域容器（静态展示）

@@ -78,6 +78,20 @@ go run ./cmd/server
 | `SB_DB` | SQLite 数据库文件路径 | `<SB_DATA_DIR>/second-brain.db` |
 | `SB_DATA_DIR` | 数据目录，存放数据库与后续附件 | `./data` |
 | `SB_ATTACH_MAX_MB` | 单个附件大小上限（MB） | `10` |
+| 变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `SB_PUSH_ENABLED` | 是否开启主动复习外部推送。开启后启动时会校验推送相关配置，校验失败直接启动失败 | `false` |
+| `SB_PUSH_TIME` | 每天推送时间，24 小时制 `HH:MM` | `08:30` |
+| `SB_PUSH_TZ` | 推送使用的时区，决定“今天”的日期 key 和触发时刻 | `Asia/Shanghai` |
+| `SB_SMTP_HOST` | SMTP 服务器地址。密钥类信息只走环境变量，页面不填 | 空 |
+| `SB_SMTP_PORT` | SMTP 服务器端口 | `587` |
+| `SB_SMTP_USER` | SMTP 登录用户名。密钥类信息只走环境变量，页面不填 | 空 |
+| `SB_SMTP_PASS` | SMTP 登录密码。密钥类信息只走环境变量，页面不填 | 空 |
+| `SB_SMTP_FROM` | 发件人地址 | 空 |
+| `SB_SMTP_TLS` | SMTP 是否使用 STARTTLS。设为 `false` 时走明文，仅建议内网使用 | `true` |
+| `SB_MAIL_TO` | 复习提醒收件邮箱，多个地址可用逗号分隔 | 空 |
+| `SB_WEBHOOK_URL` | Webhook 接收地址，POST JSON | 空 |
+| `SB_WEBHOOK_SECRET` | Webhook 签名密钥，用于生成 `X-Signature`。密钥类信息只走环境变量，页面不填 | 空 |
 
 示例：
 
@@ -153,6 +167,12 @@ docker run -d -p 8080:8080 -v sb-data:/data second-brain
 | DELETE | `/api/attachments/{id}` | 删除附件 |
 | GET | `/api/export/markdown` | 导出全库为 zip（笔记 Markdown + 附件原文件） |
 | GET | `/api/export/json` | 导出全库为 JSON（含标签与附件元数据） |
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/push/settings` | 读取推送设置。返回环境变量默认值与数据库覆盖合并后的结果，绝不返回密码、secret 明文 |
+| PUT | `/api/push/settings` | 修改推送设置。只接受白名单字段；请求体里出现 `password` 或 `secret` 直接返回 400 |
+| POST | `/api/push/test` | 用 3 条假数据真实发送一次，用来验证 SMTP 或 Webhook 通不通，不写 `push_log` |
+| GET | `/api/push/history` | 查看推送历史，来自 `push_log` |
 
 请求与响应均为 JSON。错误响应统一为 `{"error": "..."}` 结构。
 
@@ -233,6 +253,21 @@ SM-2 四档说明：
 - **导出 Markdown 包**：下载一个 zip，里面是 `index.md` 索引、`notes/` 下每篇笔记一个 `.md`（带标题/标签/时间的 front matter）、`attachments/` 下附件原文件。正文里的附件引用会自动改写成相对路径，解压开就能看。
 - **导出 JSON**：全库一份 JSON，含每篇笔记的标签与附件元数据，方便写脚本迁移。
 
+## （插入到「## 附件与导出（v0.3.0）」之后、「## 数据与备份」之前）
+
+每天到点，把当天该复习的内容推到你自己的邮箱或 webhook 地址。你不用打开第二大脑，也能收到“今天有哪几篇要复习”。
+
+通道说明：
+- SMTP：把复习摘要发到 `SB_MAIL_TO` 指定的邮箱，支持 STARTTLS，也支持明文模式（仅建议内网）。
+- Webhook：向 `SB_WEBHOOK_URL` POST JSON，带 `X-Event: review.digest`，并带 `X-Signature: sha256=<hex(hmac-sha256(secret, body))>` 供接收端验签。
+
+幂等与密钥规则：
+- 同一天、同一通道，成功推送只发生一次；靠 `push_log` 唯一索引加 `HasPushed` 检查保证。
+- SMTP 密码和 webhook 密钥只走环境变量，页面不可配置，接口也不会返回明文。
+
+![推送设置页](docs/screenshots/push-settings.png)
+
+已知限制：调度器按单实例假设工作，多实例部署会重复推送，需要外部保证只有一个实例在跑调度。
 ## 数据与备份
 
 所有数据保存在 `SB_DATA_DIR` 下的 SQLite 文件中。备份方式：

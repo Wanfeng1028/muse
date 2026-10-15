@@ -46,16 +46,140 @@ function showView(name) {
     const el = $("editor-view");
     if (!el) return;
   });
-  const views = { editor: $("editor-view"), graph: $("graph-view"), review: $("review-view") };
+  const views = { editor: $("editor-view"), graph: $("graph-view"), review: $("review-view"), push: $("push-view") };
   Object.entries(views).forEach(([k, el]) => {
     if (el) el.hidden = k !== name;
   });
   const navNotes = $("nav-notes");
   const navReview = $("nav-review");
+  const navPush = $("nav-push");
   if (navNotes) navNotes.classList.toggle("is-active", name === "editor" || name === "graph");
   if (navReview) navReview.classList.toggle("is-active", name === "review");
+  if (navPush) navPush.classList.toggle("is-active", name === "push");
 }
 window.__sbShowView = showView;
+
+async function loadPushSettings() {
+  try {
+    const s = await api("/api/push/settings");
+    const set = (id, v) => { const el = $(id); if (el) el.value = v == null ? "" : v; };
+    const en = $("push-enabled");
+    if (en) en.checked = !!s.enabled;
+    set("push-time", s.time);
+    set("push-timezone", s.timezone);
+    set("push-mail-to", s.mailTo);
+    set("push-smtp-host", s.smtpHost);
+    set("push-smtp-from", s.smtpFrom);
+    set("push-webhook-url", s.webhookUrl);
+  } catch (e) {
+    alert("读取推送设置失败：" + (e && e.message ? e.message : e));
+  }
+}
+
+async function savePushSettings() {
+  const tip = $("push-save-tip");
+  if (tip) tip.textContent = "";
+  const en = $("push-enabled");
+  const val = (id) => { const el = $(id); return el ? el.value.trim() : ""; };
+  const body = {
+    enabled: !!(en && en.checked),
+    time: val("push-time"),
+    timezone: val("push-timezone"),
+    mail_to: val("push-mail-to"),
+    smtp_host: val("push-smtp-host"),
+    smtp_from: val("push-smtp-from"),
+    webhook_url: val("push-webhook-url"),
+  };
+  try {
+    await api("/api/push/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (tip) tip.textContent = "已保存";
+  } catch (e) {
+    alert("保存推送设置失败：" + (e && e.message ? e.message : e));
+  }
+}
+
+async function testPushChannel(channel) {
+  const box = $("push-test-result");
+  if (box) {
+    box.textContent = "测试中…";
+    box.classList.remove("is-ok", "is-fail");
+  }
+  try {
+    const r = await api("/api/push/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel }),
+    });
+    if (box) {
+      if (r && r.ok) {
+        box.textContent = "成功";
+        box.classList.add("is-ok");
+      } else {
+        box.textContent = "失败：" + escapeHtml(r && r.detail ? r.detail : "未知错误");
+        box.classList.add("is-fail");
+      }
+    }
+  } catch (e) {
+    if (box) {
+      box.textContent = "失败：" + escapeHtml(e && e.message ? e.message : String(e));
+      box.classList.add("is-fail");
+    }
+  }
+}
+
+async function loadPushHistory() {
+  const tbody = $("push-history-body");
+  const empty = $("push-history-empty");
+  if (!tbody) return;
+  try {
+    const rows = await api("/api/push/history");
+    const list = Array.isArray(rows) ? rows : [];
+    tbody.innerHTML = "";
+    if (list.length === 0) {
+      if (empty) empty.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    list.forEach((r) => {
+      const tr = document.createElement("tr");
+      const td = (v) => {
+        const c = document.createElement("td");
+        c.innerHTML = escapeHtml(v == null ? "" : String(v));
+        return c;
+      };
+      tr.appendChild(td(r.date));
+      tr.appendChild(td(r.channel));
+      tr.appendChild(td(r.status));
+      tr.appendChild(td(r.detail));
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    tbody.innerHTML = "";
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent = "读取推送历史失败：" + (e && e.message ? e.message : e);
+    }
+  }
+}
+
+const _navPush = $("nav-push");
+if (_navPush) {
+  _navPush.addEventListener("click", () => {
+    showView("push");
+    loadPushSettings();
+    loadPushHistory();
+  });
+}
+const _btnPushSave = $("btn-push-save");
+if (_btnPushSave) _btnPushSave.addEventListener("click", savePushSettings);
+const _btnPushTestSmtp = $("btn-push-test-smtp");
+if (_btnPushTestSmtp) _btnPushTestSmtp.addEventListener("click", () => testPushChannel("smtp"));
+const _btnPushTestWebhook = $("btn-push-test-webhook");
+if (_btnPushTestWebhook) _btnPushTestWebhook.addEventListener("click", () => testPushChannel("webhook"));
 
 // ---------- 列表 ----------
 async function loadNotes() {

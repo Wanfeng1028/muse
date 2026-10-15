@@ -5,6 +5,35 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.0] - 2026-10-16
+
+主动复习外部推送——到期提醒推出去
+
+### 新增
+- 新增 `internal/notify` 包：定义 `Sender` 接口，提供 SMTP 与 Webhook 两种通知通道。
+- 新增 `SMTPSender`：基于标准库 `net/smtp`，支持 STARTTLS 与明文两种模式。
+- 新增 `WebhookSender`：POST JSON，带 `X-Event: review.digest`，带 `X-Signature: sha256=<hex(hmac-sha256(secret, body))>`。
+- 新增 `BuildDigestMessage` 纯函数：生成主题、纯文本正文和邮件客户端兼容 HTML（table 布局、内联样式，标题与摘要做 HTML 转义）。
+- 新增 `internal/push` 包：`NextPushTime` 纯函数、30 秒 tick 的 `Scheduler`、`RunPush` 推送流程。
+- 推送幂等：同一天同一通道只成功推送一次，靠 `push_log` 唯一索引加 `HasPushed` 检查。
+- 新增推送 API：`GET/PUT /api/push/settings`、`POST /api/push/test`、`GET /api/push/history`。
+- 新增推送设置页：侧边导航「推送设置」，含启用、时间、时区、收件邮箱、SMTP 主机、发件地址、Webhook 地址、保存、测试 SMTP、测试 Webhook、推送历史表。
+- 新增 12 个推送配置项：`SB_PUSH_ENABLED`、`SB_PUSH_TIME`、`SB_PUSH_TZ`、`SB_SMTP_HOST`、`SB_SMTP_PORT`、`SB_SMTP_USER`、`SB_SMTP_PASS`、`SB_SMTP_FROM`、`SB_SMTP_TLS`、`SB_MAIL_TO`、`SB_WEBHOOK_URL`、`SB_WEBHOOK_SECRET`。
+
+### 测试
+- 全量 104 通过，v0.3.0 时 68，新增 36。
+- notify 单元 8 条：标题、空队列、HTML 转义 XSS、webhook 成功与验签、非 2xx、超时、SMTP 不可达。
+- push 调度单测：`NextPushTime` 当天未来、已过转次日、非法格式、时区；`RunPush` 幂等；单通道失败不影响另一通道。
+- api 集成：webhook 接收端验 `X-Signature`；自研最小 fake SMTP 服务器走完 EHLO→DATA→QUIT 真实收信；settings 脱敏；PUT 非法 time 返回 400；body 含 password 返回 400。
+- 真实冒烟（2026-10-16）：webhook 接收桩真实收到 `X-Event`、`X-Signature` 与完整 payload；调度器按配置时间真实触发，`push_log` 记 sent；`/api/push/test` 真实发出。
+
+### 已知限制
+- SMTP 密码与 webhook 密钥只能走环境变量，页面不可配置。
+- 单用户，无多租户。
+- 调度器按单实例假设工作，多实例部署会重复推送，需要外部保证单实例。
+- SMTP 发送失败按次记录，可等次日或手动测试重发，没有自动重试队列。
+
+## [0.3.0]
 ## [0.3.0] - 2026-10-15
 
 附件与导出——笔记可以带图片和文件了，全库也能一键带走。
