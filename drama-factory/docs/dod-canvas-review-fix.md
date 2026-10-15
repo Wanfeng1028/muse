@@ -12,6 +12,7 @@
 | 1 | 并发用例防假绿 | `concurrentSave_sameBaseVersion_onlyOneWins` 改写：20 轮循环，每轮新子目录隔离；双栅栏（起跑门+完成门）；每轮严格三元组断言（恰好 1 成功 / 恰好 7 个 CanvasConflictException / 0 其他异常 / revision=base+1） |
 | 2 | poc-local profile 确认 | `application-poc-local.yml` 独立文件绑 127.0.0.1；`GracefulShutdownTest.defaultProfileBindsAllInterfaces` 断言默认 profile 下 `server.address=0.0.0.0`；README 含 `--spring.profiles.active=poc-local` 用法 |
 | 3 | revision null 前端 | `src/store.test.ts` 新增：revision 为 null 时 save() 不发 PUT（fetch 调用 0 次）且提示"请先加载画布后再保存"；`test:logic` 脚本纳入 store 测试 |
+| 4 | agent 写入路径注记 | README 补注：agent 写入走 service 层 `canvas.save_project` / `canvas.apply_patch` 接口，POC 阶段仅定接口、尚未接线 |
 
 ## 红测证据（注释掉 synchronized 后变红）
 
@@ -32,7 +33,7 @@
 
 ## 测试结果
 
-- 后端全量：1871 通过 / 0 失败 / 0 错误（2 skipped 为既有）
+- 后端全量：1876 通过 / 0 失败 / 0 错误（2 skipped 为既有；此前文档误写 1871，已按实测统一为 1876）
 - `CanvasProjectVersionConflictTest`：7/7（含 20 轮并发用例）
 - `GracefulShutdownTest`：4/4（含新增默认 profile 断言）
 - 前端 `tsc --noEmit`：0 错误；`vite build`：成功

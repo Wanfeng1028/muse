@@ -35,7 +35,7 @@ npm run build
 
 ## 安全（本地限定）
 
-`application.yml` 默认绑 `0.0.0.0`（`compose.yml` / `docker-compose.yml` 里 nginx 容器要通过服务名连主服务，全局写死 `127.0.0.1` 会让容器网络连不上）。POC 本地运行时加 `--spring.profiles.active=poc-local` 仅绑回环（加载 `application-poc-local.yml`）。Docker / 生产部署不许启用该 profile。POC 无鉴权，仅限本机访问时不许对外暴露。
+`application.yml` 默认绑 `0.0.0.0`（`compose.yml` / `docker-compose.yml` 里 nginx 容器要通过服务名连主服务，全局写死 `127.0.0.1` 会让容器网络连不上）。注意：默认 `0.0.0.0` 下无鉴权的 canvas PUT 接口对局域网可达，本地直跑时务必加 `--spring.profiles.active=poc-local` 仅绑回环（加载 `application-poc-local.yml`）。Docker / 生产部署不许启用该 profile。POC 无鉴权，仅限本机访问，不许对外暴露。
 
 ## 存储切换触发条件
 
