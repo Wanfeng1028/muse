@@ -103,6 +103,17 @@ Agent 技能的发布、安装与管理：4 个官方预设 Skill（分镜大师
 
 ![快捷工具](docs/screenshots/tools-light.png)
 
+### 账号体系（P0-2）
+邮箱注册登录 + Google / Apple / GitHub OAuth（无真实凭证时诚实返回未配置）；
+个人资料（几何头像，禁字母头像）、账号与安全（改密码/改邮箱需验证密码、登录会话管理）、
+个性化（主题/语言：语言偏好存服务端，账号页中英双语实时切换）；登录限流（同 email+ip 15 分钟 5 次失败 → 429）、密码强度校验。
+
+![登录](docs/screenshots/account-login.png)
+
+![账号页（中文）](docs/screenshots/account-zh.png)
+
+![账号页（英文）](docs/screenshots/account-en.png)
+
 ## 技术栈
 
 | 类别 | 选型 |

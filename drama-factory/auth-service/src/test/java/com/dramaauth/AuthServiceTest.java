@@ -152,10 +152,10 @@ class AuthServiceTest {
     @Test
     void profile_rejectsSingleLetterAvatar() {
         AuthService.UserDto u = authService.register("av@example.com", "Passw0rd1", "头");
-        assertThatThrownBy(() -> authService.updateProfile(u.id(), null, "X"))
+        assertThatThrownBy(() -> authService.updateProfile(u.id(), null, "X", null))
                 .matches(e -> ((ApiException) e).getStatus() == HttpStatus.BAD_REQUEST);
         AuthService.UserDto ok = authService.updateProfile(u.id(), "新昵称",
-                "https://example.com/avatar.png");
+                "https://example.com/avatar.png", null);
         assertThat(ok.nickname()).isEqualTo("新昵称");
     }
 
@@ -170,5 +170,34 @@ class AuthServiceTest {
                 .matches(e -> ((ApiException) e).getStatus() == HttpStatus.NOT_IMPLEMENTED);
         assertThatThrownBy(() -> oauthService.authUrl("apple"))
                 .matches(e -> ((ApiException) e).getStatus() == HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    @Test
+    void profile_languageUpdate_ok() {
+        AuthService.UserDto u = authService.register("lang1@example.com", "Passw0rd1", "用户一");
+        AuthService.UserDto updated = authService.updateProfile(u.id(), null, null, "en");
+        assertThat(updated.language()).isEqualTo("en");
+        assertThat(updated.nickname()).isEqualTo("用户一");
+    }
+
+    @Test
+    void profile_languageInvalid_400() {
+        AuthService.UserDto u = authService.register("lang2@example.com", "Passw0rd1", "用户二");
+        assertThatThrownBy(() -> authService.updateProfile(u.id(), null, null, "fr"))
+                .matches(e -> ((ApiException) e).getStatus() == HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void profile_languageNull_noChange() {
+        AuthService.UserDto u = authService.register("lang3@example.com", "Passw0rd1", "用户三");
+        authService.updateProfile(u.id(), null, null, "en");
+        AuthService.UserDto updated = authService.updateProfile(u.id(), null, null, null);
+        assertThat(updated.language()).isEqualTo("en");
+    }
+
+    @Test
+    void profile_languageDefault_zhCN() {
+        AuthService.UserDto u = authService.register("lang4@example.com", "Passw0rd1", "用户四");
+        assertThat(u.language()).isEqualTo("zh-CN");
     }
 }

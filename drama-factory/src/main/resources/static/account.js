@@ -3,10 +3,86 @@
 
   var user = null;
 
+  var I18N = {
+    'doc.title': { 'zh-CN': '账号 · AI 短剧工坊', 'en': 'Account · AI Drama Factory' },
+    'page.title': { 'zh-CN': '账号', 'en': 'Account' },
+    'profile.title': { 'zh-CN': '个人资料', 'en': 'Profile' },
+    'profile.nickname': { 'zh-CN': '昵称', 'en': 'Nickname' },
+    'profile.edit': { 'zh-CN': '编辑', 'en': 'Edit' },
+    'profile.email': { 'zh-CN': '邮箱', 'en': 'Email' },
+    'profile.role': { 'zh-CN': '角色', 'en': 'Role' },
+    'profile.save': { 'zh-CN': '保存', 'en': 'Save' },
+    'profile.cancel': { 'zh-CN': '取消', 'en': 'Cancel' },
+    'sec.title': { 'zh-CN': '账号与安全', 'en': 'Account & Security' },
+    'sec.email': { 'zh-CN': '邮箱', 'en': 'Email' },
+    'sec.change': { 'zh-CN': '修改', 'en': 'Change' },
+    'sec.newEmail': { 'zh-CN': '新邮箱', 'en': 'New email' },
+    'sec.currentPassword': { 'zh-CN': '当前密码', 'en': 'Current password' },
+    'sec.password': { 'zh-CN': '密码', 'en': 'Password' },
+    'sec.oldPassword': { 'zh-CN': '旧密码', 'en': 'Old password' },
+    'sec.newPassword': { 'zh-CN': '新密码', 'en': 'New password' },
+    'sec.pwHint': { 'zh-CN': '至少 8 位，且包含字母和数字', 'en': 'At least 8 characters, with letters and numbers' },
+    'sec.pwHintOk': { 'zh-CN': '密码符合要求', 'en': 'Password meets requirements' },
+    'sec.sessions': { 'zh-CN': '登录会话', 'en': 'Sessions' },
+    'sec.refresh': { 'zh-CN': '刷新', 'en': 'Refresh' },
+    'sec.revoke': { 'zh-CN': '撤销', 'en': 'Revoke' },
+    'sec.currentDevice': { 'zh-CN': '本机', 'en': 'This device' },
+    'pref.title': { 'zh-CN': '个性化', 'en': 'Preferences' },
+    'pref.themeSystem': { 'zh-CN': '跟随系统', 'en': 'System' },
+    'pref.themeLight': { 'zh-CN': '浅色', 'en': 'Light' },
+    'pref.themeDark': { 'zh-CN': '深色', 'en': 'Dark' },
+    'pref.language': { 'zh-CN': '语言', 'en': 'Language' },
+    'logout.title': { 'zh-CN': '退出', 'en': 'Sign out' },
+    'logout.desc': { 'zh-CN': '退出后需要重新登录才能访问。', 'en': "You'll need to sign in again after signing out." },
+    'logout.btn': { 'zh-CN': '退出登录', 'en': 'Sign out' },
+    'err.generic': { 'zh-CN': '操作失败', 'en': 'Operation failed' },
+    'err.nicknameEmpty': { 'zh-CN': '昵称不能为空', 'en': 'Nickname cannot be empty' },
+    'err.saveFail': { 'zh-CN': '保存失败', 'en': 'Save failed' },
+    'err.fillEmailPassword': { 'zh-CN': '请填写新邮箱和当前密码', 'en': 'Please enter the new email and current password' },
+    'err.changeFail': { 'zh-CN': '修改失败', 'en': 'Update failed' },
+    'err.fillOldNew': { 'zh-CN': '请填写旧密码和新密码', 'en': 'Please enter the old and new passwords' },
+    'err.weakPassword': { 'zh-CN': '密码至少 8 位，且包含字母和数字', 'en': 'At least 8 characters, with letters and numbers' },
+    'err.loadFail': { 'zh-CN': '加载失败', 'en': 'Load failed' },
+    'err.revokeFail': { 'zh-CN': '撤销失败', 'en': 'Revoke failed' },
+    'session.empty': { 'zh-CN': '暂无其他会话', 'en': 'No other sessions' }
+  };
+
+  var currentLang = 'zh-CN';
+
+  function readLang() {
+    var v = null;
+    try {
+      v = localStorage.getItem('df-lang');
+    } catch (e) {
+      v = null;
+    }
+    return v === 'en' ? 'en' : 'zh-CN';
+  }
+
+  function tr(key) {
+    var entry = I18N[key];
+    if (!entry) { return key; }
+    var lang = currentLang === 'en' ? 'en' : 'zh-CN';
+    if (entry[lang]) { return entry[lang]; }
+    if (entry['zh-CN']) { return entry['zh-CN']; }
+    return key;
+  }
+
+  function applyI18n(lang) {
+    var next = lang === 'en' ? 'en' : 'zh-CN';
+    currentLang = next;
+    document.documentElement.lang = next;
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var key = nodes[i].getAttribute('data-i18n');
+      if (key) { nodes[i].textContent = tr(key); }
+    }
+  }
+
   function $(id) { return document.getElementById(id); }
 
   function showErr(el, msg) {
-    el.textContent = msg || '操作失败';
+    el.textContent = msg || tr('err.generic');
     el.hidden = false;
   }
   function clearErr(el) {
@@ -34,6 +110,13 @@
     return Auth.me().then(function (u) {
       user = u;
       renderProfile(u);
+      var lang = u && u.language === 'en' ? 'en' : 'zh-CN';
+      try {
+        localStorage.setItem('df-lang', lang);
+      } catch (e) {
+        // 存储不可用时忽略
+      }
+      applyI18n(lang);
       return u;
     });
   }
@@ -63,7 +146,7 @@
     $('nickname-save').addEventListener('click', function () {
       clearErr(err);
       var nickname = input.value.trim();
-      if (!nickname) { showErr(err, '昵称不能为空'); return; }
+      if (!nickname) { showErr(err, tr('err.nicknameEmpty')); return; }
       $('nickname-save').disabled = true;
       Auth.updateProfile(nickname, user ? user.avatarUrl : null).then(function (u) {
         user = u;
@@ -72,7 +155,7 @@
         view.hidden = false;
         $('nickname-edit').hidden = false;
       }).catch(function (e) {
-        showErr(err, e && e.message ? e.message : '保存失败');
+        showErr(err, e && e.message ? e.message : tr('err.saveFail'));
       }).then(function () {
         $('nickname-save').disabled = false;
       });
@@ -96,7 +179,7 @@
       clearErr(err);
       var newEmail = form.newEmail.value.trim();
       var password = form.password.value;
-      if (!newEmail || !password) { showErr(err, '请填写新邮箱和当前密码'); return; }
+      if (!newEmail || !password) { showErr(err, tr('err.fillEmailPassword')); return; }
       form.querySelector('button[type=submit]').disabled = true;
       Auth.changeEmail(newEmail, password).then(function (u) {
         user = u;
@@ -104,7 +187,7 @@
         form.reset();
         form.hidden = true;
       }).catch(function (e2) {
-        showErr(err, e2 && e2.message ? e2.message : '修改失败');
+        showErr(err, e2 && e2.message ? e2.message : tr('err.changeFail'));
       }).then(function () {
         form.querySelector('button[type=submit]').disabled = false;
       });
@@ -120,7 +203,7 @@
       var pw = form.newPassword.value;
       var ok = validPassword(pw) && pw.length > 0;
       hint.classList.toggle('is-ok', ok);
-      hint.textContent = ok ? '密码符合要求' : '至少 8 位，且包含字母和数字';
+      hint.textContent = ok ? tr('sec.pwHintOk') : tr('sec.pwHint');
     }
     form.newPassword.addEventListener('input', syncHint);
     syncHint();
@@ -140,15 +223,15 @@
       clearErr(err);
       var oldPassword = form.oldPassword.value;
       var newPassword = form.newPassword.value;
-      if (!oldPassword || !newPassword) { showErr(err, '请填写旧密码和新密码'); return; }
-      if (!validPassword(newPassword)) { showErr(err, '密码至少 8 位，且包含字母和数字'); return; }
+      if (!oldPassword || !newPassword) { showErr(err, tr('err.fillOldNew')); return; }
+      if (!validPassword(newPassword)) { showErr(err, tr('err.weakPassword')); return; }
       form.querySelector('button[type=submit]').disabled = true;
       Auth.changePassword(oldPassword, newPassword).then(function () {
         form.reset();
         syncHint();
         form.hidden = true;
       }).catch(function (e2) {
-        showErr(err, e2 && e2.message ? e2.message : '修改失败');
+        showErr(err, e2 && e2.message ? e2.message : tr('err.changeFail'));
       }).then(function () {
         form.querySelector('button[type=submit]').disabled = false;
       });
@@ -169,7 +252,7 @@
     if (!list || !list.length) {
       var empty = document.createElement('li');
       empty.className = 'session-empty';
-      empty.textContent = '—';
+      empty.textContent = tr('session.empty');
       ul.appendChild(empty);
       return;
     }
@@ -186,7 +269,7 @@
       if (s.current) {
         var tag = document.createElement('span');
         tag.className = 'tag';
-        tag.textContent = '本机';
+        tag.textContent = tr('sec.currentDevice');
         dev.appendChild(tag);
       }
       main.appendChild(dev);
@@ -202,13 +285,13 @@
         var btn = document.createElement('button');
         btn.className = 'btn btn-quiet btn-sm';
         btn.type = 'button';
-        btn.textContent = '撤销';
+        btn.textContent = tr('sec.revoke');
         btn.addEventListener('click', function () {
           btn.disabled = true;
           Auth.revokeSession(s.id).then(function () {
             return loadSessions();
           }).catch(function (e) {
-            showErr($('sessions-error'), e && e.message ? e.message : '撤销失败');
+            showErr($('sessions-error'), e && e.message ? e.message : tr('err.revokeFail'));
           }).then(function () {
             btn.disabled = false;
           });
@@ -225,7 +308,7 @@
     return Auth.sessions().then(function (list) {
       renderSessions(list);
     }).catch(function (e) {
-      showErr($('sessions-error'), e && e.message ? e.message : '加载失败');
+      showErr($('sessions-error'), e && e.message ? e.message : tr('err.loadFail'));
     });
   }
 
@@ -285,13 +368,64 @@
     });
   }
 
+  function bindLanguage() {
+    var radios = document.querySelectorAll('input[name="lang"]');
+    if (!radios || !radios.length) { return; }
+    var err = $('lang-error');
+
+    function syncChecked(lang) {
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = radios[i].value === lang;
+      }
+    }
+
+    function currentChecked() {
+      for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) { return radios[i].value === 'en' ? 'en' : 'zh-CN'; }
+      }
+      return readLang();
+    }
+
+    syncChecked(currentLang);
+
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].addEventListener('change', function () {
+        var next = this.value === 'en' ? 'en' : 'zh-CN';
+        var prev = currentLang === 'en' ? 'en' : 'zh-CN';
+        if (next === prev) { syncChecked(next); return; }
+        if (err) { clearErr(err); }
+        this.disabled = true;
+        var self = this;
+        Auth.updateProfile(null, null, next).then(function () {
+          try {
+            localStorage.setItem('df-lang', next);
+          } catch (e) {
+            // 存储不可用时忽略
+          }
+          applyI18n(next);
+          syncChecked(next);
+        }).catch(function (e2) {
+          if (err) {
+            showErr(err, e2 && e2.message ? e2.message : tr('err.generic'));
+          }
+          syncChecked(prev);
+        }).then(function () {
+          self.disabled = false;
+        });
+      });
+    }
+  }
+
   function boot() {
+    applyI18n(readLang());
+
     bindNickname();
     bindEmail();
     bindPassword();
     bindSessions();
     bindTheme();
     bindLogout();
+    bindLanguage();
 
     reloadMe().catch(function () {
       // Auth.requireAuth 已处理跳转；这里静默

@@ -38,6 +38,12 @@
     if (opts.body !== undefined && !(opts.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
+    if (!opts.noAuth) {
+      var tokens = loadTokens();
+      if (tokens.access) {
+        headers['Authorization'] = 'Bearer ' + tokens.access;
+      }
+    }
     return fetch(path, {
       method: opts.method || 'GET',
       headers: headers,
@@ -59,11 +65,60 @@
 
   var refreshing = null;
 
+  // 注意权衡：token 存于 localStorage 存在 XSS 窃取风险，
+  // 后续可迁移至 httpOnly Cookie（需后端配合设置），
+  // 本轮先保证登录链路真实可用。
+  function loadTokens() {
+    try {
+      return {
+        access: global.localStorage.getItem('df-access-token'),
+        refresh: global.localStorage.getItem('df-refresh-token')
+      };
+    } catch (e) {
+      return { access: null, refresh: null };
+    }
+  }
+
+  function saveTokens(access, refresh) {
+    try {
+      if (access) {
+        global.localStorage.setItem('df-access-token', access);
+      } else {
+        global.localStorage.removeItem('df-access-token');
+      }
+      if (refresh) {
+        global.localStorage.setItem('df-refresh-token', refresh);
+      } else {
+        global.localStorage.removeItem('df-refresh-token');
+      }
+    } catch (e) {
+    }
+  }
+
+  function clearTokens() {
+    saveTokens(null, null);
+  }
+
   function tryRefresh() {
     if (refreshing) return refreshing;
-    refreshing = rawFetch(AUTH_BASE + '/refresh', { method: 'POST' })
-      .then(function () { return true; })
-      .catch(function () { return false; })
+    var tokens = loadTokens();
+    var rt = tokens.refresh;
+    if (!rt) {
+      clearTokens();
+      redirectToLogin();
+      return Promise.resolve(false);
+    }
+    refreshing = rawFetch(AUTH_BASE + '/refresh', { method: 'POST', body: { refreshToken: rt }, noAuth: true })
+      .then(function (pair) {
+        var data = pair || {};
+        if (!data.accessToken) return false;
+        saveTokens(data.accessToken, data.refreshToken || rt);
+        return true;
+      })
+      .catch(function () {
+        clearTokens();
+        return false;
+      })
       .then(function (v) { refreshing = null; return v; });
     return refreshing;
   }
@@ -91,22 +146,41 @@
     },
 
     login: function (email, password) {
-      return request('/login', { method: 'POST', body: { email: email, password: password } });
+      return rawFetch(AUTH_BASE + '/login', { method: 'POST', body: { email: email, password: password }, noAuth: true })
+        .then(function (pair) {
+          if (pair && pair.accessToken) {
+            saveTokens(pair.accessToken, pair.refreshToken);
+          }
+          return pair;
+        });
     },
 
     register: function (email, password, nickname) {
-      return request('/register', { method: 'POST', body: { email: email, password: password, nickname: nickname } });
+      return rawFetch(AUTH_BASE + '/register', { method: 'POST', body: { email: email, password: password, nickname: nickname }, noAuth: true })
+        .then(function (pair) {
+          if (pair && pair.accessToken) {
+            saveTokens(pair.accessToken, pair.refreshToken);
+          }
+          return pair;
+        });
     },
 
     logout: function () {
       return rawFetch(AUTH_BASE + '/logout', { method: 'POST' }).then(function (r) {
+        clearTokens();
         global.location.href = LOGIN_PATH;
         return r;
+      }).catch(function (err) {
+        clearTokens();
+        global.location.href = LOGIN_PATH;
+        throw err;
       });
     },
 
-    updateProfile: function (nickname, avatarUrl) {
-      return request('/profile', { method: 'PUT', body: { nickname: nickname, avatarUrl: avatarUrl } });
+    updateProfile: function (nickname, avatarUrl, language) {
+      var body = { nickname: nickname, avatarUrl: avatarUrl };
+      if (language !== undefined) body.language = language;
+      return request('/profile', { method: 'PUT', body: body });
     },
 
     changePassword: function (oldPassword, newPassword) {

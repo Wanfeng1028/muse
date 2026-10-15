@@ -40,6 +40,13 @@ public class User {
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 
+    /**
+     * 界面语言偏好，DB 列可空（ddl-auto: update 下给已有数据的库加 NOT NULL 列会失败）。
+     * Java 字段默认 "zh-CN"，toDto 对 null 回退 "zh-CN"，API 契约保证返回非空。
+     */
+    @Column(name = "language", length = 16)
+    private String language = "zh-CN";
+
     /** 角色：USER/ADMIN，首个注册用户为 ADMIN */
     @Column(nullable = false, length = 16)
     private String role = "USER";
@@ -75,6 +82,8 @@ public class User {
     public void setNickname(String nickname) { this.nickname = nickname; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public String getLanguage() { return language; }
+    public void setLanguage(String language) { this.language = language; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public String getStatus() { return status; }

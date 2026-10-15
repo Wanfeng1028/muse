@@ -50,7 +50,7 @@ public class AuthController {
     public record RefreshRequest(@NotBlank String refreshToken) {
     }
 
-    public record ProfileRequest(String nickname, String avatarUrl) {
+    public record ProfileRequest(String nickname, String avatarUrl, String language) {
     }
 
     public record PasswordRequest(@NotBlank String oldPassword, @NotBlank String newPassword) {
@@ -113,7 +113,8 @@ public class AuthController {
     @PutMapping("/profile")
     public AuthService.UserDto updateProfile(@RequestBody ProfileRequest req, HttpServletRequest request) {
         return authService.updateProfile(userId(request),
-                req == null ? null : req.nickname(), req == null ? null : req.avatarUrl());
+                req == null ? null : req.nickname(), req == null ? null : req.avatarUrl(),
+                req == null ? null : req.language());
     }
 
     @PutMapping("/password")

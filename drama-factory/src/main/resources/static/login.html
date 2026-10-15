@@ -87,7 +87,7 @@
     });
   });
 
-  document.querySelectorAll('.oauth-btn').forEach(function (b) {
+  document.querySelectorAll('.btn-oauth').forEach(function (b) {
     b.addEventListener('click', function () {
       var provider = b.getAttribute('data-provider');
       Auth.oauthUrl(provider).then(function (r) {

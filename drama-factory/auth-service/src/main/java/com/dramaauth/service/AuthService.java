@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -46,7 +47,7 @@ public class AuthService {
 
     /* ==================== DTO ==================== */
 
-    public record UserDto(Long id, String email, String nickname, String avatarUrl, String role) {
+    public record UserDto(Long id, String email, String nickname, String avatarUrl, String role, String language) {
     }
 
     public record TokenPair(String accessToken, String refreshToken, long expiresIn) {
@@ -135,8 +136,10 @@ public class AuthService {
         return toDto(requireUser(userId));
     }
 
+    private static final Set<String> SUPPORTED_LANGUAGES = Set.of("zh-CN", "en");
+
     @Transactional
-    public UserDto updateProfile(Long userId, String nickname, String avatarUrl) {
+    public UserDto updateProfile(Long userId, String nickname, String avatarUrl, String language) {
         User u = requireUser(userId);
         if (nickname != null && !nickname.trim().isEmpty()) {
             u.setNickname(nickname.trim());
@@ -149,7 +152,18 @@ public class AuthService {
             }
             u.setAvatarUrl(v.isEmpty() ? null : v);
         }
+        if (language != null) {
+            String lang = language.trim();
+            if (!SUPPORTED_LANGUAGES.contains(lang)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "不支持的语言");
+            }
+            u.setLanguage(lang);
+        }
         return toDto(userRepository.save(u));
+    }
+
+    private String normalizeLanguage(String language) {
+        return language == null ? "zh-CN" : language;
     }
 
     /* ==================== 改密码（敏感操作） ==================== */
@@ -236,7 +250,8 @@ public class AuthService {
     }
 
     private UserDto toDto(User u) {
-        return new UserDto(u.getId(), u.getEmail(), u.getNickname(), u.getAvatarUrl(), u.getRole());
+        return new UserDto(u.getId(), u.getEmail(), u.getNickname(), u.getAvatarUrl(), u.getRole(),
+                normalizeLanguage(u.getLanguage()));
     }
 
     private String norm(String s) {
