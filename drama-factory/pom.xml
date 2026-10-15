@@ -146,8 +146,8 @@
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <!-- v2.18：分支覆盖 87.09%（见 dod-v2.18.md）；门禁锁定 0.87 -->
-                                            <minimum>0.87</minimum>
+                                            <!-- v2.19：分支覆盖 88.09%（见 dod-v2.19.md）；门禁锁定 0.88 -->
+                                            <minimum>0.88</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
