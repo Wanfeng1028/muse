@@ -23,6 +23,17 @@
 - **auth-service 的密码不由本服务持久化。** 本服务通过 `com.dramafactory.controller.AuthProxyController` 把 `/api/auth/**` 代理给 auth-service，只是转发 Authorization 相关 cookie/header，自身不存账号密码。
 - 设置文件属于本机敏感文件，权限建议见第 5 节。
 
+### 浏览器 token 存储（httpOnly Cookie）
+
+- 浏览器侧登录态由 httpOnly Cookie 承载：`df_at`（access token，Path=/，Max-Age 为 access token 有效期）与 `df_rt`（refresh token，Path=/api/auth，Max-Age 7 天）。
+- 两个 cookie 都是 HttpOnly + SameSite=Lax，前端 JS 读不到，auth.js 不再用 localStorage 存 token；localStorage 只留 `df-theme`/`df-lang` 这类非敏感偏好。
+- BFF 代理（AuthProxyController）负责翻译：登录/刷新/OAuth 回调成功时，把响应体里的 token 剥掉，改成下发 Set-Cookie；其余 /api/auth/** 请求把 `df_at` 转成 `Authorization: Bearer` 头再发给上游；登出时下发 Max-Age=0 清 cookie。
+- Secure 标志由 `auth.cookie.secure` 控制（默认 false，环境变量 `AUTH_COOKIE_SECURE=true` 开启）；生产 HTTPS 部署开启后，浏览器只在 HTTPS 下发送 cookie。
+- CSRF 纵深：对"没有 Authorization 头、靠 cookie 认证的 POST/PUT/DELETE/PATCH /api/auth/** 请求"，校验 Origin（没有就回退 Referer）与 Host 是否同源；不一致返回 403 `{"code":"FORBIDDEN"}`。
+- 没有 Origin/Referer 的请求（比如 curl）放行；GET 请求和自带 Bearer 的请求不受这条校验影响。
+- API 客户端（非浏览器）仍可直连 auth-service（默认 :8082），用响应体里的 accessToken/refreshToken 走 `Authorization: Bearer`；浏览器和 API 两条路径并存。
+- 静默刷新：access 过期 → 前端 POST /api/auth/refresh（无 body，代理从 `df_rt` 取）→ 新 cookie 下发 → 原请求重试；refresh 也过期 → 跳登录页。
+
 ## 3. 日志脱敏策略
 
 - **可以记**：`X-Request-Id`（由 `com.dramafactory.config.RequestIdFilter` 透传或生成），用于串联一次请求。

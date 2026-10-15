@@ -44,20 +44,28 @@ public class AuthProxyController {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String authServiceUrl;
+    private final boolean cookieSecure;
 
-    @Autowired // 多构造器时显式标记 Spring 注入入口（另一个包可见构造器仅供测试）
+    @Autowired // 多构造器时显式标记 Spring 注入入口（另两个包可见构造器仅供测试）
     public AuthProxyController(
             // 默认 [::1] 而非 localhost：本沙箱的出口透明代理只拦截 IPv4 回环，IPv6 直通；
             // 生产/docker 环境无此限制，可配 http://auth:8082 等任意地址
-            @Value("${auth.service.url:http://[::1]:8082}") String authServiceUrl) {
-        this(authServiceUrl, defaultHttpClient());
+            @Value("${auth.service.url:http://[::1]:8082}") String authServiceUrl,
+            @Value("${auth.cookie.secure:false}") boolean cookieSecure) {
+        this(authServiceUrl, defaultHttpClient(), cookieSecure);
     }
 
     /** 可测性重载：测试可注入 mock/真实 HttpClient。Spring 容器仍走上方的 @Value 构造器。 */
     AuthProxyController(String authServiceUrl, HttpClient httpClient) {
+        this(authServiceUrl, httpClient, false);
+    }
+
+    /** 可测性重载：可显式指定 cookieSecure。 */
+    AuthProxyController(String authServiceUrl, HttpClient httpClient, boolean cookieSecure) {
         this.authServiceUrl = trimTrailingSlash(authServiceUrl);
         this.httpClient = httpClient;
         this.objectMapper = new ObjectMapper();
+        this.cookieSecure = cookieSecure;
     }
 
     private static HttpClient defaultHttpClient() {
@@ -80,6 +88,18 @@ public class AuthProxyController {
             body = request.getInputStream().readAllBytes();
         } catch (IOException e) {
             return upstreamUnavailable();
+        }
+
+        // CSRF 纵深防御：仅对"靠 df_at cookie 认证的浏览器写请求"做同源校验
+        if (("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)
+                || "DELETE".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method))
+                && path != null && path.startsWith("/api/auth/")
+                && request.getHeader("Authorization") == null) {
+            if (!isCsrfAllowed(request)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"code\":\"FORBIDDEN\",\"message\":\"跨站请求被拒绝\"}".getBytes(StandardCharsets.UTF_8));
+            }
         }
 
         // refresh: 从 df_rt cookie 取 refreshToken 构造请求体
@@ -224,6 +244,39 @@ public class AuthProxyController {
         return uri;
     }
 
+    /**
+     * CSRF 同源校验：Origin 优先，回退 Referer，与请求 Host 比对。
+     * 无 Origin 且无 Referer（如 curl 等非浏览器客户端）→ 放行。
+     * 解析失败、host 为空、Host 头为空或与来源 host 不一致 → 拒绝。
+     */
+    private boolean isCsrfAllowed(HttpServletRequest request) {
+        String origin = request.getHeader("Origin");
+        if (origin == null || origin.isEmpty()) {
+            origin = request.getHeader("Referer");
+        }
+        // 两者都为空，视为非浏览器客户端，放行
+        if (origin == null || origin.isEmpty()) {
+            return true;
+        }
+        String sourceHost;
+        try {
+            sourceHost = new URI(origin).getHost();
+        } catch (Exception e) {
+            return false;
+        }
+        if (sourceHost == null || sourceHost.isEmpty()) {
+            return false;
+        }
+        String hostHeader = request.getHeader("Host");
+        if (hostHeader == null || hostHeader.isEmpty()) {
+            return false;
+        }
+        // 去掉端口
+        int colonIdx = hostHeader.indexOf(':');
+        String requestHost = colonIdx >= 0 ? hostHeader.substring(0, colonIdx) : hostHeader;
+        return sourceHost.equalsIgnoreCase(requestHost);
+    }
+
     private String readCookie(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) return null;
@@ -242,6 +295,9 @@ public class AuthProxyController {
         sb.append("; HttpOnly");
         sb.append("; SameSite=Lax");
         sb.append("; Max-Age=").append(maxAge);
+        if (cookieSecure) {
+            sb.append("; Secure");
+        }
         return sb.toString();
     }
 

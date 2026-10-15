@@ -111,4 +111,6 @@ auth:
     secret: ${AUTH_JWT_SECRET:}
   # cookie.secure：生产 HTTPS 部署设为 true（环境变量 AUTH_COOKIE_SECURE=true），
   # 此时浏览器仅在 HTTPS 下发送 df_at/df_rt；本地 HTTP 开发保持 false。
+  cookie:
+    secure: ${AUTH_COOKIE_SECURE:false}
 

@@ -120,6 +120,11 @@ auth-service 独立微服务生产级补齐：Flyway 版本化迁移（`V1__base
 在线/离线双模式备份（`scripts/backup-auth.sh`，在线经 `POST /api/auth/admin/backup` 应用内热备）与恢复（`scripts/restore-auth.sh`，含恢复前快照与 sha256 校验）；
 运维手册 `docs/OPERATIONS-AUTH.md`。
 
+### 账号体系安全加固（P0-4）
+浏览器登录态全面改用 httpOnly Cookie（`df_at`/`df_rt`，前端不再经 localStorage 碰 token，access 过期静默刷新）；
+`auth.cookie.secure` 开关（生产 HTTPS 开启）；BFF 对 cookie 写请求做 Origin/Referer 同源校验防 CSRF；
+API 客户端仍可直连 auth-service 走 Bearer。详见 `docs/SECURITY_DATA.md`。
+
 ## 技术栈
 
 | 类别 | 选型 |
