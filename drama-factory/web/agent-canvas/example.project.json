@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "nodes": [
+    { "id": "n1", "kind": "script", "label": "写剧本", "x": 80, "y": 200, "status": "done" },
+    { "id": "n2", "kind": "storyboard", "label": "画分镜", "x": 300, "y": 200, "status": "done" },
+    { "id": "n3", "kind": "video", "label": "生成视频", "x": 520, "y": 200, "status": "running" },
+    { "id": "n4", "kind": "edit", "label": "剪辑成片", "x": 740, "y": 200, "status": "idle" },
+    { "id": "n5", "kind": "qc", "label": "质检过审", "x": 960, "y": 200, "status": "idle" }
+  ],
+  "edges": [
+    { "id": "e1", "source": "n1", "target": "n2" },
+    { "id": "e2", "source": "n2", "target": "n3" },
+    { "id": "e3", "source": "n3", "target": "n4" },
+    { "id": "e4", "source": "n4", "target": "n5" }
+  ]
+}

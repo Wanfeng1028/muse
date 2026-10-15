@@ -11,3 +11,6 @@ backups/
 .mvn/wrapper/maven-wrapper.jar
 !.mvn/wrapper/maven-wrapper.jar
 auth-data/
+# agent-canvas 前端构建产物
+web/agent-canvas/node_modules/
+web/agent-canvas/dist/

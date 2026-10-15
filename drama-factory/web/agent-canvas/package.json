@@ -1,0 +1,32 @@
+{
+  "name": "@playhouse/agent-canvas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "剧坊 Playhouse AI 短剧可视化编排画布 POC",
+  "type": "module",
+  "main": "dist/agent-canvas.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.12.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

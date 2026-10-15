@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://playhouse.local/schemas/canvas-project.json",
+  "title": "CanvasProject",
+  "description": "剧坊 Playhouse 可视化编排画布工程文件",
+  "type": "object",
+  "required": ["version", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "label", "x", "y", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": ["script", "storyboard", "video", "edit", "qc"]
+          },
+          "label": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "status": {
+            "type": "string",
+            "enum": ["idle", "running", "done", "failed"]
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "target"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "target": { "type": "string" }
+        }
+      }
+    }
+  }
+}

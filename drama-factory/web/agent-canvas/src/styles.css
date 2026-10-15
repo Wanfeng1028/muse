@@ -1,0 +1,28 @@
+.agent-canvas-root {
+  width: 100%;
+  height: 480px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.agent-canvas-root .agent-canvas-node {
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.agent-canvas-root .agent-canvas-node:hover {
+  border-color: #9ca3af;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.agent-canvas-root .react-flow__node.selected .agent-canvas-node {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* @xyflow/react v12 自带样式不给 .react-flow 设宽高，必须显式填满父容器 */
+.agent-canvas-root .react-flow {
+  width: 100%;
+  height: 100%;
+}
