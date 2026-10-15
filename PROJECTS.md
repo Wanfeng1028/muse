@@ -71,7 +71,7 @@
 8. 附件支持（v0.3.0）：`POST /api/notes/{id}/attachments` 上传（multipart，默认 ≤10MB、`SB_ATTACH_MAX_MB` 可调，扩展名白名单 + 文件名消毒 + 图片 MIME 嗅探）、列表/下载/删除接口、`attachments` 表（sha256）、删笔记级联清附件目录；正文 `![说明](attachment:{id})` 渲染内联图片；编辑区附件区（上传入口、缩略图、插入引用/下载/删除）
 9. 导出（v0.3.0）：`GET /api/export/json`（全库 JSON 含标签与附件元数据）、`GET /api/export/markdown`（zip：index.md + notes/ 带 front matter 的 .md + attachments/ 原文件，引用改写相对路径，ZipSlip 防护）；侧边栏导出按钮
 
-**状态**：v0.4.0「主动复习外部推送」（2026-10-16）：go build/vet/gofmt/test 全过（104 个测试，0 失败，新增 36）；真实服务冒烟：webhook 接收桩真实收到 X-Event/X-Signature 与完整 payload（HTML 转义正确）、调度器按配置时间真实触发推送、push_log 记 sent、幂等生效；推送设置页真实截图亲眼验收通过（docs/screenshots/push-settings.png）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md。
+**状态**：v0.5.0「反向链接面板」（2026-10-16）：`internal/store/backlinks.go`（`Backlink` + `Backlinks(noteID)` 按引用者 id 倒序 + `buildSnippet` rune 安全取 `[[标题]]` 行前后 40 字）+ `GET /api/notes/{id}/backlinks`（不存在 404、无人引用 200 `[]`）+ 前端编辑区附件区下方反向链接区（引用者标题+上下文，点击跳转，沿用 attach 视觉体系）；`go test ./...` 全量 **114/114**（v0.4.0 的 104 + 新增 10：store 6 + api 4，真实 HTTP），`go vet`/`gofmt` 全洁；真实冒烟（3 篇真实笔记 → 2 条反向链接 id 倒序、snippet 中文正确）；Playwright 真实点击跳转 INTERACT PASS；`docs/screenshots/backlinks.png` 亲眼验收通过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`（结论可发版）。本轮教训：`apply_dpsk_sb.py` 不认 `--dry-run`（"试运行"实际已应用，致路由双注册 ServeMux panic，手工删重复块）；dpsk 猜错 `newTestServer` 签名（编排手工重写测试）；截图 harness 模板字符串 `` `/api/ `` 也要改写绝对地址。
 
 **里程碑记录**：
 
@@ -79,6 +79,7 @@
 - v0.2.0 主动复习引擎（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；SM-2 纯函数包 + 6 确定性单测；`reviews` 表与 4 组 API + store/api 集成测试；抽认卡复习视图 + 每日回顾 digest；Web 三件套一致性重建——修了 v1 遗留的 4 个真实 bug（①JS/HTML id 全错位致 UI 不可用；②`GET /` 被 Go FileServer 对 `/index.html` 发 301 到 `./` 致首页打不开，改直读文件；③`review.go` 在 rows 未关闭时嵌套查询，`:memory:` 下换连接报 no such table；④CSS 的 display 规则覆盖 `[hidden]` 致翻面/完成态同屏）；README 补复习章节 + API 表 + 截图；CHANGELOG.md 新增
 - v0.3.0 附件与导出（2026-10-15）：`internal/store/attachment.go`（attachments 表 + CRUD + 删笔记清附件目录）与 `internal/api/attachment.go`（上传 413/415/400/404、MIME 嗅探、文件名消毒）+ `internal/api/export.go`（JSON / Markdown zip，分页拉取、ZipSlip 防护、引用改写）；markdown 渲染 `attachment:{id}`（图片/下载链接，顺序先于 reLink）；前端附件区 + 侧边栏导出区（沿用现有视觉体系）；68 测试全过；README/CHANGELOG/对照报告齐备
 - v0.4.0 主动复习外部推送（2026-10-16）：internal/notify（Sender 接口 + SMTP(net/smtp)/Webhook 双实现 + BuildDigestMessage 纯函数，HTML 转义防 XSS）+ internal/push（NextPushTime 纯函数 + 30s tick Scheduler + RunPush 幂等）+ store(push_settings/push_log 表，ON CONFLICT 更新）+ api（GET/PUT /api/push/settings 脱敏+白名单、POST /api/push/test 假数据真发、GET /api/push/history）+ config（12 个 SB_PUSH_*/SB_SMTP_*/SB_WEBHOOK_* 变量，启用时 fail-fast）+ main.go 调度器启停 + 推送设置页 Web UI（沿用现有视觉体系）；104 测试全过（新增 36：notify 8 + 调度单测 + api 集成含自研 fake SMTP 与 webhook 验签）；真实冒烟：webhook 真实接收、调度器定时真实触发、push_log sent；1 张真实截图亲眼验收；README/CHANGELOG/对照报告齐备。本轮教训：dpsk 首版 api/push.go 留糊弄占位（打回重做一轮）；两批 dpsk 间 webhook 契约错位（X-Event 头/X-Signature 前缀/due_count 空载荷，编排统一）；Go 1.22+ ServeMux 无方法前缀路由与 `GET /` 冲突（改方法前缀注册）；config 推送校验未启用时也 fail-fast（改仅启用时校验）。
+- v0.5.0 反向链接面板（2026-10-16）：见"状态"节。
 
 **后续计划**：
 
