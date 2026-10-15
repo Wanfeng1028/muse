@@ -35,7 +35,7 @@
 5. 真题计时与得分统计
 6. 仪表盘（初试倒计时与全局概览）
 
-**状态**：工程化 v1（2026-10-13 完成全栈重构，后端 API 与前端构建、集成测试均已跑通）。
+**状态**：v1.1.0「数据导入导出」（2026-10-15）：后端 4 个备份/导入端点 + 前端 /data 三卡片页；服务端 22/22 测试通过、前端 tsc 零错；真实冒烟 6 项全过；2 张真实截图亲眼验收；README/CHANGELOG 同步。
 
 **UI 重设计 v4（Tabler 组件库）**
 
@@ -45,10 +45,10 @@
 
 - 里程碑 1（2026-10-13）：静态单页版落地（localStorage 存储），同日被工程化重构取代，仅作历史记录
 - 工程化重构 v1（2026-10-13）：前后端分离、SQLite 持久化、vitest 集成测试、GitHub Actions CI、Dockerfile
+- **v1.1.0「数据导入导出」（2026-10-15，路线图第 2 项交付）**：后端 `apps/server/src/routes/backup.ts`——`GET /api/backup/export`（kaoyan-backup v1，7 表）、`POST /api/backup/import`（replace 事务全量替换 / merge 去重合并，逐行校验）、`POST /api/import/words` + `POST /api/import/mistakes`（CSV 导入：表头校验/空行跳过/错误行报告，subject 仅 math/english/politics/major）；前端 `DataTransfer.tsx`（/data 路由 + 导航「数据导入导出」，备份与恢复/单词 CSV/错题 CSV 三卡片，覆盖恢复二次确认，模板下载）；`tests/backup.test.ts` 13 例，服务端全量 22/22 通过，前端 tsc 零错；真实服务冒烟 6 项全过（导出/单词 CSV/错题 CSV/merge/replace 回导）；2 张真实截图亲眼验收通过（默认态 + 导入结果态）；README 功能/API/目录/路线图同步，CHANGELOG.md 新建。本轮修截图链路两处：上一轮遗留的两张截图为空白页（服务未就绪即截图），本轮用 route 拦截 harness（文档/静态读盘、/api 经 Node 代理，绕过 Chromium 152 LNA 拦截）重拍；另发现 Playwright 多 route 匹配时后注册优先，静态 route 曾吞掉 /api 代理
 
 **后续计划**：
 
-- 数据导入/导出
 - 考研核心 500 词词库扩充
 - 周报视图
 - 深色模式
