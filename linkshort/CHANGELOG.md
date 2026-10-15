@@ -4,7 +4,28 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.3.0] - 2026-10-15
+
+### 新增
+
+- burn 销毁后彻底删除（可选）：环境变量 `LINKSHORT_BURN_PURGE_AFTER_DESTROY`（默认 false）。设为 true 时 burn 链首次访问 302 后行被彻底删除（visits 级联清除），之后再访 404；默认 false 保持 v1.2 行为（仅禁用、410、数据留档）。
+- `GET /api/meta` 新增 `burn_purge_after_destroy` 字段；Prometheus 新增 `linkshort_burn_links_purged_total`。
+- 详情页 burn 链接显示销毁行为（"销毁后彻底删除" / "销毁后仅禁用、数据留档"）。
+- `scripts/backup.sh` / `scripts/restore.sh`：在线备份（sqlite3 `.backup` + integrity_check + `--keep-days` 默认 7）与恢复（`--force` 安全门、`--dry-run`、恢复前后 integrity_check、旧库 `.broken-` 快照）；`make backup` / `make restore BACKUP=...`。
+- docs/OPERATIONS.md：备份恢复改走脚本 + 2026-10-15 真实演练输出归档；新增 burn purge 行为与数据影响说明。
+- 新增 6 例测试（store PurgeLink 2、handler 跳转 purge 语义 2 + meta 1、metrics purged 指标 1）；`go test ./... -race` 58 例全过。
+
+### 变更
+
+- 无破坏性变更。默认配置下所有行为与 v1.2 一致。
+
+### 已知缺口
+
+- 高并发 clicks 检查仍未做分布式锁（单连接串行写入缓解）。
+- restore.sh 目标 DB 不存在时提示文案小瑕疵（打印了不存在的快照路径）。
+
 ## [v1.2.0] - 2026-10-14
+
 
 ### 新增
 

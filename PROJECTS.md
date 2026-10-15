@@ -318,7 +318,7 @@
 
 **定位**：自托管短链服务，把长链接变成短地址；单二进制 + SQLite + 内嵌 Web UI，跑起来就能用。
 
-**技术栈**：Go 1.23 单二进制；chi v5.3.2 路由（组件库多元化：与 second-brain/sentinel 的标准库 net/http 错开），modernc.org/sqlite v1.34.5（纯 Go SQLite 驱动，无需 cgo）；skip2/go-qrcode 服务端生成二维码 PNG；go:embed 内嵌 Web UI；go test（24 例）、go vet、gofmt；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 linkshort/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。选型经三步调研：dpsk 出候选清单与对比维度（chi/gin/echo/fiber、skip2/go-qrcode/boombuler/yeqown）→ Keenable 核验时效性（chi v5.3.2 2026-09 发布、活跃维护；qrcode 为短链场景事实标准）→ go get 实际安装验证通过。选 chi 而非 gin/echo：一句话——单二进制小服务，chi 零第三方依赖、纯 net/http 兼容，与"一个二进制跑起来"的气质最贴合。
+**技术栈**：Go 1.23 单二进制；chi v5.3.2 路由（组件库多元化：与 second-brain/sentinel 的标准库 net/http 错开），modernc.org/sqlite v1.34.5（纯 Go SQLite 驱动，无需 cgo）；skip2/go-qrcode 服务端生成二维码 PNG；go:embed 内嵌 Web UI；go test（58 例，-race 全过）、go vet、gofmt；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 linkshort/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。选型经三步调研：dpsk 出候选清单与对比维度（chi/gin/echo/fiber、skip2/go-qrcode/boombuler/yeqown）→ Keenable 核验时效性（chi v5.3.2 2026-09 发布、活跃维护；qrcode 为短链场景事实标准）→ go get 实际安装验证通过。选 chi 而非 gin/echo：一句话——单二进制小服务，chi 零第三方依赖、纯 net/http 兼容，与"一个二进制跑起来"的气质最贴合。
 
 **功能模块**：
 
@@ -336,6 +336,7 @@
 
 **状态**：工程化 v1（2026-10-13 完成，go test 24 例全过、vet/gofmt 全洁、真实服务冒烟：建链→302 跳转→点击计数→二维码→统计→CSV 往返全链路验证；4 张 Web UI 真实截图已亲眼验收）。
 **生产级补强 v1.2「可观测 + 限流 + 韧性」（2026-10-14）**：零依赖手写 Prometheus `/metrics`（请求/跳转/burn/限流拒绝计数、路由 label 归一化）；IP+Key 双维度令牌桶限流（429+Retry-After，/metrics 与探针免限流，RPS/BURST/开关走环境变量）；`/readyz` 就绪探针（DB ping 通 200 否则 503）+ `store.Ping()`；失败注入测试（关库后跳转/建链 500、health 200、readyz 503、metrics 200，全程不 panic）；CSV 导入导出扩展 7 列（兼容旧 5 列）；`docs/OPERATIONS.md` 运维手册（部署/备份恢复/升级/监控/排障/限流调参）；新增 24 例、`-race` 全过；真实服务冒烟 6 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`（结论可发版，v1.1 条件项全部关闭）。
+**生产级补强 v1.3「彻底删除 + 备份演练」（2026-10-15）**：burn 销毁后支持彻底删除，`LINKSHORT_BURN_PURGE_AFTER_DESTROY` 默认 false、开=true 时 302 后硬删除并返回 404，默认行为不变；新增 `scripts/backup.sh`/`restore.sh`（在线备份、`--force` 安全门、`--dry-run`、integrity_check、`.broken-` 快照，`make backup`/`make restore`）；`GET /api/meta` 增加 `burn_purge_after_destroy`；Prometheus 增加 `linkshort_burn_links_purged_total`；详情页 burn 链接显示销毁行为文案；go build/vet/gofmt 全洁，`go test ./... -race` 58 例全过（新增 6 例），真实服务冒烟 8 项全过，4 张 Web UI 截图逐张人工验收；发版对照报告见 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`（结论可发版；v1.2 遗留的“备份恢复未做自动化演练”未通过项已关闭）。
 
 **生产级补强 v1.1「阅后即焚 + 限次访问」（2026-10-14，灵魂功能落地）**：`links` 新增 `max_visits`（NULL=不限）、`burn`（0/1）两列 + `PRAGMA user_version` 版本化迁移（v1→v2，老库自动 ALTER，实测老数据保留）；跳转语义：burn 链首次 302 后自动禁用、再访 410"链接已阅销毁"，max_visits=N 时前 N 次 302、第 N+1 次 410"链接已达访问上限"（burn 的 410 检查在禁用 404 之前）；`store.CreateLinkEx/UpdateLinkEx/MarkBurned`（旧签名保持委托不变）；API：POST/PATCH 接受 `max_visits`（1~1000000 正整数）、`burn`，非法组合 400；响应新增 `max_visits/burn/remaining` 字段；Web UI：新建页"限次访问"输入+"阅后即焚"复选框（互斥联动）、列表页"限制"列徽标（阅后即焚/已销毁/限N次·剩M次/不限）、详情页"访问限制"行+保存/清除；`go test ./...` 全过（新增 10 例：store 4 + handler 6）；真实服务冒烟全链路验证（302→410 语义、PATCH 改限次/清除、老库迁移）；3 张新截图亲眼验收通过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.1.md`（有条件发版：失败注入//metrics/运维手册/限流排期 v1.2，CSV 未带新字段）；CHANGELOG.md 新建。
 
@@ -343,13 +344,15 @@
 
 - 工程化 v1（2026-10-13）：chi 路由 + 分层架构落地（config/db/model/store/handler/util/qr），短链 CRUD/跳转/统计/二维码/导入导出全模块、内嵌四页 Web UI、CI 与多阶段 Dockerfile 就绪
 - v1.1 阅后即焚 + 限次访问（2026-10-14）：灵魂定位核心功能落地；dpsk 4 批生成（数据层/HTTP 层/前端/文档），回喂 2 轮修签名错配，编排手工修 3 处机械问题（残留分隔符、strconv→itoa、围栏残留）
+- v1.3 彻底删除 + 备份演练（2026-10-15）：dpsk 分 5 批生成（purge 代码/备份脚本/测试/文档/UI 小改），测试回喂 3 轮（dpsk 编造 API、helper 错用，编排按流程回喂；最后一处 helper 编排按仓库现有模式机械替换），真实服务冒烟 8 项与 4 张截图人工验收通过
 
 **后续计划**：
 
 - 密码保护短链
 - 访问地域统计
 - 公开 API 文档页
-- v1.2：失败注入测试、/metrics、运维手册、限流、CSV 带新字段
+- purge 定时清理任务（已销毁 burn 链兜底清理）
+- 备份失败告警通知
 
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 

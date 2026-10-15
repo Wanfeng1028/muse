@@ -16,8 +16,13 @@
   }
 
   // 加载详情
+  var burnPurge = false;
   function loadDetail() {
-    api("/api/links/" + encodeURIComponent(id)).then(function (data) {
+    api("/api/meta").then(function (meta) {
+      burnPurge = !!(meta && meta.burn_purge_after_destroy);
+    }).catch(function () {}).then(function () {
+      return api("/api/links/" + encodeURIComponent(id));
+    }).then(function (data) {
       if (!data) return;
       fill(data);
     }).catch(function (err) {
@@ -92,7 +97,9 @@
     var editBurn = document.getElementById("edit-burn");
     if (limitsText) {
       if (data.burn) {
-        limitsText.textContent = data.enabled ? "阅后即焚（待访问，一次性）" : "阅后即焚（已销毁）";
+        var burnState = data.enabled ? "阅后即焚（待访问，一次性）" : "阅后即焚（已销毁）";
+        burnState += burnPurge ? "，销毁后彻底删除" : "，销毁后仅禁用、数据留档";
+        limitsText.textContent = burnState;
       } else if (data.max_visits != null) {
         limitsText.textContent = "限 " + data.max_visits + " 次，剩余 " + (data.remaining != null ? data.remaining : "—") + " 次";
       } else {

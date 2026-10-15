@@ -355,6 +355,23 @@ func (s *Store) MarkBurned(id int64) error {
 	return nil
 }
 
+// PurgeLink 彻底删除一条链接。visits 表的外键 ON DELETE CASCADE 会级联删除该链接的访问日志。
+// 行不存在时返回 ErrNotFound。调用方负责只对 burn=1 且已销毁的链接调用。
+func (s *Store) PurgeLink(id int64) error {
+	res, err := s.db.Exec(`DELETE FROM links WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("purge link: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // DeleteLink 删除短链，visits 通过外键 ON DELETE CASCADE 自动级联删除。
 func (s *Store) DeleteLink(id int64) error {
 	res, err := s.db.Exec(`DELETE FROM links WHERE id = ?`, id)

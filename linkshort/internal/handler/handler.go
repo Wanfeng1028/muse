@@ -72,7 +72,10 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		// 就绪探针：DB 连通才 200，否则 503。
 		api.Get("/readyz", func(w http.ResponseWriter, req *http.Request) { handleReadyz(w, req, st) })
 		api.Get("/meta", func(w http.ResponseWriter, req *http.Request) {
-			writeJSON(w, http.StatusOK, map[string]any{"base_url": shortBaseURL(req, cfg)})
+			writeJSON(w, http.StatusOK, map[string]any{
+				"base_url":                 shortBaseURL(req, cfg),
+				"burn_purge_after_destroy": cfg.BurnPurgeAfterDestroy,
+			})
 		})
 
 		api.Post("/links", func(w http.ResponseWriter, req *http.Request) { handleCreateLink(w, req, st, cfg) })
@@ -93,7 +96,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	})
 
 	// 短链跳转（放最后，避免覆盖已注册前缀）。
-	r.Get("/{slug}", func(w http.ResponseWriter, req *http.Request) { handleRedirect(w, req, st) })
+	r.Get("/{slug}", func(w http.ResponseWriter, req *http.Request) { handleRedirect(w, req, st, cfg) })
 
 	return r
 }
@@ -212,7 +215,7 @@ func parseID(r *http.Request) (int64, bool) {
 // handleRedirect 处理短链跳转。
 // 并发说明：两次并发访问可能都通过 clicks 检查（单连接串行写入缓解，
 // 未做分布式锁，文档已注明）。
-func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
+func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
 	slug := chi.URLParam(r, "slug")
 	link, err := st.GetLinkBySlug(slug)
 	if err != nil {
@@ -259,6 +262,13 @@ func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store) {
 			log.Printf("handler: 标记阅后销毁失败 link=%d: %v", link.ID, err)
 		} else {
 			metrics.Default.IncBurned()
+			if cfg.BurnPurgeAfterDestroy {
+				if perr := st.PurgeLink(link.ID); perr != nil {
+					log.Printf("handler: 彻底删除已销毁链接失败 link=%d: %v", link.ID, perr)
+				} else {
+					metrics.Default.IncBurnPurged()
+				}
+			}
 		}
 	}
 

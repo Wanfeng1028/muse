@@ -25,6 +25,9 @@ type Registry struct {
 	redirects map[string]int64
 	// burnLinksBurned 统计成功执行 MarkBurned 的次数。
 	burnLinksBurned int64
+
+	// burnLinksPurged 统计 burn 销毁后彻底删除（purge）的次数。
+	burnLinksPurged int64
 	// rateLimitRejected 统计限流拒绝次数（供后续任务使用）。
 	rateLimitRejected int64
 	// startTime 记录进程启动的 unix 秒。
@@ -84,6 +87,13 @@ func (m *Registry) IncBurned() {
 	m.mu.Unlock()
 }
 
+// IncBurnPurged 记录一次 burn 销毁后的彻底删除。
+func (m *Registry) IncBurnPurged() {
+	m.mu.Lock()
+	m.burnLinksPurged++
+	m.mu.Unlock()
+}
+
 // IncRateLimitRejected 记录一次限流拒绝。
 func (m *Registry) IncRateLimitRejected() {
 	m.mu.Lock()
@@ -104,6 +114,7 @@ func (m *Registry) Handler() http.HandlerFunc {
 			redirects[k] = v
 		}
 		burned := m.burnLinksBurned
+		purged := m.burnLinksPurged
 		rejected := m.rateLimitRejected
 		startTime := m.startTime
 		m.mu.Unlock()
@@ -146,6 +157,10 @@ func (m *Registry) Handler() http.HandlerFunc {
 		b.WriteString("# HELP linkshort_burn_links_burned_total 成功执行阅后销毁的次数。\n")
 		b.WriteString("# TYPE linkshort_burn_links_burned_total counter\n")
 		fmt.Fprintf(&b, "linkshort_burn_links_burned_total %d\n", burned)
+
+		b.WriteString("# HELP linkshort_burn_links_purged_total burn 销毁后彻底删除的次数。\n")
+		b.WriteString("# TYPE linkshort_burn_links_purged_total counter\n")
+		fmt.Fprintf(&b, "linkshort_burn_links_purged_total %d\n", purged)
 
 		b.WriteString("# HELP linkshort_rate_limit_rejected_total 被限流拒绝的请求数。\n")
 		b.WriteString("# TYPE linkshort_rate_limit_rejected_total counter\n")

@@ -98,12 +98,41 @@ services:
 | `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流令牌桶每秒补充速率（v1.2 新增） |
 | `LINKSHORT_RATE_LIMIT_BURST` | `40` | 限流令牌桶容量，允许的瞬时突发量（v1.2 新增） |
 | `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否开启限流（v1.2 新增），`true`/`false` |
+| `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
+
 
 限流按 IP + API Key 两个维度分别做令牌桶；`/metrics`、`/api/health`、`/api/readyz` 三个路径免限流。
 
 ---
 
 ## 3. 备份与恢复
+
+现在有 `scripts/backup.sh` 和 `scripts/restore.sh` 两个脚本，用法 `make backup` / `make restore BACKUP=...`。脚本行为：
+
+1. 在线备份，用 sqlite3 `.backup`，不用停服。
+2. 备份文件命名 `linkshort-YYYYmmdd-HHMMSS.db`。
+3. 备份自带 `PRAGMA integrity_check` 校验；`--keep-days N` 默认 7 天，只删自己命名格式的旧文件。
+4. 恢复默认拒绝执行，必须加 `--force`。
+5. 恢复先 integrity_check 备份，现有 DB 先做 `.broken-<时间戳>` 快照，清 WAL/SHM，恢复后再次 integrity_check；支持 `--dry-run` 只打印步骤不动数据。
+
+### 自动化演练实测（2026-10-15）
+
+```
+[backup] 源: /home/hatch/workspace/muse-build/linkshort-v13/smoke/smoke.db
+[backup] 目标: .../backups/linkshort-20261014-234826.db
+[backup] 使用 sqlite3 在线备份(.backup)...
+[backup] 校验备份完整性(PRAGMA integrity_check)...
+[backup] 完成: .../backups/linkshort-20261014-234826.db
+[backup] 清理超过 7 天的备份...
+[backup] 成功
+```
+
+```
+$ ./scripts/restore.sh <备份>            → 拒绝，exit=3（"请先停服, 然后加 --force 重试"）
+$ ./scripts/restore.sh <备份> --dry-run   → 只打印步骤，exit=0，未做任何修改
+$ 停服 → rm smoke.db* → ./scripts/restore.sh <备份> --force → 备份校验通过 → 跳过快照(目标不存在) → 写入 → 恢复后校验通过 → 成功，exit=0
+$ 重启后验证：/api/readyz 200；overview {"enabled_links":2,"links":3,"today_clicks":6,"total_clicks":6}；/smk-plain 302；/smk-burn1 410
+```
 
 数据库是单个 SQLite 文件（默认 `./data/linkshort.db`）。备份方式两种，任选，推荐在线 `.backup`。
 
@@ -153,7 +182,19 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 
 ---
 
+### 3.5 burn 销毁后彻底删除（v1.3）
+
+开关：环境变量 `LINKSHORT_BURN_PURGE_AFTER_DESTROY`，默认 `false`。
+
+- `true`：burn 链首次访问 302 后，行被彻底 DELETE；visits 表通过外键 ON DELETE CASCADE 级联清掉访问日志。之后再访是 404（不是 410）。
+- `false`：行为与 v1.2 完全一致——销毁后仅禁用，返回 410「链接已阅销毁」，数据留档。
+
+数据影响：purge 开启后，该链接的 clicks 会从总览统计里消失，总点击/今日点击/Top 链接/Top Referer 都会跟着变。审计需求强的场景保持默认 `false`。
+
+`GET /api/meta` 新增 `burn_purge_after_destroy` 字段，暴露当前开关状态。Prometheus 新增 `linkshort_burn_links_purged_total` 计数器。详情页 burn 链接显示对应文案："销毁后彻底删除" 或 "销毁后仅禁用、数据留档"。
+
 ## 4. 升级
+
 
 ### 4.1 迁移机制
 

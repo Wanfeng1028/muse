@@ -33,7 +33,8 @@
 - **统计**：总览、30 天点击曲线、Top 链接、Top Referer
 - **过期时间**：到期后返回 410
 - **限次访问**：设置最多可访问 N 次，超限返回 410
-- **阅后即焚**：一次性链接，首次访问后自动失效，再访返回 410
+- **阅后即焚**：一次性链接，首次访问后自动失效，再访返回 410（可配销毁后彻底删除）
+
 
 - **启用/禁用开关**：随时停用一条链接
 - **二维码**：服务端直接生成 PNG
@@ -93,6 +94,8 @@ docker run -d \
 | `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流速率，每秒补充的 token 数 |
 | `LINKSHORT_RATE_LIMIT_BURST` | `40` | 令牌桶容量，允许的突发请求数 |
 | `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否启用限流（IP + API Key 双维度） |
+| `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
+
 
 `LINKSHORT_BASE_URL` 不填时，短地址用请求里的 Host 拼。
 

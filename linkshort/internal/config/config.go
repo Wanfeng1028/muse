@@ -18,6 +18,8 @@ type Config struct {
 	RateLimitRPS     float64 // 限流速率，每秒 token 数
 	RateLimitBurst   int     // 令牌桶容量
 	RateLimitEnabled bool    // 是否启用限流
+
+	BurnPurgeAfterDestroy bool // burn 销毁后是否彻底删除行（默认 false）
 }
 
 // 环境变量名。
@@ -30,6 +32,8 @@ const (
 	envRateLimitRPS     = "LINKSHORT_RATE_LIMIT_RPS"
 	envRateLimitBurst   = "LINKSHORT_RATE_LIMIT_BURST"
 	envRateLimitEnabled = "LINKSHORT_RATE_LIMIT_ENABLED"
+
+	envBurnPurgeAfterDestroy = "LINKSHORT_BURN_PURGE_AFTER_DESTROY"
 )
 
 // getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
@@ -83,8 +87,11 @@ func FromEnv() *Config {
 		RateLimitRPS:     getenvFloatDefault(envRateLimitRPS, 20),
 		RateLimitBurst:   getenvIntDefault(envRateLimitBurst, 40),
 		RateLimitEnabled: getenvBoolDefault(envRateLimitEnabled, true),
+
+		BurnPurgeAfterDestroy: getenvBoolDefault(envBurnPurgeAfterDestroy, false),
 	}
 	if cfg.AdminKey == "" {
+
 		generated, err := generateAdminKey()
 		if err != nil {
 			// 无法生成密钥时属于严重问题，直接以日志暴露并终止。

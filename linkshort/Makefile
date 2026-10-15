@@ -1,7 +1,7 @@
 GO ?= go
 BIN := bin/linkshort
 
-.PHONY: run build test vet fmt tidy docker clean
+.PHONY: run build test vet fmt tidy docker clean backup restore
 
 run:
 	$(GO) run ./cmd/linkshort
@@ -27,3 +27,11 @@ docker:
 
 clean:
 	rm -rf bin
+
+backup:
+	./scripts/backup.sh
+
+restore:
+	@if [ -z "$(BACKUP)" ]; then echo "用法: make restore BACKUP=backups/linkshort-YYYYmmdd-HHMMSS.db"; exit 2; fi
+	./scripts/restore.sh $(BACKUP) --force
+
