@@ -8,6 +8,7 @@ import Pomodoro from './pages/Pomodoro';
 import Mistakes from './pages/Mistakes';
 import Words from './pages/Words';
 import Exams from './pages/Exams';
+import DataTransfer from './pages/DataTransfer';
 
 // 导航项定义
 const NAV_ITEMS = [
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/mistakes', label: '错题本', end: false },
   { to: '/words', label: '单词 SRS', end: false },
   { to: '/exams', label: '真题统计', end: false },
+  { to: '/data', label: '数据导入导出', end: false },
 ];
 
 // 计算距考试日期剩余天数（按自然日）
@@ -85,6 +87,7 @@ export default function App() {
           <Route path="/mistakes" element={<Mistakes />} />
           <Route path="/words" element={<Words />} />
           <Route path="/exams" element={<Exams />} />
+          <Route path="/data" element={<DataTransfer />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

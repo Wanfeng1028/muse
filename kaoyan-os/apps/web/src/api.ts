@@ -19,6 +19,29 @@ import type {
   Settings,
 } from '@kaoyan/shared';
 
+export interface BackupPayload {
+  format: string;
+  version: number;
+  exportedAt: string;
+  tables: Record<string, Array<Record<string, unknown>>>;
+}
+export interface BackupImportResult {
+  mode: 'replace' | 'merge';
+  imported: Record<string, number>;
+  skipped: Record<string, number>;
+}
+export interface WordsImportResult {
+  imported: number;
+  skippedEmpty: number;
+  skippedExisting: number;
+  errors: Array<{ row: number; message: string }>;
+  errorRows: number;
+}
+export interface MistakesImportResult {
+  imported: number;
+  errors: Array<{ row: number; message: string }>;
+  errorRows: number;
+}
 const BASE = '/api';
 
 // 通用请求封装：自动 JSON、错误解析、204 处理
@@ -115,4 +138,21 @@ export const api = {
   getSettings: () => request<Settings>('/settings'),
   updateSettings: (patch: Partial<Settings>) =>
     request<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(patch) }),
+  // 备份与导入
+  exportBackup: () => request<BackupPayload>('/backup/export'),
+  importBackup: (data: unknown, mode: 'replace' | 'merge') =>
+    request<BackupImportResult>('/backup/import', {
+      method: 'POST',
+      body: JSON.stringify({ data, mode }),
+    }),
+  importWordsCsv: (csv: string) =>
+    request<WordsImportResult>('/import/words', {
+      method: 'POST',
+      body: JSON.stringify({ csv }),
+    }),
+  importMistakesCsv: (csv: string) =>
+    request<MistakesImportResult>('/import/mistakes', {
+      method: 'POST',
+      body: JSON.stringify({ csv }),
+    }),
 };
