@@ -2,6 +2,8 @@
 pub mod config;
 pub mod db;
 pub mod handlers;
+pub mod log;
+pub mod migrate;
 pub mod models;
 
 use std::sync::{Arc, Mutex};
@@ -54,6 +56,7 @@ pub fn build_app(state: Arc<AppState>) -> Router {
 
     Router::new()
         .route("/api/health", get(handlers::health))
+        .route("/api/readyz", get(handlers::readyz))
         .route("/api/apps", get(handlers::list_apps))
         .route("/api/fs", get(handlers::list_fs).post(handlers::create_fs))
         .route(
@@ -74,6 +77,7 @@ pub fn build_app(state: Arc<AppState>) -> Router {
         .route("/api/stats", get(handlers::get_stats))
         .route("/ws", get(handlers::ws_handler))
         .fallback_service(serve_dir)
+        .layer(axum::middleware::from_fn(crate::log::request_log_middleware))
         .layer(CorsLayer::permissive())
         .with_state(state)
 }

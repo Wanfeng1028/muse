@@ -1,0 +1,30 @@
+services:
+  mini-os:
+    build: .
+    ports:
+      - "8090:8090"
+    environment:
+      PORT: "8090"
+      DATABASE_PATH: /app/data/mini-os.db
+      STATIC_DIR: /app/static/
+      SHUTDOWN_TIMEOUT_SECS: "30"
+    volumes:
+      - ./data:/app/data
+      - ./backups:/app/backups
+    restart: unless-stopped
+    # 说明：bookworm-slim 基础镜像默认不含 curl / wget / python3，
+    # 无法在容器内做进程内 HTTP 探活，因此这里不配置 healthcheck。
+    # 请从宿主机执行探活：
+    #   curl -f http://127.0.0.1:8090/api/readyz
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
+        reservations:
+          memory: "128M"

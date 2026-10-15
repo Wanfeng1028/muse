@@ -7,6 +7,7 @@ pub struct Config {
     pub database_path: String,
     pub static_dir: String,
     pub upload_max_bytes: u64,
+    pub shutdown_timeout_secs: u64,
 }
 
 impl Config {
@@ -27,11 +28,17 @@ impl Config {
             .and_then(|v| v.parse::<u64>().ok())
             .unwrap_or(50 * 1024 * 1024);
 
+        let shutdown_timeout_secs = env::var("SHUTDOWN_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(30);
+
         Config {
             port,
             database_path,
             static_dir,
             upload_max_bytes,
+            shutdown_timeout_secs,
         }
     }
 }

@@ -85,6 +85,8 @@ http://localhost:8090
 | `DATABASE_PATH` | `data/mini-os.db` | SQLite 数据库文件路径，目录不存在时自动创建 |
 | `STATIC_DIR` | `static` | 静态资源目录，提供 `index.html` 等前端文件 |
 | `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
+| `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒），只约束排空、不掐正常服务 |
+
 
 
 
@@ -174,7 +176,8 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 
 ## 数据与备份
 
-所有持久化数据都在一个 SQLite 文件里（默认 `data/mini-os.db`），包含 `vfs_nodes` 与 `settings` 两张表。备份时直接拷贝该文件即可；恢复时把文件放回 `DATABASE_PATH` 指向的位置再启动服务。SQLite 使用 bundled 版本，迁移到其他机器时无需额外安装数据库。
+所有持久化数据都在一个 SQLite 文件里（默认 `data/mini-os.db`），包含 `vfs_nodes`、`settings` 与 `schema_migrations`（版本化迁移 001/002，老库启动自动升级）三张表。在线备份：`mini-os backup --db <库> --out <备份>`（或 `scripts/backup.sh` 一键备份，保留最近 7 个）；恢复：`scripts/restore.sh <备份> --force`（恢复前请先停服务，CLI 会自动做完整性校验与原库快照）。探针：`GET /api/health`（存活）、`GET /api/readyz`（就绪，DB 不可用时 503）。日志为 JSONL（stderr），每行带 `request_id`，详见 `docs/OPERATIONS.md`。
+
 
 ## 路线图
 

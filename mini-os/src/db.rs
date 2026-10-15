@@ -1,7 +1,9 @@
 // src/db.rs
-// 数据库打开与种子数据初始化
+// 数据库打开、迁移、备份与完整性校验
 
-use rusqlite::{params, Connection};
+use std::time::Duration;
+
+use rusqlite::{backup::Backup, params, Connection, OpenFlags};
 
 /// 打开数据库连接，必要时创建父目录并建表
 pub fn open_db(path: &str) -> rusqlite::Result<Connection> {
@@ -19,54 +21,8 @@ pub fn open_db(path: &str) -> rusqlite::Result<Connection> {
     // 开启外键约束
     conn.execute("PRAGMA foreign_keys = ON", [])?;
 
-    // 建表：虚拟文件系统节点
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS vfs_nodes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            parent_id INTEGER REFERENCES vfs_nodes(id) ON DELETE CASCADE,
-            name TEXT NOT NULL,
-            kind TEXT NOT NULL CHECK(kind IN ('file','folder')),
-            content TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )",
-        [],
-    )?;
-
-    // 建表：设置键值
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-        )",
-        [],
-    )?;
-
-    // 幂等迁移：vfs_nodes 增加 content_blob / mime_type 列
-    {
-        let mut stmt = conn.prepare("PRAGMA table_info(vfs_nodes)")?;
-        let mut has_blob = false;
-        let mut has_mime = false;
-        let mut rows = stmt.query([])?;
-        while let Some(row) = rows.next()? {
-            let name: String = row.get(1)?;
-            if name == "content_blob" {
-                has_blob = true;
-            }
-            if name == "mime_type" {
-                has_mime = true;
-            }
-        }
-        drop(rows);
-        drop(stmt);
-
-        if !has_blob {
-            conn.execute("ALTER TABLE vfs_nodes ADD COLUMN content_blob BLOB", [])?;
-        }
-        if !has_mime {
-            conn.execute("ALTER TABLE vfs_nodes ADD COLUMN mime_type TEXT", [])?;
-        }
-    }
+    // 运行版本化迁移（建表 + 增量列）
+    crate::migrate::run_migrations(&conn)?;
 
     Ok(conn)
 }
@@ -122,4 +78,38 @@ pub fn seed(conn: &Connection) -> rusqlite::Result<()> {
     )?;
 
     Ok(())
+}
+
+/// 在线备份：只读打开源库，写入目标库；目标已存在则拒绝覆盖
+pub fn backup_db(src_path: &str, dst_path: &str) -> Result<(), String> {
+    if std::path::Path::new(dst_path).exists() {
+        return Err(format!("备份目标文件已存在，拒绝覆盖：{}", dst_path));
+    }
+
+    let src = Connection::open_with_flags(src_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .map_err(|e| e.to_string())?;
+    let mut dst = Connection::open(dst_path).map_err(|e| e.to_string())?;
+
+    let backup = Backup::new(&src, &mut dst).map_err(|e| e.to_string())?;
+    backup
+        .run_to_completion(100, Duration::ZERO, None)
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// 完整性校验：只读打开，PRAGMA integrity_check 第一行必须为 ok
+pub fn check_integrity(path: &str) -> Result<(), String> {
+    let conn = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .map_err(|e| e.to_string())?;
+
+    let result: String = conn
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
+
+    if result.trim().eq_ignore_ascii_case("ok") {
+        Ok(())
+    } else {
+        Err(format!("完整性校验失败：{}", result))
+    }
 }

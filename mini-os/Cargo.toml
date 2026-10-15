@@ -1,6 +1,7 @@
 [package]
 name = "mini-os"
-version = "1.1.0"
+version = "1.2.0"
+
 edition = "2021"
 
 [[bin]]
@@ -12,7 +13,7 @@ axum = { version = "0.7", features = ["ws", "multipart"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.32", features = ["bundled", "backup"] }
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.5", features = ["fs", "cors"] }
 futures-util = "0.3"

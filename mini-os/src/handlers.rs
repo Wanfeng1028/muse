@@ -176,7 +176,34 @@ pub struct FsQuery {
 
 /// GET /api/health
 pub async fn health() -> impl IntoResponse {
-    Json(json!({ "status": "ok", "version": "1.1.0" }))
+    Json(json!({ "status": "ok", "version": env!("CARGO_PKG_VERSION") }))
+}
+
+/// GET /api/readyz：就绪探针。DB 真实可查（schema_migrations 表）返回 200，否则 503。
+pub async fn readyz(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let ok = state
+        .db
+        .lock()
+        .map(|conn| {
+            conn.query_row(
+                "SELECT COUNT(*) FROM schema_migrations",
+                [],
+                |row| row.get::<_, i64>(0),
+            )
+            .is_ok()
+        })
+        .unwrap_or(false);
+    if ok {
+        (
+            StatusCode::OK,
+            Json(json!({ "status": "ready" })),
+        )
+    } else {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "status": "not_ready" })),
+        )
+    }
 }
 
 /// GET /api/apps

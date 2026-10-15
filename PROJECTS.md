@@ -178,7 +178,7 @@
 
 **定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。
 
-**技术栈**：Rust + Axum 0.7（含 WebSocket + multipart）+ Tokio + rusqlite 0.32（bundled SQLite）；前端原生 HTML/CSS/JS（无框架）；cargo test 集成测试 16 例、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+**技术栈**：Rust + Axum 0.7（含 WebSocket + multipart）+ Tokio + rusqlite 0.32（bundled SQLite + backup feature）；前端原生 HTML/CSS/JS（无框架）；cargo test 28 例（单元 4 + 集成 16 + 失败注入 8）、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
 **功能模块**：
 
@@ -190,20 +190,19 @@
 6. 统计（文件/文件夹数、字节数）
 7. 文件上传与下载（v1.1.0）：`POST /api/files/upload?path=<目录>`（multipart，默认 50MB 上限可配）、`GET /api/files/download?path=<文件>`（64KB 分块流式）；`vfs_nodes` 新增 `content_blob`/`mime_type` 列；工具栏上传按钮 + 拖拽上传 + 行内下载 + 错误提示条
 
-**状态**：v1.1.0（2026-10-15 完成，cargo test 16 例全过、clippy 零警告、真机冒烟 + 4 张真实截图视觉验收通过；发版对照报告 `mini-os/docs/PRODUCTION_CHECKLIST_REPORT_v1.1.0.md`）。
+**状态**：v1.2.0「生产级运维补强」（2026-10-16 完成，cargo test 28 例全过、clippy 零警告；发版对照报告 `mini-os/docs/PRODUCTION_CHECKLIST_REPORT_v1.2.0.md`，结论可发版）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Axum + rusqlite 后端落地，虚拟文件系统 API、5 应用桌面前端、WebSocket 协议、CI 与多阶段 Dockerfile 就绪
 - v1.1.0 文件上传下载（2026-10-15）：上传/下载双接口 + BLOB 存储迁移 + 前端上传/下载 UI；验收时顺带修复 2 个 v1 视觉 bug（`.hidden` 工具类缺失致开始菜单无法隐藏、壁纸切换类名 mismatch）
+- v1.2.0 生产级运维补强（2026-10-16）：`schema_migrations` 版本化迁移（001/002，幂等，老库自动升级）+ `GET /api/readyz` 就绪探针（DB 真实可查 200/503）+ JSONL 结构化日志（`x-request-id` 透传/生成）+ SIGTERM/Ctrl+C 优雅关闭（`SHUTDOWN_TIMEOUT_SECS` 只约束排空阶段）+ CLI `backup/restore` 子命令（在线备份/完整性校验/自动快照/原子替换）+ `scripts/` 四件套（backup.sh 保留 7 个、restore.sh、load_check.py、fault_drill.sh）+ `docker-compose.yml`（本机无 daemon 未实跑）+ `docs/OPERATIONS.md`；失败注入 8 例；真实负载 300 文件 0 失败（avg 74.93ms）；`fault_drill.sh` 全 PASS（kill -9 数据不丢、备份→删库→恢复一致、损坏备份 exit 3 拒绝、SIGTERM exit 0）。本轮抓真 bug 两处：dpsk 漏开 rusqlite `backup` feature（编译失败，补 feature 门）、`SHUTDOWN_TIMEOUT_SECS` 被错误用于整个服务生命周期（健康服务超 N 秒被掐断，改排空阶段计时 + 演练加回归断言）；另修 dpsk 测试 2 处（请求体字段猜错致 422、root 下 chmod 注入无效改 DROP TABLE 注入）
 
 **后续计划**：
 
-- v1.2（对照报告排期）：失败注入测试、migrations 版本化表、就绪探针 + 优雅关闭、结构化日志/request_id、运维手册（备份/资源限制/日志轮转）
-
-- 文件上传/下载
 - 多用户与权限
 - 应用商店（插件化）
+- Prometheus `/metrics`、docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
 
 ## ledger「钱迹 · 个人财务管家」
 
