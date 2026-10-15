@@ -16,6 +16,9 @@ DEFAULT_USER_AGENT = "FeedFlow/0.1"
 DEFAULT_LOG_LEVEL = "INFO"
 DEFAULT_BACKUP_DIR = "data/backups"
 DEFAULT_DIGEST_N = 20
+DEFAULT_EXTRACT_TIMEOUT = 15
+DEFAULT_FEVER_API_KEY = ""
+
 
 
 def _parse_int(value, default):
@@ -40,8 +43,10 @@ def load() -> dict:
     """读取环境变量并返回配置字典。
 
     返回键：db_path / host / port / fetch_interval / fetch_timeout /
-    fetch_retries / user_agent / log_level / backup_dir / digest_n
+    fetch_retries / user_agent / log_level / backup_dir / digest_n /
+    extract_timeout / fever_api_key
     """
+
     db_path = _resolve_path(os.environ.get("FEEDFLOW_DB", DEFAULT_DB))
 
     host = os.environ.get("FEEDFLOW_HOST", DEFAULT_HOST)
@@ -70,7 +75,14 @@ def load() -> dict:
 
     digest_n = _parse_int(os.environ.get("FEEDFLOW_DIGEST_N"), DEFAULT_DIGEST_N)
 
+    extract_timeout = _parse_int(
+        os.environ.get("FEEDFLOW_EXTRACT_TIMEOUT"), DEFAULT_EXTRACT_TIMEOUT
+    )
+
+    fever_api_key = (os.environ.get("FEEDFLOW_FEVER_API_KEY") or "").strip()
+
     return {
+
         "db_path": str(db_path),
         "host": host,
         "port": port,
@@ -81,7 +93,10 @@ def load() -> dict:
         "log_level": log_level,
         "backup_dir": str(backup_dir),
         "digest_n": digest_n,
+        "extract_timeout": extract_timeout,
+        "fever_api_key": fever_api_key,
     }
+
 
 
 def _fail(reason):
@@ -106,6 +121,9 @@ def validate(cfg: dict) -> None:
     cfg.setdefault("log_level", DEFAULT_LOG_LEVEL)
     cfg.setdefault("backup_dir", DEFAULT_BACKUP_DIR)
     cfg.setdefault("digest_n", DEFAULT_DIGEST_N)
+    cfg.setdefault("extract_timeout", DEFAULT_EXTRACT_TIMEOUT)
+    cfg.setdefault("fever_api_key", DEFAULT_FEVER_API_KEY)
+
     # 校验 port 范围
     port = cfg.get("port")
     if not isinstance(port, int) or not (1 <= port <= 65535):
@@ -130,6 +148,12 @@ def validate(cfg: dict) -> None:
     digest_n = cfg.get("digest_n")
     if not isinstance(digest_n, int) or digest_n < 1:
         _fail(f"FEEDFLOW_DIGEST_N 必须大于等于 1，当前为 {digest_n!r}")
+
+    # 校验正文提取超时
+    extract_timeout = cfg.get("extract_timeout")
+    if not isinstance(extract_timeout, int) or extract_timeout <= 0:
+        _fail(f"FEEDFLOW_EXTRACT_TIMEOUT 必须大于 0，当前为 {extract_timeout!r}")
+
 
     # 校验数据库父目录可写
     db_path = cfg.get("db_path")

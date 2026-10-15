@@ -324,10 +324,16 @@ def set_read(db_path, article_id, is_read):
     with write_lock:
         conn = get_conn(db_path)
         try:
-            conn.execute(
-                "UPDATE articles SET is_read = ? WHERE id = ?",
-                (1 if is_read else 0, article_id),
-            )
+            if is_read:
+                conn.execute(
+                    "UPDATE articles SET is_read = ?, last_read_at = ? WHERE id = ?",
+                    (1, _now_iso(), article_id),
+                )
+            else:
+                conn.execute(
+                    "UPDATE articles SET is_read = ? WHERE id = ?",
+                    (0, article_id),
+                )
             conn.commit()
         finally:
             conn.close()

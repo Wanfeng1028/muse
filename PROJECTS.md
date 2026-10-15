@@ -303,12 +303,14 @@
 
 **状态**：工程化 v1（2026-10-13 完成，pytest 35 例全过、ruff 全洁、真实服务冒烟：订阅添加→立即抓取→3 篇文章入库→标已读/星标→搜索→OPML 往返→CLI fetch 全链路验证）。
 **生产级补强 v1.1**（2026-10-13）：抓取健壮性（urllib 超时/指数退避重试/失败分类 timeout·dns·http_4xx·http_5xx·parse_error·unknown、连续失败计数）、调度可靠性（job_state 持久化、启动补跑、misfire_grace_time、单源异常隔离）、结构化 JSON 日志（request_id 全链路）、/healthz、配置环境变量化 + 启动校验、DB 迁移版本化（PRAGMA user_version）、备份恢复 CLI（保留最近 7 个）、docker-compose 一键部署、docs/OPERATIONS.md 运维手册；**灵魂功能起步**：SimHash + Jaccard 两阶段相似文章去重聚类，同事件多源报道折叠显示（"还有 N 篇相似报道"）。pytest 46 例全过、ruff 全洁、真实服务冒烟（抓取→去重聚类→折叠显示→阅读）全链路验证通过。
+**v1.3「Fever API 兼容 + 正文提取超时收敛」**（2026-10-15）：`feedflow/fever.py` 新蓝图挂载 `/fever/`（strict_slashes 双路径），Reeder/Unread 等 Fever 客户端可直连同步订阅/文章/已读/星标；鉴权 POST api_key=md5(邮箱:密码)，`FEEDFLOW_FEVER_API_KEY` 未配置则关闭，hmac 常量时间比较；读 groups/feeds/favicons/items（since_id/max_id/with_ids 各 50 封顶）/unread_item_ids/saved_item_ids，写 mark 已读/星标/按源按组已读（before 时间戳）/unread_recently_read；`feedflow fever-key` 命令生成 key；诚实边界：favicon 占位图、is_spark 恒 0、未分组源归 group 0。正文提取超时收敛：`FEEDFLOW_EXTRACT_TIMEOUT`（默认 15 秒）经 trafilatura config.DOWNLOAD_TIMEOUT 生效，超时回落摘要；迁移 v3 新增 `articles.last_read_at`。pytest 84/84（含新增 test_fever.py 22 例）、ruff 全洁、真实服务冒烟 9 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`（结论可发版，遗留 OPERATIONS.md Fever 章节/Prometheus 指标/失败注入测试排期 v1.4）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Flask 应用工厂 + 蓝图分层落地，订阅/抓取/阅读/搜索/OPML/统计全模块、Jinja2 三栏阅读器前端、CI 与 Dockerfile 就绪
 - 生产级补强 v1.1（2026-10-13）：抓取超时/重试/失败分类、调度状态持久化与补跑、结构化日志 + /healthz、配置校验、DB 迁移、备份恢复、docker-compose、运维手册；SimHash + Jaccard 两阶段去重聚类与折叠显示上线
 - **灵魂功能 v1.2 重要性排序**（2026-10-13）：`feedflow/ranking.py`——五维加权可解释分数（时效衰减半衰期 48h 0.30 / 事件热度 0.25 / 来源权重 0.20 / 关键词 0.15 / 未读 0.10），分项归一 0~1、确定性无随机；「今日必读」页（/digest，默认 20 篇，每篇标注"为什么排前面"分项理由）+ 兴趣设置页（/settings/interests：关键词增删、来源手动权重、每日篇数 N）；来源质量从已读/星标比率自动学习；DB 迁移 v2（keywords/feed_weights/settings 三表）；pytest 62 例全过（新增 test_ranking.py 16 例）、ruff check 全洁、真实服务冒烟与 3 张新截图（digest/interests/reader）逐张视觉验收通过
+- **v1.3 Fever API 兼容 + 正文提取超时收敛**（2026-10-15）：dpsk 分 6 批生成（迁移/PATCH 拆分器新增 scripts/split_patches.py 治贪婪 NEW 吞组）；验收抓真 bug 3 个：`store.get_folder` 系 prompt 误列（实现改直查 SQL）、SQLite `strftime()` 返回 TEXT 与整数 before 比较恒假（加 CAST AS INTEGER）、extract_text 加参导致旧 mock 签名不兼容（测试 mock 补参）；测试另修 3 处（种子数据污染计数、分页参数改 query string 走协议、unread_recently_read 改走 store.set_read 写 last_read_at）。pytest 84/84、ruff 全洁、冒烟 9 项全过
 
 **后续计划**：
 

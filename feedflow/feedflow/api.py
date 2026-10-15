@@ -290,8 +290,12 @@ def fetch_feed_now(feed_id: int):
     feed = store.get_feed(db, feed_id)
     if feed is None:
         return _err("订阅源不存在", 404)
-    result = fetcher.fetch_feed(db, feed, current_app.config["FEEDFLOW"]["user_agent"])
+    cfg = current_app.config["FEEDFLOW"]
+    result = fetcher.fetch_feed(
+        db, feed, cfg["user_agent"], extract_timeout=cfg["extract_timeout"]
+    )
     return jsonify(result)
+
 
 
 # ---------------------------------------------------------------------------

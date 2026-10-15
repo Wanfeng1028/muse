@@ -6,9 +6,13 @@
     import-opml  从 OPML 文件导入订阅源
     backup       对数据库做一次热备份
     restore      从备份文件恢复数据库
+    fever-key    生成 Fever API 的 api_key
 """
 
+
 import argparse
+import getpass
+import hashlib
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -51,7 +55,11 @@ def _cmd_fetch(args: argparse.Namespace) -> int:
     total_added = 0
     for feed in due:
         try:
-            result = fetcher.fetch_feed(db_path, feed, user_agent)
+            result = fetcher.fetch_feed(
+                db_path, feed, user_agent,
+                extract_timeout=cfg["extract_timeout"],
+            )
+
         except Exception as exc:  # noqa: BLE001
             # 单源失败不影响其他源，故意宽捕获
             result = {"added": 0, "status": "error", "error": str(exc)[:300]}
@@ -113,8 +121,26 @@ def _cmd_restore(args: argparse.Namespace) -> int:
     print(f"恢复完成：{path} -> {db_path}")
     return 0
 
+def _cmd_fever_key(args: argparse.Namespace) -> int:
+    """生成 Fever API 的 api_key（md5(email:password) 十六进制）。
+
+    客户端用「邮箱 + 密码」配置 Fever 账号时，实际提交的是这个 api_key。
+    生成后写入环境变量 FEEDFLOW_FEVER_API_KEY 并重启服务即可启用 Fever API。
+    """
+    email = (args.email or input("邮箱: ")).strip()
+    if not email:
+        print("邮箱不能为空", file=sys.stderr)
+        return 1
+    password = args.password
+    if not password:
+        password = getpass.getpass("密码（输入不回显）: ")
+    api_key = hashlib.md5(f"{email}:{password}".encode()).hexdigest()
+    print(f"api_key: {api_key}")
+    print("把它写入环境变量 FEEDFLOW_FEVER_API_KEY 后重启服务，RSS 客户端即可连接。")
+    return 0
 
 def build_parser() -> argparse.ArgumentParser:
+
     """构造 argparse 解析器。"""
     parser = argparse.ArgumentParser(
         prog="feedflow",
@@ -147,7 +173,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_restore.add_argument("file", help="备份文件路径")
     p_restore.set_defaults(func=_cmd_restore)
 
+    p_fever_key = sub.add_parser("fever-key", help="生成 Fever API 的 api_key")
+    p_fever_key.add_argument("--email", default=None, help="账号邮箱（不填则交互输入）")
+    p_fever_key.add_argument(
+        "--password", default=None, help="账号密码（不填则交互输入，不回显）"
+    )
+    p_fever_key.set_defaults(func=_cmd_fever_key)
+
     return parser
+
 
 
 def main(argv=None) -> int:

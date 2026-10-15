@@ -9,10 +9,12 @@ import socket
 import time
 import urllib.error
 import urllib.request
+from copy import deepcopy
 from datetime import UTC, datetime
 
 import feedparser
 import trafilatura
+from trafilatura.settings import DEFAULT_CONFIG
 
 from . import store
 from .logging import get_logger
@@ -64,13 +66,28 @@ def _iso(dt_struct) -> str | None:
         return None
 
 
-def extract_text(link: str, summary_html: str, user_agent: str) -> tuple[str, str]:
-    """返回 (content_html, content_text)。"""
+_download_config_cache: dict = {}
+
+def _download_config(timeout: float):
+    """按超时秒数缓存 trafilatura 下载配置（设置 DOWNLOAD_TIMEOUT）。"""
+    key = int(timeout)
+    cfg = _download_config_cache.get(key)
+    if cfg is None:
+        cfg = deepcopy(DEFAULT_CONFIG)
+        cfg["DEFAULT"]["DOWNLOAD_TIMEOUT"] = str(key)
+        _download_config_cache[key] = cfg
+    return cfg
+
+def extract_text(link: str, summary_html: str, user_agent: str,
+                 extract_timeout: float = 15) -> tuple[str, str]:
+    """返回 (content_html, content_text)。extract_timeout 为单篇正文下载超时（秒）。"""
     content_html = summary_html or ""
     content_text = ""
     if link:
         try:
-            raw = trafilatura.fetch_url(link, no_ssl=False)
+            raw = trafilatura.fetch_url(
+                link, no_ssl=False, config=_download_config(extract_timeout)
+            )
             if raw:
                 text = trafilatura.extract(raw, favor_recall=True)
                 if text:
@@ -80,6 +97,7 @@ def extract_text(link: str, summary_html: str, user_agent: str) -> tuple[str, st
     if not content_text:
         content_text = _html_to_text(summary_html)
     return content_html, content_text
+
 
 
 class FetchError(Exception):
@@ -230,7 +248,9 @@ def _fetch_remote(url: str, user_agent: str, timeout: float, retries: int,
     raise FetchError("未知抓取错误", "unknown", False)
 
 
-def _parse_entries(parsed: dict, db_path: str, feed_id: int, user_agent: str) -> int:
+def _parse_entries(parsed: dict, db_path: str, feed_id: int, user_agent: str,
+                   extract_timeout: float = 15) -> int:
+
     """遍历条目写入数据库，返回新增数量。单条失败不影响整源。"""
     added = 0
     entries = parsed.get("entries") or []
@@ -247,7 +267,10 @@ def _parse_entries(parsed: dict, db_path: str, feed_id: int, user_agent: str) ->
             summary = entry.get("summary") or ""
             published_at = _iso(entry.get("published_parsed"))
 
-            content_html, content_text = extract_text(link, summary, user_agent)
+            content_html, content_text = extract_text(
+                link, summary, user_agent, extract_timeout=extract_timeout
+            )
+
 
             store.insert_article(
                 db_path,
@@ -273,7 +296,9 @@ def _parse_entries(parsed: dict, db_path: str, feed_id: int, user_agent: str) ->
 
 
 def fetch_feed(db_path: str, feed: dict, user_agent: str,
-               timeout: float = 20, retries: int = 3) -> dict:
+               timeout: float = 20, retries: int = 3,
+               extract_timeout: float = 15) -> dict:
+
     """抓取单个源，返回 {added, status, error}。
 
     - feed_url 为本地路径时直接交给 feedparser 解析，不走网络层。
@@ -304,12 +329,16 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
                 error_kind = "parse_error"
                 error = str(bozo_exc)[:300] if bozo_exc else "解析失败"
             else:
-                added = _parse_entries(parsed, db_path, feed_id, user_agent)
+                added = _parse_entries(
+                    parsed, db_path, feed_id, user_agent,
+                    extract_timeout=extract_timeout,
+                )
         except Exception as exc:  # noqa: BLE001
             status = "error"
             error_kind = classify_error(exc)
             error = str(exc)[:300]
         new_failures = prev_failures + 1 if status == "error" else 0
+
         try:
             store.set_fetch_result(
                 db_path, feed_id, status, error, new_etag, new_modified,
@@ -346,13 +375,17 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
                 error_kind = "parse_error"
                 error = str(bozo_exc)[:300] if bozo_exc else "解析失败"
             else:
-                added = _parse_entries(parsed, db_path, feed_id, user_agent)
+                added = _parse_entries(
+                    parsed, db_path, feed_id, user_agent,
+                    extract_timeout=extract_timeout,
+                )
     except Exception as exc:  # noqa: BLE001
         status = "error"
         error_kind = classify_error(exc)
         error = str(exc)[:300]
 
     new_failures = prev_failures + 1 if status == "error" else 0
+
 
     try:
         store.set_fetch_result(

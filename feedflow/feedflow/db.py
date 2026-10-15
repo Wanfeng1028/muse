@@ -242,7 +242,15 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "CREATE INDEX IF NOT EXISTS idx_keywords_keyword ON keywords(keyword)",
         ],
     ),
+    (
+        3,
+        "articles 新增 last_read_at（标记已读的时间，Fever API 的 unread_recently_read 用）",
+        [
+            "ALTER TABLE articles ADD COLUMN last_read_at TEXT",
+        ],
+    ),
 ]
+
 
 
 

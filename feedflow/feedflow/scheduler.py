@@ -66,7 +66,8 @@ def _job_state_set(db_path: str, key: str, value: str) -> None:
 
 
 def _run_tick(db_path: str, default_interval: int, user_agent: str,
-              fetch_timeout, fetch_retries, catchup: bool = False) -> None:
+              fetch_timeout, fetch_retries, extract_timeout,
+              catchup: bool = False) -> None:
     """执行一次调度心跳：查询到期源并逐个抓取。
 
     :param db_path: SQLite 数据库路径。
@@ -74,8 +75,10 @@ def _run_tick(db_path: str, default_interval: int, user_agent: str,
     :param user_agent: 抓取时使用的 User-Agent。
     :param fetch_timeout: 单次抓取超时（秒），传给 fetcher.fetch_feed。
     :param fetch_retries: 抓取失败重试次数，传给 fetcher.fetch_feed。
+    :param extract_timeout: 单篇正文提取超时（秒），传给 fetcher.fetch_feed。
     :param catchup: 是否为启动补跑（仅用于日志区分）。
     """
+
     try:
         _job_state_set(db_path, "last_tick_at", _utcnow_iso())
         due = store.due_feeds(db_path, _utcnow_iso(), default_interval)
@@ -102,7 +105,9 @@ def _run_tick(db_path: str, default_interval: int, user_agent: str,
                 user_agent,
                 timeout=fetch_timeout,
                 retries=fetch_retries,
+                extract_timeout=extract_timeout,
             )
+
             status = result.get("status")
             added = result.get("added")
             error = result.get("error")
@@ -168,6 +173,8 @@ def start_scheduler(app):
     user_agent = cfg["user_agent"]
     fetch_timeout = cfg.get("fetch_timeout")
     fetch_retries = cfg.get("fetch_retries")
+    extract_timeout = cfg.get("extract_timeout")
+
 
     def tick():
         """APScheduler 定时任务入口：执行一次心跳。"""
@@ -177,8 +184,10 @@ def start_scheduler(app):
             user_agent,
             fetch_timeout,
             fetch_retries,
+            extract_timeout,
             catchup=False,
         )
+
 
     # 启动补跑：上次 tick 距今超过阈值则立即同步执行一次
     try:
@@ -197,7 +206,9 @@ def start_scheduler(app):
                 user_agent,
                 fetch_timeout,
                 fetch_retries,
+                extract_timeout,
                 catchup=True,
+
             )
         else:
             delta = (now - last_tick_dt).total_seconds()

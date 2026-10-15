@@ -4,6 +4,7 @@
 - create_app(cfg=None)：cfg 为空则调用 config.load()。
 - 初始化数据库、种子数据、注册蓝图、启动调度器（可用 FEEDFLOW_NO_SCHEDULER=1 关闭）。
 """
+
 from __future__ import annotations
 
 import atexit
@@ -49,10 +50,12 @@ def create_app(cfg=None) -> Flask:
 
     # 注册蓝图（延迟导入避免循环依赖）
     from .api import bp as api_bp
+    from .fever import fever_bp
     from .web import bp as web_bp
 
     app.register_blueprint(web_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(fever_bp)
 
     @app.before_request
     def _bind_request_id() -> None:

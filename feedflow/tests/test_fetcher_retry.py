@@ -62,7 +62,7 @@ def test_retry_on_timeout_then_ok(tmp_db, monkeypatch):
     # 不走 trafilatura 真实网络
     monkeypatch.setattr(
         fetcher, "extract_text",
-        lambda link, summary, ua: (summary, "正文文本"),
+        lambda link, summary, ua, extract_timeout=15: (summary, "正文文本"),
     )
     # 加速：跳过真实退避 sleep
     monkeypatch.setattr(fetcher.time, "sleep", lambda s: None)
