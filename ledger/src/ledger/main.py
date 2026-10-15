@@ -20,6 +20,7 @@ from ledger.routers import (
     health,
     import_export,
     recurring,
+    statements,
     stats,
     transactions,
 )
@@ -86,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(stats.router)
     app.include_router(import_export.router)
     app.include_router(recurring.router)
+    app.include_router(statements.router)
 
     # ---------- 页面路由 ----------
 
@@ -202,6 +204,39 @@ def create_app() -> FastAPI:
             request,
             "import.html",
             {},
+        )
+
+    @app.get("/statement", response_class=HTMLResponse)
+    async def statement_page(request: Request):
+        """账单导入向导页。"""
+        factory = get_session_factory()
+        async with factory() as session:
+            accounts_list = await list_accounts_with_balance(session)
+        account_options = [{"id": a["id"], "name": a["name"]} for a in accounts_list]
+        return templates.TemplateResponse(
+            request,
+            "statement.html",
+            {"accounts": account_options},
+        )
+
+    @app.get("/detective", response_class=HTMLResponse)
+    async def detective_page(request: Request):
+        """侦探队列页。"""
+        factory = get_session_factory()
+        async with factory() as session:
+            accounts_list = await list_accounts_with_balance(session)
+            result = await session.execute(select(Category).order_by(Category.kind, Category.sort_order, Category.id))
+            rows = result.scalars().all()
+        account_options = [{"id": a["id"], "name": a["name"]} for a in accounts_list]
+        grouped = {"expense": [], "income": []}
+        for row in rows:
+            d = {"id": row.id, "name": row.name, "icon": row.icon, "color": row.color}
+            if row.kind in grouped:
+                grouped[row.kind].append(d)
+        return templates.TemplateResponse(
+            request,
+            "detective.html",
+            {"accounts": account_options, "categories_grouped": grouped},
         )
 
     return app

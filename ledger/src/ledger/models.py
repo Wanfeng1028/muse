@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -97,3 +98,92 @@ class Recurring(Base):
     is_active: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class StatementTemplate(Base):
+    """账单模板表：保存账单来源与列映射。"""
+
+    __tablename__ = "statement_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    source: Mapped[str] = mapped_column(String, nullable=False)
+    mapping_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+
+
+class MatchRule(Base):
+    """关键词规则表：命中后自动归类。"""
+
+    __tablename__ = "match_rules"
+    __table_args__ = (
+        UniqueConstraint("keyword", "direction", name="uq_match_rules_keyword_direction"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    keyword: Mapped[str] = mapped_column(String, nullable=False)
+    category_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("categories.id"), nullable=False
+    )
+    direction: Mapped[str] = mapped_column(String, nullable=False, default="any")
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+
+
+class StatementBatch(Base):
+    """导入批次表：一次账单导入的汇总。"""
+
+    __tablename__ = "statement_batches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    filename: Mapped[str] = mapped_column(String, nullable=False)
+    template_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("statement_templates.id"), nullable=True
+    )
+    account_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("accounts.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String, nullable=False, default="preview")
+    total_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    auto_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    pending_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+
+
+class StatementItem(Base):
+    """导入明细表：账单中的单行记录。"""
+
+    __tablename__ = "statement_items"
+    __table_args__ = (
+        UniqueConstraint("fingerprint", name="uq_statement_items_fingerprint"),
+        CheckConstraint("amount_cents > 0", name="ck_statement_items_amount_positive"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    batch_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("statement_batches.id"), nullable=False
+    )
+    occurred_on: Mapped[str] = mapped_column(String, nullable=False)
+    counterparty: Mapped[str] = mapped_column(String, nullable=False, default="")
+    summary: Mapped[str] = mapped_column(String, nullable=False, default="")
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    direction: Mapped[str] = mapped_column(String, nullable=False)
+    raw_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    fingerprint: Mapped[str] = mapped_column(String, nullable=False)
+    suggested_category_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("categories.id"), nullable=True
+    )
+    match_source: Mapped[str] = mapped_column(String, nullable=False, default="none")
+    confidence: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    suggested_action: Mapped[str] = mapped_column(String, nullable=False, default="categorize")
+    suggested_to_account_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("accounts.id"), nullable=True
+    )
+    status: Mapped[str] = mapped_column(String, nullable=False, default="preview")
+    claimed_category_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("categories.id"), nullable=True
+    )
+    transaction_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("transactions.id"), nullable=True
+    )
+    created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)

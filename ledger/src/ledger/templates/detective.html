@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% block title %}侦探队列{% endblock %}
+{% block content %}
+<div class="chart-toolbar">
+  <h1>侦探队列 <span class="badge" id="pendingBadge">0</span></h1>
+  <div>
+    <label class="muted">批次</label>
+    <select id="batchSelect"></select>
+  </div>
+</div>
+
+<p class="muted">系统没把握的账单都在这里，你点一下就行。</p>
+
+<div id="queueError" class="error-list" style="display:none;"></div>
+<div id="cardList"></div>
+
+<div id="emptyState" class="card" style="display:none;">
+  <p>都认领完了，账本干净了。</p>
+  <a class="btn" href="/transactions">查看交易</a>
+</div>
+
+<div class="card" id="rulesCard">
+  <h2>自动匹配规则</h2>
+  <table>
+    <thead>
+      <tr><th>关键词</th><th>分类</th><th>方向</th><th>优先级</th><th></th></tr>
+    </thead>
+    <tbody id="rulesBody"></tbody>
+  </table>
+  <h3>添加规则</h3>
+  <div class="form-row">
+    <label>关键词</label>
+    <input type="text" id="ruleKeyword" placeholder="如：瑞幸">
+  </div>
+  <div class="form-row">
+    <label>分类</label>
+    <select id="ruleCategory"></select>
+  </div>
+  <div class="form-row">
+    <label>方向</label>
+    <select id="ruleDirection">
+      <option value="any">不限方向</option>
+      <option value="out">支出</option>
+      <option value="in">收入</option>
+    </select>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" id="ruleAddBtn">添加规则</button>
+  </div>
+  <div id="ruleError" class="error-list" style="display:none;"></div>
+</div>
+
+<script id="accountsData" type="application/json">{{ accounts|tojson }}</script>
+<script id="catsData" type="application/json">{{ categories_grouped|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var accounts = JSON.parse(document.getElementById('accountsData').textContent);
+  var cats = JSON.parse(document.getElementById('catsData').textContent);
+  var allCats = (cats.expense || []).concat(cats.income || []);
+  var catById = {};
+  for (var i = 0; i < allCats.length; i++) { catById[allCats[i].id] = allCats[i]; }
+
+  var currentBatch = null;
+  var currentBatchAccountId = null;
+
+  function getParam(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function showError(msg) {
+    var el = document.getElementById('queueError');
+    el.style.display = 'block';
+    el.textContent = msg;
+  }
+  function hideError() {
+    document.getElementById('queueError').style.display = 'none';
+  }
+  function dirText(d) {
+    return d === 'in' ? '收入' : (d === 'out' ? '支出' : (d === 'any' ? '不限' : (d || '')));
+  }
+  function sourceText(src) {
+    if (src === 'rule') return '规则自动匹配';
+    if (src === 'history') return '按你的习惯匹配';
+    if (src === 'suggestion') return '侦探推测';
+    return '暂无头绪';
+  }
+
+  function loadBatches() {
+    api('/api/statements/batches').then(function (list) {
+      var sel = document.getElementById('batchSelect');
+      sel.innerHTML = '';
+      var preselect = getParam('batch');
+      var batchById = {};
+      for (var i = 0; i < list.length; i++) {
+        var b = list[i];
+        batchById[b.id] = b;
+        var opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = (b.filename || ('批次 ' + b.id)) + '（待认领 ' + (b.pending_count || 0) + '）';
+        if (preselect && String(b.id) === String(preselect)) { opt.selected = true; }
+        sel.appendChild(opt);
+      }
+      function pick() {
+        currentBatch = sel.value || null;
+        currentBatchAccountId = (currentBatch && batchById[currentBatch])
+          ? batchById[currentBatch].account_id : null;
+        loadItems();
+      }
+      sel.addEventListener('change', pick);
+      if (sel.value) { pick(); }
+      else { renderEmpty(); }
+    }).catch(function (e) {
+      showError('加载批次失败：' + e.message);
+    });
+  }
+
+  function updateBadge(count) {
+    document.getElementById('pendingBadge').textContent = count;
+  }
+
+  function renderEmpty() {
+    document.getElementById('cardList').innerHTML = '';
+    document.getElementById('emptyState').style.display = 'block';
+    updateBadge(0);
+  }
+
+  function makeDirTag(dir) {
+    var t = document.createElement('span');
+    t.className = 'tag';
+    t.textContent = dirText(dir);
+    return t;
+  }
+
+  function makeCandidateButton(item, cand) {
+    var btn = document.createElement('button');
+    btn.className = 'candidate-btn';
+    btn.textContent = cand.category_name + ' ' + Math.round(cand.confidence || 0) + '%';
+    btn.addEventListener('click', function () {
+      claimItem(item.id, cand.category_id, false);
+    });
+    return btn;
+  }
+
+  function categoryOptionsFor(dir) {
+    if (dir === 'in') return cats.income || [];
+    if (dir === 'out') return cats.expense || [];
+    return allCats;
+  }
+
+  function renderCard(item) {
+    var card = document.createElement('div');
+    card.className = 'detective-card';
+    card.id = 'item-' + item.id;
+
+    var line1 = document.createElement('div');
+    line1.className = 'dc-line1';
+    var amtColor = item.direction === 'in' ? 'var(--green)' : 'var(--red)';
+    var parts = [
+      ['dc-date', item.occurred_on || ''],
+      ['dc-cp', item.counterparty || ''],
+      ['dc-sum', item.summary || '']
+    ];
+    for (var p = 0; p < parts.length; p++) {
+      var sp = document.createElement('span');
+      sp.className = parts[p][0];
+      sp.textContent = parts[p][1];
+      line1.appendChild(sp);
+    }
+    var amt = document.createElement('span');
+    amt.className = 'dc-amt';
+    amt.style.color = amtColor;
+    amt.textContent = fmtMoney(item.amount_cents);
+    line1.appendChild(amt);
+    line1.appendChild(makeDirTag(item.direction));
+    card.appendChild(line1);
+
+    var line2 = document.createElement('div');
+    line2.className = 'dc-line2';
+    var label = document.createElement('span');
+    label.className = 'dc-label';
+    label.textContent = '侦探的判断：';
+    line2.appendChild(label);
+    var cands = item.candidates || [];
+    if (cands.length === 0) {
+      var none = document.createElement('span');
+      none.className = 'muted';
+      none.textContent = '暂无候选';
+      line2.appendChild(none);
+    } else {
+      for (var i = 0; i < cands.length; i++) {
+        line2.appendChild(makeCandidateButton(item, cands[i]));
+      }
+    }
+    card.appendChild(line2);
+
+    var src = document.createElement('div');
+    src.className = 'dc-source muted';
+    src.textContent = sourceText(item.match_source);
+    card.appendChild(src);
+
+    if (item.suggested_action === 'transfer') {
+      var hint = document.createElement('div');
+      hint.className = 'transfer-hint';
+      var toName = '未知账户';
+      for (var k = 0; k < accounts.length; k++) {
+        if (accounts[k].id === item.suggested_to_account_id) { toName = accounts[k].name; }
+      }
+      hint.textContent = '对方像是你自己的账户「' + toName + '」，可能是转账';
+      card.appendChild(hint);
+
+      var trow = document.createElement('div');
+      trow.className = 'dc-line3';
+      var tsel = document.createElement('select');
+      tsel.className = 'dc-account-select';
+      for (var j = 0; j < accounts.length; j++) {
+        var a = accounts[j];
+        if (currentBatchAccountId && a.id === currentBatchAccountId) continue;
+        var o = document.createElement('option');
+        o.value = a.id;
+        o.textContent = a.name;
+        if (a.id === item.suggested_to_account_id) { o.selected = true; }
+        tsel.appendChild(o);
+      }
+      var tbtn = document.createElement('button');
+      tbtn.className = 'btn btn-primary';
+      tbtn.textContent = '确认为转账';
+      tbtn.addEventListener('click', function () {
+        confirmTransfer(item.id, tsel.value);
+      });
+      trow.appendChild(tsel);
+      trow.appendChild(tbtn);
+      card.appendChild(trow);
+    }
+
+    var line3 = document.createElement('div');
+    line3.className = 'dc-line3';
+    var sel = document.createElement('select');
+    sel.className = 'dc-cat-select';
+    var opts = categoryOptionsFor(item.direction);
+    for (var q = 0; q < opts.length; q++) {
+      var oo = document.createElement('option');
+      oo.value = opts[q].id;
+      oo.textContent = opts[q].name;
+      if (opts[q].id === item.suggested_category_id) { oo.selected = true; }
+      sel.appendChild(oo);
+    }
+    var claimBtn = document.createElement('button');
+    claimBtn.className = 'btn btn-primary';
+    claimBtn.textContent = '认领';
+    var ruleWrap = document.createElement('label');
+    ruleWrap.className = 'dc-rule';
+    var ruleChk = document.createElement('input');
+    ruleChk.type = 'checkbox';
+    ruleWrap.appendChild(ruleChk);
+    ruleWrap.appendChild(document.createTextNode('记住为规则'));
+
+    claimBtn.addEventListener('click', function () {
+      claimItem(item.id, sel.value, ruleChk.checked);
+    });
+
+    var skipBtn = document.createElement('button');
+    skipBtn.className = 'btn';
+    skipBtn.textContent = '跳过';
+    skipBtn.addEventListener('click', function () {
+      skipItem(item.id);
+    });
+
+    line3.appendChild(sel);
+    line3.appendChild(claimBtn);
+    line3.appendChild(ruleWrap);
+    line3.appendChild(skipBtn);
+    card.appendChild(line3);
+
+    return card;
+  }
+
+  function removeCard(id) {
+    var el = document.getElementById('item-' + id);
+    if (el && el.parentNode) { el.parentNode.removeChild(el); }
+    var left = document.querySelectorAll('.detective-card').length;
+    updateBadge(left);
+    if (left === 0) { renderEmpty(); }
+  }
+
+  function claimItem(id, categoryId, saveRule) {
+    api('/api/statements/items/' + id + '/claim', {
+      method: 'POST',
+      body: JSON.stringify({ category_id: Number(categoryId), save_rule: !!saveRule })
+    }).then(function () {
+      removeCard(id);
+    }).catch(function (e) {
+      showError('认领失败：' + e.message);
+    });
+  }
+
+  function confirmTransfer(id, toAccountId) {
+    api('/api/statements/items/' + id + '/claim-transfer', {
+      method: 'POST',
+      body: JSON.stringify({ to_account_id: Number(toAccountId) })
+    }).then(function () {
+      removeCard(id);
+    }).catch(function (e) {
+      showError('转账确认失败：' + e.message);
+    });
+  }
+
+  function skipItem(id) {
+    api('/api/statements/items/' + id + '/skip', { method: 'POST' }).then(function () {
+      removeCard(id);
+    }).catch(function (e) {
+      showError('跳过失败：' + e.message);
+    });
+  }
+
+  function loadItems() {
+    hideError();
+    if (!currentBatch) { renderEmpty(); return; }
+    api('/api/statements/' + currentBatch + '/items?status=pending&limit=50&offset=0').then(function (data) {
+      var list = document.getElementById('cardList');
+      list.innerHTML = '';
+      var items = data.items || [];
+      updateBadge(data.total || 0);
+      if (items.length === 0) { renderEmpty(); return; }
+      document.getElementById('emptyState').style.display = 'none';
+      for (var i = 0; i < items.length; i++) {
+        list.appendChild(renderCard(items[i]));
+      }
+    }).catch(function (e) {
+      showError('加载失败：' + e.message);
+    });
+  }
+
+  function loadRules() {
+    api('/api/match-rules').then(function (rules) {
+      var body = document.getElementById('rulesBody');
+      body.innerHTML = '';
+      for (var i = 0; i < rules.length; i++) {
+        var r = rules[i];
+        var tr = document.createElement('tr');
+        var cells = [r.keyword, r.category_name || '', dirText(r.direction), String(r.priority || 0)];
+        for (var c = 0; c < cells.length; c++) {
+          var td = document.createElement('td');
+          td.textContent = cells[c];
+          tr.appendChild(td);
+        }
+        var act = document.createElement('td');
+        var del = document.createElement('button');
+        del.className = 'btn btn-danger';
+        del.textContent = '删除';
+        del.addEventListener('click', (function (rid) {
+          return function () {
+            api('/api/match-rules/' + rid, { method: 'DELETE' }).then(function () {
+              loadRules();
+            }).catch(function (e) {
+              showError('删除规则失败：' + e.message);
+            });
+          };
+        })(r.id));
+        act.appendChild(del);
+        tr.appendChild(act);
+        body.appendChild(tr);
+      }
+    }).catch(function (e) {
+      showError('加载规则失败：' + e.message);
+    });
+  }
+
+  function initRuleForm() {
+    var sel = document.getElementById('ruleCategory');
+    for (var i = 0; i < allCats.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = allCats[i].id;
+      opt.textContent = allCats[i].name;
+      sel.appendChild(opt);
+    }
+    document.getElementById('ruleAddBtn').addEventListener('click', function () {
+      var errEl = document.getElementById('ruleError');
+      errEl.style.display = 'none';
+      var keyword = document.getElementById('ruleKeyword').value.trim();
+      if (!keyword) {
+        errEl.style.display = 'block';
+        errEl.textContent = '请填写关键词。';
+        return;
+      }
+      api('/api/match-rules', {
+        method: 'POST',
+        body: JSON.stringify({
+          keyword: keyword,
+          category_id: Number(sel.value),
+          direction: document.getElementById('ruleDirection').value,
+          priority: 0
+        })
+      }).then(function () {
+        document.getElementById('ruleKeyword').value = '';
+        loadRules();
+      }).catch(function (e) {
+        errEl.style.display = 'block';
+        errEl.textContent = '添加失败：' + e.message;
+      });
+    });
+  }
+
+  loadBatches();
+  loadRules();
+  initRuleForm();
+})();
+</script>
+{% endblock %}

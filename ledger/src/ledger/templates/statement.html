@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}账单导入向导{% endblock %}
+{% block content %}
+<div class="chart-toolbar">
+  <h1>账单导入向导</h1>
+</div>
+
+<div class="steps" id="steps">
+  <div class="step active" id="step1Dot"><span class="step-num">1</span>上传</div>
+  <div class="step" id="step2Dot"><span class="step-num">2</span>核对映射</div>
+  <div class="step" id="step3Dot"><span class="step-num">3</span>确认</div>
+</div>
+
+<div class="card" id="step1Card">
+  <h2>第 1 步：选文件、选账户</h2>
+  <div id="step1Error" class="error-list" style="display:none;"></div>
+  <div class="form-row">
+    <label>账单文件</label>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+  <div class="form-row">
+    <label>账单模板</label>
+    <select id="templateSelect">
+      <option value="">自动识别</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label>入账账户</label>
+    <select id="accountSelect">
+      {% for a in accounts %}
+      <option value="{{ a.id }}">{{ a.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" id="previewBtn">解析预览</button>
+  </div>
+</div>
+
+<div class="card" id="step2Card" style="display:none;">
+  <h2>第 2 步：核对内容与列对应</h2>
+  <p class="muted" id="previewSummary"></p>
+  <div class="error-list" id="previewErrors" style="display:none;"></div>
+
+  <h3>列对应</h3>
+  <table class="map-table">
+    <thead>
+      <tr><th>字段</th><th>对应列</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>日期</td><td><select id="map_date" class="map-select"></select></td></tr>
+      <tr><td>交易对方</td><td><select id="map_counterparty" class="map-select"></select></td></tr>
+      <tr><td>摘要</td><td><select id="map_summary" class="map-select"></select></td></tr>
+      <tr><td>金额</td><td><select id="map_amount" class="map-select"></select></td></tr>
+      <tr><td>收支方向</td><td><select id="map_direction" class="map-select"></select></td></tr>
+    </tbody>
+  </table>
+
+  <h3>前 10 行预览</h3>
+  <table>
+    <thead>
+      <tr><th>日期</th><th>对方</th><th>摘要</th><th>金额</th><th>方向</th></tr>
+    </thead>
+    <tbody id="sampleBody"></tbody>
+  </table>
+
+  <div class="form-actions">
+    <button class="btn" id="reparseBtn">重新解析</button>
+    <button class="btn btn-primary" id="uploadBtn">确认上传</button>
+  </div>
+</div>
+
+<div class="card" id="step3Card" style="display:none;">
+  <h2>第 3 步：导入结果</h2>
+  <p id="resultText"></p>
+  <div class="form-actions">
+    <a class="btn btn-primary" id="toDetectiveBtn" href="/detective">去侦探队列认领</a>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var selectedFile = null;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function showError(id, msg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'block';
+    el.innerHTML = msg;
+  }
+  function hideError(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+  function setStep(n) {
+    var dots = [document.getElementById('step1Dot'), document.getElementById('step2Dot'), document.getElementById('step3Dot')];
+    for (var i = 0; i < dots.length; i++) {
+      if (dots[i]) { dots[i].className = (i + 1 === n) ? 'step active' : 'step'; }
+    }
+    document.getElementById('step1Card').style.display = n === 1 ? 'block' : 'none';
+    document.getElementById('step2Card').style.display = n === 2 ? 'block' : 'none';
+    document.getElementById('step3Card').style.display = n === 3 ? 'block' : 'none';
+  }
+  function dirText(d) {
+    return d === 'in' ? '收入' : (d === 'out' ? '支出' : (d || ''));
+  }
+
+  function loadTemplates() {
+    api('/api/statement-templates').then(function (list) {
+      var sel = document.getElementById('templateSelect');
+      for (var i = 0; i < list.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = list[i].id;
+        opt.textContent = list[i].name;
+        sel.appendChild(opt);
+      }
+    }).catch(function () { /* 模板加载失败不阻塞主流程 */ });
+  }
+
+  function fillSelect(sel, headers, current) {
+    sel.innerHTML = '';
+    var empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '（不映射）';
+    sel.appendChild(empty);
+    for (var i = 0; i < headers.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = headers[i];
+      opt.textContent = headers[i];
+      if (headers[i] === current) { opt.selected = true; }
+      sel.appendChild(opt);
+    }
+    if (!current) { empty.selected = true; }
+  }
+
+  function renderPreview(data) {
+    var tplName = data.template_name ? data.template_name : '未匹配到模板';
+    document.getElementById('previewSummary').textContent =
+      '识别到模板：' + tplName + ' / 文件编码：' + data.encoding + ' / 共 ' + data.total_rows + ' 行';
+
+    var headers = data.headers || [];
+    var mapping = data.mapping || {};
+    fillSelect(document.getElementById('map_date'), headers, mapping.date);
+    fillSelect(document.getElementById('map_counterparty'), headers, mapping.counterparty);
+    fillSelect(document.getElementById('map_summary'), headers, mapping.summary);
+    fillSelect(document.getElementById('map_amount'), headers, mapping.amount);
+    fillSelect(document.getElementById('map_direction'), headers, mapping.direction);
+
+    var body = document.getElementById('sampleBody');
+    body.innerHTML = '';
+    var sample = data.sample || [];
+    for (var i = 0; i < sample.length && i < 10; i++) {
+      var r = sample[i];
+      var tr = document.createElement('tr');
+      var tds = [r.occurred_on || '', r.counterparty || '', r.summary || '', fmtMoney(r.amount_cents), dirText(r.direction)];
+      for (var k = 0; k < tds.length; k++) {
+        var td = document.createElement('td');
+        td.textContent = tds[k];
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+
+    var errs = data.errors || [];
+    if (errs.length > 0) {
+      var html = '<ul>';
+      for (var j = 0; j < errs.length; j++) {
+        html += '<li>第 ' + errs[j].row + ' 行：' + esc(errs[j].error) + '</li>';
+      }
+      html += '</ul>';
+      showError('previewErrors', html);
+    } else {
+      hideError('previewErrors');
+    }
+  }
+
+  function collectMapping() {
+    function v(id) {
+      var val = document.getElementById(id).value;
+      return val ? val : null;
+    }
+    var m = { date: v('map_date'), amount: v('map_amount') };
+    var c = v('map_counterparty'); if (c) m.counterparty = c;
+    var s = v('map_summary'); if (s) m.summary = s;
+    var d = v('map_direction'); if (d) m.direction = d;
+    return m;
+  }
+
+  function doPreview() {
+    hideError('step1Error');
+    var fileInput = document.getElementById('fileInput');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      showError('step1Error', '请先选择一个 CSV 文件。');
+      return;
+    }
+    selectedFile = fileInput.files[0];
+    var fd = new FormData();
+    fd.append('file', selectedFile);
+    var tpl = document.getElementById('templateSelect').value;
+    if (tpl) { fd.append('template_id', tpl); }
+
+    api('/api/statements/parse-preview', { method: 'POST', body: fd }).then(function (data) {
+      renderPreview(data);
+      setStep(2);
+    }).catch(function (e) {
+      showError('step1Error', '解析失败：' + e.message);
+    });
+  }
+
+  function doUpload() {
+    hideError('previewErrors');
+    if (!selectedFile) {
+      showError('step1Error', '文件丢失，请重新选择。');
+      setStep(1);
+      return;
+    }
+    var fd = new FormData();
+    fd.append('file', selectedFile);
+    fd.append('account_id', document.getElementById('accountSelect').value);
+    var tpl = document.getElementById('templateSelect').value;
+    if (tpl) { fd.append('template_id', tpl); }
+    fd.append('mapping', JSON.stringify(collectMapping()));
+
+    api('/api/statements/upload', { method: 'POST', body: fd }).then(function (d) {
+      var parsed = d.parsed || 0;
+      var errs = (d.errors || []).length;
+      var skipped = d.duplicates_skipped || 0;
+      document.getElementById('resultText').textContent =
+        '已解析 ' + parsed + ' 条，错误 ' + errs + ' 条，疑似重复跳过 ' + skipped + ' 条。';
+      var btn = document.getElementById('toDetectiveBtn');
+      if (d.batch && d.batch.id) {
+        btn.setAttribute('href', '/detective?batch=' + d.batch.id);
+      }
+      setStep(3);
+    }).catch(function (e) {
+      showError('previewErrors', '上传失败：' + e.message);
+    });
+  }
+
+  document.getElementById('previewBtn').addEventListener('click', doPreview);
+  document.getElementById('reparseBtn').addEventListener('click', doPreview);
+  document.getElementById('uploadBtn').addEventListener('click', doUpload);
+
+  setStep(1);
+  loadTemplates();
+})();
+</script>
+{% endblock %}

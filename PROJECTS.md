@@ -182,7 +182,7 @@
 
 **定位**：个人财务管理系统，覆盖多账户记账、月度预算、统计分析与数据导入导出的完整记账流程。
 
-**技术栈**：Python 3.11+ + FastAPI + SQLAlchemy 2.0（aiosqlite 异步）+ SQLite 单文件库；Jinja2 SSR Web UI（图表为服务端渲染内联 SVG，零外部依赖）；pytest + httpx（34 例测试）、ruff 检查与格式化；Dockerfile 单阶段构建；GitHub Actions CI 暂置于 ledger/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+**技术栈**：Python 3.11+ + FastAPI + SQLAlchemy 2.0（aiosqlite 异步）+ SQLite 单文件库；Jinja2 SSR Web UI（图表为服务端渲染内联 SVG，零外部依赖）；pytest + httpx（97 例测试）、ruff 检查与格式化；Dockerfile 单阶段构建；GitHub Actions CI 暂置于 ledger/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
 **功能模块**：
 
@@ -193,16 +193,19 @@
 5. 统计分析（月度汇总、12 个月趋势、分类占比、净资产）
 6. CSV 导入/导出
 7. 周期性账单与未来 30 天到期提醒
-8. Web UI（仪表盘/交易/账户/分类/预算/周期账单/导入导出 7 页）
+8. Web UI（仪表盘/交易/账户/分类/预算/周期账单/导入导出/账单导入/侦探队列 9 页）
+9. **银行账单侦探（v2.0 灵魂功能）**：账单导入向导（上传→解析预览→列映射→确认，预置支付宝/微信/招行/工行模板，GBK 编码与表头前导行自动探测）→ 三路匹配引擎（关键词规则 priority > 历史习惯同商户多数票 > 候选 Top3 + 置信度）→ 侦探队列（待认领卡片流，一键认领/换分类/记住为规则/跳过）→ 认领即学习（存关键词规则，下次自动）→ 转账识别（对方为自己账户名）→ 指纹去重（sha256 防重复导入）
 
-**状态**：工程化 v1（2026-10-13 完成，pytest 34 例全过、ruff 全洁、真实服务 7 页面与核心业务流冒烟均已跑通）。
+**状态**：v2.0「银行账单侦探」（2026-10-15）：灵魂一页纸先行（docs/SOUL.md）；pytest 97/97 全过（新增 63 例：matching/parser 单元 56 + API 集成 41 中含 7 个端到端场景）、ruff 全洁；真实服务冒烟：支付宝/微信/招行-GBK 三种账单上传→确认→认领→学习闭环、指纹去重、转账识别全链路验证；两页真实数据截图亲眼验收通过（docs/screenshots/）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.0.md（结论可发版，生产级基础项排期 v2.1）；README 重写（图文并茂）+ CHANGELOG.md 新建。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：FastAPI 分层架构落地，账户/交易/分类/预算/统计/导入导出/周期账单全模块、Jinja2 SSR 前端、CI 与 Dockerfile 就绪
+- v2.0 银行账单侦探（2026-10-15）：`matching.py` 三路匹配纯函数引擎 + `statement_parser.py`（GBK/表头探测/列映射/4 内置模板）+ `routers/statements.py`（18 个端点：模板 CRUD/解析预览/上传/确认/认领/转账认领/跳过/规则 CRUD）+ `statement.html` 导入向导 + `detective.html` 侦探队列 + main.py 两路由 + base.html 导航；验收抓真 bug 7 个：dpsk 的 field_validator 漏 return v、schemas created_at 误用 datetime 类型、upload 循环内 N+1 查指纹、`_load_top_categories` 未按方向过滤、表头探测被全模板并集稀释致支付宝前导行识别失败、模板名未回填、claim 后 batch.pending_count 不递减；附带修 v1 遗留 3 个真 bug（style.css 首行 ```css 围栏致全站 CSS 变量失效、base.html 顶栏类名与 CSS 设计体系脱节、style.css 尾部 .chart-toolbar 截断）
 
 **后续计划**：
 
+- v2.1 生产级补强（对照报告第 7 节 7 项排期：DB 迁移版本化、结构化日志+request_id、/metrics、备份恢复 CLI+演练、docker-compose+运维手册、失败注入测试、就绪探针+优雅关闭）
 - 多币种与汇率
 - 账单图片 OCR 录入
 - 移动端适配

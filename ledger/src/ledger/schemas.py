@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ---------------------------------------------------------------------------
 # 账户
@@ -287,3 +287,144 @@ class ImportResult(BaseModel):
     created: int
     skipped: int
     errors: list[str]
+
+
+# 账单侦探
+
+
+class MatchRuleCreate(BaseModel):
+    """创建匹配规则入参。"""
+
+    keyword: str = Field(min_length=1)
+    category_id: int
+    direction: Literal["in", "out", "any"] = "any"
+    priority: int = 0
+
+
+class MatchRuleOut(BaseModel):
+    """匹配规则出参。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    keyword: str
+    category_id: int
+    direction: str
+    priority: int
+    created_at: str
+    category_name: str = ""
+
+
+class StatementTemplateCreate(BaseModel):
+    """创建账单模板入参。"""
+
+    name: str = Field(min_length=1)
+    source: str = "custom"
+    mapping: dict[str, str]
+
+    @field_validator("mapping")
+    @classmethod
+    def _check_mapping(cls, v: dict[str, str]) -> dict[str, str]:
+        """校验 mapping 必须包含 date 与 amount。"""
+        if "date" not in v or "amount" not in v:
+            raise ValueError("mapping 必须包含 date 和 amount")
+        return v
+        return v
+
+
+class StatementTemplateOut(BaseModel):
+    """账单模板出参。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    source: str
+    mapping: dict[str, str]
+    created_at: str
+    builtin: bool = False
+
+
+class StatementBatchOut(BaseModel):
+    """账单批次出参。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    filename: str
+    template_id: int | None
+    account_id: int
+    status: str
+    total_count: int
+    auto_count: int
+    pending_count: int
+    created_at: str
+
+
+class StatementCandidate(BaseModel):
+    """候选分类。"""
+
+    category_id: int
+    category_name: str
+    reason: str
+    confidence: int
+
+
+class StatementItemOut(BaseModel):
+    """账单条目出参。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    batch_id: int
+    occurred_on: date
+    counterparty: str
+    summary: str
+    amount_cents: int
+    direction: str
+    suggested_category_id: int | None
+    match_source: str
+    confidence: int
+    suggested_action: str
+    suggested_to_account_id: int | None
+    status: str
+    claimed_category_id: int | None
+    transaction_id: int | None
+    created_at: str
+    suggested_category_name: str | None = None
+    claimed_category_name: str | None = None
+    candidates: list[StatementCandidate] = []
+
+
+class ParsePreviewOut(BaseModel):
+    """账单解析预览出参。"""
+
+    encoding: str
+    headers: list[str]
+    mapping: dict[str, str]
+    template_name: str | None
+    total_rows: int
+    sample: list[dict]
+    errors: list[dict]
+
+
+class UploadOut(BaseModel):
+    """账单上传结果。"""
+
+    batch: StatementBatchOut
+    parsed: int
+    errors: list[dict]
+    duplicates_skipped: int
+
+
+class ClaimIn(BaseModel):
+    """认领条目入参。"""
+
+    category_id: int
+    save_rule: bool = False
+
+
+class ClaimTransferIn(BaseModel):
+    """认领转账入参。"""
+
+    to_account_id: int

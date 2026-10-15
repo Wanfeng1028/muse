@@ -1,21 +1,120 @@
-ledger/
-├── src/
-│   └── ledger/
-│       ├── __init__.py
-│       ├── main.py            # FastAPI 应用入口、页面路由、静态文件挂载
-│       ├── config.py          # 环境变量读取（LEDGER_DB / LEDGER_HOST / LEDGER_PORT）
-│       ├── db.py              # create_async_engine / async_sessionmaker / Base
-│       ├── models.py          # 六张表的 ORM 模型定义
-│       ├── schemas.py         # Pydantic 请求/响应模型
-│       ├── services.py        # 业务逻辑（余额计算、预算统计、规则校验）
-│       ├── api/               # /api 路由：accounts / categories / transactions
-│       │                      #            budgets / stats / import_export / recurring
-│       ├── charts.py          # 内联 SVG 图表生成
-│       ├── seed.py            # 预置常用分类
-│       └── templates/         # Jinja2 模板（仪表盘、交易、账户、分类、预算…）
-├── tests/                     # pytest 测试用例
-├── data/                      # SQLite 数据库文件默认目录
-├── pyproject.toml
-├── Makefile
-├── Dockerfile
-└── README.md
+# 钱迹 Ledger
+
+给中国人的记账本。补录账单太累，逐条分类劝退——所以钱迹让你把银行、支付宝、微信的账单直接导进来，能自动对上的自动入账，对不上的进"侦探队列"，你点一下认领，它就学会了。
+
+![侦探队列](docs/screenshots/detective-queue.png)
+
+![导入向导](docs/screenshots/statement-wizard.png)
+
+灵魂一页纸见 [docs/SOUL.md](docs/SOUL.md)。
+
+## 快速开始
+
+make install
+make dev
+
+然后打开 http://127.0.0.1:8100
+
+`make install` 会建 `.venv` 并做可编辑安装；`make dev` 用 uvicorn 热重载跑在 127.0.0.1:8100。
+
+## 功能
+
+### v1 基础
+
+- 多账户：银行卡、支付宝、微信、现金分开记。
+- 交易：收入、支出、转账。
+- 分类：自定义分类，支持 emoji。
+- 预算：按分类按月设预算，执行进度与超支预警。
+- 统计：服务端渲染 SVG 图表，零前端构建。
+- CSV 导入导出：自己的数据随时带走。
+- 周期账单：房租、订阅这类固定支出自动记。
+- Web UI：7 个页面，Jinja2 服务端渲染。
+
+### v2.0 银行账单侦探
+
+- 账单导入向导 `/statement`：上传 → 解析预览 → 列映射可调 → 确认。
+- 预置 4 个模板：支付宝、微信支付、招商银行、工商银行。
+- 三路匹配：关键词规则（priority）> 历史习惯（同商户多数票）> 候选建议（Top3 + 置信度）。
+- 侦探队列 `/detective`：待认领卡片流，一键认领 / 换分类 / 记住为规则 / 跳过。
+- 认领即学习：认领时 `save_rule=true` 存关键词规则，下次同类自动入账。
+- 转账识别：对方是自己账户名时建议转账。
+- 指纹去重：`sha256(日期|金额|方向|对方|摘要)`，重复导入自动跳过。
+
+## 账单侦探工作流
+
+1. 上传：在 `/statement` 传账单文件（CSV），系统自动识别模板、编码、表头前导行。
+2. 自动匹配：解析后逐条跑三路匹配，能对上的直接入账。
+3. 侦探队列：对不上的进 `/detective`，卡片流展示。
+4. 认领即学习：点一下认领，勾上"记住为规则"，下次同类自动入账。
+
+## API
+
+所有端点前缀 `/api`。
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET/POST/DELETE | `/api/statement-templates` | 账单模板管理 |
+| POST | `/api/statements/parse-preview` | 上传并解析预览（multipart） |
+| POST | `/api/statements/upload` | 上传账单（multipart） |
+| GET | `/api/statements/batches` | 批次列表 |
+| GET/DELETE | `/api/statements/{id}` | 批次详情 / 删除 |
+| POST | `/api/statements/{id}/confirm` | 确认导入 |
+| GET | `/api/statements/{id}/items` | 批次条目 |
+| POST | `/api/statements/items/{id}/claim` | 认领条目 |
+| POST | `/api/statements/items/{id}/claim-transfer` | 认领为转账 |
+| POST | `/api/statements/items/{id}/skip` | 跳过条目 |
+| GET/POST/DELETE | `/api/match-rules` | 匹配规则管理 |
+
+## 为什么不用随手记 / Excel 记账
+
+| | 随手记 | Excel | 钱迹 Ledger |
+| --- | --- | --- | --- |
+| 数据存放 | 云端 | 本地文件 | 本地 SQLite 单文件 |
+| 账单导入 | 手工补录 | 手工整理 | 银行/支付宝/微信账单自动认领 |
+| 开源自托管 | 否 | 是 | 是 |
+
+## 开发
+
+make test   # pytest，97 例
+
+lint：
+
+.venv/bin/python -m ruff check src/ tests/
+
+目录：
+
+src/ledger/
+  main.py              应用入口 + 页面路由
+  config.py            LEDGER_DB / LEDGER_HOST / LEDGER_PORT 环境变量
+  database.py
+  models.py            10 张表
+  schemas.py
+  services.py
+  matching.py          v2.0 三路匹配纯函数引擎
+  statement_parser.py  v2.0 账单解析：GBK / 表头探测 / 列映射
+  routers/
+    accounts.py
+    categories.py
+    transactions.py
+    budgets.py
+    stats.py
+    import_export.py
+    recurring.py
+    statements.py
+    health.py
+  templates/           9 页
+  static/
+    style.css
+    app.js
+tests/
+docs/
+  SOUL.md
+  screenshots/
+
+## 配置
+
+| 环境变量 | 说明 |
+| --- | --- |
+| `LEDGER_DB` | SQLite 数据库文件路径 |
+| `LEDGER_HOST` | 监听地址 |
+| `LEDGER_PORT` | 监听端口 |

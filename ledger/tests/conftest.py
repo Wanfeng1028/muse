@@ -51,7 +51,17 @@ async def client(app):
     factory = get_session_factory()
     async with factory() as session:
         # 清空所有业务表（按依赖顺序删除）
-        for t in ("transactions", "budgets", "recurring", "categories", "accounts"):
+        for t in (
+            "statement_items",
+            "statement_batches",
+            "match_rules",
+            "statement_templates",
+            "transactions",
+            "budgets",
+            "recurring",
+            "categories",
+            "accounts",
+        ):
             await session.execute(text(f"DELETE FROM {t}"))
         await session.commit()
 
