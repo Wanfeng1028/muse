@@ -29,8 +29,11 @@ spring:
 
 server:
   port: ${PORT:8081}
-  # POC 无鉴权，仅绑本地回环，不许改成 0.0.0.0 对外暴露
-  address: 127.0.0.1
+  # 默认绑 0.0.0.0：compose.yml / docker-compose.yml 中 nginx 容器需通过服务名连主服务，
+  # 容器网络无法访问宿主回环 127.0.0.1，绑回环会导致容器间连不上。
+  # POC 本地运行时如需仅绑回环，启动加 --spring.profiles.active=poc-local
+  #（加载同目录 application-poc-local.yml）。Docker / 生产部署不许启用该 profile。
+  address: 0.0.0.0
   # 优雅关闭：收到关闭信号后先停止接收新请求，等待在途请求处理完成再退出
   shutdown: graceful
 
@@ -106,3 +109,6 @@ resilience4j:
 auth:
   jwt:
     secret: ${AUTH_JWT_SECRET:}
+  # cookie.secure：生产 HTTPS 部署设为 true（环境变量 AUTH_COOKIE_SECURE=true），
+  # 此时浏览器仅在 HTTPS 下发送 df_at/df_rt；本地 HTTP 开发保持 false。
+

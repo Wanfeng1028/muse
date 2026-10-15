@@ -31,11 +31,11 @@ npm run build
 
 ## 并发冲突
 
-`PUT /api/canvas/project` 请求体必须带 `base_version`（整数，等于 GET 到的 `revision`）。版本过期服务端返回 409，body 为 `{"status":409,"error":"Conflict","message":"...","current_version":<数字>,"updated_by":"editor"|"agent",...}`。前端收到 409 时弹窗：`updated_by` 为 `agent` 显示「内容已被 agent 修改，是否刷新？」，按钮「刷新」/「取消」。点刷新重拉服务端数据，点取消保留本地编辑——但取消后再点保存仍会 409。
+`PUT /api/canvas/project` 请求体必须带 `base_version`（整数，等于 GET 到的 `revision`）。版本过期服务端返回 409，body 为 `{"status":409,"error":"Conflict","message":"...","current_version":<数字>,"updated_by":"editor"|"agent",...}`。前端收到 409 时弹窗：`updated_by` 为 `agent` 显示「内容已被 agent 修改，是否刷新？」，按钮「刷新」/「取消」。点刷新重拉服务端数据，点取消保留本地编辑——但取消后再点保存仍会 409。agent 写入走 service 层 `canvas.save_project` / `canvas.apply_patch` 接口（POC 阶段仅定接口，真实执行随网关 POC 落地，尚未接线）。
 
 ## 安全（本地限定）
 
-后端只绑 `127.0.0.1`（`application.yml` 中 `server.address: 127.0.0.1`）。POC 无鉴权，仅限本机访问，不许对外暴露。
+`application.yml` 默认绑 `0.0.0.0`（`compose.yml` / `docker-compose.yml` 里 nginx 容器要通过服务名连主服务，全局写死 `127.0.0.1` 会让容器网络连不上）。POC 本地运行时加 `--spring.profiles.active=poc-local` 仅绑回环（加载 `application-poc-local.yml`）。Docker / 生产部署不许启用该 profile。POC 无鉴权，仅限本机访问时不许对外暴露。
 
 ## 存储切换触发条件
 

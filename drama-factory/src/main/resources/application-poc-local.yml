@@ -1,0 +1,5 @@
+# POC 本地运行专用 profile：仅绑本地回环，不对外暴露。
+# 启用方式：--spring.profiles.active=poc-local
+# 注意：Docker / 生产部署不许启用本 profile，否则 nginx 容器无法通过服务名连上主服务。
+server:
+  address: 127.0.0.1

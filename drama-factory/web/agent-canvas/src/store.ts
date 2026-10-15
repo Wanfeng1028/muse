@@ -154,9 +154,13 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       set({ error: '没有配置保存地址，无法保存' });
       return;
     }
+    if (revision === null) {
+      set({ error: '请先加载画布后再保存' });
+      return;
+    }
     set({ loading: true, error: null });
     try {
-      const body = { base_version: revision ?? 1, version: 1, nodes, edges };
+      const body = { base_version: revision, version: 1, nodes, edges };
       const res = await fetch(src, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

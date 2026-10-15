@@ -9,6 +9,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,5 +122,42 @@ class CanvasProjectVersionConflictTest {
         body.put("base_version", "1");
 
         assertThrows(IllegalArgumentException.class, () -> service.save(body));
+    }
+
+    @Test
+    void concurrentSave_sameBaseVersion_onlyOneWins(@TempDir Path dir) throws Exception {
+        CanvasProjectService service = newService(dir);
+        int threads = 8;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch startGate = new CountDownLatch(1);
+        CountDownLatch doneGate = new CountDownLatch(threads);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger conflictCount = new AtomicInteger(0);
+        AtomicInteger otherCount = new AtomicInteger(0);
+        try {
+            for (int i = 0; i < threads; i++) {
+                pool.submit(() -> {
+                    try {
+                        startGate.await();
+                        service.save(bodyWithBase(1), "editor");
+                        successCount.incrementAndGet();
+                    } catch (CanvasConflictException e) {
+                        conflictCount.incrementAndGet();
+                    } catch (Exception e) {
+                        otherCount.incrementAndGet();
+                    } finally {
+                        doneGate.countDown();
+                    }
+                });
+            }
+            startGate.countDown();
+            assertTrue(doneGate.await(10, TimeUnit.SECONDS), "并发保存未在超时内完成");
+        } finally {
+            pool.shutdownNow();
+        }
+        assertEquals(0, otherCount.get(), "出现了非 CanvasConflictException 的异常");
+        assertEquals(1, successCount.get(), "恰好应有 1 个线程保存成功");
+        assertEquals(threads - 1, conflictCount.get(), "其余线程应全部抛 CanvasConflictException");
+        assertEquals(2, service.load().get("revision").asInt(), "最终 revision 应为 base+1");
     }
 }
