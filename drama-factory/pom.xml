@@ -138,16 +138,16 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <!-- v2.21 实测 91.51%，棘轮锁定 0.91，只升不降 -->
-                                            <minimum>0.91</minimum>
+                                            <!-- v2.22 实测 92.33%，棘轮锁定 0.92，只升不降 -->
+                                            <minimum>0.92</minimum>
 
 
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <!-- v2.21：分支覆盖 90.24%（见 dod-v2.21.md）；门禁锁定 0.90 -->
-                                            <minimum>0.90</minimum>
+                                            <!-- v2.22：分支覆盖 91.91%（见 dod-v2.22.md）；门禁锁定 0.91 -->
+                                            <minimum>0.91</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
