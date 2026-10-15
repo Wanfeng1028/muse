@@ -2,6 +2,30 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.1 - 2026-10-15
+
+### 新增
+
+- DB 迁移版本化：`PRAGMA user_version`（当前版本 2），v1 老库启动自动补 4 张 v2 表，损坏库启动报 `MigrationError`。
+- 结构化日志：stderr JSON Lines（ts/level/logger/msg/request_id），`RequestIdMiddleware` 全链路 request_id 并回写 `X-Request-Id` 响应头；`LEDGER_LOG_LEVEL` 环境变量，非法值启动 fail-fast。
+- `GET /api/metrics`：Prometheus 文本格式，6 个指标（账单批次/条目按状态/侦探待认领/自动匹配率/交易总数/账户总数）。
+- 备份恢复 CLI：`python -m ledger backup [--keep N]`（默认保留 7 个，备份前 integrity_check）、`python -m ledger restore FILE`（恢复前自动安全快照，坏备份拒绝恢复）；`make backup [KEEP=N]` / `make restore FILE=`。
+- 就绪探针 `GET /api/ready`（DB 通 200 / 不通 503）；优雅关闭（lifespan dispose engine）。
+- `docker-compose.yml` 一键部署（healthcheck / 资源限制 1 核 512M / 日志轮转 / named volume）与 `docs/OPERATIONS.md` 运维手册。
+- 失败注入测试 4 例：DB 锁定→500 带 request_id、坏 CSV→200 不崩服务、磁盘满→BackupError 无残留、metrics DB 故障→500。
+- 未处理异常统一 500 `{"detail":"服务器内部错误","request_id":"..."}`（由 RequestIdMiddleware 兜底；FastAPI 0.143 的 Exception 处理器会被转给 ServerErrorMiddleware 并 re-raise，故不用）。
+
+### 修复
+
+- 修 `python -m ledger serve` 启动崩溃（`args.dir` 在 serve 子命令不存在）。
+- 修坏 CSV（随机二进制）的 `csv.Error` 抛 500：改为 errors 行收集返回 200。
+- 修备份 `integrity_check` 对损坏文件抛裸 `sqlite3.DatabaseError`：改为 `BackupError`。
+- 修备份写入失败（磁盘满）抛裸 `OSError` 且留半成品：改为 `BackupError` 并清理。
+
+### 测试
+
+- pytest 97 → 119 例全过；ruff 全洁；真实服务冒烟（建账→交易→metrics→备份→删库→恢复→数据一致）全链路通过。
+
 ## v2.0 - 2026-10-15
 
 ### 新增

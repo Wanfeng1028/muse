@@ -308,7 +308,14 @@ async def import_csv_rows(s: AsyncSession, text: str) -> dict:
     errors: list[str] = []
 
     reader = csv.reader(io.StringIO(text))
-    rows = list(reader)
+    try:
+        rows = list(reader)
+    except csv.Error as exc:
+        return {
+            "created": 0,
+            "skipped": 0,
+            "errors": [f"CSV 解析失败: {exc}"],
+        }
     if not rows:
         return {"created": 0, "skipped": 0, "errors": []}
 

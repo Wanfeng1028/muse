@@ -1,0 +1,96 @@
+"""数据库迁移：使用 PRAGMA user_version 进行版本化。"""
+
+from __future__ import annotations
+
+import sqlite3
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from sqlalchemy import text
+from sqlalchemy.dialects import sqlite as sqlite_dialect
+from sqlalchemy.exc import DatabaseError
+from sqlalchemy.schema import CreateTable
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncEngine
+
+
+CURRENT_VERSION = 2
+
+V1_TABLES = ("accounts", "categories", "transactions", "budgets", "recurring")
+V2_TABLES = (
+    "statement_templates",
+    "match_rules",
+    "statement_batches",
+    "statement_items",
+)
+
+
+class MigrationError(Exception):
+    """数据库迁移失败。"""
+
+
+def _compile_create_table(table) -> str:
+    """将 SQLAlchemy Table 对象编译为 SQLite 的 CREATE TABLE 语句。"""
+    ddl = str(CreateTable(table).compile(dialect=sqlite_dialect.dialect()))
+    # 加 IF NOT EXISTS 保证幂等
+    return ddl.replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ", 1)
+
+
+async def _read_user_version(conn) -> int:
+    result = await conn.execute(text("PRAGMA user_version"))
+    return int(result.scalar_one())
+
+
+async def _table_exists(conn, name: str) -> bool:
+    result = await conn.execute(
+        text("SELECT name FROM sqlite_master WHERE type='table' AND name=:n"),
+        {"n": name},
+    )
+    return result.first() is not None
+
+
+async def run_migrations(engine: AsyncEngine) -> int:
+    """执行迁移，返回迁移后的 user_version。"""
+    from ledger import models  # noqa: F401  注册所有表定义
+
+    try:
+        async with engine.begin() as conn:
+            version = await _read_user_version(conn)
+
+            if version >= CURRENT_VERSION:
+                return version
+
+            accounts_exists = await _table_exists(conn, "accounts")
+
+            if version == 0 and not accounts_exists:
+                # 全新库
+                await conn.run_sync(models.Base.metadata.create_all)
+            else:
+                # 老库（v0/v1），补 v2 的四张表
+                for table_name in V2_TABLES:
+                    table = models.Base.metadata.tables[table_name]
+                    ddl = _compile_create_table(table)
+                    await conn.execute(text(ddl))
+
+            await conn.execute(text(f"PRAGMA user_version = {CURRENT_VERSION}"))
+            return CURRENT_VERSION
+    except sqlite3.DatabaseError as exc:
+        raise MigrationError(
+            f"数据库文件损坏或不是 SQLite 库: {_engine_path(engine)}"
+        ) from exc
+    except DatabaseError as exc:
+        # SQLAlchemy 包装后的 sqlite 错误
+        orig = getattr(exc, "orig", None)
+        if isinstance(orig, sqlite3.DatabaseError):
+            raise MigrationError(
+                f"数据库文件损坏或不是 SQLite 库: {_engine_path(engine)}"
+            ) from exc
+        raise
+
+
+def _engine_path(engine: AsyncEngine) -> str:
+    url = engine.url
+    if url.database and url.database != ":memory:":
+        return str(Path(url.database))
+    return str(url)

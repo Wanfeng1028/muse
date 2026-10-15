@@ -1,7 +1,7 @@
 # ledger 项目 Makefile
 # 约定：所有 Python 命令均通过项目内 .venv 执行，避免污染全局环境
 
-.PHONY: install dev run test lint fmt clean
+.PHONY: install dev run test lint fmt clean backup restore
 
 # 创建虚拟环境并以可编辑模式安装项目及开发依赖
 install:
@@ -30,3 +30,11 @@ fmt:
 # 清理虚拟环境、数据库文件与缓存
 clean:
 	rm -rf .venv data/*.db __pycache__
+
+# 备份数据库（保留最近 7 个，可用 KEEP= 覆盖）
+backup:
+	.venv/bin/python -m ledger backup --keep $(or $(KEEP),7)
+
+# 从备份恢复（必须指定 FILE= 路径）
+restore:
+	.venv/bin/python -m ledger restore $(FILE)

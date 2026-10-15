@@ -87,16 +87,15 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """初始化数据库：确保 data 目录存在并创建所有表。"""
-    # 在函数内导入 models，注册所有表定义，避免循环导入
-    from ledger import models  # noqa: F401
+    """初始化数据库：确保 data 目录存在并执行版本化迁移。"""
+    # 在函数内导入 migrations，避免循环导入（migrations 依赖 models，models 依赖 database）
+    from ledger import migrations
 
     db_path = Path(_resolve_db_path())
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     engine = get_engine()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await migrations.run_migrations(engine)
 
 
 def utcnow_iso() -> str:

@@ -1,0 +1,44 @@
+services:
+  ledger:
+    build: .
+    image: ledger:2.1
+    container_name: ledger
+    ports:
+      - "8100:8100"
+    environment:
+      # 数据库文件路径，位于数据卷内，容器重建后数据保留
+      LEDGER_DB: /app/data/ledger.db
+      # 监听地址，容器内必须为 0.0.0.0 才能被端口映射访问
+      LEDGER_HOST: 0.0.0.0
+      LEDGER_PORT: "8100"
+      # 日志级别：DEBUG/INFO/WARNING/ERROR/CRITICAL，非法值启动 fail-fast
+      LEDGER_LOG_LEVEL: INFO
+      # 备份目录，同样位于数据卷内，备份文件随卷持久化
+      LEDGER_BACKUP_DIR: /app/data/backups
+    volumes:
+      # named volume：数据与备份都落在卷内（/app/data 含 ledger.db 与 backups/）。
+      # 使用 named volume 而非 bind 相对路径，避免宿主机权限/路径歧义。
+      - ledger-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      # slim 镜像无 curl/wget，使用 python urllib 探测 /api/health
+      test: ["CMD", "python", "-c", "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/api/health',timeout=5).status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # 数据卷说明：存放 /app/data/ledger.db 及 /app/data/backups 下的备份文件。
+  # 删除该卷会同时丢失数据库与备份，操作前请先导出备份。
+  ledger-data:

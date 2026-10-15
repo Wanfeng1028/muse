@@ -12,6 +12,7 @@ from sqlalchemy import select
 from ledger import charts
 from ledger.config import get_settings
 from ledger.database import get_session_factory, init_db
+from ledger.logging import RequestIdMiddleware, get_logger, setup_logging
 from ledger.models import Category, Recurring
 from ledger.routers import (
     accounts,
@@ -19,6 +20,7 @@ from ledger.routers import (
     categories,
     health,
     import_export,
+    metrics,
     recurring,
     statements,
     stats,
@@ -54,16 +56,30 @@ def _row_to_dict(row) -> dict:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """启动时初始化数据库并确保种子数据存在。"""
+    from pathlib import Path
+
+    settings = get_settings()
+    get_logger("app").info(
+        "startup",
+        extra={"extra_data": {"event": "startup", "db_file": Path(settings.db_path).name}},
+    )
     await init_db()
     factory = get_session_factory()
     async with factory() as session:
         await ensure_seed(session)
     yield
+    from ledger.database import get_engine
+
+    await get_engine().dispose()
+    get_logger("app").info("shutdown", extra={"extra_data": {"event": "engine_disposed"}})
 
 
 def create_app() -> FastAPI:
     """创建并配置 FastAPI 应用。"""
+    settings = get_settings()
+    setup_logging(settings.log_level)
     app = FastAPI(title="钱迹", lifespan=lifespan)
+    app.add_middleware(RequestIdMiddleware)
 
     # 静态资源
     import os
@@ -80,6 +96,7 @@ def create_app() -> FastAPI:
 
     # 注册路由
     app.include_router(health.router)
+    app.include_router(metrics.router)
     app.include_router(accounts.router)
     app.include_router(categories.router)
     app.include_router(transactions.router)

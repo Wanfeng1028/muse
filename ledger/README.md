@@ -40,6 +40,14 @@ make dev
 - 转账识别：对方是自己账户名时建议转账。
 - 指纹去重：`sha256(日期|金额|方向|对方|摘要)`，重复导入自动跳过。
 
+### v2.1 生产级补强
+
+- DB 迁移版本化：`PRAGMA user_version`，v1 老库自动升级。
+- 结构化日志 + request_id 全链路（JSON Lines，`X-Request-Id` 响应头）。
+- `GET /api/metrics`（Prometheus 格式）与 `GET /api/ready`（就绪探针）。
+- 备份恢复 CLI：`python -m ledger backup` / `python -m ledger restore FILE`，`make backup` / `make restore FILE=`。
+- `docker-compose.yml` 一键部署 + `docs/OPERATIONS.md` 运维手册。
+
 ## 账单侦探工作流
 
 1. 上传：在 `/statement` 传账单文件（CSV），系统自动识别模板、编码、表头前导行。
@@ -64,6 +72,9 @@ make dev
 | POST | `/api/statements/items/{id}/claim-transfer` | 认领为转账 |
 | POST | `/api/statements/items/{id}/skip` | 跳过条目 |
 | GET/POST/DELETE | `/api/match-rules` | 匹配规则管理 |
+| GET | `/api/health` | 健康检查（含版本号） |
+| GET | `/api/ready` | 就绪探针（DB 连通性） |
+| GET | `/api/metrics` | Prometheus 指标 |
 
 ## 为什么不用随手记 / Excel 记账
 
@@ -75,7 +86,7 @@ make dev
 
 ## 开发
 
-make test   # pytest，97 例
+make test   # pytest，119 例
 
 lint：
 
@@ -85,9 +96,12 @@ lint：
 
 src/ledger/
   main.py              应用入口 + 页面路由
-  config.py            LEDGER_DB / LEDGER_HOST / LEDGER_PORT 环境变量
+  config.py            LEDGER_DB / LEDGER_HOST / LEDGER_PORT / LEDGER_LOG_LEVEL / LEDGER_BACKUP_DIR 环境变量
   database.py
-  models.py            10 张表
+  migrations.py        v2.1 PRAGMA user_version 版本化迁移
+  backup.py            v2.1 备份/恢复（integrity_check + 安全快照）
+  logging.py           v2.1 结构化日志 + request_id 中间件
+  models.py            9 张表
   schemas.py
   services.py
   matching.py          v2.0 三路匹配纯函数引擎
@@ -102,6 +116,7 @@ src/ledger/
     recurring.py
     statements.py
     health.py
+    metrics.py           v2.1 Prometheus 指标
   templates/           9 页
   static/
     style.css
@@ -118,3 +133,11 @@ docs/
 | `LEDGER_DB` | SQLite 数据库文件路径 |
 | `LEDGER_HOST` | 监听地址 |
 | `LEDGER_PORT` | 监听端口 |
+| `LEDGER_LOG_LEVEL` | 日志级别（DEBUG/INFO/WARNING/ERROR/CRITICAL，默认 INFO，非法值启动失败） |
+| `LEDGER_BACKUP_DIR` | 备份目录（默认 `<项目根>/data/backups`） |
+
+## 运维
+
+- 一键部署：`docker compose up -d --build`
+- 备份/恢复：`make backup` / `make restore FILE=...`
+- 完整运维手册见 `docs/OPERATIONS.md`（升级/监控/排障）。
