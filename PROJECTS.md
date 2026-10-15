@@ -146,6 +146,8 @@
 - 审核流状态机
 - 多用户与权限
 - **视觉验收补课 + 录制回放测试修复**（2026-10-15）：① Skill 市场页（P2-6）之前从未截图验收，本轮用真实数据（4 官方 Skill + 已安装 1 个 + 5 星评价）亲眼验收深浅主题+详情弹窗，抓出 1 真实 UI bug：已安装列表裸 ISO 时间戳 → 加 `fmtDateTime` 格式化为 `YYYY-MM-DD HH:mm`；截图入 `docs/screenshots/skills-{light,dark,detail-light}.png` 并同步 README。② 快捷工具页（P2-7）上一轮截图是空数据状态且未入仓，本轮造演示数据（图片/视频资产、《霓虹夜行》项目+剧集）重拍深浅主题入仓；重拍抓出 1 真实功能 bug：`tools.js` 的 `loadProjects()` 用了带尾斜杠的 `/api/projects/`（Spring Boot 3 默认不匹配尾斜杠 → 404 → 导出下拉永远"暂无项目"）→ 去掉尾斜杠。③ 附带修 shell.js 顶栏标题映射漏 `mv/tools/account`（三页顶栏误显示"AI 短剧工坊"）。④ 修复两个未提交的录制回放测试文件（AgnesVideoProviderSubmitRecordingTest/QwenVideoProviderSubmitPollRecordingTest，因 Provider API 演进编译不过：submit 加 seconds 参数、VideoHttpGateway.exchange 签名、Qwen 构造器参数顺序、Shot 枚举拼音命名），15 例全绿。auth-service 12 例测试全绿。
+- 生产级补强 **v2.14 第 13 轮「分支覆盖冲 75%」**（2026-10-15，DoD v2.13 排期首项全交付且超额）：1 批 dpsk 生成——新建 QuickToolsServiceBranchTest 20 例（纯 Mockito + @TempDir，零 Spring 上下文；batchTag 5/batchRename 4/convertVideo 5/extractAudio 2/exportShotCsv 3/resolveStoragePath 1）；QuickToolsService 分支 69.7%→**87.9%**（补 24 分支）；全量分支 **74.81%→75.54%**（75% 目标达成）、行 84.78%→**84.93%**；测试总数 1049→**1069**（除 1 已知 flaky 外全绿）；pom JaCoCo 门禁棘轮 LINE 0.82→0.84、BRANCH 0.70→0.75；发版对照报告 `docs/dod-v2.14.md`。本轮核验关闭 v2.13 排期误判项：resolveExtension "bin" 不可达分支早在 f4fa998（10-14）已删除（改抛 IllegalStateException），grep 确认零残留。教训：排期前先核验代码现状；split-dpsk.py 不剥 END FILE 标记，落盘后先 grep 再编译。
+- DoD 未通过项新排期（见 docs/dod-v2.14.md：v2.15 分支覆盖冲 80%（候选 ByokGenerateService 44、ProviderService 30、MvService 29 等）；Agnes/Qwen submit/poll 真实链路（需外部 API）；h2c 锁定待产品确认；testFullPipeline flaky 根因第三次出现，考虑 mock 化视频轮询）
 
 ## mini-os「网页操作系统」
 
