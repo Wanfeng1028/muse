@@ -5,6 +5,21 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.3.0] - 2026-10-15
+
+附件与导出——笔记可以带图片和文件了，全库也能一键带走。
+
+### 新增
+
+- **附件支持**：`POST /api/notes/{id}/attachments` 上传附件（multipart，默认单个 ≤10MB，可用 `SB_ATTACH_MAX_MB` 调整）；扩展名白名单 + 文件名消毒 + 图片 MIME 嗅探校验；文件落 `<数据目录>/attachments/<笔记id>/`，元数据记 `attachments` 表（含 sha256）；`GET /api/notes/{id}/attachments` 列表、`GET /api/attachments/{id}` 下载、`DELETE /api/attachments/{id}` 删除；删笔记时附件目录一并清理。
+- **Markdown 附件引用**：正文中 `![说明](attachment:123)` 渲染为内联图片，`[说明](attachment:123)` 渲染为下载链接，编辑预览与复习卡片共用同一渲染。
+- **附件 Web UI**：编辑区新增附件区（上传入口、附件列表、图片缩略图预览、插入引用/下载/删除）。
+- **导出**：`GET /api/export/markdown` 打包全库为 zip（`index.md` + `notes/` 下每篇一个带 front matter 的 `.md` + `attachments/` 原文件，引用改写为相对路径，条目名消毒防 ZipSlip）；`GET /api/export/json` 导出全库 JSON（含标签与附件元数据）；侧边栏新增导出按钮。
+
+### 文档
+
+- README 新增附件与导出章节、API 表与配置项，路线图移除已落地的两项。
+
 ## [0.2.0] - 2026-10-13
 
 主动复习引擎——让笔记从“记录”走向“记忆”。

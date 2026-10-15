@@ -22,6 +22,8 @@ var (
 	reBold       = regexp.MustCompile(`\*\*([^*]+)\*\*`)
 	reItalic     = regexp.MustCompile(`\*([^*]+)\*`)
 	reCodeSpan   = regexp.MustCompile("`([^`]+)`")
+	reAttachImg  = regexp.MustCompile(`!\[([^\]]*)\]\(attachment:(\d+)\)`)
+	reAttachLink = regexp.MustCompile(`\[([^\]]+)\]\(attachment:(\d+)\)`)
 )
 
 // Render 将 Markdown 子集渲染为安全 HTML。
@@ -158,6 +160,24 @@ func renderInline(s string) string {
 
 	// 转义其余内容
 	s = html.EscapeString(s)
+
+	// 附件引用：必须在普通链接之前处理，因为 reLink 也会匹配 attachment: 形式。
+	// ![alt](attachment:123) 渲染为内联图片
+	s = reAttachImg.ReplaceAllStringFunc(s, func(m string) string {
+		g := reAttachImg.FindStringSubmatch(m)
+		if g == nil {
+			return m
+		}
+		return `<img src="/api/attachments/` + g[2] + `" alt="` + g[1] + `" loading="lazy" class="attachment-image">`
+	})
+	// [label](attachment:123) 渲染为下载链接
+	s = reAttachLink.ReplaceAllStringFunc(s, func(m string) string {
+		g := reAttachLink.FindStringSubmatch(m)
+		if g == nil {
+			return m
+		}
+		return `<a href="/api/attachments/` + g[2] + `">` + g[1] + `</a>`
+	})
 
 	// 链接 [文本](url) 仅 http/https
 	s = reLink.ReplaceAllStringFunc(s, func(m string) string {

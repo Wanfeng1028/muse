@@ -83,6 +83,21 @@ func TestRender(t *testing.T) {
 			input:    "just text",
 			contains: []string{"<p>just text</p>"},
 		},
+		{
+			name:     "attachment image",
+			input:    "![截图](attachment:42)",
+			contains: []string{`<img src="/api/attachments/42"`, `alt="截图"`, `class="attachment-image"`},
+		},
+		{
+			name:     "attachment link",
+			input:    "[报告](attachment:7)",
+			contains: []string{`<a href="/api/attachments/7">报告</a>`},
+		},
+		{
+			name:     "attachment alt escaped",
+			input:    `![<b>](attachment:9)`,
+			contains: []string{`alt="&lt;b&gt;"`},
+		},
 	}
 
 	for _, tt := range tests {

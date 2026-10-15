@@ -68,20 +68,21 @@
 5. Markdown 渲染与预览
 6. 统计概览
 7. 主动复习引擎（v0.2.0）：SM-2 间隔重复（`internal/review` 纯函数包）、`reviews` 表（建笔记自动建行，due=次日）、到期队列 `GET /api/review/queue`、评分 `POST /api/review/{id}`（忘记0/困难3/良好4/简单5）、统计 `GET /api/review/stats`（待复习数/7日量/平均EF/连续天数）、每日回顾 `GET /api/review/digest`、抽认卡复习 UI（正面/翻面/四档评分/完成态）+ 首页横幅 + 侧边栏 badge
+8. 附件支持（v0.3.0）：`POST /api/notes/{id}/attachments` 上传（multipart，默认 ≤10MB、`SB_ATTACH_MAX_MB` 可调，扩展名白名单 + 文件名消毒 + 图片 MIME 嗅探）、列表/下载/删除接口、`attachments` 表（sha256）、删笔记级联清附件目录；正文 `![说明](attachment:{id})` 渲染内联图片；编辑区附件区（上传入口、缩略图、插入引用/下载/删除）
+9. 导出（v0.3.0）：`GET /api/export/json`（全库 JSON 含标签与附件元数据）、`GET /api/export/markdown`（zip：index.md + notes/ 带 front matter 的 .md + attachments/ 原文件，引用改写相对路径，ZipSlip 防护）；侧边栏导出按钮
 
-**状态**：v0.2.0「主动复习引擎」（2026-10-13）：go build/vet/test 全过（api/store/review/markdown/search 五包）；真实服务冒烟：建笔记→队列→评分推进（间隔 1→6 天）→统计→digest 全链路；5 张真实截图（home/review-front/review-back/review-graded/review-done）亲眼验收通过。
+**状态**：v0.3.0「附件与导出」（2026-10-15）：go build/vet/gofmt/test 全过（68 个测试，0 失败，新增附件 15 + 导出 3 + 渲染 3）；真实服务冒烟：上传 PNG/TXT→列表→下载→删除→导出 JSON/zip 全链路；2 张真实截图（attach-ui/attach-preview）亲眼验收通过；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.3.0.md。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：单二进制架构落地，内嵌 Web UI、SQLite 持久化、双链与图谱能力、CI 与多阶段构建就绪
 - v0.2.0 主动复习引擎（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；SM-2 纯函数包 + 6 确定性单测；`reviews` 表与 4 组 API + store/api 集成测试；抽认卡复习视图 + 每日回顾 digest；Web 三件套一致性重建——修了 v1 遗留的 4 个真实 bug（①JS/HTML id 全错位致 UI 不可用；②`GET /` 被 Go FileServer 对 `/index.html` 发 301 到 `./` 致首页打不开，改直读文件；③`review.go` 在 rows 未关闭时嵌套查询，`:memory:` 下换连接报 no such table；④CSS 的 display 规则覆盖 `[hidden]` 致翻面/完成态同屏）；README 补复习章节 + API 表 + 截图；CHANGELOG.md 新增
+- v0.3.0 附件与导出（2026-10-15）：`internal/store/attachment.go`（attachments 表 + CRUD + 删笔记清附件目录）与 `internal/api/attachment.go`（上传 413/415/400/404、MIME 嗅探、文件名消毒）+ `internal/api/export.go`（JSON / Markdown zip，分页拉取、ZipSlip 防护、引用改写）；markdown 渲染 `attachment:{id}`（图片/下载链接，顺序先于 reLink）；前端附件区 + 侧边栏导出区（沿用现有视觉体系）；68 测试全过；README/CHANGELOG/对照报告齐备
 
 **后续计划**：
 
-- 外部推送（邮件/微信）v0.3
+- 外部推送（邮件/微信）v0.4
 - 多用户复习隔离
-- 数据导入/导出
-- 附件支持
 - 反向链接面板
 - PWA
 

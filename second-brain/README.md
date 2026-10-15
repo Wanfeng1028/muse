@@ -19,6 +19,8 @@
 - **知识图谱**：以图谱形式展示笔记之间的链接关系，识别孤立节点与核心节点。
 - **Markdown 渲染预览**：编辑时实时预览渲染结果。
 - **统计概览**：笔记总数、标签分布、链接密度等指标一览。
+- **附件支持**（v0.3.0）：图片与文件随笔记上传、列表管理，正文中 `![说明](attachment:123)` 即可引用渲染。
+- **导出**（v0.3.0）：一键把全库导出为 Markdown 包（含附件原文件）或 JSON，方便迁移与归档。
 - **主动复习引擎**（v0.2.0）：SM-2 间隔重复算法，笔记写完第二天自动进入复习流，抽认卡复习 + 每日回顾，详见下文。
 
 ## 技术栈
@@ -75,6 +77,7 @@ go run ./cmd/server
 | `SB_ADDR` | HTTP 监听地址 | `:8080` |
 | `SB_DB` | SQLite 数据库文件路径 | `<SB_DATA_DIR>/second-brain.db` |
 | `SB_DATA_DIR` | 数据目录，存放数据库与后续附件 | `./data` |
+| `SB_ATTACH_MAX_MB` | 单个附件大小上限（MB） | `10` |
 
 示例：
 
@@ -144,6 +147,12 @@ docker run -d -p 8080:8080 -v sb-data:/data second-brain
 | GET | `/api/review/stats` | 复习统计（待复习数/连续天数/平均记忆强度） |
 | GET | `/api/review/digest?n=` | 每日回顾（到期优先 + 最久未复习补足） |
 | POST | `/api/preview` | Markdown 渲染预览 |
+| POST | `/api/notes/{id}/attachments` | 上传附件（multipart，字段名 `file`，默认单个 ≤10MB） |
+| GET | `/api/notes/{id}/attachments` | 列出某条笔记的附件 |
+| GET | `/api/attachments/{id}` | 下载附件 |
+| DELETE | `/api/attachments/{id}` | 删除附件 |
+| GET | `/api/export/markdown` | 导出全库为 zip（笔记 Markdown + 附件原文件） |
+| GET | `/api/export/json` | 导出全库为 JSON（含标签与附件元数据） |
 
 请求与响应均为 JSON。错误响应统一为 `{"error": "..."}` 结构。
 
@@ -200,6 +209,30 @@ SM-2 四档说明：
 - 外部推送（邮件 / 微信）还没做，留到 v0.3，目前只能自己打开复习页。
 - 只支持单用户，没有多账号和权限区分。
 
+## 附件与导出（v0.3.0）
+
+### 附件
+
+图片、PDF、文档、音频都可以随笔记一起存。上传入口在编辑区下方的"附件"区，传完后点"插入引用"，附件就会以 `![说明](attachment:123)` 的形式写进正文，预览时直接渲染出来。
+
+![附件区](docs/screenshots/attach-ui.png)
+
+![预览渲染](docs/screenshots/attach-preview.png)
+
+几点说明：
+
+- 单个附件默认不超过 10MB，可用环境变量 `SB_ATTACH_MAX_MB` 调整，超了会返回 413。
+- 允许的扩展名：图片（png/jpg/jpeg/gif/webp）、文档（pdf/md/txt/csv）、音频（mp3/wav/m4a），其他的传了会返回 415。
+- 文件名会经过消毒（防路径穿越），落盘用的是服务端生成的随机文件名；图片还会校验内容真是图片。
+- 文件存在 `<数据目录>/attachments/<笔记id>/` 下，数据库里记了文件名、大小、sha256 等信息；删笔记时它的附件会一起清掉。
+
+### 导出
+
+侧边栏"导出"区有两个按钮：
+
+- **导出 Markdown 包**：下载一个 zip，里面是 `index.md` 索引、`notes/` 下每篇笔记一个 `.md`（带标题/标签/时间的 front matter）、`attachments/` 下附件原文件。正文里的附件引用会自动改写成相对路径，解压开就能看。
+- **导出 JSON**：全库一份 JSON，含每篇笔记的标签与附件元数据，方便写脚本迁移。
+
 ## 数据与备份
 
 所有数据保存在 `SB_DATA_DIR` 下的 SQLite 文件中。备份方式：
@@ -211,6 +244,6 @@ SM-2 四档说明：
 
 ## 路线图
 
-- **附件**：支持图片与文件上传，随笔记存储与引用。
-- **导出**：导出为 Markdown 目录或 JSON，便于迁移与归档。
 - **账号**：多用户与登录鉴权，支持在共享服务器上安全使用。
+- **反向链接面板**：在笔记页直接看到哪些笔记链向了当前笔记。
+- **PWA**：离线可用、安装到桌面。

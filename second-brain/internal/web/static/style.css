@@ -1066,3 +1066,130 @@ code {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ---------- 附件 ---------- */
+
+.attach-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.attach-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.attach-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.attach-upload {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.attach-hint {
+  color: var(--text-3);
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+
+.attach-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attach-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+}
+
+.attach-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  flex: none;
+}
+
+.attach-thumb-file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.attach-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attach-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attach-meta {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.attach-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.attach-actions button {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.attach-actions button:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* 预览与复习页中附件图片的约束 */
+.attachment-image {
+  max-width: 100%;
+  border-radius: var(--radius);
+}
+
+/* ---------- 导出 ---------- */
+
+.export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-actions .btn {
+  width: 100%;
+}

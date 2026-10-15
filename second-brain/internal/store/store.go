@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,6 +65,8 @@ type GraphData struct {
 // Store 数据库封装。
 type Store struct {
 	db *sql.DB
+	// attachDir 附件落盘根目录。
+	attachDir string
 }
 
 // 双链正则，例如 [[标题]]
@@ -98,7 +101,8 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Store{db: db}, nil
+	attachDir := filepath.Join(filepath.Dir(path), "attachments")
+	return &Store{db: db, attachDir: attachDir}, nil
 }
 
 // createSchema 建表。
@@ -136,6 +140,17 @@ func createSchema(db *sql.DB) error {
 			last_reviewed_at TEXT,
 			reviewed_count INTEGER NOT NULL DEFAULT 0
 		)`,
+		`CREATE TABLE IF NOT EXISTS attachments (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+			filename TEXT NOT NULL,
+			stored_name TEXT NOT NULL,
+			mime TEXT NOT NULL,
+			size INTEGER NOT NULL,
+			sha256 TEXT NOT NULL,
+			created_at TEXT NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_attachments_note_id ON attachments(note_id)`,
 	}
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {
@@ -365,8 +380,11 @@ func (s *Store) UpdateNote(n Note) (Note, error) {
 	return s.GetNote(n.ID)
 }
 
-// DeleteNote 删除笔记。
+// DeleteNote 删除笔记，并清理其附件目录。
 func (s *Store) DeleteNote(id int64) error {
+	if _, err := s.ListAttachments(id); err != nil {
+		return err
+	}
 	res, err := s.db.Exec(`DELETE FROM notes WHERE id=?`, id)
 	if err != nil {
 		return err
@@ -377,6 +395,10 @@ func (s *Store) DeleteNote(id int64) error {
 	}
 	if affected == 0 {
 		return ErrNotFound
+	}
+	dir := filepath.Join(s.attachDir, strconv.FormatInt(id, 10))
+	if err := os.RemoveAll(dir); err != nil {
+		return err
 	}
 	return nil
 }

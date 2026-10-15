@@ -36,6 +36,7 @@ const state = {
   currentId: null,
   tag: "",
   view: "editor",
+  attachments: [],
 };
 
 // ---------- 视图切换 ----------
@@ -119,6 +120,7 @@ async function selectNote(id) {
     if (pv) pv.hidden = true;
     if (body) body.hidden = false;
     renderList();
+    loadAttachments();
   } catch (e) {
     alert("打开失败：" + e.message);
   }
@@ -136,6 +138,8 @@ function newNote() {
   if (pv) pv.hidden = true;
   if (body) body.hidden = false;
   renderList();
+  state.attachments = [];
+  renderAttachments();
   if ($("editor-title")) $("editor-title").focus();
 }
 
@@ -360,12 +364,149 @@ async function drawGraph() {
   });
 }
 
+// ---------- 附件 ----------
+function formatSize(bytes) {
+  if (bytes == null) return "";
+  const b = Number(bytes);
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+}
+
+async function loadAttachments() {
+  if (!state.currentId) {
+    state.attachments = [];
+    renderAttachments();
+    return;
+  }
+  try {
+    const data = await api(`/api/notes/${state.currentId}/attachments`);
+    state.attachments = Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.error("附件加载失败", e);
+    state.attachments = [];
+  }
+  renderAttachments();
+}
+
+function renderAttachments() {
+  const listEl = $("attach-list");
+  const countEl = $("attach-count");
+  if (!listEl) return;
+  const atts = state.attachments || [];
+  if (countEl) countEl.textContent = atts.length ? `共 ${atts.length} 个` : "";
+  if (!atts.length) {
+    listEl.innerHTML = `<li class="empty-hint">还没有附件，选个文件传上来吧</li>`;
+    return;
+  }
+  listEl.innerHTML = atts
+    .map((a) => {
+      const isImg = (a.mime || "").startsWith("image/");
+      const thumb = isImg
+        ? `<img class="attach-thumb" src="/api/attachments/${a.id}" alt="" loading="lazy">`
+        : `<span class="attach-thumb attach-thumb-file">${escapeHtml((a.filename || "?").slice(-4))}</span>`;
+      return `<li class="attach-item" data-id="${a.id}">
+        ${thumb}
+        <div class="attach-info">
+          <div class="attach-name">${escapeHtml(a.filename || "未命名")}</div>
+          <div class="attach-meta">${escapeHtml(a.mime || "")} · ${formatSize(a.size)}</div>
+        </div>
+        <div class="attach-actions">
+          <button type="button" data-act="insert">插入引用</button>
+          <button type="button" data-act="download">下载</button>
+          <button type="button" data-act="delete">删除</button>
+        </div>
+      </li>`;
+    })
+    .join("");
+  listEl.querySelectorAll(".attach-item").forEach((el) => {
+    const id = Number(el.dataset.id);
+    const att = atts.find((x) => x.id === id);
+    el.querySelector('[data-act="insert"]')?.addEventListener("click", () => insertAttachmentRef(att));
+    el.querySelector('[data-act="download"]')?.addEventListener("click", () => {
+      window.open(`/api/attachments/${id}`, "_blank");
+    });
+    el.querySelector('[data-act="delete"]')?.addEventListener("click", () => deleteAttachment(id));
+  });
+}
+
+function insertAttachmentRef(att) {
+  if (!att) return;
+  const body = $("editor-body");
+  if (!body) return;
+  const name = att.filename || "附件";
+  const ref = (att.mime || "").startsWith("image/")
+    ? `![${name}](attachment:${att.id})`
+    : `[${name}](attachment:${att.id})`;
+  const cur = body.value || "";
+  body.value = cur && !cur.endsWith("\n") ? cur + "\n" + ref + "\n" : cur + ref + "\n";
+  body.focus();
+}
+
+async function uploadAttachment() {
+  const input = $("attach-file");
+  const btn = $("btn-attach-upload");
+  if (!input || !input.files || !input.files.length) {
+    alert("先选个文件吧");
+    return;
+  }
+  if (!state.currentId) {
+    alert("先保存笔记再传附件吧");
+    return;
+  }
+  const fd = new FormData();
+  fd.append("file", input.files[0]);
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(`/api/notes/${state.currentId}/attachments`, { method: "POST", body: fd });
+    if (res.status === 204) {
+      input.value = "";
+      await loadAttachments();
+      return;
+    }
+    let data = null;
+    const text = await res.text();
+    if (text) {
+      try { data = JSON.parse(text); } catch { data = text; }
+    }
+    if (!res.ok) {
+      const msg = (data && data.error) || `上传失败 (${res.status})`;
+      throw new Error(msg);
+    }
+    input.value = "";
+    await loadAttachments();
+  } catch (e) {
+    alert("上传失败：" + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function deleteAttachment(id) {
+  if (!confirm("确定删除这个附件吗？")) return;
+  try {
+    await api(`/api/attachments/${id}`, { method: "DELETE" });
+    await loadAttachments();
+  } catch (e) {
+    alert("删除失败：" + e.message);
+  }
+}
+
+// ---------- 事件绑定 ----------
+
 // ---------- 事件绑定 ----------
 function bindEvents() {
   $("btn-new")?.addEventListener("click", newNote);
   $("btn-save")?.addEventListener("click", saveNote);
   $("btn-delete")?.addEventListener("click", deleteNote);
   $("btn-preview")?.addEventListener("click", togglePreview);
+  $("btn-attach-upload")?.addEventListener("click", uploadAttachment);
+  $("btn-export-md")?.addEventListener("click", () => {
+    window.location.href = "/api/export/markdown";
+  });
+  $("btn-export-json")?.addEventListener("click", () => {
+    window.location.href = "/api/export/json";
+  });
 
   $("btn-graph")?.addEventListener("click", () => {
     showView("graph");
@@ -411,6 +552,10 @@ if (document.readyState === "loading") {
 }
 
 /*
+用到的 id 清单（附件与导出）：
+  attach-list, attach-count, attach-file, btn-attach-upload
+  btn-export-md, btn-export-json
+
 用到的 id 清单：
   editor-view, graph-view, review-view
   nav-notes, nav-review

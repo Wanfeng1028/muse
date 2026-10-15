@@ -39,6 +39,13 @@
         <div class="stat"><span class="stat-num" id="stat-words">0</span><span class="stat-label">字数</span></div>
       </div>
     </div>
+    <div class="sidebar-section">
+      <h3>导出</h3>
+      <div class="export-actions">
+        <button id="btn-export-md" class="btn btn-secondary" type="button">导出 Markdown 包</button>
+        <button id="btn-export-json" class="btn btn-secondary" type="button">导出 JSON</button>
+      </div>
+    </div>
     <button id="btn-graph" class="btn btn-secondary">图谱视图</button>
   </aside>
 
@@ -79,6 +86,18 @@
       </div>
       <div class="wiki-hint">
         <strong>双链提示：</strong>在正文中使用 <code>[[笔记标题]]</code> 即可建立双向链接，链接会显示在预览中，并可跳转至对应笔记。
+      </div>
+      <div class="attach-section">
+        <div class="attach-header">
+          <h3>附件</h3>
+          <span id="attach-count" class="list-count"></span>
+        </div>
+        <div class="attach-upload">
+          <input type="file" id="attach-file">
+          <button id="btn-attach-upload" class="btn btn-secondary" type="button">上传</button>
+        </div>
+        <p class="attach-hint">支持图片、PDF、文档、音频（单个不超过 10MB）。上传后点"插入引用"把附件放进正文。</p>
+        <ul id="attach-list" class="attach-list"></ul>
       </div>
     </div>
 
@@ -202,6 +221,17 @@ ID 对照表
   graph-view          图谱视图根容器（默认 hidden）
   btn-graph-close     返回编辑按钮
   graph-canvas        图谱画布
+
+附件
+  .attach-section     附件区容器（class，非 id）
+  attach-count        附件数量
+  attach-file         文件选择框
+  btn-attach-upload   上传按钮
+  attach-list         附件列表容器，由 JS 渲染
+
+导出
+  btn-export-md       导出 Markdown 包（下载 zip）
+  btn-export-json     导出 JSON（下载 json）
 -->
 </body>
 </html>

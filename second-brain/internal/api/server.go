@@ -208,6 +208,12 @@ func NewServer(st *store.Store) http.Handler {
 	// 复习引擎路由（见 review.go）
 	RegisterReviewRoutes(mux, st)
 
+	// 附件路由（见 attachment.go）
+	RegisterAttachmentRoutes(mux, st)
+
+	// 导出路由（见 export.go）
+	RegisterExportRoutes(mux, st)
+
 	// 静态文件服务，根路径返回 index.html
 	staticFS, err := fs.Sub(web.StaticFS(), ".")
 	if err != nil {
