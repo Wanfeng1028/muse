@@ -16,6 +16,7 @@
 - **标签体系**：为笔记打标签，按标签聚合与筛选。
 - **全文搜索**：关键词切分 + 标题/正文加权打分的相关性排序。
 - **双向链接**：正文中书写 `[[笔记标题]]` 即建立链接，自动生成反向链接。
+- **反向链接面板**（v0.5.0）：打开一篇笔记，下方直接列出所有引用它的笔记，带引用上下文，点击标题一键跳转。
 - **知识图谱**：以图谱形式展示笔记之间的链接关系，识别孤立节点与核心节点。
 - **Markdown 渲染预览**：编辑时实时预览渲染结果。
 - **统计概览**：笔记总数、标签分布、链接密度等指标一览。
@@ -156,6 +157,7 @@ docker run -d -p 8080:8080 -v sb-data:/data second-brain
 | GET | `/api/tags` | 标签列表及计数 |
 | GET | `/api/stats` | 统计概览 |
 | GET | `/api/graph` | 知识图谱节点与边 |
+| GET | `/api/notes/{id}/backlinks` | 反向链接：哪些笔记引用了这篇（id 倒序，元素含 `id/title/targetTitle/snippet/createdAt`） |
 | GET | `/api/review/queue?limit=` | 待复习队列（到期优先） |
 | POST | `/api/review/{id}` | 提交复习评分（body `{"grade":4}`，0=忘记/3=困难/4=良好/5=简单） |
 | GET | `/api/review/stats` | 复习统计（待复习数/连续天数/平均记忆强度） |
@@ -223,6 +225,10 @@ SM-2 四档说明：
 完成态：
 
 ![完成态](docs/screenshots/review-done.png)
+
+反向链接面板（v0.5.0）：
+
+![反向链接面板](docs/screenshots/backlinks.png)
 
 ### 已知限制
 

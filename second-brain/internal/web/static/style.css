@@ -1109,6 +1109,66 @@ code {
   gap: 8px;
 }
 
+.backlink-section {
+  margin-top: 16px;
+}
+
+.backlink-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.backlink-header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.backlink-hint {
+  color: var(--text-3);
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+
+.backlink-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backlink-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.backlink-item:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+.backlink-title {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.backlink-snippet {
+  color: var(--text-2);
+  font-size: 12px;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .attach-item {
   display: flex;
   align-items: center;

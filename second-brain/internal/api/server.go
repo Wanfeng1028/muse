@@ -148,6 +148,28 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"html": markdown.Render(n.Body)})
 	})
 
+	// 反向链接：哪些笔记引用了这篇
+	mux.HandleFunc("GET /api/notes/{id}/backlinks", func(w http.ResponseWriter, r *http.Request) {
+		id, ok := parseID(w, r)
+		if !ok {
+			return
+		}
+		if _, err := st.GetNote(id); err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				writeError(w, http.StatusNotFound, "note not found")
+				return
+			}
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		bl, err := st.Backlinks(id)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, bl)
+	})
+
 	// 搜索
 	mux.HandleFunc("GET /api/search", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query().Get("q")

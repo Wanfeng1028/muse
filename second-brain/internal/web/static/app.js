@@ -245,6 +245,7 @@ async function selectNote(id) {
     if (body) body.hidden = false;
     renderList();
     loadAttachments();
+    loadBacklinks();
   } catch (e) {
     alert("打开失败：" + e.message);
   }
@@ -264,6 +265,7 @@ function newNote() {
   renderList();
   state.attachments = [];
   renderAttachments();
+  loadBacklinks();
   if ($("editor-title")) $("editor-title").focus();
 }
 
@@ -551,6 +553,48 @@ function renderAttachments() {
       window.open(`/api/attachments/${id}`, "_blank");
     });
     el.querySelector('[data-act="delete"]')?.addEventListener("click", () => deleteAttachment(id));
+  });
+}
+
+// ---------- 反向链接 ----------
+async function loadBacklinks() {
+  if (!state.currentId) {
+    renderBacklinks([]);
+    return;
+  }
+  try {
+    const data = await api(`/api/notes/${state.currentId}/backlinks`);
+    renderBacklinks(Array.isArray(data) ? data : []);
+  } catch (e) {
+    console.error("反向链接加载失败", e);
+    renderBacklinks([]);
+  }
+}
+
+function renderBacklinks(items) {
+  const listEl = $("backlink-list");
+  const countEl = $("backlink-count");
+  if (!listEl) return;
+  const bls = items || [];
+  if (countEl) countEl.textContent = bls.length ? `共 ${bls.length} 篇` : "";
+  if (!state.currentId) {
+    listEl.innerHTML = `<li class="empty-hint">选中一篇笔记，这里会列出引用它的笔记</li>`;
+    return;
+  }
+  if (!bls.length) {
+    listEl.innerHTML = `<li class="empty-hint">还没有笔记引用这一篇</li>`;
+    return;
+  }
+  listEl.innerHTML = bls
+    .map(
+      (b) => `<li class="backlink-item" data-id="${b.id}">
+        <div class="backlink-title">${escapeHtml(b.title || "无标题")}</div>
+        <div class="backlink-snippet">${escapeHtml(b.snippet || "")}</div>
+      </li>`
+    )
+    .join("");
+  listEl.querySelectorAll(".backlink-item").forEach((el) => {
+    el.addEventListener("click", () => selectNote(Number(el.dataset.id)));
   });
 }
 

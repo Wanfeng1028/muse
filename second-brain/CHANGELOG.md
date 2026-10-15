@@ -5,6 +5,22 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.0] - 2026-10-16
+
+反向链接面板——打开一篇笔记就知道谁引用了它
+
+### 新增
+- 新增 `internal/store/backlinks.go`：`Backlink` 结构与 `Store.Backlinks(noteID)`，按引用者 id 倒序返回；`buildSnippet` 按 rune 提取 `[[标题]]` 所在行前后各 40 字上下文，中文不断字。
+- 新增 API `GET /api/notes/{id}/backlinks`：笔记不存在返回 404，无人引用返回空数组 `[]`。
+- 前端编辑区附件区下方新增「反向链接」区：引用者标题 + 引用上下文，点击标题跳转到引用者笔记；沿用附件区视觉体系，无新颜色。
+- 真实截图 `docs/screenshots/backlinks.png` 已亲眼验收。
+
+### 测试
+- 全量 114 通过（v0.4.0 的 104 + 新增 10：store 6 + api 4），`go vet`、`gofmt` 全洁。
+- store 6 例：基本查询、空返回非 nil、多条倒序、删源笔记、去掉链接后消失、先写 `[[Gamma]]` 再建 Gamma 回填生效。
+- api 4 例：有引用者 200、空数组 `[]`、不存在 404、非法 id 非 200（真实 HTTP）。
+- 真实冒烟：3 篇真实笔记 → 反向链接 2 条倒序，snippet 中文正确；Playwright 真实点击跳转验证通过。
+
 ## [0.4.0] - 2026-10-16
 
 主动复习外部推送——到期提醒推出去
