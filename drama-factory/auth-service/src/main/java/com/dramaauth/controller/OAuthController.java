@@ -1,5 +1,7 @@
 package com.dramaauth.controller;
 
+import com.dramaauth.exception.ApiException;
+import com.dramaauth.metrics.AuthMetrics;
 import com.dramaauth.service.AuthService;
 import com.dramaauth.service.OAuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,9 +24,11 @@ import java.util.Map;
 public class OAuthController {
 
     private final OAuthService oauthService;
+    private final AuthMetrics metrics;
 
-    public OAuthController(OAuthService oauthService) {
+    public OAuthController(OAuthService oauthService, AuthMetrics metrics) {
         this.oauthService = oauthService;
+        this.metrics = metrics;
     }
 
     /** 取授权 URL：GET /api/auth/oauth/{google|github|apple}/url */
@@ -40,13 +44,20 @@ public class OAuthController {
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
             HttpServletRequest request) {
-        AuthService.TokenPair pair = oauthService.callback(
-                provider, code, state, request.getRemoteAddr());
-        return ResponseEntity.ok(Map.of(
-                "accessToken", pair.accessToken(),
-                "refreshToken", pair.refreshToken(),
-                "expiresIn", pair.expiresIn(),
-                "tokenType", "Bearer"));
+        final String p = provider == null ? "unknown" : provider.toLowerCase();
+        try {
+            AuthService.TokenPair pair = oauthService.callback(
+                    provider, code, state, request.getRemoteAddr());
+            metrics.recordOAuthCallback(p, true);
+            return ResponseEntity.ok(Map.of(
+                    "accessToken", pair.accessToken(),
+                    "refreshToken", pair.refreshToken(),
+                    "expiresIn", pair.expiresIn(),
+                    "tokenType", "Bearer"));
+        } catch (ApiException e) {
+            metrics.recordOAuthCallback(p, false);
+            throw e;
+        }
     }
 
     /** 支持的渠道清单 */

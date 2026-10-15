@@ -1,0 +1,52 @@
+groups:
+  - name: auth-service-availability
+    rules:
+      - alert: AuthServiceHighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{job="auth-service",status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count{job="auth-service"}[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "auth-service 5xx 错误率超过 5%（当前 {{ $value | humanizePercentage }}）"
+          description: |
+            auth-service 最近 5 分钟 HTTP 5xx 占比超过 5%，持续 5 分钟。
+            排查步骤：
+            1. 查 auth-service 日志，按 request_id 串联异常堆栈，确认是业务异常还是基础设施异常；
+            2. 检查数据库连通性与慢查询（用户表、会话表），确认连接池是否耗尽；
+            3. 检查 JWT secret 是否被轮换/配置不一致，导致大量签名校验失败被包装成 5xx；
+            4. 关注 /actuator/health 与 /actuator/prometheus 自身可用性。
+
+      - alert: AuthServiceDown
+        expr: up{job="auth-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "auth-service 实例不可达（job=auth-service）"
+          description: |
+            Prometheus 连续 1 分钟抓取不到 auth-service 实例。
+            排查步骤：
+            1. 检查进程/容器是否存活，确认 OOM、崩溃、探针失败等；
+            2. 检查 /actuator/health 与 /actuator/prometheus 端点是否被网络策略阻断；
+            3. 检查数据库与 Flyway 迁移是否卡住导致应用启动失败（日志中的 migration 关键字）；
+            4. 确认 AUTH_JWT_SECRET 等必需环境变量是否缺失导致启动即退出。
+
+      - alert: AuthServiceLoginFailureSpike
+        expr: |
+          sum(increase(dramaauth_logins_total{job="auth-service",result="failure"}[5m])) > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "auth-service 登录失败激增（5 分钟 increase > 50，疑似撞库）"
+          description: |
+            auth-service 最近 5 分钟登录失败次数超过 50 次，疑似撞库/暴力破解。
+            排查步骤：
+            1. 查 auth-service 日志，按 request_id 与来源 IP 聚合，确认是否单 IP 高频或分布式撞库；
+            2. 检查限流计数器（email|ip 维度）是否按预期触发；
+            3. 检查数据库账号表是否存在异常锁定/状态变更；
+            4. 必要时临时收紧限流阈值或封禁来源网段。

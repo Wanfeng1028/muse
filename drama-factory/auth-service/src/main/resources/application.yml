@@ -9,12 +9,29 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     open-in-view: false
     properties:
       hibernate:
         format_sql: false
+  flyway:
+    # 启用 Flyway 版本化迁移；老库（ddl-auto:update 时代建的表、无 flyway 元数据表）
+    # 首次启动以基线方式接入，不重跑 V1；新库完整执行 V1
+    enabled: true
+    baseline-on-migrate: true
+
+# 指标暴露：仅开放 health 与 prometheus。
+# 对标主服务 v2.4：auth-service 的 /actuator/prometheus 不做鉴权，
+# 由内网/服务网格侧做网络层隔离，禁止直接暴露到公网。
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
 
 # JWT：密钥必须来自环境变量 AUTH_JWT_SECRET，缺失则拒绝启动
 auth:

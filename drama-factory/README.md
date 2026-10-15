@@ -114,6 +114,12 @@ Agent 技能的发布、安装与管理：4 个官方预设 Skill（分镜大师
 
 ![账号页（英文）](docs/screenshots/account-en.png)
 
+### 账号体系生产级补强（P0-3）
+auth-service 独立微服务生产级补齐：Flyway 版本化迁移（`V1__baseline.sql`，`ddl-auto: validate`，老库自动基线）；
+`/actuator/prometheus` 指标（注册/登录/刷新/OAuth 回调计数 + 用户数/活跃会话数）与 3 条 Prometheus 告警；
+在线/离线双模式备份（`scripts/backup-auth.sh`，在线经 `POST /api/auth/admin/backup` 应用内热备）与恢复（`scripts/restore-auth.sh`，含恢复前快照与 sha256 校验）；
+运维手册 `docs/OPERATIONS-AUTH.md`。
+
 ## 技术栈
 
 | 类别 | 选型 |

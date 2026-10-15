@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+## [v2.26] - 2026-10-16
+
+### Added
+- 账号体系 P0#3「auth-service 生产级补强」（dod-v2.25 排期第 1、3 项）：
+  - Flyway 版本化迁移：`auth-service` 接入 `flyway-core`，`ddl-auto: update`→`validate`，`V1__baseline.sql` 由真实 Hibernate DDL 逐字导出（三表 + 真实 FK 约束名），`baseline-on-migrate: true` 兼容老库；`AuthFlywayMigrationTest` 2 例。
+  - 指标：`actuator` + `micrometer-registry-prometheus`，`/actuator/prometheus`（无鉴权，靠网络隔离）；`AuthMetrics`（注册/登录/刷新/OAuth 回调 Counter + 用户数/活跃会话 Gauge 快照，`@Scheduled(30s)`）；`prometheus/rules/auth-service.yml` 3 条告警（5xx 错误率/实例宕机/登录失败激增）。
+  - 备份恢复：`scripts/backup-auth.sh`（在线/离线双模式）+ `scripts/restore-auth.sh`（停服检查/manifest sha256/恢复前快照/完整性校验）+ `docs/OPERATIONS-AUTH.md` 运维手册。
+  - 应用内在线备份端点：`POST /api/auth/admin/backup`（ADMIN 专用，`BackupService` 经 `JdbcTemplate` 执行 `BACKUP TO`，路径服务端生成防穿越）；修复 H2 嵌入式独占文件锁导致独立进程无法在线备份的真问题（主服务 `backup.sh` 同样受影响）。
+- 测试：auth-service 全量 25 例通过（16 旧 + 2 Flyway + 4 指标 + 3 备份端点）。
+- 发版对照报告：`docs/dod-v2.26.md`。
+
+### Docs
+- 新增 `docs/OPERATIONS-AUTH.md`（auth-service 运维手册）；`docs/dod-v2.26.md` 发版对照报告。
+
 ### Added
 - AI MV 模式 v1：`POST /api/mv`（创建）/ `{id}/lyrics`（DeepSeek 作词）/ `{id}/compose`（BYOK 作曲）/ `{id}/storyboard`（分镜）/ `{id}/render`（wan2.5+ffmpeg 合成）/ `{id}/status`（轮询）/ `{id}/video` / `{id}/audio`；Run 类型新增 MV（作词→作曲→分镜→视频生成→剪辑→质检 6 步骤进时间线）；AgentType 新增 LYRICS/COMPOSE；AceStepMusicProvider（开源作曲渠道 BYOK）；mv.html 5 步创作页（深浅主题）；作曲渠道调研 docs/mv-music-providers.md。
 

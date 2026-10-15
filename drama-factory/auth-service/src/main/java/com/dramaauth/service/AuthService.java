@@ -1,6 +1,7 @@
 package com.dramaauth.service;
 
 import com.dramaauth.exception.ApiException;
+import com.dramaauth.metrics.AuthMetrics;
 import com.dramaauth.model.User;
 import com.dramaauth.model.UserSession;
 import com.dramaauth.repository.SessionRepository;
@@ -33,16 +34,18 @@ public class AuthService {
     private final SessionRepository sessionRepository;
     private final PasswordService passwordService;
     private final JwtService jwtService;
+    private final AuthMetrics metrics;
 
     /** 单机内存限流（多机部署时换 Redis，见 DEPLOY.md） */
     private final ConcurrentHashMap<String, Attempt> attempts = new ConcurrentHashMap<>();
 
     public AuthService(UserRepository userRepository, SessionRepository sessionRepository,
-                       PasswordService passwordService, JwtService jwtService) {
+                       PasswordService passwordService, JwtService jwtService, AuthMetrics metrics) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.passwordService = passwordService;
         this.jwtService = jwtService;
+        this.metrics = metrics;
     }
 
     /* ==================== DTO ==================== */
@@ -76,7 +79,9 @@ public class AuthService {
         u.setNickname(nickname);
         // 首个注册的用户为管理员
         u.setRole(userRepository.count() == 0 ? "ADMIN" : "USER");
-        return toDto(userRepository.save(u));
+        UserDto dto = toDto(userRepository.save(u));
+        metrics.recordRegistration();
+        return dto;
     }
 
     /* ==================== 登录 ==================== */
@@ -92,9 +97,11 @@ public class AuthService {
                 || u.getPasswordHash() == null
                 || !passwordService.matches(password, u.getPasswordHash())) {
             recordFail(key);
+            metrics.recordLogin(false);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "邮箱或密码错误");
         }
         attempts.remove(key);
+        metrics.recordLogin(true);
         return issueTokens(u, deviceInfo, ip);
     }
 
@@ -102,19 +109,25 @@ public class AuthService {
 
     @Transactional
     public TokenPair refresh(String refreshToken) {
-        Map<String, Object> claims = jwtService.parseAndValidate(refreshToken);
-        if (!"REFRESH".equals(claims.get("role"))) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "非法的 refresh token");
+        try {
+            Map<String, Object> claims = jwtService.parseAndValidate(refreshToken);
+            if (!"REFRESH".equals(claims.get("role"))) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "非法的 refresh token");
+            }
+            String jti = String.valueOf(claims.get("jti"));
+            UserSession s = sessionRepository.findByTokenJti(jti).orElse(null);
+            if (s == null || s.isRevoked() || s.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "会话已失效");
+            }
+            // 轮换：旧 jti 作废，签发新对
+            s.setRevoked(true);
+            sessionRepository.save(s);
+            metrics.recordRefresh(true);
+            return issueTokens(s.getUser(), s.getDeviceInfo(), s.getIp());
+        } catch (ApiException e) {
+            metrics.recordRefresh(false);
+            throw e;
         }
-        String jti = String.valueOf(claims.get("jti"));
-        UserSession s = sessionRepository.findByTokenJti(jti).orElse(null);
-        if (s == null || s.isRevoked() || s.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", "会话已失效");
-        }
-        // 轮换：旧 jti 作废，签发新对
-        s.setRevoked(true);
-        sessionRepository.save(s);
-        return issueTokens(s.getUser(), s.getDeviceInfo(), s.getIp());
     }
 
     /* ==================== 登出 ==================== */

@@ -2,12 +2,14 @@ package com.dramaauth;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 账号微服务启动类。
  * JWT 密钥缺失时由 JwtService 在启动期拒绝启动。
  */
 @SpringBootApplication
+@EnableScheduling
 public class DramaAuthApplication {
 
     public static void main(String[] args) {
