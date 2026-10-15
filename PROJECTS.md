@@ -197,18 +197,20 @@
 9. **银行账单侦探（v2.0 灵魂功能）**：账单导入向导（上传→解析预览→列映射→确认，预置支付宝/微信/招行/工行模板，GBK 编码与表头前导行自动探测）→ 三路匹配引擎（关键词规则 priority > 历史习惯同商户多数票 > 候选 Top3 + 置信度）→ 侦探队列（待认领卡片流，一键认领/换分类/记住为规则/跳过）→ 认领即学习（存关键词规则，下次自动）→ 转账识别（对方为自己账户名）→ 指纹去重（sha256 防重复导入）
 
 **状态**：v2.0「银行账单侦探」（2026-10-15）：灵魂一页纸先行（docs/SOUL.md）；pytest 97/97 全过（新增 63 例：matching/parser 单元 56 + API 集成 41 中含 7 个端到端场景）、ruff 全洁；真实服务冒烟：支付宝/微信/招行-GBK 三种账单上传→确认→认领→学习闭环、指纹去重、转账识别全链路验证；两页真实数据截图亲眼验收通过（docs/screenshots/）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.0.md（结论可发版，生产级基础项排期 v2.1）；README 重写（图文并茂）+ CHANGELOG.md 新建。
+**v2.1「生产级补强」（2026-10-15）**：v2.0 对照报告第 7 节 7 项排期全部关闭——`migrations.py`（PRAGMA user_version=2，v2 DDL 从 models 编译生成，`init_db` 改走 `run_migrations`）+ `logging.py`（JsonFormatter 单行 JSON / RequestIdMiddleware 全链路 request_id + `X-Request-Id` 回写 / 未处理异常兜底 500，`LEDGER_LOG_LEVEL` 非法值启动 fail-fast）+ `routers/metrics.py`（Prometheus 文本 6 指标）+ `GET /api/ready`（200/503）+ 优雅关闭（lifespan dispose engine）+ `backup.py`（integrity_check / keep 修剪 / 同秒 `-N` 后缀 / 恢复前安全快照 / 坏备份拒绝）+ `python -m ledger backup|restore`（`make backup [KEEP=N]` / `make restore FILE=`）+ `docker-compose.yml`（healthcheck / 资源限制 / 日志轮转 / named volume）+ `docs/OPERATIONS.md` + `tests/test_failure_injection.py` 4 例；pytest **119/119** 全过（新增 22 例）、ruff 全洁；真实服务冒烟：建账→交易→metrics→备份→删库→恢复→数据一致全链路通过；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.1.md（结论可发版）。本轮修真 bug 4 个：`python -m ledger serve` 启动崩溃（`args.dir` 在 serve 子命令不存在，冒烟抓出）、坏 CSV 的 `csv.Error` 抛 500（改 errors 行收集，失败注入抓出）、`integrity_check` 对损坏文件抛裸 `sqlite3.DatabaseError`（改 `BackupError`）、备份写入失败抛裸 `OSError` 且留半成品（改 `BackupError` 并清理）。教训：FastAPI 0.143 把 `@app.exception_handler(Exception)` 转给 ServerErrorMiddleware（响应后仍 re-raise，测试侧可见异常穿透），500 兜底改由 RequestIdMiddleware 直接返回；`pkill -f` 再次自杀（教训重犯：命令行自匹配，必须用括号技巧）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：FastAPI 分层架构落地，账户/交易/分类/预算/统计/导入导出/周期账单全模块、Jinja2 SSR 前端、CI 与 Dockerfile 就绪
 - v2.0 银行账单侦探（2026-10-15）：`matching.py` 三路匹配纯函数引擎 + `statement_parser.py`（GBK/表头探测/列映射/4 内置模板）+ `routers/statements.py`（18 个端点：模板 CRUD/解析预览/上传/确认/认领/转账认领/跳过/规则 CRUD）+ `statement.html` 导入向导 + `detective.html` 侦探队列 + main.py 两路由 + base.html 导航；验收抓真 bug 7 个：dpsk 的 field_validator 漏 return v、schemas created_at 误用 datetime 类型、upload 循环内 N+1 查指纹、`_load_top_categories` 未按方向过滤、表头探测被全模板并集稀释致支付宝前导行识别失败、模板名未回填、claim 后 batch.pending_count 不递减；附带修 v1 遗留 3 个真 bug（style.css 首行 ```css 围栏致全站 CSS 变量失效、base.html 顶栏类名与 CSS 设计体系脱节、style.css 尾部 .chart-toolbar 截断）
+- v2.1 生产级补强（2026-10-15）：dpsk 分 7 批生成（迁移/日志+request_id/metrics+ready/备份恢复 CLI/compose+运维手册/失败注入/文档），编排验收修 6 处（编造 transactions API 字段 amount/occurred_at→amount_cents/occurred_on、编造 static mount OLD 文本、backup 同秒文件名碰撞加 -N 后缀、middleware 测试同步函数用 async fixture、__main__ serve 无 args.dir 致启动崩溃、backup OSError 裸抛）；pytest 119/119、ruff 全洁；真实冒烟全链路通过
 
 **后续计划**：
 
-- v2.1 生产级补强（对照报告第 7 节 7 项排期：DB 迁移版本化、结构化日志+request_id、/metrics、备份恢复 CLI+演练、docker-compose+运维手册、失败注入测试、就绪探针+优雅关闭）
 - 多币种与汇率
 - 账单图片 OCR 录入
 - 移动端适配
+- Dependabot（等 gh token 补 workflow 权限后迁仓库根，与其他项目同）
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
