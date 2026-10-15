@@ -29,6 +29,8 @@ spring:
 
 server:
   port: ${PORT:8081}
+  # POC 无鉴权，仅绑本地回环，不许改成 0.0.0.0 对外暴露
+  address: 127.0.0.1
   # 优雅关闭：收到关闭信号后先停止接收新请求，等待在途请求处理完成再退出
   shutdown: graceful
 

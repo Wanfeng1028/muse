@@ -20,6 +20,8 @@ export interface CanvasProject {
   version: 1;
   nodes: CanvasNode[];
   edges: CanvasEdge[];
+  revision?: number;
+  updated_by?: string;
 }
 
 export const NODE_KINDS: Record<NodeKind, { label: string; color: string }> = {

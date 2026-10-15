@@ -16,6 +16,7 @@ import {
 import DramaNode, { DramaNodeData } from './nodes/DramaNode';
 import { useCanvasStore } from './store';
 import { NodeKind, NODE_KINDS } from './types';
+import { conflictMessage } from './conflict';
 
 const nodeTypes = { drama: DramaNode };
 
@@ -33,6 +34,10 @@ export default function AgentCanvas() {
   const connect = useCanvasStore((s) => s.connect);
   const addNode = useCanvasStore((s) => s.addNode);
   const save = useCanvasStore((s) => s.save);
+  const conflict = useCanvasStore((s) => s.conflict);
+  const dismissConflict = useCanvasStore((s) => s.dismissConflict);
+  const src = useCanvasStore((s) => s.src);
+  const reload = useCanvasStore((s) => s.load);
 
   const [kind, setKind] = useState<NodeKind>('script');
   const [rfNodes, setRfNodes] = useState<RFNode[]>([]);
@@ -195,6 +200,35 @@ export default function AgentCanvas() {
           </div>
         </Panel>
       </ReactFlow>
+      {conflict && (
+        <div className="agent-canvas-conflict-overlay">
+          <div className="agent-canvas-conflict-box">
+            <div className="agent-canvas-conflict-title">{conflictMessage(conflict)}</div>
+            <div className="agent-canvas-conflict-sub">
+              当前版本 {conflict.currentVersion}，最后修改者：{conflict.updatedBy}
+            </div>
+            <div className="agent-canvas-conflict-actions">
+              <button
+                type="button"
+                className="agent-canvas-conflict-btn primary"
+                onClick={() => {
+                  dismissConflict();
+                  void reload(src);
+                }}
+              >
+                刷新
+              </button>
+              <button
+                type="button"
+                className="agent-canvas-conflict-btn"
+                onClick={() => dismissConflict()}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

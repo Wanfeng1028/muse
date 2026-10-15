@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -98,6 +100,20 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 MDC.get("request_id")
         );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(CanvasConflictException.class)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> handleCanvasConflict(CanvasConflictException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("error", "Conflict");
+        body.put("message", ex.getMessage());
+        body.put("current_version", ex.getCurrentVersion());
+        body.put("updated_by", ex.getUpdatedBy());
+        body.put("timestamp", LocalDateTime.now());
+        body.put("requestId", MDC.get("request_id"));
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 

@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,6 +33,7 @@ class CanvasProjectServiceV223ETest {
     private ObjectNode validProject() {
         ObjectNode p = om.createObjectNode();
         p.put("version", 1);
+        p.put("base_version", 1);
         p.set("nodes", om.createArrayNode());
         p.set("edges", om.createArrayNode());
         return p;
@@ -91,6 +91,7 @@ class CanvasProjectServiceV223ETest {
         ObjectNode p = om.createObjectNode();
         p.set("nodes", om.createArrayNode());
         p.set("edges", om.createArrayNode());
+        p.put("base_version", 1);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.save(p));
         assertTrue(ex.getMessage().contains("画布项目格式不对"));
@@ -124,6 +125,7 @@ class CanvasProjectServiceV223ETest {
         CanvasProjectService service = newService(tempDir);
         ObjectNode p = om.createObjectNode();
         p.put("version", 1);
+        p.put("base_version", 1);
         p.set("edges", om.createArrayNode());
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.save(p));
@@ -147,6 +149,7 @@ class CanvasProjectServiceV223ETest {
         CanvasProjectService service = newService(tempDir);
         ObjectNode p = om.createObjectNode();
         p.put("version", 1);
+        p.put("base_version", 1);
         p.set("nodes", om.createArrayNode());
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> service.save(p));
@@ -171,22 +174,27 @@ class CanvasProjectServiceV223ETest {
         ObjectNode project = validProject();
         project.withArray("nodes").addObject().put("id", "n1");
         JsonNode returned = service.save(project);
-        assertSame(project, returned);
+        assertEquals(2, returned.get("revision").asInt());
+        assertEquals("editor", returned.get("updated_by").asText());
+        assertEquals("n1", returned.get("nodes").get(0).get("id").asText());
         Path target = Paths.get(tempDir.toString(), "project.json");
         assertTrue(Files.exists(target));
         assertFalse(Files.exists(Paths.get(tempDir.toString(), "project.json.tmp")));
         JsonNode fromDisk = om.readTree(Files.readAllBytes(target));
         assertEquals(1, fromDisk.get("version").asInt());
+        assertEquals(2, fromDisk.get("revision").asInt());
         assertEquals("n1", fromDisk.get("nodes").get(0).get("id").asText());
+        assertFalse(fromDisk.has("base_version"));
     }
 
-    // ⑬ mcpTools() 返回两个工具
+    // ⑬ mcpTools() 返回三个工具（含新增的 canvas.apply_patch）
     @Test
-    void mcpToolsReturnsTwoTools(@TempDir Path tempDir) {
+    void mcpToolsReturnsThreeTools(@TempDir Path tempDir) {
         CanvasProjectService service = newService(tempDir);
-        assertEquals(2, service.mcpTools().size());
+        assertEquals(3, service.mcpTools().size());
         assertEquals("canvas.get_project", service.mcpTools().get(0).get("name"));
         assertEquals("canvas.save_project", service.mcpTools().get(1).get("name"));
+        assertEquals("canvas.apply_patch", service.mcpTools().get(2).get("name"));
     }
 
     // 额外：load() 损坏文件分支

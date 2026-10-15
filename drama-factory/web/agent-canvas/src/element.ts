@@ -2,39 +2,43 @@ import { createRoot, Root } from 'react-dom/client';
 import { createElement } from 'react';
 import AgentCanvas from './AgentCanvas';
 import { useCanvasStore } from './store';
+import { readThemeWhitelist } from './conflict';
 import xyflowCss from '@xyflow/react/dist/style.css?inline';
 import localCss from './styles.css?inline';
-
-const STYLE_ID = 'agent-canvas-styles';
-
-function injectStylesOnce(): void {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement('style');
-  style.id = STYLE_ID;
-  style.textContent = `${xyflowCss}\n${localCss}`;
-  document.head.appendChild(style);
-}
 
 export class AgentCanvasElement extends HTMLElement {
   static get observedAttributes(): string[] {
     return ['src'];
   }
 
-  private container: HTMLDivElement | null = null;
   private root: Root | null = null;
 
   connectedCallback(): void {
     this.style.display = 'block';
-    if (!this.container) {
-      this.container = document.createElement('div');
-      this.container.style.width = '100%';
-      this.container.style.height = '100%';
-      this.container.style.minHeight = '480px';
-      this.appendChild(this.container);
+    const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
+
+    let rootDiv = shadow.querySelector<HTMLDivElement>('[data-ac-root]');
+    if (!rootDiv) {
+      rootDiv = document.createElement('div');
+      rootDiv.setAttribute('data-ac-root', '');
+      rootDiv.style.width = '100%';
+      rootDiv.style.height = '100%';
+      rootDiv.style.minHeight = '480px';
+
+      const theme = readThemeWhitelist(this);
+      for (const key of Object.keys(theme)) {
+        rootDiv.style.setProperty(key, theme[key]);
+      }
+
+      const style = document.createElement('style');
+      style.textContent = `${xyflowCss}\n${localCss}`;
+
+      shadow.appendChild(style);
+      shadow.appendChild(rootDiv);
     }
+
     if (!this.root) {
-      this.root = createRoot(this.container);
+      this.root = createRoot(rootDiv);
       this.root.render(createElement(AgentCanvas));
     }
     const src = this.getAttribute('src');
@@ -62,6 +66,5 @@ export class AgentCanvasElement extends HTMLElement {
 }
 
 if (typeof customElements !== 'undefined' && !customElements.get('agent-canvas')) {
-  injectStylesOnce();
   customElements.define('agent-canvas', AgentCanvasElement);
 }

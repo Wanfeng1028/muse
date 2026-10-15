@@ -28,3 +28,19 @@ npm run build
 - 包是 `private: true`，只在剧坊内部使用。
 - 只支持 React 18（18.3.1），不要升级到 React 19。
 - 节点类型与颜色定义在 `src/types.ts` 的 `NODE_KINDS`，均为实色，不用渐变。
+
+## 并发冲突
+
+`PUT /api/canvas/project` 请求体必须带 `base_version`（整数，等于 GET 到的 `revision`）。版本过期服务端返回 409，body 为 `{"status":409,"error":"Conflict","message":"...","current_version":<数字>,"updated_by":"editor"|"agent",...}`。前端收到 409 时弹窗：`updated_by` 为 `agent` 显示「内容已被 agent 修改，是否刷新？」，按钮「刷新」/「取消」。点刷新重拉服务端数据，点取消保留本地编辑——但取消后再点保存仍会 409。
+
+## 安全（本地限定）
+
+后端只绑 `127.0.0.1`（`application.yml` 中 `server.address: 127.0.0.1`）。POC 无鉴权，仅限本机访问，不许对外暴露。
+
+## 存储切换触发条件
+
+以下任一发生即触发切换：后端离开 localhost；出现第二个写入者（第二个浏览器 tab / 第二个 agent / 第二个用户）。触发后先把文件存储换掉（换 SQLite 或远端），再继续加功能。
+
+## 主题定制（Shadow DOM + 白名单）
+
+组件用 Shadow DOM 隔离样式。宿主页面可通过 CSS 自定义属性透传主题，但组件只认 `--ph-*` 前缀白名单：`--ph-canvas-bg`、`--ph-panel-bg`、`--ph-panel-border`、`--ph-text`、`--ph-accent`。白名单仅在 `connectedCallback` 读取一次。非白名单变量不会透传。

@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:logic": "tsc src/conflict.ts src/conflict.test.ts --outDir .tmp-test --module esnext --target es2020 --lib es2020,dom --skipLibCheck --moduleResolution bundler && node .tmp-test/conflict.test.js"
   },
   "dependencies": {
     "@xyflow/react": "12.12.0",

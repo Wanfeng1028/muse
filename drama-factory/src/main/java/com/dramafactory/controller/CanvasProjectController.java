@@ -31,7 +31,8 @@ public class CanvasProjectController {
     @PutMapping("/api/canvas/project")
     @Operation(summary = "保存画布项目")
     public JsonNode save(@RequestBody JsonNode project) {
-        return canvasProjectService.save(project);
+        // agent 写入路径走 service.save(body, "agent")，真实 MCP 执行随网关 POC 落地，POC 阶段仅定接口。
+        return canvasProjectService.save(project, "editor");
     }
 
     @GetMapping("/api/canvas/mcp/tools")

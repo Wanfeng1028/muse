@@ -8,6 +8,7 @@ import {
   EMPTY_PROJECT,
   isCanvasProject,
 } from './types';
+import { parseConflictBody, ConflictInfo } from './conflict';
 
 interface CanvasState {
   nodes: CanvasNode[];
@@ -16,7 +17,10 @@ interface CanvasState {
   dirty: boolean;
   loading: boolean;
   error: string | null;
+  revision: number | null;
+  conflict: ConflictInfo | null;
   load: (src: string) => Promise<void>;
+  dismissConflict: () => void;
   setNodes: (nodes: CanvasNode[]) => void;
   setEdges: (edges: CanvasEdge[]) => void;
   moveNode: (id: string, x: number, y: number) => void;
@@ -34,6 +38,8 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   dirty: false,
   loading: false,
   error: null,
+  revision: null,
+  conflict: null,
 
   load: async (src: string) => {
     set({ src, loading: true, error: null });
@@ -61,12 +67,15 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         return;
       }
       const project: CanvasProject = json;
+      const rev = (json as { revision?: unknown }).revision;
       set({
         nodes: project.nodes,
         edges: project.edges,
+        revision: typeof rev === 'number' ? rev : null,
         loading: false,
         dirty: false,
         error: null,
+        conflict: null,
       });
     } catch (e) {
       const reason = e instanceof Error ? e.message : '未知错误';
@@ -78,6 +87,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         dirty: false,
       });
     }
+  },
+
+  dismissConflict: () => {
+    set({ conflict: null });
   },
 
   setNodes: (nodes: CanvasNode[]) => {
@@ -136,24 +149,39 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   save: async () => {
-    const { src, nodes, edges } = get();
+    const { src, nodes, edges, revision } = get();
     if (!src) {
       set({ error: '没有配置保存地址，无法保存' });
       return;
     }
     set({ loading: true, error: null });
     try {
-      const body: CanvasProject = { version: 1, nodes, edges };
+      const body = { base_version: revision ?? 1, version: 1, nodes, edges };
       const res = await fetch(src, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (res.status === 409) {
+        const info = parseConflictBody(await res.json().catch(() => null));
+        set({
+          loading: false,
+          conflict: info ?? { currentVersion: -1, updatedBy: 'unknown' },
+        });
+        return;
+      }
       if (!res.ok) {
         set({ loading: false, error: `保存失败，服务返回状态码 ${res.status}` });
         return;
       }
-      set({ loading: false, dirty: false, error: null });
+      const saved = (await res.json()) as { revision?: unknown };
+      set({
+        loading: false,
+        dirty: false,
+        error: null,
+        conflict: null,
+        revision: typeof saved.revision === 'number' ? saved.revision : revision,
+      });
     } catch (e) {
       const reason = e instanceof Error ? e.message : '未知错误';
       set({ loading: false, error: `保存失败：${reason}` });
