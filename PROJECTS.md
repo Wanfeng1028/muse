@@ -417,7 +417,7 @@
 
 **定位**：给独立游戏叙事设计师/互动小说/剧本杀作者的开源桌面工具——分支叙事的 linter。Twine 太简单无校验，articy:draft 闭源贵，开源侧真空。
 
-**技术栈**：Kotlin 2.1.0 + Compose Multiplatform Desktop 1.7.3 + Gradle；手写递归下降 DSL 解析器；JUnit5（24 例全过）。
+**技术栈**：Kotlin 2.1.0 + Compose Multiplatform Desktop 1.7.3 + Gradle；手写递归下降 DSL 解析器；JUnit5（28 例全过：单元 24 + 端到端 4）。
 
 **功能模块**：
 
@@ -428,9 +428,19 @@
 
 **视觉**：「剧本排练室」——深墨底 #1B1712 + 暖纸黄 #E8DCC0 + 朱砂红 #C8402A；去 AI 味：无紫渐变、无渐变标题、无一切居中、无 emoji 图标。
 
-**状态**：v1 核心完成（2026-10-13）：DSL 解析/校验/本地化/布局算法全部单测通过（24/24），示例剧本冒烟报出 5 个问题全部命中，分支图布局算法已可视化验证。UI 源码完成但沙箱环境无法构建桌面二进制（Gradle daemon IPC 故障 + 手工 kotlinc 的 compose 插件后端崩溃），UI 截图待正常环境补拍——未虚报验收。
+**状态**：v1.1（2026-10-15）：结构化日志（com.interlude.log，人读/JSON 双格式走 stderr，--log-level 开关，日志不含剧本正文）+ 命令行校验工具 interlude-lint（退出码 0/1/2，text/json 报告）+ 端到端测试（示例剧本"解析→5 条规则→问题报告"全链路 4 例）+ docs/OPS.md + CHANGELOG.md + .github/dependabot.yml（gradle 每周，项目内暂存、待 token 补 workflow 权限后随 CI 迁根目录）。kotlinc 直编 + JUnit Console 验证（Gradle daemon 本机不可用），测试 28/28（24 旧+4 新）；修了 dpsk 的 3 个真 bug（CLI 位置参数解析导致 lint 永远 exit 2、测试误用不存在的 assertContains(CharSequence) 重载、测试期望顺序与 Validator 实际排序不符）。桌面 UI 截图验收仍是已知限制（VM 无 GUI 构建环境），未虚报。
 
-**发版对照**：`interlude/docs/PRODUCTION_CHECKLIST_REPORT.md`——核心达到生产级基础；未通过项（集成测试、结构化日志、.bak 备份、Dependabot、运维手册）均有排期或声明为已知限制。
+**发版对照**：`interlude/docs/PRODUCTION_CHECKLIST_REPORT_v1.1.md`——v1 未通过项中集成测试/结构化日志/Dependabot/运维手册/CHANGELOG 已补齐；剩余未通过：.bak 自动备份（排期后续版本）、失败注入测试（排期 v2）、UI 截图验收与 Gradle 一键部署（环境限制，待正常环境）。
+
+**里程碑记录**：
+
+- v1（2026-10-13）：DSL 解析器 + 5 条校验规则 + 分支图布局算法 + 本地化抽取 + Compose 桌面 UI + 示例剧本；单测 24/24；布局算法渲染图已亲眼验证；UI 截图待正常环境补拍（未虚报）
+- v1.1（2026-10-15）：生产级补齐（M 规格 6 项）——日志/CLI/端到端/OPS/CHANGELOG/Dependabot；测试 28/28；3 个真 bug 修复
+
+**后续计划**：
+
+- v1.2（候选）：.bak 自动备份 + 一键恢复、失败注入测试、大剧本真实负载压测
+- v2：玩家路径热力分析 + 剧本杀复盘模式（backlog Phase 3 第 11 项）
 
 ## stagecue「舞监台 StageCue」
 

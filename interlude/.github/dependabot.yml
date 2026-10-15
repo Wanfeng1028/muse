@@ -1,0 +1,13 @@
+
+# 这份 dependabot 配置暂时放在项目内的 .github/ 下。
+# 等 GitHub token 补齐 workflow 权限后，随 CI 配置一起迁移到仓库根的 .github/，
+# 届时删除项目内这一份。
+
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
