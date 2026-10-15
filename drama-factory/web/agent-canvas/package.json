@@ -12,7 +12,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test:logic": "tsc src/conflict.ts src/conflict.test.ts --outDir .tmp-test --module esnext --target es2020 --lib es2020,dom --skipLibCheck --moduleResolution bundler && node .tmp-test/conflict.test.js"
+    "test:logic": "tsc src/conflict.ts src/conflict.test.ts src/store.ts src/store.test.ts src/types.ts --outDir .tmp-test --module esnext --target es2020 --lib es2020,dom --skipLibCheck --moduleResolution bundler && node .tmp-test/conflict.test.js && node .tmp-test/store.test.js"
   },
   "dependencies": {
     "@xyflow/react": "12.12.0",

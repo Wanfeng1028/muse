@@ -126,38 +126,42 @@ class CanvasProjectVersionConflictTest {
 
     @Test
     void concurrentSave_sameBaseVersion_onlyOneWins(@TempDir Path dir) throws Exception {
-        CanvasProjectService service = newService(dir);
         int threads = 8;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
-        CountDownLatch startGate = new CountDownLatch(1);
-        CountDownLatch doneGate = new CountDownLatch(threads);
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger conflictCount = new AtomicInteger(0);
-        AtomicInteger otherCount = new AtomicInteger(0);
         try {
-            for (int i = 0; i < threads; i++) {
-                pool.submit(() -> {
-                    try {
-                        startGate.await();
-                        service.save(bodyWithBase(1), "editor");
-                        successCount.incrementAndGet();
-                    } catch (CanvasConflictException e) {
-                        conflictCount.incrementAndGet();
-                    } catch (Exception e) {
-                        otherCount.incrementAndGet();
-                    } finally {
-                        doneGate.countDown();
-                    }
-                });
+            for (int round = 0; round < 20; round++) {
+                Path roundDir = dir.resolve("round-" + round);
+                CanvasProjectService service = newService(roundDir);
+                // 双栅栏：起跑门 + 完成门
+                CountDownLatch startGate = new CountDownLatch(1);
+                CountDownLatch doneGate = new CountDownLatch(threads);
+                AtomicInteger successCount = new AtomicInteger(0);
+                AtomicInteger conflictCount = new AtomicInteger(0);
+                AtomicInteger otherCount = new AtomicInteger(0);
+                for (int i = 0; i < threads; i++) {
+                    pool.submit(() -> {
+                        try {
+                            startGate.await();
+                            service.save(bodyWithBase(1), "editor");
+                            successCount.incrementAndGet();
+                        } catch (CanvasConflictException e) {
+                            conflictCount.incrementAndGet();
+                        } catch (Exception e) {
+                            otherCount.incrementAndGet();
+                        } finally {
+                            doneGate.countDown();
+                        }
+                    });
+                }
+                startGate.countDown();
+                assertTrue(doneGate.await(10, TimeUnit.SECONDS), "第" + round + "轮：并发保存未在超时内完成");
+                assertEquals(0, otherCount.get(), "第" + round + "轮：出现了非 CanvasConflictException 的异常");
+                assertEquals(1, successCount.get(), "第" + round + "轮：恰好应有 1 个线程保存成功");
+                assertEquals(7, conflictCount.get(), "第" + round + "轮：其余 7 线程应全部抛 CanvasConflictException");
+                assertEquals(2, service.load().get("revision").asInt(), "第" + round + "轮：最终 revision 应为 base+1");
             }
-            startGate.countDown();
-            assertTrue(doneGate.await(10, TimeUnit.SECONDS), "并发保存未在超时内完成");
         } finally {
             pool.shutdownNow();
         }
-        assertEquals(0, otherCount.get(), "出现了非 CanvasConflictException 的异常");
-        assertEquals(1, successCount.get(), "恰好应有 1 个线程保存成功");
-        assertEquals(threads - 1, conflictCount.get(), "其余线程应全部抛 CanvasConflictException");
-        assertEquals(2, service.load().get("revision").asInt(), "最终 revision 应为 base+1");
     }
 }

@@ -7,8 +7,8 @@ import {
   NODE_KINDS,
   EMPTY_PROJECT,
   isCanvasProject,
-} from './types';
-import { parseConflictBody, ConflictInfo } from './conflict';
+} from './types.js';
+import { parseConflictBody, ConflictInfo } from './conflict.js';
 
 interface CanvasState {
   nodes: CanvasNode[];

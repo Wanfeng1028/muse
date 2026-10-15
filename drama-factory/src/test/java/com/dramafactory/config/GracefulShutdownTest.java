@@ -124,4 +124,17 @@ class GracefulShutdownTest {
         assertThat(executor).isNotNull();
         assertThat(executor.isShutdown()).isFalse();
     }
+
+    /**
+     * 默认 profile 下 server.address 为 0.0.0.0（未限定回环），Docker/生产部署路径
+     * （compose.yml / docker-compose.yml 中 nginx 容器通过服务名连主服务）不受影响；
+     * POC 本地限定回环走独立的 application-poc-local.yml（--spring.profiles.active=poc-local 启用），
+     * 与默认配置解耦。
+     */
+    @Test
+    void defaultProfileBindsAllInterfaces() throws Exception {
+        Map<String, Object> yaml = loadMainApplicationYaml();
+        Object address = getNested(yaml, "server", "address");
+        assertThat(address).isEqualTo("0.0.0.0");
+    }
 }
