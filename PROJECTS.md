@@ -208,6 +208,7 @@
 - v1.1.0 文件上传下载（2026-10-15）：上传/下载双接口 + BLOB 存储迁移 + 前端上传/下载 UI；验收时顺带修复 2 个 v1 视觉 bug（`.hidden` 工具类缺失致开始菜单无法隐藏、壁纸切换类名 mismatch）
 - v1.2.0 生产级运维补强（2026-10-16）：`schema_migrations` 版本化迁移（001/002，幂等，老库自动升级）+ `GET /api/readyz` 就绪探针（DB 真实可查 200/503）+ JSONL 结构化日志（`x-request-id` 透传/生成）+ SIGTERM/Ctrl+C 优雅关闭（`SHUTDOWN_TIMEOUT_SECS` 只约束排空阶段）+ CLI `backup/restore` 子命令（在线备份/完整性校验/自动快照/原子替换）+ `scripts/` 四件套（backup.sh 保留 7 个、restore.sh、load_check.py、fault_drill.sh）+ `docker-compose.yml`（本机无 daemon 未实跑）+ `docs/OPERATIONS.md`；失败注入 8 例；真实负载 300 文件 0 失败（avg 74.93ms）；`fault_drill.sh` 全 PASS（kill -9 数据不丢、备份→删库→恢复一致、损坏备份 exit 3 拒绝、SIGTERM exit 0）。本轮抓真 bug 两处：dpsk 漏开 rusqlite `backup` feature（编译失败，补 feature 门）、`SHUTDOWN_TIMEOUT_SECS` 被错误用于整个服务生命周期（健康服务超 N 秒被掐断，改排空阶段计时 + 演练加回归断言）；另修 dpsk 测试 2 处（请求体字段猜错致 422、root 下 chmod 注入无效改 DROP TABLE 注入）
 - v1.3.0 多用户与权限（2026-10-16）：见"状态"节；26 个 dpsk 批次并行生成（8 并发撞 429 后降串行+25 秒间隔退避收回）；README/CHANGELOG/OPERATIONS.md/对照报告齐备
+- **v1.4.0「安全上传」（2026-10-16）**：上传安全加固——`sniff_mime` magic-bytes 嗅探（PE/MZ、ELF、Mach-O/fat、MSI/OLE、shebang 脚本 → 415「可执行文件不允许上传」不入库），mime 优先级改为嗅探 > 客户端头 > 扩展名猜测，零新增依赖；前端上传队列（失败继续）+ 失败汇总条 + 上传进度；`cargo test` **73/73**（新增 `upload_security_test.rs` 8 例）、clippy 零警告、fmt 通过；真实冒烟（注册→上传→下载字节一致→MZ 415→跨用户 404→未登录 401）；2 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
 
 **后续计划**：
 
