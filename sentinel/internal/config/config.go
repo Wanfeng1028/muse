@@ -9,13 +9,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"sentinel/internal/notify"
 )
 
 // Config 描述应用运行时配置。
 // EscalationLevel 告警升级的一级：故障持续 AfterMinutes 分钟未恢复时，用 Channels 渠道再通知一次。
 type EscalationLevel struct {
-AfterMinutes int
-Channels []string
+	AfterMinutes int
+	Channels     []string
 }
 
 type Config struct {
@@ -39,6 +41,17 @@ type Config struct {
 
 	WeComWebhookURL string
 	WeComMentionAll bool
+
+	// SMSMode 短信通道模式：mock（默认，内存记录不真发）或 aliyun（阿里云短信）。
+	SMSMode string
+	// SMSPhones 短信全局默认接收号码；目标级 sms_phones 为空时回退到此。
+	SMSPhones []string
+	// SMSAccessKeyID / SMSAccessKeySecret 阿里云短信 AK。
+	SMSAccessKeyID     string
+	SMSAccessKeySecret string
+	// SMSSignName / SMSTemplateCode 阿里云短信签名与模板 CODE。
+	SMSSignName     string
+	SMSTemplateCode string
 
 	NotifyChannels []string
 
@@ -131,6 +144,43 @@ func Load() (Config, error) {
 	}
 	cfg.WeComMentionAll = mentionAll
 
+	// SENTINEL_SMS_MODE：默认 mock；仅支持 mock/aliyun。
+	smsMode := strings.ToLower(strings.TrimSpace(os.Getenv("SENTINEL_SMS_MODE")))
+	if smsMode == "" {
+		smsMode = "mock"
+	}
+	if smsMode != "mock" && smsMode != "aliyun" {
+		return Config{}, fmt.Errorf("环境变量 SENTINEL_SMS_MODE 取值 %q 非法：仅支持 mock/aliyun", smsMode)
+	}
+	cfg.SMSMode = smsMode
+
+	// SENTINEL_SMS_PHONES：可选，逗号分隔；逐个校验手机号格式。
+	if rawPhones := strings.TrimSpace(os.Getenv("SENTINEL_SMS_PHONES")); rawPhones != "" {
+		phones, err := notify.ParsePhones(rawPhones)
+		if err != nil {
+			return Config{}, fmt.Errorf("环境变量 SENTINEL_SMS_PHONES 非法: %w", err)
+		}
+		cfg.SMSPhones = phones
+	}
+
+	// SENTINEL_SMS_ACCESS_KEY_ID / SENTINEL_SMS_ACCESS_KEY_SECRET。
+	cfg.SMSAccessKeyID = strings.TrimSpace(os.Getenv("SENTINEL_SMS_ACCESS_KEY_ID"))
+	cfg.SMSAccessKeySecret = strings.TrimSpace(os.Getenv("SENTINEL_SMS_ACCESS_KEY_SECRET"))
+
+	// SENTINEL_SMS_SIGN_NAME / SENTINEL_SMS_TEMPLATE_CODE。
+	cfg.SMSSignName = strings.TrimSpace(os.Getenv("SENTINEL_SMS_SIGN_NAME"))
+	cfg.SMSTemplateCode = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TEMPLATE_CODE"))
+
+	// aliyun 模式要求 AK、签名、模板四项齐全，缺一不可（启动即校验）。
+	if smsMode == "aliyun" {
+		if cfg.SMSAccessKeyID == "" || cfg.SMSAccessKeySecret == "" {
+			return Config{}, errors.New("环境变量 SENTINEL_SMS_MODE=aliyun 时必须同时设置 SENTINEL_SMS_ACCESS_KEY_ID 与 SENTINEL_SMS_ACCESS_KEY_SECRET")
+		}
+		if cfg.SMSSignName == "" || cfg.SMSTemplateCode == "" {
+			return Config{}, errors.New("环境变量 SENTINEL_SMS_MODE=aliyun 时必须同时设置 SENTINEL_SMS_SIGN_NAME 与 SENTINEL_SMS_TEMPLATE_CODE")
+		}
+	}
+
 	// SENTINEL_NOTIFY_CHANNELS：可为空；为空则默认 ["webhook"]。
 	rawChannels := strings.TrimSpace(os.Getenv("SENTINEL_NOTIFY_CHANNELS"))
 	if rawChannels == "" {
@@ -143,8 +193,8 @@ func Load() (Config, error) {
 			if name == "" {
 				continue
 			}
-			if name != "webhook" && name != "smtp" && name != "wecom" {
-				return Config{}, fmt.Errorf("环境变量 SENTINEL_NOTIFY_CHANNELS 取值 %q 非法：仅支持 webhook/smtp/wecom（逗号分隔）", name)
+			if name != "webhook" && name != "smtp" && name != "wecom" && name != "sms" {
+				return Config{}, fmt.Errorf("环境变量 SENTINEL_NOTIFY_CHANNELS 取值 %q 非法：仅支持 webhook/smtp/wecom/sms（逗号分隔）", name)
 			}
 			if seen[name] {
 				continue

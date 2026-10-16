@@ -14,8 +14,8 @@ import (
 
 	"sentinel/internal/backup"
 	"sentinel/internal/config"
-	"sentinel/internal/escalation"
 	"sentinel/internal/db"
+	"sentinel/internal/escalation"
 	"sentinel/internal/handlers"
 	"sentinel/internal/log"
 	"sentinel/internal/metrics"
@@ -79,6 +79,22 @@ func main() {
 	}
 
 	// 通知器封装
+	// 短信发送器：mock 模式内存记录不真发，aliyun 模式走阿里云短信；构造失败（未配置）直接退出。
+	smsCfg := notify.SMSConfig{
+		Mode:   cfg.SMSMode,
+		Phones: cfg.SMSPhones,
+		Aliyun: notify.AliyunConfig{
+			AccessKeyID:     cfg.SMSAccessKeyID,
+			AccessKeySecret: cfg.SMSAccessKeySecret,
+			SignName:        cfg.SMSSignName,
+			TemplateCode:    cfg.SMSTemplateCode,
+		},
+	}
+	smsSender, err := smsCfg.BuildSender()
+	if err != nil {
+		logger.Error("初始化短信通道失败", "err", err)
+		os.Exit(1)
+	}
 	ntf := notify.Notifier{
 		WebhookURL: cfg.WebhookURL,
 		SMTP: notify.SMTPConfig{
@@ -93,8 +109,11 @@ func main() {
 			WebhookURL: cfg.WeComWebhookURL,
 			MentionAll: cfg.WeComMentionAll,
 		},
-		Channels: cfg.NotifyChannels,
+		Channels:  cfg.NotifyChannels,
+		SMS:       smsCfg,
+		SMSSender: smsSender,
 	}
+
 	subMailer := notify.SMTPMailer{Notifier: notify.SMTPNotifier{Config: ntf.SMTP}}
 	// webhook 投递队列：告警产生时只入队，由 worker 按指数退避重投
 	queueSender := &notify.QueueSender{
@@ -105,7 +124,7 @@ func main() {
 	}
 	ntf.Queue = queueSender
 	notifyFn := func(m store.Monitor, event, name, target, at, errMsg string) {
-		errs := ntf.Notify(notify.Target{MonitorID: m.ID, WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels}, event, name, target, at, errMsg)
+		errs := ntf.Notify(notify.Target{MonitorID: m.ID, WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels, SMSPhones: m.SMSPhones}, event, name, target, at, errMsg)
 		if serr := notify.NotifySubscribers(st, subMailer, cfg.PublicURL, m.ID, event, name, target, at, errMsg); serr != nil {
 			errs = append(errs, serr)
 		}

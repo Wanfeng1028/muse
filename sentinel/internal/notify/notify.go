@@ -18,6 +18,8 @@ type Notifier struct {
 	WeCom      WeComConfig  // 企业微信配置
 	Channels   []string     // 全局默认渠道，如 []string{"webhook", "smtp", "wecom"}
 	Queue      *QueueSender // 非空时 webhook 渠道走持久化队列异步投递
+	SMS        SMSConfig    // 短信通道配置（模式/AK/全局号码），见 sms.go
+	SMSSender  SmsSender    // 短信发送器；main.go 构造后注入，测试可注入 MockSmsSender
 }
 
 // payload 是发送到 Webhook 的 JSON 结构。

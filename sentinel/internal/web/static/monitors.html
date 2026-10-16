@@ -422,6 +422,16 @@
           <input type="checkbox" id="m-enabled" name="m-enabled" checked>
           <label for="m-enabled">启用监控</label>
         </div>
+        <div class="form-field">
+          <label>短信告警</label>
+          <div class="checkbox-field" style="gap:12px; flex-wrap:wrap;">
+            <span style="display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="m-channel" value="webhook" checked><label>Webhook</label></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="m-channel" value="smtp"><label>邮件</label></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="m-channel" value="wecom"><label>企业微信</label></span>
+            <span style="display:inline-flex; align-items:center; gap:4px;"><input type="checkbox" class="m-channel" value="sms"><label>短信</label></span>
+          </div>
+          <input type="text" id="m-sms-phones" name="m-sms-phones" placeholder="短信接收号码，逗号分隔，如 13800138000,13900139000" autocomplete="off" style="margin-top:6px;">
+        </div>
       </div>
 
       <div class="form-actions">
@@ -599,11 +609,66 @@
     document.getElementById('m-enabled').checked = true;
     document.getElementById('m-webhook').value = '';
     document.getElementById('btn-submit').innerText = '创建监控';
+    document.querySelectorAll('.m-channel').forEach(function(el){ el.checked = el.value === 'webhook'; });
+    document.getElementById('m-sms-phones').value = '';
     document.getElementById('btn-cancel-edit').style.display = 'none';
     editingId = null;
 
     // 移除表格高亮
     document.querySelectorAll('#monitor-table tbody tr').forEach(tr => tr.classList.remove('editing-highlight'));
+  }
+
+  // ---------- 表单提交（真实 API）----------
+  function sentinelToken() {
+    return sessionStorage.getItem('sentinel_token') || '';
+  }
+  async function submitMonitorForm() {
+    var val = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    var channels = Array.prototype.map.call(
+      document.querySelectorAll('.m-channel:checked'), function(el){ return el.value; }).join(',');
+    var payload = {
+      name: val('m-name'),
+      kind: val('m-kind'),
+      target: val('m-target'),
+      method: val('m-method'),
+      expected_status: parseInt(val('m-expected'), 10) || 200,
+      timeout_sec: parseInt(val('m-timeout'), 10) || 10,
+      interval_sec: parseInt(val('m-interval'), 10) || 60,
+      webhook_url: val('m-webhook'),
+      notify_channels: channels,
+      sms_phones: val('m-sms-phones'),
+      enabled: document.getElementById('m-enabled').checked ? 1 : 0
+    };
+    var url = editingId ? '/api/monitors/' + encodeURIComponent(editingId) : '/api/monitors';
+    var method = editingId ? 'PUT' : 'POST';
+    try {
+      var res = await doMonitorSubmit(url, method, payload, false);
+      if (!res.ok) {
+        var data = await res.json().catch(function(){ return {}; });
+        throw new Error((data && data.error) || ('HTTP ' + res.status));
+      }
+      alert(editingId ? '保存成功' : '创建成功');
+      resetFormToCreateMode();
+    } catch (err) {
+      alert('保存失败：' + err.message);
+    }
+  }
+  async function doMonitorSubmit(url, method, payload, retried) {
+    var headers = { 'Content-Type': 'application/json' };
+    var token = sentinelToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    var res = await fetch(url, { method: method, headers: headers, body: JSON.stringify(payload) });
+    if (res.status === 401 && !retried) {
+      var t = prompt('需要 API Token 才能访问（SENTINEL_API_TOKEN），请输入：');
+      if (t) {
+        sessionStorage.setItem('sentinel_token', t.trim());
+        return doMonitorSubmit(url, method, payload, true);
+      }
+    }
+    return res;
+  }
+  function cancelEditMode() {
+    resetFormToCreateMode();
   }
 
   // ----------

@@ -161,6 +161,12 @@ updated_at TEXT NOT NULL
 			`CREATE INDEX IF NOT EXISTS idx_incident_escalations_incident ON incident_escalations(incident_id)`,
 		},
 	},
+	{
+		version: 8,
+		stmts: []string{
+			`ALTER TABLE monitors ADD COLUMN sms_phones TEXT NOT NULL DEFAULT ''`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

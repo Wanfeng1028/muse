@@ -2,6 +2,16 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+
+- **短信告警通道（sms）**：`internal/notify/sms.go`，`SmsSender` 接口 + `MockSmsSender`（内存记录，演示/测试用）+ 阿里云短信 HTTP 实现（SendSms，HMAC-SHA1 签名，模板变量固定 `${msg}`）；失败重试一次（共 2 次）
+- **通知目标可配短信**：`notify_channels` 支持 `sms`；监控项新增 `sms_phones` 字段（迁移 v8），目标级号码优先、全局 `SENTINEL_SMS_PHONES` 回退；手机号格式校验（大陆 11 位 / 国际 +E.164），非法返回 400
+- **配置**：`SENTINEL_SMS_MODE`（mock/aliyun，默认 mock）、`SENTINEL_SMS_PHONES`、`SENTINEL_SMS_ACCESS_KEY_ID`、`SENTINEL_SMS_ACCESS_KEY_SECRET`、`SENTINEL_SMS_SIGN_NAME`、`SENTINEL_SMS_TEMPLATE_CODE`；aliyun 模式四项缺一启动即报错退出
+- **文档**：`docs/ALERTING_CHANNELS.md`（四通道对比、短信配置 step-by-step、费用限流、故障排查）；`.env.example` 补齐短信变量
+- **前端**：监控表单新增"短信告警"配置区（通知渠道多选 + 接收号码输入）
+
 ## [v0.4.0] - 2026-10-16
 
 ### 新增

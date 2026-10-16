@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -133,6 +134,7 @@ type monitorInput struct {
 	Enabled        *int    `json:"enabled"`
 	WebhookURL     *string `json:"webhook_url"`
 	NotifyChannels *string `json:"notify_channels"`
+	SMSPhones      *string `json:"sms_phones"`
 }
 
 // toMonitor 把请求体转为 store.Monitor 并填默认值。
@@ -175,6 +177,9 @@ func (in *monitorInput) toMonitor() store.Monitor {
 	if in.NotifyChannels != nil {
 		m.NotifyChannels = *in.NotifyChannels
 	}
+	if in.SMSPhones != nil {
+		m.SMSPhones = *in.SMSPhones
+	}
 	return m
 }
 
@@ -186,6 +191,7 @@ func validateMonitor(m *store.Monitor) error {
 	m.Method = strings.TrimSpace(m.Method)
 	m.WebhookURL = strings.TrimSpace(m.WebhookURL)
 	m.NotifyChannels = strings.TrimSpace(m.NotifyChannels)
+	m.SMSPhones = strings.TrimSpace(m.SMSPhones)
 
 	if m.Name == "" {
 		return errors.New("名称不能为空")
@@ -225,9 +231,16 @@ func validateMonitor(m *store.Monitor) error {
 	if m.NotifyChannels != "" {
 		parsed := notify.ParseChannels(m.NotifyChannels)
 		if len(parsed) == 0 {
-			return errors.New("notify_channels 非法：仅支持 webhook/smtp/wecom（逗号分隔）")
+			return errors.New("notify_channels 非法：仅支持 webhook/smtp/wecom/sms（逗号分隔）")
 		}
 		m.NotifyChannels = strings.Join(parsed, ",")
+	}
+	if m.SMSPhones != "" {
+		parsed, err := notify.ParsePhones(m.SMSPhones)
+		if err != nil {
+			return fmt.Errorf("sms_phones 非法: %w", err)
+		}
+		m.SMSPhones = strings.Join(parsed, ",")
 	}
 	return nil
 }
@@ -268,6 +281,7 @@ func monitorJSON(m store.Monitor) map[string]interface{} {
 		"enabled":         m.Enabled,
 		"webhook_url":     m.WebhookURL,
 		"notify_channels": m.NotifyChannels,
+		"sms_phones":      m.SMSPhones,
 		"tenant_id":       m.TenantID,
 		"is_public":       m.IsPublic,
 		"created_at":      m.CreatedAt,

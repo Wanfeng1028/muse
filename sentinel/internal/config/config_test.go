@@ -75,7 +75,7 @@ func TestLoad_Defaults(t *testing.T) {
 
 func TestLoad_InvalidChannel(t *testing.T) {
 	t.Setenv("SENTINEL_API_TOKEN", "test-token")
-	t.Setenv("SENTINEL_NOTIFY_CHANNELS", "sms")
+	t.Setenv("SENTINEL_NOTIFY_CHANNELS", "carrier_pigeon")
 
 	_, err := Load()
 	if err == nil {
