@@ -283,9 +283,10 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
   margin-bottom: 24px;
 }
 .page-head h1, .page-head h2 {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 650;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
   margin: 0;
 }
 
@@ -293,7 +294,7 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
 .card {
   background: var(--surface);
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 14px;
   box-shadow: none;
 }
 .card-header {
@@ -364,9 +365,14 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-soft);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: none;
   font-size: 13px;
+  color: var(--text-2);
+}
+.stat-row + .stat-row {
+  border-top: 1px solid var(--border-soft);
 }
 .stat-row:last-child {
   border-bottom: 0;
@@ -404,7 +410,51 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
 #statsRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, auto);
   gap: 16px;
+  align-items: stretch;
+}
+#statsRow > :first-child {
+  grid-column: span 2;
+}
+#statsRow > :first-child > .card {
+  border: none;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -18px rgba(0, 0, 0, 0.2);
+}
+#statsRow > :first-child > .card > .card-body {
+  padding: 26px 28px;
+}
+#statsRow > :nth-child(2) > .card,
+#statsRow > :nth-child(3) > .card {
+  border: none;
+  border-radius: 10px;
+  background: var(--surface-2);
+  box-shadow: none;
+}
+#statsRow > :nth-child(2) > .card > .card-body,
+#statsRow > :nth-child(3) > .card > .card-body {
+  padding: 22px;
+}
+#statShotRate {
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  font-variant-numeric: tabular-nums;
+}
+#statTaskRate,
+#statRenderTime {
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 760px) {
+  #statsRow { grid-template-columns: 1fr; }
+  #statsRow > :first-child { grid-column: span 1; }
 }
 #statsRow > [class*="col-"] {
   width: auto;
@@ -852,4 +902,54 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
 .ws-recent-empty {
   font-size: 13px;
   color: var(--text-3);
+}
+
+/* ===== 去板正：卡片变体体系 ===== */
+.card-feature {
+  border: none;
+  border-radius: 18px;
+  padding: 28px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -18px rgba(0, 0, 0, 0.22);
+}
+.card-bare {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.card-compact {
+  border-radius: 6px;
+  box-shadow: none;
+}
+/* ===== 去板正：编辑杂志式字体节奏 ===== */
+.display-num {
+  font-size: 36px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+.display-num-sm {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.page-head .page-sub,
+.page-head p {
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: 0.01em;
+  margin-top: 6px;
+}
+h3, h4, .card-title {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--text);
 }
