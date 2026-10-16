@@ -24,6 +24,9 @@ type Config struct {
 
 	PurgeInterval      time.Duration // 定时清理间隔
 	PurgeRetentionDays int           // 保留天数
+
+	BackupDir        string // 备份目录路径
+	BackupMaxAgeDays int    // 备份最大允许天数；0 表示不检查过期
 }
 
 // 环境变量名。
@@ -41,6 +44,9 @@ const (
 
 	envPurgeInterval      = "LINKSHORT_PURGE_INTERVAL"
 	envPurgeRetentionDays = "LINKSHORT_PURGE_RETENTION_DAYS"
+
+	envBackupDir        = "LINKSHORT_BACKUP_DIR"
+	envBackupMaxAgeDays = "LINKSHORT_BACKUP_MAX_AGE_DAYS"
 )
 
 // getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
@@ -112,12 +118,18 @@ func FromEnv() *Config {
 
 		PurgeInterval:      getenvDurationDefault(envPurgeInterval, 24*time.Hour),
 		PurgeRetentionDays: getenvIntDefault(envPurgeRetentionDays, 7),
+
+		BackupDir:        getenvDefault(envBackupDir, "./backups"),
+		BackupMaxAgeDays: getenvIntDefault(envBackupMaxAgeDays, 7),
 	}
 	if cfg.PurgeInterval <= 0 {
 		cfg.PurgeInterval = 24 * time.Hour
 	}
 	if cfg.PurgeRetentionDays < 0 {
 		cfg.PurgeRetentionDays = 7
+	}
+	if cfg.BackupMaxAgeDays < 0 {
+		cfg.BackupMaxAgeDays = 7
 	}
 	if cfg.AdminKey == "" {
 

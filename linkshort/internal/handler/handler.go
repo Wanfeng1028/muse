@@ -81,6 +81,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 				"purge_retention_days":     cfg.PurgeRetentionDays,
 			})
 		})
+		api.Get("/backup/health", func(w http.ResponseWriter, req *http.Request) { handleBackupHealth(w, req, cfg) })
 
 		api.Post("/links", func(w http.ResponseWriter, req *http.Request) { handleCreateLink(w, req, st, cfg) })
 		api.Get("/links", func(w http.ResponseWriter, req *http.Request) { handleListLinks(w, req, st, cfg) })

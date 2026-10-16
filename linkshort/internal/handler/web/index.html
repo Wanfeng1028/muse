@@ -66,6 +66,18 @@
 
     <section class="panel">
       <div class="panel-head">
+        <h2>备份健康</h2>
+        <span class="badge" id="backup-badge">检查中</span>
+      </div>
+      <div class="backup-body">
+        <div class="backup-row"><span class="backup-label">最近备份</span><span class="mono" id="backup-time">—</span></div>
+        <div class="backup-row"><span class="backup-label">备份文件</span><span class="mono" id="backup-file">—</span></div>
+        <div class="backup-note" id="backup-note"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
         <h2>最近 30 天点击</h2>
       </div>
       <div class="chart" id="daily-chart"></div>

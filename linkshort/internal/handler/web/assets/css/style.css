@@ -179,6 +179,48 @@ a:hover { color: var(--stamp); }
   letter-spacing: 0.5px;
 }
 
+/* ---------- 状态徽标 ---------- */
+.badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  background: var(--paper);
+  white-space: nowrap;
+}
+.badge.ok {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.badge.bad {
+  color: var(--stamp);
+  border-color: var(--stamp);
+}
+
+/* ---------- 备份健康面板 ---------- */
+.backup-body {
+  display: grid;
+  gap: 8px;
+}
+.backup-row {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+}
+.backup-label {
+  color: var(--muted);
+  font-size: 13px;
+  min-width: 64px;
+  flex-shrink: 0;
+}
+.backup-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* ---------- 面板 ---------- */
 .panel {
   position: relative;

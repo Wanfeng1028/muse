@@ -4,6 +4,20 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.6.0] - 2026-10-16
+
+### 新增
+
+- 备份健康自检：`GET /api/backup/health`（需 API Key）返回最近备份时间、完整性校验结果、备份份数与过期判定；无备份/上次失败/完整性未通过/超过 `LINKSHORT_BACKUP_MAX_AGE_DAYS` 天（默认 7）时 `status` 为 `degraded`（HTTP 仍 200）。
+- `scripts/backup.sh` 每次运行把结果原子写入 `$BACKUP_DIR/last-backup.json`（健康端点读取的依据）；失败时若配了 `LINKSHORT_ALERT_WEBHOOK_URL` 则 POST JSON 告警（curl 10 秒超时，通知失败不影响退出码）。
+- Prometheus 新增 `linkshort_backup_last_success_timestamp`（最近成功备份的 unix 秒）与 `linkshort_backup_health_status`（1 健康/0 降级）两个 gauge。
+- Web UI 仪表盘新增"备份健康"面板：状态徽标（健康/降级）+ 最近备份时间 + 备份文件 + 备注。
+- 新增 12 例测试（handler 7、metrics 2、backupscript 3 含 fake webhook 捕获）；`go test ./... -race` 95 例全过。
+
+### 变更
+
+- 无破坏性变更。`.env.example` 新增 `LINKSHORT_BACKUP_DIR` / `LINKSHORT_BACKUP_MAX_AGE_DAYS` / `LINKSHORT_ALERT_WEBHOOK_URL`。
+
 ## [v1.5.0] - 2026-10-16
 
 ### 新增

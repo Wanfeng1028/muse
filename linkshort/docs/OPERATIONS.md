@@ -101,6 +101,9 @@ services:
 | `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
 | `LINKSHORT_PURGE_INTERVAL` | `24h` | 定时清理间隔（v1.5 新增），duration 格式如 `24h`/`90m`，解析失败回 `24h` |
 | `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7` |
+| `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用）（v1.6 新增） |
+| `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期（v1.6 新增） |
+| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 备份失败告警 webhook，backup.sh 失败时 POST JSON 通知（v1.6 新增） |
 
 
 限流按 IP + API Key 两个维度分别做令牌桶；`/metrics`、`/api/health`、`/api/readyz` 三个路径免限流。
@@ -211,6 +214,13 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 - 排障：日志里搜 `[purge]` 看每轮清理结果；`linkshort_links_purged_total` 持续为 0 先查 `GET /api/meta` 的 `purge_interval` / `purge_retention_days` 是否符合预期，再看是否有 burn 链真的到了保留期。
 - 与 v1.3 开关的关系：`LINKSHORT_BURN_PURGE_AFTER_DESTROY=true` 时销毁即删行，定时清理扫不到它们；默认 `false` 时才由定时清理兜底。
 
+### 3.8 备份健康自检与失败告警（v1.6）
+
+- 自检：`GET /api/backup/health`（需 API Key）读 `$LINKSHORT_BACKUP_DIR/last-backup.json`（backup.sh 每次运行原子写入），返回最近备份时间、完整性校验结果、目录备份份数；无备份/上次失败/完整性未通过/超过 `LINKSHORT_BACKUP_MAX_AGE_DAYS` 天（默认 7）时 `status` 为 `degraded`，HTTP 状态码仍是 200。
+- 告警：`backup.sh` 运行时失败（DB 不存在、备份失败、完整性校验失败等）且配了 `LINKSHORT_ALERT_WEBHOOK_URL` 时，POST JSON 到该 URL：`{"source":"linkshort","event":"backup_failed","host":"...","db_path":"...","backup_dir":"...","error":"...","time":"..."}`。curl 10 秒超时，通知失败不影响脚本退出码；URL 留空则不通知。参数用法错误（exit 2 那几处）不写 sidecar、不告警。
+- 指标：`linkshort_backup_last_success_timestamp`（gauge）看最后一次成功备份是多久以前：`time() - linkshort_backup_last_success_timestamp > 86400` 即超过 1 天没成功备份；`linkshort_backup_health_status == 0` 即降级。告警规则示例见 5.3。
+- 排障：health 一直 degraded 先看 `reason` 字段；`last-backup.json` 时间戳不动说明 cron 没跑起来或 backup.sh 没权限写目录。
+
 ## 4. 升级
 
 
@@ -274,6 +284,8 @@ scrape_configs:
 - `linkshort_rate_limit_rejected_total`：被限流拒绝的累计数。
 - `linkshort_process_start_time_seconds`：进程启动时间戳（秒），可用来算运行时长、检测重启。
 - `linkshort_links_purged_total`：定时清理删除的已销毁 burn 短链累计数（v1.5 新增）。
+- `linkshort_backup_last_success_timestamp`：最近一次备份成功的 unix 秒时间戳，0 表示尚无成功备份（v1.6 新增）。
+- `linkshort_backup_health_status`：备份健康状态，1 健康 / 0 降级（v1.6 新增）。
 
 ### 5.3 告警规则建议
 
@@ -323,6 +335,20 @@ changes(linkshort_process_start_time_seconds[10m]) > 0
 ```
 
 按业务调整告警频率。
+
+**备份相关**（v1.6 新增指标）：
+
+```promql
+time() - linkshort_backup_last_success_timestamp > 86400
+```
+
+超过 1 天没有成功备份就告警，时长按备份频率调整（每天备份一次就设 86400 秒）。
+
+```promql
+linkshort_backup_health_status == 0
+```
+
+备份健康降级（无备份/上次失败/完整性未通过/备份过期）。
 
 ---
 

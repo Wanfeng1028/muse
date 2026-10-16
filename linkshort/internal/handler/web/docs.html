@@ -179,6 +179,7 @@
         <tr><td><span class="method">GET</span></td><td class="path">/api/health</td><td class="auth">需要 API Key</td><td>存活探针，进程活着即 200（免限流）</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/readyz</td><td class="auth">需要 API Key</td><td>就绪探针，DB 连通才 200（免限流）</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/meta</td><td class="auth">需要 API Key</td><td>服务元信息：短链前缀与开关状态</td></tr>
+        <tr><td><span class="method">GET</span></td><td class="path">/api/backup/health</td><td class="auth">需要 API Key</td><td>备份健康：最近备份时间、完整性校验结果、过期判定；无备份/上次失败/过期时 status 为 degraded（HTTP 仍 200）</td></tr>
         <tr><td><span class="method">POST</span></td><td class="path">/api/links</td><td class="auth">需要 API Key</td><td>创建短链（自动/自定义短码，可设过期、限次、阅后即焚、密码）</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/links</td><td class="auth">需要 API Key</td><td>链接列表，支持搜索、排序、分页</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/links/{id}</td><td class="auth">需要 API Key</td><td>单条短链详情</td></tr>

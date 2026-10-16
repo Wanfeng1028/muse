@@ -11,7 +11,7 @@
 
 ![仪表盘](docs/screenshots/dashboard.png)
 
-仪表盘：总览数字、30 天点击曲线、Top 链接和 Top Referer。
+仪表盘：总览数字、30 天点击曲线、Top 链接排行，以及备份健康状态。
 
 ![链接管理](docs/screenshots/links.png)
 
@@ -40,6 +40,7 @@
 - **限次访问**：设置最多可访问 N 次，超限返回 410
 - **阅后即焚**：一次性链接，首次访问后自动失效，再访返回 410（可配销毁后彻底删除）
 - **密码保护**：给短链加访问密码，输对密码才能跳转；密码只存 bcrypt 哈希，不可找回
+- **备份健康自检**：`GET /api/backup/health` 看最近备份时间与完整性，过期/失败自动降级；`backup.sh` 失败时可配 webhook 告警
 
 - **启用/禁用开关**：随时停用一条链接
 
@@ -101,6 +102,9 @@ docker run -d \
 | `LINKSHORT_RATE_LIMIT_BURST` | `40` | 令牌桶容量，允许的突发请求数 |
 | `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否启用限流（IP + API Key 双维度） |
 | `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
+| `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用） |
+| `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期 |
+| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 备份失败告警 webhook，backup.sh 失败时 POST JSON 通知 |
 
 
 `LINKSHORT_BASE_URL` 不填时，短地址用请求里的 Host 拼。
@@ -130,6 +134,7 @@ docker run -d \
 | POST | `/api/import` | 从 CSV 导入 | 是 |
 | GET | `/api/export.csv` | 导出 CSV | 是 |
 | GET | `/api/meta` | 服务元信息 | 是 |
+| GET | `/api/backup/health` | 备份健康（最近备份/完整性/过期判定） | 是 |
 | GET | `/api/health` | 存活探针（进程活着即 200） | 是 |
 | GET | `/api/readyz` | 就绪探针（DB 通 200，否则 503） | 是 |
 | GET | `/metrics` | Prometheus 文本指标 | 否 |

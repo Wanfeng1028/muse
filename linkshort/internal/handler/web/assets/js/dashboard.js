@@ -107,6 +107,32 @@
     });
   }
 
+  // 备份健康面板
+  function loadBackupHealth() {
+    api("/api/backup/health").then(function (data) {
+      data = data || {};
+      var ok = data.status === "ok";
+      var badge = document.getElementById("backup-badge");
+      if (badge) {
+        badge.textContent = ok ? "健康" : "降级";
+        badge.className = "badge " + (ok ? "ok" : "bad");
+      }
+      setText("backup-time", data.last_backup_at ? fmtDate(data.last_backup_at) : "尚无备份");
+      setText("backup-file", data.file || "—");
+      var note = [];
+      if (data.reason) note.push(data.reason);
+      note.push("目录共 " + (data.backup_count || 0) + " 份备份，过期阈值 " + (data.max_age_days || 0) + " 天");
+      setText("backup-note", note.join("；"));
+    }).catch(function (err) {
+      var badge = document.getElementById("backup-badge");
+      if (badge) {
+        badge.textContent = "未知";
+        badge.className = "badge";
+      }
+      toast("加载备份健康失败：" + err.message);
+    });
+  }
+
   function setText(id, val) {
     var el = document.getElementById(id);
     if (el) el.textContent = val;
@@ -115,4 +141,5 @@
   loadOverview();
   loadDaily();
   loadTopLinks();
+  loadBackupHealth();
 })();

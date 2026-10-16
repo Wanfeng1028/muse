@@ -37,6 +37,11 @@ type Registry struct {
 	rateLimitRejected int64
 	// startTime 记录进程启动的 unix 秒。
 	startTime int64
+
+	// backupLastSuccessTS 最近一次备份成功的 unix 秒，0 表示尚无。
+	backupLastSuccessTS int64
+	// backupHealthy 备份健康状态：1 健康，0 降级，默认 0。
+	backupHealthy int64
 }
 
 type httpKey struct {
@@ -126,6 +131,18 @@ func (m *Registry) IncRateLimitRejected() {
 	m.mu.Unlock()
 }
 
+// SetBackupHealth 更新备份健康状态与最近一次成功备份的时间戳。
+func (m *Registry) SetBackupHealth(healthy bool, lastSuccessTS int64) {
+	m.mu.Lock()
+	if healthy {
+		m.backupHealthy = 1
+	} else {
+		m.backupHealthy = 0
+	}
+	m.backupLastSuccessTS = lastSuccessTS
+	m.mu.Unlock()
+}
+
 // Handler 输出 Prometheus 文本格式的指标。
 func (m *Registry) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +165,8 @@ func (m *Registry) Handler() http.HandlerFunc {
 		linksPurged := m.linksPurged
 		rejected := m.rateLimitRejected
 		startTime := m.startTime
+		backupLastSuccessTS := m.backupLastSuccessTS
+		backupHealthy := m.backupHealthy
 		m.mu.Unlock()
 
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
@@ -210,6 +229,13 @@ func (m *Registry) Handler() http.HandlerFunc {
 		b.WriteString("# HELP linkshort_process_start_time_seconds 进程启动的 unix 秒时间戳。\n")
 		b.WriteString("# TYPE linkshort_process_start_time_seconds gauge\n")
 		fmt.Fprintf(&b, "linkshort_process_start_time_seconds %d\n", startTime)
+
+		b.WriteString("# HELP linkshort_backup_last_success_timestamp 最近一次备份成功的 unix 秒时间戳，0 表示尚无成功备份。\n")
+		b.WriteString("# TYPE linkshort_backup_last_success_timestamp gauge\n")
+		fmt.Fprintf(&b, "linkshort_backup_last_success_timestamp %d\n", backupLastSuccessTS)
+		b.WriteString("# HELP linkshort_backup_health_status 备份健康状态：1 健康，0 降级。\n")
+		b.WriteString("# TYPE linkshort_backup_health_status gauge\n")
+		fmt.Fprintf(&b, "linkshort_backup_health_status %d\n", backupHealthy)
 
 		_, _ = w.Write([]byte(b.String()))
 	}
