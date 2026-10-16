@@ -60,7 +60,8 @@ html, body {
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  border-right: 1px solid var(--border-soft);
+  padding-right: 12px;
+}
   background: var(--bg-elev);
   display: flex;
   flex-direction: column;
@@ -118,22 +119,25 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
-  border-radius: var(--radius);
+  padding: 7px 10px 7px 12px;
+  border-radius: 0;
   color: var(--text-2);
   text-decoration: none;
   font-size: 13.5px;
-  border: 1px solid transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  margin-left: -2px;
 }
 .sidebar-link:hover {
   color: var(--text);
-  background: var(--surface);
+  background: transparent;
   text-decoration: none;
 }
 .sidebar-link.active {
   color: var(--text);
-  background: var(--surface-2);
-  border-color: var(--border-soft);
+  font-weight: 600;
+  background: transparent;
+  border-left-color: var(--accent);
 }
 .sidebar-link svg {
   width: 16px;
@@ -145,8 +149,8 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
 /* ---- 顶栏 + 全局搜索 ---- */
 .topbar {
   height: var(--topbar-h);
-  border-bottom: 1px solid var(--border-soft);
-  background: var(--bg-elev);
+  border-bottom: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -290,16 +294,17 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
   margin: 0;
 }
 
-/* 卡片：实色 + 发丝边框，零阴影 */
+/* 卡片：无框线，靠底色与留白分隔，杜绝格子感 */
 .card {
   background: var(--surface);
-  border: 1px solid transparent;
-  border-radius: 14px;
+  border: 0;
+  border-radius: 18px;
   box-shadow: none;
 }
 .card-header {
-  border-bottom: 1px solid var(--border-soft);
+  border-bottom: 0;
   background: transparent;
+  padding-bottom: 4px;
 }
 
 /* 等宽：时间码 / 标签 / 数字 */
@@ -724,7 +729,7 @@ tr:hover .row-actions .secondary-action,tr:focus-within .row-actions .secondary-
 }
 
 /* ---- 主题切换钮（侧边栏底部） ---- */
-.sidebar-footer{margin-top:auto;padding:10px 10px 4px;border-top:1px solid var(--border-soft);}
+.sidebar-footer{margin-top:auto;padding:14px 10px 4px;}
 .theme-toggle{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--text-2);cursor:pointer;font-size:13px;}
 .theme-toggle:hover{background:var(--surface);color:var(--text);}
 .theme-toggle svg{width:16px;height:16px;}
