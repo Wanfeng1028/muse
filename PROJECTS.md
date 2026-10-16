@@ -85,6 +85,7 @@
 - v0.5.0 反向链接面板（2026-10-16）：见"状态"节。
 - **v0.6.0「多用户复习隔离」（2026-10-16）**：一台机器、多个人各记各的复习进度——`reviews` 表加 `user_id` 列，主键改为 `(note_id, user_id)` 复合；新库直接建新 schema，老库打开自动迁移（加列 + 重建主键，幂等，历史数据归属 `local`）；`internal/store/user.go`（`NormalizeUser`/`DefaultUser`）；复习查询（`GetReviewState`/`RecordReview`/`ListDueReviews`/`ReviewStats`/`DigestNotes`）全部按用户过滤；`CreateNoteFor(n, user)` 建笔记时复习行归属当前用户；`internal/api/user.go`（`CurrentUser(r)` 从 `X-User` 头 / `?user=` 参数解析，默认 `local`）；复习四组 API 与 `POST /api/notes` 按用户隔离；前端侧边栏顶部"使用者"切换器（身份记 localStorage `sb-user`，每请求自动带 `X-User` 头；徽标/队列/统计/每日回顾按当前使用者刷新）；定时推送暂按默认 `local` 用户聚合（后续计划支持按用户推送）；store 新增隔离测试 8 例 + api 真实 HTTP 隔离测试 5 例；`go test ./...` 全量 **127/127**（v0.5.0 的 114 + 新增 13），`go vet`/`gofmt` 全洁
 - **v0.7「PWA」（2026-10-16）**：能装到手机桌面当 App 用——Web App Manifest（192/512/maskable 图标、主题色 #4f7cff、独立 SVG favicon，非字母 logo）+ Service Worker（应用壳预缓存、导航离线回退、GET API stale-while-revalidate）+ IndexedDB 离线写队列（断网保存/删除/评分入队，联网顺序回放）+ 安装提示 UI（Chromium 自动横幅 + iOS 手动"添加到主屏幕"说明，`docs/PWA_INSTALL.md`）；`internal/api/pwa_test.go`（manifest 字段与图标存在性、sw.js 响应头、缓存清单一致性回归）；`go test ./...` 全量 **130/130**，`go vet`/`gofmt` 全洁；真实服务冒烟（manifest/sw.js/index 均为 200）；安装横幅截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.md`；诚实边界：推送通知暂不支持、iOS 无后台同步（靠 online 事件回放）、离线新建笔记回放会产生新 id、局域网 HTTP 下 PWA 不可用（需 HTTPS 或 localhost）
+- **v0.8.0「搜索相关性升级」（2026-10-16）**：中文搜索可解释——`ScoreDetailed`/`RankDetailed`/`QueryTerms`、中文停用字、标题/标签/正文加权（修 `SearchNotes` SQL 不查标签致加权成死代码）、分数 meta 可解释；前端命中词 mark 高亮 + 命中原因标注；`GET /api/search` 响应体数组→对象 `{query,terms,notes,meta}`（不兼容变更，已标注）；`go test ./...` 全量 **126/126**（新增 14），`go vet`/`gofmt` 全洁；真实冒烟（6 篇中文笔记排序正确）；搜索高亮截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.8.0.md`。已知边界：CJK 仍逐字切分、多词 AND 语义
 
 **后续计划**：
 
@@ -358,6 +359,7 @@
 - **v1.4 生产级收尾 + 移动端阅读优化**（2026-10-16）：微信 dpsk 分 4 批并行生成（A 指标代码 / B 失败注入测试 / C 文档 / D 移动端前端），编排逐批验收、手工修 17 处后合入；pytest 102/102、ruff 全洁；真实服务冒烟 + 桌面/移动双端视觉验收（抓出顶栏移动端堆叠真 bug 已修）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
 - **v1.5「全文 RSS 输出 + HTTP 层限流」（2026-10-16）**：`GET /feed.xml`（正文优先用抓取时 trafilatura 提取的 content_text，无正文回落摘要去标签文本；`?feed_id=`/`?folder=` 过滤，50 篇封顶；ETag + If-None-Match 304）+ HTTP 层 IP 令牌桶限流（默认 60 req/min，`FEEDFLOW_RATE_LIMIT_RPS`/`_BURST`/`_ENABLED` 环境变量，超限 429 + Retry-After，`/healthz` 与 `/metrics` 免限流，Prometheus 新增 `feedflow_http_rate_limited_total`）；tests/test_feedxml.py 8 例 + tests/test_ratelimit.py 5 例；运维手册新增第 9 节"限流调参"；pytest 115/115、ruff 全洁
 - **v1.5.1 依赖升级（2026-10-16）**：trafilatura 2.2.0→2.3.1（PyPI 当前最新，2.3.0 发版说明无破坏性变更）；验收抓包：CHANGELOG 曾声称"已换 2.3.1 跑过测试"，实测 venv 仍为 2.2.0，已真升级并重跑 pytest **115/115** 全过
+- **v1.6「阅读体验」（2026-10-16）**：键盘快捷键（j/k 上下篇、o 新标签页打开原文、r 标已读/未读、s 加星、? 帮助浮层）+ 阅读进度记忆（DB 迁移 v4 `articles.scroll_pos`、`POST /api/articles/<id>/progress` 非负校验，前端防抖 500ms 保存 + 重进恢复）+ OPML 导出加固（None-safe、`dateCreated`）；验收抓真 bug：滚动容器误判 `#reader-pane`（实际为 `.col-reader`），致进度保存恒为 0，已修；门面截图右栏空态违规已重拍；pytest **129/129**、ruff 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。已知遗留：`PUT /api/folders/<id>` 调不存在的 `store.get_folder`（历史 bug，排期下轮）
 
 **后续计划**：
 
@@ -490,11 +492,13 @@
 - v1.1（2026-10-15）：生产级补齐（M 规格 6 项）——日志/CLI/端到端/OPS/CHANGELOG/Dependabot；测试 28/28；3 个真 bug 修复
 - **v1.2 .bak 自动备份 + 一键恢复**（2026-10-16）：打开/保存剧本前自动写 `.bak`（时间戳后缀，保留最近 5 个）+ `interlude-lint restore` 子命令（列出备份/恢复指定版本）+ 结构化日志记录备份事件；kotlinc 直编零错、JUnit **45/45**（新增 17 例）、CLI 冒烟全过；`docs/OPS.md` + CHANGELOG.md 已更新。**本轮打回修掉真 bug**：`restore()` 在 5 备份时恢复最旧会被 prune 删源文件。诚实缺口：沙箱 locale 无 UTF-8（中文文件名不可匹配，已在 OPS 声明）；`lint` 对目录先 snapshot 再报错（技术债，未修）。
 - **失败注入测试套件 v1.3（2026-10-16）**：FaultInjectionTest 扩至 **19 例**（损坏/截断剧本行号定位、不可读文件 exit 语义、tmpfs 磁盘满模拟、损坏备份拒绝恢复、10 万行性能回归、并发 lint 备份不互踩）+ `lint` 对目录/特殊文件输入先校验类型再报错（修掉"先 snapshot 再报错"技术债）+ 修真 bug：`BackupManager.restore` 读取损坏备份抛 IllegalArgumentException（CLI 返回 exit 2），不再让原始 IOException 崩出且绝不覆盖原文件；kotlinc 直编 + JUnit 进程内跑 **57/57** 全过（Gradle daemon 本沙箱不可用）
+- **v1.4「复盘模式」（2026-10-16）**：`SessionEvent`/`SessionLog`（JSON 对局日志解析）+ `ReplayAnalyzer`（时间线+抉择点分析）+ `ReplayMarkdown`（复盘报告生成）+ CLI `replay` 子命令；kotlinc 直编零错、JUnit **101/101**（3 例为 FaultInjectionTest OS 相关 assumption 中止）；CLI 真实冒烟：10 个时间线事件、3 个抉择点（已与剧本原文逐行核对）、无投票对局诚实降级、错误路径退出码正确；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
 
 **后续计划**：
 
 - ~~失败注入测试~~（已在 v1.3 交付）、大剧本真实负载压测（10 万行性能回归已在 v1.3 落地为用例）
-- v2：玩家路径热力分析 + 剧本杀复盘模式（backlog Phase 3 第 11 项）
+- ~~剧本杀复盘模式~~（已在 v1.4 交付）
+- v2：玩家路径热力分析（backlog Phase 3 第 11 项）
 
 ## stagecue「舞监台 StageCue」
 
@@ -528,3 +532,4 @@
 
 - v0.2.0（2026-10-15）：SQLite + Flyway 迁移替代 JSON 存储 + Micrometer /metrics + 备份恢复演练 + 非法配置 fail-fast + 排练模式后端实现 + MP3 解码
 - v0.3.0 限流 + 就绪探针 + WS 背压（2026-10-16）：见"状态"节；JUnit 44/44 全过
+- **v0.4.0「可观测性收尾」（2026-10-16）**：Logback 日志轮转（控制台+文件双输出，按天+50MB 切分，保留 14 天，总量 512MB，root 级别跟 `STAGECUE_LOG_LEVEL`）+ Prometheus 告警规则 5 条（StageCueDown/WsDisconnectSpike/RateLimitSpike/BroadcastDrop/DbMigrationStuck）+ docker-compose 资源限制（512M/1c 上限、128M 预留）与日志轮转；`TECH_DEBT` 关闭 #3（告警规则）/#4（日志轮转/资源限制）；kotlinc 直编零错、JUnit **52/52**（新增 LogConfigTest/AlertRulesTest 各 4 例）；真实冒烟（:18080）：/api/show 5 条默认 cue、/readyz ready、/metrics 9 个 stagecue_ 指标、stagecue.log 正常落盘；发版对照报告 `docs/PRODUCTION_REPORT_v0.4.0.md`（诚实列 6 项未通过，带排期）
