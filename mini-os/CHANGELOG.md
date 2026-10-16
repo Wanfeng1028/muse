@@ -1,8 +1,29 @@
 
 # Changelog
 
-## [1.3.0] - 2026-10-16
+## [1.4.0] - 2026-10-16
 
+### 新增
+- 上传安全加固：新增 sniff_mime magic-bytes 嗅探，识别 PE/MZ、ELF、Mach-O/fat binary、MSI/OLE 复合文档、shebang 脚本。
+- 命中可执行文件的上传直接返回 415 `{"error": "可执行文件不允许上传"}`，文件不入库。
+- mime 取值优先级改为：嗅探结果 > 客户端 Content-Type 头 > 扩展名猜测。
+- 无新增依赖。
+- 前端上传队列：单个文件失败不再中断整队，失败记名后继续下一个。
+- 上传进度文本改为"上传中 i/n：文件名 (pct%)"。
+- 队列结束后若有失败，错误条显示"上传完成：成功 X 个，失败 Y 个（名1，名2）"，最多列 3 个文件名。
+
+### 测试
+- `cargo test` 73/73 全过：lib 15、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、share_test 6、upload_security_test 8（新增）。
+- `cargo clippy --all-targets -- -D warnings` 零警告。
+- `cargo fmt --check` 通过。
+- 真服务冒烟（127.0.0.1:18091）：注册 200 → 上传文本 201 → 下载 200 且字节一致 → MZ 可执行上传 415 → bob 跨用户下载 404 → 未登录下载 401。
+
+### 已知限制
+- 仅按魔数拒绝已知可执行类型，未做病毒扫描。
+- zip 内嵌可执行不检测。
+- 不支持断点续传（v1.1 已知限制延续）。
+
+## [1.3.0] - 2026-10-16
 ### 新增
 - 用户体系：`users` 表（用户名唯一、argon2id 密码哈希 PHC 存储、首个可登录用户自动为管理员）；注册/登录/登出端点（`POST /api/auth/register|login|logout`）；用户名规则（3–32 字符、仅字母数字 `_.` `-`、禁用 `legacy`）、密码 ≥8 位；登录失败统一 401（防用户名枚举）
 - 登录态：opaque session token（32 字节随机 hex 走 HttpOnly Cookie `mini_os_session`，库里只存 SHA-256）；`sessions` 表（过期时间 epoch 秒）；`SESSION_TTL_SECS` 环境变量（默认 7 天）

@@ -36,11 +36,33 @@
 
 诚实未做：访客角色、目录分享、细粒度 RBAC、密码强度策略（仅最小长度）、2FA、JWT、滑动续期、限流。
 
+## 里程碑记录 — v1.4 安全上传（2026-10-16）
+
+### 做了什么
+- 后端新增 sniff_mime magic-bytes 嗅探，识别 PE/MZ、ELF、Mach-O/fat binary、MSI/OLE 复合文档、shebang 脚本。
+- 命中可执行文件的上传直接返回 415 `{"error": "可执行文件不允许上传"}`，文件不入库。
+- mime 取值优先级改为：嗅探结果 > 客户端 Content-Type 头 > 扩展名猜测。无新增依赖。
+- 前端上传队列单个文件失败不再中断，失败记名后继续下一个；进度文本"上传中 i/n：文件名 (pct%)"；结束后若有失败错误条显示"上传完成：成功 X 个，失败 Y 个（名1，名2）"，最多列 3 个名。
+
+### 测试与验收数字
+- `cargo test` 73/73 全过：lib 15、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、share_test 6、upload_security_test 8（新增）。
+- `cargo clippy --all-targets -- -D warnings` 零警告；`cargo fmt --check` 通过。
+- 真服务冒烟（127.0.0.1:18091）：注册 200 → 上传文本 201 → 下载 200 且字节一致 → MZ 可执行上传 415 → bob 跨用户下载 404 → 未登录下载 401。
+- 视觉验收截图：docs/screenshots/v14-files-list.png、docs/screenshots/v14-upload-415.png，已亲眼检查通过。
+
+### 本轮抓到的真问题
+- dpsk 首轮 PATCH 漏掉 DownloadQuery 锚定失败。
+- apply 脚本吞 NEW FILE 标记污染 handlers.rs。
+- dpsk 引入未使用的 Arc import 致 clippy 失败。
+- 以上均已修。
+
+### 诚实未做
+- 仅按魔数拒绝已知可执行类型，未做病毒扫描。
+- zip 内嵌可执行不检测。
+- 不支持断点续传（v1.1 已知限制延续）。
+
 ## 后续计划
 
 - ~~多用户与权限~~ → 目录分享、RBAC、限流。
 - 进程隔离与资源配额。
 - 可观测性：结构化日志与追踪。
-</｜DSML｜ parameter>
-</｜DSML｜ invoke>
-</｜DSML｜ calls>

@@ -10,7 +10,7 @@
 - **应用注册表**：内置 5 个应用——文件管理器、文本编辑器、终端、设置、关于。
 - **设置持久化**：主题（theme）与壁纸（wallpaper）保存在 `settings` 表，刷新后保留。
 - **统计面板**：文件数、文件夹数、占用字节数。
-- **文件上传与下载**：`POST /api/files/upload?path=<目录>` 上传（multipart，单文件默认上限 50MB），`GET /api/files/download?path=<文件>` 流式下载；文件名消毒防路径穿越，二进制文件存 BLOB 列。
+- **文件上传与下载**：`POST /api/files/upload?path=<目录>` 上传（multipart，单文件默认上限 50MB），`GET /api/files/download?path=<文件>` 流式下载；文件名消毒防路径穿越，二进制文件存 BLOB 列。v1.4 起加安全加固：上传时用 magic-bytes 嗅探（PE/MZ、ELF、Mach-O/fat binary、MSI/OLE 复合文档、shebang 脚本），命中可执行文件直接返回 415 `{"error": "可执行文件不允许上传"}` 且不入库；mime 取值优先级为嗅探结果 > 客户端 Content-Type 头 > 扩展名猜测；前端上传队列单个文件失败不再中断，失败记名后继续下一个。
 
 
 
@@ -120,7 +120,7 @@ cargo clippy      # 静态检查
 cargo fmt         # 代码格式化
 ```
 
-集成测试覆盖健康检查、应用列表、文件系统 CRUD、设置读写与统计、文件上传/下载（含超限 413、路径穿越拦截、同名 409、目录下载 400 等边界）等接口行为。metrics 专项测试覆盖端点文本格式合法性、请求计数的实时增长与标签正确性。CI（`.github/workflows/mini-os.yml`）会在每次提交时依次执行 fmt、clippy、test 与 build。
+集成测试覆盖健康检查、应用列表、文件系统 CRUD、设置读写与统计、文件上传/下载（含超限 413、路径穿越拦截、同名 409、目录下载 400 等边界）等接口行为。metrics 专项测试覆盖端点文本格式合法性、请求计数的实时增长与标签正确性。v1.4 新增 upload_security_test 8 例，覆盖 magic-bytes 嗅探与可执行文件 415 拒绝。当前 `cargo test` 共 73/73 全过（lib 15、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、share_test 6、upload_security_test 8）。CI（`.github/workflows/mini-os.yml`）会在每次提交时依次执行 fmt、clippy、test 与 build。
 
 
 
@@ -148,7 +148,7 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 | GET | `/api/settings` | 读取设置 |
 | PUT | `/api/settings` | 更新设置（theme、wallpaper） |
 | GET | `/api/stats` | 统计信息：文件数、文件夹数、字节数 |
-| POST | `/api/files/upload?path=<目录>` | 文件上传（multipart/form-data，字段名 `file`） |
+| POST | `/api/files/upload?path=<目录>` | 文件上传（multipart/form-data，字段名 `file`）；可执行文件（按 magic-bytes 嗅探）返回 415 拒绝 |
 | GET | `/api/files/download?path=<文件>` | 文件下载（流式，`Content-Disposition: attachment`） |
 | GET | `/ws` | WebSocket 连接入口 |
 | GET | `/metrics` | Prometheus 指标（`text/plain; version=0.0.4`） |
@@ -170,6 +170,8 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 ![子目录浏览](docs/screenshots/files-folder.png)
 ![上传成功](docs/screenshots/files-uploaded.png)
 ![上传失败提示](docs/screenshots/files-error.png)
+![文件列表与下载按钮（v1.4）](docs/screenshots/v14-files-list.png)
+![可执行文件 415 失败汇总（v1.4）](docs/screenshots/v14-upload-415.png)
 
 
 
@@ -200,6 +202,7 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 - ~~多用户与鉴权~~（v1.3 已完成：注册/登录/session、VFS 按用户隔离、访客只读文件分享）
 - 目录分享、细粒度权限、登录限流（后续）
 - ~~文件上传与下载~~（v1.1.0 已完成）
+- 安全上传加固（v1.4 已完成）
 - ~~Prometheus /metrics~~（已完成，见 docs/OPERATIONS.md §5.5）
 - 应用商店，支持动态注册第三方应用
 

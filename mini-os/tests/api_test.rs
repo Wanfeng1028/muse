@@ -65,7 +65,7 @@ async fn health_returns_ok() {
     assert_eq!(resp.status(), StatusCode::OK);
     let json = body_json(resp).await;
     assert_eq!(json["status"], "ok");
-    assert_eq!(json["version"], "1.3.0");
+    assert_eq!(json["version"], "1.4.0");
 }
 
 #[tokio::test]

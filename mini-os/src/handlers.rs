@@ -35,6 +35,46 @@ pub struct UploadQuery {
     pub path: Option<String>,
 }
 
+/// 魔数嗅探：返回 (mime, is_executable)。无法识别返回 None。
+fn sniff_mime(bytes: &[u8]) -> Option<(&'static str, bool)> {
+    if bytes.starts_with(&[0x4D, 0x5A]) {
+        return Some(("application/x-msdownload", true));
+    }
+    if bytes.starts_with(&[0x7F, 0x45, 0x4C, 0x46]) {
+        return Some(("application/x-elf", true));
+    }
+    if bytes.starts_with(&[0xFE, 0xED, 0xFA, 0xCE])
+        || bytes.starts_with(&[0xCE, 0xFA, 0xED, 0xFE])
+        || bytes.starts_with(&[0xFE, 0xED, 0xFA, 0xCF])
+        || bytes.starts_with(&[0xCF, 0xFA, 0xED, 0xFE])
+        || bytes.starts_with(&[0xCA, 0xFE, 0xBA, 0xBE])
+    {
+        return Some(("application/x-mach-binary", true));
+    }
+    if bytes.starts_with(&[0xD0, 0xCF, 0x11, 0xE0]) {
+        return Some(("application/x-ole-storage", true));
+    }
+    if bytes.starts_with(&[0x23, 0x21]) {
+        return Some(("text/x-shellscript", true));
+    }
+    if bytes.starts_with(&[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) {
+        return Some(("image/png", false));
+    }
+    if bytes.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        return Some(("image/jpeg", false));
+    }
+    if bytes.starts_with(&[0x47, 0x49, 0x46, 0x38]) {
+        return Some(("image/gif", false));
+    }
+    if bytes.starts_with(&[0x25, 0x50, 0x44, 0x46]) {
+        return Some(("application/pdf", false));
+    }
+    if bytes.starts_with(&[0x50, 0x4B, 0x03, 0x04]) {
+        return Some(("application/zip", false));
+    }
+    None
+}
+
 /// 下载接口查询参数
 #[derive(Deserialize)]
 pub struct DownloadQuery {
@@ -569,11 +609,22 @@ pub async fn upload_file(
         Err(msg) => return Err(err(StatusCode::BAD_REQUEST, msg)),
     };
 
-    let mime = match ctype {
-        Some(ct) => ct,
-        None => mime_guess::from_path(&name)
-            .first_or_octet_stream()
-            .to_string(),
+    let sniffed = sniff_mime(&bytes);
+    if let Some((_, true)) = sniffed {
+        return Err(err(
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+            "可执行文件不允许上传",
+        ));
+    }
+
+    let mime = match sniffed {
+        Some((m, _)) => m.to_string(),
+        None => match ctype {
+            Some(ct) => ct,
+            None => mime_guess::from_path(&name)
+                .first_or_octet_stream()
+                .to_string(),
+        },
     };
 
     let is_utf8 = std::str::from_utf8(&bytes).is_ok();

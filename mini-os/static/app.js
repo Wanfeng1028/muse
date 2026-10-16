@@ -583,18 +583,28 @@ function renderFiles(body) {
     if (files.length === 0) return;
     clearError();
     const dirPath = currentDirPath();
+    const total = files.length;
     let idx = 0;
+    let okCount = 0;
+    const failed = [];
 
     function next() {
-      if (idx >= files.length) {
+      if (idx >= total) {
         progressBox.classList.add('hidden');
+        if (failed.length > 0) {
+          const names = failed.slice(0, 3).map((it) => it.name);
+          let nameStr = names.join('，');
+          if (failed.length > 3) nameStr += '等';
+          showError('上传完成：成功 ' + okCount + ' 个，失败 ' + failed.length + ' 个（' + nameStr + '）');
+        }
         refresh();
         return;
       }
+      const i = idx + 1;
       const f = files[idx++];
       progressBox.classList.remove('hidden');
       progressBar.style.width = '0%';
-      progressText.textContent = '上传中 ' + f.name + ' (0%)';
+      progressText.textContent = '上传中 ' + i + '/' + total + '：' + f.name + ' (0%)';
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/api/files/upload?path=' + encodeURIComponent(dirPath));
@@ -602,27 +612,25 @@ function renderFiles(body) {
         if (ev.lengthComputable) {
           const pct = Math.round((ev.loaded / ev.total) * 100);
           progressBar.style.width = pct + '%';
-          progressText.textContent = '上传中 ' + f.name + ' (' + pct + '%)';
+          progressText.textContent = '上传中 ' + i + '/' + total + '：' + f.name + ' (' + pct + '%)';
         }
       });
       xhr.addEventListener('load', () => {
         if (xhr.status === 201) {
-          next();
+          okCount++;
         } else {
           let msg = 'HTTP ' + xhr.status;
           try {
             const data = JSON.parse(xhr.responseText);
             if (data && data.error) msg = data.error;
           } catch (e) {}
-          progressBox.classList.add('hidden');
-          showError('上传失败（' + f.name + '）: ' + msg);
-          refresh();
+          failed.push({ name: f.name, reason: msg });
         }
+        next();
       });
       xhr.addEventListener('error', () => {
-        progressBox.classList.add('hidden');
-        showError('上传失败（' + f.name + '）: 网络错误');
-        refresh();
+        failed.push({ name: f.name, reason: '网络错误' });
+        next();
       });
       const form = new FormData();
       form.append('file', f, f.name);
