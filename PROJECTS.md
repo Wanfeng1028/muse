@@ -92,12 +92,13 @@
 
 **后续计划**：
 
-- ~~发送重试（v0.10 未通过项排期 v0.11）~~（已在 v0.11 交付）、~~结构化日志/request_id~~（已在 v0.11.1 交付）、metrics、API 限流
+- ~~发送重试（v0.10 未通过项排期 v0.11）~~（已在 v0.11 交付）、~~结构化日志/request_id~~（已在 v0.11.1 交付）、~~metrics、API 限流~~（已在 v0.12 交付）
 - 技术债清单 `docs/TECH_DEBT.md`（2026-10-16 快照，P0/P1/P2 + 偿还节奏）
 
 **里程碑记录（续）**：
 - **v0.11「发送重试」（2026-10-16）**：`internal/push/retry.go`——RetryPolicy（SB_PUSH_MAX_RETRIES 默认 3/上限 10、SB_PUSH_RETRY_BASE_MS 默认 1000/上限 60000、MaxBackoff 30s、抖动 ±25%）、IsRetryable（可重试：网络/429/5xx；不可重试：鉴权/其他 4xx/订阅失效/ctx 取消；未知 fail-open）、WrapWithRetry；耗尽转死信（push_log failed_permanent，幂等）；SMTP/Webhook/WebPush 三 sender 统一走包装器；`go test ./...` 全绿（push 17/17：fake sender 失败 2 次后成功/一直 503 耗尽转死信且幂等）；README + `docs/OPERATIONS.md` + 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。技术债：重试循环重复待抽泛型；api 集成测试待补
 - **v0.11.1「结构化日志 + request_id」（2026-10-16）**：`internal/log` 包（slog JSON，SB_LOG_LEVEL）+ 中间件（X-Request-ID 透传/生成 32 位随机、注入 context、响应头回写、http.request 日志 request_id/method/path/status/latency_ms）；错误体统一带 request_id；store 层关键操作打带 request_id 日志；`go test ./...` **216/216**，`go vet`/`gofmt` 全洁；真实冒烟（生成/透传/错误体 request_id、日志 grep 定位）全通
+- **v0.12「Prometheus 指标 + API 限流」（2026-10-17）**：`internal/metrics`（手写 Prometheus exposition 零新依赖：`http_requests_total{method,route,status}`/`http_request_duration_seconds`/`notes_total`/`reviews_due`/`reviews_graded_total{grade}`/`push_sent_total{channel,status}`，`GET /metrics`，`SB_METRICS_TOKEN` 可选 bearer 鉴权）+ `internal/ratelimit`（token bucket 按 IP+用户双维度，读写独立桶，429 + `Retry-After` + request_id 错误体）+ 中间件链 request_id → metrics → ratelimit → mux + 7 个 `SB_METRICS_*`/`SB_RATE_LIMIT_*` 环境变量（非法值启动 fail-fast）；`go test ./...` 全绿（metrics 8/8、ratelimit 7/7，均过 `-race`），`go vet`/`gofmt` 全洁；真实冒烟（/metrics 指标值正确、读桶 7×200 后 429、写桶更严 2×201 后 429、非法配置 exit 1）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`（9 项未通过诚实排期 v0.13：基础告警规则/备份恢复实测/故障演练等）；已知限制：reviews_due 仅默认用户、限流单机内存、histogram buckets 固定不可配
 
 ## drama-factory「AI 短剧工坊」
 
