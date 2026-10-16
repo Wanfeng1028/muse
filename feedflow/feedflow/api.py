@@ -182,6 +182,27 @@ def set_article_star(article_id: int):
     return jsonify({"id": article_id, "is_starred": value})
 
 
+@bp.post("/articles/<int:article_id>/progress")
+def set_article_progress(article_id: int):
+    """记录阅读进度。body: {"scroll_pos": 数字}。"""
+    db = _db()
+    if store.get_article(db, article_id) is None:
+        return _err("文章不存在", 404)
+    data = _json_body()
+    if "scroll_pos" not in data:
+        return _err("scroll_pos 必填", 400)
+    try:
+        value = float(data["scroll_pos"])
+    except (TypeError, ValueError):
+        return _err("scroll_pos 非法", 400)
+    if value < 0:
+        return _err("scroll_pos 非法", 400)
+    if value > 100000:
+        value = 100000.0
+    store.set_scroll_pos(db, article_id, value)
+    return jsonify({"id": article_id, "scroll_pos": value})
+
+
 @bp.post("/articles/mark_read")
 def mark_all_read():
     """批量标记已读，可按源/分组/范围。"""

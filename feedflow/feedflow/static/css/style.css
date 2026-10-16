@@ -1026,3 +1026,65 @@ table.data td .actions {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+.kbd-help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 26, 23, .45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kbd-help-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px 28px;
+  max-width: 420px;
+  width: 100%;
+  color: var(--ink);
+  text-align: left;
+}
+
+.kbd-help-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.kbd-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.kbd-row:last-child {
+  border-bottom: none;
+}
+
+.kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  min-width: 32px;
+  text-align: center;
+}
+
+.kbd-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.kbd-help-actions {
+  margin-top: 16px;
+  text-align: right;
+}

@@ -353,6 +353,41 @@ def set_starred(db_path, article_id, is_starred):
             conn.close()
 
 
+def set_scroll_pos(db_path, article_id, pos):
+    """记录文章阅读滚动位置（像素）。pos 非法（负数/非数字）时钳制为 0。"""
+    try:
+        value = float(pos)
+    except (TypeError, ValueError):
+        value = 0.0
+    if value < 0:
+        value = 0.0
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            conn.execute(
+                "UPDATE articles SET scroll_pos = ? WHERE id = ?",
+                (value, article_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def get_scroll_pos(db_path, article_id):
+    """返回文章阅读滚动位置，不存在返回 0.0。"""
+    conn = get_conn(db_path)
+    try:
+        row = conn.execute(
+            "SELECT scroll_pos FROM articles WHERE id = ?",
+            (article_id,),
+        ).fetchone()
+        if row is None:
+            return 0.0
+        return float(row["scroll_pos"])
+    finally:
+        conn.close()
+
+
 def mark_all_read(db_path, feed_id=None, folder_id=None, scope="unread"):
     """批量标记已读。scope: unread|starred|all。"""
     where = [_scope_clause(scope)]

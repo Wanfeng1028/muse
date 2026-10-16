@@ -249,6 +249,13 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "ALTER TABLE articles ADD COLUMN last_read_at TEXT",
         ],
     ),
+    (
+        4,
+        "articles 新增 scroll_pos（阅读滚动位置像素值，v1.6 阅读进度记忆用）",
+        [
+            "ALTER TABLE articles ADD COLUMN scroll_pos REAL NOT NULL DEFAULT 0",
+        ],
+    ),
 ]
 
 

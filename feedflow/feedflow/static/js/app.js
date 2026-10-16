@@ -24,6 +24,9 @@ function initReader() {
   const elTree = document.getElementById("feed-tree");
   const elList = document.getElementById("article-list");
   const elReader = document.getElementById("reader-pane");
+  // 真正的滚动容器是 .col-reader 列（CSS 里 .col{overflow-y:auto}），
+  // #reader-pane 本身不滚动，只随内容长高。进度读写都必须走这一列。
+  const elScroller = elReader ? elReader.closest(".col") : null;
   const elStatus = document.getElementById("list-status");
   const elMoreWrap = document.getElementById("list-more-wrap");
 
@@ -132,12 +135,32 @@ function initReader() {
     }));
     if (elMoreWrap) elMoreWrap.hidden = true;
   }
+  // 保存当前文章阅读进度（同步，不等防抖）
+  function saveScrollPos(id) {
+    if (!id || !elScroller) return;
+    try {
+      api("/api/articles/" + id + "/progress", {
+        method: "POST",
+        body: JSON.stringify({ scroll_pos: elScroller.scrollTop }),
+      }).catch(() => {});
+    } catch (e) {
+      // 静默
+    }
+  }
+
   // 打开文章，自动标已读
   async function openArticle(id) {
+    // 切换前保存上一篇进度
+    if (state.selectedId && state.selectedId !== id) {
+      saveScrollPos(state.selectedId);
+    }
     let a;
     try { a = await api("/api/articles/" + id); } catch (e) { return; }
     state.selectedId = id;
     renderReader(a);
+    requestAnimationFrame(() => {
+      if (elScroller) elScroller.scrollTop = a.scroll_pos || 0;
+    });
     // 列表中对应项去掉 unread
     const item = elList.querySelector(`[data-id="${id}"]`);
     if (item) item.classList.remove("unread");
@@ -195,6 +218,17 @@ function initReader() {
   // 快捷键
   document.addEventListener("keydown", (e) => {
     if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+    if (e.key === "Escape") {
+      const ov = document.getElementById("kbd-help");
+      if (ov) { ov.remove(); e.preventDefault(); return; }
+    }
+    if (e.key === "?") {
+      const ov = document.getElementById("kbd-help");
+      if (ov) { ov.remove(); } else { renderHelpOverlay(); }
+      e.preventDefault();
+      return;
+    }
+    if (document.getElementById("kbd-help")) return;
     const items = Array.from(elList.querySelectorAll("[data-id]")).map(n => parseInt(n.dataset.id, 10));
     const idx = items.indexOf(state.selectedId);
     if (e.key === "j") {
@@ -211,8 +245,67 @@ function initReader() {
       const cur = elReader.querySelector("#btn-star");
       const toStar = cur && cur.textContent.indexOf("取消") >= 0;
       toggleStar(state.selectedId, toStar ? 0 : 1); e.preventDefault();
+    } else if (e.key === "o" && state.selectedId) {
+      const linkEl = elReader.querySelector("a.btn[target='_blank']");
+      if (linkEl && linkEl.href) {
+        window.open(linkEl.href, "_blank", "noopener");
+        e.preventDefault();
+      }
+    } else if (e.key === "r" && state.selectedId) {
+      const cur = elReader.querySelector("#btn-read");
+      const toRead = cur && cur.textContent.indexOf("未读") >= 0;
+      markRead(state.selectedId, toRead ? 0 : 1); e.preventDefault();
     }
   });
+
+  // 滚动监听（防抖 500ms 保存）。监听 .col-reader 列，它才是滚动容器。
+  let scrollTimer = null;
+  if (elScroller) elScroller.addEventListener("scroll", () => {
+    if (!state.selectedId) return;
+    const id = state.selectedId;
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      try {
+        api("/api/articles/" + id + "/progress", {
+          method: "POST",
+          body: JSON.stringify({ scroll_pos: elScroller.scrollTop }),
+        }).catch(() => {});
+      } catch (e) {
+        // 静默
+      }
+    }, 500);
+  });
+
+  // 快捷键帮助浮层
+  function renderHelpOverlay() {
+    const rows = [
+      ["j", "下一篇"],
+      ["k", "上一篇"],
+      ["o", "在新标签页打开原文"],
+      ["r", "标已读/未读"],
+      ["s", "加星/取消星标"],
+      ["m", "标已读/未读（兼容）"],
+      ["?", "打开/关闭本帮助"],
+      ["Esc", "关闭"],
+    ];
+    const overlay = document.createElement("div");
+    overlay.id = "kbd-help";
+    overlay.className = "kbd-help-overlay";
+    let list = "";
+    for (const [k, desc] of rows) {
+      list += `<div class="kbd-row"><span class="kbd">${escapeHtml(k)}</span><span class="kbd-desc">${escapeHtml(desc)}</span></div>`;
+    }
+    overlay.innerHTML = `<div class="kbd-help-card">
+      <h3 class="kbd-help-title">键盘快捷键</h3>
+      ${list}
+      <div class="kbd-help-actions"><button class="btn" type="button">关闭</button></div>
+    </div>`;
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) { overlay.remove(); }
+    });
+    overlay.querySelector("button").addEventListener("click", () => overlay.remove());
+    document.body.appendChild(overlay);
+  }
 
   const btnAll = document.getElementById("mark-all-read");
   if (btnAll) btnAll.addEventListener("click", markAllRead);

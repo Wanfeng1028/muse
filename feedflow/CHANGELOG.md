@@ -1,6 +1,18 @@
 # 更新日志
 
+## v1.6 — 2026-10-16
+
+### 新增
+
+- 阅读器键盘快捷键：`j`/`k` 上下篇、`o` 新标签页打开原文、`r` 标已读/未读、`s` 加星/取消星标、`?` 快捷键帮助浮层（`Esc` 关闭）；`m` 标已读/未读保留兼容。
+- 阅读进度记忆：滚动位置按文章持久化到 SQLite（`articles.scroll_pos`，DB 迁移 v4），重进文章自动恢复到上次读到的位置；新增 `POST /api/articles/<id>/progress` 接口。
+- OPML 导出加固：标题/网址为 None 的脏数据不再导致导出 500；head 新增 `dateCreated`；分组嵌套与未分组直挂结构保持 OPML 2.0 标准形态。
+- tests/test_progress.py（8 例）与 tests/test_opml.py 新增 6 例。
+
+测试：pytest 129 例全过、ruff 全洁。
+
 ## v1.5.1 — 2026-10-16
+
 
 ### 变更
 

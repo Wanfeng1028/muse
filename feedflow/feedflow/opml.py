@@ -1,6 +1,7 @@
 """OPML 导入导出模块：支持 FeedFlow 订阅的分组结构与源清单交换。"""
 
 import xml.etree.ElementTree as ET
+from datetime import UTC, datetime
 
 from . import store
 
@@ -23,42 +24,47 @@ def export_opml(db_path) -> str:
     opml = ET.Element("opml", {"version": "2.0"})
     head = ET.SubElement(opml, "head")
     ET.SubElement(head, "title").text = "FeedFlow 订阅导出"
+    ET.SubElement(head, "dateCreated").text = datetime.now(UTC).isoformat()
     body = ET.SubElement(opml, "body")
 
     # 先输出有分组的源
     for folder in folders:
+        folder_name = folder["name"] or ""
         folder_outline = ET.SubElement(
-            body, "outline", {"text": folder["name"], "title": folder["name"]}
+            body, "outline", {"text": folder_name, "title": folder_name}
         )
         for feed in grouped.get(folder["id"], []):
+            feed_title = feed["title"] or ""
             ET.SubElement(
                 folder_outline,
                 "outline",
                 {
-                    "text": feed["title"],
-                    "title": feed["title"],
+                    "text": feed_title,
+                    "title": feed_title,
                     "type": "rss",
                     "xmlUrl": feed["feed_url"],
-                    "htmlUrl": feed["site_url"],
+                    "htmlUrl": feed["site_url"] or "",
                 },
             )
 
     # 未分组源直接挂 body
     for feed in ungrouped:
+        feed_title = feed["title"] or ""
         ET.SubElement(
             body,
             "outline",
             {
-                "text": feed["title"],
-                "title": feed["title"],
+                "text": feed_title,
+                "title": feed_title,
                 "type": "rss",
                 "xmlUrl": feed["feed_url"],
-                "htmlUrl": feed["site_url"],
+                "htmlUrl": feed["site_url"] or "",
             },
         )
 
     xml_bytes = ET.tostring(opml, encoding="utf-8", xml_declaration=True)
     return xml_bytes.decode("utf-8")
+
 
 
 def import_opml(db_path, xml_text) -> dict:
