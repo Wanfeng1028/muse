@@ -436,10 +436,11 @@
 - 工程化 v1（2026-10-13）：31 个文件 dpsk 生成 + 编排验收；修 5 个后端 bug（含跨源删除误删、dir 根目录计行、水位线日期格式）；Web UI app.js 按真实 API 契约重写
 - 生产级 v1.1.0（2026-10-13）：`dbtx` 接口重构（`*sql.DB`/`*sql.Tx` 公共子集）+ `syncOneTable` 批量事务（每 5000 行提交、出错回滚、水位线最终提交后写回）+ `sync.batch_size` 配置；真实负载验证倒逼出的性能修复（优化前 10 万行需约 44 分钟）；CHANGELOG/LOADTEST.md/README 实测数据齐备
 - 生产级 v1.2.0（2026-10-15）：dpsk 分 5 批生成 + 编排修 3 处机械问题——e2e.sh 的 COUNT(*) 行数断言 bug、views_test import 缺 fmt、LOADTEST 锚定文本偏差；YAML 声明视图自动注册（`views.SyncFromConfig`，sync/serve/views sync 幂等注册+更新+清理，`_m_views.origin` 区分 yaml/manual，老库自动迁移）；`scripts/e2e.sh` 端到端编排实测 E2E PASS（10 行订单 CSV + 8 会员 JSON → sync 新增 orders 10/users 8 → 视图自动注册新增 2 → 改 YAML 新增 1 更新 1 → 删声明清理 1 → serve → CSV 导出 10 行）；docker-compose 一键部署强化（健康检查/资源限制 512m·1 核/日志轮转 10m×3，`docs/OPERATIONS.md` 补部署/升级/排障）；视图页真实截图更新（`docs/screenshots/views.png`，真实数据：4 城市销售额）；go build/vet/test 全过（12 包）
+- **v1.3.0「物化视图 + 刷新策略」（2026-10-16）**：`views` 声明新增 `materialize: {enabled, refresh}`（on_sync/manual/interval）；`views.Refresh` 事务内全量刷新（失败回滚）+ `RefreshDue` 策略调度；sync 成功后自动按策略刷新、`views refresh` CLI、`POST /api/views/{name}/refresh`、Web UI 物化标记+一键刷新；`_m_views` 增 4 列（老库幂等迁移）；3 个 Prometheus 新指标；修真 bug：`RecordViewRefresh` 用 SQLite `datetime('now')` 空格格式致 `RefreshDue` RFC3339 解析永失败、interval 每次误判到期（改 Go 侧 RFC3339）；go test 全绿、`scripts/e2e.sh` E2E PASS、视图页物化标记真实截图亲验；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.0.md`
 
 **后续计划**：
 
-- Postgres/MySQL 只读源、冲突 Webhook 通知、视图定时物化、CSV 增量导入 API
+- Postgres/MySQL 只读源、冲突 Webhook 通知、~~视图定时物化~~（已在 v1.3.0 交付）、CSV 增量导入 API
 - Dependabot（等用户在 GitHub Settings 手动开启）
 
 ## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」
