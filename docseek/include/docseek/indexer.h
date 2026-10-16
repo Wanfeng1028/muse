@@ -12,7 +12,7 @@ class Database;
 
 // 索引选项：扩展名白名单、单文件大小上限、是否跟随符号链接
 struct IndexOptions {
-    std::vector<std::string> extensions = {".txt", ".md", ".markdown", ".text", ".html", ".htm"};
+    std::vector<std::string> extensions = {".txt", ".md", ".markdown", ".text", ".html", ".htm", ".pdf"};
     int64_t maxFileBytes = 5 * 1024 * 1024;
     bool followSymlinks = false;
 };

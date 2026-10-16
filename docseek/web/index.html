@@ -531,10 +531,13 @@
       var ext = "";
       var dotPos = path.lastIndexOf(".");
       if (dotPos >= 0) { ext = path.slice(dotPos + 1).toLowerCase(); }
-      var typeLabel = "";
-      if (ext === "html" || ext === "htm") { typeLabel = "HTML"; }
-      else if (ext === "md" || ext === "markdown") { typeLabel = "MD"; }
-      else if (ext === "txt" || ext === "text") { typeLabel = "TXT"; }
+      var typeLabel = it.file_type ? it.file_type : "";
+      if (!typeLabel) {
+        if (ext === "html" || ext === "htm") { typeLabel = "HTML"; }
+        else if (ext === "md" || ext === "markdown") { typeLabel = "MD"; }
+        else if (ext === "txt" || ext === "text") { typeLabel = "TXT"; }
+        else if (ext === "pdf") { typeLabel = "PDF"; }
+      }
       html += '<span class="result-idx">' + idx + '</span>';
       html += '<span class="result-title">' + escapeHtml(title) + '</span>';
       if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }

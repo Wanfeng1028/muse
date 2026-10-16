@@ -2,6 +2,7 @@
 #include "docseek/indexer.h"
 #include "docseek/database.h"
 #include "docseek/html_extractor.h"
+#include "docseek/pdf_extractor.h"
 #include "docseek/logger.h"
 
 #include <algorithm>
@@ -107,7 +108,7 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
             return;
         }
         // HTML 允许含 NUL（UTF-16 编码页面），由 HtmlExtractor::extractFromBytes 负责解码，不在此误判为二进制
-        if (ext != ".html" && ext != ".htm" && head.find('\0') != std::string::npos) { st.skipped++; return; }
+        if (ext != ".html" && ext != ".htm" && ext != ".pdf" && head.find('\0') != std::string::npos) { st.skipped++; return; }
 
         // 读取全文
         std::string content;
@@ -141,6 +142,32 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
                              "HTML 提取失败或正文为空，回落为原始文本",
                              {{"path", sp}, {"charset", res.usedCharset}});
             }
+        }
+
+        // PDF 文件：子进程调 pdftotext 提文本（-layout 保持版式，页间 '\f' 分隔）；
+        // 加密 PDF 跳过并记 warning；损坏/失败只记 error+跳过，不中断整批；无文本的 PDF 跳过（不建空文档）
+        if (ext == ".pdf") {
+            PdfExtractResult pres = PdfExtractor::extractFromPath(sp);
+            if (pres.encrypted) {
+                docseek::log(docseek::Level::Warn, "indexer", "加密 PDF，已跳过",
+                             {{"path", sp}});
+                st.skipped++;
+                return;
+            }
+            if (!pres.ok) {
+                if (st.errors.size() < kMaxErrors) st.errors.push_back(sp + ": PDF 提取失败：" + pres.error);
+                docseek::log(docseek::Level::Warn, "indexer", "PDF 提取失败，已跳过",
+                             {{"path", sp}, {"error", pres.error}});
+                st.skipped++;
+                return;
+            }
+            if (pres.text.empty()) {
+                docseek::log(docseek::Level::Warn, "indexer", "PDF 无可提取文本，已跳过",
+                             {{"path", sp}});
+                st.skipped++;
+                return;
+            }
+            content = pres.text;
         }
 
         // 与已有记录比较

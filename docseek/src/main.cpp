@@ -27,7 +27,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.7.0";
+constexpr const char* kVersion = "0.8.0";
 
 
 struct GlobalOpts {
@@ -247,6 +247,7 @@ int cmdSearch(docseek::Database& db, const SearchCmdOpts& o, bool json) {
                       << "\"title\":\"" << jsonEscape(h.title) << "\","
                       << "\"snippet\":\"" << jsonEscape(h.snippet) << "\","
                       << "\"score\":" << std::fixed << std::setprecision(3) << h.score
+                      << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\""
                       << "}";
         }
         std::cout << "]}\n";
@@ -258,6 +259,7 @@ int cmdSearch(docseek::Database& db, const SearchCmdOpts& o, bool json) {
                 const auto& h = hits[i];
                 std::cout << (i + 1) << ". " << h.path << "\n";
                 std::cout << "   标题：" << h.title << "\n";
+                std::cout << "   类型：" << (h.file_type.empty() ? "未知" : h.file_type) << "\n";
                 std::cout << "   评分：" << std::fixed << std::setprecision(3) << h.score << "\n";
                 std::cout << "   摘要：" << h.snippet << "\n";
             }

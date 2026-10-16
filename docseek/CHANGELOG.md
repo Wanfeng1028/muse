@@ -1,5 +1,13 @@
 ```markdown
 # Changelog
+```
+
+## v0.8.0（2026-10-16）——PDF 文本提取
+
+- 新增 `PdfExtractor`：子进程调用系统 `pdftotext`（`fork`+`exec`，不经过 shell；30 秒超时 kill；stderr 判加密），零构建依赖、无 GPL 链接污染；选型见 `docs/PDF_EXTRACTION_SELECTION.md`。
+- `Indexer`：默认扩展名加入 `.pdf`；PDF 二进制不再误判跳过；加密 PDF 跳过并记 warning；损坏 PDF 只记 error 不中断整批；无文本 PDF 跳过（不建空文档）。
+- 版本号 0.8.0。
+- 测试：新增 test_pdf 10 例（提取器 7 / 索引集成 3），fixture 全部程序生成（含手写 MD5/RC4 生成的加密 PDF）。
 
 ## v0.7.0（2026-10-16）——搜索质量工程
 

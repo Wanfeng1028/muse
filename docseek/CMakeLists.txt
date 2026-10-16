@@ -76,6 +76,7 @@ add_library(docseek_core STATIC
   src/jieba_tokenizer.cpp
   src/query_parser.cpp
   src/passage_ranker.cpp
+  src/pdf_extractor.cpp
   src/locator.cpp
   src/logger.cpp
   src/metrics.cpp
@@ -164,6 +165,7 @@ add_executable(docseek_tests
   tests/test_html_charset.cpp
   tests/test_html_perf.cpp
   tests/test_html_integration.cpp
+  tests/test_pdf.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

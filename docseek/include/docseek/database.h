@@ -25,6 +25,7 @@ struct Hit {
     std::string title;
     std::string snippet;
     double score = 0;
+    std::string file_type;  // 文件类型标签：PDF/HTML/MD/TXT，未知为空
 };
 
 // 本地 SQLite 数据库封装，负责文档元数据与 FTS5 索引的读写。

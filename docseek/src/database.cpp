@@ -585,6 +585,21 @@ std::optional<Document> Database::findByPath(const std::string& path) {
     return d;
 }
 
+// 按扩展名返回文件类型标签（大写），未知返回空串
+std::string fileTypeLabel(const std::string& path) {
+    size_t dot = path.find_last_of('.');
+    std::string ext;
+    if (dot != std::string::npos) {
+        ext = path.substr(dot + 1);
+        for (char& c : ext) if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    if (ext == "pdf") return "PDF";
+    if (ext == "html" || ext == "htm") return "HTML";
+    if (ext == "md" || ext == "markdown") return "MD";
+    if (ext == "txt" || ext == "text") return "TXT";
+    return "";
+}
+
 std::vector<Hit> Database::searchFts(const std::string& match_query, int limit) {
     std::vector<Hit> out;
     if (match_query.empty()) return out;
@@ -610,6 +625,7 @@ std::vector<Hit> Database::searchFts(const std::string& match_query, int limit) 
         h.title = s.columnText(2);
         h.snippet = s.columnIsNull(3) ? std::string() : s.columnText(3);
         h.score = s.columnDouble(4);
+        h.file_type = fileTypeLabel(h.path);
         out.push_back(std::move(h));
     }
     return out;

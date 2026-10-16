@@ -249,7 +249,7 @@ public:
         server_->onGet("/api/health", [this](const HttpRequest& req) {
             return wrapRequest("health", req, false, [&]() -> HttpResponse {
                 std::lock_guard<std::mutex> lk(dbMutex_);
-                return HttpResponse::json("{\"ok\":true,\"version\":\"0.7.0\"}");
+                return HttpResponse::json("{\"ok\":true,\"version\":\"0.8.0\"}");
 
             });
         });
@@ -330,7 +330,8 @@ public:
                         << ",\"path\":\"" << jsonEscape(h.path)
                         << "\",\"title\":\"" << jsonEscape(h.title)
                         << "\",\"snippet\":\"" << jsonEscape(h.snippet)
-                        << "\",\"score\":" << formatScore(h.score) << "}";
+                        << "\",\"score\":" << formatScore(h.score)
+                        << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\"}";
                 }
                 oss << "]}";
                 return HttpResponse::json(oss.str());
@@ -383,6 +384,7 @@ public:
                         << "\",\"line_start\":" << a.line_start
                         << ",\"line_end\":" << a.line_end
                         << ",\"score\":" << formatScore(a.score)
+                        << ",\"page_no\":" << a.page_no
                         << ",\"matched_terms\":[";
                     for (size_t j = 0; j < a.matched_terms.size(); ++j) {
                         if (j) oss << ',';
@@ -559,7 +561,7 @@ void Service::run() {
     impl_->actualPort_ = impl_->server_->port();
     log(Level::Info, "service", "服务已启动",
         {{"port", std::to_string(impl_->actualPort_)},
-         {"version", "0.7.0"}});
+         {"version", "0.8.0"}});
 
 
     {

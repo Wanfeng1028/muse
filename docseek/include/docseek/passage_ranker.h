@@ -17,6 +17,7 @@ struct Passage {
     std::string text;     // 窗口原文（行间用 '\n' 连接）
     double score = 0;
     std::vector<std::string> matched_terms;  // 按首次出现序，去重
+    int page_no = 0;  // PDF 文档的页码（1-based）；非 PDF 为 0（不适用）
 };
 
 // 在单篇文档内滑动窗口打分，返回 topK 段落（score 降序，line_start 升序 tie-break）。

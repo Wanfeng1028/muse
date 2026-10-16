@@ -7,6 +7,51 @@
 #include "docseek/query_parser.h"
 
 namespace docseek {
+namespace {
+
+// PDF 页码辅助：路径是否为 .pdf（大小写不敏感）
+bool hasPdfExt(const std::string& path) {
+    if (path.size() < 4) return false;
+    std::string ext = path.substr(path.size() - 4);
+    for (char& c : ext) if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    return ext == ".pdf";
+}
+
+char lowerAscii(char c) {
+    return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
+}
+
+// 是否为空白文本（空格/制表/换行/换页符等），用于丢弃 PDF 纯 '\f' 垃圾窗口
+bool isBlankText(const std::string& t) {
+    for (unsigned char c : t) {
+        if (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\f' && c != '\v') return false;
+    }
+    return true;
+}
+
+// ASCII 大小写不敏感查找首个命中词位置（与 rankPassages 的匹配语义一致）
+size_t findTermCi(const std::string& content, const std::string& term) {
+    if (term.empty() || term.size() > content.size()) return std::string::npos;
+    for (size_t i = 0; i + term.size() <= content.size(); ++i) {
+        bool match = true;
+        for (size_t j = 0; j < term.size(); ++j) {
+            if (lowerAscii(content[i + j]) != lowerAscii(term[j])) { match = false; break; }
+        }
+        if (match) return i;
+    }
+    return std::string::npos;
+}
+
+// 按命中词字节偏移数换页符定页码（pdftotext 页间以 '\f' 分隔，页码 1-based）
+int pdfPageForOffset(const std::string& content, size_t pos) {
+    int page = 1;
+    for (size_t i = 0; i <= pos && i < content.size(); ++i) {
+        if (content[i] == '\f') ++page;
+    }
+    return page;
+}
+
+}  // namespace
 
 Locator::Locator(Database& db, Searcher& searcher)
     : db_(db), searcher_(searcher) {}
@@ -53,6 +98,25 @@ std::vector<Passage> Locator::locate(const std::string& rawQuery,
         if (!content.has_value()) continue;
         std::vector<Passage> passages =
             rankPassages(h.doc_id, h.path, *content, pq, 3);
+        if (hasPdfExt(h.path)) {
+            // rankPassages 返回的是滑动窗口，line_start 是窗口起点；
+            // 页码按窗口内首个命中词在全文中的实际偏移定位；
+            // 顺手丢弃纯换页符/空白的垃圾窗口（pdftotext 页间 '\f' 行不携带有效文本）
+            for (auto it = passages.begin(); it != passages.end();) {
+                if (isBlankText(it->text)) {
+                    it = passages.erase(it);
+                    continue;
+                }
+                if (!it->matched_terms.empty()) {
+                    size_t pos = findTermCi(*content, it->matched_terms[0]);
+                    it->page_no = (pos == std::string::npos) ? 1
+                                                            : pdfPageForOffset(*content, pos);
+                } else {
+                    it->page_no = 1;
+                }
+                ++it;
+            }
+        }
         for (auto& p : passages) {
             all.push_back(std::move(p));
         }

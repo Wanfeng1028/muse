@@ -14,8 +14,11 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build -j$(nproc) \
     && ./build/docseek_tests
 
-# 运行阶段：仅包含可执行文件
+# 运行阶段：仅包含可执行文件 + PDF 提取运行时依赖
 FROM debian:12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /src/build/docseek /usr/local/bin/docseek
 # 词典必须跟镜像走：对应 resolveDictDir 的第二级定位

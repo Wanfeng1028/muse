@@ -12,6 +12,8 @@ DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **C
 
 DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）与网页文档（`.html` / `.htm`，v0.6.0 起自动去标签提正文）提供快速、可脚本化、可常驻的全文检索能力。
 
+> PDF 文本提取选型结论（v0.8.0）：采用子进程调用系统 `pdftotext`（poppler-utils 运行时依赖）——零构建依赖、无 GPL 链接污染、提取质量由 poppler 背书；详见 `docs/PDF_EXTRACTION_SELECTION.md`。
+
 - **CLI 形态**：`docseek index` / `search` / `stats` / `prune` 等命令，适合脚本、批处理与一次性检索。
 - **服务形态**：`docseek serve` 启动一个自研的极简 HTTP 服务器（仅依赖 POSIX sockets 与 C++ 标准库），提供检索 API 与内嵌 Web UI，同时用 inotify 监控目录变更。
 
@@ -22,9 +24,10 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
 ### CLI（v1）
 
 - `index <path>... [--ext .txt,.md] [--max-mb N]`
-  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text` / `html` / `htm`（扩展名大小写不敏感）。
+  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text` / `html` / `htm` / `pdf`（扩展名大小写不敏感，v0.8.0 起）。
   - `.html` / `.htm` 走 HTML 提取管线：charset 探测（BOM → `<meta>` → 默认 UTF-8，GBK/GB18030/BIG5 等经 iconv 转码）→ 去 `<script>`/`<style>`/`<noscript>` → 提取 `<title>`（入库为文档标题，搜索时标题加权生效）、`<meta name="description">` 与正文（块级标签换行、HTML 实体解码）；提取失败或正文为空时回落为原始文本并记 warn 日志。
-  - Web 搜索结果显示文件类型徽标（HTML/MD/TXT），效果见 `docs/screenshots/html-search-badge.png`（真实服务截图）。
+  - `.pdf` 走 PDF 提取管线（v0.8.0）：子进程调用系统 `pdftotext -layout -enc UTF-8`（`fork`+`exec`，不经过 shell；页间以换页符分隔，标题取文件名）；加密 PDF 跳过并记 warning；损坏 PDF 只记 error 不中断整批；无文本的 PDF 跳过。
+  - Web 搜索结果显示文件类型徽标（HTML/MD/TXT/PDF，v0.8.0 起），效果见 `docs/screenshots/html-search-badge.png`（真实服务截图）。
   - 自动跳过二进制文件与超过 `--max-mb` 限制的超大文件。
   - 跳过隐藏目录。
   - 基于 **mtime + size** 的增量更新：未变化的文件不会重复索引。
@@ -69,6 +72,7 @@ docseek locate "退款流程写在哪一段"
 ![locate 终端截图](docs/screenshots/locate-cli.png)
 
 - `search` 给你文档列表；`locate` 给你**文件:行号锚点 + 命中词高亮的原文段落**。
+- PDF 文档的 locate 结果额外带页码：`GET /api/locate` 返回 `page_no` 字段（1-based，0 表示不适用），Web UI 搜索结果展示 PDF 文件类型徽标。
 - 离线运行：中文疑问句规则解析 → jieba 关键词抽取 → 混合召回 → 段落滑动窗口重排序 → 行号锚定，无模型、无 GPU。
 - Web 服务同样可用：首页"自然语言定位"卡片，或 `GET /api/locate?q=...`。
 
@@ -95,6 +99,7 @@ docseek locate "退款流程写在哪一段"
 ## 前置依赖
 
 - Linux（inotify 与 POSIX sockets 依赖）
+- poppler-utils（提供 pdftotext，v0.8.0 起 PDF 文本提取的运行时依赖；缺失时 .pdf 文件跳过并记 warn，不影响其他格式；Docker 运行镜像已包含）
 - GCC（支持 C++17）
 - CMake >= 3.28
 - 构建测试时需要网络（FetchContent 拉取 GoogleTest v1.14.0）
@@ -120,7 +125,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
 ctest --test-dir build
 ```
 
-共 **108 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫 / HTML 文本提取（基础/实体/畸形/编码/性能/集成）等套件。
+共 **123 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫 / HTML 文本提取（基础/实体/畸形/编码/性能/集成） / PDF 文本提取（提取器/索引集成/搜索定位）等套件。
 
 ---
 
