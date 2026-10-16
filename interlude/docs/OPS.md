@@ -129,7 +129,7 @@ interlude-lint lint src/main/resources/scripts/sample.interlude --log-level debu
 
 ## 测试说明
 
-- 失败注入测试（FaultInjectionTest 7 例）：目录/空文件 lint 返回 2 不崩溃、备份文件丢失时恢复抛 IOException、特殊文件名往返、同毫秒快照唯一命名。
+- 失败注入测试（FaultInjectionTest 19 例）：损坏/截断剧本的行号定位与不崩溃、不可读文件 exit 语义（root 环境自动跳过）、tmpfs 磁盘满模拟（snapshot 抛 IOException、原文件不受损）、损坏备份拒绝恢复（IllegalArgumentException→CLI exit 2、不覆盖原文件）、10 万行剧本解析性能回归（60 秒基线）、并发 lint 同一文件备份不重名；另有目录/空文件 lint、备份丢失恢复、特殊文件名往返、负索引、同毫秒快照唯一命名。
 
 测试分两层：
 
@@ -139,6 +139,32 @@ interlude-lint lint src/main/resources/scripts/sample.interlude --log-level debu
 示例剧本 `src/main/resources/scripts/sample.interlude` 有 9 个场景，里面埋了 5 个已知问题，端到端测试就是围绕它写的。
 
 本机跑测试按上面「本机直编」那节的三条命令来。
+
+## 失败注入与故障演练
+
+这节说的是怎么把"会坏"的地方主动弄坏，看看 interlude-lint 会不会跟着崩。跑法就一句话：`./gradlew test --tests '*FaultInjectionTest*'`。下面这张表列了每个故障场景、期望表现，以及对应测试。
+
+| 故障场景 | 期望表现 | 对应测试 |
+| --- | --- | --- |
+| 损坏/截断剧本 | exit 2，stderr 打印"第 N 行" | 损坏剧本行号定位 |
+| 不可读文件（权限位 000） | exit 2，stderr 打印"读取文件失败" | 不可读文件 exit 语义 |
+| 磁盘满（tmpfs 写满） | snapshot 抛 IOException，原文件不受损，lint 降级继续只记 warn | tmpfs 磁盘满模拟 |
+| 损坏的 .bak | restore 抛 IllegalArgumentException，CLI exit 2，不覆盖原文件 | 损坏备份拒绝恢复 |
+| 10 万行剧本 | 解析 + 校验在 60 秒内跑完（性能基线） | 大剧本性能回归 |
+| 8 线程并发 lint 同一文件 | 每次快照的备份文件名都不重复 | 并发 lint 备份不重名 |
+
+复现磁盘满的命令示例（测试里是自动做的，手工排查时可以照抄）：
+
+mkdir -p /tmp/interlude-full
+mount -t tmpfs -o size=64k tmpfs /tmp/interlude-full
+dd if=/dev/zero of=/tmp/interlude-full/fill bs=1k count=64 2>/dev/null
+# 此时 /tmp/interlude-full 已写满，指向该目录跑 lint 观察 snapshot 行为
+umount /tmp/interlude-full
+
+已知限制两条：
+
+- root 环境下 POSIX 权限位对 root 无效，"不可读文件"类测试（B1/D1）会自动跳过，不会因为 root 而误判通过。
+- mount 挂 tmpfs 需要 root 或 CAP_SYS_ADMIN，环境里没有权限时磁盘满相关测试会跳过，不会把整个测试套件带崩。
 
 ## 常见报错排查
 

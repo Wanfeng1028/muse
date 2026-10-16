@@ -23,7 +23,13 @@ object BackupManager {
             candidate = File(dir, "$baseName-$suffix")
             suffix += 1
         }
-        file.copyTo(candidate, overwrite = false)
+        try {
+            file.copyTo(candidate, overwrite = false)
+        } catch (e: Exception) {
+            // 拷贝失败（如磁盘满）不留下残留空文件，原子性语义：要么完整备份，要么没有
+            candidate.delete()
+            throw e
+        }
         prune(file)
         return candidate
     }
@@ -46,7 +52,11 @@ object BackupManager {
     fun restore(file: File, index: Int, now: Instant = Clock.systemUTC().instant()): File {
         val backups = listBackups(file)
         if (index !in backups.indices) throw IllegalArgumentException("备份索引越界: $index，共 ${backups.size} 个备份")
-        val content = backups[index].readBytes()
+        val content = try {
+            backups[index].readBytes()
+        } catch (e: Exception) {
+            throw IllegalArgumentException("备份文件损坏，拒绝恢复: ${backups[index].name}")
+        }
         snapshot(file, now)
         file.writeBytes(content)
         return file

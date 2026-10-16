@@ -75,6 +75,10 @@ fun runLint(args: Array<String>): Int {
         System.err.println("文件不存在: $scriptPath")
         printUsageAndExit()
     }
+    if (!file.isFile) {
+        System.err.println("不是有效的剧本文件(需要普通文件): $scriptPath")
+        return 2
+    }
 
     try {
         val bak = BackupManager.snapshot(file)

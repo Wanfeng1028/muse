@@ -10,6 +10,12 @@
 - .bak 自动备份：`interlude-lint lint` 打开剧本前自动快照（时间戳后缀，保留最近 5 个、超出的删最旧）；新增 `restore` 子命令（`--list` 列出备份、`--index N` 恢复指定版本，恢复前自动备份当前工作文件）；备份/恢复事件记结构化日志（op=backup/restore，不含剧本正文）。
 - 备份恢复测试 10 例（BackupTest）。
 - 失败注入测试 7 例（FaultInjectionTest：目录/空文件 lint、备份丢失恢复、特殊文件名、负索引、同毫秒快照）。
+- 失败注入测试套件 v1.3（FaultInjectionTest 扩至 19 例：损坏/截断剧本行号定位、不可读文件 exit 语义、tmpfs 磁盘满模拟、损坏备份拒绝恢复、10 万行性能回归、并发 lint 备份不互踩）。
+- `lint` 对目录/特殊文件输入先校验类型再报错，不再先尝试 snapshot（修技术债）。
+
+### Fixed
+
+- `BackupManager.restore` 读取损坏备份失败时抛 IllegalArgumentException（CLI 返回 exit 2），不再让原始 IOException 崩出，且绝不覆盖原文件。
 
 ### Known limitations
 
