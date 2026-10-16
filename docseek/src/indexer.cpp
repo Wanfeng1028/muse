@@ -1,6 +1,8 @@
 // src/indexer.cpp
 #include "docseek/indexer.h"
 #include "docseek/database.h"
+#include "docseek/html_extractor.h"
+#include "docseek/logger.h"
 
 #include <algorithm>
 #include <chrono>
@@ -104,7 +106,8 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
             st.skipped++;
             return;
         }
-        if (head.find('\0') != std::string::npos) { st.skipped++; return; }
+        // HTML 允许含 NUL（UTF-16 编码页面），由 HtmlExtractor::extractFromBytes 负责解码，不在此误判为二进制
+        if (ext != ".html" && ext != ".htm" && head.find('\0') != std::string::npos) { st.skipped++; return; }
 
         // 读取全文
         std::string content;
@@ -124,6 +127,21 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
         int64_t mtime = toUnixSeconds(ft);
         int64_t size = static_cast<int64_t>(fsz);
         std::string title = p.stem().string();
+
+        // HTML 文件：charset 探测→转 UTF-8→去标签提取正文后入库，script/style 内容不进入索引；
+        // 提取失败或正文为空时回落为原始字节并记 warn 日志（文档不丢失）
+        if (ext == ".html" || ext == ".htm") {
+            HtmlExtractResult res = HtmlExtractor::extractFromBytes(content);
+            if (res.ok && !res.doc.text.empty()) {
+                if (!res.doc.title.empty()) title = res.doc.title;
+                content = res.doc.description.empty() ? res.doc.text
+                                                      : res.doc.description + "\n" + res.doc.text;
+            } else {
+                docseek::log(docseek::Level::Warn, "indexer",
+                             "HTML 提取失败或正文为空，回落为原始文本",
+                             {{"path", sp}, {"charset", res.usedCharset}});
+            }
+        }
 
         // 与已有记录比较
         auto old = db_.findByPath(sp);

@@ -1,0 +1,13 @@
+<TITLE>容错测试页面</TITLE>
+<meta name="description" content="畸形 HTML 容错提取测试">
+<div class="wrapper">
+<div class="content">
+<p>这一段位于未闭合的 div 内部，提取器应当仍能识别为正文。</p>
+<!-- 下面是一个未闭合的注释
+<p>这段文字被注释吞掉，不应出现在提取结果中。</p>
+<p>畸形但可读正文</p>
+<br>
+<p>属性无引号的链接：<a href=https://example.com>链接</a>，紧随其后的文字用于验证标签边界处理。</p>
+<p>容错测试通过</p>
+</div>
+</body>

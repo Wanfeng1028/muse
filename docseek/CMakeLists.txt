@@ -79,6 +79,7 @@ add_library(docseek_core STATIC
   src/locator.cpp
   src/logger.cpp
   src/metrics.cpp
+  src/html_extractor.cpp
 )
 target_include_directories(docseek_core PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -157,6 +158,12 @@ add_executable(docseek_tests
   tests/test_tokenizer.cpp
   tests/test_hybrid.cpp
   tests/test_ops.cpp
+  tests/test_html_basic.cpp
+  tests/test_html_entities.cpp
+  tests/test_html_malformed.cpp
+  tests/test_html_charset.cpp
+  tests/test_html_perf.cpp
+  tests/test_html_integration.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

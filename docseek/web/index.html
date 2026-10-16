@@ -157,6 +157,15 @@
     padding: 1px 8px;
     margin-left: auto;
   }
+  .result-type {
+    font-size: 11px;
+    color: #5b6b7f;
+    background: #eef1f6;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 1px 8px;
+    white-space: nowrap;
+  }
   .result-path {
     margin-top: 4px;
     font-size: 12px;
@@ -519,8 +528,16 @@
       var snippet = it.snippet ? it.snippet : "";
       html += '<div class="result-item">';
       html += '<div class="result-head">';
+      var ext = "";
+      var dotPos = path.lastIndexOf(".");
+      if (dotPos >= 0) { ext = path.slice(dotPos + 1).toLowerCase(); }
+      var typeLabel = "";
+      if (ext === "html" || ext === "htm") { typeLabel = "HTML"; }
+      else if (ext === "md" || ext === "markdown") { typeLabel = "MD"; }
+      else if (ext === "txt" || ext === "text") { typeLabel = "TXT"; }
       html += '<span class="result-idx">' + idx + '</span>';
       html += '<span class="result-title">' + escapeHtml(title) + '</span>';
+      if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }
       html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
       html += '</div>';
       html += '<div class="result-path">' + escapeHtml(path) + '</div>';

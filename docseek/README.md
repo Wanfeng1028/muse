@@ -1,6 +1,6 @@
 # 文溯 DocSeek · 本地全文检索引擎
 
-**版本：v0.5.0**
+**版本：v0.6.0**
 
 DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，**中文分词采用 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器**，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。检索侧为**混合检索 v1**：BM25 基础分 + AND→OR 回退 + 标题/短语加成重排序。
 
@@ -8,7 +8,7 @@ DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **C
 
 ## 项目简介
 
-DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）提供快速、可脚本化、可常驻的全文检索能力。
+DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）与网页文档（`.html` / `.htm`，v0.6.0 起自动去标签提正文）提供快速、可脚本化、可常驻的全文检索能力。
 
 - **CLI 形态**：`docseek index` / `search` / `stats` / `prune` 等命令，适合脚本、批处理与一次性检索。
 - **服务形态**：`docseek serve` 启动一个自研的极简 HTTP 服务器（仅依赖 POSIX sockets 与 C++ 标准库），提供检索 API 与内嵌 Web UI，同时用 inotify 监控目录变更。
@@ -20,7 +20,9 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
 ### CLI（v1）
 
 - `index <path>... [--ext .txt,.md] [--max-mb N]`
-  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text`（扩展名大小写不敏感）。
+  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text` / `html` / `htm`（扩展名大小写不敏感）。
+  - `.html` / `.htm` 走 HTML 提取管线：charset 探测（BOM → `<meta>` → 默认 UTF-8，GBK/GB18030/BIG5 等经 iconv 转码）→ 去 `<script>`/`<style>`/`<noscript>` → 提取 `<title>`（入库为文档标题，搜索时标题加权生效）、`<meta name="description">` 与正文（块级标签换行、HTML 实体解码）；提取失败或正文为空时回落为原始文本并记 warn 日志。
+  - Web 搜索结果显示文件类型徽标（HTML/MD/TXT），效果见 `docs/screenshots/html-search-badge.png`（真实服务截图）。
   - 自动跳过二进制文件与超过 `--max-mb` 限制的超大文件。
   - 跳过隐藏目录。
   - 基于 **mtime + size** 的增量更新：未变化的文件不会重复索引。
@@ -114,7 +116,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
 ctest --test-dir build
 ```
 
-共 **62 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫等套件。
+共 **102 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫 / HTML 文本提取（基础/实体/畸形/编码/性能/集成）等套件。
 
 ---
 
@@ -234,12 +236,12 @@ compose 把 `./data` 挂载持久化数据库、`./docs` 只读挂载为演示�
 ## 已知局限
 
 - **中文分词（v0.3.0 已解决）**：v0.2.0 及之前 FTS5 的 `unicode61` 分词器不对 CJK 做分词，中文子串检索（如用"检索"搜"全文检索"）无结果。v0.3.0 起引入 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器，建索引/查询双侧一致切词；旧库打开时自动迁移（`PRAGMA user_version` 2→3，重建 FTS 索引）。评测见 [docs/eval.md](docs/eval.md)，10 个中文查询 Top-1 全部符合预期。
-- 当前仅支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`），尚不支持 HTML / PDF / Office 等格式的文本提取。
+- 当前支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）与 HTML（`.html` / `.htm`，v0.6.0）；PDF / Office 等格式的文本提取尚不支持。
 - ~~cppjieba 词典加载噪音~~（v0.5.0 已解决）：词典加载期的 limonp 噪音日志现已重定向到 `/dev/null`（`DOCSEEK_JIEBA_VERBOSE=1` 可恢复）。
 
 ---
 
 ## 后续计划
 
-- HTML / PDF / Office 文档的文本提取
+- PDF / Office 文档的文本提取
 - 多用户支持

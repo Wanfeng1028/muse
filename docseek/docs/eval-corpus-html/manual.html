@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DocSeek Operator Manual</title>
+<meta name="description" content="Operator manual for DocSeek covering backup and restore command usage, options, and verification steps.">
+</head>
+<body>
+<h1>DocSeek Operator Manual</h1>
+<p>This manual describes the backup and restore workflows for DocSeek deployments. It assumes you have shell access to the host running the index service and that the <code>docseek</code> CLI is on your <code>PATH</code>.</p>
+
+<h2>Creating a backup</h2>
+<p>Use the <code>docseek backup</code> command to snapshot the index and its metadata. By default, output is written to <code>/var/lib/docseek/backups</code>.</p>
+<pre>
+docseek backup --target /mnt/backups --compress gzip --retain 7
+</pre>
+<ul>
+  <li><code>--target</code> sets the destination directory.</li>
+  <li><code>--compress</code> accepts <code>gzip</code> or <code>zstd</code>.</li>
+  <li><code>--retain</code> keeps the N most recent archives and prunes older ones.</li>
+</ul>
+
+<h2>Restoring from a backup</h2>
+<p>Restore operations require the service to be stopped first, otherwise the index lock will reject the write.</p>
+<pre>
+systemctl stop docseek
+docseek restore --source /mnt/backups/docseek-2024-06-01.tar.gz --verify
+systemctl start docseek
+</pre>
+<p>The <code>--verify</code> flag recomputes checksums for every shard before swapping the live index&hellip; if any shard fails, the restore aborts and the previous index remains untouched.</p>
+
+<h2>Verification checklist</h2>
+<ul>
+  <li>Confirm the service reports <code>status: healthy</code> after restart.</li>
+  <li>Run <code>docseek query --selftest</code> and check for zero errors.</li>
+  <li>Compare document counts against the pre-backup snapshot.</li>
+</ul>
+<p>&copy; 2024 DocSeek Project. All rights reserved.</p>
+</body>
+</html>

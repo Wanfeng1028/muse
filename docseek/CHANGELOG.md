@@ -1,6 +1,17 @@
 ```markdown
 # Changelog
 
+## v0.6.0（2026-10-16）——HTML 文本提取
+
+- 新增 `HtmlExtractor`（零第三方依赖，纯 C++17 手写）：去 `<script>`/`<style>`/`<noscript>`、提取 `<title>`/`<meta name="description">`/正文、块级标签换行、HTML 实体解码（数字/hex/40+ 命名实体）、畸形 HTML 容错。
+- charset 探测：BOM（UTF-8/UTF-16LE/BE）→ `<meta charset>` / `<meta http-equiv>` → 默认 UTF-8；GBK/GB18030/BIG5/Latin1 经系统 iconv 转码，UTF-16 手写转换。
+- `Indexer`：默认扩展名加入 `.html`/`.htm`；UTF-16 页面（含 NUL 字节）不再误判为二进制跳过；提取失败或正文为空回落原始文本并记 warn 日志（文档不丢失）。
+- 搜索/定位：html 文档标题取自 `<title>`，标题/短语加权天然生效；`locate` 行号锚定走提取后文本。
+- Web UI：搜索结果加文件类型徽标（HTML/MD/TXT）。
+- 版本号 0.6.0（`--version` / `/api/version`）。
+- 发版对照报告：`docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`；设计注记：`docs/HTML_EXTRACTION.md`。
+- 测试 102/102 全过（v0.5.0 的 62 例 + 本轮新增 40 例：提取器基础 8 / 实体 8 / 畸形 8 / 编码 7 / 性能 4 / 集成 5；另有 1 例 WatcherTest.SubDir 为 inotify 时序 flaky，v0.5.0 已有，与本轮无关）。
+
 ## v0.5.0（2026-10-15）——生产级补齐
 
 - 结构化日志：stderr JSON Lines，`request_id` 全链路（`X-Request-Id` 响应头），`DOCSEEK_LOG_LEVEL` 控制级别。
