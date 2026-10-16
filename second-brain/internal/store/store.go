@@ -101,6 +101,10 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if err := migrateReviewsUser(db); err != nil {
+		db.Close()
+		return nil, err
+	}
 	attachDir := filepath.Join(filepath.Dir(path), "attachments")
 	return &Store{db: db, attachDir: attachDir}, nil
 }
@@ -132,13 +136,15 @@ func createSchema(db *sql.DB) error {
 			target_id INTEGER REFERENCES notes(id) ON DELETE SET NULL
 		)`,
 		`CREATE TABLE IF NOT EXISTS reviews (
-			note_id INTEGER PRIMARY KEY REFERENCES notes(id) ON DELETE CASCADE,
+			note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+			user_id TEXT NOT NULL DEFAULT 'local',
 			ef REAL NOT NULL DEFAULT 2.5,
 			interval_days INTEGER NOT NULL DEFAULT 0,
 			repetitions INTEGER NOT NULL DEFAULT 0,
 			due_date TEXT NOT NULL,
 			last_reviewed_at TEXT,
-			reviewed_count INTEGER NOT NULL DEFAULT 0
+			reviewed_count INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY (note_id, user_id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS attachments (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -205,8 +211,14 @@ func normalizeTags(tags []string) []string {
 	return out
 }
 
-// CreateNote 创建笔记。
+// CreateNote 创建笔记（复习行归属默认用户）。
 func (s *Store) CreateNote(n Note) (Note, error) {
+	return s.CreateNoteFor(n, DefaultUser)
+}
+
+// CreateNoteFor 创建笔记，复习行归属指定用户。
+func (s *Store) CreateNoteFor(n Note, user string) (Note, error) {
+	user = NormalizeUser(user)
 	now := nowRFC3339()
 	n.CreatedAt = now
 	n.UpdatedAt = now
@@ -247,8 +259,8 @@ func (s *Store) CreateNote(n Note) (Note, error) {
 		return Note{}, err
 	}
 	st := review.InitialState(time.Now())
-	if _, err := tx.Exec(`INSERT INTO reviews(note_id, ef, interval_days, repetitions, due_date) VALUES(?,?,?,?,?)`,
-		id, st.EF, st.IntervalDays, st.Repetitions, st.DueDate); err != nil {
+	if _, err := tx.Exec(`INSERT INTO reviews(note_id, user_id, ef, interval_days, repetitions, due_date) VALUES(?,?,?,?,?,?)`,
+		id, user, st.EF, st.IntervalDays, st.Repetitions, st.DueDate); err != nil {
 		return Note{}, err
 	}
 	if err := tx.Commit(); err != nil {

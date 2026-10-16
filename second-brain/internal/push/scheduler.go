@@ -79,11 +79,13 @@ func RunPush(ctx context.Context, st *store.Store, senders SenderSet, pc config.
 	}
 	dateKey := now.In(loc).Format("2006-01-02")
 
-	due, err := st.ListDueReviews(now, 50)
+	// 推送暂按默认用户聚合，多用户推送见后续计划
+	due, err := st.ListDueReviews(now, 50, store.DefaultUser)
 	if err != nil {
 		log.Printf("推送获取待复习列表失败: %v", err)
 	}
-	stats, err := st.ReviewStats(now)
+	// 推送暂按默认用户聚合，多用户推送见后续计划
+	stats, err := st.ReviewStats(now, store.DefaultUser)
 	if err != nil {
 		log.Printf("推送获取复习统计失败: %v", err)
 	}

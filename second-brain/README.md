@@ -199,12 +199,26 @@ SM-2 四档说明：
 
 | 接口 | 说明 | 返回 |
 | --- | --- | --- |
-| `GET /api/review/queue?limit=20` | 取当前待复习的笔记队列，`limit` 控制条数（默认 20，上限 200） | JSON 数组，每项 `{id,title,body,snippet,tags,dueDate,overdueDays,ef,intervalDays,repetitions}` |
-| `POST /api/review/{id}` | 提交某条笔记的复习评价，body 形如 `{"grade":4}` | `{ef,intervalDays,repetitions,dueDate,reviewedCount}`；grade 非法 → 400；笔记不存在 → 404 |
-| `GET /api/review/stats` | 复习统计 | `{dueToday,totalNotes,reviewed7d,avgEf,streakDays}` |
-| `GET /api/review/digest?n=5` | 每日回顾：到期优先，不足时用最久未复习的补足 | `{notes:[{id,title,snippet,tags,dueDate}]}` |
+| `GET /api/review/queue?limit=20` | 取当前待复习的笔记队列，`limit` 控制条数（默认 20，上限 200）（按 `X-User`/`?user=` 隔离） | JSON 数组，每项 `{id,title,body,snippet,tags,dueDate,overdueDays,ef,intervalDays,repetitions}` |
+| `POST /api/review/{id}` | 提交某条笔记的复习评价，body 形如 `{"grade":4}`（按 `X-User`/`?user=` 隔离） | `{ef,intervalDays,repetitions,dueDate,reviewedCount}`；grade 非法 → 400；笔记不存在 → 404 |
+| `GET /api/review/stats` | 复习统计（按 `X-User`/`?user=` 隔离） | `{dueToday,totalNotes,reviewed7d,avgEf,streakDays}` |
+| `GET /api/review/digest?n=5` | 每日回顾：到期优先，不足时用最久未复习的补足（按 `X-User`/`?user=` 隔离） | `{notes:[{id,title,snippet,tags,dueDate}]}` |
 
 `grade` 取值：0 = 忘记，3 = 困难，4 = 良好，5 = 简单。
+
+### 多用户复习隔离（v0.6）
+
+单机多用户简化方案：无注册、无鉴权，靠请求方声明身份。复习数据（到期队列、评分、统计、每日回顾）按使用者隔离，笔记本身全局共享。
+
+身份声明方式（优先级从高到低）：
+
+1. `X-User` 请求头（前端自动带上）
+2. `?user=` 查询参数
+3. 不声明 → 默认 `local`，行为与开放模式一致
+
+服务端对身份做归一化：去首尾空格、转小写，超长截断 64 字符。前端侧边栏顶部有"使用者"切换器，输入名字点切换即生效（记在浏览器 localStorage），复习徽标、队列、统计、每日回顾都会按新身份刷新。
+
+注意：定时推送（`SB_PUSH_*`）暂按默认 `local` 用户聚合推送，多用户推送见后续计划。老版本数据库升级时自动迁移：`reviews` 表加 `user_id` 列，历史数据全部归属 `local`。
 
 ### 复习页使用说明
 
@@ -234,6 +248,23 @@ SM-2 四档说明：
 
 - 外部推送（邮件 / 微信）还没做，留到 v0.3，目前只能自己打开复习页。
 - 只支持单用户，没有多账号和权限区分。
+
+## 装到手机上 / 离线用（v0.7.0）
+
+第二大脑是个 PWA：Chrome/Edge 里打开用一阵子，地址栏会出现安装按钮，装完跟原生应用一样从桌面进；iPhone 上用 Safari 的"分享 → 添加到主屏幕"手动装（iOS 不弹自动安装提示）。
+
+离线能力：
+- 断网也能打开、看笔记列表和详情（应用壳 + 数据都缓存在本地）。
+- 断网时新建/修改/删除笔记、给复习打分，会先排进本地队列，联网后自动同步（页面右上角能看到离线状态）。
+- 冲突规则：以服务器为准，后写入的覆盖先写入的；离线新建的笔记同步后会换一个新 id。细则见 `docs/PWA_OFFLINE_DESIGN.md`。
+
+安装步骤（含 iOS/Android/桌面/卸载/FAQ）见 `docs/PWA_INSTALL.md`。
+
+安装提示横幅：
+
+![安装提示](docs/screenshots/pwa-install-banner.png)
+
+已知限制：推送通知这版还没做（后续计划）；局域网 `http://IP:8080` 这种不安全地址下浏览器不给装 PWA、离线功能也用不了，要完整体验请用 `https` 或 `localhost`。
 
 ## 附件与导出（v0.3.0）
 

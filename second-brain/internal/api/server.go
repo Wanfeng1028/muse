@@ -59,7 +59,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 			writeError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		created, err := st.CreateNote(n)
+		created, err := st.CreateNoteFor(n, CurrentUser(r))
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -240,11 +240,36 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	// 推送路由（见 push.go）
 	RegisterPushRoutes(mux, st, cfg)
 
-	// 静态文件服务，根路径返回 index.html
+	// 静态文件子系统（embed.FS），PWA 路由与文件服务共用。
 	staticFS, err := fs.Sub(web.StaticFS(), ".")
 	if err != nil {
 		staticFS = web.StaticFS()
 	}
+
+	// PWA：Service Worker 必须从站点根提供（scope 为 /），且带 Service-Worker-Allowed 头；
+	// manifest 需要正确的 content type。
+	mux.HandleFunc("GET /sw.js", func(w http.ResponseWriter, r *http.Request) {
+		data, err := fs.ReadFile(staticFS, "sw.js")
+		if err != nil {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+		w.Header().Set("Service-Worker-Allowed", "/")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, _ = w.Write(data)
+	})
+	mux.HandleFunc("GET /manifest.webmanifest", func(w http.ResponseWriter, r *http.Request) {
+		data, err := fs.ReadFile(staticFS, "manifest.webmanifest")
+		if err != nil {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
+		_, _ = w.Write(data)
+	})
+
+	// 静态文件服务，根路径返回 index.html
 	fileServer := http.FileServerFS(staticFS)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {

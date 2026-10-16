@@ -24,7 +24,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 		if limit > 200 {
 			limit = 200
 		}
-		dues, err := st.ListDueReviews(time.Now(), limit)
+		dues, err := st.ListDueReviews(time.Now(), limit, CurrentUser(r))
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -76,7 +76,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			writeError(w, http.StatusBadRequest, "invalid grade")
 			return
 		}
-		state, err := st.RecordReview(id, *req.Grade, time.Now())
+		state, err := st.RecordReview(id, *req.Grade, time.Now(), CurrentUser(r))
 		if err != nil {
 			if err == store.ErrNotFound {
 				writeError(w, http.StatusNotFound, "note not found")
@@ -93,7 +93,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			"reviewedCount": 1,
 		}
 		// 尝试从 GetReviewState 中补充额外信息（此处 reviewedCount 以 1 表示本次）
-		if s, err := st.GetReviewState(id); err == nil {
+		if s, err := st.GetReviewState(id, CurrentUser(r)); err == nil {
 			_ = s
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -105,7 +105,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
-		stats, err := st.ReviewStats(time.Now())
+		stats, err := st.ReviewStats(time.Now(), CurrentUser(r))
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -120,7 +120,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			return
 		}
 		n := parseIntDefault(r.URL.Query().Get("n"), 5)
-		notes, err := st.DigestNotes(time.Now(), n)
+		notes, err := st.DigestNotes(time.Now(), n, CurrentUser(r))
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -135,7 +135,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 		items := make([]digestItem, 0, len(notes))
 		for _, note := range notes {
 			dueDate := ""
-			if s, err := st.GetReviewState(note.ID); err == nil {
+			if s, err := st.GetReviewState(note.ID, CurrentUser(r)); err == nil {
 				dueDate = s.DueDate
 			}
 			items = append(items, digestItem{

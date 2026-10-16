@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Wanfeng1028/muse/second-brain/internal/config"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
 
@@ -19,9 +20,8 @@ func newReviewTestServer(t *testing.T) (*httptest.Server, *store.Store) {
 	if err != nil {
 		t.Fatalf("store.Open: %v", err)
 	}
-	mux := http.NewServeMux()
-	RegisterReviewRoutes(mux, st)
-	srv := httptest.NewServer(mux)
+	// 用全量 NewServer（含 POST /api/notes），以便测试建笔记时的用户归属。
+	srv := httptest.NewServer(NewServer(st, config.Config{}))
 	t.Cleanup(func() {
 		srv.Close()
 	})
@@ -29,6 +29,18 @@ func newReviewTestServer(t *testing.T) (*httptest.Server, *store.Store) {
 }
 
 func doReviewJSON(t *testing.T, method, url string, body any) *http.Response {
+	t.Helper()
+	return doReviewJSONWithHeader(t, method, url, body, nil)
+}
+
+// doReviewJSONUser 与 doReviewJSON 相同，但通过 X-User 头声明用户身份。
+func doReviewJSONUser(t *testing.T, method, url string, body any, user string) *http.Response {
+	t.Helper()
+	return doReviewJSONWithHeader(t, method, url, body, map[string]string{"X-User": user})
+}
+
+// doReviewJSONWithHeader 是 doReviewJSON/doReviewJSONUser 的共享实现。
+func doReviewJSONWithHeader(t *testing.T, method, url string, body any, headers map[string]string) *http.Response {
 	t.Helper()
 	var rdr io.Reader
 	if body != nil {
@@ -44,6 +56,9 @@ func doReviewJSON(t *testing.T, method, url string, body any) *http.Response {
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -185,7 +200,7 @@ func TestReviewQueueShape(t *testing.T) {
 		t.Fatalf("CreateNote: %v", err)
 	}
 	tomorrow := time.Now().UTC().Add(24 * time.Hour)
-	if _, err := st.RecordReview(note.ID, 4, tomorrow); err != nil {
+	if _, err := st.RecordReview(note.ID, 4, tomorrow, store.DefaultUser); err != nil {
 		t.Fatalf("RecordReview: %v", err)
 	}
 

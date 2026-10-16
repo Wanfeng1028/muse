@@ -38,13 +38,14 @@ func parseDate(s string) (time.Time, error) {
 	return time.Parse("2006-01-02", s)
 }
 
-// GetReviewState 获取指定笔记的复习状态，无记录返回 ErrNotFound
-func (s *Store) GetReviewState(noteID int64) (review.State, error) {
+// GetReviewState 获取指定用户指定笔记的复习状态，无记录返回 ErrNotFound
+func (s *Store) GetReviewState(noteID int64, user string) (review.State, error) {
+	user = NormalizeUser(user)
 	var st review.State
-	// 查询该笔记的复习状态
+	// 查询该用户该笔记的复习状态
 	err := s.db.QueryRow(
 		`SELECT ef, interval_days, repetitions, due_date
-		 FROM reviews WHERE note_id = ?`, noteID,
+		 FROM reviews WHERE note_id = ? AND user_id = ?`, noteID, user,
 	).Scan(&st.EF, &st.IntervalDays, &st.Repetitions, &st.DueDate)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -56,7 +57,8 @@ func (s *Store) GetReviewState(noteID int64) (review.State, error) {
 }
 
 // RecordReview 记录一次复习，使用 review.Next 计算新状态并更新数据库
-func (s *Store) RecordReview(noteID int64, grade int, today time.Time) (review.State, error) {
+func (s *Store) RecordReview(noteID int64, grade int, today time.Time, user string) (review.State, error) {
+	user = NormalizeUser(user)
 	// 校验 grade 合法性
 	if grade < 0 || grade > 5 {
 		return review.State{}, fmt.Errorf("无效的评分等级: %d", grade)
@@ -72,8 +74,8 @@ func (s *Store) RecordReview(noteID int64, grade int, today time.Time) (review.S
 		return review.State{}, err
 	}
 
-	// 获取当前状态，无记录则使用初始状态
-	cur, err := s.GetReviewState(noteID)
+	// 获取当前用户当前状态，无记录则使用初始状态
+	cur, err := s.GetReviewState(noteID, user)
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return review.State{}, err
 	}
@@ -87,16 +89,16 @@ func (s *Store) RecordReview(noteID int64, grade int, today time.Time) (review.S
 	// 更新（或插入）复习记录
 	now := today.UTC().Format(time.RFC3339)
 	_, err = s.db.Exec(
-		`INSERT INTO reviews (note_id, ef, interval_days, repetitions, due_date, last_reviewed_at, reviewed_count)
-		 VALUES (?, ?, ?, ?, ?, ?, 1)
-		 ON CONFLICT(note_id) DO UPDATE SET
+		`INSERT INTO reviews (note_id, user_id, ef, interval_days, repetitions, due_date, last_reviewed_at, reviewed_count)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+		 ON CONFLICT(note_id, user_id) DO UPDATE SET
 		   ef = excluded.ef,
 		   interval_days = excluded.interval_days,
 		   repetitions = excluded.repetitions,
 		   due_date = excluded.due_date,
 		   last_reviewed_at = excluded.last_reviewed_at,
 		   reviewed_count = reviews.reviewed_count + 1`,
-		noteID, next.EF, next.IntervalDays, next.Repetitions, next.DueDate, now,
+		noteID, user, next.EF, next.IntervalDays, next.Repetitions, next.DueDate, now,
 	)
 	if err != nil {
 		return review.State{}, err
@@ -105,22 +107,23 @@ func (s *Store) RecordReview(noteID int64, grade int, today time.Time) (review.S
 	return next, nil
 }
 
-// ListDueReviews 列出到期需要复习的笔记（due_date <= today），附标签
-func (s *Store) ListDueReviews(today time.Time, limit int) ([]DueReview, error) {
+// ListDueReviews 列出指定用户到期需要复习的笔记（due_date <= today），附标签
+func (s *Store) ListDueReviews(today time.Time, limit int, user string) ([]DueReview, error) {
+	user = NormalizeUser(user)
 	if limit <= 0 {
 		limit = 50
 	}
 	todayStr := dateOnly(today)
 
-	// 查询到期复习记录并 JOIN 笔记
+	// 查询该用户到期复习记录并 JOIN 笔记
 	rows, err := s.db.Query(
 		`SELECT n.id, n.title, n.body, n.created_at, n.updated_at,
 		        r.ef, r.interval_days, r.repetitions, r.due_date
 		 FROM reviews r
 		 JOIN notes n ON n.id = r.note_id
-		 WHERE r.due_date <= ?
+		 WHERE r.due_date <= ? AND r.user_id = ?
 		 ORDER BY r.due_date ASC, r.interval_days ASC
-		 LIMIT ?`, todayStr, limit,
+		 LIMIT ?`, todayStr, user, limit,
 	)
 	if err != nil {
 		return nil, err
@@ -179,35 +182,36 @@ func (s *Store) ListDueReviews(today time.Time, limit int) ([]DueReview, error) 
 	return result, nil
 }
 
-// ReviewStats 计算复习统计数据
-func (s *Store) ReviewStats(today time.Time) (ReviewStats, error) {
+// ReviewStats 计算指定用户的复习统计数据
+func (s *Store) ReviewStats(today time.Time, user string) (ReviewStats, error) {
+	user = NormalizeUser(user)
 	var stats ReviewStats
 	todayStr := dateOnly(today)
 
-	// DueToday：到期（due <= today）计数
+	// DueToday：该用户到期（due <= today）计数
 	if err := s.db.QueryRow(
-		`SELECT COUNT(*) FROM reviews WHERE due_date <= ?`, todayStr,
+		`SELECT COUNT(*) FROM reviews WHERE due_date <= ? AND user_id = ?`, todayStr, user,
 	).Scan(&stats.DueToday); err != nil {
 		return stats, err
 	}
 
-	// TotalNotes：笔记总数
+	// TotalNotes：笔记总数（笔记全局共享，不按用户过滤）
 	if err := s.db.QueryRow(`SELECT COUNT(*) FROM notes`).Scan(&stats.TotalNotes); err != nil {
 		return stats, err
 	}
 
-	// Reviewed7d：过去 7 天内复习过的去重笔记数
+	// Reviewed7d：该用户过去 7 天内复习过的去重笔记数
 	sevenDaysAgo := today.AddDate(0, 0, -7).UTC().Format(time.RFC3339)
 	if err := s.db.QueryRow(
 		`SELECT COUNT(DISTINCT note_id) FROM reviews
-		 WHERE last_reviewed_at IS NOT NULL AND last_reviewed_at >= ?`, sevenDaysAgo,
+		 WHERE last_reviewed_at IS NOT NULL AND last_reviewed_at >= ? AND user_id = ?`, sevenDaysAgo, user,
 	).Scan(&stats.Reviewed7d); err != nil {
 		return stats, err
 	}
 
-	// AvgEF：平均 EF 值，无数据为 0
+	// AvgEF：该用户平均 EF 值，无数据为 0
 	var avgEF sql.NullFloat64
-	if err := s.db.QueryRow(`SELECT AVG(ef) FROM reviews`).Scan(&avgEF); err != nil {
+	if err := s.db.QueryRow(`SELECT AVG(ef) FROM reviews WHERE user_id = ?`, user).Scan(&avgEF); err != nil {
 		return stats, err
 	}
 	if avgEF.Valid {
@@ -215,7 +219,7 @@ func (s *Store) ReviewStats(today time.Time) (ReviewStats, error) {
 	}
 
 	// StreakDays：连续复习天数
-	streak, err := s.calcStreak(today)
+	streak, err := s.calcStreak(today, user)
 	if err != nil {
 		return stats, err
 	}
@@ -224,14 +228,15 @@ func (s *Store) ReviewStats(today time.Time) (ReviewStats, error) {
 	return stats, nil
 }
 
-// calcStreak 计算从 today 起算的连续复习天数（含 today，未复习则从昨天起算）
-func (s *Store) calcStreak(today time.Time) (int, error) {
-	// 取出所有复习日期的去重集合（按日期倒序）
+// calcStreak 计算指定用户从 today 起算的连续复习天数（含 today，未复习则从昨天起算）
+func (s *Store) calcStreak(today time.Time, user string) (int, error) {
+	user = NormalizeUser(user)
+	// 取出该用户所有复习日期的去重集合（按日期倒序）
 	rows, err := s.db.Query(
 		`SELECT DISTINCT substr(last_reviewed_at, 1, 10) AS d
 		 FROM reviews
-		 WHERE last_reviewed_at IS NOT NULL
-		 ORDER BY d DESC`,
+		 WHERE last_reviewed_at IS NOT NULL AND user_id = ?
+		 ORDER BY d DESC`, user,
 	)
 	if err != nil {
 		return 0, err
@@ -264,8 +269,9 @@ func (s *Store) calcStreak(today time.Time) (int, error) {
 	return streak, nil
 }
 
-// DigestNotes 摘要笔记：优先取到期笔记，不足则用从未复习/最久未复习的笔记补足
-func (s *Store) DigestNotes(today time.Time, n int) ([]Note, error) {
+// DigestNotes 摘要指定用户的笔记：优先取到期笔记，不足则用从未复习/最久未复习的笔记补足
+func (s *Store) DigestNotes(today time.Time, n int, user string) ([]Note, error) {
+	user = NormalizeUser(user)
 	if n <= 0 {
 		n = 50
 	}
@@ -273,14 +279,14 @@ func (s *Store) DigestNotes(today time.Time, n int) ([]Note, error) {
 
 	var result []Note
 
-	// 1. 到期优先（due_date ASC）
+	// 1. 该用户到期优先（due_date ASC）
 	rows, err := s.db.Query(
 		`SELECT n.id, n.title, n.body, n.created_at, n.updated_at
 		 FROM reviews r
 		 JOIN notes n ON n.id = r.note_id
-		 WHERE r.due_date <= ?
+		 WHERE r.due_date <= ? AND r.user_id = ?
 		 ORDER BY r.due_date ASC
-		 LIMIT ?`, todayStr, n,
+		 LIMIT ?`, todayStr, user, n,
 	)
 	if err != nil {
 		return nil, err
@@ -309,15 +315,15 @@ func (s *Store) DigestNotes(today time.Time, n int) ([]Note, error) {
 	}
 	result = append(result, dueNotes...)
 
-	// 2. 若不足，补足未在结果中的笔记，按 last_reviewed_at ASC NULLS FIRST
+	// 2. 若不足，补足未在结果中的笔记，按该用户 last_reviewed_at ASC NULLS FIRST
 	remaining := n - len(result)
 	if remaining > 0 {
 		rows2, err := s.db.Query(
 			`SELECT n.id, n.title, n.body, n.created_at, n.updated_at
 			 FROM notes n
-			 LEFT JOIN reviews r ON r.note_id = n.id
+			 LEFT JOIN reviews r ON r.note_id = n.id AND r.user_id = ?
 			 ORDER BY r.last_reviewed_at IS NOT NULL ASC, r.last_reviewed_at ASC
-			 LIMIT ?`, remaining+len(seen),
+			 LIMIT ?`, user, remaining+len(seen),
 		)
 		if err != nil {
 			return nil, err

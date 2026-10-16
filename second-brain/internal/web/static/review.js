@@ -228,7 +228,17 @@
             body: { grade: g },
           });
         } catch (e) {
-          // 忽略错误，继续推进
+          // 离线判定：无网络，或 fetch 类网络错误
+          if (!navigator.onLine || /failed to fetch|networkerror|load failed/i.test(e.message || '')) {
+            // 注意：离线评分回放时按默认 local 用户归属，多用户场景下离线评分可能串用户，已在文档诚实声明
+            await window.__sbOfflineQueue?.enqueue({
+              method: 'POST',
+              url: '/api/review/' + encodeURIComponent(item.id),
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ grade: g }),
+            });
+          }
+          // 非离线错误：忽略错误，继续推进
         }
         state.idx += 1;
         if (state.idx < state.queue.length) {
@@ -275,6 +285,15 @@
       if (window.__sbShowView) window.__sbShowView('editor');
     });
   }
+
+  // v0.6：使用者切换时按新身份刷新徽标/横幅；若正停在复习视图则重载队列。
+  window.__sbOnUserChange = function () {
+    refreshBadge();
+    const rv = $el('review-view');
+    if (rv && !rv.hidden && typeof window.__sbStartReview === 'function') {
+      window.__sbStartReview();
+    }
+  };
 
   function init() {
     ensureBanner();

@@ -16,7 +16,7 @@ func TestReviewRowAutoCreated(t *testing.T) {
 		t.Fatalf("CreateNote failed: %v", err)
 	}
 
-	st, err := s.GetReviewState(n.ID)
+	st, err := s.GetReviewState(n.ID, DefaultUser)
 	if err != nil {
 		t.Fatalf("GetReviewState failed: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestRecordReviewProgress(t *testing.T) {
 		t.Fatalf("CreateNote failed: %v", err)
 	}
 
-	st, err := s.RecordReview(n.ID, int(review.GradeGood), today)
+	st, err := s.RecordReview(n.ID, int(review.GradeGood), today, DefaultUser)
 	if err != nil {
 		t.Fatalf("RecordReview(good) failed: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestRecordReviewProgress(t *testing.T) {
 		t.Errorf("after Good DueDate = %q, want %q", st.DueDate, want)
 	}
 
-	st2, err := s.RecordReview(n.ID, int(review.GradeEasy), today)
+	st2, err := s.RecordReview(n.ID, int(review.GradeEasy), today, DefaultUser)
 	if err != nil {
 		t.Fatalf("RecordReview(easy) failed: %v", err)
 	}
@@ -87,7 +87,7 @@ func TestListDueReviews(t *testing.T) {
 		t.Fatalf("update due_date failed: %v", err)
 	}
 
-	due, err := s.ListDueReviews(today, 10)
+	due, err := s.ListDueReviews(today, 10, DefaultUser)
 	if err != nil {
 		t.Fatalf("ListDueReviews failed: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestReviewCascadeDelete(t *testing.T) {
 	if err := s.DeleteNote(n.ID); err != nil {
 		t.Fatalf("DeleteNote failed: %v", err)
 	}
-	if _, err := s.GetReviewState(n.ID); err != ErrNotFound {
+	if _, err := s.GetReviewState(n.ID, DefaultUser); err != ErrNotFound {
 		t.Errorf("GetReviewState after delete err = %v, want ErrNotFound", err)
 	}
 }
@@ -138,11 +138,11 @@ func TestReviewStats(t *testing.T) {
 	if _, err := s.db.Exec(`UPDATE reviews SET due_date = ? WHERE note_id = ?`, today.Format("2006-01-02"), n1.ID); err != nil {
 		t.Fatalf("update due_date failed: %v", err)
 	}
-	if _, err := s.RecordReview(n2.ID, int(review.GradeGood), today); err != nil {
+	if _, err := s.RecordReview(n2.ID, int(review.GradeGood), today, DefaultUser); err != nil {
 		t.Fatalf("RecordReview failed: %v", err)
 	}
 
-	stats, err := s.ReviewStats(today)
+	stats, err := s.ReviewStats(today, DefaultUser)
 	if err != nil {
 		t.Fatalf("ReviewStats failed: %v", err)
 	}
@@ -181,7 +181,7 @@ func TestDigestNotes(t *testing.T) {
 		t.Fatalf("CreateNote failed: %v", err)
 	}
 
-	digest, err := s.DigestNotes(today, 10)
+	digest, err := s.DigestNotes(today, 10, DefaultUser)
 	if err != nil {
 		t.Fatalf("DigestNotes failed: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestDigestNotes(t *testing.T) {
 		t.Errorf("digest[0].ID = %d, want overdue note %d", digest[0].ID, overdue.ID)
 	}
 
-	all, err := s.DigestNotes(today, 1000)
+	all, err := s.DigestNotes(today, 1000, DefaultUser)
 	if err != nil {
 		t.Fatalf("DigestNotes large n failed: %v", err)
 	}
@@ -210,11 +210,11 @@ func TestRecordReviewErrors(t *testing.T) {
 		t.Fatalf("CreateNote failed: %v", err)
 	}
 
-	if _, err := s.RecordReview(n.ID, 6, today); err == nil {
+	if _, err := s.RecordReview(n.ID, 6, today, DefaultUser); err == nil {
 		t.Errorf("RecordReview(grade=6) err = nil, want error")
 	}
 
-	if _, err := s.RecordReview(999999, int(review.GradeGood), today); err != ErrNotFound {
+	if _, err := s.RecordReview(999999, int(review.GradeGood), today, DefaultUser); err != ErrNotFound {
 		t.Errorf("RecordReview(missing) err = %v, want ErrNotFound", err)
 	}
 }

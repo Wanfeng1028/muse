@@ -5,11 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>第二大脑</title>
 <link rel="stylesheet" href="/static/style.css">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<meta name="theme-color" content="#4f7cff">
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="第二大脑">
+<meta name="description" content="本地笔记和复习提醒，断网也能用。">
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
     <div class="logo">第二大脑</div>
+    <div class="user-switch">
+      <label for="user-input">使用者</label>
+      <div class="user-switch-row">
+        <input type="text" id="user-input" list="user-datalist" placeholder="local" autocomplete="off" spellcheck="false">
+        <datalist id="user-datalist"></datalist>
+        <button id="btn-user-switch" class="btn btn-secondary" type="button">切换</button>
+      </div>
+      <p class="user-switch-hint">单机多用户：复习数据按使用者隔离，留空即 local</p>
+    </div>
     <div class="search-wrap">
       <input type="text" id="search-input" placeholder="搜索笔记…" autocomplete="off">
     </div>
@@ -48,6 +66,7 @@
       </div>
     </div>
     <button id="btn-graph" class="btn btn-secondary">图谱视图</button>
+    <button id="btn-install-app" class="btn btn-secondary" type="button">安装应用</button>
   </aside>
 
   <section class="list-pane">
@@ -227,6 +246,28 @@
   </section>
 </div>
 
+<div id="offline-badge" class="offline-badge" data-state="online" hidden>离线</div>
+<div id="install-banner" class="install-banner" hidden>
+  <div class="install-banner__text">
+    <span class="install-banner__title">把第二大脑装到手机上？</span>
+    <span class="install-banner__desc">离线也能看笔记、记复习。</span>
+  </div>
+  <div class="install-banner__actions">
+    <button id="install-banner-install" class="btn btn-primary" type="button">安装</button>
+    <button id="install-banner-later" class="btn btn-secondary" type="button">以后再说</button>
+  </div>
+</div>
+<div id="install-ios-sheet" class="install-ios-sheet" hidden>
+  <div class="install-ios-sheet__card">
+    <h3>在 iPhone 上安装</h3>
+    <ol><li>点 Safari 底部的分享按钮</li><li>往下划，选"添加到主屏幕"</li><li>点右上角"添加"就好了</li></ol>
+    <button id="install-ios-sheet-close" class="btn btn-secondary" type="button">知道了</button>
+  </div>
+</div>
+<div id="sw-update-toast" class="sw-update-toast" hidden><button id="btn-sw-update" class="btn btn-primary" type="button">有新版本，点我刷新</button></div>
+<script src="/static/offline-queue.js"></script>
+<script src="/static/pwa.js"></script>
+<script src="/static/install.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/review.js"></script>
 
@@ -319,6 +360,11 @@ ID 对照表
 导出
   btn-export-md       导出 Markdown 包（下载 zip）
   btn-export-json     导出 JSON（下载 json）
+
+ 使用者
+  user-input          使用者输入框（localStorage 记住当前用户）
+  user-datalist       历史使用者联想列表
+  btn-user-switch     切换使用者按钮
 -->
 </body>
 </html>

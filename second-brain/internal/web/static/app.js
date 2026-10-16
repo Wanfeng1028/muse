@@ -1,8 +1,95 @@
 // second-brain app.js — 原生 JS，无框架
 
 // ---------- 工具 ----------
+// ---------- 当前使用者（v0.6 多用户复习隔离） ----------
+// 单机多用户简化方案：身份存在 localStorage（键 sb-user），每个请求经 X-User 头声明。
+const SB_USER_KEY = "sb-user";
+const SB_USERS_KEY = "sb-users";
+
+function currentUser() {
+  try {
+    return localStorage.getItem(SB_USER_KEY) || "local";
+  } catch {
+    return "local";
+  }
+}
+
+function knownUsers() {
+  try {
+    const raw = localStorage.getItem(SB_USERS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((u) => typeof u === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberUser(u) {
+  try {
+    const users = [u, ...knownUsers().filter((x) => x !== u)].slice(0, 20);
+    localStorage.setItem(SB_USERS_KEY, JSON.stringify(users));
+  } catch {
+    // 忽略存储异常
+  }
+}
+
+// 与后端 NormalizeUser 对齐的归一化：去空格转小写，空→local。
+function normalizeUserInput(u) {
+  const t = String(u == null ? "" : u).trim().toLowerCase();
+  return t === "" ? "local" : t.slice(0, 64);
+}
+
+function refreshUserDatalist() {
+  const dl = $("user-datalist");
+  if (!dl) return;
+  dl.innerHTML = "";
+  knownUsers().forEach((u) => {
+    const opt = document.createElement("option");
+    opt.value = u;
+    dl.appendChild(opt);
+  });
+}
+
+// 切换使用者：写 localStorage、记入历史、刷新输入框与联想列表，然后通知各视图按新身份刷新。
+window.__sbSetUser = function (u) {
+  const nu = normalizeUserInput(u);
+  try {
+    localStorage.setItem(SB_USER_KEY, nu);
+  } catch {
+    // 忽略存储异常
+  }
+  rememberUser(nu);
+  const input = $("user-input");
+  if (input) input.value = nu;
+  refreshUserDatalist();
+  if (typeof window.__sbOnUserChange === "function") window.__sbOnUserChange();
+};
+window.__sbCurrentUser = currentUser;
+
+function initUserSwitcher() {
+  const input = $("user-input");
+  const btn = $("btn-user-switch");
+  if (input) input.value = currentUser();
+  refreshUserDatalist();
+  rememberUser(currentUser());
+  refreshUserDatalist();
+  const apply = () => window.__sbSetUser(input ? input.value : "local");
+  if (btn) btn.addEventListener("click", apply);
+  if (input) {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        apply();
+      }
+    });
+  }
+}
+
+// ---------- 工具 ----------
 async function api(path, opts = {}) {
-  const conf = { headers: { "Content-Type": "application/json" }, ...opts };
+  const baseHeaders = { "Content-Type": "application/json", "X-User": currentUser() };
+  const conf = { headers: baseHeaders, ...opts };
+  conf.headers = Object.assign({}, baseHeaders, opts.headers || {});
   if (conf.body && typeof conf.body !== "string") conf.body = JSON.stringify(conf.body);
   const res = await fetch(path, conf);
   if (res.status === 204) return null;
@@ -293,8 +380,23 @@ async function saveNote() {
     await Promise.all([loadNotes(), loadTags(), loadStats()]);
     if (state.view === "graph") drawGraph();
   } catch (e) {
+    const offline = !navigator.onLine || /failed to fetch|networkerror|load failed/i.test(e.message || "");
+    if (offline) {
+      await window.__sbOfflineQueue?.enqueue({method: state.currentId ? "PUT" : "POST", url: state.currentId ? `/api/notes/${state.currentId}` : "/api/notes", headers: {"Content-Type":"application/json","X-User": currentUser()}, body: JSON.stringify(payload)});
+      alert("现在没网，已把这次修改排进队列，联网后自动同步");
+      return;
+    }
     alert("保存失败：" + e.message);
   }
+}
+
+async function clearEditorAndRefresh() {
+  state.currentId = null;
+  if ($("editor-title")) $("editor-title").value = "";
+  if ($("editor-body")) $("editor-body").value = "";
+  if ($("editor-tags")) $("editor-tags").value = "";
+  if ($("editor-pinned")) $("editor-pinned").checked = false;
+  await Promise.all([loadNotes(), loadTags(), loadStats()]);
 }
 
 async function deleteNote() {
@@ -305,13 +407,15 @@ async function deleteNote() {
   if (!confirm("确定要删掉这条笔记吗？删了就找不回来了。")) return;
   try {
     await api(`/api/notes/${state.currentId}`, { method: "DELETE" });
-    state.currentId = null;
-    if ($("editor-title")) $("editor-title").value = "";
-    if ($("editor-body")) $("editor-body").value = "";
-    if ($("editor-tags")) $("editor-tags").value = "";
-    if ($("editor-pinned")) $("editor-pinned").checked = false;
-    await Promise.all([loadNotes(), loadTags(), loadStats()]);
+    await clearEditorAndRefresh();
   } catch (e) {
+    const offline = !navigator.onLine || /failed to fetch|networkerror|load failed/i.test(e.message || "");
+    if (offline) {
+      await window.__sbOfflineQueue?.enqueue({method:"DELETE", url:`/api/notes/${state.currentId}`, headers:{"X-User": currentUser()}, body: null});
+      alert("现在没网，已把删除排进队列，联网后自动同步");
+      await clearEditorAndRefresh();
+      return;
+    }
     alert("删除失败：" + e.message);
   }
 }
@@ -699,6 +803,7 @@ function bindEvents() {
     });
   }
 
+  initUserSwitcher();
   $("nav-notes")?.addEventListener("click", () => showView("editor"));
   $("nav-review")?.addEventListener("click", () => {
     showView("review");
@@ -708,6 +813,8 @@ function bindEvents() {
 
 // ---------- 初始化 ----------
 async function init() {
+  window.__sbPwaInit?.();
+  window.__sbOnQueueSynced = async (ok) => { if (ok > 0) await Promise.all([loadNotes(), loadTags(), loadStats()]); };
   bindEvents();
   await Promise.all([loadNotes(), loadTags(), loadStats()]);
   showView("editor");

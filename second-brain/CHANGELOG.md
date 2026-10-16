@@ -5,6 +5,45 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.7.0] - 2026-10-16
+
+PWA——装到手机上，断网也能用
+
+### 新增
+- Web App Manifest（`internal/web/static/manifest.webmanifest`）：name/short_name/start_url/display standalone/id，主题色 `#4f7cff`；图标 192/512/maskable PNG + SVG（`internal/web/static/icons/`，Chromium 从 SVG 光栅化）。
+- Service Worker（`internal/web/static/sw.js`，由 `GET /sw.js` 从站点根提供，`Service-Worker-Allowed: /`）：应用壳预缓存；导航请求网络优先、失败回退 index.html；GET 类 API stale-while-revalidate；写操作只走网络。
+- 离线写队列（`internal/web/static/offline-queue.js`，IndexedDB）：断网时新建/修改/删除笔记、复习评分入队，联网后按序回放；`pwa.js` 负责 SW 注册/更新提示/在线状态徽标，`install.js` 负责安装横幅（Chromium `beforeinstallprompt`）与 iOS 手动安装说明。
+- 服务端：`GET /sw.js`（no-cache）与 `GET /manifest.webmanifest`（`application/manifest+json`）两个路由（`internal/api/server.go`）。
+- 文档：`docs/PWA_INSTALL.md`（iOS/Android/桌面安装步骤）、`docs/PWA_OFFLINE_DESIGN.md`（缓存策略/队列/冲突规则）、`docs/PWA_QA.md`（手工验收清单）、`docs/PRODUCTION_CHECKLIST_REPORT_v0.7.md`（发版对照报告）。
+
+### 已知限制
+- 推送通知本版不支持（后续计划）。
+- iOS 无后台同步，队列靠 online 事件与启动时回放；iOS 无自动安装提示，需手动"添加到主屏幕"。
+- 离线新建笔记回放时会产生新 id（无客户端幂等键）；冲突以服务端为准、后写入胜出。
+- 局域网 `http://IP:8080` 不安全上下文中 PWA 不可用（需 HTTPS 或 localhost）。
+
+### 测试
+- 新增 `internal/api/pwa_test.go`：manifest 字段与图标存在性、sw.js 响应头、SW 缓存清单与文件一致性回归。
+- `go test ./...` 全量通过，`go vet`、`gofmt` 全洁；真实服务冒烟（manifest/sw.js 200、离线刷新可用）。
+
+## [0.6.0] - 2026-10-16
+>>>>>>> REPLACE
+
+
+多用户复习隔离——一台机器，多个人各记各的复习进度
+
+### 新增
+- `reviews` 表加 `user_id` 列，主键改为 `(note_id, user_id)` 复合；新库直接建新 schema，老库打开时自动迁移（加列 + 重建主键，幂等，历史数据归属 `local`）。
+- `internal/store` 新增 `NormalizeUser`/`DefaultUser`（`internal/store/user.go`）；复习查询（`GetReviewState`/`RecordReview`/`ListDueReviews`/`ReviewStats`/`DigestNotes`）全部按用户过滤；`CreateNoteFor(n, user)` 建笔记时复习行归属当前用户。
+- 新增 `internal/api/user.go`：`CurrentUser(r)` 从 `X-User` 头 / `?user=` 参数解析身份，默认 `local`；复习四组 API 与 `POST /api/notes` 按用户隔离。
+- 前端侧边栏顶部新增"使用者"切换器：输入名字点切换即生效，身份记 localStorage（`sb-user`），每个请求自动带 `X-User` 头；复习徽标、队列、统计、每日回顾按当前使用者刷新。
+- 定时推送暂按默认 `local` 用户聚合（后续计划支持按用户推送）。
+
+### 测试
+- store 新增隔离测试 8 例：归一化、建行归属、A 到期 B 不可见、评分互不干扰、digest/stats 按用户、老库迁移、跨用户自动建行。
+- api 新增真实 HTTP 隔离测试 5 例：queue 隔离、query 参数与头优先级、评分隔离、digest 隔离、默认 local。
+- `go test ./...` 全量通过，`go vet`、`gofmt` 全洁。
+
 ## [0.5.0] - 2026-10-16
 
 反向链接面板——打开一篇笔记就知道谁引用了它

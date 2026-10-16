@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 连接线 -->
+  <line x1="256" y1="216" x2="168" y2="160" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="256" y1="216" x2="352" y2="152" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="256" y1="216" x2="176" y2="320" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="256" y1="216" x2="344" y2="312" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="256" y1="216" x2="256" y2="360" stroke="#171b26" stroke-width="28" stroke-linecap="round"/>
+  <line x1="168" y1="160" x2="176" y2="320" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="352" y1="152" x2="344" y2="312" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+  <line x1="168" y1="160" x2="120" y2="248" stroke="#4f7cff" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- 节点 -->
+  <circle cx="256" cy="216" r="44" fill="#4f7cff"/>
+  <circle cx="168" cy="160" r="28" fill="#4f7cff"/>
+  <circle cx="352" cy="152" r="28" fill="#171b26"/>
+  <circle cx="176" cy="320" r="28" fill="#4f7cff"/>
+  <circle cx="344" cy="312" r="28" fill="#4f7cff"/>
+  <circle cx="256" cy="360" r="28" fill="#171b26"/>
+  <circle cx="120" cy="248" r="28" fill="#4f7cff"/>
+</svg>
