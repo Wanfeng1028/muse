@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN" data-bs-theme="light">
 <head>
@@ -14,7 +13,7 @@
 <body>
 <div class="page">
 <div class="page-head">
-  <h1>分镜板</h1>
+  <h1 data-i18n="sb.pageTitle">分镜板</h1>
 </div>
 
 
@@ -22,11 +21,11 @@
           <div class="card-body">
             <div class="row g-3 align-items-end">
               <div class="col-md-4">
-                <label class="form-label" for="projectSelect">项目</label>
+                <label class="form-label" for="projectSelect" data-i18n="sb.project">项目</label>
                 <select id="projectSelect" class="form-select"></select>
               </div>
               <div class="col-md-4">
-                <label class="form-label" for="episodeSelect">剧集</label>
+                <label class="form-label" for="episodeSelect" data-i18n="sb.episode">剧集</label>
                 <select id="episodeSelect" class="form-select"></select>
               </div>
               <div class="col-md-4">
@@ -37,62 +36,62 @@
         </div>
 
         <div class="mb-3 d-flex flex-wrap gap-2">
-          <button id="addBtn" class="btn btn-secondary">添加分镜</button>
-          <button id="fromScriptBtn" class="btn btn-secondary">从剧本生成分镜</button>
-          <button id="aiScriptBtn" class="btn btn-primary">AI 生成剧本</button>
-          <select id="skillSelect" class="form-select" style="max-width:200px" title="选用已安装的 Skill 增强剧本生成">
-            <option value="">不使用 Skill</option>
+          <button id="addBtn" class="btn btn-secondary" data-i18n="sb.addShot">添加分镜</button>
+          <button id="fromScriptBtn" class="btn btn-secondary" data-i18n="sb.fromScript">从剧本生成分镜</button>
+          <button id="aiScriptBtn" class="btn btn-primary" data-i18n="sb.aiScript">AI 生成剧本</button>
+          <select id="skillSelect" class="form-select" style="max-width:200px" title="选用已安装的 Skill 增强剧本生成" data-i18n-title="sb.skillSelectTitle">
+            <option value="" data-i18n="sb.noSkill">不使用 Skill</option>
           </select>
-          <button id="tplScriptBtn" class="btn btn-secondary">模板生成</button>
-          <button id="viewScriptBtn" class="btn btn-secondary">查看剧本</button>
-          <button id="submitAllBtn" class="btn btn-secondary">全部提交</button>
-          <button id="refreshBtn" class="btn btn-secondary">刷新</button>
+          <button id="tplScriptBtn" class="btn btn-secondary" data-i18n="sb.tplScript">模板生成</button>
+          <button id="viewScriptBtn" class="btn btn-secondary" data-i18n="sb.viewScript">查看剧本</button>
+          <button id="submitAllBtn" class="btn btn-secondary" data-i18n="sb.submitAll">全部提交</button>
+          <button id="refreshBtn" class="btn btn-secondary" data-i18n="c.refresh">刷新</button>
         </div>
 
-        <div class="text-secondary small mb-3">AI 生成会消耗你的 DeepSeek API 额度（微信 ChatAPI）；若 AI 不可用会自动降级为模板生成，不断产线。</div>
+        <div class="text-secondary small mb-3" data-i18n="sb.aiNotice">AI 生成会消耗你的 DeepSeek API 额度（微信 ChatAPI）；若 AI 不可用会自动降级为模板生成，不断产线。</div>
         <div class="text-secondary small mb-3" id="scriptMeta" hidden></div>
 
         <div id="formPanel" class="card mb-3" hidden>
           <div class="card-header">
-            <h3 class="card-title" id="formTitle">添加分镜</h3>
+            <h3 class="card-title" id="formTitle" data-i18n="sb.addShot">添加分镜</h3>
           </div>
           <div class="card-body">
             <form id="shotForm">
               <input type="hidden" id="shotId">
               <div class="row g-3">
                 <div class="col-md-3">
-                  <label class="form-label" for="shotNo">镜号</label>
+                  <label class="form-label" for="shotNo" data-i18n="sb.shotNo">镜号</label>
                   <input type="number" class="form-control" id="shotNo" min="1">
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label" for="shotSize">景别</label>
+                  <label class="form-label" for="shotSize" data-i18n="sb.shotSize">景别</label>
                   <select id="shotSize" class="form-select"></select>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label" for="cameraMove">运镜</label>
+                  <label class="form-label" for="cameraMove" data-i18n="sb.cameraMove">运镜</label>
                   <select id="cameraMove" class="form-select"></select>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label" for="durationSeconds">时长（秒）</label>
+                  <label class="form-label" for="durationSeconds" data-i18n="sb.durationSeconds">时长（秒）</label>
                   <input type="number" class="form-control" id="durationSeconds" min="0" step="0.1">
                 </div>
                 <div class="col-12">
-                  <label class="form-label" for="description">画面描述</label>
+                  <label class="form-label" for="description" data-i18n="sb.description">画面描述</label>
                   <textarea id="description" class="form-control" rows="3"></textarea>
                 </div>
                 <div class="col-12">
-                  <label class="form-label" for="dialogue">对白</label>
+                  <label class="form-label" for="dialogue" data-i18n="sb.dialogue">对白</label>
                   <textarea id="dialogue" class="form-control" rows="2"></textarea>
                 </div>
                 <div class="col-12">
-                  <label class="form-label" for="videoPrompt">视频提示词</label>
+                  <label class="form-label" for="videoPrompt" data-i18n="sb.videoPrompt">视频提示词</label>
                   <textarea id="videoPrompt" class="form-control" rows="3"></textarea>
                 </div>
               </div>
               <div id="formError" class="text-danger mt-2"></div>
               <div class="mt-3 d-flex gap-2">
-                <button type="submit" class="btn btn-secondary">保存</button>
-                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+                <button type="submit" class="btn btn-secondary" data-i18n="c.save">保存</button>
+                <button type="button" id="cancelBtn" class="btn btn-secondary" data-i18n="c.cancel">取消</button>
               </div>
             </form>
           </div>
@@ -104,20 +103,20 @@
           <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">从剧本生成分镜</h5>
+                <h5 class="modal-title" data-i18n="sb.fromScript">从剧本生成分镜</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
               </div>
               <div class="modal-body">
                 <div class="mb-3">
-                  <label class="form-label" for="scriptText">剧本原文</label>
+                  <label class="form-label" for="scriptText" data-i18n="sb.scriptText">剧本原文</label>
                   <textarea id="scriptText" class="form-control" rows="10"
-                    placeholder="粘贴剧本原文，AI 将按起承转合拆成结构化分镜（镜号/景别/运镜/画面/时长/对白/提示词），并替换本集现有分镜。"></textarea>
+                    placeholder="粘贴剧本原文，AI 将按起承转合拆成结构化分镜（镜号/景别/运镜/画面/时长/对白/提示词），并替换本集现有分镜。" data-i18n-ph="sb.scriptTextPh"></textarea>
                 </div>
                 <div id="scriptError" class="text-danger"></div>
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-secondary" id="scriptSubmitBtn">AI 拆分并落库</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="c.cancel">取消</button>
+                <button type="button" class="btn btn-secondary" id="scriptSubmitBtn" data-i18n="sb.scriptSubmit">AI 拆分并落库</button>
               </div>
             </div>
           </div>
@@ -127,6 +126,7 @@
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
   <div id="toast" class="alert alert-info" role="alert" hidden></div>
 </div>
+<script src="/i18n.js"></script>
 <script src="/tabler.min.js"></script>
 <script src="/shell.js"></script>
   <script src="/storyboard.js"></script>
@@ -135,7 +135,7 @@
   <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">本集剧本</h5>
+        <h5 class="modal-title" data-i18n="sb.viewScriptTitle">本集剧本</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
       </div>
       <div class="modal-body">
@@ -143,11 +143,10 @@
         <div id="viewScriptBody"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="c.close">关闭</button>
       </div>
     </div>
   </div>
 </div>
 </body>
 </html>
-

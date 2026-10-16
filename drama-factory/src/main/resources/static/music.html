@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI 音乐 · AI 短剧工坊</title>
+<title data-i18n="mus.docTitle">AI 音乐 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/app.css">
@@ -27,44 +27,45 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <h1 class="page-title">AI 音乐</h1>
-      <p class="page-sub">用你自己的 API 生成配乐与主题曲（BYOK）</p>
+      <h1 class="page-title" data-i18n="mus.pageTitle">AI 音乐</h1>
+      <p class="page-sub" data-i18n="mus.pageSub">用你自己的 API 生成配乐与主题曲（BYOK）</p>
     </div>
   </header>
 
   <section class="card">
-    <div class="card-head"><h2 class="card-title">生成</h2></div>
+    <div class="card-head"><h2 class="card-title" data-i18n="mus.generate">生成</h2></div>
     <div style="padding:16px 20px">
       <div class="fld">
-        <label>模式</label>
+        <label data-i18n="mus.mode">模式</label>
         <div class="seg" id="mus-seg">
-          <button type="button" class="is-active" data-mode="simple">简易</button>
-          <button type="button" data-mode="custom">自定义</button>
+          <button type="button" class="is-active" data-mode="simple" data-i18n="mus.modeSimple">简易</button>
+          <button type="button" data-mode="custom" data-i18n="mus.modeCustom">自定义</button>
         </div>
       </div>
       <div class="fld">
         <div class="check-row">
           <input id="mus-instrumental" type="checkbox" />
-          <label for="mus-instrumental" style="margin:0">纯音乐（无歌词）</label>
+          <label for="mus-instrumental" style="margin:0" data-i18n="mus.instrumental">纯音乐（无歌词）</label>
         </div>
       </div>
       <div class="fld">
-        <label for="mus-prompt">提示词 / 歌词</label>
-        <textarea id="mus-prompt" placeholder="描述风格、情绪，或粘贴歌词…"></textarea>
+        <label for="mus-prompt" data-i18n="mus.prompt">提示词 / 歌词</label>
+        <textarea id="mus-prompt" placeholder="描述风格、情绪，或粘贴歌词…" data-i18n-ph="mus.promptPh"></textarea>
       </div>
       <div class="fld">
-        <label for="mus-model">模型</label>
+        <label for="mus-model" data-i18n="mus.model">模型</label>
         <select id="mus-model"></select>
         <div id="mus-empty" class="byok-empty" hidden></div>
       </div>
       <div class="gen-foot">
-        <button type="button" class="btn btn-primary" id="mus-generate">生成音乐</button>
+        <button type="button" class="btn btn-primary" id="mus-generate" data-i18n="mus.generateBtn">生成音乐</button>
         <span class="hint" id="mus-hint"></span>
       </div>
     </div>
   </section>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/vendor/lucide.min.js"></script>
 <script src="/shell.js"></script>
 <script src="/byok.js"></script>
@@ -73,6 +74,7 @@
   "use strict";
   var currentModel = null;
   function init() {
+    if (window.DFI18N) DFI18N.applyI18n();
     Byok.loadModels("MUSIC", {
       select: document.getElementById("mus-model"),
       emptyBox: document.getElementById("mus-empty"),
@@ -90,7 +92,7 @@
     }
     document.getElementById("mus-generate").onclick = function () {
       var prompt = document.getElementById("mus-prompt").value.trim();
-      if (!prompt) { Byok.toast("请填写提示词 / 歌词", "error"); return; }
+      if (!prompt) { Byok.toast(window.DFI18N ? DFI18N.tr("mus.promptRequired") : "请填写提示词 / 歌词", "error"); return; }
       var instrumental = document.getElementById("mus-instrumental").checked;
       Byok.generate({
         module: "MUSIC",
@@ -107,11 +109,16 @@
           audio.src = url;
           audio.style.maxWidth = "100%";
           hint.appendChild(audio);
-          Byok.toast("音乐已生成", "success");
+          Byok.toast(window.DFI18N ? DFI18N.tr("mus.generated") : "音乐已生成", "success");
         }
       });
     };
     Byok.icons();
+    if (window.DFI18N) {
+      DFI18N.onLangChange(function () {
+        DFI18N.applyI18n();
+      });
+    }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

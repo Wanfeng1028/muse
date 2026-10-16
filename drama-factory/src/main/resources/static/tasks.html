@@ -14,26 +14,26 @@
 <body>
   <div class="page">
     <div class="page-head">
-      <h1>任务队列</h1>
+      <h1 data-i18n="task.pageTitle">任务队列</h1>
     </div>
 
     <div class="card mb-3">
       <div class="card-body">
         <div class="d-flex gap-2 align-items-end flex-wrap">
           <div class="flex-fill" style="min-width:160px;">
-            <label class="form-label mb-1" for="projectSelect">项目</label>
+            <label class="form-label mb-1" for="projectSelect" data-i18n="task.project">项目</label>
             <select id="projectSelect" class="form-select form-select-sm"></select>
           </div>
           <div class="flex-fill" style="min-width:160px;">
-            <label class="form-label mb-1" for="episodeSelect">剧集</label>
+            <label class="form-label mb-1" for="episodeSelect" data-i18n="task.episode">剧集</label>
             <select id="episodeSelect" class="form-select form-select-sm"></select>
           </div>
           <div class="flex-fill" style="min-width:160px;">
-            <label class="form-label mb-1" for="shotSelect">分镜</label>
+            <label class="form-label mb-1" for="shotSelect" data-i18n="task.shot">分镜</label>
             <select id="shotSelect" class="form-select form-select-sm"></select>
           </div>
           <div>
-            <button id="refreshBtn" class="btn btn-secondary btn-sm">刷新</button>
+            <button id="refreshBtn" class="btn btn-secondary btn-sm" data-i18n="c.refresh">刷新</button>
           </div>
         </div>
       </div>
@@ -47,6 +47,7 @@
 
     <div id="taskGrid"></div>
   </div>
+  <script src="/i18n.js"></script>
   <script src="/tabler.min.js"></script>
   <script src="/shell.js"></script>
   <script src="/tasks.js"></script>

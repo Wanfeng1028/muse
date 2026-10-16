@@ -5,6 +5,21 @@
 (function () {
   'use strict';
 
+  var PAGE_I18N = {
+    'onb.title': { 'zh-CN': '开始之前，先完成三步', 'en': 'Three steps to get started' },
+    'onb.step1': { 'zh-CN': '填写 API Key', 'en': 'Add your API keys' },
+    'onb.step2': { 'zh-CN': '创建第一条运行', 'en': 'Create your first run' },
+    'onb.step3': { 'zh-CN': '在运行详情看 Agent 时间线', 'en': 'Watch the Agent timeline in run details' },
+    'onb.dismiss': { 'zh-CN': '知道了', 'en': 'Got it' },
+    'onb.dismissAria': { 'zh-CN': '关闭引导', 'en': 'Dismiss onboarding' }
+  };
+  if (window.DFI18N) DFI18N.register(PAGE_I18N);
+
+  function _t(key, zh) {
+    if (window.DFI18N) return DFI18N.tr(key);
+    return zh;
+  }
+
   var DISMISS_KEY = 'df-onboard-dismissed';
 
   function dismissed() {
@@ -28,12 +43,12 @@
     el.className = 'onboard-banner';
     el.innerHTML =
       '<div class="onboard-text">' +
-        '<strong>开始之前，先完成三步</strong>' +
-        '<span>1. <a href="/settings.html">填写 API Key</a></span>' +
-        '<span>2. <a href="/runs.html#act=new-run">创建第一条运行</a></span>' +
-        '<span>3. 在运行详情看 Agent 时间线</span>' +
+        '<strong>' + _t('onb.title', '开始之前，先完成三步') + '</strong>' +
+        '<span>1. <a href="/settings.html">' + _t('onb.step1', '填写 API Key') + '</a></span>' +
+        '<span>2. <a href="/runs.html#act=new-run">' + _t('onb.step2', '创建第一条运行') + '</a></span>' +
+        '<span>3. ' + _t('onb.step3', '在运行详情看 Agent 时间线') + '</span>' +
       '</div>' +
-      '<button class="onboard-dismiss" id="onboard-dismiss" aria-label="关闭引导">知道了</button>';
+      '<button class="onboard-dismiss" id="onboard-dismiss" aria-label="' + _t('onb.dismissAria', '关闭引导') + '">' + _t('onb.dismiss', '知道了') + '</button>';
     host.insertBefore(el, host.firstChild);
     document.getElementById('onboard-dismiss').onclick = function () {
       try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) {}

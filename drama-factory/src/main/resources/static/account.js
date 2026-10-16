@@ -1,7 +1,12 @@
 (function () {
   'use strict';
 
+  if (!window.DFI18N) throw new Error('i18n.js 未加载');
+
   var user = null;
+
+  // bindLanguage 内赋值，供 reloadMe 同步语言单选按钮
+  var syncLangRadios = null;
 
   var I18N = {
     'doc.title': { 'zh-CN': '账号 · AI 短剧工坊', 'en': 'Account · AI Drama Factory' },
@@ -47,36 +52,10 @@
     'session.empty': { 'zh-CN': '暂无其他会话', 'en': 'No other sessions' }
   };
 
-  var currentLang = 'zh-CN';
-
-  function readLang() {
-    var v = null;
-    try {
-      v = localStorage.getItem('df-lang');
-    } catch (e) {
-      v = null;
-    }
-    return v === 'en' ? 'en' : 'zh-CN';
-  }
+  DFI18N.register(I18N);
 
   function tr(key) {
-    var entry = I18N[key];
-    if (!entry) { return key; }
-    var lang = currentLang === 'en' ? 'en' : 'zh-CN';
-    if (entry[lang]) { return entry[lang]; }
-    if (entry['zh-CN']) { return entry['zh-CN']; }
-    return key;
-  }
-
-  function applyI18n(lang) {
-    var next = lang === 'en' ? 'en' : 'zh-CN';
-    currentLang = next;
-    document.documentElement.lang = next;
-    var nodes = document.querySelectorAll('[data-i18n]');
-    for (var i = 0; i < nodes.length; i++) {
-      var key = nodes[i].getAttribute('data-i18n');
-      if (key) { nodes[i].textContent = tr(key); }
-    }
+    return DFI18N.tr(key);
   }
 
   function $(id) { return document.getElementById(id); }
@@ -116,7 +95,9 @@
       } catch (e) {
         // 存储不可用时忽略
       }
-      applyI18n(lang);
+      DFI18N.applyI18n();
+      // 服务端语言可能与本地初始值不一致，同步语言单选按钮
+      if (typeof syncLangRadios === 'function') syncLangRadios(lang);
       return u;
     });
   }
@@ -378,31 +359,27 @@
         radios[i].checked = radios[i].value === lang;
       }
     }
+    // 供 reloadMe 在服务端语言与本地不一致时同步单选按钮
+    syncLangRadios = syncChecked;
 
     function currentChecked() {
       for (var i = 0; i < radios.length; i++) {
         if (radios[i].checked) { return radios[i].value === 'en' ? 'en' : 'zh-CN'; }
       }
-      return readLang();
+      return DFI18N.readLang();
     }
 
-    syncChecked(currentLang);
+    syncChecked(DFI18N.getLang());
 
     for (var i = 0; i < radios.length; i++) {
       radios[i].addEventListener('change', function () {
         var next = this.value === 'en' ? 'en' : 'zh-CN';
-        var prev = currentLang === 'en' ? 'en' : 'zh-CN';
+        var prev = DFI18N.getLang();
         if (next === prev) { syncChecked(next); return; }
         if (err) { clearErr(err); }
         this.disabled = true;
         var self = this;
-        Auth.updateProfile(null, null, next).then(function () {
-          try {
-            localStorage.setItem('df-lang', next);
-          } catch (e) {
-            // 存储不可用时忽略
-          }
-          applyI18n(next);
+        DFI18N.setLang(next).then(function () {
           syncChecked(next);
         }).catch(function (e2) {
           if (err) {
@@ -417,7 +394,7 @@
   }
 
   function boot() {
-    applyI18n(readLang());
+    DFI18N.applyI18n();
 
     bindNickname();
     bindEmail();

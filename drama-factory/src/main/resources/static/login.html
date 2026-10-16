@@ -4,54 +4,93 @@
 <meta charset="utf-8">
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>登录 · AI 短剧工坊</title>
+<title data-i18n="login.docTitle">登录 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/app.css">
 <link rel="stylesheet" href="/auth.css">
 </head>
 <body class="auth-page">
 <main class="auth-wrap">
   <div class="login-hero">
-    <h1>欢迎使用 AI 短剧工坊</h1>
-    <p>从一句话灵感，到一部完整短剧。</p>
+    <h1 data-i18n="login.heroTitle">欢迎使用 AI 短剧工坊</h1>
+    <p data-i18n="login.heroSub">从一句话灵感，到一部完整短剧。</p>
   </div>
   <div class="seg" role="tablist">
-    <a class="on" href="/login.html" role="tab" aria-selected="true">登录</a>
-    <a href="/register.html" role="tab" aria-selected="false">注册</a>
+    <a class="on" href="/login.html" role="tab" aria-selected="true" data-i18n="login.tabLogin">登录</a>
+    <a href="/register.html" role="tab" aria-selected="false" data-i18n="login.tabRegister">注册</a>
   </div>
   <form id="login-form" class="login-form" novalidate>
     <div class="field">
-      <input type="email" name="email" autocomplete="email" placeholder="邮箱地址" required>
+      <input type="email" name="email" autocomplete="email" data-i18n-ph="login.emailPh" placeholder="邮箱地址" required>
     </div>
     <div class="field">
-      <input type="password" name="password" autocomplete="current-password" placeholder="密码" required>
-      <button class="eye-btn" type="button" data-toggle-pw aria-label="显示密码"><span class="icon" data-lucide="eye"></span></button>
+      <input type="password" name="password" autocomplete="current-password" data-i18n-ph="login.passwordPh" placeholder="密码" required>
+      <button class="eye-btn" type="button" data-toggle-pw data-i18n-title="login.showPw" aria-label="显示密码"><span class="icon" data-lucide="eye"></span></button>
     </div>
     <div class="form-error" id="form-error" hidden></div>
-    <button class="btn-primary" type="submit" id="submit-btn">登录</button>
+    <button class="btn-primary" type="submit" id="submit-btn" data-i18n="login.submit">登录</button>
   </form>
-  <div class="forgot-row"><a href="#" id="forgot-btn">忘记密码？</a></div>
-  <div class="divider">其他方式继续</div>
-  <button class="btn-oauth" type="button" data-provider="google"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.3H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l3.7 2.9c2.2-2 3.7-5 3.7-8.5z"></path><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.7-2.9c-1 .7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5l-3.7 2.9C3.5 21.3 7.5 24 12 24z"></path><path fill="#FBBC05" d="M5.3 14.4c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4L1.6 6.8C.6 8.5 0 10.2 0 12s.6 3.5 1.6 5.2l3.7-2.8z"></path><path fill="#EA4335" d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.5 0 3.5 2.7 1.6 6.8l3.7 2.9c1-2.9 3.7-5 6.7-5z"></path></svg>使用 Google 继续</button>
-  <button class="btn-oauth dark" type="button" data-provider="apple"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"></path></svg>使用 Apple 继续</button>
-  <button class="btn-oauth neutral" type="button" data-provider="github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>使用 GitHub 继续</button>
-  <div class="agree">继续即代表同意<a href="#">《用户协议》</a>与<a href="#">《隐私政策》</a></div>
+  <div class="forgot-row"><a href="#" id="forgot-btn" data-i18n="login.forgot">忘记密码？</a></div>
+  <div class="divider" data-i18n="login.divider">其他方式继续</div>
+  <button class="btn-oauth" type="button" data-provider="google"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.3H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l3.7 2.9c2.2-2 3.7-5 3.7-8.5z"></path><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.7-2.9c-1 .7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5l-3.7 2.9C3.5 21.3 7.5 24 12 24z"></path><path fill="#FBBC05" d="M5.3 14.4c-.2-.7-.4-1.5-.4-2.4s.2-1.7.4-2.4L1.6 6.8C.6 8.5 0 10.2 0 12s.6 3.5 1.6 5.2l3.7-2.8z"></path><path fill="#EA4335" d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.5 0 3.5 2.7 1.6 6.8l3.7 2.9c1-2.9 3.7-5 6.7-5z"></path></svg><span data-i18n="login.oauthGoogle">使用 Google 继续</span></button>
+  <button class="btn-oauth dark" type="button" data-provider="apple"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"></path></svg><span data-i18n="login.oauthApple">使用 Apple 继续</span></button>
+  <button class="btn-oauth neutral" type="button" data-provider="github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg><span data-i18n="login.oauthGithub">使用 GitHub 继续</span></button>
+  <div class="agree"><span data-i18n="login.agreePrefix">继续即代表同意</span><a href="#" data-i18n="login.terms">《用户协议》</a><span data-i18n="login.agreeAnd">与</span><a href="#" data-i18n="login.privacy">《隐私政策》</a></div>
 </main>
 
 <div class="modal" id="notice-modal" hidden>
   <div class="modal-backdrop" data-close></div>
   <div class="modal-panel">
-    <h3 class="modal-title">忘记密码</h3>
-    <p class="modal-text">暂不支持自助重置，请联系管理员。</p>
+    <h3 class="modal-title" data-i18n="login.forgotTitle">忘记密码</h3>
+    <p class="modal-text" data-i18n="login.forgotText">暂不支持自助重置，请联系管理员。</p>
     <div class="modal-actions">
-      <button class="btn btn-primary" type="button" data-close>知道了</button>
+      <button class="btn btn-primary" type="button" data-close data-i18n="login.gotIt">知道了</button>
     </div>
   </div>
 </div>
 
+<script src="/i18n.js"></script>
 <script src="/vendor/lucide.min.js"></script>
 <script src="/auth.js"></script>
 <script>
 (function () {
+  var LOGIN_I18N = {
+    'login.docTitle': { 'zh-CN': '登录 · AI 短剧工坊', 'en': 'Sign in · AI Drama Factory' },
+    'login.heroTitle': { 'zh-CN': '欢迎使用 AI 短剧工坊', 'en': 'Welcome to AI Drama Factory' },
+    'login.heroSub': { 'zh-CN': '从一句话灵感，到一部完整短剧。', 'en': 'From a one-line idea to a finished short drama.' },
+    'login.tabLogin': { 'zh-CN': '登录', 'en': 'Sign in' },
+    'login.tabRegister': { 'zh-CN': '注册', 'en': 'Sign up' },
+    'login.emailPh': { 'zh-CN': '邮箱地址', 'en': 'Email address' },
+    'login.passwordPh': { 'zh-CN': '密码', 'en': 'Password' },
+    'login.submit': { 'zh-CN': '登录', 'en': 'Sign in' },
+    'login.forgot': { 'zh-CN': '忘记密码？', 'en': 'Forgot password?' },
+    'login.divider': { 'zh-CN': '其他方式继续', 'en': 'Or continue with' },
+    'login.oauthGoogle': { 'zh-CN': '使用 Google 继续', 'en': 'Continue with Google' },
+    'login.oauthApple': { 'zh-CN': '使用 Apple 继续', 'en': 'Continue with Apple' },
+    'login.oauthGithub': { 'zh-CN': '使用 GitHub 继续', 'en': 'Continue with GitHub' },
+    'login.agreePrefix': { 'zh-CN': '继续即代表同意', 'en': 'By continuing, you agree to the' },
+    'login.terms': { 'zh-CN': '《用户协议》', 'en': 'Terms of Service' },
+    'login.agreeAnd': { 'zh-CN': '与', 'en': 'and' },
+    'login.privacy': { 'zh-CN': '《隐私政策》', 'en': 'Privacy Policy' },
+    'login.forgotTitle': { 'zh-CN': '忘记密码', 'en': 'Forgot password' },
+    'login.forgotText': { 'zh-CN': '暂不支持自助重置，请联系管理员。', 'en': 'Self-service reset is not available yet. Please contact an administrator.' },
+    'login.gotIt': { 'zh-CN': '知道了', 'en': 'Got it' },
+    'login.showPw': { 'zh-CN': '显示密码', 'en': 'Show password' },
+    'login.hidePw': { 'zh-CN': '隐藏密码', 'en': 'Hide password' },
+    'login.errEmpty': { 'zh-CN': '请填写邮箱和密码', 'en': 'Please enter your email and password' },
+    'login.errFail': { 'zh-CN': '登录失败', 'en': 'Sign in failed' },
+    'login.errNoProvider': { 'zh-CN': '该渠道未配置', 'en': 'This provider is not configured' }
+  };
+
+  if (window.DFI18N) DFI18N.register(LOGIN_I18N);
+  function tr(key, fallback) {
+    if (window.DFI18N) {
+      var v = DFI18N.tr(key);
+      if (v && v !== key) return v;
+    }
+    return fallback != null ? fallback : key;
+  }
+  if (window.DFI18N) DFI18N.applyI18n();
+
   Auth.guardGuest();
 
   var form = document.getElementById('login-form');
@@ -59,7 +98,7 @@
   var btn = document.getElementById('submit-btn');
 
   function showErr(msg) {
-    errBox.textContent = msg || '登录失败';
+    errBox.textContent = msg || tr('login.errFail', '登录失败');
     errBox.hidden = false;
   }
   function clearErr() { errBox.hidden = true; errBox.textContent = ''; }
@@ -76,12 +115,12 @@
     clearErr();
     var email = form.email.value.trim();
     var password = form.password.value;
-    if (!email || !password) { showErr('请填写邮箱和密码'); return; }
+    if (!email || !password) { showErr(tr('login.errEmpty', '请填写邮箱和密码')); return; }
     btn.disabled = true;
     Auth.login(email, password).then(function () {
       location.href = nextPath();
     }).catch(function (err) {
-      showErr(err.message || '登录失败');
+      showErr(err.message || tr('login.errFail', '登录失败'));
     }).then(function () {
       btn.disabled = false;
     });
@@ -92,9 +131,9 @@
       var provider = b.getAttribute('data-provider');
       Auth.oauthUrl(provider).then(function (r) {
         if (r && r.url) location.href = r.url;
-        else showErr('该渠道未配置');
+        else showErr(tr('login.errNoProvider', '该渠道未配置'));
       }).catch(function (err) {
-        showErr(err.message || '该渠道未配置');
+        showErr(err.message || tr('login.errNoProvider', '该渠道未配置'));
       });
     });
   });
@@ -116,7 +155,7 @@
       if (!input) return;
       var show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      b.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+      b.setAttribute('aria-label', show ? tr('login.hidePw', '隐藏密码') : tr('login.showPw', '显示密码'));
       b.innerHTML = '<span class="icon" data-lucide="' + (show ? 'eye-off' : 'eye') + '"></span>';
       if (window.lucide) window.lucide.createIcons();
     });

@@ -1,6 +1,64 @@
 (function () {
   'use strict';
 
+  var PAGE_I18N = {
+    'usg.pageTitle': { 'zh-CN': '用量统计 · AI 短剧工坊', en: 'Usage · AI Short Drama Studio' },
+    'usg.heading': { 'zh-CN': '用量统计', en: 'Usage' },
+    'usg.subtitle': { 'zh-CN': 'Token 与费用 · 仅统计真实发生的调用', en: 'Tokens and cost · Only actual calls are counted' },
+    'usg.allProviders': { 'zh-CN': '全部供应商', en: 'All providers' },
+    'usg.allModels': { 'zh-CN': '全部模型', en: 'All models' },
+    'usg.days7': { 'zh-CN': '近 7 天', en: 'Last 7 days' },
+    'usg.days30': { 'zh-CN': '近 30 天', en: 'Last 30 days' },
+    'usg.days90': { 'zh-CN': '近 90 天', en: 'Last 90 days' },
+    'usg.overview': { 'zh-CN': '概览', en: 'Overview' },
+    'usg.totalCost': { 'zh-CN': '总成本', en: 'Total cost' },
+    'usg.totalRequests': { 'zh-CN': '总请求数', en: 'Total requests' },
+    'usg.totalTokens': { 'zh-CN': '真实消耗 Tokens', en: 'Tokens used' },
+    'usg.cacheHitRate': { 'zh-CN': '缓存命中率', en: 'Cache hit rate' },
+    'usg.notCollected': { 'zh-CN': '暂未采集', en: 'Not collected yet' },
+    'usg.detailUsage': { 'zh-CN': '明细消耗', en: 'Detailed usage' },
+    'usg.newInput': { 'zh-CN': '新增输入', en: 'New input' },
+    'usg.output': { 'zh-CN': '输出', en: 'Output' },
+    'usg.cacheCreate': { 'zh-CN': '缓存创建', en: 'Cache creation' },
+    'usg.cacheRead': { 'zh-CN': '缓存命中', en: 'Cache read' },
+    'usg.trend': { 'zh-CN': '使用趋势', en: 'Usage trend' },
+    'usg.requests': { 'zh-CN': '请求数', en: 'Requests' },
+    'usg.cost': { 'zh-CN': '成本', en: 'Cost' },
+    'usg.requestLog': { 'zh-CN': '请求日志', en: 'Request log' },
+    'usg.byModel': { 'zh-CN': '按模型', en: 'By model' },
+    'usg.byRun': { 'zh-CN': '按运行', en: 'By Run' },
+    'usg.loadFailed': { 'zh-CN': '加载失败', en: 'Failed to load' },
+    'usg.thTime': { 'zh-CN': '时间', en: 'Time' },
+    'usg.thKind': { 'zh-CN': '类型', en: 'Type' },
+    'usg.thProvider': { 'zh-CN': '供应商', en: 'Provider' },
+    'usg.thModel': { 'zh-CN': '模型', en: 'Model' },
+    'usg.thCostEst': { 'zh-CN': '费用估算', en: 'Cost estimate' },
+    'usg.thSpeed': { 'zh-CN': '速度', en: 'Speed' },
+    'usg.thCost': { 'zh-CN': '费用', en: 'Cost' },
+    'usg.thTaskCount': { 'zh-CN': '任务数', en: 'Tasks' },
+    'usg.thGoal': { 'zh-CN': '目标', en: 'Goal' },
+    'usg.thCreatedAt': { 'zh-CN': '创建时间', en: 'Created at' },
+    'usg.kindVideoTask': { 'zh-CN': '视频任务', en: 'Video task' },
+    'usg.kindAgentStep': { 'zh-CN': 'Agent 步骤', en: 'Agent step' },
+    'usg.estimatedPrefix': { 'zh-CN': '约', en: '~' }
+  };
+
+  if (window.DFI18N) DFI18N.register(PAGE_I18N);
+
+  function _t(key, zh) {
+    if (window.DFI18N && typeof DFI18N.tr === 'function') {
+      var v = DFI18N.tr(key);
+      if (v && v !== key) return v;
+    }
+    return zh;
+  }
+
+  function applyI18nTo(root) {
+    if (window.DFI18N && typeof DFI18N.applyI18n === 'function') {
+      DFI18N.applyI18n(root);
+    }
+  }
+
   var EM_DASH = '\u2014';
 
   function fmtNum(n) {
@@ -268,8 +326,8 @@
   }
 
   function kindLabel(kind) {
-    if (kind === 'VIDEO_TASK') return '视频任务';
-    return 'Agent 步骤';
+    if (kind === 'VIDEO_TASK') return _t('usg.kindVideoTask', '视频任务');
+    return _t('usg.kindAgentStep', 'Agent 步骤');
   }
 
   function speedLabel(row) {
@@ -288,7 +346,7 @@
   function costEstimatedLabel(row) {
     var base = fmtCost(row.costCents);
     if (base === EM_DASH) return EM_DASH;
-    if (row.costEstimated === true) return '约' + base;
+    if (row.costEstimated === true) return _t('usg.estimatedPrefix', '约') + base;
     return base;
   }
 
@@ -455,6 +513,7 @@
   }
 
   function init() {
+    if (window.DFI18N) DFI18N.applyI18n(document);
     bindFilters();
     bindTabs();
     loadFilters();
@@ -466,5 +525,12 @@
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
+  }
+
+  if (window.DFI18N && typeof DFI18N.onLangChange === 'function') {
+    DFI18N.onLangChange(function () {
+      renderTrend();
+      loadAll();
+    });
   }
 })();

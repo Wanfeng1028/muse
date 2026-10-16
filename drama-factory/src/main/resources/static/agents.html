@@ -25,15 +25,15 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <h1 class="page-title">Agent 机队</h1>
-      <p class="page-sub">管理 5 个专用 Agent 的提示词与模型</p>
+      <h1 class="page-title" data-i18n="agt.title">Agent 机队</h1>
+      <p class="page-sub" data-i18n="agt.subtitle">管理 5 个专用 Agent 的提示词与模型</p>
     </div>
   </header>
 
   <section class="card" id="channel-card">
     <div class="card-head">
-      <h2 class="card-title">视频通道</h2>
-      <span class="badge badge-accent" id="channel-current">加载中…</span>
+      <h2 class="card-title" data-i18n="agt.videoChannel">视频通道</h2>
+      <span class="badge badge-accent" id="channel-current" data-i18n="c.loading">加载中…</span>
     </div>
     <div class="channel-switch" id="channel-switch"></div>
     <p class="hint" id="channel-note"></p>
@@ -42,31 +42,31 @@
   <section class="card" id="provider-section">
     <div class="card-head">
       <div>
-        <h2 class="card-title">媒体供应商</h2>
-        <p class="hint">每个供应商配一个 API Key，在卡片里管理可用模型</p>
+        <h2 class="card-title" data-i18n="agt.mediaProviders">媒体供应商</h2>
+        <p class="hint" data-i18n="agt.mediaProvidersHint">每个供应商配一个 API Key，在卡片里管理可用模型</p>
       </div>
       <button type="button" class="btn btn-quiet btn-sm" id="provider-add">
-        <i data-lucide="plus"></i> 添加供应商
+        <i data-lucide="plus"></i> <span data-i18n="agt.addProvider">添加供应商</span>
       </button>
     </div>
     <div id="provider-list">
-      <p class="hint">暂无供应商，点击右上添加</p>
+      <p class="hint" data-i18n="agt.noProviders">暂无供应商，点击右上添加</p>
     </div>
   </section>
 
   <section id="agents-region" aria-live="polite">
     <div class="state-loading" id="agents-loading">
       <i data-lucide="loader-circle"></i>
-      <span>正在加载 Agent 机队…</span>
+      <span data-i18n="agt.loadingFleet">正在加载 Agent 机队…</span>
     </div>
     <div class="state-empty is-hidden" id="agents-empty">
       <i data-lucide="bot"></i>
-      <span>暂无 Agent 配置</span>
+      <span data-i18n="agt.emptyFleet">暂无 Agent 配置</span>
     </div>
     <div class="state-error is-hidden" id="agents-error">
       <i data-lucide="triangle-alert"></i>
-      <span id="agents-error-text">加载失败</span>
-      <button class="btn btn-secondary" id="agents-retry">重试</button>
+      <span id="agents-error-text" data-i18n="agt.loadFailed">加载失败</span>
+      <button class="btn btn-secondary" id="agents-retry" data-i18n="c.retry">重试</button>
     </div>
     <div class="agent-grid is-hidden" id="agent-grid"></div>
   </section>
@@ -74,87 +74,88 @@
 
 <div id="provider-modal" class="pv-modal is-hidden">
   <div class="pv-dialog">
-    <div class="pv-dialog-head"><span id="pm-title">添加供应商</span></div>
+    <div class="pv-dialog-head"><span id="pm-title" data-i18n="agt.addProvider">添加供应商</span></div>
     <div class="pv-dialog-body">
       <div class="pv-field">
-        <label for="pm-name">供应商名 *</label>
+        <label for="pm-name" data-i18n="agt.providerName">供应商名 *</label>
         <input id="pm-name" type="text" />
       </div>
       <div class="pv-field">
-        <label for="pm-module">所属模块</label>
+        <label for="pm-module" data-i18n="agt.moduleLabel">所属模块</label>
         <select id="pm-module">
-          <option value="VIDEO">视频</option>
-          <option value="TEXT">文本</option>
-          <option value="IMAGE">图片</option>
-          <option value="MUSIC">音乐</option>
-          <option value="TTS">TTS 语音</option>
-          <option value="AVATAR">数字人</option>
+          <option value="VIDEO" data-i18n="agt.module.VIDEO">视频</option>
+          <option value="TEXT" data-i18n="agt.module.TEXT">文本</option>
+          <option value="IMAGE" data-i18n="agt.module.IMAGE">图片</option>
+          <option value="MUSIC" data-i18n="agt.module.MUSIC">音乐</option>
+          <option value="TTS" data-i18n="agt.module.TTS">TTS 语音</option>
+          <option value="AVATAR" data-i18n="agt.module.AVATAR">数字人</option>
         </select>
       </div>
       <div class="pv-field">
-        <label for="pm-desc">简介说明</label>
+        <label for="pm-desc" data-i18n="agt.providerDesc">简介说明</label>
         <textarea id="pm-desc" rows="3"></textarea>
       </div>
       <div class="pv-field">
-        <label for="pm-key">API 密钥</label>
+        <label for="pm-key" data-i18n="agt.apiKey">API 密钥</label>
         <div style="display:flex;gap:8px">
           <input id="pm-key" type="password" />
           <button type="button" class="btn btn-quiet btn-sm" id="pm-key-toggle"><i data-lucide="eye"></i></button>
         </div>
       </div>
       <div class="pv-field">
-        <label for="pm-addr">API 地址</label>
+        <label for="pm-addr" data-i18n="agt.apiAddress">API 地址</label>
         <input id="pm-addr" type="text" />
       </div>
     </div>
     <div class="pv-dialog-foot">
-      <button type="button" class="btn btn-quiet" id="pm-cancel">取消</button>
-      <button type="button" class="btn btn-primary" id="pm-save">保存</button>
+      <button type="button" class="btn btn-quiet" id="pm-cancel" data-i18n="c.cancel">取消</button>
+      <button type="button" class="btn btn-primary" id="pm-save" data-i18n="c.save">保存</button>
     </div>
   </div>
 </div>
 
 <div id="model-modal" class="pv-modal is-hidden">
   <div class="pv-dialog">
-    <div class="pv-dialog-head"><span id="mm-title">添加模型</span></div>
+    <div class="pv-dialog-head"><span id="mm-title" data-i18n="agt.addModel">添加模型</span></div>
     <div class="pv-dialog-body">
       <div class="pv-field">
-        <label for="mm-name">模型名 *</label>
+        <label for="mm-name" data-i18n="agt.modelName">模型名 *</label>
         <input id="mm-name" type="text" />
       </div>
       <div class="pv-field">
-        <label for="mm-model-id">模型 id</label>
+        <label for="mm-model-id" data-i18n="agt.modelId">模型 id</label>
         <input id="mm-model-id" type="text" />
       </div>
       <div class="pv-field">
-        <label for="mm-scale">规模/档位</label>
+        <label for="mm-scale" data-i18n="agt.modelScale">规模/档位</label>
         <input id="mm-scale" type="text" />
       </div>
       <div class="pv-field">
-        <label for="mm-desc">文档说明</label>
+        <label for="mm-desc" data-i18n="agt.modelDesc">文档说明</label>
         <textarea id="mm-desc" rows="3"></textarea>
       </div>
       <div class="pv-field">
-        <label for="mm-concurrency">并发数</label>
+        <label for="mm-concurrency" data-i18n="agt.modelConcurrency">并发数</label>
         <input id="mm-concurrency" type="number" min="1" value="1" />
       </div>
     </div>
     <div class="pv-dialog-foot">
-      <button type="button" class="btn btn-quiet" id="mm-cancel">取消</button>
-      <button type="button" class="btn btn-primary" id="mm-save">保存</button>
+      <button type="button" class="btn btn-quiet" id="mm-cancel" data-i18n="c.cancel">取消</button>
+      <button type="button" class="btn btn-primary" id="mm-save" data-i18n="c.save">保存</button>
     </div>
   </div>
 </div>
 
 <script src="/vendor/lucide.min.js"></script>
+<script src="/i18n.js"></script>
 <script src="/shell.js"></script>
 <script src="/agents.js"></script>
 <div id="preset-modal" class="pv-modal is-hidden">
   <div class="pv-dialog">
-    <div class="pv-dialog-head"><span id="preset-title">从预设添加</span></div>
+    <div class="pv-dialog-head"><span id="preset-title" data-i18n="agt.addFromPreset">从预设添加</span></div>
     <div class="pv-dialog-body" id="preset-list"></div>
     <div class="pv-dialog-foot">
-      <button type="button" class="btn btn-quiet" id="preset-cancel">关闭</button>
+      <button type="button" class="btn btn-quiet" id="preset-cancel" data-i18n="c.close">关闭</button>
     </div>
   </div>
 </div>

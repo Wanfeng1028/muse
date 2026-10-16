@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 对话 · AI 短剧工坊</title>
+<title data-i18n="chat.docTitle">AI 对话 · AI 短剧工坊</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
@@ -13,18 +13,18 @@
 <body>
 
 <div class="page-head">
-  <h1>AI 对话</h1>
+  <h1 data-i18n="chat.pageTitle">AI 对话</h1>
 </div>
 
       <div class="card">
         <div class="card-body border-bottom">
           <div class="d-flex gap-3 flex-wrap">
             <div class="flex-fill" style="min-width:200px;">
-              <label class="form-label">项目</label>
+              <label class="form-label" data-i18n="chat.project">项目</label>
               <select id="projectSelect" class="form-select"></select>
             </div>
             <div class="flex-fill" style="min-width:200px;">
-              <label class="form-label">目标剧集</label>
+              <label class="form-label" data-i18n="chat.targetEpisode">目标剧集</label>
               <select id="episodeSelect" class="form-select"></select>
             </div>
           </div>
@@ -33,21 +33,22 @@
           <div id="chatLog" class="mb-3" style="min-height:320px; max-height:52vh; overflow-y:auto;"></div>
 
           <div class="mb-3 d-flex flex-wrap gap-2">
-            <button type="button" class="btn btn-sm chip" data-text="写一个3镜小剧本">写一个3镜小剧本</button>
-            <button type="button" class="btn btn-sm chip" data-text="把上面的剧本拆成…">把上面的剧本拆成…</button>
-            <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词">优化第1镜的视频提示词</button>
+            <button type="button" class="btn btn-sm chip" data-text="写一个3镜小剧本" data-i18n="chat.chipScript">写一个3镜小剧本</button>
+            <button type="button" class="btn btn-sm chip" data-text="把上面的剧本拆成…" data-i18n="chat.chipSplit">把上面的剧本拆成…</button>
+            <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词" data-i18n="chat.chipOptimize">优化第1镜的视频提示词</button>
           </div>
 
           <div class="composer mb-2">
-            <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
-            <button id="sendBtn" class="composer-send" type="button" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…" data-i18n-ph="chat.inputPh"></textarea>
+            <button id="sendBtn" class="composer-send" type="button" aria-label="发送" data-i18n-title="chat.sendAria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
           </div>
-          <div class="quota-note">对话会产生模型调用费用，请按需使用。</div>
+          <div class="quota-note" data-i18n="chat.quotaNote">对话会产生模型调用费用，请按需使用。</div>
         </div>
       </div>
 
 <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
+<script src="/i18n.js"></script>
 <script src="/tabler.min.js"></script>
 <script src="/shell.js"></script>
   <script src="/chat.js"></script>

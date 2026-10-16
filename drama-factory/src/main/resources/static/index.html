@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 工作区 · AI 短剧工坊</title>
+<title data-i18n="ws.docTitle">AI 工作区 · AI 短剧工坊</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
@@ -15,42 +15,42 @@
 <!-- shell.js 注入侧边栏 + 顶栏 + 命令面板 -->
 
 <main class="ws-center">
-  <h1 class="greeting">和 AI 一起做短剧</h1>
-  <div id="ws-status-strip" class="ws-status-strip">分镜 — · 任务 — · 待质检 —</div>
+  <h1 class="greeting" data-i18n="ws.greeting">和 AI 一起做短剧</h1>
+  <div id="ws-status-strip" class="ws-status-strip" data-i18n="ws.statusEmpty">分镜 — · 任务 — · 待质检 —</div>
 
   <div class="ws-context-bar">
-    <span>上下文</span>
-    <select id="projectSelect" class="form-select" aria-label="项目"></select>
-    <select id="episodeSelect" class="form-select" aria-label="剧集"></select>
-    <button type="button" id="ws-toggle-new" class="btn-link-quiet">＋ 新建</button>
+    <span data-i18n="ws.context">上下文</span>
+    <select id="projectSelect" class="form-select" aria-label="项目" data-i18n-title="ws.projectAria"></select>
+    <select id="episodeSelect" class="form-select" aria-label="剧集" data-i18n-title="ws.episodeAria"></select>
+    <button type="button" id="ws-toggle-new" class="btn-link-quiet" data-i18n="ws.toggleNew">＋ 新建</button>
   </div>
 
   <div id="ws-new-panel" class="ws-new-panel" style="display:none;">
     <div class="ws-new-block">
       <div class="ws-new-head">
-        <span>新建项目</span>
+        <span data-i18n="ws.newProject">新建项目</span>
       </div>
       <form id="ws-project-form" class="ws-new-form">
-        <div class="mb-2"><input type="text" class="form-control" id="ws-project-title" required placeholder="项目标题，例如：逆袭千金"></div>
-        <div class="mb-2"><input type="text" class="form-control" id="ws-project-genre" placeholder="类型，例如：都市/爽文"></div>
+        <div class="mb-2"><input type="text" class="form-control" id="ws-project-title" required placeholder="项目标题，例如：逆袭千金" data-i18n-ph="ws.projectTitlePh"></div>
+        <div class="mb-2"><input type="text" class="form-control" id="ws-project-genre" placeholder="类型，例如：都市/爽文" data-i18n-ph="ws.projectGenrePh"></div>
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-secondary btn-sm">创建</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="ws-project-cancel">取消</button>
+          <button type="submit" class="btn btn-secondary btn-sm" data-i18n="c.create">创建</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="ws-project-cancel" data-i18n="c.cancel">取消</button>
         </div>
       </form>
     </div>
     <div class="ws-new-block">
       <div class="ws-new-head">
-        <span>新建剧集</span>
+        <span data-i18n="ws.newEpisode">新建剧集</span>
       </div>
       <form id="ws-episode-form" class="ws-new-form">
         <div class="row g-2 mb-2">
-          <div class="col-4"><input type="number" class="form-control" id="ws-episode-no" min="1" required placeholder="集号"></div>
-          <div class="col-8"><input type="text" class="form-control" id="ws-episode-title" placeholder="标题（可选）"></div>
+          <div class="col-4"><input type="number" class="form-control" id="ws-episode-no" min="1" required placeholder="集号" data-i18n-ph="ws.episodeNoPh"></div>
+          <div class="col-8"><input type="text" class="form-control" id="ws-episode-title" placeholder="标题（可选）" data-i18n-ph="ws.episodeTitlePh"></div>
         </div>
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-secondary btn-sm">创建</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="ws-episode-cancel">取消</button>
+          <button type="submit" class="btn btn-secondary btn-sm" data-i18n="c.create">创建</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="ws-episode-cancel" data-i18n="c.cancel">取消</button>
         </div>
       </form>
     </div>
@@ -59,25 +59,26 @@
   <div id="chatLog" class="ws-chat-log"></div>
 
   <div class="ws-chips">
-    <button type="button" class="btn btn-sm chip" data-text="写一个3镜小剧本">写一个3镜小剧本</button>
-    <button type="button" class="btn btn-sm chip" data-text="把上面的剧本拆成…">把上面的剧本拆成…</button>
-    <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词">优化第1镜的视频提示词</button>
+    <button type="button" class="btn btn-sm chip" data-text="写一个3镜小剧本" data-i18n="ws.chipScript">写一个3镜小剧本</button>
+    <button type="button" class="btn btn-sm chip" data-text="把上面的剧本拆成…" data-i18n="ws.chipSplit">把上面的剧本拆成…</button>
+    <button type="button" class="btn btn-sm chip" data-text="优化第1镜的视频提示词" data-i18n="ws.chipOptimize">优化第1镜的视频提示词</button>
   </div>
 
   <div class="composer ws-composer">
-    <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…"></textarea>
-    <button id="sendBtn" class="composer-send" type="button" aria-label="发送"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    <textarea id="chatInput" rows="3" placeholder="和 AI 编剧聊剧本、分镜、提示词…" data-i18n-ph="ws.inputPh"></textarea>
+    <button id="sendBtn" class="composer-send" type="button" aria-label="发送" data-i18n-title="ws.sendAria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
   </div>
-  <div class="quota-note">对话会产生模型调用费用，请按需使用。</div>
+  <div class="quota-note" data-i18n="ws.quotaNote">对话会产生模型调用费用，请按需使用。</div>
 
-  <section class="ws-recent" id="ws-recent" aria-label="最近动态">
-    <div class="ws-recent-title">最近动态</div>
-    <div id="ws-recent-list"><div class="ws-recent-empty">暂无动态，从上面的输入框开始。</div></div>
+  <section class="ws-recent" id="ws-recent" aria-label="最近动态" data-i18n-title="ws.recentAria">
+    <div class="ws-recent-title" data-i18n="ws.recentTitle">最近动态</div>
+    <div id="ws-recent-list"><div class="ws-recent-empty" data-i18n="ws.recentEmpty">暂无动态，从上面的输入框开始。</div></div>
   </section>
 </main>
 
 <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
+<script src="/i18n.js"></script>
 <script src="/tabler.min.js"></script>
 <script src="/shell.js"></script>
 <script src="/chat.js"></script>

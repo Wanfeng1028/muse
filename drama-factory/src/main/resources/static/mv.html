@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI MV · drama-factory</title>
+<title data-i18n="mv.docTitle">AI MV · drama-factory</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
@@ -80,119 +80,119 @@ input[type=file].mv-file{display:block;width:100%;font-size:13px;color:var(--tex
 <body>
 <main class="ws-center" style="max-width:860px;margin:0 auto;padding:24px">
   <h1 style="font-size:20px;margin:0 0 4px">AI MV</h1>
-  <p class="mv-hint">一句话主题，生成完整音乐短片。</p>
+  <p class="mv-hint" data-i18n="mv.tagline">一句话主题，生成完整音乐短片。</p>
 
   <ol class="mv-steps" id="steps">
-    <li class="mv-step is-current" data-step="1"><span class="n">1</span>写词</li>
-    <li class="mv-step" data-step="2"><span class="n">2</span>作曲</li>
-    <li class="mv-step" data-step="3"><span class="n">3</span>分镜</li>
-    <li class="mv-step" data-step="4"><span class="n">4</span>渲染</li>
-    <li class="mv-step" data-step="5"><span class="n">5</span>成片</li>
+    <li class="mv-step is-current" data-step="1"><span class="n">1</span><span data-i18n="mv.stepLyrics">写词</span></li>
+    <li class="mv-step" data-step="2"><span class="n">2</span><span data-i18n="mv.stepCompose">作曲</span></li>
+    <li class="mv-step" data-step="3"><span class="n">3</span><span data-i18n="mv.stepStoryboard">分镜</span></li>
+    <li class="mv-step" data-step="4"><span class="n">4</span><span data-i18n="mv.stepRender">渲染</span></li>
+    <li class="mv-step" data-step="5"><span class="n">5</span><span data-i18n="mv.stepFinal">成片</span></li>
   </ol>
 
   <section class="mv-panel" data-panel="1">
-    <h2>开始</h2>
+    <h2 data-i18n="mv.startTitle">开始</h2>
     <div class="mode-tabs" id="modeTabs">
       <button type="button" class="mode-tab is-on" data-mode="ai">
-        <span class="t">AI 创作歌曲</span>
-        <span class="d">给主题，AI 作词作曲，一条龙生成</span>
+        <span class="t" data-i18n="mv.modeAiTitle">AI 创作歌曲</span>
+        <span class="d" data-i18n="mv.modeAiDesc">给主题，AI 作词作曲，一条龙生成</span>
       </button>
       <button type="button" class="mode-tab" data-mode="import">
-        <span class="t">导入已有音频</span>
-        <span class="d">有现成的歌，直接上传跳过作词作曲</span>
+        <span class="t" data-i18n="mv.modeImportTitle">导入已有音频</span>
+        <span class="d" data-i18n="mv.modeImportDesc">有现成的歌，直接上传跳过作词作曲</span>
       </button>
     </div>
     <div id="aiModePanel">
-    <p class="mv-hint">给出主题、情绪和曲风，生成分段歌词。生成后可以逐段修改。</p>
+    <p class="mv-hint" data-i18n="mv.aiHint">给出主题、情绪和曲风，生成分段歌词。生成后可以逐段修改。</p>
     <div class="mv-grid">
       <div class="mv-field wide">
-        <label for="themeInput">主题</label>
-        <textarea id="themeInput" rows="3" placeholder="例如：末班地铁上的重逢"></textarea>
+        <label for="themeInput" data-i18n="mv.themeLabel">主题</label>
+        <textarea id="themeInput" rows="3" data-i18n-ph="mv.themePlaceholder" placeholder="例如：末班地铁上的重逢"></textarea>
       </div>
       <div class="mv-field">
-        <label>情绪</label>
+        <label data-i18n="mv.moodLabel">情绪</label>
         <div class="chips" id="moodGroup">
-          <button type="button" class="chip is-on" data-value="欢快">欢快</button>
-          <button type="button" class="chip" data-value="抒情">抒情</button>
-          <button type="button" class="chip" data-value="激昂">激昂</button>
-          <button type="button" class="chip" data-value="舒缓">舒缓</button>
-          <button type="button" class="chip" data-value="热血">热血</button>
+          <button type="button" class="chip is-on" data-value="欢快" data-i18n="mv.moodUpbeat">欢快</button>
+          <button type="button" class="chip" data-value="抒情" data-i18n="mv.moodLyrical">抒情</button>
+          <button type="button" class="chip" data-value="激昂" data-i18n="mv.moodPassionate">激昂</button>
+          <button type="button" class="chip" data-value="舒缓" data-i18n="mv.moodCalm">舒缓</button>
+          <button type="button" class="chip" data-value="热血" data-i18n="mv.moodFiery">热血</button>
         </div>
       </div>
       <div class="mv-field">
-        <label>曲风</label>
+        <label data-i18n="mv.styleLabel">曲风</label>
         <div class="chips" id="styleGroup">
-          <button type="button" class="chip is-on" data-value="流行">流行</button>
-          <button type="button" class="chip" data-value="民谣">民谣</button>
-          <button type="button" class="chip" data-value="摇滚">摇滚</button>
-          <button type="button" class="chip" data-value="电子">电子</button>
-          <button type="button" class="chip" data-value="古风">古风</button>
+          <button type="button" class="chip is-on" data-value="流行" data-i18n="mv.stylePop">流行</button>
+          <button type="button" class="chip" data-value="民谣" data-i18n="mv.styleFolk">民谣</button>
+          <button type="button" class="chip" data-value="摇滚" data-i18n="mv.styleRock">摇滚</button>
+          <button type="button" class="chip" data-value="电子" data-i18n="mv.styleElectronic">电子</button>
+          <button type="button" class="chip" data-value="古风" data-i18n="mv.styleClassical">古风</button>
         </div>
       </div>
     </div>
     <div class="mv-foot">
-      <button class="btn btn-primary" id="btnLyrics" type="button">生成歌词</button>
+      <button class="btn btn-primary" id="btnLyrics" type="button" data-i18n="mv.generateLyrics">生成歌词</button>
       <span class="mv-note" id="lyricsNote"></span>
     </div>
     </div>
     <div id="importModePanel" class="is-hidden">
-      <p class="mv-hint">上传音频文件（mp3 / wav / m4a，最大 100MB），自动进入资产库。歌词可选：填了按歌词做字幕时间轴，不填按纯音乐分镜。</p>
+      <p class="mv-hint" data-i18n="mv.importHint">上传音频文件（mp3 / wav / m4a，最大 100MB），自动进入资产库。歌词可选：填了按歌词做字幕时间轴，不填按纯音乐分镜。</p>
       <div class="mv-grid">
         <div class="mv-field wide">
-          <label for="importTitle">歌曲标题</label>
-          <input type="text" id="importTitle" placeholder="例如：归途的光">
+          <label for="importTitle" data-i18n="mv.importTitleLabel">歌曲标题</label>
+          <input type="text" id="importTitle" data-i18n-ph="mv.importTitlePlaceholder" placeholder="例如：归途的光">
         </div>
         <div class="mv-field wide">
-          <label for="importFile">音频文件</label>
+          <label for="importFile" data-i18n="mv.importFileLabel">音频文件</label>
           <input type="file" class="mv-file" id="importFile" accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4">
         </div>
         <div class="mv-field">
-          <label for="importMood">情绪</label>
+          <label for="importMood" data-i18n="mv.moodLabel">情绪</label>
           <select id="importMood">
-            <option value="抒情">抒情</option>
-            <option value="欢快">欢快</option>
-            <option value="激昂">激昂</option>
-            <option value="舒缓">舒缓</option>
-            <option value="热血">热血</option>
+            <option value="抒情" data-i18n="mv.moodLyrical">抒情</option>
+            <option value="欢快" data-i18n="mv.moodUpbeat">欢快</option>
+            <option value="激昂" data-i18n="mv.moodPassionate">激昂</option>
+            <option value="舒缓" data-i18n="mv.moodCalm">舒缓</option>
+            <option value="热血" data-i18n="mv.moodFiery">热血</option>
           </select>
         </div>
         <div class="mv-field">
-          <label for="importStyle">曲风</label>
+          <label for="importStyle" data-i18n="mv.styleLabel">曲风</label>
           <select id="importStyle">
-            <option value="流行">流行</option>
-            <option value="民谣">民谣</option>
-            <option value="摇滚">摇滚</option>
-            <option value="电子">电子</option>
-            <option value="古风">古风</option>
+            <option value="流行" data-i18n="mv.stylePop">流行</option>
+            <option value="民谣" data-i18n="mv.styleFolk">民谣</option>
+            <option value="摇滚" data-i18n="mv.styleRock">摇滚</option>
+            <option value="电子" data-i18n="mv.styleElectronic">电子</option>
+            <option value="古风" data-i18n="mv.styleClassical">古风</option>
           </select>
         </div>
         <div class="mv-field wide">
-          <label for="importLyrics">歌词（可选）</label>
-          <textarea id="importLyrics" rows="5" placeholder="粘贴歌词，空行分段；不填则按纯音乐分镜"></textarea>
+          <label for="importLyrics" data-i18n="mv.importLyricsLabel">歌词（可选）</label>
+          <textarea id="importLyrics" rows="5" data-i18n-ph="mv.importLyricsPlaceholder" placeholder="粘贴歌词，空行分段；不填则按纯音乐分镜"></textarea>
         </div>
       </div>
       <div class="progress is-hidden" id="uploadProgress"><div class="progress-fill" id="uploadFill"></div></div>
       <div class="mv-foot">
-        <button class="btn btn-primary" id="btnImport" type="button">上传并导入</button>
+        <button class="btn btn-primary" id="btnImport" type="button" data-i18n="mv.uploadImport">上传并导入</button>
         <span class="mv-note" id="importNote"></span>
       </div>
       <div class="is-hidden" id="importAudioBar" style="margin-top:12px">
         <audio id="importAudioEl" controls preload="metadata" style="width:100%"></audio>
         <div class="mv-foot">
           <span class="mv-note" id="importAudioMeta"></span>
-          <button class="btn btn-primary" id="btnImportToStoryboard" type="button">进入分镜</button>
+          <button class="btn btn-primary" id="btnImportToStoryboard" type="button" data-i18n="mv.gotoStoryboard">进入分镜</button>
         </div>
       </div>
     </div>
   </section>
 
   <section class="mv-panel is-hidden" data-panel="2">
-    <h2>作曲</h2>
-    <p class="mv-hint">歌词确认后开始作曲。试听满意再进入分镜。</p>
-    <h3 id="lyricsTitle" style="font-size:15px;margin:0 0 12px">未命名</h3>
+    <h2 data-i18n="mv.composeTitle">作曲</h2>
+    <p class="mv-hint" data-i18n="mv.composeHint">歌词确认后开始作曲。试听满意再进入分镜。</p>
+    <h3 id="lyricsTitle" style="font-size:15px;margin:0 0 12px" data-i18n="mv.untitled">未命名</h3>
     <div id="lyricsSections"></div>
     <div class="mv-foot">
-      <button class="btn btn-primary" id="btnCompose" type="button">开始作曲</button>
+      <button class="btn btn-primary" id="btnCompose" type="button" data-i18n="mv.startCompose">开始作曲</button>
       <span class="mv-note" id="composeNote"></span>
     </div>
     <div id="timelineBox" class="is-hidden" style="margin-top:12px"></div>
@@ -200,46 +200,47 @@ input[type=file].mv-file{display:block;width:100%;font-size:13px;color:var(--tex
       <audio id="audioEl" controls preload="metadata" style="width:100%"></audio>
       <div class="mv-foot">
         <span class="mv-note" id="audioMeta"></span>
-        <button class="btn" id="btnToStoryboard" type="button">进入分镜</button>
+        <button class="btn" id="btnToStoryboard" type="button" data-i18n="mv.gotoStoryboard">进入分镜</button>
       </div>
     </div>
   </section>
 
   <section class="mv-panel is-hidden" data-panel="3">
-    <h2>分镜</h2>
-    <p class="mv-hint">每行歌词对应一个镜头，可编辑画面描述。</p>
+    <h2 data-i18n="mv.storyboardTitle">分镜</h2>
+    <p class="mv-hint" data-i18n="mv.storyboardHint">每行歌词对应一个镜头，可编辑画面描述。</p>
     <div id="storyboardList"></div>
     <div class="mv-foot">
-      <button class="btn btn-primary" id="btnStoryboard" type="button">生成分镜</button>
-      <button class="btn is-hidden" id="btnToRender" type="button">进入渲染</button>
+      <button class="btn btn-primary" id="btnStoryboard" type="button" data-i18n="mv.generateStoryboard">生成分镜</button>
+      <button class="btn is-hidden" id="btnToRender" type="button" data-i18n="mv.gotoRender">进入渲染</button>
     </div>
   </section>
 
   <section class="mv-panel is-hidden" data-panel="4">
-    <h2>渲染</h2>
-    <p class="mv-hint">按分镜逐段合成视频。测试时可打开短片段模式。</p>
+    <h2 data-i18n="mv.renderTitle">渲染</h2>
+    <p class="mv-hint" data-i18n="mv.renderHint">按分镜逐段合成视频。测试时可打开短片段模式。</p>
     <div class="mv-foot">
-      <button class="btn btn-primary" id="btnRender" type="button">开始渲染</button>
+      <button class="btn btn-primary" id="btnRender" type="button" data-i18n="mv.startRender">开始渲染</button>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2)">
-        <input type="checkbox" id="dryRunToggle"> 短片段模式
+        <input type="checkbox" id="dryRunToggle"> <span data-i18n="mv.dryRun">短片段模式</span>
       </label>
     </div>
     <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="progress-meta"><span id="progressText">未开始</span><span id="progressPct">0%</span></div>
+    <div class="progress-meta"><span id="progressText" data-i18n="mv.notStarted">未开始</span><span id="progressPct">0%</span></div>
     <ul class="agent-list" id="agentList"></ul>
   </section>
 
   <section class="mv-panel is-hidden" data-panel="5">
-    <h2>成片</h2>
-    <p class="mv-hint">渲染完成后可直接播放或下载。</p>
+    <h2 data-i18n="mv.finalTitle">成片</h2>
+    <p class="mv-hint" data-i18n="mv.finalHint">渲染完成后可直接播放或下载。</p>
     <div class="video-wrap"><video id="videoEl" controls preload="metadata"></video></div>
     <div class="mv-foot">
-      <a class="btn btn-primary" id="btnDownload" href="#" download>下载视频</a>
-      <button class="btn" id="btnAgain" type="button">再做一支</button>
+      <a class="btn btn-primary" id="btnDownload" href="#" download data-i18n="mv.downloadVideo">下载视频</a>
+      <button class="btn" id="btnAgain" type="button" data-i18n="mv.again">再做一支</button>
     </div>
   </section>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/shell.js"></script>
 <script src="/mv.js"></script>
 </body>

@@ -2,13 +2,56 @@
 (function () {
   'use strict';
 
+  var PAGE_I18N = {
+    'chat.docTitle': { 'zh-CN': 'AI 对话 · AI 短剧工坊', 'en': 'AI Chat · AI Drama Factory' },
+    'chat.pageTitle': { 'zh-CN': 'AI 对话', 'en': 'AI Chat' },
+    'chat.project': { 'zh-CN': '项目', 'en': 'Project' },
+    'chat.targetEpisode': { 'zh-CN': '目标剧集', 'en': 'Target episode' },
+    'chat.chipScript': { 'zh-CN': '写一个3镜小剧本', 'en': 'Write a 3-shot script' },
+    'chat.chipSplit': { 'zh-CN': '把上面的剧本拆成…', 'en': 'Break the script above into…' },
+    'chat.chipOptimize': { 'zh-CN': '优化第1镜的视频提示词', 'en': 'Improve shot 1 video prompt' },
+    'chat.inputPh': { 'zh-CN': '和 AI 编剧聊剧本、分镜、提示词…', 'en': 'Chat with the AI writer about scripts, shots, prompts…' },
+    'chat.sendAria': { 'zh-CN': '发送', 'en': 'Send' },
+    'chat.quotaNote': { 'zh-CN': '对话会产生模型调用费用，请按需使用。', 'en': 'Chats use model calls and cost money — use as needed.' },
+    'chat.requestFailed': { 'zh-CN': '请求失败', 'en': 'Request failed' },
+    'chat.noProjects': { 'zh-CN': '暂无项目', 'en': 'No projects yet' },
+    'chat.noEpisodes': { 'zh-CN': '暂无剧集', 'en': 'No episodes yet' },
+    'chat.projectLabel': { 'zh-CN': '项目 ', 'en': 'Project ' },
+    'chat.episodeLabel': { 'zh-CN': '第 ', 'en': 'Ep ' },
+    'chat.episodeSuffix': { 'zh-CN': ' 集', 'en': '' },
+    'chat.pickEpisode': { 'zh-CN': '请先选择目标剧集', 'en': 'Please select a target episode first' },
+    'chat.noShots': { 'zh-CN': '没有可落库的分镜', 'en': 'No shots to save' },
+    'chat.committedPrefix': { 'zh-CN': '已落库 ', 'en': 'Saved ' },
+    'chat.committedSuffix': { 'zh-CN': ' 个分镜 → 去分镜板查看', 'en': ' shots → view on the storyboard' },
+    'chat.goStoryboard': { 'zh-CN': '去分镜板查看', 'en': 'View on storyboard' },
+    'chat.thinking': { 'zh-CN': 'AI 思考中…', 'en': 'AI is thinking…' },
+    'chat.noReply': { 'zh-CN': '（无回复）', 'en': '(no reply)' },
+    'chat.errorPrefix': { 'zh-CN': '出错了：', 'en': 'Error: ' },
+    'chat.shotPreview': { 'zh-CN': '分镜预览（可修改后落库）', 'en': 'Shot preview (edit before saving)' },
+    'chat.confirmCommit': { 'zh-CN': '确认落库', 'en': 'Confirm and save' },
+    'chat.shotNo': { 'zh-CN': '镜号', 'en': 'Shot No.' },
+    'chat.shotSize': { 'zh-CN': '景别', 'en': 'Shot Size' },
+    'chat.cameraMove': { 'zh-CN': '运镜', 'en': 'Camera Move' },
+    'chat.description': { 'zh-CN': '画面描述', 'en': 'Description' },
+    'chat.durationSeconds': { 'zh-CN': '时长（秒）', 'en': 'Duration (sec)' },
+    'chat.dialogue': { 'zh-CN': '台词', 'en': 'Dialogue' },
+    'chat.videoPrompt': { 'zh-CN': '视频提示词', 'en': 'Video prompt' },
+    'chat.shot': { 'zh-CN': '镜 ', 'en': 'Shot ' }
+  };
+  if (window.DFI18N) DFI18N.register(PAGE_I18N);
+
+  function _t(key, zh) {
+    if (window.DFI18N) return DFI18N.tr(key);
+    return zh;
+  }
+
   async function api(url, options) {
     const opts = Object.assign({ headers: { 'Content-Type': 'application/json' } }, options || {});
     const res = await fetch(url, opts);
     let data = null;
     try { data = await res.json(); } catch (e) { data = null; }
     if (!res.ok) {
-      const msg = (data && (data.detail || data.message)) || '请求失败';
+      const msg = (data && (data.detail || data.message)) || _t('chat.requestFailed', '请求失败');
       throw new Error(msg);
     }
     return data;
@@ -56,13 +99,13 @@
       state.projects = Array.isArray(data) ? data : (data && data.items) || [];
       el.projectSelect.innerHTML = '';
       if (!state.projects.length) {
-        el.projectSelect.innerHTML = '<option value="">暂无项目</option>';
+        el.projectSelect.innerHTML = '<option value="">' + escapeHtml(_t('chat.noProjects', '暂无项目')) + '</option>';
         return;
       }
       state.projects.forEach(function (p) {
         const opt = document.createElement('option');
         opt.value = p.id;
-        opt.textContent = p.name || p.title || ('项目 ' + p.id);
+        opt.textContent = p.name || p.title || (_t('chat.projectLabel', '项目 ') + p.id);
         el.projectSelect.appendChild(opt);
       });
       el.projectSelect.value = state.projects[0].id;
@@ -79,13 +122,13 @@
       const data = await api('/api/projects/' + encodeURIComponent(projectId) + '/episodes');
       state.episodes = Array.isArray(data) ? data : (data && data.items) || [];
       if (!state.episodes.length) {
-        el.episodeSelect.innerHTML = '<option value="">暂无剧集</option>';
+        el.episodeSelect.innerHTML = '<option value="">' + escapeHtml(_t('chat.noEpisodes', '暂无剧集')) + '</option>';
         return;
       }
       state.episodes.forEach(function (ep) {
         const opt = document.createElement('option');
         opt.value = ep.id;
-        opt.textContent = (ep.title || ep.name || ('第 ' + (ep.episodeNo || ep.id) + ' 集'));
+        opt.textContent = (ep.title || ep.name || (_t('chat.episodeLabel', '第 ') + (ep.episodeNo || ep.id) + _t('chat.episodeSuffix', ' 集')));
         el.episodeSelect.appendChild(opt);
       });
       el.episodeSelect.value = state.episodes[0].id;
@@ -176,23 +219,23 @@
       const idx = i;
       const shotNo = s.shotNo != null ? s.shotNo : (i + 1);
       body += '<fieldset class="border rounded p-2 mb-3">';
-      body += '<legend class="float-none w-auto px-1 small text-secondary">镜 ' + escapeHtml(shotNo) + '</legend>';
+      body += '<legend class="float-none w-auto px-1 small text-secondary">' + _t('chat.shot', '镜 ') + escapeHtml(shotNo) + '</legend>';
       body += '<div class="row g-2">';
-      body += '<div class="col-md-4">' + field('镜号', idx, 'shotNo', shotNo, false) + '</div>';
-      body += '<div class="col-md-4">' + field('景别', idx, 'shotSize', s.shotSize || '', false) + '</div>';
-      body += '<div class="col-md-4">' + field('运镜', idx, 'cameraMove', s.cameraMove || '', false) + '</div>';
+      body += '<div class="col-md-4">' + field(_t('chat.shotNo', '镜号'), idx, 'shotNo', shotNo, false) + '</div>';
+      body += '<div class="col-md-4">' + field(_t('chat.shotSize', '景别'), idx, 'shotSize', s.shotSize || '', false) + '</div>';
+      body += '<div class="col-md-4">' + field(_t('chat.cameraMove', '运镜'), idx, 'cameraMove', s.cameraMove || '', false) + '</div>';
       body += '</div>';
-      body += field('画面描述', idx, 'description', s.description || '', true);
+      body += field(_t('chat.description', '画面描述'), idx, 'description', s.description || '', true);
       body += '<div class="row g-2">';
-      body += '<div class="col-md-4">' + field('时长（秒）', idx, 'durationSeconds', s.durationSeconds != null ? s.durationSeconds : '', false) + '</div>';
-      body += '<div class="col-md-8">' + field('台词', idx, 'dialogue', s.dialogue || '', true) + '</div>';
+      body += '<div class="col-md-4">' + field(_t('chat.durationSeconds', '时长（秒）'), idx, 'durationSeconds', s.durationSeconds != null ? s.durationSeconds : '', false) + '</div>';
+      body += '<div class="col-md-8">' + field(_t('chat.dialogue', '台词'), idx, 'dialogue', s.dialogue || '', true) + '</div>';
       body += '</div>';
-      body += field('视频提示词', idx, 'videoPrompt', s.videoPrompt || '', true);
+      body += field(_t('chat.videoPrompt', '视频提示词'), idx, 'videoPrompt', s.videoPrompt || '', true);
       body += '</fieldset>';
     });
-    card.innerHTML = '<div class="card-header">分镜预览（可修改后落库）</div>' +
+    card.innerHTML = '<div class="card-header">' + _t('chat.shotPreview', '分镜预览（可修改后落库）') + '</div>' +
       '<div class="card-body">' + body +
-      '<button id="confirmShots" class="btn btn-primary">确认落库</button></div>';
+      '<button id="confirmShots" class="btn btn-primary">' + _t('chat.confirmCommit', '确认落库') + '</button></div>';
 
     const lastAssistant = el.chatLog.lastElementChild;
     if (lastAssistant && lastAssistant.parentNode === el.chatLog) {
@@ -211,7 +254,7 @@
   async function collectAndCommit(card, btn) {
     const episodeId = el.episodeSelect.value;
     if (!episodeId) {
-      showToast('请先选择目标剧集');
+      showToast(_t('chat.pickEpisode', '请先选择目标剧集'));
       return;
     }
     const inputs = card.querySelectorAll('[data-idx][data-field]');
@@ -236,7 +279,7 @@
       };
     });
     if (!shots.length) {
-      showToast('没有可落库的分镜');
+      showToast(_t('chat.noShots', '没有可落库的分镜'));
       return;
     }
     btn.disabled = true;
@@ -245,10 +288,10 @@
         method: 'POST',
         body: JSON.stringify({ shots: shots })
       });
-      addMessage('status', '已落库 ' + shots.length + ' 个分镜 → 去分镜板查看');
+      addMessage('status', _t('chat.committedPrefix', '已落库 ') + shots.length + _t('chat.committedSuffix', ' 个分镜 → 去分镜板查看'));
       const linkWrap = document.createElement('div');
       linkWrap.className = 'mb-2';
-      linkWrap.innerHTML = '<a class="btn btn-sm btn-quiet" href="/storyboard.html">去分镜板查看</a>';
+      linkWrap.innerHTML = '<a class="btn btn-sm btn-quiet" href="/storyboard.html">' + _t('chat.goStoryboard', '去分镜板查看') + '</a>';
       el.chatLog.appendChild(linkWrap);
       scrollToBottom();
       btn.disabled = false;
@@ -266,7 +309,7 @@
     el.sendBtn.disabled = true;
     el.chatInput.value = '';
     addMessage('user', text);
-    const thinking = addMessage('status', 'AI 思考中…');
+    const thinking = addMessage('status', _t('chat.thinking', 'AI 思考中…'));
 
     try {
       const payload = {
@@ -278,7 +321,7 @@
         method: 'POST',
         body: JSON.stringify(payload)
       });
-      const reply = (data && (data.reply || data.message || data.content)) || '（无回复）';
+      const reply = (data && (data.reply || data.message || data.content)) || _t('chat.noReply', '（无回复）');
 
       if (thinking && thinking.parentNode) thinking.parentNode.removeChild(thinking);
       addMessage('assistant', reply);
@@ -295,7 +338,7 @@
       }
     } catch (err) {
       if (thinking && thinking.parentNode) thinking.parentNode.removeChild(thinking);
-      addMessage('status', '出错了：' + err.message);
+      addMessage('status', _t('chat.errorPrefix', '出错了：') + err.message);
       showToast(err.message);
     } finally {
       el.sendBtn.disabled = false;
@@ -304,6 +347,8 @@
   }
 
   function init() {
+    if (window.DFI18N) DFI18N.applyI18n();
+
     el.projectSelect.addEventListener('change', function () {
       loadEpisodes(el.projectSelect.value);
     });
@@ -325,6 +370,13 @@
     });
 
     loadProjects();
+
+    if (window.DFI18N) {
+      DFI18N.onLangChange(function () {
+        DFI18N.applyI18n();
+        loadProjects();
+      });
+    }
   }
 
   init();

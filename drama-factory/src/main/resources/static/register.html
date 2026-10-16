@@ -4,43 +4,78 @@
 <meta charset="utf-8">
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>注册 · AI 短剧工坊</title>
+<title data-i18n="reg.docTitle">注册 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/app.css">
 <link rel="stylesheet" href="/auth.css">
 </head>
 <body class="auth-page">
 <main class="auth-wrap">
   <div class="login-hero">
-    <h1>欢迎使用 AI 短剧工坊</h1>
-    <p>从一句话灵感，到一部完整短剧。</p>
+    <h1 data-i18n="reg.heroTitle">欢迎使用 AI 短剧工坊</h1>
+    <p data-i18n="reg.heroSub">从一句话灵感，到一部完整短剧。</p>
   </div>
   <div class="seg" role="tablist">
-    <a href="/login.html" role="tab" aria-selected="false">登录</a>
-    <a class="on" href="/register.html" role="tab" aria-selected="true">注册</a>
+    <a href="/login.html" role="tab" aria-selected="false" data-i18n="reg.tabLogin">登录</a>
+    <a class="on" href="/register.html" role="tab" aria-selected="true" data-i18n="reg.tabRegister">注册</a>
   </div>
   <form id="register-form" class="login-form" novalidate>
     <div class="field">
-      <input type="email" name="email" autocomplete="email" placeholder="邮箱地址" required>
+      <input type="email" name="email" autocomplete="email" data-i18n-ph="reg.emailPh" placeholder="邮箱地址" required>
     </div>
     <div class="field">
-      <input type="password" name="password" autocomplete="new-password" placeholder="设置密码（至少 8 位）" required>
-      <button class="eye-btn" type="button" data-toggle-pw aria-label="显示密码"><span class="icon" data-lucide="eye"></span></button>
+      <input type="password" name="password" autocomplete="new-password" data-i18n-ph="reg.passwordPh" placeholder="设置密码（至少 8 位）" required>
+      <button class="eye-btn" type="button" data-toggle-pw data-i18n-title="reg.showPw" aria-label="显示密码"><span class="icon" data-lucide="eye"></span></button>
     </div>
-    <p class="pw-hint" id="pw-hint">至少 8 位，且包含字母和数字</p>
+    <p class="pw-hint" id="pw-hint" data-i18n="reg.pwHint">至少 8 位，且包含字母和数字</p>
     <div class="field">
-      <input type="password" name="confirm" autocomplete="new-password" placeholder="确认密码" required>
-      <button class="eye-btn" type="button" data-toggle-pw aria-label="显示密码"><span class="icon" data-lucide="eye"></span></button>
+      <input type="password" name="confirm" autocomplete="new-password" data-i18n-ph="reg.confirmPh" placeholder="确认密码" required>
+      <button class="eye-btn" type="button" data-toggle-pw data-i18n-title="reg.showPw" aria-label="显示密码"><span class="icon" data-lucide="eye"></span></button>
     </div>
     <div class="form-error" id="form-error" hidden></div>
-    <button class="btn-primary" type="submit" id="submit-btn" disabled>注册</button>
+    <button class="btn-primary" type="submit" id="submit-btn" disabled data-i18n="reg.submit">注册</button>
   </form>
-  <div class="agree">继续即代表同意<a href="#">《用户协议》</a>与<a href="#">《隐私政策》</a></div>
+  <div class="agree"><span data-i18n="reg.agreePrefix">继续即代表同意</span><a href="#" data-i18n="reg.terms">《用户协议》</a><span data-i18n="reg.agreeAnd">与</span><a href="#" data-i18n="reg.privacy">《隐私政策》</a></div>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/vendor/lucide.min.js"></script>
 <script src="/auth.js"></script>
 <script>
 (function () {
+  var REG_I18N = {
+    'reg.docTitle': { 'zh-CN': '注册 · AI 短剧工坊', 'en': 'Sign up · AI Drama Factory' },
+    'reg.heroTitle': { 'zh-CN': '欢迎使用 AI 短剧工坊', 'en': 'Welcome to AI Drama Factory' },
+    'reg.heroSub': { 'zh-CN': '从一句话灵感，到一部完整短剧。', 'en': 'From a one-line idea to a finished short drama.' },
+    'reg.tabLogin': { 'zh-CN': '登录', 'en': 'Sign in' },
+    'reg.tabRegister': { 'zh-CN': '注册', 'en': 'Sign up' },
+    'reg.emailPh': { 'zh-CN': '邮箱地址', 'en': 'Email address' },
+    'reg.passwordPh': { 'zh-CN': '设置密码（至少 8 位）', 'en': 'Set a password (at least 8 characters)' },
+    'reg.confirmPh': { 'zh-CN': '确认密码', 'en': 'Confirm password' },
+    'reg.submit': { 'zh-CN': '注册', 'en': 'Sign up' },
+    'reg.pwHint': { 'zh-CN': '至少 8 位，且包含字母和数字', 'en': 'At least 8 characters, with letters and numbers' },
+    'reg.pwHintOk': { 'zh-CN': '密码符合要求', 'en': 'Password meets requirements' },
+    'reg.agreePrefix': { 'zh-CN': '继续即代表同意', 'en': 'By continuing, you agree to the' },
+    'reg.terms': { 'zh-CN': '《用户协议》', 'en': 'Terms of Service' },
+    'reg.agreeAnd': { 'zh-CN': '与', 'en': 'and' },
+    'reg.privacy': { 'zh-CN': '《隐私政策》', 'en': 'Privacy Policy' },
+    'reg.showPw': { 'zh-CN': '显示密码', 'en': 'Show password' },
+    'reg.hidePw': { 'zh-CN': '隐藏密码', 'en': 'Hide password' },
+    'reg.errFail': { 'zh-CN': '注册失败', 'en': 'Sign up failed' },
+    'reg.errWeak': { 'zh-CN': '密码至少 8 位，且包含字母和数字', 'en': 'At least 8 characters, with letters and numbers' },
+    'reg.errMismatch': { 'zh-CN': '两次输入的密码不一致', 'en': 'Passwords do not match' },
+    'reg.errEmailExists': { 'zh-CN': '这个邮箱已经注册过了', 'en': 'This email is already registered' }
+  };
+
+  if (window.DFI18N) DFI18N.register(REG_I18N);
+  function tr(key, fallback) {
+    if (window.DFI18N) {
+      var v = DFI18N.tr(key);
+      if (v && v !== key) return v;
+    }
+    return fallback != null ? fallback : key;
+  }
+  if (window.DFI18N) DFI18N.applyI18n();
+
   Auth.guardGuest();
   document.querySelectorAll('[data-toggle-pw]').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -49,7 +84,7 @@
       if (!input) return;
       var show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      b.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+      b.setAttribute('aria-label', show ? tr('reg.hidePw', '隐藏密码') : tr('reg.showPw', '显示密码'));
       b.innerHTML = '<span class="icon" data-lucide="' + (show ? 'eye-off' : 'eye') + '"></span>';
       if (window.lucide) window.lucide.createIcons();
     });
@@ -72,8 +107,8 @@
     var pwOk = validPassword(pw);
     pwHint.classList.toggle('is-ok', pwOk && pw.length > 0);
     pwHint.textContent = pwOk && pw.length > 0
-      ? '密码符合要求'
-      : '至少 8 位，且包含字母和数字';
+      ? tr('reg.pwHintOk', '密码符合要求')
+      : tr('reg.pwHint', '至少 8 位，且包含字母和数字');
 
     var ok = email && pwOk && cf && cf === pw;
     btn.disabled = !ok;
@@ -85,7 +120,7 @@
   sync();
 
   function showErr(msg) {
-    errBox.textContent = msg || '注册失败';
+    errBox.textContent = msg || tr('reg.errFail', '注册失败');
     errBox.hidden = false;
   }
   function clearErr() { errBox.hidden = true; errBox.textContent = ''; }
@@ -105,8 +140,8 @@
     var nickname = email.split('@')[0] || email;
     var password = form.password.value;
 
-    if (!validPassword(password)) { showErr('密码至少 8 位，且包含字母和数字'); return; }
-    if (password !== form.confirm.value) { showErr('两次输入的密码不一致'); return; }
+    if (!validPassword(password)) { showErr(tr('reg.errWeak', '密码至少 8 位，且包含字母和数字')); return; }
+    if (password !== form.confirm.value) { showErr(tr('reg.errMismatch', '两次输入的密码不一致')); return; }
 
     btn.disabled = true;
     Auth.register(email, password, nickname).then(function () {
@@ -115,11 +150,11 @@
       location.href = nextPath();
     }).catch(function (err) {
       if (err && err.code === 'EMAIL_EXISTS') {
-        showErr('这个邮箱已经注册过了');
+        showErr(tr('reg.errEmailExists', '这个邮箱已经注册过了'));
       } else if (err && err.code === 'WEAK_PASSWORD') {
-        showErr(err.message || '密码至少 8 位，且包含字母和数字');
+        showErr(err.message || tr('reg.errWeak', '密码至少 8 位，且包含字母和数字'));
       } else {
-        showErr(err && err.message ? err.message : '注册失败');
+        showErr(err && err.message ? err.message : tr('reg.errFail', '注册失败'));
       }
       sync();
     });

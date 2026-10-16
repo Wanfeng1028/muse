@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN" data-bs-theme="light">
 <head>
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>生产看板 · AI 短剧工坊</title>
+<title data-i18n="pipe.title">生产看板 · AI 短剧工坊</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
@@ -15,18 +14,18 @@
 <body>
 <div class="page">
 <div class="page-head">
-  <h1 id="projectTitle">生产看板</h1>
+  <h1 id="projectTitle" data-i18n="pipe.heading">生产看板</h1>
 </div>
 
         <div class="card mb-3">
           <div class="card-body">
             <div class="row g-3 align-items-end">
               <div class="col-md-4">
-                <label class="form-label" for="projectSelect">选择项目</label>
+                <label class="form-label" for="projectSelect" data-i18n="pipe.selectProject">选择项目</label>
                 <select id="projectSelect" class="form-select"></select>
               </div>
               <div class="col-md-auto">
-                <button id="refreshBtn" type="button" class="btn btn-secondary">刷新</button>
+                <button id="refreshBtn" type="button" class="btn btn-secondary" data-i18n="c.refresh">刷新</button>
               </div>
               <div class="col-md">
                 <p id="projectMeta" class="text-secondary mb-0"></p>
@@ -40,7 +39,7 @@
             <div class="card card-sm">
               <div class="card-body">
                 <div class="font-weight-medium" id="statShotRate">-</div>
-                <div class="text-secondary" id="statShotDetail">分镜完成率</div>
+                <div class="text-secondary" id="statShotDetail" data-i18n="pipe.statShotDetail">分镜完成率</div>
               </div>
             </div>
           </div>
@@ -48,7 +47,7 @@
             <div class="card card-sm">
               <div class="card-body">
                 <div class="font-weight-medium" id="statTaskRate">-</div>
-                <div class="text-secondary" id="statTaskDetail">任务成功率</div>
+                <div class="text-secondary" id="statTaskDetail" data-i18n="pipe.statTaskDetail">任务成功率</div>
               </div>
             </div>
           </div>
@@ -56,7 +55,7 @@
             <div class="card card-sm">
               <div class="card-body">
                 <div class="font-weight-medium" id="statRenderTime">-</div>
-                <div class="text-secondary">累计渲染时长</div>
+                <div class="text-secondary" data-i18n="pipe.statRenderTime">累计渲染时长</div>
               </div>
             </div>
           </div>
@@ -64,20 +63,20 @@
 
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">剧集管线</h3>
+            <h3 class="card-title" data-i18n="pipe.boardTitle">剧集管线</h3>
           </div>
           <div id="board" class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-vcenter card-table" id="pipelineTable">
                 <thead>
                   <tr>
-                    <th>集号</th>
-                    <th>标题</th>
-                    <th>状态</th>
-                    <th class="text-end">分镜数</th>
-                    <th>视频任务</th>
-                    <th>成片</th>
-                    <th class="text-end">操作</th>
+                    <th data-i18n="pipe.colEpisodeNo">集号</th>
+                    <th data-i18n="pipe.colTitle">标题</th>
+                    <th data-i18n="pipe.colStatus">状态</th>
+                    <th class="text-end" data-i18n="pipe.colShotCount">分镜数</th>
+                    <th data-i18n="pipe.colTasks">视频任务</th>
+                    <th data-i18n="pipe.colFinalCut">成片</th>
+                    <th class="text-end" data-i18n="pipe.colActions">操作</th>
                   </tr>
                 </thead>
                 <tbody id="pipelineBody"></tbody>
@@ -91,8 +90,8 @@
 <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 <script src="/tabler.min.js"></script>
+<script src="/i18n.js"></script>
 <script src="/shell.js"></script>
   <script src="/pipeline.js"></script>
 </body>
 </html>
-

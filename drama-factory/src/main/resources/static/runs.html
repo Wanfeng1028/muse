@@ -14,12 +14,12 @@
 <div class="page">
   <div class="page-head">
     <div>
-      <h1>运行列表</h1>
-      <div class="sub muted">创建与管理短剧生成运行，实时查看步骤进度与产物。</div>
+      <h1 data-i18n="run.title">运行列表</h1>
+      <div class="sub muted" data-i18n="run.subtitle">创建与管理短剧生成运行，实时查看步骤进度与产物。</div>
     </div>
     <div class="actions">
-      <button class="btn btn-secondary" id="refreshBtn"><i data-lucide="refresh-cw"></i>刷新</button>
-      <button class="btn btn-primary" id="newRunBtn"><i data-lucide="plus"></i>新建运行</button>
+      <button class="btn btn-secondary" id="refreshBtn"><i data-lucide="refresh-cw"></i><span data-i18n="c.refresh">刷新</span></button>
+      <button class="btn btn-primary" id="newRunBtn"><i data-lucide="plus"></i><span data-i18n="run.newRun">新建运行</span></button>
     </div>
   </div>
 
@@ -27,30 +27,31 @@
 
   <div class="card" id="wizard" hidden>
     <div class="card-head">
-      <div class="card-title"><i data-lucide="wand-2" style="width:15px;height:15px;vertical-align:-2px"></i> 新建运行</div>
-      <button class="btn btn-secondary btn-sm" id="wizardClose"><i data-lucide="x"></i>收起</button>
+      <div class="card-title"><i data-lucide="wand-2" style="width:15px;height:15px;vertical-align:-2px"></i> <span data-i18n="run.newRun">新建运行</span></div>
+      <button class="btn btn-secondary btn-sm" id="wizardClose"><i data-lucide="x"></i><span data-i18n="run.collapse">收起</span></button>
     </div>
     <div class="form-row">
-      <label for="goalInput">目标</label>
-      <textarea id="goalInput" placeholder="做一部 3 集短剧，题材都市情感"></textarea>
-      <div class="hint">描述清楚题材、集数与风格，模型会据此生成分集计划。</div>
+      <label for="goalInput" data-i18n="run.goalLabel">目标</label>
+      <textarea id="goalInput" data-i18n-ph="run.goalPlaceholder" placeholder="做一部 3 集短剧，题材都市情感"></textarea>
+      <div class="hint" data-i18n="run.goalHint">描述清楚题材、集数与风格，模型会据此生成分集计划。</div>
     </div>
     <div class="actions">
-      <button class="btn btn-secondary" id="previewBtn"><i data-lucide="sparkles"></i>预览计划</button>
-      <button class="btn btn-secondary" id="confirmBtn" hidden><i data-lucide="play"></i>确认执行</button>
-      <button class="btn btn-secondary" id="wizardReset" hidden>重新填写</button>
+      <button class="btn btn-secondary" id="previewBtn"><i data-lucide="sparkles"></i><span data-i18n="run.previewPlan">预览计划</span></button>
+      <button class="btn btn-secondary" id="confirmBtn" hidden><i data-lucide="play"></i><span data-i18n="run.confirmRun">确认执行</span></button>
+      <button class="btn btn-secondary" id="wizardReset" hidden data-i18n="run.refill">重新填写</button>
     </div>
     <div id="planArea" style="margin-top:16px"></div>
   </div>
 
   <div class="section">
-    <h2 class="section-title"><i data-lucide="list"></i>全部运行</h2>
+    <h2 class="section-title"><i data-lucide="list"></i><span data-i18n="run.allRuns">全部运行</span></h2>
     <div id="listArea"><div class="loading"><span class="spinner"></span>加载中…</div></div>
   </div>
 </div>
 
 <div id="toast-host"></div>
 <script src="/vendor/lucide.min.js"></script>
+<script src="/i18n.js"></script>
 <script src="/shell.js"></script>
 <script src="/runs.js"></script>
 </body>

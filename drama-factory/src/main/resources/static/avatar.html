@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>数字人 · AI 短剧工坊</title>
+<title data-i18n="ava.docTitle">数字人 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/app.css">
@@ -25,40 +25,41 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <h1 class="page-title">数字人</h1>
-      <p class="page-sub">人物图 + 音频 + TTS 音色，生成数字人播报（BYOK）</p>
+      <h1 class="page-title" data-i18n="ava.pageTitle">数字人</h1>
+      <p class="page-sub" data-i18n="ava.pageSub">人物图 + 音频 + TTS 音色，生成数字人播报（BYOK）</p>
     </div>
   </header>
 
   <section class="card">
-    <div class="card-head"><h2 class="card-title">生成</h2></div>
+    <div class="card-head"><h2 class="card-title" data-i18n="ava.generate">生成</h2></div>
     <div style="padding:16px 20px">
       <div class="fld">
-        <label for="av-photo">人物图 URL（需公网可访问）</label>
-        <input id="av-photo" type="text" placeholder="https://…/photo.png" />
-        <p class="hint">v1.0 暂需公网可访问的图片 URL；本地文件上传后续随资产库支持。</p>
+        <label for="av-photo" data-i18n="ava.photo">人物图 URL（需公网可访问）</label>
+        <input id="av-photo" type="text" placeholder="https://…/photo.png" data-i18n-ph="ava.photoPh" />
+        <p class="hint" data-i18n="ava.photoHint">v1.0 暂需公网可访问的图片 URL；本地文件上传后续随资产库支持。</p>
       </div>
       <div class="fld">
-        <label for="av-audio">音频 URL（可选，为空则用下方文案驱动 TTS）</label>
-        <input id="av-audio" type="text" placeholder="https://…/voice.mp3" />
+        <label for="av-audio" data-i18n="ava.audio">音频 URL（可选，为空则用下方文案驱动 TTS）</label>
+        <input id="av-audio" type="text" placeholder="https://…/voice.mp3" data-i18n-ph="ava.audioPh" />
       </div>
       <div class="fld">
-        <label for="av-voice">数字人模型</label>
+        <label for="av-voice" data-i18n="ava.voice">数字人模型</label>
         <select id="av-voice"></select>
         <div id="av-empty" class="byok-empty" hidden></div>
       </div>
       <div class="fld">
-        <label for="av-script">文案</label>
-        <textarea id="av-script" placeholder="数字人要说的内容…"></textarea>
+        <label for="av-script" data-i18n="ava.script">文案</label>
+        <textarea id="av-script" placeholder="数字人要说的内容…" data-i18n-ph="ava.scriptPh"></textarea>
       </div>
       <div class="gen-foot">
-        <button type="button" class="btn btn-primary" id="av-generate">生成数字人视频</button>
+        <button type="button" class="btn btn-primary" id="av-generate" data-i18n="ava.generateBtn">生成数字人视频</button>
         <span class="hint" id="av-hint"></span>
       </div>
     </div>
   </section>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/vendor/lucide.min.js"></script>
 <script src="/shell.js"></script>
 <script src="/byok.js"></script>
@@ -67,6 +68,7 @@
   "use strict";
   var currentModel = null;
   function init() {
+    if (window.DFI18N) DFI18N.applyI18n();
     Byok.loadModels("AVATAR", {
       select: document.getElementById("av-voice"),
       emptyBox: document.getElementById("av-empty"),
@@ -76,10 +78,10 @@
     });
     document.getElementById("av-generate").onclick = function () {
       var imageUrl = document.getElementById("av-photo").value.trim();
-      if (!imageUrl) { Byok.toast("请填写人物图 URL", "error"); return; }
+      if (!imageUrl) { Byok.toast(window.DFI18N ? DFI18N.tr("ava.photoRequired") : "请填写人物图 URL", "error"); return; }
       var audioUrl = document.getElementById("av-audio").value.trim();
       var script = document.getElementById("av-script").value.trim();
-      if (!audioUrl && !script) { Byok.toast("请提供音频 URL 或文案", "error"); return; }
+      if (!audioUrl && !script) { Byok.toast(window.DFI18N ? DFI18N.tr("ava.audioOrScriptRequired") : "请提供音频 URL 或文案", "error"); return; }
       Byok.generate({
         module: "AVATAR",
         model: currentModel,
@@ -95,11 +97,16 @@
           video.src = url;
           video.style.maxWidth = "100%";
           hint.appendChild(video);
-          Byok.toast("数字人视频已生成", "success");
+          Byok.toast(window.DFI18N ? DFI18N.tr("ava.generated") : "数字人视频已生成", "success");
         }
       });
     };
     Byok.icons();
+    if (window.DFI18N) {
+      DFI18N.onLangChange(function () {
+        DFI18N.applyI18n();
+      });
+    }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

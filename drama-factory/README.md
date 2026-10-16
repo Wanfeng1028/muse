@@ -125,6 +125,17 @@ auth-service 独立微服务生产级补齐：Flyway 版本化迁移（`V1__base
 `auth.cookie.secure` 开关（生产 HTTPS 开启）；BFF 对 cookie 写请求做 Origin/Referer 同源校验防 CSRF；
 API 客户端仍可直连 auth-service 走 Bearer。详见 `docs/SECURITY_DATA.md`。
 
+### 全站中英双语（v2.28）
+控制台顶栏右侧加了「中文 | EN」分段切换器，点一下就切，语言偏好写到服务端（`PUT /api/auth/profile {language}`），刷新、换设备都保持。覆盖工作区、分镜、任务、成片、看板、MV、Skill、工具、账号等 21 个业务页面，加上登录和注册页。中文文案逐字保留，英文按产品英文写。
+
+实现方式是零依赖的原生方案：`static/i18n.js` 挂 `window.DFI18N`，各页自带页字典，静态文案用 `data-i18n` / `data-i18n-ph` / `data-i18n-title` 标注，动态渲染的收尾再调一次 `applyI18n` 并订阅 `onLangChange`。没有引入任何构建步骤或第三方库。
+
+key 命名规范、页面接入步骤、英文风格指南见 `docs/I18N.md`。门禁脚本 `scripts/i18n-keycheck.js` 扫描 HTML 的 `data-i18n*` 与 JS 的 `tr('...')`，和已注册字典比对，缺 key 就 `exit 1`；本轮结果 `1033 defined / 885 used / MISSING: none`。
+
+![工作区（英文）](docs/screenshots/i18n-index-en.png)
+
+![分镜板（英文）](docs/screenshots/i18n-storyboard-en.png)
+
 ## 技术栈
 
 | 类别 | 选型 |

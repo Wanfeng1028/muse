@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN" data-bs-theme="light">
 <head>
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>成片质检 · AI 短剧工坊</title>
+<title data-i18n="qc.pageTitle">成片质检 · AI 短剧工坊</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
@@ -15,43 +14,43 @@
 <body>
 <div class="page">
 <div class="page-head">
-  <h1>成片质检</h1>
+  <h1 data-i18n="qc.heading">成片质检</h1>
 </div>
 
-<div class="state-empty is-hidden" id="qcEmpty"><i data-lucide="inbox"></i><span>未指定成片，请从成片库进入。</span></div>
+<div class="state-empty is-hidden" id="qcEmpty"><i data-lucide="inbox"></i><span data-i18n="qc.emptyHint">未指定成片，请从成片库进入。</span></div>
 
         <div class="card" id="qcCard">
           <div class="card-header">
-            <h3 class="card-title" id="qcTitle">加载中…</h3>
+            <h3 class="card-title" id="qcTitle" data-i18n="c.loading">加载中…</h3>
             <div class="card-actions">
-              <span class="badge bg-secondary-lt" id="qcStatusBadge">加载中</span>
+              <span class="badge bg-secondary-lt" id="qcStatusBadge" data-i18n="c.loading">加载中</span>
             </div>
           </div>
           <div class="card-body">
             <video id="qcVideo" controls style="width:100%;max-height:480px;background:#000"></video>
 
             <dl class="row mt-3">
-              <dt class="col-3 col-md-2">时长</dt>
+              <dt class="col-3 col-md-2" data-i18n="qc.duration">时长</dt>
               <dd class="col-9 col-md-10" id="qcDuration">-</dd>
-              <dt class="col-3 col-md-2">创建时间</dt>
+              <dt class="col-3 col-md-2" data-i18n="qc.createdAt">创建时间</dt>
               <dd class="col-9 col-md-10" id="qcCreated">-</dd>
-              <dt class="col-3 col-md-2">所属剧集</dt>
+              <dt class="col-3 col-md-2" data-i18n="qc.episode">所属剧集</dt>
               <dd class="col-9 col-md-10" id="qcEpisode">-</dd>
             </dl>
 
             <div id="qcNoteView" class="mt-3" style="display:none">
-              <h4>质检备注</h4>
+              <h4 data-i18n="qc.noteTitle">质检备注</h4>
               <div class="text-secondary" id="qcNoteText">-</div>
             </div>
 
             <div id="qcForm" class="mt-3" style="display:none">
               <div class="mb-3">
-                <label class="form-label" for="qcNote">质检备注</label>
-                <textarea id="qcNote" class="form-control" rows="3" placeholder="质检备注 / 打回原因"></textarea>
+                <label class="form-label" for="qcNote" data-i18n="qc.noteTitle">质检备注</label>
+                <textarea id="qcNote" class="form-control" rows="3" data-i18n-ph="qc.notePh" placeholder="质检备注 / 打回原因"></textarea>
               </div>
               <div class="btn-list">
-                <button type="button" class="btn btn-secondary" id="approveBtn">通过</button>
-                <button type="button" class="btn btn-secondary" id="rejectBtn">打回</button>
+                <button type="button" class="btn btn-secondary" id="approveBtn" data-i18n="qc.approve">通过</button>
+                <button type="button" class="btn btn-secondary" id="rejectBtn" data-i18n="qc.reject">打回</button>
               </div>
             </div>
           </div>
@@ -60,6 +59,7 @@
 
 <div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
+<script src="/i18n.js"></script>
 <script src="/tabler.min.js"></script>
 <script src="/shell.js"></script>
   <script src="/qc.js"></script>

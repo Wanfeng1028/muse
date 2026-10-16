@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AI 图片 · AI 短剧工坊</title>
+<title data-i18n="img.docTitle">AI 图片 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/app.css">
@@ -25,26 +25,26 @@
 <main class="page">
   <header class="page-head">
     <div>
-      <h1 class="page-title">AI 图片</h1>
-      <p class="page-sub">用你自己的 API 生成剧照、海报与分镜参考图（BYOK）</p>
+      <h1 class="page-title" data-i18n="img.pageTitle">AI 图片</h1>
+      <p class="page-sub" data-i18n="img.pageSub">用你自己的 API 生成剧照、海报与分镜参考图（BYOK）</p>
     </div>
   </header>
 
   <section class="card">
-    <div class="card-head"><h2 class="card-title">生成</h2></div>
+    <div class="card-head"><h2 class="card-title" data-i18n="img.generate">生成</h2></div>
     <div style="padding:16px 20px">
       <div class="fld">
-        <label for="img-prompt">提示词</label>
-        <textarea id="img-prompt" placeholder="描述你想要的画面…"></textarea>
+        <label for="img-prompt" data-i18n="img.prompt">提示词</label>
+        <textarea id="img-prompt" placeholder="描述你想要的画面…" data-i18n-ph="img.promptPh"></textarea>
       </div>
       <div class="fld">
-        <label for="img-model">模型</label>
+        <label for="img-model" data-i18n="img.model">模型</label>
         <select id="img-model"></select>
         <div id="img-empty" class="byok-empty" hidden></div>
       </div>
       <div class="fld-row">
         <div class="fld">
-          <label for="img-ratio">比例</label>
+          <label for="img-ratio" data-i18n="img.ratio">比例</label>
           <select id="img-ratio">
             <option value="1:1">1:1</option>
             <option value="16:9">16:9</option>
@@ -52,7 +52,7 @@
           </select>
         </div>
         <div class="fld">
-          <label for="img-size">尺寸</label>
+          <label for="img-size" data-i18n="img.size">尺寸</label>
           <select id="img-size">
             <option value="1024">1024</option>
             <option value="2048">2048</option>
@@ -60,18 +60,19 @@
         </div>
       </div>
       <div class="fld">
-        <label for="img-ref">参考图（可选）</label>
+        <label for="img-ref" data-i18n="img.ref">参考图（可选）</label>
         <input id="img-ref" type="file" accept="image/*" />
-        <img id="img-preview" class="byok-preview" hidden alt="参考图预览" />
+        <img id="img-preview" class="byok-preview" hidden alt="参考图预览" data-i18n-title="img.refPreviewAlt" />
       </div>
       <div class="gen-foot">
-        <button type="button" class="btn btn-primary" id="img-generate">生成图片</button>
+        <button type="button" class="btn btn-primary" id="img-generate" data-i18n="img.generateBtn">生成图片</button>
         <span class="hint" id="img-hint"></span>
       </div>
     </div>
   </section>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/vendor/lucide.min.js"></script>
 <script src="/shell.js"></script>
 <script src="/byok.js"></script>
@@ -80,6 +81,7 @@
   "use strict";
   var currentModel = null;
   function init() {
+    if (window.DFI18N) DFI18N.applyI18n();
     Byok.loadModels("IMAGE", {
       select: document.getElementById("img-model"),
       emptyBox: document.getElementById("img-empty"),
@@ -97,7 +99,7 @@
     };
     document.getElementById("img-generate").onclick = function () {
       var prompt = document.getElementById("img-prompt").value.trim();
-      if (!prompt) { Byok.toast("请填写提示词", "error"); return; }
+      if (!prompt) { Byok.toast(window.DFI18N ? DFI18N.tr("img.promptRequired") : "请填写提示词", "error"); return; }
       var sizeSel = document.getElementById("img-size");
       Byok.generate({
         module: "IMAGE",
@@ -110,11 +112,16 @@
           var preview = document.getElementById("img-preview");
           preview.src = url;
           preview.hidden = false;
-          Byok.toast("图片已生成", "success");
+          Byok.toast(window.DFI18N ? DFI18N.tr("img.generated") : "图片已生成", "success");
         }
       });
     };
     Byok.icons();
+    if (window.DFI18N) {
+      DFI18N.onLangChange(function () {
+        DFI18N.applyI18n();
+      });
+    }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

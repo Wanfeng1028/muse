@@ -4,7 +4,7 @@
 <script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>用量统计 · AI 短剧工坊</title>
+<title data-i18n="usg.pageTitle">用量统计 · AI 短剧工坊</title>
 <link rel="stylesheet" href="/tabler.min.css">
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/app.css">
@@ -120,117 +120,117 @@ table.data-table td.wrap { white-space: normal; min-width: 200px; }
 <body>
 <main class="page">
   <div class="page-head">
-    <h1>用量统计</h1>
-    <div class="subtitle">Token 与费用 · 仅统计真实发生的调用</div>
+    <h1 data-i18n="usg.heading">用量统计</h1>
+    <div class="subtitle" data-i18n="usg.subtitle">Token 与费用 · 仅统计真实发生的调用</div>
   </div>
 
   <div class="filter-row">
     <select id="filter-provider" class="form-select">
-      <option value="">全部供应商</option>
+      <option value="" data-i18n="usg.allProviders">全部供应商</option>
     </select>
     <select id="filter-model" class="form-select">
-      <option value="">全部模型</option>
+      <option value="" data-i18n="usg.allModels">全部模型</option>
     </select>
     <select id="filter-days" class="form-select">
-      <option value="7">近 7 天</option>
-      <option value="30" selected>近 30 天</option>
-      <option value="90">近 90 天</option>
+      <option value="7" data-i18n="usg.days7">近 7 天</option>
+      <option value="30" data-i18n="usg.days30" selected>近 30 天</option>
+      <option value="90" data-i18n="usg.days90">近 90 天</option>
     </select>
     <button id="btn-refresh" class="btn-quiet" type="button">
       <i data-lucide="refresh-cw"></i>
-      <span>刷新</span>
+      <span data-i18n="c.refresh">刷新</span>
     </button>
   </div>
 
   <div class="section">
     <div class="section-head">
-      <h2>概览</h2>
+      <h2 data-i18n="usg.overview">概览</h2>
     </div>
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">总成本</div>
+        <div class="kpi-label" data-i18n="usg.totalCost">总成本</div>
         <div class="kpi-value" id="kpi-cost">—</div>
         <div class="kpi-hint" id="kpi-cost-hint"></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">总请求数</div>
+        <div class="kpi-label" data-i18n="usg.totalRequests">总请求数</div>
         <div class="kpi-value" id="kpi-requests">—</div>
         <div class="kpi-hint" id="kpi-requests-hint"></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">真实消耗 Tokens</div>
+        <div class="kpi-label" data-i18n="usg.totalTokens">真实消耗 Tokens</div>
         <div class="kpi-value" id="kpi-tokens">—</div>
         <div class="kpi-hint" id="kpi-tokens-hint"></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">缓存命中率</div>
+        <div class="kpi-label" data-i18n="usg.cacheHitRate">缓存命中率</div>
         <div class="kpi-value" id="kpi-cache-hit">—</div>
-        <div class="kpi-hint">暂未采集</div>
+        <div class="kpi-hint" data-i18n="usg.notCollected">暂未采集</div>
       </div>
     </div>
   </div>
 
   <div class="section">
     <div class="section-head">
-      <h2>明细消耗</h2>
+      <h2 data-i18n="usg.detailUsage">明细消耗</h2>
     </div>
     <div class="kpi-grid">
       <div class="kpi-card mini">
-        <div class="kpi-label">新增输入</div>
+        <div class="kpi-label" data-i18n="usg.newInput">新增输入</div>
         <div class="kpi-value" id="kpi-input">—</div>
-        <div class="kpi-hint">暂未采集</div>
+        <div class="kpi-hint" data-i18n="usg.notCollected">暂未采集</div>
       </div>
       <div class="kpi-card mini">
-        <div class="kpi-label">输出</div>
+        <div class="kpi-label" data-i18n="usg.output">输出</div>
         <div class="kpi-value" id="kpi-output">—</div>
-        <div class="kpi-hint">暂未采集</div>
+        <div class="kpi-hint" data-i18n="usg.notCollected">暂未采集</div>
       </div>
       <div class="kpi-card mini">
-        <div class="kpi-label">缓存创建</div>
+        <div class="kpi-label" data-i18n="usg.cacheCreate">缓存创建</div>
         <div class="kpi-value" id="kpi-cache-create">—</div>
-        <div class="kpi-hint">暂未采集</div>
+        <div class="kpi-hint" data-i18n="usg.notCollected">暂未采集</div>
       </div>
       <div class="kpi-card mini">
-        <div class="kpi-label">缓存命中</div>
+        <div class="kpi-label" data-i18n="usg.cacheRead">缓存命中</div>
         <div class="kpi-value" id="kpi-cache-read">—</div>
-        <div class="kpi-hint">暂未采集</div>
+        <div class="kpi-hint" data-i18n="usg.notCollected">暂未采集</div>
       </div>
     </div>
   </div>
 
   <div class="section">
     <div class="section-head">
-      <h2>使用趋势</h2>
+      <h2 data-i18n="usg.trend">使用趋势</h2>
       <div class="tabs">
         <button class="btn-quiet tab-btn active" type="button" data-metric="tokens">Tokens</button>
-        <button class="btn-quiet tab-btn" type="button" data-metric="requests">请求数</button>
-        <button class="btn-quiet tab-btn" type="button" data-metric="cost">成本</button>
+        <button class="btn-quiet tab-btn" type="button" data-metric="requests" data-i18n="usg.requests">请求数</button>
+        <button class="btn-quiet tab-btn" type="button" data-metric="cost" data-i18n="usg.cost">成本</button>
       </div>
     </div>
-    <div id="trend-loading" class="state-box">加载中…</div>
-    <div id="trend-empty" class="state-box" style="display:none;">暂无数据</div>
-    <div id="trend-error" class="state-box error" style="display:none;">加载失败</div>
+    <div id="trend-loading" class="state-box" data-i18n="c.loading">加载中…</div>
+    <div id="trend-empty" class="state-box" style="display:none;" data-i18n="c.empty">暂无数据</div>
+    <div id="trend-error" class="state-box error" style="display:none;" data-i18n="usg.loadFailed">加载失败</div>
     <div id="trend-list" class="bar-list"></div>
   </div>
 
   <div class="section">
     <div class="section-head">
-      <h2>请求日志</h2>
+      <h2 data-i18n="usg.requestLog">请求日志</h2>
     </div>
-    <div id="req-loading" class="state-box">加载中…</div>
-    <div id="req-empty" class="state-box" style="display:none;">暂无数据</div>
-    <div id="req-error" class="state-box error" style="display:none;">加载失败</div>
+    <div id="req-loading" class="state-box" data-i18n="c.loading">加载中…</div>
+    <div id="req-empty" class="state-box" style="display:none;" data-i18n="c.empty">暂无数据</div>
+    <div id="req-error" class="state-box error" style="display:none;" data-i18n="usg.loadFailed">加载失败</div>
     <div id="req-table-wrap" class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th>时间</th>
-            <th>类型</th>
-            <th>供应商</th>
-            <th>模型</th>
+            <th data-i18n="usg.thTime">时间</th>
+            <th data-i18n="usg.thKind">类型</th>
+            <th data-i18n="usg.thProvider">供应商</th>
+            <th data-i18n="usg.thModel">模型</th>
             <th>Tokens</th>
-            <th>费用估算</th>
-            <th>速度</th>
+            <th data-i18n="usg.thCostEst">费用估算</th>
+            <th data-i18n="usg.thSpeed">速度</th>
           </tr>
         </thead>
         <tbody id="req-tbody"></tbody>
@@ -240,19 +240,19 @@ table.data-table td.wrap { white-space: normal; min-width: 200px; }
 
   <div class="section">
     <div class="section-head">
-      <h2>按模型</h2>
+      <h2 data-i18n="usg.byModel">按模型</h2>
     </div>
-    <div id="model-loading" class="state-box">加载中…</div>
-    <div id="model-empty" class="state-box" style="display:none;">暂无数据</div>
-    <div id="model-error" class="state-box error" style="display:none;">加载失败</div>
+    <div id="model-loading" class="state-box" data-i18n="c.loading">加载中…</div>
+    <div id="model-empty" class="state-box" style="display:none;" data-i18n="c.empty">暂无数据</div>
+    <div id="model-error" class="state-box error" style="display:none;" data-i18n="usg.loadFailed">加载失败</div>
     <div id="model-table-wrap" class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
-            <th>模型</th>
+            <th data-i18n="usg.thModel">模型</th>
             <th>Tokens</th>
-            <th>费用</th>
-            <th>任务数</th>
+            <th data-i18n="usg.thCost">费用</th>
+            <th data-i18n="usg.thTaskCount">任务数</th>
           </tr>
         </thead>
         <tbody id="model-tbody"></tbody>
@@ -262,20 +262,20 @@ table.data-table td.wrap { white-space: normal; min-width: 200px; }
 
   <div class="section">
     <div class="section-head">
-      <h2>按运行</h2>
+      <h2 data-i18n="usg.byRun">按运行</h2>
     </div>
-    <div id="run-loading" class="state-box">加载中…</div>
-    <div id="run-empty" class="state-box" style="display:none;">暂无数据</div>
-    <div id="run-error" class="state-box error" style="display:none;">加载失败</div>
+    <div id="run-loading" class="state-box" data-i18n="c.loading">加载中…</div>
+    <div id="run-empty" class="state-box" style="display:none;" data-i18n="c.empty">暂无数据</div>
+    <div id="run-error" class="state-box error" style="display:none;" data-i18n="usg.loadFailed">加载失败</div>
     <div id="run-table-wrap" class="table-wrap">
       <table class="data-table">
         <thead>
           <tr>
             <th>Run ID</th>
-            <th>目标</th>
+            <th data-i18n="usg.thGoal">目标</th>
             <th>Tokens</th>
-            <th>费用</th>
-            <th>创建时间</th>
+            <th data-i18n="usg.thCost">费用</th>
+            <th data-i18n="usg.thCreatedAt">创建时间</th>
           </tr>
         </thead>
         <tbody id="run-tbody"></tbody>
@@ -284,6 +284,7 @@ table.data-table td.wrap { white-space: normal; min-width: 200px; }
   </div>
 </main>
 
+<script src="/i18n.js"></script>
 <script src="/shell.js"></script>
 <script src="/usage.js"></script>
 </body>

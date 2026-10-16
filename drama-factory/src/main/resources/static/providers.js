@@ -1,6 +1,62 @@
 (function () {
   "use strict";
 
+  var PAGE_I18N = {
+    "prov.loadFailed": { "zh-CN": "加载供应商失败", "en": "Failed to load providers" },
+    "prov.updated": { "zh-CN": "已更新", "en": "Updated" },
+    "prov.updateFailed": { "zh-CN": "更新失败", "en": "Update failed" },
+    "prov.confirmDelete": { "zh-CN": "确定删除吗？", "en": "Delete this?" },
+    "prov.deleted": { "zh-CN": "已删除", "en": "Deleted" },
+    "prov.deleteFailed": { "zh-CN": "删除失败", "en": "Delete failed" },
+    "prov.testing": { "zh-CN": "正在检测…", "en": "Checking…" },
+    "prov.testFailed": { "zh-CN": "检测失败", "en": "Check failed" },
+    "prov.noProvidersInModule": { "zh-CN": "暂无", "en": "No " },
+    "prov.noProvidersSuffix": { "zh-CN": "供应商", "en": " providers yet" },
+    "prov.addFromPreset": { "zh-CN": "从预设添加", "en": "Add from preset" },
+    "prov.addProviderOf": { "zh-CN": "添加", "en": "Add " },
+    "prov.addProviderSuffix": { "zh-CN": "供应商", "en": " provider" },
+    "prov.testConnection": { "zh-CN": "测试连接", "en": "Test connection" },
+    "prov.manualAdd": { "zh-CN": "手动添加", "en": "Add manually" },
+    "prov.connectionOk": { "zh-CN": "连接正常", "en": "Connection OK" },
+    "prov.authFailed": { "zh-CN": "密钥无效", "en": "Invalid key" },
+    "prov.rateLimited": { "zh-CN": "触发限流", "en": "Rate limited" },
+    "prov.unreachable": { "zh-CN": "网络不可达", "en": "Unreachable" },
+    "prov.providerError": { "zh-CN": "服务方异常", "en": "Provider error" },
+    "prov.unsupported": { "zh-CN": "暂不支持", "en": "Not supported" },
+    "prov.editProviderTitle": { "zh-CN": "编辑媒体供应商", "en": "Edit media provider" },
+    "prov.addProviderTitle": { "zh-CN": "添加供应商", "en": "Add provider" },
+    "prov.keepKeyPlaceholder": { "zh-CN": "留空则保留原密钥", "en": "Leave blank to keep the current key" },
+    "prov.nameRequired": { "zh-CN": "供应商名不能为空", "en": "Provider name is required" },
+    "prov.saveOk": { "zh-CN": "保存成功", "en": "Saved" },
+    "prov.saveFailed": { "zh-CN": "保存失败", "en": "Save failed" },
+    "prov.addFromPresetOf": { "zh-CN": "从预设添加", "en": "Add from preset: " },
+    "prov.addFromPresetSuffix": { "zh-CN": "供应商", "en": " provider" },
+    "prov.loadingPresets": { "zh-CN": "加载预设中…", "en": "Loading presets…" },
+    "prov.presetsFailed": { "zh-CN": "预设加载失败", "en": "Failed to load presets" },
+    "prov.noPresets": { "zh-CN": "该模块暂无预设，可手动添加", "en": "No presets for this module; add one manually." },
+    "prov.pasteKey": { "zh-CN": "粘贴你的 API Key", "en": "Paste your API Key" },
+    "prov.add": { "zh-CN": "添加", "en": "Add" },
+    "prov.pasteKeyFirst": { "zh-CN": "请先粘贴 API Key", "en": "Paste an API Key first" },
+    "prov.added": { "zh-CN": "已添加", "en": "Added" },
+    "prov.presetNotFound": { "zh-CN": "预设不存在", "en": "Preset not found" },
+    "prov.addFailed": { "zh-CN": "添加失败", "en": "Add failed" },
+    "prov.editModelTitle": { "zh-CN": "编辑模型", "en": "Edit model" },
+    "prov.addModelTitle": { "zh-CN": "添加模型", "en": "Add model" },
+    "prov.modelNameRequired": { "zh-CN": "模型名不能为空", "en": "Model name is required" },
+    "prov.module.VIDEO": { "zh-CN": "视频", "en": "Video" },
+    "prov.module.TEXT": { "zh-CN": "文本", "en": "Text" },
+    "prov.module.IMAGE": { "zh-CN": "图片", "en": "Image" },
+    "prov.module.MUSIC": { "zh-CN": "音乐", "en": "Music" },
+    "prov.module.TTS": { "zh-CN": "TTS 语音", "en": "TTS voice" },
+    "prov.module.AVATAR": { "zh-CN": "数字人", "en": "Digital human" }
+  };
+  if (window.DFI18N) DFI18N.register(PAGE_I18N);
+
+  function _t(key, zh) {
+    if (window.DFI18N) return DFI18N.tr(key);
+    return zh;
+  }
+
   function icons() {
     if (window.lucide && typeof window.lucide.createIcons === "function") {
       window.lucide.createIcons();
@@ -52,6 +108,9 @@
   ];
 
   function moduleLabel(id) {
+    var key = "prov.module." + id;
+    var v = _t(key, null);
+    if (v && v !== key) return v;
     for (var i = 0; i < MODULES.length; i++) {
       if (MODULES[i].id === id) return MODULES[i].label;
     }
@@ -78,7 +137,7 @@
         providers = data;
         render();
       } else {
-        toast("加载供应商失败", "error");
+        toast(_t("prov.loadFailed", "加载供应商失败"), "error");
       }
     });
   }
@@ -95,7 +154,7 @@
     var html = "";
     for (var g = 0; g < MODULES.length; g++) {
       var mod = MODULES[g];
-      html += '<h3 class="pv-module-title">' + esc(mod.label) + "</h3>";
+      html += '<h3 class="pv-module-title">' + esc(moduleLabel(mod.id)) + "</h3>";
       var count = 0;
       for (var i = 0; i < providers.length; i++) {
         if ((providers[i].module || "VIDEO") === mod.id) {
@@ -104,13 +163,13 @@
         }
       }
       if (!count) {
-        html += '<p class="hint">暂无' + esc(mod.label) + "供应商</p>";
+        html += '<p class="hint">' + esc(_t("prov.noProvidersInModule", "暂无")) + esc(moduleLabel(mod.id)) + esc(_t("prov.noProvidersSuffix", "供应商")) + "</p>";
       }
       html += '<div style="margin:4px 0 20px;display:flex;gap:8px;flex-wrap:wrap">' +
         '<button type="button" class="btn btn-quiet btn-sm pv-preset-add" data-module="' + esc(mod.id) +
-        '"><i data-lucide="sparkles"></i> 从预设添加</button>' +
+        '"><i data-lucide="sparkles"></i> ' + esc(_t("prov.addFromPreset", "从预设添加")) + '</button>' +
         '<button type="button" class="btn btn-quiet btn-sm pv-provider-add" data-module="' +
-        esc(mod.id) + '"><i data-lucide="plus"></i> 添加' + esc(mod.label) + "供应商</button></div>";
+        esc(mod.id) + '"><i data-lucide="plus"></i> ' + esc(_t("prov.addProviderOf", "添加")) + esc(moduleLabel(mod.id)) + esc(_t("prov.addProviderSuffix", "供应商")) + "</button></div>";
     }
     listEl.innerHTML = html;
     bind();
@@ -126,7 +185,7 @@
     h += "</div>";
     h += '<div style="display:flex;align-items:center;gap:8px">';
     h += '<input type="checkbox" class="pv-switch" data-pid="' + esc(p.id) + '"' + (p.enabled ? " checked" : "") + " />";
-    h += '<button type="button" class="btn btn-quiet btn-sm pv-test" data-pid="' + esc(p.id) + '"><i data-lucide="plug-zap"></i> 测试连接</button>';
+    h += '<button type="button" class="btn btn-quiet btn-sm pv-test" data-pid="' + esc(p.id) + '"><i data-lucide="plug-zap"></i> ' + esc(_t("prov.testConnection", "测试连接")) + '</button>';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-edit" data-pid="' + esc(p.id) + '"><i data-lucide="pencil"></i></button>';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-del" data-pid="' + esc(p.id) + '"><i data-lucide="trash-2"></i></button>';
     h += "</div>";
@@ -144,7 +203,7 @@
     }
     h += "</div>";
     h += '<div style="margin-top:8px">';
-    h += '<button type="button" class="btn btn-quiet btn-sm pv-model-add" data-pid="' + esc(p.id) + '"><i data-lucide="plus"></i> 手动添加</button>';
+    h += '<button type="button" class="btn btn-quiet btn-sm pv-model-add" data-pid="' + esc(p.id) + '"><i data-lucide="plus"></i> ' + esc(_t("prov.manualAdd", "手动添加")) + '</button>';
     h += "</div>";
     h += '<div class="pv-test-result" style="margin-top:8px;font-size:12px" hidden></div>';
     h += "</article>";
@@ -235,34 +294,34 @@
       enabled: enabled
     }, function (status) {
       if (status >= 200 && status < 300) {
-        toast("已更新", "success");
+        toast(_t("prov.updated", "已更新"), "success");
         loadProviders();
       } else {
-        toast("更新失败", "error");
+        toast(_t("prov.updateFailed", "更新失败"), "error");
         loadProviders();
       }
     });
   }
 
   function onDeleteProvider(pid) {
-    if (!window.confirm("确定删除吗？")) return;
+    if (!window.confirm(_t("prov.confirmDelete", "确定删除吗？"))) return;
     api("DELETE", "/api/providers/" + encodeURIComponent(pid), null, function (status) {
       if (status >= 200 && status < 300) {
-        toast("已删除", "success");
+        toast(_t("prov.deleted", "已删除"), "success");
         loadProviders();
       } else {
-        toast("删除失败", "error");
+        toast(_t("prov.deleteFailed", "删除失败"), "error");
       }
     });
   }
 
   var PV_TEST_MAP = {
-    OK: ["var(--green-soft)", "var(--green)", "连接正常"],
-    AUTH_FAILED: ["var(--red-soft)", "var(--red)", "密钥无效"],
-    RATE_LIMITED: ["var(--amber-soft)", "var(--amber)", "触发限流"],
-    UNREACHABLE: ["var(--red-soft)", "var(--red)", "网络不可达"],
-    PROVIDER_ERROR: ["var(--red-soft)", "var(--red)", "服务方异常"],
-    UNSUPPORTED: ["var(--surface-2)", "var(--text-3)", "暂不支持"]
+    OK: ["var(--green-soft)", "var(--green)", "prov.connectionOk", "连接正常"],
+    AUTH_FAILED: ["var(--red-soft)", "var(--red)", "prov.authFailed", "密钥无效"],
+    RATE_LIMITED: ["var(--amber-soft)", "var(--amber)", "prov.rateLimited", "触发限流"],
+    UNREACHABLE: ["var(--red-soft)", "var(--red)", "prov.unreachable", "网络不可达"],
+    PROVIDER_ERROR: ["var(--red-soft)", "var(--red)", "prov.providerError", "服务方异常"],
+    UNSUPPORTED: ["var(--surface-2)", "var(--text-3)", "prov.unsupported", "暂不支持"]
   };
 
   function onTestConnection(btn) {
@@ -271,30 +330,30 @@
     var box = card.querySelector(".pv-test-result");
     btn.disabled = true;
     box.hidden = false;
-    box.innerHTML = '<span class="hint">正在检测…</span>';
+    box.innerHTML = '<span class="hint">' + esc(_t("prov.testing", "正在检测…")) + '</span>';
     api("POST", "/api/providers/" + encodeURIComponent(pid) + "/test", null, function (status, data) {
       btn.disabled = false;
       if (status !== 200 || !data) {
-        box.innerHTML = '<span class="badge" style="background:var(--red-soft);color:var(--red)">检测失败</span>'
+        box.innerHTML = '<span class="badge" style="background:var(--red-soft);color:var(--red)">' + esc(_t("prov.testFailed", "检测失败")) + '</span>'
           + ' <span class="hint">HTTP ' + esc(status) + '</span>';
         icons();
         return;
       }
       var entry = PV_TEST_MAP[data.status] || PV_TEST_MAP.UNSUPPORTED;
       box.innerHTML = '<span class="badge" style="background:' + entry[0] + ';color:' + entry[1] + '">'
-        + esc(entry[2]) + '</span> <span class="hint">' + esc(data.detail || "") + '</span>';
+        + esc(_t(entry[2], entry[3])) + '</span> <span class="hint">' + esc(data.detail || "") + '</span>';
       icons();
     });
   }
 
   function onDeleteModel(pid, mid) {
-    if (!window.confirm("确定删除吗？")) return;
+    if (!window.confirm(_t("prov.confirmDelete", "确定删除吗？"))) return;
     api("DELETE", "/api/providers/" + encodeURIComponent(pid) + "/models/" + encodeURIComponent(mid), null, function (status) {
       if (status >= 200 && status < 300) {
-        toast("已删除", "success");
+        toast(_t("prov.deleted", "已删除"), "success");
         loadProviders();
       } else {
-        toast("删除失败", "error");
+        toast(_t("prov.deleteFailed", "删除失败"), "error");
       }
     });
   }
@@ -313,15 +372,15 @@
 
     if (pid) {
       var p = findProvider(pid);
-      title.textContent = "编辑媒体供应商";
+      title.textContent = _t("prov.editProviderTitle", "编辑媒体供应商");
       nameEl.value = p ? (p.name || "") : "";
       if (moduleEl) moduleEl.value = (p && p.module) || "VIDEO";
       descEl.value = p ? (p.description || "") : "";
       keyEl.value = "";
-      keyEl.placeholder = "留空则保留原密钥";
+      keyEl.placeholder = _t("prov.keepKeyPlaceholder", "留空则保留原密钥");
       addrEl.value = p ? (p.apiAddress || "") : "";
     } else {
-      title.textContent = "添加供应商";
+      title.textContent = _t("prov.addProviderTitle", "添加供应商");
       nameEl.value = "";
       if (moduleEl) moduleEl.value = presetModule || "VIDEO";
       descEl.value = "";
@@ -347,7 +406,7 @@
     var addrEl = document.getElementById("pm-addr");
 
     var name = (nameEl.value || "").trim();
-    if (!name) { toast("供应商名不能为空", "error"); return; }
+    if (!name) { toast(_t("prov.nameRequired", "供应商名不能为空"), "error"); return; }
 
     var moduleEl = document.getElementById("pm-module");
     var payload = {
@@ -369,11 +428,11 @@
 
     api(method, url, payload, function (status) {
       if (status >= 200 && status < 300) {
-        toast("保存成功", "success");
+        toast(_t("prov.saveOk", "保存成功"), "success");
         closeModal(providerModal);
         loadProviders();
       } else {
-        toast("保存失败", "error");
+        toast(_t("prov.saveFailed", "保存失败"), "error");
       }
     });
   }
@@ -383,16 +442,16 @@
   function openPresetPicker(module) {
     var title = document.getElementById("preset-title");
     var listBox = document.getElementById("preset-list");
-    if (title) title.textContent = "从预设添加" + moduleLabel(module) + "供应商";
-    if (listBox) listBox.innerHTML = '<p class="hint">加载预设中…</p>';
+    if (title) title.textContent = _t("prov.addFromPresetOf", "从预设添加") + moduleLabel(module) + _t("prov.addFromPresetSuffix", "供应商");
+    if (listBox) listBox.innerHTML = '<p class="hint">' + esc(_t("prov.loadingPresets", "加载预设中…")) + '</p>';
     openModal(presetModal);
     api("GET", "/api/providers/presets?module=" + encodeURIComponent(module), null, function (status, data) {
       if (!(status >= 200 && status < 300 && Array.isArray(data))) {
-        if (listBox) listBox.innerHTML = '<p class="hint">预设加载失败</p>';
+        if (listBox) listBox.innerHTML = '<p class="hint">' + esc(_t("prov.presetsFailed", "预设加载失败")) + '</p>';
         return;
       }
       if (!data.length) {
-        if (listBox) listBox.innerHTML = '<p class="hint">该模块暂无预设，可手动添加</p>';
+        if (listBox) listBox.innerHTML = '<p class="hint">' + esc(_t("prov.noPresets", "该模块暂无预设，可手动添加")) + '</p>';
         return;
       }
       var h = "";
@@ -424,8 +483,8 @@
       h += "</div>";
     }
     h += '<div class="preset-keyrow">';
-    h += '<input type="password" class="preset-key" placeholder="粘贴你的 API Key" />';
-    h += '<button type="button" class="btn btn-primary btn-sm preset-add">添加</button>';
+    h += '<input type="password" class="preset-key" placeholder="' + esc(_t("prov.pasteKey", "粘贴你的 API Key")) + '" />';
+    h += '<button type="button" class="btn btn-primary btn-sm preset-add">' + esc(_t("prov.add", "添加")) + '</button>';
     h += "</div></div>";
     return h;
   }
@@ -435,17 +494,17 @@
     var presetId = card.getAttribute("data-preset");
     var keyInput = card.querySelector(".preset-key");
     var key = (keyInput.value || "").trim();
-    if (!key) { toast("请先粘贴 API Key", "error"); keyInput.focus(); return; }
+    if (!key) { toast(_t("prov.pasteKeyFirst", "请先粘贴 API Key"), "error"); keyInput.focus(); return; }
     this.disabled = true;
     api("POST", "/api/providers/from-preset", { presetId: presetId, apiKey: key }, function (status) {
       if (status >= 200 && status < 300) {
-        toast("已添加", "success");
+        toast(_t("prov.added", "已添加"), "success");
         closeModal(presetModal);
         loadProviders();
       } else if (status === 404) {
-        toast("预设不存在", "error");
+        toast(_t("prov.presetNotFound", "预设不存在"), "error");
       } else {
-        toast("添加失败", "error");
+        toast(_t("prov.addFailed", "添加失败"), "error");
       }
       var btn = card.querySelector(".preset-add");
       if (btn) btn.disabled = false;
@@ -470,14 +529,14 @@
           if (String(p.models[i].id) === String(mid)) { m = p.models[i]; break; }
         }
       }
-      title.textContent = "编辑模型";
+      title.textContent = _t("prov.editModelTitle", "编辑模型");
       nameEl.value = m ? (m.displayName || "") : "";
       modelIdEl.value = m ? (m.modelId || "") : "";
       scaleEl.value = m ? (m.scale || "") : "";
       descEl.value = m ? (m.description || "") : "";
       concEl.value = m && m.concurrency ? m.concurrency : 1;
     } else {
-      title.textContent = "添加模型";
+      title.textContent = _t("prov.addModelTitle", "添加模型");
       nameEl.value = "";
       modelIdEl.value = "";
       scaleEl.value = "";
@@ -496,7 +555,7 @@
     var concEl = document.getElementById("mm-concurrency");
 
     var displayName = (nameEl.value || "").trim();
-    if (!displayName) { toast("模型名不能为空", "error"); return; }
+    if (!displayName) { toast(_t("prov.modelNameRequired", "模型名不能为空"), "error"); return; }
 
     var concurrency = parseInt(concEl.value, 10);
     if (!isFinite(concurrency) || concurrency < 1) concurrency = 1;
@@ -520,11 +579,11 @@
 
     api(method, url, payload, function (status) {
       if (status >= 200 && status < 300) {
-        toast("保存成功", "success");
+        toast(_t("prov.saveOk", "保存成功"), "success");
         closeModal(modelModal);
         loadProviders();
       } else {
-        toast("保存失败", "error");
+        toast(_t("prov.saveFailed", "保存失败"), "error");
       }
     });
   }
@@ -579,6 +638,12 @@
 
     loadProviders();
     icons();
+
+    if (window.DFI18N) {
+      DFI18N.onLangChange(function () {
+        loadProviders();
+      });
+    }
   }
 
   if (document.readyState === "loading") {
