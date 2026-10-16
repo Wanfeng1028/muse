@@ -50,11 +50,12 @@
 - **v1.2.0「深色模式」（2026-10-16）**：见"状态"节。
 - **v1.1.0「数据导入导出」（2026-10-15，路线图第 2 项交付）**：后端 `apps/server/src/routes/backup.ts`——`GET /api/backup/export`（kaoyan-backup v1，7 表）、`POST /api/backup/import`（replace 事务全量替换 / merge 去重合并，逐行校验）、`POST /api/import/words` + `POST /api/import/mistakes`（CSV 导入：表头校验/空行跳过/错误行报告，subject 仅 math/english/politics/major）；前端 `DataTransfer.tsx`（/data 路由 + 导航「数据导入导出」，备份与恢复/单词 CSV/错题 CSV 三卡片，覆盖恢复二次确认，模板下载）；`tests/backup.test.ts` 13 例，服务端全量 22/22 通过，前端 tsc 零错；真实服务冒烟 6 项全过（导出/单词 CSV/错题 CSV/merge/replace 回导）；2 张真实截图亲眼验收通过（默认态 + 导入结果态）；README 功能/API/目录/路线图同步，CHANGELOG.md 新建。本轮修截图链路两处：上一轮遗留的两张截图为空白页（服务未就绪即截图），本轮用 route 拦截 harness（文档/静态读盘、/api 经 Node 代理，绕过 Chromium 152 LNA 拦截）重拍；另发现 Playwright 多 route 匹配时后注册优先，静态 route 曾吞掉 /api 代理
 - **v1.3.0「自律热力图」（2026-10-16）**：见"状态"节；heatmap.test.ts 7 例（默认 3 个月 93 天、months=1 返回 31 天、months=0/7 返回 400、focus+45 差值、plans 完成差值、-7 天补记录 streak+1、-30 天孤立记录 streak 不变）
+- **v1.4.0「周报视图」（2026-10-16）**：`GET /api/stats/weekly`（周维度聚合：专注分钟/计划完成率/新增错题/模考场次/连续打卡与热力图同口径，`focusMinutesByDay` 周一..周日，非法 start 400）+ 前端 `Weekly.tsx` 升级（概览卡×5、7 天专注条形复用热力图蓝五档、计划完成率 SVG 圆环 + 四科专注条、「和上周比一比」大白话对比、单词卡，深色跟随 data-theme）；vitest **55/55**（新增 5）、server/web tsc 零错、vite build 成功；真实冒烟（默认本周/?start=/非法值 400）；浅/深两张截图亲眼验收（数据自洽、零 console 错误）
 
 **后续计划**：
 
 - 考研核心 500 词词库扩充
-- 周报视图
+- ~~周报视图~~（已在 v1.4.0 交付）
 
 ## second-brain「第二大脑」
 
@@ -246,6 +247,7 @@
 - v2.1 生产级补强（2026-10-15）：dpsk 分 7 批生成（迁移/日志+request_id/metrics+ready/备份恢复 CLI/compose+运维手册/失败注入/文档），编排验收修 6 处（编造 transactions API 字段 amount/occurred_at→amount_cents/occurred_on、编造 static mount OLD 文本、backup 同秒文件名碰撞加 -N 后缀、middleware 测试同步函数用 async fixture、__main__ serve 无 args.dir 致启动崩溃、backup OSError 裸抛）；pytest 119/119、ruff 全洁；真实冒烟全链路通过
 - v2.2 多币种与汇率（2026-10-16）：`currencies` 汇率表 + 统计按本位币折算
 - v2.3 全站移动端适配（2026-10-16）：见"状态"节；pytest 157/157、ruff 全洁；3 张移动端真实截图亲眼验收
+- **v2.4「侦探规则引擎 2.0」（2026-10-16）**：模糊匹配升级（金额容差 ±100 分/±1%、日期窗口 ±3 天、商户别名学习一次记住、转账配对 transfer-pair）+ 侦探页批量认领/忽略；修真线上 bug：base.html 给 app.js 加 defer 致内联脚本先执行 `api 未定义`（去 defer，生产级复现验证）；pytest **186/186**（新增 29）、ruff 全洁；冒烟 15/15 全链路；桌面+移动截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_v2.4.md`。已知限制：转账配对仅同批次内；别名无修改/删除入口（排期下轮）
 
 **后续计划**：
 
@@ -278,6 +280,7 @@
 - 工程化 v1（2026-10-13）：单二进制架构落地，检查器/调度器/事件流、内嵌 Web UI、CI 与多阶段构建就绪
 - 生产级 v0.2.0（2026-10-13）：全量生产级改造（可观测性/可靠性/数据/部署/安全/可维护性）+ 灵魂功能（健康档案/月度 SLA/公开状态页）；CHANGELOG 见 sentinel/CHANGELOG.md
 - v0.3.0 状态页主题与订阅通知（2026-10-16）：迁移 v3（status_pages 加 theme/accent_color，老库自动补列）+ v4（status_subscriptions 表）；`PUT /api/status-pages/{id}/theme`；公开接口透出主题；订阅全链路 `POST /api/status/{slug}/subscribe`→确认邮件 token→`GET .../confirm`→`GET/POST .../unsubscribe`，down/recovered 事件经 `notify.NotifySubscribers` 扇出给已确认订阅者（同邮箱多页去重，退订链接带 token）；`SENTINEL_PUBLIC_URL` 配邮件链接基地址；状态页 UI 重写（CSS 变量双主题+访客切换器+主色取色器+订阅卡片，去 AI 味）；72 测试全过（新增 30）；真实冒烟：fake SMTP 捕获确认邮件→点链接确认→二次故障→订阅者收到宕机通知；三主题真实截图亲眼验收；修 v0.2 遗留 bug：可用性文字 span 与状态圆点共用 `.up` 类名致 querySelector 误命中圆点（改名 `.uptime`）。README/CHANGELOG 已同步，截图落 docs/screenshots/status*.png
+- **v0.4.0「Webhook 持久化投递队列」（2026-10-16）**：`webhook_deliveries` 表（迁移 v5，pending/retrying/done/failed）+ 入队幂等去重 + worker 指数退避重投（默认 8 次/基数 60s/15s 扫描）+ 管理 API（列表/手动重试）+ `/deliveries` 控制台页（真数据）；`go test` **97/97**（新增 12）、go vet 全洁；真实冒烟（必失败 webhook：pending→retrying→failed，手动 retry 闭环）；投递队列表截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`。已知限制：单实例；故障演练排期 v0.5
 
 **后续计划**：
 
@@ -401,6 +404,7 @@
 - v1.3 彻底删除 + 备份演练（2026-10-15）：dpsk 分 5 批生成（purge 代码/备份脚本/测试/文档/UI 小改），测试回喂 3 轮（dpsk 编造 API、helper 错用，编排按流程回喂；最后一处 helper 编排按仓库现有模式机械替换），真实服务冒烟 8 项与 4 张截图人工验收通过
 - v1.5 purge 定时清理 + 公开 API 文档页（2026-10-16，commit 58d3fac）
 - v1.6.0 备份健康自检（2026-10-16）：见"状态"节；`go test ./... -race` 95/95；dashboard 备份健康面板真实截图亲眼验收
+- **v1.7.0「burn 逐条彻底删除 + 备份恢复自动化演练」（2026-10-16）**：`POST /api/links` 与 `PATCH /api/links/{id}` 新增 `purge` 字段（仅 burn 链有效，非 burn 链传 400）；DB 迁移 v4→v5（`links.purge_after_burn`）；销毁时逐条 purge 或全局 `LINKSHORT_BURN_PURGE_AFTER_DESTROY` 任一成立即彻底删除（含 visits 级联）+ 审计日志；`scripts/backup-drill.sh` 一键自动化演练（建链→访问→备份→删库→恢复→一致性校验，真实演练 PASS）+ `make drill`；`go test ./... -race` **104/104**（新增 9）、go vet/gofmt 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.7.md`
 
 **后续计划**：
 
