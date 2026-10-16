@@ -13,10 +13,11 @@ import (
 
 // Notifier 承载全局告警配置。
 type Notifier struct {
-	WebhookURL string      // 全局 Webhook 地址
-	SMTP       SMTPConfig  // SMTP 邮件配置
-	WeCom      WeComConfig // 企业微信配置
-	Channels   []string    // 全局默认渠道，如 []string{"webhook", "smtp", "wecom"}
+	WebhookURL string       // 全局 Webhook 地址
+	SMTP       SMTPConfig   // SMTP 邮件配置
+	WeCom      WeComConfig  // 企业微信配置
+	Channels   []string     // 全局默认渠道，如 []string{"webhook", "smtp", "wecom"}
+	Queue      *QueueSender // 非空时 webhook 渠道走持久化队列异步投递
 }
 
 // payload 是发送到 Webhook 的 JSON 结构。

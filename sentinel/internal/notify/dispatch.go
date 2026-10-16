@@ -7,6 +7,7 @@ import (
 
 // Target 描述一次告警的目标级渠道配置。
 type Target struct {
+	MonitorID      int64  // 监控目标 ID，用于 webhook 持久化队列入队；<=0 则走同步发送
 	WebhookURL     string // 目标级 webhook 地址，空则回退全局
 	NotifyChannels string // 目标级渠道（逗号分隔），空表示使用全局默认
 }
@@ -38,7 +39,9 @@ func ParseChannels(s string) []string {
 
 // Notify 按渠道分发告警：
 //  1. 渠道确定：Target.NotifyChannels 非空则解析它，否则用 n.Channels，再为空则默认 ["webhook"]。
-//  2. webhook：目标级 WebhookURL 优先、全局 n.WebhookURL 回退，两者皆空则跳过（不算错误）；否则调用 n.Send。
+//  2. webhook：目标级 WebhookURL 优先、全局 n.WebhookURL 回退，两者皆空则跳过（不算错误）；
+//     若 n.Queue 非空且 t.MonitorID > 0，则改为调用 n.Queue.EnqueueWebhook 持久化入队异步投递；
+//     否则调用 n.Send 同步发送。
 //  3. smtp：调用 SMTPNotifier{Config: n.SMTP}.SendAlert(event, name, target, at, errMsg)。
 //  4. wecom：调用 WeComNotifier{Config: n.WeCom}.SendMarkdown(event, name, target, at, errMsg)。
 //
@@ -62,6 +65,12 @@ func (n Notifier) Notify(t Target, event, name, target, at, errMsg string) []err
 				url = strings.TrimSpace(n.WebhookURL)
 			}
 			if url == "" {
+				continue
+			}
+			if n.Queue != nil && t.MonitorID > 0 {
+				if err := n.Queue.EnqueueWebhook(t.MonitorID, url, event, name, target, at, errMsg); err != nil {
+					errs = append(errs, fmt.Errorf("webhook 入队失败: %w", err))
+				}
 				continue
 			}
 			if err := n.Send(url, event, name, target, at, errMsg); err != nil {

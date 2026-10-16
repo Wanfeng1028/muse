@@ -24,7 +24,7 @@
 - **公开状态页** `/status/{slug}`：对外展示，无需登录，客户直接看
 - **状态页主题**：每页可配浅色/深色/自定义主色，`PUT /api/status-pages/{id}/theme`，访客可在页面上切换预览
 - **订阅通知**：访客在状态页留邮箱订阅，宕机/恢复时收邮件；订阅需点确认链接（含退订），防滥用
-
+- **告警投递队列**：webhook 告警先入 SQLite 队列表，后台 worker 按指数退避重投（默认最多 8 次），`/deliveries` 页可看投递状态、手动重投，失败不再丢告警
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -32,6 +32,7 @@
 - 总览：`docs/screenshots/dashboard.png`
 - 站点健康档案：`docs/screenshots/profile.png`
 - 公开状态页（浅色 / 深色 / 自定义主色三主题）：`docs/screenshots/status.png`、`docs/screenshots/status-dark.png`、`docs/screenshots/status-custom.png`
+- 投递队列：`docs/screenshots/deliveries.png`
 
 ## 快速开始
 
@@ -63,8 +64,10 @@ open http://localhost:8200
 | `SENTINEL_HOST` | `0.0.0.0` | 监听地址 |
 | `SENTINEL_PORT` | `8200` | 监听端口 |
 | `SENTINEL_WEBHOOK_URL` | 空 | 告警 webhook |
-| `SENTINEL_API_TOKEN` | 空（必填） | API token |
-| `SENTINEL_LOG_LEVEL` | `info` | 日志级别 |
+| `SENTINEL_WEBHOOK_QUEUE_MAX_ATTEMPTS` | `8` | webhook 投递最大次数（1~20） |
+| `SENTINEL_WEBHOOK_QUEUE_BASE_BACKOFF_SEC` | `60` | 投递退避基数秒（5~3600） |
+| `SENTINEL_WEBHOOK_QUEUE_TICK_SEC` | `15` | 队列 worker 扫描间隔秒（5~300） |
+| `SENTINEL_API_TOKEN` | 空（必填） | API token || `SENTINEL_LOG_LEVEL` | `info` | 日志级别 |
 | `SENTINEL_BACKUP_DIR` | `backups` | 备份目录 |
 | `SENTINEL_BACKUP_KEEP` | `7` | 备份保留份数 |
 | `SENTINEL_BACKUP_INTERVAL_H` | `24` | 备份间隔（小时） |
@@ -91,6 +94,8 @@ open http://localhost:8200
 | GET | `/api/status/{slug}/confirm?token=...` | 否 | 订阅确认（邮件链接） |
 | GET | `/api/status/{slug}/unsubscribe?token=...` | 否 | 退订确认页 |
 | POST | `/api/status/{slug}/unsubscribe` | 否 | 执行退订，body `{"token":"..."}` |
+| GET | `/api/alerts/deliveries` | 是 | 投递队列列表（status/monitor_id/limit 过滤） |
+| POST | `/api/alerts/deliveries/{id}/retry` | 是 | 手动重投（仅失败/重试中） |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |
@@ -136,9 +141,8 @@ open http://localhost:8200
         │  └──────┬───────┘                              │
         │         │                                      │
         │  ┌──────▼───────┐    ┌──────────────────────┐  │
-        │  │  存储层（DB）  │    │  告警（webhook）       │  │
-        │  │  迁移 / 备份   │    └──────────────────────┘  │
-        │  └──────┬───────┘                              │
+│ │ 存储层（DB） │ │ 告警 webhook 持久化队列+worker │ │
+│ │ 迁移 / 备份 │ └──────────────────────┘ │        │  └──────┬───────┘                              │
         │         │                                      │
         │  ┌──────▼───────┐                              │
         │  │  SQLite 文件  │  data/sentinel.db            │

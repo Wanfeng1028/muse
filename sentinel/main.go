@@ -95,8 +95,16 @@ func main() {
 		Channels: cfg.NotifyChannels,
 	}
 	subMailer := notify.SMTPMailer{Notifier: notify.SMTPNotifier{Config: ntf.SMTP}}
+	// webhook 投递队列：告警产生时只入队，由 worker 按指数退避重投
+	queueSender := &notify.QueueSender{
+		Store:          st,
+		MaxAttempts:    cfg.QueueMaxAttempts,
+		BaseBackoffSec: int64(cfg.QueueBaseBackoffSec),
+		TickSec:        cfg.QueueTickSec,
+	}
+	ntf.Queue = queueSender
 	notifyFn := func(m store.Monitor, event, name, target, at, errMsg string) {
-		errs := ntf.Notify(notify.Target{WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels}, event, name, target, at, errMsg)
+		errs := ntf.Notify(notify.Target{MonitorID: m.ID, WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels}, event, name, target, at, errMsg)
 		if serr := notify.NotifySubscribers(st, subMailer, cfg.PublicURL, m.ID, event, name, target, at, errMsg); serr != nil {
 			errs = append(errs, serr)
 		}
@@ -139,6 +147,8 @@ func main() {
 	sch := scheduler.New(st, notifyFn, cfg.CheckConcurrency, cfg.SchedulerTickSec, cfg.CheckRetryMax)
 	go sch.Start(ctx)
 
+	// 启动 webhook 投递队列 worker
+	go queueSender.Run(ctx)
 	// 初始化种子数据
 	seed.EnsureSeed(st)
 

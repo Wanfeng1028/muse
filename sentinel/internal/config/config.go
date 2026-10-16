@@ -48,6 +48,13 @@ type Config struct {
 	CheckConcurrency int
 	CheckRetryMax    int
 	SchedulerTickSec int
+
+	// QueueMaxAttempts webhook 投递队列最大投递次数。
+	QueueMaxAttempts int
+	// QueueBaseBackoffSec webhook 投递队列指数退避基数（秒）。
+	QueueBaseBackoffSec int
+	// QueueTickSec webhook 投递队列 worker 扫描间隔（秒）。
+	QueueTickSec int
 }
 
 // Load 读取环境变量并返回解析后的配置。
@@ -201,6 +208,26 @@ func Load() (Config, error) {
 	}
 	cfg.SchedulerTickSec = tick
 
+	// SENTINEL_WEBHOOK_QUEUE_MAX_ATTEMPTS：默认 8，范围 1~20。
+	qMaxAttempts, err := parseIntEnv("SENTINEL_WEBHOOK_QUEUE_MAX_ATTEMPTS", 8, 1, 20)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.QueueMaxAttempts = qMaxAttempts
+
+	// SENTINEL_WEBHOOK_QUEUE_BASE_BACKOFF_SEC：默认 60，范围 5~3600。
+	qBaseBackoff, err := parseIntEnv("SENTINEL_WEBHOOK_QUEUE_BASE_BACKOFF_SEC", 60, 5, 3600)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.QueueBaseBackoffSec = qBaseBackoff
+
+	// SENTINEL_WEBHOOK_QUEUE_TICK_SEC：默认 15，范围 5~300。
+	qTick, err := parseIntEnv("SENTINEL_WEBHOOK_QUEUE_TICK_SEC", 15, 5, 300)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.QueueTickSec = qTick
 	// SENTINEL_PUBLIC_URL：可选；用于订阅邮件中的确认/退订链接。为空则用相对路径。
 	publicURL := strings.TrimSpace(os.Getenv("SENTINEL_PUBLIC_URL"))
 	if publicURL != "" && !strings.HasPrefix(publicURL, "http://") && !strings.HasPrefix(publicURL, "https://") {

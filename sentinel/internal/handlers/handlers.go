@@ -61,11 +61,13 @@ func (s *Server) Routes() http.Handler {
 	// 事件与概览
 	mux.HandleFunc("GET /api/incidents", s.handleListIncidents)
 	mux.HandleFunc("GET /api/overview", s.handleOverview)
-
+	mux.HandleFunc("GET /api/alerts/deliveries", s.handleListDeliveries)
+	mux.HandleFunc("POST /api/alerts/deliveries/{id}/retry", s.handleRetryDelivery)
 	// 静态页面与资源
 	mux.HandleFunc("GET /{$}", s.handleIndex)
 	mux.HandleFunc("GET /monitors", s.handleMonitorsPage)
 	mux.HandleFunc("GET /incidents", s.handleIncidentsPage)
+	mux.HandleFunc("GET /deliveries", s.handleDeliveriesPage)
 	mux.HandleFunc("GET /profile", s.handleProfilePage)
 	mux.HandleFunc("GET /status/{slug}", s.handleStatusPage)
 	subStatic, err := fs.Sub(web.FS, "static")
@@ -78,7 +80,7 @@ func (s *Server) Routes() http.Handler {
 
 	// 中间件链：RequestID -> Logging -> Auth -> mux
 	exact := []string{"/healthz", "/readyz", "/api/healthz", "/api/readyz", "/api/health",
-		"/", "/monitors", "/incidents", "/profile"}
+		"/", "/monitors", "/incidents", "/profile", "/deliveries"}
 	prefix := []string{"/api/status/", "/status/", "/static/"}
 	return middleware.RequestID(middleware.Logging(s.auth.Middleware(exact, prefix)(mux)))
 }
@@ -293,6 +295,11 @@ func (s *Server) handleMonitorsPage(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleIncidentsPage(w http.ResponseWriter, r *http.Request) {
 	s.serveStaticFile(w, "incidents.html", "text/html; charset=utf-8")
+}
+
+// handleDeliveriesPage 渲染投递队列控制台页。
+func (s *Server) handleDeliveriesPage(w http.ResponseWriter, r *http.Request) {
+	s.serveStaticFile(w, "deliveries.html", "text/html; charset=utf-8")
 }
 
 // handleProfilePage 渲染用户资料页。

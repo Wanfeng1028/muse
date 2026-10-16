@@ -100,16 +100,37 @@ var migrations = []migration{
 		version: 4,
 		stmts: []string{
 			`CREATE TABLE IF NOT EXISTS status_subscriptions (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				page_id INTEGER NOT NULL REFERENCES status_pages(id) ON DELETE CASCADE,
-				email TEXT NOT NULL,
-				token TEXT NOT NULL UNIQUE,
-				confirmed INTEGER NOT NULL DEFAULT 0,
-				created_at TEXT NOT NULL,
-				confirmed_at TEXT
-			)`,
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+page_id INTEGER NOT NULL REFERENCES status_pages(id) ON DELETE CASCADE,
+email TEXT NOT NULL,
+token TEXT NOT NULL UNIQUE,
+confirmed INTEGER NOT NULL DEFAULT 0,
+created_at TEXT NOT NULL,
+confirmed_at TEXT
+)`,
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_status_subscriptions_page_email ON status_subscriptions(page_id, email)`,
 			`CREATE INDEX IF NOT EXISTS idx_status_subscriptions_token ON status_subscriptions(token)`,
+		},
+	},
+	{
+		version: 5,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS webhook_deliveries (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+url TEXT NOT NULL,
+event TEXT NOT NULL,
+payload TEXT NOT NULL,
+status TEXT NOT NULL DEFAULT 'pending',
+attempt INTEGER NOT NULL DEFAULT 0,
+max_attempts INTEGER NOT NULL DEFAULT 8,
+next_retry_at TEXT,
+last_error TEXT NOT NULL DEFAULT '',
+created_at TEXT NOT NULL,
+updated_at TEXT NOT NULL
+)`,
+			`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_due ON webhook_deliveries(status, next_retry_at)`,
+			`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_monitor ON webhook_deliveries(monitor_id)`,
 		},
 	},
 }

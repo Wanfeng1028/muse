@@ -1,0 +1,463 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel · 投递队列</title>
+<!-- 样式与 incidents 保持统一风格 -->
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body {
+background: #f6f8fa;
+display: flex;
+flex-direction: column;
+min-height: 100vh;
+padding: 0 24px;
+}
+
+/* 顶栏 — 与 incidents 完全一致 */
+.topbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 16px 0;
+border-bottom: 1px solid #d0d7de;
+margin-bottom: 24px;
+}
+
+.topbar-left {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.logo {
+font-weight: 700;
+font-size: 1.5rem;
+letter-spacing: -0.5px;
+color: #0969da;
+text-decoration: none;
+}
+
+.logo:hover {
+text-decoration: underline;
+}
+
+.badge {
+background: #0969da;
+color: #fff;
+font-size: 0.7rem;
+font-weight: 600;
+padding: 2px 8px;
+border-radius: 999px;
+text-transform: uppercase;
+}
+
+.topbar-right {
+display: flex;
+align-items: center;
+gap: 20px;
+font-size: 0.95rem;
+}
+
+.topbar-right a {
+color: #24292f;
+text-decoration: none;
+font-weight: 500;
+padding: 6px 12px;
+border-radius: 6px;
+transition: background 0.15s;
+}
+
+.topbar-right a:hover {
+background: #eaeef2;
+color: #0969da;
+}
+
+/* 主内容区 */
+.container {
+flex: 1;
+max-width: 1400px;
+width: 100%;
+margin: 0 auto;
+}
+
+.page-header {
+display: flex;
+flex-wrap: wrap;
+align-items: baseline;
+gap: 12px;
+margin-bottom: 20px;
+}
+
+.page-header h1 {
+font-size: 1.8rem;
+font-weight: 600;
+color: #1f2328;
+letter-spacing: -0.3px;
+}
+
+.page-header .sub {
+font-size: 0.9rem;
+color: #57606a;
+}
+
+/* 筛选栏 */
+.filter-bar {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 20px;
+background: #ffffff;
+padding: 12px 18px;
+border-radius: 10px;
+border: 1px solid #d0d7de;
+box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.filter-bar label {
+font-size: 0.95rem;
+font-weight: 500;
+color: #1f2328;
+white-space: nowrap;
+}
+
+.filter-bar select {
+padding: 6px 32px 6px 12px;
+font-size: 0.95rem;
+border: 1px solid #d0d7de;
+border-radius: 6px;
+background-color: #ffffff;
+color: #1f2328;
+cursor: pointer;
+appearance: none;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236e7781' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+background-repeat: no-repeat;
+background-position: right 8px center;
+background-size: 16px;
+min-width: 160px;
+}
+
+.filter-bar select:focus {
+outline: 2px solid #0969da;
+outline-offset: 1px;
+border-color: #0969da;
+}
+
+.filter-bar button {
+padding: 6px 16px;
+font-size: 0.95rem;
+font-weight: 500;
+color: #1f2328;
+background: #f6f8fa;
+border: 1px solid #d0d7de;
+border-radius: 6px;
+cursor: pointer;
+}
+
+.filter-bar button:hover {
+background: #eaeef2;
+border-color: #afb8c1;
+}
+
+/* 表格卡片 */
+.table-wrapper {
+background: #ffffff;
+border-radius: 12px;
+border: 1px solid #d0d7de;
+box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+overflow-x: auto;
+margin-bottom: 32px;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+font-size: 0.95rem;
+min-width: 1100px;
+}
+
+thead {
+background: #f6f8fa;
+border-bottom: 1px solid #d0d7de;
+}
+
+th {
+text-align: left;
+padding: 14px 18px;
+font-weight: 600;
+color: #1f2328;
+font-size: 0.85rem;
+letter-spacing: 0.3px;
+text-transform: uppercase;
+white-space: nowrap;
+}
+
+td {
+padding: 14px 18px;
+border-bottom: 1px solid #eaeef2;
+color: #1f2328;
+vertical-align: middle;
+}
+
+tr:last-child td {
+border-bottom: none;
+}
+
+tbody tr:hover {
+background: #f6f8fa;
+}
+
+/* 状态徽章 — GitHub 素色 */
+.badge-status {
+display: inline-block;
+padding: 2px 8px;
+border-radius: 999px;
+font-size: 0.78rem;
+font-weight: 600;
+white-space: nowrap;
+}
+
+.badge-pending {
+background: #eaeef2;
+color: #57606a;
+}
+
+.badge-retrying {
+background: #fff8c5;
+color: #9a6700;
+}
+
+.badge-done {
+background: #dafbe1;
+color: #1a7f37;
+}
+
+.badge-failed {
+background: #ffebe9;
+color: #cf222e;
+}
+
+/* 截断单元格 */
+.error-cell {
+max-width: 260px;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+
+.url-cell {
+max-width: 240px;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+
+.mono {
+font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+font-size: 0.85rem;
+color: #57606a;
+}
+
+/* 小按钮 */
+.btn-sm {
+padding: 4px 12px;
+font-size: 0.85rem;
+font-weight: 500;
+color: #1f2328;
+background: #f6f8fa;
+border: 1px solid #d0d7de;
+border-radius: 6px;
+cursor: pointer;
+}
+
+.btn-sm:hover {
+background: #eaeef2;
+border-color: #afb8c1;
+}
+
+.btn-sm:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+}
+
+.empty-row {
+text-align: left;
+padding: 24px 18px;
+color: #57606a;
+}
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<header class="topbar">
+<div class="topbar-left">
+<a href="/" class="logo">Sentinel</a>
+<span class="badge">监控</span>
+</div>
+<nav class="topbar-right">
+<a href="/">仪表盘</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries" style="background:#eaeef2; color:#0969da;">投递队列</a>
+<a href="/settings">设置</a>
+</nav>
+</header>
+
+<main class="container">
+<div class="page-header">
+<h1>投递队列</h1>
+<span class="sub">webhook 没送达的都在这里，能看到重试到第几次，失败了可以手动再投一次。</span>
+</div>
+
+<div class="filter-bar">
+<label for="statusFilter">状态</label>
+<select id="statusFilter">
+<option value="">全部</option>
+<option value="pending">待投递</option>
+<option value="retrying">重试中</option>
+<option value="done">已送达</option>
+<option value="failed">已失败</option>
+</select>
+<button type="button" id="refreshBtn">刷新</button>
+</div>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>监控</th>
+<th>事件</th>
+<th>目标地址</th>
+<th>状态</th>
+<th>尝试</th>
+<th>下次重试</th>
+<th>最近错误</th>
+<th>创建时间</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="rows"><tr><td class="empty-row" colspan="10">加载投递数据…</td></tr></tbody>
+</table>
+</div>
+</main>
+
+<script src="/static/app.js" defer></script>
+<script>
+function esc(v) {
+if (v === null || v === undefined) return '';
+return String(v)
+.replace(/&/g, '&amp;')
+.replace(/</g, '&lt;')
+.replace(/>/g, '&gt;')
+.replace(/"/g, '&quot;');
+}
+
+function fmtTime(s) {
+if (!s) return '—';
+var d = new Date(s);
+if (isNaN(d.getTime())) return esc(s);
+function p(n) { return n < 10 ? '0' + n : '' + n; }
+return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+var STATUS_LABEL = {
+pending: '待投递',
+retrying: '重试中',
+done: '已送达',
+failed: '已失败'
+};
+
+function statusBadge(status) {
+var s = String(status || '');
+var label = STATUS_LABEL[s] || s || '未知';
+return '<span class="badge-status badge-' + esc(s) + '">' + esc(label) + '</span>';
+}
+
+function renderRows(items) {
+var tbody = document.getElementById('rows');
+if (!items || items.length === 0) {
+tbody.innerHTML = '<tr><td class="empty-row" colspan="10">暂无投递记录</td></tr>';
+return;
+}
+var html = '';
+for (var i = 0; i < items.length; i++) {
+var d = items[i];
+var attempt = (d.attempt || 0) + '/' + (d.max_attempts || 0);
+var nextRetry = d.next_retry_at ? fmtTime(d.next_retry_at) : '—';
+var lastErr = d.last_error ? esc(d.last_error) : '—';
+var canRetry = d.status === 'failed' || d.status === 'retrying';
+var op = canRetry
+? '<button type="button" class="btn-sm" data-retry="' + esc(d.id) + '">重试</button>'
+: '—';
+html += '<tr>'
++ '<td class="mono">' + esc(d.id) + '</td>'
++ '<td>' + esc(d.monitor_name || ('#' + d.monitor_id)) + '</td>'
++ '<td>' + esc(d.event) + '</td>'
++ '<td class="url-cell" title="' + esc(d.url) + '">' + esc(d.url) + '</td>'
++ '<td>' + statusBadge(d.status) + '</td>'
++ '<td class="mono">' + esc(attempt) + '</td>'
++ '<td>' + esc(nextRetry) + '</td>'
++ '<td class="error-cell" title="' + lastErr + '">' + lastErr + '</td>'
++ '<td>' + esc(fmtTime(d.created_at)) + '</td>'
++ '<td>' + op + '</td>'
++ '</tr>';
+}
+tbody.innerHTML = html;
+}
+
+function renderError(msg) {
+document.getElementById('rows').innerHTML =
+'<tr><td class="empty-row" colspan="10">加载失败：' + esc(msg) + '</td></tr>';
+}
+
+function loadDeliveries() {
+var status = document.getElementById('statusFilter').value;
+var path = '/api/alerts/deliveries?limit=100';
+if (status) path += '&status=' + encodeURIComponent(status);
+return api(path).then(function (data) {
+renderRows(data && data.items ? data.items : []);
+}).catch(function (err) {
+renderError(err.message || String(err));
+});
+}
+
+document.getElementById('statusFilter').addEventListener('change', function () {
+loadDeliveries();
+});
+
+document.getElementById('refreshBtn').addEventListener('click', function () {
+loadDeliveries();
+});
+
+document.getElementById('rows').addEventListener('click', function (ev) {
+var btn = ev.target.closest ? ev.target.closest('button[data-retry]') : null;
+if (!btn) return;
+var id = btn.getAttribute('data-retry');
+btn.disabled = true;
+api('/api/alerts/deliveries/' + encodeURIComponent(id) + '/retry', { method: 'POST' })
+.then(function () {
+return loadDeliveries();
+})
+.catch(function (err) {
+alert('重试失败：' + (err.message || String(err)));
+})
+.then(function () {
+btn.disabled = false;
+});
+});
+
+loadDeliveries();
+setInterval(loadDeliveries, 30000);
+</script>
+</body>
+</html>
