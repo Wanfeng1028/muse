@@ -4,6 +4,15 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.6.0] - 2026-10-17
+
+### Added
+
+- 500 词词库 words-500.json 接入播种：POST /api/words/seed-vocab 现加载 7 个文件（vocab-500-a~d、words-05/words-06 共 1000 条 + src/seed/words-500.json 500 条）；120 条与旧库重复去重，空库首次播种 imported=1380、skippedExisting=120，重复调用 imported=0、skippedExisting=1500（幂等）。
+- 播种核心抽为可测试的导出函数 seedVocabFromEntries(db, files) 与 getBundledVocabFiles()（apps/server/src/routes/words.ts）；非法条目不再 400 中断，改为跳过并记数（skippedInvalid + errors 明细）。
+- words-500 条目无 memory_tip 字段，入库时记空字符串；旧 1000 条 memory_tip 不变。
+- 测试：apps/server/tests/vocab-seed.test.ts 断言更新为 1380/120，新增 seedVocabFromEntries 坏条目容错、幂等、同批重复词用例；服务端 vitest 81/81 全绿。
+
 ## [1.5.0] - 2026-10-16
 
 ### Added

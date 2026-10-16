@@ -10,6 +10,7 @@ import type {
 } from '@kaoyan/shared';
 import { WORD_SOURCES } from '@kaoyan/shared';
 import { todayStr, addDays } from '../db';
+import vocabG from '../seed/words-500.json';
 import vocabA from '../data/vocab-500-a.json';
 import vocabB from '../data/vocab-500-b.json';
 import vocabC from '../data/vocab-500-c.json';
@@ -138,6 +139,111 @@ function getWordWithState(db: DatabaseSync, id: number): WordWithState | null {
     .get(id) as WordWithStateRow | undefined;
   if (!row) return null;
   return toWordWithState(row);
+}
+
+export interface VocabFile {
+  file: string;
+  entries: unknown[];
+}
+
+export interface VocabSeedResult {
+  imported: number;
+  skippedExisting: number;
+  skippedInvalid: number;
+  errors: Array<{ file: string; index: number; message: string }>;
+}
+
+export function seedVocabFromEntries(
+  db: DatabaseSync,
+  files: VocabFile[],
+): VocabSeedResult {
+  const errors: Array<{ file: string; index: number; message: string }> = [];
+  const validEntries: Array<{ file: string; entry: VocabEntry }> = [];
+  for (const { file, entries } of files) {
+    for (let index = 0; index < entries.length; index += 1) {
+      const message = validateVocabEntry(entries[index], index, file);
+      if (message !== null) {
+        errors.push({ file, index, message });
+      } else {
+        validEntries.push({ file, entry: entries[index] as VocabEntry });
+      }
+    }
+  }
+
+  const skippedInvalid = errors.length;
+
+  let imported = 0;
+  let skippedExisting = 0;
+
+  const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+  const insertWord = db.prepare(
+    'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+  );
+  const insertSrs = db.prepare(
+    'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
+  );
+
+  const today = todayStr();
+
+  db.exec('BEGIN');
+  try {
+    for (const { entry } of validEntries) {
+      const word = entry.word.trim();
+      const existing = findWord.get(word) as { id: number } | undefined;
+      if (existing) {
+        skippedExisting += 1;
+        continue;
+      }
+
+      const pos = typeof entry.pos === 'string' ? entry.pos.trim() : '';
+      const meanings = entry.meanings_zh.map((m) => m.trim());
+      const meaning = (pos ? pos + ' ' : '') + meanings.join('；');
+
+      const exampleEn =
+        typeof entry.example_en === 'string' ? entry.example_en.trim() : '';
+      const exampleZh =
+        typeof entry.example_zh === 'string' ? entry.example_zh.trim() : '';
+      let example = exampleEn;
+      if (exampleZh) {
+        example += ' ｜ ' + exampleZh;
+      }
+
+      const phonetic =
+        typeof entry.phonetic === 'string' ? entry.phonetic.trim() : '';
+      const memoryTip =
+        typeof entry.memory_tip === 'string' ? entry.memory_tip.trim() : '';
+
+      const info = insertWord.run(
+        word,
+        phonetic,
+        meaning,
+        example,
+        'core500',
+        memoryTip,
+      );
+      const newId = Number(info.lastInsertRowid);
+      insertSrs.run(newId, 2.5, 0, 0, today);
+      imported += 1;
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+
+  return { imported, skippedExisting, skippedInvalid, errors };
+}
+
+export function getBundledVocabFiles(): VocabFile[] {
+  return [
+    { file: 'vocab-500-a.json', entries: vocabA as unknown[] },
+    { file: 'vocab-500-b.json', entries: vocabB as unknown[] },
+    { file: 'vocab-500-c.json', entries: vocabC as unknown[] },
+    { file: 'vocab-500-d.json', entries: vocabD as unknown[] },
+    { file: 'words-05.json', entries: vocabE as unknown[] },
+    { file: 'words-06.json', entries: vocabF as unknown[] },
+    { file: 'words-500.json', entries: vocabG as unknown[] },
+  ];
 }
 
 export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): void {
@@ -406,99 +512,10 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     },
   );
 
-  // POST /api/words/seed-vocab：播种内置 1000 词库
+  // POST /api/words/seed-vocab：播种内置词库（1000 旧库 + words-500）
   app.post('/api/words/seed-vocab', async (_request, reply) => {
-    const files: { file: string; entries: unknown[] }[] = [
-      { file: 'vocab-500-a.json', entries: vocabA as unknown[] },
-      { file: 'vocab-500-b.json', entries: vocabB as unknown[] },
-      { file: 'vocab-500-c.json', entries: vocabC as unknown[] },
-      { file: 'vocab-500-d.json', entries: vocabD as unknown[] },
-      { file: 'words-05.json', entries: vocabE as unknown[] },
-      { file: 'words-06.json', entries: vocabF as unknown[] },
-    ];
-
-    const errors: { file: string; index: number; message: string }[] = [];
-    const validEntries: { file: string; entry: VocabEntry }[] = [];
-    for (const { file, entries } of files) {
-      for (let index = 0; index < entries.length; index += 1) {
-        const message = validateVocabEntry(entries[index], index, file);
-        if (message !== null) {
-          errors.push({ file, index, message });
-        } else {
-          validEntries.push({ file, entry: entries[index] as VocabEntry });
-        }
-      }
-    }
-
-    if (errors.length > 0) {
-      return reply.code(400).send({ error: '词库数据非法', errors });
-    }
-
-    let imported = 0;
-    let skippedExisting = 0;
-
-    const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
-    const insertWord = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
-    );
-    const insertSrs = db.prepare(
-      'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
-    );
-
-    const today = todayStr();
-
-    db.exec('BEGIN');
-    try {
-      for (const { entry } of validEntries) {
-        const word = entry.word.trim();
-        const existing = findWord.get(word) as { id: number } | undefined;
-        if (existing) {
-          skippedExisting += 1;
-          continue;
-        }
-
-        const pos = typeof entry.pos === 'string' ? entry.pos.trim() : '';
-        const meanings = entry.meanings_zh.map((m) => m.trim());
-        const meaning = (pos ? pos + ' ' : '') + meanings.join('；');
-
-        const exampleEn =
-          typeof entry.example_en === 'string' ? entry.example_en.trim() : '';
-        const exampleZh =
-          typeof entry.example_zh === 'string' ? entry.example_zh.trim() : '';
-        let example = exampleEn;
-        if (exampleZh) {
-          example += ' ｜ ' + exampleZh;
-        }
-
-        const phonetic =
-          typeof entry.phonetic === 'string' ? entry.phonetic.trim() : '';
-        const memoryTip =
-          typeof entry.memory_tip === 'string' ? entry.memory_tip.trim() : '';
-
-        const info = insertWord.run(
-          word,
-          phonetic,
-          meaning,
-          example,
-          'core500',
-          memoryTip,
-        );
-        const newId = Number(info.lastInsertRowid);
-        insertSrs.run(newId, 2.5, 0, 0, today);
-        imported += 1;
-      }
-      db.exec('COMMIT');
-    } catch (err) {
-      db.exec('ROLLBACK');
-      throw err;
-    }
-
-    return reply.send({
-      imported,
-      skippedExisting,
-      skippedInvalid: 0,
-      errors: [],
-    });
+    const result = seedVocabFromEntries(db, getBundledVocabFiles());
+    return reply.send(result);
   });
 
   // GET /api/words/vocab-status：内置 500 词库统计
