@@ -423,11 +423,12 @@
 - v1.6.0 备份健康自检（2026-10-16）：见"状态"节；`go test ./... -race` 95/95；dashboard 备份健康面板真实截图亲眼验收
 - **v1.7.0「burn 逐条彻底删除 + 备份恢复自动化演练」（2026-10-16）**：`POST /api/links` 与 `PATCH /api/links/{id}` 新增 `purge` 字段（仅 burn 链有效，非 burn 链传 400）；DB 迁移 v4→v5（`links.purge_after_burn`）；销毁时逐条 purge 或全局 `LINKSHORT_BURN_PURGE_AFTER_DESTROY` 任一成立即彻底删除（含 visits 级联）+ 审计日志；`scripts/backup-drill.sh` 一键自动化演练（建链→访问→备份→删库→恢复→一致性校验，真实演练 PASS）+ `make drill`；`go test ./... -race` **104/104**（新增 9）、go vet/gofmt 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.7.md`
 **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包（内置省域段表/解析责任链/CDN 头解析）+ clientIP + RecordVisitGeo + `GET /api/stats/geo`；`go test -race` **129/129**、vet/gofmt 全洁。
+- **v1.9.0「地域分布 Web UI 面板」（2026-10-17）**：后端 visits 表加 city 列（迁移 v6→v7）+ `GeoStats` 返回 `GeoOverview`（国家/城市/UV/未知占比）+ `GET /api/stats/geo` 加 days（7/30）与 country 下钻 + 新增 `GET /api/stats/geo.csv` 导出；前端 geo.html + 手写 SVG 世界地图（23 国 5 档邮戳红热力）+ 国家排行（点击下钻城市）+ 7/30 天切换；`go test ./...` 12 包全绿；209 次访问/7 国真实数据截图亲眼验收通过；验收抓出真 bug（国家排行按城市粒度致中国出现 5 次，改按 country_code 聚合）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.9.md`；已知限制：简化地图非精确国界、城市依赖 MMDB
 - **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包——china.go（内置中国省域 IP 段抽样表，CIDR 最长前缀匹配，精度边界诚实声明）/ chain.go（解析责任链：CDN 头 → MMDB → 内置表 → unknown，ReloadFromEnv）/ header.go（CDN 厂商头解析）；handler 新增 `clientIP`（X-Forwarded-For 首段 → X-Real-IP → RemoteAddr 去端口，信任假设有注释）；finishRedirect 改用 clientIP 做 ipHash + `geo.LookupRequest`；`st.RecordVisitGeo` 落库国家/省份；新增 `GET /api/stats/geo`（国家/省份 TopN + unknown 占比）；`go test ./... -race` **129/129** 全过、go vet/gofmt 全洁；CHANGELOG v1.8.0。已知缺口：Web UI 暂无地域面板（API 就绪，排期下轮）
 
 **后续计划**：
 
-- 地域分布 Web UI 面板（`GET /api/stats/geo` 已就绪，排期下轮；视觉验收要求真实数据截图）
+- ~~地域分布 Web UI 面板~~（已在 v1.9 交付）
 
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
