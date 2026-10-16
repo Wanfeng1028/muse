@@ -402,3 +402,83 @@ func TestSendWebPushWithRetry_EndpointValidationError(t *testing.T) {
 		t.Fatalf("错误文本期望含 \"https://\"，实际 %q", err.Error())
 	}
 }
+
+func TestWithRetry_SucceedsAfterFailures(t *testing.T) {
+	calls := 0
+	sleeper := &recordingSleeper{}
+	err := withRetry(context.Background(), DefaultRetryPolicy(), sleeper.sleep, "test", func() error {
+		calls++
+		if calls <= 2 {
+			return errors.New("状态码 500")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("期望 err == nil，实际 %v", err)
+	}
+	if calls != 3 {
+		t.Fatalf("调用次数 = %d, want 3", calls)
+	}
+	if sleeper.count() != 2 {
+		t.Fatalf("睡眠次数 = %d, want 2", sleeper.count())
+	}
+}
+
+func TestWithRetry_ExhaustsAndWraps(t *testing.T) {
+	calls := 0
+	sleeper := &recordingSleeper{}
+	policy := RetryPolicy{MaxRetries: 2}
+	err := withRetry(context.Background(), policy, sleeper.sleep, "test", func() error {
+		calls++
+		return errors.New("状态码 500")
+	})
+	if err == nil {
+		t.Fatalf("期望返回错误，实际 nil")
+	}
+	var exhausted *RetryExhaustedError
+	if !errors.As(err, &exhausted) {
+		t.Fatalf("期望 *RetryExhaustedError，实际 %T", err)
+	}
+	if exhausted.Attempts != 3 {
+		t.Fatalf("Attempts = %d, want 3", exhausted.Attempts)
+	}
+	if sleeper.count() != 2 {
+		t.Fatalf("睡眠次数 = %d, want 2", sleeper.count())
+	}
+}
+
+func TestWithRetry_NonRetryableNoSleep(t *testing.T) {
+	sleeper := &recordingSleeper{}
+	err := withRetry(context.Background(), DefaultRetryPolicy(), sleeper.sleep, "test", func() error {
+		return notify.ErrAuth
+	})
+	if err == nil {
+		t.Fatalf("期望返回错误，实际 nil")
+	}
+	var exhausted *RetryExhaustedError
+	if !errors.As(err, &exhausted) {
+		t.Fatalf("期望 *RetryExhaustedError，实际 %T", err)
+	}
+	if !exhausted.Immediate {
+		t.Fatalf("Immediate = false, want true")
+	}
+	if sleeper.count() != 0 {
+		t.Fatalf("睡眠次数 = %d, want 0", sleeper.count())
+	}
+}
+
+func TestWithRetry_ContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	sleeper := &recordingSleeper{}
+	err := withRetry(ctx, DefaultRetryPolicy(), sleeper.sleep, "test", func() error {
+		return nil
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("期望 context.Canceled，实际 %v", err)
+	}
+	var exhausted *RetryExhaustedError
+	if errors.As(err, &exhausted) {
+		t.Fatalf("期望非 *RetryExhaustedError，实际 %T", err)
+	}
+}

@@ -7,7 +7,6 @@
 
 ## [Unreleased]
 
-## [0.12.0] - 2026-10-17
 
 Prometheus 指标 + API 限流
 

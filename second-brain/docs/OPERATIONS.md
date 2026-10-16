@@ -193,3 +193,49 @@ docker logs second-brain 2>&1 | grep '"note.created"' | grep '"user":"alice"'
 - 超限：429 + Retry-After 秒头 + JSON {"error":"rate limit exceeded","request_id":"..."}。
 - 非法值启动 fail-fast：SB_RATE_LIMIT_RPS / SB_RATE_LIMIT_WRITE_RPS 设了但不是数字，或任一限流参数 <=0，服务直接 log.Fatalf 拒绝启动。
 - 调优建议：日常 20/40 够用；被爬虫打时调小 RPS；内网可信调用可 SB_RATE_LIMIT_ENABLED=false 关掉。
+
+## 告警规则（v0.13+）
+
+规则文件在 `prometheus/rules/second-brain.yml`，group 名 `second-brain-alerts`，每 30 秒评估一次。所有规则都带 `summary`、`description`、`runbook_url`，`runbook_url` 指回本节。规则里只用服务真实暴露的指标：`http_requests_total`、`http_request_duration_seconds`、`push_sent_total`、`reviews_graded_total`、`notes_total`、`reviews_due`、`up`。
+
+### 规则说明和阈值
+
+- SecondBrainHigh5xxRate（warning，for 5m）：5 分钟窗口里 5xx 响应占比超过 5%。服务端错误变多，先看接口日志。
+- SecondBrainPushFailureRate（warning，for 15m）：15 分钟窗口里推送失败（`failed` 加 `failed_permanent`）占比超过 20%。推送渠道或凭据有问题。
+- SecondBrainHighP99Latency（warning，for 5m）：5 分钟窗口 HTTP 请求 P99 延迟超过 1 秒。请求变慢，先定位是哪个 route。
+- SecondBrainRateLimitedSurge（warning，for 5m）：429 拒绝速率超过 5/s。疑似被刷或被爬虫打，看来源再决定要不要调小限流阈值。
+- SecondBrainDeadLetterSurge（warning，for 0m）：1 小时内 `failed_permanent` 增量大于 0。永久失败不自动重试，有死信立刻看。
+- SecondBrainInstanceDown（critical，for 5m）：`up{job="second-brain"} == 0` 持续 5 分钟。实例抓不到指标，服务可能挂了。
+
+### Prometheus 抓取配置示例
+
+```yaml
+scrape_configs:
+  - job_name: second-brain
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - "second-brain:8080"
+```
+
+注意 `/metrics` 自身请求不会被计入 `http_requests_total`，所以抓取不会污染告警用的请求量。
+
+### Alertmanager 接入三步
+
+1. 在 Prometheus 配置里指向 Alertmanager 地址，例如 `alerting: alertmanagers: - static_configs: - targets: ["alertmanager:9093"]`，并加载规则文件 `rule_files: - /etc/prometheus/rules/second-brain.yml`。
+2. 在 Alertmanager 配置里加一个 receiver（webhook、邮件或企微/钉钉机器人），把 `route.default_receiver` 指过去。
+3. 重启 Prometheus 和 Alertmanager，在 Prometheus 的 Alerts 页面确认规则已加载，再手动触发一次（比如停掉实例）验证通知能到。
+
+### 收到告警后的排查步骤
+
+- 5xx 占比高：看服务日志里最近的 500 堆栈，对照「限流与拒绝」和接口排障节，确认是自身 panic、下游依赖还是数据问题。
+- 推送失败率高：看推送渠道返回码，对照推送相关排障节，检查凭据是否过期、网络出口是否通。
+- P99 延迟高：先按 route 拆开看哪个接口慢，再对照「限流与拒绝」判断是不是被限流排队导致；没有 DB 慢查询专用指标，这条规则同时用来代理慢请求，必要时直接查数据库侧日志。
+- 429 速率高：看访问来源 IP 和 UA，对照「限流与拒绝」节，决定是调小 SB_RATE_LIMIT_RPS 还是加白名单。
+- 出现死信：找到 `failed_permanent` 对应的推送目标和报错，确认地址和凭据后手动补发。
+- 实例抓不到指标：确认进程是否还在、端口是否监听、`/metrics` 是否能本地访问，再看启动日志有没有 fail-fast 退出。
+
+### 诚实声明
+
+当前没有数据库慢查询的专用指标。慢请求问题统一用 SecondBrainHighP99Latency（P99 延迟）这条规则代理，它能告诉你"变慢了"，但没法直接告诉你是哪条 SQL 慢，定位到具体查询还得去数据库侧看日志或慢查询记录。

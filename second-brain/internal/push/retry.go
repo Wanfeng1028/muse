@@ -217,42 +217,26 @@ func (e *RetryExhaustedError) Unwrap() error {
 	return e.LastErr
 }
 
-// retrySender 是包裹了重试逻辑的 Sender 装饰器。
-type retrySender struct {
-	inner  notify.Sender
-	policy RetryPolicy
-	sleep  Sleeper
-}
-
-// Name 原样透传内层 sender 的通道名。
-// 红线要求：push_log 的 channel 列必须保持 smtp/webhook/webpush 原样，
-// 因此这里绝不允许添加任何后缀或改写。
-func (r *retrySender) Name() string {
-	return r.inner.Name()
-}
-
-// Send 按策略执行发送与重试。
+// withRetry 是统一的重试循环，按策略执行 attemptFn 并在可重试失败时退避重试。
 //
 // 语义约定：
-//   - 总尝试次数 = MaxRetries+1。
+//   - 总尝试次数 = policy.MaxRetries+1。
 //   - 首次失败且不可重试：立刻返回 RetryExhaustedError，不睡眠。
 //   - 可重试失败且仍有剩余次数：按 backoffForAttempt 睡眠后继续。
 //   - ctx 取消：立刻返回 ctx.Err()（不包装成耗尽，便于上层区分"取消"与"失败"）。
-func (r *retrySender) Send(ctx context.Context, msg notify.Message) error {
-	sleep := r.sleep
+//   - sleep 为 nil 时回落到 DefaultSleeper。
+func withRetry(ctx context.Context, policy RetryPolicy, sleep Sleeper, name string, attemptFn func() error) error {
 	if sleep == nil {
 		sleep = DefaultSleeper
 	}
 
-	// 每次 Send 新建独立 rng，种子混入全局安全随机数避免同纳秒并发种子相同。
+	// 每次调用新建独立 rng，种子混入全局安全随机数避免同纳秒并发种子相同。
 	rng := rand.New(rand.NewSource(time.Now().UnixNano() ^ int64(rand.Uint64())))
 
-	totalAttempts := r.policy.MaxRetries + 1
+	totalAttempts := policy.MaxRetries + 1
 	if totalAttempts < 1 {
 		totalAttempts = 1
 	}
-
-	name := r.inner.Name()
 
 	var lastErr error
 	for attempt := 0; attempt < totalAttempts; attempt++ {
@@ -260,7 +244,7 @@ func (r *retrySender) Send(ctx context.Context, msg notify.Message) error {
 			return err
 		}
 
-		lastErr = r.inner.Send(ctx, msg)
+		lastErr = attemptFn()
 		if lastErr == nil {
 			return nil
 		}
@@ -279,7 +263,7 @@ func (r *retrySender) Send(ctx context.Context, msg notify.Message) error {
 			break
 		}
 
-		d := backoffForAttempt(r.policy, attempt, rng)
+		d := backoffForAttempt(policy, attempt, rng)
 		log.Printf("push: %s 发送失败（第 %d/%d 次），%v 后重试：%v", name, attempt+1, totalAttempts, d, lastErr)
 		if err := sleep(ctx, d); err != nil {
 			// ctx 取消（或 sleeper 自定义错误）：立刻返回，不包装成耗尽。
@@ -289,6 +273,28 @@ func (r *retrySender) Send(ctx context.Context, msg notify.Message) error {
 
 	log.Printf("push: %s 发送失败，已尝试 %d 次不再重试：%v", name, totalAttempts, lastErr)
 	return &RetryExhaustedError{Attempts: totalAttempts, LastErr: lastErr}
+}
+
+// retrySender 是包裹了重试逻辑的 Sender 装饰器。
+
+type retrySender struct {
+	inner  notify.Sender
+	policy RetryPolicy
+	sleep  Sleeper
+}
+
+// Name 原样透传内层 sender 的通道名。
+// 红线要求：push_log 的 channel 列必须保持 smtp/webhook/webpush 原样，
+// 因此这里绝不允许添加任何后缀或改写。
+func (r *retrySender) Name() string {
+	return r.inner.Name()
+}
+
+// Send 按策略执行发送与重试。
+func (r *retrySender) Send(ctx context.Context, msg notify.Message) error {
+	return withRetry(ctx, r.policy, r.sleep, r.inner.Name(), func() error {
+		return r.inner.Send(ctx, msg)
+	})
 }
 
 // WrapWithRetry 用默认 sleeper 包裹 sender。
@@ -324,51 +330,9 @@ func SendWebPushWithRetry(
 	policy RetryPolicy,
 	sleep Sleeper,
 ) error {
-	if sleep == nil {
-		sleep = DefaultSleeper
-	}
-
-	rng := rand.New(rand.NewSource(time.Now().UnixNano() ^ int64(rand.Uint64())))
-
-	totalAttempts := policy.MaxRetries + 1
-	if totalAttempts < 1 {
-		totalAttempts = 1
-	}
-
-	name := "webpush"
-
-	var lastErr error
-	for attempt := 0; attempt < totalAttempts; attempt++ {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
-		lastErr = wp.SendToSubscription(ctx, target, title, body, url)
-		if lastErr == nil {
-			return nil
-		}
-
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		if !IsRetryable(lastErr) {
-			return &RetryExhaustedError{Attempts: attempt + 1, LastErr: lastErr, Immediate: true}
-		}
-
-		if attempt == totalAttempts-1 {
-			break
-		}
-
-		d := backoffForAttempt(policy, attempt, rng)
-		log.Printf("push: %s 发送失败（第 %d/%d 次），%v 后重试：%v", name, attempt+1, totalAttempts, d, lastErr)
-		if err := sleep(ctx, d); err != nil {
-			return err
-		}
-	}
-
-	log.Printf("push: %s 发送失败，已尝试 %d 次不再重试：%v", name, totalAttempts, lastErr)
-	return &RetryExhaustedError{Attempts: totalAttempts, LastErr: lastErr}
+	return withRetry(ctx, policy, sleep, "webpush", func() error {
+		return wp.SendToSubscription(ctx, target, title, body, url)
+	})
 }
 
 // truncateRetryDetail 按 rune 截断字符串到 max 个字符，避免把多字节字符切坏。

@@ -1,0 +1,81 @@
+
+groups:
+  - name: second-brain-alerts
+    interval: 30s
+    rules:
+      - alert: SecondBrainHigh5xxRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "second-brain 5xx 错误占比偏高"
+          description: "过去 5 分钟里 5xx 响应占全部请求的比例超过 5%，当前值 {{ $value | humanizePercentage }}。一般是接口报错或下游依赖出问题，先看日志里最近的 500 堆栈。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
+      - alert: SecondBrainPushFailureRate
+        expr: |
+          (
+            sum(rate(push_sent_total{status=~"failed|failed_permanent"}[15m]))
+            /
+            sum(rate(push_sent_total[15m]))
+          ) > 0.2
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "second-brain 推送失败率偏高"
+          description: "过去 15 分钟里推送失败（failed 加 failed_permanent）占全部推送尝试的比例超过 20%，当前值 {{ $value | humanizePercentage }}。检查推送渠道凭据、网络出口和对方接口返回码。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
+      - alert: SecondBrainHighP99Latency
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum by (le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "second-brain P99 延迟超过 1 秒"
+          description: "过去 5 分钟 HTTP 请求 P99 延迟超过 1 秒，当前值 {{ $value }} 秒。没有 DB 慢查询专用指标，这条规则同时用来代理慢请求问题，先看是不是某个 route 拖慢了整体。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
+      - alert: SecondBrainRateLimitedSurge
+        expr: |
+          sum(rate(http_requests_total{status="429"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "second-brain 429 拒绝速率异常"
+          description: "过去 5 分钟被限流拒绝（429）的速率超过 5/s，当前值 {{ $value }} 次每秒，疑似被刷或被爬虫打。看访问来源，必要时调小 SB_RATE_LIMIT_RPS。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
+      - alert: SecondBrainDeadLetterSurge
+        expr: |
+          sum(increase(push_sent_total{status="failed_permanent"}[1h])) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "second-brain 出现永久失败推送（死信）"
+          description: "过去 1 小时出现 failed_permanent 推送，增量 {{ $value }} 条。永久失败不会自动重试，需要人工确认目标地址和凭据。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
+      - alert: SecondBrainInstanceDown
+        expr: |
+          up{job="second-brain"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "second-brain 实例抓不到指标"
+          description: "Prometheus 连续 5 分钟抓不到 job=second-brain 的实例，服务可能已经挂了或 /metrics 不通。先确认进程和端口，再看启动日志。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
