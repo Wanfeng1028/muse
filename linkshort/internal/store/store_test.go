@@ -282,8 +282,8 @@ func TestMigrate_版本与新列(t *testing.T) {
 	if err := d.QueryRow("PRAGMA user_version").Scan(&v); err != nil {
 		t.Fatalf("查询 user_version 失败: %v", err)
 	}
-	if v != 5 {
-		t.Errorf("user_version 期望 5，实际 %d", v)
+	if v != 6 {
+		t.Errorf("user_version 期望 6，实际 %d", v)
 	}
 
 	rows, err := d.Query("PRAGMA table_info(links)")

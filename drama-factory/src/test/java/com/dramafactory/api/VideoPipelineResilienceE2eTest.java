@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.file.Path;
@@ -47,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestPropertySource(properties = "spring.datasource.url=jdbc:h2:mem:drama-test-resilience;DB_CLOSE_DELAY=-1")
 class VideoPipelineResilienceE2eTest {
 
     @Autowired
@@ -138,8 +140,11 @@ class VideoPipelineResilienceE2eTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
 
-        // 步骤 6：60s 循环等待 shotId1 对应任务 DONE
-        long deadline = System.currentTimeMillis() + 60_000L;
+        // 步骤 6：120s 循环等待 shotId1 对应任务 DONE。
+        // 预算推导：测试故意注入 1 次瞬时失败 → attempts+1 → 20s 设计退避（VideoTaskService.computeBackoffMs）
+        // → 重试；2 个分镜最多 2 次真实 ffmpeg 编码（安静约 10s/次，2 核争用约 30s/次）；
+        // 再加提交轮询与 10s tick 对齐。60s 按安静机器编码耗时定的，负载下不够；120s 由机制算出。
+        long deadline = System.currentTimeMillis() + 120_000L;
         boolean done = false;
         while (System.currentTimeMillis() < deadline) {
             String tasksJson = mockMvc.perform(get("/api/shots/" + shotId1 + "/video-tasks"))
@@ -156,7 +161,7 @@ class VideoPipelineResilienceE2eTest {
             Thread.sleep(1000L);
         }
         if (!done) {
-            fail("60s 内未等到 shotId1 视频任务 DONE（管线未在退避后恢复）");
+            fail("120s 内未等到 shotId1 视频任务 DONE（管线未在退避后恢复）");
         }
 
         // 额外韧性证据：循环结束后断言确实发生过一次失败重试。

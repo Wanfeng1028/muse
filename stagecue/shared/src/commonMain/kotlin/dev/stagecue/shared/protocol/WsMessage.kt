@@ -1,6 +1,7 @@
 package dev.stagecue.shared.protocol
 
 import dev.stagecue.shared.model.CueState
+import dev.stagecue.shared.oplog.OpLogEntry
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -17,7 +18,12 @@ data class Hello(
     override val sentAtMs: Long,
     val clientId: String,
     val role: ClientRole,
-    val clientTimeMs: Long
+    val clientTimeMs: Long,
+    /**
+     * 重连时客户端已同步的最大 oplog seq；服务端回放大于该 seq 的条目。
+     * null 表示全新客户端，服务端不回放。老客户端不填此字段，解码时取默认值。
+     */
+    val lastSeenSeq: Long? = null
 ) : WsMessage
 
 @Serializable
@@ -118,4 +124,17 @@ data class Error(
     override val sentAtMs: Long,
     val code: String,
     val message: String
+) : WsMessage
+
+
+/**
+ * 重连回放：服务端把客户端未同步的 oplog 条目一次性推给它。
+ * 客户端只做日志补齐展示，绝不能把回放条目当新事件重新执行（尤其不能重放成 CueFired 去驱动设备）。
+ */
+@Serializable
+@SerialName("oplog_replay")
+data class OpLogReplay(
+    override val msgId: String,
+    override val sentAtMs: Long,
+    val entries: List<OpLogEntry>
 ) : WsMessage

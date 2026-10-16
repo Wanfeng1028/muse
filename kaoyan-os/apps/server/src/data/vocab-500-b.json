@@ -1,0 +1,1530 @@
+[
+  {
+    "word": "earnest",
+    "phonetic": "/ˈɜːnɪst/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "认真的",
+      "诚挚的"
+    ],
+    "example_en": "She made an earnest effort to master the difficult subject before the final examination.",
+    "example_zh": "她在期末考试前认真努力地掌握了这门难学的科目。",
+    "memory_tip": "记忆法：earn（挣得）+ est，认真工作才能挣得回报。"
+  },
+  {
+    "word": "eccentric",
+    "phonetic": "/ɪkˈsentrɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "古怪的",
+      "反常的"
+    ],
+    "example_en": "The eccentric professor wore a different colored sock on each foot every single day.",
+    "example_zh": "这位古怪的教授每天都穿两只不同颜色的袜子。",
+    "memory_tip": "记忆法：ec-（出）+ centr（中心），偏离中心的就是古怪的。"
+  },
+  {
+    "word": "echelon",
+    "phonetic": "/ˈeʃəlɒn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "阶层",
+      "梯队"
+    ],
+    "example_en": "Only those in the upper echelon of the company could attend the secret meeting.",
+    "example_zh": "只有公司高层阶层的人才能参加这次秘密会议。",
+    "memory_tip": "记忆法：联想 escalator（扶梯），一层层上升的阶梯即阶层。"
+  },
+  {
+    "word": "eclectic",
+    "phonetic": "/ɪˈklektɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "兼收并蓄的",
+      "折衷的"
+    ],
+    "example_en": "Her eclectic taste in music ranges from classical symphonies to modern jazz and folk songs.",
+    "example_zh": "她在音乐上兼收并蓄的品味涵盖古典交响乐到现代爵士和民谣。",
+    "memory_tip": "记忆法：ec-（出）+ lect（选），选出多种即兼收并蓄。"
+  },
+  {
+    "word": "efficacy",
+    "phonetic": "/ˈefɪkəsi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "功效",
+      "效力"
+    ],
+    "example_en": "Researchers are still testing the efficacy of the new drug against the rare disease.",
+    "example_zh": "研究人员仍在测试这种新药对抗这种罕见疾病的功效。",
+    "memory_tip": "记忆法：ef-（出）+ fic（做）+ acy，做出来的效果即功效。"
+  },
+  {
+    "word": "elapse",
+    "phonetic": "/ɪˈlæps/",
+    "pos": "v.",
+    "meanings_zh": [
+      "（时间）流逝",
+      "过去"
+    ],
+    "example_en": "Several years elapsed before they finally met again at their old school reunion.",
+    "example_zh": "几年时间流逝后，他们终于在母校聚会上再次相见。",
+    "memory_tip": "记忆法：e-（出）+ lapse（滑走），时间悄悄滑走即流逝。"
+  },
+  {
+    "word": "elicit",
+    "phonetic": "/ɪˈlɪsɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "引出",
+      "诱出"
+    ],
+    "example_en": "The teacher's clever questions elicited thoughtful answers from even the shyest students.",
+    "example_zh": "老师巧妙的问题甚至从最害羞的学生那里引出了深思熟虑的回答。",
+    "memory_tip": "记忆法：e-（出）+ licit（引诱），把答案引出来；对比 illicit（非法的）。"
+  },
+  {
+    "word": "elliptical",
+    "phonetic": "/ɪˈlɪptɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "椭圆的",
+      "（言语）隐晦的，省略的"
+    ],
+    "example_en": "The astronomer explained that the comet follows an elliptical orbit around the sun rather than a circular one.",
+    "example_zh": "天文学家解释说，这颗彗星围绕太阳运行的轨道是椭圆形的，而非圆形。",
+    "memory_tip": "ellipse（椭圆）+ ical；天体轨道多是椭圆，故引申为“拐弯抹角、省略的”表达。"
+  },
+  {
+    "word": "eloquence",
+    "phonetic": "/ˈeləkwəns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "雄辩",
+      "口才",
+      "流利的表达能力"
+    ],
+    "example_en": "Her eloquence in the debate convinced even those who had initially opposed the proposal.",
+    "example_zh": "她在辩论中的雄辩甚至说服了那些最初反对该提案的人。",
+    "memory_tip": "e-（出）+ loqu（说）+ ence；能把话说“出来”且动人，就是雄辩。"
+  },
+  {
+    "word": "eloquent",
+    "phonetic": "/ˈeləkwənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "雄辩的",
+      "有说服力的"
+    ],
+    "example_en": "His eloquent speech at the conference convinced everyone to support the new policy.",
+    "example_zh": "他在会议上雄辩的演讲说服了所有人支持新政策。",
+    "memory_tip": "记忆法：e-（出）+ loqu（说），能说会道即雄辩的。"
+  },
+  {
+    "word": "embark",
+    "phonetic": "/ɪmˈbɑːk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "从事",
+      "着手",
+      "登船"
+    ],
+    "example_en": "After graduation she embarked on a challenging career in international environmental law.",
+    "example_zh": "毕业后她投身于国际环境法这一充满挑战的职业。",
+    "memory_tip": "记忆法：em-（进入）+ bark（船），上船开始旅程即着手从事。"
+  },
+  {
+    "word": "embed",
+    "phonetic": "/ɪmˈbed/",
+    "pos": "v.",
+    "meanings_zh": [
+      "嵌入",
+      "深深植入"
+    ],
+    "example_en": "The journalist was embedded with the troops for three months to report the war.",
+    "example_zh": "这名记者随军嵌入式采访了三个月来报道这场战争。",
+    "memory_tip": "记忆法：em-（进入）+ bed（床），把东西放进床里即嵌入。"
+  },
+  {
+    "word": "embellish",
+    "phonetic": "/ɪmˈbelɪʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "装饰，美化",
+      "（对叙述）添枝加叶"
+    ],
+    "example_en": "He tends to embellish his travel stories with details that never actually happened.",
+    "example_zh": "他倾向于给旅行故事添油加醋，加入一些从未真正发生过的细节。",
+    "memory_tip": "em-（使）+ bell（美）+ ish；使变美即装饰，故事被“装饰”就是添枝加叶。"
+  },
+  {
+    "word": "eminent",
+    "phonetic": "/ˈemɪnənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "杰出的",
+      "著名的"
+    ],
+    "example_en": "An eminent scholar was invited to deliver the opening lecture at the academic forum.",
+    "example_zh": "一位杰出学者被邀请在学术论坛上做开幕讲座。",
+    "memory_tip": "记忆法：e-（出）+ min（突出），从人群中突出即杰出的。"
+  },
+  {
+    "word": "empower",
+    "phonetic": "/ɪmˈpaʊə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "授权",
+      "使有能力"
+    ],
+    "example_en": "Education can empower young people to change their communities for the better.",
+    "example_zh": "教育能赋予年轻人改变社区的力量。",
+    "memory_tip": "记忆法：em-（使）+ power（权力），使有权力即授权。"
+  },
+  {
+    "word": "emulate",
+    "phonetic": "/ˈemjuleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "努力赶上，效仿",
+      "与……竞争"
+    ],
+    "example_en": "Young researchers often try to emulate the rigorous methods of the scientists they admire most.",
+    "example_zh": "年轻研究人员常常试图效仿他们最钦佩的科学家的严谨方法。",
+    "memory_tip": "emul（竞争，源自 aemulus）+ ate；与榜样“竞争”，即努力效仿赶超。"
+  },
+  {
+    "word": "enact",
+    "phonetic": "/ɪˈnækt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "颁布（法律）",
+      "制定"
+    ],
+    "example_en": "Parliament voted to enact stricter regulations on carbon emissions last month.",
+    "example_zh": "议会上个月投票通过颁布更严格的碳排放法规。",
+    "memory_tip": "记忆法：en-（使）+ act（行动/法案），使法案生效即颁布。"
+  },
+  {
+    "word": "encompass",
+    "phonetic": "/ɪnˈkʌmpəs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "包含",
+      "涵盖"
+    ],
+    "example_en": "The new curriculum encompasses a wide range of subjects from mathematics to philosophy.",
+    "example_zh": "新课程涵盖了从数学到哲学的广泛学科。",
+    "memory_tip": "记忆法：en-（使）+ compass（范围），进入范围即包含。"
+  },
+  {
+    "word": "endow",
+    "phonetic": "/ɪnˈdaʊ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "赋予",
+      "捐赠",
+      "资助"
+    ],
+    "example_en": "The billionaire decided to endow the university with a fund for rural students.",
+    "example_zh": "这位亿万富翁决定向该大学捐赠一笔资助农村学生的基金。",
+    "memory_tip": "en（使）+dow（给予，联想donate）→使给予→捐赠、赋予。"
+  },
+  {
+    "word": "enrollment",
+    "phonetic": "/ɪnˈrəʊlmənt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "注册",
+      "入学人数"
+    ],
+    "example_en": "University enrollment has risen sharply since the government increased student financial aid.",
+    "example_zh": "自政府增加学生资助以来，大学入学人数急剧上升。",
+    "memory_tip": "记忆法：enroll（登记入册）+ ment，把名字写入名册即注册。"
+  },
+  {
+    "word": "entangle",
+    "phonetic": "/ɪnˈtæŋɡl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使纠缠，使缠住",
+      "使卷入（麻烦、纠纷）"
+    ],
+    "example_en": "The dolphin became entangled in a fishing net and had to be freed by rescue workers.",
+    "example_zh": "那只海豚被渔网缠住，只得由救援人员将其解救出来。",
+    "memory_tip": "en-（使）+ tangle（纠缠）；使进入缠绕状态，引申为卷入纠纷。"
+  },
+  {
+    "word": "enthusiastic",
+    "phonetic": "/ɪnˌθjuːziˈæstɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "热情的",
+      "热心的"
+    ],
+    "example_en": "The students were enthusiastic about the field trip to the science museum.",
+    "example_zh": "学生们对去科学博物馆的实地考察非常热情。",
+    "memory_tip": "记忆法：en-（使）+ thus（神）+ iastic，被神激励即热情的。"
+  },
+  {
+    "word": "entrepreneur",
+    "phonetic": "/ˌɒntrəprəˈnɜː(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "企业家",
+      "创业者"
+    ],
+    "example_en": "The young entrepreneur founded a tech startup that quickly attracted major investors.",
+    "example_zh": "这位年轻创业者创办了一家科技初创公司，很快吸引了主要投资者。",
+    "memory_tip": "记忆法：entre-（之间）+ pren（拿）+ eur（人），在市场中把握机会的人。"
+  },
+  {
+    "word": "envisage",
+    "phonetic": "/ɪnˈvɪzɪdʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "设想",
+      "展望"
+    ],
+    "example_en": "The architect envisaged a building that would blend modern design with traditional elements.",
+    "example_zh": "建筑师设想了一座将现代设计与传统元素融合的建筑。",
+    "memory_tip": "记忆法：en-（使）+ vis（看）+ age，使看见即在脑中设想。"
+  },
+  {
+    "word": "ephemeral",
+    "phonetic": "/ɪˈfemərəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "短暂的",
+      "转瞬即逝的"
+    ],
+    "example_en": "Fame on social media is often ephemeral, disappearing as quickly as it arrives.",
+    "example_zh": "社交媒体上的名声往往转瞬即逝，来得快去得也快。",
+    "memory_tip": "记忆法：ep-（在）+ hemer（日）+ al，只持续一日即短暂的。"
+  },
+  {
+    "word": "equip",
+    "phonetic": "/ɪˈkwɪp/",
+    "pos": "v.",
+    "meanings_zh": [
+      "装备",
+      "使有能力"
+    ],
+    "example_en": "The course aims to equip students with practical skills for the job market.",
+    "example_zh": "这门课程旨在使学生具备就业市场所需的实用技能。",
+    "memory_tip": "记忆法：联想 equipment（设备），给设备即装备。"
+  },
+  {
+    "word": "erect",
+    "phonetic": "/ɪˈrekt/",
+    "pos": "v./adj.",
+    "meanings_zh": [
+      "建造",
+      "竖立",
+      "直立的"
+    ],
+    "example_en": "Workers erected a temporary stage in the square for the national celebration.",
+    "example_zh": "工人们在广场上搭建了一个临时舞台用于国庆庆祝活动。",
+    "memory_tip": "记忆法：e-（出）+ rect（直），使直立起来即竖立。"
+  },
+  {
+    "word": "erroneous",
+    "phonetic": "/ɪˈrəʊniəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "错误的",
+      "不正确的"
+    ],
+    "example_en": "The report was based on erroneous data and had to be completely revised.",
+    "example_zh": "该报告基于错误的数据，不得不彻底修改。",
+    "memory_tip": "记忆法：error（错误）+ neous，源自 error 即错误的。"
+  },
+  {
+    "word": "escalate",
+    "phonetic": "/ˈeskəleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "升级",
+      "加剧"
+    ],
+    "example_en": "The minor dispute between the two countries escalated into a serious diplomatic crisis.",
+    "example_zh": "两国之间的小争端升级为严重的外交危机。",
+    "memory_tip": "记忆法：e-（上）+ scal（梯子），沿梯子上行即升级。"
+  },
+  {
+    "word": "escort",
+    "phonetic": "/ɪˈskɔːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "护送",
+      "陪同",
+      "护卫"
+    ],
+    "example_en": "Security guards escorted the VIP guests through the crowded lobby to the private elevator.",
+    "example_zh": "保安护送贵宾穿过拥挤的大厅来到私人电梯前。",
+    "memory_tip": "e（出）+scort（联想score）→像保镖一样护着你出场→护送。"
+  },
+  {
+    "word": "esteem",
+    "phonetic": "/ɪˈstiːm/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "尊重",
+      "敬重",
+      "认为"
+    ],
+    "example_en": "The professor was held in high esteem by both colleagues and students alike.",
+    "example_zh": "这位教授深受同事和学生们的尊敬。",
+    "memory_tip": "记忆法：联想 estimate（评价），给予高评价即尊重。"
+  },
+  {
+    "word": "eternal",
+    "phonetic": "/ɪˈtɜːnl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "永恒的",
+      "永久的"
+    ],
+    "example_en": "The poet wrote about eternal love that survives even beyond death.",
+    "example_zh": "这位诗人写的是超越死亡而长存的永恒之爱。",
+    "memory_tip": "记忆法：联想 eternity（永恒），eternal 即永恒的。"
+  },
+  {
+    "word": "ethical",
+    "phonetic": "/ˈeθɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "道德的",
+      "伦理的"
+    ],
+    "example_en": "The company faced criticism for ignoring ethical standards in its overseas factories.",
+    "example_zh": "该公司因忽视海外工厂的道德标准而受到批评。",
+    "memory_tip": "记忆法：ethic（伦理）+ al，与伦理相关即道德的。"
+  },
+  {
+    "word": "evacuate",
+    "phonetic": "/ɪˈvækjueɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "疏散",
+      "撤离"
+    ],
+    "example_en": "Residents were asked to evacuate the coastal area before the hurricane arrived.",
+    "example_zh": "居民们被要求在飓风到来之前撤离沿海地区。",
+    "memory_tip": "记忆法：e-（出）+ vacu（空），使地方变空即疏散。"
+  },
+  {
+    "word": "evade",
+    "phonetic": "/ɪˈveɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "逃避",
+      "规避"
+    ],
+    "example_en": "The suspect tried to evade taxes by hiding income in overseas accounts.",
+    "example_zh": "嫌疑人试图通过将收入藏在海外账户来逃税。",
+    "memory_tip": "记忆法：e-（出）+ vade（走），走出去躲开即逃避。"
+  },
+  {
+    "word": "evaporate",
+    "phonetic": "/ɪˈvæpəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "蒸发",
+      "消失",
+      "使脱水"
+    ],
+    "example_en": "The morning dew will evaporate quickly once the sun rises above the mountains.",
+    "example_zh": "太阳一旦升到山上方，晨露很快就会蒸发。",
+    "memory_tip": "e（出）+vapor（蒸汽）+ate→变成蒸汽出去→蒸发。"
+  },
+  {
+    "word": "excel",
+    "phonetic": "/ɪkˈsel/",
+    "pos": "v.",
+    "meanings_zh": [
+      "擅长",
+      "突出"
+    ],
+    "example_en": "She excels at mathematics and has won several national competitions.",
+    "example_zh": "她擅长数学，曾多次获得全国竞赛奖项。",
+    "memory_tip": "记忆法：ex-（出）+ cel（高），高出别人即擅长。"
+  },
+  {
+    "word": "exclusive",
+    "phonetic": "/ɪkˈskluːsɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "独家的",
+      "排他的",
+      "专有的"
+    ],
+    "example_en": "The magazine published an exclusive interview with the Nobel Prize winner.",
+    "example_zh": "该杂志发表了对诺贝尔奖得主的独家采访。",
+    "memory_tip": "记忆法：ex-（出）+ clus（关闭），把别人关在外面即排他的。"
+  },
+  {
+    "word": "execute",
+    "phonetic": "/ˈeksɪkjuːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "执行",
+      "实施"
+    ],
+    "example_en": "The government failed to execute the reform plan within the promised timeframe.",
+    "example_zh": "政府未能在承诺的时间框架内执行改革计划。",
+    "memory_tip": "记忆法：ex-（出）+ secut（跟随），跟着做下去即执行。"
+  },
+  {
+    "word": "exotic",
+    "phonetic": "/ɪɡˈzɒtɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "异国的",
+      "异域风情的"
+    ],
+    "example_en": "The garden was filled with exotic plants from tropical regions around the world.",
+    "example_zh": "花园里种满了来自世界各地热带地区的异国植物。",
+    "memory_tip": "记忆法：exo-（外面），来自外面的即异国的。"
+  },
+  {
+    "word": "expedient",
+    "phonetic": "/ɪkˈspiːdiənt/",
+    "pos": "adj. / n.",
+    "meanings_zh": [
+      "权宜的，应急的",
+      "权宜之计，应急手段"
+    ],
+    "example_en": "Cutting salaries may seem expedient now, but it could damage morale in the long run.",
+    "example_zh": "削减工资眼下看似权宜之计，但从长远看可能会损害士气。",
+    "memory_tip": "ex-（出）+ ped（脚）+ ient；能迅速“拔脚”脱困的办法，即权宜之计。"
+  },
+  {
+    "word": "expedite",
+    "phonetic": "/ˈekspədaɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "加速",
+      "促进",
+      "加快处理"
+    ],
+    "example_en": "The manager hired extra staff to expedite the processing of overdue customer orders.",
+    "example_zh": "经理雇了额外员工来加快处理逾期客户订单。",
+    "memory_tip": "ex（出）+ped（脚）+ite→把脚伸出去快走→加速。"
+  },
+  {
+    "word": "expedition",
+    "phonetic": "/ˌekspəˈdɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "探险",
+      "远征"
+    ],
+    "example_en": "The scientific expedition to Antarctica lasted six months and collected valuable data.",
+    "example_zh": "这次南极科学探险历时六个月，收集了宝贵数据。",
+    "memory_tip": "记忆法：ex-（出）+ ped（脚），走出去远行即远征。"
+  },
+  {
+    "word": "expel",
+    "phonetic": "/ɪkˈspel/",
+    "pos": "v.",
+    "meanings_zh": [
+      "驱逐",
+      "开除"
+    ],
+    "example_en": "The student was expelled from school for repeatedly violating the code of conduct.",
+    "example_zh": "这名学生因屡次违反行为守则而被学校开除。",
+    "memory_tip": "记忆法：ex-（出）+ pel（推），把某人推出去即驱逐。"
+  },
+  {
+    "word": "expenditure",
+    "phonetic": "/ɪkˈspendɪtʃə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "支出",
+      "花费"
+    ],
+    "example_en": "Government expenditure on healthcare has increased steadily over the past decade.",
+    "example_zh": "过去十年间政府在医疗保健上的支出稳步增长。",
+    "memory_tip": "记忆法：expend（花费）+ iture，花费的行为即支出。"
+  },
+  {
+    "word": "expertise",
+    "phonetic": "/ˌekspɜːˈtiːz/",
+    "pos": "n.",
+    "meanings_zh": [
+      "专业知识",
+      "专长"
+    ],
+    "example_en": "The project requires technical expertise that our team currently lacks.",
+    "example_zh": "该项目需要技术专长，而我们团队目前缺乏这方面的能力。",
+    "memory_tip": "记忆法：expert（专家）+ ise，专家所具备的即专业知识。"
+  },
+  {
+    "word": "extinct",
+    "phonetic": "/ɪkˈstɪŋkt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "灭绝的",
+      "绝种的"
+    ],
+    "example_en": "Many species of birds have become extinct due to habitat loss and climate change.",
+    "example_zh": "由于栖息地丧失和气候变化，许多鸟类物种已经灭绝。",
+    "memory_tip": "记忆法：ex-（出）+ stinct（刺灭），火被扑灭即灭绝。"
+  },
+  {
+    "word": "extravagant",
+    "phonetic": "/ɪkˈstrævəɡənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "奢侈的",
+      "过度的"
+    ],
+    "example_en": "The wedding was so extravagant that it cost more than their entire annual income.",
+    "example_zh": "这场婚礼如此奢侈，花费超过了他们全年的收入。",
+    "memory_tip": "记忆法：extra-（超出）+ vag（漫游），花钱漫无边际即奢侈的。"
+  },
+  {
+    "word": "fabricate",
+    "phonetic": "/ˈfæbrɪkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "捏造",
+      "伪造",
+      "制造"
+    ],
+    "example_en": "The witness was accused of fabricating evidence to protect the real criminal.",
+    "example_zh": "该证人被指控捏造证据以保护真正的罪犯。",
+    "memory_tip": "记忆法：fabric（织物）+ ate，像织布一样编造出来即捏造。"
+  },
+  {
+    "word": "facet",
+    "phonetic": "/ˈfæsɪt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "方面",
+      "面"
+    ],
+    "example_en": "We must consider every facet of the problem before making a final decision.",
+    "example_zh": "在做出最终决定之前，我们必须考虑问题的每一个方面。",
+    "memory_tip": "记忆法：face（脸）+ t，脸有许多面，引申为方面。"
+  },
+  {
+    "word": "faculty",
+    "phonetic": "/ˈfæklti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "才能",
+      "院系",
+      "全体教员"
+    ],
+    "example_en": "The faculty of medicine at this university is renowned for its cutting-edge research.",
+    "example_zh": "这所大学的医学院因其前沿研究而闻名。",
+    "memory_tip": "记忆法：fac（做）+ ulty，做事的能力即才能；一群人做事即院系。"
+  },
+  {
+    "word": "falter",
+    "phonetic": "/ˈfɔːltə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "（声音）颤抖，结巴",
+      "蹒跚，动摇，衰退"
+    ],
+    "example_en": "Her voice began to falter as she recalled the difficult years of her childhood.",
+    "example_zh": "当她回忆起童年那段艰难岁月时，声音开始颤抖起来。",
+    "memory_tip": "形近 default（违约）、false（虚假）；脚步或声音“不实”，就会颤抖动摇。"
+  },
+  {
+    "word": "fascinate",
+    "phonetic": "/ˈfæsɪneɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使着迷",
+      "深深吸引"
+    ],
+    "example_en": "The ancient Egyptian civilization has fascinated scholars for centuries.",
+    "example_zh": "古埃及文明几个世纪以来一直令学者们着迷。",
+    "memory_tip": "记忆法：联想 fascinating（迷人的），fascinate 即使着迷。"
+  },
+  {
+    "word": "federal",
+    "phonetic": "/ˈfedərəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "联邦的",
+      "联邦制的"
+    ],
+    "example_en": "The federal government announced new measures to combat inflation across the country.",
+    "example_zh": "联邦政府宣布了在全国范围内抗击通胀的新措施。",
+    "memory_tip": "记忆法：feder（联盟）+ al，联盟的即联邦的。"
+  },
+  {
+    "word": "ferment",
+    "phonetic": "/fəˈment/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "（使）发酵",
+      "（情绪、局势）骚动，动荡"
+    ],
+    "example_en": "Grapes ferment naturally in the barrel, slowly turning their sugar into alcohol.",
+    "example_zh": "葡萄在桶中自然发酵，慢慢把糖分转化为酒精。",
+    "memory_tip": "ferv（沸，热）+ ment；发热起泡即发酵，社会“发热”即骚动。"
+  },
+  {
+    "word": "fertile",
+    "phonetic": "/ˈfɜːtaɪl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "肥沃的",
+      "多产的"
+    ],
+    "example_en": "The fertile soil along the river valley produces abundant crops every year.",
+    "example_zh": "河谷沿岸肥沃的土壤每年都产出丰富的庄稼。",
+    "memory_tip": "记忆法：fer（带来）+ tile，能带来丰收的即肥沃的。"
+  },
+  {
+    "word": "fiscal",
+    "phonetic": "/ˈfɪskl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "财政的",
+      "国库的"
+    ],
+    "example_en": "The government adopted a tight fiscal policy to reduce the growing budget deficit.",
+    "example_zh": "政府采取了紧缩的财政政策以减少不断增长的预算赤字。",
+    "memory_tip": "记忆法：fisc（国库）+ al，与国库相关即财政的。"
+  },
+  {
+    "word": "flaw",
+    "phonetic": "/flɔː/",
+    "pos": "n.",
+    "meanings_zh": [
+      "缺陷",
+      "瑕疵"
+    ],
+    "example_en": "The researchers discovered a serious flaw in the experimental design that invalidated the results.",
+    "example_zh": "研究人员发现实验设计中存在严重缺陷，使结果无效。",
+    "memory_tip": "记忆法：联想 floor（地板），地板上的裂缝即缺陷。"
+  },
+  {
+    "word": "flexible",
+    "phonetic": "/ˈfleksəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "灵活的",
+      "可变通的"
+    ],
+    "example_en": "Employers are increasingly offering flexible working hours to attract talented staff.",
+    "example_zh": "雇主越来越多地提供灵活的工作时间以吸引优秀员工。",
+    "memory_tip": "记忆法：flex（弯曲）+ ible（可），可弯曲的即灵活的。"
+  },
+  {
+    "word": "formidable",
+    "phonetic": "/fəˈmɪdəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "强大的",
+      "令人敬畏的"
+    ],
+    "example_en": "The young team faced a formidable opponent in the semifinal match.",
+    "example_zh": "这支年轻队伍在半决赛中面对一个强大的对手。",
+    "memory_tip": "记忆法：formid（恐惧）+ able，令人恐惧的即强大的。"
+  },
+  {
+    "word": "fragment",
+    "phonetic": "/ˈfræɡmənt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "碎片",
+      "片段",
+      "使破碎"
+    ],
+    "example_en": "Archaeologists found fragments of pottery that date back three thousand years.",
+    "example_zh": "考古学家发现了可追溯到三千年前的陶器碎片。",
+    "memory_tip": "记忆法：frag（破碎）+ ment，破碎后的东西即碎片。"
+  },
+  {
+    "word": "friction",
+    "phonetic": "/ˈfrɪkʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "摩擦",
+      "冲突"
+    ],
+    "example_en": "There has been increasing friction between the two departments over budget allocation.",
+    "example_zh": "两个部门在预算分配上的摩擦日益增加。",
+    "memory_tip": "记忆法：fric（摩擦）+ tion，摩擦即摩擦。"
+  },
+  {
+    "word": "frontier",
+    "phonetic": "/ˈfrʌntɪə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "边境",
+      "前沿"
+    ],
+    "example_en": "Scientists are pushing the frontiers of artificial intelligence with remarkable speed.",
+    "example_zh": "科学家们正以惊人的速度推进人工智能的前沿。",
+    "memory_tip": "记忆法：front（前面）+ ier，最前面的地方即边境/前沿。"
+  },
+  {
+    "word": "galaxy",
+    "phonetic": "/ˈɡæləksi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "星系",
+      "银河"
+    ],
+    "example_en": "Astronomers discovered a new galaxy located billions of light-years from Earth.",
+    "example_zh": "天文学家发现了一个距地球数十亿光年的新星系。",
+    "memory_tip": "记忆法：谐音'哥来克西'，哥来看银河。"
+  },
+  {
+    "word": "gauge",
+    "phonetic": "/ɡeɪdʒ/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "衡量",
+      "判断",
+      "仪表"
+    ],
+    "example_en": "It is difficult to gauge public opinion on such a controversial issue.",
+    "example_zh": "在如此有争议的问题上很难衡量公众意见。",
+    "memory_tip": "记忆法：联想 garage（车库），车库里的仪表即 gauge。"
+  },
+  {
+    "word": "gaze",
+    "phonetic": "/ɡeɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "凝视",
+      "注视",
+      "盯着看"
+    ],
+    "example_en": "She stood at the window and gazed at the stars for what seemed like hours.",
+    "example_zh": "她站在窗前凝视着星空，似乎看了好几个小时。",
+    "memory_tip": "gaze谐音“盖茨”→盖茨盯着电脑屏幕看→凝视。"
+  },
+  {
+    "word": "generic",
+    "phonetic": "/dʒəˈnerɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "通用的",
+      "一般的",
+      "无商标的"
+    ],
+    "example_en": "Generic drugs are usually much cheaper than their brand-name equivalents.",
+    "example_zh": "非专利药通常比品牌药便宜得多。",
+    "memory_tip": "记忆法：gener（种类）+ ic，属于一个种类的即通用的。"
+  },
+  {
+    "word": "genetic",
+    "phonetic": "/dʒəˈnetɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "基因的",
+      "遗传的"
+    ],
+    "example_en": "Genetic research has opened new possibilities for treating inherited diseases.",
+    "example_zh": "基因研究为治疗遗传性疾病开辟了新可能。",
+    "memory_tip": "记忆法：gene（基因）+ tic，与基因相关即遗传的。"
+  },
+  {
+    "word": "glide",
+    "phonetic": "/ɡlaɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "滑行",
+      "滑翔",
+      "悄然移动"
+    ],
+    "example_en": "The swan glided gracefully across the still surface of the lake at dusk.",
+    "example_zh": "黄昏时分，天鹅优雅地滑过平静的湖面。",
+    "memory_tip": "g+lide（联想slide滑动）→滑行。"
+  },
+  {
+    "word": "glimmer",
+    "phonetic": "/ˈɡlɪmə(r)/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "微光，闪光",
+      "微弱的迹象",
+      "隐约闪烁"
+    ],
+    "example_en": "A glimmer of hope appeared when the trapped miners finally heard the drill above them.",
+    "example_zh": "当被困矿工终于听到头顶的钻机声时，一线希望出现了。",
+    "memory_tip": "与 glimpse（一瞥）、glow（发光）同族，gl- 常表“光”；微光引申为一线希望。"
+  },
+  {
+    "word": "glimpse",
+    "phonetic": "/ɡlɪmps/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "一瞥",
+      "瞥见"
+    ],
+    "example_en": "She caught a glimpse of the famous actor as he entered the hotel lobby.",
+    "example_zh": "当那位著名演员走进酒店大堂时，她瞥见了他。",
+    "memory_tip": "记忆法：联想 glance（一瞥），glimpse 也是快速一看。"
+  },
+  {
+    "word": "gorgeous",
+    "phonetic": "/ˈɡɔːdʒəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "华丽的",
+      "极美的"
+    ],
+    "example_en": "The bride looked gorgeous in her elegant white gown at the ceremony.",
+    "example_zh": "新娘在仪式上穿着优雅的白色礼服，美丽动人。",
+    "memory_tip": "记忆法：谐音'勾着丝'，华丽的衣服勾着丝线。"
+  },
+  {
+    "word": "gratitude",
+    "phonetic": "/ˈɡrætɪtjuːd/",
+    "pos": "n.",
+    "meanings_zh": [
+      "感激",
+      "感谢"
+    ],
+    "example_en": "He expressed deep gratitude to his mentor for years of patient guidance.",
+    "example_zh": "他对导师多年来的耐心指导表达了深切的感激。",
+    "memory_tip": "记忆法：grat（感谢）+ itude（状态），感谢的状态即感激。"
+  },
+  {
+    "word": "grief",
+    "phonetic": "/ɡriːf/",
+    "pos": "n.",
+    "meanings_zh": [
+      "悲伤",
+      "悲痛"
+    ],
+    "example_en": "The whole community was overcome with grief at the news of the tragedy.",
+    "example_zh": "整个社区在得知这一悲剧的消息后都陷入了悲痛之中。",
+    "memory_tip": "记忆法：联想 grieve（悲伤），grief 即悲伤。"
+  },
+  {
+    "word": "grope",
+    "phonetic": "/ɡrəʊp/",
+    "pos": "v.",
+    "meanings_zh": [
+      "摸索",
+      "探索",
+      "笨拙地触摸"
+    ],
+    "example_en": "He had to grope in the dark for the light switch after the power went out.",
+    "example_zh": "停电后他不得不在黑暗中摸索电灯开关。",
+    "memory_tip": "g+rope（绳子）→抓着绳子摸黑走→摸索。"
+  },
+  {
+    "word": "gross",
+    "phonetic": "/ɡrəʊs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "总的",
+      "毛的",
+      "严重的"
+    ],
+    "example_en": "The company's gross profit increased by fifteen percent compared with last year.",
+    "example_zh": "公司的毛利润比去年增长了百分之十五。",
+    "memory_tip": "记忆法：对比 net（净的），gross 即毛的/总的。"
+  },
+  {
+    "word": "guilt",
+    "phonetic": "/ɡɪlt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "内疚",
+      "罪行"
+    ],
+    "example_en": "He felt a deep sense of guilt for not helping his friend in trouble.",
+    "example_zh": "他因没有帮助陷入困境的朋友而深感内疚。",
+    "memory_tip": "记忆法：联想 guilty（有罪的），guilt 即内疚/罪行。"
+  },
+  {
+    "word": "hallmark",
+    "phonetic": "/ˈhɔːlmɑːk/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "（金银纯度）印记",
+      "特征，标志",
+      "给……打上标记"
+    ],
+    "example_en": "Careful attention to detail is the hallmark of every product from this workshop.",
+    "example_zh": "对细节的精心关注是这家作坊每件产品的标志性特征。",
+    "memory_tip": "hall（金匠行会大厅）+ mark（印记）；行会打的质量印记，引申为鲜明标志。"
+  },
+  {
+    "word": "halt",
+    "phonetic": "/hɔːlt/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "停止",
+      "中断"
+    ],
+    "example_en": "The government ordered a halt to all construction projects near the ancient ruins.",
+    "example_zh": "政府下令停止古遗址附近的所有建设项目。",
+    "memory_tip": "记忆法：谐音'吼他'，一声吼他就停下来。"
+  },
+  {
+    "word": "harass",
+    "phonetic": "/ˈhærəs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "骚扰",
+      "侵扰"
+    ],
+    "example_en": "The company was fined for allowing managers to harass female employees.",
+    "example_zh": "该公司因允许经理骚扰女员工而被罚款。",
+    "memory_tip": "记忆法：谐音'哈拉斯'，被哈拉撕扯即骚扰。"
+  },
+  {
+    "word": "harsh",
+    "phonetic": "/hɑːʃ/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "严厉的",
+      "恶劣的"
+    ],
+    "example_en": "The critics were harsh in their assessment of the director's latest film.",
+    "example_zh": "评论家们对这位导演的最新电影评价严厉。",
+    "memory_tip": "记忆法：联想 hard（硬的），harsh 比 hard 更严厉。"
+  },
+  {
+    "word": "heighten",
+    "phonetic": "/ˈhaɪtn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "加强",
+      "提高"
+    ],
+    "example_en": "The unexpected announcement served only to heighten tensions between the two sides.",
+    "example_zh": "这一意外声明只会加剧双方的紧张关系。",
+    "memory_tip": "记忆法：height（高度）+ en（使），使变高即提高/加强。"
+  },
+  {
+    "word": "heritage",
+    "phonetic": "/ˈherɪtɪdʒ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "遗产",
+      "传统"
+    ],
+    "example_en": "The ancient temple is part of the nation's cultural heritage and must be preserved.",
+    "example_zh": "这座古庙是民族文化遗产的一部分，必须加以保护。",
+    "memory_tip": "记忆法：herit（继承）+ age，继承下来的东西即遗产。"
+  },
+  {
+    "word": "hesitate",
+    "phonetic": "/ˈhezɪteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "犹豫",
+      "迟疑"
+    ],
+    "example_en": "Don't hesitate to ask questions if you don't understand the lecture.",
+    "example_zh": "如果你听不懂讲座，不要犹豫，尽管提问。",
+    "memory_tip": "记忆法：hesit（粘住）+ ate，脚被粘住走不动即犹豫。"
+  },
+  {
+    "word": "hollow",
+    "phonetic": "/ˈhɒləʊ/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "空的",
+      "空洞的"
+    ],
+    "example_en": "His promises turned out to be hollow words with no real substance.",
+    "example_zh": "他的承诺最终被证明是没有实质内容的空洞言辞。",
+    "memory_tip": "记忆法：联想 hole（洞），有洞的即空的。"
+  },
+  {
+    "word": "homogeneous",
+    "phonetic": "/ˌhɒməˈdʒiːniəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "同质的",
+      "同类的"
+    ],
+    "example_en": "The population of the small island is remarkably homogeneous in language and culture.",
+    "example_zh": "这个小岛的人口在语言和文化上非常同质。",
+    "memory_tip": "记忆法：homo-（相同）+ gene（种类）+ ous，同种类的即同质的。"
+  },
+  {
+    "word": "horizontal",
+    "phonetic": "/ˌhɒrɪˈzɒntl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "水平的",
+      "横的"
+    ],
+    "example_en": "Draw a horizontal line across the page to divide it into two sections.",
+    "example_zh": "在页面上画一条水平线，将其分为两部分。",
+    "memory_tip": "记忆法：horizon（地平线）+ tal，像地平线一样即水平的。"
+  },
+  {
+    "word": "hurl",
+    "phonetic": "/hɜːl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "猛投",
+      "用力掷",
+      "大声斥责"
+    ],
+    "example_en": "The angry fan hurled his hat onto the field to protest the referee's decision.",
+    "example_zh": "愤怒的球迷把帽子猛扔到球场上，抗议裁判的判罚。",
+    "memory_tip": "hurl谐音“吼”→一边吼一边扔→猛投。"
+  },
+  {
+    "word": "hybrid",
+    "phonetic": "/ˈhaɪbrɪd/",
+    "pos": "n./adj.",
+    "meanings_zh": [
+      "混合物",
+      "杂交的",
+      "混合的"
+    ],
+    "example_en": "The new hybrid car consumes far less fuel than traditional gasoline models.",
+    "example_zh": "新型混合动力汽车比传统汽油车型消耗的燃料少得多。",
+    "memory_tip": "记忆法：谐音'嗨不瑞的'，嗨起来不分种类即混合。"
+  },
+  {
+    "word": "ignite",
+    "phonetic": "/ɪɡˈnaɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "点燃",
+      "引发"
+    ],
+    "example_en": "The spark from the faulty wire ignited the gas and caused a massive explosion.",
+    "example_zh": "故障电线产生的火花点燃了气体，引发了大规模爆炸。",
+    "memory_tip": "记忆法：ign（火）+ ite，使有火即点燃。"
+  },
+  {
+    "word": "immense",
+    "phonetic": "/ɪˈmens/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "巨大的",
+      "极大的"
+    ],
+    "example_en": "The immense pressure of the deep ocean makes exploration extremely difficult.",
+    "example_zh": "深海的巨大压力使勘探变得极其困难。",
+    "memory_tip": "记忆法：im-（不）+ mens（测量），无法测量的即巨大的。"
+  },
+  {
+    "word": "imminent",
+    "phonetic": "/ˈɪmɪnənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "即将来临的",
+      "逼近的"
+    ],
+    "example_en": "Dark clouds gathered overhead, signaling that a storm was imminent.",
+    "example_zh": "乌云在头顶聚集，预示着暴风雨即将来临。",
+    "memory_tip": "记忆法：im-（在上）+ min（突出），悬在头上即逼近的。"
+  },
+  {
+    "word": "impart",
+    "phonetic": "/ɪmˈpɑːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "传授",
+      "传达"
+    ],
+    "example_en": "The experienced teacher sought to impart her knowledge to the next generation.",
+    "example_zh": "这位经验丰富的教师试图将她的知识传授给下一代。",
+    "memory_tip": "记忆法：im-（进入）+ part（部分），把知识分给别人即传授。"
+  },
+  {
+    "word": "impede",
+    "phonetic": "/ɪmˈpiːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "阻碍，妨碍",
+      "延缓"
+    ],
+    "example_en": "Heavy snowstorms may impede the rescue team's progress through the mountain pass.",
+    "example_zh": "暴风雪可能会阻碍救援队穿越山口的进程。",
+    "memory_tip": "im-（进入）+ ped（脚）；往脚上绊东西，自然阻碍前行。"
+  },
+  {
+    "word": "imperative",
+    "phonetic": "/ɪmˈperətɪv/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "迫切的",
+      "必要的",
+      "命令"
+    ],
+    "example_en": "It is imperative that we address climate change before it is too late.",
+    "example_zh": "我们必须趁还来得及的时候解决气候变化问题。",
+    "memory_tip": "记忆法：imper（命令）+ ative，像下命令一样即迫切的。"
+  },
+  {
+    "word": "impetus",
+    "phonetic": "/ˈɪmpɪtəs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "推动力",
+      "促进因素"
+    ],
+    "example_en": "The new policy gave fresh impetus to the development of renewable energy.",
+    "example_zh": "新政策为可再生能源的发展提供了新的推动力。",
+    "memory_tip": "记忆法：im-（内）+ pet（追求），内心追求的力量即推动力。"
+  },
+  {
+    "word": "impulse",
+    "phonetic": "/ˈɪmpʌls/",
+    "pos": "n.",
+    "meanings_zh": [
+      "冲动",
+      "脉冲"
+    ],
+    "example_en": "She bought the expensive handbag on impulse and later regretted it.",
+    "example_zh": "她一时冲动买了这个昂贵的手提包，后来后悔了。",
+    "memory_tip": "记忆法：im-（内）+ puls（推），内心被推动即冲动。"
+  },
+  {
+    "word": "incur",
+    "phonetic": "/ɪnˈkɜː(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "招致",
+      "引起"
+    ],
+    "example_en": "The company incurred heavy losses after the product recall was announced.",
+    "example_zh": "产品召回宣布后，该公司遭受了严重损失。",
+    "memory_tip": "记忆法：in-（进入）+ cur（跑），跑进来即招致。"
+  },
+  {
+    "word": "indignant",
+    "phonetic": "/ɪnˈdɪɡnənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "愤怒的",
+      "义愤的"
+    ],
+    "example_en": "She was indignant at being accused of cheating when she had done nothing wrong.",
+    "example_zh": "在被指控作弊而她什么都没做错时，她感到义愤填膺。",
+    "memory_tip": "记忆法：in-（不）+ dign（值得）+ ant，觉得不配受此待遇即愤怒。"
+  },
+  {
+    "word": "inertia",
+    "phonetic": "/ɪˈnɜːʃə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "惯性",
+      "惰性"
+    ],
+    "example_en": "Bureaucratic inertia has prevented the organization from implementing necessary reforms.",
+    "example_zh": "官僚惰性使该组织无法实施必要的改革。",
+    "memory_tip": "记忆法：in-（不）+ ert（活跃），不活跃的状态即惰性。"
+  },
+  {
+    "word": "inflict",
+    "phonetic": "/ɪnˈflɪkt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "施加（痛苦）",
+      "造成"
+    ],
+    "example_en": "The war inflicted terrible suffering on millions of innocent civilians.",
+    "example_zh": "这场战争给数百万无辜平民造成了可怕的苦难。",
+    "memory_tip": "记忆法：in-（上）+ flict（打击），打上去即施加痛苦。"
+  },
+  {
+    "word": "ingenious",
+    "phonetic": "/ɪnˈdʒiːniəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "巧妙的",
+      "有独创性的"
+    ],
+    "example_en": "The engineer devised an ingenious solution to the problem of water leakage.",
+    "example_zh": "工程师为漏水问题设计了一个巧妙的解决方案。",
+    "memory_tip": "记忆法：in-（内）+ geni（天赋），内在天赋即巧妙的。"
+  },
+  {
+    "word": "inject",
+    "phonetic": "/ɪnˈdʒekt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "注射",
+      "注入"
+    ],
+    "example_en": "The government injected billions of dollars into the economy to boost growth.",
+    "example_zh": "政府向经济注入数十亿美元以促进增长。",
+    "memory_tip": "记忆法：in-（进入）+ ject（扔），把药扔进去即注射。"
+  },
+  {
+    "word": "innate",
+    "phonetic": "/ɪˈneɪt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "天生的",
+      "固有的"
+    ],
+    "example_en": "Some scholars believe that language ability is innate rather than learned.",
+    "example_zh": "一些学者认为语言能力是天生的而非习得的。",
+    "memory_tip": "记忆法：in-（内）+ nat（出生），与生俱来的即天生的。"
+  },
+  {
+    "word": "insulate",
+    "phonetic": "/ˈɪnsjuleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "隔离",
+      "绝缘"
+    ],
+    "example_en": "The walls were insulated to keep the house warm during the freezing winter.",
+    "example_zh": "墙壁被隔热处理以在严寒的冬天保持房屋温暖。",
+    "memory_tip": "记忆法：insul（岛）+ ate，使成为孤岛即隔离。"
+  },
+  {
+    "word": "intact",
+    "phonetic": "/ɪnˈtækt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "完好的",
+      "未受损的"
+    ],
+    "example_en": "The ancient manuscript remained intact despite centuries of exposure to the elements.",
+    "example_zh": "尽管经历了数百年的风吹日晒，这份古代手稿仍然完好无损。",
+    "memory_tip": "记忆法：in-（不）+ tact（接触），未被触碰即完好的。"
+  },
+  {
+    "word": "interim",
+    "phonetic": "/ˈɪntərɪm/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "临时的",
+      "过渡期间"
+    ],
+    "example_en": "An interim government was formed to manage the country until elections could be held.",
+    "example_zh": "成立了临时政府来管理国家，直到举行选举。",
+    "memory_tip": "记忆法：inter-（之间）+ im，两者之间的即临时的。"
+  },
+  {
+    "word": "intricate",
+    "phonetic": "/ˈɪntrɪkət/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "复杂的",
+      "错综的"
+    ],
+    "example_en": "The intricate patterns on the carpet must have taken months to complete.",
+    "example_zh": "地毯上错综复杂的图案一定花了几个月才完成。",
+    "memory_tip": "记忆法：in-（内）+ tric（纠缠），内部纠缠不清即复杂的。"
+  },
+  {
+    "word": "inventory",
+    "phonetic": "/ˈɪnvəntri/",
+    "pos": "n.",
+    "meanings_zh": [
+      "库存",
+      "清单"
+    ],
+    "example_en": "The store takes inventory at the end of every month to track its stock.",
+    "example_zh": "这家商店每月底盘点库存以追踪存货。",
+    "memory_tip": "记忆法：in-（内）+ vent（来）+ ory，进来的东西即库存。"
+  },
+  {
+    "word": "irony",
+    "phonetic": "/ˈaɪrəni/",
+    "pos": "n.",
+    "meanings_zh": [
+      "讽刺",
+      "反讽"
+    ],
+    "example_en": "The irony is that the safety inspector's own office failed the safety check.",
+    "example_zh": "讽刺的是，安全检查员自己的办公室未能通过安全检查。",
+    "memory_tip": "记忆法：iron（铁）+ y，用铁面无情的方式说话即讽刺。"
+  },
+  {
+    "word": "jargon",
+    "phonetic": "/ˈdʒɑːɡən/",
+    "pos": "n.",
+    "meanings_zh": [
+      "行话",
+      "术语",
+      "专业用语"
+    ],
+    "example_en": "The doctor explained the diagnosis without medical jargon so the patient could understand.",
+    "example_zh": "医生不用医学术语解释诊断结果，以便患者能够理解。",
+    "memory_tip": "jargon谐音“贾工”→贾工程师满口行话。"
+  },
+  {
+    "word": "jurisdiction",
+    "phonetic": "/ˌdʒʊərɪsˈdɪkʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "管辖权",
+      "司法权"
+    ],
+    "example_en": "The case falls outside the jurisdiction of the local court and must be transferred.",
+    "example_zh": "该案件不属于地方法院的管辖范围，必须移交。",
+    "memory_tip": "记忆法：juris（法律）+ dict（说）+ ion，依法说话的范围即管辖权。"
+  },
+  {
+    "word": "juxtapose",
+    "phonetic": "/ˌdʒʌkstəˈpəʊz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "并置，并列",
+      "把……放在一起对照"
+    ],
+    "example_en": "The exhibition juxtaposes ancient pottery with modern glassware to highlight shared aesthetic values.",
+    "example_zh": "该展览将古代陶器与现代玻璃器皿并置，以突显共同的美学价值。",
+    "memory_tip": "juxta（旁边，源自拉丁语）+ pose（放置）；放在旁边即并置对照。"
+  },
+  {
+    "word": "kidnap",
+    "phonetic": "/ˈkɪdnæp/",
+    "pos": "v.",
+    "meanings_zh": [
+      "绑架",
+      "劫持",
+      "诱拐"
+    ],
+    "example_en": "The gang attempted to kidnap the businessman's son but were caught by police.",
+    "example_zh": "该团伙试图绑架商人的儿子，但被警方抓获。",
+    "memory_tip": "kid（小孩）+nap（小睡）→趁小孩睡着时抱走→绑架。"
+  },
+  {
+    "word": "kin",
+    "phonetic": "/kɪn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "亲属",
+      "家族"
+    ],
+    "example_en": "In many rural areas, people still rely on their kin for support in times of crisis.",
+    "example_zh": "在许多农村地区，人们在危机时仍然依靠亲属的支持。",
+    "memory_tip": "记忆法：联想 kinship（亲属关系），kin 即亲属。"
+  },
+  {
+    "word": "lament",
+    "phonetic": "/ləˈment/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "哀叹",
+      "悲叹"
+    ],
+    "example_en": "Critics lament the decline of traditional craftsmanship in the age of mass production.",
+    "example_zh": "批评家哀叹大规模生产时代传统工艺的衰落。",
+    "memory_tip": "记忆法：谐音'来门特'，来门前特别悲伤地哀叹。"
+  },
+  {
+    "word": "latent",
+    "phonetic": "/ˈleɪtnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "潜在的",
+      "隐藏的"
+    ],
+    "example_en": "The virus can remain latent in the body for years before causing symptoms.",
+    "example_zh": "这种病毒可在体内潜伏多年才引发症状。",
+    "memory_tip": "记忆法：late（晚）+ nt，晚些才出现即潜在的。"
+  },
+  {
+    "word": "leisure",
+    "phonetic": "/ˈleʒə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "闲暇",
+      "休闲"
+    ],
+    "example_en": "Modern technology has changed how people spend their leisure time at home.",
+    "example_zh": "现代技术改变了人们在家度过闲暇时间的方式。",
+    "memory_tip": "记忆法：谐音'来这儿'，闲暇时来这儿放松。"
+  },
+  {
+    "word": "liability",
+    "phonetic": "/ˌlaɪəˈbɪləti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "责任",
+      "负债",
+      "累赘"
+    ],
+    "example_en": "The company accepted full liability for the environmental damage caused by the leak.",
+    "example_zh": "该公司对泄漏造成的环境损害承担全部责任。",
+    "memory_tip": "记忆法：li（捆）+ ability，被捆住的状态即责任/负债。"
+  },
+  {
+    "word": "linguistic",
+    "phonetic": "/lɪŋˈɡwɪstɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "语言的",
+      "语言学的"
+    ],
+    "example_en": "Linguistic diversity is rapidly declining as minority languages disappear worldwide.",
+    "example_zh": "随着全球少数民族语言的消失，语言多样性正在迅速下降。",
+    "memory_tip": "记忆法：lingu（舌头/语言）+ istic，与语言相关的。"
+  },
+  {
+    "word": "litigation",
+    "phonetic": "/ˌlɪtɪˈɡeɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "诉讼",
+      "打官司"
+    ],
+    "example_en": "The dispute eventually ended in costly litigation that lasted more than three years.",
+    "example_zh": "这场纠纷最终以历时三年多的昂贵诉讼告终。",
+    "memory_tip": "记忆法：litig（打官司）+ ation，打官司的行为即诉讼。"
+  },
+  {
+    "word": "lodge",
+    "phonetic": "/lɒdʒ/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "提出（投诉）",
+      "寄宿",
+      "小屋"
+    ],
+    "example_en": "The residents decided to lodge a formal complaint with the city council.",
+    "example_zh": "居民们决定向市议会提出正式投诉。",
+    "memory_tip": "记忆法：谐音'落脚'，找个地方落脚即寄宿。"
+  },
+  {
+    "word": "loyalty",
+    "phonetic": "/ˈlɔɪəlti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "忠诚",
+      "忠实"
+    ],
+    "example_en": "Customer loyalty is essential for the long-term success of any business.",
+    "example_zh": "客户忠诚度对任何企业的长期成功都至关重要。",
+    "memory_tip": "记忆法：loyal（忠诚的）+ ty，忠诚的品质。"
+  },
+  {
+    "word": "lure",
+    "phonetic": "/lʊə(r)/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "诱惑",
+      "吸引",
+      "诱饵"
+    ],
+    "example_en": "High salaries lure many talented graduates to work in large multinational corporations.",
+    "example_zh": "高薪吸引许多优秀毕业生到大型跨国公司工作。",
+    "memory_tip": "记忆法：谐音'溜儿'，被诱惑就溜走了。"
+  },
+  {
+    "word": "lurk",
+    "phonetic": "/lɜːk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "潜伏",
+      "埋伏"
+    ],
+    "example_en": "Dangerous predators lurk in the deep waters waiting for their unsuspecting prey.",
+    "example_zh": "危险的掠食者潜伏在深水中等待毫无防备的猎物。",
+    "memory_tip": "记忆法：谐音'勒克'，被勒住脖子藏在暗处即潜伏。"
+  }
+]

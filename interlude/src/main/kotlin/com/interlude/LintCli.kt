@@ -20,6 +20,7 @@ private const val USAGE = """用法: interlude-lint <命令> [选项]
 lint <剧本文件> 校验剧本
 restore <剧本文件> 列出或恢复备份
 replay <对局日志.json> 生成复盘报告
+heatmap <对局日志.json> [更多日志...] 生成路径热力报告
 
 lint 选项:
 --log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
@@ -36,9 +37,15 @@ replay 选项:
 --log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
 --log-json 日志以 JSON 行输出到 stderr
 --script FILE 关联的剧本文件（用于场景富化；不给则只按日志生成）
+--out FILE 报告写到文件（默认打印到 stdout）
+
+heatmap 选项:
+--log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
+--log-json 日志以 JSON 行输出到 stderr
+--format FORMAT 报告格式: text 或 json (默认 text)
 --out FILE 报告写到文件（默认打印到 stdout）"""
 
-private fun printUsageAndExit(): Nothing {
+internal fun printUsageAndExit(): Nothing {
     System.err.println(USAGE)
     exitProcess(2)
 }
@@ -354,6 +361,7 @@ fun main(args: Array<String>) {
         "lint" -> exitProcess(runLint(args))
         "restore" -> exitProcess(runRestore(args))
         "replay" -> exitProcess(runReplay(args))
+        "heatmap" -> exitProcess(runHeatmap(args))
         else -> printUsageAndExit()
     }
 }

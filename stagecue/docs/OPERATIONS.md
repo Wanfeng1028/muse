@@ -163,6 +163,13 @@ systemctl start stagecue
 - 排练模式下触发的 cue，`CueFired.rehearsal=true` 并广播；灯光台/返听屏等执行端应只做提示、**不驱动真实设备**；导演台本地音频仍可播放（排练也要听声音）。
 - 切换：WS 发 `set_rehearsal`，服务端广播 `rehearsal_changed`；查询：`GET /api/rehearsal` 返回 `{"rehearsal": true|false}`。
 
+## 返听屏（MONITOR）只读接口
+
+- `GET /api/monitor`：返回 `{"current": <当前 cue 或 null>, "next": <下一 cue 或 null>, "remainingMs": <倒计时毫秒或 null>, "rehearsal": bool, "serverTimeMs": ...}`。只读，无鉴权，供返听屏首屏拉取。
+- WS：MONITOR 上线（Hello role=MONITOR）后服务端即推一条 `state_snapshot` 全量快照；之后 cue 触发/预备经现有广播推送（`cue_fired`/`cue_armed`）。
+- 越权写操作：MONITOR 发送 `trigger_cue`/`arm_cue`/`set_rehearsal` 会收到 `{"kind":"error","code":"FORBIDDEN",...}`，操作不执行、服务端状态不变。
+- OpLog：`<dataDir>/oplog/oplog.jsonl`（JSON Lines）；重连时 Hello 带 `lastSeenSeq`，服务端回放未同步条目（`oplog_replay`，只做展示补齐，不重放执行）。
+
 ## 限流调参
 
 每个客户端 IP 一个令牌桶，每秒补充 RPS 个令牌、桶最多装 BURST 个；每次 HTTP/WS 请求消耗 1 个，没令牌就 429，告诉客户端多少秒后再试（Retry-After）。

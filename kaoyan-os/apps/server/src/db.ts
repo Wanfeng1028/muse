@@ -39,7 +39,8 @@ export function initSchema(db: DatabaseSync): void {
       phonetic TEXT NOT NULL DEFAULT '',
       meaning TEXT NOT NULL DEFAULT '',
       example TEXT NOT NULL DEFAULT '',
-      source TEXT NOT NULL DEFAULT 'manual'
+      source TEXT NOT NULL DEFAULT 'manual',
+      memory_tip TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS srs_state (
@@ -66,6 +67,12 @@ export function initSchema(db: DatabaseSync): void {
       value TEXT NOT NULL
     );
   `);
+
+  // 老库迁移：words 表补 memory_tip 列
+  const cols = db.prepare('PRAGMA table_info(words)').all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === 'memory_tip')) {
+    db.exec("ALTER TABLE words ADD COLUMN memory_tip TEXT NOT NULL DEFAULT ''");
+  }
 }
 
 // 创建并初始化数据库连接

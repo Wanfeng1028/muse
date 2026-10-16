@@ -139,6 +139,7 @@ export interface Word {
   meaning: string;
   example: string;
   source: WordSource;
+  memory_tip?: string;
 }
 
 /** 创建单词输入 */

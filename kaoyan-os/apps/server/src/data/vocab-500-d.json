@@ -1,0 +1,1605 @@
+[
+  {
+    "word": "sacred",
+    "phonetic": "/ˈseɪkrɪd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "神圣的，宗教的",
+      "不可侵犯的，受尊崇的"
+    ],
+    "example_en": "For the indigenous tribe, the ancient forest remains a sacred site where ancestral spirits are believed to dwell.",
+    "example_zh": "对原住民部落而言，这片古老森林仍是神圣之地，人们相信祖先的灵魂栖息于此。",
+    "memory_tip": "sacr（神圣）+ ed；同根词 sacrifice（献祭），献祭之物即献给神的神圣之物。"
+  },
+  {
+    "word": "saint",
+    "phonetic": "/seɪnt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "圣人",
+      "圣徒",
+      "道德高尚的人"
+    ],
+    "example_en": "She devoted her entire life to caring for the poor and was regarded as a saint by the whole village.",
+    "example_zh": "她毕生致力于照顾穷人，被全村人视为圣人。",
+    "memory_tip": "形近 saint 与 faint（虚弱）：圣人也有凡人之躯，联想“圣徒”形象。"
+  },
+  {
+    "word": "salient",
+    "phonetic": "/ˈseɪliənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "显著的",
+      "突出的",
+      "重要的"
+    ],
+    "example_en": "The report highlighted several salient features of the current economic recovery that policymakers cannot ignore.",
+    "example_zh": "报告强调了当前经济复苏的几个显著特征，决策者不可忽视。",
+    "memory_tip": "词根 sal-（跳）+ -ient：跳出来的，即“显著的”，如 salient points（要点）。"
+  },
+  {
+    "word": "salvage",
+    "phonetic": "/ˈsælvɪdʒ/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "抢救",
+      "打捞",
+      "挽回"
+    ],
+    "example_en": "Divers managed to salvage valuable cargo from the shipwreck before the storm returned.",
+    "example_zh": "潜水员在风暴再次来临前成功从沉船中打捞出了贵重货物。",
+    "memory_tip": "词根 salv-（救）同 save，联想“打捞、抢救”之义。"
+  },
+  {
+    "word": "sanction",
+    "phonetic": "/ˈsæŋkʃn/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "制裁",
+      "批准",
+      "认可"
+    ],
+    "example_en": "The council imposed economic sanctions on the regime after it refused to allow international observers in.",
+    "example_zh": "该政权拒绝国际观察员入境后，委员会对其施加了经济制裁。",
+    "memory_tip": "一词两义：sanc-（神圣）→“批准”为神圣授权，也指惩罚性的“制裁”。"
+  },
+  {
+    "word": "sane",
+    "phonetic": "/seɪn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "理智的",
+      "明智的",
+      "精神正常的"
+    ],
+    "example_en": "No sane person would invest all their savings in such a risky and unregulated scheme.",
+    "example_zh": "没有理智的人会把全部积蓄投入这样一个高风险、无监管的计划。",
+    "memory_tip": "对比 insane（疯狂的）：sane 即“头脑清醒的”，词根 san- 表健康。"
+  },
+  {
+    "word": "sarcastic",
+    "phonetic": "/sɑːˈkæstɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "讽刺的",
+      "嘲讽的",
+      "尖刻的"
+    ],
+    "example_en": "His sarcastic remarks about her presentation made everyone in the meeting room feel uncomfortable.",
+    "example_zh": "他对她报告的讽刺言论让会议室里每个人都感到不自在。",
+    "memory_tip": "词根 sarc-（肉）：讽刺如割肉般刺痛人，联想 sarcasm（讽刺）。"
+  },
+  {
+    "word": "savage",
+    "phonetic": "/ˈsævɪdʒ/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "野蛮的，凶猛的",
+      "严厉的，猛烈的",
+      "未开化的"
+    ],
+    "example_en": "The critics launched a savage attack on the government's new education policy, calling it short-sighted and cruel.",
+    "example_zh": "批评者对政府的新教育政策发起了猛烈抨击，称其目光短浅且冷酷无情。",
+    "memory_tip": "谐音“杀为之”：为生存而杀戮，即野蛮凶猛之举。"
+  },
+  {
+    "word": "scale",
+    "phonetic": "/skeɪl/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "规模",
+      "等级",
+      "天平",
+      "鳞片"
+    ],
+    "example_en": "The government underestimated the scale of the disaster and initially sent far too few rescue teams.",
+    "example_zh": "政府低估了灾害的规模，最初派出的救援队远远不够。",
+    "memory_tip": "一词多义：scale 有“刻度、天平、鳞片”义，引申为“规模、等级”。"
+  },
+  {
+    "word": "scan",
+    "phonetic": "/skæn/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "扫描",
+      "浏览",
+      "细看"
+    ],
+    "example_en": "She quickly scanned the contract for any clause that might limit her future freedom.",
+    "example_zh": "她快速浏览合同，寻找任何可能限制她未来自由的条款。",
+    "memory_tip": "联想 scanner（扫描仪）：scan 即“逐行扫视”，由“细看”引申为“浏览”。"
+  },
+  {
+    "word": "scenario",
+    "phonetic": "/səˈnɑːriəʊ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "设想",
+      "情景",
+      "剧本"
+    ],
+    "example_en": "Economists outlined a worst-case scenario in which oil prices double within a single year.",
+    "example_zh": "经济学家勾勒出一种最坏情景：油价在一年内翻倍。",
+    "memory_tip": "源自 scene（场景）：scenario 即“设想出的情景、剧本梗概”。"
+  },
+  {
+    "word": "scheme",
+    "phonetic": "/skiːm/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "计划",
+      "方案",
+      "阴谋"
+    ],
+    "example_en": "The pension scheme was designed to encourage employees to save for their retirement.",
+    "example_zh": "该养老金方案旨在鼓励员工为退休储蓄。",
+    "memory_tip": "联想 schema（图式）：scheme 是头脑中“构想的计划”，贬义则为“阴谋”。"
+  },
+  {
+    "word": "scorn",
+    "phonetic": "/skɔːn/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "蔑视",
+      "轻蔑",
+      "嘲笑"
+    ],
+    "example_en": "He poured scorn on the proposal, calling it naive and completely impractical.",
+    "example_zh": "他对该提议嗤之以鼻，称其幼稚且完全不切实际。",
+    "memory_tip": "形近 score（得分）：被“蔑视”如被打低分，联想 scorn 的轻蔑态度。"
+  },
+  {
+    "word": "scrap",
+    "phonetic": "/skræp/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "废弃",
+      "取消",
+      "碎片"
+    ],
+    "example_en": "The company decided to scrap the outdated production line and invest in automation instead.",
+    "example_zh": "公司决定废弃过时的生产线，转而投资自动化。",
+    "memory_tip": "联想 scrape（刮）：把东西刮下来当“废料”，引申为“废弃、取消”。"
+  },
+  {
+    "word": "scrutinize",
+    "phonetic": "/ˈskruːtənaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "仔细审查",
+      "细看",
+      "详查"
+    ],
+    "example_en": "Investors scrutinized the annual report for any sign of hidden debt or overstated profits.",
+    "example_zh": "投资者仔细审查年报，寻找隐藏债务或虚报利润的任何迹象。",
+    "memory_tip": "名词 scrutiny（审查）→动词 scrutinize，联想“像翻垃圾一样细查”。"
+  },
+  {
+    "word": "seclude",
+    "phonetic": "/sɪˈkluːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使隔离",
+      "使隐居",
+      "使孤立"
+    ],
+    "example_en": "The writer chose to seclude himself in a mountain cabin in order to finish his novel.",
+    "example_zh": "这位作家选择隐居在山间小屋，以完成他的小说。",
+    "memory_tip": "se-（分开）+ clude（关闭）→关在外面，即“隔离、隐居”。"
+  },
+  {
+    "word": "sector",
+    "phonetic": "/ˈsektə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "部门",
+      "行业",
+      "扇形"
+    ],
+    "example_en": "The service sector now accounts for more than half of the country's total employment.",
+    "example_zh": "服务业现在占该国总就业的一半以上。",
+    "memory_tip": "词根 sect-（切）：把经济切成几块，每块即一个“部门、行业”。"
+  },
+  {
+    "word": "secular",
+    "phonetic": "/ˈsekjələ(r)/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "世俗的",
+      "非宗教的",
+      "现世的"
+    ],
+    "example_en": "The country gradually moved toward a secular legal system that separated church from state.",
+    "example_zh": "该国逐渐走向将教会与国家分离的世俗法律体系。",
+    "memory_tip": "词根 sec-（时代）：属于“此世”的，与宗教的“彼世”相对。"
+  },
+  {
+    "word": "sedentary",
+    "phonetic": "/ˈsedntri/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "久坐的",
+      "不动的",
+      "定居的"
+    ],
+    "example_en": "A sedentary lifestyle increases the risk of heart disease even among people who eat reasonably well.",
+    "example_zh": "即使饮食尚可，久坐不动的生活方式也会增加患心脏病的风险。",
+    "memory_tip": "词根 sed-（坐）同 sit：sedentary 即“久坐的”，联想 sedentary job。"
+  },
+  {
+    "word": "seemingly",
+    "phonetic": "/ˈsiːmɪŋli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "看似",
+      "表面上",
+      "据说"
+    ],
+    "example_en": "The seemingly minor error in the code eventually caused the entire system to crash.",
+    "example_zh": "代码中看似微小的错误最终导致整个系统崩溃。",
+    "memory_tip": "seeming（表面上的）+ -ly：联想“看似…实则未必”。"
+  },
+  {
+    "word": "segment",
+    "phonetic": "/ˈseɡmənt/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "部分",
+      "片段",
+      "分割"
+    ],
+    "example_en": "This segment of the population has been largely ignored by mainstream politicians.",
+    "example_zh": "这部分人群在很大程度上被主流政客忽视了。",
+    "memory_tip": "词根 seg-（切）同 section：切下的一段即“片段、部分”。"
+  },
+  {
+    "word": "seize",
+    "phonetic": "/siːz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "抓住",
+      "夺取",
+      "扣押"
+    ],
+    "example_en": "The rebels seized control of the radio station and began broadcasting their own message.",
+    "example_zh": "叛军夺取了电台的控制权，开始播放自己的信息。",
+    "memory_tip": "形近 size：seize 中 ei 倒置，联想“一把抓住”的动感。"
+  },
+  {
+    "word": "sensation",
+    "phonetic": "/senˈseɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "感觉",
+      "知觉",
+      "轰动"
+    ],
+    "example_en": "The discovery caused a sensation in the scientific community and was reported worldwide.",
+    "example_zh": "这一发现在科学界引起轰动，被全球报道。",
+    "memory_tip": "词根 sens-（感觉）同 sense：sensation 即“感觉”，引申为“轰动”。"
+  },
+  {
+    "word": "serene",
+    "phonetic": "/səˈriːn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "宁静的",
+      "安详的",
+      "平静的"
+    ],
+    "example_en": "The lake looked utterly serene at dawn, its surface reflecting the pale pink sky.",
+    "example_zh": "黎明时分，湖面显得格外宁静，倒映着淡粉色的天空。",
+    "memory_tip": "谐音“塞壬”：海妖塞壬的歌声虽美却需宁静心境，联想“安详的”。"
+  },
+  {
+    "word": "setback",
+    "phonetic": "/ˈsetbæk/",
+    "pos": "n.",
+    "meanings_zh": [
+      "挫折",
+      "退步",
+      "阻碍"
+    ],
+    "example_en": "The failed launch was a serious setback for the company's plans to enter the Asian market.",
+    "example_zh": "发射失败对公司进军亚洲市场的计划是一次严重挫折。",
+    "memory_tip": "set + back：被“往回推”，即“挫折、退步”。"
+  },
+  {
+    "word": "shatter",
+    "phonetic": "/ˈʃætə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "粉碎",
+      "破灭",
+      "使震惊"
+    ],
+    "example_en": "The news of the bankruptcy shattered the family's hopes of sending their son abroad.",
+    "example_zh": "破产的消息粉碎了这个家庭送儿子出国的希望。",
+    "memory_tip": "联想 scatter（散开）：shatter 是“打碎使四散”，如玻璃粉碎。"
+  },
+  {
+    "word": "shelter",
+    "phonetic": "/ˈʃeltə(r)/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "庇护所",
+      "避难处",
+      "保护"
+    ],
+    "example_en": "Thousands of refugees sought shelter in temporary camps along the border.",
+    "example_zh": "数千名难民在边境沿线的临时营地寻求庇护。",
+    "memory_tip": "联想 shield（盾）：shelter 即“庇护、遮蔽”，如 shelter from the rain。"
+  },
+  {
+    "word": "shrewd",
+    "phonetic": "/ʃruːd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "精明的，敏锐的",
+      "狡猾的"
+    ],
+    "example_en": "A shrewd investor knows when to sell, even if the market still looks remarkably attractive.",
+    "example_zh": "精明的投资者知道何时抛售，即使市场看起来仍极具吸引力。",
+    "memory_tip": "联想 shrew（泼妇）：泼妇吵架时心思极快，故引申为“精明敏锐”。"
+  },
+  {
+    "word": "shrink",
+    "phonetic": "/ʃrɪŋk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "收缩",
+      "退缩",
+      "减少"
+    ],
+    "example_en": "The company's profits shrank by nearly thirty percent in the last quarter.",
+    "example_zh": "该公司上季度利润减少了近百分之三十。",
+    "memory_tip": "联想 sink（下沉）：shrink 有“缩小、退缩”义，如 shrink from danger。"
+  },
+  {
+    "word": "signify",
+    "phonetic": "/ˈsɪɡnɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "表示",
+      "意味着",
+      "象征"
+    ],
+    "example_en": "A rising unemployment rate may signify deeper structural problems in the economy.",
+    "example_zh": "失业率上升可能意味着经济中存在更深层的结构性问题。",
+    "memory_tip": "词根 sign-（记号）+ -ify：用记号“表示、意味着”。"
+  },
+  {
+    "word": "simplicity",
+    "phonetic": "/sɪmˈplɪsəti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "简单",
+      "朴素",
+      "简明"
+    ],
+    "example_en": "The beauty of the design lies in its simplicity and its complete lack of unnecessary decoration.",
+    "example_zh": "这个设计的美在于其简约，以及完全没有多余的装饰。",
+    "memory_tip": "simple（简单）+ -icity：名词化，即“简单、朴素”。"
+  },
+  {
+    "word": "singular",
+    "phonetic": "/ˈsɪŋɡjələ(r)/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "单数的",
+      "非凡的",
+      "独特的"
+    ],
+    "example_en": "She showed singular courage in defending her research against powerful critics.",
+    "example_zh": "她在面对强大批评者时为捍卫自己的研究表现出非凡的勇气。",
+    "memory_tip": "single（单一）+ -ular：独一无二的，引申为“非凡的”。"
+  },
+  {
+    "word": "slack",
+    "phonetic": "/slæk/",
+    "pos": "adj. / n.",
+    "meanings_zh": [
+      "松弛的",
+      "懈怠的",
+      "淡季"
+    ],
+    "example_en": "Business is usually slack in January, so many shops cut their prices to attract customers.",
+    "example_zh": "一月份生意通常清淡，因此许多商店降价吸引顾客。",
+    "memory_tip": "联想 lack（缺乏）：slack 表示“松、懒”，缺乏紧张感。"
+  },
+  {
+    "word": "slaughter",
+    "phonetic": "/ˈslɔːtə/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "屠杀，屠宰",
+      "惨败"
+    ],
+    "example_en": "The invading army slaughtered thousands of civilians, an atrocity that the world could neither ignore nor forgive.",
+    "example_zh": "入侵军队屠杀了数千名平民，这一暴行世界既无法忽视也无法原谅。",
+    "memory_tip": "slaugh 谐音“死了”；大量“死了”，即屠杀。"
+  },
+  {
+    "word": "slight",
+    "phonetic": "/slaɪt/",
+    "pos": "adj. / n.",
+    "meanings_zh": [
+      "轻微的",
+      "少量的",
+      "轻视"
+    ],
+    "example_en": "There was a slight delay in the schedule, but the conference still ended on time.",
+    "example_zh": "日程略有延误，但会议仍按时结束。",
+    "memory_tip": "形近 light（轻）：slight 即“轻微、微不足道”。"
+  },
+  {
+    "word": "soar",
+    "phonetic": "/sɔː(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "猛增",
+      "翱翔",
+      "高飞"
+    ],
+    "example_en": "Housing prices soared in the coastal cities, making it impossible for young people to buy homes.",
+    "example_zh": "沿海城市房价飞涨，使年轻人无法买房。",
+    "memory_tip": "谐音“嗖”：价格“嗖”地上升，即“猛增、翱翔”。"
+  },
+  {
+    "word": "sober",
+    "phonetic": "/ˈsəʊbə(r)/",
+    "pos": "adj. / v.",
+    "meanings_zh": [
+      "清醒的",
+      "冷静的",
+      "未醉的"
+    ],
+    "example_en": "After a sober assessment of the risks, the board decided to postpone the merger.",
+    "example_zh": "在对风险进行冷静评估后，董事会决定推迟合并。",
+    "memory_tip": "联想 sober up（醒酒）：引申为“清醒、冷静”。"
+  },
+  {
+    "word": "solemn",
+    "phonetic": "/ˈsɒləm/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "庄严的",
+      "严肃的",
+      "郑重的"
+    ],
+    "example_en": "The judge spoke in a solemn tone as he announced the final verdict.",
+    "example_zh": "法官以庄重的语气宣布了最终判决。",
+    "memory_tip": "词根 sol-（太阳）：古罗马太阳祭典庄严隆重，联想“庄严的”。"
+  },
+  {
+    "word": "solicit",
+    "phonetic": "/səˈlɪsɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "请求",
+      "征求",
+      "恳求"
+    ],
+    "example_en": "The university sent emails to solicit feedback from recent graduates about its curriculum.",
+    "example_zh": "大学发送邮件，征求应届毕业生对课程的反馈。",
+    "memory_tip": "词根 sol-（全部）+ cit（唤起）：把大家“唤起”求意见，即“征求”。"
+  },
+  {
+    "word": "solitary",
+    "phonetic": "/ˈsɒlətri/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "孤独的",
+      "单独的",
+      "唯一的"
+    ],
+    "example_en": "He led a solitary life in the countryside, rarely seeing any of his former colleagues.",
+    "example_zh": "他在乡下过着孤独的生活，很少见到以前的同事。",
+    "memory_tip": "词根 sol-（单独）同 sole：solitary 即“孤独的、独自的”。"
+  },
+  {
+    "word": "sorrow",
+    "phonetic": "/ˈsɒrəʊ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "悲伤，悲痛",
+      "伤心事"
+    ],
+    "example_en": "Her face was filled with sorrow when she learned that her childhood friend had passed away.",
+    "example_zh": "得知儿时好友去世的消息时，她满脸悲伤。",
+    "memory_tip": "sor 与 sorry（抱歉、难过）同源；sorry 的名词化，即悲伤。"
+  },
+  {
+    "word": "spacious",
+    "phonetic": "/ˈspeɪʃəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "宽敞的，广阔的",
+      "广阔的，开阔的"
+    ],
+    "example_en": "The new library is bright and spacious, with huge windows that let in plenty of natural light.",
+    "example_zh": "新图书馆明亮宽敞，巨大的窗户引入了充足的自然光。",
+    "memory_tip": "space（空间）+ ious（形容词后缀）：有空间的，即宽敞的。"
+  },
+  {
+    "word": "spark",
+    "phonetic": "/spɑːk/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "引发",
+      "激起",
+      "火花"
+    ],
+    "example_en": "The controversial article sparked a nationwide debate about press freedom.",
+    "example_zh": "这篇有争议的文章引发了全国范围内关于新闻自由的辩论。",
+    "memory_tip": "本义“火花”：一点火花可“引发”大火，引申为“激起”。"
+  },
+  {
+    "word": "specialize",
+    "phonetic": "/ˈspeʃəlaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "专攻",
+      "专门从事",
+      "特化"
+    ],
+    "example_en": "After graduation, she decided to specialize in corporate law rather than criminal law.",
+    "example_zh": "毕业后，她决定专攻公司法而非刑法。",
+    "memory_tip": "special（专门的）+ -ize：使专门化，即“专攻”。"
+  },
+  {
+    "word": "specification",
+    "phonetic": "/ˌspesɪfɪˈkeɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "规格",
+      "详细说明",
+      "明确说明"
+    ],
+    "example_en": "The engineer checked every specification carefully before approving the final design.",
+    "example_zh": "工程师在批准最终设计前仔细核对了每一项规格。",
+    "memory_tip": "specific（具体的）+ -ation：把要求“具体化”，即“规格、详细说明”。"
+  },
+  {
+    "word": "spectacle",
+    "phonetic": "/ˈspektəkl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "景象",
+      "奇观",
+      "场面"
+    ],
+    "example_en": "The opening ceremony was a magnificent spectacle that impressed viewers around the world.",
+    "example_zh": "开幕式是一场壮观的景象，给全球观众留下了深刻印象。",
+    "memory_tip": "词根 spect-（看）：值得一看之物即“景象、奇观”，如 spectacles（眼镜）。"
+  },
+  {
+    "word": "spiral",
+    "phonetic": "/ˈspaɪrəl/",
+    "pos": "n. / v. / adj.",
+    "meanings_zh": [
+      "螺旋",
+      "螺旋式上升",
+      "急剧上升"
+    ],
+    "example_en": "Without intervention, the country's debt could spiral out of control within a few years.",
+    "example_zh": "若不加以干预，该国的债务可能在几年内失控飙升。",
+    "memory_tip": "联想 spire（尖顶）：螺旋上升的形状，引申为“急剧上升”。"
+  },
+  {
+    "word": "splendid",
+    "phonetic": "/ˈsplendɪd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "壮丽的",
+      "极好的",
+      "辉煌的"
+    ],
+    "example_en": "From the top of the hill, we enjoyed a splendid view of the entire valley.",
+    "example_zh": "从山顶上，我们欣赏到了整个山谷的壮丽景色。",
+    "memory_tip": "词根 splend-（发光）：光辉灿烂的，即“壮丽、极好的”。"
+  },
+  {
+    "word": "spontaneous",
+    "phonetic": "/spɒnˈteɪniəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "自发的",
+      "自然的",
+      "无预谋的"
+    ],
+    "example_en": "The audience broke into spontaneous applause as soon as the singer appeared on stage.",
+    "example_zh": "歌手一登台，观众就自发地爆发出掌声。",
+    "memory_tip": "词根 spon-（自愿）：出自内心自愿的，即“自发的”。"
+  },
+  {
+    "word": "spouse",
+    "phonetic": "/spaʊs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "配偶",
+      "丈夫或妻子"
+    ],
+    "example_en": "Employees may bring their spouse to the annual dinner held at the company headquarters.",
+    "example_zh": "员工可携带配偶参加在公司总部举行的年度晚宴。",
+    "memory_tip": "源自拉丁 spons（承诺）：缔结婚约者即“配偶”。"
+  },
+  {
+    "word": "stagnate",
+    "phonetic": "/stæɡˈneɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "停滞，不发展",
+      "变得迟钝，无活力"
+    ],
+    "example_en": "Without fresh investment, the local economy will stagnate and young graduates will keep moving away.",
+    "example_zh": "如果没有新的投资，当地经济将会停滞，年轻毕业生也会不断外流。",
+    "memory_tip": "联想 stagnant water（死水），死水不流动，就是停滞。"
+  },
+  {
+    "word": "startle",
+    "phonetic": "/ˈstɑːtl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使吃惊",
+      "使惊吓",
+      "惊动"
+    ],
+    "example_en": "The sudden noise from the hallway startled the sleeping baby and woke her up.",
+    "example_zh": "走廊里突然传来的声音惊醒了熟睡的婴儿。",
+    "memory_tip": "联想 start（惊起）：startle 即“使突然惊起”，重音在前。"
+  },
+  {
+    "word": "statistical",
+    "phonetic": "/stəˈtɪstɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "统计的",
+      "统计学的"
+    ],
+    "example_en": "There is no statistical evidence to support the claim that the policy reduced crime.",
+    "example_zh": "没有统计证据支持该政策降低了犯罪率的说法。",
+    "memory_tip": "statistics（统计）+ -al：形容词化，即“统计的”。"
+  },
+  {
+    "word": "stereotype",
+    "phonetic": "/ˈsteriətaɪp/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "刻板印象",
+      "成见",
+      "模式化"
+    ],
+    "example_en": "The documentary challenges the stereotype that all scientists are socially awkward.",
+    "example_zh": "这部纪录片挑战了所有科学家都不善社交的刻板印象。",
+    "memory_tip": "stereo（固定）+ type（类型）：固定的类型，即“刻板印象”。"
+  },
+  {
+    "word": "stern",
+    "phonetic": "/stɜːn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "严厉的",
+      "严肃的",
+      "坚定的"
+    ],
+    "example_en": "The teacher gave the students a stern warning about the consequences of cheating.",
+    "example_zh": "老师就作弊的后果向学生们发出严厉警告。",
+    "memory_tip": "联想 stone（石头）：像石头般坚硬严厉，即“严厉的”。"
+  },
+  {
+    "word": "stifle",
+    "phonetic": "/ˈstaɪfl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "抑制，压制（情感、反应等）",
+      "使窒息，使呼吸困难",
+      "扼杀，阻止（发展）"
+    ],
+    "example_en": "She tried hard to stifle a yawn during the professor's long and rather boring lecture.",
+    "example_zh": "在教授冗长而相当无聊的讲座中，她努力抑制住打哈欠的冲动。",
+    "memory_tip": "联想 stuff（塞满）：把情绪或呼吸“塞住”→抑制、窒息。"
+  },
+  {
+    "word": "stimulus",
+    "phonetic": "/ˈstɪmjələs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "刺激",
+      "激励",
+      "刺激物"
+    ],
+    "example_en": "The tax cut was intended to act as a stimulus for consumer spending.",
+    "example_zh": "减税旨在作为刺激消费者支出的一种手段。",
+    "memory_tip": "词根 stim-（刺）：刺激之物，复数为 stimuli。"
+  },
+  {
+    "word": "stipulate",
+    "phonetic": "/ˈstɪpjuleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "规定，明确要求",
+      "作为条件提出"
+    ],
+    "example_en": "The contract stipulates that all disputes must be settled through arbitration rather than public litigation.",
+    "example_zh": "合同规定，所有争议必须通过仲裁而非公开诉讼来解决。",
+    "memory_tip": "词根 stip-（压紧、约定）+ -ulate，把条件压进合同里，就是明文规定。"
+  },
+  {
+    "word": "straightforward",
+    "phonetic": "/ˌstreɪtˈfɔːwəd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "直接的",
+      "坦率的",
+      "简单明了的"
+    ],
+    "example_en": "The instructions were straightforward enough that even a beginner could follow them.",
+    "example_zh": "这些说明简单明了，连初学者都能看懂。",
+    "memory_tip": "straight（直）+ forward（向前）：直截了当，即“坦率的、简单的”。"
+  },
+  {
+    "word": "strain",
+    "phonetic": "/streɪn/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "压力",
+      "拉紧",
+      "扭伤"
+    ],
+    "example_en": "The extra workload placed a severe strain on the already small research team.",
+    "example_zh": "额外的工作量给本就人手不足的研究团队带来了沉重压力。",
+    "memory_tip": "联想 strict（拉紧）：strain 即“拉紧、绷紧”，引申为“压力”。"
+  },
+  {
+    "word": "streamline",
+    "phonetic": "/ˈstriːmlaɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使简化",
+      "使效率更高",
+      "使成流线型"
+    ],
+    "example_en": "The company streamlined its approval process to reduce the time needed for new products.",
+    "example_zh": "公司简化了审批流程，以缩短新产品所需的时间。",
+    "memory_tip": "stream（流）+ line（线）：使如流水线般顺畅，即“简化、提高效率”。"
+  },
+  {
+    "word": "strenuous",
+    "phonetic": "/ˈstrenjuəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "费力的，繁重的",
+      "精力充沛的，积极的"
+    ],
+    "example_en": "Doctors advise patients to avoid strenuous exercise for at least six weeks after the operation.",
+    "example_zh": "医生建议患者术后至少六周内避免剧烈运动。",
+    "memory_tip": "stren 与 strength（力量）同源；需使大力气的，即费力的。"
+  },
+  {
+    "word": "stringent",
+    "phonetic": "/ˈstrɪndʒənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "严格的，严厉的",
+      "（财政）紧缩的"
+    ],
+    "example_en": "The government imposed stringent controls on emissions, forcing factories to invest heavily in cleaner technology.",
+    "example_zh": "政府对排放实施了严格控制，迫使工厂大力投资更清洁的技术。",
+    "memory_tip": "string（绳、弦）+ ent：像绳子一样绷紧、不放松，即严格。"
+  },
+  {
+    "word": "strive",
+    "phonetic": "/straɪv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "努力",
+      "奋斗",
+      "力争"
+    ],
+    "example_en": "Every student should strive to improve, even when the results are already satisfactory.",
+    "example_zh": "每个学生都应努力进步，即使成绩已令人满意。",
+    "memory_tip": "联想 drive（驱动）：内心被驱动向前，即“努力、奋斗”。"
+  },
+  {
+    "word": "stumble",
+    "phonetic": "/ˈstʌmbl/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "绊倒",
+      "蹒跚",
+      "偶然发现"
+    ],
+    "example_en": "While cleaning the attic, she stumbled upon a box of her grandfather's old letters.",
+    "example_zh": "打扫阁楼时，她偶然发现了一箱祖父的旧信件。",
+    "memory_tip": "联想 tumble（跌倒）：stumble 是走路被绊“踉跄”，引申为“偶然发现”。"
+  },
+  {
+    "word": "stun",
+    "phonetic": "/stʌn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使震惊",
+      "使昏迷",
+      "使目瞪口呆"
+    ],
+    "example_en": "The news of the sudden resignation stunned everyone in the newsroom.",
+    "example_zh": "突然辞职的消息震惊了新闻编辑部的每个人。",
+    "memory_tip": "联想 stunning（惊艳的）：把人“打晕”般的震撼，即“使震惊”。"
+  },
+  {
+    "word": "subdue",
+    "phonetic": "/səbˈdjuː/",
+    "pos": "v.",
+    "meanings_zh": [
+      "制服，镇压",
+      "抑制，克制（情绪）"
+    ],
+    "example_en": "The government sent troops to subdue the rebellion before it could spread to neighboring provinces.",
+    "example_zh": "政府派出军队镇压叛乱，以防其蔓延到邻省。",
+    "memory_tip": "sub-（向下）+ due（due 联想“应缴”）→ 把对方压下去使其屈服。"
+  },
+  {
+    "word": "subjective",
+    "phonetic": "/səbˈdʒektɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "主观的",
+      "个人的",
+      "非客观的"
+    ],
+    "example_en": "Art criticism is inevitably subjective, reflecting the critic's own tastes and experiences.",
+    "example_zh": "艺术批评不可避免地带有主观性，反映了批评家自身的品味和经历。",
+    "memory_tip": "subject（主体）+ -ive：出于主体自身的，即“主观的”，反义 objective。"
+  },
+  {
+    "word": "subordinate",
+    "phonetic": "/səˈbɔːdɪnət/",
+    "pos": "adj. / n. / v.",
+    "meanings_zh": [
+      "从属的",
+      "下级",
+      "使服从"
+    ],
+    "example_en": "In this company, personal interests are clearly subordinate to the goals of the team.",
+    "example_zh": "在这家公司，个人利益明显从属于团队目标。",
+    "memory_tip": "sub-（下）+ ordin（顺序）：排在下面的，即“从属的、下级”。"
+  },
+  {
+    "word": "subscribe",
+    "phonetic": "/səbˈskraɪb/",
+    "pos": "v.",
+    "meanings_zh": [
+      "订阅",
+      "同意",
+      "捐助"
+    ],
+    "example_en": "Millions of readers subscribe to the magazine for its in-depth coverage of science.",
+    "example_zh": "数百万读者订阅该杂志，因其对科学的深入报道。",
+    "memory_tip": "sub-（下）+ scribe（写）：在下方签字，即“订阅、同意”。"
+  },
+  {
+    "word": "subsidiary",
+    "phonetic": "/səbˈsɪdiəri/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "附属的，次要的",
+      "子公司，附属机构"
+    ],
+    "example_en": "The bank's overseas subsidiary was ordered to pay a record fine for violating local regulations.",
+    "example_zh": "该银行的海外子公司因违反当地法规被责令支付创纪录的罚款。",
+    "memory_tip": "sub（下）+ sid（坐）+ iary：坐在下面的，即附属的、次要的。"
+  },
+  {
+    "word": "subsidy",
+    "phonetic": "/ˈsʌbsədi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "补贴",
+      "津贴",
+      "补助金"
+    ],
+    "example_en": "The government provides a subsidy to farmers who adopt environmentally friendly practices.",
+    "example_zh": "政府对采用环保做法的农民提供补贴。",
+    "memory_tip": "sub-（下）+ sid（坐）：在下面“托一把”的钱，即“补贴”。"
+  },
+  {
+    "word": "substantial",
+    "phonetic": "/səbˈstænʃl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "大量的",
+      "实质的",
+      "重大的"
+    ],
+    "example_en": "The charity received a substantial donation from an anonymous businessman last month.",
+    "example_zh": "该慈善机构上个月收到一位匿名商人的大额捐款。",
+    "memory_tip": "substance（实质）+ -ial：有实质内容的，引申为“大量的、重大的”。"
+  },
+  {
+    "word": "succession",
+    "phonetic": "/səkˈseʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "连续",
+      "继承",
+      "一系列"
+    ],
+    "example_en": "The team won three championships in succession, a feat no one had achieved before.",
+    "example_zh": "该队连续三次夺冠，这是此前无人实现的壮举。",
+    "memory_tip": "succeed（接替）+ -ion：接连发生，即“连续、继承”。"
+  },
+  {
+    "word": "suffice",
+    "phonetic": "/səˈfaɪs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "足够",
+      "满足",
+      "使满足"
+    ],
+    "example_en": "A brief note will suffice; there is no need to write a long formal letter.",
+    "example_zh": "简短的便条就足够了，不必写长篇正式信函。",
+    "memory_tip": "词根 suf-（下）+ fice（做）：做到位即“足够”，suffice it to say 是常用句型。"
+  },
+  {
+    "word": "suicide",
+    "phonetic": "/ˈsuːɪsaɪd/",
+    "pos": "n.",
+    "meanings_zh": [
+      "自杀",
+      "自杀行为"
+    ],
+    "example_en": "The novel explores the protagonist's struggle with depression and his thoughts of suicide.",
+    "example_zh": "这部小说探讨了主人公与抑郁症的斗争以及他的自杀念头。",
+    "memory_tip": "sui-（自己）+ cide（杀）：杀死自己，即“自杀”。"
+  },
+  {
+    "word": "summit",
+    "phonetic": "/ˈsʌmɪt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "峰会",
+      "顶峰",
+      "最高点"
+    ],
+    "example_en": "Leaders from twenty countries gathered for a climate summit aimed at reducing carbon emissions.",
+    "example_zh": "来自二十个国家的领导人齐聚气候峰会，旨在减少碳排放。",
+    "memory_tip": "本义“山顶”：引申为“最高层会议”，即“峰会”。"
+  },
+  {
+    "word": "supervise",
+    "phonetic": "/ˈsuːpəvaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "监督",
+      "管理",
+      "指导"
+    ],
+    "example_en": "A senior researcher will supervise the experiment to ensure all safety rules are followed.",
+    "example_zh": "一位资深研究员将监督该实验，确保遵守所有安全规则。",
+    "memory_tip": "super-（上）+ vise（看）：从上面看，即“监督、管理”。"
+  },
+  {
+    "word": "surge",
+    "phonetic": "/sɜːdʒ/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "激增",
+      "涌动",
+      "急剧上升"
+    ],
+    "example_en": "There was a sudden surge in demand for electric vehicles after fuel prices rose.",
+    "example_zh": "燃油价格上涨后，电动汽车需求突然激增。",
+    "memory_tip": "联想 surgery（外科）：切开时血“涌出”，引申为“激增、涌动”。"
+  },
+  {
+    "word": "suspend",
+    "phonetic": "/səˈspend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "暂停",
+      "悬挂",
+      "中止"
+    ],
+    "example_en": "The airline decided to suspend all flights to the region until the volcanic ash cleared.",
+    "example_zh": "该航空公司决定暂停飞往该地区的所有航班，直到火山灰消散。",
+    "memory_tip": "sus-（下）+ pend（挂）：从下面挂着，引申为“暂停、中止”。"
+  },
+  {
+    "word": "swift",
+    "phonetic": "/swɪft/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "迅速的",
+      "敏捷的",
+      "快的"
+    ],
+    "example_en": "The government's swift response to the outbreak prevented the disease from spreading further.",
+    "example_zh": "政府对疫情迅速的反应阻止了疾病的进一步传播。",
+    "memory_tip": "联想 shift（转换）：切换速度快，即“迅速的、敏捷的”。"
+  },
+  {
+    "word": "symbolic",
+    "phonetic": "/sɪmˈbɒlɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "象征性的",
+      "象征的",
+      "符号的"
+    ],
+    "example_en": "The dove is symbolic of peace in many cultures around the world.",
+    "example_zh": "在世界许多文化中，鸽子是和平的象征。",
+    "memory_tip": "symbol（符号）+ -ic：作为符号的，即“象征性的”。"
+  },
+  {
+    "word": "synthesis",
+    "phonetic": "/ˈsɪnθəsɪs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "综合",
+      "合成",
+      "综合体"
+    ],
+    "example_en": "The book offers a remarkable synthesis of historical research and personal memoir.",
+    "example_zh": "这本书精彩地综合了历史研究与个人回忆录。",
+    "memory_tip": "syn-（一起）+ thesis（放置）：放在一起，即“综合、合成”。"
+  },
+  {
+    "word": "tactic",
+    "phonetic": "/ˈtæktɪk/",
+    "pos": "n.",
+    "meanings_zh": [
+      "策略",
+      "战术",
+      "手段"
+    ],
+    "example_en": "Delay is a common tactic used by lawyers to wear down the opposing party.",
+    "example_zh": "拖延是律师常用的策略，用以拖垮对方。",
+    "memory_tip": "词根 tact-（接触）：在战场上与敌接触之法，即“战术、策略”。"
+  },
+  {
+    "word": "tame",
+    "phonetic": "/teɪm/",
+    "pos": "adj. / v.",
+    "meanings_zh": [
+      "驯服的",
+      "温顺的",
+      "驯化"
+    ],
+    "example_en": "It took the trainer several months to tame the wild horse and earn its trust.",
+    "example_zh": "驯马师花了几个月时间才驯服这匹野马并赢得它的信任。",
+    "memory_tip": "联想 team：驯服的动物能融入“团队”，即“温顺的、驯化”。"
+  },
+  {
+    "word": "tease",
+    "phonetic": "/tiːz/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "戏弄",
+      "取笑",
+      "挑逗"
+    ],
+    "example_en": "The older children used to tease him about his accent, which made him reluctant to speak.",
+    "example_zh": "大孩子们过去常取笑他的口音，这让他不愿开口说话。",
+    "memory_tip": "联想 tease out（梳理出）：把线头挑出来，引申为“戏弄、挑逗”。"
+  },
+  {
+    "word": "tempt",
+    "phonetic": "/tempt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "诱惑",
+      "吸引",
+      "引诱"
+    ],
+    "example_en": "The low prices tempted many shoppers to buy things they did not really need.",
+    "example_zh": "低价诱惑许多购物者购买了并不真正需要的东西。",
+    "memory_tip": "联想 attempt（尝试）：尝试的动机常因“诱惑”，即 tempt。"
+  },
+  {
+    "word": "tenacious",
+    "phonetic": "/təˈneɪʃəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "顽强的，坚持不懈的",
+      "紧握不放的，牢固的"
+    ],
+    "example_en": "Her tenacious pursuit of the truth eventually forced the company to admit its safety failures.",
+    "example_zh": "她对真相的顽强追求最终迫使该公司承认了其安全失误。",
+    "memory_tip": "词根 ten-（hold 握住，如 tenant 房客）+ -acious → 死死握住不放的。"
+  },
+  {
+    "word": "tentative",
+    "phonetic": "/ˈtentətɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "暂定的",
+      "试探性的",
+      "犹豫的"
+    ],
+    "example_en": "We have reached a tentative agreement, but the final contract still needs to be signed.",
+    "example_zh": "我们已达成暂定协议，但最终合同仍需签署。",
+    "memory_tip": "词根 tent-（尝试）：尝试性的，即“试探性的、暂定的”。"
+  },
+  {
+    "word": "testify",
+    "phonetic": "/ˈtestɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "作证",
+      "证明",
+      "表明"
+    ],
+    "example_en": "Three witnesses agreed to testify against the defendant in the upcoming trial.",
+    "example_zh": "三名证人同意在即将到来的审判中出庭指证被告。",
+    "memory_tip": "test（见证）+ -ify：以见证作证，即“证明、作证”。"
+  },
+  {
+    "word": "thereby",
+    "phonetic": "/ˌðeəˈbaɪ/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "从而",
+      "因此",
+      "由此"
+    ],
+    "example_en": "The company cut its energy use by half, thereby reducing both costs and emissions.",
+    "example_zh": "该公司将能源消耗减半，从而降低了成本和排放。",
+    "memory_tip": "there（那）+ by（通过）：通过那件事，即“从而、因此”。"
+  },
+  {
+    "word": "thermal",
+    "phonetic": "/ˈθɜːml/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "热的",
+      "保暖的",
+      "热量的"
+    ],
+    "example_en": "The new building uses thermal insulation to keep energy costs low during winter.",
+    "example_zh": "新建筑使用隔热材料以在冬季保持低能源成本。",
+    "memory_tip": "词根 therm-（热）：如 thermometer（温度计），thermal 即“热的”。"
+  },
+  {
+    "word": "threshold",
+    "phonetic": "/ˈθreʃhəʊld/",
+    "pos": "n.",
+    "meanings_zh": [
+      "门槛",
+      "临界点",
+      "开端"
+    ],
+    "example_en": "Incomes below a certain threshold are exempt from the new tax.",
+    "example_zh": "低于某一门槛的收入可免征新税。",
+    "memory_tip": "本义“门槛”：跨过门槛即到达“临界点、开端”。"
+  },
+  {
+    "word": "thrill",
+    "phonetic": "/θrɪl/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "激动",
+      "兴奋",
+      "使激动"
+    ],
+    "example_en": "Riding the roller coaster gave the children a thrill they would never forget.",
+    "example_zh": "坐过山车给孩子们带来了终生难忘的兴奋感。",
+    "memory_tip": "联想 through：感觉“穿透”全身，即“激动、兴奋”。"
+  },
+  {
+    "word": "thwart",
+    "phonetic": "/θwɔːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "阻挠，挫败（计划、企图）",
+      "妨碍，使受挫折"
+    ],
+    "example_en": "Heavy rain and strong winds thwarted the rescue team's attempt to reach the stranded climbers.",
+    "example_zh": "暴雨和强风阻挠了救援队接近被困登山者的尝试。",
+    "memory_tip": "形近 thwart 含“横（thwart 联想 transverse 横向）”：横插一杠→阻挠。"
+  },
+  {
+    "word": "tighten",
+    "phonetic": "/ˈtaɪtn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "收紧",
+      "加强",
+      "拧紧"
+    ],
+    "example_en": "The central bank decided to tighten monetary policy in order to control inflation.",
+    "example_zh": "央行决定收紧货币政策以控制通胀。",
+    "memory_tip": "tight（紧）+ -en（使动）：使变紧，即“收紧、加强”。"
+  },
+  {
+    "word": "tolerate",
+    "phonetic": "/ˈtɒləreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "容忍",
+      "忍受",
+      "宽容"
+    ],
+    "example_en": "The professor will not tolerate any form of cheating in his exams.",
+    "example_zh": "这位教授不会容忍考试中的任何作弊行为。",
+    "memory_tip": "词根 toler-（忍受）：tolerance（宽容）为其名词形式。"
+  },
+  {
+    "word": "tranquil",
+    "phonetic": "/ˈtræŋkwɪl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "平静的",
+      "宁静的",
+      "安宁的"
+    ],
+    "example_en": "After retirement, they moved to a tranquil village near the sea.",
+    "example_zh": "退休后，他们搬到了海边一个宁静的村庄。",
+    "memory_tip": "词根 tranquil-（平静）：联想 tranquilizer（镇静剂），即“平静的”。"
+  },
+  {
+    "word": "transcend",
+    "phonetic": "/trænˈsend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "超越",
+      "胜过",
+      "超出"
+    ],
+    "example_en": "Great works of art transcend the culture in which they were created.",
+    "example_zh": "伟大的艺术作品超越了其创作时的文化背景。",
+    "memory_tip": "trans-（越过）+ scend（爬）：爬过去，即“超越、超出”。"
+  },
+  {
+    "word": "transient",
+    "phonetic": "/ˈtrænziənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "短暂的",
+      "转瞬即逝的",
+      "临时的"
+    ],
+    "example_en": "The economic recovery may prove transient if the underlying problems are not solved.",
+    "example_zh": "若根本问题未解决，经济复苏可能只是短暂的。",
+    "memory_tip": "trans-（越过）+ ient：匆匆越过的，即“短暂的、转瞬即逝的”。"
+  },
+  {
+    "word": "traverse",
+    "phonetic": "/trəˈvɜːs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "横穿",
+      "穿过",
+      "穿越"
+    ],
+    "example_en": "The explorers took three months to traverse the desert on foot.",
+    "example_zh": "探险者花了三个月徒步穿越沙漠。",
+    "memory_tip": "trans-（越过）+ verse（转）：横向越过，即“横穿”。"
+  },
+  {
+    "word": "tribute",
+    "phonetic": "/ˈtrɪbjuːt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "致敬",
+      "贡品",
+      "悼念"
+    ],
+    "example_en": "The concert was held as a tribute to the composer on his hundredth birthday.",
+    "example_zh": "这场音乐会是为纪念作曲家百年诞辰而举办的致敬演出。",
+    "memory_tip": "词根 tribut-（给予）：向人“给予”敬意或贡品，即“致敬、贡品”。"
+  },
+  {
+    "word": "trivial",
+    "phonetic": "/ˈtrɪviəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "琐碎的",
+      "不重要的",
+      "微不足道的"
+    ],
+    "example_en": "Don't waste your time arguing over such trivial matters.",
+    "example_zh": "不要浪费时间争论这种琐碎小事。",
+    "memory_tip": "词根 tri-（三）+ via（路）：三岔路口人人可见之物，即“普通的、琐碎的”。"
+  },
+  {
+    "word": "turbulent",
+    "phonetic": "/ˈtɜːbjələnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "动荡的",
+      "混乱的",
+      "湍流的"
+    ],
+    "example_en": "The country went through a turbulent period of political and social change.",
+    "example_zh": "该国经历了一段政治和社会剧变的动荡时期。",
+    "memory_tip": "词根 turb-（搅动）同 disturb：被搅动起来，即“动荡的、混乱的”。"
+  },
+  {
+    "word": "unanimous",
+    "phonetic": "/juˈnænɪməs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "一致同意的",
+      "全体一致的"
+    ],
+    "example_en": "The board reached a unanimous decision to expand the company into overseas markets.",
+    "example_zh": "董事会一致决定将公司拓展到海外市场。",
+    "memory_tip": "un-（一）+ anim（心）：万众一心，即“一致同意的”。"
+  },
+  {
+    "word": "underlying",
+    "phonetic": "/ˌʌndəˈlaɪɪŋ/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "潜在的",
+      "根本的",
+      "下面的"
+    ],
+    "example_en": "The doctor suspected an underlying condition that had not yet been diagnosed.",
+    "example_zh": "医生怀疑存在一种尚未确诊的潜在疾病。",
+    "memory_tip": "under（下）+ lie（躺）：躺在下面的，即“潜在的、根本的”。"
+  },
+  {
+    "word": "unify",
+    "phonetic": "/ˈjuːnɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "统一",
+      "联合",
+      "使一致"
+    ],
+    "example_en": "The new leader promised to unify the divided party before the next election.",
+    "example_zh": "新领导人承诺在下次选举前统一分裂的政党。",
+    "memory_tip": "uni-（一）+ -fy（使动）：使合为一，即“统一、联合”。"
+  },
+  {
+    "word": "unprecedented",
+    "phonetic": "/ʌnˈpresɪdentɪd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "前所未有的",
+      "空前的"
+    ],
+    "example_en": "The pandemic caused unprecedented disruption to global supply chains.",
+    "example_zh": "疫情对全球供应链造成了前所未有的 disruption。",
+    "memory_tip": "un-（无）+ precedent（先例）+ -ed：没有先例的，即“空前的”。"
+  },
+  {
+    "word": "unravel",
+    "phonetic": "/ʌnˈrævl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "解开，拆散（线团等）",
+      "阐明，弄清（谜团）"
+    ],
+    "example_en": "Detectives spent months trying to unravel the complicated web of lies behind the missing funds.",
+    "example_zh": "侦探们花了数月时间，试图解开失踪资金背后那张复杂的谎言之网。",
+    "memory_tip": "un-（反）+ ravel（纠缠）→ 把缠成一团的东西反过来解开。"
+  },
+  {
+    "word": "upcoming",
+    "phonetic": "/ˈʌpkʌmɪŋ/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "即将到来的",
+      "即将举行的"
+    ],
+    "example_en": "All staff are required to attend the upcoming meeting on budget planning.",
+    "example_zh": "所有员工都必须参加即将召开的预算规划会议。",
+    "memory_tip": "up（向上）+ coming（到来）：即将“上来”的，即“即将到来的”。"
+  },
+  {
+    "word": "upgrade",
+    "phonetic": "/ˌʌpˈɡreɪd/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "升级",
+      "提升",
+      "改进"
+    ],
+    "example_en": "The airline offered to upgrade her seat because the flight was overbooked.",
+    "example_zh": "由于航班超售，航空公司主动为她升级了座位。",
+    "memory_tip": "up（向上）+ grade（等级）：向上升级，即“升级、提升”。"
+  },
+  {
+    "word": "uphold",
+    "phonetic": "/ʌpˈhəʊld/",
+    "pos": "v.",
+    "meanings_zh": [
+      "维护",
+      "支持",
+      "维持"
+    ],
+    "example_en": "The court decided to uphold the original ruling after reviewing all the evidence.",
+    "example_zh": "法院在审查所有证据后决定维持原判。",
+    "memory_tip": "up（向上）+ hold（托住）：向上托住，即“维护、支持”。"
+  },
+  {
+    "word": "utmost",
+    "phonetic": "/ˈʌtməʊst/",
+    "pos": "adj. / n.",
+    "meanings_zh": [
+      "极度的",
+      "最大的",
+      "极限"
+    ],
+    "example_en": "The doctors treated the injured passengers with the utmost care and urgency.",
+    "example_zh": "医生以最大的细心和紧迫感救治受伤乘客。",
+    "memory_tip": "ut（外）+ most（最）：最外端，即“极度的、最大的”。"
+  },
+  {
+    "word": "vacant",
+    "phonetic": "/ˈveɪkənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "空的",
+      "空缺的",
+      "空闲的"
+    ],
+    "example_en": "Several apartments in the building have remained vacant for over a year.",
+    "example_zh": "这栋楼里有几套公寓已经空置一年多了。",
+    "memory_tip": "词根 vac-（空）同 vacation（假期）：空着没人用，即“空的、空缺的”。"
+  },
+  {
+    "word": "vain",
+    "phonetic": "/veɪn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "徒劳的",
+      "虚荣的",
+      "自负的"
+    ],
+    "example_en": "All their efforts to save the company proved vain when the bank refused further loans.",
+    "example_zh": "当银行拒绝进一步贷款时，他们拯救公司的所有努力都徒劳无功。",
+    "memory_tip": "in vain（徒劳）是固定短语，vain 与“虚荣”也相关。"
+  },
+  {
+    "word": "veer",
+    "phonetic": "/vɪə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "突然转向，改变方向",
+      "（话题、政策）转向"
+    ],
+    "example_en": "The car suddenly veered to the left to avoid a dog that had run onto the highway.",
+    "example_zh": "汽车突然向左转向，以避开一只跑到公路上的狗。",
+    "memory_tip": "形近 steer（驾驶）→ 去掉 s 就是“猛打方向盘”突然转向。"
+  },
+  {
+    "word": "vegetate",
+    "phonetic": "/ˈvedʒəteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "无所事事",
+      "过单调生活",
+      "像植物般生长"
+    ],
+    "example_en": "After losing his job, he spent months vegetating in front of the television.",
+    "example_zh": "失业后，他在电视机前无所事事地过了几个月。",
+    "memory_tip": "vegetable（植物）+ -ate：像植物一样活着，即“无所事事”。"
+  },
+  {
+    "word": "veil",
+    "phonetic": "/veɪl/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "面纱",
+      "掩饰",
+      "遮盖"
+    ],
+    "example_en": "The company tried to draw a veil over its financial losses, but journalists soon uncovered the truth.",
+    "example_zh": "公司试图掩盖财务亏损，但记者很快揭开了真相。",
+    "memory_tip": "本义“面纱”：draw a veil over 意为“掩饰、掩盖”。"
+  },
+  {
+    "word": "velocity",
+    "phonetic": "/vəˈlɒsəti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "速度",
+      "速率",
+      "迅速"
+    ],
+    "example_en": "The velocity of light in a vacuum is considered a fundamental constant of nature.",
+    "example_zh": "真空中的光速被视为自然界的基本常数。",
+    "memory_tip": "词根 veloc-（快）同 accelerate：表示“速度、速率”。"
+  },
+  {
+    "word": "venture",
+    "phonetic": "/ˈventʃə(r)/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "风险投资",
+      "冒险",
+      "敢于"
+    ],
+    "example_en": "The young entrepreneur raised enough money to launch his first business venture.",
+    "example_zh": "这位年轻的企业家筹集到足够的资金来启动他的第一个创业项目。",
+    "memory_tip": "联想 adventure（冒险）：venture 即“冒险事业、风险投资”。"
+  },
+  {
+    "word": "verbal",
+    "phonetic": "/ˈvɜːbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "口头的",
+      "言语的",
+      "动词的"
+    ],
+    "example_en": "A verbal agreement may be legally binding if both parties clearly intended to be bound.",
+    "example_zh": "如果双方明确意图受约束，口头协议可能具有法律效力。",
+    "memory_tip": "词根 verb-（词语）：与言语有关的，即“口头的、言语的”。"
+  },
+  {
+    "word": "verdict",
+    "phonetic": "/ˈvɜːdɪkt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "裁决",
+      "判决",
+      "结论"
+    ],
+    "example_en": "The jury took two days to reach a verdict in the complicated fraud case.",
+    "example_zh": "陪审团花了两天时间才在这起复杂的欺诈案中达成裁决。",
+    "memory_tip": "ver-（真）+ dict（说）：说出真相，即“裁决、结论”。"
+  },
+  {
+    "word": "verge",
+    "phonetic": "/vɜːdʒ/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "边缘",
+      "濒临",
+      "接近"
+    ],
+    "example_en": "The company was on the verge of bankruptcy when a foreign investor stepped in.",
+    "example_zh": "一家外国投资者介入时，公司正濒临破产。",
+    "memory_tip": "on the verge of 意为“濒临”，联想 verge 即“边缘”。"
+  },
+  {
+    "word": "vindicate",
+    "phonetic": "/ˈvɪndɪkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "证明……正确，为……辩护",
+      "洗清（罪名），澄清"
+    ],
+    "example_en": "The final report vindicated the whistleblower and exposed the officials who had silenced her.",
+    "example_zh": "最终报告证明了这位举报人的清白，并揭露了那些让她噤声的官员。",
+    "memory_tip": "词根 vindic-（claim 主张权利，如 vindictive）+ -ate → 主张自己无罪即洗清。"
+  },
+  {
+    "word": "wary",
+    "phonetic": "/ˈweəri/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "谨慎的，警惕的",
+      "小心翼翼的"
+    ],
+    "example_en": "Investors remain wary of the startup because its revenue figures have never been independently audited.",
+    "example_zh": "投资者对这家初创公司仍持谨慎态度，因为其营收数据从未经过独立审计。",
+    "memory_tip": "形近 aware（意识到）→ 因为 aware 风险，所以 wary 警惕。"
+  }
+]

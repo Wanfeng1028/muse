@@ -3,6 +3,7 @@ package dev.stagecue.server
 import dev.stagecue.server.config.ServerConfig
 import dev.stagecue.server.db.Database
 import dev.stagecue.server.db.SettingsStore
+import dev.stagecue.shared.oplog.FileOpLogStore
 import dev.stagecue.server.db.SqliteShowStore
 import dev.stagecue.server.metrics.StageMetrics
 import dev.stagecue.server.ratelimit.RateLimitSettings
@@ -52,7 +53,9 @@ fun main() {
     val ds = Database.init(config.dataDir)
     val store = SqliteShowStore(ds)
     val settings = SettingsStore(ds)
-    val hub = SyncHub(settings = settings)
+    // 操作日志文件持久化：oplog 落在 <dataDir>/oplog/oplog.jsonl，重启自动重建 seq
+    val opLog = FileOpLogStore(config.dataDir.resolve("oplog"))
+    val hub = SyncHub(settings = settings, opLog = opLog)
     val metrics = StageMetrics()
     metrics.dbMigrationsApplied(Database.lastMigrationsApplied)
 

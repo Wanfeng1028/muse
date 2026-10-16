@@ -22,6 +22,7 @@ import (
 
 	"github.com/Wanfeng1028/muse/linkshort/internal/auth"
 	"github.com/Wanfeng1028/muse/linkshort/internal/config"
+	"github.com/Wanfeng1028/muse/linkshort/internal/geo"
 	"github.com/Wanfeng1028/muse/linkshort/internal/metrics"
 
 	"github.com/Wanfeng1028/muse/linkshort/internal/model"
@@ -95,6 +96,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Get("/stats/daily", func(w http.ResponseWriter, req *http.Request) { handleStatsDaily(w, req, st) })
 		api.Get("/stats/top-links", func(w http.ResponseWriter, req *http.Request) { handleTopLinks(w, req, st) })
 		api.Get("/stats/top-referers", func(w http.ResponseWriter, req *http.Request) { handleTopReferers(w, req, st) })
+		api.Get("/stats/geo", func(w http.ResponseWriter, req *http.Request) { handleStatsGeo(w, req, st) })
 
 		api.Post("/import", func(w http.ResponseWriter, req *http.Request) { handleImport(w, req, st) })
 		api.Get("/export.csv", func(w http.ResponseWriter, req *http.Request) { handleExport(w, req, st) })
@@ -303,6 +305,9 @@ func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Stor
 	finishRedirect(w, r, link, st, cfg)
 }
 
+// geoResolver 为地域解析器，默认从环境变量 GEOIP_MMDB_PATH 初始化；测试可用 SetGeoResolver 注入。
+var geoResolver geo.Resolver = geo.FromEnv()
+
 // finishRedirect 执行跳转前的最终检查（限次访问）并完成跳转。
 // 只有成功解锁（密码正确或无密码）才会走到这里：记访问、处理阅后即焚、302。
 func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st *store.Store, cfg *config.Config) {
@@ -316,7 +321,8 @@ func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st
 	ipHash := hashIP(r.RemoteAddr)
 	ua := truncate(r.UserAgent(), 256)
 	referer := truncate(r.Referer(), 512)
-	if err := st.RecordVisit(link.ID, ipHash, ua, referer); err != nil {
+	loc := geoResolver.Lookup(clientHost(r.RemoteAddr))
+	if err := st.RecordVisitGeo(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province); err != nil {
 		log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
 	}
 
@@ -344,6 +350,21 @@ func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st
 
 	metrics.Default.IncRedirect("ok")
 	http.Redirect(w, r, link.URL, http.StatusFound)
+}
+
+// SetGeoResolver 供测试注入地域解析器。
+func SetGeoResolver(r geo.Resolver) {
+	if r != nil {
+		geoResolver = r
+	}
+}
+
+// clientHost 从 RemoteAddr 去掉端口。
+func clientHost(remoteAddr string) string {
+	if h, _, err := net.SplitHostPort(remoteAddr); err == nil {
+		return h
+	}
+	return remoteAddr
 }
 
 // hashIP 把 RemoteAddr 去掉端口后做 sha256，取前 16 个 hex 字符。
@@ -788,6 +809,34 @@ func handleTopReferers(w http.ResponseWriter, r *http.Request, st *store.Store) 
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": namedStats(stats)})
+}
+
+// handleStatsGeo 返回地域分布：按国家/省份聚合的 TopN 与 unknown 占比。
+// link_id=0（默认）为全局；n 默认 8，范围 1~100。
+func handleStatsGeo(w http.ResponseWriter, r *http.Request, st *store.Store) {
+	linkID := parseIntDefault(r.URL.Query().Get("link_id"), 0)
+	if linkID < 0 {
+		linkID = 0
+	}
+	n := parseIntDefault(r.URL.Query().Get("n"), 8)
+	if n <= 0 || n > 100 {
+		n = 8
+	}
+	items, unknownPct, err := st.GeoStats(int64(linkID), n)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	out := make([]map[string]any, 0, len(items))
+	for _, s := range items {
+		out = append(out, map[string]any{
+			"country_code": s.CountryCode,
+			"country_name": s.CountryName,
+			"province":     s.Province,
+			"clicks":       s.Clicks,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out, "unknown_pct": unknownPct})
 }
 
 func namedStats(stats []model.NamedStat) []map[string]any {

@@ -133,6 +133,34 @@ updated_at TEXT NOT NULL
 			`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_monitor ON webhook_deliveries(monitor_id)`,
 		},
 	},
+	{
+		version: 6,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS silences (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				monitor_id INTEGER NOT NULL DEFAULT 0,
+				name_match TEXT NOT NULL DEFAULT '',
+				starts_at TEXT NOT NULL,
+				ends_at TEXT NOT NULL,
+				reason TEXT NOT NULL DEFAULT '',
+				created_at TEXT NOT NULL
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_silences_window ON silences(monitor_id, starts_at, ends_at)`,
+		},
+	},
+	{
+		version: 7,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS incident_escalations (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				incident_id INTEGER NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+				level_minutes INTEGER NOT NULL,
+				sent_at TEXT NOT NULL,
+				UNIQUE(incident_id, level_minutes)
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_incident_escalations_incident ON incident_escalations(incident_id)`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

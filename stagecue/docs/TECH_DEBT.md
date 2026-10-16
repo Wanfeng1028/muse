@@ -29,5 +29,5 @@
 | 6 | 多人同时编辑同一份 show | 未支持（单导演假设） | 二期 |
 | 7 | 服务端引擎为 CIO 非 Netty | Ktor Netty 在本 VM 误用 KQueue 启动失败；CI/生产环境可用 Netty | 保留 CIO 为默认，配置项可切 |
 | 8 | 桌面 UI 运行时截图未验收 | VM 缺 libXtst.so.6 系统库，Compose Desktop 无法启动；代码已全量编译通过 | 有 GUI 环境后补 |
-| 9 | 移动端返听屏 / 灯光台 | 二期 | 协议已留 ClientRole.MONITOR/LIGHTING |
+| 9 | 移动端返听屏 / 灯光台 | v0.5 部分交付：MONITOR 只读接口（/api/monitor 快照+鉴权+上线推送）已落地；移动端 UI 与 LIGHTING 台仍待做 | 二期继续 |
 | 10 | 音频格式 | WAV/MP3 已支持 | FLAC/OGG 按用户需求再定 |

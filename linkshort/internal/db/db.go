@@ -37,7 +37,10 @@ CREATE TABLE IF NOT EXISTS visits (
 	ts TEXT NOT NULL,
 	ip_hash TEXT NOT NULL DEFAULT "",
 	ua TEXT NOT NULL DEFAULT "",
-	referer TEXT NOT NULL DEFAULT ""
+	referer TEXT NOT NULL DEFAULT "",
+	country_code TEXT NOT NULL DEFAULT "",
+	country_name TEXT NOT NULL DEFAULT "",
+	province TEXT NOT NULL DEFAULT ""
 );
 
 CREATE INDEX IF NOT EXISTS idx_visits_link_ts ON visits(link_id, ts);
@@ -294,6 +297,59 @@ func migrate(db *sql.DB) error {
 		}
 
 		if _, err := db.Exec("PRAGMA user_version = 5;"); err != nil {
+			return fmt.Errorf("set user_version: %w", err)
+		}
+	}
+
+	if v < 6 {
+		// v5 -> v6：visits 表新增 country_code/country_name/province（地域统计，空=unknown）。
+		rows, err := db.Query("PRAGMA table_info(visits);")
+		if err != nil {
+			return fmt.Errorf("table_info visits: %w", err)
+		}
+		hasCountryCode := false
+		for rows.Next() {
+			var (
+				cid       int
+				name      string
+				ctype     string
+				notnull   int
+				dfltValue sql.NullString
+				pk        int
+			)
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				if cerr := rows.Close(); cerr != nil {
+					return fmt.Errorf("scan table_info: %w; close: %v", err, cerr)
+				}
+				return fmt.Errorf("scan table_info: %w", err)
+			}
+			if name == "country_code" {
+				hasCountryCode = true
+			}
+		}
+		if err := rows.Err(); err != nil {
+			if cerr := rows.Close(); cerr != nil {
+				return fmt.Errorf("iterate table_info: %w; close: %v", err, cerr)
+			}
+			return fmt.Errorf("iterate table_info: %w", err)
+		}
+		if err := rows.Close(); err != nil {
+			return fmt.Errorf("close table_info: %w", err)
+		}
+
+		if !hasCountryCode {
+			if _, err := db.Exec(`ALTER TABLE visits ADD COLUMN country_code TEXT NOT NULL DEFAULT "";`); err != nil {
+				return fmt.Errorf("add column country_code: %w", err)
+			}
+			if _, err := db.Exec(`ALTER TABLE visits ADD COLUMN country_name TEXT NOT NULL DEFAULT "";`); err != nil {
+				return fmt.Errorf("add column country_name: %w", err)
+			}
+			if _, err := db.Exec(`ALTER TABLE visits ADD COLUMN province TEXT NOT NULL DEFAULT "";`); err != nil {
+				return fmt.Errorf("add column province: %w", err)
+			}
+		}
+
+		if _, err := db.Exec("PRAGMA user_version = 6;"); err != nil {
 			return fmt.Errorf("set user_version: %w", err)
 		}
 	}

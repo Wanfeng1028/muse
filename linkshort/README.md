@@ -107,6 +107,8 @@ docker run -d \
 | `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用） |
 | `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期 |
 | `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 备份失败告警 webhook，backup.sh 失败时 POST JSON 通知 |
+| `GEOIP_MMDB_PATH` | 空 | GeoLite2-City.mmdb 路径（v1.8 新增）；为空则地域统计全部记为 unknown，不影响其他功能 |
+| `GEOIP_MMDB_PATH` | 空 | GeoLite2-City.mmdb 路径（v1.8 新增）；为空则地域统计全部记为 unknown，不影响其他功能 |
 
 
 `LINKSHORT_BASE_URL` 不填时，短地址用请求里的 Host 拼。
@@ -192,6 +194,8 @@ CI 配置在 `.github/workflows/ci.yml`，每次 push 跑 vet、fmt 检查和测
 **二维码用 skip2/go-qrcode。** 短链场景只要求稳定输出 PNG，这个库 API 极简、依赖近乎零。
 
 **数据库用 modernc.org/sqlite。** 纯 Go、不需要 cgo，交叉编译没有负担。
+**地域解析用 oschwald/geoip2-golang v1.13.0。** 纯 Go、无 cgo（与 modernc.org/sqlite 一致）、ISC 协议；v2 系列要求 Go 1.24+，本项目工具链 go1.23 只能用 v1 线。GeoLite2-City.mmdb 需用户自行从 MaxMind 免费获取并通过 GEOIP_MMDB_PATH 指定，未配置时降级为 unknown。
+**地域解析用 oschwald/geoip2-golang v1.13.0。** 纯 Go、无 cgo（与 modernc.org/sqlite 一致）、ISC 协议；v2 系列要求 Go 1.24+，本项目工具链 go1.23 只能用 v1 线。GeoLite2-City.mmdb 需用户自行从 MaxMind 免费获取并通过 GEOIP_MMDB_PATH 指定，未配置时降级为 unknown。
 
 **Web UI 走「快递面单 / 邮政标签」视觉。** 米白 `#F7F3EC` 打底、墨黑 `#1F1B16` 写字、邮戳红 `#B3402A` 点睛，牛皮纸卡 `#EDE6D6` 做区块，边上有邮票齿孔装饰，短码和数字用等宽字体。没有紫渐变、没有渐变标题、没有三栏特性格、没有 emoji 图标。
 

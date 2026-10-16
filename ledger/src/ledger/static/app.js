@@ -653,6 +653,212 @@ function initImportPage() {
   }
 }
 
+/* ========== 拍照记账 ========== */
+function initBillsPage() {
+  var dropEl = document.getElementById("ocr-drop");
+  var fileEl = document.getElementById("ocr-file");
+  var pickBtn = document.getElementById("btn-ocr-pick");
+  var uploadBtn = document.getElementById("btn-ocr-upload");
+  var statusEl = document.getElementById("ocr-status");
+  var formSection = document.getElementById("ocr-form-section");
+  var merchantEl = document.getElementById("o-merchant");
+  var amountEl = document.getElementById("o-amount");
+  var dateEl = document.getElementById("o-date");
+  var categoryEl = document.getElementById("o-category");
+  var accountEl = document.getElementById("o-account");
+  var noteEl = document.getElementById("o-note");
+  var candidatesEl = document.getElementById("o-candidates");
+  var saveBtn = document.getElementById("btn-ocr-save");
+  var resetBtn = document.getElementById("btn-ocr-reset");
+
+  // 判断是否为图片文件
+  function isImage(file) {
+    if (!file) return false;
+    if (file.type && file.type.indexOf("image/") === 0) return true;
+    var name = (file.name || "").toLowerCase();
+    return /\.(png|jpg|jpeg|webp|gif|bmp)$/.test(name);
+  }
+
+  // 显示状态文字
+  function setStatus(msg, isError) {
+    statusEl.textContent = msg || "";
+    statusEl.style.color = isError ? "#dc2626" : "";
+  }
+
+  // 点击 dropzone 或按钮 → 打开文件选择
+  dropEl.addEventListener("click", function (e) {
+    if (e.target === pickBtn) return;
+    fileEl.click();
+  });
+  pickBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    fileEl.click();
+  });
+
+  // 文件选择后显示文件名
+  fileEl.addEventListener("change", function () {
+    var f = fileEl.files && fileEl.files[0];
+    if (f) setStatus("已选择：" + f.name, false);
+  });
+
+  // 拖拽样式
+  dropEl.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    dropEl.classList.add("dragging");
+  });
+  dropEl.addEventListener("dragleave", function () {
+    dropEl.classList.remove("dragging");
+  });
+  dropEl.addEventListener("drop", function (e) {
+    e.preventDefault();
+    dropEl.classList.remove("dragging");
+    var files = e.dataTransfer && e.dataTransfer.files;
+    var f = files && files[0];
+    if (!f) return;
+    if (!isImage(f)) {
+      setStatus("请选择图片文件（png/jpg/jpeg/webp/gif/bmp）", true);
+      return;
+    }
+    fileEl.files = files;
+    setStatus("已选择：" + f.name, false);
+  });
+
+  // 填充识别结果表单
+  async function fillOcrForm(data) {
+    merchantEl.value = data.merchant || "";
+    if (typeof data.amount_cents === "number") {
+      amountEl.value = (data.amount_cents / 100).toFixed(2);
+    } else {
+      amountEl.value = "";
+    }
+    dateEl.value = data.occurred_on || "";
+    noteEl.value = "";
+
+    var cands = data.candidates || [];
+    var texts = [];
+    for (var i = 0; i < cands.length; i++) {
+      var c = cands[i];
+      var pct = Math.round((c.confidence || 0) * 100);
+      texts.push(c.category_name + "（" + pct + "%）");
+    }
+    candidatesEl.textContent = texts.length ? ("识别建议：" + texts.join("、")) : "";
+
+    // 加载分类，只取支出
+    try {
+      var cats = await api("/api/categories");
+      var list = cats || [];
+      categoryEl.innerHTML = "";
+      for (var j = 0; j < list.length; j++) {
+        var cat = list[j];
+        if (cat.kind !== "expense") continue;
+        var opt = document.createElement("option");
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        categoryEl.appendChild(opt);
+      }
+      // 选中候选第一个分类
+      if (cands.length && cands[0].category_id != null) {
+        categoryEl.value = String(cands[0].category_id);
+      }
+    } catch (err) {
+      setStatus(err.message, true);
+    }
+
+    // 加载账户
+    try {
+      var accs = await api("/api/accounts");
+      var alist = accs || [];
+      accountEl.innerHTML = "";
+      for (var k = 0; k < alist.length; k++) {
+        var acc = alist[k];
+        var aopt = document.createElement("option");
+        aopt.value = acc.id;
+        aopt.textContent = acc.name;
+        accountEl.appendChild(aopt);
+      }
+    } catch (err2) {
+      setStatus(err2.message, true);
+    }
+
+    formSection.hidden = false;
+    formSection.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // 点击识别
+  uploadBtn.addEventListener("click", async function () {
+    var f = fileEl.files && fileEl.files[0];
+    if (!f) {
+      setStatus("请先选择图片", true);
+      return;
+    }
+    setStatus("识别中...", false);
+    var fd = new FormData();
+    fd.append("file", f);
+    try {
+      var res = await fetch("/api/bills/ocr", { method: "POST", body: fd });
+      var text = await res.text();
+      var data = null;
+      if (text) {
+        try { data = JSON.parse(text); } catch (e) { data = text; }
+      }
+      if (!res.ok) {
+        var msg = (data && data.detail) ? data.detail : ("识别失败：" + res.status);
+        throw new Error(msg);
+      }
+      setStatus("识别完成", false);
+      await fillOcrForm(data);
+    } catch (err) {
+      setStatus(err.message, true);
+    }
+  });
+
+  // 点击确认入账
+  saveBtn.addEventListener("click", async function () {
+    var amount = parseFloat(amountEl.value);
+    if (!(amount > 0)) {
+      alert("请填写金额");
+      return;
+    }
+    if (!dateEl.value) {
+      alert("请选择日期");
+      return;
+    }
+    if (!accountEl.value) {
+      alert("请选择账户");
+      return;
+    }
+    if (!categoryEl.value) {
+      alert("请选择分类");
+      return;
+    }
+    var body = {
+      type: "expense",
+      account_id: parseInt(accountEl.value, 10),
+      category_id: parseInt(categoryEl.value, 10),
+      amount_cents: Math.round(amount * 100),
+      occurred_on: dateEl.value,
+      note: noteEl.value || ("拍照记账：" + (merchantEl.value || "")),
+      currency: "CNY"
+    };
+    try {
+      await api("/api/transactions", { method: "POST", body: body });
+      setStatus("已入账", false);
+      location.href = "/transactions";
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  // 点击重新识别
+  resetBtn.addEventListener("click", function () {
+    formSection.hidden = true;
+    fileEl.value = "";
+    setStatus("", false);
+    candidatesEl.textContent = "";
+  });
+}
+
 /* ========== 自动初始化 ========== */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -663,4 +869,5 @@ document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("b-form")) initBudgetsPage();
   if (document.getElementById("r-form")) initRecurringPage();
   if (document.getElementById("btn-upload")) initImportPage();
+  if (document.getElementById("ocr-drop")) initBillsPage();
 });

@@ -1,0 +1,1466 @@
+[
+  {
+    "word": "magnet",
+    "phonetic": "/ˈmæɡnət/",
+    "pos": "n.",
+    "meanings_zh": [
+      "磁铁，磁体",
+      "有吸引力的人或物"
+    ],
+    "example_en": "The city has become a magnet for young graduates seeking better career opportunities in technology.",
+    "example_zh": "这座城市已成为寻求科技领域更好职业机会的年轻毕业生的磁石。",
+    "memory_tip": "谐音“麦格尼特”——想象一块吸满麦子的磁铁，牢牢吸住铁钉。"
+  },
+  {
+    "word": "malicious",
+    "phonetic": "/məˈlɪʃəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "恶意的，恶毒的",
+      "蓄意伤人的"
+    ],
+    "example_en": "The company sued the former employee for spreading malicious rumours about its financial stability.",
+    "example_zh": "该公司起诉前员工散布有关其财务稳定性的恶意谣言。",
+    "memory_tip": "词根 mal-（坏）+ -icious（形容词后缀），如 malice（恶意），坏心思满满的。"
+  },
+  {
+    "word": "mammal",
+    "phonetic": "/ˈmæml/",
+    "pos": "n.",
+    "meanings_zh": [
+      "哺乳动物"
+    ],
+    "example_en": "The whale, though living in the ocean, is a mammal that breathes air through its lungs.",
+    "example_zh": "鲸鱼虽然生活在海洋中，却是一种通过肺呼吸空气的哺乳动物。",
+    "memory_tip": "词根 mamm-（乳房）来自拉丁语，哺乳动物靠乳腺哺育幼崽，mammal 即“有乳房的”。"
+  },
+  {
+    "word": "mandatory",
+    "phonetic": "/ˈmændətəri/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "强制的，义务的",
+      "法定的"
+    ],
+    "example_en": "Wearing a helmet is mandatory for all workers on this construction site.",
+    "example_zh": "在这个建筑工地上，所有工人都必须佩戴安全帽。",
+    "memory_tip": "mand（命令，如 demand 要求）+ atory → 命令式的，即强制的。"
+  },
+  {
+    "word": "manifesto",
+    "phonetic": "/ˌmænɪˈfestəʊ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "宣言，声明",
+      "（政党等的）纲领"
+    ],
+    "example_en": "The party published a detailed manifesto outlining its plans for educational and healthcare reform.",
+    "example_zh": "该党发表了一份详细宣言，概述了其教育和医疗改革计划。",
+    "memory_tip": "词根 mani-（手）+ fest（打击）→ 用手公开打出主张，即“宣言”。"
+  },
+  {
+    "word": "manuscript",
+    "phonetic": "/ˈmænjuskrɪpt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "手稿，原稿",
+      "手抄本"
+    ],
+    "example_en": "The scholar discovered an ancient manuscript containing poems that had been lost for centuries.",
+    "example_zh": "这位学者发现了一份古代手稿，其中收录了失传数百年的诗歌。",
+    "memory_tip": "词根 manu-（手）+ script（写），用手写出来的东西就是手稿。"
+  },
+  {
+    "word": "marvel",
+    "phonetic": "/ˈmɑːvl/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "奇迹，令人惊叹的事物",
+      "惊叹，感到惊奇"
+    ],
+    "example_en": "Visitors marvel at the engineering marvel of the bridge that spans the wide river.",
+    "example_zh": "游客们惊叹于这座横跨宽阔河流的桥梁工程奇迹。",
+    "memory_tip": "谐音“马维尔”——漫威（Marvel）英雄个个是奇迹，令人惊叹。"
+  },
+  {
+    "word": "meditate",
+    "phonetic": "/ˈmedɪteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "冥想，沉思",
+      "仔细考虑，筹划"
+    ],
+    "example_en": "She likes to meditate for twenty minutes each morning before starting her busy workday.",
+    "example_zh": "她喜欢每天早上在开始繁忙的工作之前冥想二十分钟。",
+    "memory_tip": "词根 med-（中间）＋ -itate，想象在纷扰中找到中间的宁静——冥想。"
+  },
+  {
+    "word": "melancholy",
+    "phonetic": "/ˈmelənkəli/",
+    "pos": "n. / adj.",
+    "meanings_zh": [
+      "忧郁，悲伤",
+      "忧郁的，令人伤感的"
+    ],
+    "example_en": "A sense of melancholy filled the old house as she recalled her childhood summers there.",
+    "example_zh": "当她回忆起在那里度过的童年夏天时，一种忧郁感充满了这座老房子。",
+    "memory_tip": "词根 melan-（黑）+ chol（胆汁）→ 古代认为黑胆汁过多致忧郁。"
+  },
+  {
+    "word": "mercy",
+    "phonetic": "/ˈmɜːsi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "仁慈，宽恕",
+      "幸运之事，恩惠"
+    ],
+    "example_en": "The judge showed mercy to the young offender because he had cooperated fully with police.",
+    "example_zh": "法官对这名年轻罪犯从轻发落，因为他全力配合了警方。",
+    "memory_tip": "谐音“魔西”——摩西带领以色列人出埃及，靠的是上帝的仁慈。"
+  },
+  {
+    "word": "metaphor",
+    "phonetic": "/ˈmetəfə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "隐喻，暗喻",
+      "象征"
+    ],
+    "example_en": "The poet uses the metaphor of a stormy sea to describe the turmoil of human emotion.",
+    "example_zh": "诗人用暴风雨中的大海这一隐喻来描述人类情感的动荡。",
+    "memory_tip": "词根 meta-（超越）+ phor（携带）→ 把意义带到另一层，即隐喻。"
+  },
+  {
+    "word": "migraine",
+    "phonetic": "/ˈmaɪɡreɪn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "偏头痛"
+    ],
+    "example_en": "Bright lights and loud noises often trigger a severe migraine that can last for hours.",
+    "example_zh": "强光和噪音常常引发可持续数小时的严重偏头痛。",
+    "memory_tip": "词根 hemi-（半）＋ cranium（颅）演变而来，只痛半边头——偏头痛。"
+  },
+  {
+    "word": "mingle",
+    "phonetic": "/ˈmɪŋɡl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "混合，混杂",
+      "（在社交场合）交往，应酬"
+    ],
+    "example_en": "The host encouraged guests to mingle freely and get to know one another.",
+    "example_zh": "主人鼓励客人们自由交流、相互认识。",
+    "memory_tip": "与 single 形近：single 是单身，mingle 是'混'在一起摆脱单身。"
+  },
+  {
+    "word": "mirth",
+    "phonetic": "/mɜːθ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "欢笑，欢乐",
+      "高兴，愉快"
+    ],
+    "example_en": "The comedian's jokes brought such mirth to the audience that tears rolled down their cheeks.",
+    "example_zh": "喜剧演员的笑话给观众带来了如此多的欢笑，以至于泪水顺着他们的脸颊滚落。",
+    "memory_tip": "形近 merry（欢乐的）——去掉 -y 加 -th，名词化后就是“欢笑”。"
+  },
+  {
+    "word": "mischief",
+    "phonetic": "/ˈmɪstʃɪf/",
+    "pos": "n.",
+    "meanings_zh": [
+      "恶作剧，捣乱",
+      "损害，危害"
+    ],
+    "example_en": "The children were up to mischief while their parents were away for the weekend.",
+    "example_zh": "父母周末外出时，孩子们在搞恶作剧。",
+    "memory_tip": "mis（坏）+ chief（首领）→ 坏首领带头捣乱。"
+  },
+  {
+    "word": "mischievous",
+    "phonetic": "/ˈmɪstʃɪvəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "顽皮的，恶作剧的",
+      "有害的，恶意中伤的"
+    ],
+    "example_en": "The mischievous boy hid his sister's shoes as a prank but soon returned them.",
+    "example_zh": "那个顽皮的男孩把姐姐的鞋子藏起来搞恶作剧，但很快就还了回去。",
+    "memory_tip": "来自 mischief（恶作剧）＋ -ous，爱搞恶作剧的——顽皮的。"
+  },
+  {
+    "word": "misconceive",
+    "phonetic": "/ˌmɪskənˈsiːv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "误解，错误地认为"
+    ],
+    "example_en": "Many students misconceive grammar as a set of rigid rules rather than a living system.",
+    "example_zh": "许多学生错误地把语法理解为一套死板的规则，而非一个活的系统。",
+    "memory_tip": "mis（错）+ conceive（构想）→ 构想错了，即误解。"
+  },
+  {
+    "word": "mitigate",
+    "phonetic": "/ˈmɪtɪɡeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "减轻，缓和（痛苦、严重性等）"
+    ],
+    "example_en": "Planting trees along the river can help mitigate the effects of flooding.",
+    "example_zh": "沿河种树有助于减轻洪水的影响。",
+    "memory_tip": "miti（温和，如 mitis）+ gate → 使变温和，即缓和。"
+  },
+  {
+    "word": "mobilize",
+    "phonetic": "/ˈməʊbɪlaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "动员，组织",
+      "调动，调动起来"
+    ],
+    "example_en": "The community mobilized hundreds of volunteers to help rebuild after the earthquake.",
+    "example_zh": "社区动员了数百名志愿者帮助震后重建。",
+    "memory_tip": "mobil（可动的，如 mobile）+ ize → 使动起来，即动员。"
+  },
+  {
+    "word": "moderate",
+    "phonetic": "/ˈmɒdərət/",
+    "pos": "adj. / v.",
+    "meanings_zh": [
+      "adj. 适度的，温和的",
+      "v. 缓和，节制"
+    ],
+    "example_en": "Doctors recommend moderate exercise rather than intense training for middle-aged people.",
+    "example_zh": "医生建议中年人进行适度锻炼而非高强度训练。",
+    "memory_tip": "mod（尺度，如 mode 模式）+ erate → 有尺度的，即适度的。"
+  },
+  {
+    "word": "momentum",
+    "phonetic": "/məˈmentəm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "动力，势头",
+      "（物理）动量"
+    ],
+    "example_en": "The reform movement gained momentum after a series of corruption scandals were exposed.",
+    "example_zh": "在一系列腐败丑闻曝光后，改革运动获得了势头。",
+    "memory_tip": "mom（移动，如 moment 瞬间）+ um → 推动事物前进的量，即动力。"
+  },
+  {
+    "word": "monopoly",
+    "phonetic": "/məˈnɒpəli/",
+    "pos": "n.",
+    "meanings_zh": [
+      "垄断，专卖",
+      "垄断企业，独占权"
+    ],
+    "example_en": "The government accused the tech giant of holding an unfair monopoly over online search.",
+    "example_zh": "政府指控这家科技巨头对网络搜索构成不公平的垄断。",
+    "memory_tip": "mono（单一）+ poly（卖）→ 一家独卖，即垄断。"
+  },
+  {
+    "word": "monotonous",
+    "phonetic": "/məˈnɒtənəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "单调的，乏味的"
+    ],
+    "example_en": "Factory workers complained that the monotonous routine made them feel like machines.",
+    "example_zh": "工厂工人抱怨单调的日常让他们感觉自己像机器。",
+    "memory_tip": "mono（单一）+ ton（音调）+ ous → 一个音调的，即单调的。"
+  },
+  {
+    "word": "morale",
+    "phonetic": "/məˈrɑːl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "士气，斗志"
+    ],
+    "example_en": "The coach's speech boosted the team's morale before the crucial final match.",
+    "example_zh": "教练的讲话在关键的决赛前鼓舞了球队的士气。",
+    "memory_tip": "moral 是'道德的'，morale 多一个 e 是'士气'——士气是精神层面的。"
+  },
+  {
+    "word": "mortal",
+    "phonetic": "/ˈmɔːtl/",
+    "pos": "adj. / n.",
+    "meanings_zh": [
+      "致命的，致死的",
+      "凡人的，会死的",
+      "凡人，人类"
+    ],
+    "example_en": "The soldier suffered a mortal wound during the battle but continued to lead his troops.",
+    "example_zh": "那名士兵在战斗中受了致命伤，但仍继续率领部队。",
+    "memory_tip": "词根 mort-（死）＋ -al，如 mortal 与 immortal（不朽的）相对——会死的、凡人的。"
+  },
+  {
+    "word": "mortgage",
+    "phonetic": "/ˈmɔːɡɪdʒ/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 抵押贷款，按揭",
+      "v. 抵押"
+    ],
+    "example_en": "Many young couples struggle to pay off their mortgage while raising children.",
+    "example_zh": "许多年轻夫妇在养育孩子的同时还要努力偿还房贷。",
+    "memory_tip": "mort（死）+ gage（抵押）→ 以死为抵的债，即抵押贷款。"
+  },
+  {
+    "word": "multitude",
+    "phonetic": "/ˈmʌltɪtjuːd/",
+    "pos": "n.",
+    "meanings_zh": [
+      "大量，众多",
+      "民众，群众"
+    ],
+    "example_en": "A multitude of factors contributed to the collapse of the ancient empire.",
+    "example_zh": "众多因素共同导致了那个古代帝国的崩溃。",
+    "memory_tip": "multi（多）+ tude（名词后缀）→ 大量、众多。"
+  },
+  {
+    "word": "mundane",
+    "phonetic": "/mʌnˈdeɪn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "平凡的，平淡的",
+      "世俗的，现世的"
+    ],
+    "example_en": "She escaped her mundane office routine by writing novels late at night.",
+    "example_zh": "她通过深夜写小说来逃离平淡的办公室日常。",
+    "memory_tip": "mund（世界，如拉丁语 mundus）+ ane → 世界的，即世俗的、平凡的。"
+  },
+  {
+    "word": "mutter",
+    "phonetic": "/ˈmʌtə(r)/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "v. 咕哝，低声抱怨",
+      "n. 低语，嘀咕"
+    ],
+    "example_en": "The old man muttered something under his breath as he left the office.",
+    "example_zh": "那位老人离开办公室时低声咕哝了几句。",
+    "memory_tip": "与 murmur（低语）同源，mutter 侧重抱怨式的嘟囔。"
+  },
+  {
+    "word": "narrative",
+    "phonetic": "/ˈnærətɪv/",
+    "pos": "n. / adj.",
+    "meanings_zh": [
+      "n. 叙述，故事",
+      "adj. 叙事的，叙述的"
+    ],
+    "example_en": "The historian challenged the dominant narrative about the causes of the war.",
+    "example_zh": "这位历史学家对关于战争起因的主流叙事提出了质疑。",
+    "memory_tip": "narr（讲述，如 narrate）+ ative → 讲述的内容，即叙事。"
+  },
+  {
+    "word": "navigate",
+    "phonetic": "/ˈnævɪɡeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "导航，领航",
+      "（顺利）通过，驾驭"
+    ],
+    "example_en": "Sailors once used the stars to navigate across the open ocean.",
+    "example_zh": "水手们曾借助星辰在广阔的海洋上导航。",
+    "memory_tip": "nav（船，如 navy 海军）+ ig（驾驶）+ ate → 驾驶船只，即导航。"
+  },
+  {
+    "word": "necessitate",
+    "phonetic": "/nəˈsesɪteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使成为必要，需要"
+    ],
+    "example_en": "The rapid expansion of the company necessitated the hiring of more staff.",
+    "example_zh": "公司的快速扩张使得招聘更多员工成为必要。",
+    "memory_tip": "necessity（必要性）+ ate → 使成为必要。"
+  },
+  {
+    "word": "nostalgia",
+    "phonetic": "/nɒˈstældʒə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "怀旧，乡愁"
+    ],
+    "example_en": "Looking at old photographs filled her with nostalgia for her childhood in the countryside.",
+    "example_zh": "看着老照片，她对在乡下度过的童年充满了怀念。",
+    "memory_tip": "nost（回家，如希腊语 nostos）+ algia（痛）→ 思乡之痛，即怀旧。"
+  },
+  {
+    "word": "notable",
+    "phonetic": "/ˈnəʊtəbl/",
+    "pos": "adj. / n.",
+    "meanings_zh": [
+      "adj. 显著的，值得注意的",
+      "n. 名人，要人"
+    ],
+    "example_en": "The scientist made a notable contribution to the field of genetic engineering.",
+    "example_zh": "这位科学家对基因工程领域做出了显著贡献。",
+    "memory_tip": "note（注意）+ able → 值得注意的，即显著的。"
+  },
+  {
+    "word": "notify",
+    "phonetic": "/ˈnəʊtɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "通知，告知",
+      "报告，申报"
+    ],
+    "example_en": "Please notify the bank immediately if you lose your credit card.",
+    "example_zh": "如果丢失信用卡，请立即通知银行。",
+    "memory_tip": "not（知道，如 notice）+ ify（使动）→ 使知道，即通知。"
+  },
+  {
+    "word": "notion",
+    "phonetic": "/ˈnəʊʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "概念，观念",
+      "想法，看法"
+    ],
+    "example_en": "He rejected the notion that success is measured solely by wealth.",
+    "example_zh": "他拒绝接受成功仅以财富来衡量的观念。",
+    "memory_tip": "not（知道）+ ion → 知道的东西，即概念、观念。"
+  },
+  {
+    "word": "novelty",
+    "phonetic": "/ˈnɒvlti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "新奇，新颖",
+      "新奇的事物"
+    ],
+    "example_en": "The novelty of living abroad wore off after a few months.",
+    "example_zh": "在国外生活的新鲜感几个月后就消失了。",
+    "memory_tip": "novel（新奇的）+ ty（名词后缀）→ 新奇感。"
+  },
+  {
+    "word": "nuisance",
+    "phonetic": "/ˈnjuːsns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "讨厌的人或事，麻烦",
+      "（法律）妨害行为"
+    ],
+    "example_en": "The constant noise from the construction site is a real nuisance to nearby residents.",
+    "example_zh": "建筑工地持续不断的噪音对附近居民来说真是个麻烦。",
+    "memory_tip": "谐音'牛绅士'——牛装绅士很讨人厌，即讨厌的人或事。"
+  },
+  {
+    "word": "numerous",
+    "phonetic": "/ˈnjuːmərəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "众多的，许多的"
+    ],
+    "example_en": "Numerous studies have shown a link between regular exercise and mental health.",
+    "example_zh": "众多研究表明，规律锻炼与心理健康之间存在联系。",
+    "memory_tip": "numer（数字，如 number）+ ous → 数目多的，即众多的。"
+  },
+  {
+    "word": "obedient",
+    "phonetic": "/əˈbiːdiənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "服从的，顺从的"
+    ],
+    "example_en": "The obedient dog waited patiently by the door for its owner to return.",
+    "example_zh": "那只听话的狗耐心地在门口等待主人回来。",
+    "memory_tip": "obey（服从）+ dient → 服从的。"
+  },
+  {
+    "word": "obligation",
+    "phonetic": "/ˌɒblɪˈɡeɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "义务，责任",
+      "（法律、道义上的）约束"
+    ],
+    "example_en": "Parents have a legal obligation to send their children to school.",
+    "example_zh": "父母有送孩子上学的法律义务。",
+    "memory_tip": "oblige（使有义务）+ ation → 义务、责任。"
+  },
+  {
+    "word": "oblivious",
+    "phonetic": "/əˈblɪviəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "未察觉的，不知不觉的"
+    ],
+    "example_en": "He was oblivious to the danger as he walked along the cliff edge.",
+    "example_zh": "他沿着悬崖边行走时完全没有察觉到危险。",
+    "memory_tip": "ob（离开）+ liv（活）+ ious → 忘记活着的，即浑然不觉的。"
+  },
+  {
+    "word": "obsess",
+    "phonetic": "/əbˈses/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使痴迷，使困扰",
+      "（be obsessed with）对……着迷"
+    ],
+    "example_en": "She became obsessed with the idea of winning the national championship.",
+    "example_zh": "她对赢得全国冠军的念头变得痴迷。",
+    "memory_tip": "ob（对着）+ sess（坐）→ 一直坐在你脑子里，即着迷。"
+  },
+  {
+    "word": "obstinate",
+    "phonetic": "/ˈɒbstɪnət/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "固执的，顽固的",
+      "难以消除的，难以控制的"
+    ],
+    "example_en": "Despite all the evidence, he remained obstinate and refused to change his mind.",
+    "example_zh": "尽管有种种证据，他仍然固执己见，拒绝改变主意。",
+    "memory_tip": "ob（对着）+ stin（站立）+ ate → 一直站着不动，即固执的。"
+  },
+  {
+    "word": "odour",
+    "phonetic": "/ˈəʊdə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "气味",
+      "（尤指难闻的）臭味"
+    ],
+    "example_en": "The kitchen was filled with the pleasant odour of freshly baked bread.",
+    "example_zh": "厨房里弥漫着新烤面包的宜人香气。",
+    "memory_tip": "与 odourless（无味的）反推；联想 odor（美式拼法）。"
+  },
+  {
+    "word": "ominous",
+    "phonetic": "/ˈɒmɪnəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "不祥的，预兆凶险的"
+    ],
+    "example_en": "Dark clouds gathered over the city, an ominous sign of the coming storm.",
+    "example_zh": "乌云在城市上空聚集，预示着暴风雨即将来临的不祥之兆。",
+    "memory_tip": "omen（预兆）+ ous → 充满预兆的，即不祥的。"
+  },
+  {
+    "word": "onset",
+    "phonetic": "/ˈɒnset/",
+    "pos": "n.",
+    "meanings_zh": [
+      "开始，发作",
+      "（疾病的）初起"
+    ],
+    "example_en": "The onset of winter brought heavy snow and freezing temperatures to the region.",
+    "example_zh": "冬季的开始给该地区带来了大雪和严寒。",
+    "memory_tip": "on + set（放置）→ 事物放上去的那一刻，即开始。"
+  },
+  {
+    "word": "oppress",
+    "phonetic": "/əˈpres/",
+    "pos": "v.",
+    "meanings_zh": [
+      "压迫，压制",
+      "使压抑，使烦恼"
+    ],
+    "example_en": "The regime oppressed its citizens through strict censorship and surveillance.",
+    "example_zh": "该政权通过严格的审查和监控来压迫其公民。",
+    "memory_tip": "op（对着）+ press（压）→ 对着压，即压迫。"
+  },
+  {
+    "word": "optimism",
+    "phonetic": "/ˈɒptɪmɪzəm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "乐观，乐观主义"
+    ],
+    "example_en": "Despite the difficulties, there is growing optimism about the country's economic future.",
+    "example_zh": "尽管困难重重，人们对该国经济前景的乐观情绪日益增强。",
+    "memory_tip": "optim（最好，如 optimum 最优）+ ism（主义）→ 最好主义，即乐观。"
+  },
+  {
+    "word": "ordeal",
+    "phonetic": "/ɔːˈdiːl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "磨难，严酷考验"
+    ],
+    "example_en": "Surviving the earthquake was a terrifying ordeal for the whole family.",
+    "example_zh": "在地震中幸存对全家人来说是一场可怕的磨难。",
+    "memory_tip": "谐音'奥地尔'——奥地利的山很难爬，是一段磨难。"
+  },
+  {
+    "word": "orient",
+    "phonetic": "/ˈɔːrient/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使适应，使熟悉",
+      "确定方向，定位"
+    ],
+    "example_en": "The training program is designed to orient new employees to the company culture.",
+    "example_zh": "该培训项目旨在让新员工熟悉公司文化。",
+    "memory_tip": "ori（升起，如太阳升起的方向）+ ent → 确定太阳升起的方向，即定位。"
+  },
+  {
+    "word": "outbreak",
+    "phonetic": "/ˈaʊtbreɪk/",
+    "pos": "n.",
+    "meanings_zh": [
+      "（战争、疾病等的）爆发，突然发生"
+    ],
+    "example_en": "The outbreak of the disease prompted the government to close all schools.",
+    "example_zh": "疾病的爆发促使政府关闭了所有学校。",
+    "memory_tip": "out（出来）+ break（打破）→ 打破平静爆发出来。"
+  },
+  {
+    "word": "outrage",
+    "phonetic": "/ˈaʊtreɪdʒ/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 愤怒，义愤",
+      "v. 激怒，凌辱"
+    ],
+    "example_en": "The decision to raise tuition fees sparked public outrage across the country.",
+    "example_zh": "提高学费的决定在全国引发了公众的愤怒。",
+    "memory_tip": "out（超出）+ rage（愤怒）→ 超出一般的愤怒，即义愤。"
+  },
+  {
+    "word": "overlap",
+    "phonetic": "/ˌəʊvəˈlæp/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "v. 重叠，部分相同",
+      "n. 重叠部分"
+    ],
+    "example_en": "The two research projects overlap in several key areas of study.",
+    "example_zh": "这两个研究项目在几个关键研究领域有重叠。",
+    "memory_tip": "over（在上）+ lap（重叠）→ 叠在上面，即重叠。"
+  },
+  {
+    "word": "override",
+    "phonetic": "/ˌəʊvəˈraɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推翻，否决",
+      "优先于，凌驾于"
+    ],
+    "example_en": "The safety of passengers must override all other considerations in airline management.",
+    "example_zh": "在航空管理中，乘客的安全必须优先于所有其他考虑因素。",
+    "memory_tip": "over（越过）+ ride（骑）→ 骑到上面去，即凌驾、推翻。"
+  },
+  {
+    "word": "overstate",
+    "phonetic": "/ˌəʊvəˈsteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "夸大，言过其实"
+    ],
+    "example_en": "It is hard to overstate the importance of education in reducing poverty.",
+    "example_zh": "教育在减少贫困方面的重要性怎么强调都不为过。",
+    "memory_tip": "over（过度）+ state（陈述）→ 过度陈述，即夸大。"
+  },
+  {
+    "word": "overturn",
+    "phonetic": "/ˌəʊvəˈtɜːn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推翻，撤销（判决等）",
+      "倾覆，翻倒"
+    ],
+    "example_en": "The Supreme Court voted to overturn the controversial law passed last year.",
+    "example_zh": "最高法院投票推翻了去年通过的那项有争议的法律。",
+    "memory_tip": "over（翻转）+ turn（转动）→ 翻转过来，即推翻。"
+  },
+  {
+    "word": "paradox",
+    "phonetic": "/ˈpærədɒks/",
+    "pos": "n.",
+    "meanings_zh": [
+      "悖论，矛盾的人或事"
+    ],
+    "example_en": "It is a paradox that the richest country in the world has so many poor citizens.",
+    "example_zh": "世界上最富有的国家却有如此多的贫困公民，这是一个悖论。",
+    "memory_tip": "para（相反）+ dox（观点）→ 相反的观点，即悖论。"
+  },
+  {
+    "word": "paralyse",
+    "phonetic": "/ˈpærəlaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使瘫痪，使麻痹",
+      "使无法正常运作"
+    ],
+    "example_en": "The heavy snowfall paralysed traffic across the entire northern region.",
+    "example_zh": "大雪使整个北部地区的交通陷入瘫痪。",
+    "memory_tip": "para（旁边）+ lyse（松开）→ 身体旁边都松了，即瘫痪。"
+  },
+  {
+    "word": "paramount",
+    "phonetic": "/ˈpærəmaʊnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "至高无上的，最重要的"
+    ],
+    "example_en": "In medical treatment, the patient's well-being is of paramount importance.",
+    "example_zh": "在医疗中，患者的健康是至关重要的。",
+    "memory_tip": "para（超越）+ mount（山峰）→ 超越山峰，即至高无上的。"
+  },
+  {
+    "word": "partial",
+    "phonetic": "/ˈpɑːʃl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "部分的，不完全的",
+      "偏袒的，偏爱的"
+    ],
+    "example_en": "The partial shutdown of the factory led to a shortage of goods.",
+    "example_zh": "工厂的部分停工导致了货物短缺。",
+    "memory_tip": "part（部分）+ ial → 部分的；对人只给一部分爱，即偏袒的。"
+  },
+  {
+    "word": "pathetic",
+    "phonetic": "/pəˈθetɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "可怜的，可悲的",
+      "差劲的，令人不屑的"
+    ],
+    "example_en": "The abandoned puppy looked so pathetic that she decided to take it home.",
+    "example_zh": "那只被遗弃的小狗看起来如此可怜，她决定把它带回家。",
+    "memory_tip": "path（感情，如 sympathy）+ etic → 令人产生感情的，即可怜的。"
+  },
+  {
+    "word": "patriotic",
+    "phonetic": "/ˌpætriˈɒtɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "爱国的，有爱国心的"
+    ],
+    "example_en": "Many citizens felt it was their patriotic duty to vote in the election.",
+    "example_zh": "许多公民认为参加选举投票是他们的爱国义务。",
+    "memory_tip": "patri（父亲，祖国）+ otic → 对祖国如对父亲，即爱国的。"
+  },
+  {
+    "word": "penalty",
+    "phonetic": "/ˈpenəlti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "处罚，惩罚",
+      "罚款，代价"
+    ],
+    "example_en": "Companies that pollute the environment now face heavy financial penalties.",
+    "example_zh": "污染环境的公司现在面临巨额经济处罚。",
+    "memory_tip": "pen（惩罚，如 penal 刑罚的）+ alty → 处罚。"
+  },
+  {
+    "word": "pending",
+    "phonetic": "/ˈpendɪŋ/",
+    "pos": "adj. / prep.",
+    "meanings_zh": [
+      "adj. 待决的，未决的",
+      "prep. 在……期间，直到……"
+    ],
+    "example_en": "The court's final decision is still pending after months of deliberation.",
+    "example_zh": "经过数月的审议，法院的最终裁决仍悬而未决。",
+    "memory_tip": "pend（悬挂，如 pendulum 钟摆）+ ing → 悬而未决的。"
+  },
+  {
+    "word": "peril",
+    "phonetic": "/ˈperəl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "危险，风险"
+    ],
+    "example_en": "The explorers were unaware of the perils that lay ahead in the jungle.",
+    "example_zh": "探险者们没有意识到前方丛林中潜伏的危险。",
+    "memory_tip": "与 perilous（危险的）联想，per（穿过）+ il → 穿过危险。"
+  },
+  {
+    "word": "perpetual",
+    "phonetic": "/pəˈpetʃuəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "永久的，永恒的",
+      "连续不断的"
+    ],
+    "example_en": "The villagers complained about the perpetual noise from the nearby factory.",
+    "example_zh": "村民们抱怨附近工厂持续不断的噪音。",
+    "memory_tip": "per（始终）+ pet（追求）+ ual → 始终追求，即永久的。"
+  },
+  {
+    "word": "perplex",
+    "phonetic": "/pəˈpleks/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使困惑，使迷惑"
+    ],
+    "example_en": "The strange results of the experiment perplexed even the most experienced researchers.",
+    "example_zh": "实验的奇怪结果甚至让最有经验的研究人员都感到困惑。",
+    "memory_tip": "per（完全）+ plex（缠绕）→ 完全缠绕在一起，即困惑。"
+  },
+  {
+    "word": "persevere",
+    "phonetic": "/ˌpɜːsɪˈvɪə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "坚持不懈，锲而不舍"
+    ],
+    "example_en": "Despite repeated failures, she persevered and eventually succeeded in her research.",
+    "example_zh": "尽管屡次失败，她仍坚持不懈，最终在研究中取得了成功。",
+    "memory_tip": "per（始终）+ severe（严峻）→ 始终面对严峻，即坚持不懈。"
+  },
+  {
+    "word": "pertain",
+    "phonetic": "/pəˈteɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "关于，涉及",
+      "适合，符合"
+    ],
+    "example_en": "The lawyer asked questions that pertain directly to the case.",
+    "example_zh": "律师提出了与本案直接相关的问题。",
+    "memory_tip": "per（完全）+ tain（拿住）→ 完全能拿住的关系，即关于。"
+  },
+  {
+    "word": "pervasive",
+    "phonetic": "/pəˈveɪsɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "普遍的，无处不在的",
+      "弥漫的，渗透的"
+    ],
+    "example_en": "Social media has become a pervasive influence on how young people view themselves.",
+    "example_zh": "社交媒体对年轻人如何看待自己产生了无处不在的影响。",
+    "memory_tip": "per（贯穿）+ vas（走）+ ive → 走遍各处的，即普遍的。"
+  },
+  {
+    "word": "pessimistic",
+    "phonetic": "/ˌpesɪˈmɪstɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "悲观的，悲观主义的"
+    ],
+    "example_en": "He felt pessimistic about finding a job after graduating during an economic recession.",
+    "example_zh": "在经济衰退期间毕业后，他对找到工作感到悲观。",
+    "memory_tip": "pessim（最坏，如 pessimum）+ istic → 认定最坏情况的，即悲观的。"
+  },
+  {
+    "word": "petition",
+    "phonetic": "/pəˈtɪʃn/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 请愿，请愿书",
+      "v. 请愿，正式请求"
+    ],
+    "example_en": "Thousands of residents signed a petition against the construction of the new airport.",
+    "example_zh": "数千名居民签署了反对修建新机场的请愿书。",
+    "memory_tip": "pet（追求）+ ition → 追求诉求，即请愿。"
+  },
+  {
+    "word": "pioneer",
+    "phonetic": "/ˌpaɪəˈnɪə(r)/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 先驱，开拓者",
+      "v. 开创，倡导"
+    ],
+    "example_en": "She was a pioneer in the field of artificial intelligence research.",
+    "example_zh": "她是人工智能研究领域的先驱。",
+    "memory_tip": "源自法语 pionnier（步兵）→ 冲在最前面的步兵，即先驱。"
+  },
+  {
+    "word": "plight",
+    "phonetic": "/plaɪt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "困境，苦难"
+    ],
+    "example_en": "The documentary highlighted the plight of refugees fleeing from the war zone.",
+    "example_zh": "这部纪录片凸显了逃离战区的难民的困境。",
+    "memory_tip": "与 plight（誓约）同形，联想'誓约'未能遵守，陷入困境。"
+  },
+  {
+    "word": "plunge",
+    "phonetic": "/plʌndʒ/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "v. 猛跌，骤降",
+      "v. 投入，跳入",
+      "n. 骤降，跳入"
+    ],
+    "example_en": "Stock prices plunged sharply after the company announced massive layoffs.",
+    "example_zh": "在公司宣布大规模裁员后，股价急剧下跌。",
+    "memory_tip": "与 plunge into（跳入）联想，扑通一声跳下去，即猛跌。"
+  },
+  {
+    "word": "ponder",
+    "phonetic": "/ˈpɒndə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "沉思，仔细考虑"
+    ],
+    "example_en": "She sat by the window and pondered the meaning of his strange farewell.",
+    "example_zh": "她坐在窗边，仔细思索他那奇怪的告别之意。",
+    "memory_tip": "与 pound（重击）联想——心里被重击，需要沉思。"
+  },
+  {
+    "word": "populate",
+    "phonetic": "/ˈpɒpjuleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "居住于，构成……的人口",
+      "填充，占据"
+    ],
+    "example_en": "The coastal area is populated mainly by fishermen and their families.",
+    "example_zh": "这个沿海地区主要由渔民及其家人居住。",
+    "memory_tip": "popul（人民，如 popular）+ ate → 人民住在那儿，即居住于。"
+  },
+  {
+    "word": "portray",
+    "phonetic": "/pɔːˈtreɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "描绘，刻画",
+      "扮演，饰演"
+    ],
+    "example_en": "The novel portrays life in a small southern town during the 1930s.",
+    "example_zh": "这部小说描绘了20世纪30年代南方小镇的生活。",
+    "memory_tip": "por（向前）+ tray（拉）→ 把形象拉出来，即描绘。"
+  },
+  {
+    "word": "postulate",
+    "phonetic": "/ˈpɒstjuleɪt/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "v. 假定，假设",
+      "n. 假设，前提"
+    ],
+    "example_en": "Scientists postulate that the universe began with a massive explosion.",
+    "example_zh": "科学家们假定宇宙起源于一次大爆炸。",
+    "memory_tip": "post（之后）+ ul + ate → 放在后面作前提，即假定。"
+  },
+  {
+    "word": "pragmatic",
+    "phonetic": "/præɡˈmætɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "务实的，实用主义的"
+    ],
+    "example_en": "We need a pragmatic approach to solving the city's traffic problems.",
+    "example_zh": "我们需要一种务实的方法来解决城市的交通问题。",
+    "memory_tip": "prag（做，如 practical 实际的）+ matic → 注重做的，即务实的。"
+  },
+  {
+    "word": "precaution",
+    "phonetic": "/prɪˈkɔːʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "预防措施，防备"
+    ],
+    "example_en": "Wearing a seatbelt is a simple precaution that can save your life.",
+    "example_zh": "系安全带是一个简单的预防措施，可以挽救你的生命。",
+    "memory_tip": "pre（预先）+ caution（小心）→ 预先小心，即预防措施。"
+  },
+  {
+    "word": "predecessor",
+    "phonetic": "/ˈpriːdəsesə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "前任，前辈",
+      "前身，（被取代的）原有事物"
+    ],
+    "example_en": "The new manager introduced reforms that were quite different from those of her predecessor.",
+    "example_zh": "新经理推行的改革与她前任的改革大不相同。",
+    "memory_tip": "pre（前）+ decess（离开）+ or → 先前离开职位的人，即前任。"
+  },
+  {
+    "word": "predominant",
+    "phonetic": "/prɪˈdɒmɪnənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "主要的，占主导地位的",
+      "显著的，突出的"
+    ],
+    "example_en": "English is the predominant language used in international business and science.",
+    "example_zh": "英语是国际商务和科学中使用的主要语言。",
+    "memory_tip": "pre（前）+ dominant（支配的）→ 在前面支配的，即主要的。"
+  },
+  {
+    "word": "premise",
+    "phonetic": "/ˈpremɪs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "前提，假定",
+      "（pl.）房屋及地基"
+    ],
+    "example_en": "The argument is based on the false premise that all people act rationally.",
+    "example_zh": "该论证基于一个错误的前提，即所有人的行为都是理性的。",
+    "memory_tip": "pre（前）+ mise（送）→ 预先送出的东西，即前提。"
+  },
+  {
+    "word": "preoccupy",
+    "phonetic": "/priˈɒkjupaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使全神贯注，占据（某人的心思）"
+    ],
+    "example_en": "Financial worries preoccupied him so much that he could hardly focus on work.",
+    "example_zh": "经济上的担忧使他全神贯注，以至于几乎无法专注于工作。",
+    "memory_tip": "pre（预先）+ occupy（占据）→ 预先占据心思，即使全神贯注。"
+  },
+  {
+    "word": "prescription",
+    "phonetic": "/prɪˈskrɪpʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "处方，药方",
+      "处方药",
+      "对策，方案"
+    ],
+    "example_en": "The doctor wrote a prescription for antibiotics and told her to rest.",
+    "example_zh": "医生开了一张抗生素处方，并让她休息。",
+    "memory_tip": "pre（预先）+ script（写）+ ion → 预先写好的东西，即处方。"
+  },
+  {
+    "word": "preside",
+    "phonetic": "/prɪˈzaɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "主持，主管"
+    ],
+    "example_en": "The judge presided over the trial with remarkable patience and fairness.",
+    "example_zh": "法官以非凡的耐心和公正主持了这场审判。",
+    "memory_tip": "pre（前）+ side（坐）→ 坐在前面，即主持。"
+  },
+  {
+    "word": "pretext",
+    "phonetic": "/ˈpriːtekst/",
+    "pos": "n.",
+    "meanings_zh": [
+      "借口，托辞"
+    ],
+    "example_en": "He left the party early under the pretext of having a headache.",
+    "example_zh": "他以头痛为借口提前离开了聚会。",
+    "memory_tip": "pre（预先）+ text（编织）→ 预先编好的话，即借口。"
+  },
+  {
+    "word": "proclaim",
+    "phonetic": "/prəˈkleɪm/",
+    "pos": "v.",
+    "meanings_zh": [
+      "宣布，宣告",
+      "表明，显示"
+    ],
+    "example_en": "The president proclaimed a state of emergency after the devastating hurricane.",
+    "example_zh": "在毁灭性的飓风过后，总统宣布进入紧急状态。",
+    "memory_tip": "pro（向前）+ claim（喊）→ 向前喊出来，即宣布。"
+  },
+  {
+    "word": "profess",
+    "phonetic": "/prəˈfes/",
+    "pos": "v.",
+    "meanings_zh": [
+      "声称，自称",
+      "表明信仰"
+    ],
+    "example_en": "He professed to know nothing about the scandal, but few believed him.",
+    "example_zh": "他声称对丑闻一无所知，但很少有人相信他。",
+    "memory_tip": "pro（公开）+ fess（说）→ 公开说，即声称。"
+  },
+  {
+    "word": "proficient",
+    "phonetic": "/prəˈfɪʃnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "熟练的，精通的"
+    ],
+    "example_en": "After years of practice, she became proficient in three foreign languages.",
+    "example_zh": "经过多年练习，她精通了三门外语。",
+    "memory_tip": "pro（向前）+ fic（做）+ ient → 做事向前，即熟练的。"
+  },
+  {
+    "word": "prolong",
+    "phonetic": "/prəˈlɒŋ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "延长，拖延"
+    ],
+    "example_en": "Regular exercise and a healthy diet can prolong your life expectancy.",
+    "example_zh": "规律锻炼和健康饮食可以延长你的预期寿命。",
+    "memory_tip": "pro（向前）+ long（长）→ 向前拉长，即延长。"
+  },
+  {
+    "word": "propel",
+    "phonetic": "/prəˈpel/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推动，推进",
+      "驱使"
+    ],
+    "example_en": "The strong wind propelled the small boat rapidly across the lake.",
+    "example_zh": "强风推动着小船迅速穿过湖面。",
+    "memory_tip": "pro（向前）+ pel（推，如 compel 强迫）→ 向前推，即推进。"
+  },
+  {
+    "word": "proposition",
+    "phonetic": "/ˌprɒpəˈzɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "提议，建议",
+      "主张，命题"
+    ],
+    "example_en": "The committee rejected the proposition to cut funding for public libraries.",
+    "example_zh": "委员会否决了削减公共图书馆资金的提议。",
+    "memory_tip": "propose（提议）+ ition → 提议、主张。"
+  },
+  {
+    "word": "prosecute",
+    "phonetic": "/ˈprɒsɪkjuːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "起诉，检举",
+      "继续从事，执行"
+    ],
+    "example_en": "The government decided to prosecute the company for violating environmental regulations.",
+    "example_zh": "政府决定以违反环保法规为由起诉该公司。",
+    "memory_tip": "pro（向前）+ secut（跟随）→ 跟随案件向前，即起诉。"
+  },
+  {
+    "word": "proximity",
+    "phonetic": "/prɒkˈsɪməti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "接近，邻近"
+    ],
+    "example_en": "The proximity of the school to the factory raised concerns about air quality.",
+    "example_zh": "学校靠近工厂引发了人们对空气质量的担忧。",
+    "memory_tip": "proxim（最近的，如 approximate 大约的）+ ity → 接近。"
+  },
+  {
+    "word": "qualitative",
+    "phonetic": "/ˈkwɒlɪtətɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "定性的，质量的"
+    ],
+    "example_en": "The study used qualitative methods such as interviews to explore patients' experiences.",
+    "example_zh": "该研究采用访谈等定性方法来探究患者的经历。",
+    "memory_tip": "quality（质量）+ ative → 关于质量的，即定性的。"
+  },
+  {
+    "word": "quantitative",
+    "phonetic": "/ˈkwɒntɪtətɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "定量的，数量的"
+    ],
+    "example_en": "The researchers collected quantitative data on income levels across different regions.",
+    "example_zh": "研究人员收集了不同地区收入水平的定量数据。",
+    "memory_tip": "quantity（数量）+ ative → 关于数量的，即定量的。"
+  },
+  {
+    "word": "quench",
+    "phonetic": "/kwentʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "解（渴），止（渴）",
+      "扑灭，抑制"
+    ],
+    "example_en": "A glass of cold water was enough to quench his thirst after the long run.",
+    "example_zh": "长跑之后，一杯冷水就足以解他的渴。",
+    "memory_tip": "与 quench thirst（解渴）固定搭配联想，qu 开头像'快去'喝水解渴。"
+  },
+  {
+    "word": "quest",
+    "phonetic": "/kwest/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 探索，追求",
+      "v. 探索，寻求"
+    ],
+    "example_en": "His quest for knowledge led him to study at universities in three different countries.",
+    "example_zh": "他对知识的追求使他先后在三个不同国家的大学学习。",
+    "memory_tip": "与 question（问题）同源，quest 就是不断找答案的探索。"
+  },
+  {
+    "word": "rationale",
+    "phonetic": "/ˌræʃəˈnɑːl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "理由，逻辑依据"
+    ],
+    "example_en": "The manager explained the rationale behind the decision to restructure the department.",
+    "example_zh": "经理解释了重组该部门这一决定背后的理由。",
+    "memory_tip": "rational（理性的）+ e → 理性的依据，即理由。"
+  },
+  {
+    "word": "ravage",
+    "phonetic": "/ˈrævɪdʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "毁坏，蹂躏",
+      "严重破坏",
+      "劫掠"
+    ],
+    "example_en": "The fierce storm continued to ravage the coastal villages for three days, leaving thousands of residents homeless.",
+    "example_zh": "猛烈的风暴连续三天肆虐沿海村庄，使数千名居民无家可归。",
+    "memory_tip": "谐音“拉危机”：灾难把一切都拉进危机里，即“毁坏、蹂躏”。"
+  },
+  {
+    "word": "rebuke",
+    "phonetic": "/rɪˈbjuːk/",
+    "pos": "v. / n.",
+    "meanings_zh": [
+      "v. 斥责，指责",
+      "n. 斥责，责难"
+    ],
+    "example_en": "The teacher rebuked the student for cheating on the final exam.",
+    "example_zh": "老师因学生在期末考试中作弊而斥责了他。",
+    "memory_tip": "re（回）+ buke（砍）→ 反过来砍你一句，即斥责。"
+  },
+  {
+    "word": "receptive",
+    "phonetic": "/rɪˈseptɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "乐于接受的，善于接受的",
+      "（对知识等）接受能力强的"
+    ],
+    "example_en": "Young children are especially receptive to learning new languages.",
+    "example_zh": "幼儿学习新语言的接受能力特别强。",
+    "memory_tip": "receive（接收）+ ptive → 善于接收的，即乐于接受的。"
+  },
+  {
+    "word": "recession",
+    "phonetic": "/rɪˈseʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "（经济）衰退，不景气",
+      "后退，撤回"
+    ],
+    "example_en": "Many small businesses were forced to close during the economic recession.",
+    "example_zh": "许多小企业在经济衰退期间被迫关闭。",
+    "memory_tip": "re（回）+ cess（走）+ ion → 经济往回走，即衰退。"
+  },
+  {
+    "word": "reciprocal",
+    "phonetic": "/rɪˈsɪprəkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "相互的，互惠的"
+    ],
+    "example_en": "The two universities signed a reciprocal agreement allowing students to exchange.",
+    "example_zh": "两所大学签署了一项互惠协议，允许学生交换。",
+    "memory_tip": "re（回）+ cip（拿）+ rocal → 你拿我也拿，即互惠的。"
+  },
+  {
+    "word": "recite",
+    "phonetic": "/rɪˈsaɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "背诵，朗诵",
+      "列举，叙述"
+    ],
+    "example_en": "Students were required to recite the entire poem from memory.",
+    "example_zh": "学生们被要求凭记忆背诵整首诗。",
+    "memory_tip": "re（再）+ cite（引用）→ 再引用出来，即背诵。"
+  },
+  {
+    "word": "reclaim",
+    "phonetic": "/rɪˈkleɪm/",
+    "pos": "v.",
+    "meanings_zh": [
+      "开垦，回收利用",
+      "要求归还，取回"
+    ],
+    "example_en": "The city plans to reclaim the abandoned industrial area and turn it into a park.",
+    "example_zh": "该市计划开垦这片废弃的工业区，将其变成公园。",
+    "memory_tip": "re（回）+ claim（喊）→ 喊回来，即取回、回收。"
+  },
+  {
+    "word": "rectify",
+    "phonetic": "/ˈrektɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "纠正，矫正",
+      "改正，修复"
+    ],
+    "example_en": "The company promised to rectify the errors in its billing system immediately.",
+    "example_zh": "该公司承诺立即纠正其计费系统中的错误。",
+    "memory_tip": "rect（直，如 correct 正确的）+ ify（使动）→ 使变直，即纠正。"
+  },
+  {
+    "word": "redundant",
+    "phonetic": "/rɪˈdʌndənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "多余的，累赘的",
+      "被裁员的，被解雇的"
+    ],
+    "example_en": "The editor removed redundant words to make the article clearer and more concise.",
+    "example_zh": "编辑删除了多余的词语，使文章更清晰简洁。",
+    "memory_tip": "re（再）+ dund（波浪）+ ant → 再涌上来的浪，即多余的。"
+  },
+  {
+    "word": "regime",
+    "phonetic": "/reɪˈʒiːm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "政权，政体",
+      "制度，管理体制"
+    ],
+    "example_en": "The military regime was criticized for its poor human rights record.",
+    "example_zh": "该军事政权因糟糕的人权记录而受到批评。",
+    "memory_tip": "reg（统治，如 regulate）+ ime → 统治方式，即政权。"
+  },
+  {
+    "word": "rehearse",
+    "phonetic": "/rɪˈhɜːs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "排练，预演",
+      "默诵，练习"
+    ],
+    "example_en": "The actors rehearsed the final scene repeatedly until it was perfect.",
+    "example_zh": "演员们反复排练最后一幕，直到完美为止。",
+    "memory_tip": "re（再）+ hearse（耙）→ 反复耙地，引申为反复排练。"
+  },
+  {
+    "word": "reign",
+    "phonetic": "/reɪn/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 统治，君主统治时期",
+      "v. 统治，盛行"
+    ],
+    "example_en": "During the queen's reign, the country experienced unprecedented economic growth.",
+    "example_zh": "在这位女王统治期间，该国经历了前所未有的经济增长。",
+    "memory_tip": "与 rein（缰绳）形近——手握缰绳即统治；reign 是君主统治。"
+  },
+  {
+    "word": "reiterate",
+    "phonetic": "/riˈɪtəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "重申，反复说"
+    ],
+    "example_en": "The spokesman reiterated the government's commitment to fighting corruption.",
+    "example_zh": "发言人重申了政府打击腐败的承诺。",
+    "memory_tip": "re（再）+ iterate（重复）→ 再重复，即重申。"
+  },
+  {
+    "word": "rejoice",
+    "phonetic": "/rɪˈdʒɔɪs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "欣喜，高兴"
+    ],
+    "example_en": "The whole village rejoiced when they heard the missing child had been found.",
+    "example_zh": "当听说失踪的孩子被找到时，全村人都欢欣鼓舞。",
+    "memory_tip": "re（再）+ joice（joy 喜悦）→ 再次喜悦，即欣喜。"
+  },
+  {
+    "word": "relentless",
+    "phonetic": "/rɪˈlentləs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "持续不断的，无情的",
+      "不屈不挠的"
+    ],
+    "example_en": "Her relentless pursuit of excellence earned her the respect of her colleagues.",
+    "example_zh": "她对卓越的不懈追求赢得了同事们的尊敬。",
+    "memory_tip": "relent（变温和）+ less（不）→ 不温和的，即无情的。"
+  },
+  {
+    "word": "relinquish",
+    "phonetic": "/rɪˈlɪŋkwɪʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "放弃，让出",
+      "松开，放开"
+    ],
+    "example_en": "He reluctantly relinquished control of the company to his younger brother.",
+    "example_zh": "他不情愿地把公司的控制权让给了弟弟。",
+    "memory_tip": "re（回）+ linqu（留下）+ ish → 留下不再管，即放弃。"
+  },
+  {
+    "word": "remedy",
+    "phonetic": "/ˈremədi/",
+    "pos": "n. / v.",
+    "meanings_zh": [
+      "n. 治疗法，补救办法",
+      "v. 补救，纠正"
+    ],
+    "example_en": "There is no easy remedy for the shortage of affordable housing in big cities.",
+    "example_zh": "大城市经济适用房短缺的问题没有简单的解决办法。",
+    "memory_tip": "re（再）+ med（治疗，如 medical）+ y → 再治疗，即补救。"
+  },
+  {
+    "word": "remnant",
+    "phonetic": "/ˈremnənt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "残余，剩余部分",
+      "遗迹，残迹"
+    ],
+    "example_en": "The ruins are the last remnant of a once-great civilization.",
+    "example_zh": "这些废墟是一个曾经伟大文明的最后遗迹。",
+    "memory_tip": "remain（剩下）的名词变体，remn 对应 remain → 剩余物。"
+  },
+  {
+    "word": "render",
+    "phonetic": "/ˈrendə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使成为，使变得",
+      "给予，提供",
+      "表达，描绘"
+    ],
+    "example_en": "The accident rendered him unable to walk without assistance.",
+    "example_zh": "那次事故使他无法在没有帮助的情况下行走。",
+    "memory_tip": "ren（回）+ der（给）→ 给回去，即给予；引申为使……处于某状态。"
+  },
+  {
+    "word": "renowned",
+    "phonetic": "/rɪˈnaʊnd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "著名的，有名望的"
+    ],
+    "example_en": "The city is renowned for its ancient temples and beautiful gardens.",
+    "example_zh": "这座城市以其古老的寺庙和美丽的花园而闻名。",
+    "memory_tip": "re（反复）+ nown（name 名字）→ 名字被反复提起，即著名的。"
+  },
+  {
+    "word": "repel",
+    "phonetic": "/rɪˈpel/",
+    "pos": "v.",
+    "meanings_zh": [
+      "击退，驱逐",
+      "使厌恶，排斥"
+    ],
+    "example_en": "This spray can effectively repel mosquitoes for up to six hours.",
+    "example_zh": "这种喷雾剂可以有效驱蚊长达六个小时。",
+    "memory_tip": "re（回）+ pel（推）→ 推回去，即击退。"
+  },
+  {
+    "word": "repertoire",
+    "phonetic": "/ˈrepətwɑː(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "（剧团等的）全部剧目",
+      "全部技能，全部本领"
+    ],
+    "example_en": "The pianist has a wide repertoire ranging from classical to modern pieces.",
+    "example_zh": "这位钢琴家的曲目广泛，从古典到现代作品都有。",
+    "memory_tip": "re（再）+ pert（带）+ oire → 可以再带出来的全部节目，即全部剧目。"
+  },
+  {
+    "word": "replenish",
+    "phonetic": "/rɪˈplenɪʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "补充，重新装满"
+    ],
+    "example_en": "We need to replenish our supplies before the long journey ahead.",
+    "example_zh": "在开始漫长的旅程之前，我们需要补充物资。",
+    "memory_tip": "re（再）+ plen（满，如 plenty 充足）+ ish → 再装满，即补充。"
+  }
+]

@@ -12,6 +12,12 @@ import (
 )
 
 // Config 描述应用运行时配置。
+// EscalationLevel 告警升级的一级：故障持续 AfterMinutes 分钟未恢复时，用 Channels 渠道再通知一次。
+type EscalationLevel struct {
+AfterMinutes int
+Channels []string
+}
+
 type Config struct {
 	// ProjectRootDir 保存项目根目录的绝对路径（不可由环境变量直接设置）。
 	ProjectRootDir string
@@ -55,6 +61,9 @@ type Config struct {
 	QueueBaseBackoffSec int
 	// QueueTickSec webhook 投递队列 worker 扫描间隔（秒）。
 	QueueTickSec int
+
+	// Escalation 告警升级链；空表示禁用。由 SENTINEL_ESCALATION 解析。
+	Escalation []EscalationLevel
 }
 
 // Load 读取环境变量并返回解析后的配置。
@@ -234,6 +243,15 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("环境变量 SENTINEL_PUBLIC_URL 取值 %q 非法：应以 http:// 或 https:// 开头", publicURL)
 	}
 	cfg.PublicURL = strings.TrimRight(publicURL, "/")
+
+	// SENTINEL_ESCALATION：可选，格式 "15:wecom;30:wecom,smtp"。
+	if escRaw := strings.TrimSpace(os.Getenv("SENTINEL_ESCALATION")); escRaw != "" {
+		levels, err := parseEscalation(escRaw)
+		if err != nil {
+			return Config{}, fmt.Errorf("环境变量 SENTINEL_ESCALATION 非法: %w", err)
+		}
+		cfg.Escalation = levels
+	}
 
 	return cfg, nil
 }

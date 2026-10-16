@@ -1,0 +1,1511 @@
+[
+  {
+    "word": "abnormal",
+    "phonetic": "/æbˈnɔːml/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "异常的，反常的",
+      "不正常的，变态的"
+    ],
+    "example_en": "The doctor found an abnormal heartbeat that required further examination.",
+    "example_zh": "医生发现心跳异常，需要进一步检查。",
+    "memory_tip": "记忆法：ab-（偏离）+ normal（正常），偏离正常即“异常”。"
+  },
+  {
+    "word": "aboard",
+    "phonetic": "/əˈbɔːd/",
+    "pos": "adv./prep.",
+    "meanings_zh": [
+      "在船（车、飞机）上",
+      "上船（车、飞机）"
+    ],
+    "example_en": "All passengers must go aboard the ship before it departs at six o'clock.",
+    "example_zh": "所有乘客必须在六点开船前登船。",
+    "memory_tip": "记忆法：a-（在…上）+ board（甲板），联想 on board 同义。"
+  },
+  {
+    "word": "abortion",
+    "phonetic": "/əˈbɔːʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "流产，堕胎",
+      "（计划等的）中途失败，夭折"
+    ],
+    "example_en": "The controversial law on abortion sparked heated debate across the entire nation.",
+    "example_zh": "这项有争议的堕胎法在全国引发了激烈辩论。",
+    "memory_tip": "记忆法：ab-（离开）+ ori（升起）+ -tion，胎儿未“升起”便离去。"
+  },
+  {
+    "word": "absence",
+    "phonetic": "/ˈæbsəns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "缺席，不在",
+      "缺乏，没有"
+    ],
+    "example_en": "His absence from the meeting was noticed by all the senior managers.",
+    "example_zh": "他缺席会议引起了所有高管的注意。",
+    "memory_tip": "记忆法：ab-（离开）+ sence（存在），人不在即缺席。"
+  },
+  {
+    "word": "absent",
+    "phonetic": "/ˈæbsənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "缺席的，不在场的",
+      "心不在焉的"
+    ],
+    "example_en": "She was absent from class for three days because of a severe cold.",
+    "example_zh": "她因重感冒缺课三天。",
+    "memory_tip": "记忆法：ab-（离开）+ sent（存在），与 absence 同源，名词形容词一起记。"
+  },
+  {
+    "word": "absolute",
+    "phonetic": "/ˈæbsəluːt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "绝对的，完全的",
+      "专制的，不受约束的"
+    ],
+    "example_en": "The new evidence gave the prosecutor absolute confidence in winning the case.",
+    "example_zh": "新证据让检察官对赢得此案有了绝对信心。",
+    "memory_tip": "记忆法：ab-（离开）+ solute（松开），松开一切限制即“绝对的”。"
+  },
+  {
+    "word": "abuse",
+    "phonetic": "/əˈbjuːz/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "滥用，妄用",
+      "虐待，伤害",
+      "辱骂"
+    ],
+    "example_en": "Officials who abuse their power will eventually be brought to justice.",
+    "example_zh": "滥用权力的官员最终会被绳之以法。",
+    "memory_tip": "记忆法：ab-（偏离）+ use（使用），偏离正常使用即“滥用”。"
+  },
+  {
+    "word": "academy",
+    "phonetic": "/əˈkædəmi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "学院，研究院",
+      "学会，学术团体"
+    ],
+    "example_en": "She was admitted to the national academy of sciences at a young age.",
+    "example_zh": "她年纪轻轻就被国家科学院录取。",
+    "memory_tip": "记忆法：源自柏拉图讲学的园林 Akademos，后指学术机构。"
+  },
+  {
+    "word": "acclaim",
+    "phonetic": "/əˈkleɪm/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "称赞，为…喝彩",
+      "称赞，欢呼"
+    ],
+    "example_en": "The film received critical acclaim for its powerful storytelling and acting.",
+    "example_zh": "这部电影因其强大的叙事和表演获得评论界赞誉。",
+    "memory_tip": "记忆法：ac-（加强）+ claim（喊），大声喊出即为“喝彩”。"
+  },
+  {
+    "word": "accommodation",
+    "phonetic": "/əˌkɒməˈdeɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "住处，膳宿",
+      "适应，迁就"
+    ],
+    "example_en": "The university provides affordable accommodation for first-year students on campus.",
+    "example_zh": "该大学为一年级学生提供校内经济实惠的住宿。",
+    "memory_tip": "记忆法：accommodate（容纳）+ -ion，注意双 c 双 m 的拼写。"
+  },
+  {
+    "word": "accordance",
+    "phonetic": "/əˈkɔːdns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "一致，符合",
+      "依照，根据"
+    ],
+    "example_en": "The project was carried out in accordance with the approved safety standards.",
+    "example_zh": "该项目依照已批准的安全标准实施。",
+    "memory_tip": "记忆法：accord（一致）+ -ance，in accordance with 为固定搭配。"
+  },
+  {
+    "word": "accountant",
+    "phonetic": "/əˈkaʊntənt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "会计，会计师"
+    ],
+    "example_en": "The accountant spent the whole weekend checking the company's financial records.",
+    "example_zh": "这位会计花了整个周末核对公司的财务记录。",
+    "memory_tip": "记忆法：account（账目）+ -ant（人），管账的人即会计。"
+  },
+  {
+    "word": "accustomed",
+    "phonetic": "/əˈkʌstəmd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "习惯于",
+      "通常的，惯常的"
+    ],
+    "example_en": "She soon grew accustomed to the cold weather in the northern city.",
+    "example_zh": "她很快就适应了北方城市的寒冷天气。",
+    "memory_tip": "记忆法：accustom（使习惯）+ -ed，be accustomed to 为固定搭配。"
+  },
+  {
+    "word": "acid",
+    "phonetic": "/ˈæsɪd/",
+    "pos": "n./adj.",
+    "meanings_zh": [
+      "酸，酸性物质",
+      "酸味的，尖刻的"
+    ],
+    "example_en": "Acid rain has damaged many forests and lakes in the region.",
+    "example_zh": "酸雨已经损害了该地区许多森林和湖泊。",
+    "memory_tip": "记忆法：与 acute（尖锐的）同源，酸味刺舌如尖锐之物。"
+  },
+  {
+    "word": "acquaint",
+    "phonetic": "/əˈkweɪnt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使熟悉，使了解",
+      "使认识"
+    ],
+    "example_en": "New employees should acquaint themselves with the company's safety regulations.",
+    "example_zh": "新员工应熟悉公司的安全规章。",
+    "memory_tip": "记忆法：ac-（加强）+ quaint（知道），使知道即“使熟悉”。"
+  },
+  {
+    "word": "acute",
+    "phonetic": "/əˈkjuːt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "严重的，剧烈的",
+      "敏锐的，灵敏的",
+      "急性的"
+    ],
+    "example_en": "The city is facing an acute shortage of affordable housing this year.",
+    "example_zh": "这座城市今年面临经济适用房的严重短缺。",
+    "memory_tip": "记忆法：a- + cute（聪明），聪明的人感觉敏锐，引申“急性的”。"
+  },
+  {
+    "word": "adhere",
+    "phonetic": "/ədˈhɪə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "粘附，附着",
+      "遵守，坚持"
+    ],
+    "example_en": "All staff must adhere strictly to the company's code of conduct.",
+    "example_zh": "所有员工都必须严格遵守公司的行为准则。",
+    "memory_tip": "记忆法：ad-（去）+ here（粘），粘上去即“附着、坚持”。"
+  },
+  {
+    "word": "adjacent",
+    "phonetic": "/əˈdʒeɪsnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "邻近的，毗连的"
+    ],
+    "example_en": "The hotel is adjacent to the train station, making travel very convenient.",
+    "example_zh": "这家酒店毗邻火车站，出行非常方便。",
+    "memory_tip": "记忆法：ad-（向）+ jac（躺）+ -ent，躺在旁边即“邻近的”。"
+  },
+  {
+    "word": "advent",
+    "phonetic": "/ˈædvent/",
+    "pos": "n.",
+    "meanings_zh": [
+      "出现，到来"
+    ],
+    "example_en": "The advent of the Internet has fundamentally changed how people communicate.",
+    "example_zh": "互联网的出现从根本上改变了人们的交流方式。",
+    "memory_tip": "记忆法：ad-（向）+ vent（来），到来即“出现”。"
+  },
+  {
+    "word": "adverse",
+    "phonetic": "/ˈædvɜːs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "不利的，有害的",
+      "相反的，对立的"
+    ],
+    "example_en": "The medicine may cause adverse effects in patients with heart disease.",
+    "example_zh": "这种药可能对心脏病患者产生不良反应。",
+    "memory_tip": "记忆法：ad-（向）+ vers（转），转向反面即“不利的”。"
+  },
+  {
+    "word": "aesthetic",
+    "phonetic": "/iːsˈθetɪk/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "美学的，审美的",
+      "美学，审美观"
+    ],
+    "example_en": "The architect paid close attention to the aesthetic value of the building.",
+    "example_zh": "建筑师非常注重这栋建筑的审美价值。",
+    "memory_tip": "记忆法：aesthet（感觉）+ -ic，对美的感觉即“审美的”。"
+  },
+  {
+    "word": "affiliate",
+    "phonetic": "/əˈfɪlieɪt/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "使隶属，使附属",
+      "附属机构，分公司"
+    ],
+    "example_en": "The research center is affiliated with a leading university in Beijing.",
+    "example_zh": "该研究中心隶属于北京一所顶尖大学。",
+    "memory_tip": "记忆法：af-（向）+ fili（儿子）+ -ate，成为其子即“附属”。"
+  },
+  {
+    "word": "affirm",
+    "phonetic": "/əˈfɜːm/",
+    "pos": "v.",
+    "meanings_zh": [
+      "断言，肯定",
+      "证实，确认"
+    ],
+    "example_en": "The witness affirmed that he had seen the suspect near the scene.",
+    "example_zh": "证人证实他曾在案发现场附近见过嫌疑人。",
+    "memory_tip": "记忆法：af-（加强）+ firm（坚定），坚定地说即“断言”。"
+  },
+  {
+    "word": "afford",
+    "phonetic": "/əˈfɔːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "买得起，负担得起",
+      "提供，给予"
+    ],
+    "example_en": "Few young people can afford to buy a house in this expensive city.",
+    "example_zh": "在这个昂贵的城市，很少有年轻人买得起房。",
+    "memory_tip": "记忆法：af-（加强）+ ford（向前），有能力向前走即“负担得起”。"
+  },
+  {
+    "word": "aftermath",
+    "phonetic": "/ˈɑːftəmæθ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "（灾难等的）后果，余波"
+    ],
+    "example_en": "In the aftermath of the earthquake, thousands of volunteers rushed to help.",
+    "example_zh": "地震过后，数千名志愿者赶来帮忙。",
+    "memory_tip": "记忆法：after（之后）+ math（割草），割草后的痕迹即“后果”。"
+  },
+  {
+    "word": "agenda",
+    "phonetic": "/əˈdʒendə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "议事日程，议程",
+      "待办事项"
+    ],
+    "example_en": "Climate change is now high on the political agenda of many countries.",
+    "example_zh": "气候变化如今在许多国家的政治议程中占据重要位置。",
+    "memory_tip": "记忆法：拉丁语 agere（做）的复数，要做的事即“议程”。"
+  },
+  {
+    "word": "aggravate",
+    "phonetic": "/ˈæɡrəveɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "加重，使恶化",
+      "激怒，使恼火"
+    ],
+    "example_en": "Staying up late will only aggravate your illness and slow your recovery.",
+    "example_zh": "熬夜只会加重你的病情，减缓康复。",
+    "memory_tip": "记忆法：ag-（加强）+ grav（重）+ -ate，使更重即“加重”。"
+  },
+  {
+    "word": "agony",
+    "phonetic": "/ˈæɡəni/",
+    "pos": "n.",
+    "meanings_zh": [
+      "极度痛苦，苦恼",
+      "（剧烈的）挣扎"
+    ],
+    "example_en": "He lay in agony on the hospital bed, waiting for the doctor to arrive.",
+    "example_zh": "他痛苦地躺在病床上，等待医生的到来。",
+    "memory_tip": "记忆法：agon（斗争）+ -y，内心斗争带来的即“极度痛苦”。"
+  },
+  {
+    "word": "alert",
+    "phonetic": "/əˈlɜːt/",
+    "pos": "adj./v./n.",
+    "meanings_zh": [
+      "警觉的，机敏的",
+      "使警觉，警告",
+      "警报"
+    ],
+    "example_en": "The guard remained alert throughout the night, watching for any suspicious movement.",
+    "example_zh": "警卫整夜保持警觉，留意任何可疑动静。",
+    "memory_tip": "记忆法：联想 alarm（警报），都含 al-，与“警觉”相关。"
+  },
+  {
+    "word": "alien",
+    "phonetic": "/ˈeɪliən/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "外国的，异域的",
+      "陌生的，格格不入的",
+      "外国人，外星人"
+    ],
+    "example_en": "Such customs seemed completely alien to the young man from the countryside.",
+    "example_zh": "这些习俗对这位来自乡村的年轻人来说完全陌生。",
+    "memory_tip": "记忆法：ali（其他）+ -en，属于其他的即“外国的、陌生的”。"
+  },
+  {
+    "word": "align",
+    "phonetic": "/əˈlaɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使成一线，对齐",
+      "使一致，使结盟"
+    ],
+    "example_en": "The company aligned its marketing strategy with the changing needs of consumers.",
+    "example_zh": "公司将营销策略与消费者不断变化的需求保持一致。",
+    "memory_tip": "记忆法：a-（向）+ line（线），成一条线即“对齐”。"
+  },
+  {
+    "word": "allege",
+    "phonetic": "/əˈledʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "断言，宣称（常指未经证实）",
+      "指控"
+    ],
+    "example_en": "The report alleges that several officials accepted bribes from local companies.",
+    "example_zh": "该报道称几名官员接受了当地公司的贿赂。",
+    "memory_tip": "记忆法：al-（加强）+ leg（法律），在法律上提出即“断言、指控”。"
+  },
+  {
+    "word": "alliance",
+    "phonetic": "/əˈlaɪəns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "联盟，同盟",
+      "结盟，联合"
+    ],
+    "example_en": "The two companies formed a strategic alliance to develop new energy vehicles.",
+    "example_zh": "两家公司结成战略联盟，共同开发新能源汽车。",
+    "memory_tip": "记忆法：ally（结盟）+ -ance，结成同盟即“联盟”。"
+  },
+  {
+    "word": "allowance",
+    "phonetic": "/əˈlaʊəns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "津贴，补助",
+      "限额，允许量"
+    ],
+    "example_en": "Each student receives a monthly allowance to cover basic living expenses.",
+    "example_zh": "每位学生每月领取津贴以支付基本生活费用。",
+    "memory_tip": "记忆法：allow（允许）+ -ance，允许给予的钱即“津贴”。"
+  },
+  {
+    "word": "ally",
+    "phonetic": "/ˈælaɪ/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "同盟国，盟友",
+      "与…结盟"
+    ],
+    "example_en": "During the war, the country was a close ally of the United States.",
+    "example_zh": "战争期间，该国是美国的亲密盟友。",
+    "memory_tip": "记忆法：与 alliance 同源，-ly 结尾，联想“盟友”。"
+  },
+  {
+    "word": "alongside",
+    "phonetic": "/əˌlɒŋˈsaɪd/",
+    "pos": "prep./adv.",
+    "meanings_zh": [
+      "在…旁边，与…并排",
+      "与…一起，与…同时"
+    ],
+    "example_en": "She worked alongside experienced engineers to complete the difficult project.",
+    "example_zh": "她与经验丰富的工程师并肩工作，完成了这个困难的项目。",
+    "memory_tip": "记忆法：along（沿着）+ side（边），沿着旁边即“并排”。"
+  },
+  {
+    "word": "ambient",
+    "phonetic": "/ˈæmbiənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "周围的，环境的"
+    ],
+    "example_en": "The ambient temperature in the lab must be kept at exactly twenty degrees.",
+    "example_zh": "实验室的环境温度必须精确保持在二十度。",
+    "memory_tip": "记忆法：ambi-（周围）+ -ent，周围的即“环境的”。"
+  },
+  {
+    "word": "amend",
+    "phonetic": "/əˈmend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "修改，修订（法律、文件等）",
+      "改进，改善"
+    ],
+    "example_en": "Parliament voted to amend the law to protect consumers' rights.",
+    "example_zh": "议会投票修改法律以保护消费者权益。",
+    "memory_tip": "记忆法：a-（去掉）+ mend（缺点），去掉缺点即“修改”。"
+  },
+  {
+    "word": "amid",
+    "phonetic": "/əˈmɪd/",
+    "pos": "prep.",
+    "meanings_zh": [
+      "在…之中，在…期间",
+      "在…氛围中"
+    ],
+    "example_en": "Amid growing public concern, the government promised to review the policy.",
+    "example_zh": "在公众日益担忧之际，政府承诺审查该政策。",
+    "memory_tip": "记忆法：a-（在）+ mid（中间），在中间即“在…之中”。"
+  },
+  {
+    "word": "ample",
+    "phonetic": "/ˈæmpl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "充足的，富裕的",
+      "宽敞的，广大的"
+    ],
+    "example_en": "The report provides ample evidence to support the researcher's main conclusion.",
+    "example_zh": "该报告提供了充足的证据支持研究者的主要结论。",
+    "memory_tip": "记忆法：ampl（大）+ -e，大的即“充足的、宽敞的”。"
+  },
+  {
+    "word": "analogy",
+    "phonetic": "/əˈnælədʒi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "类比，比拟",
+      "相似，类似"
+    ],
+    "example_en": "The teacher drew an analogy between the human brain and a computer.",
+    "example_zh": "老师把人脑与计算机做了类比。",
+    "memory_tip": "记忆法：ana-（按照）+ log（比例）+ -y，按比例比较即“类比”。"
+  },
+  {
+    "word": "anecdote",
+    "phonetic": "/ˈænɪkdəʊt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "轶事，趣闻"
+    ],
+    "example_en": "The professor began his lecture with a funny anecdote about his college days.",
+    "example_zh": "教授以一则关于他大学时代的有趣轶事开始了讲座。",
+    "memory_tip": "记忆法：an-（不）+ ec（出）+ dote（给），未公开说出的事即“轶事”。"
+  },
+  {
+    "word": "anguish",
+    "phonetic": "/ˈæŋɡwɪʃ/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "极度痛苦，苦恼",
+      "使极度痛苦"
+    ],
+    "example_en": "Her face was filled with anguish when she heard the terrible news.",
+    "example_zh": "听到这个可怕的消息，她满脸痛苦。",
+    "memory_tip": "记忆法：angu（狭窄）+ -ish，心被挤压变窄即“极度痛苦”。"
+  },
+  {
+    "word": "annex",
+    "phonetic": "/əˈneks/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "兼并，并吞",
+      "附加，附带",
+      "附属建筑"
+    ],
+    "example_en": "The country annexed the neighboring territory after a brief military conflict.",
+    "example_zh": "该国在一场短暂的军事冲突后兼并了邻国领土。",
+    "memory_tip": "记忆法：an-（向）+ nex（绑），绑在一起即“兼并”。"
+  },
+  {
+    "word": "annoy",
+    "phonetic": "/əˈnɔɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使恼怒，使烦恼",
+      "打扰，骚扰"
+    ],
+    "example_en": "The constant noise from the construction site annoyed the nearby residents.",
+    "example_zh": "建筑工地持续的噪音让附近居民很恼火。",
+    "memory_tip": "记忆法：联想 annoy 与 noise 都有 oi 音，噪音使人烦。"
+  },
+  {
+    "word": "anonymous",
+    "phonetic": "/əˈnɒnɪməs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "匿名的，无名的",
+      "无特色的"
+    ],
+    "example_en": "The newspaper received an anonymous letter revealing the company's illegal activities.",
+    "example_zh": "报社收到一封匿名信，揭露了该公司的非法活动。",
+    "memory_tip": "记忆法：an-（无）+ onym（名字）+ -ous，无名字的即“匿名的”。"
+  },
+  {
+    "word": "apparatus",
+    "phonetic": "/ˌæpəˈreɪtəs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "器械，设备，仪器",
+      "机构，机关"
+    ],
+    "example_en": "The laboratory is equipped with the latest apparatus for chemical analysis.",
+    "example_zh": "该实验室配备了最新的化学分析仪器。",
+    "memory_tip": "记忆法：ap-（向）+ par（准备）+ -atus，为某事准备的器具即“设备”。"
+  },
+  {
+    "word": "appetite",
+    "phonetic": "/ˈæpɪtaɪt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "食欲，胃口",
+      "欲望，爱好"
+    ],
+    "example_en": "Regular exercise can help improve both your appetite and your sleep quality.",
+    "example_zh": "规律锻炼有助于改善食欲和睡眠质量。",
+    "memory_tip": "记忆法：ap-（向）+ pet（追求）+ -ite，追求食物即“食欲”。"
+  },
+  {
+    "word": "applaud",
+    "phonetic": "/əˈplɔːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "鼓掌，喝彩",
+      "称赞，赞许"
+    ],
+    "example_en": "The audience applauded enthusiastically after the pianist finished his performance.",
+    "example_zh": "钢琴家演奏结束后，观众热烈鼓掌。",
+    "memory_tip": "记忆法：ap-（向）+ plaud（拍手），向某人拍手即“鼓掌”。"
+  },
+  {
+    "word": "appraisal",
+    "phonetic": "/əˈpreɪzl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "评价，评估",
+      "估价，鉴定"
+    ],
+    "example_en": "The manager gives each employee a performance appraisal at the end of the year.",
+    "example_zh": "经理在年底对每位员工进行绩效评估。",
+    "memory_tip": "记忆法：appraise（评估）+ -al，与 praise（赞扬）形近但义不同。"
+  },
+  {
+    "word": "apt",
+    "phonetic": "/æpt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "恰当的，贴切的",
+      "易于…的，有…倾向的",
+      "聪明的，敏捷的"
+    ],
+    "example_en": "Children are apt to imitate the behavior of their parents and teachers.",
+    "example_zh": "孩子们容易模仿父母和老师的行为。",
+    "memory_tip": "记忆法：与 adapt（适应）同源，适应得好即“恰当的”。"
+  },
+  {
+    "word": "archive",
+    "phonetic": "/ˈɑːkaɪv/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "档案，档案馆",
+      "把…存档"
+    ],
+    "example_en": "The historian spent months studying archives kept in the national library.",
+    "example_zh": "这位历史学家花了几个月研究国家图书馆保存的档案。",
+    "memory_tip": "记忆法：arch-（首领）+ -ive，保存首领文件的地方即“档案馆”。"
+  },
+  {
+    "word": "arena",
+    "phonetic": "/əˈriːnə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "竞技场，表演场地",
+      "活动场所，竞争舞台"
+    ],
+    "example_en": "The two candidates entered the political arena with very different promises.",
+    "example_zh": "两位候选人带着截然不同的承诺进入政治舞台。",
+    "memory_tip": "记忆法：源自拉丁语 harena（沙），古罗马角斗场铺沙，故为“竞技场”。"
+  },
+  {
+    "word": "array",
+    "phonetic": "/əˈreɪ/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "一系列，大量",
+      "排列，陈列",
+      "部署，配置"
+    ],
+    "example_en": "The store offers a wide array of products for customers to choose from.",
+    "example_zh": "这家商店提供种类繁多的产品供顾客选择。",
+    "memory_tip": "记忆法：ar-（加强）+ ray（排列），整齐排列即“一系列”。"
+  },
+  {
+    "word": "arrogant",
+    "phonetic": "/ˈærəɡənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "傲慢的，自大的"
+    ],
+    "example_en": "His arrogant attitude toward colleagues made him unpopular in the office.",
+    "example_zh": "他对同事傲慢的态度使他在办公室里不受欢迎。",
+    "memory_tip": "记忆法：ar-（加强）+ rog（要求）+ -ant，不断要求即“傲慢”。"
+  },
+  {
+    "word": "ascend",
+    "phonetic": "/əˈsend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "上升，攀登",
+      "继位，升迁"
+    ],
+    "example_en": "The balloon slowly ascended into the clear blue sky above the field.",
+    "example_zh": "气球缓缓升上田野上方清澈的蓝天。",
+    "memory_tip": "记忆法：a-（向）+ scend（爬），向上爬即“上升”。"
+  },
+  {
+    "word": "ascertain",
+    "phonetic": "/ˌæsəˈteɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "查明，弄清，确定"
+    ],
+    "example_en": "The police are trying to ascertain the exact cause of the accident.",
+    "example_zh": "警方正试图查明事故的确切原因。",
+    "memory_tip": "记忆法：as-（加强）+ certain（确定），使确定即“查明”。"
+  },
+  {
+    "word": "aspiration",
+    "phonetic": "/ˌæspəˈreɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "渴望，抱负",
+      "志向，愿望"
+    ],
+    "example_en": "Her greatest aspiration was to become a scientist and help cure diseases.",
+    "example_zh": "她最大的抱负是成为一名科学家，帮助治愈疾病。",
+    "memory_tip": "记忆法：a-（向）+ spir（呼吸）+ -ation，渴望得呼吸急促。"
+  },
+  {
+    "word": "assault",
+    "phonetic": "/əˈsɔːlt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "攻击，袭击",
+      "抨击，谴责"
+    ],
+    "example_en": "The soldiers launched a surprise assault on the enemy's supply base.",
+    "example_zh": "士兵们对敌方的补给基地发动了突袭。",
+    "memory_tip": "记忆法：as-（向）+ sault（跳），跳向对方即“攻击”。"
+  },
+  {
+    "word": "asset",
+    "phonetic": "/ˈæset/",
+    "pos": "n.",
+    "meanings_zh": [
+      "资产，财产",
+      "有价值的人或物，优势"
+    ],
+    "example_en": "Fluent English is a valuable asset when applying for international companies.",
+    "example_zh": "流利的英语是应聘跨国公司时的一项宝贵优势。",
+    "memory_tip": "记忆法：as-（加强）+ set（足够），足够的东西即“资产”。"
+  },
+  {
+    "word": "assimilate",
+    "phonetic": "/əˈsɪməleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "吸收，理解（知识）",
+      "同化，融入"
+    ],
+    "example_en": "Immigrants often need time to assimilate into the local culture and society.",
+    "example_zh": "移民往往需要时间来融入当地文化和社会。",
+    "memory_tip": "记忆法：as-（向）+ simil（相似）+ -ate，使相似即“同化”。"
+  },
+  {
+    "word": "assumption",
+    "phonetic": "/əˈsʌmpʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "假设，臆断",
+      "承担，就任"
+    ],
+    "example_en": "The whole theory is based on the assumption that people act rationally.",
+    "example_zh": "整个理论建立在人们理性行事的假设之上。",
+    "memory_tip": "记忆法：assume（假设）+ -ption，名词形式，联想 assume。"
+  },
+  {
+    "word": "assurance",
+    "phonetic": "/əˈʃʊərəns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "保证，担保",
+      "信心，把握",
+      "保险"
+    ],
+    "example_en": "The manager gave us assurance that the project would be finished on time.",
+    "example_zh": "经理向我们保证项目会按时完成。",
+    "memory_tip": "记忆法：assure（保证）+ -ance，名词形式，注意与 insurance 区分。"
+  },
+  {
+    "word": "asylum",
+    "phonetic": "/əˈsaɪləm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "庇护，避难",
+      "避难所，精神病院"
+    ],
+    "example_en": "The refugees applied for political asylum in a neighboring country.",
+    "example_zh": "难民们在邻国申请政治庇护。",
+    "memory_tip": "记忆法：a-（无）+ syl（抓）+ -um，无处被抓之地即“避难所”。"
+  },
+  {
+    "word": "atmosphere",
+    "phonetic": "/ˈætməsfɪə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "大气层，大气",
+      "气氛，环境"
+    ],
+    "example_en": "The restaurant has a warm and friendly atmosphere that attracts many customers.",
+    "example_zh": "这家餐厅气氛温馨友好，吸引了许多顾客。",
+    "memory_tip": "记忆法：atmo（气）+ sphere（球），包围地球的气体即“大气层”。"
+  },
+  {
+    "word": "attendant",
+    "phonetic": "/əˈtendənt/",
+    "pos": "n./adj.",
+    "meanings_zh": [
+      "服务员，随从",
+      "伴随的，附带的"
+    ],
+    "example_en": "A flight attendant helped the elderly passenger find his seat.",
+    "example_zh": "一位空乘人员帮助这位老年乘客找到了座位。",
+    "memory_tip": "记忆法：attend（照料）+ -ant（人），照料他人的人即“服务员”。"
+  },
+  {
+    "word": "attorney",
+    "phonetic": "/əˈtɜːni/",
+    "pos": "n.",
+    "meanings_zh": [
+      "律师",
+      "代理人"
+    ],
+    "example_en": "The defendant hired a famous attorney to defend him in court.",
+    "example_zh": "被告聘请了一位著名律师在法庭上为他辩护。",
+    "memory_tip": "记忆法：at-（向）+ torn（转）+ -ey，替人周转事务的人即“律师”。"
+  },
+  {
+    "word": "auction",
+    "phonetic": "/ˈɔːkʃn/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "拍卖",
+      "拍卖，竞拍"
+    ],
+    "example_en": "The rare painting was sold at auction for a record price.",
+    "example_zh": "这幅珍贵的画以创纪录的价格被拍卖。",
+    "memory_tip": "记忆法：auc-（增加）+ -tion，价格不断增加即“拍卖”。"
+  },
+  {
+    "word": "audit",
+    "phonetic": "/ˈɔːdɪt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "审计，查账",
+      "旁听（课程）"
+    ],
+    "example_en": "The company's financial records are subject to an annual audit.",
+    "example_zh": "该公司的财务记录每年都要接受审计。",
+    "memory_tip": "记忆法：audi（听）+ -t，审计要“听”账目汇报，引申为审计。"
+  },
+  {
+    "word": "augment",
+    "phonetic": "/ɔːɡˈment/",
+    "pos": "v.",
+    "meanings_zh": [
+      "增加，增大，提高"
+    ],
+    "example_en": "Many farmers augment their income by selling vegetables at the local market.",
+    "example_zh": "许多农民通过在当地市场卖菜来增加收入。",
+    "memory_tip": "记忆法：aug-（增长）+ -ment，使增长即“增加”。"
+  },
+  {
+    "word": "avert",
+    "phonetic": "/əˈvɜːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "避免，防止",
+      "转移（目光、注意力等）"
+    ],
+    "example_en": "Quick action by the firefighters averted a much larger disaster.",
+    "example_zh": "消防员的迅速行动避免了一场更大的灾难。",
+    "memory_tip": "记忆法：a-（离开）+ vert（转），转开即“避免”。"
+  },
+  {
+    "word": "awake",
+    "phonetic": "/əˈweɪk/",
+    "pos": "adj./v.",
+    "meanings_zh": [
+      "醒着的",
+      "醒来，唤醒",
+      "意识到，察觉"
+    ],
+    "example_en": "She lay awake all night, worrying about the results of the exam.",
+    "example_zh": "她整夜未眠，担心着考试结果。",
+    "memory_tip": "记忆法：a-（在）+ wake（醒），处于醒的状态即“醒着的”。"
+  },
+  {
+    "word": "awkward",
+    "phonetic": "/ˈɔːkwəd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "尴尬的，窘迫的",
+      "笨拙的，不灵巧的",
+      "难处理的，不方便的"
+    ],
+    "example_en": "There was an awkward silence after he accidentally mentioned her ex-husband.",
+    "example_zh": "他无意中提到她的前夫后，出现了尴尬的沉默。",
+    "memory_tip": "记忆法：awk（反手）+ -ward，反手做事即“笨拙的”，引申“尴尬的”。"
+  },
+  {
+    "word": "bacteria",
+    "phonetic": "/bækˈtɪəriə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "细菌"
+    ],
+    "example_en": "Some bacteria are harmful, but many others are essential to human health.",
+    "example_zh": "有些细菌有害，但许多其他细菌对人类健康至关重要。",
+    "memory_tip": "记忆法：bacteri（小棒）+ -a，显微镜下呈小棒状即“细菌”。"
+  },
+  {
+    "word": "badge",
+    "phonetic": "/bædʒ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "徽章，证章",
+      "标记，象征"
+    ],
+    "example_en": "All visitors must wear a badge while inside the research building.",
+    "example_zh": "所有访客在研究大楼内必须佩戴证件。",
+    "memory_tip": "记忆法：与 badge 形近的 budge（移动），佩戴徽章不易移动。"
+  },
+  {
+    "word": "bald",
+    "phonetic": "/bɔːld/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "秃头的，光秃的",
+      "直白的，不加掩饰的"
+    ],
+    "example_en": "The bald man in the gray suit turned out to be the new director.",
+    "example_zh": "那位穿灰色西装的秃头男子原来是新主任。",
+    "memory_tip": "记忆法：与 ball（球）形近，头光如球即“秃头的”。"
+  },
+  {
+    "word": "ballot",
+    "phonetic": "/ˈbælət/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "选票，投票",
+      "投票表决"
+    ],
+    "example_en": "Members will decide the issue by secret ballot at next month's meeting.",
+    "example_zh": "成员们将在下个月的会议上通过无记名投票决定此事。",
+    "memory_tip": "记忆法：ball（球）+ -ot，古时用小球投票，故为“选票”。"
+  },
+  {
+    "word": "ban",
+    "phonetic": "/bæn/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "禁止，取缔",
+      "禁令"
+    ],
+    "example_en": "The government decided to ban smoking in all public indoor places.",
+    "example_zh": "政府决定禁止在所有公共室内场所吸烟。",
+    "memory_tip": "记忆法：与 band（带子）形近，用带子绑住即“禁止”。"
+  },
+  {
+    "word": "bargain",
+    "phonetic": "/ˈbɑːɡən/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "便宜货，交易",
+      "讨价还价，议价"
+    ],
+    "example_en": "She bought the coat at a bargain price during the winter sale.",
+    "example_zh": "她在冬季促销时以便宜的价格买下了这件外套。",
+    "memory_tip": "记忆法：bar-（酒吧）+ gain（获得），酒吧里讨价还价得便宜货。"
+  },
+  {
+    "word": "barren",
+    "phonetic": "/ˈbærən/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "贫瘠的，不育的",
+      "无成果的，无益的"
+    ],
+    "example_en": "Nothing grows on the barren land except a few tough desert plants.",
+    "example_zh": "除了几株顽强的沙漠植物，这片贫瘠的土地上什么都不长。",
+    "memory_tip": "记忆法：与 bare（光秃的）形近，光秃秃的即“贫瘠的”。"
+  },
+  {
+    "word": "basin",
+    "phonetic": "/ˈbeɪsn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "盆，洗脸盆",
+      "流域，盆地"
+    ],
+    "example_en": "The river basin supports millions of people and countless species of wildlife.",
+    "example_zh": "该河流域养活了数百万人口和无数野生物种。",
+    "memory_tip": "记忆法：与 base（底部）同源，底部凹处即“盆、盆地”。"
+  },
+  {
+    "word": "batch",
+    "phonetic": "/bætʃ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "一批，一组",
+      "一批生产量"
+    ],
+    "example_en": "The factory produces a new batch of smartphones every two weeks.",
+    "example_zh": "这家工厂每两周生产一批新智能手机。",
+    "memory_tip": "记忆法：与 bake（烤）形近，一炉烤出的即“一批”。"
+  },
+  {
+    "word": "beam",
+    "phonetic": "/biːm/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "梁，横梁",
+      "光线，光束",
+      "发光，微笑"
+    ],
+    "example_en": "A beam of sunlight came through the window and lit up the room.",
+    "example_zh": "一束阳光透过窗户照亮了房间。",
+    "memory_tip": "记忆法：与 team 形近，一队人抬横梁，横梁即 beam。"
+  },
+  {
+    "word": "bearing",
+    "phonetic": "/ˈbeərɪŋ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "关系，影响",
+      "举止，风度",
+      "方位，方向"
+    ],
+    "example_en": "The new policy has an important bearing on the future of the industry.",
+    "example_zh": "新政策对该行业的未来有着重要影响。",
+    "memory_tip": "记忆法：bear（承受）+ -ing，承受的结果即“影响”。"
+  },
+  {
+    "word": "beforehand",
+    "phonetic": "/bɪˈfɔːhænd/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "事先，预先"
+    ],
+    "example_en": "You should book the train tickets beforehand, especially during holidays.",
+    "example_zh": "你应该提前订火车票，尤其是在假期期间。",
+    "memory_tip": "记忆法：before（之前）+ hand（手），事先拿在手里即“预先”。"
+  },
+  {
+    "word": "beloved",
+    "phonetic": "/bɪˈlʌvɪd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "心爱的，挚爱的"
+    ],
+    "example_en": "The old teacher was beloved by generations of students at the school.",
+    "example_zh": "这位老教师受到学校几代学生的爱戴。",
+    "memory_tip": "记忆法：be-（加强）+ loved（被爱），深深被爱即“挚爱的”。"
+  },
+  {
+    "word": "beneath",
+    "phonetic": "/bɪˈniːθ/",
+    "pos": "prep./adv.",
+    "meanings_zh": [
+      "在…下面",
+      "在…之下，不值得"
+    ],
+    "example_en": "The cat hid beneath the table until the thunderstorm passed.",
+    "example_zh": "猫躲在桌子下面，直到雷雨过去。",
+    "memory_tip": "记忆法：be-（在）+ neath（下面），在下面即“在…之下”。"
+  },
+  {
+    "word": "beneficial",
+    "phonetic": "/ˌbenɪˈfɪʃl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "有益的，有利的"
+    ],
+    "example_en": "Regular exercise is beneficial to both physical and mental health.",
+    "example_zh": "规律锻炼对身心健康都有益。",
+    "memory_tip": "记忆法：bene-（好）+ fic（做）+ -ial，做好事即“有益的”。"
+  },
+  {
+    "word": "besides",
+    "phonetic": "/bɪˈsaɪdz/",
+    "pos": "adv./prep.",
+    "meanings_zh": [
+      "此外，而且",
+      "除…之外（还）"
+    ],
+    "example_en": "Besides English, she also speaks fluent French and a little Japanese.",
+    "example_zh": "除了英语，她还会说法语，也会一点日语。",
+    "memory_tip": "记忆法：beside（在旁）+ -s，在旁边加上即“此外”。"
+  },
+  {
+    "word": "betray",
+    "phonetic": "/bɪˈtreɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "背叛，出卖",
+      "泄露，暴露"
+    ],
+    "example_en": "He would never betray his friends, even under great pressure.",
+    "example_zh": "即使在巨大压力下，他也绝不会背叛朋友。",
+    "memory_tip": "记忆法：be-（加强）+ tray（托盘），把朋友放托盘上送人即“背叛”。"
+  },
+  {
+    "word": "bewilder",
+    "phonetic": "/bɪˈwɪldə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使迷惑，使不知所措"
+    ],
+    "example_en": "The complicated instructions completely bewildered the new employees.",
+    "example_zh": "复杂的说明让新员工完全不知所措。",
+    "memory_tip": "记忆法：be-（加强）+ wilder（荒野），进入荒野即“使迷惑”。"
+  },
+  {
+    "word": "bizarre",
+    "phonetic": "/bɪˈzɑː(r)/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "奇异的，古怪的"
+    ],
+    "example_en": "He told us a bizarre story about a man who could talk to animals.",
+    "example_zh": "他给我们讲了一个关于能与动物交谈的人的离奇故事。",
+    "memory_tip": "记忆法：源自法语 bizarre（古怪），联想“比扎尔”这个奇怪的人。"
+  },
+  {
+    "word": "blast",
+    "phonetic": "/blɑːst/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "爆炸，爆破",
+      "一阵（强风）",
+      "炸毁，猛烈冲击"
+    ],
+    "example_en": "The blast destroyed several buildings and injured dozens of people.",
+    "example_zh": "爆炸摧毁了几栋建筑，造成数十人受伤。",
+    "memory_tip": "记忆法：与 blow（吹）同源，猛吹即“爆炸、一阵强风”。"
+  },
+  {
+    "word": "bleak",
+    "phonetic": "/bliːk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "荒凉的，暗淡的",
+      "无望的，凄凉的"
+    ],
+    "example_en": "The future looked bleak for the workers after the factory closed down.",
+    "example_zh": "工厂倒闭后，工人们的前景一片暗淡。",
+    "memory_tip": "记忆法：与 black（黑）形近，一片黑即“暗淡的、无望的”。"
+  },
+  {
+    "word": "blend",
+    "phonetic": "/blend/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "混合，掺杂",
+      "混合物"
+    ],
+    "example_en": "The tea is a blend of several different leaves from mountain regions.",
+    "example_zh": "这种茶是几种不同山区茶叶的混合物。",
+    "memory_tip": "记忆法：与 blind（盲）形近，盲人摸索着混合东西，即“混合”。"
+  },
+  {
+    "word": "bloom",
+    "phonetic": "/bluːm/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "开花",
+      "花，花朵",
+      "繁荣，兴旺"
+    ],
+    "example_en": "The cherry trees bloom beautifully every spring, attracting many tourists.",
+    "example_zh": "樱花树每年春天盛开，吸引了许多游客。",
+    "memory_tip": "记忆法：与 blossom（开花）同源，bl-开头多与“植物”相关。"
+  },
+  {
+    "word": "blunder",
+    "phonetic": "/ˈblʌndə(r)/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "大错，愚蠢的错误",
+      "犯大错",
+      "跌跌撞撞地走"
+    ],
+    "example_en": "The manager made a serious blunder by ignoring the customers' complaints.",
+    "example_zh": "经理忽视顾客投诉，犯了一个严重错误。",
+    "memory_tip": "记忆法：与 blind（瞎）形近，瞎着眼做事即“犯大错”。"
+  },
+  {
+    "word": "blunt",
+    "phonetic": "/blʌnt/",
+    "pos": "adj./v.",
+    "meanings_zh": [
+      "钝的，不锋利的",
+      "直率的，不客气的",
+      "使变钝"
+    ],
+    "example_en": "To be blunt, your report lacks the evidence needed to support its conclusion.",
+    "example_zh": "直说吧，你的报告缺乏支持结论所需的证据。",
+    "memory_tip": "记忆法：与 blind（瞎）形近，钝刀如瞎眼，即“钝的”。"
+  },
+  {
+    "word": "blur",
+    "phonetic": "/blɜː(r)/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "使模糊，变得模糊",
+      "模糊不清的事物"
+    ],
+    "example_en": "Tears blurred her eyes as she read the letter from her mother.",
+    "example_zh": "读母亲来信时，泪水模糊了她的双眼。",
+    "memory_tip": "记忆法：bl-（模糊感）+ ur，联想“不乐”，不乐时眼前模糊。"
+  },
+  {
+    "word": "boast",
+    "phonetic": "/bəʊst/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "自夸，吹嘘",
+      "以拥有…而自豪"
+    ],
+    "example_en": "He likes to boast about his achievements, which annoys his colleagues.",
+    "example_zh": "他喜欢吹嘘自己的成就，这让同事们很恼火。",
+    "memory_tip": "记忆法：与 boat（船）形近，船上大声吹牛即“吹嘘”。"
+  },
+  {
+    "word": "bond",
+    "phonetic": "/bɒnd/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "纽带，联系",
+      "债券",
+      "使结合，建立关系"
+    ],
+    "example_en": "The shared experience created a strong bond between the two soldiers.",
+    "example_zh": "共同的经历在两名士兵之间建立了牢固的纽带。",
+    "memory_tip": "记忆法：与 bind（绑）同源，绑在一起即“纽带、联系”。"
+  },
+  {
+    "word": "boom",
+    "phonetic": "/buːm/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "繁荣，激增",
+      "隆隆声",
+      "迅速发展，激增"
+    ],
+    "example_en": "The city experienced a construction boom after the new subway line opened.",
+    "example_zh": "新地铁线路开通后，该市经历了建设热潮。",
+    "memory_tip": "记忆法：拟声词，爆炸般增长即“繁荣、激增”。"
+  },
+  {
+    "word": "bounce",
+    "phonetic": "/baʊns/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "弹跳，反弹",
+      "跳动，跃起"
+    ],
+    "example_en": "The ball bounced twice on the ground before reaching the player.",
+    "example_zh": "球在到达球员之前在地上弹了两次。",
+    "memory_tip": "记忆法：拟声词，球落地“砰”一声弹起，即“弹跳”。"
+  },
+  {
+    "word": "bound",
+    "phonetic": "/baʊnd/",
+    "pos": "adj./v./n.",
+    "meanings_zh": [
+      "一定的，必然的",
+      "受约束的，有义务的",
+      "跳跃，限制",
+      "界限"
+    ],
+    "example_en": "The train is bound for Shanghai and will depart in ten minutes.",
+    "example_zh": "这列火车开往上海，十分钟后发车。",
+    "memory_tip": "记忆法：与 bind（绑）的过去分词同形，被绑住即“受约束的”。"
+  },
+  {
+    "word": "boycott",
+    "phonetic": "/ˈbɔɪkɒt/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "抵制，联合抵制"
+    ],
+    "example_en": "Consumers threatened to boycott the company's products over the safety scandal.",
+    "example_zh": "消费者威胁因安全丑闻抵制该公司的产品。",
+    "memory_tip": "记忆法：源自爱尔兰土地代理人 Boycott 被抵制事件，故为“抵制”。"
+  },
+  {
+    "word": "brace",
+    "phonetic": "/breɪs/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "使做好准备（迎接困难）",
+      "支撑，加固",
+      "支架，托架"
+    ],
+    "example_en": "Residents braced themselves for the coming typhoon by boarding up windows.",
+    "example_zh": "居民们用木板封住窗户，为即将到来的台风做好准备。",
+    "memory_tip": "记忆法：与 embrace（拥抱）形近，双臂抱住以“支撑”。"
+  },
+  {
+    "word": "bracket",
+    "phonetic": "/ˈbrækɪt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "括号",
+      "等级，类别",
+      "把…归入同一类"
+    ],
+    "example_en": "People in the highest income bracket tend to save more money.",
+    "example_zh": "最高收入阶层的人往往存更多的钱。",
+    "memory_tip": "记忆法：与 bracket 形近的 bracket（支架），括号如支架夹住内容。"
+  },
+  {
+    "word": "breach",
+    "phonetic": "/briːtʃ/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "违反，破坏",
+      "缺口，裂口",
+      "违反，冲破"
+    ],
+    "example_en": "The company was fined for a serious breach of environmental regulations.",
+    "example_zh": "该公司因严重违反环保法规而被罚款。",
+    "memory_tip": "记忆法：与 break（打破）同源，打破规定即“违反”。"
+  },
+  {
+    "word": "breakdown",
+    "phonetic": "/ˈbreɪkdaʊn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "故障，损坏",
+      "崩溃，瓦解",
+      "分类，细目"
+    ],
+    "example_en": "A sudden breakdown of the machinery halted production for several hours.",
+    "example_zh": "机器突然故障，使生产停顿了几个小时。",
+    "memory_tip": "记忆法：break（打破）+ down（向下），打破倒下即“故障、崩溃”。"
+  },
+  {
+    "word": "breed",
+    "phonetic": "/briːd/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "繁殖，饲养",
+      "产生，引起",
+      "品种，种类"
+    ],
+    "example_en": "Poverty and lack of education breed crime in many developing countries.",
+    "example_zh": "在许多发展中国家，贫困和缺乏教育滋生犯罪。",
+    "memory_tip": "记忆法：与 bleed（流血）形近，繁殖需要流血生育，联想“繁殖”。"
+  },
+  {
+    "word": "bribe",
+    "phonetic": "/braɪb/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "贿赂",
+      "行贿，贿赂"
+    ],
+    "example_en": "The official was arrested for accepting a bribe from a construction company.",
+    "example_zh": "这名官员因收受一家建筑公司的贿赂而被捕。",
+    "memory_tip": "记忆法：与 bride（新娘）形近，用钱换新娘即“贿赂”。"
+  },
+  {
+    "word": "brisk",
+    "phonetic": "/brɪsk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "轻快的，敏捷的",
+      "活跃的，兴旺的",
+      "凉爽的"
+    ],
+    "example_en": "A brisk walk in the morning can help you stay energetic all day.",
+    "example_zh": "早晨轻快地散步能帮助你整天保持精力充沛。",
+    "memory_tip": "记忆法：与 risk（风险）形近，冒风险需动作轻快，即“轻快的”。"
+  },
+  {
+    "word": "brittle",
+    "phonetic": "/ˈbrɪtl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "易碎的，脆的",
+      "脆弱的，不牢固的"
+    ],
+    "example_en": "The old bones of elderly people are brittle and break easily.",
+    "example_zh": "老年人的骨头脆，容易骨折。",
+    "memory_tip": "记忆法：与 little（小）形近，小的东西易碎，即“易碎的”。"
+  },
+  {
+    "word": "brochure",
+    "phonetic": "/ˈbrəʊʃə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "小册子，宣传册"
+    ],
+    "example_en": "The travel agency gave us a colorful brochure about European tours.",
+    "example_zh": "旅行社给了我们一本关于欧洲旅游的彩色宣传册。",
+    "memory_tip": "记忆法：源自法语 brocher（装订），装订成册即“小册子”。"
+  },
+  {
+    "word": "broker",
+    "phonetic": "/ˈbrəʊkə(r)/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "经纪人，中间人",
+      "安排，协调"
+    ],
+    "example_en": "The real estate broker helped the couple find their dream house.",
+    "example_zh": "房地产经纪人帮助这对夫妇找到了理想的房子。",
+    "memory_tip": "记忆法：与 broke（打破）形近，打破买卖双方隔阂的人即“中间人”。"
+  },
+  {
+    "word": "browse",
+    "phonetic": "/braʊz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "浏览，翻阅",
+      "（动物）吃草"
+    ],
+    "example_en": "She likes to browse the Internet for interesting articles in her spare time.",
+    "example_zh": "她喜欢在空闲时间上网浏览有趣的文章。",
+    "memory_tip": "记忆法：与 browser（浏览器）同源，浏览网页即 browse。"
+  },
+  {
+    "word": "brutal",
+    "phonetic": "/ˈbruːtl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "残忍的，野蛮的",
+      "严酷的，令人不快的"
+    ],
+    "example_en": "The brutal treatment of prisoners caused international outrage.",
+    "example_zh": "对囚犯的残忍对待引起了国际愤怒。",
+    "memory_tip": "记忆法：brut（野兽）+ -al，像野兽一样即“残忍的”。"
+  },
+  {
+    "word": "bulk",
+    "phonetic": "/bʌlk/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "大部分，主体",
+      "体积，容量",
+      "使膨胀，变得重要"
+    ],
+    "example_en": "The bulk of the company's profits comes from overseas markets.",
+    "example_zh": "公司的大部分利润来自海外市场。",
+    "memory_tip": "记忆法：与 bull（公牛）形近，公牛体大，即“体积、大部分”。"
+  },
+  {
+    "word": "burden",
+    "phonetic": "/ˈbɜːdn/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "负担，重担",
+      "使负担，加重"
+    ],
+    "example_en": "The heavy tax burden forced many small businesses to close down.",
+    "example_zh": "沉重的税收负担迫使许多小企业倒闭。",
+    "memory_tip": "记忆法：与 burn（燃烧）形近，负担重得像火烧身，即“重担”。"
+  },
+  {
+    "word": "bureau",
+    "phonetic": "/ˈbjʊərəʊ/",
+    "pos": "n.",
+    "meanings_zh": [
+      "局，处，署",
+      "办事处，办公室"
+    ],
+    "example_en": "The tourist bureau provides free maps and information to all visitors.",
+    "example_zh": "旅游局向所有游客免费提供地图和信息。",
+    "memory_tip": "记忆法：源自法语，指办公用的桌子，后指“局、处”。"
+  },
+  {
+    "word": "bureaucracy",
+    "phonetic": "/bjʊəˈrɒkrəsi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "官僚机构，官僚体制",
+      "官僚作风，繁文缛节"
+    ],
+    "example_en": "Excessive bureaucracy often slows down decision-making in large organizations.",
+    "example_zh": "过度的官僚作风常常拖慢大型组织的决策速度。",
+    "memory_tip": "记忆法：bureau（局）+ cracy（统治），官僚统治即“官僚体制”。"
+  },
+  {
+    "word": "burial",
+    "phonetic": "/ˈberiəl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "埋葬，葬礼"
+    ],
+    "example_en": "The burial ceremony was attended by family members and close friends.",
+    "example_zh": "家人和密友参加了葬礼。",
+    "memory_tip": "记忆法：bury（埋）+ -al，名词形式，联想 bury。"
+  },
+  {
+    "word": "bustle",
+    "phonetic": "/ˈbʌsl/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "忙碌，奔忙",
+      "喧闹，熙熙攘攘"
+    ],
+    "example_en": "The market was full of bustle as vendors called out their prices.",
+    "example_zh": "市场熙熙攘攘，小贩们大声叫卖。",
+    "memory_tip": "记忆法：拟声词，忙碌时脚步“吧嗦”声，即“忙碌”。"
+  },
+  {
+    "word": "bypass",
+    "phonetic": "/ˈbaɪpɑːs/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "绕过，避开",
+      "旁路，迂回路"
+    ],
+    "example_en": "The new road allows drivers to bypass the busy city center.",
+    "example_zh": "新道路使司机可以绕过繁忙的市中心。",
+    "memory_tip": "记忆法：by（旁边）+ pass（通过），从旁边通过即“绕过”。"
+  },
+  {
+    "word": "cabinet",
+    "phonetic": "/ˈkæbɪnət/",
+    "pos": "n.",
+    "meanings_zh": [
+      "橱柜，陈列柜",
+      "内阁"
+    ],
+    "example_en": "The prime minister announced a reshuffle of the cabinet after the election.",
+    "example_zh": "大选后，首相宣布改组内阁。",
+    "memory_tip": "记忆法：cabin（小屋）+ -et（小），小房间放东西即“橱柜”，内阁在小房间开会。"
+  }
+]

@@ -439,7 +439,13 @@ func (s *Store) DeleteLink(id int64) error {
 }
 
 // RecordVisit 在事务中插入 visits 并给 links.clicks 加 1。
+// 老入口：地域记空=unknown。
 func (s *Store) RecordVisit(linkID int64, ipHash, ua, referer string) error {
+	return s.RecordVisitGeo(linkID, ipHash, ua, referer, "", "", "")
+}
+
+// RecordVisitGeo 在事务中插入 visits（含地域三列）并给 links.clicks 加 1。
+func (s *Store) RecordVisitGeo(linkID int64, ipHash, ua, referer, countryCode, countryName, province string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -450,8 +456,8 @@ func (s *Store) RecordVisit(linkID int64, ipHash, ua, referer string) error {
 	}()
 
 	if _, err := tx.Exec(
-		`INSERT INTO visits (link_id, ts, ip_hash, ua, referer) VALUES (?, ?, ?, ?, ?)`,
-		linkID, formatTime(nowUTC()), ipHash, ua, referer,
+		`INSERT INTO visits (link_id, ts, ip_hash, ua, referer, country_code, country_name, province) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		linkID, formatTime(nowUTC()), ipHash, ua, referer, countryCode, countryName, province,
 	); err != nil {
 		return fmt.Errorf("insert visit: %w", err)
 	}
@@ -462,6 +468,74 @@ func (s *Store) RecordVisit(linkID int64, ipHash, ua, referer string) error {
 		return fmt.Errorf("commit tx: %w", err)
 	}
 	return nil
+}
+
+// GeoStat 单条地域聚合统计。
+type GeoStat struct {
+	CountryCode string
+	CountryName string
+	Province    string
+	Clicks      int64
+}
+
+// GeoStats 返回地域分布：按国家/省份聚合的 TopN 与 unknown 占比。
+// linkID>0 时只统计该短链；n<=0 时按 8 处理。
+func (s *Store) GeoStats(linkID int64, n int) (items []GeoStat, unknownPct float64, err error) {
+	if n <= 0 {
+		n = 8
+	}
+	items = make([]GeoStat, 0, n)
+	where := ""
+	args := []any{}
+	if linkID > 0 {
+		where = " WHERE link_id = ?"
+		args = append(args, linkID)
+	}
+
+	var total int64
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM visits"+where, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count visits: %w", err)
+	}
+	if total == 0 {
+		return items, 0, nil
+	}
+
+	// unknown 条件拼装：全局查询时 where 为空，不能直接拼接 AND。
+	unknownCond := "country_code IN ('', 'unknown')"
+	knownCond := "country_code NOT IN ('', 'unknown')"
+	uWhere := " WHERE " + unknownCond
+	kWhere := " WHERE " + knownCond
+	if where != "" {
+		uWhere = where + " AND " + unknownCond
+		kWhere = where + " AND " + knownCond
+	}
+
+	var unknown int64
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM visits"+uWhere, args...).Scan(&unknown); err != nil {
+		return nil, 0, fmt.Errorf("count unknown visits: %w", err)
+	}
+	unknownPct = 100.0 * float64(unknown) / float64(total)
+
+	rows, err := s.db.Query(
+		"SELECT country_code, country_name, province, COUNT(*) AS c FROM visits"+kWhere+
+			" GROUP BY country_code, country_name, province ORDER BY c DESC LIMIT ?",
+		append(args, n)...,
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf("query geo stats: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var g GeoStat
+		if err := rows.Scan(&g.CountryCode, &g.CountryName, &g.Province, &g.Clicks); err != nil {
+			return nil, 0, fmt.Errorf("scan geo stats: %w", err)
+		}
+		items = append(items, g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("iterate geo stats: %w", err)
+	}
+	return items, unknownPct, nil
 }
 
 // StatsOverview 返回整体统计：总短链数、启用数、总点击数、今日点击数。

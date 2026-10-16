@@ -63,6 +63,27 @@ flowchart LR
 
 系统表说明：`_m_tables` 记录已声明表的元信息与 schema 版本；`_m_watermarks` 保存每个源的 `updated_at` 水位线；`_m_conflicts` 存放按策略挂起、等待手动裁决的冲突行；`_m_runs` 是每次同步/视图运行的执行历史；`_m_views` 保存视图定义与导出记录。
 
+## HTTP API
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/health` | 存活探针 |
+| GET | `/api/sources` | 数据源列表（含表结构与行数） |
+| POST | `/api/sync` | 触发全量同步 |
+| GET | `/api/runs` | 同步运行历史 |
+| GET | `/api/conflicts` | 待处理冲突列表 |
+| POST | `/api/conflicts/{id}/resolve` | 裁决冲突 |
+| GET | `/api/tables` | 已同步表列表 |
+| GET | `/api/tables/{name}/rows` | 查表数据 |
+| GET | `/api/views` | 视图列表 |
+| POST | `/api/views` | 新增视图 |
+| DELETE | `/api/views/{name}` | 删除视图 |
+| GET | `/api/views/{name}/rows` | 查视图数据 |
+| POST | `/api/views/{name}/refresh` | 手动物化刷新 |
+| POST | `/api/query` | 即席 SQL 查询 |
+| POST | `/api/sources/{id}/import-csv` | CSV 增量导入（multipart `file` 字段；按主键 upsert；文件 sha256 幂等；逐行错误报告 `{line,reason}` 跳过继续；响应含 inserted/updated/unchanged/error_rows；v1.4 新增） |
+| GET | `/metrics` | Prometheus 指标 |
+
 ## 配置示例
 
 ```yaml

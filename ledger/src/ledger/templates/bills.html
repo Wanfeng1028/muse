@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}拍照记账{% endblock %}
+{% block content %}
+<h1>拍照记账</h1>
+<p class="ocr-mock-note">当前为 Mock 识别模式：返回固定演示结果；真实 OCR 需配置 LEDGER_OCR_API_KEY。</p>
+
+<section class="card">
+  <div id="ocr-drop" class="ocr-drop">
+    把小票照片拖到这里，或
+    <button type="button" id="btn-ocr-pick" class="btn">选择图片</button>
+  </div>
+  <input type="file" id="ocr-file" accept="image/*" hidden>
+  <button id="btn-ocr-upload" class="btn btn-primary" type="button">识别</button>
+  <div id="ocr-status"></div>
+</section>
+
+<section class="card" id="ocr-form-section" hidden>
+  <h2>确认入账</h2>
+  <input type="text" id="o-merchant" placeholder="商户">
+  <input type="number" id="o-amount" step="0.01" placeholder="金额(元)">
+  <input type="date" id="o-date">
+  <select id="o-category"></select>
+  <select id="o-account"></select>
+  <input type="text" id="o-note" placeholder="备注">
+  <p id="o-candidates"></p>
+  <button id="btn-ocr-save" class="btn btn-primary" type="button">确认入账</button>
+  <button id="btn-ocr-reset" class="btn btn-ghost" type="button">重新识别</button>
+</section>
+{% endblock %}

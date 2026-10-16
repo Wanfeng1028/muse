@@ -45,6 +45,17 @@ export interface MistakesImportResult {
   errors: Array<{ row: number; message: string }>;
   errorRows: number;
 }
+export interface VocabSeedResult {
+  imported: number;
+  skippedExisting: number;
+  skippedInvalid: number;
+  errors: Array<{ file: string; index: number; message: string }>;
+}
+export interface VocabStatus {
+  total: number;
+  mastered: number;
+  pending: number;
+}
 const BASE = '/api';
 
 // 通用请求封装：自动 JSON、错误解析、204 处理
@@ -133,6 +144,8 @@ export const api = {
     }),
   deleteWord: (id: number) =>
     request<void>(`/words/${id}`, { method: 'DELETE' }),
+  seedVocab: () => request<VocabSeedResult>('/words/seed-vocab', { method: 'POST' }),
+  vocabStatus: () => request<VocabStatus>('/words/vocab-status'),
 
   // 考试
   listExams: (subject?: string) => request<ExamRecord[]>(`/exams${qs({ subject })}`),

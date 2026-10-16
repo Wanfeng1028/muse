@@ -112,6 +112,17 @@ func (s *Store) Migrate() error {
 			"value" TEXT,
 			PRIMARY KEY("source","table_name","column_name")
 		)`,
+		`CREATE TABLE IF NOT EXISTS "_m_imports" (
+			"id" INTEGER PRIMARY KEY AUTOINCREMENT,
+			"source" TEXT NOT NULL,
+			"file_hash" TEXT NOT NULL UNIQUE,
+			"filename" TEXT NOT NULL DEFAULT '',
+			"rows_total" INTEGER NOT NULL DEFAULT 0,
+			"inserted" INTEGER NOT NULL DEFAULT 0,
+			"updated" INTEGER NOT NULL DEFAULT 0,
+			"error_rows" INTEGER NOT NULL DEFAULT 0,
+			"created_at" TEXT NOT NULL
+		)`,
 	}
 	for _, stmt := range stmts {
 		if _, err := s.DB.Exec(stmt); err != nil {

@@ -14,6 +14,7 @@ import (
 
 	"sentinel/internal/backup"
 	"sentinel/internal/config"
+	"sentinel/internal/escalation"
 	"sentinel/internal/db"
 	"sentinel/internal/handlers"
 	"sentinel/internal/log"
@@ -145,6 +146,14 @@ func main() {
 
 	// 启动调度器
 	sch := scheduler.New(st, notifyFn, cfg.CheckConcurrency, cfg.SchedulerTickSec, cfg.CheckRetryMax)
+	if len(cfg.Escalation) > 0 {
+		levels := make([]escalation.Level, 0, len(cfg.Escalation))
+		for _, l := range cfg.Escalation {
+			levels = append(levels, escalation.Level{AfterMinutes: l.AfterMinutes, Channels: l.Channels})
+		}
+		sch.SetEscalation(levels)
+		logger.Info("告警升级已启用", "levels", len(levels))
+	}
 	go sch.Start(ctx)
 
 	// 启动 webhook 投递队列 worker

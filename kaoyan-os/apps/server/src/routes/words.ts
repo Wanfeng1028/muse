@@ -10,6 +10,60 @@ import type {
 } from '@kaoyan/shared';
 import { WORD_SOURCES } from '@kaoyan/shared';
 import { todayStr, addDays } from '../db';
+import vocabA from '../data/vocab-500-a.json';
+import vocabB from '../data/vocab-500-b.json';
+import vocabC from '../data/vocab-500-c.json';
+import vocabD from '../data/vocab-500-d.json';
+
+// 词库 JSON 条目结构
+interface VocabEntry {
+  word: string;
+  phonetic?: string;
+  pos?: string;
+  meanings_zh: string[];
+  example_en?: string;
+  example_zh?: string;
+  memory_tip?: string;
+}
+
+// 逐条校验词库条目，合法返回 null，否则返回错误信息
+export function validateVocabEntry(
+  entry: unknown,
+  index: number,
+  file: string,
+): string | null {
+  if (entry === null || typeof entry !== 'object') {
+    return `${file} #${index}: 条目必须为对象`;
+  }
+  const e = entry as Record<string, unknown>;
+  const rawWord = e.word;
+  if (typeof rawWord !== 'string' || !rawWord.trim()) {
+    return `${file} #${index}: word 必须为非空字符串`;
+  }
+  const rawMeanings = e.meanings_zh;
+  if (!Array.isArray(rawMeanings) || rawMeanings.length === 0) {
+    return `${file} #${index}: meanings_zh 必须为非空数组`;
+  }
+  for (let i = 0; i < rawMeanings.length; i += 1) {
+    const m = rawMeanings[i];
+    if (typeof m !== 'string' || !m.trim()) {
+      return `${file} #${index}: meanings_zh[${i}] 必须为非空字符串`;
+    }
+  }
+  const optionalStrings: { key: string; value: unknown }[] = [
+    { key: 'phonetic', value: e.phonetic },
+    { key: 'pos', value: e.pos },
+    { key: 'example_en', value: e.example_en },
+    { key: 'example_zh', value: e.example_zh },
+    { key: 'memory_tip', value: e.memory_tip },
+  ];
+  for (const { key, value } of optionalStrings) {
+    if (value !== undefined && typeof value !== 'string') {
+      return `${file} #${index}: ${key} 若提供必须为字符串`;
+    }
+  }
+  return null;
+}
 
 // 数据库行类型
 interface WordRow {
@@ -19,6 +73,7 @@ interface WordRow {
   meaning: string;
   example: string;
   source: string;
+  memory_tip: string;
 }
 
 interface SrsRow {
@@ -56,6 +111,7 @@ function toWordWithState(row: WordWithStateRow): WordWithState {
     meaning: row.meaning,
     example: row.example,
     source: row.source as WordSource,
+    memory_tip: row.memory_tip,
   };
   const state: SrsState = {
     wordId: row.id,
@@ -71,7 +127,7 @@ function toWordWithState(row: WordWithStateRow): WordWithState {
 function getWordWithState(db: DatabaseSync, id: number): WordWithState | null {
   const row = db
     .prepare(
-      `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source,
+      `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip,
               s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
        FROM words w
        LEFT JOIN srs_state s ON s.word_id = w.id
@@ -87,7 +143,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   app.get('/api/words', async () => {
     const rows = db
       .prepare(
-        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source,
+        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip,
                 s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
          FROM words w
          LEFT JOIN srs_state s ON s.word_id = w.id
@@ -102,7 +158,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const today = todayStr();
     const rows = db
       .prepare(
-        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source,
+        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip,
                 s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
          FROM words w
          JOIN srs_state s ON s.word_id = w.id
@@ -347,6 +403,116 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       return reply.send({ imported, skippedExisting, skippedInvalid, errors });
     },
   );
+
+  // POST /api/words/seed-vocab：播种内置 500 词库
+  app.post('/api/words/seed-vocab', async (_request, reply) => {
+    const files: { file: string; entries: unknown[] }[] = [
+      { file: 'vocab-500-a.json', entries: vocabA as unknown[] },
+      { file: 'vocab-500-b.json', entries: vocabB as unknown[] },
+      { file: 'vocab-500-c.json', entries: vocabC as unknown[] },
+      { file: 'vocab-500-d.json', entries: vocabD as unknown[] },
+    ];
+
+    const errors: { file: string; index: number; message: string }[] = [];
+    const validEntries: { file: string; entry: VocabEntry }[] = [];
+    for (const { file, entries } of files) {
+      for (let index = 0; index < entries.length; index += 1) {
+        const message = validateVocabEntry(entries[index], index, file);
+        if (message !== null) {
+          errors.push({ file, index, message });
+        } else {
+          validEntries.push({ file, entry: entries[index] as VocabEntry });
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      return reply.code(400).send({ error: '词库数据非法', errors });
+    }
+
+    let imported = 0;
+    let skippedExisting = 0;
+
+    const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+    const insertWord = db.prepare(
+      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+    );
+    const insertSrs = db.prepare(
+      'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
+    );
+
+    const today = todayStr();
+
+    db.exec('BEGIN');
+    try {
+      for (const { entry } of validEntries) {
+        const word = entry.word.trim();
+        const existing = findWord.get(word) as { id: number } | undefined;
+        if (existing) {
+          skippedExisting += 1;
+          continue;
+        }
+
+        const pos = typeof entry.pos === 'string' ? entry.pos.trim() : '';
+        const meanings = entry.meanings_zh.map((m) => m.trim());
+        const meaning = (pos ? pos + ' ' : '') + meanings.join('；');
+
+        const exampleEn =
+          typeof entry.example_en === 'string' ? entry.example_en.trim() : '';
+        const exampleZh =
+          typeof entry.example_zh === 'string' ? entry.example_zh.trim() : '';
+        let example = exampleEn;
+        if (exampleZh) {
+          example += ' ｜ ' + exampleZh;
+        }
+
+        const phonetic =
+          typeof entry.phonetic === 'string' ? entry.phonetic.trim() : '';
+        const memoryTip =
+          typeof entry.memory_tip === 'string' ? entry.memory_tip.trim() : '';
+
+        const info = insertWord.run(
+          word,
+          phonetic,
+          meaning,
+          example,
+          'core500',
+          memoryTip,
+        );
+        const newId = Number(info.lastInsertRowid);
+        insertSrs.run(newId, 2.5, 0, 0, today);
+        imported += 1;
+      }
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
+    }
+
+    return reply.send({
+      imported,
+      skippedExisting,
+      skippedInvalid: 0,
+      errors: [],
+    });
+  });
+
+  // GET /api/words/vocab-status：内置 500 词库统计
+  app.get('/api/words/vocab-status', async () => {
+    const totalRow = db
+      .prepare("SELECT COUNT(*) AS c FROM words WHERE source = 'core500'")
+      .get() as { c: number };
+    const masteredRow = db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM words w
+         JOIN srs_state s ON s.word_id = w.id
+         WHERE w.source = 'core500' AND s.repetitions > 0`,
+      )
+      .get() as { c: number };
+    const total = totalRow.c;
+    const mastered = masteredRow.c;
+    return { total, mastered, pending: total - mastered };
+  });
 
   // DELETE /api/words/:id：删除单词及其 SRS 状态
   app.delete<{ Params: { id: string } }>('/api/words/:id', async (request, reply) => {

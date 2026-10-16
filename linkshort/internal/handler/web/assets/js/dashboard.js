@@ -107,7 +107,56 @@
     });
   }
 
-  // 备份健康面板
+ function loadGeo() {
+  api("/api/stats/geo?n=8").then(function (data) {
+    var items = (data && data.items) || [];
+    var el = document.getElementById("geo-chart");
+    var note = document.getElementById("geo-unknown-note");
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<div class="chart-empty" style="color:#888;font-size:13px;padding:20px 0">还没有带地域的访问记录</div>';
+    } else {
+      var max = 0;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].clicks > max) max = items[i].clicks;
+      }
+      var html = "";
+      for (var j = 0; j < items.length; j++) {
+        var it = items[j];
+        var name;
+        if (it.province && it.province !== "unknown") {
+          name = it.province;
+        } else if (it.country_name && it.country_name !== "unknown") {
+          name = it.country_name;
+        } else {
+          name = "未知";
+        }
+        var pct = max > 0 ? (it.clicks / max) * 100 : 0;
+        html += '<div style="margin:8px 0">';
+        html += '<div style="font-size:13px;color:var(--ink);margin-bottom:4px">' + esc(name) + '</div>';
+        html += '<div style="display:flex;align-items:center;gap:8px">';
+        html += '<div style="flex:1;background:var(--kraft);height:10px;border-radius:2px;overflow:hidden">';
+        html += '<div style="width:' + pct.toFixed(1) + '%;height:100%;background:var(--stamp)"></div>';
+        html += '</div>';
+        html += '<span class="mono" style="font-size:13px;color:var(--ink)">' + it.clicks + '</span>';
+        html += '</div>';
+        html += '</div>';
+      }
+      el.innerHTML = html;
+    }
+    if (note) {
+      if (data && data.unknown_pct > 0) {
+        note.textContent = "另有 " + data.unknown_pct.toFixed(1) + "% 没认出来是哪儿的";
+      } else {
+        note.textContent = "";
+      }
+    }
+  }).catch(function (err) {
+    toast("加载地域分布失败：" + err.message);
+  });
+}
+
+ // 备份健康面板
   function loadBackupHealth() {
     api("/api/backup/health").then(function (data) {
       data = data || {};

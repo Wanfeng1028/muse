@@ -63,6 +63,9 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/overview", s.handleOverview)
 	mux.HandleFunc("GET /api/alerts/deliveries", s.handleListDeliveries)
 	mux.HandleFunc("POST /api/alerts/deliveries/{id}/retry", s.handleRetryDelivery)
+	mux.HandleFunc("POST /api/silences", s.handleCreateSilence)
+	mux.HandleFunc("GET /api/silences", s.handleListSilences)
+	mux.HandleFunc("DELETE /api/silences/{id}", s.handleDeleteSilence)
 	// 静态页面与资源
 	mux.HandleFunc("GET /{$}", s.handleIndex)
 	mux.HandleFunc("GET /monitors", s.handleMonitorsPage)

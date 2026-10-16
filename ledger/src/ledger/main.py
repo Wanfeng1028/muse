@@ -16,6 +16,7 @@ from ledger.logging import RequestIdMiddleware, get_logger, setup_logging
 from ledger.models import Category, Currency, Recurring
 from ledger.routers import (
     accounts,
+    bills,
     budgets,
     categories,
     currencies,
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     # 注册路由
     app.include_router(health.router)
     app.include_router(metrics.router)
+    app.include_router(bills.router)
     app.include_router(accounts.router)
     app.include_router(categories.router)
     app.include_router(transactions.router)
@@ -256,6 +258,19 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(
             request,
             "statement.html",
+            {"accounts": account_options},
+        )
+
+    @app.get("/bills", response_class=HTMLResponse)
+    async def bills_page(request: Request):
+        """拍照记账页。"""
+        factory = get_session_factory()
+        async with factory() as session:
+            accounts_list = await list_accounts_with_balance(session)
+        account_options = [{"id": a["id"], "name": a["name"]} for a in accounts_list]
+        return templates.TemplateResponse(
+            request,
+            "bills.html",
             {"accounts": account_options},
         )
 

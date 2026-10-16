@@ -54,8 +54,14 @@ fun Application.configureRoutes(
             call.respond(HttpStatusCode.OK, mapOf("rehearsal" to hub.rehearsalMode))
         }
 
+        // 返听屏只读快照：当前 cue + 倒计时 + 下一 cue，无鉴权
+        get("/api/monitor") {
+            call.respond(HttpStatusCode.OK, hub.monitorSnapshot(store.getShow()))
+        }
+
         webSocket("/ws") {
             var myClientId: String? = null
+            var myRole: ClientRole? = null
             try {
             for (frame in incoming) {
                 if (frame !is Frame.Text) continue
@@ -86,6 +92,7 @@ fun Application.configureRoutes(
                             continue
                         }
                         myClientId = msg.clientId
+                        myRole = msg.role
                         broadcaster.register(
                             msg.clientId,
                             BroadcastHub.FrameSink { text -> this@webSocket.send(Frame.Text(text)) },
@@ -94,12 +101,41 @@ fun Application.configureRoutes(
                         metrics.wsConnected()
                         val welcome = hub.handleConnect(msg.clientId, msg.role)
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), welcome)))
+                        // MONITOR 上线即推全量快照
+                        if (msg.role == ClientRole.MONITOR) {
+                            val show = store.getShow()
+                            val now = System.currentTimeMillis()
+                            val snapshot = StateSnapshot(
+                                msgId = java.util.UUID.randomUUID().toString(),
+                                sentAtMs = now,
+                                showId = show.id,
+                                states = show.cues.associate { it.id to it.state },
+                                serverTimeMs = now,
+                            )
+                            send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), snapshot)))
+                        }
+
+                        // 重连回放：把客户端未同步的 oplog 条目推给它
+                        val missed = hub.missedOps(msg.lastSeenSeq)
+                        if (missed.isNotEmpty()) {
+                            val replay = OpLogReplay(
+                                msgId = UUID.randomUUID().toString(),
+                                sentAtMs = System.currentTimeMillis(),
+                                entries = missed,
+                            )
+                            send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), replay)))
+                        }
                     }
                     is ClockPing -> {
                         val pong = hub.handleClockPing(msg)
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), pong)))
                     }
                     is TriggerCue -> {
+                        val denied = hub.authorizeWrite(myRole, msg)
+                        if (denied != null) {
+                            send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), denied)))
+                            continue
+                        }
                         val out = hub.handleTriggerCue(msg)
                         if (out is CueFired) metrics.cueTriggered(rehearsal = out.rehearsal)
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), out)))
@@ -110,6 +146,11 @@ fun Application.configureRoutes(
                         }
                     }
                     is ArmCue -> {
+                        val denied = hub.authorizeWrite(myRole, msg)
+                        if (denied != null) {
+                            send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), denied)))
+                            continue
+                        }
                         val out = hub.handleArmCue(msg)
                         metrics.cueArmed()
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), out)))
@@ -117,6 +158,11 @@ fun Application.configureRoutes(
                         broadcaster.broadcastExcept(myClientId, text)
                     }
                     is SetRehearsal -> {
+                        val denied = hub.authorizeWrite(myRole, msg)
+                        if (denied != null) {
+                            send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), denied)))
+                            continue
+                        }
                         val changed = hub.setRehearsal(msg.enabled)
                         send(Frame.Text(WsJson.json.encodeToString(WsMessage.serializer(), changed)))
                         val text = WsJson.json.encodeToString(WsMessage.serializer(), changed)

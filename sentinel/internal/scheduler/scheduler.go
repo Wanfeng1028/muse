@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"sentinel/internal/checker"
+	"sentinel/internal/escalation"
 	"sentinel/internal/log"
 	"sentinel/internal/metrics"
 	"sentinel/internal/store"
@@ -19,6 +20,8 @@ type Scheduler struct {
 	tickSec    int
 	maxRetries int
 	inflight   map[int64]bool
+	// 告警升级策略，空=禁用
+	escalation []escalation.Level
 	mu         sync.Mutex
 }
 
@@ -123,6 +126,9 @@ func (s *Scheduler) tick(ctx context.Context) {
 			s.runOne(ctx, m, prevOk, hasPrev)
 		}(m, prevOk, hasLast)
 	}
+
+	// 每轮 tick 结束后检查升级。
+	s.checkEscalations()
 }
 
 // runOne 执行单次检查，带并发限流。
@@ -183,9 +189,7 @@ func (s *Scheduler) record(m store.Monitor, c store.Check, prevOk, hasPrev bool)
 			if _, err := s.store.OpenIncident(m.ID, at, c.Error); err != nil {
 				log.Logger().Error("开启事件失败", "monitorID", m.ID, "err", err)
 			}
-			if s.notify != nil {
-				s.notify(m, "down", m.Name, m.Target, at, c.Error)
-			}
+			s.notifyUnlessSilenced(m, "down", m.Name, m.Target, at, c.Error)
 		}
 		return
 	}
@@ -206,8 +210,21 @@ func (s *Scheduler) record(m store.Monitor, c store.Check, prevOk, hasPrev bool)
 		if err := s.store.CloseOpenIncident(m.ID, at, secs); err != nil {
 			log.Logger().Error("关闭事件失败", "monitorID", m.ID, "err", err)
 		}
-		if s.notify != nil {
-			s.notify(m, "recovered", m.Name, m.Target, at, "")
-		}
+		s.notifyUnlessSilenced(m, "recovered", m.Name, m.Target, at, "")
 	}
+}
+
+// notifyUnlessSilenced 在命中静默窗口时跳过通知并记录结构化日志，否则照常通知。
+func (s *Scheduler) notifyUnlessSilenced(m store.Monitor, event, name, target, at, errMsg string) {
+	if s.notify == nil {
+		return
+	}
+	sil, ok, err := s.store.FindActiveSilence(m.ID, m.Name, time.Now())
+	if err != nil {
+		log.Logger().Error("查询静默窗口失败", "monitorID", m.ID, "err", err)
+	} else if ok {
+		log.Logger().Info("告警通知被静默跳过", "monitorID", m.ID, "silenceID", sil.ID, "reason", sil.Reason)
+		return
+	}
+	s.notify(m, event, name, target, at, errMsg)
 }

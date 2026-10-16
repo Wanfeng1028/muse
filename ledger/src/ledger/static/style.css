@@ -763,6 +763,24 @@ textarea:disabled {
   color: #fff;
 }
 
+.ocr-drop {
+  border: 2px dashed #94a3b8;
+  background: #f8fafc;
+  padding: 32px 16px;
+  text-align: center;
+  cursor: pointer;
+}
+.ocr-drop.dragging {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+.ocr-mock-note {
+  background: #fef9c3;
+  border: 1px solid #facc15;
+  padding: 8px 12px;
+}
+
+
 .btn-danger {
   color: #fff;
   background: var(--red);

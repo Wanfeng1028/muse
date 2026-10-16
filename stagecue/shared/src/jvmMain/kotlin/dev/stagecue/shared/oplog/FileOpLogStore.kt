@@ -3,11 +3,15 @@ package dev.stagecue.shared.oplog
 import dev.stagecue.shared.protocol.WsJson
 import kotlinx.serialization.encodeToString
 import java.io.File
+import java.io.FileOutputStream
 import java.util.UUID
 
 /**
  * JSON Lines backed op log. Each line is one serialized [OpLogEntry].
  * On construction, existing lines are loaded so that [seq] continues monotonically.
+ *
+ * 持久化采用 append + flush + fsync，保证崩溃时已 append 的完整行不丢失；
+ * 启动加载时单行解析失败仅告警并跳过，避免崩溃产生的截断尾行拖垮启动。
  */
 class FileOpLogStore(private val dir: File) : OpLogStore {
 
@@ -20,11 +24,19 @@ class FileOpLogStore(private val dir: File) : OpLogStore {
     init {
         synchronized(lock) {
             if (file.exists()) {
+                var lineNo = 0
                 file.forEachLine { line ->
+                    lineNo += 1
                     val trimmed = line.trim()
                     if (trimmed.isNotEmpty()) {
-                        val entry = WsJson.json.decodeFromString<OpLogEntry>(trimmed)
-                        entries.add(entry)
+                        try {
+                            val entry = WsJson.json.decodeFromString<OpLogEntry>(trimmed)
+                            entries.add(entry)
+                        } catch (e: Exception) {
+                            System.err.println(
+                                "FileOpLogStore: 跳过损坏行 ${file.path}:$lineNo (${e.message})"
+                            )
+                        }
                     }
                 }
             }
@@ -44,7 +56,15 @@ class FileOpLogStore(private val dir: File) : OpLogStore {
             )
             nextSeq += 1
             entries.add(entry)
-            file.appendText(WsJson.json.encodeToString(entry) + "\n")
+            val bytes = (WsJson.json.encodeToString(entry) + "\n").toByteArray(Charsets.UTF_8)
+            val out = FileOutputStream(file, true)
+            try {
+                out.write(bytes)
+                out.flush()
+                out.fd.sync()
+            } finally {
+                out.close()
+            }
             return entry
         }
     }

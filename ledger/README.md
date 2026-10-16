@@ -157,6 +157,16 @@ docs/
   SOUL.md
   screenshots/
 
+## 功能
+
+### v2.5 账单图片 OCR 录入（进行中）
+
+当前版本交付 OCR 提供商抽象层 + Mock 链路：
+
+- `ledger/src/ledger/ocr.py` 定义 `OcrProvider` 协议、`MockOcrProvider`、`EnvOcrProvider` 与 `get_provider()`。
+- 默认 `LEDGER_OCR_PROVIDER=mock`，Mock 返回固定结果，响应中 `mock: true` 明确标识，绝不冒充真实识别。
+- 真实 OCR 需要用户自行配置外部服务 key（`LEDGER_OCR_API_KEY`）；当前版本真实提供商尚未接入，配置后仍会诚实抛出 `NotImplementedError`，不会返回伪造结果。
+
 ## 配置
 
 | 环境变量 | 说明 |
@@ -167,6 +177,8 @@ docs/
 | `LEDGER_LOG_LEVEL` | 日志级别（DEBUG/INFO/WARNING/ERROR/CRITICAL，默认 INFO，非法值启动失败） |
 | `LEDGER_BACKUP_DIR` | 备份目录（默认 `<项目根>/data/backups`） |
 | `LEDGER_BASE_CURRENCY` | 本位币（ISO 4217 三字母大写，默认 CNY，非法值启动失败） |
+| `LEDGER_OCR_PROVIDER` | OCR 提供商：`mock`（默认）或 `env`，非法值启动失败 |
+| `LEDGER_OCR_API_KEY` | 真实 OCR 服务 API Key（`LEDGER_OCR_PROVIDER=env` 时必填） |
 
 ## 运维
 

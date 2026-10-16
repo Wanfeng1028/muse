@@ -27,7 +27,6 @@ import (
 // Version 为 API 版本号。
 var Version = "1.3.0"
 
-
 // server 保存 API 依赖。
 type server struct {
 	st        *store.Store
@@ -48,6 +47,8 @@ func NewServer(st *store.Store, cfg *config.Config, logger *log.Logger) http.Han
 	mux.HandleFunc("GET /api/sources", s.handleSources)
 	// 手动同步
 	mux.HandleFunc("POST /api/sync", s.handleSync)
+
+	mux.HandleFunc("POST /api/sources/{id}/import-csv", s.handleImportCSV)
 	// 运行记录
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
 	// 冲突列表

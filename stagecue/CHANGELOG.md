@@ -4,6 +4,16 @@
 
 # Changelog
 
+## [Unreleased]
+
+### 新增
+- OpLog 文件持久化替代内存版：`FileOpLogStore` 每次 append 后 `fd.sync()`（崩溃不丢已落盘行）；启动加载跳过损坏行（截断尾行不拖垮启动）；`Main.kt` 接入 `SyncHub(opLog=...)`，oplog 落 `<dataDir>/oplog/oplog.jsonl`；重连回放：`Hello.lastSeenSeq` + `SyncHub.missedOps` + `OpLogReplay` 消息，客户端重连后自动补齐未同步条目（只做展示补齐，不重放执行）。
+- 返听屏二期（MONITOR 只读接口）：`GET /api/monitor` 返回当前 cue + 倒计时 + 下一 cue；MONITOR 上线即推 `StateSnapshot` 全量快照；写操作鉴权：MONITOR 发 trigger_cue/arm_cue/set_rehearsal 返回 `FORBIDDEN` Error；新增 `SyncHub.monitorSnapshot`/`authorizeWrite`/`roleOf` 与 shared `MonitorState`。
+- 测试：FileOpLogStoreTest 8 例（含重启恢复/并发 append/损坏尾行跳过）；MonitorApiTest 6 例（含 WS 真实鉴权与快照推送）。
+
+### 文档
+- `docs/OPERATIONS.md` 新增"返听屏（MONITOR）只读接口"节；`docs/TECH_DEBT.md` 第 9 项更新 v0.5 进度。
+
 ## [0.4.0] - 2026-10-16
 
 ### 新增
