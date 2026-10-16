@@ -69,7 +69,9 @@ public class MediaController {
      */
     @GetMapping("/videos/{taskId}")
     @Operation(summary = "获取视频任务的视频文件")
-    public ResponseEntity<Resource> getVideo(@PathVariable Long taskId) {
+    public ResponseEntity<Resource> getVideo(
+            @io.swagger.v3.oas.annotations.Parameter(description = "视频任务 ID") @PathVariable Long taskId) {
+
         // 查询视频任务，不存在则抛出异常
         VideoTask task = videoTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("VideoTask", taskId));
@@ -98,7 +100,9 @@ public class MediaController {
      */
     @GetMapping("/finals/{id}")
     @Operation(summary = "获取成片的视频文件")
-    public ResponseEntity<Resource> getFinal(@PathVariable Long id) {
+    public ResponseEntity<Resource> getFinal(
+            @io.swagger.v3.oas.annotations.Parameter(description = "成片 ID") @PathVariable Long id) {
+
         // 查询成片，不存在则抛出异常
         FinalCut finalCut = finalCutRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FinalCut", id));
@@ -150,7 +154,9 @@ public class MediaController {
      */
     @GetMapping("/finals/{id}/poster.jpg")
     @Operation(summary = "获取成片的海报帧")
-    public ResponseEntity<Resource> getFinalPoster(@PathVariable Long id) {
+    public ResponseEntity<Resource> getFinalPoster(
+            @io.swagger.v3.oas.annotations.Parameter(description = "成片 ID") @PathVariable Long id) {
+
         FinalCut finalCut = finalCutRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("FinalCut", id));
 

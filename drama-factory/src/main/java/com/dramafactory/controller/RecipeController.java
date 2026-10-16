@@ -52,15 +52,19 @@ public class RecipeController {
     /** 查询配方列表 */
     @GetMapping
     @Operation(summary = "查询配方列表，可按分类/可见性筛选")
-    public List<RecipeDto> list(@RequestParam(required = false) String category,
-                                @RequestParam(required = false) RecipeVisibility visibility) {
+    public List<RecipeDto> list(
+            @io.swagger.v3.oas.annotations.Parameter(description = "分类") @RequestParam(required = false) String category,
+            @io.swagger.v3.oas.annotations.Parameter(description = "可见性") @RequestParam(required = false) RecipeVisibility visibility) {
+
         return service.list(category, visibility).stream().map(RecipeDto::from).toList();
     }
 
     /** 查询单个配方 */
     @GetMapping("/{id}")
     @Operation(summary = "查询单个配方")
-    public RecipeDto get(@PathVariable Long id) {
+    public RecipeDto get(
+            @io.swagger.v3.oas.annotations.Parameter(description = "配方 ID") @PathVariable Long id) {
+
         return RecipeDto.from(service.list(null, null).stream()
                 .filter(r -> r.getId().equals(id))
                 .findFirst()
@@ -71,7 +75,10 @@ public class RecipeController {
     /** 更新配方 */
     @PutMapping("/{id}")
     @Operation(summary = "更新配方")
-    public RecipeDto update(@PathVariable Long id, @RequestBody UpdateRecipeRequest request) {
+    public RecipeDto update(
+            @io.swagger.v3.oas.annotations.Parameter(description = "配方 ID") @PathVariable Long id,
+            @RequestBody UpdateRecipeRequest request) {
+
         PromptRecipe recipe = service.update(
                 id,
                 request.name(),
@@ -87,7 +94,9 @@ public class RecipeController {
     /** 删除配方 */
     @DeleteMapping("/{id}")
     @Operation(summary = "删除配方")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(
+            @io.swagger.v3.oas.annotations.Parameter(description = "配方 ID") @PathVariable Long id) {
+
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -95,7 +104,10 @@ public class RecipeController {
     /** 渲染模板 */
     @PostMapping("/{id}/render")
     @Operation(summary = "渲染配方模板，替换 {{变量名}} 占位符")
-    public RenderResponse render(@PathVariable Long id, @RequestBody RenderRequest request) {
+    public RenderResponse render(
+            @io.swagger.v3.oas.annotations.Parameter(description = "配方 ID") @PathVariable Long id,
+            @RequestBody RenderRequest request) {
+
         Map<String, String> variables = request == null ? Map.of() : request.variables();
         String content = service.render(id, variables);
         return new RenderResponse(content);
@@ -104,7 +116,10 @@ public class RecipeController {
     /** 一键套用配方 */
     @PostMapping("/{id}/apply")
     @Operation(summary = "一键套用配方到编剧/分镜 Agent 的 prompt 输入")
-    public ApplyResponse apply(@PathVariable Long id, @RequestBody ApplyRequest request) {
+    public ApplyResponse apply(
+            @io.swagger.v3.oas.annotations.Parameter(description = "配方 ID") @PathVariable Long id,
+            @RequestBody ApplyRequest request) {
+
         Map<String, String> variables = request == null ? Map.of() : request.variables();
         String target = request == null ? null : request.target();
         PromptRecipeService.ApplyResult result = service.apply(id, variables, target);

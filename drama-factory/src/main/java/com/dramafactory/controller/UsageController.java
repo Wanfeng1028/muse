@@ -18,7 +18,8 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/usage")
-@Tag(name = "Usage", description = "Token 与成本用量统计接口")
+@Tag(name = "用量统计", description = "Token 与成本用量统计接口")
+
 public class UsageController {
 
     private final UsageService usageService;

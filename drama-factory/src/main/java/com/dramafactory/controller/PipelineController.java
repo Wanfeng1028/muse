@@ -3,6 +3,7 @@ package com.dramafactory.controller;
 import com.dramafactory.dto.Records;
 import com.dramafactory.service.PipelineService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,7 +40,8 @@ public class PipelineController {
      */
     @GetMapping("/projects/{projectId}/pipeline")
     @Operation(summary = "查询项目流水线视图")
-    public Records.PipelineProjectView getProjectPipeline(@PathVariable Long projectId) {
+    public Records.PipelineProjectView getProjectPipeline(@Parameter(description = "项目 ID") @PathVariable Long projectId) {
+
         return pipelineService.getProjectPipeline(projectId);
     }
 
@@ -62,7 +64,8 @@ public class PipelineController {
      */
     @GetMapping("/projects/{projectId}/stats")
     @Operation(summary = "查询项目生产统计")
-    public Records.ProductionStatsResponse getProductionStats(@PathVariable Long projectId) {
+    public Records.ProductionStatsResponse getProductionStats(@Parameter(description = "项目 ID") @PathVariable Long projectId) {
+
         return pipelineService.getProductionStats(projectId);
     }
 }

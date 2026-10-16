@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api")
-@Tag(name = "Chat", description = "AI 对话接口")
+@Tag(name = "AI 对话", description = "AI 对话接口")
+
 public class ChatController {
 
     private final ChatService chatService;

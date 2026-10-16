@@ -35,9 +35,11 @@ public class CharacterController {
 
     @PostMapping("/api/projects/{projectId}/characters")
     @Operation(summary = "创建角色")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "创建成功")
     public ResponseEntity<Records.CharacterResponse> create(
             @PathVariable Long projectId,
             @Valid @RequestBody Records.CharacterRequest request) {
+
         Records.CharacterResponse response = characterService.create(projectId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -52,7 +54,9 @@ public class CharacterController {
 
     @DeleteMapping("/api/characters/{id}")
     @Operation(summary = "删除角色")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "删除成功，无返回体")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+
         characterService.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -14,6 +14,7 @@ import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.RunService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,7 +63,8 @@ public class RunArtifactController {
     @GetMapping("/{id}/artifacts")
     @Transactional(readOnly = true)
     @Operation(summary = "查询运行的全部产物")
-    public Records.RunArtifactsResponse artifacts(@PathVariable("id") Long id) {
+    public Records.RunArtifactsResponse artifacts(@Parameter(description = "Run ID") @PathVariable("id") Long id) {
+
         Records.RunDetailResponse run;
         try {
             run = runService.getRun(id);

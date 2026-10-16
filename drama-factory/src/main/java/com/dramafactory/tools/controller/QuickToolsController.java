@@ -20,7 +20,9 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tools")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "快捷工具", description = "素材批量处理与视频转换工具接口")
 public class QuickToolsController {
+
 
     private final QuickToolsService quickToolsService;
     private final ToolOpLogService toolOpLogService;
@@ -47,31 +49,42 @@ public class QuickToolsController {
     }
 
     @PostMapping("/assets/batch-tag")
+    @io.swagger.v3.oas.annotations.Operation(summary = "批量打标签")
     public Map<String, Object> batchTag(@RequestBody BatchTagRequest req) {
+
         int count = quickToolsService.batchTagAssets(req.ids(), req.tags(), req.mode());
         return Map.of("count", count);
     }
 
     @PostMapping("/assets/batch-rename")
+    @io.swagger.v3.oas.annotations.Operation(summary = "批量重命名")
     public Map<String, Object> batchRename(@RequestBody BatchRenameRequest req) {
+
         int count = quickToolsService.batchRenameAssets(req.renames());
         return Map.of("count", count);
     }
 
     @PostMapping("/video/convert")
+    @io.swagger.v3.oas.annotations.Operation(summary = "视频格式转换")
     public AssetController.AssetDto convertVideo(@RequestBody ConvertRequest req) {
+
         return AssetController.AssetDto.from(
                 quickToolsService.convertVideo(req.assetId(), req.format(), req.maxWidth()));
     }
 
     @PostMapping("/video/extract-audio")
+    @io.swagger.v3.oas.annotations.Operation(summary = "从视频提取音频")
     public AssetController.AssetDto extractAudio(@RequestBody ExtractAudioRequest req) {
+
         return AssetController.AssetDto.from(
                 quickToolsService.extractAudio(req.assetId(), req.format()));
     }
 
     @GetMapping("/episodes/{id}/shots.csv")
-    public ResponseEntity<byte[]> exportShotsCsv(@PathVariable Long id) {
+    @io.swagger.v3.oas.annotations.Operation(summary = "导出剧集分镜为 CSV")
+    public ResponseEntity<byte[]> exportShotsCsv(
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long id) {
+
         byte[] body = quickToolsService.exportShotCsv(id);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
@@ -81,7 +94,9 @@ public class QuickToolsController {
     }
 
     @GetMapping("/op-logs")
+    @io.swagger.v3.oas.annotations.Operation(summary = "查询最近 50 条工具操作日志")
     public List<ToolOpLog> opLogs() {
+
         return toolOpLogRepository.findTop50ByOrderByCreatedAtDesc();
     }
 }

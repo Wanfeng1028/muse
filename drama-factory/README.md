@@ -211,7 +211,28 @@ mvn spring-boot:run
 mvn clean package
 java -jar target/drama-factory.jar
 
+## API 文档
+
+接口文档由 springdoc-openapi 自动生成，跟着代码走，代码改了文档就跟着变。
+
+- JSON：`/v3/api-docs`
+- 可交互页面（Swagger UI）：`/swagger-ui.html`
+
+分组文档：
+
+| 组名 | 文档地址 | 覆盖内容 |
+| --- | --- | --- |
+| runs | /v3/api-docs/runs | 运行管理：Run 生命周期、流水线状态 |
+| videos | /v3/api-docs/videos | 视频生产：视频任务、成片、MV、媒体文件 |
+| scripts | /v3/api-docs/scripts | 剧本与内容：项目、剧集、分镜、镜头、角色、画布、配方 |
+| admin | /v3/api-docs/admin | 系统管理：认证、模型供应商、BYOK、设置、用量、运维 |
+
+鉴权：配置了 `AUTH_JWT_SECRET` 后 `/api/**` 要带 `Authorization: Bearer <token>`，文档端点本身公开；没配就是开放模式。
+
+安全提醒：不要把服务直接暴露到公网，否则接口文档等于公开给所有人看。
+
 ## Docker
+
 
 FROM eclipse-temurin:21-jre
 # 镜像内需包含 ffmpeg

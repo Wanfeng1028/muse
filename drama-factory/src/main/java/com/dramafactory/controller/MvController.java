@@ -3,7 +3,9 @@ package com.dramafactory.controller;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.MvSong;
 import com.dramafactory.service.MvService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -41,7 +43,9 @@ public class MvController {
     }
 
     @PostMapping("")
+    @Operation(summary = "创建 MV 歌曲")
     public ResponseEntity<Map<String, Object>> create(@RequestBody Map<String, String> body) {
+
         try {
             String theme = body == null ? null : body.get("theme");
             if (theme == null || theme.isBlank()) {
@@ -62,7 +66,9 @@ public class MvController {
     }
 
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "导入音频素材")
     public ResponseEntity<Map<String, Object>> importAudio(
+
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
             @RequestParam(value = "lyrics", required = false) String lyrics,
@@ -86,7 +92,10 @@ public class MvController {
     }
 
     @PostMapping("/{id}/lyrics")
-    public ResponseEntity<Map<String, Object>> lyrics(@PathVariable Long id) {
+    @Operation(summary = "生成歌词")
+    public ResponseEntity<Map<String, Object>> lyrics(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id) {
+
         try {
             MvSong song = mvService.generateLyrics(id);
             return ResponseEntity.ok(Map.of(
@@ -103,8 +112,11 @@ public class MvController {
     }
 
     @PostMapping("/{id}/compose")
-    public ResponseEntity<Map<String, Object>> compose(@PathVariable Long id,
-                                                       @RequestBody Map<String, Object> body) {
+    @Operation(summary = "合成 MV 音频")
+    public ResponseEntity<Map<String, Object>> compose(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+
         try {
             Long providerId = null;
             String modelId = null;
@@ -136,7 +148,10 @@ public class MvController {
     }
 
     @PostMapping("/{id}/storyboard")
-    public ResponseEntity<Map<String, Object>> storyboard(@PathVariable Long id) {
+    @Operation(summary = "生成 MV 分镜")
+    public ResponseEntity<Map<String, Object>> storyboard(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id) {
+
         try {
             List<Map<String, String>> items = mvService.storyboard(id);
             return ResponseEntity.ok(Map.of("status", "SUCCEEDED", "items", items));
@@ -151,8 +166,11 @@ public class MvController {
     }
 
     @PostMapping("/{id}/render")
-    public ResponseEntity<Map<String, Object>> render(@PathVariable Long id,
-                                                      @RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
+    @Operation(summary = "渲染 MV 视频")
+    public ResponseEntity<Map<String, Object>> render(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id,
+            @io.swagger.v3.oas.annotations.Parameter(description = "是否试运行，默认 true") @RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
+
         try {
             mvService.render(id, dryRun);
             return ResponseEntity.ok(Map.of(
@@ -169,7 +187,10 @@ public class MvController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> get(@PathVariable Long id) {
+    @Operation(summary = "按 ID 查询 MV 歌曲")
+    public ResponseEntity<Map<String, Object>> get(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id) {
+
         try {
             MvSong song = mvService.getById(id);
             Map<String, Object> out = new HashMap<>();
@@ -196,7 +217,10 @@ public class MvController {
     }
 
     @GetMapping("/{id}/status")
-    public ResponseEntity<Map<String, Object>> status(@PathVariable Long id) {
+    @Operation(summary = "查询 MV 渲染状态")
+    public ResponseEntity<Map<String, Object>> status(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id) {
+
         try {
             MvSong song = mvService.getById(id);
             Map<String, Object> out = new HashMap<>();
@@ -214,7 +238,10 @@ public class MvController {
     }
 
     @GetMapping("/{id}/video")
-    public ResponseEntity<Resource> video(@PathVariable Long id) {
+    @Operation(summary = "获取 MV 视频文件")
+    public ResponseEntity<Resource> video(
+            @io.swagger.v3.oas.annotations.Parameter(description = "MV 歌曲 ID") @PathVariable Long id) {
+
         String sid = String.valueOf(id);
         if (!sid.matches("^[A-Za-z0-9._-]{1,128}$")) {
             throw new ResourceNotFoundException("mv_video", id);

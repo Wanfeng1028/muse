@@ -58,19 +58,25 @@ public class VideoTaskController {
 
     @GetMapping("/shots/{shotId}/video-tasks")
     @Operation(summary = "查询分镜下的视频任务列表")
-    public ResponseEntity<List<Records.VideoTaskResponse>> listByShot(@PathVariable Long shotId) {
+    public ResponseEntity<List<Records.VideoTaskResponse>> listByShot(
+            @io.swagger.v3.oas.annotations.Parameter(description = "分镜 ID") @PathVariable Long shotId) {
+
         return ResponseEntity.ok(videoTaskService.listByShot(shotId));
     }
 
     @GetMapping("/video-tasks/{taskId}")
     @Operation(summary = "按 ID 查询视频任务")
-    public ResponseEntity<Records.VideoTaskResponse> get(@PathVariable Long taskId) {
+    public ResponseEntity<Records.VideoTaskResponse> get(
+            @io.swagger.v3.oas.annotations.Parameter(description = "视频任务 ID") @PathVariable Long taskId) {
+
         return ResponseEntity.ok(videoTaskService.get(taskId));
     }
 
     @PostMapping("/video-tasks/{taskId}/retry")
     @Operation(summary = "重试视频任务")
-    public ResponseEntity<Records.VideoTaskResponse> retry(@PathVariable Long taskId) {
+    public ResponseEntity<Records.VideoTaskResponse> retry(
+            @io.swagger.v3.oas.annotations.Parameter(description = "视频任务 ID") @PathVariable Long taskId) {
+
         return ResponseEntity.ok(videoTaskService.retry(taskId));
     }
 

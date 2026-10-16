@@ -39,7 +39,10 @@ public class ByokController {
 
     @PostMapping("/generate")
     @Operation(summary = "BYOK 生成调用")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "module 不支持、缺 providerId/modelId、prompt 为空或生成参数非法")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "生成过程出错")
     public ResponseEntity<Map<String, String>> generate(@RequestBody GenerateBody body) {
+
         if (body == null || body.module() == null || !MODULES.contains(body.module())) {
             String moduleName = body == null ? "" : String.valueOf(body.module());
             return ResponseEntity.badRequest()
@@ -79,7 +82,10 @@ public class ByokController {
 
     @GetMapping("/file/{module}/{filename}")
     @Operation(summary = "下载 BYOK 产物文件")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "module 不在白名单或 filename 含非法字符/越权路径")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "文件不存在、不可读或为目录")
     public ResponseEntity<Resource> file(@PathVariable String module, @PathVariable String filename) {
+
         if (module == null || !FILE_MODULES.contains(module)) {
             return ResponseEntity.badRequest().build();
         }

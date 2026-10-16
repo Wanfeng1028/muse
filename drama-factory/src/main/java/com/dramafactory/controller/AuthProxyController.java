@@ -77,7 +77,11 @@ public class AuthProxyController {
 
     @RequestMapping("/api/auth/**")
     @Operation(summary = "代理认证请求到账号服务")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "浏览器写请求跨站被拒")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "refresh 缺少 df_rt cookie")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "502", description = "账号服务不可用或返回结构异常")
     public ResponseEntity<byte[]> proxy(HttpServletRequest request) {
+
         String method = request.getMethod();
         String path = extractPath(request);
         String query = request.getQueryString();

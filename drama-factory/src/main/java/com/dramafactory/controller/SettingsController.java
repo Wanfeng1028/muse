@@ -21,7 +21,8 @@ import java.util.Set;
  */
 @RestController
 @RequestMapping("/api/settings")
-@Tag(name = "Settings", description = "系统设置中心接口")
+@Tag(name = "系统设置", description = "系统设置中心接口")
+
 public class SettingsController {
 
     private final SettingsService settingsService;
@@ -57,7 +58,9 @@ public class SettingsController {
      */
     @PutMapping("")
     @Operation(summary = "保存设置项")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "包含非法设置键")
     public ResponseEntity<Map<String, Object>> put(@RequestBody Map<String, String> patch) {
+
         Set<String> allowed = settingsService.allowedKeys();
         Map<String, String> cleaned = new LinkedHashMap<>();
         if (patch != null) {

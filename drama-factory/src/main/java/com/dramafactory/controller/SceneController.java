@@ -29,28 +29,36 @@ public class SceneController {
 
     @GetMapping("/api/episodes/{episodeId}/scenes")
     @Operation(summary = "按剧集查询场景列表")
-    public List<Records.SceneResponse> listByEpisode(@PathVariable Long episodeId) {
+    public List<Records.SceneResponse> listByEpisode(
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId) {
+
         return sceneService.listByEpisode(episodeId);
     }
 
     @PostMapping("/api/episodes/{episodeId}/scenes")
     @Operation(summary = "创建场景")
-    public ResponseEntity<Records.SceneResponse> create(@PathVariable Long episodeId,
-                                                        @Valid @RequestBody Records.SceneRequest request) {
+    public ResponseEntity<Records.SceneResponse> create(
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId,
+            @Valid @RequestBody Records.SceneRequest request) {
+
         Records.SceneResponse response = sceneService.create(episodeId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/api/scenes/{id}")
     @Operation(summary = "更新场景")
-    public Records.SceneResponse update(@PathVariable Long id,
-                                        @Valid @RequestBody Records.SceneRequest request) {
+    public Records.SceneResponse update(
+            @io.swagger.v3.oas.annotations.Parameter(description = "场景 ID") @PathVariable Long id,
+            @Valid @RequestBody Records.SceneRequest request) {
+
         return sceneService.update(id, request);
     }
 
     @DeleteMapping("/api/scenes/{id}")
     @Operation(summary = "删除场景")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(
+            @io.swagger.v3.oas.annotations.Parameter(description = "场景 ID") @PathVariable Long id) {
+
         sceneService.delete(id);
         return ResponseEntity.noContent().build();
     }

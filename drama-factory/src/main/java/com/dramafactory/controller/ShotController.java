@@ -47,7 +47,9 @@ public class ShotController {
      */
     @GetMapping("/episodes/{episodeId}/shots")
     @Operation(summary = "查询剧集下的分镜列表")
-    public List<Records.ShotResponse> listShots(@PathVariable Long episodeId) {
+    public List<Records.ShotResponse> listShots(
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId) {
+
         return shotService.listByEpisode(episodeId);
     }
 
@@ -60,8 +62,10 @@ public class ShotController {
      */
     @PostMapping("/episodes/{episodeId}/shots")
     @Operation(summary = "新增分镜")
-    public ResponseEntity<Records.ShotResponse> createShot(@PathVariable Long episodeId,
-                                                           @Valid @RequestBody Records.ShotRequest request) {
+    public ResponseEntity<Records.ShotResponse> createShot(
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId,
+            @Valid @RequestBody Records.ShotRequest request) {
+
         Records.ShotResponse response = shotService.create(episodeId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -75,8 +79,10 @@ public class ShotController {
      */
     @PutMapping("/shots/{id}")
     @Operation(summary = "更新分镜")
-    public Records.ShotResponse updateShot(@PathVariable Long id,
-                                           @Valid @RequestBody Records.ShotRequest request) {
+    public Records.ShotResponse updateShot(
+            @io.swagger.v3.oas.annotations.Parameter(description = "分镜 ID") @PathVariable Long id,
+            @Valid @RequestBody Records.ShotRequest request) {
+
         return shotService.update(id, request);
     }
 
@@ -88,7 +94,9 @@ public class ShotController {
      */
     @DeleteMapping("/shots/{id}")
     @Operation(summary = "删除分镜")
-    public ResponseEntity<Void> deleteShot(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteShot(
+            @io.swagger.v3.oas.annotations.Parameter(description = "分镜 ID") @PathVariable Long id) {
+
         shotService.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -103,8 +111,9 @@ public class ShotController {
     @PostMapping("/episodes/{episodeId}/shots/from-script")
     @Operation(summary = "从剧本拆分分镜（可选 skillId 选用已安装 Skill）")
     public ResponseEntity<List<Records.ShotResponse>> splitFromScript(
-            @PathVariable Long episodeId,
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId,
             @Valid @RequestBody Records.ScriptSplitRequest request) {
+
         List<Records.ShotResponse> result =
                 scriptSplitterService.splitFromScript(episodeId, request.scriptText(), request.skillId());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -121,8 +130,9 @@ public class ShotController {
     @PostMapping("/episodes/{episodeId}/shots/batch")
     @Operation(summary = "批量替换分镜")
     public ResponseEntity<List<Records.ShotResponse>> replaceShots(
-            @PathVariable Long episodeId,
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId,
             @Valid @RequestBody Records.ShotBatchRequest request) {
+
         List<Records.ShotResponse> result =
                 scriptSplitterService.replaceShots(episodeId, request.shots());
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -137,8 +147,10 @@ public class ShotController {
      */
     @PostMapping("/episodes/{episodeId}/shots/reorder")
     @Operation(summary = "重排分镜顺序")
-    public List<Records.ShotResponse> reorderShots(@PathVariable Long episodeId,
-                                                   @RequestBody Records.ReorderRequest request) {
+    public List<Records.ShotResponse> reorderShots(
+            @io.swagger.v3.oas.annotations.Parameter(description = "剧集 ID") @PathVariable Long episodeId,
+            @RequestBody Records.ReorderRequest request) {
+
         shotService.reorder(episodeId, request.shotIds());
         return shotService.listByEpisode(episodeId);
     }

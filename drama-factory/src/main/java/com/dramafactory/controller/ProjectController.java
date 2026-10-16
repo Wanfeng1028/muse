@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Tag(name = "Projects", description = "项目的增删改查与统计接口")
+@Tag(name = "项目管理", description = "项目的增删改查与统计接口")
+
 
 public class ProjectController {
 

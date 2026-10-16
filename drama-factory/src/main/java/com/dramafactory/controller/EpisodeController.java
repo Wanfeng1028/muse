@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Tag(name = "Episodes", description = "剧集的增删改查与剧本生成接口")
+@Tag(name = "剧集管理", description = "剧集的增删改查与剧本生成接口")
+
 public class EpisodeController {
 
     private final EpisodeService episodeService;

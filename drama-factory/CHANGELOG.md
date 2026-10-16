@@ -6,6 +6,14 @@
 ## [Unreleased]
 
 ### Added
+
+- v2.30「OpenAPI 接口分组 + 依赖治理」（DoD 第 4 轮排期）：
+  - OpenApiConfig.java 新增 4 个分组 Bean：runs（运行管理）、videos（视频生产）、scripts（剧本与内容）、admin（系统管理），分组文档地址是 /v3/api-docs/{group}，用 @Order(1~4) 把顺序钉死。
+  - OpenApiDocsTest.java 新增 2 个测试：四组文档都能打开（200 且 openapi 以 3. 开头）；每组关键路径都对得上（runs 有 /api/runs；videos 有 /api/video-tasks/{taskId}；scripts 有 /api/projects；admin 有 /api/health）。
+  - 22 个 controller 把缺的 @Tag/@Operation/@Parameter/@ApiResponse 注解补齐了，已有的不动，只补缺的；@Parameter 用的是 io.swagger.v3.oas.annotations.Parameter。
+  - README.md 加了「API 文档」章节，写了 /v3/api-docs、/swagger-ui.html、四组文档地址表、鉴权说明和公网暴露提醒。
+  - .github/dependabot.yml 里 maven 条目加了 reviewers ["Wanfeng1028"]；加了 ignore 规则，org.springdoc:* 的 >=3 大版本不升（springdoc 2.7+ 要 Spring 6.2，本项目 Spring Boot 3.3.5 是 Spring 6.1.x）；头注释写清了为啥钉死。
+  - 新增 docs/DEPENDENCY_POLICY.md，写了依赖更新节奏（Dependabot 每周一，PR 上限 5，合入前 mvn -o test 全绿）、扫描与抽查、紧急漏洞响应流程（高危 24 小时内出修复分支）、高危依赖清单维护，附录 A 是真实直接依赖清单（13 项，mvn -o dependency:list 实测），附录 B 说明 springdoc 为啥钉死 2.6.0。
 - v2.29「testFullPipeline flaky 根因歼灭 + E2E 加固」（根因：ffmpeg 瞬时失败 × 三处生产代码缺口）：
   - `FfmpegService.FfmpegException` 增加瞬时/永久分类（`isTransient()`）：超时、非零退出码（含 137/143）、ffprobe 失败等为瞬时；`无法启动命令`（二进制缺失）、参数编程错误为永久；旧构造器默认瞬时（保守策略）。`run()` 增加慢命令 warn（>30s）。
   - `FinalCutService`：concat/burn-subtitles/probe-duration 三步对瞬时失败有界重试（默认 3 次，退避 2000ms×attempt），永久失败直接 FAILED；配置 `drama.ffmpeg.retry-attempts` / `drama.ffmpeg.retry-backoff-ms`（env `FFMPEG_RETRY_ATTEMPTS`/`FFMPEG_RETRY_BACKOFF_MS`）。

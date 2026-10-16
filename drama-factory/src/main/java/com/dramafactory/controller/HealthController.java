@@ -10,7 +10,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@Tag(name = "Health", description = "服务健康检查接口")
+@Tag(name = "健康检查", description = "服务健康检查接口")
+
 public class HealthController {
 
     @GetMapping("/health")

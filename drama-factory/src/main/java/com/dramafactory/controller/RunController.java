@@ -99,7 +99,8 @@ public class RunController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "按 ID 查询运行详情")
-    public Records.RunDetailResponse detail(@PathVariable Long id) {
+    public Records.RunDetailResponse detail(@Parameter(description = "Run 主键") @PathVariable Long id) {
+
         return runService.getRun(id);
     }
 
@@ -111,7 +112,8 @@ public class RunController {
      */
     @PostMapping("/{id}/pause")
     @Operation(summary = "暂停运行")
-    public Records.RunDetailResponse pause(@PathVariable Long id) {
+    public Records.RunDetailResponse pause(@Parameter(description = "Run 主键") @PathVariable Long id) {
+
         runService.pause(id);
         return runService.getRun(id);
     }
@@ -124,7 +126,8 @@ public class RunController {
      */
     @PostMapping("/{id}/resume")
     @Operation(summary = "恢复运行")
-    public Records.RunDetailResponse resume(@PathVariable Long id) {
+    public Records.RunDetailResponse resume(@Parameter(description = "Run 主键") @PathVariable Long id) {
+
         runService.resume(id);
         return runService.getRun(id);
     }
@@ -137,7 +140,8 @@ public class RunController {
      */
     @PostMapping("/{id}/cancel")
     @Operation(summary = "取消运行")
-    public Records.RunDetailResponse cancel(@PathVariable Long id) {
+    public Records.RunDetailResponse cancel(@Parameter(description = "Run 主键") @PathVariable Long id) {
+
         runService.cancel(id);
         return runService.getRun(id);
     }
@@ -151,7 +155,9 @@ public class RunController {
      */
     @PostMapping("/{id}/steps/{stepId}/retry")
     @Operation(summary = "重试某个步骤")
-    public Records.RunDetailResponse retry(@PathVariable Long id, @PathVariable Long stepId) {
+    public Records.RunDetailResponse retry(@Parameter(description = "Run 主键") @PathVariable Long id,
+                                           @Parameter(description = "步骤主键") @PathVariable Long stepId) {
+
         runService.retryStep(id, stepId);
         return runService.getRun(id);
     }
@@ -165,8 +171,9 @@ public class RunController {
      */
     @PostMapping("/{id}/approve")
     @Operation(summary = "审批运行")
-    public Records.RunDetailResponse approve(@PathVariable Long id,
+    public Records.RunDetailResponse approve(@Parameter(description = "Run 主键") @PathVariable Long id,
                                              @RequestBody(required = false) ApproveRequest request) {
+
         boolean approved = request != null && Boolean.TRUE.equals(request.approved());
         String note = request == null ? null : request.note();
         runService.approve(id, approved, note);
@@ -182,8 +189,9 @@ public class RunController {
      */
     @PostMapping("/{id}/rerun")
     @Operation(summary = "基于某次运行重跑")
-    public ResponseEntity<Map<String, Long>> rerun(@PathVariable Long id,
+    public ResponseEntity<Map<String, Long>> rerun(@Parameter(description = "Run 主键") @PathVariable Long id,
                                                    @RequestBody(required = false) Records.RerunRequest request) {
+
         String goal = request == null ? null : request.goal();
         Long newId = runService.rerun(id, goal);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("runId", newId));
@@ -211,8 +219,9 @@ public class RunController {
      */
     @GetMapping("/{id}/steps/{stepId}/logs")
     @Operation(summary = "增量读取步骤日志")
-    public Records.LogReadResponse logs(@PathVariable Long id,
-                                        @PathVariable Long stepId,
+    public Records.LogReadResponse logs(@Parameter(description = "Run 主键") @PathVariable Long id,
+                                        @Parameter(description = "步骤主键") @PathVariable Long stepId,
+
                                         @Parameter(description = "起始字节偏移，负数按 0 处理") @RequestParam(name = "offset", defaultValue = "0") long offset) {
         return runService.readStepLog(id, stepId, offset);
     }

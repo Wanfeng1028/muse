@@ -12,7 +12,10 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -113,4 +116,51 @@ class OpenApiDocsTest {
                 .as("swagger-ui 首页 HTML 里应出现 swagger 字样")
                 .containsIgnoringCase("swagger");
     }
+
+    @Test
+    void apiDocsGroups_allFourReachable() throws Exception {
+        for (String group : List.of("runs", "videos", "scripts", "admin")) {
+            String body = mockMvc.perform(get("/v3/api-docs/" + group))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            assertThat(body)
+                    .as("分组 %s 的 OpenAPI 文档响应体不应为空", group)
+                    .isNotBlank();
+
+            JsonNode root = objectMapper.readTree(body);
+            assertThat(root.path("openapi").asText())
+                    .as("分组 %s 的 openapi 版本应以 3. 开头", group)
+                    .startsWith("3.");
+        }
+    }
+
+    @Test
+    void apiDocsGroups_containExpectedPaths() throws Exception {
+        Map<String, List<String>> expectedPathsByGroup = Map.of(
+                "runs", List.of("/api/runs", "/api/runs/{id}/pause"),
+                "videos", List.of("/api/video-tasks/{taskId}", "/media/videos/{taskId}"),
+                "scripts", List.of("/api/projects", "/api/episodes/{id}/generate-script"),
+                "admin", List.of("/api/health", "/api/settings/effective-provider")
+        );
+
+        for (Map.Entry<String, List<String>> entry : expectedPathsByGroup.entrySet()) {
+            String group = entry.getKey();
+            String body = mockMvc.perform(get("/v3/api-docs/" + group))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            JsonNode paths = objectMapper.readTree(body).path("paths");
+            for (String expectedPath : entry.getValue()) {
+                assertThat(paths.has(expectedPath))
+                        .as("分组 %s 的文档 paths 应包含 %s", group, expectedPath)
+                        .isTrue();
+            }
+        }
+    }
 }
+

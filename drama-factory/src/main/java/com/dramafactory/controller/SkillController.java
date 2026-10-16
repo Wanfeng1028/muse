@@ -181,6 +181,7 @@ public class SkillController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "发布 Skill")
     public SkillDto publish(@RequestBody CreateSkillRequest request) {
+
         Skill skill = skillService.publish(request.name(), request.slug(), request.description(),
                 request.author(), request.category(), request.tags(), request.icon(),
                 request.promptTemplate(), request.changelog());
@@ -199,10 +200,12 @@ public class SkillController {
      */
     @GetMapping
     @Operation(summary = "检索 Skill")
-    public List<SkillDto> list(@RequestParam(value = "q", required = false) String q,
-                               @RequestParam(value = "tag", required = false) String tag,
-                               @RequestParam(value = "category", required = false) String category,
-                               @RequestParam(value = "sort", required = false) String sort) {
+    public List<SkillDto> list(
+            @io.swagger.v3.oas.annotations.Parameter(description = "关键字") @RequestParam(value = "q", required = false) String q,
+            @io.swagger.v3.oas.annotations.Parameter(description = "标签") @RequestParam(value = "tag", required = false) String tag,
+            @io.swagger.v3.oas.annotations.Parameter(description = "分类") @RequestParam(value = "category", required = false) String category,
+            @io.swagger.v3.oas.annotations.Parameter(description = "排序") @RequestParam(value = "sort", required = false) String sort) {
+
         List<Skill> skills = skillService.list(q, tag, category, sort);
         List<SkillDto> result = new ArrayList<>();
         for (Skill skill : skills) {
@@ -240,7 +243,9 @@ public class SkillController {
      */
     @GetMapping("/{id}")
     @Operation(summary = "Skill 详情")
-    public SkillDetailDto get(@PathVariable("id") Long id) {
+    public SkillDetailDto get(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Skill ID") @PathVariable("id") Long id) {
+
         SkillService.SkillDetail detail = skillService.getDetail(id);
         List<SkillVersionDto> versions = new ArrayList<>();
         for (SkillVersion v : detail.versions()) {
@@ -264,8 +269,10 @@ public class SkillController {
     @PostMapping("/{id}/versions")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "发布 Skill 版本")
-    public SkillVersionDto publishVersion(@PathVariable("id") Long id,
-                                          @RequestBody PublishVersionRequest request) {
+    public SkillVersionDto publishVersion(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Skill ID") @PathVariable("id") Long id,
+            @RequestBody PublishVersionRequest request) {
+
         SkillVersion version = skillService.publishVersion(id, request.version(),
                 request.promptTemplate(), request.changelog());
         return SkillVersionDto.from(version);
@@ -280,7 +287,10 @@ public class SkillController {
      */
     @PostMapping("/{id}/install")
     @Operation(summary = "安装 Skill")
-    public InstallDto install(@PathVariable("id") Long id, @RequestBody(required = false) InstallRequest request) {
+    public InstallDto install(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Skill ID") @PathVariable("id") Long id,
+            @RequestBody(required = false) InstallRequest request) {
+
         String version = request == null ? null : request.version();
         SkillInstall install = skillService.install(id, version);
         return InstallDto.from(install);
@@ -294,7 +304,9 @@ public class SkillController {
     @DeleteMapping("/{id}/install")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "卸载 Skill")
-    public void uninstall(@PathVariable("id") Long id) {
+    public void uninstall(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Skill ID") @PathVariable("id") Long id) {
+
         skillService.uninstall(id);
     }
 
@@ -307,7 +319,10 @@ public class SkillController {
      */
     @PostMapping("/{id}/rate")
     @Operation(summary = "评分 Skill")
-    public RatingDto rate(@PathVariable("id") Long id, @RequestBody RateRequest request) {
+    public RatingDto rate(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Skill ID") @PathVariable("id") Long id,
+            @RequestBody RateRequest request) {
+
         SkillRating rating = skillService.rate(id, request.score(), request.comment());
         return RatingDto.from(rating);
     }
@@ -321,7 +336,10 @@ public class SkillController {
      */
     @PostMapping("/{id}/render")
     @Operation(summary = "渲染 Skill 模板")
-    public RenderResponse render(@PathVariable("id") Long id, @RequestBody RenderRequest request) {
+    public RenderResponse render(
+            @io.swagger.v3.oas.annotations.Parameter(description = "Skill ID") @PathVariable("id") Long id,
+            @RequestBody RenderRequest request) {
+
         String content = skillService.renderTemplate(id, request.version(), request.variables());
         return new RenderResponse(content);
     }

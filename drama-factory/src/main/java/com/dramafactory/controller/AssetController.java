@@ -5,7 +5,11 @@ import com.dramafactory.model.Asset;
 import com.dramafactory.model.AssetSource;
 import com.dramafactory.model.AssetType;
 import com.dramafactory.service.AssetService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -34,7 +38,9 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/assets")
+@Tag(name = "资产库", description = "素材上传、查询、打标签、复用与下载接口")
 public class AssetController {
+
 
     private final AssetService assetService;
 
@@ -48,17 +54,23 @@ public class AssetController {
 
     /** 上传素材 */
     @PostMapping("/upload")
-    public AssetDto upload(@RequestParam("file") MultipartFile file,
-                           @RequestParam(value = "tags", required = false) String tags,
-                           @RequestParam(value = "runId", required = false) Long runId) {
+    @Operation(summary = "上传素材")
+    public AssetDto upload(
+            @Parameter(description = "上传的文件") @RequestParam("file") MultipartFile file,
+            @Parameter(description = "标签") @RequestParam(value = "tags", required = false) String tags,
+            @Parameter(description = "关联的运行 ID") @RequestParam(value = "runId", required = false) Long runId) {
+
         return AssetDto.from(assetService.upload(file, tags, runId));
     }
 
     /** 查询资产列表 */
     @GetMapping("/")
-    public List<AssetDto> list(@RequestParam(value = "type", required = false) AssetType type,
-                               @RequestParam(value = "source", required = false) AssetSource source,
-                               @RequestParam(value = "keyword", required = false) String keyword) {
+    @Operation(summary = "查询资产列表")
+    public List<AssetDto> list(
+            @Parameter(description = "资产类型") @RequestParam(value = "type", required = false) AssetType type,
+            @Parameter(description = "资产来源") @RequestParam(value = "source", required = false) AssetSource source,
+            @Parameter(description = "关键字") @RequestParam(value = "keyword", required = false) String keyword) {
+
         return assetService.list(type, source, keyword).stream()
                 .map(AssetDto::from)
                 .toList();
@@ -66,15 +78,21 @@ public class AssetController {
 
     /** 更新标签 */
     @PutMapping("/{id}/tags")
-    public AssetDto updateTags(@PathVariable("id") Long id,
-                               @RequestBody TagRequest body) {
+    @Operation(summary = "更新资产标签")
+    public AssetDto updateTags(
+            @Parameter(description = "资产 ID") @PathVariable("id") Long id,
+            @RequestBody TagRequest body) {
+
         return AssetDto.from(assetService.tag(id, body == null ? null : body.tags()));
     }
 
     /** 复用资产到剧集/分镜 */
     @PostMapping("/{id}/reuse")
-    public AssetDto reuse(@PathVariable("id") Long id,
-                          @RequestBody ReuseRequest body) {
+    @Operation(summary = "复用资产到剧集或分镜")
+    public AssetDto reuse(
+            @Parameter(description = "资产 ID") @PathVariable("id") Long id,
+            @RequestBody ReuseRequest body) {
+
         Long episodeId = body == null ? null : body.episodeId();
         Long shotId = body == null ? null : body.shotId();
         return AssetDto.from(assetService.reuse(id, episodeId, shotId));
@@ -83,13 +101,17 @@ public class AssetController {
     /** 删除资产 */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable("id") Long id) {
+    @Operation(summary = "删除资产")
+    public void delete(@Parameter(description = "资产 ID") @PathVariable("id") Long id) {
+
         assetService.delete(id);
     }
 
     /** 下载/预览资产文件 */
     @GetMapping("/{id}/file")
-    public ResponseEntity<Resource> file(@PathVariable("id") Long id) {
+    @Operation(summary = "下载或预览资产文件")
+    public ResponseEntity<Resource> file(@Parameter(description = "资产 ID") @PathVariable("id") Long id) {
+
         Asset asset = assetService.list(null, null, null).stream()
                 .filter(a -> a.getId() != null && a.getId().equals(id))
                 .findFirst()

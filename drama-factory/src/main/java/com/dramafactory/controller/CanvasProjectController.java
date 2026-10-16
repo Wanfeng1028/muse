@@ -50,8 +50,10 @@ public class CanvasProjectController {
 
     @GetMapping("/api/canvas")
     @Operation(summary = "读取画布项目（v2，带 ETag）")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "304", description = "If-None-Match 版本一致，无变更")
     public ResponseEntity<CanvasProjectV2> getCanvas(
             @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) {
+
         CanvasProjectV2 project = canvasProjectService.loadV2();
         String etag = "\"" + project.version() + "\"";
         if (ifNoneMatch != null) {
@@ -101,7 +103,9 @@ public class CanvasProjectController {
 
     @PostMapping("/api/canvas/proposals")
     @Operation(summary = "提交 proposal（切片 1 仅预留）")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "已接受，返回创建的 proposal")
     public ResponseEntity<CanvasProposalV2> createProposal(@RequestBody JsonNode body) {
+
         CanvasProposalV2 proposal = canvasProjectService.createProposal(body);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(proposal);
     }
@@ -114,7 +118,9 @@ public class CanvasProjectController {
 
     @PostMapping("/api/canvas/jobs")
     @Operation(summary = "创建 job")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "已接受，返回创建的 job")
     public ResponseEntity<CanvasJobV2> createJob(@RequestBody(required = false) JsonNode body) {
+
         String nodeId = null;
         if (body != null && body.has("node_id") && body.get("node_id").isTextual()) {
             nodeId = body.get("node_id").asText();

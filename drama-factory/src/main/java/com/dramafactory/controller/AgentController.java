@@ -61,8 +61,10 @@ public class AgentController {
      */
     @PutMapping("/{type}/template")
     @Operation(summary = "更新 Agent 的 Prompt 模板")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "type 非法或 content 为空时返回 400")
     public ResponseEntity<Records.AgentInfo> updateTemplate(@PathVariable("type") String type,
                                                             @RequestBody Map<String, String> body) {
+
         AgentType agentType = parseType(type);
         if (agentType == null) {
             return ResponseEntity.badRequest().build();
