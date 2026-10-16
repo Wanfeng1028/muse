@@ -18,6 +18,23 @@
   --radius-xs: 8px;
 }
 
+[data-theme="dark"] {
+  --c-math: #6b90ff;
+  --c-english: #34c98e;
+  --c-politics: #ec6a6a;
+  --c-major: #f5b055;
+  --sidebar-bg: #0f131b;
+  --sidebar-text: #8b93a6;
+  --sidebar-active: #e6e9f0;
+  --page-bg: #161a23;
+  --card-bg: #1e2430;
+  --text-main: #e6e9f0;
+  --text-sub: #9aa0ae;
+  --border: #2a3040;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.55);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -136,12 +153,12 @@ ol {
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  color: var(--sidebar-active);
 }
 
 .nav-link.active {
   background: rgba(79, 124, 255, 0.18);
-  color: #ffffff;
+  color: var(--sidebar-active);
   box-shadow: inset 3px 0 0 var(--c-math);
 }
 
@@ -151,6 +168,33 @@ ol {
   font-size: 12px;
   color: #5c6375;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .sidebar-footer {
+  color: #6a7183;
+}
+
+.theme-toggle {
+  margin-top: 10px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--sidebar-text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--sidebar-active);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--c-math);
+  outline-offset: 2px;
 }
 
 .main {
@@ -196,6 +240,10 @@ ol {
   border: 1px solid rgba(229, 231, 235, 0.6);
 }
 
+[data-theme="dark"] .card {
+  border-color: rgba(42, 48, 64, 0.6);
+}
+
 .grid {
   display: grid;
   gap: 16px;
@@ -222,6 +270,10 @@ ol {
   flex-direction: column;
   gap: 6px;
   border: 1px solid rgba(229, 231, 235, 0.6);
+}
+
+[data-theme="dark"] .stat-card {
+  border-color: rgba(42, 48, 64, 0.6);
 }
 
 .stat-value {
@@ -261,6 +313,14 @@ ol {
   background: #f3f4f8;
 }
 
+[data-theme="dark"] .btn {
+  background: #262d3b;
+}
+
+[data-theme="dark"] .btn:hover {
+  background: #2e3546;
+}
+
 .btn:active {
   transform: translateY(1px);
 }
@@ -282,6 +342,16 @@ ol {
   border-color: #3f6bee;
 }
 
+[data-theme="dark"] .btn-primary {
+  color: #0f131b;
+  box-shadow: 0 2px 8px rgba(107, 144, 255, 0.32);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background: #5a82f5;
+  border-color: #5a82f5;
+}
+
 .btn-ghost {
   background: transparent;
   border-color: transparent;
@@ -293,6 +363,10 @@ ol {
   color: var(--text-main);
 }
 
+[data-theme="dark"] .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .btn-danger {
   background: var(--c-politics);
   border-color: var(--c-politics);
@@ -302,6 +376,11 @@ ol {
 .btn-danger:hover {
   background: #d14b4b;
   border-color: #d14b4b;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+  background: #d95c5c;
+  border-color: #d95c5c;
 }
 
 .btn-sm {
@@ -324,6 +403,12 @@ ol {
   font-family: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   outline: none;
+}
+
+[data-theme="dark"] .input,
+[data-theme="dark"] .select,
+[data-theme="dark"] .textarea {
+  background: #262d3b;
 }
 
 .input:focus,
@@ -384,6 +469,14 @@ ol {
   background: #fafbfd;
 }
 
+[data-theme="dark"] .table th {
+  background: #232937;
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+  background: #232a38;
+}
+
 .table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -420,6 +513,26 @@ ol {
   color: #a5661a;
 }
 
+[data-theme="dark"] .badge-math {
+  background: rgba(107, 144, 255, 0.18);
+  color: #8aa6ff;
+}
+
+[data-theme="dark"] .badge-english {
+  background: rgba(52, 201, 142, 0.18);
+  color: #4fd6a0;
+}
+
+[data-theme="dark"] .badge-politics {
+  background: rgba(236, 106, 106, 0.18);
+  color: #ff9a9a;
+}
+
+[data-theme="dark"] .badge-major {
+  background: rgba(245, 176, 85, 0.2);
+  color: #ffc478;
+}
+
 /* ============ 进度条 ============ */
 .progress {
   width: 100%;
@@ -427,6 +540,10 @@ ol {
   border-radius: 999px;
   background: #eceef3;
   overflow: hidden;
+}
+
+[data-theme="dark"] .progress {
+  background: #2a3040;
 }
 
 .progress-bar {
@@ -447,6 +564,10 @@ ol {
   border-radius: var(--radius-sm);
 }
 
+[data-theme="dark"] .empty {
+  background: #1a1f2b;
+}
+
 .error-box {
   padding: 12px 16px;
   border-radius: var(--radius-sm);
@@ -455,6 +576,12 @@ ol {
   color: #a83434;
   font-size: 13.5px;
   font-weight: 500;
+}
+
+[data-theme="dark"] .error-box {
+  background: rgba(236, 106, 106, 0.12);
+  border-color: rgba(236, 106, 106, 0.32);
+  color: #ff9a9a;
 }
 
 .loading {
@@ -482,6 +609,10 @@ ol {
   background: #ffffff;
   border: 1px solid var(--border);
   transition: box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+[data-theme="dark"] .list-item {
+  background: #1e2430;
 }
 
 .list-item:hover {
@@ -515,6 +646,10 @@ ol {
   border-radius: 8px 8px 0 0;
   transition: height 0.5s ease;
   min-height: 4px;
+}
+
+[data-theme="dark"] .bar {
+  background: linear-gradient(180deg, #7fa1ff, var(--c-math));
 }
 
 .bar-label {
@@ -554,6 +689,10 @@ ol {
   padding: 4px 14px;
   border-radius: 999px;
   background: #eceef3;
+}
+
+[data-theme="dark"] .timer-mode {
+  background: #2a3040;
 }
 
 /* ============ 单词闪卡 ============ */
@@ -602,6 +741,10 @@ ol {
   letter-spacing: 0.5px;
 }
 
+[data-theme="dark"] .flashcard-front {
+  background: linear-gradient(135deg, #5a82f5, #3f6bee);
+}
+
 .flashcard-back {
   background: #ffffff;
   color: var(--text-main);
@@ -611,6 +754,10 @@ ol {
   line-height: 1.7;
   border: 1px solid var(--border);
   overflow-y: auto;
+}
+
+[data-theme="dark"] .flashcard-back {
+  background: #1e2430;
 }
 
 .grade-row {

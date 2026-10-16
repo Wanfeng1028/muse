@@ -53,7 +53,7 @@ export default function Exams() {
     setRecordsLoading(true);
     setRecordsError(null);
     try {
-      const data = await api.listExams(subjectFilter);
+      const data = await api.listExams(subjectFilter === 'all' ? undefined : subjectFilter);
       setRecords(data);
     } catch (e) {
       setRecordsError(e instanceof Error ? e.message : '加载失败');

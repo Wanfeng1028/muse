@@ -103,8 +103,14 @@ export const api = {
   focusStats: (days?: number) => request<FocusStats>(`/focus/stats${qs({ days })}`),
 
   // 错题
-  listMistakes: (params?: { subject?: string; mastered?: boolean; q?: string }) =>
-    request<Mistake[]>(`/mistakes${qs(params)}`),
+  listMistakes: (params?: { subject?: string; mastered?: boolean; q?: string }) => {
+    const { mastered, ...rest } = params ?? {};
+    const query = {
+      ...rest,
+      ...(mastered === undefined ? {} : { mastered: mastered ? '1' : '0' }),
+    };
+    return request<Mistake[]>(`/mistakes${qs(query)}`);
+  },
   createMistake: (input: CreateMistakeInput) =>
     request<Mistake>('/mistakes', { method: 'POST', body: JSON.stringify(input) }),
   updateMistake: (id: number, patch: UpdateMistakeInput) =>
@@ -137,7 +143,7 @@ export const api = {
   // 设置
   getSettings: () => request<Settings>('/settings'),
   updateSettings: (patch: Partial<Settings>) =>
-    request<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(patch) }),
+    request<Settings>('/settings', { method: 'PUT', body: JSON.stringify(patch) }),
   // 备份与导入
   exportBackup: () => request<BackupPayload>('/backup/export'),
   importBackup: (data: unknown, mode: 'replace' | 'merge') =>

@@ -4,6 +4,24 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.2.0] - 2026-10-16
+
+### Added
+
+- 深色模式。
+  - 后端：`packages/shared` 新增 `ThemeMode = 'light' | 'dark'`，`Settings.theme` 默认 `'light'`；`PUT /api/settings` 支持 theme，非法值返回 400。vitest 28/28 通过，其中新增 6 例：默认 light、PUT dark 后持久化、`'blue'` / 数字 `1` / `'Dark'` 三例返回 400、再切回 light。
+  - 前端：`App.tsx` 侧边栏底部加主题切换按钮，文案按当前主题显示"深色模式" / "浅色模式"，无 emoji；`document.documentElement` 的 `data-theme` 属性驱动；`index.css` 新增 `[data-theme="dark"]`，覆盖全部设计 token。`tsc --noEmit` 零错，`vite build` 成功。
+  - 设计体系：slate 家族，页面 #161a23、卡片 #1e2430，与既有侧边栏 #141824 同族；文字 #e6e9f0 / 次要 #9aa0ae；边框 #2a3040；科目四色深色下提亮一档保持可辨识；阴影改弱黑影。
+  - 截图 14 张（7 页 × 浅/深）另加考试记录表、错题筛选态，存在 `docs/screenshots/`：`light-*.png` / `dark-*.png`（dashboard / plans / pomodoro / mistakes / words / exams / data）及 `dark-exams-table.png`、`dark-mistakes-filter.png`。
+
+### Fixed
+
+- `api.updateSettings` 误用 PATCH（后端只注册了 PUT），导致点主题切换按钮报 404。改为 PUT。
+- `api.listMistakes` 把 `mastered=false` 当布尔串发出去，后端只认 0/1，导致仪表盘"未掌握错题"和错题筛选报 400。改为在 api 层转成 `'1'` / `'0'`。
+- 真题页把 `subject=all` 透传给后端，导致 400。改为 `'all'` 转 undefined 再发。
+
+修复后全站 API 零非 200，页面 console 零错误。
+
 ## [1.1.0] - 2026-10-15
 
 ### Added

@@ -159,12 +159,16 @@ export interface ExamTrendPoint {
   rate: number;
 }
 
+/** 主题模式 */
+export type ThemeMode = 'light' | 'dark';
+
 /** 全局设置 */
 export interface Settings {
   examDate: string;
   dailyGoalMinutes: number;
   pomodoroMinutes: number;
   breakMinutes: number;
+  theme: ThemeMode;
 }
 
 /** 默认设置 */
@@ -173,4 +177,5 @@ export const DEFAULT_SETTINGS = {
   dailyGoalMinutes: 300,
   pomodoroMinutes: 25,
   breakMinutes: 5,
+  theme: 'light',
 } as const;

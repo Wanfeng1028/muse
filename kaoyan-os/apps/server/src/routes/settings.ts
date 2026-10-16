@@ -8,6 +8,7 @@ const KEY_MAP: Array<[keyof Settings, string]> = [
   ['dailyGoalMinutes', 'daily_goal_minutes'],
   ['pomodoroMinutes', 'pomodoro_minutes'],
   ['breakMinutes', 'break_minutes'],
+  ['theme', 'theme'],
 ];
 
 // 数字字段上限校验
@@ -32,6 +33,8 @@ function readSettings(db: DatabaseSync): Settings {
     if (raw === undefined) continue;
     if (field === 'examDate') {
       result.examDate = raw;
+    } else if (field === 'theme') {
+      if (raw === 'light' || raw === 'dark') result.theme = raw;
     } else {
       const n = parseInt(raw, 10);
       if (!Number.isNaN(n)) result[field] = n;
@@ -47,6 +50,10 @@ function validateField(
 ): { ok: true; value: string } | { ok: false } {
   if (field === 'examDate') {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return { ok: false };
+    return { ok: true, value };
+  }
+  if (field === 'theme') {
+    if (value !== 'light' && value !== 'dark') return { ok: false };
     return { ok: true, value };
   }
   // 数字字段

@@ -6,7 +6,7 @@
 
 | 项目 | 说明 | 状态 |
 | --- | --- | --- |
-| [kaoyan-os](./kaoyan-os) | 「考研指挥舱」——全栈考研复习管理系统。pnpm monorepo：Fastify 5 + TypeScript + SQLite 后端，Vite 6 + React 18 前端，packages/shared 共享类型。六大模块：复习计划、番茄专注、错题本、单词 SRS、真题统计、仪表盘。 | 工程化 v1 |
+| [kaoyan-os](./kaoyan-os) | 「考研指挥舱」——全栈考研复习管理系统。pnpm monorepo：Fastify 5 + TypeScript + SQLite 后端，Vite 6 + React 18 前端，packages/shared 共享类型。六大模块：复习计划、番茄专注、错题本、单词 SRS、真题统计、仪表盘；v1.1.0 数据导入导出；v1.2.0 深色模式（服务端偏好持久化，slate 配色体系）。 | v1.2.0 |
 | [second-brain](./second-brain) | 「第二大脑」——个人知识库系统。Go 单二进制：net/http + modernc.org/sqlite（纯 Go SQLite）+ go:embed 内嵌 Web UI。功能：笔记 CRUD、标签、全文搜索相关性排序、[[双链]] 与知识图谱、Markdown 预览、统计；v0.2.0 灵魂功能「主动复习引擎」：SM-2 间隔重复 + 抽认卡复习流 + 每日回顾，笔记写完第二天自动进入复习；v0.3.0 新增：附件上传与引用、Markdown 目录 / JSON 导出。 | v0.3.0 |
 | [drama-factory](./drama-factory) | 「AI 短剧工坊」——短剧生产管理与剧本生成系统。Java 21 + Spring Boot 3.3 + Spring Data JPA + H2，企业级分层架构，内置 Web 控制台（Tabler 1.6.1）。v2 打通剧本→分镜→AI 视频生成→ffmpeg 剪辑成片完整管线：分镜管理、视频任务状态机（mock/agnes 双 provider）→成片剪辑（拼接+SRT 字幕烧录）、生产看板。v2.1 生产级补强：Flyway 版本化迁移、提交幂等、优雅关闭。v2.2 生产级 DoD 第 2 轮：结构化日志+request_id 全链路、Resilience4j 熔断、提交限流、Docker Compose 一键部署。v2.3「AI 编剧引擎」：真实 DeepSeek-V4-Flash 接入剧本生成（大纲→严格四场式剧本，模板兜底），传输层 HTTP 主用 + CLI 回退双通道；分镜页三按钮（AI 生成/模板生成/查看剧本）+额度提示+来源/模型/耗时展示。 | 工程化 v2.3 |
 | [mini-os](./mini-os) | 「网页操作系统」——浏览器里的桌面操作系统。Rust + Axum 0.7 + WebSocket + rusqlite（bundled SQLite）后端，原生 HTML/CSS/JS 可拖拽多窗口桌面。功能：虚拟文件系统 CRUD、应用注册表（文件管理器/编辑器/终端/设置/关于）、主题与壁纸持久化、WebSocket echo、统计；v1.1.0 新增：文件上传（multipart，多选/拖拽/进度条）与流式下载；v1.2.0 新增：版本化迁移、readyz 探针、JSONL 日志、优雅关闭、backup/restore CLI、运维脚本四件套。 | v1.2.0 |

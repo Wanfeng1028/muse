@@ -204,6 +204,67 @@ describe('api integration', () => {
     expect(settings2.dailyGoalMinutes).toBe(240)
   })
 
+  it('GET /api/settings returns default theme light', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/settings' })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().theme).toBe('light')
+  })
+
+  it('PUT /api/settings { theme: "dark" } persists theme dark', async () => {
+    const putRes = await app.inject({
+      method: 'PUT',
+      url: '/api/settings',
+      payload: { theme: 'dark' }
+    })
+    expect(putRes.statusCode).toBe(200)
+    expect(putRes.json().theme).toBe('dark')
+
+    const getRes = await app.inject({ method: 'GET', url: '/api/settings' })
+    expect(getRes.statusCode).toBe(200)
+    expect(getRes.json().theme).toBe('dark')
+  })
+
+  it('PUT /api/settings { theme: "blue" } returns 400', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/settings',
+      payload: { theme: 'blue' }
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PUT /api/settings { theme: 1 } returns 400', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/settings',
+      payload: { theme: 1 }
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PUT /api/settings { theme: "Dark" } returns 400', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/settings',
+      payload: { theme: 'Dark' }
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PUT /api/settings { theme: "light" } switches back successfully', async () => {
+    const putRes = await app.inject({
+      method: 'PUT',
+      url: '/api/settings',
+      payload: { theme: 'light' }
+    })
+    expect(putRes.statusCode).toBe(200)
+    expect(putRes.json().theme).toBe('light')
+
+    const getRes = await app.inject({ method: 'GET', url: '/api/settings' })
+    expect(getRes.statusCode).toBe(200)
+    expect(getRes.json().theme).toBe('light')
+  })
+
   it('POST /api/plans with invalid subject returns 400', async () => {
     const today = todayStr()
     const res = await app.inject({
