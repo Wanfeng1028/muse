@@ -51,10 +51,11 @@
 - **v1.1.0「数据导入导出」（2026-10-15，路线图第 2 项交付）**：后端 `apps/server/src/routes/backup.ts`——`GET /api/backup/export`（kaoyan-backup v1，7 表）、`POST /api/backup/import`（replace 事务全量替换 / merge 去重合并，逐行校验）、`POST /api/import/words` + `POST /api/import/mistakes`（CSV 导入：表头校验/空行跳过/错误行报告，subject 仅 math/english/politics/major）；前端 `DataTransfer.tsx`（/data 路由 + 导航「数据导入导出」，备份与恢复/单词 CSV/错题 CSV 三卡片，覆盖恢复二次确认，模板下载）；`tests/backup.test.ts` 13 例，服务端全量 22/22 通过，前端 tsc 零错；真实服务冒烟 6 项全过（导出/单词 CSV/错题 CSV/merge/replace 回导）；2 张真实截图亲眼验收通过（默认态 + 导入结果态）；README 功能/API/目录/路线图同步，CHANGELOG.md 新建。本轮修截图链路两处：上一轮遗留的两张截图为空白页（服务未就绪即截图），本轮用 route 拦截 harness（文档/静态读盘、/api 经 Node 代理，绕过 Chromium 152 LNA 拦截）重拍；另发现 Playwright 多 route 匹配时后注册优先，静态 route 曾吞掉 /api 代理
 - **v1.3.0「自律热力图」（2026-10-16）**：见"状态"节；heatmap.test.ts 7 例（默认 3 个月 93 天、months=1 返回 31 天、months=0/7 返回 400、focus+45 差值、plans 完成差值、-7 天补记录 streak+1、-30 天孤立记录 streak 不变）
 - **v1.4.0「周报视图」（2026-10-16）**：`GET /api/stats/weekly`（周维度聚合：专注分钟/计划完成率/新增错题/模考场次/连续打卡与热力图同口径，`focusMinutesByDay` 周一..周日，非法 start 400）+ 前端 `Weekly.tsx` 升级（概览卡×5、7 天专注条形复用热力图蓝五档、计划完成率 SVG 圆环 + 四科专注条、「和上周比一比」大白话对比、单词卡，深色跟随 data-theme）；vitest **55/55**（新增 5）、server/web tsc 零错、vite build 成功；真实冒烟（默认本周/?start=/非法值 400）；浅/深两张截图亲眼验收（数据自洽、零 console 错误）
+- **v1.5.0「500 词库扩充接线」（2026-10-17）**：`src/seed/words-500.json`（500 词，之前未接入）接入 `POST /api/words/seed-vocab`：现加载 7 个词库文件（旧 6 文件 1000 条 + 500 条），120 条重复去重，空库首次 imported=1380/skippedExisting=120，重复调用幂等；播种核心抽为导出函数 `seedVocabFromEntries` + `getBundledVocabFiles`；非法条目跳过记数（skippedInvalid+errors）不再 400 中断；vitest **81/81** 全绿；真实服务冒烟 + `docs/screenshots/vocab-1380.png`（真实 1380 词）亲眼验收
 
 **后续计划**：
 
-- 考研核心 500 词词库扩充
+- ~~考研核心 500 词词库扩充~~（已在 2026-10-17 交付：`src/seed/words-500.json` 接入 `POST /api/words/seed-vocab`，7 个词库文件共 1380 词、120 条重复去重，幂等；vitest 81/81；真实截图 vocab-1380.png）
 - ~~周报视图~~（已在 v1.4.0 交付）
 
 ## second-brain「第二大脑」
@@ -99,6 +100,7 @@
 - **v0.11「发送重试」（2026-10-16）**：`internal/push/retry.go`——RetryPolicy（SB_PUSH_MAX_RETRIES 默认 3/上限 10、SB_PUSH_RETRY_BASE_MS 默认 1000/上限 60000、MaxBackoff 30s、抖动 ±25%）、IsRetryable（可重试：网络/429/5xx；不可重试：鉴权/其他 4xx/订阅失效/ctx 取消；未知 fail-open）、WrapWithRetry；耗尽转死信（push_log failed_permanent，幂等）；SMTP/Webhook/WebPush 三 sender 统一走包装器；`go test ./...` 全绿（push 17/17：fake sender 失败 2 次后成功/一直 503 耗尽转死信且幂等）；README + `docs/OPERATIONS.md` + 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。技术债：重试循环重复待抽泛型；api 集成测试待补
 - **v0.11.1「结构化日志 + request_id」（2026-10-16）**：`internal/log` 包（slog JSON，SB_LOG_LEVEL）+ 中间件（X-Request-ID 透传/生成 32 位随机、注入 context、响应头回写、http.request 日志 request_id/method/path/status/latency_ms）；错误体统一带 request_id；store 层关键操作打带 request_id 日志；`go test ./...` **216/216**，`go vet`/`gofmt` 全洁；真实冒烟（生成/透传/错误体 request_id、日志 grep 定位）全通
 - **v0.12「Prometheus 指标 + API 限流」（2026-10-17）**：`internal/metrics`（手写 Prometheus exposition 零新依赖：`http_requests_total{method,route,status}`/`http_request_duration_seconds`/`notes_total`/`reviews_due`/`reviews_graded_total{grade}`/`push_sent_total{channel,status}`，`GET /metrics`，`SB_METRICS_TOKEN` 可选 bearer 鉴权）+ `internal/ratelimit`（token bucket 按 IP+用户双维度，读写独立桶，429 + `Retry-After` + request_id 错误体）+ 中间件链 request_id → metrics → ratelimit → mux + 7 个 `SB_METRICS_*`/`SB_RATE_LIMIT_*` 环境变量（非法值启动 fail-fast）；`go test ./...` 全绿（metrics 8/8、ratelimit 7/7，均过 `-race`），`go vet`/`gofmt` 全洁；真实冒烟（/metrics 指标值正确、读桶 7×200 后 429、写桶更严 2×201 后 429、非法配置 exit 1）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`（9 项未通过诚实排期 v0.13：基础告警规则/备份恢复实测/故障演练等）；已知限制：reviews_due 仅默认用户、限流单机内存、histogram buckets 固定不可配
+- **v0.13「告警规则 + 备份恢复/故障演练实测 + 重试泛型」（2026-10-17）**：`prometheus/rules/second-brain.yml` 6 条告警规则（5xx 率/推送失败/P99 延迟/429 突增/死信/存活）+ OPERATIONS.md 告警章节；`scripts/backup-drill.sh`（建库→备份→删库→恢复→一致性校验）真实跑通 **7/7**；`scripts/fault-drill.sh`（kill -9 恢复/只读目录与 DB 文件启动 fail-fast）真实跑通 **3/3**；偿还 v0.11 技术债：`internal/push/retry.go` 抽取泛型 `withRetry`；`go test ./...` **239 例全绿**
 
 ## drama-factory「AI 短剧工坊」
 
@@ -222,6 +224,7 @@
 - **v1.5「登录限流」（2026-10-16）**：`src/ratelimit.rs`（IP + 账号双维度令牌桶，超限 429 + Retry-After + JSON 错误体）；`MINIOS_LOGIN_RPS`/`BURST` 环境变量配置，非法值启动 exit(2)；探针豁免；前端 429 专用分支（实时倒计时 + 按钮 disabled，大白话文案）；`cargo test` **95/95**（新增 8 例）、clippy 零警告；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.5.md`；2 张截图视觉验收
 - **v1.6「目录分享 + Prometheus 指标」（2026-10-16）**：目录分享——DB 迁移 004（`shares.share_type` file|dir，CHECK 约束，老数据默认 file）；`POST /api/shares` 支持 `type:"dir"`（目录不存在 404、是文件 400、跨用户 404）；token 递归只读，`GET /api/s/:token/download?path=` 下载树内文件（`..`/空段/控制字符 403）；`GET /api/share/list` 目录浏览 API（文件夹置顶）；share.html 目录浏览（面包屑/下载/空态，深色桌面美学）；Prometheus `/metrics`（零新依赖：`http_request_duration_seconds` 直方图 11 档 + `vfs_files_total`/`vfs_bytes_total`/`shares_total{type}` gauge，路由 label 归一化）；`cargo test` **117/117**（新增 share_dir 12 + metrics_v16 5）、clippy 零警告、fmt 通过；真实冒烟（分享→浏览→下载→穿越 403）全通；4 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。已知限制：目录分享 token 无过期/无撤销接口（删源目录是唯一撤销方式）；gauge 为抓取时实时查 DB（运维手册已注明建议抓取间隔 ≥15s）
 - **v1.7「RBAC 细粒度权限」（2026-10-17）**：roles 表（admin/editor/viewer 三档）+ 用户管理 API（列表/设角色/撤销会话）+ 前端「用户与权限」页（角色徽标/下拉改角色/只读用户看权限说明矩阵）；注册接口统一 201 CREATED 语义，10 个测试文件过时 200 断言全量修复 + rbac 测试用户名合规化（3~32 字符）；`cargo test` **143/143** 全过；docs/RBAC.md；2 张截图亲眼验收。已知问题：viewer 页桌面图标与权限矩阵重叠、admin 页为测试脏用户名，两处排期干净种子数据重拍
+- **v1.7.1「告警规则补齐」（2026-10-17）**：补齐 v1.6 未通过项——`prometheus/rules/mini-os.yml`（分享读失败率/5xx 率等）+ OPERATIONS.md 告警章节
 
 **后续计划**：
 
@@ -259,7 +262,7 @@
 - v2.1 生产级补强（2026-10-15）：dpsk 分 7 批生成（迁移/日志+request_id/metrics+ready/备份恢复 CLI/compose+运维手册/失败注入/文档），编排验收修 6 处（编造 transactions API 字段 amount/occurred_at→amount_cents/occurred_on、编造 static mount OLD 文本、backup 同秒文件名碰撞加 -N 后缀、middleware 测试同步函数用 async fixture、__main__ serve 无 args.dir 致启动崩溃、backup OSError 裸抛）；pytest 119/119、ruff 全洁；真实冒烟全链路通过
 - v2.2 多币种与汇率（2026-10-16）：`currencies` 汇率表 + 统计按本位币折算
 - v2.3 全站移动端适配（2026-10-16）：见"状态"节；pytest 157/157、ruff 全洁；3 张移动端真实截图亲眼验收
-- **v2.4「侦探规则引擎 2.0」（2026-10-16）**：模糊匹配升级（金额容差 ±100 分/±1%、日期窗口 ±3 天、商户别名学习一次记住、转账配对 transfer-pair）+ 侦探页批量认领/忽略；修真线上 bug：base.html 给 app.js 加 defer 致内联脚本先执行 `api 未定义`（去 defer，生产级复现验证）；pytest **186/186**（新增 29）、ruff 全洁；冒烟 15/15 全链路；桌面+移动截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_v2.4.md`。已知限制：转账配对仅同批次内；别名无修改/删除入口（排期下轮）
+- **v2.4「侦探规则引擎 2.0」（2026-10-16）**：模糊匹配升级（金额容差 ±100 分/±1%、日期窗口 ±3 天、商户别名学习一次记住、转账配对 transfer-pair）+ 侦探页批量认领/忽略；修真线上 bug：base.html 给 app.js 加 defer 致内联脚本先执行 `api 未定义`（去 defer，生产级复现验证）；pytest **186/186**（新增 29）、ruff 全洁；冒烟 15/15 全链路；桌面+移动截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_v2.4.md`。已知限制：转账配对仅同批次内；~~别名无修改/删除入口（排期下轮）~~（已在 2026-10-17 交付：侦探页别名管理区 + 列出/改名/删除 API，pytest 回归全过）
 
 **后续计划**：
 
@@ -292,7 +295,8 @@
 - 工程化 v1（2026-10-13）：单二进制架构落地，检查器/调度器/事件流、内嵌 Web UI、CI 与多阶段构建就绪
 - 生产级 v0.2.0（2026-10-13）：全量生产级改造（可观测性/可靠性/数据/部署/安全/可维护性）+ 灵魂功能（健康档案/月度 SLA/公开状态页）；CHANGELOG 见 sentinel/CHANGELOG.md
 - v0.3.0 状态页主题与订阅通知（2026-10-16）：迁移 v3（status_pages 加 theme/accent_color，老库自动补列）+ v4（status_subscriptions 表）；`PUT /api/status-pages/{id}/theme`；公开接口透出主题；订阅全链路 `POST /api/status/{slug}/subscribe`→确认邮件 token→`GET .../confirm`→`GET/POST .../unsubscribe`，down/recovered 事件经 `notify.NotifySubscribers` 扇出给已确认订阅者（同邮箱多页去重，退订链接带 token）；`SENTINEL_PUBLIC_URL` 配邮件链接基地址；状态页 UI 重写（CSS 变量双主题+访客切换器+主色取色器+订阅卡片，去 AI 味）；72 测试全过（新增 30）；真实冒烟：fake SMTP 捕获确认邮件→点链接确认→二次故障→订阅者收到宕机通知；三主题真实截图亲眼验收；修 v0.2 遗留 bug：可用性文字 span 与状态圆点共用 `.up` 类名致 querySelector 误命中圆点（改名 `.uptime`）。README/CHANGELOG 已同步，截图落 docs/screenshots/status*.png
-- **v0.4.0「Webhook 持久化投递队列」（2026-10-16）**：`webhook_deliveries` 表（迁移 v5，pending/retrying/done/failed）+ 入队幂等去重 + worker 指数退避重投（默认 8 次/基数 60s/15s 扫描）+ 管理 API（列表/手动重试）+ `/deliveries` 控制台页（真数据）；`go test` **97/97**（新增 12）、go vet 全洁；真实冒烟（必失败 webhook：pending→retrying→failed，手动 retry 闭环）；投递队列表截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`。已知限制：单实例；故障演练排期 v0.5
+- **v0.4.0「Webhook 持久化投递队列」（2026-10-16）**：`webhook_deliveries` 表（迁移 v5，pending/retrying/done/failed）+ 入队幂等去重 + worker 指数退避重投（默认 8 次/基数 60s/15s 扫描）+ 管理 API（列表/手动重试）+ `/deliveries` 控制台页（真数据）；`go test` **97/97**（新增 12）、go vet 全洁；真实冒烟（必失败 webhook：pending→retrying→failed，手动 retry 闭环）；投递队列表截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`。已知限制：单实例；~~故障演练排期 v0.5~~（已在 2026-10-17 交付）
+- **v0.5「故障演练」（2026-10-17）**：`scripts/fault-drill.sh`（探针目标全挂→事件→webhook 通知→恢复闭环），真实跑通 **13/13**；`docs/FAULT_DRILL.md`（步骤+预期+实测结果+未覆盖项声明）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.md`（依赖扫描/真实负载改排期 v0.6）
 
 **后续计划**：
 
@@ -320,6 +324,8 @@
 **工程化 v6「HTML 文本提取」（2026-10-16）**：html_extractor 新模块（HtmlExtractor：extract/detectCharset/decodeToUtf8/extractFromBytes，纯 C++17 手写，零第三方依赖，iconv 为 glibc 系统调用）+ indexer.cpp 接入（默认扩展名加 .html/.htm；UTF-16 含 NUL 不再误判二进制跳过；提取失败/正文空回落原始文本 + warn 日志）+ 40+ 命名实体解码 + 畸形 HTML 容错 + web/index.html 文件类型徽标 + 版本号 0.6.0；cmake 构建零警告、ctest **102/102** 全过（v0.5.0 基线 62 + 新增 40；WatcherTest.SubDir 为 inotify 时序 flaky，v0.5.0 已有，重跑通过）；CLI/serve 真实冒烟（index→search→locate、GBK 页面端到端）；Web 搜索页 HTML 徽标截图亲眼验收；验收修真 bug 2 个（`</script>` 闭合标签 `>` 泄漏为正文、UTF-8 BOM 未剥离）；设计注记 `docs/HTML_EXTRACTION.md`。
 **工程化 v7「搜索质量工程」（2026-10-16）**：混合检索 v2（`Searcher` 新增 `SearchWeights{titleBoost, phraseBoost}`，默认 1.0/2.0，与 v1 行为一致；CLI `search` 新增 `--title-boost`/`--phrase-boost`，非法值 exit 1；环境变量 `DOCSEEK_TITLE_BOOST`/`DOCSEEK_PHRASE_BOOST` 改默认值，非法值警告回默认；`GET /api/search` 新增 `title_boost`/`phrase_boost` 查询参数，显式非法值 400）+ `eval/` 评测集（42 篇中文语料：HTML 8/分词边界 12/问答 12/噪声 10；44 个 query→doc 评测对；`eval/run_eval.py` 一键评测）实测 Top-1 36/44（81.8%：html 10/10、tok 14/14、noise 6/6、neg 2/2、qa 4/12）；版本号 0.7.0；gtest **107/108**（新增 test_hybrid 权重 5 例；WatcherTest.SubDir 为 inotify 时序 flaky，v0.5.0 已有）；评测发现已知问题 v0.8 排期：T1 分词器游标在 CutForSearch 重叠词下跳过中间 token 致索引静默丢词、T2 索引/查询切分上下文不一致致子串 query 漏召回（复现与根因见发版对照报告）。
 **v0.10.0「多用户支持」（2026-10-17）**：kDefaultUser/checkUserValid/user 列全 API 贯通，schema v3→v4 自动迁移；6 例多用户测试；修 DocxExtractor 页眉页脚 compare 真 bug；ctest **148/148** 全过。
+**v0.11.0「搜索质量 T1/T2 修复」（2026-10-17，前一轮孤儿工作本轮收编验证）**：T1 分词器单调游标 find 在 CutForSearch 重叠词下静默丢词→全文 occurrence 扫描 + 已认领集合；T2 查询侧新增第 3 阶段子串召回回退（中文 token 拆单字 OR 粗筛 + 原始 token 子串精验，只在精确 AND/OR 回退为空时触发）；`expandTokenOrQuery` 按起始字节位置分组（同位置重叠词 OR、不同位置 AND，连接符改显式 ` AND `）；3 个先红后绿复现测试；评测 44→56 对，Top-1 36/44（81.8%）→**48/56（85.7%）**，8 失败与基线同一集合（qa 独立已知问题）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。
+**v0.11.1「版本号唯一来源 + 定位逻辑公共抽取」（2026-10-17）**：修 v0.10.0 遗留 service.cpp 两处 "0.9.0" 硬编码，新建 `include/docseek/version.h`（`kDocseekVersion` 唯一来源）；偿还 v0.11.0 技术债：新建 `token_locate` 模块（`claimTokenPositions`），jieba_tokenizer 与 searcher 双双改用（语义逐行一致）；新增 `test_token_locate.cpp` 7 例 + Health 版本断言；`./docseek_tests --gtest_filter='-WatcherTest.SubDir'` **157/157** 全过；README 搜索质量小节更新；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.1.md`。
 
 **发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。v0.6.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`。v0.7.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。
 
@@ -338,10 +344,13 @@
 - 工程化 v6「HTML 文本提取」（2026-10-16）：HtmlExtractor（去 script/style/noscript、提 title/meta description/正文、块级换行、实体解码、charset 探测<meta>/BOM/默认 UTF-8、畸形容错，纯 C++17 手写零第三方依赖）+ Indexer 集成（增量索引/统计/prune 全链路）+ 搜索/locate（标题加权天然生效）+ serve/Web 冒烟验证 + Web 文件类型徽标；22 个 dpsk 批次并行生成（20 并行撞 429 后降串行+退避收回）；README（支持格式章节）/CHANGELOG v0.6.0/发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`/设计注记 `docs/HTML_EXTRACTION.md` 齐备
 - 工程化 v7「搜索质量工程」（2026-10-16）：混合检索权重可配置贯通 CLI/HTTP/环境变量三层 + 评测集 v07（42 篇语料 + 44 评测对 + run_eval.py）Top-1 36/44 (81.8%) + README 搜索质量小节 + CHANGELOG v0.7.0 + 发版对照报告；评测发现已知问题 T1（分词器游标逻辑在 CutForSearch 重叠词下跳过中间 token 致索引静默丢词）/T2（索引查询切分上下文不一致致子串漏召回）/qa 4/12（噪声关键词 OR 回退被干扰文档反超），v0.8 排期
 - **v0.10.0「多用户支持」（2026-10-17）**：`kDefaultUser="local"` + `checkUserValid`（非法抛 runtime_error）+ Document.user 列；upsert/removeByPath/list/findByPath/searchFts/docCount/totalBytes 全加 user 参数（默认 local，旧调用兼容）；新增 `removeByUser`；schema v3→v4 自动迁移（老数据归属 local）；6 例多用户测试（隔离/同路径多版本/检索隔离/removeByUser/校验/默认用户）；修真 bug：DocxExtractor 页眉页脚 `compare(0,12,"word/header")` 恒假（11 字符前缀），ExtractChineseTableHeader 通过；MigrateOldSchema 过时期望 3→4 已更新；`--version` 0.10.0；ctest **148/148** 全过
+- **v0.11.0「搜索质量 T1/T2 修复」（2026-10-17）**：见"状态"节；前一轮 agent 做到一半 VM 重启去世遗留未提交改动，本轮收编：重新构建+ctest+CLI smoke 验证后提交
+- **v0.11.1「版本号唯一来源 + 定位逻辑公共抽取」（2026-10-17）**：见"状态"节；本轮抓出并修复流程 bug：PATCH 应用脚本多对 OLD/NEW 挤一个块会被当字面量污染源码（已恢复文件，prompt 格式改为一块一对并同步三个协调员）
 
 **后续计划**：
 
-- 搜索质量 T1/T2（v0.7.0 评测发现：分词器游标跳过中间 token、索引/查询切分上下文不一致）
+- ~~搜索质量 T1/T2~~（已在 v0.11.0 交付）
+- qa 自然语言问句 4/12（独立已知问题，未改善）
 
 **里程碑记录**：
 
@@ -380,7 +389,7 @@
 - **v1.4 生产级收尾 + 移动端阅读优化**（2026-10-16）：微信 dpsk 分 4 批并行生成（A 指标代码 / B 失败注入测试 / C 文档 / D 移动端前端），编排逐批验收、手工修 17 处后合入；pytest 102/102、ruff 全洁；真实服务冒烟 + 桌面/移动双端视觉验收（抓出顶栏移动端堆叠真 bug 已修）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
 - **v1.5「全文 RSS 输出 + HTTP 层限流」（2026-10-16）**：`GET /feed.xml`（正文优先用抓取时 trafilatura 提取的 content_text，无正文回落摘要去标签文本；`?feed_id=`/`?folder=` 过滤，50 篇封顶；ETag + If-None-Match 304）+ HTTP 层 IP 令牌桶限流（默认 60 req/min，`FEEDFLOW_RATE_LIMIT_RPS`/`_BURST`/`_ENABLED` 环境变量，超限 429 + Retry-After，`/healthz` 与 `/metrics` 免限流，Prometheus 新增 `feedflow_http_rate_limited_total`）；tests/test_feedxml.py 8 例 + tests/test_ratelimit.py 5 例；运维手册新增第 9 节"限流调参"；pytest 115/115、ruff 全洁
 - **v1.5.1 依赖升级（2026-10-16）**：trafilatura 2.2.0→2.3.1（PyPI 当前最新，2.3.0 发版说明无破坏性变更）；验收抓包：CHANGELOG 曾声称"已换 2.3.1 跑过测试"，实测 venv 仍为 2.2.0，已真升级并重跑 pytest **115/115** 全过
-- **v1.6「阅读体验」（2026-10-16）**：键盘快捷键（j/k 上下篇、o 新标签页打开原文、r 标已读/未读、s 加星、? 帮助浮层）+ 阅读进度记忆（DB 迁移 v4 `articles.scroll_pos`、`POST /api/articles/<id>/progress` 非负校验，前端防抖 500ms 保存 + 重进恢复）+ OPML 导出加固（None-safe、`dateCreated`）；验收抓真 bug：滚动容器误判 `#reader-pane`（实际为 `.col-reader`），致进度保存恒为 0，已修；门面截图右栏空态违规已重拍；pytest **129/129**、ruff 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。已知遗留：`PUT /api/folders/<id>` 调不存在的 `store.get_folder`（历史 bug，排期下轮）
+- **v1.6「阅读体验」（2026-10-16）**：键盘快捷键（j/k 上下篇、o 新标签页打开原文、r 标已读/未读、s 加星、? 帮助浮层）+ 阅读进度记忆（DB 迁移 v4 `articles.scroll_pos`、`POST /api/articles/<id>/progress` 非负校验，前端防抖 500ms 保存 + 重进恢复）+ OPML 导出加固（None-safe、`dateCreated`）；验收抓真 bug：滚动容器误判 `#reader-pane`（实际为 `.col-reader`），致进度保存恒为 0，已修；门面截图右栏空态违规已重拍；pytest **129/129**、ruff 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。~~已知遗留：`PUT /api/folders/<id>` 调不存在的 `store.get_folder`（历史 bug，排期下轮）~~（已在 2026-10-17 修复：补 `store.get_folder` 实现 + 回归测试，真实冒烟通过）
 
 **后续计划**：
 
@@ -424,6 +433,7 @@
 - **v1.7.0「burn 逐条彻底删除 + 备份恢复自动化演练」（2026-10-16）**：`POST /api/links` 与 `PATCH /api/links/{id}` 新增 `purge` 字段（仅 burn 链有效，非 burn 链传 400）；DB 迁移 v4→v5（`links.purge_after_burn`）；销毁时逐条 purge 或全局 `LINKSHORT_BURN_PURGE_AFTER_DESTROY` 任一成立即彻底删除（含 visits 级联）+ 审计日志；`scripts/backup-drill.sh` 一键自动化演练（建链→访问→备份→删库→恢复→一致性校验，真实演练 PASS）+ `make drill`；`go test ./... -race` **104/104**（新增 9）、go vet/gofmt 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.7.md`
 **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包（内置省域段表/解析责任链/CDN 头解析）+ clientIP + RecordVisitGeo + `GET /api/stats/geo`；`go test -race` **129/129**、vet/gofmt 全洁。
 - **v1.9.0「地域分布 Web UI 面板」（2026-10-17）**：后端 visits 表加 city 列（迁移 v6→v7）+ `GeoStats` 返回 `GeoOverview`（国家/城市/UV/未知占比）+ `GET /api/stats/geo` 加 days（7/30）与 country 下钻 + 新增 `GET /api/stats/geo.csv` 导出；前端 geo.html + 手写 SVG 世界地图（23 国 5 档邮戳红热力）+ 国家排行（点击下钻城市）+ 7/30 天切换；`go test ./...` 12 包全绿；209 次访问/7 国真实数据截图亲眼验收通过；验收抓出真 bug（国家排行按城市粒度致中国出现 5 次，改按 country_code 聚合）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.9.md`；已知限制：简化地图非精确国界、城市依赖 MMDB
+- **v1.10.0「密码失败高告警」（2026-10-17）**：`internal/passalert.Tracker` 按 slug 滑动窗口计数（阈值 `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` 默认 10 / 窗口 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` 默认 5m），跨越阈值瞬间触发一次、回落重布防；触发后 warn 日志 + `linkshort_password_fail_alerts_total` + 异步 POST 复用 `LINKSHORT_ALERT_WEBHOOK_URL`（10s 超时，失败不影响主流程）；`prometheus/rules/linkshort.yml` 新增 `LinkshortPasswordFailRateHigh`/`LinkshortPasswordFailAlertFired`；13 例新增测试，`go test ./... -race` **149 例全过**；真实冒烟（阈值 3 下 4 次失败恰好触发 1 次）
 - **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包——china.go（内置中国省域 IP 段抽样表，CIDR 最长前缀匹配，精度边界诚实声明）/ chain.go（解析责任链：CDN 头 → MMDB → 内置表 → unknown，ReloadFromEnv）/ header.go（CDN 厂商头解析）；handler 新增 `clientIP`（X-Forwarded-For 首段 → X-Real-IP → RemoteAddr 去端口，信任假设有注释）；finishRedirect 改用 clientIP 做 ipHash + `geo.LookupRequest`；`st.RecordVisitGeo` 落库国家/省份；新增 `GET /api/stats/geo`（国家/省份 TopN + unknown 占比）；`go test ./... -race` **129/129** 全过、go vet/gofmt 全洁；CHANGELOG v1.8.0。已知缺口：Web UI 暂无地域面板（API 就绪，排期下轮）
 
 **后续计划**：
@@ -488,7 +498,8 @@
 - v0.1.0（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；Core 库 dpsk 生成 + 编排验收；UI Round D 生成后 2 轮修复额度用尽仍有残留，编排者亲自做跨文件 reconciliation 收尾；桌面 UI 在 Xvfb 下真实渲染截图已亲眼验收（docs/screenshots/main.png）
 - v1.1（2026-10-15）：生产级补齐（M/L 规格 9 项）。选型实测结论：NAudio.Flac（2015/net45，硬绑定 NAudio 1.7.3）在 net8.0 编译失败已证伪弃用；NAudio 2.2.1 Mp3FileReader 在 Linux 报 Msacm32.dll 缺失已证伪弃用并移除依赖；压缩格式统一走 ffmpeg 真实解码。测试夹具为 ffmpeg 真实生成的 440Hz 正弦（wav/mp3/flac/m4a）+ 随机字节损坏文件，无 demo 数据。
 - **v1.2「备份 zip 加密 + 恢复前文件清单预览 + 控制台日志人读格式」（2026-10-16）**：备份加密（AES-256-GCM + PBKDF2-SHA256 20 万轮，VXENC1 魔数自识别，无密码保持兼容）+ 恢复预览（list-backup 清单打印 + 确认后恢复，--yes 跳过确认）+ 日志人读化（VoxConsoleFormat：时长/字节/表格/CJK 对齐/进度条，控制台人读行、文件日志保持 JSON）；dotnet test **93/93**（新增 18）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`
-- **v1.3「指标告警 + 故障演练 + 技术债清理」（2026-10-16）**：VoxMetrics 指标记录器（`metrics-YYYYMMDD.jsonl`，复用日志轮转；7 处埋点：audio.import/transcript.import/align/edit.apply/export.edl/backup.create/backup.restore；`--metrics` 汇总命令）+ `docs/ALERTS.md` 4 条告警规则 + `scripts/check-alerts.sh`（退出码 0/1/2，真实触发 CRIT 验证）+ `scripts/fault-drill.sh` 故障演练 **4/4 PASS**（损坏音频拒绝/只读存储模拟磁盘满/kill -9 半截备份拒绝/位翻转备份拒绝）+ `--probe-*` 运维探针 CLI + 技术债偿还 4 项（TD-002/TD-006/TD-008/TD-009）；SmokeRunner **106/106**（新增 13）；dotnet build 零警告零错误；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`。未通过剩 2 项（3.1 定时自动备份、8.2 真实负载验证，排期 v2）
+- **v1.3「指标告警 + 故障演练 + 技术债清理」（2026-10-16）**：VoxMetrics 指标记录器（`metrics-YYYYMMDD.jsonl`，复用日志轮转；7 处埋点：audio.import/transcript.import/align/edit.apply/export.edl/backup.create/backup.restore；`--metrics` 汇总命令）+ `docs/ALERTS.md` 4 条告警规则 + `scripts/check-alerts.sh`（退出码 0/1/2，真实触发 CRIT 验证）+ `scripts/fault-drill.sh` 故障演练 **4/4 PASS**（损坏音频拒绝/只读存储模拟磁盘满/kill -9 半截备份拒绝/位翻转备份拒绝）+ `--probe-*` 运维探针 CLI + 技术债偿还 4 项（TD-002/TD-006/TD-008/TD-009）；SmokeRunner **106/106**（新增 13）；dotnet build 零警告零错误；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`。~~未通过剩 2 项（3.1 定时自动备份、8.2 真实负载验证，排期 v2）~~（3.1 已在 2026-10-17 v2 交付；8.2 真实负载验证仍排期）
+- **v2「定时自动备份」（2026-10-17）**：`AutoBackupService`（Timer 周期触发默认 60 分钟；provider 为空跳过；异常走 BackupFailed 事件绝不抛给 Timer；IDisposable）+ 配置 `autoBackupEnabled/IntervalMinutes/RetentionCount` + `VOXLOOM_AUTOBACKUP_*` 环境变量（密码只从 `VOXLOOM_AUTOBACKUP_PASSWORD` 读）+ 桌面 App 接线（独立 BackupManager：`backups/auto` 子目录 + 独立保留份数默认 5；`MainViewModel.TryStageAutoBackupSnapshot` 按需落盘；退出时 Stop）+ `AutoBackupServiceTests` 7 例；`dotnet build` 本轮新增代码零警告；xunit 在本机 testhost 挂起未能执行（沙箱环境问题，4 次尝试），改控制台冒烟直验 DLL 6 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v2.md`
 
 **后续计划**：
 
@@ -520,12 +531,13 @@
 - **v1.2 .bak 自动备份 + 一键恢复**（2026-10-16）：打开/保存剧本前自动写 `.bak`（时间戳后缀，保留最近 5 个）+ `interlude-lint restore` 子命令（列出备份/恢复指定版本）+ 结构化日志记录备份事件；kotlinc 直编零错、JUnit **45/45**（新增 17 例）、CLI 冒烟全过；`docs/OPS.md` + CHANGELOG.md 已更新。**本轮打回修掉真 bug**：`restore()` 在 5 备份时恢复最旧会被 prune 删源文件。诚实缺口：沙箱 locale 无 UTF-8（中文文件名不可匹配，已在 OPS 声明）；`lint` 对目录先 snapshot 再报错（技术债，未修）。
 - **失败注入测试套件 v1.3（2026-10-16）**：FaultInjectionTest 扩至 **19 例**（损坏/截断剧本行号定位、不可读文件 exit 语义、tmpfs 磁盘满模拟、损坏备份拒绝恢复、10 万行性能回归、并发 lint 备份不互踩）+ `lint` 对目录/特殊文件输入先校验类型再报错（修掉"先 snapshot 再报错"技术债）+ 修真 bug：`BackupManager.restore` 读取损坏备份抛 IllegalArgumentException（CLI 返回 exit 2），不再让原始 IOException 崩出且绝不覆盖原文件；kotlinc 直编 + JUnit 进程内跑 **57/57** 全过（Gradle daemon 本沙箱不可用）
 - **v1.4「复盘模式」（2026-10-16）**：`SessionEvent`/`SessionLog`（JSON 对局日志解析）+ `ReplayAnalyzer`（时间线+抉择点分析）+ `ReplayMarkdown`（复盘报告生成）+ CLI `replay` 子命令；kotlinc 直编零错、JUnit **101/101**（3 例为 FaultInjectionTest OS 相关 assumption 中止）；CLI 真实冒烟：10 个时间线事件、3 个抉择点（已与剧本原文逐行核对）、无投票对局诚实降级、错误路径退出码正确；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
+- **v2「玩家路径热力分析」（2026-10-17，backlog Phase 3 第 11 项）**：`ui/HeatmapPanel.kt` 桌面端热力分析面板（目录选择→分析→Top 热门路径/节点热力/流失点，沿用 App 墨纸暖色视觉）+ 顶栏「分支图/热力分析」tab 切换；`replay/HeatmapLoader.kt` 纯 Kotlin 加载器（无 Compose 依赖可直编单测）；`HeatmapLoaderTest` 5 例；kotlinc 直编 + JUnit **122 通过 0 失败**（3 aborted 为既有 FaultInjectionTest 沙箱假设）；README/CHANGELOG 更新。已知限制：Compose 面板代码本机编不过（Compose 编译器插件后端崩溃，既有已知限制），面板已逐行人工审查
 
 **后续计划**：
 
 - ~~失败注入测试~~（已在 v1.3 交付）、大剧本真实负载压测（10 万行性能回归已在 v1.3 落地为用例）
 - ~~剧本杀复盘模式~~（已在 v1.4 交付）
-- v2：玩家路径热力分析（backlog Phase 3 第 11 项）
+- ~~v2：玩家路径热力分析~~（已在 2026-10-17 交付）
 
 ## stagecue「舞监台 StageCue」
 
