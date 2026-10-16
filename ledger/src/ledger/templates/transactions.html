@@ -42,6 +42,7 @@
         <th>账户</th>
         <th>分类</th>
         <th>金额</th>
+        <th>币种</th>
         <th>备注</th>
         <th>操作</th>
       </tr>
@@ -86,6 +87,14 @@
       </select>
     </div>
     <input type="number" id="t-amount" step="0.01" placeholder="金额">
+    <select id="t-currency">
+    <option value="CNY">CNY 人民币</option>
+    <option value="USD">USD 美元</option>
+    <option value="EUR">EUR 欧元</option>
+    <option value="JPY">JPY 日元</option>
+    <option value="GBP">GBP 英镑</option>
+    <option value="HKD">HKD 港币</option>
+    </select>
     <input type="date" id="t-date">
     <input type="text" id="t-note" placeholder="备注">
     <button type="submit">保存</button>

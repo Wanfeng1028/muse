@@ -10,6 +10,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from ledger.currency import validate_currency_code
+
 # ---------------------------------------------------------------------------
 # 账户
 # ---------------------------------------------------------------------------
@@ -24,6 +26,11 @@ class AccountCreate(BaseModel):
     opening_balance_cents: int = 0
     note: str = ""
 
+    @field_validator("currency")
+    @classmethod
+    def _check_currency(cls, v: str) -> str:
+        return validate_currency_code(v)
+
 
 class AccountUpdate(BaseModel):
     """更新账户请求体，全部字段可选。"""
@@ -34,6 +41,11 @@ class AccountUpdate(BaseModel):
     opening_balance_cents: int | None = None
     note: str | None = None
     is_archived: bool | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def _check_currency(cls, v: str | None) -> str | None:
+        return None if v is None else validate_currency_code(v)
 
 
 class AccountOut(BaseModel):
@@ -106,6 +118,12 @@ class TransactionCreate(BaseModel):
     amount_cents: int = Field(gt=0)
     occurred_on: date
     note: str = ""
+    currency: str = "CNY"
+
+    @field_validator("currency")
+    @classmethod
+    def _check_currency(cls, v: str) -> str:
+        return validate_currency_code(v)
 
 
 class TransactionUpdate(BaseModel):
@@ -118,6 +136,12 @@ class TransactionUpdate(BaseModel):
     amount_cents: int | None = Field(default=None, gt=0)
     occurred_on: date | None = None
     note: str | None = None
+    currency: str | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def _check_currency(cls, v: str | None) -> str | None:
+        return None if v is None else validate_currency_code(v)
 
 
 class TransactionOut(BaseModel):
@@ -133,6 +157,7 @@ class TransactionOut(BaseModel):
     amount_cents: int
     occurred_on: str
     note: str
+    currency: str
     created_at: str
     updated_at: str
 
@@ -248,6 +273,7 @@ class SummaryOut(BaseModel):
     expense_cents: int
     net_cents: int
     count: int
+    unknown_count: int = 0
 
 
 class TrendPoint(BaseModel):
@@ -274,6 +300,7 @@ class NetWorth(BaseModel):
 
     total_cents: int
     accounts: list[dict]
+    unknown_count: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -428,3 +455,24 @@ class ClaimTransferIn(BaseModel):
     """认领转账入参。"""
 
     to_account_id: int
+
+
+# ---------------------------------------------------------------------------
+# 汇率
+# ---------------------------------------------------------------------------
+
+
+class CurrencyRateIn(BaseModel):
+    """更新汇率入参：rate_to_base 为 1 单位该币种主单位 = 多少本位币元。"""
+
+    rate_to_base: float = Field(gt=0)
+
+
+class CurrencyOut(BaseModel):
+    """汇率出参。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    code: str
+    rate_to_base: float
+    updated_at: str

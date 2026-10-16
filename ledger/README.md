@@ -48,6 +48,14 @@ make dev
 - 备份恢复 CLI：`python -m ledger backup` / `python -m ledger restore FILE`，`make backup` / `make restore FILE=`。
 - `docker-compose.yml` 一键部署 + `docs/OPERATIONS.md` 运维手册。
 
+### v2.2 多币种与汇率
+
+- 账户与交易支持币种（ISO 4217 三字母代码，默认 CNY）。
+- 汇率表 `/currencies`：设置各币种兑本位币汇率（本位币恒为 1，不可改）。
+- 统计（月度汇总、净资产）按本位币折算；缺汇率的交易/账户不计入并单独计数。
+- `LEDGER_BASE_CURRENCY` 环境变量设置本位币（默认 CNY，非法值启动失败）。
+- 限制：跨币种转账不做实时换算，按转出币种金额记录。
+
 ## 账单侦探工作流
 
 1. 上传：在 `/statement` 传账单文件（CSV），系统自动识别模板、编码、表头前导行。
@@ -75,6 +83,8 @@ make dev
 | GET | `/api/health` | 健康检查（含版本号） |
 | GET | `/api/ready` | 就绪探针（DB 连通性） |
 | GET | `/api/metrics` | Prometheus 指标 |
+| GET | `/api/currencies` | 汇率列表 |
+| PUT | `/api/currencies/{code}` | 新增/更新汇率 |
 
 ## 为什么不用随手记 / Excel 记账
 
@@ -135,6 +145,7 @@ docs/
 | `LEDGER_PORT` | 监听端口 |
 | `LEDGER_LOG_LEVEL` | 日志级别（DEBUG/INFO/WARNING/ERROR/CRITICAL，默认 INFO，非法值启动失败） |
 | `LEDGER_BACKUP_DIR` | 备份目录（默认 `<项目根>/data/backups`） |
+| `LEDGER_BASE_CURRENCY` | 本位币（ISO 4217 三字母大写，默认 CNY，非法值启动失败） |
 
 ## 运维
 

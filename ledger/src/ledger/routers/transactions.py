@@ -6,9 +6,10 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
+from ledger.currency import validate_currency_code
 from ledger.database import get_session_factory
 from ledger.models import Account, Category, Transaction
 from ledger.schemas import TransactionUpdate
@@ -28,6 +29,12 @@ class TransactionIn(BaseModel):
     amount_cents: int = Field(gt=0)
     occurred_on: str
     note: str = ""
+    currency: str = "CNY"
+
+    @field_validator("currency")
+    @classmethod
+    def _check_currency(cls, v: str) -> str:
+        return validate_currency_code(v)
 
 
 def _now() -> str:
@@ -44,6 +51,7 @@ def _serialize(t: Transaction) -> dict[str, Any]:
         "amount_cents": t.amount_cents,
         "occurred_on": t.occurred_on,
         "note": t.note,
+        "currency": t.currency,
         "created_at": t.created_at,
         "updated_at": t.updated_at,
     }
@@ -159,6 +167,7 @@ async def create_transaction(payload: TransactionIn) -> dict[str, Any]:
             amount_cents=payload.amount_cents,
             occurred_on=payload.occurred_on,
             note=payload.note,
+            currency=payload.currency,
             created_at=now,
             updated_at=now,
         )
@@ -197,6 +206,7 @@ async def update_transaction(txn_id: int, payload: TransactionUpdate) -> dict[st
             amount_cents=data.get("amount_cents", t.amount_cents),
             occurred_on=occurred,
             note=data.get("note", t.note),
+            currency=data.get("currency", t.currency),
         )
         await _validate(s, merged, is_update=True)
 
@@ -205,6 +215,7 @@ async def update_transaction(txn_id: int, payload: TransactionUpdate) -> dict[st
         t.amount_cents = merged.amount_cents
         t.occurred_on = merged.occurred_on
         t.note = merged.note
+        t.currency = merged.currency
         t.updated_at = _now()
         await s.commit()
         await s.refresh(t)

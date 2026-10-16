@@ -14,17 +14,17 @@
   <div class="card card-income">
     <div class="card-label">本月收入</div>
     <div class="card-value">{{ fmt_money(summary.income_cents) }}</div>
-    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔</div>
+    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔 · 本位币 {{ base_currency }}</div>
   </div>
   <div class="card card-expense">
     <div class="card-label">本月支出</div>
     <div class="card-value">{{ fmt_money(summary.expense_cents) }}</div>
-    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔</div>
+    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔 · 本位币 {{ base_currency }}</div>
   </div>
   <div class="card card-net">
     <div class="card-label">本月结余</div>
     <div class="card-value">{{ fmt_money(summary.net_cents) }}</div>
-    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔</div>
+    <div class="card-sub">{{ summary.month }} · {{ summary.count }} 笔 · 本位币 {{ base_currency }}</div>
   </div>
 </div>
 

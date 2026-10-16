@@ -13,11 +13,12 @@ from ledger import charts
 from ledger.config import get_settings
 from ledger.database import get_session_factory, init_db
 from ledger.logging import RequestIdMiddleware, get_logger, setup_logging
-from ledger.models import Category, Recurring
+from ledger.models import Category, Currency, Recurring
 from ledger.routers import (
     accounts,
     budgets,
     categories,
+    currencies,
     health,
     import_export,
     metrics,
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(accounts.router)
     app.include_router(categories.router)
     app.include_router(transactions.router)
+    app.include_router(currencies.router)
     app.include_router(budgets.router)
     app.include_router(stats.router)
     app.include_router(import_export.router)
@@ -128,6 +130,7 @@ def create_app() -> FastAPI:
                 "summary": summary,
                 "trend_svg": trend_svg,
                 "cat_svg": cat_svg,
+                "base_currency": get_settings().base_currency,
             },
         )
 
@@ -151,6 +154,26 @@ def create_app() -> FastAPI:
                 "accounts": accounts_list,
                 "categories_grouped": grouped,
             },
+        )
+
+    @app.get("/currencies", response_class=HTMLResponse)
+    async def currencies_page(request: Request):
+        """汇率设置页。"""
+        factory = get_session_factory()
+        async with factory() as session:
+            result = await session.execute(select(Currency).order_by(Currency.code))
+            rows = [
+                {
+                    "code": c.code,
+                    "rate_to_base": c.rate_to_base,
+                    "updated_at": c.updated_at,
+                }
+                for c in result.scalars().all()
+            ]
+        return templates.TemplateResponse(
+            request,
+            "currencies.html",
+            {"currencies": rows, "base_currency": get_settings().base_currency},
         )
 
     @app.get("/accounts", response_class=HTMLResponse)

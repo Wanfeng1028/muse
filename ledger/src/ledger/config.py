@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -28,6 +29,7 @@ class Settings:
     host: str
     port: int
     log_level: str
+    base_currency: str
 
 
 @lru_cache(maxsize=1)
@@ -45,13 +47,22 @@ def get_settings() -> Settings:
     raw_level = os.environ.get("LEDGER_LOG_LEVEL", DEFAULT_LOG_LEVEL)
     log_level = raw_level.upper()
     if log_level not in ALLOWED_LOG_LEVELS:
-        raise ValueError(
-            f"LEDGER_LOG_LEVEL 非法: {raw_level!r}，允许 DEBUG/INFO/WARNING/ERROR/CRITICAL"
-        )
+        raise ValueError(f"LEDGER_LOG_LEVEL 非法: {raw_level!r}，允许 DEBUG/INFO/WARNING/ERROR/CRITICAL")
+
+    raw_ccy = os.environ.get("LEDGER_BASE_CURRENCY", "CNY")
+    base_currency = raw_ccy.strip().upper()
+    if not re.fullmatch(r"[A-Z]{3}", base_currency):
+        raise ValueError(f"LEDGER_BASE_CURRENCY 非法: {raw_ccy!r}，必须为 ISO 4217 三字母大写代码")
 
     # 相对路径拼到项目根目录，绝对路径原样使用
     db_path = Path(raw_db)
     if not db_path.is_absolute():
         db_path = PROJECT_ROOT / db_path
 
-    return Settings(db_path=str(db_path), host=host, port=port, log_level=log_level)
+    return Settings(
+        db_path=str(db_path),
+        host=host,
+        port=port,
+        log_level=log_level,
+        base_currency=base_currency,
+    )

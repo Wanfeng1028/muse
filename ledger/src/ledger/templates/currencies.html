@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}汇率{% endblock %}
+
+{% block content %}
+<h1>汇率设置</h1>
+
+<section class="card">
+<p>本位币为 <strong>{{ base_currency}}</strong>，其兑本位币汇率恒为 1，不可修改。</p>
+<p>汇率语义：1 单位外币主单位 = 多少本位币元。例如 1 美元 = 7.2 元本位币时，美元汇率填 7.2。</p>
+<p>统计页金额按本位币折算；缺汇率的交易不计入汇总。</p>
+<span id="fx-base-code" data-base="{{ base_currency}}" style="display:none"></span>
+</section>
+
+<section class="card">
+<table>
+<thead>
+<tr>
+<th>币种</th>
+<th>兑本位币汇率</th>
+<th>更新时间</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="fx-body"></tbody>
+</table>
+</section>
+
+<h2>更新汇率</h2>
+<section class="card">
+<form id="fx-form">
+<select id="fx-code"></select>
+<input type="number" id="fx-rate" step="0.0001" min="0" placeholder="例如 7.2 表示 1 美元 = 7.2 元本位币">
+<button type="submit">保存</button>
+</form>
+</section>
+{% endblock %}

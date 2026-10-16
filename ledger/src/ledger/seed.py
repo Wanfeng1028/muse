@@ -5,7 +5,8 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ledger.models import Category
+from ledger.config import get_settings
+from ledger.models import Category, Currency, utcnow
 
 # (name, kind, icon, color, sort_order)
 DEFAULT_CATEGORIES: list[tuple[str, str, str, str, int]] = [
@@ -32,8 +33,18 @@ DEFAULT_CATEGORIES: list[tuple[str, str, str, str, int]] = [
 ]
 
 
+async def _ensure_base_currency(s: AsyncSession) -> None:
+    """保证本位币的汇率行存在（rate_to_base=1.0），缺失则插入。"""
+    base = get_settings().base_currency
+    exists = await s.scalar(select(func.count()).select_from(Currency).where(Currency.code == base))
+    if not exists:
+        s.add(Currency(code=base, rate_to_base=1.0, updated_at=utcnow()))
+        await s.commit()
+
+
 async def ensure_seed(s: AsyncSession) -> None:
-    """当 categories 表为空时，批量写入默认分类。"""
+    """当 categories 表为空时，批量写入默认分类；同时保证本位币汇率行存在。"""
+    await _ensure_base_currency(s)
     count = await s.scalar(select(func.count()).select_from(Category))
     if count and count > 0:
         return

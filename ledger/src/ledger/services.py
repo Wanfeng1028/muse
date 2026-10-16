@@ -12,7 +12,8 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ledger.models import Account, Budget, Category, Recurring, Transaction
+from ledger.currency import to_base_cents
+from ledger.models import Account, Budget, Category, Currency, Recurring, Transaction
 
 # ---------------------------------------------------------------------------
 # 工具函数
@@ -111,39 +112,52 @@ async def list_accounts_with_balance(s: AsyncSession) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+async def get_rates(s: AsyncSession) -> dict[str, Decimal]:
+    """返回 {币种代码: 兑本位币汇率 Decimal}。"""
+    rows = (await s.execute(select(Currency))).scalars().all()
+    return {c.code: Decimal(str(c.rate_to_base)) for c in rows}
+
+
 async def monthly_summary(s: AsyncSession, month: str) -> dict:
-    """当月收支合计、净额与交易笔数（transfer 不计入收支但计入 count）。"""
+    """当月收支合计（按本位币折算）、净额与交易笔数。
+
+    transfer 不计入收支但计入 count；缺汇率的交易不计入收支并计入 unknown_count。
+    """
     start, end = month_range(month)
+    rates = await get_rates(s)
 
-    income = await s.scalar(
-        select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(
-            Transaction.type == "income",
-            Transaction.occurred_on >= start,
-            Transaction.occurred_on < end,
+    rows = (
+        await s.execute(
+            select(Transaction.type, Transaction.amount_cents, Transaction.currency).where(
+                Transaction.occurred_on >= start,
+                Transaction.occurred_on < end,
+            )
         )
-    )
-    expense = await s.scalar(
-        select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(
-            Transaction.type == "expense",
-            Transaction.occurred_on >= start,
-            Transaction.occurred_on < end,
-        )
-    )
-    count = await s.scalar(
-        select(func.count(Transaction.id)).where(
-            Transaction.occurred_on >= start,
-            Transaction.occurred_on < end,
-        )
-    )
+    ).all()
 
-    income_cents = int(income)
-    expense_cents = int(expense)
+    income_cents = 0
+    expense_cents = 0
+    unknown_count = 0
+    for ttype, amount_cents, currency in rows:
+        if ttype not in ("income", "expense"):
+            continue
+        rate = rates.get(currency)
+        if rate is None:
+            unknown_count += 1
+            continue
+        converted = to_base_cents(int(amount_cents), rate)
+        if ttype == "income":
+            income_cents += converted
+        else:
+            expense_cents += converted
+
     return {
         "month": month,
         "income_cents": income_cents,
         "expense_cents": expense_cents,
         "net_cents": income_cents - expense_cents,
-        "count": int(count),
+        "count": len(rows),
+        "unknown_count": unknown_count,
     }
 
 
@@ -231,12 +245,43 @@ async def by_category(s: AsyncSession, month: str, kind: str = "expense") -> lis
 
 
 async def net_worth(s: AsyncSession) -> dict:
-    """全部未归档账户余额之和，附各账户余额列表。"""
+    """全部未归档账户余额之和（按本位币折算），附各账户余额列表。
+
+    缺汇率的账户不计入 total 并计入 unknown_count。
+    """
+    rates = await get_rates(s)
     accounts = await list_accounts_with_balance(s)
-    total = sum(a["balance_cents"] for a in accounts)
+    total = 0
+    unknown_count = 0
+    items = []
+    for a in accounts:
+        rate = rates.get(a["currency"])
+        if rate is None:
+            unknown_count += 1
+            items.append(
+                {
+                    "id": a["id"],
+                    "name": a["name"],
+                    "currency": a["currency"],
+                    "balance_cents": a["balance_cents"],
+                    "converted": False,
+                }
+            )
+            continue
+        items.append(
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "currency": a["currency"],
+                "balance_cents": a["balance_cents"],
+                "converted": True,
+            }
+        )
+        total += to_base_cents(a["balance_cents"], rate)
     return {
         "total_cents": total,
-        "accounts": [{"id": a["id"], "name": a["name"], "balance_cents": a["balance_cents"]} for a in accounts],
+        "accounts": items,
+        "unknown_count": unknown_count,
     }
 
 

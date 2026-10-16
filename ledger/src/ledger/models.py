@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import (
     CheckConstraint,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -66,8 +67,19 @@ class Transaction(Base):
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     occurred_on: Mapped[str] = mapped_column(String, nullable=False)
     note: Mapped[str] = mapped_column(String, nullable=False, default="")
+    currency: Mapped[str] = mapped_column(String, nullable=False, default="CNY")
     created_at: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class Currency(Base):
+    """汇率表：币种代码 -> 兑本位币汇率。rate_to_base 语义：1 单位该币种主单位 = 多少本位币元。"""
+
+    __tablename__ = "currencies"
+
+    code: Mapped[str] = mapped_column(String, primary_key=True)
+    rate_to_base: Mapped[float] = mapped_column(Float, nullable=False)
+    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
 
 
 class Budget(Base):
@@ -116,15 +128,11 @@ class MatchRule(Base):
     """关键词规则表：命中后自动归类。"""
 
     __tablename__ = "match_rules"
-    __table_args__ = (
-        UniqueConstraint("keyword", "direction", name="uq_match_rules_keyword_direction"),
-    )
+    __table_args__ = (UniqueConstraint("keyword", "direction", name="uq_match_rules_keyword_direction"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     keyword: Mapped[str] = mapped_column(String, nullable=False)
-    category_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("categories.id"), nullable=False
-    )
+    category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
     direction: Mapped[str] = mapped_column(String, nullable=False, default="any")
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
@@ -137,12 +145,8 @@ class StatementBatch(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    template_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("statement_templates.id"), nullable=True
-    )
-    account_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("accounts.id"), nullable=False
-    )
+    template_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("statement_templates.id"), nullable=True)
+    account_id: Mapped[int] = mapped_column(Integer, ForeignKey("accounts.id"), nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="preview")
     total_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     auto_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -160,9 +164,7 @@ class StatementItem(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    batch_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("statement_batches.id"), nullable=False
-    )
+    batch_id: Mapped[int] = mapped_column(Integer, ForeignKey("statement_batches.id"), nullable=False)
     occurred_on: Mapped[str] = mapped_column(String, nullable=False)
     counterparty: Mapped[str] = mapped_column(String, nullable=False, default="")
     summary: Mapped[str] = mapped_column(String, nullable=False, default="")
@@ -170,20 +172,12 @@ class StatementItem(Base):
     direction: Mapped[str] = mapped_column(String, nullable=False)
     raw_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
     fingerprint: Mapped[str] = mapped_column(String, nullable=False)
-    suggested_category_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("categories.id"), nullable=True
-    )
+    suggested_category_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
     match_source: Mapped[str] = mapped_column(String, nullable=False, default="none")
     confidence: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     suggested_action: Mapped[str] = mapped_column(String, nullable=False, default="categorize")
-    suggested_to_account_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("accounts.id"), nullable=True
-    )
+    suggested_to_account_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("accounts.id"), nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="preview")
-    claimed_category_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("categories.id"), nullable=True
-    )
-    transaction_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("transactions.id"), nullable=True
-    )
+    claimed_category_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
+    transaction_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("transactions.id"), nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)

@@ -2,6 +2,20 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.2 - 2026-10-16
+
+### 新增
+
+- 多币种：账户与交易支持 `currency` 字段（ISO 4217 三字母大写，默认 CNY，非法值 422）。
+- 汇率管理：`GET /api/currencies` 列表、`PUT /api/currencies/{code}` 新增/更新汇率；汇率页 `/currencies` 可视化设置。
+- 本位币折算：月度汇总与净资产按 `LEDGER_BASE_CURRENCY`（默认 CNY）折算；缺汇率的交易/账户不计入并计入 `unknown_count`。
+- DB 迁移 v2→v3：新增 `currencies` 表，`transactions` 表加 `currency` 列（老数据默认 CNY）。
+- 交易页记一笔表单加币种下拉；仪表盘标注本位币。
+
+### 限制
+
+- 跨币种转账不做实时换算，按转出币种金额记录（后续版本再议）。
+
 ## v2.1 - 2026-10-15
 
 ### 新增

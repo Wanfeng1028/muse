@@ -100,6 +100,7 @@ function initTransactionsPage() {
   var tAmount = document.getElementById("t-amount");
   var tDate = document.getElementById("t-date");
   var tNote = document.getElementById("t-note");
+  var tCurrency = document.getElementById("t-currency");
   var tToRow = document.getElementById("t-to-row");
   var tCategoryRow = document.getElementById("t-category-row");
 
@@ -200,7 +201,7 @@ function initTransactionsPage() {
     totalPages = Math.max(1, Math.ceil(total / limit));
 
     if (!items.length) {
-      txBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999">暂无记录</td></tr>';
+      txBody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999">暂无记录</td></tr>';
     } else {
       var html = "";
       items.forEach(function (tx) {
@@ -213,11 +214,12 @@ function initTransactionsPage() {
         else { amtStr = fmtMoney(amt); amtColor = "blue"; }
         var note = tx.note ? tx.note : "";
         html += "<tr>" +
-          "<td>" + (tx.date || "") + "</td>" +
+          "<td>" + (tx.occurred_on || "") + "</td>" +
           "<td>" + typeText(tx.type) + "</td>" +
           "<td>" + accName + "</td>" +
           "<td>" + catName + "</td>" +
           '<td style="color:' + amtColor + '">' + amtStr + "</td>" +
+          "<td>" + (tx.currency || "CNY") + "</td>" +
           "<td>" + note + "</td>" +
           '<td><button class="btn-del-tx" data-id="' + tx.id + '">删除</button></td>' +
           "</tr>";
@@ -257,7 +259,8 @@ function initTransactionsPage() {
         account_id: tAccount.value ? parseInt(tAccount.value) : null,
         amount_cents: Math.round(amountYuan * 100),
         date: tDate.value || todayStr(),
-        note: tNote.value || null
+        note: tNote.value || null,
+        currency: tCurrency && tCurrency.value ? tCurrency.value : "CNY"
       };
       if (type === "transfer") {
         if (!tTo.value) { alert("请选择转入账户"); return; }
@@ -282,6 +285,63 @@ function initTransactionsPage() {
   if (tDate) tDate.value = todayStr();
   updateFormRows();
   loadRefs().then(function () { loadTx(1); }).catch(function (e) { alert("加载失败：" + e.message); });
+}
+
+/* ========== 汇率页 ========== */
+
+function initCurrenciesPage() {
+var fxBody = document.getElementById("fx-body");
+var fxForm = document.getElementById("fx-form");
+var fxCode = document.getElementById("fx-code");
+var fxRate = document.getElementById("fx-rate");
+
+async function loadFx() {
+var data = await api("/api/currencies");
+var baseCode = document.getElementById("fx-base-code");
+var base = baseCode? baseCode.getAttribute("data-base"): null;
+var rowsHtml = "";
+var optsHtml = "";
+(data || []).forEach(function (c) {
+rowsHtml += "<tr>" +
+"<td>" + c.code + "</td>" +
+"<td>" + c.rate_to_base + "</td>" +
+"<td>" + (c.updated_at || "") + "</td>" +
+"<td>" + (c.code === base? "本位币": "-") + "</td>" +
+"</tr>";
+if (c.code!== base) {
+optsHtml += '<option value="' + c.code + '">' + c.code + "</option>";
+}
+});
+// 常用币种补齐（库中没有的也可新增）
+["USD", "EUR", "JPY", "GBP", "HKD", "AUD", "CAD", "SGD"].forEach(function (code) {
+var exists = (data || []).some(function (c) { return c.code === code;});
+if (!exists && code!== base) {
+optsHtml += '<option value="' + code + '">' + code + "</option>";
+}
+});
+if (fxBody) fxBody.innerHTML = rowsHtml || '<tr><td colspan="4" style="text-align:center;color:#999">暂无汇率</td></tr>';
+if (fxCode) fxCode.innerHTML = optsHtml;
+}
+
+if (fxForm) {
+fxForm.addEventListener("submit", async function (e) {
+e.preventDefault();
+var rate = parseFloat(fxRate.value);
+if (!(rate > 0)) { alert("请输入大于 0 的汇率"); return;}
+try {
+await api("/api/currencies/" + encodeURIComponent(fxCode.value), {
+method: "PUT",
+body: { rate_to_base: rate}
+});
+fxForm.reset();
+loadFx();
+} catch (err) {
+alert("保存失败：" + err.message);
+}
+});
+}
+
+loadFx().catch(function (e) { alert("加载失败：" + e.message);});
 }
 
 /* ========== 账户页 ========== */
@@ -597,6 +657,7 @@ function initImportPage() {
 
 document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("tx-form")) initTransactionsPage();
+  if (document.getElementById("fx-form")) initCurrenciesPage();
   if (document.getElementById("acc-form")) initAccountsPage();
   if (document.getElementById("cat-form")) initCategoriesPage();
   if (document.getElementById("b-form")) initBudgetsPage();

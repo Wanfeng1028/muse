@@ -56,6 +56,7 @@ async def client(app):
             "statement_batches",
             "match_rules",
             "statement_templates",
+            "currencies",
             "transactions",
             "budgets",
             "recurring",
