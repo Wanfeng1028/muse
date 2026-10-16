@@ -17,6 +17,7 @@ use rusqlite::{params, OptionalExtension};
 use serde::Deserialize;
 use serde_json::json;
 
+use crate::metrics::Metrics;
 use crate::models::{AppInfo, CreateNodeRequest, Node, SettingRequest, Stats, UpdateNodeRequest};
 use crate::AppState;
 
@@ -273,6 +274,7 @@ pub async fn list_fs(State(state): State<Arc<AppState>>, Query(q): Query<FsQuery
         }
     }
 
+    state.metrics.inc_vfs("read");
     Ok(Json(nodes).into_response())
 }
 
@@ -294,7 +296,10 @@ pub async fn get_fs(State(state): State<Arc<AppState>>, Path(id): Path<i64>) -> 
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
     match node {
-        Some(n) => Ok(Json(n).into_response()),
+        Some(n) => {
+            state.metrics.inc_vfs("read");
+            Ok(Json(n).into_response())
+        }
         None => Err(err(StatusCode::NOT_FOUND, "节点不存在")),
     }
 }
@@ -343,6 +348,7 @@ pub async fn create_fs(
     .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
     let id = conn.last_insert_rowid();
+    state.metrics.inc_vfs("create");
     let node = conn
         .query_row(
             "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
@@ -408,6 +414,7 @@ pub async fn update_fs(
         )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
     }
+    state.metrics.inc_vfs("update");
 
     let node = conn
         .query_row(
@@ -435,6 +442,7 @@ pub async fn delete_fs(State(state): State<Arc<AppState>>, Path(id): Path<i64>) 
     if affected == 0 {
         return Err(err(StatusCode::NOT_FOUND, "节点不存在"));
     }
+    state.metrics.inc_vfs("delete");
     Ok(StatusCode::NO_CONTENT.into_response())
 }
 
@@ -595,6 +603,7 @@ pub async fn upload_file(
         return Err(err(StatusCode::INTERNAL_SERVER_ERROR, "写入失败"));
     }
     let new_id = conn.last_insert_rowid();
+    state.metrics.inc_vfs("upload");
 
     let mut stmt = match conn.prepare(
         "SELECT id, parent_id, name, kind, content, created_at, updated_at, CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, mime_type FROM vfs_nodes WHERE id = ?1",
@@ -737,6 +746,7 @@ pub async fn download_file(
     }
     let body_stream = stream::iter(chunks);
 
+    state.metrics.inc_vfs("download");
     let disposition = format!("attachment; filename*=UTF-8''{}", percent_encode(&name));
 
     let response = Response::builder()
@@ -788,12 +798,31 @@ pub async fn get_stats(State(state): State<Arc<AppState>>) -> ApiResult {
 }
 
 /// GET /ws WebSocket 升级
-pub async fn ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
-    ws.on_upgrade(handle_socket)
+pub async fn ws_handler(
+    State(state): State<Arc<AppState>>,
+    ws: WebSocketUpgrade,
+) -> impl IntoResponse {
+    let metrics = state.metrics.clone();
+    ws.on_upgrade(move |socket| handle_socket(socket, metrics))
+}
+
+/// Drop guard：确保 WebSocket 退出时连接数一定 -1。
+struct WsConnGuard {
+    metrics: Arc<Metrics>,
+}
+
+impl Drop for WsConnGuard {
+    fn drop(&mut self) {
+        self.metrics.ws_dec();
+    }
 }
 
 /// 处理单个 WebSocket 连接。
-async fn handle_socket(mut socket: WebSocket) {
+async fn handle_socket(mut socket: WebSocket, metrics: Arc<Metrics>) {
+    metrics.ws_inc();
+    // guard 在所有退出路径（return / break / panic 展开）上都触发 ws_dec
+    let _guard = WsConnGuard { metrics };
+
     // 连接成功先发送 hello
     let hello = json!({ "type": "hello", "message": "welcome to mini-os" }).to_string();
     if socket.send(Message::Text(hello)).await.is_err() {

@@ -246,11 +246,36 @@ journalctl -u mini-os | grep '<request_id>'
 
 `SHUTDOWN_TIMEOUT_SECS`（默认 30）只约束排空阶段，不掐正常服务。排空超时会打 `shutdown_timeout`。
 
-### 5.5 监控现状（诚实说明）
+### 5.5 Prometheus `/metrics`
 
-- **Prometheus 指标未接。** v1.2.0 没有 `/metrics` 端点，也没有 Prometheus 集成。
-- 现阶段可用的观测手段就是 JSONL 日志 + `health` / `readyz` 两个探针。
-- 如果要把 mini-os 接到 Prometheus，需要另做（未在 v1.2.0 范围内）。
+`GET /metrics` 返回 Prometheus 文本格式（`Content-Type: text/plain; version=0.0.4`），手写 exposition、零第三方依赖，可直接被 Prometheus 抓取。
+
+指标一览：
+
+| 指标 | 类型 | 标签 | 说明 |
+| --- | --- | --- | --- |
+| `http_requests_total` | counter | `method`、`route`、`status` | 请求计数。`route` 取 axum MatchedPath（路由模板，如 `/api/fs/:id`），`status` 为响应状态码 |
+| `vfs_ops_total` | counter | `op` | VFS 操作计数：`create`（POST /api/fs）、`update`（PUT /api/fs/{id}）、`delete`（DELETE）、`upload`（上传）、`download`（下载）、`read`（查询） |
+| `ws_connections` | gauge | — | 当前 WebSocket 连接数 |
+
+注意：
+
+- `route` 用的是路由模板而非具体路径，`/api/fs/123` 会记为 `/api/fs/:id`，避免标签基数爆炸。
+- 静态文件兜底（`fallback_service`）的请求不经过指标中间件，不计入 `http_requests_total`；`/metrics` 自身会计入。
+- 计数在响应返回后递增，因此一次 `/metrics` 抓取看到的是本次抓取之前的累计值。
+
+Prometheus 抓取配置示例：
+
+```yaml
+scrape_configs:
+  - job_name: 'mini-os'
+    static_configs:
+      - targets: ['127.0.0.1:8090']
+    metrics_path: /metrics
+    scrape_interval: 15s
+```
+
+排障：`curl -s localhost:8090/metrics | head` 应看到 `# HELP` / `# TYPE` 行；若某条业务线计数不动，先确认请求走的是 `/api/*` 路由而非静态文件。
 
 ---
 

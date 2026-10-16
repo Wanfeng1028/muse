@@ -15,6 +15,7 @@
 
 
 - **WebSocket 通道**：连接建立后服务端主动下发欢迎消息，文本消息原样回显。
+- **Prometheus 指标**：`GET /metrics` 暴露 `http_requests_total`、`vfs_ops_total`、`ws_connections`（文本格式，零依赖）。
 - **桌面交互**：窗口拖拽、开始菜单、实时时钟、WebSocket 连接状态指示。
 
 ## 技术栈
@@ -108,7 +109,7 @@ DATABASE_PATH=/var/lib/mini-os/mini-os.db STATIC_DIR=/opt/mini-os/static PORT=80
 ## 测试
 
 ```bash
-cargo test        # 运行 16 个集成测试
+cargo test        # 运行全部测试（单元 + 集成 + 失败注入）
 
 
 
@@ -116,7 +117,7 @@ cargo clippy      # 静态检查
 cargo fmt         # 代码格式化
 ```
 
-集成测试覆盖健康检查、应用列表、文件系统 CRUD、设置读写与统计、文件上传/下载（含超限 413、路径穿越拦截、同名 409、目录下载 400 等边界）等接口行为。CI（`.github/workflows/mini-os.yml`）会在每次提交时依次执行 fmt、clippy、test 与 build。
+集成测试覆盖健康检查、应用列表、文件系统 CRUD、设置读写与统计、文件上传/下载（含超限 413、路径穿越拦截、同名 409、目录下载 400 等边界）等接口行为。metrics 专项测试覆盖端点文本格式合法性、请求计数的实时增长与标签正确性。CI（`.github/workflows/mini-os.yml`）会在每次提交时依次执行 fmt、clippy、test 与 build。
 
 
 
@@ -147,6 +148,7 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 | POST | `/api/files/upload?path=<目录>` | 文件上传（multipart/form-data，字段名 `file`） |
 | GET | `/api/files/download?path=<文件>` | 文件下载（流式，`Content-Disposition: attachment`） |
 | GET | `/ws` | WebSocket 连接入口 |
+| GET | `/metrics` | Prometheus 指标（`text/plain; version=0.0.4`） |
 
 ## 界面截图
 
@@ -176,13 +178,14 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 
 ## 数据与备份
 
-所有持久化数据都在一个 SQLite 文件里（默认 `data/mini-os.db`），包含 `vfs_nodes`、`settings` 与 `schema_migrations`（版本化迁移 001/002，老库启动自动升级）三张表。在线备份：`mini-os backup --db <库> --out <备份>`（或 `scripts/backup.sh` 一键备份，保留最近 7 个）；恢复：`scripts/restore.sh <备份> --force`（恢复前请先停服务，CLI 会自动做完整性校验与原库快照）。探针：`GET /api/health`（存活）、`GET /api/readyz`（就绪，DB 不可用时 503）。日志为 JSONL（stderr），每行带 `request_id`，详见 `docs/OPERATIONS.md`。
+所有持久化数据都在一个 SQLite 文件里（默认 `data/mini-os.db`），包含 `vfs_nodes`、`settings` 与 `schema_migrations`（版本化迁移 001/002，老库启动自动升级）三张表。在线备份：`mini-os backup --db <库> --out <备份>`（或 `scripts/backup.sh` 一键备份，保留最近 7 个）；恢复：`scripts/restore.sh <备份> --force`（恢复前请先停服务，CLI 会自动做完整性校验与原库快照）。探针：`GET /api/health`（存活）、`GET /api/readyz`（就绪，DB 不可用时 503）。指标：`GET /metrics`（Prometheus 文本格式），详见 `docs/OPERATIONS.md` §5.5。日志为 JSONL（stderr），每行带 `request_id`，详见 `docs/OPERATIONS.md`。
 
 
 ## 路线图
 
 - 多用户与鉴权
 - ~~文件上传与下载~~（v1.1.0 已完成）
+- ~~Prometheus /metrics~~（已完成，见 docs/OPERATIONS.md §5.5）
 - 应用商店，支持动态注册第三方应用
 
 
