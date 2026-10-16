@@ -71,6 +71,7 @@ fun App() {
     var issues by remember { mutableStateOf<List<Issue>>(emptyList()) }
     var selectedScene by remember { mutableStateOf<String?>(null) }
     var statusLine by remember { mutableStateOf<String?>(null) }
+    var tab by remember { mutableStateOf(0) }
 
     fun runLint() {
         try {
@@ -96,6 +97,28 @@ fun App() {
                     onSample = { source = loadSample(); runLint() },
                     onValidate = { runLint() }
                 )
+                Row(
+                    Modifier.fillMaxWidth().background(InkSoft)
+                        .border(1.dp, Hairline)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "分支图",
+                        color = if (tab == 0) Vermilion else PaperDim,
+                        fontFamily = Mono,
+                        fontSize = 13.sp,
+                        modifier = Modifier.clickable { tab = 0 }
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        "热力分析",
+                        color = if (tab == 1) Vermilion else PaperDim,
+                        fontFamily = Mono,
+                        fontSize = 13.sp,
+                        modifier = Modifier.clickable { tab = 1 }
+                    )
+                }
                 Row(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxHeight().weight(0.38f)) {
                         EditorPane(
@@ -108,24 +131,28 @@ fun App() {
                         Modifier.fillMaxHeight().weight(0.62f)
                             .border(1.dp, Hairline)
                     ) {
-                        Column(Modifier.fillMaxSize()) {
-                            Box(Modifier.weight(0.62f).fillMaxWidth()) {
-                                GraphPane(
-                                    story = story,
-                                    issues = issues,
-                                    selected = selectedScene,
-                                    onSelect = { selectedScene = it; statusLine = "选中场景 $it" }
-                                )
+                        if (tab == 0) {
+                            Column(Modifier.fillMaxSize()) {
+                                Box(Modifier.weight(0.62f).fillMaxWidth()) {
+                                    GraphPane(
+                                        story = story,
+                                        issues = issues,
+                                        selected = selectedScene,
+                                        onSelect = { selectedScene = it; statusLine = "选中场景 $it" }
+                                    )
+                                }
+                                Box(
+                                    Modifier.weight(0.38f).fillMaxWidth()
+                                        .border(1.dp, Hairline)
+                                        .background(InkSoft)
+                                ) {
+                                    IssuesPane(issues = issues, onPick = { issue ->
+                                        statusLine = "${issue.sceneId ?: "-"}:${issue.line}  ${issue.message}"
+                                    })
+                                }
                             }
-                            Box(
-                                Modifier.weight(0.38f).fillMaxWidth()
-                                    .border(1.dp, Hairline)
-                                    .background(InkSoft)
-                            ) {
-                                IssuesPane(issues = issues, onPick = { issue ->
-                                    statusLine = "${issue.sceneId ?: "-"}:${issue.line}  ${issue.message}"
-                                })
-                            }
+                        } else {
+                            HeatmapPanel()
                         }
                     }
                 }

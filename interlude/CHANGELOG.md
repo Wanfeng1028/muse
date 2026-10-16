@@ -9,6 +9,8 @@
 
 - 玩家路径热力分析：`HeatmapAnalyzer` 对多份对局日志做 choice 节点访问频次聚合与流失点（高跳出 choice）识别；`HeatmapJson` 输出 JSON 报告（node_id/visits/drop_rate）；`HeatmapText` 渲染人类可读文本报告（Top 热门路径 / Top 流失点表格）；CLI 新增 `heatmap` 子命令（多日志输入、`--format text|json`、`--out`）。
 - 热力分析测试 16 例（HeatmapTest 8 / HeatmapTextTest 8：空日志/单路径/环路/流失识别/阈值过滤/CLI）。
+- 桌面端「热力分析」面板：`HeatmapPanel`（目录选择→`HeatmapLoader` 纯逻辑加载→Top 热门路径/节点热力/流失点展示，沿用 App 墨纸暖色视觉）；数据加载逻辑抽到 `replay.HeatmapLoader`（无 Compose 依赖，可直编单测），`HeatmapLoaderTest` 5 例。
+
 
 - .bak 自动备份：`interlude-lint lint` 打开剧本前自动快照（时间戳后缀，保留最近 5 个、超出的删最旧）；新增 `restore` 子命令（`--list` 列出备份、`--index N` 恢复指定版本，恢复前自动备份当前工作文件）；备份/恢复事件记结构化日志（op=backup/restore，不含剧本正文）。
 - 备份恢复测试 10 例（BackupTest）。
