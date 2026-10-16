@@ -95,10 +95,12 @@
     var limitsText = document.getElementById("link-limits-text");
     var editMaxVisits = document.getElementById("edit-maxvisits");
     var editBurn = document.getElementById("edit-burn");
+    var editPurge = document.getElementById("edit-purge");
+    var purgeEffective = !!(data.purge_after_burn || burnPurge);
     if (limitsText) {
       if (data.burn) {
         var burnState = data.enabled ? "阅后即焚（待访问，一次性）" : "阅后即焚（已销毁）";
-        burnState += burnPurge ? "，销毁后彻底删除" : "，销毁后仅禁用、数据留档";
+        burnState += purgeEffective ? "，销毁后彻底删除" : "，销毁后仅禁用、数据留档";
         limitsText.textContent = burnState;
       } else if (data.max_visits != null) {
         limitsText.textContent = "限 " + data.max_visits + " 次，剩余 " + (data.remaining != null ? data.remaining : "—") + " 次";
@@ -109,9 +111,13 @@
     if (editBurn) {
       editBurn.checked = !!data.burn;
     }
+    if (editPurge) {
+      editPurge.checked = !!data.purge_after_burn;
+    }
     if (editMaxVisits) {
       editMaxVisits.value = data.max_visits != null ? data.max_visits : "";
     }
+
     var saveLimits = document.getElementById("save-limits");
     var clearLimits = document.getElementById("clear-limits");
     var pwText = document.getElementById("link-password-text");
@@ -124,8 +130,10 @@
         var mvVal = (editMaxVisits && editMaxVisits.value) ? parseInt(editMaxVisits.value, 10) : null;
         var body = {
           max_visits: (mvVal && mvVal >= 1) ? mvVal : null,
-          burn: editBurn ? !!editBurn.checked : false
+          burn: editBurn ? !!editBurn.checked : false,
+          purge: editPurge ? !!editPurge.checked : false
         };
+
         api("/api/links/" + encodeURIComponent(id), {
           method: "PATCH",
           body: body
@@ -141,8 +149,9 @@
       clearLimits.addEventListener("click", function () {
         api("/api/links/" + encodeURIComponent(id), {
           method: "PATCH",
-          body: { max_visits: null, burn: false }
+          body: { max_visits: null, burn: false, purge: false }
         }).then(function () {
+
           toast("已清除");
           loadDetail();
         }).catch(function (err) {

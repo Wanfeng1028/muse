@@ -69,12 +69,13 @@ func scanLink(scanner interface {
 	Scan(dest ...any) error
 }) (*model.Link, error) {
 	var (
-		l         model.Link
-		enabled   int64
-		expiresAt sql.NullString
-		maxVisits sql.NullInt64
-		burn      int64
-		pwHash    sql.NullString
+		l              model.Link
+		enabled        int64
+		expiresAt      sql.NullString
+		maxVisits      sql.NullInt64
+		burn           int64
+		pwHash         sql.NullString
+		purgeAfterBurn int64
 
 		createdAt string
 		updatedAt string
@@ -82,8 +83,9 @@ func scanLink(scanner interface {
 	)
 	if err := scanner.Scan(
 		&l.ID, &l.Slug, &l.URL, &l.Title, &l.Clicks,
-		&enabled, &expiresAt, &maxVisits, &burn, &pwHash, &createdAt, &updatedAt, &burnedAt,
+		&enabled, &expiresAt, &maxVisits, &burn, &pwHash, &purgeAfterBurn, &createdAt, &updatedAt, &burnedAt,
 	); err != nil {
+
 		return nil, err
 	}
 	l.Enabled = enabled != 0
@@ -120,10 +122,11 @@ func scanLink(scanner interface {
 		return nil, fmt.Errorf("parse burned_at: %w", err)
 	}
 	l.BurnedAt = ba
+	l.PurgeAfterBurn = purgeAfterBurn != 0
 	return &l, nil
 }
 
-const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, password_hash, created_at, updated_at, burned_at`
+const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, password_hash, purge_after_burn, created_at, updated_at, burned_at`
 
 // CreateLink 创建短链。slug 为空时内部生成 6 位随机 slug，冲突时重试并加长。
 // validURL 校验目标 URL：必须 http/https 开头且长度不超过 2048。
@@ -135,12 +138,14 @@ func validURL(u string) bool {
 }
 
 func (s *Store) CreateLink(slug, url, title string, expiresAt *time.Time) (int64, error) {
-	return s.CreateLinkEx(slug, url, title, expiresAt, nil, false)
+	return s.CreateLinkEx(slug, url, title, expiresAt, nil, false, false)
 }
 
-// CreateLinkEx 与 CreateLink 逻辑一致，额外支持 maxVisits 与 burn。
+// CreateLinkEx 与 CreateLink 逻辑一致，额外支持 maxVisits、burn 与 purge。
 // maxVisits 为 nil 表示不限次数；burn 为 true 表示第一次成功跳转后自动禁用。
-func (s *Store) CreateLinkEx(slug, url, title string, expiresAt *time.Time, maxVisits *int64, burn bool) (int64, error) {
+// purge 为 true 表示 burn 链接销毁后彻底删除行与访问日志（仅对 burn=1 有效）。
+func (s *Store) CreateLinkEx(slug, url, title string, expiresAt *time.Time, maxVisits *int64, burn bool, purge bool) (int64, error) {
+
 	if !validURL(url) {
 		return 0, errors.New("url must start with http:// or https://")
 	}
@@ -158,6 +163,10 @@ func (s *Store) CreateLinkEx(slug, url, title string, expiresAt *time.Time, maxV
 	if burn {
 		burnInt = 1
 	}
+	purgeInt := int64(0)
+	if purge {
+		purgeInt = 1
+	}
 
 	// 用户指定 slug 的分支。
 	if slug != "" {
@@ -165,10 +174,11 @@ func (s *Store) CreateLinkEx(slug, url, title string, expiresAt *time.Time, maxV
 			return 0, util.ErrInvalidSlug
 		}
 		res, err := s.db.Exec(
-			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, max_visits, burn, created_at, updated_at)
-			 VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?, ?)`,
-			slug, url, title, expStr, mv, burnInt, nowStr, nowStr,
+			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, max_visits, burn, purge_after_burn, created_at, updated_at)
+			 VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?, ?, ?)`,
+			slug, url, title, expStr, mv, burnInt, purgeInt, nowStr, nowStr,
 		)
+
 		if err != nil {
 			return 0, fmt.Errorf("insert link: %w", err)
 		}
@@ -195,10 +205,11 @@ func (s *Store) CreateLinkEx(slug, url, title string, expiresAt *time.Time, maxV
 			return 0, fmt.Errorf("generate slug: %w", err)
 		}
 		res, err := s.db.Exec(
-			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, max_visits, burn, created_at, updated_at)
-			 VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?, ?)`,
-			generated, url, title, expStr, mv, burnInt, nowStr, nowStr,
+			`INSERT INTO links (slug, url, title, clicks, enabled, expires_at, max_visits, burn, purge_after_burn, created_at, updated_at)
+			 VALUES (?, ?, ?, 0, 1, ?, ?, ?, ?, ?, ?)`,
+			generated, url, title, expStr, mv, burnInt, purgeInt, nowStr, nowStr,
 		)
+
 		if err == nil {
 			id, lerr := res.LastInsertId()
 			if lerr != nil {
@@ -310,12 +321,14 @@ func (s *Store) ListLinks(search string, page, perPage int, orderBy string) ([]*
 
 // UpdateLink 更新短链的 title、enabled、expiresAt 字段。
 func (s *Store) UpdateLink(id int64, title string, enabled bool, expiresAt *time.Time) error {
-	return s.UpdateLinkEx(id, title, enabled, expiresAt, nil, false)
+	return s.UpdateLinkEx(id, title, enabled, expiresAt, nil, false, false)
 }
 
-// UpdateLinkEx 更新短链的 title、enabled、expiresAt、maxVisits、burn 字段。
+// UpdateLinkEx 更新短链的 title、enabled、expiresAt、maxVisits、burn、purge 字段。
 // maxVisits 为 nil 表示不限次数；burn 为 true 表示阅后即焚。
-func (s *Store) UpdateLinkEx(id int64, title string, enabled bool, expiresAt *time.Time, maxVisits *int64, burn bool) error {
+// purge 为 true 表示 burn 链接销毁后彻底删除行与访问日志（仅对 burn=1 有效）。
+func (s *Store) UpdateLinkEx(id int64, title string, enabled bool, expiresAt *time.Time, maxVisits *int64, burn bool, purge bool) error {
+
 	var expStr sql.NullString
 	if expiresAt != nil {
 		expStr = sql.NullString{String: formatTime(*expiresAt), Valid: true}
@@ -332,10 +345,15 @@ func (s *Store) UpdateLinkEx(id int64, title string, enabled bool, expiresAt *ti
 	if burn {
 		burnInt = 1
 	}
+	purgeInt := int64(0)
+	if purge {
+		purgeInt = 1
+	}
 	res, err := s.db.Exec(
-		`UPDATE links SET title = ?, enabled = ?, expires_at = ?, max_visits = ?, burn = ?, updated_at = ? WHERE id = ?`,
-		title, en, expStr, mv, burnInt, formatTime(nowUTC()), id,
+		`UPDATE links SET title = ?, enabled = ?, expires_at = ?, max_visits = ?, burn = ?, purge_after_burn = ?, updated_at = ? WHERE id = ?`,
+		title, en, expStr, mv, burnInt, purgeInt, formatTime(nowUTC()), id,
 	)
+
 	if err != nil {
 		return fmt.Errorf("update link: %w", err)
 	}
@@ -690,7 +708,7 @@ func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 			continue
 		}
 
-		id, cerr := s.CreateLinkEx(slug, url, title, expiresAt, maxVisits, burn)
+		id, cerr := s.CreateLinkEx(slug, url, title, expiresAt, maxVisits, burn, false)
 		if cerr != nil {
 			errs = append(errs, fmt.Sprintf("line %d: create link: %v", lineNo, cerr))
 			skipped++
@@ -698,7 +716,8 @@ func (s *Store) ImportCSV(r io.Reader) (imported, skipped int, errs []string) {
 		}
 		// 若导入数据里 enabled=false，则创建后再更新一次。
 		if !enabled {
-			if uerr := s.UpdateLinkEx(id, title, false, expiresAt, maxVisits, burn); uerr != nil {
+			if uerr := s.UpdateLinkEx(id, title, false, expiresAt, maxVisits, burn, false); uerr != nil {
+
 				errs = append(errs, fmt.Sprintf("line %d: update enabled: %v", lineNo, uerr))
 				skipped++
 				continue

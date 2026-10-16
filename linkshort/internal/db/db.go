@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS links (
 	burn INTEGER NOT NULL DEFAULT 0,
 	password_hash TEXT,
 	burned_at TEXT,
+	purge_after_burn INTEGER NOT NULL DEFAULT 0,
 	created_at TEXT NOT NULL,
+
 
 	updated_at TEXT NOT NULL
 );
@@ -97,7 +99,9 @@ func Open(path string) (*sql.DB, error) {
 // v1 -> v2：links 表新增 max_visits（NULL=不限次数）与 burn（0/1，默认0）。
 // v2 -> v3：links 表新增 password_hash（NULL=未设置密码）。
 // v3 -> v4：links 表新增 burned_at（NULL=未被阅后即焚销毁）。
+// v4 -> v5：links 表新增 purge_after_burn（0/1，默认0）。
 func migrate(db *sql.DB) error {
+
 	var v int
 	if err := db.QueryRow("PRAGMA user_version;").Scan(&v); err != nil {
 		return fmt.Errorf("read user_version: %w", err)
@@ -243,6 +247,53 @@ func migrate(db *sql.DB) error {
 		}
 
 		if _, err := db.Exec("PRAGMA user_version = 4;"); err != nil {
+			return fmt.Errorf("set user_version: %w", err)
+		}
+	}
+
+	if v < 5 {
+		// 检查 purge_after_burn 是否已存在，避免重复 ALTER 导致报错。
+		rows, err := db.Query("PRAGMA table_info(links);")
+		if err != nil {
+			return fmt.Errorf("table_info links: %w", err)
+		}
+		hasPurgeAfterBurn := false
+		for rows.Next() {
+			var (
+				cid       int
+				name      string
+				ctype     string
+				notnull   int
+				dfltValue sql.NullString
+				pk        int
+			)
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				if cerr := rows.Close(); cerr != nil {
+					return fmt.Errorf("scan table_info: %w; close: %v", err, cerr)
+				}
+				return fmt.Errorf("scan table_info: %w", err)
+			}
+			if name == "purge_after_burn" {
+				hasPurgeAfterBurn = true
+			}
+		}
+		if err := rows.Err(); err != nil {
+			if cerr := rows.Close(); cerr != nil {
+				return fmt.Errorf("iterate table_info: %w; close: %v", err, cerr)
+			}
+			return fmt.Errorf("iterate table_info: %w", err)
+		}
+		if err := rows.Close(); err != nil {
+			return fmt.Errorf("close table_info: %w", err)
+		}
+
+		if !hasPurgeAfterBurn {
+			if _, err := db.Exec("ALTER TABLE links ADD COLUMN purge_after_burn INTEGER NOT NULL DEFAULT 0;"); err != nil {
+				return fmt.Errorf("add column purge_after_burn: %w", err)
+			}
+		}
+
+		if _, err := db.Exec("PRAGMA user_version = 5;"); err != nil {
 			return fmt.Errorf("set user_version: %w", err)
 		}
 	}

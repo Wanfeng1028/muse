@@ -282,8 +282,8 @@ func TestMigrate_版本与新列(t *testing.T) {
 	if err := d.QueryRow("PRAGMA user_version").Scan(&v); err != nil {
 		t.Fatalf("查询 user_version 失败: %v", err)
 	}
-	if v != 4 {
-		t.Errorf("user_version 期望 4，实际 %d", v)
+	if v != 5 {
+		t.Errorf("user_version 期望 5，实际 %d", v)
 	}
 
 	rows, err := d.Query("PRAGMA table_info(links)")
@@ -325,7 +325,7 @@ func TestCreateLinkEx_限次与阅后即焚(t *testing.T) {
 	st := newTestStore(t)
 
 	mv := int64(3)
-	id1, err := st.CreateLinkEx("t-mv", "https://example.com/1", "", nil, &mv, false)
+	id1, err := st.CreateLinkEx("t-mv", "https://example.com/1", "", nil, &mv, false, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx 限次失败: %v", err)
 	}
@@ -342,7 +342,7 @@ func TestCreateLinkEx_限次与阅后即焚(t *testing.T) {
 		t.Errorf("Burn 期望 false，实际 true")
 	}
 
-	id2, err := st.CreateLinkEx("t-burn", "https://example.com/2", "", nil, nil, true)
+	id2, err := st.CreateLinkEx("t-burn", "https://example.com/2", "", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx 阅后即焚失败: %v", err)
 	}
@@ -376,7 +376,7 @@ func TestCreateLinkEx_限次与阅后即焚(t *testing.T) {
 func TestMarkBurned(t *testing.T) {
 	st := newTestStore(t)
 
-	idBurn, err := st.CreateLinkEx("t-mb-burn", "https://example.com/burn", "", nil, nil, true)
+	idBurn, err := st.CreateLinkEx("t-mb-burn", "https://example.com/burn", "", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx 失败: %v", err)
 	}
@@ -391,7 +391,7 @@ func TestMarkBurned(t *testing.T) {
 		t.Errorf("MarkBurned 后 Enabled 期望 false，实际 true")
 	}
 
-	idNoBurn, err := st.CreateLinkEx("t-mb-noburn", "https://example.com/noburn", "", nil, nil, false)
+	idNoBurn, err := st.CreateLinkEx("t-mb-noburn", "https://example.com/noburn", "", nil, nil, false, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx 失败: %v", err)
 	}
@@ -409,7 +409,7 @@ func TestUpdateLinkEx(t *testing.T) {
 	}
 
 	mv := int64(5)
-	if err := st.UpdateLinkEx(id, "新标题", true, nil, &mv, true); err != nil {
+	if err := st.UpdateLinkEx(id, "新标题", true, nil, &mv, true, false); err != nil {
 		t.Fatalf("UpdateLinkEx 设置失败: %v", err)
 	}
 	l1, err := st.GetLink(id)
@@ -428,7 +428,7 @@ func TestUpdateLinkEx(t *testing.T) {
 		t.Errorf("Burn 期望 true，实际 false")
 	}
 
-	if err := st.UpdateLinkEx(id, "", true, nil, nil, false); err != nil {
+	if err := st.UpdateLinkEx(id, "", true, nil, nil, false, false); err != nil {
 		t.Fatalf("UpdateLinkEx 清除失败: %v", err)
 	}
 	l2, err := st.GetLink(id)

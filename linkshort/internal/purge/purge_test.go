@@ -28,7 +28,7 @@ func TestStart_短间隔真实触发清理(t *testing.T) {
 	defer cancel()
 	go Start(ctx, st, cfg)
 
-	id, err := st.CreateLinkEx("pg-timer", "https://example.com/timer", "timer", nil, nil, true)
+	id, err := st.CreateLinkEx("pg-timer", "https://example.com/timer", "timer", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx: %v", err)
 	}

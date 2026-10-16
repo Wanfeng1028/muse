@@ -10,7 +10,7 @@ func TestPurgeExpiredBurned_只删超期已销毁(t *testing.T) {
 	st := newTestStore(t)
 
 	// ① 超期已销毁 burn：MarkBurned 后把 burned_at 回拨 10 天。
-	idOld, err := st.CreateLinkEx("pg-old", "https://example.com/old", "old", nil, nil, true)
+	idOld, err := st.CreateLinkEx("pg-old", "https://example.com/old", "old", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx old: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestPurgeExpiredBurned_只删超期已销毁(t *testing.T) {
 	}
 
 	// ② 刚销毁 burn：不回拨。
-	idNew, err := st.CreateLinkEx("pg-new", "https://example.com/new", "new", nil, nil, true)
+	idNew, err := st.CreateLinkEx("pg-new", "https://example.com/new", "new", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx new: %v", err)
 	}
@@ -31,19 +31,19 @@ func TestPurgeExpiredBurned_只删超期已销毁(t *testing.T) {
 	}
 
 	// ③ 未销毁 burn。
-	idNotBurned, err := st.CreateLinkEx("pg-notburned", "https://example.com/nb", "nb", nil, nil, true)
+	idNotBurned, err := st.CreateLinkEx("pg-notburned", "https://example.com/nb", "nb", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx notburned: %v", err)
 	}
 
 	// ④ 普通链。
-	idPlain, err := st.CreateLinkEx("pg-plain", "https://example.com/plain", "plain", nil, nil, false)
+	idPlain, err := st.CreateLinkEx("pg-plain", "https://example.com/plain", "plain", nil, nil, false, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx plain: %v", err)
 	}
 
 	// ⑤ burned_at=NULL 的历史行。
-	idNull, err := st.CreateLinkEx("pg-null", "https://example.com/null", "null", nil, nil, true)
+	idNull, err := st.CreateLinkEx("pg-null", "https://example.com/null", "null", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx null: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestPurgeExpiredBurned_只删超期已销毁(t *testing.T) {
 func TestPurgeExpiredBurned_无超期返回0(t *testing.T) {
 	st := newTestStore(t)
 
-	id, err := st.CreateLinkEx("pg-fresh", "https://example.com/fresh", "fresh", nil, nil, true)
+	id, err := st.CreateLinkEx("pg-fresh", "https://example.com/fresh", "fresh", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestPurgeExpiredBurned_无超期返回0(t *testing.T) {
 func TestMarkBurned_设置BurnedAt(t *testing.T) {
 	st := newTestStore(t)
 
-	id, err := st.CreateLinkEx("pg-mark", "https://example.com/mark", "mark", nil, nil, true)
+	id, err := st.CreateLinkEx("pg-mark", "https://example.com/mark", "mark", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx: %v", err)
 	}

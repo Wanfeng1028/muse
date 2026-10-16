@@ -221,7 +221,61 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 - 指标：`linkshort_backup_last_success_timestamp`（gauge）看最后一次成功备份是多久以前：`time() - linkshort_backup_last_success_timestamp > 86400` 即超过 1 天没成功备份；`linkshort_backup_health_status == 0` 即降级。告警规则示例见 5.3。
 - 排障：health 一直 degraded 先看 `reason` 字段；`last-backup.json` 时间戳不动说明 cron 没跑起来或 backup.sh 没权限写目录。
 
+### 3.9 备份恢复自动化演练（v1.7）
+
+`scripts/backup-drill.sh` 一键跑完「备份 → 删库 → 恢复 → 一致性校验」全流程，失败非零退出；`make drill` 等价于无参调用。
+
+用法：
+
+```bash
+./scripts/backup-drill.sh [--addr 127.0.0.1:PORT] [--keep] [--timeout N] [-h|--help]
+```
+
+- `--addr 127.0.0.1:PORT`：演练服务监听地址，默认 `127.0.0.1:18080`；端口被占则报错退出。
+- `--keep`：保留隔离工作区（不清理），结束时打印路径供排查。
+- `--timeout N`：等待 `/api/readyz` 就绪的最长秒数，默认 `30`。
+- `-h` / `--help`：显示帮助。
+
+演练步骤：
+
+1. `mktemp -d` 建隔离工作区，`trap EXIT` 清理（`--keep` 保留）。
+2. 从仓库根 `go build` 演练用二进制。
+3. 生成随机 admin key，探测 `--addr` 端口占用。
+4. 以隔离 `LINKSHORT_DB` / `LINKSHORT_BACKUP_DIR` 启动服务，轮询 `/api/readyz`。
+5. 建三条链：普通（`drill-plain`）、burn+purge（`drill-burn`）、限次（`drill-max`, `max_visits=2`）。
+6. 访问造数据：`drill-plain`×3、`drill-max`×2、`drill-burn`×1（再访 404），记录 links 行数 / visits 行数 / clicks 总和为快照。
+7. 跑 `scripts/backup.sh`，对备份文件 `PRAGMA integrity_check`，取最新备份路径。
+8. 停服（超时则 `kill -9` 记 FAIL）。
+9. `rm -f` 删库，模拟灾难。
+10. 跑 `scripts/restore.sh <备份> --force`。
+11. 重启服务，等 readyz。
+12. 一致性校验：行数/点击数一致；`drill-plain` 302；`drill-max` 第 3 次 410；`drill-burn` 404；`GET /api/backup/health` 返回 `status=ok`（健康）而非 `degraded`。
+
+退出码：
+
+- `0`：演练通过。
+- `2`：参数或依赖错误（缺 `sqlite3`/`go`/`curl`、端口占用、参数非法）。
+- 其他非零：某步骤 FAIL（`[drill] FAIL <步骤名>: <原因>`）。
+
+建议：
+
+- 上线前跑一次，之后每月跑一次。
+- cron 示例（每月 1 号 04:00）：
+
+  ```bash
+  0 4 1 * * cd /path/to/linkshort && ./scripts/backup-drill.sh >> /var/log/linkshort-drill.log 2>&1
+  ```
+
+- CI 定时任务里跑，作为备份可恢复性的持续验证。
+
+注意：
+
+- 演练全程在 `mktemp -d` 隔离目录进行，不碰生产的 `data/` 与 `backups/`。
+- 需要排查时加 `--keep` 保留现场。
+- 日志里 admin key 只经环境变量传给子进程，不落日志明文。
+
 ## 4. 升级
+
 
 
 

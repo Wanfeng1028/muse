@@ -8,7 +8,7 @@ import (
 func TestPurgeLink_彻底删除并级联清访问日志(t *testing.T) {
 	st := newTestStore(t)
 
-	id, err := st.CreateLinkEx("t-pg-1", "https://example.com/x", "", nil, nil, true)
+	id, err := st.CreateLinkEx("t-pg-1", "https://example.com/x", "", nil, nil, true, false)
 	if err != nil {
 		t.Fatalf("CreateLinkEx 失败: %v", err)
 	}

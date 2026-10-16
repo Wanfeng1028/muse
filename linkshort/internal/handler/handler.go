@@ -163,6 +163,8 @@ type linkJSON struct {
 	Burn        bool    `json:"burn"`
 	Remaining   *int64  `json:"remaining"`
 	HasPassword bool    `json:"has_password"`
+
+	PurgeAfterBurn bool `json:"purge_after_burn"`
 }
 
 func toLinkJSON(l *model.Link, base string) linkJSON {
@@ -200,6 +202,8 @@ func toLinkJSON(l *model.Link, base string) linkJSON {
 		Burn:        l.Burn,
 		Remaining:   remaining,
 		HasPassword: l.PasswordHash != nil,
+
+		PurgeAfterBurn: l.PurgeAfterBurn,
 	}
 
 }
@@ -321,10 +325,17 @@ func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st
 			log.Printf("handler: 标记阅后销毁失败 link=%d: %v", link.ID, err)
 		} else {
 			metrics.Default.IncBurned()
-			if cfg.BurnPurgeAfterDestroy {
+			purgeCause := ""
+			if link.PurgeAfterBurn {
+				purgeCause = "per-link"
+			} else if cfg.BurnPurgeAfterDestroy {
+				purgeCause = "env"
+			}
+			if purgeCause != "" {
 				if perr := st.PurgeLink(link.ID); perr != nil {
 					log.Printf("handler: 彻底删除已销毁链接失败 link=%d: %v", link.ID, perr)
 				} else {
+					log.Printf("handler: 彻底删除已销毁链接 link=%d slug=%s cause=%s", link.ID, link.Slug, purgeCause)
 					metrics.Default.IncBurnPurged()
 				}
 			}
@@ -366,6 +377,7 @@ type createLinkReq struct {
 	ExpiresAt *string `json:"expires_at"`
 	MaxVisits *int64  `json:"max_visits"`
 	Burn      bool    `json:"burn"`
+	Purge     *bool   `json:"purge"`
 	Password  string  `json:"password"`
 }
 
@@ -415,8 +427,13 @@ func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, c
 		writeError(w, http.StatusBadRequest, "阅后即焚不能与限次访问同时设置")
 		return
 	}
+	if req.Purge != nil && *req.Purge && !req.Burn {
+		writeError(w, http.StatusBadRequest, "只有阅后即焚链接才能设置销毁后彻底删除")
+		return
+	}
 
 	var pwHash *string
+
 	if req.Password != "" {
 		if err := auth.ValidPasswordPolicy(req.Password); err != nil {
 			writeError(w, http.StatusBadRequest, err.Error())
@@ -430,11 +447,13 @@ func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, c
 		pwHash = &h
 	}
 
-	id, err := st.CreateLinkEx(req.Slug, req.URL, req.Title, expiresAt, req.MaxVisits, req.Burn)
+	purge := req.Purge != nil && *req.Purge
+	id, err := st.CreateLinkEx(req.Slug, req.URL, req.Title, expiresAt, req.MaxVisits, req.Burn, purge)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	if pwHash != nil {
 		if err := st.SetLinkPassword(id, *pwHash); err != nil {
 			// 密码落库失败时回滚整条短链，避免"建了链但密码没设上"的半吊子状态。
@@ -515,6 +534,7 @@ type patchLinkReq struct {
 	ExpiresAt json.RawMessage `json:"expires_at"`
 	MaxVisits json.RawMessage `json:"max_visits"`
 	Burn      *bool           `json:"burn"`
+	Purge     *bool           `json:"purge"`
 	Password  *string         `json:"password"`
 }
 
@@ -593,8 +613,16 @@ func handlePatchLink(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 	if req.Burn != nil {
 		burn = *req.Burn
 	}
+	purge := existing.PurgeAfterBurn
+	if req.Purge != nil {
+		purge = *req.Purge
+	}
 	if burn && maxVisits != nil && *maxVisits != 1 {
 		writeError(w, http.StatusBadRequest, "阅后即焚不能与限次访问同时设置")
+		return
+	}
+	if purge && !burn {
+		writeError(w, http.StatusBadRequest, "只有阅后即焚链接才能设置销毁后彻底删除")
 		return
 	}
 
@@ -621,7 +649,7 @@ func handlePatchLink(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		}
 	}
 
-	if err := st.UpdateLinkEx(id, title, enabled, expiresAt, maxVisits, burn); err != nil {
+	if err := st.UpdateLinkEx(id, title, enabled, expiresAt, maxVisits, burn, purge); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

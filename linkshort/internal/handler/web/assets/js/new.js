@@ -16,8 +16,8 @@
   var resultQr = document.getElementById("result-qr");
   var maxVisitsEl = document.getElementById("max-visits");
   var burnEl = document.getElementById("burn");
+  var purgeEl = document.getElementById("purge");
   var passwordEl = document.getElementById("password");
-
 
   if (!form) return;
 
@@ -27,8 +27,17 @@
       if (burnEl.checked) {
         maxVisitsEl.value = "";
       }
+      if (purgeEl) {
+        purgeEl.disabled = !burnEl.checked;
+        if (!burnEl.checked) purgeEl.checked = false;
+      }
     });
   }
+  if (burnEl && purgeEl) {
+    purgeEl.disabled = !burnEl.checked;
+    if (!burnEl.checked) purgeEl.checked = false;
+  }
+
 
 
 
@@ -62,9 +71,13 @@
     if (burnEl && burnEl.checked) {
       body.burn = true;
     }
+    if (purgeEl && purgeEl.checked && burnEl && burnEl.checked) {
+      body.purge = true;
+    }
     if (passwordEl && passwordEl.value) {
       body.password = passwordEl.value;
     }
+
 
 
 

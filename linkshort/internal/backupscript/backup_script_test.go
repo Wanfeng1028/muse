@@ -54,7 +54,7 @@ func makeRealDB(t *testing.T) string {
 		t.Fatalf("db.Open(%q) 失败: %v", dbPath, err)
 	}
 	st := store.New(database)
-	if _, err := st.CreateLinkEx("", "https://example.com/a", "t", nil, nil, false); err != nil {
+	if _, err := st.CreateLinkEx("", "https://example.com/a", "t", nil, nil, false, false); err != nil {
 		database.Close()
 		t.Fatalf("CreateLinkEx 失败: %v", err)
 	}

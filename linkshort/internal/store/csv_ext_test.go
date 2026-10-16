@@ -109,13 +109,13 @@ func TestExportCSV_RoundTrip(t *testing.T) {
 	s1 := newTestStore(t)
 
 	mv := int64(3)
-	if _, err := s1.CreateLinkEx("rt-plain", "https://example.com/p", "普通", nil, nil, false); err != nil {
+	if _, err := s1.CreateLinkEx("rt-plain", "https://example.com/p", "普通", nil, nil, false, false); err != nil {
 		t.Fatalf("CreateLinkEx(plain): %v", err)
 	}
-	if _, err := s1.CreateLinkEx("rt-limited", "https://example.com/l", "限次", nil, &mv, false); err != nil {
+	if _, err := s1.CreateLinkEx("rt-limited", "https://example.com/l", "限次", nil, &mv, false, false); err != nil {
 		t.Fatalf("CreateLinkEx(limited): %v", err)
 	}
-	if _, err := s1.CreateLinkEx("rt-burn", "https://example.com/b", "burn", nil, nil, true); err != nil {
+	if _, err := s1.CreateLinkEx("rt-burn", "https://example.com/b", "burn", nil, nil, true, false); err != nil {
 		t.Fatalf("CreateLinkEx(burn): %v", err)
 	}
 

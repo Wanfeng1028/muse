@@ -4,7 +4,31 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.7.0] - 2026-10-16
+
+### 新增
+
+- burn 逐条 purge：`POST /api/links` 与 `PATCH /api/links/{id}` 新增 `purge` 字段；`purge=true` 仅当 burn 链接有效，非 burn 链传 `purge=true` 返回 400（"只有阅后即焚链接才能设置销毁后彻底删除"）；响应新增 `purge_after_burn` 布尔字段。
+- DB 迁移 v4→v5：`links.purge_after_burn INTEGER NOT NULL DEFAULT 0`，老库自动 ALTER，老行默认 0。
+- 销毁语义：逐条 `purge=true` 或全局 `LINKSHORT_BURN_PURGE_AFTER_DESTROY=true` 任一成立即彻底删除行（含 visits 级联）。
+- 审计日志：`handler: 彻底删除已销毁链接 link=<id> slug=<slug> cause=per-link|env`。
+- 指标复用 `linkshort_burn_links_purged_total`。
+- Web UI 新建页与详情页各加一个"销毁后彻底删除"复选框（新建页仅 burn 勾选时可用）。
+- `scripts/backup-drill.sh` 一键自动化演练：构建→起服务→建链（含普通/burn+purge/限次）→访问造数据→快照→backup.sh 备份→停服→删库→restore.sh --force 恢复→重启→一致性校验（links/visits/clicks 行数一致、普通链 302、限次链第 3 次 410、burn+purge 链 404、`/api/backup/health` status=ok）；用法 `backup-drill.sh [--addr 127.0.0.1:PORT] [--keep] [--timeout N]`；退出码 0 通过 / 2 参数或依赖缺失 / 其他非零为某步 FAIL；演练全程 mktemp 隔离工作区不碰生产 data/ 与 backups/。
+- Makefile 新增 `make drill`；OPERATIONS.md 新增 3.9 节。
+- 新增 9 例测试（store 4——v4→v5 真实迁移/CreateLinkEx purge 标记/UpdateLinkEx purge 标记/PurgeLink 删行+visits 级联；handler 5——purge 非 burn 报 400/逐条 purge 302→404/默认软保留 302→410/PATCH 设 purge/全局开关仍有效）；`go test ./... -race` 104 例全过。
+
+### 变更
+
+- 无破坏性变更。默认行为与 v1.6.0 一致。
+
+### 已知缺口
+
+- v1.5 之前销毁的 burn 链没有 `burned_at`，定时清理仍跳过它们（v1.5 起已知）。
+- PATCH 把 burn 设为 false 时若该链 `purge=true` 会 400，需先把 purge 设 false（严格校验，有意为之）。
+
 ## [v1.6.0] - 2026-10-16
+
 
 ### 新增
 

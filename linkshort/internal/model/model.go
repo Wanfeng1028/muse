@@ -16,6 +16,8 @@ type Link struct {
 	PasswordHash *string    // 密码的 bcrypt 哈希，nil 表示未设置密码
 	BurnedAt     *time.Time // 阅后即焚销毁时间（UTC），nil 表示未销毁
 
+	PurgeAfterBurn bool // 销毁后彻底删除：burn 链接销毁后是否彻底删除行与访问日志；仅对 burn=1 的链接有效，默认 false
+
 	CreatedAt time.Time // 创建时间（UTC）
 
 	UpdatedAt time.Time // 更新时间（UTC）
