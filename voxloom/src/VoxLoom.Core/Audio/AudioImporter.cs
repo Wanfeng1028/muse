@@ -1,3 +1,5 @@
+using VoxLoom.Core.Logging;
+
 namespace VoxLoom.Core.Audio;
 
 /// <summary>
@@ -79,6 +81,9 @@ public static class AudioImporter
     /// <param name="ffmpegPath">显式指定的 ffmpeg 路径，可为 null。</param>
     /// <returns>读取到的 AudioClip。</returns>
     public static AudioClip Import(string path, string? ffmpegPath = null)
+        => VoxMetrics.Timed("audio.import", () => ImportCore(path, ffmpegPath));
+
+    private static AudioClip ImportCore(string path, string? ffmpegPath)
     {
         var format = DetectFormat(path);
         switch (format)

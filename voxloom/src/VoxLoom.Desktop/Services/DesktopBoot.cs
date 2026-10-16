@@ -29,6 +29,7 @@ public static class DesktopBoot
 
         Config = config;
         Logger = VoxLogger.Create(config.LogDirectory);
+        VoxMetrics.Initialize(config.LogDirectory);
         Logger.Info("VoxLoom 启动", new { version = typeof(DesktopBoot).Assembly.GetName().Version?.ToString() });
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using VoxLoom.Core.Audio;
 using VoxLoom.Core.Transcript;
 
+using VoxLoom.Core.Logging;
 namespace VoxLoom.Core.Alignment;
 
 /// <summary>
@@ -17,6 +18,9 @@ public static class RuleBasedAligner
 
     /// <summary>对粗估转写稿进行时间精修。</summary>
     public static TranscriptDoc Refine(AudioClip clip, TranscriptDoc rough)
+        => VoxMetrics.Timed("align", () => RefineCore(clip, rough));
+
+    private static TranscriptDoc RefineCore(AudioClip clip, TranscriptDoc rough)
     {
         ArgumentNullException.ThrowIfNull(clip);
         ArgumentNullException.ThrowIfNull(rough);

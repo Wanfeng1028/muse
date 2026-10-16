@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using VoxLoom.Core.Transcript;
 
+using VoxLoom.Core.Logging;
 namespace VoxLoom.Core.Editing;
 
 /// <summary>
@@ -21,6 +22,12 @@ public static class EdlExporter
     /// <param name="events">事件列表：每个事件包含源时间区间与录制起点。</param>
     /// <param name="sampleRate">源音频采样率（保留供扩展；当前时间码按秒换算）。</param>
     public static string ExportCmx3600(
+        string tapeName,
+        IReadOnlyList<(TimeRange SourceRange, TimeSpan RecordStart)> events,
+        int sampleRate)
+        => VoxMetrics.Timed("export.edl", () => ExportCmx3600Core(tapeName, events, sampleRate));
+
+    private static string ExportCmx3600Core(
         string tapeName,
         IReadOnlyList<(TimeRange SourceRange, TimeSpan RecordStart)> events,
         int sampleRate)

@@ -47,6 +47,9 @@ public sealed class BackupManager
         => CreateBackup(projectDirectory, projectName, null);
 
     public BackupRecord CreateBackup(string projectDirectory, string projectName, string? password = null)
+        => VoxMetrics.Timed("backup.create", () => CreateBackupCore(projectDirectory, projectName, password));
+
+    private BackupRecord CreateBackupCore(string projectDirectory, string projectName, string? password)
     {
         var encrypt = false;
         if (password is not null)
@@ -158,6 +161,9 @@ public sealed class BackupManager
         => Restore(backupId, targetDirectory, null);
 
     public void Restore(string backupId, string targetDirectory, string? password = null)
+        => VoxMetrics.Timed("backup.restore", () => { RestoreCore(backupId, targetDirectory, password); });
+
+    private void RestoreCore(string backupId, string targetDirectory, string? password)
     {
         if (string.IsNullOrWhiteSpace(backupId))
             throw new BackupException("备份编号不能为空");

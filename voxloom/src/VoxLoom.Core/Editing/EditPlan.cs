@@ -4,6 +4,7 @@ using System.Linq;
 using VoxLoom.Core.Audio;
 using VoxLoom.Core.Transcript;
 
+using VoxLoom.Core.Logging;
 namespace VoxLoom.Core.Editing;
 
 /// <summary>
@@ -66,6 +67,9 @@ public sealed class EditPlan
     /// SampleRate / Channels 与源一致。
     /// </summary>
     public AudioClip Render()
+        => VoxMetrics.Timed("edit.apply", () => RenderCore());
+
+    private AudioClip RenderCore()
     {
         int sampleRate = Source.SampleRate;
         int channels = Source.Channels;

@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
+using VoxLoom.Core.Logging;
 namespace VoxLoom.Core.Transcript;
 
 /// <summary>
@@ -17,6 +18,9 @@ public static class TranscriptImporter
     /// 优先使用 segments[].words[] 词级时间；若缺失则按 segments 内字数均分。
     /// </summary>
     public static TranscriptDoc ParseWhisperJson(string json)
+        => VoxMetrics.Timed("transcript.import", () => ParseWhisperJsonCore(json));
+
+    private static TranscriptDoc ParseWhisperJsonCore(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -120,6 +124,9 @@ public static class TranscriptImporter
     /// 解析 LRC 格式：每行形如 [mm:ss.cc] 文本，词级时间按行内字数均分。
     /// </summary>
     public static TranscriptDoc ParseLrc(string lrc)
+        => VoxMetrics.Timed("transcript.import", () => ParseLrcCore(lrc));
+
+    private static TranscriptDoc ParseLrcCore(string lrc)
     {
         if (string.IsNullOrWhiteSpace(lrc))
         {
@@ -205,6 +212,9 @@ public static class TranscriptImporter
     /// 解析纯文本：按字符数均分 totalDuration。
     /// </summary>
     public static TranscriptDoc ParsePlainText(string text, TimeSpan totalDuration)
+        => VoxMetrics.Timed("transcript.import", () => ParsePlainTextCore(text, totalDuration));
+
+    private static TranscriptDoc ParsePlainTextCore(string text, TimeSpan totalDuration)
     {
         if (text is null)
         {

@@ -30,13 +30,15 @@ dotnet run --project src/VoxLoom.Desktop
 
 启动后点界面上的「载入演示」按钮。内置演示工程（DemoProjectGenerator）会自动生成一段带转写稿的音频，不用自己准备素材就能走完整个流程：看波形、点文字跳音频、删句子、弱化语气词、导出 EDL。 导入 MP3 / FLAC / M4A 需要本机装有 ffmpeg（Ubuntu/Debian：`sudo apt install ffmpeg`；macOS：`brew install ffmpeg`），也可用环境变量 `VOXLOOM_FFMPEG_PATH` 指定路径；WAV 不需要。
 
+命令行模式（不用开界面）：`--demo-wav <输出wav>` 生成演示音频与转写稿；`--screenshot <输出png>` 在 Xvfb 下离屏抓屏；`--metrics [--json] [--hours N]` 汇总近 N 小时操作指标（默认 24 小时）；`--probe-import/--probe-backup/--probe-restore` 是给运维脚本用的探针（成功输出 `OK` 开头，失败 `ERROR:` 开头，退出码 0/2/3）。配置走 `config.json` + `VOXLOOM_*` 环境变量覆盖（`VOXLOOM_LOG_DIR`、`VOXLOOM_BACKUP_DIR`、`VOXLOOM_FFMPEG_PATH` 等），配置文件里不许放密钥，启动时校验，违规退出码 2。
+
 跑测试：
 
 ```bash
 dotnet test VoxLoom.sln
 ```
 
-44 个 xUnit 测试。
+93 个测试全绿（本地用 tests/VoxLoom.SmokeRunner 反射直跑全部 [Fact]；CI 走 vstest）。
 
 ---
 
@@ -109,6 +111,8 @@ Core 与 UI 完全解耦，可以单独引用。如果你只想用剪辑逻辑�
 3. **文字删除 → 音频剪辑** — 在文字上删掉句子，自动生成剪辑操作。剪辑点自动找过零点并加短交叉淡化，避免爆音。
 4. **语气词一键弱化** — 检测「嗯」「那个」这类语气词，衰减 12dB 而不是直接静音。保留呼吸节奏，听感更自然。这是刻意设计的选择：静音会让语句之间出现生硬的断裂，弱化则保留了说话的呼吸感。
 5. **导出 EDL** — 给 Premiere / Reaper 做精修。VoxLoom 不打算取代专业 DAW，它负责把粗剪做完。
+6. **备份与恢复** — 删除/弱化前自动备份，工具栏可手动备份/恢复（zip + manifest + sha256 校验，保留最近 10 份）；备份可加密（PBKDF2-SHA256 派生 AES-256-GCM，密码只走环境变量 `VOXLOOM_BACKUP_PASSWORD`）；恢复前先看文件清单再确认。
+7. **日志与指标** — 结构化 JSON 日志（op_id 全链路关联、敏感字段脱敏、5MB 轮转保留 10 份，控制台是人读格式）；操作指标落 `metrics-*.jsonl`（转写导入/对齐/剪辑/导出/备份的计数与延迟），`--metrics` 看汇总，`scripts/check-alerts.sh` 按 `docs/ALERTS.md` 判告警。
 
 界面文案是中文人话，比如按钮写的是「把这句剪掉」，不是「Delete Segment」。
 
@@ -130,7 +134,7 @@ Core 与 UI 完全解耦，可以单独引用。如果你只想用剪辑逻辑�
 - **对齐是规则 + 轻量方案**，不是声学模型。转写稿时间戳质量差的时候，对齐结果会跟着差。v2 上 ONNX 本地声学模型做精对齐。
 - **没有协作功能**。这是本地单机工具。
 - **不做多轨混音**。它做的是单条人声的粗剪，精修交给 DAW。
-- **备份 zip 未加密**。如需保密请用系统级磁盘加密（见 docs/SECURITY_DATA.md）；加密备份列入 v2。
+- **备份加密是可选的**。默认备份 zip 不加密（见 docs/SECURITY_DATA.md 的敏感数据策略）；需要保密时备份传入密码即走 AES-256-GCM 加密，密码只走环境变量 `VOXLOOM_BACKUP_PASSWORD`，不落配置文件。
 
 如果你需要的是内置转写 + 云端协作，v1 不适合你，等 v2 或直接用 Descript。
 

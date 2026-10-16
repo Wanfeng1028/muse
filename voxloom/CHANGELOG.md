@@ -15,8 +15,26 @@
 ### Fixed（v1.1）
 - 日志轮转保留数多一个的 bug（先裁剪后建新文件导致稳态为 N+1）
 - NAudio 的 Mp3FileReader 在 Linux 上不可用（依赖 Msacm32.dll），MP3 改走 ffmpeg，移除 NAudio 依赖
+### Added（v1.2）
+- 备份加密：`BackupManager.CreateBackup` 三参重载（`string? password = null`，双参保留兼容）；PBKDF2-SHA256（200,000 轮）派生 AES-256-GCM，文件格式 `VXENC1` 魔数+salt(16)+nonce(12)+tag(16)+密文，扩展名保持 `.zip`，恢复时按魔数自动识别；空密码/错密码给中文报错；无密码行为与旧格式完全兼容；密码永不进日志
+- 恢复前文件清单预览：`ListBackupContents` 列出备份内文件（路径/大小/修改时间 UTC），`RestoreWithPreview` 打印清单→确认（`--yes` 跳过，拒绝则目标目录保持原样）
+- 控制台日志人读格式：新增 `VoxConsoleFormat`（耗时/字节人读、表格 CJK 对齐、进度条、级别配色、重定向自动禁用颜色），文件日志保持 JSON；VoxLoom.Core 保持零第三方依赖
+
+## [1.3.0] - 2026-10-16
+
+### Added
+- 操作指标：`VoxLoom.Core.Logging.VoxMetrics` 记录转写导入/对齐/剪辑/EDL 导出/备份恢复的操作计数与延迟，落 `metrics-YYYYMMDD.jsonl`（字段 ts/op/duration_ms/success/error_type/items，复用 5MB/10 份体积轮转）；`VoxLoom.Desktop --metrics [--json] [--hours N]` 输出汇总
+- 告警：`docs/ALERTS.md`（转写失败率/剪辑冲突率/磁盘空间不足/备份失败 4 条规则：阈值/级别/处置步骤）+ `scripts/check-alerts.sh`（扫描 metrics.jsonl，退出码 0=无告警、1=警告、2=严重）
+- 故障演练：`scripts/fault-drill.sh`（损坏音频拒绝不崩溃、只读存储模拟磁盘满、kill -9 后半截备份拒绝恢复、位翻转备份拒绝恢复，每项 PASS/FAIL 明确输出；另附 ulimit -f 下 SIGXFSZ 行为的实测说明）
+- 运维探针 CLI：`--probe-import/--probe-backup/--probe-restore`（成功 `OK` 退出 0，失败 `ERROR:` 退出 3，备份密码只读环境变量 `VOXLOOM_BACKUP_PASSWORD`）
+- 运维手册：`docs/OPERATIONS.md` 补齐配置/日志/指标告警/备份恢复/演练/排障章节
+
+### Fixed
+- README 过时信息修正：测试数 44→93（SmokeRunner/CI 说明）、"备份 zip 未加密"改为可选加密说明、补 CLI/日志/指标章节（偿还 TD-009）
+- CHANGELOG 补 v1.2 条目（偿还 TD-008）；TD-006（控制台人读格式）经核验已由 v1.2 的 VoxConsoleFormat 实现，标记已偿还
 
 ## [0.1.0] - 2026-10-13
+
 
 首个可用版本：中文播客文字剪辑核心链路跑通。
 
