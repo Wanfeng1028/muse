@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { WordWithState, CreateWordInput, ReviewGrade } from '@kaoyan/shared';
+import type { WordWithState, CreateWordInput, ReviewGrade, WordSource } from '@kaoyan/shared';
+import { WORD_SOURCES } from '@kaoyan/shared';
 import { api } from '../api';
 
 // 单词 SRS 复习页：今日复习队列 + 词表管理
@@ -22,8 +23,16 @@ export default function Words() {
     example: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<'all' | WordSource>('all');
 
   const current = queue[0];
+  const filteredWords =
+    sourceFilter === 'all' ? words : words.filter((w) => w.source === sourceFilter);
+  const learned = words.filter((w) => w.state.repetitions > 0).length;
+  const learnedRate = words.length > 0 ? Math.round((learned / words.length) * 100) : 0;
+  const sourceCounts = (Object.keys(WORD_SOURCES) as WordSource[])
+    .map((k) => ({ key: k, name: WORD_SOURCES[k], count: words.filter((w) => w.source === k).length }))
+    .filter((s) => s.count > 0);
 
   // 加载今日复习队列
   const loadQueue = useCallback(async () => {
@@ -165,7 +174,27 @@ export default function Words() {
         )}
       </div>
 
-      {/* ② 词表管理 */}
+      {/* ② 学习进度 */}
+      <div className="card" style={{ marginTop: 16 }}>
+        <h2>学习进度</h2>
+        <div className="form-row" style={{ gap: 24, marginBottom: 12 }}>
+          <span className="stat-label">词库总数 {words.length}</span>
+          <span className="stat-label">已学习 {learned}</span>
+          <span className="stat-label">今日待复习 {total}</span>
+        </div>
+        <div className="progress" style={{ marginBottom: 12 }}>
+          <div
+            className="progress-bar"
+            style={{ width: `${learnedRate}%`, backgroundColor: '#206bc4' }}
+          />
+        </div>
+        <div className="text-muted" style={{ fontSize: 13 }}>
+          已学习 {learned} / {words.length}（{learnedRate}%）
+          {sourceCounts.length > 0 && '；' + sourceCounts.map((s) => `${s.name} ${s.count}`).join(' · ')}
+        </div>
+      </div>
+
+      {/* ③ 词表管理 */}
       <div className="card" style={{ marginTop: 16 }}>
         <h2>词表管理</h2>
 
@@ -199,12 +228,32 @@ export default function Words() {
           </button>
         </form>
 
+        <div className="form-row" style={{ marginBottom: 12 }}>
+          <label className="form-label" style={{ margin: 0 }}>
+            词库来源
+          </label>
+          <select
+            className="form-select"
+            style={{ width: 180 }}
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value as 'all' | WordSource)}
+          >
+            <option value="all">全部来源</option>
+            {(Object.keys(WORD_SOURCES) as WordSource[]).map((k) => (
+              <option key={k} value={k}>
+                {WORD_SOURCES[k]}
+              </option>
+            ))}
+          </select>
+          <span className="stat-label">共 {filteredWords.length} 个</span>
+        </div>
+
         {loadingWords ? (
           <div className="loading">加载中…</div>
         ) : wordsError ? (
           <div className="error-box">{wordsError}</div>
-        ) : words.length === 0 ? (
-          <div className="empty">暂无单词</div>
+        ) : filteredWords.length === 0 ? (
+          <div className="empty">{sourceFilter === 'all' ? '暂无单词' : '该来源暂无单词'}</div>
         ) : (
           <table className="table">
             <thead>
@@ -212,16 +261,18 @@ export default function Words() {
                 <th>单词</th>
                 <th>音标</th>
                 <th>释义</th>
+                <th>来源</th>
                 <th>到期日</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {words.map((w) => (
+              {filteredWords.map((w) => (
                 <tr key={w.id}>
                   <td>{w.word}</td>
                   <td>{w.phonetic}</td>
                   <td>{w.meaning}</td>
+                  <td>{WORD_SOURCES[w.source] ?? w.source}</td>
                   <td>{w.state.dueDate}</td>
                   <td>
                     <button className="btn btn-danger btn-sm" onClick={() => handleDelete(w.id)}>

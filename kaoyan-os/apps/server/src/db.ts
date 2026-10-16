@@ -38,7 +38,8 @@ export function initSchema(db: DatabaseSync): void {
       word TEXT NOT NULL UNIQUE,
       phonetic TEXT NOT NULL DEFAULT '',
       meaning TEXT NOT NULL DEFAULT '',
-      example TEXT NOT NULL DEFAULT ''
+      example TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL DEFAULT 'manual'
     );
 
     CREATE TABLE IF NOT EXISTS srs_state (

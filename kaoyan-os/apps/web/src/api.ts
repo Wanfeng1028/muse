@@ -17,6 +17,7 @@ import type {
   CreateExamInput,
   ExamTrendPoint,
   Settings,
+  WeeklyStats,
 } from '@kaoyan/shared';
 
 export interface BackupPayload {
@@ -161,4 +162,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ csv }),
     }),
+
+  // 周报
+  weeklyStats: (start?: string) =>
+    request<WeeklyStats>(`/stats/weekly${qs({ start })}`),
 };

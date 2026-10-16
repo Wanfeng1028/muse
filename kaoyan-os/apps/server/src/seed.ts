@@ -50,14 +50,14 @@ export function seedIfEmpty(db: DatabaseSync): void {
     ];
 
     const insertWord = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example) VALUES (?, ?, ?, ?)'
+      'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)'
     );
     const insertSrs = db.prepare(
       'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
     );
 
     for (const w of wordList) {
-      const result = insertWord.run(w.word, w.phonetic, w.meaning, w.example);
+      const result = insertWord.run(w.word, w.phonetic, w.meaning, w.example, 'builtin');
       const wordId = Number(result.lastInsertRowid);
       insertSrs.run(wordId, 2.5, 0, 0, today);
     }

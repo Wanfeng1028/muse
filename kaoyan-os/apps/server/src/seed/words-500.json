@@ -1,0 +1,5483 @@
+[
+ {
+  "word": "abolish",
+  "phonetic": "/əˈbɒlɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "废除",
+   "取消"
+  ],
+  "example_en": "Congress voted to abolish the outdated tax law.",
+  "example_zh": "国会投票废除了过时的税法。"
+ },
+ {
+  "word": "abrupt",
+  "phonetic": "/əˈbrʌpt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "突然的",
+   "唐突的"
+  ],
+  "example_en": "The abrupt change in policy surprised investors.",
+  "example_zh": "政策的突然变化令投资者惊讶。"
+ },
+ {
+  "word": "absorb",
+  "phonetic": "/əbˈzɔːb/",
+  "pos": "v.",
+  "meanings_zh": [
+   "吸收",
+   "吸引"
+  ],
+  "example_en": "Plants absorb carbon dioxide from the air.",
+  "example_zh": "植物从空气中吸收二氧化碳。"
+ },
+ {
+  "word": "absurd",
+  "phonetic": "/əbˈsɜːd/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "荒谬的",
+   "可笑的"
+  ],
+  "example_en": "It seems absurd to blame the victim.",
+  "example_zh": "责怪受害者似乎很荒谬。"
+ },
+ {
+  "word": "abundant",
+  "phonetic": "/əˈbʌndənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "丰富的",
+   "充足的"
+  ],
+  "example_en": "The region has abundant natural resources.",
+  "example_zh": "该地区拥有丰富的自然资源。"
+ },
+ {
+  "word": "accelerate",
+  "phonetic": "/əkˈseləreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "加速",
+   "促进"
+  ],
+  "example_en": "New technology may accelerate economic growth.",
+  "example_zh": "新技术可能加速经济增长。"
+ },
+ {
+  "word": "accessible",
+  "phonetic": "/əkˈsesəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "可接近的",
+   "易得到的"
+  ],
+  "example_en": "Online courses make education accessible to more people.",
+  "example_zh": "网络课程使更多人能够接受教育。"
+ },
+ {
+  "word": "accommodate",
+  "phonetic": "/əˈkɒmədeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "容纳",
+   "适应"
+  ],
+  "example_en": "The hotel can accommodate up to 500 guests.",
+  "example_zh": "这家酒店可容纳多达500名客人。"
+ },
+ {
+  "word": "accompany",
+  "phonetic": "/əˈkʌmpəni/",
+  "pos": "v.",
+  "meanings_zh": [
+   "陪伴",
+   "伴随"
+  ],
+  "example_en": "Economic growth is often accompanied by inflation.",
+  "example_zh": "经济增长常常伴随通货膨胀。"
+ },
+ {
+  "word": "accomplish",
+  "phonetic": "/əˈkʌmplɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "完成",
+   "实现"
+  ],
+  "example_en": "She accomplished the task ahead of schedule.",
+  "example_zh": "她提前完成了任务。"
+ },
+ {
+  "word": "accord",
+  "phonetic": "/əˈkɔːd/",
+  "pos": "n.",
+  "meanings_zh": [
+   "一致",
+   "协议"
+  ],
+  "example_en": "The two sides reached an accord on trade.",
+  "example_zh": "双方就贸易达成了协议。"
+ },
+ {
+  "word": "account",
+  "phonetic": "/əˈkaʊnt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "解释",
+   "占"
+  ],
+  "example_en": "Scientists must account for these unexpected results.",
+  "example_zh": "科学家必须解释这些意外结果。"
+ },
+ {
+  "word": "accurate",
+  "phonetic": "/ˈækjərət/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "准确的",
+   "精确的"
+  ],
+  "example_en": "Accurate data are essential for sound research.",
+  "example_zh": "准确的数据对可靠研究至关重要。"
+ },
+ {
+  "word": "accuse",
+  "phonetic": "/əˈkjuːz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "指控",
+   "指责"
+  ],
+  "example_en": "They accused the company of hiding evidence.",
+  "example_zh": "他们指控该公司隐瞒证据。"
+ },
+ {
+  "word": "acknowledge",
+  "phonetic": "/əkˈnɒlɪdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "承认",
+   "确认"
+  ],
+  "example_en": "He acknowledged that mistakes had been made.",
+  "example_zh": "他承认已经犯了错误。"
+ },
+ {
+  "word": "acquire",
+  "phonetic": "/əˈkwaɪə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "获得",
+   "学到"
+  ],
+  "example_en": "Children acquire language through interaction.",
+  "example_zh": "儿童通过互动习得语言。"
+ },
+ {
+  "word": "adapt",
+  "phonetic": "/əˈdæpt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "适应",
+   "改编"
+  ],
+  "example_en": "Species must adapt to changing environments.",
+  "example_zh": "物种必须适应不断变化的环境。"
+ },
+ {
+  "word": "address",
+  "phonetic": "/əˈdres/",
+  "pos": "v.",
+  "meanings_zh": [
+   "处理",
+   "演说"
+  ],
+  "example_en": "The report addresses the issue of climate change.",
+  "example_zh": "该报告探讨了气候变化问题。"
+ },
+ {
+  "word": "adjust",
+  "phonetic": "/əˈdʒʌst/",
+  "pos": "v.",
+  "meanings_zh": [
+   "调整",
+   "适应"
+  ],
+  "example_en": "Workers must adjust to new technologies.",
+  "example_zh": "工人必须适应新技术。"
+ },
+ {
+  "word": "administration",
+  "phonetic": "/ədˌmɪnɪˈstreɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "管理",
+   "政府"
+  ],
+  "example_en": "The administration announced a new education policy.",
+  "example_zh": "政府宣布了一项新的教育政策。"
+ },
+ {
+  "word": "adopt",
+  "phonetic": "/əˈdɒpt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "采纳",
+   "收养"
+  ],
+  "example_en": "Many firms have adopted flexible working hours.",
+  "example_zh": "许多公司已采用弹性工作时间。"
+ },
+ {
+  "word": "advocate",
+  "phonetic": "/ˈædvəkeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "提倡",
+   "主张"
+  ],
+  "example_en": "She advocates stricter environmental laws.",
+  "example_zh": "她主张更严格的环保法律。"
+ },
+ {
+  "word": "affect",
+  "phonetic": "/əˈfekt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "影响",
+   "感动"
+  ],
+  "example_en": "Rising costs affect consumers' purchasing power.",
+  "example_zh": "成本上升影响消费者的购买力。"
+ },
+ {
+  "word": "aggregate",
+  "phonetic": "/ˈæɡrɪɡət/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "总计的",
+   "聚合的"
+  ],
+  "example_en": "The aggregate demand fell sharply last quarter.",
+  "example_zh": "上季度总需求急剧下降。"
+ },
+ {
+  "word": "aggressive",
+  "phonetic": "/əˈɡresɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "侵略的",
+   "积极进取的"
+  ],
+  "example_en": "The firm adopted an aggressive marketing strategy.",
+  "example_zh": "该公司采取了积极的营销策略。"
+ },
+ {
+  "word": "alleviate",
+  "phonetic": "/əˈliːvieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "减轻",
+   "缓解"
+  ],
+  "example_en": "The medicine helps alleviate the patient's pain.",
+  "example_zh": "这种药有助于减轻病人的疼痛。"
+ },
+ {
+  "word": "allocate",
+  "phonetic": "/ˈæləkeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "分配",
+   "拨给"
+  ],
+  "example_en": "The government allocated funds for rural schools.",
+  "example_zh": "政府为农村学校拨款。"
+ },
+ {
+  "word": "alter",
+  "phonetic": "/ˈɔːltə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "改变",
+   "修改"
+  ],
+  "example_en": "Digital tools have altered how we communicate.",
+  "example_zh": "数字工具改变了我们的交流方式。"
+ },
+ {
+  "word": "alternative",
+  "phonetic": "/ɔːlˈtɜːnətɪv/",
+  "pos": "n.",
+  "meanings_zh": [
+   "替代物",
+   "选择"
+  ],
+  "example_en": "We must find an alternative to fossil fuels.",
+  "example_zh": "我们必须找到化石燃料的替代品。"
+ },
+ {
+  "word": "ambition",
+  "phonetic": "/æmˈbɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "雄心",
+   "野心"
+  ],
+  "example_en": "Her ambition drove her to start a company.",
+  "example_zh": "她的雄心驱使她创办了一家公司。"
+ },
+ {
+  "word": "analyze",
+  "phonetic": "/ˈænəlaɪz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "分析",
+   "解析"
+  ],
+  "example_en": "Researchers analyze data to identify patterns.",
+  "example_zh": "研究人员分析数据以识别模式。"
+ },
+ {
+  "word": "anchor",
+  "phonetic": "/ˈæŋkə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "固定",
+   "扎根"
+  ],
+  "example_en": "The policy is anchored in economic reality.",
+  "example_zh": "该政策植根于经济现实。"
+ },
+ {
+  "word": "annual",
+  "phonetic": "/ˈænjuəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "每年的",
+   "年度的"
+  ],
+  "example_en": "The company publishes an annual report each spring.",
+  "example_zh": "该公司每年春天发布年度报告。"
+ },
+ {
+  "word": "apparent",
+  "phonetic": "/əˈpærənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "明显的",
+   "表面的"
+  ],
+  "example_en": "It became apparent that the plan would fail.",
+  "example_zh": "很明显这个计划会失败。"
+ },
+ {
+  "word": "appeal",
+  "phonetic": "/əˈpiːl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "呼吁",
+   "吸引"
+  ],
+  "example_en": "The campaign appeals to young voters.",
+  "example_zh": "这场运动吸引年轻选民。"
+ },
+ {
+  "word": "apply",
+  "phonetic": "/əˈplaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "申请",
+   "应用"
+  ],
+  "example_en": "These rules apply to all students equally.",
+  "example_zh": "这些规定对所有学生一视同仁。"
+ },
+ {
+  "word": "appreciate",
+  "phonetic": "/əˈpriːʃieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "欣赏",
+   "理解"
+  ],
+  "example_en": "We appreciate the difficulty of the task.",
+  "example_zh": "我们理解这项任务的难度。"
+ },
+ {
+  "word": "approach",
+  "phonetic": "/əˈprəʊtʃ/",
+  "pos": "n.",
+  "meanings_zh": [
+   "方法",
+   "途径"
+  ],
+  "example_en": "A new approach to teaching is needed.",
+  "example_zh": "需要一种新的教学方法。"
+ },
+ {
+  "word": "appropriate",
+  "phonetic": "/əˈprəʊpriət/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "适当的",
+   "合适的"
+  ],
+  "example_en": "It is appropriate to ask for clarification.",
+  "example_zh": "要求澄清是恰当的。"
+ },
+ {
+  "word": "approve",
+  "phonetic": "/əˈpruːv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "批准",
+   "赞成"
+  ],
+  "example_en": "The committee approved the new budget.",
+  "example_zh": "委员会批准了新预算。"
+ },
+ {
+  "word": "arise",
+  "phonetic": "/əˈraɪz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "出现",
+   "产生"
+  ],
+  "example_en": "New problems arise as technology develops.",
+  "example_zh": "随着技术发展，新问题会出现。"
+ },
+ {
+  "word": "articulate",
+  "phonetic": "/ɑːˈtɪkjuleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "清楚表达",
+   "阐明"
+  ],
+  "example_en": "He articulated his concerns clearly at the meeting.",
+  "example_zh": "他在会上清楚地表达了自己的担忧。"
+ },
+ {
+  "word": "aspect",
+  "phonetic": "/ˈæspekt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "方面",
+   "外观"
+  ],
+  "example_en": "We must consider every aspect of the issue.",
+  "example_zh": "我们必须考虑问题的每个方面。"
+ },
+ {
+  "word": "assemble",
+  "phonetic": "/əˈsembl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "集合",
+   "组装"
+  ],
+  "example_en": "Workers assemble the parts into a finished product.",
+  "example_zh": "工人将零件组装成成品。"
+ },
+ {
+  "word": "assert",
+  "phonetic": "/əˈsɜːt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "断言",
+   "主张"
+  ],
+  "example_en": "The author asserts that education drives progress.",
+  "example_zh": "作者断言教育推动进步。"
+ },
+ {
+  "word": "assign",
+  "phonetic": "/əˈsaɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "分配",
+   "指派"
+  ],
+  "example_en": "The teacher assigned each student a topic.",
+  "example_zh": "老师给每个学生分配了一个题目。"
+ },
+ {
+  "word": "assume",
+  "phonetic": "/əˈsjuːm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "假定",
+   "承担"
+  ],
+  "example_en": "We assume the data are reliable.",
+  "example_zh": "我们假定这些数据是可靠的。"
+ },
+ {
+  "word": "assure",
+  "phonetic": "/əˈʃʊə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "保证",
+   "使确信"
+  ],
+  "example_en": "The manager assured us that the delay was temporary.",
+  "example_zh": "经理向我们保证延误是暂时的。"
+ },
+ {
+  "word": "attach",
+  "phonetic": "/əˈtætʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "附上",
+   "重视"
+  ],
+  "example_en": "Please attach the file to your email.",
+  "example_zh": "请将文件附在电子邮件中。"
+ },
+ {
+  "word": "attain",
+  "phonetic": "/əˈteɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "达到",
+   "获得"
+  ],
+  "example_en": "Few people attain such a high level of skill.",
+  "example_zh": "很少有人能达到如此高的技能水平。"
+ },
+ {
+  "word": "attribute",
+  "phonetic": "/əˈtrɪbjuːt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "归因于",
+   "归功于"
+  ],
+  "example_en": "Scientists attribute the warming to human activity.",
+  "example_zh": "科学家将变暖归因于人类活动。"
+ },
+ {
+  "word": "authentic",
+  "phonetic": "/ɔːˈθentɪk/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "真实的",
+   "可靠的"
+  ],
+  "example_en": "The museum displays authentic ancient artifacts.",
+  "example_zh": "博物馆展出真实的古代文物。"
+ },
+ {
+  "word": "authority",
+  "phonetic": "/ɔːˈθɒrəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "权威",
+   "当局"
+  ],
+  "example_en": "Local authorities are responsible for public safety.",
+  "example_zh": "地方当局负责公共安全。"
+ },
+ {
+  "word": "available",
+  "phonetic": "/əˈveɪləbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "可用的",
+   "可获得的"
+  ],
+  "example_en": "The data are available to all researchers.",
+  "example_zh": "这些数据对所有研究人员开放。"
+ },
+ {
+  "word": "aware",
+  "phonetic": "/əˈweə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "意识到的",
+   "知道的"
+  ],
+  "example_en": "People are increasingly aware of environmental risks.",
+  "example_zh": "人们日益意识到环境风险。"
+ },
+ {
+  "word": "barrier",
+  "phonetic": "/ˈbæriə/",
+  "pos": "n.",
+  "meanings_zh": [
+   "障碍",
+   "屏障"
+  ],
+  "example_en": "Language can be a barrier to communication.",
+  "example_zh": "语言可能成为交流的障碍。"
+ },
+ {
+  "word": "benefit",
+  "phonetic": "/ˈbenɪfɪt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "利益",
+   "好处"
+  ],
+  "example_en": "The new policy brings benefits to small businesses.",
+  "example_zh": "新政策给小企业带来好处。"
+ },
+ {
+  "word": "bias",
+  "phonetic": "/ˈbaɪəs/",
+  "pos": "n.",
+  "meanings_zh": [
+   "偏见",
+   "偏差"
+  ],
+  "example_en": "The study was criticized for its obvious bias.",
+  "example_zh": "这项研究因明显偏见受到批评。"
+ },
+ {
+  "word": "boost",
+  "phonetic": "/buːst/",
+  "pos": "v.",
+  "meanings_zh": [
+   "促进",
+   "提高"
+  ],
+  "example_en": "Tax cuts are expected to boost consumption.",
+  "example_zh": "减税预计将促进消费。"
+ },
+ {
+  "word": "boundary",
+  "phonetic": "/ˈbaʊndri/",
+  "pos": "n.",
+  "meanings_zh": [
+   "边界",
+   "界限"
+  ],
+  "example_en": "The river forms the boundary between the two countries.",
+  "example_zh": "这条河构成了两国的边界。"
+ },
+ {
+  "word": "broaden",
+  "phonetic": "/ˈbrɔːdn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "拓宽",
+   "扩大"
+  ],
+  "example_en": "Travel can broaden one's horizons.",
+  "example_zh": "旅行可以拓宽人的视野。"
+ },
+ {
+  "word": "budget",
+  "phonetic": "/ˈbʌdʒɪt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "预算",
+   "经费"
+  ],
+  "example_en": "The research budget was cut by ten percent.",
+  "example_zh": "研究预算削减了百分之十。"
+ },
+ {
+  "word": "campaign",
+  "phonetic": "/kæmˈpeɪn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "运动",
+   "活动"
+  ],
+  "example_en": "The government launched a campaign against smoking.",
+  "example_zh": "政府发起了一场反吸烟运动。"
+ },
+ {
+  "word": "capable",
+  "phonetic": "/ˈkeɪpəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "有能力的",
+   "能够的"
+  ],
+  "example_en": "She is capable of solving complex problems.",
+  "example_zh": "她有能力解决复杂问题。"
+ },
+ {
+  "word": "capacity",
+  "phonetic": "/kəˈpæsəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "能力",
+   "容量"
+  ],
+  "example_en": "The factory has the capacity to produce more.",
+  "example_zh": "这家工厂有能力生产更多。"
+ },
+ {
+  "word": "capital",
+  "phonetic": "/ˈkæpɪtl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "资本",
+   "首都"
+  ],
+  "example_en": "Foreign capital flowed into the region.",
+  "example_zh": "外国资本流入了该地区。"
+ },
+ {
+  "word": "capture",
+  "phonetic": "/ˈkæptʃə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "捕捉",
+   "夺取"
+  ],
+  "example_en": "The report captures the mood of the public.",
+  "example_zh": "该报告捕捉到了公众的情绪。"
+ },
+ {
+  "word": "casual",
+  "phonetic": "/ˈkæʒuəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "随意的",
+   "偶然的"
+  ],
+  "example_en": "Casual remarks can sometimes cause offense.",
+  "example_zh": "随意的评论有时会冒犯他人。"
+ },
+ {
+  "word": "category",
+  "phonetic": "/ˈkætəɡəri/",
+  "pos": "n.",
+  "meanings_zh": [
+   "类别",
+   "范畴"
+  ],
+  "example_en": "These goods fall into three main categories.",
+  "example_zh": "这些商品分为三大类。"
+ },
+ {
+  "word": "cease",
+  "phonetic": "/siːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "停止",
+   "终止"
+  ],
+  "example_en": "The company ceased production last month.",
+  "example_zh": "该公司上个月停止了生产。"
+ },
+ {
+  "word": "challenge",
+  "phonetic": "/ˈtʃælɪndʒ/",
+  "pos": "n.",
+  "meanings_zh": [
+   "挑战",
+   "质疑"
+  ],
+  "example_en": "Climate change is a major global challenge.",
+  "example_zh": "气候变化是全球重大挑战。"
+ },
+ {
+  "word": "channel",
+  "phonetic": "/ˈtʃænl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "渠道",
+   "频道"
+  ],
+  "example_en": "Social media is a key channel for information.",
+  "example_zh": "社交媒体是重要信息渠道。"
+ },
+ {
+  "word": "chaos",
+  "phonetic": "/ˈkeɪɒs/",
+  "pos": "n.",
+  "meanings_zh": [
+   "混乱",
+   "紊乱"
+  ],
+  "example_en": "The strike caused chaos at the airport.",
+  "example_zh": "罢工在机场造成了混乱。"
+ },
+ {
+  "word": "characteristic",
+  "phonetic": "/ˌkærəktəˈrɪstɪk/",
+  "pos": "n.",
+  "meanings_zh": [
+   "特征",
+   "特点"
+  ],
+  "example_en": "Patience is a characteristic of good teachers.",
+  "example_zh": "耐心是好老师的特征。"
+ },
+ {
+  "word": "charge",
+  "phonetic": "/tʃɑːdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "收费",
+   "指控"
+  ],
+  "example_en": "The hotel charges extra for parking.",
+  "example_zh": "这家酒店停车另行收费。"
+ },
+ {
+  "word": "cite",
+  "phonetic": "/saɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "引用",
+   "举例"
+  ],
+  "example_en": "The author cites several studies to support her claim.",
+  "example_zh": "作者引用了几项研究来支持她的主张。"
+ },
+ {
+  "word": "civil",
+  "phonetic": "/ˈsɪvl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "公民的",
+   "民事的"
+  ],
+  "example_en": "Civil rights are protected by the constitution.",
+  "example_zh": "公民权利受宪法保护。"
+ },
+ {
+  "word": "claim",
+  "phonetic": "/kleɪm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "声称",
+   "要求"
+  ],
+  "example_en": "The report claims that the drug is safe.",
+  "example_zh": "该报告声称这种药是安全的。"
+ },
+ {
+  "word": "clarify",
+  "phonetic": "/ˈklærəfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "澄清",
+   "阐明"
+  ],
+  "example_en": "The spokesman clarified the government's position.",
+  "example_zh": "发言人澄清了政府的立场。"
+ },
+ {
+  "word": "classify",
+  "phonetic": "/ˈklæsɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "分类",
+   "归类"
+  ],
+  "example_en": "Scientists classify these animals as mammals.",
+  "example_zh": "科学家将这些动物归类为哺乳动物。"
+ },
+ {
+  "word": "coherent",
+  "phonetic": "/kəʊˈhɪərənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "连贯的",
+   "一致的"
+  ],
+  "example_en": "The essay lacks a coherent argument.",
+  "example_zh": "这篇文章缺乏连贯的论证。"
+ },
+ {
+  "word": "coincide",
+  "phonetic": "/ˌkəʊɪnˈsaɪd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "同时发生",
+   "一致"
+  ],
+  "example_en": "The two events coincided by pure chance.",
+  "example_zh": "这两件事纯属巧合地同时发生。"
+ },
+ {
+  "word": "collapse",
+  "phonetic": "/kəˈlæps/",
+  "pos": "v.",
+  "meanings_zh": [
+   "崩溃",
+   "倒塌"
+  ],
+  "example_en": "The housing market collapsed in 2008.",
+  "example_zh": "房地产市场在2008年崩溃。"
+ },
+ {
+  "word": "colleague",
+  "phonetic": "/ˈkɒliːɡ/",
+  "pos": "n.",
+  "meanings_zh": [
+   "同事",
+   "同僚"
+  ],
+  "example_en": "She discussed the issue with her colleagues.",
+  "example_zh": "她与同事们讨论了这个问题。"
+ },
+ {
+  "word": "combat",
+  "phonetic": "/ˈkɒmbæt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "对抗",
+   "防止"
+  ],
+  "example_en": "New measures are needed to combat pollution.",
+  "example_zh": "需要新措施来治理污染。"
+ },
+ {
+  "word": "comment",
+  "phonetic": "/ˈkɒment/",
+  "pos": "n.",
+  "meanings_zh": [
+   "评论",
+   "意见"
+  ],
+  "example_en": "The minister refused to make any comment.",
+  "example_zh": "部长拒绝发表任何评论。"
+ },
+ {
+  "word": "commercial",
+  "phonetic": "/kəˈmɜːʃl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "商业的",
+   "营利的"
+  ],
+  "example_en": "The project was a huge commercial success.",
+  "example_zh": "该项目取得了巨大的商业成功。"
+ },
+ {
+  "word": "commit",
+  "phonetic": "/kəˈmɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "承诺",
+   "犯（罪）"
+  ],
+  "example_en": "The firm committed itself to reducing emissions.",
+  "example_zh": "该公司承诺减少排放。"
+ },
+ {
+  "word": "commodity",
+  "phonetic": "/kəˈmɒdəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "商品",
+   "日用品"
+  ],
+  "example_en": "Oil is a major commodity in global trade.",
+  "example_zh": "石油是全球贸易中的主要商品。"
+ },
+ {
+  "word": "communicate",
+  "phonetic": "/kəˈmjuːnɪkeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "交流",
+   "传达"
+  ],
+  "example_en": "Scientists must communicate their findings clearly.",
+  "example_zh": "科学家必须清楚地传达他们的发现。"
+ },
+ {
+  "word": "community",
+  "phonetic": "/kəˈmjuːnəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "社区",
+   "群体"
+  ],
+  "example_en": "The local community supported the new library.",
+  "example_zh": "当地社区支持新图书馆。"
+ },
+ {
+  "word": "comparable",
+  "phonetic": "/ˈkɒmpərəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "可比较的",
+   "类似的"
+  ],
+  "example_en": "The two countries have comparable economic systems.",
+  "example_zh": "这两个国家有类似的经济制度。"
+ },
+ {
+  "word": "compel",
+  "phonetic": "/kəmˈpel/",
+  "pos": "v.",
+  "meanings_zh": [
+   "迫使",
+   "强迫"
+  ],
+  "example_en": "Economic pressure compelled them to change course.",
+  "example_zh": "经济压力迫使他们改变方向。"
+ },
+ {
+  "word": "competent",
+  "phonetic": "/ˈkɒmpɪtənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "有能力的",
+   "胜任的"
+  ],
+  "example_en": "She is a highly competent manager.",
+  "example_zh": "她是一位非常胜任的经理。"
+ },
+ {
+  "word": "compile",
+  "phonetic": "/kəmˈpaɪl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "编写",
+   "汇编"
+  ],
+  "example_en": "Researchers compiled a database of climate records.",
+  "example_zh": "研究人员汇编了一个气候记录数据库。"
+ },
+ {
+  "word": "complement",
+  "phonetic": "/ˈkɒmplɪment/",
+  "pos": "v.",
+  "meanings_zh": [
+   "补充",
+   "配合"
+  ],
+  "example_en": "These policies complement each other well.",
+  "example_zh": "这些政策相互配合得很好。"
+ },
+ {
+  "word": "comply",
+  "phonetic": "/kəmˈplaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "遵守",
+   "服从"
+  ],
+  "example_en": "All firms must comply with safety regulations.",
+  "example_zh": "所有公司都必须遵守安全规定。"
+ },
+ {
+  "word": "component",
+  "phonetic": "/kəmˈpəʊnənt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "组成部分",
+   "零件"
+  ],
+  "example_en": "Trust is a key component of any relationship.",
+  "example_zh": "信任是任何关系的关键组成部分。"
+ },
+ {
+  "word": "compose",
+  "phonetic": "/kəmˈpəʊz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "构成",
+   "创作"
+  ],
+  "example_en": "Women compose over half of the workforce.",
+  "example_zh": "女性占劳动力的半数以上。"
+ },
+ {
+  "word": "comprehend",
+  "phonetic": "/ˌkɒmprɪˈhend/",
+  "pos": "v.",
+  "meanings_zh": [
+   "理解",
+   "领悟"
+  ],
+  "example_en": "Children gradually comprehend abstract ideas.",
+  "example_zh": "儿童逐渐理解抽象概念。"
+ },
+ {
+  "word": "compromise",
+  "phonetic": "/ˈkɒmprəmaɪz/",
+  "pos": "n.",
+  "meanings_zh": [
+   "妥协",
+   "折中"
+  ],
+  "example_en": "The two parties finally reached a compromise.",
+  "example_zh": "双方最终达成了妥协。"
+ },
+ {
+  "word": "conceal",
+  "phonetic": "/kənˈsiːl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "隐藏",
+   "隐瞒"
+  ],
+  "example_en": "He tried to conceal his disappointment.",
+  "example_zh": "他试图隐藏自己的失望。"
+ },
+ {
+  "word": "concentrate",
+  "phonetic": "/ˈkɒnsntreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "集中",
+   "专心"
+  ],
+  "example_en": "We should concentrate on solving the main problem.",
+  "example_zh": "我们应集中精力解决主要问题。"
+ },
+ {
+  "word": "concept",
+  "phonetic": "/ˈkɒnsept/",
+  "pos": "n.",
+  "meanings_zh": [
+   "概念",
+   "观念"
+  ],
+  "example_en": "The concept of fairness varies across cultures.",
+  "example_zh": "公平的概念因文化而异。"
+ },
+ {
+  "word": "conclude",
+  "phonetic": "/kənˈkluːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "得出结论",
+   "结束"
+  ],
+  "example_en": "Researchers concluded that the drug was effective.",
+  "example_zh": "研究人员得出结论认为该药有效。"
+ },
+ {
+  "word": "condemn",
+  "phonetic": "/kənˈdem/",
+  "pos": "v.",
+  "meanings_zh": [
+   "谴责",
+   "判刑"
+  ],
+  "example_en": "Leaders condemned the attack on civilians.",
+  "example_zh": "领导人谴责对平民的袭击。"
+ },
+ {
+  "word": "deem",
+  "phonetic": "/diːm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "认为",
+   "视为"
+  ],
+  "example_en": "The court deemed the evidence inadmissible.",
+  "example_zh": "法院认为该证据不可采纳。"
+ },
+ {
+  "word": "deficit",
+  "phonetic": "/ˈdefɪsɪt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "赤字",
+   "亏损",
+   "不足"
+  ],
+  "example_en": "The government must reduce the budget deficit.",
+  "example_zh": "政府必须减少预算赤字。"
+ },
+ {
+  "word": "defy",
+  "phonetic": "/dɪˈfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "违抗",
+   "挑战"
+  ],
+  "example_en": "The protesters defied the government's ban.",
+  "example_zh": "抗议者违抗了政府的禁令。"
+ },
+ {
+  "word": "depict",
+  "phonetic": "/dɪˈpɪkt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "描绘",
+   "描述"
+  ],
+  "example_en": "The novel depicts life in nineteenth-century London.",
+  "example_zh": "这部小说描绘了十九世纪伦敦的生活。"
+ },
+ {
+  "word": "deprive",
+  "phonetic": "/dɪˈpraɪv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "剥夺",
+   "使丧失"
+  ],
+  "example_en": "The new law deprived citizens of their rights.",
+  "example_zh": "新法律剥夺了公民的权利。"
+ },
+ {
+  "word": "derive",
+  "phonetic": "/dɪˈraɪv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "得到",
+   "源自",
+   "推导"
+  ],
+  "example_en": "Many English words derive from Latin.",
+  "example_zh": "许多英语单词源自拉丁语。"
+ },
+ {
+  "word": "designate",
+  "phonetic": "/ˈdezɪɡneɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "指定",
+   "命名"
+  ],
+  "example_en": "The area was designated as a national park.",
+  "example_zh": "该地区被指定为国家公园。"
+ },
+ {
+  "word": "detect",
+  "phonetic": "/dɪˈtekt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "察觉",
+   "发现",
+   "探测"
+  ],
+  "example_en": "Scientists can detect tiny changes in temperature.",
+  "example_zh": "科学家能探测到温度的微小变化。"
+ },
+ {
+  "word": "deter",
+  "phonetic": "/dɪˈtɜː/",
+  "pos": "v.",
+  "meanings_zh": [
+   "阻止",
+   "威慑"
+  ],
+  "example_en": "Heavy fines may deter people from breaking the law.",
+  "example_zh": "重罚可能阻止人们违法。"
+ },
+ {
+  "word": "deteriorate",
+  "phonetic": "/dɪˈtɪəriəreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "恶化",
+   "变坏"
+  ],
+  "example_en": "His health continued to deteriorate rapidly.",
+  "example_zh": "他的健康继续迅速恶化。"
+ },
+ {
+  "word": "deviate",
+  "phonetic": "/ˈdiːvieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "偏离",
+   "背离"
+  ],
+  "example_en": "The results deviate from the expected pattern.",
+  "example_zh": "结果偏离了预期的模式。"
+ },
+ {
+  "word": "diagnose",
+  "phonetic": "/ˈdaɪəɡnəʊz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "诊断",
+   "判断"
+  ],
+  "example_en": "Doctors diagnosed the illness as a rare infection.",
+  "example_zh": "医生诊断该病为一种罕见感染。"
+ },
+ {
+  "word": "differentiate",
+  "phonetic": "/ˌdɪfəˈrenʃieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "区分",
+   "区别"
+  ],
+  "example_en": "Children must learn to differentiate right from wrong.",
+  "example_zh": "孩子们必须学会区分是非。"
+ },
+ {
+  "word": "discard",
+  "phonetic": "/dɪsˈkɑːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "丢弃",
+   "抛弃"
+  ],
+  "example_en": "We should discard outdated ideas and methods.",
+  "example_zh": "我们应该抛弃过时的观念和方法。"
+ },
+ {
+  "word": "discern",
+  "phonetic": "/dɪˈsɜːn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "辨别",
+   "察觉"
+  ],
+  "example_en": "It is difficult to discern the truth from his story.",
+  "example_zh": "很难从他的叙述中辨别真相。"
+ },
+ {
+  "word": "discrepancy",
+  "phonetic": "/dɪsˈkrepənsi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "差异",
+   "不一致"
+  ],
+  "example_en": "There is a discrepancy between the two reports.",
+  "example_zh": "两份报告之间存在差异。"
+ },
+ {
+  "word": "discrete",
+  "phonetic": "/dɪˈskriːt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "离散的",
+   "分离的"
+  ],
+  "example_en": "The data can be divided into discrete categories.",
+  "example_zh": "这些数据可以分为离散的类别。"
+ },
+ {
+  "word": "dispatch",
+  "phonetic": "/dɪˈspætʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "派遣",
+   "发送"
+  ],
+  "example_en": "Rescue teams were dispatched to the disaster area.",
+  "example_zh": "救援队被派往灾区。"
+ },
+ {
+  "word": "disperse",
+  "phonetic": "/dɪˈspɜːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "驱散",
+   "分散"
+  ],
+  "example_en": "Police used water cannon to disperse the crowd.",
+  "example_zh": "警察使用水炮驱散人群。"
+ },
+ {
+  "word": "dispose",
+  "phonetic": "/dɪˈspəʊz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "处理",
+   "处置",
+   "使倾向"
+  ],
+  "example_en": "Factories must dispose of waste properly.",
+  "example_zh": "工厂必须妥善处理废物。"
+ },
+ {
+  "word": "disrupt",
+  "phonetic": "/dɪsˈrʌpt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "扰乱",
+   "中断"
+  ],
+  "example_en": "The storm disrupted train services across the region.",
+  "example_zh": "暴风雨扰乱了整个地区的火车服务。"
+ },
+ {
+  "word": "distinct",
+  "phonetic": "/dɪˈstɪŋkt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "明显的",
+   "不同的"
+  ],
+  "example_en": "There is a distinct difference between the two species.",
+  "example_zh": "这两个物种之间有明显的区别。"
+ },
+ {
+  "word": "distinguish",
+  "phonetic": "/dɪˈstɪŋɡwɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "区分",
+   "辨别"
+  ],
+  "example_en": "It is important to distinguish fact from opinion.",
+  "example_zh": "区分事实与观点很重要。"
+ },
+ {
+  "word": "distort",
+  "phonetic": "/dɪˈstɔːt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "扭曲",
+   "曲解"
+  ],
+  "example_en": "The media may distort the facts of the case.",
+  "example_zh": "媒体可能扭曲案件的事实。"
+ },
+ {
+  "word": "diverge",
+  "phonetic": "/daɪˈvɜːdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "分歧",
+   "偏离"
+  ],
+  "example_en": "Their opinions diverge on this critical issue.",
+  "example_zh": "他们在这个关键问题上意见分歧。"
+ },
+ {
+  "word": "diverse",
+  "phonetic": "/daɪˈvɜːs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "多样的",
+   "不同的"
+  ],
+  "example_en": "The city has a culturally diverse population.",
+  "example_zh": "这座城市拥有文化多样的人口。"
+ },
+ {
+  "word": "document",
+  "phonetic": "/ˈdɒkjumənt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "记录",
+   "证明"
+  ],
+  "example_en": "The study documents the effects of climate change.",
+  "example_zh": "该研究记录了气候变化的影响。"
+ },
+ {
+  "word": "dominate",
+  "phonetic": "/ˈdɒmɪneɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "支配",
+   "主导"
+  ],
+  "example_en": "A few firms dominate the global market.",
+  "example_zh": "少数几家公司主导着全球市场。"
+ },
+ {
+  "word": "drain",
+  "phonetic": "/dreɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "耗尽",
+   "排水"
+  ],
+  "example_en": "The long war drained the country's resources.",
+  "example_zh": "长期战争耗尽了该国的资源。"
+ },
+ {
+  "word": "drastic",
+  "phonetic": "/ˈdræstɪk/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "剧烈的",
+   "极端的"
+  ],
+  "example_en": "Drastic measures are needed to control pollution.",
+  "example_zh": "需要采取剧烈措施来控制污染。"
+ },
+ {
+  "word": "duration",
+  "phonetic": "/djʊˈreɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "持续时间",
+   "期间"
+  ],
+  "example_en": "The duration of the experiment was three months.",
+  "example_zh": "实验的持续时间是三个月。"
+ },
+ {
+  "word": "dwell",
+  "phonetic": "/dwel/",
+  "pos": "v.",
+  "meanings_zh": [
+   "居住",
+   "细想"
+  ],
+  "example_en": "Don't dwell on past mistakes too much.",
+  "example_zh": "不要过多地纠结于过去的错误。"
+ },
+ {
+  "word": "dynamic",
+  "phonetic": "/daɪˈnæmɪk/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "动态的",
+   "有活力的"
+  ],
+  "example_en": "The economy is a dynamic and complex system.",
+  "example_zh": "经济是一个动态而复杂的系统。"
+ },
+ {
+  "word": "eager",
+  "phonetic": "/ˈiːɡə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "渴望的",
+   "热切的"
+  ],
+  "example_en": "Students are eager to learn new skills.",
+  "example_zh": "学生们渴望学习新技能。"
+ },
+ {
+  "word": "eclipse",
+  "phonetic": "/ɪˈklɪps/",
+  "pos": "v.",
+  "meanings_zh": [
+   "使黯然失色",
+   "超越"
+  ],
+  "example_en": "Her achievements eclipse those of her colleagues.",
+  "example_zh": "她的成就使同事们的成就黯然失色。"
+ },
+ {
+  "word": "economical",
+  "phonetic": "/ˌiːkəˈnɒmɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "节约的",
+   "经济的"
+  ],
+  "example_en": "This car is very economical on fuel.",
+  "example_zh": "这辆车非常省油。"
+ },
+ {
+  "word": "efficient",
+  "phonetic": "/ɪˈfɪʃnt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "高效的",
+   "有效的"
+  ],
+  "example_en": "The new system is far more efficient than the old one.",
+  "example_zh": "新系统比旧系统高效得多。"
+ },
+ {
+  "word": "eligible",
+  "phonetic": "/ˈelɪdʒəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "有资格的",
+   "合格的"
+  ],
+  "example_en": "Only citizens are eligible to vote in the election.",
+  "example_zh": "只有公民才有资格在选举中投票。"
+ },
+ {
+  "word": "eliminate",
+  "phonetic": "/ɪˈlɪmɪneɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "消除",
+   "淘汰"
+  ],
+  "example_en": "We must eliminate all possible sources of error.",
+  "example_zh": "我们必须消除所有可能的错误来源。"
+ },
+ {
+  "word": "embody",
+  "phonetic": "/ɪmˈbɒdi/",
+  "pos": "v.",
+  "meanings_zh": [
+   "体现",
+   "包含"
+  ],
+  "example_en": "The constitution embodies the basic principles of the nation.",
+  "example_zh": "宪法体现了国家的基本原则。"
+ },
+ {
+  "word": "embrace",
+  "phonetic": "/ɪmˈbreɪs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "拥抱",
+   "接受"
+  ],
+  "example_en": "We should embrace new technology rather than fear it.",
+  "example_zh": "我们应该接受新技术而不是害怕它。"
+ },
+ {
+  "word": "emerge",
+  "phonetic": "/ɪˈmɜːdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "出现",
+   "显露"
+  ],
+  "example_en": "New evidence emerged during the investigation.",
+  "example_zh": "调查期间出现了新证据。"
+ },
+ {
+  "word": "emphasize",
+  "phonetic": "/ˈemfəsaɪz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "强调",
+   "着重"
+  ],
+  "example_en": "The teacher emphasized the importance of practice.",
+  "example_zh": "老师强调了练习的重要性。"
+ },
+ {
+  "word": "empirical",
+  "phonetic": "/ɪmˈpɪrɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "经验的",
+   "实证的"
+  ],
+  "example_en": "The theory lacks sufficient empirical evidence.",
+  "example_zh": "该理论缺乏足够的实证证据。"
+ },
+ {
+  "word": "enable",
+  "phonetic": "/ɪˈneɪbl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "使能够",
+   "使可能"
+  ],
+  "example_en": "Technology enables us to work from home.",
+  "example_zh": "技术使我们能够在家工作。"
+ },
+ {
+  "word": "endanger",
+  "phonetic": "/ɪnˈdeɪndʒə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "危及",
+   "使危险"
+  ],
+  "example_en": "Pollution endangers many species of wildlife.",
+  "example_zh": "污染危及许多野生物种。"
+ },
+ {
+  "word": "endeavor",
+  "phonetic": "/ɪnˈdevə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "努力",
+   "尽力"
+  ],
+  "example_en": "Scientists endeavor to find a cure for the disease.",
+  "example_zh": "科学家们努力寻找这种疾病的治疗方法。"
+ },
+ {
+  "word": "endorse",
+  "phonetic": "/ɪnˈdɔːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "支持",
+   "认可"
+  ],
+  "example_en": "Several experts endorsed the new policy.",
+  "example_zh": "几位专家支持这项新政策。"
+ },
+ {
+  "word": "endure",
+  "phonetic": "/ɪnˈdjʊə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "忍受",
+   "持续"
+  ],
+  "example_en": "She had to endure great hardship during the war.",
+  "example_zh": "战争期间她不得不忍受巨大的苦难。"
+ },
+ {
+  "word": "enforce",
+  "phonetic": "/ɪnˈfɔːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "执行",
+   "强制"
+  ],
+  "example_en": "The government must enforce environmental laws strictly.",
+  "example_zh": "政府必须严格执行环保法律。"
+ },
+ {
+  "word": "enhance",
+  "phonetic": "/ɪnˈhɑːns/",
+  "pos": "v.",
+  "meanings_zh": [
+   "提高",
+   "增强"
+  ],
+  "example_en": "Regular exercise can enhance your mental health.",
+  "example_zh": "定期锻炼可以增强你的心理健康。"
+ },
+ {
+  "word": "enlighten",
+  "phonetic": "/ɪnˈlaɪtn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "启发",
+   "开导"
+  ],
+  "example_en": "The book enlightened me on many social issues.",
+  "example_zh": "这本书在许多社会问题上启发了我。"
+ },
+ {
+  "word": "enormous",
+  "phonetic": "/ɪˈnɔːməs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "巨大的",
+   "庞大的"
+  ],
+  "example_en": "The project required an enormous amount of money.",
+  "example_zh": "这个项目需要巨额资金。"
+ },
+ {
+  "word": "enrich",
+  "phonetic": "/ɪnˈrɪtʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "丰富",
+   "使富裕"
+  ],
+  "example_en": "Reading enriches our lives in many ways.",
+  "example_zh": "阅读在许多方面丰富了我们的生活。"
+ },
+ {
+  "word": "ensure",
+  "phonetic": "/ɪnˈʃʊə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "确保",
+   "保证"
+  ],
+  "example_en": "Please ensure that all doors are locked.",
+  "example_zh": "请确保所有门都锁好。"
+ },
+ {
+  "word": "entail",
+  "phonetic": "/ɪnˈteɪl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "需要",
+   "涉及"
+  ],
+  "example_en": "The job entails a great deal of responsibility.",
+  "example_zh": "这份工作需要承担很大的责任。"
+ },
+ {
+  "word": "enterprise",
+  "phonetic": "/ˈentəpraɪz/",
+  "pos": "n.",
+  "meanings_zh": [
+   "企业",
+   "事业"
+  ],
+  "example_en": "Small enterprises play a vital role in the economy.",
+  "example_zh": "小企业在经济中发挥着重要作用。"
+ },
+ {
+  "word": "entitle",
+  "phonetic": "/ɪnˈtaɪtl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "使有权",
+   "命名"
+  ],
+  "example_en": "This ticket entitles you to a free meal.",
+  "example_zh": "这张票使你有权享受一顿免费餐。"
+ },
+ {
+  "word": "epidemic",
+  "phonetic": "/ˌepɪˈdemɪk/",
+  "pos": "n.",
+  "meanings_zh": [
+   "流行病",
+   "泛滥"
+  ],
+  "example_en": "The government took steps to control the epidemic.",
+  "example_zh": "政府采取措施控制流行病。"
+ },
+ {
+  "word": "equate",
+  "phonetic": "/ɪˈkweɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "等同",
+   "视为相等"
+  ],
+  "example_en": "We should not equate wealth with happiness.",
+  "example_zh": "我们不应将财富等同于幸福。"
+ },
+ {
+  "word": "equilibrium",
+  "phonetic": "/ˌiːkwɪˈlɪbriəm/",
+  "pos": "n.",
+  "meanings_zh": [
+   "平衡",
+   "均衡"
+  ],
+  "example_en": "The market eventually reaches an equilibrium.",
+  "example_zh": "市场最终会达到均衡。"
+ },
+ {
+  "word": "erode",
+  "phonetic": "/ɪˈrəʊd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "侵蚀",
+   "削弱"
+  ],
+  "example_en": "Waves gradually erode the coastline.",
+  "example_zh": "海浪逐渐侵蚀海岸线。"
+ },
+ {
+  "word": "erupt",
+  "phonetic": "/ɪˈrʌpt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "爆发",
+   "喷发"
+  ],
+  "example_en": "Violence erupted in the city after the verdict.",
+  "example_zh": "判决后该市爆发了暴力事件。"
+ },
+ {
+  "word": "essential",
+  "phonetic": "/ɪˈsenʃl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "必要的",
+   "本质的"
+  ],
+  "example_en": "Water is essential to all forms of life.",
+  "example_zh": "水对所有形式的生命都是必要的。"
+ },
+ {
+  "word": "establish",
+  "phonetic": "/ɪˈstæblɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "建立",
+   "确立"
+  ],
+  "example_en": "The two countries established diplomatic relations in 1972.",
+  "example_zh": "两国于1972年建立了外交关系。"
+ },
+ {
+  "word": "estimate",
+  "phonetic": "/ˈestɪmeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "估计",
+   "评估"
+  ],
+  "example_en": "Experts estimate the cost at ten million dollars.",
+  "example_zh": "专家估计成本为一千万美元。"
+ },
+ {
+  "word": "evaluate",
+  "phonetic": "/ɪˈvæljueɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "评估",
+   "评价"
+  ],
+  "example_en": "We need to evaluate the effectiveness of the program.",
+  "example_zh": "我们需要评估该项目的有效性。"
+ },
+ {
+  "word": "evident",
+  "phonetic": "/ˈevɪdənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "明显的",
+   "显然的"
+  ],
+  "example_en": "It is evident that the policy has failed.",
+  "example_zh": "很明显，该政策已经失败。"
+ },
+ {
+  "word": "evoke",
+  "phonetic": "/ɪˈvəʊk/",
+  "pos": "v.",
+  "meanings_zh": [
+   "唤起",
+   "引起"
+  ],
+  "example_en": "The song evoked memories of his childhood.",
+  "example_zh": "这首歌唤起了他童年的回忆。"
+ },
+ {
+  "word": "evolve",
+  "phonetic": "/ɪˈvɒlv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "演变",
+   "进化"
+  ],
+  "example_en": "Language evolves gradually over time.",
+  "example_zh": "语言随着时间的推移逐渐演变。"
+ },
+ {
+  "word": "exaggerate",
+  "phonetic": "/ɪɡˈzædʒəreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "夸大",
+   "夸张"
+  ],
+  "example_en": "The media often exaggerate the risks involved.",
+  "example_zh": "媒体经常夸大其中的风险。"
+ },
+ {
+  "word": "exceed",
+  "phonetic": "/ɪkˈsiːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "超过",
+   "超越"
+  ],
+  "example_en": "Sales this year exceed all expectations.",
+  "example_zh": "今年的销售额超出了所有预期。"
+ },
+ {
+  "word": "exclude",
+  "phonetic": "/ɪkˈskluːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "排除",
+   "排斥"
+  ],
+  "example_en": "We cannot exclude the possibility of failure.",
+  "example_zh": "我们不能排除失败的可能性。"
+ },
+ {
+  "word": "exempt",
+  "phonetic": "/ɪɡˈzempt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "免除",
+   "豁免"
+  ],
+  "example_en": "Charities are exempt from paying taxes.",
+  "example_zh": "慈善机构免缴税款。"
+ },
+ {
+  "word": "exert",
+  "phonetic": "/ɪɡˈzɜːt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "施加",
+   "运用"
+  ],
+  "example_en": "Parents exert great influence on their children.",
+  "example_zh": "父母对孩子有很大的影响。"
+ },
+ {
+  "word": "exhaust",
+  "phonetic": "/ɪɡˈzɔːst/",
+  "pos": "v.",
+  "meanings_zh": [
+   "耗尽",
+   "使疲惫"
+  ],
+  "example_en": "The long journey exhausted all of us.",
+  "example_zh": "漫长的旅程使我们所有人都疲惫不堪。"
+ },
+ {
+  "word": "exile",
+  "phonetic": "/ˈeksaɪl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "流放",
+   "流亡"
+  ],
+  "example_en": "The writer spent many years in exile.",
+  "example_zh": "这位作家流亡多年。"
+ },
+ {
+  "word": "expire",
+  "phonetic": "/ɪkˈspaɪə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "到期",
+   "期满"
+  ],
+  "example_en": "My passport expires next month.",
+  "example_zh": "我的护照下个月到期。"
+ },
+ {
+  "word": "exploit",
+  "phonetic": "/ɪkˈsplɔɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "利用",
+   "剥削"
+  ],
+  "example_en": "Some companies exploit their workers for profit.",
+  "example_zh": "一些公司为利润剥削工人。"
+ },
+ {
+  "word": "expose",
+  "phonetic": "/ɪkˈspəʊz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "暴露",
+   "揭露"
+  ],
+  "example_en": "The report exposed serious corruption in the government.",
+  "example_zh": "该报告揭露了政府中的严重腐败。"
+ },
+ {
+  "word": "exquisite",
+  "phonetic": "/ɪkˈskwɪzɪt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "精美的",
+   "精致的",
+   "剧烈的"
+  ],
+  "example_en": "The museum displays an exquisite collection of ancient porcelain.",
+  "example_zh": "博物馆展出了一批精美的古代瓷器。"
+ },
+ {
+  "word": "extract",
+  "phonetic": "/ɪkˈstrækt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "提取",
+   "摘录"
+  ],
+  "example_en": "Scientists can extract DNA from ancient bones.",
+  "example_zh": "科学家可以从古代骨骼中提取DNA。"
+ },
+ {
+  "word": "facilitate",
+  "phonetic": "/fəˈsɪlɪteɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "促进",
+   "便利"
+  ],
+  "example_en": "The new road will facilitate trade between the two cities.",
+  "example_zh": "这条新路将促进两座城市之间的贸易。"
+ },
+ {
+  "word": "fade",
+  "phonetic": "/feɪd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "褪色",
+   "逐渐消失"
+  ],
+  "example_en": "Memories of the war gradually faded.",
+  "example_zh": "战争的记忆逐渐消失。"
+ },
+ {
+  "word": "fatal",
+  "phonetic": "/ˈfeɪtl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "致命的",
+   "严重的"
+  ],
+  "example_en": "The accident was fatal for the driver.",
+  "example_zh": "这起事故对司机来说是致命的。"
+ },
+ {
+  "word": "fatigue",
+  "phonetic": "/fəˈtiːɡ/",
+  "pos": "n.",
+  "meanings_zh": [
+   "疲劳",
+   "劳累"
+  ],
+  "example_en": "Drivers suffering from fatigue cause many accidents.",
+  "example_zh": "疲劳驾驶的司机造成许多事故。"
+ },
+ {
+  "word": "feasible",
+  "phonetic": "/ˈfiːzəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "可行的",
+   "可能的"
+  ],
+  "example_en": "The plan is not financially feasible.",
+  "example_zh": "该计划在财务上不可行。"
+ },
+ {
+  "word": "feeble",
+  "phonetic": "/ˈfiːbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "虚弱的",
+   "无力的"
+  ],
+  "example_en": "He gave a feeble excuse for being late.",
+  "example_zh": "他为迟到给出了一个无力的借口。"
+ },
+ {
+  "word": "flourish",
+  "phonetic": "/ˈflʌrɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "繁荣",
+   "兴旺"
+  ],
+  "example_en": "The arts flourished during that period.",
+  "example_zh": "艺术在那一时期繁荣发展。"
+ },
+ {
+  "word": "fluctuate",
+  "phonetic": "/ˈflʌktʃueɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "波动",
+   "起伏"
+  ],
+  "example_en": "Oil prices fluctuate according to global demand.",
+  "example_zh": "油价根据全球需求波动。"
+ },
+ {
+  "word": "forge",
+  "phonetic": "/fɔːdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "锻造",
+   "建立"
+  ],
+  "example_en": "The two nations forged a strong alliance.",
+  "example_zh": "两国建立了牢固的联盟。"
+ },
+ {
+  "word": "formulate",
+  "phonetic": "/ˈfɔːmjuleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "制定",
+   "阐述"
+  ],
+  "example_en": "The committee formulated a new policy.",
+  "example_zh": "委员会制定了一项新政策。"
+ },
+ {
+  "word": "foster",
+  "phonetic": "/ˈfɒstə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "培养",
+   "促进"
+  ],
+  "example_en": "The school aims to foster creativity in students.",
+  "example_zh": "学校旨在培养学生的创造力。"
+ },
+ {
+  "word": "framework",
+  "phonetic": "/ˈfreɪmwɜːk/",
+  "pos": "n.",
+  "meanings_zh": [
+   "框架",
+   "结构"
+  ],
+  "example_en": "The theory provides a framework for analysis.",
+  "example_zh": "该理论提供了一个分析框架。"
+ },
+ {
+  "word": "frustrate",
+  "phonetic": "/frʌˈstreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "使沮丧",
+   "挫败"
+  ],
+  "example_en": "The lack of progress frustrated everyone involved.",
+  "example_zh": "缺乏进展使所有参与者感到沮丧。"
+ },
+ {
+  "word": "fulfill",
+  "phonetic": "/fʊlˈfɪl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "实现",
+   "履行"
+  ],
+  "example_en": "He worked hard to fulfill his ambitions.",
+  "example_zh": "他努力工作以实现自己的抱负。"
+ },
+ {
+  "word": "generate",
+  "phonetic": "/ˈdʒenəreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "产生",
+   "生成"
+  ],
+  "example_en": "Solar panels generate electricity from sunlight.",
+  "example_zh": "太阳能电池板利用阳光发电。"
+ },
+ {
+  "word": "genuine",
+  "phonetic": "/ˈdʒenjuɪn/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "真正的",
+   "真诚的"
+  ],
+  "example_en": "She showed genuine concern for the victims.",
+  "example_zh": "她对受害者表现出真诚的关心。"
+ },
+ {
+  "word": "grasp",
+  "phonetic": "/ɡrɑːsp/",
+  "pos": "v.",
+  "meanings_zh": [
+   "理解",
+   "抓住"
+  ],
+  "example_en": "It is hard to grasp the scale of the problem.",
+  "example_zh": "很难理解这个问题的规模。"
+ },
+ {
+  "word": "grave",
+  "phonetic": "/ɡreɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "严重的",
+   "严肃的"
+  ],
+  "example_en": "The situation poses a grave threat to peace.",
+  "example_zh": "局势对和平构成严重威胁。"
+ },
+ {
+  "word": "guarantee",
+  "phonetic": "/ˌɡærənˈtiː/",
+  "pos": "v.",
+  "meanings_zh": [
+   "保证",
+   "担保"
+  ],
+  "example_en": "Hard work does not guarantee success.",
+  "example_zh": "努力工作并不能保证成功。"
+ },
+ {
+  "word": "guideline",
+  "phonetic": "/ˈɡaɪdlaɪn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "指导方针",
+   "准则"
+  ],
+  "example_en": "The government issued new guidelines on data protection.",
+  "example_zh": "政府发布了关于数据保护的新指导方针。"
+ },
+ {
+  "word": "hamper",
+  "phonetic": "/ˈhæmpə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "妨碍",
+   "阻碍"
+  ],
+  "example_en": "Lack of funds hampered the research project.",
+  "example_zh": "资金短缺妨碍了这项研究项目。"
+ },
+ {
+  "word": "harness",
+  "phonetic": "/ˈhɑːnɪs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "利用",
+   "控制"
+  ],
+  "example_en": "We must harness technology to improve productivity.",
+  "example_zh": "我们必须利用技术来提高生产力。"
+ },
+ {
+  "word": "haunt",
+  "phonetic": "/hɔːnt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "萦绕",
+   "困扰"
+  ],
+  "example_en": "The memory of the accident still haunts her.",
+  "example_zh": "那场事故的记忆仍然困扰着她。"
+ },
+ {
+  "word": "hazard",
+  "phonetic": "/ˈhæzəd/",
+  "pos": "n.",
+  "meanings_zh": [
+   "危险",
+   "危害"
+  ],
+  "example_en": "Smoking poses a serious health hazard.",
+  "example_zh": "吸烟对健康构成严重危害。"
+ },
+ {
+  "word": "hierarchy",
+  "phonetic": "/ˈhaɪərɑːki/",
+  "pos": "n.",
+  "meanings_zh": [
+   "等级制度",
+   "层级"
+  ],
+  "example_en": "The company has a rigid hierarchy of authority.",
+  "example_zh": "这家公司有着严格的权力等级制度。"
+ },
+ {
+  "word": "highlight",
+  "phonetic": "/ˈhaɪlaɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "强调",
+   "突出"
+  ],
+  "example_en": "The report highlights the need for reform.",
+  "example_zh": "这份报告强调了改革的必要性。"
+ },
+ {
+  "word": "hinder",
+  "phonetic": "/ˈhɪndə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "阻碍",
+   "妨碍"
+  ],
+  "example_en": "Heavy snow hindered rescue efforts in the area.",
+  "example_zh": "大雪阻碍了该地区的救援工作。"
+ },
+ {
+  "word": "hostile",
+  "phonetic": "/ˈhɒstaɪl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "敌对的",
+   "不友好的"
+  ],
+  "example_en": "The proposal met with a hostile reception.",
+  "example_zh": "该提议遭到了敌意的对待。"
+ },
+ {
+  "word": "humble",
+  "phonetic": "/ˈhʌmbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "谦逊的",
+   "卑微的"
+  ],
+  "example_en": "Despite his fame, he remained humble.",
+  "example_zh": "尽管名声显赫，他依然谦逊。"
+ },
+ {
+  "word": "identical",
+  "phonetic": "/aɪˈdentɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "完全相同的",
+   "同一的"
+  ],
+  "example_en": "The two samples were identical in composition.",
+  "example_zh": "这两个样本在成分上完全相同。"
+ },
+ {
+  "word": "identify",
+  "phonetic": "/aɪˈdentɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "识别",
+   "确认"
+  ],
+  "example_en": "Researchers identified the gene responsible for the disease.",
+  "example_zh": "研究人员确认了导致该疾病的基因。"
+ },
+ {
+  "word": "ideology",
+  "phonetic": "/ˌaɪdiˈɒlədʒi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "意识形态",
+   "思想体系"
+  ],
+  "example_en": "The party's ideology shaped its economic policies.",
+  "example_zh": "该党的意识形态塑造了其经济政策。"
+ },
+ {
+  "word": "ignorance",
+  "phonetic": "/ˈɪɡnərəns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "无知",
+   "愚昧"
+  ],
+  "example_en": "His ignorance of the law led to serious trouble.",
+  "example_zh": "他对法律的无知导致了严重麻烦。"
+ },
+ {
+  "word": "illustrate",
+  "phonetic": "/ˈɪləstreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "说明",
+   "阐明"
+  ],
+  "example_en": "The data illustrate the trend clearly.",
+  "example_zh": "这些数据清楚地说明了这一趋势。"
+ },
+ {
+  "word": "imitate",
+  "phonetic": "/ˈɪmɪteɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "模仿",
+   "仿效"
+  ],
+  "example_en": "Children tend to imitate their parents' behavior.",
+  "example_zh": "孩子往往会模仿父母的行为。"
+ },
+ {
+  "word": "immune",
+  "phonetic": "/ɪˈmjuːn/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "免疫的",
+   "不受影响的"
+  ],
+  "example_en": "No one is immune to criticism.",
+  "example_zh": "没有人能不受批评的影响。"
+ },
+ {
+  "word": "impact",
+  "phonetic": "/ˈɪmpækt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "影响",
+   "冲击"
+  ],
+  "example_en": "The new policy had a profound impact on the economy.",
+  "example_zh": "新政策对经济产生了深远影响。"
+ },
+ {
+  "word": "impair",
+  "phonetic": "/ɪmˈpeə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "损害",
+   "削弱"
+  ],
+  "example_en": "Lack of sleep can impair cognitive function.",
+  "example_zh": "睡眠不足会损害认知功能。"
+ },
+ {
+  "word": "implement",
+  "phonetic": "/ˈɪmplɪment/",
+  "pos": "v.",
+  "meanings_zh": [
+   "实施",
+   "执行"
+  ],
+  "example_en": "The government will implement the new tax law next year.",
+  "example_zh": "政府将于明年实施新税法。"
+ },
+ {
+  "word": "implication",
+  "phonetic": "/ˌɪmplɪˈkeɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "含义",
+   "影响"
+  ],
+  "example_en": "The implications of this discovery are enormous.",
+  "example_zh": "这一发现的含义极其重大。"
+ },
+ {
+  "word": "implicit",
+  "phonetic": "/ɪmˈplɪsɪt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "含蓄的",
+   "隐含的"
+  ],
+  "example_en": "There was an implicit threat in his words.",
+  "example_zh": "他的话中隐含着威胁。"
+ },
+ {
+  "word": "impose",
+  "phonetic": "/ɪmˈpəʊz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "强加",
+   "征收"
+  ],
+  "example_en": "The government imposed heavy taxes on imports.",
+  "example_zh": "政府对进口商品征收重税。"
+ },
+ {
+  "word": "incentive",
+  "phonetic": "/ɪnˈsentɪv/",
+  "pos": "n.",
+  "meanings_zh": [
+   "激励",
+   "动机"
+  ],
+  "example_en": "Tax cuts provide an incentive for investment.",
+  "example_zh": "减税为投资提供了激励。"
+ },
+ {
+  "word": "incidence",
+  "phonetic": "/ˈɪnsɪdəns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "发生率",
+   "发病率"
+  ],
+  "example_en": "The incidence of lung cancer has risen sharply.",
+  "example_zh": "肺癌的发病率急剧上升。"
+ },
+ {
+  "word": "incline",
+  "phonetic": "/ɪnˈklaɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "倾向",
+   "倾斜"
+  ],
+  "example_en": "I incline to accept his explanation.",
+  "example_zh": "我倾向于接受他的解释。"
+ },
+ {
+  "word": "incorporate",
+  "phonetic": "/ɪnˈkɔːpəreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "纳入",
+   "合并"
+  ],
+  "example_en": "The new design incorporates several safety features.",
+  "example_zh": "新设计纳入了多项安全功能。"
+ },
+ {
+  "word": "indicate",
+  "phonetic": "/ˈɪndɪkeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "表明",
+   "指出"
+  ],
+  "example_en": "The results indicate a significant improvement.",
+  "example_zh": "结果表明有了显著改善。"
+ },
+ {
+  "word": "indifferent",
+  "phonetic": "/ɪnˈdɪfrənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "漠不关心的",
+   "冷漠的"
+  ],
+  "example_en": "He seemed indifferent to their suffering.",
+  "example_zh": "他似乎对他们的痛苦漠不关心。"
+ },
+ {
+  "word": "indispensable",
+  "phonetic": "/ˌɪndɪˈspensəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "不可缺少的",
+   "必需的"
+  ],
+  "example_en": "Water is indispensable to all forms of life.",
+  "example_zh": "水对所有生命形式都是不可缺少的。"
+ },
+ {
+  "word": "induce",
+  "phonetic": "/ɪnˈdjuːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "引起",
+   "诱导"
+  ],
+  "example_en": "Nothing could induce him to change his mind.",
+  "example_zh": "没有什么能促使他改变主意。"
+ },
+ {
+  "word": "indulge",
+  "phonetic": "/ɪnˈdʌldʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "纵容",
+   "沉溺"
+  ],
+  "example_en": "He indulged in excessive drinking.",
+  "example_zh": "他沉溺于过度饮酒。"
+ },
+ {
+  "word": "inevitably",
+  "phonetic": "/ɪnˈevɪtəbli/",
+  "pos": "adv.",
+  "meanings_zh": [
+   "不可避免地",
+   "必然"
+  ],
+  "example_en": "Such conflicts will inevitably arise.",
+  "example_zh": "这类冲突将不可避免地出现。"
+ },
+ {
+  "word": "infer",
+  "phonetic": "/ɪnˈfɜː/",
+  "pos": "v.",
+  "meanings_zh": [
+   "推断",
+   "推论"
+  ],
+  "example_en": "From his tone we can infer his dissatisfaction.",
+  "example_zh": "从他的语气我们可以推断出他的不满。"
+ },
+ {
+  "word": "inferior",
+  "phonetic": "/ɪnˈfɪəriə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "较差的",
+   "次等的"
+  ],
+  "example_en": "These goods are inferior to those we saw earlier.",
+  "example_zh": "这些商品比我们之前看到的差。"
+ },
+ {
+  "word": "inflation",
+  "phonetic": "/ɪnˈfleɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "通货膨胀",
+   "膨胀"
+  ],
+  "example_en": "Inflation has eroded the value of savings.",
+  "example_zh": "通货膨胀侵蚀了储蓄的价值。"
+ },
+ {
+  "word": "inherent",
+  "phonetic": "/ɪnˈhɪərənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "固有的",
+   "内在的"
+  ],
+  "example_en": "There are inherent risks in the venture.",
+  "example_zh": "这项冒险存在固有风险。"
+ },
+ {
+  "word": "inhibit",
+  "phonetic": "/ɪnˈhɪbɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "抑制",
+   "阻碍"
+  ],
+  "example_en": "Fear can inhibit creative thinking.",
+  "example_zh": "恐惧会抑制创造性思维。"
+ },
+ {
+  "word": "initiate",
+  "phonetic": "/ɪˈnɪʃieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "发起",
+   "开始"
+  ],
+  "example_en": "The company initiated a new training program.",
+  "example_zh": "公司发起了一项新的培训计划。"
+ },
+ {
+  "word": "innovation",
+  "phonetic": "/ˌɪnəˈveɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "创新",
+   "革新"
+  ],
+  "example_en": "Technological innovation drives economic growth.",
+  "example_zh": "技术创新推动经济增长。"
+ },
+ {
+  "word": "inquiry",
+  "phonetic": "/ɪnˈkwaɪəri/",
+  "pos": "n.",
+  "meanings_zh": [
+   "询问",
+   "调查"
+  ],
+  "example_en": "The committee launched an inquiry into the scandal.",
+  "example_zh": "委员会对丑闻展开了调查。"
+ },
+ {
+  "word": "insight",
+  "phonetic": "/ˈɪnsaɪt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "洞察力",
+   "见解"
+  ],
+  "example_en": "The book offers valuable insights into human nature.",
+  "example_zh": "这本书对人性提供了宝贵的见解。"
+ },
+ {
+  "word": "inspire",
+  "phonetic": "/ɪnˈspaɪə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "激励",
+   "启发"
+  ],
+  "example_en": "Her speech inspired the students to work harder.",
+  "example_zh": "她的演讲激励学生更加努力。"
+ },
+ {
+  "word": "install",
+  "phonetic": "/ɪnˈstɔːl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "安装",
+   "任命"
+  ],
+  "example_en": "They installed a new security system.",
+  "example_zh": "他们安装了一套新的安全系统。"
+ },
+ {
+  "word": "instinct",
+  "phonetic": "/ˈɪnstɪŋkt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "本能",
+   "直觉"
+  ],
+  "example_en": "Birds build nests by instinct.",
+  "example_zh": "鸟类凭本能筑巢。"
+ },
+ {
+  "word": "institute",
+  "phonetic": "/ˈɪnstɪtjuːt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "研究所",
+   "学会"
+  ],
+  "example_en": "He works at a famous research institute.",
+  "example_zh": "他在一家著名的研究所工作。"
+ },
+ {
+  "word": "integral",
+  "phonetic": "/ˈɪntɪɡrəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "必需的",
+   "整体的"
+  ],
+  "example_en": "Music is an integral part of the culture.",
+  "example_zh": "音乐是该文化不可或缺的一部分。"
+ },
+ {
+  "word": "integrity",
+  "phonetic": "/ɪnˈteɡrəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "正直",
+   "完整"
+  ],
+  "example_en": "He is a man of great integrity.",
+  "example_zh": "他是一个非常正直的人。"
+ },
+ {
+  "word": "intense",
+  "phonetic": "/ɪnˈtens/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "强烈的",
+   "紧张的"
+  ],
+  "example_en": "The competition for the job was intense.",
+  "example_zh": "这份工作的竞争非常激烈。"
+ },
+ {
+  "word": "interpret",
+  "phonetic": "/ɪnˈtɜːprɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "解释",
+   "理解"
+  ],
+  "example_en": "How do you interpret this passage?",
+  "example_zh": "你如何解释这段话？"
+ },
+ {
+  "word": "intervene",
+  "phonetic": "/ˌɪntəˈviːn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "干预",
+   "介入"
+  ],
+  "example_en": "The government intervened to stabilize prices.",
+  "example_zh": "政府介入以稳定物价。"
+ },
+ {
+  "word": "intimate",
+  "phonetic": "/ˈɪntɪmət/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "亲密的",
+   "私人的"
+  ],
+  "example_en": "They shared an intimate friendship for years.",
+  "example_zh": "他们多年来保持着亲密的友谊。"
+ },
+ {
+  "word": "intrigue",
+  "phonetic": "/ɪnˈtriːɡ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "激起兴趣",
+   "密谋"
+  ],
+  "example_en": "The mystery intrigued readers around the world.",
+  "example_zh": "这个谜团激起了全世界读者的兴趣。"
+ },
+ {
+  "word": "intrinsic",
+  "phonetic": "/ɪnˈtrɪnsɪk/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "内在的",
+   "固有的"
+  ],
+  "example_en": "Curiosity has intrinsic value in learning.",
+  "example_zh": "好奇心在学习中具有内在价值。"
+ },
+ {
+  "word": "invaluable",
+  "phonetic": "/ɪnˈvæljuəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "无价的",
+   "极宝贵的"
+  ],
+  "example_en": "Her advice proved invaluable to the team.",
+  "example_zh": "她的建议对团队来说极其宝贵。"
+ },
+ {
+  "word": "invariably",
+  "phonetic": "/ɪnˈveəriəbli/",
+  "pos": "adv.",
+  "meanings_zh": [
+   "总是",
+   "始终"
+  ],
+  "example_en": "He invariably arrives on time.",
+  "example_zh": "他总是准时到达。"
+ },
+ {
+  "word": "investigate",
+  "phonetic": "/ɪnˈvestɪɡeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "调查",
+   "研究"
+  ],
+  "example_en": "Police are investigating the cause of the fire.",
+  "example_zh": "警方正在调查火灾的原因。"
+ },
+ {
+  "word": "invisible",
+  "phonetic": "/ɪnˈvɪzəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "看不见的",
+   "无形的"
+  ],
+  "example_en": "The damage was invisible to the naked eye.",
+  "example_zh": "这种损害肉眼看不见。"
+ },
+ {
+  "word": "involve",
+  "phonetic": "/ɪnˈvɒlv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "涉及",
+   "包含"
+  ],
+  "example_en": "The job involves frequent travel abroad.",
+  "example_zh": "这份工作涉及频繁出国旅行。"
+ },
+ {
+  "word": "isolate",
+  "phonetic": "/ˈaɪsəleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "隔离",
+   "孤立"
+  ],
+  "example_en": "The village was isolated by heavy snow.",
+  "example_zh": "这个村庄被大雪隔离了。"
+ },
+ {
+  "word": "issue",
+  "phonetic": "/ˈɪʃuː/",
+  "pos": "n.",
+  "meanings_zh": [
+   "问题",
+   "议题"
+  ],
+  "example_en": "Climate change is a pressing global issue.",
+  "example_zh": "气候变化是一个紧迫的全球问题。"
+ },
+ {
+  "word": "jeopardize",
+  "phonetic": "/ˈdʒepədaɪz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "危及",
+   "损害"
+  ],
+  "example_en": "His carelessness could jeopardize the whole plan.",
+  "example_zh": "他的粗心可能危及整个计划。"
+ },
+ {
+  "word": "jeopardy",
+  "phonetic": "/ˈdʒepədi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "危险",
+   "危难"
+  ],
+  "example_en": "His career was in jeopardy after the scandal.",
+  "example_zh": "丑闻之后他的职业生涯陷入危险。"
+ },
+ {
+  "word": "justify",
+  "phonetic": "/ˈdʒʌstɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "证明正当",
+   "辩护"
+  ],
+  "example_en": "Nothing can justify such cruel behavior.",
+  "example_zh": "没有任何理由能为这种残忍行为辩护。"
+ },
+ {
+  "word": "keen",
+  "phonetic": "/kiːn/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "热切的",
+   "敏锐的"
+  ],
+  "example_en": "She is keen to learn a new language.",
+  "example_zh": "她热切地想学一门新语言。"
+ },
+ {
+  "word": "kindle",
+  "phonetic": "/ˈkɪndl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "点燃",
+   "激起"
+  ],
+  "example_en": "The speech kindled enthusiasm among the students.",
+  "example_zh": "演讲激起了学生们的热情。"
+ },
+ {
+  "word": "label",
+  "phonetic": "/ˈleɪbl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "贴标签",
+   "归类"
+  ],
+  "example_en": "They labeled him a troublemaker.",
+  "example_zh": "他们把他归类为捣乱分子。"
+ },
+ {
+  "word": "lag",
+  "phonetic": "/læɡ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "落后",
+   "滞后"
+  ],
+  "example_en": "Wages are lagging behind inflation.",
+  "example_zh": "工资增长落后于通货膨胀。"
+ },
+ {
+  "word": "launch",
+  "phonetic": "/lɔːntʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "发起",
+   "发射"
+  ],
+  "example_en": "The company will launch a new product next month.",
+  "example_zh": "公司下个月将推出新产品。"
+ },
+ {
+  "word": "legacy",
+  "phonetic": "/ˈleɡəsi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "遗产",
+   "遗留"
+  ],
+  "example_en": "The war left a legacy of bitterness.",
+  "example_zh": "这场战争留下了仇恨的遗产。"
+ },
+ {
+  "word": "legislation",
+  "phonetic": "/ˌledʒɪsˈleɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "立法",
+   "法规"
+  ],
+  "example_en": "New legislation on data protection was passed.",
+  "example_zh": "关于数据保护的新立法获得通过。"
+ },
+ {
+  "word": "legitimate",
+  "phonetic": "/lɪˈdʒɪtɪmət/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "合法的",
+   "正当的"
+  ],
+  "example_en": "Workers have a legitimate right to strike.",
+  "example_zh": "工人有罢工的正当权利。"
+ },
+ {
+  "word": "lever",
+  "phonetic": "/ˈliːvə/",
+  "pos": "n.",
+  "meanings_zh": [
+   "杠杆",
+   "手段"
+  ],
+  "example_en": "Education is a powerful lever for social change.",
+  "example_zh": "教育是社会变革的有力手段。"
+ },
+ {
+  "word": "liable",
+  "phonetic": "/ˈlaɪəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "有责任的",
+   "易于……的"
+  ],
+  "example_en": "Drivers are liable for any damage they cause.",
+  "example_zh": "司机对其造成的任何损害负有责任。"
+ },
+ {
+  "word": "liberal",
+  "phonetic": "/ˈlɪbərəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "自由的",
+   "开明的"
+  ],
+  "example_en": "He holds liberal views on social issues.",
+  "example_zh": "他在社会问题上持开明观点。"
+ },
+ {
+  "word": "license",
+  "phonetic": "/ˈlaɪsns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "许可证",
+   "执照"
+  ],
+  "example_en": "You need a license to drive a car.",
+  "example_zh": "开车需要驾照。"
+ },
+ {
+  "word": "linger",
+  "phonetic": "/ˈlɪŋɡə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "逗留",
+   "徘徊"
+  ],
+  "example_en": "The smell of smoke lingered in the room.",
+  "example_zh": "烟味在房间里久久不散。"
+ },
+ {
+  "word": "literacy",
+  "phonetic": "/ˈlɪtərəsi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "读写能力",
+   "识字"
+  ],
+  "example_en": "The literacy rate has risen steadily.",
+  "example_zh": "识字率稳步上升。"
+ },
+ {
+  "word": "literally",
+  "phonetic": "/ˈlɪtərəli/",
+  "pos": "adv.",
+  "meanings_zh": [
+   "字面上",
+   "确实地"
+  ],
+  "example_en": "He was literally shaking with fear.",
+  "example_zh": "他确实吓得发抖。"
+ },
+ {
+  "word": "lucrative",
+  "phonetic": "/ˈluːkrətɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "赚钱的",
+   "获利多的"
+  ],
+  "example_en": "Law can be a highly lucrative profession.",
+  "example_zh": "法律可以是一个收入很高的职业。"
+ },
+ {
+  "word": "magnify",
+  "phonetic": "/ˈmæɡnɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "放大",
+   "夸大"
+  ],
+  "example_en": "The microscope can magnify the specimen by a thousand times.",
+  "example_zh": "这台显微镜能把标本放大一千倍。"
+ },
+ {
+  "word": "maintain",
+  "phonetic": "/meɪnˈteɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "维持",
+   "坚持",
+   "保养"
+  ],
+  "example_en": "It is difficult to maintain such a high level of output.",
+  "example_zh": "维持如此高的产量是很困难的。"
+ },
+ {
+  "word": "mandate",
+  "phonetic": "/ˈmændeɪt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "授权",
+   "命令"
+  ],
+  "example_en": "The government claimed a mandate for radical reform.",
+  "example_zh": "政府声称获得了进行彻底改革的授权。"
+ },
+ {
+  "word": "manifest",
+  "phonetic": "/ˈmænɪfest/",
+  "pos": "v.",
+  "meanings_zh": [
+   "显示",
+   "表明"
+  ],
+  "example_en": "The symptoms manifested themselves ten days later.",
+  "example_zh": "症状在十天后显现出来。"
+ },
+ {
+  "word": "marginal",
+  "phonetic": "/ˈmɑːdʒɪnl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "微小的",
+   "边缘的"
+  ],
+  "example_en": "The change had only a marginal effect on profits.",
+  "example_zh": "这一变化对利润只有微小的影响。"
+ },
+ {
+  "word": "mature",
+  "phonetic": "/məˈtʃʊə(r)/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "成熟的"
+  ],
+  "example_en": "She is very mature for her age.",
+  "example_zh": "就她的年龄而言，她非常成熟。"
+ },
+ {
+  "word": "mechanism",
+  "phonetic": "/ˈmekənɪzəm/",
+  "pos": "n.",
+  "meanings_zh": [
+   "机制",
+   "机械装置"
+  ],
+  "example_en": "The body has a complex mechanism for regulating temperature.",
+  "example_zh": "人体有一套复杂的调节体温的机制。"
+ },
+ {
+  "word": "mediate",
+  "phonetic": "/ˈmiːdieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "调解",
+   "斡旋"
+  ],
+  "example_en": "The UN tried to mediate between the two countries.",
+  "example_zh": "联合国试图在两国之间进行调解。"
+ },
+ {
+  "word": "merge",
+  "phonetic": "/mɜːdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "合并",
+   "融合"
+  ],
+  "example_en": "The two companies decided to merge last year.",
+  "example_zh": "这两家公司去年决定合并。"
+ },
+ {
+  "word": "meticulous",
+  "phonetic": "/məˈtɪkjələs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "细致的",
+   "一丝不苟的"
+  ],
+  "example_en": "He is meticulous about keeping accurate records.",
+  "example_zh": "他对保存准确记录一丝不苟。"
+ },
+ {
+  "word": "migrate",
+  "phonetic": "/maɪˈɡreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "迁移",
+   "移居"
+  ],
+  "example_en": "Many birds migrate south for the winter.",
+  "example_zh": "许多鸟南迁过冬。"
+ },
+ {
+  "word": "minimize",
+  "phonetic": "/ˈmɪnɪmaɪz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "最小化",
+   "使减到最少"
+  ],
+  "example_en": "We must minimize the risks involved in the project.",
+  "example_zh": "我们必须把项目涉及的风险降到最低。"
+ },
+ {
+  "word": "modify",
+  "phonetic": "/ˈmɒdɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "修改",
+   "调整"
+  ],
+  "example_en": "The design was modified to reduce costs.",
+  "example_zh": "为了降低成本，设计被修改了。"
+ },
+ {
+  "word": "monitor",
+  "phonetic": "/ˈmɒnɪtə(r)/",
+  "pos": "v.",
+  "meanings_zh": [
+   "监控",
+   "监测"
+  ],
+  "example_en": "Scientists monitor the level of pollution in the river.",
+  "example_zh": "科学家监测河流中的污染水平。"
+ },
+ {
+  "word": "motivate",
+  "phonetic": "/ˈməʊtɪveɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "激励",
+   "促使"
+  ],
+  "example_en": "Good teachers know how to motivate their students.",
+  "example_zh": "好老师知道如何激励学生。"
+ },
+ {
+  "word": "mutual",
+  "phonetic": "/ˈmjuːtʃuəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "相互的",
+   "共同的"
+  ],
+  "example_en": "The agreement was based on mutual trust.",
+  "example_zh": "该协议建立在相互信任的基础上。"
+ },
+ {
+  "word": "negligible",
+  "phonetic": "/ˈneɡlɪdʒəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "微不足道的"
+  ],
+  "example_en": "The difference in cost was negligible.",
+  "example_zh": "成本上的差异微不足道。"
+ },
+ {
+  "word": "negotiate",
+  "phonetic": "/nɪˈɡəʊʃieɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "谈判",
+   "协商"
+  ],
+  "example_en": "The union refused to negotiate on wages.",
+  "example_zh": "工会拒绝就工资问题进行谈判。"
+ },
+ {
+  "word": "neutral",
+  "phonetic": "/ˈnjuːtrəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "中立的",
+   "中性的"
+  ],
+  "example_en": "Switzerland remained neutral during the war.",
+  "example_zh": "瑞士在战争期间保持中立。"
+ },
+ {
+  "word": "notorious",
+  "phonetic": "/nəʊˈtɔːriəs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "臭名昭著的"
+  ],
+  "example_en": "The area is notorious for its high crime rate.",
+  "example_zh": "该地区因犯罪率高而臭名昭著。"
+ },
+ {
+  "word": "nourish",
+  "phonetic": "/ˈnʌrɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "滋养",
+   "培养"
+  ],
+  "example_en": "A good diet nourishes both body and mind.",
+  "example_zh": "良好的饮食滋养身心。"
+ },
+ {
+  "word": "novel",
+  "phonetic": "/ˈnɒvl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "新颖的"
+  ],
+  "example_en": "They came up with a novel solution to the problem.",
+  "example_zh": "他们想出了解决问题的新颖办法。"
+ },
+ {
+  "word": "nurture",
+  "phonetic": "/ˈnɜːtʃə(r)/",
+  "pos": "v.",
+  "meanings_zh": [
+   "培养",
+   "养育"
+  ],
+  "example_en": "It is important to nurture talent in young people.",
+  "example_zh": "培养年轻人的才能很重要。"
+ },
+ {
+  "word": "objective",
+  "phonetic": "/əbˈdʒektɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "客观的"
+  ],
+  "example_en": "A scientist must remain objective at all times.",
+  "example_zh": "科学家必须始终保持客观。"
+ },
+ {
+  "word": "oblige",
+  "phonetic": "/əˈblaɪdʒ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "迫使",
+   "使感激"
+  ],
+  "example_en": "The law obliges employers to provide safety training.",
+  "example_zh": "法律迫使雇主提供安全培训。"
+ },
+ {
+  "word": "obscure",
+  "phonetic": "/əbˈskjʊə(r)/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "模糊的",
+   "晦涩的"
+  ],
+  "example_en": "The meaning of the poem remains obscure.",
+  "example_zh": "这首诗的含义仍然晦涩难懂。"
+ },
+ {
+  "word": "obsolete",
+  "phonetic": "/ˈɒbsəliːt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "过时的",
+   "淘汰的"
+  ],
+  "example_en": "Many traditional skills have become obsolete.",
+  "example_zh": "许多传统技能已经过时。"
+ },
+ {
+  "word": "obstacle",
+  "phonetic": "/ˈɒbstəkl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "障碍",
+   "阻碍"
+  ],
+  "example_en": "Lack of funding is the main obstacle to the plan.",
+  "example_zh": "缺乏资金是这一计划的主要障碍。"
+ },
+ {
+  "word": "obtain",
+  "phonetic": "/əbˈteɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "获得",
+   "得到"
+  ],
+  "example_en": "You must obtain permission before entering the site.",
+  "example_zh": "进入现场前你必须获得许可。"
+ },
+ {
+  "word": "obvious",
+  "phonetic": "/ˈɒbviəs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "明显的"
+  ],
+  "example_en": "It was obvious that she had not read the report.",
+  "example_zh": "很明显她没有读过这份报告。"
+ },
+ {
+  "word": "occupy",
+  "phonetic": "/ˈɒkjupaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "占据",
+   "占用"
+  ],
+  "example_en": "The books occupy most of the space in the room.",
+  "example_zh": "这些书占据了房间里的大部分空间。"
+ },
+ {
+  "word": "occur",
+  "phonetic": "/əˈkɜː(r)/",
+  "pos": "v.",
+  "meanings_zh": [
+   "发生",
+   "出现"
+  ],
+  "example_en": "The accident occurred late at night.",
+  "example_zh": "事故发生在深夜。"
+ },
+ {
+  "word": "offset",
+  "phonetic": "/ˈɒfset/",
+  "pos": "v.",
+  "meanings_zh": [
+   "抵消",
+   "弥补"
+  ],
+  "example_en": "Higher sales offset the rise in production costs.",
+  "example_zh": "销售额上升抵消了生产成本的上涨。"
+ },
+ {
+  "word": "omit",
+  "phonetic": "/əˈmɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "省略",
+   "遗漏"
+  ],
+  "example_en": "He omitted several important details from the report.",
+  "example_zh": "他在报告中遗漏了几个重要细节。"
+ },
+ {
+  "word": "opponent",
+  "phonetic": "/əˈpəʊnənt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "对手",
+   "反对者"
+  ],
+  "example_en": "She defeated her opponent in the final round.",
+  "example_zh": "她在最后一轮击败了对手。"
+ },
+ {
+  "word": "optimistic",
+  "phonetic": "/ˌɒptɪˈmɪstɪk/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "乐观的"
+  ],
+  "example_en": "Economists are optimistic about growth next year.",
+  "example_zh": "经济学家对明年的增长持乐观态度。"
+ },
+ {
+  "word": "originate",
+  "phonetic": "/əˈrɪdʒɪneɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "起源",
+   "发源"
+  ],
+  "example_en": "The custom originated in ancient China.",
+  "example_zh": "这一习俗起源于古代中国。"
+ },
+ {
+  "word": "outcome",
+  "phonetic": "/ˈaʊtkʌm/",
+  "pos": "n.",
+  "meanings_zh": [
+   "结果",
+   "成果"
+  ],
+  "example_en": "The outcome of the election surprised everyone.",
+  "example_zh": "选举结果令所有人惊讶。"
+ },
+ {
+  "word": "outstanding",
+  "phonetic": "/aʊtˈstændɪŋ/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "杰出的",
+   "未解决的"
+  ],
+  "example_en": "She received an award for her outstanding research.",
+  "example_zh": "她因杰出的研究获得了奖项。"
+ },
+ {
+  "word": "overcome",
+  "phonetic": "/ˌəʊvəˈkʌm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "克服",
+   "战胜"
+  ],
+  "example_en": "He overcame many difficulties to finish his degree.",
+  "example_zh": "他克服了许多困难才完成学位。"
+ },
+ {
+  "word": "overlook",
+  "phonetic": "/ˌəʊvəˈlʊk/",
+  "pos": "v.",
+  "meanings_zh": [
+   "忽视",
+   "俯瞰"
+  ],
+  "example_en": "We should not overlook the importance of sleep.",
+  "example_zh": "我们不应忽视睡眠的重要性。"
+ },
+ {
+  "word": "overwhelm",
+  "phonetic": "/ˌəʊvəˈwelm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "压倒",
+   "淹没"
+  ],
+  "example_en": "The small clinic was overwhelmed by patients.",
+  "example_zh": "这家小诊所被病人挤得应接不暇。"
+ },
+ {
+  "word": "parallel",
+  "phonetic": "/ˈpærəlel/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "平行的",
+   "类似的"
+  ],
+  "example_en": "There are parallel trends in both countries.",
+  "example_zh": "两国有类似的发展趋势。"
+ },
+ {
+  "word": "participate",
+  "phonetic": "/pɑːˈtɪsɪpeɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "参与",
+   "参加"
+  ],
+  "example_en": "All students are encouraged to participate in the debate.",
+  "example_zh": "鼓励所有学生参与这场辩论。"
+ },
+ {
+  "word": "passive",
+  "phonetic": "/ˈpæsɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "被动的",
+   "消极的"
+  ],
+  "example_en": "His passive attitude annoyed his colleagues.",
+  "example_zh": "他消极的态度让同事们很恼火。"
+ },
+ {
+  "word": "peculiar",
+  "phonetic": "/pɪˈkjuːliə(r)/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "奇怪的",
+   "特有的"
+  ],
+  "example_en": "This custom is peculiar to the region.",
+  "example_zh": "这一习俗是该地区特有的。"
+ },
+ {
+  "word": "perceive",
+  "phonetic": "/pəˈsiːv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "察觉",
+   "理解"
+  ],
+  "example_en": "Children perceive the world differently from adults.",
+  "example_zh": "儿童对世界的感知与成人不同。"
+ },
+ {
+  "word": "permanent",
+  "phonetic": "/ˈpɜːmənənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "永久的",
+   "长期的"
+  ],
+  "example_en": "The accident caused permanent damage to his hearing.",
+  "example_zh": "这起事故对他的听力造成了永久性损伤。"
+ },
+ {
+  "word": "persist",
+  "phonetic": "/pəˈsɪst/",
+  "pos": "v.",
+  "meanings_zh": [
+   "坚持",
+   "持续"
+  ],
+  "example_en": "The problem persists despite repeated efforts.",
+  "example_zh": "尽管一再努力，问题依然存在。"
+ },
+ {
+  "word": "perspective",
+  "phonetic": "/pəˈspektɪv/",
+  "pos": "n.",
+  "meanings_zh": [
+   "观点",
+   "视角"
+  ],
+  "example_en": "The book offers a fresh perspective on history.",
+  "example_zh": "这本书提供了一个看待历史的新视角。"
+ },
+ {
+  "word": "persuade",
+  "phonetic": "/pəˈsweɪd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "说服",
+   "劝说"
+  ],
+  "example_en": "She persuaded him to change his mind.",
+  "example_zh": "她说服他改变了主意。"
+ },
+ {
+  "word": "phenomenon",
+  "phonetic": "/fɪˈnɒmɪnən/",
+  "pos": "n.",
+  "meanings_zh": [
+   "现象"
+  ],
+  "example_en": "Global warming is a complex phenomenon.",
+  "example_zh": "全球变暖是一个复杂的现象。"
+ },
+ {
+  "word": "philosophy",
+  "phonetic": "/fɪˈlɒsəfi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "哲学",
+   "人生观"
+  ],
+  "example_en": "He studied philosophy at a famous university.",
+  "example_zh": "他在一所著名大学学习哲学。"
+ },
+ {
+  "word": "plausible",
+  "phonetic": "/ˈplɔːzəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "貌似合理的"
+  ],
+  "example_en": "His explanation sounded plausible enough.",
+  "example_zh": "他的解释听起来相当合理。"
+ },
+ {
+  "word": "potential",
+  "phonetic": "/pəˈtenʃl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "潜在的"
+  ],
+  "example_en": "We must consider the potential risks of the drug.",
+  "example_zh": "我们必须考虑这种药物的潜在风险。"
+ },
+ {
+  "word": "precede",
+  "phonetic": "/prɪˈsiːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "先于",
+   "在……之前"
+  ],
+  "example_en": "A short introduction precedes each chapter.",
+  "example_zh": "每章前面都有一段简短的引言。"
+ },
+ {
+  "word": "precise",
+  "phonetic": "/prɪˈsaɪs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "精确的",
+   "准确的"
+  ],
+  "example_en": "The instrument gives precise measurements.",
+  "example_zh": "这台仪器能给出精确的测量结果。"
+ },
+ {
+  "word": "predict",
+  "phonetic": "/prɪˈdɪkt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "预测",
+   "预言"
+  ],
+  "example_en": "It is hard to predict how the market will react.",
+  "example_zh": "很难预测市场会如何反应。"
+ },
+ {
+  "word": "prejudice",
+  "phonetic": "/ˈpredʒudɪs/",
+  "pos": "n.",
+  "meanings_zh": [
+   "偏见",
+   "成见"
+  ],
+  "example_en": "Education can help reduce racial prejudice.",
+  "example_zh": "教育有助于减少种族偏见。"
+ },
+ {
+  "word": "preserve",
+  "phonetic": "/prɪˈzɜːv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "保护",
+   "保存"
+  ],
+  "example_en": "We must preserve these historic buildings.",
+  "example_zh": "我们必须保护这些历史建筑。"
+ },
+ {
+  "word": "prestige",
+  "phonetic": "/preˈstiːʒ/",
+  "pos": "n.",
+  "meanings_zh": [
+   "声望",
+   "威信"
+  ],
+  "example_en": "The university enjoys great prestige worldwide.",
+  "example_zh": "这所大学在全世界享有很高的声望。"
+ },
+ {
+  "word": "presume",
+  "phonetic": "/prɪˈzjuːm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "假定",
+   "推测"
+  ],
+  "example_en": "I presume you have read the instructions.",
+  "example_zh": "我猜想你已经读过说明了。"
+ },
+ {
+  "word": "prevail",
+  "phonetic": "/prɪˈveɪl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "盛行",
+   "占优势"
+  ],
+  "example_en": "Common sense finally prevailed in the discussion.",
+  "example_zh": "常识最终在讨论中占了上风。"
+ },
+ {
+  "word": "primitive",
+  "phonetic": "/ˈprɪmətɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "原始的",
+   "简陋的"
+  ],
+  "example_en": "Their tools were primitive but effective.",
+  "example_zh": "他们的工具虽然简陋但很有效。"
+ },
+ {
+  "word": "principal",
+  "phonetic": "/ˈprɪnsəpl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "主要的"
+  ],
+  "example_en": "Tourism is the principal source of income here.",
+  "example_zh": "旅游业是这里的主要收入来源。"
+ },
+ {
+  "word": "priority",
+  "phonetic": "/praɪˈɒrəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "优先",
+   "优先事项"
+  ],
+  "example_en": "Safety must be our top priority.",
+  "example_zh": "安全必须是我们的头等大事。"
+ },
+ {
+  "word": "proceed",
+  "phonetic": "/prəˈsiːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "继续进行",
+   "前进"
+  ],
+  "example_en": "The meeting proceeded as planned.",
+  "example_zh": "会议按计划继续进行。"
+ },
+ {
+  "word": "profound",
+  "phonetic": "/prəˈfaʊnd/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "深刻的",
+   "深远的"
+  ],
+  "example_en": "The discovery had a profound impact on medicine.",
+  "example_zh": "这一发现对医学产生了深远的影响。"
+ },
+ {
+  "word": "prohibit",
+  "phonetic": "/prəˈhɪbɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "禁止"
+  ],
+  "example_en": "The law prohibits smoking in public places.",
+  "example_zh": "法律禁止在公共场所吸烟。"
+ },
+ {
+  "word": "prominent",
+  "phonetic": "/ˈprɒmɪnənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "突出的",
+   "著名的"
+  ],
+  "example_en": "He played a prominent role in the negotiations.",
+  "example_zh": "他在谈判中发挥了重要作用。"
+ },
+ {
+  "word": "promote",
+  "phonetic": "/prəˈməʊt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "促进",
+   "提升"
+  ],
+  "example_en": "The campaign aims to promote healthy eating.",
+  "example_zh": "这项运动旨在促进健康饮食。"
+ },
+ {
+  "word": "prompt",
+  "phonetic": "/prɒmpt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "促使",
+   "激起"
+  ],
+  "example_en": "The incident prompted calls for reform.",
+  "example_zh": "这一事件激起了改革的呼声。"
+ },
+ {
+  "word": "proportion",
+  "phonetic": "/prəˈpɔːʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "比例",
+   "部分"
+  ],
+  "example_en": "A large proportion of workers support the plan.",
+  "example_zh": "很大一部分工人支持这项计划。"
+ },
+ {
+  "word": "prospect",
+  "phonetic": "/ˈprɒspekt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "前景",
+   "可能性"
+  ],
+  "example_en": "The prospect of promotion motivated him.",
+  "example_zh": "升职的前景激励了他。"
+ },
+ {
+  "word": "prosperity",
+  "phonetic": "/prɒˈsperəti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "繁荣",
+   "兴旺"
+  ],
+  "example_en": "Trade brought prosperity to the coastal towns.",
+  "example_zh": "贸易给沿海城镇带来了繁荣。"
+ },
+ {
+  "word": "protest",
+  "phonetic": "/prəˈtest/",
+  "pos": "v.",
+  "meanings_zh": [
+   "抗议",
+   "反对"
+  ],
+  "example_en": "Students protested against the rise in tuition fees.",
+  "example_zh": "学生们抗议学费上涨。"
+ },
+ {
+  "word": "provoke",
+  "phonetic": "/prəˈvəʊk/",
+  "pos": "v.",
+  "meanings_zh": [
+   "激起",
+   "挑动"
+  ],
+  "example_en": "His remarks provoked an angry response.",
+  "example_zh": "他的言论激起了愤怒的回应。"
+ },
+ {
+  "word": "prudent",
+  "phonetic": "/ˈpruːdnt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "谨慎的",
+   "审慎的"
+  ],
+  "example_en": "It would be prudent to save some money.",
+  "example_zh": "存些钱是审慎的做法。"
+ },
+ {
+  "word": "pursue",
+  "phonetic": "/pəˈsjuː/",
+  "pos": "v.",
+  "meanings_zh": [
+   "追求",
+   "从事"
+  ],
+  "example_en": "She decided to pursue a career in law.",
+  "example_zh": "她决定从事法律职业。"
+ },
+ {
+  "word": "qualify",
+  "phonetic": "/ˈkwɒlɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "使合格",
+   "取得资格"
+  ],
+  "example_en": "He qualified as a doctor last year.",
+  "example_zh": "他去年取得了医生资格。"
+ },
+ {
+  "word": "quantify",
+  "phonetic": "/ˈkwɒntɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "量化",
+   "定量"
+  ],
+  "example_en": "It is difficult to quantify the damage caused.",
+  "example_zh": "很难量化造成的损失。"
+ },
+ {
+  "word": "quota",
+  "phonetic": "/ˈkwəʊtə/",
+  "pos": "n.",
+  "meanings_zh": [
+   "配额",
+   "定额"
+  ],
+  "example_en": "The country imposed a quota on imports.",
+  "example_zh": "该国对进口实行了配额限制。"
+ },
+ {
+  "word": "radical",
+  "phonetic": "/ˈrædɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "激进的",
+   "根本的"
+  ],
+  "example_en": "The company needs radical changes to survive.",
+  "example_zh": "这家公司需要根本性的变革才能生存。"
+ },
+ {
+  "word": "random",
+  "phonetic": "/ˈrændəm/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "随机的",
+   "任意的"
+  ],
+  "example_en": "The participants were chosen at random.",
+  "example_zh": "参与者是随机挑选的。"
+ },
+ {
+  "word": "rational",
+  "phonetic": "/ˈræʃnəl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "理性的",
+   "合理的"
+  ],
+  "example_en": "We need a rational approach to the problem.",
+  "example_zh": "我们需要用理性的方法解决这个问题。"
+ },
+ {
+  "word": "rebel",
+  "phonetic": "/rɪˈbel/",
+  "pos": "v.",
+  "meanings_zh": [
+   "反抗",
+   "造反"
+  ],
+  "example_en": "The peasants rebelled against heavy taxation.",
+  "example_zh": "农民反抗沉重的赋税。"
+ },
+ {
+  "word": "recall",
+  "phonetic": "/rɪˈkɔːl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "回忆",
+   "召回"
+  ],
+  "example_en": "I cannot recall where I met him.",
+  "example_zh": "我想不起在哪里见过他。"
+ },
+ {
+  "word": "recede",
+  "phonetic": "/rɪˈsiːd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "退去",
+   "减弱"
+  ],
+  "example_en": "The floodwaters began to recede at dawn.",
+  "example_zh": "洪水在黎明时开始退去。"
+ },
+ {
+  "word": "recipient",
+  "phonetic": "/rɪˈsɪpiənt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "接受者",
+   "接收者"
+  ],
+  "example_en": "She was the recipient of several major awards.",
+  "example_zh": "她获得过几个重要奖项。"
+ },
+ {
+  "word": "reckon",
+  "phonetic": "/ˈrekən/",
+  "pos": "v.",
+  "meanings_zh": [
+   "认为",
+   "估计"
+  ],
+  "example_en": "I reckon it will take about three hours.",
+  "example_zh": "我估计这大约需要三个小时。"
+ },
+ {
+  "word": "recommend",
+  "phonetic": "/ˌrekəˈmend/",
+  "pos": "v.",
+  "meanings_zh": [
+   "推荐",
+   "建议"
+  ],
+  "example_en": "The doctor recommended a low-salt diet.",
+  "example_zh": "医生建议低盐饮食。"
+ },
+ {
+  "word": "reconcile",
+  "phonetic": "/ˈrekənsaɪl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "调和",
+   "使和解"
+  ],
+  "example_en": "It is hard to reconcile work with family life.",
+  "example_zh": "很难兼顾工作和家庭生活。"
+ },
+ {
+  "word": "recruit",
+  "phonetic": "/rɪˈkruːt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "招募",
+   "招收"
+  ],
+  "example_en": "The firm plans to recruit fifty graduates.",
+  "example_zh": "该公司计划招收五十名毕业生。"
+ },
+ {
+  "word": "refine",
+  "phonetic": "/rɪˈfaɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "改进",
+   "提炼"
+  ],
+  "example_en": "The theory has been refined over many years.",
+  "example_zh": "这一理论经过多年不断完善。"
+ },
+ {
+  "word": "reflect",
+  "phonetic": "/rɪˈflekt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "反映",
+   "反思"
+  ],
+  "example_en": "Rising prices reflect the shortage of raw materials.",
+  "example_zh": "物价上涨反映了原材料的短缺。"
+ },
+ {
+  "word": "reform",
+  "phonetic": "/rɪˈfɔːm/",
+  "pos": "n.",
+  "meanings_zh": [
+   "改革",
+   "改良"
+  ],
+  "example_en": "The education reform has produced mixed results.",
+  "example_zh": "教育改革产生了喜忧参半的结果。"
+ },
+ {
+  "word": "refute",
+  "phonetic": "/rɪˈfjuːt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "驳斥",
+   "反驳"
+  ],
+  "example_en": "He refuted the charges with strong evidence.",
+  "example_zh": "他用有力的证据驳斥了这些指控。"
+ },
+ {
+  "word": "regulate",
+  "phonetic": "/ˈreɡjuleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "管理",
+   "调节"
+  ],
+  "example_en": "The government regulates the banking industry.",
+  "example_zh": "政府对银行业进行监管。"
+ },
+ {
+  "word": "reinforce",
+  "phonetic": "/ˌriːɪnˈfɔːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "加强",
+   "强化"
+  ],
+  "example_en": "The results reinforce our earlier conclusions.",
+  "example_zh": "这些结果强化了我们先前的结论。"
+ },
+ {
+  "word": "reject",
+  "phonetic": "/rɪˈdʒekt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "拒绝",
+   "否决"
+  ],
+  "example_en": "The committee rejected the proposal outright.",
+  "example_zh": "委员会断然否决了这项提议。"
+ },
+ {
+  "word": "relevant",
+  "phonetic": "/ˈreləvənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "相关的",
+   "切题的"
+  ],
+  "example_en": "Please include only relevant information.",
+  "example_zh": "请只提供相关的信息。"
+ },
+ {
+  "word": "reluctant",
+  "phonetic": "/rɪˈlʌktənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "不情愿的"
+  ],
+  "example_en": "She was reluctant to leave her hometown.",
+  "example_zh": "她不愿意离开家乡。"
+ },
+ {
+  "word": "sacrifice",
+  "phonetic": "/ˈsækrɪfaɪs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "牺牲",
+   "献出"
+  ],
+  "example_en": "Many parents sacrifice their own interests for their children.",
+  "example_zh": "许多父母为了孩子牺牲自己的利益。"
+ },
+ {
+  "word": "sake",
+  "phonetic": "/seɪk/",
+  "pos": "n.",
+  "meanings_zh": [
+   "缘故",
+   "利益"
+  ],
+  "example_en": "For the sake of clarity, we should redefine the term.",
+  "example_zh": "为了清晰起见，我们应该重新定义这个术语。"
+ },
+ {
+  "word": "saturate",
+  "phonetic": "/ˈsætʃəreɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "使饱和",
+   "充满"
+  ],
+  "example_en": "The market for smartphones has become saturated.",
+  "example_zh": "智能手机市场已经饱和。"
+ },
+ {
+  "word": "scarce",
+  "phonetic": "/skeəs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "稀缺的",
+   "不足的"
+  ],
+  "example_en": "Fresh water is scarce in many desert regions.",
+  "example_zh": "在许多沙漠地区淡水稀缺。"
+ },
+ {
+  "word": "scatter",
+  "phonetic": "/ˈskætə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "散开",
+   "驱散"
+  ],
+  "example_en": "The crowd scattered when the rain began.",
+  "example_zh": "雨开始下时人群散开了。"
+ },
+ {
+  "word": "sceptical",
+  "phonetic": "/ˈskeptɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "怀疑的"
+  ],
+  "example_en": "Scientists remain sceptical about the new claim.",
+  "example_zh": "科学家们对这项新说法仍持怀疑态度。"
+ },
+ {
+  "word": "scope",
+  "phonetic": "/skəʊp/",
+  "pos": "n.",
+  "meanings_zh": [
+   "范围",
+   "余地"
+  ],
+  "example_en": "The scope of the investigation was widened.",
+  "example_zh": "调查的范围被扩大了。"
+ },
+ {
+  "word": "scrutiny",
+  "phonetic": "/ˈskruːtəni/",
+  "pos": "n.",
+  "meanings_zh": [
+   "审查",
+   "细看"
+  ],
+  "example_en": "The policy came under close public scrutiny.",
+  "example_zh": "该政策受到公众的严密审查。"
+ },
+ {
+  "word": "secure",
+  "phonetic": "/sɪˈkjʊə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "获得",
+   "保护"
+  ],
+  "example_en": "They worked hard to secure funding for the project.",
+  "example_zh": "他们努力为该项目争取资金。"
+ },
+ {
+  "word": "seek",
+  "phonetic": "/siːk/",
+  "pos": "v.",
+  "meanings_zh": [
+   "寻求",
+   "探索"
+  ],
+  "example_en": "Researchers seek to understand the underlying causes.",
+  "example_zh": "研究人员试图了解根本原因。"
+ },
+ {
+  "word": "seldom",
+  "phonetic": "/ˈseldəm/",
+  "pos": "adv.",
+  "meanings_zh": [
+   "很少",
+   "不常"
+  ],
+  "example_en": "Such opportunities seldom come twice.",
+  "example_zh": "这样的机会很少出现两次。"
+ },
+ {
+  "word": "sensible",
+  "phonetic": "/ˈsensəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "明智的",
+   "合理的"
+  ],
+  "example_en": "It is sensible to save money for emergencies.",
+  "example_zh": "为紧急情况存钱是明智的。"
+ },
+ {
+  "word": "sensitive",
+  "phonetic": "/ˈsensətɪv/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "敏感的",
+   "灵敏的"
+  ],
+  "example_en": "The issue is highly sensitive in some cultures.",
+  "example_zh": "这个问题在某些文化中非常敏感。"
+ },
+ {
+  "word": "sentiment",
+  "phonetic": "/ˈsentɪmənt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "情绪",
+   "观点"
+  ],
+  "example_en": "Public sentiment has shifted against the war.",
+  "example_zh": "公众情绪已转而反对这场战争。"
+ },
+ {
+  "word": "sequence",
+  "phonetic": "/ˈsiːkwəns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "顺序",
+   "一系列"
+  ],
+  "example_en": "The events occurred in a logical sequence.",
+  "example_zh": "这些事件按逻辑顺序发生。"
+ },
+ {
+  "word": "severe",
+  "phonetic": "/sɪˈvɪə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "严重的",
+   "严厉的"
+  ],
+  "example_en": "The region suffered a severe drought last year.",
+  "example_zh": "该地区去年遭受了严重干旱。"
+ },
+ {
+  "word": "shallow",
+  "phonetic": "/ˈʃæləʊ/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "浅薄的",
+   "浅的"
+  ],
+  "example_en": "His argument is rather shallow and unconvincing.",
+  "example_zh": "他的论点相当肤浅且缺乏说服力。"
+ },
+ {
+  "word": "shed",
+  "phonetic": "/ʃed/",
+  "pos": "v.",
+  "meanings_zh": [
+   "摆脱",
+   "流出"
+  ],
+  "example_en": "New evidence may shed light on the mystery.",
+  "example_zh": "新证据可能有助于解开这个谜团。"
+ },
+ {
+  "word": "shift",
+  "phonetic": "/ʃɪft/",
+  "pos": "n.",
+  "meanings_zh": [
+   "转变",
+   "轮班"
+  ],
+  "example_en": "There has been a shift in public attitudes.",
+  "example_zh": "公众态度发生了转变。"
+ },
+ {
+  "word": "shortage",
+  "phonetic": "/ˈʃɔːtɪdʒ/",
+  "pos": "n.",
+  "meanings_zh": [
+   "短缺",
+   "不足"
+  ],
+  "example_en": "The country faces a serious shortage of skilled workers.",
+  "example_zh": "该国面临熟练工人的严重短缺。"
+ },
+ {
+  "word": "significance",
+  "phonetic": "/sɪɡˈnɪfɪkəns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "重要性",
+   "意义"
+  ],
+  "example_en": "Few people realized the significance of the discovery.",
+  "example_zh": "很少有人意识到这一发现的重要性。"
+ },
+ {
+  "word": "simulate",
+  "phonetic": "/ˈsɪmjuleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "模拟",
+   "假装"
+  ],
+  "example_en": "The software can simulate real-world conditions.",
+  "example_zh": "该软件可以模拟真实世界的情况。"
+ },
+ {
+  "word": "simultaneous",
+  "phonetic": "/ˌsɪmlˈteɪniəs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "同时的"
+  ],
+  "example_en": "The two events were almost simultaneous.",
+  "example_zh": "这两个事件几乎是同时发生的。"
+ },
+ {
+  "word": "sincere",
+  "phonetic": "/sɪnˈsɪə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "真诚的"
+  ],
+  "example_en": "She expressed sincere gratitude for their help.",
+  "example_zh": "她对他们的帮助表示真诚的感谢。"
+ },
+ {
+  "word": "skeptical",
+  "phonetic": "/ˈskeptɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "怀疑的"
+  ],
+  "example_en": "Many economists are skeptical of the forecast.",
+  "example_zh": "许多经济学家对预测持怀疑态度。"
+ },
+ {
+  "word": "sole",
+  "phonetic": "/səʊl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "唯一的",
+   "单独的"
+  ],
+  "example_en": "She was the sole survivor of the accident.",
+  "example_zh": "她是那场事故唯一的幸存者。"
+ },
+ {
+  "word": "solid",
+  "phonetic": "/ˈsɒlɪd/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "可靠的",
+   "坚实的"
+  ],
+  "example_en": "There is solid evidence to support the theory.",
+  "example_zh": "有可靠的证据支持这一理论。"
+ },
+ {
+  "word": "sophisticated",
+  "phonetic": "/səˈfɪstɪkeɪtɪd/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "复杂的",
+   "精密的"
+  ],
+  "example_en": "Modern aircraft use highly sophisticated technology.",
+  "example_zh": "现代飞机使用高度精密的技术。"
+ },
+ {
+  "word": "spare",
+  "phonetic": "/speə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "抽出",
+   "饶恕"
+  ],
+  "example_en": "Can you spare a few minutes for a quick talk?",
+  "example_zh": "你能抽出几分钟快速谈一谈吗？"
+ },
+ {
+  "word": "spectrum",
+  "phonetic": "/ˈspektrəm/",
+  "pos": "n.",
+  "meanings_zh": [
+   "范围",
+   "光谱"
+  ],
+  "example_en": "The proposal appeals to a broad spectrum of voters.",
+  "example_zh": "该提案吸引了广泛的选民。"
+ },
+ {
+  "word": "speculate",
+  "phonetic": "/ˈspekjuleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "推测",
+   "投机"
+  ],
+  "example_en": "Experts speculate about the causes of the decline.",
+  "example_zh": "专家们推测下降的原因。"
+ },
+ {
+  "word": "sphere",
+  "phonetic": "/sfɪə/",
+  "pos": "n.",
+  "meanings_zh": [
+   "领域",
+   "球体"
+  ],
+  "example_en": "She is influential in the political sphere.",
+  "example_zh": "她在政治领域很有影响力。"
+ },
+ {
+  "word": "stability",
+  "phonetic": "/stəˈbɪləti/",
+  "pos": "n.",
+  "meanings_zh": [
+   "稳定",
+   "稳定性"
+  ],
+  "example_en": "Economic stability is essential for growth.",
+  "example_zh": "经济稳定对增长至关重要。"
+ },
+ {
+  "word": "stagnant",
+  "phonetic": "/ˈstæɡnənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "停滞的"
+  ],
+  "example_en": "Wages have remained stagnant for years.",
+  "example_zh": "工资多年来一直停滞不前。"
+ },
+ {
+  "word": "stake",
+  "phonetic": "/steɪk/",
+  "pos": "n.",
+  "meanings_zh": [
+   "利害关系",
+   "股份"
+  ],
+  "example_en": "Many jobs are at stake in the negotiation.",
+  "example_zh": "许多工作岗位在谈判中面临风险。"
+ },
+ {
+  "word": "statistics",
+  "phonetic": "/stəˈtɪstɪks/",
+  "pos": "n.",
+  "meanings_zh": [
+   "统计数据"
+  ],
+  "example_en": "The statistics reveal a troubling trend.",
+  "example_zh": "统计数据揭示了一个令人不安的趋势。"
+ },
+ {
+  "word": "status",
+  "phonetic": "/ˈsteɪtəs/",
+  "pos": "n.",
+  "meanings_zh": [
+   "地位",
+   "状况"
+  ],
+  "example_en": "Education can improve one's social status.",
+  "example_zh": "教育可以改善一个人的社会地位。"
+ },
+ {
+  "word": "steady",
+  "phonetic": "/ˈstedi/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "稳定的",
+   "持续的"
+  ],
+  "example_en": "The company has shown steady growth.",
+  "example_zh": "该公司显示出稳定的增长。"
+ },
+ {
+  "word": "stimulate",
+  "phonetic": "/ˈstɪmjuleɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "刺激",
+   "激励"
+  ],
+  "example_en": "Tax cuts are designed to stimulate the economy.",
+  "example_zh": "减税旨在刺激经济。"
+ },
+ {
+  "word": "strategy",
+  "phonetic": "/ˈstrætədʒi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "策略",
+   "战略"
+  ],
+  "example_en": "The company adopted a new marketing strategy.",
+  "example_zh": "该公司采用了新的营销策略。"
+ },
+ {
+  "word": "stress",
+  "phonetic": "/stres/",
+  "pos": "v.",
+  "meanings_zh": [
+   "强调",
+   "使紧张"
+  ],
+  "example_en": "The report stresses the need for urgent action.",
+  "example_zh": "报告强调需要采取紧急行动。"
+ },
+ {
+  "word": "striking",
+  "phonetic": "/ˈstraɪkɪŋ/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "显著的",
+   "惊人的"
+  ],
+  "example_en": "There is a striking contrast between the two cities.",
+  "example_zh": "这两座城市之间有显著的对比。"
+ },
+ {
+  "word": "structure",
+  "phonetic": "/ˈstrʌktʃə/",
+  "pos": "n.",
+  "meanings_zh": [
+   "结构",
+   "构造"
+  ],
+  "example_en": "The structure of the family has changed greatly.",
+  "example_zh": "家庭结构发生了巨大变化。"
+ },
+ {
+  "word": "struggle",
+  "phonetic": "/ˈstrʌɡl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "挣扎",
+   "奋斗"
+  ],
+  "example_en": "Many graduates struggle to find suitable jobs.",
+  "example_zh": "许多毕业生难以找到合适的工作。"
+ },
+ {
+  "word": "submit",
+  "phonetic": "/səbˈmɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "提交",
+   "屈服"
+  ],
+  "example_en": "Students must submit their essays by Friday.",
+  "example_zh": "学生必须在周五之前提交论文。"
+ },
+ {
+  "word": "substitute",
+  "phonetic": "/ˈsʌbstɪtjuːt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "替代品",
+   "代替者"
+  ],
+  "example_en": "There is no substitute for hard work.",
+  "example_zh": "努力工作是无可替代的。"
+ },
+ {
+  "word": "subtle",
+  "phonetic": "/ˈsʌtl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "微妙的",
+   "细微的"
+  ],
+  "example_en": "There is a subtle difference between the two terms.",
+  "example_zh": "这两个术语之间有微妙的差别。"
+ },
+ {
+  "word": "sufficient",
+  "phonetic": "/səˈfɪʃnt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "充足的"
+  ],
+  "example_en": "We do not have sufficient evidence to convict him.",
+  "example_zh": "我们没有足够的证据判他有罪。"
+ },
+ {
+  "word": "suggest",
+  "phonetic": "/səˈdʒest/",
+  "pos": "v.",
+  "meanings_zh": [
+   "表明",
+   "建议"
+  ],
+  "example_en": "The data suggest a link between diet and health.",
+  "example_zh": "数据表明饮食与健康之间存在联系。"
+ },
+ {
+  "word": "superficial",
+  "phonetic": "/ˌsuːpəˈfɪʃl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "表面的",
+   "肤浅的"
+  ],
+  "example_en": "His knowledge of the subject is superficial.",
+  "example_zh": "他对这个主题的了解很肤浅。"
+ },
+ {
+  "word": "superior",
+  "phonetic": "/suːˈpɪəriə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "优越的",
+   "上级的"
+  ],
+  "example_en": "This model is superior to the previous one.",
+  "example_zh": "这个型号优于前一个。"
+ },
+ {
+  "word": "supplement",
+  "phonetic": "/ˈsʌplɪmənt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "补充"
+  ],
+  "example_en": "Many students supplement their income with part-time jobs.",
+  "example_zh": "许多学生通过兼职补充收入。"
+ },
+ {
+  "word": "suppress",
+  "phonetic": "/səˈpres/",
+  "pos": "v.",
+  "meanings_zh": [
+   "压制",
+   "抑制"
+  ],
+  "example_en": "The government tried to suppress the protests.",
+  "example_zh": "政府试图压制抗议活动。"
+ },
+ {
+  "word": "surpass",
+  "phonetic": "/səˈpɑːs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "超过",
+   "胜过"
+  ],
+  "example_en": "The results surpassed all our expectations.",
+  "example_zh": "结果超出了我们所有的预期。"
+ },
+ {
+  "word": "surrender",
+  "phonetic": "/səˈrendə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "投降",
+   "放弃"
+  ],
+  "example_en": "They refused to surrender despite the pressure.",
+  "example_zh": "尽管有压力，他们还是拒绝投降。"
+ },
+ {
+  "word": "surveillance",
+  "phonetic": "/səˈveɪləns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "监视",
+   "监控"
+  ],
+  "example_en": "The suspect was kept under constant surveillance.",
+  "example_zh": "嫌疑人受到持续监视。"
+ },
+ {
+  "word": "susceptible",
+  "phonetic": "/səˈseptəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "易受影响的"
+  ],
+  "example_en": "Young children are susceptible to such diseases.",
+  "example_zh": "幼儿易患这类疾病。"
+ },
+ {
+  "word": "sustain",
+  "phonetic": "/səˈsteɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "维持",
+   "支撑"
+  ],
+  "example_en": "The economy cannot sustain such rapid growth.",
+  "example_zh": "经济无法维持如此快速的增长。"
+ },
+ {
+  "word": "symbol",
+  "phonetic": "/ˈsɪmbl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "象征",
+   "符号"
+  ],
+  "example_en": "The dove is a symbol of peace.",
+  "example_zh": "鸽子是和平的象征。"
+ },
+ {
+  "word": "sympathy",
+  "phonetic": "/ˈsɪmpəθi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "同情",
+   "赞同"
+  ],
+  "example_en": "He expressed deep sympathy for the victims.",
+  "example_zh": "他对受害者表示深切同情。"
+ },
+ {
+  "word": "symptom",
+  "phonetic": "/ˈsɪmptəm/",
+  "pos": "n.",
+  "meanings_zh": [
+   "症状",
+   "征兆"
+  ],
+  "example_en": "Rising unemployment is a symptom of economic decline.",
+  "example_zh": "失业率上升是经济衰退的征兆。"
+ },
+ {
+  "word": "tackle",
+  "phonetic": "/ˈtækl/",
+  "pos": "v.",
+  "meanings_zh": [
+   "处理",
+   "应对"
+  ],
+  "example_en": "The government must tackle the housing crisis.",
+  "example_zh": "政府必须解决住房危机。"
+ },
+ {
+  "word": "tangible",
+  "phonetic": "/ˈtændʒəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "有形的",
+   "实际的"
+  ],
+  "example_en": "The policy produced tangible benefits for farmers.",
+  "example_zh": "该政策为农民带来了实际利益。"
+ },
+ {
+  "word": "tedious",
+  "phonetic": "/ˈtiːdiəs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "乏味的",
+   "冗长的"
+  ],
+  "example_en": "The task was tedious but necessary.",
+  "example_zh": "这项任务乏味但必要。"
+ },
+ {
+  "word": "temporary",
+  "phonetic": "/ˈtemprəri/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "暂时的"
+  ],
+  "example_en": "The measure is only a temporary solution.",
+  "example_zh": "该措施只是暂时的解决办法。"
+ },
+ {
+  "word": "tendency",
+  "phonetic": "/ˈtendənsi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "趋势",
+   "倾向"
+  ],
+  "example_en": "There is a tendency to overestimate the risks.",
+  "example_zh": "人们倾向于高估风险。"
+ },
+ {
+  "word": "tension",
+  "phonetic": "/ˈtenʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "紧张",
+   "张力"
+  ],
+  "example_en": "Tension between the two countries is rising.",
+  "example_zh": "两国之间的紧张关系正在加剧。"
+ },
+ {
+  "word": "terminate",
+  "phonetic": "/ˈtɜːmɪneɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "终止",
+   "结束"
+  ],
+  "example_en": "The company decided to terminate the contract.",
+  "example_zh": "公司决定终止合同。"
+ },
+ {
+  "word": "theoretical",
+  "phonetic": "/ˌθɪəˈretɪkl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "理论的"
+  ],
+  "example_en": "The book deals with both theoretical and practical issues.",
+  "example_zh": "这本书既涉及理论问题也涉及实践问题。"
+ },
+ {
+  "word": "thorough",
+  "phonetic": "/ˈθʌrə/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "彻底的",
+   "细致的"
+  ],
+  "example_en": "The police conducted a thorough investigation.",
+  "example_zh": "警方进行了彻底的调查。"
+ },
+ {
+  "word": "threaten",
+  "phonetic": "/ˈθretn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "威胁",
+   "危及"
+  ],
+  "example_en": "Climate change threatens coastal communities.",
+  "example_zh": "气候变化威胁着沿海社区。"
+ },
+ {
+  "word": "thrive",
+  "phonetic": "/θraɪv/",
+  "pos": "v.",
+  "meanings_zh": [
+   "繁荣",
+   "茁壮成长"
+  ],
+  "example_en": "Small businesses thrive in this environment.",
+  "example_zh": "小企业在这种环境中蓬勃发展。"
+ },
+ {
+  "word": "tolerance",
+  "phonetic": "/ˈtɒlərəns/",
+  "pos": "n.",
+  "meanings_zh": [
+   "宽容",
+   "忍耐力"
+  ],
+  "example_en": "Religious tolerance is essential in a diverse society.",
+  "example_zh": "宗教宽容在多元社会中至关重要。"
+ },
+ {
+  "word": "trace",
+  "phonetic": "/treɪs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "追溯",
+   "追踪"
+  ],
+  "example_en": "The custom can be traced back to ancient times.",
+  "example_zh": "这一习俗可以追溯到古代。"
+ },
+ {
+  "word": "tradition",
+  "phonetic": "/trəˈdɪʃn/",
+  "pos": "n.",
+  "meanings_zh": [
+   "传统",
+   "惯例"
+  ],
+  "example_en": "The university has a long tradition of scholarship.",
+  "example_zh": "这所大学有着悠久的学术传统。"
+ },
+ {
+  "word": "tragedy",
+  "phonetic": "/ˈtrædʒədi/",
+  "pos": "n.",
+  "meanings_zh": [
+   "悲剧",
+   "惨事"
+  ],
+  "example_en": "The accident was a tragedy for the whole community.",
+  "example_zh": "这场事故对整个社区来说是一场悲剧。"
+ },
+ {
+  "word": "trait",
+  "phonetic": "/treɪt/",
+  "pos": "n.",
+  "meanings_zh": [
+   "特征",
+   "特点"
+  ],
+  "example_en": "Patience is an essential trait for teachers.",
+  "example_zh": "耐心是教师必备的品质。"
+ },
+ {
+  "word": "transfer",
+  "phonetic": "/trænsˈfɜː/",
+  "pos": "v.",
+  "meanings_zh": [
+   "转移",
+   "调动"
+  ],
+  "example_en": "He was transferred to another department.",
+  "example_zh": "他被调到了另一个部门。"
+ },
+ {
+  "word": "transform",
+  "phonetic": "/trænsˈfɔːm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "改变",
+   "转化"
+  ],
+  "example_en": "Technology has transformed the way we communicate.",
+  "example_zh": "技术改变了我们的交流方式。"
+ },
+ {
+  "word": "transmit",
+  "phonetic": "/trænzˈmɪt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "传播",
+   "传输"
+  ],
+  "example_en": "The disease can be transmitted through the air.",
+  "example_zh": "这种疾病可以通过空气传播。"
+ },
+ {
+  "word": "transparent",
+  "phonetic": "/trænsˈpærənt/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "透明的",
+   "明显的"
+  ],
+  "example_en": "The company promised a transparent decision process.",
+  "example_zh": "该公司承诺决策过程透明。"
+ },
+ {
+  "word": "tremendous",
+  "phonetic": "/trəˈmendəs/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "巨大的",
+   "极好的"
+  ],
+  "example_en": "The project required a tremendous amount of effort.",
+  "example_zh": "该项目需要付出巨大的努力。"
+ },
+ {
+  "word": "trigger",
+  "phonetic": "/ˈtrɪɡə/",
+  "pos": "v.",
+  "meanings_zh": [
+   "引发",
+   "触发"
+  ],
+  "example_en": "The report triggered a heated debate.",
+  "example_zh": "该报告引发了激烈的辩论。"
+ },
+ {
+  "word": "ultimate",
+  "phonetic": "/ˈʌltɪmət/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "最终的",
+   "根本的"
+  ],
+  "example_en": "Their ultimate goal is to eliminate poverty.",
+  "example_zh": "他们的最终目标是消除贫困。"
+ },
+ {
+  "word": "undergo",
+  "phonetic": "/ˌʌndəˈɡəʊ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "经历",
+   "接受"
+  ],
+  "example_en": "The patient will undergo surgery tomorrow.",
+  "example_zh": "病人明天将接受手术。"
+ },
+ {
+  "word": "underlie",
+  "phonetic": "/ˌʌndəˈlaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "构成基础",
+   "潜藏"
+  ],
+  "example_en": "Economic factors underlie many social problems.",
+  "example_zh": "经济因素构成了许多社会问题的基础。"
+ },
+ {
+  "word": "undermine",
+  "phonetic": "/ˌʌndəˈmaɪn/",
+  "pos": "v.",
+  "meanings_zh": [
+   "削弱",
+   "破坏"
+  ],
+  "example_en": "Such rumors could undermine public confidence.",
+  "example_zh": "这类谣言可能削弱公众信心。"
+ },
+ {
+  "word": "undertake",
+  "phonetic": "/ˌʌndəˈteɪk/",
+  "pos": "v.",
+  "meanings_zh": [
+   "承担",
+   "着手"
+  ],
+  "example_en": "The team undertook a major research project.",
+  "example_zh": "该团队承担了一项重大研究项目。"
+ },
+ {
+  "word": "uniform",
+  "phonetic": "/ˈjuːnɪfɔːm/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "统一的",
+   "一致的"
+  ],
+  "example_en": "The rules should be uniform across all regions.",
+  "example_zh": "规则应在所有地区统一。"
+ },
+ {
+  "word": "unique",
+  "phonetic": "/juˈniːk/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "独特的",
+   "唯一的"
+  ],
+  "example_en": "Each culture has its own unique characteristics.",
+  "example_zh": "每种文化都有其独特的特点。"
+ },
+ {
+  "word": "universal",
+  "phonetic": "/ˌjuːnɪˈvɜːsl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "普遍的",
+   "通用的"
+  ],
+  "example_en": "Access to education is a universal right.",
+  "example_zh": "受教育权是一项普遍权利。"
+ },
+ {
+  "word": "utilize",
+  "phonetic": "/ˈjuːtəlaɪz/",
+  "pos": "v.",
+  "meanings_zh": [
+   "利用",
+   "使用"
+  ],
+  "example_en": "We must utilize resources more efficiently.",
+  "example_zh": "我们必须更有效地利用资源。"
+ },
+ {
+  "word": "vague",
+  "phonetic": "/veɪɡ/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "模糊的",
+   "含糊的"
+  ],
+  "example_en": "His answer was too vague to be useful.",
+  "example_zh": "他的回答太含糊，没有什么用。"
+ },
+ {
+  "word": "valid",
+  "phonetic": "/ˈvælɪd/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "有效的",
+   "合理的"
+  ],
+  "example_en": "There are valid reasons for questioning the conclusion.",
+  "example_zh": "有正当理由质疑这一结论。"
+ },
+ {
+  "word": "vanish",
+  "phonetic": "/ˈvænɪʃ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "消失",
+   "绝迹"
+  ],
+  "example_en": "Many species may vanish within decades.",
+  "example_zh": "许多物种可能在几十年内消失。"
+ },
+ {
+  "word": "variable",
+  "phonetic": "/ˈveəriəbl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "变量",
+   "可变因素"
+  ],
+  "example_en": "Income is only one variable in the study.",
+  "example_zh": "收入只是研究中的一个变量。"
+ },
+ {
+  "word": "verify",
+  "phonetic": "/ˈverɪfaɪ/",
+  "pos": "v.",
+  "meanings_zh": [
+   "核实",
+   "证实"
+  ],
+  "example_en": "Please verify the accuracy of the data.",
+  "example_zh": "请核实数据的准确性。"
+ },
+ {
+  "word": "versatile",
+  "phonetic": "/ˈvɜːsətaɪl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "多才多艺的",
+   "多用途的"
+  ],
+  "example_en": "She is a versatile and highly skilled researcher.",
+  "example_zh": "她是一位多才多艺、技艺高超的研究者。"
+ },
+ {
+  "word": "vital",
+  "phonetic": "/ˈvaɪtl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "至关重要的"
+  ],
+  "example_en": "Clean water is vital to human health.",
+  "example_zh": "清洁的水对人类健康至关重要。"
+ },
+ {
+  "word": "vulnerable",
+  "phonetic": "/ˈvʌlnərəbl/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "脆弱的",
+   "易受伤害的"
+  ],
+  "example_en": "Elderly people are especially vulnerable to the virus.",
+  "example_zh": "老年人尤其易受该病毒感染。"
+ },
+ {
+  "word": "warrant",
+  "phonetic": "/ˈwɒrənt/",
+  "pos": "v.",
+  "meanings_zh": [
+   "证明正当",
+   "需要"
+  ],
+  "example_en": "The evidence does not warrant such a conclusion.",
+  "example_zh": "证据不足以支持这样的结论。"
+ },
+ {
+  "word": "weaken",
+  "phonetic": "/ˈwiːkən/",
+  "pos": "v.",
+  "meanings_zh": [
+   "削弱",
+   "减弱"
+  ],
+  "example_en": "The scandal weakened the government's position.",
+  "example_zh": "丑闻削弱了政府的地位。"
+ },
+ {
+  "word": "widespread",
+  "phonetic": "/ˈwaɪdspred/",
+  "pos": "adj.",
+  "meanings_zh": [
+   "普遍的",
+   "广泛的"
+  ],
+  "example_en": "The disease has become widespread in rural areas.",
+  "example_zh": "该疾病在农村地区已普遍传播。"
+ },
+ {
+  "word": "withdraw",
+  "phonetic": "/wɪðˈdrɔː/",
+  "pos": "v.",
+  "meanings_zh": [
+   "撤回",
+   "退出"
+  ],
+  "example_en": "The company decided to withdraw its offer.",
+  "example_zh": "该公司决定撤回其提议。"
+ },
+ {
+  "word": "withstand",
+  "phonetic": "/wɪðˈstænd/",
+  "pos": "v.",
+  "meanings_zh": [
+   "抵御",
+   "承受"
+  ],
+  "example_en": "The bridge can withstand strong earthquakes.",
+  "example_zh": "这座桥能抵御强烈地震。"
+ },
+ {
+  "word": "witness",
+  "phonetic": "/ˈwɪtnəs/",
+  "pos": "v.",
+  "meanings_zh": [
+   "目睹",
+   "见证"
+  ],
+  "example_en": "The past decade witnessed rapid technological change.",
+  "example_zh": "过去十年见证了技术的迅速变化。"
+ },
+ {
+  "word": "xenophobia",
+  "phonetic": "/ˌzenəˈfəʊbiə/",
+  "pos": "n.",
+  "meanings_zh": [
+   "仇外",
+   "排外"
+  ],
+  "example_en": "The rise of xenophobia threatens social stability.",
+  "example_zh": "仇外情绪的上升威胁社会稳定。"
+ },
+ {
+  "word": "xerox",
+  "phonetic": "/ˈzɪərɒks/",
+  "pos": "v.",
+  "meanings_zh": [
+   "复印",
+   "影印"
+  ],
+  "example_en": "Please xerox these documents for the meeting.",
+  "example_zh": "请为会议复印这些文件。"
+ },
+ {
+  "word": "yield",
+  "phonetic": "/jiːld/",
+  "pos": "v.",
+  "meanings_zh": [
+   "产生",
+   "屈服"
+  ],
+  "example_en": "The experiment yielded surprising results.",
+  "example_zh": "实验产生了令人惊讶的结果。"
+ },
+ {
+  "word": "zeal",
+  "phonetic": "/ziːl/",
+  "pos": "n.",
+  "meanings_zh": [
+   "热情",
+   "热忱"
+  ],
+  "example_en": "He pursued his research with great zeal.",
+  "example_zh": "他以极大的热情投入研究。"
+ },
+ {
+  "word": "zoom",
+  "phonetic": "/zuːm/",
+  "pos": "v.",
+  "meanings_zh": [
+   "急剧上升",
+   "快速移动"
+  ],
+  "example_en": "Prices zoomed after the new policy was announced.",
+  "example_zh": "新政策宣布后价格急剧上升。"
+ }
+]

@@ -12,6 +12,7 @@ import { registerWordsRoutes } from './routes/words';
 import { registerExamsRoutes } from './routes/exams';
 import { registerSettingsRoutes } from './routes/settings';
 import { registerBackupRoutes } from './routes/backup';
+import { registerStatsRoutes } from './routes/stats';
 
 // 构建 Fastify 应用实例
 export function buildApp(opts?: { dbPath?: string; logger?: boolean }): FastifyInstance {
@@ -43,6 +44,7 @@ export function buildApp(opts?: { dbPath?: string; logger?: boolean }): FastifyI
   registerExamsRoutes(app, db);
   registerSettingsRoutes(app, db);
   registerBackupRoutes(app, db);
+  registerStatsRoutes(app, db);
 
   // 若配置了前端构建产物目录且存在，则挂载静态资源并做 SPA 兜底
   const webDist = process.env.WEB_DIST;

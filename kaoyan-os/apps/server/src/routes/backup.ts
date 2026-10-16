@@ -411,15 +411,21 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
             }
 
             const insertWord = db.prepare(
-              'INSERT INTO words (id, word, phonetic, meaning, example) VALUES (?, ?, ?, ?, ?)'
+              'INSERT INTO words (id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)'
             );
             for (const row of validated.words) {
+              const src =
+                typeof row.source === 'string' &&
+                ['builtin', 'core500', 'manual', 'csv'].includes(row.source)
+                  ? row.source
+                  : 'manual';
               insertWord.run(
                 (row.id as number) ?? null,
                 row.word as string,
                 typeof row.phonetic === 'string' ? row.phonetic : '',
                 row.meaning as string,
-                typeof row.example === 'string' ? row.example : ''
+                typeof row.example === 'string' ? row.example : '',
+                src
               );
               imported.words += 1;
             }
@@ -454,7 +460,7 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         // merge
         const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
         const insertWord = db.prepare(
-          'INSERT INTO words (word, phonetic, meaning, example) VALUES (?, ?, ?, ?)'
+          'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)'
         );
         for (const row of validated.words) {
           const word = row.word as string;
@@ -463,11 +469,17 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
             skipped.words += 1;
             continue;
           }
+          const src =
+            typeof row.source === 'string' &&
+            ['builtin', 'core500', 'manual', 'csv'].includes(row.source)
+              ? row.source
+              : 'manual';
           const info = insertWord.run(
             word,
             typeof row.phonetic === 'string' ? row.phonetic : '',
             row.meaning as string,
-            typeof row.example === 'string' ? row.example : ''
+            typeof row.example === 'string' ? row.example : '',
+            src
           );
           if (info.lastInsertRowid !== undefined && info.lastInsertRowid !== null) {
             imported.words += 1;

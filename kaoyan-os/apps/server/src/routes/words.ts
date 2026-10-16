@@ -5,8 +5,10 @@ import type {
   ReviewGrade,
   SrsState,
   Word,
+  WordSource,
   WordWithState,
 } from '@kaoyan/shared';
+import { WORD_SOURCES } from '@kaoyan/shared';
 import { todayStr, addDays } from '../db';
 
 // 数据库行类型
@@ -16,6 +18,7 @@ interface WordRow {
   phonetic: string;
   meaning: string;
   example: string;
+  source: string;
 }
 
 interface SrsRow {
@@ -34,6 +37,16 @@ interface WordWithStateRow extends WordRow {
   due_date: string | null;
 }
 
+// 单词导入项
+interface WordImportItem {
+  word: string;
+  phonetic?: string;
+  pos?: string;
+  meanings_zh: string[];
+  example_en?: string;
+  example_zh?: string;
+}
+
 // 将 JOIN 行转换为 WordWithState
 function toWordWithState(row: WordWithStateRow): WordWithState {
   const word: Word = {
@@ -42,6 +55,7 @@ function toWordWithState(row: WordWithStateRow): WordWithState {
     phonetic: row.phonetic,
     meaning: row.meaning,
     example: row.example,
+    source: row.source as WordSource,
   };
   const state: SrsState = {
     wordId: row.id,
@@ -57,7 +71,7 @@ function toWordWithState(row: WordWithStateRow): WordWithState {
 function getWordWithState(db: DatabaseSync, id: number): WordWithState | null {
   const row = db
     .prepare(
-      `SELECT w.id, w.word, w.phonetic, w.meaning, w.example,
+      `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source,
               s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
        FROM words w
        LEFT JOIN srs_state s ON s.word_id = w.id
@@ -73,7 +87,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   app.get('/api/words', async () => {
     const rows = db
       .prepare(
-        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example,
+        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source,
                 s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
          FROM words w
          LEFT JOIN srs_state s ON s.word_id = w.id
@@ -88,7 +102,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const today = todayStr();
     const rows = db
       .prepare(
-        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example,
+        `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source,
                 s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
          FROM words w
          JOIN srs_state s ON s.word_id = w.id
@@ -124,13 +138,13 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     const today = todayStr();
     const insertWord = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example) VALUES (?, ?, ?, ?)',
+      'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)',
     );
     const insertSrs = db.prepare(
       'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
     );
 
-    const result = insertWord.run(word, phonetic, meaning, example);
+    const result = insertWord.run(word, phonetic, meaning, example, 'manual');
     const newId = Number(result.lastInsertRowid);
     insertSrs.run(newId, 2.5, 0, 0, today);
 
@@ -205,6 +219,132 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
       const updated = getWordWithState(db, id);
       return reply.send(updated);
+    },
+  );
+
+  // POST /api/words/import：批量导入词库
+  app.post<{ Body: { words?: unknown; source?: unknown } }>(
+    '/api/words/import',
+    { bodyLimit: 5 * 1024 * 1024 },
+    async (request, reply) => {
+      const body = request.body;
+      if (body === null || typeof body !== 'object') {
+        return reply.code(400).send({ error: 'words 必须为 1..2000 的数组' });
+      }
+      const rawWords = (body as { words?: unknown }).words;
+      if (!Array.isArray(rawWords) || rawWords.length < 1 || rawWords.length > 2000) {
+        return reply.code(400).send({ error: 'words 必须为 1..2000 的数组' });
+      }
+
+      const rawSource = (body as { source?: unknown }).source;
+      const source: string =
+        rawSource === undefined || rawSource === null
+          ? 'core500'
+          : typeof rawSource === 'string'
+            ? rawSource
+            : '';
+      if (!Object.keys(WORD_SOURCES).includes(source)) {
+        return reply.code(400).send({ error: 'source 无效' });
+      }
+
+      let imported = 0;
+      let skippedExisting = 0;
+      let skippedInvalid = 0;
+      const errors: { index: number; message: string }[] = [];
+
+      const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+      const insertWord = db.prepare(
+        'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)',
+      );
+      const insertSrs = db.prepare(
+        'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
+      );
+
+      const seen = new Set<string>();
+      const today = todayStr();
+
+      db.exec('BEGIN');
+      try {
+        for (let index = 0; index < rawWords.length; index += 1) {
+          const item = rawWords[index] as WordImportItem;
+          if (item === null || typeof item !== 'object') {
+            skippedInvalid += 1;
+            if (errors.length < 50) {
+              errors.push({ index, message: '条目必须为对象' });
+            }
+            continue;
+          }
+          const rawWord = (item as { word?: unknown }).word;
+          const word = typeof rawWord === 'string' ? rawWord.trim() : '';
+          if (!word) {
+            skippedInvalid += 1;
+            if (errors.length < 50) {
+              errors.push({ index, message: 'word 不能为空' });
+            }
+            continue;
+          }
+          const rawMeanings = (item as { meanings_zh?: unknown }).meanings_zh;
+          if (!Array.isArray(rawMeanings) || rawMeanings.length === 0) {
+            skippedInvalid += 1;
+            if (errors.length < 50) {
+              errors.push({ index, message: 'meanings_zh 必须为非空数组' });
+            }
+            continue;
+          }
+          const meanings = rawMeanings.map((m) =>
+            typeof m === 'string' ? m.trim() : '',
+          );
+          if (meanings.some((m) => !m)) {
+            skippedInvalid += 1;
+            if (errors.length < 50) {
+              errors.push({ index, message: 'meanings_zh 每项必须为非空字符串' });
+            }
+            continue;
+          }
+
+          if (seen.has(word)) {
+            skippedExisting += 1;
+            continue;
+          }
+          seen.add(word);
+
+          const existing = findWord.get(word) as { id: number } | undefined;
+          if (existing) {
+            skippedExisting += 1;
+            continue;
+          }
+
+          const rawPos = (item as { pos?: unknown }).pos;
+          const pos = typeof rawPos === 'string' ? rawPos.trim() : '';
+          const meaning = (pos ? pos + ' ' : '') + meanings.join('；');
+
+          const rawExampleEn = (item as { example_en?: unknown }).example_en;
+          const exampleEn =
+            typeof rawExampleEn === 'string' ? rawExampleEn.trim() : '';
+          const rawExampleZh = (item as { example_zh?: unknown }).example_zh;
+          const exampleZh =
+            typeof rawExampleZh === 'string' ? rawExampleZh.trim() : '';
+          let example = exampleEn;
+          if (exampleZh) {
+            example += ' ｜ ' + exampleZh;
+          }
+
+          const rawPhonetic = (item as { phonetic?: unknown }).phonetic;
+          const phonetic =
+            typeof rawPhonetic === 'string' ? rawPhonetic.trim() : '';
+
+          const info = insertWord.run(word, phonetic, meaning, example, source);
+          const newId = Number(info.lastInsertRowid);
+          insertSrs.run(newId, 2.5, 0, 0, today);
+          imported += 1;
+        }
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
+      }
+
+      return reply.send({ imported, skippedExisting, skippedInvalid, errors });
     },
   );
 

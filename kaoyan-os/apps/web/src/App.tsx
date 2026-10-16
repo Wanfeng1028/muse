@@ -9,6 +9,7 @@ import Mistakes from './pages/Mistakes';
 import Words from './pages/Words';
 import Exams from './pages/Exams';
 import DataTransfer from './pages/DataTransfer';
+import Weekly from './pages/Weekly';
 
 type Theme = 'light' | 'dark';
 
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { to: '/mistakes', label: '错题本', end: false },
   { to: '/words', label: '单词 SRS', end: false },
   { to: '/exams', label: '真题统计', end: false },
+  { to: '/weekly', label: '周报', end: false },
   { to: '/data', label: '数据导入导出', end: false },
 ];
 
@@ -118,6 +120,7 @@ export default function App() {
           <Route path="/mistakes" element={<Mistakes />} />
           <Route path="/words" element={<Words />} />
           <Route path="/exams" element={<Exams />} />
+          <Route path="/weekly" element={<Weekly />} />
           <Route path="/data" element={<DataTransfer />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

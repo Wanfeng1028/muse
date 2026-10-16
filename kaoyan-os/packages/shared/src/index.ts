@@ -41,6 +41,22 @@ export interface CreatePlanInput {
 /** 更新计划输入 */
 export type UpdatePlanInput = Partial<CreatePlanInput & { done: boolean }>;
 
+/** 周报统计 */
+export interface WeeklyStats {
+  weekStart: string;   // 周一 YYYY-MM-DD
+  weekEnd: string;     // 下周一 YYYY-MM-DD（开区间）
+  focusMinutes: number;
+  focusBySubject: Record<SubjectKey, number>;
+  plansTotal: number;
+  plansDone: number;
+  wordsTotal: number;
+  wordsLearned: number;  // srs_state.repetitions > 0 的词数（累计）
+  wordsDue: number;      // due_date <= 今天的词数
+  mistakesNew: number;   // 本周新增错题（created_at >= weekStart）
+  mistakesUnmastered: number; // 全部未掌握错题数
+  examsTaken: number;    // 本周模考场次（taken_at >= weekStart 且 < weekEnd）
+}
+
 /** 专注会话 */
 export interface FocusSession {
   id: number;
@@ -102,6 +118,17 @@ export interface CreateMistakeInput {
 /** 更新错题输入 */
 export type UpdateMistakeInput = Partial<CreateMistakeInput & { mastered: boolean }>;
 
+/** 单词来源 */
+export type WordSource = 'builtin' | 'core500' | 'manual' | 'csv';
+
+/** 单词来源中文名 */
+export const WORD_SOURCES: Record<WordSource, string> = {
+  builtin: '内置种子',
+  core500: '核心500词库',
+  manual: '手动录入',
+  csv: 'CSV导入',
+};
+
 /** 单词 */
 export interface Word {
   id: number;
@@ -109,10 +136,11 @@ export interface Word {
   phonetic: string;
   meaning: string;
   example: string;
+  source: WordSource;
 }
 
 /** 创建单词输入 */
-export type CreateWordInput = Omit<Word, 'id'>;
+export type CreateWordInput = Omit<Word, 'id' | 'source'>;
 
 /** 记忆曲线状态 */
 export interface SrsState {
