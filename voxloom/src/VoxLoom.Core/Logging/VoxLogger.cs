@@ -102,7 +102,9 @@ public sealed class VoxLogger : IDisposable
         try
         {
             if (level < _options.MinLevel) return;
-            var line = BuildLine(level, message, data, ex);
+            var now = DateTime.UtcNow;
+            var sanitized = SerializeAndSanitize(data);
+            var line = BuildLine(now, level, message, sanitized, ex);
             lock (_lock)
             {
                 if (_disposed) return;
@@ -113,7 +115,23 @@ public sealed class VoxLogger : IDisposable
             }
             if (_options.WriteToConsole)
             {
-                try { Console.Out.WriteLine(line); } catch { }
+                try
+                {
+                    var human = VoxConsoleFormat.RenderLine(level, message, CurrentOperation, CurrentOperationId, sanitized, now);
+                    var color = VoxConsoleFormat.ColorFor(level);
+                    if (!Console.IsOutputRedirected && color.HasValue)
+                    {
+                        var prev = Console.ForegroundColor;
+                        Console.ForegroundColor = color.Value;
+                        try { Console.Out.WriteLine(human); }
+                        finally { Console.ForegroundColor = prev; }
+                    }
+                    else
+                    {
+                        Console.Out.WriteLine(human);
+                    }
+                }
+                catch { }
             }
         }
         catch (Exception inner)
@@ -122,11 +140,11 @@ public sealed class VoxLogger : IDisposable
         }
     }
 
-    private string BuildLine(VoxLogLevel level, string message, object? data, Exception? ex)
+    private string BuildLine(DateTime timestampUtc, VoxLogLevel level, string message, string? sanitizedDataJson, Exception? ex)
     {
         var sb = new StringBuilder(256);
         sb.Append('{');
-        AppendString(sb, "ts", DateTime.UtcNow.ToString("o"));
+        AppendString(sb, "ts", timestampUtc.ToString("o"));
         sb.Append(',');
         AppendString(sb, "level", LevelText(level));
 
@@ -146,14 +164,10 @@ public sealed class VoxLogger : IDisposable
         sb.Append(',');
         AppendString(sb, "msg", message ?? string.Empty);
 
-        if (data is not null)
+        if (sanitizedDataJson is not null)
         {
-            var sanitized = SerializeAndSanitize(data);
-            if (sanitized is not null)
-            {
-                sb.Append(",\"data\":");
-                sb.Append(sanitized);
-            }
+            sb.Append(",\"data\":");
+            sb.Append(sanitizedDataJson);
         }
 
         if (ex is not null)
@@ -166,7 +180,7 @@ public sealed class VoxLogger : IDisposable
         return sb.ToString();
     }
 
-    private static string? SerializeAndSanitize(object data)
+    internal static string? SerializeAndSanitize(object data)
     {
         try
         {

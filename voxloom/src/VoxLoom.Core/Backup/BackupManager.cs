@@ -12,7 +12,20 @@ public sealed class BackupException : Exception
     public BackupException(string message, Exception inner) : base(message, inner) { }
 }
 
-public sealed record BackupRecord(string Id, DateTime CreatedUtc, string FileName, long SizeBytes, string Sha256);
+public sealed record BackupRecord(string Id, DateTime CreatedUtc, string FileName, long SizeBytes, string Sha256)
+{
+    public bool Encrypted { get; init; } = false;
+}
+
+public sealed record BackupEntryInfo(string Path, long SizeBytes, DateTime ModifiedUtc);
+
+public sealed class RestorePreviewOptions
+{
+    public string? Password { get; set; }
+    public bool AutoConfirm { get; set; }
+    public TextWriter? Output { get; set; }
+    public Func<string, bool>? Confirmer { get; set; }
+}
 
 public sealed class BackupManager
 {
@@ -31,7 +44,18 @@ public sealed class BackupManager
     }
 
     public BackupRecord CreateBackup(string projectDirectory, string projectName)
+        => CreateBackup(projectDirectory, projectName, null);
+
+    public BackupRecord CreateBackup(string projectDirectory, string projectName, string? password = null)
     {
+        var encrypt = false;
+        if (password is not null)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+                throw new BackupException("备份密码不能为空");
+            encrypt = true;
+        }
+
         if (!Directory.Exists(projectDirectory))
             throw new BackupException($"项目目录不存在：{projectDirectory}");
         if (string.IsNullOrWhiteSpace(projectName))
@@ -80,9 +104,12 @@ public sealed class BackupManager
             if (File.Exists(zipPath)) File.Delete(zipPath);
             ZipFile.CreateFromDirectory(staging, zipPath, CompressionLevel.Optimal, includeBaseDirectory: false);
 
+            if (encrypt)
+                BackupCrypto.EncryptFile(zipPath, password!);
+
             var zipSha = ComputeSha256(zipPath);
             var zipBytes = new FileInfo(zipPath).Length;
-            var record = new BackupRecord(id, DateTime.UtcNow, id + ".zip", zipBytes, zipSha);
+            var record = new BackupRecord(id, DateTime.UtcNow, id + ".zip", zipBytes, zipSha) { Encrypted = encrypt };
             File.WriteAllText(sidecarPath,
                 JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true }));
 
@@ -128,6 +155,9 @@ public sealed class BackupManager
     }
 
     public void Restore(string backupId, string targetDirectory)
+        => Restore(backupId, targetDirectory, null);
+
+    public void Restore(string backupId, string targetDirectory, string? password = null)
     {
         if (string.IsNullOrWhiteSpace(backupId))
             throw new BackupException("备份编号不能为空");
@@ -136,6 +166,10 @@ public sealed class BackupManager
         var sidecarPath = Path.Combine(_backupDirectory, backupId + ".json");
         if (!File.Exists(zipPath))
             throw new BackupException($"备份文件不存在：{zipPath}");
+
+        var isEncrypted = BackupCrypto.IsEncryptedFile(zipPath);
+        if (isEncrypted && string.IsNullOrEmpty(password))
+            throw new BackupException("该备份已加密，恢复需要密码");
 
         BackupRecord? rec = null;
         if (File.Exists(sidecarPath))
@@ -153,10 +187,19 @@ public sealed class BackupManager
 
         var temp = Path.Combine(Path.GetTempPath(), "voxloom-restore-" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(temp);
+        string? decryptedTemp = null;
 
         try
         {
-            ExtractZipSafe(zipPath, temp);
+            if (isEncrypted)
+            {
+                decryptedTemp = BackupCrypto.DecryptToTempFile(zipPath, password!);
+                ExtractZipSafe(decryptedTemp, temp);
+            }
+            else
+            {
+                ExtractZipSafe(zipPath, temp);
+            }
 
             var manifestPath = Path.Combine(temp, "manifest.json");
             if (File.Exists(manifestPath))
@@ -212,7 +255,93 @@ public sealed class BackupManager
         finally
         {
             TryDeleteDirectory(temp);
+            if (decryptedTemp is not null) TryDeleteFile(decryptedTemp);
         }
+    }
+
+    public IReadOnlyList<BackupEntryInfo> ListBackupContents(string backupId, string? password = null)
+    {
+        if (string.IsNullOrWhiteSpace(backupId))
+            throw new BackupException("备份编号不能为空");
+
+        var zipPath = Path.Combine(_backupDirectory, backupId + ".zip");
+        if (!File.Exists(zipPath))
+            throw new BackupException($"备份文件不存在：{zipPath}");
+
+        var isEncrypted = BackupCrypto.IsEncryptedFile(zipPath);
+        if (isEncrypted && string.IsNullOrEmpty(password))
+            throw new BackupException("该备份已加密，查看清单需要密码");
+
+        string? decryptedTemp = null;
+        try
+        {
+            var readPath = zipPath;
+            if (isEncrypted)
+            {
+                decryptedTemp = BackupCrypto.DecryptToTempFile(zipPath, password!);
+                readPath = decryptedTemp;
+            }
+
+            var list = new List<BackupEntryInfo>();
+            using (var archive = ZipFile.OpenRead(readPath))
+            {
+                foreach (var entry in archive.Entries)
+                {
+                    if (string.IsNullOrEmpty(entry.Name)) continue;
+                    list.Add(new BackupEntryInfo(entry.FullName, entry.Length, entry.LastWriteTime.UtcDateTime));
+                }
+            }
+            return list.OrderBy(e => e.Path, StringComparer.Ordinal).ToList();
+        }
+        catch (BackupException) { throw; }
+        catch (Exception ex)
+        {
+            throw new BackupException($"读取备份清单失败：{ex.Message}", ex);
+        }
+        finally
+        {
+            if (decryptedTemp is not null) TryDeleteFile(decryptedTemp);
+        }
+    }
+
+    public void RestoreWithPreview(string backupId, string targetDirectory, RestorePreviewOptions? options = null)
+    {
+        options ??= new RestorePreviewOptions();
+        var output = options.Output ?? Console.Out;
+
+        var entries = ListBackupContents(backupId, options.Password);
+
+        output.WriteLine($"备份 {backupId} 内容清单（共 {entries.Count} 个文件）：");
+        output.WriteLine("路径  大小  修改时间(UTC)");
+        var width = entries.Count == 0 ? 0 : entries.Max(e => e.Path.Length) + 2;
+        foreach (var e in entries)
+        {
+            output.WriteLine(
+                e.Path.PadRight(width) + FormatBytes(e.SizeBytes).PadRight(10) +
+                e.ModifiedUtc.ToString("yyyy-MM-dd HH:mm:ss"));
+        }
+        output.WriteLine($"目标目录：{targetDirectory}");
+
+        var ok = true;
+        if (!options.AutoConfirm)
+        {
+            ok = options.Confirmer is not null
+                ? options.Confirmer("确认恢复？[y/N] ")
+                : ReadConsoleConfirm();
+        }
+
+        if (!options.AutoConfirm)
+            output.WriteLine(ok ? "确认恢复，开始执行恢复…" : "已取消恢复");
+        else
+            output.WriteLine("已跳过确认（--yes），开始执行恢复…");
+
+        if (!ok)
+            throw new BackupException("已取消恢复");
+
+        Restore(backupId, targetDirectory, options.Password);
+
+        _logger?.Info("恢复预览", new { backupId, targetDirectory, fileCount = entries.Count, autoConfirm = options.AutoConfirm });
+        output.WriteLine("恢复完成");
     }
 
     public void DeleteBackup(string backupId)
@@ -326,11 +455,37 @@ public sealed class BackupManager
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024L * 1024L) return (bytes / 1024.0).ToString("0.0") + " KB";
+        return (bytes / (1024.0 * 1024.0)).ToString("0.0") + " MB";
+    }
+
+    private static bool ReadConsoleConfirm()
+    {
+        Console.Out.Write("确认恢复？[y/N] ");
+        var line = Console.ReadLine();
+        if (line is null) return false;
+        var t = line.Trim();
+        return t.Equals("y", StringComparison.OrdinalIgnoreCase) ||
+               t.Equals("yes", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static void TryDeleteDirectory(string dir)
     {
         try
         {
             if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+        }
+        catch { }
+    }
+
+    private static void TryDeleteFile(string file)
+    {
+        try
+        {
+            if (File.Exists(file)) File.Delete(file);
         }
         catch { }
     }
