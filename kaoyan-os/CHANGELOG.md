@@ -4,7 +4,18 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.3.0] - 2026-10-16
+
+### Added
+
+- 自律热力图。
+- 后端：`packages/shared` 新增 `HeatmapDay` / `HeatmapResponse` 类型；`apps/server/src/routes/stats.ts` 新增 `GET /api/stats/heatmap?months=N`（默认 3，只接受整数 1~6，否则 400）：按天聚合专注分钟、计划总数/完成数、新增错题、模考场次，返回 currentStreak（今日为 0 则从昨日往前数）、bestStreak、activeDays。
+- 前端：新增 `apps/web/src/pages/Heatmap.tsx`，路由 `/heatmap`，导航项「自律热力图」；GitHub 贡献图式热力图（列=周、行=周一..周日、月份标签、少→多图例），颜色五档蓝（浅 `#c9e2fb → #2f74e0` / 深 `#1e4068 → #5b9bf3`）；顶部当前连续打卡/最长连续/累计专注天数三卡；近 1/3/6 个月切换；格子 title 显示当日明细，点击格子展开当日详情卡（含当日专注会话列表，科目中文名）。
+- 测试：`apps/server/tests/heatmap.test.ts` 新增 7 例（默认 3 个月 93 天、months=1 返回 31 天、months=0/7 返回 400、focus+45 差值、plans 完成差值、-7 天补记录 streak+1、-30 天孤立记录 streak 不变）；服务端全量 50/50 通过（vitest）；前端 `tsc --noEmit` 零错，`vite build` 成功。
+- 截图：`docs/screenshots/light-heatmap.png`（热力图默认态）、`docs/screenshots/light-heatmap-detail.png`（点击 2026-10-16 当日详情态）、`docs/screenshots/dark-heatmap.png`（深色）。
+
 ## [1.2.0] - 2026-10-16
+
 
 ### Added
 

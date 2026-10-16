@@ -16,9 +16,11 @@ import type {
   ExamRecord,
   CreateExamInput,
   ExamTrendPoint,
+  HeatmapResponse,
   Settings,
   WeeklyStats,
 } from '@kaoyan/shared';
+
 
 export interface BackupPayload {
   format: string;
@@ -163,7 +165,12 @@ export const api = {
       body: JSON.stringify({ csv }),
     }),
 
+  // 热力图
+  heatmapStats: (months?: number) =>
+    request<HeatmapResponse>(`/stats/heatmap${qs({ months })}`),
+
   // 周报
   weeklyStats: (start?: string) =>
     request<WeeklyStats>(`/stats/weekly${qs({ start })}`),
 };
+

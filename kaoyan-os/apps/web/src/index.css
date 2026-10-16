@@ -900,3 +900,28 @@ ol {
     font-size: 13px;
   }
 }
+
+
+/* ============ 自律热力图 ============ */
+.hm-grid { display: flex; gap: 3px;}
+.hm-col { display: flex; flex-direction: column; gap: 3px;}
+.hm-cell { width: 14px; height: 14px; border-radius: 3px; background: var(--border);}
+.hm-cell.hm-empty { visibility: hidden;}
+.hm-cell.hm-clickable { cursor: pointer;}
+.hm-cell.hm-clickable:hover { outline: 2px solid var(--text-sub);}
+.hm-cell.hm-selected { outline: 2px solid var(--text-main);}
+.hm-1 { background: #c9e2fb;}
+.hm-2 { background: #9cc6f7;}
+.hm-3 { background: #5f9df2;}
+.hm-4 { background: #2f74e0;}
+.hm-months { display: flex; gap: 3px; margin-bottom: 4px;}
+.hm-month { font-size: 12px; color: var(--text-sub); width: 17px; flex-shrink: 0;}
+.hm-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 12px; color: var(--text-sub);}
+.hm-legend .hm-cell { width: 12px; height: 12px;}
+.hm-scroll { overflow-x: auto;}
+[data-theme="dark"] .hm-1 { background: #1e4068;}
+[data-theme="dark"] .hm-2 { background: #2a5d94;}
+[data-theme="dark"] .hm-3 { background: #3a7fc9;}
+[data-theme="dark"] .hm-4 { background: #5b9bf3;}
+
+

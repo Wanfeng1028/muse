@@ -207,3 +207,25 @@ export const DEFAULT_SETTINGS = {
   breakMinutes: 5,
   theme: 'light',
 } as const;
+
+/** 热力图单日聚合 */
+export interface HeatmapDay {
+  date: string;
+  focusMinutes: number;
+  plansTotal: number;
+  plansDone: number;
+  mistakesNew: number;
+  examsTaken: number;
+}
+
+/** 热力图响应 */
+export interface HeatmapResponse {
+  months: number;
+  startDate: string;
+  endDate: string;
+  days: HeatmapDay[];
+  currentStreak: number;
+  bestStreak: number;
+  activeDays: number;
+}
+

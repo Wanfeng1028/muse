@@ -20,6 +20,8 @@
 | 仪表盘 | 初试倒计时、今日任务、专注时长、待复习单词、错题与真题得分概览 |
 | 数据导入导出 | 全量 JSON 备份与恢复（覆盖/合并）、单词 CSV 与错题 CSV 导入 |
 | 深色模式 | 浅/深主题一键切换，偏好存服务端多端同步，深色板为 slate 家族配色体系 |
+| 自律热力图 | 近 1/3/6 个月专注热力图、当前/最长连续打卡与累计专注天数，点击格子查看当日专注、计划、错题、模考明细 |
+
 
 ## 深色模式
 
@@ -49,7 +51,22 @@ v1.2.0 起支持浅色 / 深色两套主题。
 
 ![浅色仪表盘](docs/screenshots/light-dashboard.png)
 
+## 自律热力图
+
+v1.3.0 起新增「自律热力图」页面（导航在"周报"之后）：把每天的专注分钟数画成 GitHub 贡献图式的热力图，格子越深代表当天专注越久。
+
+- 数据：`GET /api/stats/heatmap?months=N` 按天聚合专注、计划、错题、模考，并算出当前连续打卡、最长连续、累计专注天数。
+- 视觉逻辑：单色系蓝色五档（0/1~30/31~60/61~120/>120 分钟），浅色 `#c9e2fb → #2f74e0`，深色 `#1e4068 → #5b9bf3`，与 slate 深色板同族；月份标签、少→多图例；hover 显示当日明细（title 原生提示），点击格子展开当日详情卡（含当日专注会话列表）。
+- 文案用大白话，不做营销腔。
+
+![自律热力图（浅色）](docs/screenshots/light-heatmap.png)
+
+![自律热力图当日详情（浅色）](docs/screenshots/light-heatmap-detail.png)
+
+![自律热力图（深色）](docs/screenshots/dark-heatmap.png)
+
 ## 技术栈
+
 
 - **包管理 / 仓库结构**：pnpm workspace monorepo
 - **后端** `apps/server`：Fastify 5 + TypeScript + SQLite（Node 内置 `node:sqlite`，无原生依赖）
@@ -159,6 +176,8 @@ docker run -d \
 | words | `GET/POST /api/words`，`POST /api/words/:id/review` | 词条管理与 SRS 复习结果提交 |
 | exams | `GET/POST /api/exams` | 真题计时记录与得分统计 |
 | settings | `GET/PUT /api/settings` | 考试日期、科目等配置 |
+| stats | `GET /api/stats/weekly`，`GET /api/stats/heatmap` | 周报聚合；热力图聚合（专注/计划/错题/模考按天聚合 + 连续打卡统计） |
+
 | 备份导入 | `GET /api/backup/export`，`POST /api/backup/import`，`POST /api/import/words`，`POST /api/import/mistakes` | 全量备份导出/恢复（覆盖·合并）、单词 CSV / 错题 CSV 导入 |
 
 ## 开发说明与路线图
@@ -177,3 +196,5 @@ docker run -d \
 4. **考研核心 500 词库扩充**：~~500 个考研英语核心词 JSON 词库（word/phonetic/pos/meanings_zh/example_en/example_zh），POST /api/words/import 幂等导入（按 word 去重），单词表新增 source 来源字段（内置种子/核心500词库/手动录入/CSV导入），前端单词页支持按来源筛选与学习进度展示。~~（2026-10-16 已交付）
 5. **移动端**：面向手机浏览器的响应式优化，并评估轻量原生客户端方案。
 6. **周报视图**：~~GET /api/stats/weekly 周统计聚合（专注/计划/单词/错题/模考），前端 /weekly 周报页（本周/上一周切换、四科专注条、计划完成率、单词进度）。~~（2026-10-16 已交付）
+7. **自律热力图**：~~GET /api/stats/heatmap 按天聚合（专注/计划/错题/模考）+ 连续打卡统计，前端 /heatmap 热力图页（GitHub 贡献图式、1/3/6 个月切换、点击格子看当日详情）。~~（2026-10-16 已交付 v1.3.0）
+

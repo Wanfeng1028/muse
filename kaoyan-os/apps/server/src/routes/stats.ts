@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { DatabaseSync } from 'node:sqlite';
-import type { SubjectKey, WeeklyStats } from '@kaoyan/shared';
+import type { SubjectKey, WeeklyStats, HeatmapDay, HeatmapResponse } from '@kaoyan/shared';
+
 import { todayStr, addDays } from '../db';
 
 export function registerStatsRoutes(app: FastifyInstance, db: DatabaseSync): void {
@@ -60,4 +61,120 @@ export function registerStatsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     };
     return reply.send(stats);
   });
+
+  app.get('/api/stats/heatmap', async (request, reply) => {
+    const q = (request.query ?? {}) as { months?: string };
+    let months = 3;
+    if (q.months !== undefined) {
+      const n = Number(q.months);
+      if (!Number.isInteger(n) || n < 1 || n > 6) {
+        return reply.status(400).send({ error: 'months 参数无效' });
+      }
+      months = n;
+    }
+
+    const endDate = todayStr();
+    const startDate = addDays(endDate, -(months * 31 - 1));
+
+    const focusRows = db
+      .prepare(
+        `SELECT substr(started_at, 1, 10) AS d, SUM(minutes) AS m
+         FROM focus_sessions
+         WHERE substr(started_at, 1, 10) >= ? AND substr(started_at, 1, 10) <= ?
+         GROUP BY d`
+      )
+      .all(startDate, endDate) as { d: string; m: number }[];
+
+    const planRows = db
+      .prepare(
+        `SELECT date AS d, COUNT(*) AS total, SUM(CASE WHEN done = 1 THEN 1 ELSE 0 END) AS doneCnt
+         FROM plans
+         WHERE date >= ? AND date <= ?
+         GROUP BY d`
+      )
+      .all(startDate, endDate) as { d: string; total: number; doneCnt: number }[];
+
+    const mistakeRows = db
+      .prepare(
+        `SELECT substr(created_at, 1, 10) AS d, COUNT(*) AS c
+         FROM mistakes
+         WHERE substr(created_at, 1, 10) >= ? AND substr(created_at, 1, 10) <= ?
+         GROUP BY d`
+      )
+      .all(startDate, endDate) as { d: string; c: number }[];
+
+    const examRows = db
+      .prepare(
+        `SELECT substr(taken_at, 1, 10) AS d, COUNT(*) AS c
+         FROM exam_records
+         WHERE substr(taken_at, 1, 10) >= ? AND substr(taken_at, 1, 10) <= ?
+         GROUP BY d`
+      )
+      .all(startDate, endDate) as { d: string; c: number }[];
+
+    const focusMap = new Map<string, number>();
+    for (const r of focusRows) focusMap.set(r.d, Number(r.m ?? 0));
+    const planTotalMap = new Map<string, number>();
+    const planDoneMap = new Map<string, number>();
+    for (const r of planRows) {
+      planTotalMap.set(r.d, Number(r.total ?? 0));
+      planDoneMap.set(r.d, Number(r.doneCnt ?? 0));
+    }
+    const mistakeMap = new Map<string, number>();
+    for (const r of mistakeRows) mistakeMap.set(r.d, Number(r.c ?? 0));
+    const examMap = new Map<string, number>();
+    for (const r of examRows) examMap.set(r.d, Number(r.c ?? 0));
+
+    const days: HeatmapDay[] = [];
+    const totalDays = months * 31;
+    for (let i = 0; i < totalDays; i++) {
+      const date = addDays(startDate, i);
+      days.push({
+        date,
+        focusMinutes: focusMap.get(date) ?? 0,
+        plansTotal: planTotalMap.get(date) ?? 0,
+        plansDone: planDoneMap.get(date) ?? 0,
+        mistakesNew: mistakeMap.get(date) ?? 0,
+        examsTaken: examMap.get(date) ?? 0,
+      });
+    }
+
+    const activeDays = days.filter((d) => d.focusMinutes > 0).length;
+
+    let currentStreak = 0;
+    {
+      const todayIdx = days.length - 1;
+      let i = todayIdx;
+      if (i >= 0 && days[i].focusMinutes <= 0) i--;
+      while (i >= 0 && days[i].focusMinutes > 0) {
+        currentStreak++;
+        i--;
+      }
+    }
+
+    let bestStreak = 0;
+    {
+      let run = 0;
+      for (const d of days) {
+        if (d.focusMinutes > 0) {
+          run++;
+          if (run > bestStreak) bestStreak = run;
+        } else {
+          run = 0;
+        }
+      }
+    }
+
+    const resp: HeatmapResponse = {
+      months,
+      startDate,
+      endDate,
+      days,
+      currentStreak,
+      bestStreak,
+      activeDays,
+    };
+    return reply.send(resp);
+  });
 }
+
