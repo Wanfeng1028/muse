@@ -22,6 +22,8 @@
 - **站点健康档案** `/profile?id=N`：7/30 天可用性、延迟分位、30 天每日柱状图、月度 SLA 一页看全
 - **月度 SLA**：选月份，看可用性、检查数、宕机时长、是否达标 99.9%
 - **公开状态页** `/status/{slug}`：对外展示，无需登录，客户直接看
+- **状态页主题**：每页可配浅色/深色/自定义主色，`PUT /api/status-pages/{id}/theme`，访客可在页面上切换预览
+- **订阅通知**：访客在状态页留邮箱订阅，宕机/恢复时收邮件；订阅需点确认链接（含退订），防滥用
 
 ## 截图
 
@@ -29,7 +31,7 @@
 
 - 总览：`docs/screenshots/dashboard.png`
 - 站点健康档案：`docs/screenshots/profile.png`
-- 公开状态页：`docs/screenshots/status.png`
+- 公开状态页（浅色 / 深色 / 自定义主色三主题）：`docs/screenshots/status.png`、`docs/screenshots/status-dark.png`、`docs/screenshots/status-custom.png`
 
 ## 快速开始
 
@@ -69,6 +71,7 @@ open http://localhost:8200
 | `SENTINEL_CHECK_CONCURRENCY` | `8` | 并发检查上限 |
 | `SENTINEL_CHECK_RETRY_MAX` | `3` | 失败重试次数 |
 | `SENTINEL_TICK_SEC` | `10` | 调度 tick 间隔 |
+| `SENTINEL_PUBLIC_URL` | 空 | 对外基地址，用于订阅邮件里的确认/退订链接；为空用相对路径 |
 
 ## API 一览
 
@@ -83,6 +86,11 @@ open http://localhost:8200
 | GET | `/api/status-pages` | 是 | 状态页列表 |
 | POST | `/api/status-pages/auto` | 是 | 自动生成状态页 |
 | GET | `/api/status/{slug}` | 否 | 公开状态页数据 |
+| PUT | `/api/status-pages/{id}/theme` | 是 | 设置状态页主题，body `{"theme":"light\|dark","accent_color":"#rrggbb"}` |
+| POST | `/api/status/{slug}/subscribe` | 否 | 订阅状态通知，body `{"email":"..."}`，返回 pending/already |
+| GET | `/api/status/{slug}/confirm?token=...` | 否 | 订阅确认（邮件链接） |
+| GET | `/api/status/{slug}/unsubscribe?token=...` | 否 | 退订确认页 |
+| POST | `/api/status/{slug}/unsubscribe` | 否 | 执行退订，body `{"token":"..."}` |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |

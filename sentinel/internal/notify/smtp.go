@@ -109,6 +109,28 @@ func buildMessage(cfg SMTPConfig, recipients []string, event, name, target, at, 
 	return []byte(b.String())
 }
 
+// buildRawMessage 组装完整 RFC822 消息（主题与正文由调用方提供）。
+func buildRawMessage(from string, recipients []string, subject, body string) []byte {
+	encodedSubject := mime.BEncoding.Encode("utf-8", subject)
+
+	var b strings.Builder
+	b.WriteString("From: ")
+	b.WriteString(from)
+	b.WriteString("\r\n")
+	b.WriteString("To: ")
+	b.WriteString(strings.Join(recipients, ", "))
+	b.WriteString("\r\n")
+	b.WriteString("Subject: ")
+	b.WriteString(encodedSubject)
+	b.WriteString("\r\n")
+	b.WriteString("MIME-Version: 1.0\r\n")
+	b.WriteString("Content-Type: text/plain; charset=utf-8\r\n")
+	b.WriteString("Content-Transfer-Encoding: base64\r\n")
+	b.WriteString("\r\n")
+	b.WriteString(base64.StdEncoding.EncodeToString([]byte(body)))
+	return []byte(b.String())
+}
+
 // dialSMTP 建立到 SMTP 服务器的连接，返回客户端。
 func dialSMTP(cfg SMTPConfig, port int) (*smtp.Client, error) {
 	dialer := &net.Dialer{Timeout: 10 * time.Second}
@@ -190,6 +212,46 @@ func (n SMTPNotifier) SendAlert(event, name, target, at, errMsg string) error {
 	}
 
 	message := buildMessage(cfg, recipients, event, name, target, at, errMsg)
+
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		err := sendOnce(cfg, port, recipients, message)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		log.Logger().Warn("发送 SMTP 邮件失败",
+			"host", cfg.Host,
+			"port", port,
+			"attempt", attempt+1,
+			"error", err,
+		)
+		if attempt < 2 {
+			backoff := time.Duration(1<<uint(attempt)) * time.Second
+			time.Sleep(backoff)
+		}
+	}
+
+	return fmt.Errorf("SMTP 邮件发送失败: %w", lastErr)
+}
+
+// SendRaw 向指定收件人发送邮件（主题/正文已由调用方组装好）。
+// Config.Host 为空表示渠道未配置，直接返回 nil（跳过，不报错）。
+func (n SMTPNotifier) SendRaw(recipients []string, subject, body string) error {
+	cfg := n.Config
+	if cfg.Host == "" {
+		return nil
+	}
+	if len(recipients) == 0 {
+		return fmt.Errorf("SMTP 收件人为空")
+	}
+
+	port := cfg.Port
+	if port <= 0 {
+		port = 25
+	}
+
+	message := buildRawMessage(cfg.From, recipients, subject, body)
 
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {

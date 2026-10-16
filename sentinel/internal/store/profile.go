@@ -30,11 +30,13 @@ type SLAReport struct {
 
 // StatusPage 表示一个状态页。
 type StatusPage struct {
-	ID        int64  `json:"id"`
-	TenantID  int64  `json:"tenant_id"`
-	Slug      string `json:"slug"`
-	Title     string `json:"title"`
-	CreatedAt string `json:"created_at"`
+	ID          int64  `json:"id"`
+	TenantID    int64  `json:"tenant_id"`
+	Slug        string `json:"slug"`
+	Title       string `json:"title"`
+	Theme       string `json:"theme"`
+	AccentColor string `json:"accent_color"`
+	CreatedAt   string `json:"created_at"`
 }
 
 // percentileLinear 使用线性插值法计算已排序切片的分位数。
@@ -233,8 +235,8 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 // CreateStatusPage 创建状态页，返回新 ID。
 func (s *Store) CreateStatusPage(tenantID int64, slug, title string) (int64, error) {
 	res, err := s.db.Exec(
-		`INSERT INTO status_pages(tenant_id, slug, title, created_at) VALUES(?,?,?,?)`,
-		tenantID, slug, title, time.Now().UTC().Format(time.RFC3339),
+		`INSERT INTO status_pages(tenant_id, slug, title, theme, accent_color, created_at) VALUES(?,?,?,?,?,?)`,
+		tenantID, slug, title, "light", "", time.Now().UTC().Format(time.RFC3339),
 	)
 	if err != nil {
 		return 0, err
@@ -245,7 +247,7 @@ func (s *Store) CreateStatusPage(tenantID int64, slug, title string) (int64, err
 // ListStatusPages 返回某租户下所有状态页。
 func (s *Store) ListStatusPages(tenantID int64) ([]StatusPage, error) {
 	rows, err := s.db.Query(
-		`SELECT id, tenant_id, slug, title, created_at FROM status_pages WHERE tenant_id = ? ORDER BY id ASC`,
+		`SELECT id, tenant_id, slug, title, theme, accent_color, created_at FROM status_pages WHERE tenant_id = ? ORDER BY id ASC`,
 		tenantID,
 	)
 	if err != nil {
@@ -255,7 +257,7 @@ func (s *Store) ListStatusPages(tenantID int64) ([]StatusPage, error) {
 	var out []StatusPage
 	for rows.Next() {
 		var sp StatusPage
-		if err := rows.Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.CreatedAt); err != nil {
+		if err := rows.Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.CreatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, sp)
@@ -267,8 +269,8 @@ func (s *Store) ListStatusPages(tenantID int64) ([]StatusPage, error) {
 func (s *Store) GetStatusPage(id int64) (StatusPage, error) {
 	var sp StatusPage
 	err := s.db.QueryRow(
-		`SELECT id, tenant_id, slug, title, created_at FROM status_pages WHERE id = ?`, id,
-	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.CreatedAt)
+		`SELECT id, tenant_id, slug, title, theme, accent_color, created_at FROM status_pages WHERE id = ?`, id,
+	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.CreatedAt)
 	if err != nil {
 		return sp, err
 	}
@@ -279,8 +281,8 @@ func (s *Store) GetStatusPage(id int64) (StatusPage, error) {
 func (s *Store) GetStatusPageBySlug(slug string) (StatusPage, error) {
 	var sp StatusPage
 	err := s.db.QueryRow(
-		`SELECT id, tenant_id, slug, title, created_at FROM status_pages WHERE slug = ?`, slug,
-	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.CreatedAt)
+		`SELECT id, tenant_id, slug, title, theme, accent_color, created_at FROM status_pages WHERE slug = ?`, slug,
+	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.CreatedAt)
 	if err != nil {
 		return sp, err
 	}
@@ -351,6 +353,53 @@ func (s *Store) SetMonitorPublic(monitorID int64, isPublic int) error {
 		isPublic, time.Now().UTC().Format(time.RFC3339), monitorID,
 	)
 	return err
+}
+
+// ValidPageThemes 列出状态页允许的主题取值。
+var ValidPageThemes = map[string]bool{"light": true, "dark": true}
+
+// validAccentColor 校验自定义主色：空字符串合法（用默认主色），
+// 否则必须为 #rrggbb 形式的 6 位十六进制颜色。
+func validAccentColor(c string) bool {
+	if c == "" {
+		return true
+	}
+	if len(c) != 7 || c[0] != '#' {
+		return false
+	}
+	for _, r := range c[1:] {
+		if !(r >= '0' && r <= '9' || r >= 'a' && r <= 'f' || r >= 'A' && r <= 'F') {
+			return false
+		}
+	}
+	return true
+}
+
+// UpdateStatusPageTheme 更新状态页主题与自定义主色。
+// theme 必须为 light/dark；accentColor 为空或 #rrggbb；非法返回中文 error。
+// 页面不存在返回 sql.ErrNoRows。
+func (s *Store) UpdateStatusPageTheme(id int64, theme, accentColor string) error {
+	if !ValidPageThemes[theme] {
+		return errors.New("主题非法：仅支持 light/dark")
+	}
+	if !validAccentColor(accentColor) {
+		return errors.New("主色非法：须为 #rrggbb 格式或空")
+	}
+	res, err := s.db.Exec(
+		`UPDATE status_pages SET theme = ?, accent_color = ? WHERE id = ?`,
+		theme, accentColor, id,
+	)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 // 确保 strings 被使用（用于潜在的扩展）。

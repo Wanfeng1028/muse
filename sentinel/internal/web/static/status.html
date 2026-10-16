@@ -6,24 +6,229 @@
 <title>服务状态 · 哨兵 Sentinel</title>
 <link rel="stylesheet" href="/static/style.css">
 <style>
-  .wrap { max-width: 780px; margin: 0 auto; padding: 24px 20px 64px; }
-  .banner { padding: 18px 20px; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 500; margin-bottom: 20px; }
-  .banner.ok { background: #10b981; }
-  .banner.bad { background: #ef4444; }
-  .banner .sub { font-size: 12px; opacity: .9; font-weight: 400; margin-top: 4px; }
-  .list { background: #fff; border-radius: 10px; box-shadow: 0 1px 2px rgba(17,24,39,.05); overflow: hidden; }
-  .row { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #f1f3f6; font-size: 14px; }
-  .row:last-child { border-bottom: none; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-  .dot.up { background: #10b981; }
-  .dot.down { background: #ef4444; }
-  .dot.unknown { background: #9ca3af; }
-  .row .name { color: #111827; font-weight: 500; }
-  .row .kind { font-size: 12px; color: #6b7280; }
-  .row .right { margin-left: auto; text-align: right; font-size: 12px; color: #6b7280; font-variant-numeric: tabular-nums; }
-  .row .right .up { color: #374151; font-size: 13px; }
-  .foot { text-align: center; margin-top: 24px; font-size: 12px; color: #9ca3af; }
-  .empty { padding: 24px 18px; color: #6b7280; font-size: 13px; }
+/*
+  视觉逻辑（本页）
+  - 字体：系统字体栈（-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif），不用 web font。
+  - 底色：浅色纸面 (#f6f7f9)，深色 slate 文字 (#1f2937)；卡片纯白 + 1px 边框 + 极淡阴影。
+  - 单一主色点缀：默认 #2563eb 纯蓝（深色下 #5b8def）；可由 API accent_color 或访客取色器覆盖。
+  - 圆角统一 10px；间距节奏 4/8/12/16/20/24；行内文字左对齐，页脚小字也左对齐。
+  - 层级：h1 页面标题 18px/600，banner 15px/500，正文 14px，辅助 12px。
+*/
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, .10);
+  --ok: #10b981;
+  --bad: #ef4444;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(17, 24, 39, .05);
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+:root[data-theme="dark"] {
+  --bg: #0f1419;
+  --card: #1a2230;
+  --text: #e8edf3;
+  --muted: #9aa7b8;
+  --border: #2a3444;
+  --accent: #5b8def;
+  --accent-soft: rgba(91, 141, 239, .16);
+  --ok: #34d399;
+  --bad: #f87171;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.topbar { background: var(--card); border-bottom: 1px solid var(--border); }
+.topbar-inner {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.brand-mark {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); display: inline-block;
+}
+
+.wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 20px 20px 56px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.toolbar .updated {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.toolbar .controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+}
+.seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+.color-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.color-field input[type="color"] {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.banner {
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+.banner.ok { border-left: 4px solid var(--ok); }
+.banner.bad { border-left: 4px solid var(--bad); }
+.banner .sub {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 4px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.list { overflow: hidden; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.row:last-child { border-bottom: none; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.dot.up { background: var(--ok); }
+.dot.down { background: var(--bad); }
+.dot.unknown { background: var(--muted); }
+.row .name { color: var(--text); font-weight: 500; }
+.row .kind { font-size: 12px; color: var(--muted); }
+.row .right {
+  margin-left: auto;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.row .right .uptime { color: var(--text); font-size: 13px; }
+
+.empty { padding: 24px 18px; color: var(--muted); font-size: 13px; }
+
+.subscribe { margin-top: 16px; padding: 18px; }
+.subscribe h2 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+.subscribe p { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.subscribe form { display: flex; gap: 8px; flex-wrap: wrap; }
+.subscribe input[type="email"] {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.subscribe input[type="email"]:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.subscribe button {
+  appearance: none;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.subscribe button[disabled] { opacity: .6; cursor: default; }
+.subscribe .status {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 1em;
+}
+.subscribe .status.ok { color: var(--ok); }
+.subscribe .status.bad { color: var(--bad); }
+
+.foot {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: left;
+}
 </style>
 </head>
 <body>
@@ -34,13 +239,101 @@
 </div>
 
 <div class="wrap">
+  <div class="toolbar">
+    <span class="updated" id="updatedAt">加载中…</span>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="主题">
+        <button type="button" data-theme-choice="light" aria-pressed="false">浅色</button>
+        <button type="button" data-theme-choice="dark" aria-pressed="false">深色</button>
+        <button type="button" data-theme-choice="site" aria-pressed="true">跟随站点</button>
+      </div>
+      <label class="color-field" title="临时预览主色">
+        主色
+        <input type="color" id="accentPick" value="#2563eb">
+      </label>
+    </div>
+  </div>
+
   <div class="banner ok" id="banner">加载中…<div class="sub" id="bannerSub"></div></div>
-  <div class="list" id="list"><div class="empty">加载中…</div></div>
+
+  <div class="card list" id="list"><div class="empty">加载中…</div></div>
+
+  <div class="card subscribe">
+    <h2>订阅状态通知</h2>
+    <p>站点宕机或恢复时，给这个邮箱发一封通知邮件。</p>
+    <form id="subForm" novalidate>
+      <input type="email" id="subEmail" placeholder="you@example.com" autocomplete="email" aria-label="邮箱地址">
+      <button type="submit" id="subBtn">订阅</button>
+    </form>
+    <div class="status" id="subStatus" role="status" aria-live="polite"></div>
+  </div>
+
   <div class="foot">由哨兵 Sentinel 提供</div>
 </div>
 
 <script>
 (function () {
+  var THEME_KEY = 'sentinel-status-theme';
+  var ACCENT_KEY = 'sentinel-status-accent';
+
+  var siteTheme = 'light';
+  var siteAccent = '';
+  var slug = '';
+
+  function readLS(k) {
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function writeLS(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) {}
+  }
+
+  function effectiveTheme() {
+    var pref = readLS(THEME_KEY) || 'site';
+    if (pref === 'light' || pref === 'dark') return pref;
+    return siteTheme === 'dark' ? 'dark' : 'light';
+  }
+
+  function applyTheme() {
+    var eff = effectiveTheme();
+    document.documentElement.setAttribute('data-theme', eff);
+    var pref = readLS(THEME_KEY) || 'site';
+    var btns = document.querySelectorAll('[data-theme-choice]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-theme-choice') === pref ? 'true' : 'false');
+    }
+  }
+
+  function applyAccent() {
+    var visitor = readLS(ACCENT_KEY);
+    var color = visitor || siteAccent || '';
+    if (color) {
+      document.documentElement.style.setProperty('--accent', color);
+      document.getElementById('accentPick').value = color;
+    } else {
+      document.documentElement.style.removeProperty('--accent');
+      var computed = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+      document.getElementById('accentPick').value = computed || '#2563eb';
+    }
+  }
+
+  // 主题切换
+  var segBtns = document.querySelectorAll('[data-theme-choice]');
+  for (var i = 0; i < segBtns.length; i++) {
+    segBtns[i].addEventListener('click', function () {
+      writeLS(THEME_KEY, this.getAttribute('data-theme-choice'));
+      applyTheme();
+    });
+  }
+
+  // 取色器
+  document.getElementById('accentPick').addEventListener('input', function () {
+    writeLS(ACCENT_KEY, this.value);
+    applyAccent();
+  });
+
+  applyTheme();
+  applyAccent();
+
   function pct(v) {
     if (v === null || v === undefined) return '—';
     return v.toFixed(2) + '%';
@@ -55,13 +348,72 @@
     if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
     return Math.floor(diff / 86400) + ' 天前';
   }
+  function absTime(iso) {
+    if (!iso) return '';
+    var t = new Date(iso).getTime();
+    if (isNaN(t)) return '';
+    var d = new Date(t);
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
 
   var parts = location.pathname.split('/').filter(Boolean);
-  var slug = parts.length ? decodeURIComponent(parts[parts.length - 1]) : '';
+  slug = parts.length ? decodeURIComponent(parts[parts.length - 1]) : '';
   if (!slug) {
     document.getElementById('list').innerHTML = '<div class="empty">缺少 slug</div>';
+    document.getElementById('banner').className = 'banner bad';
+    document.getElementById('banner').firstChild.nodeValue = '加载失败';
+    document.getElementById('bannerSub').textContent = 'URL 里没有状态页标识';
     return;
   }
+
+  var subForm = document.getElementById('subForm');
+  var subEmail = document.getElementById('subEmail');
+  var subBtn = document.getElementById('subBtn');
+  var subStatus = document.getElementById('subStatus');
+
+  function setSubStatus(text, kind) {
+    subStatus.textContent = text;
+    subStatus.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  subForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = (subEmail.value || '').trim();
+    if (!email || email.indexOf('@') < 1 || email.indexOf('@') === email.length - 1) {
+      setSubStatus('请填写正确的邮箱地址。', 'bad');
+      return;
+    }
+    subBtn.disabled = true;
+    setSubStatus('正在提交…', '');
+    fetch('/api/status/' + encodeURIComponent(slug) + '/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (body) {
+          return { ok: r.ok, status: r.status, body: body };
+        });
+      })
+      .then(function (res) {
+        if (res.ok && res.body && res.body.status === 'pending') {
+          setSubStatus('确认邮件已发出，请查收并点击邮件里的确认链接。', 'ok');
+        } else if (res.ok && res.body && res.body.status === 'already') {
+          setSubStatus('这个邮箱已经订阅过了。', 'ok');
+        } else if (!res.ok) {
+          setSubStatus((res.body && res.body.error) || '订阅失败，请稍后再试。', 'bad');
+        } else {
+          setSubStatus('订阅失败，请稍后再试。', 'bad');
+        }
+      })
+      .catch(function () {
+        setSubStatus('订阅失败，请稍后再试。', 'bad');
+      })
+      .then(function () {
+        subBtn.disabled = false;
+      });
+  });
 
   fetch('/api/status/' + encodeURIComponent(slug))
     .then(function (r) {
@@ -72,13 +424,20 @@
       document.getElementById('pageTitle').textContent = d.title || '服务状态';
       document.title = (d.title || '服务状态') + ' · 哨兵 Sentinel';
 
+      siteTheme = d.theme === 'dark' ? 'dark' : 'light';
+      siteAccent = (d.accent_color && /^#[0-9a-fA-F]{6}$/.test(d.accent_color)) ? d.accent_color : '';
+      applyTheme();
+      applyAccent();
+
+      document.getElementById('updatedAt').textContent = d.updated_at ? ('更新于 ' + absTime(d.updated_at)) : '';
+
       var monitors = d.monitors || [];
-      var anyDown = monitors.some(function (m) { return m.status === 'down'; });
+      var downCount = monitors.filter(function (m) { return m.status === 'down'; }).length;
       var banner = document.getElementById('banner');
-      if (anyDown) {
+      if (downCount > 0) {
         banner.className = 'banner bad';
         banner.firstChild.nodeValue = '部分服务异常';
-        document.getElementById('bannerSub').textContent = '有 ' + monitors.filter(function (m) { return m.status === 'down'; }).length + ' 个服务处于宕机状态';
+        document.getElementById('bannerSub').textContent = '有 ' + downCount + ' 个服务处于宕机状态';
       } else {
         banner.className = 'banner ok';
         banner.firstChild.nodeValue = '所有服务运行正常';
@@ -95,16 +454,17 @@
         var row = document.createElement('div');
         row.className = 'row';
         var status = m.status || 'unknown';
+        if (status !== 'up' && status !== 'down') status = 'unknown';
         var kindText = m.kind || '';
         var latency = m.latency_ms != null ? (' · ' + Math.round(m.latency_ms) + ' ms') : '';
         row.innerHTML =
           '<span class="dot ' + status + '"></span>' +
           '<span class="name"></span>' +
           '<span class="kind"></span>' +
-          '<span class="right"><span class="up"></span><br>' + relTime(m.last_checked_at) + latency + '</span>';
+          '<span class="right"><span class="uptime"></span><br>' + relTime(m.last_checked_at) + latency + '</span>';
         row.querySelector('.name').textContent = m.name || ('#' + m.id);
         row.querySelector('.kind').textContent = kindText;
-        row.querySelector('.up').textContent = '30 天可用性 ' + pct(m.uptime_30d);
+        row.querySelector('.uptime').textContent = '30 天可用性 ' + pct(m.uptime_30d);
         list.appendChild(row);
       });
     })

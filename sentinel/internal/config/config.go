@@ -36,6 +36,9 @@ type Config struct {
 
 	NotifyChannels []string
 
+	// PublicURL 对外基地址（用于订阅邮件中的确认/退订链接），可为空。
+	PublicURL string
+
 	LogLevel string
 
 	BackupDir       string
@@ -197,6 +200,13 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	cfg.SchedulerTickSec = tick
+
+	// SENTINEL_PUBLIC_URL：可选；用于订阅邮件中的确认/退订链接。为空则用相对路径。
+	publicURL := strings.TrimSpace(os.Getenv("SENTINEL_PUBLIC_URL"))
+	if publicURL != "" && !strings.HasPrefix(publicURL, "http://") && !strings.HasPrefix(publicURL, "https://") {
+		return Config{}, fmt.Errorf("环境变量 SENTINEL_PUBLIC_URL 取值 %q 非法：应以 http:// 或 https:// 开头", publicURL)
+	}
+	cfg.PublicURL = strings.TrimRight(publicURL, "/")
 
 	return cfg, nil
 }

@@ -27,6 +27,8 @@ type Server struct {
 	sched        *scheduler.Scheduler
 	auth         *middleware.Auth
 	checkRetries int
+	mailer       notify.Mailer
+	publicURL    string
 }
 
 // New 构造 Server。

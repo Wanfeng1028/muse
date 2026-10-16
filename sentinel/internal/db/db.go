@@ -89,6 +89,29 @@ var migrations = []migration{
 			)`,
 		},
 	},
+	{
+		version: 3,
+		stmts: []string{
+			`ALTER TABLE status_pages ADD COLUMN theme TEXT NOT NULL DEFAULT 'light'`,
+			`ALTER TABLE status_pages ADD COLUMN accent_color TEXT NOT NULL DEFAULT ''`,
+		},
+	},
+	{
+		version: 4,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS status_subscriptions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				page_id INTEGER NOT NULL REFERENCES status_pages(id) ON DELETE CASCADE,
+				email TEXT NOT NULL,
+				token TEXT NOT NULL UNIQUE,
+				confirmed INTEGER NOT NULL DEFAULT 0,
+				created_at TEXT NOT NULL,
+				confirmed_at TEXT
+			)`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_status_subscriptions_page_email ON status_subscriptions(page_id, email)`,
+			`CREATE INDEX IF NOT EXISTS idx_status_subscriptions_token ON status_subscriptions(token)`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

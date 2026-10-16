@@ -94,8 +94,12 @@ func main() {
 		},
 		Channels: cfg.NotifyChannels,
 	}
+	subMailer := notify.SMTPMailer{Notifier: notify.SMTPNotifier{Config: ntf.SMTP}}
 	notifyFn := func(m store.Monitor, event, name, target, at, errMsg string) {
 		errs := ntf.Notify(notify.Target{WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels}, event, name, target, at, errMsg)
+		if serr := notify.NotifySubscribers(st, subMailer, cfg.PublicURL, m.ID, event, name, target, at, errMsg); serr != nil {
+			errs = append(errs, serr)
+		}
 		metrics.Default.RecordWebhook(len(errs) == 0)
 	}
 
@@ -139,9 +143,12 @@ func main() {
 	seed.EnsureSeed(st)
 
 	// HTTP 服务
+	h := handlers.New(st, sch, cfg.CheckRetryMax)
+	h.SetMailer(subMailer)
+	h.SetPublicURL(cfg.PublicURL)
 	srv := &http.Server{
 		Addr:         cfg.Addr(),
-		Handler:      handlers.New(st, sch, cfg.CheckRetryMax).Routes(),
+		Handler:      h.Routes(),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
