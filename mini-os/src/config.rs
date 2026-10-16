@@ -13,6 +13,10 @@ pub struct Config {
     pub login_rps: f64,
     /// 登录限流：桶容量/突发上限（来自 MINIOS_LOGIN_BURST）
     pub login_burst: u64,
+    /// 分享读取限流：每秒补充的令牌数（来自 MINIOS_SHARE_READ_RPM，rps = RPM / 60）
+    pub share_read_rps: f64,
+    /// 分享读取限流：桶容量/突发上限（来自 MINIOS_SHARE_READ_BURST）
+    pub share_read_burst: u64,
 }
 
 impl Config {
@@ -54,6 +58,15 @@ impl Config {
             }
         };
 
+        // 分享读取限流配置：非法值同样 fail-fast。
+        let share_limit = match crate::ratelimit::parse_share_limit() {
+            Ok(cfg) => cfg,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
+
         Config {
             port,
             database_path,
@@ -63,6 +76,8 @@ impl Config {
             session_ttl_secs,
             login_rps: login_limit.rps,
             login_burst: login_limit.burst,
+            share_read_rps: share_limit.rps,
+            share_read_burst: share_limit.burst,
         }
     }
 }

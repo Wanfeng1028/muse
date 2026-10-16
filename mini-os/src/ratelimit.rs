@@ -334,6 +334,154 @@ pub async fn login_ratelimit_middleware(
     }
 }
 
+/// 分享读取限流配置：`rps = 每分钟次数 / 60`。
+pub struct ShareReadLimitConfig {
+    pub rps: f64,
+    pub burst: u64,
+}
+
+fn parse_share_rpm(raw: Option<&str>) -> Result<f64, String> {
+    let s = raw.unwrap_or("30");
+    let v: f64 = s
+        .parse()
+        .map_err(|_| "MINIOS_SHARE_READ_RPM 非法：无法解析为数字".to_string())?;
+    if !v.is_finite() || v <= 0.0 {
+        return Err("MINIOS_SHARE_READ_RPM 非法：必须为正的有限数".to_string());
+    }
+    Ok(v)
+}
+
+fn parse_share_burst(raw: Option<&str>) -> Result<u64, String> {
+    let s = raw.unwrap_or("30");
+    let v: u64 = s
+        .parse()
+        .map_err(|_| "MINIOS_SHARE_READ_BURST 非法：无法解析为整数".to_string())?;
+    if v == 0 {
+        return Err("MINIOS_SHARE_READ_BURST 非法：必须大于 0".to_string());
+    }
+    Ok(v)
+}
+
+/// 读取分享读取限流配置。
+pub fn parse_share_limit() -> Result<ShareReadLimitConfig, String> {
+    let rpm = parse_share_rpm(std::env::var("MINIOS_SHARE_READ_RPM").ok().as_deref())?;
+    let burst = parse_share_burst(std::env::var("MINIOS_SHARE_READ_BURST").ok().as_deref())?;
+    Ok(ShareReadLimitConfig {
+        rps: rpm / 60.0,
+        burst,
+    })
+}
+
+/// 从 URI 中提取分享 token（纯函数，不引入新依赖）。
+///
+/// - 路径以 `/api/s/` 开头：取第三段（到下一个 `/` 或 `?` 为止），URL 解码，空则 `None`。
+/// - 路径为 `/api/share/list`：从 query 中取 `token=` 参数并 URL 解码，空则 `None`。
+/// - 其他路径或解码失败：`None`。
+fn extract_share_token(uri: &axum::http::Uri) -> Option<String> {
+    let path = uri.path();
+    if let Some(rest) = path.strip_prefix("/api/s/") {
+        let seg = rest.split(['/', '?']).next().unwrap_or("");
+        if seg.is_empty() {
+            return None;
+        }
+        return url_decode(seg);
+    }
+    if path == "/api/share/list" {
+        let query = uri.query()?;
+        for pair in query.split('&') {
+            if let Some(val) = pair.strip_prefix("token=") {
+                if val.is_empty() {
+                    return None;
+                }
+                return url_decode(val);
+            }
+        }
+        return None;
+    }
+    None
+}
+
+/// 手写 URL 解码：处理 `%XX` 与 `+`，非法 `%` 序列返回 `None`。
+fn url_decode(s: &str) -> Option<String> {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'+' => {
+                out.push(b' ');
+                i += 1;
+            }
+            b'%' => {
+                if i + 2 >= bytes.len() {
+                    return None;
+                }
+                let hi = hex_val(bytes[i + 1])?;
+                let lo = hex_val(bytes[i + 2])?;
+                out.push((hi << 4) | lo);
+                i += 3;
+            }
+            b => {
+                out.push(b);
+                i += 1;
+            }
+        }
+    }
+    String::from_utf8(out).ok()
+}
+
+fn hex_val(b: u8) -> Option<u8> {
+    match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    }
+}
+
+/// 分享读取限流中间件：仅作用于 `/api/s/` 前缀与 `/api/share/list`，
+/// 维度为 token+IP 双键。token 无法解析时直接放行（不记桶）。
+pub async fn share_ratelimit_middleware(
+    State(state): State<Arc<AppState>>,
+    req: Request,
+    next: Next,
+) -> Response {
+    let path = req.uri().path();
+    let is_share_read = path.starts_with("/api/s/") || path == "/api/share/list";
+    if !is_share_read {
+        return next.run(req).await;
+    }
+
+    let ip_key = extract_ip_key(&req);
+    let share_key = extract_share_token(req.uri());
+    let share_key = match share_key {
+        Some(k) => k,
+        None => return next.run(req).await,
+    };
+
+    match state
+        .share_limiter
+        .try_acquire(&ip_key, Some(share_key.as_str()))
+    {
+        Ok(()) => next.run(req).await,
+        Err(secs) => {
+            state.metrics.inc_auth("share_ratelimited");
+            let body = serde_json::json!({
+                "error": format!("分享访问过于频繁，请 {} 秒后重试", secs),
+                "retry_after": secs,
+            });
+            let mut resp = Json(body).into_response();
+            *resp.status_mut() = axum::http::StatusCode::TOO_MANY_REQUESTS;
+            resp.headers_mut().insert(
+                axum::http::header::RETRY_AFTER,
+                axum::http::HeaderValue::from_str(&secs.to_string())
+                    .unwrap_or_else(|_| axum::http::HeaderValue::from_static("1")),
+            );
+            resp
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -471,5 +619,83 @@ mod tests {
         assert_eq!(RateLimiter::retry_after(3.0, 2.0), 2);
         // 极小 rps：deficit = 1.0, rps = 0.1 → 10s。
         assert_eq!(RateLimiter::retry_after(1.0, 0.1), 10);
+    }
+
+    #[test]
+    fn parse_share_rpm_defaults_and_invalid() {
+        assert_eq!(parse_share_rpm(None).unwrap(), 30.0);
+        assert_eq!(parse_share_rpm(Some("60")).unwrap(), 60.0);
+        assert!(parse_share_rpm(Some("abc")).is_err());
+        assert!(parse_share_rpm(Some("0")).is_err());
+        assert!(parse_share_rpm(Some("-5")).is_err());
+        assert!(parse_share_rpm(Some("inf")).is_err());
+        let e = parse_share_rpm(Some("abc")).unwrap_err();
+        assert!(e.contains("MINIOS_SHARE_READ_RPM"));
+    }
+
+    #[test]
+    fn parse_share_burst_defaults_and_invalid() {
+        assert_eq!(parse_share_burst(None).unwrap(), 30);
+        assert_eq!(parse_share_burst(Some("10")).unwrap(), 10);
+        assert!(parse_share_burst(Some("abc")).is_err());
+        assert!(parse_share_burst(Some("0")).is_err());
+        let e = parse_share_burst(Some("0")).unwrap_err();
+        assert!(e.contains("MINIOS_SHARE_READ_BURST"));
+    }
+
+    #[test]
+    fn parse_share_limit_default_rps_half() {
+        let cfg = ShareReadLimitConfig {
+            rps: 30.0 / 60.0,
+            burst: 30,
+        };
+        assert_eq!(cfg.rps, 0.5);
+        assert_eq!(cfg.burst, 30);
+    }
+
+    #[test]
+    fn extract_share_token_cases() {
+        let u = |s: &str| s.parse::<axum::http::Uri>().unwrap();
+        assert_eq!(
+            extract_share_token(&u("/api/s/abc123")),
+            Some("abc123".to_string())
+        );
+        assert_eq!(
+            extract_share_token(&u("/api/s/abc123/download")),
+            Some("abc123".to_string())
+        );
+        assert_eq!(
+            extract_share_token(&u("/api/share/list?token=xyz&path=/")),
+            Some("xyz".to_string())
+        );
+        assert_eq!(extract_share_token(&u("/api/share/list")), None);
+        assert_eq!(extract_share_token(&u("/api/health")), None);
+        assert_eq!(extract_share_token(&u("/api/s/%zz")), None);
+        assert_eq!(
+            extract_share_token(&u("/api/s/a%20b")),
+            Some("a b".to_string())
+        );
+    }
+
+    #[test]
+    fn share_token_bucket_isolation_by_token() {
+        // burst=2：验证 token 桶相互独立，且 IP 桶维度同时生效。
+        let cfg = LoginLimitConfig { rps: 1.0, burst: 2 };
+        let rl = RateLimiter::new(&cfg);
+        let now = std::time::Instant::now();
+        assert!(rl.try_acquire_at("ip1", Some("tokA"), now).is_ok());
+        // 同一 IP、不同 token：token 桶独立，IP 桶还有余量 → 通过。
+        assert!(rl.try_acquire_at("ip1", Some("tokB"), now).is_ok());
+        // 第三次：IP 桶已空，即使换全新 token 也被拒（IP 维度生效，防单 IP 刷全站分享）。
+        assert!(rl.try_acquire_at("ip1", Some("tokC"), now).is_err());
+    }
+
+    #[test]
+    fn share_token_bucket_shared_across_ips() {
+        let cfg = LoginLimitConfig { rps: 1.0, burst: 1 };
+        let rl = RateLimiter::new(&cfg);
+        let now = std::time::Instant::now();
+        assert!(rl.try_acquire_at("ip1", Some("tokA"), now).is_ok());
+        assert!(rl.try_acquire_at("ip2", Some("tokA"), now).is_err());
     }
 }

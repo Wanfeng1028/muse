@@ -1,6 +1,23 @@
 
 # Changelog
 
+## [1.7.0] - 2026-10-16
+
+### 新增
+- Prometheus 告警规则示例：prometheus/rules/mini-os-example.yml（7 条：5xx 错误率、P99 延迟、服务存活、分享访问突增、登录限流突增、WS 连接数、分享 404 探测；字段以官方文档为准）；docs/ALERTING.md（规则说明、阈值调参、Alertmanager/webhook 接入步骤）；scripts/check-alert-rules.py（无 promtool 时的规则自检：pyyaml 解析 + 字段/duration/severity/annotations 校验）。
+- 分享读取限流（token+IP 双维度令牌桶）：GET /api/s/:token、/api/s/:token/download、/api/share/list 三条公开读路由；默认 30 次/分钟、burst 30（MINIOS_SHARE_READ_RPM/_BURST 可配，非法 fail-fast）；超限 429 + Retry-After 头 + JSON 错误体；metrics 新增 auth_ops_total{op="share_ratelimited"}。
+- docs/RATE_LIMIT_EVAL.md：真实压测数据与阈值评估（20s/8 并发：16989 次请求中 40 次 200、16949 次 429，p99 34.98ms；正常速率 1/s 下 10/10 通过）。
+
+### 测试
+- cargo test：lib 46、api_test 16、auth_test 8、isolation_test 5、metrics_test 4、metrics_v16_test 5、ratelimit_test 8、share_test 6、share_dir_test 12、upload_security_test 8、share_ratelimit_test 6（新增）全过。
+- cargo clippy --all-targets -- -D warnings：本轮新增代码零警告；cargo fmt --check：本轮文件通过。
+- 真服务压测（127.0.0.1:18098/18099）：正常速率 10/10 通过；burst 40 次→25×200+15×429；429 带 retry-after: 2 头与 JSON 体；新 IP+新 token 200 不受影响。
+
+### 已知限制
+- 限流桶单进程内存（多实例不共享、重启清零），与登录限流同一实现。
+- token 桶跨 IP 聚合：单分享链接 30/分钟封顶，爆款链接需调大 MINIOS_SHARE_READ_RPM。
+- NAT/出口 IP 下多用户共享 IP 桶可能被误伤，建议调大 BURST 或透传 X-Forwarded-For。
+
 ## [1.6.0] - 2026-10-16
 
 ### 新增

@@ -1,0 +1,75 @@
+groups:
+  - name: mini-os-alerts
+    interval: 30s
+    labels:
+      team: mini-os
+    rules:
+      - alert: MiniOSHigh5xxErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os 5xx 错误率过高"
+          description: "mini-os 最近 5 分钟 5xx 错误率为 {{ $value }}，已超过阈值 0.05（5%）。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#minioshigh5xxerrorrate"
+
+      - alert: MiniOSHighP99Latency
+        expr: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os P99 请求延迟过高"
+          description: "mini-os 最近 5 分钟 P99 请求延迟为 {{ $value }} 秒，已超过阈值 1 秒。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#minioshighp99latency"
+
+      - alert: MiniOSInstanceDown
+        expr: up{job="mini-os"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "mini-os 实例不可达"
+          description: "mini-os 实例 {{ $labels.instance }} 已持续 5 分钟无法被 Prometheus 抓取，当前 up 值为 {{ $value }}（阈值：== 0）。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniosinstancedown"
+
+      - alert: MiniOSShareAccessSurge
+        expr: sum(rate(http_requests_total{route=~"/api/s/:token|/api/s/:token/download|/api/share/list"}[5m])) > 10
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os 分享读接口访问突增"
+          description: "mini-os 最近 5 分钟分享读接口（/api/s/:token、/api/s/:token/download、/api/share/list）合计 QPS 为 {{ $value }}，已超过阈值 10，疑似爬虫或滥用。mini-os 已有分享读限流兜底，请确认限流是否生效并排查来源。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniosshareaccesssurge"
+
+      - alert: MiniOSLoginRateLimitedSurge
+        expr: increase(auth_ops_total{op="login_ratelimited"}[5m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os 登录被限流次数突增"
+          description: "mini-os 最近 5 分钟登录被限流次数增量为 {{ $value }}，已超过阈值 50，疑似暴力破解攻击。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniosloginratelimitedsurge"
+
+      - alert: MiniOSHighWSConnections
+        expr: ws_connections > 500
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os WebSocket 连接数过高"
+          description: "mini-os 当前 WebSocket 连接数为 {{ $value }}，已持续 10 分钟超过阈值 500。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#minioshighwsconnections"
+
+      - alert: MiniOSShareNotFoundSurge
+        expr: sum(rate(http_requests_total{route=~"/api/s/:token",status="404"}[5m])) / sum(rate(http_requests_total{route=~"/api/s/:token"}[5m])) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os 分享 token 枚举探测"
+          description: "mini-os 最近 5 分钟 /api/s/:token 的 404 占比为 {{ $value }}，已超过阈值 0.3（30%），疑似分享 token 枚举探测。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniossharenotfoundsurge"

@@ -8,19 +8,21 @@ pub mod metrics;
 pub mod migrate;
 pub mod models;
 pub mod ratelimit;
+pub mod rbac;
 
 use std::sync::{Arc, Mutex};
 
 use axum::{
     extract::{DefaultBodyLimit, State},
-    routing::{get, post, Router},
+    routing::{delete, get, post, put, Router},
 };
+
 use tower_http::{
     cors::CorsLayer,
     services::{ServeDir, ServeFile},
 };
 
-/// 应用共享状态：数据库连接 + 静态资源目录 + 上传大小上限 + session 有效期 + 指标集合 + 登录限流器
+/// 应用共享状态：数据库连接 + 静态资源目录 + 上传大小上限 + session 有效期 + 指标集合 + 登录限流器 + 分享读取限流器
 pub struct AppState {
     pub db: Mutex<rusqlite::Connection>,
     pub static_dir: String,
@@ -29,22 +31,34 @@ pub struct AppState {
     pub metrics: Arc<crate::metrics::Metrics>,
     /// 登录限流器（IP + 账号双维度令牌桶）
     pub login_limiter: Arc<crate::ratelimit::RateLimiter>,
+    /// 分享读取限流器（token + IP 双维度令牌桶）
+    pub share_limiter: Arc<crate::ratelimit::RateLimiter>,
 }
 
-/// 初始化全局状态（指定上传上限）：打开数据库并做种子数据
-pub fn init_state_with(
+/// 初始化全局状态（完整参数版，含分享读取限流配额）
+///
+/// 参数多于 clippy 阈值是刻意的：保持与旧 `init_state_with` 的位置参数风格一致，
+/// 调用方（测试）按顺序传参可读性更好。
+#[allow(clippy::too_many_arguments)]
+pub fn init_state_with_full(
     database_path: &str,
     static_dir: &str,
     max_upload_bytes: u64,
     session_ttl_secs: u64,
     login_rps: f64,
     login_burst: u64,
+    share_read_rps: f64,
+    share_read_burst: u64,
 ) -> Arc<AppState> {
     let conn = crate::db::open_db(database_path).expect("open_db failed");
     crate::db::seed(&conn).expect("seed failed");
     let limiter_cfg = crate::ratelimit::LoginLimitConfig {
         rps: login_rps,
         burst: login_burst,
+    };
+    let share_limiter_cfg = crate::ratelimit::LoginLimitConfig {
+        rps: share_read_rps,
+        burst: share_read_burst,
     };
     Arc::new(AppState {
         db: Mutex::new(conn),
@@ -53,23 +67,48 @@ pub fn init_state_with(
         session_ttl_secs,
         metrics: Arc::new(crate::metrics::Metrics::new()),
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
+        share_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&share_limiter_cfg)),
     })
+}
+
+/// 初始化全局状态（指定上传上限）：打开数据库并做种子数据
+/// 分享读取限流配额取环境变量默认值（MINIOS_SHARE_READ_RPM/_BURST），非法则启动失败。
+pub fn init_state_with(
+    database_path: &str,
+    static_dir: &str,
+    max_upload_bytes: u64,
+    session_ttl_secs: u64,
+    login_rps: f64,
+    login_burst: u64,
+) -> Arc<AppState> {
+    let share_limit = crate::ratelimit::parse_share_limit().expect("parse_share_limit failed");
+    init_state_with_full(
+        database_path,
+        static_dir,
+        max_upload_bytes,
+        session_ttl_secs,
+        login_rps,
+        login_burst,
+        share_limit.rps,
+        share_limit.burst,
+    )
 }
 
 /// 初始化全局状态：打开数据库并做种子数据
 pub fn init_state(database_path: &str, static_dir: &str) -> Arc<AppState> {
     let cfg = crate::config::Config::from_env();
-    init_state_with(
+    init_state_with_full(
         database_path,
         static_dir,
         cfg.upload_max_bytes,
         cfg.session_ttl_secs,
         cfg.login_rps,
         cfg.login_burst,
+        cfg.share_read_rps,
+        cfg.share_read_burst,
     )
 }
 
-/// 构建路由
 /// 无需登录的公开路径。
 fn is_public_path(path: &str) -> bool {
     matches!(
@@ -146,6 +185,80 @@ async fn auth_middleware(
     next.run(req).await
 }
 
+/// 根据 HTTP 方法与匹配到的路由路径，返回该请求所需的 RBAC 权限。
+/// 返回 None 表示仅要求登录（或未知路径，由路由层负责 404）。
+fn required_permission(
+    method: &axum::http::Method,
+    matched_path: &str,
+) -> Option<crate::rbac::Permission> {
+    use crate::rbac::Permission;
+    use axum::http::Method;
+    match (method, matched_path) {
+        (&Method::GET, "/api/fs")
+        | (&Method::GET, "/api/fs/:id")
+        | (&Method::GET, "/api/files/download")
+        | (&Method::GET, "/api/settings")
+        | (&Method::PUT, "/api/settings")
+        | (&Method::GET, "/api/stats") => Some(Permission::FsRead),
+        (&Method::POST, "/api/fs")
+        | (&Method::PUT, "/api/fs/:id")
+        | (&Method::DELETE, "/api/fs/:id")
+        | (&Method::POST, "/api/files/upload") => Some(Permission::FsWrite),
+        (&Method::POST, "/api/shares") => Some(Permission::ShareCreate),
+        (&Method::GET, "/api/shares") | (&Method::DELETE, "/api/shares/:id") => {
+            Some(Permission::ShareManage)
+        }
+        (&Method::GET, "/api/users") | (&Method::PUT, "/api/users/:id/role") => {
+            Some(Permission::UsersManage)
+        }
+        _ => None,
+    }
+}
+
+/// RBAC 鉴权中间件：在 auth 之后执行（依赖 CurrentUser 扩展），在 metrics 之前执行。
+/// 未知角色字符串 fail-closed 视为 Viewer。
+async fn rbac_middleware(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::response::IntoResponse;
+
+    if is_public_path(req.uri().path()) {
+        return next.run(req).await;
+    }
+
+    let user = match req.extensions().get::<crate::auth::CurrentUser>() {
+        Some(u) => u.clone(),
+        None => {
+            return (
+                axum::http::StatusCode::UNAUTHORIZED,
+                axum::Json(serde_json::json!({"error": "未登录"})),
+            )
+                .into_response();
+        }
+    };
+
+    let role = crate::rbac::Role::parse(&user.role).unwrap_or(crate::rbac::Role::Viewer);
+
+    let matched_path = req
+        .extensions()
+        .get::<axum::extract::MatchedPath>()
+        .map(|m| m.as_str().to_string())
+        .unwrap_or_default();
+
+    if let Some(perm) = required_permission(req.method(), &matched_path) {
+        if let Err(reason) = crate::rbac::require(&role, &perm) {
+            return (
+                axum::http::StatusCode::FORBIDDEN,
+                axum::Json(serde_json::json!({"error": "权限不足", "reason": reason})),
+            )
+                .into_response();
+        }
+    }
+
+    next.run(req).await
+}
+
 /// 构建路由
 pub fn build_app(state: Arc<AppState>) -> Router {
     let static_dir = state.static_dir.clone();
@@ -191,17 +304,47 @@ pub fn build_app(state: Arc<AppState>) -> Router {
         .route("/api/auth/migrate-legacy", post(handlers::migrate_legacy))
         .route("/api/me", get(handlers::me))
         .route("/api/auth/setup-needed", get(handlers::setup_needed))
-        .route("/api/shares", post(handlers::create_share))
-        .route("/api/s/:token", get(handlers::get_share))
-        .route("/api/s/:token/download", get(handlers::download_share))
-        .route("/api/share/list", get(handlers::list_share))
+        .route("/api/users", get(handlers::list_users))
+        .route("/api/users/:id/role", put(handlers::set_user_role))
+        .route(
+            "/api/shares",
+            post(handlers::create_share).get(handlers::list_shares),
+        )
+        .route("/api/shares/:id", delete(handlers::delete_share))
+        .route(
+            "/api/s/:token",
+            get(handlers::get_share).route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                crate::ratelimit::share_ratelimit_middleware,
+            )),
+        )
+        .route(
+            "/api/s/:token/download",
+            get(handlers::download_share).route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                crate::ratelimit::share_ratelimit_middleware,
+            )),
+        )
+        .route(
+            "/api/share/list",
+            get(handlers::list_share).route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                crate::ratelimit::share_ratelimit_middleware,
+            )),
+        )
         // route_layer 只包装已注册路由，必须在所有 .route() 之后、fallback_service 之前，
         // 这样中间件在路由匹配之后执行，才能拿到 MatchedPath。
+        //
+        // 三层 route_layer 的执行顺序（后挂载=更外层=先执行）：
+        //   1) auth（最外层，先执行）：注入 CurrentUser 扩展；
+        //   2) rbac（中间层）：基于 CurrentUser.role 做权限校验；
+        //   3) metrics（最内层，最后执行）：仅统计已通过鉴权/授权的请求。
+        // 这样 401（未登录）与 403（权限不足）都不会计入 metrics。
         .route_layer(axum::middleware::from_fn_with_state(
             metrics,
             crate::metrics::metrics_middleware,
         ))
-        // auth 中间件在 metrics 之后（更外层）：未登录的 401 请求不计入 metrics。
+        .route_layer(axum::middleware::from_fn(rbac_middleware))
         .route_layer(axum::middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
