@@ -1,7 +1,8 @@
 // 程序入口：子命令解析（serve/backup/restore）、优雅关闭、结构化日志
 use std::time::Duration;
 
-use mini_os::{build_app, config::Config, db, init_state_with, log::log_event};
+use mini_os::{auth, build_app, config::Config, db, init_state_with, log::log_event, rbac};
+
 use serde_json::json;
 
 /// 手写参数解析结果：位置参数 + 选项表
@@ -57,7 +58,9 @@ fn usage() -> &'static str {
     "用法：
   mini-os serve                                    启动服务
   mini-os backup  --db <path> --out <path>         在线备份数据库
-  mini-os restore --db <path> --backup <path> [--force]  从备份恢复"
+  mini-os restore --db <path> --backup <path> [--force]  从备份恢复
+  mini-os useradd --username <名> --password <密码> [--role admin|editor|viewer] [--db <路径>]
+  mini-os set-role --username <名> --role admin|editor|viewer [--db <路径>]"
 }
 
 fn cmd_backup(args: &Args) -> i32 {
@@ -140,6 +143,218 @@ fn cmd_restore(args: &Args) -> i32 {
     }
 
     log_event("restore_done", json!({ "db": db_path, "backup": backup }));
+    0
+}
+
+/// useradd 子命令：创建用户。首个可登录用户自动设为 admin。
+fn cmd_useradd(args: &Args) -> i32 {
+    // 必填参数：用户名、密码
+    let username = match args.get("username") {
+        Some(v) => v,
+        None => {
+            eprintln!("缺少参数：--username");
+            return 2;
+        }
+    };
+    let password = match args.get("password") {
+        Some(v) => v,
+        None => {
+            eprintln!("缺少参数：--password");
+            return 2;
+        }
+    };
+
+    // 角色：缺省 editor，非法值直接拒绝
+    let role_str = args.get("role").unwrap_or("editor");
+    if rbac::Role::parse(role_str).is_none() {
+        eprintln!("role 只支持 admin/editor/viewer");
+        return 2;
+    }
+
+    // 用户名合法性校验
+    if let Err(e) = auth::validate_username(username) {
+        eprintln!("{}", e);
+        return 2;
+    }
+
+    // 密码长度下限
+    if password.chars().count() < 8 {
+        eprintln!("密码至少 8 个字符");
+        return 2;
+    }
+
+    // 数据库路径：--db 优先，否则取环境配置
+    let db_path = match args.get("db") {
+        Some(v) => v.to_string(),
+        None => Config::from_env().database_path,
+    };
+    let conn = match db::open_db(&db_path) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("打开数据库失败：{}", e);
+            return 3;
+        }
+    };
+
+    // 用户名唯一性检查
+    let existing: i64 = match conn.query_row(
+        "SELECT COUNT(*) FROM users WHERE username=?1",
+        [username],
+        |row| row.get(0),
+    ) {
+        Ok(n) => n,
+        Err(e) => {
+            eprintln!("查询用户失败：{}", e);
+            return 3;
+        }
+    };
+    if existing > 0 {
+        eprintln!("用户名已存在");
+        return 3;
+    }
+
+    // 库中是否已有可登录用户；没有则首个用户强制为 admin
+    let loginable: i64 = match conn.query_row(
+        "SELECT COUNT(*) FROM users WHERE password_hash IS NOT NULL",
+        [],
+        |row| row.get(0),
+    ) {
+        Ok(n) => n,
+        Err(e) => {
+            eprintln!("查询用户失败：{}", e);
+            return 3;
+        }
+    };
+    let role = if loginable == 0 {
+        eprintln!("首个用户，自动设为 admin");
+        rbac::Role::Admin
+    } else {
+        // 上面已校验，这里必为 Some
+        rbac::Role::parse(role_str).unwrap()
+    };
+    let role_str = role.as_str();
+    let is_admin: i64 = if role_str == "admin" { 1 } else { 0 };
+
+    // 哈希密码
+    let password_hash = match auth::hash_password(password) {
+        Ok(h) => h,
+        Err(e) => {
+            eprintln!("密码哈希失败：{}", e);
+            return 3;
+        }
+    };
+
+    // 落库
+    if let Err(e) = conn.execute(
+        "INSERT INTO users(username, password_hash, is_admin, role) VALUES(?1, ?2, ?3, ?4)",
+        rusqlite::params![username, password_hash, is_admin, role_str],
+    ) {
+        eprintln!("创建用户失败：{}", e);
+        return 3;
+    }
+    let id = conn.last_insert_rowid();
+
+    // 成功输出单行 JSON，便于脚本解析
+    println!(
+        "{{\"id\": {}, \"username\": \"{}\", \"role\": \"{}\"}}",
+        id, username, role_str
+    );
+    0
+}
+
+/// set-role 子命令：变更用户角色。角色变更后旧会话必须失效。
+fn cmd_set_role(args: &Args) -> i32 {
+    // 必填参数：用户名、角色
+    let username = match args.get("username") {
+        Some(v) => v,
+        None => {
+            eprintln!("缺少参数：--username");
+            return 2;
+        }
+    };
+    let role_str = match args.get("role") {
+        Some(v) => v,
+        None => {
+            eprintln!("缺少参数：--role");
+            return 2;
+        }
+    };
+    let new_role = match rbac::Role::parse(role_str) {
+        Some(r) => r,
+        None => {
+            eprintln!("role 只支持 admin/editor/viewer");
+            return 2;
+        }
+    };
+    let new_role_str = new_role.as_str();
+
+    // 数据库路径：--db 优先，否则取环境配置
+    let db_path = match args.get("db") {
+        Some(v) => v.to_string(),
+        None => Config::from_env().database_path,
+    };
+    let conn = match db::open_db(&db_path) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("打开数据库失败：{}", e);
+            return 3;
+        }
+    };
+
+    // 查目标用户当前角色
+    let (id, cur_role): (i64, String) = match conn.query_row(
+        "SELECT id, role FROM users WHERE username=?1",
+        [username],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    ) {
+        Ok(v) => v,
+        Err(rusqlite::Error::QueryReturnedNoRows) => {
+            eprintln!("用户不存在");
+            return 3;
+        }
+        Err(e) => {
+            eprintln!("查询用户失败：{}", e);
+            return 3;
+        }
+    };
+
+    // 保护：不能把最后一个 admin 降级
+    if cur_role == "admin" && new_role_str != "admin" {
+        let admin_count: i64 =
+            match conn.query_row("SELECT COUNT(*) FROM users WHERE role='admin'", [], |row| {
+                row.get(0)
+            }) {
+                Ok(n) => n,
+                Err(e) => {
+                    eprintln!("查询管理员数量失败：{}", e);
+                    return 3;
+                }
+            };
+        if admin_count == 1 {
+            eprintln!("拒绝：不能移除最后一个管理员");
+            return 3;
+        }
+    }
+
+    let is_admin: i64 = if new_role_str == "admin" { 1 } else { 0 };
+    if let Err(e) = conn.execute(
+        "UPDATE users SET role=?1, is_admin=?2 WHERE id=?3",
+        rusqlite::params![new_role_str, is_admin, id],
+    ) {
+        eprintln!("更新角色失败：{}", e);
+        return 3;
+    }
+
+    // 角色变更后旧会话必须失效：撤销该用户全部会话。失败只告警，不影响返回码。
+    if let Err(e) = auth::revoke_all_user_sessions(&conn, id) {
+        eprintln!("警告：撤销用户会话失败：{}", e);
+    }
+
+    // 成功输出单行 JSON，便于脚本解析
+    println!(
+        "{{\"id\": {}, \"username\": \"{}\", \"role\": \"{}\"}}",
+        id, username, new_role_str
+    );
     0
 }
 
@@ -244,6 +459,8 @@ async fn main() {
         }
         "backup" => cmd_backup(&args),
         "restore" => cmd_restore(&args),
+        "useradd" => cmd_useradd(&args),
+        "set-role" => cmd_set_role(&args),
         other => {
             eprintln!("未知子命令：{}", other);
             eprintln!("{}", usage());

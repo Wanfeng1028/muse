@@ -18,7 +18,7 @@ async fn test_app() -> (Router, String) {
         ))
         .unwrap();
     let resp = app.clone().oneshot(reg).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
     let cookie = resp
         .headers()
         .get("set-cookie")
@@ -65,22 +65,24 @@ async fn health_returns_ok() {
     assert_eq!(resp.status(), StatusCode::OK);
     let json = body_json(resp).await;
     assert_eq!(json["status"], "ok");
-    assert_eq!(json["version"], "1.6.0");
+    assert_eq!(json["version"], "1.7.0");
+
 }
 
 #[tokio::test]
-async fn apps_has_five_entries() {
+async fn apps_has_six_entries() {
     let (app, cookie) = test_app().await;
     let resp = request(app, "GET", "/api/apps", None, &cookie).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let json = body_json(resp).await;
     let arr = json.as_array().expect("apps should be an array");
-    assert_eq!(arr.len(), 5);
+    assert_eq!(arr.len(), 6);
+
     let ids: Vec<String> = arr
         .iter()
         .map(|a| a["id"].as_str().unwrap().to_string())
         .collect();
-    for expected in ["files", "editor", "terminal", "settings", "about"] {
+    for expected in ["files", "editor", "terminal", "settings", "about", "users"] {
         assert!(
             ids.contains(&expected.to_string()),
             "missing app {}",
@@ -467,7 +469,7 @@ async fn upload_oversize_returns_413() {
         ))
         .unwrap();
     let resp = app.clone().oneshot(reg).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
     let cookie = resp
         .headers()
         .get("set-cookie")

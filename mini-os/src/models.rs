@@ -96,6 +96,8 @@ pub struct UserInfo {
     pub username: String,
     /// 是否管理员
     pub is_admin: bool,
+    /// 角色规范值 admin/editor/viewer
+    pub role: String,
 }
 
 /// POST /api/auth/register 请求
@@ -190,4 +192,48 @@ pub struct ShareDirListing {
     pub path: String,
     /// 条目列表（文件夹在前，各按名称排序）
     pub entries: Vec<ShareDirEntry>,
+}
+
+/// 用户管理列表项
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserWithRole {
+    /// 用户主键
+    pub id: i64,
+    /// 用户名
+    pub username: String,
+    /// 是否管理员
+    pub is_admin: bool,
+    /// 角色规范值 admin/editor/viewer
+    pub role: String,
+    /// 创建时间
+    pub created_at: String,
+}
+
+/// PUT /api/users/{id}/role 请求体
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetRoleRequest {
+    /// 角色规范值 admin/editor/viewer
+    pub role: String,
+}
+
+/// GET /api/shares 条目（含归属信息，仅管理员/创建者可见）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShareAdminItem {
+    /// 分享行主键
+    pub id: i64,
+    /// 分享令牌
+    pub token: String,
+    /// 分享类型 file/dir
+    pub share_type: String,
+    /// 创建者用户 id
+    pub owner_id: i64,
+    /// 创建者用户名
+    pub owner_username: String,
+    /// 被分享节点名
+    pub node_name: String,
+    /// 创建时间
+    pub created_at: String,
 }

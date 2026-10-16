@@ -97,7 +97,7 @@ async fn write_to_broken_db_returns_500_not_panic() {
         ))
         .unwrap();
     let reg_resp = app.clone().oneshot(reg).await.unwrap();
-    assert_eq!(reg_resp.status(), StatusCode::OK);
+    assert_eq!(reg_resp.status(), StatusCode::CREATED);
     let cookie = reg_resp
         .headers()
         .get("set-cookie")
@@ -266,7 +266,8 @@ fn migrations_idempotent_on_same_file() {
                 "001".to_string(),
                 "002".to_string(),
                 "003".to_string(),
-                "004".to_string()
+                "004".to_string(),
+                "005".to_string()
             ]
         );
     }
@@ -280,7 +281,8 @@ fn migrations_idempotent_on_same_file() {
                 "001".to_string(),
                 "002".to_string(),
                 "003".to_string(),
-                "004".to_string()
+                "004".to_string(),
+                "005".to_string()
             ]
         );
         db::seed(&conn).unwrap();
@@ -323,7 +325,8 @@ fn migrations_upgrade_legacy_db() {
             "001".to_string(),
             "002".to_string(),
             "003".to_string(),
-            "004".to_string()
+            "004".to_string(),
+            "005".to_string()
         ]
     );
 

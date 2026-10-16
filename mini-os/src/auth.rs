@@ -25,6 +25,8 @@ pub struct CurrentUser {
     pub id: i64,
     pub username: String,
     pub is_admin: bool,
+    /// 取自 users.role，规范值 admin/editor/viewer。
+    pub role: String,
 }
 
 /// 返回当前 Unix epoch 秒（可能为负，仅在系统时间异常时）。
@@ -105,9 +107,9 @@ pub fn verify_session(
     let token_hash = hash_token(token);
     let now = now_epoch_secs();
 
-    let row: Option<(i64, String, i64, i64)> = conn
+    let row: Option<(i64, String, i64, i64, String)> = conn
         .query_row(
-            "SELECT s.expires_at, u.username, u.is_admin, u.id \
+            "SELECT s.expires_at, u.username, u.is_admin, u.id, u.role \
              FROM sessions s JOIN users u ON u.id = s.user_id \
              WHERE s.token_hash = ?1",
             params![token_hash],
@@ -117,6 +119,7 @@ pub fn verify_session(
                     r.get::<_, String>(1)?,
                     r.get::<_, i64>(2)?,
                     r.get::<_, i64>(3)?,
+                    r.get::<_, String>(4)?,
                 ))
             },
         )
@@ -126,7 +129,7 @@ pub fn verify_session(
             other => Err(format!("query session failed: {other}")),
         })?;
 
-    let Some((expires_at, username, is_admin, id)) = row else {
+    let Some((expires_at, username, is_admin, id, role)) = row else {
         return Ok(None);
     };
 
@@ -143,6 +146,7 @@ pub fn verify_session(
         id,
         username,
         is_admin: is_admin != 0,
+        role,
     }))
 }
 

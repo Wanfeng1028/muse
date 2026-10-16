@@ -44,7 +44,7 @@ async fn authed_app(username: &str) -> (Router, String) {
     .await;
     assert_eq!(
         resp.status(),
-        StatusCode::OK,
+        StatusCode::CREATED,
         "register failed for {}",
         username
     );
@@ -73,7 +73,7 @@ async fn register_second(app: &Router, username: &str) -> String {
         None,
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
     let set_cookie = resp
         .headers()
         .get("set-cookie")

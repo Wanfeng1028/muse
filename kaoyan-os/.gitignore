@@ -5,6 +5,10 @@ data/*.db
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
+apps/server/data/*.db
+apps/server/data/*.db-journal
+apps/server/data/*.db-wal
+apps/server/data/*.db-shm
 coverage/
 *.log
 .DS_Store

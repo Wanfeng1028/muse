@@ -57,8 +57,8 @@ async fn register(app: &Router, username: &str) {
     let body = body_json(resp).await;
     assert_eq!(
         status,
-        StatusCode::OK,
-        "register {username} should return 200, got {status}, body={body}"
+        StatusCode::CREATED,
+        "register {username} should return 201, got {status}, body={body}"
     );
 }
 

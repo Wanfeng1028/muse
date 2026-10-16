@@ -44,7 +44,7 @@ async fn authed_app(username: &str) -> (Router, String) {
     .await;
     assert_eq!(
         resp.status(),
-        StatusCode::OK,
+        StatusCode::CREATED,
         "register failed for {}",
         username
     );
@@ -73,7 +73,7 @@ async fn register_second(app: &Router, username: &str) -> String {
         None,
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
     let set_cookie = resp
         .headers()
         .get("set-cookie")
@@ -102,7 +102,7 @@ async fn register_login_me_logout_flow() {
         None,
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
     let set_cookie = resp
         .headers()
         .get("set-cookie")
@@ -145,7 +145,7 @@ async fn register_duplicate_409() {
         None,
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
 
     let resp = raw_request(
         app.clone(),
@@ -240,7 +240,7 @@ async fn login_wrong_password_401() {
         None,
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
 
     let resp = raw_request(
         app.clone(),

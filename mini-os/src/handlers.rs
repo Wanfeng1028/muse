@@ -21,8 +21,8 @@ use crate::auth;
 use crate::metrics::Metrics;
 use crate::models::{
     AppInfo, CreateNodeRequest, CreateShareRequest, LoginRequest, Node, RegisterRequest,
-    SettingRequest, ShareCreated, ShareDirEntry, ShareDirListing, ShareInfo, Stats,
-    UpdateNodeRequest, UserInfo,
+    SetRoleRequest, SettingRequest, ShareAdminItem, ShareCreated, ShareDirEntry, ShareDirListing,
+    ShareInfo, Stats, UpdateNodeRequest, UserInfo, UserWithRole,
 };
 use crate::AppState;
 use rand::TryRngCore;
@@ -180,6 +180,15 @@ fn err(status: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {
     (status, Json(json!({ "error": msg })))
 }
 
+/// 构造带 reason 的错误响应：{"error":..., "reason":...}，用于 403 权限拒绝。
+fn err_reason(
+    status: StatusCode,
+    msg: &str,
+    reason: &str,
+) -> (StatusCode, Json<serde_json::Value>) {
+    (status, Json(json!({ "error": msg, "reason": reason })))
+}
+
 /// 应用注册表：返回 5 个内置应用。
 pub fn apps_registry() -> Vec<AppInfo> {
     vec![
@@ -212,6 +221,12 @@ pub fn apps_registry() -> Vec<AppInfo> {
             name: "关于".to_string(),
             icon: "ℹ️".to_string(),
             description: "系统信息与统计".to_string(),
+        },
+        AppInfo {
+            id: "users".to_string(),
+            name: "用户与权限".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3l7 3v6c0 4.2-2.9 7.5-7 9-4.1-1.5-7-4.8-7-9V6l7-3z\"/><circle cx=\"12\" cy=\"10\" r=\"2.2\"/><path d=\"M8.2 16.4c.7-1.6 2.1-2.5 3.8-2.5s3.1.9 3.8 2.5\"/></svg>".to_string(),
+            description: "查看用户列表、调整角色、读懂权限规则".to_string(),
         },
     ]
 }
@@ -960,10 +975,12 @@ pub async fn register(
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
     let is_admin = if loginable == 0 { 1 } else { 0 };
 
+    let role = if is_admin == 1 { "admin" } else { "editor" };
     let insert = conn.execute(
-        "INSERT INTO users (username, password_hash, is_admin) VALUES (?1, ?2, ?3)",
-        params![req.username, hash, is_admin],
+        "INSERT INTO users (username, password_hash, is_admin, role) VALUES (?1, ?2, ?3, ?4)",
+        params![req.username, hash, is_admin, role],
     );
+
     if let Err(e) = insert {
         let msg = e.to_string();
         if msg.contains("UNIQUE constraint failed") {
@@ -982,8 +999,9 @@ pub async fn register(
         id: user_id,
         username: req.username,
         is_admin: is_admin == 1,
+        role: role.to_string(),
     });
-    Ok((StatusCode::OK, [(header::SET_COOKIE, cookie)], body).into_response())
+    Ok((StatusCode::CREATED, [(header::SET_COOKIE, cookie)], body).into_response())
 }
 
 /// POST /api/auth/login：登录。失败统一 401，防用户名枚举。
@@ -991,17 +1009,17 @@ pub async fn login(State(state): State<Arc<AppState>>, Json(req): Json<LoginRequ
     let ttl = state.session_ttl_secs;
     let conn = state.db.lock().unwrap();
 
-    let row: Option<(i64, Option<String>, i64)> = conn
+    let row: Option<(i64, Option<String>, i64, String)> = conn
         .query_row(
-            "SELECT id, password_hash, is_admin FROM users WHERE username = ?1",
+            "SELECT id, password_hash, is_admin, role FROM users WHERE username = ?1",
             params![req.username],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
         )
         .optional()
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
     let bad = || err(StatusCode::UNAUTHORIZED, "用户名或密码错误");
-    let (user_id, hash_opt, is_admin) = match row {
+    let (user_id, hash_opt, is_admin, role) = match row {
         Some(v) => v,
         None => return Err(bad()),
     };
@@ -1022,6 +1040,7 @@ pub async fn login(State(state): State<Arc<AppState>>, Json(req): Json<LoginRequ
         id: user_id,
         username: req.username,
         is_admin: is_admin == 1,
+        role,
     });
     Ok((StatusCode::OK, [(header::SET_COOKIE, cookie)], body).into_response())
 }
@@ -1054,6 +1073,7 @@ pub async fn me(Extension(user): Extension<auth::CurrentUser>) -> ApiResult {
         id: user.id,
         username: user.username,
         is_admin: user.is_admin,
+        role: user.role.clone(),
     })
     .into_response())
 }
@@ -1113,6 +1133,214 @@ pub async fn migrate_legacy(
 }
 
 // __AUTH_ENDPOINTS_END__
+
+// ================= v1.7 RBAC 用户与分享管理 =================
+
+/// GET /api/users：列出全体用户（需要 UsersManage 权限，由中间件保证）
+pub async fn list_users(
+    State(state): State<Arc<AppState>>,
+    Extension(_user): Extension<auth::CurrentUser>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let mut stmt = conn
+        .prepare("SELECT id, username, is_admin, role, created_at FROM users ORDER BY id ASC")
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let rows = stmt
+        .query_map([], |r| {
+            Ok(UserWithRole {
+                id: r.get(0)?,
+                username: r.get(1)?,
+                is_admin: r.get::<_, i64>(2)? == 1,
+                role: r.get(3)?,
+                created_at: r.get(4)?,
+            })
+        })
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let mut out = Vec::new();
+    for row in rows {
+        out.push(row.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?);
+    }
+    Ok(Json(out).into_response())
+}
+
+/// PATCH /api/users/:id/role：修改用户角色（需要 UsersManage 权限，由中间件保证）
+pub async fn set_user_role(
+    State(state): State<Arc<AppState>>,
+    Extension(_user): Extension<auth::CurrentUser>,
+    Path(id): Path<i64>,
+    Json(req): Json<SetRoleRequest>,
+) -> ApiResult {
+    let new_role = match crate::rbac::Role::parse(&req.role) {
+        Some(r) => r,
+        None => {
+            return Err(err(
+                StatusCode::BAD_REQUEST,
+                "role 只支持 admin/editor/viewer",
+            ))
+        }
+    };
+
+    let conn = state.db.lock().unwrap();
+
+    let existing: Option<(i64, String)> = conn
+        .query_row(
+            "SELECT id, role FROM users WHERE id = ?1",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let (_, current_role) = match existing {
+        Some(v) => v,
+        None => return Err(err(StatusCode::NOT_FOUND, "用户不存在")),
+    };
+
+    if current_role == "admin" && new_role.as_str() != "admin" {
+        let admin_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM users WHERE role = 'admin'", [], |r| {
+                r.get(0)
+            })
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        if admin_count == 1 {
+            return Err(err_reason(
+                StatusCode::FORBIDDEN,
+                "权限不足",
+                "不能移除最后一个管理员",
+            ));
+        }
+    }
+
+    let is_admin_flag: i64 = if new_role.as_str() == "admin" { 1 } else { 0 };
+    conn.execute(
+        "UPDATE users SET role = ?1, is_admin = ?2 WHERE id = ?3",
+        params![new_role.as_str(), is_admin_flag, id],
+    )
+    .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    // 角色变更后旧会话必须失效：忽略错误，避免因清理失败阻断成功响应。
+    let _ = auth::revoke_all_user_sessions(&conn, id);
+
+    state.metrics.inc_auth("set_role");
+
+    let updated = conn
+        .query_row(
+            "SELECT id, username, is_admin, role, created_at FROM users WHERE id = ?1",
+            params![id],
+            |r| {
+                Ok(UserWithRole {
+                    id: r.get(0)?,
+                    username: r.get(1)?,
+                    is_admin: r.get::<_, i64>(2)? == 1,
+                    role: r.get(3)?,
+                    created_at: r.get(4)?,
+                })
+            },
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    Ok(Json(updated).into_response())
+}
+
+/// GET /api/shares：列出分享（admin 全部，editor 仅自己创建的）
+pub async fn list_shares(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let base = "SELECT s.id, s.token, s.share_type, s.owner_id, u.username, s.created_at, v.name \
+                FROM shares s \
+                JOIN users u ON u.id = s.owner_id \
+                JOIN vfs_nodes v ON v.id = s.node_id";
+
+    let is_admin = matches!(
+        crate::rbac::Role::parse(&user.role),
+        Some(crate::rbac::Role::Admin)
+    );
+
+    let mut out: Vec<ShareAdminItem> = Vec::new();
+    if is_admin {
+        let mut stmt = conn
+            .prepare(&format!("{} ORDER BY s.id ASC", base))
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        let rows = stmt
+            .query_map([], |r| {
+                Ok(ShareAdminItem {
+                    id: r.get(0)?,
+                    token: r.get(1)?,
+                    share_type: r.get(2)?,
+                    owner_id: r.get(3)?,
+                    owner_username: r.get(4)?,
+                    created_at: r.get(5)?,
+                    node_name: r.get(6)?,
+                })
+            })
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        for row in rows {
+            out.push(row.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?);
+        }
+    } else {
+        let mut stmt = conn
+            .prepare(&format!("{} WHERE s.owner_id = ?1 ORDER BY s.id ASC", base))
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        let rows = stmt
+            .query_map(params![user.id], |r| {
+                Ok(ShareAdminItem {
+                    id: r.get(0)?,
+                    token: r.get(1)?,
+                    share_type: r.get(2)?,
+                    owner_id: r.get(3)?,
+                    owner_username: r.get(4)?,
+                    created_at: r.get(5)?,
+                    node_name: r.get(6)?,
+                })
+            })
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        for row in rows {
+            out.push(row.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?);
+        }
+    }
+
+    Ok(Json(out).into_response())
+}
+
+/// DELETE /api/shares/:id：删除分享（admin 任意，editor 仅自己创建的）
+pub async fn delete_share(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Path(id): Path<i64>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+
+    let existing: Option<(i64, i64)> = conn
+        .query_row(
+            "SELECT id, owner_id FROM shares WHERE id = ?1",
+            params![id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let (_, owner_id) = match existing {
+        Some(v) => v,
+        None => return Err(err(StatusCode::NOT_FOUND, "分享不存在")),
+    };
+
+    let is_admin = matches!(
+        crate::rbac::Role::parse(&user.role),
+        Some(crate::rbac::Role::Admin)
+    );
+    if !is_admin && owner_id != user.id {
+        return Err(err_reason(
+            StatusCode::FORBIDDEN,
+            "权限不足",
+            "只能管理自己创建的分享",
+        ));
+    }
+
+    conn.execute("DELETE FROM shares WHERE id = ?1", params![id])
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    Ok(StatusCode::NO_CONTENT.into_response())
+}
 
 // ================= v1.3 访客只读分享 =================
 

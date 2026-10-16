@@ -62,8 +62,13 @@ async function init() {
 
   // v1.3 当前用户 + 注销
   const userLabel = document.getElementById('user-label');
-  if (userLabel && state.currentUser) userLabel.textContent = state.currentUser.username;
+  if (userLabel && state.currentUser) {
+    const roleNameMap = { admin: '管理员', editor: '编辑者', viewer: '只读' };
+    const roleName = roleNameMap[state.currentUser.role] || state.currentUser.role;
+    userLabel.textContent = state.currentUser.username + '（' + roleName + '）';
+  }
   const logoutBtn = document.getElementById('logout-btn');
+
   if (logoutBtn) logoutBtn.addEventListener('click', async () => {
     try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
     location.replace('/login.html');
@@ -200,7 +205,12 @@ function openApp(appId) {
   titlebar.className = 'window-titlebar';
   const title = document.createElement('div');
   title.className = 'window-title';
-  title.textContent = app.icon + ' ' + app.name;
+  if (app.icon.indexOf('<svg') === 0) {
+    title.innerHTML = '<span class="title-icon">' + app.icon + '</span><span>' + escapeHtml(app.name) + '</span>';
+  } else {
+    title.textContent = app.icon + ' ' + app.name;
+  }
+
   const controls = document.createElement('div');
   controls.className = 'window-controls';
   const btnMin = document.createElement('button');
@@ -269,9 +279,13 @@ function renderAppContent(appId, body) {
     case 'about':
       renderAbout(body);
       break;
+    case 'users':
+      renderUsers(body);
+      break;
     default:
       body.textContent = '未知应用: ' + appId;
   }
+
 }
 
 // 聚焦窗口
@@ -298,7 +312,11 @@ function syncTaskbar() {
     const app = appsRegistry.find((a) => a.id === w.appId);
     const btn = document.createElement('button');
     btn.className = 'taskbar-app-btn';
-    btn.textContent = (app ? app.icon + ' ' + app.name : w.appId);
+    if (app && app.icon.indexOf('<svg') === 0) {
+      btn.innerHTML = '<span class="title-icon">' + app.icon + '</span><span>' + escapeHtml(app.name) + '</span>';
+    } else {
+      btn.textContent = (app ? app.icon + ' ' + app.name : w.appId);
+    }
     btn.addEventListener('click', () => {
       if (w.el.classList.contains('minimized')) {
         w.el.classList.remove('minimized');
@@ -953,3 +971,146 @@ function escapeHtml(str) {
 
 // 启动
 document.addEventListener('DOMContentLoaded', init);
+
+// 视觉逻辑：延续桌面系统 token，左对齐数据表，无装饰性渐变
+const ROLE_LABELS = { admin: '管理员', editor: '编辑者', viewer: '只读' };
+const ROLE_ORDER = ['viewer', 'editor', 'admin'];
+
+function roleLabel(role) {
+  return ROLE_LABELS[role] || role;
+}
+
+function roleBadge(role) {
+  const cls = 'role-badge rb-' + (ROLE_LABELS[role] ? role : 'viewer');
+  return '<span class="' + cls + '">' + escapeHtml(roleLabel(role)) + '</span>';
+}
+
+function permMatrixHtml() {
+  const rows = [
+    ['文件读取', '是', '是', '是'],
+    ['文件写入', '—', '是', '是'],
+    ['创建分享', '—', '是', '是'],
+    ['管理分享', '—', '是', '是'],
+    ['管理用户', '—', '—', '是'],
+  ];
+  let html = '<table class="perm-matrix"><thead><tr><th>能力</th><th>只读</th><th>编辑者</th><th>管理员</th></tr></thead><tbody>';
+  rows.forEach(function (r) {
+    html += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += '<p class="perm-note">个人设置（主题、壁纸）是每人管自己的，不算在上面这张表里。</p>';
+  html += '<p class="perm-note">只读用户不能创建分享；分享链接本身一律只读。</p>';
+  html += '<p class="perm-note">改完角色后，那个人要重新登录才生效。</p>';
+  return html;
+}
+
+async function renderUsers(body) {
+  // 视觉逻辑：延续桌面系统 token，左对齐数据表，无装饰性渐变
+  body.innerHTML = '<div class="users-wrap"><div class="loading">加载中…</div></div>';
+
+  let res;
+  try {
+    res = await fetch('/api/users', { credentials: 'same-origin' });
+  } catch (e) {
+    body.querySelector('.users-wrap').innerHTML =
+      '<div class="perm-notice">请求失败：' + escapeHtml(e.message) + '</div>';
+    return;
+  }
+
+  if (res.status === 401) {
+    location.replace('/login.html');
+    return;
+  }
+
+  const data = await res.json().catch(function () { return null; });
+  const wrap = body.querySelector('.users-wrap');
+
+  if (res.status === 403) {
+    const me = state.currentUser || {};
+    const myRole = roleLabel(me.role);
+    const reason = data && data.reason ? data.reason : '需要「用户管理」权限。';
+    let html = '<div class="perm-notice">';
+    html += '你现在的角色是「' + escapeHtml(myRole) + '」，这个页面需要「管理员」才能改东西。';
+    html += '下面这张表告诉你每个角色能干什么——想调权限的话，找管理员。';
+    html += '<br><span class="row-err">服务端说明：' + escapeHtml(reason) + '</span>';
+    html += '</div>';
+    html += '<h3>权限说明</h3>';
+    html += permMatrixHtml();
+    wrap.innerHTML = html;
+    return;
+  }
+
+  if (!res.ok) {
+    const msg = data && data.error ? data.error : ('HTTP ' + res.status);
+    wrap.innerHTML = '<div class="perm-notice">加载失败：' + escapeHtml(msg) + '</div>';
+    return;
+  }
+
+  const me = state.currentUser || {};
+  const isAdmin = me.role === 'admin';
+  let html = '';
+
+  html += '<div class="me-bar">当前登录：' + escapeHtml(me.username || '未知') + '（' + escapeHtml(roleLabel(me.role)) + '）</div>';
+
+  if (!isAdmin) {
+    html += '<div class="perm-notice">你不是管理员，下面的角色下拉框是灰的，改不了。要看自己能干什么，看页面最下面的权限说明。</div>';
+  }
+
+  html += '<h3>用户列表</h3>';
+  html += '<table class="users-table"><thead><tr><th>用户名</th><th>角色</th><th>注册时间</th><th>操作</th></tr></thead><tbody>';
+  const users = Array.isArray(data) ? data : [];
+  users.forEach(function (u) {
+    html += '<tr data-uid="' + u.id + '">';
+    html += '<td>' + escapeHtml(u.username) + '</td>';
+    html += '<td class="role-cell">' + roleBadge(u.role) + '</td>';
+    html += '<td>' + escapeHtml(u.createdAt) + '</td>';
+    html += '<td>';
+    html += '<select class="role-select" data-uid="' + u.id + '"' + (isAdmin ? '' : ' disabled title="需要管理员权限"') + '>';
+    ROLE_ORDER.forEach(function (r) {
+      html += '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + roleLabel(r) + '</option>';
+    });
+    html += '</select>';
+    html += '<div class="row-err" data-err-for="' + u.id + '"></div>';
+    html += '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  html += '<h3>权限说明</h3>';
+  html += permMatrixHtml();
+
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('.role-select').forEach(function (sel) {
+    sel.addEventListener('change', async function () {
+      const uid = sel.getAttribute('data-uid');
+      const errBox = wrap.querySelector('[data-err-for="' + uid + '"]');
+      if (errBox) errBox.textContent = '';
+      const newRole = sel.value;
+      const row = sel.closest('tr');
+      const prevRole = row ? row.querySelector('.role-cell') : null;
+      const prevHtml = prevRole ? prevRole.innerHTML : '';
+      try {
+        const r = await fetch('/api/users/' + encodeURIComponent(uid) + '/role', {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole }),
+        });
+        const respData = await r.json().catch(function () { return null; });
+        if (!r.ok) {
+          const reason = respData && (respData.reason || respData.error) ? (respData.reason || respData.error) : ('HTTP ' + r.status);
+          if (errBox) errBox.textContent = reason;
+          if (prevRole) prevRole.innerHTML = prevHtml;
+          return;
+        }
+        if (respData && respData.role && prevRole) {
+          prevRole.innerHTML = roleBadge(respData.role);
+        }
+      } catch (e) {
+        if (errBox) errBox.textContent = '请求失败：' + e.message;
+        if (prevRole) prevRole.innerHTML = prevHtml;
+      }
+    });
+  });
+}

@@ -17,7 +17,7 @@ async fn test_app() -> (Router, String) {
         ))
         .unwrap();
     let resp = app.clone().oneshot(reg).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
     let cookie = resp
         .headers()
         .get("set-cookie")

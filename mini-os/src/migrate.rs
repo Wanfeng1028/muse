@@ -233,6 +233,50 @@ pub fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
         apply_004(conn)?;
     }
 
+    if !is_applied(conn, "005")? {
+        apply_005(conn)?;
+    }
+
+    Ok(())
+}
+
+/// 迁移 005：users 增加 role 列（RBAC）。
+/// 幂等；默认 'editor'，admin 用户回填为 'admin'，legacy 占位回填为 'viewer'。
+fn apply_005(conn: &Connection) -> rusqlite::Result<()> {
+    let tx = conn.unchecked_transaction()?;
+
+    let mut has_role = false;
+    {
+        let mut stmt = tx.prepare("PRAGMA table_info(users)")?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == "role" {
+                has_role = true;
+            }
+        }
+    }
+
+    if !has_role {
+        tx.execute(
+            "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'editor' \
+             CHECK(role IN ('admin','editor','viewer'))",
+            [],
+        )?;
+    }
+
+    // 先回填 admin（is_admin = 1 的真实用户）
+    tx.execute("UPDATE users SET role = 'admin' WHERE is_admin = 1", [])?;
+
+    // 再把 legacy 占位用户（password_hash IS NULL）覆盖为 viewer。
+    // 顺序必须在 admin 回填之后，保证 legacy 最终为 'viewer'。
+    tx.execute(
+        "UPDATE users SET role = 'viewer' WHERE password_hash IS NULL",
+        [],
+    )?;
+
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('005')", [])?;
+    tx.commit()?;
     Ok(())
 }
 
@@ -294,7 +338,8 @@ mod tests {
                 "001".to_string(),
                 "002".to_string(),
                 "003".to_string(),
-                "004".to_string()
+                "004".to_string(),
+                "005".to_string()
             ]
         );
 
@@ -303,9 +348,10 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 4);
+        assert_eq!(count, 5);
 
         let blob_cols: i64 = conn
+
             .query_row(
                 "SELECT COUNT(*) FROM pragma_table_info('vfs_nodes') WHERE name IN ('content_blob','mime_type')",
                 [],
@@ -398,7 +444,8 @@ mod tests {
                 "001".to_string(),
                 "002".to_string(),
                 "003".to_string(),
-                "004".to_string()
+                "004".to_string(),
+                "005".to_string()
             ]
         );
         let count: i64 = conn
@@ -406,7 +453,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 4);
+        assert_eq!(count, 5);
     }
 
     #[test]
@@ -483,6 +530,75 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 4);
+        assert_eq!(count, 5);
+    }
+
+    #[test]
+    fn migration_005_role_backfill() {
+        let conn = Connection::open_in_memory().expect("open in-memory");
+        ensure_migrations_table(&conn).expect("migrations table");
+        apply_001(&conn).expect("apply 001");
+        apply_002(&conn).expect("apply 002");
+        apply_003(&conn).expect("apply 003");
+        apply_004(&conn).expect("apply 004");
+
+        // 003 已自动插入 legacy 占位（id=1, password_hash IS NULL）。
+        // 再插入 admin 用户与普通用户。
+        conn.execute(
+            "INSERT INTO users (username, password_hash, is_admin) VALUES ('admin', 'hash-admin', 1)",
+            [],
+        )
+        .expect("insert admin user");
+        conn.execute(
+            "INSERT INTO users (username, password_hash, is_admin) VALUES ('alice', 'hash-alice', 0)",
+            [],
+        )
+        .expect("insert normal user");
+
+        // 升级到 005
+        run_migrations(&conn).expect("run migrations");
+
+        // admin 用户 -> 'admin'
+        let admin_role: String = conn
+            .query_row(
+                "SELECT role FROM users WHERE username = 'admin'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("admin role");
+        assert_eq!(admin_role, "admin");
+
+        // 普通用户 -> 'editor'
+        let alice_role: String = conn
+            .query_row(
+                "SELECT role FROM users WHERE username = 'alice'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("alice role");
+        assert_eq!(alice_role, "editor");
+
+        // legacy 占位 -> 'viewer'
+        let legacy_role: String = conn
+            .query_row(
+                "SELECT role FROM users WHERE username = 'legacy'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("legacy role");
+        assert_eq!(legacy_role, "viewer");
+
+        // CHECK 约束拒绝非法值
+        let bad = conn.execute("UPDATE users SET role = 'x' WHERE username = 'alice'", []);
+        assert!(bad.is_err(), "role='x' 应被 CHECK 约束拒绝");
+
+        // 重复 run 幂等
+        run_migrations(&conn).expect("second run");
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+                row.get(0)
+            })
+            .expect("count");
+        assert_eq!(count, 5);
     }
 }

@@ -44,7 +44,7 @@ async fn authed_app(username: &str) -> (Router, String) {
     .await;
     assert_eq!(
         resp.status(),
-        StatusCode::OK,
+        StatusCode::CREATED,
         "register failed for {}",
         username
     );
