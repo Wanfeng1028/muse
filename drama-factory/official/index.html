@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 短剧工坊 · drama-factory</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#top">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+      <span>AI 短剧工坊</span>
+    </a>
+    <nav class="nav">
+      <a href="#how">功能</a>
+      <a href="#run">工作流</a>
+      <a href="#shots">截图</a>
+      <a href="#deploy">部署</a>
+    </nav>
+    <a class="gh" href="#" aria-label="GitHub 仓库">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+      <span>GitHub</span>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- 首屏 -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="kicker">drama-factory · 短剧生产的 Harness</p>
+          <h1>给一句目标，<br>出一部短剧。</h1>
+          <p class="lede">
+            你写一句自然语言目标，系统调度编剧、分镜、视频生成、剪辑、质检五个 Agent 依次干活。
+            核心是 Run 的全生命周期管理——不是看板，不是工作台。
+          </p>
+
+          <dl class="facts">
+            <div class="fact">
+              <dt>技术栈</dt>
+              <dd>Java 21 + Spring Boot 3 后端，自带 Web 控制台</dd>
+            </div>
+            <div class="fact">
+              <dt>视频通道</dt>
+              <dd>Agnes agnes-video-2.5-flash，BYOK；也接 DashScope wan2.5 与 mock 离线演示</dd>
+            </div>
+            <div class="fact">
+              <dt>剪辑合成</dt>
+              <dd>本地 ffmpeg 输出 H.264 mp4，SRT 字幕烧录</dd>
+            </div>
+          </dl>
+
+          <div class="hero-actions">
+            <a class="btn-primary" href="#deploy">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+              查看部署方式
+            </a>
+            <a class="btn-ghost" href="#how">它是怎么工作的</a>
+          </div>
+        </div>
+
+        <figure class="hero-shot">
+          <img src="../docs/screenshots/index.png" alt="AI 短剧工坊工作区界面" loading="lazy">
+          <figcaption>AI 工作区：输入目标，Agent 开始干活</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 它是怎么工作的 -->
+  <section id="how" class="section">
+    <div class="wrap">
+      <header class="section-head">
+        <h2>它是怎么工作的</h2>
+        <p>四步。每步都有对应的 Run 阶段，可以暂停、重试、人工审批。</p>
+      </header>
+
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num">01</div>
+          <div class="step-body">
+            <h3>目标</h3>
+            <p>你输入一句自然语言目标，比如"拍一个 60 秒的悬疑短剧，主角是外卖员"。系统解析意图、时长、题材。</p>
+          </div>
+          <figure class="step-shot">
+            <img src="../docs/screenshots/index.png" alt="输入自然语言目标的界面" loading="lazy">
+          </figure>
+        </li>
+
+        <li class="step">
+          <div class="step-num">02</div>
+          <div class="step-body">
+            <h3>计划预览</h3>
+            <p>编剧 Agent 产出剧本与分镜草案，生成可预览的计划。确认后才进入生产，避免浪费算力。</p>
+          </div>
+          <figure class="step-shot">
+            <img src="../docs/screenshots/storyboard.png" alt="分镜板界面" loading="lazy">
+          </figure>
+        </li>
+
+        <li class="step">
+          <div class="step-num">03</div>
+          <div class="step-body">
+            <h3>Agent 执行</h3>
+            <p>分镜→视频生成→剪辑依次触发。生产管线可视化每一步状态、耗时、成本。失败可重试单步。</p>
+          </div>
+          <figure class="step-shot">
+            <img src="../docs/screenshots/pipeline.png" alt="生产管线界面" loading="lazy">
+          </figure>
+        </li>
+
+        <li class="step">
+          <div class="step-num">04</div>
+          <div class="step-body">
+            <h3>成片</h3>
+            <p>ffmpeg 本地合成 H.264 mp4，SRT 字幕烧录进画面。质检 Agent 检查输出后交付。</p>
+          </div>
+          <figure class="step-shot">
+            <img src="../docs/screenshots/run-detail-light.png" alt="运行详情与成片结果" loading="lazy">
+          </figure>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Run 生命周期 -->
+  <section id="run" class="section section-alt">
+    <div class="wrap">
+      <header class="section-head">
+        <h2>Run 的生命周期</h2>
+        <p>一次生产就是一个 Run。你管的不是一堆文件，是一个可观察、可干预的运行过程。</p>
+      </header>
+
+      <div class="run-grid">
+        <div class="run-text">
+          <ul class="run-list">
+            <li>
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              <div>
+                <strong>暂停 / 继续</strong>
+                <span>随时冻结正在跑的 Run，改完参数接着跑。</span>
+              </div>
+            </li>
+            <li>
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+              <div>
+                <strong>取消</strong>
+                <span>发现方向不对，直接停掉，不浪费后面的调用。</span>
+              </div>
+            </li>
+            <li>
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <div>
+                <strong>重试某一步</strong>
+                <span>只重跑失败或不满意的步骤，不用整条重来。</span>
+              </div>
+            </li>
+            <li>
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <div>
+                <strong>人工审批</strong>
+                <span>在关键节点插入确认，批准后 Agent 才继续。</span>
+              </div>
+            </li>
+            <li>
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <div>
+                <strong>成本统计</strong>
+                <span>按 Run 和步骤记录 token 与视频生成花费。</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="run-shots">
+          <figure>
+            <img src="../docs/screenshots/runs-light.png" alt="运行列表界面" loading="lazy">
+            <figcaption>运行列表：所有 Run 的状态与进度</figcaption>
+          </figure>
+          <figure>
+            <img src="../docs/screenshots/run-detail-light.png" alt="运行详情界面" loading="lazy">
+            <figcaption>运行详情：单步状态、成本与操作</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 截图 -->
+  <section id="shots" class="section">
+    <div class="wrap">
+      <header class="section-head">
+        <h2>界面截图</h2>
+        <p>全部来自仓库真实截图，非效果图。</p>
+      </header>
+
+      <div class="shots-grid">
+        <figure>
+          <img src="../docs/screenshots/index.png" alt="AI 工作区" loading="lazy">
+          <figcaption>AI 工作区</figcaption>
+        </figure>
+        <figure>
+          <img src="../docs/screenshots/storyboard.png" alt="分镜板" loading="lazy">
+          <figcaption>分镜板</figcaption>
+        </figure>
+        <figure>
+          <img src="../docs/screenshots/pipeline.png" alt="生产管线" loading="lazy">
+          <figcaption>生产管线</figcaption>
+        </figure>
+        <figure>
+          <img src="../docs/screenshots/runs-light.png" alt="运行列表" loading="lazy">
+          <figcaption>运行列表</figcaption>
+        </figure>
+        <figure>
+          <img src="../docs/screenshots/run-detail-light.png" alt="运行详情" loading="lazy">
+          <figcaption>运行详情</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 部署 -->
+  <section id="deploy" class="section section-alt">
+    <div class="wrap">
+      <header class="section-head">
+        <h2>部署</h2>
+        <p>一条命令起服务。详细配置见仓库 README。</p>
+      </header>
+
+      <div class="deploy-grid">
+        <div class="code-block">
+          <div class="code-head">
+            <span>终端</span>
+            <button class="copy" type="button" aria-label="复制命令">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            </button>
+          </div>
+          <pre><code>docker compose up</code></pre>
+        </div>
+
+        <div class="deploy-notes">
+          <p>默认走 mock 离线演示，不配密钥也能跑通全流程。</p>
+          <p>接真实视频生成：填 Agnes 或 DashScope 的 API Key（BYOK），在配置里切换通道。</p>
+          <p>本地需要 ffmpeg 在 PATH 中，用于剪辑与字幕烧录。</p>
+          <a class="btn-ghost" href="#">阅读 README</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <p class="footer-line">drama-factory · 短剧生产的 Harness。给一句目标，调度 Agent 干完剩下的。</p>
+    <p class="footer-meta">MIT License · Java 21 / Spring Boot 3 · ffmpeg</p>
+  </div>
+</footer>
+
+</body>
+</html>
