@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>__TITLE__</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #141210; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #title {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 72px; color: #f5f0e6; letter-spacing: 12px; text-align: center;
+    max-width: 1500px; line-height: 1.5; padding: 0 60px;
+    opacity: 0; animation: fadein 1.5s ease forwards;
+  }
+  #prompt {
+    margin-top: 36px; font-size: 26px; color: rgba(245,240,230,.55);
+    max-width: 1300px; text-align: center; line-height: 1.8; padding: 0 80px;
+    opacity: 0; animation: fadein 1.5s ease .8s forwards;
+  }
+  #progress {
+    position: absolute; bottom: 0; left: 0; height: 6px;
+    background: #b3541e; width: 0%;
+  }
+  @keyframes fadein { to { opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="title">__TITLE__</div>
+  <div id="prompt">__PROMPT__</div>
+  <div id="progress"></div>
+</div>
+<script>
+  // 时长 __DURATION__s，fps __FPS__。进度条按虚拟时间推进。
+  const DURATION_MS = __DURATION__ * 1000;
+  const bar = document.getElementById('progress');
+  function tick(now) {
+    // 兼容虚拟时钟（html_render.mjs 注入的 __vtimeMs）与真实时钟
+    const t = (typeof window.__vtimeMs === 'number') ? window.__vtimeMs : now;
+    const k = Math.min(1, t / DURATION_MS);
+    bar.style.width = (k * 100).toFixed(2) + '%';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+</script>
+</body>
+</html>

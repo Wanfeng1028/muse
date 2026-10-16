@@ -16,7 +16,7 @@ public class VideoProviderRouter {
 
     private static final Logger log = LoggerFactory.getLogger(VideoProviderRouter.class);
 
-    private static final List<String> DEFAULT_ORDER = List.of("agnes", "novai", "doubao");
+    private static final List<String> DEFAULT_ORDER = List.of("agnes", "novai", "doubao", "htmlrender", "painted");
     private static final String MOCK = "mock";
 
     private final ApplicationContext applicationContext;
@@ -109,6 +109,9 @@ public class VideoProviderRouter {
         }
         if ("painted".equals(name)) {
             return applicationContext.getBean("paintedAnimationVideoProvider", VideoProvider.class);
+        }
+        if ("htmlrender".equals(name)) {
+            return applicationContext.getBean("htmlRenderVideoProvider", VideoProvider.class);
         }
         if ("mock".equals(name)) {
             return applicationContext.getBean("mockVideoProvider", VideoProvider.class);
