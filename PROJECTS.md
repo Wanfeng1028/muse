@@ -92,7 +92,12 @@
 
 **后续计划**：
 
-- 发送重试（v0.10 未通过项排期 v0.11）、结构化日志/request_id、metrics、API 限流
+- ~~发送重试（v0.10 未通过项排期 v0.11）~~（已在 v0.11 交付）、~~结构化日志/request_id~~（已在 v0.11.1 交付）、metrics、API 限流
+- 技术债清单 `docs/TECH_DEBT.md`（2026-10-16 快照，P0/P1/P2 + 偿还节奏）
+
+**里程碑记录（续）**：
+- **v0.11「发送重试」（2026-10-16）**：`internal/push/retry.go`——RetryPolicy（SB_PUSH_MAX_RETRIES 默认 3/上限 10、SB_PUSH_RETRY_BASE_MS 默认 1000/上限 60000、MaxBackoff 30s、抖动 ±25%）、IsRetryable（可重试：网络/429/5xx；不可重试：鉴权/其他 4xx/订阅失效/ctx 取消；未知 fail-open）、WrapWithRetry；耗尽转死信（push_log failed_permanent，幂等）；SMTP/Webhook/WebPush 三 sender 统一走包装器；`go test ./...` 全绿（push 17/17：fake sender 失败 2 次后成功/一直 503 耗尽转死信且幂等）；README + `docs/OPERATIONS.md` + 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。技术债：重试循环重复待抽泛型；api 集成测试待补
+- **v0.11.1「结构化日志 + request_id」（2026-10-16）**：`internal/log` 包（slog JSON，SB_LOG_LEVEL）+ 中间件（X-Request-ID 透传/生成 32 位随机、注入 context、响应头回写、http.request 日志 request_id/method/path/status/latency_ms）；错误体统一带 request_id；store 层关键操作打带 request_id 日志；`go test ./...` **216/216**，`go vet`/`gofmt` 全洁；真实冒烟（生成/透传/错误体 request_id、日志 grep 定位）全通
 
 ## drama-factory「AI 短剧工坊」
 
@@ -141,6 +146,7 @@
 - DoD 未通过项新排期（见 docs/dod-v2.7.md：v2.8 E2E（Run 全链路端到端）、Agnes/Qwen provider 契约测试（录制回放）、分支覆盖冲 45%、stats() 聚合查询优化）
 - 上轮遗留三项已落地（2026-10-14，commit 37149e3）：Agnes/Qwen 录制回放契约测试（27 例，`VideoHttpGateway` 录制回放接缝）+ `RunLifecycleE2eTest`（Run 全生命周期多用户隔离 6 例）+ `ProjectService.stats()` N+1 消除（3 个 repository 新增 `countByOwner` 聚合查询）；全量 210 测试通过
 - **BYOK 连接自检**（2026-10-14，ROADMAP P0#1 子项，commit 394146e）：`VideoProvider.probeConnectivity()` 契约（default 返回 UNSUPPORTED）+ `POST /api/providers/{id}/test` + 供应商卡片「测试连接」按钮与状态徽标；Agnes/Qwen 采用"查询不存在探测任务"的负向探测（零费用：401/403=密钥无效、404=密钥有效，鉴权先行，已用 Keenable 核验两家官方文档错误表），mock 恒 OK，未接入模块/未知名称诚实返回 UNSUPPORTED（绝不假成功）；附带修 `submit`/`poll` 未配置密钥时的 NPE（改抛 `IllegalStateException` 明示）；`ResilientVideoProvider` 自检委托给被装饰方；测试 22 例（Agnes/Qwen 各 9 例契约 + 4 例 API，录制回放零真实网络）；`docs/connection-probe.md` 原理文档；agents.html 真实截图亲眼验收通过（`docs/screenshots/providers-test-connection.png`，README 已引用）；全量 **232** 测试通过
+- **策略文档补全**（2026-10-16）：`docs/SENSITIVE_DATA_POLICY.md`（`SECURITY_DATA.md` 审计摘要的完整策略版，文末第 7 节写明二者关系）+ `docs/DEGRADATION_POLICY.md`（`DEGRADATION.md` 的完整策略版）；技术债清单 `docs/TECH_DEBT.md` 待下一轮（本轮 step193plan 文风不达标未收录）
 - 生产级补强 **v2.8 第 7 轮「分支覆盖冲 45%」**（2026-10-14，DoD v2.8 排期最后一项）：9 批 dpsk 生成——LlmScriptServiceTest 8→34（validate/parseScenes/buildUserContent）、RunServiceTest 15→33（planPreview/createRun·pause·resume）、ScriptSplitterServiceTest 15→35（parse·strip/replaceShots）、RunExecutorTest 10→36（advanceRun 异常分支/QC 自动门/checkVideoStep/finalize）、ProviderServiceProbeTest 新建 14（testConnection/maskKey）；测试总数 232→**336** 全绿；行覆盖 58.5%→**71.0%**、分支 37.5%→**52.7%**（超额达成）；pom JaCoCo 新增 BRANCH 0.45 门禁、LINE 0.55→0.65 棘轮；发版对照报告 `docs/dod-v2.8.md`；已知缺口排期 v2.9（AuthProxyController 110 分支需 HttpClient 可注入重构、Agnes/Qwen 真实链路需外部 API）
 - 生产级补强 **v2.9 第 8 轮「分支覆盖冲 55%」**（2026-10-14，DoD v2.8 排期两项全交付且超额）：AuthProxyController 可测性重构（HttpClient 构造器注入 + `@Autowired` 显式标记，双构造器曾致 40 个 Spring 上下文测试报 No default constructor found，已修）+ AuthProxyControllerTest 新建 20 例（T1~T10 透传/头/refresh 分支 + T11~T20 login/logout token 剥离/send 异常分支；上游 JDK HttpServer 绑 `::1`）；单类分支 0%→**79.5%**（≥60% 目标达成）、行 97.8%；全量分支 52.7%→**57.3%**（55% 目标超额）、行 71.0%→73.6%；测试总数 336→**356** 全绿；门禁棘轮 LINE 0.65→0.70、BRANCH 0.45→0.55；发版对照报告 `docs/dod-v2.9.md`。本轮教训：dpsk 第 3 批整批作废（编造不存在的 stubUpstream/双参数 proxy/单参数构造器），打回并贴文件原文后第二版可用；`HttpClient.newHttpClient()` 默认发 h2c 升级头（Connection: Upgrade, HTTP2-Settings），T3 改断言"伪造值不透传"而非"头不存在"
 - DoD 未通过项新排期（见 docs/dod-v2.9.md：v2.10 分支覆盖冲 60%（ChatService/FinalCutService/VideoTaskService）、Agnes/Qwen 录制回放扩到 submit/poll（需外部 API）、h2c 默认行为是否锁定 HTTP_1_1 待产品确认）
