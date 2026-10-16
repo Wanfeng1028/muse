@@ -18,6 +18,9 @@ DEFAULT_BACKUP_DIR = "data/backups"
 DEFAULT_DIGEST_N = 20
 DEFAULT_EXTRACT_TIMEOUT = 15
 DEFAULT_FEVER_API_KEY = ""
+DEFAULT_RATE_LIMIT_RPS = 1.0
+DEFAULT_RATE_LIMIT_BURST = 60
+DEFAULT_RATE_LIMIT_ENABLED = True
 
 
 
@@ -29,6 +32,28 @@ def _parse_int(value, default):
         return int(str(value).strip())
     except (TypeError, ValueError):
         return default
+
+
+def _parse_float(value, default):
+    """把环境变量转成 float，非法则回退默认值。"""
+    if value is None:
+        return default
+    try:
+        return float(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _parse_bool(value, default):
+    """把环境变量转成 bool，无法识别则回退默认值。"""
+    if value is None:
+        return default
+    text = str(value).strip().lower()
+    if text in ("1", "true", "yes", "on"):
+        return True
+    if text in ("0", "false", "no", "off"):
+        return False
+    return default
 
 
 def _resolve_path(value):
@@ -44,7 +69,8 @@ def load() -> dict:
 
     返回键：db_path / host / port / fetch_interval / fetch_timeout /
     fetch_retries / user_agent / log_level / backup_dir / digest_n /
-    extract_timeout / fever_api_key
+    extract_timeout / fever_api_key / rate_limit_rps /
+    rate_limit_burst / rate_limit_enabled
     """
 
     db_path = _resolve_path(os.environ.get("FEEDFLOW_DB", DEFAULT_DB))
@@ -81,6 +107,18 @@ def load() -> dict:
 
     fever_api_key = (os.environ.get("FEEDFLOW_FEVER_API_KEY") or "").strip()
 
+    rate_limit_rps = _parse_float(
+        os.environ.get("FEEDFLOW_RATE_LIMIT_RPS"), DEFAULT_RATE_LIMIT_RPS
+    )
+
+    rate_limit_burst = _parse_int(
+        os.environ.get("FEEDFLOW_RATE_LIMIT_BURST"), DEFAULT_RATE_LIMIT_BURST
+    )
+
+    rate_limit_enabled = _parse_bool(
+        os.environ.get("FEEDFLOW_RATE_LIMIT_ENABLED"), DEFAULT_RATE_LIMIT_ENABLED
+    )
+
     return {
 
         "db_path": str(db_path),
@@ -93,9 +131,12 @@ def load() -> dict:
         "log_level": log_level,
         "backup_dir": str(backup_dir),
         "digest_n": digest_n,
-        "extract_timeout": extract_timeout,
-        "fever_api_key": fever_api_key,
-    }
+    "extract_timeout": extract_timeout,
+    "fever_api_key": fever_api_key,
+    "rate_limit_rps": rate_limit_rps,
+    "rate_limit_burst": rate_limit_burst,
+    "rate_limit_enabled": rate_limit_enabled,
+}
 
 
 
@@ -123,6 +164,9 @@ def validate(cfg: dict) -> None:
     cfg.setdefault("digest_n", DEFAULT_DIGEST_N)
     cfg.setdefault("extract_timeout", DEFAULT_EXTRACT_TIMEOUT)
     cfg.setdefault("fever_api_key", DEFAULT_FEVER_API_KEY)
+    cfg.setdefault("rate_limit_rps", DEFAULT_RATE_LIMIT_RPS)
+    cfg.setdefault("rate_limit_burst", DEFAULT_RATE_LIMIT_BURST)
+    cfg.setdefault("rate_limit_enabled", DEFAULT_RATE_LIMIT_ENABLED)
 
     # 校验 port 范围
     port = cfg.get("port")
@@ -154,8 +198,31 @@ def validate(cfg: dict) -> None:
     if not isinstance(extract_timeout, int) or extract_timeout <= 0:
         _fail(f"FEEDFLOW_EXTRACT_TIMEOUT 必须大于 0，当前为 {extract_timeout!r}")
 
+    # 校验限流速率
+    rate_limit_rps = cfg.get("rate_limit_rps")
+    if (
+        not isinstance(rate_limit_rps, (int, float))
+        or isinstance(rate_limit_rps, bool)
+        or rate_limit_rps <= 0
+    ):
+        _fail(f"FEEDFLOW_RATE_LIMIT_RPS 必须大于 0，当前为 {rate_limit_rps!r}")
 
-    # 校验数据库父目录可写
+    # 校验限流桶容量
+    rate_limit_burst = cfg.get("rate_limit_burst")
+    if (
+        not isinstance(rate_limit_burst, int)
+        or isinstance(rate_limit_burst, bool)
+        or rate_limit_burst < 1
+    ):
+        _fail(f"FEEDFLOW_RATE_LIMIT_BURST 必须是大于等于 1 的整数，当前为 {rate_limit_burst!r}")
+
+    # 校验限流开关
+    rate_limit_enabled = cfg.get("rate_limit_enabled")
+    if not isinstance(rate_limit_enabled, bool):
+        _fail(f"FEEDFLOW_RATE_LIMIT_ENABLED 必须是布尔值，当前为 {rate_limit_enabled!r}")
+
+
+# 校验数据库父目录可写
     db_path = cfg.get("db_path")
     if not db_path:
         _fail("FEEDFLOW_DB 不能为空")

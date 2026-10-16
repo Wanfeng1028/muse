@@ -9,6 +9,7 @@ _fetch_errors_total = {}   # kind -> count
 _articles_stored_total = 0
 _fetch_duration_sum = 0.0
 _http_requests_total = {}  # (method, route, status) -> count
+_rate_limited_total = 0
 
 
 def inc_fetch(status):
@@ -52,6 +53,13 @@ def inc_http_request(method, route, status):
     key = (method, route, status)
     with _lock:
         _http_requests_total[key] = _http_requests_total.get(key, 0) + 1
+
+
+def inc_rate_limited():
+    """累加被限流拒绝的请求计数。"""
+    global _rate_limited_total
+    with _lock:
+        _rate_limited_total += 1
 
 
 def _fmt(value):
@@ -126,6 +134,15 @@ def render(db_path=None):
                 f'route="{_escape_label(route)}",status="{_escape_label(status)}"}} '
                 f"{_fmt(http_requests[key])}"
             )
+
+    with _lock:
+        rate_limited = _rate_limited_total
+    lines.append(
+        "# HELP feedflow_http_rate_limited_total "
+        "Total HTTP requests rejected by the rate limiter."
+    )
+    lines.append("# TYPE feedflow_http_rate_limited_total counter")
+    lines.append(f"feedflow_http_rate_limited_total {_fmt(rate_limited)}")
 
     stats = None
     if db_path is not None:

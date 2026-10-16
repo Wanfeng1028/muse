@@ -129,6 +129,42 @@ def metrics():
     return Response(text, mimetype="text/plain; version=0.0.4")
 
 
+@bp.get("/feed.xml")
+def feedxml():
+    """全文 RSS 输出，支持 ETag 条件请求。"""
+    from . import rss
+
+    db_path = _cfg()["db_path"]
+
+    raw_feed_id = request.args.get("feed_id")
+    try:
+        feed_id = int(raw_feed_id) if raw_feed_id is not None else None
+    except (TypeError, ValueError):
+        feed_id = None
+
+    raw_folder = request.args.get("folder")
+    try:
+        folder_id = int(raw_folder) if raw_folder is not None else None
+    except (TypeError, ValueError):
+        folder_id = None
+
+    xml_text, etag = rss.build_rss(
+        db_path,
+        feed_id=feed_id,
+        folder_id=folder_id,
+        limit=50,
+    )
+
+    if request.headers.get("If-None-Match") == etag:
+        return Response(status=304, headers={"ETag": etag})
+
+    return Response(
+        xml_text,
+        mimetype="application/rss+xml",
+        headers={"ETag": etag},
+    )
+
+
 @bp.get("/healthz")
 def healthz():
     """健康检查：返回服务、数据库与调度器状态。"""

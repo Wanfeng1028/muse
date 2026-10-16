@@ -8,10 +8,12 @@
 from __future__ import annotations
 
 import atexit
+import json
+import math
 import os
 import uuid
 
-from flask import Flask, g, request
+from flask import Flask, Response, g, request
 
 from . import config as _config
 from . import db as _db
@@ -50,6 +52,14 @@ def create_app(cfg=None) -> Flask:
     # 将配置挂到 app.config，供蓝图内通过 current_app 读取
     app.config["FEEDFLOW"] = cfg
 
+    # HTTP 层 IP 限流器（内存令牌桶），create_app 内只创建一次，闭包引用。
+    from .ratelimit import RateLimiter
+
+    _limiter = RateLimiter(
+        rate_per_sec=float(cfg["rate_limit_rps"]),
+        burst=int(cfg["rate_limit_burst"]),
+    )
+
     # 注册蓝图（延迟导入避免循环依赖）
     from .api import bp as api_bp
     from .fever import fever_bp
@@ -65,6 +75,36 @@ def create_app(cfg=None) -> Flask:
         request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
         set_request_id(request_id)
         g.request_id = request_id
+
+    @app.before_request
+    def _check_rate_limit():
+        """HTTP 层 IP 限流：命中拒绝时短路返回 429。"""
+        cfg = app.config["FEEDFLOW"]
+        if not cfg.get("rate_limit_enabled"):
+            return None
+
+        # 免限流路径：精确匹配，避免前缀匹配误伤。
+        if request.path in ("/healthz", "/metrics"):
+            return None
+
+        key = request.remote_addr or "unknown"
+        ok, retry_after = _limiter.allow(key)
+        if ok:
+            return None
+
+        try:
+            from . import metrics as _metrics
+
+            _metrics.inc_rate_limited()
+        except Exception as exc:  # noqa: BLE001  # 埋点不许影响限流主流程，故意宽捕获
+            _logger.warning("限流埋点失败", extra={"error": str(exc)[:200]})
+
+        return Response(
+            json.dumps({"error": "请求过于频繁，请稍后再试"}, ensure_ascii=False),
+            status=429,
+            mimetype="application/json",
+            headers={"Retry-After": str(math.ceil(retry_after))},
+        )
 
     @app.after_request
     def _write_back_request_id(response):

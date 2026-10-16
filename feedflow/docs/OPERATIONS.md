@@ -26,6 +26,10 @@
 | `FEEDFLOW_FEVER_API_KEY` | 空 | 为空表示 Fever 功能关闭。填入 key 后启用 `/fever`。生成方式见第 3 节。 |
 | `FEEDFLOW_NO_SCHEDULER` | 未设置 | 设为 `1` 时禁用后台调度器，仅用于调试。 |
 
+| `FEEDFLOW_RATE_LIMIT_RPS` | `1.0` | 限流补充速率，单位 请求/秒。默认 1.0 即每分钟 60 请求。必须大于 0。 |
+| `FEEDFLOW_RATE_LIMIT_BURST` | `60` | 令牌桶容量，即允许的突发请求数。必须大于等于 1。 |
+| `FEEDFLOW_RATE_LIMIT_ENABLED` | `true` | 设为 `0`/`false`/`no`/`off` 关闭限流。 |
+
 修改环境变量后需重启服务生效。
 
 ---
@@ -183,4 +187,20 @@ docker compose logs -f
 ```
 
 调整 `FEEDFLOW_LOG_LEVEL` 到 `DEBUG` 后重启，可拿到更详细的过程日志。
+
+---
+
+## 9. 限流调参
+
+`/`、`/api/*`、`/fever`、`/feed.xml` 等接口受内存令牌桶限流保护（按客户端 IP 统计）。`/healthz` 与 `/metrics` 免限流，保证探针与监控抓取不受影响。
+
+工作原理：每个 IP 一个令牌桶，容量 `FEEDFLOW_RATE_LIMIT_BURST`，每秒补充 `FEEDFLOW_RATE_LIMIT_RPS` 个令牌；每次请求消耗 1 个，桶空则返回 `429` 并带 `Retry-After` 响应头（整数秒，建议客户端按此退避后重试）。被限流的请求会计入 Prometheus 指标 `feedflow_http_rate_limited_total`。
+
+调参建议：
+
+- 默认 `1.0` 请求/秒 + `60` 突发，适合个人/家庭自用（正常阅读器前端轮询远低于此）。
+- 反向代理后方：如果所有请求都来自代理 IP（`request.remote_addr` 恒为代理地址），所有用户共享一个桶，应调大 `FEEDFLOW_RATE_LIMIT_BURST`（如 `600`），或在代理层做限流。
+- 压测/批量导入时可临时 `FEEDFLOW_RATE_LIMIT_ENABLED=0` 关闭，结束后记得重新打开。
+- 告警建议：`feedflow_http_rate_limited_total` 短时间突增，可能是爬虫或攻击，检查访问日志中的 IP 分布。
+
 
