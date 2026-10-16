@@ -86,6 +86,8 @@ journalctl -u mini-os -f
 | `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
 | `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒）。只约束收到 SIGTERM/Ctrl+C 后的排空阶段，不掐正常服务（已回归验证） |
 | `SESSION_TTL_SECS` | `604800`（7 天） | 登录 session 有效期（秒）；非法/≤0 回落默认值 |
+| `MINIOS_LOGIN_RPS` | `1` | 登录限流每秒补充 token 数；非法值启动即报错退出（exit 2） |
+| `MINIOS_LOGIN_BURST` | `5` | 登录限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |
 
 补充说明：
 - `SHUTDOWN_TIMEOUT_SECS` 是 v1.2.0 新增。它只管"排空在途请求"这一段，不限制服务运行时长。v1.1.0 曾把它错误地当成整个服务生命周期超时，v1.2.0 已修复。
@@ -355,6 +357,44 @@ scrape_configs:
 ### 8.3 建议频率
 
 建议每季度跑一次 `scripts/fault_drill.sh`，覆盖升级、配置变更、宿主变更之后。演练前先确认已有可用备份。
+
+## 9 登录限流调参
+
+登录限流只挂在 `POST /api/auth/login` 上，`GET /api/health`、`GET /api/readyz`、`/metrics` 不限流。
+
+### 9.1 两个旋钮
+
+- `MINIOS_LOGIN_RPS`：每秒补充 token 数，默认 `1`。
+- `MINIOS_LOGIN_BURST`：桶容量（突发上限），默认 `5`。
+
+含义（默认值）：一台 mini-os 默认允许每 IP/每账号突发 5 次登录尝试，之后按每秒 1 次回补。
+
+非法值（解析失败、≤0、NaN、无穷大）会在启动时由 stderr 点名变量并 `exit(2)`，服务不起（fail-fast）；未设置则用默认值。
+
+### 9.2 双维度
+
+IP 桶 + 账号（username）桶，任一耗尽即 429。IP 提取优先级：`X-Forwarded-For` 首项 → `X-Real-IP` → `ConnectInfo` → `"unknown"`。
+
+### 9.3 调参建议（建议，非强制）
+
+- 面向公网且被扫爆破时调小（如 `BURST=3 RPS=0.2`）。
+- 内网可信环境可放宽。
+- `BURST` 至少留 3，给用户连续输错 2 次留余地。
+
+### 9.4 反向代理部署
+
+务必透传 `X-Forwarded-For`。否则所有客户端挤在同一个 `"unknown"` IP 桶里互相牵连（已验证的默认行为，如实写）。
+
+### 9.5 429 契约
+
+响应头 `Retry-After: <整数秒>`，JSON 体 `{"error": "登录尝试过于频繁，请 <N> 秒后重试", "retry_after": <N>}`。
+
+前端 login.html 收到 429 时显示"试得太频繁，N 秒后重试"倒计时，倒计时期间提交按钮 disabled。
+
+### 9.6 监控与排障
+
+- 计数器 `auth_ops_total{op="login_ratelimited"}` 记录被限流次数（`op` 维度已有 register/login/logout/migrate_legacy/share_create）。
+- 排障时结合 request_id 日志定位。
 
 ---
 

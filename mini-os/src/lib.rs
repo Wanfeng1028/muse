@@ -7,6 +7,7 @@ pub mod log;
 pub mod metrics;
 pub mod migrate;
 pub mod models;
+pub mod ratelimit;
 
 use std::sync::{Arc, Mutex};
 
@@ -19,13 +20,15 @@ use tower_http::{
     services::{ServeDir, ServeFile},
 };
 
-/// 应用共享状态：数据库连接 + 静态资源目录 + 上传大小上限 + session 有效期 + 指标集合
+/// 应用共享状态：数据库连接 + 静态资源目录 + 上传大小上限 + session 有效期 + 指标集合 + 登录限流器
 pub struct AppState {
     pub db: Mutex<rusqlite::Connection>,
     pub static_dir: String,
     pub max_upload_bytes: u64,
     pub session_ttl_secs: u64,
     pub metrics: Arc<crate::metrics::Metrics>,
+    /// 登录限流器（IP + 账号双维度令牌桶）
+    pub login_limiter: Arc<crate::ratelimit::RateLimiter>,
 }
 
 /// 初始化全局状态（指定上传上限）：打开数据库并做种子数据
@@ -34,15 +37,22 @@ pub fn init_state_with(
     static_dir: &str,
     max_upload_bytes: u64,
     session_ttl_secs: u64,
+    login_rps: f64,
+    login_burst: u64,
 ) -> Arc<AppState> {
     let conn = crate::db::open_db(database_path).expect("open_db failed");
     crate::db::seed(&conn).expect("seed failed");
+    let limiter_cfg = crate::ratelimit::LoginLimitConfig {
+        rps: login_rps,
+        burst: login_burst,
+    };
     Arc::new(AppState {
         db: Mutex::new(conn),
         static_dir: static_dir.to_string(),
         max_upload_bytes,
         session_ttl_secs,
         metrics: Arc::new(crate::metrics::Metrics::new()),
+        login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
     })
 }
 
@@ -54,6 +64,8 @@ pub fn init_state(database_path: &str, static_dir: &str) -> Arc<AppState> {
         static_dir,
         cfg.upload_max_bytes,
         cfg.session_ttl_secs,
+        cfg.login_rps,
+        cfg.login_burst,
     )
 }
 
@@ -167,7 +179,13 @@ pub fn build_app(state: Arc<AppState>) -> Router {
         .route("/ws", get(handlers::ws_handler))
         .route("/metrics", get(crate::metrics::metrics_handler))
         .route("/api/auth/register", post(handlers::register))
-        .route("/api/auth/login", post(handlers::login))
+        .route(
+            "/api/auth/login",
+            post(handlers::login).route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                crate::ratelimit::login_ratelimit_middleware,
+            )),
+        )
         .route("/api/auth/logout", post(handlers::logout))
         .route("/api/auth/migrate-legacy", post(handlers::migrate_legacy))
         .route("/api/me", get(handlers::me))

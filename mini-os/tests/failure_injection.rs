@@ -80,7 +80,7 @@ async fn write_to_broken_db_returns_500_not_panic() {
     let db_path = dir.join("tmp.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60, 1.0, 5);
     {
         let conn = state.db.lock().unwrap();
         conn.execute("DROP TABLE vfs_nodes", []).unwrap();
@@ -149,7 +149,7 @@ async fn readyz_reflects_db_health() {
     let db_path = dir.join("ready.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60, 1.0, 5);
     let app = build_app(state.clone());
 
     let req = Request::builder()
@@ -188,7 +188,7 @@ async fn request_id_passthrough() {
     let db_path = dir.join("rid.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60, 1.0, 5);
     let app = build_app(state);
 
     let req = Request::builder()
@@ -214,7 +214,7 @@ async fn request_id_generated_when_absent() {
     let db_path = dir.join("rid2.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60, 1.0, 5);
     let app = build_app(state);
 
     let req1 = Request::builder()
@@ -346,7 +346,7 @@ fn migrations_upgrade_legacy_db() {
 #[tokio::test]
 async fn forged_token_gets_401_not_panic() {
     // 伪造 token → 401，不 panic
-    let state = init_state_with(":memory:", "static", 1024, 60);
+    let state = init_state_with(":memory:", "static", 1024, 60, 1.0, 5);
     let app = build_app(state);
     let req = Request::builder()
         .method("GET")

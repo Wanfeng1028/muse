@@ -173,6 +173,8 @@ async fn cmd_serve(config: Config) -> i32 {
         &config.static_dir,
         config.upload_max_bytes,
         config.session_ttl_secs,
+        config.login_rps,
+        config.login_burst,
     );
 
     let app = build_app(state);

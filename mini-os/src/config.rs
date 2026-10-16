@@ -9,6 +9,10 @@ pub struct Config {
     pub upload_max_bytes: u64,
     pub shutdown_timeout_secs: u64,
     pub session_ttl_secs: u64,
+    /// 登录限流：每秒补充的令牌数（来自 MINIOS_LOGIN_RPS）
+    pub login_rps: f64,
+    /// 登录限流：桶容量/突发上限（来自 MINIOS_LOGIN_BURST）
+    pub login_burst: u64,
 }
 
 impl Config {
@@ -40,6 +44,16 @@ impl Config {
             .filter(|&v| v > 0)
             .unwrap_or(604800);
 
+        // 登录限流配置：非法值 fail-fast（启动即报错退出），符合规格 S3。
+        // 注意 from_env 的签名是 -> Self（非 Result），因此这里直接 eprintln + exit(2)。
+        let login_limit = match crate::ratelimit::parse_login_limit() {
+            Ok(cfg) => cfg,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
+
         Config {
             port,
             database_path,
@@ -47,6 +61,8 @@ impl Config {
             upload_max_bytes,
             shutdown_timeout_secs,
             session_ttl_secs,
+            login_rps: login_limit.rps,
+            login_burst: login_limit.burst,
         }
     }
 }

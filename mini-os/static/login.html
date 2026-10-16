@@ -165,9 +165,36 @@
     elErr.textContent = msg;
     elErr.classList.add("show");
   }
+  var countdownTimer = null;
   function clearError() {
     elErr.textContent = "";
     elErr.classList.remove("show");
+    if (countdownTimer !== null) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }
+  function startRateLimitCountdown(data) {
+    var n = (data && typeof data.retry_after === "number" && data.retry_after > 0) ? Math.ceil(data.retry_after) : 30;
+    if (countdownTimer !== null) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+    elSubmit.disabled = true;
+    var remain = n;
+    elErr.textContent = "试得太频繁，" + remain + " 秒后重试";
+    elErr.classList.add("show");
+    countdownTimer = setInterval(function () {
+      remain = remain - 1;
+      if (remain <= 0) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        clearError();
+        elSubmit.disabled = false;
+        return;
+      }
+      elErr.textContent = "试得太频繁，" + remain + " 秒后重试";
+    }, 1000);
   }
 
   function render() {
@@ -226,6 +253,7 @@
         return null;
       }
       return res.json().catch(function () { return null; }).then(function (data) {
+        if (res.status === 429) { startRateLimitCountdown(data); return; }
         var msg = data && typeof data.error === "string" ? data.error : "";
         showError(friendlyError(res.status, msg));
         elSubmit.disabled = false;

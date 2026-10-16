@@ -65,7 +65,7 @@ async fn health_returns_ok() {
     assert_eq!(resp.status(), StatusCode::OK);
     let json = body_json(resp).await;
     assert_eq!(json["status"], "ok");
-    assert_eq!(json["version"], "1.4.0");
+    assert_eq!(json["version"], "1.5.0");
 }
 
 #[tokio::test]
@@ -456,7 +456,7 @@ async fn upload_to_subfolder_and_download() {
 
 #[tokio::test]
 async fn upload_oversize_returns_413() {
-    let state = init_state_with(":memory:", "static", 1024, 60);
+    let state = init_state_with(":memory:", "static", 1024, 60, 1.0, 5);
     let app = build_app(state);
     let reg = Request::builder()
         .method("POST")
