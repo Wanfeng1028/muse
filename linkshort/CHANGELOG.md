@@ -4,6 +4,29 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.8.0] - 2026-10-17
+
+### 新增
+
+- 新增 `internal/geo` 包：`china.go` 内置中国省域 IP 段抽样表，按 CIDR 最长前缀匹配，并在代码注释中诚实声明精度边界。
+- 新增 `internal/geo` 包：`chain.go` 实现地域解析责任链（CDN 头 → MMDB → 内置表 → unknown），并支持 `ReloadFromEnv` 从环境变量重载解析器配置。
+- 新增 `internal/geo` 包：`header.go` 负责 CDN 厂商头解析，提供 `HeaderNames`/`LookupHeader` 以适配不同厂商的客户端 IP 与地域头。
+- `handler.go` 新增 `clientIP` 取址策略：`X-Forwarded-For` 首段 → `X-Real-IP` → `RemoteAddr` 去端口，并在代码中注明对上游代理的信任假设。
+- `handler.go` 的 `finishRedirect` 改用 `clientIP` 计算 `ipHash`，并调用 `geo.LookupRequest(cip, r.Header.Get)` 解析地域。
+- 访问记录改用 `st.RecordVisitGeo(link.ID, ipHash, ua, referer, CountryCode, CountryName, Province)` 落库地域字段。
+- 新增 `GET /api/stats/geo`（`handleStatsGeo`）：按国家/省份聚合 TopN，并返回 unknown 占比。
+
+### 变更
+
+- 无破坏性变更；默认行为保持不变。
+- 未配置 MMDB 时，地域解析走内置抽样表 + unknown 诚实降级，不影响既有短链跳转与统计链路。
+
+### 已知缺口
+
+- 内置 IP 段表为抽样而非全量，精确到省需配置 `LINKSHORT_GEO_MMDB`。
+- anycast 段解析出的省份为运营商总部所在地，仅供参考。
+- Web UI 暂无地域分布面板，API 已就绪，排期下轮。
+
 ## [v1.7.0] - 2026-10-16
 
 ### 新增

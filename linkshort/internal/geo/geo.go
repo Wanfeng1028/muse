@@ -1,9 +1,7 @@
 package geo
 
 import (
-	"log"
 	"net"
-	"os"
 	"strings"
 
 	"github.com/oschwald/geoip2-golang"
@@ -131,18 +129,9 @@ func (s *staticResolver) Lookup(ip string) Location {
 	return Unknown
 }
 
-// FromEnv 读取 GEOIP_MMDB_PATH 构建 Resolver；未配置或打开失败时降级为全 unknown。
-// 打开成功后不关闭 DB（随进程生命周期，避免热路径重复打开）。
+// FromEnv 返回兼容旧签名的 Resolver，实际走 LookupRequest 完整责任链
+// （内网 → 云厂商头 → MMDB → 内置表 → unknown）；不带请求头信息。
+// 行为变化：未配置 mmdb 时不再全 unknown，内置表仍可命中。
 func FromEnv() Resolver {
-	path := os.Getenv("GEOIP_MMDB_PATH")
-	if path == "" {
-		log.Printf("geo: GEOIP_MMDB_PATH 未配置，地域解析降级为 unknown")
-		return NewStatic(nil)
-	}
-	db, err := Open(path)
-	if err != nil {
-		log.Printf("geo: 打开 mmdb 失败 (%s)：%v，地域解析降级为 unknown", path, err)
-		return NewStatic(nil)
-	}
-	return db
+	return requestResolver{}
 }

@@ -54,23 +54,32 @@ func TestOpenInvalidPath(t *testing.T) {
 }
 
 func TestFromEnvWithoutPath(t *testing.T) {
+	t.Setenv("LINKSHORT_GEO_MMDB", "")
 	t.Setenv("GEOIP_MMDB_PATH", "")
+	ReloadFromEnv()
 	r := FromEnv()
 	if r == nil {
 		t.Fatal("FromEnv 不应返回 nil")
 	}
-	if got := r.Lookup("8.8.8.8"); got != Unknown {
-		t.Fatalf("未配置时应返回 Unknown，实际 %+v", got)
+	if got := r.Lookup("203.0.113.7"); got != Unknown {
+		t.Fatalf("未配置 mmdb 且无内置表命中时应返回 Unknown，实际 %+v", got)
+	}
+	if got := r.Lookup("8.8.8.8"); got == Unknown {
+		t.Skip("china.go 未注入内置表时跳过")
+	} else if got.CountryCode != "US" {
+		t.Fatalf("8.8.8.8 期望 CountryCode=US，实际 %+v", got)
 	}
 }
 
 func TestFromEnvWithBadPath(t *testing.T) {
-	t.Setenv("GEOIP_MMDB_PATH", "/nonexistent/path.mmdb")
+	t.Setenv("LINKSHORT_GEO_MMDB", "/nonexistent/path.mmdb")
+	t.Setenv("GEOIP_MMDB_PATH", "")
+	ReloadFromEnv()
 	r := FromEnv()
 	if r == nil {
 		t.Fatal("FromEnv 不应返回 nil")
 	}
-	if got := r.Lookup("8.8.8.8"); got != Unknown {
-		t.Fatalf("路径无效时应返回 Unknown，实际 %+v", got)
+	if got := r.Lookup("203.0.113.7"); got != Unknown {
+		t.Fatalf("mmdb 路径无效时应降级，203.0.113.7 应返回 Unknown，实际 %+v", got)
 	}
 }

@@ -305,8 +305,21 @@ func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Stor
 	finishRedirect(w, r, link, st, cfg)
 }
 
-// geoResolver 为地域解析器，默认从环境变量 GEOIP_MMDB_PATH 初始化；测试可用 SetGeoResolver 注入。
-var geoResolver geo.Resolver = geo.FromEnv()
+// clientIP 取客户端 IP：X-Forwarded-For 首个 → X-Real-IP → RemoteAddr 去端口。
+// X-Forwarded-For 可能含多个 IP（客户端, 代理1, 代理2），取第一段；非法值则继续回退。
+// 信任假设：服务部署在受信任反向代理之后，由代理负责清洗/设置这两个头；
+// 若直接暴露公网，调用方应确保前置层已 strip 不可信的 X-Forwarded-For。
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if first := strings.TrimSpace(strings.Split(xff, ",")[0]); net.ParseIP(first) != nil {
+			return first
+		}
+	}
+	if xrip := strings.TrimSpace(r.Header.Get("X-Real-IP")); net.ParseIP(xrip) != nil {
+		return xrip
+	}
+	return clientHost(r.RemoteAddr)
+}
 
 // finishRedirect 执行跳转前的最终检查（限次访问）并完成跳转。
 // 只有成功解锁（密码正确或无密码）才会走到这里：记访问、处理阅后即焚、302。
@@ -318,10 +331,12 @@ func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st
 	}
 
 	// 记录访问，失败只记日志不阻断跳转。
-	ipHash := hashIP(r.RemoteAddr)
+	// clientIP 优先取 X-Forwarded-For / X-Real-IP（反向代理部署的常见形态），直连时退化为 RemoteAddr。
+	cip := clientIP(r)
+	ipHash := hashIP(cip)
 	ua := truncate(r.UserAgent(), 256)
 	referer := truncate(r.Referer(), 512)
-	loc := geoResolver.Lookup(clientHost(r.RemoteAddr))
+	loc := geo.LookupRequest(cip, r.Header.Get)
 	if err := st.RecordVisitGeo(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province); err != nil {
 		log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
 	}
@@ -350,13 +365,6 @@ func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st
 
 	metrics.Default.IncRedirect("ok")
 	http.Redirect(w, r, link.URL, http.StatusFound)
-}
-
-// SetGeoResolver 供测试注入地域解析器。
-func SetGeoResolver(r geo.Resolver) {
-	if r != nil {
-		geoResolver = r
-	}
 }
 
 // clientHost 从 RemoteAddr 去掉端口。
