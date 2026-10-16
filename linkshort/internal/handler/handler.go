@@ -77,6 +77,8 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"base_url":                 shortBaseURL(req, cfg),
 				"burn_purge_after_destroy": cfg.BurnPurgeAfterDestroy,
+				"purge_interval":           cfg.PurgeInterval.String(),
+				"purge_retention_days":     cfg.PurgeRetentionDays,
 			})
 		})
 
@@ -96,6 +98,9 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Post("/import", func(w http.ResponseWriter, req *http.Request) { handleImport(w, req, st) })
 		api.Get("/export.csv", func(w http.ResponseWriter, req *http.Request) { handleExport(w, req, st) })
 	})
+
+	// API 文档页：公开，无需鉴权。
+	r.Get("/docs", func(w http.ResponseWriter, req *http.Request) { handleDocs(w, req) })
 
 	// 短链跳转（放最后，避免覆盖已注册前缀）。
 	r.Get("/{slug}", func(w http.ResponseWriter, req *http.Request) { handleRedirect(w, req, st, cfg) })

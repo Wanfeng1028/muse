@@ -99,6 +99,8 @@ services:
 | `LINKSHORT_RATE_LIMIT_BURST` | `40` | 限流令牌桶容量，允许的瞬时突发量（v1.2 新增） |
 | `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否开启限流（v1.2 新增），`true`/`false` |
 | `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
+| `LINKSHORT_PURGE_INTERVAL` | `24h` | 定时清理间隔（v1.5 新增），duration 格式如 `24h`/`90m`，解析失败回 `24h` |
+| `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7` |
 
 
 限流按 IP + API Key 两个维度分别做令牌桶；`/metrics`、`/api/health`、`/api/readyz` 三个路径免限流。
@@ -201,6 +203,14 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 - 排障：用户报"密码总不对" → 先确认输的不是全角字符/首尾空格（门页按原样比对，不做 trim）；仍不行就清除重设。不要尝试从哈希反推。
 - 限流：密码尝试走全局 IP 令牌桶（默认 20 RPS / burst 40），暴力猜解会被 429 挡掉；`linkshort_password_attempts_total{result="fail"}` 持续走高说明有人在猜。
 
+### 3.7 定时清理已销毁 burn 链（v1.5）
+
+后台 goroutine 按 `LINKSHORT_PURGE_INTERVAL` 轮询，删除 `burned_at` 早于"现在 − `LINKSHORT_PURGE_RETENTION_DAYS` 天"的已销毁 burn 链。`burned_at` 为 NULL 的历史行（v1.5 之前销毁的）跳过不删；visits 通过外键级联清除。
+
+- 数据影响：被清理的链接 clicks 会从总览统计里消失（与 v1.3 的立即 purge 一致）。审计需求强就把保留天数设大（如 `365`），不要设 `0`。
+- 排障：日志里搜 `[purge]` 看每轮清理结果；`linkshort_links_purged_total` 持续为 0 先查 `GET /api/meta` 的 `purge_interval` / `purge_retention_days` 是否符合预期，再看是否有 burn 链真的到了保留期。
+- 与 v1.3 开关的关系：`LINKSHORT_BURN_PURGE_AFTER_DESTROY=true` 时销毁即删行，定时清理扫不到它们；默认 `false` 时才由定时清理兜底。
+
 ## 4. 升级
 
 
@@ -263,6 +273,7 @@ scrape_configs:
 - `linkshort_burn_links_burned_total`：burn 类型链接被销毁的累计数。
 - `linkshort_rate_limit_rejected_total`：被限流拒绝的累计数。
 - `linkshort_process_start_time_seconds`：进程启动时间戳（秒），可用来算运行时长、检测重启。
+- `linkshort_links_purged_total`：定时清理删除的已销毁 burn 短链累计数（v1.5 新增）。
 
 ### 5.3 告警规则建议
 

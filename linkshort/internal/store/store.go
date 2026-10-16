@@ -78,10 +78,11 @@ func scanLink(scanner interface {
 
 		createdAt string
 		updatedAt string
+		burnedAt  sql.NullString
 	)
 	if err := scanner.Scan(
 		&l.ID, &l.Slug, &l.URL, &l.Title, &l.Clicks,
-		&enabled, &expiresAt, &maxVisits, &burn, &pwHash, &createdAt, &updatedAt,
+		&enabled, &expiresAt, &maxVisits, &burn, &pwHash, &createdAt, &updatedAt, &burnedAt,
 	); err != nil {
 		return nil, err
 	}
@@ -114,10 +115,15 @@ func scanLink(scanner interface {
 	} else {
 		l.PasswordHash = nil
 	}
+	ba, err := parseNullableTime(burnedAt)
+	if err != nil {
+		return nil, fmt.Errorf("parse burned_at: %w", err)
+	}
+	l.BurnedAt = ba
 	return &l, nil
 }
 
-const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, password_hash, created_at, updated_at`
+const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, password_hash, created_at, updated_at, burned_at`
 
 // CreateLink 创建短链。slug 为空时内部生成 6 位随机 slug，冲突时重试并加长。
 // validURL 校验目标 URL：必须 http/https 开头且长度不超过 2048。
@@ -347,8 +353,8 @@ func (s *Store) UpdateLinkEx(id int64, title string, enabled bool, expiresAt *ti
 // 目标不存在或 burn != 1 时返回 ErrNotFound。
 func (s *Store) MarkBurned(id int64) error {
 	res, err := s.db.Exec(
-		`UPDATE links SET enabled = 0, updated_at = ? WHERE id = ? AND burn = 1`,
-		formatTime(nowUTC()), id,
+		`UPDATE links SET enabled = 0, burned_at = ?, updated_at = ? WHERE id = ? AND burn = 1`,
+		formatTime(nowUTC()), formatTime(nowUTC()), id,
 	)
 	if err != nil {
 		return fmt.Errorf("mark burned: %w", err)
@@ -361,6 +367,24 @@ func (s *Store) MarkBurned(id int64) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// PurgeExpiredBurned 删除销毁时间早于 before 的 burn 短链（burn=1 且 burned_at 已设置）。
+// burned_at 为 NULL 的历史行（v1.5 之前销毁的）不在清理范围内，避免误删。
+// 返回实际删除的行数；visits 通过外键 ON DELETE CASCADE 级联删除。
+func (s *Store) PurgeExpiredBurned(before time.Time) (int64, error) {
+	res, err := s.db.Exec(
+		`DELETE FROM links WHERE burn = 1 AND burned_at IS NOT NULL AND burned_at < ?`,
+		formatTime(before),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("purge expired burned: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("rows affected: %w", err)
+	}
+	return n, nil
 }
 
 // PurgeLink 彻底删除一条链接。visits 表的外键 ON DELETE CASCADE 会级联删除该链接的访问日志。

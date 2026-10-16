@@ -4,6 +4,25 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.5.0] - 2026-10-16
+
+### 新增
+
+- purge 定时清理：后台 goroutine 按 `LINKSHORT_PURGE_INTERVAL`（默认 `24h`）轮询，删除销毁时间超过 `LINKSHORT_PURGE_RETENTION_DAYS`（默认 `7` 天）的已销毁 burn 短链；启动时打日志说明清理配置，优雅退出时先停清理再停 HTTP。
+- DB 迁移 v3→v4：`links` 新增 `burned_at TEXT` 列（老库自动 ALTER），`MarkBurned` 销毁时写入销毁时间；清理只认 `burned_at` 非空的行，v1.5 之前销毁的历史行（`burned_at` 为 NULL）不在清理范围内。
+- Prometheus 新增 `linkshort_links_purged_total`（定时清理删除数）；`GET /api/meta` 新增 `purge_interval` / `purge_retention_days` 字段。
+- `GET /docs` 公开 API 文档页（无需鉴权）：邮政标签视觉，表格列出全部 22 个端点（方法/路径/鉴权/说明），随二进制内嵌发布。
+- 新增 10 例测试（store 3、purge 1、config 3、metrics 1、handler 2）；`go test ./... -race` 83 例全过。
+
+### 变更
+
+- 无破坏性变更。默认配置下 purge 每天跑一轮、保留 7 天；v1.5 之前已销毁的 burn 链因无 `burned_at` 不会被自动清理（已知缺口见下）。
+
+### 已知缺口
+
+- v1.5 之前销毁的 burn 链没有 `burned_at`，定时清理跳过它们；如需清理请手动删除或等后续版本补回填脚本。
+- OPERATIONS.md 5.2 指标列表历史欠账：`linkshort_burn_links_purged_total`（v1.3）、`linkshort_password_attempts_total`（v1.4）之前漏记，本轮仅补记 v1.5 新增指标。
+
 ## [v1.4.0] - 2026-10-16
 
 ### 新增

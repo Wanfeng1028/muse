@@ -135,8 +135,8 @@ PRAGMA user_version=2;
 	if err := database.QueryRow("PRAGMA user_version").Scan(&version); err != nil {
 		t.Fatalf("read user_version failed: %v", err)
 	}
-	if version != 3 {
-		t.Fatalf("expected user_version=3 after migration, got %d", version)
+	if version != 4 {
+		t.Fatalf("expected user_version=4 after migration, got %d", version)
 	}
 
 	s := New(database)

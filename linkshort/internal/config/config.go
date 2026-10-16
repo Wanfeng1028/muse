@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Config 保存服务运行时所需的全部配置项。
@@ -20,6 +21,9 @@ type Config struct {
 	RateLimitEnabled bool    // 是否启用限流
 
 	BurnPurgeAfterDestroy bool // burn 销毁后是否彻底删除行（默认 false）
+
+	PurgeInterval      time.Duration // 定时清理间隔
+	PurgeRetentionDays int           // 保留天数
 }
 
 // 环境变量名。
@@ -34,6 +38,9 @@ const (
 	envRateLimitEnabled = "LINKSHORT_RATE_LIMIT_ENABLED"
 
 	envBurnPurgeAfterDestroy = "LINKSHORT_BURN_PURGE_AFTER_DESTROY"
+
+	envPurgeInterval      = "LINKSHORT_PURGE_INTERVAL"
+	envPurgeRetentionDays = "LINKSHORT_PURGE_RETENTION_DAYS"
 )
 
 // getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
@@ -75,6 +82,19 @@ func getenvBoolDefault(key string, def bool) bool {
 	return b
 }
 
+// getenvDurationDefault 读取 duration 型环境变量，解析失败返回默认值。
+func getenvDurationDefault(key string, def time.Duration) time.Duration {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return def
+	}
+	return d
+}
+
 // FromEnv 从环境变量加载配置，缺省值在文档中说明。
 // 当 LINKSHORT_ADMIN_KEY 为空时，自动生成 32 位 hex 并打印提示。
 func FromEnv() *Config {
@@ -89,6 +109,15 @@ func FromEnv() *Config {
 		RateLimitEnabled: getenvBoolDefault(envRateLimitEnabled, true),
 
 		BurnPurgeAfterDestroy: getenvBoolDefault(envBurnPurgeAfterDestroy, false),
+
+		PurgeInterval:      getenvDurationDefault(envPurgeInterval, 24*time.Hour),
+		PurgeRetentionDays: getenvIntDefault(envPurgeRetentionDays, 7),
+	}
+	if cfg.PurgeInterval <= 0 {
+		cfg.PurgeInterval = 24 * time.Hour
+	}
+	if cfg.PurgeRetentionDays < 0 {
+		cfg.PurgeRetentionDays = 7
 	}
 	if cfg.AdminKey == "" {
 

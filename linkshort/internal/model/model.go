@@ -14,6 +14,7 @@ type Link struct {
 	MaxVisits    *int64     // 限次访问，nil 表示不限
 	Burn         bool       // 阅后即焚开关
 	PasswordHash *string    // 密码的 bcrypt 哈希，nil 表示未设置密码
+	BurnedAt     *time.Time // 阅后即焚销毁时间（UTC），nil 表示未销毁
 
 	CreatedAt time.Time // 创建时间（UTC）
 

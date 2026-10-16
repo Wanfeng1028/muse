@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS links (
 	max_visits INTEGER,
 	burn INTEGER NOT NULL DEFAULT 0,
 	password_hash TEXT,
+	burned_at TEXT,
 	created_at TEXT NOT NULL,
 
 	updated_at TEXT NOT NULL
@@ -95,6 +96,7 @@ func Open(path string) (*sql.DB, error) {
 // migrate 负责把老库结构升级到当前版本。
 // v1 -> v2：links 表新增 max_visits（NULL=不限次数）与 burn（0/1，默认0）。
 // v2 -> v3：links 表新增 password_hash（NULL=未设置密码）。
+// v3 -> v4：links 表新增 burned_at（NULL=未被阅后即焚销毁）。
 func migrate(db *sql.DB) error {
 	var v int
 	if err := db.QueryRow("PRAGMA user_version;").Scan(&v); err != nil {
@@ -194,6 +196,53 @@ func migrate(db *sql.DB) error {
 		}
 
 		if _, err := db.Exec("PRAGMA user_version = 3;"); err != nil {
+			return fmt.Errorf("set user_version: %w", err)
+		}
+	}
+
+	if v < 4 {
+		// 检查 burned_at 是否已存在，避免重复 ALTER 导致报错。
+		rows, err := db.Query("PRAGMA table_info(links);")
+		if err != nil {
+			return fmt.Errorf("table_info links: %w", err)
+		}
+		hasBurnedAt := false
+		for rows.Next() {
+			var (
+				cid       int
+				name      string
+				ctype     string
+				notnull   int
+				dfltValue sql.NullString
+				pk        int
+			)
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				if cerr := rows.Close(); cerr != nil {
+					return fmt.Errorf("scan table_info: %w; close: %v", err, cerr)
+				}
+				return fmt.Errorf("scan table_info: %w", err)
+			}
+			if name == "burned_at" {
+				hasBurnedAt = true
+			}
+		}
+		if err := rows.Err(); err != nil {
+			if cerr := rows.Close(); cerr != nil {
+				return fmt.Errorf("iterate table_info: %w; close: %v", err, cerr)
+			}
+			return fmt.Errorf("iterate table_info: %w", err)
+		}
+		if err := rows.Close(); err != nil {
+			return fmt.Errorf("close table_info: %w", err)
+		}
+
+		if !hasBurnedAt {
+			if _, err := db.Exec("ALTER TABLE links ADD COLUMN burned_at TEXT;"); err != nil {
+				return fmt.Errorf("add column burned_at: %w", err)
+			}
+		}
+
+		if _, err := db.Exec("PRAGMA user_version = 4;"); err != nil {
 			return fmt.Errorf("set user_version: %w", err)
 		}
 	}
