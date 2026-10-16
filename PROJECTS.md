@@ -293,10 +293,12 @@
 5. 索引统计（文档数、内容总字节、库文件大小）
 6. JSON 输出（--json，便于脚本集成）
 7. 灵活配置（--db > DOCSEEK_DB > $HOME/.local/share/docseek/docseek.db）
+8. HTML 文本提取（v0.6.0）：索引 `.html`/`.htm` 时自动 charset 探测（BOM → `<meta>` → 默认 UTF-8，GBK/GB18030/BIG5 经 iconv 转码）→ 去 `<script>`/`<style>`/`<noscript>` → 提取 `<title>`（入库为文档标题，搜索标题加权生效）、`<meta name="description">` 与正文；提取失败回落原始文本并记 warn 日志；Web 搜索结果文件类型徽标（HTML/MD/TXT）
 
 **状态**：工程化 v5「生产级补齐」（2026-10-15 完成：结构化日志 stderr JSON Lines + request_id 全链路（X-Request-Id 响应头）+ `GET /api/metrics`（查询量/延迟/Top 查询词/慢查询/限流拒绝数）+ `backup`/`restore` 子命令（SQLite backup API 在线热备，原子替换恢复）+ `/api/locate` 并发限流（默认 4，超限 429）+ 索引批量事务（每 500 文件提交，147 文件/秒，老基线 37 文件/秒）+ jieba 词典噪音重定向 + `docker-compose.yml` 一键部署 + `docs/OPERATIONS.md` + 仓库级 `.github/dependabot.yml`；构建零警告、测试 62/62 全过〈含新增 test_ops.cpp 14 例〉；backup/restore、kill -9、删库恢复、词典缺失四项真实演练全过；发版对照报告 v0.5.0：13 项缺口全部关闭）。
+**工程化 v6「HTML 文本提取」（2026-10-16）**：html_extractor 新模块（HtmlExtractor：extract/detectCharset/decodeToUtf8/extractFromBytes，纯 C++17 手写，零第三方依赖，iconv 为 glibc 系统调用）+ indexer.cpp 接入（默认扩展名加 .html/.htm；UTF-16 含 NUL 不再误判二进制跳过；提取失败/正文空回落原始文本 + warn 日志）+ 40+ 命名实体解码 + 畸形 HTML 容错 + web/index.html 文件类型徽标 + 版本号 0.6.0；cmake 构建零警告、ctest **102/102** 全过（v0.5.0 基线 62 + 新增 40；WatcherTest.SubDir 为 inotify 时序 flaky，v0.5.0 已有，重跑通过）；CLI/serve 真实冒烟（index→search→locate、GBK 页面端到端）；Web 搜索页 HTML 徽标截图亲眼验收；验收修真 bug 2 个（`</script>` 闭合标签 `>` 泄漏为正文、UTF-8 BOM 未剥离）；设计注记 `docs/HTML_EXTRACTION.md`。
 
-**发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。
+**发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。v0.6.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`。
 
 **修 bug（本轮视觉验收附带抓出）**：
 1. web/index.html 的 `<script>` 自 v2 起在 `btn.dis` 处被截断，导致整页 JS 解析失败、所有按钮无响应——本轮补全并补上事件绑定与初始化（node --check 验证通过）。
@@ -310,10 +312,11 @@
 - 工程化 v3（2026-10-13）：**中文分词攻坚**——cppjieba（v5.6.2，MIT，Keenable 核验 2026 年仍在维护）实现的 FTS5 自定义分词器（`tokenize='jieba'`，fts5_api 注册，CutForSearch + 字节偏移，ASCII 小写折叠）；`PRAGMA user_version` 2→3 旧库自动迁移（事务包裹，失败回滚）；**混合检索 v1**（BM25 + AND→OR 回退 + 标题/短语加成重排序）；词典运行时四级定位（DOCSEEK_DICT_DIR > ../share/docseek/dict > 同级 dict/ > 编译期默认），缺失则 fail-fast。评测：12 篇中文语料 10 查询 Top-1 全部符合预期（docs/eval.md）；万级文件（40MB）索引 267 秒，检索 2.7 秒（含词典加载）。调试中发现并修复 dpsk 埋的 bug：Jieba 构造函数传参顺序错误（把 idf.utf8 当用户词典加载导致切词异常）。
 - 工程化 v4「自然语言定位原文」（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；query_parser（中文疑问句规则解析 + 疑问词删除表 + 引号短语抽取）/ passage_ranker（滑动窗口段落切分 + 四维加权打分 + 行号锚定）/ locator（混合召回→段落重排）三新模块 + Database::getContentById + jieba 单例只读接口；`locate` CLI（行号段落 + ANSI 高亮 + --json）+ `GET /api/locate` + Web"自然语言定位"卡片（延续现有视觉系统）；CHANGELOG.md 新建；docs/eval.md 第七节 10 查询评测 10/10；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md；CLI/Web 真实截图各 1 张亲眼验收；修了 v2 遗留的 3 个真实 bug（Web JS 截断致全页失效、首行 ```html 围栏、refreshStats 字段映射错位）
 - 工程化 v5「生产级补齐」（2026-10-15）：logger/metrics/concurrency_guard 三新模块 + `wrapRequest` 统一请求包装（request_id 生成/结构化日志/指标记录/X-Request-Id）+ `GET /api/metrics` + `/api/locate` 并发守卫（ScopedSlot RAII）+ `Database::beginBatch/commitBatch/abortBatch`（嵌套防护+异常回滚）+ `Database::backup/isValidDocseekDb` + `backup`/`restore` CLI（含 restore 原子替换三步）+ `StderrSilencer`（jieba 噪音重定向）+ `docker-compose.yml` + Dockerfile 补拷词典（修运行镜像 serve 起不来）+ `.github/dependabot.yml`（仓库级）+ `docs/OPERATIONS.md` + 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`；测试 62/62 全过（含新增 test_ops.cpp 14 例：日志/指标/备份恢复/失败注入/批量事务/并发守卫）；真实演练：backup→删库→restore→检索、kill -9 重启、词典缺失 fail-fast；索引 1000 文件 6.8 秒（147 文件/秒，4 倍提升）。本轮抓真 bug 两处：dpsk 首版 logger 输出非法 JSON（key 无引号+首字段多逗号，strace 定位打回重修）；SvcFixture.Health 硬编码 0.4.0 改版本无关断言
+- 工程化 v6「HTML 文本提取」（2026-10-16）：HtmlExtractor（去 script/style/noscript、提 title/meta description/正文、块级换行、实体解码、charset 探测<meta>/BOM/默认 UTF-8、畸形容错，纯 C++17 手写零第三方依赖）+ Indexer 集成（增量索引/统计/prune 全链路）+ 搜索/locate（标题加权天然生效）+ serve/Web 冒烟验证 + Web 文件类型徽标；22 个 dpsk 批次并行生成（20 并行撞 429 后降串行+退避收回）；README（支持格式章节）/CHANGELOG v0.6.0/发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`/设计注记 `docs/HTML_EXTRACTION.md` 齐备
 
 **后续计划**：
 
-- HTML/PDF/Office 文本提取
+- PDF / Office 文档的文本提取
 - 多用户支持
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
