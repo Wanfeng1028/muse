@@ -41,6 +41,19 @@
 - 可视化分支图，层次化布局，有问题的节点用朱砂红圈注（布局算法渲染见上图）。
 - 本地化文本抽取与回填，保留 `{var}` 占位符。
 
+复盘模式（v1.4）：
+
+- 对局事件流：记录一次跑团/试玩的完整时间线——进入场景、每次选择（含"没选的路"）、投票、出局、人工关键标注。
+- 一键生成 Markdown 复盘报告：对局时间线、抉择点复盘（每个抉择点引用剧本原文行号、列出没走的路）、投票与出局、MVP 评选表（留白投票列）、关键标注。
+- CLI：`interlude-lint replay 对局日志.json --script 剧本.interlude --out 复盘报告.md`（不给 --script 则只按日志生成）。
+
+示例（对示例剧本的一次真实走法）：
+
+```
+interlude-lint replay src/main/resources/replays/sample-session.json \
+  --script src/main/resources/scripts/sample.interlude --out 复盘报告.md
+```
+
 ## DSL 语法速查
 
 ```
@@ -85,7 +98,10 @@ v1 已完成：
 计划中：
 
 - 玩家路径热力分析
-- 剧本杀复盘模式
+
+已完成：
+
+- v1.4 剧本杀复盘模式：对局时间线记录 + Markdown 复盘报告（含抉择点复盘与 MVP 评选输入）
 
 ## 许可证
 

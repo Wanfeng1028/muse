@@ -7,6 +7,10 @@ import com.interlude.lint.Report
 import com.interlude.lint.Severity
 import com.interlude.lint.Validator
 import com.interlude.log.Log
+import com.interlude.replay.ReplayAnalyzer
+import com.interlude.replay.ReplayMarkdown
+import com.interlude.replay.SessionLog
+import com.interlude.replay.SessionLogParseException
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -15,6 +19,7 @@ private const val USAGE = """用法: interlude-lint <命令> [选项]
 命令:
 lint <剧本文件> 校验剧本
 restore <剧本文件> 列出或恢复备份
+replay <对局日志.json> 生成复盘报告
 
 lint 选项:
 --log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
@@ -25,7 +30,13 @@ restore 选项:
 --log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
 --log-json 日志以 JSON 行输出到 stderr
 --list 列出全部备份（默认行为）
---index N 恢复第 N 个备份（0=最新）"""
+--index N 恢复第 N 个备份（0=最新）
+
+replay 选项:
+--log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
+--log-json 日志以 JSON 行输出到 stderr
+--script FILE 关联的剧本文件（用于场景富化；不给则只按日志生成）
+--out FILE 报告写到文件（默认打印到 stdout）"""
 
 private fun printUsageAndExit(): Nothing {
     System.err.println(USAGE)
@@ -233,11 +244,116 @@ fun runRestore(args: Array<String>): Int {
     return 0
 }
 
+/** 复盘子命令：读取对局日志，生成复盘报告。 */
+fun runReplay(args: Array<String>): Int {
+    var logLevel = "info"
+    var logJson = false
+    var scriptPath: String? = null
+    var outPath: String? = null
+    val positional = mutableListOf<String>()
+
+    var i = 1
+    while (i < args.size) {
+        when (args[i]) {
+            "--log-level" -> {
+                if (i + 1 >= args.size) printUsageAndExit()
+                logLevel = args[i + 1]
+                i += 2
+            }
+            "--log-json" -> {
+                logJson = true
+                i += 1
+            }
+            "--script" -> {
+                if (i + 1 >= args.size) printUsageAndExit()
+                scriptPath = args[i + 1]
+                i += 2
+            }
+            "--out" -> {
+                if (i + 1 >= args.size) printUsageAndExit()
+                outPath = args[i + 1]
+                i += 2
+            }
+            else -> {
+                positional.add(args[i])
+                i += 1
+            }
+        }
+    }
+    if (positional.size != 1) printUsageAndExit()
+    val logPath = positional[0]
+
+    val logFile = File(logPath)
+    if (!logFile.exists()) {
+        System.err.println("文件不存在: $logPath")
+        return 2
+    }
+    val logText = try {
+        logFile.readText()
+    } catch (e: Exception) {
+        System.err.println("读取文件失败: $logPath")
+        return 2
+    }
+
+    val events = try {
+        SessionLog.parse(logText)
+    } catch (e: SessionLogParseException) {
+        System.err.println("对局日志解析失败: ${e.message}")
+        return 2
+    }
+
+    val story = if (scriptPath != null) {
+        val scriptFile = File(scriptPath)
+        if (!scriptFile.exists()) {
+            System.err.println("文件不存在: $scriptPath")
+            return 2
+        }
+        val scriptText = try {
+            scriptFile.readText()
+        } catch (e: Exception) {
+            System.err.println("读取文件失败: $scriptPath")
+            return 2
+        }
+        try {
+            Parser(scriptText).parse()
+        } catch (e: ParseError) {
+            System.err.println(e.message)
+            return 2
+        }
+    } else {
+        null
+    }
+
+    val report = try {
+        ReplayAnalyzer.buildReport(story, events)
+    } catch (e: IllegalArgumentException) {
+        System.err.println("对局日志无效: ${e.message}")
+        return 2
+    }
+
+    val markdown = ReplayMarkdown.render(report)
+
+    if (outPath != null) {
+        try {
+            File(outPath).writeText(markdown)
+        } catch (e: Exception) {
+            System.err.println("写入报告失败: $outPath")
+            return 2
+        }
+    } else {
+        println(markdown)
+    }
+
+    Log.info("replay", "复盘报告已生成: session=${report.sessionId}, events=${report.timeline.size}")
+    return 0
+}
+
 fun main(args: Array<String>) {
     if (args.isEmpty()) printUsageAndExit()
     when (args[0]) {
         "lint" -> exitProcess(runLint(args))
         "restore" -> exitProcess(runRestore(args))
+        "replay" -> exitProcess(runReplay(args))
         else -> printUsageAndExit()
     }
 }

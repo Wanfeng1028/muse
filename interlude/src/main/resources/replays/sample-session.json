@@ -1,0 +1,17 @@
+{
+  "session": { "id": "demo-001", "script": "sample.interlude", "players": 1, "startedAt": "2026-10-16T20:00:00+08:00" },
+  "events": [
+    { "type": "scene", "scene": "prologue", "at": "2026-10-16T20:00:05+08:00" },
+    { "type": "choice", "scene": "prologue", "label": "走向候车室", "target": "hall",
+      "alternatives": [ { "label": "留在站台", "target": "platform" } ], "at": "2026-10-16T20:00:40+08:00" },
+    { "type": "scene", "scene": "hall", "at": "2026-10-16T20:00:41+08:00" },
+    { "type": "note", "note": "关键抉择：推门离开需要 has_key，当时没有钥匙，只能搭话", "scene": "hall", "at": "2026-10-16T20:01:10+08:00" },
+    { "type": "choice", "scene": "hall", "label": "和陌生人搭话", "target": "stranger",
+      "alternatives": [ { "label": "推门离开", "target": "exit" } ], "at": "2026-10-16T20:01:30+08:00" },
+    { "type": "scene", "scene": "stranger", "at": "2026-10-16T20:01:31+08:00" },
+    { "type": "choice", "scene": "stranger", "label": "报上姓名", "target": "ending_a",
+      "alternatives": [ { "label": "沉默", "target": "ending_b" } ], "at": "2026-10-16T20:02:00+08:00" },
+    { "type": "scene", "scene": "ending_a", "at": "2026-10-16T20:02:01+08:00" },
+    { "type": "end", "outcome": "抵达 ending_a：陌生人说出了你的名字", "winner": null, "at": "2026-10-16T20:02:10+08:00" }
+  ]
+}

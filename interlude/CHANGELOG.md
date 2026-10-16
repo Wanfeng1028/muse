@@ -22,6 +22,24 @@
 - 桌面 UI 截图验收待正常 GUI 环境。
 - Gradle daemon 在本沙箱不可用，验证走直编流程。
 
+## [1.4] - 2026-10-16
+
+### Added
+- 复盘模式（replay）：对局事件模型（发言/进入场景/选择/投票/出局/关键标注/结束 7 种事件，选择事件记录"没选的路" alternatives）。
+- 对局日志 JSON 解析器（手写递归下降，零依赖；错误定位到 events[i]）。
+- 复盘报告分析器：抉择点提取 + 剧本场景富化（行号+原文引用）+ 引用缺失场景记 warnings 不崩 + 投票按轮分组 + 玩家统计（投出/被投/出局轮次）+ MVP 评选输入。
+- Markdown 复盘报告生成器：时间线 / 抉择点复盘（含"没走的路"）/ 投票与出局 / MVP 评选表 / 关键标注 / 对局结果。
+- CLI `replay` 子命令（`--script` 关联剧本做富化、`--out` 写文件，退出码 0/2）。
+- 示例对局日志 `src/main/resources/replays/sample-session.json`（示例剧本真实走法 demo-001）。
+- 复盘测试 47 例（SessionLogTest 16 / ReplayAnalyzerTest 16 / ReplayMarkdownTest 9 / ReplayCliTest 6）。
+
+### Fixed
+- 复盘 warnings 产生顺序：改为严格按事件时间线顺序（之前抉择点警告先于 SceneEnter 警告）。
+
+### Known limitations
+- 桌面 UI 截图验收待正常 GUI 环境。
+- Gradle daemon 在本沙箱不可用，验证走直编流程。
+
 ## [1.1] - 2026-10-15
 
 ### Added
