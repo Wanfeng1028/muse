@@ -304,6 +304,9 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
     - feed_url 为本地路径时直接交给 feedparser 解析，不走网络层。
     - 远程抓取使用 urllib，支持 etag/modified 条件请求与指数退避重试。
     """
+    from . import metrics as _metrics
+
+    _t0 = time.monotonic()
     feed_id = feed["id"]
     feed_url = feed["feed_url"]
     etag = feed.get("etag") or None
@@ -349,6 +352,14 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
                 "更新抓取结果失败",
                 extra={"feed_id": feed_id, "kind": "unknown", "attempt": 0, "error": str(exc)[:200]},
             )
+        try:
+            _metrics.observe_fetch_duration(time.monotonic() - _t0)
+            _metrics.inc_fetch("ok" if status == "ok" else "error")
+            if status == "error" and error_kind:
+                _metrics.inc_fetch_error(error_kind)
+            _metrics.add_articles(added)
+        except Exception as exc:  # noqa: BLE001  # 指标埋点不许影响抓取主流程，故意宽捕获
+            logger.warning("指标埋点失败", extra={"feed_id": feed_id, "error": str(exc)[:200]})
         return {"added": added, "status": status, "error": error}
 
     # 远程抓取
@@ -398,4 +409,12 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
             extra={"feed_id": feed_id, "kind": "unknown", "attempt": 0, "error": str(exc)[:200]},
         )
 
+    try:
+        _metrics.observe_fetch_duration(time.monotonic() - _t0)
+        _metrics.inc_fetch("ok" if status == "ok" else "error")
+        if status == "error" and error_kind:
+            _metrics.inc_fetch_error(error_kind)
+        _metrics.add_articles(added)
+    except Exception as exc:  # noqa: BLE001  # 指标埋点不许影响抓取主流程，故意宽捕获
+        logger.warning("指标埋点失败", extra={"feed_id": feed_id, "error": str(exc)[:200]})
     return {"added": added, "status": status, "error": error}

@@ -82,7 +82,36 @@ OPML：导入导出订阅清单。
 
 演示数据只在空库时写入一次，不会覆盖你自己的数据。想要干净的库，删掉 `data/feedflow.db` 重启即可。
 
+## 监控指标
+
+`GET /metrics` 返回 Prometheus 文本格式，可直接被抓取。
+
+| 指标名 | labels | 含义 |
+| --- | --- | --- |
+| `feedflow_http_requests_total` | `method`、`route`、`status` | HTTP 请求计数。 |
+| `feedflow_fetch_total` | `status` | 抓取总次数。 |
+| `feedflow_fetch_errors_total` | `kind` | 抓取错误计数，`kind` 取值 `timeout` / `dns` / `http_4xx` / `http_5xx` / `parse_error` / `unknown`。 |
+| `feedflow_articles_stored_total` | 无 | 已入库文章累计数量。 |
+| `feedflow_fetch_duration_seconds_total` | 无 | 抓取耗时累计秒数。 |
+| `feedflow_feeds_total` | 无 | 订阅源总数。 |
+| `feedflow_articles_total` | 无 | 文章总数。 |
+| `feedflow_unread_total` | 无 | 未读文章数。 |
+| `feedflow_starred_total` | 无 | 加星文章数。 |
+
 ## 更新记录
+
+### v1.4 — 2026-10-16
+
+- 新增 Prometheus 指标（`GET /metrics`）。
+- 新增失败注入测试。
+- 补全运维手册，共 8 章。
+- 新增 Fever 运维章节。
+- 移动端阅读优化（≤768px：订阅/文章/正文三段式视图切换，顶栏横滑，触控目标 ≥44px）。
+- 测试：pytest 102 例全过（新增 18：指标 6 + 失败注入 12）、ruff 全洁。
+
+![移动端阅读器](docs/screenshots/reader-mobile.png)
+
+移动端：三段式视图切换，一次只看一栏。
 
 - v1.1（2026-10-13）：视觉返工。阅读器三栏改为全幅布局（之前被锁在 900px 容器里，右边大片空白）；演示数据换成真实命名的订阅源和文章（之前是"示例博客"这类敷衍命名且有重复）；修了订阅管理页分组列显示"未分组"的加载竞态；修了搜索页模板变量写错导致永远无结果；短于 3 字的搜索词改走 LIKE 匹配（trigram 索引形不成 3 元组）。pytest 35 例全过，ruff 全洁。
 

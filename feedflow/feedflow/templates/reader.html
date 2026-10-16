@@ -5,6 +5,11 @@
 {% block title %}信流 · 阅读器{% endblock %}
 
 {% block content %}
+<nav class="mobile-views" aria-label="视图切换">
+  <button type="button" class="mobile-view-btn is-active" data-view="tree">订阅</button>
+  <button type="button" class="mobile-view-btn" data-view="list">文章</button>
+  <button type="button" class="mobile-view-btn" data-view="reader">正文</button>
+</nav>
 <div class="app-shell" data-folders='{{ folders|tojson }}'>
 
   <aside class="col col-tree" aria-label="订阅源">
@@ -108,4 +113,5 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
 {% endblock %}

@@ -911,3 +911,118 @@ table.data td .actions {
 .app-shell {
   width: 100%;
 }
+
+
+/* ---- mobile reading views (<=768px) ---- */
+.mobile-views {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-views {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #FAFAF7;
+    border-bottom: 1px solid #E7E2D8;
+    height: 48px;
+  }
+  .mobile-view-btn {
+    flex: 1 1 0;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: #1C1A17;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0 8px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .mobile-view-btn.is-active {
+    color: #C2410C;
+    border-bottom-color: #C2410C;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 57px - 48px);
+    overflow: hidden;
+  }
+
+  body[data-mobile-view="tree"] .col-list,
+  body[data-mobile-view="tree"] .col-reader {
+    display: none;
+  }
+  body[data-mobile-view="list"] .col-tree,
+  body[data-mobile-view="list"] .col-reader {
+    display: none;
+  }
+  body[data-mobile-view="reader"] .col-tree,
+  body[data-mobile-view="reader"] .col-list {
+    display: none;
+  }
+
+  body:not([data-mobile-view]) .col-list,
+  body:not([data-mobile-view]) .col-reader {
+    display: none;
+  }
+
+  .topbar-inner {
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 0 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .topbar-inner .brand {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    font-size: 16px;
+  }
+  .topbar-inner .mainnav {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 2px;
+    flex: 0 0 auto;
+  }
+  .topbar-inner .mainnav a {
+    white-space: nowrap;
+    padding: 12px 10px;
+    font-size: 14px;
+  }
+  .topbar-inner .searchbox {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .tree-item,
+  .filter-btn,
+  .ghost-btn {
+    min-height: 44px;
+  }
+
+  .reader-pane {
+    padding: 20px 16px;
+  }
+  .reader-pane .content {
+    font-size: 16px;
+  }
+
+  .page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

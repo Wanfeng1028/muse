@@ -17,7 +17,9 @@ from . import config as _config
 from . import db as _db
 from . import scheduler as _scheduler
 from . import seed as _seed
-from .logging import clear_request_id, set_request_id, setup_logging
+from .logging import clear_request_id, get_logger, set_request_id, setup_logging
+
+_logger = get_logger("feedflow.metrics")
 
 
 def create_app(cfg=None) -> Flask:
@@ -70,6 +72,16 @@ def create_app(cfg=None) -> Flask:
         request_id = getattr(g, "request_id", None)
         if request_id:
             response.headers["X-Request-ID"] = request_id
+        try:
+            from . import metrics as _metrics
+
+            _metrics.inc_http_request(
+                request.method,
+                getattr(request.url_rule, "rule", None) or "unknown",
+                str(response.status_code),
+            )
+        except Exception as exc:  # noqa: BLE001  # 指标埋点不许影响请求主流程，故意宽捕获
+            _logger.warning("指标埋点失败", extra={"error": str(exc)[:200]})
         clear_request_id()
         return response
 

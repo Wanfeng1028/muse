@@ -119,6 +119,16 @@ def search_page():
     return render_template("search.html", q=q, articles=articles)
 
 
+@bp.get("/metrics")
+def metrics():
+    """Prometheus 指标。"""
+    from . import metrics as metrics_mod
+
+    db_path = _cfg()["db_path"]
+    text = metrics_mod.render(db_path)
+    return Response(text, mimetype="text/plain; version=0.0.4")
+
+
 @bp.get("/healthz")
 def healthz():
     """健康检查：返回服务、数据库与调度器状态。"""
