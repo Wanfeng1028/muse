@@ -1,4 +1,4 @@
-const CACHE_NAME = 'second-brain-v0.7.0';
+const CACHE_NAME = 'second-brain-v0.10.0';
 
 const APP_SHELL = [
   '/',
@@ -9,6 +9,7 @@ const APP_SHELL = [
   '/static/pwa.js',
   '/static/install.js',
   '/static/offline-queue.js',
+  '/static/webpush.js',
   '/static/manifest.webmanifest',
   '/static/favicon.svg',
   '/static/icons/icon.svg',
@@ -110,4 +111,45 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    // 载荷解析失败时用默认文案兜底
+  }
+  const title = data.title || '第二大脑 · 复习提醒';
+  const options = {
+    body: data.body || '有笔记到期了，点开看看',
+    tag: data.tag || 'review-digest',
+    icon: '/static/icons/icon-192.png',
+    badge: '/static/icons/icon-192.png',
+    renotify: false,
+    data: { url: data.url || '/#review' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// 点击通知：已有本应用窗口则聚焦并跳到复习页，否则开新窗口。
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/#review';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        try {
+          if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
+            return client.focus().then(() => {
+              if ('navigate' in client) return client.navigate(targetUrl);
+            }).catch(() => client.focus());
+          }
+        } catch (e) {
+          // URL 解析失败则继续找下一个窗口
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(targetUrl);
+    })
+  );
 });

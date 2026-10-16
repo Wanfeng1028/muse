@@ -220,6 +220,22 @@
         <div id="push-test-result" class="push-test-result"></div>
       </form>
 
+      <h3 class="push-section-title">浏览器推送</h3>
+      <p class="push-desc">每天到点后，浏览器会弹一条提醒，告诉你今天有几篇笔记要复习。手机和电脑的浏览器都能收，记得先允许通知。</p>
+      <div class="push-row">
+        <span class="push-label">通知权限</span>
+        <span id="webpush-permission">正在检查…</span>
+      </div>
+      <div class="push-row">
+        <span class="push-label">订阅状态</span>
+        <span id="webpush-status">正在检查…</span>
+      </div>
+      <div class="push-actions">
+        <button id="btn-webpush-subscribe" class="btn btn-primary" type="button">开启浏览器推送</button>
+        <button id="btn-webpush-unsubscribe" class="btn btn-secondary" type="button" hidden>关闭浏览器推送</button>
+      </div>
+      <p id="webpush-tip" class="push-save-tip"></p>
+
       <h3 class="push-section-title">推送历史</h3>
       <table id="push-history-table" class="push-history-table">
         <thead>
@@ -270,6 +286,7 @@
 <script src="/static/install.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/review.js"></script>
+<script src="/static/webpush.js"></script>
 
 <!--
 ID 对照表

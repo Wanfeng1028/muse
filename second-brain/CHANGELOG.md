@@ -5,6 +5,30 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.10.0] - 2026-10-16
+
+浏览器 Web Push 推送——每天到点，浏览器弹提醒，不用开邮箱也能收到复习通知
+
+### 新增
+- `push_subscriptions` 表（`endpoint` 全局唯一，按 `user_id` 隔离）+ `internal/store/subscription.go`（Upsert/Delete/List/Count，参数校验中文错误）。
+- `internal/notify/webpush.go`：VAPID Web Push 发送器（`github.com/SherClockHolmes/webpush-go`），410/404 自动清理失效订阅，单订阅失败不影响其他，发送超时 10s。
+- 4 个 API：`POST/DELETE/GET /api/push/subscriptions`、`GET /api/push/vapid-public-key`；`p256dh`/`auth` 一律脱敏返回，VAPID 未配置时返回 503。
+- 调度器集成：有到期复习时给已订阅用户推送（沿用 X-User 用户隔离口径），与 SMTP/Webhook 共用"今日已推送"去重。
+- 前端：推送设置页「浏览器推送」区（通知权限/订阅状态/开启/关闭按钮，大白话失败提示）；`/#review` hash 直达复习页。
+- `sw.js`：`push` 事件解析载荷显示通知，`notificationclick` 聚焦或打开复习页；缓存版本升到 v0.10.0。
+- 配置：`SB_VAPID_PUBLIC_KEY` / `SB_VAPID_PRIVATE_KEY` / `SB_VAPID_SUBJECT`；只配 VAPID 也能启动（`Validate` 已修正）。
+
+### 测试
+- `go test./...` 157/157 全绿（新增 18 例：`subscription_test.go` 6、`push_subscription_test.go` 8、`webpush_test.go` 4，覆盖 CRUD/校验/跨用户隔离/503/脱敏/410 清理/加密发送）。
+- `go vet`、`gofmt` 全洁。
+- 真实冒烟：真实服务 + mock push service 全链路通过（订阅→到期复习→scheduler 触发→mock 收到 aes128gcm 加密推送→退订）；推送设置页两态截图已验收（`docs/screenshots/push/`）。
+
+### 已知限制
+- VAPID 密钥需用户自己生成配置（README 有生成命令）。
+- 调度器单实例假设，多实例部署会重复推送。
+- iOS 需 16.4+ 且已安装到主屏幕才能收 Web Push。
+- 无到期复习时不推送。
+
 ## [0.8.0] - 2026-10-16
 
 搜索相关性升级——中文搜得准，还能看懂为什么排前面

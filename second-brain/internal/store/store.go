@@ -182,6 +182,18 @@ func createSchema(db *sql.DB) error {
 		// 注意：push_log 的唯一索引由 migratePushLogUser 统一创建（幂等）。
 		// 不能在这里直接建 (date, channel, user_id) 索引：老库在 migration 之前
 		// 还没有 user_id 列，会报 no such column。
+		`CREATE TABLE IF NOT EXISTS push_subscriptions (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id TEXT NOT NULL DEFAULT 'local',
+			endpoint TEXT NOT NULL,
+			p256dh TEXT NOT NULL,
+			auth TEXT NOT NULL,
+			created_at TEXT NOT NULL,
+			UNIQUE(endpoint)
+		)`,
+		// endpoint 全局唯一：同一浏览器订阅被其他用户重新认领时归属新用户。
+		// 按 user_id 查询的普通索引，支撑 List/Count。
+		`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id)`,
 	}
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {

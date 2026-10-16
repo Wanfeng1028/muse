@@ -93,6 +93,9 @@ go run ./cmd/server
 | `SB_MAIL_TO` | 复习提醒收件邮箱，多个地址可用逗号分隔 | 空 |
 | `SB_WEBHOOK_URL` | Webhook 接收地址，POST JSON | 空 |
 | `SB_WEBHOOK_SECRET` | Webhook 签名密钥，用于生成 `X-Signature`。密钥类信息只走环境变量，页面不填 | 空 |
+| `SB_VAPID_PUBLIC_KEY` | Web Push 的 VAPID 公钥（base64url，65 字节 uncompressed 点）。密钥类信息只走环境变量 | 空 |
+| `SB_VAPID_PRIVATE_KEY` | Web Push 的 VAPID 私钥（base64url，32 字节）。密钥类信息只走环境变量 | 空 |
+| `SB_VAPID_SUBJECT` | VAPID 联系人，`mailto:你@邮箱` 或 `https://你的域名` | 空 |
 
 示例：
 
@@ -175,6 +178,10 @@ docker run -d -p 8080:8080 -v sb-data:/data second-brain
 | PUT | `/api/push/settings` | 修改推送设置。只接受白名单字段；请求体里出现 `password` 或 `secret` 直接返回 400 |
 | POST | `/api/push/test` | 用 3 条假数据真实发送一次，用来验证 SMTP 或 Webhook 通不通，不写 `push_log` |
 | GET | `/api/push/history` | 查看推送历史，来自 `push_log` |
+| POST | `/api/push/subscriptions` | 新建/更新浏览器推送订阅。body `{endpoint,p256dh,auth}`，返回脱敏后的订阅。VAPID 未配置时 503 |
+| DELETE | `/api/push/subscriptions` | 按 endpoint 删除当前用户的订阅。body 或 `?endpoint=` 传参，返回 `{deleted:true/false}`。VAPID 未配置时 503 |
+| GET | `/api/push/subscriptions` | 列出当前用户的浏览器订阅，`p256dh`/`auth` 脱敏显示。VAPID 未配置时 503 |
+| GET | `/api/push/vapid-public-key` | 返回 VAPID 公钥，前端订阅时用。VAPID 未配置时 503 |
 
 请求与响应均为 JSON。错误响应统一为 `{"error": "..."}` 结构。
 
@@ -304,7 +311,40 @@ SM-2 四档说明：
 
 ![推送设置页](docs/screenshots/push-settings.png)
 
-已知限制：调度器按单实例假设工作，多实例部署会重复推送，需要外部保证只有一个实例在跑调度。
+**浏览器推送（v0.10+）**：每天到点后，浏览器弹一条提醒"今天有 N 篇笔记到期了"，点开直接跳到复习页。手机、电脑的浏览器都能收。
+
+- 开启：推送设置页 → 「浏览器推送」区 → 「开启浏览器推送」，按提示允许通知。
+- 服务器配置：三个环境变量 `SB_VAPID_PUBLIC_KEY` / `SB_VAPID_PRIVATE_KEY` / `SB_VAPID_SUBJECT` 必须同时配好；只配 VAPID 不配邮箱/webhook 也能用。
+- 密钥生成（跑一次，把输出填进环境变量）：
+  ```bash
+  cat > /tmp/genvapid.go <<'EOF'
+  package main
+
+  import (
+  	"crypto/ecdsa"
+  	"crypto/elliptic"
+  	"crypto/rand"
+  	"encoding/base64"
+  	"fmt"
+  )
+
+  func main() {
+  	key, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+  	priv := make([]byte, 32)
+  	d := key.D.Bytes()
+  	copy(priv[32-len(d):], d)
+  	fmt.Println("SB_VAPID_PRIVATE_KEY=" + base64.RawURLEncoding.EncodeToString(priv))
+  	fmt.Println("SB_VAPID_PUBLIC_KEY=" + base64.RawURLEncoding.EncodeToString(elliptic.Marshal(elliptic.P256(), key.X, key.Y)))
+  }
+  EOF
+  go run /tmp/genvapid.go
+  ```
+  `SB_VAPID_SUBJECT` 填 `mailto:你的邮箱`。
+
+![浏览器推送未订阅](docs/screenshots/push/push-settings-unsubscribed.png)
+![浏览器推送已订阅](docs/screenshots/push/push-settings-subscribed.png)
+
+已知限制：调度器按单实例假设工作，多实例部署会重复推送，需要外部保证只有一个实例在跑调度；iOS 需 16.4+ 且已安装到主屏幕；无到期复习时不推送。
 ## 数据与备份
 
 所有数据保存在 `SB_DATA_DIR` 下的 SQLite 文件中。备份方式：

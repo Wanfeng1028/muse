@@ -379,4 +379,5 @@ func RegisterPushRoutes(mux *http.ServeMux, st *store.Store, cfg config.Config) 
 	mux.HandleFunc("PUT /api/push/settings", handlePutPushSettings(st, cfg))
 	mux.HandleFunc("POST /api/push/test", handlePushTest(st, cfg))
 	mux.HandleFunc("GET /api/push/history", handlePushHistory(st))
+	RegisterPushSubscriptionRoutes(mux, st, cfg)
 }

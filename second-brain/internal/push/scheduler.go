@@ -3,6 +3,7 @@ package push
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -27,6 +28,8 @@ type PushResult struct {
 type SenderSet struct {
 	SMTP    notify.Sender
 	Webhook notify.Sender
+	// WebPush 为 Web Push 发送器，nil 表示未配置 VAPID。
+	WebPush *notify.WebPushSender
 }
 
 // BuildSenders 根据配置构建各通道发送器。
@@ -37,6 +40,13 @@ func BuildSenders(pc config.PushConfig) SenderSet {
 	}
 	if pc.WebhookURL != "" {
 		set.Webhook = notify.NewWebhookSender(pc.WebhookURL, pc.WebhookSecret, 15*time.Second)
+	}
+	if pc.VAPIDConfigured() {
+		if wp, err := notify.NewWebPushSender(pc.VAPIDPublicKey, pc.VAPIDPrivateKey, pc.VAPIDSubject, 15*time.Second); err != nil {
+			log.Printf("WebPush 发送器构建失败: %v", err)
+		} else {
+			set.WebPush = wp
+		}
 	}
 	return set
 }
@@ -141,7 +151,84 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 		}
 		results = append(results, PushResult{Channel: name, User: user, Status: "sent", Detail: ""})
 	}
+	if senders.WebPush != nil && len(items) > 0 {
+		const wpName = "webpush"
+		if st.HasPushedFor(dateKey, wpName, user) {
+			results = append(results, PushResult{Channel: wpName, User: user, Status: "skipped", Detail: "今日已推送"})
+		} else {
+			results = append(results, sendWebPushDigest(ctx, st, senders.WebPush, dateKey, user, len(items)))
+		}
+	}
 	return results
+}
+
+// sendWebPushDigest 向指定用户的全部浏览器订阅推送复习摘要，410/404 失效订阅顺手清理。
+func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushSender, dateKey, user string, dueCount int) PushResult {
+	const wpName = "webpush"
+	subs, err := st.ListSubscriptionsForUser(user)
+	if err != nil {
+		return PushResult{Channel: wpName, User: user, Status: "failed", Detail: truncateRunes("读取订阅失败: "+err.Error(), 200)}
+	}
+	if len(subs) == 0 {
+		return PushResult{Channel: wpName, User: user, Status: "skipped", Detail: "该用户无浏览器订阅"}
+	}
+	title := "第二大脑 · 复习提醒"
+	var body string
+	if dueCount == 1 {
+		body = "有 1 篇笔记到期了，点开看看"
+	} else {
+		body = fmt.Sprintf("今天有 %d 篇笔记到期了，点开看看", dueCount)
+	}
+	const targetURL = "/#review"
+	sentN, goneN := 0, 0
+	var failMsg string
+	for _, s := range subs {
+		target := notify.WebPushTarget{Endpoint: s.Endpoint, P256DH: s.P256DH, Auth: s.Auth}
+		err := wp.SendToSubscription(ctx, target, title, body, targetURL)
+		if err == nil {
+			sentN++
+			continue
+		}
+		if errors.Is(err, notify.ErrSubscriptionGone) {
+			goneN++
+			if _, delErr := st.DeleteSubscriptionForUser(user, s.Endpoint); delErr != nil {
+				log.Printf("清理失效订阅失败 (%s): %v", user, delErr)
+			}
+			continue
+		}
+		if failMsg == "" {
+			failMsg = err.Error()
+		}
+	}
+	var status, detail string
+	if sentN > 0 {
+		status = "sent"
+		if goneN > 0 {
+			detail = fmt.Sprintf("成功 %d 条，清理失效订阅 %d 条", sentN, goneN)
+		}
+	} else if goneN > 0 && failMsg == "" {
+		status = "failed"
+		detail = fmt.Sprintf("全部订阅已失效，清理 %d 条", goneN)
+	} else {
+		status = "failed"
+		detail = truncateRunes("推送失败: "+failMsg, 200)
+	}
+	if err := st.RecordPushFor(dateKey, wpName, user, status, detail); err != nil {
+		log.Printf("推送记录写入失败 (%s): %v", wpName, err)
+	}
+	return PushResult{Channel: wpName, User: user, Status: status, Detail: detail}
+}
+
+// truncateRunes 按 rune 截断到 n 个字符。
+func truncateRunes(s string, n int) string {
+	if n <= 0 {
+		return ""
+	}
+	rs := []rune(s)
+	if len(rs) <= n {
+		return s
+	}
+	return string(rs[:n])
 }
 
 // RunPush 执行一次推送：按有到期回顾的用户循环分发，每个用户独立 digest。无用户到期时回退为默认用户单次推送（保持空库行为与旧测试兼容）。
@@ -286,7 +373,7 @@ func (s *Scheduler) tick(loc *time.Location) {
 		users = []string{store.DefaultUser}
 	}
 	for _, u := range users {
-		if s.st.HasPushedFor(dateKey, "smtp", u) || s.st.HasPushedFor(dateKey, "webhook", u) {
+		if s.st.HasPushedFor(dateKey, "smtp", u) || s.st.HasPushedFor(dateKey, "webhook", u) || s.st.HasPushedFor(dateKey, "webpush", u) {
 			continue
 		}
 		results := RunPushForUser(context.Background(), s.st, s.senders, s.pc, now, u)

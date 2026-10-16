@@ -20,18 +20,21 @@ type Config struct {
 
 // PushConfig 保存主动复习外部推送的配置。
 type PushConfig struct {
-	Enabled       bool
-	Time          string // "08:30"
-	Timezone      string
-	SMTPHost      string
-	SMTPPort      int
-	SMTPUser      string
-	SMTPPass      string
-	SMTPFrom      string
-	SMTPTLS       bool
-	MailTo        string
-	WebhookURL    string
-	WebhookSecret string
+	Enabled         bool
+	Time            string // "08:30"
+	Timezone        string
+	SMTPHost        string
+	SMTPPort        int
+	SMTPUser        string
+	SMTPPass        string
+	SMTPFrom        string
+	SMTPTLS         bool
+	MailTo          string
+	WebhookURL      string
+	WebhookSecret   string
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDSubject    string
 }
 
 // Load 从环境变量读取配置，未设置时使用默认值。
@@ -43,18 +46,21 @@ func Load() Config {
 		DBPath:  getEnv("SB_DB", "data/second-brain.db"),
 		DataDir: getEnv("SB_DATA_DIR", "data"),
 		Push: PushConfig{
-			Enabled:       getBoolEnv("SB_PUSH_ENABLED", false),
-			Time:          getEnv("SB_PUSH_TIME", "08:30"),
-			Timezone:      getEnv("SB_PUSH_TZ", "Asia/Shanghai"),
-			SMTPHost:      os.Getenv("SB_SMTP_HOST"),
-			SMTPPort:      getIntEnv("SB_SMTP_PORT", 587),
-			SMTPUser:      os.Getenv("SB_SMTP_USER"),
-			SMTPPass:      os.Getenv("SB_SMTP_PASS"),
-			SMTPFrom:      os.Getenv("SB_SMTP_FROM"),
-			SMTPTLS:       getBoolEnv("SB_SMTP_TLS", true),
-			MailTo:        os.Getenv("SB_MAIL_TO"),
-			WebhookURL:    os.Getenv("SB_WEBHOOK_URL"),
-			WebhookSecret: os.Getenv("SB_WEBHOOK_SECRET"),
+			Enabled:         getBoolEnv("SB_PUSH_ENABLED", false),
+			Time:            getEnv("SB_PUSH_TIME", "08:30"),
+			Timezone:        getEnv("SB_PUSH_TZ", "Asia/Shanghai"),
+			SMTPHost:        os.Getenv("SB_SMTP_HOST"),
+			SMTPPort:        getIntEnv("SB_SMTP_PORT", 587),
+			SMTPUser:        os.Getenv("SB_SMTP_USER"),
+			SMTPPass:        os.Getenv("SB_SMTP_PASS"),
+			SMTPFrom:        os.Getenv("SB_SMTP_FROM"),
+			SMTPTLS:         getBoolEnv("SB_SMTP_TLS", true),
+			MailTo:          os.Getenv("SB_MAIL_TO"),
+			WebhookURL:      os.Getenv("SB_WEBHOOK_URL"),
+			WebhookSecret:   os.Getenv("SB_WEBHOOK_SECRET"),
+			VAPIDPublicKey:  os.Getenv("SB_VAPID_PUBLIC_KEY"),
+			VAPIDPrivateKey: os.Getenv("SB_VAPID_PRIVATE_KEY"),
+			VAPIDSubject:    os.Getenv("SB_VAPID_SUBJECT"),
 		},
 	}
 	if err := cfg.Push.Validate(); err != nil {
@@ -91,11 +97,25 @@ func (c PushConfig) Validate() error {
 	}
 
 	if c.Enabled {
-		if c.SMTPHost == "" && c.WebhookURL == "" {
+		// VAPID 配好也算有推送通道：用户可能只用浏览器推送，不配邮件/webhook。
+		if c.SMTPHost == "" && c.WebhookURL == "" && !c.VAPIDConfigured() {
 			return fmt.Errorf("未配置任何推送通道")
+		}
+		if !c.vapidAllEmpty() && !c.VAPIDConfigured() {
+			return fmt.Errorf("VAPID 配置不完整：SB_VAPID_PUBLIC_KEY / SB_VAPID_PRIVATE_KEY / SB_VAPID_SUBJECT 必须同时配置")
 		}
 	}
 	return nil
+}
+
+// VAPIDConfigured 报告 VAPID 三项是否均已配置。
+func (c PushConfig) VAPIDConfigured() bool {
+	return c.VAPIDPublicKey != "" && c.VAPIDPrivateKey != "" && c.VAPIDSubject != ""
+}
+
+// vapidAllEmpty 报告 VAPID 三项是否均为空。
+func (c PushConfig) vapidAllEmpty() bool {
+	return c.VAPIDPublicKey == "" && c.VAPIDPrivateKey == "" && c.VAPIDSubject == ""
 }
 
 // parseHHMM 解析 "HH:MM"，要求 00:00–23:59。

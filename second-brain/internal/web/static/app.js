@@ -261,6 +261,7 @@ if (_navPush) {
     showView("push");
     loadPushSettings();
     loadPushHistory();
+    window.__sbRefreshWebPush?.();
   });
 }
 const _btnPushSave = $("btn-push-save");
@@ -886,7 +887,12 @@ async function init() {
   window.__sbOnQueueSynced = async (ok) => { if (ok > 0) await Promise.all([loadNotes(), loadTags(), loadStats()]); };
   bindEvents();
   await Promise.all([loadNotes(), loadTags(), loadStats()]);
-  showView("editor");
+  if (window.location.hash === "#review") {
+    showView("review");
+    window.__sbStartReview?.();
+  } else {
+    showView("editor");
+  }
 }
 
 if (document.readyState === "loading") {
