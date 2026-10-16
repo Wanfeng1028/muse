@@ -1,0 +1,71 @@
+# Alertmanager 配置示例
+# 用法：复制成 alertmanager.yml，把所有 <YOUR_...> 占位符换成真实值再启动。
+# 不要把这个示例文件直接用于生产。
+
+global:
+  # SMTP 发信服务器，替换成你们自己的
+  smtp_smarthost: '<YOUR_SMTP_HOST>:587'
+  smtp_from: '<YOUR_ALERT_FROM_EMAIL>'
+  smtp_auth_username: '<YOUR_SMTP_USERNAME>'
+  smtp_auth_password: '<YOUR_SMTP_PASSWORD>'
+  smtp_require_tls: true
+  resolve_timeout: 5m
+
+route:
+  # 默认走邮件
+  receiver: 'email-ops'
+  # 同一条告警 30 分钟没恢复才允许再次通知
+  repeat_interval: 30m
+  group_by: ['alertname', 'severity']
+  # 一组告警进来后等 30 秒再发，避免抖动
+  group_wait: 30s
+  # 同一组内新告警合进来后等 5 分钟再发一次
+  group_interval: 5m
+
+  routes:
+    # critical：不等，立刻发，重复间隔短一点
+    - matchers:
+        - severity="critical"
+      receiver: 'wecom-critical'
+      group_wait: 0s
+      group_interval: 1m
+      repeat_interval: 10m
+      continue: true
+
+    # critical 同时也发一封邮件存档
+    - matchers:
+        - severity="critical"
+      receiver: 'email-ops'
+      group_wait: 0s
+      repeat_interval: 10m
+
+    # warning：攒 5 分钟再发，避免刷屏
+    - matchers:
+        - severity="warning"
+      receiver: 'email-ops'
+      group_wait: 5m
+      group_interval: 10m
+      repeat_interval: 1h
+
+receivers:
+  - name: 'email-ops'
+    email_configs:
+      - to: '<YOUR_EMAIL>'
+        send_resolved: true
+        headers:
+          Subject: '[StageCue] {{ .Status | toUpper }} {{ .CommonLabels.alertname }}'
+
+  - name: 'wecom-critical'
+    webhook_configs:
+      # 把 <YOUR_WECOM_WEBHOOK_URL> 换成企业微信群机器人的 webhook 地址
+      - url: '<YOUR_WECOM_WEBHOOK_URL>'
+        send_resolved: true
+
+# critical 抑制同实例的 warning，避免一个故障报两遍
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    # 同一个实例 + 同一类告警名时抑制
+    equal: ['instance', 'alertname']

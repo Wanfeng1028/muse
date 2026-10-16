@@ -4,6 +4,17 @@
 
 # Changelog
 
+## [0.4.0] - 2026-10-16
+
+### 新增
+- Logback 日志轮转：控制台 + 文件双输出，日志落在 `STAGECUE_DATA_DIR/logs`；按天轮转、单文件 50MB 切分、保留 14 天、总量上限 512MB；日志级别跟 `STAGECUE_LOG_LEVEL`。
+- Prometheus 告警规则示例 `docs/alerts/stagecue.rules.yml`：StageCueDown（critical）、WS 断开突增、限流 429 突增、广播丢包、迁移计数异常（4 个 warning）；Alertmanager 接收器示例（邮件 + 企业微信 webhook 占位）。
+- docker-compose 资源限制：memory 512M / cpu 1.0 上限、128M 预留；容器日志 json-file 轮转（10m×5）。
+
+### 文档
+- `docs/OPERATIONS.md` 新增"告警规则"节（规则加载、5 条告警的含义与排查）；`docs/TECH_DEBT.md` 关闭"告警规则""日志轮转/资源限制"债务项。
+- 新增 `docs/PRODUCTION_REPORT_v0.4.0.md` 发版对照报告。
+
 ## [0.3.0] - 2026-10-16
 
 ### 新增

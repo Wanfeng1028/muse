@@ -22,6 +22,21 @@ services:
     volumes:
       # 挂载 Gradle installDist 生成的启动脚本与依赖
       - ./server/build/install/server:/app:ro
-      # 持久化数据目录
+      # 持久化数据目录；应用日志文件落在 /app/data/logs（A 批 resolveLogDir 计算，默认 STAGECUE_DATA_DIR/logs）
       - ./data:/app/data
+    # 容器日志轮转，防止长期运行打爆磁盘
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     restart: unless-stopped
+    # 单机 compose 下 deploy.resources 需配合 --compatibility 或 swarm 才完全生效，
+    # 此处作为声明式约束，记录本服务的资源边界。
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M

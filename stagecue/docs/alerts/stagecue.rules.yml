@@ -1,0 +1,63 @@
+groups:
+  - name: stagecue.rules
+    rules:
+      - alert: StageCueDown
+        expr: up{job="stagecue"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "StageCue 实例抓取失败"
+          description: |
+            Prometheus 已经 1 分钟抓不到 stagecue 的 /metrics。
+            可能原因：服务进程挂了、端口没监听、防火墙拦了抓取、或者 /metrics 路由被改坏。
+            先查什么：见运维手册《告警规则》一节，先看进程和端口，再看 Prometheus 的 /targets 页面。
+
+      - alert: StageCueWsDisconnectSpike
+        expr: rate(stagecue_ws_disconnections[5m]) / rate(stagecue_ws_connections[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WebSocket 断开数超过连接数一半"
+          description: |
+            最近 5 分钟断开速率是连接速率的 50% 以上，说明客户端在大规模掉线。
+            可能原因：客户端网络抖动、反向代理空闲超时、服务端广播异常导致连接被踢、或者是有人在压测反复连断。
+            先查什么：见运维手册《告警规则》一节，先看服务端日志里的 WS 关闭原因，再确认反代 timeout 配置。
+
+      - alert: StageCueRateLimitSpike
+        expr: rate(stagecue_http_rate_limited_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP 请求持续被限流打回 429"
+          description: |
+            最近 5 分钟每秒被限流拒绝的请求超过 5 个，且已经持续 5 分钟。
+            可能原因：有人在压测或爬接口、限流阈值配得太低误伤正常流量、某个客户端重试逻辑写成了死循环。
+            先查什么：见运维手册《告警规则》一节，先看访问日志里的来源 IP 和 UA，再决定是调阈值还是封来源。
+
+      - alert: StageCueBroadcastDrop
+        expr: rate(stagecue_ws_broadcast_dropped_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "WS 广播因慢消费者丢消息"
+          description: |
+            最近 5 分钟有广播消息因为慢消费者被丢弃（DROP_OLDEST 策略）。
+            可能原因：某个客户端消费太慢、网络卡顿、或者该客户端所在机器负载高。
+            后果：返听屏、灯光台可能漏掉 cue，演出中要当事故处理。
+            先查什么：见运维手册《告警规则》一节，先定位是哪个连接在拖后腿，再看那台机器和网络。
+
+      - alert: StageCueDbMigrationStuck
+        expr: changes(stagecue_db_migrations_applied[10m]) > 3
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "数据库迁移计数 10 分钟内反复变化"
+          description: |
+            迁移数是个只增不减的 gauge，10 分钟内变化超过 3 次说明有人在反复重建数据库。
+            可能原因：数据目录被清空重建、部署脚本反复跑、或者测试环境误连了生产库。
+            先查什么：见运维手册《告警规则》一节，先确认 STAGECUE_DATA_DIR 指向的目录有没有被反复清掉，再看部署记录。

@@ -13,6 +13,8 @@ StageCue 是一个开源的舞台监督工具：把 cue 表放到时间轴上，
 - **持久化**：SQLite + Flyway 版本化迁移，旧版 show.json 自动导入。
 - **限流保护**：按 IP 的令牌桶限流，突发流量超了返回 429 + 重试等待秒数，导演台正常操作不受影响。
 - **广播背压**：返听屏/灯光台网络卡顿时，服务端排队发送、实在排不下就丢旧的保新的，不会拖住导演台，也不会踢掉线。
+- **日志轮转**：日志同时打控制台和文件，按天轮转、自动清理旧文件，长期运行不打爆磁盘。
+- **告警规则**：Prometheus 规则示例开箱即用，服务挂了、客户端大面积掉线、广播丢消息都会告警。
 
 ## 对比
 
@@ -63,12 +65,15 @@ export PATH=~/workspace/toolchains/jdk/bin:$PATH
 - `GET /readyz`：就绪检查，数据库可读才返回 ready。
 - `GET /metrics`：Prometheus 文本格式指标（WS 连接、cue 触发/预备、HTTP 请求、限流拒绝数、广播丢弃数、DB 迁移数），详见 `docs/OPERATIONS.md`。
 - 日志：SLF4J + Logback，HTTP 请求带 `X-Request-Id`（CallId）全链路。
+- 日志轮转：`STAGECUE_DATA_DIR/logs/stagecue.log`，按天轮转 + 50MB 切分，保留 14 天、总量上限 512MB。
+- 告警：`docs/alerts/stagecue.rules.yml`（5 条规则）+ `docs/alerts/alertmanager.example.yml`，详见 `docs/OPERATIONS.md` 的"告警规则"节。
 
 ## 技术栈
 
 - **Kotlin Multiplatform**：一套 model / protocol 代码，桌面端和二期移动端共用。
 - **Ktor**：服务端和客户端的 WebSocket 都能用一套协程 API，写起来顺手。
 - **Compose Desktop**：UI 声明式，改个 cue 列表不用碰 XML。
+- **为什么选 SQLite + Flyway**：小剧场没有专职 DBA，SQLite 单文件零运维、备份就是拷文件；Flyway 版本化迁移保证升级不丢数据，旧版 show.json 也能幂等导入。
 
 ## 截图
 

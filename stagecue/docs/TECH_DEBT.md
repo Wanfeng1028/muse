@@ -2,6 +2,11 @@
 
 > 每轮发版前更新；还清一项就删一项，不许留僵尸条目。
 
+## v0.4.0 已偿还
+- 告警规则：docs/alerts/stagecue.rules.yml 5 条规则（StageCueDown/WS 断开突增/限流 429 突增/广播丢包/迁移计数异常）+ alertmanager.example.yml 接收器示例 + OPERATIONS.md 告警章节
+- 日志轮转：Logback RollingFileAppender（按天 + 50MB 切分，保留 14 天，总量 512MB），日志目录 STAGECUE_DATA_DIR/logs
+- 资源限制：docker-compose deploy.resources（512M/1.0c 上限，128M 预留）+ 容器日志轮转（10m×5）
+
 ## v0.3.0 已偿还
 - WS/HTTP 限流：IP 令牌桶（STAGECUE_RATE_LIMIT_RPS/BURST 环境变量，超限 429 + Retry-After）
 - 超时/熔断：WS 广播背压——每客户端有界队列 + DROP_OLDEST 丢弃最旧 + stagecue_ws_broadcast_dropped_total 可观测；请求超时由 Ktor CIO 引擎与 WS ping 超时（30s）覆盖
@@ -20,8 +25,6 @@
 | # | 债务 | 现状 / 影响 | 计划 |
 |---|------|-------------|------|
 | 2 | 依赖更新机制 | 无 Dependabot | 跟仓库统一配（仓库级事项） |
-| 3 | 告警规则 | 无 | 基于 /metrics 配 Prometheus rule 示例（cue 触发失败率、WS 断开突增） |
-| 4 | 日志轮转 / 资源限制 | Logback 无滚动策略；docker-compose 无 memory limit | v0.3 补 |
 | 5 | 滚动更新 / 零停机 | 单机应用，停机更新 | 声明为可接受限制（演出前窗口更新） |
 | 6 | 多人同时编辑同一份 show | 未支持（单导演假设） | 二期 |
 | 7 | 服务端引擎为 CIO 非 Netty | Ktor Netty 在本 VM 误用 KQueue 启动失败；CI/生产环境可用 Netty | 保留 CIO 为默认，配置项可切 |

@@ -29,6 +29,38 @@ export STAGECUE_DATA_DIR=/var/lib/stagecue
 ./gradlew :server:run
 ```
 
+## 告警规则
+
+告警规则文件有两份，内容一样：
+
+- 仓库里：`docs/alerts/stagecue.rules.yml`，给人看和给 Prometheus 加载都行。
+- 发行版里：装好 server 后，在 server 安装目录的 `alerts/stagecue.rules.yml`，随包分发。
+
+### 怎么让 Prometheus 加载
+
+在 `prometheus.yml` 里加一行 `rule_files`，指向上面那个文件：
+
+```yaml
+rule_files:
+  - /etc/prometheus/stagecue.rules.yml
+```
+
+改完重启 Prometheus，或者发 SIGHUP 让它重载配置。
+
+### 5 条告警
+
+| 告警名 | 级别 | 触发条件 | 可能原因 | 先查什么 |
+| --- | --- | --- | --- | --- |
+| StageCueDown | critical | `up{job="stagecue"} == 0` 持续 1 分钟 | 进程挂了、端口没监听、防火墙拦了、/metrics 路由坏了 | 先 `systemctl status` 看进程，再 `ss -lntp` 看端口，最后看 Prometheus 的 /targets 页面 |
+| StageCueWsDisconnectSpike | warning | 5 分钟内断开速率 / 连接速率 > 0.5，持续 5 分钟 | 客户端网络抖动、反代空闲超时、广播异常踢连接、有人在压测 | 先看服务端日志里 WS 的关闭原因，再确认反向代理的 idle timeout 配置 |
+| StageCueRateLimitSpike | warning | `rate(stagecue_http_rate_limited_total[5m]) > 5` 持续 5 分钟 | 压测、爬虫、限流阈值太低误伤、客户端死循环重试 | 先看访问日志的来源 IP 和 UA，判断是封来源还是调阈值 |
+| StageCueBroadcastDrop | warning | `rate(stagecue_ws_broadcast_dropped_total[5m]) > 0` 持续 5 分钟 | 某个客户端消费太慢、网络卡顿、客户端机器负载高 | 先定位是哪个连接在拖后腿，再看那台机器和网络；演出中当事故处理 |
+| StageCueDbMigrationStuck | warning | `changes(stagecue_db_migrations_applied[10m]) > 3` 立刻触发 | 数据目录被反复清空重建、部署脚本反复跑、测试环境误连生产库 | 先确认 `STAGECUE_DATA_DIR` 指向的目录有没有被反复清掉，再看部署记录 |
+
+### 告警不响怎么办
+
+先打开 Prometheus 的 `/alerts` 页面，看规则有没有加载成功。如果列表里根本没有这几条告警，说明 `rule_files` 路径写错了或者文件没读到，先解决这个，再谈别的。
+
 ## 启动校验
 
 `ServerConfig.fromEnv().validateOrExit()` 在进程启动时校验全部环境变量，任一项非法直接打印中文错误并退出（exit 1），不会带病运行：
