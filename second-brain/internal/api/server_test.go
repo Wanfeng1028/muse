@@ -189,14 +189,17 @@ func TestSearch(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, want 200", resp.StatusCode)
 	}
-	var notes []store.Note
-	decodeBody(t, resp, &notes)
-	if len(notes) == 0 {
+	var sr struct {
+		Notes []store.Note `json:"notes"`
+	}
+	decodeBody(t, resp, &sr)
+	if len(sr.Notes) == 0 {
 		t.Fatalf("expected search results")
 	}
-	if notes[0].Title != "Go Programming" {
-		t.Fatalf("top result = %q", notes[0].Title)
+	if sr.Notes[0].Title != "Go Programming" {
+		t.Fatalf("top result = %q", sr.Notes[0].Title)
 	}
+
 }
 
 func TestTagsAndStats(t *testing.T) {

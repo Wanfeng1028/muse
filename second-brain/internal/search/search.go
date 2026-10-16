@@ -2,6 +2,7 @@
 package search
 
 import (
+	"math"
 	"sort"
 	"strings"
 	"unicode"
@@ -128,4 +129,212 @@ func Rank(notes []store.Note, query string) []store.Note {
 		result = append(result, it.note)
 	}
 	return result
+}
+
+// cjkStopWords 中文单字停用字集合，仅在 ScoreDetailed/QueryTerms 中对单字符词元额外过滤。
+var cjkStopWords = map[string]struct{}{
+	"的": {}, "了": {}, "是": {}, "在": {}, "和": {}, "有": {}, "不": {},
+	"我": {}, "你": {}, "他": {}, "她": {}, "它": {}, "这": {}, "那": {},
+	"个": {}, "为": {}, "以": {}, "也": {}, "就": {}, "都": {}, "于": {},
+	"而": {}, "及": {}, "或": {}, "之": {}, "其": {}, "所": {}, "把": {},
+	"被": {}, "给": {}, "让": {}, "向": {}, "到": {}, "着": {}, "过": {},
+	"很": {}, "太": {}, "更": {}, "最": {}, "非": {}, "即": {}, "若": {},
+	"如": {}, "但": {}, "可": {}, "能": {}, "会": {},
+}
+
+// filterCJKStop 过滤掉单字符中文停用字，多字符词元保留。
+func filterCJKStop(terms []string) []string {
+	out := make([]string, 0, len(terms))
+	for _, t := range terms {
+		if len([]rune(t)) == 1 {
+			if _, ok := cjkStopWords[t]; ok {
+				continue
+			}
+		}
+		out = append(out, t)
+	}
+	return out
+}
+
+// QueryTerms 返回过滤停用词/停用字后实际参与打分查询词，保持原顺序与去重。
+func QueryTerms(query string) []string {
+	return filterCJKStop(Tokenize(query))
+}
+
+// MatchField 命中字段类型。
+type MatchField string
+
+const (
+	FieldTitle MatchField = "title"
+	FieldTag   MatchField = "tag"
+	FieldBody  MatchField = "body"
+)
+
+// Match 记录单个"查询词×命中字段"的明细。
+type Match struct {
+	Field MatchField `json:"field"`
+	Term  string     `json:"term"`
+}
+
+// ScoreDetailed 返回分数与命中明细（可解释）。
+func ScoreDetailed(title string, body string, tags []string, query string) (float64, []Match) {
+	terms := QueryTerms(query)
+	if len(terms) == 0 {
+		return 0, nil
+	}
+
+	titleTokens := Tokenize(title)
+	bodyTokens := Tokenize(body)
+
+	titleFreq := make(map[string]int, len(titleTokens))
+	for _, t := range titleTokens {
+		titleFreq[t]++
+	}
+	bodyFreq := make(map[string]int, len(bodyTokens))
+	for _, t := range bodyTokens {
+		bodyFreq[t]++
+	}
+
+	// 标签：每个标签单独 Tokenize，命中按标签整体判断。
+	tagTokenSets := make([][]string, 0, len(tags))
+	for _, tag := range tags {
+		tagTokenSets = append(tagTokenSets, Tokenize(tag))
+	}
+	tagFreq := make(map[string]int, len(tags))
+	for _, tts := range tagTokenSets {
+		seenInTag := make(map[string]struct{}, len(tts))
+		for _, t := range tts {
+			if _, ok := seenInTag[t]; ok {
+				continue
+			}
+			seenInTag[t] = struct{}{}
+			tagFreq[t]++
+		}
+	}
+
+	// AND 语义：每个查询词必须在标题/标签/正文至少一处命中。
+	for _, term := range terms {
+		_, inTitle := titleFreq[term]
+		_, inTag := tagFreq[term]
+		_, inBody := bodyFreq[term]
+		if !inTitle && !inTag && !inBody {
+			return 0, nil
+		}
+	}
+
+	var titleScore, tagScore, bodyScore float64
+	matches := make([]Match, 0, len(terms)*3)
+	seenMatch := make(map[string]struct{}, len(terms)*3)
+
+	for _, term := range terms {
+		if c := titleFreq[term]; c > 0 {
+			titleScore += float64(c) * 3.0
+			key := string(FieldTitle) + "\x00" + term
+			if _, ok := seenMatch[key]; !ok {
+				seenMatch[key] = struct{}{}
+				matches = append(matches, Match{Field: FieldTitle, Term: term})
+			}
+		}
+		if c := tagFreq[term]; c > 0 {
+			tagScore += float64(c) * 2.0
+			key := string(FieldTag) + "\x00" + term
+			if _, ok := seenMatch[key]; !ok {
+				seenMatch[key] = struct{}{}
+				matches = append(matches, Match{Field: FieldTag, Term: term})
+			}
+		}
+		if c := bodyFreq[term]; c > 0 {
+			bodyScore += float64(c) * 1.0
+			key := string(FieldBody) + "\x00" + term
+			if _, ok := seenMatch[key]; !ok {
+				seenMatch[key] = struct{}{}
+				matches = append(matches, Match{Field: FieldBody, Term: term})
+			}
+		}
+	}
+
+	// 词组加成：相邻两 CJK 字组成的二元词组。
+	queryRunes := []rune(strings.ToLower(query))
+	var bigrams []string
+	for i := 0; i+1 < len(queryRunes); i++ {
+		a, b := queryRunes[i], queryRunes[i+1]
+		if isCJK(a) && isCJK(b) {
+			bigrams = append(bigrams, string(a)+string(b))
+		}
+	}
+	titleLower := strings.ToLower(title)
+	bodyLower := strings.ToLower(body)
+	var phraseBonus float64
+	seenBigram := make(map[string]struct{}, len(bigrams))
+	for _, bg := range bigrams {
+		if _, ok := seenBigram[bg]; ok {
+			continue
+		}
+		seenBigram[bg] = struct{}{}
+		hit := false
+		if strings.Contains(titleLower, bg) {
+			phraseBonus += 2.0
+			hit = true
+		}
+		if !hit {
+			for _, tag := range tags {
+				if strings.Contains(strings.ToLower(tag), bg) {
+					phraseBonus += 1.5
+					hit = true
+					break
+				}
+			}
+		}
+		if !hit && strings.Contains(bodyLower, bg) {
+			phraseBonus += 1.0
+		}
+	}
+
+	// 完全匹配加成。
+	var exactBonus float64
+	compactQuery := strings.ReplaceAll(strings.ToLower(query), " ", "")
+	if len([]rune(compactQuery)) >= 2 {
+		if strings.Contains(titleLower, compactQuery) {
+			exactBonus += 5.0
+		}
+		for _, tag := range tags {
+			if strings.EqualFold(strings.TrimSpace(tag), strings.TrimSpace(query)) {
+				exactBonus += 4.0
+				break
+			}
+		}
+	}
+
+	// 正文长度归一化。
+	bodyRunes := len([]rune(body))
+	normalizer := 1.0 + math.Log10(1.0+float64(bodyRunes)/200.0)
+	if normalizer <= 0 {
+		normalizer = 1.0
+	}
+	bodyScore = bodyScore / normalizer
+
+	total := titleScore + tagScore + bodyScore + phraseBonus + exactBonus
+	return total, matches
+}
+
+// RankedNote 带分数与命中明细的笔记。
+type RankedNote struct {
+	Note    store.Note
+	Score   float64
+	Matches []Match
+}
+
+// RankDetailed 按 ScoreDetailed 降序稳定排序，过滤 0 分。
+func RankDetailed(notes []store.Note, query string) []RankedNote {
+	items := make([]RankedNote, 0, len(notes))
+	for _, n := range notes {
+		s, m := ScoreDetailed(n.Title, n.Body, n.Tags, query)
+		if s > 0 {
+			items = append(items, RankedNote{Note: n, Score: s, Matches: m})
+		}
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		return items[i].Score > items[j].Score
+	})
+	return items
 }

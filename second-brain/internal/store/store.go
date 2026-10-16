@@ -429,7 +429,7 @@ func (s *Store) DeleteNote(id int64) error {
 	return nil
 }
 
-// SearchNotes 按 title/body 多关键词 AND 搜索。
+// SearchNotes 按 title/body/tags 多关键词 AND 搜索。
 func (s *Store) SearchNotes(q string) ([]Note, error) {
 	fields := strings.Fields(q)
 	clauses := []string{}
@@ -440,9 +440,10 @@ func (s *Store) SearchNotes(q string) ([]Note, error) {
 			continue
 		}
 		like := "%" + f + "%"
-		clauses = append(clauses, "(title LIKE ? OR body LIKE ?)")
-		args = append(args, like, like)
+		clauses = append(clauses, "(title LIKE ? OR body LIKE ? OR EXISTS (SELECT 1 FROM note_tags nt JOIN tags t ON t.id = nt.tag_id WHERE nt.note_id = notes.id AND t.name LIKE ?))")
+		args = append(args, like, like, like)
 	}
+
 	query := `SELECT id, title, body, pinned, created_at, updated_at FROM notes`
 	if len(clauses) > 0 {
 		query += " WHERE " + strings.Join(clauses, " AND ")

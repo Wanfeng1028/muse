@@ -5,7 +5,29 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.8.0] - 2026-10-16
+
+搜索相关性升级——中文搜得准，还能看懂为什么排前面
+
+### 新增
+- `internal/search` 新增 `ScoreDetailed`/`RankDetailed`/`QueryTerms`：查询词 AND 语义（缺一词不得分）、标题权重 3 / 标签权重 2 / 正文权重 1、正文长度归一化（长文不再靠词频碾压）、中文二元词组加成（标题含"复习"整体比"复""习"分散分高）、整串完全匹配加成、中文单字停用字过滤（的/了/是/在……），并返回"查询词×命中字段"明细（可解释）。
+- `store.SearchNotes` 的 SQL 增加标签匹配（`EXISTS` 子查询走 `note_tags`/`tags` 表），只打标签的笔记也能被搜到；无 schema 变更。
+- `GET /api/search` 响应改为对象 `{"query","terms","notes","meta"}`，`meta` 含每条笔记的 `score` 与命中字段（标题/标签/正文）；q 为空返回各字段为空的对象。
+- 前端搜索结果：命中词 `<mark>` 高亮（先转义后标记，防 XSS）、正文显示命中上下文摘要（前后各 30 字）、每条结果标注"命中：标题 · 正文"；沿用现有视觉变量，无新配色。
+
+### 变更
+- `GET /api/search` 响应体由数组改为对象，**不兼容**：旧客户端按数组解析会失败，需取 `data.notes`。
+
+### 测试
+- `go test ./...` 全量 125 通过、0 失败（新增 `internal/search/search_relevance_test.go` 10 例、`internal/api/search_relevance_test.go` 2 例，覆盖权重排序/AND 语义/词组加成/完全匹配/停用字/长度归一化/Matches 明细/真实 HTTP 集成）。
+- `go vet`、`gofmt` 全洁；真实服务冒烟：5 篇中文笔记搜索排序/高亮验证通过。
+
+### 已知限制
+- CJK 仍为逐字切分（无真实中文分词），词组加成只能缓解，复杂长词的语义理解有限。
+- 查询词 AND 语义：多词查询缺一词即无结果，对只想"沾边"的搜法不友好。
+
 ## [0.7.0] - 2026-10-16
+
 
 PWA——装到手机上，断网也能用
 

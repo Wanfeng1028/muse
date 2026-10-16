@@ -174,7 +174,12 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/search", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query().Get("q")
 		if strings.TrimSpace(q) == "" {
-			writeJSON(w, http.StatusOK, []store.Note{})
+			writeJSON(w, http.StatusOK, map[string]any{
+				"query": "",
+				"terms": []string{},
+				"notes": []store.Note{},
+				"meta":  []any{},
+			})
 			return
 		}
 		notes, err := st.SearchNotes(q)
@@ -182,11 +187,50 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		ranked := search.Rank(notes, q)
-		if ranked == nil {
-			ranked = []store.Note{}
+		ranked := search.RankDetailed(notes, q)
+		terms := search.QueryTerms(q)
+		if terms == nil {
+			terms = []string{}
 		}
-		writeJSON(w, http.StatusOK, ranked)
+		outNotes := make([]store.Note, 0, len(ranked))
+		meta := make([]map[string]any, 0, len(ranked))
+		for _, rn := range ranked {
+			outNotes = append(outNotes, rn.Note)
+			fields := make([]string, 0, 3)
+			hasTitle := false
+			hasTag := false
+			hasBody := false
+			for _, m := range rn.Matches {
+				switch m.Field {
+				case search.FieldTitle:
+					hasTitle = true
+				case search.FieldTag:
+					hasTag = true
+				case search.FieldBody:
+					hasBody = true
+				}
+			}
+			if hasTitle {
+				fields = append(fields, "标题")
+			}
+			if hasTag {
+				fields = append(fields, "标签")
+			}
+			if hasBody {
+				fields = append(fields, "正文")
+			}
+			meta = append(meta, map[string]any{
+				"id":     rn.Note.ID,
+				"score":  rn.Score,
+				"fields": fields,
+			})
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"query": q,
+			"terms": terms,
+			"notes": outNotes,
+			"meta":  meta,
+		})
 	})
 
 	// 标签列表

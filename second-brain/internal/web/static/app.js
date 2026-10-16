@@ -124,7 +124,9 @@ const state = {
   tag: "",
   view: "editor",
   attachments: [],
+  search: null,
 };
+
 
 // ---------- 视图切换 ----------
 function showView(name) {
@@ -281,14 +283,55 @@ async function loadNotes() {
   renderList();
 }
 
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightText(text, terms) {
+  const safe = escapeHtml(text);
+  if (!terms || !terms.length) return safe;
+  const valid = terms.filter((t) => t != null && String(t).length);
+  if (!valid.length) return safe;
+  const pattern = valid.map((t) => escapeRegExp(String(t))).join("|");
+  const re = new RegExp(`(${pattern})`, "gi");
+  return safe.replace(re, `<mark class="search-mark">$1</mark>`);
+}
+
+function matchSnippet(body, terms) {
+  const raw = String(body || "").replace(/\s+/g, " ");
+  const valid = (terms || []).filter((t) => t != null && String(t).length);
+  let start = -1;
+  let hitLen = 0;
+  for (const t of valid) {
+    const idx = raw.toLowerCase().indexOf(String(t).toLowerCase());
+    if (idx !== -1 && (start === -1 || idx < start)) {
+      start = idx;
+      hitLen = String(t).length;
+    }
+  }
+  if (start === -1) {
+    return highlightText(raw.slice(0, 60), terms);
+  }
+  const from = Math.max(0, start - 30);
+  const to = Math.min(raw.length, start + hitLen + 30);
+  const prefix = from > 0? "…": "";
+  const suffix = to < raw.length? "…": "";
+  return prefix + highlightText(raw.slice(from, to), terms) + suffix;
+}
+
 function renderList() {
   const listEl = $("note-list");
   const countEl = $("list-count");
   const titleEl = $("list-title");
   if (!listEl) return;
 
-  if (titleEl) titleEl.textContent = state.tag ? `#${state.tag}` : "全部笔记";
-  if (countEl) countEl.textContent = `共 ${state.notes.length} 篇`;
+  const search = state.search;
+  if (titleEl) titleEl.textContent = search
+    ? `搜索"${search.q}"`
+    : (state.tag? `#${state.tag}`: "全部笔记");
+  if (countEl) countEl.textContent = search
+    ? `找到 ${state.notes.length} 篇`
+    : `共 ${state.notes.length} 篇`;
 
   if (!state.notes.length) {
     listEl.innerHTML = `<div class="empty-hint">还没有笔记，点上面「新建」写一条吧</div>`;
@@ -296,18 +339,35 @@ function renderList() {
   }
 
   listEl.innerHTML = state.notes
-    .map((n) => {
+    .map((n, i) => {
       const tags = (n.tags || []).map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join("");
-      const body = (n.body || "").slice(0, 60).replace(/\s+/g, " ");
-      const date = n.updated_at ? new Date(n.updated_at).toLocaleDateString("zh-CN") : "";
-      const active = n.id === state.currentId ? " is-active" : "";
+      const date = n.updated_at? new Date(n.updated_at).toLocaleDateString("zh-CN"): "";
+      const active = n.id === state.currentId? " is-active": "";
+      let titleHtml;
+      let bodyHtml;
+      let reasonsHtml = "";
+      if (search) {
+        const terms = search.terms || [];
+        titleHtml = highlightText(n.title || "无标题", terms);
+        bodyHtml = matchSnippet(n.body || "", terms);
+        const meta = search.meta && search.meta[i];
+        if (meta && Array.isArray(meta.fields) && meta.fields.length) {
+          const joined = meta.fields.map((f) => escapeHtml(String(f))).join(" · ");
+          reasonsHtml = `<div class="match-reasons">命中：${joined}</div>`;
+        }
+      } else {
+        const body = (n.body || "").slice(0, 60).replace(/\s+/g, " ");
+        titleHtml = escapeHtml(n.title || "无标题");
+        bodyHtml = escapeHtml(body);
+      }
       return `<div class="note-item${active}" data-id="${n.id}">
-        <div class="note-item-title">${escapeHtml(n.title || "无标题")}</div>
-        <div class="note-item-body">${escapeHtml(body)}</div>
+        <div class="note-item-title">${titleHtml}</div>
+        <div class="note-item-body">${bodyHtml}</div>
         <div class="note-item-foot">
           <div class="note-item-tags">${tags}</div>
           <div class="note-item-date">${escapeHtml(date)}</div>
         </div>
+        ${reasonsHtml}
       </div>`;
     })
     .join("");
@@ -316,6 +376,7 @@ function renderList() {
     el.addEventListener("click", () => selectNote(Number(el.dataset.id)));
   });
 }
+
 
 // ---------- 选中笔记 ----------
 async function selectNote(id) {
@@ -426,18 +487,26 @@ let searchTimer = null;
 async function doSearch() {
   const q = ($("search-input")?.value || "").trim();
   if (!q) {
+    state.search = null;
     await loadNotes();
     return;
   }
   try {
     const data = await api(`/api/search?q=${encodeURIComponent(q)}`);
-    state.notes = Array.isArray(data) ? data : (data && data.notes) || [];
+    state.notes = Array.isArray(data)? data: (data && data.notes) || [];
+    state.search = {
+      q,
+      terms: (data && data.terms) || [],
+      meta: (data && data.meta) || [],
+    };
   } catch (e) {
     console.error("搜索失败", e);
     state.notes = [];
+    state.search = null;
   }
   renderList();
 }
+
 
 // ---------- 标签 ----------
 async function loadTags() {
