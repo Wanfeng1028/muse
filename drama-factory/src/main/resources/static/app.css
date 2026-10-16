@@ -411,36 +411,61 @@ body.sb-collapsed .sidebar-footer { display: flex; flex-direction: column; align
   white-space: nowrap;
 }
 
-/* 看板统计：3 列（确保 Bootstrap 网格失效时仍有布局） */
+/* 看板统计：编辑杂志式错落，去板正 */
 #statsRow {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: minmax(0, auto);
-  gap: 16px;
-  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  align-items: flex-start;
 }
 #statsRow > :first-child {
-  grid-column: span 2;
+  flex: 1 1 58%;
+  min-width: 280px;
+  margin-right: 28px;
+  margin-bottom: 8px;
 }
 #statsRow > :first-child > .card {
   border: none;
-  border-radius: 18px;
+  border-radius: 4px 22px 4px 22px;
   background: var(--surface);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12px 32px -18px rgba(0, 0, 0, 0.2);
+  transform: rotate(-0.4deg);
 }
 #statsRow > :first-child > .card > .card-body {
-  padding: 26px 28px;
+  padding: 30px 32px 26px;
 }
-#statsRow > :nth-child(2) > .card,
+#statsRow > :nth-child(2) {
+  flex: 0 1 32%;
+  min-width: 200px;
+  margin-top: 34px;
+}
+#statsRow > :nth-child(2) > .card {
+  border: none;
+  border-radius: 22px 4px 22px 4px;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  box-shadow: none;
+  transform: rotate(0.6deg);
+}
+#statsRow > :nth-child(2) > .card > .card-body {
+  padding: 20px 22px;
+}
+#statsRow > :nth-child(3) {
+  flex: 1 1 100%;
+  margin-top: 18px;
+  max-width: 420px;
+  margin-left: 12%;
+}
 #statsRow > :nth-child(3) > .card {
   border: none;
-  border-radius: 10px;
-  background: var(--surface-2);
+  border-radius: 4px;
+  background: transparent;
+  border-left: 3px solid var(--accent);
   box-shadow: none;
+  padding-left: 18px;
 }
-#statsRow > :nth-child(2) > .card > .card-body,
 #statsRow > :nth-child(3) > .card > .card-body {
-  padding: 22px;
+  padding: 8px 0;
 }
 #statShotRate {
   font-size: 40px;
@@ -957,4 +982,59 @@ h3, h4, .card-title {
   font-weight: 650;
   letter-spacing: -0.015em;
   color: var(--text);
+}
+
+/* ---- 去板正：剧集管线表格编辑化 ---- */
+.table {
+  --bs-table-bg: transparent;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+.table thead th {
+  border: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 600;
+  padding: 0 16px 6px;
+}
+.table tbody tr {
+  background: var(--surface);
+  border-radius: 12px;
+}
+.table tbody tr td {
+  border: 0;
+  padding: 16px;
+  vertical-align: middle;
+}
+.table tbody tr td:first-child {
+  border-radius: 12px 0 0 12px;
+  font-weight: 650;
+  font-size: 15px;
+}
+.table tbody tr td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+/* 奇偶行轻微错位，打破严格对齐 */
+.table tbody tr:nth-child(odd) {
+  transform: translateX(4px);
+}
+.table tbody tr:nth-child(even) > td:first-child {
+  padding-left: 22px;
+}
+.table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* 页面标题去板正：左对齐+呼吸感 */
+.page-title {
+  font-size: 32px;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.page-subtitle {
+  color: var(--text-2);
+  font-size: 14px;
+  margin-bottom: 28px;
 }
