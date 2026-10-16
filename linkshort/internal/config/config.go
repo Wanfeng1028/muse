@@ -27,6 +27,10 @@ type Config struct {
 
 	BackupDir        string // 备份目录路径
 	BackupMaxAgeDays int    // 备份最大允许天数；0 表示不检查过期
+
+	PasswordFailAlertThreshold int           // 滑动窗口内单个短链密码失败触发告警的次数阈值
+	PasswordFailAlertWindow    time.Duration // 滑动窗口时长
+	AlertWebhookURL            string        // 告警 webhook 地址，复用备份告警的 LINKSHORT_ALERT_WEBHOOK_URL
 }
 
 // 环境变量名。
@@ -47,6 +51,10 @@ const (
 
 	envBackupDir        = "LINKSHORT_BACKUP_DIR"
 	envBackupMaxAgeDays = "LINKSHORT_BACKUP_MAX_AGE_DAYS"
+
+	envPasswordFailAlertThreshold = "LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD"
+	envPasswordFailAlertWindow    = "LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW"
+	envAlertWebhookURL            = "LINKSHORT_ALERT_WEBHOOK_URL"
 )
 
 // getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
@@ -121,6 +129,10 @@ func FromEnv() *Config {
 
 		BackupDir:        getenvDefault(envBackupDir, "./backups"),
 		BackupMaxAgeDays: getenvIntDefault(envBackupMaxAgeDays, 7),
+
+		PasswordFailAlertThreshold: getenvIntDefault(envPasswordFailAlertThreshold, 10),
+		PasswordFailAlertWindow:    getenvDurationDefault(envPasswordFailAlertWindow, 5*time.Minute),
+		AlertWebhookURL:            getenvDefault(envAlertWebhookURL, ""),
 	}
 	if cfg.PurgeInterval <= 0 {
 		cfg.PurgeInterval = 24 * time.Hour
@@ -130,6 +142,12 @@ func FromEnv() *Config {
 	}
 	if cfg.BackupMaxAgeDays < 0 {
 		cfg.BackupMaxAgeDays = 7
+	}
+	if cfg.PasswordFailAlertThreshold <= 0 {
+		cfg.PasswordFailAlertThreshold = 10
+	}
+	if cfg.PasswordFailAlertWindow <= 0 {
+		cfg.PasswordFailAlertWindow = 5 * time.Minute
 	}
 	if cfg.AdminKey == "" {
 

@@ -118,8 +118,11 @@ docker run -d \
 | `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
 | `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用） |
 | `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期 |
-| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 备份失败告警 webhook，backup.sh 失败时 POST JSON 通知 |
+| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 备份失败告警 webhook，backup.sh 失败时 POST JSON 通知；v1.10 起密码失败高告警复用该地址 |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` | `10` | 单个短链滑动窗口内密码失败触发告警的次数阈值（v1.10 新增） |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` | `5m` | 密码失败滑动窗口时长（v1.10 新增） |
 | `GEOIP_MMDB_PATH` | 空 | GeoLite2-City.mmdb 路径（v1.8 新增）；为空则地域统计全部记为 unknown，不影响其他功能 |
+
 | `GEOIP_MMDB_PATH` | 空 | GeoLite2-City.mmdb 路径（v1.8 新增）；为空则地域统计全部记为 unknown，不影响其他功能 |
 
 

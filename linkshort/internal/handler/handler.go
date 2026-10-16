@@ -26,6 +26,7 @@ import (
 	"github.com/Wanfeng1028/muse/linkshort/internal/config"
 	"github.com/Wanfeng1028/muse/linkshort/internal/geo"
 	"github.com/Wanfeng1028/muse/linkshort/internal/metrics"
+	"github.com/Wanfeng1028/muse/linkshort/internal/passalert"
 
 	"github.com/Wanfeng1028/muse/linkshort/internal/model"
 	"github.com/Wanfeng1028/muse/linkshort/internal/qr"
@@ -40,6 +41,9 @@ var webFS embed.FS
 // NewRouter 组装中间件、API 分组、Web UI 静态托管与短链跳转路由。
 func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	r := chi.NewRouter()
+
+	// 密码失败告警计数器按配置初始化。
+	passalert.Configure(cfg.PasswordFailAlertThreshold, cfg.PasswordFailAlertWindow)
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -301,6 +305,14 @@ func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Stor
 	}
 	if !auth.CheckPassword(*link.PasswordHash, r.FormValue("password")) {
 		metrics.Default.IncPasswordAttempt(false)
+		if passalert.Default.RecordFail(slug, time.Now()) {
+			failCount := passalert.Default.FailCount(slug, time.Now())
+			metrics.Default.IncPasswordFailAlert()
+			log.Printf("[passalert] 短链 %s 密码失败高告警：窗口内失败 %d 次（阈值 %d）", slug, failCount, cfg.PasswordFailAlertThreshold)
+			if cfg.AlertWebhookURL != "" {
+				go passalert.NotifyPasswordFailAlert(cfg.AlertWebhookURL, r.Host, slug, failCount, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertThreshold)
+			}
+		}
 		renderPasswordPage(w, slug, "密码错误，请重试", http.StatusUnauthorized)
 		return
 	}

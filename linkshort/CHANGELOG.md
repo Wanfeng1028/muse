@@ -4,7 +4,24 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.10.0] - 2026-10-17
+
+### 新增
+
+- 密码失败高告警：`internal/passalert.Tracker` 按 slug 做滑动窗口计数（`LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` 默认 10 次 / `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` 默认 5m），只在计数从阈值下方跨越到阈值及以上时触发一次：打 warn 日志 + 指标 `linkshort_password_fail_alerts_total` +1 + 异步 POST JSON 到复用的 `LINKSHORT_ALERT_WEBHOOK_URL`（10 秒超时，失败只记日志不影响主流程；URL 为空则不通知）；持续超阈值不重复触发，计数回落到阈值下方后重新布防。
+- `prometheus/rules/linkshort.yml`：`LinkshortPasswordFailRateHigh`（warning，5 分钟失败速率 >0.2/s 持续 2m）与 `LinkshortPasswordFailAlertFired`（critical，应用内滑动窗口触发）。
+- `docs/OPERATIONS.md`：环境变量表新增两行、`### 3.10 密码失败高告警（v1.10）`、`5.2` 新增指标说明、`5.3` 新增规则说明。
+
+### 测试
+
+- 新增 13 例：`passalert` 8 例（首次跨越触发/未达阈值不触发/持续超阈值不重复/窗口滑动重布防/旧事件裁剪/空 slug/默认值/并发 -race）、`notify` 3 例（空 URL 直接返回/JSON 字段/500 不抛 panic）、`handler` 2 例（webhook 只触发一次/指标 +1）；`go test./... -race` 149 例全过。
+
+### 已知缺口
+
+- 告警按 slug 维度聚合，未做按 IP 聚合；webhook 只支持单个 URL。
+
 ## [v1.9.0] - 2026-10-17
+
 
 ### 新增
 

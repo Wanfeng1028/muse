@@ -1,0 +1,22 @@
+
+# linkshort Prometheus 告警规则（v1.10 新增密码失败高告警）。
+# 阈值按业务量调整；加载方式见 docs/OPERATIONS.md 5.3。
+groups:
+  - name: linkshort
+    interval: 30s
+    rules:
+      - alert: LinkshortPasswordFailRateHigh
+        expr: sum(rate(linkshort_password_attempts_total{result="fail"}[5m])) > 0.2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "linkshort 密码失败速率走高"
+          description: "过去 5 分钟密码失败速率 {{ $value | humanize }} 次/秒，持续 2 分钟，可能有人在撞密码门。请结合日志定位 slug，阈值按业务调整。"
+      - alert: LinkshortPasswordFailAlertFired
+        expr: increase(linkshort_password_fail_alerts_total[10m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "linkshort 密码失败高告警已触发"
+          description: "应用内滑动窗口告警已触发：单个短链 5 分钟内密码失败达到阈值（默认 10 次）。请立即检查该短链的访问日志。"

@@ -103,7 +103,9 @@ services:
 | `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7` |
 | `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用）（v1.6 新增） |
 | `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期（v1.6 新增） |
-| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 备份失败告警 webhook，backup.sh 失败时 POST JSON 通知（v1.6 新增） |
+| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 告警 webhook：backup.sh 备份失败时 POST JSON 通知（v1.6 新增）；v1.10 起密码失败高告警复用该地址 |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` | `10` | 密码失败高告警阈值：单个短链滑动窗口内密码失败达到该次数触发告警（v1.10 新增），`<=0` 回 `10` |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` | `5m` | 密码失败滑动窗口时长（v1.10 新增），duration 格式，解析失败或 `<=0` 回 `5m` |
 
 
 限流按 IP + API Key 两个维度分别做令牌桶；`/metrics`、`/api/health`、`/api/readyz` 三个路径免限流。
@@ -274,6 +276,13 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 - 需要排查时加 `--keep` 保留现场。
 - 日志里 admin key 只经环境变量传给子进程，不落日志明文。
 
+### 3.10 密码失败高告警（v1.10）
+
+- 机制：`internal/passalert.Tracker` 按 slug 做滑动窗口计数，窗口 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW`（默认 5m），窗口内失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD`（默认 10）时触发一次；只在从阈值下方跨越到阈值及以上的那次触发，持续超阈值不重复触发，计数回落到阈值下方后重新布防。
+- 触发后三件事：打 warn 日志（含 slug、窗口内失败次数、阈值）；指标 `linkshort_password_fail_alerts_total` +1；若配了 `LINKSHORT_ALERT_WEBHOOK_URL` 则异步 POST JSON：`{"source":"linkshort","event":"password_fail_alert","host":"...","slug":"...","fail_count":N,"window_seconds":300,"threshold":10,"time":"..."}`，HTTP 10 秒超时，通知失败只记日志不影响主流程；URL 留空则不通知。
+- 与限流的关系：密码尝试先走全局 IP 令牌桶（429 挡掉的不计入本告警，只统计真正打到密码校验的失败）。
+- 排障：告警触发后先查日志里的 slug，再看该 slug 的 `linkshort_password_attempts_total{result="fail"}` 速率；误报就调大阈值/窗口。
+
 ## 4. 升级
 
 
@@ -336,6 +345,7 @@ scrape_configs:
 - `linkshort_redirects_total{outcome}`：跳转结果，`outcome` 取值 `ok` / `gone` / `not_found` / `error`。
 - `linkshort_burn_links_burned_total`：burn 类型链接被销毁的累计数。
 - `linkshort_rate_limit_rejected_total`：被限流拒绝的累计数。
+- `linkshort_password_fail_alerts_total`：密码失败高告警触发次数（v1.10 新增）。
 - `linkshort_process_start_time_seconds`：进程启动时间戳（秒），可用来算运行时长、检测重启。
 - `linkshort_links_purged_total`：定时清理删除的已销毁 burn 短链累计数（v1.5 新增）。
 - `linkshort_backup_last_success_timestamp`：最近一次备份成功的 unix 秒时间戳，0 表示尚无成功备份（v1.6 新增）。
@@ -373,6 +383,14 @@ rate(linkshort_rate_limit_rejected_total[5m])
 ```
 
 对比平时基线，明显抬头说明要么被刷，要么正常流量涨了需要调参（见第 7 节）。
+
+**密码失败走高**（v1.10，规则文件 `prometheus/rules/linkshort.yml`）：
+
+```promql
+sum(rate(linkshort_password_attempts_total{result="fail"}[5m])) > 0.2
+```
+
+持续 2 分钟触发 `LinkshortPasswordFailRateHigh`（warning）；应用内滑动窗口触发的 `linkshort_password_fail_alerts_total` 增长对应 `LinkshortPasswordFailAlertFired`（critical）。阈值按业务调整。
 
 **burn 计数异常**：
 

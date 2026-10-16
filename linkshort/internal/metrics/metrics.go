@@ -42,6 +42,9 @@ type Registry struct {
 	backupLastSuccessTS int64
 	// backupHealthy 备份健康状态：1 健康，0 降级，默认 0。
 	backupHealthy int64
+
+	// passwordFailAlerts 密码失败高告警触发次数。
+	passwordFailAlerts int64
 }
 
 type httpKey struct {
@@ -143,6 +146,13 @@ func (m *Registry) SetBackupHealth(healthy bool, lastSuccessTS int64) {
 	m.mu.Unlock()
 }
 
+// IncPasswordFailAlert 记录一次密码失败高告警触发。
+func (m *Registry) IncPasswordFailAlert() {
+	m.mu.Lock()
+	m.passwordFailAlerts++
+	m.mu.Unlock()
+}
+
 // Handler 输出 Prometheus 文本格式的指标。
 func (m *Registry) Handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -167,6 +177,7 @@ func (m *Registry) Handler() http.HandlerFunc {
 		startTime := m.startTime
 		backupLastSuccessTS := m.backupLastSuccessTS
 		backupHealthy := m.backupHealthy
+		passwordFailAlerts := m.passwordFailAlerts
 		m.mu.Unlock()
 
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
@@ -209,6 +220,11 @@ func (m *Registry) Handler() http.HandlerFunc {
 		for _, res := range []string{"ok", "fail"} {
 			fmt.Fprintf(&b, "linkshort_password_attempts_total{result=\"%s\"} %d\n", res, passwordAttempts[res])
 		}
+
+		b.WriteString("# HELP linkshort_password_fail_alerts_total 密码失败高告警触发次数。\n")
+		b.WriteString("# TYPE linkshort_password_fail_alerts_total counter\n")
+		fmt.Fprintf(&b, "linkshort_password_fail_alerts_total %d\n", passwordFailAlerts)
+
 		b.WriteString("# HELP linkshort_burn_links_burned_total 成功执行阅后销毁的次数。\n")
 
 		b.WriteString("# TYPE linkshort_burn_links_burned_total counter\n")
