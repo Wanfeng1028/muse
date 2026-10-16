@@ -186,6 +186,11 @@ bool detectPassageIntent(const std::string& raw) {
 
 }  // namespace
 
+// 单字中文停用词判断（供查询展开等复用）。
+bool isSingleCharStopword(const std::string& w) {
+    return singleCharStopwords().count(w) > 0;
+}
+
 ParsedQuery parseNaturalQuery(const std::string& raw) {
     ParsedQuery pq;
 

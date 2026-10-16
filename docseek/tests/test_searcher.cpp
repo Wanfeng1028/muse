@@ -22,11 +22,15 @@ std::string makeTempDbPath() {
 }  // namespace
 
 // 测试 buildMatchQuery 的转义与分词行为
+// 注意：多 token 之间用显式 AND 连接（FTS5 里括号 OR 组与引号串隐式相邻会报
+// syntax error）；单个词若被 CutForSearch 切出重叠词则 OR 展开（如"咖啡豆"）。
 TEST(BuildMatchQuery, BasicTokens) {
-    EXPECT_EQ(docseek::Searcher::buildMatchQuery("hello world"), "\"hello\" \"world\"");
-    EXPECT_EQ(docseek::Searcher::buildMatchQuery("say \"hi\""), "\"say\" \"\"\"hi\"\"\"");
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("hello world"), "\"hello\" AND \"world\"");
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("say \"hi\""), "\"say\" AND \"\"\"\" AND \"hi\" AND \"\"\"\"");
     EXPECT_EQ(docseek::Searcher::buildMatchQuery(""), "");
     EXPECT_EQ(docseek::Searcher::buildMatchQuery("   "), "");
+    // 中文重叠词展开为 OR（T1 查询侧）：咖啡豆 => <咖啡@0><咖啡豆@0>
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("咖啡豆"), "(\"咖啡\" OR \"咖啡豆\")");
 }
 
 // 测试 search() 的隐式 AND 语义与命中数
@@ -74,6 +78,39 @@ TEST(SearchEmptyQuery, EmptyAndWhitespace) {
         docseek::Searcher s(db);
         EXPECT_TRUE(s.search("", 10).empty());
         EXPECT_TRUE(s.search("   ", 10).empty());
+    }
+    std::filesystem::remove_all(std::filesystem::path(dbPath).parent_path());
+}
+
+// T2 复现：切分上下文不一致导致的子串查询漏召回。
+//
+// 索引侧：FTS5 分词器对文档全文调用 CutForSearch，"猫砂盆" 被切成 <猫> <砂盆>，
+// 因此索引里只存在 token "猫" 和 "砂盆"，不存在 "猫砂"。
+// 查询侧：parseNaturalQuery 对查询串单独调用 CutForSearch，"猫砂" 被切成 <猫砂>，
+// 于是查询关键词是 "猫砂"。MATCH '猫砂' 要求索引中存在 token "猫砂"，
+// 但索引里只有 "猫"/"砂盆" —— 两边词汇表对不上，命中 0 条。
+//
+// 本测试当前必须失败（复现 T2）；T2 修复后应通过。
+TEST(SearchT2, SubstringQueryRecall) {
+    const std::string dbPath = makeTempDbPath();
+    {
+        auto db = docseek::Database::open(dbPath);
+        db.upsert(
+            "/t2/cat.txt",
+            "猫砂盆选购指南",
+            "猫砂盆是养猫家庭的必需品，挑选猫砂盆要注意尺寸和材质。",
+            100,
+            42);
+
+        docseek::Searcher s(db);
+
+        // 对照组：完整词 "猫砂盆" 的索引 token 为 猫/砂盆，查询同样切成 猫/砂盆，
+        // 两边一致，应当有结果，证明索引本身可用。
+        EXPECT_FALSE(s.search("猫砂盆", 10).empty());
+
+        // 复现断言：查询 "猫砂" 被切成 <猫砂>，索引中无此 token，
+        // 子串查询漏召回。当前代码下此断言必须失败。
+        EXPECT_FALSE(s.search("猫砂", 10).empty());
     }
     std::filesystem::remove_all(std::filesystem::path(dbPath).parent_path());
 }

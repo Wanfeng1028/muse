@@ -179,3 +179,123 @@ TEST(TokenizerTest, EnglishCaseFolding) {
     auto hits = searcher.search("hello", 10);
     EXPECT_GE(hits.size(), 1u);
 }
+
+// T1 缺陷复现（重叠词游标跳跃 → 后续普通词级联丢失）：
+// 这不是"重复词"场景，而是"重叠词导致游标跳跃、进而使后续普通词被级联丢失"。
+// 旧场景文本 '维修手机维修电脑' 在 bug 代码下并不丢词：第二个 "维修" 的真实
+// 位置在 cursor 之后，单调 find 仍能找到它，因此该测试在 bug 下是通过的，
+// 不能复现 T1，故换掉。
+//
+// 复现文本：'计算机算机维修'，CutForSearch 切分顺序为
+//   <计算> <算机> <计算机> <算机> <维修>
+// bug 推演（单调 find + cursor 前进）：
+//   计算@字节0..6  → cursor=6
+//   算机在 [6,n) 中 find → 命中第二个 "算机"（字节12..18）→ cursor=18
+//   计算机在 [18,n) 中 find → npos → 丢失
+//   第二个算机在 [19,n) 中 find → npos → 丢失
+//   维修在 [20,n) 中 find → npos → 丢失
+// 实测 fts5vocab('ft','instance') 索引中只有 计算@0、算机@1，
+// "维修" 完全不在索引里：SELECT COUNT(*) FROM v WHERE term='维修' = 0。
+// 这正是 T1 的危害形态：重叠词导致游标跳跃，后续普通词被级联丢失。
+// 期望：修复后 term='维修' 至少进索引一次（COUNT >= 1）。
+TEST(TokenizerT1, DuplicateWordNotLost) {
+    const std::string dir = makeTempDir("docseek_tokenizer_t1_dup");
+    const std::string dbPath = dir + "/t1_dup.db";
+
+    sqlite3 *db = nullptr;
+    ASSERT_EQ(sqlite3_open(dbPath.c_str(), &db), SQLITE_OK);
+    ASSERT_EQ(docseek::registerJiebaTokenizer(db), SQLITE_OK);
+
+    char *errMsg = nullptr;
+    int rc = sqlite3_exec(db,
+        "CREATE VIRTUAL TABLE ft USING fts5(content, tokenize='jieba');",
+        nullptr, nullptr, &errMsg);
+    if (rc != SQLITE_OK) {
+        std::string msg = errMsg ? errMsg : "unknown error";
+        sqlite3_free(errMsg);
+        sqlite3_close(db);
+        FAIL() << "create fts5 table failed: " << msg;
+    }
+
+    rc = sqlite3_exec(db,
+        "INSERT INTO ft(content) VALUES('计算机算机维修');",
+        nullptr, nullptr, &errMsg);
+    if (rc != SQLITE_OK) {
+        std::string msg = errMsg ? errMsg : "unknown error";
+        sqlite3_free(errMsg);
+        sqlite3_close(db);
+        FAIL() << "insert failed: " << msg;
+    }
+
+    rc = sqlite3_exec(db,
+        "CREATE VIRTUAL TABLE v USING fts5vocab('ft', 'instance');",
+        nullptr, nullptr, &errMsg);
+    ASSERT_EQ(rc, SQLITE_OK) << (errMsg ? errMsg : "");
+
+    sqlite3_stmt *stmt = nullptr;
+    rc = sqlite3_prepare_v2(db,
+        "SELECT COUNT(*) FROM v WHERE term='维修';",
+        -1, &stmt, nullptr);
+    ASSERT_EQ(rc, SQLITE_OK);
+
+    int count = -1;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+
+    EXPECT_GE(count, 1);
+}
+
+// T1 缺陷复现（重叠词丢失）：
+// CutForSearch("计算机技术") => <计算> <算机> <技术> <计算机> <计算机技术>。
+// jiebaXTokenize 处理完 <算机> 后游标推进到 "技术" 之前，
+// 随后 "计算机"（offset 0，长 9 字节）在游标之后 find -> npos -> 丢失。
+// 于是索引里找不到完整词"计算机"。
+// 正确行为：索引中 term='计算机' 至少出现 1 次。bug 存在时该断言失败。
+//
+// 注：改用 fts5vocab 直接检查索引内容。原因：offsets() 在本仓库静态
+// 编译的 sqlite3 中不可用（prepare 返回 "no such function: offsets"），
+// 而 MATCH '计算机' 会被 jieba 查询侧分词切成 "计算" 从而命中，掩盖
+// 索引侧丢词。fts5vocab 直接读索引，不经过查询侧分词。
+TEST(TokenizerT1, OverlappingWordNotLost) {
+    const std::string dir = makeTempDir("docseek_tokenizer_t1_overlap");
+    const std::string dbPath = dir + "/t1_overlap.db";
+    remove(dbPath.c_str());
+
+    sqlite3* db = nullptr;
+    ASSERT_EQ(sqlite3_open(dbPath.c_str(), &db), SQLITE_OK);
+    ASSERT_EQ(docseek::registerJiebaTokenizer(db), SQLITE_OK);
+
+    const char* createFt =
+        "CREATE VIRTUAL TABLE ft USING fts5(content, tokenize='jieba');";
+    char* errMsg = nullptr;
+    ASSERT_EQ(sqlite3_exec(db, createFt, nullptr, nullptr, &errMsg), SQLITE_OK)
+        << (errMsg ? errMsg : "");
+
+    const char* insertSql =
+        "INSERT INTO ft(content) VALUES('计算机技术');";
+    ASSERT_EQ(sqlite3_exec(db, insertSql, nullptr, nullptr, &errMsg), SQLITE_OK)
+        << (errMsg ? errMsg : "");
+
+    const char* createVocab =
+        "CREATE VIRTUAL TABLE v USING fts5vocab('ft', 'instance');";
+    ASSERT_EQ(sqlite3_exec(db, createVocab, nullptr, nullptr, &errMsg), SQLITE_OK)
+        << (errMsg ? errMsg : "");
+
+    sqlite3_stmt* stmt = nullptr;
+    const char* countSql = "SELECT COUNT(*) FROM v WHERE term='计算机';";
+    ASSERT_EQ(sqlite3_prepare_v2(db, countSql, -1, &stmt, nullptr), SQLITE_OK);
+
+    int count = -1;
+    ASSERT_EQ(sqlite3_step(stmt), SQLITE_ROW);
+    count = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    EXPECT_GE(count, 1);
+
+    sqlite3_close(db);
+    remove(dbPath.c_str());
+    rmdir(dir.c_str());
+}

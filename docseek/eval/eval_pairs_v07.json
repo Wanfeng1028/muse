@@ -1,4 +1,3 @@
-
 [
   {
     "id": "v07-001",
@@ -40,7 +39,6 @@
     "category": "html",
     "note": "HTML 猫页，主题词命中（单字\"猫\"因分词器上下文切分差异当前不可召回，记为已知问题 T2）"
   },
-
   {
     "id": "v07-006",
     "query": "租房",
@@ -57,7 +55,6 @@
     "category": "html",
     "note": "HTML 摄影页，主题词命中"
   },
-
   {
     "id": "v07-008",
     "query": "川菜",
@@ -114,7 +111,6 @@
     "category": "tok",
     "note": "tokenizer 量词场景"
   },
-
   {
     "id": "v07-015",
     "query": "标点",
@@ -131,7 +127,6 @@
     "category": "tok",
     "note": "tokenizer 长复合词场景"
   },
-
   {
     "id": "v07-017",
     "query": "电脑",
@@ -140,7 +135,6 @@
     "category": "tok",
     "note": "tokenizer 同义词文档词面命中"
   },
-
   {
     "id": "v07-018",
     "query": "缩写",
@@ -165,7 +159,6 @@
     "category": "tok",
     "note": "tokenizer 动宾结构场景"
   },
-
   {
     "id": "v07-021",
     "query": "退款流程写在哪一段",
@@ -357,5 +350,101 @@
     "type": "search",
     "category": "noise",
     "note": "noise 桌游文档关键词"
+  },
+  {
+    "id": "v11-t1-01",
+    "query": "维修",
+    "expected": "t1_01_repair.md",
+    "type": "search",
+    "category": "tok",
+    "note": "T1 回归：重叠切分下维修词仍须召回"
+  },
+  {
+    "id": "v11-t1-02",
+    "query": "算机维修",
+    "expected": "t1_01_repair.md",
+    "type": "search",
+    "category": "tok",
+    "note": "T1 回归：算机为计算机子串，游标丢词须复现"
+  },
+  {
+    "id": "v11-t1-03",
+    "query": "计算机维修",
+    "expected": "t1_01_repair.md",
+    "type": "search",
+    "category": "tok",
+    "note": "T1 回归：计算机与维修重叠切分后组合召回"
+  },
+  {
+    "id": "v11-t1-04",
+    "query": "计算机技术",
+    "expected": "t1_02_jishu.md",
+    "type": "search",
+    "category": "tok",
+    "note": "T1 回归：计算机技术整词与重叠切分召回"
+  },
+  {
+    "id": "v11-t1-05",
+    "query": "电脑维修",
+    "expected": "tok_09_synonym.md",
+    "type": "search",
+    "category": "tok",
+    "note": "T1 回归：电脑/维修分词正常；tok_09 是电脑/计算机/PC 近义词文档，电脑维修应以它为 Top-1"
+  },
+  {
+    "id": "v11-t1-06",
+    "query": "快捷键",
+    "expected": "qa_06_shortcut.md",
+    "type": "search",
+    "category": "tok",
+    "note": "T1 回归：快捷与快捷键重叠切分须 OR 展开"
+  },
+  {
+    "id": "v11-t2-01",
+    "query": "猫砂",
+    "expected": "html_05_cat.html",
+    "type": "search",
+    "category": "tok",
+    "note": "T2 主复现：索引仅有猫与砂盆，查询猫砂须子串召回"
+  },
+  {
+    "id": "v11-t2-02",
+    "query": "咖啡粉",
+    "expected": "html_02_coffee.html",
+    "type": "search",
+    "category": "tok",
+    "note": "T2 回归：咖啡粉为索引词子串须召回"
+  },
+  {
+    "id": "v11-t2-03",
+    "query": "手冲",
+    "expected": "html_02_coffee.html",
+    "type": "search",
+    "category": "tok",
+    "note": "T2 回归：手冲子串漏召回场景"
+  },
+  {
+    "id": "v11-t2-04",
+    "query": "马拉松备赛",
+    "expected": "html_03_marathon.html",
+    "type": "search",
+    "category": "tok",
+    "note": "T2 回归：马拉松备赛跨词子串召回"
+  },
+  {
+    "id": "v11-t2-05",
+    "query": "定投",
+    "expected": "html_04_fund.html",
+    "type": "search",
+    "category": "tok",
+    "note": "T2 回归：定投子串漏召回场景"
+  },
+  {
+    "id": "v11-t2-06",
+    "query": "指数基金",
+    "expected": "html_04_fund.html",
+    "type": "search",
+    "category": "tok",
+    "note": "T2 回归：指数基金组合子串召回"
   }
 ]

@@ -16,4 +16,7 @@ struct ParsedQuery {
 // 空输入（去空白后为空）返回空 ParsedQuery。
 ParsedQuery parseNaturalQuery(const std::string& raw);
 
+// 判断是否为单字中文停用词（查询展开等复用）。
+bool isSingleCharStopword(const std::string& w);
+
 }  // namespace docseek

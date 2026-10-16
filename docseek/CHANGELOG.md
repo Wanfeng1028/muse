@@ -2,6 +2,17 @@
 # Changelog
 ```
 
+## v0.11.0（2026-10-17）——搜索质量 T1/T2 修复
+
+- T1 修复（`src/jieba_tokenizer.cpp`）：`jiebaXTokenize` 的单调游标 `find` 在 CutForSearch 重叠词下静默丢词（如"计算机技术"丢算机/计算机/计算机技术、"计算机算机维修"连"维修"都被级联丢失）。改为"全文 occurrence 扫描 + 已认领集合"：每个词独立定位，`(词, 起始字节)` 去重，不同词允许同位置重叠；归一化回退路径保留。
+- T2 修复（动查询侧，不动索引侧）：`Searcher::search` 新增第 3 阶段"子串召回回退"——中文 token 拆单字 OR 粗筛（跳过单字停用词）+ 按原始 token 逐个子串精验（ASCII 大小写不敏感），只保留原文确实连续包含每个查询 token 的文档；只在精确 AND、OR 回退都为空时触发，不影响已有查询。`search 猫砂` 现可命中含"猫砂盆"的文档（之前无结果）。
+- 查询构造修正（`src/searcher.cpp` 新增 `expandTokenOrQuery`）：单个查询词的 CutForSearch 结果按起始字节位置分组，同一起始位置的重叠词 OR（如"咖啡豆"→`("咖啡" OR "咖啡豆")`，单个引号串会被 FTS5 当成要求相邻的短语而恒为 0），不同位置顺序 AND；`buildMatchQuery` 连接符由空格改为显式 ` AND `（FTS5 括号 OR 组与引号串隐式相邻会报 syntax error）。
+- `isSingleCharStopword` 从 `query_parser.cpp` 暴露到头文件供查询展开复用。
+- 测试：新增 3 个先红后绿的复现测试（`TokenizerT1.DuplicateWordNotLost` / `TokenizerT1.OverlappingWordNotLost` / `SearchT2.SubstringQueryRecall`，断言走 fts5vocab 直接读索引）；ctest 除已知 flaky（WatcherTest.SubDir，inotify 时序，v0.5.0 已有）外全绿。
+- 评测：语料 42→44 篇、评测对 44→56（新增 12 对：6 T1 + 6 T2，其中 5 对已在修复前验证为 FAIL 的真回归对），Top-1 从基线 36/44（81.8%）到 **48/56（85.7%）**；8 个失败与基线同一集合（qa 自然语言问句，独立已知问题）。
+- 已知限制：T2 要求查询 token 在文档中连续出现（语义级子串不在本轮范围）；单字 OR 粗筛极端情况下候选集可能较大（未压测）；qa 4/12 未改善；`service.cpp` 的版本字面量仍为 0.9.0（v0.10.0 遗留待办）。
+- 版本号 0.11.0（`--version` / 服务启动日志）；发版对照报告：`docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。
+
 ## v0.10.0（2026-10-17）——多用户支持
 
 - 多用户：`database.h` 新增 `kDefaultUser = "local"` 与 `checkUserValid`（非法 user 抛 `std::runtime_error`）；`Document` 新增 `user` 字段。
