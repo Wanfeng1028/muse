@@ -2,6 +2,21 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.6 - 2026-10-16
+
+### 新增
+
+- 真实 OCR 提供商：`TesseractOcrProvider`（src/ledger/ocr.py，调本地 tesseract CLI 的 stdin/stdout）。超时默认 30 秒（`LEDGER_OCR_TIMEOUT`）、语言默认 `chi_sim+eng`（`LEDGER_OCR_LANG`）；缺二进制时报错并给出 apt/brew 安装命令；识别失败或超时抛 `OcrFailedError`。金额提取先遮掉日期片段再取最大值（修过日期干扰金额的 bug）。
+- OCR 审核队列：`POST /api/bills/ocr` 返回 `review_id` 并把识别结果写入待审核队列（`ocr_reviews` 表，status=pending）；新增 `GET /api/bills/review`（待审核列表）、`GET /api/bills/review/{id}/image`（原图）、`POST /api/bills/review/{id}/confirm`（确认入账，重复确认返回 409）、`POST /api/bills/review/{id}/reject`（驳回）。
+- 新页面 `/bills/review`「OCR 审核」：原图缩略 + 识别字段可编辑 + 置信度低于 70% 的字段标红；确认后调记账 API 入账。
+- `OcrResult` 新增 `field_confidence`（各字段置信度：merchant/amount_cents/occurred_on）。
+- DB 迁移 v4→v5：新建 `ocr_reviews` 表（`CURRENT_VERSION=5`）。
+
+### 测试
+
+- 新增 `tests/test_ocr_tesseract.py`（18 例通过、1 例因环境无 tesseract 跳过）、`tests/test_bills_review.py`（15 例）；全量 242 例通过。
+- 3 处旧的硬编码版本号断言更新为 `CURRENT_VERSION`。
+
 ## v2.4 - 2026-10-16
 
 ### 新增

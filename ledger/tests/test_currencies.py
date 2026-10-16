@@ -78,8 +78,8 @@ async def test_migration_v2_to_v3(tmp_path):
         await conn.execute(text("PRAGMA user_version = 2"))
 
     version = await run_migrations(engine)
-    assert version == 4
-    assert await _get_user_version(engine) == 4
+    assert version == CURRENT_VERSION
+    assert await _get_user_version(engine) == CURRENT_VERSION
     tables = await _list_tables(engine)
     assert "currencies" in tables
     assert "merchant_aliases" in tables
@@ -94,7 +94,7 @@ async def test_migration_v2_to_v3(tmp_path):
 async def test_fresh_db_has_v4(tmp_path):
     engine = _make_engine(tmp_path, "fresh.db")
     version = await run_migrations(engine)
-    assert version == 4
+    assert version == CURRENT_VERSION
     assert version == CURRENT_VERSION
     tables = await _list_tables(engine)
     assert "currencies" in tables
@@ -102,14 +102,14 @@ async def test_fresh_db_has_v4(tmp_path):
     assert "currency" in await _column_names(engine, "transactions")
 
     version_again = await run_migrations(engine)
-    assert version_again == 4
+    assert version_again == CURRENT_VERSION
     await engine.dispose()
 
 
 async def test_migration_idempotent_on_v4(tmp_path):
     engine = _make_engine(tmp_path, "idem.db")
-    assert await run_migrations(engine) == 4
-    assert await run_migrations(engine) == 4
+    assert await run_migrations(engine) == CURRENT_VERSION
+    assert await run_migrations(engine) == CURRENT_VERSION
     await engine.dispose()
 
 

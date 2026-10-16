@@ -52,6 +52,7 @@ async def client(app):
     async with factory() as session:
         # 清空所有业务表（按依赖顺序删除）
         for t in (
+            "ocr_reviews",
             "statement_items",
             "statement_batches",
             "match_rules",

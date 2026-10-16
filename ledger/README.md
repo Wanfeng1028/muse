@@ -159,13 +159,15 @@ docs/
 
 ## 功能
 
-### v2.5 账单图片 OCR 录入（进行中）
+### v2.6 真实 OCR + 审核台
 
-当前版本交付 OCR 提供商抽象层 + Mock 链路：
+- 三种 OCR 提供商：`mock`（默认，固定演示结果，响应中 `mock: true` 明确标识）、`tesseract`（本地真实识别）、`env`。
+- `get_provider()` 支持 `mock`/`tesseract`/`env`。
+- tesseract 模式：`LEDGER_OCR_PROVIDER=tesseract`，语言 `LEDGER_OCR_LANG`（默认 `chi_sim+eng`），超时 `LEDGER_OCR_TIMEOUT`（默认 30 秒）；缺二进制时报错并给出 apt/brew 安装命令。Debian/Ubuntu 安装：`sudo apt install tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng`。
+- 审核流程：`/bills` 上传图片 → 识别结果进入 `/bills/review`「OCR 审核」队列 → 人工核对（置信度低于 70% 的字段标红）→ 确认入账 / 驳回。确认调记账 API 入账；重复确认返回 409。
 
-- `ledger/src/ledger/ocr.py` 定义 `OcrProvider` 协议、`MockOcrProvider`、`EnvOcrProvider` 与 `get_provider()`。
-- 默认 `LEDGER_OCR_PROVIDER=mock`，Mock 返回固定结果，响应中 `mock: true` 明确标识，绝不冒充真实识别。
-- 真实 OCR 需要用户自行配置外部服务 key（`LEDGER_OCR_API_KEY`）；当前版本真实提供商尚未接入，配置后仍会诚实抛出 `NotImplementedError`，不会返回伪造结果。
+![OCR 审核台](docs/screenshots/ocr-review.png)
+![拍照记账上传](docs/screenshots/bills-upload.png)
 
 ## 配置
 
@@ -177,8 +179,10 @@ docs/
 | `LEDGER_LOG_LEVEL` | 日志级别（DEBUG/INFO/WARNING/ERROR/CRITICAL，默认 INFO，非法值启动失败） |
 | `LEDGER_BACKUP_DIR` | 备份目录（默认 `<项目根>/data/backups`） |
 | `LEDGER_BASE_CURRENCY` | 本位币（ISO 4217 三字母大写，默认 CNY，非法值启动失败） |
-| `LEDGER_OCR_PROVIDER` | OCR 提供商：`mock`（默认）或 `env`，非法值启动失败 |
+| `LEDGER_OCR_PROVIDER` | OCR 提供商：`mock`（默认）/`tesseract`/`env`，非法值启动失败 |
 | `LEDGER_OCR_API_KEY` | 真实 OCR 服务 API Key（`LEDGER_OCR_PROVIDER=env` 时必填） |
+| `LEDGER_OCR_LANG` | tesseract 语言包（默认 `chi_sim+eng`） |
+| `LEDGER_OCR_TIMEOUT` | tesseract 识别超时秒数（默认 30） |
 
 ## 运维
 

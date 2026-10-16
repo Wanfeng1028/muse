@@ -1483,6 +1483,23 @@ textarea:disabled {
   font-size: 15px;
 }
 
+
+/* ---------- OCR 审核台 ---------- */
+#review-list { display: flex; flex-direction: column; gap: 16px;}
+.review-card { display: grid; grid-template-columns: 220px 1fr; gap: 20px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);}
+.review-thumb { width: 220px; max-height: 300px; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--striped);}
+.review-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; align-content: start;}
+.review-field { display: flex; flex-direction: column; gap: 4px;}
+.review-field.full { grid-column: 1 / -1;}
+.review-field label { font-size: 12px; color: var(--muted);}
+.review-field label.conf { font-family: var(--font-num);}
+.conf-low { color: var(--red); font-weight: 600;}
+.review-field input,.review-field select { padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 14px; font-family: var(--font);}
+.review-amount { font-family: var(--font-num);}
+.review-actions { grid-column: 1 / -1; display: flex; gap: 10px; margin-top: 4px;}
+.review-provider { font-size: 12px; color: var(--muted);}
+.review-empty { text-align: left; padding: 40px 20px; color: var(--muted); background: var(--card); border: 1px dashed var(--border-strong); border-radius: var(--radius);}
+@media (max-width: 768px) {.review-card { grid-template-columns: 1fr;}.review-thumb { width: 100%; max-height: 240px;}.review-fields { grid-template-columns: 1fr;}}
 /* ---------- 13. 移动端适配（≤768px） ---------- */
 /* 品牌 mark */
 .brand-mark { flex: none; display: inline-block; vertical-align: -4px; }
@@ -1627,7 +1644,8 @@ textarea:disabled {
   #b-form { padding: 14px; }
   #b-form button[type="submit"] { width: 100%; min-height: 48px; }
 
-  /* __LEDGER_MOBILE_MORE__ */
+
+/* __LEDGER_MOBILE_MORE__ */
   /* 仪表盘：≤768px 单列 + 快捷入口两列 */
   .summary-cards { grid-template-columns: 1fr; gap: 12px; }
   .card-value { font-size: 24px; }

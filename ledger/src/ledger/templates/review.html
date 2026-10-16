@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}OCR 审核{% endblock %}
+{% block content %}
+<h1>OCR 审核</h1>
+<p class="muted">识别结果先在这里核对，确认后入账；置信度低的字段标红，请重点检查。</p>
+<div id="review-list"></div>
+<div id="review-status" class="muted"></div>
+{% endblock %}

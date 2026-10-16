@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
 
 
-CURRENT_VERSION = 4
+CURRENT_VERSION = 5
 
 V1_TABLES = ("accounts", "categories", "transactions", "budgets", "recurring")
 V2_TABLES = (
@@ -70,6 +70,14 @@ async def _migrate_v3_to_v4(conn) -> None:
     await conn.execute(text(_compile_create_table(table)))
 
 
+async def _migrate_v4_to_v5(conn) -> None:
+    """v4 -> v5：新建 ocr_reviews 表（OCR 审核队列）。"""
+    from ledger import models  # noqa: F401  局部导入，避免循环
+
+    table = models.Base.metadata.tables["ocr_reviews"]
+    await conn.execute(text(_compile_create_table(table)))
+
+
 async def run_migrations(engine: AsyncEngine) -> int:
     """执行迁移，返回迁移后的 user_version。"""
     from ledger import models  # noqa: F401  注册所有表定义
@@ -98,6 +106,9 @@ async def run_migrations(engine: AsyncEngine) -> int:
 
                 if version < 4:
                     await _migrate_v3_to_v4(conn)
+
+                if version < 5:
+                    await _migrate_v4_to_v5(conn)
 
             await conn.execute(text(f"PRAGMA user_version = {CURRENT_VERSION}"))
             return CURRENT_VERSION

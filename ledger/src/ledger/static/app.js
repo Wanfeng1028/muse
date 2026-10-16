@@ -859,6 +859,214 @@ function initBillsPage() {
   });
 }
 
+/* ========== OCR 审核台 ========== */
+function initReviewPage() {
+    var listEl = document.getElementById("review-list");
+    var statusEl = document.getElementById("review-status");
+    if (!listEl) return;
+
+    var categories = [];
+    var accounts = [];
+
+    function fmtYuan(cents) {
+        var n = Number(cents) || 0;
+        return (n / 100).toFixed(2);
+    }
+
+    function confLabel(text, conf) {
+        var pct = Math.round((Number(conf) || 0) * 100);
+        var cls = "conf" + (Number(conf) < 0.7 ? " conf-low" : "");
+        return '<label class="' + cls + '">' + text + '（' + pct + '%）</label>';
+    }
+
+    function catOptions(selectedId) {
+        var html = '<option value="">请选择分类</option>';
+        for (var i = 0; i < categories.length; i++) {
+            var c = categories[i];
+            var sel = Number(selectedId) === Number(c.id) ? " selected" : "";
+            html += '<option value="' + c.id + '"' + sel + '>' + escapeHtml(c.name) + '</option>';
+        }
+        return html;
+    }
+
+    function accOptions(selectedId) {
+        var html = '<option value="">请选择账户</option>';
+        for (var i = 0; i < accounts.length; i++) {
+            var a = accounts[i];
+            var sel = Number(selectedId) === Number(a.id) ? " selected" : "";
+            html += '<option value="' + a.id + '"' + sel + '>' + escapeHtml(a.name) + '</option>';
+        }
+        return html;
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function renderEmpty() {
+        listEl.innerHTML = '<div class="review-empty">暂无待审核的 OCR 记录，去<a href="/bills">拍照记账</a>传一张小票试试。</div>';
+    }
+
+    function renderItem(item) {
+        var fc = item.field_confidence || {};
+        var card = document.createElement("article");
+        card.className = "review-card";
+        card.dataset.id = item.id;
+
+        var thumb = document.createElement("img");
+        thumb.className = "review-thumb";
+        thumb.alt = "小票原图";
+        thumb.src = "/api/bills/review/" + item.id + "/image";
+
+        var fields = document.createElement("div");
+        fields.className = "review-fields";
+        fields.innerHTML =
+            '<div class="review-field">' +
+                confLabel("商户", fc.merchant) +
+                '<input type="text" class="rv-merchant" value="' + escapeHtml(item.merchant || "") + '">' +
+            '</div>' +
+            '<div class="review-field">' +
+                confLabel("金额（元）", fc.amount_cents) +
+                '<input type="number" step="0.01" class="rv-amount review-amount" value="' + fmtYuan(item.amount_cents) + '">' +
+            '</div>' +
+            '<div class="review-field">' +
+                confLabel("日期", fc.occurred_on) +
+                '<input type="date" class="rv-date" value="' + escapeHtml(item.occurred_on || "") + '">' +
+            '</div>' +
+            '<div class="review-field">' +
+                '<label>分类</label>' +
+                '<select class="rv-category">' + catOptions(item.category_id) + '</select>' +
+            '</div>' +
+            '<div class="review-field">' +
+                '<label>账户</label>' +
+                '<select class="rv-account">' + accOptions(null) + '</select>' +
+            '</div>' +
+            '<div class="review-field full">' +
+                '<label>备注</label>' +
+                '<input type="text" class="rv-note" value="">' +
+            '</div>' +
+            '<div class="review-actions">' +
+                '<button type="button" class="btn-primary rv-confirm">确认入账</button>' +
+                '<button type="button" class="btn-ghost rv-reject">驳回</button>' +
+            '</div>' +
+            '<div class="review-provider">来源：' + escapeHtml(item.provider || "") + (item.mock ? "（Mock 识别）" : "") + '</div>';
+
+        card.appendChild(thumb);
+        card.appendChild(fields);
+        listEl.appendChild(card);
+
+        fields.querySelector(".rv-confirm").addEventListener("click", function () {
+            onConfirm(card, item);
+        });
+        fields.querySelector(".rv-reject").addEventListener("click", function () {
+            onReject(card, item);
+        });
+    }
+
+    async function onConfirm(card, item) {
+        var merchant = card.querySelector(".rv-merchant").value.trim();
+        var amountStr = card.querySelector(".rv-amount").value;
+        var occurredOn = card.querySelector(".rv-date").value;
+        var categoryId = card.querySelector(".rv-category").value;
+        var accountId = card.querySelector(".rv-account").value;
+        var note = card.querySelector(".rv-note").value.trim();
+
+        var amountNum = parseFloat(amountStr);
+        if (!merchant) { alert("请填写商户名称。"); return; }
+        if (!(amountNum > 0)) { alert("金额要大于 0，请检查后再确认。"); return; }
+        if (!occurredOn) { alert("请选择日期。"); return; }
+        if (!categoryId) { alert("请选择分类。"); return; }
+        if (!accountId) { alert("请选择账户。"); return; }
+
+        var payload = {
+            merchant: merchant,
+            amount_cents: Math.round(amountNum * 100),
+            occurred_on: occurredOn,
+            category_id: Number(categoryId),
+            account_id: Number(accountId),
+            note: note
+        };
+
+        var btn = card.querySelector(".rv-confirm");
+        btn.disabled = true;
+        try {
+            var res = await fetch("/api/bills/review/" + item.id + "/confirm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) {
+                var msg = "入账失败，请重试。";
+                try { var e = await res.json(); if (e && e.detail) msg = e.detail; } catch (err) {}
+                alert(msg);
+                btn.disabled = false;
+                return;
+            }
+            var data = await res.json();
+            card.remove();
+            if (!listEl.querySelector(".review-card")) renderEmpty();
+            if (statusEl) statusEl.textContent = "已入账，交易 #" + data.transaction_id;
+        } catch (err) {
+            alert("网络错误，入账没成功，请重试。");
+            btn.disabled = false;
+        }
+    }
+
+    async function onReject(card, item) {
+        if (!confirm("确定驳回这条识别结果吗？")) return;
+        var btn = card.querySelector(".rv-reject");
+        btn.disabled = true;
+        try {
+            var res = await fetch("/api/bills/review/" + item.id + "/reject", {
+                method: "POST"
+            });
+            if (!res.ok) {
+                alert("驳回失败，请重试。");
+                btn.disabled = false;
+                return;
+            }
+            card.remove();
+            if (!listEl.querySelector(".review-card")) renderEmpty();
+            if (statusEl) statusEl.textContent = "已驳回 #" + item.id;
+        } catch (err) {
+            alert("网络错误，驳回没成功，请重试。");
+            btn.disabled = false;
+        }
+    }
+
+    async function load() {
+        try {
+            var results = await Promise.all([
+                fetch("/api/categories").then(function (r) { return r.json(); }),
+                fetch("/api/accounts").then(function (r) { return r.json(); }),
+                fetch("/api/bills/review").then(function (r) { return r.json(); })
+            ]);
+            var cats = results[0] || [];
+            categories = cats.filter(function (c) { return c.kind === "expense"; });
+            accounts = results[1] || [];
+            var data = results[2] || {};
+            var items = data.items || [];
+
+            listEl.innerHTML = "";
+            if (!items.length) {
+                renderEmpty();
+                return;
+            }
+            for (var i = 0; i < items.length; i++) {
+                renderItem(items[i]);
+            }
+        } catch (err) {
+            listEl.innerHTML = '<div class="review-empty">加载失败，请刷新页面重试。</div>';
+        }
+    }
+
+    load();
+}
+
 /* ========== 自动初始化 ========== */
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -870,4 +1078,5 @@ document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("r-form")) initRecurringPage();
   if (document.getElementById("btn-upload")) initImportPage();
   if (document.getElementById("ocr-drop")) initBillsPage();
+  if (document.getElementById("review-list")) initReviewPage();
 });

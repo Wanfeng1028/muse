@@ -1,14 +1,19 @@
-"""账单相关路由：图片 OCR 识别预填接口。"""
+"""账单相关路由：图片 OCR 识别、审核队列（确认入账/驳回）。"""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+import json
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ledger.database import get_session
-from ledger.models import Category
+from ledger.models import Category, OcrReview
 from ledger.ocr import OcrFailedError, OcrNotConfiguredError, get_provider
+from ledger.routers.transactions import TransactionIn, create_transaction
 
 router = APIRouter(prefix="/api/bills", tags=["bills"])
 
@@ -85,11 +90,140 @@ async def ocr_bill(
             }
         )
 
+    # 识别结果入审核队列（待人工确认/驳回）
+    now = datetime.now(UTC).isoformat()
+    review = OcrReview(
+        image=raw,
+        content_type=file.content_type or "image/png",
+        filename=file.filename or "",
+        merchant=result.merchant,
+        amount_cents=result.amount_cents,
+        occurred_on=result.occurred_on,
+        raw_text=result.raw_text,
+        provider=result.provider,
+        mock=1 if result.mock else 0,
+        category_id=candidates[0]["category_id"] if candidates else None,
+        field_confidence=json.dumps(result.field_confidence, ensure_ascii=False),
+        status="pending",
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(review)
+    await session.commit()
+    await session.refresh(review)
+
     return {
+        "review_id": review.id,
         "merchant": result.merchant,
         "amount_cents": result.amount_cents,
         "occurred_on": result.occurred_on,
         "candidates": candidates,
         "provider": result.provider,
         "mock": result.mock,
+        "field_confidence": result.field_confidence,
     }
+
+
+def _serialize_review(row: OcrReview) -> dict:
+    """序列化审核记录；field_confidence 解析失败时给空 dict。"""
+    try:
+        fc = json.loads(row.field_confidence or "{}")
+    except (TypeError, ValueError):
+        fc = {}
+    if not isinstance(fc, dict):
+        fc = {}
+    return {
+        "id": row.id,
+        "merchant": row.merchant,
+        "amount_cents": row.amount_cents,
+        "occurred_on": row.occurred_on,
+        "provider": row.provider,
+        "mock": row.mock,
+        "status": row.status,
+        "category_id": row.category_id,
+        "transaction_id": row.transaction_id,
+        "created_at": row.created_at,
+        "field_confidence": fc,
+    }
+
+
+class ReviewConfirmIn(BaseModel):
+    """审核确认入账请求体。"""
+
+    merchant: str = ""
+    amount_cents: int = Field(gt=0)
+    occurred_on: str
+    category_id: int
+    account_id: int
+    note: str = ""
+
+
+def _validate_date(value: str) -> str:
+    """校验 YYYY-MM-DD 日期格式，非法抛 HTTPException(422)。"""
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="日期格式非法，应为 YYYY-MM-DD") from None
+    return value
+
+
+@router.get("/review")
+async def list_reviews(session: AsyncSession = Depends(get_session)) -> dict:
+    """列出待审核的 OCR 记录（id 倒序）。"""
+    stmt = select(OcrReview).where(OcrReview.status == "pending").order_by(OcrReview.id.desc())
+    rows = (await session.execute(stmt)).scalars().all()
+    return {"items": [_serialize_review(r) for r in rows]}
+
+
+@router.get("/review/{review_id}/image")
+async def review_image(review_id: int, session: AsyncSession = Depends(get_session)) -> Response:
+    """返回审核记录的原图。"""
+    row = await session.get(OcrReview, review_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="审核记录不存在")
+    return Response(content=row.image, media_type=row.content_type or "image/png")
+
+
+@router.post("/review/{review_id}/confirm")
+async def confirm_review(
+    review_id: int,
+    payload: ReviewConfirmIn,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """确认审核记录并入账：创建支出交易，记录关联。"""
+    row = await session.get(OcrReview, review_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="审核记录不存在")
+    if row.status != "pending":
+        raise HTTPException(status_code=409, detail="该记录已处理，不可重复确认")
+    _validate_date(payload.occurred_on)
+    txn = await create_transaction(
+        TransactionIn(
+            type="expense",
+            account_id=payload.account_id,
+            category_id=payload.category_id,
+            amount_cents=payload.amount_cents,
+            occurred_on=payload.occurred_on,
+            note=payload.note or f"拍照记账：{payload.merchant}",
+            currency="CNY",
+        )
+    )
+    row.status = "confirmed"
+    row.transaction_id = int(txn["id"])
+    row.updated_at = datetime.now(UTC).isoformat()
+    await session.commit()
+    return {"transaction_id": int(txn["id"]), "review_id": row.id}
+
+
+@router.post("/review/{review_id}/reject")
+async def reject_review(review_id: int, session: AsyncSession = Depends(get_session)) -> dict:
+    """驳回审核记录。"""
+    row = await session.get(OcrReview, review_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="审核记录不存在")
+    if row.status != "pending":
+        raise HTTPException(status_code=409, detail="该记录已处理，不可重复驳回")
+    row.status = "rejected"
+    row.updated_at = datetime.now(UTC).isoformat()
+    await session.commit()
+    return {"id": row.id, "status": row.status}

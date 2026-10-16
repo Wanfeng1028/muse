@@ -9,6 +9,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -149,6 +150,35 @@ class MerchantAlias(Base):
     category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
     direction: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+
+
+class OcrReview(Base):
+    """OCR 审核队列表：拍照识别结果待人工确认入账 / 驳回。"""
+
+    __tablename__ = "ocr_reviews"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending','confirmed','rejected')",
+            name="ck_ocr_reviews_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    image: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    content_type: Mapped[str] = mapped_column(String, nullable=False, default="image/png")
+    filename: Mapped[str] = mapped_column(String, nullable=False, default="")
+    merchant: Mapped[str] = mapped_column(String, nullable=False, default="")
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    occurred_on: Mapped[str] = mapped_column(String, nullable=False, default="")
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    provider: Mapped[str] = mapped_column(String, nullable=False, default="")
+    mock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    category_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
+    field_confidence: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
+    transaction_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("transactions.id"), nullable=True)
+    created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
 
 
 class StatementBatch(Base):

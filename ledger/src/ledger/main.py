@@ -274,6 +274,12 @@ def create_app() -> FastAPI:
             {"accounts": account_options},
         )
 
+
+    @app.get("/bills/review", response_class=HTMLResponse)
+    async def review_page(request: Request):
+        """OCR 审核页。"""
+        return templates.TemplateResponse(request, "review.html", {})
+
     @app.get("/detective", response_class=HTMLResponse)
     async def detective_page(request: Request):
         """侦探队列页。"""
