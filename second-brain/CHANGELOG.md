@@ -5,6 +5,36 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+- 结构化日志：`internal/log` 包（标准库 `slog`，JSON 输出到 stdout），`SB_LOG_LEVEL` 控制级别（debug/info/warn/error，默认 info）。
+- 请求全链路追踪：中间件透传/生成 `X-Request-ID`（32 位随机串），注入 context，响应头回写；每条请求记 `http.request` 日志（request_id/method/path/status/latency_ms，5xx 用 ERROR）。
+- 错误响应体统一带 `request_id` 字段，方便按 ID 查日志定位。
+- `store.CreateNoteFor` / `store.RecordReview` 首参加 `ctx`，关键操作（建笔记/评分/推送测试）打带 `request_id` 的日志；`CreateNote` 保持原签名兼容。
+- 推送调度器、导出接口、`main.go` 的 `log.Printf` 全部替换为结构化日志。
+- README「日志与可观测性」章节 + `docs/OPERATIONS.md` 日志运维说明。
+
+## [0.11.0] - 2026-10-16
+
+推送发送重试——网络抖动、对方 5xx、被限流时自动重发，重试完还失败记为死信
+
+### 新增
+- `internal/push/retry.go`：指数退避重试引擎。`RetryPolicy`（`SB_PUSH_MAX_RETRIES` 默认 3、上限 10；`SB_PUSH_RETRY_BASE_MS` 默认 1000ms；退避 `base*2^attempt` + ±25% 抖动，上限 30s）；`IsRetryable` 错误分类（可重试：网络/连接错误、HTTP 429、5xx；不可重试：鉴权失败、其他 4xx、WebPush 订阅失效 410/404；未知错误 fail-open）；`WrapWithRetry`（`Name()` 原样透出，`MaxRetries+1` 次尝试，ctx 取消立刻退出）；`SendWebPushWithRetry`（逐浏览器订阅重试）；`RecordDeadLetter`（`push_log` 写 `status='failed_permanent'`，同 date/channel/user 幂等不重复入死信）。
+- `internal/store/push_status.go`：`PushLogStatus` 查询最新推送状态。
+- `internal/push/scheduler.go` 接线：`BuildSenders` 出口统一包装 SMTP/Webhook（channel 名不变）；`RunPushForUser` 重试耗尽转死信；`sendWebPushDigest` 逐订阅重试，耗尽转死信（410/404 仍走订阅清理）。
+- 文档：README 推送章节新增"发送重试"小节与两个环境变量说明；新建 `docs/OPERATIONS.md`（部署/推送配置/重试策略/死信处理/备份恢复/排障）；`docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md` 发版对照报告。
+
+### 测试
+- push 包 17/17 全绿（新增 9 个 retry 单元测试：失败 2 次后成功、一直失败耗尽、不可重试 0 睡眠、退避时长区间、死信幂等、环境变量边界；2 个真实 HTTP 冒烟：httptest mock 前 2 次 500 → 真实 WebhookSender 第 3 次成功，请求计数 3；一直 503 → 耗尽转死信）。
+- store 49/49、notify 12/12、markdown/review/search 全绿；`go vet`、`gofmt` 全洁。
+
+### 已知限制
+- `POST /api/push/test` 测试通道保持单次发送，不重试。
+- 死信次日不补发，第二天正常推送当天的。
+- 调度器单实例假设，多实例部署会重复推送（沿用 v0.10 限制）。
+- api 集成测试（触发推送→重试→push_log 流转→history 可见死信）待 `internal/api` 重构完成后补。
+
 ## [0.10.0] - 2026-10-16
 
 浏览器 Web Push 推送——每天到点，浏览器弹提醒，不用开邮箱也能收到复习通知

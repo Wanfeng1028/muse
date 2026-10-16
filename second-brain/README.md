@@ -90,18 +90,43 @@ go run ./cmd/server
 | `SB_SMTP_PASS` | SMTP 登录密码。密钥类信息只走环境变量，页面不填 | 空 |
 | `SB_SMTP_FROM` | 发件人地址 | 空 |
 | `SB_SMTP_TLS` | SMTP 是否使用 STARTTLS。设为 `false` 时走明文，仅建议内网使用 | `true` |
+| `SB_PUSH_MAX_RETRIES` | 推送失败后的最大重试次数（v0.11+）。每个通道独立计数 | `3` |
+| `SB_PUSH_RETRY_BASE_MS` | 重试退避基数，单位毫秒（v0.11+）。实际等待为基数×2^次数再加 ±25% 抖动 | `1000` |
 | `SB_MAIL_TO` | 复习提醒收件邮箱，多个地址可用逗号分隔 | 空 |
 | `SB_WEBHOOK_URL` | Webhook 接收地址，POST JSON | 空 |
 | `SB_WEBHOOK_SECRET` | Webhook 签名密钥，用于生成 `X-Signature`。密钥类信息只走环境变量，页面不填 | 空 |
 | `SB_VAPID_PUBLIC_KEY` | Web Push 的 VAPID 公钥（base64url，65 字节 uncompressed 点）。密钥类信息只走环境变量 | 空 |
 | `SB_VAPID_PRIVATE_KEY` | Web Push 的 VAPID 私钥（base64url，32 字节）。密钥类信息只走环境变量 | 空 |
 | `SB_VAPID_SUBJECT` | VAPID 联系人，`mailto:你@邮箱` 或 `https://你的域名` | 空 |
+| `SB_LOG_LEVEL` | 日志级别：`debug`/`info`/`warn`/`error`，大小写不敏感，非法值回退 `info` | `info` |
 
 示例：
 
 ```bash
 SB_ADDR=127.0.0.1:9000 SB_DATA_DIR=/var/lib/second-brain go run ./cmd/server
 ```
+
+## 日志与可观测性
+
+日志是 JSON 结构化输出（打到 stdout），用 `SB_LOG_LEVEL` 调级别（`debug`/`info`/`warn`/`error`，默认 `info`）。
+
+每个请求都有一个 `request_id`（32 位随机串）：
+
+- 自己带请求头 `X-Request-ID` 就透传你的，不带服务端就生成一个，响应头里原样返回。
+- 每次请求结束记一条 `http.request` 日志，带 `request_id`、`method`、`path`、`status`、`latency_ms`；5xx 用 ERROR 级别。
+- 出错时响应体长这样，拿着 `request_id` 直接定位：
+
+```json
+{"error": "note not found", "request_id": "9f3a1c..."}
+```
+
+查一条请求的完整链路（以 docker 为例）：
+
+```bash
+docker logs second-brain 2>&1 | grep '"request_id":"9f3a1c..."'
+```
+
+关键操作都会打日志：建笔记（`note.created`）、复习评分（`review.graded`）、推送（`push.tick_result`），字段里都有 `request_id`，从报错一路 grep 到根因。
 
 ## 构建与发布
 
@@ -308,6 +333,8 @@ SM-2 四档说明：
 幂等与密钥规则：
 - 同一天、同一通道，成功推送只发生一次；靠 `push_log` 唯一索引加 `HasPushed` 检查保证。
 - SMTP 密码和 webhook 密钥只走环境变量，页面不可配置，接口也不会返回明文。
+
+**发送重试（v0.11+）**：SMTP、Webhook、浏览器推送三个通道发送失败会自动重试。网络抖动、对方 5xx、被限流（429）会按指数退避重发（1 秒、2 秒、4 秒起，带抖动，最多等 30 秒）；账号密码错了、地址写错了（4xx）这种重发也没用的错误不会重试。次数用完还没发出去，这条推送记为"死信"（`push_log` 里 `status='failed_permanent'`），第二天照常推送，不会把昨天的再补发。想调重试次数改 `SB_PUSH_MAX_RETRIES`，想调等待基数改 `SB_PUSH_RETRY_BASE_MS`。查死信：
 
 ![推送设置页](docs/screenshots/push-settings.png)
 

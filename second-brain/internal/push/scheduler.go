@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -43,10 +43,19 @@ func BuildSenders(pc config.PushConfig) SenderSet {
 	}
 	if pc.VAPIDConfigured() {
 		if wp, err := notify.NewWebPushSender(pc.VAPIDPublicKey, pc.VAPIDPrivateKey, pc.VAPIDSubject, 15*time.Second); err != nil {
-			log.Printf("WebPush 发送器构建失败: %v", err)
+			slog.Warn("push.webpush_build_failed", "error", err)
 		} else {
 			set.WebPush = wp
 		}
+	}
+	// v0.11 发送重试：SMTP/Webhook 统一走指数退避包装器。Name() 原样透出，
+	// push_log 的 channel 名保持 "smtp"/"webhook" 不变。
+	policy := DefaultRetryPolicy()
+	if set.SMTP != nil {
+		set.SMTP = WrapWithRetry(set.SMTP, policy)
+	}
+	if set.Webhook != nil {
+		set.Webhook = WrapWithRetry(set.Webhook, policy)
 	}
 	return set
 }
@@ -92,11 +101,11 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 
 	due, err := st.ListDueReviews(now, 50, user)
 	if err != nil {
-		log.Printf("推送获取待复习列表失败: %v", err)
+		slog.Error("push.list_due_failed", "user", user, "error", err)
 	}
 	stats, err := st.ReviewStats(now, user)
 	if err != nil {
-		log.Printf("推送获取复习统计失败: %v", err)
+		slog.Error("push.review_stats_failed", "user", user, "error", err)
 	}
 
 	items := make([]notify.DigestItem, 0, len(due))
@@ -136,18 +145,29 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 		cancel()
 
 		if sendErr != nil {
+			// v0.11 发送重试：重试耗尽转死信（push_log status='failed_permanent'），
+			// RecordDeadLetter 幂等：同一 due 批次重复触发不会重复入死信。
+			var rex *RetryExhaustedError
+			if errors.As(sendErr, &rex) {
+				detail := truncateRunes("重试耗尽: "+rex.LastErr.Error(), 200)
+				if err := RecordDeadLetter(st, dateKey, name, user, rex.LastErr); err != nil {
+					slog.Error("push.dead_letter_write_failed", "channel", name, "error", err)
+				}
+				results = append(results, PushResult{Channel: name, User: user, Status: "failed_permanent", Detail: detail})
+				continue
+			}
 			detail := sendErr.Error()
 			if len(detail) > 200 {
 				detail = detail[:200]
 			}
 			if err := st.RecordPushFor(dateKey, name, user, "failed", detail); err != nil {
-				log.Printf("推送记录写入失败 (%s): %v", name, err)
+				slog.Error("push.record_write_failed", "channel", name, "user", user, "error", err)
 			}
 			results = append(results, PushResult{Channel: name, User: user, Status: "failed", Detail: detail})
 			continue
 		}
 		if err := st.RecordPushFor(dateKey, name, user, "sent", ""); err != nil {
-			log.Printf("推送记录写入失败 (%s): %v", name, err)
+			slog.Error("push.record_write_failed", "channel", name, "user", user, "error", err)
 		}
 		results = append(results, PushResult{Channel: name, User: user, Status: "sent", Detail: ""})
 	}
@@ -182,9 +202,11 @@ func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushS
 	const targetURL = "/#review"
 	sentN, goneN := 0, 0
 	var failMsg string
+	var exhausted *RetryExhaustedError
+	policy := DefaultRetryPolicy()
 	for _, s := range subs {
 		target := notify.WebPushTarget{Endpoint: s.Endpoint, P256DH: s.P256DH, Auth: s.Auth}
-		err := wp.SendToSubscription(ctx, target, title, body, targetURL)
+		err := SendWebPushWithRetry(ctx, wp, target, title, body, targetURL, policy, nil)
 		if err == nil {
 			sentN++
 			continue
@@ -192,7 +214,17 @@ func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushS
 		if errors.Is(err, notify.ErrSubscriptionGone) {
 			goneN++
 			if _, delErr := st.DeleteSubscriptionForUser(user, s.Endpoint); delErr != nil {
-				log.Printf("清理失效订阅失败 (%s): %v", user, delErr)
+				slog.Error("push.subscription_cleanup_failed", "user", user, "error", delErr)
+			}
+			continue
+		}
+		var rex *RetryExhaustedError
+		if errors.As(err, &rex) {
+			if exhausted == nil {
+				exhausted = rex
+			}
+			if failMsg == "" {
+				failMsg = rex.LastErr.Error()
 			}
 			continue
 		}
@@ -213,8 +245,15 @@ func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushS
 		status = "failed"
 		detail = truncateRunes("推送失败: "+failMsg, 200)
 	}
-	if err := st.RecordPushFor(dateKey, wpName, user, status, detail); err != nil {
-		log.Printf("推送记录写入失败 (%s): %v", wpName, err)
+	// v0.11 发送重试：全部订阅都重试耗尽且无成功时转死信（幂等）。
+	if status == "failed" && exhausted != nil {
+		if err := RecordDeadLetter(st, dateKey, wpName, user, exhausted.LastErr); err != nil {
+			slog.Error("push.dead_letter_write_failed", "channel", wpName, "error", err)
+		}
+		status = "failed_permanent"
+		detail = truncateRunes("重试耗尽: "+exhausted.LastErr.Error(), 200)
+	} else if err := st.RecordPushFor(dateKey, wpName, user, status, detail); err != nil {
+		slog.Error("push.record_write_failed", "channel", wpName, "user", user, "error", err)
 	}
 	return PushResult{Channel: wpName, User: user, Status: status, Detail: detail}
 }
@@ -235,7 +274,7 @@ func truncateRunes(s string, n int) string {
 func RunPush(ctx context.Context, st *store.Store, senders SenderSet, pc config.PushConfig, now time.Time) []PushResult {
 	users, err := st.ListUsersWithDueReviews(now)
 	if err != nil {
-		log.Printf("推送获取到期用户列表失败: %v", err)
+		slog.Error("push.list_users_failed", "error", err)
 		users = nil
 	}
 	if len(users) == 0 {
@@ -353,7 +392,7 @@ func (s *Scheduler) tick(loc *time.Location) {
 	now := s.nowFunc()
 	next, err := NextPushTime(now, s.pc.Time, loc)
 	if err != nil {
-		log.Printf("推送调度时间解析失败: %v", err)
+		slog.Error("push.next_time_parse_failed", "error", err)
 		return
 	}
 	// 当 now 已过今日推送时刻（next 落在次日）时，视为到点需推送。
@@ -366,7 +405,7 @@ func (s *Scheduler) tick(loc *time.Location) {
 	dateKey := local.Format("2006-01-02")
 	users, err := s.st.ListUsersWithDueReviews(now)
 	if err != nil {
-		log.Printf("推送获取到期用户列表失败: %v", err)
+		slog.Error("push.list_users_failed", "error", err)
 		return
 	}
 	if len(users) == 0 {
@@ -378,7 +417,7 @@ func (s *Scheduler) tick(loc *time.Location) {
 		}
 		results := RunPushForUser(context.Background(), s.st, s.senders, s.pc, now, u)
 		for _, r := range results {
-			log.Printf("推送 %s@%s: %s %s", r.Channel, r.User, r.Status, r.Detail)
+			slog.Info("push.tick_result", "channel", r.Channel, "user", r.User, "status", r.Status, "detail", r.Detail)
 		}
 	}
 }
