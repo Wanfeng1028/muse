@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dramafactory.local/schemas/canvas-schema-v2.json",
+  "title": "CanvasProjectV2",
+  "type": "object",
+  "required": ["schema_version", "version", "updated_by", "updated_at", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 2 },
+    "version": { "type": "integer", "minimum": 1 },
+    "updated_by": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "label", "x", "y", "shot_ref", "params", "status", "asset_refs", "updated_at", "updated_by"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string", "enum": ["script", "storyboard", "video", "edit", "qc"] },
+          "label": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "shot_ref": { "type": ["string", "null"] },
+          "params": { "type": "object" },
+          "status": { "type": "string", "enum": ["idle", "running", "done", "failed"] },
+          "asset_refs": { "type": "array", "items": { "type": "string" } },
+          "updated_at": { "type": "string" },
+          "updated_by": { "type": "string" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "target", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "target": { "type": "string" },
+          "type": { "type": "string", "enum": ["depends", "ref"] }
+        }
+      }
+    }
+  }
+}

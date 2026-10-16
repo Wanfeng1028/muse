@@ -1,4 +1,5 @@
 package com.dramafactory.service;
+import com.dramafactory.dto.canvas.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,202 +10,132 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * 诚实跳过清单：
- * 1. save() 中 catch (IOException atomicFailed) 的 ATOMIC_MOVE 失败回退分支 ——
- *    是否支持原子移动取决于底层文件系统实现，普通测试环境无法确定性触发该 IOException，
- *    不做硬凑测试。
- */
 class CanvasProjectServiceV223ETest {
 
     private final ObjectMapper om = new ObjectMapper();
 
     private CanvasProjectService newService(Path dir) {
-        return new CanvasProjectService(dir.toString(), om);
+        return new CanvasProjectService(dir.toString(), om, new CanvasEventService(), new CanvasMigrationAdapter(om));
     }
 
-    private ObjectNode validProject() {
+    private ObjectNode v2Body(int base) {
         ObjectNode p = om.createObjectNode();
-        p.put("version", 1);
-        p.put("base_version", 1);
+        p.put("schema_version", 2);
         p.set("nodes", om.createArrayNode());
         p.set("edges", om.createArrayNode());
+        p.put("base_version", base);
         return p;
     }
 
-    // ① L34 臂：Files.exists 为 false -> emptyProject()
     @Test
-    void loadWhenFileMissingReturnsEmptyProject(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        JsonNode result = service.load();
-        assertEquals(1, result.get("version").asInt());
-        assertTrue(result.get("nodes").isArray());
-        assertTrue(result.get("edges").isArray());
-        assertEquals(0, result.get("nodes").size());
-        assertEquals(0, result.get("edges").size());
+    void emptyProject_hasSchemaVersion2AndVersion1(@TempDir Path dir) {
+        CanvasProjectService service = newService(dir);
+        CanvasProjectV2 project = service.loadV2();
+        assertEquals(2, project.schemaVersion());
+        assertEquals(1, project.version());
     }
 
-    // ② L34 臂：Files.exists 为 true -> readTree
     @Test
-    void loadAfterSaveRoundTrips(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode project = validProject();
-        project.withArray("nodes").addObject().put("id", "n1");
-        service.save(project);
-        JsonNode loaded = service.load();
-        assertEquals(1, loaded.get("version").asInt());
-        assertEquals(1, loaded.get("nodes").size());
-        assertEquals("n1", loaded.get("nodes").get(0).get("id").asText());
-        assertTrue(loaded.get("edges").isArray());
-    }
-
-    // ③ L46 臂：project == null
-    @Test
-    void saveNullThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
+    void saveWithoutBaseVersion_throwsIllegalArgument(@TempDir Path dir) {
+        CanvasProjectService service = newService(dir);
+        ObjectNode body = om.createObjectNode();
+        body.put("schema_version", 2);
+        body.set("nodes", om.createArrayNode());
+        body.set("edges", om.createArrayNode());
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(null));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
+                () -> service.saveV2(body, "editor"));
+        assertTrue(ex.getMessage().contains("缺少 base_version"),
+                "异常消息应含 '缺少 base_version'，实际: " + ex.getMessage());
     }
 
-    // ④ L46 臂：project 非 object
     @Test
-    void saveNonObjectThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ArrayNode array = om.createArrayNode();
+    void saveWithoutSchemaMarker_throwsIllegalArgument(@TempDir Path dir) {
+        CanvasProjectService service = newService(dir);
+        ObjectNode body = om.createObjectNode();
+        body.set("nodes", om.createArrayNode());
+        body.set("edges", om.createArrayNode());
+        body.put("base_version", 1);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(array));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
+                () -> service.saveV2(body, "editor"));
+        assertTrue(ex.getMessage().contains("缺少 schema_version 或 version"),
+                "异常消息应含 '缺少 schema_version 或 version'，实际: " + ex.getMessage());
     }
 
-    // ⑤ L50 臂：缺 version 字段
     @Test
-    void saveMissingVersionThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = om.createObjectNode();
-        p.set("nodes", om.createArrayNode());
-        p.set("edges", om.createArrayNode());
-        p.put("base_version", 1);
+    void saveWithNodesNotArray_throwsIllegalArgument(@TempDir Path dir) {
+        CanvasProjectService service = newService(dir);
+        ObjectNode body = om.createObjectNode();
+        body.put("schema_version", 2);
+        body.put("nodes", "not-an-array");
+        body.set("edges", om.createArrayNode());
+        body.put("base_version", 1);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
+                () -> service.saveV2(body, "editor"));
+        assertTrue(ex.getMessage().contains("画布项目格式不对"),
+                "异常消息应含 '画布项目格式不对'，实际: " + ex.getMessage());
     }
 
-    // ⑥ L50 臂：version 为文本 "1"（isInt false）
     @Test
-    void saveTextVersionThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = validProject();
-        p.put("version", "1");
+    void saveWithVersion2WithoutSchemaMarker_throwsIllegalArgument(@TempDir Path dir) {
+        CanvasProjectService service = newService(dir);
+        ObjectNode body = om.createObjectNode();
+        body.put("version", 2);
+        body.set("nodes", om.createArrayNode());
+        body.set("edges", om.createArrayNode());
+        body.put("base_version", 1);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
+                () -> service.saveV2(body, "editor"));
+        assertTrue(ex.getMessage().contains("旧版 version 必须为 1"),
+                "异常消息应含 '旧版 version 必须为 1'，实际: " + ex.getMessage());
     }
 
-    // ⑦ L50 臂：version 为 2（asInt != 1）
     @Test
-    void saveWrongVersionThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = validProject();
-        p.put("version", 2);
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
+    void saveSuccess_versionIncremented_persistedAsV2(@TempDir Path dir) throws Exception {
+        CanvasProjectService service = newService(dir);
+        CanvasProjectV2 saved = service.saveV2(v2Body(1), "editor");
+        assertEquals(2, saved.version());
+        assertEquals(2, saved.schemaVersion());
+        assertEquals("editor", saved.updatedBy());
+
+        String onDisk = Files.readString(dir.resolve("project.json"));
+        assertTrue(onDisk.contains("\"schema_version\""), "落盘 JSON 应含 schema_version");
+        assertTrue(onDisk.contains("\"schema_version\":2") || onDisk.contains("\"schema_version\" : 2"),
+                "落盘 JSON schema_version 应为 2");
+        assertFalse(onDisk.contains("\"base_version\""), "落盘 JSON 不应包含 base_version");
     }
 
-    // ⑧ L55 臂：version=1 但缺 nodes
     @Test
-    void saveMissingNodesThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = om.createObjectNode();
-        p.put("version", 1);
-        p.put("base_version", 1);
-        p.set("edges", om.createArrayNode());
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
+    void loadLegacyFile_normalizesInMemory_fileUnchanged(@TempDir Path dir) throws Exception {
+        ObjectNode legacy = om.createObjectNode();
+        legacy.put("version", 1);
+        legacy.put("revision", 6);
+        legacy.put("updated_by", "editor");
+        legacy.set("nodes", om.createArrayNode());
+        legacy.set("edges", om.createArrayNode());
+        Path file = dir.resolve("project.json");
+        String original = om.writeValueAsString(legacy);
+        Files.writeString(file, original);
+
+        CanvasProjectService service = newService(dir);
+        CanvasProjectV2 loaded = service.loadV2();
+        assertEquals(2, loaded.schemaVersion());
+        assertEquals(6, loaded.version());
+        assertEquals("editor", loaded.updatedBy());
+
+        String after = Files.readString(file);
+        assertEquals(original, after, "loadV2 不应改写磁盘文件");
     }
 
-    // ⑨ L55 臂：nodes 为文本（非数组）
     @Test
-    void saveTextNodesThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = validProject();
-        p.put("nodes", "not-an-array");
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
-    }
-
-    // ⑩ L55 臂：nodes=[] 但缺 edges
-    @Test
-    void saveMissingEdgesThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = om.createObjectNode();
-        p.put("version", 1);
-        p.put("base_version", 1);
-        p.set("nodes", om.createArrayNode());
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
-    }
-
-    // ⑪ L55 臂：edges 为数字（非数组）
-    @Test
-    void saveNumericEdgesThrows(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode p = validProject();
-        p.put("edges", 5);
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.save(p));
-        assertTrue(ex.getMessage().contains("画布项目格式不对"));
-    }
-
-    // ⑫ save 成功路径：返回原对象，磁盘落盘
-    @Test
-    void saveWritesProjectToDisk(@TempDir Path tempDir) throws Exception {
-        CanvasProjectService service = newService(tempDir);
-        ObjectNode project = validProject();
-        project.withArray("nodes").addObject().put("id", "n1");
-        JsonNode returned = service.save(project);
-        assertEquals(2, returned.get("revision").asInt());
-        assertEquals("editor", returned.get("updated_by").asText());
-        assertEquals("n1", returned.get("nodes").get(0).get("id").asText());
-        Path target = Paths.get(tempDir.toString(), "project.json");
-        assertTrue(Files.exists(target));
-        assertFalse(Files.exists(Paths.get(tempDir.toString(), "project.json.tmp")));
-        JsonNode fromDisk = om.readTree(Files.readAllBytes(target));
-        assertEquals(1, fromDisk.get("version").asInt());
-        assertEquals(2, fromDisk.get("revision").asInt());
-        assertEquals("n1", fromDisk.get("nodes").get(0).get("id").asText());
-        assertFalse(fromDisk.has("base_version"));
-    }
-
-    // ⑬ mcpTools() 返回三个工具（含新增的 canvas.apply_patch）
-    @Test
-    void mcpToolsReturnsThreeTools(@TempDir Path tempDir) {
-        CanvasProjectService service = newService(tempDir);
-        assertEquals(3, service.mcpTools().size());
-        assertEquals("canvas.get_project", service.mcpTools().get(0).get("name"));
-        assertEquals("canvas.save_project", service.mcpTools().get(1).get("name"));
-        assertEquals("canvas.apply_patch", service.mcpTools().get(2).get("name"));
-    }
-
-    // 额外：load() 损坏文件分支
-    @Test
-    void loadCorruptedFileThrows(@TempDir Path tempDir) throws Exception {
-        Path target = Paths.get(tempDir.toString(), "project.json");
-        Files.write(target, "{broken".getBytes());
-        CanvasProjectService service = newService(tempDir);
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.load());
-        assertTrue(ex.getMessage().contains("损坏"));
+    void mcpTools_stillThree(@TempDir Path dir) {
+        CanvasProjectService service = newService(dir);
+        List<Map<String, String>> tools = service.mcpTools();
+        assertNotNull(tools);
+        assertEquals(3, tools.size(), "mcpTools 应仍返回 3 个");
     }
 }

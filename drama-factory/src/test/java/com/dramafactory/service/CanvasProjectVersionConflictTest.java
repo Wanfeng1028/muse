@@ -1,4 +1,5 @@
 package com.dramafactory.service;
+import com.dramafactory.dto.canvas.*;
 
 import com.dramafactory.exception.CanvasConflictException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,12 +23,12 @@ class CanvasProjectVersionConflictTest {
     private final ObjectMapper om = new ObjectMapper();
 
     private CanvasProjectService newService(Path dir) {
-        return new CanvasProjectService(dir.toString(), om);
+        return new CanvasProjectService(dir.toString(), om, new CanvasEventService(), new CanvasMigrationAdapter(om));
     }
 
     private ObjectNode bodyWithBase(int base) {
         ObjectNode p = om.createObjectNode();
-        p.put("version", 1);
+        p.put("schema_version", 2);
         p.set("nodes", om.createArrayNode());
         p.set("edges", om.createArrayNode());
         p.put("base_version", base);
@@ -37,25 +38,19 @@ class CanvasProjectVersionConflictTest {
     @Test
     void saveWithoutBaseVersion_throws400(@TempDir Path dir) {
         CanvasProjectService service = newService(dir);
-
         ObjectNode body = om.createObjectNode();
-        body.put("version", 1);
+        body.put("schema_version", 2);
         body.set("nodes", om.createArrayNode());
         body.set("edges", om.createArrayNode());
-
-        assertThrows(IllegalArgumentException.class, () -> service.save(body));
+        assertThrows(IllegalArgumentException.class, () -> service.saveV2(body, "editor"));
     }
 
     @Test
     void saveWithStaleBaseVersion_throws409(@TempDir Path dir) {
         CanvasProjectService service = newService(dir);
-
-        service.save(bodyWithBase(1), "editor");
-
-        CanvasConflictException ex = assertThrows(
-                CanvasConflictException.class,
-                () -> service.save(bodyWithBase(1), "agent"));
-
+        service.saveV2(bodyWithBase(1), "editor");
+        CanvasConflictException ex = assertThrows(CanvasConflictException.class,
+                () -> service.saveV2(bodyWithBase(1), "agent"));
         assertEquals(2, ex.getCurrentVersion());
         assertEquals("editor", ex.getUpdatedBy());
     }
@@ -63,65 +58,47 @@ class CanvasProjectVersionConflictTest {
     @Test
     void bidirectionalConflict_editorStaleAfterAgentWrite(@TempDir Path dir) {
         CanvasProjectService service = newService(dir);
-
-        // editor PUT 成功：revision 1 -> 2，updated_by = editor
-        service.save(bodyWithBase(1), "editor");
-
-        // agent patch 成功：revision 2 -> 3，updated_by = agent
-        service.save(bodyWithBase(2), "agent");
-
-        // editor 再次 PUT，仍带过期的 base_version=2 -> 冲突
-        CanvasConflictException ex = assertThrows(
-                CanvasConflictException.class,
-                () -> service.save(bodyWithBase(2), "editor"));
-
+        service.saveV2(bodyWithBase(1), "editor");
+        service.saveV2(bodyWithBase(2), "agent");
+        CanvasConflictException ex = assertThrows(CanvasConflictException.class,
+                () -> service.saveV2(bodyWithBase(2), "editor"));
         assertEquals(3, ex.getCurrentVersion());
         assertEquals("agent", ex.getUpdatedBy());
     }
 
     @Test
-    void saveReturnsIncrementedRevision(@TempDir Path dir) throws Exception {
+    void saveReturnsIncrementedVersion(@TempDir Path dir) throws Exception {
         CanvasProjectService service = newService(dir);
-
-        JsonNode saved = service.save(bodyWithBase(1), "editor");
-
-        assertEquals(2, saved.get("revision").asInt());
-        assertEquals("editor", saved.get("updated_by").asText());
-
+        CanvasProjectV2 saved = service.saveV2(bodyWithBase(1), "editor");
+        assertEquals(2, saved.version());
+        assertEquals("editor", saved.updatedBy());
         String onDisk = Files.readString(dir.resolve("project.json"));
-        assertFalse(onDisk.contains("\"base_version\""),
-                "落盘 JSON 不应包含 base_version 字段");
+        assertFalse(onDisk.contains("\"base_version\""), "落盘 JSON 不应包含 base_version 字段");
+        assertTrue(onDisk.contains("\"schema_version\""), "落盘应为 v2 形状");
     }
 
     @Test
     void loadNormalizesLegacyFile(@TempDir Path dir) throws Exception {
         ObjectNode legacy = om.createObjectNode();
         legacy.put("version", 1);
+        legacy.put("revision", 6);
+        legacy.put("updated_by", "editor");
         legacy.set("nodes", om.createArrayNode());
         legacy.set("edges", om.createArrayNode());
-
-        Files.writeString(
-                dir.resolve("project.json"),
-                om.writeValueAsString(legacy));
-
+        Files.writeString(dir.resolve("project.json"), om.writeValueAsString(legacy));
         CanvasProjectService service = newService(dir);
-        JsonNode loaded = service.load();
-
-        assertEquals(1, loaded.get("revision").asInt());
-        assertEquals("editor", loaded.get("updated_by").asText());
+        CanvasProjectV2 loaded = service.loadV2();
+        assertEquals(2, loaded.schemaVersion());
+        assertEquals(6, loaded.version());
+        assertEquals("editor", loaded.updatedBy());
     }
 
     @Test
     void saveWithNonIntBaseVersion_throws400(@TempDir Path dir) {
         CanvasProjectService service = newService(dir);
-
-        ObjectNode body = om.createObjectNode();
-        body.put("version", 1);
-        body.set("nodes", om.createArrayNode());
-        body.set("edges", om.createArrayNode());
+        ObjectNode body = bodyWithBase(1);
         body.put("base_version", "1");
-
-        assertThrows(IllegalArgumentException.class, () -> service.save(body));
+        assertThrows(IllegalArgumentException.class, () -> service.saveV2(body, "editor"));
     }
 
     @Test
@@ -132,7 +109,6 @@ class CanvasProjectVersionConflictTest {
             for (int round = 0; round < 20; round++) {
                 Path roundDir = dir.resolve("round-" + round);
                 CanvasProjectService service = newService(roundDir);
-                // 双栅栏：起跑门 + 完成门
                 CountDownLatch startGate = new CountDownLatch(1);
                 CountDownLatch doneGate = new CountDownLatch(threads);
                 AtomicInteger successCount = new AtomicInteger(0);
@@ -142,7 +118,7 @@ class CanvasProjectVersionConflictTest {
                     pool.submit(() -> {
                         try {
                             startGate.await();
-                            service.save(bodyWithBase(1), "editor");
+                            service.saveV2(bodyWithBase(1), "editor");
                             successCount.incrementAndGet();
                         } catch (CanvasConflictException e) {
                             conflictCount.incrementAndGet();
@@ -158,7 +134,7 @@ class CanvasProjectVersionConflictTest {
                 assertEquals(0, otherCount.get(), "第" + round + "轮：出现了非 CanvasConflictException 的异常");
                 assertEquals(1, successCount.get(), "第" + round + "轮：恰好应有 1 个线程保存成功");
                 assertEquals(7, conflictCount.get(), "第" + round + "轮：其余 7 线程应全部抛 CanvasConflictException");
-                assertEquals(2, service.load().get("revision").asInt(), "第" + round + "轮：最终 revision 应为 base+1");
+                assertEquals(2, service.loadV2().version(), "第" + round + "轮：最终 version 应为 base+1");
             }
         } finally {
             pool.shutdownNow();
