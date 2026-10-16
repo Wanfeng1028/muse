@@ -2,6 +2,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -21,12 +22,12 @@ func TestListUsersWithDueReviewsEmpty(t *testing.T) {
 func TestListUsersWithDueReviewsSingleUser(t *testing.T) {
 	st := newTestStore(t)
 
-	n, err := st.CreateNoteFor(Note{Title: "x", Body: "y"}, "alice")
+	n, err := st.CreateNoteFor(context.Background(), Note{Title: "x", Body: "y"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
 	yesterday := time.Now().AddDate(0, 0, -1)
-	if _, err := st.RecordReview(n.ID, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), n.ID, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("RecordReview: %v", err)
 	}
 
@@ -44,11 +45,11 @@ func TestListUsersWithDueReviewsMultiUserSorted(t *testing.T) {
 
 	yesterday := time.Now().AddDate(0, 0, -1)
 	for _, u := range []string{"alice", "bob"} {
-		n, err := st.CreateNoteFor(Note{Title: "x", Body: "y"}, u)
+		n, err := st.CreateNoteFor(context.Background(), Note{Title: "x", Body: "y"}, u)
 		if err != nil {
 			t.Fatalf("CreateNoteFor %s: %v", u, err)
 		}
-		if _, err := st.RecordReview(n.ID, 0, yesterday, u); err != nil {
+		if _, err := st.RecordReview(context.Background(), n.ID, 0, yesterday, u); err != nil {
 			t.Fatalf("RecordReview %s: %v", u, err)
 		}
 	}
@@ -65,12 +66,12 @@ func TestListUsersWithDueReviewsMultiUserSorted(t *testing.T) {
 func TestListUsersWithDueReviewsNormalized(t *testing.T) {
 	st := newTestStore(t)
 
-	n, err := st.CreateNoteFor(Note{Title: "x", Body: "y"}, "Alice")
+	n, err := st.CreateNoteFor(context.Background(), Note{Title: "x", Body: "y"}, "Alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
 	yesterday := time.Now().AddDate(0, 0, -1)
-	if _, err := st.RecordReview(n.ID, 0, yesterday, "Alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), n.ID, 0, yesterday, "Alice"); err != nil {
 		t.Fatalf("RecordReview: %v", err)
 	}
 
@@ -86,12 +87,12 @@ func TestListUsersWithDueReviewsNormalized(t *testing.T) {
 func TestListUsersWithDueReviewsExcludesFuture(t *testing.T) {
 	st := newTestStore(t)
 
-	n, err := st.CreateNoteFor(Note{Title: "x", Body: "y"}, "carol")
+	n, err := st.CreateNoteFor(context.Background(), Note{Title: "x", Body: "y"}, "carol")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
 	today := time.Now()
-	if _, err := st.RecordReview(n.ID, 5, today, "carol"); err != nil {
+	if _, err := st.RecordReview(context.Background(), n.ID, 5, today, "carol"); err != nil {
 		t.Fatalf("RecordReview: %v", err)
 	}
 

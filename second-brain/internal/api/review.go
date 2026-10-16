@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/review"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
@@ -14,7 +15,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 	// 获取待复习队列
 	mux.HandleFunc("GET /api/review/queue", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		limit := parseIntDefault(r.URL.Query().Get("limit"), 20)
@@ -26,7 +27,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 		}
 		dues, err := st.ListDueReviews(time.Now(), limit, CurrentUser(r))
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		type queueItem struct {
@@ -69,22 +70,25 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			Grade *int `json:"grade"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid body")
+			writeError(w, r, http.StatusBadRequest, "invalid body")
 			return
 		}
 		if req.Grade == nil || *req.Grade < 0 || *req.Grade > 5 {
-			writeError(w, http.StatusBadRequest, "invalid grade")
+			writeError(w, r, http.StatusBadRequest, "invalid grade")
 			return
 		}
-		state, err := st.RecordReview(id, *req.Grade, time.Now(), CurrentUser(r))
+		state, err := st.RecordReview(r.Context(), id, *req.Grade, time.Now(), CurrentUser(r))
 		if err != nil {
 			if err == store.ErrNotFound {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
+		logpkg.RequestLogger(r.Context()).Info("review.graded",
+			"note_id", id, "grade", *req.Grade, "user", CurrentUser(r),
+			"next_due", state.DueDate)
 		resp := map[string]interface{}{
 			"ef":            state.EF,
 			"intervalDays":  state.IntervalDays,
@@ -102,12 +106,12 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 	// 复习统计
 	mux.HandleFunc("GET /api/review/stats", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		stats, err := st.ReviewStats(time.Now(), CurrentUser(r))
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, stats)
@@ -116,13 +120,13 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 	// 今日摘要
 	mux.HandleFunc("GET /api/review/digest", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		n := parseIntDefault(r.URL.Query().Get("n"), 5)
 		notes, err := st.DigestNotes(time.Now(), n, CurrentUser(r))
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		type digestItem struct {
@@ -153,7 +157,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 	// 按用户摘要（v0.9）：与 /api/review/digest 同数据源，显式返回 user 与 date
 	mux.HandleFunc("GET /api/digest", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		user := CurrentUser(r)
@@ -166,7 +170,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 		}
 		notes, err := st.DigestNotes(time.Now(), n, user)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		type digestItem struct {

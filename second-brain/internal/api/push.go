@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/notify"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
@@ -66,7 +67,7 @@ func buildPushSettingsView(st *store.Store, cfg config.Config) pushSettingsView 
 func handleGetPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "方法不允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不允许")
 			return
 		}
 		writeJSON(w, http.StatusOK, buildPushSettingsView(st, cfg))
@@ -106,21 +107,21 @@ func validHHMM(s string) bool {
 func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
-			writeError(w, http.StatusMethodNotAllowed, "方法不允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不允许")
 			return
 		}
 
 		var body map[string]json.RawMessage
 		dec := json.NewDecoder(r.Body)
 		if err := dec.Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "请求体不是合法 JSON")
+			writeError(w, r, http.StatusBadRequest, "请求体不是合法 JSON")
 			return
 		}
 
 		// 敏感字段一律拒绝
 		for k := range body {
 			if sensitiveKey(k) {
-				writeError(w, http.StatusBadRequest, "密钥请通过环境变量配置")
+				writeError(w, r, http.StatusBadRequest, "密钥请通过环境变量配置")
 				return
 			}
 		}
@@ -137,7 +138,7 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		}
 		for k := range body {
 			if !allowed[k] {
-				writeError(w, http.StatusBadRequest, "未知字段: "+k)
+				writeError(w, r, http.StatusBadRequest, "未知字段: "+k)
 				return
 			}
 		}
@@ -147,7 +148,7 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["enabled"]; ok {
 			var b bool
 			if err := json.Unmarshal(raw, &b); err != nil {
-				writeError(w, http.StatusBadRequest, "enabled 必须为布尔值")
+				writeError(w, r, http.StatusBadRequest, "enabled 必须为布尔值")
 				return
 			}
 			if b {
@@ -160,11 +161,11 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["time"]; ok {
 			var s string
 			if err := json.Unmarshal(raw, &s); err != nil {
-				writeError(w, http.StatusBadRequest, "time 必须为字符串")
+				writeError(w, r, http.StatusBadRequest, "time 必须为字符串")
 				return
 			}
 			if s != "" && !validHHMM(s) {
-				writeError(w, http.StatusBadRequest, "time 必须为 HH:MM 格式且在 00:00–23:59 之间")
+				writeError(w, r, http.StatusBadRequest, "time 必须为 HH:MM 格式且在 00:00–23:59 之间")
 				return
 			}
 			updates["time"] = s
@@ -173,12 +174,12 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["timezone"]; ok {
 			var s string
 			if err := json.Unmarshal(raw, &s); err != nil {
-				writeError(w, http.StatusBadRequest, "timezone 必须为字符串")
+				writeError(w, r, http.StatusBadRequest, "timezone 必须为字符串")
 				return
 			}
 			if s != "" {
 				if _, err := time.LoadLocation(s); err != nil {
-					writeError(w, http.StatusBadRequest, "timezone 非法")
+					writeError(w, r, http.StatusBadRequest, "timezone 非法")
 					return
 				}
 			}
@@ -188,7 +189,7 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["mail_to"]; ok {
 			var s string
 			if err := json.Unmarshal(raw, &s); err != nil {
-				writeError(w, http.StatusBadRequest, "mail_to 必须为字符串")
+				writeError(w, r, http.StatusBadRequest, "mail_to 必须为字符串")
 				return
 			}
 			updates["mail_to"] = s
@@ -197,11 +198,11 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["webhook_url"]; ok {
 			var s string
 			if err := json.Unmarshal(raw, &s); err != nil {
-				writeError(w, http.StatusBadRequest, "webhook_url 必须为字符串")
+				writeError(w, r, http.StatusBadRequest, "webhook_url 必须为字符串")
 				return
 			}
 			if s != "" && !strings.HasPrefix(s, "http://") && !strings.HasPrefix(s, "https://") {
-				writeError(w, http.StatusBadRequest, "webhook_url 必须以 http:// 或 https:// 开头")
+				writeError(w, r, http.StatusBadRequest, "webhook_url 必须以 http:// 或 https:// 开头")
 				return
 			}
 			updates["webhook_url"] = s
@@ -210,7 +211,7 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["smtp_host"]; ok {
 			var s string
 			if err := json.Unmarshal(raw, &s); err != nil {
-				writeError(w, http.StatusBadRequest, "smtp_host 必须为字符串")
+				writeError(w, r, http.StatusBadRequest, "smtp_host 必须为字符串")
 				return
 			}
 			updates["smtp_host"] = s
@@ -219,7 +220,7 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 		if raw, ok := body["smtp_from"]; ok {
 			var s string
 			if err := json.Unmarshal(raw, &s); err != nil {
-				writeError(w, http.StatusBadRequest, "smtp_from 必须为字符串")
+				writeError(w, r, http.StatusBadRequest, "smtp_from 必须为字符串")
 				return
 			}
 			updates["smtp_from"] = s
@@ -227,7 +228,7 @@ func handlePutPushSettings(st *store.Store, cfg config.Config) http.HandlerFunc 
 
 		for k, v := range updates {
 			if err := st.SetPushSetting(k, v); err != nil {
-				writeError(w, http.StatusInternalServerError, "写入设置失败")
+				writeError(w, r, http.StatusInternalServerError, "写入设置失败")
 				return
 			}
 		}
@@ -302,7 +303,7 @@ func truncateDetail(s string) string {
 func handlePushTest(st *store.Store, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeError(w, http.StatusMethodNotAllowed, "方法不允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不允许")
 			return
 		}
 
@@ -311,18 +312,18 @@ func handlePushTest(st *store.Store, cfg config.Config) http.HandlerFunc {
 		}
 		dec := json.NewDecoder(r.Body)
 		if err := dec.Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "请求体不是合法 JSON")
+			writeError(w, r, http.StatusBadRequest, "请求体不是合法 JSON")
 			return
 		}
 
 		if body.Channel != "smtp" && body.Channel != "webhook" {
-			writeError(w, http.StatusBadRequest, "channel 必须为 smtp 或 webhook")
+			writeError(w, r, http.StatusBadRequest, "channel 必须为 smtp 或 webhook")
 			return
 		}
 
 		sender, err := buildTestSender(body.Channel, cfg)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -335,6 +336,8 @@ func handlePushTest(st *store.Store, cfg config.Config) http.HandlerFunc {
 		defer cancel()
 
 		if sendErr := sender.Send(ctx, msg); sendErr != nil {
+			logpkg.RequestLogger(r.Context()).Warn("push.test_failed",
+				"channel", body.Channel, "detail", truncateDetail(sendErr.Error()))
 			writeJSON(w, http.StatusOK, map[string]any{
 				"channel": body.Channel,
 				"ok":      false,
@@ -343,6 +346,7 @@ func handlePushTest(st *store.Store, cfg config.Config) http.HandlerFunc {
 			return
 		}
 
+		logpkg.RequestLogger(r.Context()).Info("push.test_sent", "channel", body.Channel)
 		writeJSON(w, http.StatusOK, map[string]any{
 			"channel": body.Channel,
 			"ok":      true,
@@ -355,7 +359,7 @@ func handlePushTest(st *store.Store, cfg config.Config) http.HandlerFunc {
 func handlePushHistory(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "方法不允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不允许")
 			return
 		}
 
@@ -363,7 +367,7 @@ func handlePushHistory(st *store.Store) http.HandlerFunc {
 		records, err := st.ListPushLogFor(limit, r.URL.Query().Get("user"))
 
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "读取推送历史失败")
+			writeError(w, r, http.StatusInternalServerError, "读取推送历史失败")
 			return
 		}
 		if records == nil {

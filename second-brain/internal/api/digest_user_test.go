@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -44,11 +45,11 @@ func TestDigestPerUserIsolation(t *testing.T) {
 
 	aliceID := createNoteAs(t, srv.URL, "alice", "alice-due")
 	yesterday := time.Now().AddDate(0, 0, -1)
-	if _, err := st.RecordReview(aliceID, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), aliceID, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("alice RecordReview 失败: %v", err)
 	}
 	bobID := createNoteAs(t, srv.URL, "bob", "bob-due")
-	if _, err := st.RecordReview(bobID, 0, yesterday, "bob"); err != nil {
+	if _, err := st.RecordReview(context.Background(), bobID, 0, yesterday, "bob"); err != nil {
 		t.Fatalf("bob RecordReview 失败: %v", err)
 	}
 
@@ -72,11 +73,11 @@ func TestDigestQueryParamUser(t *testing.T) {
 
 	aliceID := createNoteAs(t, srv.URL, "alice", "alice-due")
 	yesterday := time.Now().AddDate(0, 0, -1)
-	if _, err := st.RecordReview(aliceID, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), aliceID, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("alice RecordReview 失败: %v", err)
 	}
 	bobID := createNoteAs(t, srv.URL, "bob", "bob-due")
-	if _, err := st.RecordReview(bobID, 0, yesterday, "bob"); err != nil {
+	if _, err := st.RecordReview(context.Background(), bobID, 0, yesterday, "bob"); err != nil {
 		t.Fatalf("bob RecordReview 失败: %v", err)
 	}
 
@@ -100,7 +101,7 @@ func TestDigestDefaultLocalFallback(t *testing.T) {
 
 	id := createNoteAs(t, srv.URL, "local", "local-due")
 	yesterday := time.Now().AddDate(0, 0, -1)
-	if _, err := st.RecordReview(id, 0, yesterday, "local"); err != nil {
+	if _, err := st.RecordReview(context.Background(), id, 0, yesterday, "local"); err != nil {
 		t.Fatalf("local RecordReview 失败: %v", err)
 	}
 
@@ -124,11 +125,11 @@ func TestDigestHeaderBeatsQueryParam(t *testing.T) {
 
 	aliceID := createNoteAs(t, srv.URL, "alice", "alice-due")
 	yesterday := time.Now().AddDate(0, 0, -1)
-	if _, err := st.RecordReview(aliceID, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), aliceID, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("alice RecordReview 失败: %v", err)
 	}
 	bobID := createNoteAs(t, srv.URL, "bob", "bob-due")
-	if _, err := st.RecordReview(bobID, 0, yesterday, "bob"); err != nil {
+	if _, err := st.RecordReview(context.Background(), bobID, 0, yesterday, "bob"); err != nil {
 		t.Fatalf("bob RecordReview 失败: %v", err)
 	}
 

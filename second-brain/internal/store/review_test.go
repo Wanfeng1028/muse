@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -44,7 +45,7 @@ func TestRecordReviewProgress(t *testing.T) {
 		t.Fatalf("CreateNote failed: %v", err)
 	}
 
-	st, err := s.RecordReview(n.ID, int(review.GradeGood), today, DefaultUser)
+	st, err := s.RecordReview(context.Background(), n.ID, int(review.GradeGood), today, DefaultUser)
 	if err != nil {
 		t.Fatalf("RecordReview(good) failed: %v", err)
 	}
@@ -56,7 +57,7 @@ func TestRecordReviewProgress(t *testing.T) {
 		t.Errorf("after Good DueDate = %q, want %q", st.DueDate, want)
 	}
 
-	st2, err := s.RecordReview(n.ID, int(review.GradeEasy), today, DefaultUser)
+	st2, err := s.RecordReview(context.Background(), n.ID, int(review.GradeEasy), today, DefaultUser)
 	if err != nil {
 		t.Fatalf("RecordReview(easy) failed: %v", err)
 	}
@@ -138,7 +139,7 @@ func TestReviewStats(t *testing.T) {
 	if _, err := s.db.Exec(`UPDATE reviews SET due_date = ? WHERE note_id = ?`, today.Format("2006-01-02"), n1.ID); err != nil {
 		t.Fatalf("update due_date failed: %v", err)
 	}
-	if _, err := s.RecordReview(n2.ID, int(review.GradeGood), today, DefaultUser); err != nil {
+	if _, err := s.RecordReview(context.Background(), n2.ID, int(review.GradeGood), today, DefaultUser); err != nil {
 		t.Fatalf("RecordReview failed: %v", err)
 	}
 
@@ -210,11 +211,11 @@ func TestRecordReviewErrors(t *testing.T) {
 		t.Fatalf("CreateNote failed: %v", err)
 	}
 
-	if _, err := s.RecordReview(n.ID, 6, today, DefaultUser); err == nil {
+	if _, err := s.RecordReview(context.Background(), n.ID, 6, today, DefaultUser); err == nil {
 		t.Errorf("RecordReview(grade=6) err = nil, want error")
 	}
 
-	if _, err := s.RecordReview(999999, int(review.GradeGood), today, DefaultUser); err != ErrNotFound {
+	if _, err := s.RecordReview(context.Background(), 999999, int(review.GradeGood), today, DefaultUser); err != ErrNotFound {
 		t.Errorf("RecordReview(missing) err = %v, want ErrNotFound", err)
 	}
 }

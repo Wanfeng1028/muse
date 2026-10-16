@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/review"
 	_ "modernc.org/sqlite"
 )
@@ -236,11 +238,11 @@ func normalizeTags(tags []string) []string {
 
 // CreateNote 创建笔记（复习行归属默认用户）。
 func (s *Store) CreateNote(n Note) (Note, error) {
-	return s.CreateNoteFor(n, DefaultUser)
+	return s.CreateNoteFor(context.Background(), n, DefaultUser)
 }
 
-// CreateNoteFor 创建笔记，复习行归属指定用户。
-func (s *Store) CreateNoteFor(n Note, user string) (Note, error) {
+// CreateNoteFor 创建笔记，复习行归属指定用户。ctx 用于携带 request_id 做全链路日志。
+func (s *Store) CreateNoteFor(ctx context.Context, n Note, user string) (Note, error) {
 	user = NormalizeUser(user)
 	now := nowRFC3339()
 	n.CreatedAt = now
@@ -289,6 +291,7 @@ func (s *Store) CreateNoteFor(n Note, user string) (Note, error) {
 	if err := tx.Commit(); err != nil {
 		return Note{}, err
 	}
+	logpkg.RequestLogger(ctx).Info("store.note_created", "note_id", id, "user", user)
 	return n, nil
 }
 

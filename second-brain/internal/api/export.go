@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +14,7 @@ import (
 	"time"
 	"unicode"
 
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
 
@@ -100,7 +101,7 @@ func handleExportJSON(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		notes, err := collectAllNotes(st)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -115,7 +116,7 @@ func handleExportJSON(st *store.Store) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		enc := json.NewEncoder(w)
 		if err := enc.Encode(doc); err != nil {
-			log.Printf("export json: encode: %v", err)
+			logpkg.RequestLogger(r.Context()).Error("export.json.encode_failed", "error", err)
 		}
 	}
 }
@@ -171,7 +172,7 @@ func handleExportMarkdown(st *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		notes, err := collectAllNotes(st)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -191,7 +192,7 @@ func handleExportMarkdown(st *store.Store) http.HandlerFunc {
 			idx.WriteString(fmt.Sprintf("- [%s](notes/%s)\n", n.Title, entry))
 		}
 		if err := writeZipEntry(zw, "index.md", []byte(idx.String()), now); err != nil {
-			log.Printf("export markdown: write index.md: %v", err)
+			logpkg.RequestLogger(r.Context()).Error("export.markdown.write_index_failed", "error", err)
 			return
 		}
 
@@ -209,11 +210,11 @@ func handleExportMarkdown(st *store.Store) http.HandlerFunc {
 				full := st.AttachmentPath(a)
 				data, rerr := os.ReadFile(full)
 				if rerr != nil {
-					log.Printf("export markdown: read attachment %d: %v", a.ID, rerr)
+					logpkg.RequestLogger(r.Context()).Error("export.markdown.read_attachment_failed", "attachment_id", a.ID, "error", rerr)
 					continue
 				}
 				if err := writeZipEntry(zw, attEntry, data, now); err != nil {
-					log.Printf("export markdown: write attachment %s: %v", attEntry, err)
+					logpkg.RequestLogger(r.Context()).Error("export.markdown.write_attachment_failed", "entry", attEntry, "error", err)
 					return
 				}
 			}
@@ -221,13 +222,13 @@ func handleExportMarkdown(st *store.Store) http.HandlerFunc {
 			body := rewriteAttachmentRefs(n.Body, attMap)
 			content := buildNoteMarkdown(n, body)
 			if err := writeZipEntry(zw, zipPath, []byte(content), now); err != nil {
-				log.Printf("export markdown: write note %s: %v", zipPath, err)
+				logpkg.RequestLogger(r.Context()).Error("export.markdown.write_note_failed", "entry", zipPath, "error", err)
 				return
 			}
 		}
 
 		if err := zw.Close(); err != nil {
-			log.Printf("export markdown: close zip: %v", err)
+			logpkg.RequestLogger(r.Context()).Error("export.markdown.close_zip_failed", "error", err)
 		}
 	}
 }
@@ -281,7 +282,7 @@ func rewriteAttachmentRefs(body string, attMap map[int64]string) string {
 // writeZipEntry 写出一个 zip 条目；条目名包含 ".." 时跳过并记录日志。
 func writeZipEntry(zw *zip.Writer, name string, data []byte, mod time.Time) error {
 	if strings.Contains(name, "..") || filepath.IsAbs(name) {
-		log.Printf("export markdown: skip unsafe zip entry %q", name)
+		slog.Warn("export.markdown.skip_unsafe_entry", "entry", name)
 		return nil
 	}
 	hdr := &zip.FileHeader{

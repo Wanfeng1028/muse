@@ -1,11 +1,13 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/review"
 )
 
@@ -56,8 +58,8 @@ func (s *Store) GetReviewState(noteID int64, user string) (review.State, error) 
 	return st, nil
 }
 
-// RecordReview 记录一次复习，使用 review.Next 计算新状态并更新数据库
-func (s *Store) RecordReview(noteID int64, grade int, today time.Time, user string) (review.State, error) {
+// RecordReview 记录一次复习，使用 review.Next 计算新状态并更新数据库。ctx 用于携带 request_id 做全链路日志。
+func (s *Store) RecordReview(ctx context.Context, noteID int64, grade int, today time.Time, user string) (review.State, error) {
 	user = NormalizeUser(user)
 	// 校验 grade 合法性
 	if grade < 0 || grade > 5 {
@@ -104,6 +106,9 @@ func (s *Store) RecordReview(noteID int64, grade int, today time.Time, user stri
 		return review.State{}, err
 	}
 
+	logpkg.RequestLogger(ctx).Info("store.review_recorded",
+		"note_id", noteID, "grade", grade, "user", user,
+		"interval_days", next.IntervalDays, "due_date", next.DueDate)
 	return next, nil
 }
 

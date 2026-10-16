@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -63,7 +64,7 @@ func TestReviewUserIsolationQueue(t *testing.T) {
 	yesterday := time.Now().AddDate(0, 0, -1)
 
 	id := createNoteAs(t, srv.URL, "alice", "alice-secret")
-	if _, err := st.RecordReview(id, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), id, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("RecordReview alice: %v", err)
 	}
 
@@ -105,7 +106,7 @@ func TestReviewUserQueryParam(t *testing.T) {
 	yesterday := time.Now().AddDate(0, 0, -1)
 
 	id := createNoteAs(t, srv.URL, "alice", "alice-note")
-	if _, err := st.RecordReview(id, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), id, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("RecordReview alice: %v", err)
 	}
 
@@ -149,7 +150,7 @@ func TestReviewScoreIsolation(t *testing.T) {
 	yesterday := time.Now().AddDate(0, 0, -1)
 
 	id := createNoteAs(t, srv.URL, "alice", "alice-card")
-	if _, err := st.RecordReview(id, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), id, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("RecordReview alice: %v", err)
 	}
 
@@ -231,10 +232,10 @@ func TestReviewDigestIsolation(t *testing.T) {
 	a1 := createNoteAs(t, srv.URL, "alice", "alice-digest")
 	b1 := createNoteAs(t, srv.URL, "bob", "bob-digest")
 	// 各造一条到期数据（grade 0 按 SM-2 得 due=昨天+1天=今天），使 n=1 时取到期首条确定。
-	if _, err := st.RecordReview(a1, 0, yesterday, "alice"); err != nil {
+	if _, err := st.RecordReview(context.Background(), a1, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("RecordReview a1: %v", err)
 	}
-	if _, err := st.RecordReview(b1, 0, yesterday, "bob"); err != nil {
+	if _, err := st.RecordReview(context.Background(), b1, 0, yesterday, "bob"); err != nil {
 		t.Fatalf("RecordReview b1: %v", err)
 	}
 
@@ -303,7 +304,7 @@ func TestReviewDefaultUser(t *testing.T) {
 	}
 
 	// 让 local 的复习到期
-	if _, err := st.RecordReview(id, 0, yesterday, "local"); err != nil {
+	if _, err := st.RecordReview(context.Background(), id, 0, yesterday, "local"); err != nil {
 		t.Fatalf("RecordReview local: %v", err)
 	}
 

@@ -3,7 +3,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/api"
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/push"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
@@ -20,10 +21,14 @@ func main() {
 	// 加载配置
 	cfg := config.Load()
 
+	// 初始化结构化日志（SB_LOG_LEVEL，默认 info，JSON 输出）
+	logpkg.Init()
+
 	// 打开数据库
 	st, err := store.Open(cfg.DBPath)
 	if err != nil {
-		log.Fatalf("打开数据库失败: %v", err)
+		slog.Error("server.db_open_failed", "db", cfg.DBPath, "error", err)
+		os.Exit(1)
 	}
 
 	// 构建 HTTP 服务
@@ -39,15 +44,16 @@ func main() {
 		senders := push.BuildSenders(cfg.Push)
 		sched = push.NewScheduler(st, senders, cfg.Push)
 		sched.Start()
-		log.Printf("推送调度器已启动，每日 %s（%s）", cfg.Push.Time, cfg.Push.Timezone)
+		slog.Info("server.push_scheduler_started", "time", cfg.Push.Time, "timezone", cfg.Push.Timezone)
 	}
 
-	log.Printf("second-brain 正在监听 %s，数据库路径 %s", cfg.Addr, cfg.DBPath)
+	slog.Info("server.listening", "addr", cfg.Addr, "db", cfg.DBPath)
 
 	// 启动服务
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP 服务异常: %v", err)
+			slog.Error("server.http_failed", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -56,7 +62,7 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
-	log.Println("收到退出信号，正在优雅关闭...")
+	slog.Info("server.shutting_down")
 
 	// 停止推送调度器
 	if sched != nil {
@@ -67,13 +73,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("HTTP 关闭出错: %v", err)
+		slog.Warn("server.http_close_error", "error", err)
 	}
 
 	// 关闭数据库
 	if err := st.Close(); err != nil {
-		log.Printf("数据库关闭出错: %v", err)
+		slog.Warn("server.db_close_error", "error", err)
 	}
 
-	log.Println("已退出")
+	slog.Info("server.exited")
 }

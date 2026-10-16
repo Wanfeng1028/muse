@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"path/filepath"
 	"strings"
@@ -30,7 +31,7 @@ func TestNormalizeUser(t *testing.T) {
 func TestCreateNoteForUser(t *testing.T) {
 	s := newTestStore(t)
 
-	n, err := s.CreateNoteFor(Note{Title: "alice note", Body: "hello"}, "alice")
+	n, err := s.CreateNoteFor(context.Background(), Note{Title: "alice note", Body: "hello"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
@@ -55,11 +56,11 @@ func TestReviewIsolationQueue(t *testing.T) {
 	s := newTestStore(t)
 	today := time.Now()
 
-	n, err := s.CreateNoteFor(Note{Title: "alice due", Body: "x"}, "alice")
+	n, err := s.CreateNoteFor(context.Background(), Note{Title: "alice due", Body: "x"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
-	if _, err := s.RecordReview(n.ID, 4, today, "alice"); err != nil {
+	if _, err := s.RecordReview(context.Background(), n.ID, 4, today, "alice"); err != nil {
 		t.Fatalf("RecordReview: %v", err)
 	}
 	if _, err := s.db.Exec("UPDATE reviews SET due_date='2000-01-01' WHERE note_id=? AND user_id='alice'", n.ID); err != nil {
@@ -87,16 +88,16 @@ func TestReviewIsolationGrade(t *testing.T) {
 	s := newTestStore(t)
 	today := time.Now()
 
-	n, err := s.CreateNoteFor(Note{Title: "shared note", Body: "x"}, "alice")
+	n, err := s.CreateNoteFor(context.Background(), Note{Title: "shared note", Body: "x"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
 
-	aliceState, err := s.RecordReview(n.ID, 5, today, "alice")
+	aliceState, err := s.RecordReview(context.Background(), n.ID, 5, today, "alice")
 	if err != nil {
 		t.Fatalf("RecordReview(alice): %v", err)
 	}
-	bobState, err := s.RecordReview(n.ID, 0, today, "bob")
+	bobState, err := s.RecordReview(context.Background(), n.ID, 0, today, "bob")
 	if err != nil {
 		t.Fatalf("RecordReview(bob): %v", err)
 	}
@@ -147,23 +148,23 @@ func TestReviewIsolationDigest(t *testing.T) {
 	today := time.Now()
 	yesterday := today.AddDate(0, 0, -1)
 
-	a1, err := s.CreateNoteFor(Note{Title: "a1", Body: "x"}, "alice")
+	a1, err := s.CreateNoteFor(context.Background(), Note{Title: "a1", Body: "x"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor a1: %v", err)
 	}
-	a2, err := s.CreateNoteFor(Note{Title: "a2", Body: "x"}, "alice")
+	a2, err := s.CreateNoteFor(context.Background(), Note{Title: "a2", Body: "x"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor a2: %v", err)
 	}
-	b1, err := s.CreateNoteFor(Note{Title: "b1", Body: "x"}, "bob")
+	b1, err := s.CreateNoteFor(context.Background(), Note{Title: "b1", Body: "x"}, "bob")
 	if err != nil {
 		t.Fatalf("CreateNoteFor b1: %v", err)
 	}
 	// 各自造一条到期数据：grade 0 按 SM-2 得 due=yesterday+1=今天。
-	if _, err := s.RecordReview(a1.ID, 0, yesterday, "alice"); err != nil {
+	if _, err := s.RecordReview(context.Background(), a1.ID, 0, yesterday, "alice"); err != nil {
 		t.Fatalf("RecordReview a1: %v", err)
 	}
-	if _, err := s.RecordReview(b1.ID, 0, yesterday, "bob"); err != nil {
+	if _, err := s.RecordReview(context.Background(), b1.ID, 0, yesterday, "bob"); err != nil {
 		t.Fatalf("RecordReview b1: %v", err)
 	}
 
@@ -214,11 +215,11 @@ func TestReviewIsolationStats(t *testing.T) {
 	s := newTestStore(t)
 	today := time.Now()
 
-	n, err := s.CreateNoteFor(Note{Title: "alice stats", Body: "x"}, "alice")
+	n, err := s.CreateNoteFor(context.Background(), Note{Title: "alice stats", Body: "x"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
-	if _, err := s.RecordReview(n.ID, 4, today, "alice"); err != nil {
+	if _, err := s.RecordReview(context.Background(), n.ID, 4, today, "alice"); err != nil {
 		t.Fatalf("RecordReview(alice): %v", err)
 	}
 
@@ -340,14 +341,14 @@ func TestReviewIsolationMigrationFromOldSchema(t *testing.T) {
 func TestRecordReviewCreatesRowForNewUser(t *testing.T) {
 	s := newTestStore(t)
 
-	note, err := s.CreateNoteFor(Note{Title: "shared", Body: "body"}, "alice")
+	note, err := s.CreateNoteFor(context.Background(), Note{Title: "shared", Body: "body"}, "alice")
 	if err != nil {
 		t.Fatalf("CreateNoteFor: %v", err)
 	}
 	id := note.ID
 
 	today := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
-	if _, err := s.RecordReview(id, 4, today, "bob"); err != nil {
+	if _, err := s.RecordReview(context.Background(), id, 4, today, "bob"); err != nil {
 		t.Fatalf("RecordReview bob: %v", err)
 	}
 

@@ -92,10 +92,10 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 		}
 		if _, err := st.GetNote(noteID); err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -103,40 +103,40 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 		if err := r.ParseMultipartForm(maxBytes + (1 << 20)); err != nil {
 			var mbe *http.MaxBytesError
 			if errors.As(err, &mbe) {
-				writeError(w, http.StatusRequestEntityTooLarge, tooLargeMsg)
+				writeError(w, r, http.StatusRequestEntityTooLarge, tooLargeMsg)
 				return
 			}
-			writeError(w, http.StatusBadRequest, "invalid multipart form")
+			writeError(w, r, http.StatusBadRequest, "invalid multipart form")
 			return
 		}
 
 		file, header, err := r.FormFile("file")
 		if err != nil {
-			writeError(w, http.StatusBadRequest, "缺少 file 字段")
+			writeError(w, r, http.StatusBadRequest, "缺少 file 字段")
 			return
 		}
 		defer file.Close()
 
 		data, err := io.ReadAll(io.LimitReader(file, maxBytes+1))
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if int64(len(data)) > maxBytes {
-			writeError(w, http.StatusRequestEntityTooLarge, tooLargeMsg)
+			writeError(w, r, http.StatusRequestEntityTooLarge, tooLargeMsg)
 			return
 		}
 
 		filename := sanitizeFilename(header.Filename)
 		ext := strings.ToLower(filepath.Ext(filename))
 		if !attachAllowedExt[ext] {
-			writeError(w, http.StatusUnsupportedMediaType, "不支持的文件类型："+ext)
+			writeError(w, r, http.StatusUnsupportedMediaType, "不支持的文件类型："+ext)
 			return
 		}
 
 		sniffed := http.DetectContentType(data)
 		if attachImageExt[ext] && !strings.HasPrefix(sniffed, "image/") {
-			writeError(w, http.StatusUnsupportedMediaType, "文件内容与扩展名不符")
+			writeError(w, r, http.StatusUnsupportedMediaType, "文件内容与扩展名不符")
 			return
 		}
 
@@ -145,19 +145,19 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 
 		var rnd [8]byte
 		if _, err := rand.Read(rnd[:]); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		storedName := hex.EncodeToString(rnd[:]) + ext
 
 		dir := filepath.Join(st.AttachDir(), strconv.FormatInt(noteID, 10))
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		fullPath := filepath.Join(dir, storedName)
 		if err := os.WriteFile(fullPath, data, 0o644); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 
@@ -165,10 +165,10 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 		if err != nil {
 			_ = os.Remove(fullPath)
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusCreated, a)
@@ -182,15 +182,15 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 		}
 		if _, err := st.GetNote(noteID); err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		list, err := st.ListAttachments(noteID)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if list == nil {
@@ -208,26 +208,26 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 		a, err := st.GetAttachment(id)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "attachment not found")
+				writeError(w, r, http.StatusNotFound, "attachment not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		fullPath := st.AttachmentPath(a)
 		f, err := os.Open(fullPath)
 		if err != nil {
 			if os.IsNotExist(err) {
-				writeError(w, http.StatusInternalServerError, "附件文件丢失")
+				writeError(w, r, http.StatusInternalServerError, "附件文件丢失")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		defer f.Close()
 		info, err := f.Stat()
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		dispName := strings.ReplaceAll(sanitizeFilename(a.Filename), `"`, "_")
@@ -244,10 +244,10 @@ func RegisterAttachmentRoutes(mux *http.ServeMux, st *store.Store) {
 		}
 		if _, err := st.DeleteAttachment(id); err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "attachment not found")
+				writeError(w, r, http.StatusNotFound, "attachment not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)

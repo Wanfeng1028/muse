@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -200,7 +201,7 @@ func TestReviewQueueShape(t *testing.T) {
 		t.Fatalf("CreateNote: %v", err)
 	}
 	tomorrow := time.Now().UTC().Add(24 * time.Hour)
-	if _, err := st.RecordReview(note.ID, 4, tomorrow, store.DefaultUser); err != nil {
+	if _, err := st.RecordReview(context.Background(), note.ID, 4, tomorrow, store.DefaultUser); err != nil {
 		t.Fatalf("RecordReview: %v", err)
 	}
 

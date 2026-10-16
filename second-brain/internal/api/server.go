@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
+	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/markdown"
 	"github.com/Wanfeng1028/muse/second-brain/internal/search"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
@@ -39,7 +40,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		}
 		notes, err := st.ListNotes(tag, limit, offset)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if notes == nil {
@@ -52,18 +53,20 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("POST /api/notes", func(w http.ResponseWriter, r *http.Request) {
 		var n store.Note
 		if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid json body")
+			writeError(w, r, http.StatusBadRequest, "invalid json body")
 			return
 		}
 		if strings.TrimSpace(n.Title) == "" {
-			writeError(w, http.StatusBadRequest, "title is required")
+			writeError(w, r, http.StatusBadRequest, "title is required")
 			return
 		}
-		created, err := st.CreateNoteFor(n, CurrentUser(r))
+		created, err := st.CreateNoteFor(r.Context(), n, CurrentUser(r))
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
+		logpkg.RequestLogger(r.Context()).Info("note.created",
+			"note_id", created.ID, "user", CurrentUser(r))
 		writeJSON(w, http.StatusCreated, created)
 	})
 
@@ -76,10 +79,10 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		n, err := st.GetNote(id)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, n)
@@ -93,21 +96,21 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		}
 		var n store.Note
 		if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid json body")
+			writeError(w, r, http.StatusBadRequest, "invalid json body")
 			return
 		}
 		n.ID = id
 		if strings.TrimSpace(n.Title) == "" {
-			writeError(w, http.StatusBadRequest, "title is required")
+			writeError(w, r, http.StatusBadRequest, "title is required")
 			return
 		}
 		updated, err := st.UpdateNote(n)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, updated)
@@ -121,10 +124,10 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		}
 		if err := st.DeleteNote(id); err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -139,10 +142,10 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		n, err := st.GetNote(id)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"html": markdown.Render(n.Body)})
@@ -156,15 +159,15 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		}
 		if _, err := st.GetNote(id); err != nil {
 			if errors.Is(err, store.ErrNotFound) {
-				writeError(w, http.StatusNotFound, "note not found")
+				writeError(w, r, http.StatusNotFound, "note not found")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		bl, err := st.Backlinks(id)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, bl)
@@ -184,7 +187,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		}
 		notes, err := st.SearchNotes(q)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		ranked := search.RankDetailed(notes, q)
@@ -237,7 +240,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/tags", func(w http.ResponseWriter, r *http.Request) {
 		tags, err := st.ListTags()
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if tags == nil {
@@ -250,7 +253,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/stats", func(w http.ResponseWriter, r *http.Request) {
 		s, err := st.Stats()
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusOK, s)
@@ -260,7 +263,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/graph", func(w http.ResponseWriter, r *http.Request) {
 		g, err := st.Graph()
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if g.Nodes == nil {
@@ -295,7 +298,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /sw.js", func(w http.ResponseWriter, r *http.Request) {
 		data, err := fs.ReadFile(staticFS, "sw.js")
 		if err != nil {
-			writeError(w, http.StatusNotFound, "not found")
+			writeError(w, r, http.StatusNotFound, "not found")
 			return
 		}
 		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
@@ -306,7 +309,7 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /manifest.webmanifest", func(w http.ResponseWriter, r *http.Request) {
 		data, err := fs.ReadFile(staticFS, "manifest.webmanifest")
 		if err != nil {
-			writeError(w, http.StatusNotFound, "not found")
+			writeError(w, r, http.StatusNotFound, "not found")
 			return
 		}
 		w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
@@ -328,14 +331,15 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		// 形如 /index.html 的路径 301 重定向到 ./，故直接读文件写入。
 		data, err := fs.ReadFile(staticFS, "index.html")
 		if err != nil {
-			writeError(w, http.StatusNotFound, "not found")
+			writeError(w, r, http.StatusNotFound, "not found")
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = w.Write(data)
 	})
 
-	return mux
+	// 请求追踪中间件包住全部路由：透传/生成 X-Request-ID，全链路日志带 request_id。
+	return logpkg.Middleware(mux)
 }
 
 // writeJSON 序列化并写出 JSON 响应。
@@ -345,9 +349,13 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// writeError 以统一格式写出错误 JSON。
-func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+// writeError 以统一格式写出错误 JSON，响应体恒带 request_id，方便按 ID 查日志定位。
+func writeError(w http.ResponseWriter, r *http.Request, status int, msg string) {
+	body := map[string]string{"error": msg}
+	if id := logpkg.FromContext(r.Context()); id != "" {
+		body["request_id"] = id
+	}
+	writeJSON(w, status, body)
 }
 
 // parseID 从路径中解析 id，失败时写出 400 并返回 false。
@@ -355,7 +363,7 @@ func parseID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	raw := r.PathValue("id")
 	id, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil || id <= 0 {
-		writeError(w, http.StatusBadRequest, "invalid id")
+		writeError(w, r, http.StatusBadRequest, "invalid id")
 		return 0, false
 	}
 	return id, true

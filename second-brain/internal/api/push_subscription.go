@@ -45,11 +45,11 @@ func toSubscriptionView(sub store.PushSubscription) subscriptionView {
 func handlePostPushSubscription(st *store.Store, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			writeError(w, http.StatusMethodNotAllowed, "方法不被允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不被允许")
 			return
 		}
 		if !cfg.Push.VAPIDConfigured() {
-			writeError(w, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
+			writeError(w, r, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
 			return
 		}
 		var body struct {
@@ -58,13 +58,13 @@ func handlePostPushSubscription(st *store.Store, cfg config.Config) http.Handler
 			Auth     string `json:"auth"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			writeError(w, http.StatusBadRequest, "请求体不是合法 JSON")
+			writeError(w, r, http.StatusBadRequest, "请求体不是合法 JSON")
 			return
 		}
 		sub, err := st.UpsertSubscription(CurrentUser(r), body.Endpoint, body.P256dh, body.Auth)
 		if err != nil {
 			// UpsertSubscription 的参数校验失败与入库失败都经此返回，错误信息为中文可直接透传。
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
 		writeJSON(w, http.StatusCreated, toSubscriptionView(sub))
@@ -75,11 +75,11 @@ func handlePostPushSubscription(st *store.Store, cfg config.Config) http.Handler
 func handleDeletePushSubscription(st *store.Store, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
-			writeError(w, http.StatusMethodNotAllowed, "方法不被允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不被允许")
 			return
 		}
 		if !cfg.Push.VAPIDConfigured() {
-			writeError(w, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
+			writeError(w, r, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
 			return
 		}
 		endpoint := ""
@@ -93,12 +93,12 @@ func handleDeletePushSubscription(st *store.Store, cfg config.Config) http.Handl
 			endpoint = r.URL.Query().Get("endpoint")
 		}
 		if endpoint == "" {
-			writeError(w, http.StatusBadRequest, "缺少 endpoint 参数")
+			writeError(w, r, http.StatusBadRequest, "缺少 endpoint 参数")
 			return
 		}
 		deleted, err := st.DeleteSubscriptionForUser(CurrentUser(r), endpoint)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "删除订阅失败")
+			writeError(w, r, http.StatusInternalServerError, "删除订阅失败")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]bool{"deleted": deleted})
@@ -109,16 +109,16 @@ func handleDeletePushSubscription(st *store.Store, cfg config.Config) http.Handl
 func handleListPushSubscriptions(st *store.Store, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "方法不被允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不被允许")
 			return
 		}
 		if !cfg.Push.VAPIDConfigured() {
-			writeError(w, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
+			writeError(w, r, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
 			return
 		}
 		subs, err := st.ListSubscriptionsForUser(CurrentUser(r))
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "读取订阅失败")
+			writeError(w, r, http.StatusInternalServerError, "读取订阅失败")
 			return
 		}
 		views := make([]subscriptionView, 0, len(subs))
@@ -133,11 +133,11 @@ func handleListPushSubscriptions(st *store.Store, cfg config.Config) http.Handle
 func handleGetVAPIDPublicKey(cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			writeError(w, http.StatusMethodNotAllowed, "方法不被允许")
+			writeError(w, r, http.StatusMethodNotAllowed, "方法不被允许")
 			return
 		}
 		if !cfg.Push.VAPIDConfigured() {
-			writeError(w, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
+			writeError(w, r, http.StatusServiceUnavailable, "浏览器推送未启用：服务器未配置 VAPID 密钥")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"publicKey": cfg.Push.VAPIDPublicKey})
