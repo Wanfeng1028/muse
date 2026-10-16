@@ -2,6 +2,7 @@
 #include "docseek/indexer.h"
 #include "docseek/database.h"
 #include "docseek/html_extractor.h"
+#include "docseek/office_extractor.h"
 #include "docseek/pdf_extractor.h"
 #include "docseek/logger.h"
 
@@ -108,7 +109,9 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
             return;
         }
         // HTML 允许含 NUL（UTF-16 编码页面），由 HtmlExtractor::extractFromBytes 负责解码，不在此误判为二进制
-        if (ext != ".html" && ext != ".htm" && ext != ".pdf" && head.find('\0') != std::string::npos) { st.skipped++; return; }
+        // Office 文档是 zip 包（二进制），由 Office 提取器处理，同样豁免
+        if (ext != ".html" && ext != ".htm" && ext != ".pdf" && ext != ".docx" &&
+            ext != ".xlsx" && ext != ".pptx" && head.find('\0') != std::string::npos) { st.skipped++; return; }
 
         // 读取全文
         std::string content;
@@ -168,6 +171,72 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
                 return;
             }
             content = pres.text;
+        }
+
+        // Office 文档：自研 zip 解析 + 系统 zlib 解压提取文本（零 GPL 污染，见 office_extractor.h）；
+        // 损坏/失败只记 error+跳过，不中断整批；无文本的跳过（不建空文档）
+        if (ext == ".docx") {
+            OfficeExtractResult ores = DocxExtractor::extractFromPath(sp);
+            if (!ores.ok) {
+                if (st.errors.size() < kMaxErrors) st.errors.push_back(sp + ": DOCX 提取失败：" + ores.error);
+                docseek::log(docseek::Level::Warn, "indexer", "DOCX 提取失败，已跳过",
+                             {{"path", sp}, {"error", ores.error}});
+                st.skipped++;
+                return;
+            }
+            if (ores.text.empty()) {
+                docseek::log(docseek::Level::Warn, "indexer", "DOCX 无可提取文本，已跳过",
+                             {{"path", sp}});
+                st.skipped++;
+                return;
+            }
+            content = ores.text;
+        }
+        if (ext == ".xlsx") {
+            XlsxExtractor::XlsxResult xres = XlsxExtractor::extractFromPath(sp);
+            if (!xres.ok) {
+                if (st.errors.size() < kMaxErrors) st.errors.push_back(sp + ": XLSX 提取失败：" + xres.error);
+                docseek::log(docseek::Level::Warn, "indexer", "XLSX 提取失败，已跳过",
+                             {{"path", sp}, {"error", xres.error}});
+                st.skipped++;
+                return;
+            }
+            // 按"工作表"组装：表头行 [工作表:表名] + 各行文本，表间以换页符分隔（定位时按表切分）
+            std::string assembled;
+            for (const auto& sh : xres.sheets) {
+                if (!assembled.empty()) assembled += "\f";
+                assembled += "[工作表:" + sh.sheetName + "]\n" + sh.text;
+            }
+            if (assembled.empty()) {
+                docseek::log(docseek::Level::Warn, "indexer", "XLSX 无可提取文本，已跳过",
+                             {{"path", sp}});
+                st.skipped++;
+                return;
+            }
+            content = assembled;
+        }
+        if (ext == ".pptx") {
+            PptxExtractor::PptxResult pres2 = PptxExtractor::extractFromPath(sp);
+            if (!pres2.ok) {
+                if (st.errors.size() < kMaxErrors) st.errors.push_back(sp + ": PPTX 提取失败：" + pres2.error);
+                docseek::log(docseek::Level::Warn, "indexer", "PPTX 提取失败，已跳过",
+                             {{"path", sp}, {"error", pres2.error}});
+                st.skipped++;
+                return;
+            }
+            // 按页组装：页间以换页符分隔（与 PDF 一致，定位时按页切分），每页首行 [第 N 页]
+            std::string assembled;
+            for (const auto& sl : pres2.slides) {
+                if (!assembled.empty()) assembled += "\f";
+                assembled += "[第 " + std::to_string(sl.slideNo) + " 页]\n" + sl.text;
+            }
+            if (assembled.empty()) {
+                docseek::log(docseek::Level::Warn, "indexer", "PPTX 无可提取文本，已跳过",
+                             {{"path", sp}});
+                st.skipped++;
+                return;
+            }
+            content = assembled;
         }
 
         // 与已有记录比较

@@ -13,6 +13,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(Threads REQUIRED)
 
 # ---------------------------------------------------------------------------
+# zlib：Office 文档（OOXML zip 包）DEFLATE 解压，系统库
+# zlib license 为宽松许可证，非 GPL，与项目"零 GPL 污染"原则一致；
+# office_extractor.cpp 的 zip 解析器为纯自研，不依赖 miniz 等第三方 zip 库
+# ---------------------------------------------------------------------------
+find_package(ZLIB REQUIRED)
+
+# ---------------------------------------------------------------------------
 # cppjieba：C++ 中文分词（MIT，yanyiwu/cppjieba）
 # 版本选择：v5.6.2（5.6.x 稳定系列；若上游缺失该 tag 可改用 v5.6.0，API 一致）
 # 纯头文件库，只需 include 路径；词典文件在构建期复制到 build/dict/
@@ -77,6 +84,7 @@ add_library(docseek_core STATIC
   src/query_parser.cpp
   src/passage_ranker.cpp
   src/pdf_extractor.cpp
+  src/office_extractor.cpp
   src/locator.cpp
   src/logger.cpp
   src/metrics.cpp
@@ -90,6 +98,7 @@ target_include_directories(docseek_core PUBLIC
 )
 target_link_libraries(docseek_core PUBLIC
   sqlite3_static
+  ZLIB::ZLIB
 )
 # 非 MSVC 平台开启告警
 if(NOT MSVC)
@@ -166,6 +175,10 @@ add_executable(docseek_tests
   tests/test_html_perf.cpp
   tests/test_html_integration.cpp
   tests/test_pdf.cpp
+  tests/test_office_docx.cpp
+  tests/test_office_xlsx.cpp
+  tests/test_office_pptx.cpp
+  tests/test_office_index.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

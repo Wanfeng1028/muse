@@ -103,3 +103,98 @@ TEST_F(DatabaseTest, DbFileBytes) {
     db.upsert("/tmp/size.txt", "s", "content", 100, 7);
     EXPECT_GT(db.dbFileBytes(), 0);
 }
+TEST_F(DatabaseTest, UserIsolation_CountAndList) {
+    // 在测：不同用户的数据相互隔离，docCount 与 list 都按 user 维度过滤
+    auto db = makeDb();
+    db.upsert("/tmp/alice1.txt", "甲一", "content a1", 100, 10, "alice");
+    db.upsert("/tmp/alice2.txt", "甲二", "content a2", 101, 11, "alice");
+    db.upsert("/tmp/bob1.txt", "乙一", "content b1", 102, 12, "bob");
+
+    EXPECT_EQ(db.docCount("alice"), 2);
+    EXPECT_EQ(db.docCount("bob"), 1);
+    // 默认用户是 local，本用例未向 local 写入任何文档
+    EXPECT_EQ(db.docCount(), 0);
+
+    auto aliceDocs = db.list("alice");
+    ASSERT_EQ(aliceDocs.size(), 2u);
+    for (const auto& d : aliceDocs) {
+        EXPECT_EQ(d.user, "alice");
+    }
+
+    // 默认 list 只返回 local 用户的文档，此处为空
+    EXPECT_TRUE(db.list().empty());
+}
+
+TEST_F(DatabaseTest, UserIsolation_SamePath) {
+    // 在测：同一路径在不同用户下互不覆盖，findByPath 按 user 维度返回各自版本
+    auto db = makeDb();
+    db.upsert("/tmp/shared.txt", "alice版", "alice content", 100, 20, "alice");
+    db.upsert("/tmp/shared.txt", "bob版", "bob content", 200, 30, "bob");
+
+    auto aliceDoc = db.findByPath("/tmp/shared.txt", "alice");
+    ASSERT_TRUE(aliceDoc.has_value());
+    EXPECT_EQ(aliceDoc->title, "alice版");
+
+    auto bobDoc = db.findByPath("/tmp/shared.txt", "bob");
+    ASSERT_TRUE(bobDoc.has_value());
+    EXPECT_EQ(bobDoc->title, "bob版");
+
+    // 默认用户 local 下不存在该路径
+    EXPECT_FALSE(db.findByPath("/tmp/shared.txt").has_value());
+}
+
+TEST_F(DatabaseTest, UserIsolation_Search) {
+    // 在测：全文检索按 user 维度隔离，不会跨用户命中
+    auto db = makeDb();
+    db.upsert("/tmp/alice_secret.txt", "机密文档", "这是机密内容", 100, 15, "alice");
+    db.upsert("/tmp/bob_public.txt", "公开文档", "这是公开内容", 200, 15, "bob");
+
+    auto aliceHits = db.searchFts(docseek::Searcher::buildMatchQuery("机密"), 10, "alice");
+    EXPECT_EQ(aliceHits.size(), 1u);
+
+    auto bobHits = db.searchFts(docseek::Searcher::buildMatchQuery("机密"), 10, "bob");
+    EXPECT_TRUE(bobHits.empty());
+
+    // 默认用户 local 无任何文档，检索为空
+    auto defaultHits = db.searchFts(docseek::Searcher::buildMatchQuery("机密"), 10);
+    EXPECT_TRUE(defaultHits.empty());
+}
+
+TEST_F(DatabaseTest, RemoveByUser) {
+    // 在测：removeByUser 只删除指定用户的全部文档，返回删除条数，用户不存在返回 0 不抛异常
+    auto db = makeDb();
+    db.upsert("/tmp/alice1.txt", "甲一", "content a1", 100, 10, "alice");
+    db.upsert("/tmp/alice2.txt", "甲二", "content a2", 101, 11, "alice");
+    db.upsert("/tmp/bob1.txt", "乙一", "content b1", 102, 12, "bob");
+
+    EXPECT_EQ(db.removeByUser("alice"), 2u);
+    EXPECT_EQ(db.docCount("alice"), 0);
+    EXPECT_EQ(db.docCount("bob"), 1);
+
+    // 删除不存在的用户应返回 0 且不抛异常
+    EXPECT_NO_THROW({
+        EXPECT_EQ(db.removeByUser("ghost"), 0u);
+    });
+}
+
+TEST_F(DatabaseTest, CheckUserValid) {
+    // 在测：checkUserValid 对空、含控制字符、超长用户名抛 runtime_error，对合法用户名不抛
+    EXPECT_THROW(docseek::checkUserValid(""), std::runtime_error);
+    EXPECT_THROW(docseek::checkUserValid(std::string("a\ttab")), std::runtime_error);
+    EXPECT_THROW(docseek::checkUserValid(std::string(65, 'x')), std::runtime_error);
+
+    EXPECT_NO_THROW(docseek::checkUserValid("alice"));
+    EXPECT_NO_THROW(docseek::checkUserValid("user-1.name"));
+}
+
+TEST_F(DatabaseTest, DefaultUserIsLocal) {
+    // 在测：默认用户常量为 local，且不传 user 参数时写入的文档归属于 local
+    EXPECT_STREQ(docseek::kDefaultUser, "local");
+
+    auto db = makeDb();
+    db.upsert("/tmp/default.txt", "默认", "default content", 100, 20);
+
+    auto a = db.findByPath("/tmp/default.txt", "local");
+    ASSERT_TRUE(a.has_value());
+    EXPECT_EQ(a->user, "local");
+}

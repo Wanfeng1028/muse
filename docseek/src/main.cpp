@@ -27,7 +27,7 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.8.0";
+constexpr const char* kVersion = "0.10.0";
 
 
 struct GlobalOpts {

@@ -249,7 +249,7 @@ public:
         server_->onGet("/api/health", [this](const HttpRequest& req) {
             return wrapRequest("health", req, false, [&]() -> HttpResponse {
                 std::lock_guard<std::mutex> lk(dbMutex_);
-                return HttpResponse::json("{\"ok\":true,\"version\":\"0.8.0\"}");
+                return HttpResponse::json("{\"ok\":true,\"version\":\"0.9.0\"}");
 
             });
         });
@@ -561,7 +561,7 @@ void Service::run() {
     impl_->actualPort_ = impl_->server_->port();
     log(Level::Info, "service", "服务已启动",
         {{"port", std::to_string(impl_->actualPort_)},
-         {"version", "0.8.0"}});
+         {"version", "0.9.0"}});
 
 
     {

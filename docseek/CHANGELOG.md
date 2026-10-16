@@ -2,6 +2,28 @@
 # Changelog
 ```
 
+## v0.10.0（2026-10-17）——多用户支持
+
+- 多用户：`database.h` 新增 `kDefaultUser = "local"` 与 `checkUserValid`（非法 user 抛 `std::runtime_error`）；`Document` 新增 `user` 字段。
+- 多用户：`upsert` / `removeByPath` / `list` / `findByPath` / `searchFts` / `docCount` / `totalBytes` 全部新增 `user` 参数（默认 `kDefaultUser`），保持旧调用兼容。
+- 多用户：新增 `removeByUser(user)`，删除该用户全部文档并返回删除条数；用户不存在返回 0，不抛异常。
+- Schema：v3 → v4，`documents` 表新增 `user` 列；老库自动迁移，旧数据统一归属 `local`。
+- 测试：新增 6 例多用户测试全过（用户隔离、同路径多版本、检索隔离、`removeByUser`、`checkUserValid` 校验、默认用户），ctest 全过。
+- Bugfix：`DocxExtractor` 页眉页脚判断 `n.compare(0, 12, "word/header")` 恒为假（11 字符前缀误比 12 位），已修正为 11，`OfficeDocxTest.ExtractChineseTableHeader` 通过。
+- Bugfix：`TokenizerTest.MigrateOldSchema` 期望版本由 3 更新为 4（过时断言），已同步 schema v4。
+
+## v0.9.0（2026-10-16）——Office 文档文本提取
+
+- 新增 `office_extractor` 模块：纯自研 zip 解析（central directory + local file header，支持 stored/deflated，防 zip bomb 上限）+ 系统 zlib 解压（zlib license，非 GPL），零第三方 zip 库、零 GPL 污染；选型见 `docs/OFFICE_EXTRACTION_SELECTION.md`。
+- `DocxExtractor`：提取 `word/document.xml` 的 `w:t` 文本（段落换行、表格、XML 实体解码、`xml:space="preserve"`），附带 `word/header*.xml` / `word/footer*.xml`。
+- `XlsxExtractor`：解析 `xl/workbook.xml` + rels 得工作表顺序与表名，`xl/sharedStrings.xml` 查表；单元格支持共享字符串/数字/公式字符串/inlineStr；输出按工作表分组（`[工作表:表名]` + 行文本，保留"表名:行"定位信息）。
+- `PptxExtractor`：按 `ppt/presentation.xml` 放映顺序（经 rels 解析，缺失时诚实降级为文件名数字排序）提取各 `slideN.xml` 的 `a:t` 文本，输出 `[第 N 页]` + 页文本、页间换页符分隔。
+- `Indexer`：默认扩展名加入 `.docx`/`.xlsx`/`.pptx`；Office 二进制不再误判跳过；损坏文件只记 error 不中断整批；无文本跳过。
+- 搜索结果文件类型标签新增 DOCX/XLSX/PPTX。
+- 构建：`find_package(ZLIB REQUIRED)`，`docseek_core` 链接 `ZLIB::ZLIB`。
+- 版本号 0.9.0（`--version` / `/api/health` / `/api/version`）。
+- 测试：新增 test_office_docx / test_office_xlsx / test_office_pptx / test_office_index，fixture 全部由测试内手写 zip 构造器程序生成（含中文、表格、页眉、多工作表、乱序 sldId、损坏文件）。
+
 ## v0.8.0（2026-10-16）——PDF 文本提取
 
 - 新增 `PdfExtractor`：子进程调用系统 `pdftotext`（`fork`+`exec`，不经过 shell；30 秒超时 kill；stderr 判加密），零构建依赖、无 GPL 链接污染；选型见 `docs/PDF_EXTRACTION_SELECTION.md`。

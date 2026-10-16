@@ -154,14 +154,14 @@ TEST(TokenizerTest, MigrateOldSchema) {
     auto hits = searcher.search("检索", 10);
     EXPECT_GE(hits.size(), 1u);
 
-    // 校验 user_version == 3
+    // 校验 user_version == 4（多用户改造后 schema v4 为最新）
     {
         sqlite3* raw = nullptr;
         ASSERT_EQ(sqlite3_open(dbPath.c_str(), &raw), SQLITE_OK);
         sqlite3_stmt* stmt = nullptr;
         ASSERT_EQ(sqlite3_prepare_v2(raw, "PRAGMA user_version;", -1, &stmt, nullptr), SQLITE_OK);
         ASSERT_EQ(sqlite3_step(stmt), SQLITE_ROW);
-        EXPECT_EQ(sqlite3_column_int(stmt, 0), 3);
+        EXPECT_EQ(sqlite3_column_int(stmt, 0), 4);
         sqlite3_finalize(stmt);
         sqlite3_close(raw);
     }

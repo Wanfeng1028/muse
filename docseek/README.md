@@ -24,10 +24,11 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
 ### CLI（v1）
 
 - `index <path>... [--ext .txt,.md] [--max-mb N]`
-  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text` / `html` / `htm` / `pdf`（扩展名大小写不敏感，v0.8.0 起）。
+  - 递归索引目录；默认识别 `txt` / `md` / `markdown` / `text` / `html` / `htm` / `pdf` / `docx` / `xlsx` / `pptx`（扩展名大小写不敏感，v0.8.0 起支持 pdf，v0.9.0 起支持 Office 三件套）。
   - `.html` / `.htm` 走 HTML 提取管线：charset 探测（BOM → `<meta>` → 默认 UTF-8，GBK/GB18030/BIG5 等经 iconv 转码）→ 去 `<script>`/`<style>`/`<noscript>` → 提取 `<title>`（入库为文档标题，搜索时标题加权生效）、`<meta name="description">` 与正文（块级标签换行、HTML 实体解码）；提取失败或正文为空时回落为原始文本并记 warn 日志。
   - `.pdf` 走 PDF 提取管线（v0.8.0）：子进程调用系统 `pdftotext -layout -enc UTF-8`（`fork`+`exec`，不经过 shell；页间以换页符分隔，标题取文件名）；加密 PDF 跳过并记 warning；损坏 PDF 只记 error 不中断整批；无文本的 PDF 跳过。
-  - Web 搜索结果显示文件类型徽标（HTML/MD/TXT/PDF，v0.8.0 起），效果见 `docs/screenshots/html-search-badge.png`（真实服务截图）。
+  - `.docx` / `.xlsx` / `.pptx` 走 Office 提取管线（v0.9.0）：纯自研 zip 解析 + 系统 zlib 解压（zlib license，非 GPL，零 GPL 污染；选型见 `docs/OFFICE_EXTRACTION_SELECTION.md`），不调用外部程序。docx 取 `word/document.xml` 的 `w:t` 文本（含表格、页眉页脚）；xlsx 按工作表组装（`[工作表:表名]` + 行文本，共享字符串/数字/公式字符串/inlineStr 全支持）；pptx 按放映顺序组装（`[第 N 页]` + `a:t` 文本，页间换页符分隔）；损坏文件只记 error 不中断整批；无文本的跳过。
+  - Web 搜索结果显示文件类型徽标（HTML/MD/TXT/PDF/DOCX/XLSX/PPTX，v0.8.0 起支持前四种，v0.9.0 起支持 Office 三种），效果见 `docs/screenshots/html-search-badge.png`（真实服务截图）。
   - 自动跳过二进制文件与超过 `--max-mb` 限制的超大文件。
   - 跳过隐藏目录。
   - 基于 **mtime + size** 的增量更新：未变化的文件不会重复索引。
@@ -270,12 +271,12 @@ docseek search 全文检索 --phrase-boost 5
 ## 已知局限
 
 - **中文分词（v0.3.0 已解决）**：v0.2.0 及之前 FTS5 的 `unicode61` 分词器不对 CJK 做分词，中文子串检索（如用"检索"搜"全文检索"）无结果。v0.3.0 起引入 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器，建索引/查询双侧一致切词；旧库打开时自动迁移（`PRAGMA user_version` 2→3，重建 FTS 索引）。评测见 [docs/eval.md](docs/eval.md)，10 个中文查询 Top-1 全部符合预期。
-- 当前支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）与 HTML（`.html` / `.htm`，v0.6.0）；PDF / Office 等格式的文本提取尚不支持。
+- 当前支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）、HTML（`.html` / `.htm`，v0.6.0）、PDF（v0.8.0）与 Office 文档（`.docx` / `.xlsx` / `.pptx`，v0.9.0）。
 - ~~cppjieba 词典加载噪音~~（v0.5.0 已解决）：词典加载期的 limonp 噪音日志现已重定向到 `/dev/null`（`DOCSEEK_JIEBA_VERBOSE=1` 可恢复）。
 
 ---
 
 ## 后续计划
 
-- PDF / Office 文档的文本提取
+- 老格式 Office 文档（`.doc` / `.xls` / `.ppt` 二进制格式）的文本提取
 - 多用户支持

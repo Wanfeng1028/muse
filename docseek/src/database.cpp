@@ -98,6 +98,53 @@ private:
 
 }  // namespace
 
+void checkUserValid(const std::string& user) {
+    size_t codepoints = 0;
+    for (size_t i = 0; i < user.size();) {
+        unsigned char c = static_cast<unsigned char>(user[i]);
+        if (c < 0x20 || c == 0x7f) {
+            throw std::runtime_error("用户名含控制字符");
+        }
+        size_t len = 1;
+        if ((c & 0x80) == 0x00) {
+            len = 1;
+        } else if ((c & 0xE0) == 0xC0) {
+            len = 2;
+        } else if ((c & 0xF0) == 0xE0) {
+            len = 3;
+        } else if ((c & 0xF8) == 0xF0) {
+            len = 4;
+        } else {
+            len = 1;
+        }
+        // 校验后续字节是否为合法续字节（0x80~0xBF）；非法则按单字节码点处理。
+        size_t valid = 1;
+        for (size_t k = 1; k < len && i + k < user.size(); ++k) {
+            unsigned char cc = static_cast<unsigned char>(user[i + k]);
+            if ((cc & 0xC0) != 0x80) break;
+            ++valid;
+        }
+        if (valid != len) {
+            len = 1;
+        }
+        // 控制字符检查覆盖本码点的所有字节。
+        for (size_t k = 1; k < len; ++k) {
+            unsigned char cc = static_cast<unsigned char>(user[i + k]);
+            if (cc < 0x20 || cc == 0x7f) {
+                throw std::runtime_error("用户名含控制字符");
+            }
+        }
+        ++codepoints;
+        i += len;
+    }
+    if (codepoints < 1) {
+        throw std::runtime_error("用户名过短（至少 1 个码点）");
+    }
+    if (codepoints > 64) {
+        throw std::runtime_error("用户名过长（最多 64 个码点）");
+    }
+}
+
 std::string utcNowIso() {
     using namespace std::chrono;
     auto now = system_clock::now();
@@ -119,8 +166,9 @@ struct Database::Impl {
     bool inBatch = false;  // true 表示调用方已 beginBatch，upsert/removeByPath 不再自行开事务
 };
 
-// 当前 schema 版本：3 = FTS5 使用 jieba 中文分词器；<3 为 unicode61 旧库。
-constexpr int kSchemaVersion = 3;
+// 当前 schema 版本：4 = documents 增加 user 列并改为 UNIQUE(path, user)；
+// 3 = FTS5 使用 jieba 中文分词器；<3 为 unicode61 旧库。
+constexpr int kSchemaVersion = 4;
 
 namespace {
 
@@ -142,6 +190,24 @@ int readUserVersion(sqlite3* db) {
 void writeUserVersion(sqlite3* db, int v) {
     std::string sql = "PRAGMA user_version = " + std::to_string(v) + ";";
     execSql(db, sql.c_str());
+}
+
+// 判断表中是否存在某列（查 PRAGMA table_info）。
+bool columnExists(sqlite3* db, const char* table, const char* column) {
+    std::string sql = std::string("PRAGMA table_info(") + table + ");";
+    sqlite3_stmt* stmt = nullptr;
+    bool exists = false;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const unsigned char* name = sqlite3_column_text(stmt, 1);
+            if (name && std::strcmp(reinterpret_cast<const char*>(name), column) == 0) {
+                exists = true;
+                break;
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+    return exists;
 }
 
 // 判断表是否存在。
@@ -262,30 +328,66 @@ Database Database::open(const std::string& path) {
     try {
         execSql(db, "PRAGMA journal_mode=WAL;");
         execSql(db, "PRAGMA foreign_keys=ON;");
-        execSql(db,
-                "CREATE TABLE IF NOT EXISTS documents("
-                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "path TEXT NOT NULL UNIQUE,"
-                "title TEXT NOT NULL,"
-                "mtime INTEGER NOT NULL,"
-                "size INTEGER NOT NULL,"
-                "indexed_at TEXT NOT NULL);");
-        // schema 版本：3 = jieba 分词器时代；<3 为 unicode61 旧库，需迁移。
+        // schema 版本：4 = 多用户（documents.user + UNIQUE(path, user)）；
+        // 3 = jieba 分词器时代；<3 为 unicode61 旧库，需迁移。
         int uv = readUserVersion(db);
         if (uv > kSchemaVersion) {
             throw std::runtime_error("数据库版本过新（user_version=" +
                                      std::to_string(uv) + "），请升级 docseek");
         }
+        bool docsExists = tableExists(db, "documents");
+        if (!docsExists) {
+            execSql(db,
+                    "CREATE TABLE documents("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "path TEXT NOT NULL,"
+                    "title TEXT NOT NULL,"
+                    "mtime INTEGER NOT NULL,"
+                    "size INTEGER NOT NULL,"
+                    "indexed_at TEXT NOT NULL,"
+                    "user TEXT NOT NULL DEFAULT 'local',"
+                    "UNIQUE(path, user));");
+        }
+        // 旧库 FTS 分词器迁移（unicode61 -> jieba），原样保留。
         bool ftsExists = tableExists(db, "documents_fts");
+        if (uv < 3 && ftsExists) {
+            migrateFtsToJieba(db);
+        }
+        // documents 存在但无 user 列：迁移到多用户 schema（保留 id）。
+        if (docsExists && !columnExists(db, "documents", "user")) {
+            execSql(db, "BEGIN IMMEDIATE;");
+            try {
+                execSql(db, "ALTER TABLE documents RENAME TO documents_old;");
+                execSql(db,
+                        "CREATE TABLE documents("
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        "path TEXT NOT NULL,"
+                        "title TEXT NOT NULL,"
+                        "mtime INTEGER NOT NULL,"
+                        "size INTEGER NOT NULL,"
+                        "indexed_at TEXT NOT NULL,"
+                        "user TEXT NOT NULL DEFAULT 'local',"
+                        "UNIQUE(path, user));");
+                execSql(db,
+                        "INSERT INTO documents(id,path,title,mtime,size,indexed_at,user) "
+                        "SELECT id,path,title,mtime,size,indexed_at,'local' "
+                        "FROM documents_old;");
+                execSql(db, "DROP TABLE documents_old;");
+                execSql(db, "COMMIT;");
+            } catch (...) {
+                try {
+                    execSql(db, "ROLLBACK;");
+                } catch (...) {
+                }
+                throw;
+            }
+        }
         if (!ftsExists) {
             execSql(db,
                     "CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5("
                     "title, content, tokenize='jieba');");
-            writeUserVersion(db, kSchemaVersion);
-        } else if (uv < kSchemaVersion) {
-            migrateFtsToJieba(db);
-            writeUserVersion(db, kSchemaVersion);
         }
+        writeUserVersion(db, kSchemaVersion);
     } catch (...) {
         sqlite3_close(db);
         d.impl_->db = nullptr;
@@ -319,7 +421,9 @@ Database& Database::operator=(Database&& other) noexcept {
 }
 
 void Database::upsert(const std::string& path, const std::string& title,
-                      const std::string& content, int64_t mtime, int64_t size) {
+                      const std::string& content, int64_t mtime, int64_t size,
+                      const std::string& user) {
+    checkUserValid(user);
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
 
@@ -330,8 +434,9 @@ void Database::upsert(const std::string& path, const std::string& title,
         int64_t id = 0;
         bool exists = false;
         {
-            Stmt s(db, "SELECT id FROM documents WHERE path=?;");
+            Stmt s(db, "SELECT id FROM documents WHERE path=? AND user=?;");
             s.bindText(1, path);
+            s.bindText(2, user);
             if (s.step()) {
                 id = s.columnInt64(0);
                 exists = true;
@@ -351,13 +456,14 @@ void Database::upsert(const std::string& path, const std::string& title,
             s.exec();
         } else {
             Stmt s(db,
-                   "INSERT INTO documents(path, title, mtime, size, indexed_at) "
-                   "VALUES(?,?,?,?,?);");
+                   "INSERT INTO documents(path, title, mtime, size, indexed_at, user) "
+                   "VALUES(?,?,?,?,?,?);");
             s.bindText(1, path);
             s.bindText(2, title);
             s.bindInt64(3, mtime);
             s.bindInt64(4, size);
             s.bindText(5, now);
+            s.bindText(6, user);
             s.exec();
             id = sqlite3_last_insert_rowid(db);
         }
@@ -389,7 +495,8 @@ void Database::upsert(const std::string& path, const std::string& title,
     }
 }
 
-bool Database::removeByPath(const std::string& path) {
+bool Database::removeByPath(const std::string& path, const std::string& user) {
+    checkUserValid(user);
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
 
@@ -399,8 +506,9 @@ bool Database::removeByPath(const std::string& path) {
         int64_t id = 0;
         bool exists = false;
         {
-            Stmt s(db, "SELECT id FROM documents WHERE path=?;");
+            Stmt s(db, "SELECT id FROM documents WHERE path=? AND user=?;");
             s.bindText(1, path);
+            s.bindText(2, user);
             if (s.step()) {
                 id = s.columnInt64(0);
                 exists = true;
@@ -422,6 +530,45 @@ bool Database::removeByPath(const std::string& path) {
         }
         if (!outer) execSql(db, "COMMIT;");
         return true;
+    } catch (...) {
+        if (!outer) {
+            try {
+                execSql(db, "ROLLBACK;");
+            } catch (...) {
+            }
+        }
+        throw;
+    }
+}
+
+size_t Database::removeByUser(const std::string& user) {
+    checkUserValid(user);
+    sqlite3* db = impl_->db;
+    if (!db) throw std::runtime_error("database 未打开");
+
+    bool outer = impl_->inBatch;
+    if (!outer) execSql(db, "BEGIN IMMEDIATE;");
+    try {
+        std::vector<int64_t> ids;
+        {
+            Stmt s(db, "SELECT id FROM documents WHERE user=?;");
+            s.bindText(1, user);
+            while (s.step()) {
+                ids.push_back(s.columnInt64(0));
+            }
+        }
+        for (int64_t id : ids) {
+            Stmt s(db, "DELETE FROM documents_fts WHERE rowid=?;");
+            s.bindInt64(1, id);
+            s.exec();
+        }
+        {
+            Stmt s(db, "DELETE FROM documents WHERE user=?;");
+            s.bindText(1, user);
+            s.exec();
+        }
+        if (!outer) execSql(db, "COMMIT;");
+        return ids.size();
     } catch (...) {
         if (!outer) {
             try {
@@ -534,7 +681,7 @@ bool Database::isValidDocseekDb(const std::string& path) {
         sqlite3_finalize(st);
         st = nullptr;
     }
-    // kSchemaVersion 在本文件匿名命名空间内定义（当前为 3）
+    // kSchemaVersion 在本文件匿名命名空间内定义（当前为 4）
     if (uv >= 1 && uv <= kSchemaVersion) {
         const char* sql =
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='documents' LIMIT 1;";
@@ -547,13 +694,16 @@ bool Database::isValidDocseekDb(const std::string& path) {
     return ok;
 }
 
-std::vector<Document> Database::list() {
+std::vector<Document> Database::list(const std::string& user) {
+    checkUserValid(user);
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
 
     std::vector<Document> out;
     Stmt s(db,
-           "SELECT id,path,title,mtime,size,indexed_at FROM documents ORDER BY id;");
+           "SELECT id,path,title,mtime,size,indexed_at,user FROM documents "
+           "WHERE user=? ORDER BY id;");
+    s.bindText(1, user);
     while (s.step()) {
         Document d;
         d.id = s.columnInt64(0);
@@ -562,18 +712,23 @@ std::vector<Document> Database::list() {
         d.mtime = s.columnInt64(3);
         d.size = s.columnInt64(4);
         d.indexed_at = s.columnText(5);
+        d.user = s.columnText(6);
         out.push_back(std::move(d));
     }
     return out;
 }
 
-std::optional<Document> Database::findByPath(const std::string& path) {
+std::optional<Document> Database::findByPath(const std::string& path,
+                                             const std::string& user) {
+    checkUserValid(user);
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
 
     Stmt s(db,
-           "SELECT id,path,title,mtime,size,indexed_at FROM documents WHERE path=?;");
+           "SELECT id,path,title,mtime,size,indexed_at,user FROM documents "
+           "WHERE path=? AND user=?;");
     s.bindText(1, path);
+    s.bindText(2, user);
     if (!s.step()) return std::nullopt;
     Document d;
     d.id = s.columnInt64(0);
@@ -582,6 +737,7 @@ std::optional<Document> Database::findByPath(const std::string& path) {
     d.mtime = s.columnInt64(3);
     d.size = s.columnInt64(4);
     d.indexed_at = s.columnText(5);
+    d.user = s.columnText(6);
     return d;
 }
 
@@ -597,10 +753,15 @@ std::string fileTypeLabel(const std::string& path) {
     if (ext == "html" || ext == "htm") return "HTML";
     if (ext == "md" || ext == "markdown") return "MD";
     if (ext == "txt" || ext == "text") return "TXT";
+    if (ext == "docx") return "DOCX";
+    if (ext == "xlsx") return "XLSX";
+    if (ext == "pptx") return "PPTX";
     return "";
 }
 
-std::vector<Hit> Database::searchFts(const std::string& match_query, int limit) {
+std::vector<Hit> Database::searchFts(const std::string& match_query, int limit,
+                                     const std::string& user) {
+    checkUserValid(user);
     std::vector<Hit> out;
     if (match_query.empty()) return out;
 
@@ -614,9 +775,10 @@ std::vector<Hit> Database::searchFts(const std::string& match_query, int limit) 
            "snippet(documents_fts, 1, '', '', '…', 30), "
            "-bm25(documents_fts) "
            "FROM documents_fts JOIN documents d ON d.id = documents_fts.rowid "
-           "WHERE documents_fts MATCH ? ORDER BY 5 DESC LIMIT ?;");
+           "WHERE documents_fts MATCH ? AND d.user=? ORDER BY 5 DESC LIMIT ?;");
     s.bindText(1, match_query);
-    s.bindInt64(2, effLimit);
+    s.bindText(2, user);
+    s.bindInt64(3, effLimit);
 
     while (s.step()) {
         Hit h;
@@ -631,10 +793,12 @@ std::vector<Hit> Database::searchFts(const std::string& match_query, int limit) 
     return out;
 }
 
-int64_t Database::docCount() {
+int64_t Database::docCount(const std::string& user) {
+    checkUserValid(user);
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
-    Stmt s(db, "SELECT COUNT(*) FROM documents;");
+    Stmt s(db, "SELECT COUNT(*) FROM documents WHERE user=?;");
+    s.bindText(1, user);
     if (s.step()) return s.columnInt64(0);
     return 0;
 }
@@ -651,10 +815,12 @@ std::optional<std::string> Database::getContentById(int64_t doc_id) {
     return std::nullopt;
 }
 
-int64_t Database::totalBytes() {
+int64_t Database::totalBytes(const std::string& user) {
+    checkUserValid(user);
     sqlite3* db = impl_->db;
     if (!db) throw std::runtime_error("database 未打开");
-    Stmt s(db, "SELECT COALESCE(SUM(size),0) FROM documents;");
+    Stmt s(db, "SELECT COALESCE(SUM(size),0) FROM documents WHERE user=?;");
+    s.bindText(1, user);
     if (s.step()) return s.columnInt64(0);
     return 0;
 }
