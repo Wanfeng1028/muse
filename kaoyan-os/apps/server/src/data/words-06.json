@@ -1,0 +1,3036 @@
+[
+  {
+    "word": "nevertheless",
+    "phonetic": "/ˌnevəðəˈles/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表转折：然而、不过",
+      "尽管如此（引出相反结论）"
+    ],
+    "example_en": "The data seem convincing; nevertheless, the researchers caution that the sample size was too small to support any firm conclusion.",
+    "example_zh": "这些数据看似令人信服；然而，研究人员提醒说样本量太小，无法支撑任何确切的结论。",
+    "memory_tip": "never + the + less：『从不因此减少』→ 尽管这样，仍然如此，即『然而』。"
+  },
+  {
+    "word": "nonetheless",
+    "phonetic": "/ˌnʌnðəˈles/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表转折：尽管如此、但是",
+      "虽然如此（较正式，写作常用）"
+    ],
+    "example_en": "The policy was criticized by economists; nonetheless, it remained in force throughout the following decade.",
+    "example_zh": "该政策遭到经济学家的批评；尽管如此，它在接下来的十年里一直有效。",
+    "memory_tip": "none + the + less：『一点都不因此减少』→ 即便如此，仍然，即『尽管如此』。"
+  },
+  {
+    "word": "consequently",
+    "phonetic": "/ˈkɒnsɪkwəntli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表结果：因此、所以",
+      "随之而来地（引出必然结果）"
+    ],
+    "example_en": "Funding for the project was cut sharply; consequently, several research teams were forced to suspend their fieldwork.",
+    "example_zh": "该项目的资金被大幅削减；因此，好几个研究团队被迫中止了实地考察。",
+    "memory_tip": "con(共同)+sequ(跟随)+ently：紧跟着发生 → 因此、结果。"
+  },
+  {
+    "word": "furthermore",
+    "phonetic": "/ˌfɜːðəˈmɔː/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表递进：此外、而且",
+      "再者（补充更强论据）"
+    ],
+    "example_en": "The new system saves time; furthermore, it reduces the risk of human error in data processing.",
+    "example_zh": "新系统节省时间；此外，它还降低了数据处理中人为失误的风险。",
+    "memory_tip": "further(进一步)+more(更多)：进一步再说更多 → 此外、而且。"
+  },
+  {
+    "word": "moreover",
+    "phonetic": "/mɔːrˈəʊvə/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表递进：而且、此外",
+      "除此之外（正式书面语）"
+    ],
+    "example_en": "The evidence is incomplete; moreover, some of the key witnesses have refused to testify in court.",
+    "example_zh": "证据并不完整；而且，一些关键证人拒绝出庭作证。",
+    "memory_tip": "more(更多)+over(超过)：超出原有的更多 → 此外、而且。"
+  },
+  {
+    "word": "whereas",
+    "phonetic": "/ˌweərˈæz/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表对比：然而、反之",
+      "鉴于（法律、正式文书）"
+    ],
+    "example_en": "Urban residents tend to favour public transport, whereas those in rural areas depend heavily on private cars.",
+    "example_zh": "城市居民往往青睐公共交通，而农村地区的人则严重依赖私家车。",
+    "memory_tip": "where + as：在……的地方就…… → 两相对照 → 然而、反之。"
+  },
+  {
+    "word": "hence",
+    "phonetic": "/hens/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表因果：因此、所以",
+      "从此（正式书面语）"
+    ],
+    "example_en": "The sample was contaminated during transport; hence, the entire batch of results must be discarded.",
+    "example_zh": "样本在运输途中被污染了；因此，整批结果都必须作废。",
+    "memory_tip": "与 henceforth(从今往后)同源，hence 表『由此』→ 因此。"
+  },
+  {
+    "word": "thus",
+    "phonetic": "/ðʌs/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表结果：因此、从而",
+      "以这种方式、如此"
+    ],
+    "example_en": "The two variables are closely correlated; thus, changes in one inevitably affect the other.",
+    "example_zh": "这两个变量密切相关；因此，其中一个的变化必然影响另一个。",
+    "memory_tip": "与 this 同源，读作『这样子』→ 如此、因此。"
+  },
+  {
+    "word": "conversely",
+    "phonetic": "/ˈkɒnvɜːsli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表对比：相反地、反之",
+      "从反面来说"
+    ],
+    "example_en": "Higher interest rates tend to curb inflation; conversely, lower rates may stimulate consumer spending.",
+    "example_zh": "较高的利率往往抑制通货膨胀；相反，较低的利率可能会刺激消费支出。",
+    "memory_tip": "con(共同)+verse(转)+ly：一起转向另一边 → 相反地。"
+  },
+  {
+    "word": "likewise",
+    "phonetic": "/ˈlaɪkwaɪz/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表类比：同样地、照样",
+      "也、此外"
+    ],
+    "example_en": "The first experiment failed due to poor calibration; likewise, the second yielded unreliable data.",
+    "example_zh": "第一次实验因校准不当而失败；同样地，第二次也得出了不可靠的数据。",
+    "memory_tip": "like(相似)+wise(方式)：以相似的方式 → 同样地。"
+  },
+  {
+    "word": "similarly",
+    "phonetic": "/ˈsɪmələli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表类比：同样地、类似地",
+      "与此相似"
+    ],
+    "example_en": "The government subsidised farmers; similarly, it offered tax breaks to small manufacturers.",
+    "example_zh": "政府补贴了农民；同样地，它也为小型制造商提供了税收减免。",
+    "memory_tip": "similar(相似)+ly：以类似方式 → 同样地。"
+  },
+  {
+    "word": "meanwhile",
+    "phonetic": "/ˈmiːnwaɪl/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表时间/对比：与此同时",
+      "在此期间、另一方面"
+    ],
+    "example_en": "Researchers were analysing the survey data; meanwhile, policymakers debated how to fund the next phase.",
+    "example_zh": "研究人员正在分析调查数据；与此同时，政策制定者则在讨论如何为下一阶段提供资金。",
+    "memory_tip": "mean(中间)+while(一段时间)：在中间那段时间 → 与此同时。"
+  },
+  {
+    "word": "subsequently",
+    "phonetic": "/ˈsʌbsɪkwəntli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表时间顺序：随后、后来",
+      "接着（正式书面语）"
+    ],
+    "example_en": "The theory was widely rejected at first; subsequently, however, new evidence forced a rethink.",
+    "example_zh": "该理论起初被广泛否定；然而随后，新证据迫使人们重新思考。",
+    "memory_tip": "sub(下面/接着)+sequ(跟随)+ently：接着跟来 → 随后。"
+  },
+  {
+    "word": "notwithstanding",
+    "phonetic": "/ˌnɒtwɪθˈstændɪŋ/",
+    "pos": "prep./adv.",
+    "meanings_zh": [
+      "表让步：尽管、虽然",
+      " notwithstanding 用作 adv. 尽管如此"
+    ],
+    "example_en": "Notwithstanding the considerable risks involved, the firm decided to proceed with the overseas investment.",
+    "example_zh": "尽管涉及相当大的风险，该公司还是决定继续进行这笔海外投资。",
+    "memory_tip": "not(不)+withstanding(抵挡)：挡不住 → 尽管、虽然。"
+  },
+  {
+    "word": "albeit",
+    "phonetic": "/ˌɔːlˈbiːɪt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表让步：尽管、虽然",
+      " albeit 较正式，常接短语"
+    ],
+    "example_en": "The reform brought real benefits, albeit unevenly distributed across different regions of the country.",
+    "example_zh": "这项改革带来了实实在在的好处，尽管在全国不同地区的分配并不均衡。",
+    "memory_tip": "al(虽然)+be+it：尽管它是这样 → 尽管、虽然。"
+  },
+  {
+    "word": "thereafter",
+    "phonetic": "/ˌðeərˈɑːftə/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表时间：此后、其后",
+      "在那之后（正式）"
+    ],
+    "example_en": "The treaty was signed in 1997; thereafter, trade between the two nations expanded rapidly.",
+    "example_zh": "该条约于1997年签署；此后，两国之间的贸易迅速扩大。",
+    "memory_tip": "there(那)+after(之后)：在那之后 → 此后。"
+  },
+  {
+    "word": "hereby",
+    "phonetic": "/ˌhɪəˈbaɪ/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表方式：特此、兹",
+      "以此方式（正式文书用语）"
+    ],
+    "example_en": "The committee hereby announces that the annual conference will be postponed until further notice.",
+    "example_zh": "委员会特此宣布，年度会议将推迟举行，具体时间另行通知。",
+    "memory_tip": "here(这里)+by(通过)：通过这里/现在所说 → 特此、兹。"
+  },
+  {
+    "word": "thereupon",
+    "phonetic": "/ˌðeərəˈpɒn/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表结果：随即、因此",
+      "在其上、就此（正式）"
+    ],
+    "example_en": "The witness refused to answer; thereupon the judge ordered the court to be cleared.",
+    "example_zh": "证人拒绝回答；随即法官下令清场。",
+    "memory_tip": "there(那)+upon(在上)：就在那之上 → 随即、就此。"
+  },
+  {
+    "word": "otherwise",
+    "phonetic": "/ˈʌðəwaɪz/",
+    "pos": "adv./conj.",
+    "meanings_zh": [
+      "表条件结果：否则、要不然",
+      "在其他方面、另外"
+    ],
+    "example_en": "All applications must be submitted by Friday; otherwise they will not be considered by the committee.",
+    "example_zh": "所有申请必须在周五之前提交；否则委员会将不予考虑。",
+    "memory_tip": "other(其他)+wise(方式)：以其他方式 → 否则、另外。"
+  },
+  {
+    "word": "lest",
+    "phonetic": "/lest/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表目的/担心：以免、免得",
+      "以防（后接 should 虚拟）"
+    ],
+    "example_en": "The report was kept confidential lest it should alarm the public before the facts were verified.",
+    "example_zh": "这份报告被保密，以免在事实核实之前引起公众恐慌。",
+    "memory_tip": "与 less 形近：担心更少/更糟 → 以免、免得。"
+  },
+  {
+    "word": "provided",
+    "phonetic": "/prəˈvaɪdɪd/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表条件：如果、只要",
+      "条件是（正式）"
+    ],
+    "example_en": "The experiment may proceed provided that all safety protocols are strictly observed.",
+    "example_zh": "只要严格遵守所有安全规程，实验就可以继续进行。",
+    "memory_tip": "provide(提供)+d：提供这个前提 → 如果、只要。"
+  },
+  {
+    "word": "unless",
+    "phonetic": "/ənˈles/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表否定条件：除非、如果不",
+      "除非在……情况下"
+    ],
+    "example_en": "The data cannot be trusted unless the sampling method is clearly described in the paper.",
+    "example_zh": "除非论文中清楚描述抽样方法，否则这些数据不可信。",
+    "memory_tip": "un(不)+less(少)：不减少这一条件 → 除非。"
+  },
+  {
+    "word": "whereby",
+    "phonetic": "/weəˈbaɪ/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表方式：凭此、借以",
+      "通过……方式"
+    ],
+    "example_en": "The two sides reached an agreement whereby all tariffs would be gradually removed over five years.",
+    "example_zh": "双方达成了一项协议，凭此所有关税将在五年内逐步取消。",
+    "memory_tip": "where(哪里)+by(通过)：通过哪个途径 → 凭此、借以。"
+  },
+  {
+    "word": "insofar",
+    "phonetic": "/ˌɪnsəʊˈfɑː/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表范围：在……范围内",
+      " insofar as 只要、就……而言"
+    ],
+    "example_en": "The theory is useful insofar as it predicts the behaviour of large populations rather than individuals.",
+    "example_zh": "该理论在预测大规模群体而非个体行为方面是有用的。",
+    "memory_tip": "in+so+far：到这么远为止 → 在……范围内。"
+  },
+  {
+    "word": "inasmuch",
+    "phonetic": "/ˌɪnəzˈmʌtʃ/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表原因：因为、由于",
+      " inasmuch as 鉴于、就……而言"
+    ],
+    "example_en": "The plan is flawed inasmuch as it ignores the long-term environmental costs of rapid industrialisation.",
+    "example_zh": "该计划有缺陷，因为它忽视了快速工业化的长期环境成本。",
+    "memory_tip": "in+as+much：就这么多而言 → 因为、鉴于。"
+  },
+  {
+    "word": "seeing",
+    "phonetic": "/ˈsiːɪŋ/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表原因：鉴于、既然",
+      " seeing that 考虑到"
+    ],
+    "example_en": "Seeing that the deadline is approaching, the team decided to focus only on the most critical tasks.",
+    "example_zh": "鉴于截止日期临近，团队决定只专注于最关键的任务。",
+    "memory_tip": "see(看见)+ing：看见了这一情况 → 鉴于、既然。"
+  },
+  {
+    "word": "granted",
+    "phonetic": "/ˈɡrɑːntɪd/",
+    "pos": "conj./adv.",
+    "meanings_zh": [
+      "表让步：诚然、的确",
+      " granted that 即使、假定"
+    ],
+    "example_en": "Granted that the method is efficient, its ethical implications still deserve serious consideration.",
+    "example_zh": "即使这种方法很高效，其伦理影响仍值得认真考虑。",
+    "memory_tip": "grant(承认)+ed：承认这一点 → 诚然、即使。"
+  },
+  {
+    "word": "arguably",
+    "phonetic": "/ˈɑːɡjuəbli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表评价：可以说、可论证地",
+      "大概（用于表达可辩护的观点）"
+    ],
+    "example_en": "This is arguably the most influential study of social mobility published in the past decade.",
+    "example_zh": "这可以说是过去十年中发表的关于社会流动性最具影响力的研究。",
+    "memory_tip": "argue(论证)+ably：可以被论证地 → 可以说、可论证地。"
+  },
+  {
+    "word": "admittedly",
+    "phonetic": "/ədˈmɪtɪdli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表让步：诚然、无可否认",
+      "必须承认（先让步再反驳）"
+    ],
+    "example_en": "Admittedly, the policy reduced unemployment, but it also widened the gap between rich and poor.",
+    "example_zh": "诚然，该政策降低了失业率，但它也扩大了贫富差距。",
+    "memory_tip": "admit(承认)+tedly：被承认地 → 诚然、无可否认。"
+  },
+  {
+    "word": "undoubtedly",
+    "phonetic": "/ʌnˈdaʊtɪdli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表强调：毫无疑问、确实",
+      "毋庸置疑地"
+    ],
+    "example_en": "Global warming is undoubtedly one of the most pressing challenges facing humanity today.",
+    "example_zh": "全球变暖无疑是当今人类面临的最紧迫挑战之一。",
+    "memory_tip": "un(不)+doubt(怀疑)+edly：不容怀疑地 → 毫无疑问。"
+  },
+  {
+    "word": "incidentally",
+    "phonetic": "/ˌɪnsɪˈdentəli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表补充：顺便提一句",
+      "偶然地、附带地"
+    ],
+    "example_en": "Incidentally, the survey also revealed a sharp decline in reading habits among teenagers.",
+    "example_zh": "顺便提一句，该调查还揭示出青少年阅读习惯的急剧下降。",
+    "memory_tip": "incident(附带事件)+ally：作为附带事项 → 顺便提一句。"
+  },
+  {
+    "word": "namely",
+    "phonetic": "/ˈneɪmli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表举例/说明：即、也就是",
+      "具体说来（后接具体名称）"
+    ],
+    "example_en": "Only one group benefited from the reform, namely the large state-owned enterprises in the energy sector.",
+    "example_zh": "只有一个群体从改革中受益，即能源领域的大型国有企业。",
+    "memory_tip": "name(名字)+ly：把名字点出来 → 即、也就是。"
+  },
+  {
+    "word": "specifically",
+    "phonetic": "/spəˈsɪfɪkli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表举例：具体来说",
+      "特别地、明确地"
+    ],
+    "example_en": "The report focuses specifically on how climate change affects agricultural output in coastal regions.",
+    "example_zh": "这份报告具体关注气候变化如何影响沿海地区的农业产量。",
+    "memory_tip": "specific(具体的)+ally：以具体方式 → 具体来说。"
+  },
+  {
+    "word": "particularly",
+    "phonetic": "/pəˈtɪkjələli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表强调：尤其、特别",
+      "特别是（突出某一点）"
+    ],
+    "example_en": "The new tax is unpopular, particularly among small businesses already struggling with rising costs.",
+    "example_zh": "新税不受欢迎，尤其是在那些已经在成本上涨中挣扎的小企业当中。",
+    "memory_tip": "particular(特别的)+ly：以特别方式 → 尤其、特别。"
+  },
+  {
+    "word": "chiefly",
+    "phonetic": "/ˈtʃiːfli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表主次：主要地、首要地",
+      "大多、多半"
+    ],
+    "example_en": "The decline in bird populations is chiefly caused by habitat loss rather than by hunting.",
+    "example_zh": "鸟类数量的下降主要是由栖息地丧失造成的，而非捕猎。",
+    "memory_tip": "chief(首领/主要)+ly：作为首领地 → 主要地。"
+  },
+  {
+    "word": "primarily",
+    "phonetic": "/praɪˈmerəli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表主次：主要地、首要地",
+      "起初、原本"
+    ],
+    "example_en": "The programme is aimed primarily at students from low-income families in rural areas.",
+    "example_zh": "该项目主要面向农村地区的低收入家庭学生。",
+    "memory_tip": "primary(首要的)+ly：以首要方式 → 主要地。"
+  },
+  {
+    "word": "mostly",
+    "phonetic": "/ˈməʊstli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表程度：大多、大部分",
+      "主要地、通常"
+    ],
+    "example_en": "The complaints came mostly from residents living near the construction site.",
+    "example_zh": "投诉大多来自居住在建筑工地附近的居民。",
+    "memory_tip": "most(最多)+ly：占最多部分地 → 大多。"
+  },
+  {
+    "word": "partly",
+    "phonetic": "/ˈpɑːtli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表程度：部分地、在一定程度上",
+      "有几分"
+    ],
+    "example_en": "The failure was partly due to poor planning and partly to a shortage of skilled workers.",
+    "example_zh": "这次失败部分是由于规划不当，部分是由于熟练工人短缺。",
+    "memory_tip": "part(部分)+ly：以部分方式 → 部分地。"
+  },
+  {
+    "word": "merely",
+    "phonetic": "/ˈmɪəli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表限定：仅仅、只不过",
+      "只是（强调程度有限）"
+    ],
+    "example_en": "The new measures merely postpone the problem instead of addressing its root causes.",
+    "example_zh": "这些新措施只是推迟了问题，而没有解决其根本原因。",
+    "memory_tip": "mere(仅仅的)+ly：仅此而已地 → 仅仅、只不过。"
+  },
+  {
+    "word": "solely",
+    "phonetic": "/ˈsəʊlli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表限定：仅仅、唯一地",
+      "单独地、完全地"
+    ],
+    "example_en": "Success in this field depends not solely on talent but also on persistent effort and luck.",
+    "example_zh": "在这一领域取得成功不仅取决于天赋，还取决于持续的努力和运气。",
+    "memory_tip": "sole(唯一的)+ly：以唯一方式 → 仅仅、唯一地。"
+  },
+  {
+    "word": "exclusively",
+    "phonetic": "/ɪkˈskluːsɪvli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表限定：仅仅、专门地",
+      "排他地、独有地"
+    ],
+    "example_en": "The journal publishes exclusively articles that have passed a rigorous double-blind review.",
+    "example_zh": "该期刊只发表通过严格双盲评审的文章。",
+    "memory_tip": "exclude(排除)+sively：把其他都排除地 → 仅仅、专门地。"
+  },
+  {
+    "word": "regardless",
+    "phonetic": "/rɪˈɡɑːdləs/",
+    "pos": "adv./prep.",
+    "meanings_zh": [
+      "表让步：不管、无论",
+      " regardless of 不顾、不论"
+    ],
+    "example_en": "The research will continue regardless of whether additional funding is approved this year.",
+    "example_zh": "无论今年是否批准额外资金，这项研究都将继续进行。",
+    "memory_tip": "regard(顾及)+less(不)：不顾及地 → 不管、无论。"
+  },
+  {
+    "word": "alternatively",
+    "phonetic": "/ɔːlˈtɜːnətɪvli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表选择：或者、另一种方式",
+      "作为替代方案"
+    ],
+    "example_en": "You may submit the form online; alternatively, you can post it to the admissions office.",
+    "example_zh": "你可以在线提交表格；或者，你也可以将其邮寄到招生办公室。",
+    "memory_tip": "alternative(替代方案)+ly：以替代方式 → 或者。"
+  },
+  {
+    "word": "respectively",
+    "phonetic": "/rɪˈspektɪvli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表对应：分别地、各自地",
+      "依次（按前述顺序）"
+    ],
+    "example_en": "The two experiments lasted six months and two years respectively, producing quite different results.",
+    "example_zh": "这两项实验分别持续了六个月和两年，产生了截然不同的结果。",
+    "memory_tip": "respective(各自的)+ly：按各自顺序地 → 分别地。"
+  },
+  {
+    "word": "in the wake of",
+    "phonetic": "/ɪn ðə weɪk əv/",
+    "pos": "prep.",
+    "meanings_zh": [
+      "表因果：随着…而来、在…之后",
+      "表背景：作为…的直接结果"
+    ],
+    "example_en": "In the wake of the financial crisis, many governments tightened regulations on banks that had previously operated with minimal oversight.",
+    "example_zh": "金融危机之后，许多政府加强了对银行的监管，而这些银行此前几乎不受监督地运营。",
+    "memory_tip": "wake 本义是船行驶后留下的尾流；船过后水面留下的波纹，引申为某事件过后随之而来的影响，故为'在…之后、随…而来'。"
+  },
+  {
+    "word": "insofar as",
+    "phonetic": "/ˌɪnsəˈfɑːr əz/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表限定：就…而言、在…范围内",
+      "表条件：只要、在…限度内"
+    ],
+    "example_en": "Insofar as the new policy encourages innovation, it deserves support, but its long-term social costs must also be carefully weighed.",
+    "example_zh": "就新政策鼓励创新这一点而言，它值得支持，但其长期社会成本也必须仔细权衡。",
+    "memory_tip": "in so far as 字面即'在如此远的程度上'，把'范围'想成一段距离，只有走到那么远才成立，故为'就…而言、在…限度内'。"
+  },
+  {
+    "word": "be it...or...",
+    "phonetic": "/biː ɪt ... ɔːr/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表让步：无论是…还是…",
+      "表泛指：不管…也好…也好"
+    ],
+    "example_en": "Be it a multinational corporation or a small local firm, every business must adapt to the rapidly changing digital landscape.",
+    "example_zh": "无论是跨国公司还是本地小企业，每家企业都必须适应快速变化的数字环境。",
+    "memory_tip": "源自古英语虚拟式让步结构，相当于 whether it be...or...，把 be 提前即为'无论它是…还是…'，是写作中提升句式的利器。"
+  },
+  {
+    "word": "save that",
+    "phonetic": "/seɪv ðæt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "表除外：除了…以外",
+      "表保留：只是、只不过"
+    ],
+    "example_en": "The committee found no evidence of misconduct, save that a few members had failed to disclose minor financial interests.",
+    "example_zh": "委员会没有发现不当行为的证据，只不过有几名成员未披露些微的经济利益。",
+    "memory_tip": "save 除'拯救'外还有'除外'的古义，与 except 同源；save that 即'把这一点除外'，阅读中见到 save 作连词要立刻反应为'除了'。"
+  },
+  {
+    "word": "to wit",
+    "phonetic": "/tə wɪt/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表举例：即、也就是",
+      "表说明：换言之、具体地说"
+    ],
+    "example_en": "Several industries have suffered sharp declines this quarter, to wit, tourism, hospitality and commercial aviation.",
+    "example_zh": "本季度有几个行业大幅下滑，即旅游业、酒店业和商用航空业。",
+    "memory_tip": "wit 古义为'知道'（参 witness 证人），to wit 即'让人知道'，作用是把前面笼统的话具体化，等同于 namely。"
+  },
+  {
+    "word": "by the same token",
+    "phonetic": "/baɪ ðə seɪm ˈtəʊkən/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表类比递进：同样地、同理",
+      "表对应推论：基于同样理由"
+    ],
+    "example_en": "Governments cannot demand transparency from corporations by the same token, firms may reasonably expect clear and stable rules from regulators.",
+    "example_zh": "政府不能单方面要求企业透明；同样地，企业也有理由期待监管者给出清晰稳定的规则。",
+    "memory_tip": "token 是'凭证、标志'，by the same token 即'凭同一个凭证'，引申为基于同样的理由、同理，常用于写作中对称论证。"
+  },
+  {
+    "word": "substantiate",
+    "phonetic": "/səbˈstænʃieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "证实、用证据支持",
+      "使具体化、充实"
+    ],
+    "example_en": "The author fails to substantiate his claim that technological progress inevitably widens the gap between rich and poor.",
+    "example_zh": "作者未能证实其关于技术进步必然拉大贫富差距的论断。",
+    "memory_tip": "sub(下)+stant(站,同stand)+iate→在下面站住脚→拿出证据站得住脚→证实"
+  },
+  {
+    "word": "corroborate",
+    "phonetic": "/kəˈrɒbəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "证实、佐证",
+      "使（证据、陈述）更为确凿"
+    ],
+    "example_en": "Recent surveys corroborate the view that reading habits among teenagers have declined sharply over the past decade.",
+    "example_zh": "近期调查证实了这样一种观点：过去十年间青少年的阅读习惯急剧下降。",
+    "memory_tip": "cor(共同)+robor(力量,同robust)+ate→共同给力→为某说法添力佐证"
+  },
+  {
+    "word": "refute",
+    "phonetic": "/rɪˈfjuːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "驳斥、反驳",
+      "证明（某说法）错误"
+    ],
+    "example_en": "It is difficult to refute the argument that a college education should cultivate independent thinking rather than mere job skills.",
+    "example_zh": "很难驳斥这样一种论点：大学教育应培养独立思考能力，而不仅仅是职业技能。",
+    "memory_tip": "re(回)+fute(同fut,打击)→打回去→反驳、驳斥"
+  },
+  {
+    "word": "rebut",
+    "phonetic": "/rɪˈbʌt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "反驳、驳回",
+      "提出反证"
+    ],
+    "example_en": "Critics were quick to rebut the assumption that economic growth alone can solve all social problems.",
+    "example_zh": "批评者们迅速反驳了那种认为单靠经济增长就能解决一切社会问题的假设。",
+    "memory_tip": "re(回)+but(顶)→顶回去→反驳；与refute近义，字母短、力度强"
+  },
+  {
+    "word": "presuppose",
+    "phonetic": "/ˌpriːsəˈpəʊz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "以…为前提、预先假定",
+      "意味着、含有"
+    ],
+    "example_en": "Any proposal to ban private cars presupposes that public transport is adequate, which is far from true in many cities.",
+    "example_zh": "任何禁止私家车的提议都以公共交通充足为前提，而在许多城市这远非事实。",
+    "memory_tip": "pre(预先)+suppose(假设)→预先假设→以…为前提"
+  },
+  {
+    "word": "infer",
+    "phonetic": "/ɪnˈfɜː(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推断、推论",
+      "暗示、意味着"
+    ],
+    "example_en": "From the author's tone we can infer that he is deeply skeptical of government intervention in the market.",
+    "example_zh": "从作者的语调我们可以推断，他对政府干预市场深表怀疑。",
+    "memory_tip": "in(进入)+fer(带来)→把信息带进脑中加工→推断；与inferior同根不同义"
+  },
+  {
+    "word": "extrapolate",
+    "phonetic": "/ɪkˈstræpəleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推断、外推",
+      "由已知推未知"
+    ],
+    "example_en": "It is risky to extrapolate from a single case the conclusion that all rural students lack digital skills.",
+    "example_zh": "仅凭一个案例就外推出所有农村学生都缺乏数字技能的结论，是有风险的。",
+    "memory_tip": "extra(向外)+pol(同polish,打磨)+ate→向外打磨延伸→外推"
+  },
+  {
+    "word": "delineate",
+    "phonetic": "/dɪˈlɪnieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "描绘、勾勒",
+      "界定、阐明"
+    ],
+    "example_en": "The essay clearly delineates the boundary between personal freedom and social responsibility.",
+    "example_zh": "这篇文章清晰地界定了个人自由与社会责任之间的界限。",
+    "memory_tip": "de(加强)+line(线)+ate→用线画出来→勾勒、界定"
+  },
+  {
+    "word": "elucidate",
+    "phonetic": "/ɪˈluːsɪdeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "阐明、解释清楚",
+      "使（问题）明晰"
+    ],
+    "example_en": "The professor used vivid examples to elucidate how cultural differences shape the way people perceive time.",
+    "example_zh": "教授用生动的例子阐明了文化差异如何塑造人们感知时间的方式。",
+    "memory_tip": "e(出)+luc(光,同light)+id+ate→让光照出来→阐明；同根lucid(清晰的)"
+  },
+  {
+    "word": "expound",
+    "phonetic": "/ɪkˈspaʊnd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "详细阐述、详述",
+      "解释（理论、观点）"
+    ],
+    "example_en": "In his lecture he expounded at length on the relationship between education and social mobility.",
+    "example_zh": "在讲座中，他详尽阐述了教育与社会流动之间的关系。",
+    "memory_tip": "ex(向外)+pound(敲打)→向外一点点敲打出来→详细阐述"
+  },
+  {
+    "word": "explicate",
+    "phonetic": "/ˈeksplɪkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "解释、详细分析",
+      "阐明（文本、理论）含义"
+    ],
+    "example_en": "The critic attempts to explicate the poem's hidden political implications line by line.",
+    "example_zh": "这位批评家试图逐行解析这首诗隐藏的政治含义。",
+    "memory_tip": "ex(向外)+plic(折叠,同ply)+ate→把折叠的东西展开→详细解释"
+  },
+  {
+    "word": "propound",
+    "phonetic": "/prəˈpaʊnd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "提出（理论、观点）",
+      "提议、主张"
+    ],
+    "example_en": "The scholar propounded a controversial theory that urbanization inevitably erodes traditional values.",
+    "example_zh": "这位学者提出了一个颇具争议的理论：城市化必然侵蚀传统价值观。",
+    "memory_tip": "pro(向前)+pound(敲)→向前敲出观点→提出；与expound对比记忆"
+  },
+  {
+    "word": "contend",
+    "phonetic": "/kənˈtend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "主张、声称",
+      "竞争、争夺",
+      "对付、应付"
+    ],
+    "example_en": "Critics contend that the new policy will do more harm than good to small businesses.",
+    "example_zh": "批评者声称，新政策对小微企业弊大于利。",
+    "memory_tip": "con(共同)+tend(伸展)→共同伸向一个目标→竞争；引申为各执一词地主张"
+  },
+  {
+    "word": "assert",
+    "phonetic": "/əˈsɜːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "断言、声称",
+      "维护、坚持（权利等）"
+    ],
+    "example_en": "The author asserts that happiness depends far more on attitude than on material wealth.",
+    "example_zh": "作者断言，幸福更多取决于态度而非物质财富。",
+    "memory_tip": "as(加强)+sert(插入,同insert)→把观点插进去→断言；assert oneself 坚持自我"
+  },
+  {
+    "word": "surmise",
+    "phonetic": "/səˈmaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推测、猜测",
+      "（作为n.）推测"
+    ],
+    "example_en": "We can only surmise why so many talented graduates choose to leave their hometowns.",
+    "example_zh": "我们只能推测，为何如此多才华横溢的毕业生选择离开家乡。",
+    "memory_tip": "sur(上)+mise(送,同mission)→把想法送上去→推测；含'依据不足'的意味"
+  },
+  {
+    "word": "conjecture",
+    "phonetic": "/kənˈdʒektʃə(r)/",
+    "pos": "n.",
+    "meanings_zh": [
+      "推测、猜想",
+      "（作为v.）猜测"
+    ],
+    "example_en": "Without solid data, any conjecture about future employment trends remains purely speculative.",
+    "example_zh": "没有扎实的数据，任何关于未来就业趋势的猜测都纯属臆测。",
+    "memory_tip": "con(共同)+ject(扔,同inject)→一起扔想法→猜想；比guess更正式"
+  },
+  {
+    "word": "hypothesize",
+    "phonetic": "/haɪˈpɒθəsaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "假设、假定",
+      "提出假说"
+    ],
+    "example_en": "Researchers hypothesize that prolonged exposure to social media may impair young people's attention span.",
+    "example_zh": "研究人员假设，长期接触社交媒体可能损害年轻人的注意力持续时间。",
+    "memory_tip": "hypo(下)+thes(放,同thesis)+ize→放在下面作垫底→假设；hypothesis名词"
+  },
+  {
+    "word": "verify",
+    "phonetic": "/ˈverɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "核实、查证",
+      "证实、证明"
+    ],
+    "example_en": "Before drawing any conclusion, we should verify the data on which the argument is based.",
+    "example_zh": "在得出任何结论之前，我们应核实论证所依据的数据。",
+    "memory_tip": "ver(真实,同very)+ify(使)→使真实→核实；verdict(裁决)同根"
+  },
+  {
+    "word": "validate",
+    "phonetic": "/ˈvælɪdeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "证实、验证",
+      "使合法化、确认"
+    ],
+    "example_en": "The findings validate the long-held belief that sleep plays a crucial role in memory formation.",
+    "example_zh": "这些发现证实了人们长期以来的看法：睡眠在记忆形成中起着关键作用。",
+    "memory_tip": "val(价值,同value)+id+ate→赋予价值→证实其有效；valid(有效的)同根"
+  },
+  {
+    "word": "empirical",
+    "phonetic": "/ɪmˈpɪrɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "经验主义的、以经验为依据的",
+      "实证的"
+    ],
+    "example_en": "The theory sounds elegant, but there is little empirical evidence to support it.",
+    "example_zh": "这一理论听起来很优雅，但几乎没有实证证据支持它。",
+    "memory_tip": "em(使)+pir(尝试,同experience)+ical→靠尝试得来的→经验主义的；对比theoretical"
+  },
+  {
+    "word": "theoretical",
+    "phonetic": "/ˌθɪəˈretɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "理论上的、理论的",
+      "假设的、非实际的"
+    ],
+    "example_en": "What looks like a theoretical debate often has profound implications for ordinary people's lives.",
+    "example_zh": "看似理论性的争论，往往对普通人的生活有着深远影响。",
+    "memory_tip": "theory(理论)+etical→理论的；对比empirical(实证的)、practical(实际的)"
+  },
+  {
+    "word": "conceptual",
+    "phonetic": "/kənˈseptʃuəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "概念的、观念上的",
+      "概念性的"
+    ],
+    "example_en": "The article provides a conceptual framework for understanding how cultures interact in a globalized world.",
+    "example_zh": "这篇文章提供了一个概念框架，用以理解全球化世界中各种文化如何互动。",
+    "memory_tip": "concept(概念)+ual→概念的；conceive(构想)、conception同根"
+  },
+  {
+    "word": "notional",
+    "phonetic": "/ˈnəʊʃənl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "观念上的、概念性的",
+      "名义上的、假想的"
+    ],
+    "example_en": "The distinction between work and leisure has become largely notional in the age of remote employment.",
+    "example_zh": "在远程办公时代，工作与休闲之间的界限在很大程度上已成为观念上的区分。",
+    "memory_tip": "notion(观念)+al→观念上的；比conceptual更强调'名义上、不实际'"
+  },
+  {
+    "word": "methodology",
+    "phonetic": "/ˌmeθəˈdɒlədʒi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "方法论、方法体系",
+      "（研究）方法"
+    ],
+    "example_en": "The paper has been criticized for its flawed methodology rather than for its conclusions.",
+    "example_zh": "这篇论文受到批评的是其有缺陷的方法论，而非其结论。",
+    "memory_tip": "method(方法)+ology(学科)→关于方法的学问→方法论"
+  },
+  {
+    "word": "criterion",
+    "phonetic": "/kraɪˈtɪəriən/",
+    "pos": "n.",
+    "meanings_zh": [
+      "标准、准则",
+      "（pl. criteria）判断依据"
+    ],
+    "example_en": "Test scores should not be the sole criterion for judging a student's overall ability.",
+    "example_zh": "考试分数不应成为评判学生综合能力的唯一标准。",
+    "memory_tip": "crit(判断,同critic)+erion→用于判断的东西→标准；复数criteria常考"
+  },
+  {
+    "word": "benchmark",
+    "phonetic": "/ˈbentʃmɑːk/",
+    "pos": "n.",
+    "meanings_zh": [
+      "基准、参照标准",
+      "（作为v.）以…为基准衡量"
+    ],
+    "example_en": "Finland's education system is often used as a benchmark against which other countries measure their own.",
+    "example_zh": "芬兰的教育体系常被用作其他国家衡量自身的基准。",
+    "memory_tip": "bench(长凳)+mark(记号)→工匠在长凳上刻记号量尺寸→基准"
+  },
+  {
+    "word": "tenet",
+    "phonetic": "/ˈtenɪt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "原则、信条",
+      "宗旨"
+    ],
+    "example_en": "Freedom of speech is a central tenet of any democratic society.",
+    "example_zh": "言论自由是任何民主社会的核心信条。",
+    "memory_tip": "ten(持有,同tenant)+et→所持有的东西→信条；与tenant(房客)同根'持有'"
+  },
+  {
+    "word": "correlation",
+    "phonetic": "/ˌkɒrəˈleɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "相关性、关联",
+      "相互关系"
+    ],
+    "example_en": "There is a strong correlation between parents' education levels and their children's academic performance.",
+    "example_zh": "父母的教育水平与子女的学业成绩之间存在很强的相关性。",
+    "memory_tip": "cor(共同)+relation(关系)→相互之间的关系→相关性；注意'相关≠因果'"
+  },
+  {
+    "word": "causation",
+    "phonetic": "/kɔːˈzeɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "因果关系、因果作用",
+      "引起、导致"
+    ],
+    "example_en": "Researchers warn that correlation should never be mistaken for causation in social studies.",
+    "example_zh": "研究人员警告说，在社会科学研究中，绝不可将相关关系误认为因果关系。",
+    "memory_tip": "cause(原因)+ation→因果关系；记住金句correlation≠causation"
+  },
+  {
+    "word": "attribution",
+    "phonetic": "/ˌætrɪˈbjuːʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "归因、归功于",
+      "归属、归因理论"
+    ],
+    "example_en": "The attribution of success solely to individual effort overlooks the role of social environment.",
+    "example_zh": "把成功单纯归因于个人努力，忽视了社会环境的作用。",
+    "memory_tip": "at(向)+tribut(给予,同tribute)+ion→把功劳给谁→归因；attribute动词形式"
+  },
+  {
+    "word": "fallacy",
+    "phonetic": "/ˈfæləsi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "谬论、错误观念",
+      "谬误、推理错误"
+    ],
+    "example_en": "It is a common fallacy to assume that technological progress automatically improves human well-being.",
+    "example_zh": "认为技术进步会自动改善人类福祉，是一种常见的谬论。",
+    "memory_tip": "fall(跌倒)+acy→让人跌倒的错误→谬论；同fallible(易错的)"
+  },
+  {
+    "word": "flawed",
+    "phonetic": "/flɔːd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "有缺陷的、有瑕疵的",
+      "错误的、站不住脚的"
+    ],
+    "example_en": "The argument is fundamentally flawed because it ignores the complexity of human motivation.",
+    "example_zh": "该论证从根本上就是有缺陷的，因为它忽视了人类动机的复杂性。",
+    "memory_tip": "flaw(瑕疵,裂缝)+ed→有裂缝的→有缺陷的；常修饰argument/logic"
+  },
+  {
+    "word": "groundless",
+    "phonetic": "/ˈɡraʊndləs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "无根据的、无理由的",
+      "毫无依据的"
+    ],
+    "example_en": "Fears that artificial intelligence will replace all human workers are largely groundless.",
+    "example_zh": "认为人工智能将取代所有人类劳动者的担忧在很大程度上是毫无根据的。",
+    "memory_tip": "ground(基础,理由)+less(无)→无基础的→无根据的；对比well-grounded"
+  },
+  {
+    "word": "unfounded",
+    "phonetic": "/ʌnˈfaʊndɪd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "无根据的、无稽的",
+      "没有事实依据的"
+    ],
+    "example_en": "The belief that money alone can buy happiness is completely unfounded.",
+    "example_zh": "认为单靠金钱就能买到幸福的看法是完全没有根据的。",
+    "memory_tip": "un(否定)+found(建立基础)+ed→没有建立基础的→无根据的；与groundless近义"
+  },
+  {
+    "word": "biased",
+    "phonetic": "/ˈbaɪəst/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "有偏见的、有倾向性的",
+      "偏向一方的"
+    ],
+    "example_en": "Any report based on a single source is likely to be biased and therefore unreliable.",
+    "example_zh": "任何仅依据单一来源的报告都可能有偏见，因而不可靠。",
+    "memory_tip": "bias(偏见)+ed→带偏见的；bias原义'斜线'→偏离正中的→偏见"
+  },
+  {
+    "word": "objective",
+    "phonetic": "/əbˈdʒektɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "客观的、公正的",
+      "（作为n.）目标、目的"
+    ],
+    "example_en": "A good researcher must remain objective even when the findings contradict his own beliefs.",
+    "example_zh": "优秀的研究者必须保持客观，即便研究结果与自己的信念相悖。",
+    "memory_tip": "ob(对着)+ject(扔)+ive→扔到对面去看→不代入自己→客观的；对比subjective"
+  },
+  {
+    "word": "empirically",
+    "phonetic": "/ɪmˈpɪrɪkli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "以经验为依据地、实证地",
+      "通过观察或实验地"
+    ],
+    "example_en": "The claim that violent games cause aggression has not been empirically established.",
+    "example_zh": "暴力游戏导致攻击性这一说法尚未得到实证证实。",
+    "memory_tip": "empirical(经验的)+ly→以经验为依据地；写作中常与establish/verify搭配"
+  },
+  {
+    "word": "ostensibly",
+    "phonetic": "/ɒˈstensəbli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "表面上、名义上",
+      "据称、看来"
+    ],
+    "example_en": "The reform was ostensibly aimed at improving efficiency, but in fact it cut public services.",
+    "example_zh": "这项改革表面上旨在提高效率，但实际上削减了公共服务。",
+    "memory_tip": "ostensible(表面的)+ly→表面上；ostendere拉丁语'展示'→展示出来的表层"
+  },
+  {
+    "word": "operationalize",
+    "phonetic": "/ˌɒpəˈreɪʃənəlaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "将（理论、概念）操作化、转化为可测量指标",
+      "使投入实施、使运作"
+    ],
+    "example_en": "Researchers must operationalize abstract notions such as social trust before they can test them against reliable empirical data.",
+    "example_zh": "研究者必须先将社会信任这类抽象概念操作化，然后才能用可靠的经验数据对其进行检验。",
+    "memory_tip": "operation（操作）+ -al + -ize（动词后缀）——把抽象概念'操作'成可测量的指标，即操作化。"
+  },
+  {
+    "word": "underpin",
+    "phonetic": "/ˌʌndəˈpɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "支撑、构成……的基础",
+      "为（论点、理论）提供依据"
+    ],
+    "example_en": "The assumption that economic growth inevitably reduces poverty underpins much of the current policy debate.",
+    "example_zh": "经济增长必然减少贫困这一假设，支撑着当前许多政策辩论。",
+    "memory_tip": "under（下面）+ pin（钉住）——从下面钉住支撑，引申为'构成基础、支撑论点'。"
+  },
+  {
+    "word": "adduce",
+    "phonetic": "/əˈdjuːs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "引证、举出（证据、理由）以支持论点"
+    ],
+    "example_en": "In defending his thesis, the author adduces a wealth of historical evidence that critics had previously overlooked.",
+    "example_zh": "在为自己的论点辩护时，作者引证了大量此前被批评者忽视的历史证据。",
+    "memory_tip": "ad-（向）+ duc（引导，同 conduct）——把证据'引'到论点面前，即引证。"
+  },
+  {
+    "word": "repudiate",
+    "phonetic": "/rɪˈpjuːdieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "否认、断然拒绝接受（观点、指控）",
+      "拒不履行（协议、债务）"
+    ],
+    "example_en": "The scholar publicly repudiated the widely accepted theory, arguing that its premises were logically incoherent.",
+    "example_zh": "这位学者公开否定了这一被广泛接受的理论，认为其前提在逻辑上并不自洽。",
+    "memory_tip": "re-（回）+ pud（羞耻，同 pudendum）+ -iate——把对方观点'羞耻地退回'，即断然否认、拒绝。"
+  },
+  {
+    "word": "posit",
+    "phonetic": "/ˈpɒzɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "假定、提出（作为论据或前提）",
+      "断定、主张"
+    ],
+    "example_en": "Economists often posit a rational consumer who maximizes utility, an assumption that behavioral studies increasingly challenge.",
+    "example_zh": "经济学家常假定一个追求效用最大化的理性消费者，而行为研究正日益挑战这一假设。",
+    "memory_tip": "pos（放置，同 pose/position）——把观点'放'出来当作前提，即假定、提出。"
+  },
+  {
+    "word": "conflate",
+    "phonetic": "/kənˈfleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "将（不同事物）混为一谈、合并",
+      "混淆（两个概念）"
+    ],
+    "example_en": "Critics often conflate correlation with causation, thereby drawing conclusions that the data cannot genuinely support.",
+    "example_zh": "批评者常将相关性与因果关系混为一谈，从而得出数据根本无法真正支持的结论。",
+    "memory_tip": "con-（一起）+ flate（吹，同 inflate）——把两样东西'吹'到一起，即混为一谈。"
+  },
+  {
+    "word": "impute",
+    "phonetic": "/ɪmˈpjuːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "把……归因于、归咎于",
+      "把（过错、责任）归于某人"
+    ],
+    "example_en": "It would be unfair to impute the decline in reading solely to digital media, since many factors are at work.",
+    "example_zh": "把阅读量的下降仅仅归因于数字媒体并不公平，因为其中有许多因素在起作用。",
+    "memory_tip": "im-（进入）+ put（思考，同 compute）——把结果'算'到某人头上，即归因、归咎。"
+  },
+  {
+    "word": "proffer",
+    "phonetic": "/ˈprɒfə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "提出、提供（建议、解释、证据）",
+      "递上、奉上"
+    ],
+    "example_en": "The committee proffered several explanations for the policy's failure, none of which satisfied the angry public.",
+    "example_zh": "委员会为该政策的失败提出了若干解释，但没有一个能让愤怒的公众满意。",
+    "memory_tip": "pro-（向前）+ offer（提供）——主动向前'提供'，即提出、奉上。"
+  },
+  {
+    "word": "confute",
+    "phonetic": "/kənˈfjuːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "驳倒、证明（论点、论据）有误",
+      "推翻（错误观点）"
+    ],
+    "example_en": "New archaeological findings confute the long-held belief that the region was uninhabited during that period.",
+    "example_zh": "新的考古发现推翻了长期以来认为该地区在那一时期无人居住的观点。",
+    "memory_tip": "con-（加强）+ fut（击打，联想 refute 反驳）——用力'击倒'对方论点，即驳倒、推翻。"
+  },
+  {
+    "word": "exacerbate",
+    "phonetic": "/ɪɡˈzæsəbeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使恶化、使加剧",
+      "使（问题、情绪）更严重"
+    ],
+    "example_en": "Cutting public spending during a recession may exacerbate unemployment and further weaken the already fragile social safety net.",
+    "example_zh": "在经济衰退期间削减公共开支可能会加剧失业，并进一步削弱本已脆弱的社会保障体系。",
+    "memory_tip": "ex（向外）+acerb（尖锐、苦涩，如 acerbic 尖刻的）+ate → 把苦涩往外放大，即“使恶化”。"
+  },
+  {
+    "word": "conducive",
+    "phonetic": "/kənˈdjuːsɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "有助于……的、有益于……的",
+      "促成（某种结果）的"
+    ],
+    "example_en": "A classroom atmosphere conducive to open discussion encourages students to question authority rather than memorize facts passively.",
+    "example_zh": "有利于公开讨论的课堂氛围鼓励学生质疑权威，而不是被动地记忆事实。",
+    "memory_tip": "con（共同）+duc（引导）+ive → 能共同引导出好结果的，即“有助于……的”；与 conduct 同根。"
+  },
+  {
+    "word": "refutation",
+    "phonetic": "/ˌrefjuˈteɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "驳斥、反驳",
+      "反驳的论据、反证"
+    ],
+    "example_en": "A rigorous refutation of the prevailing assumption is indispensable if we are to advance the academic debate on climate policy.",
+    "example_zh": "如果我们要推进关于气候政策的学术辩论，对主流假设进行严谨的反驳是不可或缺的。",
+    "memory_tip": "来自动词 refute（反驳）+ 名词后缀 -ation；refute 可拆为 re-（回）+ fut（=fut 击打，同 refute 的拉丁词源）→ 打回去 → 反驳。对比已收录的 refute，本词是其名词形式，注意后缀变化。"
+  },
+  {
+    "word": "which",
+    "phonetic": "/wɪtʃ/",
+    "pos": "pron./adj.",
+    "meanings_zh": [
+      "引导定语从句（限制性或非限制性）",
+      "引导名词性从句（主语、宾语、表语）",
+      "哪一个、哪些（疑问代词）"
+    ],
+    "example_en": "The report, which was published last week by a leading research institute, highlights the growing gap between urban and rural incomes.",
+    "example_zh": "这份由一家顶尖研究机构于上周发布的报告，凸显了城乡收入差距日益扩大。",
+    "memory_tip": "which 引导非限定性定语从句时前面必有逗号，指代整个主句或前面名词；与 that 区别：that 不能用于非限定性从句。"
+  },
+  {
+    "word": "that",
+    "phonetic": "/ðæt/",
+    "pos": "conj./pron.",
+    "meanings_zh": [
+      "引导同位语从句或定语从句",
+      "引导宾语从句（that 可省略）",
+      "那个、那种（指示代词）"
+    ],
+    "example_en": "The assumption that economic growth will automatically reduce poverty has been challenged by recent empirical studies.",
+    "example_zh": "经济增长会自动减少贫困这一假设已受到近期实证研究的质疑。",
+    "memory_tip": "that 在同位语从句中只起连接作用、不作成分，从句解释前面抽象名词（如 assumption、fact、idea）；定语从句中 that 须作主语或宾语。"
+  },
+  {
+    "word": "who",
+    "phonetic": "/huː/",
+    "pos": "pron.",
+    "meanings_zh": [
+      "引导定语从句，先行词为人",
+      "引导宾语从句或主语从句",
+      "谁（疑问代词）"
+    ],
+    "example_en": "Scientists who study climate change warn that urgent action is needed to prevent irreversible damage to the planet.",
+    "example_zh": "研究气候变化的科学家警告说，需要采取紧急行动以防止对地球造成不可逆的损害。",
+    "memory_tip": "who 引导定语从句时先行词必须是人，在从句中作主语；作宾语时用 whom，介词后必须用 whom。"
+  },
+  {
+    "word": "whose",
+    "phonetic": "/huːz/",
+    "pos": "pron.",
+    "meanings_zh": [
+      "引导定语从句表示所属关系",
+      "谁的（疑问代词）"
+    ],
+    "example_en": "The company whose shares plummeted last month has announced a major restructuring plan to restore investor confidence.",
+    "example_zh": "上月股价暴跌的那家公司已宣布一项重大重组计划以恢复投资者信心。",
+    "memory_tip": "whose 引导定语从句时表所属，先行词可以是人或物；注意区分 who's（who is 的缩写）。"
+  },
+  {
+    "word": "whom",
+    "phonetic": "/huːm/",
+    "pos": "pron.",
+    "meanings_zh": [
+      "引导定语从句，先行词为人且在从句中作宾语",
+      "谁（宾格疑问代词）"
+    ],
+    "example_en": "The scholar whom the committee selected to lead the project is widely respected for her pioneering research.",
+    "example_zh": "委员会选来领导该项目的学者因其开创性研究而广受尊敬。",
+    "memory_tip": "whom 在定语从句中作动词或介词的宾语；介词提前时只能用 whom，如 to whom、for whom。"
+  },
+  {
+    "word": "where",
+    "phonetic": "/weə(r)/",
+    "pos": "adv./conj.",
+    "meanings_zh": [
+      "引导定语从句修饰地点名词",
+      "引导地点状语从句",
+      "引导名词性从句（地点）"
+    ],
+    "example_en": "The city where the conference was held has become a hub for technological innovation in recent years.",
+    "example_zh": "举办该会议的城市近年来已成为技术创新的中心。",
+    "memory_tip": "where 引导定语从句时先行词是地点名词（如 city、situation、case）；注意抽象地点先行词也常用 where。"
+  },
+  {
+    "word": "when",
+    "phonetic": "/wen/",
+    "pos": "adv./conj.",
+    "meanings_zh": [
+      "引导定语从句修饰时间名词",
+      "引导时间状语从句",
+      "引导名词性从句（时间）"
+    ],
+    "example_en": "There are moments when even the most confident individuals begin to doubt their own abilities and choices.",
+    "example_zh": "有些时刻，即使最自信的人也会开始怀疑自己的能力和选择。",
+    "memory_tip": "when 引导定语从句时先行词为时间名词（如 moment、day、occasion）；注意与状语从句的区别在于先行词是否存在。"
+  },
+  {
+    "word": "why",
+    "phonetic": "/waɪ/",
+    "pos": "adv./conj.",
+    "meanings_zh": [
+      "引导定语从句修饰 reason",
+      "引导名词性从句（原因）",
+      "为什么（疑问副词）"
+    ],
+    "example_en": "The reason why so many graduates struggle to find employment lies partly in the mismatch between education and market demand.",
+    "example_zh": "如此多毕业生难以找到工作的原因，部分在于教育与市场需求之间的错配。",
+    "memory_tip": "why 引导定语从句时先行词必须是 reason；注意 The reason is that... 而非 The reason is because..."
+  },
+  {
+    "word": "whether",
+    "phonetic": "/ˈweðə(r)/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导主语从句、宾语从句或表语从句（是否）",
+      "引导让步状语从句（无论）"
+    ],
+    "example_en": "Whether the new policy will achieve its intended goals remains a question that economists continue to debate.",
+    "example_zh": "新政策能否实现其预期目标，仍是经济学家们持续争论的问题。",
+    "memory_tip": "whether 引导主语从句时常用 it 作形式主语；whether...or not 结构在长难句中常作插入成分。"
+  },
+  {
+    "word": "if",
+    "phonetic": "/ɪf/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导条件状语从句（如果）",
+      "引导宾语从句（是否，=whether）",
+      "引导让步状语从句（即使）"
+    ],
+    "example_en": "If the government fails to address the housing crisis, social tensions are likely to intensify in the coming decade.",
+    "example_zh": "如果政府未能解决住房危机，未来十年社会紧张局势可能加剧。",
+    "memory_tip": "if 引导条件从句时注意虚拟语气；if 不能引导主语从句（用 whether）；if any/if ever 等是省略结构信号。"
+  },
+  {
+    "word": "although",
+    "phonetic": "/ɔːlˈðəʊ/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导让步状语从句（虽然、尽管）",
+      "然而、不过（转折）"
+    ],
+    "example_en": "Although considerable progress has been made in reducing poverty, millions of people still lack access to basic healthcare.",
+    "example_zh": "尽管在减贫方面已取得相当大的进展，数百万人仍然无法获得基本医疗。",
+    "memory_tip": "although 引导让步状语从句，主句不能再加 but；在长难句中常出现在句首，标志主从转折关系。"
+  },
+  {
+    "word": "though",
+    "phonetic": "/ðəʊ/",
+    "pos": "conj./adv.",
+    "meanings_zh": [
+      "引导让步状语从句（虽然）",
+      "然而、不过（副词，置于句末）",
+      "as though 仿佛"
+    ],
+    "example_en": "The theory, though widely accepted for decades, has recently been challenged by a series of contradictory findings.",
+    "example_zh": "该理论虽然几十年来被广泛接受，但最近受到一系列相互矛盾的发现的挑战。",
+    "memory_tip": "though 可作插入语置于句中，前后用逗号隔开，是长难句常见插入信号；though 引导从句可倒装（形容词+though+主语）。"
+  },
+  {
+    "word": "since",
+    "phonetic": "/sɪns/",
+    "pos": "conj./prep./adv.",
+    "meanings_zh": [
+      "引导原因状语从句（既然、因为）",
+      "引导时间状语从句（自从）",
+      "此后、后来（副词）"
+    ],
+    "example_en": "Since the data were collected from a relatively small sample, the conclusions should be interpreted with considerable caution.",
+    "example_zh": "由于数据取自相对较小的样本，这些结论应相当谨慎地加以解读。",
+    "memory_tip": "since 引导原因从句时语气比 because 弱，常置于句首；引导时间从句时主句用完成时，是区分两种用法的关键。"
+  },
+  {
+    "word": "as",
+    "phonetic": "/æz/",
+    "pos": "conj./prep./adv.",
+    "meanings_zh": [
+      "引导时间、原因、方式状语从句",
+      "引导定语从句（as...as、such...as）",
+      "作为、如同（介词）"
+    ],
+    "example_en": "As the economy continues to globalize, the demand for workers with cross-cultural communication skills has risen sharply.",
+    "example_zh": "随着经济持续全球化，对具备跨文化沟通能力的劳动者的需求急剧上升。",
+    "memory_tip": "as 引导非限定性定语从句时可指代整个主句（as is known to all）；as 引导让步从句需倒装（形容词+as+主语+系动词）。"
+  },
+  {
+    "word": "because",
+    "phonetic": "/bɪˈkɒz/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导原因状语从句（因为）",
+      "because of 由于（介词短语）"
+    ],
+    "example_en": "Many species are facing extinction because their natural habitats have been destroyed by human activities.",
+    "example_zh": "许多物种正面临灭绝，因为它们的自然栖息地已被人类活动破坏。",
+    "memory_tip": "because 引导原因从句，语气最强；注意 because of 后接名词短语，而 because 后接完整句子。"
+  },
+  {
+    "word": "so",
+    "phonetic": "/səʊ/",
+    "pos": "conj./adv.",
+    "meanings_zh": [
+      "引导结果状语从句（因此、所以）",
+      "so that 以便、结果",
+      "如此、这么（副词）"
+    ],
+    "example_en": "The evidence was so compelling that even the most skeptical researchers were forced to revise their positions.",
+    "example_zh": "证据如此有说服力，以至于连最持怀疑态度的研究人员也被迫修正立场。",
+    "memory_tip": "so...that 引导结果状语从句，so 后接形容词或副词；so that 引导目的或结果从句，是长难句常见结构。"
+  },
+  {
+    "word": "such",
+    "phonetic": "/sʌtʃ/",
+    "pos": "adj./pron.",
+    "meanings_zh": [
+      "such...that 引导结果状语从句",
+      "such as 例如",
+      "这样的、如此的（形容词）"
+    ],
+    "example_en": "Such was the impact of the financial crisis that governments worldwide were compelled to rethink their economic policies.",
+    "example_zh": "金融危机的冲击如此之大，以至于世界各国政府被迫重新思考其经济政策。",
+    "memory_tip": "such...that 引导结果从句，such 后接名词短语；such 置于句首时句子倒装，是长难句识别难点。"
+  },
+  {
+    "word": "than",
+    "phonetic": "/ðæn/",
+    "pos": "conj./prep.",
+    "meanings_zh": [
+      "引导比较状语从句（比）",
+      "用于 rather than、other than 等结构",
+      "与 more/less 搭配表比较"
+    ],
+    "example_en": "The new generation of workers values flexibility and personal growth more than job security and long-term loyalty.",
+    "example_zh": "新一代劳动者更看重灵活性和个人成长，而非工作保障和长期忠诚。",
+    "memory_tip": "than 引导比较从句时从句常省略与主句相同的成分；rather than 表取舍，是长难句常见并列信号。"
+  },
+  {
+    "word": "nor",
+    "phonetic": "/nɔː(r)/",
+    "pos": "conj./adv.",
+    "meanings_zh": [
+      "引导并列否定从句（也不）",
+      "neither...nor... 既不……也不……",
+      "置于句首引起倒装"
+    ],
+    "example_en": "The proposal was neither practical nor affordable, nor did it address the fundamental causes of the problem.",
+    "example_zh": "该提案既不切实际也负担不起，也没有解决问题的根本原因。",
+    "memory_tip": "nor 置于句首时句子倒装（nor+助动词+主语）；neither...nor 连接并列成分，是长难句并列结构信号。"
+  },
+  {
+    "word": "but",
+    "phonetic": "/bʌt/",
+    "pos": "conj./prep./adv.",
+    "meanings_zh": [
+      "引导转折并列句（但是）",
+      "not...but... 不是……而是……",
+      "cannot but 不得不"
+    ],
+    "example_en": "The problem is not merely technological but fundamentally ethical, requiring a broader public debate.",
+    "example_zh": "这个问题不仅是技术性的，而且是根本性的伦理问题，需要更广泛的公众讨论。",
+    "memory_tip": "not...but... 是长难句核心并列结构，强调对比；but 作介词时意为'除……之外'，需与连词用法区分。"
+  },
+  {
+    "word": "or",
+    "phonetic": "/ɔː(r)/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导选择或并列（或者）",
+      "否则、要不然",
+      "即、也就是（同位解释）"
+    ],
+    "example_en": "The government must either invest heavily in renewable energy or risk falling behind in the global race for sustainability.",
+    "example_zh": "政府要么大力投资可再生能源，要么冒着在全球可持续发展竞赛中落后的风险。",
+    "memory_tip": "either...or 是长难句并列信号；or 表同位解释时前后为同一事物的不同表述，注意与选择用法的区别。"
+  },
+  {
+    "word": "and",
+    "phonetic": "/ænd/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "连接并列成分（和、并且）",
+      "连接并列句（然后、因此）",
+      "用于 both...and... 结构"
+    ],
+    "example_en": "The research highlights both the potential benefits of artificial intelligence and the serious risks it poses to employment.",
+    "example_zh": "该研究既强调了人工智能的潜在益处，也强调了它对就业构成的严重风险。",
+    "memory_tip": "and 连接三个以上并列成分时前面用逗号；both...and 强调并列，是长难句结构分析的关键信号。"
+  },
+  {
+    "word": "for",
+    "phonetic": "/fɔː(r)/",
+    "pos": "conj./prep.",
+    "meanings_zh": [
+      "引导原因状语从句（因为，较正式）",
+      "为了、对于（介词）",
+      "持续一段时间（介词）"
+    ],
+    "example_en": "The findings should be treated with caution, for the sample size was too small to yield reliable conclusions.",
+    "example_zh": "这些发现应谨慎对待，因为样本量太小，无法得出可靠结论。",
+    "memory_tip": "for 作连词引导原因从句时通常置于主句之后，用逗号隔开，语气比 because 弱，在长难句中易被误认为介词。"
+  },
+  {
+    "word": "while",
+    "phonetic": "/waɪl/",
+    "pos": "conj./n.",
+    "meanings_zh": [
+      "引导时间状语从句（当……时）",
+      "引导让步状语从句（虽然、尽管）",
+      "引导对比从句（而、然而）"
+    ],
+    "example_en": "While some economists predict a rapid recovery, others warn that the downturn could persist for years.",
+    "example_zh": "虽然一些经济学家预测会迅速复苏，但另一些人警告说经济低迷可能持续数年。",
+    "memory_tip": "while 引导让步或对比从句时置于句首，是长难句重要信号词；区分 while 的时间、让步、对比三种用法需看上下文。"
+  },
+  {
+    "word": "until",
+    "phonetic": "/ənˈtɪl/",
+    "pos": "conj./prep.",
+    "meanings_zh": [
+      "引导时间状语从句（直到……为止）",
+      "not...until... 直到……才……",
+      "直到（介词）"
+    ],
+    "example_en": "It was not until the nineteenth century that scientists began to understand the role of bacteria in causing disease.",
+    "example_zh": "直到十九世纪，科学家们才开始了解细菌在致病中的作用。",
+    "memory_tip": "not...until 用于强调句 It was not until...that... 是考研高频句式；until 引导从句时主句动词为延续性或否定。"
+  },
+  {
+    "word": "once",
+    "phonetic": "/wʌns/",
+    "pos": "conj./adv.",
+    "meanings_zh": [
+      "引导时间/条件状语从句（一旦）",
+      "一次、曾经（副词）",
+      "at once 立刻、同时"
+    ],
+    "example_en": "Once a species becomes extinct, it can never be brought back, regardless of how advanced our technology becomes.",
+    "example_zh": "一个物种一旦灭绝，就永远无法恢复，无论我们的技术变得多么先进。",
+    "memory_tip": "once 引导条件从句时意为'一旦'，是长难句重要信号；once 作副词时与 at once 短语需区分。"
+  },
+  {
+    "word": "as if",
+    "phonetic": "/æz ɪf/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导方式状语从句（好像、仿佛）",
+      "引导表语从句（看起来好像）",
+      "常用于虚拟语气"
+    ],
+    "example_en": "The economy appears to be recovering, as if the worst of the recession were already behind us.",
+    "example_zh": "经济似乎在复苏，仿佛最严重的衰退已经过去。",
+    "memory_tip": "as if 引导的从句常用虚拟语气（were/had done）；在长难句中 as if 标志比喻或推测性描述。"
+  },
+  {
+    "word": "so that",
+    "phonetic": "/səʊ ðæt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导目的状语从句（以便、为了）",
+      "引导结果状语从句（结果、以至于）",
+      "常与情态动词连用"
+    ],
+    "example_en": "The government introduced tax incentives so that private companies would invest more heavily in renewable energy research.",
+    "example_zh": "政府出台了税收优惠政策，以便私营企业加大对可再生能源研究的投资。",
+    "memory_tip": "so that 引导目的从句时常与 can/could/may/might 连用；引导结果从句时通常用逗号与主句隔开。"
+  },
+  {
+    "word": "in that",
+    "phonetic": "/ɪn ðæt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导原因状语从句（因为、在于）",
+      "表示在某方面、就……而言",
+      "常用于解释性从句"
+    ],
+    "example_en": "The study is particularly valuable in that it provides longitudinal data spanning more than three decades.",
+    "example_zh": "这项研究特别有价值，因为它提供了跨越三十多年的纵向数据。",
+    "memory_tip": "in that 引导原因从句，比 because 更正式，在学术长难句中常标志对前述观点的解释或限定。"
+  },
+  {
+    "word": "now that",
+    "phonetic": "/naʊ ðæt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "引导原因状语从句（既然、由于）",
+      "表示时间上的'现在既然'",
+      "常置于句首"
+    ],
+    "example_en": "Now that digital technology has become ubiquitous, concerns about data privacy have intensified among ordinary users.",
+    "example_zh": "既然数字技术已无处不在，普通用户对数据隐私的担忧也日益加剧。",
+    "memory_tip": "now that 引导原因从句，兼有时间含义，常置于句首，是长难句主从关系的信号词。"
+  },
+  {
+    "word": "given",
+    "phonetic": "/ˈɡɪvn/",
+    "pos": "prep./conj.",
+    "meanings_zh": [
+      "考虑到、鉴于（介词）",
+      "如果、假设（引导条件）",
+      "给定的、特定的（形容词）"
+    ],
+    "example_en": "Given the current rate of deforestation, it is estimated that tropical rainforests could disappear within fifty years.",
+    "example_zh": "考虑到目前的森林砍伐速度，据估计热带雨林可能在五十年内消失。",
+    "memory_tip": "given 作介词引导条件或原因状语，后接名词短语，是长难句中常见的独立成分信号词。"
+  },
+  {
+    "word": "considering",
+    "phonetic": "/kənˈsɪdərɪŋ/",
+    "pos": "prep./conj.",
+    "meanings_zh": [
+      "考虑到、鉴于（介词）",
+      "考虑到……（引导状语）",
+      "就……而言"
+    ],
+    "example_en": "Considering the limited resources available, the research team managed to produce remarkably comprehensive results.",
+    "example_zh": "考虑到可用资源有限，研究团队还是取得了相当全面的成果。",
+    "memory_tip": "considering 作介词引导状语，逻辑主语通常与主句主语一致，是长难句中常见的悬垂修饰信号。"
+  },
+  {
+    "word": "despite",
+    "phonetic": "/dɪˈspaɪt/",
+    "pos": "prep.",
+    "meanings_zh": [
+      "尽管、不管（介词）",
+      "despite the fact that 尽管事实是",
+      "表示让步关系"
+    ],
+    "example_en": "Despite substantial investment in public education, the gap in academic achievement between rich and poor students persists.",
+    "example_zh": "尽管在公共教育上投入巨大，贫富学生之间的学业成绩差距依然存在。",
+    "memory_tip": "despite 是介词，后接名词短语，不能接句子；接句子时用 despite the fact that，是长难句让步信号。"
+  },
+  {
+    "word": "wherein",
+    "phonetic": "/weərˈɪn/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "在其中、在那里",
+      "在……方面"
+    ],
+    "example_en": "The report highlights several key areas wherein the current policy fails to address the needs of disadvantaged communities.",
+    "example_zh": "该报告强调了几个关键领域，在其中现行政策未能满足弱势群体的需求。",
+    "memory_tip": "where+in = in which，引导定语从句。长难句中它前面的名词就是要修饰的对象，看到 wherein 立即在其后断句，把它后面的内容当作从句处理。"
+  },
+  {
+    "word": "whichever",
+    "phonetic": "/wɪtʃˈevə/",
+    "pos": "pron./adj.",
+    "meanings_zh": [
+      "无论哪个",
+      "不管哪个（引导让步状语从句）"
+    ],
+    "example_en": "Whichever approach the government adopts, it must ensure that the reforms do not widen the gap between rich and poor.",
+    "example_zh": "无论政府采取哪种方法，都必须确保改革不会扩大贫富差距。",
+    "memory_tip": "which+ever，引导让步状语从句，常置于句首。长难句中它标志让步结构，看到它就知道后面是从句，主句在逗号之后。"
+  },
+  {
+    "word": "whoever",
+    "phonetic": "/huːˈevə/",
+    "pos": "pron.",
+    "meanings_zh": [
+      "无论谁",
+      "任何人（引导名词性从句或让步从句）"
+    ],
+    "example_en": "Whoever neglects the ethical dimension of scientific research is likely to face severe criticism from the academic community.",
+    "example_zh": "任何忽视科学研究伦理维度的人都很可能面临学术界的严厉批评。",
+    "memory_tip": "who+ever，可引导主语从句或让步状语从句。长难句中若位于句首且后面有完整谓语，则它引导的是主语从句，充当整个句子的主语。"
+  },
+  {
+    "word": "whatsoever",
+    "phonetic": "/ˌwɒtsəʊˈevə/",
+    "pos": "adv./pron.",
+    "meanings_zh": [
+      "丝毫、任何（用于否定句加强语气）",
+      "无论什么"
+    ],
+    "example_en": "The committee found no evidence whatsoever to support the claim that the experiment had been deliberately manipulated.",
+    "example_zh": "委员会没有发现丝毫证据支持该实验被故意操纵的说法。",
+    "memory_tip": "what+so+ever，常用于否定句或名词后加强语气。长难句中它紧跟在 no、none、nothing 等否定词后，起强调作用，切分时可将它与其前的否定词合并处理。"
+  },
+  {
+    "word": "on condition that",
+    "phonetic": "/ɒn kənˈdɪʃn ðæt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "只要、条件是",
+      "在……条件下"
+    ],
+    "example_en": "The government agreed to fund the project on condition that the university submit a detailed report every six months.",
+    "example_zh": "政府同意资助该项目，条件是这所大学每六个月提交一份详细报告。",
+    "memory_tip": "条件从句信号词，作用等同 if 但更正式；that 后引导完整从句，前面主句表'承诺/同意'，断句时从句从 on condition that 处起算到句末。"
+  },
+  {
+    "word": "such that",
+    "phonetic": "/sʌtʃ ðæt/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "如此……以至于",
+      "这样的……使得"
+    ],
+    "example_en": "The decline in biodiversity was such that many species could no longer sustain viable populations within their natural habitats.",
+    "example_zh": "生物多样性的下降如此严重，以至于许多物种再也无法在其自然栖息地维持可存活的种群。",
+    "memory_tip": "结果结构标记：such 为表语或定语，that 从句表结果，常见句式 'Such was the impact that...' 或 'The impact was such that...'，断句时 that 从句整体作结果状语。"
+  },
+  {
+    "word": "so as to",
+    "phonetic": "/səʊ æz tuː/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "为了、以便",
+      "以至于（表结果）"
+    ],
+    "example_en": "Researchers adjusted the experimental variables so as to isolate the effect of temperature from other confounding factors.",
+    "example_zh": "研究者调整了实验变量，以便将温度的影响与其他混杂因素隔离开来。",
+    "memory_tip": "目的状语信号词，后接动词原形；否定式为 so as not to do，注意其逻辑主语须与主句主语一致，断句时整体划为目的状语。"
+  },
+  {
+    "word": "in order to",
+    "phonetic": "/ɪn ˈɔːdə tuː/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "为了、以便",
+      "目的在于"
+    ],
+    "example_en": "In order to evaluate the long-term effects of the policy, economists tracked household income over a period of ten years.",
+    "example_zh": "为了评估该政策的长期效果，经济学家在十年间追踪了家庭收入情况。",
+    "memory_tip": "目的状语信号词，置于句首时须用逗号与主句隔开；与 so as to 同义但位置更灵活，断句时从 in order to 到动词短语结束为完整目的状语。"
+  },
+  {
+    "word": "strictly speaking",
+    "phonetic": "/ˈstrɪktli ˈspiːkɪŋ/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "严格说来、严格地讲"
+    ],
+    "example_en": "Strictly speaking, the two concepts are not synonymous, although they are often used interchangeably in popular discourse.",
+    "example_zh": "严格说来，这两个概念并非同义，尽管它们在通俗话语中常被互换使用。",
+    "memory_tip": "独立分词插入语，前后用逗号包裹，表示'从严格意义上界定'；阅读时先跳过插入语抓主干，回头再补其限定含义。"
+  },
+  {
+    "word": "in other words",
+    "phonetic": "/ɪn ˈʌðə wɜːdz/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "换句话说、也就是说",
+      "换言之"
+    ],
+    "example_en": "The data do not support a causal link; in other words, correlation alone cannot justify the conclusion the author draws.",
+    "example_zh": "这些数据并不支持因果联系；换句话说，仅凭相关性无法证明作者得出的结论。",
+    "memory_tip": "话语标记插入语，提示后句是对前句的释义或简化，常与破折号、分号连用；做题时看到它可直接把后句当作前句的同义改写。"
+  },
+  {
+    "word": "instead of",
+    "phonetic": "/ɪnˈsted əv/",
+    "pos": "prep.",
+    "meanings_zh": [
+      "代替、而不是",
+      "作为……的替代"
+    ],
+    "example_en": "Instead of relying on anecdotal evidence, the committee demanded statistical data drawn from a representative national sample.",
+    "example_zh": "委员会没有依赖轶事性证据，而是要求提供取自全国代表性样本的统计数据。",
+    "memory_tip": "介词型对比标记，后接名词或动名词；与 rather than 逻辑相近但更强调'取而代之'，断句时把 of 后的名词短语整体看作被否定的对象。"
+  },
+  {
+    "word": "but for",
+    "phonetic": "/bʌt fɔː/",
+    "pos": "prep.",
+    "meanings_zh": [
+      "要不是、若非",
+      "如果没有"
+    ],
+    "example_en": "But for the timely intervention of the central bank, the financial crisis would have spread far beyond the region.",
+    "example_zh": "要不是中央银行及时干预，这场金融危机本会蔓延到该地区之外。",
+    "memory_tip": "隐含虚拟条件信号词，等于 'If it had not been for'，主句必用 would/could have done；见到 but for 立刻判断为虚拟语气并找主句的完成式谓语。"
+  },
+  {
+    "word": "in spite of",
+    "phonetic": "/ɪn spaɪt əv/",
+    "pos": "prep.",
+    "meanings_zh": [
+      "尽管、不顾",
+      "虽然"
+    ],
+    "example_en": "In spite of considerable public opposition, the legislature passed the controversial bill without substantial amendment.",
+    "example_zh": "尽管公众强烈反对，立法机构仍未作实质性修改就通过了这项有争议的法案。",
+    "memory_tip": "让步介词短语，后接名词或名词短语，不能接完整从句（接从句须用 although）；断句时 of 后的名词短语是让步对象，主句才是作者真正的观点。"
+  },
+  {
+    "word": "no sooner than",
+    "phonetic": "/nəʊ ˈsuːnə ðæn/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "一……就……",
+      "刚……便……"
+    ],
+    "example_en": "No sooner had the report been published than critics began to question the reliability of its underlying methodology.",
+    "example_zh": "报告刚一发表，批评者便开始质疑其基础方法的可靠性。",
+    "memory_tip": "倒装时间信号词：No sooner 置于句首时主句部分倒装（had + 主语 + done），than 引导从句用一般过去时；见到 No sooner...than 立即判定为'一……就……'结构。"
+  },
+  {
+    "word": "not until",
+    "phonetic": "/nɒt ʌnˈtɪl/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "直到……才",
+      "在……之前不"
+    ],
+    "example_en": "Not until the nineteenth century did scientists fully appreciate the role that microorganisms play in the spread of disease.",
+    "example_zh": "直到十九世纪，科学家才充分认识到微生物在疾病传播中所起的作用。",
+    "memory_tip": "否定前置倒装信号词：Not until 置于句首时主句须部分倒装（did + 主语 + 动词原形），until 从句用正常语序，翻译时按'直到……才'处理。"
+  },
+  {
+    "word": "it is who",
+    "phonetic": "/ɪt ɪz huː/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "正是……（强调句型）",
+      "是……（分裂句）"
+    ],
+    "example_en": "It is the interaction between genetic inheritance and environmental factors that ultimately determines an individual's cognitive development.",
+    "example_zh": "正是遗传继承与环境因素之间的相互作用，最终决定了个体的认知发展。",
+    "memory_tip": "强调句型（分裂句）信号：It is/was + 被强调成分 + that/who + 其余部分；去掉 It is 和 that/who 后句子仍完整，借此可快速判断强调结构与主语从句的区别。"
+  },
+  {
+    "word": "whilst",
+    "phonetic": "/waɪlst/",
+    "pos": "conj.",
+    "meanings_zh": [
+      "当……时、在……期间（=while，多用于英式书面语）",
+      "然而、尽管（表对比或让步）"
+    ],
+    "example_en": "Whilst numerous studies have underscored the benefits of bilingual education, critics contend that implementing such programmes nationwide remains prohibitively expensive.",
+    "example_zh": "尽管大量研究都强调了双语教育的好处，批评者仍认为在全国范围内实施此类项目成本高得令人却步。",
+    "memory_tip": "whilst 是 while 的英式书面变体，在长难句中引导时间状语从句或让步/对比从句，常置于句首；看到它先找主句谓语，把 whilst 从句整体当作状语剥离，主干立刻显现。"
+  },
+  {
+    "word": "abide",
+    "phonetic": "/əˈbaɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "遵守、遵从（by）",
+      "忍受、容忍",
+      "持续、居留"
+    ],
+    "example_en": "Researchers must abide by strict ethical guidelines when conducting experiments involving human participants.",
+    "example_zh": "研究人员在进行涉及人类参与者的实验时必须遵守严格的伦理准则。",
+    "memory_tip": "a-(加强)+bide(停留)→留下来守规矩→遵守；常考搭配 abide by（遵守）"
+  },
+  {
+    "word": "abolish",
+    "phonetic": "/əˈbɒlɪʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "废除、取消（制度、法律）",
+      "彻底废止"
+    ],
+    "example_en": "Many campaigners argue that the government should abolish the outdated law to protect individual privacy.",
+    "example_zh": "许多活动人士主张政府应废除这项过时的法律以保护个人隐私。",
+    "memory_tip": "a-(离开)+bol(抛)+ish→抛掉旧制度→废除；常与 slavery、law、system 搭配"
+  },
+  {
+    "word": "abrupt",
+    "phonetic": "/əˈbrʌpt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "突然的、意外的",
+      "（言行）唐突、粗鲁的",
+      "陡峭的"
+    ],
+    "example_en": "The company's abrupt decision to close the factory left hundreds of workers without any compensation.",
+    "example_zh": "公司突然决定关闭工厂，使数百名工人未获任何补偿。",
+    "memory_tip": "ab-(离开)+rupt(断裂)→突然断裂→突然的；形近 corrupt、erupt、disrupt"
+  },
+  {
+    "word": "abstain",
+    "phonetic": "/əbˈsteɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "戒除、放弃（from）",
+      "投票弃权"
+    ],
+    "example_en": "Doctors advise patients to abstain from alcohol while taking these powerful antibiotics.",
+    "example_zh": "医生建议患者在服用这些强效抗生素期间戒酒。",
+    "memory_tip": "abs-(离开)+tain(拿住)→拿开手→戒除；固定搭配 abstain from"
+  },
+  {
+    "word": "accommodate",
+    "phonetic": "/əˈkɒmədeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "容纳、为……提供住宿",
+      "适应、迁就",
+      "顾及、考虑到"
+    ],
+    "example_en": "The new lecture hall can accommodate up to five hundred students at a single session.",
+    "example_zh": "新报告厅一次最多可容纳五百名学生。",
+    "memory_tip": "ac-(加强)+com(共同)+mod(方式)+ate→用共同方式安排→容纳；常考 accommodate oneself to"
+  },
+  {
+    "word": "acquire",
+    "phonetic": "/əˈkwaɪə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "获得、取得",
+      "学到（知识、技能）",
+      "购得、收购"
+    ],
+    "example_en": "Children acquire their native language far more easily than adults learn a foreign tongue.",
+    "example_zh": "儿童习得母语远比成年人学外语容易得多。",
+    "memory_tip": "ac-(加强)+quire(寻求)→不断寻求→获得；常考 acquire knowledge/skills"
+  },
+  {
+    "word": "adjourn",
+    "phonetic": "/əˈdʒɜːn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "休会、延期",
+      "暂停（会议）"
+    ],
+    "example_en": "The committee decided to adjourn the meeting until further evidence could be collected.",
+    "example_zh": "委员会决定休会，直到收集到更多证据为止。",
+    "memory_tip": "ad-(到)+journ(日、天)→推到另一天→延期；常考 adjourn the meeting"
+  },
+  {
+    "word": "administer",
+    "phonetic": "/ədˈmɪnɪstə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "管理、掌管",
+      "执行、实施",
+      "给予（药物、帮助）"
+    ],
+    "example_en": "The fund was set up to administer financial aid to students from low-income families.",
+    "example_zh": "该基金旨在管理向低收入家庭学生提供的资助。",
+    "memory_tip": "ad-(向)+minister(部长、服务)→为公众服务→管理；与 administration 同源"
+  },
+  {
+    "word": "afflict",
+    "phonetic": "/əˈflɪkt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使痛苦、折磨",
+      "困扰、侵袭"
+    ],
+    "example_en": "For decades, the region has been afflicted by drought, poverty and political instability.",
+    "example_zh": "数十年来，该地区饱受干旱、贫困和政治动荡之苦。",
+    "memory_tip": "af-(加强)+flict(打击)→不断打击→折磨；名词 affliction（痛苦）"
+  },
+  {
+    "word": "agitate",
+    "phonetic": "/ˈædʒɪteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "搅动、摇动",
+      "使焦虑不安",
+      "煽动、鼓动"
+    ],
+    "example_en": "The union leaders continued to agitate for higher wages and safer working conditions.",
+    "example_zh": "工会领袖继续鼓动争取更高工资和更安全的工作条件。",
+    "memory_tip": "ag(行动)+it(走)+ate→来回走→搅动；常考 agitate for（鼓动争取）"
+  },
+  {
+    "word": "alienate",
+    "phonetic": "/ˈeɪliəneɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使疏远、使不友好",
+      "使格格不入",
+      "转让（财产）"
+    ],
+    "example_en": "His harsh criticism of colleagues gradually alienated even his most loyal supporters.",
+    "example_zh": "他对同事的严厉批评逐渐使他最忠实的支持者也疏远了他。",
+    "memory_tip": "alien(外国的)+ate→使变成外人→疏远；名词 alienation（疏离感）"
+  },
+  {
+    "word": "alleviate",
+    "phonetic": "/əˈliːvieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "减轻、缓和（痛苦、问题）",
+      "缓解"
+    ],
+    "example_en": "The new policy is intended to alleviate the financial burden on rural households.",
+    "example_zh": "这项新政策旨在减轻农村家庭的经济负担。",
+    "memory_tip": "al-(加强)+lev(轻)+iate→使变轻→减轻；常考 alleviate poverty/pressure"
+  },
+  {
+    "word": "allocate",
+    "phonetic": "/ˈæləkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "分配、拨给",
+      "划拨（资金、资源）"
+    ],
+    "example_en": "The government plans to allocate more funds to basic scientific research next year.",
+    "example_zh": "政府计划明年向基础科学研究划拨更多资金。",
+    "memory_tip": "al-(向)+loc(地方)+ate→放到各自地方→分配；名词 allocation"
+  },
+  {
+    "word": "alter",
+    "phonetic": "/ˈɔːltə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "改变、改动",
+      "修改（衣服）"
+    ],
+    "example_en": "Digital technology has fundamentally altered the way we communicate and do business.",
+    "example_zh": "数字技术从根本上改变了我们交流和经商的方式。",
+    "memory_tip": "alter(其他)→变成另一个→改变；与 alternative（替代的）同源"
+  },
+  {
+    "word": "ambitious",
+    "phonetic": "/æmˈbɪʃəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "有雄心的、有抱负的",
+      "（计划）宏大的、艰巨的"
+    ],
+    "example_en": "The young scientist had an ambitious plan to map the entire human genome within five years.",
+    "example_zh": "这位年轻科学家有一个雄心勃勃的计划：五年内绘制整个人类基因组图谱。",
+    "memory_tip": "ambit(周围走)+ious→四处奔走求功名→有雄心的；名词 ambition"
+  },
+  {
+    "word": "amplify",
+    "phonetic": "/ˈæmplɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "放大、增强（声音、信号）",
+      "详述、进一步阐明",
+      "扩大（影响）"
+    ],
+    "example_en": "Social media tends to amplify rumours far more quickly than traditional newspapers ever did.",
+    "example_zh": "社交媒体放大谣言的速�度远快于传统报纸。",
+    "memory_tip": "ampl(大)+ify(使)→使变大→放大；与 ample（充足的）同源"
+  },
+  {
+    "word": "analogous",
+    "phonetic": "/əˈnæləɡəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "类似的、相似的",
+      "可类比的"
+    ],
+    "example_en": "The structure of the atom is often said to be analogous to that of the solar system.",
+    "example_zh": "人们常说原子结构类似于太阳系的结构。",
+    "memory_tip": "analog(类似)+ous→类似的；常考 be analogous to"
+  },
+  {
+    "word": "annihilate",
+    "phonetic": "/əˈnaɪəleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "歼灭、消灭",
+      "彻底击败",
+      "毁灭"
+    ],
+    "example_en": "A single asteroid could annihilate most life on Earth within a matter of hours.",
+    "example_zh": "一颗小行星可能在几小时内毁灭地球上大部分生命。",
+    "memory_tip": "an-(加强)+nihil(无)+ate→使变成无→消灭；nihil 表示“虚无”"
+  },
+  {
+    "word": "apprehend",
+    "phonetic": "/ˌæprɪˈhend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "逮捕、拘押",
+      "理解、领会",
+      "忧虑、担心"
+    ],
+    "example_en": "The suspect was apprehended shortly after the police reviewed the surveillance footage.",
+    "example_zh": "警方查看监控录像后不久便逮捕了嫌疑人。",
+    "memory_tip": "ap-(加强)+prehend(抓住)→抓住→逮捕/理解；名词 apprehension"
+  },
+  {
+    "word": "approximate",
+    "phonetic": "/əˈprɒksɪmət/",
+    "pos": "adj./v.",
+    "meanings_zh": [
+      "大约的、近似的",
+      "接近、近似（to）"
+    ],
+    "example_en": "The approximate cost of the whole project is estimated at three million dollars.",
+    "example_zh": "整个项目的费用估计约为三百万美元。",
+    "memory_tip": "ap-(加强)+proxim(最近)+ate→接近的；常考 be approximate to"
+  },
+  {
+    "word": "arouse",
+    "phonetic": "/əˈraʊz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "唤起、激起（情感、兴趣）",
+      "唤醒、叫醒"
+    ],
+    "example_en": "The documentary aroused widespread public concern about the loss of biodiversity.",
+    "example_zh": "这部纪录片激起了公众对生物多样性丧失的广泛关注。",
+    "memory_tip": "a-(加强)+rouse(唤醒)→唤起；常考 arouse interest/concern/suspicion"
+  },
+  {
+    "word": "aspire",
+    "phonetic": "/əˈspaɪə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "渴望、追求（to/after）",
+      "有志于"
+    ],
+    "example_en": "Many talented graduates aspire to work for companies that value innovation and creativity.",
+    "example_zh": "许多有才华的毕业生渴望为重视创新和创造力的公司工作。",
+    "memory_tip": "a-(向)+spir(呼吸)+e→向理想呼气→渴望；常考 aspire to do"
+  },
+  {
+    "word": "assemble",
+    "phonetic": "/əˈsembl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "集合、聚集",
+      "装配、组装"
+    ],
+    "example_en": "Workers on the assembly line assemble hundreds of electronic devices every single day.",
+    "example_zh": "装配线上的工人每天组装数百台电子设备。",
+    "memory_tip": "as-(加强)+semble(相似、一起)→聚到一起→集合；名词 assembly"
+  },
+  {
+    "word": "assume",
+    "phonetic": "/əˈsjuːm/",
+    "pos": "v.",
+    "meanings_zh": [
+      "假定、假设",
+      "承担（责任、职务）",
+      "呈现（面貌）"
+    ],
+    "example_en": "We cannot simply assume that economic growth will automatically reduce social inequality.",
+    "example_zh": "我们不能想当然地认为经济增长会自动减少社会不平等。",
+    "memory_tip": "as-(加强)+sume(拿)→拿来当真→假定；常考 assume responsibility"
+  },
+  {
+    "word": "attach",
+    "phonetic": "/əˈtætʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "附上、系上",
+      "认为有（重要性）",
+      "使依恋"
+    ],
+    "example_en": "Researchers attach great importance to the reliability of the data they collect.",
+    "example_zh": "研究人员非常重视他们收集数据的可靠性。",
+    "memory_tip": "at-(向)+tach(钉)→钉上去→附上；常考 attach importance to"
+  },
+  {
+    "word": "attend",
+    "phonetic": "/əˈtend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "出席、参加",
+      "照料、处理（to）",
+      "伴随、随之而来"
+    ],
+    "example_en": "More than two hundred scholars attended the international conference on climate change.",
+    "example_zh": "两百多名学者出席了这次关于气候变化的国际会议。",
+    "memory_tip": "at-(向)+tend(伸展)→伸向某处→出席；常考 attend to（处理）"
+  },
+  {
+    "word": "authorize",
+    "phonetic": "/ˈɔːθəraɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "授权、批准",
+      "委托、认可"
+    ],
+    "example_en": "Only the board of directors can authorize spending beyond the agreed annual budget.",
+    "example_zh": "只有董事会才能批准超出约定年度预算的开支。",
+    "memory_tip": "author(作者、权威)+ize→使有权威→授权；名词 authorization"
+  },
+  {
+    "word": "behave",
+    "phonetic": "/bɪˈheɪv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "表现、举止",
+      "运转、反应",
+      "守规矩"
+    ],
+    "example_en": "People tend to behave differently when they know they are being watched.",
+    "example_zh": "人们知道自己被观察时往往表现得不一样。",
+    "memory_tip": "be-(加强)+have(拥有)→拥有举止→表现；名词 behaviour 高频"
+  },
+  {
+    "word": "benefit",
+    "phonetic": "/ˈbenɪfɪt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "利益、好处",
+      "福利、救济金",
+      "使受益、得益（from/by）"
+    ],
+    "example_en": "Small businesses will benefit greatly from the new tax reduction policy.",
+    "example_zh": "小企业将从新的减税政策中大为受益。",
+    "memory_tip": "bene(好)+fit(做)→做好事→益处；常考 benefit from"
+  },
+  {
+    "word": "cater",
+    "phonetic": "/ˈkeɪtə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "迎合、满足（to）",
+      "提供饮食、承办宴席"
+    ],
+    "example_en": "The magazine tries to cater to the tastes of young readers with its lively layout.",
+    "example_zh": "这本杂志以活泼的版面迎合年轻读者的口味。",
+    "memory_tip": "cat(猫)+er→像猫一样挑食→迎合口味；常考 cater to/for"
+  },
+  {
+    "word": "cease",
+    "phonetic": "/siːs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "停止、终止",
+      "结束"
+    ],
+    "example_en": "The factory will cease production of the model at the end of this year.",
+    "example_zh": "该工厂将于今年年底停止生产这一型号。",
+    "memory_tip": "谐音“息死”→气息停止→停止；常考 cease to do / cease doing"
+  },
+  {
+    "word": "cite",
+    "phonetic": "/saɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "引用、引证",
+      "举例说明",
+      "传唤、表彰"
+    ],
+    "example_en": "The professor cited several recent studies to support her argument about memory.",
+    "example_zh": "教授引用了数项近期研究来支持她关于记忆的论点。",
+    "memory_tip": "cite 与 cite（引用）同音于 sight/site，联想“点出”证据；名词 citation"
+  },
+  {
+    "word": "coincide",
+    "phonetic": "/ˌkəʊɪnˈsaɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "同时发生",
+      "一致、相符（with）",
+      "重合"
+    ],
+    "example_en": "Their views on environmental protection coincide to a remarkable degree.",
+    "example_zh": "他们在环境保护方面的观点高度一致。",
+    "memory_tip": "co-(共同)+in+cide(落下)→同时落下→同时发生；常考 coincide with"
+  },
+  {
+    "word": "compel",
+    "phonetic": "/kəmˈpel/",
+    "pos": "v.",
+    "meanings_zh": [
+      "强迫、迫使",
+      "使不得不"
+    ],
+    "example_en": "The worsening situation compelled the government to take immediate emergency measures.",
+    "example_zh": "不断恶化的形势迫使政府立即采取紧急措施。",
+    "memory_tip": "com-(加强)+pel(推)→推着走→强迫；名词 compulsion（强制）"
+  },
+  {
+    "word": "comprehend",
+    "phonetic": "/ˌkɒmprɪˈhend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "理解、领会",
+      "包含、包括"
+    ],
+    "example_en": "It is difficult for young children to comprehend abstract concepts such as justice.",
+    "example_zh": "幼儿很难理解正义这类抽象概念。",
+    "memory_tip": "com-(全部)+prehend(抓住)→全部抓住→理解；形容词 comprehensive"
+  },
+  {
+    "word": "condense",
+    "phonetic": "/kənˈdens/",
+    "pos": "v.",
+    "meanings_zh": [
+      "浓缩、压缩",
+      "凝结、冷凝",
+      "简缩（文章）"
+    ],
+    "example_en": "The editor asked the author to condense the report into fewer than five pages.",
+    "example_zh": "编辑要求作者把报告压缩到五页以内。",
+    "memory_tip": "con-(加强)+dense(密)→使变密→浓缩；与 dense 同源"
+  },
+  {
+    "word": "confess",
+    "phonetic": "/kənˈfes/",
+    "pos": "v.",
+    "meanings_zh": [
+      "承认、坦白",
+      "供认、认罪"
+    ],
+    "example_en": "The manager finally confessed that he had known about the problem for months.",
+    "example_zh": "经理最终承认他几个月前就知道这个问题了。",
+    "memory_tip": "con-(全部)+fess(说)→全说出来→坦白；名词 confession"
+  },
+  {
+    "word": "conserve",
+    "phonetic": "/kənˈsɜːv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "保护、保存（资源）",
+      "节约、节省"
+    ],
+    "example_en": "Turning off the lights when leaving the room helps conserve energy.",
+    "example_zh": "离开房间时关灯有助于节约能源。",
+    "memory_tip": "con-(加强)+serve(保持)→保持住→保存；名词 conservation 高频"
+  },
+  {
+    "word": "contemplate",
+    "phonetic": "/ˈkɒntəmpleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "沉思、仔细考虑",
+      "打算、考虑",
+      "凝视"
+    ],
+    "example_en": "She sat by the window, contemplating whether to accept the job offer.",
+    "example_zh": "她坐在窗边，考虑是否接受这份工作。",
+    "memory_tip": "con-(加强)+templ(庙宇)+ate→在庙里静思→沉思；名词 contemplation"
+  },
+  {
+    "word": "reconcile",
+    "phonetic": "/ˈrekənsaɪl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使和解、使协调",
+      "使一致、调和（矛盾）",
+      "使甘心接受（reconcile oneself to）"
+    ],
+    "example_en": "It is difficult to reconcile the demands of economic growth with the need to protect the environment.",
+    "example_zh": "很难将经济增长的需求与保护环境的需要协调起来。",
+    "memory_tip": "re-(再)+con-(共同)+cil(召集)→把双方再召集到一起→和解；完形常考 reconcile A with B（使A与B协调一致）。"
+  },
+  {
+    "word": "deviate",
+    "phonetic": "/ˈdiːvieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "偏离、背离（常规、标准）",
+      "违背、脱离（deviate from）"
+    ],
+    "example_en": "Researchers who deviate from established procedures risk having their findings rejected by the academic community.",
+    "example_zh": "偏离既定程序的研究人员可能会面临其研究结果被学术界否定的风险。",
+    "memory_tip": "de-(离开)+via(路)+-ate→离开大路→偏离；完形高频搭配 deviate from the norm/standard。"
+  },
+  {
+    "word": "prescribe",
+    "phonetic": "/prɪˈskraɪb/",
+    "pos": "v.",
+    "meanings_zh": [
+      "开处方、开药",
+      "规定、指定（规则、做法）"
+    ],
+    "example_en": "The regulations prescribe that all hazardous waste must be disposed of in accordance with strict safety standards.",
+    "example_zh": "该条例规定，所有危险废物都必须按照严格的安全标准进行处置。",
+    "memory_tip": "pre-(预先)+scrib(写)→预先写下→规定；与 subscribe（在下签名）、describe（描述）同根 scrib，完形常考 prescribe 表“规定”。"
+  },
+  {
+    "word": "ascribe",
+    "phonetic": "/əˈskraɪb/",
+    "pos": "v.",
+    "meanings_zh": [
+      "把……归因于（ascribe to）",
+      "认为……具有、把……归属于"
+    ],
+    "example_en": "Historians ascribe the decline of the empire to a combination of political corruption and economic stagnation.",
+    "example_zh": "历史学家将帝国的衰落归因于政治腐败与经济停滞的双重作用。",
+    "memory_tip": "a-(去)+scrib(写)→把原因写到某人头上→归因于；完形固定搭配 ascribe A to B，与 attribute A to B 同义辨析。"
+  },
+  {
+    "word": "renounce",
+    "phonetic": "/rɪˈnaʊns/",
+    "pos": "v.",
+    "meanings_zh": [
+      "放弃、抛弃（权利、信仰）",
+      "声明放弃、断绝关系"
+    ],
+    "example_en": "The scholar chose to renounce his academic post in protest against the university's controversial policies.",
+    "example_zh": "这位学者选择放弃其学术职位，以抗议该大学备受争议的政策。",
+    "memory_tip": "re-(回)+nounce(宣布)→宣布收回→放弃；同根 announce、pronounce，完形常考 renounce violence/claim（放弃暴力/主张）。"
+  },
+  {
+    "word": "denounce",
+    "phonetic": "/dɪˈnaʊns/",
+    "pos": "v.",
+    "meanings_zh": [
+      "公开谴责、指责",
+      "告发、揭发"
+    ],
+    "example_en": "Human rights groups were quick to denounce the government's decision to restrict press freedom.",
+    "example_zh": "人权组织迅速谴责政府限制新闻自由的决定。",
+    "memory_tip": "de-(向下、贬低)+nounce(宣布)→宣布贬低→谴责；与 announce、renounce、pronounce 同根，完形常考 denounce sb as...（谴责某人为……）。"
+  },
+  {
+    "word": "offset",
+    "phonetic": "/ˈɒfset/",
+    "pos": "v.",
+    "meanings_zh": [
+      "抵消、弥补",
+      "（n.）补偿、抵消物"
+    ],
+    "example_en": "The government introduced subsidies to offset the rising costs that small businesses were forced to bear.",
+    "example_zh": "政府出台了补贴政策，以抵消小企业被迫承担的不断上涨的成本。",
+    "memory_tip": "off(离开)+set(放置)→放到另一边去→抵消；完形常考 offset the cost/loss/effect（抵消成本/损失/影响）。"
+  },
+  {
+    "word": "outweigh",
+    "phonetic": "/ˌaʊtˈweɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "比……更重要、胜过",
+      "在重量上超过"
+    ],
+    "example_en": "Most experts argue that the long-term benefits of the reform far outweigh its short-term costs.",
+    "example_zh": "大多数专家认为，这项改革的长期收益远远大于其短期成本。",
+    "memory_tip": "out(超过)+weigh(称重)→重量上超过→胜过；完形常考 the benefits outweigh the risks/costs（利大于弊）。"
+  },
+  {
+    "word": "take",
+    "phonetic": "/teɪk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "take on 承担、呈现",
+      "take up 占据、开始从事",
+      "take in 理解、欺骗",
+      "take to 喜欢上、养成习惯"
+    ],
+    "example_en": "It took the committee several months to take in the full implications of the new policy before taking on further reforms.",
+    "example_zh": "委员会花了几个月才充分理解新政策的全部影响，之后才开始承担进一步的改革。",
+    "memory_tip": "完形高频搭配核心动词：take on 承担/呈现、take up 占据/从事、take in 理解/吸收/欺骗、take to 喜欢上。看到 take 先想搭配而非“拿”。"
+  },
+  {
+    "word": "account",
+    "phonetic": "/əˈkaʊnt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "account for 解释、占比",
+      "take into account 考虑到",
+      "on account of 由于",
+      "account n. 账户、描述"
+    ],
+    "example_en": "Researchers must account for regional differences when they take into account the fact that income gaps explain only part of the trend.",
+    "example_zh": "研究人员在考虑收入差距只能解释部分趋势这一事实时，必须对地区差异作出解释。",
+    "memory_tip": "完形高频固定搭配：account for 解释/占（比例）、take into account 把……考虑在内、on account of 由于。见到 account 先看后面介词，判断是“解释、占比”还是“考虑”。"
+  },
+  {
+    "word": "construe",
+    "phonetic": "/kənˈstruː/",
+    "pos": "v.",
+    "meanings_zh": [
+      "理解、解释（条文、行为等）",
+      "把……理解为、将……解释为"
+    ],
+    "example_en": "The court was asked to construe the ambiguous clause in a manner consistent with the original intention of the contracting parties.",
+    "example_zh": "法院被要求以符合缔约双方原意的方式解释这一含糊条款。",
+    "memory_tip": "con（共同）+strue（建造，同structure）→把含义“共同搭建”起来→解释、理解"
+  },
+  {
+    "word": "predispose",
+    "phonetic": "/ˌpriːdɪˈspəʊz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使预先倾向、使易于接受",
+      "使易患（某病）"
+    ],
+    "example_en": "Genetic inheritance may predispose certain individuals to develop the disease when exposed to adverse environmental conditions.",
+    "example_zh": "遗传因素可能使某些个体在接触不利环境条件时易患该疾病。",
+    "memory_tip": "pre（预先）+dispose（安排、使倾向）→预先安排好倾向→使预先倾向"
+  },
+  {
+    "word": "vitiate",
+    "phonetic": "/ˈvɪʃieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "损害、削弱（效力、质量）",
+      "使（契约、论据等）失效"
+    ],
+    "example_en": "Any agreement obtained through deception would be vitiated and therefore unenforceable in a court of law.",
+    "example_zh": "任何通过欺骗手段达成的协议都将归于无效，因而在法庭上不可强制执行。",
+    "memory_tip": "viti（缺陷，同vice）+ate→使产生缺陷→损害、使失效"
+  },
+  {
+    "word": "enjoin",
+    "phonetic": "/ɪnˈdʒɔɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "命令、吩咐、责令",
+      "（法律）禁止、阻止"
+    ],
+    "example_en": "The regulatory body may enjoin the company from pursuing practices that endanger public health and safety.",
+    "example_zh": "监管机构可责令该公司停止从事危害公众健康与安全的行为。",
+    "memory_tip": "en（使）+join（加入）→把命令“加入”某人身上→命令、责令"
+  },
+  {
+    "word": "abet",
+    "phonetic": "/əˈbet/",
+    "pos": "v.",
+    "meanings_zh": [
+      "教唆、怂恿",
+      "协助、支持（犯罪等）"
+    ],
+    "example_en": "Those who aid and abet the commission of fraud are equally liable under the provisions of the criminal code.",
+    "example_zh": "根据刑法条款，协助和教唆实施欺诈者同样负有责任。",
+    "memory_tip": "a+bet（打赌）→怂恿别人打赌→教唆、怂恿"
+  },
+  {
+    "word": "remonstrate",
+    "phonetic": "/ˈremənstreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "抗议、抗辩",
+      "规劝、告诫"
+    ],
+    "example_en": "Several scholars remonstrated against the government's decision to cut funding for basic scientific research.",
+    "example_zh": "几位学者对政府削减基础科学研究经费的决定提出了抗议。",
+    "memory_tip": "re（再）+monstr（显示，同demonstrate）→一再显示不满→抗议"
+  },
+  {
+    "word": "deprecate",
+    "phonetic": "/ˈdeprəkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "反对、不赞成",
+      "轻视、贬低"
+    ],
+    "example_en": "While some economists deprecate the policy as short-sighted, others regard it as a necessary temporary measure.",
+    "example_zh": "尽管一些经济学家批评该政策目光短浅，另一些人则认为它是必要的临时措施。",
+    "memory_tip": "de（向下）+prec（祈求，同pray）→祈求消灾→反对、贬低"
+  },
+  {
+    "word": "extol",
+    "phonetic": "/ɪkˈstəʊl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "赞颂、颂扬、推崇"
+    ],
+    "example_en": "The report extols the virtues of lifelong learning as a means of adapting to a rapidly changing economy.",
+    "example_zh": "该报告颂扬终身学习的美德，认为它是适应快速变化的经济的一种手段。",
+    "memory_tip": "ex（向外）+tol（举起，同tolerate原义）→向外举起→高高赞扬"
+  },
+  {
+    "word": "venerate",
+    "phonetic": "/ˈvenəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "尊敬、崇敬",
+      "崇拜、敬奉"
+    ],
+    "example_en": "In many cultures the elderly are venerated for the wisdom and experience they have accumulated over a lifetime.",
+    "example_zh": "在许多文化中，老年人因一生积累的智慧与经验而受到崇敬。",
+    "memory_tip": "vener（爱、敬，同Venus维纳斯）+ate→像敬爱维纳斯一样→崇敬"
+  },
+  {
+    "word": "abhor",
+    "phonetic": "/əbˈhɔː(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "憎恶、厌恶、痛恨"
+    ],
+    "example_en": "Most citizens abhor any form of corruption, yet few are willing to report it when they encounter it.",
+    "example_zh": "大多数公民憎恶任何形式的腐败，然而遇到腐败时却少有人愿意举报。",
+    "memory_tip": "ab（离开）+hor（战栗，同horror）→因战栗而想离开→憎恶"
+  },
+  {
+    "word": "lionize",
+    "phonetic": "/ˈlaɪənaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "把……奉为名人、吹捧",
+      "追捧、崇拜（名人）"
+    ],
+    "example_en": "The media tend to lionize successful entrepreneurs while ignoring the structural factors that made their rise possible.",
+    "example_zh": "媒体往往把成功的企业家奉为名人，却忽视使其崛起成为可能的结构性因素。",
+    "memory_tip": "lion（狮子）+ize→把某人捧成狮子般的英雄→追捧、吹捧"
+  },
+  {
+    "word": "vilify",
+    "phonetic": "/ˈvɪlɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "诽谤、诋毁、中伤"
+    ],
+    "example_en": "It is easy to vilify one's opponents, but far more difficult to engage seriously with their arguments.",
+    "example_zh": "诋毁对手很容易，但认真对待他们的论点要困难得多。",
+    "memory_tip": "vil（卑劣，同vile）+ify（使）→使显得卑劣→诋毁"
+  },
+  {
+    "word": "decry",
+    "phonetic": "/dɪˈkraɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "谴责、公开反对",
+      "贬低、诋毁"
+    ],
+    "example_en": "Critics decry the increasing commercialization of higher education as a threat to academic freedom.",
+    "example_zh": "批评者谴责高等教育日益商业化，认为这是对学术自由的威胁。",
+    "memory_tip": "de（向下）+cry（喊）→向下大喊→公开谴责"
+  },
+  {
+    "word": "belittle",
+    "phonetic": "/bɪˈlɪtl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "轻视、贬低、小看"
+    ],
+    "example_en": "To belittle the achievements of others is often a sign of one's own insecurity rather than genuine confidence.",
+    "example_zh": "贬低他人的成就往往是自己缺乏安全感而非真正自信的表现。",
+    "memory_tip": "be+little（小）→把别人说小→贬低、轻视"
+  },
+  {
+    "word": "aggrieve",
+    "phonetic": "/əˈɡriːv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使悲痛、使苦恼",
+      "使受到不公正对待、侵害"
+    ],
+    "example_en": "Workers who feel aggrieved by unfair treatment may seek redress through legal or institutional channels.",
+    "example_zh": "因受到不公正对待而感到委屈的工人可以通过法律或制度渠道寻求救济。",
+    "memory_tip": "ag（加强）+grieve（悲伤）→使人加重悲伤→使苦恼、侵害"
+  },
+  {
+    "word": "vex",
+    "phonetic": "/veks/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使烦恼、使恼火",
+      "使困惑、使伤脑筋"
+    ],
+    "example_en": "The question of how to distribute limited resources fairly continues to vex policymakers around the world.",
+    "example_zh": "如何公平分配有限资源这一问题始终困扰着世界各地的决策者。",
+    "memory_tip": "谐音“歪渴死”→又歪又渴要死→令人恼火、烦恼"
+  },
+  {
+    "word": "disconcert",
+    "phonetic": "/ˌdɪskənˈsɜːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使不安、使窘迫",
+      "打乱、使慌乱"
+    ],
+    "example_en": "The unexpected question disconcerted the speaker, who had prepared carefully for a very different line of inquiry.",
+    "example_zh": "这个意外的问题使演讲者感到窘迫，他原本为完全不同的提问方向做了充分准备。",
+    "memory_tip": "dis（否定）+concert（协调）→使不协调→使慌乱、使窘迫"
+  },
+  {
+    "word": "perturb",
+    "phonetic": "/pəˈtɜːb/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使不安、使烦恼",
+      "扰乱、干扰（正常状态）"
+    ],
+    "example_en": "The sudden fluctuation in the market perturbed investors who had assumed that prices would remain stable.",
+    "example_zh": "市场的突然波动使那些原本以为价格会保持稳定的投资者感到不安。",
+    "memory_tip": "per（彻底）+turb（搅动，同turbulent）→彻底搅动→扰乱、使不安"
+  },
+  {
+    "word": "disquiet",
+    "phonetic": "/dɪsˈkwaɪət/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使不安、使忧虑"
+    ],
+    "example_en": "The findings of the survey disquiet many educators, who see in them a decline in students' critical thinking.",
+    "example_zh": "调查结果使许多教育工作者感到不安，他们从中看到了学生批判性思维的下降。",
+    "memory_tip": "dis（否定）+quiet（安静）→心里不再安静→使不安"
+  },
+  {
+    "word": "antagonize",
+    "phonetic": "/ænˈtæɡənaɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使敌对、招致……的敌意",
+      "对抗、与……为敌"
+    ],
+    "example_en": "A diplomat must be careful not to antagonize potential allies while defending the interests of his own country.",
+    "example_zh": "外交官在维护本国利益时必须谨慎，不可招致潜在盟友的敌意。",
+    "memory_tip": "ant（反）+agon（斗争，同agony原义）→反过来斗争→使敌对"
+  },
+  {
+    "word": "mollify",
+    "phonetic": "/ˈmɒlɪfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "安抚、抚慰、使平静",
+      "缓和、减轻"
+    ],
+    "example_en": "The manager tried to mollify the angry customers by offering them a full refund and a formal apology.",
+    "example_zh": "经理试图通过提供全额退款和正式道歉来安抚愤怒的顾客。",
+    "memory_tip": "moll（软，同mellow）+ify（使）→使变软→安抚、缓和"
+  },
+  {
+    "word": "appease",
+    "phonetic": "/əˈpiːz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "安抚、平息（怒气）",
+      "姑息、绥靖"
+    ],
+    "example_en": "Concessions intended to appease an aggressor often serve only to encourage further demands.",
+    "example_zh": "旨在安抚侵略者的让步往往只会助长其进一步的要求。",
+    "memory_tip": "ap（加强）+pease（和平，同peace）→使和平→安抚、绥靖"
+  },
+  {
+    "word": "propitiate",
+    "phonetic": "/prəˈpɪʃieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "安抚、抚慰",
+      "使息怒、谋求……的好感"
+    ],
+    "example_en": "Ancient societies offered sacrifices to propitiate the gods and ensure a bountiful harvest.",
+    "example_zh": "古代社会献祭以安抚众神，确保获得丰收。",
+    "memory_tip": "propit（有利、吉祥）+ate→使变得有利→讨好、安抚"
+  },
+  {
+    "word": "castigate",
+    "phonetic": "/ˈkæstɪɡeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "严厉批评、斥责",
+      "惩罚、惩治"
+    ],
+    "example_en": "The editorial castigated the government for failing to address the root causes of the economic crisis.",
+    "example_zh": "该社论严厉批评政府未能解决经济危机的根本原因。",
+    "memory_tip": "cast（纯洁，同chaste）+igate→为使纯洁而责罚→斥责、惩治"
+  },
+  {
+    "word": "admonish",
+    "phonetic": "/ədˈmɒnɪʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "告诫、警告",
+      "温和地责备、劝诫"
+    ],
+    "example_en": "The professor admonished his students not to accept any theory without first examining the evidence.",
+    "example_zh": "教授告诫学生，不要未经检验证据就接受任何理论。",
+    "memory_tip": "ad（向）+mon（警告，同monitor）+ish→向人发出警告→告诫"
+  },
+  {
+    "word": "chide",
+    "phonetic": "/tʃaɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "责备、批评、责怪"
+    ],
+    "example_en": "She chided her colleague for submitting the report without checking the accuracy of the data.",
+    "example_zh": "她责备同事未核对数据准确性就提交了报告。",
+    "memory_tip": "谐音“拆的”→东西被拆了要受责备→责备"
+  },
+  {
+    "word": "upbraid",
+    "phonetic": "/ʌpˈbreɪd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "斥责、责骂、谴责"
+    ],
+    "example_en": "The senator was upbraided by his colleagues for making remarks that many considered offensive.",
+    "example_zh": "这位参议员因发表被许多人视为冒犯的言论而受到同事的斥责。",
+    "memory_tip": "up（向上）+braid（编织）→把罪状编起来往上抛→斥责"
+  },
+  {
+    "word": "reproach",
+    "phonetic": "/rɪˈprəʊtʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "责备、指责、非难"
+    ],
+    "example_en": "It would be unfair to reproach the young for their ignorance of history when so little is taught in schools.",
+    "example_zh": "在学校几乎不教历史的情况下，指责年轻人对历史无知是不公平的。",
+    "memory_tip": "re（回）+proach（靠近，同approach）→靠近回来算账→责备"
+  },
+  {
+    "word": "censure",
+    "phonetic": "/ˈsenʃə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "谴责、严厉批评",
+      "（正式）指责、弹劾"
+    ],
+    "example_en": "The committee voted to censure the official for conduct that it deemed incompatible with public office.",
+    "example_zh": "委员会投票决定谴责该官员，认定其行为与公职身份不相容。",
+    "memory_tip": "cens（评估，同census）+ure→对行为作负面评估→谴责"
+  },
+  {
+    "word": "reprimand",
+    "phonetic": "/ˈreprɪmɑːnd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "训斥、斥责、申斥"
+    ],
+    "example_en": "The officer was reprimanded for failing to follow the established procedures during the investigation.",
+    "example_zh": "该官员因在调查期间未遵循既定程序而受到训斥。",
+    "memory_tip": "re（再）+prim（首要，同primary）+and→用首要的威严再训一次→训斥"
+  },
+  {
+    "word": "rebuff",
+    "phonetic": "/rɪˈbʌf/",
+    "pos": "v.",
+    "meanings_zh": [
+      "断然拒绝、回绝"
+    ],
+    "example_en": "The proposal for a joint venture was rebuffed by the board, which preferred to maintain full control.",
+    "example_zh": "建立合资企业的提议被董事会断然拒绝，董事会更倾向于保持完全控制。",
+    "memory_tip": "re（回）+buff（喷气）→一口气把人喷回去→断然拒绝"
+  },
+  {
+    "word": "spurn",
+    "phonetic": "/spɜːn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "拒绝、摒弃、轻蔑地回绝"
+    ],
+    "example_en": "To spurn the advice of experts merely out of pride is to invite avoidable failure.",
+    "example_zh": "仅仅出于骄傲而摒弃专家的建议，无异于招致本可避免的失败。",
+    "memory_tip": "谐音“死不认”→死不承认、拒绝接受→摒弃"
+  },
+  {
+    "word": "disdain",
+    "phonetic": "/dɪsˈdeɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "鄙视、轻蔑、不屑"
+    ],
+    "example_en": "Scholars who disdain popular writing often fail to communicate the value of their research to the public.",
+    "example_zh": "鄙视通俗写作的学者往往无法向公众传达其研究的价值。",
+    "memory_tip": "dis（否定）+dain（价值，同dignity）→认为没有价值→鄙视"
+  },
+  {
+    "word": "contemn",
+    "phonetic": "/kənˈtem/",
+    "pos": "v.",
+    "meanings_zh": [
+      "蔑视、藐视、轻视"
+    ],
+    "example_en": "Those who contemn the rule of law undermine the very foundation upon which a free society rests.",
+    "example_zh": "蔑视法治者破坏的正是自由社会赖以存在的基础。",
+    "memory_tip": "con（共同）+temn（轻视，同contempt）→共同轻视→蔑视"
+  },
+  {
+    "word": "flout",
+    "phonetic": "/flaʊt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "公然藐视、无视（规则、法律）"
+    ],
+    "example_en": "Companies that flout environmental regulations should face penalties severe enough to deter future violations.",
+    "example_zh": "公然藐视环保法规的公司应面临足以遏制未来违规行为的严厉处罚。",
+    "memory_tip": "谐音“不老实”→不老实、公然无视规则→藐视"
+  },
+  {
+    "word": "transgress",
+    "phonetic": "/trænzˈɡres/",
+    "pos": "v.",
+    "meanings_zh": [
+      "违反、违犯（法律、道德）",
+      "越界、超越限度"
+    ],
+    "example_en": "To transgress the boundaries of accepted academic conduct is to risk one's reputation and career.",
+    "example_zh": "违反公认学术行为规范，就是拿自己的声誉和职业生涯冒险。",
+    "memory_tip": "trans（越过）+gress（走）→越过界限→违反、越界"
+  },
+  {
+    "word": "infringe",
+    "phonetic": "/ɪnˈfrɪndʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "侵犯、侵害（权利）",
+      "违反、违背（法律、规定）"
+    ],
+    "example_en": "The new legislation may infringe upon citizens' right to privacy if adequate safeguards are not put in place.",
+    "example_zh": "若不设立充分的保障措施，新立法可能会侵犯公民的隐私权。",
+    "memory_tip": "in（进入）+fringe（边缘）→进入别人的边缘→侵犯"
+  },
+  {
+    "word": "impinge",
+    "phonetic": "/ɪmˈpɪndʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "对……产生影响、冲击",
+      "侵犯、侵害（权利等）"
+    ],
+    "example_en": "Economic policies formulated in distant capitals inevitably impinge upon the daily lives of ordinary people.",
+    "example_zh": "在遥远首都制定的经济政策不可避免地会影响普通人的日常生活。",
+    "memory_tip": "im（进入）+pinge（撞击，同pungent）→撞进去→冲击、侵犯"
+  },
+  {
+    "word": "encroach",
+    "phonetic": "/ɪnˈkrəʊtʃ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "侵占、蚕食、逐步侵犯",
+      "侵占（时间、权利等）"
+    ],
+    "example_en": "Urban expansion continues to encroach upon the agricultural land that once sustained local communities.",
+    "example_zh": "城市扩张不断侵占曾经养活当地社区的农田。",
+    "memory_tip": "en（进入）+croach（钩，同crook）→用钩子逐步钩进来→蚕食"
+  },
+  {
+    "word": "supplant",
+    "phonetic": "/səˈplɑːnt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "取代、代替、排挤掉"
+    ],
+    "example_en": "Digital media have largely supplanted traditional newspapers as the primary source of daily news.",
+    "example_zh": "数字媒体已在很大程度上取代传统报纸，成为每日新闻的主要来源。",
+    "memory_tip": "sup（下面）+plant（种植）→在下面种一株把上面顶掉→取代"
+  },
+  {
+    "word": "usurp",
+    "phonetic": "/juːˈzɜːp/",
+    "pos": "v.",
+    "meanings_zh": [
+      "篡夺、篡位、霸占"
+    ],
+    "example_en": "The manager was accused of attempting to usurp the authority that rightfully belonged to the board.",
+    "example_zh": "该经理被指控企图篡夺本应属于董事会的权力。",
+    "memory_tip": "us（使用）+urp（夺取）→擅自使用夺取来的权力→篡夺"
+  },
+  {
+    "word": "wrest",
+    "phonetic": "/rest/",
+    "pos": "v.",
+    "meanings_zh": [
+      "夺取、夺走、强行取得",
+      "费力获得、歪曲（含义）"
+    ],
+    "example_en": "The rebels sought to wrest control of the region from the central government by force.",
+    "example_zh": "叛乱者试图以武力从中央政府手中夺取该地区的控制权。",
+    "memory_tip": "与wrist（手腕）同源→用手腕力量夺过来→夺取"
+  },
+  {
+    "word": "commandeer",
+    "phonetic": "/ˌkɒmənˈdɪə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "征用、强征（财产等）",
+      "霸占、强行占用"
+    ],
+    "example_en": "During the emergency the authorities were empowered to commandeer private vehicles for relief operations.",
+    "example_zh": "紧急状态下，当局有权征用私人车辆用于救援行动。",
+    "memory_tip": "command（命令）+eer→下令征用→强征、霸占"
+  },
+  {
+    "word": "appropriate",
+    "phonetic": "/əˈprəʊprieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "挪用、占用、侵吞",
+      "拨出（款项等）"
+    ],
+    "example_en": "Officials who appropriate public funds for personal use betray the trust placed in them by society.",
+    "example_zh": "挪用公款谋私的官员背叛了社会寄予他们的信任。",
+    "memory_tip": "ap（向）+propri（自己的，同property）→把公物变为己有→挪用"
+  },
+  {
+    "word": "expropriate",
+    "phonetic": "/eksˈprəʊprieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "征用、没收（财产）",
+      "剥夺……的所有权"
+    ],
+    "example_en": "The government threatened to expropriate the land if the owners refused to sell it voluntarily.",
+    "example_zh": "政府威胁说，如果业主拒绝自愿出售，就将征用这块土地。",
+    "memory_tip": "ex（向外）+propri（自己的）+ate→使财产脱离原主→没收"
+  },
+  {
+    "word": "confiscate",
+    "phonetic": "/ˈkɒnfɪskeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "没收、充公、查抄"
+    ],
+    "example_en": "Customs officers are authorized to confiscate goods that have been imported without proper documentation.",
+    "example_zh": "海关官员有权没收未按规定单证进口的货物。",
+    "memory_tip": "con（共同）+fisc（国库，同fiscal）+ate→收进国库→没收"
+  },
+  {
+    "word": "sequester",
+    "phonetic": "/sɪˈkwestə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使隔离、使隔绝",
+      "扣押、没收（财产）"
+    ],
+    "example_en": "The jury was sequestered for the duration of the trial to prevent outside influence on its deliberations.",
+    "example_zh": "陪审团在审判期间被隔离，以防外界对其评议产生影响。",
+    "memory_tip": "sequ（跟随）+ester→使人跟随其后不得离开→隔离、扣押"
+  },
+  {
+    "word": "perpetuate",
+    "phonetic": "/pəˈpetʃueɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使永久化、使长期延续（某种错误观念或制度）",
+      "使（记忆、传统）流传不朽"
+    ],
+    "example_en": "Such institutional arrangements, far from resolving the conflict, tend to perpetuate the very inequalities that the reformers originally set out to eliminate.",
+    "example_zh": "这类制度安排非但未能化解冲突，反而往往使改革者当初力图消除的那些不平等现象得以长期延续。",
+    "memory_tip": "词根 perpet-（=perpetual 永久的，来自拉丁 perpetuus）+ -uate（动词后缀），联想 perpetual（永恒的）→ 使其永恒 → 使永久化。"
+  },
+  {
+    "word": "predicate",
+    "phonetic": "/ˈpredɪkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使……以……为依据、把……建立在……之上（常与 on/upon 连用）",
+      "断言、断定（某事物属实）"
+    ],
+    "example_en": "The entire argument of the author is predicated on the assumption that human behaviour can be reduced to a set of measurable variables.",
+    "example_zh": "作者的整个论证是建立在这一假设之上的：人类行为可以被化约为一组可测量的变量。",
+    "memory_tip": "前缀 pre-（预先）+ 词根 dic-（说，如 dictate、predict）+ -ate，预先说出 → 断言；预先设定前提 → 以……为依据。"
+  },
+  {
+    "word": "suffuse",
+    "phonetic": "/səˈfjuːz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "（光、色、液体等）弥漫于、充满、布满（常与 with 连用，多用于被动语态）",
+      "（情感、气氛）充溢于……之中"
+    ],
+    "example_en": "A sense of quiet resignation seemed to suffuse the entire community as the long-awaited reforms were once again postponed indefinitely.",
+    "example_zh": "当人们期盼已久的改革再次被无限期推迟时，一种默默认命的情绪似乎弥漫在整个社区之中。",
+    "memory_tip": "前缀 suf-（=sub-，在 f 前同化，表“在下面、遍及”）+ 词根 fus-（倒、流，如 fuse、transfuse、profuse），从下面流遍各处 → 弥漫、充满。"
+  },
+  {
+    "word": "apposite",
+    "phonetic": "/ˈæpəzɪt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "贴切的、恰当的",
+      "切中要害的"
+    ],
+    "example_en": "The professor's apposite remark on the economic crisis illuminated the otherwise obscure passage in the dense theoretical text.",
+    "example_zh": "教授对经济危机那番切中要害的评论，照亮了这部晦涩理论著作中原本难以理解的一段。",
+    "memory_tip": "ap（加强）+ pos（放）+ ite → 正好放在点子上 → 贴切的；对比 opposite（放在对面→相反的），一个放对位置，一个放反位置。"
+  }
+]

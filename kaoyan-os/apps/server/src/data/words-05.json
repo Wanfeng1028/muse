@@ -1,0 +1,3089 @@
+[
+  {
+    "word": "accelerate",
+    "phonetic": "/əkˈseləreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "加速、加快",
+      "促进、推动（进程）"
+    ],
+    "example_en": "The rapid diffusion of digital technology has accelerated the pace of change in nearly every sector of the economy.",
+    "example_zh": "数字技术的迅速传播加快了几乎所有经济领域的变革步伐。",
+    "memory_tip": "ac（加强）+ celer（快速，源自拉丁语 celer）+ ate（动词后缀）→ 使更快。同根词 celerity（迅速）。"
+  },
+  {
+    "word": "acknowledge",
+    "phonetic": "/əkˈnɒlɪdʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "承认、认可（事实或错误）",
+      "确认收到",
+      "致谢、表示感谢"
+    ],
+    "example_en": "Even those who champion the reform acknowledge that its long-term consequences remain difficult to predict with confidence.",
+    "example_zh": "即便是改革的支持者也承认，其长远后果仍难以自信地预测。",
+    "memory_tip": "ac（加强）+ knowledge（知识、知道）→ 完全知道了→ 承认。联想：收到信后回一句 I acknowledge your letter。"
+  },
+  {
+    "word": "advocate",
+    "phonetic": "/ˈædvəkeɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "提倡、主张、拥护",
+      "（作名词）倡导者、辩护律师"
+    ],
+    "example_en": "Many economists advocate targeted subsidies rather than broad tax cuts as a means of stimulating demand.",
+    "example_zh": "许多经济学家主张用有针对性的补贴而非全面减税来刺激需求。",
+    "memory_tip": "ad（向）+ voc（声音、呼喊，如 vocal）+ ate → 向着某方发声→ 提倡、辩护。同根：vocation（使命）。"
+  },
+  {
+    "word": "appraise",
+    "phonetic": "/əˈpreɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "评估、估价",
+      "鉴定、评价（价值或质量）"
+    ],
+    "example_en": "It is notoriously difficult to appraise the true value of a work of art before the market has spoken.",
+    "example_zh": "在市场表态之前，评估一件艺术品的真实价值是出了名的困难。",
+    "memory_tip": "ap（加强）+ praise（价值，源自拉丁语 pretium）→ 给出价值判断→ 评估。同根：precious（珍贵的）、price。"
+  },
+  {
+    "word": "articulate",
+    "phonetic": "/ɑːˈtɪkjuleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "清晰表达、明确阐述",
+      "（作形容词）表达清楚的、口齿伶俐的"
+    ],
+    "example_en": "The author manages to articulate a complex philosophical argument in language accessible to the general reader.",
+    "example_zh": "作者用普通读者能理解的语言清晰阐述了复杂的哲学论点。",
+    "memory_tip": "artic（关节，如 article 里的小节）+ ulate → 把话语像关节一样一节节说清楚→ 清晰表达。"
+  },
+  {
+    "word": "attribute",
+    "phonetic": "/əˈtrɪbjuːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "把……归因于、把……归咎于",
+      "（作名词）属性、特征"
+    ],
+    "example_en": "Scientists attribute the sharp decline in insect populations to habitat loss and the widespread use of pesticides.",
+    "example_zh": "科学家将昆虫数量的急剧下降归因于栖息地丧失和杀虫剂的大规模使用。",
+    "memory_tip": "at（向）+ tribut（给予，如 tribute 贡品）→ 把原因给到某方→ 归因于。注意名词重音在前 /ˈætrɪbjuːt/。"
+  },
+  {
+    "word": "boost",
+    "phonetic": "/buːst/",
+    "pos": "v.",
+    "meanings_zh": [
+      "促进、提高、推动",
+      "增强（信心、信心等）",
+      "（作名词）提升、推动"
+    ],
+    "example_en": "Tax incentives designed to boost consumer spending often produce disappointing results in times of economic uncertainty.",
+    "example_zh": "旨在促进消费者支出的税收激励在经济不确定时期往往收效甚微。",
+    "memory_tip": "谐音“不死的”→ 让人“不死”就是给他打气、提升。联想 booster（助推器）。"
+  },
+  {
+    "word": "capture",
+    "phonetic": "/ˈkæptʃə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "捕捉、俘获",
+      "吸引（注意力）",
+      "准确表达、充分体现"
+    ],
+    "example_en": "The documentary succeeds in capturing the quiet desperation of workers whose jobs have been automated away.",
+    "example_zh": "这部纪录片成功捕捉到了那些工作被自动化取代的工人无声的绝望。",
+    "memory_tip": "capt（抓，如 captive 俘虏、capture the flag）+ ure → 抓住。同根：captive、captivate（迷住）。"
+  },
+  {
+    "word": "clarify",
+    "phonetic": "/ˈklærəfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "澄清、阐明",
+      "使清楚易懂"
+    ],
+    "example_en": "The spokesman was asked to clarify whether the new policy would apply to foreign firms operating in the country.",
+    "example_zh": "发言人被要求澄清新政策是否适用于在该国经营的外国公司。",
+    "memory_tip": "clar（清楚、明亮，如 clear）+ ify（使……）→ 使清楚。同根：clarity（清晰）、declare（宣布）。"
+  },
+  {
+    "word": "collaborate",
+    "phonetic": "/kəˈlæbəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "合作、协作（尤指创作或研究）",
+      "（贬义）与敌人勾结"
+    ],
+    "example_en": "Universities and technology firms increasingly collaborate on research that neither could afford to fund alone.",
+    "example_zh": "大学和科技公司越来越多地在双方都无法独立承担经费的研究上展开合作。",
+    "memory_tip": "col（共同）+ labor（劳动）+ ate → 一起劳动→ 合作。同根：elaborate（精心制作）、laboratory。"
+  },
+  {
+    "word": "compile",
+    "phonetic": "/kəmˈpaɪl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "编辑、汇编（资料）",
+      "（计算机）编译"
+    ],
+    "example_en": "The team spent three years compiling a database of every known species inhabiting the deep-sea floor.",
+    "example_zh": "该团队花了三年时间汇编了一个包含所有已知深海海底物种的数据库。",
+    "memory_tip": "com（共同）+ pile（堆）→ 把资料堆到一起→ 汇编。联想 pile up（堆积）。"
+  },
+  {
+    "word": "comply",
+    "phonetic": "/kəmˈplaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "遵守、服从（规定、要求）",
+      "照做、依从"
+    ],
+    "example_en": "Firms that fail to comply with the new emission standards face substantial fines and possible criminal charges.",
+    "example_zh": "未能遵守新排放标准的公司面临巨额罚款，甚至可能被刑事起诉。",
+    "memory_tip": "com（完全）+ ply（折叠、弯曲，如 ply 层）→ 完全弯下→ 服从。搭配 comply with 是考研高频。"
+  },
+  {
+    "word": "comprise",
+    "phonetic": "/kəmˈpraɪz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "包括、由……组成",
+      "构成、组成"
+    ],
+    "example_en": "The committee comprises twelve members drawn from industry, academia and consumer advocacy groups.",
+    "example_zh": "该委员会由来自产业界、学术界和消费者权益团体的十二名成员组成。",
+    "memory_tip": "com（一起）+ prise（抓，如 surprise 抓住）→ 抓在一起→ 包含。注意：整体 comprise 部分，不用被动。"
+  },
+  {
+    "word": "conceive",
+    "phonetic": "/kənˈsiːv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "构想、设想",
+      "怀孕",
+      "理解、想象"
+    ],
+    "example_en": "It is hard to conceive of a modern city that does not depend on a vast network of underground utilities.",
+    "example_zh": "很难设想一座不依赖庞大地下管网系统的现代城市。",
+    "memory_tip": "con（共同）+ ceive（拿、取，如 receive）→ 把想法拿到一起→ 构想。同根：concept、perceive。"
+  },
+  {
+    "word": "condemn",
+    "phonetic": "/kənˈdem/",
+    "pos": "v.",
+    "meanings_zh": [
+      "谴责、指责",
+      "判刑、宣判有罪",
+      "宣布……不适用、使注定"
+    ],
+    "example_en": "Human rights groups were quick to condemn the government's decision to restrict access to foreign news websites.",
+    "example_zh": "人权组织迅速谴责政府限制访问外国新闻网站的决定。",
+    "memory_tip": "con（加强）+ demn（损害、判罪，如 damn 该死）→ 宣判有罪、谴责。同根：damn、indemnity。"
+  },
+  {
+    "word": "confer",
+    "phonetic": "/kənˈfɜː(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "授予、赋予（荣誉、权利）",
+      "商议、协商"
+    ],
+    "example_en": "The new regulations confer considerable power on local authorities to inspect and close polluting factories.",
+    "example_zh": "新规赋予地方政府相当大的权力，以检查和关闭污染工厂。",
+    "memory_tip": "con（共同）+ fer（带来，如 transfer）→ 把东西带到一起→ 授予；一起带话→ 商议。"
+  },
+  {
+    "word": "confine",
+    "phonetic": "/kənˈfaɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "限制、局限（于某范围）",
+      "监禁、关押"
+    ],
+    "example_en": "The damage caused by the flood was largely confined to low-lying districts near the river.",
+    "example_zh": "洪水造成的破坏主要局限于河流附近的低洼地区。",
+    "memory_tip": "con（加强）+ fine（界限，如 define 划定边界）→ 加强边界→ 限制。同根：define、finite。"
+  },
+  {
+    "word": "conform",
+    "phonetic": "/kənˈfɔːm/",
+    "pos": "v.",
+    "meanings_zh": [
+      "符合、遵守（规则、标准）",
+      "顺从、随大流"
+    ],
+    "example_en": "Adolescents often feel intense pressure to conform to the tastes and habits of their peer group.",
+    "example_zh": "青少年常常感到巨大的压力，要顺从同龄群体的品味和习惯。",
+    "memory_tip": "con（共同）+ form（形状）→ 大家都变成同一形状→ 符合、顺从。搭配 conform to。"
+  },
+  {
+    "word": "confront",
+    "phonetic": "/kənˈfrʌnt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "面对、直面（困难、问题）",
+      "使面临、使遭遇",
+      "对抗、对峙"
+    ],
+    "example_en": "Governments around the world are being forced to confront the uncomfortable realities of an ageing population.",
+    "example_zh": "世界各国政府被迫面对人口老龄化带来的令人不安的现实。",
+    "memory_tip": "con（共同）+ front（前额、正面）→ 面对面→ 直面。联想 confront the enemy。"
+  },
+  {
+    "word": "convey",
+    "phonetic": "/kənˈveɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "传达、传递（思想、感情）",
+      "运送、运输",
+      "表达、表示"
+    ],
+    "example_en": "The report conveys a sense of urgency that is often missing from official statements on climate change.",
+    "example_zh": "这份报告传达出一种紧迫感，而官方关于气候变化的声明往往缺少这种感觉。",
+    "memory_tip": "con（共同）+ vey（路，如 voyage 航行）→ 一起上路→ 运送、传达。同根：voyage、convoy。"
+  },
+  {
+    "word": "convince",
+    "phonetic": "/kənˈvɪns/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使确信、说服",
+      "使认识到、使明白"
+    ],
+    "example_en": "It took years of painstaking research to convince the medical establishment that the bacterium caused ulcers.",
+    "example_zh": "经过多年艰苦研究，才使医学界相信这种细菌会导致溃疡。",
+    "memory_tip": "con（加强）+ vince（征服，如 invincible 无敌的）→ 彻底征服对方→ 使确信。同根：invincible、victory。"
+  },
+  {
+    "word": "curb",
+    "phonetic": "/kɜːb/",
+    "pos": "v.",
+    "meanings_zh": [
+      "控制、抑制、遏制",
+      "（作名词）起控制作用的事物、路缘"
+    ],
+    "example_en": "Central banks raised interest rates in an effort to curb inflation without triggering a sharp recession.",
+    "example_zh": "央行提高利率，力图在不引发急剧衰退的情况下抑制通货膨胀。",
+    "memory_tip": "本义是“勒马的缰绳”→ 引申为控制。联想 curb your enthusiasm（克制你的热情）。"
+  },
+  {
+    "word": "deduce",
+    "phonetic": "/dɪˈdjuːs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "推断、推论、演绎",
+      "演绎出（结论）"
+    ],
+    "example_en": "From the distribution of fossils, geologists can deduce how the continents drifted apart over millions of years.",
+    "example_zh": "根据化石的分布，地质学家可以推断出大陆在数百万年间是如何漂移分离的。",
+    "memory_tip": "de（向下）+ duce（引导，如 introduce）→ 从一般往下引出→ 推断。同根：deduct（扣除）、conduct。"
+  },
+  {
+    "word": "defy",
+    "phonetic": "/dɪˈfaɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "违抗、公然反抗",
+      "使难以（解释、解决）",
+      "向……挑战"
+    ],
+    "example_en": "The persistence of the phenomenon seems to defy any straightforward economic explanation.",
+    "example_zh": "这一现象的持续存在似乎无法用任何直截了当的经济学解释来说明。",
+    "memory_tip": "de（离开）+ fy（信任，如 fidelity 忠诚）→ 背弃信任→ 违抗。联想 defy description（难以形容）。"
+  },
+  {
+    "word": "depict",
+    "phonetic": "/dɪˈpɪkt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "描绘、描画",
+      "描述、刻画"
+    ],
+    "example_en": "The novel depicts a society in which personal ambition is constantly at odds with collective welfare.",
+    "example_zh": "这部小说描绘了一个个人抱负与集体福祉不断冲突的社会。",
+    "memory_tip": "de（加强）+ pict（画，如 picture、pictorial）→ 画出来→ 描绘。同根：picturesque。"
+  },
+  {
+    "word": "derive",
+    "phonetic": "/dɪˈraɪv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "获得、取得（from）",
+      "起源于、源自（from）",
+      "推导出、衍生"
+    ],
+    "example_en": "Many modern legal concepts derive from principles established in ancient Rome more than two thousand years ago.",
+    "example_zh": "许多现代法律概念源自两千多年前古罗马确立的原则。",
+    "memory_tip": "de（从……来）+ rive（河流，如 river）→ 从河里引水→ 源自、获得。搭配 derive from 高频。"
+  },
+  {
+    "word": "designate",
+    "phonetic": "/ˈdezɪɡneɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "指定、指派、命名",
+      "标明、标示"
+    ],
+    "example_en": "The government designated several coastal areas as protected zones where commercial fishing is strictly forbidden.",
+    "example_zh": "政府指定几个沿海地区为保护区，严禁商业捕鱼。",
+    "memory_tip": "de（加强）+ sign（标记）+ ate → 明确标记出来→ 指定。同根：sign、signal、significant。"
+  },
+  {
+    "word": "deteriorate",
+    "phonetic": "/dɪˈtɪəriəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "恶化、变坏",
+      "退化、衰退"
+    ],
+    "example_en": "Relations between the two countries deteriorated sharply after the disputed border incident last spring.",
+    "example_zh": "去年春天边界争端事件发生后，两国关系急剧恶化。",
+    "memory_tip": "deterior（更坏，拉丁语 deterior）+ ate → 变得更坏。联想 in a deteriorating situation。"
+  },
+  {
+    "word": "discard",
+    "phonetic": "/dɪsˈkɑːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "丢弃、抛弃",
+      "摒弃（想法、做法）"
+    ],
+    "example_en": "Consumers increasingly discard electronic devices long before they stop functioning, driven by fashion rather than necessity.",
+    "example_zh": "在时尚而非需求的驱动下，消费者越来越多地在电子设备还能使用很久之前就将其丢弃。",
+    "memory_tip": "dis（去掉）+ card（牌）→ 把没用的牌扔掉→ 丢弃。打牌时 discard 是扔牌动作。"
+  },
+  {
+    "word": "disclose",
+    "phonetic": "/dɪsˈkləʊz/",
+    "pos": "v.",
+    "meanings_zh": [
+      "披露、透露、公开",
+      "使显露、使暴露"
+    ],
+    "example_en": "The company was required by law to disclose any potential conflicts of interest to its shareholders.",
+    "example_zh": "法律要求该公司向股东披露任何潜在的利益冲突。",
+    "memory_tip": "dis（打开）+ close（关闭）→ 把关闭的东西打开→ 披露。对比 enclose（围住、附上）。"
+  },
+  {
+    "word": "disrupt",
+    "phonetic": "/dɪsˈrʌpt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "扰乱、打乱（秩序、进程）",
+      "使中断、破坏",
+      "颠覆（行业）"
+    ],
+    "example_en": "Ride-sharing apps have disrupted the traditional taxi industry in cities around the world.",
+    "example_zh": "拼车应用扰乱了世界各地城市的传统出租车行业。",
+    "memory_tip": "dis（分开）+ rupt（断裂，如 rupture 破裂）→ 把东西打裂→ 扰乱。同根：erupt（爆发）、corrupt。"
+  },
+  {
+    "word": "distort",
+    "phonetic": "/dɪˈstɔːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "扭曲、歪曲（事实、真相）",
+      "使变形、使失真"
+    ],
+    "example_en": "Selective reporting can seriously distort public perceptions of the risks associated with climate change.",
+    "example_zh": "选择性报道会严重扭曲公众对气候变化相关风险的认知。",
+    "memory_tip": "dis（加强）+ tort（扭，如 torture 折磨）→ 使劲扭→ 扭曲。同根：torture、retort（反驳）。"
+  },
+  {
+    "word": "dominate",
+    "phonetic": "/ˈdɒmɪneɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "支配、统治、主宰",
+      "占优势、占主导地位",
+      "（山、建筑）高耸于"
+    ],
+    "example_en": "A handful of technology giants now dominate the global market for cloud computing and digital advertising.",
+    "example_zh": "少数几家科技巨头如今主导着全球云计算和数字广告市场。",
+    "memory_tip": "domin（主人，如 dominus 拉丁语“主人”）+ ate → 当主人→ 支配。同根：dominant、dominion。"
+  },
+  {
+    "word": "embrace",
+    "phonetic": "/ɪmˈbreɪs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "欣然接受、拥抱（变革、观念）",
+      "包含、涵盖",
+      "抱、拥抱"
+    ],
+    "example_en": "Firms that failed to embrace digital transformation in the 2010s have largely disappeared from the market.",
+    "example_zh": "在2010年代未能拥抱数字化转型的公司大多已从市场上消失。",
+    "memory_tip": "em（进入）+ brace（手臂，如 bracelet 手镯）→ 用手臂抱住→ 拥抱、接受。"
+  },
+  {
+    "word": "emerge",
+    "phonetic": "/ɪˈmɜːdʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "出现、浮现",
+      "显露、暴露（事实）",
+      "（从困境中）摆脱出来"
+    ],
+    "example_en": "A growing body of evidence has emerged linking air pollution to cognitive decline in older adults.",
+    "example_zh": "越来越多的证据显示，空气污染与老年人认知能力下降之间存在关联。",
+    "memory_tip": "e（出）+ merge（沉、浸，如 submerge 淹没）→ 从水里冒出来→ 出现。同根：merge、submerge。"
+  },
+  {
+    "word": "enforce",
+    "phonetic": "/ɪnˈfɔːs/",
+    "pos": "v.",
+    "meanings_zh": [
+      "执行、实施（法律、规定）",
+      "强制、迫使"
+    ],
+    "example_en": "Without adequate funding, even the most carefully drafted environmental regulations are difficult to enforce.",
+    "example_zh": "没有充足的资金，即使起草得再仔细的环保法规也难以执行。",
+    "memory_tip": "en（使）+ force（力量）→ 使有力量→ 强制执行。同根：reinforce（加强）、forceful。"
+  },
+  {
+    "word": "enhance",
+    "phonetic": "/ɪnˈhɑːns/",
+    "pos": "v.",
+    "meanings_zh": [
+      "提高、增强（质量、价值）",
+      "增进、促进"
+    ],
+    "example_en": "Regular exercise has been shown to enhance both physical health and cognitive performance in middle age.",
+    "example_zh": "规律锻炼已被证明能增强中年人的身体健康和认知表现。",
+    "memory_tip": "en（使）+ hance（高，同 high 词源）→ 使变高→ 提高。联想 enhance reputation（提升声誉）。"
+  },
+  {
+    "word": "entail",
+    "phonetic": "/ɪnˈteɪl/",
+    "pos": "v.",
+    "meanings_zh": [
+      "需要、必然涉及、使必要",
+      "牵涉、包含"
+    ],
+    "example_en": "Any serious attempt to reform the pension system will entail difficult political choices.",
+    "example_zh": "任何认真改革养老金制度的尝试都将涉及艰难的政治抉择。",
+    "memory_tip": "en（使）+ tail（尾巴，源自拉丁语 talea 切割）→ 把尾巴拴上→ 牵涉、必然带来。"
+  },
+  {
+    "word": "evoke",
+    "phonetic": "/ɪˈvəʊk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "唤起、引起（记忆、情感）",
+      "使人想起"
+    ],
+    "example_en": "The mere smell of freshly cut grass can evoke vivid memories of childhood summers.",
+    "example_zh": "仅仅是新割青草的气味，就能唤起对童年夏天的鲜明记忆。",
+    "memory_tip": "e（出）+ voke（叫，如 vocal、provoke）→ 叫出来→ 唤起。同根：provoke（激起）、invoke（援引）。"
+  },
+  {
+    "word": "exaggerate",
+    "phonetic": "/ɪɡˈzædʒəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "夸大、夸张",
+      "使突出、使显得更严重"
+    ],
+    "example_en": "Media coverage tends to exaggerate rare risks while ignoring the far more common threats to public health.",
+    "example_zh": "媒体报道往往夸大罕见风险，却忽视对公共健康更为常见的威胁。",
+    "memory_tip": "ex（出）+ agger（堆积，拉丁语 agger 土堆）+ ate → 堆得超出实际→ 夸大。"
+  },
+  {
+    "word": "exert",
+    "phonetic": "/ɪɡˈzɜːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "施加（压力、影响）",
+      "运用、行使（权力、权威）",
+      "努力、尽力"
+    ],
+    "example_en": "Peer groups exert a powerful influence on the choices that adolescents make about health and risk.",
+    "example_zh": "同龄群体对青少年在健康和风险方面的选择施加着强大影响。",
+    "memory_tip": "ex（出）+ ert（编织、放置，如 insert）→ 把力量放出来→ 施加。搭配 exert influence/pressure on。"
+  },
+  {
+    "word": "facilitate",
+    "phonetic": "/fəˈsɪlɪteɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "促进、推动",
+      "使便利、使容易"
+    ],
+    "example_en": "The new digital platform is designed to facilitate collaboration between researchers in different countries.",
+    "example_zh": "这个新数字平台旨在促进不同国家研究人员之间的合作。",
+    "memory_tip": "facil（容易，如 facile、facility）+ itate → 使容易。同根：facile（容易的）、facility（设施）。"
+  },
+  {
+    "word": "formulate",
+    "phonetic": "/ˈfɔːmjuleɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "制定、规划（政策、方案）",
+      "构想、系统阐述（理论）",
+      "配制（配方）"
+    ],
+    "example_en": "It took the committee nearly two years to formulate a coherent strategy for reducing carbon emissions.",
+    "example_zh": "委员会花了近两年时间才制定出一套连贯的碳减排战略。",
+    "memory_tip": "formul（公式、形式，如 formula）+ ate → 按公式写出来→ 系统阐述、制定。"
+  },
+  {
+    "word": "generate",
+    "phonetic": "/ˈdʒenəreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "产生、引起",
+      "生成、发（电、热等）"
+    ],
+    "example_en": "The renewable energy sector is expected to generate millions of new jobs over the coming decade.",
+    "example_zh": "可再生能源行业预计将在未来十年创造数百万个新工作岗位。",
+    "memory_tip": "gener（产生、种类，如 gene、genus）+ ate → 产生。同根：generation、genetic、genesis。"
+  },
+  {
+    "word": "illustrate",
+    "phonetic": "/ˈɪləstreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "说明、阐明（观点）",
+      "举例说明",
+      "为……作插图"
+    ],
+    "example_en": "The case of Japan illustrates how quickly a society can age once birth rates fall below replacement level.",
+    "example_zh": "日本的案例说明了，一旦出生率降至更替水平以下，一个社会老龄化的速度会有多快。",
+    "memory_tip": "il（加强）+ lustr（光，如 luster 光泽）+ ate → 打光使其清楚→ 阐明。同根：lustrous。"
+  },
+  {
+    "word": "implement",
+    "phonetic": "/ˈɪmplɪment/",
+    "pos": "v.",
+    "meanings_zh": [
+      "实施、执行（政策、计划）",
+      "（作名词）工具、器具"
+    ],
+    "example_en": "The government has pledged to implement the reform in stages over the next five years.",
+    "example_zh": "政府已承诺在未来五年内分阶段实施这项改革。",
+    "memory_tip": "im（进入）+ ple（填满，如 complete）+ ment → 填满、完成→ 实施。同根：complete、deplete。"
+  },
+  {
+    "word": "cautious",
+    "phonetic": "/ˈkɔːʃəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "谨慎的、小心的",
+      "（对风险）审慎的、持保留态度的"
+    ],
+    "example_en": "Although the report predicts a modest recovery, economists remain cautious about the sustainability of such growth in the coming decade.",
+    "example_zh": "尽管该报告预测会出现温和复苏，经济学家们对这样的增长在未来十年是否可持续仍持谨慎态度。",
+    "memory_tip": "源自 caution（小心）+ -ous 形容词后缀；谐音“考试时”——考试时要 cautious（谨慎的）。"
+  },
+  {
+    "word": "impartial",
+    "phonetic": "/ɪmˈpɑːʃl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "公正的、不偏不倚的",
+      "中立的、客观的"
+    ],
+    "example_en": "A truly impartial judge must set aside personal sympathies and evaluate the evidence strictly according to the law.",
+    "example_zh": "一位真正公正的法官必须抛开个人同情，严格依照法律来评判证据。",
+    "memory_tip": "im-(不)+partial(偏袒的)=不偏袒的；partial 源自 part(部分)，只取一部分即偏袒。"
+  },
+  {
+    "word": "skeptical",
+    "phonetic": "/ˈskeptɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "怀疑的、持怀疑态度的",
+      "（对权威或说法）不轻信的"
+    ],
+    "example_en": "Many researchers remain skeptical of the claim that artificial intelligence will soon replace human creativity entirely.",
+    "example_zh": "许多研究人员对人工智能将很快完全取代人类创造力这一说法持怀疑态度。",
+    "memory_tip": "源自希腊语 skeptikos（好探究的）；联想 skeptic（怀疑论者）+ -al，考研阅读态度题高频词。"
+  },
+  {
+    "word": "inherent",
+    "phonetic": "/ɪnˈhɪərənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "内在的、固有的",
+      "与生俱来的、本身包含的"
+    ],
+    "example_en": "The author argues that inequality is inherent in the current economic system rather than a temporary side effect.",
+    "example_zh": "作者认为不平等是当前经济体制中固有的，而非暂时的副作用。",
+    "memory_tip": "in-(在内)+her(黏附)+-ent=黏在里面的，即内在的、固有的；与 inherit(继承)同根。"
+  },
+  {
+    "word": "prevalent",
+    "phonetic": "/ˈprevələnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "普遍的、流行的",
+      "盛行的、广泛存在的"
+    ],
+    "example_en": "The belief that hard work guarantees success is still prevalent in many societies despite growing evidence to the contrary.",
+    "example_zh": "尽管反证日益增多，努力就一定能成功的观念在许多社会中仍然盛行。",
+    "memory_tip": "pre-(在前)+val(强)+-ent=力量在前、压过一切的，即盛行的；对比 prevail(流行)。"
+  },
+  {
+    "word": "deficient",
+    "phonetic": "/dɪˈfɪʃnt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "缺乏的、不足的",
+      "有缺陷的、不完善的"
+    ],
+    "example_en": "The committee concluded that the current educational funding system is seriously deficient in serving rural communities.",
+    "example_zh": "委员会得出结论，当前的教育经费体制在为农村社区服务方面严重不足。",
+    "memory_tip": "de-(向下、不足)+fic(做)+-ient=没做够的，即缺乏的；同根词 efficiency、sufficient。"
+  },
+  {
+    "word": "negligible",
+    "phonetic": "/ˈneɡlɪdʒəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "微不足道的、可忽略的",
+      "不重要的"
+    ],
+    "example_en": "The study found that the impact of social media on teenage sleep was negligible compared with that of academic pressure.",
+    "example_zh": "研究发现，与学业压力相比，社交媒体对青少年睡眠的影响微不足道。",
+    "memory_tip": "neglect(忽视)+-ible=可以被忽视的，即微不足道的；neg-表否定。"
+  },
+  {
+    "word": "conspicuous",
+    "phonetic": "/kənˈspɪkjuəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "显眼的、引人注目的",
+      "明显的、显而易见的"
+    ],
+    "example_en": "The most conspicuous feature of the new policy is its emphasis on individual responsibility over collective welfare.",
+    "example_zh": "这项新政策最显著的特征是强调个人责任而非集体福利。",
+    "memory_tip": "con-(共同)+spic(看)+-uous=大家都看得到的，即显眼的；同根词 suspicious、perspective。"
+  },
+  {
+    "word": "profound",
+    "phonetic": "/prəˈfaʊnd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "深刻的、意义深远的",
+      "渊博的、深奥的"
+    ],
+    "example_en": "The invention of the printing press had a profound effect on the spread of knowledge and the decline of religious authority.",
+    "example_zh": "印刷机的发明对知识的传播和宗教权威的衰落产生了深远影响。",
+    "memory_tip": "pro-(向前)+found(底部)=深入到底的，即深刻的；对比 fundamental、foundation。"
+  },
+  {
+    "word": "vulnerable",
+    "phonetic": "/ˈvʌlnərəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "脆弱的、易受伤害的",
+      "易受攻击的、缺乏保护的"
+    ],
+    "example_en": "Elderly people living alone are particularly vulnerable to financial fraud and often lack the means to seek redress.",
+    "example_zh": "独居老人尤其容易遭受金融诈骗，而且往往缺乏寻求补偿的途径。",
+    "memory_tip": "源自拉丁语 vulnus(伤口)+-able=易受伤的；联想 vulnerability(脆弱性)。"
+  },
+  {
+    "word": "apparent",
+    "phonetic": "/əˈpærənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "明显的、显而易见的",
+      "表面上的、貌似的（未必真实）"
+    ],
+    "example_en": "The apparent decline in crime rates may reflect changes in reporting practices rather than any real improvement in public safety.",
+    "example_zh": "犯罪率表面上的下降可能反映的是报案方式的变化，而非公共安全的真正改善。",
+    "memory_tip": "ap-(朝向)+par(出现)+-ent=显现出来的；对比 appear，注意“表面上的”这一考研常考义。"
+  },
+  {
+    "word": "reluctant",
+    "phonetic": "/rɪˈlʌktənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "不情愿的、勉强的",
+      "（对某事）抗拒的、不愿配合的"
+    ],
+    "example_en": "Governments are often reluctant to impose strict regulations on industries that contribute heavily to tax revenue.",
+    "example_zh": "政府往往不愿对税收贡献巨大的行业实施严格监管。",
+    "memory_tip": "re-(反)+luct(挣扎)+-ant=反着挣扎的，即不情愿的；对比 reluctantly(勉强地)。"
+  },
+  {
+    "word": "plausible",
+    "phonetic": "/ˈplɔːzəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "貌似合理的、说得通的",
+      "看似可信的（但未必真实）"
+    ],
+    "example_en": "The theory sounds plausible, yet it fails to account for the mounting evidence that contradicts its central assumption.",
+    "example_zh": "该理论听起来貌似合理，却无法解释越来越多与其核心假设相矛盾的证据。",
+    "memory_tip": "plaus(鼓掌)+-ible=值得鼓掌的，即看似可信的；联想 applause(掌声)。"
+  },
+  {
+    "word": "coherent",
+    "phonetic": "/kəʊˈhɪərənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "连贯的、条理清晰的",
+      "一致的、协调的"
+    ],
+    "example_en": "The candidate's speech lacked a coherent argument, jumping from one topic to another without any logical transition.",
+    "example_zh": "这位候选人的演讲缺乏连贯的论证，从一个话题跳到另一个话题，毫无逻辑过渡。",
+    "memory_tip": "co-(共同)+her(黏)+-ent=黏在一起的，即连贯的；对比 adhere、inherent 同根。"
+  },
+  {
+    "word": "meticulous",
+    "phonetic": "/məˈtɪkjələs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "一丝不苟的、极仔细的",
+      "注重细节的"
+    ],
+    "example_en": "Her meticulous attention to detail enabled the research team to detect errors that others had overlooked for years.",
+    "example_zh": "她一丝不苟的细致使研究团队发现了他人多年来一直忽视的错误。",
+    "memory_tip": "源自拉丁语 metus(恐惧)→因恐惧而出错，故做事小心翼翼、一丝不苟。"
+  },
+  {
+    "word": "obscure",
+    "phonetic": "/əbˈskjʊə(r)/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "晦涩难懂的、不清楚的",
+      "鲜为人知的、无名的"
+    ],
+    "example_en": "The author's argument remains obscure because he relies on technical jargon that few readers can understand.",
+    "example_zh": "作者的论证晦涩难懂，因为他依赖的是很少有读者能理解的专业术语。",
+    "memory_tip": "ob-(在上)+scur(遮盖)+-e=被盖住的，即晦涩的；同根词 security(安全→遮盖)。"
+  },
+  {
+    "word": "intrinsic",
+    "phonetic": "/ɪnˈtrɪnsɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "内在的、本质的",
+      "固有的、本身的"
+    ],
+    "example_en": "The paper distinguishes between the intrinsic value of education and the purely economic benefits it may bring.",
+    "example_zh": "该论文区分了教育的内在价值与其可能带来的纯粹经济利益。",
+    "memory_tip": "intri-(在内)+nsic(源自 sec，切割)=切在内部的，即内在的；对比 extrinsic(外在的)。"
+  },
+  {
+    "word": "notorious",
+    "phonetic": "/nəʊˈtɔːriəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "臭名昭著的、声名狼藉的",
+      "以坏事闻名的"
+    ],
+    "example_en": "The region is notorious for its lax regulation, which has attracted numerous polluting industries over the past decade.",
+    "example_zh": "该地区因监管松懈而臭名昭著，过去十年间吸引了大量污染企业。",
+    "memory_tip": "not(知道)+-orious=被众人知道的，但多指因坏事闻名；对比 notable(著名的)。"
+  },
+  {
+    "word": "subtle",
+    "phonetic": "/ˈsʌtl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "微妙的、不易察觉的",
+      "细微的、精巧的"
+    ],
+    "example_en": "The study reveals a subtle but consistent shift in public attitudes toward immigration over the past twenty years.",
+    "example_zh": "该研究揭示了过去二十年间公众对移民态度上一种微妙但持续的变化。",
+    "memory_tip": "源自拉丁语 subtilis(精细的)，sub-(在下)+til(编织)=织得细密的，即微妙的。"
+  },
+  {
+    "word": "robust",
+    "phonetic": "/rəʊˈbʌst/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "强有力的、健全的",
+      "（论证或数据）可靠的、经得起检验的"
+    ],
+    "example_en": "The conclusions would be far more convincing if they were supported by robust data from a larger sample.",
+    "example_zh": "如果这些结论能得到来自更大样本的可靠数据支持，就会令人信服得多。",
+    "memory_tip": "谐音“骆驼背的”→像骆驼一样强壮的；考研中常修饰 evidence、economy。"
+  },
+  {
+    "word": "feasible",
+    "phonetic": "/ˈfiːzəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "可行的、行得通的",
+      "办得到的"
+    ],
+    "example_en": "The committee concluded that the proposal was theoretically sound but not financially feasible in the current climate.",
+    "example_zh": "委员会得出结论，该提案在理论上站得住脚，但在当前形势下财务上不可行。",
+    "memory_tip": "feas(做)+-ible=能做的，即可行的；同根词 feature、defeat。"
+  },
+  {
+    "word": "crucial",
+    "phonetic": "/ˈkruːʃl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "至关重要的、决定性的",
+      "关键的"
+    ],
+    "example_en": "Access to clean water is crucial to reducing infant mortality in developing countries, yet it is often overlooked.",
+    "example_zh": "获得清洁水源对降低发展中国家的婴儿死亡率至关重要，然而这一点却常被忽视。",
+    "memory_tip": "源自拉丁语 crux(十字、关键点)，十字路口即关键时刻；谐音“哭受”→关键到让人哭。"
+  },
+  {
+    "word": "cordial",
+    "phonetic": "/ˈkɔːdiəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "热诚的、友好的",
+      "诚恳的、真挚的"
+    ],
+    "example_en": "Despite their political differences, the two leaders maintained cordial relations throughout the negotiation process.",
+    "example_zh": "尽管存在政治分歧，两位领导人在整个谈判过程中仍保持着友好的关系。",
+    "memory_tip": "cord(心)+-ial=发自内心的，即热诚的；同根词 courage、concord(和谐)。"
+  },
+  {
+    "word": "hostile",
+    "phonetic": "/ˈhɒstaɪl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "敌对的、敌意的",
+      "（环境）不利的、恶劣的"
+    ],
+    "example_en": "The proposal met with a hostile reception from local residents who feared the plant would damage the environment.",
+    "example_zh": "该提案遭到当地居民的敌意对待，他们担心工厂会破坏环境。",
+    "memory_tip": "host(敌人)+-ile=敌人的；联想 hotel 与 hospital 同源，本义为招待，hostile 则转为敌意。"
+  },
+  {
+    "word": "indifferent",
+    "phonetic": "/ɪnˈdɪfrənt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "漠不关心的、冷淡的",
+      "平庸的、不出色的"
+    ],
+    "example_en": "Voters appear largely indifferent to the candidates' personal scandals, focusing instead on economic policies.",
+    "example_zh": "选民似乎对候选人的个人丑闻大体上漠不关心，而是更关注经济政策。",
+    "memory_tip": "in-(不)+different(不同)=没有区别、无所谓，即漠不关心的；考研态度题高频词。"
+  },
+  {
+    "word": "conventional",
+    "phonetic": "/kənˈvenʃənl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "传统的、常规的",
+      "因循守旧的、按惯例的"
+    ],
+    "example_en": "The author challenges conventional wisdom by arguing that urbanization does not necessarily improve living standards.",
+    "example_zh": "作者通过论证城市化并不必然提高生活水平，向传统观念发起挑战。",
+    "memory_tip": "convention(惯例)+-al=按惯例的；con-(共同)+vent(来)=大家一起来约定的，即传统。"
+  },
+  {
+    "word": "radical",
+    "phonetic": "/ˈrædɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "根本的、彻底的",
+      "激进的、极端的"
+    ],
+    "example_en": "Tackling climate change requires radical changes in how energy is produced, distributed, and consumed worldwide.",
+    "example_zh": "应对气候变化需要在全球范围内对能源的生产、分配和消费方式做出根本性的改变。",
+    "memory_tip": "radic(根)+-al=从根上的，即根本的；同根词 eradicate(根除)、radish(萝卜)。"
+  },
+  {
+    "word": "marginal",
+    "phonetic": "/ˈmɑːdʒɪnl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "微小的、微不足道的",
+      "边缘的、非主流的"
+    ],
+    "example_en": "The tax cut produced only a marginal improvement in consumer spending, disappointing those who had predicted a boom.",
+    "example_zh": "减税只带来了消费者支出的微小改善，令那些曾预测会繁荣的人失望。",
+    "memory_tip": "margin(边缘)+-al=边缘的、微小的；对比 marginalize(边缘化)。"
+  },
+  {
+    "word": "substantive",
+    "phonetic": "/səbˈstæntɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "实质性的、根本的",
+      "真实的、有实质内容的"
+    ],
+    "example_en": "The two sides held talks for months but failed to reach any substantive agreement on the core disputed issues.",
+    "example_zh": "双方会谈了数月，却未能在核心争议问题上达成任何实质性协议。",
+    "memory_tip": "substance(实质)+-ive=实质的；对比 substantial(大量的)。"
+  },
+  {
+    "word": "superficial",
+    "phonetic": "/ˌsuːpəˈfɪʃl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "表面的、浅薄的",
+      "肤浅的、不深刻的"
+    ],
+    "example_en": "The report offers only a superficial analysis of the crisis, ignoring the deeper structural causes at work.",
+    "example_zh": "该报告仅对危机作了肤浅的分析，忽视了起作用的结构性深层原因。",
+    "memory_tip": "super-(上)+fic(面)+-ial=只在表面上的，即肤浅的；同根词 surface、face。"
+  },
+  {
+    "word": "simultaneous",
+    "phonetic": "/ˌsɪmlˈteɪniəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "同时发生的、同步的",
+      "同时进行的"
+    ],
+    "example_en": "The study tracked simultaneous changes in temperature and rainfall across five continents over a fifty-year period.",
+    "example_zh": "该研究追踪了五大洲在五十年间气温与降雨量的同步变化。",
+    "memory_tip": "simul(相同)+-taneous=时间相同的，即同时的；同根词 simulate(模拟)、similar。"
+  },
+  {
+    "word": "apparently",
+    "phonetic": "/əˈpærəntli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "显然地、看来",
+      "据说、表面上"
+    ],
+    "example_en": "The experiment apparently succeeded, yet independent laboratories have so far failed to reproduce the reported results.",
+    "example_zh": "该实验表面上成功了，然而独立实验室迄今未能重现所报告的结果。",
+    "memory_tip": "apparent(明显的)+-ly；注意考研中常表“表面上、据称”，暗含作者质疑态度。"
+  },
+  {
+    "word": "remarkably",
+    "phonetic": "/rɪˈmɑːkəbli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "显著地、引人注目地",
+      "非常、相当"
+    ],
+    "example_en": "Remarkably, the ancient remedy has proven effective against certain bacterial infections that resist modern antibiotics.",
+    "example_zh": "引人注目的是，这种古老的疗法已被证明对某些抵抗现代抗生素的细菌感染有效。",
+    "memory_tip": "remark(评论、注意)+-able+-ly=值得注意地；阅读中常表作者惊讶或强调态度。"
+  },
+  {
+    "word": "largely",
+    "phonetic": "/ˈlɑːdʒli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "主要地、在很大程度上",
+      "大部分地"
+    ],
+    "example_en": "The decline in manufacturing jobs is largely attributable to automation rather than to competition from overseas.",
+    "example_zh": "制造业岗位的减少在很大程度上应归因于自动化，而非来自海外的竞争。",
+    "memory_tip": "large(大)+-ly=大部分地；考研逻辑题常用来限定程度，与 partly 对照。"
+  },
+  {
+    "word": "scarcely",
+    "phonetic": "/ˈskeəsli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "几乎不、简直不",
+      "勉强、刚刚"
+    ],
+    "example_en": "Scarcely had the new policy been implemented when critics began to question its long-term financial viability.",
+    "example_zh": "新政策刚一实施，批评者就开始质疑其长期财务可行性。",
+    "memory_tip": "scarce(稀少的)+-ly=稀少到几乎没有；注意 scarcely...when 倒装结构为考研语法考点。"
+  },
+  {
+    "word": "presumably",
+    "phonetic": "/prɪˈzjuːməbli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "大概、据推测",
+      "想必、可能"
+    ],
+    "example_en": "The manuscript was presumably written in the twelfth century, though no definitive evidence of its date has survived.",
+    "example_zh": "这份手稿大概写于十二世纪，尽管关于其年代的确凿证据没有留存下来。",
+    "memory_tip": "presume(推测)+-ably=可推测地；阅读中表示作者基于证据的推断，语气弱于 certainly。"
+  },
+  {
+    "word": "accordingly",
+    "phonetic": "/əˈkɔːdɪŋli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "因此、相应地",
+      "照着、依照情形"
+    ],
+    "example_en": "The data proved unreliable, and the researchers accordingly revised their conclusions and withdrew the original paper.",
+    "example_zh": "数据被证明不可靠，研究人员因此修改了结论并撤回了原论文。",
+    "memory_tip": "according(依照)+-ly=相应地；连接因果关系，逻辑题中标志结论。"
+  },
+  {
+    "word": "virtually",
+    "phonetic": "/ˈvɜːtʃuəli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "几乎、实际上",
+      "虚拟地、在网络空间"
+    ],
+    "example_en": "Virtually all participants reported improved concentration after the intervention, though the sample size was small.",
+    "example_zh": "几乎所有参与者都报告干预后注意力有所改善，尽管样本量很小。",
+    "memory_tip": "virtual(实际上的、虚拟的)+-ly；考研中常表“几乎”，与 literally 对照。"
+  },
+  {
+    "word": "ultimately",
+    "phonetic": "/ˈʌltɪmətli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "最终、归根结底",
+      "根本上"
+    ],
+    "example_en": "The success of any reform depends ultimately on whether ordinary citizens are willing to change their behaviour.",
+    "example_zh": "任何改革的成功最终取决于普通民众是否愿意改变自己的行为。",
+    "memory_tip": "ultimate(最终的)+-ly；阅读结论段高频标志词，提示作者最终立场。"
+  },
+  {
+    "word": "predominantly",
+    "phonetic": "/prɪˈdɒmɪnəntli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "主要地、占主导地位地",
+      "绝大多数情况下、总体上"
+    ],
+    "example_en": "The workforce in this region is predominantly composed of skilled immigrants who arrived over the past two decades.",
+    "example_zh": "该地区的劳动力主要由过去二十年间到来的技术移民构成。",
+    "memory_tip": "pre（在前）+ dominant（支配的）+ ly → 在前面支配着 → 占主导地；对比 predominant（adj. 主要的）。"
+  },
+  {
+    "word": "markedly",
+    "phonetic": "/ˈmɑːkɪdli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "显著地、明显地",
+      "引人注目地"
+    ],
+    "example_en": "Attitudes toward remote work have changed markedly since the pandemic forced companies to rethink office culture.",
+    "example_zh": "自疫情迫使企业重新思考办公文化以来，人们对远程工作的态度已发生显著变化。",
+    "memory_tip": "marked（有标记的、显著的）+ ly → 带着明显标记地 → 显著地；阅读中常与 differ/improve/increase 连用。"
+  },
+  {
+    "word": "invariably",
+    "phonetic": "/ɪnˈveəriəbli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "总是、一贯地",
+      "不变地、始终如一地"
+    ],
+    "example_en": "Studies show that consumers invariably overestimate the short-term benefits of new technology while ignoring its costs.",
+    "example_zh": "研究表明，消费者总是高估新技术的短期好处，却忽视其代价。",
+    "memory_tip": "in（不）+ vari（变化，如 vary）+ ably → 不发生变化的 → 总是、一贯地；比 always 更书面、更强调规律性。"
+  },
+  {
+    "word": "adversely",
+    "phonetic": "/ˈædvɜːsli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "不利地、有害地",
+      "逆向地、负面地"
+    ],
+    "example_en": "Prolonged exposure to social media has been shown to adversely affect adolescents' sleep patterns and mental health.",
+    "example_zh": "长期接触社交媒体已被证明会对青少年的睡眠模式与心理健康产生不利影响。",
+    "memory_tip": "adverse（不利的，ad- 向 + vers 转 → 转向对立面）+ ly → 不利地；常与 affect/impact 搭配。"
+  },
+  {
+    "word": "detrimental",
+    "phonetic": "/ˌdetrɪˈmentl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "有害的、不利的（对某事物造成损害）",
+      "（考研态度题）作者批判某做法时的负面评价词"
+    ],
+    "example_en": "The report warns that excessive screen time is detrimental to children's cognitive development and social skills.",
+    "example_zh": "该报告警告称，过多的屏幕时间对儿童的认知发展和社交能力有害。",
+    "memory_tip": "detriment（损害）+ -al（形容词后缀）；detri- 与 damage 的 d 音近似，联想“伤害性的一记”（detri ≈ 打锤）。"
+  },
+  {
+    "word": "notably",
+    "phonetic": "/ˈnəʊtəbli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "尤其、特别是（用于强调突出例证）",
+      "显著地、明显地"
+    ],
+    "example_en": "Several countries, notably Germany and Japan, have adopted policies to cope with their shrinking workforces.",
+    "example_zh": "若干国家，尤其是德国和日本，已采取政策来应对其不断萎缩的劳动力。",
+    "memory_tip": "notable（显著的）+ -ly；词根 not- 表“知道、标记”（如 note、notion），被特别“标注”出来即“尤其”。"
+  },
+  {
+    "word": "stringently",
+    "phonetic": "/ˈstrɪndʒəntli/",
+    "pos": "adv.",
+    "meanings_zh": [
+      "严格地、严厉地（指规则、标准执行）",
+      "（考研语境）以严苛条件施加限制地"
+    ],
+    "example_en": "Environmental regulations must be stringently enforced if the government genuinely intends to curb industrial pollution.",
+    "example_zh": "如果政府真心打算遏制工业污染，环境法规就必须得到严格执行。",
+    "memory_tip": "stringent（严格的）+ -ly；string- 与“string（绳子）”同源，联想“用绳子勒紧”，标准勒得紧即“严格地”。"
+  },
+  {
+    "word": "consensus",
+    "phonetic": "/kənˈsensəs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "共识、一致意见",
+      "舆论、普遍看法"
+    ],
+    "example_en": "Despite fierce debate among economists, a broad consensus has emerged that climate policy must not sacrifice economic growth.",
+    "example_zh": "尽管经济学家之间争论激烈，但已形成广泛共识：气候政策不能以牺牲经济增长为代价。",
+    "memory_tip": "con（共同）+ sens（感觉）+ us（我们）→ 我们共同的感觉就是“共识”。"
+  },
+  {
+    "word": "discrepancy",
+    "phonetic": "/dɪsˈkrepənsi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "差异、不一致",
+      "矛盾之处、出入"
+    ],
+    "example_en": "The auditor found a serious discrepancy between the figures reported by the company and those recorded by its regional branches.",
+    "example_zh": "审计人员发现该公司上报的数据与其地区分支机构记录的数据之间存在严重出入。",
+    "memory_tip": "dis（分离）+ crep（响声，如 creak 嘎吱响）+ ancy → 声音对不上，就是“不一致”。"
+  },
+  {
+    "word": "dilemma",
+    "phonetic": "/dɪˈlemə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "困境、进退两难",
+      "两难选择"
+    ],
+    "example_en": "Policymakers face a painful dilemma: tightening environmental rules may curb growth, while loosening them worsens pollution.",
+    "example_zh": "决策者面临痛苦的困境：收紧环保法规可能抑制增长，而放松法规又会加剧污染。",
+    "memory_tip": "di（二）+ lemma（前提）→ 两个前提都成立却互相冲突，即“两难”。"
+  },
+  {
+    "word": "paradigm",
+    "phonetic": "/ˈpærədaɪm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "范式、模式",
+      "典范、样板"
+    ],
+    "example_en": "The discovery of DNA fundamentally shifted the paradigm within which biologists had explained heredity for decades.",
+    "example_zh": "DNA 的发现从根本上改变了生物学家数十年来解释遗传所依循的范式。",
+    "memory_tip": "para（并列）+ deigm（显示）→ 并列展示出来的标准样式，即“范式”。"
+  },
+  {
+    "word": "prejudice",
+    "phonetic": "/ˈpredʒudɪs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "偏见、成见",
+      "歧视、不公"
+    ],
+    "example_en": "Social scientists argue that hidden prejudice, rather than explicit discrimination, now sustains inequality in many workplaces.",
+    "example_zh": "社会科学家认为，如今在许多职场中维系不平等的，是隐蔽的偏见而非公开的歧视。",
+    "memory_tip": "pre（预先）+ jud（判断）+ ice → 未了解就先下判断，即“偏见”。"
+  },
+  {
+    "word": "controversy",
+    "phonetic": "/ˈkɒntrəvɜːsi/",
+    "pos": "n.",
+    "meanings_zh": [
+      "争议、争论",
+      "争议事件、论战"
+    ],
+    "example_en": "The controversy over genetically modified crops has divided scientists, farmers and consumers for more than two decades.",
+    "example_zh": "关于转基因作物的争议已使科学家、农民和消费者分裂了二十多年。",
+    "memory_tip": "contro（相反）+ vers（转）+ y → 观点朝相反方向转，即“争论”。"
+  },
+  {
+    "word": "initiative",
+    "phonetic": "/ɪˈnɪʃətɪv/",
+    "pos": "n.",
+    "meanings_zh": [
+      "倡议、新方案",
+      "主动性、首创精神"
+    ],
+    "example_en": "The government launched an initiative to encourage rural students to pursue careers in science and engineering.",
+    "example_zh": "政府发起了一项倡议，鼓励农村学生从事科学与工程领域的职业。",
+    "memory_tip": "init（开始，如 initial）+ ative → 主动发起的行为，即“倡议、主动性”。"
+  },
+  {
+    "word": "incentive",
+    "phonetic": "/ɪnˈsentɪv/",
+    "pos": "n.",
+    "meanings_zh": [
+      "激励、刺激",
+      "奖励措施、诱因"
+    ],
+    "example_en": "Tax breaks serve as a powerful incentive for firms to invest in cleaner production technologies.",
+    "example_zh": "税收减免是企业投资更清洁生产技术的有力激励。",
+    "memory_tip": "in（进入）+ cent（唱，如 chant）+ ive → 唱歌鼓动你行动，即“激励”。"
+  },
+  {
+    "word": "discipline",
+    "phonetic": "/ˈdɪsəplɪn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "学科、科目",
+      "纪律、自律"
+    ],
+    "example_en": "Economics has gradually borrowed methods from psychology, blurring the boundary between the two disciplines.",
+    "example_zh": "经济学逐渐借鉴心理学的方法，模糊了这两个学科之间的界限。",
+    "memory_tip": "disciple（门徒）+ ine → 门徒须守的规矩与所学，引申为“纪律、学科”。"
+  },
+  {
+    "word": "doctrine",
+    "phonetic": "/ˈdɒktrɪn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "学说、教义",
+      "主义、信条"
+    ],
+    "example_en": "The doctrine that markets always correct themselves has been seriously questioned since the financial crisis.",
+    "example_zh": "自金融危机以来，市场总能自我修正这一信条受到了严重质疑。",
+    "memory_tip": "doc（教，如 doctor 博士）+ trine → 所教的内容，即“学说、教义”。"
+  },
+  {
+    "word": "hierarchy",
+    "phonetic": "/ˈhaɪərɑːki/",
+    "pos": "n.",
+    "meanings_zh": [
+      "等级制度、层级",
+      "统治集团、上层"
+    ],
+    "example_en": "Flat management structures are said to promote innovation more effectively than rigid corporate hierarchies.",
+    "example_zh": "据说扁平化管理结构比僵化的公司层级更能有效促进创新。",
+    "memory_tip": "hier（神圣，如 hieroglyph）+ archy（统治）→ 神职等级统治，即“等级制度”。"
+  },
+  {
+    "word": "infrastructure",
+    "phonetic": "/ˈɪnfrəstrʌktʃə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "基础设施、基础建设",
+      "公共设施体系"
+    ],
+    "example_en": "Decades of underinvestment have left the country's transport infrastructure unable to support rapid urban expansion.",
+    "example_zh": "数十年的投资不足使该国交通基础设施无力支撑城市的快速扩张。",
+    "memory_tip": "infra（下部）+ structure（结构）→ 位于下层支撑整体的结构，即“基础设施”。"
+  },
+  {
+    "word": "legislation",
+    "phonetic": "/ˌledʒɪsˈleɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "立法、法规",
+      "法律、制定法"
+    ],
+    "example_en": "New legislation on data privacy imposes heavy fines on firms that misuse personal information.",
+    "example_zh": "关于数据隐私的新立法对滥用个人信息的企业处以重罚。",
+    "memory_tip": "legis（法律，如 legal）+ lat（带来）+ ion → 带来法律的行为，即“立法”。"
+  },
+  {
+    "word": "revenue",
+    "phonetic": "/ˈrevənjuː/",
+    "pos": "n.",
+    "meanings_zh": [
+      "收入、收益",
+      "税收、岁入"
+    ],
+    "example_en": "Advertising revenue, once the lifeblood of newspapers, has migrated rapidly to digital platforms.",
+    "example_zh": "广告收入曾是报纸的命脉，如今已迅速转移到数字平台。",
+    "memory_tip": "re（回）+ ven（来，如 venture）+ ue → 收回来之物，即“收入”。"
+  },
+  {
+    "word": "capitalism",
+    "phonetic": "/ˈkæpɪtəlɪzəm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "资本主义",
+      "资本主义制度"
+    ],
+    "example_en": "Critics argue that unregulated capitalism widens the gap between the wealthy and the working class.",
+    "example_zh": "批评者认为，缺乏监管的资本主义拉大了富人与工人阶级之间的差距。",
+    "memory_tip": "capital（资本）+ ism（主义）→ 以资本为主导的主义，即“资本主义”。"
+  },
+  {
+    "word": "inflation",
+    "phonetic": "/ɪnˈfleɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "通货膨胀",
+      "膨胀、充气"
+    ],
+    "example_en": "Rising energy prices pushed inflation to its highest level in a decade, forcing the central bank to raise interest rates.",
+    "example_zh": "能源价格上涨将通胀推至十年来的最高水平，迫使央行加息。",
+    "memory_tip": "in（向内）+ flat（吹，如 inflate）+ ion → 货币被吹胀，即“通货膨胀”。"
+  },
+  {
+    "word": "depression",
+    "phonetic": "/dɪˈpreʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "萧条、不景气",
+      "抑郁、沮丧"
+    ],
+    "example_en": "The Great Depression of the 1930s reshaped economic theory and government policy for generations.",
+    "example_zh": "20 世纪 30 年代的大萧条重塑了几代人的经济理论与政府政策。",
+    "memory_tip": "de（向下）+ press（压）+ ion → 经济被向下压，即“萧条”。"
+  },
+  {
+    "word": "commodity",
+    "phonetic": "/kəˈmɒdəti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "商品、日用品",
+      "有价值的东西、有用之物"
+    ],
+    "example_en": "Clean air is increasingly treated as an economic commodity rather than a basic human right.",
+    "example_zh": "清洁空气正日益被视为一种经济商品，而非基本人权。",
+    "memory_tip": "com（共同）+ mod（尺度、方式）+ ity → 按统一尺度交易之物，即“商品”。"
+  },
+  {
+    "word": "consumerism",
+    "phonetic": "/kənˈsjuːmərɪzəm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "消费主义",
+      "保护消费者运动"
+    ],
+    "example_en": "Many psychologists blame consumerism for the growing sense of emptiness among wealthy young people.",
+    "example_zh": "许多心理学家将富裕年轻人日益增长的空虚感归咎于消费主义。",
+    "memory_tip": "consume（消费）+ er + ism（主义）→ 以消费为核心的信条，即“消费主义”。"
+  },
+  {
+    "word": "demographic",
+    "phonetic": "/ˌdeməˈɡræfɪk/",
+    "pos": "n.",
+    "meanings_zh": [
+      "人口统计数据",
+      "特定人群、人口群体"
+    ],
+    "example_en": "Shifting demographics mean that fewer workers must support a rapidly growing elderly population.",
+    "example_zh": "人口结构的变化意味着更少的劳动者要供养快速增长的老年人口。",
+    "memory_tip": "demo（人民，如 democracy）+ graph（写、记录）+ ic → 记录人口状况的数据，即“人口统计”。"
+  },
+  {
+    "word": "sustainability",
+    "phonetic": "/səˌsteɪnəˈbɪləti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "可持续性",
+      "可持续发展能力"
+    ],
+    "example_en": "Environmental economists insist that long-term sustainability must be weighed against short-term profits.",
+    "example_zh": "环境经济学家坚持认为，长期可持续性必须与短期利润相权衡。",
+    "memory_tip": "sus（在下）+ tain（握持，如 maintain）+ ability → 能自下托住不垮，即“可持续性”。"
+  },
+  {
+    "word": "biodiversity",
+    "phonetic": "/ˌbaɪəʊdaɪˈvɜːsəti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "生物多样性",
+      "物种多样性"
+    ],
+    "example_en": "Deforestation in tropical regions poses a severe threat to global biodiversity and to local livelihoods.",
+    "example_zh": "热带地区的森林砍伐对全球生物多样性和当地民生构成严重威胁。",
+    "memory_tip": "bio（生命）+ diversity（多样性）→ 生命的多样性，即“生物多样性”。"
+  },
+  {
+    "word": "ecosystem",
+    "phonetic": "/ˈiːkəʊsɪstəm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "生态系统",
+      "生态体系"
+    ],
+    "example_en": "Coral reefs support an astonishing variety of species and are among the most fragile ecosystems on Earth.",
+    "example_zh": "珊瑚礁养育着种类惊人的物种，是地球上最脆弱的生态系统之一。",
+    "memory_tip": "eco（生态，如 ecology）+ system（系统）→ 生态构成的系统，即“生态系统”。"
+  },
+  {
+    "word": "emission",
+    "phonetic": "/ɪˈmɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "排放、排放物",
+      "散发、发射"
+    ],
+    "example_en": "Cutting carbon emissions requires not only new technology but also profound changes in daily behaviour.",
+    "example_zh": "削减碳排放不仅需要新技术，还需要日常行为的深刻改变。",
+    "memory_tip": "e（出）+ miss（送，如 mission）+ ion → 送出去之物，即“排放”。"
+  },
+  {
+    "word": "conservation",
+    "phonetic": "/ˌkɒnsəˈveɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "保护、保育",
+      "节约、保存"
+    ],
+    "example_en": "Wildlife conservation programmes often conflict with the economic interests of local communities.",
+    "example_zh": "野生动物保护项目往往与当地社区的经济利益发生冲突。",
+    "memory_tip": "con（共同）+ serv（保存，如 preserve）+ ation → 共同保存，即“保护、节约”。"
+  },
+  {
+    "word": "pollutant",
+    "phonetic": "/pəˈluːtənt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "污染物",
+      "污染物质"
+    ],
+    "example_en": "Industrial pollutants discharged into rivers have contaminated drinking water for millions of residents.",
+    "example_zh": "排入河流的工业污染物已污染了数百万居民的饮用水。",
+    "memory_tip": "pollute（污染）+ ant（物）→ 起污染作用之物，即“污染物”。"
+  },
+  {
+    "word": "drought",
+    "phonetic": "/draʊt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "干旱、旱灾",
+      "长期缺乏"
+    ],
+    "example_en": "A prolonged drought in the region has forced farmers to abandon traditional crops and migrate to cities.",
+    "example_zh": "该地区持续的干旱迫使农民放弃传统作物并迁往城市。",
+    "memory_tip": "与 dry（干）同源，dr- 开头联想“干裂的土地”，即“干旱”。"
+  },
+  {
+    "word": "habitat",
+    "phonetic": "/ˈhæbɪtæt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "栖息地、生境",
+      "居住环境"
+    ],
+    "example_en": "Urban sprawl has destroyed the natural habitat of countless species, driving many to the brink of extinction.",
+    "example_zh": "城市无序扩张破坏了无数物种的自然栖息地，使许多物种濒临灭绝。",
+    "memory_tip": "habit（居住，如 inhabit）+ at → 居住之地，即“栖息地”。"
+  },
+  {
+    "word": "species",
+    "phonetic": "/ˈspiːʃiːz/",
+    "pos": "n.",
+    "meanings_zh": [
+      "物种",
+      "种类、类型"
+    ],
+    "example_en": "Scientists warn that invasive species can disrupt local ecosystems far more severely than pollution.",
+    "example_zh": "科学家警告说，入侵物种对当地生态系统的破坏可能远比污染严重。",
+    "memory_tip": "spec（看，如 spectacle）→ 外观可辨的一类生物，即“物种”。"
+  },
+  {
+    "word": "evolution",
+    "phonetic": "/ˌiːvəˈluːʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "进化、演化",
+      "演变、发展"
+    ],
+    "example_en": "The evolution of language reflects the way human societies have adapted to changing environments.",
+    "example_zh": "语言的演变反映了人类社会适应环境变化的方式。",
+    "memory_tip": "e（出）+ volv（滚、转，如 revolve）+ tion → 逐渐滚开展开，即“进化”。"
+  },
+  {
+    "word": "cognition",
+    "phonetic": "/kɒɡˈnɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "认知、认识",
+      "认知能力"
+    ],
+    "example_en": "Recent studies suggest that sleep deprivation impairs cognition far more than most people realise.",
+    "example_zh": "近期研究表明，睡眠不足对认知的损害远超大多数人的想象。",
+    "memory_tip": "co（共同）+ gnit（知道，如 recognize）+ ion → 共同知道的过程，即“认知”。"
+  },
+  {
+    "word": "perception",
+    "phonetic": "/pəˈsepʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "感知、知觉",
+      "看法、观念"
+    ],
+    "example_en": "Public perception of risk often bears little relation to the statistical evidence provided by experts.",
+    "example_zh": "公众对风险的感知往往与专家提供的统计证据几乎无关。",
+    "memory_tip": "per（贯穿）+ cept（拿，如 accept）+ ion → 全面抓住信息，即“感知”。"
+  },
+  {
+    "word": "intuition",
+    "phonetic": "/ˌɪntjuˈɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "直觉、直觉力",
+      "直观、直觉知识"
+    ],
+    "example_en": "Experienced doctors sometimes rely on intuition when the available evidence is ambiguous or incomplete.",
+    "example_zh": "当现有证据模糊或不完整时，经验丰富的医生有时会依靠直觉。",
+    "memory_tip": "in（内）+ tuit（看，如 tuition）+ ion → 向内一看便知，即“直觉”。"
+  },
+  {
+    "word": "motivation",
+    "phonetic": "/ˌməʊtɪˈveɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "动机、动力",
+      "积极性、干劲"
+    ],
+    "example_en": "Researchers found that intrinsic motivation predicts academic success better than family income.",
+    "example_zh": "研究人员发现，内在动机比家庭收入更能预测学业成功。",
+    "memory_tip": "mot（移动，如 motion）+ iv + ation → 推动行动的内在力量，即“动机”。"
+  },
+  {
+    "word": "trait",
+    "phonetic": "/treɪt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "特征、特质",
+      "性格特点"
+    ],
+    "example_en": "Psychologists debate whether personality traits remain stable throughout a person's adult life.",
+    "example_zh": "心理学家们争论人格特质是否在一个人的成年生活中保持稳定。",
+    "memory_tip": "tract（拉、拖）脱落元音 → 被“拉”出来的特征，即“特质”。"
+  },
+  {
+    "word": "aptitude",
+    "phonetic": "/ˈæptɪtjuːd/",
+    "pos": "n.",
+    "meanings_zh": [
+      "天资、才能",
+      "倾向、适应性"
+    ],
+    "example_en": "The test is designed to measure aptitude for abstract reasoning rather than acquired knowledge.",
+    "example_zh": "该测试旨在测量抽象推理的天资，而非后天习得的知识。",
+    "memory_tip": "apt（适合，如 adapt）+ itude → 天生适合做某事，即“天资”。"
+  },
+  {
+    "word": "conformity",
+    "phonetic": "/kənˈfɔːməti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "从众、顺从",
+      "一致性、符合"
+    ],
+    "example_en": "Experiments show that social pressure can produce striking conformity even among intelligent adults.",
+    "example_zh": "实验表明，社会压力甚至能在聪明的成年人中产生惊人的从众行为。",
+    "memory_tip": "con（共同）+ form（形状）+ ity → 大家都变成同一形状，即“从众”。"
+  },
+  {
+    "word": "solidarity",
+    "phonetic": "/ˌsɒlɪˈdærəti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "团结、一致",
+      "声援、相互支持"
+    ],
+    "example_en": "Workers across the industry expressed solidarity with those who had lost their jobs to automation.",
+    "example_zh": "整个行业的工人们向那些因自动化而失业的人表达了声援。",
+    "memory_tip": "solid（坚实）+ arity → 彼此关系坚实牢固，即“团结”。"
+  },
+  {
+    "word": "cohesion",
+    "phonetic": "/kəʊˈhiːʒn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "凝聚力、团结",
+      "连贯、结合"
+    ],
+    "example_en": "A shared language and common history are often said to strengthen social cohesion in diverse societies.",
+    "example_zh": "人们常说，共同的语言和历史能增强多元社会的社会凝聚力。",
+    "memory_tip": "co（共同）+ hes（粘，如 adhesive）+ ion → 粘在一起，即“凝聚力”。"
+  },
+  {
+    "word": "integration",
+    "phonetic": "/ˌɪntɪˈɡreɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "融合、一体化",
+      "整合、结合"
+    ],
+    "example_en": "The economic integration of Europe has brought prosperity but also resentment in poorer regions.",
+    "example_zh": "欧洲的经济一体化带来了繁荣，但在较贫困地区也引发了不满。",
+    "memory_tip": "integr（完整，如 integrity）+ ation → 使成为完整一体，即“融合”。"
+  },
+  {
+    "word": "segregation",
+    "phonetic": "/ˌseɡrɪˈɡeɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "隔离、分离",
+      "种族隔离"
+    ],
+    "example_en": "Racial segregation in housing continues to shape educational opportunities in many American cities.",
+    "example_zh": "住房方面的种族隔离继续塑造着许多美国城市的教育机会。",
+    "memory_tip": "se（分开）+ greg（群体，如 gregarious）+ ation → 把群体分开，即“隔离”。"
+  },
+  {
+    "word": "discrimination",
+    "phonetic": "/dɪˌskrɪmɪˈneɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "歧视、区别对待",
+      "辨别、鉴别力"
+    ],
+    "example_en": "Legislation alone cannot eliminate discrimination if employers' hidden biases remain unchallenged.",
+    "example_zh": "如果雇主的隐性偏见不受质疑，仅靠立法无法消除歧视。",
+    "memory_tip": "dis（分开）+ crimin（区分，如 criminal）+ ation → 加以区分对待，即“歧视”。"
+  },
+  {
+    "word": "inequality",
+    "phonetic": "/ˌɪnɪˈkwɒləti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "不平等、不均等",
+      "差距、悬殊"
+    ],
+    "example_en": "Rising income inequality has become a central issue in political debates across the developed world.",
+    "example_zh": "收入不平等的加剧已成为发达国家政治辩论的核心议题。",
+    "memory_tip": "in（不）+ equal（平等）+ ity → 不平等，即“不平等、差距”。"
+  },
+  {
+    "word": "welfare",
+    "phonetic": "/ˈwelfeə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "福利、福利制度",
+      "幸福、安康"
+    ],
+    "example_en": "Debate over welfare reform often pits fiscal responsibility against the needs of the poorest citizens.",
+    "example_zh": "关于福利改革的辩论常常将财政责任与最贫困公民的需求对立起来。",
+    "memory_tip": "well（好）+ fare（行进）→ 日子过得好，即“福利、安康”。"
+  },
+  {
+    "word": "intervention",
+    "phonetic": "/ˌɪntəˈvenʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "干预、介入",
+      "干涉、调停"
+    ],
+    "example_en": "Economists disagree about whether government intervention in markets helps or harms long-term growth.",
+    "example_zh": "经济学家对政府干预市场是有助于还是损害长期增长意见不一。",
+    "memory_tip": "inter（之间）+ vent（来，如 prevent）+ ion → 来到中间插手，即“干预”。"
+  },
+  {
+    "word": "regulation",
+    "phonetic": "/ˌreɡjuˈleɪʃn/",
+    "pos": "n.",
+    "meanings_zh": [
+      "法规、条例",
+      "管理、调控"
+    ],
+    "example_en": "Financial regulation failed to keep pace with the rapid innovation of complex derivative products.",
+    "example_zh": "金融监管未能跟上复杂衍生品快速创新的步伐。",
+    "memory_tip": "regul（规则，如 regular）+ ation → 制定规则加以管理，即“法规、调控”。"
+  },
+  {
+    "word": "productivity",
+    "phonetic": "/ˌprɒdʌkˈtɪvəti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "生产率、生产力",
+      "效率、产能"
+    ],
+    "example_en": "Investment in education and technology is widely regarded as the surest route to higher productivity.",
+    "example_zh": "对教育和技术的投资被广泛视为提高生产率最可靠的途径。",
+    "memory_tip": "product（产品）+ ivity → 产出产品的能力，即“生产率”。"
+  },
+  {
+    "word": "surveillance",
+    "phonetic": "/sɜːˈveɪləns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "监视、监控",
+      "监督、监察"
+    ],
+    "example_en": "The spread of facial recognition technology has raised fears of constant state surveillance.",
+    "example_zh": "人脸识别技术的普及引发了人们对国家持续监控的担忧。",
+    "memory_tip": "sur（在上）+ veil（看，如 vigil）+ ance → 从上方盯着看，即“监视”。"
+  },
+  {
+    "word": "propaganda",
+    "phonetic": "/ˌprɒpəˈɡændə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "宣传、鼓吹",
+      "宣传机构、宣传材料"
+    ],
+    "example_en": "Social media has made political propaganda cheaper to produce and harder to identify.",
+    "example_zh": "社交媒体使政治宣传的制作成本更低，也更难以识别。",
+    "memory_tip": "pro（向前）+ pag（固定，如 page）→ 把观点向前固定灌输，即“宣传”。"
+  },
+  {
+    "word": "accountability",
+    "phonetic": "/əˌkaʊntəˈbɪləti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "问责、责任",
+      "可说明性、透明度"
+    ],
+    "example_en": "Without genuine accountability, even well-designed environmental policies tend to fail in practice.",
+    "example_zh": "没有真正的问责机制，即便设计良好的环保政策也往往在实践中失败。",
+    "memory_tip": "account（算账、说明）+ ability → 能够就行为作出交代，即“问责”。"
+  },
+  {
+    "word": "address",
+    "phonetic": "/əˈdres/",
+    "pos": "v.",
+    "meanings_zh": [
+      "处理、应对（问题）",
+      "向……讲话",
+      "称呼",
+      "地址（熟义）"
+    ],
+    "example_en": "The government must address the root causes of inequality rather than merely alleviating its symptoms.",
+    "example_zh": "政府必须解决不平等的根源，而不能仅仅缓解其表象。",
+    "memory_tip": "考研常考的是动词'处理、应对'义，别只记'地址'。联想：把问题'ad-dress'（穿上衣服）→ 正式处理它。"
+  },
+  {
+    "word": "appreciate",
+    "phonetic": "/əˈpriːʃieɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "意识到、察觉（微妙差异）",
+      "感激（熟义）",
+      "欣赏（熟义）",
+      "增值"
+    ],
+    "example_en": "Few researchers fully appreciate the extent to which cultural bias shapes scientific inquiry.",
+    "example_zh": "很少有研究者充分意识到文化偏见在多大程度上塑造了科学探究。",
+    "memory_tip": "考研常考的是'意识到、体察'义，别只记'感激、欣赏'。词根 preci=price（价值），能看出价值即'意识到'。"
+  },
+  {
+    "word": "argue",
+    "phonetic": "/ˈɑːɡjuː/",
+    "pos": "v.",
+    "meanings_zh": [
+      "主张、论证（学术观点）",
+      "争吵（熟义）",
+      "表明、说明"
+    ],
+    "example_en": "The author argues that technological progress has paradoxically deepened social isolation.",
+    "example_zh": "作者主张，技术进步悖论性地加深了社会孤立。",
+    "memory_tip": "考研常考的是'主张、论证'义，别只记'争吵'。阅读题干中 argue 后面常接 that 从句，即作者的核心论点。"
+  },
+  {
+    "word": "arrest",
+    "phonetic": "/əˈrest/",
+    "pos": "v.",
+    "meanings_zh": [
+      "阻止、抑制（进程）",
+      "逮捕（熟义）",
+      "吸引（注意力）"
+    ],
+    "example_en": "Adequate funding could arrest the decline of public trust in scientific institutions.",
+    "example_zh": "充足的资金能够遏制公众对科学机构信任度的下滑。",
+    "memory_tip": "考研常考的是'遏制、阻止'义，别只记'逮捕'。ar-(加强)+rest(停) → 使停下 → 遏制。"
+  },
+  {
+    "word": "bent",
+    "phonetic": "/bent/",
+    "pos": "n.",
+    "meanings_zh": [
+      "倾向、癖好、天赋",
+      "弯曲的（熟义）",
+      "决意的"
+    ],
+    "example_en": "His early bent for mathematics was evident long before he entered university.",
+    "example_zh": "他早年对数学的偏好早在进入大学之前就已显露。",
+    "memory_tip": "考研常考的是名词'天赋、癖好'义，别只记形容词'弯曲的'。be bent on doing = 一心要做某事。"
+  },
+  {
+    "word": "book",
+    "phonetic": "/bʊk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "预订（座位、房间）",
+      "登记、记载",
+      "书（熟义）"
+    ],
+    "example_en": "The performance was fully booked weeks before the festival officially opened.",
+    "example_zh": "演出在艺术节正式开幕前几周就已被预订一空。",
+    "memory_tip": "考研常考的是动词'预订、登记'义，别只记名词'书'。源自古代把名字'写进册子'即预订。"
+  },
+  {
+    "word": "capital",
+    "phonetic": "/ˈkæpɪtl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "资本、资金",
+      "首都（熟义）",
+      "大写字母",
+      "adj. 首要的、极刑的"
+    ],
+    "example_en": "Social capital, no less than financial capital, determines a community's capacity for renewal.",
+    "example_zh": "社会资本与金融资本一样，决定着一个社区自我更新的能力。",
+    "memory_tip": "考研常考的是'资本'这一经济义，别只记'首都'。capital punishment = 死刑；capital 核心义为'首要的'。"
+  },
+  {
+    "word": "case",
+    "phonetic": "/keɪs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "论据、理由、案例",
+      "情况（熟义）",
+      "案件",
+      "病例"
+    ],
+    "example_en": "The economist made a compelling case for investing in early childhood education.",
+    "example_zh": "这位经济学家为投资幼儿教育提出了令人信服的论据。",
+    "memory_tip": "考研常考的是'论据、理由'义，别只记'情况、箱子'。make a case for = 为……提供论据。"
+  },
+  {
+    "word": "celebrate",
+    "phonetic": "/ˈselɪbreɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "赞美、颂扬",
+      "庆祝（熟义）",
+      "主持（仪式）"
+    ],
+    "example_en": "The essay celebrates the resilience of ordinary people in the face of institutional failure.",
+    "example_zh": "这篇文章赞美了普通民众在制度失灵面前的坚韧。",
+    "memory_tip": "考研常考的是'颂扬、赞美'义，别只记'庆祝'。词根 celebr=honour（荣誉），使人获得荣誉即颂扬。"
+  },
+  {
+    "word": "champion",
+    "phonetic": "/ˈtʃæmpiən/",
+    "pos": "v.",
+    "meanings_zh": [
+      "拥护、捍卫（主张）",
+      "冠军（熟义）",
+      "n. 捍卫者"
+    ],
+    "example_en": "She spent her career championing the rights of migrant workers in urban China.",
+    "example_zh": "她毕生致力于捍卫中国城市中农民工的权利。",
+    "memory_tip": "考研常考的是动词'拥护、倡导'义，别只记'冠军'。像冠军一样为某事而战 → 捍卫。"
+  },
+  {
+    "word": "charge",
+    "phonetic": "/tʃɑːdʒ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "指控、指责",
+      "收费（熟义）",
+      "充电",
+      "n. 职责、掌管"
+    ],
+    "example_en": "The report charges multinational corporations with evading environmental regulations abroad.",
+    "example_zh": "该报告指控跨国公司在海外逃避环境法规。",
+    "memory_tip": "考研常考的是'指控'与'掌管'义，别只记'收费'。in charge of = 负责；charge sb with sth = 指控某人。"
+  },
+  {
+    "word": "claim",
+    "phonetic": "/kleɪm/",
+    "pos": "v.",
+    "meanings_zh": [
+      "声称、断言",
+      "索取、认领（熟义）",
+      "夺去（生命）",
+      "n. 主张"
+    ],
+    "example_en": "Critics claim that the new policy will widen rather than narrow the urban-rural gap.",
+    "example_zh": "批评者声称，新政策将扩大而非缩小城乡差距。",
+    "memory_tip": "考研常考的是'声称、断言'义，别只记'索赔、认领'。阅读中 claim 常引出作者要驳斥的观点。"
+  },
+  {
+    "word": "coin",
+    "phonetic": "/kɔɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "创造（新词、新说法）",
+      "硬币（熟义）",
+      "铸造（货币）"
+    ],
+    "example_en": "The sociologist coined the term 'digital divide' to describe unequal access to technology.",
+    "example_zh": "这位社会学家创造了'数字鸿沟'一词来描述技术获取的不平等。",
+    "memory_tip": "考研常考的是'创造（新词）'义，别只记'硬币'。像铸币一样铸造出新词汇。"
+  },
+  {
+    "word": "company",
+    "phonetic": "/ˈkʌmpəni/",
+    "pos": "n.",
+    "meanings_zh": [
+      "陪伴、同伴",
+      "公司（熟义）",
+      "一群、一伙"
+    ],
+    "example_en": "Solitude, not the company of others, often proves most conducive to original thought.",
+    "example_zh": "独处而非他人陪伴，往往最有利于原创性思考。",
+    "memory_tip": "考研常考的是'陪伴、同伴'义，别只记'公司'。keep sb company = 陪伴某人；词根 com+pan(面包) → 一起吃面包的人。"
+  },
+  {
+    "word": "compound",
+    "phonetic": "/kəmˈpaʊnd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使加剧、使恶化",
+      "混合、合成（熟义）",
+      "n. 化合物"
+    ],
+    "example_en": "Rising energy costs compound the difficulties already facing small manufacturing firms.",
+    "example_zh": "能源成本上涨加剧了小型制造企业本已面临的困难。",
+    "memory_tip": "考研常考的是动词'使加剧'义，别只记'化合物'。把问题一层层叠加起来 → 使恶化。"
+  },
+  {
+    "word": "credit",
+    "phonetic": "/ˈkredɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "把……归功于",
+      "信任、相信",
+      "学分、信贷（熟义）"
+    ],
+    "example_en": "Researchers credit the decline in smoking to decades of sustained public campaigns.",
+    "example_zh": "研究者把吸烟率的下降归功于数十年持续的公共宣传。",
+    "memory_tip": "考研常考的是'归功于'义，别只记'信用、学分'。credit A with B / credit B to A = 把B归功于A。"
+  },
+  {
+    "word": "cultivate",
+    "phonetic": "/ˈkʌltɪveɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "培养、养成（习惯、关系）",
+      "耕种、栽培（熟义）",
+      "结交（朋友）"
+    ],
+    "example_en": "Universities should cultivate in students the habit of questioning received authority.",
+    "example_zh": "大学应当培养学生的质疑既有权威的习惯。",
+    "memory_tip": "考研常考的是'培养、养成'抽象义，别只记'耕种'。cult=耕作，引申为对人心的耕耘。"
+  },
+  {
+    "word": "digest",
+    "phonetic": "/daɪˈdʒest/",
+    "pos": "v.",
+    "meanings_zh": [
+      "消化、领悟（信息）",
+      "消化（食物，熟义）",
+      "n. 文摘"
+    ],
+    "example_en": "Readers need time to digest the dense arguments presented in the opening chapter.",
+    "example_zh": "读者需要时间来消化开篇章节中呈现的密集论证。",
+    "memory_tip": "考研常考的是'领悟、融会贯通'的比喻义，别只记'消化食物'。di-(分开)+gest(携带) → 把知识分解吸收。"
+  },
+  {
+    "word": "draft",
+    "phonetic": "/drɑːft/",
+    "pos": "n.",
+    "meanings_zh": [
+      "草稿、初稿",
+      "征兵、选拔（熟义）",
+      "v. 起草"
+    ],
+    "example_en": "The first draft of the treaty was so vague that it satisfied no party at the table.",
+    "example_zh": "条约初稿过于含糊，未能令谈判桌上的任何一方满意。",
+    "memory_tip": "考研常考的是'草稿、起草'义，别只记'征兵、穿堂风'。写作流程 draft → revise → finalize。"
+  },
+  {
+    "word": "drive",
+    "phonetic": "/draɪv/",
+    "pos": "n.",
+    "meanings_zh": [
+      "动力、动机、欲望",
+      "驾驶（熟义）",
+      "运动、努力",
+      "v. 驱使"
+    ],
+    "example_en": "A relentless drive for efficiency has eroded the quality of academic mentorship.",
+    "example_zh": "对效率的不懈追求侵蚀了学术导师制的质量。",
+    "memory_tip": "考研常考的是'内在动力'义，别只记'驾驶'。心理学中的 drive = 内驱力。"
+  },
+  {
+    "word": "employ",
+    "phonetic": "/ɪmˈplɔɪ/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使用、运用（方法、手段）",
+      "雇用（熟义）"
+    ],
+    "example_en": "Historians employ a variety of interpretive frameworks to make sense of the same evidence.",
+    "example_zh": "历史学家运用各种解释框架来理解同样的证据。",
+    "memory_tip": "考研常考的是'使用、运用'义，别只记'雇用'。employ a method = 采用某方法。"
+  },
+  {
+    "word": "even",
+    "phonetic": "/ˈiːvn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "均匀的、平稳的",
+      "偶数的",
+      "平的（熟义）",
+      "v. 使相等"
+    ],
+    "example_en": "The distribution of resources remains strikingly uneven across the country's provinces.",
+    "example_zh": "全国各省之间的资源分配仍然极不均衡。",
+    "memory_tip": "考研常考的是'均匀、平稳'义，别只记'甚至'。even 作形容词表'平、匀'。"
+  },
+  {
+    "word": "figure",
+    "phonetic": "/ˈfɪɡə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "人物、人士",
+      "数字（熟义）",
+      "身材、图形",
+      "v. 认为、估计"
+    ],
+    "example_en": "She remains a pivotal figure in the debate over artificial intelligence regulation.",
+    "example_zh": "她仍是人工智能监管辩论中的关键人物。",
+    "memory_tip": "考研常考的是'人物、人士'义，别只记'数字'。a public figure = 公众人物。"
+  },
+  {
+    "word": "fine",
+    "phonetic": "/faɪn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "细微的、微妙的",
+      "罚款（熟义）",
+      "好的、晴朗的"
+    ],
+    "example_en": "The distinction between persuasion and manipulation is often extremely fine.",
+    "example_zh": "说服与操纵之间的区别往往极其细微。",
+    "memory_tip": "考研常考的是'细微的、精密的'义，别只记'好的'。fine arts 美术；fine print 细则。"
+  },
+  {
+    "word": "firm",
+    "phonetic": "/fɜːm/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "坚定的、坚决的",
+      "牢固的（熟义）",
+      "n. 公司"
+    ],
+    "example_en": "The committee took a firm stance against any dilution of academic standards.",
+    "example_zh": "委员会坚决反对任何降低学术标准的做法。",
+    "memory_tip": "考研常考的是'坚定的'义，别只记'公司'。firm belief = 坚定信念。"
+  },
+  {
+    "word": "game",
+    "phonetic": "/ɡeɪm/",
+    "pos": "n.",
+    "meanings_zh": [
+      "猎物、野味",
+      "策略、把戏",
+      "游戏（熟义）"
+    ],
+    "example_en": "Poachers have driven several species of big game to the brink of extinction.",
+    "example_zh": "偷猎者已将数种大型猎物逼至灭绝边缘。",
+    "memory_tip": "考研常考的是'猎物、野味'义，别只记'游戏'。fair game = 可攻击的对象。"
+  },
+  {
+    "word": "ground",
+    "phonetic": "/ɡraʊnd/",
+    "pos": "n.",
+    "meanings_zh": [
+      "理由、根据",
+      "地面（熟义）",
+      "领域、范围",
+      "v. 以……为基础"
+    ],
+    "example_en": "There are strong grounds for believing that the survey's methodology was flawed.",
+    "example_zh": "有充分理由相信该调查的方法论存在缺陷。",
+    "memory_tip": "考研常考的是'理由、根据'义，别只记'地面'。on the grounds that = 以……为理由。"
+  },
+  {
+    "word": "hand",
+    "phonetic": "/hænd/",
+    "pos": "n.",
+    "meanings_zh": [
+      "帮助、援手",
+      "指针",
+      "手（熟义）",
+      "v. 递交"
+    ],
+    "example_en": "The new evidence lent a powerful hand to those challenging the official narrative.",
+    "example_zh": "新证据有力地帮助了那些质疑官方说法的人。",
+    "memory_tip": "考研常考的是'帮助、援手'义，别只记'手'。give sb a hand = 帮某人一把。"
+  },
+  {
+    "word": "hold",
+    "phonetic": "/həʊld/",
+    "pos": "v.",
+    "meanings_zh": [
+      "认为、主张",
+      "容纳、装得下",
+      "持有（熟义）",
+      "举行"
+    ],
+    "example_en": "Many economists hold that inflation is driven more by expectations than by money supply.",
+    "example_zh": "许多经济学家认为，通胀更多由预期而非货币供应推动。",
+    "memory_tip": "考研常考的是'认为、主张'义，别只记'握住'。hold that... = 持……观点。"
+  },
+  {
+    "word": "issue",
+    "phonetic": "/ˈɪʃuː/",
+    "pos": "n.",
+    "meanings_zh": [
+      "问题、议题",
+      "发行、期号",
+      "v. 发布、颁布",
+      "发放"
+    ],
+    "example_en": "The central issue is not whether to regulate, but how to regulate without stifling innovation.",
+    "example_zh": "核心问题不在于是否监管，而在于如何在不扼杀创新的前提下监管。",
+    "memory_tip": "考研常考的是'议题、争议点'义，别只记'发行'。阅读题干常问 the issue at stake。"
+  },
+  {
+    "word": "just",
+    "phonetic": "/dʒʌst/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "公正的、正义的",
+      "刚刚（熟义）",
+      "仅仅"
+    ],
+    "example_en": "A just society must guarantee equal access to basic health care for all citizens.",
+    "example_zh": "一个公正的社会必须保障所有公民平等获得基本医疗。",
+    "memory_tip": "考研常考的是形容词'公正的'义，别只记副词'刚刚'。just society = 正义社会。"
+  },
+  {
+    "word": "labor",
+    "phonetic": "/ˈleɪbə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "劳动力、劳工（总称）",
+      "劳动、工作（熟义）",
+      "分娩",
+      "v. 努力做"
+    ],
+    "example_en": "Cheap labor, once the region's chief advantage, is rapidly disappearing.",
+    "example_zh": "廉价劳动力曾是这一地区的主要优势，如今正迅速消失。",
+    "memory_tip": "考研常考的是'劳动力（总称）'义，别只记'劳动'。labor market = 劳动力市场。"
+  },
+  {
+    "word": "last",
+    "phonetic": "/lɑːst/",
+    "pos": "v.",
+    "meanings_zh": [
+      "持续、维持",
+      "最后的（熟义）",
+      "上一个的"
+    ],
+    "example_en": "The effects of early malnutrition can last well into a child's adult years.",
+    "example_zh": "早期营养不良的影响可能持续到孩子成年之后。",
+    "memory_tip": "考研常考的是动词'持续'义，别只记'最后的'。last for decades = 持续数十年。"
+  },
+  {
+    "word": "letter",
+    "phonetic": "/ˈletə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "（法律）字面意义",
+      "字母",
+      "信件（熟义）"
+    ],
+    "example_en": "Judges must interpret the law according to its spirit, not merely its letter.",
+    "example_zh": "法官必须依据法律的精神而非仅其字面意义来解释法律。",
+    "memory_tip": "考研常考的是'字面意义'义，别只记'信件、字母'。the letter of the law = 法律的字面条文。"
+  },
+  {
+    "word": "lot",
+    "phonetic": "/lɒt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "命运、运气",
+      "一批、一块地",
+      "大量（熟义）"
+    ],
+    "example_en": "He accepted his lot with a quiet dignity that impressed everyone around him.",
+    "example_zh": "他以一种令周围所有人动容的平静尊严接受了自己的命运。",
+    "memory_tip": "考研常考的是'命运、运气'义，别只记'许多'。draw lots = 抽签；one's lot in life = 人生际遇。"
+  },
+  {
+    "word": "matter",
+    "phonetic": "/ˈmætə/",
+    "pos": "v.",
+    "meanings_zh": [
+      "要紧、有重大影响",
+      "物质（熟义）",
+      "事情"
+    ],
+    "example_en": "What matters most is not the quantity of data but the quality of interpretation.",
+    "example_zh": "最重要的不是数据的数量，而是解读的质量。",
+    "memory_tip": "考研常考的是动词'要紧'义，别只记名词'物质、事情'。It matters little = 无关紧要。"
+  },
+  {
+    "word": "mean",
+    "phonetic": "/miːn/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "吝啬的、刻薄的",
+      "平均的",
+      "意味着（熟义）"
+    ],
+    "example_en": "It was mean of the company to cut benefits while awarding executives huge bonuses.",
+    "example_zh": "公司在给高管发放巨额奖金的同时削减福利，实在刻薄。",
+    "memory_tip": "考研常考的是形容词'吝啬、刻薄'义，别只记动词'意味着'。mean-spirited = 心胸狭隘的。"
+  },
+  {
+    "word": "meet",
+    "phonetic": "/miːt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "满足（需求、标准）",
+      "遇见（熟义）",
+      "应付、应对"
+    ],
+    "example_en": "The new facility was designed to meet the growing demand for clean energy research.",
+    "example_zh": "新设施旨在满足对清洁能源研究日益增长的需求。",
+    "memory_tip": "考研常考的是'满足（需求）'义，别只记'遇见'。meet the criteria = 符合标准。"
+  },
+  {
+    "word": "milk",
+    "phonetic": "/mɪlk/",
+    "pos": "v.",
+    "meanings_zh": [
+      "榨取、剥削",
+      "挤奶（熟义）"
+    ],
+    "example_en": "Some critics argue that the tax system milks the middle class to subsidize the wealthy.",
+    "example_zh": "一些批评者认为，税制榨取中产阶级以补贴富人。",
+    "memory_tip": "考研常考的是'榨取、剥削'义，别只记'牛奶、挤奶'。像挤奶一样榨干利益。"
+  },
+  {
+    "word": "novel",
+    "phonetic": "/ˈnɒvl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "新颖的、新奇的",
+      "小说（熟义）"
+    ],
+    "example_en": "The researchers proposed a novel approach to reducing carbon emissions in cement production.",
+    "example_zh": "研究者提出了一种减少水泥生产碳排放的新颖方法。",
+    "memory_tip": "考研常考的是形容词'新颖的'义，别只记名词'小说'。novel idea = 新奇的想法；同源 novelty。"
+  },
+  {
+    "word": "observe",
+    "phonetic": "/əbˈzɜːv/",
+    "pos": "v.",
+    "meanings_zh": [
+      "评论、指出",
+      "遵守（法规）",
+      "观察（熟义）",
+      "庆祝（节日）"
+    ],
+    "example_en": "The author observes that technological optimism often masks a deeper cultural anxiety.",
+    "example_zh": "作者评论道，技术乐观主义往往掩盖了更深层的文化焦虑。",
+    "memory_tip": "考研常考的是'评论、指出'与'遵守'义，别只记'观察'。observe that... = 评论说……。"
+  },
+  {
+    "word": "odd",
+    "phonetic": "/ɒd/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "奇数的",
+      "奇怪的（熟义）",
+      "临时的、单只的",
+      "……多"
+    ],
+    "example_en": "Odd as it may seem, the most creative work often emerges from strict constraints.",
+    "example_zh": "看似奇怪的是，最具创造性的作品往往诞生于严格的约束之中。",
+    "memory_tip": "考研常考的是'奇数的'义，别只记'奇怪的'。odd numbers 奇数；odds 概率、可能性。"
+  },
+  {
+    "word": "order",
+    "phonetic": "/ˈɔːdə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "秩序、条理",
+      "命令（熟义）",
+      "订单",
+      "等级、阶层"
+    ],
+    "example_en": "Social order depends less on coercion than on shared norms and mutual trust.",
+    "example_zh": "社会秩序与其说依赖强制，不如说依赖共同规范和相互信任。",
+    "memory_tip": "考研常考的是'秩序'义，别只记'命令、点菜'。law and order = 法律与秩序。"
+  },
+  {
+    "word": "paper",
+    "phonetic": "/ˈpeɪpə/",
+    "pos": "n.",
+    "meanings_zh": [
+      "论文、研究报告",
+      "试卷",
+      "纸（熟义）",
+      "报纸"
+    ],
+    "example_en": "Her paper on urban migration was cited by scholars across three different disciplines.",
+    "example_zh": "她关于城市移民的论文被三个不同学科的学者引用。",
+    "memory_tip": "考研常考的是'论文'义，别只记'纸'。学术语境中 paper = 学术论文。"
+  },
+  {
+    "word": "party",
+    "phonetic": "/ˈpɑːti/",
+    "pos": "n.",
+    "meanings_zh": [
+      "一方、当事人",
+      "政党（熟义）",
+      "聚会",
+      "一行人"
+    ],
+    "example_en": "The agreement binds both parties to reduce tariffs within five years.",
+    "example_zh": "该协议约束双方在五年内降低关税。",
+    "memory_tip": "考研常考的是'一方、当事人'义，别只记'聚会、政党'。the third party = 第三方。"
+  },
+  {
+    "word": "plant",
+    "phonetic": "/plɑːnt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "工厂、车间",
+      "植物（熟义）",
+      "v. 种植、安插"
+    ],
+    "example_en": "The automobile plant was forced to shut down after decades of declining demand.",
+    "example_zh": "这家汽车工厂在需求持续数十年下滑后被迫关闭。",
+    "memory_tip": "考研常考的是'工厂'义，别只记'植物'。manufacturing plant = 制造厂。"
+  },
+  {
+    "word": "practice",
+    "phonetic": "/ˈpræktɪs/",
+    "pos": "n.",
+    "meanings_zh": [
+      "惯例、做法",
+      "实践（熟义）",
+      "（医生、律师）开业"
+    ],
+    "example_en": "The practice of tipping varies widely across cultures and often confuses visitors.",
+    "example_zh": "给小费的做法在不同文化中差异很大，常令游客困惑。",
+    "memory_tip": "考研常考的是'惯例、做法'义，别只记'练习、实践'。common practice = 普遍做法。"
+  },
+  {
+    "word": "present",
+    "phonetic": "/prɪˈzent/",
+    "pos": "v.",
+    "meanings_zh": [
+      "呈现、提出（观点、证据）",
+      "赠送",
+      "present adj. 出席的、目前的（熟义）"
+    ],
+    "example_en": "The study presents compelling evidence that early intervention reduces later inequality.",
+    "example_zh": "该研究提出了有力证据，表明早期干预能减少日后的不平等。",
+    "memory_tip": "考研常考的是动词'呈现、提出'义，别只记形容词'目前的、出席的'。present a case = 陈述理由。"
+  },
+  {
+    "word": "minute",
+    "phonetic": "/maɪˈnjuːt/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "微小的、细微的",
+      "详细的、精密的",
+      "分钟、片刻（熟义）"
+    ],
+    "example_en": "The researchers paid minute attention to the minute changes in the subjects' brain activity during the experiment.",
+    "example_zh": "研究人员对实验过程中受试者大脑活动的细微变化给予了极为细致的关注。",
+    "memory_tip": "考研常考的是形容词义'微小的、细致的'，别只记名词'分钟'。联想：把minute拆成min(小)+ute，读音变为/maɪˈnjuːt/时就是'微小'，与minus同源。"
+  },
+  {
+    "word": "second",
+    "phonetic": "/sɪˈkɒnd/",
+    "pos": "v./adj./n.",
+    "meanings_zh": [
+      "支持、赞成（议案等）",
+      "附议、声援",
+      "第二的、次要的（熟义）",
+      "秒（熟义）"
+    ],
+    "example_en": "Several senior senators seconded the motion to investigate the alleged misuse of public funds.",
+    "example_zh": "几位资深参议员附议了调查涉嫌滥用公共资金的动议。",
+    "memory_tip": "考研常考的是动词'附议、支持'义，别只记'第二/秒'。联想：议会里有人提出动议，第二个人站出来说'I second'就是'我附议'。"
+  },
+  {
+    "word": "adapt",
+    "phonetic": "/əˈdæpt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "适应、使适应",
+      "改编、改写"
+    ],
+    "example_en": "Species that fail to adapt to abrupt shifts in climate may face extinction within a few decades, biologists warn.",
+    "example_zh": "生物学家警告，那些无法适应气候急剧变化的物种可能在几十年内面临灭绝。",
+    "memory_tip": "adapt 强调主动改变自身去适应环境；易混 adopt（收养、采纳）只差一个字母，adopt 是“拿过来”，adapt 是“改一改”。"
+  },
+  {
+    "word": "adept",
+    "phonetic": "/əˈdept/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "熟练的、精通的",
+      "擅长……的"
+    ],
+    "example_en": "She is remarkably adept at negotiating complex contracts, a skill that her rivals have long envied.",
+    "example_zh": "她非常擅长谈判复杂的合同，这一技能令她的对手们长期羡慕。",
+    "memory_tip": "adept 与 adapt 形近，但 adept 是“人很熟练”，adapt 是“去适应”；记住 expert 里也有 ept，都是“行家里手”。"
+  },
+  {
+    "word": "adopt",
+    "phonetic": "/əˈdɒpt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "采用、采纳",
+      "收养"
+    ],
+    "example_en": "The committee decided to adopt a stricter set of criteria for evaluating research proposals this year.",
+    "example_zh": "委员会决定今年采用一套更严格的标准来评审研究提案。",
+    "memory_tip": "adopt 是“拿过来用/收进来养”；易混 adapt（适应、改编），两者只差一个元音，可记“o 像张开的手去拿”。"
+  },
+  {
+    "word": "sensitive",
+    "phonetic": "/ˈsensətɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "敏感的、易受伤害的",
+      "灵敏的、能感知的"
+    ],
+    "example_en": "Investors remain highly sensitive to any signal that the central bank might raise interest rates again.",
+    "example_zh": "投资者对央行可能再次加息的任何信号都高度敏感。",
+    "memory_tip": "sensitive 是“易受外界影响的敏感”；易混 sensible（明智的、通情达理的），sensible 讲理性，sensitive 讲感受。"
+  },
+  {
+    "word": "sensible",
+    "phonetic": "/ˈsensəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "明智的、合理的",
+      "意识到的、察觉到的"
+    ],
+    "example_en": "It would be sensible to consult a lawyer before signing such a long-term lease agreement.",
+    "example_zh": "在签署这样一份长期租赁协议之前咨询律师是明智的。",
+    "memory_tip": "sensible 源于 sense“判断力”，指人“明智”；易混 sensitive（敏感的），一个讲脑子，一个讲神经。"
+  },
+  {
+    "word": "considerable",
+    "phonetic": "/kənˈsɪdərəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "相当大的、可观的",
+      "值得考虑的、重要的"
+    ],
+    "example_en": "The new policy has attracted considerable criticism from economists who doubt its long-term feasibility.",
+    "example_zh": "新政策招致了经济学家的大量批评，他们怀疑其长期可行性。",
+    "memory_tip": "considerable 修饰“数量/程度”之大；易混 considerate（体贴的、考虑周到的），后者修饰人的态度。"
+  },
+  {
+    "word": "considerate",
+    "phonetic": "/kənˈsɪdərət/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "体贴的、考虑周到的",
+      "为他人着想的"
+    ],
+    "example_en": "It was considerate of him to postpone the meeting when he learned that his colleague was ill.",
+    "example_zh": "得知同事生病后他推迟了会议，真是体贴周到。",
+    "memory_tip": "considerate 形容人“替别人着想”；易混 considerable（相当大的），-ate 指人，-able 指程度。"
+  },
+  {
+    "word": "industrious",
+    "phonetic": "/ɪnˈdʌstriəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "勤奋的、勤劳的",
+      "努力工作的"
+    ],
+    "example_en": "The industrious students who reviewed their notes daily outperformed their peers in the final examination.",
+    "example_zh": "那些每天复习笔记的勤奋学生在期末考试中超过了同龄人。",
+    "memory_tip": "industrious 是“人勤劳”；易混 industrial（工业的），前者形容人，后者形容产业。"
+  },
+  {
+    "word": "industrial",
+    "phonetic": "/ɪnˈdʌstriəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "工业的、产业的",
+      "从事工业的"
+    ],
+    "example_en": "Rapid industrial expansion in the region has placed enormous pressure on local water and energy supplies.",
+    "example_zh": "该地区工业的快速扩张给当地的水和能源供应带来了巨大压力。",
+    "memory_tip": "industrial 指“工业的、产业的”；易混 industrious（勤奋的），-ial 与产业挂钩，-ious 与人的品性挂钩。"
+  },
+  {
+    "word": "respectful",
+    "phonetic": "/rɪˈspektfl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "恭敬的、表示尊重的",
+      "有礼貌的"
+    ],
+    "example_en": "Students are expected to remain respectful toward their professors even when they disagree with their views.",
+    "example_zh": "即使不同意教授的观点，学生也应保持对教授的尊重。",
+    "memory_tip": "respectful 是“对别人表示尊重”；易混 respectable（值得尊敬的、体面的），一个主动敬人，一个被动受敬。"
+  },
+  {
+    "word": "respectable",
+    "phonetic": "/rɪˈspektəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "体面的、值得尊敬的",
+      "相当好的、不错的"
+    ],
+    "example_en": "He earns a respectable salary as a senior engineer, though he often complains about the long hours.",
+    "example_zh": "作为高级工程师，他挣着相当不错的薪水，尽管他常抱怨工作时间长。",
+    "memory_tip": "respectable 是“值得别人尊敬的、体面的”；易混 respectful（恭敬的），-able 受敬，-ful 敬人。"
+  },
+  {
+    "word": "imaginary",
+    "phonetic": "/ɪˈmædʒɪnəri/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "想象中的、虚构的",
+      "不真实的"
+    ],
+    "example_en": "The child invented an imaginary friend to cope with the loneliness of moving to a new city.",
+    "example_zh": "这个孩子编造了一个想象中的朋友，以应对搬到新城市后的孤独。",
+    "memory_tip": "imaginary 指“虚构的、不存在的”；易混 imaginative（富于想象力的），一个讲虚构之物，一个讲创造之能。"
+  },
+  {
+    "word": "imaginative",
+    "phonetic": "/ɪˈmædʒɪnətɪv/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "富于想象力的、有创意的",
+      "虚构的、想象的"
+    ],
+    "example_en": "The director is known for his imaginative use of light and shadow in depicting urban isolation.",
+    "example_zh": "这位导演以在描绘都市孤独时富有想象力的光影运用而闻名。",
+    "memory_tip": "imaginative 形容人/作品“有想象力”；易混 imaginary（虚构的），-tive 表能力，-ary 表虚构。"
+  },
+  {
+    "word": "economical",
+    "phonetic": "/ˌiːkəˈnɒmɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "节约的、省钱的",
+      "经济实惠的"
+    ],
+    "example_en": "Smaller cars are more economical to run, which explains their growing popularity among city dwellers.",
+    "example_zh": "小型车用起来更省钱，这解释了它们为何在城市居民中日益受欢迎。",
+    "memory_tip": "economical 指“省钱、划算”；易混 economic（经济学的、经济上的），-ical 讲节约，-ic 讲经济领域。"
+  },
+  {
+    "word": "economic",
+    "phonetic": "/ˌiːkəˈnɒmɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "经济上的、经济学的",
+      "有经济效益的"
+    ],
+    "example_en": "The government unveiled a series of measures aimed at sustaining economic growth amid global uncertainty.",
+    "example_zh": "政府公布了一系列旨在在全球不确定中维持经济增长的措施。",
+    "memory_tip": "economic 指“宏观经济层面的”；易混 economical（节约的），-ic 关涉国计，-ical 关涉省钱。"
+  },
+  {
+    "word": "historic",
+    "phonetic": "/hɪˈstɒrɪk/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "历史性的、具有重大意义的",
+      "有历史记载的"
+    ],
+    "example_en": "The two nations signed a historic agreement that many hope will end decades of hostility.",
+    "example_zh": "两国签署了一项历史性协议，许多人希望它能结束数十年的敌对状态。",
+    "memory_tip": "historic 指“有重大历史意义的”；易混 historical（与历史有关的、历史上的），前者重意义，后者重关联。"
+  },
+  {
+    "word": "historical",
+    "phonetic": "/hɪˈstɒrɪkl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "历史的、与历史有关的",
+      "基于史实的"
+    ],
+    "example_en": "The novel is set against the historical backdrop of the Industrial Revolution in nineteenth-century England.",
+    "example_zh": "这部小说以十九世纪英国工业革命的历史背景为依托。",
+    "memory_tip": "historical 指“与历史相关、史实的”；易混 historic（有历史意义的），-al 只是关联，-ic 强调重要。"
+  },
+  {
+    "word": "continual",
+    "phonetic": "/kənˈtɪnjuəl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "不断的、频繁的",
+      "一再发生的"
+    ],
+    "example_en": "The continual interruptions during the lecture made it difficult for students to follow the argument.",
+    "example_zh": "讲座期间不断的打扰使学生难以跟上论证。",
+    "memory_tip": "continual 指“断断续续但反复发生”；易混 continuous（连续不断的、不间断的），前者有间隔，后者无缝隙。"
+  },
+  {
+    "word": "continuous",
+    "phonetic": "/kənˈtɪnjuəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "连续的、不间断的",
+      "连绵不断的"
+    ],
+    "example_en": "A continuous stream of data from the sensors allows researchers to monitor the volcano in real time.",
+    "example_zh": "来自传感器的连续数据流使研究人员能够实时监测这座火山。",
+    "memory_tip": "continuous 指“中间无间断”；易混 continual（反复不断的），-ous 无缝隙，-al 有间隔。"
+  },
+  {
+    "word": "principle",
+    "phonetic": "/ˈprɪnsəpl/",
+    "pos": "n.",
+    "meanings_zh": [
+      "原则、原理",
+      "准则、道德规范"
+    ],
+    "example_en": "He refused to compromise his principles even when doing so would have brought him considerable profit.",
+    "example_zh": "即使妥协本可以给他带来可观利润，他也拒绝放弃自己的原则。",
+    "memory_tip": "principle 是名词“原则”；易混 principal（主要的；校长），记“princi-ple 里有 rule 的 p，是原则”。"
+  },
+  {
+    "word": "principal",
+    "phonetic": "/ˈprɪnsəpl/",
+    "pos": "adj./n.",
+    "meanings_zh": [
+      "主要的、首要的",
+      "校长、负责人"
+    ],
+    "example_en": "The principal reason for the project's failure was insufficient funding in its early stages.",
+    "example_zh": "该项目失败的主要原因是早期资金不足。",
+    "memory_tip": "principal 作形容词是“主要的”，作名词是“校长”；易混 principle（原则），记“pal 是朋友，校长是朋友”。"
+  },
+  {
+    "word": "affect",
+    "phonetic": "/əˈfekt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "影响、作用于",
+      "感动、侵袭"
+    ],
+    "example_en": "Rising sea levels are expected to affect millions of people living in low-lying coastal regions.",
+    "example_zh": "预计海平面上升将影响数百万生活在低洼沿海地区的人。",
+    "memory_tip": "affect 是动词“影响”；易混 effect（名词“效果”，作动词是“实现”），a 开头多作动词。"
+  },
+  {
+    "word": "effect",
+    "phonetic": "/ɪˈfekt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "效果、影响、结果",
+      "实现、使发生"
+    ],
+    "example_en": "The new tax had an immediate effect on consumer spending, particularly among low-income households.",
+    "example_zh": "新税对消费者支出产生了立竿见影的影响，尤其是对低收入家庭。",
+    "memory_tip": "effect 常作名词“效果/影响”；易混 affect（动词“影响”），记“cause and effect 是因果”。"
+  },
+  {
+    "word": "personal",
+    "phonetic": "/ˈpɜːsənl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "个人的、私人的",
+      "亲自的、本人的"
+    ],
+    "example_en": "She keeps her professional and personal lives strictly separate to avoid any conflict of interest.",
+    "example_zh": "她将职业生活与个人生活严格分开，以避免任何利益冲突。",
+    "memory_tip": "personal 指“个人的、私人的”；易混 personnel（全体人员、人事部门），-al 是形容词，-nel 是名词。"
+  },
+  {
+    "word": "personnel",
+    "phonetic": "/ˌpɜːsəˈnel/",
+    "pos": "n.",
+    "meanings_zh": [
+      "全体人员、员工",
+      "人事部门"
+    ],
+    "example_en": "The company's personnel department is responsible for recruiting and training new employees.",
+    "example_zh": "公司的人事部门负责招聘和培训新员工。",
+    "memory_tip": "personnel 是名词“全体人员/人事部”；易混 personal（个人的），记“-nel 像 channel，是一条人员通道”。"
+  },
+  {
+    "word": "averse",
+    "phonetic": "/əˈvɜːs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "不情愿的、反对的",
+      "厌恶的"
+    ],
+    "example_en": "He is not averse to taking risks, but he always calculates the potential losses first.",
+    "example_zh": "他并不反对冒险，但他总是先计算潜在的损失。",
+    "memory_tip": "averse 指人“不情愿、厌恶”，常用 be averse to；易混 adverse（不利的），a 开头常带“个人态度”。"
+  },
+  {
+    "word": "complement",
+    "phonetic": "/ˈkɒmplɪment/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "补充、补足",
+      "补足物、互补者"
+    ],
+    "example_en": "The new evidence serves to complement the earlier findings rather than contradict them.",
+    "example_zh": "新证据用于补充而非反驳早先的研究结果。",
+    "memory_tip": "complement 是“补足、使完整”；易混 compliment（赞美、恭维），e 表补充，i 表称赞。"
+  },
+  {
+    "word": "compliment",
+    "phonetic": "/ˈkɒmplɪment/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "赞美、恭维",
+      "祝贺、致意"
+    ],
+    "example_en": "She took his remark as a compliment rather than a criticism, which surprised everyone present.",
+    "example_zh": "她把他的话当作赞美而非批评，这让在场所有人都感到惊讶。",
+    "memory_tip": "compliment 是“称赞”；易混 complement（补充），记“i 像人张口说好话，e 是补齐缺口”。"
+  },
+  {
+    "word": "expand",
+    "phonetic": "/ɪkˈspænd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "扩大、扩张",
+      "详述、展开"
+    ],
+    "example_en": "The firm plans to expand its operations into several emerging markets over the next five years.",
+    "example_zh": "该公司计划在未来五年内将业务扩展到几个新兴市场。",
+    "memory_tip": "expand 指“体积、范围扩大”；易混 expend（花费、消耗），记“a 表扩张，e 表支出”。"
+  },
+  {
+    "word": "expend",
+    "phonetic": "/ɪkˈspend/",
+    "pos": "v.",
+    "meanings_zh": [
+      "花费、消耗",
+      "用尽、耗尽"
+    ],
+    "example_en": "Researchers expend considerable energy collecting data that may ultimately prove inconclusive.",
+    "example_zh": "研究人员耗费大量精力收集最终可能无定论的数据。",
+    "memory_tip": "expend 是“花费、耗费”；易混 expand（扩大），记“p-e-n-d 与 spend 同源，都是花钱”。"
+  },
+  {
+    "word": "invaluable",
+    "phonetic": "/ɪnˈvæljuəbl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "无价的、极其宝贵的",
+      "无法估价的"
+    ],
+    "example_en": "Her advice proved invaluable when the team was struggling to meet the tight deadline.",
+    "example_zh": "当团队难以在紧迫的期限内完成任务时，她的建议显得极其宝贵。",
+    "memory_tip": "invaluable 是“无价的、极其宝贵”；易混 valueless（毫无价值的），in- 表“无法估量”，不是否定。"
+  },
+  {
+    "word": "valueless",
+    "phonetic": "/ˈvæljuːləs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "毫无价值的、不值钱的",
+      "无用的"
+    ],
+    "example_en": "Without proper verification, the data collected from unreliable sources is virtually valueless.",
+    "example_zh": "如果未经适当核实，从不可靠来源收集的数据几乎毫无价值。",
+    "memory_tip": "valueless 是“毫无价值”；易混 invaluable（无价的），-less 是否定，in- 此处是强调。"
+  },
+  {
+    "word": "succeed",
+    "phonetic": "/səkˈsiːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "成功、办成",
+      "继承、接替"
+    ],
+    "example_en": "Those who succeed in academia often attribute their achievements to persistence rather than talent.",
+    "example_zh": "在学术界取得成功的人常把成就归因于坚持而非天赋。",
+    "memory_tip": "succeed 是“成功”或“继任”；易混 success（名词“成功”），动词拼写结尾是 -ceed。"
+  },
+  {
+    "word": "exceed",
+    "phonetic": "/ɪkˈsiːd/",
+    "pos": "v.",
+    "meanings_zh": [
+      "超过、超出",
+      "胜过、优于"
+    ],
+    "example_en": "The company's profits this year exceed all expectations, driven largely by strong overseas demand.",
+    "example_zh": "公司今年的利润超出所有预期，主要得益于强劲的海外需求。",
+    "memory_tip": "exceed 是“超过、超出”；易混 succeed（成功、继任），ex- 表向外超出，suc- 表接着上。"
+  },
+  {
+    "word": "assure",
+    "phonetic": "/əˈʃʊə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "向……保证、使确信",
+      "确保、保障"
+    ],
+    "example_en": "The manager assured the staff that no layoffs were planned despite the recent decline in sales.",
+    "example_zh": "尽管近期销售下滑，经理仍向员工保证没有裁员计划。",
+    "memory_tip": "assure 是“向某人保证”，宾语是人；易混 ensure（确保某事发生），宾语是事件。"
+  },
+  {
+    "word": "ensure",
+    "phonetic": "/ɪnˈʃʊə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "确保、保证",
+      "担保、使必然发生"
+    ],
+    "example_en": "Strict inspections are necessary to ensure that imported food meets domestic safety standards.",
+    "example_zh": "严格的检查对于确保进口食品符合国内安全标准是必要的。",
+    "memory_tip": "ensure 是“确保某事发生”，宾语是事件；易混 assure（向某人保证），宾语是人。"
+  },
+  {
+    "word": "attain",
+    "phonetic": "/əˈteɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "达到、获得",
+      "实现、到达"
+    ],
+    "example_en": "Few candidates attain the level of proficiency required for this highly competitive position.",
+    "example_zh": "很少有候选人能达到这个竞争激烈的职位所要求的熟练程度。",
+    "memory_tip": "attain 是“经过努力达到目标”；易混 obtain（获得具体物品），at- 表朝向目标，ob- 表拿到手。"
+  },
+  {
+    "word": "obtain",
+    "phonetic": "/əbˈteɪn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "获得、取得",
+      "存在、通行"
+    ],
+    "example_en": "Foreign students must obtain a visa before they can enroll in most British universities.",
+    "example_zh": "外国学生在进入大多数英国大学就读之前必须获得签证。",
+    "memory_tip": "obtain 是“取得具体东西”；易混 attain（达到抽象目标），ob- 表伸手去拿，at- 表奔向目标。"
+  },
+  {
+    "word": "accept",
+    "phonetic": "/əkˈsept/",
+    "pos": "v.",
+    "meanings_zh": [
+      "接受、认可",
+      "承认、同意"
+    ],
+    "example_en": "She decided to accept the offer after carefully weighing the advantages and disadvantages.",
+    "example_zh": "在仔细权衡利弊后，她决定接受这个提议。",
+    "memory_tip": "accept 是“主动接受、认可”；易混 except（除……之外），ac- 表接受，ex- 表排除。"
+  },
+  {
+    "word": "except",
+    "phonetic": "/ɪkˈsept/",
+    "pos": "prep./conj./v.",
+    "meanings_zh": [
+      "除……之外",
+      "把……排除在外"
+    ],
+    "example_en": "Everyone except the chairman agreed that the proposal should be revised before approval.",
+    "example_zh": "除主席外，所有人都同意该提案在批准前应予修订。",
+    "memory_tip": "except 是“除……之外、排除”；易混 accept（接受），ex- 表向外排除，ac- 表接纳。"
+  },
+  {
+    "word": "desert",
+    "phonetic": "/ˈdezət/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "沙漠、荒原",
+      "抛弃、遗弃"
+    ],
+    "example_en": "The explorers nearly died of thirst while crossing the vast desert without a reliable map.",
+    "example_zh": "探险者们在没有可靠地图的情况下穿越广袤沙漠时几乎渴死。",
+    "memory_tip": "desert 作名词是“沙漠”，作动词是“抛弃”；易混 dessert（甜点），多一个 s 就是“甜点”。"
+  },
+  {
+    "word": "dessert",
+    "phonetic": "/dɪˈzɜːt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "甜点、餐后甜食",
+      "甜食"
+    ],
+    "example_en": "After the main course, the host served a rich chocolate dessert that everyone enjoyed.",
+    "example_zh": "主菜之后，主人端上了一道大家都很喜欢的浓郁巧克力甜点。",
+    "memory_tip": "dessert 是“甜点”，双 s 可记“super sweet”；易混 desert（沙漠、抛弃），单 s 是荒芜。"
+  },
+  {
+    "word": "contract",
+    "phonetic": "/ˈkɒntrækt/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "合同、契约",
+      "收缩、缩小；感染"
+    ],
+    "example_en": "The two companies signed a five-year contract covering the supply of raw materials.",
+    "example_zh": "两家公司签署了一份为期五年的原材料供应合同。",
+    "memory_tip": "contract 作名词“合同”，作动词“收缩”；易混 contrast（对比），-tract 是拉，-trast 是对照。"
+  },
+  {
+    "word": "contrast",
+    "phonetic": "/ˈkɒntrɑːst/",
+    "pos": "n./v.",
+    "meanings_zh": [
+      "对比、对照",
+      "差异、反差"
+    ],
+    "example_en": "The sharp contrast between the two theories highlights the need for further empirical research.",
+    "example_zh": "两种理论之间的鲜明对比凸显了进一步实证研究的必要性。",
+    "memory_tip": "contrast 是“对比、反差”；易混 contract（合同、收缩），-trast 含“对照”，-tract 含“拉紧”。"
+  },
+  {
+    "word": "pursue",
+    "phonetic": "/pəˈsjuː/",
+    "pos": "v.",
+    "meanings_zh": [
+      "追求、从事",
+      "追赶、追踪"
+    ],
+    "example_en": "Many young graduates choose to pursue further study abroad rather than enter the job market immediately.",
+    "example_zh": "许多年轻毕业生选择出国深造，而不是立即进入就业市场。",
+    "memory_tip": "pursue 是“追求、从事”；易混 pursuit（名词“追求”），动词去 e 加 ing 或直接加 d，名词加 -it。"
+  },
+  {
+    "word": "pursuit",
+    "phonetic": "/pəˈsjuːt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "追求、寻求",
+      "消遣、事业"
+    ],
+    "example_en": "The pursuit of knowledge requires patience, curiosity and a willingness to question assumptions.",
+    "example_zh": "对知识的追求需要耐心、好奇心以及质疑假设的意愿。",
+    "memory_tip": "pursuit 是名词“追求”；易混 pursue（动词“追求”），记“动词 pursue，名词去 e 变 -uit”。"
+  },
+  {
+    "word": "wander",
+    "phonetic": "/ˈwɒndə(r)/",
+    "pos": "v.",
+    "meanings_zh": [
+      "漫游、徘徊",
+      "走神、离题"
+    ],
+    "example_en": "His mind began to wander during the long lecture, so he missed several key points.",
+    "example_zh": "在漫长的讲座中他开始走神，因此错过了几个要点。",
+    "memory_tip": "wander 是“漫游、走神”；易混 wonder（想知道、惊奇），a 表四处游荡，o 表心中纳闷。"
+  },
+  {
+    "word": "wonder",
+    "phonetic": "/ˈwʌndə(r)/",
+    "pos": "v./n.",
+    "meanings_zh": [
+      "想知道、纳闷",
+      "惊奇、奇迹"
+    ],
+    "example_en": "I wonder whether the committee will reconsider its decision in light of the new evidence.",
+    "example_zh": "我想知道委员会是否会根据新证据重新考虑其决定。",
+    "memory_tip": "wonder 是“想知道、惊奇”；易混 wander（漫游、走神），o 表脑中疑问，a 表脚步游走。"
+  },
+  {
+    "word": "vary",
+    "phonetic": "/ˈveəri/",
+    "pos": "v.",
+    "meanings_zh": [
+      "变化、不同",
+      "使多样化、改变"
+    ],
+    "example_en": "The cost of living varies considerably from one region to another within the same country.",
+    "example_zh": "在同一国家内，不同地区的生活成本差异相当大。",
+    "memory_tip": "vary 是“变化、不同”；易混 various（形容词“各种各样的”），vary 是动词，various 是形容词。"
+  },
+  {
+    "word": "various",
+    "phonetic": "/ˈveəriəs/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "各种各样的、不同的",
+      "好几个的"
+    ],
+    "example_en": "The committee examined various proposals before finally settling on the most cost-effective one.",
+    "example_zh": "委员会审查了各种提案，最终选定了最具成本效益的一个。",
+    "memory_tip": "various 是形容词“各种各样的”；易混 vary（动词“变化”），-ous 是形容词标志。"
+  },
+  {
+    "word": "obsolete",
+    "phonetic": "/ˈɒbsəliːt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "过时的、淘汰的",
+      "废弃不用的",
+      "老式的"
+    ],
+    "example_en": "Many traditional crafts have become obsolete as automated machinery has replaced the skilled hands that once produced them.",
+    "example_zh": "随着自动化机械取代了曾经从事生产的熟练工匠，许多传统手工艺已经变得过时了。",
+    "memory_tip": "词根 ob-（离开）+ sol（习惯，如 solace 安慰）+ -ete，离开习惯用法即“被淘汰的”。"
+  },
+  {
+    "word": "intervene",
+    "phonetic": "/ˌɪntəˈviːn/",
+    "pos": "v.",
+    "meanings_zh": [
+      "干涉、干预",
+      "介入调停",
+      "阻碍、干扰"
+    ],
+    "example_en": "The central bank was forced to intervene in the currency market to prevent a sudden collapse of the national economy.",
+    "example_zh": "中央银行被迫干预外汇市场，以防止国民经济突然崩溃。",
+    "memory_tip": "inter-（之间）+ ven（来，如 advent 到来），来到两者之间就是“介入、干预”。"
+  },
+  {
+    "word": "inhibit",
+    "phonetic": "/ɪnˈhɪbɪt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "抑制、阻碍",
+      "使拘谨、使不安",
+      "禁止"
+    ],
+    "example_en": "Excessive regulation may inhibit innovation and discourage young researchers from pursuing bold scientific experiments.",
+    "example_zh": "过度监管可能会抑制创新，并使年轻研究人员不敢进行大胆的科学实验。",
+    "memory_tip": "in-（在内）+ hibit（持有，如 exhibit 展出），把东西按在里面即“抑制”。"
+  },
+  {
+    "word": "versatile",
+    "phonetic": "/ˈvɜːsətaɪl/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "多才多艺的",
+      "多用途的、多功能的",
+      "适应性强的"
+    ],
+    "example_en": "Employers increasingly value versatile graduates who can shift between technical tasks and creative problem-solving roles.",
+    "example_zh": "雇主越来越看重那些能在技术任务和创造性解决问题角色之间转换的多才多艺的毕业生。",
+    "memory_tip": "vers（转，如 reverse 反转）+ atile，能随意转向多种领域即“多才多艺的”。"
+  },
+  {
+    "word": "recipient",
+    "phonetic": "/rɪˈsɪpiənt/",
+    "pos": "n.",
+    "meanings_zh": [
+      "接受者、受领人",
+      "接受器、容器"
+    ],
+    "example_en": "The recipient of the research grant must submit a detailed report on the allocation of funds within one year.",
+    "example_zh": "研究经费的接受者必须在一年内提交一份关于资金分配的详细报告。",
+    "memory_tip": "re-（回）+ cip（拿，如 capture 捕获）+ -ient 人，把东西接回来的人即“接受者”。"
+  },
+  {
+    "word": "warrant",
+    "phonetic": "/ˈwɒrənt/",
+    "pos": "v.",
+    "meanings_zh": [
+      "使……有正当理由、需要",
+      "保证、担保"
+    ],
+    "example_en": "The complexity of the issue warrants a more careful analysis than the brief report currently provides.",
+    "example_zh": "该问题的复杂性使得有必要进行比目前这份简短报告更为仔细的分析。",
+    "memory_tip": "与 guarantee 同源，warr- 表“保证”，引申为“使有正当理由、需要”。"
+  },
+  {
+    "word": "compliance",
+    "phonetic": "/kəmˈplaɪəns/",
+    "pos": "n.",
+    "meanings_zh": [
+      "遵守、服从",
+      "合规、依从"
+    ],
+    "example_en": "Strict compliance with environmental standards has become a prerequisite for companies seeking access to international markets.",
+    "example_zh": "严格遵守环境标准已成为企业进入国际市场的先决条件。",
+    "memory_tip": "comply（遵从）+ -ance 名词后缀，com-（完全）+ ply（折叠、弯曲），完全屈从即“服从”。"
+  },
+  {
+    "word": "discreet",
+    "phonetic": "/dɪˈskriːt/",
+    "pos": "adj.",
+    "meanings_zh": [
+      "谨慎的、慎重的",
+      "言行审慎的、不引人注目的"
+    ],
+    "example_en": "Diplomats must be discreet when discussing sensitive negotiations that could affect international relations.",
+    "example_zh": "外交官在讨论可能影响国际关系的敏感谈判时必须谨慎行事。",
+    "memory_tip": "与 discriminate（区分）同根，dis-（分开）+ creet（辨别），善于分辨该说什么即“谨慎的”。"
+  }
+]

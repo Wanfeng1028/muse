@@ -343,6 +343,8 @@ ol {
 }
 
 [data-theme="dark"] .btn-primary {
+  background: var(--c-math);
+  border-color: var(--c-math);
   color: #0f131b;
   box-shadow: 0 2px 8px rgba(107, 144, 255, 0.32);
 }

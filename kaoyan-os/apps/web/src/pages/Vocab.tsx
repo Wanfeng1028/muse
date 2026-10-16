@@ -114,14 +114,14 @@ export default function Vocab() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>核心 500 词库</h1>
+        <h1>核心词库</h1>
         <button
           type="button"
           className="btn btn-primary"
           onClick={handleSeed}
           disabled={seeding}
         >
-          {seeding ? '导入中…' : '导入 500 词库'}
+          {seeding ? '导入中…' : '导入词库'}
         </button>
       </div>
 

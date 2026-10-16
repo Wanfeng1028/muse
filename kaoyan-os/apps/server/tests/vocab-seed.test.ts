@@ -5,27 +5,33 @@ import vocabA from '../src/data/vocab-500-a.json';
 import vocabB from '../src/data/vocab-500-b.json';
 import vocabC from '../src/data/vocab-500-c.json';
 import vocabD from '../src/data/vocab-500-d.json';
+import vocabE from '../src/data/words-05.json';
+import vocabF from '../src/data/words-06.json';
 
 const files = [
   { name: 'vocab-500-a.json', data: vocabA as Record<string, unknown>[] },
   { name: 'vocab-500-b.json', data: vocabB as Record<string, unknown>[] },
   { name: 'vocab-500-c.json', data: vocabC as Record<string, unknown>[] },
   { name: 'vocab-500-d.json', data: vocabD as Record<string, unknown>[] },
+  { name: 'words-05.json', data: vocabE as Record<string, unknown>[] },
+  { name: 'words-06.json', data: vocabF as Record<string, unknown>[] },
 ];
 
-describe('vocab 500 词库数据文件', () => {
-  it('每个文件 125 条', () => {
-    for (const { data } of files) {
+describe('vocab 1000 词库数据文件', () => {
+  it('每个文件条数符合 [125,125,125,125,250,250]', () => {
+    const expected = [125, 125, 125, 125, 250, 250];
+    for (let i = 0; i < files.length; i += 1) {
+      const { data } = files[i];
       expect(Array.isArray(data)).toBe(true);
-      expect(data.length).toBe(125);
+      expect(data.length).toBe(expected[i]);
     }
   });
 
-  it('四文件合计 500 条且 word 无重复', () => {
+  it('六文件合计 1000 条且 word 无重复', () => {
     const all = files.flatMap((f) => f.data);
-    expect(all.length).toBe(500);
+    expect(all.length).toBe(1000);
     const words = all.map((e) => e.word);
-    expect(new Set(words).size).toBe(500);
+    expect(new Set(words).size).toBe(1000);
   });
 
   it('每条字段齐全非空', () => {
@@ -63,23 +69,23 @@ describe('POST /api/words/seed-vocab', () => {
     await app.close();
   });
 
-  it('首次导入 200 且 imported=500', async () => {
+  it('首次导入 imported=1000', async () => {
     const res = await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.imported).toBe(500);
+    expect(body.imported).toBe(1000);
     expect(body.skippedExisting).toBe(0);
     expect(body.skippedInvalid).toBe(0);
     expect(body.errors).toEqual([]);
   });
 
-  it('第二次调用 imported=0 且 skippedExisting=500', async () => {
+  it('第二次调用 imported=0 且 skippedExisting=1000', async () => {
     await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
     const res = await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.imported).toBe(0);
-    expect(body.skippedExisting).toBe(500);
+    expect(body.skippedExisting).toBe(1000);
   });
 
   it('幂等：重复调用后总数不变', async () => {
@@ -131,7 +137,7 @@ describe('导入后的单词字段', () => {
     const res = await app.inject({ method: 'GET', url: '/api/words' });
     const words = res.json();
     const vocab = words.filter((w: { source: string }) => w.source === 'core500');
-    expect(vocab.length).toBe(500);
+    expect(vocab.length).toBe(1000);
     for (const w of vocab) {
       expect(typeof w.memory_tip).toBe('string');
       expect((w.memory_tip as string).length > 0).toBe(true);
@@ -151,13 +157,13 @@ describe('GET /api/words/vocab-status', () => {
     await app.close();
   });
 
-  it('初始 total=500 mastered=0 pending=500', async () => {
+  it('初始 total=1000 mastered=0 pending=1000', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/words/vocab-status' });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ total: 500, mastered: 0, pending: 500 });
+    expect(res.json()).toEqual({ total: 1000, mastered: 0, pending: 1000 });
   });
 
-  it('复习 3 个词后 mastered=3 pending=497', async () => {
+  it('复习 3 个词后 mastered=3 pending=997', async () => {
     const list = await app.inject({ method: 'GET', url: '/api/words' });
     const words = list.json();
     const vocab = words.filter((w: { source: string }) => w.source === 'core500');
@@ -171,7 +177,7 @@ describe('GET /api/words/vocab-status', () => {
       expect(r.statusCode).toBe(200);
     }
     const res = await app.inject({ method: 'GET', url: '/api/words/vocab-status' });
-    expect(res.json()).toEqual({ total: 500, mastered: 3, pending: 497 });
+    expect(res.json()).toEqual({ total: 1000, mastered: 3, pending: 997 });
   });
 });
 

@@ -4,6 +4,18 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.5.0] - 2026-10-16
+
+### Added
+
+- 词库从 500 扩到 1000：新增 apps/server/src/data/words-05.json（250 词：高频动词/高频形容词副词/高频名词/熟词僻义/易混词辨析 各 50）、apps/server/src/data/words-06.json（250 词：逻辑连接词/学术写作高频词/长难句拆解关键词/完形高频词/翻译高频词 各 50）
+- 每个词条字段为 word、phonetic（英式 IPA）、pos、meanings_zh（考研常考义 2-3 个）、example_en（贴近真题语境 15-25 词）+ example_zh 翻译、memory_tip（词根/谐音/辨析钩子）
+- 去重：新 500 词与旧 500 词、与 seed.ts 内置 24 词逐一比对零重叠，其中 9 个撞内置词的已替换
+- 后端：apps/server/src/routes/words.ts 的 POST /api/words/seed-vocab 改为加载 6 个词库文件，source 仍为 core500，幂等逻辑不变；二次调用返回 imported=0、skippedExisting=1000
+- 测试：apps/server/tests/vocab-seed.test.ts 断言更新为 1000（六文件合计 1000 且 word 无重复、每文件条数 [125,125,125,125,250,250]）；服务端 vitest 全量 73/73 全绿；server/web tsc --noEmit 零错
+- 前端：apps/web/src/pages/Vocab.tsx 标题与按钮文案去掉写死的"500"（改为"核心词库"/"导入词库"），词数统计改走 /api/words/vocab-status 动态值
+- 截图：docs/screenshots/light-words.png、dark-words.png 按 1000 词状态重截并已验收
+
 ## [1.4.0] - 2026-10-16
 
 ### Added

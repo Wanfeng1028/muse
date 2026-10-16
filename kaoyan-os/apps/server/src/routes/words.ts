@@ -14,6 +14,8 @@ import vocabA from '../data/vocab-500-a.json';
 import vocabB from '../data/vocab-500-b.json';
 import vocabC from '../data/vocab-500-c.json';
 import vocabD from '../data/vocab-500-d.json';
+import vocabE from '../data/words-05.json';
+import vocabF from '../data/words-06.json';
 
 // 词库 JSON 条目结构
 interface VocabEntry {
@@ -404,13 +406,15 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     },
   );
 
-  // POST /api/words/seed-vocab：播种内置 500 词库
+  // POST /api/words/seed-vocab：播种内置 1000 词库
   app.post('/api/words/seed-vocab', async (_request, reply) => {
     const files: { file: string; entries: unknown[] }[] = [
       { file: 'vocab-500-a.json', entries: vocabA as unknown[] },
       { file: 'vocab-500-b.json', entries: vocabB as unknown[] },
       { file: 'vocab-500-c.json', entries: vocabC as unknown[] },
       { file: 'vocab-500-d.json', entries: vocabD as unknown[] },
+      { file: 'words-05.json', entries: vocabE as unknown[] },
+      { file: 'words-06.json', entries: vocabF as unknown[] },
     ];
 
     const errors: { file: string; index: number; message: string }[] = [];
