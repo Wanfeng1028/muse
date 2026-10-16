@@ -125,6 +125,13 @@ public class QwenVideoProvider implements VideoProvider {
 
     @Override
     public String submit(Shot shot, int seconds) {
+        // 2026-10-16 紧急停用：wan2.5-t2v-preview 本周期免费额度已耗尽。
+        // 为防止按量扣费，直接拒单，不再向 DashScope 发起任何视频合成请求。
+        // 额度恢复后删除本 guard 即可恢复。
+        throw new RuntimeException("qwen 视频通道已停用：wan2.5-t2v-preview 免费额度耗尽，恢复前拒绝派单（防按量扣费）");
+    }
+
+    private String doSubmit(Shot shot, int seconds) {
         // 构造 prompt：优先使用 videoPrompt，否则拼接 description、景别、运镜中文标签
         String prompt = shot.getVideoPrompt();
         if (prompt == null || prompt.isBlank()) {

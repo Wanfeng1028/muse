@@ -7,6 +7,7 @@ import com.dramafactory.service.CredentialResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.InputStream;
 import java.net.http.HttpRequest;
@@ -110,6 +111,7 @@ class QwenVideoProviderContractTest {
     }
 
     @Test
+    @Disabled("2026-10-16 起 wan2.5-t2v-preview 免费额度耗尽，submit() 已加硬拒单 guard；额度恢复后删 guard 并移除本 Disabled")
     void submitOk() throws Exception {
         // 契约点：提交成功返回 task_id；body 含模型 wan2.5-t2v-preview；
         // 携带 X-DashScope-Async=enable 头
@@ -131,6 +133,7 @@ class QwenVideoProviderContractTest {
     }
 
     @Test
+    @Disabled("2026-10-16 起 wan2.5-t2v-preview 免费额度耗尽，submit() 已加硬拒单 guard；额度恢复后删 guard 并移除本 Disabled")
     void submitAssemblesPrompt() throws Exception {
         // 契约点：videoPrompt 为空时，用 description + shotSize.getLabel() + cameraMove.getLabel() 拼接；
         // QUAN_JING → "全景"，TUI → "推镜头"
@@ -151,6 +154,7 @@ class QwenVideoProviderContractTest {
     }
 
     @Test
+    @Disabled("2026-10-16 起 wan2.5-t2v-preview 免费额度耗尽，submit() 已加硬拒单 guard；额度恢复后删 guard 并移除本 Disabled")
     void submitLogicError() throws Exception {
         // 契约点：响应体含 code 字段 → 抛 RuntimeException，消息含"逻辑错误"
         gateway.enqueue(200, fixture("qwen-submit-logic-error.json"));
@@ -163,6 +167,7 @@ class QwenVideoProviderContractTest {
     }
 
     @Test
+    @Disabled("2026-10-16 起 wan2.5-t2v-preview 免费额度耗尽，submit() 已加硬拒单 guard；额度恢复后删 guard 并移除本 Disabled")
     void submitMissingTaskId() throws Exception {
         // 契约点：缺 output.task_id → 抛 RuntimeException，消息含 task_id
         gateway.enqueue(200, fixture("qwen-submit-noid.json"));

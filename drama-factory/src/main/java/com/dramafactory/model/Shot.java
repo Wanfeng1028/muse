@@ -61,6 +61,10 @@ public class Shot {
     @Column(length = 2000)
     private String videoPrompt;
 
+    /** 首选视频提供方（doubao/novai/qwen/agnes/painted），为空时按规则自动分流 */
+    @Column(length = 32)
+    private String preferredProvider;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 
@@ -154,6 +158,14 @@ public class Shot {
 
     public void setVideoPrompt(String videoPrompt) {
         this.videoPrompt = videoPrompt;
+    }
+
+    public String getPreferredProvider() {
+        return preferredProvider;
+    }
+
+    public void setPreferredProvider(String preferredProvider) {
+        this.preferredProvider = preferredProvider;
     }
 
     public LocalDateTime getCreatedAt() {
