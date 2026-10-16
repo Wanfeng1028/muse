@@ -13,6 +13,8 @@ import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.metrics.DramaMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,8 @@ import java.util.List;
 @Service
 public class FinalCutService {
 
+    private static final Logger log = LoggerFactory.getLogger(FinalCutService.class);
+
     private final FinalCutRepository finalCutRepository;
     private final EpisodeRepository episodeRepository;
     private final ShotRepository shotRepository;
@@ -39,6 +43,8 @@ public class FinalCutService {
     private final String storageDir;
     /** v2.4 指标埋点：成片构建次数/耗时。 */
     private final DramaMetrics dramaMetrics;
+    private final int ffmpegRetryAttempts;
+    private final long ffmpegRetryBackoffMs;
 
     /**
      * 构造器注入所有依赖。
@@ -51,7 +57,9 @@ public class FinalCutService {
                            FfmpegService ffmpegService,
                            EpisodeStatusFlowService episodeStatusFlowService,
                            @Value("${drama.storage:./data/media}") String storageDir,
-                           DramaMetrics dramaMetrics) {
+                           DramaMetrics dramaMetrics,
+                           @Value("${drama.ffmpeg.retry-attempts:3}") int ffmpegRetryAttempts,
+                           @Value("${drama.ffmpeg.retry-backoff-ms:2000}") long ffmpegRetryBackoffMs) {
         this.finalCutRepository = finalCutRepository;
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
@@ -61,6 +69,8 @@ public class FinalCutService {
         this.episodeStatusFlowService = episodeStatusFlowService;
         this.storageDir = storageDir;
         this.dramaMetrics = dramaMetrics;
+        this.ffmpegRetryAttempts = ffmpegRetryAttempts;
+        this.ffmpegRetryBackoffMs = ffmpegRetryBackoffMs;
     }
 
     /**
@@ -123,15 +133,21 @@ public class FinalCutService {
 
             // 第一步：拼接片段
             Path concatOut = finalsDir.resolve(base + "_concat.mp4");
-            ffmpegService.concatClips(clips, concatOut);
+            withFfmpegRetry("concat", () -> {
+                ffmpegService.concatClips(clips, concatOut);
+                return null;
+            });
 
             // 第二步：生成字幕并烧录
             Path srt = subtitleService.buildSrt(episodeId, shots);
             Path finalOut = finalsDir.resolve(base + ".mp4");
-            ffmpegService.burnSubtitles(concatOut, srt, finalOut);
+            withFfmpegRetry("burn-subtitles", () -> {
+                ffmpegService.burnSubtitles(concatOut, srt, finalOut);
+                return null;
+            });
 
             // 第三步：探测成片时长
-            double dur = ffmpegService.probeDurationSeconds(finalOut);
+            double dur = withFfmpegRetry("probe-duration", () -> ffmpegService.probeDurationSeconds(finalOut));
 
             // 更新成片记录为完成状态
             fc.setStatus(FinalCutStatus.READY);
@@ -147,6 +163,50 @@ public class FinalCutService {
             finalCutRepository.save(fc);
             throw e instanceof RuntimeException re ? re : new RuntimeException(e);
         }
+    }
+
+    /**
+     * ffmpeg 步骤抽象：允许以 lambda 形式传入单个 ffmpeg 调用。
+     */
+    private interface FfmpegStep<T> {
+        T run() throws Exception;
+    }
+
+    /**
+     * 对单个 ffmpeg 步骤执行有界重试：仅对可瞬时重试的失败（isTransient）重试，
+     * 每次退避 ffmpegRetryBackoffMs * attempt 毫秒，最多 max(1, ffmpegRetryAttempts) 次。
+     */
+    private <T> T withFfmpegRetry(String operation, FfmpegStep<T> step) {
+        int maxAttempts = Math.max(1, ffmpegRetryAttempts);
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                T result = step.run();
+                if (attempt > 1) {
+                    dramaMetrics.recordFfmpegRetry(operation, true, true);
+                }
+                return result;
+            } catch (FfmpegService.FfmpegException e) {
+                dramaMetrics.recordFfmpegRetry(operation, e.isTransient(), false);
+                if (!e.isTransient() || attempt >= maxAttempts) {
+                    throw e;
+                }
+                long backoffMs = ffmpegRetryBackoffMs * attempt;
+                log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying in {}ms: {}",
+                        operation, attempt, maxAttempts, backoffMs, e.getMessage());
+                try {
+                    Thread.sleep(backoffMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new FfmpegService.FfmpegException(
+                            "ffmpeg retry interrupted: " + operation, true);
+                }
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        throw new IllegalStateException("unreachable: ffmpeg retry loop exhausted for " + operation);
     }
 
     /**

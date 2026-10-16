@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+### Added
+- v2.29「testFullPipeline flaky 根因歼灭 + E2E 加固」（根因：ffmpeg 瞬时失败 × 三处生产代码缺口）：
+  - `FfmpegService.FfmpegException` 增加瞬时/永久分类（`isTransient()`）：超时、非零退出码（含 137/143）、ffprobe 失败等为瞬时；`无法启动命令`（二进制缺失）、参数编程错误为永久；旧构造器默认瞬时（保守策略）。`run()` 增加慢命令 warn（>30s）。
+  - `FinalCutService`：concat/burn-subtitles/probe-duration 三步对瞬时失败有界重试（默认 3 次，退避 2000ms×attempt），永久失败直接 FAILED；配置 `drama.ffmpeg.retry-attempts` / `drama.ffmpeg.retry-backoff-ms`（env `FFMPEG_RETRY_ATTEMPTS`/`FFMPEG_RETRY_BACKOFF_MS`）。
+  - `VideoTaskService`：`processDueTasks` 单飞保护（重叠调用跳过，防对真实 provider 重复提交）；`failOrRetry` 对非瞬时 FfmpegException 直接标记 FAILED（`[永久失败，不再重试]`），不再空转指数退避。
+  - 指标：`dramafactory_ffmpeg_retries_total{operation,kind,result}`、`dramafactory_video_poll_skipped_total`。
+  - 测试 8 批：`FfmpegExceptionClassificationTest`、`FinalCutFfmpegRetryTest`、`FinalCutRealFfmpegRetryTest`（真实 ffmpeg）、`ProcessDueTasksSingleFlightTest`、`VideoTaskFailFastTest`、`VideoPipelineResilienceE2eTest`（E2E 韧性）、`FfmpegRetryMetricsTest`、`FfmpegServiceTest` 补强（probe/extractPoster）。
+  - 脚本：`scripts/verify-flaky-fix.sh`（回归验证）、`scripts/ffmpeg-chaos-drill.sh`（故障演练：kill -9 ffmpeg 后任务经重试恢复）。
+- 发版对照报告：`docs/dod-v2.29.md`。
+
+### Docs
+- 新增 `docs/FFMPEG_RELIABILITY.md`（可靠性设计注记：分类表/重试矩阵/排障/告警）；`docs/OPERATIONS.md` 新增 8.7/8.8（ffmpeg 排障/单飞说明/告警示例）；`docs/DEGRADATION.md` ffmpeg 小节更新；README 增加可靠性小节。
+
 ## [v2.26] - 2026-10-16
 
 ### Added

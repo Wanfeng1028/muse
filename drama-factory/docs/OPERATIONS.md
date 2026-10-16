@@ -313,6 +313,114 @@ jstat -gc <pid>
 - 临时：调大 JVM 堆 `java -Xmx1g -jar ...`，或调大 compose 里的内存限制。
 - 长期：看是哪个环节吃内存。视频/成片处理是主要占用方，大文件要避免一次性读进内存。H2 单机内存占用也会随数据量增长。
 
+### 8.7 ffmpeg 瞬时失败（v2.29 flaky 根因歼灭）
+
+**现象**
+
+成片构建偶尔报 500，日志里能看到 `ffmpeg 瞬时失败，…ms 后第 x/3 次重试`。视频任务偶尔 attempts 次数涨上去，过一会儿又好了。
+
+**先分清是哪一类**
+
+看错误日志里的关键字：
+
+- 含 `无法启动命令` → 这是永久失败，ffmpeg 二进制没装或路径不对。跳到 8.4 去装 ffmpeg。
+- 含 `命令超时`，或退出码是 137 / 143 → 这是瞬时抖动。137 一般是进程被 SIGKILL（常见是 OOM），143 是 SIGTERM。
+
+代码里 `FfmpegService.FfmpegException#isTransient()` 就是这么判的：超时 / 137 / 143 / OOM 算瞬时，`无法启动命令` 算永久。`FinalCutService` 对 concat、burn-subtitles、probe-duration 这三种操作的瞬时失败会做有界重试，默认 3 次，退避是 2000ms × 当前 attempt 数。想改的话用环境变量 `FFMPEG_RETRY_ATTEMPTS` 和 `FFMPEG_RETRY_BACKOFF_MS`。
+
+**排查步骤**
+
+1. 先确认二进制在不在、版本对不对：
+
+   ```bash
+   which ffmpeg
+   ffmpeg -version
+   ```
+
+2. 看重试指标有没有突增。Prometheus 里查：
+
+   ```bash
+   curl -sG 'http://localhost:9090/api/v1/query' \
+     --data-urlencode 'query=rate(dramafactory_ffmpeg_retries_total{kind="transient"}[5m])'
+   ```
+
+   返回里 `result` 数组非空、值明显大于 0，说明瞬时重试在涨。
+
+3. 翻日志找慢命令 warn。ffmpeg 单次执行超过 30s 会打 warn，能看到是哪个操作慢。
+
+4. 查是不是被 OOM kill 了：
+
+   ```bash
+   dmesg | grep -i "killed process"
+   ```
+
+5. 看磁盘满没满：
+
+   ```bash
+   df -h
+   ```
+
+**怎么处理**
+
+- 抖动频繁：加内存、降并发，或者把 `FFMPEG_RETRY_ATTEMPTS` 调到 5 多给几次机会。
+- 137 反复出现：去查容器的内存 limit，多半是压得太紧。
+- 永久失败（`无法启动命令`）：按 8.4 装 ffmpeg，别在这浪费时间调重试。
+
+### 8.8 轮询单飞跳过（v2.29）
+
+**这是什么**
+
+`VideoTaskService.processDueTasks` 加了单飞保护。定时线程和手动调用如果撞到一起，后到的那个直接跳过，只打一条 debug 日志，同时 `dramafactory_video_poll_skipped_total` 指标加一。这是正常的保护行为，不是 bug，别当故障查。
+
+**什么时候要警惕**
+
+如果 `dramafactory_video_poll_skipped_total` 一直在涨，同时任务积压不降，那可能是定时线程卡死了。用 jstack 看 poll 线程在干嘛：
+
+```bash
+jstack <pid> | grep -A 20 'video-poll'
+```
+
+（线程名按实际配置替换，重点是找到跑 `processDueTasks` 的那个线程，看它是不是卡在某个 ffmpeg 调用或锁上。）
+
+**Prometheus 告警示例**
+
+finalcut 构建失败率，只要有 error 就报：
+
+```yaml
+- alert: FinalCutBuildError
+  expr: rate(dramafactory_finalcut_builds_total{result="error"}[5m]) > 0
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "finalcut 构建出现失败"
+    description: "过去 5 分钟有 finalcut 构建以 error 结束，查日志和 dramafactory_ffmpeg_retries_total。"
+```
+
+ffmpeg 瞬时重试突增：
+
+```yaml
+- alert: FfmpegTransientRetrySpike
+  expr: rate(dramafactory_ffmpeg_retries_total{kind="transient"}[5m]) > 0.1
+  for: 10m
+  labels:
+    severity: warning
+  annotations:
+    summary: "ffmpeg 瞬时重试在涨"
+    description: "瞬时重试速率超过 0.1/s 持续 10 分钟，按 8.7 排查内存、并发和磁盘。"
+```
+
+轮询跳过持续增长（配合积压判断，这里只给指标表达式，积压得看你们自己的队列指标）：
+
+```yaml
+- alert: VideoPollSkippedGrowing
+  expr: rate(dramafactory_video_poll_skipped_total[5m]) > 0
+  for: 15m
+  labels:
+    severity: info
+  annotations:
+    summary: "轮询单飞跳过持续发生"
+    description: "结合任务积压一起看，如果积压不降，用 jstack 查 poll 线程是否卡死。"
 ---
 
 ## 9. 已知限制

@@ -125,6 +125,27 @@ class FfmpegServiceTest {
                         + "，新时长=" + subtitledDuration + "，差值=" + diff);
     }
 
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void probeDurationSeconds_measuresRealDuration() {
+        Path clip = WORK_DIR.resolve("probe_me.mp4");
+        ffmpegService.generateTestClip(clip, 3);
+        double duration = ffmpegService.probeDurationSeconds(clip);
+        assertTrue(duration >= 2.5 && duration <= 3.5,
+                "3s clip probed duration should be 2.5~3.5s, actual " + duration);
+    }
+
+    @Test
+    @Timeout(value = 120, unit = TimeUnit.SECONDS)
+    void extractPoster_producesJpeg() throws IOException {
+        Path clip = WORK_DIR.resolve("poster_src.mp4");
+        ffmpegService.generateTestClip(clip, 2);
+        Path poster = WORK_DIR.resolve("poster.jpg");
+        ffmpegService.extractPoster(clip, poster);
+        assertTrue(Files.exists(poster), "poster frame should exist");
+        assertTrue(Files.size(poster) > 0, "poster frame size should be > 0");
+    }
+
     /**
      * 递归删除目录及其内容，用于清理测试产物。
      */

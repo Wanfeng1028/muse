@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *   <li>dramafactory_script_llm_duration_seconds{model} —— 脚本生成 LLM 调用耗时，单位：秒</li>
  *   <li>dramafactory_finalcut_builds_total{result} —— 成片构建总次数，单位：次</li>
  *   <li>dramafactory_finalcut_build_duration_seconds —— 成片构建耗时，单位：秒</li>
+ *   <li>dramafactory_ffmpeg_retries_total{operation,kind,result} —— ffmpeg 单步重试次数，operation=concat/burn-subtitles/probe-duration/download-clip，kind=transient/permanent，result=ok/error，单位：次（v2.29 新增）</li>
+ *   <li>dramafactory_video_poll_skipped_total —— 视频任务轮询因单飞保护被跳过的次数，单位：次（v2.29 新增）</li>
  * </ul>
  */
 @Component
@@ -116,6 +118,17 @@ public class DramaMetrics {
                 .increment();
         registry.timer("dramafactory_finalcut_build_duration")
                 .record(Duration.ofMillis(safeLatency));
+    }
+
+    public void recordFfmpegRetry(String operation, boolean transientFailure, boolean ok) {
+        String op = (operation == null || operation.isBlank()) ? "unknown" : operation;
+        registry.counter("dramafactory_ffmpeg_retries_total",
+                "operation", op, "kind", transientFailure ? "transient" : "permanent",
+                "result", ok ? "ok" : "error").increment();
+    }
+
+    public void recordPollSkipped() {
+        registry.counter("dramafactory_video_poll_skipped_total").increment();
     }
 
     /**

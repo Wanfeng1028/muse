@@ -75,6 +75,9 @@ drama:
   storage: ${DRAMA_STORAGE:./data/media}
   ffmpeg: ${FFMPEG_PATH:ffmpeg}
   ffprobe: ${FFPROBE_PATH:ffprobe}
+  # v2.29 flaky 根因歼灭：ffmpeg 单步瞬时失败有界重试（成片构建 concat/burn-subtitles/probe）
+  ffmpeg-retry-attempts: ${FFMPEG_RETRY_ATTEMPTS:3}
+  ffmpeg-retry-backoff-ms: ${FFMPEG_RETRY_BACKOFF_MS:2000}
 
 logging:
   # JSON 结构化日志：设置环境变量 SPRING_PROFILES_ACTIVE=json 即切换为 Logstash JSON 输出（含 request_id）

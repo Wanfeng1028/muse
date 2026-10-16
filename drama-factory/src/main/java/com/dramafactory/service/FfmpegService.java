@@ -22,6 +22,11 @@ import java.util.concurrent.TimeUnit;
  * 提供生成测试片段、拼接片段、烧录字幕、探测时长等常用能力，
  * 所有外部进程调用均通过统一的 {@link #run(List, long)} 方法执行，
  * 保证超时控制与错误信息的可读性。
+ * <p>
+ * 失败分类：{@link FfmpegException} 携带 {@code transientFailure} 标记，
+ * 用于区分可重试的瞬时故障（如超时、非零退出码、IO 中断等）与
+ * 不可重试的永久故障（如命令无法启动、参数非法、输出路径缺少父目录等）。
+ * 调用方可据此决定是否执行有界重试。
  */
 @Service
 public class FfmpegService {
@@ -56,14 +61,46 @@ public class FfmpegService {
 
     /**
      * ffmpeg 执行异常，包装超时、非零退出码等错误。
+     * <p>
+     * 分类语义：{@code transientFailure} 为 {@code true} 表示瞬时故障，
+     * 通常由外部环境波动（超时、进程被中断、非零退出码、IO 失败等）引起，
+     * 可通过有界重试恢复；为 {@code false} 表示永久故障，
+     * 例如命令无法启动、参数非法、输出路径缺少父目录等，重试不会成功。
+     * <p>
+     * 兼容构造器（未显式传入分类）默认使用保守值 {@code true}：
+     * 即便分类不确定，也可交由有界重试来覆盖，不会造成无限重试。
      */
     public static class FfmpegException extends RuntimeException {
+
+        /** 是否为瞬时（可重试）故障。 */
+        private final boolean transientFailure;
+
+        /**
+         * 兼容构造器：默认按瞬时故障处理（保守默认，有界重试可覆盖）。
+         */
         public FfmpegException(String m) {
-            super(m);
+            this(m, true);
         }
 
+        /**
+         * 兼容构造器：默认按瞬时故障处理（保守默认，有界重试可覆盖）。
+         */
         public FfmpegException(String m, Throwable t) {
+            this(m, t, true);
+        }
+
+        public FfmpegException(String m, boolean transientFailure) {
+            super(m);
+            this.transientFailure = transientFailure;
+        }
+
+        public FfmpegException(String m, Throwable t, boolean transientFailure) {
             super(m, t);
+            this.transientFailure = transientFailure;
+        }
+
+        public boolean isTransient() {
+            return transientFailure;
         }
     }
 
@@ -82,7 +119,7 @@ public class FfmpegService {
         try {
             process = pb.start();
         } catch (IOException e) {
-            throw new FfmpegException("无法启动命令: " + String.join(" ", cmd), e);
+            throw new FfmpegException("无法启动命令: " + String.join(" ", cmd), e, false);
         }
 
         StringBuilder output = new StringBuilder();
@@ -101,18 +138,29 @@ public class FfmpegService {
         reader.setDaemon(true);
         reader.start();
 
+        long startNanos = System.nanoTime();
+
         boolean finished;
         try {
             finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             process.destroyForcibly();
-            throw new FfmpegException("等待命令时被中断: " + String.join(" ", cmd), e);
+            throw new FfmpegException("等待命令时被中断: " + String.join(" ", cmd), e, true);
+        }
+
+        long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
+        if (elapsedMillis > 30_000L) {
+            String cmdText = String.join(" ", cmd);
+            String[] words = cmdText.split(" ");
+            String firstTwo = words.length >= 2 ? words[0] + " " + words[1] : cmdText;
+            log.warn("ffmpeg 命令执行耗时 {} 秒（前两个命令词: {}）",
+                    elapsedMillis / 1000.0, firstTwo);
         }
 
         if (!finished) {
             process.destroyForcibly();
-            throw new FfmpegException("命令超时(" + timeoutSeconds + "s): " + String.join(" ", cmd));
+            throw new FfmpegException("命令超时(" + timeoutSeconds + "s): " + String.join(" ", cmd), true);
         }
 
         try {
@@ -126,7 +174,7 @@ public class FfmpegService {
             String out = output.toString();
             String snippet = out.length() > 500 ? out.substring(0, 500) : out;
             throw new FfmpegException("命令执行失败(退出码 " + exitCode + "): "
-                    + String.join(" ", cmd) + "\n输出: " + snippet);
+                    + String.join(" ", cmd) + "\n输出: " + snippet, true);
         }
     }
 
@@ -143,7 +191,7 @@ public class FfmpegService {
                 Files.createDirectories(parent);
             }
         } catch (IOException e) {
-            throw new FfmpegException("无法创建输出目录: " + out, e);
+            throw new FfmpegException("无法创建输出目录: " + out, e, true);
         }
 
         List<String> cmd = new ArrayList<>();
@@ -172,18 +220,18 @@ public class FfmpegService {
      */
     public void concatClips(List<Path> inputs, Path output) {
         if (inputs == null || inputs.isEmpty()) {
-            throw new FfmpegException("拼接片段列表不能为空");
+            throw new FfmpegException("拼接片段列表不能为空", false);
         }
 
         Path parent = output.getParent();
         if (parent == null) {
-            throw new FfmpegException("输出文件缺少父目录: " + output);
+            throw new FfmpegException("输出文件缺少父目录: " + output, false);
         }
 
         try {
             Files.createDirectories(parent);
         } catch (IOException e) {
-            throw new FfmpegException("无法创建输出目录: " + parent, e);
+            throw new FfmpegException("无法创建输出目录: " + parent, e, true);
         }
 
         Path listFile = parent.resolve("concat_list.txt");
@@ -197,7 +245,7 @@ public class FfmpegService {
         try {
             Files.writeString(listFile, sb.toString(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new FfmpegException("写入 concat 列表失败: " + listFile, e);
+            throw new FfmpegException("写入 concat 列表失败: " + listFile, e, true);
         }
 
         List<String> cmd = new ArrayList<>();
@@ -238,20 +286,20 @@ public class FfmpegService {
     public void burnSubtitles(Path input, Path srt, Path output) {
         Path parent = output.getParent();
         if (parent == null) {
-            throw new FfmpegException("输出文件缺少父目录: " + output);
+            throw new FfmpegException("输出文件缺少父目录: " + output, false);
         }
 
         try {
             Files.createDirectories(parent);
         } catch (IOException e) {
-            throw new FfmpegException("无法创建输出目录: " + parent, e);
+            throw new FfmpegException("无法创建输出目录: " + parent, e, true);
         }
 
         Path asciiSrt = parent.resolve("subs.srt");
         try {
             Files.copy(srt, asciiSrt, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new FfmpegException("复制字幕文件失败: " + srt + " -> " + asciiSrt, e);
+            throw new FfmpegException("复制字幕文件失败: " + srt + " -> " + asciiSrt, e, true);
         }
 
         // subtitles 滤镜的文件名走滤镜选项解析，需用绝对路径并转义特殊字符（: ' \）
@@ -294,7 +342,7 @@ public class FfmpegService {
         try {
             process = pb.start();
         } catch (IOException e) {
-            throw new FfmpegException("无法启动 ffprobe: " + String.join(" ", cmd), e);
+            throw new FfmpegException("无法启动 ffprobe: " + String.join(" ", cmd), e, false);
         }
 
         StringBuilder output = new StringBuilder();
@@ -305,30 +353,30 @@ public class FfmpegService {
                 output.append(line).append('\n');
             }
         } catch (IOException e) {
-            throw new FfmpegException("读取 ffprobe 输出失败: " + file, e);
+            throw new FfmpegException("读取 ffprobe 输出失败: " + file, e, true);
         }
 
         try {
             boolean finished = process.waitFor(60, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                throw new FfmpegException("ffprobe 超时: " + file);
+                throw new FfmpegException("ffprobe 超时: " + file, true);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             process.destroyForcibly();
-            throw new FfmpegException("等待 ffprobe 时被中断: " + file, e);
+            throw new FfmpegException("等待 ffprobe 时被中断: " + file, e, true);
         }
 
         if (process.exitValue() != 0) {
             String out = output.toString();
             String snippet = out.length() > 500 ? out.substring(0, 500) : out;
-            throw new FfmpegException("ffprobe 执行失败: " + file + "\n输出: " + snippet);
+            throw new FfmpegException("ffprobe 执行失败: " + file + "\n输出: " + snippet, true);
         }
 
         String raw = output.toString().trim();
         if (raw.isEmpty()) {
-            throw new FfmpegException("ffprobe 未返回时长信息: " + file);
+            throw new FfmpegException("ffprobe 未返回时长信息: " + file, true);
         }
 
         // 可能包含多行，取第一行有效数字
@@ -336,7 +384,7 @@ public class FfmpegService {
         try {
             return Double.parseDouble(firstLine);
         } catch (NumberFormatException e) {
-            throw new FfmpegException("无法解析时长: " + firstLine, e);
+            throw new FfmpegException("无法解析时长: " + firstLine, e, true);
         }
     }
 

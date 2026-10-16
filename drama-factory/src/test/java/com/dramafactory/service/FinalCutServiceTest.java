@@ -76,7 +76,9 @@ class FinalCutServiceTest {
                 ffmpegService,
                 episodeStatusFlowService,
                 tempDir.toString(),
-                dramaMetrics);
+                dramaMetrics,
+                3,
+                2000L);
 
         when(finalCutRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }

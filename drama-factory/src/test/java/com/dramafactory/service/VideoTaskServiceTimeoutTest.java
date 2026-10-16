@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
+import com.dramafactory.metrics.DramaMetrics;
 import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.video.VideoProviderRouter;
@@ -41,6 +42,8 @@ class VideoTaskServiceTimeoutTest {
     private Environment environment;
     @Mock
     private VideoProviderRouter router;
+    @Mock
+    private DramaMetrics dramaMetrics;
 
     private VideoTaskService service;
 
@@ -58,7 +61,8 @@ class VideoTaskServiceTimeoutTest {
                 "mock",
                 10000L,
                 3,
-                tempDir.toString()
+                tempDir.toString(),
+                dramaMetrics
         );
     }
 

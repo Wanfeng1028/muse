@@ -2,6 +2,7 @@ package com.dramafactory.service;
 
 import com.dramafactory.dto.Records;
 import com.dramafactory.exception.ResourceNotFoundException;
+import com.dramafactory.metrics.DramaMetrics;
 import com.dramafactory.model.Shot;
 import com.dramafactory.model.VideoTask;
 import com.dramafactory.model.VideoTaskStatus;
@@ -29,6 +30,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +59,7 @@ public class VideoTaskService {
     private final long pollIntervalMs;
     private final int maxAttempts;
     private final String storageDir;
+    private final DramaMetrics dramaMetrics;
 
     /** 轮询方法是否正在执行中，用于关闭时等待在途任务收尾。 */
     private final AtomicBoolean pollInFlight = new AtomicBoolean(false);
@@ -71,7 +74,8 @@ public class VideoTaskService {
                             @Value("${drama.video.provider:mock}") String providerName,
                             @Value("${drama.video.poll-interval-ms:10000}") long pollIntervalMs,
                             @Value("${drama.video.max-attempts:8}") int maxAttempts,
-                            @Value("${drama.storage:./data/media}") String storageDir) {
+                            @Value("${drama.storage:./data/media}") String storageDir,
+                            DramaMetrics dramaMetrics) {
         this.videoTaskRepository = videoTaskRepository;
         this.shotRepository = shotRepository;
         this.ffmpegService = ffmpegService;
@@ -83,6 +87,7 @@ public class VideoTaskService {
         this.pollIntervalMs = pollIntervalMs;
         this.maxAttempts = maxAttempts;
         this.storageDir = storageDir;
+        this.dramaMetrics = dramaMetrics;
     }
 
     /**
@@ -179,7 +184,11 @@ public class VideoTaskService {
     @Scheduled(fixedDelayString = "${drama.video.poll-interval-ms:10000}")
     @Transactional
     public void processDueTasks() {
-        pollInFlight.set(true);
+        if (!pollInFlight.compareAndSet(false, true)) {
+            log.debug("video task poll already in flight, skipping this trigger");
+            dramaMetrics.recordPollSkipped();
+            return;
+        }
         MDC.put("request_id", "poll-" + UUID.randomUUID().toString().substring(0, 8));
         try {
             LocalDateTime now = LocalDateTime.now();
@@ -197,7 +206,8 @@ public class VideoTaskService {
                 } catch (RateLimitedException e) {
                     task.setNextRetryAt(now.plusSeconds(Math.max(e.getRetryAfterSeconds(), 30)));
                 } catch (Exception e) {
-                    failOrRetry(task, e.getMessage());
+                    boolean permanent = e instanceof FfmpegService.FfmpegException fe && !fe.isTransient();
+                    failOrRetry(task, e.getMessage(), permanent);
                 }
                 videoTaskRepository.save(task);
             });
@@ -268,7 +278,7 @@ public class VideoTaskService {
             }
             case FAILED -> {
                 log.warn("视频任务提供方返回失败：taskId={}，shotId={}，原因={}", task.getId(), task.getShot().getId(), result.errorMessage());
-                failOrRetry(task, result.errorMessage());
+                failOrRetry(task, result.errorMessage(), false);
             }
             case QUEUED, PROCESSING -> task.setNextRetryAt(LocalDateTime.now().plusNanos((pollIntervalMs) * 1_000_000L));
         }
@@ -283,7 +293,10 @@ public class VideoTaskService {
         Files.createDirectories(dir);
         Path out = dir.resolve("task_" + task.getId() + ".mp4");
 
-        if (url != null && url.startsWith("mock://")) {
+        if (url != null && url.startsWith("file://")) {
+            Path src = Paths.get(URI.create(url));
+            Files.copy(src, out, StandardCopyOption.REPLACE_EXISTING);
+        } else if (url != null && url.startsWith("mock://")) {
             int seconds = 5;
             int idx = url.indexOf("seconds=");
             if (idx >= 0) {
@@ -321,7 +334,15 @@ public class VideoTaskService {
     /**
      * 失败处理：累计尝试次数，超过上限标记 FAILED，否则按指数退避安排下次重试。
      */
-    private void failOrRetry(VideoTask task, String err) {
+    private void failOrRetry(VideoTask task, String err, boolean permanent) {
+        if (permanent) {
+            task.setAttempts(task.getAttempts() + 1);
+            task.setStatus(VideoTaskStatus.FAILED);
+            task.setErrorMessage("[永久失败，不再重试] " + err);
+            task.setNextRetryAt(LocalDateTime.now());
+            log.warn("视频任务永久失败，不再重试：taskId={}，shotId={}，错误={}", task.getId(), task.getShot().getId(), err);
+            return;
+        }
         task.setAttempts(task.getAttempts() + 1);
         task.setErrorMessage(err);
         if (task.getAttempts() >= maxAttempts) {

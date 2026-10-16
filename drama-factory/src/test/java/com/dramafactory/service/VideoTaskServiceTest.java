@@ -2,6 +2,7 @@ package com.dramafactory.service;
 
 import com.dramafactory.dto.Records;
 import com.dramafactory.exception.ResourceNotFoundException;
+import com.dramafactory.metrics.DramaMetrics;
 import com.dramafactory.model.Episode;
 import com.dramafactory.model.Shot;
 import com.dramafactory.model.VideoTask;
@@ -60,6 +61,8 @@ class VideoTaskServiceTest {
     private VideoProvider mockProvider;
     private VideoProviderRouter router;
 
+    private DramaMetrics dramaMetrics;
+
     private VideoTaskService service;
 
     @BeforeEach
@@ -72,6 +75,7 @@ class VideoTaskServiceTest {
         environment = mock(Environment.class);
         mockProvider = mock(VideoProvider.class);
         router = mock(VideoProviderRouter.class);
+        dramaMetrics = mock(DramaMetrics.class);
 
         service = new VideoTaskService(
                 videoTaskRepository,
@@ -84,7 +88,8 @@ class VideoTaskServiceTest {
                 "mock",
                 10000L,
                 3,
-                tempDir.toString()
+                tempDir.toString(),
+                dramaMetrics
         );
     }
 
