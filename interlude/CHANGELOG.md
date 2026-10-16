@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- .bak 自动备份：`interlude-lint lint` 打开剧本前自动快照（时间戳后缀，保留最近 5 个、超出的删最旧）；新增 `restore` 子命令（`--list` 列出备份、`--index N` 恢复指定版本，恢复前自动备份当前工作文件）；备份/恢复事件记结构化日志（op=backup/restore，不含剧本正文）。
+- 备份恢复测试 10 例（BackupTest）。
+- 失败注入测试 7 例（FaultInjectionTest：目录/空文件 lint、备份丢失恢复、特殊文件名、负索引、同毫秒快照）。
+
 ### Known limitations
 
 - 桌面 UI 截图验收待正常 GUI 环境。

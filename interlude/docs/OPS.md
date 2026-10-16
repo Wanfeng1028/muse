@@ -90,9 +90,18 @@ interlude-lint lint <剧本文件> [--log-level LEVEL] [--log-json] [--format te
 
 日志走 stderr，报告走 stdout，两者分开，方便脚本里管道处理。
 
+## 备份与恢复
+
+- `interlude-lint lint <剧本文件>` 在打开剧本前自动写 .bak 备份；`interlude-lint restore` 在恢复前自动备份当前工作文件。备份失败只记 warn 日志，不中断主流程。
+- 备份文件与工作文件同目录，命名 `<原文件名>.bak.<yyyyMMdd-HHmmssSSS>`，例如 `play.interlude.bak.20261016-042616408`；同一毫秒重复备份追加 `-1`、`-2` 序号。
+- 只保留最近 5 个备份，超出时删除最旧的。
+- 列出备份：`interlude-lint restore <剧本文件> [--list]`（默认即列出），输出 `[0] <备份文件名> (<字节数> bytes)`，0=最新；无备份时打印 `无可用备份`。
+- 恢复：`interlude-lint restore <剧本文件> --index N`，把第 N 个备份写回工作文件；index 越界时退出码 2。
+- 结构化日志：op=backup（fields: file/backup/kept）、op=restore（fields: file/count/from），只记路径与计数，不含剧本正文。
+
 ## 日志说明
 
-日志通过 `com.interlude.log` 这个统一门面输出，op 字段固定是四个之一：startup / parse / validate / report。
+日志通过 `com.interlude.log` 这个统一门面输出，op 字段固定是六个之一：startup / parse / validate / report / backup / restore。
 
 - parse：记录文件路径、场景数、耗时。
 - validate：记录问题总数、ERROR 数、WARNING 数、耗时。
@@ -119,6 +128,8 @@ interlude-lint lint src/main/resources/scripts/sample.interlude --log-level debu
 ```
 
 ## 测试说明
+
+- 失败注入测试（FaultInjectionTest 7 例）：目录/空文件 lint 返回 2 不崩溃、备份文件丢失时恢复抛 IOException、特殊文件名往返、同毫秒快照唯一命名。
 
 测试分两层：
 
@@ -156,3 +167,4 @@ Compose 编译器插件在本机后端崩溃，UI 编不过，也截不了图。
 - 桌面 UI 的截图验收还没做，要等正常 GUI 环境。
 - Gradle daemon 在本沙箱不可用（IPC 故障），所以本机验证一律走直编。
 - UI 相关的代码（`ui/App.kt`）不在本机直编范围内。
+- 中文文件名限制：JVM 用 `sun.jnu.encoding` 做文件名编解码。若运行环境没有 UTF-8 locale（如本沙箱 LANG 为空，`sun.jnu.encoding=ANSI_X3.4-1968`），中文文件名的备份无法被目录列表匹配，`restore --list` 看不到它们；ASCII 文件名（含空格）不受影响。正常 UTF-8 locale 机器（`LANG=C.UTF-8`）无此问题，建议以 UTF-8 locale 运行。
