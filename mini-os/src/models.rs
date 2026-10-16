@@ -85,3 +85,77 @@ pub struct Stats {
     /// 所有文件内容总字节数
     pub total_bytes: i64,
 }
+
+/// 用户公开信息（永不含 password_hash）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserInfo {
+    /// 用户主键
+    pub id: i64,
+    /// 用户名
+    pub username: String,
+    /// 是否管理员
+    pub is_admin: bool,
+}
+
+/// POST /api/auth/register 请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegisterRequest {
+    /// 用户名
+    pub username: String,
+    /// 密码
+    pub password: String,
+}
+
+/// POST /api/auth/login 请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoginRequest {
+    /// 用户名
+    pub username: String,
+    /// 密码
+    pub password: String,
+}
+
+/// GET /api/auth/setup-needed 响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetupNeededResponse {
+    /// 是否需要进行初始设置
+    pub needed: bool,
+}
+
+/// POST /api/shares 请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateShareRequest {
+    /// 待分享的节点 id
+    pub node_id: i64,
+}
+
+/// POST /api/shares 响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShareCreated {
+    /// 分享令牌
+    pub token: String,
+    /// 分享访问地址
+    pub url: String,
+}
+
+/// GET /api/s/:token 响应（只读元信息）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShareInfo {
+    /// 分享令牌
+    pub token: String,
+    /// 名称
+    pub name: String,
+    /// 类型：只取 "file" 或 "folder"
+    pub kind: String,
+    /// 字节数
+    pub size: i64,
+    /// MIME 类型（未设置时为 None）
+    pub mime_type: Option<String>,
+}

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use axum::body::to_bytes;
 use axum::http::{Request, StatusCode};
-use mini_os::{build_app, db, init_state_with, migrate};
+use mini_os::{build_app, db, init_state, init_state_with, migrate};
 use serde_json::{json, Value};
 use tower::ServiceExt;
 
@@ -80,31 +80,61 @@ async fn write_to_broken_db_returns_500_not_panic() {
     let db_path = dir.join("tmp.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
     {
         let conn = state.db.lock().unwrap();
         conn.execute("DROP TABLE vfs_nodes", []).unwrap();
     }
     let app = build_app(state);
 
+    // v1.3：先注册拿 session cookie（users 表未被 DROP，注册可用）
+    let reg = Request::builder()
+        .method("POST")
+        .uri("/api/auth/register")
+        .header("content-type", "application/json")
+        .body(axum::body::Body::from(
+            serde_json::json!({"username":"drill","password":"password123"}).to_string(),
+        ))
+        .unwrap();
+    let reg_resp = app.clone().oneshot(reg).await.unwrap();
+    assert_eq!(reg_resp.status(), StatusCode::OK);
+    let cookie = reg_resp
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string();
+
     // 写 → 500，body 带 error 字段，不 panic
     let req = Request::builder()
         .method("POST")
         .uri("/api/fs")
         .header("content-type", "application/json")
+        .header("cookie", &cookie)
         .body(axum::body::Body::from(
-            serde_json::to_vec(&json!({"parentId": null, "name": "brokentest", "kind": "folder", "content": ""})).unwrap(),
+            serde_json::to_vec(
+                &json!({"parentId": null, "name": "brokentest", "kind": "folder", "content": ""}),
+            )
+            .unwrap(),
         ))
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
     let value = body_json(resp).await;
-    assert!(value.get("error").is_some(), "500 body must contain error field");
+    assert!(
+        value.get("error").is_some(),
+        "500 body must contain error field"
+    );
 
     // 读 → 同样 500 不 panic
     let req2 = Request::builder()
         .method("GET")
         .uri("/api/fs")
+        .header("cookie", &cookie)
         .body(axum::body::Body::empty())
         .unwrap();
     let resp2 = app.oneshot(req2).await.unwrap();
@@ -119,7 +149,7 @@ async fn readyz_reflects_db_health() {
     let db_path = dir.join("ready.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
     let app = build_app(state.clone());
 
     let req = Request::builder()
@@ -158,7 +188,7 @@ async fn request_id_passthrough() {
     let db_path = dir.join("rid.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
     let app = build_app(state);
 
     let req = Request::builder()
@@ -184,7 +214,7 @@ async fn request_id_generated_when_absent() {
     let db_path = dir.join("rid2.db");
     cleanup(&db_path);
 
-    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024);
+    let state = init_state_with(db_path.to_str().unwrap(), "static", 1024, 60);
     let app = build_app(state);
 
     let req1 = Request::builder()
@@ -230,13 +260,19 @@ fn migrations_idempotent_on_same_file() {
     {
         let conn = db::open_db(db_path.to_str().unwrap()).unwrap();
         let versions = migrate::applied_versions(&conn).unwrap();
-        assert_eq!(versions, vec!["001".to_string(), "002".to_string()]);
+        assert_eq!(
+            versions,
+            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+        );
     }
 
     {
         let conn = db::open_db(db_path.to_str().unwrap()).unwrap();
         let versions = migrate::applied_versions(&conn).unwrap();
-        assert_eq!(versions, vec!["001".to_string(), "002".to_string()]);
+        assert_eq!(
+            versions,
+            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+        );
         db::seed(&conn).unwrap();
         let count: i64 = conn
             .query_row(
@@ -271,7 +307,10 @@ fn migrations_upgrade_legacy_db() {
     let conn = db::open_db(db_path.to_str().unwrap()).unwrap();
 
     let versions = migrate::applied_versions(&conn).unwrap();
-    assert_eq!(versions, vec!["001".to_string(), "002".to_string()]);
+    assert_eq!(
+        versions,
+        vec!["001".to_string(), "002".to_string(), "003".to_string()]
+    );
 
     let mut has_content_blob = false;
     let mut has_mime_type = false;
@@ -302,4 +341,74 @@ fn migrations_upgrade_legacy_db() {
 
     drop(conn);
     cleanup(&db_path);
+}
+
+#[tokio::test]
+async fn forged_token_gets_401_not_panic() {
+    // 伪造 token → 401，不 panic
+    let state = init_state_with(":memory:", "static", 1024, 60);
+    let app = build_app(state);
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/fs")
+        .header(
+            "cookie",
+            "mini_os_session=deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        )
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn expired_session_gets_401() {
+    // 直接插一条过期 session → 401
+    let state = init_state(":memory:", "static");
+    {
+        let conn = state.db.lock().unwrap();
+        conn.execute(
+            "INSERT INTO users (username, password_hash, is_admin) VALUES ('ghost','x',0)",
+            [],
+        )
+        .unwrap();
+        let uid = conn.last_insert_rowid();
+        let past = mini_os::auth::now_epoch_secs() - 100;
+        let th = mini_os::auth::hash_token("expiredtoken123");
+        conn.execute(
+            "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?1,?2,?3)",
+            rusqlite::params![th, uid, past],
+        )
+        .unwrap();
+    }
+    let app = build_app(state);
+    let req = Request::builder()
+        .method("GET")
+        .uri("/api/fs")
+        .header("cookie", "mini_os_session=expiredtoken123")
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn broken_users_table_returns_500_not_panic() {
+    // 删 users 表后注册 → 500 不 panic（鉴权中间件/处理器错误路径）
+    let state = init_state(":memory:", "static");
+    {
+        let conn = state.db.lock().unwrap();
+        conn.execute("DROP TABLE users", []).unwrap();
+    }
+    let app = build_app(state);
+    let req = Request::builder()
+        .method("POST")
+        .uri("/api/auth/register")
+        .header("content-type", "application/json")
+        .body(axum::body::Body::from(
+            serde_json::json!({"username":"drilluser","password":"password123"}).to_string(),
+        ))
+        .unwrap();
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
 }

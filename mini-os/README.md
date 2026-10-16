@@ -15,6 +15,8 @@
 
 
 - **WebSocket 通道**：连接建立后服务端主动下发欢迎消息，文本消息原样回显。
+- **多用户与鉴权**（v1.3）：注册/登录（argon2id 密码哈希）、opaque session token（HttpOnly Cookie，`SESSION_TTL_SECS` 可配默认 7 天）；VFS、设置、统计按用户隔离；未登录访问 `/api/*`（除白名单）返回 401，前端自动跳登录页。
+- **访客只读分享**（v1.3）：文件管理器对文件生成分享链接（`/share.html?token=...`），访客免登录只读查看/下载，不可写。
 - **Prometheus 指标**：`GET /metrics` 暴露 `http_requests_total`、`vfs_ops_total`、`ws_connections`（文本格式，零依赖）。
 - **桌面交互**：窗口拖拽、开始菜单、实时时钟、WebSocket 连接状态指示。
 
@@ -87,6 +89,7 @@ http://localhost:8090
 | `STATIC_DIR` | `static` | 静态资源目录，提供 `index.html` 等前端文件 |
 | `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
 | `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒），只约束排空、不掐正常服务 |
+| `SESSION_TTL_SECS` | `604800`（7 天） | 登录 session 有效期（秒），非法值回落默认 |
 
 
 
@@ -149,6 +152,17 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 | GET | `/api/files/download?path=<文件>` | 文件下载（流式，`Content-Disposition: attachment`） |
 | GET | `/ws` | WebSocket 连接入口 |
 | GET | `/metrics` | Prometheus 指标（`text/plain; version=0.0.4`） |
+| POST | `/api/auth/register` | 注册（首个用户自动为管理员；用户名 3–32 字符，仅字母数字 `_.` `-`；密码 ≥8 位） |
+| POST | `/api/auth/login` | 登录（失败统一 401，防枚举） |
+| POST | `/api/auth/logout` | 登出（清除 session 与 Cookie） |
+| GET | `/api/me` | 当前登录用户（需登录） |
+| GET | `/api/auth/setup-needed` | 是否需要初始化管理员（公开） |
+| POST | `/api/auth/migrate-legacy` | 一次性把升级前的旧数据转给当前用户（需登录，无旧数据时 410） |
+| POST | `/api/shares` | 创建文件只读分享（需登录，仅 file 类型）→ 201 `{token, url}` |
+| GET | `/api/s/:token` | 分享元信息（公开，只读） |
+| GET | `/api/s/:token/download` | 分享文件下载（公开，只读） |
+
+> 鉴权说明：除 `/api/health`、`/api/readyz`、`/metrics`、`/api/auth/register|login|logout|setup-needed`、`/api/s/:token` 系列公开外，其余 `/api/*` 与 `/ws` 均需登录（Cookie `mini_os_session`），未登录返回 401 `{"error":"未登录"}`。VFS/设置/统计按用户隔离，跨用户 id 返回 404。
 
 ## 界面截图
 
@@ -178,12 +192,13 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 
 ## 数据与备份
 
-所有持久化数据都在一个 SQLite 文件里（默认 `data/mini-os.db`），包含 `vfs_nodes`、`settings` 与 `schema_migrations`（版本化迁移 001/002，老库启动自动升级）三张表。在线备份：`mini-os backup --db <库> --out <备份>`（或 `scripts/backup.sh` 一键备份，保留最近 7 个）；恢复：`scripts/restore.sh <备份> --force`（恢复前请先停服务，CLI 会自动做完整性校验与原库快照）。探针：`GET /api/health`（存活）、`GET /api/readyz`（就绪，DB 不可用时 503）。指标：`GET /metrics`（Prometheus 文本格式），详见 `docs/OPERATIONS.md` §5.5。日志为 JSONL（stderr），每行带 `request_id`，详见 `docs/OPERATIONS.md`。
+所有持久化数据都在一个 SQLite 文件里（默认 `data/mini-os.db`），包含 `vfs_nodes`、`settings` 与 `schema_migrations`（版本化迁移 001/002，老库启动自动升级）三张表。v1.3 新增 `users`（密码只存 argon2id PHC 哈希）、`sessions`（只存 token 的 SHA-256，不存明文）、`shares` 三张表；`settings` 主键改为 `(user_id, key)`；迁移 003 幂等，老库升级时旧数据归属占位用户 `legacy`（不可登录），首个注册用户可经 `POST /api/auth/migrate-legacy` 一次性领走。备份/恢复为整库操作，新表自动覆盖。在线备份：`mini-os backup --db <库> --out <备份>`（或 `scripts/backup.sh` 一键备份，保留最近 7 个）；恢复：`scripts/restore.sh <备份> --force`（恢复前请先停服务，CLI 会自动做完整性校验与原库快照）。探针：`GET /api/health`（存活）、`GET /api/readyz`（就绪，DB 不可用时 503）。指标：`GET /metrics`（Prometheus 文本格式），详见 `docs/OPERATIONS.md` §5.5。日志为 JSONL（stderr），每行带 `request_id`，详见 `docs/OPERATIONS.md`。
 
 
 ## 路线图
 
-- 多用户与鉴权
+- ~~多用户与鉴权~~（v1.3 已完成：注册/登录/session、VFS 按用户隔离、访客只读文件分享）
+- 目录分享、细粒度权限、登录限流（后续）
 - ~~文件上传与下载~~（v1.1.0 已完成）
 - ~~Prometheus /metrics~~（已完成，见 docs/OPERATIONS.md §5.5）
 - 应用商店，支持动态注册第三方应用

@@ -172,6 +172,7 @@ async fn cmd_serve(config: Config) -> i32 {
         &config.database_path,
         &config.static_dir,
         config.upload_max_bytes,
+        config.session_ttl_secs,
     );
 
     let app = build_app(state);
@@ -217,10 +218,7 @@ async fn cmd_serve(config: Config) -> i32 {
             1
         }
         Err(_) => {
-            log_event(
-                "shutdown_timeout",
-                json!({ "timeout_secs": timeout_secs }),
-            );
+            log_event("shutdown_timeout", json!({ "timeout_secs": timeout_secs }));
             1
         }
     }
@@ -231,7 +229,11 @@ async fn main() {
     let raw: Vec<String> = std::env::args().skip(1).collect();
     let args = parse_args(&raw);
 
-    let sub = args.positional.first().map(|s| s.as_str()).unwrap_or("serve");
+    let sub = args
+        .positional
+        .first()
+        .map(|s| s.as_str())
+        .unwrap_or("serve");
 
     let code = match sub {
         "serve" => {

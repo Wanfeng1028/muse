@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录 - mini-os</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: rgba(15, 23, 42, .10);
+    --radius: 10px;
+    --shadow-lg: 0 24px 48px rgba(15, 23, 42, .18);
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+  body {
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--text);
+    background: linear-gradient(160deg, #062a5e, #1361c0 40%, #58b7f5);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 380px;
+    max-width: 100%;
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 32px;
+  }
+  .brand {
+    font-size: 13px;
+    letter-spacing: .08em;
+    text-transform: lowercase;
+    color: var(--text-muted);
+    margin: 0 0 18px 0;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: 22px;
+    line-height: 1.35;
+    margin: 0 0 10px 0;
+    font-weight: 650;
+    text-align: left;
+  }
+  .hint {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: 0 0 20px 0;
+    text-align: left;
+  }
+  .err {
+    display: none;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid rgba(220, 38, 38, .25);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .err.show { display: block; }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-align: left;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    outline: none;
+    margin-bottom: 16px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .18);
+  }
+  button {
+    width: 100%;
+    height: 44px;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--primary);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color .15s ease;
+  }
+  button:hover { background: var(--primary-hover); }
+  button:disabled { opacity: .6; cursor: default; }
+  .switch {
+    margin-top: 18px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    text-align: left;
+  }
+  .switch a {
+    color: var(--primary);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .switch a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <p class="brand">mini-os</p>
+    <h1 id="title">登录你的桌面</h1>
+    <p class="hint" id="hint"></p>
+    <div class="err" id="err" role="alert"></div>
+    <form id="form" novalidate>
+      <label for="username">用户名</label>
+      <input type="text" id="username" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+      <label for="password">密码</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required>
+      <button type="submit" id="submit">登录</button>
+    </form>
+    <p class="switch" id="switch"></p>
+  </main>
+
+<script>
+(function () {
+  "use strict";
+
+  var state = { mode: "login" };
+
+  var elTitle = document.getElementById("title");
+  var elHint = document.getElementById("hint");
+  var elErr = document.getElementById("err");
+  var elForm = document.getElementById("form");
+  var elUser = document.getElementById("username");
+  var elPass = document.getElementById("password");
+  var elSubmit = document.getElementById("submit");
+  var elSwitch = document.getElementById("switch");
+
+  function showError(msg) {
+    elErr.textContent = msg;
+    elErr.classList.add("show");
+  }
+  function clearError() {
+    elErr.textContent = "";
+    elErr.classList.remove("show");
+  }
+
+  function render() {
+    clearError();
+    if (state.mode === "setup") {
+      elTitle.textContent = "创建管理员账号";
+      elHint.textContent = "这是这台 mini-os 的第一个用户，会成为管理员。用户名 3-32 个字符，密码至少 8 位。";
+      elSubmit.textContent = "创建账号";
+      elPass.setAttribute("autocomplete", "new-password");
+      elSwitch.innerHTML = "";
+      return;
+    }
+    if (state.mode === "register") {
+      elTitle.textContent = "注册新账号";
+      elHint.textContent = "用户名 3-32 个字符，只能用字母、数字、下划线、点或短横线。密码至少 8 位。";
+      elSubmit.textContent = "注册";
+      elPass.setAttribute("autocomplete", "new-password");
+      elSwitch.innerHTML = '已经有账号了？<a id="to-login">去登录</a>';
+      var l = document.getElementById("to-login");
+      if (l) l.addEventListener("click", function () { state.mode = "login"; render(); });
+      return;
+    }
+    elTitle.textContent = "登录你的桌面";
+    elHint.textContent = "";
+    elSubmit.textContent = "登录";
+    elPass.setAttribute("autocomplete", "current-password");
+    elSwitch.innerHTML = '没有账号？<a id="to-register">去注册</a>';
+    var r = document.getElementById("to-register");
+    if (r) r.addEventListener("click", function () { state.mode = "register"; render(); });
+  }
+
+  function friendlyError(status, serverMsg) {
+    if (status === 409) return "这个用户名已经被用了，换一个";
+    if (status === 401) return "用户名或密码不对";
+    if (status === 400) return serverMsg || "输入的内容不符合要求，检查一下用户名和密码";
+    if (status === 0) return "连不上服务器，检查一下网络";
+    if (serverMsg) return serverMsg;
+    return "出错了（" + status + "），稍后再试";
+  }
+
+  function submit(path) {
+    var username = elUser.value.trim();
+    var password = elPass.value;
+    if (!username) { showError("请输入用户名"); elUser.focus(); return; }
+    if (!password) { showError("请输入密码"); elPass.focus(); return; }
+    clearError();
+    elSubmit.disabled = true;
+    fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ username: username, password: password })
+    }).then(function (res) {
+      if (res.ok) {
+        location.replace("/");
+        return null;
+      }
+      return res.json().catch(function () { return null; }).then(function (data) {
+        var msg = data && typeof data.error === "string" ? data.error : "";
+        showError(friendlyError(res.status, msg));
+        elSubmit.disabled = false;
+      });
+    }).catch(function () {
+      showError(friendlyError(0, ""));
+      elSubmit.disabled = false;
+    });
+  }
+
+  elForm.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (state.mode === "register" || state.mode === "setup") {
+      submit("/api/auth/register");
+    } else {
+      submit("/api/auth/login");
+    }
+  });
+
+  fetch("/api/auth/setup-needed", { credentials: "same-origin" })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data && data.needed === true) {
+        state.mode = "setup";
+      } else {
+        state.mode = "login";
+      }
+      render();
+    })
+    .catch(function () {
+      state.mode = "login";
+      render();
+    });
+})();
+</script>
+</body>
+</html>

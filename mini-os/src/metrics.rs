@@ -20,6 +20,8 @@ pub struct Metrics {
     http: Mutex<HashMap<(String, String, u16), u64>>,
     /// vfs_ops_total：key 为 op。
     vfs: Mutex<HashMap<String, u64>>,
+    /// auth_ops_total：key 为 op（register/login/logout/migrate_legacy/share_create）。
+    auth: Mutex<HashMap<String, u64>>,
     /// ws_connections：当前 WebSocket 连接数。
     ws: AtomicI64,
 }
@@ -30,6 +32,7 @@ impl Metrics {
         Self {
             http: Mutex::new(HashMap::new()),
             vfs: Mutex::new(HashMap::new()),
+            auth: Mutex::new(HashMap::new()),
             ws: AtomicI64::new(0),
         }
     }
@@ -46,6 +49,13 @@ impl Metrics {
     /// 累加一次 VFS 操作计数。
     pub fn inc_vfs(&self, op: &str) {
         let mut map = self.vfs.lock().unwrap();
+        let entry = map.entry(op.to_string()).or_insert(0);
+        *entry += 1;
+    }
+
+    /// 累加一次认证操作计数。
+    pub fn inc_auth(&self, op: &str) {
+        let mut map = self.auth.lock().unwrap();
         let entry = map.entry(op.to_string()).or_insert(0);
         *entry += 1;
     }
@@ -96,6 +106,22 @@ impl Metrics {
             for (op, count) in rows {
                 out.push_str(&format!(
                     "vfs_ops_total{{op=\"{}\"}} {}\n",
+                    escape_label(op),
+                    count
+                ));
+            }
+        }
+
+        // auth_ops_total
+        out.push_str("# HELP auth_ops_total Total number of auth operations.\n");
+        out.push_str("# TYPE auth_ops_total counter\n");
+        {
+            let map = self.auth.lock().unwrap();
+            let mut rows: Vec<(&String, &u64)> = map.iter().collect();
+            rows.sort_by(|a, b| a.0.cmp(b.0));
+            for (op, count) in rows {
+                out.push_str(&format!(
+                    "auth_ops_total{{op=\"{}\"}} {}\n",
                     escape_label(op),
                     count
                 ));
@@ -182,10 +208,18 @@ mod tests {
             // TYPE 行必须在样本行之前：样本行不以 '# ' 开头且包含指标名
             let sample_marker = format!("\n{} ", name);
             if let Some(sample_pos) = text.find(&sample_marker) {
-                assert!(typ_pos < sample_pos, "TYPE must precede sample for {}", name);
+                assert!(
+                    typ_pos < sample_pos,
+                    "TYPE must precede sample for {}",
+                    name
+                );
             }
             if let Some(sample_pos) = text.find(&format!("\n{}{{", name)) {
-                assert!(typ_pos < sample_pos, "TYPE must precede sample for {}", name);
+                assert!(
+                    typ_pos < sample_pos,
+                    "TYPE must precede sample for {}",
+                    name
+                );
             }
         }
     }
@@ -224,5 +258,14 @@ mod tests {
         m.inc_http("GET", "/a\"b\\c", 200);
         let text = m.render();
         assert!(text.contains("route=\"/a\\\"b\\\\c\""));
+    }
+
+    #[test]
+    fn inc_auth_accumulates() {
+        let m = Metrics::new();
+        m.inc_auth("login");
+        m.inc_auth("login");
+        let text = m.render();
+        assert!(text.contains(r#"auth_ops_total{op="login"} 2"#));
     }
 }

@@ -27,28 +27,29 @@ pub fn open_db(path: &str) -> rusqlite::Result<Connection> {
     Ok(conn)
 }
 
-/// 种子数据：vfs_nodes 为空时插入初始文件结构，settings 用 INSERT OR IGNORE
+/// 种子数据：vfs_nodes 为空时插入初始文件结构（归属 legacy 占位用户 id=1），
+/// settings 按用户维度使用 INSERT OR IGNORE。不创建可登录用户。
 pub fn seed(conn: &Connection) -> rusqlite::Result<()> {
     // 统计节点数量
     let count: i64 = conn.query_row("SELECT COUNT(*) FROM vfs_nodes", [], |row| row.get(0))?;
 
     if count == 0 {
-        // 根下文件夹：Desktop、Documents
+        // 根下文件夹：Desktop、Documents（显式归属 legacy 占位用户 user_id=1）
         conn.execute(
-            "INSERT INTO vfs_nodes (parent_id, name, kind, content) VALUES (NULL, ?1, 'folder', '')",
+            "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (1, NULL, ?1, 'folder', '')",
             params!["Desktop"],
         )?;
         let desktop_id = conn.last_insert_rowid();
 
         conn.execute(
-            "INSERT INTO vfs_nodes (parent_id, name, kind, content) VALUES (NULL, ?1, 'folder', '')",
+            "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (1, NULL, ?1, 'folder', '')",
             params!["Documents"],
         )?;
         let documents_id = conn.last_insert_rowid();
 
         // Desktop/welcome.txt
         conn.execute(
-            "INSERT INTO vfs_nodes (parent_id, name, kind, content) VALUES (?1, ?2, 'file', ?3)",
+            "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (1, ?1, ?2, 'file', ?3)",
             params![
                 desktop_id,
                 "welcome.txt",
@@ -58,7 +59,7 @@ pub fn seed(conn: &Connection) -> rusqlite::Result<()> {
 
         // Documents/notes.txt
         conn.execute(
-            "INSERT INTO vfs_nodes (parent_id, name, kind, content) VALUES (?1, ?2, 'file', ?3)",
+            "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (1, ?1, ?2, 'file', ?3)",
             params![
                 documents_id,
                 "notes.txt",
@@ -67,13 +68,13 @@ pub fn seed(conn: &Connection) -> rusqlite::Result<()> {
         )?;
     }
 
-    // 默认设置，存在则忽略
+    // 默认设置（按用户维度），存在则忽略
     conn.execute(
-        "INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'light')",
+        "INSERT OR IGNORE INTO settings (user_id, key, value) VALUES (1, 'theme', 'light')",
         [],
     )?;
     conn.execute(
-        "INSERT OR IGNORE INTO settings (key, value) VALUES ('wallpaper', 'ocean')",
+        "INSERT OR IGNORE INTO settings (user_id, key, value) VALUES (1, 'wallpaper', 'ocean')",
         [],
     )?;
 

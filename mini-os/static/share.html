@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>分享 - mini-os</title>
+<style>
+  :root {
+    --primary: #3b82f6;
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: rgba(15, 23, 42, .10);
+    --radius: 10px;
+    --shadow-lg: 0 10px 30px rgba(15, 23, 42, .12), 0 2px 8px rgba(15, 23, 42, .06);
+    --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 48px 16px 64px;
+  }
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 28px 28px 32px;
+  }
+  .brand {
+    font-size: 12px;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand .dot { color: var(--primary); }
+  .icon-wrap {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: 20px;
+    line-height: 1.35;
+    margin: 0 0 6px;
+    font-weight: 600;
+    word-break: break-all;
+  }
+  .meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  .meta span { white-space: nowrap; }
+  .btn {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+    padding: 11px 18px;
+    border-radius: var(--radius);
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--primary);
+    transition: opacity .15s ease;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .empty h1 { font-size: 18px; }
+  .empty p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0 0 22px;
+    line-height: 1.6;
+  }
+  .link-plain {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .link-plain:hover { text-decoration: underline; }
+  .loading { font-size: 14px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+  <main class="card" id="card">
+    <div class="brand"><span class="dot">●</span> mini-os · 只读分享</div>
+    <div id="content"><p class="loading">正在读取分享…</p></div>
+  </main>
+
+<script>
+(function () {
+  var contentEl = document.getElementById('content');
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    if (attrs) {
+      for (var k in attrs) {
+        if (Object.prototype.hasOwnProperty.call(attrs, k)) {
+          node.setAttribute(k, attrs[k]);
+        }
+      }
+    }
+    if (children) {
+      for (var i = 0; i < children.length; i++) {
+        var c = children[i];
+        if (typeof c === 'string') {
+          node.appendChild(document.createTextNode(c));
+        } else if (c) {
+          node.appendChild(c);
+        }
+      }
+    }
+    return node;
+  }
+
+  function fileIconSvg() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '40');
+    svg.setAttribute('height', '40');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.5');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    var p1 = document.createElementNS(ns, 'path');
+    p1.setAttribute('d', 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z');
+    var p2 = document.createElementNS(ns, 'polyline');
+    p2.setAttribute('points', '14 3 14 8 19 8');
+    svg.appendChild(p1);
+    svg.appendChild(p2);
+    return svg;
+  }
+
+  function humanSize(bytes) {
+    if (typeof bytes !== 'number' || isNaN(bytes) || bytes < 0) return '未知大小';
+    var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    var v = bytes;
+    var i = 0;
+    while (v >= 1024 && i < units.length - 1) {
+      v = v / 1024;
+      i++;
+    }
+    if (i === 0) return v + ' ' + units[i];
+    return v.toFixed(1) + ' ' + units[i];
+  }
+
+  function getToken() {
+    var search = window.location.search || '';
+    if (search.charAt(0) === '?') search = search.slice(1);
+    if (!search) return '';
+    var parts = search.split('&');
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].split('=');
+      if (decodeURIComponent(kv[0]) === 'token') {
+        return decodeURIComponent((kv[1] || '').replace(/\+/g, ' '));
+      }
+    }
+    return '';
+  }
+
+  function renderInvalid() {
+    contentEl.innerHTML = '';
+    contentEl.className = 'empty';
+    var wrap = el('div', { 'class': 'empty' });
+    wrap.appendChild(el('h1', null, ['链接无效']));
+    wrap.appendChild(el('p', null, ['这个分享链接缺少 token，或者地址被截断了。请向分享者重新获取完整链接。']));
+    var a = el('a', { 'class': 'link-plain', 'href': '/' }, ['回到 mini-os']);
+    wrap.appendChild(a);
+    contentEl.appendChild(wrap);
+  }
+
+  function renderNotFound() {
+    contentEl.innerHTML = '';
+    contentEl.className = 'empty';
+    var wrap = el('div', { 'class': 'empty' });
+    wrap.appendChild(el('h1', null, ['这个分享不存在或已被删除']));
+    wrap.appendChild(el('p', null, ['分享可能已经过期，或者被拥有者取消了。']));
+    var a = el('a', { 'class': 'link-plain', 'href': '/' }, ['回到 mini-os']);
+    wrap.appendChild(a);
+    contentEl.appendChild(wrap);
+  }
+
+  function renderError() {
+    contentEl.innerHTML = '';
+    contentEl.className = 'empty';
+    var wrap = el('div', { 'class': 'empty' });
+    wrap.appendChild(el('h1', null, ['读取分享失败']));
+    wrap.appendChild(el('p', null, ['网络或服务出了点问题，稍后再试一次。']));
+    var a = el('a', { 'class': 'link-plain', 'href': '/' }, ['回到 mini-os']);
+    wrap.appendChild(a);
+    contentEl.appendChild(wrap);
+  }
+
+  function renderInfo(token, info) {
+    contentEl.innerHTML = '';
+    contentEl.className = '';
+    var wrap = el('div');
+
+    var iconWrap = el('div', { 'class': 'icon-wrap' });
+    iconWrap.appendChild(fileIconSvg());
+    wrap.appendChild(iconWrap);
+
+    wrap.appendChild(el('h1', null, [info.name || '未命名文件']));
+
+    var meta = el('div', { 'class': 'meta' });
+    meta.appendChild(el('span', null, [humanSize(info.size)]));
+    meta.appendChild(el('span', null, [info.mime_type || '未知类型']));
+    wrap.appendChild(meta);
+
+    var dl = el('a', {
+      'class': 'btn',
+      'href': '/api/s/' + encodeURIComponent(token) + '/download'
+    }, ['下载文件']);
+    wrap.appendChild(dl);
+
+    contentEl.appendChild(wrap);
+  }
+
+  var token = getToken();
+  if (!token) {
+    renderInvalid();
+    return;
+  }
+
+  fetch('/api/s/' + encodeURIComponent(token), {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+    credentials: 'same-origin'
+  }).then(function (res) {
+    if (res.status === 404) {
+      renderNotFound();
+      return null;
+    }
+    if (!res.ok) {
+      renderError();
+      return null;
+    }
+    return res.json();
+  }).then(function (info) {
+    if (info) {
+      renderInfo(token, info);
+    }
+  }).catch(function () {
+    renderError();
+  });
+})();
+</script>
+</body>
+</html>

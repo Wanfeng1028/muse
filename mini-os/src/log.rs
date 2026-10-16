@@ -7,9 +7,9 @@ use std::sync::OnceLock;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use axum::extract::Request;
+use axum::http::HeaderValue;
 use axum::middleware::Next;
 use axum::response::Response;
-use axum::http::HeaderValue;
 
 /// days-to-civil 算法（Howard Hinnant），返回 (year, month, day)
 fn civil_from_days(z: i64) -> (i64, u32, u32) {
@@ -167,10 +167,7 @@ mod tests {
             format_rfc3339_millis(1792133085123),
             "2026-10-16T06:44:45.123Z"
         );
-        assert_eq!(
-            format_rfc3339_millis(1792133085000),
-            "2026-10-16T06:44:45Z"
-        );
+        assert_eq!(format_rfc3339_millis(1792133085000), "2026-10-16T06:44:45Z");
     }
 
     #[test]

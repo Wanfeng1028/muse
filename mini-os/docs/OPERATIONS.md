@@ -1,4 +1,6 @@
-# mini-os v1.2.0 运维手册
+# mini-os v1.3.0 运维手册
+
+> v1.3 新增：多用户与鉴权、访客只读分享。旧版单用户库可直接升级（迁移 003 自动执行，旧数据归属占位用户 legacy）。
 
 本手册面向把 mini-os 跑在单机上的运维同学。所有命令与行为都对应 v1.2.0 的已验证事实，没验证过的会明确写"未验证"。
 
@@ -83,10 +85,13 @@ journalctl -u mini-os -f
 | --- | --- | --- |
 | `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
 | `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒）。只约束收到 SIGTERM/Ctrl+C 后的排空阶段，不掐正常服务（已回归验证） |
+| `SESSION_TTL_SECS` | `604800`（7 天） | 登录 session 有效期（秒）；非法/≤0 回落默认值 |
 
 补充说明：
 - `SHUTDOWN_TIMEOUT_SECS` 是 v1.2.0 新增。它只管"排空在途请求"这一段，不限制服务运行时长。v1.1.0 曾把它错误地当成整个服务生命周期超时，v1.2.0 已修复。
 - 数据库路径、监听地址等如未在表中列出，以实际启动参数 / 现有配置为准；未验证项不在此处臆测。
+
+多用户说明：首个注册的用户自动成为管理员；`users` 表存 argon2id 密码哈希（PHC 字符串），`sessions` 表只存 token 的 SHA-256（不明文存 token）；Cookie 名 `mini_os_session`（HttpOnly）。老库升级后旧数据归属不可登录的占位用户 `legacy`，首个注册用户登录后调 `POST /api/auth/migrate-legacy` 一次性领走（只能执行一次）。
 
 ---
 
@@ -114,6 +119,9 @@ journalctl -u mini-os -f
 - 脚本会先提示你停服务。
 - 不带 `--force` 时，若目标库已存在会拒绝恢复。
 - 加 `--force` 才会覆盖目标库。
+
+### 3.1.1 用户数据的备份覆盖
+v1.3 的 `users`/`sessions`/`shares` 表与 `vfs_nodes.user_id` 列都在同一个 SQLite 文件里，`backup`/`restore` 整库操作自动覆盖，无需额外步骤。恢复后所有 session 保持有效（除非已过期）；如需强制所有用户重新登录，恢复后执行 `DELETE FROM sessions;`（sqlite3 CLI）。
 
 ### 3.2 保留策略
 
@@ -288,6 +296,8 @@ scrape_configs:
 | 恢复报完整性校验失败（exit 3） | 备份文件 `integrity_check` 不过，文件可能损坏 | 换一个完好的备份；损坏的备份不要强行恢复 |
 | 端口占用，服务起不来 | 监听端口已被别的进程占用 | 查占用进程（`ss -lntp` / `lsof -i`），停掉或换端口 |
 | `/api/readyz` 返回 503 | DB 不可查（例如文件被移走、损坏、权限问题） | 检查 `DATABASE_PATH` 指向的库是否存在且可读写；必要时从备份恢复 |
+| 登录后频繁跳回登录页 | session 过期（`SESSION_TTL_SECS`）或 sessions 表被清空 | 重新登录；检查 `SESSION_TTL_SECS` 配置 |
+| `/api/*` 返回 401 `{"error":"未登录"}` | Cookie 丢失/过期（跨域或隐私模式） | 确认同源访问、Cookie 未被拦截；重新登录 |
 | 启动 panic"无法绑定监听地址" | 监听地址绑定失败（端口被占、地址不可用等） | 确认端口空闲、监听地址正确，再重启 |
 
 排障时优先看 JSONL 日志，用 `request_id` 串请求，用事件名（`service_started` / `backup_done` / `restore_done` 等）定位阶段。
@@ -355,3 +365,5 @@ scrape_configs:
 - 真实负载：`scripts/load_check.py` 300 文件顺序创建 0 失败，avg 74.93ms，max 138.97ms，30 个抽查内容一致。
 - 探针：`/api/health` → 200 `{"status":"ok","version":"1.2.0"}`；`/api/readyz` → DB 可查 200 `{"status":"ready"}`，否则 503 `{"status":"not_ready"}`。
 - 退出码：0 成功 / 2 参数错误 / 3 执行失败。
+- v1.3（2026-10-16 验收实测）：`cargo test` 65/65 全过——lib 15（auth 4 + metrics 6 + migrate 2 + log 3 既有）、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、share_test 6；`cargo clippy --all-targets -- -D warnings` 零警告；`cargo fmt --check` 通过；迁移 003 幂等（migrate::tests::migrations_are_idempotent + migration_003_preserves_legacy_data 均过，老库升级冒烟验证通过）。
+- 已知限制：无登录限流；仅文件分享；密码策略仅最小长度。

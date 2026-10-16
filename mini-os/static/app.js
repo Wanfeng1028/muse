@@ -21,6 +21,7 @@ async function api(path, opts) {
     data = null;
   }
   if (!res.ok) {
+    if (res.status === 401) { location.replace('/login.html'); throw new Error('未登录'); }
     const msg = data && data.error ? data.error : ('HTTP ' + res.status);
     throw new Error(msg);
   }
@@ -32,6 +33,10 @@ let appsRegistry = [];
 
 // 初始化
 async function init() {
+  // v1.3 登录门卫：未登录跳登录页
+  const me = await api('/api/me').catch(() => null);
+  if (!me) { location.replace('/login.html'); return; }
+  state.currentUser = me;
   try {
     appsRegistry = await api('/api/apps');
   } catch (e) {
@@ -54,6 +59,15 @@ async function init() {
   // 时钟
   updateClock();
   setInterval(updateClock, 1000);
+
+  // v1.3 当前用户 + 注销
+  const userLabel = document.getElementById('user-label');
+  if (userLabel && state.currentUser) userLabel.textContent = state.currentUser.username;
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) logoutBtn.addEventListener('click', async () => {
+    try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+    location.replace('/login.html');
+  });
 
   // 开始菜单
   const startBtn = document.getElementById('start-btn');
@@ -396,6 +410,23 @@ function renderFiles(body) {
             a.remove();
           });
           row.appendChild(dl);
+
+          // v1.3 行内分享按钮（仅文件）
+          const shareBtn = document.createElement('button');
+          shareBtn.className = 'fs-share';
+          shareBtn.textContent = '分享';
+          shareBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            clearError();
+            try {
+              const r = await api('/api/shares', { method: 'POST', body: JSON.stringify({ nodeId: node.id }) });
+              const url = location.origin + r.url;
+              showShareDialog(node.name, url);
+            } catch (e) {
+              showError('分享失败：' + e.message);
+            }
+          });
+          row.appendChild(shareBtn);
         }
         row.addEventListener('dblclick', () => {
           if (node.kind === 'folder') {
@@ -486,6 +517,65 @@ function renderFiles(body) {
   function clearError() {
     errorBox.textContent = '';
     errorBox.classList.add('hidden');
+  }
+
+  function showShareDialog(fileName, url) {
+    const overlay = document.createElement('div');
+    overlay.className = 'share-dialog-overlay';
+    const card = document.createElement('div');
+    card.className = 'share-dialog-card';
+
+    const title = document.createElement('div');
+    title.className = 'share-dialog-title';
+    title.textContent = '分享：' + fileName;
+
+    const input = document.createElement('input');
+    input.className = 'share-dialog-input';
+    input.type = 'text';
+    input.readOnly = true;
+    input.value = url;
+    input.addEventListener('click', () => input.select());
+
+    const actions = document.createElement('div');
+    actions.className = 'share-dialog-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'share-dialog-copy';
+    copyBtn.textContent = '复制链接';
+    copyBtn.addEventListener('click', async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+        } else {
+          input.select();
+          document.execCommand('copy');
+        }
+        copyBtn.textContent = '已复制';
+        setTimeout(() => { copyBtn.textContent = '复制链接'; }, 1500);
+      } catch (e) {
+        input.select();
+        try { document.execCommand('copy'); } catch (e2) {}
+      }
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'share-dialog-close';
+    closeBtn.textContent = '关闭';
+    closeBtn.addEventListener('click', () => overlay.remove());
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(closeBtn);
+
+    card.appendChild(title);
+    card.appendChild(input);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    overlay.addEventListener('click', (ev) => {
+      if (ev.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+    input.focus();
+    input.select();
   }
 
   function uploadFiles(fileList) {

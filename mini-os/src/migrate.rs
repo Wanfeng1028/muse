@@ -46,10 +46,7 @@ fn apply_001(conn: &Connection) -> rusqlite::Result<()> {
     let tx = conn.unchecked_transaction()?;
     tx.execute(MIGRATION_001_VFS_NODES, [])?;
     tx.execute(MIGRATION_001_SETTINGS, [])?;
-    tx.execute(
-        "INSERT INTO schema_migrations(version) VALUES ('001')",
-        [],
-    )?;
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('001')", [])?;
     tx.commit()?;
     Ok(())
 }
@@ -81,10 +78,137 @@ fn apply_002(conn: &Connection) -> rusqlite::Result<()> {
         tx.execute("ALTER TABLE vfs_nodes ADD COLUMN mime_type TEXT", [])?;
     }
 
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('002')", [])?;
+    tx.commit()?;
+    Ok(())
+}
+
+/// 迁移 003：多用户隔离。新增 users / sessions / shares 表，
+/// 为 vfs_nodes 增加 user_id 列，并将 settings 重建为 (user_id, key) 联合主键。
+fn apply_003(conn: &Connection) -> rusqlite::Result<()> {
+    let tx = conn.unchecked_transaction()?;
+
+    // a) users 表。password_hash 允许 NULL，代表不可登录的占位用户。
     tx.execute(
-        "INSERT INTO schema_migrations(version) VALUES ('002')",
+        "CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NULL,
+            is_admin INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
         [],
     )?;
+
+    // b) sessions 表 + 索引
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS sessions (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            expires_at INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)",
+        [],
+    )?;
+
+    // c) shares 表 + 索引
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS shares (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT NOT NULL UNIQUE,
+            node_id INTEGER NOT NULL REFERENCES vfs_nodes(id) ON DELETE CASCADE,
+            owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(token)",
+        [],
+    )?;
+
+    // d) vfs_nodes 增加 user_id 列（SQLite ADD COLUMN 带 NOT NULL 必须提供 DEFAULT）。
+    //    先查 PRAGMA 确保幂等。
+    let mut has_user_id = false;
+    {
+        let mut stmt = tx.prepare("PRAGMA table_info(vfs_nodes)")?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == "user_id" {
+                has_user_id = true;
+            }
+        }
+    }
+    if !has_user_id {
+        tx.execute(
+            "ALTER TABLE vfs_nodes ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1",
+            [],
+        )?;
+    }
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_vfs_user ON vfs_nodes(user_id)",
+        [],
+    )?;
+
+    // e) settings 重建为 (user_id, key) 联合主键。
+    //    001 建的 settings 是 key 单主键；此处 4 步走：
+    //    建新表 -> 拷贝老数据（归属 user_id=1）-> 删旧表 -> 重命名。
+    //    先查 PRAGMA 判断是否已经是新结构，避免重复重建。
+    let mut settings_needs_rebuild = true;
+    {
+        let mut stmt = tx.prepare("PRAGMA table_info(settings)")?;
+        let mut rows = stmt.query([])?;
+        let mut has_user_id = false;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == "user_id" {
+                has_user_id = true;
+            }
+        }
+        if has_user_id {
+            settings_needs_rebuild = false;
+        }
+    }
+    if settings_needs_rebuild {
+        tx.execute(
+            "CREATE TABLE IF NOT EXISTS settings_new (
+                user_id INTEGER NOT NULL DEFAULT 1,
+                key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                PRIMARY KEY(user_id, key)
+            )",
+            [],
+        )?;
+        tx.execute(
+            "INSERT INTO settings_new(user_id, key, value) SELECT 1, key, value FROM settings",
+            [],
+        )?;
+        tx.execute("DROP TABLE settings", [])?;
+        tx.execute("ALTER TABLE settings_new RENAME TO settings", [])?;
+    }
+
+    // f) 占位用户 id=1：003 首次建表时理论上不存在 id=1 的真实用户，
+    //    OR IGNORE 兜底（若库中已存在同 id 或同 username 则跳过）。
+    tx.execute(
+        "INSERT OR IGNORE INTO users(id, username, password_hash, is_admin) VALUES (1, 'legacy', NULL, 0)",
+        [],
+    )?;
+
+    // g) 防御性：ADD COLUMN DEFAULT 1 已保证非空，此 UPDATE 影响 0 行。
+    tx.execute("UPDATE vfs_nodes SET user_id = 1 WHERE user_id IS NULL", [])?;
+
+    // h) 记录版本
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('003')", [])?;
+
     tx.commit()?;
     Ok(())
 }
@@ -101,14 +225,17 @@ pub fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
         apply_002(conn)?;
     }
 
+    if !is_applied(conn, "003")? {
+        apply_003(conn)?;
+    }
+
     Ok(())
 }
 
 /// 返回已应用的迁移版本，按 version 排序
 pub fn applied_versions(conn: &Connection) -> rusqlite::Result<Vec<String>> {
     ensure_migrations_table(conn)?;
-    let mut stmt =
-        conn.prepare("SELECT version FROM schema_migrations ORDER BY version ASC")?;
+    let mut stmt = conn.prepare("SELECT version FROM schema_migrations ORDER BY version ASC")?;
     let mut rows = stmt.query([])?;
     let mut out = Vec::new();
     while let Some(row) = rows.next()? {
@@ -128,12 +255,17 @@ mod tests {
         run_migrations(&conn).expect("second run");
 
         let versions = applied_versions(&conn).expect("applied versions");
-        assert_eq!(versions, vec!["001".to_string(), "002".to_string()]);
+        assert_eq!(
+            versions,
+            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+        );
 
         let count: i64 = conn
-            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row.get(0))
+            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+                row.get(0)
+            })
             .expect("count");
-        assert_eq!(count, 2);
+        assert_eq!(count, 3);
 
         let blob_cols: i64 = conn
             .query_row(
@@ -143,5 +275,94 @@ mod tests {
             )
             .expect("pragma");
         assert_eq!(blob_cols, 2);
+    }
+
+    #[test]
+    fn migration_003_preserves_legacy_data() {
+        let conn = Connection::open_in_memory().expect("open in-memory");
+
+        // 手工构造 001/002 之后的旧库结构。
+        ensure_migrations_table(&conn).expect("migrations table");
+        conn.execute(MIGRATION_001_VFS_NODES, [])
+            .expect("vfs_nodes");
+        conn.execute(MIGRATION_001_SETTINGS, []).expect("settings");
+        conn.execute("INSERT INTO schema_migrations(version) VALUES ('001')", [])
+            .expect("mark 001");
+        conn.execute("ALTER TABLE vfs_nodes ADD COLUMN content_blob BLOB", [])
+            .expect("add content_blob");
+        conn.execute("ALTER TABLE vfs_nodes ADD COLUMN mime_type TEXT", [])
+            .expect("add mime_type");
+        conn.execute("INSERT INTO schema_migrations(version) VALUES ('002')", [])
+            .expect("mark 002");
+
+        // 老数据
+        conn.execute(
+            "INSERT INTO vfs_nodes(parent_id, name, kind, content) VALUES (NULL, 'doc.txt', 'file', 'hello')",
+            [],
+        )
+        .expect("insert node");
+        conn.execute(
+            "INSERT INTO settings(key, value) VALUES ('theme', 'dark')",
+            [],
+        )
+        .expect("insert setting");
+        conn.execute("INSERT INTO settings(key, value) VALUES ('lang', 'zh')", [])
+            .expect("insert setting 2");
+
+        // 跑迁移升级到 003
+        run_migrations(&conn).expect("migrate to 003");
+
+        // users 含 legacy 占位
+        let legacy_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM users WHERE id = 1 AND username = 'legacy' AND password_hash IS NULL",
+                [],
+                |row| row.get(0),
+            )
+            .expect("legacy user");
+        assert_eq!(legacy_count, 1);
+
+        // vfs_nodes 行保留且 user_id = 1
+        let (name, user_id): (String, i64) = conn
+            .query_row(
+                "SELECT name, user_id FROM vfs_nodes WHERE name = 'doc.txt'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .expect("node row");
+        assert_eq!(name, "doc.txt");
+        assert_eq!(user_id, 1);
+
+        // settings 数据保留，且可按 (user_id, key) 查询
+        let theme: String = conn
+            .query_row(
+                "SELECT value FROM settings WHERE user_id = 1 AND key = 'theme'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("theme setting");
+        assert_eq!(theme, "dark");
+        let lang: String = conn
+            .query_row(
+                "SELECT value FROM settings WHERE user_id = 1 AND key = 'lang'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("lang setting");
+        assert_eq!(lang, "zh");
+
+        // 重复 run 幂等
+        run_migrations(&conn).expect("second run");
+        let versions = applied_versions(&conn).expect("versions");
+        assert_eq!(
+            versions,
+            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+        );
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+                row.get(0)
+            })
+            .expect("count");
+        assert_eq!(count, 3);
     }
 }

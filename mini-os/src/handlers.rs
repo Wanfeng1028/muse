@@ -6,9 +6,9 @@ use axum::{
     body::{Body, Bytes},
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Multipart, Path, Query, State,
+        Extension, Multipart, Path, Query, State,
     },
-    http::StatusCode,
+    http::{header, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
@@ -17,9 +17,14 @@ use rusqlite::{params, OptionalExtension};
 use serde::Deserialize;
 use serde_json::json;
 
+use crate::auth;
 use crate::metrics::Metrics;
-use crate::models::{AppInfo, CreateNodeRequest, Node, SettingRequest, Stats, UpdateNodeRequest};
+use crate::models::{
+    AppInfo, CreateNodeRequest, CreateShareRequest, LoginRequest, Node, RegisterRequest,
+    SettingRequest, ShareCreated, ShareInfo, Stats, UpdateNodeRequest, UserInfo,
+};
 use crate::AppState;
+use rand::TryRngCore;
 
 /// 统一的 API 返回类型别名
 type ApiResult = Result<Response, (StatusCode, Json<serde_json::Value>)>;
@@ -61,6 +66,7 @@ fn sanitize_filename(name: &str) -> Result<String, &'static str> {
 fn resolve_folder_id(
     conn: &rusqlite::Connection,
     path: Option<&str>,
+    user_id: i64,
 ) -> Result<Option<i64>, &'static str> {
     let raw = match path {
         None => return Ok(None),
@@ -88,16 +94,16 @@ fn resolve_folder_id(
 
         let found: Option<i64> = if parent.is_none() {
             conn.query_row(
-                "SELECT id FROM vfs_nodes WHERE parent_id IS NULL AND name = ?1 AND kind = 'folder'",
-                params![seg_trimmed],
+                "SELECT id FROM vfs_nodes WHERE parent_id IS NULL AND name = ?1 AND kind = 'folder' AND user_id = ?2",
+                params![seg_trimmed, user_id],
                 |row| row.get(0),
             )
             .optional()
             .map_err(|_| "目录不存在或不是文件夹")?
         } else {
             conn.query_row(
-                "SELECT id FROM vfs_nodes WHERE parent_id = ?2 AND name = ?1 AND kind = 'folder'",
-                params![seg_trimmed, parent],
+                "SELECT id FROM vfs_nodes WHERE parent_id = ?2 AND name = ?1 AND kind = 'folder' AND user_id = ?3",
+                params![seg_trimmed, parent, user_id],
                 |row| row.get(0),
             )
             .optional()
@@ -186,19 +192,14 @@ pub async fn readyz(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         .db
         .lock()
         .map(|conn| {
-            conn.query_row(
-                "SELECT COUNT(*) FROM schema_migrations",
-                [],
-                |row| row.get::<_, i64>(0),
-            )
+            conn.query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+                row.get::<_, i64>(0)
+            })
             .is_ok()
         })
         .unwrap_or(false);
     if ok {
-        (
-            StatusCode::OK,
-            Json(json!({ "status": "ready" })),
-        )
+        (StatusCode::OK, Json(json!({ "status": "ready" })))
     } else {
         (
             StatusCode::SERVICE_UNAVAILABLE,
@@ -229,7 +230,11 @@ fn row_to_node(row: &rusqlite::Row) -> rusqlite::Result<Node> {
 }
 
 /// GET /api/fs?parent_id=...
-pub async fn list_fs(State(state): State<Arc<AppState>>, Query(q): Query<FsQuery>) -> ApiResult {
+pub async fn list_fs(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Query(q): Query<FsQuery>,
+) -> ApiResult {
     // 锁中毒直接 unwrap（进程内简单互斥，不做恢复）
     let conn = state.db.lock().unwrap();
 
@@ -242,14 +247,14 @@ pub async fn list_fs(State(state): State<Arc<AppState>>, Query(q): Query<FsQuery
                 "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
                  CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
                  mime_type \
-                 FROM vfs_nodes WHERE parent_id = ?1 \
+                 FROM vfs_nodes WHERE parent_id = ?1 AND user_id = ?2 \
                  ORDER BY CASE kind WHEN 'folder' THEN 0 ELSE 1 END, name ASC",
             )
 
 
             .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
         let rows = stmt
-            .query_map(params![pid], row_to_node)
+            .query_map(params![pid, user.id], row_to_node)
             .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
         for r in rows {
             nodes.push(r.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?);
@@ -260,14 +265,14 @@ pub async fn list_fs(State(state): State<Arc<AppState>>, Query(q): Query<FsQuery
                 "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
                  CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
                  mime_type \
-                 FROM vfs_nodes WHERE parent_id IS NULL \
+                 FROM vfs_nodes WHERE parent_id IS NULL AND user_id = ?1 \
                  ORDER BY CASE kind WHEN 'folder' THEN 0 ELSE 1 END, name ASC",
             )
 
 
             .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
         let rows = stmt
-            .query_map([], row_to_node)
+            .query_map(params![user.id], row_to_node)
             .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
         for r in rows {
             nodes.push(r.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?);
@@ -279,15 +284,19 @@ pub async fn list_fs(State(state): State<Arc<AppState>>, Query(q): Query<FsQuery
 }
 
 /// GET /api/fs/{id}
-pub async fn get_fs(State(state): State<Arc<AppState>>, Path(id): Path<i64>) -> ApiResult {
+pub async fn get_fs(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Path(id): Path<i64>,
+) -> ApiResult {
     let conn = state.db.lock().unwrap();
     let node = conn
         .query_row(
             "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
              CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
              mime_type \
-             FROM vfs_nodes WHERE id = ?1",
-            params![id],
+             FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            params![id, user.id],
             row_to_node,
         )
         .optional()
@@ -307,6 +316,7 @@ pub async fn get_fs(State(state): State<Arc<AppState>>, Path(id): Path<i64>) -> 
 /// POST /api/fs
 pub async fn create_fs(
     State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
     Json(req): Json<CreateNodeRequest>,
 ) -> ApiResult {
     // 校验名称
@@ -326,8 +336,8 @@ pub async fn create_fs(
     if let Some(pid) = req.parent_id {
         let parent_kind: Option<String> = conn
             .query_row(
-                "SELECT kind FROM vfs_nodes WHERE id = ?1",
-                params![pid],
+                "SELECT kind FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+                params![pid, user.id],
                 |r| r.get(0),
             )
             .optional()
@@ -342,8 +352,8 @@ pub async fn create_fs(
     }
 
     conn.execute(
-        "INSERT INTO vfs_nodes (parent_id, name, kind, content) VALUES (?1, ?2, ?3, ?4)",
-        params![req.parent_id, name, req.kind, content],
+        "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![user.id, req.parent_id, name, req.kind, content],
     )
     .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
@@ -354,10 +364,10 @@ pub async fn create_fs(
             "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
              CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
              mime_type \
-             FROM vfs_nodes WHERE id = ?1",
+             FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
 
 
-            params![id],
+            params![id, user.id],
             row_to_node,
         )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
@@ -368,6 +378,7 @@ pub async fn create_fs(
 /// PUT /api/fs/{id}
 pub async fn update_fs(
     State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
     Path(id): Path<i64>,
     Json(req): Json<UpdateNodeRequest>,
 ) -> ApiResult {
@@ -375,9 +386,11 @@ pub async fn update_fs(
 
     // 确认存在
     let exists: Option<i64> = conn
-        .query_row("SELECT id FROM vfs_nodes WHERE id = ?1", params![id], |r| {
-            r.get(0)
-        })
+        .query_row(
+            "SELECT id FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            params![id, user.id],
+            |r| r.get(0),
+        )
         .optional()
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
     if exists.is_none() {
@@ -421,10 +434,10 @@ pub async fn update_fs(
             "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
              CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
              mime_type \
-             FROM vfs_nodes WHERE id = ?1",
+             FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
 
 
-            params![id],
+            params![id, user.id],
             row_to_node,
         )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
@@ -433,10 +446,17 @@ pub async fn update_fs(
 }
 
 /// DELETE /api/fs/{id}（级联删除子节点）
-pub async fn delete_fs(State(state): State<Arc<AppState>>, Path(id): Path<i64>) -> ApiResult {
+pub async fn delete_fs(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Path(id): Path<i64>,
+) -> ApiResult {
     let conn = state.db.lock().unwrap();
     let affected = conn
-        .execute("DELETE FROM vfs_nodes WHERE id = ?1", params![id])
+        .execute(
+            "DELETE FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            params![id, user.id],
+        )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
     if affected == 0 {
@@ -447,13 +467,16 @@ pub async fn delete_fs(State(state): State<Arc<AppState>>, Path(id): Path<i64>) 
 }
 
 /// GET /api/settings -> 键值映射
-pub async fn get_settings(State(state): State<Arc<AppState>>) -> ApiResult {
+pub async fn get_settings(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<crate::auth::CurrentUser>,
+) -> ApiResult {
     let conn = state.db.lock().unwrap();
     let mut stmt = conn
-        .prepare("SELECT key, value FROM settings")
+        .prepare("SELECT key, value FROM settings WHERE user_id = ?1")
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
     let rows = stmt
-        .query_map([], |r| {
+        .query_map(params![user.id], |r| {
             let k: String = r.get(0)?;
             let v: String = r.get(1)?;
             Ok((k, v))
@@ -472,6 +495,7 @@ pub async fn get_settings(State(state): State<Arc<AppState>>) -> ApiResult {
 /// PUT /api/settings（upsert）
 pub async fn put_setting(
     State(state): State<Arc<AppState>>,
+    Extension(user): Extension<crate::auth::CurrentUser>,
     Json(req): Json<SettingRequest>,
 ) -> ApiResult {
     if req.key.trim().is_empty() {
@@ -479,9 +503,9 @@ pub async fn put_setting(
     }
     let conn = state.db.lock().unwrap();
     conn.execute(
-        "INSERT INTO settings (key, value) VALUES (?1, ?2) \
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-        params![req.key, req.value],
+        "INSERT INTO settings (user_id, key, value) VALUES (?1, ?2, ?3) \
+         ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value",
+        params![user.id, req.key, req.value],
     )
     .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
@@ -492,6 +516,7 @@ pub async fn put_setting(
 /// 上传文件：multipart/form-data，字段名固定为 "file"，目标目录由 ?path= 指定
 pub async fn upload_file(
     State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
     Query(q): Query<UploadQuery>,
     mut multipart: Multipart,
 ) -> ApiResult {
@@ -560,7 +585,7 @@ pub async fn upload_file(
 
     let conn = state.db.lock().unwrap();
 
-    let parent_id = match resolve_folder_id(&conn, q.path.as_deref()) {
+    let parent_id = match resolve_folder_id(&conn, q.path.as_deref(), user.id) {
         Ok(p) => p,
         Err(msg) => return Err(err(StatusCode::BAD_REQUEST, msg)),
     };
@@ -568,16 +593,16 @@ pub async fn upload_file(
     // 同目录同名检查（file 或 folder 任意）
     let exists: Option<i64> = if parent_id.is_none() {
         conn.query_row(
-            "SELECT id FROM vfs_nodes WHERE parent_id IS NULL AND name = ?1",
-            params![name],
+            "SELECT id FROM vfs_nodes WHERE parent_id IS NULL AND name = ?1 AND user_id = ?2",
+            params![name, user.id],
             |row| row.get(0),
         )
         .optional()
         .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "查询失败"))?
     } else {
         conn.query_row(
-            "SELECT id FROM vfs_nodes WHERE parent_id = ?1 AND name = ?2",
-            params![parent_id, name],
+            "SELECT id FROM vfs_nodes WHERE parent_id = ?1 AND name = ?2 AND user_id = ?3",
+            params![parent_id, name, user.id],
             |row| row.get(0),
         )
         .optional()
@@ -590,13 +615,13 @@ pub async fn upload_file(
     // 插入
     let insert_res = if parent_id.is_none() {
         conn.execute(
-            "INSERT INTO vfs_nodes (parent_id, name, kind, content, content_blob, mime_type) VALUES (NULL, ?1, 'file', ?2, ?3, ?4)",
-            params![name, content_text, bytes, mime],
+            "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content, content_blob, mime_type) VALUES (?1, NULL, ?2, 'file', ?3, ?4, ?5)",
+            params![user.id, name, content_text, bytes, mime],
         )
     } else {
         conn.execute(
-            "INSERT INTO vfs_nodes (parent_id, name, kind, content, content_blob, mime_type) VALUES (?1, ?2, 'file', ?3, ?4, ?5)",
-            params![parent_id, name, content_text, bytes, mime],
+            "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content, content_blob, mime_type) VALUES (?1, ?2, ?3, 'file', ?4, ?5, ?6)",
+            params![user.id, parent_id, name, content_text, bytes, mime],
         )
     };
     if insert_res.is_err() {
@@ -638,6 +663,7 @@ type FileRow = (
 
 pub async fn download_file(
     State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
     Query(q): Query<DownloadQuery>,
 ) -> ApiResult {
     let raw_path = match q.path.as_deref() {
@@ -667,15 +693,15 @@ pub async fn download_file(
 
     let conn = state.db.lock().unwrap();
 
-    let parent_id = match resolve_folder_id(&conn, dir_path.as_deref()) {
+    let parent_id = match resolve_folder_id(&conn, dir_path.as_deref(), user.id) {
         Ok(p) => p,
         Err(msg) => return Err(err(StatusCode::BAD_REQUEST, msg)),
     };
 
     let query_row: rusqlite::Result<FileRow> = if parent_id.is_none() {
         conn.query_row(
-                "SELECT id, parent_id, name, kind, content, created_at, updated_at, content_blob, mime_type FROM vfs_nodes WHERE parent_id IS NULL AND name = ?1",
-                params![file_name],
+                "SELECT id, parent_id, name, kind, content, created_at, updated_at, content_blob, mime_type FROM vfs_nodes WHERE parent_id IS NULL AND name = ?1 AND user_id = ?2",
+                params![file_name, user.id],
                 |row| {
                     Ok((
                         row.get(0)?,
@@ -692,8 +718,8 @@ pub async fn download_file(
             )
     } else {
         conn.query_row(
-                "SELECT id, parent_id, name, kind, content, created_at, updated_at, content_blob, mime_type FROM vfs_nodes WHERE parent_id = ?1 AND name = ?2",
-                params![parent_id, file_name],
+                "SELECT id, parent_id, name, kind, content, created_at, updated_at, content_blob, mime_type FROM vfs_nodes WHERE parent_id = ?1 AND name = ?2 AND user_id = ?3",
+                params![parent_id, file_name, user.id],
                 |row| {
                     Ok((
                         row.get(0)?,
@@ -760,20 +786,23 @@ pub async fn download_file(
     Ok(response)
 }
 
-pub async fn get_stats(State(state): State<Arc<AppState>>) -> ApiResult {
+pub async fn get_stats(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<crate::auth::CurrentUser>,
+) -> ApiResult {
     let conn = state.db.lock().unwrap();
 
     let files: i64 = conn
         .query_row(
-            "SELECT COUNT(*) FROM vfs_nodes WHERE kind = 'file'",
-            [],
+            "SELECT COUNT(*) FROM vfs_nodes WHERE kind = 'file' AND user_id = ?1",
+            params![user.id],
             |r| r.get(0),
         )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
     let folders: i64 = conn
         .query_row(
-            "SELECT COUNT(*) FROM vfs_nodes WHERE kind = 'folder'",
-            [],
+            "SELECT COUNT(*) FROM vfs_nodes WHERE kind = 'folder' AND user_id = ?1",
+            params![user.id],
             |r| r.get(0),
         )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
@@ -782,9 +811,9 @@ pub async fn get_stats(State(state): State<Arc<AppState>>) -> ApiResult {
     let total_bytes: i64 = conn
         .query_row(
             "SELECT COALESCE(SUM(CASE WHEN kind='file' THEN CASE WHEN content_blob IS NOT NULL THEN LENGTH(content_blob) ELSE LENGTH(CAST(content AS BLOB)) END ELSE 0 END), 0) \
-             FROM vfs_nodes",
+             FROM vfs_nodes WHERE user_id = ?1",
 
-            [],
+            params![user.id],
             |r| r.get(0),
         )
         .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
@@ -849,3 +878,347 @@ async fn handle_socket(mut socket: WebSocket, metrics: Arc<Metrics>) {
         }
     }
 }
+
+// ================= v1.3 认证端点 =================
+
+/// POST /api/auth/register：注册。首个可登录用户自动成为 admin。
+pub async fn register(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<RegisterRequest>,
+) -> ApiResult {
+    if let Err(msg) = auth::validate_username(&req.username) {
+        return Err(err(StatusCode::BAD_REQUEST, msg));
+    }
+    if req.password.chars().count() < 8 {
+        return Err(err(StatusCode::BAD_REQUEST, "密码至少 8 个字符"));
+    }
+
+    let hash = auth::hash_password(&req.password)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+    let ttl = state.session_ttl_secs;
+    let conn = state.db.lock().unwrap();
+
+    // 是否首个可登录用户 → 自动 admin
+    let loginable: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM users WHERE password_hash IS NOT NULL",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let is_admin = if loginable == 0 { 1 } else { 0 };
+
+    let insert = conn.execute(
+        "INSERT INTO users (username, password_hash, is_admin) VALUES (?1, ?2, ?3)",
+        params![req.username, hash, is_admin],
+    );
+    if let Err(e) = insert {
+        let msg = e.to_string();
+        if msg.contains("UNIQUE constraint failed") {
+            return Err(err(StatusCode::CONFLICT, "用户名已存在"));
+        }
+        return Err(err(StatusCode::INTERNAL_SERVER_ERROR, &msg));
+    }
+    let user_id = conn.last_insert_rowid();
+
+    let token = auth::create_session(&conn, user_id, ttl as i64)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+    state.metrics.inc_auth("register");
+
+    let cookie = auth::set_session_cookie_value(&token, ttl as i64);
+    let body = Json(UserInfo {
+        id: user_id,
+        username: req.username,
+        is_admin: is_admin == 1,
+    });
+    Ok((StatusCode::OK, [(header::SET_COOKIE, cookie)], body).into_response())
+}
+
+/// POST /api/auth/login：登录。失败统一 401，防用户名枚举。
+pub async fn login(State(state): State<Arc<AppState>>, Json(req): Json<LoginRequest>) -> ApiResult {
+    let ttl = state.session_ttl_secs;
+    let conn = state.db.lock().unwrap();
+
+    let row: Option<(i64, Option<String>, i64)> = conn
+        .query_row(
+            "SELECT id, password_hash, is_admin FROM users WHERE username = ?1",
+            params![req.username],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    let bad = || err(StatusCode::UNAUTHORIZED, "用户名或密码错误");
+    let (user_id, hash_opt, is_admin) = match row {
+        Some(v) => v,
+        None => return Err(bad()),
+    };
+    let hash = match hash_opt {
+        Some(h) => h,
+        None => return Err(bad()), // 占位用户不可登录
+    };
+    if !auth::verify_password(&req.password, &hash) {
+        return Err(bad());
+    }
+
+    let token = auth::create_session(&conn, user_id, ttl as i64)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+    state.metrics.inc_auth("login");
+
+    let cookie = auth::set_session_cookie_value(&token, ttl as i64);
+    let body = Json(UserInfo {
+        id: user_id,
+        username: req.username,
+        is_admin: is_admin == 1,
+    });
+    Ok((StatusCode::OK, [(header::SET_COOKIE, cookie)], body).into_response())
+}
+
+/// POST /api/auth/logout：登出（无 session 也返回 200）
+pub async fn logout(
+    State(state): State<Arc<AppState>>,
+    headers: axum::http::HeaderMap,
+) -> ApiResult {
+    let cookie_header = headers
+        .get(axum::http::header::COOKIE)
+        .and_then(|v| v.to_str().ok());
+    if let Some(token) = auth::extract_session_token(cookie_header) {
+        let conn = state.db.lock().unwrap();
+        let _ = auth::revoke_session(&conn, &token);
+    }
+    state.metrics.inc_auth("logout");
+    let clear = auth::clear_session_cookie_value();
+    Ok((
+        StatusCode::OK,
+        [(header::SET_COOKIE, clear)],
+        Json(json!({"status": "ok"})),
+    )
+        .into_response())
+}
+
+/// GET /api/me：当前登录用户（中间件已鉴权）
+pub async fn me(Extension(user): Extension<auth::CurrentUser>) -> ApiResult {
+    Ok(Json(UserInfo {
+        id: user.id,
+        username: user.username,
+        is_admin: user.is_admin,
+    })
+    .into_response())
+}
+
+/// GET /api/auth/setup-needed：是否需要初始化（无可登录用户时 true）
+pub async fn setup_needed(State(state): State<Arc<AppState>>) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM users WHERE password_hash IS NOT NULL",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    Ok(Json(crate::models::SetupNeededResponse { needed: count == 0 }).into_response())
+}
+
+/// POST /api/auth/migrate-legacy：一次性把 legacy 占位用户的数据转给当前用户
+pub async fn migrate_legacy(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let legacy_id: Option<i64> = conn
+        .query_row("SELECT id FROM users WHERE username = 'legacy'", [], |r| {
+            r.get(0)
+        })
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let legacy_id = match legacy_id {
+        Some(id) => id,
+        None => return Err(err(StatusCode::GONE, "无可迁移数据")),
+    };
+
+    // 先删目标用户下与 legacy 同 key 的设置，避免 (user_id,key) 冲突
+    conn.execute(
+        "DELETE FROM settings WHERE user_id = ?1 AND key IN (SELECT key FROM settings WHERE user_id = ?2)",
+        params![user.id, legacy_id],
+    )
+    .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    conn.execute(
+        "UPDATE vfs_nodes SET user_id = ?1 WHERE user_id = ?2",
+        params![user.id, legacy_id],
+    )
+    .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    conn.execute(
+        "UPDATE settings SET user_id = ?1 WHERE user_id = ?2",
+        params![user.id, legacy_id],
+    )
+    .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    // sessions 表 ON DELETE CASCADE 自动清理 legacy 的 session
+    conn.execute("DELETE FROM users WHERE id = ?1", params![legacy_id])
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    state.metrics.inc_auth("migrate_legacy");
+    Ok(Json(json!({"migrated": true})).into_response())
+}
+
+// __AUTH_ENDPOINTS_END__
+
+// ================= v1.3 访客只读分享 =================
+
+/// 生成分享 token：16 字节随机 hex
+fn new_share_token() -> Result<String, String> {
+    let mut buf = [0u8; 16];
+    rand::rngs::OsRng
+        .try_fill_bytes(&mut buf)
+        .map_err(|e| e.to_string())?;
+    Ok(hex::encode(buf))
+}
+
+/// 分享查询行：(node_id, name, kind, content, content_blob, mime_type)
+type ShareRow = (i64, String, String, String, Option<Vec<u8>>, Option<String>);
+
+/// 按 token 查分享及其文件（公开接口用，不做用户隔离）
+fn lookup_share(conn: &rusqlite::Connection, token: &str) -> Result<Option<ShareRow>, String> {
+    let row: Option<ShareRow> = conn
+        .query_row(
+            "SELECT v.id, v.name, v.kind, v.content, v.content_blob, v.mime_type \
+             FROM shares s JOIN vfs_nodes v ON v.id = s.node_id WHERE s.token = ?1",
+            params![token],
+            |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                    r.get(5)?,
+                ))
+            },
+        )
+        .optional()
+        .map_err(|e| e.to_string())?;
+    Ok(row)
+}
+
+/// POST /api/shares：创建文件只读分享（需登录；仅 file 类型）
+pub async fn create_share(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Json(req): Json<CreateShareRequest>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let kind: Option<String> = conn
+        .query_row(
+            "SELECT kind FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            params![req.node_id, user.id],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    match kind.as_deref() {
+        None => return Err(err(StatusCode::NOT_FOUND, "节点不存在")),
+        Some(k) if k != "file" => return Err(err(StatusCode::BAD_REQUEST, "仅支持分享文件")),
+        _ => {}
+    }
+
+    // token 碰撞重试 3 次（概率极低，防御性）
+    let mut token = String::new();
+    let mut ok = false;
+    for _ in 0..3 {
+        token = new_share_token().map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+        let res = conn.execute(
+            "INSERT INTO shares (token, node_id, owner_id) VALUES (?1, ?2, ?3)",
+            params![token, req.node_id, user.id],
+        );
+        match res {
+            Ok(_) => {
+                ok = true;
+                break;
+            }
+            Err(e) if e.to_string().contains("UNIQUE constraint failed") => continue,
+            Err(e) => return Err(err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string())),
+        }
+    }
+    if !ok {
+        return Err(err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "分享创建失败，请重试",
+        ));
+    }
+
+    state.metrics.inc_auth("share_create");
+    Ok((
+        StatusCode::CREATED,
+        Json(ShareCreated {
+            token: token.clone(),
+            url: format!("/share.html?token={}", token),
+        }),
+    )
+        .into_response())
+}
+
+/// GET /api/s/:token：分享元信息（公开，只读）
+pub async fn get_share(State(state): State<Arc<AppState>>, Path(token): Path<String>) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let row =
+        lookup_share(&conn, &token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+    match row {
+        None => Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
+        Some((_, name, kind, content, blob, mime)) => {
+            let size = blob.as_ref().map(|b| b.len()).unwrap_or(content.len()) as i64;
+            Ok(Json(ShareInfo {
+                token,
+                name,
+                kind,
+                size,
+                mime_type: mime,
+            })
+            .into_response())
+        }
+    }
+}
+
+/// GET /api/s/:token/download：分享文件下载（公开，只读，流式）
+pub async fn download_share(
+    State(state): State<Arc<AppState>>,
+    Path(token): Path<String>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+    let row =
+        lookup_share(&conn, &token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+    let (_, name, kind, content, blob, mime_opt) = match row {
+        None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
+        Some(v) => v,
+    };
+    if kind == "folder" {
+        return Err(err(StatusCode::BAD_REQUEST, "不能下载目录"));
+    }
+    let bytes_vec: Vec<u8> = blob.unwrap_or_else(|| content.into_bytes());
+    let mime_str = mime_opt.filter(|m| !m.is_empty()).unwrap_or_else(|| {
+        mime_guess::from_path(&name)
+            .first_or_octet_stream()
+            .to_string()
+    });
+
+    // 分块流式
+    const CHUNK_SIZE: usize = 65536;
+    let mut chunks: Vec<Result<Bytes, std::io::Error>> = Vec::new();
+    let mut offset = 0usize;
+    while offset < bytes_vec.len() {
+        let end = std::cmp::min(offset + CHUNK_SIZE, bytes_vec.len());
+        chunks.push(Ok(Bytes::copy_from_slice(&bytes_vec[offset..end])));
+        offset = end;
+    }
+    let body_stream = stream::iter(chunks);
+
+    let disposition = format!("attachment; filename*=UTF-8''{}", percent_encode(&name));
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header("content-type", mime_str)
+        .header("content-disposition", disposition)
+        .header("content-length", bytes_vec.len().to_string())
+        .body(Body::from_stream(body_stream))
+        .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "构造响应失败"))?;
+    Ok(response)
+}
+
+// __SHARES_END__

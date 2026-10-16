@@ -8,6 +8,7 @@ pub struct Config {
     pub static_dir: String,
     pub upload_max_bytes: u64,
     pub shutdown_timeout_secs: u64,
+    pub session_ttl_secs: u64,
 }
 
 impl Config {
@@ -33,12 +34,19 @@ impl Config {
             .and_then(|v| v.parse::<u64>().ok())
             .unwrap_or(30);
 
+        let session_ttl_secs = env::var("SESSION_TTL_SECS")
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .filter(|&v| v > 0)
+            .unwrap_or(604800);
+
         Config {
             port,
             database_path,
             static_dir,
             upload_max_bytes,
             shutdown_timeout_secs,
+            session_ttl_secs,
         }
     }
 }

@@ -1,6 +1,30 @@
 
 # Changelog
 
+## [1.3.0] - 2026-10-16
+
+### 新增
+- 用户体系：`users` 表（用户名唯一、argon2id 密码哈希 PHC 存储、首个可登录用户自动为管理员）；注册/登录/登出端点（`POST /api/auth/register|login|logout`）；用户名规则（3–32 字符、仅字母数字 `_.` `-`、禁用 `legacy`）、密码 ≥8 位；登录失败统一 401（防用户名枚举）
+- 登录态：opaque session token（32 字节随机 hex 走 HttpOnly Cookie `mini_os_session`，库里只存 SHA-256）；`sessions` 表（过期时间 epoch 秒）；`SESSION_TTL_SECS` 环境变量（默认 7 天）
+- 鉴权中间件：白名单公开（health/readyz/metrics/auth 注册登录登出/setup-needed/分享只读），其余 `/api/*` 与 `/ws` 未登录 401；前端登录门卫（未登录跳 `login.html`，401 自动跳转）
+- VFS 按用户隔离：`vfs_nodes.user_id`、`settings` 主键改为 `(user_id, key)`；跨用户 id 返回 404（不泄露存在性）
+- 访客只读分享：`POST /api/shares`（仅文件，201 返回 `{token, url}`）、`GET /api/s/:token` 元信息、`GET /api/s/:token/download` 流式下载；`shares` 表（token 唯一、节点删除级联失效）；`static/share.html` 只读分享页
+- 迁移 003：建 `users`/`sessions`/`shares`、加 `user_id` 列、重建 `settings` 联合主键、占位用户 `legacy` 承接老数据（不可登录）；`POST /api/auth/migrate-legacy` 一次性领走旧数据（无旧数据 410）
+- 前端：`static/login.html`（登录/注册/初始化三态）、任务栏当前用户 + 注销、文件管理器行内"分享"按钮 + 链接弹窗
+- 指标：`auth_ops_total{op}`（register/login/logout/migrate_legacy/share_create）
+
+### 测试
+- 新增 `tests/auth_test.rs` 8 例（注册/登录/注销全流程、409/400/401、legacy 不可登录、首个用户 admin、migrate-legacy 一次性、未登录 401）
+- 新增 `tests/isolation_test.rs` 5 例（文件/设置/上传下载/统计隔离、跨用户父目录 404）
+- 新增 `tests/share_test.rs` 6 例（分享全流程、文件夹拒绝、伪造 token 404、跨用户分享 404、删文件后分享失效）
+- `tests/failure_injection.rs` 追加 3 例（伪造 token 401、过期 session 401、users 表缺失 500 不 panic）；既有 4 例适配鉴权
+- `cargo test` 65/65 全过（lib 15、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、share_test 6）；`cargo clippy --all-targets -- -D warnings` 零警告；`cargo fmt --check` 通过（2026-10-16 验收实测）
+
+### 已知限制（诚实声明）
+- 仅文件分享，不支持目录分享；无访客角色、无细粒度 RBAC
+- 密码策略仅最小长度（8 位），无复杂度要求；无 2FA；无登录限流
+- session 无滑动续期，过期需重新登录
+
 ## [1.2.0] - 2026-10-16
 
 ### 新增
