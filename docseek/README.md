@@ -1,8 +1,10 @@
 # 文溯 DocSeek · 本地全文检索引擎
 
-**版本：v0.6.0**
+**版本：v0.7.0**
 
-DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，**中文分词采用 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器**，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。检索侧为**混合检索 v1**：BM25 基础分 + AND→OR 回退 + 标题/短语加成重排序。
+
+DocSeek（文溯）是一个面向本地文档的全文检索引擎，提供 **CLI** 与 **HTTP 常驻服务** 两种使用形态。它使用 SQLite FTS5 作为索引与检索内核，**中文分词采用 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器**，支持递归目录索引、增量更新，以及在服务模式下通过 Linux inotify 实时监控文件变更并自动增量索引。所有数据均保存在本地数据库中，无需任何外部服务。检索侧为**混合检索 v2**：BM25 基础分 + AND→OR 回退 + 标题/短语加成重排序，**权重可配置**（v0.7.0 起）。
+
 
 ---
 
@@ -26,10 +28,11 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
   - 自动跳过二进制文件与超过 `--max-mb` 限制的超大文件。
   - 跳过隐藏目录。
   - 基于 **mtime + size** 的增量更新：未变化的文件不会重复索引。
-- `search <query...> [--limit N]`
+- `search <query...> [--limit N] [--title-boost X] [--phrase-boost Y]`
   - 使用 FTS5 `MATCH`，多个词之间为**隐式 AND**。
-  - **BM25** 相关性排序。
+  - **BM25** 相关性排序；标题加成权重默认 1.0、短语加成默认 2.0，可用 flag 或环境变量调整。
   - 返回 **30 token 摘要片段**。
+
 - `stats`：查看索引统计信息。
 - `prune`：清理失效/无效记录。
 - `backup <dest>`：在线备份数据库（SQLite backup API，不阻塞读写）。
@@ -79,7 +82,8 @@ docseek locate "退款流程写在哪一段"
 | 构建系统 | CMake >= 3.28 |
 | 编译器 | GCC |
 | 检索内核 | SQLite FTS5 + **cppjieba 中文分词器**（v0.3.0 起；v0.2.0 及之前为 `unicode61`） |
-| 混合检索 | BM25 + AND→OR 回退 + 标题/短语加成重排序（v0.3.0 起） |
+| 混合检索 | BM25 + AND→OR 回退 + 标题/短语加成重排序；v0.7.0 起权重可配置（v2） |
+
 | SQLite 来源 | amalgamation，vendored 于 `third_party/sqlite3` |
 | 测试框架 | GoogleTest v1.14.0（通过 FetchContent 拉取，**需联网**） |
 | 文件监控 | Linux inotify |
@@ -116,7 +120,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
 ctest --test-dir build
 ```
 
-共 **102 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫 / HTML 文本提取（基础/实体/畸形/编码/性能/集成）等套件。
+共 **108 个测试用例**，覆盖 Database / Indexer / Searcher / HTTP 服务 / Watcher / Service / 自然语言定位 / 混合检索 / 分词器 / 日志 / 指标 / 备份恢复 / 失败注入 / 批量事务 / 并发守卫 / HTML 文本提取（基础/实体/畸形/编码/性能/集成）等套件。
 
 ---
 
@@ -163,7 +167,8 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 | GET | `/` | Web 检索界面 |
 | GET | `/api/health` | 健康检查 |
 | GET | `/api/stats` | 索引统计信息 |
-| GET | `/api/search?q=关键词&limit=20` | 全文检索 |
+| GET | `/api/search?q=关键词&limit=20&title_boost=1.0&phrase_boost=2.0` | 全文检索（标题/短语加成权重可配，显式非法值回 400） |
+
 | GET | `/api/locate?q=自然语言问题&limit=5` | 自然语言定位原文，返回文件:行号锚点与高亮段落（并发上限默认 4，超限回 429） |
 | GET | `/api/metrics` | 运行指标：查询量/延迟/Top 查询词/慢查询/限流拒绝数 |
 | POST | `/api/index` | 索引指定路径，请求体：`{"path":"..."}` |
@@ -193,6 +198,9 @@ docseek serve --port 8080 --watch ./docs --ext .txt,.md --max-mb 20
 | `DOCSEEK_LOCATE_CONCURRENCY` | `/api/locate` 最大并发数，默认 `4`，超限回 429 |
 | `DOCSEEK_LOCATE_WAIT_MS` | 拿不到并发槽位的最大等待（毫秒），默认 `2000` |
 | `DOCSEEK_JIEBA_VERBOSE` | 设为 `1` 恢复词典加载噪音日志（排障用） |
+| `DOCSEEK_TITLE_BOOST` | 标题加成权重默认值（默认 `1.0`），非法值打警告回默认 |
+| `DOCSEEK_PHRASE_BOOST` | 短语加成权重默认值（默认 `2.0`），非法值打警告回默认 |
+
 
 ---
 
@@ -232,6 +240,27 @@ compose 把 `./data` 挂载持久化数据库、`./docs` 只读挂载为演示�
 > **CI 说明**：GitHub Actions 配置当前暂置于 `docseek/.github`，待仓库根目录的 workflow 权限补齐后迁移至仓库根目录。
 
 ---
+
+## 搜索质量（v0.7.0）
+
+评测集 `eval/`（44 个中文 query→doc 评测对，覆盖 HTML 语料/中文分词边界/locate 定位），一键运行：
+
+```bash
+python3 eval/run_eval.py --binary ./build/docseek --dict ./build/dict
+```
+
+实测 Top-1 准确率 **36/44 (81.8%)**（html 10/10 / tok 14/14 / qa 4/12 / noise 6/6 / neg 2/2）。
+
+权重调优示例：
+
+```bash
+# 标题党文档太多时压低标题权重
+docseek search 全文检索 --title-boost 0.2
+# 短语精确匹配优先时拉高短语权重
+docseek search 全文检索 --phrase-boost 5
+```
+
+评测发现的已知问题（v0.8 排期）：T1 分词器游标逻辑在 CutForSearch 重叠词下会跳过中间 token 导致索引静默丢词；T2 索引/查询切分上下文不一致导致子串 query 漏召回。详见 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。
 
 ## 已知局限
 

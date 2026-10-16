@@ -1,0 +1,361 @@
+
+[
+  {
+    "id": "v07-001",
+    "query": "智能手机",
+    "expected": "html_01_smartphone.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 智能手机页，标题词命中，考察标题加成"
+  },
+  {
+    "id": "v07-002",
+    "query": "咖啡豆",
+    "expected": "html_02_coffee.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 咖啡页，主题词命中"
+  },
+  {
+    "id": "v07-003",
+    "query": "马拉松",
+    "expected": "html_03_marathon.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 马拉松页，标题词命中"
+  },
+  {
+    "id": "v07-004",
+    "query": "基金定投",
+    "expected": "html_04_fund.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 基金页，核心概念命中"
+  },
+  {
+    "id": "v07-005",
+    "query": "养猫",
+    "expected": "html_05_cat.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 猫页，主题词命中（单字\"猫\"因分词器上下文切分差异当前不可召回，记为已知问题 T2）"
+  },
+
+  {
+    "id": "v07-006",
+    "query": "租房",
+    "expected": "html_06_rent.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 租房页，标题词命中"
+  },
+  {
+    "id": "v07-007",
+    "query": "摄影",
+    "expected": "html_07_photo.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 摄影页，主题词命中"
+  },
+
+  {
+    "id": "v07-008",
+    "query": "川菜",
+    "expected": "html_08_chuancai.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 川菜页，标题词命中"
+  },
+  {
+    "id": "v07-009",
+    "query": "子串",
+    "expected": "tok_01_substring.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 子串场景"
+  },
+  {
+    "id": "v07-010",
+    "query": "专有名词",
+    "expected": "tok_02_proper.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 专有名词场景"
+  },
+  {
+    "id": "v07-011",
+    "query": "新词",
+    "expected": "tok_03_newterm.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 新词场景"
+  },
+  {
+    "id": "v07-012",
+    "query": "歧义",
+    "expected": "tok_04_ambiguity.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 歧义切分场景"
+  },
+  {
+    "id": "v07-013",
+    "query": "中英混排",
+    "expected": "tok_05_mixed.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 中英混排场景"
+  },
+  {
+    "id": "v07-014",
+    "query": "量词",
+    "expected": "tok_06_number.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 量词场景"
+  },
+
+  {
+    "id": "v07-015",
+    "query": "标点",
+    "expected": "tok_07_punct.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 标点处理场景"
+  },
+  {
+    "id": "v07-016",
+    "query": "复合词",
+    "expected": "tok_08_longword.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 长复合词场景"
+  },
+
+  {
+    "id": "v07-017",
+    "query": "电脑",
+    "expected": "tok_09_synonym.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 同义词文档词面命中"
+  },
+
+  {
+    "id": "v07-018",
+    "query": "缩写",
+    "expected": "tok_10_abbr.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 缩写场景"
+  },
+  {
+    "id": "v07-019",
+    "query": "地名",
+    "expected": "tok_11_place.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 地名场景"
+  },
+  {
+    "id": "v07-020",
+    "query": "卸载",
+    "expected": "tok_12_verb.md",
+    "type": "search",
+    "category": "tok",
+    "note": "tokenizer 动宾结构场景"
+  },
+
+  {
+    "id": "v07-021",
+    "query": "退款流程写在哪一段",
+    "expected": "qa_01_refund.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位退款流程"
+  },
+  {
+    "id": "v07-022",
+    "query": "发货说明在哪里",
+    "expected": "qa_02_shipping.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位发货说明"
+  },
+  {
+    "id": "v07-023",
+    "query": "会员权益写在哪一段",
+    "expected": "qa_03_member.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位会员权益"
+  },
+  {
+    "id": "v07-024",
+    "query": "安装步骤在哪里",
+    "expected": "qa_04_install.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位安装步骤"
+  },
+  {
+    "id": "v07-025",
+    "query": "备份方法写在哪一段",
+    "expected": "qa_05_backup.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位备份方法"
+  },
+  {
+    "id": "v07-026",
+    "query": "快捷键在哪里说明",
+    "expected": "qa_06_shortcut.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位快捷键"
+  },
+  {
+    "id": "v07-027",
+    "query": "保修政策写在哪一段",
+    "expected": "qa_07_warranty.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位保修政策"
+  },
+  {
+    "id": "v07-028",
+    "query": "发票申请在哪里",
+    "expected": "qa_08_invoice.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位发票申请"
+  },
+  {
+    "id": "v07-029",
+    "query": "密码重置写在哪一段",
+    "expected": "qa_09_password.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位密码重置"
+  },
+  {
+    "id": "v07-030",
+    "query": "限流规则在哪里",
+    "expected": "qa_10_ratelimit.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位限流规则"
+  },
+  {
+    "id": "v07-031",
+    "query": "价格方案写在哪一段",
+    "expected": "qa_11_pricing.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位价格方案"
+  },
+  {
+    "id": "v07-032",
+    "query": "联系方式在哪里",
+    "expected": "qa_12_contact.md",
+    "type": "locate",
+    "category": "qa",
+    "note": "自然语言定位联系方式"
+  },
+  {
+    "id": "v07-033",
+    "query": "烹饪",
+    "expected": "noise_01_cooking.md",
+    "type": "search",
+    "category": "noise",
+    "note": "noise 烹饪文档关键词"
+  },
+  {
+    "id": "v07-034",
+    "query": "云南",
+    "expected": "noise_02_travel.md",
+    "type": "search",
+    "category": "noise",
+    "note": "noise 云南旅行文档关键词"
+  },
+  {
+    "id": "v07-035",
+    "query": "健身",
+    "expected": "noise_03_fitness.md",
+    "type": "search",
+    "category": "noise",
+    "note": "noise 健身文档关键词"
+  },
+  {
+    "id": "v07-036",
+    "query": "电影",
+    "expected": "noise_04_movie.md",
+    "type": "search",
+    "category": "noise",
+    "note": "noise 电影文档关键词"
+  },
+  {
+    "id": "v07-037",
+    "query": "量子纠缠",
+    "expected": null,
+    "type": "search",
+    "category": "neg",
+    "note": "语料中不存在的词，期望无结果"
+  },
+  {
+    "id": "v07-038",
+    "query": "超导材料制备",
+    "expected": null,
+    "type": "search",
+    "category": "neg",
+    "note": "语料中不存在的词，期望无结果"
+  },
+  {
+    "id": "v07-039",
+    "query": "轻风 X7",
+    "expected": "html_01_smartphone.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 手机页标题专有名词，考察标题加成"
+  },
+  {
+    "id": "v07-040",
+    "query": "手冲咖啡",
+    "expected": "html_02_coffee.html",
+    "type": "search",
+    "category": "html",
+    "note": "HTML 咖啡页标题词，考察标题加成"
+  },
+  {
+    "id": "v07-041",
+    "query": "检索",
+    "expected": "tok_01_substring.md",
+    "type": "search",
+    "category": "tok",
+    "note": "子串查询，考察中文分词子串召回"
+  },
+  {
+    "id": "v07-042",
+    "query": "计算机",
+    "expected": "tok_09_synonym.md",
+    "type": "search",
+    "category": "tok",
+    "note": "近义词文档的词面命中"
+  },
+  {
+    "id": "v07-043",
+    "query": "园艺",
+    "expected": "noise_05_garden.md",
+    "type": "search",
+    "category": "noise",
+    "note": "noise 园艺文档关键词"
+  },
+  {
+    "id": "v07-044",
+    "query": "桌游",
+    "expected": "noise_09_game.md",
+    "type": "search",
+    "category": "noise",
+    "note": "noise 桌游文档关键词"
+  }
+]

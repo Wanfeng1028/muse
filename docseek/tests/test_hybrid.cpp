@@ -88,3 +88,120 @@ TEST(HybridTest, BuildOrMatchQuery) {
     EXPECT_EQ(docseek::Searcher::buildOrMatchQuery("x"), "\"x\"");
     EXPECT_EQ(docseek::Searcher::buildOrMatchQuery(""), "");
 }
+
+TEST(HybridTest, WeightsDefaultEquivalentToV1) {
+    std::string dir = hybridTmp("weights_t2_default");
+    docseek::Database db = docseek::Database::open(dir + "/w.db");
+    db.upsert(dir + "/a.txt", "全文检索指南", "全文检索技术详解", 1000, 10);
+    db.upsert(dir + "/b.txt", "其他", "全文检索指南内容", 1000, 10);
+
+    docseek::Searcher s1(db);
+    docseek::Searcher s2(db, docseek::SearchWeights{});
+
+    auto r1 = s1.search("全文检索", 10);
+    auto r2 = s2.search("全文检索", 10);
+
+    ASSERT_EQ(r1.size(), r2.size());
+    for (size_t i = 0; i < r1.size(); ++i) {
+        EXPECT_EQ(r1[i].path, r2[i].path);
+        EXPECT_DOUBLE_EQ(r1[i].score, r2[i].score);
+    }
+}
+
+TEST(HybridTest, WeightsTitleBoostZero) {
+    std::string dir = hybridTmp("weights_t2_title");
+    docseek::Database db = docseek::Database::open(dir + "/w.db");
+    db.upsert(dir + "/a.txt", "全文检索指南", "全文检索技术详解", 1000, 10);
+    db.upsert(dir + "/b.txt", "其他", "全文检索指南内容", 1000, 10);
+
+    docseek::Searcher sDef(db);
+    docseek::Searcher sZero(db, docseek::SearchWeights{0.0, 2.0});
+
+    auto rDef = sDef.search("全文检索", 10);
+    auto rZero = sZero.search("全文检索", 10);
+
+    double aDef = 0.0, aZero = 0.0, bDef = 0.0, bZero = 0.0;
+    for (const auto& r : rDef) {
+        if (r.path == dir + "/a.txt") aDef = r.score;
+        if (r.path == dir + "/b.txt") bDef = r.score;
+    }
+    for (const auto& r : rZero) {
+        if (r.path == dir + "/a.txt") aZero = r.score;
+        if (r.path == dir + "/b.txt") bZero = r.score;
+    }
+
+    EXPECT_DOUBLE_EQ(aZero, aDef - 1.0);
+    EXPECT_DOUBLE_EQ(bZero, bDef);
+}
+
+TEST(HybridTest, WeightsPhraseBoostZero) {
+    std::string dir = hybridTmp("weights_t2_phrase");
+    docseek::Database db = docseek::Database::open(dir + "/w.db");
+    db.upsert(dir + "/a.txt", "全文检索指南", "全文检索技术详解", 1000, 10);
+    db.upsert(dir + "/b.txt", "其他", "全文检索指南内容", 1000, 10);
+
+    docseek::Searcher sDef(db);
+    docseek::Searcher sZero(db, docseek::SearchWeights{1.0, 0.0});
+
+    auto rDef = sDef.search("全文检索", 10);
+    auto rZero = sZero.search("全文检索", 10);
+
+    double aDef = 0.0, aZero = 0.0;
+    for (const auto& r : rDef) {
+        if (r.path == dir + "/a.txt") aDef = r.score;
+    }
+    for (const auto& r : rZero) {
+        if (r.path == dir + "/a.txt") aZero = r.score;
+    }
+
+    EXPECT_DOUBLE_EQ(aZero, aDef - 2.0);
+}
+
+TEST(HybridTest, WeightsPhraseBoostScales) {
+    std::string dir = hybridTmp("weights_t2_scales");
+    docseek::Database db = docseek::Database::open(dir + "/w.db");
+    db.upsert(dir + "/a.txt", "全文检索指南", "全文检索技术详解", 1000, 10);
+    db.upsert(dir + "/b.txt", "其他", "全文检索指南内容", 1000, 10);
+
+    docseek::Searcher sZero(db, docseek::SearchWeights{0.0, 0.0});
+    docseek::Searcher sHundred(db, docseek::SearchWeights{0.0, 100.0});
+
+    auto rZero = sZero.search("全文检索", 10);
+    auto rHundred = sHundred.search("全文检索", 10);
+
+    double aZero = 0.0, aHundred = 0.0, bZero = 0.0, bHundred = 0.0;
+    for (const auto& r : rZero) {
+        if (r.path == dir + "/a.txt") aZero = r.score;
+        if (r.path == dir + "/b.txt") bZero = r.score;
+    }
+    for (const auto& r : rHundred) {
+        if (r.path == dir + "/a.txt") aHundred = r.score;
+        if (r.path == dir + "/b.txt") bHundred = r.score;
+    }
+
+    EXPECT_DOUBLE_EQ(aHundred, aZero + 100.0);
+    EXPECT_DOUBLE_EQ(bHundred, bZero + 100.0);
+}
+
+TEST(HybridTest, WeightsSetWeights) {
+    std::string dir = hybridTmp("weights_t2_set");
+    docseek::Database db = docseek::Database::open(dir + "/w.db");
+    db.upsert(dir + "/a.txt", "全文检索指南", "全文检索技术详解", 1000, 10);
+    db.upsert(dir + "/b.txt", "其他", "全文检索指南内容", 1000, 10);
+
+    docseek::Searcher sCtor(db, docseek::SearchWeights{3.0, 0.5});
+    docseek::Searcher sSet(db);
+    sSet.setWeights(docseek::SearchWeights{3.0, 0.5});
+
+    EXPECT_DOUBLE_EQ(sSet.weights().titleBoost, 3.0);
+    EXPECT_DOUBLE_EQ(sSet.weights().phraseBoost, 0.5);
+
+    auto rCtor = sCtor.search("全文检索", 10);
+    auto rSet = sSet.search("全文检索", 10);
+
+    ASSERT_EQ(rCtor.size(), rSet.size());
+    for (size_t i = 0; i < rCtor.size(); ++i) {
+        EXPECT_EQ(rCtor[i].path, rSet[i].path);
+        EXPECT_DOUBLE_EQ(rCtor[i].score, rSet[i].score);
+    }
+}

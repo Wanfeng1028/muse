@@ -2,7 +2,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
+
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -247,7 +249,8 @@ public:
         server_->onGet("/api/health", [this](const HttpRequest& req) {
             return wrapRequest("health", req, false, [&]() -> HttpResponse {
                 std::lock_guard<std::mutex> lk(dbMutex_);
-                return HttpResponse::json("{\"ok\":true,\"version\":\"0.6.0\"}");
+                return HttpResponse::json("{\"ok\":true,\"version\":\"0.7.0\"}");
+
             });
         });
 
@@ -290,8 +293,34 @@ public:
                         limit = 20;
                     }
                 }
-                Searcher searcher(db_);
+                SearchWeights weights;
+                auto tbit = req.query.find("title_boost");
+                if (tbit != req.query.end() && !tbit->second.empty()) {
+                    try {
+                        double parsed = std::stod(tbit->second);
+                        if (!std::isfinite(parsed) || parsed < 0.0 || parsed > 1000.0) {
+                            return HttpResponse::json("{\"error\":\"title_boost 参数无效\"}", 400);
+                        }
+                        weights.titleBoost = parsed;
+                    } catch (...) {
+                        return HttpResponse::json("{\"error\":\"title_boost 参数无效\"}", 400);
+                    }
+                }
+                auto pbit = req.query.find("phrase_boost");
+                if (pbit != req.query.end() && !pbit->second.empty()) {
+                    try {
+                        double parsed = std::stod(pbit->second);
+                        if (!std::isfinite(parsed) || parsed < 0.0 || parsed > 1000.0) {
+                            return HttpResponse::json("{\"error\":\"phrase_boost 参数无效\"}", 400);
+                        }
+                        weights.phraseBoost = parsed;
+                    } catch (...) {
+                        return HttpResponse::json("{\"error\":\"phrase_boost 参数无效\"}", 400);
+                    }
+                }
+                Searcher searcher(db_, weights);
                 std::vector<Hit> hits = searcher.search(q, limit);
+
                 std::ostringstream oss;
                 oss << "{\"query\":\"" << jsonEscape(q) << "\",\"hits\":[";
                 for (size_t i = 0; i < hits.size(); ++i) {
@@ -530,7 +559,8 @@ void Service::run() {
     impl_->actualPort_ = impl_->server_->port();
     log(Level::Info, "service", "服务已启动",
         {{"port", std::to_string(impl_->actualPort_)},
-         {"version", "0.6.0"}});
+         {"version", "0.7.0"}});
+
 
     {
         std::unique_lock<std::mutex> lk(impl_->runMutex_);

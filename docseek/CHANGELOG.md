@@ -1,7 +1,17 @@
 ```markdown
 # Changelog
 
+## v0.7.0（2026-10-16）——搜索质量工程
+
+- 混合检索 v2：标题/短语加成权重可配置。`Searcher` 新增 `SearchWeights{titleBoost, phraseBoost}`（默认 1.0/2.0，与 v1 行为完全一致）；CLI `search` 新增 `--title-boost` / `--phrase-boost`（非法值 exit 1）；环境变量 `DOCSEEK_TITLE_BOOST` / `DOCSEEK_PHRASE_BOOST` 可改默认值（非法值打警告回默认）；`GET /api/search` 新增 `title_boost` / `phrase_boost` 查询参数（显式非法值回 400）。
+- 评测集 v07：`eval/` 新增 42 篇中文评测语料（HTML 8 / 中文分词边界 12 / 问答 12 / 噪声 10）+ 44 个 query→doc 评测对 + `eval/run_eval.py` 一键评测脚本；实测 Top-1 准确率 36/44 (81.8%)（html 10/10 / tok 14/14 / qa 4/12 / noise 6/6 / neg 2/2）。
+- 已知问题（评测发现，v0.8 排期）：T1 分词器游标逻辑在 CutForSearch 重叠词下会跳过中间 token 导致索引静默丢词；T2 索引/查询切分上下文不一致导致子串 query 漏召回。复现与根因见发版对照报告。
+- 版本号 0.7.0（`--version` / `/api/health` / 服务启动日志）。
+- 发版对照报告：`docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。
+- 测试 108 例运行、107 通过（本轮新增 test_hybrid 权重测试 5 例；1 例 WatcherTest.SubDir 为 inotify 时序 flaky，v0.5.0 已有，与本轮无关）。
+
 ## v0.6.0（2026-10-16）——HTML 文本提取
+
 
 - 新增 `HtmlExtractor`（零第三方依赖，纯 C++17 手写）：去 `<script>`/`<style>`/`<noscript>`、提取 `<title>`/`<meta name="description">`/正文、块级标签换行、HTML 实体解码（数字/hex/40+ 命名实体）、畸形 HTML 容错。
 - charset 探测：BOM（UTF-8/UTF-16LE/BE）→ `<meta charset>` / `<meta http-equiv>` → 默认 UTF-8；GBK/GB18030/BIG5/Latin1 经系统 iconv 转码，UTF-16 手写转换。

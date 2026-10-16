@@ -16,6 +16,8 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
+
 #include <string>
 #include <algorithm>
 #include <vector>
@@ -25,7 +27,8 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.6.0";
+constexpr const char* kVersion = "0.7.0";
+
 
 struct GlobalOpts {
     std::string dbPath;
@@ -38,10 +41,25 @@ struct IndexCmdOpts {
     int64_t maxMb = 5;
 };
 
+double readWeightEnv(const char* name, double def) {
+    const char* raw = std::getenv(name);
+    if (raw == nullptr || *raw == '\0') return def;
+    char* end = nullptr;
+    double v = std::strtod(raw, &end);
+    if (end == raw || *end != '\0' || !std::isfinite(v)) {
+        std::cerr << "警告：" << name << " 参数无效，使用默认值 " << def << "\n";
+        return def;
+    }
+    return v;
+}
+
 struct SearchCmdOpts {
     std::string query;
     int limit = 20;
+    double titleBoost = readWeightEnv("DOCSEEK_TITLE_BOOST", 1.0);
+    double phraseBoost = readWeightEnv("DOCSEEK_PHRASE_BOOST", 2.0);
 };
+
 
 struct LocateCmdOpts {
     std::string query;
@@ -125,8 +143,10 @@ void printUsage() {
         "命令：\n"
         "  index <path>... [--ext .txt,.md] [--max-mb N]\n"
         "                   建立或更新索引（可指定多个文件或目录）\n"
-        "  search <query...> [--limit N]\n"
+        "  search <query...> [--limit N] [--title-boost F] [--phrase-boost F]\n"
         "                   全文搜索，默认返回前 20 条\n"
+        "                   --title-boost/--phrase-boost 设置权重（默认 1.0/2.0）\n"
+
         "  locate <query...> [--limit N]\n"
         "                   自然语言定位原文：问句直达文件:行号，默认返回前 5 段\n"
         "  stats            显示索引统计信息\n"
@@ -209,8 +229,12 @@ int cmdIndex(docseek::Database& db, const IndexCmdOpts& o, bool json) {
 }
 
 int cmdSearch(docseek::Database& db, const SearchCmdOpts& o, bool json) {
-    docseek::Searcher s(db);
+    docseek::SearchWeights weights;
+    weights.titleBoost = o.titleBoost;
+    weights.phraseBoost = o.phraseBoost;
+    docseek::Searcher s(db, weights);
     auto hits = s.search(o.query, o.limit);
+
 
     if (json) {
         std::cout << "{\"query\":\"" << jsonEscape(o.query) << "\",\"hits\":[";
@@ -529,7 +553,42 @@ int main(int argc, char** argv) {
                 std::cerr << "错误：--max-mb 参数无效\n";
                 return 1;
             }
+        } else if (a == "--title-boost" && command == "search") {
+            if (i + 1 >= argc) {
+                std::cerr << "错误：--title-boost 需要参数\n";
+                return 1;
+            }
+            try {
+                double v = std::stod(argv[++i]);
+                if (!std::isfinite(v) || v < 0.0 || v > 1000.0) {
+                    std::cerr << "错误：--title-boost 参数无效\n";
+                    return 1;
+                }
+                searchOpts.titleBoost = v;
+            } catch (...) {
+                std::cerr << "错误：--title-boost 参数无效\n";
+                return 1;
+            }
+
+        } else if (a == "--phrase-boost" && command == "search") {
+            if (i + 1 >= argc) {
+                std::cerr << "错误：--phrase-boost 需要参数\n";
+                return 1;
+            }
+            try {
+                double v = std::stod(argv[++i]);
+                if (!std::isfinite(v) || v < 0.0 || v > 1000.0) {
+                    std::cerr << "错误：--phrase-boost 参数无效\n";
+                    return 1;
+                }
+                searchOpts.phraseBoost = v;
+            } catch (...) {
+                std::cerr << "错误：--phrase-boost 参数无效\n";
+                return 1;
+            }
+
         } else if (a == "--limit" && (command == "search" || command == "locate")) {
+
             if (i + 1 >= argc) {
                 std::cerr << "错误：--limit 需要参数\n";
                 return 1;

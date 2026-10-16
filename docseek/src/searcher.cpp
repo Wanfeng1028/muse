@@ -60,6 +60,17 @@ std::string removeWhitespace(const std::string& query) {
 
 Searcher::Searcher(Database& db) : db_(db) {}
 
+Searcher::Searcher(Database& db, SearchWeights weights) : db_(db), weights_(weights) {}
+
+void Searcher::setWeights(SearchWeights weights) {
+    weights_ = weights;
+}
+
+SearchWeights Searcher::weights() const {
+    return weights_;
+}
+
+
 std::string Searcher::buildMatchQuery(const std::string& query) {
     const std::vector<std::string> tokens = splitTokens(query);
     std::string out;
@@ -118,16 +129,18 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
         // title 加成：每个 query token 在 title 中出现为子串，+1.0。
         for (const std::string& token : tokens) {
             if (hit.title.find(token) != std::string::npos) {
-                finalScore += 1.0;
+                finalScore += weights_.titleBoost;
             }
+
         }
 
         // 短语加成：去掉空白的连续查询串出现在 title 或 snippet 中，+2.0。
         if (!longQuery.empty()) {
             if (hit.title.find(longQuery) != std::string::npos ||
                 hit.snippet.find(longQuery) != std::string::npos) {
-                finalScore += 2.0;
+                finalScore += weights_.phraseBoost;
             }
+
         }
 
         hit.score = finalScore;
