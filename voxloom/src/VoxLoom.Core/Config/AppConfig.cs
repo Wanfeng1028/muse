@@ -15,6 +15,10 @@ public sealed class AppConfig
     public string BackupDirectory { get; private set; } = string.Empty;
     public string ProjectsDirectory { get; private set; } = string.Empty;
     public int BackupRetentionCount { get; private set; } = 10;
+    public bool AutoBackupEnabled { get; private set; } = true;
+    public int AutoBackupIntervalMinutes { get; private set; } = 60;
+    public int AutoBackupRetentionCount { get; private set; } = 5;
+
 
     public static string AppDataDir => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "VoxLoom");
@@ -88,6 +92,16 @@ public sealed class AppConfig
                         case "backupRetentionCount":
                             cfg.BackupRetentionCount = ReadInt(prop, "backupRetentionCount");
                             break;
+                        case "autoBackupEnabled":
+                            cfg.AutoBackupEnabled = ReadBool(prop, "autoBackupEnabled");
+                            break;
+                        case "autoBackupIntervalMinutes":
+                            cfg.AutoBackupIntervalMinutes = ReadInt(prop, "autoBackupIntervalMinutes");
+                            break;
+                        case "autoBackupRetentionCount":
+                            cfg.AutoBackupRetentionCount = ReadInt(prop, "autoBackupRetentionCount");
+                            break;
+
                         default:
                             break;
                     }
@@ -107,6 +121,29 @@ public sealed class AppConfig
                 throw new ConfigValidationException($"环境变量 VOXLOOM_BACKUP_RETENTION 不是整数：{retentionEnv}");
             cfg.BackupRetentionCount = n;
         }
+
+        var autoEnabledEnv = Environment.GetEnvironmentVariable("VOXLOOM_AUTOBACKUP_ENABLED");
+        if (!string.IsNullOrEmpty(autoEnabledEnv))
+        {
+            if (!bool.TryParse(autoEnabledEnv, out var b))
+                throw new ConfigValidationException($"环境变量 VOXLOOM_AUTOBACKUP_ENABLED 不是布尔值：{autoEnabledEnv}");
+            cfg.AutoBackupEnabled = b;
+        }
+        var autoIntervalEnv = Environment.GetEnvironmentVariable("VOXLOOM_AUTOBACKUP_INTERVAL_MINUTES");
+        if (!string.IsNullOrEmpty(autoIntervalEnv))
+        {
+            if (!int.TryParse(autoIntervalEnv, out var autoInterval))
+                throw new ConfigValidationException($"环境变量 VOXLOOM_AUTOBACKUP_INTERVAL_MINUTES 不是整数：{autoIntervalEnv}");
+            cfg.AutoBackupIntervalMinutes = autoInterval;
+        }
+        var autoRetentionEnv = Environment.GetEnvironmentVariable("VOXLOOM_AUTOBACKUP_RETENTION");
+        if (!string.IsNullOrEmpty(autoRetentionEnv))
+        {
+            if (!int.TryParse(autoRetentionEnv, out var autoRetention))
+                throw new ConfigValidationException($"环境变量 VOXLOOM_AUTOBACKUP_RETENTION 不是整数：{autoRetentionEnv}");
+            cfg.AutoBackupRetentionCount = autoRetention;
+        }
+
 
         return cfg;
     }
@@ -141,6 +178,13 @@ public sealed class AppConfig
         return v;
     }
 
+    private static bool ReadBool(JsonProperty prop, string name)
+    {
+        if (prop.Value.ValueKind != JsonValueKind.True && prop.Value.ValueKind != JsonValueKind.False)
+            throw new ConfigValidationException($"配置项 {name} 类型错误，应为布尔值");
+        return prop.Value.GetBoolean();
+    }
+
     public void Validate()
     {
         var problems = new List<string>();
@@ -149,6 +193,10 @@ public sealed class AppConfig
         CheckDirectory(BackupDirectory, "备份目录", problems);
         CheckDirectory(ProjectsDirectory, "项目目录", problems);
 
+        if (AutoBackupIntervalMinutes < 1 || AutoBackupIntervalMinutes > 1440)
+            problems.Add("autoBackupIntervalMinutes 必须在 1~1440 之间");
+        if (AutoBackupRetentionCount < 1 || AutoBackupRetentionCount > 100)
+            problems.Add("autoBackupRetentionCount 必须在 1~100 之间");
         if (BackupRetentionCount < 1 || BackupRetentionCount > 100)
             problems.Add($"备份保留数量必须在 1..100 之间，当前为 {BackupRetentionCount}");
 

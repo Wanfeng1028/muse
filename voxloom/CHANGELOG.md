@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added（v2）
+- 定时自动备份：`AutoBackupService` 按配置间隔（默认 60 分钟）自动备份当前项目；桌面启动时运行、退出时停止；备份存 `backups/auto` 子目录、独立保留份数（默认 5 份）；无已加载项目时跳过；失败只记日志不阻断编辑
+- 配置项 `autoBackupEnabled` / `autoBackupIntervalMinutes` / `autoBackupRetentionCount` + `VOXLOOM_AUTOBACKUP_*` 环境变量覆盖；备份密码只从 `VOXLOOM_AUTOBACKUP_PASSWORD` 环境变量读取
+- 关闭 v1.3 发版报告 3.1 未通过项（定时/触发式自动备份）
+
 ### Added（v1.1）
 - 音频导入：MP3 / FLAC / M4A 真实解码（WAV 继续走纯托管；压缩格式走外部 ffmpeg，缺失时给中文安装指引）
 - 结构化日志：JSON 行日志 + op_id 全链路关联 + 敏感字段脱敏 + 体积轮转（5MB/保留 10 份）

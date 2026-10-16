@@ -359,6 +359,13 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>供定时自动备份调用：有已加载项目时落盘快照并返回目录，否则返回 null（本次跳过）。</summary>
+    public string? TryStageAutoBackupSnapshot()
+    {
+        if (_clip is null || _doc is null) return null;
+        return StageProjectSnapshot("autobackup");
+    }
+
     /// <summary>把当前内存中的项目落盘为快照目录，返回目录路径。</summary>
     private string StageProjectSnapshot(string reason)
     {

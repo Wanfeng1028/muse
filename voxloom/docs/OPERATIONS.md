@@ -37,6 +37,10 @@ appdir/
 | `backupDirectory` | 备份目录 |
 | `projectsDirectory` | 项目目录 |
 | `backupRetentionCount` | 备份保留份数 |
+| `autoBackupEnabled` | 定时自动备份开关（默认 true） |
+| `autoBackupIntervalMinutes` | 自动备份间隔分钟数（默认 60，1~1440） |
+| `autoBackupRetentionCount` | 自动备份保留份数（默认 5，存 backups/auto 子目录） |
+
 
 ### 2.2 环境变量覆盖表
 
@@ -49,6 +53,9 @@ appdir/
 | `VOXLOOM_BACKUP_DIR` | `backupDirectory` |
 | `VOXLOOM_PROJECTS_DIR` | `projectsDirectory` |
 | `VOXLOOM_BACKUP_RETENTION` | `backupRetentionCount` |
+| `VOXLOOM_AUTOBACKUP_ENABLED` | `autoBackupEnabled` |
+| `VOXLOOM_AUTOBACKUP_INTERVAL_MINUTES` | `autoBackupIntervalMinutes` |
+| `VOXLOOM_AUTOBACKUP_RETENTION` | `autoBackupRetentionCount` |
 
 ### 2.3 禁密钥规则与退出码
 
