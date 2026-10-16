@@ -343,14 +343,17 @@
       body.innerHTML = '';
       for (var i = 0; i < rules.length; i++) {
         var r = rules[i];
-        var tr = document.createElement('tr');
+      var tr = document.createElement('tr');
+        var labels = ['关键词', '分类', '方向', '优先级'];
         var cells = [r.keyword, r.category_name || '', dirText(r.direction), String(r.priority || 0)];
         for (var c = 0; c < cells.length; c++) {
           var td = document.createElement('td');
           td.textContent = cells[c];
+          td.setAttribute('data-label', labels[c]);
           tr.appendChild(td);
         }
         var act = document.createElement('td');
+        act.setAttribute('data-label', '操作');
         var del = document.createElement('button');
         del.className = 'btn btn-danger';
         del.textContent = '删除';

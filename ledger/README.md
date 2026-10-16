@@ -56,6 +56,18 @@ make dev
 - `LEDGER_BASE_CURRENCY` 环境变量设置本位币（默认 CNY，非法值启动失败）。
 - 限制：跨币种转账不做实时换算，按转出币种金额记录。
 
+### v2.3 移动端适配
+
+- 手机浏览器可用：`@media (max-width: 768px)` 断点，顶栏 10 个导航横向滑动，按钮与表单触控目标 ≥44px。
+- 大表格转卡片流：交易列表、侦探队列规则表在窄屏下变成卡片，一行一条，列名标在左边。
+- 仪表盘：三汇总卡单列、两张统计图上下排、快捷入口两列；预算页行内信息换行、删除按钮加大。
+- 品牌 logo 从 emoji 换成 SVG 硬币线稿；顺手修了导航高亮样式不生效的 bug。
+- 新增 `tests/test_mobile.py` 移动端冒烟测试（10 个页面 200 + viewport 标记 + 断点 CSS 存在性）。
+
+![手机端仪表盘](docs/screenshots/mobile-dashboard.png)
+![手机端交易列表](docs/screenshots/mobile-transactions.png)
+![手机端侦探队列](docs/screenshots/mobile-detective.png)
+
 ## 账单侦探工作流
 
 1. 上传：在 `/statement` 传账单文件（CSV），系统自动识别模板、编码、表头前导行。

@@ -1198,3 +1198,351 @@ textarea:disabled {
   margin: 0;
   padding-left: 18px;
 }
+
+
+
+/* ---------- 15. 仪表盘：桌面端缺失样式补齐 ---------- */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.page-header h1 { font-size: 22px; }
+.month-picker input[type="month"] {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.card-income { border-left: 4px solid var(--green); }
+.card-expense { border-left: 4px solid var(--red); }
+.card-net { border-left: 4px solid var(--blue); }
+.card-label { font-size: 13px; color: var(--muted); }
+.card-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0;
+  color: var(--ink);
+}
+.card-sub { font-size: 12px; color: var(--muted); }
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-panel {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  min-width: 0;
+}
+.chart-panel h2 { font-size: 15px; margin-bottom: 12px; }
+.chart-box { overflow-x: auto; }
+.chart-box svg { max-width: 100%; height: auto; display: block; }
+.quick-links { margin-bottom: 8px; }
+.quick-links h2 { font-size: 15px; margin-bottom: 12px; }
+.quick-link-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.quick-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-weight: 500;
+  font-size: 14px;
+}
+.quick-link:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ---------- 14. 交易页：桌面端缺失样式补齐 ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.filters select,
+.filters input[type="date"],
+.filters input[type="text"] {
+  flex: 1 1 150px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.filters #btn-search { min-height: 40px; }
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.pagination button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+#tx-form { display: flex; flex-wrap: wrap; gap: 10px; }
+#tx-form > * { flex: 1 1 150px; min-width: 0; min-height: 40px; }
+#tx-form #t-note { flex: 2 1 220px; }
+#tx-form button[type="submit"] {
+  flex: 1 1 100%;
+  background: var(--blue);
+  color: #fff;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+/* ---------- 16. 预算页：桌面端缺失样式补齐 ---------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.toolbar label { font-size: 13px; color: var(--muted); }
+.toolbar input[type="month"] {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.budget-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.budget-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.budget-cat { font-weight: 600; font-size: 15px; }
+.budget-amount, .budget-spent { font-size: 13px; color: var(--muted); }
+.budget-remaining { font-size: 13px; color: var(--muted); margin-left: auto; }
+.btn-del-budget {
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--red);
+}
+.btn-del-budget:hover { border-color: var(--red); }
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+#b-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 520px;
+}
+#b-form .form-row label { flex: none; font-size: 13px; color: var(--muted); min-width: 48px; }
+#b-form .form-row select,
+#b-form .form-row input {
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  min-width: 0;
+}
+#b-form button[type="submit"] {
+  min-height: 44px;
+  background: var(--blue);
+  color: #fff;
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 15px;
+}
+
+/* ---------- 13. 移动端适配（≤768px） ---------- */
+/* 品牌 mark */
+.brand-mark { flex: none; display: inline-block; vertical-align: -4px; }
+
+@media (max-width: 768px) {
+  /* 顶栏：品牌 + 横向滑动导航，不换行不挤压 */
+  .topbar .container,
+  .topbar .wrap {
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    min-height: 56px;
+  }
+  .brand { font-size: 16px; gap: 8px; flex: none; }
+  .nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1 1 auto;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    white-space: nowrap;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px 10px;
+  }
+  /* 内容区收窄内边距，杜绝横向溢出 */
+  .container,
+  .wrap,
+  main {
+    padding-left: 12px;
+    padding-right: 12px;
+    overflow-x: clip;
+  }
+  img, svg { max-width: 100%; }
+  /* 触控目标 ≥44px */
+  .btn,
+  button[type="submit"],
+  .candidate-btn {
+    min-height: 44px;
+  }
+  /* 表单控件不撑破容器 */
+  input, select, textarea { max-width: 100%; }
+  .form-row { align-items: stretch; }
+  .form-row > * { flex: 1 1 100%; min-width: 0; }
+  /* 表格兜底：卡片内横向滑动（已做卡片流的表不受影响） */
+  .card { overflow-x: auto; }
+
+  /* 交易列表：≤768px 表格转卡片流 */
+  table:has(#tx-body) thead { display: none; }
+  table:has(#tx-body) tbody { display: block; }
+  table:has(#tx-body) tr {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+  }
+  table:has(#tx-body) td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 14px;
+  }
+  table:has(#tx-body) td:last-child { border-bottom: none; }
+  table:has(#tx-body) td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  table:has(#tx-body) .btn-del-tx { min-height: 44px; }
+  /* 交易页筛选与表单：移动端两列/全宽 */
+  .filters select,
+  .filters input[type="date"],
+  .filters input[type="text"] { flex: 1 1 44%; min-height: 44px; }
+  .filters #btn-search { flex: 1 1 100%; min-height: 44px; }
+  #tx-form > * { flex: 1 1 44%; min-height: 44px; }
+  #tx-form button[type="submit"] { flex: 1 1 100%; min-height: 48px; }
+
+  /* 侦探队列：≤768px */
+  .chart-toolbar { flex-wrap: wrap; }
+  .chart-toolbar h1 { font-size: 20px; }
+  /* 规则表转卡片流 */
+  #rulesCard table thead { display: none; }
+  #rulesCard table tbody { display: block; }
+  #rulesCard table tr {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    margin-bottom: 8px;
+  }
+  #rulesCard table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 14px;
+  }
+  #rulesCard table td:last-child { border-bottom: none; }
+  #rulesCard table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  /* 待认领卡片：收紧内边距，控件触控 ≥44px */
+  .detective-card { padding: 12px; }
+  .dc-line1 { gap: 8px; }
+  .dc-amt { font-size: 16px; }
+  .dc-line3 .btn { min-height: 44px; flex: 1 1 auto; }
+  .dc-line3 select { min-height: 44px; max-width: 100%; }
+  .dc-rule { min-height: 44px; }
+  .candidate-btn { min-height: 44px; padding: 8px 14px; font-size: 14px; }
+  #rulesCard .form-row > * { flex: 1 1 100%; }
+  #rulesCard .form-actions .btn { width: 100%; min-height: 48px; }
+
+  /* 预算页：≤768px */
+  .budget-row { padding: 12px; }
+  .budget-head { gap: 8px; }
+  .budget-cat { font-size: 15px; }
+  .budget-amount, .budget-spent { font-size: 12px; }
+  .budget-remaining { margin-left: 0; width: 100%; font-size: 13px; font-weight: 600; }
+  .btn-del-budget { min-height: 44px; padding: 8px 16px; margin-left: auto; }
+  .toolbar { flex-wrap: wrap; }
+  #b-form { padding: 14px; }
+  #b-form button[type="submit"] { width: 100%; min-height: 48px; }
+
+  /* __LEDGER_MOBILE_MORE__ */
+  /* 仪表盘：≤768px 单列 + 快捷入口两列 */
+  .summary-cards { grid-template-columns: 1fr; gap: 12px; }
+  .card-value { font-size: 24px; }
+  .charts { grid-template-columns: 1fr; }
+  .quick-link-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quick-link { min-height: 56px; }
+  .page-header { flex-wrap: wrap; gap: 8px; }
+  .page-header h1 { font-size: 20px; }
+}

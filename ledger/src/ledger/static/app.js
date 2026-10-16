@@ -214,14 +214,14 @@ function initTransactionsPage() {
         else { amtStr = fmtMoney(amt); amtColor = "blue"; }
         var note = tx.note ? tx.note : "";
         html += "<tr>" +
-          "<td>" + (tx.occurred_on || "") + "</td>" +
-          "<td>" + typeText(tx.type) + "</td>" +
-          "<td>" + accName + "</td>" +
-          "<td>" + catName + "</td>" +
-          '<td style="color:' + amtColor + '">' + amtStr + "</td>" +
-          "<td>" + (tx.currency || "CNY") + "</td>" +
-          "<td>" + note + "</td>" +
-          '<td><button class="btn-del-tx" data-id="' + tx.id + '">删除</button></td>' +
+          '<td data-label="日期">' + (tx.occurred_on || "") + "</td>" +
+          '<td data-label="类型">' + typeText(tx.type) + "</td>" +
+          '<td data-label="账户">' + accName + "</td>" +
+          '<td data-label="分类">' + catName + "</td>" +
+          '<td data-label="金额" style="color:' + amtColor + '">' + amtStr + "</td>" +
+          '<td data-label="币种">' + (tx.currency || "CNY") + "</td>" +
+          '<td data-label="备注">' + note + "</td>" +
+          '<td data-label="操作"><button class="btn btn-del-tx" data-id="' + tx.id + '">删除</button></td>' +
           "</tr>";
       });
       txBody.innerHTML = html;

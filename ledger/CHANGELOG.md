@@ -2,6 +2,21 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.3 - 2026-10-16
+
+### 新增
+
+- 全站移动端适配：`@media (max-width: 768px)` 断点；顶栏导航横向滑动；触控目标 ≥44px。
+- 交易列表、侦探队列规则表在移动端转卡片流（`data-label` 列名，`table:has()` 精确命中）。
+- 仪表盘 / 预算页移动端布局：汇总卡单列、图表上下排、快捷入口两列、预算行换行。
+- 品牌 logo 从 emoji 换成内联 SVG 硬币线稿 mark。
+- `tests/test_mobile.py`：10 页 200 + viewport 标记 + 断点 CSS 存在性冒烟测试。
+
+### 修复
+
+- 修导航高亮选择器 `.nav a.active` 缺圆点导致永不生效。
+- 补齐模板存在但 CSS 从未定义的类（`.filters`、`.pagination`、`.summary-cards`、`.charts`、`.quick-link-grid`、`.budget-row`、`.toolbar` 等）的桌面样式。
+
 ## v2.2 - 2026-10-16
 
 ### 新增
