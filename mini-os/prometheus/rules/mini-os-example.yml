@@ -73,3 +73,23 @@ groups:
           summary: "mini-os 分享 token 枚举探测"
           description: "mini-os 最近 5 分钟 /api/s/:token 的 404 占比为 {{ $value }}，已超过阈值 0.3（30%），疑似分享 token 枚举探测。"
           runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniossharenotfoundsurge"
+
+      - alert: MiniOSShareForbiddenSurge
+        expr: sum(rate(http_requests_total{route=~"/api/s/:token|/api/s/:token/download|/api/share/list",status="403"}[5m])) / sum(rate(http_requests_total{route=~"/api/s/:token|/api/s/:token/download|/api/share/list"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "mini-os 分享读接口 403 突增"
+          description: "mini-os 最近 5 分钟分享读三个路由的 403 占比为 {{ $value }}，已超过阈值 0.2（20%），疑似有人在扫路径穿越（非法路径段会返回 403\"非法路径\"）。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniosshareforbiddensurge"
+
+      - alert: MiniOSMetricsScrapeFailed
+        expr: absent(up{job="mini-os"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "mini-os 抓取目标消失"
+          description: "Prometheus 里已经找不到 job=mini-os 的抓取目标，说明监控自己瞎了：可能是 job 名配错，或 target 下线后被从配置里删掉。注意这和 MiniOSInstanceDown 不是一回事，后者是 up==0、目标还在但实例挂了；排查时先看 Prometheus 的 targets 页面有没有这个 job，再看 job 名和抓取配置，最后才去查实例本身。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/mini-os/docs/ALERTING.md#miniosmetricsscrapefailed"

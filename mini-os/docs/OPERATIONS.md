@@ -421,3 +421,43 @@ IP 桶 + 账号（username）桶，任一耗尽即 429。IP 提取优先级：`X
 - 退出码：0 成功 / 2 参数错误 / 3 执行失败。
 - v1.3（2026-10-16 验收实测）：`cargo test` 65/65 全过——lib 15（auth 4 + metrics 6 + migrate 2 + log 3 既有）、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、share_test 6；`cargo clippy --all-targets -- -D warnings` 零警告；`cargo fmt --check` 通过；迁移 003 幂等（migrate::tests::migrations_are_idempotent + migration_003_preserves_legacy_data 均过，老库升级冒烟验证通过）。
 - 已知限制：无登录限流；仅文件分享；密码策略仅最小长度。
+
+## 告警规则（v1.7+）
+
+规则文件在 `prometheus/rules/mini-os-example.yml`，Prometheus 启动时用 `rule_files` 引进去即可。下面 9 条规则覆盖分享接口探测、403 突增、实例存活、抓取目标存活等场景。
+
+| 规则名 | 含义 | severity |
+| --- | --- | --- |
+| `MiniOSInstanceDown` | mini-os 实例抓不到了（`up == 0`） | critical |
+| `MiniOSHighErrorRate` | HTTP 5xx 占比过高 | critical |
+| `MiniOSHighLatency` | 请求延迟过高 | warning |
+| `MiniOSShareNotFoundSurge` | 分享 token 枚举探测（`/api/s/:token` 404 占比 > 30%） | warning |
+| `MiniOSShareForbiddenSurge` | 分享读三路由 403 占比 > 20%，疑似扫路径穿越 | warning |
+| `MiniOSMetricsScrapeFailed` | Prometheus 里没有 mini-os 抓取目标，监控失明 | critical |
+| `MiniOSDiskSpaceLow` | 磁盘空间不足 | warning |
+| `MiniOSHighMemoryUsage` | 内存占用过高 | warning |
+| `MiniOSCertExpiringSoon` | 证书快过期 | warning |
+
+Prometheus 引用规则文件的配置片段：
+
+```yaml
+rule_files:
+  - /etc/prometheus/rules/mini-os-example.yml
+```
+
+### 收到 MiniOSShareForbiddenSurge 后怎么查
+
+1. 先确认告警不是误报：打开 Prometheus 查 `sum(rate(http_requests_total{route=~"/api/s/:token|/api/s/:token/download|/api/share/list",status="403"}[5m])) by (route)`，看是哪个路由在涨。
+2. 看日志里 403 的请求路径和来源 IP，mini-os 对非法路径段会返回 403“非法路径”，如果路径里带 `..`、`%2e%2e` 之类的就是有人在扫路径穿越。
+3. 看是不是单个 IP 或单个 UA 在刷，是的话先在网关或反代层封掉。
+4. 如果来源很分散、量又大，说明是被批量扫描，考虑在网关层加通用规则拦路径穿越，再回来把阈值调高一点。
+5. 确认是正常客户端拼错路径导致的，就把这些客户端修掉，或者把规则的分母加最小请求量条件，减少低基数误报。
+
+### 收到 MiniOSMetricsScrapeFailed 后怎么查
+
+1. 先打开 Prometheus 的 Targets 页面，搜 `mini-os`，确认是不是真的没有这个 job 的目标。
+2. 没有的话，检查 `prometheus.yml` 里 `scrape_configs` 的 job 名是不是写成别的了，或者这段配置是不是被谁删了。
+3. 改完配置记得 reload 或重启 Prometheus，再回 Targets 页面确认目标回来了。
+4. 如果配置没问题但目标还是没有，检查 mini-os 的 `/metrics` 端口是不是没起、防火墙是不是挡了。
+5. 这条告警意味着监控对 mini-os 完全失明，处理期间 mini-os 的其他告警都别太当真，先把它修好。
+

@@ -31,6 +31,32 @@ mini-os 暴露的指标：
 | `MiniOSLoginRateLimitedSurge` | `increase(auth_ops_total{op="login_ratelimited"}[5m]) > 50`（5 分钟内 login_ratelimited 增量 > 50） | 5m | warning | 登录被限流次数突增。常见原因：暴力破解、撞库攻击、客户端重试风暴、密码错误导致的用户侧反复重试。 |
 | `MiniOSHighWSConnections` | `ws_connections > 500`（当前 WebSocket 连接数 > 500） | 10m | warning | WebSocket 连接数过高。常见原因：客户端异常重连、连接未正确释放、长连接泄漏、突发在线人数增长。 |
 | `MiniOSShareNotFoundSurge` | `sum(rate(http_requests_total{route=~"/api/s/:token",status="404"}[5m])) / sum(rate(http_requests_total{route=~"/api/s/:token"}[5m])) > 0.3`（`/api/s/:token` 的 404 占比 > 0.3，即 30%） | 5m | warning | 分享 token 枚举探测。常见原因：攻击者批量遍历 token、失效分享链接被大量访问、客户端持有过期链接反复请求。 |
+| `MiniOSShareForbiddenSurge` | `sum(rate(http_requests_total{route=~"/api/s/:token|/api/s/:token/download|/api/share/list",status="403"}[5m])) / sum(rate(http_requests_total{route=~"/api/s/:token|/api/s/:token/download|/api/share/list"}[5m])) > 0.2`（分享读三路由的 403 占比 > 0.2，即 20%） | 5m | warning | 有人在扫路径穿越。常见原因：攻击者构造带 `..` 或非法路径段的请求、扫描器批量试探、客户端拼错路径反复请求。 |
+| `MiniOSMetricsScrapeFailed` | `absent(up{job="mini-os"})`（Prometheus 里没有 job=mini-os 的抓取目标） | 2m | critical | 监控自己瞎了。常见原因：job 名写错、抓取配置被改坏、target 下线后被从配置里删掉。和 `MiniOSInstanceDown` 不同，后者是目标还在但实例挂了。 |
+--- OLD ---
+- 该规则依赖 `/api/s/:token` 有稳定的请求量；若该路由请求量极低，建议先加最小请求量条件（如分母 > 某值）再判断占比，避免低基数误报。
+
+## 3. 接入 Alertmanager
+--- NEW ---
+- 该规则依赖 `/api/s/:token` 有稳定的请求量；若该路由请求量极低，建议先加最小请求量条件（如分母 > 某值）再判断占比，避免低基数误报。
+
+### 2.8 MiniOSShareForbiddenSurge
+
+- 默认阈值：分享读三路由（`/api/s/:token`、`/api/s/:token/download`、`/api/share/list`）的 403 占比 > 0.2，`for: 5m`，severity 为 warning。
+- 该规则用分母是三路由的总请求量，如果只想盯某一个路由，把 `route=~` 里的正则改窄即可。
+- 403 占比高不一定是被攻击，先看是不是客户端一直拿错路径；如果确认是扫描，可先在网关层封 IP，再回来调阈值。
+- 路由请求量很低时同样会低基数误报，建议给分母加个最小请求量条件（如 > 某值）再判断占比。
+
+### 2.9 MiniOSMetricsScrapeFailed
+
+- 默认阈值：`absent(up{job="mini-os"})`，`for: 2m`，severity 为 critical。
+- 这条和 `MiniOSInstanceDown` 的区别：`MiniOSInstanceDown` 用 `up{job="mini-os"} == 0`，表示目标还在抓取列表里、只是抓不到；本规则用 `absent(...)`，表示 Prometheus 里压根没有这个 job 的目标了，连抓都不抓。
+- 排查顺序：先打开 Prometheus 的 Targets 页面看有没有 `job="mini-os"`；没有就查 `prometheus.yml` 里的 job 名和 `scrape_configs` 是不是写错或被删；确认配置没问题，再去查 mini-os 实例本身是不是没起来。
+- 如果只是临时下线实例、故意从配置里移除，可以把这条规则静音或加白名单，别让它一直报。
+- 该规则是 critical，因为它意味着监控对 mini-os 完全失明，后面所有 mini-os 告警都不可信。
+
+## 3. 接入 Alertmanager
+
 
 > 说明：`keep_firing_for`、`service` 标签等字段在本示例规则文件中未使用，属于可选能力；如需启用请自行在规则或组标签中补充，并同步更新本文档。
 
