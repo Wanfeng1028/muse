@@ -1,5 +1,12 @@
 # 更新日志
 
+## v1.6.1 — 2026-10-17
+
+### 修复
+
+- 修 PUT /api/folders/<id> 历史 bug（v1.6 遗留）：处理器调用的 store.get_folder 与 store.update_folder_position 根本不存在，导致改分组名/排序直接 500。补上 feedflow/store.py 的 get_folder(db_path, folder_id)（无则 None，返回 {id,name,position,unread}，形状与 list_folders 一致）与 update_folder_position（直接设置 position）；api.py 行为契约未动。
+- 回归测试 tests/test_folders_put.py（7 例：改名、调序、404、空名 400、非法 position 400、名+序同改、404 无副作用）；pytest 136/136 全绿。
+
 ## v1.6 — 2026-10-16
 
 ### 新增

@@ -57,6 +57,38 @@ def rename_folder(db_path, folder_id, name):
             conn.close()
 
 
+def get_folder(db_path, folder_id):
+    """取单个分组，无则返回 None，形状与 list_folders 行一致。"""
+    conn = get_conn(db_path)
+    try:
+        row = conn.execute(
+            """
+            SELECT f.id AS id, f.name AS name, f.position AS position,
+                   (SELECT COUNT(*) FROM articles a
+                      JOIN feeds fe ON fe.id = a.feed_id
+                     WHERE fe.folder_id = f.id AND a.is_read = 0) AS unread
+              FROM folders f
+             WHERE f.id = ?
+            """,
+            (folder_id,),
+        ).fetchone()
+        return dict(row) if row is not None else None
+    finally:
+        conn.close()
+
+def update_folder_position(db_path, folder_id, position):
+    """把指定分组的 position 直接设为给定整数。"""
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            conn.execute(
+                "UPDATE folders SET position = ? WHERE id = ?",
+                (position, folder_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
 def delete_folder(db_path, folder_id):
     """删除分组，组内源 folder_id 置 NULL。"""
     with write_lock:
