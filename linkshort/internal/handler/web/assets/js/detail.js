@@ -114,6 +114,11 @@
     }
     var saveLimits = document.getElementById("save-limits");
     var clearLimits = document.getElementById("clear-limits");
+    var pwText = document.getElementById("link-password-text");
+    if (pwText) {
+      pwText.textContent = data.has_password ? "已设置（访问需输密码）" : "未设置";
+    }
+
     if (saveLimits) {
       saveLimits.addEventListener("click", function () {
         var mvVal = (editMaxVisits && editMaxVisits.value) ? parseInt(editMaxVisits.value, 10) : null;
@@ -160,6 +165,44 @@
     copyBtn.addEventListener("click", function () {
       var el = document.getElementById("link-short");
       if (el) copyText(el.textContent || "");
+    });
+  }
+
+  // 密码设置 / 清除（一次性绑定，不在 fill 内重复绑）
+  var editPassword = document.getElementById("edit-password");
+  var savePassword = document.getElementById("save-password");
+  var clearPassword = document.getElementById("clear-password");
+  if (savePassword) {
+    savePassword.addEventListener("click", function () {
+      var pw = editPassword && editPassword.value ? editPassword.value : "";
+      if (!pw) {
+        toast("请先输入新密码");
+        return;
+      }
+      api("/api/links/" + encodeURIComponent(id), {
+        method: "PATCH",
+        body: { password: pw }
+      }).then(function () {
+        toast("密码已设置");
+        if (editPassword) editPassword.value = "";
+        loadDetail();
+      }).catch(function (err) {
+        toast(err && err.message ? err.message : "设置失败");
+      });
+    });
+  }
+  if (clearPassword) {
+    clearPassword.addEventListener("click", function () {
+      if (!confirm("确定清除访问密码吗？清除后链接变为公开访问。")) return;
+      api("/api/links/" + encodeURIComponent(id), {
+        method: "PATCH",
+        body: { password: "" }
+      }).then(function () {
+        toast("密码已清除");
+        loadDetail();
+      }).catch(function (err) {
+        toast(err && err.message ? err.message : "清除失败");
+      });
     });
   }
 

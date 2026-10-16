@@ -370,6 +370,7 @@
 **状态**：工程化 v1（2026-10-13 完成，go test 24 例全过、vet/gofmt 全洁、真实服务冒烟：建链→302 跳转→点击计数→二维码→统计→CSV 往返全链路验证；4 张 Web UI 真实截图已亲眼验收）。
 **生产级补强 v1.2「可观测 + 限流 + 韧性」（2026-10-14）**：零依赖手写 Prometheus `/metrics`（请求/跳转/burn/限流拒绝计数、路由 label 归一化）；IP+Key 双维度令牌桶限流（429+Retry-After，/metrics 与探针免限流，RPS/BURST/开关走环境变量）；`/readyz` 就绪探针（DB ping 通 200 否则 503）+ `store.Ping()`；失败注入测试（关库后跳转/建链 500、health 200、readyz 503、metrics 200，全程不 panic）；CSV 导入导出扩展 7 列（兼容旧 5 列）；`docs/OPERATIONS.md` 运维手册（部署/备份恢复/升级/监控/排障/限流调参）；新增 24 例、`-race` 全过；真实服务冒烟 6 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`（结论可发版，v1.1 条件项全部关闭）。
 **生产级补强 v1.3「彻底删除 + 备份演练」（2026-10-15）**：burn 销毁后支持彻底删除，`LINKSHORT_BURN_PURGE_AFTER_DESTROY` 默认 false、开=true 时 302 后硬删除并返回 404，默认行为不变；新增 `scripts/backup.sh`/`restore.sh`（在线备份、`--force` 安全门、`--dry-run`、integrity_check、`.broken-` 快照，`make backup`/`make restore`）；`GET /api/meta` 增加 `burn_purge_after_destroy`；Prometheus 增加 `linkshort_burn_links_purged_total`；详情页 burn 链接显示销毁行为文案；go build/vet/gofmt 全洁，`go test ./... -race` 58 例全过（新增 6 例），真实服务冒烟 8 项全过，4 张 Web UI 截图逐张人工验收；发版对照报告见 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`（结论可发版；v1.2 遗留的“备份恢复未做自动化演练”未通过项已关闭）。
+**生产级补强 v1.4「密码保护短链」（2026-10-16）**：`internal/auth` 新包（bcrypt，golang.org/x/crypto v0.31.0，go 1.23 兼容未升工具链；密码策略 1~128 rune，BcryptCost 变量测试可调）+ DB 迁移 v2→v3（`password_hash TEXT`，老库自动 ALTER）+ `store.SetLinkPassword/ClearLinkPassword` + API（POST 创建带 `password`，PATCH 的 `password` 字段 nil=不动/""=清除/非空=设置，创建时密码落库失败回滚删链；响应只有 `has_password` 布尔，哈希永不外泄）+ 跳转密码门（`GET /{slug}` 有密码→200 服务端渲染门页，`POST /{slug}` 校验：正确 302 记点击/burn 照常、错误 401 不计点击不触发 burn；校验在限次检查之前）+ `loadActiveLink/finishRedirect` 重构（原 handleRedirect 的存在/销毁/禁用/过期四检查抽取复用）+ 指标 `linkshort_password_attempts_total{result=ok|fail}` + Web UI（新建页密码框、列表"密码保护"徽标同行、详情页密码设置/清除区）；`go test ./... -race` **73 例全过**（新增 15：auth 3 + store 4 含 v2→v3 真实迁移 + handler 8）；真实服务冒烟（门页 200/错码 401/对码 302/点击计数/burn 联动）全过；5 张真实截图亲眼验收（new/links/detail/password-gate/password-gate-error），抓出 1 视觉 bug（列表双徽标换行，已加 nowrap 修好重拍）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`（结论可发版，未通过 0，排期 1：fail 走高告警 v1.5）。本轮修 dpsk 输出 6 处（max-tokens 截断重跑、B2 五组 OLD/NEW 挤一个 PATCH 块致贪婪吞组→拆块、END FILE 标记泄漏、noRedirectClient 重定义、httptest import 丢失、JSON 数字 float64 断言 string）；dpsk 手写 v2 表结构漏列致迁移测试假失败（已按真实 schema 修正）；`go get x/crypto@latest` 曾把工具链抬到 go1.26，已回滚并钉 v0.31.0。
 
 **生产级补强 v1.1「阅后即焚 + 限次访问」（2026-10-14，灵魂功能落地）**：`links` 新增 `max_visits`（NULL=不限）、`burn`（0/1）两列 + `PRAGMA user_version` 版本化迁移（v1→v2，老库自动 ALTER，实测老数据保留）；跳转语义：burn 链首次 302 后自动禁用、再访 410"链接已阅销毁"，max_visits=N 时前 N 次 302、第 N+1 次 410"链接已达访问上限"（burn 的 410 检查在禁用 404 之前）；`store.CreateLinkEx/UpdateLinkEx/MarkBurned`（旧签名保持委托不变）；API：POST/PATCH 接受 `max_visits`（1~1000000 正整数）、`burn`，非法组合 400；响应新增 `max_visits/burn/remaining` 字段；Web UI：新建页"限次访问"输入+"阅后即焚"复选框（互斥联动）、列表页"限制"列徽标（阅后即焚/已销毁/限N次·剩M次/不限）、详情页"访问限制"行+保存/清除；`go test ./...` 全过（新增 10 例：store 4 + handler 6）；真实服务冒烟全链路验证（302→410 语义、PATCH 改限次/清除、老库迁移）；3 张新截图亲眼验收通过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.1.md`（有条件发版：失败注入//metrics/运维手册/限流排期 v1.2，CSV 未带新字段）；CHANGELOG.md 新建。
 
@@ -381,7 +382,6 @@
 
 **后续计划**：
 
-- 密码保护短链
 - 访问地域统计
 - 公开 API 文档页
 - purge 定时清理任务（已销毁 burn 链兜底清理）

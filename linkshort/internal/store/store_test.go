@@ -282,8 +282,8 @@ func TestMigrate_版本与新列(t *testing.T) {
 	if err := d.QueryRow("PRAGMA user_version").Scan(&v); err != nil {
 		t.Fatalf("查询 user_version 失败: %v", err)
 	}
-	if v != 2 {
-		t.Errorf("user_version 期望 2，实际 %d", v)
+	if v != 3 {
+		t.Errorf("user_version 期望 3，实际 %d", v)
 	}
 
 	rows, err := d.Query("PRAGMA table_info(links)")
@@ -315,6 +315,9 @@ func TestMigrate_版本与新列(t *testing.T) {
 	}
 	if !cols["burn"] {
 		t.Errorf("links 表缺少 burn 列")
+	}
+	if !cols["password_hash"] {
+		t.Errorf("links 表缺少 password_hash 列")
 	}
 }
 

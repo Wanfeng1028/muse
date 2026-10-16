@@ -23,6 +23,9 @@ type Registry struct {
 	httpRequests map[httpKey]int64
 	// redirects 按 outcome 统计跳转结果。
 	redirects map[string]int64
+	// passwordAttempts 按结果统计密码验证次数，key 为 ok/fail。
+	passwordAttempts map[string]int64
+
 	// burnLinksBurned 统计成功执行 MarkBurned 的次数。
 	burnLinksBurned int64
 
@@ -43,10 +46,12 @@ type httpKey struct {
 // NewRegistry 创建一个新的指标注册表并记录启动时间。
 func NewRegistry() *Registry {
 	return &Registry{
-		httpRequests: make(map[httpKey]int64),
-		redirects:    make(map[string]int64),
-		startTime:    time.Now().Unix(),
+		httpRequests:     make(map[httpKey]int64),
+		redirects:        make(map[string]int64),
+		passwordAttempts: make(map[string]int64),
+		startTime:        time.Now().Unix(),
 	}
+
 }
 
 // Default 是包级默认注册表，供全局使用。
@@ -77,6 +82,17 @@ func (m *Registry) Middleware(next http.Handler) http.Handler {
 func (m *Registry) IncRedirect(outcome string) {
 	m.mu.Lock()
 	m.redirects[outcome]++
+	m.mu.Unlock()
+}
+
+// IncPasswordAttempt 记录一次密码验证，ok 为 true 表示密码正确。
+func (m *Registry) IncPasswordAttempt(ok bool) {
+	m.mu.Lock()
+	if ok {
+		m.passwordAttempts["ok"]++
+	} else {
+		m.passwordAttempts["fail"]++
+	}
 	m.mu.Unlock()
 }
 
@@ -113,6 +129,11 @@ func (m *Registry) Handler() http.HandlerFunc {
 		for k, v := range m.redirects {
 			redirects[k] = v
 		}
+		passwordAttempts := make(map[string]int64, len(m.passwordAttempts))
+		for k, v := range m.passwordAttempts {
+			passwordAttempts[k] = v
+		}
+
 		burned := m.burnLinksBurned
 		purged := m.burnLinksPurged
 		rejected := m.rateLimitRejected
@@ -154,7 +175,13 @@ func (m *Registry) Handler() http.HandlerFunc {
 			fmt.Fprintf(&b, "linkshort_redirects_total{outcome=\"%s\"} %d\n", escapeLabel(o), redirects[o])
 		}
 
+		b.WriteString("# HELP linkshort_password_attempts_total 密码验证次数，按 result 分组。\n")
+		b.WriteString("# TYPE linkshort_password_attempts_total counter\n")
+		for _, res := range []string{"ok", "fail"} {
+			fmt.Fprintf(&b, "linkshort_password_attempts_total{result=\"%s\"} %d\n", res, passwordAttempts[res])
+		}
 		b.WriteString("# HELP linkshort_burn_links_burned_total 成功执行阅后销毁的次数。\n")
+
 		b.WriteString("# TYPE linkshort_burn_links_burned_total counter\n")
 		fmt.Fprintf(&b, "linkshort_burn_links_burned_total %d\n", burned)
 

@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS links (
 	expires_at TEXT,
 	max_visits INTEGER,
 	burn INTEGER NOT NULL DEFAULT 0,
+	password_hash TEXT,
 	created_at TEXT NOT NULL,
+
 	updated_at TEXT NOT NULL
 );
 
@@ -92,61 +94,109 @@ func Open(path string) (*sql.DB, error) {
 
 // migrate 负责把老库结构升级到当前版本。
 // v1 -> v2：links 表新增 max_visits（NULL=不限次数）与 burn（0/1，默认0）。
+// v2 -> v3：links 表新增 password_hash（NULL=未设置密码）。
 func migrate(db *sql.DB) error {
 	var v int
 	if err := db.QueryRow("PRAGMA user_version;").Scan(&v); err != nil {
 		return fmt.Errorf("read user_version: %w", err)
 	}
-	if v >= 2 {
-		return nil
-	}
 
-	// 检查 max_visits 是否已存在，避免重复 ALTER 导致报错。
-	rows, err := db.Query("PRAGMA table_info(links);")
-	if err != nil {
-		return fmt.Errorf("table_info links: %w", err)
-	}
-	hasMaxVisits := false
-	for rows.Next() {
-		var (
-			cid       int
-			name      string
-			ctype     string
-			notnull   int
-			dfltValue sql.NullString
-			pk        int
-		)
-		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
-			if cerr := rows.Close(); cerr != nil {
-				return fmt.Errorf("scan table_info: %w; close: %v", err, cerr)
+	if v < 2 {
+		// 检查 max_visits 是否已存在，避免重复 ALTER 导致报错。
+		rows, err := db.Query("PRAGMA table_info(links);")
+		if err != nil {
+			return fmt.Errorf("table_info links: %w", err)
+		}
+		hasMaxVisits := false
+		for rows.Next() {
+			var (
+				cid       int
+				name      string
+				ctype     string
+				notnull   int
+				dfltValue sql.NullString
+				pk        int
+			)
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				if cerr := rows.Close(); cerr != nil {
+					return fmt.Errorf("scan table_info: %w; close: %v", err, cerr)
+				}
+				return fmt.Errorf("scan table_info: %w", err)
 			}
-			return fmt.Errorf("scan table_info: %w", err)
+			if name == "max_visits" {
+				hasMaxVisits = true
+			}
 		}
-		if name == "max_visits" {
-			hasMaxVisits = true
+		if err := rows.Err(); err != nil {
+			if cerr := rows.Close(); cerr != nil {
+				return fmt.Errorf("iterate table_info: %w; close: %v", err, cerr)
+			}
+			return fmt.Errorf("iterate table_info: %w", err)
 		}
-	}
-	if err := rows.Err(); err != nil {
-		if cerr := rows.Close(); cerr != nil {
-			return fmt.Errorf("iterate table_info: %w; close: %v", err, cerr)
+		if err := rows.Close(); err != nil {
+			return fmt.Errorf("close table_info: %w", err)
 		}
-		return fmt.Errorf("iterate table_info: %w", err)
-	}
-	if err := rows.Close(); err != nil {
-		return fmt.Errorf("close table_info: %w", err)
+
+		if !hasMaxVisits {
+			if _, err := db.Exec("ALTER TABLE links ADD COLUMN max_visits INTEGER;"); err != nil {
+				return fmt.Errorf("add column max_visits: %w", err)
+			}
+			if _, err := db.Exec("ALTER TABLE links ADD COLUMN burn INTEGER NOT NULL DEFAULT 0;"); err != nil {
+				return fmt.Errorf("add column burn: %w", err)
+			}
+		}
+
+		if _, err := db.Exec("PRAGMA user_version = 2;"); err != nil {
+			return fmt.Errorf("set user_version: %w", err)
+		}
 	}
 
-	if !hasMaxVisits {
-		if _, err := db.Exec("ALTER TABLE links ADD COLUMN max_visits INTEGER;"); err != nil {
-			return fmt.Errorf("add column max_visits: %w", err)
+	if v < 3 {
+		// 检查 password_hash 是否已存在，避免重复 ALTER 导致报错。
+		rows, err := db.Query("PRAGMA table_info(links);")
+		if err != nil {
+			return fmt.Errorf("table_info links: %w", err)
 		}
-		if _, err := db.Exec("ALTER TABLE links ADD COLUMN burn INTEGER NOT NULL DEFAULT 0;"); err != nil {
-			return fmt.Errorf("add column burn: %w", err)
+		hasPasswordHash := false
+		for rows.Next() {
+			var (
+				cid       int
+				name      string
+				ctype     string
+				notnull   int
+				dfltValue sql.NullString
+				pk        int
+			)
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err != nil {
+				if cerr := rows.Close(); cerr != nil {
+					return fmt.Errorf("scan table_info: %w; close: %v", err, cerr)
+				}
+				return fmt.Errorf("scan table_info: %w", err)
+			}
+			if name == "password_hash" {
+				hasPasswordHash = true
+			}
+		}
+		if err := rows.Err(); err != nil {
+			if cerr := rows.Close(); cerr != nil {
+				return fmt.Errorf("iterate table_info: %w; close: %v", err, cerr)
+			}
+			return fmt.Errorf("iterate table_info: %w", err)
+		}
+		if err := rows.Close(); err != nil {
+			return fmt.Errorf("close table_info: %w", err)
+		}
+
+		if !hasPasswordHash {
+			if _, err := db.Exec("ALTER TABLE links ADD COLUMN password_hash TEXT;"); err != nil {
+				return fmt.Errorf("add column password_hash: %w", err)
+			}
+		}
+
+		if _, err := db.Exec("PRAGMA user_version = 3;"); err != nil {
+			return fmt.Errorf("set user_version: %w", err)
 		}
 	}
 
-	if _, err := db.Exec("PRAGMA user_version = 2;"); err != nil {
-		return fmt.Errorf("set user_version: %w", err)
-	}
 	return nil
 }

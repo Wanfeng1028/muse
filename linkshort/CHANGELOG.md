@@ -4,7 +4,29 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.4.0] - 2026-10-16
+
+### 新增
+
+- 密码保护短链：创建时可设访问密码（POST /api/links 的 `password` 字段），访问者必须在密码门页输入正确密码才能跳转。密码只存 bcrypt 哈希（golang.org/x/crypto v0.31.0），明文永不落库、不进响应、不进日志。
+- `PATCH /api/links/{id}` 支持 `password`：null=不动、`""`=清除、非空=设置/修改；创建时密码落库失败会回滚整条短链，避免半吊子状态。
+- 跳转语义：`GET /{slug}` 有密码返回 200 密码门页（服务端渲染，邮政标签视觉）；`POST /{slug}` 校验密码，正确 302（正常记点击、burn 链照常销毁），错误 401（不计点击、不触发阅后即焚）。密码校验在限次访问检查之前，防错误尝试耗尽次数。
+- Prometheus 新增 `linkshort_password_attempts_total{result="ok"|"fail"}`；错误尝试走全局 IP 限流（默认 20 RPS）。
+- Web UI：新建页"访问密码"输入框、列表"限制"列"密码保护"徽标（与其他徽标同行）、详情页"密码保护"区（状态文案+设置/清除）。
+- DB 迁移 v2→v3（`password_hash TEXT`，老库自动 ALTER 升级，数据不丢）。
+- 新增 15 例测试（auth 3、store 4 含 v2→v3 真实迁移、handler 8 含门页/401/302/burn 联动）；`go test ./... -race` 73 例全过。
+
+### 变更
+
+- 无破坏性变更。默认配置下所有行为与 v1.3 一致；`go.mod` 新增 `golang.org/x/crypto v0.31.0`（go 1.23 兼容版，未升级工具链）。
+
+### 已知缺口
+
+- CSV 导入导出未带密码字段：密码不可批量导入/导出（有意为之，防明文密码进 CSV）。
+- 高并发 clicks 检查仍未做分布式锁（单连接串行写入缓解，v1.1 起已知）。
+
 ## [v1.3.0] - 2026-10-15
+
 
 ### 新增
 

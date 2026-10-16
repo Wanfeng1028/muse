@@ -193,7 +193,16 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 
 `GET /api/meta` 新增 `burn_purge_after_destroy` 字段，暴露当前开关状态。Prometheus 新增 `linkshort_burn_links_purged_total` 计数器。详情页 burn 链接显示对应文案："销毁后彻底删除" 或 "销毁后仅禁用、数据留档"。
 
+### 3.6 密码保护（v1.4）
+
+- 存储：密码只存 bcrypt 哈希（`links.password_hash`），服务端、日志、API 响应里永不见明文。忘记密码只能清除重设，无法找回。
+- 备份：哈希随库文件一起备份，恢复后密码继续有效。注意备份文件本身含哈希，保管要求与数据库文件一致。
+- 遗失处理：某条链密码遗失且无人记得 → 用管理 API `PATCH /api/links/{id}` 传 `{"password": ""}` 清除，链接变公开；或直接删链重建。
+- 排障：用户报"密码总不对" → 先确认输的不是全角字符/首尾空格（门页按原样比对，不做 trim）；仍不行就清除重设。不要尝试从哈希反推。
+- 限流：密码尝试走全局 IP 令牌桶（默认 20 RPS / burst 40），暴力猜解会被 429 挡掉；`linkshort_password_attempts_total{result="fail"}` 持续走高说明有人在猜。
+
 ## 4. 升级
+
 
 
 ### 4.1 迁移机制

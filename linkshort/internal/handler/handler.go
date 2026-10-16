@@ -20,8 +20,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/Wanfeng1028/muse/linkshort/internal/auth"
 	"github.com/Wanfeng1028/muse/linkshort/internal/config"
 	"github.com/Wanfeng1028/muse/linkshort/internal/metrics"
+
 	"github.com/Wanfeng1028/muse/linkshort/internal/model"
 	"github.com/Wanfeng1028/muse/linkshort/internal/qr"
 	"github.com/Wanfeng1028/muse/linkshort/internal/ratelimit"
@@ -97,6 +99,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 
 	// 短链跳转（放最后，避免覆盖已注册前缀）。
 	r.Get("/{slug}", func(w http.ResponseWriter, req *http.Request) { handleRedirect(w, req, st, cfg) })
+	r.Post("/{slug}", func(w http.ResponseWriter, req *http.Request) { handlePasswordUnlock(w, req, st, cfg) })
 
 	return r
 }
@@ -140,19 +143,20 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 
 // linkJSON 是返回给前端的链接结构，ExpiresAt 为 nil 时序列化成 null。
 type linkJSON struct {
-	ID        int64   `json:"id"`
-	Slug      string  `json:"slug"`
-	URL       string  `json:"url"`
-	Title     string  `json:"title"`
-	Clicks    int64   `json:"clicks"`
-	Enabled   bool    `json:"enabled"`
-	ExpiresAt *string `json:"expires_at"`
-	CreatedAt string  `json:"created_at"`
-	UpdatedAt string  `json:"updated_at"`
-	ShortURL  string  `json:"short_url"`
-	MaxVisits *int64  `json:"max_visits"`
-	Burn      bool    `json:"burn"`
-	Remaining *int64  `json:"remaining"`
+	ID          int64   `json:"id"`
+	Slug        string  `json:"slug"`
+	URL         string  `json:"url"`
+	Title       string  `json:"title"`
+	Clicks      int64   `json:"clicks"`
+	Enabled     bool    `json:"enabled"`
+	ExpiresAt   *string `json:"expires_at"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
+	ShortURL    string  `json:"short_url"`
+	MaxVisits   *int64  `json:"max_visits"`
+	Burn        bool    `json:"burn"`
+	Remaining   *int64  `json:"remaining"`
+	HasPassword bool    `json:"has_password"`
 }
 
 func toLinkJSON(l *model.Link, base string) linkJSON {
@@ -176,20 +180,22 @@ func toLinkJSON(l *model.Link, base string) linkJSON {
 		remaining = &r
 	}
 	return linkJSON{
-		ID:        l.ID,
-		Slug:      l.Slug,
-		URL:       l.URL,
-		Title:     l.Title,
-		Clicks:    l.Clicks,
-		Enabled:   l.Enabled,
-		ExpiresAt: exp,
-		CreatedAt: l.CreatedAt.UTC().Format(time.RFC3339),
-		UpdatedAt: l.UpdatedAt.UTC().Format(time.RFC3339),
-		ShortURL:  base + "/" + l.Slug,
-		MaxVisits: l.MaxVisits,
-		Burn:      l.Burn,
-		Remaining: remaining,
+		ID:          l.ID,
+		Slug:        l.Slug,
+		URL:         l.URL,
+		Title:       l.Title,
+		Clicks:      l.Clicks,
+		Enabled:     l.Enabled,
+		ExpiresAt:   exp,
+		CreatedAt:   l.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:   l.UpdatedAt.UTC().Format(time.RFC3339),
+		ShortURL:    base + "/" + l.Slug,
+		MaxVisits:   l.MaxVisits,
+		Burn:        l.Burn,
+		Remaining:   remaining,
+		HasPassword: l.PasswordHash != nil,
 	}
+
 }
 
 // shortBaseURL 优先使用配置的 BaseURL，否则根据请求 Host 拼。
@@ -212,37 +218,84 @@ func parseID(r *http.Request) (int64, bool) {
 
 // ---------- 短链跳转 ----------
 
-// handleRedirect 处理短链跳转。
-// 并发说明：两次并发访问可能都通过 clicks 检查（单连接串行写入缓解，
-// 未做分布式锁，文档已注明）。
-func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
-	slug := chi.URLParam(r, "slug")
+// loadActiveLink 按 slug 取出可用短链。
+// 不存在/已销毁/禁用/过期时直接写错误响应并返回 false，调用方无需再处理。
+func loadActiveLink(w http.ResponseWriter, r *http.Request, st *store.Store, slug string) (*model.Link, bool) {
 	link, err := st.GetLinkBySlug(slug)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			metrics.Default.IncRedirect("not_found")
 			http.Error(w, "短链不存在", http.StatusNotFound)
-			return
+			return nil, false
 		}
 		metrics.Default.IncRedirect("error")
 		http.Error(w, "服务器错误", http.StatusInternalServerError)
-		return
+		return nil, false
 	}
 	if link.Burn && !link.Enabled {
 		metrics.Default.IncRedirect("gone")
 		http.Error(w, "链接已阅销毁", http.StatusGone)
-		return
+		return nil, false
 	}
 	if !link.Enabled {
 		metrics.Default.IncRedirect("not_found")
 		http.Error(w, "短链不存在", http.StatusNotFound)
-		return
+		return nil, false
 	}
 	if link.ExpiresAt != nil && time.Now().After(*link.ExpiresAt) {
 		metrics.Default.IncRedirect("gone")
 		http.Error(w, "链接已过期", http.StatusGone)
+		return nil, false
+	}
+	return link, true
+}
+
+// handleRedirect 处理短链跳转（GET /{slug}）。
+// 带密码的短链先渲染密码输入页，密码校验走 POST /{slug}。
+// 并发说明：两次并发访问可能都通过 clicks 检查（单连接串行写入缓解，
+// 未做分布式锁，文档已注明）。
+func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
+	slug := chi.URLParam(r, "slug")
+	link, ok := loadActiveLink(w, r, st, slug)
+	if !ok {
 		return
 	}
+	if link.PasswordHash != nil {
+		renderPasswordPage(w, slug, "", http.StatusOK)
+		return
+	}
+	finishRedirect(w, r, link, st, cfg)
+}
+
+// handlePasswordUnlock 校验访问密码（POST /{slug}），通过后走正常跳转流程。
+// 未设密码的短链收到 POST 也直接跳转（兼容直接 POST 的客户端）。
+// 密码错误不计点击、不触发阅后即焚。
+func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
+	slug := chi.URLParam(r, "slug")
+	link, ok := loadActiveLink(w, r, st, slug)
+	if !ok {
+		return
+	}
+	if link.PasswordHash == nil {
+		finishRedirect(w, r, link, st, cfg)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		renderPasswordPage(w, slug, "请求解析失败，请重试", http.StatusBadRequest)
+		return
+	}
+	if !auth.CheckPassword(*link.PasswordHash, r.FormValue("password")) {
+		metrics.Default.IncPasswordAttempt(false)
+		renderPasswordPage(w, slug, "密码错误，请重试", http.StatusUnauthorized)
+		return
+	}
+	metrics.Default.IncPasswordAttempt(true)
+	finishRedirect(w, r, link, st, cfg)
+}
+
+// finishRedirect 执行跳转前的最终检查（限次访问）并完成跳转。
+// 只有成功解锁（密码正确或无密码）才会走到这里：记访问、处理阅后即焚、302。
+func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st *store.Store, cfg *config.Config) {
 	if link.MaxVisits != nil && link.Clicks >= *link.MaxVisits {
 		metrics.Default.IncRedirect("gone")
 		http.Error(w, "链接已达访问上限", http.StatusGone)
@@ -307,6 +360,7 @@ type createLinkReq struct {
 	ExpiresAt *string `json:"expires_at"`
 	MaxVisits *int64  `json:"max_visits"`
 	Burn      bool    `json:"burn"`
+	Password  string  `json:"password"`
 }
 
 func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
@@ -356,10 +410,34 @@ func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, c
 		return
 	}
 
+	var pwHash *string
+	if req.Password != "" {
+		if err := auth.ValidPasswordPolicy(req.Password); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		h, err := auth.HashPassword(req.Password)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "密码处理失败")
+			return
+		}
+		pwHash = &h
+	}
+
 	id, err := st.CreateLinkEx(req.Slug, req.URL, req.Title, expiresAt, req.MaxVisits, req.Burn)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	if pwHash != nil {
+		if err := st.SetLinkPassword(id, *pwHash); err != nil {
+			// 密码落库失败时回滚整条短链，避免"建了链但密码没设上"的半吊子状态。
+			if derr := st.DeleteLink(id); derr != nil {
+				log.Printf("handler: 设置密码失败且回滚删除失败 id=%d: %v / %v", id, err, derr)
+			}
+			writeError(w, http.StatusInternalServerError, "密码设置失败")
+			return
+		}
 	}
 
 	link, err := st.GetLink(id)
@@ -431,6 +509,7 @@ type patchLinkReq struct {
 	ExpiresAt json.RawMessage `json:"expires_at"`
 	MaxVisits json.RawMessage `json:"max_visits"`
 	Burn      *bool           `json:"burn"`
+	Password  *string         `json:"password"`
 }
 
 func handlePatchLink(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
@@ -511,6 +590,29 @@ func handlePatchLink(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 	if burn && maxVisits != nil && *maxVisits != 1 {
 		writeError(w, http.StatusBadRequest, "阅后即焚不能与限次访问同时设置")
 		return
+	}
+
+	if req.Password != nil {
+		if *req.Password == "" {
+			if err := st.ClearLinkPassword(id); err != nil {
+				writeError(w, http.StatusInternalServerError, "清除密码失败")
+				return
+			}
+		} else {
+			if err := auth.ValidPasswordPolicy(*req.Password); err != nil {
+				writeError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			h, err := auth.HashPassword(*req.Password)
+			if err != nil {
+				writeError(w, http.StatusInternalServerError, "密码处理失败")
+				return
+			}
+			if err := st.SetLinkPassword(id, h); err != nil {
+				writeError(w, http.StatusInternalServerError, "密码设置失败")
+				return
+			}
+		}
 	}
 
 	if err := st.UpdateLinkEx(id, title, enabled, expiresAt, maxVisits, burn); err != nil {

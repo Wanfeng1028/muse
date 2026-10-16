@@ -85,6 +85,19 @@
             </div>
           </div>
         </div>
+        <div class="kv-row">
+          <div class="kv-key">密码保护</div>
+          <div class="kv-val">
+            <span id="link-password-text" class="mono">—</span>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input class="input" type="password" id="edit-password" placeholder="输入新密码" style="width:200px" autocomplete="new-password">
+              <button class="btn tiny" id="save-password">设置密码</button>
+              <button class="btn tiny ghost" id="clear-password">清除密码</button>
+            </div>
+            <div class="hint" style="margin-top:6px">密码只存哈希，不可找回；清除后链接变为公开访问</div>
+          </div>
+        </div>
+
 
       </div>
     </section>

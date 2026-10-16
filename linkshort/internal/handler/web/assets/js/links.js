@@ -126,6 +126,7 @@
         tr2.appendChild(tdExp);
 
         var tdLimit = document.createElement("td");
+        tdLimit.style.whiteSpace = "nowrap";
         var tag = document.createElement("span");
         if (it.burn) {
           tag.className = "tag tag-stamp";
@@ -139,7 +140,15 @@
           tag.textContent = "不限";
         }
         tdLimit.appendChild(tag);
+        if (it.has_password) {
+          var pwTag = document.createElement("span");
+          pwTag.className = "tag tag-kraft";
+          pwTag.style.marginLeft = "6px";
+          pwTag.textContent = "密码保护";
+          tdLimit.appendChild(pwTag);
+        }
         tr2.appendChild(tdLimit);
+
 
         // 操作：复制 / 删除
         var tdAct = document.createElement("td");

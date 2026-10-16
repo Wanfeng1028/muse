@@ -16,6 +16,8 @@
   var resultQr = document.getElementById("result-qr");
   var maxVisitsEl = document.getElementById("max-visits");
   var burnEl = document.getElementById("burn");
+  var passwordEl = document.getElementById("password");
+
 
   if (!form) return;
 
@@ -60,6 +62,10 @@
     if (burnEl && burnEl.checked) {
       body.burn = true;
     }
+    if (passwordEl && passwordEl.value) {
+      body.password = passwordEl.value;
+    }
+
 
 
     if (submitBtn) {

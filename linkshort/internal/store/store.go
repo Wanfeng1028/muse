@@ -74,12 +74,14 @@ func scanLink(scanner interface {
 		expiresAt sql.NullString
 		maxVisits sql.NullInt64
 		burn      int64
+		pwHash    sql.NullString
+
 		createdAt string
 		updatedAt string
 	)
 	if err := scanner.Scan(
 		&l.ID, &l.Slug, &l.URL, &l.Title, &l.Clicks,
-		&enabled, &expiresAt, &maxVisits, &burn, &createdAt, &updatedAt,
+		&enabled, &expiresAt, &maxVisits, &burn, &pwHash, &createdAt, &updatedAt,
 	); err != nil {
 		return nil, err
 	}
@@ -106,10 +108,16 @@ func scanLink(scanner interface {
 		l.MaxVisits = nil
 	}
 	l.Burn = burn != 0
+	if pwHash.Valid {
+		h := pwHash.String
+		l.PasswordHash = &h
+	} else {
+		l.PasswordHash = nil
+	}
 	return &l, nil
 }
 
-const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, created_at, updated_at`
+const linkColumns = `id, slug, url, title, clicks, enabled, expires_at, max_visits, burn, password_hash, created_at, updated_at`
 
 // CreateLink 创建短链。slug 为空时内部生成 6 位随机 slug，冲突时重试并加长。
 // validURL 校验目标 URL：必须 http/https 开头且长度不超过 2048。

@@ -4,16 +4,18 @@ import "time"
 
 // Link 表示一条短链记录。
 type Link struct {
-	ID        int64      // 主键
-	Slug      string     // 短链标识，全局唯一
-	URL       string     // 目标长链接
-	Title     string     // 备注标题
-	Clicks    int64      // 累计点击数
-	Enabled   bool       // 是否启用
-	ExpiresAt *time.Time // 过期时间，nil 表示永不过期
-	MaxVisits *int64     // 限次访问，nil 表示不限
-	Burn      bool       // 阅后即焚开关
-	CreatedAt time.Time  // 创建时间（UTC）
+	ID           int64      // 主键
+	Slug         string     // 短链标识，全局唯一
+	URL          string     // 目标长链接
+	Title        string     // 备注标题
+	Clicks       int64      // 累计点击数
+	Enabled      bool       // 是否启用
+	ExpiresAt    *time.Time // 过期时间，nil 表示永不过期
+	MaxVisits    *int64     // 限次访问，nil 表示不限
+	Burn         bool       // 阅后即焚开关
+	PasswordHash *string    // 密码的 bcrypt 哈希，nil 表示未设置密码
+
+	CreatedAt time.Time // 创建时间（UTC）
 
 	UpdatedAt time.Time // 更新时间（UTC）
 }
