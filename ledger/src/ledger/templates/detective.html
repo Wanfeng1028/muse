@@ -12,6 +12,18 @@
 <p class="muted">系统没把握的账单都在这里，你点一下就行。</p>
 
 <div id="queueError" class="error-list" style="display:none;"></div>
+<div class="batch-toolbar" id="batchToolbar" style="display:none;">
+  <label class="batch-select-all">
+    <input type="checkbox" id="selectAll">
+    <span>全选</span>
+  </label>
+  <span class="muted" id="selectedCount">已选 0 条</span>
+  <select id="batchCatSelect" aria-label="批量认领分类"></select>
+  <button class="btn btn-primary" id="batchClaimBtn">批量认领</button>
+  <button class="btn" id="batchSkipBtn">批量忽略</button>
+  <span class="batch-hint" id="batchDirHint" style="display:none;"></span>
+</div>
+<div id="batchResult" class="batch-result" style="display:none;"></div>
 <div id="cardList"></div>
 
 <div id="emptyState" class="card" style="display:none;">
@@ -88,6 +100,8 @@
   function sourceText(src) {
     if (src === 'rule') return '规则自动匹配';
     if (src === 'history') return '按你的习惯匹配';
+    if (src === 'alias') return '按你的纠正记住的';
+    if (src === 'transfer-pair') return '转账配对成功';
     if (src === 'suggestion') return '侦探推测';
     return '暂无头绪';
   }
@@ -128,6 +142,8 @@
   function renderEmpty() {
     document.getElementById('cardList').innerHTML = '';
     document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('batchToolbar').style.display = 'none';
+    document.getElementById('batchResult').style.display = 'none';
     updateBadge(0);
   }
 
@@ -158,6 +174,21 @@
     var card = document.createElement('div');
     card.className = 'detective-card';
     card.id = 'item-' + item.id;
+    var selectRow = document.createElement('div');
+    selectRow.className = 'dc-select-row';
+    var chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'dc-select';
+    chk.setAttribute('data-id', item.id);
+    chk.setAttribute('data-direction', item.direction || '');
+    chk.setAttribute('aria-label', '选中这条账单');
+    chk.addEventListener('change', updateBatchToolbar);
+    var chkLabel = document.createElement('span');
+    chkLabel.className = 'muted';
+    chkLabel.textContent = '选中这条';
+    selectRow.appendChild(chk);
+    selectRow.appendChild(chkLabel);
+    card.appendChild(selectRow);
 
     var line1 = document.createElement('div');
     line1.className = 'dc-line1';
@@ -319,6 +350,138 @@
     });
   }
 
+  function selectedItems() {
+    var boxes = document.querySelectorAll('.dc-select:checked');
+    var out = [];
+    for (var i = 0; i < boxes.length; i++) {
+      out.push({ id: boxes[i].getAttribute('data-id'), direction: boxes[i].getAttribute('data-direction') });
+    }
+    return out;
+  }
+
+  function updateBatchToolbar() {
+    var sel = selectedItems();
+    document.getElementById('selectedCount').textContent = '已选 ' + sel.length + ' 条';
+    var dirs = {};
+    for (var i = 0; i < sel.length; i++) { dirs[sel[i].direction] = true; }
+    var dirKeys = Object.keys(dirs);
+    var claimBtn = document.getElementById('batchClaimBtn');
+    var catSel = document.getElementById('batchCatSelect');
+    var hint = document.getElementById('batchDirHint');
+    if (dirKeys.length > 1) {
+      claimBtn.disabled = true;
+      hint.style.display = 'inline';
+      hint.textContent = '勾选了不同方向的账单，批量认领只支持同方向；可分两次处理，或用批量忽略。';
+    } else {
+      claimBtn.disabled = sel.length === 0;
+      hint.style.display = 'none';
+      fillBatchCatOptions(dirKeys[0] || 'out');
+    }
+    document.getElementById('batchSkipBtn').disabled = sel.length === 0;
+  }
+
+  function fillBatchCatOptions(dir) {
+    var sel = document.getElementById('batchCatSelect');
+    var cur = sel.value;
+    sel.innerHTML = '';
+    var opts = categoryOptionsFor(dir);
+    for (var i = 0; i < opts.length; i++) {
+      var o = document.createElement('option');
+      o.value = opts[i].id;
+      o.textContent = opts[i].name;
+      sel.appendChild(o);
+    }
+    if (cur) { sel.value = cur; }
+  }
+
+  function removeCards(ids) {
+    for (var i = 0; i < ids.length; i++) { removeCard(ids[i]); }
+    updateBatchToolbar();
+  }
+
+  function showBatchResult(processed, failed, verb) {
+    var el = document.getElementById('batchResult');
+    el.style.display = 'block';
+    el.innerHTML = '';
+    var ok = document.createElement('span');
+    ok.className = 'batch-ok';
+    ok.textContent = '已' + verb + ' ' + processed + ' 条';
+    el.appendChild(ok);
+    if (failed && failed.length) {
+      var bad = document.createElement('span');
+      bad.className = 'batch-fail';
+      bad.textContent = '，失败 ' + failed.length + ' 条：';
+      el.appendChild(bad);
+      var ul = document.createElement('ul');
+      for (var i = 0; i < failed.length; i++) {
+        var li = document.createElement('li');
+        li.textContent = '账单 #' + failed[i].item_id + '：' + failed[i].error;
+        ul.appendChild(li);
+      }
+      el.appendChild(ul);
+    }
+  }
+
+  function batchClaim() {
+    var sel = selectedItems();
+    if (!sel.length) { showError('先勾选要处理的账单。'); return; }
+    var ids = [];
+    for (var i = 0; i < sel.length; i++) { ids.push(Number(sel[i].id)); }
+    api('/api/statements/items/batch-claim', {
+      method: 'POST',
+      body: JSON.stringify({
+        item_ids: ids,
+        category_id: Number(document.getElementById('batchCatSelect').value),
+        save_rule: false
+      })
+    }).then(function (data) {
+      var okIds = [];
+      var failedIds = {};
+      var failed = data.failed || [];
+      for (var i = 0; i < failed.length; i++) { failedIds[failed[i].item_id] = true; }
+      for (var j = 0; j < ids.length; j++) {
+        if (!failedIds[ids[j]]) { okIds.push(ids[j]); }
+      }
+      removeCards(okIds);
+      showBatchResult(data.processed || 0, failed, '认领');
+    }).catch(function (e) {
+      showError('批量认领失败：' + e.message);
+    });
+  }
+
+  function batchSkip() {
+    var sel = selectedItems();
+    if (!sel.length) { showError('先勾选要处理的账单。'); return; }
+    var ids = [];
+    for (var i = 0; i < sel.length; i++) { ids.push(Number(sel[i].id)); }
+    api('/api/statements/items/batch-skip', {
+      method: 'POST',
+      body: JSON.stringify({ item_ids: ids })
+    }).then(function (data) {
+      var failedIds = {};
+      var failed = data.failed || [];
+      for (var i = 0; i < failed.length; i++) { failedIds[failed[i].item_id] = true; }
+      var okIds = [];
+      for (var j = 0; j < ids.length; j++) {
+        if (!failedIds[ids[j]]) { okIds.push(ids[j]); }
+      }
+      removeCards(okIds);
+      showBatchResult(data.processed || 0, failed, '忽略');
+    }).catch(function (e) {
+      showError('批量忽略失败：' + e.message);
+    });
+  }
+
+  function initBatchToolbar() {
+    document.getElementById('selectAll').addEventListener('change', function (e) {
+      var boxes = document.querySelectorAll('.dc-select');
+      for (var i = 0; i < boxes.length; i++) { boxes[i].checked = e.target.checked; }
+      updateBatchToolbar();
+    });
+    document.getElementById('batchClaimBtn').addEventListener('click', batchClaim);
+    document.getElementById('batchSkipBtn').addEventListener('click', batchSkip);
+  }
+
   function loadItems() {
     hideError();
     if (!currentBatch) { renderEmpty(); return; }
@@ -332,6 +495,10 @@
       for (var i = 0; i < items.length; i++) {
         list.appendChild(renderCard(items[i]));
       }
+      document.getElementById('batchToolbar').style.display = 'flex';
+      document.getElementById('batchResult').style.display = 'none';
+      document.getElementById('batchResult').innerHTML = '';
+      updateBatchToolbar();
     }).catch(function (e) {
       showError('加载失败：' + e.message);
     });
@@ -413,6 +580,7 @@
   loadBatches();
   loadRules();
   initRuleForm();
+  initBatchToolbar();
 })();
 </script>
 {% endblock %}

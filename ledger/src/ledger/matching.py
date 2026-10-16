@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 
 _PUNCTUATION = "，。、；：！？,.!?:;·•|/-"
@@ -192,3 +193,111 @@ def detect_transfer(counterparty: str, account_names: dict[int, str]) -> int | N
         if _fuzzy_hit(norm_cp, norm_name):
             return account_id
     return None
+
+
+def amount_within(a_cents: int, b_cents: int, abs_tol_cents: int, pct_tol: float) -> bool:
+    """判断两金额是否"相当"：绝对差 <= abs_tol_cents，或相对差 <= pct_tol%。
+
+    相对差按 max(|a|, |b|) 计算；a、b 均为 0 时视为相当；
+    pct_tol <= 0 时只看绝对容差。用整数运算避免浮点误差。
+    """
+    diff = abs(a_cents - b_cents)
+    if diff <= abs_tol_cents:
+        return True
+    if pct_tol <= 0:
+        return False
+    base = max(abs(a_cents), abs(b_cents))
+    if base == 0:
+        return True
+    return diff * 100 <= base * pct_tol
+
+
+def within_date_window(d1: str, d2: str, n_days: int) -> bool:
+    """两日期（YYYY-MM-DD）相差绝对值 <= n_days 天。任一非法返回 False。"""
+    try:
+        date1 = datetime.date.fromisoformat(d1)
+        date2 = datetime.date.fromisoformat(d2)
+    except ValueError:
+        return False
+    return abs((date1 - date2).days) <= n_days
+
+
+def match_by_alias(
+    counterparty: str,
+    direction: str,
+    aliases: list[dict],
+) -> tuple[int, int] | None:
+    """商户别名匹配：归一化后精确相等，返回 (category_id, 85) 或 None。
+
+    aliases 元素形如 {"alias": <已归一化的别名>, "category_id": int, "direction": "in"/"out"}。
+    direction 不一致的别名跳过。
+    """
+    norm_cp = normalize(counterparty)
+    if not norm_cp:
+        return None
+    for alias in aliases:
+        stored = str(alias.get("alias") or "")
+        if stored != norm_cp:
+            continue
+        if (alias.get("direction") or "") != direction:
+            continue
+        return int(alias["category_id"]), 85
+    return None
+
+
+def detect_transfer_pair(
+    items: list[dict],
+    account_names: dict[int, str],
+    abs_tol_cents: int = 100,
+    pct_tol: float = 1,
+    date_window_days: int = 3,
+) -> list[tuple[int, int]]:
+    """在同批次条目中找转账配对：方向一出一入、金额容差内、日期窗口内、
+    且至少一方的 counterparty 能对上某个自有账户名（用 detect_transfer）。
+
+    items 元素形如 {"id": int, "occurred_on": str, "amount_cents": int,
+    "direction": "in"/"out", "counterparty": str}。
+    贪心配对：out 按 id 升序、in 按 id 升序，每个条目最多用一次。
+    返回 [(out_id, in_id), ...]（out 在前）。
+    """
+    outs = sorted(
+        (item for item in items if (item.get("direction") or "") == "out"),
+        key=lambda item: int(item["id"]),
+    )
+    ins = sorted(
+        (item for item in items if (item.get("direction") or "") == "in"),
+        key=lambda item: int(item["id"]),
+    )
+    used: set[int] = set()
+    pairs: list[tuple[int, int]] = []
+    for out in outs:
+        out_id = int(out["id"])
+        if out_id in used:
+            continue
+        for in_ in ins:
+            in_id = int(in_["id"])
+            if in_id in used:
+                continue
+            if not amount_within(
+                int(out["amount_cents"]),
+                int(in_["amount_cents"]),
+                abs_tol_cents,
+                pct_tol,
+            ):
+                continue
+            if not within_date_window(
+                str(out["occurred_on"]),
+                str(in_["occurred_on"]),
+                date_window_days,
+            ):
+                continue
+            if (
+                detect_transfer(str(out.get("counterparty") or ""), account_names) is None
+                and detect_transfer(str(in_.get("counterparty") or ""), account_names) is None
+            ):
+                continue
+            used.add(out_id)
+            used.add(in_id)
+            pairs.append((out_id, in_id))
+            break
+    return pairs

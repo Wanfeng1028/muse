@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
 
 
-CURRENT_VERSION = 3
+CURRENT_VERSION = 4
 
 V1_TABLES = ("accounts", "categories", "transactions", "budgets", "recurring")
 V2_TABLES = (
@@ -62,6 +62,14 @@ async def _migrate_v2_to_v3(conn) -> None:
         await conn.execute(text("ALTER TABLE transactions ADD COLUMN currency TEXT NOT NULL DEFAULT 'CNY'"))
 
 
+async def _migrate_v3_to_v4(conn) -> None:
+    """v3 -> v4：新建 merchant_aliases 表（商户别名学习）。"""
+    from ledger import models  # noqa: F401  局部导入，避免循环
+
+    table = models.Base.metadata.tables["merchant_aliases"]
+    await conn.execute(text(_compile_create_table(table)))
+
+
 async def run_migrations(engine: AsyncEngine) -> int:
     """执行迁移，返回迁移后的 user_version。"""
     from ledger import models  # noqa: F401  注册所有表定义
@@ -87,6 +95,9 @@ async def run_migrations(engine: AsyncEngine) -> int:
                         await conn.execute(text(ddl))
                 if version < 3:
                     await _migrate_v2_to_v3(conn)
+
+                if version < 4:
+                    await _migrate_v3_to_v4(conn)
 
             await conn.execute(text(f"PRAGMA user_version = {CURRENT_VERSION}"))
             return CURRENT_VERSION

@@ -1170,6 +1170,77 @@ textarea:disabled {
   margin-top: 8px;
 }
 
+/* ---------- 侦探队列：批量处理 ---------- */
+.batch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.batch-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.batch-select-all input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--blue);
+}
+.batch-toolbar select {
+  min-height: 44px;
+}
+.batch-toolbar .btn {
+  min-height: 44px;
+}
+.batch-toolbar .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.batch-hint {
+  font-size: 13px;
+  color: var(--amber);
+  flex-basis: 100%;
+}
+.batch-result {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.batch-result .batch-ok {
+  color: var(--green);
+  font-weight: 600;
+}
+.batch-result .batch-fail {
+  color: var(--red);
+}
+.batch-result ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+  color: var(--red);
+  font-size: 13px;
+}
+.dc-select-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.dc-select-row .dc-select {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
 .map-table {
   width: 100%;
   border-collapse: collapse;
@@ -1517,6 +1588,8 @@ textarea:disabled {
   /* 待认领卡片：收紧内边距，控件触控 ≥44px */
   .detective-card { padding: 12px; }
   .dc-line1 { gap: 8px; }
+  .batch-toolbar { gap: 8px; }
+  .batch-toolbar .btn { flex: 1 1 40%; }
   .dc-amt { font-size: 16px; }
   .dc-line3 .btn { min-height: 44px; flex: 1 1 auto; }
   .dc-line3 select { min-height: 44px; max-width: 100%; }

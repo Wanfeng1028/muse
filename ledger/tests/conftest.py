@@ -55,6 +55,7 @@ async def client(app):
             "statement_items",
             "statement_batches",
             "match_rules",
+            "merchant_aliases",
             "statement_templates",
             "currencies",
             "transactions",

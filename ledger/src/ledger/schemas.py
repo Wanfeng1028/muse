@@ -457,6 +457,34 @@ class ClaimTransferIn(BaseModel):
     to_account_id: int
 
 
+class BatchClaimIn(BaseModel):
+    """批量认领入参。"""
+
+    item_ids: list[int] = Field(min_length=1, max_length=200)
+    category_id: int
+    save_rule: bool = False
+
+
+class BatchSkipIn(BaseModel):
+    """批量忽略入参。"""
+
+    item_ids: list[int] = Field(min_length=1, max_length=200)
+
+
+class BatchItemError(BaseModel):
+    """批量处理单条失败明细。"""
+
+    item_id: int
+    error: str
+
+
+class BatchResultOut(BaseModel):
+    """批量处理结果：部分成功语义。"""
+
+    processed: int
+    failed: list[BatchItemError] = []
+
+
 # ---------------------------------------------------------------------------
 # 汇率
 # ---------------------------------------------------------------------------

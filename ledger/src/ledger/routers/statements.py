@@ -14,6 +14,7 @@ from ledger.models import (
     Account,
     Category,
     MatchRule,
+    MerchantAlias,
     StatementBatch,
     StatementItem,
     StatementTemplate,
@@ -21,6 +22,10 @@ from ledger.models import (
     utcnow,
 )
 from ledger.schemas import (
+    BatchClaimIn,
+    BatchItemError,
+    BatchResultOut,
+    BatchSkipIn,
     ClaimIn,
     ClaimTransferIn,
     MatchRuleCreate,
@@ -35,6 +40,11 @@ from ledger.schemas import (
 )
 
 router = APIRouter(tags=["statements"])
+
+# 转账配对参数：金额容差 ±100 分或 ±1%，日期窗口 ±3 天
+TRANSFER_PAIR_ABS_TOL_CENTS = 100
+TRANSFER_PAIR_PCT_TOL = 1
+TRANSFER_PAIR_DATE_WINDOW_DAYS = 3
 
 # 账单侦探
 
@@ -229,6 +239,24 @@ async def _load_rules(session: AsyncSession) -> list[dict]:
             }
         )
     return rules
+
+
+async def _load_aliases(session: AsyncSession) -> list[dict]:
+    """加载全部商户别名（排除已删分类），元素 {"alias", "category_id", "direction"}。"""
+    rows = (await session.execute(select(MerchantAlias))).scalars().all()
+    valid_cat_ids = set((await session.execute(select(Category.id))).scalars().all())
+    aliases: list[dict] = []
+    for a in rows:
+        if a.category_id not in valid_cat_ids:
+            continue
+        aliases.append(
+            {
+                "alias": a.alias,
+                "category_id": a.category_id,
+                "direction": a.direction,
+            }
+        )
+    return aliases
 
 
 async def _load_account_names(session: AsyncSession) -> dict[int, str]:
@@ -631,6 +659,7 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
         raise HTTPException(status_code=400, detail="批次状态不允许确认")
 
     rules = await _load_rules(session)
+    aliases = await _load_aliases(session)
     account_names = await _load_account_names(session)
     category_kinds = await _load_category_kinds(session)
     history = await _load_history(session)
@@ -675,6 +704,28 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
     auto_count = 0
     pending_count = 0
 
+    # 转账配对：同批次一出一入、金额容差内、日期窗口内、对方名为自有账户
+    pair_ids: set[int] = set()
+    pair_input = [
+        {
+            "id": it.id,
+            "occurred_on": it.occurred_on,
+            "amount_cents": it.amount_cents,
+            "direction": it.direction,
+            "counterparty": it.counterparty or "",
+        }
+        for it in items
+    ]
+    for out_id, in_id in matching.detect_transfer_pair(
+        pair_input,
+        account_names,
+        TRANSFER_PAIR_ABS_TOL_CENTS,
+        TRANSFER_PAIR_PCT_TOL,
+        TRANSFER_PAIR_DATE_WINDOW_DAYS,
+    ):
+        pair_ids.add(out_id)
+        pair_ids.add(in_id)
+
     for item in items:
         # 重复指纹
         if item.fingerprint in all_fps or item.fingerprint in batch_fps:
@@ -692,7 +743,11 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
             item.suggested_action = "transfer"
             item.suggested_to_account_id = transfer_to
             item.status = "pending"
-            item.match_source = "none"
+            if item.id in pair_ids:
+                item.match_source = "transfer-pair"
+                item.confidence = 90
+            else:
+                item.match_source = "none"
             pending_count += 1
             continue
 
@@ -709,6 +764,17 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
                 matched_category_id = cid
                 matched_source = "rule"
                 matched_confidence = 95
+
+        # 别名匹配：用户纠正一次即记住，优先级低于关键词规则
+        if matched_category_id is None:
+            alias_hit = matching.match_by_alias(counterparty, direction, aliases)
+            if alias_hit is not None:
+                cid = alias_hit[0]
+                kind = category_kinds.get(cid)
+                if kind is not None and _direction_matches_kind(direction, kind):
+                    matched_category_id = cid
+                    matched_source = "alias"
+                    matched_confidence = 85
 
         # 历史匹配
         if matched_category_id is None:
@@ -776,6 +842,89 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
 # ---------------------- 条目操作 ----------------------
 
 
+async def _apply_claim(
+    session: AsyncSession,
+    item: StatementItem,
+    batch: StatementBatch,
+    category_id: int,
+    save_rule: bool,
+    strict_rule_dup: bool,
+) -> None:
+    """认领核心：建交易、改条目状态、别名学习、可选存关键词规则。
+
+    调用方负责 commit。strict_rule_dup=True 时规则重复抛 409（单条认领保持旧行为），
+    False 时静默跳过建规则（批量认领部分成功语义）。
+    """
+    tx_type = "income" if item.direction == "in" else "expense"
+    now = utcnow()
+    tx = Transaction(
+        type=tx_type,
+        account_id=batch.account_id,
+        to_account_id=None,
+        category_id=category_id,
+        amount_cents=item.amount_cents,
+        occurred_on=item.occurred_on,
+        note=_build_note(item.counterparty or "", item.summary or ""),
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(tx)
+    await session.flush()
+
+    item.status = "claimed"
+    item.claimed_category_id = category_id
+    item.transaction_id = tx.id
+
+    if batch.pending_count > 0:
+        batch.pending_count -= 1
+
+    # 别名学习：用户手工认领一次即记住（归一化对方名 → 分类）；纠正了就更新映射
+    norm_alias = matching.normalize(item.counterparty or "")
+    if norm_alias:
+        existing_alias = (
+            await session.execute(
+                select(MerchantAlias).where(
+                    MerchantAlias.alias == norm_alias,
+                    MerchantAlias.direction == item.direction,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing_alias is None:
+            session.add(
+                MerchantAlias(
+                    alias=norm_alias,
+                    category_id=category_id,
+                    direction=item.direction,
+                )
+            )
+        elif existing_alias.category_id != category_id:
+            existing_alias.category_id = category_id
+
+    if save_rule:
+        keyword = (item.counterparty or "").strip() or (item.summary or "").strip()
+        if keyword:
+            dup = (
+                await session.execute(
+                    select(MatchRule).where(
+                        MatchRule.keyword == keyword,
+                        MatchRule.direction == item.direction,
+                    )
+                )
+            ).scalar_one_or_none()
+            if dup is not None:
+                if strict_rule_dup:
+                    raise HTTPException(status_code=409, detail="匹配规则已存在")
+            else:
+                session.add(
+                    MatchRule(
+                        keyword=keyword,
+                        category_id=category_id,
+                        direction=item.direction,
+                        priority=0,
+                    )
+                )
+
+
 @router.post("/api/statements/items/{item_id}/claim", response_model=StatementItemOut)
 async def claim_item(
     item_id: int,
@@ -799,50 +948,7 @@ async def claim_item(
     if batch is None:
         raise HTTPException(status_code=404, detail="批次不存在")
 
-    tx_type = "income" if item.direction == "in" else "expense"
-    now = utcnow()
-    tx = Transaction(
-        type=tx_type,
-        account_id=batch.account_id,
-        to_account_id=None,
-        category_id=payload.category_id,
-        amount_cents=item.amount_cents,
-        occurred_on=item.occurred_on,
-        note=_build_note(item.counterparty or "", item.summary or ""),
-        created_at=now,
-        updated_at=now,
-    )
-    session.add(tx)
-    await session.flush()
-
-    item.status = "claimed"
-    item.claimed_category_id = payload.category_id
-    item.transaction_id = tx.id
-
-    if batch.pending_count > 0:
-        batch.pending_count -= 1
-
-    if payload.save_rule:
-        keyword = (item.counterparty or "").strip() or (item.summary or "").strip()
-        if keyword:
-            dup = (
-                await session.execute(
-                    select(MatchRule).where(
-                        MatchRule.keyword == keyword,
-                        MatchRule.direction == item.direction,
-                    )
-                )
-            ).scalar_one_or_none()
-            if dup is not None:
-                raise HTTPException(status_code=409, detail="匹配规则已存在")
-            session.add(
-                MatchRule(
-                    keyword=keyword,
-                    category_id=payload.category_id,
-                    direction=item.direction,
-                    priority=0,
-                )
-            )
+    await _apply_claim(session, item, batch, payload.category_id, payload.save_rule, True)
 
     await session.commit()
     await session.refresh(item)
@@ -991,3 +1097,71 @@ async def delete_match_rule(rule_id: int, session: AsyncSession = Depends(get_se
     await session.delete(rule)
     await session.commit()
     return {"ok": True}
+
+
+# ---------------------- 批量处理 ----------------------
+
+
+@router.post("/api/statements/items/batch-claim", response_model=BatchResultOut)
+async def batch_claim_items(
+    payload: BatchClaimIn,
+    session: AsyncSession = Depends(get_session),
+) -> BatchResultOut:
+    """批量认领：逐条处理，部分成功。返回 {processed, failed:[{item_id, error}]}。"""
+    category = await session.get(Category, payload.category_id)
+    if category is None:
+        raise HTTPException(status_code=404, detail="分类不存在")
+
+    processed = 0
+    failed: list[BatchItemError] = []
+    for item_id in payload.item_ids:
+        item = await session.get(StatementItem, item_id)
+        if item is None:
+            failed.append(BatchItemError(item_id=item_id, error="条目不存在"))
+            continue
+        if item.status != "pending":
+            failed.append(BatchItemError(item_id=item_id, error="条目状态不允许认领"))
+            continue
+        if not _direction_matches_kind(item.direction, category.kind):
+            failed.append(BatchItemError(item_id=item_id, error="分类类型与收支方向不匹配"))
+            continue
+        batch = await session.get(StatementBatch, item.batch_id)
+        if batch is None:
+            failed.append(BatchItemError(item_id=item_id, error="批次不存在"))
+            continue
+        try:
+            await _apply_claim(session, item, batch, payload.category_id, payload.save_rule, False)
+            processed += 1
+        except HTTPException as exc:
+            await session.rollback()
+            failed.append(BatchItemError(item_id=item_id, error=str(exc.detail)))
+        except Exception as exc:  # noqa: BLE001
+            await session.rollback()
+            failed.append(BatchItemError(item_id=item_id, error=f"处理失败：{exc}"))
+    await session.commit()
+    return BatchResultOut(processed=processed, failed=failed)
+
+
+@router.post("/api/statements/items/batch-skip", response_model=BatchResultOut)
+async def batch_skip_items(
+    payload: BatchSkipIn,
+    session: AsyncSession = Depends(get_session),
+) -> BatchResultOut:
+    """批量忽略：逐条处理，部分成功。"""
+    processed = 0
+    failed: list[BatchItemError] = []
+    for item_id in payload.item_ids:
+        item = await session.get(StatementItem, item_id)
+        if item is None:
+            failed.append(BatchItemError(item_id=item_id, error="条目不存在"))
+            continue
+        if item.status != "pending":
+            failed.append(BatchItemError(item_id=item_id, error="条目状态不允许跳过"))
+            continue
+        item.status = "skipped"
+        batch = await session.get(StatementBatch, item.batch_id)
+        if batch is not None and batch.pending_count > 0:
+            batch.pending_count -= 1
+        processed += 1
+    await session.commit()
+    return BatchResultOut(processed=processed, failed=failed)

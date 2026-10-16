@@ -138,6 +138,19 @@ class MatchRule(Base):
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
 
 
+class MerchantAlias(Base):
+    """商户别名表：用户一次手工纠正后记住的映射（归一化别名 → 分类），下次同类自动命中。"""
+
+    __tablename__ = "merchant_aliases"
+    __table_args__ = (UniqueConstraint("alias", "direction", name="uq_merchant_aliases_alias_direction"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    alias: Mapped[str] = mapped_column(String, nullable=False)
+    category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
+    direction: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+
+
 class StatementBatch(Base):
     """导入批次表：一次账单导入的汇总。"""
 

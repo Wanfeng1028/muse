@@ -56,6 +56,13 @@ make dev
 - `LEDGER_BASE_CURRENCY` 环境变量设置本位币（默认 CNY，非法值启动失败）。
 - 限制：跨币种转账不做实时换算，按转出币种金额记录。
 
+### v2.4 侦探规则引擎 2.0
+
+- 模糊匹配：金额容差（±x 元/±x%）、日期窗口（±N 天），银行两边金额差一点手续费也能认出来。
+- 商户别名学习：手工认领一次就记住（"淘宝商城"→购物），下次同类自动入账；纠正了就更新。
+- 转账配对：提现/转入两条金额接近、日期接近的记录自动配对，侦探页提示"转账配对成功"。
+- 批量处理：侦探队列卡片多选，一键批量认领 / 批量忽略，部分失败逐条告诉你原因。
+
 ### v2.3 移动端适配
 
 - 手机浏览器可用：`@media (max-width: 768px)` 断点，顶栏 10 个导航横向滑动，按钮与表单触控目标 ≥44px。
@@ -71,9 +78,9 @@ make dev
 ## 账单侦探工作流
 
 1. 上传：在 `/statement` 传账单文件（CSV），系统自动识别模板、编码、表头前导行。
-2. 自动匹配：解析后逐条跑三路匹配，能对上的直接入账。
-3. 侦探队列：对不上的进 `/detective`，卡片流展示。
-4. 认领即学习：点一下认领，勾上"记住为规则"，下次同类自动入账。
+2. 自动匹配：解析后逐条跑匹配（关键词规则 > 别名 > 历史习惯，另有金额容差与日期窗口），能对上的直接入账。
+3. 侦探队列：对不上的进 `/detective`，卡片流展示；支持多选批量认领 / 批量忽略。
+4. 认领即学习：点一下认领就记住（别名学习），勾上"记住为规则"则存为关键词规则，下次同类自动入账。
 
 ## API
 
@@ -91,6 +98,8 @@ make dev
 | POST | `/api/statements/items/{id}/claim` | 认领条目 |
 | POST | `/api/statements/items/{id}/claim-transfer` | 认领为转账 |
 | POST | `/api/statements/items/{id}/skip` | 跳过条目 |
+| POST | `/api/statements/items/batch-claim` | 批量认领（部分成功） |
+| POST | `/api/statements/items/batch-skip` | 批量忽略（部分成功） |
 | GET/POST/DELETE | `/api/match-rules` | 匹配规则管理 |
 | GET | `/api/health` | 健康检查（含版本号） |
 | GET | `/api/ready` | 就绪探针（DB 连通性） |
@@ -108,7 +117,7 @@ make dev
 
 ## 开发
 
-make test   # pytest，119 例
+make test   # pytest，173 例
 
 lint：
 
@@ -123,10 +132,10 @@ src/ledger/
   migrations.py        v2.1 PRAGMA user_version 版本化迁移
   backup.py            v2.1 备份/恢复（integrity_check + 安全快照）
   logging.py           v2.1 结构化日志 + request_id 中间件
-  models.py            9 张表
+  models.py            10 张表（含 merchant_aliases）
   schemas.py
   services.py
-  matching.py          v2.0 三路匹配纯函数引擎
+  matching.py          v2.0 三路匹配纯函数引擎；v2.4 加金额容差/日期窗口/别名匹配/转账配对
   statement_parser.py  v2.0 账单解析：GBK / 表头探测 / 列映射
   routers/
     accounts.py

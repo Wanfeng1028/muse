@@ -3,12 +3,16 @@
 import hashlib
 
 from ledger.matching import (  # type: ignore
+    amount_within,
     detect_transfer,
+    detect_transfer_pair,
     fingerprint,
+    match_by_alias,
     match_by_history,
     match_by_rules,
     normalize,
     suggest_candidates,
+    within_date_window,
 )
 
 
@@ -206,3 +210,185 @@ class TestDetectTransfer:
         """无命中返回 None。"""
         accounts = {1: "招商银行储蓄卡"}
         assert detect_transfer("星巴克", accounts) is None
+
+
+class TestAmountWithin:
+    def test_abs_tol_boundary(self):
+        """绝对容差边界：差值恰等于容差为 True，超 1 分为 False。"""
+        assert amount_within(10000, 10100, 100, 0) is True
+        assert amount_within(10000, 10101, 100, 0) is False
+
+    def test_pct_tol_boundary(self):
+        """百分比容差边界：相对差恰达 1% 为 True，明显超出为 False（基数按 max 取）。"""
+        assert amount_within(10000, 10100, 0, 1) is True
+        assert amount_within(10000, 10200, 0, 1) is False
+
+    def test_pct_tol_zero_base(self):
+        """基准为 0 时视为相当；绝对容差可兜住小额差异。"""
+        assert amount_within(0, 0, 0, 1) is True
+        assert amount_within(0, 50, 100, 1) is True
+
+    def test_either_condition(self):
+        """绝对容差不够、百分比容差够时仍为 True。"""
+        assert amount_within(100, 200, 50, 200) is True
+
+
+class TestWithinDateWindow:
+    def test_boundary(self):
+        """日期窗口边界：恰好在窗口内为 True，超出为 False。"""
+        assert within_date_window("2026-10-01", "2026-10-04", 3) is True
+        assert within_date_window("2026-10-01", "2026-10-05", 3) is False
+
+    def test_same_day(self):
+        """同一天且窗口为 0 时为 True。"""
+        assert within_date_window("2026-10-01", "2026-10-01", 0) is True
+
+    def test_invalid_date(self):
+        """任一非法日期返回 False。"""
+        assert within_date_window("2026-13-01", "2026-10-01", 3) is False
+        assert within_date_window("not-a-date", "2026-10-01", 3) is False
+
+
+class TestMatchByAlias:
+    def test_exact_normalized_hit(self):
+        """别名归一化后精确相等即命中，返回 (category_id, 85)。"""
+        aliases = [{"alias": normalize("淘宝商城"), "category_id": 3, "direction": "out"}]
+        assert match_by_alias("淘宝商城 ", "out", aliases) == (3, 85)
+
+    def test_direction_mismatch(self):
+        """方向不一致的别名跳过。"""
+        aliases = [{"alias": normalize("淘宝商城"), "category_id": 3, "direction": "out"}]
+        assert match_by_alias("淘宝商城", "in", aliases) is None
+
+    def test_no_match(self):
+        """无命中别名返回 None。"""
+        aliases = [{"alias": normalize("淘宝商城"), "category_id": 3, "direction": "out"}]
+        assert match_by_alias("京东", "out", aliases) is None
+
+    def test_empty_counterparty(self):
+        """对方为空返回 None。"""
+        aliases = [{"alias": normalize("淘宝商城"), "category_id": 3, "direction": "out"}]
+        assert match_by_alias("", "out", aliases) is None
+
+
+class TestDetectTransferPair:
+    def test_pair_found(self):
+        """金额与日期均在容差内且能对上账户名时配对成功。"""
+        accounts = {1: "招商银行", 2: "余额宝"}
+        items = [
+            {
+                "id": 1,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "余额宝",
+            },
+            {
+                "id": 2,
+                "occurred_on": "2026-10-12",
+                "amount_cents": 499950,
+                "direction": "in",
+                "counterparty": "招商银行",
+            },
+        ]
+        assert detect_transfer_pair(items, accounts) == [(1, 2)]
+
+    def test_amount_beyond_tol(self):
+        """金额超出绝对与百分比容差时不配对。"""
+        accounts = {1: "招商银行", 2: "余额宝"}
+        items = [
+            {
+                "id": 1,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "余额宝",
+            },
+            {
+                "id": 2,
+                "occurred_on": "2026-10-12",
+                "amount_cents": 490000,
+                "direction": "in",
+                "counterparty": "招商银行",
+            },
+        ]
+        assert detect_transfer_pair(items, accounts) == []
+
+    def test_date_beyond_window(self):
+        """日期超出窗口时不配对。"""
+        accounts = {1: "招商银行", 2: "余额宝"}
+        items = [
+            {
+                "id": 1,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "余额宝",
+            },
+            {
+                "id": 2,
+                "occurred_on": "2026-10-20",
+                "amount_cents": 499950,
+                "direction": "in",
+                "counterparty": "招商银行",
+            },
+        ]
+        assert detect_transfer_pair(items, accounts) == []
+
+    def test_no_account_name_match(self):
+        """双方 counterparty 均对不上自有账户名时不配对。"""
+        accounts = {1: "招商银行", 2: "余额宝"}
+        items = [
+            {
+                "id": 1,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "星巴克",
+            },
+            {
+                "id": 2,
+                "occurred_on": "2026-10-12",
+                "amount_cents": 499950,
+                "direction": "in",
+                "counterparty": "肯德基",
+            },
+        ]
+        assert detect_transfer_pair(items, accounts) == []
+
+    def test_each_item_used_once(self):
+        """每个条目最多用一次，多条 out 只与同一个 in 配出一对。"""
+        accounts = {1: "招商银行", 2: "余额宝"}
+        items = [
+            {
+                "id": 1,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "余额宝",
+            },
+            {
+                "id": 2,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "余额宝",
+            },
+            {
+                "id": 3,
+                "occurred_on": "2026-10-10",
+                "amount_cents": 500000,
+                "direction": "out",
+                "counterparty": "余额宝",
+            },
+            {
+                "id": 4,
+                "occurred_on": "2026-10-11",
+                "amount_cents": 500000,
+                "direction": "in",
+                "counterparty": "招商银行",
+            },
+        ]
+        pairs = detect_transfer_pair(items, accounts)
+        assert len(pairs) == 1
+        assert pairs == [(1, 4)]
