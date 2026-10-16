@@ -209,6 +209,7 @@
 
 **状态**：v1.2.0「生产级运维补强」（2026-10-16 完成，cargo test 28 例全过、clippy 零警告；发版对照报告 `mini-os/docs/PRODUCTION_CHECKLIST_REPORT_v1.2.0.md`，结论可发版）。
 **v1.3.0「多用户与权限」（2026-10-16）**：用户体系（注册/登录/注销，argon2id + opaque session token 走 HttpOnly Cookie）+ 鉴权中间件 + VFS 按用户隔离 + 迁移 003（legacy 占位用户承接老数据）+ 访客只读文件分享（`POST /api/shares` → `/share.html?token=`）+ 前端（login.html 三态页、桌面门卫、任务栏用户区与注销、分享页）；`cargo test` **65/65** 全过（lib 15/api_test 16/auth_test 8/failure_injection 11/isolation_test 5/metrics_test 4/share_test 6）、`cargo clippy --all-targets -- -D warnings` 零警告、`cargo fmt --check` 通过；真实服务冒烟（注册→登录→A 文件 B 不可见→分享只读→migrate-legacy→登出→未登录 401）全过；登录/桌面/分享 3 张截图亲眼验收；验收附带修 v1.x 遗留 bug（`<div id="taskbar">` 用 id 而 CSS 用 `.taskbar` 类选择器，任务栏样式自 v1 起从未生效）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`。诚实未做：访客角色、目录分享、细粒度 RBAC、密码强度策略（仅最小长度 8）、2FA、JWT、session 滑动续期、登录限流。
+**v1.7「RBAC 细粒度权限」（2026-10-17）**：roles（admin/editor/viewer）+ 用户管理 API + 前端用户与权限页 + docs/RBAC.md；注册 201 语义统一后 10 个测试文件断言全量修复；`cargo test` **143/143** 全过。
 
 **里程碑记录**：
 
@@ -219,10 +220,11 @@
 - **v1.4.0「安全上传」（2026-10-16）**：上传安全加固——`sniff_mime` magic-bytes 嗅探（PE/MZ、ELF、Mach-O/fat、MSI/OLE、shebang 脚本 → 415「可执行文件不允许上传」不入库），mime 优先级改为嗅探 > 客户端头 > 扩展名猜测，零新增依赖；前端上传队列（失败继续）+ 失败汇总条 + 上传进度；`cargo test` **73/73**（新增 `upload_security_test.rs` 8 例）、clippy 零警告、fmt 通过；真实冒烟（注册→上传→下载字节一致→MZ 415→跨用户 404→未登录 401）；2 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
 - **v1.5「登录限流」（2026-10-16）**：`src/ratelimit.rs`（IP + 账号双维度令牌桶，超限 429 + Retry-After + JSON 错误体）；`MINIOS_LOGIN_RPS`/`BURST` 环境变量配置，非法值启动 exit(2)；探针豁免；前端 429 专用分支（实时倒计时 + 按钮 disabled，大白话文案）；`cargo test` **95/95**（新增 8 例）、clippy 零警告；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.5.md`；2 张截图视觉验收
 - **v1.6「目录分享 + Prometheus 指标」（2026-10-16）**：目录分享——DB 迁移 004（`shares.share_type` file|dir，CHECK 约束，老数据默认 file）；`POST /api/shares` 支持 `type:"dir"`（目录不存在 404、是文件 400、跨用户 404）；token 递归只读，`GET /api/s/:token/download?path=` 下载树内文件（`..`/空段/控制字符 403）；`GET /api/share/list` 目录浏览 API（文件夹置顶）；share.html 目录浏览（面包屑/下载/空态，深色桌面美学）；Prometheus `/metrics`（零新依赖：`http_request_duration_seconds` 直方图 11 档 + `vfs_files_total`/`vfs_bytes_total`/`shares_total{type}` gauge，路由 label 归一化）；`cargo test` **117/117**（新增 share_dir 12 + metrics_v16 5）、clippy 零警告、fmt 通过；真实冒烟（分享→浏览→下载→穿越 403）全通；4 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。已知限制：目录分享 token 无过期/无撤销接口（删源目录是唯一撤销方式）；gauge 为抓取时实时查 DB（运维手册已注明建议抓取间隔 ≥15s）
+- **v1.7「RBAC 细粒度权限」（2026-10-17）**：roles 表（admin/editor/viewer 三档）+ 用户管理 API（列表/设角色/撤销会话）+ 前端「用户与权限」页（角色徽标/下拉改角色/只读用户看权限说明矩阵）；注册接口统一 201 CREATED 语义，10 个测试文件过时 200 断言全量修复 + rbac 测试用户名合规化（3~32 字符）；`cargo test` **143/143** 全过；docs/RBAC.md；2 张截图亲眼验收。已知问题：viewer 页桌面图标与权限矩阵重叠、admin 页为测试脏用户名，两处排期干净种子数据重拍
 
 **后续计划**：
 
-- RBAC、分享读接口限流评估、告警规则示例（v1.6 未通过项排期 v1.7）
+- 分享读接口限流评估、告警规则示例（v1.6 未通过项排期）
 - 应用商店（插件化）
 - docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
 
@@ -333,11 +335,13 @@
 - 工程化 v5「生产级补齐」（2026-10-15）：logger/metrics/concurrency_guard 三新模块 + `wrapRequest` 统一请求包装（request_id 生成/结构化日志/指标记录/X-Request-Id）+ `GET /api/metrics` + `/api/locate` 并发守卫（ScopedSlot RAII）+ `Database::beginBatch/commitBatch/abortBatch`（嵌套防护+异常回滚）+ `Database::backup/isValidDocseekDb` + `backup`/`restore` CLI（含 restore 原子替换三步）+ `StderrSilencer`（jieba 噪音重定向）+ `docker-compose.yml` + Dockerfile 补拷词典（修运行镜像 serve 起不来）+ `.github/dependabot.yml`（仓库级）+ `docs/OPERATIONS.md` + 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`；测试 62/62 全过（含新增 test_ops.cpp 14 例：日志/指标/备份恢复/失败注入/批量事务/并发守卫）；真实演练：backup→删库→restore→检索、kill -9 重启、词典缺失 fail-fast；索引 1000 文件 6.8 秒（147 文件/秒，4 倍提升）。本轮抓真 bug 两处：dpsk 首版 logger 输出非法 JSON（key 无引号+首字段多逗号，strace 定位打回重修）；SvcFixture.Health 硬编码 0.4.0 改版本无关断言
 - 工程化 v6「HTML 文本提取」（2026-10-16）：HtmlExtractor（去 script/style/noscript、提 title/meta description/正文、块级换行、实体解码、charset 探测<meta>/BOM/默认 UTF-8、畸形容错，纯 C++17 手写零第三方依赖）+ Indexer 集成（增量索引/统计/prune 全链路）+ 搜索/locate（标题加权天然生效）+ serve/Web 冒烟验证 + Web 文件类型徽标；22 个 dpsk 批次并行生成（20 并行撞 429 后降串行+退避收回）；README（支持格式章节）/CHANGELOG v0.6.0/发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`/设计注记 `docs/HTML_EXTRACTION.md` 齐备
 - 工程化 v7「搜索质量工程」（2026-10-16）：混合检索权重可配置贯通 CLI/HTTP/环境变量三层 + 评测集 v07（42 篇语料 + 44 评测对 + run_eval.py）Top-1 36/44 (81.8%) + README 搜索质量小节 + CHANGELOG v0.7.0 + 发版对照报告；评测发现已知问题 T1（分词器游标逻辑在 CutForSearch 重叠词下跳过中间 token 致索引静默丢词）/T2（索引查询切分上下文不一致致子串漏召回）/qa 4/12（噪声关键词 OR 回退被干扰文档反超），v0.8 排期
+- **v0.10.0「多用户支持」（2026-10-17）**：`kDefaultUser="local"` + `checkUserValid`（非法抛 runtime_error）+ Document.user 列；upsert/removeByPath/list/findByPath/searchFts/docCount/totalBytes 全加 user 参数（默认 local，旧调用兼容）；新增 `removeByUser`；schema v3→v4 自动迁移（老数据归属 local）；6 例多用户测试（隔离/同路径多版本/检索隔离/removeByUser/校验/默认用户）；修真 bug：DocxExtractor 页眉页脚 `compare(0,12,"word/header")` 恒假（11 字符前缀），ExtractChineseTableHeader 通过；MigrateOldSchema 过时期望 3→4 已更新；`--version` 0.10.0；ctest **148/148** 全过
 
 **后续计划**：
 
-- PDF / Office 文档的文本提取
-- 多用户支持
+- 搜索质量 T1/T2（v0.7.0 评测发现：分词器游标跳过中间 token、索引/查询切分上下文不一致）
+
+**里程碑记录**：
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
@@ -416,10 +420,11 @@
 - v1.5 purge 定时清理 + 公开 API 文档页（2026-10-16，commit 58d3fac）
 - v1.6.0 备份健康自检（2026-10-16）：见"状态"节；`go test ./... -race` 95/95；dashboard 备份健康面板真实截图亲眼验收
 - **v1.7.0「burn 逐条彻底删除 + 备份恢复自动化演练」（2026-10-16）**：`POST /api/links` 与 `PATCH /api/links/{id}` 新增 `purge` 字段（仅 burn 链有效，非 burn 链传 400）；DB 迁移 v4→v5（`links.purge_after_burn`）；销毁时逐条 purge 或全局 `LINKSHORT_BURN_PURGE_AFTER_DESTROY` 任一成立即彻底删除（含 visits 级联）+ 审计日志；`scripts/backup-drill.sh` 一键自动化演练（建链→访问→备份→删库→恢复→一致性校验，真实演练 PASS）+ `make drill`；`go test ./... -race` **104/104**（新增 9）、go vet/gofmt 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.7.md`
+- **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包——china.go（内置中国省域 IP 段抽样表，CIDR 最长前缀匹配，精度边界诚实声明）/ chain.go（解析责任链：CDN 头 → MMDB → 内置表 → unknown，ReloadFromEnv）/ header.go（CDN 厂商头解析）；handler 新增 `clientIP`（X-Forwarded-For 首段 → X-Real-IP → RemoteAddr 去端口，信任假设有注释）；finishRedirect 改用 clientIP 做 ipHash + `geo.LookupRequest`；`st.RecordVisitGeo` 落库国家/省份；新增 `GET /api/stats/geo`（国家/省份 TopN + unknown 占比）；`go test ./... -race` **129/129** 全过、go vet/gofmt 全洁；CHANGELOG v1.8.0。已知缺口：Web UI 暂无地域面板（API 就绪，排期下轮）
 
 **后续计划**：
 
-- 访问地域统计
+- 地域分布 Web UI 面板（`GET /api/stats/geo` 已就绪，排期下轮；视觉验收要求真实数据截图）
 
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
