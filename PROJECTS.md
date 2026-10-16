@@ -83,12 +83,13 @@
 - v0.3.0 附件与导出（2026-10-15）：`internal/store/attachment.go`（attachments 表 + CRUD + 删笔记清附件目录）与 `internal/api/attachment.go`（上传 413/415/400/404、MIME 嗅探、文件名消毒）+ `internal/api/export.go`（JSON / Markdown zip，分页拉取、ZipSlip 防护、引用改写）；markdown 渲染 `attachment:{id}`（图片/下载链接，顺序先于 reLink）；前端附件区 + 侧边栏导出区（沿用现有视觉体系）；68 测试全过；README/CHANGELOG/对照报告齐备
 - v0.4.0 主动复习外部推送（2026-10-16）：internal/notify（Sender 接口 + SMTP(net/smtp)/Webhook 双实现 + BuildDigestMessage 纯函数，HTML 转义防 XSS）+ internal/push（NextPushTime 纯函数 + 30s tick Scheduler + RunPush 幂等）+ store(push_settings/push_log 表，ON CONFLICT 更新）+ api（GET/PUT /api/push/settings 脱敏+白名单、POST /api/push/test 假数据真发、GET /api/push/history）+ config（12 个 SB_PUSH_*/SB_SMTP_*/SB_WEBHOOK_* 变量，启用时 fail-fast）+ main.go 调度器启停 + 推送设置页 Web UI（沿用现有视觉体系）；104 测试全过（新增 36：notify 8 + 调度单测 + api 集成含自研 fake SMTP 与 webhook 验签）；真实冒烟：webhook 真实接收、调度器定时真实触发、push_log sent；1 张真实截图亲眼验收；README/CHANGELOG/对照报告齐备。本轮教训：dpsk 首版 api/push.go 留糊弄占位（打回重做一轮）；两批 dpsk 间 webhook 契约错位（X-Event 头/X-Signature 前缀/due_count 空载荷，编排统一）；Go 1.22+ ServeMux 无方法前缀路由与 `GET /` 冲突（改方法前缀注册）；config 推送校验未启用时也 fail-fast（改仅启用时校验）。
 - v0.5.0 反向链接面板（2026-10-16）：见"状态"节。
+- **v0.6.0「多用户复习隔离」（2026-10-16）**：一台机器、多个人各记各的复习进度——`reviews` 表加 `user_id` 列，主键改为 `(note_id, user_id)` 复合；新库直接建新 schema，老库打开自动迁移（加列 + 重建主键，幂等，历史数据归属 `local`）；`internal/store/user.go`（`NormalizeUser`/`DefaultUser`）；复习查询（`GetReviewState`/`RecordReview`/`ListDueReviews`/`ReviewStats`/`DigestNotes`）全部按用户过滤；`CreateNoteFor(n, user)` 建笔记时复习行归属当前用户；`internal/api/user.go`（`CurrentUser(r)` 从 `X-User` 头 / `?user=` 参数解析，默认 `local`）；复习四组 API 与 `POST /api/notes` 按用户隔离；前端侧边栏顶部"使用者"切换器（身份记 localStorage `sb-user`，每请求自动带 `X-User` 头；徽标/队列/统计/每日回顾按当前使用者刷新）；定时推送暂按默认 `local` 用户聚合（后续计划支持按用户推送）；store 新增隔离测试 8 例 + api 真实 HTTP 隔离测试 5 例；`go test ./...` 全量 **127/127**（v0.5.0 的 114 + 新增 13），`go vet`/`gofmt` 全洁
+- **v0.7「PWA」（2026-10-16）**：能装到手机桌面当 App 用——Web App Manifest（192/512/maskable 图标、主题色 #4f7cff、独立 SVG favicon，非字母 logo）+ Service Worker（应用壳预缓存、导航离线回退、GET API stale-while-revalidate）+ IndexedDB 离线写队列（断网保存/删除/评分入队，联网顺序回放）+ 安装提示 UI（Chromium 自动横幅 + iOS 手动"添加到主屏幕"说明，`docs/PWA_INSTALL.md`）；`internal/api/pwa_test.go`（manifest 字段与图标存在性、sw.js 响应头、缓存清单一致性回归）；`go test ./...` 全量 **130/130**，`go vet`/`gofmt` 全洁；真实服务冒烟（manifest/sw.js/index 均为 200）；安装横幅截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.md`；诚实边界：推送通知暂不支持、iOS 无后台同步（靠 online 事件回放）、离线新建笔记回放会产生新 id、局域网 HTTP 下 PWA 不可用（需 HTTPS 或 localhost）
 
 **后续计划**：
 
-- 多用户复习隔离
-- 反向链接面板
-- PWA
+- 按用户推送（v0.6.0 暂按 local 聚合）
+- 推送通知（PWA）
 
 ## drama-factory「AI 短剧工坊」
 
