@@ -1,4 +1,6 @@
 #include "docseek/service.h"
+#include "docseek/version.h"
+
 
 #include <atomic>
 #include <chrono>
@@ -249,7 +251,8 @@ public:
         server_->onGet("/api/health", [this](const HttpRequest& req) {
             return wrapRequest("health", req, false, [&]() -> HttpResponse {
                 std::lock_guard<std::mutex> lk(dbMutex_);
-                return HttpResponse::json("{\"ok\":true,\"version\":\"0.9.0\"}");
+                return HttpResponse::json(std::string("{\"ok\":true,\"version\":\"") + docseek::kDocseekVersion + "\"}");
+
 
             });
         });
@@ -561,7 +564,7 @@ void Service::run() {
     impl_->actualPort_ = impl_->server_->port();
     log(Level::Info, "service", "服务已启动",
         {{"port", std::to_string(impl_->actualPort_)},
-         {"version", "0.9.0"}});
+         {"version", docseek::kDocseekVersion}});
 
 
     {

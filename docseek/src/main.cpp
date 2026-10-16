@@ -5,6 +5,8 @@
 #include "docseek/query_parser.h"
 #include "docseek/searcher.h"
 #include "docseek/service.h"
+#include "docseek/version.h"
+
 
 #include <csignal>
 #include <cstdlib>
@@ -27,7 +29,8 @@
 
 namespace {
 
-constexpr const char* kVersion = "0.11.0";
+// 唯一来源：docseek::kDocseekVersion（include/docseek/version.h），发版只改那一处。
+constexpr const char* kVersion = docseek::kDocseekVersion;
 
 
 struct GlobalOpts {

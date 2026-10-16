@@ -1,4 +1,7 @@
 #include "docseek/searcher.h"
+
+#include "docseek/token_locate.h"
+
 #include "docseek/query_parser.h"
 #include "docseek/jieba_tokenizer.h"
 
@@ -98,29 +101,24 @@ std::string expandTokenOrQuery(const std::string& token) {
         }
     }
 
+    // 定位逻辑来自 docseek/token_locate.h（与 jiebaXTokenize 一致）。
     // 按起始字节偏移分组（std::map 自动按 key 排序）。
     std::set<std::pair<std::string, size_t>> claimed;
-    std::map<size_t, std::vector<std::string>> groups;
+    std::vector<LocatedToken> located = claimTokenPositions(token, words, claimed);
+    size_t expected = 0;
     for (const std::string& w : words) {
-        if (w.empty()) continue;
-        size_t chosen = std::string::npos;
-        for (size_t p = token.find(w, 0); p != std::string::npos;
-             p = token.find(w, p + 1)) {
-            if (claimed.find(std::make_pair(w, p)) == claimed.end()) {
-                chosen = p;
-                break;
-            }
-        }
-        if (chosen == std::string::npos) {
-            return quoteToken(token);  // 定位失败，退化为原文
-        }
-        claimed.insert(std::make_pair(w, chosen));
-        std::vector<std::string>& g = groups[chosen];
-        if (std::find(g.begin(), g.end(), w) == g.end()) {
-            g.push_back(w);
+        if (!w.empty()) ++expected;
+    }
+    if (located.size() != expected) {
+        return quoteToken(token);  // 定位失败，退化为原文
+    }
+    std::map<size_t, std::vector<std::string>> groups;
+    for (const LocatedToken& lt : located) {
+        std::vector<std::string>& g = groups[lt.byteOffset];
+        if (std::find(g.begin(), g.end(), lt.word) == g.end()) {
+            g.push_back(lt.word);
         }
     }
-
     if (groups.empty()) {
         return quoteToken(token);
     }

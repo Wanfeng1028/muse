@@ -247,15 +247,16 @@ compose 把 `./data` 挂载持久化数据库、`./docs` 只读挂载为演示�
 
 ---
 
-## 搜索质量（v0.7.0）
+## 搜索质量（v0.11.0）
 
-评测集 `eval/`（44 个中文 query→doc 评测对，覆盖 HTML 语料/中文分词边界/locate 定位），一键运行：
+评测集 `eval/`（56 个中文 query→doc 评测对，覆盖 HTML 语料/中文分词边界/分词器 T1 回归/子串召回 T2/locate 定位），一键运行：
 
 ```bash
 python3 eval/run_eval.py --binary ./build/docseek --dict ./build/dict
 ```
 
-实测 Top-1 准确率 **36/44 (81.8%)**（html 10/10 / tok 14/14 / qa 4/12 / noise 6/6 / neg 2/2）。
+实测 Top-1 准确率 **48/56 (85.7%)**（html 10/10 / tok 26/26 / neg 2/2 / noise 6/6 / qa 4/12），基线（v0.7.0）为 36/44（81.8%）。
+
 
 权重调优示例：
 
@@ -266,7 +267,7 @@ docseek search 全文检索 --title-boost 0.2
 docseek search 全文检索 --phrase-boost 5
 ```
 
-评测发现的已知问题（v0.8 排期）：T1 分词器游标逻辑在 CutForSearch 重叠词下会跳过中间 token 导致索引静默丢词；T2 索引/查询切分上下文不一致导致子串 query 漏召回。详见 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。
+v0.11.0 修复的两类搜索质量问题：T1——分词器单调游标 `find` 在 CutForSearch 重叠词下静默丢词（如"计算机技术"丢"算机/计算机/计算机技术"），改为全文 occurrence 扫描 + 已认领集合；T2——索引/查询切分上下文不一致导致子串 query 漏召回（如搜"猫砂"命中不了含"猫砂盆"的文档），查询侧新增第 3 阶段子串召回回退（中文 token 拆单字 OR 粗筛 + 原始 token 子串精验），只在精确 AND、OR 回退都为空时触发。详见 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。剩余已知问题：8 个失败与 v0.7.0 基线是同一集合（qa 自然语言问句，独立问题）；T2 要求查询 token 在文档中连续出现。
 
 ## 已知局限
 

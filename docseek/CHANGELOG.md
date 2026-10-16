@@ -2,6 +2,18 @@
 # Changelog
 ```
 
+## v0.11.1（2026-10-17）——版本号唯一来源 + 定位逻辑公共抽取
+
+- 修复 v0.10.0 遗留 bug：`src/service.cpp` 的 `/api/health` 与服务启动日志把版本号硬编码为 "0.9.0"。
+- 新建 `include/docseek/version.h`（`docseek::kDocseekVersion = "0.11.0"`，注释"发版只改这一处"）；`src/main.cpp` 的 `kVersion` 与 `src/service.cpp` 两处硬编码全部改用该唯一来源。
+- 技术债偿还（v0.11.0 报告第 6 节已知项）："T2 回退路径与 jiebaXTokenize 共享 occurrence 扫描定位逻辑，但二者仍为两处实现"。
+- 新建 `include/docseek/token_locate.h` + `src/token_locate.cpp`（`claimTokenPositions(text, words, claimed)`：全文 occurrence 扫描 + 已认领集合，定位失败的词跳过）。
+- `src/jieba_tokenizer.cpp`（主循环逐词调用 + 码点回退路径同样走公共函数，交错语义与原来逐行一致）与 `src/searcher.cpp`（`expandTokenOrQuery` 按字节位置分组改用公共函数，定位失败仍退化为 `quoteToken(token)`）双双改用公共函数；`CMakeLists.txt` 注册新源文件。
+- 测试：新增 `tests/test_token_locate.cpp` 7 例（重叠词不丢/重复词认领下一处/重复耗尽跳过/不可定位跳过/空串跳过/跨调用共享 claimed 集/空输入）。
+- 测试：`tests/test_service.cpp` 的 Health 测试加断言：health 返回的 version 必须等于 `docseek::kDocseekVersion`（版本无关、防硬编码回退）。
+- 版本号：`--version` 仍为 0.11.0（本轮为 v0.11.x 补丁级改动，不 bump 大版本；version.h 的值保持 "0.11.0"）。
+- 已知限制：既有索引不受影响（本轮只动查询侧定位与版本号，无索引格式变更）；`WatcherTest.SubDir` flaky 照旧（v0.5.0 已有，与本轮无关）。
+
 ## v0.11.0（2026-10-17）——搜索质量 T1/T2 修复
 
 - T1 修复（`src/jieba_tokenizer.cpp`）：`jiebaXTokenize` 的单调游标 `find` 在 CutForSearch 重叠词下静默丢词（如"计算机技术"丢算机/计算机/计算机技术、"计算机算机维修"连"维修"都被级联丢失）。改为"全文 occurrence 扫描 + 已认领集合"：每个词独立定位，`(词, 起始字节)` 去重，不同词允许同位置重叠；归一化回退路径保留。

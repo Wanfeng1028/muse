@@ -18,6 +18,8 @@
 
 #include "docseek/database.h"
 #include "docseek/service.h"
+#include "docseek/version.h"
+
 
 namespace fs = std::filesystem;
 
@@ -162,8 +164,11 @@ TEST_F(SvcFixture, Health) {
     std::string resp = httpGet(svc_->port(), "/api/health");
     EXPECT_EQ(statusCode(resp), 200);
     EXPECT_NE(resp.find("\"ok\":true"), std::string::npos);
-    // 版本号断言必须版本无关：每次发版都会 bump，不许再硬编码具体版本号
+    // 版本号断言必须版本无关：只认唯一来源 docseek::kDocseekVersion，
+    // 不许硬编码具体版本号字面量；同时防 service.cpp 硬编码回退。
     EXPECT_NE(resp.find("\"version\":\""), std::string::npos);
+    EXPECT_NE(resp.find(std::string("\"version\":\"") + docseek::kDocseekVersion + "\""),
+              std::string::npos);
 }
 
 // 索引与检索端到端。

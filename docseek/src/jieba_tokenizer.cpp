@@ -1,5 +1,8 @@
 #include "docseek/jieba_tokenizer.h"
 
+#include "docseek/token_locate.h"
+
+
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
@@ -267,48 +270,35 @@ int jiebaXTokenize(Fts5Tokenizer* pTokenizer, void* pCtx, int /*flags*/,
     // <计算机> <计算机技术>），排在后面的词其真实位置可能落在游标之前，
     // 单调游标 find 会返回 npos 静默丢词，甚至跳到后文同词处导致游标
     // 大幅前跳、级联丢失后续普通词。全文扫描则对每个词独立定位。
+    // occurrence 扫描定位逻辑已抽至 docseek/token_locate.h 的 claimTokenPositions，
+    // 与 T2 回退路径共享同一实现；claimed 由本函数持有并在逐词调用间共享。
     std::set<std::pair<std::string, size_t>> claimed;
 
     for (const std::string& w : words) {
         if (w.empty()) continue;
 
-        // 在全文 [0, n) 中枚举 w 的所有出现位置，取第一个尚未被认领的。
-        // p + 1 按字节推进，允许重叠出现（如 "aa" 在 "aaa" 中的 0 和 1）。
-        // 循环天然有界：words 有限、find 位置单调递增，不可能死循环。
-        size_t chosen = std::string::npos;
-        for (size_t p = input.find(w, 0); p != std::string::npos; p = input.find(w, p + 1)) {
-            if (claimed.find(std::make_pair(w, p)) == claimed.end()) {
-                chosen = p;
-                break;
-            }
+        std::vector<LocatedToken> got = claimTokenPositions(input, {w}, claimed);
+        if (!got.empty()) {
+            emitToken(pText, (int)got[0].byteOffset,
+                      (int)(got[0].byteOffset + got[0].word.size()), pCtx, xToken);
+            continue;
         }
 
-        if (chosen != std::string::npos) {
-            emitToken(pText, (int)chosen, (int)(chosen + w.size()), pCtx, xToken);
-            claimed.insert(std::make_pair(w, chosen));
-        } else {
-            // 回退路径：CutForSearch 可能对词做了归一化（如大小写折叠），
-            // 导致 w 在原文中无法一字不差地找到。此时按 Unicode 码点切分 w，
-            // 逐个码点在全文 [0, n) 中定位，同样用 claimed 集合避免重复认领。
-            // （原实现从 cursor 起找；cursor 已删除，改为从 0 起找。）
-            std::vector<size_t> offsets =
-                utf8CodepointOffsets(w.data(), static_cast<int>(w.size()));
-            for (size_t i = 0; i + 1 < offsets.size(); ++i) {
-                std::string cp = w.substr(offsets[i], offsets[i + 1] - offsets[i]);
-                size_t cpChosen = std::string::npos;
-                for (size_t p = input.find(cp, 0); p != std::string::npos; p = input.find(cp, p + 1)) {
-                    if (claimed.find(std::make_pair(cp, p)) == claimed.end()) {
-                        cpChosen = p;
-                        break;
-                    }
-                }
-                if (cpChosen == std::string::npos) {
-                    // 该码点无法在原文中定位，放弃该词剩余部分。
-                    break;
-                }
-                emitToken(pText, (int)cpChosen, (int)(cpChosen + cp.size()), pCtx, xToken);
-                claimed.insert(std::make_pair(cp, cpChosen));
+        // 回退路径：CutForSearch 可能对词做了归一化（如大小写折叠），
+        // 导致 w 在原文中无法一字不差地找到。此时按 Unicode 码点切分 w，
+        // 逐个码点在全文 [0, n) 中定位，同样用 claimed 集合避免重复认领。
+        // （原实现从 cursor 起找；cursor 已删除，改为从 0 起找。）
+        std::vector<size_t> offsets =
+            utf8CodepointOffsets(w.data(), static_cast<int>(w.size()));
+        for (size_t i = 0; i + 1 < offsets.size(); ++i) {
+            std::string cp = w.substr(offsets[i], offsets[i + 1] - offsets[i]);
+            std::vector<LocatedToken> cpGot = claimTokenPositions(input, {cp}, claimed);
+            if (cpGot.empty()) {
+                // 该码点无法在原文中定位，放弃该词剩余部分。
+                break;
             }
+            emitToken(pText, (int)cpGot[0].byteOffset,
+                      (int)(cpGot[0].byteOffset + cpGot[0].word.size()), pCtx, xToken);
         }
     }
 
