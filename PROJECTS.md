@@ -195,18 +195,22 @@
 5. WebSocket（连接先发 hello，文本消息 echo 回显）
 6. 统计（文件/文件夹数、字节数）
 7. 文件上传与下载（v1.1.0）：`POST /api/files/upload?path=<目录>`（multipart，默认 50MB 上限可配）、`GET /api/files/download?path=<文件>`（64KB 分块流式）；`vfs_nodes` 新增 `content_blob`/`mime_type` 列；工具栏上传按钮 + 拖拽上传 + 行内下载 + 错误提示条
+8. 用户体系与鉴权（v1.3.0）：注册/登录/注销（argon2id 密码哈希 + opaque session token，HttpOnly Cookie）；鉴权中间件（白名单外 `/api/*` 与 `/ws` 未登录 401）；VFS 按 `user_id` 隔离（跨用户 404）；迁移 003（`users`/`sessions`/`shares` 表，老数据归占位用户 `legacy`，`migrate-legacy` 领走）
+9. 访客只读分享（v1.3.0）：`POST /api/shares` 签发 token，`/share.html?token=` 只读页（元信息 + 下载）
 
 **状态**：v1.2.0「生产级运维补强」（2026-10-16 完成，cargo test 28 例全过、clippy 零警告；发版对照报告 `mini-os/docs/PRODUCTION_CHECKLIST_REPORT_v1.2.0.md`，结论可发版）。
+**v1.3.0「多用户与权限」（2026-10-16）**：用户体系（注册/登录/注销，argon2id + opaque session token 走 HttpOnly Cookie）+ 鉴权中间件 + VFS 按用户隔离 + 迁移 003（legacy 占位用户承接老数据）+ 访客只读文件分享（`POST /api/shares` → `/share.html?token=`）+ 前端（login.html 三态页、桌面门卫、任务栏用户区与注销、分享页）；`cargo test` **65/65** 全过（lib 15/api_test 16/auth_test 8/failure_injection 11/isolation_test 5/metrics_test 4/share_test 6）、`cargo clippy --all-targets -- -D warnings` 零警告、`cargo fmt --check` 通过；真实服务冒烟（注册→登录→A 文件 B 不可见→分享只读→migrate-legacy→登出→未登录 401）全过；登录/桌面/分享 3 张截图亲眼验收；验收附带修 v1.x 遗留 bug（`<div id="taskbar">` 用 id 而 CSS 用 `.taskbar` 类选择器，任务栏样式自 v1 起从未生效）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`。诚实未做：访客角色、目录分享、细粒度 RBAC、密码强度策略（仅最小长度 8）、2FA、JWT、session 滑动续期、登录限流。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：Axum + rusqlite 后端落地，虚拟文件系统 API、5 应用桌面前端、WebSocket 协议、CI 与多阶段 Dockerfile 就绪
 - v1.1.0 文件上传下载（2026-10-15）：上传/下载双接口 + BLOB 存储迁移 + 前端上传/下载 UI；验收时顺带修复 2 个 v1 视觉 bug（`.hidden` 工具类缺失致开始菜单无法隐藏、壁纸切换类名 mismatch）
 - v1.2.0 生产级运维补强（2026-10-16）：`schema_migrations` 版本化迁移（001/002，幂等，老库自动升级）+ `GET /api/readyz` 就绪探针（DB 真实可查 200/503）+ JSONL 结构化日志（`x-request-id` 透传/生成）+ SIGTERM/Ctrl+C 优雅关闭（`SHUTDOWN_TIMEOUT_SECS` 只约束排空阶段）+ CLI `backup/restore` 子命令（在线备份/完整性校验/自动快照/原子替换）+ `scripts/` 四件套（backup.sh 保留 7 个、restore.sh、load_check.py、fault_drill.sh）+ `docker-compose.yml`（本机无 daemon 未实跑）+ `docs/OPERATIONS.md`；失败注入 8 例；真实负载 300 文件 0 失败（avg 74.93ms）；`fault_drill.sh` 全 PASS（kill -9 数据不丢、备份→删库→恢复一致、损坏备份 exit 3 拒绝、SIGTERM exit 0）。本轮抓真 bug 两处：dpsk 漏开 rusqlite `backup` feature（编译失败，补 feature 门）、`SHUTDOWN_TIMEOUT_SECS` 被错误用于整个服务生命周期（健康服务超 N 秒被掐断，改排空阶段计时 + 演练加回归断言）；另修 dpsk 测试 2 处（请求体字段猜错致 422、root 下 chmod 注入无效改 DROP TABLE 注入）
+- v1.3.0 多用户与权限（2026-10-16）：见"状态"节；26 个 dpsk 批次并行生成（8 并发撞 429 后降串行+25 秒间隔退避收回）；README/CHANGELOG/OPERATIONS.md/对照报告齐备
 
 **后续计划**：
 
-- 多用户与权限
+- 目录分享、RBAC、登录限流（v1.3 诚实未做项）
 - 应用商店（插件化）
 - Prometheus `/metrics`、docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
 
