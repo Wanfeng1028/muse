@@ -5,7 +5,7 @@ flask==3.1.3
 feedparser==6.0.14
 
 # 网页正文抽取库，用于从文章链接中提取干净的正文文本
-trafilatura==2.2.0
+trafilatura==2.3.1
 
 # 进程内定时任务调度库，用于周期性抓取与更新订阅源
 apscheduler==3.11.3
