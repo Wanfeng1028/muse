@@ -34,8 +34,10 @@
 4. 单词 SRS（SM-2 简化算法）
 5. 真题计时与得分统计
 6. 仪表盘（初试倒计时与全局概览）
+7. 自律热力图（v1.3.0）：GitHub 贡献图式按天热力 + 连续打卡统计
 
 **状态**：v1.2.0「深色模式」（2026-10-16）：`Settings.theme`（`ThemeMode='light'|'dark'`，默认 light，`PUT /api/settings` 非法值 400）+ 前端侧边栏切换按钮 + `data-theme` 属性驱动 + `index.css` 全 token 深色覆盖（slate 家族 #161a23/#1e2430，与侧边栏 #141824 同族）；服务端 vitest **28/28**（新增 6 例）、前端 tsc 零错、vite 构建成功；真实冒烟（PUT dark 持久化/非法值 400/GET 确认）全过；16 张真实截图（7 页×浅/深 + 考试记录表 + 错题筛选态）亲眼验收；INTERACT PASS（点按钮→data-theme=dark+服务端落库，切回 light）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.0.md`。本轮附带修 3 个线上真 bug：`api.updateSettings` 误用 PATCH（后端只有 PUT）致主题切换 404；`listMistakes` 发 `mastered=false` 布尔串致仪表盘未掌握错题与错题筛选 400（api 层转 '1'/'0'）；真题页 `subject=all` 透传致 400（'all' 转 undefined）。修复后全站 API 零非 200、页面 console 零错误。
+**v1.3.0「自律热力图」（2026-10-16）**：后端 `packages/shared` 新增 `HeatmapDay`/`HeatmapResponse` 类型 + `GET /api/stats/heatmap?months=N`（默认 3，只接受整数 1~6 否则 400）：按天聚合专注分钟、计划总数/完成数、新增错题、模考场次，返回 currentStreak（今日为 0 则从昨日往前数）、bestStreak、activeDays；前端新增 `Heatmap.tsx`（/heatmap 路由 + 导航「自律热力图」）：GitHub 贡献图式（列=周、行=周一..周日、月份标签、少→多图例），颜色五档蓝（浅 `#c9e2fb → #2f74e0` / 深 `#1e4068 → #5b9bf3`），顶部当前连续打卡/最长连续/累计专注天数三卡，近 1/3/6 个月切换，格子 title 显示当日明细、点击展开当日详情卡（含当日专注会话列表，科目中文名）；服务端 vitest **50/50**（heatmap.test.ts 新增 7 例）、前端 tsc 零错、vite build 成功；3 张真实截图（默认态/点击 2026-10-16 当日详情/深色）亲眼验收通过。
 
 **UI 重设计 v4（Tabler 组件库）**
 
@@ -47,6 +49,7 @@
 - 工程化重构 v1（2026-10-13）：前后端分离、SQLite 持久化、vitest 集成测试、GitHub Actions CI、Dockerfile
 - **v1.2.0「深色模式」（2026-10-16）**：见"状态"节。
 - **v1.1.0「数据导入导出」（2026-10-15，路线图第 2 项交付）**：后端 `apps/server/src/routes/backup.ts`——`GET /api/backup/export`（kaoyan-backup v1，7 表）、`POST /api/backup/import`（replace 事务全量替换 / merge 去重合并，逐行校验）、`POST /api/import/words` + `POST /api/import/mistakes`（CSV 导入：表头校验/空行跳过/错误行报告，subject 仅 math/english/politics/major）；前端 `DataTransfer.tsx`（/data 路由 + 导航「数据导入导出」，备份与恢复/单词 CSV/错题 CSV 三卡片，覆盖恢复二次确认，模板下载）；`tests/backup.test.ts` 13 例，服务端全量 22/22 通过，前端 tsc 零错；真实服务冒烟 6 项全过（导出/单词 CSV/错题 CSV/merge/replace 回导）；2 张真实截图亲眼验收通过（默认态 + 导入结果态）；README 功能/API/目录/路线图同步，CHANGELOG.md 新建。本轮修截图链路两处：上一轮遗留的两张截图为空白页（服务未就绪即截图），本轮用 route 拦截 harness（文档/静态读盘、/api 经 Node 代理，绕过 Chromium 152 LNA 拦截）重拍；另发现 Playwright 多 route 匹配时后注册优先，静态 route 曾吞掉 /api 代理
+- **v1.3.0「自律热力图」（2026-10-16）**：见"状态"节；heatmap.test.ts 7 例（默认 3 个月 93 天、months=1 返回 31 天、months=0/7 返回 400、focus+45 差值、plans 完成差值、-7 天补记录 streak+1、-30 天孤立记录 streak 不变）
 
 **后续计划**：
 
@@ -226,18 +229,20 @@
 
 **状态**：v2.0「银行账单侦探」（2026-10-15）：灵魂一页纸先行（docs/SOUL.md）；pytest 97/97 全过（新增 63 例：matching/parser 单元 56 + API 集成 41 中含 7 个端到端场景）、ruff 全洁；真实服务冒烟：支付宝/微信/招行-GBK 三种账单上传→确认→认领→学习闭环、指纹去重、转账识别全链路验证；两页真实数据截图亲眼验收通过（docs/screenshots/）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.0.md（结论可发版，生产级基础项排期 v2.1）；README 重写（图文并茂）+ CHANGELOG.md 新建。
 **v2.1「生产级补强」（2026-10-15）**：v2.0 对照报告第 7 节 7 项排期全部关闭——`migrations.py`（PRAGMA user_version=2，v2 DDL 从 models 编译生成，`init_db` 改走 `run_migrations`）+ `logging.py`（JsonFormatter 单行 JSON / RequestIdMiddleware 全链路 request_id + `X-Request-Id` 回写 / 未处理异常兜底 500，`LEDGER_LOG_LEVEL` 非法值启动 fail-fast）+ `routers/metrics.py`（Prometheus 文本 6 指标）+ `GET /api/ready`（200/503）+ 优雅关闭（lifespan dispose engine）+ `backup.py`（integrity_check / keep 修剪 / 同秒 `-N` 后缀 / 恢复前安全快照 / 坏备份拒绝）+ `python -m ledger backup|restore`（`make backup [KEEP=N]` / `make restore FILE=`）+ `docker-compose.yml`（healthcheck / 资源限制 / 日志轮转 / named volume）+ `docs/OPERATIONS.md` + `tests/test_failure_injection.py` 4 例；pytest **119/119** 全过（新增 22 例）、ruff 全洁；真实服务冒烟：建账→交易→metrics→备份→删库→恢复→数据一致全链路通过；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.1.md（结论可发版）。本轮修真 bug 4 个：`python -m ledger serve` 启动崩溃（`args.dir` 在 serve 子命令不存在，冒烟抓出）、坏 CSV 的 `csv.Error` 抛 500（改 errors 行收集，失败注入抓出）、`integrity_check` 对损坏文件抛裸 `sqlite3.DatabaseError`（改 `BackupError`）、备份写入失败抛裸 `OSError` 且留半成品（改 `BackupError` 并清理）。教训：FastAPI 0.143 把 `@app.exception_handler(Exception)` 转给 ServerErrorMiddleware（响应后仍 re-raise，测试侧可见异常穿透），500 兜底改由 RequestIdMiddleware 直接返回；`pkill -f` 再次自杀（教训重犯：命令行自匹配，必须用括号技巧）。
+**v2.2「多币种与汇率」（2026-10-16）**：`currencies` 汇率表 + 统计按本位币折算（commit a265b1e）。
+**v2.3「全站移动端适配」（2026-10-16）**：`@media (max-width: 768px)` 断点；顶栏导航横向滑动；触控目标 ≥44px；交易列表、侦探队列规则表在移动端转卡片流（`data-label` 列名，`table:has()` 精确命中）；仪表盘/预算页移动端布局（汇总卡单列、图表上下排、快捷入口两列、预算行换行）；品牌 logo 从 emoji 换成内联 SVG 硬币线稿 mark；`tests/test_mobile.py`（10 页 200 + viewport 标记 + 断点 CSS 存在性冒烟）；修导航高亮选择器 `.nav a.active` 缺圆点致永不生效；补齐模板存在但 CSS 从未定义的类（`.filters`、`.pagination`、`.summary-cards`、`.charts`、`.quick-link-grid`、`.budget-row`、`.toolbar` 等）桌面样式；pytest **157/157**（含 test_mobile.py 16 例）、ruff 全洁；3 张移动端真实截图亲眼验收（仪表盘单列/交易卡片流真实数据/侦探队列+规则表）。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：FastAPI 分层架构落地，账户/交易/分类/预算/统计/导入导出/周期账单全模块、Jinja2 SSR 前端、CI 与 Dockerfile 就绪
 - v2.0 银行账单侦探（2026-10-15）：`matching.py` 三路匹配纯函数引擎 + `statement_parser.py`（GBK/表头探测/列映射/4 内置模板）+ `routers/statements.py`（18 个端点：模板 CRUD/解析预览/上传/确认/认领/转账认领/跳过/规则 CRUD）+ `statement.html` 导入向导 + `detective.html` 侦探队列 + main.py 两路由 + base.html 导航；验收抓真 bug 7 个：dpsk 的 field_validator 漏 return v、schemas created_at 误用 datetime 类型、upload 循环内 N+1 查指纹、`_load_top_categories` 未按方向过滤、表头探测被全模板并集稀释致支付宝前导行识别失败、模板名未回填、claim 后 batch.pending_count 不递减；附带修 v1 遗留 3 个真 bug（style.css 首行 ```css 围栏致全站 CSS 变量失效、base.html 顶栏类名与 CSS 设计体系脱节、style.css 尾部 .chart-toolbar 截断）
 - v2.1 生产级补强（2026-10-15）：dpsk 分 7 批生成（迁移/日志+request_id/metrics+ready/备份恢复 CLI/compose+运维手册/失败注入/文档），编排验收修 6 处（编造 transactions API 字段 amount/occurred_at→amount_cents/occurred_on、编造 static mount OLD 文本、backup 同秒文件名碰撞加 -N 后缀、middleware 测试同步函数用 async fixture、__main__ serve 无 args.dir 致启动崩溃、backup OSError 裸抛）；pytest 119/119、ruff 全洁；真实冒烟全链路通过
+- v2.2 多币种与汇率（2026-10-16）：`currencies` 汇率表 + 统计按本位币折算
+- v2.3 全站移动端适配（2026-10-16）：见"状态"节；pytest 157/157、ruff 全洁；3 张移动端真实截图亲眼验收
 
 **后续计划**：
 
-- 多币种与汇率
 - 账单图片 OCR 录入
-- 移动端适配
 - Dependabot（等 gh token 补 workflow 权限后迁仓库根，与其他项目同）
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
@@ -259,18 +264,18 @@
 9. 生产级：slog 结构化日志（request_id 全链路）、/healthz /readyz、优雅关闭、Prometheus /api/metrics、DB 迁移版本化（v1→v2）、API Token 鉴权、tenant/user 多用户、自动备份 + `-restore` 一键恢复、docs/OPERATIONS.md 运维手册
 10. Web UI（仪表盘/监控管理/事件/健康档案/公开状态页）
 
-**状态**：生产级 v0.2.0（2026-10-13）：构建、vet、gofmt、全量测试（backup/checker/handlers/store）与真实服务冒烟均已跑通；冒烟验证了 鉴权(401/200)→加监控→故障→incident→恢复→事件关闭、备份→删库→-restore 恢复、健康档案/SLA/公开状态页 API 全链路；发版对照报告见 sentinel/docs/RELEASE_CHECKLIST.md。已知限制：单实例（SQLite）、webhook 失败最多重试 3 次。
+**状态**：生产级 v0.3.0（2026-10-16）：构建、vet、gofmt、全量测试（72 例，含新增主题/订阅 30 例）与真实服务冒烟均已跑通；冒烟验证了 建监控→故障→订阅→确认邮件→点链接确认→二次故障→订阅者收到宕机通知邮件（含退订链接）、公开状态页三主题真实渲染；已知限制：单实例（SQLite）、webhook 失败最多重试 3 次。
 
 **里程碑记录**：
 
 - 工程化 v1（2026-10-13）：单二进制架构落地，检查器/调度器/事件流、内嵌 Web UI、CI 与多阶段构建就绪
 - 生产级 v0.2.0（2026-10-13）：全量生产级改造（可观测性/可靠性/数据/部署/安全/可维护性）+ 灵魂功能（健康档案/月度 SLA/公开状态页）；CHANGELOG 见 sentinel/CHANGELOG.md
+- v0.3.0 状态页主题与订阅通知（2026-10-16）：迁移 v3（status_pages 加 theme/accent_color，老库自动补列）+ v4（status_subscriptions 表）；`PUT /api/status-pages/{id}/theme`；公开接口透出主题；订阅全链路 `POST /api/status/{slug}/subscribe`→确认邮件 token→`GET .../confirm`→`GET/POST .../unsubscribe`，down/recovered 事件经 `notify.NotifySubscribers` 扇出给已确认订阅者（同邮箱多页去重，退订链接带 token）；`SENTINEL_PUBLIC_URL` 配邮件链接基地址；状态页 UI 重写（CSS 变量双主题+访客切换器+主色取色器+订阅卡片，去 AI 味）；72 测试全过（新增 30）；真实冒烟：fake SMTP 捕获确认邮件→点链接确认→二次故障→订阅者收到宕机通知；三主题真实截图亲眼验收；修 v0.2 遗留 bug：可用性文字 span 与状态圆点共用 `.up` 类名致 querySelector 误命中圆点（改名 `.uptime`）。README/CHANGELOG 已同步，截图落 docs/screenshots/status*.png
 
 **后续计划**：
 
-- 多渠道告警（邮件/短信/企业微信）
+- 短信告警（邮件/企业微信 webhook 已落地）
 - 分布式探针（多实例需先换 PostgreSQL）
-- 状态页自定义主题与订阅通知
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
@@ -343,11 +348,11 @@
 - **灵魂功能 v1.2 重要性排序**（2026-10-13）：`feedflow/ranking.py`——五维加权可解释分数（时效衰减半衰期 48h 0.30 / 事件热度 0.25 / 来源权重 0.20 / 关键词 0.15 / 未读 0.10），分项归一 0~1、确定性无随机；「今日必读」页（/digest，默认 20 篇，每篇标注"为什么排前面"分项理由）+ 兴趣设置页（/settings/interests：关键词增删、来源手动权重、每日篇数 N）；来源质量从已读/星标比率自动学习；DB 迁移 v2（keywords/feed_weights/settings 三表）；pytest 62 例全过（新增 test_ranking.py 16 例）、ruff check 全洁、真实服务冒烟与 3 张新截图（digest/interests/reader）逐张视觉验收通过
 - **v1.3 Fever API 兼容 + 正文提取超时收敛**（2026-10-15）：dpsk 分 6 批生成（迁移/PATCH 拆分器新增 scripts/split_patches.py 治贪婪 NEW 吞组）；验收抓真 bug 3 个：`store.get_folder` 系 prompt 误列（实现改直查 SQL）、SQLite `strftime()` 返回 TEXT 与整数 before 比较恒假（加 CAST AS INTEGER）、extract_text 加参导致旧 mock 签名不兼容（测试 mock 补参）；测试另修 3 处（种子数据污染计数、分页参数改 query string 走协议、unread_recently_read 改走 store.set_read 写 last_read_at）。pytest 84/84、ruff 全洁、冒烟 9 项全过
 - **v1.4 生产级收尾 + 移动端阅读优化**（2026-10-16）：微信 dpsk 分 4 批并行生成（A 指标代码 / B 失败注入测试 / C 文档 / D 移动端前端），编排逐批验收、手工修 17 处后合入；pytest 102/102、ruff 全洁；真实服务冒烟 + 桌面/移动双端视觉验收（抓出顶栏移动端堆叠真 bug 已修）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
+- **v1.5「全文 RSS 输出 + HTTP 层限流」（2026-10-16）**：`GET /feed.xml`（正文优先用抓取时 trafilatura 提取的 content_text，无正文回落摘要去标签文本；`?feed_id=`/`?folder=` 过滤，50 篇封顶；ETag + If-None-Match 304）+ HTTP 层 IP 令牌桶限流（默认 60 req/min，`FEEDFLOW_RATE_LIMIT_RPS`/`_BURST`/`_ENABLED` 环境变量，超限 429 + Retry-After，`/healthz` 与 `/metrics` 免限流，Prometheus 新增 `feedflow_http_rate_limited_total`）；tests/test_feedxml.py 8 例 + tests/test_ratelimit.py 5 例；运维手册新增第 9 节"限流调参"；pytest 115/115、ruff 全洁
+- **v1.5.1 依赖升级（2026-10-16）**：trafilatura 2.2.0→2.3.1（PyPI 当前最新，2.3.0 发版说明无破坏性变更）；验收抓包：CHANGELOG 曾声称"已换 2.3.1 跑过测试"，实测 venv 仍为 2.2.0，已真升级并重跑 pytest **115/115** 全过
 
 **后续计划**：
 
-- 全文 RSS 输出
-- HTTP 层限流评估（v1.5）
 - pip 依赖定期扫描机制（等 gh token 补 workflow 权限后统一处理）
 
 ## linkshort「短链 LinkShort · 自托管短链服务」
@@ -373,7 +378,8 @@
 **状态**：工程化 v1（2026-10-13 完成，go test 24 例全过、vet/gofmt 全洁、真实服务冒烟：建链→302 跳转→点击计数→二维码→统计→CSV 往返全链路验证；4 张 Web UI 真实截图已亲眼验收）。
 **生产级补强 v1.2「可观测 + 限流 + 韧性」（2026-10-14）**：零依赖手写 Prometheus `/metrics`（请求/跳转/burn/限流拒绝计数、路由 label 归一化）；IP+Key 双维度令牌桶限流（429+Retry-After，/metrics 与探针免限流，RPS/BURST/开关走环境变量）；`/readyz` 就绪探针（DB ping 通 200 否则 503）+ `store.Ping()`；失败注入测试（关库后跳转/建链 500、health 200、readyz 503、metrics 200，全程不 panic）；CSV 导入导出扩展 7 列（兼容旧 5 列）；`docs/OPERATIONS.md` 运维手册（部署/备份恢复/升级/监控/排障/限流调参）；新增 24 例、`-race` 全过；真实服务冒烟 6 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`（结论可发版，v1.1 条件项全部关闭）。
 **生产级补强 v1.3「彻底删除 + 备份演练」（2026-10-15）**：burn 销毁后支持彻底删除，`LINKSHORT_BURN_PURGE_AFTER_DESTROY` 默认 false、开=true 时 302 后硬删除并返回 404，默认行为不变；新增 `scripts/backup.sh`/`restore.sh`（在线备份、`--force` 安全门、`--dry-run`、integrity_check、`.broken-` 快照，`make backup`/`make restore`）；`GET /api/meta` 增加 `burn_purge_after_destroy`；Prometheus 增加 `linkshort_burn_links_purged_total`；详情页 burn 链接显示销毁行为文案；go build/vet/gofmt 全洁，`go test ./... -race` 58 例全过（新增 6 例），真实服务冒烟 8 项全过，4 张 Web UI 截图逐张人工验收；发版对照报告见 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`（结论可发版；v1.2 遗留的“备份恢复未做自动化演练”未通过项已关闭）。
-**生产级补强 v1.4「密码保护短链」（2026-10-16）**：`internal/auth` 新包（bcrypt，golang.org/x/crypto v0.31.0，go 1.23 兼容未升工具链；密码策略 1~128 rune，BcryptCost 变量测试可调）+ DB 迁移 v2→v3（`password_hash TEXT`，老库自动 ALTER）+ `store.SetLinkPassword/ClearLinkPassword` + API（POST 创建带 `password`，PATCH 的 `password` 字段 nil=不动/""=清除/非空=设置，创建时密码落库失败回滚删链；响应只有 `has_password` 布尔，哈希永不外泄）+ 跳转密码门（`GET /{slug}` 有密码→200 服务端渲染门页，`POST /{slug}` 校验：正确 302 记点击/burn 照常、错误 401 不计点击不触发 burn；校验在限次检查之前）+ `loadActiveLink/finishRedirect` 重构（原 handleRedirect 的存在/销毁/禁用/过期四检查抽取复用）+ 指标 `linkshort_password_attempts_total{result=ok|fail}` + Web UI（新建页密码框、列表"密码保护"徽标同行、详情页密码设置/清除区）；`go test ./... -race` **73 例全过**（新增 15：auth 3 + store 4 含 v2→v3 真实迁移 + handler 8）；真实服务冒烟（门页 200/错码 401/对码 302/点击计数/burn 联动）全过；5 张真实截图亲眼验收（new/links/detail/password-gate/password-gate-error），抓出 1 视觉 bug（列表双徽标换行，已加 nowrap 修好重拍）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`（结论可发版，未通过 0，排期 1：fail 走高告警 v1.5）。本轮修 dpsk 输出 6 处（max-tokens 截断重跑、B2 五组 OLD/NEW 挤一个 PATCH 块致贪婪吞组→拆块、END FILE 标记泄漏、noRedirectClient 重定义、httptest import 丢失、JSON 数字 float64 断言 string）；dpsk 手写 v2 表结构漏列致迁移测试假失败（已按真实 schema 修正）；`go get x/crypto@latest` 曾把工具链抬到 go1.26，已回滚并钉 v0.31.0。
+**生产级补强 v1.4「密码保护短链」（2026-10-16）**：`internal/auth` 新包（bcrypt，golang.org/x/crypto v0.31.0，go 1.23 兼容未升工具链；密码策略 1~128 rune，BcryptCost 变量测试可调）+ DB 迁移 v2→v3（`password_hash TEXT`，老库自动 ALTER）+ `store.SetLinkPassword/ClearLinkPassword` + API（POST 创建带 `password`，PATCH 的 `password` 字段 nil=不动/""=清除/非空=设置，创建时密码落库失败回滚删链；响应只有 `has_password` 布尔，哈希永不外泄）+ 跳转密码门（`GET /{slug}` 有密码→200 服务端渲染门页，`POST /{slug}` 校验：正确 302 记点击/burn 照常、错误 401 不计点击不触发 burn；校验在限次检查之前）+ `loadActiveLink/finishRedirect` 重构（原 handleRedirect 的存在/销毁/禁用/过期四检查抽取复用）+ 指标 `linkshort_password_attempts_total{result=ok|fail}` + Web UI（新建页密码框、列表"密码保护"徽标同行、详情页密码设置/清除区）；`go test ./... -race` **73 例全过**（新增 15：auth 3 + store 4 含 v2→v3 真实迁移 + handler 8）；真实服务冒烟（门页 200/错码 401/对码 302/点击计数/burn 联动）全过；5 张真实截图亲眼验收（new/links/detail/password-gate/password-gate-error），抓出 1 视觉 bug（列表双徽标换行，已加 nowrap 修好重拍）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`（结论可发版，未通过 0，排期 1：fail 走高告警 v1.5）。
+**生产级补强 v1.6.0「备份健康自检」（2026-10-16）**：`GET /api/backup/health`（需 API Key）：返回最近备份时间、完整性校验结果、备份份数与过期判定（无备份/上次失败/完整性未通过/超过 `LINKSHORT_BACKUP_MAX_AGE_DAYS` 默认 7 天则 `status` 为 `degraded`，HTTP 仍 200）+ `scripts/backup.sh` 每次运行把结果原子写入 `$BACKUP_DIR/last-backup.json`（健康端点读取依据）；失败时若配了 `LINKSHORT_ALERT_WEBHOOK_URL` 则 POST JSON 告警（curl 10 秒超时，通知失败不影响退出码）+ Prometheus 新增 `linkshort_backup_last_success_timestamp`（最近成功备份 unix 秒）与 `linkshort_backup_health_status`（1 健康/0 降级）+ Web UI 仪表盘新增"备份健康"面板（状态徽标+最近备份时间+备份文件+备注）；`.env.example` 新增 `LINKSHORT_BACKUP_DIR`/`LINKSHORT_BACKUP_MAX_AGE_DAYS`/`LINKSHORT_ALERT_WEBHOOK_URL`；`go test ./... -race` **95 例全过**（新增 12：handler 7、metrics 2、backupscript 3 含 fake webhook 捕获）；dashboard.png 亲眼验收（备份健康面板：健康徽标+最近备份 2026-10-16+备份文件+2 份/阈值 7 天，真实数据）。本轮修 dpsk 输出 6 处（max-tokens 截断重跑、B2 五组 OLD/NEW 挤一个 PATCH 块致贪婪吞组→拆块、END FILE 标记泄漏、noRedirectClient 重定义、httptest import 丢失、JSON 数字 float64 断言 string）；dpsk 手写 v2 表结构漏列致迁移测试假失败（已按真实 schema 修正）；`go get x/crypto@latest` 曾把工具链抬到 go1.26，已回滚并钉 v0.31.0。
 
 **生产级补强 v1.1「阅后即焚 + 限次访问」（2026-10-14，灵魂功能落地）**：`links` 新增 `max_visits`（NULL=不限）、`burn`（0/1）两列 + `PRAGMA user_version` 版本化迁移（v1→v2，老库自动 ALTER，实测老数据保留）；跳转语义：burn 链首次 302 后自动禁用、再访 410"链接已阅销毁"，max_visits=N 时前 N 次 302、第 N+1 次 410"链接已达访问上限"（burn 的 410 检查在禁用 404 之前）；`store.CreateLinkEx/UpdateLinkEx/MarkBurned`（旧签名保持委托不变）；API：POST/PATCH 接受 `max_visits`（1~1000000 正整数）、`burn`，非法组合 400；响应新增 `max_visits/burn/remaining` 字段；Web UI：新建页"限次访问"输入+"阅后即焚"复选框（互斥联动）、列表页"限制"列徽标（阅后即焚/已销毁/限N次·剩M次/不限）、详情页"访问限制"行+保存/清除；`go test ./...` 全过（新增 10 例：store 4 + handler 6）；真实服务冒烟全链路验证（302→410 语义、PATCH 改限次/清除、老库迁移）；3 张新截图亲眼验收通过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.1.md`（有条件发版：失败注入//metrics/运维手册/限流排期 v1.2，CSV 未带新字段）；CHANGELOG.md 新建。
 
@@ -382,13 +388,12 @@
 - 工程化 v1（2026-10-13）：chi 路由 + 分层架构落地（config/db/model/store/handler/util/qr），短链 CRUD/跳转/统计/二维码/导入导出全模块、内嵌四页 Web UI、CI 与多阶段 Dockerfile 就绪
 - v1.1 阅后即焚 + 限次访问（2026-10-14）：灵魂定位核心功能落地；dpsk 4 批生成（数据层/HTTP 层/前端/文档），回喂 2 轮修签名错配，编排手工修 3 处机械问题（残留分隔符、strconv→itoa、围栏残留）
 - v1.3 彻底删除 + 备份演练（2026-10-15）：dpsk 分 5 批生成（purge 代码/备份脚本/测试/文档/UI 小改），测试回喂 3 轮（dpsk 编造 API、helper 错用，编排按流程回喂；最后一处 helper 编排按仓库现有模式机械替换），真实服务冒烟 8 项与 4 张截图人工验收通过
+- v1.5 purge 定时清理 + 公开 API 文档页（2026-10-16，commit 58d3fac）
+- v1.6.0 备份健康自检（2026-10-16）：见"状态"节；`go test ./... -race` 95/95；dashboard 备份健康面板真实截图亲眼验收
 
 **后续计划**：
 
 - 访问地域统计
-- 公开 API 文档页
-- purge 定时清理任务（已销毁 burn 链兜底清理）
-- 备份失败告警通知
 
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
@@ -476,10 +481,11 @@
 - v1（2026-10-13）：DSL 解析器 + 5 条校验规则 + 分支图布局算法 + 本地化抽取 + Compose 桌面 UI + 示例剧本；单测 24/24；布局算法渲染图已亲眼验证；UI 截图待正常环境补拍（未虚报）
 - v1.1（2026-10-15）：生产级补齐（M 规格 6 项）——日志/CLI/端到端/OPS/CHANGELOG/Dependabot；测试 28/28；3 个真 bug 修复
 - **v1.2 .bak 自动备份 + 一键恢复**（2026-10-16）：打开/保存剧本前自动写 `.bak`（时间戳后缀，保留最近 5 个）+ `interlude-lint restore` 子命令（列出备份/恢复指定版本）+ 结构化日志记录备份事件；kotlinc 直编零错、JUnit **45/45**（新增 17 例）、CLI 冒烟全过；`docs/OPS.md` + CHANGELOG.md 已更新。**本轮打回修掉真 bug**：`restore()` 在 5 备份时恢复最旧会被 prune 删源文件。诚实缺口：沙箱 locale 无 UTF-8（中文文件名不可匹配，已在 OPS 声明）；`lint` 对目录先 snapshot 再报错（技术债，未修）。
+- **失败注入测试套件 v1.3（2026-10-16）**：FaultInjectionTest 扩至 **19 例**（损坏/截断剧本行号定位、不可读文件 exit 语义、tmpfs 磁盘满模拟、损坏备份拒绝恢复、10 万行性能回归、并发 lint 备份不互踩）+ `lint` 对目录/特殊文件输入先校验类型再报错（修掉"先 snapshot 再报错"技术债）+ 修真 bug：`BackupManager.restore` 读取损坏备份抛 IllegalArgumentException（CLI 返回 exit 2），不再让原始 IOException 崩出且绝不覆盖原文件；kotlinc 直编 + JUnit 进程内跑 **57/57** 全过（Gradle daemon 本沙箱不可用）
 
 **后续计划**：
 
-- v1.2（候选）：失败注入测试、大剧本真实负载压测
+- ~~失败注入测试~~（已在 v1.3 交付）、大剧本真实负载压测（10 万行性能回归已在 v1.3 落地为用例）
 - v2：玩家路径热力分析 + 剧本杀复盘模式（backlog Phase 3 第 11 项）
 
 ## stagecue「舞监台 StageCue」
@@ -504,7 +510,13 @@
 4. 离线优先：本地操作日志（内存版，File 版待接）
 
 **状态**：v0.2.0（2026-10-15）：SQLite + Flyway 版本化迁移（旧 show.json 自动幂等导入）替代 JSON 文件存储；`GET /metrics`（Micrometer Prometheus，6 个指标）；备份→删库→恢复真实演练通过；启动配置非法值 fail-fast（exit 1）；排练模式后端真实实现（服务端持久化 + WS 广播 + 导演台联动）；MP3 解码（mp3spi + jlayer），WAV 回归通过。kotlinc 直接编译 + JUnit 全过（server/shared/desktop）。server 31/31、shared 29/29、desktop 音频测试 4/4、桌面 UI 全量编译通过
+**v0.3.0「限流 + 就绪探针 + WS 背压」（2026-10-16）**：IP 令牌桶限流（`STAGECUE_RATE_LIMIT_RPS` 默认 60 / `STAGECUE_RATE_LIMIT_BURST` 默认 120，环境变量配置，非法值启动即报错退出；超限 429 + `Retry-After` 头（秒）+ JSON 错误体；`GET /healthz`、`/readyz`、`/metrics` 探针免限流）+ `GET /readyz` 就绪检查（settings 表可读则 200 `{"status":"ready"}` 否则 503）+ WS 广播背压（每客户端独立有界队列 64 + 专属发送协程；队列满时丢弃最旧 DROP_OLDEST，不断开慢消费者；丢弃数经 `stagecue_ws_broadcast_dropped_total` 可观测）+ 指标新增 `stagecue_http_rate_limited_total`（429 计数）；`docs/OPERATIONS.md` 新增限流调参说明，`docs/TECH_DEBT.md` 关闭"限流熔断"债务项；kotlinc 直编（Gradle daemon 本沙箱不可用）+ JUnit 进程内跑 **44/44** 全过（含 429+Retry-After、探针免限流、readyz、WS 背压丢弃计数）
 
 **发版对照**：`stagecue/docs/PRODUCTION_REPORT_v0.2.0.md`——v0.1.0 的 6 个未通过排期项本轮修复 5 个（剩限流熔断、Dependabot、告警、日志轮转/资源限制，均已记入 `stagecue/docs/TECH_DEBT.md`）。
 
 **已知限制**：Gradle daemon 本 VM 无法运行（改 kotlinc 直接验证）；服务端用 CIO 非 Netty（Netty 在本 VM 误用 KQueue）；桌面 UI 运行时截图因 VM 缺 libXtst.so.6 未验收；移动端返听屏二期。
+
+**里程碑记录**：
+
+- v0.2.0（2026-10-15）：SQLite + Flyway 迁移替代 JSON 存储 + Micrometer /metrics + 备份恢复演练 + 非法配置 fail-fast + 排练模式后端实现 + MP3 解码
+- v0.3.0 限流 + 就绪探针 + WS 背压（2026-10-16）：见"状态"节；JUnit 44/44 全过
