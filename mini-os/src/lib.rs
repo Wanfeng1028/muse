@@ -81,6 +81,7 @@ fn is_public_path(path: &str) -> bool {
             | "/api/auth/login"
             | "/api/auth/logout"
             | "/api/auth/setup-needed"
+            | "/api/share/list"
     ) || path.starts_with("/api/s/")
 }
 
@@ -193,6 +194,7 @@ pub fn build_app(state: Arc<AppState>) -> Router {
         .route("/api/shares", post(handlers::create_share))
         .route("/api/s/:token", get(handlers::get_share))
         .route("/api/s/:token/download", get(handlers::download_share))
+        .route("/api/share/list", get(handlers::list_share))
         // route_layer 只包装已注册路由，必须在所有 .route() 之后、fallback_service 之前，
         // 这样中间件在路由匹配之后执行，才能拿到 MatchedPath。
         .route_layer(axum::middleware::from_fn_with_state(

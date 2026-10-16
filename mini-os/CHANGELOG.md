@@ -1,6 +1,26 @@
 
 # Changelog
 
+## [1.6.0] - 2026-10-16
+
+### 新增
+- 目录分享：`POST /api/shares` 传 `{"type":"dir","path":"/目录"}` 创建目录只读分享（目录不存在 404、是文件 400、跨用户 404、非法 type 400）；`shares` 表加 `share_type` 列（迁移 004，老数据默认 `file`，`CHECK(share_type IN ('file','dir'))`）。
+- 目录浏览 API：`GET /api/share/list?token=...&path=` 返回 `{path, entries:[{name,kind,size,mtime}]}`（文件夹排前面）；`GET /api/s/:token/download?path=相对路径` 下载目录树内文件；路径穿越（`..`/空段/控制字符）一律 403。
+- 分享页 `static/share.html` 支持目录浏览：面包屑导航、文件夹点击进入、文件下载按钮；换肤为深色桌面美学（与桌面端 dark 主题同 token），去 AI 味。
+- Prometheus 指标增强（零新依赖）：`http_request_duration_seconds` 直方图（11 档桶 + `+Inf`，`_sum`/`_count`）；`vfs_files_total`、`vfs_bytes_total`、`shares_total{type}` 三个 DB 实时 gauge；路由 label 归一化（无 MatchedPath 时记 `unknown`，不用原始 URI）。
+- `GET /api/s/:token` 对目录分享返回 `shareType:"dir"`、`kind:"folder"`、`size` 为整树文件字节数之和。
+
+### 测试
+- `cargo test` 117/117 全过：lib 34（含 metrics 直方图单测 4）、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、metrics_test 4、ratelimit_test 8、share_test 6、upload_security_test 8、share_dir_test 12（新增）、metrics_v16_test 5（新增）。
+- `cargo clippy --all-targets -- -D warnings` 零警告；`cargo fmt --check` 通过。
+- 真服务冒烟（127.0.0.1:18092）：注册 200 → 建目录树 → 分享目录 201 → 访客浏览根/子目录 200 → 嵌套文件下载 200 → 路径穿越 403；4 张截图亲眼验收通过。
+
+### 已知限制
+- 目录分享 token 无过期时间、无撤销接口；删除源目录（级联删 shares 行）是唯一的撤销方式。
+- 分享为整树只读，不支持子目录/单文件级二次授权。
+- 三个 gauge 为抓取时实时查 DB，大库下每次抓取有全表 `COUNT/SUM` 开销（抓取间隔建议 ≥15s）。
+- v1.5 已知限制延续：限流桶单进程内存（多实例不共享、重启清零）、注册接口不限流、无密码复杂度/2FA。
+
 ## [1.4.0] - 2026-10-16
 
 ### 新增

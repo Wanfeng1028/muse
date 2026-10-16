@@ -7,14 +7,114 @@
 <style>
   :root {
     --primary: #3b82f6;
-    --bg: #f4f6fb;
-    --surface: #ffffff;
-    --text: #1f2937;
-    --text-muted: #6b7280;
-    --border: rgba(15, 23, 42, .10);
+    --primary-soft: rgba(59, 130, 246, .24);
+    --bg: #0b1120;
+    --bg-alt: #0f172a;
+    --surface: #16213a;
+    --surface-alt: #1b2745;
+    --text: #e5e9f0;
+    --text-muted: #94a3b8;
+    --border: rgba(148, 163, 184, .18);
     --radius: 10px;
-    --shadow-lg: 0 10px 30px rgba(15, 23, 42, .12), 0 2px 8px rgba(15, 23, 42, .06);
+    --shadow-lg: 0 20px 52px rgba(0, 0, 0, .65), 0 2px 8px rgba(0, 0, 0, .5);
     --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  }
+
+  .card.wide { max-width: 680px; }
+
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    margin: 0 0 12px;
+  }
+  .crumb {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    color: var(--primary);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: var(--font);
+  }
+  .crumb:hover { text-decoration: underline; }
+  .crumb.current { color: var(--text); cursor: default; }
+  .crumb.current:hover { text-decoration: none; }
+  .crumb-sep { color: var(--text-muted); }
+
+  .dir-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .file-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row.folder { cursor: pointer; }
+  .row.folder:hover { background: var(--surface-alt); }
+  .row-icon {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+  }
+  .row.folder .row-icon { color: var(--primary); }
+  .row-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .row-meta {
+    flex: none;
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .row-dl {
+    flex: none;
+    font-size: 13px;
+    color: var(--primary);
+    text-decoration: none;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .row-dl:hover { background: var(--primary-soft, rgba(59, 130, 246, .24)); }
+
+  .empty-dir {
+    padding: 28px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .list-error {
+    padding: 16px 0;
+    color: var(--text-muted);
+    font-size: 14px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -240,6 +340,162 @@
     contentEl.appendChild(wrap);
   }
 
+  function folderIconSvg() {
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '32');
+    svg.setAttribute('height', '32');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.5');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    var p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z');
+    svg.appendChild(p);
+    return svg;
+  }
+
+  function fmtMtime(s) {
+    if (!s) return '—';
+    return String(s).slice(0, 16);
+  }
+
+  function renderDir(token, info) {
+    var card = document.getElementById('card');
+    if (card) card.className = 'card wide';
+    contentEl.textContent = '';
+
+    var head = el('div', { 'class': 'dir-head' });
+    var iconBox = el('span', { 'class': 'row-icon' });
+    iconBox.appendChild(folderIconSvg());
+    head.appendChild(iconBox);
+    head.appendChild(el('h1', {}, [info.name || '共享目录']));
+    contentEl.appendChild(head);
+
+    var meta = el('p', { 'class': 'meta' }, ['只读分享 · 共 ' + humanSize(info.size)]);
+    contentEl.appendChild(meta);
+
+    var crumbs = el('div', { 'class': 'crumbs', 'id': 'crumbs' });
+    contentEl.appendChild(crumbs);
+
+    var list = el('div', { 'id': 'filelist' });
+    contentEl.appendChild(list);
+
+    loadDir(token, '');
+  }
+
+  function loadDir(token, path) {
+    var url = '/api/share/list?token=' + encodeURIComponent(token) + '&path=' + encodeURIComponent(path);
+    fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (res) {
+      if (res.status === 404) {
+        renderNotFound();
+        return null;
+      }
+      if (!res.ok) {
+        var list = document.getElementById('filelist');
+        if (list) {
+          list.textContent = '';
+          list.appendChild(el('div', { 'class': 'list-error' }, ['目录读取失败，点面包屑重试。']));
+        }
+        return null;
+      }
+      return res.json();
+    }).then(function (data) {
+      if (!data) return;
+      renderCrumbs(token, path);
+      renderRows(token, path, data.entries || []);
+    }).catch(function () {
+      var list = document.getElementById('filelist');
+      if (list) {
+        list.textContent = '';
+        list.appendChild(el('div', { 'class': 'list-error' }, ['目录读取失败，点面包屑重试。']));
+      }
+    });
+  }
+
+  function renderCrumbs(token, path) {
+    var crumbs = document.getElementById('crumbs');
+    if (!crumbs) return;
+    crumbs.textContent = '';
+
+    var segs = path ? path.split('/') : [];
+    var rootIsCurrent = segs.length === 0;
+
+    if (rootIsCurrent) {
+      crumbs.appendChild(el('span', { 'class': 'crumb current' }, ['根']));
+    } else {
+      crumbs.appendChild(el('button', {
+        'class': 'crumb',
+        'type': 'button',
+        'onclick': function () { loadDir(token, ''); }
+      }, ['根']));
+    }
+
+    var acc = '';
+    for (var i = 0; i < segs.length; i++) {
+      crumbs.appendChild(el('span', { 'class': 'crumb-sep' }, ['/']));
+      acc = acc ? acc + '/' + segs[i] : segs[i];
+      var isLast = (i === segs.length - 1);
+      if (isLast) {
+        crumbs.appendChild(el('span', { 'class': 'crumb current' }, [segs[i]]));
+      } else {
+        (function (target) {
+          crumbs.appendChild(el('button', {
+            'class': 'crumb',
+            'type': 'button',
+            'onclick': function () { loadDir(token, target); }
+          }, [segs[i]]));
+        })(acc);
+      }
+    }
+  }
+
+  function renderRows(token, path, entries) {
+    var list = document.getElementById('filelist');
+    if (!list) return;
+    list.textContent = '';
+
+    if (!entries.length) {
+      list.appendChild(el('div', { 'class': 'empty-dir' }, ['这个文件夹是空的。']));
+      return;
+    }
+
+    var ul = el('ul', { 'class': 'file-list' });
+
+    for (var i = 0; i < entries.length; i++) {
+      (function (entry) {
+        var isFolder = entry.kind === 'folder';
+        var sub = path ? path + '/' + entry.name : entry.name;
+        var row = el('li', { 'class': isFolder ? 'row folder' : 'row' });
+
+        if (isFolder) {
+          row.addEventListener('click', function () { loadDir(token, sub); });
+        }
+
+        var iconBox = el('span', { 'class': 'row-icon' });
+        iconBox.appendChild(isFolder ? folderIconSvg() : fileIconSvg());
+        row.appendChild(iconBox);
+
+        row.appendChild(el('span', { 'class': 'row-name' }, [entry.name]));
+
+        var sizeText = isFolder ? '—' : humanSize(entry.size);
+        row.appendChild(el('span', { 'class': 'row-meta' }, [sizeText + ' · ' + fmtMtime(entry.mtime)]));
+
+        if (!isFolder) {
+          var rel = path ? path + '/' + entry.name : entry.name;
+          var href = '/api/s/' + encodeURIComponent(token) + '/download?path=' + encodeURIComponent(rel);
+          row.appendChild(el('a', { 'class': 'row-dl', 'href': href }, ['下载']));
+        }
+
+        ul.appendChild(row);
+      })(entries[i]);
+    }
+
+    list.appendChild(ul);
+  }
+
   var token = getToken();
   if (!token) {
     renderInvalid();
@@ -262,7 +518,11 @@
     return res.json();
   }).then(function (info) {
     if (info) {
-      renderInfo(token, info);
+      if (info.shareType === 'dir') {
+        renderDir(token, info);
+      } else {
+        renderInfo(token, info);
+      }
     }
   }).catch(function () {
     renderError();

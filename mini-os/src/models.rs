@@ -130,8 +130,14 @@ pub struct SetupNeededResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateShareRequest {
-    /// 待分享的节点 id
-    pub node_id: i64,
+    /// 待分享的节点 id（file 模式必填）
+    pub node_id: Option<i64>,
+    /// 分享类型："file"（默认）或 "dir"；JSON 字段名为 type
+    #[serde(rename = "type", default)]
+    pub share_type: Option<String>,
+    /// 目录分享时的 VFS 路径，如 "/docs"；file 模式忽略
+    #[serde(default)]
+    pub path: Option<String>,
 }
 
 /// POST /api/shares 响应
@@ -154,8 +160,34 @@ pub struct ShareInfo {
     pub name: String,
     /// 类型：只取 "file" 或 "folder"
     pub kind: String,
-    /// 字节数
+    /// 字节数（目录分享时为子树内所有文件字节数之和）
     pub size: i64,
     /// MIME 类型（未设置时为 None）
     pub mime_type: Option<String>,
+    /// 分享类型："file" 或 "dir"
+    pub share_type: String,
+}
+
+/// GET /api/share/list 条目：目录分享内的一个文件/文件夹
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShareDirEntry {
+    /// 名称
+    pub name: String,
+    /// 类型：只取 "file" 或 "folder"
+    pub kind: String,
+    /// 字节数（文件夹为 0）
+    pub size: i64,
+    /// 修改时间（updated_at）
+    pub mtime: String,
+}
+
+/// GET /api/share/list 响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShareDirListing {
+    /// 当前相对路径（"" 表示分享根）
+    pub path: String,
+    /// 条目列表（文件夹在前，各按名称排序）
+    pub entries: Vec<ShareDirEntry>,
 }

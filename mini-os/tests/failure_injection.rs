@@ -262,7 +262,12 @@ fn migrations_idempotent_on_same_file() {
         let versions = migrate::applied_versions(&conn).unwrap();
         assert_eq!(
             versions,
-            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+            vec![
+                "001".to_string(),
+                "002".to_string(),
+                "003".to_string(),
+                "004".to_string()
+            ]
         );
     }
 
@@ -271,7 +276,12 @@ fn migrations_idempotent_on_same_file() {
         let versions = migrate::applied_versions(&conn).unwrap();
         assert_eq!(
             versions,
-            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+            vec![
+                "001".to_string(),
+                "002".to_string(),
+                "003".to_string(),
+                "004".to_string()
+            ]
         );
         db::seed(&conn).unwrap();
         let count: i64 = conn
@@ -309,7 +319,12 @@ fn migrations_upgrade_legacy_db() {
     let versions = migrate::applied_versions(&conn).unwrap();
     assert_eq!(
         versions,
-        vec!["001".to_string(), "002".to_string(), "003".to_string()]
+        vec![
+            "001".to_string(),
+            "002".to_string(),
+            "003".to_string(),
+            "004".to_string()
+        ]
     );
 
     let mut has_content_blob = false;

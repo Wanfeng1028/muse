@@ -16,8 +16,8 @@
 
 - **WebSocket 通道**：连接建立后服务端主动下发欢迎消息，文本消息原样回显。
 - **多用户与鉴权**（v1.3）：注册/登录（argon2id 密码哈希）、opaque session token（HttpOnly Cookie，`SESSION_TTL_SECS` 可配默认 7 天）；VFS、设置、统计按用户隔离；未登录访问 `/api/*`（除白名单）返回 401，前端自动跳登录页。
-- **访客只读分享**（v1.3）：文件管理器对文件生成分享链接（`/share.html?token=...`），访客免登录只读查看/下载，不可写。
-- **Prometheus 指标**：`GET /metrics` 暴露 `http_requests_total`、`vfs_ops_total`、`ws_connections`（文本格式，零依赖）。
+- **访客只读分享**（v1.3 文件分享，v1.6 加目录分享）：文件管理器对文件/目录生成分享链接（`/share.html?token=...`），访客免登录只读查看/下载，不可写。目录分享带面包屑浏览（`GET /api/share/list?token=...&path=`），路径穿越一律 403。
+- **Prometheus 指标**：`GET /metrics` 暴露 `http_requests_total`、`http_request_duration_seconds`（直方图）、`vfs_ops_total`、`ws_connections`、`vfs_files_total`、`vfs_bytes_total`、`shares_total{type}`（文本格式，零依赖，路由 label 已归一化防爆炸）。
 - **桌面交互**：窗口拖拽、开始菜单、实时时钟、WebSocket 连接状态指示。
 
 ## 技术栈
@@ -158,9 +158,10 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 | GET | `/api/me` | 当前登录用户（需登录） |
 | GET | `/api/auth/setup-needed` | 是否需要初始化管理员（公开） |
 | POST | `/api/auth/migrate-legacy` | 一次性把升级前的旧数据转给当前用户（需登录，无旧数据时 410） |
-| POST | `/api/shares` | 创建文件只读分享（需登录，仅 file 类型）→ 201 `{token, url}` |
-| GET | `/api/s/:token` | 分享元信息（公开，只读） |
-| GET | `/api/s/:token/download` | 分享文件下载（公开，只读） |
+| POST | `/api/shares` | 创建只读分享（需登录）：`{"nodeId":id}` 分享文件（`type` 缺省 `file`）；`{"type":"dir","path":"/目录"}` 分享目录 → 201 `{token, url}` |
+| GET | `/api/s/:token` | 分享元信息（公开，只读；目录分享返回 `shareType:"dir"`、`kind:"folder"`） |
+| GET | `/api/share/list?token=...&path=` | 目录分享浏览（公开，只读；`path` 为分享根下相对路径，返回 `{path, entries}`） |
+| GET | `/api/s/:token/download` | 分享文件下载（公开，只读；目录分享用 `?path=相对路径` 下载树内文件） |
 
 > 鉴权说明：除 `/api/health`、`/api/readyz`、`/metrics`、`/api/auth/register|login|logout|setup-needed`、`/api/s/:token` 系列公开外，其余 `/api/*` 与 `/ws` 均需登录（Cookie `mini_os_session`），未登录返回 401 `{"error":"未登录"}`。VFS/设置/统计按用户隔离，跨用户 id 返回 404。
 
@@ -172,6 +173,10 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 ![上传失败提示](docs/screenshots/files-error.png)
 ![文件列表与下载按钮（v1.4）](docs/screenshots/v14-files-list.png)
 ![可执行文件 415 失败汇总（v1.4）](docs/screenshots/v14-upload-415.png)
+![目录分享浏览（v1.6，深色）](docs/screenshots/v16-share-dir.png)
+![目录分享子目录与面包屑（v1.6）](docs/screenshots/v16-share-dir-sub.png)
+![文件分享页（v1.6，深色）](docs/screenshots/v16-share-file.png)
+![Prometheus /metrics 输出（v1.6）](docs/screenshots/v16-metrics.png)
 
 
 

@@ -265,14 +265,19 @@ journalctl -u mini-os | grep '<request_id>'
 | 指标 | 类型 | 标签 | 说明 |
 | --- | --- | --- | --- |
 | `http_requests_total` | counter | `method`、`route`、`status` | 请求计数。`route` 取 axum MatchedPath（路由模板，如 `/api/fs/:id`），`status` 为响应状态码 |
+| `http_request_duration_seconds` | histogram | `method`、`route` | 请求时长（秒）。桶：0.005/0.01/0.025/0.05/0.1/0.25/0.5/1/2.5/5/10，另有 `+Inf` 桶、`_sum`、`_count` |
 | `vfs_ops_total` | counter | `op` | VFS 操作计数：`create`（POST /api/fs）、`update`（PUT /api/fs/{id}）、`delete`（DELETE）、`upload`（上传）、`download`（下载）、`read`（查询） |
 | `ws_connections` | gauge | — | 当前 WebSocket 连接数 |
+| `vfs_files_total` | gauge | — | VFS 中文件总数（DB 实时 `COUNT(*)`） |
+| `vfs_bytes_total` | gauge | — | VFS 文件内容总字节数（DB 实时求和，BLOB 按字节、文本按 UTF-8 字节） |
+| `shares_total` | gauge | `type` | 分享总数，按 `type`（`file`/`dir`）分组（DB 实时 `GROUP BY`） |
 
 注意：
 
-- `route` 用的是路由模板而非具体路径，`/api/fs/123` 会记为 `/api/fs/:id`，避免标签基数爆炸。
+- `route` 用的是路由模板而非具体路径，`/api/s/abc123` 会记为 `/api/s/:token`，避免标签基数爆炸；取不到模板时记为 `unknown`（防御性，不应出现）。
 - 静态文件兜底（`fallback_service`）的请求不经过指标中间件，不计入 `http_requests_total`；`/metrics` 自身会计入。
 - 计数在响应返回后递增，因此一次 `/metrics` 抓取看到的是本次抓取之前的累计值。
+- 三个 gauge 是抓取时实时查 DB 算的：文件量很大时每次抓取有一次全表 `COUNT/SUM` 开销，抓取间隔建议 ≥15s；DB 锁异常时 gauge 段跳过、`/metrics` 不 500。
 
 Prometheus 抓取配置示例：
 
@@ -286,6 +291,15 @@ scrape_configs:
 ```
 
 排障：`curl -s localhost:8090/metrics | head` 应看到 `# HELP` / `# TYPE` 行；若某条业务线计数不动，先确认请求走的是 `/api/*` 路由而非静态文件。
+
+### 5.6 目录分享运维
+
+- 创建：`POST /api/shares` 传 `{"type":"dir","path":"/目录路径"}`（需登录，`path` 按登录用户解析，不存在 404、是文件 400、跨用户 404）。`file` 分享沿用 `{"nodeId":id}`（`type` 缺省即 `file`）。
+- 访客浏览：`GET /api/share/list?token=...&path=`（`path` 为分享根下相对路径，缺省为根；返回 `{path, entries:[{name,kind,size,mtime}]}`，文件夹排前面）。访客下载：`GET /api/s/:token/download?path=相对路径`。
+- 安全契约：分享整树只读；`path` 含 `..`/空段/控制字符一律 403；只能访问分享根子树内的节点；token 32 位随机 hex，DB 只存原文（无哈希），**泄露即获得只读访问**，请走 HTTPS。
+- 生命周期：分享无过期时间、无撤销接口；删除源目录（或其祖先）时 `shares` 行级联删除，分享即失效——这是目前唯一的"撤销"方式。
+- 数据：`shares.share_type`（迁移 004，`file`/`dir`，老数据默认为 `file`）；`GET /api/s/:token` 对目录分享返回 `kind:"folder"`、`size` 为整树文件字节数之和。
+- 排障：访客 403 先看 `path` 是否含 `..`；404 先确认 token 有效且源目录未被删除；`GET /api/share/list` 对 `file` 分享返回 400（仅目录分享可浏览）。
 
 ---
 

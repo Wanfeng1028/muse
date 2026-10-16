@@ -229,6 +229,39 @@ pub fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
         apply_003(conn)?;
     }
 
+    if !is_applied(conn, "004")? {
+        apply_004(conn)?;
+    }
+
+    Ok(())
+}
+
+/// 迁移 004：shares 增加 share_type 列（幂等，默认 'file'）
+fn apply_004(conn: &Connection) -> rusqlite::Result<()> {
+    let tx = conn.unchecked_transaction()?;
+
+    let mut has_share_type = false;
+    {
+        let mut stmt = tx.prepare("PRAGMA table_info(shares)")?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == "share_type" {
+                has_share_type = true;
+            }
+        }
+    }
+
+    if !has_share_type {
+        tx.execute(
+            "ALTER TABLE shares ADD COLUMN share_type TEXT NOT NULL DEFAULT 'file' \
+             CHECK(share_type IN ('file','dir'))",
+            [],
+        )?;
+    }
+
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('004')", [])?;
+    tx.commit()?;
     Ok(())
 }
 
@@ -257,7 +290,12 @@ mod tests {
         let versions = applied_versions(&conn).expect("applied versions");
         assert_eq!(
             versions,
-            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+            vec![
+                "001".to_string(),
+                "002".to_string(),
+                "003".to_string(),
+                "004".to_string()
+            ]
         );
 
         let count: i64 = conn
@@ -265,7 +303,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 3);
+        assert_eq!(count, 4);
 
         let blob_cols: i64 = conn
             .query_row(
@@ -356,13 +394,95 @@ mod tests {
         let versions = applied_versions(&conn).expect("versions");
         assert_eq!(
             versions,
-            vec!["001".to_string(), "002".to_string(), "003".to_string()]
+            vec![
+                "001".to_string(),
+                "002".to_string(),
+                "003".to_string(),
+                "004".to_string()
+            ]
         );
         let count: i64 = conn
             .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 3);
+        assert_eq!(count, 4);
+    }
+
+    #[test]
+    fn migration_004_share_type_defaults_file() {
+        let conn = Connection::open_in_memory().expect("open in-memory");
+        ensure_migrations_table(&conn).expect("migrations table");
+        apply_001(&conn).expect("apply 001");
+        apply_002(&conn).expect("apply 002");
+        apply_003(&conn).expect("apply 003");
+
+        // 003 时代：shares 表无 share_type 列
+        let cols: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('shares') WHERE name = 'share_type'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("pragma");
+        assert_eq!(cols, 0);
+
+        // 手工搭出 003 时代的库内容：一个 file 节点 + 一条老分享行
+        conn.execute(
+            "INSERT INTO vfs_nodes (id, user_id, parent_id, name, kind, content, content_blob, mime_type) \
+             VALUES (1, 1, NULL, 'legacy.txt', 'file', 'hello', NULL, NULL)",
+            [],
+        )
+        .expect("insert node");
+        conn.execute(
+            "INSERT INTO shares (token, node_id, owner_id) VALUES ('legacy-token', 1, 1)",
+            [],
+        )
+        .expect("insert legacy share");
+
+        // 升级
+        run_migrations(&conn).expect("run migrations");
+
+        // 老数据默认 'file'
+        let legacy_type: String = conn
+            .query_row(
+                "SELECT share_type FROM shares WHERE token = 'legacy-token'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("legacy share_type");
+        assert_eq!(legacy_type, "file");
+
+        // 新插入行默认 'file'
+        conn.execute(
+            "INSERT INTO shares (token, node_id, owner_id) VALUES ('new-token', 1, 1)",
+            [],
+        )
+        .expect("insert new share");
+        let new_type: String = conn
+            .query_row(
+                "SELECT share_type FROM shares WHERE token = 'new-token'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("new share_type");
+        assert_eq!(new_type, "file");
+
+        // CHECK 约束拒绝非法值
+        let bad = conn.execute(
+            "INSERT INTO shares (token, node_id, owner_id, share_type) \
+             VALUES ('bad-token', 1, 1, 'x')",
+            [],
+        );
+        assert!(bad.is_err(), "share_type='x' 应被 CHECK 约束拒绝");
+
+        // 重复 run 幂等
+        run_migrations(&conn).expect("second run");
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+                row.get(0)
+            })
+            .expect("count");
+        assert_eq!(count, 4);
     }
 }

@@ -21,7 +21,8 @@ use crate::auth;
 use crate::metrics::Metrics;
 use crate::models::{
     AppInfo, CreateNodeRequest, CreateShareRequest, LoginRequest, Node, RegisterRequest,
-    SettingRequest, ShareCreated, ShareInfo, Stats, UpdateNodeRequest, UserInfo,
+    SettingRequest, ShareCreated, ShareDirEntry, ShareDirListing, ShareInfo, Stats,
+    UpdateNodeRequest, UserInfo,
 };
 use crate::AppState;
 use rand::TryRngCore;
@@ -1124,14 +1125,22 @@ fn new_share_token() -> Result<String, String> {
     Ok(hex::encode(buf))
 }
 
-/// 分享查询行：(node_id, name, kind, content, content_blob, mime_type)
-type ShareRow = (i64, String, String, String, Option<Vec<u8>>, Option<String>);
+/// 分享查询行：(node_id, name, kind, content, content_blob, mime_type, share_type)
+type ShareRow = (
+    i64,
+    String,
+    String,
+    String,
+    Option<Vec<u8>>,
+    Option<String>,
+    String,
+);
 
 /// 按 token 查分享及其文件（公开接口用，不做用户隔离）
 fn lookup_share(conn: &rusqlite::Connection, token: &str) -> Result<Option<ShareRow>, String> {
     let row: Option<ShareRow> = conn
         .query_row(
-            "SELECT v.id, v.name, v.kind, v.content, v.content_blob, v.mime_type \
+            "SELECT v.id, v.name, v.kind, v.content, v.content_blob, v.mime_type, s.share_type \
              FROM shares s JOIN vfs_nodes v ON v.id = s.node_id WHERE s.token = ?1",
             params![token],
             |r| {
@@ -1142,6 +1151,7 @@ fn lookup_share(conn: &rusqlite::Connection, token: &str) -> Result<Option<Share
                     r.get(3)?,
                     r.get(4)?,
                     r.get(5)?,
+                    r.get(6)?,
                 ))
             },
         )
@@ -1150,26 +1160,362 @@ fn lookup_share(conn: &rusqlite::Connection, token: &str) -> Result<Option<Share
     Ok(row)
 }
 
-/// POST /api/shares：创建文件只读分享（需登录；仅 file 类型）
+/// 目录解析失败原因（创建分享时用）
+enum ShareDirError {
+    NotFound,
+    NotAFolder,
+}
+
+/// 校验单个路径段是否合法（非空、非 . / ..、无控制字符）
+fn is_valid_segment(seg: &str) -> bool {
+    if seg.is_empty() || seg == "." || seg == ".." {
+        return false;
+    }
+    !seg.chars().any(|c| c.is_control())
+}
+
+/// 在用户根下逐级解析目录路径，返回目标目录节点 id
+fn resolve_share_dir(
+    conn: &rusqlite::Connection,
+    path: &str,
+    user_id: i64,
+) -> Result<i64, ShareDirError> {
+    let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
+    if segments.is_empty() {
+        return Err(ShareDirError::NotFound);
+    }
+    for seg in &segments {
+        if !is_valid_segment(seg) {
+            return Err(ShareDirError::NotFound);
+        }
+    }
+
+    let mut current: Option<i64> = None;
+    for seg in segments {
+        let found: Option<(i64, String)> = match current {
+            None => conn
+                .query_row(
+                    "SELECT id, kind FROM vfs_nodes \
+                     WHERE parent_id IS NULL AND name = ?1 AND user_id = ?2",
+                    params![seg, user_id],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )
+                .optional(),
+            Some(pid) => conn
+                .query_row(
+                    "SELECT id, kind FROM vfs_nodes \
+                     WHERE parent_id = ?1 AND name = ?2 AND user_id = ?3",
+                    params![pid, seg, user_id],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )
+                .optional(),
+        }
+        .map_err(|_| ShareDirError::NotFound)?;
+
+        match found {
+            None => return Err(ShareDirError::NotFound),
+            Some((id, kind)) => {
+                if kind != "folder" {
+                    return Err(ShareDirError::NotAFolder);
+                }
+                current = Some(id);
+            }
+        }
+    }
+    current.ok_or(ShareDirError::NotFound)
+}
+
+/// 分享内相对路径解析结果
+struct ShareFile {
+    name: String,
+    kind: String,
+    content: String,
+    blob: Option<Vec<u8>>,
+    mime: Option<String>,
+}
+
+/// 在目录分享子树内沿相对路径下钻，返回 (节点 id, kind)。
+/// allow_empty=true 时空 rel 指向分享根（返回 Ok((root_id, "folder"))）；
+/// 否则空 rel 按非法路径 403（保持下载端点现有行为）。
+/// 非法段（空/"."/".." /控制字符）→ 403；中途找不到 → 404。
+fn walk_share_path(
+    conn: &rusqlite::Connection,
+    root_id: i64,
+    rel: &str,
+    allow_empty: bool,
+) -> Result<(i64, String), (StatusCode, Json<serde_json::Value>)> {
+    let trimmed = rel.trim().trim_start_matches('/');
+    let segments: Vec<&str> = trimmed.split('/').filter(|s| !s.is_empty()).collect();
+    if segments.is_empty() {
+        if allow_empty {
+            return Ok((root_id, "folder".to_string()));
+        }
+        return Err(err(StatusCode::FORBIDDEN, "非法路径"));
+    }
+    for seg in &segments {
+        if !is_valid_segment(seg) {
+            return Err(err(StatusCode::FORBIDDEN, "非法路径"));
+        }
+    }
+
+    let mut current = root_id;
+    let mut kind: String = "folder".to_string();
+    let last_idx = segments.len() - 1;
+    for (i, seg) in segments.iter().enumerate() {
+        let found: Option<(i64, String)> = conn
+            .query_row(
+                "SELECT id, kind FROM vfs_nodes WHERE parent_id = ?1 AND name = ?2",
+                params![current, seg],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()
+            .map_err(|_| err(StatusCode::NOT_FOUND, "分享不存在或已失效"))?;
+
+        match found {
+            None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
+            Some((id, k)) => {
+                if k != "folder" && i != last_idx {
+                    // 中间段是文件：无法继续下钻
+                    return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效"));
+                }
+                current = id;
+                kind = k;
+            }
+        }
+    }
+    Ok((current, kind))
+}
+
+/// 在目录分享的子树内按相对路径解析节点（访客访问，无用户隔离）
+fn resolve_in_share(
+    conn: &rusqlite::Connection,
+    root_id: i64,
+    rel: &str,
+) -> Result<ShareFile, (StatusCode, Json<serde_json::Value>)> {
+    let trimmed = rel.trim().trim_start_matches('/');
+    let segments: Vec<&str> = trimmed.split('/').filter(|s| !s.is_empty()).collect();
+    if segments.is_empty() {
+        return Err(err(StatusCode::FORBIDDEN, "非法路径"));
+    }
+    for seg in &segments {
+        if !is_valid_segment(seg) {
+            return Err(err(StatusCode::FORBIDDEN, "非法路径"));
+        }
+    }
+
+    let (node_id, _kind) = walk_share_path(conn, root_id, rel, false)?;
+    let last = segments
+        .last()
+        .copied()
+        .ok_or_else(|| err(StatusCode::NOT_FOUND, "分享不存在或已失效"))?;
+
+    let parent_id: i64 = if segments.len() == 1 {
+        root_id
+    } else {
+        let parent_rel = segments[..segments.len() - 1].join("/");
+        let (pid, _) = walk_share_path(conn, root_id, &parent_rel, false)?;
+        pid
+    };
+
+    conn.query_row(
+        "SELECT name, kind, content, content_blob, mime_type FROM vfs_nodes \
+         WHERE parent_id = ?1 AND name = ?2 AND id = ?3",
+        params![parent_id, last, node_id],
+        |r| {
+            Ok(ShareFile {
+                name: r.get(0)?,
+                kind: r.get(1)?,
+                content: r.get(2)?,
+                blob: r.get(3)?,
+                mime: r.get(4)?,
+            })
+        },
+    )
+    .optional()
+    .map_err(|_| err(StatusCode::NOT_FOUND, "分享不存在或已失效"))?
+    .ok_or_else(|| err(StatusCode::NOT_FOUND, "分享不存在或已失效"))
+}
+
+/// 目录分享浏览查询参数
+#[derive(Deserialize)]
+pub struct ShareListQuery {
+    pub token: String,
+    pub path: Option<String>,
+}
+
+/// GET /api/share/list?token=&path=：目录分享浏览（公开，只读）
+/// path 为分享根下的相对路径，缺省/"" 为根；返回该目录的直接子条目。
+pub async fn list_share(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<ShareListQuery>,
+) -> ApiResult {
+    let conn = state
+        .db
+        .lock()
+        .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "内部错误"))?;
+
+    let row =
+        lookup_share(&conn, &q.token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+    let (root_id, _node_name, _node_kind, _content, _blob, _mime, share_type) = match row {
+        None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
+        Some(v) => v,
+    };
+
+    if share_type != "dir" {
+        return Err(err(StatusCode::BAD_REQUEST, "仅目录分享支持浏览"));
+    }
+
+    let rel = q
+        .path
+        .as_deref()
+        .unwrap_or("")
+        .trim()
+        .trim_start_matches('/');
+    let rel = rel.to_string();
+
+    let (dir_id, kind) = walk_share_path(&conn, root_id, &rel, true)?;
+    if kind != "folder" {
+        return Err(err(StatusCode::BAD_REQUEST, "path 不是目录"));
+    }
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT name, kind, content, content_blob, updated_at FROM vfs_nodes \
+             WHERE parent_id = ?1 ORDER BY kind DESC, name ASC",
+        )
+        .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "内部错误"))?;
+
+    let rows = stmt
+        .query_map(params![dir_id], |r| {
+            let name: String = r.get(0)?;
+            let kind: String = r.get(1)?;
+            let content: Option<String> = r.get(2)?;
+            let blob: Option<Vec<u8>> = r.get(3)?;
+            let mtime: String = r.get(4)?;
+            let size: i64 = if kind == "folder" {
+                0
+            } else if let Some(b) = &blob {
+                b.len() as i64
+            } else if let Some(c) = &content {
+                c.len() as i64
+            } else {
+                0
+            };
+            Ok(ShareDirEntry {
+                name,
+                kind,
+                size,
+                mtime,
+            })
+        })
+        .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "内部错误"))?;
+
+    let mut entries: Vec<ShareDirEntry> = Vec::new();
+    for row in rows {
+        entries.push(row.map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "内部错误"))?);
+    }
+
+    Ok(Json(ShareDirListing { path: rel, entries }).into_response())
+}
+
+/// 统计目录子树内所有文件字节数之和（迭代栈）
+fn subtree_bytes(conn: &rusqlite::Connection, root_id: i64) -> Result<i64, String> {
+    let mut total: i64 = 0;
+    let mut stack: Vec<i64> = vec![root_id];
+    while let Some(id) = stack.pop() {
+        let mut stmt = conn
+            .prepare("SELECT id, kind, content, content_blob FROM vfs_nodes WHERE parent_id = ?1")
+            .map_err(|e| e.to_string())?;
+        let mut rows = stmt.query(params![id]).map_err(|e| e.to_string())?;
+        while let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            let child_id: i64 = row.get(0).map_err(|e| e.to_string())?;
+            let kind: String = row.get(1).map_err(|e| e.to_string())?;
+            if kind == "folder" {
+                stack.push(child_id);
+            } else {
+                let content: String = row.get(2).map_err(|e| e.to_string())?;
+                let blob: Option<Vec<u8>> = row.get(3).map_err(|e| e.to_string())?;
+                total += blob.as_ref().map(|b| b.len()).unwrap_or(content.len()) as i64;
+            }
+        }
+    }
+    Ok(total)
+}
+
+/// 构造文件下载响应（分块流式，两处复用）
+fn file_download_response(name: &str, bytes_vec: Vec<u8>, mime_opt: Option<String>) -> ApiResult {
+    let mime_str = mime_opt.filter(|m| !m.is_empty()).unwrap_or_else(|| {
+        mime_guess::from_path(name)
+            .first_or_octet_stream()
+            .to_string()
+    });
+
+    // 分块流式
+    const CHUNK_SIZE: usize = 65536;
+    let mut chunks: Vec<Result<Bytes, std::io::Error>> = Vec::new();
+    let mut offset = 0usize;
+    while offset < bytes_vec.len() {
+        let end = std::cmp::min(offset + CHUNK_SIZE, bytes_vec.len());
+        chunks.push(Ok(Bytes::copy_from_slice(&bytes_vec[offset..end])));
+        offset = end;
+    }
+    let body_stream = stream::iter(chunks);
+
+    let disposition = format!("attachment; filename*=UTF-8''{}", percent_encode(name));
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header("content-type", mime_str)
+        .header("content-disposition", disposition)
+        .header("content-length", bytes_vec.len().to_string())
+        .body(Body::from_stream(body_stream))
+        .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "构造响应失败"))?;
+    Ok(response)
+}
+
+/// POST /api/shares：创建只读分享（需登录；file 或 dir 类型）
 pub async fn create_share(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<auth::CurrentUser>,
     Json(req): Json<CreateShareRequest>,
 ) -> ApiResult {
     let conn = state.db.lock().unwrap();
-    let kind: Option<String> = conn
-        .query_row(
-            "SELECT kind FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
-            params![req.node_id, user.id],
-            |r| r.get(0),
-        )
-        .optional()
-        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
-    match kind.as_deref() {
-        None => return Err(err(StatusCode::NOT_FOUND, "节点不存在")),
-        Some(k) if k != "file" => return Err(err(StatusCode::BAD_REQUEST, "仅支持分享文件")),
-        _ => {}
+    let stype = req.share_type.as_deref().unwrap_or("file");
+    if stype != "file" && stype != "dir" {
+        return Err(err(StatusCode::BAD_REQUEST, "type 只支持 file 或 dir"));
     }
+
+    let node_id: i64 = if stype == "dir" {
+        let path = req.path.as_deref().unwrap_or("");
+        if path.trim().is_empty() {
+            return Err(err(StatusCode::BAD_REQUEST, "目录分享需要 path 参数"));
+        }
+        match resolve_share_dir(&conn, path, user.id) {
+            Ok(id) => id,
+            Err(ShareDirError::NotFound) => return Err(err(StatusCode::NOT_FOUND, "目录不存在")),
+            Err(ShareDirError::NotAFolder) => {
+                return Err(err(StatusCode::BAD_REQUEST, "path 不是目录"))
+            }
+        }
+    } else {
+        let node_id = match req.node_id {
+            Some(id) => id,
+            None => return Err(err(StatusCode::BAD_REQUEST, "文件分享需要 node_id")),
+        };
+        let kind: Option<String> = conn
+            .query_row(
+                "SELECT kind FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+                params![node_id, user.id],
+                |r| r.get(0),
+            )
+            .optional()
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        match kind.as_deref() {
+            None => return Err(err(StatusCode::NOT_FOUND, "节点不存在")),
+            Some(k) if k != "file" => return Err(err(StatusCode::BAD_REQUEST, "仅支持分享文件")),
+            _ => {}
+        }
+        node_id
+    };
 
     // token 碰撞重试 3 次（概率极低，防御性）
     let mut token = String::new();
@@ -1177,8 +1523,8 @@ pub async fn create_share(
     for _ in 0..3 {
         token = new_share_token().map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
         let res = conn.execute(
-            "INSERT INTO shares (token, node_id, owner_id) VALUES (?1, ?2, ?3)",
-            params![token, req.node_id, user.id],
+            "INSERT INTO shares (token, node_id, owner_id, share_type) VALUES (?1, ?2, ?3, ?4)",
+            params![token, node_id, user.id, stype],
         );
         match res {
             Ok(_) => {
@@ -1214,16 +1560,31 @@ pub async fn get_share(State(state): State<Arc<AppState>>, Path(token): Path<Str
         lookup_share(&conn, &token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
     match row {
         None => Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
-        Some((_, name, kind, content, blob, mime)) => {
-            let size = blob.as_ref().map(|b| b.len()).unwrap_or(content.len()) as i64;
-            Ok(Json(ShareInfo {
-                token,
-                name,
-                kind,
-                size,
-                mime_type: mime,
-            })
-            .into_response())
+        Some((node_id, name, kind, content, blob, mime, share_type)) => {
+            if share_type == "dir" {
+                let size = subtree_bytes(&conn, node_id)
+                    .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+                Ok(Json(ShareInfo {
+                    token,
+                    name,
+                    kind: "folder".to_string(),
+                    size,
+                    mime_type: None,
+                    share_type: "dir".to_string(),
+                })
+                .into_response())
+            } else {
+                let size = blob.as_ref().map(|b| b.len()).unwrap_or(content.len()) as i64;
+                Ok(Json(ShareInfo {
+                    token,
+                    name,
+                    kind,
+                    size,
+                    mime_type: mime,
+                    share_type: "file".to_string(),
+                })
+                .into_response())
+            }
         }
     }
 }
@@ -1232,44 +1593,34 @@ pub async fn get_share(State(state): State<Arc<AppState>>, Path(token): Path<Str
 pub async fn download_share(
     State(state): State<Arc<AppState>>,
     Path(token): Path<String>,
+    Query(q): Query<DownloadQuery>,
 ) -> ApiResult {
     let conn = state.db.lock().unwrap();
     let row =
         lookup_share(&conn, &token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
-    let (_, name, kind, content, blob, mime_opt) = match row {
+    let (root_id, name, kind, content, blob, mime_opt, share_type) = match row {
         None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
         Some(v) => v,
     };
+
+    if share_type == "dir" {
+        let rel = q.path.as_deref().unwrap_or("");
+        if rel.trim().is_empty() {
+            return Err(err(StatusCode::BAD_REQUEST, "目录分享下载需要 path 参数"));
+        }
+        let f = resolve_in_share(&conn, root_id, rel)?;
+        if f.kind == "folder" {
+            return Err(err(StatusCode::BAD_REQUEST, "不能下载目录"));
+        }
+        let bytes_vec: Vec<u8> = f.blob.unwrap_or_else(|| f.content.into_bytes());
+        return file_download_response(&f.name, bytes_vec, f.mime);
+    }
+
     if kind == "folder" {
         return Err(err(StatusCode::BAD_REQUEST, "不能下载目录"));
     }
     let bytes_vec: Vec<u8> = blob.unwrap_or_else(|| content.into_bytes());
-    let mime_str = mime_opt.filter(|m| !m.is_empty()).unwrap_or_else(|| {
-        mime_guess::from_path(&name)
-            .first_or_octet_stream()
-            .to_string()
-    });
-
-    // 分块流式
-    const CHUNK_SIZE: usize = 65536;
-    let mut chunks: Vec<Result<Bytes, std::io::Error>> = Vec::new();
-    let mut offset = 0usize;
-    while offset < bytes_vec.len() {
-        let end = std::cmp::min(offset + CHUNK_SIZE, bytes_vec.len());
-        chunks.push(Ok(Bytes::copy_from_slice(&bytes_vec[offset..end])));
-        offset = end;
-    }
-    let body_stream = stream::iter(chunks);
-
-    let disposition = format!("attachment; filename*=UTF-8''{}", percent_encode(&name));
-    let response = Response::builder()
-        .status(StatusCode::OK)
-        .header("content-type", mime_str)
-        .header("content-disposition", disposition)
-        .header("content-length", bytes_vec.len().to_string())
-        .body(Body::from_stream(body_stream))
-        .map_err(|_| err(StatusCode::INTERNAL_SERVER_ERROR, "构造响应失败"))?;
-    Ok(response)
+    file_download_response(&name, bytes_vec, mime_opt)
 }
 
 // __SHARES_END__
