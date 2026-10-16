@@ -13,19 +13,19 @@ func TestLookupHeader(t *testing.T) {
 			name:  "国家码带省份",
 			get:   func(name string) string { return "us:California" },
 			names: []string{"X-Test"},
-			want:  Location{CountryCode: "US", CountryName: "美国", Province: "California"},
+			want:  Location{CountryCode: "US", CountryName: "美国", Province: "California", City: "unknown"},
 		},
 		{
 			name:  "仅国家码",
 			get:   func(name string) string { return "JP" },
 			names: []string{"X-Test"},
-			want:  Location{CountryCode: "JP", CountryName: "日本", Province: "unknown"},
+			want:  Location{CountryCode: "JP", CountryName: "日本", Province: "unknown", City: "unknown"},
 		},
 		{
 			name:  "未收录国家码",
 			get:   func(name string) string { return "XX" },
 			names: []string{"X-Test"},
-			want:  Location{CountryCode: "XX", CountryName: "XX", Province: "unknown"},
+			want:  Location{CountryCode: "XX", CountryName: "XX", Province: "unknown", City: "unknown"},
 		},
 		{
 			name:  "国家码长度非法",
@@ -55,7 +55,7 @@ func TestLookupHeader(t *testing.T) {
 				return headers[name]
 			},
 			names: []string{"X-First", "X-Second"},
-			want:  Location{CountryCode: "CN", CountryName: "中国", Province: "浙江"},
+			want:  Location{CountryCode: "CN", CountryName: "中国", Province: "浙江", City: "unknown"},
 		},
 	}
 

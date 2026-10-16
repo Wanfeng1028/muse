@@ -12,9 +12,10 @@ type Location struct {
 	CountryCode string // ISO 3166-1 alpha-2，如 "CN"；未知为 "unknown"
 	CountryName string // 中文国名，如 "中国"；未知为 "unknown"
 	Province    string // 中文省份，如 "广东"；未知为 "unknown"
+	City        string // 中文城市，如"广州"；未知为 "unknown"
 }
 
-var Unknown = Location{CountryCode: "unknown", CountryName: "unknown", Province: "unknown"}
+var Unknown = Location{CountryCode: "unknown", CountryName: "unknown", Province: "unknown", City: "unknown"}
 
 type Resolver interface {
 	// Lookup 解析 IP；任何失败/非法/内网 IP 返回 Unknown，绝不 panic。
@@ -81,10 +82,12 @@ func (d *DB) Lookup(ip string) Location {
 		sub := record.Subdivisions[0]
 		province = pickName(sub.Names, sub.IsoCode)
 	}
+	city := pickName(record.City.Names, "")
 	return Location{
 		CountryCode: cc,
 		CountryName: countryName,
 		Province:    province,
+		City:        city,
 	}
 }
 

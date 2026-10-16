@@ -98,5 +98,6 @@ func (r *cidrResolver) Lookup(ip string) Location {
 		CountryCode: matched.cc,
 		CountryName: matched.country,
 		Province:    matched.province,
+		City:        Unknown.City,
 	}
 }

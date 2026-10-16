@@ -19,8 +19,8 @@ func TestLookupRequestTiers(t *testing.T) {
 		ip   string
 		want Location
 	}{
-		{"10.1.2.3", Location{CountryCode: "lan", CountryName: "内网", Province: "内网"}},
-		{"fd00::1", Location{CountryCode: "lan", CountryName: "内网", Province: "内网"}},
+		{"10.1.2.3", Location{CountryCode: "lan", CountryName: "内网", Province: "内网", City: "内网"}},
+		{"fd00::1", Location{CountryCode: "lan", CountryName: "内网", Province: "内网", City: "内网"}},
 		{"203.0.113.7", Unknown},
 		{"198.51.100.9", Unknown},
 		{"", Unknown},
@@ -45,7 +45,7 @@ func TestLookupRequestHeaderPriority(t *testing.T) {
 	builtinStatic = nil
 	defer func() { builtinStatic = oldStatic }()
 
-	want := Location{CountryCode: "CN", CountryName: "中国", Province: "浙江"}
+	want := Location{CountryCode: "CN", CountryName: "中国", Province: "浙江", City: "unknown"}
 	getHeader := func(name string) string {
 		if name == "X-Region" {
 			return "CN:浙江"
@@ -81,11 +81,11 @@ func TestLookupRequestBuiltinStatic(t *testing.T) {
 
 	oldStatic := builtinStatic
 	builtinStatic = NewStatic(map[string]Location{
-		"1.2.3.4": {CountryCode: "TT", CountryName: "测试国", Province: "测试省"},
+		"1.2.3.4": {CountryCode: "TT", CountryName: "测试国", Province: "测试省", City: "测试市"},
 	})
 	defer func() { builtinStatic = oldStatic }()
 
-	want := Location{CountryCode: "TT", CountryName: "测试国", Province: "测试省"}
+	want := Location{CountryCode: "TT", CountryName: "测试国", Province: "测试省", City: "测试市"}
 	if got := LookupRequest("1.2.3.4", nil); got != want {
 		t.Fatalf("LookupRequest() = %+v, want %+v", got, want)
 	}

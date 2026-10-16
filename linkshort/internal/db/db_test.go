@@ -61,7 +61,7 @@ referer TEXT NOT NULL DEFAULT ""
 	if err := d.QueryRow("PRAGMA user_version;").Scan(&version); err != nil {
 		t.Fatalf("user_version: %v", err)
 	}
-	if version != 6 {
-		t.Fatalf("want user_version 6, got %d", version)
+	if version != 7 {
+		t.Fatalf("want user_version 7, got %d", version)
 	}
 }

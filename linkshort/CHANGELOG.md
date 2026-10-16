@@ -4,6 +4,27 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [v1.9.0] - 2026-10-17
+
+### 新增
+
+- 地域分布 Web UI 面板（`/ui/geo.html`）：世界地图热力（手写 SVG，23 国简化路径，5 档着色）、国家排行（点击/独立访客/占比条，点击国家下钻看城市）、近 7 天/近 30 天切换、CSV 导出按钮；导航新增"地域分布"项。
+- `GET /api/stats/geo` 升级：新增 `days`（只接受 7/30，非法回落 30）、`country`（国家码精确过滤，供下钻用）、`city` 粒度聚合、每项 `uv`（独立访客，`COUNT(DISTINCT NULLIF(ip_hash,''))`，空哈希不计）、`total_clicks`/`total_uv`。
+- DB 迁移 v6→v7：`visits` 表新增 `city` 列（`TEXT NOT NULL DEFAULT ""`），老库自动 ALTER。
+- `geo.Location` 新增 `City` 字段：MMDB 解析城市名（zh-CN 优先），内置表/请求头走 honest unknown，不编数据。
+- 新增 `GET /api/stats/geo.csv`：地域分布 CSV 导出（BOM + encoding/csv 转义，文件名按天数区分）。
+
+### 变更
+
+- `store.GeoStats` 签名改为 `(linkID, days, country, n)`，返回 `GeoOverview`（Items/TotalClicks/TotalUV/UnknownPct/Days）；`RecordVisitGeo` 加 `city` 参数。无破坏性变更：旧查询参数缺省行为与 v1.8 一致。
+- `unknown_pct` 口径不变（country_code 为空或 unknown 的占比，内网 lan 算已知）。
+
+### 已知缺口
+
+- 内置 IP 段表无城市数据，city 精度依赖 MMDB；未配置 MMDB 时城市一律 unknown。
+- 世界地图为手写简化示意，非精确国界。
+- CSV 导出除 API 鉴权外无额外限流。
+
 ## [v1.8.0] - 2026-10-17
 
 ### 新增

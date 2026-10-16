@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>地域分布 · 短链</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="key-banner" class="key-banner" hidden>
+  还没有设置访问密钥。请到终端查看服务启动日志里的 Admin Key，然后点这里输入。
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path>
+        <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path>
+      </svg>
+      <span>短链</span>
+    </div>
+    <nav>
+      <a href="index.html" data-nav="dashboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        仪表盘
+      </a>
+      <a href="links.html" data-nav="links">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+        链接管理
+      </a>
+      <a href="new.html" data-nav="new">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        新建短链
+      </a>
+      <a href="geo.html" data-nav="geo">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3c2.5 2.5 3.5 6 3.5 9s-1 6.5-3.5 9"></path><path d="M12 3c-2.5 2.5-3.5 6-3.5 9s1 6.5 3.5 9"></path></svg>
+        地域分布
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">地域分布</div>
+      <div class="topbar-meta"><span id="geo-meta">—</span></div>
+    </header>
+
+    <div id="geo-toolbar" class="toolbar"></div>
+
+    <section class="cards" id="geo-summary">
+      <div class="card">
+        <div class="card-label">总点击</div>
+        <div class="card-value mono" id="sum-clicks">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">独立访客</div>
+        <div class="card-value mono" id="sum-uv">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">覆盖国家</div>
+        <div class="card-value mono" id="sum-countries">0</div>
+      </div>
+      <div class="card">
+        <div class="card-label">未知占比</div>
+        <div class="card-value mono" id="sum-unknown">0.0%</div>
+      </div>
+    </section>
+
+    <section class="panel" id="geo-map-panel">
+      <div class="panel-head">
+        <h2 id="map-title">世界地图</h2>
+      </div>
+      <div id="geo-map" class="chart"></div>
+    </section>
+
+    <section class="panel" id="geo-rank-panel">
+      <div class="panel-head">
+        <h2 id="rank-title">国家排行</h2>
+      </div>
+      <div id="geo-rank"></div>
+    </section>
+
+    <div id="geo-empty" hidden>
+      <p>还没有地域数据——短链被访问后，这里会按国家/城市列出访问分布。</p>
+    </div>
+  </main>
+</div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/geo-toolbar.js"></script>
+<script src="assets/js/geo-map.js"></script>
+<script src="assets/js/geo-rank.js"></script>
+<script src="assets/js/geo.js"></script>
+</body>
+</html>

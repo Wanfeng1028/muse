@@ -112,8 +112,8 @@ func TestMigrateV4ToV5(t *testing.T) {
 	if err := database.QueryRow("PRAGMA user_version;").Scan(&v); err != nil {
 		t.Fatalf("read user_version: %v", err)
 	}
-	if v != 6 {
-		t.Fatalf("user_version = %d, want 6", v)
+	if v != 7 {
+		t.Fatalf("user_version = %d, want 7", v)
 	}
 	if !columnExists(t, database, "links", "purge_after_burn") {
 		t.Fatalf("purge_after_burn column missing after migration")

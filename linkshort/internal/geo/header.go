@@ -99,6 +99,7 @@ func LookupHeader(get func(name string) string, names []string) Location {
 			CountryCode: code,
 			CountryName: countryName,
 			Province:    province,
+			City:        Unknown.City,
 		}
 	}
 

@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS visits (
 	referer TEXT NOT NULL DEFAULT "",
 	country_code TEXT NOT NULL DEFAULT "",
 	country_name TEXT NOT NULL DEFAULT "",
-	province TEXT NOT NULL DEFAULT ""
+	province TEXT NOT NULL DEFAULT "",
+	city TEXT NOT NULL DEFAULT ""
 );
 
 CREATE INDEX IF NOT EXISTS idx_visits_link_ts ON visits(link_id, ts);
@@ -350,6 +351,45 @@ func migrate(db *sql.DB) error {
 		}
 
 		if _, err := db.Exec("PRAGMA user_version = 6;"); err != nil {
+			return fmt.Errorf("set user_version: %w", err)
+		}
+	}
+
+	// v6 -> v7：visits 表新增 city（城市粒度地域统计，空=unknown）
+	if v < 7 {
+		rows, err := db.Query("PRAGMA table_info(visits);")
+		if err != nil {
+			return fmt.Errorf("pragma table_info(visits): %w", err)
+		}
+		hasCity := false
+		for rows.Next() {
+			var (
+				cid       int
+				name      string
+				ctype     string
+				notNull   int
+				dfltValue sql.NullString
+				pk        int
+			)
+			if err := rows.Scan(&cid, &name, &ctype, &notNull, &dfltValue, &pk); err != nil {
+				rows.Close()
+				return fmt.Errorf("scan table_info(visits): %w", err)
+			}
+			if name == "city" {
+				hasCity = true
+			}
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return fmt.Errorf("iterate table_info(visits): %w", err)
+		}
+		rows.Close()
+		if !hasCity {
+			if _, err := db.Exec("ALTER TABLE visits ADD COLUMN city TEXT NOT NULL DEFAULT \"\";"); err != nil {
+				return fmt.Errorf("add column city: %w", err)
+			}
+		}
+		if _, err := db.Exec("PRAGMA user_version = 7;"); err != nil {
 			return fmt.Errorf("set user_version: %w", err)
 		}
 	}

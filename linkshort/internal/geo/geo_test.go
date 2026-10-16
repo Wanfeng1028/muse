@@ -27,10 +27,10 @@ func TestNormalizeIPRejectsNonPublic(t *testing.T) {
 
 func TestStaticResolverHitAndMiss(t *testing.T) {
 	r := NewStatic(map[string]Location{
-		"8.8.8.8": {CountryCode: "US", CountryName: "美国", Province: "加利福尼亚"},
+		"8.8.8.8": {CountryCode: "US", CountryName: "美国", Province: "加利福尼亚", City: "洛杉矶"},
 	})
 	got := r.Lookup("8.8.8.8")
-	want := Location{CountryCode: "US", CountryName: "美国", Province: "加利福尼亚"}
+	want := Location{CountryCode: "US", CountryName: "美国", Province: "加利福尼亚", City: "洛杉矶"}
 	if got != want {
 		t.Fatalf("命中返回 %+v，期望 %+v", got, want)
 	}

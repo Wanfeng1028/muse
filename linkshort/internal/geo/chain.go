@@ -72,7 +72,7 @@ func LookupRequest(ip string, getHeader func(name string) string) Location {
 	}
 
 	if parsed.IsPrivate() || parsed.IsLoopback() || parsed.IsLinkLocalUnicast() || parsed.IsMulticast() || parsed.IsUnspecified() {
-		return Location{CountryCode: "lan", CountryName: "内网", Province: "内网"}
+		return Location{CountryCode: "lan", CountryName: "内网", Province: "内网", City: "内网"}
 	}
 
 	if getHeader != nil {

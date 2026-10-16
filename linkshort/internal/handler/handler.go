@@ -2,8 +2,10 @@
 package handler
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"embed"
+	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -100,6 +102,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 
 		api.Post("/import", func(w http.ResponseWriter, req *http.Request) { handleImport(w, req, st) })
 		api.Get("/export.csv", func(w http.ResponseWriter, req *http.Request) { handleExport(w, req, st) })
+		api.Get("/stats/geo.csv", func(w http.ResponseWriter, req *http.Request) { handleExportGeoCSV(w, req, st) })
 	})
 
 	// API 文档页：公开，无需鉴权。
@@ -337,7 +340,7 @@ func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st
 	ua := truncate(r.UserAgent(), 256)
 	referer := truncate(r.Referer(), 512)
 	loc := geo.LookupRequest(cip, r.Header.Get)
-	if err := st.RecordVisitGeo(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province); err != nil {
+	if err := st.RecordVisitGeo(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province, loc.City); err != nil {
 		log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
 	}
 
@@ -819,32 +822,45 @@ func handleTopReferers(w http.ResponseWriter, r *http.Request, st *store.Store) 
 	writeJSON(w, http.StatusOK, map[string]any{"items": namedStats(stats)})
 }
 
-// handleStatsGeo 返回地域分布：按国家/省份聚合的 TopN 与 unknown 占比。
-// link_id=0（默认）为全局；n 默认 8，范围 1~100。
+// handleStatsGeo 返回地域概览：按国家/省份/城市聚合的 TopN、总点击数、总 UV、unknown 占比。
+// link_id=0（默认）为全局；days 仅接受 7/30，否则按 30；country 可选；n 默认 8，范围 1~100。
 func handleStatsGeo(w http.ResponseWriter, r *http.Request, st *store.Store) {
 	linkID := parseIntDefault(r.URL.Query().Get("link_id"), 0)
 	if linkID < 0 {
 		linkID = 0
 	}
+	days := parseIntDefault(r.URL.Query().Get("days"), 30)
+	if days != 7 && days != 30 {
+		days = 30
+	}
+	country := strings.TrimSpace(r.URL.Query().Get("country"))
 	n := parseIntDefault(r.URL.Query().Get("n"), 8)
 	if n <= 0 || n > 100 {
 		n = 8
 	}
-	items, unknownPct, err := st.GeoStats(int64(linkID), n)
+	ov, err := st.GeoStats(int64(linkID), days, country, n)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	out := make([]map[string]any, 0, len(items))
-	for _, s := range items {
+	out := make([]map[string]any, 0, len(ov.Items))
+	for _, s := range ov.Items {
 		out = append(out, map[string]any{
 			"country_code": s.CountryCode,
 			"country_name": s.CountryName,
 			"province":     s.Province,
+			"city":         s.City,
 			"clicks":       s.Clicks,
+			"uv":           s.UV,
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": out, "unknown_pct": unknownPct})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"items":        out,
+		"unknown_pct":  ov.UnknownPct,
+		"total_clicks": ov.TotalClicks,
+		"total_uv":     ov.TotalUV,
+		"days":         ov.Days,
+	})
 }
 
 func namedStats(stats []model.NamedStat) []map[string]any {
@@ -886,6 +902,37 @@ func handleExport(w http.ResponseWriter, r *http.Request, st *store.Store) {
 	if err := st.ExportCSV(w); err != nil {
 		log.Printf("handler: 导出 CSV 失败: %v", err)
 	}
+}
+
+// handleExportGeoCSV 导出地域分布 CSV：国家代码,国家,省份,城市,点击,独立访客。
+func handleExportGeoCSV(w http.ResponseWriter, r *http.Request, st *store.Store) {
+	linkID := parseIntDefault(r.URL.Query().Get("link_id"), 0)
+	if linkID < 0 {
+		linkID = 0
+	}
+	days := parseIntDefault(r.URL.Query().Get("days"), 30)
+	if days != 7 && days != 30 {
+		days = 30
+	}
+	ov, err := st.GeoStats(int64(linkID), days, "", 100)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="linkshort-geo-`+strconv.Itoa(days)+`d.csv"`)
+	bw := bufio.NewWriter(w)
+	bw.WriteString("\xEF\xBB\xBF") // BOM，Excel 直接打开不乱码
+	cw := csv.NewWriter(bw)
+	cw.Write([]string{"国家代码", "国家", "省份", "城市", "点击", "独立访客"})
+	for _, s := range ov.Items {
+		cw.Write([]string{
+			s.CountryCode, s.CountryName, s.Province, s.City,
+			strconv.FormatInt(s.Clicks, 10), strconv.FormatInt(s.UV, 10),
+		})
+	}
+	cw.Flush()
+	bw.Flush()
 }
 
 // ---------- 小工具 ----------
