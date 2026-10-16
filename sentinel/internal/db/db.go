@@ -221,6 +221,16 @@ func ensureMonitorColumns(conn *sql.DB) error {
 			return fmt.Errorf("为 monitors 添加 is_public 列失败：%w", err)
 		}
 	}
+
+	has, err = columnExists(conn, "monitors", "notify_channels")
+	if err != nil {
+		return err
+	}
+	if !has {
+		if _, err := conn.Exec(`ALTER TABLE monitors ADD COLUMN notify_channels TEXT NOT NULL DEFAULT ''`); err != nil {
+			return fmt.Errorf("为 monitors 添加 notify_channels 列失败：%w", err)
+		}
+	}
 	return nil
 }
 

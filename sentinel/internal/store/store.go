@@ -22,6 +22,7 @@ type Monitor struct {
 	TenantID       int64
 	IsPublic       int
 	WebhookURL     string
+	NotifyChannels string
 	CreatedAt      string
 	UpdatedAt      string
 }
@@ -78,10 +79,10 @@ func (s *Store) CreateMonitor(m Monitor) (int64, error) {
 	now := utcNow()
 	res, err := s.db.Exec(
 		`INSERT INTO monitors
-			(name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			(name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Kind, m.Target, m.Method, m.ExpectedStatus, m.TimeoutSec,
-		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, now, now,
+		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, m.NotifyChannels, now, now,
 	)
 	if err != nil {
 		return 0, err
@@ -93,11 +94,11 @@ func (s *Store) CreateMonitor(m Monitor) (int64, error) {
 func (s *Store) GetMonitor(id int64) (Monitor, error) {
 	var m Monitor
 	err := s.db.QueryRow(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, created_at, updated_at
 		 FROM monitors WHERE id = ?`, id,
 	).Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 		&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
-		&m.WebhookURL, &m.CreatedAt, &m.UpdatedAt)
+		&m.WebhookURL, &m.NotifyChannels, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Monitor{}, sql.ErrNoRows
@@ -110,7 +111,7 @@ func (s *Store) GetMonitor(id int64) (Monitor, error) {
 // ListMonitors 按 id 升序返回全部 monitor。
 func (s *Store) ListMonitors() ([]Monitor, error) {
 	rows, err := s.db.Query(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, created_at, updated_at
 		 FROM monitors ORDER BY id ASC`)
 	if err != nil {
 		return nil, err
@@ -122,7 +123,7 @@ func (s *Store) ListMonitors() ([]Monitor, error) {
 		var m Monitor
 		if err := rows.Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
-			&m.WebhookURL, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			&m.WebhookURL, &m.NotifyChannels, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -136,7 +137,7 @@ func (s *Store) ListMonitors() ([]Monitor, error) {
 // ListMonitorsByTenant 按 id 升序返回指定租户下的全部 monitor。
 func (s *Store) ListMonitorsByTenant(tenantID int64) ([]Monitor, error) {
 	rows, err := s.db.Query(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, created_at, updated_at
 		 FROM monitors WHERE tenant_id = ? ORDER BY id ASC`, tenantID)
 	if err != nil {
 		return nil, err
@@ -148,7 +149,7 @@ func (s *Store) ListMonitorsByTenant(tenantID int64) ([]Monitor, error) {
 		var m Monitor
 		if err := rows.Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
-			&m.WebhookURL, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			&m.WebhookURL, &m.NotifyChannels, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -164,10 +165,10 @@ func (s *Store) UpdateMonitor(id int64, m Monitor) error {
 	res, err := s.db.Exec(
 		`UPDATE monitors SET
 			name = ?, kind = ?, target = ?, method = ?, expected_status = ?, timeout_sec = ?,
-			interval_sec = ?, enabled = ?, tenant_id = ?, is_public = ?, webhook_url = ?, updated_at = ?
+			interval_sec = ?, enabled = ?, tenant_id = ?, is_public = ?, webhook_url = ?, notify_channels = ?, updated_at = ?
 		 WHERE id = ?`,
 		m.Name, m.Kind, m.Target, m.Method, m.ExpectedStatus, m.TimeoutSec,
-		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, utcNow(), id,
+		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, m.NotifyChannels, utcNow(), id,
 	)
 	if err != nil {
 		return err

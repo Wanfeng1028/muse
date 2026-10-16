@@ -14,7 +14,7 @@ import (
 // Scheduler 周期性扫描到期监控并执行检查。
 type Scheduler struct {
 	store      *store.Store
-	notify     func(webhookURL, event, name, target, at, errMsg string)
+	notify     func(m store.Monitor, event, name, target, at, errMsg string)
 	sem        chan struct{}
 	tickSec    int
 	maxRetries int
@@ -23,7 +23,7 @@ type Scheduler struct {
 }
 
 // New 创建调度器。concurrency<=0 则 10；tickSec<=0 则 5。
-func New(st *store.Store, notifyFn func(webhookURL, event, name, target, at, errMsg string), concurrency, tickSec, maxRetries int) *Scheduler {
+func New(st *store.Store, notifyFn func(m store.Monitor, event, name, target, at, errMsg string), concurrency, tickSec, maxRetries int) *Scheduler {
 	if concurrency <= 0 {
 		concurrency = 10
 	}
@@ -184,7 +184,7 @@ func (s *Scheduler) record(m store.Monitor, c store.Check, prevOk, hasPrev bool)
 				log.Logger().Error("开启事件失败", "monitorID", m.ID, "err", err)
 			}
 			if s.notify != nil {
-				s.notify(m.WebhookURL, "down", m.Name, m.Target, at, c.Error)
+				s.notify(m, "down", m.Name, m.Target, at, c.Error)
 			}
 		}
 		return
@@ -207,7 +207,7 @@ func (s *Scheduler) record(m store.Monitor, c store.Check, prevOk, hasPrev bool)
 			log.Logger().Error("关闭事件失败", "monitorID", m.ID, "err", err)
 		}
 		if s.notify != nil {
-			s.notify(m.WebhookURL, "recovered", m.Name, m.Target, at, "")
+			s.notify(m, "recovered", m.Name, m.Target, at, "")
 		}
 	}
 }

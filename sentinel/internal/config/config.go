@@ -24,6 +24,18 @@ type Config struct {
 	WebhookURL string
 	APIToken   string
 
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUsername string
+	SMTPPassword string
+	SMTPFrom     string
+	SMTPTo       string
+
+	WeComWebhookURL string
+	WeComMentionAll bool
+
+	NotifyChannels []string
+
 	LogLevel string
 
 	BackupDir       string
@@ -73,6 +85,60 @@ func Load() (Config, error) {
 
 	// SENTINEL_WEBHOOK_URL：可为空。
 	cfg.WebhookURL = strings.TrimSpace(os.Getenv("SENTINEL_WEBHOOK_URL"))
+
+	// SENTINEL_SMTP_HOST：可为空。
+	cfg.SMTPHost = strings.TrimSpace(os.Getenv("SENTINEL_SMTP_HOST"))
+
+	// SENTINEL_SMTP_PORT：默认 25，范围 1~65535。
+	smtpPort, err := parseIntEnv("SENTINEL_SMTP_PORT", 25, 1, 65535)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.SMTPPort = smtpPort
+
+	// SENTINEL_SMTP_USERNAME / SENTINEL_SMTP_PASSWORD / SENTINEL_SMTP_FROM / SENTINEL_SMTP_TO：可为空。
+	cfg.SMTPUsername = strings.TrimSpace(os.Getenv("SENTINEL_SMTP_USERNAME"))
+	cfg.SMTPPassword = strings.TrimSpace(os.Getenv("SENTINEL_SMTP_PASSWORD"))
+	cfg.SMTPFrom = strings.TrimSpace(os.Getenv("SENTINEL_SMTP_FROM"))
+	cfg.SMTPTo = strings.TrimSpace(os.Getenv("SENTINEL_SMTP_TO"))
+
+	// SENTINEL_WECOM_WEBHOOK_URL：可为空。
+	cfg.WeComWebhookURL = strings.TrimSpace(os.Getenv("SENTINEL_WECOM_WEBHOOK_URL"))
+
+	// SENTINEL_WECOM_MENTION_ALL：默认 false。
+	mentionAll, err := parseBoolEnv("SENTINEL_WECOM_MENTION_ALL", false)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.WeComMentionAll = mentionAll
+
+	// SENTINEL_NOTIFY_CHANNELS：可为空；为空则默认 ["webhook"]。
+	rawChannels := strings.TrimSpace(os.Getenv("SENTINEL_NOTIFY_CHANNELS"))
+	if rawChannels == "" {
+		cfg.NotifyChannels = []string{"webhook"}
+	} else {
+		seen := make(map[string]bool)
+		channels := make([]string, 0)
+		for _, part := range strings.Split(rawChannels, ",") {
+			name := strings.ToLower(strings.TrimSpace(part))
+			if name == "" {
+				continue
+			}
+			if name != "webhook" && name != "smtp" && name != "wecom" {
+				return Config{}, fmt.Errorf("环境变量 SENTINEL_NOTIFY_CHANNELS 取值 %q 非法：仅支持 webhook/smtp/wecom（逗号分隔）", name)
+			}
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			channels = append(channels, name)
+		}
+		if len(channels) == 0 {
+			cfg.NotifyChannels = []string{"webhook"}
+		} else {
+			cfg.NotifyChannels = channels
+		}
+	}
 
 	// SENTINEL_API_TOKEN：必填。
 	cfg.APIToken = strings.TrimSpace(os.Getenv("SENTINEL_API_TOKEN"))
@@ -181,4 +247,22 @@ func parseIntEnv(name string, def, min, max int) (int, error) {
 		return 0, fmt.Errorf("环境变量 %s 取值 %d 超出范围：应为 %d~%d", name, v, min, max)
 	}
 	return v, nil
+}
+
+// parseBoolEnv 解析布尔环境变量，未设置时返回默认值。
+// 取值按小写识别 "1","true","yes","on" 为 true，"0","false","no","off" 为 false；
+// 其他返回中文错误并点名变量。
+func parseBoolEnv(name string, def bool) (bool, error) {
+	raw := strings.TrimSpace(os.Getenv(name))
+	if raw == "" {
+		return def, nil
+	}
+	switch strings.ToLower(raw) {
+	case "1", "true", "yes", "on":
+		return true, nil
+	case "0", "false", "no", "off":
+		return false, nil
+	default:
+		return false, fmt.Errorf("环境变量 %s 取值 %q 非法：应为布尔值（1/true/yes/on 或 0/false/no/off）", name, raw)
+	}
 }

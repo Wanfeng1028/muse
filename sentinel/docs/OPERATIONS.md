@@ -57,6 +57,15 @@ export SENTINEL_HOST=127.0.0.1
 | `SENTINEL_CHECK_CONCURRENCY` | `8` | 单次调度最大并发检查数 |
 | `SENTINEL_CHECK_RETRY_MAX` | `3` | 检查失败重试次数（指数退避） |
 | `SENTINEL_TICK_SEC` | `10` | 调度 tick 间隔（秒） |
+| `SENTINEL_NOTIFY_CHANNELS` | `webhook` | 全局默认告警渠道，逗号分隔：webhook / smtp / wecom |
+| `SENTINEL_SMTP_HOST` | 空 | SMTP 服务器地址，空表示关闭邮件渠道 |
+| `SENTINEL_SMTP_PORT` | `25` | SMTP 端口（465 自动用 SMTPS，587/25 按需 STARTTLS） |
+| `SENTINEL_SMTP_USERNAME` | 空 | SMTP 鉴权用户名，空表示不鉴权 |
+| `SENTINEL_SMTP_PASSWORD` | 空 | SMTP 鉴权密码 |
+| `SENTINEL_SMTP_FROM` | 空 | 发件人地址 |
+| `SENTINEL_SMTP_TO` | 空 | 收件人地址，逗号分隔多个 |
+| `SENTINEL_WECOM_WEBHOOK_URL` | 空 | 企业微信群机器人 webhook，空表示关闭该渠道 |
+| `SENTINEL_WECOM_MENTION_ALL` | `false` | 是否 @全体成员（true/false） |
 
 ## 3. 备份与恢复
 
@@ -246,6 +255,8 @@ du -sh /var/lib/docker/volumes/sentinel-*
 - 检查网络出口是否被防火墙拦。
 - 检查 URL 是否带多余空格。
 - 服务端日志里搜 `webhook` 关键字，会打印失败原因和重试次数。
+- 邮件没收到：确认 `SENTINEL_SMTP_HOST/PORT` 可达、发件人/收件人正确；日志搜 `SMTP` 看失败原因；465 端口走 SMTPS，25/587 依赖服务端 STARTTLS。
+- 企业微信没收到：用 curl 手动 POST 一条 markdown 消息到 webhook URL；日志搜 `企业微信` 看 errcode；`SENTINEL_WECOM_MENTION_ALL=true` 时正文会带 @all。
 
 ### 7.5 SQLite locked
 
@@ -265,3 +276,34 @@ database is locked
 - 日志走 `json-file` 驱动，单文件 10MB，最多 5 个，合计上限约 50MB。
 - 检查并发上限由 `SENTINEL_CHECK_CONCURRENCY` 控制，同时有 inflight 去重，防止同一个监控项被重复调度。
 - 单实例部署。多实例分布式不在当前支持范围，多副本会写坏 SQLite。
+
+## 9. 多渠道告警配置
+
+sentinel 支持三种告警渠道：webhook（原有）、邮件（SMTP）、企业微信群机器人（markdown 消息）。
+
+### 9.1 全局配置
+
+- `SENTINEL_NOTIFY_CHANNELS`：全局默认渠道，逗号分隔，如 `webhook,smtp,wecom`；默认 `webhook`。
+- 邮件渠道配 `SENTINEL_SMTP_*`（host 为空则该渠道自动跳过，不报错）。
+- 企业微信渠道配 `SENTINEL_WECOM_WEBHOOK_URL`（为空则跳过）；`SENTINEL_WECOM_MENTION_ALL=true` 可 @全体成员。
+
+### 9.2 目标级配置
+
+创建/更新监控时可传 `notify_channels` 字段（逗号分隔，如 `"smtp,wecom"`），只给该目标开指定渠道；留空则继承全局默认。响应 JSON 中同样返回 `notify_channels`（已按小写归一化）。
+
+### 9.3 发送策略
+
+- 状态翻转（down / recovered）时按渠道逐个发送，一个渠道失败不影响其他渠道。
+- 每个渠道最多重试 3 次，退避 1s、2s、4s；最终失败记服务端日志（搜 `SMTP` / `企业微信` / `Webhook` 关键字）。
+- SMTP：465 端口自动用 SMTPS；25/587 端口服务端支持 STARTTLS 则自动升级；用户名为空则不鉴权。
+- 企业微信：服务端返回 errcode 非 0 视为失败并重试。
+
+### 9.4 冒烟验证
+
+```bash
+# 起一个本地 fake SMTP 收信（示例用 python，监听 127.0.0.1:1025）
+export SENTINEL_SMTP_HOST=127.0.0.1 SENTINEL_SMTP_PORT=1025
+export SENTINEL_SMTP_FROM=sentinel@example.com SENTINEL_SMTP_TO=ops@example.com
+export SENTINEL_NOTIFY_CHANNELS=smtp
+# 另开终端用 httptest/本地服务模拟企业微信 webhook 后再加 wecom
+```

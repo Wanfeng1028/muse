@@ -78,10 +78,25 @@ func main() {
 	}
 
 	// 通知器封装
-	ntf := notify.Notifier{WebhookURL: cfg.WebhookURL}
-	notifyFn := func(event, name, target, at, errMsg, _ string) {
-		ok := ntf.Send(cfg.WebhookURL, event, name, target, at, errMsg) == nil
-		metrics.Default.RecordWebhook(ok)
+	ntf := notify.Notifier{
+		WebhookURL: cfg.WebhookURL,
+		SMTP: notify.SMTPConfig{
+			Host:     cfg.SMTPHost,
+			Port:     cfg.SMTPPort,
+			Username: cfg.SMTPUsername,
+			Password: cfg.SMTPPassword,
+			From:     cfg.SMTPFrom,
+			To:       cfg.SMTPTo,
+		},
+		WeCom: notify.WeComConfig{
+			WebhookURL: cfg.WeComWebhookURL,
+			MentionAll: cfg.WeComMentionAll,
+		},
+		Channels: cfg.NotifyChannels,
+	}
+	notifyFn := func(m store.Monitor, event, name, target, at, errMsg string) {
+		errs := ntf.Notify(notify.Target{WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels}, event, name, target, at, errMsg)
+		metrics.Default.RecordWebhook(len(errs) == 0)
 	}
 
 	// 信号上下文

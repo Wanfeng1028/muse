@@ -50,7 +50,7 @@ func newTestServer(t *testing.T) (*Server, *store.Store) {
 	if _, err := st.CreateUser(1, "tester", tokenHash); err != nil {
 		t.Fatalf("CreateUser: %v", err)
 	}
-	sc := scheduler.New(st, func(webhookURL, event, name, target, at, errMsg string) {
+	sc := scheduler.New(st, func(m store.Monitor, event, name, target, at, errMsg string) {
 		// 测试中通知为空实现
 	}, 10, 5, 2)
 	srv := New(st, sc, 2)

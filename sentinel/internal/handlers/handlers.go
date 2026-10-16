@@ -15,6 +15,7 @@ import (
 	"sentinel/internal/log"
 	"sentinel/internal/metrics"
 	"sentinel/internal/middleware"
+	"sentinel/internal/notify"
 	"sentinel/internal/scheduler"
 	"sentinel/internal/store"
 	"sentinel/internal/web"
@@ -124,6 +125,7 @@ type monitorInput struct {
 	IntervalSec    *int    `json:"interval_sec"`
 	Enabled        *int    `json:"enabled"`
 	WebhookURL     *string `json:"webhook_url"`
+	NotifyChannels *string `json:"notify_channels"`
 }
 
 // toMonitor 把请求体转为 store.Monitor 并填默认值。
@@ -163,6 +165,9 @@ func (in *monitorInput) toMonitor() store.Monitor {
 	if in.WebhookURL != nil {
 		m.WebhookURL = *in.WebhookURL
 	}
+	if in.NotifyChannels != nil {
+		m.NotifyChannels = *in.NotifyChannels
+	}
 	return m
 }
 
@@ -173,6 +178,7 @@ func validateMonitor(m *store.Monitor) error {
 	m.Target = strings.TrimSpace(m.Target)
 	m.Method = strings.TrimSpace(m.Method)
 	m.WebhookURL = strings.TrimSpace(m.WebhookURL)
+	m.NotifyChannels = strings.TrimSpace(m.NotifyChannels)
 
 	if m.Name == "" {
 		return errors.New("名称不能为空")
@@ -208,6 +214,13 @@ func validateMonitor(m *store.Monitor) error {
 	}
 	if m.Enabled != 0 && m.Enabled != 1 {
 		return errors.New("enabled 只能为 0 或 1")
+	}
+	if m.NotifyChannels != "" {
+		parsed := notify.ParseChannels(m.NotifyChannels)
+		if len(parsed) == 0 {
+			return errors.New("notify_channels 非法：仅支持 webhook/smtp/wecom（逗号分隔）")
+		}
+		m.NotifyChannels = strings.Join(parsed, ",")
 	}
 	return nil
 }
@@ -247,6 +260,7 @@ func monitorJSON(m store.Monitor) map[string]interface{} {
 		"interval_sec":    m.IntervalSec,
 		"enabled":         m.Enabled,
 		"webhook_url":     m.WebhookURL,
+		"notify_channels": m.NotifyChannels,
 		"tenant_id":       m.TenantID,
 		"is_public":       m.IsPublic,
 		"created_at":      m.CreatedAt,
