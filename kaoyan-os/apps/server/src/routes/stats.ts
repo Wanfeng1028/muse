@@ -50,16 +50,44 @@ export function registerStatsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const mistakesNew = (db.prepare(`SELECT COUNT(*) AS c FROM mistakes WHERE created_at >= ?`).get(weekStart) as { c: number }).c;
     const mistakesUnmastered = (db.prepare(`SELECT COUNT(*) AS c FROM mistakes WHERE mastered = 0`).get() as { c: number }).c;
 
-    // 模考
-    const examsTaken = (db.prepare(`SELECT COUNT(*) AS c FROM exam_records WHERE taken_at >= ? AND taken_at < ?`).get(weekStart, weekEnd) as { c: number }).c;
+  // 本周每日专注分钟
+  const dayRows = db.prepare(
+    `SELECT substr(started_at, 1, 10) AS d, SUM(minutes) AS m FROM focus_sessions WHERE substr(started_at, 1, 10) >= ? AND substr(started_at, 1, 10) < ? GROUP BY d`
+  ).all(weekStart, weekEnd) as { d: string; m: number | null }[];
+  const dayMap = new Map<string, number>();
+  for (const row of dayRows) {
+    dayMap.set(row.d, Number(row.m ?? 0));
+  }
+  const focusMinutesByDay: number[] = [0, 1, 2, 3, 4, 5, 6].map(
+    (i) => dayMap.get(addDays(weekStart, i)) ?? 0
+  );
 
-    const stats: WeeklyStats = {
-      weekStart, weekEnd, focusMinutes, focusBySubject,
-      plansTotal: planRow.total, plansDone: planRow.done,
-      wordsTotal, wordsLearned, wordsDue,
-      mistakesNew, mistakesUnmastered, examsTaken,
-    };
-    return reply.send(stats);
+  // 连续打卡（与热力图口径一致）
+  const streakRows = db.prepare(
+    `SELECT substr(started_at, 1, 10) AS d, SUM(minutes) AS m FROM focus_sessions WHERE substr(started_at, 1, 10) >= ? GROUP BY d`
+  ).all(addDays(today, -365)) as { d: string; m: number | null }[];
+  const activeDays = new Set<string>();
+  for (const row of streakRows) {
+    if (Number(row.m ?? 0) > 0) activeDays.add(row.d);
+  }
+  let cursor = activeDays.has(today) ? today : addDays(today, -1);
+  let currentStreak = 0;
+  while (activeDays.has(cursor)) {
+    currentStreak += 1;
+    cursor = addDays(cursor, -1);
+  }
+
+  // 模考
+  const examsTaken = (db.prepare(`SELECT COUNT(*) AS c FROM exam_records WHERE taken_at >= ? AND taken_at < ?`).get(weekStart, weekEnd) as { c: number }).c;
+
+  const stats: WeeklyStats = {
+    weekStart, weekEnd, focusMinutes, focusBySubject,
+    focusMinutesByDay, currentStreak,
+    plansTotal: planRow.total, plansDone: planRow.done,
+    wordsTotal, wordsLearned, wordsDue,
+    mistakesNew, mistakesUnmastered, examsTaken,
+  };
+  return reply.send(stats);
   });
 
   app.get('/api/stats/heatmap', async (request, reply) => {

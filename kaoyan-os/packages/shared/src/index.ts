@@ -43,10 +43,12 @@ export type UpdatePlanInput = Partial<CreatePlanInput & { done: boolean }>;
 
 /** 周报统计 */
 export interface WeeklyStats {
-  weekStart: string;   // 周一 YYYY-MM-DD
-  weekEnd: string;     // 下周一 YYYY-MM-DD（开区间）
+  weekStart: string; // 周一 YYYY-MM-DD
+  weekEnd: string; // 下周一 YYYY-MM-DD（开区间）
   focusMinutes: number;
   focusBySubject: Record<SubjectKey, number>;
+  focusMinutesByDay: number[]; // 7 个数：周一..周日每日专注分钟（与 focusMinutes 口径一致）
+  currentStreak: number; // 连续打卡天数：今日有专注则从今日往前数，否则从昨日往前数
   plansTotal: number;
   plansDone: number;
   wordsTotal: number;

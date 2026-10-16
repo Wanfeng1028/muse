@@ -925,3 +925,25 @@ ol {
 [data-theme="dark"] .hm-4 { background: #5b9bf3;}
 
 
+/* ============ 周报页 ============ */
+.wk-bars { display: flex; align-items: stretch; gap: 10px; height: 190px; padding-top: 8px;}
+.wk-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0;}
+.wk-bar { width: 100%; max-width: 54px; border-radius: 6px 6px 3px 3px; background: var(--border);}
+.wk-lv1 { background: #c9e2fb;}
+.wk-lv2 { background: #9cc6f7;}
+.wk-lv3 { background: #5f9df2;}
+.wk-lv4 { background: #2f74e0;}
+[data-theme="dark"].wk-lv1 { background: #1e4068;}
+[data-theme="dark"].wk-lv2 { background: #2a5d94;}
+[data-theme="dark"].wk-lv3 { background: #3a7fc9;}
+[data-theme="dark"].wk-lv4 { background: #5b9bf3;}
+.wk-bar-label { font-size: 12px; color: var(--text-sub); white-space: nowrap;}
+.wk-bar-val { font-size: 12px; color: var(--text-sub); font-weight: 600; white-space: nowrap;}
+.wk-ring-track { stroke: #e7eaf0; fill: none;}
+[data-theme="dark"].wk-ring-track { stroke: #2a3040;}
+.wk-ring-bar { stroke: #2f74e0; fill: none;}
+[data-theme="dark"].wk-ring-bar { stroke: #5b9bf3;}
+.wk-ring-text { font-size: 22px; font-weight: 800; fill: var(--text-main);}
+.wk-delta-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;}
+.wk-delta-row:last-child { border-bottom: none;}
+@media (max-width: 720px) {.wk-bars { gap: 6px;}}
