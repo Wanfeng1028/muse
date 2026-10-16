@@ -4,6 +4,20 @@
 
 # Changelog
 
+## [0.3.0] - 2026-10-16
+
+### 新增
+- IP 令牌桶限流：`STAGECUE_RATE_LIMIT_RPS`（默认 60）/ `STAGECUE_RATE_LIMIT_BURST`（默认 120）
+  环境变量配置，非法值启动即报错退出；超限返回 429 + `Retry-After` 头（秒）与 JSON 错误体；
+  `GET /healthz`、`/readyz`、`/metrics` 探针免限流。
+- `GET /readyz` 就绪检查：settings 表可读则 200 `{"status":"ready"}`，否则 503。
+- WS 广播背压：每客户端独立有界队列（64）+ 专属发送协程；队列满时丢弃最旧（DROP_OLDEST），
+  不断开慢消费者；丢弃数经 `stagecue_ws_broadcast_dropped_total` 可观测。
+- 指标新增：`stagecue_http_rate_limited_total`（429 计数）、`stagecue_ws_broadcast_dropped_total`（广播丢弃计数）。
+
+### 文档
+- `docs/OPERATIONS.md` 新增限流调参说明；`docs/TECH_DEBT.md` 关闭"限流熔断"债务项。
+
 ## [0.2.0] - 2026-10-15
 
 ### 新增

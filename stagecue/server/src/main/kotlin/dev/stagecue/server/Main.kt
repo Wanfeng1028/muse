@@ -5,6 +5,10 @@ import dev.stagecue.server.db.Database
 import dev.stagecue.server.db.SettingsStore
 import dev.stagecue.server.db.SqliteShowStore
 import dev.stagecue.server.metrics.StageMetrics
+import dev.stagecue.server.ratelimit.RateLimitSettings
+import dev.stagecue.server.ratelimit.RateLimiting
+import dev.stagecue.server.ratelimit.TokenBucketLimiter
+import dev.stagecue.server.ws.BroadcastHub
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -35,7 +39,19 @@ fun main() {
     metrics.dbMigrationsApplied(Database.lastMigrationsApplied)
 
     val server = embeddedServer(CIO, port = config.port, host = config.host) {
-        module(store, hub, settings, metrics)
+        module(
+            store, hub, settings, metrics,
+            rateLimit = RateLimitSettings(config.rateLimitRps, config.rateLimitBurst),
+            readiness = {
+                try {
+                    settings.getBoolean("rehearsal", false)
+                    true
+                } catch (e: Exception) {
+                    log.warn("readiness 检查失败", e)
+                    false
+                }
+            },
+        )
     }
 
     Runtime.getRuntime().addShutdownHook(Thread {
@@ -65,7 +81,14 @@ fun main() {
     server.start(wait = true)
 }
 
-fun Application.module(store: SqliteShowStore, hub: SyncHub, settings: SettingsStore, metrics: StageMetrics = StageMetrics()) {
+fun Application.module(
+    store: SqliteShowStore,
+    hub: SyncHub,
+    settings: SettingsStore,
+    metrics: StageMetrics = StageMetrics(),
+    rateLimit: RateLimitSettings = RateLimitSettings(),
+    readiness: () -> Boolean = { true },
+) {
     install(WebSockets) {
         pingPeriodMillis = 15_000
         timeoutMillis = 30_000
@@ -96,5 +119,12 @@ fun Application.module(store: SqliteShowStore, hub: SyncHub, settings: SettingsS
         mdc("call-id") { it.callId ?: "-" }
     }
 
-    configureRoutes(store, hub, metrics)
+    install(RateLimiting) {
+        limiter = TokenBucketLimiter(rateLimit.rps.toDouble(), rateLimit.burst, rateLimit.clock)
+        onRejected = { metrics.httpRateLimited() }
+    }
+
+    val broadcaster = BroadcastHub(metrics)
+
+    configureRoutes(store, hub, metrics, broadcaster, readiness)
 }

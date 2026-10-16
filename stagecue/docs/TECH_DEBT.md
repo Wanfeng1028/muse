@@ -2,6 +2,11 @@
 
 > 每轮发版前更新；还清一项就删一项，不许留僵尸条目。
 
+## v0.3.0 已偿还
+- WS/HTTP 限流：IP 令牌桶（STAGECUE_RATE_LIMIT_RPS/BURST 环境变量，超限 429 + Retry-After）
+- 超时/熔断：WS 广播背压——每客户端有界队列 + DROP_OLDEST 丢弃最旧 + stagecue_ws_broadcast_dropped_total 可观测；请求超时由 Ktor CIO 引擎与 WS ping 超时（30s）覆盖
+- 新增 GET /readyz 就绪探针；探针（/healthz、/readyz、/metrics）免限流
+
 ## v0.2.0 已偿还
 - SQLite + Flyway 版本化迁移（原 JSON 文件存储，无迁移机制）
 - /metrics 指标缺失
@@ -14,7 +19,6 @@
 
 | # | 债务 | 现状 / 影响 | 计划 |
 |---|------|-------------|------|
-| 1 | WS/HTTP 无限流、无超时熔断 | 局域网可信环境，v0.1.0 已声明为限制 | v0.3 评估 token-bucket 限流（触发/预备接口） |
 | 2 | 依赖更新机制 | 无 Dependabot | 跟仓库统一配（仓库级事项） |
 | 3 | 告警规则 | 无 | 基于 /metrics 配 Prometheus rule 示例（cue 触发失败率、WS 断开突增） |
 | 4 | 日志轮转 / 资源限制 | Logback 无滚动策略；docker-compose 无 memory limit | v0.3 补 |

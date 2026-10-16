@@ -14,6 +14,8 @@ data class ServerConfig(
     val logLevel: String = "INFO",
     val wsPingIntervalMs: Long = 15000,
     val corsAllowedOrigins: String = "*",
+    val rateLimitRps: Int = 60,
+    val rateLimitBurst: Int = 120,
 ) {
     companion object {
         /** 从环境变量读取并校验配置，失败抛 [ConfigException]。 */
@@ -85,6 +87,24 @@ data class ServerConfig(
                 raw
             } ?: "*"
 
+            val rateLimitRps = env["STAGECUE_RATE_LIMIT_RPS"]?.let { raw ->
+                val v = raw.toIntOrNull()
+                    ?: throw ConfigException("STAGECUE_RATE_LIMIT_RPS 必须是 >= 1 的整数，当前值：'$raw'")
+                if (v < 1) {
+                    throw ConfigException("STAGECUE_RATE_LIMIT_RPS 必须是 >= 1 的整数，当前值：'$raw'")
+                }
+                v
+            } ?: 60
+
+            val rateLimitBurst = env["STAGECUE_RATE_LIMIT_BURST"]?.let { raw ->
+                val v = raw.toIntOrNull()
+                    ?: throw ConfigException("STAGECUE_RATE_LIMIT_BURST 必须是 >= 1 的整数，当前值：'$raw'")
+                if (v < 1) {
+                    throw ConfigException("STAGECUE_RATE_LIMIT_BURST 必须是 >= 1 的整数，当前值：'$raw'")
+                }
+                v
+            } ?: 120
+
             return ServerConfig(
                 port = port,
                 host = host,
@@ -92,6 +112,8 @@ data class ServerConfig(
                 logLevel = logLevel,
                 wsPingIntervalMs = wsPingIntervalMs,
                 corsAllowedOrigins = corsAllowedOrigins,
+                rateLimitRps = rateLimitRps,
+                rateLimitBurst = rateLimitBurst,
             )
         }
     }

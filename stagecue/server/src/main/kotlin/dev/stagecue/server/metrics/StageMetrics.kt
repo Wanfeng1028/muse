@@ -44,6 +44,16 @@ class StageMetrics {
         .description("GET /api/show 请求次数")
         .register(registry)
 
+    private val httpRateLimited: Counter = Counter
+        .builder("stagecue_http_rate_limited_total")
+        .description("HTTP 请求被限流拒绝次数（429）")
+        .register(registry)
+
+    private val wsBroadcastDropped: Counter = Counter
+        .builder("stagecue_ws_broadcast_dropped_total")
+        .description("WS 广播因慢消费者丢弃的消息数（DROP_OLDEST 策略）")
+        .register(registry)
+
     private val migrationsApplied = AtomicInteger(0)
 
     init {
@@ -72,6 +82,14 @@ class StageMetrics {
 
     fun dbMigrationsApplied(n: Int) {
         migrationsApplied.set(n)
+    }
+
+    fun httpRateLimited() {
+        httpRateLimited.increment()
+    }
+
+    fun broadcastDropped(n: Long) {
+        wsBroadcastDropped.increment(n.toDouble())
     }
 
     fun scrape(): String = registry.scrape()

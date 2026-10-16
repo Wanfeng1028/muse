@@ -11,6 +11,8 @@ StageCue 是一个开源的舞台监督工具：把 cue 表放到时间轴上，
 - **排练模式**：服务端真实开关（重启不丢失），排练触发打标、不驱动真实设备，导演台一键切换。
 - **离线优先**：本地存一份 show 数据，网络断了也能继续排练，连上后自动同步。
 - **持久化**：SQLite + Flyway 版本化迁移，旧版 show.json 自动导入。
+- **限流保护**：按 IP 的令牌桶限流，突发流量超了返回 429 + 重试等待秒数，导演台正常操作不受影响。
+- **广播背压**：返听屏/灯光台网络卡顿时，服务端排队发送、实在排不下就丢旧的保新的，不会拖住导演台，也不会踢掉线。
 
 ## 对比
 
@@ -58,7 +60,8 @@ export PATH=~/workspace/toolchains/jdk/bin:$PATH
 ## 可观测性
 
 - `GET /healthz`：存活检查。
-- `GET /metrics`：Prometheus 文本格式指标（WS 连接、cue 触发/预备、HTTP 请求、DB 迁移数），详见 `docs/OPERATIONS.md`。
+- `GET /readyz`：就绪检查，数据库可读才返回 ready。
+- `GET /metrics`：Prometheus 文本格式指标（WS 连接、cue 触发/预备、HTTP 请求、限流拒绝数、广播丢弃数、DB 迁移数），详见 `docs/OPERATIONS.md`。
 - 日志：SLF4J + Logback，HTTP 请求带 `X-Request-Id`（CallId）全链路。
 
 ## 技术栈

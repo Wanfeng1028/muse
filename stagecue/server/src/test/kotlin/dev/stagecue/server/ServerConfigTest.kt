@@ -23,6 +23,45 @@ class ServerConfigTest {
         assertEquals("INFO", cfg.logLevel)
         assertEquals(15000L, cfg.wsPingIntervalMs)
         assertEquals("*", cfg.corsAllowedOrigins)
+        assertEquals(60, cfg.rateLimitRps)
+        assertEquals(120, cfg.rateLimitBurst)
+    }
+
+    @Test
+    fun `custom rate limit env parsed`() {
+        val cfg = ServerConfig.fromEnv(
+            mapOf(
+                "STAGECUE_DATA_DIR" to tempDir.absolutePath,
+                "STAGECUE_RATE_LIMIT_RPS" to "10",
+                "STAGECUE_RATE_LIMIT_BURST" to "20",
+            )
+        )
+        assertEquals(10, cfg.rateLimitRps)
+        assertEquals(20, cfg.rateLimitBurst)
+    }
+
+    @Test
+    fun `rate limit rps zero throws`() {
+        assertThrows<ConfigException> {
+            ServerConfig.fromEnv(
+                mapOf(
+                    "STAGECUE_DATA_DIR" to tempDir.absolutePath,
+                    "STAGECUE_RATE_LIMIT_RPS" to "0",
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `rate limit burst non-numeric throws`() {
+        assertThrows<ConfigException> {
+            ServerConfig.fromEnv(
+                mapOf(
+                    "STAGECUE_DATA_DIR" to tempDir.absolutePath,
+                    "STAGECUE_RATE_LIMIT_BURST" to "abc",
+                )
+            )
+        }
     }
 
     @Test

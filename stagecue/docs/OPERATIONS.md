@@ -18,6 +18,8 @@
 |---|---|---|
 | `STAGECUE_PORT` | `8080` | 同步服务监听端口 |
 | `STAGECUE_DATA_DIR` | `./data` | 数据目录，存放 stagecue.db（SQLite）与备份 |
+| `STAGECUE_RATE_LIMIT_RPS` | `60` | 每 IP 每秒补充的令牌数（限流速率） |
+| `STAGECUE_RATE_LIMIT_BURST` | `120` | 每 IP 令牌桶容量（突发上限） |
 
 示例：
 
@@ -35,6 +37,8 @@ export STAGECUE_DATA_DIR=/var/lib/stagecue
 - `STAGECUE_LOG_LEVEL` 不是 `DEBUG` / `INFO` / `WARN` / `ERROR` 之一
 - `STAGECUE_WS_PING_INTERVAL_MS` 不是 ≥1000 的整数
 - `STAGECUE_DATA_DIR` 不存在且无法创建，或不可写
+- `STAGECUE_RATE_LIMIT_RPS` 不是 ≥1 的整数
+- `STAGECUE_RATE_LIMIT_BURST` 不是 ≥1 的整数
 
 ## 启动与停止
 
@@ -118,12 +122,31 @@ systemctl start stagecue
 | `stagecue_cues_armed_total` | counter | cue 预备次数 |
 | `stagecue_http_show_requests_total` | counter | `GET /api/show` 请求次数 |
 | `stagecue_db_migrations_applied` | gauge | 启动时 Flyway 执行的迁移数 |
+| `stagecue_http_rate_limited_total` | counter | 被限流拒绝的 HTTP 请求数（429） |
+| `stagecue_ws_broadcast_dropped_total` | counter | WS 广播因慢消费者丢弃的消息数 |
 
 ## 排练模式
 
 - 服务端状态，持久化在 `settings` 表（key=`rehearsal`），重启不丢失。
 - 排练模式下触发的 cue，`CueFired.rehearsal=true` 并广播；灯光台/返听屏等执行端应只做提示、**不驱动真实设备**；导演台本地音频仍可播放（排练也要听声音）。
 - 切换：WS 发 `set_rehearsal`，服务端广播 `rehearsal_changed`；查询：`GET /api/rehearsal` 返回 `{"rehearsal": true|false}`。
+
+## 限流调参
+
+每个客户端 IP 一个令牌桶，每秒补充 RPS 个令牌、桶最多装 BURST 个；每次 HTTP/WS 请求消耗 1 个，没令牌就 429，告诉客户端多少秒后再试（Retry-After）。
+
+调参建议：
+
+- 局域网演出默认 60/120 够用。
+- 导演台是单 IP 高频操作（连点触发 cue），如果导演台被 429 拦了，把 BURST 调大（如 300）。
+- 公网暴露时 RPS 可收紧到 20~30。
+
+观察指标：
+
+- `stagecue_http_rate_limited_total` 持续增长说明有人被限流，先看是不是误伤正常客户端。
+- `stagecue_ws_broadcast_dropped_total` 增长说明有慢消费者，检查该返听屏/灯光台的网络，或考虑调大队列（目前 64，改代码常量）。
+
+探针（/healthz、/readyz、/metrics）不走限流，反向代理的健康检查不会被误杀。
 
 ## 常见故障
 
