@@ -1,0 +1,30 @@
+{
+  "name": "@botstalk/adapter-echo",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "botstalk-adapter-echo": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "echo \"no tests\" && exit 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@botstalk/protocol": "^0.1.0",
+    "@botstalk/adapter-base": "^0.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.4.0",
+    "vitest": "^3.2.0"
+  }
+}

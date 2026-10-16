@@ -1,0 +1,19 @@
+{
+  "name": "botstalk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BotsTalk — 个人 AI 团队办公室：多 personal agent 群聊",
+  "workspaces": [
+    "packages/*",
+    "gateway",
+    "adapters/*",
+    "web"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
