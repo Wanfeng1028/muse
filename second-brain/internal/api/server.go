@@ -2,16 +2,21 @@
 package api
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"io/fs"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
 	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/markdown"
+	"github.com/Wanfeng1028/muse/second-brain/internal/metrics"
+	"github.com/Wanfeng1028/muse/second-brain/internal/ratelimit"
 	"github.com/Wanfeng1028/muse/second-brain/internal/search"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 	"github.com/Wanfeng1028/muse/second-brain/internal/web"
@@ -24,6 +29,20 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	// 健康检查
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	})
+
+	// /metrics 路由（v0.12+）：Prometheus 文本格式，支持 SB_METRICS_TOKEN 鉴权。
+	reg := metrics.Default()
+	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
+		if !cfg.Metrics.Enabled {
+			writeError(w, r, http.StatusNotFound, "metrics disabled")
+			return
+		}
+		if cfg.Metrics.Token != "" && subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+cfg.Metrics.Token)) != 1 {
+			writeError(w, r, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		reg.Handler().ServeHTTP(w, r)
 	})
 
 	// 笔记列表
@@ -338,8 +357,35 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		_, _ = w.Write(data)
 	})
 
-	// 请求追踪中间件包住全部路由：透传/生成 X-Request-ID，全链路日志带 request_id。
-	return logpkg.Middleware(mux)
+	// v0.12 指标 gauge：采集时实时查库，失败记 NaN。
+	reg.SetGaugeFunc("notes_total", func() float64 {
+		s, err := st.Stats()
+		if err != nil {
+			return math.NaN()
+		}
+		return float64(s.Notes)
+	})
+	reg.SetGaugeFunc("reviews_due", func() float64 {
+		rs, err := st.ReviewStats(time.Now(), store.DefaultUser)
+		if err != nil {
+			return math.NaN()
+		}
+		return float64(rs.DueToday)
+	})
+
+	// 中间件链（外层 -> 内层）：request_id -> metrics -> ratelimit -> mux。
+	// metrics 在 ratelimit 外层，因此 429 拒绝也会被计数（route 走回退归一化）；
+	// ratelimit 在最内层，拒绝时 context 里已有 request_id，429 body 能带上。
+	var handler http.Handler = mux
+	handler = ratelimit.New(ratelimit.Config{
+		Enabled:    cfg.RateLimit.Enabled,
+		RPS:        cfg.RateLimit.RPS,
+		Burst:      cfg.RateLimit.Burst,
+		WriteRPS:   cfg.RateLimit.WriteRPS,
+		WriteBurst: cfg.RateLimit.WriteBurst,
+	}).Middleware(CurrentUser, handler)
+	handler = reg.Middleware(handler)
+	return logpkg.Middleware(handler)
 }
 
 // writeJSON 序列化并写出 JSON 响应。

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
+	"github.com/Wanfeng1028/muse/second-brain/internal/metrics"
 	"github.com/Wanfeng1028/muse/second-brain/internal/review"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
@@ -86,6 +87,8 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			writeError(w, r, http.StatusInternalServerError, err.Error())
 			return
 		}
+		// 按 grade 维度记录复习评分计数
+		metrics.Default().IncReviewGraded(*req.Grade)
 		logpkg.RequestLogger(r.Context()).Info("review.graded",
 			"note_id", id, "grade", *req.Grade, "user", CurrentUser(r),
 			"next_due", state.DueDate)

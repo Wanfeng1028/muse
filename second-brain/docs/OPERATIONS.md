@@ -178,3 +178,18 @@ docker logs second-brain 2>&1 | grep '"note.created"' | grep '"user":"alice"'
 - docker 部署：`--log-opt max-size=50m --log-opt max-file=5`。
 - systemd：`SystemMaxUse=` / `journald` 按发行版默认即可，JSON 行日志可直接 `journalctl -u second-brain -o cat | grep ...`。
 - 日志不含密码、密钥明文（推送设置接口返回已脱敏；VAPID 私钥只走环境变量）。
+
+## 指标（v0.12+）
+
+- 开关与鉴权：SB_METRICS_ENABLED（默认 true）、SB_METRICS_TOKEN（为空则 /metrics 无需鉴权；非空时需 Authorization: Bearer <token>，否则 401）。
+- 抓取：GET /metrics，Prometheus 文本格式；Prometheus 配置示例 scrape_interval 15s。
+- 指标表：http_requests_total{method,route,status}、http_request_duration_seconds{method,route}（histogram，buckets 0.005~10）、push_sent_total{channel,status}（status 含 sent/failed/failed_permanent/skipped）、reviews_graded_total{grade}、notes_total、reviews_due（默认用户的今日到期数）。
+- 注意：/metrics 自身不被 metrics 中间件记录；429 拒绝会被计数。
+
+## API 限流（v0.12+）
+
+- 双维度 token bucket：key = clientIP + 用户（X-User/CurrentUser）；读桶与写桶独立，写操作指 POST/PUT/DELETE/PATCH。
+- 变量：SB_RATE_LIMIT_ENABLED（默认 true）、SB_RATE_LIMIT_RPS（默认 20）、SB_RATE_LIMIT_BURST（默认 40）、SB_RATE_LIMIT_WRITE_RPS（默认 5）、SB_RATE_LIMIT_WRITE_BURST（默认 10）。
+- 超限：429 + Retry-After 秒头 + JSON {"error":"rate limit exceeded","request_id":"..."}。
+- 非法值启动 fail-fast：SB_RATE_LIMIT_RPS / SB_RATE_LIMIT_WRITE_RPS 设了但不是数字，或任一限流参数 <=0，服务直接 log.Fatalf 拒绝启动。
+- 调优建议：日常 20/40 够用；被爬虫打时调小 RPS；内网可信调用可 SB_RATE_LIMIT_ENABLED=false 关掉。

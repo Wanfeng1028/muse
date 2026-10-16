@@ -99,6 +99,13 @@ go run ./cmd/server
 | `SB_VAPID_PRIVATE_KEY` | Web Push 的 VAPID 私钥（base64url，32 字节）。密钥类信息只走环境变量 | 空 |
 | `SB_VAPID_SUBJECT` | VAPID 联系人，`mailto:你@邮箱` 或 `https://你的域名` | 空 |
 | `SB_LOG_LEVEL` | 日志级别：`debug`/`info`/`warn`/`error`，大小写不敏感，非法值回退 `info` | `info` |
+| `SB_METRICS_ENABLED` | 是否暴露 Prometheus 指标（`GET /metrics`），v0.12+ | `true` |
+| `SB_METRICS_TOKEN` | `/metrics` 的 Bearer 鉴权 token；为空表示不鉴权。密钥只走环境变量 | 空 |
+| `SB_RATE_LIMIT_ENABLED` | 是否开启 API 限流，v0.12+ | `true` |
+| `SB_RATE_LIMIT_RPS` | 每 IP+用户每秒令牌数（读操作），v0.12+。非法值启动直接失败 | `20` |
+| `SB_RATE_LIMIT_BURST` | 读操作桶容量，v0.12+ | `40` |
+| `SB_RATE_LIMIT_WRITE_RPS` | 写操作（POST/PUT/DELETE/PATCH）每秒令牌数，v0.12+ | `5` |
+| `SB_RATE_LIMIT_WRITE_BURST` | 写操作桶容量，v0.12+ | `10` |
 
 示例：
 
@@ -127,6 +134,67 @@ docker logs second-brain 2>&1 | grep '"request_id":"9f3a1c..."'
 ```
 
 关键操作都会打日志：建笔记（`note.created`）、复习评分（`review.graded`）、推送（`push.tick_result`），字段里都有 `request_id`，从报错一路 grep 到根因。
+
+## 指标与限流（v0.12+）
+
+### 指标
+
+`GET /metrics` 按 Prometheus exposition 格式输出。指标是手写的，没有引入新依赖。gauge 类的值在每次抓取时实时查库，所以看到的就是当前真实状态。
+
+| 指标 | 类型 | labels | 说明 |
+| --- | --- | --- | --- |
+| `http_requests_total` | counter | `method`、`route`、`status` | 每个 HTTP 请求计一次；被限流拒绝的 429 也会计数 |
+| `http_request_duration_seconds` | histogram | `method`、`route` | 请求耗时；buckets 固定为 0.005、0.01、0.025、0.05、0.1、0.25、0.5、1、2.5、5、10 |
+| `push_sent_total` | counter | `channel`、`status` | 推送结果；`status` 取值为 `sent`/`failed`/`failed_permanent`/`skipped` |
+| `reviews_graded_total` | counter | `grade` | 复习评分次数，按评分值分桶 |
+| `notes_total` | gauge | 无 | 当前笔记总数，抓取时实时查库 |
+| `reviews_due` | gauge | 无 | 默认用户今天到期的复习数，抓取时实时查库 |
+
+`/metrics` 自己不会被 metrics 中间件记录，抓取它不会污染上面的数据。
+
+### 抓取与鉴权
+
+- `SB_METRICS_ENABLED` 默认 `true`。设成 `false` 时 `GET /metrics` 返回 404。
+- `SB_METRICS_TOKEN` 为空时不鉴权，谁都能抓。非空时请求必须带 `Authorization: Bearer <token>`，token 用 constant-time 比较，不匹配返回 401。
+- token 只从环境变量读，不要写进代码或配置文件。
+
+Prometheus scrape 配置示例（15s 抓一次）：
+
+```yaml
+scrape_configs:
+  - job_name: second-brain
+    scrape_interval: 15s
+    metrics_path: /metrics
+    authorization:
+      credentials: "<你的 SB_METRICS_TOKEN>"
+    static_configs:
+      - targets: ["second-brain:8080"]
+```
+
+如果没开 token，把 `authorization` 那段删掉就行。
+
+### 限流
+
+限流在 `internal/ratelimit` 里，是 token bucket 实现。中间件链顺序（外层到内层）：
+
+```
+request_id -> metrics -> ratelimit -> mux
+```
+
+也就是先打 request_id 和指标，再进限流，被限流的请求一样会被 metrics 计到。
+
+- key 是 clientIP 加用户，两个维度一起算。
+- 读操作和写操作各用一套独立的桶，写操作更严。写方法指 `POST`/`PUT`/`DELETE`/`PATCH`。
+- `SB_RATE_LIMIT_ENABLED` 默认 `true`，设成 `false` 时直接放行不计数。
+- 读：`SB_RATE_LIMIT_RPS` 默认 `20`，`SB_RATE_LIMIT_BURST` 默认 `40`。
+- 写：`SB_RATE_LIMIT_WRITE_RPS` 默认 `5`，`SB_RATE_LIMIT_WRITE_BURST` 默认 `10`。
+- 超限返回 429，带 `Retry-After` 秒头，body 是 JSON：
+
+```json
+{"error":"rate limit exceeded","request_id":"..."}
+```
+
+- `SB_RATE_LIMIT_RPS`/`SB_RATE_LIMIT_WRITE_RPS` 设了但不是数字，或者任一限流参数 `<= 0`，启动直接 `log.Fatalf`，进程 exit 1。不会带着错配置跑起来。
 
 ## 构建与发布
 

@@ -7,6 +7,31 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-17
+
+Prometheus 指标 + API 限流
+
+### 新增
+- `internal/metrics`：手写 Prometheus exposition（零新依赖），`GET /metrics`；指标 `http_requests_total{method,route,status}`、`http_request_duration_seconds{method,route}`（histogram）、`push_sent_total{channel,status}`、`reviews_graded_total{grade}`、`notes_total`、`reviews_due`；gauge 采集时实时查库。`SB_METRICS_ENABLED`（默认 true）、`SB_METRICS_TOKEN`（Bearer 鉴权，为空不鉴权）。
+- `internal/ratelimit`：token bucket 限流中间件，按 clientIP+用户双维度 key，读/写独立桶（写=POST/PUT/DELETE/PATCH 更严）；`SB_RATE_LIMIT_ENABLED`（默认 true）、`SB_RATE_LIMIT_RPS`（20）、`SB_RATE_LIMIT_BURST`（40）、`SB_RATE_LIMIT_WRITE_RPS`（5）、`SB_RATE_LIMIT_WRITE_BURST`（10）；超限 429 + `Retry-After` 秒头 + `{"error":"rate limit exceeded","request_id":"..."}`；非法值启动 fail-fast（log.Fatalf，exit 1）。
+- 中间件链：request_id -> metrics -> ratelimit -> mux；复习评分埋点 `reviews_graded_total`，推送各结果（sent/failed/failed_permanent/skipped）埋点 `push_sent_total`。
+- 文档：README 新增「指标与限流」章节与 7 个环境变量；`docs/OPERATIONS.md` 新增指标/限流运维节。
+
+### 测试
+- metrics 8/8 全绿（exposition 格式、label 转义、histogram 桶累计、gauge（含 panic→NaN、nil 删除）、中间件路由 label 与 /metrics 跳过、50 goroutine 并发 -race）。
+- ratelimit 7/7 全绿（Validate 非法值、令牌桶 refill/耗尽、读写桶独立、禁用透传、真实 HTTP 连续打超限 429+Retry-After+request_id、写接口更严、X-Forwarded-For IP 隔离）。
+- 全量 `go test ./...` 全绿；`go build`/`go vet`/`gofmt` 全洁。
+- 真实服务冒烟（2026-10-17）：指标值正确、429 行为正确、fail-fast exit 1、token 鉴权正确。
+
+### 已知限制
+- `reviews_due` 只统计默认用户的今日到期数，多用户各自到期数暂未拆分。
+- 限流桶在单机内存里，多实例部署时每个实例独立计数（沿用 v0.10 调度器单实例假设）。
+- histogram buckets 固定，不可配。
+
+## [0.11.1] - 2026-10-16
+
+结构化日志 + request_id 全链路追踪
+
 ### 新增
 - 结构化日志：`internal/log` 包（标准库 `slog`，JSON 输出到 stdout），`SB_LOG_LEVEL` 控制级别（debug/info/warn/error，默认 info）。
 - 请求全链路追踪：中间件透传/生成 `X-Request-ID`（32 位随机串），注入 context，响应头回写；每条请求记 `http.request` 日志（request_id/method/path/status/latency_ms，5xx 用 ERROR）。

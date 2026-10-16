@@ -12,10 +12,12 @@ import (
 
 // Config 保存服务运行所需的全部配置项。
 type Config struct {
-	Addr    string // 监听地址，如 ":8080"
-	DBPath  string // SQLite 数据库文件路径
-	DataDir string // 数据目录
-	Push    PushConfig
+	Addr      string // 监听地址，如 ":8080"
+	DBPath    string // SQLite 数据库文件路径
+	DataDir   string // 数据目录
+	Push      PushConfig
+	Metrics   MetricsConfig   // 指标配置
+	RateLimit RateLimitConfig // 限流配置
 }
 
 // PushConfig 保存主动复习外部推送的配置。
@@ -38,7 +40,7 @@ type PushConfig struct {
 }
 
 // Load 从环境变量读取配置，未设置时使用默认值。
-// 支持的变量：SB_ADDR、SB_DB、SB_DATA_DIR 以及 SB_PUSH_* / SB_SMTP_* / SB_WEBHOOK_*。
+// 支持的变量：SB_ADDR、SB_DB、SB_DATA_DIR 以及 SB_PUSH_* / SB_SMTP_* / SB_WEBHOOK_* / SB_METRICS_* / SB_RATE_LIMIT_*。
 // 若推送配置校验失败，直接 log.Fatalf 让服务启动失败。
 func Load() Config {
 	cfg := Config{
@@ -63,8 +65,21 @@ func Load() Config {
 			VAPIDSubject:    os.Getenv("SB_VAPID_SUBJECT"),
 		},
 	}
+	cfg.Metrics = MetricsConfig{Enabled: getBoolEnv("SB_METRICS_ENABLED", true), Token: os.Getenv("SB_METRICS_TOKEN")}
+	rps, ok := getFloatEnv("SB_RATE_LIMIT_RPS", 20)
+	if !ok {
+		log.Fatalf("SB_RATE_LIMIT_RPS 非法: %q", os.Getenv("SB_RATE_LIMIT_RPS"))
+	}
+	wrps, ok := getFloatEnv("SB_RATE_LIMIT_WRITE_RPS", 5)
+	if !ok {
+		log.Fatalf("SB_RATE_LIMIT_WRITE_RPS 非法: %q", os.Getenv("SB_RATE_LIMIT_WRITE_RPS"))
+	}
+	cfg.RateLimit = RateLimitConfig{Enabled: getBoolEnv("SB_RATE_LIMIT_ENABLED", true), RPS: rps, Burst: getIntEnv("SB_RATE_LIMIT_BURST", 40), WriteRPS: wrps, WriteBurst: getIntEnv("SB_RATE_LIMIT_WRITE_BURST", 10)}
 	if err := cfg.Push.Validate(); err != nil {
 		log.Fatalf("推送配置无效: %v", err)
+	}
+	if err := cfg.RateLimit.Validate(); err != nil {
+		log.Fatalf("限流配置无效: %v", err)
 	}
 	return cfg
 }
@@ -162,4 +177,57 @@ func getIntEnv(key string, def int) int {
 		return def
 	}
 	return n
+}
+
+// MetricsConfig 指标导出配置。Token 为空表示 /metrics 无需鉴权。
+type MetricsConfig struct {
+	Enabled bool
+	Token   string
+}
+
+// RateLimitConfig 限流配置。
+// Enabled：是否开启限流，默认 true。
+// RPS：读桶每秒补充令牌数，默认 20。
+// Burst：读桶容量，默认 40。
+// WriteRPS：写桶每秒补充令牌数，默认 5。
+// WriteBurst：写桶容量，默认 10。
+type RateLimitConfig struct {
+	Enabled    bool
+	RPS        float64
+	Burst      int
+	WriteRPS   float64
+	WriteBurst int
+}
+
+// Validate 校验限流配置：关闭时直接通过；否则各参数必须为正。
+func (c RateLimitConfig) Validate() error {
+	if !c.Enabled {
+		return nil
+	}
+	if c.RPS <= 0 {
+		return fmt.Errorf("RPS 必须为正: %v", c.RPS)
+	}
+	if c.Burst <= 0 {
+		return fmt.Errorf("Burst 必须为正: %v", c.Burst)
+	}
+	if c.WriteRPS <= 0 {
+		return fmt.Errorf("WriteRPS 必须为正: %v", c.WriteRPS)
+	}
+	if c.WriteBurst <= 0 {
+		return fmt.Errorf("WriteBurst 必须为正: %v", c.WriteBurst)
+	}
+	return nil
+}
+
+// getFloatEnv 解析浮点环境变量。未设置返回 (def, true)；设置但解析失败返回 (0, false)。
+func getFloatEnv(key string, def float64) (float64, bool) {
+	v := os.Getenv(key)
+	if v == "" {
+		return def, true
+	}
+	f, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+	if err != nil {
+		return 0, false
+	}
+	return f, true
 }

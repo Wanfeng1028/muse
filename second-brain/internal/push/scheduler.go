@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
+	"github.com/Wanfeng1028/muse/second-brain/internal/metrics"
 	"github.com/Wanfeng1028/muse/second-brain/internal/notify"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
@@ -135,6 +136,7 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 		}
 		name := ch.sender.Name()
 		if st.HasPushedFor(dateKey, name, user) {
+			metrics.Default().IncPushSent(name, "skipped")
 			results = append(results, PushResult{Channel: name, User: user, Status: "skipped", Detail: "今日已推送"})
 			continue
 		}
@@ -153,6 +155,7 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 				if err := RecordDeadLetter(st, dateKey, name, user, rex.LastErr); err != nil {
 					slog.Error("push.dead_letter_write_failed", "channel", name, "error", err)
 				}
+				metrics.Default().IncPushSent(name, "failed_permanent")
 				results = append(results, PushResult{Channel: name, User: user, Status: "failed_permanent", Detail: detail})
 				continue
 			}
@@ -163,17 +166,20 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 			if err := st.RecordPushFor(dateKey, name, user, "failed", detail); err != nil {
 				slog.Error("push.record_write_failed", "channel", name, "user", user, "error", err)
 			}
+			metrics.Default().IncPushSent(name, "failed")
 			results = append(results, PushResult{Channel: name, User: user, Status: "failed", Detail: detail})
 			continue
 		}
 		if err := st.RecordPushFor(dateKey, name, user, "sent", ""); err != nil {
 			slog.Error("push.record_write_failed", "channel", name, "user", user, "error", err)
 		}
+		metrics.Default().IncPushSent(name, "sent")
 		results = append(results, PushResult{Channel: name, User: user, Status: "sent", Detail: ""})
 	}
 	if senders.WebPush != nil && len(items) > 0 {
 		const wpName = "webpush"
 		if st.HasPushedFor(dateKey, wpName, user) {
+			metrics.Default().IncPushSent(wpName, "skipped")
 			results = append(results, PushResult{Channel: wpName, User: user, Status: "skipped", Detail: "今日已推送"})
 		} else {
 			results = append(results, sendWebPushDigest(ctx, st, senders.WebPush, dateKey, user, len(items)))
@@ -190,6 +196,7 @@ func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushS
 		return PushResult{Channel: wpName, User: user, Status: "failed", Detail: truncateRunes("读取订阅失败: "+err.Error(), 200)}
 	}
 	if len(subs) == 0 {
+		metrics.Default().IncPushSent(wpName, "skipped")
 		return PushResult{Channel: wpName, User: user, Status: "skipped", Detail: "该用户无浏览器订阅"}
 	}
 	title := "第二大脑 · 复习提醒"
@@ -255,6 +262,7 @@ func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushS
 	} else if err := st.RecordPushFor(dateKey, wpName, user, status, detail); err != nil {
 		slog.Error("push.record_write_failed", "channel", wpName, "user", user, "error", err)
 	}
+	metrics.Default().IncPushSent(wpName, status)
 	return PushResult{Channel: wpName, User: user, Status: status, Detail: detail}
 }
 

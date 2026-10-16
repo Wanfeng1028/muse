@@ -48,6 +48,9 @@ func main() {
 	}
 
 	slog.Info("server.listening", "addr", cfg.Addr, "db", cfg.DBPath)
+	// v0.12 启动日志：暴露指标与限流配置，便于运维核对实际生效值。
+	slog.Info("server.metrics", "enabled", cfg.Metrics.Enabled, "token_protected", cfg.Metrics.Token != "")
+	slog.Info("server.ratelimit", "enabled", cfg.RateLimit.Enabled, "rps", cfg.RateLimit.RPS, "burst", cfg.RateLimit.Burst, "write_rps", cfg.RateLimit.WriteRPS, "write_burst", cfg.RateLimit.WriteBurst)
 
 	// 启动服务
 	go func() {
