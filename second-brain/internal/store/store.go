@@ -101,10 +101,17 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+
 	if err := migrateReviewsUser(db); err != nil {
 		db.Close()
 		return nil, err
 	}
+
+	if err := migratePushLogUser(db); err != nil {
+		db.Close()
+		return nil, err
+	}
+
 	attachDir := filepath.Join(filepath.Dir(path), "attachments")
 	return &Store{db: db, attachDir: attachDir}, nil
 }
@@ -162,15 +169,19 @@ func createSchema(db *sql.DB) error {
 			value TEXT NOT NULL,
 			updated_at TEXT NOT NULL
 		)`,
+
 		`CREATE TABLE IF NOT EXISTS push_log (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			date TEXT NOT NULL,
 			channel TEXT NOT NULL,
+			user_id TEXT NOT NULL DEFAULT 'local',
 			status TEXT NOT NULL,
 			detail TEXT NOT NULL DEFAULT '',
 			created_at TEXT NOT NULL
 		)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_push_log_date_channel ON push_log(date, channel)`,
+		// 注意：push_log 的唯一索引由 migratePushLogUser 统一创建（幂等）。
+		// 不能在这里直接建 (date, channel, user_id) 索引：老库在 migration 之前
+		// 还没有 user_id 列，会报 no such column。
 	}
 	for _, s := range stmts {
 		if _, err := db.Exec(s); err != nil {

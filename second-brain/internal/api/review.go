@@ -146,7 +146,58 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 				DueDate: dueDate,
 			})
 		}
+
 		writeJSON(w, http.StatusOK, map[string]interface{}{"notes": items})
+	})
+
+	// 按用户摘要（v0.9）：与 /api/review/digest 同数据源，显式返回 user 与 date
+	mux.HandleFunc("GET /api/digest", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		user := CurrentUser(r)
+		n := parseIntDefault(r.URL.Query().Get("n"), 5)
+		if n <= 0 {
+			n = 5
+		}
+		if n > 200 {
+			n = 200
+		}
+		notes, err := st.DigestNotes(time.Now(), n, user)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		type digestItem struct {
+			ID      int64    `json:"id"`
+			Title   string   `json:"title"`
+			Snippet string   `json:"snippet"`
+			Tags    []string `json:"tags"`
+			DueDate string   `json:"dueDate"`
+		}
+		items := make([]digestItem, 0, len(notes))
+		for _, note := range notes {
+			dueDate := ""
+			if s, err := st.GetReviewState(note.ID, user); err == nil {
+				dueDate = s.DueDate
+			}
+			items = append(items, digestItem{
+				ID:      note.ID,
+				Title:   note.Title,
+				Snippet: snippetOf(note.Body, 120),
+				Tags:    note.Tags,
+				DueDate: dueDate,
+			})
+		}
+		if items == nil {
+			items = []digestItem{}
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"user":  user,
+			"date":  time.Now().Format("2006-01-02"),
+			"notes": items,
+		})
 	})
 }
 

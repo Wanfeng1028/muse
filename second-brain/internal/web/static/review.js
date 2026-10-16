@@ -1,7 +1,9 @@
 (function () {
   'use strict';
 
-  const state = { queue: [], idx: 0, total: 0, digestMode: false };
+
+  const state = { queue: [], idx: 0, total: 0, digestMode: false, digestUser: '', loadSeq: 0 };
+
 
   const $el = (id) => document.getElementById(id);
 
@@ -68,7 +70,15 @@
       return;
     }
     const progress = $el('review-progress');
-    if (progress) progress.textContent = (state.idx + 1) + ' / ' + state.queue.length;
+
+    if (progress) {
+      let text = (state.idx + 1) + ' / ' + state.queue.length;
+      if (state.digestMode && state.digestUser) {
+        text += ' · ' + state.digestUser + ' 的回顾';
+      }
+      progress.textContent = text;
+    }
+
 
     const titleEl = $el('review-title');
     const snippetEl = $el('review-snippet');
@@ -156,10 +166,12 @@
 
   window.__sbStartReview = async function () {
     state.digestMode = false;
+    const seq = ++state.loadSeq;
     const flip = $el('btn-flip');
     if (flip) flip.hidden = false;
     try {
       const res = await api('/api/review/queue?limit=50');
+      if (seq !== state.loadSeq) return; // 过期请求的结果作废（v0.9 竞态修复）
       const notes = (res && res.notes) || (Array.isArray(res) ? res : []);
       state.queue = notes;
       state.idx = 0;
@@ -250,33 +262,41 @@
     });
   }
 
+
+  async function loadDigest() {
+    const seq = ++state.loadSeq;
+    try {
+      const res = await api('/api/review/digest?n=5');
+      if (seq !== state.loadSeq) return; // 过期请求的结果作废（v0.9 竞态修复）
+      const notes = (res && res.notes) || (Array.isArray(res) ? res : []);
+      if (!notes.length) {
+        state.queue = [];
+        state.idx = 0;
+        state.total = 0;
+        state.digestUser = '';
+        showEmpty();
+        return;
+      }
+      state.digestMode = true;
+      state.digestUser = (typeof window.__sbCurrentUser === 'function') ? window.__sbCurrentUser() : 'local';
+      state.queue = notes;
+      state.idx = 0;
+      state.total = notes.length;
+      const flip = $el('btn-flip');
+      if (flip) flip.hidden = false;
+      if (window.__sbShowView) window.__sbShowView('review');
+      renderCard();
+    } catch (e) {
+      // 忽略
+    }
+  }
+
   function bindDigest() {
     const btn = $el('btn-digest');
     if (!btn) return;
-    btn.addEventListener('click', async () => {
-      try {
-        const res = await api('/api/review/digest?n=5');
-        const notes = (res && res.notes) || (Array.isArray(res) ? res : []);
-        if (!notes.length) {
-          state.queue = [];
-          state.idx = 0;
-          state.total = 0;
-          showEmpty();
-          return;
-        }
-        state.digestMode = true;
-        state.queue = notes;
-        state.idx = 0;
-        state.total = notes.length;
-        const flip = $el('btn-flip');
-        if (flip) flip.hidden = false;
-        if (window.__sbShowView) window.__sbShowView('review');
-        renderCard();
-      } catch (e) {
-        // 忽略
-      }
-    });
+    btn.addEventListener('click', loadDigest);
   }
+
 
   function bindExit() {
     const btn = $el('btn-review-exit');
@@ -286,14 +306,21 @@
     });
   }
 
+
   // v0.6：使用者切换时按新身份刷新徽标/横幅；若正停在复习视图则重载队列。
+  // v0.9：digest 模式下按新使用者重载今日回顾。
   window.__sbOnUserChange = function () {
     refreshBadge();
     const rv = $el('review-view');
-    if (rv && !rv.hidden && typeof window.__sbStartReview === 'function') {
-      window.__sbStartReview();
+    if (rv && !rv.hidden) {
+      if (state.digestMode && typeof loadDigest === 'function') {
+        loadDigest();
+      } else if (typeof window.__sbStartReview === 'function') {
+        window.__sbStartReview();
+      }
     }
   };
+
 
   function init() {
     ensureBanner();

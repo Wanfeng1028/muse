@@ -18,6 +18,7 @@ import (
 // PushResult 表示一次推送尝试的结果。
 type PushResult struct {
 	Channel string
+	User    string
 	Status  string
 	Detail  string
 }
@@ -70,22 +71,20 @@ func NextPushTime(now time.Time, clockTime string, loc *time.Location) (time.Tim
 	return candidate, nil
 }
 
-// RunPush 执行一次推送。now 可注入以便测试。
-// 单个通道失败不影响其他通道。
-func RunPush(ctx context.Context, st *store.Store, senders SenderSet, pc config.PushConfig, now time.Time) []PushResult {
+// RunPushForUser 对单个用户执行一次推送。now 可注入以便测试。单个通道失败不影响其他通道。
+func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc config.PushConfig, now time.Time, user string) []PushResult {
+	user = store.NormalizeUser(user)
 	loc, err := time.LoadLocation(pc.Timezone)
 	if err != nil || pc.Timezone == "" {
 		loc = time.Local
 	}
 	dateKey := now.In(loc).Format("2006-01-02")
 
-	// 推送暂按默认用户聚合，多用户推送见后续计划
-	due, err := st.ListDueReviews(now, 50, store.DefaultUser)
+	due, err := st.ListDueReviews(now, 50, user)
 	if err != nil {
 		log.Printf("推送获取待复习列表失败: %v", err)
 	}
-	// 推送暂按默认用户聚合，多用户推送见后续计划
-	stats, err := st.ReviewStats(now, store.DefaultUser)
+	stats, err := st.ReviewStats(now, user)
 	if err != nil {
 		log.Printf("推送获取复习统计失败: %v", err)
 	}
@@ -116,8 +115,8 @@ func RunPush(ctx context.Context, st *store.Store, senders SenderSet, pc config.
 			continue
 		}
 		name := ch.sender.Name()
-		if st.HasPushed(dateKey, name) {
-			results = append(results, PushResult{Channel: name, Status: "skipped", Detail: "今日已推送"})
+		if st.HasPushedFor(dateKey, name, user) {
+			results = append(results, PushResult{Channel: name, User: user, Status: "skipped", Detail: "今日已推送"})
 			continue
 		}
 
@@ -131,16 +130,33 @@ func RunPush(ctx context.Context, st *store.Store, senders SenderSet, pc config.
 			if len(detail) > 200 {
 				detail = detail[:200]
 			}
-			if err := st.RecordPush(dateKey, name, "failed", detail); err != nil {
+			if err := st.RecordPushFor(dateKey, name, user, "failed", detail); err != nil {
 				log.Printf("推送记录写入失败 (%s): %v", name, err)
 			}
-			results = append(results, PushResult{Channel: name, Status: "failed", Detail: detail})
+			results = append(results, PushResult{Channel: name, User: user, Status: "failed", Detail: detail})
 			continue
 		}
-		if err := st.RecordPush(dateKey, name, "sent", ""); err != nil {
+		if err := st.RecordPushFor(dateKey, name, user, "sent", ""); err != nil {
 			log.Printf("推送记录写入失败 (%s): %v", name, err)
 		}
-		results = append(results, PushResult{Channel: name, Status: "sent", Detail: ""})
+		results = append(results, PushResult{Channel: name, User: user, Status: "sent", Detail: ""})
+	}
+	return results
+}
+
+// RunPush 执行一次推送：按有到期回顾的用户循环分发，每个用户独立 digest。无用户到期时回退为默认用户单次推送（保持空库行为与旧测试兼容）。
+func RunPush(ctx context.Context, st *store.Store, senders SenderSet, pc config.PushConfig, now time.Time) []PushResult {
+	users, err := st.ListUsersWithDueReviews(now)
+	if err != nil {
+		log.Printf("推送获取到期用户列表失败: %v", err)
+		users = nil
+	}
+	if len(users) == 0 {
+		users = []string{store.DefaultUser}
+	}
+	var results []PushResult
+	for _, u := range users {
+		results = append(results, RunPushForUser(ctx, st, senders, pc, now, u)...)
 	}
 	return results
 }
@@ -261,11 +277,21 @@ func (s *Scheduler) tick(loc *time.Location) {
 		return
 	}
 	dateKey := local.Format("2006-01-02")
-	if s.st.HasPushed(dateKey, "smtp") || s.st.HasPushed(dateKey, "webhook") {
+	users, err := s.st.ListUsersWithDueReviews(now)
+	if err != nil {
+		log.Printf("推送获取到期用户列表失败: %v", err)
 		return
 	}
-	results := RunPush(context.Background(), s.st, s.senders, s.pc, now)
-	for _, r := range results {
-		log.Printf("推送 %s: %s %s", r.Channel, r.Status, r.Detail)
+	if len(users) == 0 {
+		users = []string{store.DefaultUser}
+	}
+	for _, u := range users {
+		if s.st.HasPushedFor(dateKey, "smtp", u) || s.st.HasPushedFor(dateKey, "webhook", u) {
+			continue
+		}
+		results := RunPushForUser(context.Background(), s.st, s.senders, s.pc, now, u)
+		for _, r := range results {
+			log.Printf("推送 %s@%s: %s %s", r.Channel, r.User, r.Status, r.Detail)
+		}
 	}
 }

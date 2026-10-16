@@ -360,7 +360,8 @@ func handlePushHistory(st *store.Store) http.HandlerFunc {
 		}
 
 		limit := parseIntDefault(r.URL.Query().Get("limit"), 50)
-		records, err := st.ListPushLog(limit)
+		records, err := st.ListPushLogFor(limit, r.URL.Query().Get("user"))
+
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "读取推送历史失败")
 			return
