@@ -87,11 +87,12 @@
 - **v0.6.0「多用户复习隔离」（2026-10-16）**：一台机器、多个人各记各的复习进度——`reviews` 表加 `user_id` 列，主键改为 `(note_id, user_id)` 复合；新库直接建新 schema，老库打开自动迁移（加列 + 重建主键，幂等，历史数据归属 `local`）；`internal/store/user.go`（`NormalizeUser`/`DefaultUser`）；复习查询（`GetReviewState`/`RecordReview`/`ListDueReviews`/`ReviewStats`/`DigestNotes`）全部按用户过滤；`CreateNoteFor(n, user)` 建笔记时复习行归属当前用户；`internal/api/user.go`（`CurrentUser(r)` 从 `X-User` 头 / `?user=` 参数解析，默认 `local`）；复习四组 API 与 `POST /api/notes` 按用户隔离；前端侧边栏顶部"使用者"切换器（身份记 localStorage `sb-user`，每请求自动带 `X-User` 头；徽标/队列/统计/每日回顾按当前使用者刷新）；定时推送暂按默认 `local` 用户聚合（后续计划支持按用户推送）；store 新增隔离测试 8 例 + api 真实 HTTP 隔离测试 5 例；`go test ./...` 全量 **127/127**（v0.5.0 的 114 + 新增 13），`go vet`/`gofmt` 全洁
 - **v0.7「PWA」（2026-10-16）**：能装到手机桌面当 App 用——Web App Manifest（192/512/maskable 图标、主题色 #4f7cff、独立 SVG favicon，非字母 logo）+ Service Worker（应用壳预缓存、导航离线回退、GET API stale-while-revalidate）+ IndexedDB 离线写队列（断网保存/删除/评分入队，联网顺序回放）+ 安装提示 UI（Chromium 自动横幅 + iOS 手动"添加到主屏幕"说明，`docs/PWA_INSTALL.md`）；`internal/api/pwa_test.go`（manifest 字段与图标存在性、sw.js 响应头、缓存清单一致性回归）；`go test ./...` 全量 **130/130**，`go vet`/`gofmt` 全洁；真实服务冒烟（manifest/sw.js/index 均为 200）；安装横幅截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.md`；诚实边界：推送通知暂不支持、iOS 无后台同步（靠 online 事件回放）、离线新建笔记回放会产生新 id、局域网 HTTP 下 PWA 不可用（需 HTTPS 或 localhost）
 - **v0.8.0「搜索相关性升级」（2026-10-16）**：中文搜索可解释——`ScoreDetailed`/`RankDetailed`/`QueryTerms`、中文停用字、标题/标签/正文加权（修 `SearchNotes` SQL 不查标签致加权成死代码）、分数 meta 可解释；前端命中词 mark 高亮 + 命中原因标注；`GET /api/search` 响应体数组→对象 `{query,terms,notes,meta}`（不兼容变更，已标注）；`go test ./...` 全量 **126/126**（新增 14），`go vet`/`gofmt` 全洁；真实冒烟（6 篇中文笔记排序正确）；搜索高亮截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.8.0.md`。已知边界：CJK 仍逐字切分、多词 AND 语义
+- **v0.9「按用户推送」（2026-10-16）**：`push_log` 加 `user_id` 列 + 幂等迁移（老数据回填 `local`）；`ListUsersWithDueReviews`/`HasPushedFor`/`RecordPushFor` 按用户隔离；推送调度按用户循环分发；前端回顾页按当前使用者刷新；`go test ./...` 全绿（新增 13 例）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.9.md`
+- **v0.10「PWA 推送通知」（2026-10-16）**：Web Push（VAPID）——`push_subscriptions` 表（endpoint 全局唯一、按用户隔离）+ `SB_VAPID_*` 三配置（未配齐相关 API 明确 503）+ 订阅管理 API（POST/DELETE/GET `/api/push/subscriptions`、`GET /api/push/vapid-public-key`，密钥脱敏）+ `internal/notify/webpush.go`（webpush-go，410/404 自动清理失效订阅）+ Scheduler 集成（按用户推送到期复习提醒，与 SMTP/Webhook 共用去重）+ 前端推送设置页「浏览器推送」区 + `webpush.js` + sw.js push/notificationclick；`go test ./...` **157/157**（新增 18），`go vet`/`gofmt` 全洁；真实冒烟（mock push service 捕获 aes128gcm 加密载荷，vapid 头校验）全通；两态截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.10.md`。已知限制：调度器单实例假设；iOS 需 16.4+ 且已安装到主屏幕；无到期复习时不推送
 
 **后续计划**：
 
-- 按用户推送（v0.6.0 暂按 local 聚合）
-- 推送通知（PWA）
+- 发送重试（v0.10 未通过项排期 v0.11）、结构化日志/request_id、metrics、API 限流
 
 ## drama-factory「AI 短剧工坊」
 
@@ -210,12 +211,14 @@
 - v1.2.0 生产级运维补强（2026-10-16）：`schema_migrations` 版本化迁移（001/002，幂等，老库自动升级）+ `GET /api/readyz` 就绪探针（DB 真实可查 200/503）+ JSONL 结构化日志（`x-request-id` 透传/生成）+ SIGTERM/Ctrl+C 优雅关闭（`SHUTDOWN_TIMEOUT_SECS` 只约束排空阶段）+ CLI `backup/restore` 子命令（在线备份/完整性校验/自动快照/原子替换）+ `scripts/` 四件套（backup.sh 保留 7 个、restore.sh、load_check.py、fault_drill.sh）+ `docker-compose.yml`（本机无 daemon 未实跑）+ `docs/OPERATIONS.md`；失败注入 8 例；真实负载 300 文件 0 失败（avg 74.93ms）；`fault_drill.sh` 全 PASS（kill -9 数据不丢、备份→删库→恢复一致、损坏备份 exit 3 拒绝、SIGTERM exit 0）。本轮抓真 bug 两处：dpsk 漏开 rusqlite `backup` feature（编译失败，补 feature 门）、`SHUTDOWN_TIMEOUT_SECS` 被错误用于整个服务生命周期（健康服务超 N 秒被掐断，改排空阶段计时 + 演练加回归断言）；另修 dpsk 测试 2 处（请求体字段猜错致 422、root 下 chmod 注入无效改 DROP TABLE 注入）
 - v1.3.0 多用户与权限（2026-10-16）：见"状态"节；26 个 dpsk 批次并行生成（8 并发撞 429 后降串行+25 秒间隔退避收回）；README/CHANGELOG/OPERATIONS.md/对照报告齐备
 - **v1.4.0「安全上传」（2026-10-16）**：上传安全加固——`sniff_mime` magic-bytes 嗅探（PE/MZ、ELF、Mach-O/fat、MSI/OLE、shebang 脚本 → 415「可执行文件不允许上传」不入库），mime 优先级改为嗅探 > 客户端头 > 扩展名猜测，零新增依赖；前端上传队列（失败继续）+ 失败汇总条 + 上传进度；`cargo test` **73/73**（新增 `upload_security_test.rs` 8 例）、clippy 零警告、fmt 通过；真实冒烟（注册→上传→下载字节一致→MZ 415→跨用户 404→未登录 401）；2 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
+- **v1.5「登录限流」（2026-10-16）**：`src/ratelimit.rs`（IP + 账号双维度令牌桶，超限 429 + Retry-After + JSON 错误体）；`MINIOS_LOGIN_RPS`/`BURST` 环境变量配置，非法值启动 exit(2)；探针豁免；前端 429 专用分支（实时倒计时 + 按钮 disabled，大白话文案）；`cargo test` **95/95**（新增 8 例）、clippy 零警告；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.5.md`；2 张截图视觉验收
+- **v1.6「目录分享 + Prometheus 指标」（2026-10-16）**：目录分享——DB 迁移 004（`shares.share_type` file|dir，CHECK 约束，老数据默认 file）；`POST /api/shares` 支持 `type:"dir"`（目录不存在 404、是文件 400、跨用户 404）；token 递归只读，`GET /api/s/:token/download?path=` 下载树内文件（`..`/空段/控制字符 403）；`GET /api/share/list` 目录浏览 API（文件夹置顶）；share.html 目录浏览（面包屑/下载/空态，深色桌面美学）；Prometheus `/metrics`（零新依赖：`http_request_duration_seconds` 直方图 11 档 + `vfs_files_total`/`vfs_bytes_total`/`shares_total{type}` gauge，路由 label 归一化）；`cargo test` **117/117**（新增 share_dir 12 + metrics_v16 5）、clippy 零警告、fmt 通过；真实冒烟（分享→浏览→下载→穿越 403）全通；4 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。已知限制：目录分享 token 无过期/无撤销接口（删源目录是唯一撤销方式）；gauge 为抓取时实时查 DB（运维手册已注明建议抓取间隔 ≥15s）
 
 **后续计划**：
 
-- 目录分享、RBAC、登录限流（v1.3 诚实未做项）
+- RBAC、分享读接口限流评估、告警规则示例（v1.6 未通过项排期 v1.7）
 - 应用商店（插件化）
-- Prometheus `/metrics`、docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
+- docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
 
 ## ledger「钱迹 · 个人财务管家」
 
@@ -469,11 +472,12 @@
 
 - v0.1.0（2026-10-13）：灵魂一页纸先行（docs/SOUL.md）；Core 库 dpsk 生成 + 编排验收；UI Round D 生成后 2 轮修复额度用尽仍有残留，编排者亲自做跨文件 reconciliation 收尾；桌面 UI 在 Xvfb 下真实渲染截图已亲眼验收（docs/screenshots/main.png）
 - v1.1（2026-10-15）：生产级补齐（M/L 规格 9 项）。选型实测结论：NAudio.Flac（2015/net45，硬绑定 NAudio 1.7.3）在 net8.0 编译失败已证伪弃用；NAudio 2.2.1 Mp3FileReader 在 Linux 报 Msacm32.dll 缺失已证伪弃用并移除依赖；压缩格式统一走 ffmpeg 真实解码。测试夹具为 ffmpeg 真实生成的 440Hz 正弦（wav/mp3/flac/m4a）+ 随机字节损坏文件，无 demo 数据。
+- **v1.2「备份 zip 加密 + 恢复前文件清单预览 + 控制台日志人读格式」（2026-10-16）**：备份加密（AES-256-GCM + PBKDF2-SHA256 20 万轮，VXENC1 魔数自识别，无密码保持兼容）+ 恢复预览（list-backup 清单打印 + 确认后恢复，--yes 跳过确认）+ 日志人读化（VoxConsoleFormat：时长/字节/表格/CJK 对齐/进度条，控制台人读行、文件日志保持 JSON）；dotnet test **93/93**（新增 18）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`
+- **v1.3「指标告警 + 故障演练 + 技术债清理」（2026-10-16）**：VoxMetrics 指标记录器（`metrics-YYYYMMDD.jsonl`，复用日志轮转；7 处埋点：audio.import/transcript.import/align/edit.apply/export.edl/backup.create/backup.restore；`--metrics` 汇总命令）+ `docs/ALERTS.md` 4 条告警规则 + `scripts/check-alerts.sh`（退出码 0/1/2，真实触发 CRIT 验证）+ `scripts/fault-drill.sh` 故障演练 **4/4 PASS**（损坏音频拒绝/只读存储模拟磁盘满/kill -9 半截备份拒绝/位翻转备份拒绝）+ `--probe-*` 运维探针 CLI + 技术债偿还 4 项（TD-002/TD-006/TD-008/TD-009）；SmokeRunner **106/106**（新增 13）；dotnet build 零警告零错误；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`。未通过剩 2 项（3.1 定时自动备份、8.2 真实负载验证，排期 v2）
 
 **后续计划**：
 
-- v1.2（候选）：备份 zip 加密选项、恢复前文件清单预览、控制台日志人读格式
-- v2：ONNX 本地声学模型精对齐 + 内置转写、指标告警、限流熔断、技术债清理轮、故障演练、多轨口误自动推荐最自然一版
+- v2：ONNX 本地声学模型精对齐 + 内置转写、限流熔断、多轨口误自动推荐最自然一版、定时自动备份、真实负载验证
 
 ## interlude「幕间 Interlude · 分支叙事的 linter」
 
