@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -97,8 +98,13 @@ func (s *Store) Migrate() error {
 			"sql" TEXT,
 			"description" TEXT,
 			"created_at" TEXT,
-			"origin" TEXT NOT NULL DEFAULT 'manual'
+			"origin" TEXT NOT NULL DEFAULT 'manual',
+			"materialized" INTEGER NOT NULL DEFAULT 0,
+			"refresh_policy" TEXT NOT NULL DEFAULT '',
+			"last_refresh_at" TEXT,
+			"last_refresh_rows" INTEGER NOT NULL DEFAULT 0
 		)`,
+
 		`CREATE TABLE IF NOT EXISTS "_m_watermarks" (
 			"source" TEXT,
 			"table_name" TEXT,
@@ -112,9 +118,9 @@ func (s *Store) Migrate() error {
 			return fmt.Errorf("建表失败: %w", err)
 		}
 	}
-	// v1.2 兼容迁移：老库的 "_m_views" 表可能没有 "origin" 列，
-	// 通过 PRAGMA table_info 检查，缺失时补加该列（幂等，已存在则跳过）。
-	hasOrigin := false
+	// v1.2/v1.3 兼容迁移：老库的 "_m_views" 表可能缺少部分列，
+	// 通过 PRAGMA table_info 检查，缺失时补加（幂等，已存在则跳过）。
+	existingCols := make(map[string]bool)
 	rows, err := s.DB.Query(`PRAGMA table_info("_m_views")`)
 	if err != nil {
 		return fmt.Errorf("检查视图表结构失败: %w", err)
@@ -128,18 +134,31 @@ func (s *Store) Migrate() error {
 			rows.Close()
 			return fmt.Errorf("扫描视图表结构失败: %w", err)
 		}
-		if name == "origin" {
-			hasOrigin = true
-		}
+		existingCols[name] = true
 	}
 	if err := rows.Err(); err != nil {
 		rows.Close()
 		return fmt.Errorf("遍历视图表结构失败: %w", err)
 	}
 	rows.Close()
-	if !hasOrigin {
-		if _, err := s.DB.Exec(`ALTER TABLE "_m_views" ADD COLUMN "origin" TEXT NOT NULL DEFAULT 'manual'`); err != nil {
-			return fmt.Errorf("迁移视图表 origin 列失败: %w", err)
+	// 待补列定义：列名、ADD COLUMN 语句、失败文案。
+	migrations := []struct {
+		column string
+		stmt   string
+		errMsg string
+	}{
+		{"origin", `ALTER TABLE "_m_views" ADD COLUMN "origin" TEXT NOT NULL DEFAULT 'manual'`, "迁移视图表 origin 列失败: %w"},
+		{"materialized", `ALTER TABLE "_m_views" ADD COLUMN "materialized" INTEGER NOT NULL DEFAULT 0`, "迁移视图表 materialized 列失败: %w"},
+		{"refresh_policy", `ALTER TABLE "_m_views" ADD COLUMN "refresh_policy" TEXT NOT NULL DEFAULT ''`, "迁移视图表 refresh_policy 列失败: %w"},
+		{"last_refresh_at", `ALTER TABLE "_m_views" ADD COLUMN "last_refresh_at" TEXT`, "迁移视图表 last_refresh_at 列失败: %w"},
+		{"last_refresh_rows", `ALTER TABLE "_m_views" ADD COLUMN "last_refresh_rows" INTEGER NOT NULL DEFAULT 0`, "迁移视图表 last_refresh_rows 列失败: %w"},
+	}
+	for _, m := range migrations {
+		if existingCols[m.column] {
+			continue
+		}
+		if _, err := s.DB.Exec(m.stmt); err != nil {
+			return fmt.Errorf(m.errMsg, err)
 		}
 	}
 	return nil
@@ -526,11 +545,15 @@ func (s *Store) ResolveConflictsByPK(q dbtx, table, pk, status string) (int64, e
 
 // View 表示一个视图定义。
 type View struct {
-	Name        string `json:"name"`
-	SQL         string `json:"sql"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"created_at"`
-	Origin      string `json:"origin"`
+	Name            string `json:"name"`
+	SQL             string `json:"sql"`
+	Description     string `json:"description"`
+	CreatedAt       string `json:"created_at"`
+	Origin          string `json:"origin"`
+	Materialized    bool   `json:"materialized"`
+	RefreshPolicy   string `json:"refresh_policy"`
+	LastRefreshAt   string `json:"last_refresh_at"`
+	LastRefreshRows int64  `json:"last_refresh_rows"`
 }
 
 // SaveView 保存或更新视图定义。
@@ -565,7 +588,7 @@ func (s *Store) SaveYAMLView(name, sqlStr, desc string) error {
 // ListViews 列出所有视图。
 func (s *Store) ListViews() ([]View, error) {
 	rows, err := s.DB.Query(
-		`SELECT "name","sql","description","created_at","origin" FROM "_m_views" ORDER BY "name"`,
+		`SELECT "name","sql","description","created_at","origin","materialized","refresh_policy","last_refresh_at","last_refresh_rows" FROM "_m_views" ORDER BY "name"`,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("查询视图失败: %w", err)
@@ -575,7 +598,15 @@ func (s *Store) ListViews() ([]View, error) {
 	for rows.Next() {
 		var v View
 		var name, sqlStr, desc, ca, origin sql.NullString
-		if err := rows.Scan(&name, &sqlStr, &desc, &ca, &origin); err != nil {
+		// materialized 列为 INTEGER 0/1，用 NullInt64 中转再转 bool，避免 modernc sqlite 直接 Scan 进 bool 的行为差异
+		var mat sql.NullInt64
+		// refresh_policy 列可能为 NULL
+		var rp sql.NullString
+		// last_refresh_at 列可能为 NULL
+		var lra sql.NullString
+		// last_refresh_rows 列可能为 NULL
+		var lrr sql.NullInt64
+		if err := rows.Scan(&name, &sqlStr, &desc, &ca, &origin, &mat, &rp, &lra, &lrr); err != nil {
 			return nil, fmt.Errorf("扫描视图失败: %w", err)
 		}
 		v.Name = name.String
@@ -583,6 +614,10 @@ func (s *Store) ListViews() ([]View, error) {
 		v.Description = desc.String
 		v.CreatedAt = ca.String
 		v.Origin = origin.String
+		v.Materialized = mat.Int64 != 0
+		v.RefreshPolicy = rp.String
+		v.LastRefreshAt = lra.String
+		v.LastRefreshRows = lrr.Int64
 		result = append(result, v)
 	}
 	if err := rows.Err(); err != nil {
@@ -610,10 +645,11 @@ func (s *Store) DropView(name string) error {
 // GetView 获取视图，不存在返回 ErrNotFound。
 func (s *Store) GetView(name string) (View, error) {
 	var v View
-	var nameS, sqlStr, desc, ca, origin sql.NullString
+	var nameS, sqlStr, desc, ca, origin, refreshPolicy, lastRefreshAt sql.NullString
+	var materialized, lastRefreshRows sql.NullInt64
 	err := s.DB.QueryRow(
-		`SELECT "name","sql","description","created_at","origin" FROM "_m_views" WHERE "name"=?`, name,
-	).Scan(&nameS, &sqlStr, &desc, &ca, &origin)
+		`SELECT "name","sql","description","created_at","origin","materialized","refresh_policy","last_refresh_at","last_refresh_rows" FROM "_m_views" WHERE "name"=?`, name,
+	).Scan(&nameS, &sqlStr, &desc, &ca, &origin, &materialized, &refreshPolicy, &lastRefreshAt, &lastRefreshRows)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return View{}, ErrNotFound
@@ -625,7 +661,63 @@ func (s *Store) GetView(name string) (View, error) {
 	v.Description = desc.String
 	v.CreatedAt = ca.String
 	v.Origin = origin.String
+	v.Materialized = materialized.Int64 != 0
+	v.RefreshPolicy = refreshPolicy.String
+	v.LastRefreshAt = lastRefreshAt.String
+	v.LastRefreshRows = lastRefreshRows.Int64
 	return v, nil
+}
+
+// materializeNameRe 校验物化视图名称是否为合法标识符。
+var materializeNameRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+// MaterializeTableName 返回视图的物化表名（_mv_<name>），名称非法返回错误。
+func MaterializeTableName(name string) (string, error) {
+	if !materializeNameRe.MatchString(name) {
+		return "", fmt.Errorf("视图名称 %q 不是合法标识符，无法物化", name)
+	}
+	return "_mv_" + name, nil
+}
+
+// UpdateViewMaterialize 更新视图的物化开关与刷新策略；视图不存在返回 ErrNotFound。
+func (s *Store) UpdateViewMaterialize(name string, materialized bool, policy string) error {
+	if _, err := s.GetView(name); err != nil {
+		return err
+	}
+	if !materialized {
+		policy = ""
+	}
+	mv := 0
+	if materialized {
+		mv = 1
+	}
+	res, err := s.DB.Exec(
+		`UPDATE "_m_views" SET "materialized"=?, "refresh_policy"=? WHERE "name"=?`,
+		mv, policy, name,
+	)
+	if err != nil {
+		return fmt.Errorf("更新视图物化配置失败: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// RecordViewRefresh 记录一次刷新完成（last_refresh_at=RFC3339，last_refresh_rows=rows）；视图不存在返回 ErrNotFound。
+func (s *Store) RecordViewRefresh(name string, rows int64) error {
+	now := time.Now().UTC().Format(time.RFC3339)
+	res, err := s.DB.Exec(
+		`UPDATE "_m_views" SET "last_refresh_at"=?, "last_refresh_rows"=? WHERE "name"=?`,
+		now, rows, name,
+	)
+	if err != nil {
+		return fmt.Errorf("记录视图刷新失败: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // Query 执行只读查询。守卫：仅允许 SELECT/WITH/EXPLAIN 开头，且不含分号。

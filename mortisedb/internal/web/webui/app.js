@@ -277,11 +277,14 @@ async function loadViews() {
     }
     el.innerHTML = views.map(v =>
       '<div class="view-item" data-name="' + esc(v.name) + '">' +
-      '<div class="view-name">' + esc(v.name) + '</div>' +
+      '<div class="view-name">' + esc(v.name) + (v.materialized ? ' <span class="view-mv-tag">物化</span>' : '') + '</div>' +
       '<div class="view-desc">' + esc(v.description || '') + '</div>' +
+      (v.materialized ? '<div class="view-refresh-info">' + (v.last_refresh_at ? '上次刷新：' + esc(v.last_refresh_at) : '尚未刷新') + '</div>' : '') +
+      '<button class="btn-refresh-view" data-name="' + esc(v.name) + '">刷新</button>' +
       '<button class="btn-del-view" data-name="' + esc(v.name) + '">删除</button>' +
       '</div>'
     ).join('');
+
     el.querySelectorAll('.view-item').forEach(item => {
       item.addEventListener('click', (ev) => {
         if (ev.target.classList.contains('btn-del-view')) return;
@@ -295,6 +298,13 @@ async function loadViews() {
         deleteView(btn.getAttribute('data-name'));
       });
     });
+    el.querySelectorAll('.btn-refresh-view').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        refreshView(btn.getAttribute('data-name'));
+      });
+    });
+
   } catch (e) {
     toast('加载视图失败: ' + e.message, true);
   }
@@ -319,6 +329,16 @@ async function deleteView(name) {
     loadViews();
   } catch (e) {
     toast('删除失败: ' + e.message, true);
+  }
+}
+
+async function refreshView(name) {
+  try {
+    const res = await api('/api/views/' + encodeURIComponent(name) + '/refresh', { method: 'POST' });
+    toast('已刷新视图 ' + name + '，写入 ' + res.rows + ' 行');
+    loadViews();
+  } catch (e) {
+    toast('刷新失败: ' + e.message, true);
   }
 }
 

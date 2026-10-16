@@ -25,15 +25,16 @@ import (
 )
 
 // Version 为 API 版本号。
-var Version = "1.2.0"
+var Version = "1.3.0"
+
 
 // server 保存 API 依赖。
 type server struct {
-	st         *store.Store
-	cfg        *config.Config
-	logger     *log.Logger
-	dbPath     string
-	startedAt  time.Time
+	st        *store.Store
+	cfg       *config.Config
+	logger    *log.Logger
+	dbPath    string
+	startedAt time.Time
 }
 
 // NewServer 构造 HTTP 处理器。
@@ -62,6 +63,8 @@ func NewServer(st *store.Store, cfg *config.Config, logger *log.Logger) http.Han
 	mux.HandleFunc("POST /api/views", s.handleAddView)
 	mux.HandleFunc("DELETE /api/views/{name}", s.handleDropView)
 	mux.HandleFunc("GET /api/views/{name}/rows", s.handleViewRows)
+	mux.HandleFunc("POST /api/views/{name}/refresh", s.handleRefreshView)
+
 	// 自由查询
 	mux.HandleFunc("POST /api/query", s.handleQuery)
 	// 指标
@@ -476,7 +479,30 @@ func (s *server) handleViewRows(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"columns": cols, "rows": rows})
 }
 
+// handleRefreshView 手动触发物化视图刷新，返回写入行数与耗时。
+func (s *server) handleRefreshView(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	start := time.Now()
+	rows, err := views.Refresh(s.st, name)
+	dur := time.Since(start)
+	m := metrics.Default()
+	if err != nil {
+		m.Inc("mortise_view_refresh_total", name, "error")
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	m.Inc("mortise_view_refresh_total", name, "ok")
+	m.Observe("mortise_view_refresh_duration_seconds", dur.Seconds(), name)
+	m.Set("mortise_view_last_refresh_rows", float64(rows), name)
+	writeJSON(w, http.StatusOK, map[string]any{"name": name, "rows": rows, "duration_ms": dur.Milliseconds()})
+}
+
 // handleQuery 执行自由查询（含耗时指标，view 标签固定为 adhoc）。
+
 func (s *server) handleQuery(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		SQL   string `json:"sql"`

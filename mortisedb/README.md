@@ -141,6 +141,10 @@ curl -s http://localhost:8421/metrics | head -40
 | `mortise_sync_last_duration_seconds{source}` | Gauge | 最近一次同步耗时 |
 | `mortise_view_duration_seconds_{count,sum}{view}` | Summary | 视图执行耗时 |
 | `mortise_view_last_duration_seconds{view}` | Gauge | 最近一次视图耗时 |
+| `mortise_view_refresh_total{view,status}` | Counter | 物化视图刷新次数，status ∈ ok/error |
+| `mortise_view_refresh_duration_seconds_{count,sum}{view}` | Summary | 物化视图刷新耗时 |
+| `mortise_view_last_refresh_rows{view}` | Gauge | 物化视图上次刷新行数 |
+
 | `mortise_watermark_lag_seconds{source,table}` | Gauge | 水位线滞后秒数（抓取时实时计算） |
 | `mortise_conflicts_pending` | Gauge | 待处理冲突数（抓取时查询） |
 | `mortise_conflicts_total` | Counter | 累计冲突数 |
@@ -176,7 +180,33 @@ mortise_sync_rows_total{source="orders_csv",table="orders",op="skipped"} 0
 
 规则：YAML 里改了 SQL/描述 → 自动更新；删掉某条声明 → 自动清理；你在 CLI（`views add`）或 Web/API 里手工建的视图标为 `manual`，永远不会被清理。注意注册时不做 SQL 试运行（表可能还没同步出来），跑视图时才会真正校验。
 
+## 物化视图
+
+![物化视图](docs/screenshots/views-materialized.png)
+
+查询量大的视图可以声明物化，把结果落成 `_mv_<视图名>` 表，查询时直接读表：
+
+```yaml
+views:
+  - name: monthly_sales
+    sql: SELECT ...
+    materialize:
+      enabled: true
+      refresh: on_sync   # on_sync | manual | interval:30m
+```
+
+刷新策略：`on_sync`（默认，每次 `sync` 后自动刷新）、`manual`（仅手动）、`interval:<时长>`（超期才刷新）。手动触发：
+
+```bash
+./mortisedb views refresh monthly_sales
+# 已刷新视图 monthly_sales，写入 1280 行
+curl -s -X POST http://localhost:8421/api/views/monthly_sales/refresh
+```
+
+刷新是全量事务（`DROP` + `CREATE TABLE AS`），失败回滚旧表不受影响；YAML 里取消 `materialize` 块后下次 sync 自动删掉物化表。视图页会显示物化标记与上次刷新时间，可一键刷新。
+
 ## 备份与恢复
+
 
 ### 备份
 
@@ -229,7 +259,8 @@ cd ./loadtest-work
 bash scripts/e2e.sh ./e2e-work
 ```
 
-它用一份真实感的茶叶小店数据（10 行订单 CSV + 8 个会员 JSON）走完：写 YAML → `sync`（断言视图自动注册 `新增 2`）→ `views list`（断言两个视图名）→ 全行查询（断言 10 行）→ 改 YAML（断言 `新增 1，更新 1`）→ 删声明（断言 `清理 1` 且 `views list` 不再含它）→ 起 `serve` 调 `/api/views` → CSV 导出（断言 10 行数据且含"龙井"）。本轮实测 `E2E PASS`。
+它用一份真实感的茶叶小店数据（10 行订单 CSV + 8 个会员 JSON）走完：写 YAML → `sync`（断言视图自动注册 `新增 2`）→ `views list`（断言两个视图名）→ 全行查询（断言 10 行）→ 改 YAML（断言 `新增 1，更新 1`）→ 删声明（断言 `清理 1` 且 `views list` 不再含它）→ 起 `serve` 调 `/api/views` → CSV 导出（断言 10 行数据且含"龙井"）→ 物化演练（`on_sync` 自动刷新断言 `刷新 1，跳过 1`、`_mv_v_order_detail` 10 行、`views refresh` 手动刷新、`POST /api/views/{name}/refresh`）。本轮实测 `E2E PASS`。
+
 
 ## 一键部署
 
@@ -258,12 +289,17 @@ compose 文件含健康检查（`wget` 探 `/api/health`）、资源限制（512
 - ✅ 端到端编排脚本 `scripts/e2e.sh`（真实数据 + 断言，实测 E2E PASS）。
 - ✅ docker-compose 一键部署强化（健康检查 + 资源限制 + 日志轮转；`docs/OPERATIONS.md` 补部署/升级/排障）。
 
+### v1.3（已交付）
+
+- ✅ 物化视图 + 刷新策略（`materialize: {enabled, refresh}`：on_sync/manual/interval；`views.Refresh` 事务全量刷新 + `views.RefreshDue` 策略调度；sync 自动刷新/CLI 手动/API 触发；Web UI 物化标记 + 一键刷新；`_m_views` 4 列扩展与老库迁移；3 个新指标；e2e 第 9 步物化演练 E2E PASS）。
+- ✅ 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.0.md`。
+
 ### 后续版本
 
 - ⬜ HTTP / WebDAV 数据源连接器。
-- ⬜ 视图物化（物化视图 + 刷新策略）。
 - ⬜ 冲突批量操作。
 - ⬜ 单文件加密。
+
 
 ## License
 

@@ -2,7 +2,29 @@
 
 本文件记录 MortiseDB 的重要变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.3.0] - 2026-10-16
+
+### 新增
+
+- **物化视图（Materialized Views）+ 刷新策略**：`views` 声明新增 `materialize: {enabled, refresh}`，`refresh` ∈ `on_sync`（默认，每次 sync 后刷新）/ `manual`（仅手动）/ `interval:<时长>`（如 `interval:30m`，超期才刷新）。
+  - `views.Refresh`：事务内 `DROP TABLE IF EXISTS` + `CREATE TABLE _mv_<name> AS <视图SQL>` 全量刷新，失败回滚旧表不受影响，返回写入行数。
+  - `views.RefreshDue`：按 YAML 策略刷新到期视图；YAML 取消物化声明时自动 `DROP TABLE` 删旧物化表。
+  - `mortisedb sync` 成功后自动按策略刷新，打印 `物化视图刷新: 刷新 N，跳过 M`；`mortisedb views refresh <名称>` 手动触发；`POST /api/views/{name}/refresh` 返回行数与耗时；`views list` 新增物化/刷新策略/上次刷新列；Web UI 视图页显示物化标记与上次刷新时间、可一键刷新。
+  - `_m_views` 新增 `materialized` / `refresh_policy` / `last_refresh_at` / `last_refresh_rows` 列，老库 `Migrate()` 幂等补列；物化表命名 `_mv_<视图名>`（启用物化要求视图名为合法标识符）。
+  - 新指标：`mortise_view_refresh_total{view,status}`、`mortise_view_refresh_duration_seconds{view}`、`mortise_view_last_refresh_rows{view}`。
+  - `scripts/e2e.sh` 新增第 9 步物化演练（on_sync 自动刷新/跳过断言、`_mv_` 表行数断言、manual 手动刷新、API 刷新），实测 E2E PASS。
+
+### 修复
+
+- `RecordViewRefresh` 时间格式：原 SQLite `datetime('now')`（`2026-10-16 17:45:00` 空格格式）导致 `RefreshDue` 的 RFC3339 解析永远失败、`interval` 策略每次误判为到期；改为 Go 侧 `time.Now().UTC().Format(time.RFC3339)` 写入。
+
+### 变更
+
+- `api.Version` 由 `1.2.0` 升级为 `1.3.0`。
+- `docs/OPERATIONS.md` 新增 §5 物化视图（声明/策略/手动刷新/指标/注意事项），原 §5/§6 顺延为 §6/§7。
+
 ## [1.2.0] - 2026-10-15
+
 
 ### 新增
 

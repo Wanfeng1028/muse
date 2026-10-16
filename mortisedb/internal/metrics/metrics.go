@@ -17,9 +17,9 @@ var BuildVersion = "1.1.0"
 type metricType string
 
 const (
-	typeCounter   metricType = "counter"
-	typeGauge     metricType = "gauge"
-	typeSummary   metricType = "summary"
+	typeCounter metricType = "counter"
+	typeGauge   metricType = "gauge"
+	typeSummary metricType = "summary"
 )
 
 // metric 单个指标元数据与系列。
@@ -29,7 +29,7 @@ type metric struct {
 	typ    metricType
 	labels []string
 
-	mu     sync.Mutex
+	mu sync.Mutex
 	// counter/gauge：labelKey -> 值
 	values map[string]float64
 	// summary：labelKey -> count, sum
@@ -295,6 +295,9 @@ func (r *Registry) RegisterStandard() {
 
 	r.RegisterSummary("mortise_view_duration_seconds", "视图执行耗时（秒）", "view")
 	r.RegisterGauge("mortise_view_last_duration_seconds", "最近一次视图执行耗时（秒）", "view")
+	r.RegisterCounter("mortise_view_refresh_total", "物化视图刷新次数", "view", "status")
+	r.RegisterSummary("mortise_view_refresh_duration_seconds", "物化视图刷新耗时（秒）", "view")
+	r.RegisterGauge("mortise_view_last_refresh_rows", "物化视图上次刷新行数", "view")
 
 	r.RegisterGauge("mortise_watermark_lag_seconds", "水位线滞后秒数（抓取时计算）", "source", "table")
 

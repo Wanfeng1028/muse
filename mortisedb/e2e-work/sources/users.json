@@ -1,0 +1,10 @@
+[
+  {"user_id":"u01","name":"陈建国","phone":"13857120001","city":"杭州","level":"金卡"},
+  {"user_id":"u02","name":"林晓梅","phone":"13857120002","city":"湖州","level":"银卡"},
+  {"user_id":"u03","name":"赵铁柱","phone":"13857120003","city":"嘉兴","level":"普卡"},
+  {"user_id":"u04","name":"吴淑芬","phone":"13857120004","city":"绍兴","level":"金卡"},
+  {"user_id":"u05","name":"郑志远","phone":"13857120005","city":"杭州","level":"银卡"},
+  {"user_id":"u06","name":"黄丽华","phone":"13857120006","city":"湖州","level":"普卡"},
+  {"user_id":"u07","name":"周文斌","phone":"13857120007","city":"嘉兴","level":"银卡"},
+  {"user_id":"u08","name":"孙雅琴","phone":"13857120008","city":"绍兴","level":"金卡"}
+]

@@ -67,7 +67,8 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # ---------- 步骤 1：数据源 ----------
-echo "==> [1/9] 生成数据源 (orders.csv / users.json)"
+echo "==> [1/10] 生成数据源 (orders.csv / users.json)"
+
 
 cat > sources/orders.csv <<'CSV'
 order_id,user_id,customer,item,amount,updated_at
@@ -97,7 +98,8 @@ cat > sources/users.json <<'JSON'
 JSON
 
 # ---------- 步骤 2：初始 YAML ----------
-echo "==> [2/9] 写入 mortise.yaml（初始版）"
+echo "==> [2/10] 写入 mortise.yaml（初始版）"
+
 cat > mortise.yaml <<'YAML'
 database: ./data/mortise.db
 addr: "127.0.0.1:18421"
@@ -115,27 +117,31 @@ views:
 YAML
 
 # ---------- 步骤 3：sync ----------
-echo "==> [3/9] sync 并断言视图自动注册"
+echo "==> [3/10] sync 并断言视图自动注册"
+
 SYNC_OUT="$("$BIN" sync --config mortise.yaml 2>&1)"
 echo "$SYNC_OUT"
 assert_contains "视图自动注册: 新增 2，更新 0，清理 0" "$SYNC_OUT"
 
 # ---------- 步骤 4：views list ----------
-echo "==> [4/9] views list 断言视图名"
+echo "==> [4/10] views list 断言视图名"
+
 LIST_OUT="$("$BIN" views list --config mortise.yaml 2>&1)"
 echo "$LIST_OUT"
 assert_contains "v_order_detail" "$LIST_OUT"
 assert_contains "v_city_revenue" "$LIST_OUT"
 
 # ---------- 步骤 5：query 内联子查询计数 ----------
-echo "==> [5/9] query 内联视图 SQL 计数"
+echo "==> [5/10] query 内联视图 SQL 计数"
+
 V_ORDER_SQL='SELECT o.order_id, o.customer, o.item, o.amount, u.city AS city, u.level AS level FROM "orders" o LEFT JOIN "users" u ON o.user_id = u.user_id WHERE o._m_deleted = 0'
 Q_OUT="$("$BIN" query --config mortise.yaml "SELECT * FROM ($V_ORDER_SQL)" 2>&1)"
 echo "$Q_OUT"
 assert_contains "(10 行)" "$Q_OUT"
 
 # ---------- 步骤 6：变更演练（新增 v_top_items，改 v_city_revenue） ----------
-echo "==> [6/9] YAML 变更：新增 v_top_items / 修改 v_city_revenue 描述"
+echo "==> [6/10] YAML 变更：新增 v_top_items / 修改 v_city_revenue 描述"
+
 cat > mortise.yaml <<'YAML'
 database: ./data/mortise.db
 addr: "127.0.0.1:18421"
@@ -160,7 +166,8 @@ echo "$SYNC2_OUT"
 assert_contains "视图自动注册: 新增 1，更新 1，清理 0" "$SYNC2_OUT"
 
 # ---------- 步骤 7：删除 v_top_items ----------
-echo "==> [7/9] YAML 变更：删除 v_top_items"
+echo "==> [7/10] YAML 变更：删除 v_top_items"
+
 cat > mortise.yaml <<'YAML'
 database: ./data/mortise.db
 addr: "127.0.0.1:18421"
@@ -186,7 +193,8 @@ echo "$LIST3_OUT"
 assert_not_contains "v_top_items" "$LIST3_OUT"
 
 # ---------- 步骤 8：serve + CSV 导出 ----------
-echo "==> [8/9] 启动 serve 并导出 CSV"
+echo "==> [8/10] 启动 serve 并导出 CSV"
+
 MORTISE_ADDR="127.0.0.1:18421" "$BIN" serve --config mortise.yaml > serve.log 2>&1 &
 SERVE_PID=$!
 
@@ -207,6 +215,9 @@ fi
 
 VIEWS_JSON="$(curl -s http://127.0.0.1:18421/api/views)"
 assert_contains "v_order_detail" "$VIEWS_JSON"
+REFRESH_JSON="$(curl -s -X POST http://127.0.0.1:18421/api/views/v_city_revenue/refresh)"
+assert_contains '"rows"' "$REFRESH_JSON"
+
 
 curl -s "http://127.0.0.1:18421/api/views/v_order_detail/rows?format=csv" -o export.csv
 
@@ -222,12 +233,55 @@ assert_contains "龙井" "$EXPORT_BODY"
 cleanup
 SERVE_PID=""
 
-# ---------- 步骤 9：摘要 ----------
-echo "==> [9/9] 汇总"
+# ---------- 步骤 9：物化视图演练 ----------
+echo "==> [9/10] 物化视图：on_sync 自动刷新 + manual 手动刷新"
+cat > mortise.yaml <<'YAML'
+database: ./data/mortise.db
+addr: "127.0.0.1:18421"
+sync: {conflict: priority, priority: [shop, members], soft_delete: true}
+sources:
+  - {name: shop, type: csv, path: ./sources/orders.csv, table: orders, primary_key: order_id, incremental: "column:updated_at"}
+  - {name: members, type: json, path: ./sources/users.json, table: users, primary_key: user_id, incremental: hash}
+views:
+  - name: v_order_detail
+    description: 订单关联会员
+    sql: SELECT o.order_id, o.customer, o.item, o.amount, u.city AS city, u.level AS level FROM "orders" o LEFT JOIN "users" u ON o.user_id = u.user_id WHERE o._m_deleted = 0
+    materialize:
+      enabled: true
+      refresh: on_sync
+  - name: v_city_revenue
+    description: 按城市汇总销售额
+    sql: SELECT u.city AS city, COUNT(*) AS orders, SUM(o.amount) AS revenue FROM "orders" o LEFT JOIN "users" u ON o.user_id = u.user_id WHERE o._m_deleted = 0 GROUP BY u.city
+    materialize:
+      enabled: true
+      refresh: manual
+YAML
+
+SYNC3_OUT="$("$BIN" sync --config mortise.yaml 2>&1)"
+echo "$SYNC3_OUT"
+assert_contains "物化视图刷新: 刷新 1，跳过 1" "$SYNC3_OUT"
+
+MV_COUNT_OUT="$("$BIN" query --config mortise.yaml 'SELECT COUNT(*) AS c FROM "_mv_v_order_detail"' 2>&1)"
+echo "$MV_COUNT_OUT"
+assert_contains "(1 行)" "$MV_COUNT_OUT"
+assert_contains "10" "$MV_COUNT_OUT"
+
+echo "==> [9/10] 手动刷新 manual 策略视图"
+REF_OUT="$("$BIN" views refresh --config mortise.yaml v_city_revenue 2>&1)"
+echo "$REF_OUT"
+assert_contains "已刷新视图 v_city_revenue，写入" "$REF_OUT"
+
+MV2_OUT="$("$BIN" query --config mortise.yaml 'SELECT COUNT(*) AS c FROM "_mv_v_city_revenue"' 2>&1)"
+echo "$MV2_OUT"
+assert_contains "(1 行)" "$MV2_OUT"
+
+# ---------- 步骤 10：摘要 ----------
+echo "==> [10/10] 汇总"
 echo "    orders.csv 行数     : $(tail -n +2 sources/orders.csv | grep -c .)"
 echo "    users.json 对象数   : $(grep -c '"user_id"' sources/users.json)"
 echo "    sync 首轮统计       : 新增 2，更新 0，清理 0"
 echo "    变更演练统计        : 新增 1，更新 1，清理 0"
 echo "    删除演练统计        : 新增 0，更新 0，清理 1"
 echo "    CSV 导出数据行数    : $DATA_ROWS"
+echo "    物化视图刷新        : on_sync 自动刷新 1，manual 跳过 1，手动刷新 1"
 echo "E2E PASS"

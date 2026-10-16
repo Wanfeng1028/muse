@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -39,10 +41,20 @@ type SyncPolicy struct {
 
 // ViewConfig 描述一个视图定义。
 type ViewConfig struct {
-	Name        string `yaml:"name"`
-	SQL         string `yaml:"sql"`
-	Description string `yaml:"description"`
+	Name        string             `yaml:"name"`
+	SQL         string             `yaml:"sql"`
+	Description string             `yaml:"description"`
+	Materialize *MaterializeConfig `yaml:"materialize"`
 }
+
+// MaterializeConfig 描述视图的物化配置。
+type MaterializeConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Refresh string `yaml:"refresh"`
+}
+
+// materializeNameRe 校验物化视图名称是否为合法标识符。
+var materializeNameRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 // JobConfig 描述一个定时同步任务。
 type JobConfig struct {
@@ -193,6 +205,25 @@ func (c *Config) validate() error {
 		viewSeen[v.Name] = true
 		if strings.TrimSpace(v.SQL) == "" {
 			return fmt.Errorf("视图 %q 的 sql 不能为空", v.Name)
+		}
+		// 物化视图声明校验：enabled 为 false 时视为未启用，不做任何校验。
+		if v.Materialize != nil && v.Materialize.Enabled {
+			if !materializeNameRe.MatchString(v.Name) {
+				return fmt.Errorf("视图 %q 启用物化要求名称为合法标识符", v.Name)
+			}
+			if c.Views[i].Materialize.Refresh == "" {
+				c.Views[i].Materialize.Refresh = "on_sync"
+			}
+			refresh := c.Views[i].Materialize.Refresh
+			if refresh != "on_sync" && refresh != "manual" {
+				if !strings.HasPrefix(refresh, "interval:") {
+					return fmt.Errorf("视图 %q 的 materialize.refresh 非法: %q", v.Name, refresh)
+				}
+				d, err := time.ParseDuration(strings.TrimPrefix(refresh, "interval:"))
+				if err != nil || d <= 0 {
+					return fmt.Errorf("视图 %q 的 materialize.refresh 非法: %q", v.Name, refresh)
+				}
+			}
 		}
 	}
 

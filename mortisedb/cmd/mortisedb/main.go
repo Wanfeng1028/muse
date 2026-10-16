@@ -137,7 +137,8 @@ func printUsage() {
 	fmt.Println("  init     生成示例配置、目录与示例数据源")
 	fmt.Println("  sync     执行一次同步")
 	fmt.Println("  query    执行单条 SQL 查询")
-	fmt.Println("  views    视图管理 (list/add/drop/sync)")
+	fmt.Println("  views    视图管理 (list/add/drop/sync/refresh)")
+
 	fmt.Println("  serve    启动 HTTP 服务与调度器")
 	fmt.Println("  status   打印系统状态")
 	fmt.Println("  backup   在线备份数据库 (VACUUM INTO)")
@@ -242,6 +243,13 @@ func runSync(args []string) {
 		fmt.Printf("视图自动注册: 新增 %d，更新 %d，清理 %d\n", added, updated, removed)
 	}
 
+	// 同步成功后，按 YAML 物化策略刷新到期视图；失败只告警，不把同步判失败。
+	if refreshed, skipped, rerr := views.RefreshDue(cfg, st); rerr != nil {
+		fmt.Fprintf(os.Stderr, "物化视图刷新失败（同步数据不受影响）: %v\n", rerr)
+	} else {
+		fmt.Printf("物化视图刷新: 刷新 %d，跳过 %d\n", len(refreshed), len(skipped))
+	}
+
 	fmt.Println("同步完成:")
 	for _, ss := range results {
 		fmt.Printf("源 [%s]\n", ss.Source)
@@ -319,9 +327,10 @@ func formatCell(v any) string {
 // runViews 视图管理。
 func runViews(args []string) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "用法: mortisedb views <list|add|drop|sync> [...]")
+		fmt.Fprintln(os.Stderr, "用法: mortisedb views <list|add|drop|sync|refresh> [...]")
 		os.Exit(1)
 	}
+
 	sub := args[0]
 	rest := args[1:]
 
@@ -356,11 +365,16 @@ func runViews(args []string) {
 			os.Exit(1)
 		}
 		tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "名称\t描述\tSQL")
+		fmt.Fprintln(tw, "名称\t物化\t刷新策略\t上次刷新\t描述\tSQL")
 		for _, v := range list {
-			fmt.Fprintf(tw, "%s\t%s\t%s\n", v.Name, v.Description, v.SQL)
+			materialized := "否"
+			if v.Materialized {
+				materialized = "是"
+			}
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n", v.Name, materialized, v.RefreshPolicy, v.LastRefreshAt, v.Description, v.SQL)
 		}
 		tw.Flush()
+
 	case "sync":
 		added, updated, removed, err := views.SyncFromConfig(cfg, st)
 		if err != nil {
@@ -389,6 +403,23 @@ func runViews(args []string) {
 			os.Exit(1)
 		}
 		fmt.Printf("已删除视图 %s\n", rest[0])
+
+	case "refresh":
+		if len(rest) < 1 {
+			fmt.Fprintln(os.Stderr, "用法: mortisedb views refresh <名称>")
+			os.Exit(1)
+		}
+		name := rest[0]
+		rows, err := views.Refresh(st, name)
+		if err != nil {
+			metrics.Default().Inc("mortise_view_refresh_total", name, "error")
+			fmt.Fprintf(os.Stderr, "刷新视图失败: %v\n", err)
+			os.Exit(1)
+		}
+		metrics.Default().Inc("mortise_view_refresh_total", name, "ok")
+		metrics.Default().Set("mortise_view_last_refresh_rows", float64(rows), name)
+		fmt.Printf("已刷新视图 %s，写入 %d 行\n", name, rows)
+
 	default:
 		fmt.Fprintf(os.Stderr, "未知视图子命令: %s\n", sub)
 		os.Exit(1)

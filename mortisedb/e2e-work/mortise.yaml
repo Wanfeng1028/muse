@@ -1,0 +1,19 @@
+database: ./data/mortise.db
+addr: "127.0.0.1:18421"
+sync: {conflict: priority, priority: [shop, members], soft_delete: true}
+sources:
+  - {name: shop, type: csv, path: ./sources/orders.csv, table: orders, primary_key: order_id, incremental: "column:updated_at"}
+  - {name: members, type: json, path: ./sources/users.json, table: users, primary_key: user_id, incremental: hash}
+views:
+  - name: v_order_detail
+    description: 订单关联会员
+    sql: SELECT o.order_id, o.customer, o.item, o.amount, u.city AS city, u.level AS level FROM "orders" o LEFT JOIN "users" u ON o.user_id = u.user_id WHERE o._m_deleted = 0
+    materialize:
+      enabled: true
+      refresh: on_sync
+  - name: v_city_revenue
+    description: 按城市汇总销售额
+    sql: SELECT u.city AS city, COUNT(*) AS orders, SUM(o.amount) AS revenue FROM "orders" o LEFT JOIN "users" u ON o.user_id = u.user_id WHERE o._m_deleted = 0 GROUP BY u.city
+    materialize:
+      enabled: true
+      refresh: manual

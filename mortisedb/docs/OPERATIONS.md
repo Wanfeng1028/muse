@@ -228,9 +228,59 @@ curl -s http://localhost:8421/metrics
 - `mortise_sync_runs_total{status="error"}`：同步失败累计次数，短时间内快速增长需排查。
 - `mortise_db_size_bytes`：库大小趋势，异常增长需检查是否有大批量数据灌入。
 
-## 5. 常见故障
+## 5. 物化视图
 
-### 5.1 服务启动失败：端口占用
+### 5.1 声明方式
+
+在 `mortise.yaml` 的视图条目下加 `materialize` 块：
+
+```yaml
+views:
+  - name: monthly_sales
+    sql: SELECT ...
+    materialize:
+      enabled: true
+      refresh: on_sync   # on_sync | manual | interval:30m
+```
+
+`enabled: true` 要求视图名为合法标识符（`^[A-Za-z_][A-Za-z0-9_]*$`），物化表名为 `_mv_<视图名>`。
+
+### 5.2 刷新策略
+
+- `on_sync`（默认）：每次 `mortisedb sync` 成功后自动刷新。
+- `manual`：仅手动触发（CLI / API），sync 时跳过。
+- `interval:<时长>`（如 `interval:30m`、`interval:6h`）：距上次刷新超过该时长才刷新，否则跳过；从未刷新的视为到期。
+
+YAML 里改策略或取消 `materialize` 块，下次 sync 自动生效；取消物化会 `DROP TABLE` 删掉旧物化表。
+
+### 5.3 手动刷新
+
+```bash
+# CLI
+mortisedb views refresh --config /etc/mortise/mortise.yaml monthly_sales
+# 已刷新视图 monthly_sales，写入 1280 行
+
+# API
+curl -s -X POST http://localhost:8421/api/views/monthly_sales/refresh
+# {"name":"monthly_sales","rows":1280,"duration_ms":42}
+```
+
+### 5.4 监控指标
+
+- `mortise_view_refresh_total{view,status}`：刷新次数，status ∈ ok/error。
+- `mortise_view_refresh_duration_seconds{view}`：刷新耗时分布。
+- `mortise_view_last_refresh_rows{view}`：上次刷新写入行数。
+
+### 5.5 注意事项
+
+- 物化刷新是**全量**的：事务内 `DROP TABLE` + `CREATE TABLE AS`，失败回滚，旧物化表不受影响；但大视图刷新期间 sync 会变慢。
+- `views list` 会显示物化标记、刷新策略与上次刷新时间；Web UI 视图页同样可见，并可一键刷新。
+
+## 6. 常见故障
+
+
+### 6.1 服务启动失败：端口占用
+
 
 检查 `addr` 是否被占用：
 
@@ -238,11 +288,12 @@ curl -s http://localhost:8421/metrics
 ss -ltnp | grep 8421
 ```
 
-### 5.2 同步失败：源文件不存在
+### 6.2 同步失败：源文件不存在
+
 
 日志会输出结构化错误，含 `source` 与 `error` 字段。检查 `mortise.yaml` 中 `path` 是否正确。
 
-### 5.3 冲突积压
+### 6.3 冲突积压
 
 ```bash
 # 查看待处理冲突
@@ -254,7 +305,8 @@ mortisedb query --config /etc/mortise/mortise.yaml \
 - 通过 Web UI 或 `POST /api/conflicts/{id}/resolve` 逐条解决。
 - 或调整 `sync.priority` 让优先级更高的源自动胜出。
 
-## 6. 版本历史
+## 7. 版本历史
+
 
 - **1.2.0**：YAML 声明视图自动注册（sync/serve/views sync 幂等注册+清理，_m_views 新增 origin 列）、e2e 编排脚本（scripts/e2e.sh）、docker-compose 一键部署（健康检查+资源限制+日志轮转）。
 - **1.1.0**：新增 `/metrics`、`backup`/`restore` 子命令、优雅关闭补强（HTTP 超时 + WAL checkpoint + 在途等待）、10 万行负载验证。
