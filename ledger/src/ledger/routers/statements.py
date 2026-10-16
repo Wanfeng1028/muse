@@ -30,6 +30,8 @@ from ledger.schemas import (
     ClaimTransferIn,
     MatchRuleCreate,
     MatchRuleOut,
+    MerchantAliasOut,
+    MerchantAliasUpdate,
     ParsePreviewOut,
     StatementBatchOut,
     StatementCandidate,
@@ -1095,6 +1097,80 @@ async def delete_match_rule(rule_id: int, session: AsyncSession = Depends(get_se
     if rule is None:
         raise HTTPException(status_code=404, detail="匹配规则不存在")
     await session.delete(rule)
+    await session.commit()
+    return {"ok": True}
+
+@router.get("/api/merchant-aliases", response_model=list[MerchantAliasOut])
+async def list_merchant_aliases(session: AsyncSession = Depends(get_session)) -> list[MerchantAliasOut]:
+    """列出全部商户别名。"""
+    result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.id.asc()))
+    aliases = result.scalars().all()
+    category_ids = {a.category_id for a in aliases}
+    categories: dict[int, str] = {}
+    if category_ids:
+        cat_result = await session.execute(select(Category).where(Category.id.in_(category_ids)))
+        categories = {c.id: c.name for c in cat_result.scalars().all()}
+    out: list[MerchantAliasOut] = []
+    for a in aliases:
+        item = MerchantAliasOut.model_validate(a)
+        item.category_name = categories.get(a.category_id, "")
+        out.append(item)
+    return out
+
+@router.patch("/api/merchant-aliases/{alias_id}", response_model=MerchantAliasOut)
+async def update_merchant_alias(
+    alias_id: int,
+    payload: MerchantAliasUpdate,
+    session: AsyncSession = Depends(get_session),
+) -> MerchantAliasOut:
+    """更新商户别名。"""
+    record = await session.get(MerchantAlias, alias_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="商户别名不存在")
+    if payload.alias is None and payload.category_id is None:
+        raise HTTPException(status_code=400, detail="没有可更新的字段")
+
+    new_alias = record.alias
+    if payload.alias is not None:
+        stripped = payload.alias.strip()
+        normalized = matching.normalize(stripped)
+        if not normalized:
+            raise HTTPException(status_code=400, detail="别名不能为空")
+        new_alias = normalized
+
+    if payload.category_id is not None:
+        category = await session.get(Category, payload.category_id)
+        if category is None:
+            raise HTTPException(status_code=404, detail="分类不存在")
+
+    conflict_result = await session.execute(
+        select(MerchantAlias).where(
+            MerchantAlias.alias == new_alias,
+            MerchantAlias.direction == record.direction,
+            MerchantAlias.id != alias_id,
+        )
+    )
+    if conflict_result.scalars().first() is not None:
+        raise HTTPException(status_code=409, detail="商户别名已存在")
+
+    record.alias = new_alias
+    if payload.category_id is not None:
+        record.category_id = payload.category_id
+    await session.commit()
+    await session.refresh(record)
+
+    out = MerchantAliasOut.model_validate(record)
+    category = await session.get(Category, record.category_id)
+    out.category_name = category.name if category is not None else ""
+    return out
+
+@router.delete("/api/merchant-aliases/{alias_id}")
+async def delete_merchant_alias(alias_id: int, session: AsyncSession = Depends(get_session)) -> dict:
+    """删除商户别名。"""
+    record = await session.get(MerchantAlias, alias_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="商户别名不存在")
+    await session.delete(record)
     await session.commit()
     return {"ok": True}
 

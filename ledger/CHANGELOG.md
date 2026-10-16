@@ -2,6 +2,14 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.7 - 2026-10-17
+
+### 新增
+
+- 商户别名管理 API（v2.4 遗留缺口：别名学错了改不掉）：GET /api/merchant-aliases（列表，含 category_name）、PATCH /api/merchant-aliases/{id}（改别名文本/改映射分类；404 别名不存在/分类不存在、400 无更新字段或别名为空、409 别名冲突）、DELETE /api/merchant-aliases/{id}（404/ok）；schemas 新增 MerchantAliasOut、MerchantAliasUpdate。
+- 侦探页新增「记住的商户别名」管理区：每行别名可改名、分类可重选，保存/删除即时生效；空状态有引导文案。
+- 回归测试 tests/test_merchant_aliases.py（8 例：列表、改名、改分类、404、400、409、删除）；pytest 全量 250 通过、1 跳过（既有 tesseract 缺失跳过）。
+
 ## v2.6 - 2026-10-16
 
 ### 新增

@@ -341,6 +341,24 @@ class MatchRuleOut(BaseModel):
     created_at: str
     category_name: str = ""
 
+class MerchantAliasOut(BaseModel):
+    """商户别名出参。"""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    alias: str
+    category_id: int
+    direction: str
+    created_at: str
+    category_name: str = ""
+
+class MerchantAliasUpdate(BaseModel):
+    """商户别名更新入参（全可选）。"""
+
+    alias: str | None = None
+    category_id: int | None = None
+
 
 class StatementTemplateCreate(BaseModel):
     """创建账单模板入参。"""
