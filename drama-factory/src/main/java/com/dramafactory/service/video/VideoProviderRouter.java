@@ -16,17 +16,20 @@ public class VideoProviderRouter {
 
     private static final Logger log = LoggerFactory.getLogger(VideoProviderRouter.class);
 
-    private static final List<String> DEFAULT_ORDER = List.of("agnes", "qwen");
+    private static final List<String> DEFAULT_ORDER = List.of("agnes", "novai", "doubao");
     private static final String MOCK = "mock";
 
     private final ApplicationContext applicationContext;
     private final Environment environment;
+    private final ShotVideoRouter shotVideoRouter;
 
     private volatile LastFallback lastFallback;
 
-    public VideoProviderRouter(ApplicationContext applicationContext, Environment environment) {
+    public VideoProviderRouter(ApplicationContext applicationContext, Environment environment,
+                               ShotVideoRouter shotVideoRouter) {
         this.applicationContext = applicationContext;
         this.environment = environment;
+        this.shotVideoRouter = shotVideoRouter;
     }
 
     public record RouteResult(String providerName, String providerTaskId, String fallbackReason) {
@@ -57,12 +60,55 @@ public class VideoProviderRouter {
         return result;
     }
 
+    /**
+     * 按分镜决定通道链：分镜首选 → 全局 preferred → 默认顺序去重。
+     */
+    public List<String> chain(Shot shot) {
+        String preferred = environment.getProperty("drama.video.provider", "mock");
+        if (preferred == null || preferred.isBlank()) {
+            preferred = "mock";
+        }
+        if (MOCK.equals(preferred)) {
+            return List.of(MOCK);
+        }
+        String shotPreferred = null;
+        if (shot != null && shotVideoRouter != null) {
+            shotPreferred = shotVideoRouter.route(shot);
+            if (shotPreferred != null && shotPreferred.isBlank()) {
+                shotPreferred = null;
+            }
+        }
+        List<String> result = new ArrayList<>();
+        if (shotPreferred != null) {
+            result.add(shotPreferred);
+        }
+        if (!preferred.equals(shotPreferred)) {
+            result.add(preferred);
+        }
+        for (String candidate : DEFAULT_ORDER) {
+            if (!candidate.equals(shotPreferred) && !candidate.equals(preferred)
+                    && !result.contains(candidate)) {
+                result.add(candidate);
+            }
+        }
+        return result;
+    }
+
     public VideoProvider providerFor(String name) {
         if ("agnes".equals(name)) {
             return applicationContext.getBean("agnesVideoProvider", VideoProvider.class);
         }
         if ("qwen".equals(name)) {
             return applicationContext.getBean("qwenVideoProvider", VideoProvider.class);
+        }
+        if ("novai".equals(name)) {
+            return applicationContext.getBean("novAiVideoProvider", VideoProvider.class);
+        }
+        if ("doubao".equals(name)) {
+            return applicationContext.getBean("doubaoEmailVideoProvider", VideoProvider.class);
+        }
+        if ("painted".equals(name)) {
+            return applicationContext.getBean("paintedAnimationVideoProvider", VideoProvider.class);
         }
         if ("mock".equals(name)) {
             return applicationContext.getBean("mockVideoProvider", VideoProvider.class);
@@ -71,7 +117,7 @@ public class VideoProviderRouter {
     }
 
     public RouteResult submit(Shot shot, int seconds) {
-        List<String> chain = chain();
+        List<String> chain = chain(shot);
         List<String> failures = new ArrayList<>();
         for (int i = 0; i < chain.size(); i++) {
             String current = chain.get(i);

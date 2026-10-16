@@ -65,6 +65,20 @@ public class CredentialResolver {
     }
 
     /**
+     * 解析 NovAI 鉴权头。
+     *
+     * @param url 目标地址
+     * @return Authorization 头；无凭证时走 surrogate 通道（custom.novai-api）
+     */
+    public Map.Entry<String, String> novaiAuth(String url) {
+        String key = readKey("novai.api-key");
+        if (key != null) {
+            return Map.entry("Authorization", "Bearer " + key);
+        }
+        return surrogateAuthClient.authHeader(url, "custom.novai-api");
+    }
+
+    /**
      * 解析 DashScope BYOK 鉴权头：卡片 key → 设置中心 → surrogate。
      */
     public Map.Entry<String, String> dashscopeByokAuth(String cardKey, String url) {

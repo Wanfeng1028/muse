@@ -79,7 +79,7 @@ class VideoProviderRouterTest {
         VideoProvider qwen = successProvider(QWEN);
         VideoProvider mock = successProvider(MOCK);
         ApplicationContext ctx = contextWith(agnes, qwen, mock);
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES), null);
 
         VideoProviderRouter.RouteResult result = router.submit(shot(), 5);
 
@@ -92,7 +92,7 @@ class VideoProviderRouterTest {
     @Test
     void chainPrefersQwenThenAgnes() {
         ApplicationContext ctx = contextWith(successProvider(AGNES), successProvider(QWEN), successProvider(MOCK));
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(QWEN));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(QWEN), null);
 
         assertEquals(List.of(QWEN, AGNES), router.chain());
     }
@@ -100,7 +100,7 @@ class VideoProviderRouterTest {
     @Test
     void chainPrefersMockOnly() {
         ApplicationContext ctx = contextWith(successProvider(AGNES), successProvider(QWEN), successProvider(MOCK));
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(MOCK));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(MOCK), null);
 
         assertEquals(List.of(MOCK), router.chain());
     }
@@ -109,7 +109,7 @@ class VideoProviderRouterTest {
     void mockFailureDoesNotFallBackToAgnesOrQwen() {
         RuntimeException boom = new RuntimeException("mock down");
         ApplicationContext ctx = contextWith(successProvider(AGNES), successProvider(QWEN), failingProvider(MOCK, boom));
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(MOCK));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(MOCK), null);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> router.submit(shot(), 5));
         assertTrue(thrown.getMessage().contains("所有视频通道均失败"));
@@ -121,7 +121,7 @@ class VideoProviderRouterTest {
         VideoProvider qwen = successProvider(QWEN);
         VideoProvider mock = successProvider(MOCK);
         ApplicationContext ctx = contextWith(agnes, qwen, mock);
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES), null);
 
         VideoProviderRouter.RouteResult result = router.submit(shot(), 5);
 
@@ -143,7 +143,7 @@ class VideoProviderRouterTest {
         VideoProvider qwen = successProvider(QWEN);
         VideoProvider mock = successProvider(MOCK);
         ApplicationContext ctx = contextWith(agnes, qwen, mock);
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES), null);
 
         VideoProviderRouter.RouteResult result = router.submit(shot(), 5);
 
@@ -162,7 +162,7 @@ class VideoProviderRouterTest {
         VideoProvider qwen = successProvider(QWEN);
         VideoProvider mock = successProvider(MOCK);
         ApplicationContext ctx = contextWith(agnes, qwen, mock);
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES), null);
 
         VideoProviderRouter.RouteResult result = router.submit(shot(), 5);
 
@@ -183,7 +183,7 @@ class VideoProviderRouterTest {
         VideoProvider qwen = failingProvider(QWEN, new RuntimeException("qwen down"));
         VideoProvider mock = successProvider(MOCK);
         ApplicationContext ctx = contextWith(agnes, qwen, mock);
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES), null);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () -> router.submit(shot(), 5));
         assertTrue(thrown.getMessage().contains("所有视频通道均失败"));
@@ -192,7 +192,7 @@ class VideoProviderRouterTest {
     @Test
     void providerForUnknownNameThrowsIllegalArgumentException() {
         ApplicationContext ctx = contextWith(successProvider(AGNES), successProvider(QWEN), successProvider(MOCK));
-        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES));
+        VideoProviderRouter router = new VideoProviderRouter(ctx, environmentWithPreferred(AGNES), null);
 
         assertThrows(IllegalArgumentException.class, () -> router.providerFor("unknown"));
     }

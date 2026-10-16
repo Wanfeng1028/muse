@@ -40,7 +40,8 @@ public class SurrogateAuthClient {
             "apihub.agnes-ai.com",
             "apihub.agens-ai.com",
             "chatapi.weixin.qq.com",
-            "dashscope.aliyuncs.com"
+            "dashscope.aliyuncs.com",
+            "aiapi-pro.com"
     );
 
     /** 默认凭证名称（Agnes），保持原有单参数方法的行为不变。 */
