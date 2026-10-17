@@ -174,12 +174,11 @@ export default function App() {
         ) : (
           <div className="empty-state">
             <div className="empty-logo-lg"><CodexLogo size={48} /></div>
-            <div className="empty-title-xl">What should we work on in <u>{activeProject?.name}</u>?</div>
+            <div className="empty-title-xl">What should we build in <u>{activeProject?.name}</u>?</div>
             <div className="suggestion-cards">
               {[
                 { icon: <WandIcon />, title: 'Create a file or build a site' },
                 { icon: <BookIcon />, title: 'Research and plan next steps' },
-                { icon: <ListIcon />, title: 'Get a briefing on recent work' },
                 { icon: <ClockColorIcon />, title: 'Automate routine and recurring work' },
               ].map((s, i) => (
                 <button key={i} className="suggestion-card" onClick={() => send(s.title)}>

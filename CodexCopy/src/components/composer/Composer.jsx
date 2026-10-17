@@ -73,10 +73,6 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
               onClick={() => setApproveForMe(!approveForMe)} title="Approval setting">
               <CheckIcon size={12} /> Ask for approval
             </button>
-            <button className="composer-pill" title="Set a goal">
-              <GoalIcon size={13} /> Goal
-            </button>
-            {planMode && <span className="pill blue">Plan</span>}
             <span className="composer-sp" />
             <div style={{ position: 'relative' }}>
               <button className="model-control" onClick={() => setPickerOpen(!pickerOpen)} title="Model settings (Ctrl+Shift+M)">

@@ -18,7 +18,7 @@ export default function Sidebar({
 
   const NAV = [
     { id: 'new', label: 'New task', icon: <TaskIcon size={16} />, plus: true },
-    { id: 'scheduled', label: 'Scheduled', icon: <ClockIcon size={16} /> },
+    { id: 'tasks', label: 'Tasks', icon: <ClockIcon size={16} /> },
     { id: 'plugins', label: 'Plugins', icon: <PlugIcon size={16} /> },
     { id: 'sites', label: 'Sites', icon: <SitesIcon size={16} /> },
     { id: 'chat', label: 'Chat', icon: <ChatIcon size={16} /> },
