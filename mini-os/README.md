@@ -177,6 +177,8 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 ![目录分享子目录与面包屑（v1.6）](docs/screenshots/v16-share-dir-sub.png)
 ![文件分享页（v1.6，深色）](docs/screenshots/v16-share-file.png)
 ![Prometheus /metrics 输出（v1.6）](docs/screenshots/v16-metrics.png)
+![用户与权限（viewer 只读视角，v1.7 重拍）](docs/screenshots/v17-users-viewer.png)
+![用户与权限（admin 管理视角，v1.7 重拍）](docs/screenshots/v17-users-admin.png)
 
 
 

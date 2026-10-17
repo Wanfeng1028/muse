@@ -1,6 +1,16 @@
 
 # Changelog
 
+## [1.8.1] - 2026-10-17
+
+### 修复
+
+- **窗口透明 bug**：`static/style.css` 首行残留 markdown 代码围栏 ```` ```css ````，CSS 解析器把 `:root` 规则整个吞掉，所有 `var(--*)` 失效 → 全部窗口背景透明、桌面图标从窗口内容里透出来。删除该行后恢复正常（视觉验收确认）
+
+### 杂项
+
+- v1.7 两张截图重拍：`docs/screenshots/v17-users-viewer.png` / `v17-users-admin.png`，干净种子数据（`scripts/seed-shot-users.sh`：zhangwei/admin、editor01/editor、viewer01/viewer），README 截图区已引用
+
 ## [1.8.0] - 2026-10-17
 
 ### 新增
