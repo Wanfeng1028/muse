@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
@@ -52,6 +55,13 @@ public class FinalCutService {
      * 配置键 drama.ffmpeg.retry-total-budget-ms（环境变量 FFMPEG_RETRY_TOTAL_BUDGET_MS），默认 20000。
      */
     private final long ffmpegRetryTotalBudgetMs;
+
+    private FinalCutService self;
+
+    @Autowired
+    public void setSelf(@Lazy FinalCutService self) {
+        this.self = self;
+    }
 
     /**
      * 构造器注入所有依赖。
@@ -118,6 +128,27 @@ public class FinalCutService {
             dramaMetrics.recordFinalCutBuild(System.currentTimeMillis() - start, false);
             throw e;
         }
+    }
+
+    /**
+     * 在独立事务中记录构建失败。若直接在外层事务里保存 FAILED 状态，
+     * 外层事务因异常回滚时会把 FAILED 记录一并吞掉，导致失败无迹可查。
+     * 用 REQUIRES_NEW 确保失败记录一定落盘。
+     *
+     * @param episodeId    剧集 ID（已提交，可见）
+     * @param title        成片标题
+     * @param errorMessage 错误信息
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordBuildFailure(Long episodeId, String title, String errorMessage) {
+        Episode episode = episodeRepository.findById(episodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Episode", episodeId));
+        FinalCut fc = new FinalCut();
+        fc.setEpisode(episode);
+        fc.setTitle(title);
+        fc.setStatus(FinalCutStatus.FAILED);
+        fc.setErrorMessage(errorMessage);
+        finalCutRepository.save(fc);
     }
 
     /**
@@ -190,10 +221,8 @@ public class FinalCutService {
 
             return toResponse(fc);
         } catch (Exception e) {
-            // 失败时记录错误信息并置为失败状态
-            fc.setStatus(FinalCutStatus.FAILED);
-            fc.setErrorMessage(e.getMessage());
-            finalCutRepository.save(fc);
+            // 失败时在独立事务中记录 FAILED（外层事务回滚会吞掉直接 save）
+            self.recordBuildFailure(episodeId, fc.getTitle(), e.getMessage());
             throw e instanceof RuntimeException re ? re : new RuntimeException(e);
         }
     }

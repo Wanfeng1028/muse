@@ -373,7 +373,7 @@ public class CanvasProjectService {
 
     private CanvasProjectV2 emptyV2() {
         String now = OffsetDateTime.now().toString();
-        return new CanvasProjectV2(2, 1, "editor", now, new ArrayList<>(), new ArrayList<>());
+        return new CanvasProjectV2(2, 0, "", now, new ArrayList<>(), new ArrayList<>());
     }
 
     private int parseIfMatch(String header) {

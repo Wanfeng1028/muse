@@ -31,6 +31,9 @@ import java.util.TreeSet;
 @Service
 public class UsageService {
 
+    /** "不限时间"查询的下界：LocalDateTime.MIN 超出 H2 TIMESTAMP 可比范围会导致查询返回空，改用 1970 纪元。 */
+    private static final java.time.LocalDateTime TIME_BEGIN = java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
+
     private static final Logger log = LoggerFactory.getLogger(UsageService.class);
 
     private static final int DEFAULT_DAYS = 30;
@@ -70,8 +73,8 @@ public class UsageService {
                     promptTotal, completionTotal, cachedTotal, cacheHitRate(cachedTotal, promptTotal, completionTotal));
         }
         LocalDateTime from = days > 0 ? LocalDateTime.now().minusDays(days) : null;
-        List<RequestVideoRow> videoRows = videoTaskRepository.findForRequests(from != null ? from : LocalDateTime.MIN);
-        List<RequestStepRow> stepRows = agentStepRepository.findForRequests(from != null ? from : LocalDateTime.MIN);
+        List<RequestVideoRow> videoRows = videoTaskRepository.findForRequests(from != null ? from : TIME_BEGIN);
+        List<RequestStepRow> stepRows = agentStepRepository.findForRequests(from != null ? from : TIME_BEGIN);
         Long tokens = null;
         Long cost = null;
         long taskCount = 0;
@@ -106,7 +109,7 @@ public class UsageService {
 
     @Transactional(readOnly = true)
     public List<RequestUsage> requests(int limit, String provider, String model, int days) {
-        LocalDateTime from = days > 0 ? LocalDateTime.now().minusDays(days) : LocalDateTime.MIN;
+        LocalDateTime from = days > 0 ? LocalDateTime.now().minusDays(days) : TIME_BEGIN;
         List<RequestVideoRow> videoRows = videoTaskRepository.findForRequests(from);
         List<RequestStepRow> stepRows = agentStepRepository.findForRequests(from);
         List<RequestUsage> result = new ArrayList<>();
@@ -171,6 +174,9 @@ public class UsageService {
         Map<LocalDate, Long> videoCountMap = new TreeMap<>();
         Map<LocalDate, Long> stepCountMap = new TreeMap<>();
         for (VideoTaskRow r : videoRows) {
+            if (provider != null && !provider.isEmpty() && !provider.equals(r.getProvider())) {
+                continue;
+            }
             if (model != null && !model.isEmpty() && !model.equals(r.getModelUsed())) {
                 continue;
             }
@@ -180,6 +186,7 @@ public class UsageService {
             videoCountMap.merge(d, 1L, Long::sum);
         }
         for (AgentStepRow r : stepRows) {
+            // AgentStep 无 provider 字段，无法归属到视频供应商；按 provider 过滤时整体跳过（有意设计，非遗漏）
             if (provider != null && !provider.isEmpty()) {
                 continue;
             }
@@ -396,6 +403,7 @@ public record FilterOptions(List<String> providers, List<String> models) {}
         Long getTokensUsed();
         Long getCostCents();
         LocalDateTime getCreatedAt();
+        String getProvider();
     }
 
     /** VideoTask 请求明细投影。 */

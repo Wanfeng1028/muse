@@ -142,6 +142,29 @@ public class PromptTemplateService implements ApplicationRunner {
                 成片信息：{{finalCut}}
                 """);
 
+        map.put(AgentType.LYRICS, """
+                你是短剧作词人。根据给定主题、情绪与曲风，产出可直接谱曲的中文歌词。
+                要求：
+                1) 按段落组织，至少包含 verse 与 chorus，段落顺序清晰；
+                2) 每段前用中括号标注段落类型与情绪，如 [Verse 1 - 克制]；
+                3) 用词贴合剧情，避免生僻词与口语化口水词；
+                4) 只输出歌词文本，不要输出解释或创作说明。
+                主题：{{theme}}
+                情绪：{{mood}}
+                曲风：{{genre}}
+                """);
+
+        map.put(AgentType.COMPOSE, """
+                你是短剧作曲指导。根据歌词产出可交付给编曲的作曲说明。
+                要求：
+                1) 给出曲风、BPM、调式三项基本参数；
+                2) 说明段落结构（前奏/主歌/副歌/间奏/尾奏）与时长安排；
+                3) 列出主要乐器编配与层次处理；
+                4) 只输出文字说明，不生成音频，不输出谱例。
+                歌词：{{lyrics}}
+                情绪：{{mood}}
+                """);
+
         return map;
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -101,6 +102,25 @@ public class GlobalExceptionHandler {
                 MDC.get("request_id")
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseBody
+    public ResponseEntity<Records.ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = "数据完整性校验失败";
+        Throwable root = ex.getRootCause();
+        if (root != null && root.getMessage() != null) {
+            String rm = root.getMessage();
+            message = rm.length() > 200 ? rm.substring(0, 200) : rm;
+        }
+        Records.ErrorResponse body = new Records.ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                message,
+                LocalDateTime.now(),
+                MDC.get("request_id")
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(CanvasConflictException.class)

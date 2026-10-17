@@ -5,6 +5,22 @@
 
 ## [Unreleased]
 
+### Fixed（深测轮 r3，2026-10-18）
+
+- PromptRecipeService.apply 并发丢更新：改为 `@Modifying` 原子自增 + `@Transactional`。
+- UsageService.summary/requests 的"不限时间"查询：`LocalDateTime.MIN` 在 H2 上比较返回空，改用 1970-01-01 下界常量 `TIME_BEGIN`。
+- GlobalExceptionHandler 新增 `DataIntegrityViolationException` -> 400 映射（超长入参不再 500）。
+
+### Tests（深测轮 r3，2026-10-18）
+
+- 41 个 `*DeepTest`、652 用例；全量失败+错误从 73 降至 61。
+- 新增 `PromptTemplateServiceDeepTest` / `RunServiceDeepTest` / `PipelineServiceDeepTest` / `ChatServiceDeepTest` / `PresetServiceDeepTest`。
+- 对齐了一批测试期望与产品真实语义的偏差（见 `docs/DEEPTEST_ROUND_R3.md`）。
+
+### Known issues
+
+- SkillService.install 并发同版本安装存在竞态（唯一约束冲突），测试暂为串行幂等验证，产品侧修复待排期。
+
 ### Added
 
 - v2.32「flaky 收尾：ffmpeg 输出竞态 + 中断异常收敛 + 重试逃逸」（2026-10-17，关闭 `docs/FLAKY_ROOT_CAUSE.md` §7 残余风险 ③④⑥）：

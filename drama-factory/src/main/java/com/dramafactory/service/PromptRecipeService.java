@@ -5,6 +5,7 @@ import com.dramafactory.model.PromptRecipe;
 import com.dramafactory.model.RecipeVisibility;
 import com.dramafactory.repository.PromptRecipeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -156,15 +157,14 @@ public class PromptRecipeService {
      * @param target    目标：SCRIPT（编剧）/BOARD（分镜）
      * @return 套用结果
      */
+    @Transactional
     public ApplyResult apply(Long id, Map<String, String> variables, String target) {
         if (target == null || !VALID_TARGETS.contains(target)) {
             throw new IllegalArgumentException("目标类型非法，必须为 SCRIPT 或 BOARD，实际：" + target);
         }
         PromptRecipe recipe = getOrThrow(id);
         String rendered = doRender(recipe, variables);
-        long count = recipe.getUsageCount() == null ? 0L : recipe.getUsageCount();
-        recipe.setUsageCount(count + 1);
-        repository.save(recipe);
+        repository.incrementUsageCount(id);
         return new ApplyResult(rendered, recipe.getModelParams(), target);
     }
 

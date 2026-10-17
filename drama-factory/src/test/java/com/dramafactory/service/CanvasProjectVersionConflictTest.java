@@ -48,29 +48,30 @@ class CanvasProjectVersionConflictTest {
     @Test
     void saveWithStaleBaseVersion_throws409(@TempDir Path dir) {
         CanvasProjectService service = newService(dir);
-        service.saveV2(bodyWithBase(1), "editor");
+        // 空项目版本号为 0（见 emptyV2），首次保存用 base 0
+        service.saveV2(bodyWithBase(0), "editor");
         CanvasConflictException ex = assertThrows(CanvasConflictException.class,
-                () -> service.saveV2(bodyWithBase(1), "agent"));
-        assertEquals(2, ex.getCurrentVersion());
+                () -> service.saveV2(bodyWithBase(0), "agent"));
+        assertEquals(1, ex.getCurrentVersion());
         assertEquals("editor", ex.getUpdatedBy());
     }
 
     @Test
     void bidirectionalConflict_editorStaleAfterAgentWrite(@TempDir Path dir) {
         CanvasProjectService service = newService(dir);
-        service.saveV2(bodyWithBase(1), "editor");
-        service.saveV2(bodyWithBase(2), "agent");
+        service.saveV2(bodyWithBase(0), "editor");
+        service.saveV2(bodyWithBase(1), "agent");
         CanvasConflictException ex = assertThrows(CanvasConflictException.class,
-                () -> service.saveV2(bodyWithBase(2), "editor"));
-        assertEquals(3, ex.getCurrentVersion());
+                () -> service.saveV2(bodyWithBase(1), "editor"));
+        assertEquals(2, ex.getCurrentVersion());
         assertEquals("agent", ex.getUpdatedBy());
     }
 
     @Test
     void saveReturnsIncrementedVersion(@TempDir Path dir) throws Exception {
         CanvasProjectService service = newService(dir);
-        CanvasProjectV2 saved = service.saveV2(bodyWithBase(1), "editor");
-        assertEquals(2, saved.version());
+        CanvasProjectV2 saved = service.saveV2(bodyWithBase(0), "editor");
+        assertEquals(1, saved.version());
         assertEquals("editor", saved.updatedBy());
         String onDisk = Files.readString(dir.resolve("project.json"));
         assertFalse(onDisk.contains("\"base_version\""), "落盘 JSON 不应包含 base_version 字段");

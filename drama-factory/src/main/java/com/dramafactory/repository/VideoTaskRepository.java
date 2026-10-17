@@ -82,10 +82,10 @@ public interface VideoTaskRepository extends JpaRepository<VideoTask, Long> {
     @Query("SELECT SUM(v.costCents) FROM VideoTask v")
     Long sumCostCents();
 
-    @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt FROM VideoTask v")
+    @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt, v.provider AS provider FROM VideoTask v")
     List<UsageService.VideoTaskRow> findAllForModelUsage();
 
-    @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt FROM VideoTask v WHERE v.createdAt >= :from")
+    @Query("SELECT v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, v.costCents AS costCents, v.createdAt AS createdAt, v.provider AS provider FROM VideoTask v WHERE v.createdAt >= :from")
     List<UsageService.VideoTaskRow> findForDailyUsage(@Param("from") LocalDateTime from);
 
 @Query("SELECT v.id AS id, v.provider AS provider, v.modelUsed AS modelUsed, v.tokensUsed AS tokensUsed, " +

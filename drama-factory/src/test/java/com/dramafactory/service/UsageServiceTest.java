@@ -655,6 +655,7 @@ class UsageServiceTest {
             @Override public Long getTokensUsed() { return tokens; }
             @Override public Long getCostCents() { return cost; }
             @Override public LocalDateTime getCreatedAt() { return createdAt; }
+            @Override public String getProvider() { return null; }
         };
     }
 

@@ -38,7 +38,7 @@ public class AgentController {
     }
 
     /**
-     * 列出全部 5 个 Agent 的实时信息。
+     * 列出全部 7 个 Agent 的实时信息。
      *
      * @return Agent 信息列表
      */
