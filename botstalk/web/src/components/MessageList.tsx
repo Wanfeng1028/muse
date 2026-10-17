@@ -129,7 +129,7 @@ function TaskRow({ item }: { item: ChatItem }) {
   const label =
     status === 'running' ? '开始处理' : status === 'done' ? '处理完成' : '处理失败';
   return (
-    <div className="task" data-key={item.key}>
+    <div className="task" data-key={item.key} data-taskid={item.taskId ?? ''}>
       <span className="task-sender">{item.sender}</span>
       <span className="task-text">
         {label}

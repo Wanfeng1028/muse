@@ -57,6 +57,12 @@ export function openDb(dataDir: string): DatabaseSync {
   db.exec(
     "CREATE INDEX IF NOT EXISTS idx_pending_frames_adapter_gseq ON pending_frames(adapter_id, gseq);",
   );
+  db.exec(
+    "CREATE TABLE IF NOT EXISTS tasks (task_id TEXT PRIMARY KEY, room TEXT NOT NULL, owner TEXT NOT NULL, assignee TEXT, title TEXT NOT NULL, status TEXT NOT NULL, created_at_ms INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL);",
+  );
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_tasks_room_updated ON tasks(room, updated_at_ms DESC);",
+  );
   return db;
 }
 
@@ -227,6 +233,75 @@ export function getArtifact(db: Db, id: string): ArtifactRow | undefined {
   );
   const row = stmt.get(id);
   return row as unknown as ArtifactRow | undefined;
+}
+
+export type TaskStatus = "dispatched" | "running" | "done" | "failed" | "unsupported" | "cancelled";
+
+export interface TaskRow {
+  task_id: string;
+  room: string;
+  owner: string;
+  assignee: string | null;
+  title: string;
+  status: TaskStatus;
+  created_at_ms: number;
+  updated_at_ms: number;
+}
+
+/** 任务派发时登记；同一 task_id 重复派发则更新（幂等）。 */
+export function upsertTaskDispatch(
+  db: Db,
+  t: { task_id: string; room: string; owner: string; assignee: string | null; title: string; status: TaskStatus },
+): void {
+  const now = Date.now();
+  const stmt = db.prepare(
+    `INSERT INTO tasks (task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(task_id) DO UPDATE SET
+       room = excluded.room, owner = excluded.owner, assignee = excluded.assignee,
+       title = excluded.title, status = excluded.status, updated_at_ms = excluded.updated_at_ms`,
+  );
+  stmt.run(t.task_id, t.room, t.owner, t.assignee, t.title, t.status, now, now);
+}
+
+/** 任务状态流转；不存在的 task_id 返回 false。 */
+export function updateTaskStatus(db: Db, task_id: string, status: TaskStatus): boolean {
+  const stmt = db.prepare("UPDATE tasks SET status = ?, updated_at_ms = ? WHERE task_id = ?");
+  const info = stmt.run(status, Date.now(), task_id);
+  return Number(info.changes) > 0;
+}
+
+export function getTask(db: Db, task_id: string): TaskRow | undefined {
+  const stmt = db.prepare("SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms FROM tasks WHERE task_id = ?");
+  return stmt.get(task_id) as unknown as TaskRow | undefined;
+}
+
+/** 按更新时间倒序；room/status 可选过滤；limit 上限 200；before_* 游标翻页（与排序一致） */
+export function listTasks(db: Db, opts: { room?: string; status?: TaskStatus; limit?: number; before_updated_ms?: number; before_task_id?: string }): TaskRow[] {
+  const conds: string[] = [];
+  const args: Array<string | number> = [];
+  if (opts.room !== undefined) { conds.push("room = ?"); args.push(opts.room); }
+  if (opts.status !== undefined) { conds.push("status = ?"); args.push(opts.status); }
+  if (opts.before_updated_ms !== undefined && opts.before_task_id !== undefined) {
+    conds.push("(updated_at_ms < ? OR (updated_at_ms = ? AND task_id > ?))");
+    args.push(opts.before_updated_ms, opts.before_updated_ms, opts.before_task_id);
+  }
+  const where = conds.length > 0 ? "WHERE " + conds.join(" AND ") : "";
+  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+  const stmt = db.prepare(
+    `SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms FROM tasks ${where} ORDER BY updated_at_ms DESC, task_id ASC LIMIT ?`,
+  );
+  return stmt.all(...args, limit) as unknown as TaskRow[];
+}
+
+export function countTasksByStatus(db: Db, room?: string): Record<string, number> {
+  const where = room !== undefined ? "WHERE room = ?" : "";
+  const args = room !== undefined ? [room] : [];
+  const stmt = db.prepare(`SELECT status, COUNT(*) AS n FROM tasks ${where} GROUP BY status`);
+  const rows = stmt.all(...args) as unknown as Array<{ status: string; n: number }>;
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.status] = r.n;
+  return out;
 }
 
 // 自查：红线 1-5 逐条通过

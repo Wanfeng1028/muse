@@ -5,6 +5,7 @@ import { MemberEntry } from './Members';
 interface Props {
   members: MemberEntry[];
   onSend: (text: string, mentions: string[]) => void;
+  onSendTask: (text: string, mentions: string[]) => void;
 }
 
 interface MentionState {
@@ -16,8 +17,9 @@ interface MentionState {
 
 const EMPTY: MentionState = { active: false, start: -1, query: '', cursor: 0 };
 
-export default function Composer({ members, onSend }: Props) {
+export default function Composer({ members, onSend, onSendTask }: Props) {
   const [text, setText] = useState('');
+  const [taskMode, setTaskMode] = useState(false);
   const [mention, setMention] = useState<MentionState>(EMPTY);
   const [highlight, setHighlight] = useState(0);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -76,7 +78,11 @@ export default function Composer({ members, onSend }: Props) {
     const trimmed = text.trim();
     if (!trimmed) return;
     const mentions = parseMentions(trimmed, members);
-    onSend(trimmed, mentions);
+    if (taskMode) {
+      onSendTask(trimmed, mentions);
+    } else {
+      onSend(trimmed, mentions);
+    }
     setText('');
     setMention(EMPTY);
   };
@@ -134,12 +140,21 @@ export default function Composer({ members, onSend }: Props) {
           ))}
         </div>
       )}
-      <div className="composer-row">
+      <div className={`composer-row${taskMode ? ' is-task' : ''}`}>
+        <button
+          className={`taskmode-toggle${taskMode ? ' is-on' : ''}`}
+          type="button"
+          title={taskMode ? '切换回聊天模式' : '切换到派活模式'}
+          onClick={() => setTaskMode((v) => !v)}
+        >
+          <Bot size={16} strokeWidth={2} />
+          <span>{taskMode ? '派活中' : '派活'}</span>
+        </button>
         <textarea
           ref={taRef}
           className="composer-input"
           rows={1}
-          placeholder="说点什么，@ 可以叫某个成员"
+          placeholder={taskMode ? '派活：@一位成员，说清楚要干什么' : '说点什么，@ 可以叫某个成员'}
           value={text}
           onChange={(e) => onChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
           onKeyDown={onKeyDown}
@@ -148,7 +163,7 @@ export default function Composer({ members, onSend }: Props) {
         />
         <button className="btn-primary" type="button" onClick={submit} disabled={!text.trim()}>
           <Send size={16} strokeWidth={2} />
-          <span>发送</span>
+          <span>{taskMode ? '派活' : '发送'}</span>
         </button>
       </div>
     </div>

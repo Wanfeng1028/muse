@@ -538,3 +538,221 @@ textarea {
 .mention-pop::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* ---------- 任务追踪面板 ---------- */
+.task-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  background: var(--paper-raised);
+  border-left: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+}
+.task-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.task-panel-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+.task-panel-stats {
+  font-size: 12px;
+  color: var(--ink-muted);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.task-panel-close {
+  margin-left: auto;
+}
+.task-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.task-filter-chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.task-filter-chip.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.task-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--sp-2);
+}
+.task-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-2);
+  cursor: pointer;
+}
+.task-row:hover {
+  border-color: var(--line-strong);
+}
+.task-row-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: 4px;
+}
+.task-row-title {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.task-row-meta {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.task-pill {
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+  background: var(--paper-sunken);
+  white-space: nowrap;
+}
+.pill-running {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.pill-done {
+  color: var(--online);
+  border-color: var(--online);
+}
+.pill-failed {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.pill-cancelled {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+.task-detail {
+  border-top: 1px solid var(--line-strong);
+  padding: var(--sp-3) var(--sp-4);
+  max-height: 46%;
+  overflow-y: auto;
+  background: var(--paper);
+}
+.task-detail-row {
+  display: flex;
+  gap: var(--sp-2);
+  font-size: 13px;
+  padding: 4px 0;
+  color: var(--ink-soft);
+}
+.task-detail-label {
+  flex: 0 0 64px;
+  color: var(--ink-muted);
+}
+.task-detail-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  word-break: break-all;
+}
+.task-detail-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.task-error {
+  font-size: 13px;
+  color: var(--danger);
+  padding: var(--sp-3) var(--sp-4);
+}
+.task-empty {
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 13px;
+  padding: var(--sp-5) var(--sp-4);
+}
+.task-empty svg {
+  display: block;
+  margin: 0 auto var(--sp-2);
+  color: var(--line-strong);
+}
+.task-retry {
+  margin-top: var(--sp-2);
+}
+
+/* ---------- 派活模式 ---------- */
+.taskmode-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.taskmode-toggle.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.composer-row.is-task .composer-input {
+  border-color: var(--accent);
+}
+
+/* ---------- 未读 pill ---------- */
+.unread-pill {
+  align-self: center;
+  margin-bottom: var(--sp-2);
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---------- 定位闪一下 ---------- */
+@keyframes task-flash {
+  0%, 100% { background: transparent; }
+  30%, 70% { background: var(--accent-soft); }
+}
+.task-flash {
+  animation: task-flash 1.6s ease;
+  border-radius: var(--radius-sm);
+}

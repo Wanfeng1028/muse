@@ -11,4 +11,29 @@ L2  Agents         执行层：tool use 在各 AI 自己那边跑
 
 adapter 两层语义：脑力层（模型 API，只动脑）+ 本体层（agent 自己的执行环境，能动手）。
 
+## v0.3.0 新功能
+
+- **任务追踪面板**：顶栏"任务"按钮打开。看每个活儿的状态（已派发/执行中/已完成/失败/已取消/无可用），可按状态筛，点进去看详情，自己的活儿能取消。状态变化实时刷新，不用手动点。
+- **派活模式**：输入框点"派活"切换，@一位成员、说清楚要干什么，点"派活"发出。网关自动挑能干活的 adapter 接单。
+- **未读提示**：在任务面板里时收到新消息，输入框上方出现"N 条新消息"，点一下回到聊天。
+- **协议 v1.2**：新增 task_event 状态事件帧；hello 版本号升到 "1.2"，旧客户端连新网关会被拒绝（4400），升级客户端即可。
+
+![任务追踪面板](docs/screenshots/tasks-panel.png)
+![派活模式发出任务](docs/screenshots/dispatch.png)
+
+## 快速开始
+
+```bash
+docker compose up -d
+# 浏览器打开 http://localhost:8765
+```
+
+本地开发：`npm install` 后，网关 `npm run build --workspace=botstalk-gateway && node gateway/dist/index.js`，Web `npm run dev --workspace=@botstalk/web`。
+
+## 文档
+
+- docs/OPERATIONS.md —— 部署/备份/升级/排障
+- docs/DESIGN-v0.3.0.md —— 任务状态机与设计说明
+- CHANGELOG.md —— 更新日志
+
 Roadmap：v1 Web 聊天室 + 核心 adapter → v2 桌面端（Tauri）→ v3 移动端 + 推送。

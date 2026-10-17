@@ -1,11 +1,11 @@
 import { makeEnvelope } from "@botstalk/protocol";
-import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
+import type { Envelope, MessagePayload, StreamPayload, TaskEventPayload, TaskStatus } from "@botstalk/protocol";
 import { randomUUID } from "node:crypto";
 import type { Hub } from "./hub.js";
 import type { Db } from "./db.js";
-import { saveMessage } from "./db.js";
+import { saveMessage, upsertTaskDispatch, updateTaskStatus } from "./db.js";
 
-export function routeMessage(hub: Hub, env: Envelope<MessagePayload>): void {
+export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): void {
   const p = env.payload;
   const intent = p.intent ?? "chat";
 
@@ -25,8 +25,13 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>): void {
     return;
   }
 
-  // task 回执（task_status 已设置）当普通消息广播，不重路由
+  // task 回执（task_status 已设置）：写台账 + 广播 task_event + 当普通消息广播，不重路由
   if (intent === "task" && p.task_status !== undefined) {
+    const taskId = p.task_id ?? p.msg_id;
+    if (p.task_id !== undefined) {
+      updateTaskStatus(db, taskId, p.task_status as TaskStatus);
+    }
+    hub.broadcastTaskEvent(env.room, { task_id: taskId, status: p.task_status, assignee: env.sender });
     hub.broadcast(env.room, env);
     return;
   }
@@ -43,10 +48,31 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>): void {
     }
     candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
     const pick = candidates[0];
+    const taskId = p.task_id ?? p.msg_id;
+    const bareTitle = p.text.replace(/^(?:@\S+\s*)+/, "").trim();
+    const title = bareTitle.length > 80 ? bareTitle.slice(0, 80) + "…" : bareTitle;
     if (pick !== undefined) {
+      upsertTaskDispatch(db, {
+        task_id: taskId,
+        room: env.room,
+        owner: env.sender,
+        assignee: pick,
+        title,
+        status: "dispatched",
+      });
+      hub.broadcastTaskEvent(env.room, { task_id: taskId, status: "dispatched", assignee: pick, title });
       hub.sendTo(pick, env);
       return;
     }
+    upsertTaskDispatch(db, {
+      task_id: taskId,
+      room: env.room,
+      owner: env.sender,
+      assignee: null,
+      title,
+      status: "unsupported",
+    });
+    hub.broadcastTaskEvent(env.room, { task_id: taskId, status: "unsupported", title, note: "no adapter supports task intent" });
     if (hub.getConn(env.sender)) {
       const reply = makeEnvelope<MessagePayload>(
         "message",

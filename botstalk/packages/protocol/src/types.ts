@@ -12,13 +12,23 @@ export type FrameType =
   | "hello"
   | "presence"
   | "gap"
-  | "capability_update";
+  | "capability_update"
+  | "task_event";
 
 /** 消息 intent。默认 "chat"。 */
 export type Intent = "chat" | "task";
 
 /** task 回执状态。 */
 export type TaskStatus = "running" | "done" | "failed" | "unsupported";
+
+/** type=task_event 的 payload（网关向房间广播的任务状态事件）。 */
+export interface TaskEventPayload {
+  task_id: string;
+  status: "dispatched" | TaskStatus | "cancelled";
+  assignee?: string;
+  title?: string;
+  note?: string;
+}
 
 /** 统一错误码枚举（stream error 终帧与 task 失败共用）。 */
 export type ErrorCode =
@@ -28,7 +38,8 @@ export type ErrorCode =
   | "cancelled";
 
 /** presence 状态。 */
-export type PresenceStatus = "online" | "thinking";
+/** presence 状态；"offline" 用于网关向房间广播成员下线（v1.2 新增）。 */
+export type PresenceStatus = "online" | "thinking" | "offline";
 
 /** 累计 token 用量。 */
 export interface Usage {
@@ -92,8 +103,10 @@ export interface HelloPayload {
 }
 
 /** type=presence 的 payload（心跳）。 */
+/** 网关广播成员上下线时带 adapter_id（v1.2 新增可选字段）。 */
 export interface PresencePayload {
   status: PresenceStatus;
+  adapter_id?: string;
   usage?: Usage;
 }
 

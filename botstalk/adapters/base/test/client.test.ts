@@ -114,7 +114,7 @@ describe("AdapterClient", () => {
     await gateway.close();
   });
 
-  it("sends hello with adapter_id and protocol_version 1.1", async () => {
+  it("sends hello with adapter_id and protocol_version 1.2", async () => {
     client = new AdapterClient({ adapterId: "test-adapter", gatewayUrl: gateway.url });
     client.connect();
     await waitFor(() => gateway.received.some((f) => f.type === "hello"));
@@ -122,7 +122,7 @@ describe("AdapterClient", () => {
     expect(hello).toBeDefined();
     const payload = hello?.payload as { adapter_id: string; protocol_version: string; last_seen_seq: number };
     expect(payload.adapter_id).toBe("test-adapter");
-    expect(payload.protocol_version).toBe("1.1");
+    expect(payload.protocol_version).toBe("1.2");
   });
 
   it("sends presence heartbeat on interval", async () => {

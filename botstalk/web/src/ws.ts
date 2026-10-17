@@ -17,7 +17,7 @@ export interface WSEvents {
   onFrame: (frame: InboundMessage) => void;
 }
 
-const PROTOCOL_VERSION = '1.1';
+const PROTOCOL_VERSION = '1.2';
 const HEARTBEAT_MS = 20_000;
 const RECONNECT_BASE_MS = 800;
 const RECONNECT_MAX_MS = 15_000;
@@ -71,6 +71,18 @@ export class ChatSocket {
       mentions,
       intent: 'chat',
     });
+  }
+
+  sendTask(text: string, mentions: string[]): string {
+    const taskId = makeUuid();
+    this.send('message', {
+      msg_id: makeUuid(),
+      text,
+      mentions,
+      intent: 'task',
+      task_id: taskId,
+    });
+    return taskId;
   }
 
   private openSocket(): void {

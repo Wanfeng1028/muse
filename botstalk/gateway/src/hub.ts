@@ -20,8 +20,10 @@ import type {
   StreamPayload,
   HelloPayload,
   PresencePayload,
+  PresenceStatus,
   GapPayload,
   CapabilityUpdatePayload,
+  TaskEventPayload,
 } from "@botstalk/protocol";
 import * as store from "./db.js";
 import type { Db } from "./db.js";
@@ -152,6 +154,7 @@ export class Hub {
         }
         this.conns.delete(hello.adapter_id);
         store.upsertPresence(this.db, { adapter_id: hello.adapter_id, status: "offline", last_seen_ms: Date.now(), usage_in: existing.usageIn, usage_out: existing.usageOut });
+        this.broadcastPresence(existing.room, hello.adapter_id, "offline");
       }
 
       conn = {
@@ -174,6 +177,7 @@ export class Hub {
       conn.maxSeenSeq = env.seq;
 
       store.upsertPresence(this.db, { adapter_id: hello.adapter_id, status: "online", last_seen_ms: Date.now(), usage_in: 0, usage_out: 0 });
+      this.broadcastPresence(env.room, hello.adapter_id, "online", false);
 
       // last_seen_seq 补发：v1.1 起 last_seen_seq 语义为客户端已见最大 gseq，
       // 取队列中 gseq > last_seen_seq 的全部帧（上界用 MAX_SAFE_INTEGER）。
@@ -198,7 +202,12 @@ export class Hub {
         const cur = this.conns.get(conn.adapterId);
         if (cur === conn) {
           this.conns.delete(conn.adapterId);
-          store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: "offline", last_seen_ms: Date.now(), usage_in: conn.usageIn, usage_out: conn.usageOut });
+          try {
+            store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: "offline", last_seen_ms: Date.now(), usage_in: conn.usageIn, usage_out: conn.usageOut });
+          } catch {
+            // DB 可能已在关停中关闭；presence 丢失可接受，不抛未捕获异常。
+          }
+          this.broadcastPresence(conn.room, conn.adapterId, "offline");
         }
       });
       ws.on("error", () => {
@@ -262,6 +271,7 @@ export class Hub {
           conn.usageOut = p.usage.output_tokens;
         }
         store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: p.status, last_seen_ms: now, usage_in: conn.usageIn, usage_out: conn.usageOut });
+        this.broadcastPresence(conn.room, conn.adapterId, p.status);
         break;
       }
       case "gap": {
@@ -342,12 +352,42 @@ export class Hub {
     return true;
   }
 
+  /**
+   * 向房间广播成员 presence 变化（type=presence，sender 固定为 "gateway"）。
+   * 默认排除当事人自己（心跳/下线他自己知道，广播是通知其他成员）；
+   * hello 上线时包含自己，作为服务端确认的状态同步。
+   */
+  broadcastPresence(room: string, adapter_id: string, status: PresenceStatus, excludeSelf = true): void {
+    const env = makeEnvelope<PresencePayload>(
+      "presence",
+      "gateway",
+      room,
+      0,
+      0,
+      { adapter_id, status },
+    );
+    this.broadcast(room, env, excludeSelf ? adapter_id : undefined);
+  }
+
   broadcast(room: string, env: Envelope, excludeAdapterId?: string): void {
     for (const [id, r] of this.adapterRooms) {
       if (r !== room) continue;
       if (excludeAdapterId && id === excludeAdapterId) continue;
       this.sendTo(id, env);
     }
+  }
+
+  /** 向房间广播任务状态事件（type=task_event，v1.2）。sender 固定为 "gateway"。 */
+  broadcastTaskEvent(room: string, payload: TaskEventPayload): void {
+    const env = makeEnvelope<TaskEventPayload>(
+      "task_event",
+      "gateway",
+      room,
+      this.nextSeq(),
+      0,
+      payload,
+    );
+    this.broadcast(room, env);
   }
 
   sweep(nowMs: number = Date.now()): void {

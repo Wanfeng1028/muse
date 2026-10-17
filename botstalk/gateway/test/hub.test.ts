@@ -63,6 +63,30 @@ function waitFrame(ws: WebSocket, timeoutMs = 2000): Promise<Envelope> {
   });
 }
 
+/** 等待第一帧满足 pred 的帧（跳过不相干帧，如 hello 自带的 presence 广播）。 */
+function waitFrameWhere(ws: WebSocket, pred: (e: Envelope) => boolean, timeoutMs = 5000): Promise<Envelope> {
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => {
+      ws.off("message", onMsg);
+      rej(new Error("timeout waiting frame"));
+    }, timeoutMs);
+    const onMsg = (d: unknown) => {
+      let env: Envelope;
+      try {
+        env = JSON.parse(String(d)) as Envelope;
+      } catch {
+        return;
+      }
+      if (pred(env)) {
+        clearTimeout(t);
+        ws.off("message", onMsg);
+        res(env);
+      }
+    };
+    ws.on("message", onMsg);
+  });
+}
+
 function waitClose(ws: WebSocket, timeoutMs = 2000): Promise<{ code: number }> {
   return new Promise((res, rej) => {
     const t = setTimeout(() => rej(new Error("timeout waiting close")), timeoutMs);
@@ -107,12 +131,11 @@ describe("Hub", () => {
     const ws1 = await connectClient();
     await hello(ws1, "dup");
     const closeP = waitClose(ws1);
-    const frameP = waitFrame(ws1);
 
     const ws2 = await connectClient();
     await hello(ws2, "dup");
 
-    const frame = await frameP;
+    const frame = await waitFrameWhere(ws1, (e) => e.type === "message");
     expect(frame.type).toBe("message");
     const c = await closeP;
     expect(c.code).toBe(4402);
@@ -182,7 +205,9 @@ describe("Hub", () => {
     }
     expect(received.length).toBe(3);
 
-    const gapEnv = makeEnvelope<GapPayload>("gap", "gapc", "room-a", 2, 0, { from_seq: 2, to_seq: 2 });
+    // gap 的 from_seq/to_seq 是 gseq 区间：取收到的第 2 帧的实际 gseq（hello 的 presence 广播也会占一个 gseq，不能硬编码）
+    const f2gseq = received[1]!.gseq as number;
+    const gapEnv = makeEnvelope<GapPayload>("gap", "gapc", "room-a", 2, 0, { from_seq: f2gseq, to_seq: f2gseq });
     ws.send(JSON.stringify(gapEnv));
 
     deadline = Date.now() + 2000;
@@ -243,7 +268,7 @@ describe("Hub", () => {
     const m1 = makeEnvelope<MessagePayload>("message", "adapter-A", "room-a", 2, 0,
       { msg_id: "m-1", text: "before", mentions: [] });
     a.send(JSON.stringify(m1));
-    const firstToB = await waitFrame(b);
+    const firstToB = await waitFrameWhere(b, (e) => e.type === "message");
     expect(typeof firstToB.gseq).toBe("number");
     const bMaxGseq = firstToB.gseq as number;
 
@@ -267,7 +292,9 @@ describe("Hub", () => {
     const received: Envelope[] = [];
     const gotAll = new Promise<void>((resolve) => {
       b2.on("message", (d) => {
-        received.push(JSON.parse(String(d)) as Envelope);
+        const env = JSON.parse(String(d)) as Envelope;
+        if (env.type !== "message") return;
+        received.push(env);
         if (received.length >= texts.length) resolve();
       });
     });
@@ -318,7 +345,9 @@ describe("recovers gseq and resend queue after restart", () => {
     const received: Envelope[] = [];
     const gotAll = new Promise<void>((resolve) => {
       ws.on("message", (d) => {
-        received.push(JSON.parse(String(d)) as Envelope);
+        const env = JSON.parse(String(d)) as Envelope;
+        if (env.type !== "message") return;
+        received.push(env);
         if (received.length >= 2) resolve();
       });
     });

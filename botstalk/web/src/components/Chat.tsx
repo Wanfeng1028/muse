@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LogOut } from 'lucide-react';
+import { ClipboardList, LogOut } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
 import { fetchHistory, fetchPresence, HistoryMessage } from '../api';
 import MessageList, { ChatItem } from './MessageList';
 import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
+import TaskPanel from './TaskPanel';
 
 interface Props {
   nick: string;
@@ -25,6 +26,11 @@ export default function Chat({ nick, onLeave }: Props) {
   const [status, setStatus] = useState<WSStatus>('idle');
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [showTasks, setShowTasks] = useState(false);
+  const [taskRefreshKey, setTaskRefreshKey] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const showTasksRef = useRef(false);
+  showTasksRef.current = showTasks;
 
   const socketRef = useRef<ChatSocket | null>(null);
   const seenRef = useRef<Set<string>>(new Set());
@@ -59,6 +65,10 @@ export default function Chat({ nick, onLeave }: Props) {
       setMembers((prev) => mergePresence(prev, adapter_id, rawStatus, Date.now(), usage));
       return;
     }
+    if (frame.type === 'task_event') {
+      setTaskRefreshKey((k) => k + 1);
+      return;
+    }
     if (frame.type !== 'message') return;
     const key = `${frame.sender}#${frame.seq}`;
     if (seenRef.current.has(key)) return;
@@ -77,7 +87,10 @@ export default function Chat({ nick, onLeave }: Props) {
       next.sort(compareItems);
       return next;
     });
-  }, []);
+    if (showTasksRef.current && frame.sender !== nick) {
+      setUnreadCount((c) => c + 1);
+    }
+  }, [nick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,6 +165,28 @@ export default function Chat({ nick, onLeave }: Props) {
     socketRef.current?.sendMessage(text, mentions);
   }, []);
 
+  const handleSendTask = useCallback((text: string, mentions: string[]) => {
+    socketRef.current?.sendTask(text, mentions);
+  }, []);
+
+  const markReadAndCloseTasks = useCallback(() => {
+    setShowTasks(false);
+    setUnreadCount(0);
+  }, []);
+
+  const jumpToTask = useCallback((taskId: string) => {
+    setShowTasks(false);
+    setUnreadCount(0);
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-taskid="${CSS.escape(taskId)}"]`);
+      if (el) {
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        el.classList.add('task-flash');
+        window.setTimeout(() => el.classList.remove('task-flash'), 1600);
+      }
+    });
+  }, []);
+
   const onlineCount = useMemo(
     () => members.filter((m) => m.status === 'online').length,
     [members],
@@ -167,6 +202,10 @@ export default function Chat({ nick, onLeave }: Props) {
             {statusLabel(status)}
           </span>
         </div>
+        <button className="btn-ghost" type="button" onClick={() => setShowTasks((v) => !v)} title="任务追踪">
+          <ClipboardList size={16} strokeWidth={2} />
+          <span>任务</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={onLeave} title="退出">
           <LogOut size={16} strokeWidth={2} />
           <span>退出</span>
@@ -181,10 +220,24 @@ export default function Chat({ nick, onLeave }: Props) {
             loadingOlder={loadingOlder}
             hasMore={hasMore}
           />
-          <Composer members={members} onSend={handleSend} />
+          {showTasks && unreadCount > 0 && (
+            <button className="unread-pill" type="button" onClick={markReadAndCloseTasks}>
+              有 {unreadCount} 条新消息，点击查看
+            </button>
+          )}
+          <Composer members={members} onSend={handleSend} onSendTask={handleSendTask} />
         </main>
         <Members members={members} selfNick={nick} />
       </div>
+      {showTasks && (
+        <TaskPanel
+          room={ROOM}
+          nick={nick}
+          refreshKey={taskRefreshKey}
+          onClose={markReadAndCloseTasks}
+          onJumpToTask={jumpToTask}
+        />
+      )}
     </div>
   );
 }

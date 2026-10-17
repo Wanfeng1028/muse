@@ -1,0 +1,41 @@
+# BotsTalk 一键部署：docker compose up 即跑
+#
+# 端口说明：
+#   8765 是网关默认监听端口（GATEWAY_PORT=8765），容器内外保持一致，
+#   映射写法 "8765:8765" 表示 宿主机:容器。
+#   如需改宿主机端口，只改冒号左边的数字（例如 "18000:8765"），
+#   容器内 GATEWAY_PORT 必须与冒号右边一致，否则健康检查会失败。
+#
+# 数据卷说明：
+#   容器内 DATA_DIR=/data，SQLite 单文件数据库位于 /data/botstalk.db（WAL 模式）。
+#   这里用命名卷 botstalk-data 挂到 /data，容器重建/升级都不会丢数据。
+#   想直接看到数据库文件，可换成 bind mount，例如：
+#     - ./data:/data
+#
+# 首次启动拉镜像较慢：
+#   本机当前没有可用的 docker daemon，未实际执行 docker compose up 验证运行，
+#   仅保证 YAML 结构与事实来源（Dockerfile / 网关配置）逐字一致。
+#   首次构建或拉取 node:22-slim 基础镜像以及 botstalk:0.3.0 需要下载，
+#   视网络情况可能要等几分钟，属正常现象。
+services:
+  botstalk:
+    build: .
+    image: botstalk:0.3.0
+    ports:
+      - "8765:8765"
+    environment:
+      GATEWAY_PORT: "8765"
+      DATA_DIR: "/data"
+      PUBLIC_DIR: "/app/public"
+    volumes:
+      - botstalk-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8765/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  botstalk-data:

@@ -4,6 +4,8 @@ import { dirname, isAbsolute, resolve } from "node:path";
 export interface GatewayConfig {
   port: number;
   dataDir: string;
+  /** Web 构建产物目录（Docker 一体化部署用）；不设置则网关不提供静态文件服务。 */
+  publicDir?: string;
 }
 
 const DEFAULT_PORT = 8765;
@@ -26,8 +28,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, pkgDir?: string
   const baseDir = resolvePackageDir(pkgDir);
   const rawDataDir = env.DATA_DIR ?? DEFAULT_DATA_DIR;
   const dataDir = isAbsolute(rawDataDir) ? rawDataDir : resolve(baseDir, rawDataDir);
+  const rawPublicDir = env.PUBLIC_DIR;
+  const publicDir =
+    rawPublicDir === undefined
+      ? undefined
+      : isAbsolute(rawPublicDir)
+        ? rawPublicDir
+        : resolve(baseDir, rawPublicDir);
 
-  return { port, dataDir };
+  return { port, dataDir, publicDir };
 }
 
 export const defaultConfig = loadConfig();

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { WebSocketServer, WebSocket } from "ws";
 import type { Envelope, MessagePayload } from "@botstalk/protocol";
@@ -9,6 +9,7 @@ import { openDb, type Db } from "../src/db.js";
 import { routeMessage } from "../src/router.js";
 
 const TEST_TMP_ROOT = join(import.meta.dirname ?? __dirname, "test-tmp");
+mkdirSync(TEST_TMP_ROOT, { recursive: true });
 
 interface FrameCollector {
   ws: WebSocket;
@@ -53,7 +54,7 @@ class TestClient {
       room,
       this.nextSeq(),
       0,
-      { adapter_id: this.id, protocol_version: "1.1", last_seen_seq: 0 },
+      { adapter_id: this.id, protocol_version: "1.2", last_seen_seq: 0 },
     );
     this.ws.send(JSON.stringify(env));
   }
@@ -156,7 +157,7 @@ describe("router", () => {
     tmpDir = mkdtempSync(join(TEST_TMP_ROOT, "router-"));
     db = openDb(tmpDir);
     hub = new Hub(db);
-    hub.onMessage = (env) => routeMessage(hub, env);
+    hub.onMessage = (env) => routeMessage(hub, env, db);
     wss = new WebSocketServer({ port: 0 });
     wss.on("connection", (ws) => hub.handleConnection(ws));
     await new Promise<void>((resolve) => {

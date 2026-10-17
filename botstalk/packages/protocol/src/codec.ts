@@ -13,6 +13,7 @@ import type {
   CapabilityUpdatePayload,
   Intent,
   TaskStatus,
+  TaskEventPayload,
 } from "./types.js";
 import { PROTOCOL_VERSION } from "./constants.js";
 
@@ -23,6 +24,7 @@ const FRAME_TYPES: readonly FrameType[] = [
   "presence",
   "gap",
   "capability_update",
+  "task_event",
 ];
 
 const INTENTS: readonly Intent[] = ["chat", "task"];
@@ -202,8 +204,23 @@ export function validateEnvelope(env: Envelope): string[] {
     case "capability_update":
       errors.push(...validateCapabilityUpdatePayload(payload));
       break;
+    case "task_event":
+      errors.push(...validateTaskEventPayload(payload));
+      break;
   }
 
+  return errors;
+}
+
+function validateTaskEventPayload(payload: unknown): string[] {
+  const errors: string[] = [];
+  if (!isPlainObject(payload)) { errors.push("payload: expected object"); return errors; }
+  if (!isNonEmptyString(payload["task_id"])) errors.push("payload.task_id: must be a non-empty string");
+  const ok = ["dispatched","running","done","failed","unsupported","cancelled"];
+  if (typeof payload["status"] !== "string" || !ok.includes(payload["status"])) errors.push("payload.status: invalid task event status");
+  for (const k of ["assignee","title","note"]) {
+    if (payload[k] !== undefined && typeof payload[k] !== "string") errors.push("payload." + k + ": must be a string");
+  }
   return errors;
 }
 
@@ -326,8 +343,8 @@ function validatePresencePayload(payload: unknown): string[] {
     return errors;
   }
   const status = payload["status"];
-  if (status !== "online" && status !== "thinking") {
-    errors.push("payload.status: must be 'online' or 'thinking'");
+  if (status !== "online" && status !== "thinking" && status !== "offline") {
+    errors.push("payload.status: must be 'online', 'thinking' or 'offline'");
   }
   const usage = payload["usage"];
   if (usage !== undefined) {
