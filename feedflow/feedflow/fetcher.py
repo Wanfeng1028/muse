@@ -50,7 +50,11 @@ def _html_to_text(h: str) -> str:
     if not h:
         return ""
     text = re.sub(r"<[^>]+>", " ", h)
-    text = html.unescape(text)
+    for _ in range(3):
+        unescaped = html.unescape(text)
+        if unescaped == text:
+            break
+        text = unescaped
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 

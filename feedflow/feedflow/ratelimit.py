@@ -54,8 +54,12 @@ class RateLimiter:
                 return True, 0.0
 
             # 令牌不足：计算需要等待多久才能攒够 1 个令牌。
-            retry_after = (1.0 - tokens) / self._rate
-            retry_after = math.ceil(retry_after * 10.0) / 10.0
+            # 速率为 0 表示永不补充，直接返回正无穷。
+            if self._rate > 0:
+                retry_after = (1.0 - tokens) / self._rate
+                retry_after = math.ceil(retry_after * 10.0) / 10.0
+            else:
+                retry_after = math.inf
             self._buckets[key] = (tokens, now)
             return False, retry_after
 

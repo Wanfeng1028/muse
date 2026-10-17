@@ -31,8 +31,21 @@ def _format_pubdate(row: dict) -> str | None:
     return None
 
 
+_ILLEGAL_XML_RE = None
+
+
+def _strip_illegal_xml(text: str) -> str:
+    """剔除 XML 1.0 非法的控制字符。"""
+    global _ILLEGAL_XML_RE
+    if _ILLEGAL_XML_RE is None:
+        import re
+        _ILLEGAL_XML_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+    return _ILLEGAL_XML_RE.sub("", text)
+
+
 def _cdata_safe(text: str) -> str:
-    """把 ]]> 拆开，避免破坏 CDATA 段。"""
+    """把 ]]> 拆开，避免破坏 CDATA 段；剔除 XML 1.0 非法控制字符。"""
+    text = _strip_illegal_xml(text)
     return text.replace("]]>", "]]]]><![CDATA[>")
 
 
@@ -66,7 +79,7 @@ def build_rss(db_path, feed_id=None, folder_id=None, limit=50) -> tuple[str, str
     parts.append("<description>FeedFlow 自托管阅读器全文输出</description>")
 
     for row in rows:
-        title = escape(row.get("title") or "")
+        title = escape(_strip_illegal_xml(row.get("title") or ""))
         link = row.get("link") or ""
         guid_raw = row.get("guid") or link
         guid = escape(guid_raw)
