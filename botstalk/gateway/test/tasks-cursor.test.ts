@@ -21,11 +21,11 @@ describe("listTasks cursor pagination", () => {
   });
 
   function seed(): void {
-    upsertTaskDispatch(db, { task_id: "t1", room: "r", owner: "o", assignee: "a", title: "T1", status: "pending" });
-    upsertTaskDispatch(db, { task_id: "t2", room: "r", owner: "o", assignee: "a", title: "T2", status: "pending" });
-    upsertTaskDispatch(db, { task_id: "t3", room: "r", owner: "o", assignee: "a", title: "T3", status: "pending" });
-    upsertTaskDispatch(db, { task_id: "t4", room: "r", owner: "o", assignee: "a", title: "T4", status: "pending" });
-    upsertTaskDispatch(db, { task_id: "t5", room: "r", owner: "o", assignee: "a", title: "T5", status: "pending" });
+    upsertTaskDispatch(db, { task_id: "t1", room: "r", owner: "o", assignee: "a", title: "T1", status: "dispatched" });
+    upsertTaskDispatch(db, { task_id: "t2", room: "r", owner: "o", assignee: "a", title: "T2", status: "dispatched" });
+    upsertTaskDispatch(db, { task_id: "t3", room: "r", owner: "o", assignee: "a", title: "T3", status: "dispatched" });
+    upsertTaskDispatch(db, { task_id: "t4", room: "r", owner: "o", assignee: "a", title: "T4", status: "dispatched" });
+    upsertTaskDispatch(db, { task_id: "t5", room: "r", owner: "o", assignee: "a", title: "T5", status: "dispatched" });
     const upd = db.prepare("UPDATE tasks SET updated_at_ms = ? WHERE task_id = ?");
     upd.run(3000, "t1");
     upd.run(1000, "t2");

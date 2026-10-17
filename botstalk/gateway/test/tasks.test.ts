@@ -9,7 +9,8 @@ import {
   getTask,
   listTasks,
   countTasksByStatus,
-} from "../src/db";
+  type TaskRow,
+} from "../src/db.js";
 
 function newDb() {
   return openDb(join(tmpdir(), `botstalk-tasks-${randomUUID()}.db`));
@@ -101,13 +102,13 @@ describe("tasks", () => {
     expect(all[2].task_id).toBe("a");
 
     const r1 = listTasks(db, { room: "r1" });
-    expect(r1.map((x) => x.task_id)).toEqual(["b", "a"]);
+    expect(r1.map((x: TaskRow) => x.task_id)).toEqual(["b", "a"]);
 
     const running = listTasks(db, { status: "running" });
-    expect(running.map((x) => x.task_id)).toEqual(["c", "b"]);
+    expect(running.map((x: TaskRow) => x.task_id)).toEqual(["c", "b"]);
 
     const r1running = listTasks(db, { room: "r1", status: "running" });
-    expect(r1running.map((x) => x.task_id)).toEqual(["b"]);
+    expect(r1running.map((x: TaskRow) => x.task_id)).toEqual(["b"]);
   });
 
   it("countTasksByStatus 计数正确", () => {

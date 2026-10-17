@@ -3,10 +3,10 @@ import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { makeEnvelope } from "@botstalk/protocol";
 import type { Envelope, MessagePayload } from "@botstalk/protocol";
-import { routeMessage } from "../src/router.ts";
-import { openDb, getTask } from "../src/db.ts";
+import { routeMessage } from "../src/router.js";
+import { openDb, getTask } from "../src/db.js";
 import type { DatabaseSync } from "node:sqlite";
-import type { Hub } from "../src/hub.ts";
+import type { Hub } from "../src/hub.js";
 
 type Intents = ("chat" | "task")[];
 

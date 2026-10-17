@@ -1,6 +1,9 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { DEFAULT_ROOM_TYPE, type RoomType } from "@botstalk/protocol";
+
+
 
 export type Db = DatabaseSync;
 
@@ -63,6 +66,36 @@ export function openDb(dataDir: string): DatabaseSync {
   db.exec(
     "CREATE INDEX IF NOT EXISTS idx_tasks_room_updated ON tasks(room, updated_at_ms DESC);",
   );
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS rooms (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL DEFAULT 'workroom',
+        name TEXT,
+        topic TEXT,
+        owner TEXT,
+        created_at_ms INTEGER NOT NULL
+      );
+    `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS room_members (
+      room_id TEXT NOT NULL,
+      adapter_id TEXT NOT NULL,
+      persona_role TEXT,
+      joined_at_ms INTEGER NOT NULL,
+      PRIMARY KEY (room_id, adapter_id)
+    );
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS game_sessions (
+      id TEXT PRIMARY KEY,
+      room_id TEXT NOT NULL,
+      game TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT '{}',
+      created_at_ms INTEGER NOT NULL,
+      updated_at_ms INTEGER NOT NULL
+    );
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_game_sessions_room ON game_sessions(room_id);");
   return db;
 }
 
@@ -302,6 +335,191 @@ export function countTasksByStatus(db: Db, room?: string): Record<string, number
   const out: Record<string, number> = {};
   for (const r of rows) out[r.status] = r.n;
   return out;
+}
+
+export interface RoomRow {
+  id: string;
+  type: RoomType;
+  name: string | null;
+  topic: string | null;
+  owner: string | null;
+  created_at_ms: number;
+}
+
+/** 建房间；type 缺省 'workroom'；id 冲突时让 SQLite 抛错（调用方保证唯一）；返回写入的行。 */
+export function createRoom(
+  db: Db,
+  r: { id: string; type?: RoomType; name?: string; topic?: string; owner?: string },
+): RoomRow {
+  const now = Date.now();
+  const stmt = db.prepare(
+    "INSERT INTO rooms (id, type, name, topic, owner, created_at_ms) VALUES (?, ?, ?, ?, ?, ?)",
+  );
+  stmt.run(r.id, r.type ?? DEFAULT_ROOM_TYPE, r.name ?? null, r.topic ?? null, r.owner ?? null, now);
+  const row = getRoom(db, r.id);
+  if (!row) throw new Error("createRoom: row missing after insert");
+  return row;
+}
+
+export function getRoom(db: Db, id: string): RoomRow | undefined {
+  const stmt = db.prepare(
+    "SELECT id, type, name, topic, owner, created_at_ms FROM rooms WHERE id = ?",
+  );
+  return stmt.get(id) as unknown as RoomRow | undefined;
+}
+
+export function listRooms(db: Db): RoomRow[] {
+  const stmt = db.prepare(
+    "SELECT id, type, name, topic, owner, created_at_ms FROM rooms ORDER BY created_at_ms ASC",
+  );
+  return stmt.all() as unknown as RoomRow[];
+}
+
+/** 改房间类型；房间不存在返回 false。 */
+export function setRoomType(db: Db, id: string, type: RoomType): boolean {
+  const stmt = db.prepare("UPDATE rooms SET type = ? WHERE id = ?");
+  return Number(stmt.run(type, id).changes) > 0;
+}
+
+/** 改名/话题；只更新传入的字段；房间不存在返回 false。 */
+export function updateRoom(db: Db, id: string, patch: { name?: string; topic?: string }): boolean {
+  const sets: string[] = [];
+  const args: Array<string | null> = [];
+  if (patch.name !== undefined) { sets.push("name = ?"); args.push(patch.name); }
+  if (patch.topic !== undefined) { sets.push("topic = ?"); args.push(patch.topic); }
+  if (sets.length === 0) return getRoom(db, id) !== undefined;
+  const stmt = db.prepare(`UPDATE rooms SET ${sets.join(", ")} WHERE id = ?`);
+  return Number(stmt.run(...args, id).changes) > 0;
+}
+
+/**
+ * 取房间类型。房间不存在（老数据/未注册）→ DEFAULT_ROOM_TYPE；
+ * type 字段非法 → DEFAULT_ROOM_TYPE。保证总返回合法值。
+ */
+export function getRoomType(db: Db, id: string): RoomType {
+  const row = getRoom(db, id);
+  const t = row?.type;
+  return t === "workroom" || t === "playroom" ? t : DEFAULT_ROOM_TYPE;
+}
+
+export interface RoomMemberRow {
+  room_id: string;
+  adapter_id: string;
+  persona_role: string | null;
+  joined_at_ms: number;
+}
+
+/** 加成员；已存在则更新 persona_role（upsert）。 */
+export function addRoomMember(
+  db: Db,
+  room_id: string,
+  adapter_id: string,
+  persona_role?: string | null,
+): void {
+  const stmt = db.prepare(
+    `INSERT INTO room_members (room_id, adapter_id, persona_role, joined_at_ms)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(room_id, adapter_id) DO UPDATE SET persona_role = excluded.persona_role`,
+  );
+  stmt.run(room_id, adapter_id, persona_role ?? null, Date.now());
+}
+
+/** 移除成员；不存在返回 false。 */
+export function removeRoomMember(db: Db, room_id: string, adapter_id: string): boolean {
+  const stmt = db.prepare("DELETE FROM room_members WHERE room_id = ? AND adapter_id = ?");
+  return Number(stmt.run(room_id, adapter_id).changes) > 0;
+}
+
+export function listRoomMembers(db: Db, room_id: string): RoomMemberRow[] {
+  const stmt = db.prepare(
+    "SELECT room_id, adapter_id, persona_role, joined_at_ms FROM room_members WHERE room_id = ? ORDER BY joined_at_ms ASC",
+  );
+  return stmt.all(room_id) as unknown as RoomMemberRow[];
+}
+
+/** 设人设角色；成员不存在则先添加（upsert 语义）。 */
+export function setPersonaRole(
+  db: Db,
+  room_id: string,
+  adapter_id: string,
+  role: string | null,
+): void {
+  addRoomMember(db, room_id, adapter_id, role);
+}
+
+/** 取人设角色；非成员返回 undefined。 */
+export function getPersonaRole(
+  db: Db,
+  room_id: string,
+  adapter_id: string,
+): string | null | undefined {
+  const stmt = db.prepare(
+    "SELECT persona_role FROM room_members WHERE room_id = ? AND adapter_id = ?",
+  );
+  const row = stmt.get(room_id, adapter_id) as unknown as { persona_role: string | null } | undefined;
+  return row === undefined ? undefined : row.persona_role;
+}
+
+export function countRoomMembers(db: Db, room_id: string): number {
+  const stmt = db.prepare("SELECT COUNT(*) AS n FROM room_members WHERE room_id = ?");
+  const row = stmt.get(room_id) as unknown as { n: number };
+  return row.n;
+}
+
+export interface GameSessionRow {
+  id: string;
+  room_id: string;
+  game: string;
+  state: string;
+  created_at_ms: number;
+  updated_at_ms: number;
+}
+
+/** 开一局游戏；state 缺省 '{}'；id 冲突让 SQLite 抛错；返回写入的行。 */
+export function createGameSession(
+  db: Db,
+  s: { id: string; room_id: string; game: string; state?: string },
+): GameSessionRow {
+  const now = Date.now();
+  const stmt = db.prepare(
+    "INSERT INTO game_sessions (id, room_id, game, state, created_at_ms, updated_at_ms) VALUES (?, ?, ?, ?, ?, ?)",
+  );
+  stmt.run(s.id, s.room_id, s.game, s.state ?? "{}", now, now);
+  const row = getGameSession(db, s.id);
+  if (!row) throw new Error("createGameSession: row missing after insert");
+  return row;
+}
+
+export function getGameSession(db: Db, id: string): GameSessionRow | undefined {
+  const stmt = db.prepare(
+    "SELECT id, room_id, game, state, created_at_ms, updated_at_ms FROM game_sessions WHERE id = ?",
+  );
+  return stmt.get(id) as unknown as GameSessionRow | undefined;
+}
+
+export function listGameSessions(db: Db, room_id: string): GameSessionRow[] {
+  const stmt = db.prepare(
+    "SELECT id, room_id, game, state, created_at_ms, updated_at_ms FROM game_sessions WHERE room_id = ? ORDER BY created_at_ms DESC",
+  );
+  return stmt.all(room_id) as unknown as GameSessionRow[];
+}
+
+/** 更新游戏状态 JSON；同时刷新 updated_at_ms；不存在返回 false。 */
+export function updateGameSessionState(db: Db, id: string, state: string): boolean {
+  const stmt = db.prepare("UPDATE game_sessions SET state = ?, updated_at_ms = ? WHERE id = ?");
+  return Number(stmt.run(state, Date.now(), id).changes) > 0;
+}
+
+/** 结束一局（删除）；不存在返回 false。 */
+export function endGameSession(db: Db, id: string): boolean {
+  const stmt = db.prepare("DELETE FROM game_sessions WHERE id = ?");
+  return Number(stmt.run(id).changes) > 0;
+}
+
+export function countGameSessions(db: Db, room_id: string): number {
+  const stmt = db.prepare("SELECT COUNT(*) AS n FROM game_sessions WHERE room_id = ?");
+  const row = stmt.get(room_id) as unknown as { n: number };
+  return row.n;
 }
 
 // 自查：红线 1-5 逐条通过

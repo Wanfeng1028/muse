@@ -20,7 +20,7 @@ describe("tasks http api", () => {
     saveMessage(db, { room: "lobby", sender: "alice", seq: 1, type: "text", payload: JSON.stringify({ text: "m1" }), ts: 1 });
     saveMessage(db, { room: "lobby", sender: "alice", seq: 2, type: "text", payload: JSON.stringify({ text: "m2" }), ts: 2 });
     saveMessage(db, { room: "lobby", sender: "alice", seq: 3, type: "text", payload: JSON.stringify({ text: "m3" }), ts: 3 });
-    server = startServer({ port: 0, dataDir: join(root, "dbdir") }, db);
+    server = startServer({ port: 0, dataDir: join(root, "dbdir"), roomMaxMembersWorkroom: 50, roomMaxMembersPlayroom: 200, gameBroadcastThrottleMs: 500 }, db);
     const addr = server.httpServer.address();
     if (addr === null || typeof addr === "string") throw new Error("no port");
     base = `http://127.0.0.1:${addr.port}`;

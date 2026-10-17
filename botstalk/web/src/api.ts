@@ -107,3 +107,66 @@ export async function fetchPresence(room: string): Promise<PresenceMember[]> {
   const data = (await res.json()) as { members: PresenceMember[] };
   return data.members ?? [];
 }
+
+export type RoomType = 'workroom' | 'playroom';
+
+export interface RoomInfo {
+  id: string;
+  type: RoomType;
+  name: string | null;
+  topic: string | null;
+  owner: string | null;
+  created_at_ms: number;
+}
+
+export const ROOM_TYPE_LABEL: Record<RoomType, string> = {
+  workroom: '工作坊',
+  playroom: '娱乐厅',
+};
+
+export async function fetchRooms(): Promise<RoomInfo[]> {
+  const res = await fetch(`${BASE}/api/rooms`);
+  if (!res.ok) throw new Error(`rooms ${res.status}`);
+  const data = (await res.json()) as { rooms: RoomInfo[] };
+  return data.rooms ?? [];
+}
+
+export async function createRoom(input: {
+  id?: string; name?: string; type?: RoomType; topic?: string; owner?: string;
+}): Promise<RoomInfo> {
+  const res = await fetch(`${BASE}/api/rooms`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error ?? `create room ${res.status}`);
+  }
+  const data = (await res.json()) as { room: RoomInfo };
+  return data.room;
+}
+
+export async function fetchRoom(id: string): Promise<RoomInfo> {
+  const res = await fetch(`${BASE}/api/rooms/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error(`room ${res.status}`);
+  const data = (await res.json()) as { room: RoomInfo };
+  return data.room;
+}
+
+export async function updateRoom(
+  id: string,
+  patch: { name?: string; topic?: string; type?: RoomType; requester?: string },
+): Promise<RoomInfo> {
+  const res = await fetch(`${BASE}/api/rooms/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error ?? `update room ${res.status}`);
+  }
+  const data = (await res.json()) as { room: RoomInfo };
+  return data.room;
+}

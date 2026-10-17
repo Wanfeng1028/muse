@@ -3,9 +3,9 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve as resolvePath, join as joinPath, sep as pathSep, extname } from "node:path";
 import type { ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
-import { ZOMBIE_SWEEP_MS } from "@botstalk/protocol";
+import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
-import { getRoomHistory, listPresence, listTasks, getTask, updateTaskStatus, countTasksByStatus } from "./db.js";
+import { getRoomHistory, listPresence, listTasks, getTask, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
 import type { TaskStatus } from "./db.js";
 import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
@@ -13,6 +13,7 @@ import { routeMessage, routeStream } from "./router.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
 import { createArtifactService } from "./artifacts.js";
+import { randomUUID } from "node:crypto";
 
 // 排序规则：online 在前，其余按 adapter_id 字典序
 const STATIC_MIME: Record<string, string> = {
@@ -323,6 +324,279 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       const row = db.prepare("SELECT COUNT(*) AS n, MAX(id) AS maxId FROM messages WHERE room = ? AND id > ?").get(room, since) as unknown as { n: number; maxId: number | null };
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ unread: row.n, latest_id: row.maxId }));
+      return;
+    }
+
+    // POST /api/rooms  body: { id?, name?, type?, topic?, owner? }
+    const roomCreateMatch = url.match(/^\/api\/rooms(?:\?|$)/);
+    if (roomCreateMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const body = (await readJsonBody(req)) as { id?: unknown; name?: unknown; type?: unknown; topic?: unknown; owner?: unknown } | undefined;
+      const type = body?.type === undefined ? "workroom" : body.type;
+      if (!isRoomType(type)) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_ROOM_TYPE" }));
+        return;
+      }
+      const id = typeof body?.id === "string" && body.id.length > 0 ? body.id : randomUUID();
+      if (getRoom(db, id)) {
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room already exists" }));
+        return;
+      }
+      const room = createRoom(db, {
+        id,
+        type,
+        name: typeof body?.name === "string" ? body.name : undefined,
+        topic: typeof body?.topic === "string" ? body.topic : undefined,
+        owner: typeof body?.owner === "string" ? body.owner : undefined,
+      });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ room }));
+      return;
+    }
+
+    // GET /api/rooms
+    const roomListMatch = url.match(/^\/api\/rooms(?:\?|$)/);
+    if (roomListMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ rooms: listRooms(db) }));
+      return;
+    }
+
+    // GET /api/rooms/:room
+    const roomOneMatch = url.match(/^\/api\/rooms\/([^/?]+)(?:\?|$)/);
+    if (roomOneMatch && method === "GET" && !/\/api\/rooms\/[^/?]+\//.test(url)) {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(roomOneMatch[1]);
+      const room = getRoom(db, roomId);
+      if (!room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ room }));
+      return;
+    }
+
+    // PATCH /api/rooms/:room  body: { name?, topic?, type?, requester? }
+    // 改 type 走权限：workroom 只有 owner 能改（requester 必须等于 room.owner），playroom 所有成员可改。
+    const roomPatchMatch = url.match(/^\/api\/rooms\/([^/?]+)(?:\?|$)/);
+    if (roomPatchMatch && method === "PATCH" && !/\/api\/rooms\/[^/?]+\//.test(url)) {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(roomPatchMatch[1]);
+      const room = getRoom(db, roomId);
+      if (!room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      const body = (await readJsonBody(req)) as { name?: unknown; topic?: unknown; type?: unknown; requester?: unknown } | undefined;
+      if (body?.type !== undefined) {
+        if (!isRoomType(body.type)) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "INVALID_ROOM_TYPE" }));
+          return;
+        }
+        const requester = typeof body.requester === "string" ? body.requester : "";
+        const isOwner = requester !== "" && requester === room.owner;
+        if (!canUpdateRoom(room.type, isOwner)) {
+          res.writeHead(403, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "ROOM_TYPE_FORBIDDEN" }));
+          return;
+        }
+        setRoomType(db, roomId, body.type);
+      }
+      const patch: { name?: string; topic?: string } = {};
+      if (typeof body?.name === "string") patch.name = body.name;
+      if (typeof body?.topic === "string") patch.topic = body.topic;
+      updateRoom(db, roomId, patch);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ room: getRoom(db, roomId) }));
+      return;
+    }
+
+    // GET /api/rooms/:room/members
+    const membersListMatch = url.match(/^\/api\/rooms\/([^/?]+)\/members(?:\?|$)/);
+    if (membersListMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(membersListMatch[1]);
+      if (!getRoom(db, roomId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ members: listRoomMembers(db, roomId) }));
+      return;
+    }
+
+    // POST /api/rooms/:room/members  body: { adapter_id, persona_role? }
+    const membersAddMatch = url.match(/^\/api\/rooms\/([^/?]+)\/members(?:\?|$)/);
+    if (membersAddMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(membersAddMatch[1]);
+      const room = getRoom(db, roomId);
+      if (!room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      const body = (await readJsonBody(req)) as { adapter_id?: unknown; persona_role?: unknown } | undefined;
+      const adapterId = typeof body?.adapter_id === "string" ? body.adapter_id : "";
+      if (!adapterId) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "adapter_id required" }));
+        return;
+      }
+      const limit = room.type === "playroom" ? config.roomMaxMembersPlayroom : config.roomMaxMembersWorkroom;
+      if (countRoomMembers(db, roomId) >= limit) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "ROOM_FULL" }));
+        return;
+      }
+      const personaRole = typeof body?.persona_role === "string" ? body.persona_role : null;
+      addRoomMember(db, roomId, adapterId, personaRole);
+      const member = listRoomMembers(db, roomId).find((m) => m.adapter_id === adapterId);
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ member }));
+      return;
+    }
+
+    // DELETE /api/rooms/:room/members/:adapter_id
+    const membersDelMatch = url.match(/^\/api\/rooms\/([^/?]+)\/members\/([^/?]+)(?:\?|$)/);
+    if (membersDelMatch && method === "DELETE") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(membersDelMatch[1]);
+      const adapterId = decodeURIComponent(membersDelMatch[2]);
+      if (!getRoom(db, roomId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      if (!removeRoomMember(db, roomId, adapterId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "member not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+
+    // PATCH /api/rooms/:room/members/:adapter_id  body: { persona_role }
+    const membersRoleMatch = url.match(/^\/api\/rooms\/([^/?]+)\/members\/([^/?]+)(?:\?|$)/);
+    if (membersRoleMatch && method === "PATCH") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(membersRoleMatch[1]);
+      const adapterId = decodeURIComponent(membersRoleMatch[2]);
+      if (!getRoom(db, roomId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      const body = (await readJsonBody(req)) as { persona_role?: unknown } | undefined;
+      const role = typeof body?.persona_role === "string" ? body.persona_role : null;
+      setPersonaRole(db, roomId, adapterId, role);
+      const member = listRoomMembers(db, roomId).find((m) => m.adapter_id === adapterId);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ member }));
+      return;
+    }
+
+    // POST /api/rooms/:room/games  body: { game, id? }
+    // 游戏清单由网关按房间类型强制过滤，不依赖模型。
+    const gamesCreateMatch = url.match(/^\/api\/rooms\/([^/?]+)\/games(?:\?|$)/);
+    if (gamesCreateMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(gamesCreateMatch[1]);
+      const room = getRoom(db, roomId);
+      if (!room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      const body = (await readJsonBody(req)) as { game?: unknown; id?: unknown } | undefined;
+      const game = typeof body?.game === "string" ? body.game : "";
+      if (!game) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "game required" }));
+        return;
+      }
+      if (!isGameAllowed(room.type, game)) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "ROOM_TYPE_FORBIDDEN", game }));
+        return;
+      }
+      const id = typeof body?.id === "string" && body.id.length > 0 ? body.id : randomUUID();
+      if (getGameSession(db, id)) {
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "game session already exists" }));
+        return;
+      }
+      const session = createGameSession(db, { id, room_id: roomId, game });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ session }));
+      return;
+    }
+
+    // GET /api/rooms/:room/games
+    const gamesListMatch = url.match(/^\/api\/rooms\/([^/?]+)\/games(?:\?|$)/);
+    if (gamesListMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(gamesListMatch[1]);
+      if (!getRoom(db, roomId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ sessions: listGameSessions(db, roomId) }));
+      return;
+    }
+
+    // PATCH /api/rooms/:room/games/:id  body: { state }
+    const gamesPatchMatch = url.match(/^\/api\/rooms\/([^/?]+)\/games\/([^/?]+)(?:\?|$)/);
+    if (gamesPatchMatch && method === "PATCH") {
+      res.setHeader("access-control-allow-origin", "*");
+      const sessionId = decodeURIComponent(gamesPatchMatch[2]);
+      const body = (await readJsonBody(req)) as { state?: unknown } | undefined;
+      const rawState = body?.state;
+      const stateStr =
+        typeof rawState === "string"
+          ? rawState
+          : rawState !== null && typeof rawState === "object"
+            ? JSON.stringify(rawState)
+            : null;
+      if (stateStr === null) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "state required" }));
+        return;
+      }
+      if (!updateGameSessionState(db, sessionId, stateStr)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "game session not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ session: getGameSession(db, sessionId) }));
+      return;
+    }
+
+    // DELETE /api/rooms/:room/games/:id
+    const gamesDelMatch = url.match(/^\/api\/rooms\/([^/?]+)\/games\/([^/?]+)(?:\?|$)/);
+    if (gamesDelMatch && method === "DELETE") {
+      res.setHeader("access-control-allow-origin", "*");
+      const sessionId = decodeURIComponent(gamesDelMatch[2]);
+      if (!endGameSession(db, sessionId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "game session not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
       return;
     }
 

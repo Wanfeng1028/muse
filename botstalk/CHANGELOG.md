@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.0 - 2026-10-17
+### 新增
+- 房间类型：workroom（工作坊）/ playroom（娱乐厅），协议层 packages/protocol/src/rooms-types.ts（类型、权限矩阵、路由策略、游戏清单）。
+- 网关 DB 新增 rooms / room_members / game_sessions 三表（老库自动建表），房间不存在时按 workroom 兼容。
+- 网关配置新增 ROOM_MAX_MEMBERS_WORKROOM（默认 50）、ROOM_MAX_MEMBERS_PLAYROOM（默认 200）、GAME_BROADCAST_THROTTLE_MS（默认 500），非法值启动 fail-fast。
+- 路由语义：workroom 聊天 @定向（只派发给被@者与发送者，禁止抢话）；playroom 聊天广播（允许抢话）；playroom 内新 task 意图直接拒绝并回 ROOM_TYPE_FORBIDDEN。
+- REST：POST /api/rooms、GET /api/rooms、GET/PATCH /api/rooms/:room（含改类型权限：workroom 仅房主，playroom 所有成员）、成员增删改查（超上限 403 ROOM_FULL）、小游戏会话 CRUD（按房间类型强制游戏清单，不过滤 403 ROOM_TYPE_FORBIDDEN）。
+- Web：房间列表（含工作坊/娱乐厅徽标、建房）、聊天头房间名 + 类型徽标、房间设置（改类型）。
+- 测试：protocol rooms-types 35 例；gateway 新增 rooms-db（26）、rooms-router（7）、rooms-server（5）三套；网关全量 14 文件 104 用例全绿；另修复 3 处既有测试类型错误（config 新字段、.ts 后缀 import、"pending" 非法 TaskStatus）。
+### 变更
+- GatewayConfig 新增三个必填字段；既有测试调用点已同步。
+- PATCH /api/rooms/:room/games/:id 的 state 同时接受 string 与 JSON 对象（对象自动序列化）。
 ## v0.3.0 - 2026-10-17
 ### 新增
 - 协议 v1.2 新增 task_event 帧，网关向房间广播任务状态事件（dispatched/running/done/failed/unsupported/cancelled），携带 assignee/title/note。

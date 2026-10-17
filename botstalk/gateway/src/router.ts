@@ -3,14 +3,40 @@ import type { Envelope, MessagePayload, StreamPayload, TaskEventPayload, TaskSta
 import { randomUUID } from "node:crypto";
 import type { Hub } from "./hub.js";
 import type { Db } from "./db.js";
-import { saveMessage, upsertTaskDispatch, updateTaskStatus } from "./db.js";
+import { saveMessage, upsertTaskDispatch, updateTaskStatus, getRoomType } from "./db.js";
 
 export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): void {
+  const roomType = getRoomType(db, env.room);
   const p = env.payload;
   const intent = p.intent ?? "chat";
 
+  // 娱乐厅禁止新任务：playroom 里 intent=task（非回执）直接拒绝，不路由。
+  // 回执（task_status 已设置）放行——可能是房间改类型前派发的任务完成上报。
+  if (roomType === "playroom" && intent === "task" && p.task_status === undefined) {
+    if (hub.getConn(env.sender)) {
+      const reply = makeEnvelope<MessagePayload>(
+        "message",
+        "gateway",
+        env.room,
+        hub.nextSeq(),
+        0,
+        {
+          msg_id: randomUUID(),
+          text: "ROOM_TYPE_FORBIDDEN: intent=task is not allowed in playroom",
+          mentions: [],
+          intent: "task",
+          task_id: p.task_id,
+          task_status: "unsupported",
+        },
+      );
+      hub.sendTo(env.sender, reply);
+    }
+    return;
+  }
+
   if (intent === "chat") {
-    if (p.mentions.length > 0) {
+    if (p.mentions.length > 0 && roomType === "workroom") {
+      // 工作坊定向：只派发给被@的成员和发送者自己，禁止抢话。
       for (const adapterId of p.mentions) {
         if (hub.getConn(adapterId)) {
           hub.sendTo(adapterId, env);
@@ -20,6 +46,7 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
         hub.sendTo(env.sender, env);
       }
     } else {
+      // 娱乐厅广播：允许抢话、插科打诨；无 mention 时两类房间都广播。
       hub.broadcast(env.room, env);
     }
     return;

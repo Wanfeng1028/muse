@@ -756,3 +756,141 @@ textarea {
   animation: task-flash 1.6s ease;
   border-radius: var(--radius-sm);
 }
+
+/* ---------- 房间列表 ---------- */
+.room-list {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+}
+.room-list-panel {
+  width: 100%;
+  max-width: 560px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-5);
+}
+.room-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.room-list-head .room-list-title {
+  margin: 0;
+}
+.room-list-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 var(--sp-1);
+}
+.room-list-sub {
+  color: var(--ink-muted);
+  font-size: 13px;
+  margin: 0 0 var(--sp-4);
+}
+.room-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.room-row:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.room-row-icon {
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+.room-row-main {
+  flex: 1;
+  min-width: 0;
+}
+.room-row-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 8px;
+}
+.room-row-id {
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.room-badge {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.room-badge-workroom {
+  background: #e8f0fe;
+  color: #1a56db;
+  border: 1px solid #bcd3f5;
+}
+.room-badge-playroom {
+  background: #e9f9ef;
+  color: #157f3d;
+  border: 1px solid #b9e6c9;
+}
+.room-create-form {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.room-create-form input,
+.room-create-form select,
+.room-settings-select {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
+.room-err {
+  color: var(--danger);
+  font-size: 13px;
+}
+.room-empty {
+  color: var(--ink-muted);
+  text-align: center;
+  padding: var(--sp-4) 0;
+}
+
+/* ---------- 聊天内房间设置 ---------- */
+.room-settings {
+  border-top: 1px solid var(--line);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  background: var(--paper-raised);
+}
+.room-settings-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+.room-settings-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 13px;
+}
+.room-settings-hint {
+  color: var(--ink-muted);
+  font-size: 12px;
+}

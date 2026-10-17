@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardList, LogOut } from 'lucide-react';
+import { ClipboardList, LogOut, Settings } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
-import { fetchHistory, fetchPresence, HistoryMessage } from '../api';
+import { fetchHistory, fetchPresence, fetchRoom, updateRoom, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage } from '../api';
 import MessageList, { ChatItem } from './MessageList';
 import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
@@ -9,10 +9,10 @@ import TaskPanel from './TaskPanel';
 
 interface Props {
   nick: string;
+  room: string;
   onLeave: () => void;
 }
 
-const ROOM = 'lobby';
 const PAGE_SIZE = 50;
 
 interface TaskReceipt {
@@ -20,7 +20,7 @@ interface TaskReceipt {
   task_status: string;
 }
 
-export default function Chat({ nick, onLeave }: Props) {
+export default function Chat({ nick, room, onLeave }: Props) {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [members, setMembers] = useState<MemberEntry[]>([]);
   const [status, setStatus] = useState<WSStatus>('idle');
@@ -29,6 +29,10 @@ export default function Chat({ nick, onLeave }: Props) {
   const [showTasks, setShowTasks] = useState(false);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
+  const [showRoomSettings, setShowRoomSettings] = useState(false);
+  const [pendingType, setPendingType] = useState<RoomType>('workroom');
+  const [roomErr, setRoomErr] = useState<string | null>(null);
   const showTasksRef = useRef(false);
   showTasksRef.current = showTasks;
 
@@ -97,7 +101,7 @@ export default function Chat({ nick, onLeave }: Props) {
 
     (async () => {
       try {
-        const rows = await fetchHistory(ROOM, PAGE_SIZE);
+        const rows = await fetchHistory(room, PAGE_SIZE);
         if (cancelled) return;
         ingestHistory(rows);
         if (rows.length > 0) oldestIdRef.current = rows[0].id;
@@ -109,7 +113,7 @@ export default function Chat({ nick, onLeave }: Props) {
 
     (async () => {
       try {
-        const list = await fetchPresence(ROOM);
+        const list = await fetchPresence(room);
         if (cancelled) return;
         setMembers(
           list.map((m) => ({
@@ -126,7 +130,18 @@ export default function Chat({ nick, onLeave }: Props) {
       }
     })();
 
-    const sock = new ChatSocket(nick, ROOM, {
+    (async () => {
+      try {
+        const info = await fetchRoom(room);
+        if (cancelled) return;
+        setRoomInfo(info);
+        setPendingType(info.type);
+      } catch {
+        /* 房间元数据拉不到不阻塞聊天 */
+      }
+    })();
+
+    const sock = new ChatSocket(nick, room, {
       onStatus: setStatus,
       onFrame: ingestFrame,
     });
@@ -138,14 +153,14 @@ export default function Chat({ nick, onLeave }: Props) {
       sock.close();
       socketRef.current = null;
     };
-  }, [nick, ingestFrame, ingestHistory]);
+  }, [nick, room, ingestFrame, ingestHistory]);
 
   const loadOlder = useCallback(async () => {
     if (loadingOlderRef.current || !hasMore || !oldestIdRef.current) return;
     loadingOlderRef.current = true;
     setLoadingOlder(true);
     try {
-      const rows = await fetchHistory(ROOM, PAGE_SIZE, oldestIdRef.current);
+      const rows = await fetchHistory(room, PAGE_SIZE, oldestIdRef.current);
       if (rows.length === 0) {
         setHasMore(false);
       } else {
@@ -196,12 +211,21 @@ export default function Chat({ nick, onLeave }: Props) {
     <div className="chat">
       <header className="chat-top">
         <div className="chat-top-left">
-          <span className="room-name">lobby</span>
+          <span className="room-name">{roomInfo?.name || room}</span>
+          {roomInfo && (
+            <span className={`room-badge room-badge-${roomInfo.type}`}>
+              {ROOM_TYPE_LABEL[roomInfo.type]}
+            </span>
+          )}
           <span className="room-meta">{onlineCount} 人在线</span>
           <span className={`conn conn-${status}`} title={statusLabel(status)}>
             {statusLabel(status)}
           </span>
         </div>
+        <button className="btn-ghost" type="button" onClick={() => setShowRoomSettings((v) => !v)} title="房间设置">
+          <Settings size={16} strokeWidth={2} />
+          <span>设置</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={() => setShowTasks((v) => !v)} title="任务追踪">
           <ClipboardList size={16} strokeWidth={2} />
           <span>任务</span>
@@ -229,9 +253,45 @@ export default function Chat({ nick, onLeave }: Props) {
         </main>
         <Members members={members} selfNick={nick} />
       </div>
+      {showRoomSettings && (
+        <div className="room-settings">
+          <div className="room-settings-title">房间设置</div>
+          <label className="room-settings-label">
+            房间类型
+            <select
+              className="room-settings-select"
+              value={pendingType}
+              onChange={(e) => setPendingType(e.target.value as RoomType)}
+            >
+              <option value="workroom">工作坊（定向派发，任务协作）</option>
+              <option value="playroom">娱乐厅（广播抢话，玩游戏）</option>
+            </select>
+          </label>
+          <div className="room-settings-hint">
+            工作坊改类型只有房主能操作，娱乐厅所有成员都能改。
+          </div>
+          {roomErr && <div className="room-err">{roomErr}</div>}
+          <button
+            className="btn-primary"
+            type="button"
+            onClick={async () => {
+              setRoomErr(null);
+              try {
+                const updated = await updateRoom(room, { type: pendingType, requester: nick });
+                setRoomInfo(updated);
+                setShowRoomSettings(false);
+              } catch (err) {
+                setRoomErr(err instanceof Error ? err.message : '保存失败');
+              }
+            }}
+          >
+            保存
+          </button>
+        </div>
+      )}
       {showTasks && (
         <TaskPanel
-          room={ROOM}
+          room={room}
           nick={nick}
           refreshKey={taskRefreshKey}
           onClose={markReadAndCloseTasks}

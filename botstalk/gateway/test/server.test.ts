@@ -15,7 +15,7 @@ describe("http api", () => {
     root = mkdtempSync(join(tmpdir(), "botstalk-server-"));
     db = openDb(join(root, "dbdir"));
     // port 0 = 随机端口；startServer 内同步 listen
-    server = startServer({ port: 0, dataDir: join(root, "dbdir") }, db);
+    server = startServer({ port: 0, dataDir: join(root, "dbdir"), roomMaxMembersWorkroom: 50, roomMaxMembersPlayroom: 200, gameBroadcastThrottleMs: 500 }, db);
     const addr = server.httpServer.address();
     if (addr === null || typeof addr === "string") throw new Error("no port");
     base = `http://127.0.0.1:${addr.port}`;

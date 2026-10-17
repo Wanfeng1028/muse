@@ -21,7 +21,7 @@ beforeAll(async () => {
   mkdirSync(parent, { recursive: true });
   tmpDir = mkdtempSync(join(parent, "artifacts-"));
   db = openDb(tmpDir);
-  const config: GatewayConfig = { port: 0, dataDir: tmpDir };
+  const config: GatewayConfig = { port: 0, dataDir: tmpDir, roomMaxMembersWorkroom: 50, roomMaxMembersPlayroom: 200, gameBroadcastThrottleMs: 500 };
   server = startServer(config, db);
   await new Promise<void>((r) => server.httpServer.once("listening", r));
   const addr = server.httpServer.address() as AddressInfo;

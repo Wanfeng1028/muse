@@ -6,10 +6,23 @@ export interface GatewayConfig {
   dataDir: string;
   /** Web 构建产物目录（Docker 一体化部署用）；不设置则网关不提供静态文件服务。 */
   publicDir?: string;
+  /** 工作坊房间成员上限。 */
+  roomMaxMembersWorkroom: number;
+  /** 娱乐厅房间成员上限。 */
+  roomMaxMembersPlayroom: number;
+  /** 小游戏状态广播节流毫秒数。 */
+  gameBroadcastThrottleMs: number;
 }
+
+
 
 const DEFAULT_PORT = 8765;
 const DEFAULT_DATA_DIR = "./data";
+const DEFAULT_ROOM_MAX_MEMBERS_WORKROOM = 50;
+const DEFAULT_ROOM_MAX_MEMBERS_PLAYROOM = 200;
+const DEFAULT_GAME_BROADCAST_THROTTLE_MS = 500;
+
+
 
 function resolvePackageDir(pkgDir?: string): string {
   if (pkgDir !== undefined) {
@@ -20,7 +33,27 @@ function resolvePackageDir(pkgDir?: string): string {
   return dirname(srcDir);
 }
 
+function readInt(
+  env: NodeJS.ProcessEnv,
+  key: string,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const raw = env[key];
+  if (raw === undefined || raw === "") {
+    return fallback;
+  }
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw new Error(`[config] invalid ${key}=${raw}; expected integer in [${min}, ${max}]`);
+  }
+  return parsed;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, pkgDir?: string): GatewayConfig {
+
+
   const rawPort = env.GATEWAY_PORT;
   const parsedPort = rawPort === undefined ? Number.NaN : parseInt(rawPort, 10);
   const port = Number.isNaN(parsedPort) ? DEFAULT_PORT : parsedPort;
@@ -36,7 +69,36 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, pkgDir?: string
         ? rawPublicDir
         : resolve(baseDir, rawPublicDir);
 
-  return { port, dataDir, publicDir };
+  const roomMaxMembersWorkroom = readInt(
+    env,
+    "ROOM_MAX_MEMBERS_WORKROOM",
+    DEFAULT_ROOM_MAX_MEMBERS_WORKROOM,
+    1,
+    10000,
+  );
+  const roomMaxMembersPlayroom = readInt(
+    env,
+    "ROOM_MAX_MEMBERS_PLAYROOM",
+    DEFAULT_ROOM_MAX_MEMBERS_PLAYROOM,
+    1,
+    100000,
+  );
+  const gameBroadcastThrottleMs = readInt(
+    env,
+    "GAME_BROADCAST_THROTTLE_MS",
+    DEFAULT_GAME_BROADCAST_THROTTLE_MS,
+    0,
+    60000,
+  );
+
+  return {
+    port,
+    dataDir,
+    publicDir,
+    roomMaxMembersWorkroom,
+    roomMaxMembersPlayroom,
+    gameBroadcastThrottleMs,
+  };
 }
 
 export const defaultConfig = loadConfig();
