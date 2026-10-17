@@ -38,6 +38,10 @@ class OcrFailedError(OcrError):
     """OCR 识别失败。"""
 
 
+class OcrEmptyError(OcrFailedError):
+    """OCR 未识别出任何文本。"""
+
+
 class OcrUnavailableError(OcrError):
     """OCR 能力不可用（缺 tesseract 二进制、执行失败或超时）。
 
@@ -126,6 +130,7 @@ class TesseractOcrProvider:
         self._lang = lang
         self._timeout = timeout
         self._psm = psm
+        self.last_confidence: float | None = None
 
     def _check_binary(self) -> None:
         if not shutil.which("tesseract"):
@@ -225,8 +230,57 @@ class TesseractOcrProvider:
         lines = [line.strip() for line in raw.splitlines()]
         lines = [line for line in lines if line]
         if not lines:
-            raise OcrFailedError("tesseract 未识别出任何文本")
+            raise OcrEmptyError("tesseract 未识别出任何文本")
+        self.last_confidence = self._word_confidence_avg(payload)
         return lines
+
+    def _word_confidence_avg(self, payload: bytes) -> float | None:
+        """best-effort：用 tesseract TSV 输出计算词级置信度均值（0~1）。
+
+        任何异常（缺二进制、超时、解析失败、无词）都返回 None，永不抛错，
+        调用方无需 try/except。
+        """
+        try:
+            import csv
+            import subprocess
+
+            try:
+                proc = subprocess.run(
+                    [
+                        "tesseract",
+                        "stdin",
+                        "stdout",
+                        "-l",
+                        self._lang,
+                        "--psm",
+                        str(self._psm),
+                        "tsv",
+                    ],
+                    input=payload,
+                    capture_output=True,
+                    timeout=self._timeout,
+                )
+            except Exception:
+                return None
+            if proc.returncode != 0:
+                return None
+            raw = (proc.stdout or b"").decode("utf-8", errors="replace")
+            reader = csv.DictReader(raw.splitlines(), delimiter="\t")
+            confs: list[float] = []
+            for row in reader:
+                if (row.get("level") or "").strip() != "5":
+                    continue
+                try:
+                    conf = float((row.get("conf") or "").strip())
+                except ValueError:
+                    continue
+                if conf >= 0:
+                    confs.append(conf)
+            if not confs:
+                return None
+            return sum(confs) / len(confs) / 100.0
+        except Exception:
+            return None
 
     def _mask_dates(self, text: str) -> str:
         """把文本中所有日期形态片段替换为等长空格，避免日期数字被金额正则误提取。"""

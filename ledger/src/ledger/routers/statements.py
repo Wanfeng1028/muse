@@ -23,8 +23,8 @@ from ledger.models import (
     Transaction,
     utcnow,
 )
-from ledger.ocr import OcrFailedError, OcrUnavailableError, get_provider
-from ledger.ocr_metrics import record_ocr_request
+from ledger.ocr import OcrEmptyError, OcrFailedError, OcrUnavailableError, get_provider
+from ledger.ocr_metrics import record_ocr_confidence, record_ocr_failure, record_ocr_request
 from ledger.schemas import (
     BatchClaimIn,
     BatchItemError,
@@ -401,8 +401,7 @@ async def parse_preview(
     )
 
 
-@router.post("/api/statements/ocr", response_model=ParsePreviewOut)
-async def ocr_statement_preview(
+async def _ocr_statement_preview_impl(
     file: UploadFile = File(...),
     template_id: int | None = Form(None),
     mapping: str | None = Form(None),
@@ -449,36 +448,34 @@ async def ocr_statement_preview(
     if not _is_valid_image(raw):
         raise HTTPException(status_code=400, detail="不是有效的图片文件")
 
-    _ocr_result = "error"
-    _ocr_start = time.perf_counter()
     try:
-        try:
-            provider = get_provider()
-        except ValueError as exc:
-            raise HTTPException(status_code=500, detail=str(exc)) from exc
+        provider = get_provider()
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-        try:
-            lines = await provider.ocr_lines(raw)
-        except OcrUnavailableError as exc:
-            _ocr_result = "unavailable"
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        except OcrFailedError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-        except NotImplementedError as exc:
-            raise HTTPException(status_code=501, detail=str(exc)) from exc
-        _ocr_result = "ok"
-    finally:
-        # 埋点永不影响主流程
-        duration = time.perf_counter() - _ocr_start
-        try:
-            record_ocr_request(_ocr_result, duration)
-        except Exception as exc:
-            _logger.warning(
-                "ocr_metrics_record_failed",
-                extra={"extra_data": {"error": repr(exc)}},
-            )
+    try:
+        lines = await provider.ocr_lines(raw)
+    except OcrEmptyError:
+        # 空文本由外层包装统一分类为 result="empty"，此处直接透出
+        raise
+    except OcrUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except OcrFailedError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        raise HTTPException(status_code=501, detail=str(exc)) from exc
 
     text = "\n".join(lines)
+
+    # tesseract 置信度埋点（best-effort）：只有真实跑 tesseract 的 provider 才有 last_confidence；
+    # record_ocr_confidence 自身永不抛错，None/非法值自动忽略
+    try:
+        record_ocr_confidence(getattr(provider, "last_confidence", None))
+    except Exception as exc:
+        _logger.warning(
+            "ocr_metrics_record_failed",
+            extra={"extra_data": {"error": repr(exc)}},
+        )
 
     explicit_mapping: dict | None = None
     if mapping:
@@ -525,6 +522,62 @@ async def ocr_statement_preview(
         sample=records[:10],
         errors=errors,
     )
+
+
+def _classify_ocr_http_error(status_code: int) -> str:
+    """把 HTTP 状态码映射为失败分类 reason。"""
+    if status_code == 503:
+        return "unavailable"
+    if status_code == 415:
+        return "unsupported"
+    if status_code == 413:
+        return "oversize"
+    if status_code == 400:
+        return "invalid"
+    return "internal"
+
+
+@router.post("/api/statements/ocr", response_model=ParsePreviewOut)
+async def ocr_statement_preview(
+    file: UploadFile = File(...),
+    template_id: int | None = Form(None),
+    mapping: str | None = Form(None),
+    session: AsyncSession = Depends(get_session),
+) -> ParsePreviewOut:
+    """账单图片 OCR 预览：图片→OCR 文本行→复用 statement 解析预览流，不写库。
+
+    全路径指标埋点：每次请求都计数（result=ok|empty|error）并记录耗时；
+    失败请求另按原因分类计数（reason=unavailable|unsupported|invalid|oversize|internal）。
+    埋点自身异常只记 warning，永不影响主流程。
+    """
+    _start = time.perf_counter()
+    _result = "error"
+    _reason: str | None = None
+    try:
+        out = await _ocr_statement_preview_impl(file=file, template_id=template_id, mapping=mapping, session=session)
+    except OcrEmptyError as exc:
+        _result = "empty"
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except HTTPException as exc:
+        _reason = _classify_ocr_http_error(exc.status_code or 500)
+        raise
+    except Exception:
+        _reason = "internal"
+        raise
+    else:
+        _result = "ok"
+        return out
+    finally:
+        # 埋点永不影响主流程
+        try:
+            record_ocr_request(_result, time.perf_counter() - _start)
+            if _reason is not None:
+                record_ocr_failure(_reason)
+        except Exception as exc:
+            _logger.warning(
+                "ocr_metrics_record_failed",
+                extra={"extra_data": {"error": repr(exc)}},
+            )
 
 
 @router.post("/api/statements/upload", response_model=UploadOut)

@@ -2,6 +2,35 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.9 - 2026-10-17
+
+### 新增
+
+- 新增 `ledger_ocr_requests_total{result="ok"|"empty"|"error"}` counter：POST /api/statements/ocr 全路径计数（每次请求都记，含 400/413/415 前置校验拒绝）。
+- 新增 `ledger_ocr_failures_total{reason="unavailable"|"unsupported"|"invalid"|"oversize"|"internal"}` counter：unavailable=tesseract 不可用（503）；unsupported=非图片类型（415）；invalid=请求非法（400）；oversize=超 5MB（413）；internal=其他。
+- 新增 `ledger_ocr_duration_seconds` histogram：全路径请求耗时，buckets (0.05,0.1,0.25,0.5,1,2.5,5,10,+Inf)。
+- 新增 `ledger_ocr_confidence_avg` gauge：tesseract TSV 词级置信度均值（0~1），运行平均；无样本时为 0。
+- 改名说明：排期名 `ledger_ocr_requests_total{provider,status}` 当时为占位名，v2.8.1 实际交付的是 `ocr_requests_total`/`ocr_duration_seconds`；v2.9 交付真正的 `ledger_`-前缀全路径指标集。
+- 新增 OcrEmptyError(OcrFailedError)；TesseractOcrProvider 新增 `_word_confidence_avg`（TSV 解析，best-effort 永不抛错）与 `last_confidence` 属性。
+- 埋点语义：src/ledger/routers/statements.py 原函数改名 `_ocr_statement_preview_impl`，新 `ocr_statement_preview` 包装做全路径埋点（OcrEmptyError→422/result empty；HTTPException 按状态码分类；埋点异常只 warning）。
+
+### 测试
+
+- pytest 全量 279 通过、1 跳过（跳过的是既有用例：环境无 tesseract）。
+- 新增 tests/test_ocr_metrics_v29.py（14 例：指标名/HELP、归一化、置信度校验、直方图桶、全路径 e2e 各分类、故障隔离）。
+- 删除被取代的 tests/test_ocr_metrics.py（v2.8.1 旧指标名已移除）。
+- ruff check 与 ruff format 全洁（11 个历史未格式化文件与本轮无关）。
+
+### 冒烟
+
+- 真实冒烟（uvicorn 真实进程，mock provider）：POST /api/statements/ocr 有效 PNG→200；.txt→415；魔数非法→400；超 5MB→413；/metrics 验证 ledger_ocr_requests_total{result="ok"} 1、{result="error"} 3，failures unsupported/invalid/oversize 各 1，直方图 count 4。
+
+### 已知限制
+
+- tesseract 未安装时 confidence_avg 恒为 0（无样本，诚实）。
+- 旧端点 POST /api/bills/ocr 未埋点（本轮范围外）。
+- 指标为进程内计数，重启清零（既有行为）。
+
 ## v2.8.1 - 2026-10-17
 
 ### 新增

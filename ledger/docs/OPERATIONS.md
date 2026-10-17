@@ -177,10 +177,13 @@ make restore FILE=data/backups/ledger-<升级前时间戳>.db
 | `ledger_auto_match_rate` | 自动匹配率（各批次 auto_count/total_count 汇总） |
 | `ledger_transactions_total` | 交易总数 |
 | `ledger_accounts_total` | 未归档账户总数 |
-| `ocr_requests_total{result="ok"\|"unavailable"\|"error"}` | OCR 请求计数（counter）。`ok`=OCR 成功；`unavailable`=OCR provider 不可用（503）；`error`=识别失败（422）/其他异常。只统计走到 OCR provider 调用的请求 |
-| `ocr_duration_seconds` | OCR 延迟分布（histogram，buckets：0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, +Inf），用于 OCR 延迟分布/告警 |
+| `ledger_ocr_requests_total{result="ok"\|"empty"\|"error"}` | OCR 全路径请求计数（counter）。`ok`=200 成功；`empty`=OCR 未识别出任何文本（422 空文本）；`error`=其余全部失败。每次 POST /api/statements/ocr 都计数（含 400/413/415 等前置校验拒绝） |
+| `ledger_ocr_failures_total{reason="unavailable"\|"unsupported"\|"invalid"\|"oversize"\|"internal"}` | 失败请求按原因分类（counter）。`unavailable`=tesseract 不可用（503）；`unsupported`=非图片类型（415）；`invalid`=请求非法（400）；`oversize`=超 5MB（413）；`internal`=其他（500/501/未知异常） |
+| `ledger_ocr_duration_seconds` | 全路径请求耗时分布（histogram，buckets：0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, +Inf） |
+| `ledger_ocr_confidence_avg` | tesseract 词置信度均值（gauge，0~1，无样本时为 0；仅真实跑 tesseract 且 TSV 解析成功时有样本） |
 
-指标输出 `GET /api/metrics`，为进程内计数，服务重启清零。
+v2.9 起 OCR 指标改名（`ocr_*` → `ledger_ocr_*`，与其他指标前缀统一）并升级为全路径埋点；v2.8.1 的旧指标名已移除。
+指标输出 `GET /api/metrics`，为进程内计数，服务重启清零。埋点自身异常只记 warning，永不影响主流程。
 
 就绪探测使用 `GET /api/ready`：数据库连通返回 200 `{"ready":true}`，不通返回 503。
 
