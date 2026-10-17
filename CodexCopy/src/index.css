@@ -932,3 +932,38 @@ button { font-family: inherit; }
   border: 1px solid; border-radius: 12px;
   padding: 4px 10px;
 }
+
+/* 输入框右下角模型控制（真实位置） */
+.model-control {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px solid var(--border-light);
+  color: var(--text-secondary); font-size: 12px; font-weight: 500;
+  padding: 6px 10px; border-radius: 16px; cursor: pointer;
+}
+.model-control:hover { background: var(--bg-hover); color: var(--text-primary); }
+.model-picker {
+  position: absolute; bottom: calc(100% + 8px); right: 0;
+  width: 250px; z-index: 95;
+  background: #1c1c1c; border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  padding: 6px;
+}
+[data-theme="light"] .model-picker { background: #fff; }
+.reasoning-row { display: flex; gap: 6px; padding: 4px 10px 8px; }
+.reason-pill {
+  flex: 1; background: transparent; border: 1px solid var(--border-light);
+  color: var(--text-secondary); font-size: 12px;
+  padding: 6px 0; border-radius: 8px; cursor: pointer;
+}
+.reason-pill.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.toggle {
+  width: 32px; height: 18px; border-radius: 9px;
+  background: rgba(255,255,255,0.15); position: relative; transition: background 0.15s;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  transition: left 0.15s;
+}
+.toggle.on::after { left: 16px; }

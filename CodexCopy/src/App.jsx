@@ -151,7 +151,8 @@ export default function App() {
             <div className="empty-sub">The best way to build with agents</div>
           </div>
         )}
-        <Composer onSend={send} disabled={streaming} placeholder={placeholder} />
+        <Composer onSend={send} disabled={streaming} placeholder={placeholder}
+          model={model} onModelChange={setModel} />
       </div>
     );
   };

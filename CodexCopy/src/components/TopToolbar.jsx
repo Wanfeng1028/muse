@@ -34,7 +34,6 @@ export default function TopToolbar({ projects, activeProjectId, onProjectChange,
   return (
     <div className="top-toolbar">
       <Drop id="project" label="Project" value={active?.name} options={projects} onPick={onProjectChange} />
-      <Drop id="model" label="Model" value={model} options={models} onPick={onModelChange} />
       <Drop id="sandbox" label="Sandbox" value={sandbox} options={sandboxModes} onPick={onSandboxChange} />
       <span style={{ flex: 1 }} />
       <button className="icon-btn sm" title="Settings" onClick={onOpenSettings}>

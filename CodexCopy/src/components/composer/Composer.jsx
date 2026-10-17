@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { AttachIcon, SendIcon, ChevronDown } from '../icons';
+import { AttachIcon, SendIcon, ChevronDown, CheckIcon } from '../icons';
 import { models } from '../../data/mock';
 
-export default function Composer({ onSend, disabled, placeholder }) {
+// 真实 Codex 输入框：模型选择器在右下角（GitHub issue #38961 实证：
+// "Click the model control at the lower-right of the composer"）
+// 完整 picker 含：model + reasoning effort + Fast/service-tier
+export default function Composer({ onSend, disabled, placeholder, model, onModelChange }) {
   const [text, setText] = useState('');
-  const [model, setModel] = useState(models[0]);
-  const [modelOpen, setModelOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [reasoning, setReasoning] = useState('Medium');
+  const [fast, setFast] = useState(false);
   const taRef = useRef(null);
 
   useEffect(() => {
@@ -38,38 +42,43 @@ export default function Composer({ onSend, disabled, placeholder }) {
             rows={1}
           />
           <div className="composer-bar">
-            <button className="composer-tool" title="Attach files">
+            <button className="composer-tool" title="Attach files or images">
               <AttachIcon />
             </button>
+            <span className="composer-sp" />
+            {/* 模型控制在右下角 */}
             <div style={{ position: 'relative' }}>
-              <button className="composer-tool" onClick={() => setModelOpen(!modelOpen)}>
-                {model} <ChevronDown />
+              <button className="model-control" onClick={() => setPickerOpen(!pickerOpen)} title="Model settings">
+                {model} <ChevronDown size={12} />
               </button>
-              {modelOpen && (
-                <div style={{
-                  position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
-                  background: 'var(--bg-elevated)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-md)', minWidth: 160, overflow: 'hidden',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)', zIndex: 10,
-                }}>
-                  {models.map((m) => (
-                    <div
-                      key={m}
-                      onClick={() => { setModel(m); setModelOpen(false); }}
-                      style={{
-                        padding: '9px 14px', fontSize: 13, cursor: 'pointer',
-                        background: m === model ? 'var(--bg-active)' : 'transparent',
-                        color: m === model ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      }}
-                    >
-                      {m}
+              {pickerOpen && (
+                <>
+                  <div className="drop-mask" onClick={() => setPickerOpen(false)} />
+                  <div className="model-picker">
+                    <div className="filter-menu-title">Model</div>
+                    {models.map((m) => (
+                      <div key={m} className="drop-item" onClick={() => { onModelChange(m); }}>
+                        <span style={{ flex: 1 }}>{m}</span>
+                        {m === model && <CheckIcon size={13} />}
+                      </div>
+                    ))}
+                    <div className="filter-menu-title">Reasoning effort</div>
+                    <div className="reasoning-row">
+                      {['Low', 'Medium', 'High'].map((r) => (
+                        <button key={r}
+                          className={'reason-pill' + (reasoning === r ? ' active' : '')}
+                          onClick={() => setReasoning(r)}>{r}</button>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                    <div className="drop-item" onClick={() => setFast(!fast)}>
+                      <span style={{ flex: 1 }}>Fast mode</span>
+                      <span className={'toggle' + (fast ? ' on' : '')} />
+                    </div>
+                  </div>
+                </>
               )}
             </div>
-            <span className="composer-sp" />
-            <button className={'send-btn' + (text.trim() ? ' ready' : '')} onClick={submit} title="Send">
+            <button className={'send-btn' + (text.trim() ? ' ready' : '')} onClick={submit} title="Send (⌘↵)">
               <SendIcon />
             </button>
           </div>
