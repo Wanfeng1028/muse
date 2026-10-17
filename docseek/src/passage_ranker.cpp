@@ -14,8 +14,13 @@ constexpr int kMaxWindowLines = 6;
 constexpr int kMaxWindowCodepoints = 400;
 constexpr int kWindowStep = 3;
 
+// 复合短语加成权重；取值依据：大于位置项（0.05）、小于覆盖度主项（0.5）；
+// 实测 v07-024：主题文档 0.688+0.25=0.938 > 干扰文档 0.845。
+constexpr double kCompoundPhraseBonus = 0.25;
+
 // 计算 UTF-8 码点数（非法字节按 1 推进，绝不死循环）。
 int countUtf8Codepoints(const std::string& s) {
+
     int n = 0;
     size_t i = 0;
     while (i < s.size()) {
@@ -101,7 +106,29 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
     phLower.reserve(pq.phrases.size());
     for (const auto& p : pq.phrases) phLower.push_back(toLowerAscii(p));
 
+    // 复合短语：关键词按序拼接（如"安装"+"步骤"→"安装步骤"）。
+    // 连续出现是比词袋更强的意图信号（与 Searcher 文档级的 phraseBoost 同原理）；
+    // 只在关键词不少于 2 个、拼接串非空、且拼接串不同于任一引号短语时生效
+    // （引号短语已有 phraseTerm 加成，避免重复）。
+    std::string queryCompound;
+    if (kwLower.size() >= 2) {
+        std::string c;
+        for (const auto& k : kwLower) c += k;
+        if (!c.empty()) {
+            bool dupPhrase = false;
+            for (const auto& p : phLower) {
+                if (c == p) {
+                    dupPhrase = true;
+                    break;
+                }
+            }
+            if (!dupPhrase) queryCompound = c;
+        }
+    }
+
     const int totalKeywords = static_cast<int>(pq.keywords.size());
+
+
 
     // 滑动窗口。
     int windowIndex = 0;
@@ -194,8 +221,15 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
 
+        // 复合短语加成：窗口原文连续包含关键词拼接串。
+        if (!queryCompound.empty() &&
+            windowLower.find(queryCompound) != std::string::npos) {
+            score += kCompoundPhraseBonus;
+        }
+
         if (score > 0.0) {
             Passage p;
+
             p.doc_id = doc_id;
             p.path = path;
             p.line_start = wStart + 1;

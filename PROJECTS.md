@@ -346,9 +346,10 @@
 **v0.11.0「搜索质量 T1/T2 修复」（2026-10-17，前一轮孤儿工作本轮收编验证）**：T1 分词器单调游标 find 在 CutForSearch 重叠词下静默丢词→全文 occurrence 扫描 + 已认领集合；T2 查询侧新增第 3 阶段子串召回回退（中文 token 拆单字 OR 粗筛 + 原始 token 子串精验，只在精确 AND/OR 回退为空时触发）；`expandTokenOrQuery` 按起始字节位置分组（同位置重叠词 OR、不同位置 AND，连接符改显式 ` AND `）；3 个先红后绿复现测试；评测 44→56 对，Top-1 36/44（81.8%）→**48/56（85.7%）**，8 失败与基线同一集合（qa 独立已知问题）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。
 **v0.11.1「版本号唯一来源 + 定位逻辑公共抽取」（2026-10-17）**：修 v0.10.0 遗留 service.cpp 两处 "0.9.0" 硬编码，新建 `include/docseek/version.h`（`kDocseekVersion` 唯一来源）；偿还 v0.11.0 技术债：新建 `token_locate` 模块（`claimTokenPositions`），jieba_tokenizer 与 searcher 双双改用（语义逐行一致）；新增 `test_token_locate.cpp` 7 例 + Health 版本断言；`./docseek_tests --gtest_filter='-WatcherTest.SubDir'` **157/157** 全过；README 搜索质量小节更新；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.1.md`。
 **v0.12.0「问句理解升级」（2026-10-17）**：问句改写（`src/query_parser.cpp`：fillerWords 疑问词表清理、全表按长度严格降序；新增 trailingPredicates 尾部谓语剥离：写在哪/写在/说明/介绍/申请/开具/重置/阐述/写，只剥尾部谓语、保留名词主题）+ 段落排序修复（`src/passage_ranker.cpp`：标题行断窗覆盖 bug；passageIntent=true 时含标题行窗口 +0.1）+ 问句召回路径（`src/locator.cpp` recallQuery 跨 keywords/phrases 去重；`Searcher::searchQuestion`：AND∪OR 并集召回、doc_id 去重，rerankHits 抽取共用）；评测集 `eval/eval_pairs_v08.json`（71 对）；测试 +10，ctest **168/168**（除 WatcherTest.SubDir 已知 inotify flaky）；评测 v07 **55/56（98.2%）**、qa **11/12**（基线 4/12）；v08 66/71（93.0%）、qa 22/27；已知限制：v07-024「安装步骤在哪里」仍被干扰文档压制、v08 新增 4 问失败（v0.13 排期）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`。
-
+**v0.13.0「段落排序复合短语加成」（2026-10-17）**：修 v0.12.0 遗留 v07-024（干扰文档段落分 0.845 压制主题文档 0.688）；根因：keywords=[安装, 步骤] 纯词袋打分；"安装步骤"连续串全语料只出现在主题文档；修复（只动 `src/passage_ranker.cpp`）：`kCompoundPhraseBonus=0.25` 具名常量+注释；`queryCompound`=关键词按序拼接（≥2 个、非空、不同于引号短语）；窗口连续包含则 +0.25；先红后绿 `LocatorV013.CompoundPhraseBonusPrefersThematicDoc`；诚实记录：中途"文档级检索分融合"方案被评测证伪已还原；评测 v07 56/56（100%）、qa 12/12；v08 67/71（94.4%）、qa 23/27；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.13.md`。
 
 **发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。v0.6.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`。v0.7.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。
+
 
 **修 bug（本轮视觉验收附带抓出）**：
 1. web/index.html 的 `<script>` 自 v2 起在 `btn.dis` 处被截断，导致整页 JS 解析失败、所有按钮无响应——本轮补全并补上事件绑定与初始化（node --check 验证通过）。
@@ -368,9 +369,10 @@
 - **v0.11.0「搜索质量 T1/T2 修复」（2026-10-17）**：见"状态"节；前一轮 agent 做到一半 VM 重启去世遗留未提交改动，本轮收编：重新构建+ctest+CLI smoke 验证后提交
 - **v0.11.1「版本号唯一来源 + 定位逻辑公共抽取」（2026-10-17）**：见"状态"节；本轮抓出并修复流程 bug：PATCH 应用脚本多对 OLD/NEW 挤一个块会被当字面量污染源码（已恢复文件，prompt 格式改为一块一对并同步三个协调员）
 - **v0.12.0「问句理解升级」（2026-10-17）**：见"状态"节；评测 v07 55/56（qa 4/12→11/12），评测集扩至 v08（71 对）。
-
+- **v0.13.0「段落排序复合短语加成」（2026-10-17）**：见"状态"节；v07-024 修复，评测 v07 56/56（100%）、qa 12/12，v08 67/71（94.4%）。
 
 **后续计划**：
+
 
 - ~~搜索质量 T1/T2~~（已在 v0.11.0 交付）
 - qa 自然语言问句 v07 11/12（v0.12.0 已把基线 4/12 提升到 11/12；剩余 v07-024 一问 v0.13 攻坚）

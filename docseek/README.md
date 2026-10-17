@@ -255,10 +255,10 @@ compose 把 `./data` 挂载持久化数据库、`./docs` 只读挂载为演示�
 python3 eval/run_eval.py --binary ./build/docseek --dict ./build/dict
 ```
 
-实测 Top-1 准确率：v07 集 **55/56 (98.2%)**（html 10/10 / tok 26/26 / neg 2/2 / noise 6/6 / qa 11/12），基线（v0.7.0）为 36/44（81.8%），v0.11.0 为 48/56（85.7%）；v08 集 **66/71 (93.0%)**，qa 22/27（81.5%）。
-
+实测 Top-1 准确率：v07 集 **56/56（100%）**（html 10/10 / tok 26/26 / neg 2/2 / noise 6/6 / qa 12/12），基线（v0.7.0）为 36/44（81.8%），v0.11.0 为 48/56（85.7%），v0.12.0 为 55/56（98.2%）；v08 集 **67/71（94.4%）**，qa 23/27（基线 66/71、qa 22/27）。
 
 权重调优示例：
+
 
 ```bash
 # 标题党文档太多时压低标题权重
@@ -274,11 +274,16 @@ v0.12.0 问句理解升级（一句话原理：自然语言问句先被改写成
 - `src/locator.cpp`：recallQuery 跨 keywords/phrases 去重；问句（passageIntent 或问句尾缀"在哪里/在哪/哪里/吗/?/？"）走新 searchQuestion。
 - `src/searcher.cpp` + `include/docseek/searcher.h`：新增 `Searcher::searchQuestion`（问句 AND∪OR 并集召回，doc_id 去重；重排逻辑抽取为共用 rerankHits，`search()` 行为零差异）。
 
-效果：v07 集 qa 从基线 4/12 提升到 11/12（91.7%），总准确率 48/56（85.7%）→ 55/56（98.2%）。详见 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`。剩余已知问题：v07-024 "安装步骤在哪里"未修复（期望 qa_04_install.md，实际 tok_12_verb.md，跨文档排序被干扰文档 0.845 vs 0.688 压制）；v08 新增 4 个真实问法失败（"请问发货得几天啊"→t1_01_repair.md、"多久备份一次"→t1_01_repair.md、"有哪些套餐"→tok_04_ambiguity.md、"想找客服，联系方式在哪啊"→qa_08_invoice.md）。
+效果：v07 集 qa 从基线 4/12 提升到 11/12（91.7%），总准确率 48/56（85.7%）→ 55/56（98.2%）。详见 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`。剩余已知问题：v08 新增 4 个真实问法失败（"请问发货得几天啊"→t1_01_repair.md、"多久备份一次"→t1_01_repair.md、"有哪些套餐"→tok_04_ambiguity.md、"想找客服，联系方式在哪啊"→qa_08_invoice.md），v0.14 排期。
+
+v0.13.0 段落排序复合短语加成（一句话原理：关键词按序拼接成连续串（如"安装"+"步骤"→"安装步骤"），窗口原文连续包含它时 +0.25——连续出现是比词袋更强的意图信号，与文档级 phraseBoost 同原理）。只动 `src/passage_ranker.cpp`。
+
+效果：v07-024「安装步骤在哪里」修复（干扰文档段落分 0.845 vs 主题文档 0.688+0.25=0.938），v07 集 56/56（100%）、qa 12/12；v08 集 67/71（94.4%）、qa 23/27。详见 `docs/PRODUCTION_CHECKLIST_REPORT_v0.13.md`。诚实记录：本轮中途"文档级检索分融合"方案（0.3×min-max 归一化）被真实评测证伪（55/56 未动）后已完整还原。
 
 v0.11.0 修复的两类搜索质量问题（保留说明）：T1——分词器单调游标 `find` 在 CutForSearch 重叠词下静默丢词（如"计算机技术"丢"算机/计算机/计算机技术"），改为全文 occurrence 扫描 + 已认领集合；T2——索引/查询切分上下文不一致导致子串 query 漏召回（如搜"猫砂"命中不了含"猫砂盆"的文档），查询侧新增第 3 阶段子串召回回退（中文 token 拆单字 OR 粗筛 + 原始 token 子串精验），只在精确 AND、OR 回退都为空时触发。T2 要求查询 token 在文档中连续出现。
 
 ## 已知局限
+
 
 - **中文分词（v0.3.0 已解决）**：v0.2.0 及之前 FTS5 的 `unicode61` 分词器不对 CJK 做分词，中文子串检索（如用"检索"搜"全文检索"）无结果。v0.3.0 起引入 cppjieba（v5.6.2，MIT）实现的 FTS5 自定义分词器，建索引/查询双侧一致切词；旧库打开时自动迁移（`PRAGMA user_version` 2→3，重建 FTS 索引）。评测见 [docs/eval.md](docs/eval.md)，10 个中文查询 Top-1 全部符合预期。
 - 当前支持纯文本类文档（`.txt` / `.md` / `.markdown` / `.text`）、HTML（`.html` / `.htm`，v0.6.0）、PDF（v0.8.0）与 Office 文档（`.docx` / `.xlsx` / `.pptx`，v0.9.0）。

@@ -312,5 +312,45 @@ TEST(LocatorV012, LocatorRecallQueryDedup) {
     cleanupTempDb(dbPath);
 }
 
+// 先红后绿复现：跨文档段落排序只看段落分 Passage.score，丢弃了 Searcher
+// 给出的文档级检索分 Hit.score，导致"关键词堆砌的短干扰段落"压过真正
+// 的主题文档。
+// 场景：问句"安装步骤在哪里"（关键词"安装""步骤"）。
+//   - "安装指南.md" 是主题文档，标题"## 安装步骤"中"安装""步骤"按序连续出现，
+//     命中复合短语加成（kCompoundPhraseBonus，窗口连续包含关键词拼接串 +0.25），
+//     排序更靠前；
+//   - "词语辨析.md" 是干扰文档，单段落把"安装""步骤"高频堆满，但两者未按序连续成串，
+//     段落覆盖度+命中次数饱和，仍拿不到复合短语加成。
+// 现状（未实现复合短语加成）下本测试会失败：res[0] 是"词语辨析.md"。
+// 本用例是 v0.13 修复（复合短语加成，窗口连续包含关键词拼接串 +0.25）的验收测试，
+// 修复后应转为绿。查询解析细节不做任何硬编码假设，只断言最终排序结果。
+TEST(LocatorV013, CompoundPhraseBonusPrefersThematicDoc) {
+
+    std::string dbPath = makeTempDbPath("docblend");
+    {
+        Database db = Database::open(dbPath);
+        db.upsert("安装指南.md", "软件安装指南",
+                  "# 软件安装指南\n\n## 安装步骤\n\n第一步：下载安装包。\n\n"
+                  "第二步：运行程序完成安装。\n\n## 常见问题\n\n"
+                  "安装失败时检查磁盘空间。\n",
+                  0, 0);
+        db.upsert("词语辨析.md", "词语辨析",
+                  "动宾结构辨析：安装与卸载是反义。安装配置步骤是先下载再解压，"
+                  "安装完成后再看步骤说明，安装过程分为几个步骤，"
+                  "安装前请先阅读步骤。\n",
+                  0, 0);
+
+        Searcher searcher(db);
+        Locator locator(db, searcher);
+
+        std::vector<Passage> res = locator.locate("安装步骤在哪里");
+
+        ASSERT_FALSE(res.empty());
+        EXPECT_EQ(res[0].path, "安装指南.md");
+    }
+    cleanupTempDb(dbPath);
+}
+
 }  // namespace
 }  // namespace docseek
+

@@ -1,5 +1,22 @@
 ```markdown
 # Changelog
+
+## v0.13.0（2026-10-17）——段落排序复合短语加成
+
+- 修复 v0.12.0 遗留问题 v07-024「安装步骤在哪里」。
+- 根因：问句「安装步骤在哪里」被 jieba 解析为 keywords=\u3010安装, 步骤\u3011（复合词被切散）；段落打分是纯词袋（覆盖度 0.5 + 命中饱和 0.3 + 短语 0.15 + 位置 0.05），干扰文档 tok_12_verb.md 靠单一段落堆砌关键词拿到 0.845，压过主题文档 qa_04_install.md 的 0.688。而「安装步骤」连续串在全语料中只出现在主题文档——连续出现是比词袋更强的意图信号（文档级 Searcher 早有同原理 phraseBoost +2.0，段落级缺失，两阶段不一致）。
+- 修复（只动 src/passage_ranker.cpp）：
+  - 匿名 namespace 新增具名常量 kCompoundPhraseBonus=0.25，注释写清取值依据：大于位置项 0.05、小于覆盖度主项 0.5；实测主题 0.688+0.25=0.938 > 干扰 0.845。
+  - rankPassages 在 kwLower/phLower 预处理后计算 queryCompound：关键词按序拼接，关键词 >= 2 个、拼接串非空、且不同于任一引号短语时生效（避免与 phraseTerm 重复加成）。
+  - 窗口原文连续包含 queryCompound 时 score += 0.25。
+  - rankPassages 签名不变，既有权重公式不动。
+- 诚实记录：本轮曾先尝试「跨文档排序融合文档级检索分」（Passage.doc_score + 0.3×min-max 归一化文档分），真实评测证伪（55/56 未动：min-max 取整轮召回集最大/最小值，召回集一大就把两篇关键文档 9.642 vs 8.394 的差距稀释掉），已完整还原（git checkout 恢复，工作区无残留），改走段落级复合短语路线。失败尝试如实记录，不删历史。
+- 先红后绿：tests/test_locate.cpp 新增 TEST(LocatorV013, CompoundPhraseBonusPrefersThematicDoc)（主题文档 vs 关键词堆砌干扰文档；还原后未加成时失败=红，加复合加成后通过=绿）。
+- 评测（实测）：v07 集 56/56（100%），qa 12/12（基线 v0.12.0 为 55/56、qa 11/12）；v08 集 67/71（94.4%），qa 23/27（基线 66/71、qa 22/27；v07-024 的修复连带使 v08 的 qa 也 +1）。
+- 构建：cmake 零警告（自有文件；第三方 cppjieba 头警告 pre-existing）；ctest 168/168（WatcherTest.SubDir 为 v0.5.0 起已知 inotify 时序 flaky，排除后全绿；本轮单独重跑 4 次仍失败，与改动无关）。
+- 已知限制：v08 剩余 4 个真实问法失败（v08-qa-03「请问发货得几天啊」→t1_01_repair.md、v08-qa-09「多久备份一次」→t1_01_repair.md、v08-qa-10「有哪些套餐」→tok_04_ambiguity.md、v08-qa-15「想找客服，联系方式在哪啊」→qa_08_invoice.md），v0.14 排期；WatcherTest.SubDir flaky 照旧。
+- 版本号 0.13.0（version.h 唯一来源）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.13.md。
+
 ```
 
 ## v0.12.0（2026-10-17）——问句理解升级
