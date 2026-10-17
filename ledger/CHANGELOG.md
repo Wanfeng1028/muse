@@ -2,6 +2,20 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.8.1 - 2026-10-17
+
+### 新增
+
+- `ocr_requests_total{result="ok"|"unavailable"|"error"}`：OCR 请求计数（counter）。`ok`=OCR 成功；`unavailable`=OCR provider 不可用（503）；`error`=识别失败（422）/其他异常。只统计走到 OCR provider 调用的请求。
+- `ocr_duration_seconds`：OCR 延迟分布（histogram，buckets：0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, +Inf），用于 OCR 延迟分布/告警。
+- 指标输出 `GET /api/metrics`（手写 Prometheus exposition，零新依赖）；进程内计数，服务重启清零。
+- 埋点只统计走到 OCR provider 调用的请求；埋点异常只记 warning，永不影响主流程。
+
+### 测试
+
+- 新增 `tests/test_ocr_metrics.py` 覆盖埋点语义。
+- `GET /api/metrics` 真实冒烟验证指标名与标签。
+
 ## v2.8 - 2026-10-17
 
 ### 新增

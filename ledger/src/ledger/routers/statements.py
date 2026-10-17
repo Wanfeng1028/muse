@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import time
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import delete, func, select
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ledger import matching, statement_parser
 from ledger.database import get_session
+from ledger.logging import get_logger
 from ledger.models import (
     Account,
     Category,
@@ -22,6 +24,7 @@ from ledger.models import (
     utcnow,
 )
 from ledger.ocr import OcrFailedError, OcrUnavailableError, get_provider
+from ledger.ocr_metrics import record_ocr_request
 from ledger.schemas import (
     BatchClaimIn,
     BatchItemError,
@@ -43,6 +46,7 @@ from ledger.schemas import (
 )
 
 router = APIRouter(tags=["statements"])
+_logger = get_logger("statements")
 
 # 转账配对参数：金额容差 ±100 分或 ±1%，日期窗口 ±3 天
 TRANSFER_PAIR_ABS_TOL_CENTS = 100
@@ -445,19 +449,34 @@ async def ocr_statement_preview(
     if not _is_valid_image(raw):
         raise HTTPException(status_code=400, detail="不是有效的图片文件")
 
+    _ocr_result = "error"
+    _ocr_start = time.perf_counter()
     try:
-        provider = get_provider()
-    except ValueError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        try:
+            provider = get_provider()
+        except ValueError as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    try:
-        lines = await provider.ocr_lines(raw)
-    except OcrUnavailableError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    except OcrFailedError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except NotImplementedError as exc:
-        raise HTTPException(status_code=501, detail=str(exc)) from exc
+        try:
+            lines = await provider.ocr_lines(raw)
+        except OcrUnavailableError as exc:
+            _ocr_result = "unavailable"
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except OcrFailedError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except NotImplementedError as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
+        _ocr_result = "ok"
+    finally:
+        # 埋点永不影响主流程
+        duration = time.perf_counter() - _ocr_start
+        try:
+            record_ocr_request(_ocr_result, duration)
+        except Exception as exc:
+            _logger.warning(
+                "ocr_metrics_record_failed",
+                extra={"extra_data": {"error": repr(exc)}},
+            )
 
     text = "\n".join(lines)
 

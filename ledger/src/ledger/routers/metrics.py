@@ -74,5 +74,14 @@ async def metrics() -> PlainTextResponse:
     lines.append("# TYPE ledger_accounts_total gauge")
     lines.append(f"ledger_accounts_total {int(accounts_total)}")
 
+    try:
+        from ledger.ocr_metrics import render_ocr_metrics
+
+        lines.append(render_ocr_metrics())
+    except Exception as exc:
+        from ledger.logging import get_logger
+
+        get_logger("metrics").warning("ocr_metrics_render_failed", extra={"extra_data": {"error": repr(exc)}})
+
     body = "\n".join(lines) + "\n"
     return PlainTextResponse(content=body, media_type="text/plain; version=0.0.4")

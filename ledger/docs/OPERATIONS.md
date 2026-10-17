@@ -177,6 +177,10 @@ make restore FILE=data/backups/ledger-<升级前时间戳>.db
 | `ledger_auto_match_rate` | 自动匹配率（各批次 auto_count/total_count 汇总） |
 | `ledger_transactions_total` | 交易总数 |
 | `ledger_accounts_total` | 未归档账户总数 |
+| `ocr_requests_total{result="ok"\|"unavailable"\|"error"}` | OCR 请求计数（counter）。`ok`=OCR 成功；`unavailable`=OCR provider 不可用（503）；`error`=识别失败（422）/其他异常。只统计走到 OCR provider 调用的请求 |
+| `ocr_duration_seconds` | OCR 延迟分布（histogram，buckets：0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, +Inf），用于 OCR 延迟分布/告警 |
+
+指标输出 `GET /api/metrics`，为进程内计数，服务重启清零。
 
 就绪探测使用 `GET /api/ready`：数据库连通返回 200 `{"ready":true}`，不通返回 503。
 
