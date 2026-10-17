@@ -9,7 +9,7 @@ Vite + React + 手写 CSS 从零实现与其一致的界面与交互。
 ## 复刻依据（逆向参数）
 
 - 布局：macOS 窗口 chrome（红绿灯）+ 左侧 280px 侧栏（New thread / 搜索 / 按时间分组的会话列表 / 底部用户栏）+ 主区 + 底部 composer
-- 深色主题 token：`--bg-main #212121`、`--bg-sidebar #171717`，文字三级灰阶，边框 `rgba(255,255,255,0.1)` 体系
+- 深色主题 token：**逆向自 `codex-dark-xFLf7JPn.js` 官方主题（24 色逐字提取）**：`#111111` 主背景、`#131313` 侧栏、`#fcfcfc`/`#8f8f8f` 文字、`#0169cc` 强调色（按钮/链接）、`#00a240` 成功、`#e02e2a` 错误
 - 交互文案：`New thread`、`Filter threads ⌘K`、`Ask Codex to do something…` 等均取自逆向出的 i18n
 
 ## 功能面（14 个组件）
