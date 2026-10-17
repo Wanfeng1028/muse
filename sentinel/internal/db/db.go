@@ -167,6 +167,23 @@ updated_at TEXT NOT NULL
 			`ALTER TABLE monitors ADD COLUMN sms_phones TEXT NOT NULL DEFAULT ''`,
 		},
 	},
+	{
+		version: 9,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS sms_log (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				phone TEXT NOT NULL DEFAULT '',
+				message TEXT NOT NULL DEFAULT '',
+				provider TEXT NOT NULL DEFAULT '',
+				status TEXT NOT NULL DEFAULT '',
+				error TEXT NOT NULL DEFAULT '',
+				created_at TEXT NOT NULL
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_sms_log_phone ON sms_log(phone)`,
+			`CREATE INDEX IF NOT EXISTS idx_sms_log_status ON sms_log(status)`,
+			`CREATE INDEX IF NOT EXISTS idx_sms_log_created ON sms_log(created_at)`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

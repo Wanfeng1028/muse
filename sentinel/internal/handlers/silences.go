@@ -57,13 +57,11 @@ func (s *Server) handleCreateSilence(w http.ResponseWriter, r *http.Request) {
 		Reason:    p.Reason,
 	})
 	if err != nil {
-		logErr(r, "handleCreateSilence", err)
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	sl, err := s.store.GetSilence(id)
 	if err != nil {
-		logErr(r, "handleCreateSilence", err)
 		writeErr(w, http.StatusInternalServerError, "创建静默失败")
 		return
 	}
@@ -73,7 +71,6 @@ func (s *Server) handleCreateSilence(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleListSilences(w http.ResponseWriter, r *http.Request) {
 	list, err := s.store.ListSilences()
 	if err != nil {
-		logErr(r, "handleListSilences", err)
 		writeErr(w, http.StatusInternalServerError, "读取静默列表失败")
 		return
 	}
@@ -85,7 +82,7 @@ func (s *Server) handleListSilences(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDeleteSilence(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
 		writeErr(w, http.StatusBadRequest, "无效的 id")
 		return
@@ -95,7 +92,6 @@ func (s *Server) handleDeleteSilence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.DeleteSilence(id); err != nil {
-		logErr(r, "handleDeleteSilence", err)
 		writeErr(w, http.StatusInternalServerError, "删除静默失败")
 		return
 	}

@@ -64,6 +64,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/incidents", s.handleListIncidents)
 	mux.HandleFunc("GET /api/overview", s.handleOverview)
 	mux.HandleFunc("GET /api/alerts/deliveries", s.handleListDeliveries)
+	mux.HandleFunc("GET /api/sms/log", s.handleSMSLogAPI)
 	mux.HandleFunc("POST /api/alerts/deliveries/{id}/retry", s.handleRetryDelivery)
 	mux.HandleFunc("POST /api/silences", s.handleCreateSilence)
 	mux.HandleFunc("GET /api/silences", s.handleListSilences)
@@ -73,6 +74,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /monitors", s.handleMonitorsPage)
 	mux.HandleFunc("GET /incidents", s.handleIncidentsPage)
 	mux.HandleFunc("GET /deliveries", s.handleDeliveriesPage)
+	mux.HandleFunc("GET /sms-log", s.handleSMSLogPage)
 	mux.HandleFunc("GET /profile", s.handleProfilePage)
 	mux.HandleFunc("GET /status/{slug}", s.handleStatusPage)
 	subStatic, err := fs.Sub(web.FS, "static")
@@ -321,6 +323,39 @@ func (s *Server) handleDeliveriesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleProfilePage 渲染用户资料页。
+func (s *Server) handleSMSLogPage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "internal/web/static/sms_log.html")
+}
+
+func (s *Server) handleSMSLogAPI(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	phone := q.Get("phone")
+	status := q.Get("status")
+	limit := 50
+	offset := 0
+	if v := q.Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			limit = n
+		}
+	}
+	if v := q.Get("offset"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			offset = n
+		}
+	}
+	rows, total, err := s.store.ListSMSLog(phone, status, limit, offset)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "读取短信记录失败"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"logs":   rows,
+		"total":  total,
+		"limit":  limit,
+		"offset": offset,
+	})
+}
+
 func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
 	s.serveStaticFile(w, "profile.html", "text/html; charset=utf-8")
 }

@@ -109,8 +109,25 @@ func (n Notifier) Notify(t Target, event, name, target, at, errMsg string) []err
 			}
 			msg := BuildSMSMessage(event, name, target, at, errMsg)
 			for _, ph := range parsed {
-				if err := n.SMSSender.Send(ph, msg); err != nil {
-					errs = append(errs, fmt.Errorf("sms 渠道发送失败（%s）: %w", ph, err))
+				sendErr := n.SMSSender.Send(ph, msg)
+				if sendErr != nil {
+					errs = append(errs, fmt.Errorf("sms 渠道发送失败（%s）: %w", ph, sendErr))
+				}
+				if n.SMSLogger != nil {
+					status := "success"
+					errMsg := ""
+					if sendErr != nil {
+						status = "failed"
+						errMsg = sendErr.Error()
+					}
+					// provider 从 SMSSender 获取，取不到则空
+					provider := ""
+					if p, ok := n.SMSSender.(interface{ Provider() string }); ok {
+						provider = p.Provider()
+					}
+					if err := n.SMSLogger.RecordSMSLog(ph, msg, provider, status, errMsg); err != nil {
+						errs = append(errs, fmt.Errorf("短信记录失败: %w", err))
+					}
 				}
 			}
 		}

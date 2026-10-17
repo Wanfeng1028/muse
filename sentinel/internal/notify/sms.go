@@ -302,9 +302,10 @@ func (s *AliyunSMSSender) doSend(phone, templateParam string) error {
 
 // SMSConfig 短信通道配置。
 type SMSConfig struct {
-	Mode   string
-	Phones []string
-	Aliyun AliyunConfig
+	Mode    string
+	Phones  []string
+	Aliyun  AliyunConfig
+	Tencent TencentConfig
 }
 
 // BuildSender 根据 Mode 构造短信发送器。
@@ -314,6 +315,8 @@ func (c SMSConfig) BuildSender() (SmsSender, error) {
 		return &MockSmsSender{}, nil
 	case "aliyun":
 		return NewAliyunSMSSender(c.Aliyun)
+	case "tencent":
+		return NewTencentSMSSender(c.Tencent)
 	default:
 		return nil, ErrSMSNotConfigured
 	}

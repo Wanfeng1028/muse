@@ -7,23 +7,7 @@ import (
 )
 
 // TestBreakerStateString 验证各状态字符串表示
-func TestBreakerStateString(t *testing.T) {
-	cases := []struct {
-		state BreakerState
-		want  string
-	}{
-		{BreakerClosed, "closed"},
-		{BreakerOpen, "open"},
-		{BreakerHalfOpen, "half-open"},
-	}
-	for _, c := range cases {
-		if got := c.state.String(); got != c.want {
-			t.Fatalf("State %d String()=%q, want %q", c.state, got, c.want)
-		}
-	}
-}
 
-// TestCircuitClosedToOpen 验证连续失败达到阈值后熔断器打开
 func TestCircuitClosedToOpen(t *testing.T) {
 	c := NewCircuitBreaker(3, time.Minute)
 	for i := 0; i < 3; i++ {

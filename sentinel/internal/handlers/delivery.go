@@ -95,7 +95,7 @@ func (s *Server) handleListDeliveries(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleRetryDelivery(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
 		writeErr(w, http.StatusBadRequest, "投递记录 ID 非法")
 		return

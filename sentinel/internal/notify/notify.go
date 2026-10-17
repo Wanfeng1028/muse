@@ -20,6 +20,12 @@ type Notifier struct {
 	Queue      *QueueSender // 非空时 webhook 渠道走持久化队列异步投递
 	SMS        SMSConfig    // 短信通道配置（模式/AK/全局号码），见 sms.go
 	SMSSender  SmsSender    // 短信发送器；main.go 构造后注入，测试可注入 MockSmsSender
+	SMSLogger  SMSLogger   // 短信发送记录器；为 nil 时不记录
+}
+
+// SMSLogger 短信发送记录接口。
+type SMSLogger interface {
+	RecordSMSLog(phone, message, provider, status, errMsg string) error
 }
 
 // payload 是发送到 Webhook 的 JSON 结构。

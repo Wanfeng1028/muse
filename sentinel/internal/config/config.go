@@ -42,7 +42,7 @@ type Config struct {
 	WeComWebhookURL string
 	WeComMentionAll bool
 
-	// SMSMode 短信通道模式：mock（默认，内存记录不真发）或 aliyun（阿里云短信）。
+	// SMSMode 短信通道模式：mock（默认，内存记录不真发）、aliyun（阿里云短信）或 tencent（腾讯云短信）。
 	SMSMode string
 	// SMSPhones 短信全局默认接收号码；目标级 sms_phones 为空时回退到此。
 	SMSPhones []string
@@ -52,6 +52,15 @@ type Config struct {
 	// SMSSignName / SMSTemplateCode 阿里云短信签名与模板 CODE。
 	SMSSignName     string
 	SMSTemplateCode string
+	// SMSTencentSecretID / SMSTencentSecretKey 腾讯云短信 API 密钥。
+	SMSTencentSecretID  string
+	SMSTencentSecretKey string
+	// SMSTencentSdkAppID / SMSTencentSignName / SMSTencentTemplateID 腾讯云短信应用与模板。
+	SMSTencentSdkAppID  string
+	SMSTencentSignName  string
+	SMSTencentTemplateID string
+	// SMSTencentRegion 腾讯云短信地域，默认 ap-guangzhou。
+	SMSTencentRegion string
 
 	NotifyChannels []string
 

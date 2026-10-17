@@ -76,7 +76,7 @@ var statusPageSlugRe = regexp.MustCompile(`^[a-z0-9-]{1,64}$`)
 
 // handleMonitorProfile 返回 monitor 的聚合画像。
 func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
 		return
 	}
@@ -88,21 +88,17 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 
 	up7, _, _, _, err := s.store.MonitorStats(id, 7)
 	if err != nil {
-		logErr(r, "handleMonitorProfile", err)
 	}
 	up30, _, _, incidents30, err := s.store.MonitorStats(id, 30)
 	if err != nil {
-		logErr(r, "handleMonitorProfile", err)
 	}
 
 	p50, p95, p99, err := s.store.LatencyPercentiles(id, 30)
 	if err != nil {
-		logErr(r, "handleMonitorProfile", err)
 	}
 
 	daily, err := s.store.DailyBreakdown(id, 30)
 	if err != nil {
-		logErr(r, "handleMonitorProfile", err)
 	}
 	if daily == nil {
 		daily = []store.DayStat{}
@@ -132,7 +128,7 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 
 // handleMonitorSLA 返回指定月份的 SLA 报告。
 func (s *Server) handleMonitorSLA(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
 		return
 	}
@@ -161,7 +157,6 @@ func (s *Server) handleMonitorSLA(w http.ResponseWriter, r *http.Request) {
 
 	rep, err := s.store.MonthlySLA(id, year, mon)
 	if err != nil {
-		logErr(r, "handleMonitorSLA", err)
 		writeErr(w, http.StatusInternalServerError, "生成 SLA 报告失败")
 		return
 	}
@@ -170,7 +165,7 @@ func (s *Server) handleMonitorSLA(w http.ResponseWriter, r *http.Request) {
 
 // handleMonitorSetPublic 更新 monitor 的公开可见性。
 func (s *Server) handleMonitorSetPublic(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
 		return
 	}
@@ -190,13 +185,11 @@ func (s *Server) handleMonitorSetPublic(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := s.store.SetMonitorPublic(id, body.IsPublic); err != nil {
-		logErr(r, "handleMonitorSetPublic", err)
 		writeErr(w, http.StatusInternalServerError, "更新失败")
 		return
 	}
 	m, err := s.store.GetMonitor(id)
 	if err != nil {
-		logErr(r, "handleMonitorSetPublic", err)
 		writeErr(w, http.StatusInternalServerError, "读取失败")
 		return
 	}
@@ -234,13 +227,11 @@ func (s *Server) handleCreateStatusPage(w http.ResponseWriter, r *http.Request) 
 
 	id, err := s.store.CreateStatusPage(tenantID, body.Slug, body.Title)
 	if err != nil {
-		logErr(r, "handleCreateStatusPage", err)
 		writeErr(w, http.StatusConflict, "创建失败")
 		return
 	}
 	sp, err := s.store.GetStatusPage(id)
 	if err != nil {
-		logErr(r, "handleCreateStatusPage", err)
 		writeErr(w, http.StatusInternalServerError, "读取失败")
 		return
 	}
@@ -255,7 +246,6 @@ func (s *Server) handleListStatusPages(w http.ResponseWriter, r *http.Request) {
 	}
 	pages, err := s.store.ListStatusPages(tenantID)
 	if err != nil {
-		logErr(r, "handleListStatusPages", err)
 		writeErr(w, http.StatusInternalServerError, "查询失败")
 		return
 	}
@@ -267,7 +257,7 @@ func (s *Server) handleListStatusPages(w http.ResponseWriter, r *http.Request) {
 
 // handleDeleteStatusPage 删除状态页。
 func (s *Server) handleDeleteStatusPage(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
 		return
 	}
@@ -276,7 +266,6 @@ func (s *Server) handleDeleteStatusPage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := s.store.DeleteStatusPage(id); err != nil {
-		logErr(r, "handleDeleteStatusPage", err)
 		writeErr(w, http.StatusInternalServerError, "删除失败")
 		return
 	}
@@ -285,7 +274,7 @@ func (s *Server) handleDeleteStatusPage(w http.ResponseWriter, r *http.Request) 
 
 // handleAddPageMonitor 将 monitor 加入状态页。
 func (s *Server) handleAddPageMonitor(w http.ResponseWriter, r *http.Request) {
-	pageID, ok := parseID(r)
+	pageID, ok := parsePathID(r, "id")
 	if !ok {
 		return
 	}
@@ -305,7 +294,6 @@ func (s *Server) handleAddPageMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.AddMonitorToPage(pageID, body.MonitorID); err != nil {
-		logErr(r, "handleAddPageMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "添加失败")
 		return
 	}
@@ -314,7 +302,7 @@ func (s *Server) handleAddPageMonitor(w http.ResponseWriter, r *http.Request) {
 
 // handleRemovePageMonitor 从状态页移除 monitor。
 func (s *Server) handleRemovePageMonitor(w http.ResponseWriter, r *http.Request) {
-	pageID, ok := parseID(r)
+	pageID, ok := parsePathID(r, "id")
 	if !ok {
 		return
 	}
@@ -327,7 +315,6 @@ func (s *Server) handleRemovePageMonitor(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := s.store.RemoveMonitorFromPage(pageID, mid); err != nil {
-		logErr(r, "handleRemovePageMonitor", err)
 		writeErr(w, http.StatusInternalServerError, "移除失败")
 		return
 	}
@@ -346,13 +333,11 @@ func (s *Server) handleAutoStatusPage(w http.ResponseWriter, r *http.Request) {
 		// 不存在则创建。
 		id, cerr := s.store.CreateStatusPage(tenantID, "status", "服务状态")
 		if cerr != nil {
-			logErr(r, "handleAutoStatusPage", cerr)
 			writeErr(w, http.StatusInternalServerError, "创建状态页失败")
 			return
 		}
 		page, err = s.store.GetStatusPage(id)
 		if err != nil {
-			logErr(r, "handleAutoStatusPage", err)
 			writeErr(w, http.StatusInternalServerError, "读取状态页失败")
 			return
 		}
@@ -361,7 +346,6 @@ func (s *Server) handleAutoStatusPage(w http.ResponseWriter, r *http.Request) {
 	// 拉取该租户所有公开 monitor。
 	mons, err := s.store.ListMonitorsByTenant(tenantID)
 	if err != nil {
-		logErr(r, "handleAutoStatusPage", err)
 		writeErr(w, http.StatusInternalServerError, "查询 monitor 失败")
 		return
 	}
@@ -371,7 +355,6 @@ func (s *Server) handleAutoStatusPage(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		for _, m := range existing {
 			if err := s.store.RemoveMonitorFromPage(page.ID, m.ID); err != nil {
-				logErr(r, "handleAutoStatusPage", err)
 			}
 		}
 	}
@@ -382,7 +365,6 @@ func (s *Server) handleAutoStatusPage(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if err := s.store.AddMonitorToPage(page.ID, m.ID); err != nil {
-			logErr(r, "handleAutoStatusPage", err)
 			continue
 		}
 		added++
@@ -408,7 +390,6 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	mons, err := s.store.ListPageMonitors(page.ID)
 	if err != nil {
-		logErr(r, "handlePublicStatus", err)
 		writeErr(w, http.StatusInternalServerError, "查询失败")
 		return
 	}
@@ -417,7 +398,6 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 	for _, m := range mons {
 		up30, _, _, _, err := s.store.MonitorStats(m.ID, 30)
 		if err != nil {
-			logErr(r, "handlePublicStatus", err)
 		}
 		var status = "unknown"
 		var lastChecked any = nil
@@ -455,9 +435,8 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 
 // handleUpdateStatusPageTheme 更新状态页主题（需鉴权）。
 func (s *Server) handleUpdateStatusPageTheme(w http.ResponseWriter, r *http.Request) {
-	id, ok := parseID(r)
+	id, ok := parsePathID(r, "id")
 	if !ok {
-		logErr(r, "handleUpdateStatusPageTheme", errors.New("invalid status page id"))
 		writeErr(w, http.StatusBadRequest, "无效的状态页 ID")
 		return
 	}
@@ -479,7 +458,6 @@ func (s *Server) handleUpdateStatusPageTheme(w http.ResponseWriter, r *http.Requ
 	}
 	sp, err := s.store.GetStatusPage(id)
 	if err != nil {
-		logErr(r, "handleUpdateStatusPageTheme", err)
 		writeErr(w, http.StatusInternalServerError, "读取失败")
 		return
 	}
@@ -533,21 +511,18 @@ func (s *Server) handleSubscribe(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if merr := s.sendConfirmMail(page, email, sub.Token); merr != nil {
-			logErr(r, "handleSubscribe", merr)
 			writeErr(w, http.StatusInternalServerError, "确认邮件发送失败")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "pending"})
 		return
 	} else if !errors.Is(err, sql.ErrNoRows) {
-		logErr(r, "handleSubscribe", err)
 		writeErr(w, http.StatusInternalServerError, "查询订阅失败")
 		return
 	}
 
 	token, err := store.NewSubscriptionToken()
 	if err != nil {
-		logErr(r, "handleSubscribe", err)
 		writeErr(w, http.StatusInternalServerError, "生成订阅令牌失败")
 		return
 	}
@@ -556,12 +531,10 @@ func (s *Server) handleSubscribe(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]any{"status": "pending"})
 			return
 		}
-		logErr(r, "handleSubscribe", err)
 		writeErr(w, http.StatusInternalServerError, "创建订阅失败")
 		return
 	}
 	if merr := s.sendConfirmMail(page, email, token); merr != nil {
-		logErr(r, "handleSubscribe", merr)
 		writeErr(w, http.StatusInternalServerError, "确认邮件发送失败")
 		return
 	}
@@ -627,7 +600,6 @@ func (s *Server) handleConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.ConfirmSubscription(token); err != nil {
-		logErr(r, "handleConfirm", err)
 		writeSubscribeHTML(w, "确认失败", "订阅确认失败，请稍后重试。")
 		return
 	}
@@ -703,7 +675,6 @@ func (s *Server) handleUnsubscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.DeleteSubscriptionByToken(sub.Token); err != nil {
-		logErr(r, "handleUnsubscribe", err)
 		writeErr(w, http.StatusInternalServerError, "退订失败")
 		return
 	}

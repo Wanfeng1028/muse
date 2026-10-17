@@ -399,3 +399,20 @@ export SENTINEL_NOTIFY_CHANNELS=smtp
 - 看限流：`sentinel_webhook_enqueue_rejected_total` 的 increase；告警 `SentinelWebhookEnqueueRejected`。
 - 看熔断：`sentinel_webhook_breaker_state` 按 host 拆；告警 `SentinelWebhookBreakerOpen`。
 - 启动 fail-fast：四个变量任一非法，进程启动即中文报错退出（exit 1），先修环境变量再起服务。
+
+## 13. 短信通道运维
+
+短信 v2 支持双 provider：aliyun 和 tencent，用 SMSMode 切换，默认走 mock。每次发送由 dispatch 自动记录，结果分 sent 和 failed，provider 名记 aliyun、tencent 或 mock。记录落在 sms_log 表（db migration v9），用 GET /api/sms/log 查，页面上看 /sms-log。
+
+相关环境变量：
+
+- SENTINEL_SMS_MODE：通道模式，可选 mock、aliyun、tencent，默认 mock。
+- SENTINEL_SMS_PHONES：接收短信的号码列表。
+- 阿里云：SENTINEL_SMS_ACCESS_KEY_ID、SENTINEL_SMS_SECRET、SENTINEL_SMS_SIGN_NAME、SENTINEL_SMS_TEMPLATE_CODE。
+- 腾讯云：SENTINEL_SMS_TENCENT_SECRET_ID、SENTINEL_SMS_TENCENT_SECRET_KEY、SENTINEL_SMS_TENCENT_SDK_APP_ID、SENTINEL_SMS_TENCENT_SIGN_NAME、SENTINEL_SMS_TENCENT_TEMPLATE_ID、SENTINEL_SMS_TENCENT_REGION（默认 ap-guangzhou）。
+
+上线检查单：签名和模板先在服务商后台过审；env 配齐；先用 SMSMode=mock 跑一轮，看 /sms-log 里有记录且内容对，再切 aliyun 或 tencent；用真实号码先发一条 down 演练。
+
+费用与防刷：短信按条计费，70 字内一条；只给 down、recovered 这类事件开短信，别全量事件都开；号码配错会导致重复发送，先在 mock 模式看记录。
+
+排障：发不出去先查 /sms-log 的 error 列；腾讯云报签名错误对一下服务器时间（NTP）；阿里云 Code 不是 OK 看 Message；余额不足两个服务商都会在 error 里写清楚。

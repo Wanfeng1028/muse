@@ -71,6 +71,11 @@ func New(db *sql.DB) *Store {
 	return &Store{db: db}
 }
 
+// Close 关闭底层数据库连接。
+func (s *Store) Close() error {
+	return s.db.Close()
+}
+
 // utcNow 返回当前 UTC 时间的 RFC3339 字符串。
 func utcNow() string {
 	return time.Now().UTC().Format(time.RFC3339)
