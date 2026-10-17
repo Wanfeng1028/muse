@@ -1,20 +1,29 @@
 import { useState } from 'react';
 import {
   PlusIcon, SearchIcon, SettingsIcon, ClockIcon, ChevronDown, CheckIcon,
-  CodexLogo, PlugIcon, GitIcon, ChatIcon, SidebarIcon, BackIcon, ForwardIcon, TrashIcon,
+  PlugIcon, GitIcon, ChatIcon, SidebarIcon, BackIcon, ForwardIcon, FolderIcon,
 } from './icons';
+import { THREAD_MODES } from '../data/mock';
 
-// 真实 Codex 侧栏（依据 2026-07 真机截图）：
-// 顶部：红绿灯 + 侧栏开关 + 前进后退
-// 模式下拉：ChatGPT（Create, learn, and explore）/ Codex（Build, debug, and ship）
+// 真实 Codex 侧栏（2026-07 真机截图 + 官方文档）：
+// 顶部：红绿灯 + 开关 + 前进后退
+// 模式：ChatGPT（Create, learn, and explore）/ Codex（Build, debug, and ship）
 // 导航：New task / Scheduled / Plugins / Pull requests / Chat
-// 下方：Projects 分组
+// Projects：每个项目对应磁盘目录，下挂线程（标 Local/Worktree/Cloud 模式）
+const MODE_STYLE = {
+  local: { label: 'Local', color: '#00a240' },
+  worktree: { label: 'Worktree', color: '#FA994C' },
+  cloud: { label: 'Cloud', color: '#0169cc' },
+};
+
 export default function Sidebar({
   mode, onModeChange, nav, onNav,
-  projects, activeProjectId, onSelectProject,
-  onNewTask, onOpenSettings,
+  projects, activeProjectId, activeThreadId,
+  onSelectThread, onNewTask, onOpenSettings,
 }) {
   const [modeOpen, setModeOpen] = useState(false);
+  const [expanded, setExpanded] = useState({ [activeProjectId]: true });
+  const [pickMode, setPickMode] = useState(false);
 
   const NAV = [
     { id: 'new', label: 'New task', icon: <PlusIcon size={16} /> },
@@ -23,6 +32,11 @@ export default function Sidebar({
     { id: 'prs', label: 'Pull requests', icon: <GitIcon size={16} /> },
     { id: 'chat', label: 'Chat', icon: <ChatIcon size={16} /> },
   ];
+
+  const startNew = (modeId) => {
+    setPickMode(false);
+    onNewTask(modeId);
+  };
 
   return (
     <aside className="sidebar-real">
@@ -66,7 +80,33 @@ export default function Sidebar({
       </div>
 
       <nav className="sr-nav">
-        {NAV.map((n) => (
+        {NAV.map((n) => n.id === 'new' ? (
+          <div key={n.id} style={{ position: 'relative' }}>
+            <button className={'sr-nav-item' + (nav === 'new' ? ' active' : '')}
+              onClick={() => setPickMode(!pickMode)}>
+              <span className="sr-nav-icon">{n.icon}</span>
+              <span>{n.label}</span>
+            </button>
+            {pickMode && (
+              <>
+                <div className="drop-mask" onClick={() => setPickMode(false)} />
+                <div className="drop-menu sr-mode-menu">
+                  <div className="filter-menu-title">Choose mode</div>
+                  {THREAD_MODES.map((m) => (
+                    <div key={m.id} className="drop-item sr-mode-item" onClick={() => startNew(m.id)}>
+                      <span style={{ flex: 1 }}>
+                        <div className="sr-mode-item-name">
+                          {m.name} <span className="mode-dot" style={{ background: MODE_STYLE[m.id].color }} />
+                        </div>
+                        <div className="sr-mode-item-desc">{m.desc}</div>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
           <button key={n.id}
             className={'sr-nav-item' + (nav === n.id ? ' active' : '')}
             onClick={() => onNav(n.id)}>
@@ -78,14 +118,29 @@ export default function Sidebar({
 
       <div className="sr-section">Projects</div>
       <div className="sr-projects">
-        {(projects || []).map((p) => (
-          <button key={p.id}
-            className={'sr-nav-item' + (p.id === activeProjectId ? ' active' : '')}
-            onClick={() => onSelectProject(p.id)}>
-            <span className="sr-proj-dot" />
-            <span className="sr-proj-name">{p.name}</span>
-          </button>
-        ))}
+        {(projects || []).map((p) => {
+          const open = expanded[p.id];
+          return (
+            <div key={p.id}>
+              <button className="sr-nav-item"
+                onClick={() => setExpanded({ ...expanded, [p.id]: !open })}>
+                <span className={'twisty' + (open ? ' open' : '')}><ChevronDown size={12} /></span>
+                <span className="sr-proj-name" style={{ fontWeight: 600 }}>{p.name}</span>
+              </button>
+              {open && p.threads.map((t) => {
+                const ms = MODE_STYLE[t.mode] || MODE_STYLE.local;
+                return (
+                  <button key={t.id}
+                    className={'sr-nav-item sr-thread' + (t.id === activeThreadId ? ' active' : '')}
+                    onClick={() => onSelectThread(p.id, t.id)}>
+                    <span className="mode-dot" style={{ background: ms.color }} title={ms.label} />
+                    <span className="sr-proj-name">{t.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
 
       <div className="sr-bottom">
@@ -96,3 +151,5 @@ export default function Sidebar({
     </aside>
   );
 }
+
+export { MODE_STYLE };
