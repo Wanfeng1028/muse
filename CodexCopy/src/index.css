@@ -849,7 +849,7 @@ button { font-family: inherit; }
 
 /* ---- 真实 Codex 侧栏（依据 2026-07 真机截图） ---- */
 .sidebar-real {
-  width: 300px; min-width: 300px;
+  width: 320px; min-width: 320px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-light);
   display: flex; flex-direction: column;
@@ -1089,3 +1089,39 @@ button { font-family: inherit; }
 .suggestion-card:hover { border-color: var(--border); background: var(--bg-hover); }
 .sc-icon { display: block; }
 .sc-title { font-size: 13.5px; line-height: 1.45; color: var(--text-primary); }
+
+/* ---- ZDNet 最新截图像素级对照 ---- */
+.sr-title { font-size: 18px; }
+.sr-title b { font-weight: 700; }
+.sr-title-light { font-weight: 400; }
+
+/* 建议卡片：更接近真实的圆角和边框 */
+.suggestion-card {
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  padding: 20px 18px;
+}
+[data-theme="dark"] .suggestion-card {
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* 发送按钮：浅蓝圆形（新版） */
+.send-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #e8e8e8; color: #666;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.send-btn.ready {
+  background: #a8d8f0; color: #fff;
+}
+[data-theme="dark"] .send-btn { background: #3a3a3a; color: #888; }
+[data-theme="dark"] .send-btn.ready { background: #4a4a4a; color: #fff; }
+
+/* 空状态标题：下划线用 dotted */
+.empty-title-xl u {
+  text-decoration: underline dotted;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 1.5px;
+}
