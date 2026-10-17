@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -39,6 +40,15 @@ type SyncPolicy struct {
 	BatchSize  int      `yaml:"batch_size"`
 }
 
+// NotifyConfig 描述冲突 webhook 通知配置。
+type NotifyConfig struct {
+	ConflictWebhookURL        string   `yaml:"conflict_webhook_url"`
+	ConflictWebhookSecret     string   `yaml:"conflict_webhook_secret"`
+	ConflictWebhookTimeout    string   `yaml:"conflict_webhook_timeout"`
+	ConflictWebhookMaxRetries int      `yaml:"conflict_webhook_max_retries"`
+	ConflictEvents            []string `yaml:"conflict_events"`
+}
+
 // ViewConfig 描述一个视图定义。
 type ViewConfig struct {
 	Name        string             `yaml:"name"`
@@ -72,6 +82,7 @@ type Config struct {
 	Views    []ViewConfig   `yaml:"views"`
 	Jobs     []JobConfig    `yaml:"jobs"`
 	Sync     SyncPolicy     `yaml:"sync"`
+	Notify   NotifyConfig   `yaml:"notify"`
 }
 
 // DefaultConfig 返回内置默认配置。
@@ -132,6 +143,32 @@ func (c *Config) validate() error {
 	}
 	if c.Sync.Conflict != "priority" && c.Sync.Conflict != "manual" {
 		return fmt.Errorf("sync.conflict 非法取值 %q，仅支持 priority|manual", c.Sync.Conflict)
+	}
+	// notify 段校验：URL 为空表示功能关闭，不校验其余项。
+	if n := c.Notify; n.ConflictWebhookURL != "" {
+		u, err := url.Parse(n.ConflictWebhookURL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return fmt.Errorf("notify.conflict_webhook_url 非法：仅支持 http/https URL")
+		}
+		if n.ConflictWebhookSecret == "" {
+			return fmt.Errorf("notify.conflict_webhook_secret 不能为空（已配置 webhook URL 时必填）")
+		}
+		if n.ConflictWebhookTimeout == "" {
+			c.Notify.ConflictWebhookTimeout = "10s"
+		} else if _, err := time.ParseDuration(n.ConflictWebhookTimeout); err != nil {
+			return fmt.Errorf("notify.conflict_webhook_timeout 非法：%v", err)
+		}
+		if n.ConflictWebhookMaxRetries < 0 {
+			return fmt.Errorf("notify.conflict_webhook_max_retries 不能为负")
+		}
+		if n.ConflictWebhookMaxRetries == 0 {
+			c.Notify.ConflictWebhookMaxRetries = 3
+		}
+		for _, ev := range n.ConflictEvents {
+			if ev != "conflict.pending" && ev != "conflict.resolved_auto" && ev != "conflict.resolved" {
+				return fmt.Errorf("notify.conflict_events 非法取值 %q，仅支持 conflict.pending|conflict.resolved_auto|conflict.resolved", ev)
+			}
+		}
 	}
 	if c.Sync.BatchSize <= 0 {
 		c.Sync.BatchSize = 5000

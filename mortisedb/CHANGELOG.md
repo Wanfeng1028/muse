@@ -2,6 +2,34 @@
 
 本文件记录 MortiseDB 的重要变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.5.0] - 2026-10-17
+
+### 新增
+
+- 冲突 Webhook 投递器（internal/notify/notify.go）：POST JSON，请求头 `X-Mortise-Event`、`X-Mortise-Signature`、`X-Mortise-Delivery-Id`；指数退避 1s→2s→4s+抖动，最多重试 `conflict_webhook_max_retries` 次，单次超时 `conflict_webhook_timeout`；投递失败只记日志+指标，永不阻塞主流程。
+- 配置键（`mortise.yaml` 的 `notify.` 段）：`conflict_webhook_url`（为空则不启用）、`conflict_webhook_secret`（HMAC-SHA256 签名密钥）、`conflict_webhook_timeout`（默认 10s）、`conflict_webhook_max_retries`（默认 3）、`events`（默认 `["conflict.pending","conflict.resolved","conflict.resolved_auto"]`，可配子集）。
+- 事件：`conflict.pending`（manual 模式冲突挂起）、`conflict.resolved`（`POST /api/conflicts/{id}/resolve` 手动解决）、`conflict.resolved_auto`（priority 自动裁决）。
+- 埋点位置：sync 完成后（FireTableConflicts 回查本表本次冲突）、两路 CSV 导入（`POST /api/sources/{id}/import-csv` 的 handleImportCSV、`POST /api/import/csv` 的 handleImportCSVNew）、`POST /api/conflicts/{id}/resolve` 成功后。
+- 指标：`mortisedb_conflict_webhook_deliveries_total{event,status}`（status=delivered|failed）。
+- 签名格式：`X-Mortise-Signature` 为 `sha256=<hex>`，对请求体做 HMAC-SHA256（密钥即 `conflict_webhook_secret`）。
+
+### 变更
+
+- api.Version 1.4.0 → 1.5.0（server.go 第 29 行）。
+
+### 测试
+
+- `go test ./...` 全量通过（含 api 包 10.4s）。
+- 新增 internal/api/webhook_notify_test.go（4 例：两路导入投递+签名校验、失败不阻塞导入、resolve 投递）、internal/notify/notify_test.go（M2a 投递器单测）。
+- `go vet ./...` 全洁、`gofmt -l` 全洁；scripts/e2e.sh 扩展为 11 步全 PASS（新步骤 10：冲突 webhook——dead 端口投递失败不阻塞 409 导入、failed 指标可观测）。
+- 真实冒烟（fake webhook 捕获）：签名用 secret 独立计算 HMAC 验签 MATCH。
+
+### 已知限制
+
+- 同秒边界可能多投（时间字符串秒级比较），接收端按 `delivery_id` 去重。
+- pending 风暴下一事件一投递（设计裁决，不聚合）。
+- 指标进程内计数，重启清零。
+
 ## [1.4.0] - 2026-10-17
 
 ### 新增

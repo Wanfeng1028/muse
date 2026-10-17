@@ -18,6 +18,7 @@ import (
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/notify"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 	syncpkg "github.com/Wanfeng1028/muse/mortisedb/internal/sync"
 )
@@ -421,6 +422,8 @@ type importCSVOptions struct {
 }
 
 func (s *server) handleImportCSV(w http.ResponseWriter, r *http.Request) {
+	// 冲突 webhook 回查的起始时间（RFC3339 秒级；同秒边界可能多投，接收端按 delivery_id 去重）
+	importStartedAt := time.Now().UTC().Format(time.RFC3339)
 	id := r.PathValue("id")
 	if id == "" {
 		writeError(w, http.StatusBadRequest, errors.New("缺少数据源名称"))
@@ -456,6 +459,9 @@ func (s *server) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 冲突 webhook：importCSV 内事务已提交；回查本表本次新增的冲突（pending/自动解决）异步投递
+	notify.FromConfig(s.cfg, s.logger).FireTableConflicts(s.st, res.Table, importStartedAt)
+
 	if len(res.Conflicts) > 0 {
 		s.logger.Info("CSV 导入存在挂起冲突", map[string]any{
 			"source":            res.Source,
@@ -480,6 +486,8 @@ func (s *server) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleImportCSVNew(w http.ResponseWriter, r *http.Request) {
+	// 冲突 webhook 回查的起始时间（RFC3339 秒级；同秒边界可能多投，接收端按 delivery_id 去重）
+	importStartedAt := time.Now().UTC().Format(time.RFC3339)
 	if err := r.ParseMultipartForm(importCSVMaxFileBytes); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -534,6 +542,9 @@ func (s *server) handleImportCSVNew(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	// 冲突 webhook：importCSVStream 内事务已提交；回查本表本次新增的冲突（pending/自动解决）异步投递
+	notify.FromConfig(s.cfg, s.logger).FireTableConflicts(s.st, res.Table, importStartedAt)
 
 	if len(res.Conflicts) > 0 {
 		s.logger.Info("CSV 导入存在挂起冲突", map[string]any{

@@ -275,8 +275,63 @@ MV2_OUT="$("$BIN" query --config mortise.yaml 'SELECT COUNT(*) AS c FROM "_mv_v_
 echo "$MV2_OUT"
 assert_contains "(1 行)" "$MV2_OUT"
 
-# ---------- 步骤 10：摘要 ----------
-echo "==> [10/10] 汇总"
+# ---------- 步骤 10：冲突 webhook（失败不阻塞 + 指标可观测） ----------
+echo "==> [10/11] 冲突 webhook：投递失败不阻塞导入，指标可观测"
+
+cat > mortise.yaml <<'YAML'
+database: ./data/mortise.db
+addr: "127.0.0.1:18421"
+sync: {conflict: manual, soft_delete: true}
+sources:
+  - {name: shop, type: csv, path: ./sources/orders.csv, table: orders, primary_key: order_id, incremental: "column:updated_at"}
+  - {name: legacy, type: csv, path: ./sources/legacy.csv, table: orders, primary_key: order_id}
+notify:
+  conflict_webhook_url: "http://127.0.0.1:9/hook"
+  conflict_webhook_secret: "e2e-test-secret"
+  conflict_webhook_timeout: 2s
+  conflict_webhook_max_retries: 1
+YAML
+
+MORTISE_ADDR="127.0.0.1:18421" "$BIN" serve --config mortise.yaml > serve.log 2>&1 &
+SERVE_PID=$!
+
+HEALTH_OK=0
+for i in $(seq 1 30); do
+  H="$(curl -s http://127.0.0.1:18421/api/health || true)"
+  if printf '%s' "$H" | grep -q '"status":"ok"'; then
+    HEALTH_OK=1
+    break
+  fi
+  sleep 1
+done
+if [ "$HEALTH_OK" != "1" ]; then
+  echo "FAIL: /api/health 30 秒内未就绪，serve.log 尾部：" >&2
+  tail -n 40 serve.log >&2 || true
+  exit 1
+fi
+
+# 9001 号订单已在库中（属 shop 源）；用 legacy 源导入同主键不同内容 → manual 模式挂起 pending 冲突
+cat > clash.csv <<'CSV'
+order_id,user_id,customer,item,amount,updated_at
+9001,u01,陈建国,西湖龙井 250g,999.00,2026-10-17 10:00:00
+CSV
+
+IMPORT_OUT="$(curl -s -w '\n%{http_code}' -X POST -F "file=@clash.csv;filename=clash.csv" http://127.0.0.1:18421/api/sources/legacy/import-csv)"
+echo "$IMPORT_OUT"
+IMPORT_CODE="$(printf '%s' "$IMPORT_OUT" | tail -n 1)"
+assert_eq "409" "$IMPORT_CODE" "冲突导入应返回 409"
+assert_contains '"status":"pending"' "$IMPORT_OUT"
+
+# webhook 目标端口拒连：投递失败，但导入流程不受影响；等一次重试退避走完再查指标
+sleep 8
+METRICS_OUT="$(curl -s http://127.0.0.1:18421/metrics)"
+assert_contains 'mortisedb_conflict_webhook_deliveries_total{event="conflict.pending",status="failed"}' "$METRICS_OUT"
+
+cleanup
+SERVE_PID=""
+
+# ---------- 步骤 11：摘要 ----------
+echo "==> [11/11] 汇总"
 echo "    orders.csv 行数     : $(tail -n +2 sources/orders.csv | grep -c .)"
 echo "    users.json 对象数   : $(grep -c '"user_id"' sources/users.json)"
 echo "    sync 首轮统计       : 新增 2，更新 0，清理 0"
@@ -284,4 +339,5 @@ echo "    变更演练统计        : 新增 1，更新 1，清理 0"
 echo "    删除演练统计        : 新增 0，更新 0，清理 1"
 echo "    CSV 导出数据行数    : $DATA_ROWS"
 echo "    物化视图刷新        : on_sync 自动刷新 1，manual 跳过 1，手动刷新 1"
+echo "    冲突 webhook        : 409 挂起不阻塞，投递失败记 failed 指标"
 echo "E2E PASS"

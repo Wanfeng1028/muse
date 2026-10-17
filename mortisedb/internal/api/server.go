@@ -18,6 +18,7 @@ import (
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/log"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/notify"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 	syncpkg "github.com/Wanfeng1028/muse/mortisedb/internal/sync"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/views"
@@ -25,7 +26,7 @@ import (
 )
 
 // Version 为 API 版本号。
-var Version = "1.4.0"
+var Version = "1.5.0"
 
 // server 保存 API 依赖。
 type server struct {
@@ -34,11 +35,14 @@ type server struct {
 	logger    *log.Logger
 	dbPath    string
 	startedAt time.Time
+	notifier  *notify.Notifier
 }
 
 // NewServer 构造 HTTP 处理器。
 func NewServer(st *store.Store, cfg *config.Config, logger *log.Logger) http.Handler {
-	s := &server{st: st, cfg: cfg, logger: logger, dbPath: cfg.Database, startedAt: time.Now()}
+	// 供 webhook payload 的 mortise_version（notify 不能 import api，避免 cycle）
+	notify.AppVersion = Version
+	s := &server{st: st, cfg: cfg, logger: logger, dbPath: cfg.Database, startedAt: time.Now(), notifier: notify.FromConfig(cfg, logger)}
 	mux := http.NewServeMux()
 
 	// 健康检查
@@ -346,6 +350,17 @@ func (s *server) handleResolveConflict(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "resolved"})
+	// 冲突 webhook：人工解决成功后异步投递 resolved 事件；失败只记日志+指标，不影响已返回的响应
+	if resolved, err := s.st.ListConflicts("resolved"); err == nil {
+		for _, c := range resolved {
+			if c.ID == id {
+				s.notifier.NotifyAsync(notify.EventResolved, c)
+				break
+			}
+		}
+	} else if s.logger != nil {
+		s.logger.Error("conflict webhook 回查已解决冲突失败", map[string]any{"id": id, "error": err.Error()})
+	}
 }
 
 // tableSummary 表信息。

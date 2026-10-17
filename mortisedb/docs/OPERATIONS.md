@@ -227,6 +227,7 @@ curl -s http://localhost:8421/metrics
 - `mortise_watermark_lag_seconds`：水位线滞后秒数，持续增长说明源端同步滞后。
 - `mortise_sync_runs_total{status="error"}`：同步失败累计次数，短时间内快速增长需排查。
 - `mortise_db_size_bytes`：库大小趋势，异常增长需检查是否有大批量数据灌入。
+- `mortisedb_conflict_webhook_deliveries_total{event,status}`：冲突 webhook 投递累计（status=delivered|failed）；failed 持续增长说明接收端不可达或密钥错配。
 
 ## 5. 物化视图
 
@@ -359,9 +360,54 @@ mortisedb query --config /etc/mortise/mortise.yaml \
 
 新增"导入"页：选数据源、选 CSV 文件、填目标表/主键（可选）、填列映射 JSON（可选）、上传。结果展示 inserted/updated/unchanged/error_rows 和错误列表。有挂起冲突时用朱砂色提示，并跳冲突页。
 
-## 8. 版本历史
+## 8. 冲突 Webhook 通知
 
 
+### 8.1 配置
+
+（`mortise.yaml` 的 `notify.` 段；URL 为空则不启用）
+```yaml
+notify:
+  conflict_webhook_url: "https://ops.example.com/hooks/mortise"
+  conflict_webhook_secret: "your-webhook-secret"
+  conflict_webhook_timeout: 10s
+  conflict_webhook_max_retries: 3
+  events: ["conflict.pending", "conflict.resolved", "conflict.resolved_auto"]
+```
+`events` 可配子集；默认三者都订阅。
+
+### 8.2 触发时机
+
+- `conflict.pending`：`sync.conflict=manual` 模式下冲突挂起（sync 完成后、两路 CSV 导入时回查本次冲突）。
+- `conflict.resolved`：`POST /api/conflicts/{id}/resolve` 手动解决成功后。
+- `conflict.resolved_auto`：`sync.priority` 自动裁决后。
+
+一事件一投递，不聚合；pending 风暴下每个冲突各投递一次。
+
+### 8.3 请求格式
+
+POST JSON，请求头：
+- `X-Mortise-Event`：事件名（如 `conflict.pending`）。
+- `X-Mortise-Signature`：`sha256=<hex>`，对请求体做 HMAC-SHA256（密钥即 `conflict_webhook_secret`）。
+- `X-Mortise-Delivery-Id`：本次投递唯一 ID；秒级边界可能多投，接收端按此去重。
+
+payload 字段：`event`、`delivery_id`、`occurred_at`、`mortise_version`、`conflict`（`_m_conflicts` 行快照：id/table_name/pk/source_a/source_b/row_json/status/created_at/resolved_at）。
+
+### 8.4 失败语义
+
+指数退避 1s→2s→4s+抖动，最多重试 `conflict_webhook_max_retries` 次，单次超时 `conflict_webhook_timeout`。投递失败只记日志并记 `mortisedb_conflict_webhook_deliveries_total{event,status="failed"}`，**永不阻塞**同步、导入或冲突解决主流程。
+
+### 8.5 排查
+
+```bash
+# 投递失败是否在涨
+curl -s http://localhost:8421/metrics | grep 'conflict_webhook_deliveries_total.*status="failed"'
+```
+
+## 9. 版本历史
+
+
+- **1.5.0**：冲突 Webhook 通知（HMAC-SHA256 签名/指数退避重试/失败不阻塞/指标；配置 `notify.conflict_webhook_*`）。
 - **1.4.0**：CSV 增量导入 API（`POST /api/import/csv`：列映射/真流式/冲突策略集成/409；Web UI 导入页）。
 - **1.2.0**：YAML 声明视图自动注册（sync/serve/views sync 幂等注册+清理，_m_views 新增 origin 列）、e2e 编排脚本（scripts/e2e.sh）、docker-compose 一键部署（健康检查+资源限制+日志轮转）。
 - **1.1.0**：新增 `/metrics`、`backup`/`restore` 子命令、优雅关闭补强（HTTP 超时 + WAL checkpoint + 在途等待）、10 万行负载验证。

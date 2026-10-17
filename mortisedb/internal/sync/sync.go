@@ -13,6 +13,7 @@ import (
 	"github.com/Wanfeng1028/muse/mortisedb/internal/connector"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/metrics"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/notify"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 )
 
@@ -187,6 +188,11 @@ func syncOneSource(cfg *config.Config, st *store.Store, sc config.SourceConfig, 
 // syncOneTable 同步单张表，返回统计
 func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc config.SourceConfig, ti connector.TableInfo, incrementalCol string) (TableStats, error) {
 	ts := TableStats{Table: ti.Name}
+
+	// 冲突 webhook：本表本次同步起始时间（RFC3339），提交成功后据此回查新增冲突；
+	// sync 包无 logger，传 nil（notify 内部判空）
+	tableStartedAt := nowRFC3339()
+	webhookNotifier := notify.FromConfig(cfg, nil)
 
 	// 确保目标表存在
 	if err := st.EnsureTable(ti.Name, ti.Primary, ti.Columns); err != nil {
@@ -451,6 +457,9 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 		rollback()
 		return ts, fmt.Errorf("提交批量事务失败: %w", err)
 	}
+	// 冲突 webhook：提交成功后扫描本表本次新增的冲突（pending/自动解决）异步投递；
+	// 投递失败只记日志+指标，永不阻塞同步
+	webhookNotifier.FireTableConflicts(st, ti.Name, tableStartedAt)
 	// 写回水位线
 	if incrementalCol != "" && maxWatermark != "" {
 		if err := st.SetWatermark(sc.Name, ti.Name, incrementalCol, maxWatermark); err != nil {

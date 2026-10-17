@@ -81,3 +81,17 @@ jobs:
   - name: hourly
     interval: 1h
     sources: [shop_orders, app_users]
+
+# 冲突 webhook 通知（v1.5）：冲突挂起/自动裁决/人工解决后异步推送带 HMAC-SHA256 签名的 JSON
+# 留空 conflict_webhook_url 即关闭本功能
+notify:
+  # 接收端 URL（必填，http/https）
+  conflict_webhook_url: ""
+  # 签名密钥（配置 URL 时必填；绝不打日志、不进 /metrics）
+  conflict_webhook_secret: ""
+  # 单次投递超时（Go duration，默认 10s）
+  conflict_webhook_timeout: 10s
+  # 失败重试次数（指数退避 1s→2s→4s+抖动，默认 3；0 表示用默认值）
+  conflict_webhook_max_retries: 3
+  # 订阅事件（默认三个全订阅；留空=全订阅）
+  conflict_events: [conflict.pending, conflict.resolved_auto, conflict.resolved]
