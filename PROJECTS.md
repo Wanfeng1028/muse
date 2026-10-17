@@ -53,6 +53,7 @@
 - **v1.3.0「自律热力图」（2026-10-16）**：见"状态"节；heatmap.test.ts 7 例（默认 3 个月 93 天、months=1 返回 31 天、months=0/7 返回 400、focus+45 差值、plans 完成差值、-7 天补记录 streak+1、-30 天孤立记录 streak 不变）
 - **v1.4.0「周报视图」（2026-10-16）**：`GET /api/stats/weekly`（周维度聚合：专注分钟/计划完成率/新增错题/模考场次/连续打卡与热力图同口径，`focusMinutesByDay` 周一..周日，非法 start 400）+ 前端 `Weekly.tsx` 升级（概览卡×5、7 天专注条形复用热力图蓝五档、计划完成率 SVG 圆环 + 四科专注条、「和上周比一比」大白话对比、单词卡，深色跟随 data-theme）；vitest **55/55**（新增 5）、server/web tsc 零错、vite build 成功；真实冒烟（默认本周/?start=/非法值 400）；浅/深两张截图亲眼验收（数据自洽、零 console 错误）
 - **v1.5.0「500 词库扩充接线」（2026-10-17）**：`src/seed/words-500.json`（500 词，之前未接入）接入 `POST /api/words/seed-vocab`：现加载 7 个词库文件（旧 6 文件 1000 条 + 500 条），120 条重复去重，空库首次 imported=1380/skippedExisting=120，重复调用幂等；播种核心抽为导出函数 `seedVocabFromEntries` + `getBundledVocabFiles`；非法条目跳过记数（skippedInvalid+errors）不再 400 中断；vitest **81/81** 全绿；真实服务冒烟 + `docs/screenshots/vocab-1380.png`（真实 1380 词）亲眼验收
+- **深测轮 r3（2026-10-18）**：17 个深测文件——plans 日期严格校验（`isValidDate` 改逐字段回绕校验，2024-02-30 等判非法）、mistakes CSV 导入边界、words 复习边界、backup/db/exams/focus/settings/stats/seed 幂等深测；vitest **279/279**（23 文件）全绿
 
 **后续计划**：
 
@@ -133,6 +134,7 @@
 - 生产级补强 v2.1（2026-10-13，DoD 第 1 轮三项全交付）：Flyway 版本化迁移（V1__baseline.sql 由 Hibernate 实际 DDL 导出，ddl-auto→validate，baseline-on-migrate 兼容老库）+ 提交幂等（同 shot PENDING/PROCESSING 去重，首次 201/重复 200）+ 优雅关闭（server.shutdown=graceful + 调度器 await-termination 30s + 轮询在途收尾钩子 25s）；mvn test 20/20 全过；真实 jar 冒烟验证 Flyway 基线/幂等 201→200/优雅关闭日志；发版对照报告 docs/dod-v2.1.md
 - 生产级补强 v2.2（2026-10-13，DoD 第 2 轮四项全交付）：结构化日志（logback-spring.xml，可读 pattern 含 request_id；SPRING_PROFILES_ACTIVE=json 切 Logstash JSON）+ request_id 全链路（RequestIdFilter 透传/生成/回写 X-Request-Id、ErrorResponse 含 requestId、调度轮询带 poll-xxx）+ Resilience4j（ResilientVideoProvider 装饰 agnes：CircuitBreaker 50%/4 次/60s + TimeLimiter 90s，熔断抛 ProviderCircuitOpenException 由指数退避接管）+ 提交接口限流（@RateLimiter 10 秒 10 次，超限 429 + Retry-After: 10）+ Docker Compose 一键部署（compose.yml：健康检查/日志轮转/资源限制；Dockerfile 加装 ffmpeg+curl）；mvn test 26/26 全过；真实 jar 冒烟全链路验证；发版对照报告 docs/dod-v2.2.md
 - v5.1 控制台统一外壳（2026-10-13）：shell.js 注入左侧窄导航（6 页 + G+字母快捷键）+ 顶栏全局搜索 + ⌘K/Ctrl+K 命令面板；app.css 统一视觉语言（暖炭 #1c1917 + 降饱和蓝 #4a6fa5，零 backdrop-filter/零渐变/零 emoji 图标，沿用 v4.1 主题）；首页重做为 AI 工作区（左 AI 对话 + 右生产概览 workspace.js）；Tabler 1.6.1 本地化入仓库摆脱 CDN；storyboard.js 支持 ?episodeId= 深链；7 页真实数据截图亲眼验收通过并同步 docs/screenshots/；视觉验收抓出 2 个 v5.1 bug 已修（workspace.js 项目下拉单向同步致左右脱节、"去质检"链接参数名 finalCutId 与 qc.js 的 id 错配致跳空页）；mvn test 26/26 全过
+- **深测轮 r3（2026-10-18，未合入，诚实记录）**：36+5 个 DeepTest 文件（约 650 用例）卡在 "Table DRAMA_PROJECTS not found"——测试 yml `ddl-auto: create-drop` 下新测试的 `@ActiveProfiles("test")` 与既有测试 setup 不一致致 schema 未建，6+ 轮回喂未收敛；另发现 triage 曾擅改主代码 `FfmpegService.java` 重试语义（永久/瞬时判定）以凑测试，已回滚。41 个测试文件留 working tree 未提交，待下轮专攻 schema setup 后再验再合
 
 **后续计划**：
 
@@ -277,6 +279,7 @@
 - **v2.7 商户别名管理（2026-10-17）**：见"状态"节；关闭 v2.4 遗留缺口；pytest 250 通过、ruff 全洁。
 - **v2.8.1 OCR Prometheus 指标第一版（2026-10-17）**：ocr_requests_total / ocr_duration_seconds（仅 provider 到达请求）；tests/test_ocr_metrics.py 7 例；真实冒烟验证。
 - **v2.9 OCR 可观测性指标第二版（2026-10-17）**：与 v2.8.1 为增量升级（改名 ledger_ocr_* + 全路径埋点 + failures 五分类 + confidence_avg gauge；旧指标名与旧测试已删除）；pytest 279 通过、1 跳过；真实冒烟验证各分类计数；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.9.md。
+- **深测轮 r3（2026-10-18）**：5 个深测文件 77 测试（__main__ 备份 keep 边界/修剪语义、backup、config 中文往返/并发双写、logging request_id/并发、seed 中文/极值/超长商户名）全绿；修 dpsk 10 处编造（Currency.id、transactions.amount/merchant 列、seed 建账户假设、asyncio.get_event_loop），测试按源码地面真相机械修正
 
 **后续计划**：
 
@@ -317,6 +320,7 @@
 
 - **v0.9「短信 v2：腾讯云 provider + 发送记录」（2026-10-17）**：`internal/notify/sms_tencent.go` 腾讯云 SMS provider（TC3-HMAC-SHA256 三步签名，SendSms 2021-01-11，固定向量测试）；`internal/notify/dispatch.go` 新增 `SMSLogger` 接口，发送时记录；`internal/store/sms_log.go` + migration v9 `sms_log` 表（phone/message/provider/status/error/created_at）；`GET /api/sms/log` + `/sms-log` 页面；`SENTINEL_SMS_TENCENT_*` 6 个环境变量；OPERATIONS.md 短信运维章节。`go build` 通过，sms_log 存储测试通过。
 - **v0.8「事件页真实数据」（2026-10-17）**：偿还 v0.6/v0.7 挂账——incidents.html 删掉写死的 MONITORS/INCIDENTS 常量与尾部截断的残缺 JS（含首行多余 markdown 围栏导致的 quirks 模式），改接真实接口 GET /api/incidents（monitor_id 筛选走服务端、limit=100）与 GET /api/monitors（填充筛选下拉）；新增“状态”列（进行中/已恢复 pill，未恢复事件持续时长按 now-started_at 实时计算）；监控筛选 + 状态筛选；点击行展开详情行（完整 start_error + 监控档案链接）；客户端分页（20 条/页）；设计的空态（线条图标+文案+去监控列表链接）与带重试按钮的错误态；全部插入文本 esc 转义。新增 scripts/smoke_incidents.sh（down→recovered 闭环冒烟：断言 open 态 ended_at/downtime_sec 为 null、recovered 态字段齐全，幂等自清理）+ Go 测试 TestListIncidentsOpenEndedNull（open/closed JSON 契约）；`go test` **191/191**、go vet/gofmt 全洁、handlers/store 包 -race 全过；真实服务视觉验收（1 open + 1 recovered 事件截图亲眼验收：双 pill、实时时长、筛选、详情展开、空态、错误态均正常）。发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.8.md`。诚实缺口（排期后续）：Go 工具链升级后复扫；事件页分页为客户端分页（limit=100 上限内有效）；后端存在手动检查与调度 tick 并发导致同一监控短时出现两个 open 事件的竞态（本轮为避开它用 disabled 监控做验收，未修）。
+- **深测轮 r3（2026-10-18）**：6 个深测文件 57 测试（middleware RequestID/鉴权/白名单/多用户、scheduler 状态机/静默窗口、escalation 升级幂等、seed 幂等、log 级别矩阵/request_id、handlers SLA/画像/checks/SetPublic）全绿；修**真 bug**：middleware `userKey`/`tenantIDKey` 同为 `ctxKey{}` 空结构体，第二个 WithValue 覆盖第一个致 `UserFrom` 鉴权后恒返 nil（改 `type ctxKey string` 区分值）
 
 **后续计划**：
 
@@ -383,6 +387,8 @@
 
 
 **里程碑记录**：
+
+- **深测轮 r3（2026-10-18）**：docseek/eval 新增 eval_pairs_v09_sample.json（200 条 query/expected/type/category 评测对）+ work_v07/v08/v09 语料与评测库；JSON 结构校验通过
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
@@ -498,6 +504,7 @@
 - 生产级 v1.2.0（2026-10-15）：dpsk 分 5 批生成 + 编排修 3 处机械问题——e2e.sh 的 COUNT(*) 行数断言 bug、views_test import 缺 fmt、LOADTEST 锚定文本偏差；YAML 声明视图自动注册（`views.SyncFromConfig`，sync/serve/views sync 幂等注册+更新+清理，`_m_views.origin` 区分 yaml/manual，老库自动迁移）；`scripts/e2e.sh` 端到端编排实测 E2E PASS（10 行订单 CSV + 8 会员 JSON → sync 新增 orders 10/users 8 → 视图自动注册新增 2 → 改 YAML 新增 1 更新 1 → 删声明清理 1 → serve → CSV 导出 10 行）；docker-compose 一键部署强化（健康检查/资源限制 512m·1 核/日志轮转 10m×3，`docs/OPERATIONS.md` 补部署/升级/排障）；视图页真实截图更新（`docs/screenshots/views.png`，真实数据：4 城市销售额）；go build/vet/test 全过（12 包）
 - **v1.3.0「物化视图 + 刷新策略」（2026-10-16）**：`views` 声明新增 `materialize: {enabled, refresh}`（on_sync/manual/interval）；`views.Refresh` 事务内全量刷新（失败回滚）+ `RefreshDue` 策略调度；sync 成功后自动按策略刷新、`views refresh` CLI、`POST /api/views/{name}/refresh`、Web UI 物化标记+一键刷新；`_m_views` 增 4 列（老库幂等迁移）；3 个 Prometheus 新指标；修真 bug：`RecordViewRefresh` 用 SQLite `datetime('now')` 空格格式致 `RefreshDue` RFC3339 解析永失败、interval 每次误判到期（改 Go 侧 RFC3339）；go test 全绿、`scripts/e2e.sh` E2E PASS、视图页物化标记真实截图亲验；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.0.md`
 - **v1.4.1「深测全绿 + 并发修复」（2026-10-17）**：354+ 深测文件应用 + 3 轮机械修复（API 对齐真实源码）；`store.go` 加 `PRAGMA busy_timeout=5000` + `SetMaxOpenConns(1)` 修并发写 SQLITE_BUSY；`RecordImport` 改 `INSERT OR IGNORE` 修并发同文件导入竞态（返回是否插入，调用方标记 Duplicate）；删除测试不存在 API 的用例；13 包 `go test ./...` 全绿。
+- **深测轮 r3（2026-10-18）**：6 个深测文件 48 测试（scheduler 非法 interval/真实 CSV 同步、notify 签名投递/订阅过滤/backoff、backup 篡改拒绝、api 注入防护/limit 回退、main formatCell/printTable）全绿
 - **v1.4.0「CSV 增量导入 API」（2026-10-17）**：新端点 `POST /api/import/csv`（列映射/真流式 32MB 上限/`.import-tmp`/sha256 幂等/冲突策略集成 409）、Web UI 导入页；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.0.md`
 
 **后续计划**：
@@ -604,6 +611,7 @@
 - v0.2.0（2026-10-15）：SQLite + Flyway 迁移替代 JSON 存储 + Micrometer /metrics + 备份恢复演练 + 非法配置 fail-fast + 排练模式后端实现 + MP3 解码
 - v0.3.0 限流 + 就绪探针 + WS 背压（2026-10-16）：见"状态"节；JUnit 44/44 全过
 - **v0.4.0「可观测性收尾」（2026-10-16）**：Logback 日志轮转（控制台+文件双输出，按天+50MB 切分，保留 14 天，总量 512MB，root 级别跟 `STAGECUE_LOG_LEVEL`）+ Prometheus 告警规则 5 条（StageCueDown/WsDisconnectSpike/RateLimitSpike/BroadcastDrop/DbMigrationStuck）+ docker-compose 资源限制（512M/1c 上限、128M 预留）与日志轮转；`TECH_DEBT` 关闭 #3（告警规则）/#4（日志轮转/资源限制）；kotlinc 直编零错、JUnit **52/52**（新增 LogConfigTest/AlertRulesTest 各 4 例）；真实冒烟（:18080）：/api/show 5 条默认 cue、/readyz ready、/metrics 9 个 stagecue_ 指标、stagecue.log 正常落盘；发版对照报告 `docs/PRODUCTION_REPORT_v0.4.0.md`（诚实列 6 项未通过，带排期）
+- **深测轮 r3（2026-10-18）**：6 个深测文件（AuthorizeWriteMatrix/MonitorSnapshotBoundary/SettingsStore/ShowRoute/SyncHubMissedOps/WsRoute）；kotlinc 直编零错、JUnit **112/113**——唯一失败为既有 MonitorApiTest「monitor endpoint returns snapshot structure」（serverTimeMs 时间敏感断言，与本轮无关）
 
 ## botstalk「个人 AI 团队办公室」
 
