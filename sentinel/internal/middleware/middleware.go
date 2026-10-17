@@ -18,11 +18,11 @@ import (
 )
 
 // ctxKey 用于在 context 中存储用户与租户信息的私有键类型。
-type ctxKey struct{}
+type ctxKey string
 
 var (
-	userKey     = ctxKey{}
-	tenantIDKey = ctxKey{}
+	userKey     = ctxKey("user")
+	tenantIDKey = ctxKey("tenant-id")
 )
 
 // UserFrom 从 context 中提取当前用户，未鉴权时返回 nil。
