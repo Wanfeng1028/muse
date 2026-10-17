@@ -1,4 +1,5 @@
-import { CodexLogo } from '../icons';
+import { useState } from 'react';
+import { CodexLogo, CheckIcon, XIcon } from '../icons';
 import ThinkingBlock from './ThinkingBlock';
 import ToolCard from './ToolCard';
 import CodeBlock from './CodeBlock';
@@ -24,7 +25,7 @@ export function UserMessage({ text }) {
   );
 }
 
-export function AgentMessage({ msg }) {
+export function AgentMessage({ msg, onApprove, onReject }) {
   return (
     <div className="msg msg-agent">
       <div className="agent-avatar"><CodexLogo size={16} /></div>
@@ -33,7 +34,35 @@ export function AgentMessage({ msg }) {
         {msg.text && <div className="msg-text">{renderRich(msg.text)}</div>}
         {msg.tools?.map((t, i) => <ToolCard key={i} tool={t} />)}
         {msg.diff && <DiffBlock file={msg.diff.file} hunks={msg.diff.hunks} />}
+        {msg.needsApproval && msg.approval && (
+          <ApprovalCard approval={msg.approval} onApprove={onApprove} onReject={onReject} />
+        )}
       </div>
+    </div>
+  );
+}
+
+function ApprovalCard({ approval, onApprove, onReject }) {
+  const [done, setDone] = useState(null);
+  return (
+    <div className="approval-card">
+      <div className="approval-title">⚠️ Needs your confirmation</div>
+      <div className="approval-name">{approval.title}</div>
+      <div className="approval-desc">{approval.desc}</div>
+      {!done ? (
+        <div className="approval-actions">
+          <button className="btn-ghost danger" onClick={() => { setDone('rejected'); onReject?.(); }}>
+            <XIcon size={13} /> Reject
+          </button>
+          <button className="btn-primary sm" onClick={() => { setDone('approved'); onApprove?.(); }}>
+            <CheckIcon size={13} /> Approve
+          </button>
+        </div>
+      ) : (
+        <div className={'diff-decision ' + (done === 'approved' ? 'accepted' : 'rejected')}>
+          {done === 'approved' ? 'Approved' : 'Rejected'}
+        </div>
+      )}
     </div>
   );
 }

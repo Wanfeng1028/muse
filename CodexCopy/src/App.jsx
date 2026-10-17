@@ -1,37 +1,26 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Sidebar from './components/Sidebar';
+import TopToolbar from './components/TopToolbar';
+import TaskList from './components/TaskList';
 import ThreadView from './components/thread/ThreadView';
 import Composer from './components/composer/Composer';
+import RightPanel from './components/RightPanel';
 import SettingsView from './components/settings/SettingsView';
 import SchedulesView from './components/schedules/SchedulesView';
 import CommandPalette from './components/palette/CommandPalette';
 import { CodexLogo } from './components/icons';
-import { projects as seedProjects, suggestions, models } from './data/mock';
+import { projects as seedProjects, tasks as seedTasks, models } from './data/mock';
 
-const FAKE_REPLIES = [
-  {
-    thinking: '收到。我先看一下相关代码，确认改动范围。',
-    tools: [{ name: 'read', target: 'src/', status: 'ok', output: '→ 扫描 24 个文件\n  - 找到 3 处相关逻辑' }],
-    text: '看明白了。这个需求分两步做：\n\n1. 先补数据结构和接口\n2. 再接 UI 交互\n\n我先从第一步开始改。',
-  },
-  {
-    thinking: '改动点已经明确，动手实现。',
-    tools: [
-      { name: 'edit', target: 'src/main.ts', status: 'ok', output: '+ export function handleRequest(req) {\n+   validate(req);\n+   return process(req);\n+ }' },
-      { name: 'bash', target: 'npm test', status: 'ok', output: '✓ 12 passed\n✓ 0 failed' },
-    ],
-    text: '改好了，测试全过。你看下 diff，没问题我就收尾。',
-  },
-];
-
-let replyIdx = 0;
-
+// 三栏布局（依据 Codex App Interface Guide）：
+// 左=任务列表 | 中=会话窗口 | 右=多功能区（文件/终端/代码/上下文）
 export default function App() {
-  const [view, setView] = useState('thread');
+  const [view, setView] = useState('main'); // main | settings | schedules
   const [theme, setTheme] = useState('dark');
-  const [projects, setProjects] = useState(seedProjects);
+  const [projects] = useState(seedProjects);
+  const [tasks, setTasks] = useState(seedTasks);
   const [activeProjectId, setActiveProjectId] = useState('p1');
-  const [activeChatId, setActiveChatId] = useState('t1');
+  const [activeTaskId, setActiveTaskId] = useState('t1');
+  const [model, setModel] = useState('gpt-5.2');
+  const [sandbox, setSandbox] = useState('Auto Edit');
   const [streaming, setStreaming] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const scrollRef = useRef(null);
@@ -40,65 +29,71 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  const projectTasks = tasks.filter((t) => t.projectId === activeProjectId);
+  const activeTask = tasks.find((t) => t.id === activeTaskId);
   const activeProject = projects.find((p) => p.id === activeProjectId);
-  const activeChat = activeProject?.chats.find((c) => c.id === activeChatId);
 
   useEffect(() => {
     const h = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen((v) => !v); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); newTask(); }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, []);
+  }, [activeProjectId]);
 
-  const selectChat = (pid, cid) => {
-    setActiveProjectId(pid);
-    setActiveChatId(cid);
-    setView('thread');
+  const newTask = () => {
+    const id = 't' + Date.now();
+    const task = {
+      id, projectId: activeProjectId, title: 'New chat', status: 'running',
+      model, sandbox, branch: 'main', worktree: 'local',
+      files: [], terminal: [], messages: [],
+    };
+    setTasks((ts) => [task, ...ts]);
+    setActiveTaskId(id);
+    setView('main');
   };
 
-  const newChat = () => {
-    const id = 't' + Date.now();
-    const chat = { id, title: 'New chat', updated: '今天', model: models[0], status: 'idle', messages: [] };
-    setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? { ...p, chats: [chat, ...p.chats] } : p)));
-    setActiveChatId(id);
-    setView('thread');
+  const deleteTask = (id) => {
+    setTasks((ts) => {
+      const rest = ts.filter((t) => t.id !== id);
+      if (id === activeTaskId && rest.length > 0) setActiveTaskId(rest[0].id);
+      return rest;
+    });
   };
 
   const send = (text) => {
-    const reply = FAKE_REPLIES[replyIdx++ % FAKE_REPLIES.length];
-    const update = (ps) => ps.map((p) => (p.id === activeProjectId ? {
-      ...p,
-      chats: p.chats.map((c) => (c.id === activeChatId
-        ? { ...c, title: c.messages.length === 0 ? text.slice(0, 32) : c.title, status: 'working', messages: [...c.messages, { role: 'user', text }] }
-        : c)),
-    } : p));
-    setProjects(update);
+    setTasks((ts) => ts.map((t) => (t.id === activeTaskId
+      ? { ...t, title: t.messages.length === 0 ? text.slice(0, 32) : t.title, status: 'running',
+          messages: [...t.messages, { role: 'user', text }] }
+      : t)));
     setStreaming(true);
     setTimeout(() => {
-      setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? {
-        ...p,
-        chats: p.chats.map((c) => (c.id === activeChatId
-          ? { ...c, status: 'done', messages: [...c.messages, { role: 'agent', ...reply }] }
-          : c)),
-      } : p)));
+      setTasks((ts) => ts.map((t) => (t.id === activeTaskId
+        ? { ...t, status: 'awaiting',
+            messages: [...t.messages, {
+              role: 'agent',
+              thinking: '收到，开始处理。',
+              text: '已按你的要求处理，需要确认：',
+              needsApproval: true,
+              approval: { title: 'Apply changes', desc: 'Codex 将修改 2 个文件' },
+            }] }
+        : t)));
       setStreaming(false);
-    }, 2600);
+    }, 2200);
   };
 
   const paletteAction = useCallback((id) => {
-    if (id === 'new') newChat();
+    if (id === 'new') newTask();
     if (id === 'settings') setView('settings');
     if (id === 'schedules') setView('schedules');
-    if (id === 'search') document.getElementById('thread-filter')?.focus();
   }, [activeProjectId]);
 
   useEffect(() => {
     const el = scrollRef.current?.querySelector('.thread-scroll');
     if (el) el.scrollTop = el.scrollHeight;
-  }, [activeChatId, projects, streaming, view]);
+  }, [activeTaskId, tasks, streaming, view]);
 
-  // 真实占位文案（逆向）："Ask Codex anything locally in {project}"
   const placeholder = activeProject ? `Ask Codex anything locally in ${activeProject.name}` : 'Ask Codex anything locally';
 
   return (
@@ -109,53 +104,47 @@ export default function App() {
         </div>
         <div className="chrome-title">CodexCopy — Codex 桌面端复刻</div>
       </div>
-      <div className="app-body">
-        <Sidebar
-          projects={projects}
-          activeChatId={view === 'thread' ? activeChatId : null}
-          activeProjectId={activeProjectId}
-          onSelectChat={selectChat}
-          onNewChat={newChat}
+
+      {view === 'main' && (
+        <TopToolbar
+          projects={projects} activeProjectId={activeProjectId} onProjectChange={setActiveProjectId}
+          model={model} onModelChange={setModel}
+          sandbox={sandbox} onSandboxChange={setSandbox}
           onOpenSettings={() => setView('settings')}
-          onOpenSchedules={() => setView('schedules')}
-          currentView={view}
         />
-        <div className="main">
-          {view === 'settings' ? (
-            <SettingsView onClose={() => setView('thread')} theme={theme} onThemeChange={setTheme} />
-          ) : view === 'schedules' ? (
-            <>
-              <div className="topbar"><div className="topbar-title">Automations</div></div>
-              <SchedulesView />
-            </>
-          ) : (
-            <>
+      )}
+
+      <div className="app-body">
+        {view === 'settings' ? (
+          <SettingsView onClose={() => setView('main')} theme={theme} onThemeChange={setTheme} />
+        ) : view === 'schedules' ? (
+          <div className="main" style={{ flex: 1 }}>
+            <div className="topbar"><div className="topbar-title">Automations</div></div>
+            <SchedulesView />
+          </div>
+        ) : (
+          <>
+            <TaskList tasks={projectTasks} activeId={activeTaskId}
+              onSelect={setActiveTaskId} onNew={newTask} onDelete={deleteTask} />
+            <div className="main">
               <div className="topbar">
-                <div className="topbar-title">{activeChat ? activeChat.title : 'Codex'}</div>
-                {activeProject && <div className="project-badge">{activeProject.name} · {activeProject.branch}</div>}
-                {activeChat && <div className="model-badge"><span className="dot" />{activeChat.model}</div>}
+                <div className="topbar-title">{activeTask ? activeTask.title : 'Codex'}</div>
+                {activeTask && <span className="task-branch">{activeTask.branch} · {activeTask.worktree}</span>}
               </div>
-              {activeChat && activeChat.messages.length > 0 ? (
-                <ThreadView thread={activeChat} streaming={streaming} />
+              {activeTask && activeTask.messages.length > 0 ? (
+                <ThreadView thread={activeTask} streaming={streaming} />
               ) : (
                 <div className="empty-state">
                   <div className="empty-logo"><CodexLogo size={52} /></div>
                   <div className="empty-title">Welcome to Codex</div>
                   <div className="empty-sub">The best way to build with agents</div>
-                  <div className="suggestion-grid">
-                    {suggestions.map((s, i) => (
-                      <button key={i} className="suggestion" onClick={() => send(s.title + '：' + s.desc)}>
-                        <div className="s-title">{s.title}</div>
-                        <div className="s-desc">{s.desc}</div>
-                      </button>
-                    ))}
-                  </div>
                 </div>
               )}
               <Composer onSend={send} disabled={streaming} placeholder={placeholder} />
-            </>
-          )}
-        </div>
+            </div>
+            <RightPanel task={activeTask} />
+          </>
+        )}
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onAction={paletteAction} />
     </div>
