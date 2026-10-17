@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PlusIcon, SearchIcon, SettingsIcon, ClockIcon } from './icons';
 
-const STATUS_COLORS = { working: '#e5a54b', done: '#4caf7d', idle: '#8e8e8e' };
+const STATUS_COLORS = { working: '#FA994C', done: '#00a240', idle: '#8f8f8f' };
 
 export default function Sidebar({ threads, activeId, onSelect, onNew, onOpenSettings, onOpenSchedules, currentView }) {
   const [filter, setFilter] = useState('');

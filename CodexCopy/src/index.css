@@ -1,23 +1,24 @@
-/* CodexCopy 设计系统 — 复刻自 Codex (Beta) 26.415.40636 深色主题参数 */
+/* CodexCopy 设计系统 — 逆向自 Codex (Beta) 26.415.40636 的 codex-dark 官方主题
+   （assets/codex-dark-xFLf7JPn.js，24 个颜色定义逐字提取） */
 
 :root {
-  --bg-main: #212121;
-  --bg-sidebar: #171717;
-  --bg-elevated: #2f2f2f;
-  --bg-input: #2f2f2f;
+  --bg-main: #111111;              /* editor.background */
+  --bg-sidebar: #131313;           /* sideBar.background */
+  --bg-elevated: #1a1a1a;          /* 面板/输入框（panel.background #131313 提亮一档） */
+  --bg-input: #1a1a1a;
   --bg-hover: rgba(255, 255, 255, 0.06);
   --bg-active: rgba(255, 255, 255, 0.1);
-  --bg-card: #262626;
-  --text-primary: #ececec;
-  --text-secondary: #b4b4b4;
-  --text-tertiary: #8e8e8e;
+  --bg-card: #161616;
+  --text-primary: #fcfcfc;         /* editor.foreground */
+  --text-secondary: #8f8f8f;       /* sideBar.foreground */
+  --text-tertiary: #6e6e6e;
   --border: rgba(255, 255, 255, 0.1);
   --border-light: rgba(255, 255, 255, 0.06);
-  --accent: #7aa2f7;
-  --accent-dim: rgba(122, 162, 247, 0.12);
-  --success: #4caf7d;
-  --warning: #e5a54b;
-  --error: #e0685c;
+  --accent: #0169cc;               /* button.background / textLink / activeBorder */
+  --accent-dim: rgba(1, 105, 204, 0.14);
+  --success: #00a240;              /* gitDecoration.addedResourceForeground */
+  --warning: #FA994C;              /* variable.constant */
+  --error: #e02e2a;                /* gitDecoration.deletedResourceForeground */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
@@ -266,8 +267,8 @@ button { font-family: inherit; }
   white-space: pre-wrap;
   max-height: 260px; overflow-y: auto;
 }
-.tool-body .added { color: #7ee2a8; }
-.tool-body .removed { color: #f0887e; }
+.tool-body .added { color: #85df7b; }
+.tool-body .removed { color: #F67576; }
 
 /* code block */
 .codeblock {
@@ -339,7 +340,7 @@ button { font-family: inherit; }
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
 }
-.send-btn.ready { background: #fff; color: #000; }
+.send-btn.ready { background: var(--accent); color: #fff; }
 .send-btn svg { width: 15px; height: 15px; }
 .composer-hint {
   text-align: center;
@@ -451,8 +452,8 @@ button { font-family: inherit; }
 .hunk-head { padding: 6px 12px; color: var(--text-tertiary); background: rgba(255,255,255,0.03); font-size: 11.5px; }
 .dline { display: flex; padding: 2px 12px 2px 0; line-height: 1.6; }
 .dline .sign { width: 30px; text-align: center; flex-shrink: 0; color: var(--text-tertiary); user-select: none; }
-.dline.add { background: rgba(76, 175, 125, 0.1); color: #9be8b8; }
-.dline.del { background: rgba(224, 104, 92, 0.1); color: #f5a49d; }
+.dline.add { background: rgba(0, 162, 64, 0.12); color: #85df7b; }
+.dline.del { background: rgba(224, 46, 42, 0.12); color: #F67576; }
 .dline.ctx { color: var(--text-secondary); }
 .diff-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 12px; border-top: 1px solid var(--border-light); }
 .diff-decision { padding: 10px 12px; font-size: 13px; display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--border-light); }
@@ -471,11 +472,11 @@ button { font-family: inherit; }
 .btn-ghost.danger:hover { border-color: var(--error); color: var(--error); }
 .btn-primary {
   display: inline-flex; align-items: center; gap: 7px;
-  background: #fff; color: #000; border: none;
+  background: var(--accent); color: #fff; border: none;
   font-size: 13px; font-weight: 500;
   padding: 8px 14px; border-radius: var(--radius-md); cursor: pointer;
 }
-.btn-primary:hover { background: #e8e8e8; }
+.btn-primary:hover { background: #0178e6; }
 .mini-btn {
   background: transparent; border: none; color: var(--text-tertiary);
   font-size: 11.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
