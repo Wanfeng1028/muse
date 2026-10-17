@@ -82,6 +82,7 @@ flowchart LR
 | POST | `/api/views/{name}/refresh` | 手动物化刷新 |
 | POST | `/api/query` | 即席 SQL 查询 |
 | POST | `/api/sources/{id}/import-csv` | CSV 增量导入（multipart `file` 字段；按主键 upsert；文件 sha256 幂等；逐行错误报告 `{line,reason}` 跳过继续；响应含 inserted/updated/unchanged/error_rows；v1.4 新增） |
+| POST | `/api/import/csv` | CSV 增量导入 v2（multipart：`file`/`source` 必填，`table`/`primary_key`/`column_mapping` 可选；列映射；真流式 32MB 上限；冲突挂起时 409；v1.4 新增） |
 | GET | `/metrics` | Prometheus 指标 |
 
 ## 配置示例

@@ -2,13 +2,19 @@ package api
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"encoding/csv"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
@@ -28,22 +34,29 @@ type importCSVError struct {
 }
 
 type importCSVResult struct {
-	Source          string           `json:"source"`
-	Table           string           `json:"table"`
-	FileHash        string           `json:"file_hash"`
-	Filename        string           `json:"filename"`
-	Duplicate       bool             `json:"duplicate"`
-	TotalRows       int              `json:"total_rows"`
-	Inserted        int              `json:"inserted"`
-	Updated         int              `json:"updated"`
-	Unchanged       int              `json:"unchanged"`
-	ErrorRows       int              `json:"error_rows"`
-	Errors          []importCSVError `json:"errors"`
-	ErrorsTruncated bool             `json:"errors_truncated"`
+	Source           string           `json:"source"`
+	Table            string           `json:"table"`
+	FileHash         string           `json:"file_hash"`
+	Filename         string           `json:"filename"`
+	Duplicate        bool             `json:"duplicate"`
+	TotalRows        int              `json:"total_rows"`
+	Inserted         int              `json:"inserted"`
+	Updated          int              `json:"updated"`
+	Unchanged        int              `json:"unchanged"`
+	ErrorRows        int              `json:"error_rows"`
+	Errors           []importCSVError `json:"errors"`
+	ErrorsTruncated  bool             `json:"errors_truncated"`
+	ConflictsPending int              `json:"conflicts_pending"`
+	Conflicts        []store.Conflict `json:"conflicts,omitempty"`
 }
 
 // importCSV 执行 CSV 增量导入。st 已打开；sourceName 为数据源名称；r 为文件内容；filename 为文件名。
+// 兼容旧端点：默认选项走流式实现。
 func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Reader, filename string) (importCSVResult, error) {
+	return importCSVStream(st, cfg, sourceName, r, filename, importCSVOptions{})
+}
+
+func importCSVStream(st *store.Store, cfg *config.Config, sourceName string, r io.Reader, filename string, opts importCSVOptions) (importCSVResult, error) {
 	var res importCSVResult
 	res.Source = sourceName
 	res.Filename = filename
@@ -59,21 +72,42 @@ func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Read
 	if sc == nil {
 		return res, errImportSourceNotFound
 	}
-	if strings.TrimSpace(sc.Table) == "" || strings.TrimSpace(sc.PrimaryKey) == "" {
+
+	table := strings.TrimSpace(opts.Table)
+	if table == "" {
+		table = sc.Table
+	}
+	pkCol := strings.TrimSpace(opts.PrimaryKey)
+	if pkCol == "" {
+		pkCol = sc.PrimaryKey
+	}
+	if strings.TrimSpace(table) == "" || strings.TrimSpace(pkCol) == "" {
 		return res, errImportSourceNotConfigured
 	}
-	res.Table = sc.Table
+	res.Table = table
 
-	data, err := io.ReadAll(io.LimitReader(r, importCSVMaxFileBytes+1))
+	tmpDir := filepath.Join(filepath.Dir(cfg.Database), ".import-tmp")
+	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
+		return res, err
+	}
+	tmpFile, err := os.CreateTemp(tmpDir, "import-*.csv")
 	if err != nil {
 		return res, err
 	}
-	if len(data) > importCSVMaxFileBytes {
+	defer os.Remove(tmpFile.Name())
+
+	h := sha256.New()
+	n, err := io.Copy(io.MultiWriter(tmpFile, h), io.LimitReader(r, importCSVMaxFileBytes+1))
+	if err != nil {
+		return res, err
+	}
+	if n > importCSVMaxFileBytes {
 		return res, errImportFileTooLarge
 	}
-
-	sum := sha256.Sum256(data)
-	res.FileHash = hex.EncodeToString(sum[:])
+	if err := tmpFile.Close(); err != nil {
+		return res, err
+	}
+	res.FileHash = hex.EncodeToString(h.Sum(nil))
 
 	found, summary, err := st.FindImport(sourceName, res.FileHash)
 	if err != nil {
@@ -99,7 +133,13 @@ func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Read
 		return res, nil
 	}
 
-	cr := csv.NewReader(strings.NewReader(string(data)))
+	f, err := os.Open(tmpFile.Name())
+	if err != nil {
+		return res, err
+	}
+	defer f.Close()
+
+	cr := csv.NewReader(f)
 	cr.FieldsPerRecord = -1
 	cr.TrimLeadingSpace = true
 	cr.LazyQuotes = false
@@ -114,19 +154,27 @@ func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Read
 
 	colNames := make([]string, 0, len(header))
 	seen := make(map[string]bool, len(header))
-	for _, h := range header {
-		name := strings.TrimSpace(h)
-		if name == "" {
+	for _, raw := range header {
+		name := strings.TrimSpace(raw)
+		target := name
+		if opts.ColumnMapping != nil {
+			if mapped, ok := opts.ColumnMapping[name]; ok {
+				target = strings.TrimSpace(mapped)
+			}
+		}
+		if target == "" {
 			return res, errImportEmptyColumn
 		}
-		if seen[name] {
+		if !importCSVTargetColRe.MatchString(target) {
+			return res, errImportInvalidColumnName
+		}
+		if seen[target] {
 			return res, errImportDuplicateColumn
 		}
-		seen[name] = true
-		colNames = append(colNames, name)
+		seen[target] = true
+		colNames = append(colNames, target)
 	}
 
-	pkCol := sc.PrimaryKey
 	pkIdx := -1
 	for i, n := range colNames {
 		if n == pkCol {
@@ -142,7 +190,7 @@ func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Read
 	for _, n := range colNames {
 		cols = append(cols, infer.Column{Name: n, Type: "TEXT"})
 	}
-	if err := st.EnsureTable(sc.Table, pkCol, cols); err != nil {
+	if err := st.EnsureTable(table, pkCol, cols); err != nil {
 		return res, err
 	}
 
@@ -204,21 +252,22 @@ func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Read
 		}
 		hash := syncpkg.HashRow(pk, colNames, vals)
 
-		prevHash, _, _, found, err := st.GetHash(tx, sc.Table, pkCol, pk)
+		action, pending, err := decideUpsert(tx, st, cfg, table, pkCol, pk, colNames, vals, hash, sourceName)
 		if err != nil {
 			return res, err
 		}
-		if found && prevHash == hash {
-			res.Unchanged++
-			continue
-		}
-		if err := st.UpsertRow(tx, sc.Table, pkCol, pk, colNames, vals, hash, sourceName); err != nil {
-			return res, err
-		}
-		if found {
-			res.Updated++
-		} else {
+		switch action {
+		case "inserted":
 			res.Inserted++
+		case "updated":
+			res.Updated++
+		case "unchanged":
+			res.Unchanged++
+		case "conflict":
+			res.ConflictsPending++
+			if pending != nil {
+				res.Conflicts = append(res.Conflicts, *pending)
+			}
 		}
 	}
 
@@ -233,6 +282,119 @@ func importCSV(st *store.Store, cfg *config.Config, sourceName string, r io.Read
 	return res, nil
 }
 
+// decideUpsert 执行逐行 upsert 决策，返回动作 "inserted"/"updated"/"unchanged"/"conflict"。
+// 冲突策略（cfg.Sync.Conflict）语义与 sync.go 完全一致：
+//   - "manual"：跨源（existSource 非空且与本源不同）且行哈希不同 → 不覆盖，
+//     写入 _m_conflicts（SourceA=现有方来源名，SourceB=挑战方来源名，
+//     RowJSON=挑战方行数据 JSON，Status=pending），返回 "conflict" 及该冲突记录。
+//   - "priority"：复用 syncpkg.PriorityIndex 按源优先级裁决；本源优先则覆盖并记录
+//     resolved_auto 冲突，返回 "updated"；否则挂起 pending 冲突，返回 "conflict"。
+//   - 其他值：默认按 "priority" 处理（与 sync.go 一致；本源优先时只覆盖不额外记录冲突）。
+//   - 同源（existSource 为空或与本源相同）内容变化：直接覆盖，并将该主键的 pending
+//     冲突标记为 resolved_auto，返回 "updated"。
+func decideUpsert(tx *sql.Tx, st *store.Store, cfg *config.Config, table, pkCol, pk string, colNames []string, vals []any, hash, source string) (string, *store.Conflict, error) {
+	prevHash, existSource, _, found, err := st.GetHash(tx, table, pkCol, pk)
+	if err != nil {
+		return "", nil, err
+	}
+	if !found {
+		if err := st.UpsertRow(tx, table, pkCol, pk, colNames, vals, hash, source); err != nil {
+			return "", nil, err
+		}
+		return "inserted", nil, nil
+	}
+	if prevHash == hash {
+		return "unchanged", nil, nil
+	}
+	// 主键已存在且行哈希不同 → 冲突判定
+	if existSource != "" && existSource != source {
+		rowJSON := importBuildRowJSON(pkCol, pk, colNames, vals)
+		newConflict := func(status string) store.Conflict {
+			return store.Conflict{
+				TableName: table,
+				PK:        pk,
+				SourceA:   existSource,
+				SourceB:   source,
+				RowJSON:   rowJSON,
+				Status:    status,
+				CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			}
+		}
+		recordPending := func() (*store.Conflict, error) {
+			c := newConflict("pending")
+			id, err := st.RecordConflict(tx, c)
+			if err != nil {
+				return nil, err
+			}
+			c.ID = id
+			return &c, nil
+		}
+		switch cfg.Sync.Conflict {
+		case "priority":
+			if syncpkg.PriorityIndex(cfg.Sync.Priority, source) < syncpkg.PriorityIndex(cfg.Sync.Priority, existSource) {
+				// 本源优先，覆盖并记录自动解决
+				if err := st.UpsertRow(tx, table, pkCol, pk, colNames, vals, hash, source); err != nil {
+					return "", nil, err
+				}
+				if _, err := st.RecordConflict(tx, newConflict("resolved_auto")); err != nil {
+					return "", nil, err
+				}
+				return "updated", nil, nil
+			}
+			// 本源优先级低，挂起冲突
+			c, err := recordPending()
+			if err != nil {
+				return "", nil, err
+			}
+			return "conflict", c, nil
+		case "manual":
+			// 手动模式，记录冲突并跳过（不覆盖）
+			c, err := recordPending()
+			if err != nil {
+				return "", nil, err
+			}
+			return "conflict", c, nil
+		default:
+			// 默认按 priority 处理（与 sync.go 一致）
+			if syncpkg.PriorityIndex(cfg.Sync.Priority, source) < syncpkg.PriorityIndex(cfg.Sync.Priority, existSource) {
+				if err := st.UpsertRow(tx, table, pkCol, pk, colNames, vals, hash, source); err != nil {
+					return "", nil, err
+				}
+				return "updated", nil, nil
+			}
+			c, err := recordPending()
+			if err != nil {
+				return "", nil, err
+			}
+			return "conflict", c, nil
+		}
+	}
+	// 同源内容变化，直接更新；该主键的 pending 冲突视为自动胜出
+	if err := st.UpsertRow(tx, table, pkCol, pk, colNames, vals, hash, source); err != nil {
+		return "", nil, err
+	}
+	if _, err := st.ResolveConflictsByPK(tx, table, pk, "resolved_auto"); err != nil {
+		return "", nil, err
+	}
+	return "updated", nil, nil
+}
+
+// importBuildRowJSON 构造挑战方行数据的 JSON（形状与 sync.buildRowJSON 一致：主键与各目标列）。
+func importBuildRowJSON(pkCol, pk string, cols []string, vals []any) string {
+	m := make(map[string]any, len(cols)+1)
+	m[pkCol] = pk
+	for i, c := range cols {
+		if i < len(vals) {
+			m[c] = vals[i]
+		}
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
+}
+
 var (
 	errImportSourceNotFound      = errors.New("数据源不存在")
 	errImportSourceNotConfigured = errors.New("该数据源未配置 table/primary_key，无法导入")
@@ -243,6 +405,20 @@ var (
 	errImportDuplicateColumn     = errors.New("表头存在重复列名")
 	errImportPrimaryKeyMissing   = errors.New("表头未包含主键列")
 )
+
+var importCSVTargetColRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+var (
+	errImportInvalidColumnName = errors.New("映射后列名非法：必须以字母或下划线开头，后跟字母、数字或下划线")
+	errImportInvalidMapping    = errors.New("column_mapping 必须是 JSON 对象")
+	errImportMissingSource     = errors.New("缺少 source 参数")
+)
+
+type importCSVOptions struct {
+	Table         string
+	PrimaryKey    string
+	ColumnMapping map[string]string
+}
 
 func (s *server) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -277,6 +453,95 @@ func (s *server) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 		default:
 			writeError(w, http.StatusInternalServerError, err)
 		}
+		return
+	}
+
+	if len(res.Conflicts) > 0 {
+		s.logger.Info("CSV 导入存在挂起冲突", map[string]any{
+			"source":            res.Source,
+			"table":             res.Table,
+			"conflicts_pending": res.ConflictsPending,
+		})
+		writeJSON(w, http.StatusConflict, res.Conflicts)
+		return
+	}
+
+	if !res.Duplicate {
+		s.logger.Info("CSV 导入完成", map[string]any{
+			"source":     res.Source,
+			"table":      res.Table,
+			"inserted":   res.Inserted,
+			"updated":    res.Updated,
+			"error_rows": res.ErrorRows,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (s *server) handleImportCSVNew(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(importCSVMaxFileBytes); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	f, hdr, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer f.Close()
+
+	source := strings.TrimSpace(r.FormValue("source"))
+	if source == "" {
+		writeError(w, http.StatusBadRequest, errImportMissingSource)
+		return
+	}
+
+	opts := importCSVOptions{
+		Table:      strings.TrimSpace(r.FormValue("table")),
+		PrimaryKey: strings.TrimSpace(r.FormValue("primary_key")),
+	}
+
+	mappingRaw := strings.TrimSpace(r.FormValue("column_mapping"))
+	if mappingRaw != "" {
+		var m map[string]string
+		if err := json.Unmarshal([]byte(mappingRaw), &m); err != nil {
+			writeError(w, http.StatusBadRequest, errImportInvalidMapping)
+			return
+		}
+		opts.ColumnMapping = m
+	}
+
+	res, err := importCSVStream(s.st, s.cfg, source, f, hdr.Filename, opts)
+	if err != nil {
+		switch {
+		case errors.Is(err, errImportSourceNotFound):
+			writeError(w, http.StatusNotFound, err)
+		case errors.Is(err, errImportFileTooLarge):
+			writeError(w, http.StatusRequestEntityTooLarge, err)
+		case errors.Is(err, errImportSourceNotConfigured),
+			errors.Is(err, errImportTooManyRows),
+			errors.Is(err, errImportEmptyFile),
+			errors.Is(err, errImportEmptyColumn),
+			errors.Is(err, errImportDuplicateColumn),
+			errors.Is(err, errImportPrimaryKeyMissing),
+			errors.Is(err, errImportInvalidColumnName),
+			errors.Is(err, errImportInvalidMapping),
+			errors.Is(err, errImportMissingSource):
+			writeError(w, http.StatusBadRequest, err)
+		default:
+			writeError(w, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	if len(res.Conflicts) > 0 {
+		s.logger.Info("CSV 导入存在挂起冲突", map[string]any{
+			"source":            res.Source,
+			"table":             res.Table,
+			"conflicts_pending": res.ConflictsPending,
+		})
+		writeJSON(w, http.StatusConflict, res.Conflicts)
 		return
 	}
 

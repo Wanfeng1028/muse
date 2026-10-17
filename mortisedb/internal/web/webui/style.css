@@ -706,3 +706,17 @@ footer,
     padding: 0.45rem 0.55rem;
   }
 }
+
+/* ------------------------------------------------------- import */
+.field-error {
+  color: var(--cinnabar);
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  text-align: left;
+}
+.hint {
+  color: var(--ink-faint);
+  font-size: 0.82rem;
+  margin-top: 0.3rem;
+  text-align: left;
+}

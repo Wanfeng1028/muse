@@ -65,6 +65,7 @@ function switchTab(name) {
   else if (name === 'data') loadTables();
   else if (name === 'views') loadViews();
   else if (name === 'conflicts') loadConflicts();
+  else if (name === 'import') loadImportSources();
 }
 
 function fmtTime(t) {
@@ -484,6 +485,9 @@ function init() {
   const btnSave = document.getElementById('btn-save-view');
   if (btnSave) btnSave.addEventListener('click', saveView);
 
+  const btnImport = document.getElementById('btn-import');
+  if (btnImport) btnImport.addEventListener('click', doImportCSV);
+
   const editor = document.getElementById('sql-editor');
   if (editor) {
     editor.addEventListener('keydown', (ev) => {
@@ -495,6 +499,177 @@ function init() {
   }
 
   switchTab('overview');
+}
+
+async function loadImportSources() {
+  const sel = document.getElementById('import-source');
+  const errEl = document.getElementById('import-source-error');
+  if (!sel) return;
+  if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+  sel.innerHTML = '<option value="">加载中...</option>';
+  try {
+    const sources = await api('/api/sources');
+    state.sources = sources;
+    if (!sources || sources.length === 0) {
+      sel.innerHTML = '<option value="">暂无数据源</option>';
+      if (errEl) { errEl.hidden = false; errEl.textContent = '还没有可用的数据源：先去配置文件里加一个数据源，再回来导入。'; }
+      return;
+    }
+    sel.innerHTML = sources.map(s =>
+      '<option value="' + esc(s.name) + '">' + esc(s.name) + '</option>'
+    ).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">加载失败</option>';
+    if (errEl) { errEl.hidden = false; errEl.textContent = '数据源列表加载失败：' + e.message + '，请稍后重试。'; }
+  }
+}
+
+async function doImportCSV() {
+  const sel = document.getElementById('import-source');
+  const fileEl = document.getElementById('import-file');
+  const tableEl = document.getElementById('import-table');
+  const pkEl = document.getElementById('import-primary-key');
+  const mappingEl = document.getElementById('import-mapping');
+  const mappingErr = document.getElementById('import-mapping-error');
+  const statusEl = document.getElementById('import-status');
+  const btn = document.getElementById('btn-import');
+  if (!sel || !fileEl || !btn) return;
+  if (mappingErr) { mappingErr.hidden = true; mappingErr.textContent = ''; }
+  const source = sel.value;
+  if (!source) {
+    if (statusEl) statusEl.textContent = '请先选择一个数据源。';
+    toast('请先选择数据源', true);
+    return;
+  }
+  const file = (fileEl.files && fileEl.files[0]) || null;
+  if (!file) {
+    if (statusEl) statusEl.textContent = '请选择要导入的 CSV 文件。';
+    toast('请选择 CSV 文件', true);
+    return;
+  }
+  if (!/\.csv$/i.test(file.name)) {
+    if (statusEl) statusEl.textContent = '只接受 .csv 文件，请重新选择。';
+    toast('只接受 .csv 文件', true);
+    return;
+  }
+  const mappingStr = mappingEl ? mappingEl.value.trim() : '';
+  if (mappingStr) {
+    try {
+      JSON.parse(mappingStr);
+    } catch (e) {
+      if (mappingErr) { mappingErr.hidden = false; mappingErr.textContent = '列映射不是合法的 JSON：' + e.message + '。请检查引号和逗号后再提交。'; }
+      if (statusEl) statusEl.textContent = '列映射格式有误，未提交。';
+      return;
+    }
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('source', source);
+  if (tableEl && tableEl.value.trim()) fd.append('table', tableEl.value.trim());
+  if (pkEl && pkEl.value.trim()) fd.append('primary_key', pkEl.value.trim());
+  if (mappingStr) fd.append('column_mapping', mappingStr);
+
+  btn.disabled = true;
+  const oldText = btn.textContent;
+  btn.textContent = '导入中...';
+  if (statusEl) statusEl.textContent = '正在上传 ' + file.name + '，请稍候...';
+  try {
+    const res = await fetch('/api/import/csv', { method: 'POST', body: fd });
+    let data = null;
+    const ct = res.headers.get('content-type') || '';
+    if (ct.indexOf('application/json') !== -1) {
+      try { data = await res.json(); } catch (e) {}
+    }
+    if (res.status === 409) {
+      renderImportConflict(data, '当前还有没处理完的冲突，这次导入没有写入任何数据。先去冲突页处理完再重新导入。');
+      if (statusEl) statusEl.textContent = '导入被拦下：有未处理的冲突。';
+      return;
+    }
+    if (!res.ok) {
+      throw new Error((data && data.error) ? data.error : ('HTTP ' + res.status));
+    }
+    renderImportResult(data);
+    if (statusEl) statusEl.textContent = '导入完成。';
+  } catch (e) {
+    renderImportError('导入失败：' + e.message);
+    if (statusEl) statusEl.textContent = '导入失败。';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+}
+
+function renderImportConflict(data, note) {
+  const panel = document.getElementById('import-result-panel');
+  const el = document.getElementById('import-result');
+  if (!panel || !el) return;
+  panel.hidden = false;
+  const n = (data && data.conflicts_pending) ? data.conflicts_pending : 0;
+  let html = '<div class="alert err"><strong>有 ' + esc(n) + ' 行冲突已挂起。</strong>' + esc(note) +
+    ' <a href="#" id="import-goto-conflicts">去冲突页查看</a></div>';
+  el.innerHTML = html;
+  const link = document.getElementById('import-goto-conflicts');
+  if (link) {
+    link.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      switchTab('conflicts');
+    });
+  }
+}
+
+function renderImportResult(data) {
+  const panel = document.getElementById('import-result-panel');
+  const el = document.getElementById('import-result');
+  if (!panel || !el) return;
+  panel.hidden = false;
+  data = data || {};
+  let html = '';
+  if (data.duplicate) {
+    html += '<div class="alert">这个文件之前已经导入过（hash ' + esc(data.file_hash || '') + '），这次没有重复写入，下面是上次导入的统计。</div>';
+  }
+  html += '<div class="row">' +
+    '<span class="badge ok">新增 ' + esc(data.inserted || 0) + '</span>' +
+    '<span class="badge">更新 ' + esc(data.updated || 0) + '</span>' +
+    '<span class="badge">未变化 ' + esc(data.unchanged || 0) + '</span>' +
+    '<span class="badge' + ((data.error_rows || 0) > 0 ? ' err' : '') + '">出错行 ' + esc(data.error_rows || 0) + '</span>' +
+    '<span class="badge">共读 ' + esc(data.total_rows || 0) + ' 行</span>' +
+    '</div>';
+  const n = data.conflicts_pending || 0;
+  if (n > 0) {
+    html += '<div class="alert err" style="margin-top:0.75rem"><strong>有 ' + esc(n) + ' 行冲突已挂起。</strong>' +
+      ' <a href="#" id="import-goto-conflicts">去冲突页查看</a></div>';
+  }
+  const errors = data.errors || [];
+  if (errors.length > 0) {
+    html += '<h4 style="margin-top:1rem">出错明细（共 ' + esc(data.error_rows || errors.length) + ' 行，本次展示 ' + esc(errors.length) + ' 条）</h4>';
+    html += '<table><thead><tr><th>行号</th><th>原因</th></tr></thead><tbody>';
+    const shown = errors.slice(0, 100);
+    shown.forEach((er) => {
+      html += '<tr><td>' + esc(er.line) + '</td><td>' + esc(er.reason) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (data.errors_truncated) {
+      html += '<div class="hint">错误太多，只展示了前 100 条。</div>';
+    }
+  } else {
+    html += '<div class="empty" style="margin-top:0.75rem">没有出错的行，导入很干净。</div>';
+  }
+  el.innerHTML = html;
+  const link = document.getElementById('import-goto-conflicts');
+  if (link) {
+    link.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      switchTab('conflicts');
+    });
+  }
+}
+
+function renderImportError(msg) {
+  const panel = document.getElementById('import-result-panel');
+  const el = document.getElementById('import-result');
+  if (!panel || !el) return;
+  panel.hidden = false;
+  el.innerHTML = '<div class="alert err">' + esc(msg) + '</div>';
 }
 
 if (document.readyState === 'loading') {

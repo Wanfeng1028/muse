@@ -300,12 +300,13 @@
 - **v0.4.0「Webhook 持久化投递队列」（2026-10-16）**：`webhook_deliveries` 表（迁移 v5，pending/retrying/done/failed）+ 入队幂等去重 + worker 指数退避重投（默认 8 次/基数 60s/15s 扫描）+ 管理 API（列表/手动重试）+ `/deliveries` 控制台页（真数据）；`go test` **97/97**（新增 12）、go vet 全洁；真实冒烟（必失败 webhook：pending→retrying→failed，手动 retry 闭环）；投递队列表截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`。已知限制：单实例；~~故障演练排期 v0.5~~（已在 2026-10-17 交付）
 - **v0.5「故障演练」（2026-10-17）**：`scripts/fault-drill.sh`（探针目标全挂→事件→webhook 通知→恢复闭环），真实跑通 **13/13**；`docs/FAULT_DRILL.md`（步骤+预期+实测结果+未覆盖项声明）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.md`（依赖扫描/真实负载改排期 v0.6）
 - **v0.6「告警规则+依赖扫描+真实负载」（2026-10-17）**：`prometheus/rules/sentinel.yml` 6 条告警规则（实例 down / 调度停滞 / 队列积压>50 / 投递失败率>20% / 检查失败激增 / 自身 API 5xx 率>5%）+ `prometheus/prometheus.yml` 抓取示例；`RenderQueueBacklog` 指标缺口补齐（`sentinel_webhook_queue_backlog{status="pending"|"retrying"}`）；OPERATIONS.md 第 10 章（阈值依据、静默/值班建议）+ §5.2 订正；`scripts/depscan.sh` 实跑（23 个模块，OSV 3 个 + govulncheck 46 个 = 49 个漏洞，全在 Go 标准库 go1.23.4 与 x/mod、x/sys，因 go1.23.4 过旧，无第三方业务依赖漏洞，退出码 1）；`scripts/load_check.sh` 实跑（40 轮检查，p50=6.0ms、p99=14.8ms，4 down 事件全对、无误报，webhook 4/4，积压峰值 2 并排空，耗时 73s）；`go test` **141/141**、vet/gofmt 全洁、fault-drill 13/13；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.md` 关闭全部 v0.5 排期项。诚实缺口（排期 v0.7）：入队限流、投递熔断、Go 工具链升级后复扫、incidents.html 模拟数据债
+- **v0.7「入队限流+投递熔断」（2026-10-17）**：`internal/notify/limiter.go` 令牌桶入队限流（`SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS` 默认 20/`_BURST` 默认 40，非法启动 fail-fast，超限丢弃+计数+warn 日志）+ `internal/notify/circuit.go` 按 host 投递熔断（闭合→断开→半开→闭合，半开单探测，与指数退避/手动重试正交）+ 指标 `sentinel_webhook_enqueue_rejected_total`/`sentinel_webhook_breaker_state{host}` 进 `/api/metrics` + 告警规则 8 条 + `OPERATIONS.md` 第 12 章调参；`go test` **190/190**（含 -race 并发）、`go vet` 全洁；真实冒烟（必失败 sink 下 2 次连续失败即熔断断开、10 死目标洪峰下限流拒绝 8 次、sink 恢复后半开探测成功闭合）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.md` 关闭 v0.6 全部排期中的限流熔断项。诚实缺口（排期后续）：Go 工具链升级后复扫、`incidents.html` 模拟数据债
 
 **后续计划**：
 
 - 短信告警（邮件/企业微信 webhook 已落地）
 - 分布式探针（多实例需先换 PostgreSQL）
-- 入队限流、投递熔断、Go 工具链升级后复扫、incidents.html 模拟数据债（排期 v0.7）
+- Go 工具链升级后依赖复扫、`incidents.html` 模拟数据债（v0.7 未排期，继续挂账）
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
@@ -471,10 +472,11 @@
 - 生产级 v1.1.0（2026-10-13）：`dbtx` 接口重构（`*sql.DB`/`*sql.Tx` 公共子集）+ `syncOneTable` 批量事务（每 5000 行提交、出错回滚、水位线最终提交后写回）+ `sync.batch_size` 配置；真实负载验证倒逼出的性能修复（优化前 10 万行需约 44 分钟）；CHANGELOG/LOADTEST.md/README 实测数据齐备
 - 生产级 v1.2.0（2026-10-15）：dpsk 分 5 批生成 + 编排修 3 处机械问题——e2e.sh 的 COUNT(*) 行数断言 bug、views_test import 缺 fmt、LOADTEST 锚定文本偏差；YAML 声明视图自动注册（`views.SyncFromConfig`，sync/serve/views sync 幂等注册+更新+清理，`_m_views.origin` 区分 yaml/manual，老库自动迁移）；`scripts/e2e.sh` 端到端编排实测 E2E PASS（10 行订单 CSV + 8 会员 JSON → sync 新增 orders 10/users 8 → 视图自动注册新增 2 → 改 YAML 新增 1 更新 1 → 删声明清理 1 → serve → CSV 导出 10 行）；docker-compose 一键部署强化（健康检查/资源限制 512m·1 核/日志轮转 10m×3，`docs/OPERATIONS.md` 补部署/升级/排障）；视图页真实截图更新（`docs/screenshots/views.png`，真实数据：4 城市销售额）；go build/vet/test 全过（12 包）
 - **v1.3.0「物化视图 + 刷新策略」（2026-10-16）**：`views` 声明新增 `materialize: {enabled, refresh}`（on_sync/manual/interval）；`views.Refresh` 事务内全量刷新（失败回滚）+ `RefreshDue` 策略调度；sync 成功后自动按策略刷新、`views refresh` CLI、`POST /api/views/{name}/refresh`、Web UI 物化标记+一键刷新；`_m_views` 增 4 列（老库幂等迁移）；3 个 Prometheus 新指标；修真 bug：`RecordViewRefresh` 用 SQLite `datetime('now')` 空格格式致 `RefreshDue` RFC3339 解析永失败、interval 每次误判到期（改 Go 侧 RFC3339）；go test 全绿、`scripts/e2e.sh` E2E PASS、视图页物化标记真实截图亲验；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.0.md`
+- **v1.4.0「CSV 增量导入 API」（2026-10-17）**：新端点 `POST /api/import/csv`（列映射/真流式 32MB 上限/`.import-tmp`/sha256 幂等/冲突策略集成 409）、Web UI 导入页；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.0.md`
 
 **后续计划**：
 
-- Postgres/MySQL 只读源、冲突 Webhook 通知、~~视图定时物化~~（已在 v1.3.0 交付）、CSV 增量导入 API
+- Postgres/MySQL 只读源、冲突 Webhook 通知、~~视图定时物化~~（已在 v1.3.0 交付）、~~CSV 增量导入 API~~（已在 v1.4.0 交付）
 - Dependabot（等用户在 GitHub Settings 手动开启）
 
 ## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」

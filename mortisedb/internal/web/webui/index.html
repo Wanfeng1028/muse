@@ -27,6 +27,7 @@
     <button class="tab" data-tab="data">数据</button>
     <button class="tab" data-tab="views">视图</button>
     <button class="tab" data-tab="conflicts">冲突</button>
+    <button class="tab" data-tab="import">导入</button>
   </nav>
 </header>
 
@@ -127,6 +128,45 @@
         </thead>
         <tbody></tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="section-import" class="section">
+    <h2>导入</h2>
+    <div class="panel">
+      <div class="stack">
+        <div>
+          <label for="import-source">数据源（必填）</label>
+          <select id="import-source"></select>
+          <div id="import-source-error" class="field-error" hidden></div>
+        </div>
+        <div>
+          <label for="import-file">CSV 文件（必填，只收 .csv）</label>
+          <input id="import-file" type="file" accept=".csv">
+          <div class="hint">文件不超过 32MB，最多 10 万行数据。</div>
+        </div>
+        <div>
+          <label for="import-table">目标表（可选，留空就用这个数据源配好的表）</label>
+          <input id="import-table" type="text" placeholder="留空=用数据源配置的表">
+        </div>
+        <div>
+          <label for="import-primary-key">主键列（可选，留空就用数据源配好的主键）</label>
+          <input id="import-primary-key" type="text" placeholder="留空=用数据源配置的主键">
+        </div>
+        <div>
+          <label for="import-mapping">列映射（可选，JSON 格式；留空=CSV 列名和目标列同名直接对应）</label>
+          <textarea id="import-mapping" rows="4" placeholder='{"CSV 里的列名": "目标表的列名"}'></textarea>
+          <div id="import-mapping-error" class="field-error" hidden></div>
+        </div>
+        <div class="row">
+          <button id="btn-import">开始导入</button>
+          <span id="import-status" class="status"></span>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="import-result-panel" hidden>
+      <h3>导入结果</h3>
+      <div id="import-result"></div>
     </div>
   </section>
 

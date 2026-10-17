@@ -2,6 +2,26 @@
 
 本文件记录 MortiseDB 的重要变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.4.0] - 2026-10-17
+
+### 新增
+
+- 新端点 `POST /api/import/csv`（multipart）：`file`（必填）、`source`（必填）、`table`（可选，默认源的 `table`）、`primary_key`（可选，默认源的 `primary_key`）、`column_mapping`（可选，JSON 字符串如 `{"订单号":"order_id"}`）。
+- 列映射：`column_mapping` 为 `{"CSV列名":"目标列名"}`；未映射列按原名直通；映射后列名必须非空、唯一、匹配 `^[A-Za-z_][A-Za-z0-9_]*$`，否则 400；主键列必须在映射后列集合中，否则 400。
+- 真流式：文件内容落盘到 `<dbdir>/.import-tmp/` 临时文件（`os.CreateTemp`，处理完删除），不一次进内存；超 32MB → 413；边写边 sha256。
+- 幂等：同 source + 文件 sha256 命中 `_m_imports` → `duplicate=true` 直接返回上次统计。
+- 冲突策略集成：源 `sync.conflict=manual` 且主键已存在、行哈希不同、现有行来源与本源不同 → 不覆盖，写 `_m_conflicts`（`status=pending`），本批有挂起冲突时 HTTP 409 + 冲突数组；`priority` 按 `sync.priority` 源顺序自动裁决（`resolved_auto`）；同源更新直接覆盖并自动解决该 pk 的 pending。
+- Web UI 新增"导入"页：选数据源、选 CSV 文件、目标表/主键（可选）、列映射 JSON（可选）、上传；结果展示 inserted/updated/unchanged/error_rows/错误列表；有挂起冲突时朱砂色提示并跳冲突页。
+
+### 变更
+
+- `api.Version` 1.3.0 → 1.4.0。
+
+### 测试
+
+- `internal/api/import_csv_v14_test.go`
+- `scripts/e2e.sh` 回归
+
 ## [1.3.0] - 2026-10-16
 
 ### 新增

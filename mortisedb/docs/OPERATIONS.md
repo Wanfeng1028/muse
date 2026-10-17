@@ -305,9 +305,64 @@ mortisedb query --config /etc/mortise/mortise.yaml \
 - 通过 Web UI 或 `POST /api/conflicts/{id}/resolve` 逐条解决。
 - 或调整 `sync.priority` 让优先级更高的源自动胜出。
 
-## 7. 版本历史
+## 7. CSV 增量导入
+
+### 7.1 端点与字段
+
+新端点 `POST /api/import/csv`（multipart 上传）。
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `file` | 是 | 要导入的 CSV 文件 |
+| `source` | 是 | 源名 |
+| `table` | 否 | 目标表，默认取源的 `table` |
+| `primary_key` | 否 | 主键列，默认取源的 `primary_key` |
+| `column_mapping` | 否 | JSON 字符串，形如 `{"订单号":"order_id"}` |
+
+旧端点 `POST /api/sources/{id}/import-csv` 保留，行为兼容，内部已走流式实现。
+
+### 7.2 列映射
+
+`column_mapping` 是 `{"CSV列名":"目标列名"}` 形式的 JSON。没写进映射的列，按 CSV 里的原名直通。映射后的列名必须非空、唯一，并且匹配 `^[A-Za-z_][A-Za-z0-9_]*$`，否则返回 400。主键列必须在映射后的列集合里，否则返回 400。
+
+### 7.3 错误码
+
+| 错误码 | 场景 |
+| --- | --- |
+| 400 | 非法映射 JSON / 非法目标列名 / 缺主键 / 空文件 / 表头问题 / 缺 source |
+| 404 | 源不存在 |
+| 409 | 本批有冲突挂起 |
+| 413 | 文件超过 32MB |
+
+### 7.4 流式与 32MB 限制
+
+文件内容落盘到 `<dbdir>/.import-tmp/` 临时文件（用 `os.CreateTemp` 创建，处理完删除），不会一次读进内存。文件超过 32MB 返回 413。写盘时边写边算 sha256。
+
+### 7.5 幂等
+
+同一个 source 加同一个文件 sha256，如果命中 `_m_imports`，直接返回 `duplicate=true` 和上次的统计，不再重复导入。
+
+### 7.6 增量语义
+
+按主键 upsert，只写变更行（用行哈希比对）。响应字段：`total_rows/inserted/updated/unchanged/error_rows/errors[]/errors_truncated/file_hash`。逐行错误记成 `{line,reason}`，覆盖列数不符、主键为空、坏引号行三类。错误列表上限 100 条，遇到坏行跳过继续处理。
+
+### 7.7 冲突挂起处理流程
+
+冲突策略与 sync 一致。当源 `sync.conflict=manual`，且主键已存在、行哈希不同、现有行来源与本源不同时，不覆盖，写 `_m_conflicts`（`source_a` 是现有方来源名、`source_b` 是挑战方来源名、`row_json` 是挑战方行数据 JSON、`status` 为 `pending`）。本批有挂起冲突时返回 HTTP 409 加冲突数组（与 `GET /api/conflicts` 同形状）。`priority` 按 `sync.priority` 源顺序自动裁决，胜出方覆盖并记 `resolved_auto`。同源更新直接覆盖，并自动解决该 pk 的 pending。
+
+处理流程：
+
+1. 收到 409 后查 `GET /api/conflicts`。
+2. 在 Web UI 冲突页处理，或调 `POST /api/conflicts/{id}/resolve` 裁决。
+
+### 7.8 Web UI
+
+新增"导入"页：选数据源、选 CSV 文件、填目标表/主键（可选）、填列映射 JSON（可选）、上传。结果展示 inserted/updated/unchanged/error_rows 和错误列表。有挂起冲突时用朱砂色提示，并跳冲突页。
+
+## 8. 版本历史
 
 
+- **1.4.0**：CSV 增量导入 API（`POST /api/import/csv`：列映射/真流式/冲突策略集成/409；Web UI 导入页）。
 - **1.2.0**：YAML 声明视图自动注册（sync/serve/views sync 幂等注册+清理，_m_views 新增 origin 列）、e2e 编排脚本（scripts/e2e.sh）、docker-compose 一键部署（健康检查+资源限制+日志轮转）。
 - **1.1.0**：新增 `/metrics`、`backup`/`restore` 子命令、优雅关闭补强（HTTP 超时 + WAL checkpoint + 在途等待）、10 万行负载验证。
 - **0.1.0**：首个可用版本（多源同步、冲突策略、视图、调度、Web UI）。
