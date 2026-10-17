@@ -134,6 +134,13 @@ func (m *Registry) IncRateLimitRejected() {
 	m.mu.Unlock()
 }
 
+// RateLimitRejectedCount 返回限流拒绝次数。
+func (m *Registry) RateLimitRejectedCount() int64 {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.rateLimitRejected
+}
+
 // SetBackupHealth 更新备份健康状态与最近一次成功备份的时间戳。
 func (m *Registry) SetBackupHealth(healthy bool, lastSuccessTS int64) {
 	m.mu.Lock()

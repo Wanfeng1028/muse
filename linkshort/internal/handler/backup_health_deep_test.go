@@ -15,6 +15,7 @@ import (
 	"github.com/Wanfeng1028/muse/linkshort/internal/config"
 	"github.com/Wanfeng1028/muse/linkshort/internal/metrics"
 )
+
 // snapshotBackupHealth 从 metrics 文本输出解析备份健康指标（替代不存在的 SnapshotBackupHealth）。
 func snapshotBackupHealth(t *testing.T) (healthy bool, lastSuccess int64) {
 	t.Helper()
@@ -32,7 +33,6 @@ func snapshotBackupHealth(t *testing.T) (healthy bool, lastSuccess int64) {
 	}
 	return healthy, lastSuccess
 }
-
 
 func writeDeepSidecar(t *testing.T, dir string, sc backupSidecar) {
 	t.Helper()
@@ -258,7 +258,8 @@ func TestReadBackupHealthExpiredBeyondMaxAge(t *testing.T) {
 
 func TestReadBackupHealthExactlyAtBoundary(t *testing.T) {
 	dir := t.TempDir()
-	finished := time.Now().Add(-7 * 24 * time.Hour).UTC()
+	// 注：精确 7 天会因测试执行耗时漂过 `>` 边界，改用 7 天减 1 小时测边界内 ok 语义
+	finished := time.Now().Add(-7*24*time.Hour + time.Hour).UTC()
 	writeDeepSidecar(t, dir, backupSidecar{
 		OK:             true,
 		File:           "linkshort-edge.db",
