@@ -9,6 +9,7 @@ import { getRoomHistory, listPresence, listTasks, getTask, updateTaskStatus, cou
 import type { TaskStatus } from "./db.js";
 import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
+import { DoudizhuGameEngine } from "./doudizhu-game.js";
 import { routeMessage, routeStream } from "./router.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
@@ -613,6 +614,8 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
 
   const wss = new WebSocketServer({ server: httpServer });
   const hub = new Hub(db);
+  // 把已经写好的斗地主引擎挂到网关，游戏 id 用 doudizhu
+  hub.registerGameEngine("doudizhu", new DoudizhuGameEngine());
 
   hub.onMessage = (env: Envelope<MessagePayload>) => {
     routeMessage(hub, env, db);

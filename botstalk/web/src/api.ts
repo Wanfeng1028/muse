@@ -186,11 +186,11 @@ export async function fetchGameSessions(room: string): Promise<GameSession[]> {
   return (await res.json()) as GameSession[];
 }
 
-export async function createGameSession(room: string, game: string): Promise<GameSession> {
+export async function createGameSession(room: string, game: string, seats?: string[]): Promise<GameSession> {
   const res = await fetch(`${BASE}/api/rooms/${encodeURIComponent(room)}/games`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ game }),
+    body: JSON.stringify(seats && seats.length > 0 ? { game, seats } : { game }),
   });
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as { error?: string };

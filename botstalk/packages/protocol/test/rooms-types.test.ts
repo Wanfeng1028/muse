@@ -72,9 +72,10 @@ describe("游戏清单常量", () => {
     expect(WORKROOM_GAMES).toContain("vote_plan");
   });
 
-  it("PLAYROOM_GAMES 有 4 个且含 who_is_undercover", () => {
-    expect(PLAYROOM_GAMES).toHaveLength(4);
+  it("PLAYROOM_GAMES 有 5 个且含 who_is_undercover", () => {
+    expect(PLAYROOM_GAMES).toHaveLength(5);
     expect(PLAYROOM_GAMES).toContain("who_is_undercover");
+    expect(PLAYROOM_GAMES).toContain("doudizhu");
   });
 
   it("两份清单没有交集", () => {
@@ -99,6 +100,7 @@ describe("isGameAllowed", () => {
     expect(isGameAllowed("workroom", "timed_brainstorm")).toBe(true);
     expect(isGameAllowed("playroom", "who_is_undercover")).toBe(true);
     expect(isGameAllowed("playroom", "draw_and_guess")).toBe(true);
+    expect(isGameAllowed("playroom", "doudizhu")).toBe(true);
   });
 
   it("跨房间的游戏不允许", () => {

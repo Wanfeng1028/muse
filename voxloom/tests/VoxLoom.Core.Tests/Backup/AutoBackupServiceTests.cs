@@ -52,21 +52,19 @@ public sealed class AutoBackupServiceTests
         {
             var options = new AutoBackupOptions { Enabled = true, IntervalMinutes = 0 };
             int calls = 0;
-            using var service = new AutoBackupService(
-                options,
-                () => dir,
-                () => "proj",
-                (a, b, c) =>
-                {
-                    Interlocked.Increment(ref calls);
-                    return new BackupRecord("id", DateTime.UtcNow, "f.zip", 1, "abc");
-                });
-
-            Assert.Throws<BackupException>(() => service.Start());
-            Assert.Equal(0, Volatile.Read(ref calls));
-
-            // 服务未启动，Stop 应为无操作
-            service.Stop();
+            // 构造器内 ValidateInterval 即 fail-fast 抛 BackupException，断言应包住构造而非 Start()
+            Assert.Throws<BackupException>(() =>
+            {
+                using var service = new AutoBackupService(
+                    options,
+                    () => dir,
+                    () => "proj",
+                    (a, b, c) =>
+                    {
+                        Interlocked.Increment(ref calls);
+                        return new BackupRecord("id", DateTime.UtcNow, "f.zip", 1, "abc");
+                    });
+            });
             Assert.Equal(0, Volatile.Read(ref calls));
         }
         finally

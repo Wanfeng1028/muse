@@ -539,6 +539,7 @@
 - **v1.2「备份 zip 加密 + 恢复前文件清单预览 + 控制台日志人读格式」（2026-10-16）**：备份加密（AES-256-GCM + PBKDF2-SHA256 20 万轮，VXENC1 魔数自识别，无密码保持兼容）+ 恢复预览（list-backup 清单打印 + 确认后恢复，--yes 跳过确认）+ 日志人读化（VoxConsoleFormat：时长/字节/表格/CJK 对齐/进度条，控制台人读行、文件日志保持 JSON）；dotnet test **93/93**（新增 18）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.2.md`
 - **v1.3「指标告警 + 故障演练 + 技术债清理」（2026-10-16）**：VoxMetrics 指标记录器（`metrics-YYYYMMDD.jsonl`，复用日志轮转；7 处埋点：audio.import/transcript.import/align/edit.apply/export.edl/backup.create/backup.restore；`--metrics` 汇总命令）+ `docs/ALERTS.md` 4 条告警规则 + `scripts/check-alerts.sh`（退出码 0/1/2，真实触发 CRIT 验证）+ `scripts/fault-drill.sh` 故障演练 **4/4 PASS**（损坏音频拒绝/只读存储模拟磁盘满/kill -9 半截备份拒绝/位翻转备份拒绝）+ `--probe-*` 运维探针 CLI + 技术债偿还 4 项（TD-002/TD-006/TD-008/TD-009）；SmokeRunner **106/106**（新增 13）；dotnet build 零警告零错误；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.md`。~~未通过剩 2 项（3.1 定时自动备份、8.2 真实负载验证，排期 v2）~~（3.1 已在 2026-10-17 v2 交付；8.2 真实负载验证仍排期）
 - **v2「定时自动备份」（2026-10-17）**：`AutoBackupService`（Timer 周期触发默认 60 分钟；provider 为空跳过；异常走 BackupFailed 事件绝不抛给 Timer；IDisposable）+ 配置 `autoBackupEnabled/IntervalMinutes/RetentionCount` + `VOXLOOM_AUTOBACKUP_*` 环境变量（密码只从 `VOXLOOM_AUTOBACKUP_PASSWORD` 读）+ 桌面 App 接线（独立 BackupManager：`backups/auto` 子目录 + 独立保留份数默认 5；`MainViewModel.TryStageAutoBackupSnapshot` 按需落盘；退出时 Stop）+ `AutoBackupServiceTests` 7 例；`dotnet build` 本轮新增代码零警告；xunit 在本机 testhost 挂起未能执行（沙箱环境问题，4 次尝试），改控制台冒烟直验 DLL 6 项全过；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v2.md`
+- **深测轮 r4（2026-10-18）**：5 个深测文件 65 测试——Editing/EditPlanDeepTests（17：ReplaceOp 零时长删除/相邻区间/乱序 ops/未知 op/衰减包络）、EdlExporterDeepTests（9：UNTITLED/负时间/帧进位/超 1 小时）、ZeroCrossingDeepTests（11）、TranscriptTimelineDeepTests（18）、RuleBasedAlignerDeepTests（10）；SmokeRunner 反射直跑 **178/178** 全绿；修**真 bug**：`AutoBackupServiceTests.InvalidInterval_Throws` 把 Assert.Throws 包在 Start() 外层，但构造器内 ValidateInterval 已先抛 BackupException，测试永远跑不过——改为断言构造时抛（产品 fail-fast 设计正确，是测试写错了）
 
 **后续计划**：
 
@@ -571,6 +572,7 @@
 - **失败注入测试套件 v1.3（2026-10-16）**：FaultInjectionTest 扩至 **19 例**（损坏/截断剧本行号定位、不可读文件 exit 语义、tmpfs 磁盘满模拟、损坏备份拒绝恢复、10 万行性能回归、并发 lint 备份不互踩）+ `lint` 对目录/特殊文件输入先校验类型再报错（修掉"先 snapshot 再报错"技术债）+ 修真 bug：`BackupManager.restore` 读取损坏备份抛 IllegalArgumentException（CLI 返回 exit 2），不再让原始 IOException 崩出且绝不覆盖原文件；kotlinc 直编 + JUnit 进程内跑 **57/57** 全过（Gradle daemon 本沙箱不可用）
 - **v1.4「复盘模式」（2026-10-16）**：`SessionEvent`/`SessionLog`（JSON 对局日志解析）+ `ReplayAnalyzer`（时间线+抉择点分析）+ `ReplayMarkdown`（复盘报告生成）+ CLI `replay` 子命令；kotlinc 直编零错、JUnit **101/101**（3 例为 FaultInjectionTest OS 相关 assumption 中止）；CLI 真实冒烟：10 个时间线事件、3 个抉择点（已与剧本原文逐行核对）、无投票对局诚实降级、错误路径退出码正确；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.4.md`
 - **v2「玩家路径热力分析」（2026-10-17，backlog Phase 3 第 11 项）**：`ui/HeatmapPanel.kt` 桌面端热力分析面板（目录选择→分析→Top 热门路径/节点热力/流失点，沿用 App 墨纸暖色视觉）+ 顶栏「分支图/热力分析」tab 切换；`replay/HeatmapLoader.kt` 纯 Kotlin 加载器（无 Compose 依赖可直编单测）；`HeatmapLoaderTest` 5 例；kotlinc 直编 + JUnit **122 通过 0 失败**（3 aborted 为既有 FaultInjectionTest 沙箱假设）；README/CHANGELOG 更新。已知限制：Compose 面板代码本机编不过（Compose 编译器插件后端崩溃，既有已知限制），面板已逐行人工审查
+- **深测轮 r4（2026-10-18）**：2 个深测文件 57 测试——dsl/ParserDeepTest（38：深层嵌套括号/表达式优先级边界/错误行号定位/SetVar 索引边界）+ lint/ValidatorDeepTest（19：死路/不可达/变量未初始化/条件永假/跳转缺失边界）；kotlinc 直编零错、JUnit **179/182**（3 aborted 为既有 FaultInjectionTest root/tmpfs 沙箱假设），0 失败
 
 **后续计划**：
 
@@ -637,6 +639,7 @@
 - **v0.2.0（2026-10-17）**：补发语义收敛 + usage 可观测 + 重启持久化。
 - **v0.3.0（2026-10-17）**：见"状态"节。
 - **v0.4.0「房间类型」（2026-10-17）**：protocol rooms-types + 网关三表（rooms/room_members/game_sessions，老库自动建表）+ 3 个 env（非法值 fail-fast）+ 房间感知路由 + 12 个 REST 端点 + Web 房间列表/徽标/设置；测试 protocol 79/79、gateway 104/104（新增 38）；真实网关冒烟 + 3 张真实截图亲眼验收；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md。
+- **v0.4.1「斗地主」（2026-10-18，娱乐厅首个可玩小游戏）**：网关 `doudizhu/` 引擎（cards.ts 牌型判定 67 测试/game.ts 牌局状态机/ai.ts 出牌 AI）+ `doudizhu-game.ts` 适配器（DoudizhuRoom + DoudizhuGameEngine 实现 GameEngine 接口）+ Web 三件套（DoudizhuLobby 开局/DoudizhuPanel 出牌/DoudizhuResult 结算）；`PLAYROOM_GAMES` 加 `doudizhu`、网关启动时 `registerGameEngine` 接线；补 `kind:"start"` 开局动作（空 session 也能开局，网关落库 JSON 会丢 rng 函数，读回时补 `Math.random`）；测试 protocol 35/35、gateway **215/215**、网关+Web tsc 零错；真实网关 E2E：建 playroom→开 doudizhu session（201）→WS start→bidding 三家 17 张→bid 落库→game_state 广播；workroom 开 doudizhu 照旧 403。本轮修真 bug：ai.ts 尾部混入 dpsk 的 markdown fence（tsc 抓获）；doudizhu-game.ts 自造 DoudizhuGameState 简化接口漏内部字段且 spring 类型写错，改为 `type DoudizhuGameState = GameState` 单一事实来源；Chat.tsx 斗地主按钮被重复 patch 三次，删至一个。
 
 **后续计划**：
 

@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardList, Gamepad2, LogOut, Settings } from 'lucide-react';
+import { ClipboardList, Gamepad2, LogOut, Settings, Spade } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
-import { fetchHistory, fetchPresence, fetchRoom, updateRoom, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload } from '../api';
+import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload } from '../api';
 import MessageList, { ChatItem } from './MessageList';
 import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
 import TaskPanel from './TaskPanel';
 import GamePanel from './GamePanel';
+import DoudizhuPanel, { isDoudizhuState } from '../doudizhu/DoudizhuPanel';
+import DoudizhuResult from '../doudizhu/DoudizhuResult';
+import DoudizhuLobby from '../doudizhu/DoudizhuLobby';
 
 interface Props {
   nick: string;
@@ -29,6 +32,8 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [hasMore, setHasMore] = useState(true);
   const [showTasks, setShowTasks] = useState(false);
   const [showGame, setShowGame] = useState(false);
+  const [showDoudizhuLobby, setShowDoudizhuLobby] = useState(false);
+  const [doudizhuErr, setDoudizhuErr] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameStatePayload | null>(null);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -237,6 +242,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
           <Gamepad2 size={16} strokeWidth={2} />
           <span>游戏</span>
         </button>
+        <button className="btn-ghost" type="button" onClick={() => { setDoudizhuErr(null); setShowDoudizhuLobby(true); }} title="开一局斗地主">
+          <Spade size={16} strokeWidth={2} />
+          <span>斗地主</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={() => setShowTasks((v) => !v)} title="任务追踪">
           <ClipboardList size={16} strokeWidth={2} />
           <span>任务</span>
@@ -300,10 +309,45 @@ export default function Chat({ nick, room, onLeave }: Props) {
           </button>
         </div>
       )}
-      {showGame && (
+      {showGame && gameState?.game === 'doudizhu' && (
+        isDoudizhuState(gameState.state) && gameState.state.phase === 'finished' ? (
+          <DoudizhuResult
+            state={gameState.state}
+            seat={nick}
+            onRematch={() => { setDoudizhuErr(null); setShowDoudizhuLobby(true); }}
+            onClose={() => setShowGame(false)}
+          />
+        ) : (
+          <DoudizhuPanel
+            state={gameState.state}
+            seat={nick}
+            onAction={(action) => socketRef.current?.sendGameAction('doudizhu', action, nick)}
+          />
+        )
+      )}
+
+      {showGame && gameState?.game !== 'doudizhu' && (
         <GamePanel
           gameState={gameState}
           onSendAction={(game, action) => socketRef.current?.sendGameAction(game, action)}
+        />
+      )}
+      {showDoudizhuLobby && (
+        <DoudizhuLobby
+          defaultSeat={nick}
+          err={doudizhuErr}
+          onStart={async (seats) => {
+            try {
+              await createGameSession(room, 'doudizhu', seats);
+              socketRef.current?.sendGameAction('doudizhu', { kind: 'start', seats }, nick);
+              setShowDoudizhuLobby(false);
+              setDoudizhuErr(null);
+              setShowGame(true);
+            } catch (e) {
+              setDoudizhuErr(e instanceof Error ? e.message : '开局失败');
+            }
+          }}
+          onClose={() => setShowDoudizhuLobby(false)}
         />
       )}
       {showTasks && (
