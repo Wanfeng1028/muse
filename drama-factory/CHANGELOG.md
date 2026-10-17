@@ -22,6 +22,16 @@
   - 测试 8 批：`FfmpegExceptionClassificationTest`、`FinalCutFfmpegRetryTest`、`FinalCutRealFfmpegRetryTest`（真实 ffmpeg）、`ProcessDueTasksSingleFlightTest`、`VideoTaskFailFastTest`、`VideoPipelineResilienceE2eTest`（E2E 韧性）、`FfmpegRetryMetricsTest`、`FfmpegServiceTest` 补强（probe/extractPoster）。
   - 脚本：`scripts/verify-flaky-fix.sh`（回归验证）、`scripts/ffmpeg-chaos-drill.sh`（故障演练：kill -9 ffmpeg 后任务经重试恢复）。
 - 发版对照报告：`docs/dod-v2.29.md`。
+- v2.29 第二阶段「覆盖率收尾 + flaky 根因验证」（2026-10-17）：
+  - 基线：干净环境全量 1921 例，BRANCH 84.07% / LINE 87.95%（门禁已红，缺口 65.8% 来自他人在途新代码——视频管线轮次 + agent-canvas，按铁律不代写）。
+  - 新增 11 个 *V229* 测试文件共 75 例（dpsk 生成），终版全量 1996 例全部通过，无新增失败：
+    AuthProxyControllerV229Test(13) / V229D2Test(6)、LlmScriptServiceV229Test(4) / V229D2Test(4)、
+    JwtAuthFilterV229Test(9)、SettingsEnvPostProcessorV229Test(2 skipped)、EpisodeServiceV229Test(7)、
+    PromptTemplateServiceV229Test(8)、CharacterServiceV229Test(10)、RunExecutorV229Test(9) / V229D2Test(3)。
+  - 覆盖率：BRANCH 84.07%→85.00%（+0.93%）、LINE 87.95%→88.75%（+0.80%）；3 个类清零（JwtAuthFilter/CharacterService/PromptTemplateService）。
+  - flaky 验证结论：基本歼灭，有低概率残留（testFullPipeline 本轮 25.31s 通过；2 处结构性残留：退避总额无上限、pb.start IOException 误判永久）。
+  - 诚实声明：门禁仍红（BRANCH 0.85/LINE 0.89）；Qwen 6 个测试类红（他人在途改动未同步）；11 处不可达分支已论证（见报告）。
+  - 发版对照报告：`docs/dod-v2.29.md`（本轮重写）。
 
 ### Docs
 - 新增 `docs/FFMPEG_RELIABILITY.md`（可靠性设计注记：分类表/重试矩阵/排障/告警）；`docs/OPERATIONS.md` 新增 8.7/8.8（ffmpeg 排障/单飞说明/告警示例）；`docs/DEGRADATION.md` ffmpeg 小节更新；README 增加可靠性小节。
