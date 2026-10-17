@@ -37,6 +37,26 @@
   </div>
 </div>
 
+<div class="card" id="ocrCard">
+  <h2>图片 OCR 录入</h2>
+  <p class="muted">把纸质账单的照片或电子账单截图拖进来，识别成文字后走同样的核对流程。图片只在内存里做识别，不会存到服务器。</p>
+  <div id="ocrError" class="error-list" style="display:none;"></div>
+  <div class="ocr-drop" id="ocrDrop">
+    <p>把图片拖到这里，或者 <button type="button" class="btn" id="ocrPickBtn">选择图片</button></p>
+    <p class="muted">支持 PNG / JPG / WebP / GIF / BMP，最大 5MB</p>
+    <input type="file" id="ocrFileInput" accept="image/*" style="display:none;">
+  </div>
+  <div id="ocrProgress" style="display:none; margin-top:12px;">
+    <div style="height:8px; background:#e2e8f0; border-radius:4px;">
+      <div id="ocrProgressBar" style="height:8px; width:0%; background:#2563eb; border-radius:4px;"></div>
+    </div>
+    <p class="muted" id="ocrProgressText">正在上传…</p>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" id="ocrPreviewBtn">识别预览</button>
+  </div>
+</div>
+
 <div class="card" id="step2Card" style="display:none;">
   <h2>第 2 步：核对内容与列对应</h2>
   <p class="muted" id="previewSummary"></p>
@@ -246,6 +266,149 @@
   }
 
   document.getElementById('previewBtn').addEventListener('click', doPreview);
+
+  var ocrFile = null;
+  var ocrDrop = document.getElementById('ocrDrop');
+  var ocrFileInput = document.getElementById('ocrFileInput');
+  var ocrPickBtn = document.getElementById('ocrPickBtn');
+  var ocrPreviewBtn = document.getElementById('ocrPreviewBtn');
+  var ocrProgress = document.getElementById('ocrProgress');
+  var ocrProgressBar = document.getElementById('ocrProgressBar');
+  var ocrProgressText = document.getElementById('ocrProgressText');
+
+  function ocrShowError(msg) {
+    var el = document.getElementById('ocrError');
+    el.innerHTML = msg;
+    el.style.display = '';
+  }
+
+  function ocrClearError() {
+    var el = document.getElementById('ocrError');
+    el.innerHTML = '';
+    el.style.display = 'none';
+  }
+
+  function ocrShowFile(file) {
+    var old = ocrDrop.querySelector('.ocr-picked');
+    if (old) old.remove();
+    if (!file) return;
+    var p = document.createElement('p');
+    p.className = 'muted ocr-picked';
+    p.textContent = '已选择：' + file.name;
+    ocrDrop.appendChild(p);
+  }
+
+  function ocrBaseName(name) {
+    var i = name.lastIndexOf('.');
+    return i > 0 ? name.slice(0, i) : name;
+  }
+
+  ocrDrop.addEventListener('click', function (e) {
+    if (e.target === ocrPickBtn || ocrPickBtn.contains(e.target)) return;
+    ocrFileInput.click();
+  });
+
+  ocrPickBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    ocrFileInput.click();
+  });
+
+  ocrFileInput.addEventListener('change', function () {
+    ocrFile = ocrFileInput.files[0] || null;
+    ocrClearError();
+    ocrShowFile(ocrFile);
+  });
+
+  ocrDrop.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    ocrDrop.classList.add('dragging');
+  });
+
+  ocrDrop.addEventListener('dragleave', function () {
+    ocrDrop.classList.remove('dragging');
+  });
+
+  ocrDrop.addEventListener('drop', function (e) {
+    e.preventDefault();
+    ocrDrop.classList.remove('dragging');
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    if (!/^image\//.test(f.type)) {
+      ocrShowError('只能拖入图片文件');
+      return;
+    }
+    ocrFile = f;
+    ocrClearError();
+    ocrShowFile(ocrFile);
+  });
+
+  ocrPreviewBtn.addEventListener('click', doOcrPreview);
+
+  function doOcrPreview() {
+    if (!ocrFile) {
+      ocrShowError('请先选择一张图片');
+      return;
+    }
+    ocrClearError();
+    ocrProgress.style.display = '';
+    ocrProgressBar.style.width = '0%';
+    ocrProgressText.textContent = '正在上传…';
+
+    var fd = new FormData();
+    fd.append('file', ocrFile);
+    var tpl = document.getElementById('templateSelect');
+    if (tpl && tpl.value) fd.append('template_id', tpl.value);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/statements/ocr');
+    xhr.timeout = 120000;
+
+    xhr.upload.onprogress = function (ev) {
+      if (ev.lengthComputable) {
+        var pct = Math.round((ev.loaded / ev.total) * 100);
+        ocrProgressBar.style.width = pct + '%';
+        ocrProgressText.textContent = '正在上传…' + pct + '%';
+      }
+    };
+
+    xhr.onload = function () {
+      if (xhr.status === 200) {
+        var data;
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch (err) {
+          ocrProgress.style.display = 'none';
+          ocrShowError('服务器返回的内容无法解析');
+          return;
+        }
+        var ocrText = data.ocr_text || '';
+        selectedFile = new File([ocrText], ocrBaseName(ocrFile.name) + '.csv', { type: 'text/csv' });
+        renderPreview(data);
+        setStep(2);
+        ocrProgress.style.display = 'none';
+      } else {
+        var msg = '识别失败（HTTP ' + xhr.status + '）';
+        try {
+          var body = JSON.parse(xhr.responseText);
+          if (body && body.detail) msg = body.detail;
+        } catch (err) {}
+        ocrProgress.style.display = 'none';
+        ocrShowError(esc(msg).replace(/\n/g, '<br>'));
+      }
+    };
+
+    xhr.onerror = function () {
+      ocrProgress.style.display = 'none';
+      ocrShowError('网络出错，请重试');
+    };
+
+    xhr.ontimeout = function () {
+      ocrProgress.style.display = 'none';
+      ocrShowError('网络出错，请重试');
+    };
+
+    xhr.send(fd);
+  }
   document.getElementById('reparseBtn').addEventListener('click', doPreview);
   document.getElementById('uploadBtn').addEventListener('click', doUpload);
 

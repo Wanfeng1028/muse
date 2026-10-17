@@ -246,7 +246,44 @@ python -m venv .venv
 make install
 ```
 
-## 7. 已知限制
+## 7. OCR（账单图片录入）
+
+### 7.1 安装 tesseract（真实 OCR）
+
+不装也能用。默认 `LEDGER_OCR_PROVIDER=mock`，OCR 返回模拟文本行，链路可以演示。
+
+要识别真实图片，先装 tesseract：
+
+Debian/Ubuntu：
+
+    sudo apt install tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng
+
+macOS：
+
+    brew install tesseract tesseract-lang
+
+装完确保 `tesseract` 在 PATH 里。
+
+相关环境变量：
+
+- `LEDGER_OCR_PROVIDER`：`mock` / `tesseract` / `env`，默认 `mock`。
+- `LEDGER_OCR_LANG`：默认 `chi_sim+eng`。
+- `LEDGER_OCR_TIMEOUT`：默认 30 秒，最小 5。
+
+### 7.2 不可用时的行为
+
+缺 binary、执行失败、超时，接口返回 503，detail 原样带安装指引（OcrUnavailableError）。调用方直接展示 detail，不要重试。
+
+### 7.3 图片处理与限制
+
+图片只在内存里识别，不写盘、不存库。
+
+- 单张图片上限 5MB，超了返回 413。
+- 只接受类型白名单里的图片，非图片返回 415。
+- 上传后做 magic bytes 校验，坏图返回 400。
+- 识别出空文本返回 422。
+
+## 8. 已知限制
 
 - 单用户本地应用，无鉴权，不要直接暴露到公网。
 - SQLite 单文件存储，写入并发能力有限。

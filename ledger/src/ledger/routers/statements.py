@@ -21,6 +21,7 @@ from ledger.models import (
     Transaction,
     utcnow,
 )
+from ledger.ocr import OcrFailedError, OcrUnavailableError, get_provider
 from ledger.schemas import (
     BatchClaimIn,
     BatchItemError,
@@ -387,6 +388,117 @@ async def parse_preview(
     auto_name = None if template else _builtin_name_for_mapping(resolved)
     return ParsePreviewOut(
         encoding=encoding,
+        headers=headers,
+        mapping=resolved,
+        template_name=template.name if template else auto_name,
+        total_rows=len(records) + len(errors),
+        sample=records[:10],
+        errors=errors,
+    )
+
+
+@router.post("/api/statements/ocr", response_model=ParsePreviewOut)
+async def ocr_statement_preview(
+    file: UploadFile = File(...),
+    template_id: int | None = Form(None),
+    mapping: str | None = Form(None),
+    session: AsyncSession = Depends(get_session),
+) -> ParsePreviewOut:
+    """账单图片 OCR 预览：图片→OCR 文本行→复用 statement 解析预览流，不写库。"""
+    await ensure_builtin_templates(session)
+
+    filename = file.filename or ""
+    if not filename:
+        raise HTTPException(status_code=400, detail="文件名为空")
+
+    ext = ""
+    dot = filename.rfind(".")
+    if dot >= 0:
+        ext = filename[dot:].lower()
+    allowed_exts = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+    if ext not in allowed_exts:
+        raise HTTPException(status_code=415, detail="仅支持图片文件（PNG/JPG/WebP/GIF/BMP）")
+
+    content_type = file.content_type or ""
+    if content_type and not content_type.startswith("image/"):
+        raise HTTPException(status_code=415, detail="仅支持图片文件（PNG/JPG/WebP/GIF/BMP）")
+
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="图片内容为空")
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="图片超过 5MB 限制")
+
+    def _is_valid_image(data: bytes) -> bool:
+        if len(data) >= 4 and data[:4] == b"\x89PNG":
+            return True
+        if len(data) >= 3 and data[:3] == b"\xff\xd8\xff":
+            return True
+        if len(data) >= 4 and data[:4] == b"GIF8":
+            return True
+        if len(data) >= 2 and data[:2] == b"BM":
+            return True
+        if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            return True
+        return False
+
+    if not _is_valid_image(raw):
+        raise HTTPException(status_code=400, detail="不是有效的图片文件")
+
+    try:
+        provider = get_provider()
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    try:
+        lines = await provider.ocr_lines(raw)
+    except OcrUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except OcrFailedError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        raise HTTPException(status_code=501, detail=str(exc)) from exc
+
+    text = "\n".join(lines)
+
+    explicit_mapping: dict | None = None
+    if mapping:
+        try:
+            parsed = json.loads(mapping)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail="mapping 不是合法 JSON") from exc
+        if not isinstance(parsed, dict):
+            raise HTTPException(status_code=400, detail="mapping 必须为对象")
+        explicit_mapping = parsed
+
+    template: StatementTemplate | None = None
+    if template_id is not None:
+        template = await session.get(StatementTemplate, template_id)
+        if template is None:
+            raise HTTPException(status_code=404, detail="模板不存在")
+
+    hint: dict = {}
+    if explicit_mapping:
+        hint = explicit_mapping
+    elif template is not None:
+        try:
+            m = json.loads(template.mapping_json)
+            hint = m if isinstance(m, dict) else {}
+        except json.JSONDecodeError:
+            hint = {}
+
+    headers, data_rows = _extract_table(text, hint)
+    resolved = _resolve_mapping(explicit_mapping, template, headers)
+
+    if "date" not in resolved or "amount" not in resolved:
+        raise HTTPException(status_code=400, detail="mapping 必须包含 date 和 amount")
+
+    records, errors = statement_parser.apply_mapping(data_rows, resolved)
+
+    auto_name = None if template else _builtin_name_for_mapping(resolved)
+    return ParsePreviewOut(
+        encoding="ocr",
+        ocr_text=text,
         headers=headers,
         mapping=resolved,
         template_name=template.name if template else auto_name,
@@ -1100,6 +1212,7 @@ async def delete_match_rule(rule_id: int, session: AsyncSession = Depends(get_se
     await session.commit()
     return {"ok": True}
 
+
 @router.get("/api/merchant-aliases", response_model=list[MerchantAliasOut])
 async def list_merchant_aliases(session: AsyncSession = Depends(get_session)) -> list[MerchantAliasOut]:
     """列出全部商户别名。"""
@@ -1116,6 +1229,7 @@ async def list_merchant_aliases(session: AsyncSession = Depends(get_session)) ->
         item.category_name = categories.get(a.category_id, "")
         out.append(item)
     return out
+
 
 @router.patch("/api/merchant-aliases/{alias_id}", response_model=MerchantAliasOut)
 async def update_merchant_alias(
@@ -1163,6 +1277,7 @@ async def update_merchant_alias(
     category = await session.get(Category, record.category_id)
     out.category_name = category.name if category is not None else ""
     return out
+
 
 @router.delete("/api/merchant-aliases/{alias_id}")
 async def delete_merchant_alias(alias_id: int, session: AsyncSession = Depends(get_session)) -> dict:

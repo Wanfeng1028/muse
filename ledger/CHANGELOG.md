@@ -2,6 +2,24 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.8 - 2026-10-17
+
+### 新增
+
+- `POST /api/statements/ocr`：multipart 上传图片，做 magic bytes 校验，得到 OCR 文本行，复用 statement 解析预览流。坏图 400、超 5MB 413、非图片 415、识别出空文本 422；缺 binary、执行失败、超时返回 503，detail 原样带安装指引（OcrUnavailableError）。
+- 图片只在内存里识别，不写盘、不存库。
+- `src/ledger/ocr.py`：新增 `OcrUnavailableError` 与 `ocr_lines` 方法（Mock/Tesseract）。
+- `ParsePreviewOut` 新增 `ocr_text` 字段。
+- `statement.html` 新增「图片 OCR 录入」卡片：拖拽区、进度条、识别预览后进第 2 步核对。
+- 侦探队列集成：OCR → 上传 → 确认 → 认领 → 记住为规则，全复用既有接口。
+
+### 测试
+
+- pytest 全量 265 通过、1 跳过（跳过的是环境无 tesseract 的既有用例）。
+- ruff check 与 ruff format 全洁。
+- 真实服务冒烟（mock provider）7 步：建账户 201 → OCR 预览 200 → 确认上传 200 → 确认批次 200 → 侦探队列 4 条 pending → 认领 200 → 记住为规则 1 条。
+- 2 张截图亲眼验收通过。
+
 ## v2.7 - 2026-10-17
 
 ### 新增

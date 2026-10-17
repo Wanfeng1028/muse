@@ -341,6 +341,7 @@ class MatchRuleOut(BaseModel):
     created_at: str
     category_name: str = ""
 
+
 class MerchantAliasOut(BaseModel):
     """商户别名出参。"""
 
@@ -352,6 +353,7 @@ class MerchantAliasOut(BaseModel):
     direction: str
     created_at: str
     category_name: str = ""
+
 
 class MerchantAliasUpdate(BaseModel):
     """商户别名更新入参（全可选）。"""
@@ -451,6 +453,7 @@ class ParsePreviewOut(BaseModel):
     total_rows: int
     sample: list[dict]
     errors: list[dict]
+    ocr_text: str = ""  # 仅 OCR 预览时有值，普通 CSV 预览为空字符串
 
 
 class UploadOut(BaseModel):

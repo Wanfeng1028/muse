@@ -38,6 +38,13 @@ class OcrFailedError(OcrError):
     """OCR 识别失败。"""
 
 
+class OcrUnavailableError(OcrError):
+    """OCR 能力不可用（缺 tesseract 二进制、执行失败或超时）。
+
+    message 必须带安装指引，便于调用方直接展示给用户。
+    """
+
+
 class OcrProvider(Protocol):
     """OCR 提供商协议。"""
 
@@ -66,6 +73,22 @@ class MockOcrProvider:
             raw_text="星巴克臻选\n拿铁 68.00\n2026-10-16",
             field_confidence={"merchant": 0.95, "amount_cents": 0.9, "occurred_on": 0.85},
         )
+
+    async def ocr_lines(self, image: bytes) -> list[str]:
+        """返回模拟的微信支付账单 CSV 风格文本行，供 statement 解析流消费。
+
+        注意：这是编造的模拟数据，不反映真实图片内容，仅用于打通「账单图片 OCR 录入」
+        到 statement 解析的链路。
+        """
+        if not image:
+            raise OcrFailedError("图片内容为空")
+        return [
+            "交易时间,交易对方,商品,金额(元),收/支",
+            "2026-10-15 08:32:11,肯德基,早餐套餐,18.50,支出",
+            "2026-10-16 12:05:47,美团外卖,午餐,32.80,支出",
+            "2026-10-16 19:21:03,全家便利店,日用品,45.60,支出",
+            "2026-10-16 21:10:55,微信红包,收到红包,88.00,收入",
+        ]
 
 
 class TesseractOcrProvider:
@@ -169,6 +192,41 @@ class TesseractOcrProvider:
             raw_text=text,
             field_confidence=confidences,
         )
+
+    async def ocr_lines(self, image: bytes) -> list[str]:
+        """识别图片并返回按行切分的文本列表（已 strip、去除空行）。"""
+        if not image:
+            raise OcrFailedError("图片内容为空")
+        if not shutil.which("tesseract"):
+            raise OcrUnavailableError(self._INSTALL_HINT)
+        payload = self._preprocess(image)
+        try:
+            proc = subprocess.run(
+                [
+                    "tesseract",
+                    "stdin",
+                    "stdout",
+                    "-l",
+                    self._lang,
+                    "--psm",
+                    str(self._psm),
+                ],
+                input=payload,
+                capture_output=True,
+                timeout=self._timeout,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise OcrUnavailableError(f"tesseract 执行超时（{self._timeout} 秒）：{self._INSTALL_HINT}") from exc
+        if proc.returncode != 0:
+            stderr_text = (proc.stderr or b"").decode("utf-8", errors="replace")
+            tail = stderr_text[-300:]
+            raise OcrUnavailableError(f"tesseract 退出码 {proc.returncode}：{tail}\n{self._INSTALL_HINT}")
+        raw = (proc.stdout or b"").decode("utf-8", errors="replace")
+        lines = [line.strip() for line in raw.splitlines()]
+        lines = [line for line in lines if line]
+        if not lines:
+            raise OcrFailedError("tesseract 未识别出任何文本")
+        return lines
 
     def _mask_dates(self, text: str) -> str:
         """把文本中所有日期形态片段替换为等长空格，避免日期数字被金额正则误提取。"""
