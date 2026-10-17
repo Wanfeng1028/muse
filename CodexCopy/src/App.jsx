@@ -6,7 +6,7 @@ import SettingsView from './components/settings/SettingsView';
 import SchedulesView from './components/schedules/SchedulesView';
 import CommandPalette from './components/palette/CommandPalette';
 import { CodexLogo } from './components/icons';
-import { threads as seedThreads, suggestions, models } from './data/mock';
+import { projects as seedProjects, suggestions, models } from './data/mock';
 
 const FAKE_REPLIES = [
   {
@@ -22,44 +22,27 @@ const FAKE_REPLIES = [
     ],
     text: '改好了，测试全过。你看下 diff，没问题我就收尾。',
   },
-  {
-    thinking: '这个改动涉及样式系统，先确认设计 token。',
-    tools: [{ name: 'read', target: 'src/styles/tokens.css', status: 'ok', output: '→ 读取 120 行\n  - 找到 --bg-* / --text-* 变量' }],
-    text: '设计 token 找到了。给你看下改动预览：',
-    diff: {
-      file: 'src/styles/tokens.css',
-      hunks: [
-        { head: '@@ -12,7 +12,9 @@ :root {', lines: [
-          { t: ' ', c: '  --bg-main: #212121;' },
-          { t: '-', c: '  --bg-sidebar: #171717;' },
-          { t: '+', c: '  --bg-sidebar: #1a1a1a;' },
-          { t: '+', c: '  --theme: dark;' },
-          { t: ' ', c: '  --text-primary: #ececec;' },
-        ]},
-      ],
-    },
-  },
 ];
 
 let replyIdx = 0;
 
 export default function App() {
-  const [view, setView] = useState('thread'); // thread | settings | schedules
-  const [theme, setTheme] = useState('dark'); // dark | light（codex-dark / codex-light 官方主题）
-
-  // 主题挂到 documentElement，保证 body 及全局继承
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-  const [threads, setThreads] = useState(seedThreads);
-  const [activeId, setActiveId] = useState('t1');
+  const [view, setView] = useState('thread');
+  const [theme, setTheme] = useState('dark');
+  const [projects, setProjects] = useState(seedProjects);
+  const [activeProjectId, setActiveProjectId] = useState('p1');
+  const [activeChatId, setActiveChatId] = useState('t1');
   const [streaming, setStreaming] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const scrollRef = useRef(null);
 
-  const active = threads.find((t) => t.id === activeId);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
-  // Cmd+K / Ctrl+K 打开命令面板
+  const activeProject = projects.find((p) => p.id === activeProjectId);
+  const activeChat = activeProject?.chats.find((c) => c.id === activeChatId);
+
   useEffect(() => {
     const h = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen((v) => !v); }
@@ -68,51 +51,58 @@ export default function App() {
     return () => window.removeEventListener('keydown', h);
   }, []);
 
-  const goThread = (id) => { setActiveId(id); setView('thread'); };
+  const selectChat = (pid, cid) => {
+    setActiveProjectId(pid);
+    setActiveChatId(cid);
+    setView('thread');
+  };
 
-  const newThread = () => {
+  const newChat = () => {
     const id = 't' + Date.now();
-    setThreads((ts) => [{ id, title: 'New thread', group: '今天', model: models[0], status: 'idle', messages: [] }, ...ts]);
-    setActiveId(id);
+    const chat = { id, title: 'New chat', updated: '今天', model: models[0], status: 'idle', messages: [] };
+    setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? { ...p, chats: [chat, ...p.chats] } : p)));
+    setActiveChatId(id);
     setView('thread');
   };
 
   const send = (text) => {
     const reply = FAKE_REPLIES[replyIdx++ % FAKE_REPLIES.length];
-    setThreads((ts) =>
-      ts.map((t) => (t.id === activeId
-        ? { ...t, title: t.messages.length === 0 ? text.slice(0, 28) : t.title, status: 'working', messages: [...t.messages, { role: 'user', text }] }
-        : t)));
+    const update = (ps) => ps.map((p) => (p.id === activeProjectId ? {
+      ...p,
+      chats: p.chats.map((c) => (c.id === activeChatId
+        ? { ...c, title: c.messages.length === 0 ? text.slice(0, 32) : c.title, status: 'working', messages: [...c.messages, { role: 'user', text }] }
+        : c)),
+    } : p));
+    setProjects(update);
     setStreaming(true);
     setTimeout(() => {
-      setThreads((ts) =>
-        ts.map((t) => (t.id === activeId
-          ? { ...t, status: 'done', messages: [...t.messages, { role: 'agent', ...reply }] }
-          : t)));
+      setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? {
+        ...p,
+        chats: p.chats.map((c) => (c.id === activeChatId
+          ? { ...c, status: 'done', messages: [...c.messages, { role: 'agent', ...reply }] }
+          : c)),
+      } : p)));
       setStreaming(false);
     }, 2600);
   };
 
   const paletteAction = useCallback((id) => {
-    if (id === 'new') newThread();
+    if (id === 'new') newChat();
     if (id === 'settings') setView('settings');
     if (id === 'schedules') setView('schedules');
     if (id === 'search') document.getElementById('thread-filter')?.focus();
-    if (id === 'compact' && active) alert('Compact: 总结当前 thread 上下文（演示版未实现）');
-    if (id === 'rename' && active) {
-      const name = prompt('Rename thread', active.title);
-      if (name) setThreads((ts) => ts.map((t) => (t.id === activeId ? { ...t, title: name } : t)));
-    }
-  }, [active, activeId]);
+  }, [activeProjectId]);
 
   useEffect(() => {
     const el = scrollRef.current?.querySelector('.thread-scroll');
     if (el) el.scrollTop = el.scrollHeight;
-  }, [activeId, threads, streaming, view]);
+  }, [activeChatId, projects, streaming, view]);
+
+  // 真实占位文案（逆向）："Ask Codex anything locally in {project}"
+  const placeholder = activeProject ? `Ask Codex anything locally in ${activeProject.name}` : 'Ask Codex anything locally';
 
   return (
     <div className="app" ref={scrollRef}>
-      {/* 桌面窗口 chrome（macOS 风格） */}
       <div className="window-chrome">
         <div className="traffic-lights">
           <span className="tl close" /><span className="tl min" /><span className="tl max" />
@@ -121,8 +111,11 @@ export default function App() {
       </div>
       <div className="app-body">
         <Sidebar
-          threads={threads} activeId={view === 'thread' ? activeId : null}
-          onSelect={goThread} onNew={newThread}
+          projects={projects}
+          activeChatId={view === 'thread' ? activeChatId : null}
+          activeProjectId={activeProjectId}
+          onSelectChat={selectChat}
+          onNewChat={newChat}
           onOpenSettings={() => setView('settings')}
           onOpenSchedules={() => setView('schedules')}
           currentView={view}
@@ -132,24 +125,23 @@ export default function App() {
             <SettingsView onClose={() => setView('thread')} theme={theme} onThemeChange={setTheme} />
           ) : view === 'schedules' ? (
             <>
-              <div className="topbar">
-                <div className="topbar-title">Automations</div>
-              </div>
+              <div className="topbar"><div className="topbar-title">Automations</div></div>
               <SchedulesView />
             </>
           ) : (
             <>
               <div className="topbar">
-                <div className="topbar-title">{active ? active.title : 'Codex'}</div>
-                {active && <div className="model-badge"><span className="dot" />{active.model}</div>}
+                <div className="topbar-title">{activeChat ? activeChat.title : 'Codex'}</div>
+                {activeProject && <div className="project-badge">{activeProject.name} · {activeProject.branch}</div>}
+                {activeChat && <div className="model-badge"><span className="dot" />{activeChat.model}</div>}
               </div>
-              {active && active.messages.length > 0 ? (
-                <ThreadView thread={active} streaming={streaming} />
+              {activeChat && activeChat.messages.length > 0 ? (
+                <ThreadView thread={activeChat} streaming={streaming} />
               ) : (
                 <div className="empty-state">
                   <div className="empty-logo"><CodexLogo size={52} /></div>
-                  <div className="empty-title">What should we build?</div>
-                  <div className="empty-sub">CodexCopy — Codex 桌面端 UI 复刻（演示版）</div>
+                  <div className="empty-title">Welcome to Codex</div>
+                  <div className="empty-sub">The best way to build with agents</div>
                   <div className="suggestion-grid">
                     {suggestions.map((s, i) => (
                       <button key={i} className="suggestion" onClick={() => send(s.title + '：' + s.desc)}>
@@ -160,7 +152,7 @@ export default function App() {
                   </div>
                 </div>
               )}
-              <Composer onSend={send} disabled={streaming} />
+              <Composer onSend={send} disabled={streaming} placeholder={placeholder} />
             </>
           )}
         </div>

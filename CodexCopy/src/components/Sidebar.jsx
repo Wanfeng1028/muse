@@ -1,59 +1,90 @@
 import { useState } from 'react';
-import { PlusIcon, SearchIcon, SettingsIcon, ClockIcon } from './icons';
+import { PlusIcon, SearchIcon, SettingsIcon, ClockIcon, FolderIcon, ChevronDown, CheckIcon } from './icons';
 
 const STATUS_COLORS = { working: '#FA994C', done: '#00a240', idle: '#8f8f8f' };
 
-export default function Sidebar({ threads, activeId, onSelect, onNew, onOpenSettings, onOpenSchedules, currentView }) {
+// 侧栏：项目中心结构（逆向证据："This remote folder will appear as its own project in the sidebar"）
+// 过滤器： "Filter sidebar chats" / "All chats" / "Relevant"
+export default function Sidebar({ projects, activeChatId, activeProjectId, onSelectChat, onNewChat, onOpenSettings, onOpenSchedules, currentView }) {
   const [filter, setFilter] = useState('');
-  const groups = {};
-  threads.forEach((t) => {
-    if (filter && !t.title.toLowerCase().includes(filter.toLowerCase())) return;
-    (groups[t.group] = groups[t.group] || []).push(t);
-  });
+  const [showFilter, setShowFilter] = useState('all'); // all | relevant
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [expanded, setExpanded] = useState({ [activeProjectId]: true });
+
+  const toggleExpand = (pid) => setExpanded({ ...expanded, [pid]: !expanded[pid] });
+
+  const matchFilter = (title) => !filter || title.toLowerCase().includes(filter.toLowerCase());
 
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
-        <button className="new-thread-btn" onClick={onNew}>
+        <button className="new-thread-btn" onClick={onNewChat}>
           <PlusIcon />
-          <span>New thread</span>
+          <span>New chat</span>
         </button>
-        <button className="icon-btn" title="Search">
-          <SearchIcon />
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button className="icon-btn" title="Filter sidebar chats" onClick={() => setFilterOpen(!filterOpen)}>
+            <SearchIcon />
+          </button>
+          {filterOpen && (
+            <div className="filter-menu">
+              <div className="filter-menu-title">Show</div>
+              {[
+                { id: 'all', label: 'All chats', desc: 'Show threads from all branches' },
+                { id: 'relevant', label: 'Relevant', desc: 'Current branch, worktrees, needs attention' },
+              ].map((o) => (
+                <div key={o.id} className="filter-menu-item" onClick={() => { setShowFilter(o.id); setFilterOpen(false); }}>
+                  <span style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13 }}>{o.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{o.desc}</div>
+                  </span>
+                  {showFilter === o.id && <CheckIcon size={13} />}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="sidebar-search" onClick={() => document.getElementById('thread-filter')?.focus()}>
+      <div className="sidebar-search">
         <SearchIcon />
         <input
           id="thread-filter"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Filter threads"
+          placeholder="Filter sidebar chats"
           style={{ background: 'transparent', border: 'none', outline: 'none', color: 'inherit', fontSize: 'inherit', width: '100%' }}
         />
         <kbd>⌘K</kbd>
       </div>
 
       <div className="thread-groups">
-        {Object.entries(groups).map(([g, list]) => (
-          <div key={g}>
-            <div className="thread-group-label">{g}</div>
-            {list.map((t) => (
-              <div
-                key={t.id}
-                className={'thread-item' + (t.id === activeId ? ' active' : '')}
-                onClick={() => onSelect(t.id)}
-              >
-                <span className="dot" style={{ background: STATUS_COLORS[t.status] || '#8e8e8e' }} />
-                <span className="title">{t.title}</span>
+        {projects.map((p) => {
+          const chats = p.chats.filter((c) => matchFilter(c.title));
+          if (showFilter === 'relevant' && p.id !== activeProjectId) return null;
+          if (chats.length === 0 && filter) return null;
+          const isOpen = expanded[p.id];
+          return (
+            <div key={p.id} className="project-group">
+              <div className="project-head" onClick={() => toggleExpand(p.id)}>
+                <span className={'twisty' + (isOpen ? ' open' : '')}><ChevronDown size={12} /></span>
+                <span className="project-icon"><FolderIcon /></span>
+                <span className="project-name">{p.name}</span>
+                <span className="project-branch">{p.branch}</span>
               </div>
-            ))}
-          </div>
-        ))}
-        {Object.keys(groups).length === 0 && (
-          <div style={{ padding: '20px 10px', color: 'var(--text-tertiary)', fontSize: 13 }}>No threads match</div>
-        )}
+              {isOpen && chats.map((c) => (
+                <div
+                  key={c.id}
+                  className={'thread-item nested' + (c.id === activeChatId ? ' active' : '')}
+                  onClick={() => onSelectChat(p.id, c.id)}
+                >
+                  <span className="dot" style={{ background: STATUS_COLORS[c.status] || '#8f8f8f' }} />
+                  <span className="title">{c.title}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
 
       <div className="sidebar-bottom">

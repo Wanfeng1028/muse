@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { AttachIcon, SendIcon, ChevronDown } from '../icons';
 import { models } from '../../data/mock';
 
-export default function Composer({ onSend, disabled }) {
+export default function Composer({ onSend, disabled, placeholder }) {
   const [text, setText] = useState('');
   const [model, setModel] = useState(models[0]);
   const [modelOpen, setModelOpen] = useState(false);
@@ -34,7 +34,7 @@ export default function Composer({ onSend, disabled }) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
             }}
-            placeholder="Ask Codex to do something…"
+            placeholder={placeholder || "Ask Codex to do something…"}
             rows={1}
           />
           <div className="composer-bar">
