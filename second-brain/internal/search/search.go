@@ -338,3 +338,91 @@ func RankDetailed(notes []store.Note, query string) []RankedNote {
 	})
 	return items
 }
+
+// orTokenScore 表示单个 token 在一条笔记上的 OR 命中情况。
+type orTokenScore struct {
+	token     string
+	titleHit  bool
+	score     float64
+	matches   []Match
+}
+
+// orScore 对单条笔记按 OR 语义打分：对每个 token 单独调用 ScoreDetailed，
+// 命中即计入（分数>0），并累加命中 token 数。标题命中额外加权。
+func orScore(title, body string, tags []string, tokens []string) (float64, int, []Match) {
+	var total float64
+	var hitCount int
+	var matches []Match
+	for _, tok := range tokens {
+		s, m := ScoreDetailed(title, body, tags, tok)
+		if s <= 0 {
+			continue
+		}
+		hitCount++
+		total += s
+		if strings.Contains(strings.ToLower(title), strings.ToLower(tok)) {
+			total += 3.0
+		}
+		matches = append(matches, m...)
+	}
+	return total, hitCount, matches
+}
+
+// SearchWithFallback 先按 AND 语义搜索（Rank）；结果为空且 query 分词后 token 数>=2 时，
+// 改用 OR 语义重搜（任一 token 命中即收），并按命中 token 数降序、标题命中加权排序。
+func SearchWithFallback(notes []store.Note, query string, limit int) []RankedNote {
+	tokens := Tokenize(query)
+	if len(tokens) > 0 {
+		// 严格 AND：每个 token 都必须出现
+		var and []RankedNote
+		for _, n := range notes {
+			hay := strings.ToLower(n.Title + " " + n.Body + " " + strings.Join(n.Tags, " "))
+			ok := true
+			for _, tok := range tokens {
+				if !strings.Contains(hay, strings.ToLower(tok)) {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				s, m := ScoreDetailed(n.Title, n.Body, n.Tags, query)
+				and = append(and, RankedNote{Note: n, Score: s, Matches: m})
+			}
+		}
+		if len(and) > 0 {
+			sort.SliceStable(and, func(i, j int) bool { return and[i].Score > and[j].Score })
+			if limit > 0 && len(and) > limit {
+				and = and[:limit]
+			}
+			return and
+		}
+	}
+	if len(tokens) < 2 {
+		return nil
+	}
+	items := make([]RankedNote, 0, len(notes))
+	hitCounts := make(map[int]int, len(notes))
+	for i, n := range notes {
+		s, hits, m := orScore(n.Title, n.Body, n.Tags, tokens)
+		if s <= 0 {
+			continue
+		}
+		items = append(items, RankedNote{Note: n, Score: s, Matches: m})
+		hitCounts[i] = hits
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		if hitCounts[i] != hitCounts[j] {
+			return hitCounts[i] > hitCounts[j]
+		}
+		return items[i].Score > items[j].Score
+	})
+	out := make([]RankedNote, 0, len(items))
+	for _, it := range items {
+		out = append(out, it)
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out
+}
+

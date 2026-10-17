@@ -634,3 +634,13 @@
 - 娱乐厅房间类型 + 小游戏（狼人杀/斗地主）——用户 2026-10-16 想法
 - 工作坊房间类型（派活/汇报/交接）人设区分
 - v2 桌面端（Tauri）
+
+- **多项目深耕轮 r121920（2026-10-17）**：36 个 dpsk 批次（微信 ChatAPI DeepSeek-V4-Flash）——
+  - sentinel：delivery_deep_test 外键修复（12 测试全绿）、腾讯云短信 ALERTING_CHANNELS 章节、OPERATIONS 短信运维章节 + SMS_TENCENT_SETUP 接入文档、depscan 复扫报告模板；main.go 短信配置补考通过
+  - second-brain：CJK 词典分词（偿还 P2-6，1106 词）、AND→OR 回退搜索（偿还 P2-7）、调度器单实例文件锁 + SCHEDULER_DEPLOYMENT.md（偿还 P1-4）
+  - mini-os：应用商店插件化（PluginManifest/注册表/zip 安装/前端商店页，29 测试全绿）
+  - mortisedb：冲突 webhook 通知、PG 只读源设计文档、冲突解决深测、README v1.4 路线图
+  - docseek：serve 搜索高亮、eval v09 复盘报告、jieba 边界测试、README 搜索质量章节
+  - feedflow：FTS5 搜索深测（23 测试全绿）+ 修真实 bug（单引号/保留字致 FTS5 500）
+  - linkshort：地域统计 API 测试
+  - 验收：各项目构建通过，新增测试全绿；诚实声明：dpsk 3 处编造（Open(path)/metrics.Counter/sql.NullString 假设）由编排机械修复并披露

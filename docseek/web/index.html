@@ -183,6 +183,14 @@
     color: #2f5b8f;
     font-weight: 600;
   }
+  :root {
+    --mark-bg: #fff3b0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --mark-bg: #5c4a00;
+    }
+  }
   .result-snippet {
     margin-top: 8px;
     font-size: 13px;
@@ -193,6 +201,12 @@
     font-style: normal;
     background: #fff3c4;
     color: #7a5a00;
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+  .result-snippet mark {
+    background: var(--mark-bg);
+    color: inherit;
     padding: 0 2px;
     border-radius: 3px;
   }
@@ -419,6 +433,283 @@
     out += escapeHtml(text.slice(i));
     return out;
   }
+
+  // 转义正则特殊字符，供 highlight 构造 RegExp 使用。
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
+  }
+
+  // 判断是否为 CJK 字符（中文按字切分片段边界用）。
+  function isCJK(ch) {
+    var c = ch.charCodeAt(0);
+    return (c >= 0x4E00 && c <= 0x9FFF) ||
+           (c >= 0x3400 && c <= 0x4DBF) ||
+           (c >= 0x3000 && c <= 0x303F) ||
+           (c >= 0xFF00 && c <= 0xFFEF);
+  }
+
+  // 判断字符是否为单词字符（英文/数字/下划线），用于不截断单词。
+  function isWordChar(ch) {
+    return /[A-Za-z0-9_]/.test(ch);
+  }
+
+  // 从 pos 向左扩展到词边界（不截断单词；中文按字）。
+  function expandLeft(text, pos) {
+    var i = pos;
+    while (i > 0) {
+      var prev = text.charAt(i - 1);
+      if (isWordChar(prev) || isCJK(prev)) { i--; } else { break; }
+    }
+    return i;
+  }
+
+  // 从 pos 向右扩展到词边界（不截断单词；中文按字）。
+  function expandRight(text, pos) {
+    var i = pos;
+    while (i < text.length) {
+      var cur = text.charAt(i);
+      if (isWordChar(cur) || isCJK(cur)) { i++; } else { break; }
+    }
+    return i;
+  }
+
+  // 在 text 中找出所有 keywords 的命中区间 [start, end)，大小写不敏感。
+  // 返回按 start 升序、互不重叠的区间数组。
+  function findKeywordRanges(text, keywords) {
+    var ranges = [];
+    if (!keywords || keywords.length === 0) { return ranges; }
+    for (var k = 0; k < keywords.length; k++) {
+      var kw = keywords[k];
+      if (!kw) { continue; }
+      var re = new RegExp(escapeRegExp(kw), "gi");
+      var m;
+      while ((m = re.exec(text)) !== null) {
+        if (m[0].length === 0) { re.lastIndex++; continue; }
+        ranges.push({ start: m.index, end: m.index + m[0].length });
+        if (re.lastIndex <= m.index) { re.lastIndex = m.index + 1; }
+      }
+    }
+    ranges.sort(function (a, b) {
+      if (a.start !== b.start) { return a.start - b.start; }
+      return a.end - b.end;
+    });
+    var merged = [];
+    for (var i = 0; i < ranges.length; i++) {
+      var r = ranges[i];
+      if (merged.length > 0 && r.start <= merged[merged.length - 1].end) {
+        if (r.end > merged[merged.length - 1].end) {
+          merged[merged.length - 1].end = r.end;
+        }
+      } else {
+        merged.push({ start: r.start, end: r.end });
+      }
+    }
+    return merged;
+  }
+
+  // 在 text 上做关键词高亮，返回 HTML 字符串。
+  // - 大小写不敏感
+  // - 转义正则特殊字符（如 "C++"）
+  // - 转义 HTML（防注入）
+  // - 用 <mark> 包裹命中词
+  function highlight(text, keywords) {
+    if (text === null || text === undefined) { return ""; }
+    var s = String(text);
+    var ranges = findKeywordRanges(s, keywords);
+    if (ranges.length === 0) {
+      return escapeHtml(s);
+    }
+    var out = "";
+    var cursor = 0;
+    for (var i = 0; i < ranges.length; i++) {
+      var r = ranges[i];
+      out += escapeHtml(s.slice(cursor, r.start));
+      out += "<mark>" + escapeHtml(s.slice(r.start, r.end)) + "</mark>";
+      cursor = r.end;
+    }
+    out += escapeHtml(s.slice(cursor));
+    return out;
+  }
+
+  // 生成带高亮的摘要片段：以第一个命中词为中心，前后各 60 字符，
+  // 片段边界扩展到词边界（中文按字）。未命中时返回开头 120 字符。
+  function buildSnippet(text, keywords) {
+    if (text === null || text === undefined) { return ""; }
+    var s = String(text);
+    var ranges = findKeywordRanges(s, keywords);
+    var start;
+    var end;
+    if (ranges.length === 0) {
+      start = 0;
+      end = Math.min(s.length, 120);
+      end = expandRight(s, end);
+    } else {
+      var first = ranges[0];
+      start = first.start - 60;
+      if (start < 0) { start = 0; } else { start = expandLeft(s, start); }
+      end = first.end + 60;
+      if (end > s.length) { end = s.length; } else { end = expandRight(s, end); }
+    }
+    var prefix = start > 0 ? "…" : "";
+    var suffix = end < s.length ? "…" : "";
+    return prefix + highlight(s.slice(start, end), keywords) + suffix;
+  }
+
+  // 从用户查询串里切出关键词，用于搜索页高亮。
+  // 按空白切分；同时把整串作为一个关键词（保留 "C++" 这类含特殊字符的整体）。
+  function splitKeywords(q) {
+    var s = (q === null || q === undefined) ? "" : String(q).trim();
+    if (!s) { return []; }
+    var parts = s.split(/\s+/);
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i]) { out.push(parts[i]); }
+    }
+    return out;
+  }
+--- END PATCH ===
+
+=== PATCH: docseek/web/index.html ===
+--- OLD ---
+      html += '<span class="result-idx">' + idx + '</span>';
+      html += '<span class="result-title">' + escapeHtml(title) + '</span>';
+      if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }
+      html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
+      html += '</div>';
+      html += '<div class="result-path">' + escapeHtml(path) + '</div>';
+      if (snippet) {
+        html += '<div class="result-snippet">' + renderSnippet(snippet) + '</div>';
+      }
+      html += '</div>';
+--- NEW ---
+      html += '<span class="result-idx">' + idx + '</span>';
+      html += '<span class="result-title">' + highlight(title, keywords) + '</span>';
+      if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }
+      html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
+      html += '</div>';
+      html += '<div class="result-path">' + highlight(path, keywords) + '</div>';
+      if (snippet) {
+        html += '<div class="result-snippet">' + buildSnippet(snippet, keywords) + '</div>';
+      }
+      html += '</div>';
+--- END PATCH ===
+
+=== PATCH: docseek/web/index.html ===
+--- OLD ---
+  function renderResults(data, q) {
+    var box = $("results");
+    var items = [];
+    if (Array.isArray(data)) {
+      items = data;
+    } else if (data && Array.isArray(data.results)) {
+      items = data.results;
+    } else if (data && Array.isArray(data.hits)) {
+      items = data.hits;
+    }
+    if (items.length === 0) {
+      box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的文档</div>';
+      return;
+    }
+--- NEW ---
+  function renderResults(data, q) {
+    var box = $("results");
+    var items = [];
+    if (Array.isArray(data)) {
+      items = data;
+    } else if (data && Array.isArray(data.results)) {
+      items = data.results;
+    } else if (data && Array.isArray(data.hits)) {
+      items = data.hits;
+    }
+    if (items.length === 0) {
+      box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的文档</div>';
+      return;
+    }
+    var keywords = splitKeywords(q);
+--- END PATCH ===
+
+=== FILE: docs/SERVE_UI.md ===
+# docseek serve 的 Web UI 搜索高亮
+
+本文说明 `docseek serve` 子命令自带 Web UI（`web/index.html`）里搜索结果的
+关键词高亮行为，以及需要留意的边界情况。
+
+## 高亮做什么
+
+在“搜索”卡片里输入关键词并点“搜索”后，结果列表每一项的标题、路径、摘要
+三处都会把命中词用 `<mark>` 包起来。颜色由 CSS 变量 `--mark-bg` 控制：
+
+- 浅色（默认）：`#fff3b0`
+- 深色（`@media (prefers-color-scheme: dark)`）：`#5c4a00`
+
+页面上负责这件事的是 `highlight(text, keywords)` 函数，配套的还有
+`buildSnippet(text, keywords)` 用来从摘要原文里切一段带高亮的片段。
+
+## highlight 的行为
+
+- 大小写不敏感。搜 `Python` 能命中 `python`，搜 `python` 也能命中 `Python`。
+- 关键词里的正则特殊字符会被转义后再构造 `RegExp`，所以像 `C++`、`a.b`、
+  `(x)`、`$100`、`[test]` 这类词都能原样命中，不会当成正则。
+- 文本先切分再对每段调用 `escapeHtml`，所以原文里的 `<script>`、`&`、`"` 等
+  会被转义成 `&lt;script&gt;`、`&amp;`、`&quot;`，不会注入页面。
+- 多个关键词各自扫描，命中区间合并去重，重叠部分只包一层 `<mark>`。
+- 命中词之间的文本和命中词内部的文本都走 `escapeHtml`，只有命中词本身被
+  `<mark>` 包裹。
+
+## 摘要片段怎么切
+
+`buildSnippet` 以第一个命中词为中心：
+
+- 命中词前 60 个字符、后 60 个字符组成片段。
+- 片段左边界向左扩展到词边界，右边界向右扩展到词边界。也就是说不会把
+  一个英文单词从中间截断。
+- 中文按字处理，汉字之间不会做词边界扩展，直接以字符为准。
+- 片段被裁剪时（左边有裁、右边有裁）在对应侧加省略号 `…`。
+- 整段摘要没有任何命中词时，退化为开头最多 120 个字符（同样向右扩展到词
+  边界）。
+
+## 关键词怎么切
+
+用户输入的查询串由 `splitKeywords(q)` 按空白切分：
+
+- 输入 `机器学习 模型` 得到 `["机器学习", "模型"]`。
+- 输入 `C++` 得到 `["C++"]`，整串作为一个关键词，含 `+` 也不会被当正则。
+- 输入为空或全是空白时返回空数组，此时 `highlight` 只做 HTML 转义，不加
+  `<mark>`。
+
+## 边界与注意
+
+- **query 为空不请求**：`doSearch` 里先 `trim` 再判断，空串直接显示
+  “请输入关键词后再搜索”，不会发 HTTP 请求。`/api/search` 只在有非空 query
+  时被调用。
+- **关键词含正则字符**：`C++`、`a.b`、`x*y`、`(foo)`、`[bar]`、`{n}`、`$`、`^`、
+  `|`、`\` 都能正确高亮。函数里用 `escapeRegExp` 逐个转义，再用 `"gi"` 构造
+  `RegExp`。
+- **XSS**：原文里的 `<img onerror=...>`、`<script>` 之类都会先转义再拼 HTML，
+  高亮不会绕过转义。
+- **重叠命中**：关键词 `ab` 和 `abc` 同时存在时，命中区间合并，`abc` 只包一层
+  `<mark>`，不会出现嵌套 `<mark>`。
+- **空关键词**：`splitKeywords` 会丢弃空串，`highlight` 遇到空数组时只转义。
+- **服务端 snippet 已有 `<em>` 标记**：`renderSnippet` 会把服务端返回的
+  `<b>`/`<em>`/`<strong>` 转成 `<em>`；搜索页现在走的是前端
+  `buildSnippet` + `highlight` 这条路，`renderSnippet` 保留给其它入口用。
+- **深色模式**：只改 `--mark-bg`，文字颜色用 `inherit`，不会在深色背景上出现
+  亮底黑字的刺眼组合。
+
+## 本地手工验证
+
+1. 启动：`docseek serve`（默认监听本地端口，具体见命令帮助）。
+2. 浏览器打开首页，在“搜索”输入框里输入 `C++`，点搜索。
+3. 期望：结果里出现的 `C++` 被黄色（浅色模式）或暗黄（深色模式）背景包住，
+   标题、路径、摘要三处都生效。
+4. 输入框留空点搜索，期望：结果区显示“请输入关键词后再搜索”，网络面板里没有
+   `/api/search` 请求。
+5. 输入 `机器学习`，期望摘要片段里命中词前后各约 60 字，被截断处有 `…`，
+   英文单词不会被从中间切开。
+=== END ===
+=== PATCH: docs/SERVE_UI.md ===
+--- OLD ---
+=== NEW ---
 
   function requestJSON(method, url, body) {
     var opts = {

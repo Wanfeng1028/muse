@@ -316,6 +316,17 @@ compose 文件含健康检查（`wget` 探 `/api/health`）、资源限制（512
 - ✅ 物化视图 + 刷新策略（`materialize: {enabled, refresh}`：on_sync/manual/interval；`views.Refresh` 事务全量刷新 + `views.RefreshDue` 策略调度；sync 自动刷新/CLI 手动/API 触发；Web UI 物化标记 + 一键刷新；`_m_views` 4 列扩展与老库迁移；3 个新指标；e2e 第 9 步物化演练 E2E PASS）。
 - ✅ 发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.3.0.md`。
 
+### v1.4（已交付）
+
+- ✅ CSV 增量导入 API：`POST /api/sources/{id}/import-csv` 和 `POST /api/import/csv` v2。
+- ✅ 导入走真流式，上传上限 32MB，不再一次性把整个文件读进内存。
+
+### v1.4.1（已交付）
+
+- ✅ 13 个包的 `go test` 全部跑绿。
+- ✅ 并发写报 SQLITE_BUSY 修好：加 `PRAGMA busy_timeout=5000`，并设 `SetMaxOpenConns(1)`。
+- ✅ `RecordImport` 改成 `INSERT OR IGNORE`，返回 `(bool, error)`，bool 用来标记是不是 Duplicate。
+
 ### 后续版本
 
 - ⬜ HTTP / WebDAV 数据源连接器。

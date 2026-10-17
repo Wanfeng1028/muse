@@ -442,11 +442,35 @@ def mark_all_read(db_path, feed_id=None, folder_id=None, scope="unread"):
             conn.close()
 
 
+def _escape_fts5_query(q):
+    """把用户输入转成安全的 FTS5 MATCH 查询串。
+
+    双引号已被剥除。这里：
+    - 把单引号 '、星号 *、左括号 (、右括号 )、冒号 :、脱字符 ^ 当作普通字符，
+      整体用双引号包成短语，避免被 FTS5 当成语法。
+    - 保留字 AND/OR/NOT 在 FTS5 中是运算符，把整段输入按空白切成 token，
+      对每个 token 单独加双引号包成短语，运算符就退化为普通词。
+    - 若处理后没有任何非空白 token，返回空串，由调用方回退 LIKE。
+    """
+    tokens = q.split()
+    parts = []
+    for tok in tokens:
+        cleaned = tok.replace("'", "").replace("*", "").replace("(", "").replace(")", "").replace(":", "").replace("^", "")
+        if not cleaned:
+            continue
+        parts.append('"' + cleaned + '"')
+    return " ".join(parts)
+
+
 def search_articles(db_path, q, limit=50):
     """FTS5 全文检索，返回 dict 列表（含 feed_title）。
 
     trigram 分词器无法处理短于 3 个字符的查询（形不成 trigram），
     这类短查询退化为 LIKE 匹配，保证单字/双字也能搜到结果。
+
+    用户输入里的单引号、星号、括号、冒号、脱字符以及 AND/OR/NOT 等
+    FTS5 特殊字符/保留字，会先被转义或剥除；转义后为空则退化为 LIKE；
+    MATCH 抛 OperationalError 时也退化为 LIKE，不把异常抛给上层。
     """
     if q is None:
         return []
@@ -463,7 +487,8 @@ def search_articles(db_path, q, limit=50):
     )
     conn = get_conn(db_path)
     try:
-        if len(q) < 3:
+        escaped = _escape_fts5_query(q)
+        if len(q) < 3 or not escaped:
             like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
             rows = conn.execute(
                 f"""SELECT {columns}
@@ -477,16 +502,30 @@ def search_articles(db_path, q, limit=50):
                 (like, like, like, limit),
             ).fetchall()
         else:
-            rows = conn.execute(
-                f"""SELECT {columns}
-                      FROM articles_fts
-                      JOIN articles a ON a.id = articles_fts.rowid
-                      JOIN feeds f ON f.id = a.feed_id
-                     WHERE articles_fts MATCH ?
-                     ORDER BY rank
-                     LIMIT ?""",
-                (q, limit),
-            ).fetchall()
+            try:
+                rows = conn.execute(
+                    f"""SELECT {columns}
+                          FROM articles_fts
+                          JOIN articles a ON a.id = articles_fts.rowid
+                          JOIN feeds f ON f.id = a.feed_id
+                         WHERE articles_fts MATCH ?
+                         ORDER BY rank
+                         LIMIT ?""",
+                    (escaped, limit),
+                ).fetchall()
+            except sqlite3.OperationalError:
+                like = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+                rows = conn.execute(
+                    f"""SELECT {columns}
+                          FROM articles a
+                          JOIN feeds f ON f.id = a.feed_id
+                         WHERE a.title LIKE ? ESCAPE '\\'
+                            OR a.content_text LIKE ? ESCAPE '\\'
+                            OR a.author LIKE ? ESCAPE '\\'
+                         ORDER BY a.published_at DESC
+                         LIMIT ?""",
+                    (like, like, like, limit),
+                ).fetchall()
         return [dict(r) for r in rows]
     finally:
         conn.close()

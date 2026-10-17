@@ -19,6 +19,27 @@ func openTestStore(t *testing.T) *Store {
 	t.Cleanup(func() { sqldb.Close() })
 	return New(sqldb)
 }
+// seedMonitors 批量创建 n 个 monitor 父行，使自增 ID 1..n 存在，
+// 供投递队列测试的硬编码 monitorID 使用（webhook_deliveries.monitor_id 外键约束）。
+func seedMonitors(t *testing.T, s *Store, n int) {
+	t.Helper()
+	for i := 0; i < n; i++ {
+		_, err := s.CreateMonitor(Monitor{
+			Name:           "seed",
+			Kind:           "http",
+			Target:         "https://example.com/seed",
+			Method:         "GET",
+			ExpectedStatus: 200,
+			TimeoutSec:     10,
+			IntervalSec:    60,
+			Enabled:        1,
+		})
+		if err != nil {
+			t.Fatalf("seed monitor %d: %v", i, err)
+		}
+	}
+}
+
 
 func TestEnqueueDeliveryEmptyAndBoundary(t *testing.T) {
 	cases := []struct {
@@ -76,6 +97,7 @@ func TestEnqueueDeliveryEmptyAndBoundary(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := openTestStore(t)
+			seedMonitors(t, s, 4)
 			id, err := s.EnqueueDelivery(tc.monitorID, tc.url, tc.event, tc.payload, tc.maxAttempts)
 			if tc.wantErr {
 				if err == nil {
@@ -111,6 +133,8 @@ func TestEnqueueDeliveryEmptyAndBoundary(t *testing.T) {
 
 func TestEnqueueDeliveryIdempotentSameKey(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 7)
 	id1, err := s.EnqueueDelivery(7, "https://example.com/hook", "down", `{"x":1}`, 8)
 	if err != nil {
 		t.Fatalf("首次入队失败: %v", err)
@@ -140,6 +164,8 @@ func TestEnqueueDeliveryIdempotentSameKey(t *testing.T) {
 
 func TestEnqueueDeliveryIdempotentAfterRetryStatus(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 11)
 	id, err := s.EnqueueDelivery(11, "https://example.com/hook", "down", `{"y":2}`, 4)
 	if err != nil {
 		t.Fatalf("入队失败: %v", err)
@@ -171,6 +197,8 @@ func TestEnqueueDeliveryIdempotentAfterRetryStatus(t *testing.T) {
 
 func TestEnqueueDeliveryDifferentKeyInsertsNew(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 22)
 	id1, err := s.EnqueueDelivery(21, "https://example.com/a", "down", `{"k":1}`, 8)
 	if err != nil {
 		t.Fatalf("入队 1 失败: %v", err)
@@ -197,6 +225,8 @@ func TestEnqueueDeliveryDifferentKeyInsertsNew(t *testing.T) {
 
 func TestMarkDeliveryDoneAndNotFound(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 31)
 	id, err := s.EnqueueDelivery(31, "https://example.com/done", "up", `{"z":3}`, 8)
 	if err != nil {
 		t.Fatalf("入队失败: %v", err)
@@ -222,6 +252,8 @@ func TestMarkDeliveryDoneAndNotFound(t *testing.T) {
 
 func TestMarkDeliveryAttemptAndFailed(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 41)
 	id, err := s.EnqueueDelivery(41, "https://example.com/fail", "down", `{"q":4}`, 3)
 	if err != nil {
 		t.Fatalf("入队失败: %v", err)
@@ -273,6 +305,8 @@ func TestMarkDeliveryAttemptAndFailed(t *testing.T) {
 
 func TestRetryDeliveryStatusRules(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 51)
 	id, err := s.EnqueueDelivery(51, "https://example.com/retry", "down", `{"r":5}`, 3)
 	if err != nil {
 		t.Fatalf("入队失败: %v", err)
@@ -325,6 +359,8 @@ func TestRetryDeliveryStatusRules(t *testing.T) {
 
 func TestClaimDueDeliveriesBoundaryAndOrder(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 99)
 	base := "2020-01-01T00:00:00Z"
 	later := "2030-01-01T00:00:00Z"
 	ids := make([]int64, 0, 3)
@@ -373,6 +409,8 @@ func TestClaimDueDeliveriesBoundaryAndOrder(t *testing.T) {
 
 func TestListDeliveriesFilterAndClamp(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 80)
 	for i := 0; i < 5; i++ {
 		if _, err := s.EnqueueDelivery(int64(70+i), "https://example.com/l", "down", `{"n":`+string(rune('0'+i))+`}`, 3); err != nil {
 			t.Fatalf("入队失败: %v", err)
@@ -433,6 +471,8 @@ func TestListDeliveriesFilterAndClamp(t *testing.T) {
 
 func TestEnqueueDeliveryConcurrentSameKey(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 101)
 	const goroutines = 16
 	var wg sync.WaitGroup
 	ids := make([]int64, goroutines)
@@ -470,6 +510,8 @@ func TestEnqueueDeliveryConcurrentSameKey(t *testing.T) {
 
 func TestMarkDeliveryAttemptConcurrentDistinctRows(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 212)
 	const rows = 12
 	ids := make([]int64, rows)
 	for i := 0; i < rows; i++ {
@@ -525,6 +567,8 @@ func TestMarkDeliveryAttemptConcurrentDistinctRows(t *testing.T) {
 
 func TestClaimDueDeliveriesConcurrentNoDuplicateOverlap(t *testing.T) {
 	s := openTestStore(t)
+
+	seedMonitors(t, s, 320)
 	const total = 20
 	for i := 0; i < total; i++ {
 		id, err := s.EnqueueDelivery(int64(300+i), "https://example.com/claim", "down", `{"c":`+string(rune('a'+i%26))+string(rune('0'+i/26))+`}`, 3)

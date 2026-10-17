@@ -89,6 +89,14 @@ func main() {
 			SignName:        cfg.SMSSignName,
 			TemplateCode:    cfg.SMSTemplateCode,
 		},
+		Tencent: notify.TencentConfig{
+			SecretId:    cfg.SMSTencentSecretID,
+			SecretKey:   cfg.SMSTencentSecretKey,
+			SmsSdkAppId: cfg.SMSTencentSdkAppID,
+			SignName:    cfg.SMSTencentSignName,
+			TemplateId:  cfg.SMSTencentTemplateID,
+			Region:      cfg.SMSTencentRegion,
+		},
 	}
 	smsSender, err := smsCfg.BuildSender()
 	if err != nil {

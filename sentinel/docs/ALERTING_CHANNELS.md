@@ -41,6 +41,21 @@
 4. 创建 AccessKey。在 RAM 里建一个子账号，给它短信发送权限，拿到 AccessKeyID 和 AccessKeySecret。
 5. 填环境变量并启动。设置 `SENTINEL_SMS_MODE=aliyun`，再把 AK、签名、模板 CODE 都填上，缺一个启动就会报错退出。
 
+### 2.2b 腾讯云短信配置 step-by-step
+
+1. 在腾讯云短信控制台创建短信应用。创建完会拿到 SdkAppId，这个 ID 后面填环境变量要用。
+2. 申请签名。签名就是短信开头那个方括号里的名字，提交后等审核，审核过了才能用。
+3. 申请正文模板。模板正文里必须放 1 个文本变量，用来装要发的消息内容，审核通过后拿到模板 ID。
+4. 创建 API 密钥。在访问管理里建一个子账号，给它短信发送权限，拿到 SecretId 和 SecretKey。
+5. 填环境变量并启动。一共 7 个：`SENTINEL_SMS_TENCENT_SECRET_ID`、`SENTINEL_SMS_TENCENT_SECRET_KEY`、`SENTINEL_SMS_TENCENT_SDK_APP_ID`、`SENTINEL_SMS_TENCENT_SIGN_NAME`、`SENTINEL_SMS_TENCENT_TEMPLATE_ID`、`SENTINEL_SMS_TENCENT_REGION`（默认 ap-guangzhou）、`SENTINEL_SMS_MODE=tencent`。发送器是 `NewTencentSMSSender`，签名走 TC3-HMAC-SHA256，号码会自动转成 E.164，大陆号补 +86。
+
+费用提醒：腾讯云短信按条计费，发一条扣一条的钱，具体单价以腾讯云定价页为准，别拿文档里的数字当账单依据。
+
+排障：
+
+- 报签名错误，先对一下服务器时间戳。TC3-HMAC-SHA256 签名跟时间强相关，机器时间偏了就会签名失败，校准时间再试。
+- 返回 Code 不是 Ok，去查 `sms_log` 表的 `error` 列，里面记了腾讯云返回的错误码和原因，照着改配置就行。
+
 ### 2.3 环境变量表
 
 | 变量名 | 必填 | 默认值 | 说明 |

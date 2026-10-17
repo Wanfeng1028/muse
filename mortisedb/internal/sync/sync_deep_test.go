@@ -476,6 +476,248 @@ func TestCSVIncremental_ResumeFromWatermark(t *testing.T) {
 	}
 }
 
+// 水位线已经等于文件最后一行的 ts 时，再跑一次同步应插 0 行，水位线不变。
+func TestCSVIncremental_NoNewRowsWhenWatermarkAtTail(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "orders.csv")
+	writeCSV(t, path, [][]string{
+		{"id", "ts", "amount"},
+		{"1", "2024-01-01T00:00:00Z", "10"},
+		{"2", "2024-01-02T00:00:00Z", "20"},
+		{"3", "2024-01-03T00:00:00Z", "30"},
+	})
+
+	st, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("打开内存库出错: %v", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		t.Fatalf("建表出错: %v", err)
+	}
+
+	cfg := &config.Config{Sources: []config.SourceConfig{{
+		Name:        "csv",
+		Type:        "csv",
+		Path:        path,
+		Table:       "orders",
+		PrimaryKey:  "id",
+		Incremental: "column:ts",
+	}}}
+
+	first, err := Sync(cfg, st, []string{"csv"}, "job-inc")
+	if err != nil {
+		t.Fatalf("首次增量同步出错: %v", err)
+	}
+	if first[0].Tables[0].Inserted != 3 {
+		t.Fatalf("首次期望 Inserted=3，得到 %d", first[0].Tables[0].Inserted)
+	}
+	wm, err := st.GetWatermark("csv", "orders", "ts")
+	if err != nil {
+		t.Fatalf("读水位线出错: %v", err)
+	}
+	if wm != "2024-01-03T00:00:00Z" {
+		t.Fatalf("首次水位线期望 2024-01-03T00:00:00Z，得到 %q", wm)
+	}
+
+	// 文件一字不改再同步一次，没有超过水位线的新行。
+	second, err := Sync(cfg, st, []string{"csv"}, "job-inc")
+	if err != nil {
+		t.Fatalf("二次增量同步出错: %v", err)
+	}
+	if len(second) != 1 || len(second[0].Tables) != 1 {
+		t.Fatalf("二次期望 1 源 1 表统计，得到 %+v", second)
+	}
+	if second[0].Tables[0].Inserted != 0 {
+		t.Fatalf("二次期望 Inserted=0，得到 %d", second[0].Tables[0].Inserted)
+	}
+	wm2, err := st.GetWatermark("csv", "orders", "ts")
+	if err != nil {
+		t.Fatalf("读水位线出错: %v", err)
+	}
+	if wm2 != "2024-01-03T00:00:00Z" {
+		t.Fatalf("二次水位线期望保持 2024-01-03T00:00:00Z，得到 %q", wm2)
+	}
+
+	var count int
+	if err := st.DB.QueryRow(`SELECT COUNT(*) FROM "orders"`).Scan(&count); err != nil {
+		t.Fatalf("count rows: %v", err)
+	}
+	if count != 3 {
+		t.Fatalf("目标表期望 3 行，得到 %d", count)
+	}
+}
+
+// CSV 表头变更后列名对不上，增量水位线失效，应全量重同步把行数刷齐。
+func TestCSVIncremental_HeaderChangeForcesFullResync(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "orders.csv")
+	writeCSV(t, path, [][]string{
+		{"id", "ts", "amount"},
+		{"1", "2024-01-01T00:00:00Z", "10"},
+		{"2", "2024-01-02T00:00:00Z", "20"},
+	})
+
+	st, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("打开内存库出错: %v", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		t.Fatalf("建表出错: %v", err)
+	}
+
+	cfg := &config.Config{Sources: []config.SourceConfig{{
+		Name:        "csv",
+		Type:        "csv",
+		Path:        path,
+		Table:       "orders",
+		PrimaryKey:  "id",
+		Incremental: "column:ts",
+	}}}
+
+	first, err := Sync(cfg, st, []string{"csv"}, "job-inc")
+	if err != nil {
+		t.Fatalf("首次增量同步出错: %v", err)
+	}
+	if first[0].Tables[0].Inserted != 2 {
+		t.Fatalf("首次期望 Inserted=2，得到 %d", first[0].Tables[0].Inserted)
+	}
+
+	// 表头换名，旧的增量水位线列 ts 在新文件里不再存在。
+	writeCSV(t, path, [][]string{
+		{"id", "event_time", "amount"},
+		{"1", "2024-02-01T00:00:00Z", "100"},
+		{"2", "2024-02-02T00:00:00Z", "200"},
+		{"3", "2024-02-03T00:00:00Z", "300"},
+	})
+
+	second, err := Sync(cfg, st, []string{"csv"}, "job-inc")
+	if err != nil {
+		t.Fatalf("表头变更后同步出错: %v", err)
+	}
+	if len(second) != 1 || len(second[0].Tables) != 1 {
+		t.Fatalf("表头变更期望 1 源 1 表统计，得到 %+v", second)
+	}
+	if second[0].Tables[0].Inserted != 3 {
+		t.Fatalf("表头变更期望 Inserted=3，得到 %d", second[0].Tables[0].Inserted)
+	}
+
+	var count int
+	if err := st.DB.QueryRow(`SELECT COUNT(*) FROM "orders"`).Scan(&count); err != nil {
+		t.Fatalf("count rows: %v", err)
+	}
+	if count != 3 {
+		t.Fatalf("目标表期望 3 行，得到 %d", count)
+	}
+}
+
+// 空文件（零字节）应能同步完成且不插任何行，也不写水位线。
+func TestCSVIncremental_EmptyFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "orders.csv")
+	writeCSV(t, path, [][]string{})
+
+	st, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("打开内存库出错: %v", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		t.Fatalf("建表出错: %v", err)
+	}
+
+	cfg := &config.Config{Sources: []config.SourceConfig{{
+		Name:        "csv",
+		Type:        "csv",
+		Path:        path,
+		Table:       "orders",
+		PrimaryKey:  "id",
+		Incremental: "column:ts",
+	}}}
+
+	rep, err := Sync(cfg, st, []string{"csv"}, "job-inc")
+	if err != nil {
+		t.Fatalf("空文件同步出错: %v", err)
+	}
+	if len(rep) != 1 || len(rep[0].Tables) != 1 {
+		t.Fatalf("空文件期望 1 源 1 表统计，得到 %+v", rep)
+	}
+	if rep[0].Tables[0].Inserted != 0 {
+		t.Fatalf("空文件期望 Inserted=0，得到 %d", rep[0].Tables[0].Inserted)
+	}
+
+	var count int
+	if err := st.DB.QueryRow(`SELECT COUNT(*) FROM "orders"`).Scan(&count); err != nil {
+		t.Fatalf("count rows: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("目标表期望 0 行，得到 %d", count)
+	}
+
+	wm, err := st.GetWatermark("csv", "orders", "ts")
+	if err != nil {
+		t.Fatalf("读水位线出错: %v", err)
+	}
+	if wm != "" {
+		t.Fatalf("空文件水位线期望空串，得到 %q", wm)
+	}
+}
+
+// 只有表头没有数据行时，不应插行，也不应写水位线。
+func TestCSVIncremental_HeaderOnlyNoDataRows(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "orders.csv")
+	writeCSV(t, path, [][]string{
+		{"id", "ts", "amount"},
+	})
+
+	st, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("打开内存库出错: %v", err)
+	}
+	defer st.Close()
+	if err := st.Migrate(); err != nil {
+		t.Fatalf("建表出错: %v", err)
+	}
+
+	cfg := &config.Config{Sources: []config.SourceConfig{{
+		Name:        "csv",
+		Type:        "csv",
+		Path:        path,
+		Table:       "orders",
+		PrimaryKey:  "id",
+		Incremental: "column:ts",
+	}}}
+
+	rep, err := Sync(cfg, st, []string{"csv"}, "job-inc")
+	if err != nil {
+		t.Fatalf("只有表头同步出错: %v", err)
+	}
+	if len(rep) != 1 || len(rep[0].Tables) != 1 {
+		t.Fatalf("只有表头期望 1 源 1 表统计，得到 %+v", rep)
+	}
+	if rep[0].Tables[0].Inserted != 0 {
+		t.Fatalf("只有表头期望 Inserted=0，得到 %d", rep[0].Tables[0].Inserted)
+	}
+
+	var count int
+	if err := st.DB.QueryRow(`SELECT COUNT(*) FROM "orders"`).Scan(&count); err != nil {
+		t.Fatalf("count rows: %v", err)
+	}
+	if count != 0 {
+		t.Fatalf("目标表期望 0 行，得到 %d", count)
+	}
+
+	wm, err := st.GetWatermark("csv", "orders", "ts")
+	if err != nil {
+		t.Fatalf("读水位线出错: %v", err)
+	}
+	if wm != "" {
+		t.Fatalf("只有表头水位线期望空串，得到 %q", wm)
+	}
+}
+
 // 9. Sync 未知源应返回错误且不产生任何源统计
 func TestSync_UnknownSource(t *testing.T) {
 	st, err := store.Open(":memory:")
