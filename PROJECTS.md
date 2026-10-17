@@ -225,10 +225,11 @@
 - **v1.6「目录分享 + Prometheus 指标」（2026-10-16）**：目录分享——DB 迁移 004（`shares.share_type` file|dir，CHECK 约束，老数据默认 file）；`POST /api/shares` 支持 `type:"dir"`（目录不存在 404、是文件 400、跨用户 404）；token 递归只读，`GET /api/s/:token/download?path=` 下载树内文件（`..`/空段/控制字符 403）；`GET /api/share/list` 目录浏览 API（文件夹置顶）；share.html 目录浏览（面包屑/下载/空态，深色桌面美学）；Prometheus `/metrics`（零新依赖：`http_request_duration_seconds` 直方图 11 档 + `vfs_files_total`/`vfs_bytes_total`/`shares_total{type}` gauge，路由 label 归一化）；`cargo test` **117/117**（新增 share_dir 12 + metrics_v16 5）、clippy 零警告、fmt 通过；真实冒烟（分享→浏览→下载→穿越 403）全通；4 张截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。已知限制：目录分享 token 无过期/无撤销接口（删源目录是唯一撤销方式）；gauge 为抓取时实时查 DB（运维手册已注明建议抓取间隔 ≥15s）
 - **v1.7「RBAC 细粒度权限」（2026-10-17）**：roles 表（admin/editor/viewer 三档）+ 用户管理 API（列表/设角色/撤销会话）+ 前端「用户与权限」页（角色徽标/下拉改角色/只读用户看权限说明矩阵）；注册接口统一 201 CREATED 语义，10 个测试文件过时 200 断言全量修复 + rbac 测试用户名合规化（3~32 字符）；`cargo test` **143/143** 全过；docs/RBAC.md；2 张截图亲眼验收。已知问题：viewer 页桌面图标与权限矩阵重叠、admin 页为测试脏用户名，两处排期干净种子数据重拍
 - **v1.7.1「告警规则补齐」（2026-10-17）**：补齐 v1.6 未通过项——`prometheus/rules/mini-os.yml`（分享读失败率/5xx 率等）+ OPERATIONS.md 告警章节
+- **v1.8「分享读接口限流」（2026-10-17）**：分享读独立令牌桶（IP 单维度，与登录桶类型/状态双隔离）；`MINIOS_SHARE_RPS`（默认 5）/`MINIOS_SHARE_BURST`（默认 30）/`MINIOS_SHARE_RATE_LIMIT_ENABLED`（默认 true），非法值启动 fail-fast（stderr 点名 + exit 2）；覆盖 `GET /api/s/:token/*` 与 `GET /api/share/list`；探针免限流；share.html 429 UX（「看的人有点多」+ 实时倒计时 + disabled 重试按钮）；指标 `minios_share_rate_limited_total`；`cargo test` **151/151**、clippy 零警告、fmt 通过、真实冒烟 14/14、2 张截图亲眼验收。破坏性变更：旧 env `MINIOS_SHARE_READ_RPM`/`MINIOS_SHARE_READ_BURST` 设了就启动失败；`auth_ops_total{op="share_ratelimited"}` 移除。诚实缺口：NAT 下多用户共享出口 IP 会误伤（已知限制）；Dependabot、注册限流、密码策略、2FA 仍排期
 
 **后续计划**：
 
-- 分享读接口限流评估、告警规则示例（v1.6 未通过项排期）
+- ~~分享读接口限流评估、告警规则示例（v1.6 未通过项排期）~~（已在 2026-10-17 交付：v1.7.1 告警规则补齐、v1.8 分享读接口限流）
 - 应用商店（插件化）
 - docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
 
@@ -263,10 +264,11 @@
 - v2.2 多币种与汇率（2026-10-16）：`currencies` 汇率表 + 统计按本位币折算
 - v2.3 全站移动端适配（2026-10-16）：见"状态"节；pytest 157/157、ruff 全洁；3 张移动端真实截图亲眼验收
 - **v2.4「侦探规则引擎 2.0」（2026-10-16）**：模糊匹配升级（金额容差 ±100 分/±1%、日期窗口 ±3 天、商户别名学习一次记住、转账配对 transfer-pair）+ 侦探页批量认领/忽略；修真线上 bug：base.html 给 app.js 加 defer 致内联脚本先执行 `api 未定义`（去 defer，生产级复现验证）；pytest **186/186**（新增 29）、ruff 全洁；冒烟 15/15 全链路；桌面+移动截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_v2.4.md`。已知限制：转账配对仅同批次内；~~别名无修改/删除入口（排期下轮）~~（已在 2026-10-17 交付：侦探页别名管理区 + 列出/改名/删除 API，pytest 回归全过）
+- **v2.8「账单图片 OCR 录入」（2026-10-17）**：`POST /api/statements/ocr`（magic bytes 校验、5MB 上限、图片格式白名单；坏图 400 / 超限 413 / 非图片 415 / 识别为空 422 / 无 tesseract binary 503 并带安装指引）；`ocr.py`（`OcrUnavailableError` 诚实不可用）；statement.html 上传卡片（拖拽区+进度条+识别预览后进核对流）；侦探队列集成（OCR→上传→确认→认领→记住为规则全复用既有接口）；pytest **265/265**（1 跳过为环境无 tesseract 的既有用例）、ruff 全洁、真实服务冒烟 7 步全过、2 张截图亲眼验收。诚实缺口：真实 tesseract 未实测（环境无 binary）；OCR 识别成功率等 Prometheus 指标未加（排期下一轮）。注：CHANGELOG 记为 v2.8（v2.5/v2.6/v2.7 已被占用）
 
 **后续计划**：
 
-- 账单图片 OCR 录入
+- ~~账单图片 OCR 录入~~（已在 2026-10-17 交付 v2.8）
 - Dependabot（等 gh token 补 workflow 权限后迁仓库根，与其他项目同）
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
@@ -297,11 +299,13 @@
 - v0.3.0 状态页主题与订阅通知（2026-10-16）：迁移 v3（status_pages 加 theme/accent_color，老库自动补列）+ v4（status_subscriptions 表）；`PUT /api/status-pages/{id}/theme`；公开接口透出主题；订阅全链路 `POST /api/status/{slug}/subscribe`→确认邮件 token→`GET .../confirm`→`GET/POST .../unsubscribe`，down/recovered 事件经 `notify.NotifySubscribers` 扇出给已确认订阅者（同邮箱多页去重，退订链接带 token）；`SENTINEL_PUBLIC_URL` 配邮件链接基地址；状态页 UI 重写（CSS 变量双主题+访客切换器+主色取色器+订阅卡片，去 AI 味）；72 测试全过（新增 30）；真实冒烟：fake SMTP 捕获确认邮件→点链接确认→二次故障→订阅者收到宕机通知；三主题真实截图亲眼验收；修 v0.2 遗留 bug：可用性文字 span 与状态圆点共用 `.up` 类名致 querySelector 误命中圆点（改名 `.uptime`）。README/CHANGELOG 已同步，截图落 docs/screenshots/status*.png
 - **v0.4.0「Webhook 持久化投递队列」（2026-10-16）**：`webhook_deliveries` 表（迁移 v5，pending/retrying/done/failed）+ 入队幂等去重 + worker 指数退避重投（默认 8 次/基数 60s/15s 扫描）+ 管理 API（列表/手动重试）+ `/deliveries` 控制台页（真数据）；`go test` **97/97**（新增 12）、go vet 全洁；真实冒烟（必失败 webhook：pending→retrying→failed，手动 retry 闭环）；投递队列表截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`。已知限制：单实例；~~故障演练排期 v0.5~~（已在 2026-10-17 交付）
 - **v0.5「故障演练」（2026-10-17）**：`scripts/fault-drill.sh`（探针目标全挂→事件→webhook 通知→恢复闭环），真实跑通 **13/13**；`docs/FAULT_DRILL.md`（步骤+预期+实测结果+未覆盖项声明）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.md`（依赖扫描/真实负载改排期 v0.6）
+- **v0.6「告警规则+依赖扫描+真实负载」（2026-10-17）**：`prometheus/rules/sentinel.yml` 6 条告警规则（实例 down / 调度停滞 / 队列积压>50 / 投递失败率>20% / 检查失败激增 / 自身 API 5xx 率>5%）+ `prometheus/prometheus.yml` 抓取示例；`RenderQueueBacklog` 指标缺口补齐（`sentinel_webhook_queue_backlog{status="pending"|"retrying"}`）；OPERATIONS.md 第 10 章（阈值依据、静默/值班建议）+ §5.2 订正；`scripts/depscan.sh` 实跑（23 个模块，OSV 3 个 + govulncheck 46 个 = 49 个漏洞，全在 Go 标准库 go1.23.4 与 x/mod、x/sys，因 go1.23.4 过旧，无第三方业务依赖漏洞，退出码 1）；`scripts/load_check.sh` 实跑（40 轮检查，p50=6.0ms、p99=14.8ms，4 down 事件全对、无误报，webhook 4/4，积压峰值 2 并排空，耗时 73s）；`go test` **141/141**、vet/gofmt 全洁、fault-drill 13/13；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.md` 关闭全部 v0.5 排期项。诚实缺口（排期 v0.7）：入队限流、投递熔断、Go 工具链升级后复扫、incidents.html 模拟数据债
 
 **后续计划**：
 
 - 短信告警（邮件/企业微信 webhook 已落地）
 - 分布式探针（多实例需先换 PostgreSQL）
+- 入队限流、投递熔断、Go 工具链升级后复扫、incidents.html 模拟数据债（排期 v0.7）
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
