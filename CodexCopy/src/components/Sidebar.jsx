@@ -1,100 +1,96 @@
 import { useState } from 'react';
-import { PlusIcon, SearchIcon, SettingsIcon, ClockIcon, FolderIcon, ChevronDown, CheckIcon } from './icons';
+import {
+  PlusIcon, SearchIcon, SettingsIcon, ClockIcon, ChevronDown, CheckIcon,
+  CodexLogo, PlugIcon, GitIcon, ChatIcon, SidebarIcon, BackIcon, ForwardIcon, TrashIcon,
+} from './icons';
 
-const STATUS_COLORS = { working: '#FA994C', done: '#00a240', idle: '#8f8f8f' };
+// 真实 Codex 侧栏（依据 2026-07 真机截图）：
+// 顶部：红绿灯 + 侧栏开关 + 前进后退
+// 模式下拉：ChatGPT（Create, learn, and explore）/ Codex（Build, debug, and ship）
+// 导航：New task / Scheduled / Plugins / Pull requests / Chat
+// 下方：Projects 分组
+export default function Sidebar({
+  mode, onModeChange, nav, onNav,
+  projects, activeProjectId, onSelectProject,
+  onNewTask, onOpenSettings,
+}) {
+  const [modeOpen, setModeOpen] = useState(false);
 
-// 侧栏：项目中心结构（逆向证据："This remote folder will appear as its own project in the sidebar"）
-// 过滤器： "Filter sidebar chats" / "All chats" / "Relevant"
-export default function Sidebar({ projects, activeChatId, activeProjectId, onSelectChat, onNewChat, onOpenSettings, onOpenSchedules, currentView }) {
-  const [filter, setFilter] = useState('');
-  const [showFilter, setShowFilter] = useState('all'); // all | relevant
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [expanded, setExpanded] = useState({ [activeProjectId]: true });
-
-  const toggleExpand = (pid) => setExpanded({ ...expanded, [pid]: !expanded[pid] });
-
-  const matchFilter = (title) => !filter || title.toLowerCase().includes(filter.toLowerCase());
+  const NAV = [
+    { id: 'new', label: 'New task', icon: <PlusIcon size={16} /> },
+    { id: 'scheduled', label: 'Scheduled', icon: <ClockIcon size={16} /> },
+    { id: 'plugins', label: 'Plugins', icon: <PlugIcon size={16} /> },
+    { id: 'prs', label: 'Pull requests', icon: <GitIcon size={16} /> },
+    { id: 'chat', label: 'Chat', icon: <ChatIcon size={16} /> },
+  ];
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-top">
-        <button className="new-thread-btn" onClick={onNewChat}>
-          <PlusIcon />
-          <span>New chat</span>
-        </button>
-        <div style={{ position: 'relative' }}>
-          <button className="icon-btn" title="Filter sidebar chats" onClick={() => setFilterOpen(!filterOpen)}>
-            <SearchIcon />
+    <aside className="sidebar-real">
+      <div className="sr-top">
+        <div className="traffic-lights sm">
+          <span className="tl close" /><span className="tl min" /><span className="tl max" />
+        </div>
+        <button className="sr-icon-btn" title="Toggle sidebar"><SidebarIcon /></button>
+        <button className="sr-icon-btn" title="Back"><BackIcon /></button>
+        <button className="sr-icon-btn" title="Forward"><ForwardIcon /></button>
+      </div>
+
+      <div className="sr-mode-row">
+        <div style={{ position: 'relative', flex: 1 }}>
+          <button className="sr-mode-btn" onClick={() => setModeOpen(!modeOpen)}>
+            <span className="sr-mode-name">{mode === 'codex' ? 'Codex' : 'ChatGPT'}</span>
+            <ChevronDown size={14} />
           </button>
-          {filterOpen && (
-            <div className="filter-menu">
-              <div className="filter-menu-title">Show</div>
-              {[
-                { id: 'all', label: 'All chats', desc: 'Show threads from all branches' },
-                { id: 'relevant', label: 'Relevant', desc: 'Current branch, worktrees, needs attention' },
-              ].map((o) => (
-                <div key={o.id} className="filter-menu-item" onClick={() => { setShowFilter(o.id); setFilterOpen(false); }}>
-                  <span style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13 }}>{o.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{o.desc}</div>
-                  </span>
-                  {showFilter === o.id && <CheckIcon size={13} />}
-                </div>
-              ))}
-            </div>
+          {modeOpen && (
+            <>
+              <div className="drop-mask" onClick={() => setModeOpen(false)} />
+              <div className="drop-menu sr-mode-menu">
+                {[
+                  { id: 'chatgpt', name: 'ChatGPT', desc: 'Create, learn, and explore' },
+                  { id: 'codex', name: 'Codex', desc: 'Build, debug, and ship' },
+                ].map((m) => (
+                  <div key={m.id} className="drop-item sr-mode-item"
+                    onClick={() => { onModeChange(m.id); setModeOpen(false); }}>
+                    <span style={{ flex: 1 }}>
+                      <div className="sr-mode-item-name">{m.name}</div>
+                      <div className="sr-mode-item-desc">{m.desc}</div>
+                    </span>
+                    {mode === m.id && <CheckIcon size={14} />}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
+        <button className="sr-icon-btn" title="Search"><SearchIcon size={16} /></button>
       </div>
 
-      <div className="sidebar-search">
-        <SearchIcon />
-        <input
-          id="thread-filter"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Filter sidebar chats"
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: 'inherit', fontSize: 'inherit', width: '100%' }}
-        />
-        <kbd>⌘K</kbd>
+      <nav className="sr-nav">
+        {NAV.map((n) => (
+          <button key={n.id}
+            className={'sr-nav-item' + (nav === n.id ? ' active' : '')}
+            onClick={() => onNav(n.id)}>
+            <span className="sr-nav-icon">{n.icon}</span>
+            <span>{n.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="sr-section">Projects</div>
+      <div className="sr-projects">
+        {(projects || []).map((p) => (
+          <button key={p.id}
+            className={'sr-nav-item' + (p.id === activeProjectId ? ' active' : '')}
+            onClick={() => onSelectProject(p.id)}>
+            <span className="sr-proj-dot" />
+            <span className="sr-proj-name">{p.name}</span>
+          </button>
+        ))}
       </div>
 
-      <div className="thread-groups">
-        {projects.map((p) => {
-          const chats = p.chats.filter((c) => matchFilter(c.title));
-          if (showFilter === 'relevant' && p.id !== activeProjectId) return null;
-          if (chats.length === 0 && filter) return null;
-          const isOpen = expanded[p.id];
-          return (
-            <div key={p.id} className="project-group">
-              <div className="project-head" onClick={() => toggleExpand(p.id)}>
-                <span className={'twisty' + (isOpen ? ' open' : '')}><ChevronDown size={12} /></span>
-                <span className="project-icon"><FolderIcon /></span>
-                <span className="project-name">{p.name}</span>
-                <span className="project-branch">{p.branch}</span>
-              </div>
-              {isOpen && chats.map((c) => (
-                <div
-                  key={c.id}
-                  className={'thread-item nested' + (c.id === activeChatId ? ' active' : '')}
-                  onClick={() => onSelectChat(p.id, c.id)}
-                >
-                  <span className="dot" style={{ background: STATUS_COLORS[c.status] || '#8f8f8f' }} />
-                  <span className="title">{c.title}</span>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="sidebar-bottom">
-        <div className="avatar">晚</div>
-        <div className="user-name">晚风</div>
-        <button className={'settings-btn' + (currentView === 'schedules' ? ' active' : '')} title="Automations" onClick={onOpenSchedules}>
-          <ClockIcon />
-        </button>
-        <button className={'settings-btn' + (currentView === 'settings' ? ' active' : '')} title="Codex settings" onClick={onOpenSettings}>
-          <SettingsIcon />
+      <div className="sr-bottom">
+        <button className="sr-icon-btn" title="Settings" onClick={onOpenSettings}>
+          <SettingsIcon size={16} />
         </button>
       </div>
     </aside>

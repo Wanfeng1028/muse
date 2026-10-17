@@ -846,3 +846,76 @@ button { font-family: inherit; }
 .approval-desc { font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 10px; }
 .approval-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .btn-primary.sm { padding: 7px 12px; font-size: 12.5px; }
+
+/* ---- 真实 Codex 侧栏（依据 2026-07 真机截图） ---- */
+.sidebar-real {
+  width: 250px; min-width: 250px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-light);
+  display: flex; flex-direction: column;
+  padding: 10px 10px 8px;
+}
+.sr-top {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 2px 10px;
+}
+.traffic-lights.sm .tl { width: 11px; height: 11px; }
+.traffic-lights.sm { margin-right: 6px; }
+.sr-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  background: transparent; border: none; border-radius: var(--radius-sm);
+  color: var(--text-tertiary); cursor: pointer;
+}
+.sr-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.sr-icon-btn svg { width: 15px; height: 15px; }
+.sr-mode-row { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+.sr-mode-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 16px; font-weight: 600;
+  padding: 8px 12px; cursor: pointer; width: 100%;
+}
+.sr-mode-btn:hover { border-color: var(--border); }
+.sr-mode-btn svg { margin-left: auto; color: var(--text-tertiary); }
+.sr-mode-menu { min-width: 230px; }
+.sr-mode-item { padding: 10px 12px; }
+.sr-mode-item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.sr-mode-item-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.sr-nav { display: flex; flex-direction: column; gap: 1px; margin-bottom: 6px; }
+.sr-nav-item {
+  display: flex; align-items: center; gap: 11px;
+  background: transparent; border: none;
+  color: var(--text-secondary); font-size: 14px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; text-align: left; width: 100%;
+}
+.sr-nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.sr-nav-item.active { background: var(--bg-active); color: var(--text-primary); }
+.sr-nav-icon { display: inline-flex; color: var(--text-tertiary); }
+.sr-nav-item.active .sr-nav-icon, .sr-nav-item:hover .sr-nav-icon { color: var(--text-secondary); }
+.sr-nav-icon svg { width: 16px; height: 16px; }
+.sr-section {
+  font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+  padding: 12px 10px 6px;
+}
+.sr-projects { flex: 1; overflow-y: auto; }
+.sr-proj-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0; margin-left: 4px;
+}
+.sr-proj-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-bottom {
+  border-top: 1px solid var(--border-light);
+  padding-top: 8px;
+  display: flex; justify-content: flex-end;
+}
+
+/* 主区行容器（三栏） */
+.main-row { flex: 1; display: flex; min-width: 0; min-height: 0; }
+.codex-toolbar-wrap { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.codex-toolbar-wrap .top-toolbar { border-bottom: 1px solid var(--border-light); }
+.codex-toolbar-wrap .main-row { flex: 1; }

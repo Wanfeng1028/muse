@@ -90,3 +90,15 @@ export const HistoryIcon = ({ size = 14 }) => (
 export const CommandIcon = ({ size = 14 }) => (
   <I size={size}><path d="M5.5 5.5A2.5 2.5 0 1 1 8 8M10.5 10.5a2.5 2.5 0 1 1-2.5-2.5M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3" strokeLinecap="round" /></I>
 );
+export const ChatIcon = ({ size = 16 }) => (
+  <I size={size}><circle cx="8" cy="8" r="5.5" /><path d="M8 5.5v.01M5.8 8h.01M10.2 8h.01" strokeLinecap="round" strokeWidth={2} /></I>
+);
+export const SidebarIcon = ({ size = 16 }) => (
+  <I size={size}><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><path d="M6 2.5v11" /></I>
+);
+export const BackIcon = ({ size = 16 }) => (
+  <I size={size} sw={1.6}><path d="M10 3 5 8l5 5" strokeLinecap="round" strokeLinejoin="round" /></I>
+);
+export const ForwardIcon = ({ size = 16 }) => (
+  <I size={size} sw={1.6}><path d="M6 3l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" /></I>
+);
