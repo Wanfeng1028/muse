@@ -609,7 +609,7 @@
 
 **定位**：个人 AI 团队办公室——用户当老板在群里派活，各家 personal agent 以 adapter 接入、bot 间可 @ 交接、群里汇报。三层结构：L0 用户 / L1 聊天室纯聚合层（收发、@路由、分发、展示、存历史，不做 function calling）/ adapter 翻译层 / L2 Agents 执行层。adapter 分两层语义：脑力层（模型 API）+ 本体层（agent 执行环境）。
 
-**技术栈**：TypeScript pnpm workspace monorepo——packages/protocol（协议 v1.2：原生 WS + 统一 seq/ack 信封 + gseq 网关全局序列号 + 心跳 20s/45s 判离线 + per-adapter FIFO 补发 + seq 单调去重窗口 + task_event 状态事件帧）、gateway（Node + ws + node:sqlite）、adapters/base（AdapterClient：gseq 水位跟踪与磁盘持久化）+ deepseek（brain/body 双模式）+ echo、web（Vite + React 18 + 手写 CSS + lucide-react 图标）。
+**技术栈**：TypeScript pnpm workspace monorepo——packages/protocol（协议 v1.2：原生 WS + 统一 seq/ack 信封 + gseq 网关全局序列号 + 心跳 20s/45s 判离线 + per-adapter FIFO 补发 + seq 单调去重窗口 + task_event 状态事件帧、rooms-types（房间类型：workroom|playroom、权限矩阵、路由策略、游戏清单））、gateway（Node + ws + node:sqlite）、adapters/base（AdapterClient：gseq 水位跟踪与磁盘持久化）+ deepseek（brain/body 双模式）+ echo、web（Vite + React 18 + 手写 CSS + lucide-react 图标）。
 
 **功能模块**：
 
@@ -620,14 +620,15 @@
 5. 历史分页 API 与 Web 分页加载
 6. usage 可观测（/api/usage + 成员面板用量展示）
 7. gseq 与重发队列 SQLite 持久化（网关重启不断补发）
+8. 房间类型（v0.4.0）：workroom @定向（禁抢话）/ playroom 广播（允抢话）、playroom 拒 task（ROOM_TYPE_FORBIDDEN）、小游戏清单网关强制、房间 CRUD/成员/游戏会话 REST、Web 房间列表 + 类型徽标 + 房间设置
 
-**状态**：v0.3.0（2026-10-17）「任务追踪面板 + 未读计数 + 一键部署」：协议 v1.2（task_event 状态事件帧、PresenceStatus 新增 offline、PresencePayload 新增 adapter_id 可选字段）；任务台账（tasks 表：dispatched/running/done/failed/unsupported/cancelled）+ REST（/api/tasks 游标分页、/api/tasks/stats、/api/tasks/:id、POST cancel owner 鉴权、/api/rooms/:room/unread）；Web 任务追踪抽屉（状态筛选、详情、取消、task_event 实时刷新）、Composer 派活模式（@mention 自动剥离标题）、未读 pill（面板打开时来消息→点击回到底部）、任务定位（点任务跳到聊天对应消息）；网关 presence 变化向房间广播（上线含自己、下线/心跳排除自己；close handler 防 DB 已关未捕获异常）；Docker 多阶段构建 + compose.yml 一键部署 + docs/OPERATIONS.md；docs/PRODUCTION_CHECKLIST_REPORT_v0.3.0.md。测试：protocol 44/44、gateway 66/66、adapters 12/12；真实网关 + echo adapter + 种子数据做视觉验收（任务面板/派活/未读 pill/成员在线均实拍通过）。
-
+**状态**：v0.4.0（2026-10-17）「房间类型」：protocol rooms-types.ts（RoomType/权限矩阵/路由策略/游戏清单，35 例单测）；网关 db 三表（rooms/room_members/game_sessions，老库自动建表）+ 19 函数；config 3 env（非法值 fail-fast）；router 房间感知路由（workroom @定向禁抢话 / playroom 广播允抢话 / playroom 拒 task）；server 12 个 REST 端点（房间 CRUD、成员、游戏会话，403 ROOM_TYPE_FORBIDDEN / ROOM_FULL）；Web 房间列表 + 类型徽标 + 房间设置。测试：protocol 79/79、gateway 104/104（新增 rooms-db 26、rooms-router 7、rooms-server 5）；真实网关 12 端点冒烟全过；3 张真实截图亲眼验收（console 零错误）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md。另修复 3 处既有测试类型错误。
 **里程碑记录**：
 
 - protocol v1.1（2026-10-16）：gseq、last_seen_seq 重定义、自激风暴修复，e2e 6/6
 - **v0.2.0（2026-10-17）**：补发语义收敛 + usage 可观测 + 重启持久化。
 - **v0.3.0（2026-10-17）**：见"状态"节。
+- **v0.4.0「房间类型」（2026-10-17）**：protocol rooms-types + 网关三表（rooms/room_members/game_sessions，老库自动建表）+ 3 个 env（非法值 fail-fast）+ 房间感知路由 + 12 个 REST 端点 + Web 房间列表/徽标/设置；测试 protocol 79/79、gateway 104/104（新增 38）；真实网关冒烟 + 3 张真实截图亲眼验收；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md。
 
 **后续计划**：
 
