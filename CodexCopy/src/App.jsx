@@ -6,7 +6,7 @@ import RightPanel from './components/RightPanel';
 import SettingsView from './components/settings/SettingsView';
 import SchedulesView from './components/schedules/SchedulesView';
 import CommandPalette from './components/palette/CommandPalette';
-import { CodexLogo, GitIcon, MoreIcon, PanelIcon } from './components/icons';
+import { CodexLogo, GitIcon, MoreIcon, PanelIcon, CloudIcon } from './components/icons';
 import { projects as seedProjects, models } from './data/mock';
 
 // 真实 Codex 布局（六份实证报告）：
@@ -173,13 +173,14 @@ export default function App() {
           <ThreadView thread={activeThread} streaming={streaming} />
         ) : (
           <div className="empty-state">
-            <div className="empty-title-sm">Create a chat to get started!</div>
-            <div className="empty-sub">Type a message and click send to get started</div>
+            <div className="empty-cloud"><CloudIcon size={44} /></div>
+            <div className="empty-title-lg">What should we build in <u>{activeProject?.name}</u>?</div>
           </div>
         )}
         <Composer onSend={send} streaming={streaming} onStop={() => setStreaming(false)}
           placeholder={placeholder} model={model} onModelChange={setModel}
-          threadMode={activeThread?.mode} branch={activeThread?.branch} />
+          threadMode={activeThread?.mode} branch={activeThread?.branch}
+          projectName={activeProject?.name} />
       </div>
     );
   };

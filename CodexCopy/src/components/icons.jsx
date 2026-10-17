@@ -111,3 +111,30 @@ export const PanelIcon = ({ size = 16 }) => (
 export const StopIcon = ({ size = 16 }) => (
   <I size={size}><rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor" stroke="none" /></I>
 );
+export const BellIcon = ({ size = 16 }) => (
+  <I size={size}><path d="M8 2.5a4 4 0 0 0-4 4v2.5L2.8 10.5h10.4L12 9V6.5a4 4 0 0 0-4-4Z" /><path d="M6.8 13a1.3 1.3 0 0 0 2.4 0" /></I>
+);
+export const ExploreIcon = ({ size = 16 }) => (
+  <I size={size}><circle cx="4" cy="4" r="1.2" fill="currentColor" stroke="none" /><circle cx="12" cy="4" r="1.2" fill="currentColor" stroke="none" /><circle cx="4" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" /></I>
+);
+export const HelpIcon = ({ size = 16 }) => (
+  <I size={size}><circle cx="8" cy="8" r="6" /><path d="M6.2 6.2A1.9 1.9 0 0 1 8 4.8c1 0 1.9.7 1.9 1.7 0 1.2-1.4 1.4-1.9 2.3" strokeLinecap="round" /><path d="M8 11.5v.01" strokeLinecap="round" strokeWidth={2} /></I>
+);
+export const MicIcon = ({ size = 16 }) => (
+  <I size={size}><rect x="6" y="2" width="4" height="8" rx="2" /><path d="M4 7.5a4 4 0 0 0 8 0M8 11.5V14" strokeLinecap="round" /></I>
+);
+export const MonitorIcon = ({ size = 14 }) => (
+  <I size={size}><rect x="2" y="3" width="12" height="8" rx="1.5" /><path d="M6 13.5h4" strokeLinecap="round" /></I>
+);
+export const CloudIcon = ({ size = 40 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2}>
+    <path d="M17.5 18a4.5 4.5 0 0 0 .4-8.98A6 6 0 0 0 6.2 10.5 3.8 3.8 0 0 0 7 18h10.5Z" strokeLinejoin="round" />
+    <path d="M9.5 12.5h.01M12 12.5h.01M14.5 12.5h.01" strokeLinecap="round" strokeWidth={2} />
+  </svg>
+);
+export const ZapIcon = ({ size = 13 }) => (
+  <I size={size}><path d="M9 1.5 3.5 9H7l-1 5.5L11.5 7H8l1-5.5Z" strokeLinejoin="round" /></I>
+);
+export const GoalIcon = ({ size = 14 }) => (
+  <I size={size}><circle cx="8" cy="8" r="5.5" /><circle cx="8" cy="8" r="2.5" /></I>
+);

@@ -2,48 +2,36 @@ import { useState } from 'react';
 import {
   PlusIcon, SearchIcon, SettingsIcon, ClockIcon, ChevronDown, CheckIcon,
   PlugIcon, GitIcon, ChatIcon, SidebarIcon, BackIcon, ForwardIcon, FolderIcon,
+  BellIcon, ExploreIcon, HelpIcon,
 } from './icons';
 import { THREAD_MODES } from '../data/mock';
 
-// 真实 Codex 侧栏（2026-07 真机截图 + 官方文档）：
-// 顶部：红绿灯 + 开关 + 前进后退
-// 模式：ChatGPT（Create, learn, and explore）/ Codex（Build, debug, and ship）
-// 导航：New task / Scheduled / Plugins / Pull requests / Chat
-// Projects：每个项目对应磁盘目录，下挂线程（标 Local/Worktree/Cloud 模式）
-const MODE_STYLE = {
-  local: { label: 'Local' },
-  worktree: { label: 'Worktree' },
-  cloud: { label: 'Cloud' },
-};
-
-// 线程状态：spinner + 文字（实证，emoji 是错的）
-const STATUS_LABEL = {
-  active: 'Thinking',
-  awaiting: 'Awaiting approval',
-  paused: 'Paused',
-};
-
+// 真实 Codex 侧栏（flaviocopes.com 真机截图逐像素对照）：
+// 导航：New chat / Pull requests / Scheduled / Plugins / Explore
+// Pinned 分区置顶；线程蓝点=未读/活跃；底部 Projects> / Recents>；左下头像
 export default function Sidebar({
   mode, onModeChange, nav, onNav,
   projects, activeProjectId, activeThreadId,
   onSelectThread, onNewTask, onOpenSettings,
 }) {
   const [modeOpen, setModeOpen] = useState(false);
-  const [expanded, setExpanded] = useState({ [activeProjectId]: true });
+  const [expanded, setExpanded] = useState({ p1: true });
   const [pickMode, setPickMode] = useState(false);
 
   const NAV = [
-    { id: 'new', label: 'New task', icon: <PlusIcon size={16} /> },
+    { id: 'new', label: 'New chat', icon: <ChatIcon size={16} />, plus: true },
+    { id: 'prs', label: 'Pull requests', icon: <GitIcon size={16} /> },
     { id: 'scheduled', label: 'Scheduled', icon: <ClockIcon size={16} /> },
     { id: 'plugins', label: 'Plugins', icon: <PlugIcon size={16} /> },
-    { id: 'prs', label: 'Pull requests', icon: <GitIcon size={16} /> },
-    { id: 'chat', label: 'Chat', icon: <ChatIcon size={16} /> },
+    { id: 'explore', label: 'Explore', icon: <ExploreIcon size={16} /> },
   ];
 
   const startNew = (modeId) => {
     setPickMode(false);
     onNewTask(modeId);
   };
+
+  const pinnedProject = projects[0];
 
   return (
     <aside className="sidebar-real">
@@ -84,6 +72,7 @@ export default function Sidebar({
           )}
         </div>
         <button className="sr-icon-btn" title="Search"><SearchIcon size={16} /></button>
+        <button className="sr-icon-btn" title="Notifications"><BellIcon size={16} /></button>
       </div>
 
       <nav className="sr-nav">
@@ -92,7 +81,8 @@ export default function Sidebar({
             <button className={'sr-nav-item' + (nav === 'new' ? ' active' : '')}
               onClick={() => setPickMode(!pickMode)}>
               <span className="sr-nav-icon">{n.icon}</span>
-              <span>{n.label}</span>
+              <span style={{ flex: 1 }}>{n.label}</span>
+              <PlusIcon size={13} />
             </button>
             {pickMode && (
               <>
@@ -102,9 +92,7 @@ export default function Sidebar({
                   {THREAD_MODES.map((m) => (
                     <div key={m.id} className="drop-item sr-mode-item" onClick={() => startNew(m.id)}>
                       <span style={{ flex: 1 }}>
-                        <div className="sr-mode-item-name">
-                          {m.name} <span className="mode-dot" style={{ background: MODE_STYLE[m.id].color }} />
-                        </div>
+                        <div className="sr-mode-item-name">{m.name}</div>
                         <div className="sr-mode-item-desc">{m.desc}</div>
                       </span>
                     </div>
@@ -123,36 +111,44 @@ export default function Sidebar({
         ))}
       </nav>
 
-      <div className="sr-section">Projects</div>
+      {/* Pinned 分区 */}
+      <div className="sr-section">Pinned</div>
       <div className="sr-projects">
-        {(projects || []).map((p) => {
-          const open = expanded[p.id];
-          return (
-            <div key={p.id}>
-              <button className="sr-nav-item"
-                onClick={() => setExpanded({ ...expanded, [p.id]: !open })}>
-                <span className={'twisty' + (open ? ' open' : '')}><ChevronDown size={12} /></span>
-                <span className="sr-proj-name" style={{ fontWeight: 600 }}>{p.name}</span>
+        {pinnedProject && (
+          <div>
+            <button className="sr-nav-item sr-proj-active">
+              <span className="sr-nav-icon"><FolderIcon size={15} /></span>
+              <span className="sr-proj-name" style={{ fontWeight: 500 }}>{pinnedProject.name}</span>
+            </button>
+            {pinnedProject.threads.map((t) => (
+              <button key={t.id}
+                className={'sr-nav-item sr-thread' + (t.id === activeThreadId ? ' active' : '')}
+                onClick={() => onSelectThread(pinnedProject.id, t.id)}>
+                <span className="sr-proj-name">{t.title}</span>
+                {(t.status === 'active' || t.unread) && <span className="blue-dot" />}
               </button>
-              {open && p.threads.map((t) => {
-                const ms = MODE_STYLE[t.mode] || MODE_STYLE.local;
-                const st = STATUS_LABEL[t.status];
-                return (
-                  <button key={t.id}
-                    className={'sr-nav-item sr-thread' + (t.id === activeThreadId ? ' active' : '')}
-                    onClick={() => onSelectThread(p.id, t.id)}>
-                    {t.status === 'active' ? <span className="spinner" /> : <span className="thread-bullet" />}
-                    <span className="sr-proj-name">{t.title}</span>
-                    {st && <span className="thread-status">{st}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
+            ))}
+            <button className="sr-show-more">Show more</button>
+          </div>
+        )}
+        {projects.slice(1).map((p) => (
+          <button key={p.id} className="sr-nav-item"
+            onClick={() => onSelectThread(p.id, p.threads[0]?.id)}>
+            <span className="sr-nav-icon"><FolderIcon size={15} /></span>
+            <span className="sr-proj-name">{p.name}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="sr-links">
+        <button className="sr-link">Projects <span>›</span></button>
+        <button className="sr-link">Recents <span>›</span></button>
       </div>
 
       <div className="sr-bottom">
+        <div className="sr-avatar">晚</div>
+        <span style={{ flex: 1 }} />
+        <button className="sr-icon-btn" title="Help"><HelpIcon size={15} /></button>
         <button className="sr-icon-btn" title="Settings" onClick={onOpenSettings}>
           <SettingsIcon size={16} />
         </button>
@@ -160,5 +156,3 @@ export default function Sidebar({
     </aside>
   );
 }
-
-export { MODE_STYLE };

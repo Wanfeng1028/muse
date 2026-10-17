@@ -1,19 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { SendIcon, ChevronDown, CheckIcon, StopIcon, GitIcon } from '../icons';
+import { SendIcon, ChevronDown, CheckIcon, StopIcon, GitIcon, FolderIcon, MonitorIcon, MicIcon, GoalIcon, ZapIcon } from '../icons';
 import { models } from '../../data/mock';
 
-// 真实 Codex composer（实证）：
-// - 左下角 "+"（Add files and more），菜单：Files and folders + Plan mode
-// - 右下角模型控制，picker：model + reasoning（4档） + Fast
-// - 发送中按钮变 Stop
-// - 输入框下方：分支指示器 + 模式标
-export default function Composer({ onSend, streaming, onStop, placeholder, model, onModelChange, threadMode, branch }) {
+// 真实 Codex composer（flaviocopes.com 真机截图逐像素对照）：
+// 顶部 chips：[项目] [Local] [分支]（在文本框上方）
+// 底部：+ | Approve for me | Goal | … | 模型（闪电图标）| 麦克风 | 发送（黑圆上箭头）
+export default function Composer({ onSend, streaming, onStop, placeholder, model, onModelChange, threadMode, branch, projectName }) {
   const [text, setText] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [reasoning, setReasoning] = useState('Medium');
   const [fast, setFast] = useState(false);
   const [planMode, setPlanMode] = useState(false);
+  const [approveForMe, setApproveForMe] = useState(false);
   const taRef = useRef(null);
 
   useEffect(() => {
@@ -35,6 +34,12 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
     <div className="composer-wrap">
       <div className="composer-inner">
         <div className="composer">
+          {/* 顶部 chips 栏 */}
+          <div className="composer-chips">
+            <span className="chip"><FolderIcon size={12} /> {projectName || 'codex-copy'}</span>
+            <span className="chip"><MonitorIcon size={12} /> {threadMode === 'worktree' ? 'Worktree' : threadMode === 'cloud' ? 'Cloud' : 'Local'}</span>
+            <span className="chip"><GitIcon size={12} /> {branch || 'main'}</span>
+          </div>
           <textarea
             ref={taRef}
             value={text}
@@ -65,11 +70,18 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
                 </>
               )}
             </div>
+            <button className={'composer-pill' + (approveForMe ? ' active' : '')}
+              onClick={() => setApproveForMe(!approveForMe)} title="Approval setting">
+              <CheckIcon size={12} /> Approve for me
+            </button>
+            <button className="composer-pill" title="Set a goal">
+              <GoalIcon size={13} /> Goal
+            </button>
             {planMode && <span className="pill blue">Plan</span>}
             <span className="composer-sp" />
             <div style={{ position: 'relative' }}>
               <button className="model-control" onClick={() => setPickerOpen(!pickerOpen)} title="Model settings (Ctrl+Shift+M)">
-                {model} <ChevronDown size={12} />
+                <ZapIcon size={12} /> {model} <ChevronDown size={12} />
               </button>
               {pickerOpen && (
                 <>
@@ -98,6 +110,7 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
                 </>
               )}
             </div>
+            <button className="composer-tool" title="Voice input"><MicIcon size={15} /></button>
             {streaming ? (
               <button className="stop-btn" onClick={onStop} title="Stop (Esc)">
                 <StopIcon size={13} />
@@ -108,12 +121,6 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
               </button>
             )}
           </div>
-        </div>
-        {/* 输入框下方：分支 + 模式（真实位置，issue #14182） */}
-        <div className="composer-context">
-          <span className="ctx-item"><GitIcon size={12} /> {branch || 'main'}</span>
-          <span className="ctx-sep">·</span>
-          <span className="ctx-item">{threadMode === 'worktree' ? 'Worktree' : threadMode === 'cloud' ? 'Cloud' : 'Local'}</span>
         </div>
         <div className="composer-hint">Codex can make mistakes. Review output before applying.</div>
       </div>

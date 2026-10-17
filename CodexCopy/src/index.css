@@ -1047,3 +1047,25 @@ button { font-family: inherit; }
 }
 .thread-bullet { width: 8px; height: 8px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; opacity: 0.5; }
 .thread-status { font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; margin-left: auto; }
+
+/* ---- 真机截图对照修正 ---- */
+.blue-dot { width: 7px; height: 7px; border-radius: 50%; background: #0169cc; flex-shrink: 0; margin-left: auto; }
+.sr-show-more { background: none; border: none; color: var(--text-tertiary); font-size: 12.5px; cursor: pointer; padding: 6px 10px 6px 34px; text-align: left; }
+.sr-show-more:hover { color: var(--text-secondary); }
+.sr-proj-active { background: var(--bg-active); }
+.sr-links { border-top: 1px solid var(--border-light); padding: 8px 4px; display: flex; flex-direction: column; }
+.sr-link { background: none; border: none; color: var(--text-tertiary); font-size: 13px; cursor: pointer; padding: 7px 10px; text-align: left; display: flex; justify-content: space-between; }
+.sr-link:hover { color: var(--text-primary); background: var(--bg-hover); border-radius: var(--radius-sm); }
+.sr-avatar { width: 28px; height: 28px; border-radius: 50%; background: #00a240; color: #fff; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+
+/* composer 顶部 chips */
+.composer-chips { display: flex; gap: 8px; padding: 10px 14px 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); background: var(--bg-elevated); border: 1px solid var(--border-light); padding: 5px 10px; border-radius: 8px; }
+.composer-pill { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--text-tertiary); font-size: 12.5px; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+.composer-pill:hover { background: var(--bg-hover); color: var(--text-primary); }
+.composer-pill.active { color: var(--accent); }
+
+/* 空状态 */
+.empty-cloud { color: var(--text-tertiary); margin-bottom: 16px; opacity: 0.6; }
+.empty-title-lg { font-size: 22px; font-weight: 400; color: var(--text-primary); }
+.empty-title-lg u { text-decoration: underline; text-underline-offset: 4px; }
