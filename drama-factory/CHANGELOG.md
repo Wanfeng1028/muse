@@ -7,6 +7,20 @@
 
 ### Added
 
+- v2.31「flaky 收尾：退避预算上限 + 启动异常精细分类」（2026-10-17，dod-v2.28 排期"flaky 残留 2 处代码漏洞"全交付）：
+  - `FinalCutService`：单次成片构建内所有 ffmpeg 步骤共享退避预算，
+    `drama.ffmpeg.retry-total-budget-ms`（`FFMPEG_RETRY_TOTAL_BUDGET_MS`，默认 20000ms）；
+    `claimRetryBackoff(AtomicLong, long)` 认领睡眠；预算耗尽后仍尝试剩余次数但不再睡眠；
+    13 参 `@Autowired` 构造器 + 保留 12 参委托构造器（默认 20000L），既有测试零改动。
+  - `FfmpegService.isTransientLaunchFailure(IOException)`：正向识别 cannot allocate memory /
+    too many open files / resource temporarily unavailable 为瞬时，其余保持永久（v2.29 行为）。
+  - 测试 17 例：`FinalCutRetryBudgetV231Test` 7 例 + `FfmpegLaunchClassifyV231Test` 10 例（含真实缺失二进制端到端）。
+  - 文档：新增 `docs/FLAKY_ROOT_CAUSE.md`（诚实根因报告）；`docs/dod-v2.31.md` 为发版对照；
+    `application.yml` + `docs/FFMPEG_RELIABILITY.md` + `docs/OPERATIONS.md` 同步新配置键。
+  - 验证：新测试 17/17；既有相关 8 类 38/38 无回归；testFullPipeline 基线 2/2 → 修复后 10/10 通过（耗时 161.8s~320.5s；VM 高负载下依然全绿）；
+    全量 verify 2013 例，14 失败 + 11 错误，8 skipped，JaCoCo BRANCH 83.94%（门禁 0.94，红）、LINE 86.41%（门禁 0.92，红）；missed branches 的 70.9%（458/646）来自他人在途新代码（NovAI 105、CanvasProjectService 71、Doubao 64、ShotVideoRouter 58、Painted 56、HtmlRender 45、Qwen 36、CanvasMigration 23）。
+- 发版对照报告：`docs/dod-v2.31.md`。
+
 - v2.30「OpenAPI 接口分组 + 依赖治理」（DoD 第 4 轮排期）：
   - OpenApiConfig.java 新增 4 个分组 Bean：runs（运行管理）、videos（视频生产）、scripts（剧本与内容）、admin（系统管理），分组文档地址是 /v3/api-docs/{group}，用 @Order(1~4) 把顺序钉死。
   - OpenApiDocsTest.java 新增 2 个测试：四组文档都能打开（200 且 openapi 以 3. 开头）；每组关键路径都对得上（runs 有 /api/runs；videos 有 /api/video-tasks/{taskId}；scripts 有 /api/projects；admin 有 /api/health）。

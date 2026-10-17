@@ -326,7 +326,7 @@ jstat -gc <pid>
 - 含 `无法启动命令` → 这是永久失败，ffmpeg 二进制没装或路径不对。跳到 8.4 去装 ffmpeg。
 - 含 `命令超时`，或退出码是 137 / 143 → 这是瞬时抖动。137 一般是进程被 SIGKILL（常见是 OOM），143 是 SIGTERM。
 
-代码里 `FfmpegService.FfmpegException#isTransient()` 就是这么判的：超时 / 137 / 143 / OOM 算瞬时，`无法启动命令` 算永久。`FinalCutService` 对 concat、burn-subtitles、probe-duration 这三种操作的瞬时失败会做有界重试，默认 3 次，退避是 2000ms × 当前 attempt 数。想改的话用环境变量 `FFMPEG_RETRY_ATTEMPTS` 和 `FFMPEG_RETRY_BACKOFF_MS`。
+代码里 `FfmpegService.FfmpegException#isTransient()` 就是这么判的：超时 / 137 / 143 / OOM 算瞬时，`无法启动命令` 算永久（v2.31 起 EAGAIN/ENOMEM/EMFILE 类资源耗尽信号算瞬时）。`FinalCutService` 对 concat、burn-subtitles、probe-duration 这三种操作的瞬时失败会做有界重试，默认 3 次，退避是 2000ms × 当前 attempt 数；另有总预算 `FFMPEG_RETRY_TOTAL_BUDGET_MS`（默认 20000ms），单次构建内所有步骤的退避睡眠合计不超过该值。想改的话用环境变量 `FFMPEG_RETRY_ATTEMPTS`、`FFMPEG_RETRY_BACKOFF_MS` 和 `FFMPEG_RETRY_TOTAL_BUDGET_MS`。
 
 **排查步骤**
 

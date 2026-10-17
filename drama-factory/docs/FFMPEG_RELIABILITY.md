@@ -51,6 +51,7 @@ v2.11 起 `DramaV2ApiIntegrationTest.testFullPipeline` 反复 flaky，v2.29 定�
 | --- | --- | --- | --- |
 | `drama.ffmpeg.retry-attempts` | `FFMPEG_RETRY_ATTEMPTS` | 3 | FinalCutService 三步对瞬时失败的最大尝试次数 |
 | `drama.ffmpeg.retry-backoff-ms` | `FFMPEG_RETRY_BACKOFF_MS` | 2000 | 退避基数，实际等待为基数 × attempt |
+| `drama.ffmpeg.retry-total-budget-ms` | `FFMPEG_RETRY_TOTAL_BUDGET_MS` | 20000 | 单次成片构建内所有 ffmpeg 步骤共享的退避预算，总睡眠不超过该值；耗尽后仍尝试剩余次数但不再睡眠 |
 
 ## 运维排障
 

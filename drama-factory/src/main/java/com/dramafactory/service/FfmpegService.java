@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,7 +66,7 @@ public class FfmpegService {
      * 分类语义：{@code transientFailure} 为 {@code true} 表示瞬时故障，
      * 通常由外部环境波动（超时、进程被中断、非零退出码、IO 失败等）引起，
      * 可通过有界重试恢复；为 {@code false} 表示永久故障，
-     * 例如命令无法启动、参数非法、输出路径缺少父目录等，重试不会成功。
+     * 例如命令无法启动（二进制缺失/权限不足时永久，见 isTransientLaunchFailure；EAGAIN/ENOMEM/EMFILE 类瞬时资源异常除外）、参数非法、输出路径缺少父目录等，重试不会成功。
      * <p>
      * 兼容构造器（未显式传入分类）默认使用保守值 {@code true}：
      * 即便分类不确定，也可交由有界重试来覆盖，不会造成无限重试。
@@ -105,6 +106,27 @@ public class FfmpegService {
     }
 
     /**
+     * v2.31：对 ProcessBuilder.start() 抛出的 IOException 做瞬时/永久分类。
+     * <p>
+     * 瞬时（true）：消息中出现资源耗尽信号——cannot allocate memory（ENOMEM）、
+     * too many open files（EMFILE）、resource temporarily unavailable（EAGAIN），
+     * 这类失败重试可能成功。
+     * <p>
+     * 永久（false）：no such file or directory（error=2，二进制缺失）、permission denied /
+     * access is denied（权限不足），以及无法识别的其它消息（保持 v2.29 既有行为：启动失败默认永久）。
+     */
+    static boolean isTransientLaunchFailure(IOException e) {
+        String msg = e.getMessage();
+        String lower = msg == null ? "" : msg.toLowerCase(Locale.ROOT);
+        if (lower.contains("cannot allocate memory")
+                || lower.contains("too many open files")
+                || lower.contains("resource temporarily unavailable")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 执行外部命令，统一处理超时与错误输出。
      *
      * @param cmd            命令及参数列表
@@ -119,7 +141,7 @@ public class FfmpegService {
         try {
             process = pb.start();
         } catch (IOException e) {
-            throw new FfmpegException("无法启动命令: " + String.join(" ", cmd), e, false);
+            throw new FfmpegException("无法启动命令: " + String.join(" ", cmd), e, isTransientLaunchFailure(e));
         }
 
         StringBuilder output = new StringBuilder();

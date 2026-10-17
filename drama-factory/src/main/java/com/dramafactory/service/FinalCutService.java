@@ -15,6 +15,7 @@ import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.metrics.DramaMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 剪辑成片服务：将分镜片段按序拼接，并烧录字幕生成 H.264 mp4 成片。
@@ -45,9 +47,15 @@ public class FinalCutService {
     private final DramaMetrics dramaMetrics;
     private final int ffmpegRetryAttempts;
     private final long ffmpegRetryBackoffMs;
+    /**
+     * v2.31：单次成片构建内所有 ffmpeg 步骤共享的退避预算（毫秒），总睡眠不超过该值。
+     * 配置键 drama.ffmpeg.retry-total-budget-ms（环境变量 FFMPEG_RETRY_TOTAL_BUDGET_MS），默认 20000。
+     */
+    private final long ffmpegRetryTotalBudgetMs;
 
     /**
      * 构造器注入所有依赖。
+     * v2.31：退避预算未显式传入时委托到 13 参构造器，使用默认预算 20000L。
      */
     public FinalCutService(FinalCutRepository finalCutRepository,
                            EpisodeRepository episodeRepository,
@@ -60,6 +68,27 @@ public class FinalCutService {
                            DramaMetrics dramaMetrics,
                            @Value("${drama.ffmpeg.retry-attempts:3}") int ffmpegRetryAttempts,
                            @Value("${drama.ffmpeg.retry-backoff-ms:2000}") long ffmpegRetryBackoffMs) {
+        this(finalCutRepository, episodeRepository, shotRepository, videoTaskRepository,
+                subtitleService, ffmpegService, episodeStatusFlowService, storageDir,
+                dramaMetrics, ffmpegRetryAttempts, ffmpegRetryBackoffMs, 20000L);
+    }
+
+    /**
+     * v2.31：构造器注入所有依赖，并显式指定单次成片构建共享的退避预算。
+     */
+    @Autowired
+    public FinalCutService(FinalCutRepository finalCutRepository,
+                           EpisodeRepository episodeRepository,
+                           ShotRepository shotRepository,
+                           VideoTaskRepository videoTaskRepository,
+                           SubtitleService subtitleService,
+                           FfmpegService ffmpegService,
+                           EpisodeStatusFlowService episodeStatusFlowService,
+                           @Value("${drama.storage:./data/media}") String storageDir,
+                           DramaMetrics dramaMetrics,
+                           @Value("${drama.ffmpeg.retry-attempts:3}") int ffmpegRetryAttempts,
+                           @Value("${drama.ffmpeg.retry-backoff-ms:2000}") long ffmpegRetryBackoffMs,
+                           @Value("${drama.ffmpeg.retry-total-budget-ms:20000}") long ffmpegRetryTotalBudgetMs) {
         this.finalCutRepository = finalCutRepository;
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
@@ -71,6 +100,7 @@ public class FinalCutService {
         this.dramaMetrics = dramaMetrics;
         this.ffmpegRetryAttempts = ffmpegRetryAttempts;
         this.ffmpegRetryBackoffMs = ffmpegRetryBackoffMs;
+        this.ffmpegRetryTotalBudgetMs = ffmpegRetryTotalBudgetMs;
     }
 
     /**
@@ -131,12 +161,15 @@ public class FinalCutService {
 
             String base = "episode_" + episodeId + "_final_" + System.currentTimeMillis();
 
+            // v2.31：单次成片构建内所有 ffmpeg 步骤共享一份退避预算，总睡眠不超过预算。
+            AtomicLong retryBudget = new AtomicLong(Math.max(0, ffmpegRetryTotalBudgetMs));
+
             // 第一步：拼接片段
             Path concatOut = finalsDir.resolve(base + "_concat.mp4");
             withFfmpegRetry("concat", () -> {
                 ffmpegService.concatClips(clips, concatOut);
                 return null;
-            });
+            }, retryBudget);
 
             // 第二步：生成字幕并烧录
             Path srt = subtitleService.buildSrt(episodeId, shots);
@@ -144,10 +177,10 @@ public class FinalCutService {
             withFfmpegRetry("burn-subtitles", () -> {
                 ffmpegService.burnSubtitles(concatOut, srt, finalOut);
                 return null;
-            });
+            }, retryBudget);
 
             // 第三步：探测成片时长
-            double dur = withFfmpegRetry("probe-duration", () -> ffmpegService.probeDurationSeconds(finalOut));
+            double dur = withFfmpegRetry("probe-duration", () -> ffmpegService.probeDurationSeconds(finalOut), retryBudget);
 
             // 更新成片记录为完成状态
             fc.setStatus(FinalCutStatus.READY);
@@ -175,8 +208,9 @@ public class FinalCutService {
     /**
      * 对单个 ffmpeg 步骤执行有界重试：仅对可瞬时重试的失败（isTransient）重试，
      * 每次退避 ffmpegRetryBackoffMs * attempt 毫秒，最多 max(1, ffmpegRetryAttempts) 次。
+     * v2.31：退避睡眠从 retryBudget 共享预算中认领，预算耗尽后仍继续尝试剩余次数但不再睡眠。
      */
-    private <T> T withFfmpegRetry(String operation, FfmpegStep<T> step) {
+    private <T> T withFfmpegRetry(String operation, FfmpegStep<T> step, AtomicLong retryBudget) {
         int maxAttempts = Math.max(1, ffmpegRetryAttempts);
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
@@ -191,14 +225,20 @@ public class FinalCutService {
                     throw e;
                 }
                 long backoffMs = ffmpegRetryBackoffMs * attempt;
-                log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying in {}ms: {}",
-                        operation, attempt, maxAttempts, backoffMs, e.getMessage());
-                try {
-                    Thread.sleep(backoffMs);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new FfmpegService.FfmpegException(
-                            "ffmpeg retry interrupted: " + operation, true);
+                long sleepMs = claimRetryBackoff(retryBudget, backoffMs);
+                if (sleepMs > 0) {
+                    log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying in {}ms: {}",
+                            operation, attempt, maxAttempts, sleepMs, e.getMessage());
+                    try {
+                        Thread.sleep(sleepMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new FfmpegService.FfmpegException(
+                                "ffmpeg retry interrupted: " + operation, true);
+                    }
+                } else {
+                    log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying without backoff (budget exhausted): {}",
+                            operation, attempt, maxAttempts, e.getMessage());
                 }
             } catch (RuntimeException e) {
                 throw e;
@@ -207,6 +247,26 @@ public class FinalCutService {
             }
         }
         throw new IllegalStateException("unreachable: ffmpeg retry loop exhausted for " + operation);
+    }
+
+    /**
+     * v2.31：从共享退避预算中认领睡眠毫秒数。
+     *
+     * @param retryBudget 本次构建共享的剩余预算（毫秒）
+     * @param requestedMs 本次希望睡眠的毫秒数
+     * @return 实际可睡眠的毫秒数（不超过剩余预算；预算耗尽、预算为 null 或请求非正时返回 0）
+     */
+    static long claimRetryBackoff(AtomicLong retryBudget, long requestedMs) {
+        if (retryBudget == null || requestedMs <= 0) {
+            return 0;
+        }
+        long remaining = retryBudget.get();
+        if (remaining <= 0) {
+            return 0;
+        }
+        long grant = Math.min(requestedMs, remaining);
+        retryBudget.addAndGet(-grant);
+        return grant;
     }
 
     /**

@@ -78,6 +78,8 @@ drama:
   # v2.29 flaky 根因歼灭：ffmpeg 单步瞬时失败有界重试（成片构建 concat/burn-subtitles/probe）
   ffmpeg-retry-attempts: ${FFMPEG_RETRY_ATTEMPTS:3}
   ffmpeg-retry-backoff-ms: ${FFMPEG_RETRY_BACKOFF_MS:2000}
+  # v2.31 flaky 收尾：单次成片构建内所有 ffmpeg 步骤共享退避预算，总睡眠不超过预算
+  ffmpeg-retry-total-budget-ms: ${FFMPEG_RETRY_TOTAL_BUDGET_MS:20000}
 
 logging:
   # JSON 结构化日志：设置环境变量 SPRING_PROFILES_ACTIVE=json 即切换为 Logstash JSON 输出（含 request_id）
