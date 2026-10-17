@@ -181,6 +181,7 @@ add_executable(docseek_tests
   tests/test_office_xlsx.cpp
   tests/test_office_pptx.cpp
   tests/test_office_index.cpp
+  tests/test_query_parser.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

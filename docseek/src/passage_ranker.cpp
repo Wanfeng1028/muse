@@ -105,11 +105,13 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
 
     // 滑动窗口。
     int windowIndex = 0;
-    for (int wStart = 0; wStart < lineCount; wStart += kWindowStep) {
+    for (int wStart = 0; wStart < lineCount;) {
         // 强制断窗：行首为 '#' 的 markdown 标题行单独开启新窗口。
         // 若 wStart 行本身是标题行，它作为窗口首行；否则沿用累积。
         int wEnd = wStart;  // 含
         int accumulatedCodepoints = 0;
+        int breakLine = -1;  // 触发断窗的标题行号；无断窗为 -1
+        bool windowHasHeading = false;
         // 累积行直到超过上限。
         for (int li = wStart; li < lineCount; ++li) {
             if (li > wStart && (li - wStart) >= kMaxWindowLines) break;
@@ -124,14 +126,23 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
             wEnd = li;
             // markdown 标题行强制断窗（标题行本身开启新窗口）。
             bool isHeading = !lineText.empty() && lineText[0] == '#';
+            if (li == wStart && isHeading) {
+                windowHasHeading = true;
+            }
             if (isHeading && li > wStart) {
                 // 标题行不并入上一窗口。
                 wEnd = li - 1;
+                breakLine = li;
                 break;
             }
         }
         if (wEnd < wStart) {
             ++windowIndex;
+            if (breakLine >= 0) {
+                wStart = breakLine;
+            } else {
+                wStart += kWindowStep;
+            }
             continue;
         }
 
@@ -181,6 +192,8 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         double score =
             0.5 * coverage + 0.3 * hitsTerm + 0.15 * phraseTerm + 0.05 * posTerm;
 
+        if (pq.passageIntent && windowHasHeading) score += 0.1;
+
         if (score > 0.0) {
             Passage p;
             p.doc_id = doc_id;
@@ -206,6 +219,11 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
             result.push_back(std::move(p));
         }
         ++windowIndex;
+        if (breakLine >= 0) {
+            wStart = breakLine;
+        } else {
+            wStart += kWindowStep;
+        }
     }
 
     // 排序：score 降序，line_start 升序 tie-break。

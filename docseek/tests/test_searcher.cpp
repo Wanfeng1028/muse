@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -111,6 +112,52 @@ TEST(SearchT2, SubstringQueryRecall) {
         // 复现断言：查询 "猫砂" 被切成 <猫砂>，索引中无此 token，
         // 子串查询漏召回。当前代码下此断言必须失败。
         EXPECT_FALSE(s.search("猫砂", 10).empty());
+    }
+    std::filesystem::remove_all(std::filesystem::path(dbPath).parent_path());
+}
+
+// T5：B3——searchQuestion 对 AND 与 OR 结果按 doc_id 取并集，
+// 冲突时保留 AND 版本；空查询守卫。
+TEST(SearchQuestion, SearchQuestionAndUnionOr) {
+    std::string dbPath = makeTempDbPath();
+    {
+        docseek::Database db = docseek::Database::open(dbPath);
+        db.upsert("/q/a.txt", "a", "alpha gadget", 0, 0);
+        db.upsert("/q/b.txt", "b", "beta gadget", 0, 0);
+        db.upsert("/q/c.txt", "c", "alpha beta gadget", 0, 0);
+
+        docseek::Searcher s(db);
+
+        // AND 语义不变：只有同时含 alpha 与 beta 的 c.txt 命中。
+        std::vector<docseek::Hit> andHits = s.search("alpha beta", 10);
+        ASSERT_EQ(andHits.size(), 1u);
+        EXPECT_EQ(andHits[0].path, "/q/c.txt");
+
+        // 问句：AND∪OR 并集，三篇都应召回。
+        std::vector<docseek::Hit> qHits = s.searchQuestion("alpha beta", 10);
+        ASSERT_EQ(qHits.size(), 3u);
+        std::set<int64_t> ids;
+        for (const auto& h : qHits) ids.insert(h.doc_id);
+        EXPECT_EQ(ids.size(), 3u);
+
+        // 冲突保留 AND 版本：c.txt 的 score 在两边应相等。
+        bool foundAnd = false;
+        bool foundQ = false;
+        double andScore = 0.0;
+        double qScore = 0.0;
+        for (const auto& h : andHits) {
+            if (h.path == "/q/c.txt") { foundAnd = true; andScore = h.score; }
+        }
+        for (const auto& h : qHits) {
+            if (h.path == "/q/c.txt") { foundQ = true; qScore = h.score; }
+        }
+        ASSERT_TRUE(foundAnd);
+        ASSERT_TRUE(foundQ);
+        EXPECT_DOUBLE_EQ(qScore, andScore);
+
+        // 空查询守卫。
+        EXPECT_TRUE(s.searchQuestion("", 10).empty());
+        EXPECT_TRUE(s.searchQuestion("   ", 10).empty());
     }
     std::filesystem::remove_all(std::filesystem::path(dbPath).parent_path());
 }

@@ -33,6 +33,12 @@ public:
     //   3. 词法重排序（bm25 基础分 + title 加成 + 短语加成）
     std::vector<Hit> search(const std::string& query, int limit);
 
+    // 问句召回放宽版检索：重排逻辑与 search() 逐行等价，
+    // 区别仅在召回阶段——AND 结果与 OR 结果取并集（按 doc_id 去重，冲突保留 AND 版本），
+    // tokens.size() >= 2 时 OR 查询恒执行（不论 AND 是否为空）。
+    // 仅供 Locator 对问句调用；search() 本体行为不变。
+    std::vector<Hit> searchQuestion(const std::string& query, int limit);
+
 
     // 将查询按空白切分，每个 token 双引号包裹转义，空格连接（FTS5 隐式 AND）。
     static std::string buildMatchQuery(const std::string& query);

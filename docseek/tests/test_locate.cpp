@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdio>
+#include <set>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -168,6 +169,146 @@ TEST(Locator, NoResult) {
         EXPECT_TRUE(res.empty());
     }
 
+    cleanupTempDb(dbPath);
+}
+
+// 构造 6 行文档：第 3 行为 markdown 标题行，关键词"退款政策"只出现在标题行。
+std::string makeHeadingOnlyContent() {
+    return "前言第一行介绍背景\n"
+           "前言第二行继续铺垫\n"
+           "## 退款政策\n"
+           "正文内容第一行说明条款\n"
+           "正文内容第二行解释细则\n"
+           "正文内容第三行补充备注\n";
+}
+
+// 在结果中查找 line_start==ls 的首个窗口（只按起点匹配：文档末尾的 '\n'
+// 会产生一个空尾行，窗口的 line_end 会因此多出一行，按完整区间匹配是脆弱的）。
+const Passage* findByLineStart(const std::vector<Passage>& vec, int ls) {
+    for (const auto& p : vec) {
+        if (p.line_start == ls) return &p;
+    }
+    return nullptr;
+}
+
+// T1：B2 bug 回归——标题行强制断窗后，下一窗口必须从标题行开始，
+// 保证标题行始终被某个窗口覆盖。
+TEST(PassageRankerV012, HeadingWindowRegression) {
+    std::string content = makeHeadingOnlyContent();
+    ParsedQuery pq;
+    pq.keywords.push_back("退款政策");
+
+    std::vector<Passage> res = rankPassages(1, "t.md", content, pq, 5);
+    ASSERT_FALSE(res.empty());
+
+    // 存在某窗口覆盖第 3 行标题行，且窗口文本含标题原文。
+    bool covered = false;
+    for (const auto& p : res) {
+        if (p.line_start <= 3 && 3 <= p.line_end &&
+            p.text.find("## 退款政策") != std::string::npos) {
+            covered = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(covered);
+
+    // top-1 应覆盖第 3 行且文本含标题（该窗口 coverage=1.0 排第一）。
+    ASSERT_FALSE(res.empty());
+    EXPECT_LE(res[0].line_start, 3);
+    EXPECT_GE(res[0].line_end, 3);
+    EXPECT_NE(res[0].text.find("## 退款政策"), std::string::npos);
+}
+
+// T2：passageIntent 对标题打头窗口精确 +0.1，非标题窗口 +0.0。
+TEST(PassageRankerV012, PassageIntentBonus) {
+    std::string content = makeHeadingOnlyContent();
+
+    ParsedQuery pq0;
+    pq0.keywords.push_back("退款政策");
+    pq0.passageIntent = false;
+    std::vector<Passage> r0 = rankPassages(1, "t.md", content, pq0, 5);
+
+    ParsedQuery pq1;
+    pq1.keywords.push_back("退款政策");
+    pq1.passageIntent = true;
+    std::vector<Passage> r1 = rankPassages(1, "t.md", content, pq1, 5);
+
+    ASSERT_FALSE(r0.empty());
+    ASSERT_FALSE(r1.empty());
+    EXPECT_EQ(r0.size(), r1.size());
+
+    // 标题行打头的窗口（line_start==3）：passageIntent 应带来 +0.1。
+    const Passage* a = findByLineStart(r0, 3);
+    const Passage* b = findByLineStart(r1, 3);
+    ASSERT_NE(a, nullptr);
+    ASSERT_NE(b, nullptr);
+    EXPECT_EQ(a->line_end, b->line_end);
+    EXPECT_NEAR(b->score - a->score, 0.1, 1e-9);
+
+    // 非标题窗口（line_start==1 的前言窗口）：passageIntent 不应改变分数。
+    const Passage* c = findByLineStart(r0, 1);
+    const Passage* d = findByLineStart(r1, 1);
+    ASSERT_NE(c, nullptr);
+    ASSERT_NE(d, nullptr);
+    EXPECT_NEAR(d->score - c->score, 0.0, 1e-12);
+}
+
+// T3：问句走 searchQuestion 的 AND∪OR 并集召回。
+TEST(LocatorV012, LocatorQuestionUsesUnionRecall) {
+    std::string dbPath = makeTempDbPath("qunion");
+    {
+        Database db = Database::open(dbPath);
+        db.upsert("退款流程.md", "退款流程",
+                  "退款流程说明\n提交申请后等待审核。\n审核通过原路返回。\n",
+                  0, 0);
+        db.upsert("发货说明.md", "发货说明",
+                  "发货须知\n四十八小时内发出。\n偏远地区延迟。\n",
+                  0, 0);
+        db.upsert("综合.md", "综合",
+                  "退款流程发货总览\n退款流程与发货须知汇总。\n",
+                  0, 0);
+
+        Searcher searcher(db);
+        Locator locator(db, searcher);
+
+        LocateOptions opts;
+        opts.limit = 9;
+        opts.recallDocs = 10;
+        std::vector<Passage> res =
+            locator.locate("退款流程发货说明在哪里", opts);
+
+        // 问句：AND 只命中"综合"，并集后三篇都应被召回。
+        std::set<std::string> paths;
+        for (const auto& p : res) paths.insert(p.path);
+        EXPECT_NE(paths.find("退款流程.md"), paths.end());
+        EXPECT_NE(paths.find("发货说明.md"), paths.end());
+        EXPECT_NE(paths.find("综合.md"), paths.end());
+    }
+    cleanupTempDb(dbPath);
+}
+
+// T4：recallQuery 去重链路——phrases 与 keywords 共用去重集合。
+TEST(LocatorV012, LocatorRecallQueryDedup) {
+    std::string dbPath = makeTempDbPath("qdedup");
+    {
+        Database db = Database::open(dbPath);
+        db.upsert("发货说明.md", "发货说明",
+                  "发货须知\n四十八小时内发出。\n",
+                  0, 0);
+
+        Searcher searcher(db);
+        Locator locator(db, searcher);
+
+        // 解析：phrases=["发货"]、keywords=["发货"]，
+        // recallQuery 去重后为单份"发货"（未去重会是 "发货 发货"）。
+        // 注意：完全重复的 AND 在结果集层面等价，本用例守护的是去重后的
+        // recallQuery 拼装链路（无 FTS5 语法错误、召回正确），
+        // 并非声称能测出结果集差异。
+        std::vector<Passage> res = locator.locate("\"发货\"发货在哪");
+        EXPECT_FALSE(res.empty());
+        ASSERT_FALSE(res.empty());
+        EXPECT_NE(res[0].path.find("发货"), std::string::npos);
+    }
     cleanupTempDb(dbPath);
 }
 

@@ -2,12 +2,39 @@
 
 #include <algorithm>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "docseek/query_parser.h"
 
 namespace docseek {
 namespace {
+
+// 问句尾缀/疑问词补充检测：passageIntent 触发词表不含"在哪里/在哪/哪里"等
+// 常见问句尾缀，这里补充识别，供 Locator 决定是否走问句召回放宽链路。
+bool hasQuestionTail(const std::string& rawQuery) {
+    if (rawQuery.find("在哪里") != std::string::npos) return true;
+    if (rawQuery.find("在哪") != std::string::npos) return true;
+    if (rawQuery.find("哪里") != std::string::npos) return true;
+    size_t end = rawQuery.size();
+    while (end > 0) {
+        char c = rawQuery[end - 1];
+        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v') {
+            --end;
+        } else {
+            break;
+        }
+    }
+    if (end == 0) return false;
+    auto endsWith = [&](const std::string& suffix) {
+        return end >= suffix.size() &&
+               rawQuery.compare(end - suffix.size(), suffix.size(), suffix) == 0;
+    };
+    if (endsWith("吗")) return true;
+    if (rawQuery[end - 1] == '?') return true;
+    if (endsWith("？")) return true;
+    return false;
+}
 
 // PDF 页码辅助：路径是否为 .pdf（大小写不敏感）
 bool hasPdfExt(const std::string& path) {
@@ -77,20 +104,26 @@ std::vector<Passage> Locator::locate(const std::string& rawQuery,
         pq.keywords.push_back(rawQuery);
     }
 
-    // 拼接 recallQuery。
+    // 拼接 recallQuery：keywords 与 phrases 共用去重集合，避免冗余 AND。
     std::string recallQuery;
+    std::unordered_set<std::string> seenRecall;
     for (const auto& k : pq.keywords) {
+        if (!seenRecall.insert(k).second) continue;
         if (!recallQuery.empty()) recallQuery.push_back(' ');
         recallQuery += k;
     }
     for (const auto& p : pq.phrases) {
+        if (!seenRecall.insert(p).second) continue;
         if (!recallQuery.empty()) recallQuery.push_back(' ');
         recallQuery += p;
     }
 
     if (recallQuery.empty()) return result;
 
-    std::vector<Hit> hits = searcher_.search(recallQuery, opts.recallDocs);
+    const bool isQuestion = pq.passageIntent || hasQuestionTail(rawQuery);
+    std::vector<Hit> hits = isQuestion
+        ? searcher_.searchQuestion(recallQuery, opts.recallDocs)
+        : searcher_.search(recallQuery, opts.recallDocs);
 
     std::vector<Passage> all;
     for (const auto& h : hits) {

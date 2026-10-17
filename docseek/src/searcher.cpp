@@ -232,6 +232,53 @@ bool containsFolded(const std::string& haystack, const std::string& needle) {
     return h.find(n) != std::string::npos;
 }
 
+static std::vector<Hit> rerankHits(std::vector<Hit> hits,
+                            const std::vector<std::string>& tokens,
+                            const std::string& query,
+                            const SearchWeights& weights,
+                            int limit) {
+    if (hits.empty()) {
+        return {};
+    }
+
+    // 4. 重排序：bm25 基础分 + title 加成 + 短语加成。
+    const std::string longQuery = removeWhitespace(query);
+
+    for (Hit& hit : hits) {
+        double finalScore = hit.score;  // base = -bm25，越大越相关
+
+        // title 加成：每个 query token 在 title 中出现为子串，+1.0。
+        for (const std::string& token : tokens) {
+            if (hit.title.find(token) != std::string::npos) {
+                finalScore += weights.titleBoost;
+            }
+
+        }
+
+        // 短语加成：去掉空白的连续查询串出现在 title 或 snippet 中，+2.0。
+        if (!longQuery.empty()) {
+            if (hit.title.find(longQuery) != std::string::npos ||
+                hit.snippet.find(longQuery) != std::string::npos) {
+                finalScore += weights.phraseBoost;
+            }
+
+        }
+
+        hit.score = finalScore;
+    }
+
+    // 按总分降序排序。
+    std::stable_sort(hits.begin(), hits.end(),
+                     [](const Hit& a, const Hit& b) { return a.score > b.score; });
+
+    // 截断到 limit。
+    if (static_cast<int>(hits.size()) > limit) {
+        hits.resize(static_cast<size_t>(limit));
+    }
+
+    return hits;
+}
+
 std::vector<Hit> Searcher::search(const std::string& query, int limit) {
     if (query.empty() || limit <= 0) {
         return {};
@@ -281,46 +328,64 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
         }
     }
 
-    if (hits.empty()) {
+    return rerankHits(std::move(hits), tokens, query, weights_, limit);
+}
+
+std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {
+    if (query.empty() || limit <= 0) {
         return {};
     }
 
-    // 4. 重排序：bm25 基础分 + title 加成 + 短语加成。
-    const std::string longQuery = removeWhitespace(query);
-
-    for (Hit& hit : hits) {
-        double finalScore = hit.score;  // base = -bm25，越大越相关
-
-        // title 加成：每个 query token 在 title 中出现为子串，+1.0。
-        for (const std::string& token : tokens) {
-            if (hit.title.find(token) != std::string::npos) {
-                finalScore += weights_.titleBoost;
-            }
-
-        }
-
-        // 短语加成：去掉空白的连续查询串出现在 title 或 snippet 中，+2.0。
-        if (!longQuery.empty()) {
-            if (hit.title.find(longQuery) != std::string::npos ||
-                hit.snippet.find(longQuery) != std::string::npos) {
-                finalScore += weights_.phraseBoost;
-            }
-
-        }
-
-        hit.score = finalScore;
+    const std::vector<std::string> tokens = splitTokens(query);
+    if (tokens.empty()) {
+        // 查询只有空白字符，视为空查询。
+        return {};
     }
 
-    // 按总分降序排序。
-    std::stable_sort(hits.begin(), hits.end(),
-                     [](const Hit& a, const Hit& b) { return a.score > b.score; });
+    // 1. 精确 AND：多取 2 倍做重排。
+    const std::string matchQuery = buildMatchQuery(query);
+    std::vector<Hit> hits = db_.searchFts(matchQuery, limit * 2);
 
-    // 截断到 limit。
-    if (static_cast<int>(hits.size()) > limit) {
-        hits.resize(static_cast<size_t>(limit));
+    // 2. OR 并集：token 数 >= 2 时恒执行 OR，与 AND 结果按 doc_id 取并集，
+    //    冲突时保留 AND 版本（先放入 AND，再追加 OR 中未见过的 doc_id）。
+    if (tokens.size() >= 2) {
+        const std::string orQuery = buildOrMatchQuery(query);
+        std::vector<Hit> orHits = db_.searchFts(orQuery, limit * 2);
+        std::set<int64_t> seen;
+        for (const Hit& h : hits) {
+            seen.insert(h.doc_id);
+        }
+        for (const Hit& h : orHits) {
+            if (seen.insert(h.doc_id).second) {
+                hits.push_back(h);
+            }
+        }
     }
 
-    return hits;
+    // 3. 子串召回回退（T2 修复）：并集为空时，把中文 token 拆成单字
+    //    做 OR 粗筛，再用"原文按 token 逐个包含查询子串"精验后保留。
+    if (hits.empty()) {
+        const std::string subQuery = buildSubstringRecallQuery(tokens);
+        if (!subQuery.empty()) {
+            std::vector<Hit> subHits = db_.searchFts(subQuery, limit * 2);
+            for (const Hit& h : subHits) {
+                std::string hay = h.title;
+                if (auto content = db_.getContentById(h.doc_id)) {
+                    hay.push_back('\n');
+                    hay += *content;
+                } else {
+                    hay += h.snippet;
+                }
+                bool allFound = true;
+                for (const std::string& t : tokens) {
+                    if (!containsFolded(hay, t)) { allFound = false; break; }
+                }
+                if (allFound) hits.push_back(h);
+            }
+        }
+    }
+
+    return rerankHits(std::move(hits), tokens, query, weights_, limit);
 }
 
 }  // namespace docseek

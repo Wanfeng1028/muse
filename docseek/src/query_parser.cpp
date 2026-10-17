@@ -146,13 +146,17 @@ void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
     }
 }
 
-// 按顺序整体替换为空的疑问/语气词表（长度降序）。
+// 按顺序整体替换为空的疑问/语气词表。
+// 注意：单字 "的"、"了" 已由 singleCharStopwords 在分词阶段过滤，
+// 此处不再列入，避免把名词短语（如"密码的规则"）切碎。
+// 表按字节长度严格降序排列，消除 "在哪"/"在哪里"、"哪段"/"哪一段" 等
+// 前后缀重叠对遍历顺序的依赖（先长后短，短词不会误吃长词前缀）。
 const std::vector<std::string>& fillerWords() {
     static const std::vector<std::string> kWords = {
-        "请问", "帮我找一下", "帮我找", "找一下", "有没有", "在哪里", "哪一段", "在哪",
-        "哪个", "哪些", "是什么", "为什么", "为啥", "怎么", "如何", "怎样",
-        "多少", "哪段", "哪句", "哪一句", "哪一篇", "哪篇", "吗", "呢", "啊",
-        "吧", "一下", "的", "了"};
+        "帮我找一下", "哪一篇", "有没有", "在哪里", "哪一段", "哪一句",
+        "帮我找", "找一下", "是什么", "为什么", "哪段", "哪句", "哪个",
+        "哪些", "怎么", "如何", "怎样", "多少", "哪篇", "请问", "在哪",
+        "为啥", "一下", "吗", "呢", "啊", "吧"};
     return kWords;
 }
 
@@ -170,6 +174,36 @@ std::string eraseAll(const std::string& s, const std::string& from) {
         }
         out.append(s, pos, found - pos);
         pos = found + from.size();
+    }
+    return out;
+}
+
+// 尾部谓语/动词残留剥离表（长度降序）。
+// 只含谓语/动词类，不含名词主题词（"备份"/"方法"/"政策"/"规则"/"方案"/
+// "权益"/"流程"/"步骤" 等名词一律保留）。
+// 剥离仅作用于字符串尾部，循环直到稳定，避免误伤串中间的名词。
+const std::vector<std::string>& trailingPredicates() {
+    static const std::vector<std::string> kWords = {
+        "写在哪", "写在", "说明", "介绍", "申请", "开具", "重置", "阐述", "写"};
+    return kWords;
+}
+
+// 反复剥掉 rest 尾部的谓语/动词残留，直到稳定。
+// 按长度降序尝试；每次命中一个后缀即剥掉并重新尝试。
+std::string stripTrailingPredicates(const std::string& s) {
+    std::string out = s;
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (const auto& w : trailingPredicates()) {
+            if (w.empty()) continue;
+            if (out.size() >= w.size() &&
+                out.compare(out.size() - w.size(), w.size(), w) == 0) {
+                out.resize(out.size() - w.size());
+                changed = true;
+                break;
+            }
+        }
     }
     return out;
 }
@@ -206,10 +240,15 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     std::string rest;
     extractPhrases(raw, pq.phrases, rest);
 
-    // 2. 删除疑问/语气词（按表顺序）。
+    // 2. 删除疑问/语气词（按表顺序，长度降序）。
     for (const auto& w : fillerWords()) {
         rest = eraseAll(rest, w);
     }
+    rest = squeezeWhitespace(rest);
+
+    // 2.5 尾部谓语/动词残留剥离（只剥尾部，保护串中间名词）。
+    // 处理 "写在"/"写"/"说明"/"申请" 等问句谓语，避免其进入 keywords。
+    rest = stripTrailingPredicates(rest);
     rest = squeezeWhitespace(rest);
 
     // 3. jieba 分词 + 过滤。

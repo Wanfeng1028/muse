@@ -2,6 +2,17 @@
 # Changelog
 ```
 
+## v0.12.0（2026-10-17）——问句理解升级
+
+- 问句改写（`src/query_parser.cpp`）：fillerWords 疑问词表清理（删除与 singleCharStopwords 重复的"的/了"，全表按长度严格降序）；新增 trailingPredicates 尾部谓语剥离（写在哪/写在/说明/介绍/申请/开具/重置/阐述/写，只剥尾部谓语、保留名词主题），parseNaturalQuery 步骤 2.5 接入。自然语言问句先被改写成名词主题再检索。
+- 段落排序修复（`src/passage_ranker.cpp`）：修标题行断窗覆盖 bug（断窗后下一窗口从标题行开始，每行必被覆盖）；passageIntent=true 时含标题行窗口 +0.1，问句更倾向定位到标题附近的段落。
+- 问句召回路径（`src/locator.cpp`）：recallQuery 跨 keywords/phrases 去重；问句（passageIntent 或问句尾缀"在哪里/在哪/哪里/吗/?/？"）走新 searchQuestion。
+- 新增 `Searcher::searchQuestion`（`src/searcher.cpp` + `include/docseek/searcher.h`）：问句 AND∪OR 并集召回，doc_id 去重；重排逻辑抽取为共用 rerankHits，`search()` 行为零差异。
+- 评测集：`eval/eval_pairs_v08.json`（71 对：56 个 v07 对逐字 + 15 个新增真实问法）。
+- 测试：`tests/test_query_parser.cpp` 新建 5 例；`tests/test_locate.cpp` +4；`tests/test_searcher.cpp` +1。ctest 168/168 全过（WatcherTest.SubDir 为 v0.5.0 起已知 inotify flaky，排除后全绿）。
+- 评测：v07 集 55/56（98.2%）（html 10/10 / tok 26/26 / noise 6/6 / neg 2/2 / qa 11/12），基线 48/56（85.7%），qa 由基线 4/12 提升到 11/12；v08 集（71 对）66/71（93.0%），qa 22/27（81.5%）。
+- 已知限制：v07-024 "安装步骤在哪里"未修复（期望 qa_04_install.md，实际 tok_12_verb.md；跨文档排序被干扰文档 0.845 vs 0.688 压制）；v08 新增 4 个真实问法失败（v08-qa-03 "请问发货得几天啊"→t1_01_repair.md、v08-qa-09 "多久备份一次"→t1_01_repair.md、v08-qa-10 "有哪些套餐"→tok_04_ambiguity.md、v08-qa-15 "想找客服，联系方式在哪啊"→qa_08_invoice.md）；`WatcherTest.SubDir` flaky 照旧（v0.5.0 已有，与本轮无关）。
+- 构建：cmake 零警告（自有文件；第三方 cppjieba 头警告 pre-existing）。版本号 0.12.0（`--version`）。
 ## v0.11.1（2026-10-17）——版本号唯一来源 + 定位逻辑公共抽取
 
 - 修复 v0.10.0 遗留 bug：`src/service.cpp` 的 `/api/health` 与服务启动日志把版本号硬编码为 "0.9.0"。
