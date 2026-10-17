@@ -122,7 +122,18 @@ func main() {
 		BaseBackoffSec: int64(cfg.QueueBaseBackoffSec),
 		TickSec:        cfg.QueueTickSec,
 	}
+	queueSender.Limiter = notify.NewRateLimiter(cfg.QueueEnqueueRPS, cfg.QueueEnqueueBurst)
+	if queueSender.Limiter == nil {
+		logger.Info("webhook 入队限流已禁用")
+	} else {
+		logger.Info("webhook 入队限流已启用", "rps", cfg.QueueEnqueueRPS, "burst", cfg.QueueEnqueueBurst)
+	}
+
+	queueSender.Breakers = notify.NewBreakerRegistry(cfg.BreakerFailureThreshold, time.Duration(cfg.BreakerOpenTimeoutSec)*time.Second)
+	logger.Info("webhook 投递熔断已启用", "failure_threshold", cfg.BreakerFailureThreshold, "open_timeout_sec", cfg.BreakerOpenTimeoutSec)
+
 	ntf.Queue = queueSender
+
 	notifyFn := func(m store.Monitor, event, name, target, at, errMsg string) {
 		errs := ntf.Notify(notify.Target{MonitorID: m.ID, WebhookURL: m.WebhookURL, NotifyChannels: m.NotifyChannels, SMSPhones: m.SMSPhones}, event, name, target, at, errMsg)
 		if serr := notify.NotifySubscribers(st, subMailer, cfg.PublicURL, m.ID, event, name, target, at, errMsg); serr != nil {
@@ -184,6 +195,7 @@ func main() {
 	h := handlers.New(st, sch, cfg.CheckRetryMax)
 	h.SetMailer(subMailer)
 	h.SetPublicURL(cfg.PublicURL)
+	h.SetQueueSender(queueSender)
 	srv := &http.Server{
 		Addr:         cfg.Addr(),
 		Handler:      h.Routes(),

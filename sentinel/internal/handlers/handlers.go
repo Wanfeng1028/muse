@@ -30,6 +30,7 @@ type Server struct {
 	checkRetries int
 	mailer       notify.Mailer
 	publicURL    string
+	queueSender  *notify.QueueSender
 }
 
 // New 构造 Server。
@@ -370,6 +371,10 @@ func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
 		// map 缺 key 时读到的零值即为 0，无需额外判断。
 		out += metrics.RenderQueueBacklog(int64(counts["pending"]), int64(counts["retrying"]))
 	}
+	if s.queueSender != nil {
+		out += metrics.RenderBreakerStates(s.queueSender.BreakerStates())
+	}
+
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(out))

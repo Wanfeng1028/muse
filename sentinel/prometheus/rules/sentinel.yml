@@ -99,3 +99,34 @@ groups:
             3) 检查存储（SQLite/磁盘）是否可用、磁盘是否写满；
             4) 若集中在写接口，确认是否有锁竞争或事务失败；
             5) 检查是否刚刚发布过新版本引入回归。
+
+      - alert: SentinelWebhookEnqueueRejected
+        expr: increase(sentinel_webhook_enqueue_rejected_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Webhook 入队限流持续拒绝"
+          description: |
+            10 分钟窗口内出现 webhook 入队被限流器拒绝，说明告警产生速度超过了入队配额（SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS），
+            被拒绝的告警会被直接丢弃（只记 warn 日志与计数），不会进入投递队列。
+            先查什么：1) 是否处于故障风暴（大量目标同时 down 导致告警洪峰）；
+            2) 看 sentinel_webhook_enqueue_rejected_total 的增长速率，估算缺口；
+            3) 检查 sentinel 日志中"webhook 入队被限流拒绝"确认是限流而非其他入队失败；
+            4) 评估调高 SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS / _BURST，或排查是否有误告警的目标在刷屏。
+
+      - alert: SentinelWebhookBreakerOpen
+        expr: sentinel_webhook_breaker_state == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Webhook 投递熔断器已断开"
+          description: |
+            某个下游 host 的投递熔断器已断开超过 5 分钟：该下游连续投递失败达到阈值，
+            其投递被整体跳过（记录保留在队列里，状态不变），直到半开探测成功才恢复。
+            先查什么：1) 看 sentinel_webhook_breaker_state 的 host 标签，定位是哪个下游；
+            2) 从 sentinel 所在主机 curl 该下游，确认是对方故障还是网络问题；
+            3) 下游恢复后熔断器会自动半开探测并恢复，无需人工干预（可观察指标回到 0）；
+            4) 若频繁误熔断，检查 SENTINEL_WEBHOOK_BREAKER_FAILURE_THRESHOLD 是否设得过小、
+            SENTINEL_WEBHOOK_BREAKER_OPEN_TIMEOUT_SEC 是否过长。

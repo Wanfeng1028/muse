@@ -368,3 +368,34 @@ export SENTINEL_NOTIFY_CHANNELS=smtp
 - 注意：`/api/metrics` 需带 Bearer token。
 
 ```
+
+## 12. 入队限流与投递熔断调参（v0.7 新增）
+
+### 12.1 环境变量一览
+
+| 变量 | 默认 | 合法范围 | 说明 |
+| --- | --- | --- | --- |
+| `SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS` | `20` | `0` 或 `0.1`~`10000` | 入队令牌桶速率（每秒）。`0` = 禁用限流；非零须在 `0.1`~`10000`，否则启动 fail-fast。 |
+| `SENTINEL_WEBHOOK_QUEUE_ENQUEUE_BURST` | `40` | `1`~`100000` | 入队令牌桶容量（突发额度），非法启动 fail-fast。 |
+| `SENTINEL_WEBHOOK_BREAKER_FAILURE_THRESHOLD` | `5` | `1`~`100` | 连续失败达该值即断开下游熔断器，非法启动 fail-fast。 |
+| `SENTINEL_WEBHOOK_BREAKER_OPEN_TIMEOUT_SEC` | `300` | `10`~`86400` | 断开持续多久后转半开（秒），非法启动 fail-fast。 |
+
+### 12.2 限流：什么时候调
+
+- 默认 `20` rps / `40` burst 够不够：单实例下告警产生速度平时远低于此；故障风暴（几十个目标同时 down）时可能打满。
+- 被限流的表现：`sentinel_webhook_enqueue_rejected_total` 增长 + 日志 warn "webhook 入队被限流拒绝"；被拒绝的告警直接丢弃，不会进队列——这是有损的，调参前先确认是真洪峰还是误告警。
+- 调参建议：先看 10 分钟拒绝量的峰值，RPS 按"峰值×1.5"给，BURST 按"RPS×2"给；RPS 设 `0` 可彻底禁用（不推荐生产环境禁用）。
+- 为什么超限是丢弃而不是排队/429：入队发生在调度器后台 goroutine，没有 HTTP 请求上下文可返回 429；无限排队会把 SQLite 撑爆，丢弃+计数+告警是诚实的有损策略。
+
+### 12.3 熔断：什么时候调
+
+- 默认连续 `5` 次失败断开、断开 `300` 秒后半开探测。
+- 下游 webhook 本来就慢/偶发 500：阈值 `5` 可能偏小，可调到 `8`~`10`；超时 `300` 秒偏保守，内网下游可调到 `60`~`120`。
+- 半开探测一次只放一个请求，探测成功自动闭合，无需人工干预；用 `sentinel_webhook_breaker_state{host}` 看各下游状态。
+- 熔断与指数退避/手动重试的关系：正交。退避决定"失败后何时再试"，熔断决定"下游已死时是否还打它"；手动重试（`/api/alerts/deliveries/{id}/retry`）不受熔断影响，照样把记录打回 pending（但 worker 仍会跳过熔断中的下游）。
+
+### 12.4 观测与排障
+
+- 看限流：`sentinel_webhook_enqueue_rejected_total` 的 increase；告警 `SentinelWebhookEnqueueRejected`。
+- 看熔断：`sentinel_webhook_breaker_state` 按 host 拆；告警 `SentinelWebhookBreakerOpen`。
+- 启动 fail-fast：四个变量任一非法，进程启动即中文报错退出（exit 1），先修环境变量再起服务。

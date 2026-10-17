@@ -24,11 +24,13 @@ func RenderQueueBacklog(pending, retrying int64) string {
 
 // Registry 保存所有指标的原子计数器与互斥保护的 map。
 type Registry struct {
-	checksTotal    atomic.Int64
-	checksFailed   atomic.Int64
-	checksRetried  atomic.Int64
-	webhooksSent   atomic.Int64
-	webhookFailed  atomic.Int64
+	checksTotal     atomic.Int64
+	checksFailed    atomic.Int64
+	checksRetried   atomic.Int64
+	webhooksSent    atomic.Int64
+	webhookFailed   atomic.Int64
+	enqueueRejected atomic.Int64
+
 	checkLatencyMs atomic.Int64
 
 	mu          sync.Mutex
@@ -73,6 +75,11 @@ func (m *Registry) RecordWebhook(ok bool) {
 	if !ok {
 		m.webhookFailed.Add(1)
 	}
+}
+
+// RecordEnqueueRejected 记录一次 webhook 入队被限流器拒绝。
+func (m *Registry) RecordEnqueueRejected() {
+	m.enqueueRejected.Add(1)
 }
 
 // RecordHTTP 记录一次 HTTP 请求。
@@ -155,6 +162,7 @@ func (m *Registry) RenderPrometheus() string {
 	writeCounter("sentinel_check_retries_total", "Total number of retried checks.", m.checksRetried.Load())
 	writeCounter("sentinel_webhooks_sent_total", "Total number of webhook deliveries attempted.", m.webhooksSent.Load())
 	writeCounter("sentinel_webhook_failures_total", "Total number of webhook delivery failures.", m.webhookFailed.Load())
+	writeCounter("sentinel_webhook_enqueue_rejected_total", "Total number of webhook enqueue requests rejected by the rate limiter.", m.enqueueRejected.Load())
 
 	m.mu.Lock()
 	keys := make([]httpKey, 0, len(m.httpReqs))
@@ -183,5 +191,22 @@ func (m *Registry) RenderPrometheus() string {
 			k.method, k.path, k.status, values[i])
 	}
 
+	return b.String()
+}
+
+// RenderBreakerStates 输出各下游熔断状态的 Prometheus 文本指标。
+// states 为 host → 状态码（0=闭合，1=断开，2=半开）；空 map 时只输出 HELP/TYPE 头。
+func RenderBreakerStates(states map[string]int) string {
+	var b strings.Builder
+	b.WriteString("# HELP sentinel_webhook_breaker_state Circuit breaker state per downstream host (0=closed, 1=open, 2=half-open).\n")
+	b.WriteString("# TYPE sentinel_webhook_breaker_state gauge\n")
+	hosts := make([]string, 0, len(states))
+	for h := range states {
+		hosts = append(hosts, h)
+	}
+	sort.Strings(hosts)
+	for _, h := range hosts {
+		fmt.Fprintf(&b, "sentinel_webhook_breaker_state{host=%q} %d\n", h, states[h])
+	}
 	return b.String()
 }

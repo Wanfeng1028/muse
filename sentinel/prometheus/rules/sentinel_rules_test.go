@@ -44,8 +44,8 @@ func TestSentinelRulesFile(t *testing.T) {
 	if g.Name != "sentinel" {
 		t.Fatalf("expected group name %q, got %q", "sentinel", g.Name)
 	}
-	if len(g.Rules) != 6 {
-		t.Fatalf("expected exactly 6 rules, got %d", len(g.Rules))
+	if len(g.Rules) != 8 {
+		t.Fatalf("expected exactly 8 rules, got %d", len(g.Rules))
 	}
 
 	metricSubstr := map[string]string{
@@ -55,6 +55,8 @@ func TestSentinelRulesFile(t *testing.T) {
 		"SentinelWebhookFailureRateHigh":  `sentinel_webhook_failures_total`,
 		"SentinelCheckFailuresSpike":      `sentinel_check_failures_total`,
 		"SentinelAPI5xxRateHigh":          `sentinel_http_requests_total`,
+		"SentinelWebhookEnqueueRejected":  `sentinel_webhook_enqueue_rejected_total`,
+		"SentinelWebhookBreakerOpen":      `sentinel_webhook_breaker_state`,
 	}
 
 	expected := map[string]bool{
@@ -64,6 +66,8 @@ func TestSentinelRulesFile(t *testing.T) {
 		"SentinelWebhookFailureRateHigh":  false,
 		"SentinelCheckFailuresSpike":      false,
 		"SentinelAPI5xxRateHigh":          false,
+		"SentinelWebhookEnqueueRejected":  false,
+		"SentinelWebhookBreakerOpen":      false,
 	}
 
 	for _, r := range g.Rules {

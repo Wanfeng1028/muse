@@ -13,15 +13,19 @@ import (
 	"time"
 
 	"sentinel/internal/log"
+	"sentinel/internal/metrics"
 	"sentinel/internal/store"
 )
 
 // QueueSender 把 webhook 投递任务持久化到 SQLite 队列并由 worker 按指数退避重投。
 type QueueSender struct {
 	Store          *store.Store
-	MaxAttempts    int   // <=0 则用 8
-	BaseBackoffSec int64 // <=0 则用 60
-	TickSec        int   // <=0 则用 15
+	MaxAttempts    int              // <=0 则用 8
+	BaseBackoffSec int64            // <=0 则用 60
+	TickSec        int              // <=0 则用 15
+	Limiter        *RateLimiter     // 入队限流器；nil 表示不限流
+	Breakers       *BreakerRegistry // 投递熔断注册表；nil 表示不熔断
+
 }
 
 const (
@@ -81,6 +85,12 @@ func (q *QueueSender) EnqueueWebhook(monitorID int64, url, event, name, target, 
 		return nil
 	}
 
+	if q.Limiter != nil && !q.Limiter.Allow() {
+		log.Logger().Warn("webhook 入队被限流拒绝", "monitor_id", monitorID, "url", u, "event", event)
+		metrics.Default.RecordEnqueueRejected()
+		return ErrEnqueueRateLimited
+	}
+
 	body, err := json.Marshal(payload{
 		Event:   event,
 		Name:    name,
@@ -127,7 +137,22 @@ func postWebhookOnce(url string, body []byte) error {
 
 // ProcessDue 扫描到期的投递记录并逐条尝试投递。
 // 成功标记 done；失败按 attempt 与 max_attempts 决定 retrying 或 failed。
+// BreakerStates 返回各下游 host 的熔断状态（0=闭合，1=断开，2=半开）；
+// 未配置熔断注册表时返回 nil。供 /api/metrics 导出。
+func (q *QueueSender) BreakerStates() map[string]int {
+	if q.Breakers == nil {
+		return nil
+	}
+	snap := q.Breakers.Snapshot()
+	out := make(map[string]int, len(snap))
+	for host, st := range snap {
+		out[host] = int(st)
+	}
+	return out
+}
+
 func (q *QueueSender) ProcessDue(ctx context.Context) error {
+
 	now := time.Now().UTC().Format(time.RFC3339)
 	items, err := q.Store.ClaimDueDeliveries(now, 100)
 	if err != nil {
@@ -141,7 +166,20 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 		default:
 		}
 
+		var br *CircuitBreaker
+		if q.Breakers != nil {
+			br = q.Breakers.Get(d.URL)
+			if !br.BeforeRequest() {
+				log.Logger().Warn("webhook 投递被熔断跳过", "delivery_id", d.ID, "url", d.URL, "state", br.State().String())
+				continue
+			}
+		}
+
 		if err := postWebhookOnce(d.URL, []byte(d.Payload)); err == nil {
+			if br != nil {
+				br.AfterRequest(true)
+			}
+
 			if err := q.Store.MarkDeliveryDone(d.ID); err != nil {
 				log.Logger().Error("标记投递成功失败", "delivery_id", d.ID, "error", err)
 			}
@@ -168,7 +206,11 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 					"attempt", attempts,
 					"error", err,
 				)
+				if br != nil {
+					br.AfterRequest(false)
+				}
 				continue
+
 			}
 
 			next := time.Now().UTC().Add(q.BackoffFor(attempts)).Format(time.RFC3339)
@@ -181,6 +223,10 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 				"attempt", attempts,
 				"error", err,
 			)
+			if br != nil {
+				br.AfterRequest(false)
+			}
+
 		}
 	}
 	return nil

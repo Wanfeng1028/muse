@@ -496,6 +496,11 @@ func (s *Server) SetPublicURL(u string) {
 	s.publicURL = strings.TrimRight(strings.TrimSpace(u), "/")
 }
 
+// SetQueueSender 设置 webhook 投递队列发送器，供 /api/metrics 导出熔断状态；可为 nil。
+func (s *Server) SetQueueSender(q *notify.QueueSender) {
+	s.queueSender = q
+}
+
 // handleSubscribe 处理公开订阅：创建待确认订阅并发送确认邮件。
 func (s *Server) handleSubscribe(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")

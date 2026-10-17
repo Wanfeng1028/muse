@@ -74,6 +74,14 @@ type Config struct {
 	QueueBaseBackoffSec int
 	// QueueTickSec webhook 投递队列 worker 扫描间隔（秒）。
 	QueueTickSec int
+	// QueueEnqueueRPS webhook 入队限流速率（每秒令牌数）；<=0 表示禁用入队限流。
+	QueueEnqueueRPS float64
+	// QueueEnqueueBurst webhook 入队限流桶容量。
+	QueueEnqueueBurst int
+	// BreakerFailureThreshold webhook 投递熔断：连续失败阈值。
+	BreakerFailureThreshold int
+	// BreakerOpenTimeoutSec webhook 投递熔断：断开后转半开探测的等待秒数。
+	BreakerOpenTimeoutSec int
 
 	// Escalation 告警升级链；空表示禁用。由 SENTINEL_ESCALATION 解析。
 	Escalation []EscalationLevel
@@ -287,7 +295,39 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	cfg.QueueTickSec = qTick
+
+	// SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS：默认 20；0 表示禁用；非零必须在 0.1~10000。
+	enqueueRPS, err := parseFloatEnv("SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS", 20, 0, 10000)
+	if err != nil {
+		return Config{}, err
+	}
+	if enqueueRPS != 0 && enqueueRPS < 0.1 {
+		return Config{}, fmt.Errorf("环境变量 SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS 取值 %g 非法：0 表示禁用，非零应在 0.1~10000", enqueueRPS)
+	}
+	cfg.QueueEnqueueRPS = enqueueRPS
+
+	// SENTINEL_WEBHOOK_QUEUE_ENQUEUE_BURST：默认 40，范围 1~100000。
+	enqueueBurst, err := parseIntEnv("SENTINEL_WEBHOOK_QUEUE_ENQUEUE_BURST", 40, 1, 100000)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.QueueEnqueueBurst = enqueueBurst
+
+	// SENTINEL_WEBHOOK_BREAKER_FAILURE_THRESHOLD：默认 5，范围 1~100。
+	breakerThreshold, err := parseIntEnv("SENTINEL_WEBHOOK_BREAKER_FAILURE_THRESHOLD", 5, 1, 100)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.BreakerFailureThreshold = breakerThreshold
+
+	// SENTINEL_WEBHOOK_BREAKER_OPEN_TIMEOUT_SEC：默认 300，范围 10~86400。
+	breakerTimeout, err := parseIntEnv("SENTINEL_WEBHOOK_BREAKER_OPEN_TIMEOUT_SEC", 300, 10, 86400)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.BreakerOpenTimeoutSec = breakerTimeout
 	// SENTINEL_PUBLIC_URL：可选；用于订阅邮件中的确认/退订链接。为空则用相对路径。
+
 	publicURL := strings.TrimSpace(os.Getenv("SENTINEL_PUBLIC_URL"))
 	if publicURL != "" && !strings.HasPrefix(publicURL, "http://") && !strings.HasPrefix(publicURL, "https://") {
 		return Config{}, fmt.Errorf("环境变量 SENTINEL_PUBLIC_URL 取值 %q 非法：应以 http:// 或 https:// 开头", publicURL)
@@ -337,9 +377,27 @@ func resolveProjectRoot() (string, error) {
 	return wd, nil
 }
 
+// parseFloatEnv 解析浮点型环境变量，未设置时返回默认值。
+// 解析失败或超出范围返回中文错误。
+func parseFloatEnv(name string, def, min, max float64) (float64, error) {
+	raw := strings.TrimSpace(os.Getenv(name))
+	if raw == "" {
+		return def, nil
+	}
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return 0, fmt.Errorf("环境变量 %s 取值 %q 非法：应为数字，范围 %g~%g", name, raw, min, max)
+	}
+	if v < min || v > max {
+		return 0, fmt.Errorf("环境变量 %s 取值 %g 超出范围：应为 %g~%g", name, v, min, max)
+	}
+	return v, nil
+}
+
 // parseIntEnv 解析整型环境变量，未设置时返回默认值。
 // 解析失败或超出范围返回中文错误。
 func parseIntEnv(name string, def, min, max int) (int, error) {
+
 	raw := strings.TrimSpace(os.Getenv(name))
 	if raw == "" {
 		return def, nil
