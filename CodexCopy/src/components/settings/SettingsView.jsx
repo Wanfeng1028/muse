@@ -58,21 +58,20 @@ function GeneralPage() {
   );
 }
 
-function AppearancePage() {
-  const [theme, setTheme] = useState('Dark');
+function AppearancePage({ theme, onThemeChange }) {
   const [font, setFont] = useState('System');
   return (
     <div>
       <h2>Appearance</h2>
       <Row label="Theme" desc="Color scheme for the interface">
-        <Select value={theme} options={['Dark', 'Light', 'System']} onChange={setTheme} />
+        <Select value={theme === 'dark' ? 'Dark' : 'Light'} options={['Dark', 'Light']} onChange={(v) => onThemeChange(v === 'Dark' ? 'dark' : 'light')} />
       </Row>
       <Row label="Font" desc="Interface font">
         <Select value={font} options={['System', 'Inter', 'SF Pro']} onChange={setFont} />
       </Row>
       <div className="theme-preview">
-        <div className="tp-card dark"><span>Dark</span>{theme === 'Dark' && <span className="tp-check">●</span>}</div>
-        <div className="tp-card light"><span>Light</span>{theme === 'Light' && <span className="tp-check">●</span>}</div>
+        <div className="tp-card dark" onClick={() => onThemeChange('dark')}><span>Dark</span>{theme === 'dark' && <span className="tp-check">●</span>}</div>
+        <div className="tp-card light" onClick={() => onThemeChange('light')}><span>Light</span>{theme === 'light' && <span className="tp-check">●</span>}</div>
       </div>
     </div>
   );
@@ -157,9 +156,9 @@ function PluginsPage() {
   );
 }
 
-const PAGE_BODY = { general: <GeneralPage />, appearance: <AppearancePage />, models: <ModelsPage />, git: <GitPage />, mcp: <McpPage />, plugins: <PluginsPage /> };
+const PAGE_BODY = (theme, onThemeChange) => ({ general: <GeneralPage />, appearance: <AppearancePage theme={theme} onThemeChange={onThemeChange} />, models: <ModelsPage />, git: <GitPage />, mcp: <McpPage />, plugins: <PluginsPage /> });
 
-export default function SettingsView({ onClose }) {
+export default function SettingsView({ onClose, theme, onThemeChange }) {
   const [page, setPage] = useState('general');
   return (
     <div className="settings-view">
@@ -176,7 +175,7 @@ export default function SettingsView({ onClose }) {
             </button>
           ))}
         </nav>
-        <div className="settings-content">{PAGE_BODY[page]}</div>
+        <div className="settings-content">{PAGE_BODY(theme, onThemeChange)[page]}</div>
       </div>
     </div>
   );

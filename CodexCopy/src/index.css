@@ -634,3 +634,30 @@ button { font-family: inherit; }
 .msg-para { margin-bottom: 10px; white-space: pre-wrap; }
 .msg-para:last-child { margin-bottom: 0; }
 .settings-btn.active { background: var(--bg-active); color: var(--text-primary); }
+
+/* ---- codex-light 官方主题（assets/codex-light-D_T79zci.js 逐字提取） ---- */
+[data-theme="light"] {
+  --bg-main: #ffffff;              /* editor.background */
+  --bg-sidebar: #fcfcfc;           /* sideBar.background */
+  --bg-elevated: #f2f2f2;
+  --bg-input: #f2f2f2;
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-active: rgba(0, 0, 0, 0.08);
+  --bg-card: #f7f7f7;
+  --text-primary: #0d0d0d;         /* editor.foreground */
+  --text-secondary: #212121;       /* sideBar.foreground */
+  --text-tertiary: #8a8a8a;
+  --border: rgba(0, 0, 0, 0.12);
+  --border-light: rgba(0, 0, 0, 0.07);
+  --accent: #0169cc;
+  --accent-dim: rgba(1, 105, 204, 0.1);
+  --success: #00a240;
+  --warning: #FA994C;
+  --error: #e02e2a;
+}
+[data-theme="light"] .codeblock { background: #f5f5f5; }
+[data-theme="light"] .codeblock pre { color: #1a1a1a; }
+[data-theme="light"] .tool-body { background: rgba(0,0,0,0.03); }
+[data-theme="light"] .agent-avatar { background: #f0f0f0; }
+[data-theme="light"] .avatar { color: #fff; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); }

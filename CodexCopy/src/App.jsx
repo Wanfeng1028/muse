@@ -45,6 +45,12 @@ let replyIdx = 0;
 
 export default function App() {
   const [view, setView] = useState('thread'); // thread | settings | schedules
+  const [theme, setTheme] = useState('dark'); // dark | light（codex-dark / codex-light 官方主题）
+
+  // 主题挂到 documentElement，保证 body 及全局继承
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
   const [threads, setThreads] = useState(seedThreads);
   const [activeId, setActiveId] = useState('t1');
   const [streaming, setStreaming] = useState(false);
@@ -123,7 +129,7 @@ export default function App() {
         />
         <div className="main">
           {view === 'settings' ? (
-            <SettingsView onClose={() => setView('thread')} />
+            <SettingsView onClose={() => setView('thread')} theme={theme} onThemeChange={setTheme} />
           ) : view === 'schedules' ? (
             <>
               <div className="topbar">
