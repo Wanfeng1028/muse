@@ -21,6 +21,44 @@ bool isAsciiSymbolOnly(const std::string& s) {
     return true;
 }
 
+// 判断是否为纯标点 token（含全角标点，如"，""。""？"等）。
+// 用于丢弃分词后残留的纯标点 token。
+bool isPunctuationOnly(const std::string& s) {
+    if (s.empty()) return false;
+    size_t i = 0;
+    while (i < s.size()) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        if (c < 0x80) {
+            if (std::isalnum(c)) return false;
+            ++i;
+            continue;
+        }
+        // UTF-8 多字节：解析码点，判断是否属于 Unicode 标点区。
+        int len = 1;
+        unsigned int cp = 0;
+        if ((c & 0xE0) == 0xC0) { len = 2; cp = c & 0x1F; }
+        else if ((c & 0xF0) == 0xE0) { len = 3; cp = c & 0x0F; }
+        else if ((c & 0xF8) == 0xF0) { len = 4; cp = c & 0x07; }
+        else { return false; }  // 非法首字节，按非标点处理
+        if (i + len > s.size()) return false;
+        for (int k = 1; k < len; ++k) {
+            unsigned char cc = static_cast<unsigned char>(s[i + k]);
+            if ((cc & 0xC0) != 0x80) return false;
+            cp = (cp << 6) | (cc & 0x3F);
+        }
+        // 常见 Unicode 标点范围：
+        // 0x3000-0x303F CJK 符号与标点（含 。、「」）
+        // 0xFF00-0xFFEF 全角/半角形式（含 ，．？！：；）
+        // 0x2000-0x206F 常用标点（含 ……、“”‘’）
+        bool isPunct = (cp >= 0x3000 && cp <= 0x303F) ||
+                       (cp >= 0xFF00 && cp <= 0xFFEF) ||
+                       (cp >= 0x2000 && cp <= 0x206F);
+        if (!isPunct) return false;
+        i += len;
+    }
+    return true;
+}
+
 // 判断是否为纯 ASCII 字母数字（用于 ASCII token 长度判断）。
 bool isAsciiWord(const std::string& s) {
     if (s.empty()) return false;
@@ -32,11 +70,13 @@ bool isAsciiWord(const std::string& s) {
 }
 
 // 单字中文停用词。
+// 注：「得」为结构助词/情态动词（"发货得几天"），不承载检索信息，加入本表；
+// 实义词如"得到/觉得/值得"由 jieba 整体切出，不会被本表命中。
 const std::unordered_set<std::string>& singleCharStopwords() {
     static const std::unordered_set<std::string> kSet = {
         "的", "了", "在", "是", "有", "和", "与", "或", "个", "上", "下", "中",
         "之", "为", "于", "由", "把", "被", "给", "对", "就", "都", "也", "还",
-        "要", "会", "可", "以", "及"};
+        "要", "会", "可", "以", "及", "得"};
     return kSet;
 }
 
@@ -153,10 +193,12 @@ void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
 // 前后缀重叠对遍历顺序的依赖（先长后短，短词不会误吃长词前缀）。
 const std::vector<std::string>& fillerWords() {
     static const std::vector<std::string> kWords = {
-        "帮我找一下", "哪一篇", "有没有", "在哪里", "哪一段", "哪一句",
-        "帮我找", "找一下", "是什么", "为什么", "哪段", "哪句", "哪个",
-        "哪些", "怎么", "如何", "怎样", "多少", "哪篇", "请问", "在哪",
-        "为啥", "一下", "吗", "呢", "啊", "吧"};
+        "帮我找一下", "有没有建议", "我想知道", "比较合适", "哪一篇", "有没有",
+        "在哪里", "哪一段", "哪一句", "帮我找", "找一下", "是什么", "为什么",
+        "哪段", "哪句", "哪个", "哪些", "怎么", "如何", "怎样",
+        "多少", "哪篇", "请问", "在哪", "哪儿", "为啥", "一下", "你们",
+        "应该", "吗", "呢", "啊", "吧", "我", "想", "该",
+        "才"};
     return kWords;
 }
 
@@ -268,6 +310,7 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
                     pushUnique(pq.keywords, seen, w);
                 } else {
                     // 中文（或含非 ASCII）token。
+                    if (isPunctuationOnly(w)) continue;  // 全角标点丢弃
                     if (isSingleCjk(w) &&
                         singleCharStopwords().count(w) > 0) {
                         continue;

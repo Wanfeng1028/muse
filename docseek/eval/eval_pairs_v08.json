@@ -566,5 +566,89 @@
     "type": "locate",
     "category": "qa",
     "note": "口语省略，问客服联系方式"
+  },
+  {
+    "id": "v08-qa-03b",
+    "type": "locate",
+    "category": "qa",
+    "query": "发货几天到啊",
+    "expected": "qa_02_shipping.md"
+  },
+  {
+    "id": "v08-qa-03c",
+    "type": "locate",
+    "category": "qa",
+    "query": "麻烦问下，一般下单之后要等多久才能收到货呢",
+    "expected": "qa_02_shipping.md"
+  },
+  {
+    "id": "v08-qa-03d",
+    "type": "locate",
+    "category": "qa",
+    "query": "你们这边发货速度怎么样，大概多久能到",
+    "expected": "qa_02_shipping.md"
+  },
+  {
+    "id": "v08-qa-09b",
+    "type": "locate",
+    "category": "qa",
+    "query": "数据备份多久做一次比较好",
+    "expected": "qa_05_backup.md"
+  },
+  {
+    "id": "v08-qa-09c",
+    "type": "locate",
+    "category": "qa",
+    "query": "请问一下，备份频率怎么安排才合理，有推荐的做法吗",
+    "expected": "qa_05_backup.md"
+  },
+  {
+    "id": "v08-qa-09d",
+    "type": "locate",
+    "category": "qa",
+    "query": "多久备份一回数据才算合适，能给点建议不",
+    "expected": "qa_05_backup.md"
+  },
+  {
+    "id": "v08-qa-10b",
+    "type": "locate",
+    "category": "qa",
+    "query": "你们都有啥套餐，怎么挑啊",
+    "expected": "qa_11_pricing.md"
+  },
+  {
+    "id": "v08-qa-10c",
+    "type": "locate",
+    "category": "qa",
+    "query": "麻烦问下，贵司提供哪几种套餐方案，我该如何选择比较合适",
+    "expected": "qa_11_pricing.md"
+  },
+  {
+    "id": "v08-qa-10d",
+    "type": "locate",
+    "category": "qa",
+    "query": "套餐有哪几档，选哪个好呢",
+    "expected": "qa_11_pricing.md"
+  },
+  {
+    "id": "v08-qa-15b",
+    "type": "locate",
+    "category": "qa",
+    "query": "客服联系方式在哪啊",
+    "expected": "qa_12_contact.md"
+  },
+  {
+    "id": "v08-qa-15c",
+    "type": "locate",
+    "category": "qa",
+    "query": "请问怎么联系你们客服，电话是多少",
+    "expected": "qa_12_contact.md"
+  },
+  {
+    "id": "v08-qa-15d",
+    "type": "locate",
+    "category": "qa",
+    "query": "我想找人工客服，从哪儿能联系上",
+    "expected": "qa_12_contact.md"
   }
 ]

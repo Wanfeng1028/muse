@@ -1,6 +1,25 @@
 ```markdown
 # Changelog
 
+## v0.14.0（2026-10-17）——v08 剩余 4 失败攻坚
+
+- 修复 v0.13.0 遗留的 v08 全部 4 个真实问法失败，逐对根因+修复如下：
+  - v08-qa-03「请问发货得几天啊」→ 期望 qa_02_shipping.md（原命中干扰文档）：根因是单字"得"漏过两张停用词表，进入 keywords 后在干扰文档命中 13 次；修复为 singleCharStopwords 加"得"。
+  - v08-qa-09「我想知道数据应该多久备份一次才比较合适，请问有没有建议」→ 期望 qa_05_backup.md：根因是口语框架词 + 全角标点污染 keywords，"建议"被干扰文档"不建议"子串误命中；修复为 fillerWords 加"我想知道/应该/才/比较合适/有没有建议"，isPunctuationOnly 丢弃全角标点；中途"最短相邻二元 queryCompound"方案被实证证伪后改走"有没有建议"整串擦除。
+  - v08-qa-10「请问你们有哪些套餐，我该怎么选呢」→ 期望 qa_11_pricing.md：根因是全角逗号进 keywords + "你们/我/该"噪音摊薄 coverage 分母；修复为 isPunctuationOnly + fillerWords 加"你们/我/该"。
+  - v08-qa-15「想找客服，联系方式在哪啊」→ 期望 qa_12_contact.md：根因是"想"污染 queryCompound 使 +0.25 加成恒不触发；修复为 fillerWords 加"想"。
+- 修复（只动 src/query_parser.cpp，共 6 处）：
+  - singleCharStopwords 加"得"。
+  - fillerWords 加"我想知道/你们/应该/我/想/该/才/比较合适/有没有建议/哪儿"（"有没有建议" 15 字节排在"帮我找一下"之后、"有没有"之前；"哪儿"为"哪里"同族补齐）。
+  - 新增 isPunctuationOnly()（Unicode 标点区 0x3000-0x303F / 0xFF00-0xFFEF / 0x2000-0x206F），parseNaturalQuery 分词后丢弃纯标点 token。
+  - 无其他文件改动。
+- 诚实记录：本轮曾先尝试 A6 第 1 轮的"queryCompound 最短相邻二元"方案，被实测证伪（tie-break 选中从不命中的"数据多久"，+0.25 永不触发），未应用，已改走"有没有建议"整串擦除；失败尝试如实记录，不删历史。仍有 2 个对抗变体未攻克：v08-qa-09d「多久备份一回数据才算合适，能给点建议不」→tok_05_mixed.md（"一回/算/能/点/不"无安全切口，"不"全局擦除会反转"不建议"语义）；v08-qa-15d「我想找人工客服，从哪儿能联系上」→qa_08_invoice.md（干扰文档"联系客服人工处理"连续命中 3 个关键词，属排序模型语义能力边界；"哪儿"补丁作为"哪里"同族词表补齐保留，零回归）。
+- 先红后绿：tests/test_query_parser.cpp 新增 QueryParserV014 套件 5 例，全部先红后绿（git stash 还原旧代码时 5 例全红，恢复后全绿）。
+- 评测（实测）：v07 集 56/56（100%）；v08 原 71 对 71/71（100%）、qa 27/27（基线 v0.13.0 为 67/71（94.4%）、qa 23/27（85.2%））；评测集扩到 83 对（+12 个对抗变体：每对 3 个，口语省略/礼貌体/换句式），83 对为 81/83（97.6%）、qa 37/39（94.9%）。
+- 构建：cmake 零警告（自有文件；第三方 cppjieba 头警告 pre-existing）；ctest 全绿（WatcherTest.SubDir 为 v0.5.0 起已知 inotify 时序 flaky，与本轮无关）。
+- 已知限制：2 个对抗变体未攻克（v08-qa-09d→tok_05_mixed.md、v08-qa-15d→qa_08_invoice.md，详见诚实记录）；WatcherTest.SubDir flaky 照旧。
+- 版本号 0.14.0（version.h 唯一来源）；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.14.md。
+
 ## v0.13.0（2026-10-17）——段落排序复合短语加成
 
 - 修复 v0.12.0 遗留问题 v07-024「安装步骤在哪里」。

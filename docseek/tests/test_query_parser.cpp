@@ -66,5 +66,81 @@ TEST(QueryParserV012, PlainKeywordUnchanged) {
     EXPECT_FALSE(parsed.passageIntent);
 }
 
+// ===== v0.14 失败对回归测试 =====
+// 每个用例对应本轮修好的一个评测对，注释说明 pair id 与"先红"依据。
+
+// pair v08-qa-03「请问发货得几天啊」：修复前 keywords 含 "得"，
+// NOT contains "得" 会红；修复后应只保留 ["发货","几天"]。
+TEST(QueryParserV014, ColloquialShippingQueryDropsDe) {
+    const ParsedQuery parsed = parseNaturalQuery("请问发货得几天啊");
+    EXPECT_TRUE(contains(parsed.keywords, "发货"));
+    EXPECT_TRUE(contains(parsed.keywords, "几天"));
+    EXPECT_FALSE(contains(parsed.keywords, "得"));
+    EXPECT_FALSE(contains(parsed.keywords, "请问"));
+    EXPECT_FALSE(contains(parsed.keywords, "啊"));
+}
+
+// pair v08-qa-09「我想知道数据应该多久备份一次才比较合适，请问有没有建议」：
+// 修复前 keywords 含 "我想知道" 的组成词、"应该"、"才"、"比较合适" 的组成词、
+// "建议"、全角 "，"，这些 NOT contains 会红；修复后应只保留 ["数据","多久","备份","一次"]。
+TEST(QueryParserV014, LongColloquialAdviceQueryDropsFillersAndPunct) {
+    const ParsedQuery parsed =
+        parseNaturalQuery("我想知道数据应该多久备份一次才比较合适，请问有没有建议");
+    EXPECT_TRUE(contains(parsed.keywords, "数据"));
+    EXPECT_TRUE(contains(parsed.keywords, "多久"));
+    EXPECT_TRUE(contains(parsed.keywords, "备份"));
+    EXPECT_TRUE(contains(parsed.keywords, "一次"));
+    EXPECT_FALSE(contains(parsed.keywords, "我想知道"));
+    EXPECT_FALSE(contains(parsed.keywords, "应该"));
+    EXPECT_FALSE(contains(parsed.keywords, "才"));
+    EXPECT_FALSE(contains(parsed.keywords, "比较合适"));
+    EXPECT_FALSE(contains(parsed.keywords, "有没有建议"));
+    EXPECT_FALSE(contains(parsed.keywords, "建议"));
+    EXPECT_FALSE(contains(parsed.keywords, "，"));
+    EXPECT_FALSE(contains(parsed.keywords, "请问"));
+}
+
+// pair v08-qa-10「请问你们有哪些套餐，我该怎么选呢」：修复前 keywords 为
+// ["你们","套餐","，","我","该","选"]，故 "你们"/"，"/"我"/"该" 的 NOT contains 会红；
+// 修复后应只保留 ["套餐","选"]。
+TEST(QueryParserV014, PackageSelectionQueryDropsPronounsAndPunct) {
+    const ParsedQuery parsed = parseNaturalQuery("请问你们有哪些套餐，我该怎么选呢");
+    EXPECT_TRUE(contains(parsed.keywords, "套餐"));
+    EXPECT_TRUE(contains(parsed.keywords, "选"));
+    EXPECT_FALSE(contains(parsed.keywords, "你们"));
+    EXPECT_FALSE(contains(parsed.keywords, "我"));
+    EXPECT_FALSE(contains(parsed.keywords, "该"));
+    EXPECT_FALSE(contains(parsed.keywords, "，"));
+    EXPECT_FALSE(contains(parsed.keywords, "请问"));
+    EXPECT_FALSE(contains(parsed.keywords, "哪些"));
+    EXPECT_FALSE(contains(parsed.keywords, "怎么"));
+    EXPECT_FALSE(contains(parsed.keywords, "呢"));
+}
+
+// pair v08-qa-15「想找客服，联系方式在哪啊」：修复前 keywords 为
+// ["想","找","客服","，","联系","方式","联系方式"]，"想" 与 "，" 的 NOT contains 会红；
+// 注意「找」经 A9 审计决定不进 fillerWords，修复后仍含 "找"，故不断言 NOT contains "找"。
+TEST(QueryParserV014, ContactLookupQueryDropsXiangAndPunct) {
+    const ParsedQuery parsed = parseNaturalQuery("想找客服，联系方式在哪啊");
+    EXPECT_TRUE(contains(parsed.keywords, "客服"));
+    EXPECT_TRUE(contains(parsed.keywords, "联系"));
+    EXPECT_TRUE(contains(parsed.keywords, "联系方式"));
+    EXPECT_FALSE(contains(parsed.keywords, "想"));
+    EXPECT_FALSE(contains(parsed.keywords, "，"));
+    EXPECT_FALSE(contains(parsed.keywords, "在哪"));
+    EXPECT_FALSE(contains(parsed.keywords, "啊"));
+}
+
+// 全角标点通用回归：修复前全角 "，"、"。"、"？" 会进 keywords，
+// 对应的 NOT contains 会红；修复后标点应被清除，核心词保留。
+TEST(QueryParserV014, FullWidthPunctuationStripped) {
+    const ParsedQuery parsed = parseNaturalQuery("套餐，价格。多少？");
+    EXPECT_FALSE(contains(parsed.keywords, "，"));
+    EXPECT_FALSE(contains(parsed.keywords, "。"));
+    EXPECT_FALSE(contains(parsed.keywords, "？"));
+    EXPECT_TRUE(contains(parsed.keywords, "套餐"));
+    EXPECT_TRUE(contains(parsed.keywords, "价格"));
+}
+
 }  // namespace
 }  // namespace docseek
