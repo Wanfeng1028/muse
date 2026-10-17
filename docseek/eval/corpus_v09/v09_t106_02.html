@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>二分查找手写模板与边界坑</title>
+</head>
+<body>
+<h1>二分查找手写模板与边界坑</h1>
+<p>二分查找思路简单，但手写时极容易在边界上翻车。我把自己踩过的坑整理一下，重点讲闭区间写法和几个容易写错的地方。</p>
+<h2>闭区间模板</h2>
+<p>维护一个左闭右闭的区间 [left, right]，循环条件是 left &lt;= right。每次取 mid = left + (right - left) / 2，这样写可以避免 left + right 溢出。</p>
+<p>如果 nums[mid] 等于目标，直接返回 mid。如果小于目标，说明目标在右半边，令 left = mid + 1。如果大于目标，令 right = mid - 1。</p>
+<h2>常见错误一：死循环</h2>
+<p>有人写成 left = mid，当区间只剩两个元素时 mid 会一直等于 left，导致死循环。记住：收缩时要么 left = mid + 1，要么 right = mid - 1，不要留 mid 在原地。</p>
+<h2>常见错误二：溢出</h2>
+<p>mid = (left + right) / 2 在 left 和 right 都很大时会整数溢出。用 mid = left + (right - left) / 2 更稳妥，这也是很多标准库的写法。</p>
+<h2>常见错误三：循环条件写混</h2>
+<p>闭区间用 left &lt;= right，左闭右开区间用 left &lt; right。两种写法不能混用，混了就会漏查或多查。建议初学只练熟一种，我推荐闭区间，好记。</p>
+<ul>
+<li>先写循环条件，再写收缩逻辑</li>
+<li>每步都问自己：目标还可能在哪半边</li>
+<li>用两三个元素的数组手动模拟一遍</li>
+</ul>
+</body>
+</html>

@@ -182,6 +182,18 @@ add_executable(docseek_tests
   tests/test_office_pptx.cpp
   tests/test_office_index.cpp
   tests/test_query_parser.cpp
+  tests/test_tokenizer_neologism.cpp
+  tests/test_tokenizer_mixed.cpp
+  tests/test_tokenizer_number.cpp
+  tests/test_tokenizer_punct.cpp
+  tests/test_tokenizer_long.cpp
+  tests/test_tokenizer_single.cpp
+  tests/test_tokenizer_repeat.cpp
+  tests/test_tokenizer_trad.cpp
+  tests/test_tokenizer_empty.cpp
+  tests/test_tokenizer_stopword.cpp
+  tests/test_tokenizer_phrase.cpp
+  tests/test_tokenizer_perf.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

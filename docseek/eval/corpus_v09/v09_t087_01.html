@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>我用 Hugo 搭建个人博客的完整记录</title>
+</head>
+<body>
+<h1>我用 Hugo 搭建个人博客的完整记录</h1>
+<p>去年我把博客从 WordPress 迁到了 Hugo，原因很简单：服务器太贵，维护太烦。现在整个站点就是一堆静态文件，托管在 Cloudflare Pages 上，一年花不了几块钱，访问速度反而快了不少。</p>
+<h2>为什么选 Hugo 而不是 Hexo</h2>
+<p>Hexo 在国内用的人多，主题也丰富。但我试了一圈发现，Hexo 生成文章的速度实在一般，我有一百多篇旧文，每次构建要等十几秒。Hugo 用 Go 写的，同样的文章量构建只要零点几秒，这个差距在频繁改样式的时候特别明显。</p>
+<p>另外 Hugo 不需要 Node 环境，我电脑上不用装一堆 npm 包，少了很多依赖冲突的烦恼。</p>
+<h2>目录结构怎么组织</h2>
+<p>我的 content 目录按年份分文件夹，比如 content/posts/2024/、content/posts/2025/。每篇文章是一个单独的 markdown 文件，文件名用英文短横线连接，不用中文，避免 URL 出现乱码。</p>
+<ul>
+<li>archetypes：新建文章的模板</li>
+<li>content：所有文章和页面</li>
+<li>layouts：自己改的模板文件</li>
+<li>static：图片、favicon 等静态资源</li>
+<li>themes：主题文件夹</li>
+</ul>
+<h2>图片处理的小技巧</h2>
+<p>我习惯把图片放在和文章同名的文件夹里，比如 content/posts/2025/hello/index.md 配 content/posts/2025/hello/cover.jpg。这样写相对路径引用，迁移的时候整个文件夹一起搬，不会断图。</p>
+<p>大图我会先用 Squoosh 压一遍，一般能压到原来体积的三分之一，加载快很多。</p>
+<h2>部署流程</h2>
+<p>我把仓库连到 Cloudflare Pages，每次 push 到 main 分支它就自动构建。构建命令是 hugo --minify，输出目录是 public。整个流程不用我管，写完文章 git push 就完事了。</p>
+</body>
+</html>
