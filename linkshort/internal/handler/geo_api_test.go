@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,17 +11,19 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/Wanfeng1028/muse/linkshort/internal/db"
 	"github.com/Wanfeng1028/muse/linkshort/internal/store"
 )
 
 // newGeoTestServer 起一个只挂 geo 两个路由的 chi server，配一个临时库。
 func newGeoTestServer(t *testing.T) (*httptest.Server, *store.Store) {
 	t.Helper()
-	st, err := store.Open(":memory:")
+	database, err := db.Open(":memory:")
 	if err != nil {
 		t.Fatalf("打开内存库失败: %v", err)
 	}
-	t.Cleanup(func() { _ = st.Close() })
+	t.Cleanup(func() { _ = database.Close() })
+	st := store.New(database)
 
 	r := chi.NewRouter()
 	r.Route("/api", func(api chi.Router) {
@@ -82,7 +85,7 @@ func TestGeoStats_NoData_EmptyItems(t *testing.T) {
 
 func TestGeoStats_CountryProvinceTopN_Correct(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	linkID := int64(1)
+	linkID := mustCreateLink(t, st)
 
 	// 中国-广东 3 次，中国-北京 1 次，美国-加州 2 次
 	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
@@ -92,7 +95,7 @@ func TestGeoStats_CountryProvinceTopN_Correct(t *testing.T) {
 	mustRecord(t, st, linkID, "US", "美国", "加州", "洛杉矶")
 	mustRecord(t, st, linkID, "US", "美国", "加州", "旧金山")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&days=30&n=8")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&days=30&n=8", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -102,24 +105,25 @@ func TestGeoStats_CountryProvinceTopN_Correct(t *testing.T) {
 	if len(body.Items) == 0 {
 		t.Fatalf("items 不应为空")
 	}
-	// 按点击排序后，第一条应是广东(3 次)
+	// API 按城市粒度返回；按点击排序后，第一条应是深圳(2 次)
 	first := body.Items[0]
 	if first["country_code"] != "CN" {
 		t.Fatalf("首条 country_code = %v, 期望 CN", first["country_code"])
 	}
-	if first["province"] != "广东" {
-		t.Fatalf("首条 province = %v, 期望 广东", first["province"])
+	if first["city"] != "深圳" {
+		t.Fatalf("首条 city = %v, 期望 深圳", first["city"])
 	}
-	if toInt64(first["clicks"]) != 3 {
-		t.Fatalf("广东 clicks = %v, 期望 3", first["clicks"])
+	if toInt64(first["clicks"]) != 2 {
+		t.Fatalf("深圳 clicks = %v, 期望 2", first["clicks"])
 	}
 }
 
 func TestGeoStats_DaysZero_FallsBackTo30(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&days=0")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&days=0", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -133,9 +137,10 @@ func TestGeoStats_DaysZero_FallsBackTo30(t *testing.T) {
 
 func TestGeoStats_DaysNegative_FallsBackTo30(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&days=-5")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&days=-5", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -149,9 +154,10 @@ func TestGeoStats_DaysNegative_FallsBackTo30(t *testing.T) {
 
 func TestGeoStats_DaysHuge_FallsBackTo30(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&days=100000")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&days=100000", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -165,9 +171,10 @@ func TestGeoStats_DaysHuge_FallsBackTo30(t *testing.T) {
 
 func TestGeoStats_DaysSeven_Kept(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&days=7")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&days=7", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -181,10 +188,11 @@ func TestGeoStats_DaysSeven_Kept(t *testing.T) {
 
 func TestGeoStats_CountryFilter(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
-	mustRecord(t, st, 1, "US", "美国", "加州", "洛杉矶")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
+	mustRecord(t, st, linkID, "US", "美国", "加州", "洛杉矶")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&country=CN")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&country=CN", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -201,14 +209,15 @@ func TestGeoStats_CountryFilter(t *testing.T) {
 
 func TestGeoStats_NTruncation(t *testing.T) {
 	ts, st := newGeoTestServer(t)
+	linkID := mustCreateLink(t, st)
 	// 造 5 个不同省份，每个 1 次
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
-	mustRecord(t, st, 1, "CN", "中国", "北京", "北京")
-	mustRecord(t, st, 1, "CN", "中国", "上海", "上海")
-	mustRecord(t, st, 1, "CN", "中国", "浙江", "杭州")
-	mustRecord(t, st, 1, "CN", "中国", "江苏", "南京")
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
+	mustRecord(t, st, linkID, "CN", "中国", "北京", "北京")
+	mustRecord(t, st, linkID, "CN", "中国", "上海", "上海")
+	mustRecord(t, st, linkID, "CN", "中国", "浙江", "杭州")
+	mustRecord(t, st, linkID, "CN", "中国", "江苏", "南京")
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&n=2")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&n=2", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -222,11 +231,12 @@ func TestGeoStats_NTruncation(t *testing.T) {
 
 func TestGeoStats_NZero_FallsBackTo8(t *testing.T) {
 	ts, st := newGeoTestServer(t)
+	linkID := mustCreateLink(t, st)
 	for i := 0; i < 10; i++ {
-		mustRecord(t, st, 1, "CN", "中国", "省份"+string(rune('A'+i)), "城市")
+		mustRecord(t, st, linkID, "CN", "中国", "省份"+string(rune('A'+i)), "城市")
 	}
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&n=0")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&n=0", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -240,11 +250,12 @@ func TestGeoStats_NZero_FallsBackTo8(t *testing.T) {
 
 func TestGeoStats_NTooLarge_FallsBackTo8(t *testing.T) {
 	ts, st := newGeoTestServer(t)
+	linkID := mustCreateLink(t, st)
 	for i := 0; i < 10; i++ {
-		mustRecord(t, st, 1, "CN", "中国", "省份"+string(rune('A'+i)), "城市")
+		mustRecord(t, st, linkID, "CN", "中国", "省份"+string(rune('A'+i)), "城市")
 	}
 
-	status, body, _ := getGeoStats(t, ts, "?link_id=1&n=101")
+	status, body, _ := getGeoStats(t, ts, fmt.Sprintf("?link_id=%d&n=101", linkID))
 	if status != http.StatusOK {
 		t.Fatalf("状态码 = %d, 期望 200", status)
 	}
@@ -258,7 +269,8 @@ func TestGeoStats_NTooLarge_FallsBackTo8(t *testing.T) {
 
 func TestGeoStats_UnknownPctFieldPresent(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
 
 	status, body, _ := getGeoStats(t, ts, "?link_id=1")
 	if status != http.StatusOK {
@@ -278,8 +290,9 @@ func TestGeoStats_UnknownPctFieldPresent(t *testing.T) {
 
 func TestExportGeoCSV_HeaderAndRowCount(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
-	mustRecord(t, st, 1, "US", "美国", "加州", "洛杉矶")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
+	mustRecord(t, st, linkID, "US", "美国", "加州", "洛杉矶")
 
 	resp, err := http.Get(ts.URL + "/api/stats/geo.csv?link_id=1&days=30")
 	if err != nil {
@@ -302,6 +315,7 @@ func TestExportGeoCSV_HeaderAndRowCount(t *testing.T) {
 		t.Fatalf("CSV 行数(含表头) = %d, 期望 3", len(records))
 	}
 	header := records[0]
+	header[0] = strings.TrimPrefix(header[0], "\ufeff") // 导出带 BOM 供 Excel 识别，断言时去掉
 	wantHeader := []string{"国家代码", "国家", "省份", "城市", "点击", "独立访客"}
 	if len(header) != len(wantHeader) {
 		t.Fatalf("表头列数 = %d, 期望 %d", len(header), len(wantHeader))
@@ -331,7 +345,7 @@ func TestExportGeoCSV_NoData_HeaderOnly(t *testing.T) {
 	if len(records) != 1 {
 		t.Fatalf("无数据时 CSV 行数 = %d, 期望仅表头 1 行", len(records))
 	}
-	if records[0][0] != "国家代码" {
+	if strings.TrimPrefix(records[0][0], "\ufeff") != "国家代码" {
 		t.Fatalf("表头首列 = %q, 期望 国家代码", records[0][0])
 	}
 	if len(records[0]) != 6 {
@@ -341,7 +355,8 @@ func TestExportGeoCSV_NoData_HeaderOnly(t *testing.T) {
 
 func TestExportGeoCSV_DaysInvalid_FallsBackTo30(t *testing.T) {
 	ts, st := newGeoTestServer(t)
-	mustRecord(t, st, 1, "CN", "中国", "广东", "深圳")
+	linkID := mustCreateLink(t, st)
+	mustRecord(t, st, linkID, "CN", "中国", "广东", "深圳")
 
 	resp, err := http.Get(ts.URL + "/api/stats/geo.csv?link_id=1&days=999")
 	if err != nil {
@@ -364,10 +379,24 @@ func TestExportGeoCSV_DaysInvalid_FallsBackTo30(t *testing.T) {
 	}
 }
 
+
+// mustCreateLink 建一条测试短链并返回其 id（visits 表有外键约束，不能用虚构 id）。
+func mustCreateLink(t *testing.T, st *store.Store) int64 {
+	t.Helper()
+	id, err := st.CreateLink("geo-test", "https://example.com/", "geo 测试", nil)
+	if err != nil {
+		t.Fatalf("CreateLink 失败: %v", err)
+	}
+	return id
+}
+
 // mustRecord 是测试辅助，把一次访问打进库。
+var recordSeq int64
+
 func mustRecord(t *testing.T, st *store.Store, linkID int64, cc, cn, province, city string) {
 	t.Helper()
-	if err := st.RecordVisitGeo(linkID, "hash-"+city, "ua", "referer", cc, cn, province, city); err != nil {
+	recordSeq++
+	if err := st.RecordVisitGeo(linkID, fmt.Sprintf("hash-%d", recordSeq), "ua", "referer", cc, cn, province, city); err != nil {
 		t.Fatalf("RecordVisitGeo 失败: %v", err)
 	}
 }
