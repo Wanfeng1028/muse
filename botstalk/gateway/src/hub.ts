@@ -7,6 +7,8 @@ import {
   makeEnvelope,
   parseEnvelope,
   validateEnvelope,
+  validateGameAction,
+  isGameAllowed,
   makeGap,
   HEARTBEAT_MS,
   OFFLINE_AFTER_MS,
@@ -24,10 +26,24 @@ import type {
   GapPayload,
   CapabilityUpdatePayload,
   TaskEventPayload,
+  GameActionPayload,
+  GameStatePayload,
 } from "@botstalk/protocol";
 import * as store from "./db.js";
 import type { Db } from "./db.js";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
+
+/** 小游戏规则引擎：把玩家动作算成新局面。 */
+export interface GameEngine {
+  applyAction(prevState: unknown, action: GameActionPayload): unknown;
+}
+
+/** 默认透传引擎：新局面 = action 本体。真实游戏规则引擎另行注册。 */
+export class PassthroughGameEngine implements GameEngine {
+  applyAction(_prevState: unknown, action: GameActionPayload): unknown {
+    return action.action ?? null;
+  }
+}
 
 export interface Conn {
   ws: WebSocket;
@@ -52,10 +68,20 @@ export class Hub {
   private adapterRooms = new Map<string, string>();
   public onMessage: ((env: Envelope<MessagePayload>) => void) | null = null;
 
-  constructor(private readonly db: Db) {
+  private readonly gameBroadcastThrottleMs: number;
+  private readonly gameEngines = new Map<string, GameEngine>();
+  private readonly lastGameBroadcastMs = new Map<string, number>();
+
+  constructor(private readonly db: Db, opts?: { gameBroadcastThrottleMs?: number }) {
     const raw = store.getGatewayState(db, "global_seq");
     const parsed = raw === undefined ? Number.NaN : Number(raw);
     this.globalSeq = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    this.gameBroadcastThrottleMs = opts?.gameBroadcastThrottleMs ?? 500;
+  }
+
+  /** 注册指定游戏的规则引擎；未注册的游戏用透传引擎。 */
+  registerGameEngine(game: string, engine: GameEngine): void {
+    this.gameEngines.set(game, engine);
   }
 
   public nextSeq(): number {
@@ -311,6 +337,10 @@ export class Hub {
         }
         break;
       }
+      case "game_action": {
+        this.handleGameAction(conn, env.payload as GameActionPayload);
+        break;
+      }
       default:
         break;
     }
@@ -388,6 +418,48 @@ export class Hub {
       payload,
     );
     this.broadcast(room, env);
+  }
+
+  /** 处理 game_action：校验 → 房间类型游戏清单 → 引擎算局面 → 落库 → 节流广播 game_state。 */
+  private handleGameAction(conn: Conn, payload: GameActionPayload): void {
+    if (validateGameAction(payload).length > 0) return;
+    const room = store.getRoom(this.db, conn.room);
+    if (!room) return;
+    if (!isGameAllowed(room.type, payload.game)) return;
+    const sessions = store.listGameSessions(this.db, conn.room);
+    let session = sessions.find((s) => s.game === payload.game);
+    if (!session) {
+      session = store.createGameSession(this.db, {
+        id: randomUUID(),
+        room_id: conn.room,
+        game: payload.game,
+        state: "{}",
+      });
+    }
+    let prevState: unknown = {};
+    try {
+      prevState = JSON.parse(session.state);
+    } catch {
+      prevState = {};
+    }
+    const engine = this.gameEngines.get(payload.game) ?? new PassthroughGameEngine();
+    const newState = engine.applyAction(prevState, payload);
+    const stateStr = JSON.stringify(newState ?? null);
+    store.updateGameSessionState(this.db, session.id, stateStr);
+    const stateHash = createHash("sha256").update(stateStr).digest("hex");
+    const now = Date.now();
+    const key = `${conn.room}:${payload.game}`;
+    const last = this.lastGameBroadcastMs.get(key) ?? 0;
+    if (now - last < this.gameBroadcastThrottleMs) return;
+    this.lastGameBroadcastMs.set(key, now);
+    const out: GameStatePayload = {
+      game: payload.game,
+      seat: payload.seat,
+      state: newState ?? null,
+      state_hash: stateHash,
+    };
+    const env = makeEnvelope<GameStatePayload>("game_state", "gateway", conn.room, this.nextSeq(), 0, out);
+    this.broadcast(conn.room, env);
   }
 
   sweep(nowMs: number = Date.now()): void {

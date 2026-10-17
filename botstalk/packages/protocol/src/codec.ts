@@ -25,6 +25,8 @@ const FRAME_TYPES: readonly FrameType[] = [
   "gap",
   "capability_update",
   "task_event",
+  "game_action",
+  "game_state",
 ];
 
 const INTENTS: readonly Intent[] = ["chat", "task"];

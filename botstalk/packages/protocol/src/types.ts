@@ -13,7 +13,34 @@ export type FrameType =
   | "presence"
   | "gap"
   | "capability_update"
-  | "task_event";
+  | "task_event"
+  | "game_action"
+  | "game_state";
+
+/** type=game_action 的 payload（客户端→网关：玩家动作）。 */
+export interface GameActionPayload {
+  game: string;
+  seat?: string;
+  action?: unknown;
+}
+
+/** type=game_state 的 payload（网关→房间广播：当前局面）。 */
+export interface GameStatePayload {
+  game: string;
+  seat?: string;
+  state?: unknown;
+  state_hash?: string;
+}
+
+/** 校验 GameActionPayload，返回错误列表（空表示通过）。 */
+export function validateGameAction(p: unknown): string[] {
+  const errs: string[] = [];
+  if (typeof p !== "object" || p === null) return ["game_action payload must be an object"];
+  const o = p as Record<string, unknown>;
+  if (typeof o.game !== "string" || o.game.length === 0) errs.push("game must be a non-empty string");
+  if (o.seat !== undefined && typeof o.seat !== "string") errs.push("seat must be a string");
+  return errs;
+}
 
 /** 消息 intent。默认 "chat"。 */
 export type Intent = "chat" | "task";
