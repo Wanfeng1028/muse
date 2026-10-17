@@ -205,6 +205,10 @@ public class VideoTaskService {
                     }
                 } catch (RateLimitedException e) {
                     task.setNextRetryAt(now.plusSeconds(Math.max(e.getRetryAfterSeconds(), 30)));
+                } catch (FfmpegService.FfmpegInterruptedException ie) {
+                    // v2.32：中断走终止路径——恢复中断标志，标记永久失败，不重排
+                    Thread.currentThread().interrupt();
+                    failOrRetry(task, ie.getMessage(), true);
                 } catch (Exception e) {
                     boolean permanent = e instanceof FfmpegService.FfmpegException fe && !fe.isTransient();
                     failOrRetry(task, e.getMessage(), permanent);

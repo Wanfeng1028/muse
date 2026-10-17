@@ -106,6 +106,32 @@ public class FfmpegService {
     }
 
     /**
+     * v2.32 引入（flaky-4）：专用中断异常，承载"线程被中断"信号。
+     * <p>
+     * 语义约定：中断必须走终止路径，不许进入重试 / 重排。与普通
+     * {@link FfmpegException}({@code transient=true}) 的区别在于：
+     * 普通瞬时异常表示"外部环境波动，可通过有界重试恢复"；本类型表示
+     * "调用线程被中断，上层必须立即停止"，不应被 {@code isTransient}
+     * 判定为可重试，也不应进入退避睡眠。
+     * <p>
+     * 双保险：构造器固定传入 {@code super(m, t, false)}，即 {@code isTransient()}
+     * 恒为 {@code false}；即使某处漏判专用类型而落入 {@code catch (FfmpegException)}，
+     * 也不会被当作 transient 重试。
+     */
+    public static class FfmpegInterruptedException extends FfmpegException {
+
+        /**
+         * 构造中断异常。
+         *
+         * @param m 消息
+         * @param t 根因（应为 {@link InterruptedException}）
+         */
+        public FfmpegInterruptedException(String m, Throwable t) {
+            super(m, t, false);
+        }
+    }
+
+    /**
      * v2.31：对 ProcessBuilder.start() 抛出的 IOException 做瞬时/永久分类。
      * <p>
      * 瞬时（true）：消息中出现资源耗尽信号——cannot allocate memory（ENOMEM）、
@@ -168,7 +194,7 @@ public class FfmpegService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             process.destroyForcibly();
-            throw new FfmpegException("等待命令时被中断: " + String.join(" ", cmd), e, true);
+            throw new FfmpegInterruptedException("等待命令时被中断: " + String.join(" ", cmd), e);
         }
 
         long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000L;
@@ -185,18 +211,49 @@ public class FfmpegService {
             throw new FfmpegException("命令超时(" + timeoutSeconds + "s): " + String.join(" ", cmd), true);
         }
 
-        try {
-            reader.join(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        // v2.32：保留有上限的等待（复用 2000ms 预算），并循环 join 直到 reader 结束或预算耗尽；
+        // 目的是在读取 output 前尽量确立 reader 已终止，同时不引入挂死风险（进程已退出，写端已关，reader 终将 EOF）。
+        // 若预算耗尽而 reader 仍 alive，则用 reader.isAlive() 守卫，不把 output 当完整内容使用。
+        long joinDeadlineNanos = System.nanoTime() + 2_000_000_000L;
+        boolean readerFinished;
+        while (true) {
+            long remainingNanos = joinDeadlineNanos - System.nanoTime();
+            if (remainingNanos <= 0L) {
+                readerFinished = !reader.isAlive();
+                break;
+            }
+            try {
+                reader.join(TimeUnit.NANOSECONDS.toMillis(remainingNanos) + 1L);
+            } catch (InterruptedException e) {
+                // v2.32：红线 7 要求——保留中断标志的恢复；中断后不读可能不完整的 output，
+                // 直接抛不带 snippet 的 FfmpegInterruptedException，避免把不完整内容伪装成完整 snippet。
+                // v2.32 flaky-4：B2 已把此点改为"恢复标志后走传播路径"，按 B3 划分原则归属第 4 条，本批一并收敛为专用中断异常。
+                Thread.currentThread().interrupt();
+                throw new FfmpegInterruptedException("等待命令输出读取线程时被中断（输出可能不完整）: "
+                        + String.join(" ", cmd), e);
+            }
+            if (!reader.isAlive()) {
+                readerFinished = true;
+                break;
+            }
         }
 
         int exitCode = process.exitValue();
         if (exitCode != 0) {
-            String out = output.toString();
-            String snippet = out.length() > 500 ? out.substring(0, 500) : out;
+            // v2.32：reader.isAlive() 守卫——只有确认 reader 已结束才把 output 当完整内容读取；
+            // 否则明确标注 snippet 可能不完整，绝不伪装成完整 snippet。
+            String out = readerFinished ? output.toString() : "";
+            String snippet;
+            String incompletenessNote;
+            if (readerFinished) {
+                snippet = out.length() > 500 ? out.substring(0, 500) : out;
+                incompletenessNote = "";
+            } else {
+                incompletenessNote = "（注意：输出读取线程未在等待上限内结束，snippet 可能不完整）";
+                snippet = "";
+            }
             throw new FfmpegException("命令执行失败(退出码 " + exitCode + "): "
-                    + String.join(" ", cmd) + "\n输出: " + snippet, true);
+                    + String.join(" ", cmd) + "\n输出" + incompletenessNote + ": " + snippet, true);
         }
     }
 
@@ -387,7 +444,7 @@ public class FfmpegService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             process.destroyForcibly();
-            throw new FfmpegException("等待 ffprobe 时被中断: " + file, e, true);
+            throw new FfmpegInterruptedException("等待 ffprobe 时被中断: " + file, e);
         }
 
         if (process.exitValue() != 0) {

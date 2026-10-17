@@ -219,6 +219,9 @@ public class FinalCutService {
                     dramaMetrics.recordFfmpegRetry(operation, true, true);
                 }
                 return result;
+            } catch (FfmpegService.FfmpegInterruptedException ie) {
+                // v2.32：中断信号直接终止重试循环，不睡眠、不重试、不记 transient 指标
+                throw ie;
             } catch (FfmpegService.FfmpegException e) {
                 dramaMetrics.recordFfmpegRetry(operation, e.isTransient(), false);
                 if (!e.isTransient() || attempt >= maxAttempts) {
@@ -233,16 +236,49 @@ public class FinalCutService {
                         Thread.sleep(sleepMs);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw new FfmpegService.FfmpegException(
-                                "ffmpeg retry interrupted: " + operation, true);
+                        throw new FfmpegService.FfmpegInterruptedException(
+                                "ffmpeg retry interrupted: " + operation, ie);
                     }
                 } else {
                     log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying without backoff (budget exhausted): {}",
                             operation, attempt, maxAttempts, e.getMessage());
                 }
             } catch (RuntimeException e) {
-                throw e;
+                // v2.32 flaky-6：未知 RuntimeException 保守按瞬时失败处理。
+                // 论证：FfmpegInterruptedException 已被上方专用 catch 拦截，到不了本分支；
+                // 其余 RuntimeException 语义未知，与 FfmpegException 兼容构造器
+                // "默认 transient=true，有界重试覆盖"的既有约定保持一致，
+                // 包装为 transient FfmpegException 后走下方统一重试分支（记指标、退避、有界）。
+                // 不改变 FfmpegException(transient=false) 的快速失败，也不改变普通 transient 的重试行为。
+                FfmpegService.FfmpegException wrapped = new FfmpegService.FfmpegException(
+                        "unknown runtime failure in ffmpeg step '" + operation + "': " + e.getMessage(), true);
+                wrapped.initCause(e);
+                dramaMetrics.recordFfmpegRetry(operation, true, false);
+                if (attempt >= maxAttempts) {
+                    throw wrapped;
+                }
+                long backoffMs = ffmpegRetryBackoffMs * attempt;
+                long sleepMs = claimRetryBackoff(retryBudget, backoffMs);
+                if (sleepMs > 0) {
+                    log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying in {}ms: {}",
+                            operation, attempt, maxAttempts, sleepMs, e.getMessage());
+                    try {
+                        Thread.sleep(sleepMs);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new FfmpegService.FfmpegInterruptedException(
+                                "ffmpeg retry interrupted: " + operation, ie);
+                    }
+                } else {
+                    log.warn("ffmpeg step '{}' failed (attempt {}/{}), retrying without backoff (budget exhausted): {}",
+                            operation, attempt, maxAttempts, e.getMessage());
+                }
             } catch (Exception e) {
+                // v2.32 flaky-6：理论路径，实际不可达。
+                // 依据 B5 审计：三个调用点（concatClips/burnSubtitles 经 FfmpegService.run，
+                // probeDurationSeconds 直接）的受检异常出口仅为 FfmpegException；
+                // FfmpegStep.run() 声明的其它受检异常在现有 lambda 实现中不存在。
+                // 保持现状，不引入无用的收敛代码。
                 throw new RuntimeException(e);
             }
         }

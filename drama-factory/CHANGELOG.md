@@ -7,6 +7,25 @@
 
 ### Added
 
+- v2.32「flaky 收尾：ffmpeg 输出竞态 + 中断异常收敛 + 重试逃逸」（2026-10-17，关闭 `docs/FLAKY_ROOT_CAUSE.md` §7 残余风险 ③④⑥）：
+  - `FfmpegService.run()`：`reader.join(2000)` 固定上限等待改为有上限循环 join + `reader.isAlive()` 守卫，
+    预算耗尽仍未结束时 message 标注"可能不完整"，不再静默截断；新增
+    `FfmpegInterruptedException extends FfmpegException`（`(String, Throwable)` → `super(m, t, false)`），
+    三处中断 throw 点收敛为专用异常。
+  - `FinalCutService.withFfmpegRetry`：新增 `catch (FfmpegInterruptedException)` 直接 throw（终止重试）；
+    sleep 中断改抛专用异常（修复 cause=null）；`catch (RuntimeException)` 收敛为保守 transient 重试。
+  - `VideoTaskService.processDueTasks()`：新增 `catch (FfmpegInterruptedException)`——恢复中断标志 +
+    `failOrRetry(task, msg, true)`。
+  - 测试 9 例：`FfmpegOutputRaceV232Test` 3 例（2.621s）+ `FfmpegInterruptV232Test` 3 例（12.92s）+
+    `FfmpegRetryEscapeV232Test` 3 例（14.12s）。
+  - 文档：`docs/FLAKY_ROOT_CAUSE.md` §7/§2/§6/§8/§9 同步；`docs/dod-v2.32.md` 为发版对照。
+  - 验证：新测试 9/9；回归 13 类 64/64（既有 10 类 55/55 基线），无回归；
+    全量 `mvn -o verify` 本轮未跑（只跑受影响的 13 类；铁律：不降 JaCoCo 门禁），
+    v2.31 全量数据（2013 例，14 失败 + 11 错误，Qwen 相关）保持原样。
+  - 诚实声明：残余风险 ⑤（多实例 CAS 单飞）本轮仍未关闭，留待多实例场景再议；
+    概率性场景（输出竞态 / 中断路径）9/9 通过为当前样本量观测结果，不宣称已彻底消除。
+- 发版对照报告：`docs/dod-v2.32.md`。
+
 - v2.31「flaky 收尾：退避预算上限 + 启动异常精细分类」（2026-10-17，dod-v2.28 排期"flaky 残留 2 处代码漏洞"全交付）：
   - `FinalCutService`：单次成片构建内所有 ffmpeg 步骤共享退避预算，
     `drama.ffmpeg.retry-total-budget-ms`（`FFMPEG_RETRY_TOTAL_BUDGET_MS`，默认 20000ms）；
