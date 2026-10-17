@@ -22,7 +22,7 @@ curl -s http://127.0.0.1:8100/api/health
 预期返回：
 
 ```
-{"status":"ok","version":"2.1.0"}
+{"status":"ok","version":"2.10.0"}
 ```
 
 停止与清理：
@@ -133,7 +133,7 @@ curl -s http://127.0.0.1:8100/api/metrics | grep ledger_transactions_total
 kill $SRV
 ```
 
-第 5 步中 `/api/health` 返回 `{"status":"ok","version":"2.1.0"}`、`/api/ready` 返回 `{"ready":true}`、`ledger_transactions_total` 与第 2 步一致，即恢复成功。
+第 5 步中 `/api/health` 返回 `{"status":"ok","version":"2.10.0"}`、`/api/ready` 返回 `{"ready":true}`、`ledger_transactions_total` 与第 2 步一致，即恢复成功。
 
 ## 4. 升级
 
@@ -181,8 +181,12 @@ make restore FILE=data/backups/ledger-<升级前时间戳>.db
 | `ledger_ocr_failures_total{reason="unavailable"\|"unsupported"\|"invalid"\|"oversize"\|"internal"}` | 失败请求按原因分类（counter）。`unavailable`=tesseract 不可用（503）；`unsupported`=非图片类型（415）；`invalid`=请求非法（400）；`oversize`=超 5MB（413）；`internal`=其他（500/501/未知异常） |
 | `ledger_ocr_duration_seconds` | 全路径请求耗时分布（histogram，buckets：0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, +Inf） |
 | `ledger_ocr_confidence_avg` | tesseract 词置信度均值（gauge，0~1，无样本时为 0；仅真实跑 tesseract 且 TSV 解析成功时有样本） |
+| `ledger_bills_ocr_requests_total{result="ok"|"error"}` | POST /api/bills/ocr 全路径请求计数（counter）。`ok`=200 成功创建 review；`error`=其余全部失败 |
+| `ledger_bills_ocr_failures_total{reason="unavailable"|"unsupported"|"invalid"|"oversize"|"internal"}` | bills/ocr 失败请求按原因分类（counter）。`unsupported`=非图片（422）；`oversize`=超 5MB（422）；`invalid`=文件名/内容空或提供商配置非法（422/500）；`unavailable`=OCR 提供商未配置或未实现（422/501）；`internal`=其他 |
+| `ledger_bills_ocr_duration_seconds` | bills/ocr 全路径请求耗时分布（histogram，同 buckets） |
+| `ledger_bills_ocr_confidence_avg` | bills/ocr 的 tesseract 词置信度均值（gauge，0~1，无样本时为 0） |
 
-v2.9 起 OCR 指标改名（`ocr_*` → `ledger_ocr_*`，与其他指标前缀统一）并升级为全路径埋点；v2.8.1 的旧指标名已移除。
+v2.9 起 OCR 指标改名（`ocr_*` → `ledger_ocr_*`，与其他指标前缀统一）并升级为全路径埋点；v2.8.1 的旧指标名已移除。v2.10 起 POST /api/bills/ocr 也有独立前缀 `ledger_bills_ocr_*` 的全路径指标集（与 statements 端点计数隔离）。
 指标输出 `GET /api/metrics`，为进程内计数，服务重启清零。埋点自身异常只记 warning，永不影响主流程。
 
 就绪探测使用 `GET /api/ready`：数据库连通返回 200 `{"ready":true}`，不通返回 503。

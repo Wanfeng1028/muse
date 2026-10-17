@@ -1,7 +1,7 @@
 # ledger 项目 Makefile
 # 约定：所有 Python 命令均通过项目内 .venv 执行，避免污染全局环境
 
-.PHONY: install dev run test lint fmt clean backup restore
+.PHONY: install dev run test lint fmt clean backup restore deps-scan
 
 # 创建虚拟环境并以可编辑模式安装项目及开发依赖
 install:
@@ -38,3 +38,7 @@ backup:
 # 从备份恢复（必须指定 FILE= 路径）
 restore:
 	.venv/bin/python -m ledger restore $(FILE)
+
+# 依赖扫描：过期依赖 + OSV 已知漏洞（每周 workflow 也会跑）
+deps-scan:
+	.venv/bin/python scripts/deps_scan.py

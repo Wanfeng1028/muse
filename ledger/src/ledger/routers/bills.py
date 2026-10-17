@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
@@ -11,18 +12,82 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ledger.database import get_session
+from ledger.logging import get_logger
 from ledger.models import Category, OcrReview
 from ledger.ocr import OcrFailedError, OcrNotConfiguredError, get_provider
+from ledger.ocr_metrics import record_bills_ocr_failure, record_bills_ocr_request
 from ledger.routers.transactions import TransactionIn, create_transaction
 
 router = APIRouter(prefix="/api/bills", tags=["bills"])
+
+_logger = get_logger("bills")
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
+def _classify_bills_ocr_reason(status_code: int, detail: str) -> str:
+    """把 bills OCR 的 HTTP 状态码与 detail 映射为失败分类 reason。"""
+    if status_code == 501:
+        return "unavailable"
+    if status_code == 422:
+        if detail == "仅支持图片文件（PNG/JPG/WebP/GIF/BMP）":
+            return "unsupported"
+        if detail == "图片超过 5MB 限制":
+            return "oversize"
+        if detail == "文件名为空" or detail == "图片内容为空":
+            return "invalid"
+        return "invalid"
+    if status_code == 500:
+        return "invalid"
+    return "internal"
+
+
 @router.post("/ocr")
 async def ocr_bill(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """上传账单图片，OCR 识别后返回预填账单 JSON。
+
+    全路径指标埋点：每次请求都计数（result=ok|error）并记录耗时；
+    失败请求另按原因分类计数（reason=unavailable|unsupported|invalid|oversize|internal）。
+    埋点自身异常只记 warning，永不影响主流程。
+    """
+    _start = time.perf_counter()
+    _result = "error"
+    _reason: str | None = None
+    try:
+        out = await _ocr_bill_impl(file=file, session=session)
+    except OcrNotConfiguredError as exc:
+        _reason = "unavailable"
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except NotImplementedError as exc:
+        _reason = "unavailable"
+        raise HTTPException(status_code=501, detail=str(exc)) from exc
+    except HTTPException as exc:
+        _reason = _classify_bills_ocr_reason(exc.status_code or 500, str(exc.detail))
+        raise
+    except Exception:
+        _reason = "internal"
+        raise
+    else:
+        _result = "ok"
+        return out
+    finally:
+        # 埋点永不影响主流程
+        try:
+            record_bills_ocr_request(_result, time.perf_counter() - _start)
+            if _reason is not None:
+                record_bills_ocr_failure(_reason)
+        except Exception as exc:
+            _logger.warning(
+                "ocr_metrics_record_failed",
+                extra={"extra_data": {"error": repr(exc)}},
+            )
+
+
+async def _ocr_bill_impl(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
@@ -60,10 +125,6 @@ async def ocr_bill(
     # 调用识别
     try:
         result = await provider.recognize(raw, file.filename or "", file.content_type or "")
-    except OcrNotConfiguredError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except NotImplementedError as exc:
-        raise HTTPException(status_code=501, detail=str(exc)) from exc
     except OcrFailedError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

@@ -2,6 +2,31 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.10 - 2026-10-17
+
+### 新增
+
+- 旧端点 POST /api/bills/ocr 补齐全路径 Prometheus 埋点（v2.9 对照报告已知限制"本轮范围外"，本轮关闭）：新指标集 ledger_bills_ocr_requests_total{result="ok"|"error"} / ledger_bills_ocr_failures_total{reason="unavailable"|"unsupported"|"invalid"|"oversize"|"internal"} / ledger_bills_ocr_duration_seconds / ledger_bills_ocr_confidence_avg，与 statements 端点的 ledger_ocr_* 实例计数完全隔离；reason 映射：unsupported=非图片（422）、oversize=超 5MB（422）、invalid=文件名/内容空或提供商配置非法（422/500）、unavailable=OCR 提供商未配置或未实现（422/501）、internal=其他。
+- src/ledger/ocr_metrics.py 重构为 _OcrMetrics(prefix) 类：模块级旧函数名与 ledger_ocr_* 指标名/HELP 文本逐字不变（v2.9 向后兼容），bills 用独立实例。
+- pip 依赖定期扫描本地脚本版：scripts/deps_scan.py（只用标准库：从 pyproject 读依赖、pip list --outdated 查过期、OSV API 查已知 CVE；exit 0 无问题 / 1 有漏洞或大版本过期 / 2 扫描失败）+ docs/DEPENDENCY_SCAN.md + make deps-scan + .github/workflows/deps-scan.yml（每周一 03:00 UTC，continue-on-error）。
+- 版本号统一 bump：pyproject.toml、src/ledger/routers/health.py（/api/health）、tests/test_metrics.py 断言、docs/OPERATIONS.md 两处示例，2.1.0 → 2.10.0。
+
+### 测试
+
+- pytest 全量 290 通过、1 跳过（跳过的是既有用例：环境无 tesseract）。
+- 新增 tests/test_bills_ocr_metrics.py（至少 10 例：指标名前缀/HELP、两实例隔离、ok 路径、各失败分类、埋点故障隔离、/metrics 文本解析）。
+- ruff check 与 ruff format 全洁。
+
+### 冒烟
+
+- 真实服务冒烟（uvicorn 真实进程，mock provider，LEDGER_DB 独立）：建账户 201 → 记一笔 200 → POST /api/bills/ocr 有效 PNG → 200（review_id=1 入审核队列）→ 非图片 .txt → 422 → GET /api/metrics 验证 ledger_bills_ocr_requests_total{result="ok"}=1/{result="error"}=1、ledger_bills_ocr_failures_total{reason="unsupported"}=1、直方图 count=2 → POST /api/statements/ocr → 200（旧端点不受影响，ledger_ocr_* 照常渲染）→ /api/health version=2.10.0 → 备份 → 删库 → 恢复 → 账户/交易/review 数据一致。
+
+### 已知限制
+
+- tesseract 真实安装实测：2026-10-17 实测：`apt-get update` 执行 10 分钟无任何输出（apt 源不可达，与已知 apt 源损坏一致），已终止；`which tesseract` 无 binary；全盘仅找到冒烟垫片 ~/workspace/muse-build/w2b/shim/tesseract（POSIX shell 脚本，输出固定 CSV，非真实识别）。结论：环境仍无真实 tesseract，ledger_ocr_confidence_avg / ledger_bills_ocr_confidence_avg 继续诚实为 0；OCR 识别率真实语料验证暂无法执行，仍为已知限制。
+- 指标为进程内计数，重启清零（既有行为）。
+- pyproject 版本号历史漂移（v2.2 起未 bump）已在本轮统一为 2.10.0。
+
 ## v2.9 - 2026-10-17
 
 ### 新增

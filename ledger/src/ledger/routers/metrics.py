@@ -16,9 +16,7 @@ async def metrics() -> PlainTextResponse:
     lines: list[str] = []
 
     async with get_session_factory()() as session:
-        batches_total = (
-            await session.execute(select(func.count()).select_from(models.StatementBatch))
-        ).scalar_one()
+        batches_total = (await session.execute(select(func.count()).select_from(models.StatementBatch))).scalar_one()
 
         rows = (
             await session.execute(
@@ -37,15 +35,11 @@ async def metrics() -> PlainTextResponse:
         ).scalar_one()
         auto_match_rate = (auto_sum / total_sum) if total_sum else 0.0
 
-        transactions_total = (
-            await session.execute(select(func.count()).select_from(models.Transaction))
-        ).scalar_one()
+        transactions_total = (await session.execute(select(func.count()).select_from(models.Transaction))).scalar_one()
 
         accounts_total = (
             await session.execute(
-                select(func.count())
-                .select_from(models.Account)
-                .where(models.Account.is_archived == 0)
+                select(func.count()).select_from(models.Account).where(models.Account.is_archived == 0)
             )
         ).scalar_one()
 
@@ -82,6 +76,15 @@ async def metrics() -> PlainTextResponse:
         from ledger.logging import get_logger
 
         get_logger("metrics").warning("ocr_metrics_render_failed", extra={"extra_data": {"error": repr(exc)}})
+
+    try:
+        from ledger.ocr_metrics import render_bills_ocr_metrics
+
+        lines.append(render_bills_ocr_metrics())
+    except Exception as exc:
+        from ledger.logging import get_logger
+
+        get_logger("metrics").warning("bills_ocr_metrics_render_failed", extra={"extra_data": {"error": repr(exc)}})
 
     body = "\n".join(lines) + "\n"
     return PlainTextResponse(content=body, media_type="text/plain; version=0.0.4")
