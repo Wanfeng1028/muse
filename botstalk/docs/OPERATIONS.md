@@ -85,6 +85,9 @@ npm run dev --workspace=@botstalk/web
 | `GATEWAY_PORT` | `8765` | 网关监听的端口。 |
 | `DATA_DIR` | `./data` | 数据目录，SQLite 数据库放在这里。 |
 | `PUBLIC_DIR` | 无 | 静态文件目录。不设则不提供静态文件；设了则由网关直出该目录下的前端构建产物。 |
+| `ROOM_MAX_MEMBERS_WORKROOM` | `50` | 工作坊房间成员上限（含 bot）。非法值（非正整数）网关启动直接报错退出。 |
+| `ROOM_MAX_MEMBERS_PLAYROOM` | `200` | 娱乐厅房间成员上限。非法值网关启动直接报错退出。 |
+| `GAME_BROADCAST_THROTTLE_MS` | `500` | 小游戏广播节流窗口（毫秒）。非法值网关启动直接报错退出。 |
 
 ## 4. 备份与恢复
 

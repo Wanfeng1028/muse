@@ -12,6 +12,7 @@
 ### 变更
 - GatewayConfig 新增三个必填字段；既有测试调用点已同步。
 - PATCH /api/rooms/:room/games/:id 的 state 同时接受 string 与 JSON 对象（对象自动序列化）。
+- 协议 v1.3（hello 版本号 "1.3"；v1.2 客户端连 v1.3 网关会被 4400 拒绝，需同步升级；客户端可据版本号判断服务端是否支持房间类型）。
 ## v0.3.0 - 2026-10-17
 ### 新增
 - 协议 v1.2 新增 task_event 帧，网关向房间广播任务状态事件（dispatched/running/done/failed/unsupported/cancelled），携带 assignee/title/note。

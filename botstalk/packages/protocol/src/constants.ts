@@ -1,8 +1,8 @@
-// 职责：导出协议 v1.2 的全部时间/数量常量与退避计算函数。
+// 职责：导出协议 v1.3 的全部时间/数量常量与退避计算函数。
 // 无副作用；退避抖动的叠加由调用方负责。
 
 export const PROTOCOL_VERSION = 1 as const;
-export const PROTOCOL_VERSION_STR = "1.2";
+export const PROTOCOL_VERSION_STR = "1.3";
 
 export const HEARTBEAT_MS = 20000;
 export const OFFLINE_AFTER_MS = 45000;

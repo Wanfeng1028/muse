@@ -54,7 +54,7 @@ class TestClient {
       room,
       this.nextSeq(),
       0,
-      { adapter_id: this.id, protocol_version: "1.2", last_seen_seq: 0 },
+      { adapter_id: this.id, protocol_version: "1.3", last_seen_seq: 0 },
     );
     this.ws.send(JSON.stringify(env));
   }

@@ -122,7 +122,7 @@ describe("AdapterClient", () => {
     expect(hello).toBeDefined();
     const payload = hello?.payload as { adapter_id: string; protocol_version: string; last_seen_seq: number };
     expect(payload.adapter_id).toBe("test-adapter");
-    expect(payload.protocol_version).toBe("1.2");
+    expect(payload.protocol_version).toBe("1.3");
   });
 
   it("sends presence heartbeat on interval", async () => {
