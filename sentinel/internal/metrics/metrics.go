@@ -11,6 +11,17 @@ import (
 	"sync/atomic"
 )
 
+// RenderQueueBacklog 输出 webhook 投递队列积压的 Prometheus 文本指标。
+// pending 与 retrying 分别为处于 pending 与 retrying 状态的投递数量。
+func RenderQueueBacklog(pending, retrying int64) string {
+	var b strings.Builder
+	b.WriteString("# HELP sentinel_webhook_queue_backlog Number of webhook deliveries waiting in the queue, by status.\n")
+	b.WriteString("# TYPE sentinel_webhook_queue_backlog gauge\n")
+	fmt.Fprintf(&b, "sentinel_webhook_queue_backlog{status=\"pending\"} %d\n", pending)
+	fmt.Fprintf(&b, "sentinel_webhook_queue_backlog{status=\"retrying\"} %d\n", retrying)
+	return b.String()
+}
+
 // Registry 保存所有指标的原子计数器与互斥保护的 map。
 type Registry struct {
 	checksTotal    atomic.Int64

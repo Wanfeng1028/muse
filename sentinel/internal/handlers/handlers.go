@@ -357,10 +357,22 @@ func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMetrics 输出 Prometheus 文本格式指标。
+//
+// 除 Registry 内的计数器外，还会附加 webhook 投递队列积压 gauge。
+// 积压数据来自数据库查询，属于易抖动的外部依赖：一旦查询失败，
+// 只记录错误并跳过该 gauge，绝不中断整个 Prometheus 抓取，
+// 仍然返回 200 与已收集到的指标，避免一次 DB 抖动导致抓取目标被判 down。
 func (s *Server) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	out := metrics.Default.RenderPrometheus()
+	if counts, err := s.store.CountDeliveriesByStatus(); err != nil {
+		logErr(r, "handleMetrics", err)
+	} else {
+		// map 缺 key 时读到的零值即为 0，无需额外判断。
+		out += metrics.RenderQueueBacklog(int64(counts["pending"]), int64(counts["retrying"]))
+	}
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(metrics.Default.RenderPrometheus()))
+	_, _ = w.Write([]byte(out))
 }
 
 func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {

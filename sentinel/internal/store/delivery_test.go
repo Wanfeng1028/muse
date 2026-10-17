@@ -361,3 +361,63 @@ func TestCountDeliveriesByStatus(t *testing.T) {
 		t.Fatalf("expected done=1, got %d", counts["done"])
 	}
 }
+
+func TestQueueBacklogCountsPendingPlusRetrying(t *testing.T) {
+	st := newTestStore(t)
+
+	mid, err := st.CreateMonitor(Monitor{
+		Name:           "m1",
+		Kind:           "http",
+		Target:         "https://example.com",
+		Method:         "GET",
+		ExpectedStatus: 200,
+		TimeoutSec:     5,
+		IntervalSec:    60,
+		Enabled:        1,
+		TenantID:       1,
+	})
+	if err != nil {
+		t.Fatalf("CreateMonitor: %v", err)
+	}
+
+	id1, err := st.EnqueueDelivery(mid, "https://example.com/hook", "check.failed", `{"k":1}`, 3)
+	if err != nil {
+		t.Fatalf("EnqueueDelivery #1: %v", err)
+	}
+	id2, err := st.EnqueueDelivery(mid, "https://example.com/hook", "check.failed", `{"k":2}`, 3)
+	if err != nil {
+		t.Fatalf("EnqueueDelivery #2: %v", err)
+	}
+	id3, err := st.EnqueueDelivery(mid, "https://example.com/hook", "check.failed", `{"k":3}`, 3)
+	if err != nil {
+		t.Fatalf("EnqueueDelivery #3: %v", err)
+	}
+
+	nextRetryAt := time.Now().UTC().Format(time.RFC3339)
+	if err := st.MarkDeliveryAttempt(id1, nextRetryAt, "boom"); err != nil {
+		t.Fatalf("MarkDeliveryAttempt: %v", err)
+	}
+	if err := st.MarkDeliveryDone(id2); err != nil {
+		t.Fatalf("MarkDeliveryDone: %v", err)
+	}
+
+	counts, err := st.CountDeliveriesByStatus()
+	if err != nil {
+		t.Fatalf("CountDeliveriesByStatus: %v", err)
+	}
+	if counts["pending"] != 1 {
+		t.Fatalf("expected pending=1, got %d", counts["pending"])
+	}
+	if counts["retrying"] != 1 {
+		t.Fatalf("expected retrying=1, got %d", counts["retrying"])
+	}
+	if counts["done"] != 1 {
+		t.Fatalf("expected done=1, got %d", counts["done"])
+	}
+
+	backlog := counts["pending"] + counts["retrying"]
+	if backlog != 2 {
+		t.Fatalf("expected backlog (pending+retrying)=2, got %d", backlog)
+	}
+	_ = id3
+}

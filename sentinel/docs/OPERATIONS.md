@@ -159,20 +159,21 @@ readinessProbe: { httpGet: { path: /readyz,  port: 8200 } }
 
 `GET /api/metrics`（Prometheus 文本格式）暴露：
 
-- `sentinel_monitors_total`：监控项总数
-- `sentinel_checks_total{status="up|down"}`：累计检查次数
-- `sentinel_check_duration_seconds`：检查耗时直方图
-- `sentinel_check_failures_total`：累计失败次数
-- `sentinel_incidents_open`：当前未恢复事件数
-- `sentinel_http_requests_total{path,code}`：HTTP 请求计数
+- `sentinel_checks_total`：累计检查次数（counter）
+- `sentinel_check_failures_total`：累计检查失败次数（counter）
+- `sentinel_check_retries_total`：累计检查重试次数（counter）
+- `sentinel_webhooks_sent_total`：累计 webhook 发送次数（counter）
+- `sentinel_webhook_failures_total`：累计 webhook 投递失败次数（counter）
+- `sentinel_webhook_queue_backlog{status="pending"|"retrying"}`：webhook 队列积压（gauge，v0.6 新增，pending+retrying 即队列积压）
+- `sentinel_http_requests_total{method,path,status}`：HTTP 请求计数（counter）
 
-抓取配置示例：
+说明：
 
-```yaml
-scrape_configs:
-  - job_name: sentinel
-    static_configs:
-      - targets: ['sentinel:8200']
+- `/api/metrics` 需要 API Token 鉴权（`Authorization: Bearer <token>`），抓取配置须带 authorization，否则返回 401。
+- 历史文档中的 `sentinel_monitors_total`、`sentinel_check_duration_seconds`（耗时直方图）、`sentinel_incidents_open` 等指标并不存在，属旧版文档写错，本次一并订正。
+
+抓取配置示例见 `prometheus/prometheus.yml`（含 authorization 示例）。
+
 ```
 
 ### 5.3 结构化日志
@@ -306,4 +307,64 @@ export SENTINEL_SMTP_HOST=127.0.0.1 SENTINEL_SMTP_PORT=1025
 export SENTINEL_SMTP_FROM=sentinel@example.com SENTINEL_SMTP_TO=ops@example.com
 export SENTINEL_NOTIFY_CHANNELS=smtp
 # 另开终端用 httptest/本地服务模拟企业微信 webhook 后再加 wecom
+
+## 10. 告警规则与值班（v0.6 新增）
+
+### 10.1 规则一览
+
+| 规则名 | 级别 | 阈值 | 持续时间 | 含义 |
+| --- | --- | --- | --- | --- |
+| SentinelInstanceDown | critical | `up{job="sentinel"} == 0` | for 2m | Prometheus 抓不到 sentinel |
+| SentinelChecksStalled | warning | `up{job="sentinel"} == 1 and increase(sentinel_checks_total[15m]) == 0` | for 15m | 进程活着但 15 分钟无任何检查 |
+| SentinelWebhookQueueBacklogHigh | warning | `sum(sentinel_webhook_queue_backlog) > 50` | for 10m | webhook 队列积压超 50 |
+| SentinelWebhookFailureRateHigh | warning | `rate(sentinel_webhook_failures_total[10m]) / rate(sentinel_webhooks_sent_total[10m]) > 0.2` | for 10m | 10 分钟投递失败率超 20% |
+| SentinelCheckFailuresSpike | warning | `increase(sentinel_check_failures_total[15m]) > 20` | for 15m | 15 分钟检查失败激增超 20 次 |
+| SentinelAPI5xxRateHigh | warning | `sum(rate(sentinel_http_requests_total{status=~"5.."}[5m])) / sum(rate(sentinel_http_requests_total[5m])) > 0.05` | for 5m | sentinel 自身 API 的 5xx 率超 5% |
+
+每条规则的 `annotations.description` 都写了"先查什么"排查步骤。
+
+### 10.2 阈值依据
+
+- 积压 50：默认退避基数 60s、最多 8 次，50 条积压意味着投递能力持续跟不上产生速度，再涨就有丢失风险。
+- 失败率 20%：偶发抖动容忍线，持续 10 分钟超 20% 说明下游大面积不可用。
+- 失败激增 20 次/15min：单目标按 60s 间隔检查，15 分钟 20 次≈多个目标同时 down 或出口故障。
+- 5xx 率 5%：API 自身错误预算。
+- 实例 down 2m：抓取间隔 15s，2 分钟确认非抖动。
+- 调度停滞 15m：检查间隔通常 ≤60s，15 分钟零增长必有问题。
+
+### 10.3 Prometheus 接入
+
+- `prometheus/` 目录结构：`prometheus.yml` + `rules/sentinel.yml`。
+- job 名必须叫 `sentinel`。
+- `metrics_path` 必须是 `/api/metrics`。
+- `authorization` 必须配 Bearer token（`/api/metrics` 要鉴权，不配会 401 并误报 SentinelInstanceDown）。
+- SentinelChecksStalled 的零监控误报前提：零监控部署会持续误报，需删除/禁用该规则。
+
+### 10.4 静默与值班建议
+
+- critical（SentinelInstanceDown）：立即响应，不静默。
+- warning：工作时间处理；已知下游 webhook 维护时可对 SentinelWebhookFailureRateHigh / BacklogHigh 做 2 小时静默；批量目标计划内停机前先对 SentinelCheckFailuresSpike 静默。
+- 值班看到告警先看规则 annotations.description 里的"先查什么"。
+
+## 11. 运维脚本（v0.6 新增）
+
+### 11.1 scripts/depscan.sh
+
+- 用途：扫描模块依赖漏洞（OSV + govulncheck）。
+- 用法：`bash scripts/depscan.sh`。
+- 退出码：0=无漏洞 / 1=发现漏洞 / 2=环境缺失。
+- 报告路径：`docs/dependency-scan-YYYYMMDD.json`。
+- 实测（2026-10-17）：扫描 23 个模块；OSV 查出 3 个（golang.org/x/mod@v0.16.0 的 GO-2026-6179/GO-2026-6180、golang.org/x/sys@v0.22.0 的 GO-2026-5024）；govulncheck 查出 46 个（全部在 Go 标准库，工具链 go1.23.4 太旧所致，第三方模块无漏洞）；报告 `docs/dependency-scan-20261017.json`。
+- 环境备注：本机到 api.osv.dev 的 POST 会被出站链路拦截超时，脚本已做降级（OSV 失败不致命，走 govulncheck）。
+- 建议每月跑一次，或接入 cron。
+
+### 11.2 scripts/load_check.sh
+
+- 用途：真实负载验证（假目标 + webhook sink，采集检查延迟、事件正确性、队列积压与排空）。
+- 用法：`bash scripts/load_check.sh`。
+- 退出码：0=全过 / 1=断言失败 / 2=环境缺失。
+- 报告路径：`docs/load-test-YYYYMMDD.md`。
+- 实测（2026-10-17）：全过。8 个假目标，检查 40 轮，延迟 p50=6.0ms、p99=14.8ms，ok=100%；kill 4 个目标→4 条 down 事件全对、存活目标无误报、webhook 送达 4/4；再停 webhook sink 并 kill 2 个目标→积压峰值 2，sink 恢复后排空成功；总耗时 73s。报告 `docs/load-test-20261017.md`。
+- 注意：`/api/metrics` 需带 Bearer token。
+
 ```

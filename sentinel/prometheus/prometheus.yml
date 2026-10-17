@@ -1,0 +1,31 @@
+
+# Prometheus 最小可用配置示例（配合 sentinel 使用）。
+#
+# 使用方式：将本机的 prometheus/ 整个目录挂载到 Prometheus 容器的 /etc/prometheus，
+# 例如 docker run -v $(pwd)/prometheus:/etc/prometheus prom/prometheus
+# （容器内工作目录为 /etc/prometheus，rule_files 中的相对路径 rules/sentinel.yml 以此为基准）。
+#
+# 单机部署时，把下面的 'sentinel:8200' 换成 sentinel 的实际地址，
+# 例如 '127.0.0.1:8200' 或 'sentinel.example.com:8200'。
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/sentinel.yml"
+
+scrape_configs:
+  # job 名必须为 "sentinel"，rules/sentinel.yml 中的 up{job="sentinel"} 依赖它。
+  - job_name: sentinel
+    # sentinel 的指标路径是 /api/metrics，不是 Prometheus 默认的 /metrics，
+    # 因此必须显式配置 metrics_path。
+    metrics_path: /api/metrics
+    # /api/metrics 需要 API Token 鉴权（与调用 sentinel API 同一个 token）；
+    # 不配 authorization 的话抓取返回 401，up{job="sentinel"} 会一直是 0 从而误报 SentinelInstanceDown。
+    # 把下面的占位符换成你的 SENTINEL_API_TOKEN。
+    authorization:
+      type: Bearer
+      credentials: "<SENTINEL_API_TOKEN>"
+    static_configs:
+      - targets: ['sentinel:8200']

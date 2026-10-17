@@ -1,0 +1,101 @@
+
+# Sentinel 告警规则。
+#
+# 抓取约定：Prometheus 中监控 sentinel 的 scrape job 名必须为 "sentinel"，
+# 规则中的 up{job="sentinel"} 依赖该命名。
+#
+# 注意 B2（SentinelChecksStalled）的前提：该规则只在“至少配置了 1 个启用监控”
+# 的部署上有意义；零监控部署下 sentinel_checks_total 永远不增长，会持续误报。
+# 这类部署请自行删除或禁用 B2。
+groups:
+  - name: sentinel
+    rules:
+      - alert: SentinelInstanceDown
+        expr: up{job="sentinel"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Sentinel 实例不可达"
+          description: |
+            Prometheus 已连续 2 分钟抓不到 sentinel，通常是进程崩溃、容器被杀或网络不通。
+            先查什么：1) 目标主机上 sentinel 进程/容器是否存活（systemctl status / docker ps）；
+            2) 从 Prometheus 所在机器 curl <sentinel>/api/metrics 是否可达；
+            3) 检查 Prometheus Targets 页面的错误信息（连接拒绝 / 超时 / DNS 失败）；
+            4) 查看 sentinel 自身日志确认是否有启动失败或 OOM。
+
+      - alert: SentinelChecksStalled
+        expr: up{job="sentinel"} == 1 and increase(sentinel_checks_total[15m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sentinel 调度器疑似卡死，15 分钟内未执行任何检查"
+          description: |
+            进程存活（up==1）但 15 分钟内 sentinel_checks_total 完全没有增长，说明调度器卡死或所有检查任务被阻塞。
+            前提：该规则仅在“至少配置了 1 个启用监控”的部署上有效；零监控部署会持续误报，请删除或禁用本规则。
+            先查什么：1) 确认是否真的配置了启用状态的监控目标（否则属预期行为，忽略即可）；
+            2) 查看 sentinel 日志是否有 panic、死锁或长时间阻塞；
+            3) 检查 goroutine 堆栈（/debug/pprof/goroutine）定位卡死点；
+            4) 确认系统时间是否异常（时钟跳变会让 increase 计算失真）。
+
+      - alert: SentinelWebhookQueueBacklogHigh
+        expr: sum(sentinel_webhook_queue_backlog) > 50
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Webhook 投递队列积压超过 50 条"
+          description: |
+            webhook 投递队列积压总量已超过 50 条并持续 10 分钟，说明投递能力跟不上产生速度：
+            下游 webhook 不通导致重试堆积，或 worker 处于退避状态。
+            先查什么：1) 看 sentinel_webhook_queue_backlog{status="retrying"} 是否占多数（重试堆积）；
+            2) 检查 sentinel_webhook_failures_total 与 sentinel_webhooks_sent_total 的变化趋势；
+            3) 逐个确认下游 webhook 端点是否可用（curl 目标 URL、看返回码）；
+            4) 查看 sentinel 日志中投递失败的具体错误（超时 / 4xx / 5xx / 连接拒绝）；
+            5) 确认 worker 并发度与退避配置是否合理。
+
+      - alert: SentinelWebhookFailureRateHigh
+        expr: rate(sentinel_webhook_failures_total[10m]) / rate(sentinel_webhooks_sent_total[10m]) > 0.2 and rate(sentinel_webhooks_sent_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Webhook 投递失败率超过 20%"
+          description: |
+            10 分钟窗口内 webhook 投递失败率超过 20%，下游接收端很可能已经不可用或大面积拒绝。
+            先查什么：1) 找出失败集中在哪个下游端点（查看 sentinel 日志中的目标 URL 与状态码）；
+            2) curl 该端点确认返回码与响应时间；
+            3) 区分是网络问题（超时 / 连接拒绝）还是对方服务问题（5xx）还是配置问题（4xx、签名不匹配）；
+            4) 确认是否刚刚变更过 webhook 地址、密钥或对方防火墙规则。
+
+      - alert: SentinelCheckFailuresSpike
+        expr: increase(sentinel_check_failures_total[15m]) > 20
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "检查失败次数在 15 分钟内激增"
+          description: |
+            15 分钟内检查失败超过 20 次，通常是多个被监控目标同时 down，或 sentinel 出口网络故障。
+            先查什么：1) 看是全局性失败还是集中在少数目标（对比各目标状态）；
+            2) 从 sentinel 所在主机 ping/curl 若干被监控目标，判断是否出口网络故障；
+            3) 检查 DNS 解析是否异常；
+            4) 确认是否有批量目标被误删或误改配置；
+            5) 查看 sentinel 日志中的失败原因（超时 / 连接拒绝 / TLS 错误）。
+
+      - alert: SentinelAPI5xxRateHigh
+        expr: sum(rate(sentinel_http_requests_total{status=~"5.."}[5m])) / sum(rate(sentinel_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sentinel 自身 HTTP API 5xx 率超过 5%"
+          description: |
+            这是 sentinel 服务端自身返回的 5xx 比例超过 5%，说明 API 层或底层存储出现问题。
+            注意：被监控目标的失败不计入此指标，那类问题由 SentinelCheckFailuresSpike（B5）覆盖。
+            先查什么：1) 按 path 维度拆解 sentinel_http_requests_total{status=~"5.."}，定位是哪个接口；
+            2) 查看 sentinel 日志中的 panic / 数据库错误 / 超时；
+            3) 检查存储（SQLite/磁盘）是否可用、磁盘是否写满；
+            4) 若集中在写接口，确认是否有锁竞争或事务失败；
+            5) 检查是否刚刚发布过新版本引入回归。
