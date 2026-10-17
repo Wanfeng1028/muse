@@ -2,28 +2,26 @@ import { useState } from 'react';
 import {
   PlusIcon, SearchIcon, SettingsIcon, ClockIcon, ChevronDown, CheckIcon,
   PlugIcon, GitIcon, ChatIcon, SidebarIcon, BackIcon, ForwardIcon, FolderIcon,
-  BellIcon, ExploreIcon, HelpIcon,
+  SitesIcon, HelpIcon, TaskIcon,
 } from './icons';
 import { THREAD_MODES } from '../data/mock';
 
-// 真实 Codex 侧栏（flaviocopes.com 真机截图逐像素对照）：
-// 导航：New chat / Pull requests / Scheduled / Plugins / Explore
-// Pinned 分区置顶；线程蓝点=未读/活跃；底部 Projects> / Recents>；左下头像
+// 最新版：ChatGPT Work（2026-10 合并版）
+// 导航：New task / Scheduled / Plugins / Sites / Chat
+// Projects 分区；Tasks 分区；底部用户
 export default function Sidebar({
-  mode, onModeChange, nav, onNav,
+  nav, onNav,
   projects, activeProjectId, activeThreadId,
   onSelectThread, onNewTask, onOpenSettings,
 }) {
-  const [modeOpen, setModeOpen] = useState(false);
-  const [expanded, setExpanded] = useState({ p1: true });
   const [pickMode, setPickMode] = useState(false);
 
   const NAV = [
-    { id: 'new', label: 'New chat', icon: <ChatIcon size={16} />, plus: true },
-    { id: 'prs', label: 'Pull requests', icon: <GitIcon size={16} /> },
+    { id: 'new', label: 'New task', icon: <TaskIcon size={16} />, plus: true },
     { id: 'scheduled', label: 'Scheduled', icon: <ClockIcon size={16} /> },
     { id: 'plugins', label: 'Plugins', icon: <PlugIcon size={16} /> },
-    { id: 'explore', label: 'Explore', icon: <ExploreIcon size={16} /> },
+    { id: 'sites', label: 'Sites', icon: <SitesIcon size={16} /> },
+    { id: 'chat', label: 'Chat', icon: <ChatIcon size={16} /> },
   ];
 
   const startNew = (modeId) => {
@@ -31,7 +29,7 @@ export default function Sidebar({
     onNewTask(modeId);
   };
 
-  const pinnedProject = projects[0];
+  const activeProject = projects.find((p) => p.id === activeProjectId);
 
   return (
     <aside className="sidebar-real">
@@ -44,35 +42,9 @@ export default function Sidebar({
         <button className="sr-icon-btn" title="Forward"><ForwardIcon /></button>
       </div>
 
-      <div className="sr-mode-row">
-        <div style={{ position: 'relative', flex: 1 }}>
-          <button className="sr-mode-btn" onClick={() => setModeOpen(!modeOpen)}>
-            <span className="sr-mode-name">{mode === 'codex' ? 'Codex' : 'ChatGPT'}</span>
-            <ChevronDown size={14} />
-          </button>
-          {modeOpen && (
-            <>
-              <div className="drop-mask" onClick={() => setModeOpen(false)} />
-              <div className="drop-menu sr-mode-menu">
-                {[
-                  { id: 'chatgpt', name: 'ChatGPT', desc: 'Create, learn, and explore' },
-                  { id: 'codex', name: 'Codex', desc: 'Build, debug, and ship' },
-                ].map((m) => (
-                  <div key={m.id} className="drop-item sr-mode-item"
-                    onClick={() => { onModeChange(m.id); setModeOpen(false); }}>
-                    <span style={{ flex: 1 }}>
-                      <div className="sr-mode-item-name">{m.name}</div>
-                      <div className="sr-mode-item-desc">{m.desc}</div>
-                    </span>
-                    {mode === m.id && <CheckIcon size={14} />}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+      <div className="sr-title-row">
+        <span className="sr-title">ChatGPT <span className="sr-title-light">Work</span></span>
         <button className="sr-icon-btn" title="Search"><SearchIcon size={16} /></button>
-        <button className="sr-icon-btn" title="Notifications"><BellIcon size={16} /></button>
       </div>
 
       <nav className="sr-nav">
@@ -82,7 +54,6 @@ export default function Sidebar({
               onClick={() => setPickMode(!pickMode)}>
               <span className="sr-nav-icon">{n.icon}</span>
               <span style={{ flex: 1 }}>{n.label}</span>
-              <PlusIcon size={13} />
             </button>
             {pickMode && (
               <>
@@ -111,42 +82,36 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* Pinned 分区 */}
-      <div className="sr-section">Pinned</div>
+      <div className="sr-section">Projects</div>
       <div className="sr-projects">
-        {pinnedProject && (
-          <div>
-            <button className="sr-nav-item sr-proj-active">
+        {projects.map((p) => (
+          <div key={p.id}>
+            <button className={'sr-nav-item' + (p.id === activeProjectId ? ' sr-proj-active' : '')}
+              onClick={() => p.threads[0] && onSelectThread(p.id, p.threads[0].id)}>
               <span className="sr-nav-icon"><FolderIcon size={15} /></span>
-              <span className="sr-proj-name" style={{ fontWeight: 500 }}>{pinnedProject.name}</span>
+              <span className="sr-proj-name">{p.name}</span>
             </button>
-            {pinnedProject.threads.map((t) => (
+            {p.id === activeProjectId && p.threads.map((t) => (
               <button key={t.id}
                 className={'sr-nav-item sr-thread' + (t.id === activeThreadId ? ' active' : '')}
-                onClick={() => onSelectThread(pinnedProject.id, t.id)}>
+                onClick={() => onSelectThread(p.id, t.id)}>
                 <span className="sr-proj-name">{t.title}</span>
                 {(t.status === 'active' || t.unread) && <span className="blue-dot" />}
               </button>
             ))}
-            <button className="sr-show-more">Show more</button>
+            {p.id === activeProjectId && p.threads.length > 3 && (
+              <button className="sr-show-more">Show more</button>
+            )}
           </div>
-        )}
-        {projects.slice(1).map((p) => (
-          <button key={p.id} className="sr-nav-item"
-            onClick={() => onSelectThread(p.id, p.threads[0]?.id)}>
-            <span className="sr-nav-icon"><FolderIcon size={15} /></span>
-            <span className="sr-proj-name">{p.name}</span>
-          </button>
         ))}
       </div>
 
-      <div className="sr-links">
-        <button className="sr-link">Projects <span>›</span></button>
-        <button className="sr-link">Recents <span>›</span></button>
-      </div>
+      <div className="sr-section">Tasks</div>
+      <div className="sr-tasks-empty">No tasks</div>
 
       <div className="sr-bottom">
         <div className="sr-avatar">晚</div>
+        <span className="sr-user-name">晚风</span>
         <span style={{ flex: 1 }} />
         <button className="sr-icon-btn" title="Help"><HelpIcon size={15} /></button>
         <button className="sr-icon-btn" title="Settings" onClick={onOpenSettings}>

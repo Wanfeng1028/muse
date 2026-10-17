@@ -138,3 +138,24 @@ export const ZapIcon = ({ size = 13 }) => (
 export const GoalIcon = ({ size = 14 }) => (
   <I size={size}><circle cx="8" cy="8" r="5.5" /><circle cx="8" cy="8" r="2.5" /></I>
 );
+export const SitesIcon = ({ size = 16 }) => (
+  <I size={size}><rect x="2" y="2" width="5" height="5" rx="1" /><rect x="9" y="2" width="5" height="5" rx="1" /><rect x="2" y="9" width="5" height="5" rx="1" /><rect x="9" y="9" width="5" height="5" rx="1" /></I>
+);
+export const TaskIcon = ({ size = 16 }) => (
+  <I size={size}><path d="M3 5.5h9M3 5.5v7a1.5 1.5 0 0 0 1.5 1.5h7A1.5 1.5 0 0 0 13 12.5v-7" /><path d="M3 5.5 4.5 4h9L15 5.5" /></I>
+);
+export const WandIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth={1.6}><path d="M6 21 21 6l-3-3L3 18l3 3Z" strokeLinejoin="round" /><path d="M14 5l3 3" strokeLinecap="round" /></svg>
+);
+export const BookIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth={1.6}><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5V5.5Z" strokeLinejoin="round" /><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20" /></svg>
+);
+export const ListIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={1.6}><path d="M8 6h13M8 12h13M8 18h13" strokeLinecap="round" /><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" strokeLinecap="round" strokeWidth={2.5} /></svg>
+);
+export const ClockColorIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={1.6}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" strokeLinecap="round" /></svg>
+);
+export const DocIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M4 2.5h5.5L13 6v11.5H4V2.5Z" strokeLinejoin="round" /><path d="M9.5 2.5V6H13" /></I>
+);

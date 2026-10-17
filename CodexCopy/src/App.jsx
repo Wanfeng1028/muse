@@ -6,7 +6,7 @@ import RightPanel from './components/RightPanel';
 import SettingsView from './components/settings/SettingsView';
 import SchedulesView from './components/schedules/SchedulesView';
 import CommandPalette from './components/palette/CommandPalette';
-import { CodexLogo, GitIcon, MoreIcon, PanelIcon, CloudIcon } from './components/icons';
+import { CodexLogo, GitIcon, MoreIcon, PanelIcon, CloudIcon, WandIcon, BookIcon, ListIcon, ClockColorIcon } from './components/icons';
 import { projects as seedProjects, models } from './data/mock';
 
 // 真实 Codex 布局（六份实证报告）：
@@ -94,7 +94,7 @@ export default function App() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [activeThreadId, projects, streaming, view]);
 
-  const placeholder = activeProject ? `Ask Codex anything locally in ${activeProject.name}` : 'Ask Codex anything locally';
+  const placeholder = 'Do anything';
 
   const PANELS = [
     { id: 'review', label: 'Review', key: '⌃⇧G' },
@@ -173,8 +173,21 @@ export default function App() {
           <ThreadView thread={activeThread} streaming={streaming} />
         ) : (
           <div className="empty-state">
-            <div className="empty-cloud"><CloudIcon size={44} /></div>
-            <div className="empty-title-lg">What should we build in <u>{activeProject?.name}</u>?</div>
+            <div className="empty-logo-lg"><CodexLogo size={48} /></div>
+            <div className="empty-title-xl">What should we work on in <u>{activeProject?.name}</u>?</div>
+            <div className="suggestion-cards">
+              {[
+                { icon: <WandIcon />, title: 'Create a file or build a site' },
+                { icon: <BookIcon />, title: 'Research and plan next steps' },
+                { icon: <ListIcon />, title: 'Get a briefing on recent work' },
+                { icon: <ClockColorIcon />, title: 'Automate routine and recurring work' },
+              ].map((s, i) => (
+                <button key={i} className="suggestion-card" onClick={() => send(s.title)}>
+                  <span className="sc-icon">{s.icon}</span>
+                  <span className="sc-title">{s.title}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
         <Composer onSend={send} streaming={streaming} onStop={() => setStreaming(false)}
@@ -189,7 +202,6 @@ export default function App() {
     <div className="app" ref={scrollRef}>
       <div className="app-body">
         <Sidebar
-          mode={mode} onModeChange={setMode}
           nav={view === 'main' ? nav : ''}
           onNav={handleNav}
           projects={projects} activeProjectId={activeProjectId} activeThreadId={activeThreadId}

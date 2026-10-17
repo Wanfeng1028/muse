@@ -34,11 +34,10 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
     <div className="composer-wrap">
       <div className="composer-inner">
         <div className="composer">
-          {/* 顶部 chips 栏 */}
+          {/* 顶部：项目 + 关联文件（新版样式） */}
           <div className="composer-chips">
             <span className="chip"><FolderIcon size={12} /> {projectName || 'codex-copy'}</span>
-            <span className="chip"><MonitorIcon size={12} /> {threadMode === 'worktree' ? 'Worktree' : threadMode === 'cloud' ? 'Cloud' : 'Local'}</span>
-            <span className="chip"><GitIcon size={12} /> {branch || 'main'}</span>
+            <span className="chip"><DocIcon size={12} /> Plugins</span>
           </div>
           <textarea
             ref={taRef}
@@ -72,7 +71,7 @@ export default function Composer({ onSend, streaming, onStop, placeholder, model
             </div>
             <button className={'composer-pill' + (approveForMe ? ' active' : '')}
               onClick={() => setApproveForMe(!approveForMe)} title="Approval setting">
-              <CheckIcon size={12} /> Approve for me
+              <CheckIcon size={12} /> Ask for approval
             </button>
             <button className="composer-pill" title="Set a goal">
               <GoalIcon size={13} /> Goal
