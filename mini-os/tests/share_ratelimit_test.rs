@@ -8,7 +8,11 @@ use mini_os::{build_app, init_state_with_full};
 use serde_json::{json, Value};
 use tower::ServiceExt;
 
-fn app_with_share_limits(share_rps: f64, share_burst: u64) -> (Router, Arc<mini_os::AppState>) {
+fn app_with_share_limits(
+    share_rps: f64,
+    share_burst: u64,
+    enabled: bool,
+) -> (Router, Arc<mini_os::AppState>) {
     let state = init_state_with_full(
         ":memory:",
         "static",
@@ -18,6 +22,7 @@ fn app_with_share_limits(share_rps: f64, share_burst: u64) -> (Router, Arc<mini_
         100,
         share_rps,
         share_burst,
+        enabled,
     );
     let app = build_app(state.clone());
     (app, state)
@@ -150,7 +155,7 @@ async fn create_dir_share(app: &Router, cookie: &str, path: &str) -> String {
 
 #[tokio::test]
 async fn share_read_burst_then_429() {
-    let (app, _state) = app_with_share_limits(0.5, 3);
+    let (app, _state) = app_with_share_limits(0.5, 3, true);
     let cookie = register_and_login(&app, "u_burst").await;
     let file_id = create_file(&app, &cookie, "burst.txt").await;
     let token = create_share(&app, &cookie, file_id).await;
@@ -186,7 +191,7 @@ async fn share_read_burst_then_429() {
 
 #[tokio::test]
 async fn share_read_window_recovers() {
-    let (app, _state) = app_with_share_limits(0.5, 3);
+    let (app, _state) = app_with_share_limits(0.5, 3, true);
     let cookie = register_and_login(&app, "u_recover").await;
     let file_id = create_file(&app, &cookie, "recover.txt").await;
     let token = create_share(&app, &cookie, file_id).await;
@@ -209,13 +214,35 @@ async fn share_read_window_recovers() {
     );
 }
 
-/// IP 维度跨 token 生效：同一 IP 把 token_a 打满后，换 token_b 立即请求同样被限。
-/// 这是期望行为（防单 IP 轮询多个分享 token 做枚举/爬取）；token 桶本身的独立性
-/// 由 src/ratelimit.rs 的单测 share_token_bucket_isolation_by_token 覆盖。
+#[tokio::test]
+async fn share_read_probes_exempt() {
+    let (app, _state) = app_with_share_limits(0.5, 2, true);
+    let cookie = register_and_login(&app, "u_probes").await;
+    let file_id = create_file(&app, &cookie, "probes.txt").await;
+    let token = create_share(&app, &cookie, file_id).await;
+
+    let uri = format!("/api/s/{token}");
+    for _ in 0..2 {
+        let (status, _h, _b) = raw_request(&app, "GET", &uri, None, None).await;
+        assert_eq!(status, StatusCode::OK);
+    }
+    let (status, _h, _b) = raw_request(&app, "GET", &uri, None, None).await;
+    assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+
+    let (health_status, _h, _b) = raw_request(&app, "GET", "/api/health", None, None).await;
+    assert_eq!(health_status, StatusCode::OK, "health should be exempt");
+
+    let (ready_status, _h, _b) = raw_request(&app, "GET", "/api/readyz", None, None).await;
+    assert_eq!(ready_status, StatusCode::OK, "readyz should be exempt");
+
+    let (metrics_status, _h, _b) = raw_request(&app, "GET", "/metrics", None, None).await;
+    assert_eq!(metrics_status, StatusCode::OK, "metrics should be exempt");
+}
+
 #[tokio::test]
 async fn share_read_ip_dimension_across_tokens() {
-    let (app, _state) = app_with_share_limits(0.5, 3);
-    let cookie = register_and_login(&app, "u_isolation").await;
+    let (app, _state) = app_with_share_limits(0.5, 3, true);
+    let cookie = register_and_login(&app, "u_ipdim").await;
     let file_a = create_file(&app, &cookie, "a.txt").await;
     let file_b = create_file(&app, &cookie, "b.txt").await;
     let token_a = create_share(&app, &cookie, file_a).await;
@@ -230,7 +257,6 @@ async fn share_read_ip_dimension_across_tokens() {
     assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
     assert!(headers.contains_key("retry-after"));
 
-    // 同一 IP 换 token_b：IP 桶已空 → 同样 429（IP 维度跨 token 生效）。
     let uri_b = format!("/api/s/{token_b}");
     let (status, _h, body) = raw_request(&app, "GET", &uri_b, None, None).await;
     assert_eq!(
@@ -241,9 +267,26 @@ async fn share_read_ip_dimension_across_tokens() {
 }
 
 #[tokio::test]
-async fn share_read_download_and_list_limited() {
-    // 目录分享：三条读路由共用同一限流器（token+IP 双桶）。
-    let (app, _state) = app_with_share_limits(0.5, 2);
+async fn share_read_disabled_no_limit() {
+    let (app, _state) = app_with_share_limits(0.5, 1, false);
+    let cookie = register_and_login(&app, "u_disabled").await;
+    let file_id = create_file(&app, &cookie, "disabled.txt").await;
+    let token = create_share(&app, &cookie, file_id).await;
+
+    let uri = format!("/api/s/{token}");
+    for i in 0..5 {
+        let (status, _h, body) = raw_request(&app, "GET", &uri, None, None).await;
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "req {i} should pass when disabled: {body}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn share_read_three_routes_share_one_limiter() {
+    let (app, _state) = app_with_share_limits(0.5, 2, true);
     let cookie = register_and_login(&app, "u_routes").await;
     let docs = create_folder(&app, &cookie, "docs", None).await;
     let mut v = json!({"name": "a.txt", "kind": "file", "content": "aaa"});
@@ -266,7 +309,6 @@ async fn share_read_download_and_list_limited() {
     let (s2, _h, b2) = raw_request(&app, "GET", &list_uri, None, None).await;
     assert_eq!(s2, StatusCode::OK, "2nd list: {b2}");
 
-    // burst=2 已用完：第 3 次（download 路由）应 429，证明三条路由共用限流器。
     let (s3, headers, b3) = raw_request(&app, "GET", &download_uri, None, None).await;
     assert_eq!(
         s3,
@@ -278,16 +320,14 @@ async fn share_read_download_and_list_limited() {
 
 #[tokio::test]
 async fn share_read_metrics_counted() {
-    let (app, _state) = app_with_share_limits(0.5, 3);
+    let (app, _state) = app_with_share_limits(0.5, 1, true);
     let cookie = register_and_login(&app, "u_metrics").await;
     let file_id = create_file(&app, &cookie, "metrics.txt").await;
     let token = create_share(&app, &cookie, file_id).await;
 
     let uri = format!("/api/s/{token}");
-    for _ in 0..3 {
-        let (status, _h, _b) = raw_request(&app, "GET", &uri, None, None).await;
-        assert_eq!(status, StatusCode::OK);
-    }
+    let (status, _h, _b) = raw_request(&app, "GET", &uri, None, None).await;
+    assert_eq!(status, StatusCode::OK);
     let (status, _h, _b) = raw_request(&app, "GET", &uri, None, None).await;
     assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
 
@@ -301,10 +341,10 @@ async fn share_read_metrics_counted() {
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let text = String::from_utf8(bytes.to_vec()).unwrap();
 
-    let needle = "auth_ops_total{op=\"share_ratelimited\"}";
+    let needle = "minios_share_rate_limited_total";
     let line = text
         .lines()
-        .find(|l| l.starts_with(needle))
+        .find(|l| l.starts_with(needle) && !l.starts_with("#"))
         .unwrap_or_else(|| panic!("metrics missing {needle}\n---\n{text}"));
 
     let value_str = line
@@ -314,13 +354,24 @@ async fn share_read_metrics_counted() {
     let value: f64 = value_str.parse().expect("metrics value not numeric");
     assert!(
         value >= 1.0,
-        "share_ratelimited count should be >=1, got {value}"
+        "minios_share_rate_limited_total should be >=1, got {value}"
+    );
+
+    let help_line = format!("# HELP {needle}");
+    let type_line = format!("# TYPE {needle}");
+    assert!(
+        text.lines().any(|l| l.starts_with(&help_line)),
+        "metrics missing HELP line for {needle}\n---\n{text}"
+    );
+    assert!(
+        text.lines().any(|l| l.starts_with(&type_line)),
+        "metrics missing TYPE line for {needle}\n---\n{text}"
     );
 }
 
 #[tokio::test]
 async fn share_create_not_limited() {
-    let (app, _state) = app_with_share_limits(0.5, 1);
+    let (app, _state) = app_with_share_limits(0.5, 1, true);
     let cookie = register_and_login(&app, "u_create").await;
 
     for i in 0..5 {

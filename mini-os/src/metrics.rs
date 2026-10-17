@@ -4,7 +4,7 @@
 //! 只使用标准库：`Mutex<HashMap<...>>` 存标签计数，`AtomicI64` 存 gauge。
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{AtomicI64, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
 use axum::extract::{MatchedPath, Request, State};
@@ -41,6 +41,8 @@ pub struct Metrics {
     ws: AtomicI64,
     /// http_request_duration_seconds：key 为 (method, route)，值为各桶累计计数（末位为 +Inf 桶）与总和/总数。
     durations: Mutex<HashMap<(String, String), Histogram>>,
+    /// share_ratelimited：被分享读取限流拒绝的请求总数。
+    share_ratelimited: AtomicU64,
 }
 
 impl Metrics {
@@ -52,6 +54,7 @@ impl Metrics {
             auth: Mutex::new(HashMap::new()),
             ws: AtomicI64::new(0),
             durations: Mutex::new(HashMap::new()),
+            share_ratelimited: AtomicU64::new(0),
         }
     }
 
@@ -76,6 +79,11 @@ impl Metrics {
         let mut map = self.auth.lock().unwrap();
         let entry = map.entry(op.to_string()).or_insert(0);
         *entry += 1;
+    }
+
+    /// 累加一次分享读取限流拒绝计数。
+    pub fn inc_share_ratelimited(&self) {
+        self.share_ratelimited.fetch_add(1, Ordering::Relaxed);
     }
 
     /// WebSocket 连接数 +1。
@@ -145,6 +153,14 @@ impl Metrics {
                 ));
             }
         }
+
+        // minios_share_rate_limited_total
+        out.push_str("# HELP minios_share_rate_limited_total Total number of share read requests rejected by rate limiting.\n");
+        out.push_str("# TYPE minios_share_rate_limited_total counter\n");
+        out.push_str(&format!(
+            "minios_share_rate_limited_total {}\n",
+            self.share_ratelimited.load(Ordering::Relaxed)
+        ));
 
         // http_request_duration_seconds
         out.push_str("# HELP http_request_duration_seconds HTTP request duration in seconds.\n");

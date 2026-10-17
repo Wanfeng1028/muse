@@ -1,5 +1,10 @@
 # 分享读接口限流评估报告
 
+> 注（v1.8，2026-10-17）：本报告评估的是 v1.7 的 token+IP 双维度实现（`MINIOS_SHARE_READ_RPM`/`_BURST`、
+> `auth_ops_total{op="share_ratelimited"}`）。v1.8 已重设计为 IP 单维度独立令牌桶，
+> 环境变量改为 `MINIOS_SHARE_RPS` / `MINIOS_SHARE_BURST` / `MINIOS_SHARE_RATE_LIMIT_ENABLED`，
+> 指标改为 `minios_share_rate_limited_total`，旧变量被设置即启动失败。运维调参以 OPERATIONS.md §10 为准，
+> 本报告的压测数据仅保留作历史参考。
 ## 1. 背景与范围
 
 mini-os 为三条公开分享读路由新增了限流：

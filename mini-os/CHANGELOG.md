@@ -1,7 +1,39 @@
 
 # Changelog
 
+## [1.8.0] - 2026-10-17
+
+### 新增
+- 分享读限流 v1.8 重设计：IP 单维度独立令牌桶（`ShareReadLimiter` + `ShareReadKey`，与登录桶类型/状态双隔离）；
+  覆盖 `GET /api/s/:token`、`/api/s/:token/download`、`GET /api/share/list`；探针（`/api/health`、`/api/readyz`、`/metrics`）天然豁免。
+- 新环境变量：`MINIOS_SHARE_RPS`（默认 5）、`MINIOS_SHARE_BURST`（默认 30）、
+  `MINIOS_SHARE_RATE_LIMIT_ENABLED`（默认 true）；非法值启动 fail-fast（stderr 点名 + exit 2）。
+- 指标 `minios_share_rate_limited_total`（counter）：被限流拒绝的分享读请求总数。
+- share.html 429 前端 UX（沿用 v1.5 登录限流 UX 体系）：初始页「看的人有点多」+ 实时倒计时 + disabled 重试按钮，
+  倒计时结束自动重试；目录浏览列表区倒计时条 + 面包屑禁用 + 自动重载。深色主题一致，大白话文案。
+
+### 变更（破坏性）
+- `MINIOS_SHARE_READ_RPM` / `MINIOS_SHARE_READ_BURST` 废弃：只要被设置服务就拒绝启动并提示改用新变量（fail-fast，防静默误配）。
+- 限流维度从 token+IP 双维度改为 IP 单维度：v1.7 的 token 桶跨 IP 聚合曾导致爆款链接多 IP 正常访问也全员 429，v1.8 已消除。
+- `auth_ops_total{op="share_ratelimited"}` 移除，改用独立计数器 `minios_share_rate_limited_total`。
+
+### 测试
+- `cargo test` 151/151 全过：lib 52、api_test 16、auth_test 8、failure_injection 11、isolation_test 5、
+  metrics_test 4、metrics_v16_test 5、ratelimit_test 8、rbac_test 8、share_dir_test 12、
+  share_ratelimit_test 8（v1.8 重写：429+Retry-After、探针豁免、总开关关闭、恢复）、share_test 6、upload_security_test 8。
+- `cargo clippy --all-targets -- -D warnings` 零警告；`cargo fmt --check` 通过；依赖零新增。
+- 真服务冒烟（127.0.0.1:18101，RPS=1/BURST=3）：14/14 通过——注册 201、3 次分享读 200、
+  第 4 次 429（`retry-after: 1` + JSON 体）、限流期间三探针 200、`minios_share_rate_limited_total 1`、窗口后恢复 200。
+- 2 张截图亲眼验收：`docs/screenshots/v18-share-normal.png`（正常态）、
+  `docs/screenshots/v18-share-ratelimited.png`（429 倒计时态）。
+
+### 已知限制
+- 限流桶单进程内存（多实例不共享、重启清零）。
+- NAT/出口 IP 下多用户共享 IP 桶可能被误伤（调大 BURST 或透传 X-Forwarded-For）。
+- v1.5 遗留：分布式限流、注册限流、密码策略、2FA，这版没动，继续挂。
+
 ## [1.7.0] - 2026-10-16
+
 
 ### 新增
 - Prometheus 告警规则示例：prometheus/rules/mini-os-example.yml（7 条：5xx 错误率、P99 延迟、服务存活、分享访问突增、登录限流突增、WS 连接数、分享 404 探测；字段以官方文档为准）；docs/ALERTING.md（规则说明、阈值调参、Alertmanager/webhook 接入步骤）；scripts/check-alert-rules.py（无 promtool 时的规则自检：pyyaml 解析 + 字段/duration/severity/annotations 校验）。

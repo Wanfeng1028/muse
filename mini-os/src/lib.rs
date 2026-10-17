@@ -31,11 +31,13 @@ pub struct AppState {
     pub metrics: Arc<crate::metrics::Metrics>,
     /// 登录限流器（IP + 账号双维度令牌桶）
     pub login_limiter: Arc<crate::ratelimit::RateLimiter>,
-    /// 分享读取限流器（token + IP 双维度令牌桶）
-    pub share_limiter: Arc<crate::ratelimit::RateLimiter>,
+    /// 分享读取限流器（IP 单维度令牌桶，与登录桶解耦）
+    pub share_limiter: Arc<crate::ratelimit::ShareReadLimiter>,
+    /// 分享读限流总开关，来自 MINIOS_SHARE_RATE_LIMIT_ENABLED
+    pub share_ratelimit_enabled: bool,
 }
 
-/// 初始化全局状态（完整参数版，含分享读取限流配额）
+/// 初始化全局状态（完整参数版，含分享读取限流配额与总开关）
 ///
 /// 参数多于 clippy 阈值是刻意的：保持与旧 `init_state_with` 的位置参数风格一致，
 /// 调用方（测试）按顺序传参可读性更好。
@@ -49,6 +51,7 @@ pub fn init_state_with_full(
     login_burst: u64,
     share_read_rps: f64,
     share_read_burst: u64,
+    share_ratelimit_enabled: bool,
 ) -> Arc<AppState> {
     let conn = crate::db::open_db(database_path).expect("open_db failed");
     crate::db::seed(&conn).expect("seed failed");
@@ -56,9 +59,10 @@ pub fn init_state_with_full(
         rps: login_rps,
         burst: login_burst,
     };
-    let share_limiter_cfg = crate::ratelimit::LoginLimitConfig {
+    let share_limiter_cfg = crate::ratelimit::ShareReadLimitConfig {
         rps: share_read_rps,
         burst: share_read_burst,
+        enabled: share_ratelimit_enabled,
     };
     Arc::new(AppState {
         db: Mutex::new(conn),
@@ -67,12 +71,13 @@ pub fn init_state_with_full(
         session_ttl_secs,
         metrics: Arc::new(crate::metrics::Metrics::new()),
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
-        share_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&share_limiter_cfg)),
+        share_limiter: Arc::new(crate::ratelimit::ShareReadLimiter::new(&share_limiter_cfg)),
+        share_ratelimit_enabled,
     })
 }
 
 /// 初始化全局状态（指定上传上限）：打开数据库并做种子数据
-/// 分享读取限流配额取环境变量默认值（MINIOS_SHARE_READ_RPM/_BURST），非法则启动失败。
+/// 分享读取限流配额取环境变量默认值（MINIOS_SHARE_RPS/_BURST/_ENABLED），非法则启动失败。
 pub fn init_state_with(
     database_path: &str,
     static_dir: &str,
@@ -91,6 +96,7 @@ pub fn init_state_with(
         login_burst,
         share_limit.rps,
         share_limit.burst,
+        share_limit.enabled,
     )
 }
 
@@ -106,6 +112,7 @@ pub fn init_state(database_path: &str, static_dir: &str) -> Arc<AppState> {
         cfg.login_burst,
         cfg.share_read_rps,
         cfg.share_read_burst,
+        cfg.share_ratelimit_enabled,
     )
 }
 

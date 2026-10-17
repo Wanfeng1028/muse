@@ -410,9 +410,65 @@ IP 桶 + 账号（username）桶，任一耗尽即 429。IP 提取优先级：`X
 - 计数器 `auth_ops_total{op="login_ratelimited"}` 记录被限流次数（`op` 维度已有 register/login/logout/migrate_legacy/share_create）。
 - 排障时结合 request_id 日志定位。
 
+## 10 分享读限流调参
+
+分享读限流只挂在三条公开读路由上：`GET /api/s/:token`、`/api/s/:token/download`、
+`GET /api/share/list`。`/api/health`、`/api/readyz`、`/metrics` 不挂该中间件，天然不限流。
+
+### 10.1 三个旋钮
+
+- `MINIOS_SHARE_RPS`：每秒补充 token 数，默认 `5`。读多写少场景阈值宽松但有界：默认可持续 300 次/分钟。
+- `MINIOS_SHARE_BURST`：桶容量（突发上限），默认 `30`。覆盖"1 次元数据 + 多次目录浏览 + 下载"的正常浏览。
+- `MINIOS_SHARE_RATE_LIMIT_ENABLED`：总开关，默认 `true`。`1/true/yes/on` 开，`0/false/no/off` 关（大小写不敏感）；设为 `false` 时分享读请求直接放行，不计数不记桶。
+
+非法值（解析失败、rps ≤ 0/NaN/无穷大、burst 非整数或 0、非法布尔值）会在启动时由 stderr 点名变量并 `exit(2)`，服务不起（fail-fast）；未设置则用默认值。
+
+注意：v1.7 的旧变量 `MINIOS_SHARE_READ_RPM` / `MINIOS_SHARE_READ_BURST` 已废弃，
+只要被设置（无论值）服务就拒绝启动并提示改用新变量。这是故意的：防止运维按旧文档配了变量却静默不生效。
+
+### 10.2 IP 单维度（v1.8 语义）
+
+v1.8 起分享读限流是 IP 单维度独立令牌桶（`ShareReadLimiter`），键类型 `ShareReadKey`
+与登录域隔离，两个桶不共享任何状态。不再按 token 维度聚合——v1.7 的 token 桶跨 IP 聚合
+曾导致爆款链接多 IP 正常访问也全员 429，v1.8 已消除该 trade-off。
+
+IP 提取优先级与登录限流一致：`X-Forwarded-For` 首项 → `X-Real-IP` → `ConnectInfo` → `"unknown"`。
+反向代理后务必透传 `X-Forwarded-For`，否则所有客户端挤在同一个桶里互相牵连。
+
+### 10.3 调参建议（建议，非强制）
+
+| 档位 | RPS | BURST | 适用场景 |
+| --- | --- | --- | --- |
+| 保守 | 1 | 10 | 高敏感分享、对外暴露面大、优先防爬 |
+| 默认 | 5 | 30 | 个人云桌面常规使用 |
+| 开放 | 20 | 100 | 内部可信网络、热点分享、共享出口 IP 较多 |
+
+只改环境变量、重启进程生效，不用改代码。
+
+### 10.4 429 契约与前端
+
+超限返回 429，响应头 `Retry-After: <整数秒>`，
+JSON 体 `{"error": "分享访问过于频繁，请 <N> 秒后重试", "retry_after": <N>}`。
+
+share.html 收到 429 时：初始页显示「看的人有点多」+ N 秒倒计时 + disabled 的重试按钮，
+倒计时结束自动重发请求；目录浏览在列表区显示「刷得太快，N 秒后自动重试。」倒计时条，
+面包屑禁用，倒计时结束自动重载当前目录。
+
+### 10.5 监控
+
+- 计数器 `minios_share_rate_limited_total` 记录被限流拒绝的分享读请求总数。
+  可基于它加告警，例如 `rate(minios_share_rate_limited_total[5m])` 突增可能意味着有人在扫分享链接。
+- 排障时结合 request_id 日志定位。
+
+### 10.6 已知限制
+
+- 单进程内存桶：多实例之间不共享配额，进程重启后桶清零（与登录限流同一取舍）。
+- NAT/出口 IP 下多用户共享同一 IP 桶可能被误伤：调大 `MINIOS_SHARE_BURST` 或透传 `X-Forwarded-For` 缓解。
+
 ---
 
 ## 附：验证过的数字速查
+
 
 - 测试：`cargo test` 28 例全过（单元 4：log 3 + migrate 1；API 集成 16；失败注入 8）。
 - 静态检查：`cargo clippy --all-targets` 零警告。

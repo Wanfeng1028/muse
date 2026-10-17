@@ -334,118 +334,221 @@ pub async fn login_ratelimit_middleware(
     }
 }
 
-/// 分享读取限流配置：`rps = 每分钟次数 / 60`。
+/// 分享读取限流配置。
 pub struct ShareReadLimitConfig {
+    /// 每秒请求数上限，来源变量 `MINIOS_SHARE_RPS`；必须为正的有限数。
     pub rps: f64,
+    /// 突发容量，来源变量 `MINIOS_SHARE_BURST`；必须为大于 0 的整数。
     pub burst: u64,
+    /// 是否启用分享读限流，来源变量 `MINIOS_SHARE_RATE_LIMIT_ENABLED`；布尔值。
+    pub enabled: bool,
 }
 
-fn parse_share_rpm(raw: Option<&str>) -> Result<f64, String> {
-    let s = raw.unwrap_or("30");
+const ENV_SHARE_RPS: &str = "MINIOS_SHARE_RPS";
+const ENV_SHARE_BURST: &str = "MINIOS_SHARE_BURST";
+const ENV_SHARE_ENABLED: &str = "MINIOS_SHARE_RATE_LIMIT_ENABLED";
+const ENV_LEGACY_SHARE_RPM: &str = "MINIOS_SHARE_READ_RPM";
+const ENV_LEGACY_SHARE_BURST: &str = "MINIOS_SHARE_READ_BURST";
+
+/// 解析每秒请求数上限，默认 `"5"`。
+///
+/// 非法值（无法解析、非有限数、`<= 0`、NaN、无穷大）一律 fail-fast 返回 Err。
+fn parse_share_rps(raw: Option<&str>) -> Result<f64, String> {
+    let s = raw.unwrap_or("5");
     let v: f64 = s
         .parse()
-        .map_err(|_| "MINIOS_SHARE_READ_RPM 非法：无法解析为数字".to_string())?;
+        .map_err(|_| format!("{} 非法：'{}'，期望正的有限数", ENV_SHARE_RPS, s))?;
     if !v.is_finite() || v <= 0.0 {
-        return Err("MINIOS_SHARE_READ_RPM 非法：必须为正的有限数".to_string());
+        return Err(format!("{} 非法：'{}'，期望正的有限数", ENV_SHARE_RPS, s));
     }
     Ok(v)
 }
 
+/// 解析突发容量，默认 `"30"`。
+///
+/// 非法值（无法解析为整数、含小数、等于 0）一律 fail-fast 返回 Err。
 fn parse_share_burst(raw: Option<&str>) -> Result<u64, String> {
     let s = raw.unwrap_or("30");
     let v: u64 = s
         .parse()
-        .map_err(|_| "MINIOS_SHARE_READ_BURST 非法：无法解析为整数".to_string())?;
+        .map_err(|_| format!("{} 非法：'{}'，期望大于 0 的整数", ENV_SHARE_BURST, s))?;
     if v == 0 {
-        return Err("MINIOS_SHARE_READ_BURST 非法：必须大于 0".to_string());
+        return Err(format!(
+            "{} 非法：'{}'，期望大于 0 的整数",
+            ENV_SHARE_BURST, s
+        ));
     }
     Ok(v)
 }
 
+/// 解析是否启用分享读限流，默认 `"true"`。
+///
+/// 合法取值：`1`/`true`/`yes`/`on` 为 true，`0`/`false`/`no`/`off` 为 false（忽略大小写与首尾空白）；
+/// 其他值一律 fail-fast 返回 Err。
+fn parse_share_enabled(raw: Option<&str>) -> Result<bool, String> {
+    let s = raw.unwrap_or("true");
+    match s.trim().to_lowercase().as_str() {
+        "1" | "true" | "yes" | "on" => Ok(true),
+        "0" | "false" | "no" | "off" => Ok(false),
+        _ => Err(format!(
+            "{} 非法：'{}'，期望 1/true/yes/on 或 0/false/no/off",
+            ENV_SHARE_ENABLED, s
+        )),
+    }
+}
+
+/// 校验废弃的旧环境变量是否仍被设置。
+///
+/// 旧变量存在即 fail-fast 返回 Err，提示迁移到新变量。
+fn check_no_legacy(rpm: Option<&str>, burst: Option<&str>) -> Result<(), String> {
+    if rpm.is_some() {
+        return Err(format!(
+            "{} 已废弃，请改用 {}（直接填每秒速率）",
+            ENV_LEGACY_SHARE_RPM, ENV_SHARE_RPS
+        ));
+    }
+    if burst.is_some() {
+        return Err(format!(
+            "{} 已废弃，请改用 {}",
+            ENV_LEGACY_SHARE_BURST, ENV_SHARE_BURST
+        ));
+    }
+    Ok(())
+}
+
 /// 读取分享读取限流配置。
+///
+/// 先拒绝废弃的旧变量，再解析新变量；任一非法值 fail-fast 返回 Err。
 pub fn parse_share_limit() -> Result<ShareReadLimitConfig, String> {
-    let rpm = parse_share_rpm(std::env::var("MINIOS_SHARE_READ_RPM").ok().as_deref())?;
-    let burst = parse_share_burst(std::env::var("MINIOS_SHARE_READ_BURST").ok().as_deref())?;
+    let legacy_rpm = std::env::var(ENV_LEGACY_SHARE_RPM).ok();
+    let legacy_burst = std::env::var(ENV_LEGACY_SHARE_BURST).ok();
+    check_no_legacy(legacy_rpm.as_deref(), legacy_burst.as_deref())?;
+
+    let rps = parse_share_rps(std::env::var(ENV_SHARE_RPS).ok().as_deref())?;
+    let burst = parse_share_burst(std::env::var(ENV_SHARE_BURST).ok().as_deref())?;
+    let enabled = parse_share_enabled(std::env::var(ENV_SHARE_ENABLED).ok().as_deref())?;
+
     Ok(ShareReadLimitConfig {
-        rps: rpm / 60.0,
+        rps,
         burst,
+        enabled,
     })
 }
 
-/// 从 URI 中提取分享 token（纯函数，不引入新依赖）。
+/// 分享读限流域的桶键：仅 IP 维度。
 ///
-/// - 路径以 `/api/s/` 开头：取第三段（到下一个 `/` 或 `?` 为止），URL 解码，空则 `None`。
-/// - 路径为 `/api/share/list`：从 query 中取 `token=` 参数并 URL 解码，空则 `None`。
-/// - 其他路径或解码失败：`None`。
-fn extract_share_token(uri: &axum::http::Uri) -> Option<String> {
-    let path = uri.path();
-    if let Some(rest) = path.strip_prefix("/api/s/") {
-        let seg = rest.split(['/', '?']).next().unwrap_or("");
-        if seg.is_empty() {
-            return None;
-        }
-        return url_decode(seg);
-    }
-    if path == "/api/share/list" {
-        let query = uri.query()?;
-        for pair in query.split('&') {
-            if let Some(val) = pair.strip_prefix("token=") {
-                if val.is_empty() {
-                    return None;
-                }
-                return url_decode(val);
-            }
-        }
-        return None;
-    }
-    None
-}
+/// 新类型包装，与登录域 `RateLimiter` 内部的 `String` 键在类型层面隔离，
+/// 编译期就不可能把登录桶的 key 串进分享桶（与登录桶解耦的 BucketKey 设计）。
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ShareReadKey(String);
 
-/// 手写 URL 解码：处理 `%XX` 与 `+`，非法 `%` 序列返回 `None`。
-fn url_decode(s: &str) -> Option<String> {
-    let bytes = s.as_bytes();
-    let mut out = Vec::with_capacity(bytes.len());
-    let mut i = 0;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'+' => {
-                out.push(b' ');
-                i += 1;
-            }
-            b'%' => {
-                if i + 2 >= bytes.len() {
-                    return None;
-                }
-                let hi = hex_val(bytes[i + 1])?;
-                let lo = hex_val(bytes[i + 2])?;
-                out.push((hi << 4) | lo);
-                i += 3;
-            }
-            b => {
-                out.push(b);
-                i += 1;
-            }
-        }
-    }
-    String::from_utf8(out).ok()
-}
-
-fn hex_val(b: u8) -> Option<u8> {
-    match b {
-        b'0'..=b'9' => Some(b - b'0'),
-        b'a'..=b'f' => Some(b - b'a' + 10),
-        b'A'..=b'F' => Some(b - b'A' + 10),
-        _ => None,
+impl ShareReadKey {
+    /// 从客户端 IP 构造分享读桶键。
+    pub fn from_ip(ip: &str) -> Self {
+        Self(ip.to_string())
     }
 }
 
-/// 分享读取限流中间件：仅作用于 `/api/s/` 前缀与 `/api/share/list`，
-/// 维度为 token+IP 双键。token 无法解析时直接放行（不记桶）。
+/// 分享读限流器：与登录桶解耦的独立令牌桶。
+///
+/// 内部以 [`ShareReadKey`] 为键，仅按 IP 维度限流，不与登录域共享任何状态。
+pub struct ShareReadLimiter {
+    rps: f64,
+    burst: u64,
+    /// 惰性清理的 idle TTL：max(300s, 10 * burst / rps)。
+    idle_ttl: Duration,
+    buckets: Mutex<HashMap<ShareReadKey, Bucket>>,
+}
+
+impl ShareReadLimiter {
+    /// 根据配置构造限流器。所有桶初始为满（capacity = burst）。
+    pub fn new(config: &ShareReadLimitConfig) -> Self {
+        let ttl_secs = 10.0 * (config.burst as f64) / config.rps;
+        let idle_ttl = Duration::from_secs_f64(ttl_secs.max(300.0));
+        Self {
+            rps: config.rps,
+            burst: config.burst,
+            idle_ttl,
+            buckets: Mutex::new(HashMap::new()),
+        }
+    }
+
+    /// 尝试获取一个分享读令牌，使用当前时刻。
+    pub fn try_acquire(&self, key: &ShareReadKey) -> Result<(), u64> {
+        self.try_acquire_at(key, Instant::now())
+    }
+
+    /// 在给定时刻尝试获取一个分享读令牌（供单测伪造时间）。
+    ///
+    /// 语义：按流逝时间 refill（`tokens = min(capacity, tokens + elapsed * rps)`，
+    /// 同时更新 last）；`tokens < 1.0` → `Err(retry_after_secs)` 且不扣减，
+    /// `retry_after_secs = max(1, ceil((1.0 - tokens) / rps))`；否则扣 1 返回 Ok。
+    pub fn try_acquire_at(&self, key: &ShareReadKey, now: Instant) -> Result<(), u64> {
+        let mut map = self.buckets.lock().unwrap_or_else(|e| e.into_inner());
+        self.maybe_cleanup(&mut map, now);
+        let bucket = map.entry(key.clone()).or_insert_with(|| Bucket {
+            tokens: self.burst as f64,
+            last: now,
+        });
+        let elapsed = now.saturating_duration_since(bucket.last).as_secs_f64();
+        if elapsed > 0.0 {
+            bucket.tokens = (bucket.tokens + elapsed * self.rps).min(self.burst as f64);
+            bucket.last = now;
+        }
+        if bucket.tokens < 1.0 {
+            return Err(Self::retry_after(1.0 - bucket.tokens, self.rps));
+        }
+        bucket.tokens -= 1.0;
+        Ok(())
+    }
+
+    /// 计算 `retry_after` 秒数：`max(1, ceil(deficit / rps))`，带非有限保护。
+    fn retry_after(deficit: f64, rps: f64) -> u64 {
+        if !deficit.is_finite() || !rps.is_finite() || rps <= 0.0 {
+            return 1;
+        }
+        let secs = (deficit / rps).ceil();
+        if !secs.is_finite() || secs <= 1.0 {
+            1
+        } else {
+            secs as u64
+        }
+    }
+
+    /// 惰性清理：桶数量超过阈值时，移除 idle 超过 `idle_ttl` 的桶。
+    fn maybe_cleanup(&self, map: &mut HashMap<ShareReadKey, Bucket>, now: Instant) {
+        if map.len() <= CLEANUP_THRESHOLD {
+            return;
+        }
+        let idle_ttl = self.idle_ttl;
+        map.retain(|_, bucket| now.saturating_duration_since(bucket.last) < idle_ttl);
+    }
+}
+
+/// 分享读取限流中间件（v1.8 语义）。
+///
+/// 作用范围：仅覆盖 `GET /api/s/:token/*`（`/api/s/` 前缀）与
+/// `GET /api/share/list`；探针（`/api/health`、`/api/readyz`、`/metrics`）
+/// 挂在各自路由上，不经过本中间件，因此天然豁免限流。
+///
+/// 维度：IP 单维度（不再使用 token+IP 双键），使用 `share_limiter` 独立桶，
+/// 与其它限流器的桶互不影响。
+///
+/// 总开关：`state.share_ratelimit_enabled` 为 `false` 时直接放行，
+/// 不计数、不记桶、不产生任何指标。
+///
+/// 429 契约：超限时返回 `429 Too Many Requests`，携带 `Retry-After: <secs>`
+/// 响应头（整数秒十进制字符串），响应体为 JSON：
+/// `{"error": "分享访问过于频繁，请 <secs> 秒后重试", "retry_after": <secs>}`。
 pub async fn share_ratelimit_middleware(
     State(state): State<Arc<AppState>>,
     req: Request,
     next: Next,
 ) -> Response {
+    if !state.share_ratelimit_enabled {
+        return next.run(req).await;
+    }
+
     let path = req.uri().path();
     let is_share_read = path.starts_with("/api/s/") || path == "/api/share/list";
     if !is_share_read {
@@ -453,19 +556,14 @@ pub async fn share_ratelimit_middleware(
     }
 
     let ip_key = extract_ip_key(&req);
-    let share_key = extract_share_token(req.uri());
-    let share_key = match share_key {
-        Some(k) => k,
-        None => return next.run(req).await,
-    };
 
     match state
         .share_limiter
-        .try_acquire(&ip_key, Some(share_key.as_str()))
+        .try_acquire(&ShareReadKey::from_ip(&ip_key))
     {
         Ok(()) => next.run(req).await,
         Err(secs) => {
-            state.metrics.inc_auth("share_ratelimited");
+            state.metrics.inc_share_ratelimited();
             let body = serde_json::json!({
                 "error": format!("分享访问过于频繁，请 {} 秒后重试", secs),
                 "retry_after": secs,
@@ -622,80 +720,154 @@ mod tests {
     }
 
     #[test]
-    fn parse_share_rpm_defaults_and_invalid() {
-        assert_eq!(parse_share_rpm(None).unwrap(), 30.0);
-        assert_eq!(parse_share_rpm(Some("60")).unwrap(), 60.0);
-        assert!(parse_share_rpm(Some("abc")).is_err());
-        assert!(parse_share_rpm(Some("0")).is_err());
-        assert!(parse_share_rpm(Some("-5")).is_err());
-        assert!(parse_share_rpm(Some("inf")).is_err());
-        let e = parse_share_rpm(Some("abc")).unwrap_err();
-        assert!(e.contains("MINIOS_SHARE_READ_RPM"));
+    fn parse_share_rps_defaults_and_valid() {
+        assert_eq!(parse_share_rps(None).unwrap(), 5.0);
+        assert_eq!(parse_share_rps(Some("2.5")).unwrap(), 2.5);
     }
 
     #[test]
-    fn parse_share_burst_defaults_and_invalid() {
+    fn parse_share_rps_invalid_names_var() {
+        for raw in ["abc", "0", "-1", "NaN", "inf"] {
+            let err = parse_share_rps(Some(raw)).unwrap_err();
+            assert!(err.contains("MINIOS_SHARE_RPS"), "err = {err}");
+            assert!(err.contains(raw), "err = {err}");
+        }
+    }
+
+    #[test]
+    fn parse_share_burst_defaults_and_valid() {
         assert_eq!(parse_share_burst(None).unwrap(), 30);
         assert_eq!(parse_share_burst(Some("10")).unwrap(), 10);
-        assert!(parse_share_burst(Some("abc")).is_err());
-        assert!(parse_share_burst(Some("0")).is_err());
-        let e = parse_share_burst(Some("0")).unwrap_err();
-        assert!(e.contains("MINIOS_SHARE_READ_BURST"));
     }
 
     #[test]
-    fn parse_share_limit_default_rps_half() {
-        let cfg = ShareReadLimitConfig {
-            rps: 30.0 / 60.0,
-            burst: 30,
-        };
-        assert_eq!(cfg.rps, 0.5);
-        assert_eq!(cfg.burst, 30);
+    fn parse_share_burst_invalid_names_var() {
+        for raw in ["abc", "0", "-2", "1.5"] {
+            let err = parse_share_burst(Some(raw)).unwrap_err();
+            assert!(err.contains("MINIOS_SHARE_BURST"), "err = {err}");
+            assert!(err.contains(raw), "err = {err}");
+        }
     }
 
     #[test]
-    fn extract_share_token_cases() {
-        let u = |s: &str| s.parse::<axum::http::Uri>().unwrap();
-        assert_eq!(
-            extract_share_token(&u("/api/s/abc123")),
-            Some("abc123".to_string())
+    fn parse_share_enabled_cases() {
+        assert!(parse_share_enabled(None).unwrap());
+
+        for raw in ["1", "true", "TRUE", " yes ", "on"] {
+            assert!(parse_share_enabled(Some(raw)).unwrap(), "raw = {raw}");
+        }
+
+        for raw in ["0", "false", "FALSE", "no", "off"] {
+            assert!(!parse_share_enabled(Some(raw)).unwrap(), "raw = {raw}");
+        }
+
+        let err = parse_share_enabled(Some("maybe")).unwrap_err();
+        assert!(
+            err.contains("MINIOS_SHARE_RATE_LIMIT_ENABLED"),
+            "err = {err}"
         );
-        assert_eq!(
-            extract_share_token(&u("/api/s/abc123/download")),
-            Some("abc123".to_string())
-        );
-        assert_eq!(
-            extract_share_token(&u("/api/share/list?token=xyz&path=/")),
-            Some("xyz".to_string())
-        );
-        assert_eq!(extract_share_token(&u("/api/share/list")), None);
-        assert_eq!(extract_share_token(&u("/api/health")), None);
-        assert_eq!(extract_share_token(&u("/api/s/%zz")), None);
-        assert_eq!(
-            extract_share_token(&u("/api/s/a%20b")),
-            Some("a b".to_string())
-        );
+        assert!(err.contains("maybe"), "err = {err}");
     }
 
     #[test]
-    fn share_token_bucket_isolation_by_token() {
-        // burst=2：验证 token 桶相互独立，且 IP 桶维度同时生效。
-        let cfg = LoginLimitConfig { rps: 1.0, burst: 2 };
-        let rl = RateLimiter::new(&cfg);
-        let now = std::time::Instant::now();
-        assert!(rl.try_acquire_at("ip1", Some("tokA"), now).is_ok());
-        // 同一 IP、不同 token：token 桶独立，IP 桶还有余量 → 通过。
-        assert!(rl.try_acquire_at("ip1", Some("tokB"), now).is_ok());
-        // 第三次：IP 桶已空，即使换全新 token 也被拒（IP 维度生效，防单 IP 刷全站分享）。
-        assert!(rl.try_acquire_at("ip1", Some("tokC"), now).is_err());
+    fn check_no_legacy_cases() {
+        assert!(check_no_legacy(None, None).is_ok());
+
+        let err = check_no_legacy(Some("30"), None).unwrap_err();
+        assert!(err.contains("MINIOS_SHARE_READ_RPM"), "err = {err}");
+        assert!(err.contains("MINIOS_SHARE_RPS"), "err = {err}");
+
+        let err = check_no_legacy(None, Some("30")).unwrap_err();
+        assert!(err.contains("MINIOS_SHARE_READ_BURST"), "err = {err}");
+        assert!(err.contains("MINIOS_SHARE_BURST"), "err = {err}");
+    }
+
+    fn make_share_limiter(rps: f64, burst: u64) -> ShareReadLimiter {
+        ShareReadLimiter::new(&ShareReadLimitConfig {
+            rps,
+            burst,
+            enabled: true,
+        })
     }
 
     #[test]
-    fn share_token_bucket_shared_across_ips() {
-        let cfg = LoginLimitConfig { rps: 1.0, burst: 1 };
-        let rl = RateLimiter::new(&cfg);
-        let now = std::time::Instant::now();
-        assert!(rl.try_acquire_at("ip1", Some("tokA"), now).is_ok());
-        assert!(rl.try_acquire_at("ip2", Some("tokA"), now).is_err());
+    fn share_burst_then_reject() {
+        let rl = make_share_limiter(1.0, 2);
+        let key = ShareReadKey::from_ip("10.0.0.1");
+        let now = Instant::now();
+
+        assert!(rl.try_acquire_at(&key, now).is_ok());
+        assert!(rl.try_acquire_at(&key, now).is_ok());
+
+        let err = rl.try_acquire_at(&key, now).unwrap_err();
+        assert!(err >= 1, "retry_after = {err}");
+    }
+
+    #[test]
+    fn share_reject_does_not_consume() {
+        let rl = make_share_limiter(1.0, 1);
+        let key = ShareReadKey::from_ip("10.0.0.2");
+        let now = Instant::now();
+
+        assert!(rl.try_acquire_at(&key, now).is_ok());
+
+        let first = rl.try_acquire_at(&key, now).unwrap_err();
+        let second = rl.try_acquire_at(&key, now).unwrap_err();
+        assert_eq!(first, second, "reject must not consume tokens");
+    }
+
+    #[test]
+    fn share_refill_over_time() {
+        let rl = make_share_limiter(1.0, 1);
+        let key = ShareReadKey::from_ip("10.0.0.3");
+        let t0 = Instant::now();
+
+        assert!(rl.try_acquire_at(&key, t0).is_ok());
+        assert!(rl.try_acquire_at(&key, t0).is_err());
+
+        let t1 = t0 + Duration::from_secs(1);
+        assert!(rl.try_acquire_at(&key, t1).is_ok());
+    }
+
+    #[test]
+    fn share_ip_key_isolation() {
+        let rl = make_share_limiter(1.0, 1);
+        let key_a = ShareReadKey::from_ip("ipA");
+        let key_b = ShareReadKey::from_ip("ipB");
+        let now = Instant::now();
+
+        assert!(rl.try_acquire_at(&key_a, now).is_ok());
+        assert!(rl.try_acquire_at(&key_a, now).is_err());
+
+        assert!(rl.try_acquire_at(&key_b, now).is_ok());
+
+        let again = ShareReadKey::from_ip("ipA");
+        assert_eq!(key_a, again);
+    }
+
+    #[test]
+    fn share_retry_after_ceil() {
+        let rl_half = make_share_limiter(0.5, 1);
+        let key_half = ShareReadKey::from_ip("10.0.0.4");
+        let now = Instant::now();
+        assert!(rl_half.try_acquire_at(&key_half, now).is_ok());
+        let err = rl_half.try_acquire_at(&key_half, now).unwrap_err();
+        assert_eq!(err, 2, "deficit=1.0, ceil(1.0/0.5)=2");
+
+        let rl_one = make_share_limiter(1.0, 1);
+        let key_one = ShareReadKey::from_ip("10.0.0.5");
+        assert!(rl_one.try_acquire_at(&key_one, now).is_ok());
+        let err = rl_one.try_acquire_at(&key_one, now).unwrap_err();
+        assert_eq!(err, 1, "min retry_after is 1");
+    }
+
+    #[test]
+    fn share_key_from_ip() {
+        let a = ShareReadKey::from_ip("1.2.3.4");
+        let b = ShareReadKey::from_ip("1.2.3.4");
+        let c = ShareReadKey::from_ip("5.6.7.8");
+
+        assert_eq!(a, b);
+        assert_ne!(a, c);
     }
 }

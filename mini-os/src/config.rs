@@ -13,10 +13,12 @@ pub struct Config {
     pub login_rps: f64,
     /// 登录限流：桶容量/突发上限（来自 MINIOS_LOGIN_BURST）
     pub login_burst: u64,
-    /// 分享读取限流：每秒补充的令牌数（来自 MINIOS_SHARE_READ_RPM，rps = RPM / 60）
+    /// 分享读取限流：每秒补充的令牌数（来自 MINIOS_SHARE_RPS）
     pub share_read_rps: f64,
-    /// 分享读取限流：桶容量/突发上限（来自 MINIOS_SHARE_READ_BURST）
+    /// 分享读取限流：桶容量/突发上限（来自 MINIOS_SHARE_BURST）
     pub share_read_burst: u64,
+    /// 来自 MINIOS_SHARE_RATE_LIMIT_ENABLED，默认开启
+    pub share_ratelimit_enabled: bool,
 }
 
 impl Config {
@@ -58,7 +60,7 @@ impl Config {
             }
         };
 
-        // 分享读取限流配置：非法值同样 fail-fast。
+        // 分享读取限流配置（v1.8）：MINIOS_SHARE_RPS / MINIOS_SHARE_BURST / MINIOS_SHARE_RATE_LIMIT_ENABLED，非法值同样 fail-fast。
         let share_limit = match crate::ratelimit::parse_share_limit() {
             Ok(cfg) => cfg,
             Err(msg) => {
@@ -78,6 +80,7 @@ impl Config {
             login_burst: login_limit.burst,
             share_read_rps: share_limit.rps,
             share_read_burst: share_limit.burst,
+            share_ratelimit_enabled: share_limit.enabled,
         }
     }
 }

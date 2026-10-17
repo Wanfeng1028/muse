@@ -187,7 +187,10 @@
   }
   .btn:hover { opacity: .9; }
   .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .crumbs.disabled { pointer-events: none; opacity: .5; }
   .empty h1 { font-size: 18px; }
+
   .empty p {
     font-size: 14px;
     color: var(--text-muted);
@@ -315,6 +318,46 @@
     contentEl.appendChild(wrap);
   }
 
+  var countdownTimer = null;
+
+  function renderRateLimited(token, data, retry) {
+    if (countdownTimer !== null) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+    var n = (data && typeof data.retry_after === 'number' && data.retry_after > 0) ? Math.ceil(data.retry_after) : 30;
+    contentEl.innerHTML = '';
+    contentEl.className = 'empty';
+    var wrap = el('div', { 'class': 'empty' });
+    wrap.appendChild(el('h1', null, ['看的人有点多']));
+    var p = el('p', null, ['这个分享刚才被频繁访问，' + n + ' 秒后自动重试。']);
+    wrap.appendChild(p);
+    var btn = el('button', { 'class': 'btn', 'type': 'button' }, [n + ' 秒后重试']);
+    btn.disabled = true;
+    btn.addEventListener('click', function () {
+      if (btn.disabled) return;
+      retry();
+    });
+    wrap.appendChild(btn);
+    contentEl.appendChild(wrap);
+
+    var remain = n;
+    countdownTimer = setInterval(function () {
+      remain = remain - 1;
+      if (remain <= 0) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        btn.disabled = false;
+        btn.textContent = '重试';
+        retry();
+        return;
+      }
+      p.textContent = '这个分享刚才被频繁访问，' + remain + ' 秒后自动重试。';
+      btn.textContent = remain + ' 秒后重试';
+    }, 1000);
+  }
+
+
   function renderInfo(token, info) {
     contentEl.innerHTML = '';
     contentEl.className = '';
@@ -386,12 +429,24 @@
     loadDir(token, '');
   }
 
+  var currentDirPath = '';
+
   function loadDir(token, path) {
+    currentDirPath = path;
     var url = '/api/share/list?token=' + encodeURIComponent(token) + '&path=' + encodeURIComponent(path);
     fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (res) {
       if (res.status === 404) {
         renderNotFound();
         return null;
+      }
+      if (res.status === 429) {
+        return res.json().then(function (data) {
+          showDirRateLimit(token, data);
+          return null;
+        }).catch(function () {
+          showDirRateLimit(token, null);
+          return null;
+        });
       }
       if (!res.ok) {
         var list = document.getElementById('filelist');
@@ -413,6 +468,35 @@
         list.appendChild(el('div', { 'class': 'list-error' }, ['目录读取失败，点面包屑重试。']));
       }
     });
+  }
+
+  function showDirRateLimit(token, data) {
+    if (countdownTimer !== null) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+    var n = (data && typeof data.retry_after === 'number' && data.retry_after > 0) ? Math.ceil(data.retry_after) : 30;
+    var crumbs = document.getElementById('crumbs');
+    if (crumbs) crumbs.classList.add('disabled');
+    var list = document.getElementById('filelist');
+    var remain = n;
+    function paint() {
+      if (!list) return;
+      list.textContent = '';
+      list.appendChild(el('div', { 'class': 'list-error' }, ['刷得太快，' + remain + ' 秒后自动重试。']));
+    }
+    paint();
+    countdownTimer = setInterval(function () {
+      remain = remain - 1;
+      if (remain <= 0) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+        if (crumbs) crumbs.classList.remove('disabled');
+        loadDir(token, currentDirPath);
+        return;
+      }
+      paint();
+    }, 1000);
   }
 
   function renderCrumbs(token, path) {
@@ -502,31 +586,45 @@
     return;
   }
 
-  fetch('/api/s/' + encodeURIComponent(token), {
-    method: 'GET',
-    headers: { 'Accept': 'application/json' },
-    credentials: 'same-origin'
-  }).then(function (res) {
-    if (res.status === 404) {
-      renderNotFound();
-      return null;
-    }
-    if (!res.ok) {
-      renderError();
-      return null;
-    }
-    return res.json();
-  }).then(function (info) {
-    if (info) {
-      if (info.shareType === 'dir') {
-        renderDir(token, info);
-      } else {
-        renderInfo(token, info);
+  function loadShareInfo() {
+    fetch('/api/s/' + encodeURIComponent(token), {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    }).then(function (res) {
+      if (res.status === 404) {
+        renderNotFound();
+        return null;
       }
-    }
-  }).catch(function () {
-    renderError();
-  });
+      if (res.status === 429) {
+        return res.json().then(function (data) {
+          renderRateLimited(token, data, loadShareInfo);
+          return null;
+        }).catch(function () {
+          renderRateLimited(token, null, loadShareInfo);
+          return null;
+        });
+      }
+      if (!res.ok) {
+        renderError();
+        return null;
+      }
+      return res.json();
+    }).then(function (info) {
+      if (info) {
+        if (info.shareType === 'dir') {
+          renderDir(token, info);
+        } else {
+          renderInfo(token, info);
+        }
+      }
+    }).catch(function () {
+      renderError();
+    });
+  }
+
+  loadShareInfo();
+
 })();
 </script>
 </body>
