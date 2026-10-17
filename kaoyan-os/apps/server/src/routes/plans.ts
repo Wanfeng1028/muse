@@ -37,8 +37,10 @@ function mapPlan(row: PlanRow): Plan {
 function isValidDate(s: unknown): s is string {
   if (typeof s !== 'string') return false;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, day] = s.split('-').map(Number);
   const d = new Date(s + 'T00:00:00');
-  return !Number.isNaN(d.getTime());
+  if (Number.isNaN(d.getTime())) return false;
+  return d.getFullYear() === y && d.getMonth() + 1 === m && d.getDate() === day;
 }
 
 export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): void {

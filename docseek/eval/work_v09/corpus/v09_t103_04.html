@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Python条件判断与循环写法</title>
+</head>
+<body>
+<h1>Python条件判断与循环写法</h1>
+<p>控制流程是编程的基本功。Python的if和for写起来比很多语言都干净，但有几个细节新手容易忽略。</p>
+<h2>if语句的缩进</h2>
+<p>Python用缩进表示代码块，通常四个空格。同一代码块缩进必须一致，混用空格和Tab会报<code>IndentationError</code>。if后面跟条件，条件成立执行冒号下面的代码。elif可以写多个，else放最后。</p>
+<h2>for循环遍历</h2>
+<ul>
+<li><code>for i in range(5)</code>循环五次，i从0到4</li>
+<li><code>for item in list</code>直接遍历列表元素</li>
+<li>需要下标时用<code>enumerate()</code>，同时拿到索引和值</li>
+</ul>
+<p>while循环适合不确定循环次数的情况，但记得在循环体内改变条件变量，否则会死循环。另外break跳出整个循环，continue跳过本次进入下一次，这两个关键字在for和while里都能用。</p>
+</body>
+</html>

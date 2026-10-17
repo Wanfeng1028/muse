@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>给博客加评论功能：从 Disqus 换到 Waline</title>
+</head>
+<body>
+<h1>给博客加评论功能：从 Disqus 换到 Waline</h1>
+<p>我的博客之前一直用 Disqus 做评论，但国内读者打开页面经常要等很久，有时候干脆加载不出来。后来我换成了 Waline，部署在自己的服务器上，数据也在自己手里，踏实多了。</p>
+<h2>Waline 是什么</h2>
+<p>Waline 是一个带后端的评论系统，前端是一个轻量的 JS 组件，后端可以跑在 Vercel 或者自己的服务器上。它支持 Markdown 语法、表情回复、邮件通知，基本该有的都有。</p>
+<h2>部署后端</h2>
+<p>我选择用 Docker 部署，因为服务器上本来就有 Docker 环境。拉取 waline 镜像之后，配一个环境变量文件，指定数据库连接和站点地址就行。数据库我用的是 LeanCloud，免费额度对我来说完全够用。</p>
+<ul>
+<li>拉取镜像：docker pull lizheming/waline</li>
+<li>创建数据卷，持久化评论数据</li>
+<li>配置环境变量：LEAN_ID、LEAN_KEY、SITE_URL</li>
+<li>启动容器，映射端口 8360</li>
+</ul>
+<h2>前端接入</h2>
+<p>在文章模板里引入 Waline 的 CSS 和 JS，然后初始化一个实例，指定 serverURL 指向刚才部署的后端地址。我的主题是在 layouts/partials/comments.html 里加的，改一处所有文章都生效。</p>
+<h2>遇到的两个坑</h2>
+<p>第一个是跨域问题，浏览器控制台报 CORS 错误。解决办法是在后端环境变量里加上允许的域名，不能偷懒写星号。</p>
+<p>第二个是评论数不显示，后来发现是文章路径和 Waline 记录的 path 对不上，把 path 统一成相对路径就好了。</p>
+</body>
+</html>

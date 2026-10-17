@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>给页面加一点 CSS：选择器和盒模型入门</title>
+</head>
+<body>
+<h1>给页面加一点 CSS：选择器和盒模型入门</h1>
+<p>HTML 管内容，CSS 管长相。刚学完标签的人，最想知道的就是怎么让文字居中、怎么给盒子加边框。答案都藏在选择器和盒模型里。</p>
+<h2>三种最常用的选择器</h2>
+<ul>
+<li>标签选择器：直接写 p、h1，选中所有同类标签。</li>
+<li>类选择器：写 .card，选中 class="card" 的元素，最灵活。</li>
+<li>id 选择器：写 #header，选中 id="header" 的唯一元素，优先级高但别滥用。</li>
+</ul>
+<h2>盒模型：内容、内边距、边框、外边距</h2>
+<p>每个元素都是一个矩形盒子，从里到外依次是 content、padding、border、margin。设了 width 之后，默认盒子的总宽度还要加上 padding 和 border，容易撑破布局。可以在元素上加 box-sizing: border-box，让 width 包含 padding 和 border，算起来省心。</p>
+<p>让块级元素水平居中的常见写法是给自身设 margin: 0 auto，同时保证它有明确宽度。文字水平居中用 text-align: center。这两个别搞混，一个管盒子，一个管盒子里文字。</p>
+</body>
+</html>
