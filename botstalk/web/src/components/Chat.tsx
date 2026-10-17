@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardList, LogOut, Settings } from 'lucide-react';
+import { ClipboardList, Gamepad2, LogOut, Settings } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
-import { fetchHistory, fetchPresence, fetchRoom, updateRoom, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage } from '../api';
+import { fetchHistory, fetchPresence, fetchRoom, updateRoom, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload } from '../api';
 import MessageList, { ChatItem } from './MessageList';
 import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
 import TaskPanel from './TaskPanel';
+import GamePanel from './GamePanel';
 
 interface Props {
   nick: string;
@@ -27,6 +28,8 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [showTasks, setShowTasks] = useState(false);
+  const [showGame, setShowGame] = useState(false);
+  const [gameState, setGameState] = useState<GameStatePayload | null>(null);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
@@ -71,6 +74,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
     }
     if (frame.type === 'task_event') {
       setTaskRefreshKey((k) => k + 1);
+      return;
+    }
+    if (frame.type === 'game_state') {
+      setGameState(frame.payload as unknown as GameStatePayload);
       return;
     }
     if (frame.type !== 'message') return;
@@ -226,6 +233,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
           <Settings size={16} strokeWidth={2} />
           <span>设置</span>
         </button>
+        <button className="btn-ghost" type="button" onClick={() => setShowGame((v) => !v)} title="小游戏">
+          <Gamepad2 size={16} strokeWidth={2} />
+          <span>游戏</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={() => setShowTasks((v) => !v)} title="任务追踪">
           <ClipboardList size={16} strokeWidth={2} />
           <span>任务</span>
@@ -288,6 +299,12 @@ export default function Chat({ nick, room, onLeave }: Props) {
             保存
           </button>
         </div>
+      )}
+      {showGame && (
+        <GamePanel
+          gameState={gameState}
+          onSendAction={(game, action) => socketRef.current?.sendGameAction(game, action)}
+        />
       )}
       {showTasks && (
         <TaskPanel

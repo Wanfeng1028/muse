@@ -170,3 +170,38 @@ export async function updateRoom(
   const data = (await res.json()) as { room: RoomInfo };
   return data.room;
 }
+
+export interface GameSession {
+  id: string;
+  room_id: string;
+  game: string;
+  state: string;
+  created_at_ms: number;
+  updated_at_ms: number;
+}
+
+export async function fetchGameSessions(room: string): Promise<GameSession[]> {
+  const res = await fetch(`${BASE}/api/rooms/${encodeURIComponent(room)}/games`);
+  if (!res.ok) throw new Error('获取游戏会话失败');
+  return (await res.json()) as GameSession[];
+}
+
+export async function createGameSession(room: string, game: string): Promise<GameSession> {
+  const res = await fetch(`${BASE}/api/rooms/${encodeURIComponent(room)}/games`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ game }),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error ?? `create game ${res.status}`);
+  }
+  return (await res.json()) as GameSession;
+}
+
+export interface GameStatePayload {
+  game: string;
+  seat?: string;
+  state?: unknown;
+  state_hash?: string;
+}

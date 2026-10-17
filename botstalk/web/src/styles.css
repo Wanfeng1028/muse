@@ -782,6 +782,68 @@ textarea {
 .room-list-head .room-list-title {
   margin: 0;
 }
+
+/* ---------- 小游戏面板 ---------- */
+.game-panel {
+  border-top: 1px solid var(--line);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--paper-raised);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.game-panel-empty {
+  align-items: center;
+  text-align: center;
+  color: var(--ink-muted);
+  padding: var(--sp-4);
+}
+.game-panel-hint {
+  font-size: 12px;
+}
+.game-panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 700;
+  font-size: 14px;
+}
+.game-panel-seat {
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+.game-panel-state {
+  background: var(--paper-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-2);
+  font-size: 12px;
+  max-height: 160px;
+  overflow: auto;
+  margin: 0;
+}
+.game-panel-hash {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+}
+.game-panel-action {
+  display: flex;
+  gap: var(--sp-2);
+}
+.game-panel-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--paper-sunken);
+  color: var(--ink);
+}
 .room-list-title {
   font-size: 20px;
   font-weight: 700;

@@ -85,6 +85,14 @@ export class ChatSocket {
     return taskId;
   }
 
+  sendGameAction(game: string, action: unknown, seat?: string): void {
+    this.send('game_action', {
+      game,
+      seat,
+      action,
+    });
+  }
+
   private openSocket(): void {
     this.events.onStatus('connecting');
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
