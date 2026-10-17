@@ -493,6 +493,17 @@ textarea {
   color: var(--ink-muted);
   font-size: 12px;
 }
+.member-usage {
+  margin-left: 6px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.member-offline-tag {
+  margin-left: 6px;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
 .member-dot {
   flex: 0 0 auto;
   width: 8px;

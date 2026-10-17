@@ -19,6 +19,8 @@ export interface PresenceMember {
   adapter_id: string;
   status: 'online' | 'offline';
   last_seen_ms: number;
+  usage_in?: number;
+  usage_out?: number;
 }
 
 const BASE = (() => {

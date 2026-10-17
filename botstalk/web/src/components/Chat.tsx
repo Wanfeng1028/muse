@@ -51,7 +51,12 @@ export default function Chat({ nick, onLeave }: Props) {
       const adapter_id = String(frame.payload.adapter_id ?? '');
       const rawStatus = String(frame.payload.status ?? '');
       if (!adapter_id || (rawStatus !== 'online' && rawStatus !== 'offline')) return;
-      setMembers((prev) => mergePresence(prev, adapter_id, rawStatus, Date.now()));
+      const rawIn = frame.payload.usage_in;
+      const rawOut = frame.payload.usage_out;
+      const usage: { usage_in?: number; usage_out?: number } = {};
+      if (typeof rawIn === 'number') usage.usage_in = rawIn;
+      if (typeof rawOut === 'number') usage.usage_out = rawOut;
+      setMembers((prev) => mergePresence(prev, adapter_id, rawStatus, Date.now(), usage));
       return;
     }
     if (frame.type !== 'message') return;
@@ -99,6 +104,8 @@ export default function Chat({ nick, onLeave }: Props) {
             status: m.status,
             last_seen_ms: m.last_seen_ms,
             isSelf: m.adapter_id === nick,
+            usage_in: m.usage_in,
+            usage_out: m.usage_out,
           })),
         );
       } catch {
@@ -224,13 +231,25 @@ function mergePresence(
   adapter_id: string,
   status: 'online' | 'offline',
   last_seen_ms: number,
+  usage?: { usage_in?: number; usage_out?: number },
 ): MemberEntry[] {
   const next = prev.slice();
   const idx = next.findIndex((m) => m.adapter_id === adapter_id);
   if (idx === -1) {
-    next.push({ adapter_id, status, last_seen_ms, isSelf: false });
+    next.push({
+      adapter_id,
+      status,
+      last_seen_ms,
+      isSelf: false,
+      usage_in: usage?.usage_in,
+      usage_out: usage?.usage_out,
+    });
   } else {
-    next[idx] = { ...next[idx], status, last_seen_ms };
+    const merged: MemberEntry = { ...next[idx], status, last_seen_ms };
+    // 帧里带用量就更新，没带就沿用之前记下的值
+    if (usage?.usage_in !== undefined) merged.usage_in = usage.usage_in;
+    if (usage?.usage_out !== undefined) merged.usage_out = usage.usage_out;
+    next[idx] = merged;
   }
   next.sort((a, b) => {
     if (a.status !== b.status) return a.status === 'online' ? -1 : 1;

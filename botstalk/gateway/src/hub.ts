@@ -12,6 +12,7 @@ import {
   OFFLINE_AFTER_MS,
   ZOMBIE_SWEEP_MS,
   PROTOCOL_VERSION_STR,
+  RESEND_MAX_MSGS,
 } from "@botstalk/protocol";
 import type {
   Envelope,
@@ -49,7 +50,11 @@ export class Hub {
   private adapterRooms = new Map<string, string>();
   public onMessage: ((env: Envelope<MessagePayload>) => void) | null = null;
 
-  constructor(private readonly db: Db) {}
+  constructor(private readonly db: Db) {
+    const raw = store.getGatewayState(db, "global_seq");
+    const parsed = raw === undefined ? Number.NaN : Number(raw);
+    this.globalSeq = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
 
   public nextSeq(): number {
     return this.serverSeq.nextSeq();
@@ -60,6 +65,10 @@ export class Hub {
    * 已知局限（v1.1 明确边界，不修）：globalSeq 是内存计数器，网关重启后从 1 开始；
    * resendQueues 也是内存的，重启即丢。
    */
+  /**
+   * 网关全局序列号计数器。
+   * 现在会写透到 DB，重启后从上次的值继续，不再回到 1。
+   */
   private globalSeq = 0;
 
   /** 给发往客户端的帧打网关全局序列号。幂等：同一逻辑帧 broadcast 给多个客户端时 gseq 必须一致。 */
@@ -67,6 +76,7 @@ export class Hub {
     if (env.gseq === undefined) {
       this.globalSeq += 1;
       env.gseq = this.globalSeq;
+      store.setGatewayState(this.db, "global_seq", String(this.globalSeq));
     }
     return env;
   }
@@ -75,6 +85,14 @@ export class Hub {
     let q = this.resendQueues.get(adapterId);
     if (!q) {
       q = new ResendQueue();
+      const rows = store.loadPendingFrames(this.db, adapterId);
+      for (const r of rows) {
+        try {
+          q.push(JSON.parse(r.envelope) as Envelope);
+        } catch {
+          // 坏数据跳过，不让一行脏数据拖垮恢复
+        }
+      }
       this.resendQueues.set(adapterId, q);
     }
     return q;
@@ -288,18 +306,27 @@ export class Hub {
     }
   }
 
+  private persistPendingFrame(adapterId: string, env: Envelope): void {
+    if (env.type === "presence") return;
+    if (env.gseq === undefined) return;
+    store.savePendingFrame(this.db, adapterId, env.gseq, JSON.stringify(env));
+    store.prunePendingFrames(this.db, adapterId, RESEND_MAX_MSGS);
+  }
+
   sendTo(adapterId: string, env: Envelope): boolean {
     env = this.stampOutbound(env);
     const conn = this.conns.get(adapterId);
     if (!conn) {
       if (env.type !== "presence") {
         this.getResendQueue(adapterId).push(env);
+        this.persistPendingFrame(adapterId, env);
       }
       return false;
     }
     if (conn.ws.readyState !== WebSocket.OPEN) {
       if (env.type !== "presence") {
         this.getResendQueue(adapterId).push(env);
+        this.persistPendingFrame(adapterId, env);
       }
       return false;
     }
@@ -310,6 +337,7 @@ export class Hub {
     }
     if (env.type !== "presence") {
       this.getResendQueue(adapterId).push(env);
+      this.persistPendingFrame(adapterId, env);
     }
     return true;
   }

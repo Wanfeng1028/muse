@@ -268,6 +268,117 @@ func TestIncidentFlow(t *testing.T) {
 	}
 }
 
+func TestListIncidentsOpenEndedNull(t *testing.T) {
+	srv, _ := newTestServer(t)
+	h := srv.Routes()
+
+	var code int = 500
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+	}))
+	defer ts.Close()
+
+	rec, m := doJSON(t, h, http.MethodPost, "/api/monitors",
+		`{"name":"open-ended","kind":"http","target":"`+ts.URL+`","interval_sec":10}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create monitor status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	id := int64(m["id"].(float64))
+	idPath := "/api/monitors/" + itoa(id)
+
+	rec, m = doJSON(t, h, http.MethodPost, idPath+"/check", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("first check status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	if ok, _ := m["ok"].(bool); ok {
+		t.Fatalf("first check ok=true, want false: %v", m)
+	}
+
+	rec, m = doJSON(t, h, http.MethodGet, "/api/incidents?monitor_id="+itoa(id), "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list incidents by monitor status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	items, ok := m["items"].([]any)
+	if !ok {
+		t.Fatalf("items missing or wrong type: %v", m)
+	}
+	if len(items) != 1 {
+		t.Fatalf("want 1 open incident, got %d: %v", len(items), items)
+	}
+	inc, ok := items[0].(map[string]any)
+	if !ok {
+		t.Fatalf("incident item wrong type: %v", items[0])
+	}
+	if v, present := inc["ended_at"]; !present || v != nil {
+		t.Fatalf("open incident ended_at=%v (present=%v), want nil", v, present)
+	}
+	if v, present := inc["downtime_sec"]; !present || v != nil {
+		t.Fatalf("open incident downtime_sec=%v (present=%v), want nil", v, present)
+	}
+	se, ok := inc["start_error"].(string)
+	if !ok || se == "" {
+		t.Fatalf("open incident start_error=%v, want non-empty string", inc["start_error"])
+	}
+	if mn, _ := inc["monitor_name"].(string); mn != "open-ended" {
+		t.Fatalf("open incident monitor_name=%v, want %q", inc["monitor_name"], "open-ended")
+	}
+
+	rec, m = doJSON(t, h, http.MethodGet, "/api/incidents", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list all incidents status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	allItems, ok := m["items"].([]any)
+	if !ok {
+		t.Fatalf("items missing or wrong type: %v", m)
+	}
+	found := false
+	for _, raw := range allItems {
+		it, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if mid, _ := it["monitor_id"].(float64); int64(mid) == id {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("open incident for monitor_id=%d not found in all incidents: %v", id, allItems)
+	}
+
+	code = 200
+	rec, m = doJSON(t, h, http.MethodPost, idPath+"/check", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("second check status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	if ok, _ := m["ok"].(bool); !ok {
+		t.Fatalf("second check ok=false, want true: %v", m)
+	}
+
+	rec, m = doJSON(t, h, http.MethodGet, "/api/incidents?monitor_id="+itoa(id), "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list incidents after recovery status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	items, ok = m["items"].([]any)
+	if !ok {
+		t.Fatalf("items missing or wrong type: %v", m)
+	}
+	if len(items) != 1 {
+		t.Fatalf("want 1 closed incident, got %d: %v", len(items), items)
+	}
+	inc, ok = items[0].(map[string]any)
+	if !ok {
+		t.Fatalf("incident item wrong type: %v", items[0])
+	}
+	if ea, ok := inc["ended_at"].(string); !ok || ea == "" {
+		t.Fatalf("closed incident ended_at=%v, want non-empty string", inc["ended_at"])
+	}
+	ds, ok := inc["downtime_sec"].(float64)
+	if !ok || ds < 0 {
+		t.Fatalf("closed incident downtime_sec=%v, want float64 >= 0", inc["downtime_sec"])
+	}
+}
+
 // TestOverview 概览计数
 func TestOverview(t *testing.T) {
 	srv, _ := newTestServer(t)

@@ -9,6 +9,16 @@ import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
 import { createArtifactService } from "./artifacts.js";
 
+// 排序规则：online 在前，其余按 adapter_id 字典序
+function sortPresence<T extends { adapter_id: string; status: string }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => {
+    const aOnline = a.status === "online" ? 0 : 1;
+    const bOnline = b.status === "online" ? 0 : 1;
+    if (aOnline !== bOnline) return aOnline - bOnline;
+    return a.adapter_id < b.adapter_id ? -1 : a.adapter_id > b.adapter_id ? 1 : 0;
+  });
+}
+
 export interface RunningServer {
   httpServer: Server;
   wss: WebSocketServer;
@@ -82,15 +92,49 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         return;
       }
       const rows = listPresence(db);
-      const members = rows
-        .filter((r) => r.status === "online")
-        .map((r) => ({
-          adapter_id: r.adapter_id,
-          status: r.status,
-          last_seen_ms: r.last_seen_ms,
-        }));
+      const members = sortPresence(rows).map((r) => ({
+        adapter_id: r.adapter_id,
+        status: r.status,
+        last_seen_ms: r.last_seen_ms,
+        usage_in: r.usage_in,
+        usage_out: r.usage_out,
+      }));
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ members }));
+      return;
+    }
+
+    // GET /api/rooms/:room/usage
+    const usageMatch = url.match(/^\/api\/rooms\/([^/?]+)\/usage(?:\?|$)/);
+    if (usageMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(usageMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      const rows = sortPresence(listPresence(db));
+      let totalIn = 0;
+      let totalOut = 0;
+      const adapters = rows.map((r) => {
+        totalIn += r.usage_in;
+        totalOut += r.usage_out;
+        return {
+          adapter_id: r.adapter_id,
+          status: r.status,
+          input_tokens: r.usage_in,
+          output_tokens: r.usage_out,
+          last_seen_ms: r.last_seen_ms,
+        };
+      });
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(
+        JSON.stringify({
+          adapters,
+          total: { input_tokens: totalIn, output_tokens: totalOut },
+        }),
+      );
       return;
     }
 

@@ -2,6 +2,31 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.8.0] - 2026-10-17
+
+### 新增
+- incidents.html 事件页改接真实 API：删除写死的 MONITORS/INCIDENTS 常量与残缺 JS，列表数据来自 GET /api/incidents（monitor_id 筛选在服务端完成，limit=100），筛选下拉由 GET /api/monitors 填充。
+- 事件列表新增"状态"列：进行中/已恢复 pill；未恢复事件的持续时长按 now-started_at 实时计算。
+- 事件页新增监控筛选与状态筛选。
+- 事件行支持点击展开详情行，展示完整错误文本与监控档案链接。
+- 事件列表加入客户端分页，每页 20 条。
+- 事件页加入空态（图标 + 文案 + 去监控列表链接）与错误态（带重试按钮）。
+- 新增 scripts/smoke_incidents.sh：down→recovered 事件闭环冒烟，断言 open 态 ended_at/downtime_sec 为 null、recovered 态字段齐全；幂等可重跑，运行后自清理。
+- 新增测试 TestListIncidentsOpenEndedNull，覆盖 /api/incidents 的 open/closed 两种 JSON 契约。
+
+### 实测
+- incidents.html 事件页改接真实 API（待验收填写）
+- 状态列与持续时长实时计算（待验收填写）
+- 监控筛选与状态筛选（待验收填写）
+- 点击行展开详情行（待验收填写）
+- 客户端分页（待验收填写）
+- 空态与错误态（待验收填写）
+- scripts/smoke_incidents.sh 事件闭环冒烟（待验收填写）
+- TestListIncidentsOpenEndedNull（待验收填写）
+
+### 偿还排期
+- 关闭 v0.6/v0.7 对照报告挂账的 incidents.html 模拟数据债：事件页改接真实 API，相关挂账条目结清。
+
 ## [0.7.0] - 2026-10-17
 
 ### 新增

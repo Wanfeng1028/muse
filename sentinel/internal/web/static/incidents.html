@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -238,6 +237,145 @@
       color: #6e7781;
     }
 
+    /* 状态 pill */
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 3px 12px;
+      white-space: nowrap;
+    }
+    .pill-open {
+      background: #fff8e6;
+      color: #9a6700;
+      border: 1px solid #e3b341;
+    }
+    .pill-closed {
+      background: #e6f4ea;
+      color: #1a7f37;
+      border: 1px solid #4ac26b;
+    }
+
+    /* 分页 */
+    .pager {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 32px;
+    }
+    .pager button {
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 6px 16px;
+      color: #1f2328;
+      cursor: pointer;
+    }
+    .pager button:disabled {
+      color: #6e7781;
+      cursor: not-allowed;
+    }
+    .pager .pager-info {
+      color: #6e7781;
+      font-size: 0.9rem;
+    }
+
+    /* 空态 */
+    .empty-state {
+      text-align: center;
+      padding: 56px 24px;
+    }
+    .empty-state svg {
+      width: 56px;
+      height: 56px;
+      stroke: #0969da;
+      stroke-width: 1.5;
+      fill: none;
+      margin-bottom: 16px;
+    }
+    .empty-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1f2328;
+      margin-bottom: 8px;
+    }
+    .empty-desc {
+      font-size: 0.95rem;
+      color: #6e7781;
+      max-width: 420px;
+      margin: 0 auto 16px;
+    }
+    .empty-link {
+      font-size: 0.95rem;
+      color: #0969da;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .empty-link:hover {
+      text-decoration: underline;
+    }
+
+    /* 错误态 */
+    .error-wrap {
+      text-align: center;
+      padding: 48px 24px;
+      color: #cf222e;
+    }
+    .retry-btn {
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 6px 18px;
+      margin-left: 12px;
+      cursor: pointer;
+    }
+    .retry-btn:hover {
+      border-color: #0969da;
+      color: #0969da;
+    }
+
+    /* 行详情与数据行（类名与 JS 的 renderTable 对齐） */
+    tbody tr.incident-row {
+      cursor: pointer;
+    }
+    tr.incident-detail td {
+      background: #f6f8fa;
+      padding: 16px 18px;
+    }
+    .detail-box {
+      font-size: 0.9rem;
+      color: #24292f;
+    }
+    .detail-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6e7781;
+      margin-bottom: 8px;
+    }
+    .detail-error {
+      font-family: monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      white-space: pre-wrap;
+      color: #cf222e;
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 0 0 10px;
+    }
+    .detail-link {
+      color: #0969da;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .detail-link:hover {
+      text-decoration: underline;
+    }
+
     /* 响应式微调 */
     @media (max-width: 640px) {
       body { padding: 0 16px; }
@@ -276,6 +414,12 @@
         <option value="all" selected>全部监控</option>
         <!-- 选项由 JS 动态填充，此处保留全部作为默认 -->
       </select>
+      <label for="f-status">状态</label>
+      <select id="f-status" aria-label="按状态筛选事件">
+        <option value="all" selected>全部状态</option>
+        <option value="open">进行中</option>
+        <option value="closed">已恢复</option>
+      </select>
     </div>
 
     <!-- 事件表格 -->
@@ -288,108 +432,350 @@
             <th>结束时间</th>
             <th>持续时长</th>
             <th>起始错误</th>
+            <th>状态</th>
           </tr>
         </thead>
         <tbody id="incident-tbody">
           <!-- 数据由 initIncidentsPage() 渲染 -->
           <tr class="loading-row">
-            <td colspan="5">加载事件数据…</td>
+            <td colspan="6">加载事件数据…</td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- 分页 -->
+    <div id="pager" class="pager" aria-label="事件分页"></div>
   </main>
 
-  <!-- 脚本：事件页逻辑 -->
+  <script src="/static/app.js" defer></script>
   <script>
-    (function() {
-      // ---------- 模拟数据 ----------
-      const MONITORS = [
-        { id: 'mon-1', name: 'API 网关' },
-        { id: 'mon-2', name: '用户服务' },
-        { id: 'mon-3', name: '订单服务' },
-        { id: 'mon-4', name: '支付服务' },
-        { id: 'mon-5', name: '消息队列' }
-      ];
+/* ==== NEW_SCRIPT_BEGIN ==== */
+/* 事件页逻辑：真实后端 API 渲染（依赖 app.js 的 api()） */
 
-      const INCIDENTS = [
-        { monitorId: 'mon-1', startTime: '2025-03-18T08:12:00Z', endTime: '2025-03-18T08:34:00Z', startError: '连接超时 (504)' },
-        { monitorId: 'mon-2', startTime: '2025-03-18T09:05:00Z', endTime: '2025-03-18T09:42:00Z', startError: '数据库连接池耗尽' },
-        { monitorId: 'mon-1', startTime: '2025-03-18T10:20:00Z', endTime: '2025-03-18T10:25:00Z', startError: '请求频率超限' },
-        { monitorId: 'mon-3', startTime: '2025-03-18T11:00:00Z', endTime: '2025-03-18T11:55:00Z', startError: '服务不可用 (503)' },
-        { monitorId: 'mon-4', startTime: '2025-03-18T12:30:00Z', endTime: '2025-03-18T12:48:00Z', startError: '证书过期' },
-        { monitorId: 'mon-2', startTime: '2025-03-18T14:10:00Z', endTime: '2025-03-18T14:30:00Z', startError: '响应超时 (5s)' },
-        { monitorId: 'mon-5', startTime: '2025-03-18T15:05:00Z', endTime: '2025-03-18T15:22:00Z', startError: '磁盘空间不足' },
-        { monitorId: 'mon-1', startTime: '2025-03-18T16:40:00Z', endTime: '2025-03-18T16:58:00Z', startError: '上游服务无响应' },
-        { monitorId: 'mon-3', startTime: '2025-03-18T18:15:00Z', endTime: '2025-03-18T18:35:00Z', startError: '缓存穿透' },
-        { monitorId: 'mon-4', startTime: '2025-03-18T20:00:00Z', endTime: '2025-03-18T20:12:00Z', startError: '第三方 API 限流' }
-      ];
+// ---------- 工具函数 ----------
+// 时长格式化：将毫秒转为人类可读 (如 "2小时15分钟", "8分钟", "45秒")
+function humanizeDuration(ms) {
+  if (ms < 0) return '—';
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
-      // ---------- 工具函数 ----------
-      // 时长格式化：将毫秒转为人类可读 (如 "2小时15分钟", "8分钟", "45秒")
-      function humanizeDuration(ms) {
-        if (ms < 0) return '—';
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
+  if (days > 0) {
+    const remainHours = hours % 24;
+    return remainHours > 0 ? `${days}天 ${remainHours}小时` : `${days}天`;
+  }
+  if (hours > 0) {
+    const remainMinutes = minutes % 60;
+    return remainMinutes > 0 ? `${hours}小时 ${remainMinutes}分钟` : `${hours}小时`;
+  }
+  if (minutes > 0) {
+    const remainSeconds = seconds % 60;
+    return remainSeconds > 0 ? `${minutes}分钟 ${remainSeconds}秒` : `${minutes}分钟`;
+  }
+  return `${seconds}秒`;
+}
 
-        if (days > 0) {
-          const remainHours = hours % 24;
-          return remainHours > 0 ? `${days}天 ${remainHours}小时` : `${days}天`;
-        }
-        if (hours > 0) {
-          const remainMinutes = minutes % 60;
-          return remainMinutes > 0 ? `${hours}小时 ${remainMinutes}分钟` : `${hours}小时`;
-        }
-        if (minutes > 0) {
-          const remainSeconds = seconds % 60;
-          return remainSeconds > 0 ? `${minutes}分钟 ${remainSeconds}秒` : `${minutes}分钟`;
-        }
-        return `${seconds}秒`;
+// 格式化时间为 "YYYY-MM-DD HH:mm"
+function formatDateTime(isoString) {
+  if (!isoString) return '—';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return isoString;
+  }
+}
+
+// ---------- 其它工具 ----------
+// HTML 转义，防止 XSS
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+var PAGE_SIZE = 20;
+
+// 分页状态
+var incidentsState = {
+  all: [],        // 后端返回的全部事件（已按 monitor_id 过滤）
+  page: 1,
+  status: 'all'   // all | open | closed
+};
+
+// ---------- 渲染：加载 / 错误 / 空态 ----------
+function renderLoading() {
+  var tbody = document.getElementById('incident-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">加载事件数据…</td></tr>';
+  var pager = document.getElementById('pager');
+  if (pager) pager.style.display = 'none';
+}
+
+function renderError(msg) {
+  var tbody = document.getElementById('incident-tbody');
+  if (!tbody) return;
+  tbody.innerHTML =
+    '<tr><td colspan="6"><div class="error-wrap">加载失败：<span>' +
+    esc(msg) +
+    '</span> <button class="retry-btn" onclick="initIncidentsPage()">重试</button></div></td></tr>';
+  var pager = document.getElementById('pager');
+  if (pager) pager.style.display = 'none';
+}
+
+function renderEmpty() {
+  var tbody = document.getElementById('incident-tbody');
+  if (!tbody) return;
+  tbody.innerHTML =
+    '<tr><td colspan="6"><div class="empty-state">' +
+      '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' +
+        '<polyline points="9 12 11 14 15 10"/>' +
+      '</svg>' +
+      '<div class="empty-title">一切正常，暂无事件记录</div>' +
+      '<div class="empty-desc">站点运行稳定时这里会保持安静；一旦某次检查失败，事件会自动出现在这里。</div>' +
+      '<a class="empty-link" href="/monitors">去查看监控列表</a>' +
+    '</div></td></tr>';
+  var pager = document.getElementById('pager');
+  if (pager) pager.style.display = 'none';
+}
+
+// ---------- 前端状态过滤 ----------
+function filterByStatus(items, status) {
+  if (status === 'open') {
+    return items.filter(function (it) {
+      return it.ended_at === null || it.ended_at === undefined || it.ended_at === '';
+    });
+  }
+  if (status === 'closed') {
+    return items.filter(function (it) {
+      return !(it.ended_at === null || it.ended_at === undefined || it.ended_at === '');
+    });
+  }
+  return items;
+}
+
+// ---------- 渲染数据行 ----------
+function renderRows() {
+  var tbody = document.getElementById('incident-tbody');
+  if (!tbody) return;
+
+  var filtered = filterByStatus(incidentsState.all, incidentsState.status);
+
+  if (!filtered.length) {
+    renderEmpty();
+    return;
+  }
+
+  var total = filtered.length;
+  var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (incidentsState.page > totalPages) incidentsState.page = totalPages;
+  if (incidentsState.page < 1) incidentsState.page = 1;
+
+  var startIdx = (incidentsState.page - 1) * PAGE_SIZE;
+  var endIdx = Math.min(startIdx + PAGE_SIZE, total);
+  var pageItems = filtered.slice(startIdx, endIdx);
+
+  var now = Date.now();
+  var html = '';
+
+  for (var i = 0; i < pageItems.length; i++) {
+    var it = pageItems[i];
+    var isOpen = (it.ended_at === null || it.ended_at === undefined || it.ended_at === '');
+    var monitorName = it.monitor_name || ('监控 #' + it.monitor_id);
+    var monitorId = it.monitor_id;
+    var startErr = it.start_error || '';
+
+    // 持续时长
+    var durationMs;
+    if (isOpen) {
+      var startedMs = it.started_at ? new Date(it.started_at).getTime() : now;
+      if (isNaN(startedMs)) startedMs = now;
+      durationMs = now - startedMs;
+    } else {
+      if (typeof it.downtime_sec === 'number' && it.downtime_sec >= 0) {
+        durationMs = it.downtime_sec * 1000;
+      } else if (it.started_at && it.ended_at) {
+        var s = new Date(it.started_at).getTime();
+        var e = new Date(it.ended_at).getTime();
+        durationMs = (!isNaN(s) && !isNaN(e)) ? (e - s) : 0;
+      } else {
+        durationMs = 0;
       }
+    }
+    var durationText = humanizeDuration(durationMs);
 
-      // 格式化时间为 "YYYY-MM-DD HH:mm"
-      function formatDateTime(isoString) {
-        if (!isoString) return '—';
-        try {
-          const d = new Date(isoString);
-          if (isNaN(d.getTime())) return isoString;
-          const pad = (n) => n.toString().padStart(2, '0');
-          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        } catch {
-          return isoString;
-        }
+    var statusPill = isOpen
+      ? '<span class="pill pill-open">进行中</span>'
+      : '<span class="pill pill-closed">已恢复</span>';
+
+    var endText = isOpen ? '—' : formatDateTime(it.ended_at);
+
+    html += '<tr class="incident-row" data-idx="' + esc(it.id) + '">' +
+      '<td><a class="monitor-name" href="/profile?id=' + esc(monitorId) + '">' + esc(monitorName) + '</a></td>' +
+      '<td>' + esc(formatDateTime(it.started_at)) + '</td>' +
+      '<td>' + esc(endText) + '</td>' +
+      '<td><span class="duration-badge">' + esc(durationText) + '</span></td>' +
+      '<td class="error-cell" title="' + esc(startErr) + '">' + esc(startErr || '—') + '</td>' +
+      '<td>' + statusPill + '</td>' +
+    '</tr>';
+
+    // 详情行
+    html += '<tr class="incident-detail" style="display:none;">' +
+      '<td colspan="6">' +
+        '<div class="detail-box">' +
+          '<div class="detail-label">完整起始错误</div>' +
+          '<pre class="detail-error">' + esc(startErr || '（无错误信息）') + '</pre>' +
+          '<a class="detail-link" href="/profile?id=' + esc(monitorId) + '">查看监控档案 →</a>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }
+
+  tbody.innerHTML = html;
+
+  // 绑定点击展开 / 收起
+  var rows = tbody.querySelectorAll('tr.incident-row');
+  for (var r = 0; r < rows.length; r++) {
+    rows[r].addEventListener('click', function (ev) {
+      // 点击链接不展开
+      var target = ev.target;
+      if (target && target.tagName === 'A') return;
+      var detail = this.nextElementSibling;
+      if (detail && detail.classList.contains('incident-detail')) {
+        detail.style.display = (detail.style.display === 'none' || !detail.style.display) ? 'table-row' : 'none';
       }
+    });
+  }
 
-      // 根据监控ID获取名称
-      function getMonitorName(monitorId) {
-        const monitor = MONITORS.find(m => m.id === monitorId);
-        return monitor ? monitor.name : monitorId;
+  renderPager(total);
+}
+
+// ---------- 分页 ----------
+function renderPager(total) {
+  var pager = document.getElementById('pager');
+  if (!pager) return;
+
+  var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (totalPages <= 1) {
+    pager.style.display = 'none';
+    pager.innerHTML = '';
+    return;
+  }
+
+  pager.style.display = '';
+
+  var prevDisabled = incidentsState.page <= 1;
+  var nextDisabled = incidentsState.page >= totalPages;
+
+  pager.innerHTML =
+    '<button class="pager-btn" id="pager-prev"' + (prevDisabled ? ' disabled' : '') + '>上一页</button>' +
+    '<span class="pager-info">第 ' + incidentsState.page + ' / ' + totalPages + ' 页 · 共 ' + total + ' 条</span>' +
+    '<button class="pager-btn" id="pager-next"' + (nextDisabled ? ' disabled' : '') + '>下一页</button>';
+
+  var prevBtn = document.getElementById('pager-prev');
+  var nextBtn = document.getElementById('pager-next');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function () {
+      if (incidentsState.page > 1) {
+        incidentsState.page -= 1;
+        renderRows();
       }
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function () {
+      if (incidentsState.page < totalPages) {
+        incidentsState.page += 1;
+        renderRows();
+      }
+    });
+  }
+}
 
-      // ---------- 渲染表格 ----------
-      function renderTable(incidents, tbody) {
-        if (!incidents || incidents.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="empty-message">暂无事件记录</td></tr>`;
-          return;
-        }
+// ---------- 拉取事件 ----------
+function loadIncidents() {
+  renderLoading();
 
-        const rows = incidents.map(inc => {
-          const monitorName = getMonitorName(inc.monitorId);
-          const startFormatted = formatDateTime(inc.startTime);
-          const endFormatted = formatDateTime(inc.endTime);
-          const startDate = new Date(inc.startTime);
-          const endDate = new Date(inc.endTime);
-          let durationMs = 0;
-          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
-            durationMs = endDate - startDate;
-          }
-          const durationHuman = humanizeDuration(durationMs);
+  var sel = document.getElementById('f-monitor');
+  var monitorId = sel ? sel.value : 'all';
 
-          // 安全转义错误文本（简单转义）
-          const safeError = inc.startError
-            ? inc.startError.replace(/[&<>"]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;
+  var path = '/api/incidents?limit=100';
+  if (monitorId && monitorId !== 'all') {
+    path += '&monitor_id=' + encodeURIComponent(monitorId);
+  }
+
+  return api(path)
+    .then(function (data) {
+      var items = (data && data.items) ? data.items : [];
+      incidentsState.all = items;
+      incidentsState.page = 1;
+      renderRows();
+    })
+    .catch(function (err) {
+      renderError(err && err.message ? err.message : '未知错误');
+    });
+}
+
+// ---------- 填充监控下拉 ----------
+function loadMonitors() {
+  return api('/api/monitors')
+    .then(function (list) {
+      var sel = document.getElementById('f-monitor');
+      if (!sel) return;
+      var arr = Array.isArray(list) ? list : [];
+
+      var html = '<option value="all" selected>全部监控</option>';
+      for (var i = 0; i < arr.length; i++) {
+        var m = arr[i] || {};
+        html += '<option value="' + esc(m.id) + '">' + esc(m.name || ('监控 #' + m.id)) + '</option>';
+      }
+      sel.innerHTML = html;
+    })
+    .catch(function () {
+      // 监控列表失败不影响事件列表展示
+    });
+}
+
+// ---------- 入口 ----------
+function initIncidentsPage() {
+  incidentsState.all = [];
+  incidentsState.page = 1;
+  incidentsState.status = 'all';
+
+  var sel = document.getElementById('f-monitor');
+  if (sel) {
+    sel.onchange = function () {
+      incidentsState.page = 1;
+      loadIncidents();
+    };
+  }
+
+  var statusSel = document.getElementById('f-status');
+  if (statusSel) {
+    statusSel.onchange = function () {
+      incidentsState.status = statusSel.value || 'all';
+      incidentsState.page = 1;
+      renderRows();
+    };
+  }
+
+  renderLoading();
+
+  loadMonitors().then(function () {
+    return loadIncidents();
+  });
+}
+/* ==== NEW_SCRIPT_END ==== */
+  </script>
+</body>
+</html>

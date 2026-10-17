@@ -17,6 +17,7 @@
 | stagecue | 无 Web UI（Kotlin） | — | — |
 | voxloom | 桌面（C#/Avalonia） | 无 Web 组件库 | — |
 | drama-factory | Web | Tabler 1.6.1 | 仓库内唯一使用第三方前端组件库的项目 |
+| botstalk | Web（React 18） | 无（手写 CSS） | — |
 
 > 选型铁律（2026-10-13 用户亲定）：每个项目的 UI 组件库尽量不要一样。后续新项目或重设计选型前，必须先查此表避重。
 
@@ -255,6 +256,12 @@
 **v2.1「生产级补强」（2026-10-15）**：v2.0 对照报告第 7 节 7 项排期全部关闭——`migrations.py`（PRAGMA user_version=2，v2 DDL 从 models 编译生成，`init_db` 改走 `run_migrations`）+ `logging.py`（JsonFormatter 单行 JSON / RequestIdMiddleware 全链路 request_id + `X-Request-Id` 回写 / 未处理异常兜底 500，`LEDGER_LOG_LEVEL` 非法值启动 fail-fast）+ `routers/metrics.py`（Prometheus 文本 6 指标）+ `GET /api/ready`（200/503）+ 优雅关闭（lifespan dispose engine）+ `backup.py`（integrity_check / keep 修剪 / 同秒 `-N` 后缀 / 恢复前安全快照 / 坏备份拒绝）+ `python -m ledger backup|restore`（`make backup [KEEP=N]` / `make restore FILE=`）+ `docker-compose.yml`（healthcheck / 资源限制 / 日志轮转 / named volume）+ `docs/OPERATIONS.md` + `tests/test_failure_injection.py` 4 例；pytest **119/119** 全过（新增 22 例）、ruff 全洁；真实服务冒烟：建账→交易→metrics→备份→删库→恢复→数据一致全链路通过；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.1.md（结论可发版）。本轮修真 bug 4 个：`python -m ledger serve` 启动崩溃（`args.dir` 在 serve 子命令不存在，冒烟抓出）、坏 CSV 的 `csv.Error` 抛 500（改 errors 行收集，失败注入抓出）、`integrity_check` 对损坏文件抛裸 `sqlite3.DatabaseError`（改 `BackupError`）、备份写入失败抛裸 `OSError` 且留半成品（改 `BackupError` 并清理）。教训：FastAPI 0.143 把 `@app.exception_handler(Exception)` 转给 ServerErrorMiddleware（响应后仍 re-raise，测试侧可见异常穿透），500 兜底改由 RequestIdMiddleware 直接返回；`pkill -f` 再次自杀（教训重犯：命令行自匹配，必须用括号技巧）。
 **v2.2「多币种与汇率」（2026-10-16）**：`currencies` 汇率表 + 统计按本位币折算（commit a265b1e）。
 **v2.3「全站移动端适配」（2026-10-16）**：`@media (max-width: 768px)` 断点；顶栏导航横向滑动；触控目标 ≥44px；交易列表、侦探队列规则表在移动端转卡片流（`data-label` 列名，`table:has()` 精确命中）；仪表盘/预算页移动端布局（汇总卡单列、图表上下排、快捷入口两列、预算行换行）；品牌 logo 从 emoji 换成内联 SVG 硬币线稿 mark；`tests/test_mobile.py`（10 页 200 + viewport 标记 + 断点 CSS 存在性冒烟）；修导航高亮选择器 `.nav a.active` 缺圆点致永不生效；补齐模板存在但 CSS 从未定义的类（`.filters`、`.pagination`、`.summary-cards`、`.charts`、`.quick-link-grid`、`.budget-row`、`.toolbar` 等）桌面样式；pytest **157/157**（含 test_mobile.py 16 例）、ruff 全洁；3 张移动端真实截图亲眼验收（仪表盘单列/交易卡片流真实数据/侦探队列+规则表）。
+**v2.6「真实 OCR 提供商 + 审核修正台」（2026-10-17）**：TesseractOcrProvider（调本地 tesseract CLI stdin/stdout；超时 30 秒 LEDGER_OCR_TIMEOUT、语言 chi_sim+eng LEDGER_OCR_LANG；缺 binary 时报错并给 apt/brew 安装命令；识别失败/超时抛 OcrFailedError）；金额提取先遮日期片段再取最大值（修日期干扰金额的 bug）；OCR 审核队列：POST /api/bills/ocr 返回 review_id 并写入 ocr_reviews 表（status=pending）；GET /api/bills/review（待审核列表）、GET /review/{review_id}/image（原图）、POST /review/{id}/confirm（确认入账，重复确认 409）、POST /review/{id}/reject（驳回）；/bills/review 页面（原图缩略 + 识别字段可编辑 + 置信度低于 70% 的字段标红）；OcrResult 新增 field_confidence；DB 迁移 v4→v5（CURRENT_VERSION=5）；pytest 242 通过（test_ocr_tesseract 18 例 + 1 跳过系环境无 tesseract、test_bills_review 15 例）、ruff 全洁；3 处硬编码版本号断言改为 CURRENT_VERSION。
+**v2.7「商户别名管理」（2026-10-17）**：关闭 v2.4 遗留缺口"别名无修改/删除入口"——GET /api/merchant-aliases（列表，含 category_name）、PATCH /api/merchant-aliases/{id}（改别名文本/改映射分类；404 别名或分类不存在、400 无更新字段或别名为空、409 别名冲突）、DELETE /api/merchant-aliases/{id}；schemas 新增 MerchantAliasOut、MerchantAliasUpdate；侦探页新增「记住的商户别名」管理区（每行改名/重选分类/删除即时生效，空状态有引导文案）；tests/test_merchant_aliases.py 8 例；pytest 250 通过、1 跳过（既有 tesseract 缺失）、ruff 全洁。
+**v2.8「账单图片 OCR 录入」（2026-10-17，commit 1c39719）**：POST /api/statements/ocr（magic bytes 校验、5MB 上限；坏图 400 / 超限 413 / 非图片 415 / 识别为空 422 / 无 tesseract binary 503 并带安装指引）；ocr.py（OcrUnavailableError 诚实不可用）；statement.html 上传卡片（拖拽区+进度条+识别预览后进核对流）；侦探队列集成（OCR→上传→确认→认领→记住为规则全复用既有接口）；pytest 265/265（1 跳过为环境无 tesseract 的既有用例）、ruff 全洁、真实服务冒烟 7 步全过、2 张截图亲眼验收。诚实缺口：真实 tesseract 未实测（环境无 binary）；OCR 识别成功率等 Prometheus 指标未加（排期下一轮，已在 v2.8.1/v2.9 交付）。
+**v2.8.1「OCR Prometheus 指标（第一版）」（2026-10-17，commit d393224）**：ocr_requests_total{result=ok|unavailable|error} counter + ocr_duration_seconds histogram（buckets 0.05~10）；只统计走到 OCR provider 调用的请求；并入 GET /api/metrics（手写 Prometheus exposition，零新依赖）；埋点异常只记 warning 永不影响主流程；tests/test_ocr_metrics.py 7 例；真实冒烟验证指标名与标签。
+**v2.9「OCR 可观测性指标（第二版）」（2026-10-17，commit 7839fa5）**：与 v2.8.1 是增量升级、不是重复交付——指标改名 ledger_ocr_*（v2.8 排期时的占位名 ledger_ocr_requests_total{provider,status} 当时并未实际使用，v2.8.1 实际交付的是无前缀名）；升级为全路径埋点（每次 POST /api/statements/ocr 都计数，含 400/413/415 前置校验拒绝）；新增 ledger_ocr_failures_total{reason=unavailable|unsupported|invalid|oversize|internal} + ledger_ocr_confidence_avg gauge（tesseract TSV 词置信度均值 0~1，无样本时为 0）；v2.8.1 旧指标名已移除、旧测试文件 tests/test_ocr_metrics.py 已删除；OcrEmptyError→422/result empty；埋点故障隔离（自身异常只 warning）；tests/test_ocr_metrics_v29.py 14 例；pytest 279 通过、1 跳过（既有）；真实冒烟（mock provider）：有效 PNG→200、.txt→415、魔数非法→400、超 5MB→413，/metrics 验证各分类计数；OPERATIONS.md §5 监控表格已更新。
+注：版本号有一段混乱史，诚实记录——commit 1c39719 标题自称 v2.5，但它写入 CHANGELOG 的节标题是"## v2.8 - 2026-10-17"；commit 5c1b6fb（v2.6）的提交时间早于 1c39719；CHANGELOG 无 v2.5 节（v2.5 标题对应的内容即 v2.8 节）；PROJECTS.md 按 CHANGELOG 口径记 v2.6→v2.8→v2.8.1→v2.9。
 
 **里程碑记录**：
 
@@ -265,11 +272,16 @@
 - v2.3 全站移动端适配（2026-10-16）：见"状态"节；pytest 157/157、ruff 全洁；3 张移动端真实截图亲眼验收
 - **v2.4「侦探规则引擎 2.0」（2026-10-16）**：模糊匹配升级（金额容差 ±100 分/±1%、日期窗口 ±3 天、商户别名学习一次记住、转账配对 transfer-pair）+ 侦探页批量认领/忽略；修真线上 bug：base.html 给 app.js 加 defer 致内联脚本先执行 `api 未定义`（去 defer，生产级复现验证）；pytest **186/186**（新增 29）、ruff 全洁；冒烟 15/15 全链路；桌面+移动截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_v2.4.md`。已知限制：转账配对仅同批次内；~~别名无修改/删除入口（排期下轮）~~（已在 2026-10-17 交付：侦探页别名管理区 + 列出/改名/删除 API，pytest 回归全过）
 - **v2.8「账单图片 OCR 录入」（2026-10-17）**：`POST /api/statements/ocr`（magic bytes 校验、5MB 上限、图片格式白名单；坏图 400 / 超限 413 / 非图片 415 / 识别为空 422 / 无 tesseract binary 503 并带安装指引）；`ocr.py`（`OcrUnavailableError` 诚实不可用）；statement.html 上传卡片（拖拽区+进度条+识别预览后进核对流）；侦探队列集成（OCR→上传→确认→认领→记住为规则全复用既有接口）；pytest **265/265**（1 跳过为环境无 tesseract 的既有用例）、ruff 全洁、真实服务冒烟 7 步全过、2 张截图亲眼验收。诚实缺口：真实 tesseract 未实测（环境无 binary）；OCR 识别成功率等 Prometheus 指标未加（排期下一轮）。注：CHANGELOG 记为 v2.8（v2.5/v2.6/v2.7 已被占用）
+- **v2.6 真实 OCR provider + 审核修正台（2026-10-17）**：见"状态"节；pytest 242 通过（新增 test_ocr_tesseract 18+1 跳过、test_bills_review 15）、ruff 全洁；DB 迁移 v4→v5。
+- **v2.7 商户别名管理（2026-10-17）**：见"状态"节；关闭 v2.4 遗留缺口；pytest 250 通过、ruff 全洁。
+- **v2.8.1 OCR Prometheus 指标第一版（2026-10-17）**：ocr_requests_total / ocr_duration_seconds（仅 provider 到达请求）；tests/test_ocr_metrics.py 7 例；真实冒烟验证。
+- **v2.9 OCR 可观测性指标第二版（2026-10-17）**：与 v2.8.1 为增量升级（改名 ledger_ocr_* + 全路径埋点 + failures 五分类 + confidence_avg gauge；旧指标名与旧测试已删除）；pytest 279 通过、1 跳过；真实冒烟验证各分类计数；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.9.md。
 
 **后续计划**：
 
 - ~~账单图片 OCR 录入~~（已在 2026-10-17 交付 v2.8）
-- Dependabot（等 gh token 补 workflow 权限后迁仓库根，与其他项目同）
+- ~~pip 依赖定期扫描~~（v2.10 落地本地脚本版 scripts/deps_scan.py + 每周 workflow；Dependabot 等 gh token 补 workflow 权限后迁仓库根，与其他项目同）
+- ~~旧端点 POST /api/bills/ocr 埋点~~（v2.9 已知限制，已在 v2.10 交付 ledger_bills_ocr_* 指标集）
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
@@ -302,6 +314,8 @@
 - **v0.6「告警规则+依赖扫描+真实负载」（2026-10-17）**：`prometheus/rules/sentinel.yml` 6 条告警规则（实例 down / 调度停滞 / 队列积压>50 / 投递失败率>20% / 检查失败激增 / 自身 API 5xx 率>5%）+ `prometheus/prometheus.yml` 抓取示例；`RenderQueueBacklog` 指标缺口补齐（`sentinel_webhook_queue_backlog{status="pending"|"retrying"}`）；OPERATIONS.md 第 10 章（阈值依据、静默/值班建议）+ §5.2 订正；`scripts/depscan.sh` 实跑（23 个模块，OSV 3 个 + govulncheck 46 个 = 49 个漏洞，全在 Go 标准库 go1.23.4 与 x/mod、x/sys，因 go1.23.4 过旧，无第三方业务依赖漏洞，退出码 1）；`scripts/load_check.sh` 实跑（40 轮检查，p50=6.0ms、p99=14.8ms，4 down 事件全对、无误报，webhook 4/4，积压峰值 2 并排空，耗时 73s）；`go test` **141/141**、vet/gofmt 全洁、fault-drill 13/13；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.md` 关闭全部 v0.5 排期项。诚实缺口（排期 v0.7）：入队限流、投递熔断、Go 工具链升级后复扫、incidents.html 模拟数据债
 - **v0.7「入队限流+投递熔断」（2026-10-17）**：`internal/notify/limiter.go` 令牌桶入队限流（`SENTINEL_WEBHOOK_QUEUE_ENQUEUE_RPS` 默认 20/`_BURST` 默认 40，非法启动 fail-fast，超限丢弃+计数+warn 日志）+ `internal/notify/circuit.go` 按 host 投递熔断（闭合→断开→半开→闭合，半开单探测，与指数退避/手动重试正交）+ 指标 `sentinel_webhook_enqueue_rejected_total`/`sentinel_webhook_breaker_state{host}` 进 `/api/metrics` + 告警规则 8 条 + `OPERATIONS.md` 第 12 章调参；`go test` **190/190**（含 -race 并发）、`go vet` 全洁；真实冒烟（必失败 sink 下 2 次连续失败即熔断断开、10 死目标洪峰下限流拒绝 8 次、sink 恢复后半开探测成功闭合）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.7.md` 关闭 v0.6 全部排期中的限流熔断项。诚实缺口（排期后续）：Go 工具链升级后复扫、`incidents.html` 模拟数据债
 
+- **v0.8「事件页真实数据」（2026-10-17）**：偿还 v0.6/v0.7 挂账——incidents.html 删掉写死的 MONITORS/INCIDENTS 常量与尾部截断的残缺 JS（含首行多余 markdown 围栏导致的 quirks 模式），改接真实接口 GET /api/incidents（monitor_id 筛选走服务端、limit=100）与 GET /api/monitors（填充筛选下拉）；新增“状态”列（进行中/已恢复 pill，未恢复事件持续时长按 now-started_at 实时计算）；监控筛选 + 状态筛选；点击行展开详情行（完整 start_error + 监控档案链接）；客户端分页（20 条/页）；设计的空态（线条图标+文案+去监控列表链接）与带重试按钮的错误态；全部插入文本 esc 转义。新增 scripts/smoke_incidents.sh（down→recovered 闭环冒烟：断言 open 态 ended_at/downtime_sec 为 null、recovered 态字段齐全，幂等自清理）+ Go 测试 TestListIncidentsOpenEndedNull（open/closed JSON 契约）；`go test` **191/191**、go vet/gofmt 全洁、handlers/store 包 -race 全过；真实服务视觉验收（1 open + 1 recovered 事件截图亲眼验收：双 pill、实时时长、筛选、详情展开、空态、错误态均正常）。发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.8.md`。诚实缺口（排期后续）：Go 工具链升级后复扫；事件页分页为客户端分页（limit=100 上限内有效）；后端存在手动检查与调度 tick 并发导致同一监控短时出现两个 open 事件的竞态（本轮为避开它用 disabled 监控做验收，未修）。
+
 **后续计划**：
 
 - 短信告警（邮件/企业微信 webhook 已落地）
@@ -331,6 +345,8 @@
 **v0.10.0「多用户支持」（2026-10-17）**：kDefaultUser/checkUserValid/user 列全 API 贯通，schema v3→v4 自动迁移；6 例多用户测试；修 DocxExtractor 页眉页脚 compare 真 bug；ctest **148/148** 全过。
 **v0.11.0「搜索质量 T1/T2 修复」（2026-10-17，前一轮孤儿工作本轮收编验证）**：T1 分词器单调游标 find 在 CutForSearch 重叠词下静默丢词→全文 occurrence 扫描 + 已认领集合；T2 查询侧新增第 3 阶段子串召回回退（中文 token 拆单字 OR 粗筛 + 原始 token 子串精验，只在精确 AND/OR 回退为空时触发）；`expandTokenOrQuery` 按起始字节位置分组（同位置重叠词 OR、不同位置 AND，连接符改显式 ` AND `）；3 个先红后绿复现测试；评测 44→56 对，Top-1 36/44（81.8%）→**48/56（85.7%）**，8 失败与基线同一集合（qa 独立已知问题）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.md`。
 **v0.11.1「版本号唯一来源 + 定位逻辑公共抽取」（2026-10-17）**：修 v0.10.0 遗留 service.cpp 两处 "0.9.0" 硬编码，新建 `include/docseek/version.h`（`kDocseekVersion` 唯一来源）；偿还 v0.11.0 技术债：新建 `token_locate` 模块（`claimTokenPositions`），jieba_tokenizer 与 searcher 双双改用（语义逐行一致）；新增 `test_token_locate.cpp` 7 例 + Health 版本断言；`./docseek_tests --gtest_filter='-WatcherTest.SubDir'` **157/157** 全过；README 搜索质量小节更新；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.11.1.md`。
+**v0.12.0「问句理解升级」（2026-10-17）**：问句改写（`src/query_parser.cpp`：fillerWords 疑问词表清理、全表按长度严格降序；新增 trailingPredicates 尾部谓语剥离：写在哪/写在/说明/介绍/申请/开具/重置/阐述/写，只剥尾部谓语、保留名词主题）+ 段落排序修复（`src/passage_ranker.cpp`：标题行断窗覆盖 bug；passageIntent=true 时含标题行窗口 +0.1）+ 问句召回路径（`src/locator.cpp` recallQuery 跨 keywords/phrases 去重；`Searcher::searchQuestion`：AND∪OR 并集召回、doc_id 去重，rerankHits 抽取共用）；评测集 `eval/eval_pairs_v08.json`（71 对）；测试 +10，ctest **168/168**（除 WatcherTest.SubDir 已知 inotify flaky）；评测 v07 **55/56（98.2%）**、qa **11/12**（基线 4/12）；v08 66/71（93.0%）、qa 22/27；已知限制：v07-024「安装步骤在哪里」仍被干扰文档压制、v08 新增 4 问失败（v0.13 排期）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`。
+
 
 **发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。v0.6.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`。v0.7.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。
 
@@ -351,11 +367,14 @@
 - **v0.10.0「多用户支持」（2026-10-17）**：`kDefaultUser="local"` + `checkUserValid`（非法抛 runtime_error）+ Document.user 列；upsert/removeByPath/list/findByPath/searchFts/docCount/totalBytes 全加 user 参数（默认 local，旧调用兼容）；新增 `removeByUser`；schema v3→v4 自动迁移（老数据归属 local）；6 例多用户测试（隔离/同路径多版本/检索隔离/removeByUser/校验/默认用户）；修真 bug：DocxExtractor 页眉页脚 `compare(0,12,"word/header")` 恒假（11 字符前缀），ExtractChineseTableHeader 通过；MigrateOldSchema 过时期望 3→4 已更新；`--version` 0.10.0；ctest **148/148** 全过
 - **v0.11.0「搜索质量 T1/T2 修复」（2026-10-17）**：见"状态"节；前一轮 agent 做到一半 VM 重启去世遗留未提交改动，本轮收编：重新构建+ctest+CLI smoke 验证后提交
 - **v0.11.1「版本号唯一来源 + 定位逻辑公共抽取」（2026-10-17）**：见"状态"节；本轮抓出并修复流程 bug：PATCH 应用脚本多对 OLD/NEW 挤一个块会被当字面量污染源码（已恢复文件，prompt 格式改为一块一对并同步三个协调员）
+- **v0.12.0「问句理解升级」（2026-10-17）**：见"状态"节；评测 v07 55/56（qa 4/12→11/12），评测集扩至 v08（71 对）。
+
 
 **后续计划**：
 
 - ~~搜索质量 T1/T2~~（已在 v0.11.0 交付）
-- qa 自然语言问句 4/12（独立已知问题，未改善）
+- qa 自然语言问句 v07 11/12（v0.12.0 已把基线 4/12 提升到 11/12；剩余 v07-024 一问 v0.13 攻坚）
+
 
 **里程碑记录**：
 
@@ -578,3 +597,32 @@
 - v0.2.0（2026-10-15）：SQLite + Flyway 迁移替代 JSON 存储 + Micrometer /metrics + 备份恢复演练 + 非法配置 fail-fast + 排练模式后端实现 + MP3 解码
 - v0.3.0 限流 + 就绪探针 + WS 背压（2026-10-16）：见"状态"节；JUnit 44/44 全过
 - **v0.4.0「可观测性收尾」（2026-10-16）**：Logback 日志轮转（控制台+文件双输出，按天+50MB 切分，保留 14 天，总量 512MB，root 级别跟 `STAGECUE_LOG_LEVEL`）+ Prometheus 告警规则 5 条（StageCueDown/WsDisconnectSpike/RateLimitSpike/BroadcastDrop/DbMigrationStuck）+ docker-compose 资源限制（512M/1c 上限、128M 预留）与日志轮转；`TECH_DEBT` 关闭 #3（告警规则）/#4（日志轮转/资源限制）；kotlinc 直编零错、JUnit **52/52**（新增 LogConfigTest/AlertRulesTest 各 4 例）；真实冒烟（:18080）：/api/show 5 条默认 cue、/readyz ready、/metrics 9 个 stagecue_ 指标、stagecue.log 正常落盘；发版对照报告 `docs/PRODUCTION_REPORT_v0.4.0.md`（诚实列 6 项未通过，带排期）
+
+## botstalk「个人 AI 团队办公室」
+
+**定位**：个人 AI 团队办公室——用户当老板在群里派活，各家 personal agent 以 adapter 接入、bot 间可 @ 交接、群里汇报。三层结构：L0 用户 / L1 聊天室纯聚合层（收发、@路由、分发、展示、存历史，不做 function calling）/ adapter 翻译层 / L2 Agents 执行层。adapter 分两层语义：脑力层（模型 API）+ 本体层（agent 执行环境）。
+
+**技术栈**：TypeScript pnpm workspace monorepo——packages/protocol（协议 v1.1：原生 WS + 统一 seq/ack 信封 + gseq 网关全局序列号 + 心跳 20s/45s 判离线 + per-adapter FIFO 补发 + seq 单调去重窗口）、gateway（Node + ws + node:sqlite）、adapters/base（AdapterClient：gseq 水位跟踪与磁盘持久化）+ deepseek（brain/body 双模式）+ echo、web（Vite + React 18 + 手写 CSS + lucide-react 图标）。
+
+**功能模块**：
+
+1. @提及路由与 task 派发（task 回执广播）
+2. presence 心跳与 usage 随心跳上报
+3. 断线重连补发（last_seen_seq=gseq 语义）
+4. artifacts 整份重传（upload_url 5 分钟发起窗口）
+5. 历史分页 API 与 Web 分页加载
+6. usage 可观测（/api/usage + 成员面板用量展示）
+7. gseq 与重发队列 SQLite 持久化（网关重启不断补发）
+
+**状态**：v0.2.0（2026-10-17）「补发语义收敛 + usage 可观测 + 重启持久化」：修 Web 端 gseq 水位 bug（曾用 per-sender seq 当 last_seen_seq）；presence API 返回全量成员 + usage；新增 /api/usage；gseq/重发队列 SQLite 持久化；测试卫生（hub.test.ts 改 tmpdir，删 8 个 test-tmp-* 残留）。gateway vitest 全绿、tsc 零错。
+
+**里程碑记录**：
+
+- protocol v1.1（2026-10-16）：gseq、last_seen_seq 重定义、自激风暴修复，e2e 6/6
+- **v0.2.0（2026-10-17）**：见"状态"节。
+
+**后续计划**：
+
+- task 状态追踪面板（派发→回执全链路 Web 可见）
+- Web 未读计数
+- Docker Compose 一键部署 + 运维手册

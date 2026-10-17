@@ -1,6 +1,6 @@
 {
   "name": "botstalk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "BotsTalk — 个人 AI 团队办公室：多 personal agent 群聊",
   "workspaces": [

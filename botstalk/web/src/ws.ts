@@ -4,6 +4,7 @@ export interface InboundMessage {
   v: number;
   type: string;
   seq: number;
+  gseq?: number;
   ack: number;
   sender: string;
   room: string;
@@ -27,7 +28,7 @@ export class ChatSocket {
   private room: string;
   private events: WSEvents;
   private sendSeq = 1;
-  private lastSeenSeq = 0;
+  private maxGseq = 0;
   private heartbeatTimer: number | null = null;
   private reconnectTimer: number | null = null;
   private reconnectAttempt = 0;
@@ -100,8 +101,13 @@ export class ChatSocket {
       } catch {
         return;
       }
-      if (typeof frame.seq === 'number' && frame.seq > this.lastSeenSeq) {
-        this.lastSeenSeq = frame.seq;
+      if (typeof frame.gseq === 'number') {
+        if (frame.gseq < this.maxGseq) {
+          // 网关重启了（gseq 回退），重置水位，避免用旧高水位漏消息。
+          this.maxGseq = frame.gseq;
+        } else if (frame.gseq > this.maxGseq) {
+          this.maxGseq = frame.gseq;
+        }
       }
       this.events.onFrame(frame);
     };
@@ -139,7 +145,7 @@ export class ChatSocket {
     this.send('hello', {
       adapter_id: this.nick,
       protocol_version: PROTOCOL_VERSION,
-      last_seen_seq: this.lastSeenSeq,
+      last_seen_seq: this.maxGseq,
     });
   }
 

@@ -19,6 +19,7 @@
 | [interlude](./interlude) | 「幕间 Interlude」——分支叙事的 linter：给独立游戏叙事设计师/互动小说/剧本杀作者的开源桌面工具。Kotlin + Compose Desktop。自研叙事 DSL（行号精确报错）、一致性校验引擎（死路/不可达节点/变量未初始化/条件永假，5 条规则）、可视化分支图（层次化布局）、本地化文本抽取回填；v1.1 新增：结构化日志、lint CLI、端到端测试、OPS 手册；v1.2 新增：.bak 自动备份 + 一键恢复（interlude-lint restore）。 | v2 |
 | [stagecue](./stagecue) | 「舞监台 StageCue」——小剧场/脱口秀/校园演出的多端同步演出控台。Kotlin Multiplatform + Compose Desktop + Ktor：时间轴 cue 编排、WebSocket 毫秒级时钟同步（NTP 式）、幂等事件广播、离线操作日志。QLab 的开源跨平台中文平替。 | v0.2.0 |
 | [voxloom](./voxloom) | 「声纹工坊 VoxLoom」——中文播客/有声书的文字剪辑工作站。C#/.NET 8 + Avalonia 跨平台桌面：转写稿当时间轴，文字删改自动生成音频剪辑（过零点防爆音），语气词一键弱化（-12dB），EDL 导出供 Premiere/Reaper 精修。自研 Core 库（波形金字塔/对齐/剪辑引擎），MP3/FLAC/M4A 真实导入（ffmpeg 解码）。 | v2 |
+| [botstalk](./botstalk) | 「个人 AI 团队办公室」——用户当老板在群里派活，各家 personal agent 以 adapter 接入、bot 间可 @ 交接、群里汇报。TypeScript monorepo：协议 v1.1（原生 WS + gseq 全局序列号 + 心跳 20s/45s 判离线 + per-adapter FIFO 补发）、Node 网关（node:sqlite）、deepseek/echo/base 三个 adapter、Vite + React 18 Web 聊天室（历史分页/成员在线/用量展示）。v0.2 新增 usage 可观测 API 与 gseq/重发队列 SQLite 持久化。 | v0.2.0 |
 
 ## 如何运行
 
@@ -193,6 +194,26 @@ cd stagecue
 ```
 
 完整说明见 [stagecue/README.md](./stagecue/README.md)，发版对照报告见 [stagecue/docs/PRODUCTION_REPORT_v0.2.0.md](./stagecue/docs/PRODUCTION_REPORT_v0.2.0.md)。
+
+### botstalk
+
+进入项目目录安装依赖并启动网关与 Web（需 Node 22+）：
+
+```bash
+cd botstalk
+npm install
+npm run build --workspace=@botstalk/protocol
+node gateway/dist/index.js   # 网关 :8765（WS + HTTP API + /healthz）
+```
+
+另开终端启动 Web：
+
+```bash
+cd botstalk/web
+npm run dev                  # Vite 开发服，浏览器打开提示的地址
+```
+
+完整说明见 [botstalk/README.md](./botstalk/README.md)。
 
 ## 目录约定
 

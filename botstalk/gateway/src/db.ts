@@ -39,7 +39,83 @@ export function openDb(dataDir: string): DatabaseSync {
       created_at_ms INTEGER NOT NULL
     );
   `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS gateway_state (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pending_frames (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      adapter_id TEXT NOT NULL,
+      gseq INTEGER NOT NULL,
+      envelope TEXT NOT NULL,
+      created_at_ms INTEGER NOT NULL
+    );
+  `);
+  db.exec(
+    "CREATE INDEX IF NOT EXISTS idx_pending_frames_adapter_gseq ON pending_frames(adapter_id, gseq);",
+  );
   return db;
+}
+
+export function getGatewayState(db: Db, key: string): string | undefined {
+  const stmt = db.prepare("SELECT value FROM gateway_state WHERE key = ?");
+  const row = stmt.get(key) as unknown as { value: string } | undefined;
+  return row ? row.value : undefined;
+}
+
+export function setGatewayState(db: Db, key: string, value: string): void {
+  const stmt = db.prepare(
+    `INSERT INTO gateway_state (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+  );
+  stmt.run(key, value);
+}
+
+export interface PendingFrameRow {
+  id: number;
+  adapter_id: string;
+  gseq: number;
+  envelope: string;
+  created_at_ms: number;
+}
+
+export function savePendingFrame(
+  db: Db,
+  adapter_id: string,
+  gseq: number,
+  envelopeJson: string,
+): void {
+  const stmt = db.prepare(
+    "INSERT INTO pending_frames (adapter_id, gseq, envelope, created_at_ms) VALUES (?, ?, ?, ?)",
+  );
+  stmt.run(adapter_id, gseq, envelopeJson, Date.now());
+}
+
+export function loadPendingFrames(
+  db: Db,
+  adapter_id: string,
+): Array<{ gseq: number; envelope: string }> {
+  const stmt = db.prepare(
+    "SELECT gseq, envelope FROM pending_frames WHERE adapter_id = ? ORDER BY gseq ASC",
+  );
+  return stmt.all(adapter_id) as unknown as Array<{ gseq: number; envelope: string }>;
+}
+
+export function prunePendingFrames(db: Db, adapter_id: string, keepMax: number): void {
+  const stmt = db.prepare(
+    `DELETE FROM pending_frames
+     WHERE adapter_id = ?
+       AND id NOT IN (
+         SELECT id FROM pending_frames
+         WHERE adapter_id = ?
+         ORDER BY gseq DESC
+         LIMIT ?
+       )`,
+  );
+  stmt.run(adapter_id, adapter_id, keepMax);
 }
 
 export interface MessageRow {

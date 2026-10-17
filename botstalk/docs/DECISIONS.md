@@ -120,4 +120,20 @@ e2e 联调共 6 项，**5/6 通过**。
 
 - protocol 38/38、gateway 22/22、adapter-base 7/7、echo 5/5、deepseek 5/5，共 77 全绿。
 
-=== END ===
+## 2026-10-17：v0.2 补发语义收敛 + usage 可观测 + 重启持久化
+
+### Web 端 gseq 水位修复
+
+web/src/ws.ts 之前把 per-sender seq 当成 `last_seen_seq` 上报，跟 v1.1 定义的“客户端已见最大 gseq”对不上，重连后补发范围算错，跟 2026-10-15 那次失败一个毛病。现在改成跟踪收到的 `frame.gseq`，取最大值存为 `maxGseq`，重连 hello 时携带它。如果新收到的 gseq 比当前水位小（说明网关重启过、gseq 从 1 重新开始），就把水位重置，跟 adapters/base 里的处理保持一致。
+
+### usage 可观测
+
+先把语义定清楚：presence 心跳里带的 usage 是 adapter 侧自己累计的数值，网关收到后直接覆盖写入 presence 表，不做差分累加，避免重复心跳把数字越加越大。新增 `GET /api/rooms/:room/usage`，返回该房间下每个 adapter 的累计用量以及房间总计。presence 端点改成返回全量成员（含离线的），每条带 `usage_in` / `usage_out`。Web 成员面板上把用量展示出来。
+
+### gseq 与重发队列 SQLite 持久化
+
+这条是补 2026-10-16 里记的已知边界：`globalSeq` 和 resendQueues 都是内存态，网关一重启就没了。现在新增 `gateway_state` 表存 `global_seq`，Hub 构造时读回来恢复，`stampOutbound` 每次打戳后写透。新增 `pending_frames` 表存重发帧，`sendTo` 入队时写透，`getResendQueue` 第一次建队时从表里恢复，队列超过 `RESEND_MAX_MSGS` 时裁掉最老的。
+
+### 测试卫生
+
+test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gateway/ 下留下一堆 `test-tmp-*` 目录。改成用 `tmpdir()`，跑完不再堆在仓库里。之前残留的 8 个目录已经删掉了。

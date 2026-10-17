@@ -16,6 +16,7 @@ import type {
 import { Hub } from "../src/hub.js";
 import { openDb, getRoomHistory } from "../src/db.js";
 import type { Db } from "../src/db.js";
+import { randomUUID } from "node:crypto";
 
 let tmpDir: string;
 let db: Db;
@@ -24,7 +25,7 @@ let port: number;
 let hub: Hub;
 
 beforeEach(async () => {
-  tmpDir = mkdtempSync(join(process.cwd(), "test-tmp-"));
+  tmpDir = mkdtempSync(join(tmpdir(), "botstalk-hub-"));
   db = openDb(tmpDir);
   wss = new WebSocketServer({ port: 0 });
   await new Promise<void>((res) => wss.once("listening", () => res()));
@@ -280,6 +281,57 @@ describe("Hub", () => {
     const gseqs = received.map((f) => f.gseq as number);
     for (const g of gseqs) expect(g).toBeGreaterThan(bMaxGseq);
     for (let i = 1; i < gseqs.length; i++) expect(gseqs[i]).toBe(gseqs[i - 1] + 1);
+  });
+});
+
+describe("recovers gseq and resend queue after restart", () => {
+  it("keeps globalSeq and replays pending frames after a new Hub is built", async () => {
+    const db1 = openDb(tmpDir);
+    const hub1 = new Hub(db1);
+    const offlineId = "adapter-restart-1";
+    const room = "room-restart";
+    const gseqsBefore: number[] = [];
+    for (let i = 0; i < 2; i++) {
+      const env = makeEnvelope<MessagePayload>("message", "gateway", room, hub1.nextSeq(), 0, {
+        msg_id: randomUUID(), text: "restart-" + i, mentions: [],
+      });
+      hub1.sendTo(offlineId, env);
+      gseqsBefore.push(env.gseq as number);
+    }
+    db1.close();
+
+    // 模拟网关重启：新 Hub 用同一 DB，并接管 wss 连接
+    const db2 = openDb(tmpDir);
+    const hub2 = new Hub(db2);
+    wss.removeAllListeners("connection");
+    wss.on("connection", (ws: WebSocket) => hub2.handleConnection(ws));
+
+    // gseq 延续：重启后新帧的 gseq 大于重启前
+    const env3 = makeEnvelope<MessagePayload>("message", "gateway", room, hub2.nextSeq(), 0, {
+      msg_id: randomUUID(), text: "after-restart", mentions: [],
+    });
+    hub2.sendTo("adapter-restart-2", env3);
+    expect(env3.gseq as number).toBeGreaterThan(Math.max(...gseqsBefore));
+
+    // 重连补发：offlineId 带 last_seen_seq=0 重连，收到重启前入队的 2 帧
+    const ws = await connectClient();
+    const received: Envelope[] = [];
+    const gotAll = new Promise<void>((resolve) => {
+      ws.on("message", (d) => {
+        received.push(JSON.parse(String(d)) as Envelope);
+        if (received.length >= 2) resolve();
+      });
+    });
+    await hello(ws, offlineId, 0);
+    await Promise.race([
+      gotAll,
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout waiting resend")), 5000)),
+    ]);
+    const texts = received.map((f) => (f.payload as MessagePayload).text).sort();
+    expect(texts).toEqual(["restart-0", "restart-1"]);
+    ws.terminate();
+    await new Promise((r) => setTimeout(r, 100)); // 等 hub close 回调写完 presence 再关库
+    db2.close();
   });
 });
 

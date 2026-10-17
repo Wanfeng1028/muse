@@ -94,7 +94,7 @@ describe("http api", () => {
     expect(page.messages.every((m) => m.id < beforeId)).toBe(true);
   });
 
-  it("filters presence to online only", async () => {
+  it("presence returns all members with usage", async () => {
     upsertPresence(db, {
       adapter_id: "online-1",
       status: "online",
@@ -114,13 +114,64 @@ describe("http api", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
     const body = (await res.json()) as {
-      members: Array<{ adapter_id: string; status: string; last_seen_ms: number }>;
+      members: Array<{
+        adapter_id: string;
+        status: string;
+        last_seen_ms: number;
+        usage_in: number;
+        usage_out: number;
+      }>;
     };
-    expect(body.members.length).toBe(1);
+    expect(body.members.length).toBe(2);
     expect(body.members[0].adapter_id).toBe("online-1");
     expect(body.members[0].status).toBe("online");
     expect(body.members[0].last_seen_ms).toBe(5000);
-    expect("usage_in" in body.members[0]).toBe(false);
-    expect("usage_out" in body.members[0]).toBe(false);
+    expect(body.members[0].usage_in).toBe(10);
+    expect(body.members[0].usage_out).toBe(20);
+    expect(body.members[1].adapter_id).toBe("offline-1");
+    expect(body.members[1].status).toBe("offline");
+    expect(body.members[1].last_seen_ms).toBe(4000);
+    expect(body.members[1].usage_in).toBe(1);
+    expect(body.members[1].usage_out).toBe(2);
+  });
+
+  it("usage aggregates tokens", async () => {
+    upsertPresence(db, {
+      adapter_id: "online-1",
+      status: "online",
+      last_seen_ms: 5000,
+      usage_in: 10,
+      usage_out: 20,
+    });
+    upsertPresence(db, {
+      adapter_id: "offline-1",
+      status: "offline",
+      last_seen_ms: 4000,
+      usage_in: 1,
+      usage_out: 2,
+    });
+
+    const res = await fetch(`${base}/api/rooms/lobby/usage`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    const body = (await res.json()) as {
+      adapters: Array<{
+        adapter_id: string;
+        status: string;
+        input_tokens: number;
+        output_tokens: number;
+        last_seen_ms: number;
+      }>;
+      total: { input_tokens: number; output_tokens: number };
+    };
+    expect(body.adapters.length).toBe(2);
+    expect(body.adapters[0].adapter_id).toBe("online-1");
+    expect(body.adapters[0].input_tokens).toBe(10);
+    expect(body.adapters[0].output_tokens).toBe(20);
+    expect(body.adapters[1].adapter_id).toBe("offline-1");
+    expect(body.adapters[1].input_tokens).toBe(1);
+    expect(body.adapters[1].output_tokens).toBe(2);
+    expect(body.total.input_tokens).toBe(11);
+    expect(body.total.output_tokens).toBe(22);
   });
 });
