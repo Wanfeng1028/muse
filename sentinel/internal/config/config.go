@@ -187,6 +187,12 @@ func Load() (Config, error) {
 	// SENTINEL_SMS_SIGN_NAME / SENTINEL_SMS_TEMPLATE_CODE。
 	cfg.SMSSignName = strings.TrimSpace(os.Getenv("SENTINEL_SMS_SIGN_NAME"))
 	cfg.SMSTemplateCode = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TEMPLATE_CODE"))
+	cfg.SMSTencentSecretID = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_SECRET_ID"))
+	cfg.SMSTencentSecretKey = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_SECRET_KEY"))
+	cfg.SMSTencentSdkAppID = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_SDK_APP_ID"))
+	cfg.SMSTencentSignName = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_SIGN_NAME"))
+	cfg.SMSTencentTemplateID = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_TEMPLATE_ID"))
+	cfg.SMSTencentRegion = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_REGION"))
 
 	// aliyun 模式要求 AK、签名、模板四项齐全，缺一不可（启动即校验）。
 	if smsMode == "aliyun" {
