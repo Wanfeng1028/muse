@@ -102,3 +102,12 @@ export const BackIcon = ({ size = 16 }) => (
 export const ForwardIcon = ({ size = 16 }) => (
   <I size={size} sw={1.6}><path d="M6 3l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" /></I>
 );
+export const MoreIcon = ({ size = 16 }) => (
+  <I size={size}><circle cx="8" cy="3.5" r="1.3" fill="currentColor" stroke="none" /><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none" /><circle cx="8" cy="12.5" r="1.3" fill="currentColor" stroke="none" /></I>
+);
+export const PanelIcon = ({ size = 16 }) => (
+  <I size={size}><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><path d="M10 2.5v11" /></I>
+);
+export const StopIcon = ({ size = 16 }) => (
+  <I size={size}><rect x="4" y="4" width="8" height="8" rx="1.5" fill="currentColor" stroke="none" /></I>
+);

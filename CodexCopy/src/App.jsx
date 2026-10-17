@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Sidebar, { MODE_STYLE } from './components/Sidebar';
-import TopToolbar from './components/TopToolbar';
+import Sidebar from './components/Sidebar';
 import ThreadView from './components/thread/ThreadView';
 import Composer from './components/composer/Composer';
 import RightPanel from './components/RightPanel';
 import SettingsView from './components/settings/SettingsView';
 import SchedulesView from './components/schedules/SchedulesView';
 import CommandPalette from './components/palette/CommandPalette';
-import { CodexLogo, GitIcon } from './components/icons';
+import { CodexLogo, GitIcon, MoreIcon, PanelIcon } from './components/icons';
 import { projects as seedProjects, models } from './data/mock';
 
-// 真实 Codex 结构：侧栏 = 模式切换 + 导航 + Projects（项目→线程，线程标模式）
-// 主区 = 会话（新建线程时选 Local/Worktree/Cloud）
+// 真实 Codex 布局（六份实证报告）：
+// - 两栏：左=侧栏（导航+Projects+线程树），右=会话区
+// - 无顶栏（Project/Sandbox下拉是错的，已删）
+// - 右侧面板按需从右上角菜单打开：Review / Terminal / Browser / Files
+// - 线程头部：标题 + "..." 菜单；分支/模式信息在输入框下方
 export default function App() {
   const [view, setView] = useState('main');
   const [theme, setTheme] = useState('dark');
@@ -21,9 +23,10 @@ export default function App() {
   const [activeProjectId, setActiveProjectId] = useState('p1');
   const [activeThreadId, setActiveThreadId] = useState('t1');
   const [model, setModel] = useState('gpt-5.2');
-  const [sandbox, setSandbox] = useState('Auto Edit');
   const [streaming, setStreaming] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [rightPanel, setRightPanel] = useState(null); // null | review | terminal | browser | files
+  const [panelMenuOpen, setPanelMenuOpen] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +40,7 @@ export default function App() {
     const h = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen((v) => !v); }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); newThread('local'); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') { e.preventDefault(); setRightPanel((p) => (p === 'terminal' ? null : 'terminal')); }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
@@ -44,12 +48,8 @@ export default function App() {
 
   const newThread = (modeId) => {
     const id = 't' + Date.now();
-    const thread = {
-      id, title: 'New thread', mode: modeId, branch: 'main',
-      status: 'running', model, messages: [],
-    };
-    setProjects((ps) => ps.map((p) => (p.id === activeProjectId
-      ? { ...p, threads: [thread, ...p.threads] } : p)));
+    const thread = { id, title: 'Untitled chat', mode: modeId, branch: 'main', status: 'idle', model, messages: [] };
+    setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? { ...p, threads: [thread, ...p.threads] } : p)));
     setActiveThreadId(id);
     setNav('threads');
     setView('main');
@@ -62,21 +62,21 @@ export default function App() {
   };
 
   const send = (text) => {
-    const upd = (ps) => ps.map((p) => (p.id === activeProjectId ? {
+    setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? {
       ...p, threads: p.threads.map((t) => (t.id === activeThreadId
-        ? { ...t, title: t.messages.length === 0 ? text.slice(0, 32) : t.title,
+        ? { ...t, title: t.messages.length === 0 ? text.slice(0, 32) : t.title, status: 'active',
             messages: [...t.messages, { role: 'user', text }] }
         : t)),
-    } : p));
-    setProjects(upd);
+    } : p)));
     setStreaming(true);
     setTimeout(() => {
       setProjects((ps) => ps.map((p) => (p.id === activeProjectId ? {
         ...p, threads: p.threads.map((t) => (t.id === activeThreadId
-          ? { ...t, messages: [...t.messages, {
-              role: 'agent', thinking: '收到，开始处理。', text: '已按你的要求处理，需要确认：',
-              needsApproval: true, approval: { title: 'Apply changes', desc: 'Codex 将修改 2 个文件' },
-            }] }
+          ? { ...t, status: 'awaiting',
+              messages: [...t.messages, {
+                role: 'agent', thinking: 'Thinking…', text: '已按你的要求处理，需要确认：',
+                needsApproval: true, approval: { title: 'Apply changes', desc: 'Codex 将修改 2 个文件' },
+              }] }
           : t)),
       } : p)));
       setStreaming(false);
@@ -95,7 +95,13 @@ export default function App() {
   }, [activeThreadId, projects, streaming, view]);
 
   const placeholder = activeProject ? `Ask Codex anything locally in ${activeProject.name}` : 'Ask Codex anything locally';
-  const ms = activeThread ? (MODE_STYLE[activeThread.mode] || MODE_STYLE.local) : null;
+
+  const PANELS = [
+    { id: 'review', label: 'Review', key: '⌃⇧G' },
+    { id: 'terminal', label: 'Terminal', key: '⌃`' },
+    { id: 'browser', label: 'Browser', key: '⌘T' },
+    { id: 'files', label: 'Files', key: '⌘P' },
+  ];
 
   const renderMain = () => {
     if (nav === 'prs') {
@@ -137,22 +143,43 @@ export default function App() {
       <div className="main" style={{ flex: 1 }}>
         <div className="topbar">
           <div className="topbar-title">{activeThread ? activeThread.title : 'Codex'}</div>
-          {ms && <span className="mode-badge" style={{ borderColor: ms.color, color: ms.color }}>
-            <span className="mode-dot" style={{ background: ms.color }} />{ms.label}
-          </span>}
-          {activeThread && <span className="task-branch">{activeThread.branch}</span>}
+          <span style={{ flex: 1 }} />
+          {/* diff 计数按钮（真实：绿/红数字） */}
+          <button className="diff-count-btn" title="Toggle diff panel" onClick={() => setRightPanel(rightPanel === 'review' ? null : 'review')}>
+            <span className="diff-add">+12</span><span className="diff-del">−3</span>
+          </button>
+          {/* 面板菜单 */}
+          <div style={{ position: 'relative' }}>
+            <button className="icon-btn sm" title="Panels" onClick={() => setPanelMenuOpen(!panelMenuOpen)}>
+              <PanelIcon size={15} />
+            </button>
+            {panelMenuOpen && (
+              <>
+                <div className="drop-mask" onClick={() => setPanelMenuOpen(false)} />
+                <div className="drop-menu" style={{ right: 0, left: 'auto', minWidth: 190 }}>
+                  {PANELS.map((p) => (
+                    <div key={p.id} className="drop-item" onClick={() => { setRightPanel(rightPanel === p.id ? null : p.id); setPanelMenuOpen(false); }}>
+                      <span style={{ flex: 1 }}>{p.label}</span>
+                      <kbd className="kbd-sm">{p.key}</kbd>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <button className="icon-btn sm" title="Thread options"><MoreIcon size={15} /></button>
         </div>
         {activeThread && activeThread.messages.length > 0 ? (
           <ThreadView thread={activeThread} streaming={streaming} />
         ) : (
           <div className="empty-state">
-            <div className="empty-logo"><CodexLogo size={52} /></div>
-            <div className="empty-title">Welcome to Codex</div>
-            <div className="empty-sub">The best way to build with agents</div>
+            <div className="empty-title-sm">Create a chat to get started!</div>
+            <div className="empty-sub">Type a message and click send to get started</div>
           </div>
         )}
-        <Composer onSend={send} disabled={streaming} placeholder={placeholder}
-          model={model} onModelChange={setModel} />
+        <Composer onSend={send} streaming={streaming} onStop={() => setStreaming(false)}
+          placeholder={placeholder} model={model} onModelChange={setModel}
+          threadMode={activeThread?.mode} branch={activeThread?.branch} />
       </div>
     );
   };
@@ -180,18 +207,10 @@ export default function App() {
             <SchedulesView />
           </div>
         ) : (
-          <div className="codex-toolbar-wrap">
-            {mode === 'codex' && (
-              <TopToolbar
-                projects={projects.map((p) => ({ id: p.id, name: p.name }))}
-                activeProjectId={activeProjectId} onProjectChange={setActiveProjectId}
-                model={model} onModelChange={setModel}
-                sandbox={sandbox} onSandboxChange={setSandbox}
-                onOpenSettings={() => setView('settings')}
-              />
-            )}
-            <div className="main-row">{renderMain()}</div>
-          </div>
+          <>
+            <div className="main-row" style={{ flex: 1 }}>{renderMain()}</div>
+            {rightPanel && <RightPanel panel={rightPanel} task={activeThread} onClose={() => setRightPanel(null)} />}
+          </>
         )}
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onAction={paletteAction} />

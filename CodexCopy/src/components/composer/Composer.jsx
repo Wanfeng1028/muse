@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-import { AttachIcon, SendIcon, ChevronDown, CheckIcon } from '../icons';
+import { SendIcon, ChevronDown, CheckIcon, StopIcon, GitIcon } from '../icons';
 import { models } from '../../data/mock';
 
-// 真实 Codex 输入框：模型选择器在右下角（GitHub issue #38961 实证：
-// "Click the model control at the lower-right of the composer"）
-// 完整 picker 含：model + reasoning effort + Fast/service-tier
-export default function Composer({ onSend, disabled, placeholder, model, onModelChange }) {
+// 真实 Codex composer（实证）：
+// - 左下角 "+"（Add files and more），菜单：Files and folders + Plan mode
+// - 右下角模型控制，picker：model + reasoning（4档） + Fast
+// - 发送中按钮变 Stop
+// - 输入框下方：分支指示器 + 模式标
+export default function Composer({ onSend, streaming, onStop, placeholder, model, onModelChange, threadMode, branch }) {
   const [text, setText] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [plusOpen, setPlusOpen] = useState(false);
   const [reasoning, setReasoning] = useState('Medium');
   const [fast, setFast] = useState(false);
+  const [planMode, setPlanMode] = useState(false);
   const taRef = useRef(null);
 
   useEffect(() => {
@@ -22,7 +26,7 @@ export default function Composer({ onSend, disabled, placeholder, model, onModel
 
   const submit = () => {
     const v = text.trim();
-    if (!v || disabled) return;
+    if (!v || streaming) return;
     onSend(v);
     setText('');
   };
@@ -38,17 +42,33 @@ export default function Composer({ onSend, disabled, placeholder, model, onModel
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
             }}
-            placeholder={placeholder || "Ask Codex to do something…"}
+            placeholder={placeholder}
             rows={1}
           />
           <div className="composer-bar">
-            <button className="composer-tool" title="Attach files or images">
-              <AttachIcon />
-            </button>
-            <span className="composer-sp" />
-            {/* 模型控制在右下角 */}
             <div style={{ position: 'relative' }}>
-              <button className="model-control" onClick={() => setPickerOpen(!pickerOpen)} title="Model settings">
+              <button className="composer-plus" title="Add files and more" onClick={() => setPlusOpen(!plusOpen)}>
+                +
+              </button>
+              {plusOpen && (
+                <>
+                  <div className="drop-mask" onClick={() => setPlusOpen(false)} />
+                  <div className="drop-menu" style={{ bottom: 'calc(100% + 8px)', top: 'auto', minWidth: 200 }}>
+                    <div className="drop-item" onClick={() => setPlusOpen(false)}>
+                      <span style={{ flex: 1 }}>Files and folders</span>
+                    </div>
+                    <div className="drop-item" onClick={() => { setPlanMode(!planMode); setPlusOpen(false); }}>
+                      <span style={{ flex: 1 }}>Plan mode</span>
+                      {planMode && <CheckIcon size={13} />}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            {planMode && <span className="pill blue">Plan</span>}
+            <span className="composer-sp" />
+            <div style={{ position: 'relative' }}>
+              <button className="model-control" onClick={() => setPickerOpen(!pickerOpen)} title="Model settings (Ctrl+Shift+M)">
                 {model} <ChevronDown size={12} />
               </button>
               {pickerOpen && (
@@ -64,10 +84,10 @@ export default function Composer({ onSend, disabled, placeholder, model, onModel
                     ))}
                     <div className="filter-menu-title">Reasoning effort</div>
                     <div className="reasoning-row">
-                      {['Low', 'Medium', 'High'].map((r) => (
+                      {['Low', 'Medium', 'High', 'XHigh'].map((r) => (
                         <button key={r}
                           className={'reason-pill' + (reasoning === r ? ' active' : '')}
-                          onClick={() => setReasoning(r)}>{r}</button>
+                          onClick={() => setReasoning(r)}>{r === 'XHigh' ? 'Extra High' : r}</button>
                       ))}
                     </div>
                     <div className="drop-item" onClick={() => setFast(!fast)}>
@@ -78,10 +98,22 @@ export default function Composer({ onSend, disabled, placeholder, model, onModel
                 </>
               )}
             </div>
-            <button className={'send-btn' + (text.trim() ? ' ready' : '')} onClick={submit} title="Send (⌘↵)">
-              <SendIcon />
-            </button>
+            {streaming ? (
+              <button className="stop-btn" onClick={onStop} title="Stop (Esc)">
+                <StopIcon size={13} />
+              </button>
+            ) : (
+              <button className={'send-btn' + (text.trim() ? ' ready' : '')} onClick={submit} title="Send (⌘↵)">
+                <SendIcon />
+              </button>
+            )}
           </div>
+        </div>
+        {/* 输入框下方：分支 + 模式（真实位置，issue #14182） */}
+        <div className="composer-context">
+          <span className="ctx-item"><GitIcon size={12} /> {branch || 'main'}</span>
+          <span className="ctx-sep">·</span>
+          <span className="ctx-item">{threadMode === 'worktree' ? 'Worktree' : threadMode === 'cloud' ? 'Cloud' : 'Local'}</span>
         </div>
         <div className="composer-hint">Codex can make mistakes. Review output before applying.</div>
       </div>

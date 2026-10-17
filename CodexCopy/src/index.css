@@ -967,3 +967,83 @@ button { font-family: inherit; }
   transition: left 0.15s;
 }
 .toggle.on::after { left: 16px; }
+
+/* ---- 实证修正 ---- */
+/* 用户消息：深色气泡+浅色文字（Codex 标志性设计） */
+.msg-user { display: flex; justify-content: flex-end; }
+.user-bubble, .msg-user .bubble {
+  background: #2b2b2b; color: #f5f5f5;
+  border-radius: 18px; padding: 10px 16px;
+  max-width: 75%; font-size: 14px; line-height: 1.55;
+}
+[data-theme="light"] .user-bubble, [data-theme="light"] .msg-user .bubble {
+  background: #1e1e1e; color: #f5f5f5;
+}
+
+/* diff 计数按钮（右上：绿+红数字） */
+.diff-count-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-elevated); border: 1px solid var(--border-light);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 12px;
+}
+.diff-count-btn:hover { border-color: var(--border); }
+.diff-add { color: var(--success); font-weight: 600; }
+.diff-del { color: var(--error); font-weight: 600; }
+
+/* 输入框 "+" 按钮 */
+.composer-plus {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: transparent; border: 1px solid var(--border-light);
+  color: var(--text-secondary); font-size: 18px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.composer-plus:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* Stop 按钮 */
+.stop-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  color: var(--text-primary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.stop-btn:hover { border-color: var(--error); color: var(--error); }
+
+/* 输入框下方上下文条 */
+.composer-context {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 4px 0;
+  font-size: 12px; color: var(--text-tertiary);
+}
+.ctx-item { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); }
+.ctx-sep { opacity: 0.5; }
+
+/* 空状态修正（短欢迎语，不是大标题） */
+.empty-title-sm { font-size: 15px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px; }
+
+/* spinner（替代 emoji 状态） */
+.spinner {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite; display: inline-block; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 右侧按需面板 */
+.right-panel {
+  width: 340px; min-width: 340px;
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border-light);
+  display: flex; flex-direction: column;
+}
+.rp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid var(--border-light);
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+}
+.kbd-sm {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary);
+  background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;
+}
+.thread-bullet { width: 8px; height: 8px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; opacity: 0.5; }
+.thread-status { font-size: 10.5px; color: var(--text-tertiary); white-space: nowrap; margin-left: auto; }

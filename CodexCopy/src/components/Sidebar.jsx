@@ -11,9 +11,16 @@ import { THREAD_MODES } from '../data/mock';
 // 导航：New task / Scheduled / Plugins / Pull requests / Chat
 // Projects：每个项目对应磁盘目录，下挂线程（标 Local/Worktree/Cloud 模式）
 const MODE_STYLE = {
-  local: { label: 'Local', color: '#00a240' },
-  worktree: { label: 'Worktree', color: '#FA994C' },
-  cloud: { label: 'Cloud', color: '#0169cc' },
+  local: { label: 'Local' },
+  worktree: { label: 'Worktree' },
+  cloud: { label: 'Cloud' },
+};
+
+// 线程状态：spinner + 文字（实证，emoji 是错的）
+const STATUS_LABEL = {
+  active: 'Thinking',
+  awaiting: 'Awaiting approval',
+  paused: 'Paused',
 };
 
 export default function Sidebar({
@@ -129,12 +136,14 @@ export default function Sidebar({
               </button>
               {open && p.threads.map((t) => {
                 const ms = MODE_STYLE[t.mode] || MODE_STYLE.local;
+                const st = STATUS_LABEL[t.status];
                 return (
                   <button key={t.id}
                     className={'sr-nav-item sr-thread' + (t.id === activeThreadId ? ' active' : '')}
                     onClick={() => onSelectThread(p.id, t.id)}>
-                    <span className="mode-dot" style={{ background: ms.color }} title={ms.label} />
+                    {t.status === 'active' ? <span className="spinner" /> : <span className="thread-bullet" />}
                     <span className="sr-proj-name">{t.title}</span>
+                    {st && <span className="thread-status">{st}</span>}
                   </button>
                 );
               })}
