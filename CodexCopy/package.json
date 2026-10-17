@@ -1,0 +1,20 @@
+{
+  "name": "codexcopy",
+  "version": "1.0.0",
+  "description": "Codex 桌面应用前端的逆向复现。源码来自对 `Codex (Beta) 26.415.40636`（macOS arm64） 安装包的逆向分析（rea 静态重构），`web/` 下是字节一致的官方前端构建产物。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.4"
+  }
+}
