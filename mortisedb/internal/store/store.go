@@ -60,6 +60,14 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("开启外键失败: %w", err)
 	}
+	// 并发写等待：WAL 下多写仍可能 SQLITE_BUSY，等待代替直接报错。
+	// 注意：PRAGMA 只对执行它的连接生效，连接池新连接需通过 DSN 设置。
+	// 这里限制单连接，彻底避免多连接并发写冲突（SQLite 嵌入式场景足够）。
+	db.SetMaxOpenConns(1)
+	if _, err := db.Exec("PRAGMA busy_timeout=5000"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("设置 busy_timeout 失败: %w", err)
+	}
 	return &Store{DB: db}, nil
 }
 

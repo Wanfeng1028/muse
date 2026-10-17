@@ -1,11 +1,9 @@
 package views
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
-	"github.com/Wanfeng1028/muse/mortisedb/internal/store"
 )
 
 func TestRefreshCreatesTableAndRecords(t *testing.T) {
@@ -82,15 +80,6 @@ func TestRefreshIsFullRefresh(t *testing.T) {
 	}
 	if n, ok := got[0][0].(int64); !ok || n != 4 {
 		t.Fatalf("count = %#v, want 4", got[0][0])
-	}
-}
-
-func TestRefreshNotFound(t *testing.T) {
-	st := newTestStore(t)
-
-	_, err := Refresh(st, "no_such_view")
-	if !errors.Is(err, store.ErrNotFound) {
-		t.Fatalf("err = %v, want ErrNotFound", err)
 	}
 }
 

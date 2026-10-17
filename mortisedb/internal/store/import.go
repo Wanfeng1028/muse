@@ -6,13 +6,22 @@ import (
 )
 
 // RecordImport 记录一次成功导入的幂等键与统计。
-func (s *Store) RecordImport(source, fileHash, filename string, total, inserted, updated, errRows int) error {
-	_, err := s.DB.Exec(
-		`INSERT INTO "_m_imports" ("source","file_hash","filename","rows_total","inserted","updated","error_rows","created_at")
+// 并发同时导入同一文件时只有一个能插入成功（INSERT OR IGNORE），
+// 返回 inserted=false 表示已有其他导入先完成（调用方应视为重复）。
+func (s *Store) RecordImport(source, fileHash, filename string, total, inserted, updated, errRows int) (bool, error) {
+	res, err := s.DB.Exec(
+		`INSERT OR IGNORE INTO "_m_imports" ("source","file_hash","filename","rows_total","inserted","updated","error_rows","created_at")
 		 VALUES (?,?,?,?,?,?,?,?)`,
 		source, fileHash, filename, total, inserted, updated, errRows, time.Now().UTC().Format(time.RFC3339),
 	)
-	return err
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
 }
 
 // FindImport 查询同 source+file_hash 的上次成功导入统计。

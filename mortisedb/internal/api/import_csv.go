@@ -277,8 +277,13 @@ func importCSVStream(st *store.Store, cfg *config.Config, sourceName string, r i
 	}
 	committed = true
 
-	if err := st.RecordImport(sourceName, res.FileHash, res.Filename, res.TotalRows, res.Inserted, res.Updated, res.ErrorRows); err != nil {
+	ok, err := st.RecordImport(sourceName, res.FileHash, res.Filename, res.TotalRows, res.Inserted, res.Updated, res.ErrorRows)
+	if err != nil {
 		return res, err
+	}
+	if !ok {
+		// 并发竞态：另一导入先完成了，本次视为重复
+		res.Duplicate = true
 	}
 	return res, nil
 }
