@@ -5,10 +5,11 @@ const { execSync } = require('child_process');
 
 const DIST = '/home/hatch/workspace/muse-repo/CodexCopy/dist';
 const BASE = 'http://localhost:8931';
-const FRAMES = '/home/hatch/workspace/muse-repo/CodexCopy/frames2';
+const FRAMES = '/home/hatch/workspace/muse-repo/CodexCopy/frames4';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };
 
 (async () => {
+  fs.rmSync(FRAMES, { recursive: true, force: true });
   fs.mkdirSync(FRAMES, { recursive: true });
   const browser = await chromium.launch({
     executablePath: '/opt/meta-chromium/chrome',
@@ -31,51 +32,87 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
   await page.waitForTimeout(2500);
 
   let n = 0;
-  const shot = async (times = 2) => {
+  const shot = async (ms = 200, times = 1) => {
     for (let i = 0; i < times; i++) {
       await page.screenshot({ path: path.join(FRAMES, 'f' + String(n++).padStart(4, '0') + '.png') });
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(ms);
     }
   };
+  const move = async (x, y) => { await page.mouse.move(x, y, { steps: 8 }); await shot(120, 2); };
 
-  // 1. 首屏：已有会话
-  await shot(4);
+  // 1. 主界面（带窗口 chrome）
+  await shot(300, 6);
 
-  // 2. 展开一个 tool card
-  const cards = page.locator('.tool-head');
-  if (await cards.count() > 0) { await cards.first().click(); await shot(3); }
+  // 2. 展开 tool card
+  const card = page.locator('.tool-head').first();
+  const bb = await card.boundingBox();
+  await move(bb.x + bb.width / 2, bb.y + bb.height / 2);
+  await card.click();
+  await shot(250, 6);
 
-  // 3. 展开 Thought
-  const th = page.locator('.thinking-head');
-  if (await th.count() > 0) { await th.first().click(); await shot(3); }
+  // 3. Cmd+K 命令面板
+  await page.keyboard.press('Control+k');
+  await page.waitForTimeout(500);
+  await shot(250, 6);
+  await page.keyboard.press('Escape');
+  await shot(200, 2);
 
-  // 4. 切换到另一个 thread
-  const items = page.locator('.thread-item');
-  if (await items.count() > 2) { await items.nth(2).click(); await page.waitForTimeout(800); await shot(4); }
+  // 4. 设置中心
+  await page.locator('.settings-btn[title="Codex settings"]').click();
+  await page.waitForTimeout(500);
+  await shot(250, 6);
+  // 切换 Appearance
+  await page.locator('.set-nav-item').nth(1).click();
+  await page.waitForTimeout(400);
+  await shot(250, 5);
+  // 切换 Models
+  await page.locator('.set-nav-item').nth(2).click();
+  await page.waitForTimeout(400);
+  await shot(250, 5);
 
-  // 5. 新建 thread -> 空状态
-  await page.locator('.new-thread-btn').click();
-  await page.waitForTimeout(800);
-  await shot(4);
+  // 5. 自动化视图
+  await page.locator('.settings-btn[title="Automations"]').click();
+  await page.waitForTimeout(500);
+  await shot(250, 6);
+  // 暂停一个
+  const pauseBtns = page.locator('.auto-card .icon-btn');
+  await pauseBtns.first().click();
+  await shot(250, 4);
 
-  // 6. 输入并发送消息，等待模拟回复
-  await page.locator('.composer textarea').fill('帮我把登录页改成深色模式');
-  await shot(2);
-  await page.locator('.send-btn').click();
-  await shot(3); // streaming 状态
-  await page.waitForTimeout(3000);
-  await shot(5); // 回复出现
+  // 6. 回到 thread，新建 + 发送消息（含 DiffBlock 回复）
+  await page.locator('.thread-item').first().click();
+  await page.waitForTimeout(500);
+  await shot(250, 4);
+  const nb = page.locator('.new-thread-btn');
+  const nbb = await nb.boundingBox();
+  await move(nbb.x + 60, nbb.y + 18);
+  await nb.click();
+  await page.waitForTimeout(500);
+  await shot(250, 4);
+  await page.locator('.composer textarea').fill('把主题 token 改成深色模式变量');
+  await shot(250, 3);
+  const send = page.locator('.send-btn');
+  const sbb = await send.boundingBox();
+  await move(sbb.x + 16, sbb.y + 16);
+  await send.click();
+  await shot(250, 5);
+  await page.waitForTimeout(3400);
+  await shot(250, 10); // DiffBlock 回复
 
-  // 7. 打开 model 选择器
-  const modelBtns = page.locator('.composer-tool');
-  if (await modelBtns.count() > 1) { await modelBtns.nth(1).click(); await shot(3); }
+  // 7. Accept diff
+  const accept = page.locator('.diff-foot .btn-ghost.ok');
+  if (await accept.count() > 0) {
+    const abb = await accept.boundingBox();
+    await move(abb.x + 40, abb.y + 14);
+    await accept.click();
+    await shot(250, 5);
+  }
 
   console.log('frames:', n);
   await browser.close();
 
-  // 合成视频
   execSync(
-    `ffmpeg -y -v error -framerate 2.5 -i ${FRAMES}/f%04d.png -c:v libx264 -pix_fmt yuv420p -movflags +faststart /home/hatch/workspace/muse-repo/CodexCopy/CodexCopy-demo.mp4`,
+    `ffmpeg -y -v error -framerate 5 -i ${FRAMES}/f%04d.png -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -movflags +faststart /home/hatch/workspace/muse-repo/CodexCopy/CodexCopy-demo.mp4`,
     { stdio: 'inherit' }
   );
   console.log('video done');

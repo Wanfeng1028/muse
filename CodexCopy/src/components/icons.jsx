@@ -1,4 +1,11 @@
-// CodexCopy 图标 — 手写 SVG（复刻 Codex 界面图标风格）
+// CodexCopy 图标库 — 手写 SVG（复刻 Codex 界面图标风格）
+
+const I = ({ children, size, vb = '0 0 16 16', fill = false, sw = 1.5 }) => (
+  <svg width={size} height={size} viewBox={vb} fill={fill ? 'currentColor' : 'none'}
+    stroke={fill ? 'none' : 'currentColor'} strokeWidth={fill ? undefined : sw} aria-hidden="true">
+    {children}
+  </svg>
+);
 
 export const CodexLogo = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 500 500" fill="currentColor" aria-hidden="true">
@@ -8,72 +15,78 @@ export const CodexLogo = ({ size = 20 }) => (
   </svg>
 );
 
-export const PlusIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M8 2v12M2 8h12" strokeLinecap="round" />
-  </svg>
+export const PlusIcon = ({ size = 15 }) => (
+  <I size={size} sw={1.6}><path d="M8 2v12M2 8h12" strokeLinecap="round" /></I>
 );
-
-export const SearchIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <circle cx="7" cy="7" r="4.5" />
-    <path d="M10.5 10.5 14 14" strokeLinecap="round" />
-  </svg>
+export const SearchIcon = ({ size = 16 }) => (
+  <I size={size} sw={1.6}><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" strokeLinecap="round" /></I>
 );
-
-export const SettingsIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <circle cx="8" cy="8" r="2.2" />
-    <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4" strokeLinecap="round" />
-  </svg>
+export const SettingsIcon = ({ size = 17 }) => (
+  <I size={size}><circle cx="8" cy="8" r="2.2" /><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4" strokeLinecap="round" /></I>
 );
-
-export const SendIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M8 14V2M3.5 6.5 8 2l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+export const SendIcon = ({ size = 15 }) => (
+  <I size={size} sw={1.8}><path d="M8 14V2M3.5 6.5 8 2l4.5 4.5" strokeLinecap="round" strokeLinejoin="round" /></I>
 );
-
-export const AttachIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M11 7 5.8 12.2a2.3 2.3 0 0 1-3.2-3.2L9.4 2.2a1.6 1.6 0 0 1 2.3 2.3L5 11.2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+export const AttachIcon = ({ size = 15 }) => (
+  <I size={size}><path d="M11 7 5.8 12.2a2.3 2.3 0 0 1-3.2-3.2L9.4 2.2a1.6 1.6 0 0 1 2.3 2.3L5 11.2" strokeLinecap="round" strokeLinejoin="round" /></I>
 );
-
-export const ChevronDown = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+export const ChevronDown = ({ size = 14 }) => (
+  <I size={size} sw={1.6}><path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></I>
 );
-
-export const TerminalIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
-    <path d="M5 6l2.5 2L5 10M9 10.5h2.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+export const ChevronRight = ({ size = 14 }) => (
+  <I size={size} sw={1.6}><path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" /></I>
 );
-
-export const FileIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M4 1.5h5.5L12.5 4.5V14.5H4z" strokeLinejoin="round" />
-    <path d="M9.5 1.5v3h3" strokeLinejoin="round" />
-  </svg>
+export const TerminalIcon = ({ size = 14 }) => (
+  <I size={size}><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><path d="M5 6l2.5 2L5 10M9 10.5h2.5" strokeLinecap="round" strokeLinejoin="round" /></I>
 );
-
-export const EditIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M11.5 2.5l2 2L5 13H3v-2z" strokeLinejoin="round" />
-  </svg>
+export const FileIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M4 1.5h5.5L12.5 4.5V14.5H4z" strokeLinejoin="round" /><path d="M9.5 1.5v3h3" strokeLinejoin="round" /></I>
 );
-
-export const CheckIcon = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M3 8.5l3.5 3.5L13 4.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+export const EditIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M11.5 2.5l2 2L5 13H3v-2z" strokeLinejoin="round" /></I>
 );
-
-export const ChevronRight = () => (
-  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6">
-    <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+export const CheckIcon = ({ size = 14 }) => (
+  <I size={size} sw={2}><path d="M3 8.5l3.5 3.5L13 4.5" strokeLinecap="round" strokeLinejoin="round" /></I>
+);
+export const XIcon = ({ size = 14 }) => (
+  <I size={size} sw={1.6}><path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" /></I>
+);
+export const ClockIcon = ({ size = 14 }) => (
+  <I size={size}><circle cx="8" cy="8" r="6" /><path d="M8 4.5V8l2.5 1.5" strokeLinecap="round" /></I>
+);
+export const GitIcon = ({ size = 14 }) => (
+  <I size={size}><circle cx="4.5" cy="4" r="1.8" /><circle cx="4.5" cy="12" r="1.8" /><circle cx="11.5" cy="8" r="1.8" /><path d="M4.5 5.8v4.4M6 4h4.2a1.5 1.5 0 0 1 0 3H7" strokeLinecap="round" /></I>
+);
+export const CpuIcon = ({ size = 14 }) => (
+  <I size={size}><rect x="4" y="4" width="8" height="8" rx="1.5" /><path d="M6.5 1.5v2M9.5 1.5v2M6.5 12.5v2M9.5 12.5v2M1.5 6.5h2M1.5 9.5h2M12.5 6.5h2M12.5 9.5h2" strokeLinecap="round" /></I>
+);
+export const PaletteIcon = ({ size = 14 }) => (
+  <I size={size}><circle cx="8" cy="8" r="6" /><circle cx="6" cy="6.5" r="1" fill="currentColor" stroke="none" /><circle cx="10" cy="6" r="1" fill="currentColor" stroke="none" /><circle cx="6.5" cy="10" r="1" fill="currentColor" stroke="none" /></I>
+);
+export const PlugIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M6 2v4M10 2v4M4 6h8v3a4 4 0 0 1-8 0zM8 13v1.5" strokeLinecap="round" strokeLinejoin="round" /></I>
+);
+export const FolderIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M1.5 4.5a1 1 0 0 1 1-1h3l1.5 2h5.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z" strokeLinejoin="round" /></I>
+);
+export const GlobeIcon = ({ size = 14 }) => (
+  <I size={size}><circle cx="8" cy="8" r="6" /><path d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12" /></I>
+);
+export const TrashIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M2.5 4h11M6.5 2.5h3M4 4l1 10h6l1-10M6.5 7v4M9.5 7v4" strokeLinecap="round" strokeLinejoin="round" /></I>
+);
+export const PlayIcon = ({ size = 14 }) => (
+  <I size={size} fill><path d="M4.5 2.8v10.4c0 .6.7 1 1.2.7l8-5.2c.5-.3.5-1 0-1.3l-8-5.2c-.5-.4-1.2 0-1.2.6z" /></I>
+);
+export const PauseIcon = ({ size = 14 }) => (
+  <I size={size} fill><rect x="4" y="3" width="3" height="10" rx="1" /><rect x="9" y="3" width="3" height="10" rx="1" /></I>
+);
+export const DiffIcon = ({ size = 14 }) => (
+  <I size={size}><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><path d="M5 6.5h3M5 9.5h5M5 12h2" strokeLinecap="round" /></I>
+);
+export const HistoryIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M2.5 8a5.5 5.5 0 1 1 1.6 3.9M2.5 8V4.5M2.5 8h3.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M8 5.5V8l1.8 1.2" strokeLinecap="round" /></I>
+);
+export const CommandIcon = ({ size = 14 }) => (
+  <I size={size}><path d="M5.5 5.5A2.5 2.5 0 1 1 8 8M10.5 10.5a2.5 2.5 0 1 1-2.5-2.5M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3" strokeLinecap="round" /></I>
 );

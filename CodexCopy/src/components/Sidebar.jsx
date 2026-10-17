@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { PlusIcon, SearchIcon, SettingsIcon, CodexLogo } from './icons';
+import { PlusIcon, SearchIcon, SettingsIcon, ClockIcon } from './icons';
 
 const STATUS_COLORS = { working: '#e5a54b', done: '#4caf7d', idle: '#8e8e8e' };
 
-export default function Sidebar({ threads, activeId, onSelect, onNew }) {
+export default function Sidebar({ threads, activeId, onSelect, onNew, onOpenSettings, onOpenSchedules, currentView }) {
   const [filter, setFilter] = useState('');
   const groups = {};
   threads.forEach((t) => {
@@ -59,7 +59,10 @@ export default function Sidebar({ threads, activeId, onSelect, onNew }) {
       <div className="sidebar-bottom">
         <div className="avatar">晚</div>
         <div className="user-name">晚风</div>
-        <button className="settings-btn" title="Codex settings">
+        <button className={'settings-btn' + (currentView === 'schedules' ? ' active' : '')} title="Automations" onClick={onOpenSchedules}>
+          <ClockIcon />
+        </button>
+        <button className={'settings-btn' + (currentView === 'settings' ? ' active' : '')} title="Codex settings" onClick={onOpenSettings}>
           <SettingsIcon />
         </button>
       </div>

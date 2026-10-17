@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { AttachIcon, SendIcon, ChevronDown } from './icons';
-import { models } from '../data/mock';
+import { AttachIcon, SendIcon, ChevronDown } from '../icons';
+import { models } from '../../data/mock';
 
 export default function Composer({ onSend, disabled }) {
   const [text, setText] = useState('');

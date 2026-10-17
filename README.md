@@ -20,7 +20,7 @@
 | [stagecue](./stagecue) | 「舞监台 StageCue」——小剧场/脱口秀/校园演出的多端同步演出控台。Kotlin Multiplatform + Compose Desktop + Ktor：时间轴 cue 编排、WebSocket 毫秒级时钟同步（NTP 式）、幂等事件广播、离线操作日志。QLab 的开源跨平台中文平替。 | v0.2.0 |
 | [voxloom](./voxloom) | 「声纹工坊 VoxLoom」——中文播客/有声书的文字剪辑工作站。C#/.NET 8 + Avalonia 跨平台桌面：转写稿当时间轴，文字删改自动生成音频剪辑（过零点防爆音），语气词一键弱化（-12dB），EDL 导出供 Premiere/Reaper 精修。自研 Core 库（波形金字塔/对齐/剪辑引擎），MP3/FLAC/M4A 真实导入（ffmpeg 解码）。 | v2 |
 | [botstalk](./botstalk) | 「个人 AI 团队办公室」——用户当老板在群里派活，各家 personal agent 以 adapter 接入、bot 间可 @ 交接、群里汇报。TypeScript monorepo：协议 v1.1（原生 WS + gseq 全局序列号 + 心跳 20s/45s 判离线 + per-adapter FIFO 补发）、Node 网关（node:sqlite）、deepseek/echo/base 三个 adapter、Vite + React 18 Web 聊天室（历史分页/成员在线/用量展示）。v0.2 新增 usage 可观测 API 与 gseq/重发队列 SQLite 持久化。 | v0.2.0 |
-| [CodexCopy](./CodexCopy) | 「Codex 前端复刻」——对 Codex (Beta) 26.415.40636 的干净复刻（clean-room）：按逆向出的布局/深色主题 token/组件结构，用 Vite + React + 手写 CSS 从零实现——280px 侧栏（New thread/搜索/时间分组会话列表）、用户气泡、agent 消息（Codex logo 头像）、可折叠 Thought 块、tool call 卡片、composer（模型选择器/发送）。mock 数据可交互：发消息触发模拟回复、新建会话、切换模型。演示视频见目录内 mp4。 | v0.2 |
+| [CodexCopy](./CodexCopy) | 「Codex 前端复刻」——对 Codex (Beta) 26.415.40636 的干净复刻（clean-room）：按逆向出的布局/深色主题 token/组件结构，用 Vite + React + 手写 CSS 从零实现。14 个组件：macOS 窗口 chrome、280px 侧栏（New thread/搜索/时间分组）、会话区（用户气泡/agent 消息/Thought 折叠块/tool 卡片/代码块/Diff 审查）、composer、6 页设置中心、Cmd+K 命令面板、自动化视图。mock 数据可交互。演示视频见目录内 mp4。 | v0.3 |
 
 ## 如何运行
 
