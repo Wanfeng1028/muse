@@ -7,7 +7,7 @@
 | 构建 | `go build ./...` | ✅ 通过 |
 | 静态检查 | `go vet ./...` | ✅ 通过 |
 | 格式检查 | `gofmt -l .` | ✅ 干净（本轮涉及文件无输出） |
-| 单元与集成测试 | `go test ./...` | ✅ 全过（8 个包 ok，共 98 个测试 PASS，0 失败；新增 `import_csv_v14_test.go` 14 例全过） |
+| 单元与集成测试 | `go test ./...` | ✅ 全过（9 个包 ok，共 135 个测试 PASS（含子测试），0 失败；新增 `import_csv_v14_test.go` 14 例全过） |
 | 端到端回归 | `scripts/e2e.sh` | ✅ E2E PASS（10 步，v1.3 全链路无回归） |
 | Web UI 回归 | 导入页截图亲验 | ✅ 通过（导入页：数据源下拉真实加载/表单完整/宣纸榫卯风格无 AI 味；总览页真实数据渲染正常；`docs/screenshots/import.png`） |
 
