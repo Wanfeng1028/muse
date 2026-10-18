@@ -266,6 +266,43 @@ std::string expandTokenOrSingle(const std::string& token) {
     return expandTokenWithJoiner(token, " OR ");
 }
 
+// D4（DF-zero 丢弃）辅助：对每个 token 探测其"展开后表达式"的 DF，
+// 为空则视为对 AND 查询零贡献。关键：探测 expandTokenOrQuery(t) 的输出，
+// 而不是裸 token —— 该输出内部已含 D3 单字 CJK 前缀（"进"→`"进"*`）与
+// 同义词 OR 组，因此 D3 兼容是构造性成立的（裸 token DF=0 不代表展开式 DF=0）。
+// static 限定本 TU 可见；仅在 AND 为空时被调用，每 token 一次 LIMIT 1 探测。
+static std::vector<std::string> dropZeroDfTokens(const std::vector<std::string>& tokens,
+                                                Database& db) {
+    std::vector<std::string> kept;
+    kept.reserve(tokens.size());
+    for (const auto& t : tokens) {
+        if (t.empty()) continue;
+        const std::string expanded = expandTokenOrQuery(t);
+        if (expanded.empty()) continue;  // 展开为空视作零贡献，丢弃
+        if (!db.searchFts(expanded, 1).empty()) {
+            kept.push_back(t);
+        }
+    }
+    return kept;
+}
+
+// D4 stage 1.5 共用：AND 为空时尝试 DF-pruned AND；
+// 成功则返回 true 且 hits 被替换，失败返回 false（调用方继续原级联）。
+static bool tryDfPrunedAnd(const std::vector<std::string>& tokens, Database& db,
+                           int limit, std::vector<Hit>& hits) {
+    std::vector<std::string> kept = dropZeroDfTokens(tokens, db);
+    if (kept.empty() || kept.size() >= tokens.size()) return false;  // fail-open
+    std::string joined;
+    for (size_t i = 0; i < kept.size(); ++i) {
+        if (i) joined += ' ';
+        joined += kept[i];
+    }
+    std::vector<Hit> refill = db.searchFts(Searcher::buildMatchQuery(joined), limit * 2);
+    if (refill.empty()) return false;
+    hits = std::move(refill);
+    return true;
+}
+
 std::string Searcher::buildMatchQuery(const std::string& query) {
     const std::vector<std::string> tokens = splitTokens(query);
     std::string out;
@@ -510,6 +547,13 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
     const std::string matchQuery = buildMatchQuery(rest);
     std::vector<Hit> hits = db_.searchFts(matchQuery, limit * 2);
 
+    // 1.5 DF-zero 丢弃（D4）：AND 为空时丢弃零贡献 token，用剩余 token 重建 AND
+    //     再查一次，避免直接掉进 OR/子串回退（AND 交集精度高于 OR 并集）。
+    //     只在 hits.empty() 时触发；已有结果的查询行为一字不变。
+    if (hits.empty() && !tokens.empty()) {
+        tryDfPrunedAnd(tokens, db_, limit, hits);
+    }
+
     // 2. OR 回退：AND 无结果时放宽为 OR；单 token 查询把组间 AND 换成 OR（GAP-TOK-001）。
     if (hits.empty() && !tokens.empty()) {
         const std::string orQuery =
@@ -613,6 +657,12 @@ std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {
     // 1. 精确 AND：多取 2 倍做重排。
     const std::string matchQuery = buildMatchQuery(rest);
     std::vector<Hit> hits = db_.searchFts(matchQuery, limit * 2);
+
+    // 1.5 DF-zero 丢弃（D4）：AND 为空时用 DF-pruned AND 作为 AND 侧结果，
+    //     之后的 OR 并集逻辑一字不动。
+    if (hits.empty() && !tokens.empty()) {
+        tryDfPrunedAnd(tokens, db_, limit, hits);
+    }
 
     // 2. OR 并集：恒执行 OR（单 token 时组间 OR 放宽，GAP-TOK-001），与 AND 结果按 doc_id 取并集、
     //    冲突时保留 AND 版本（先放入 AND，再追加 OR 中未见过的 doc_id）。
