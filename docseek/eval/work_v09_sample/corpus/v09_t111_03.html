@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>OpenWrt 里装 Docker 跑 AdGuard Home 的步骤</title>
+</head>
+<body>
+<h1>OpenWrt 里装 Docker 跑 AdGuard Home 的步骤</h1>
+<p>我的软路由是 x86 的，装了 OpenWrt 23.05，存储 32G，够跑几个容器。下面记录一下装 Docker 和 AdGuard Home 的过程，免得下次重装又忘。</p>
+<h2>装 Docker</h2>
+<p>先更新软件源，然后装 dockerd 和 docker-compose。opkg update 之后 opkg install dockerd docker-compose。装完在 LuCI 的 Docker 菜单里能看到容器页面，没有的话重启一下 LuCI。</p>
+<h2>配置存储路径</h2>
+<p>默认镜像存在 /opt/docker，根分区小的话要改到挂载的硬盘上。编辑 /etc/docker/daemon.json，把 data-root 改成 /mnt/sda1/docker。改完重启 dockerd 服务。</p>
+<h2>拉 AdGuard Home 镜像</h2>
+<p>docker pull adguard/adguardhome。然后建两个目录，一个放配置，一个放工作数据。docker run 的时候把 53 和 3000 端口映射出来。53 被 dnsmasq 占了的话，先把 OpenWrt 自带的 dnsmasq 停掉，或者改端口。</p>
+<h2>初始化设置</h2>
+<p>浏览器打开 3000 端口，走一遍向导。管理界面端口我改成 8080，DNS 监听 53。上游 DNS 填了阿里和腾讯的，再加一个本地的 dnsmasq 做备用。过滤规则订阅了几个常见的列表，每天自动更新。</p>
+<h2>注意点</h2>
+<p>容器重启策略设成 unless-stopped，不然软路由重启后 AdGuard 不会自己起来。日志文件会越来越大，我在计划任务里加了一条每周清理。还有就是升级 OpenWrt 前先备份 /mnt/sda1/docker 目录，不然白配。</p>
+</body>
+</html>

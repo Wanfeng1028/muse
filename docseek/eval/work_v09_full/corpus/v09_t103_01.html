@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Python变量命名与赋值入门</title>
+</head>
+<body>
+<h1>Python变量命名与赋值入门</h1>
+<p>刚学Python的时候，我总把变量名起得很随意，结果代码读起来像天书。后来踩了几次坑才明白，变量名不只是给电脑看的，更是给人看的。Python里变量不需要提前声明类型，直接写<code>name = "张三"</code>就完成赋值，解释器会自动推断类型。</p>
+<h2>命名规则要记牢</h2>
+<p>变量名只能由字母、数字和下划线组成，而且不能以数字开头。比如<code>2name</code>会报语法错误，但<code>name2</code>没问题。另外Python区分大小写，<code>age</code>和<code>Age</code>是两个不同的变量，这点和某些语言不一样。</p>
+<h2>好名字省去注释</h2>
+<ul>
+<li>用<code>student_count</code>代替<code>sc</code></li>
+<li>用<code>is_valid</code>代替<code>flag</code></li>
+<li>避免用<code>l</code>、<code>O</code>这些容易和数字混淆的单字母</li>
+</ul>
+<p>赋值时还可以同时给多个变量赋值，例如<code>a, b = 1, 2</code>，交换两个变量也不用临时变量：<code>a, b = b, a</code>。这些写法在Python里很自然，读起来也简洁。</p>
+</body>
+</html>

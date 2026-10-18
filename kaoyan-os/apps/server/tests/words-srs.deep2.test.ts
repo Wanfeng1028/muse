@@ -1,0 +1,265 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import Fastify, { type FastifyInstance } from 'fastify';
+import { DatabaseSync } from 'node:sqlite';
+import { registerWordsRoutes } from '../src/routes/words';
+import { todayStr, addDays } from '../src/db';
+
+function createDb(): DatabaseSync {
+  const db = new DatabaseSync(':memory:');
+  db.exec(`
+    CREATE TABLE words (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      word TEXT NOT NULL UNIQUE,
+      phonetic TEXT NOT NULL DEFAULT '',
+      meaning TEXT NOT NULL DEFAULT '',
+      example TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL DEFAULT 'core500',
+      memory_tip TEXT NOT NULL DEFAULT ''
+    );
+    CREATE TABLE srs_state (
+      word_id INTEGER PRIMARY KEY,
+      ease REAL NOT NULL DEFAULT 2.5,
+      interval_days INTEGER NOT NULL DEFAULT 0,
+      repetitions INTEGER NOT NULL DEFAULT 0,
+      due_date TEXT NOT NULL
+    );
+  `);
+  return db;
+}
+
+function seedWord(db: DatabaseSync, word: string, dueDate: string, repetitions = 0): number {
+  const info = db
+    .prepare(
+      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .run(word, '', '测试释义', '', 'core500', '');
+  const id = Number(info.lastInsertRowid);
+  db.prepare(
+    'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, 2.5, 0, repetitions, dueDate);
+  return id;
+}
+
+function seedWordCustom(
+  db: DatabaseSync,
+  word: string,
+  dueDate: string,
+  intervalDays: number,
+  repetitions: number,
+  ease: number,
+): number {
+  const info = db
+    .prepare(
+      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .run(word, '', '测试释义', '', 'core500', '');
+  const id = Number(info.lastInsertRowid);
+  db.prepare(
+    'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, ease, intervalDays, repetitions, dueDate);
+  return id;
+}
+
+let app: FastifyInstance;
+let db: DatabaseSync;
+
+beforeEach(async () => {
+  db = createDb();
+  app = Fastify({ logger: false });
+  registerWordsRoutes(app, db);
+  await app.ready();
+});
+
+afterEach(async () => {
+  await app.close();
+  db.close();
+});
+
+describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
+  it('grade=2 连续五轮：intervalDays 序列精确为 1,3,8,21,57，ease 每轮 +0.05，repetitions 依次 1..5', async () => {
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/words',
+      payload: { word: 'five', meaning: '测试释义' },
+    });
+    expect(create.statusCode).toBe(201);
+    const id = create.json().id as number;
+
+    const expectedIntervals = [1, 3, 8, 21, 57];
+    const expectedEase = [2.55, 2.6, 2.65, 2.7, 2.75];
+
+    for (let i = 0; i < 5; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/words/${id}/review`,
+        payload: { grade: 2 },
+      });
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body.state.intervalDays).toBe(expectedIntervals[i]);
+      expect(body.state.repetitions).toBe(i + 1);
+      expect(body.state.ease).toBeCloseTo(expectedEase[i], 10);
+      expect(body.state.dueDate).toBe(addDays(todayStr(), expectedIntervals[i]));
+    }
+  });
+
+  it('grade=2 的 ease 没有上钳制（当前行为：无上钳制）：20 轮后 ease=3.5, repetitions=20', async () => {
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/words',
+      payload: { word: 'nocap', meaning: '测试释义' },
+    });
+    expect(create.statusCode).toBe(201);
+    const id = create.json().id as number;
+
+    let last: any;
+    for (let i = 0; i < 20; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/words/${id}/review`,
+        payload: { grade: 2 },
+      });
+      expect(res.statusCode).toBe(200);
+      last = res.json();
+    }
+
+    expect(last.state.ease).toBeCloseTo(3.5, 10);
+    expect(last.state.repetitions).toBe(20);
+  });
+
+  it('连续 grade=0 六轮后 ease 钳制在 1.3，第 7 轮仍为 1.3，repetitions 恒 0，intervalDays 恒 1', async () => {
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/words',
+      payload: { word: 'again', meaning: '测试释义' },
+    });
+    expect(create.statusCode).toBe(201);
+    const id = create.json().id as number;
+
+    let last: any;
+    for (let i = 0; i < 6; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/words/${id}/review`,
+        payload: { grade: 0 },
+      });
+      expect(res.statusCode).toBe(200);
+      last = res.json();
+      expect(last.state.repetitions).toBe(0);
+      expect(last.state.intervalDays).toBe(1);
+      expect(last.state.ease).toBeGreaterThanOrEqual(1.3);
+    }
+    expect(last.state.ease).toBeCloseTo(1.3, 10);
+
+    const seventh = await app.inject({
+      method: 'POST',
+      url: `/api/words/${id}/review`,
+      payload: { grade: 0 },
+    });
+    expect(seventh.statusCode).toBe(200);
+    const body7 = seventh.json();
+    expect(body7.state.repetitions).toBe(0);
+    expect(body7.state.intervalDays).toBe(1);
+    expect(body7.state.ease).toBeCloseTo(1.3, 10);
+  });
+
+  it('答错重置链：grade=2 三次 → grade=0 → 再 grade=2，三步逐段断言', async () => {
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/words',
+      payload: { word: 'chain', meaning: '测试释义' },
+    });
+    expect(create.statusCode).toBe(201);
+    const id = create.json().id as number;
+
+    let res: any;
+    for (let i = 0; i < 3; i++) {
+      res = await app.inject({
+        method: 'POST',
+        url: `/api/words/${id}/review`,
+        payload: { grade: 2 },
+      });
+      expect(res.statusCode).toBe(200);
+    }
+    let body = res.json();
+    expect(body.state.repetitions).toBe(3);
+    expect(body.state.intervalDays).toBe(8);
+    expect(body.state.ease).toBeCloseTo(2.65, 10);
+
+    const wrong = await app.inject({
+      method: 'POST',
+      url: `/api/words/${id}/review`,
+      payload: { grade: 0 },
+    });
+    expect(wrong.statusCode).toBe(200);
+    body = wrong.json();
+    expect(body.state.repetitions).toBe(0);
+    expect(body.state.intervalDays).toBe(1);
+    expect(body.state.ease).toBeCloseTo(2.45, 10);
+
+    const again = await app.inject({
+      method: 'POST',
+      url: `/api/words/${id}/review`,
+      payload: { grade: 2 },
+    });
+    expect(again.statusCode).toBe(200);
+    body = again.json();
+    expect(body.state.repetitions).toBe(1);
+    expect(body.state.intervalDays).toBe(1);
+    expect(body.state.ease).toBeCloseTo(2.5, 10);
+  });
+
+  it('grade=1 中段精确值：interval_days=5,reps=3 → 6/4/2.45；interval_days=1,reps=2 → 1/3', async () => {
+    const idA = seedWordCustom(db, 'midA', todayStr(), 5, 3, 2.5);
+    const resA = await app.inject({
+      method: 'POST',
+      url: `/api/words/${idA}/review`,
+      payload: { grade: 1 },
+    });
+    expect(resA.statusCode).toBe(200);
+    const bodyA = resA.json();
+    expect(bodyA.state.intervalDays).toBe(6);
+    expect(bodyA.state.repetitions).toBe(4);
+    expect(bodyA.state.ease).toBeCloseTo(2.45, 10);
+
+    const idB = seedWordCustom(db, 'midB', todayStr(), 1, 2, 2.5);
+    const resB = await app.inject({
+      method: 'POST',
+      url: `/api/words/${idB}/review`,
+      payload: { grade: 1 },
+    });
+    expect(resB.statusCode).toBe(200);
+    const bodyB = resB.json();
+    expect(bodyB.state.intervalDays).toBe(1);
+    expect(bodyB.state.repetitions).toBe(3);
+  });
+
+  it('dueDate 与 intervalDays 严格一致：grade=2 后 dueDate === addDays(todayStr(), intervalDays)', async () => {
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/words',
+      payload: { word: 'dueday', meaning: '测试释义' },
+    });
+    expect(create.statusCode).toBe(201);
+    const id = create.json().id as number;
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/api/words/${id}/review`,
+      payload: { grade: 2 },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.state.dueDate).toBe(addDays(todayStr(), body.state.intervalDays));
+  });
+
+  it('review 不存在的 id：POST /api/words/99999/review → 404 且 error 为 单词不存在', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/words/99999/review',
+      payload: { grade: 2 },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error).toBe('单词不存在');
+  });
+});

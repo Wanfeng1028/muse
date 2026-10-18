@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Python字符串常用操作整理</title>
+</head>
+<body>
+<h1>Python字符串常用操作整理</h1>
+<p>字符串大概是Python里最常打交道的类型之一。不管是读文件、处理网页还是打印日志，都离不开它。这篇整理几个我平时用得最多的字符串方法。</p>
+<h2>拼接与格式化</h2>
+<p>最简单的拼接用加号：<code>"hello" + " " + "world"</code>。但拼接多个变量时，f-string更清晰，比如<code>f"{name}今年{age}岁"</code>。注意f-string前面的f不能丢，丢了就变成普通字符串了。</p>
+<h2>查找与替换</h2>
+<ul>
+<li><code>find()</code>返回子串首次出现的下标，找不到返回-1</li>
+<li><code>index()</code>和find类似，但找不到会抛异常</li>
+<li><code>replace(old, new)</code>把旧子串全部替换成新子串</li>
+</ul>
+<p>切分字符串常用<code>split()</code>，默认按空白字符切。如果指定分隔符，比如<code>"a,b,c".split(",")</code>会得到列表<code>['a','b','c']</code>。反过来用<code>join()</code>把列表拼成字符串：<code>",".join(['a','b'])</code>。这两个方法经常成对出现，处理CSV数据时特别顺手。</p>
+</body>
+</html>

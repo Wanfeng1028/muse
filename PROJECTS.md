@@ -54,6 +54,7 @@
 - **v1.4.0「周报视图」（2026-10-16）**：`GET /api/stats/weekly`（周维度聚合：专注分钟/计划完成率/新增错题/模考场次/连续打卡与热力图同口径，`focusMinutesByDay` 周一..周日，非法 start 400）+ 前端 `Weekly.tsx` 升级（概览卡×5、7 天专注条形复用热力图蓝五档、计划完成率 SVG 圆环 + 四科专注条、「和上周比一比」大白话对比、单词卡，深色跟随 data-theme）；vitest **55/55**（新增 5）、server/web tsc 零错、vite build 成功；真实冒烟（默认本周/?start=/非法值 400）；浅/深两张截图亲眼验收（数据自洽、零 console 错误）
 - **v1.5.0「500 词库扩充接线」（2026-10-17）**：`src/seed/words-500.json`（500 词，之前未接入）接入 `POST /api/words/seed-vocab`：现加载 7 个词库文件（旧 6 文件 1000 条 + 500 条），120 条重复去重，空库首次 imported=1380/skippedExisting=120，重复调用幂等；播种核心抽为导出函数 `seedVocabFromEntries` + `getBundledVocabFiles`；非法条目跳过记数（skippedInvalid+errors）不再 400 中断；vitest **81/81** 全绿；真实服务冒烟 + `docs/screenshots/vocab-1380.png`（真实 1380 词）亲眼验收
 - **深测轮 r3（2026-10-18）**：17 个深测文件——plans 日期严格校验（`isValidDate` 改逐字段回绕校验，2024-02-30 等判非法）、mistakes CSV 导入边界、words 复习边界、backup/db/exams/focus/settings/stats/seed 幂等深测；vitest **279/279**（23 文件）全绿
+- **深测轮 r8（2026-10-18，deep2）**：6 个 deep2 文件 35 测试——words SRS 进阶（grade=2 五轮 interval 精确序列 1→3→8→21→57）、vocab 播种纵深（2000 条合成数据幂等零新增）、周报"和上周比一比"（跨年周 2024-12-30）、热力图 streak 纵深（闰年 2-29、replace 主键冲突 500 且 ROLLBACK 后原数据完整、merge 四表语义矩阵）；vitest **314/314**（29 文件）、tsc 零错。2 个疑似缺陷用测试文档化当前行为未修（待产品拍板）：grade=2 ease 无上钳制致间隔指数爆炸、`POST /api/focus` startedAt 无格式校验致 `'not-a-date'` 入库 201
 
 **后续计划**：
 
@@ -393,6 +394,7 @@
 **里程碑记录**：
 
 - **深测轮 r3（2026-10-18）**：docseek/eval 新增 eval_pairs_v09_sample.json（200 条 query/expected/type/category 评测对）+ work_v07/v08/v09 语料与评测库；JSON 结构校验通过
+- **评测复盘 EVAL_V09（2026-10-18，已合入）**：`docs/EVAL_V09.md` + 评测基线库 work_v07_base/work_v08_base/work_v09_full/work_v09_sample（同日同构建实测对照组）。被测 v0.14.0：v09 样本 174/200（87.0%）、v09 全量 1228/1440（85.3%）、v07 56/56（100%）、v08 81/83（97.6%，2 个为已记录对抗变体）。26 个样本失败逐对根因：A 类查询/索引分词粒度不对齐 7 例（「戚风塌腰」等，cppjieba 上下文相关切分致 FTS5 恒 0 结果，三阶段回退兜不住）等类别已分类归档，v0.15 排期攻坚。ctest 基线 305/334：29 失败全部来自 2026-10-17 e7eae08 新增的 12 个 test_tokenizer_*.cpp（自提交起从未通过，pre-existing）
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
@@ -649,6 +651,7 @@
 - **v0.3.0（2026-10-17）**：见"状态"节。
 - **v0.4.0「房间类型」（2026-10-17）**：protocol rooms-types + 网关三表（rooms/room_members/game_sessions，老库自动建表）+ 3 个 env（非法值 fail-fast）+ 房间感知路由 + 12 个 REST 端点 + Web 房间列表/徽标/设置；测试 protocol 79/79、gateway 104/104（新增 38）；真实网关冒烟 + 3 张真实截图亲眼验收；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md。
 - **v0.4.1「斗地主」（2026-10-18，娱乐厅首个可玩小游戏）**：网关 `doudizhu/` 引擎（cards.ts 牌型判定 67 测试/game.ts 牌局状态机/ai.ts 出牌 AI）+ `doudizhu-game.ts` 适配器（DoudizhuRoom + DoudizhuGameEngine 实现 GameEngine 接口）+ Web 三件套（DoudizhuLobby 开局/DoudizhuPanel 出牌/DoudizhuResult 结算）；`PLAYROOM_GAMES` 加 `doudizhu`、网关启动时 `registerGameEngine` 接线；补 `kind:"start"` 开局动作（空 session 也能开局，网关落库 JSON 会丢 rng 函数，读回时补 `Math.random`）；测试 protocol 35/35、gateway **215/215**、网关+Web tsc 零错；真实网关 E2E：建 playroom→开 doudizhu session（201）→WS start→bidding 三家 17 张→bid 落库→game_state 广播；workroom 开 doudizhu 照旧 403。本轮修真 bug：ai.ts 尾部混入 dpsk 的 markdown fence（tsc 抓获）；doudizhu-game.ts 自造 DoudizhuGameState 简化接口漏内部字段且 spring 类型写错，改为 `type DoudizhuGameState = GameState` 单一事实来源；Chat.tsx 斗地主按钮被重复 patch 三次，删至一个。
+- **深测轮 r1（2026-10-18）**：7 个 deep 文件 144 测试——rooms-types 边界 28、rooms-db 迁移幂等 21、rooms-router 路由 20、doudizhu 牌型纵深 32、叫分状态机+AI 16、artifacts 上传窗口 12、presence/usage 15；protocol **115/115**、gateway **331/331**、adapters 全绿、tsc 零错（`gateway/test/game-frames.test.ts` 的 better-sqlite3 类型错误为存量，pristine 树同样报错）。2 个真 bug 用测试锁定未修（待口径确认）：workroom 定向分支 sender 同时被@时收到两份 env（`router.ts` 重复投递）、A2345 顺子被判非法（规则口径差异）。缺口：artifacts 1 用例因 vi 假时钟 + undici keep-alive 全量必超时已移除（隔离验证通过，根治需可注入 clock）。
 
 **后续计划**：
 

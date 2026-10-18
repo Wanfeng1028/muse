@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>用 HTML 表单收集用户输入</title>
+</head>
+<body>
+<h1>用 HTML 表单收集用户输入</h1>
+<p>表单是网页和用户对话的入口。登录、搜索、留言，背后都是一个 form 元素在收集数据。入门阶段先掌握三种控件：文本输入、单选、提交按钮。</p>
+<h2>input 的 type 决定长相</h2>
+<p>input 是个自闭合标签，type 属性不同，浏览器渲染出来的控件就不同。type="text" 是单行文本框，type="password" 输入时显示圆点，type="radio" 是单选圈，type="checkbox" 是方框。给每个 input 配一个 label，点文字也能聚焦输入框，对手机用户很友好。</p>
+<h2>提交按钮和 name 属性</h2>
+<ul>
+<li>button 标签默认类型是 submit，放在 form 里点击就会提交。</li>
+<li>每个需要提交的控件都要写 name，后端靠这个名字取值。</li>
+<li>form 的 action 写接收地址，method 常用 get 和 post。</li>
+</ul>
+<p>初学者常忘写 name，结果提交后什么也收不到。可以先用浏览器开发者工具看网络请求，确认参数有没有带上。表单校验可以先交给 required 属性，浏览器会自动拦截空值。</p>
+</body>
+</html>

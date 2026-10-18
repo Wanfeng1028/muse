@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>HTML 里的图片和链接怎么写才不出错</title>
+</head>
+<body>
+<h1>HTML 里的图片和链接怎么写才不出错</h1>
+<p>图片和链接是网页里最常出问题的两个地方。路径写错、alt 忘写、链接打开方式不对，都会让用户直接离开页面。下面把常见的坑列一遍。</p>
+<h2>图片的 src 和 alt</h2>
+<p>img 标签用 src 指定图片路径，路径分相对和绝对两种。图片和网页在同一目录，直接写文件名；在上一级目录，用 ../ 开头。alt 是图片加载失败时显示的文字，也供屏幕阅读器朗读，不能省。写法是 alt="描述图片内容"，别写“图片”两个字糊弄。</p>
+<h2>链接的 target 和锚点</h2>
+<ul>
+<li>a 标签的 href 写目标地址，外部链接建议加 target="_blank" 在新标签打开。</li>
+<li>用 target="_blank" 时最好同时加 rel="noopener"，避免安全风险。</li>
+<li>锚点链接写成 href="#section2"，跳到本页 id 为 section2 的元素。</li>
+</ul>
+<p>如果链接点了没反应，先检查 href 有没有写成空字符串或者 # 开头。图片不显示，八成是路径大小写和实际文件名对不上，Linux 服务器区分大小写，本地 Windows 可能不区分，部署后才暴露。</p>
+</body>
+</html>
