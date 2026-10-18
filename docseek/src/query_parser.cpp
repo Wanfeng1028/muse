@@ -252,6 +252,16 @@ std::string stripFillerWords(const std::string& raw) {
     return rest;
 }
 
+// 问句胶水词：疑问句式里的场景状语/泛动词/反身代词，信息量极低，进入 keywords
+// 只会拉低 coverage 分母。独立于 singleCharStopwords()（后者被 searcher.cpp 共用，不许动）。
+// 只收 7 个：「住」「里」「用」「到」「唱」「时」「自己」。
+// 「不」字有否定保护，不入此表；「自己」为反身代词（对等英文停用词 myself/yourself）。
+bool isQuestionGlueWord(const std::string& w) {
+    static const std::unordered_set<std::string> kSet = {
+        "住", "里", "用", "到", "唱", "时", "自己"};
+    return kSet.count(w) > 0;
+}
+
 // 单字中文停用词判断（供查询展开等复用）。
 bool isSingleCharStopword(const std::string& w) {
     return singleCharStopwords().count(w) > 0;
@@ -317,9 +327,69 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     extractPhrases(raw, pq.phrases, rest);
 
     // 2. 删除疑问/语气词（按表顺序，长度降序）。
-    // 注意：此处用 eraseAll（直接删除）而非 replaceAllWithSpace——实测 replaceAllWithSpace
+    // 分两步：
+    //   2a. token 边界删除（精确模式 Cut 切分后，把 fillerWords 表项在 token
+    //       边界上整段换成单个空格），避免字符串级 eraseAll 把相邻 token 粘连成
+    //       胶水词（如 q4"才算好按"删"才"后"算好按"粘连）。
+    //   2b. 字符串级 eraseAll（原有行为，保持原样、原顺序），负责处理 token 边界
+    //       删除覆盖不到的残余（如"才能"这类整词，2a 不动它，交给 2b 按现有行为
+    //       撕成"能"——v09-t004-q09 依赖这个"能"，不许动）。
+    // 注意：2b 用 eraseAll（直接删除）而非 replaceAllWithSpace——实测 replaceAllWithSpace
     // 在 locate 路径会导致单字 token（如“好”）被空格隔离成独立 AND 组，BM25 排序劣化
     // （v08-qa-09b 回归）。search 路径的 stripFillerWords 仍用空格版（修“报班钱”粘连）。
+
+    // 2a. token 边界疑问词删除：先用精确模式 Cut 分词（非 CutForSearch，因为后者
+    //     返回重叠的搜索词，不能拼接回字符串），把 fillerWords 表项在 token 边界上
+    //     整段删掉，用单个空格占位（防止左右 token 粘连）。fillerWords() 已按长度降序。
+    //     - 多 token 序列：连续子序列直接拼接等于 w（至少两个 token）→ 整个子序列替换为一个 " "。
+    //     - 单 token：toks[i] == w → 替换为 " "。
+    //     - "才能"这类整词：没有任何 w 与之相等，也拼不出（"才"是单字，子序列至少两个 token
+    //       才能触发），因此完整保留，留给后面的字符串级 eraseAll 按现有行为撕成"能"
+    //       （v09-t004-q09 依赖这个"能"，不许动）。
+    //     之后把 toks 直接拼接（concatenate，不加额外空格）回 rest。
+    //     示例："有没有建议"被切成 [有没有][建议] → 两个 token 一起换成一个 " "，[建议] 不会残留。
+    //     示例：q4 的 [才] → " "，得到 "范围 算 好按"，[算][好按] 分离。
+    //     若 jiebaInstance() 返回空指针，跳过本预处理。
+    if (!rest.empty()) {
+        const cppjieba::Jieba* jieba = jiebaInstance();
+        if (jieba != nullptr) {
+            std::vector<std::string> toks;
+            jieba->Cut(rest, toks);
+            const auto& fillers = fillerWords();  // 已按长度降序
+            // 外层按 filler 长度降序遍历：避免短词在前面位置贪掉长词的 token
+            //（如"在哪"吃掉"哪一段"中的"在""哪"，导致"一段"残留，v07 回归）。
+            for (const auto& w : fillers) {
+                if (w.empty()) continue;
+                for (size_t i = 0; i < toks.size();) {
+                    // 单 token 精确命中。
+                    if (toks[i] == w) {
+                        toks[i] = " ";
+                        ++i;
+                        continue;
+                    }
+                    // 多 token 连续子序列拼接命中（至少两个 token）。
+                    std::string acc;
+                    size_t j = i;
+                    while (j < toks.size() && acc.size() < w.size()) {
+                        acc += toks[j];
+                        ++j;
+                    }
+                    if (j - i >= 2 && acc == w) {
+                        toks[i] = " ";
+                        toks.erase(toks.begin() + i + 1, toks.begin() + j);
+                        // i 不变，继续检查当前位置
+                    } else {
+                        ++i;
+                    }
+                }
+            }
+            // 直接拼接（不加额外空格）回 rest。" " 占位符保留以防粘连。
+            std::string joined;
+            for (const auto& t : toks) joined += t;
+            rest = joined;
+        }
+    }
+
     for (const auto& w : fillerWords()) {
         rest = eraseAll(rest, w);
     }
@@ -352,6 +422,7 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
                         singleCharStopwords().count(w) > 0) {
                         continue;
                     }
+                    if (isQuestionGlueWord(w)) continue;
                     pushUnique(pq.keywords, seen, w);
                 }
             }

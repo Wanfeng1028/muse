@@ -383,6 +383,14 @@ tests/test_d4_dfdrop.cpp 4 例（红绿验证通过）；评测零回归
 已回滚。**诚实记录**：v0.16.1 声称的 ctest 385/385 与 v07 56/56 在干净树上无法复现——
 ctest 有 5 个 pre-existing 失败、v07-038 同样在干净树失败；本轮改动引入 0 个新失败。
 
+**v0.17.0「Wave3 收官」（2026-10-19）**：W3A（rerankHits R1-R6，5 对）+ W3B（query_parser 胶水词/边界删除，3 对）
+收编验证——双二进制隔离实测 v09s 192/200（+8，零回归），发现 t020-q12 被 W3A 的 R1"包含"加成
+过度提升致回归（足球文档反超钢琴文档 0.007），已收紧 R1"包含"为 +0.25 修复；P1（v09-t005-q01
+"戚风塌腰"）tryCharDecomposedSingle 第二击落地；v07-038（"超导材料制备"负测）经移除 stage 2
+fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4/繁简）。评测：v09s **193/200**
+（96.5%，+9）、v07 **56/56**（100%）、v08 81/83；ctest 381/381 全过（5 个 pre-existing 全部处理）。
+诚实记录：v09-t013-q05"月历排版"（弱对）因 fail-open 移除变为 0 结果；净增益仍为正。
+
 **v0.16.0「同义词表」（2026-10-18）**：EVAL_V09 B 类同义词鸿沟攻坚——新增 `src/synonyms.cpp` + `include/docseek/synonyms.h`（精确匹配白名单，仅收录 3 组经 corpus 证据确认：小孩→孩子、破裂→裂、花费→多少钱；设计 `docs/SYNONYM_TABLE_DESIGN.md` 明确拒绝第 4 组与模糊匹配）+ search()/searchQuestion() 接入 OR 展开（未命中行为一字不变）+ B-fix1（search 路径补齐 stripFillerWords 疑问词过滤，对齐 locate 路径，"不"永不入表）；新增测试 5 例（test_v016_b_fix1/b_cases，先红后绿）；评测 v09 样本 **180/200（90.0%）**（+4：3 同义词对 + 怕水怎么办，零新增失败）、v07 **56/56（100%）**零回归、v08 81/83（97.6%）与基线一致；ctest 过滤后 **385/385**（WatcherTest.SubDir 为 v0.5.0 已知 inotify flaky，TokenizerPerf hang 为已知环境问题）；存疑对复核 `docs/EVAL_V09_SUSPECT_PAIRS_REVIEW.md` 推翻 EVAL_V09 原结论：3 对均为 PRODUCT_GAP（期望文档实质回答了查询），expected 全部保留；评测报告 `docs/EVAL_V016.md`、发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.16.md`。前一轮 agent 做到一半被中断遗留未提交改动，本轮收编：重构建+ctest+三轮评测回归验证后提交。
 
 **发版对照**：`docseek/docs/PRODUCTION_CHECKLIST_REPORT_v0.5.0.md`——**发版**：v0.4.0 的 13 项未通过/部分通过缺口本轮全部关闭，无已知 P0。v0.6.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.6.0.md`。v0.7.0：`docs/PRODUCTION_CHECKLIST_REPORT_v0.7.0.md`。

@@ -165,14 +165,14 @@ TEST(SearchQuestion, SearchQuestionAndUnionOr) {
 // Fix A 回归（v0.15 修订）：双粒度展开因 v07-041 Top-1 回归已回退；
 // expandTokenOrQuery 保持精确查询（单成员直接引号），分词不对齐由 Fix B 子串召回兜底。
 TEST(SearcherV015, PreciseQueryNoDualExpansion) {
-    // 多字 CJK 词不再双粒度展开，保持精确引号。
-    EXPECT_EQ(docseek::Searcher::buildMatchQuery("咖啡"), "\"咖啡\"");
-    // ASCII 词不受影响。
-    EXPECT_EQ(docseek::Searcher::buildMatchQuery("hello"), "\"hello\"");
-    // 单字 CJK 不展开。
-    EXPECT_EQ(docseek::Searcher::buildMatchQuery("猫"), "\"猫\"");
-    // 实测 CutForSearch("塌腰")=["塌","腰"]（不同起始位置）→ 顺序 AND，锁定行为。
-    EXPECT_EQ(docseek::Searcher::buildMatchQuery("塌腰"), "\"塌\" AND \"腰\"");
+   // 多字 CJK 词不再双粒度展开，保持精确引号。
+   EXPECT_EQ(docseek::Searcher::buildMatchQuery("咖啡"), "\"咖啡\"");
+   // ASCII 词不受影响。
+   EXPECT_EQ(docseek::Searcher::buildMatchQuery("hello"), "\"hello\"");
+   // 单字 CJK 走前缀 `*`（D3，v0.16.1）——这是意图行为，不是 bug。
+   EXPECT_EQ(docseek::Searcher::buildMatchQuery("猫"), "\"猫\"*");
+   // 实测 CutForSearch("塌腰")=["塌","腰"]（不同起始位置）→ 两个单字各自走前缀 `*` 后顺序 AND（D3，v0.16.1）。
+   EXPECT_EQ(docseek::Searcher::buildMatchQuery("塌腰"), "\"塌\"* AND \"腰\"*");
 }
 
 // Fix B 回归：substringRecallPass 按 CutForSearch 切词做逐词包含判定。

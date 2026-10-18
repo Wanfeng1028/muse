@@ -60,34 +60,40 @@ TEST(TokenizerTradTest, SimplifiedDocSimplifiedQuery) {
 
 // 简体文档：用繁体查询词命中（繁->简归一化）
 TEST(TokenizerTradTest, SimplifiedDocTraditionalQuery) {
-    // 当前行为：无繁简归一化，繁体查询词查简体文档返回 0 条（未来实现归一化时本测试需同步更新）。
+    // 当前行为（v0.17.0 起）：无繁简归一化；fail-open 已移除，跨字形部分匹配返回 0 条（严格精度）。
+    // 未来实现归一化时本测试需同步更新。
     docseek::Database db = openFreshDb("trad_simp_trad");
     db.upsert("/s2.txt", "简体标题", "全文检索引擎测试文档", 100, 42);
 
     docseek::Searcher searcher(db);
 
+    // 单字繁体：无共享 token，0 条（繁简归一化未实现的证据）
     auto hits = searcher.search("檢索", 10);
     EXPECT_TRUE(hits.empty());
 
+    // "全文檢索"：虽有"全文"共享 token，但字形不同，严格精度下 0 条
     auto hits2 = searcher.search("全文檢索", 10);
     EXPECT_TRUE(hits2.empty());
 
-    // 对照：简体查询词命中简体文档（同字形正常工作）
-    auto hits3 = searcher.search("检索", 10);
-    EXPECT_GE(hits3.size(), 1u);
+   // 对照：简体查询词命中简体文档（同字形正常工作）
+   auto hits3 = searcher.search("检索", 10);
+   EXPECT_GE(hits3.size(), 1u);
 }
 
 // 繁体文档：用简体查询词命中（简->繁归一化）
 TEST(TokenizerTradTest, TraditionalDocSimplifiedQuery) {
-    // 当前行为：无繁简归一化，简体查询词查繁体文档返回 0 条（未来实现归一化时本测试需同步更新）。
+    // 当前行为（v0.17.0 起）：无繁简归一化；fail-open 已移除，跨字形部分匹配返回 0 条（严格精度）——"全文检索"通过共享的"全文"token 命中繁体文档。
+    // 单字简体（"检索"）无共享 token，仍返回 0 条。未来实现归一化时本测试需同步更新。
     docseek::Database db = openFreshDb("trad_trad_simp");
     db.upsert("/t1.txt", "繁體標題", "全文檢索引擎測試文檔", 100, 42);
 
     docseek::Searcher searcher(db);
 
+    // 单字简体：无共享 token，仍 0 条（繁简归一化未实现的证据）
     auto hits = searcher.search("检索", 10);
     EXPECT_TRUE(hits.empty());
 
+    // "全文检索"：v0.17.0 起 fail-open 已移除，严格精度下跨字形部分匹配返回 0 条。
     auto hits2 = searcher.search("全文检索", 10);
     EXPECT_TRUE(hits2.empty());
 

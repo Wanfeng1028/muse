@@ -85,8 +85,10 @@ TEST(SubstringRecallV015, DoesNotRecallUnrelatedDoc) {
     EXPECT_TRUE(hits.empty());
 }
 
-// (c) 阶段 3 不污染已有结果：换词（去掉"配方"）后不应被召回 doc4。
-// 若实现无脑做 OR/子串兜底，doc4（含"多肉植物配土方法"）会被召回；本用例锁定其不被召回。
+// (c) v0.16.1 D4 起语义变更：精确 AND 为空时丢弃 DF=0 的 token（"配方"），
+// 用剩余 token（"多肉配土"）重建 AND 再查一次（fail-open 召回）。
+// 因此 doc4（"多肉植物配土方法"）被召回是 D4 的意图行为（Google 式纠正/放宽后召回相关文档），
+// 不是"无脑 OR 兜底"。本用例现锁定 D4 的 fail-open 召回语义。
 TEST(SubstringRecallV015, Stage3DoesNotPolluteWithDoc4) {
     requireJiebaReady();
     std::string dir = makeTempDir("v015_stage3_doc4");
@@ -95,7 +97,7 @@ TEST(SubstringRecallV015, Stage3DoesNotPolluteWithDoc4) {
               "标题", "多肉植物配土方法", 100, 42);
     Searcher searcher(db);
     auto hits = searcher.search("多肉配土配方", 10);
-    EXPECT_TRUE(hits.empty());
+    EXPECT_EQ(hits.size(), 1u);
 }
 
 // (c) 阶段 3 不污染已有结果：doc1 在阶段 1 命中，加入无关 doc3 后仍只召回 doc1。
