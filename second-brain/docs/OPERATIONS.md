@@ -199,6 +199,15 @@ docker logs second-brain 2>&1 | grep '"note.created"' | grep '"user":"alice"'
 
 规则文件在 `prometheus/rules/second-brain.yml`，group 名 `second-brain-alerts`，每 30 秒评估一次。所有规则都带 `summary`、`description`、`runbook_url`，`runbook_url` 指回本节。规则里只用服务真实暴露的指标：`http_requests_total`、`http_request_duration_seconds`、`push_sent_total`、`reviews_graded_total`、`notes_total`、`reviews_due`、`reviews_due_by_user`、`up`。
 
+7 条规则一览：
+- SecondBrainHigh5xxRate：5 分钟 5xx 占比超 5%（warning）
+- SecondBrainPushFailureRate：15 分钟推送失败率超 20%（warning）
+- SecondBrainHighP99Latency：5 分钟 P99 延迟超 1 秒（warning）
+- SecondBrainRateLimitedSurge：5 分钟 429 速率超 5/s（warning）
+- SecondBrainDeadLetterSurge：1 小时出现死信（warning）
+- SecondBrainInstanceDown：连续 5 分钟抓不到实例（critical）
+- SecondBrainUserDueBacklog（v0.14+）：某用户待复习数超 20 篇持续 1 小时（info，只提醒不打扰）
+
 
 ### 规则说明和阈值
 

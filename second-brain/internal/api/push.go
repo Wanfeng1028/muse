@@ -11,6 +11,7 @@ import (
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
 	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
 	"github.com/Wanfeng1028/muse/second-brain/internal/notify"
+	"github.com/Wanfeng1028/muse/second-brain/internal/push"
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
 )
 
@@ -326,6 +327,8 @@ func handlePushTest(st *store.Store, cfg config.Config) http.HandlerFunc {
 			writeError(w, r, http.StatusBadRequest, err.Error())
 			return
 		}
+		// 测试通道同样走重试：一次网络抖动不应直接判失败
+		sender = push.WrapWithRetry(sender, push.DefaultRetryPolicy())
 
 		to := cfg.Push.MailTo
 		items := testDigestItems()

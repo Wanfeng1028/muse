@@ -79,3 +79,15 @@ groups:
           summary: "second-brain 实例抓不到指标"
           description: "Prometheus 连续 5 分钟抓不到 job=second-brain 的实例，服务可能已经挂了或 /metrics 不通。先确认进程和端口，再看启动日志。"
           runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
+      - alert: SecondBrainUserDueBacklog
+        expr: |
+          max by (user) (reviews_due_by_user) > 20
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "second-brain 某用户待复习积压较多"
+          description: "用户 {{ $labels.user }} 的今日待复习数超过 20 篇且持续 1 小时（当前 {{ $value }} 篇）。提醒该用户及时复习，避免遗忘曲线断裂后集中补救。"
+          runbook_url: "https://github.com/Wanfeng1028/muse/blob/main/second-brain/docs/OPERATIONS.md#告警规则v013"
+
