@@ -80,6 +80,13 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       return reply.code(400).send({ error: 'minutes must be an integer between 1 and 1440' });
     }
 
+    // 校验 startedAt：提供时必须为可解析的有效日期字符串
+    if (startedAt !== undefined && startedAt !== null) {
+      if (typeof startedAt !== 'string' || Number.isNaN(Date.parse(startedAt))) {
+        return reply.code(400).send({ error: 'startedAt must be a valid date string' });
+      }
+    }
+
     const finalStartedAt = startedAt ?? nowIso();
     const finalNote = note === undefined ? null : note;
 

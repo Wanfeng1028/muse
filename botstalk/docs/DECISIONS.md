@@ -137,3 +137,16 @@ web/src/ws.ts 之前把 per-sender seq 当成 `last_seen_seq` 上报，跟 v1.1 
 ### 测试卫生
 
 test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gateway/ 下留下一堆 `test-tmp-*` 目录。改成用 `tmpdir()`，跑完不再堆在仓库里。之前残留的 8 个目录已经删掉了。
+
+## 2026-10-18：A2345 顺子口径决策（斗地主）
+
+**决策**：A 不可作为 1 回绕，A2345 / A23456 均为非法牌型。引擎现行行为（判 invalid）正确，保持不变。
+
+**依据**（2026-10-18 经 Keenable 核验）：
+- gameabc.com《斗地主顺子可以打A23456吗？》明确指出 A23456 不是顺子、不能打；顺子最小 3、最大 A。
+- 同城游斗地主：顺子最大牌型为 10JQKA，不可带 2，最大点数为 A。
+- 腾讯欢乐斗地主官方规则：顺子是"点数相连的牌，2 和王不能出现在顺子中"，牌序 3..A，A 为端点不回绕。
+
+**影响**：
+- `gateway/src/doudizhu/cards.ts` 中 `tryStraight` 注释已写明该口径。
+- `gateway/test/doudizhu-cards.deep.test.ts` 用例锁定 A2345 为 invalid。

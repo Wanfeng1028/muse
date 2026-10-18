@@ -67,7 +67,7 @@ describe('POST /api/words/:id/review - grade=1 首评分支', () => {
 });
 
 describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
-  it('reps=0 -> intervalDays=1, ease=2.55', async () => {
+  it('reps=0 -> intervalDays=1, ease=2.5（上限钳制）', async () => {
     const id = await createWord('advA', '进阶A');
     const res = await app.inject({
       method: 'POST',
@@ -78,10 +78,10 @@ describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
     const body = res.json();
     expect(body.state.repetitions).toBe(1);
     expect(body.state.intervalDays).toBe(1);
-    expect(body.state.ease).toBeCloseTo(2.55, 10);
+    expect(body.state.ease).toBeCloseTo(2.5, 10);
   });
 
-  it('reps=1 -> intervalDays=3', async () => {
+  it('reps=1 -> intervalDays=3, ease=2.5（上限钳制）', async () => {
     const id = await createWord('advB', '进阶B');
     await app.inject({
       method: 'POST',
@@ -97,7 +97,7 @@ describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
     const body = res.json();
     expect(body.state.repetitions).toBe(2);
     expect(body.state.intervalDays).toBe(3);
-    expect(body.state.ease).toBeCloseTo(2.6, 10);
+    expect(body.state.ease).toBeCloseTo(2.5, 10);
   });
 
   it('reps=2 -> intervalDays = Math.round(3 * ease)', async () => {
@@ -120,7 +120,7 @@ describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.state.repetitions).toBe(3);
-    expect(body.state.ease).toBeCloseTo(2.65, 10);
+    expect(body.state.ease).toBeCloseTo(2.5, 10);
     expect(body.state.intervalDays).toBe(Math.round(3 * body.state.ease));
   });
 });
@@ -175,7 +175,7 @@ describe('POST /api/words/:id/review - 缺 srs_state 行的 INSERT 分支', () =
     const body = res.json();
     expect(body.state.repetitions).toBe(1);
     expect(body.state.intervalDays).toBe(1);
-    expect(body.state.ease).toBeCloseTo(2.55, 10);
+    expect(body.state.ease).toBeCloseTo(2.5, 10);
 
     const after = db
       .prepare(
@@ -188,7 +188,7 @@ describe('POST /api/words/:id/review - 缺 srs_state 行的 INSERT 分支', () =
       due_date: string;
     };
     expect(after).toBeDefined();
-    expect(after.ease).toBeCloseTo(2.55, 10);
+    expect(after.ease).toBeCloseTo(2.5, 10);
     expect(after.interval_days).toBe(1);
     expect(after.repetitions).toBe(1);
     expect(after.due_date).toBe(addDays(todayStr(), 1));

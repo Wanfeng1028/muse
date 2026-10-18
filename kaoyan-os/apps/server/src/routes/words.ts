@@ -366,7 +366,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
           intervalDays = Math.round(intervalDays * ease);
         }
         repetitions += 1;
-        ease = ease + 0.05;
+        ease = Math.min(2.5, ease + 0.05);
       }
 
       const dueDate = addDays(todayStr(), intervalDays);

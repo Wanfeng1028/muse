@@ -37,7 +37,17 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
   if (intent === "chat") {
     if (p.mentions.length > 0 && roomType === "workroom") {
       // 工作坊定向：只派发给被@的成员和发送者自己，禁止抢话。
+      // 用 Set 去重，避免 mentions 含重复 adapter id 或同时含 sender 时重复投递；
+      // sender 的副本统一交给下方 sender 分支处理。
+      const sent = new Set<string>();
       for (const adapterId of p.mentions) {
+        if (adapterId === env.sender) {
+          continue;
+        }
+        if (sent.has(adapterId)) {
+          continue;
+        }
+        sent.add(adapterId);
         if (hub.getConn(adapterId)) {
           hub.sendTo(adapterId, env);
         }

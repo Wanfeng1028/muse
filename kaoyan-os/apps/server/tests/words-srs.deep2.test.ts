@@ -76,7 +76,7 @@ afterEach(async () => {
 });
 
 describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
-  it('grade=2 连续五轮：intervalDays 序列精确为 1,3,8,21,57，ease 每轮 +0.05，repetitions 依次 1..5', async () => {
+  it('grade=2 连续五轮（已修复 ease 上限 2.5）：intervalDays 序列精确为 1,3,8,20,50，ease 恒为 2.5，repetitions 依次 1..5', async () => {
     const create = await app.inject({
       method: 'POST',
       url: '/api/words',
@@ -85,8 +85,8 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
     expect(create.statusCode).toBe(201);
     const id = create.json().id as number;
 
-    const expectedIntervals = [1, 3, 8, 21, 57];
-    const expectedEase = [2.55, 2.6, 2.65, 2.7, 2.75];
+    const expectedIntervals = [1, 3, 8, 20, 50];
+    const expectedEase = [2.5, 2.5, 2.5, 2.5, 2.5];
 
     for (let i = 0; i < 5; i++) {
       const res = await app.inject({
@@ -103,7 +103,7 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
     }
   });
 
-  it('grade=2 的 ease 没有上钳制（当前行为：无上钳制）：20 轮后 ease=3.5, repetitions=20', async () => {
+  it('grade=2 的 ease 上钳制在 2.5（已修复）：20 轮后 ease 精确=2.5，interval 收敛不再指数爆炸', async () => {
     const create = await app.inject({
       method: 'POST',
       url: '/api/words',
@@ -112,6 +112,10 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
     expect(create.statusCode).toBe(201);
     const id = create.json().id as number;
 
+    const expectedIntervals = [
+      1, 3, 8, 20, 50, 125, 313, 783, 1958, 4895, 12238, 30595, 76488, 191220, 478050, 1195125,
+      2987813, 7469533, 18673833, 46684583,
+    ];
     let last: any;
     for (let i = 0; i < 20; i++) {
       const res = await app.inject({
@@ -121,12 +125,40 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       });
       expect(res.statusCode).toBe(200);
       last = res.json();
+      expect(last.state.intervalDays).toBe(expectedIntervals[i]);
     }
 
-    expect(last.state.ease).toBeCloseTo(3.5, 10);
+    expect(last.state.ease).toBe(2.5);
     expect(last.state.repetitions).toBe(20);
   });
 
+  it('ease 从低位回升也被钳制在 2.5', async () => {
+    const create = await app.inject({
+      method: 'POST',
+      url: '/api/words',
+      payload: { word: 'recovercap', meaning: '测试释义' },
+    });
+    expect(create.statusCode).toBe(201);
+    const id = create.json().id as number;
+    const down = await app.inject({
+      method: 'POST',
+      url: `/api/words/${id}/review`,
+      payload: { grade: 0 },
+    });
+    expect(down.statusCode).toBe(200);
+    let last: any;
+    for (let i = 0; i < 10; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/words/${id}/review`,
+        payload: { grade: 2 },
+      });
+      expect(res.statusCode).toBe(200);
+      last = res.json();
+      expect(last.state.ease).toBeLessThanOrEqual(2.5);
+    }
+    expect(last.state.ease).toBe(2.5);
+  });
   it('连续 grade=0 六轮后 ease 钳制在 1.3，第 7 轮仍为 1.3，repetitions 恒 0，intervalDays 恒 1', async () => {
     const create = await app.inject({
       method: 'POST',
@@ -184,7 +216,7 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
     let body = res.json();
     expect(body.state.repetitions).toBe(3);
     expect(body.state.intervalDays).toBe(8);
-    expect(body.state.ease).toBeCloseTo(2.65, 10);
+    expect(body.state.ease).toBeCloseTo(2.5, 10);
 
     const wrong = await app.inject({
       method: 'POST',
@@ -195,7 +227,7 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
     body = wrong.json();
     expect(body.state.repetitions).toBe(0);
     expect(body.state.intervalDays).toBe(1);
-    expect(body.state.ease).toBeCloseTo(2.45, 10);
+    expect(body.state.ease).toBeCloseTo(2.3, 10);
 
     const again = await app.inject({
       method: 'POST',
@@ -206,7 +238,7 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
     body = again.json();
     expect(body.state.repetitions).toBe(1);
     expect(body.state.intervalDays).toBe(1);
-    expect(body.state.ease).toBeCloseTo(2.5, 10);
+    expect(body.state.ease).toBeCloseTo(2.35, 10);
   });
 
   it('grade=1 中段精确值：interval_days=5,reps=3 → 6/4/2.45；interval_days=1,reps=2 → 1/3', async () => {

@@ -51,6 +51,8 @@ function isConsecutive(ranks: number[]): boolean {
 
 function tryStraight(sorted: number[], counts: Map<number, number>): Combo | null {
   // 顺子：>=5 张，连续，每张 <=14，无重复
+  // 口径决策（2026-10-18）：A 不可作为 1 回绕，A2345 / A23456 均非法。
+  // 依据主流口径（腾讯欢乐斗地主等）：顺子最小 3、最大 A，A 为端点不回绕。
   const n = sorted.length;
   if (n < 5) return null;
   if (counts.size !== n) return null;

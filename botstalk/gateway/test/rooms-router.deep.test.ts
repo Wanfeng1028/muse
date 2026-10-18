@@ -228,15 +228,53 @@ describe("rooms-router.deep", () => {
     expect(bobRecv![0]).toBe(env);
   });
 
-  // 10. sender 同时是被@成员：按源码如实断言收到 2 份（疑似重复投递 bug，已锁定）。
-  it("workroom sender 同时被@时收到两份（疑似重复投递 bug）", () => {
+  // 10. sender 同时是被@成员：修复后同一 adapter 一次 routeMessage 最多收到一份 env。
+  it("workroom sender 同时被@时只收到一份（重复投递 bug 已修复）", () => {
     const hub = makeFakeHub();
     hub.conns.add("alice");
     const env = chatEnv("alice", "workroom", "@alice hi", ["alice"]);
     routeMessage(hub as unknown as Hub, env, db);
-    // 现行源码行为：for 循环发一次，sender 分支再发一次，共 2 份。
-    // 疑似 bug：被@且是发送者会收到重复投递，已锁定当前行为。
-    expect(hub.sent.get("alice")?.length).toBe(2);
+    // 修复后：sender 的副本由 sender 分支负责，mentions 循环不再重复投递。
+    expect(hub.sent.get("alice")?.length).toBe(1);
+    expect(hub.broadcasts.length).toBe(0);
+  });
+
+  // 11. mentions 中出现重复的 adapter id：同一 adapter 只投递一次。
+  it("workroom mentions 重复 id 时只投递一次", () => {
+    const hub = makeFakeHub();
+    hub.conns.add("bob");
+    const env = chatEnv("alice", "workroom", "@bob @bob hi", ["bob", "bob"]);
+    routeMessage(hub as unknown as Hub, env, db);
+    expect(hub.sent.get("bob")?.length).toBe(1);
+    expect(hub.broadcasts.length).toBe(0);
+  });
+
+  // 12. sender 同时@自己与另一成员：两人各收到一份，无广播。
+  it("workroom sender 与另一被@成员各收到一份", () => {
+    const hub = makeFakeHub();
+    hub.conns.add("alice");
+    hub.conns.add("bob");
+    const env = chatEnv("alice", "workroom", "@alice @bob hi", ["alice", "bob"]);
+    routeMessage(hub as unknown as Hub, env, db);
+    expect(hub.sent.get("alice")?.length).toBe(1);
+    expect(hub.sent.get("bob")?.length).toBe(1);
+    expect(hub.broadcasts.length).toBe(0);
+  });
+
+  // 13. mentions 含不在线 adapter：跳过不崩，在线的仍各收一份。
+  it("workroom mentions 含离线 adapter 时跳过且在线者各收一份", () => {
+    const hub = makeFakeHub();
+    hub.conns.add("alice");
+    hub.conns.add("bob");
+    const env = chatEnv("carol", "workroom", "@alice @dave @bob hi", [
+      "alice",
+      "dave",
+      "bob",
+    ]);
+    routeMessage(hub as unknown as Hub, env, db);
+    expect(hub.sent.get("alice")?.length).toBe(1);
+    expect(hub.sent.get("bob")?.length).toBe(1);
+    expect(hub.sent.get("dave")).toBeUndefined();
     expect(hub.broadcasts.length).toBe(0);
   });
 
