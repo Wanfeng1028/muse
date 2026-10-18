@@ -1,11 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import type { DatabaseSync } from 'node:sqlite';
 import {
-  isSubjectKey,
-  type CreateExamInput,
-  type ExamRecord,
-  type ExamTrendPoint,
+isSubjectKey,
+type CreateExamInput,
+type ExamRecord,
+type ExamTrendPoint,
+type ExamSummary,
 } from '@kaoyan/shared';
+
 import { todayStr } from '../db';
 
 // 数据库行类型
@@ -84,7 +86,93 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     });
 
     return points;
-  });
+});
+
+// GET /api/exams/summary - 真题汇总统计
+app.get('/api/exams/summary', async (req, reply) => {
+const query = req.query as { subject?: string};
+const params: string[] = [];
+let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records';
+
+if (query.subject!== undefined) {
+if (!isSubjectKey(query.subject)) {
+return reply.code(400).send({ error: '无效的 subject 参数'});
+}
+sql += ' WHERE subject =?';
+params.push(query.subject);
+}
+
+sql += ' ORDER BY taken_at ASC, id ASC';
+const rows = db.prepare(sql).all(...params) as unknown as ExamRow[];
+
+const subject = query.subject!== undefined ? query.subject : null;
+
+if (rows.length === 0) {
+const empty: ExamSummary = {
+subject,
+count: 0,
+avgScore: 0,
+avgRate: 0,
+bestScore: 0,
+bestTakenAt: '',
+latestScore: 0,
+latestTakenAt: '',
+firstScore: 0,
+firstTakenAt: '',
+improvement: 0,
+};
+return empty;
+}
+
+const count = rows.length;
+const totalScoreSum = rows.reduce((sum, row) => sum + row.score, 0);
+const totalFullSum = rows.reduce((sum, row) => sum + row.total_score, 0);
+const avgScore = Math.round((totalScoreSum / count) * 10) / 10;
+const avgRate = totalFullSum > 0 ? Math.round((totalScoreSum / totalFullSum) * 10000) / 10000 : 0;
+
+// 最高分：并列取最早的一场（taken_at 最早，并列取 id 最小）
+let best = rows[0];
+for (const row of rows) {
+if (row.score > best.score) {
+best = row;
+}
+}
+
+// 最早一场：taken_at 最早，并列取 id 最小
+let first = rows[0];
+for (const row of rows) {
+if (row.taken_at < first.taken_at || (row.taken_at === first.taken_at && row.id < first.id)) {
+first = row;
+}
+}
+
+// 最近一场：taken_at 最晚，并列取 id 最大
+let latest = rows[0];
+for (const row of rows) {
+if (row.taken_at > latest.taken_at || (row.taken_at === latest.taken_at && row.id > latest.id)) {
+latest = row;
+}
+}
+
+const improvement = count < 2 ? 0 : latest.score - first.score;
+
+const summary: ExamSummary = {
+subject,
+count,
+avgScore,
+avgRate,
+bestScore: best.score,
+bestTakenAt: best.taken_at,
+latestScore: latest.score,
+latestTakenAt: latest.taken_at,
+firstScore: first.score,
+firstTakenAt: first.taken_at,
+improvement,
+};
+
+return summary;
+});
+
 
   // POST /api/exams - 创建考试记录
   app.post('/api/exams', async (req, reply) => {

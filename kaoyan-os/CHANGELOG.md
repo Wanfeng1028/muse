@@ -4,7 +4,18 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.7.0] - 2026-10-18
+
+### Added
+
+- 后端：GET /api/exams/summary（可选?subject=，非法值 400 { error: '无效的 subject 参数'}），返回真题汇总 { subject/count/avgScore（1 位小数）/avgRate（加权平均得分率，4 位小数）/bestScore+bestTakenAt（并列取最早）/latestScore+latestTakenAt（taken_at 最晚，并列取 id 大者）/firstScore+firstTakenAt（taken_at 最早，并列取 id 小者）/improvement（最新减最早，少于 2 场为 0）}；空库时 count=0 其余数字 0、字符串 ''。
+- 共享类型：packages/shared 新增 ExamSummary 接口；apps/web/src/api.ts 新增 api.examSummary(subject?)。
+- 前端：真题页（/exams）在新增表单与趋势图之间新增「本阶段汇总」卡片，跟随趋势图科目筛选，展示模考场次/平均分/平均得分率/最高分（含日期）/进步幅度（正绿负红，少于 2 场显示 —）；空态大白话「还没有模考记录，先在上面记一场吧」。
+- 测试：apps/server/tests/exams-summary.test.ts 8 例全绿；服务端 vitest 全量通过；server/web tsc --noEmit 零错。
+- 截图：docs/screenshots/light-exams-summary.png（浅色）、docs/screenshots/dark-exams-summary.png（深色），真实演示数据、已亲眼验收。
+
 ## [1.6.0] - 2026-10-17
+
 
 ### Added
 

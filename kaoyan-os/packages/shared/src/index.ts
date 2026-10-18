@@ -183,11 +183,26 @@ export interface CreateExamInput {
 
 /** 模考趋势点 */
 export interface ExamTrendPoint {
-  takenAt: string;
-  paper: string;
-  score: number;
-  totalScore: number;
-  rate: number;
+takenAt: string;
+paper: string;
+score: number;
+totalScore: number;
+rate: number;
+}
+
+/** 真题汇总 */
+export interface ExamSummary {
+subject: string | null;
+count: number;
+avgScore: number;
+avgRate: number;
+bestScore: number;
+bestTakenAt: string;
+latestScore: number;
+latestTakenAt: string;
+firstScore: number;
+firstTakenAt: string;
+improvement: number;
 }
 
 /** 主题模式 */

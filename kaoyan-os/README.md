@@ -16,7 +16,8 @@
 | 番茄专注计时 | 专注会话记录，累计有效学习时长并回流到仪表盘 |
 | 错题本 | 按科目/知识点归档错题，记录错因与重做状态 |
 | 单词 SRS | 基于 SM-2 简化算法的间隔重复调度，管理复习队列与到期词 |
-| 真题计时与得分统计 | 套卷计时、按题型/科目录入得分，输出趋势统计 |
+| 真题计时与得分统计 | 套卷计时、按题型/科目录入得分，输出趋势统计与本阶段汇总（场次/平均分/得分率/最高分/进步幅度） |
+
 | 仪表盘 | 初试倒计时、今日任务、专注时长、待复习单词、错题与真题得分概览 |
 | 数据导入导出 | 全量 JSON 备份与恢复（覆盖/合并）、单词 CSV 与错题 CSV 导入 |
 | 深色模式 | 浅/深主题一键切换，偏好存服务端多端同步，深色板为 slate 家族配色体系 |
@@ -183,7 +184,7 @@ docker run -d \
 | focus | `GET/POST /api/focus` | 番茄专注会话记录与统计 |
 | mistakes | `GET/POST /api/mistakes`，`PATCH/DELETE /api/mistakes/:id` | 错题归档、错因与重做状态 |
 | words | `GET/POST /api/words`，`POST /api/words/:id/review` | 词条管理与 SRS 复习结果提交 |
-| exams | `GET/POST /api/exams` | 真题计时记录与得分统计 |
+| exams | `GET/POST /api/exams`，`GET /api/exams/trend`，`GET /api/exams/summary` | 真题计时记录、得分率趋势与本阶段汇总统计 |
 | settings | `GET/PUT /api/settings` | 考试日期、科目等配置 |
 | stats | `GET /api/stats/weekly`，`GET /api/stats/heatmap` | 周报聚合（专注分钟/计划完成率/新增错题/模考场次/连续打卡 + 7 天每日专注分钟）；热力图聚合（专注/计划/错题/模考按天聚合 + 连续打卡统计） |
 

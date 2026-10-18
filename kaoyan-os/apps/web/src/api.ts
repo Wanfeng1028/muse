@@ -16,10 +16,12 @@ import type {
   ExamRecord,
   CreateExamInput,
   ExamTrendPoint,
+  ExamSummary,
   HeatmapResponse,
   Settings,
   WeeklyStats,
 } from '@kaoyan/shared';
+
 
 
 export interface BackupPayload {
@@ -151,10 +153,13 @@ export const api = {
   listExams: (subject?: string) => request<ExamRecord[]>(`/exams${qs({ subject })}`),
   examTrend: (subject?: string) =>
     request<ExamTrendPoint[]>(`/exams/trend${qs({ subject })}`),
+  examSummary: (subject?: string) =>
+    request<ExamSummary>(`/exams/summary${qs({ subject })}`),
   createExam: (input: CreateExamInput) =>
     request<ExamRecord>('/exams', { method: 'POST', body: JSON.stringify(input) }),
   deleteExam: (id: number) =>
     request<void>(`/exams/${id}`, { method: 'DELETE' }),
+
 
   // 设置
   getSettings: () => request<Settings>('/settings'),

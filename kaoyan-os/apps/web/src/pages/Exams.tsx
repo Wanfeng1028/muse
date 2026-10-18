@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   ExamRecord,
   ExamTrendPoint,
+  ExamSummary,
   SubjectKey,
   CreateExamInput,
 } from '@kaoyan/shared';
+
 import { SUBJECTS } from '@kaoyan/shared';
 import { api } from '../api';
 
@@ -76,6 +78,26 @@ export default function Exams() {
     }
   }, [trendSubject]);
 
+  // 汇总数据状态
+  const [summary, setSummary] = useState<ExamSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  // 加载汇总数据
+  const loadSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    setSummaryError(null);
+    try {
+      const data = await api.examSummary(trendSubject);
+      setSummary(data);
+    } catch (e) {
+      setSummaryError(e instanceof Error ? e.message : '加载失败');
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [trendSubject]);
+
+
   // 依赖变化时重新加载
   useEffect(() => {
     loadRecords();
@@ -84,6 +106,11 @@ export default function Exams() {
   useEffect(() => {
     loadTrend();
   }, [loadTrend]);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
+
 
   // 提交新增表单
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,8 +150,10 @@ export default function Exams() {
       }));
       await loadRecords();
       await loadTrend();
+      await loadSummary();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : '提交失败');
+
     } finally {
       setSubmitting(false);
     }
@@ -136,10 +165,12 @@ export default function Exams() {
       await api.deleteExam(id);
       await loadRecords();
       await loadTrend();
+      await loadSummary();
     } catch (e) {
       setRecordsError(e instanceof Error ? e.message : '删除失败');
     }
   };
+
 
   // 计算得分率显示
   const rateOf = (r: ExamRecord) =>
@@ -277,6 +308,47 @@ export default function Exams() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* 本阶段汇总 */}
+      <div className="card">
+        <div className="form-row" style={{ justifyContent: 'space-between' }}>
+          <h2 style={{ margin: 0 }}>本阶段汇总</h2>
+          <span style={{ color: '#888', fontSize: 13 }}>{SUBJECT_NAME[trendSubject]}</span>
+        </div>
+        {summaryLoading ? (
+          <div className="loading">加载中…</div>
+        ) : summaryError ? (
+          <div className="error-box">{summaryError}</div>
+        ) : !summary || summary.count === 0 ? (
+          <div className="empty">还没有模考记录，先在上面记一场吧</div>
+        ) : (
+          <div className="form-row" style={{ marginTop: 12, gap: 24 }}>
+            <div>
+              <div style={{ color: '#888', fontSize: 13 }}>模考场次</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{summary.count}</div>
+            </div>
+            <div>
+              <div style={{ color: '#888', fontSize: 13 }}>平均分</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{summary.avgScore}</div>
+            </div>
+            <div>
+              <div style={{ color: '#888', fontSize: 13 }}>平均得分率</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{(summary.avgRate * 100).toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ color: '#888', fontSize: 13 }}>最高分</div>
+              <div style={{ fontSize: 24, fontWeight: 600 }}>{summary.bestScore}</div>
+              <div style={{ color: '#888', fontSize: 12 }}>{summary.bestTakenAt}</div>
+            </div>
+            <div>
+              <div style={{ color: '#888', fontSize: 13 }}>进步幅度</div>
+              <div style={{ fontSize: 24, fontWeight: 600, color: summary.count < 2 ? '#333' : summary.improvement > 0 ? '#22b07d' : summary.improvement < 0 ? '#e05d5d' : '#333' }}>
+                {summary.count < 2 ? '—' : summary.improvement > 0 ? `+${summary.improvement} 分` : summary.improvement < 0 ? `${summary.improvement} 分` : '持平'}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 趋势图 */}
