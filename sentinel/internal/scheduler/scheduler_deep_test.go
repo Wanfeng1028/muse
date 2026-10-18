@@ -126,7 +126,7 @@ func TestRecord_RepeatFailureNoDuplicate(t *testing.T) {
 	m := newMonitor(t, st, "repeat-fail", 1)
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	if _, err := st.OpenIncident(m.ID, now, "boom"); err != nil {
+	if _, _, err := st.OpenIncident(m.ID, now, "boom"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
 
@@ -186,7 +186,7 @@ func TestRecord_RecoverClosesIncident(t *testing.T) {
 	m := newMonitor(t, st, "recover", 1)
 
 	startedAt := time.Now().UTC().Add(-5 * time.Minute).Format(time.RFC3339)
-	if _, err := st.OpenIncident(m.ID, startedAt, "boom"); err != nil {
+	if _, _, err := st.OpenIncident(m.ID, startedAt, "boom"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
 

@@ -93,7 +93,7 @@ func escCreateMonitor(t *testing.T, st *store.Store, name, target string) int64 
 func escOpenIncident(t *testing.T, st *store.Store, monitorID int64, ago time.Duration, startError string) int64 {
 	t.Helper()
 	startedAt := time.Now().Add(-ago).UTC().Format(time.RFC3339)
-	id, err := st.OpenIncident(monitorID, startedAt, startError)
+	id, _, err := st.OpenIncident(monitorID, startedAt, startError)
 	if err != nil {
 		t.Fatalf("OpenIncident 失败: %v", err)
 	}

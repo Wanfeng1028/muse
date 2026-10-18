@@ -183,7 +183,7 @@ func TestDeep2_Record_ZeroSecsWhenRecoverBeforeStart(t *testing.T) {
 	m := deep2NewMonitor(t, st, "recover-negsecs", 1)
 
 	startedAt := time.Now().UTC().Add(30 * time.Minute).Format(time.RFC3339)
-	if _, err := st.OpenIncident(m.ID, startedAt, "future-start"); err != nil {
+	if _, _, err := st.OpenIncident(m.ID, startedAt, "future-start"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
 
@@ -264,7 +264,7 @@ func TestDeep2_CheckEscalations_NoPolicyNoop(t *testing.T) {
 	m := deep2NewMonitor(t, st, "esc-noop", 1)
 
 	startedAt := time.Now().UTC().Add(-30 * time.Minute).Format(time.RFC3339)
-	if _, err := st.OpenIncident(m.ID, startedAt, "down"); err != nil {
+	if _, _, err := st.OpenIncident(m.ID, startedAt, "down"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
 
@@ -286,7 +286,7 @@ func TestDeep2_CheckEscalations_TriggersDueLevel(t *testing.T) {
 	m := deep2NewMonitor(t, st, "esc-due", 1)
 
 	startedAt := time.Now().UTC().Add(-30 * time.Minute).Format(time.RFC3339)
-	if _, err := st.OpenIncident(m.ID, startedAt, "down-long"); err != nil {
+	if _, _, err := st.OpenIncident(m.ID, startedAt, "down-long"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
 
@@ -324,7 +324,7 @@ func TestDeep2_CheckEscalations_Idempotent(t *testing.T) {
 	m := deep2NewMonitor(t, st, "esc-idem", 1)
 
 	startedAt := time.Now().UTC().Add(-30 * time.Minute).Format(time.RFC3339)
-	if _, err := st.OpenIncident(m.ID, startedAt, "down-long"); err != nil {
+	if _, _, err := st.OpenIncident(m.ID, startedAt, "down-long"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
 

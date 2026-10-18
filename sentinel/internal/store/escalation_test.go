@@ -10,7 +10,7 @@ func TestListOpenIncidentsAndClose(t *testing.T) {
 		t.Fatalf("create monitor: %v", err)
 	}
 
-	incID, err := st.OpenIncident(mid, "2026-10-16T00:00:00Z", "boom")
+	incID, _, err := st.OpenIncident(mid, "2026-10-16T00:00:00Z", "boom")
 	if err != nil {
 		t.Fatalf("open incident: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestMarkEscalationSentIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create monitor: %v", err)
 	}
-	incID, err := st.OpenIncident(mid, "2026-10-16T00:00:00Z", "boom")
+	incID, _, err := st.OpenIncident(mid, "2026-10-16T00:00:00Z", "boom")
 	if err != nil {
 		t.Fatalf("open incident: %v", err)
 	}

@@ -298,16 +298,39 @@ func (s *Store) MonitorStats(monitorID int64, days int) (uptimePct float64, avgL
 	return
 }
 
-// OpenIncident 创建一个未关闭的 incident，返回自增 ID。
-func (s *Store) OpenIncident(monitorID int64, startedAt, startError string) (int64, error) {
+// OpenIncident 幂等地为某 monitor 打开一个未关闭 incident。
+// 若该 monitor 已存在 ended_at IS NULL 的 incident，直接返回其 id，created=false；
+// 否则新建并返回 (id, true, nil)。并发调用由 uq_incidents_open_monitor
+// 部分唯一索引在数据库层保证唯一性。
+func (s *Store) OpenIncident(monitorID int64, startedAt, startError string) (int64, bool, error) {
 	res, err := s.db.Exec(
-		`INSERT INTO incidents (monitor_id, started_at, start_error) VALUES (?, ?, ?)`,
+		`INSERT INTO incidents (monitor_id, started_at, start_error) VALUES (?, ?, ?)
+		 ON CONFLICT (monitor_id) WHERE ended_at IS NULL DO NOTHING`,
 		monitorID, startedAt, startError,
 	)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
-	return res.LastInsertId()
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, false, err
+	}
+	if n > 0 {
+		id, err := res.LastInsertId()
+		if err != nil {
+			return 0, false, err
+		}
+		return id, true, nil
+	}
+	var id int64
+	if err := s.db.QueryRow(
+		`SELECT id FROM incidents WHERE monitor_id = ? AND ended_at IS NULL
+		 ORDER BY started_at DESC, id DESC LIMIT 1`,
+		monitorID,
+	).Scan(&id); err != nil {
+		return 0, false, err
+	}
+	return id, false, nil
 }
 
 // CloseOpenIncident 关闭某 monitor 的未关闭 incident（ended_at IS NULL）。

@@ -186,10 +186,13 @@ func (s *Scheduler) record(m store.Monitor, c store.Check, prevOk, hasPrev bool)
 	if !nowOk {
 		// 无上次记录视为首次失败，也开事件。
 		if !hasPrev || prevOk {
-			if _, err := s.store.OpenIncident(m.ID, at, c.Error); err != nil {
+			_, created, err := s.store.OpenIncident(m.ID, at, c.Error)
+			if err != nil {
 				log.Logger().Error("开启事件失败", "monitorID", m.ID, "err", err)
 			}
-			s.notifyUnlessSilenced(m, "down", m.Name, m.Target, at, c.Error)
+			if created {
+				s.notifyUnlessSilenced(m, "down", m.Name, m.Target, at, c.Error)
+			}
 		}
 		return
 	}

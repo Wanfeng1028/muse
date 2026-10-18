@@ -184,6 +184,26 @@ updated_at TEXT NOT NULL
 			`CREATE INDEX IF NOT EXISTS idx_sms_log_created ON sms_log(created_at)`,
 		},
 	},
+	{
+		version: 10,
+		stmts: []string{
+			`UPDATE incidents SET ended_at = started_at, downtime_sec = 0
+			 WHERE ended_at IS NULL
+			   AND id NOT IN (
+			     SELECT id FROM (
+			       SELECT id,
+			              ROW_NUMBER() OVER (
+			                PARTITION BY monitor_id
+			                ORDER BY started_at DESC, id DESC
+			              ) AS rn
+			       FROM incidents
+			       WHERE ended_at IS NULL
+			     ) ranked
+			     WHERE rn = 1
+			   )`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS uq_incidents_open_monitor ON incidents(monitor_id) WHERE ended_at IS NULL`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

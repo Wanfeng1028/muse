@@ -2,6 +2,25 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.8.1] - 2026-10-19
+
+### 新增
+- migration v10：部分唯一索引 `uq_incidents_open_monitor ON incidents(monitor_id) WHERE ended_at IS NULL`，含历史重复 open 数据去重。
+- `OpenIncident` 幂等化：签名变为 `(id, created, err)`，底层 `INSERT ... ON CONFLICT DO NOTHING`，返回 created 标志。
+- `record()` 仅在真正新建事件时发 down 通知，重复并发不再重复告警。
+
+### 实测
+- 复现测试 `TestManualAndTickConcurrent_DuplicateOpenIncident` 先红（open incident 数量 = 23，期望 1）后绿。
+- 新增 8 个测试全部通过（1 复现 + 4 store 幂等/索引/重开 + 3 scheduler 回归）。
+- `go vet` 全洁；经手文件 gofmt 全洁。
+- 真实服务 30 并发冒烟：GET /api/incidents 恰好 1 条 open，无重复。
+- 恢复→重开闭环正常：关闭后 ended_at 非空，downtime_sec=432；切回 down 后新开事件（共 2 条，1 open）。
+
+### 已知限制
+- Go 工具链旧，依赖复扫仍挂账（46 个标准库漏洞根因，排期升级后复扫）。
+- store/notify 包 7 个 pre-existing 测试失败（已在干净树复现，与本轮无关，排期修）。
+- deliveries 表存在同类并发幂等缺口（TestEnqueueDeliveryConcurrentSameKey 失败），排期按本轮 incidents 方案同理修复。
+
 ## [0.8.0] - 2026-10-17
 
 ### 新增
