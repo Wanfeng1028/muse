@@ -282,6 +282,7 @@
 - **v2.8.1 OCR Prometheus 指标第一版（2026-10-17）**：ocr_requests_total / ocr_duration_seconds（仅 provider 到达请求）；tests/test_ocr_metrics.py 7 例；真实冒烟验证。
 - **v2.9 OCR 可观测性指标第二版（2026-10-17）**：与 v2.8.1 为增量升级（改名 ledger_ocr_* + 全路径埋点 + failures 五分类 + confidence_avg gauge；旧指标名与旧测试已删除）；pytest 279 通过、1 跳过；真实冒烟验证各分类计数；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.9.md。
 - **深测轮 r3（2026-10-18）**：5 个深测文件 77 测试（__main__ 备份 keep 边界/修剪语义、backup、config 中文往返/并发双写、logging request_id/并发、seed 中文/极值/超长商户名）全绿；修 dpsk 10 处编造（Currency.id、transactions.amount/merchant 列、seed 建账户假设、asyncio.get_event_loop），测试按源码地面真相机械修正
+- **深测轮 r7（2026-10-18）**：8 个 deep2 文件 156 测试（matching 34/parser 13/statements_claim 20/bills_review/transactions 22/currencies_budgets/recurring/import_export 14）全绿；pytest **584/584**（1 跳过为既有 tesseract 缺失）；修 dpsk 20+ 处测试侧编造（API 形状、confirm 前置步骤、budgets month 必填、转账导出 "现金->银行"、金额单位元/分）；产品无真 bug
 
 **后续计划**：
 
@@ -323,6 +324,7 @@
 - **v0.9「短信 v2：腾讯云 provider + 发送记录」（2026-10-17）**：`internal/notify/sms_tencent.go` 腾讯云 SMS provider（TC3-HMAC-SHA256 三步签名，SendSms 2021-01-11，固定向量测试）；`internal/notify/dispatch.go` 新增 `SMSLogger` 接口，发送时记录；`internal/store/sms_log.go` + migration v9 `sms_log` 表（phone/message/provider/status/error/created_at）；`GET /api/sms/log` + `/sms-log` 页面；`SENTINEL_SMS_TENCENT_*` 6 个环境变量；OPERATIONS.md 短信运维章节。`go build` 通过，sms_log 存储测试通过。
 - **v0.8「事件页真实数据」（2026-10-17）**：偿还 v0.6/v0.7 挂账——incidents.html 删掉写死的 MONITORS/INCIDENTS 常量与尾部截断的残缺 JS（含首行多余 markdown 围栏导致的 quirks 模式），改接真实接口 GET /api/incidents（monitor_id 筛选走服务端、limit=100）与 GET /api/monitors（填充筛选下拉）；新增“状态”列（进行中/已恢复 pill，未恢复事件持续时长按 now-started_at 实时计算）；监控筛选 + 状态筛选；点击行展开详情行（完整 start_error + 监控档案链接）；客户端分页（20 条/页）；设计的空态（线条图标+文案+去监控列表链接）与带重试按钮的错误态；全部插入文本 esc 转义。新增 scripts/smoke_incidents.sh（down→recovered 闭环冒烟：断言 open 态 ended_at/downtime_sec 为 null、recovered 态字段齐全，幂等自清理）+ Go 测试 TestListIncidentsOpenEndedNull（open/closed JSON 契约）；`go test` **191/191**、go vet/gofmt 全洁、handlers/store 包 -race 全过；真实服务视觉验收（1 open + 1 recovered 事件截图亲眼验收：双 pill、实时时长、筛选、详情展开、空态、错误态均正常）。发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.8.md`。诚实缺口（排期后续）：Go 工具链升级后复扫；事件页分页为客户端分页（limit=100 上限内有效）；后端存在手动检查与调度 tick 并发导致同一监控短时出现两个 open 事件的竞态（本轮为避开它用 disabled 监控做验收，未修）。
 - **深测轮 r3（2026-10-18）**：6 个深测文件 57 测试（middleware RequestID/鉴权/白名单/多用户、scheduler 状态机/静默窗口、escalation 升级幂等、seed 幂等、log 级别矩阵/request_id、handlers SLA/画像/checks/SetPublic）全绿；修**真 bug**：middleware `userKey`/`tenantIDKey` 同为 `ctxKey{}` 空结构体，第二个 WithValue 覆盖第一个致 `UserFrom` 鉴权后恒返 nil（改 `type ctxKey string` 区分值）
+- **深测轮 r7（2026-10-18）**：8 个 deep2 文件（config/backup/metrics/escalation/handlers/checker/db/store）全绿；修**真 bug** 3 个：backup 对不存在的源库静默产出空库（加前置 os.Stat 校验）、handlers 空 method 覆盖默认 GET 致校验失败（toMonitor 空值不覆盖）、TCP 监控被要求 HTTP method（validateMonitor 仅 http kind 校验 method，空 method 视为默认放行）；另修 dpsk 测试侧编造 10+ 处（NewStore/CreateTenant 不存在、CreateMonitor 多参、store.Link 应为 model.Link 等）
 
 **后续计划**：
 
@@ -474,6 +476,7 @@
 - **v1.9.0「地域分布 Web UI 面板」（2026-10-17）**：后端 visits 表加 city 列（迁移 v6→v7）+ `GeoStats` 返回 `GeoOverview`（国家/城市/UV/未知占比）+ `GET /api/stats/geo` 加 days（7/30）与 country 下钻 + 新增 `GET /api/stats/geo.csv` 导出；前端 geo.html + 手写 SVG 世界地图（23 国 5 档邮戳红热力）+ 国家排行（点击下钻城市）+ 7/30 天切换；`go test ./...` 12 包全绿；209 次访问/7 国真实数据截图亲眼验收通过；验收抓出真 bug（国家排行按城市粒度致中国出现 5 次，改按 country_code 聚合）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.9.md`；已知限制：简化地图非精确国界、城市依赖 MMDB
 - **v1.10.0「密码失败高告警」（2026-10-17）**：`internal/passalert.Tracker` 按 slug 滑动窗口计数（阈值 `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` 默认 10 / 窗口 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` 默认 5m），跨越阈值瞬间触发一次、回落重布防；触发后 warn 日志 + `linkshort_password_fail_alerts_total` + 异步 POST 复用 `LINKSHORT_ALERT_WEBHOOK_URL`（10s 超时，失败不影响主流程）；`prometheus/rules/linkshort.yml` 新增 `LinkshortPasswordFailRateHigh`/`LinkshortPasswordFailAlertFired`；13 例新增测试，`go test ./... -race` **149 例全过**；真实冒烟（阈值 3 下 4 次失败恰好触发 1 次）
 - **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包——china.go（内置中国省域 IP 段抽样表，CIDR 最长前缀匹配，精度边界诚实声明）/ chain.go（解析责任链：CDN 头 → MMDB → 内置表 → unknown，ReloadFromEnv）/ header.go（CDN 厂商头解析）；handler 新增 `clientIP`（X-Forwarded-For 首段 → X-Real-IP → RemoteAddr 去端口，信任假设有注释）；finishRedirect 改用 clientIP 做 ipHash + `geo.LookupRequest`；`st.RecordVisitGeo` 落库国家/省份；新增 `GET /api/stats/geo`（国家/省份 TopN + unknown 占比）；`go test ./... -race` **129/129** 全过、go vet/gofmt 全洁；CHANGELOG v1.8.0。已知缺口：Web UI 暂无地域面板（API 就绪，排期下轮）
+- **深测轮 r7（2026-10-18）**：7 个 deep2 文件（store/handler/auth/util/purge/qr）全绿，`go test ./...` 12 包全过；修 dpsk 测试侧编造 15+ 处（store.NewStore/store.New(dir)/CreateLink 单参、store.Config 应为 config.Config、NewRouter 需 *config.Config、RecordVisit 传 slug 应传 id、model.Link 字段类型等）；产品无真 bug
 
 **后续计划**：
 
