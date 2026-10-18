@@ -66,11 +66,15 @@ function AppearancePage({ theme, onThemeChange }) {
       <div className="model-card">
         <div><div className="model-name">Theme</div><div className="model-desc">Base color theme</div></div>
         <div className="seg">
-          {['dark', 'light'].map((t) => (
-            <button key={t} className={'seg-btn' + (theme === t ? ' active' : '')}
-              onClick={() => onThemeChange(t)}>{t === 'dark' ? 'Dark' : 'Light'}</button>
+          {[['light', 'Light'], ['dark', 'Dark'], ['system', 'System']].map(([v, l]) => (
+            <button key={v} className={'seg-btn' + (theme === v ? ' active' : '')}
+              onClick={() => onThemeChange(v)}>{l}</button>
           ))}
         </div>
+      </div>
+      <div className="model-card">
+        <div><div className="model-name">Dock icon</div><div className="model-desc">Choose the icon the app will use in the dock</div></div>
+        <span className="model-desc">Use ChatGPT Dock icon</span>
       </div>
       <div className="model-card">
         <div><div className="model-name">UI font</div><div className="model-desc">Interface typeface</div></div>

@@ -30,7 +30,8 @@ export default function App() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    const effective = theme === 'system' ? 'dark' : theme;
+    document.documentElement.setAttribute('data-theme', effective);
   }, [theme]);
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
