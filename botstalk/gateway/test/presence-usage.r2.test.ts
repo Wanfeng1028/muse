@@ -256,7 +256,7 @@ describe("presence-usage.r2", () => {
       const body = (await res.json()) as {
         members: Array<{ adapter_id: string; status: string }>;
       };
-      // 行为待确认：未按 room 过滤，端点返回全量
+      // 语义锁定（DECISIONS 2026-10-18 presence 全局）：presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤
       expect(body.members.length).toBe(2);
       expect(body.members.map((m) => m.adapter_id)).toEqual(["z_online", "a_offline"]);
       expect(body.members.map((m) => m.status)).toEqual(["online", "offline"]);
@@ -290,7 +290,7 @@ describe("presence-usage.r2", () => {
       const res = await fetch(`http://127.0.0.1:${port}/api/rooms/anything/presence`);
       expect(res.status).toBe(200);
       const body = (await res.json()) as { members: Array<{ adapter_id: string }> };
-      // 行为待确认：未按 room 过滤
+      // 语义锁定（DECISIONS 2026-10-18 presence 全局）：presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤
       expect(body.members.map((m) => m.adapter_id)).toEqual(["a", "c", "b"]);
     });
   });
@@ -356,7 +356,7 @@ describe("presence-usage.r2", () => {
         }>;
         total: { input_tokens: number; output_tokens: number };
       };
-      // 行为待确认：未按 room 过滤
+      // 语义锁定（DECISIONS 2026-10-18 presence 全局）：presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤
       expect(body.adapters.length).toBe(2);
       const map = new Map(body.adapters.map((x) => [x.adapter_id, x]));
       expect(map.get("a")).toMatchObject({
