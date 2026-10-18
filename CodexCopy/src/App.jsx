@@ -98,10 +98,10 @@ export default function App() {
   const placeholder = 'Do anything';
 
   const PANELS = [
-    { id: 'review', label: 'Review', key: '⌃⇧G' },
+    { id: 'changes', label: 'Changes', key: '' },
     { id: 'terminal', label: 'Terminal', key: '⌃`' },
-    { id: 'browser', label: 'Browser', key: '⌘T' },
-    { id: 'files', label: 'Files', key: '⌘P' },
+    { id: 'browser', label: 'Browser', key: '' },
+    { id: 'files', label: 'Files', key: '' },
   ];
 
   const renderMain = () => {
@@ -147,7 +147,7 @@ export default function App() {
           <div className="topbar-title">{activeThread ? activeThread.title : 'Codex'}</div>
           <span style={{ flex: 1 }} />
           {/* diff 计数按钮（真实：绿/红数字） */}
-          <button className="diff-count-btn" title="Toggle diff panel" onClick={() => setRightPanel(rightPanel === 'review' ? null : 'review')}>
+          <button className="diff-count-btn" title="Toggle diff panel" onClick={() => setRightPanel(rightPanel === 'changes' ? null : 'changes')}>
             <span className="diff-add">+12</span><span className="diff-del">−3</span>
           </button>
           {/* 面板菜单 */}

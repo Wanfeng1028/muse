@@ -1,8 +1,8 @@
 import { FileIcon, FolderIcon, TerminalIcon, XIcon } from './icons';
 
-// 右侧按需面板（实证：默认不打开，从右上角菜单按需调出）
-// Review / Terminal / Browser / Files
-const TITLES = { review: 'Review', terminal: 'Terminal', browser: 'Browser', files: 'Files' };
+// 右侧按需面板（新版 bundle 实测：多 Tab 制，面板叫 Changes 不是 Review）
+// Changes / Terminal / Browser / Files
+const TITLES = { changes: 'Changes', terminal: 'Terminal', browser: 'Browser', files: 'Files' };
 
 export default function RightPanel({ panel, task, onClose }) {
   return (
@@ -12,7 +12,7 @@ export default function RightPanel({ panel, task, onClose }) {
         <button className="icon-btn sm" onClick={onClose} title="Close panel"><XIcon size={13} /></button>
       </div>
       <div className="rp-body">
-        {panel === 'review' && (
+        {panel === 'changes' && (
           <>
             <div className="filter-menu-title">Changed files</div>
             {['src/auth/tokens.ts', 'src/auth/middleware.ts'].map((f) => (
@@ -40,10 +40,6 @@ export default function RightPanel({ panel, task, onClose }) {
         )}
         {panel === 'files' && (
           <>
-            <div className="sidebar-search" style={{ marginBottom: 8 }}>
-              <FileIcon size={13} />
-              <input placeholder="Filter files..." style={{ background: 'transparent', border: 'none', outline: 'none', color: 'inherit', fontSize: 12, width: '100%' }} />
-            </div>
             {['src/auth/tokens.ts', 'src/auth/middleware.ts', 'src/auth/index.ts', 'package.json'].map((f) => (
               <div key={f} className="file-row">
                 <FileIcon size={13} />
