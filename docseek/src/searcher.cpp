@@ -804,6 +804,44 @@ static std::vector<Hit> rerankHits(std::vector<Hit> hits,
         }
 
         if (hasContent) {
+            // R7（单 token 时间单位序数结构加成）
+            if (tokens.size() == 1) {
+                const std::string& tok = tokens[0];
+                std::string unit;
+                // 后缀匹配单位表：双字优先
+                const char* kU2[] = {"季度", "小时", "分钟"};
+                const char* kU1[] = {"月", "周", "天", "年"};
+                for (const char* u : kU2) {
+                    std::string su(u);
+                    if (tok.size() >= su.size() && tok.compare(tok.size() - su.size(), su.size(), su) == 0) { unit = su; break; }
+                }
+                if (unit.empty()) {
+                    for (const char* u : kU1) {
+                        std::string su(u);
+                        if (tok.size() >= su.size() && tok.compare(tok.size() - su.size(), su.size(), su) == 0) { unit = su; break; }
+                    }
+                }
+                if (!unit.empty() && (hit.title.find(tok) != std::string::npos || titleDegraded)) {
+                    const char* kNum[] = {"一", "二", "三", "四", "五", "六", "七", "八", "九", "十"};
+                    int distinct = 0;
+                    int total = 0;
+                    for (const char* n : kNum) {
+                        // 形态一：“第”+数字+“个”+单位（如“第一个月”）
+                        std::string patWithGe = std::string("第") + n + "个" + unit;
+                        int cntWithGe = countSubstringOccurrences(content, patWithGe);
+                        // 形态二：“第”+数字+单位（如“第一周”）
+                        std::string patPlain = std::string("第") + n + unit;
+                        int cntPlain = countSubstringOccurrences(content, patPlain);
+                        int cnt = cntWithGe + cntPlain;
+                        if (cnt > 0) ++distinct;
+                        total += cnt;
+                    }
+                    if (distinct >= 2) {
+                        // distinct 奖励“按序数分节的结构化”，total 奖励“覆盖深度”
+                        finalScore += static_cast<double>(distinct) * 1.0 + static_cast<double>(total) * 0.5;
+                    }
+                }
+            }
             // R1（标题行 token 加成）：仅 titleDegraded 为真时。按 token 计：标题行
             // stripHtmlTags 去首尾空白后，以该 token 开头则计 1.5（行首=包含的强化形式），
             // 否则含该 token 子串则计 weights.titleBoost；二者取其一，不叠加。

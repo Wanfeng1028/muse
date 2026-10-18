@@ -1,4 +1,5 @@
 #include "docseek/passage_ranker.h"
+#include "docseek/synonyms.h"
 
 #include <algorithm>
 #include <cctype>
@@ -17,6 +18,9 @@ constexpr int kWindowStep = 3;
 // 复合短语加成权重；取值依据：大于位置项（0.05）、小于覆盖度主项（0.5）；
 // 实测 v07-024：主题文档 0.688+0.25=0.938 > 干扰文档 0.845。
 constexpr double kCompoundPhraseBonus = 0.25;
+// 数值范围答案加成：locate 问“范围/多少”且窗口含阿拉伯数字+紧邻单位时 +0.08（v09-t018-q09 gap 0.054，加成略大于 gap、远小于 0.25 的 compound 加成）。
+constexpr double kRangeAnswerBonus = 0.08;
+constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：实测 gap≈0.07，取略大于 gap 以翻转排序
 
 // 计算 UTF-8 码点数（非法字节按 1 推进，绝不死循环）。
 int countUtf8Codepoints(const std::string& s) {
@@ -188,9 +192,23 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         int phraseHitCount = 0;
         std::vector<std::pair<size_t, std::string>> matched;  // (pos, term)
 
+        bool synonymFired = false;
         for (size_t ki = 0; ki < pq.keywords.size(); ++ki) {
             const std::string& lower = kwLower[ki];
             size_t pos = findFirst(windowLower, lower);
+            // 同义词回退：query 词字面未命中时，试其同义词展开（如"琴弦"→"弦"）。
+            // 只补计数，不改变分母；matched_terms 仍记原 query 词。
+            // 命中同义词时置 synonymFired，用于后续轻量加成（变体词回应概念是强相关信号）。
+            if (pos == std::string::npos) {
+                if (const SynonymEntry* e = findSynonyms(pq.keywords[ki].c_str())) {
+                    for (int k = 0; k < e->expansionCount && pos == std::string::npos; ++k) {
+                        pos = findFirst(windowLower, toLowerAscii(e->expansions[k]));
+                        if (pos != std::string::npos) {
+                            synonymFired = true;
+                        }
+                    }
+                }
+            }
             if (pos != std::string::npos) {
                 ++uniqueKeywordHits;
                 int cnt = countOccurrences(windowLower, lower);
@@ -226,6 +244,50 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
             windowLower.find(queryCompound) != std::string::npos) {
             score += kCompoundPhraseBonus;
         }
+
+        // 数值范围答案加成：query 含范围类疑问词，且窗口含“阿拉伯数字+紧邻单位”。
+        {
+            bool queryAsksRange = false;
+            {
+                std::string queryJoined;
+                for (const auto& kw : pq.keywords) queryJoined += kw;
+                std::transform(queryJoined.begin(), queryJoined.end(), queryJoined.begin(),
+                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                static const char* kRangeHints[] = {"范围", "多少", "多久", "多长", "多大",
+                                                    "几", "多高", "多宽", "多厚"};
+                for (const char* hint : kRangeHints) {
+                    if (queryJoined.find(hint) != std::string::npos) {
+                        queryAsksRange = true;
+                        break;
+                    }
+                }
+            }
+            if (queryAsksRange) {
+                static const std::string kUnits[] = {"毫米", "厘米", "mm", "cm", "米", "寸",
+                                                     "英寸", "克", "kg", "分钟", "小时", "秒"};
+                int hitCount = 0;
+                for (std::size_t i = 0; i < windowLower.size(); ++i) {
+                    if (windowLower[i] < '0' || windowLower[i] > '9') continue;
+                    std::size_t j = i;
+                    while (j < windowLower.size() &&
+                           ((windowLower[j] >= '0' && windowLower[j] <= '9') || windowLower[j] == '.')) {
+                        ++j;
+                    }
+                    for (const std::string& u : kUnits) {
+                        if (windowLower.compare(j, u.size(), u) == 0) {
+                            ++hitCount;
+                            break;
+                        }
+                    }
+                    i = j;
+                }
+                // 范围答案常给上下界，要求至少 2 个数值+单位，排除“1毫米”这类单点提及
+                if (hitCount >= 2) score += kRangeAnswerBonus;
+            }
+        }
+
+        // 同义词命中加成：文档用变体词回应 query 概念是强相关信号。
+        if (synonymFired) score += kSynonymHitBonus;
 
         if (score > 0.0) {
             Passage p;

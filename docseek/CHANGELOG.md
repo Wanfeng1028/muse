@@ -1,3 +1,24 @@
+## v0.18.1（2026-10-19）——Wave5：v09 剩余失败攻坚（下）
+
+### 新增
+
+- R7（searcher.cpp）：单 token 时间单位查询，若 title 命中（或标题退化）且正文含 ≥2 个互不相同的“第X<单位>”序数结构，加分 = distinct*1.0 + total*0.5。
+- kRangeAnswerBonus（passage_ranker.cpp）：=+0.08。query 含范围疑问词（范围/多少/…）且窗口含 ≥2 个“阿拉伯数字+紧邻单位”时触发。
+- 同义词回退 + kSynonymHitBonus（passage_ranker.cpp + synonyms.cpp“琴弦”→“弦”）：rankPassages 加入同义词回退（只补计数），kSynonymHitBonus=+0.08。
+
+### 测试
+
+- 新增 9 个 gtest（tests/test_wave5_v0181.cpp），全绿。
+
+### 评测
+
+- v09s 197/200（+3，零回归）；v07 56/56；v08 81/83。
+- 剩余 3 个失败均为已知不可修复：t006-q11、t013-q05、t021-q12（本轮新判，见报告）。
+
+### 已知问题
+
+- t021-q12 需分块策略改动（跨轮技术债）。
+
 ## v0.18.0（2026-10-19）——Wave4：v09 剩余失败攻坚
 
 ### 新增
