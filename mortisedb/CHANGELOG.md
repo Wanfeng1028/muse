@@ -2,6 +2,24 @@
 
 本文件记录 MortiseDB 的重要变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.6.0] - 2026-10-18（未发布）
+
+### 新增
+
+- PG 只读源 `internal/pgsource`：`types.go`（PG 类型→内部类型映射）、`guard.go`（只读 SQL 白名单 `(?is)^\s*(select|with)\b` + 分号拦截）、`iface.go`（`ReadSource` 接口：`PullTables`/`PullRows`/`Close`，`Cursor` 支持 `updated_at` + 主键 tiebreak 推进）、`fake.go`（内存假源，单元测试用）、`source.go`（pgx v5.11.0 真实接线：连接串强制 `default_transaction_read_only=on`，查询跑在 `pgx.ReadOnly` 事务里，表名/列名转义防注入）、`adapter.go`（`ReadSource` → `connector.Source` 适配器，游标断点续传，可直接喂给 `sync.Sync`）。
+- 依赖：`github.com/jackc/pgx/v5 v5.11.0`（纯 Go，无 cgo）。
+
+### 测试
+
+- 新增 `internal/pgsource/pgsource_deep2_test.go`（11 例：类型映射表、SQL 白名单、游标推进、连接串改写、假源分页/深拷贝）。
+- 新增 webhook E2E 深测 6 文件 65 例（见 README v1.5 节）；冲突解决深测 2 文件 18 例。
+- `go test./...` 全绿、`go vet./...` 全洁、`gofmt -l` 全洁（2026-10-18 验收）。
+
+### 已知限制
+
+- 本机无真实 PG，`source.go` 仅编译验证；PG 行为测试走 `FakeSource`，真实 PG 联调待补。
+- `FireTableConflicts` 的 since 为 RFC3339 秒级字符串比较，同秒边界可能多投，接收端按 `delivery_id` 去重（v1.5 已有约束，本轮测试已覆盖）。
+
 ## [1.5.0] - 2026-10-17
 
 ### 新增

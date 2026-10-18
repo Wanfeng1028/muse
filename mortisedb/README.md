@@ -327,6 +327,16 @@ compose 文件含健康检查（`wget` 探 `/api/health`）、资源限制（512
 - ✅ 并发写报 SQLITE_BUSY 修好：加 `PRAGMA busy_timeout=5000`，并设 `SetMaxOpenConns(1)`。
 - ✅ `RecordImport` 改成 `INSERT OR IGNORE`，返回 `(bool, error)`，bool 用来标记是不是 Duplicate。
 
+### v1.5（已交付）
+
+- ✅ 冲突 Webhook 通知：`conflict.pending` / `conflict.resolved_auto` / `conflict.resolved` 三类事件，HMAC-SHA256 签名（`X-Mortise-Signature`），指数退避重试，失败只记日志+指标永不阻塞主流程。
+- ✅ Webhook 端到端深测：6 个 `*_deep2_test.go` 文件 65 个用例（载荷+签名头校验、异步不阻塞语义、重试/不重试分类、指标语义、resolve/CSV 导入两路 E2E）。
+
+### v1.6（进行中，未发布）
+
+- ⬜ PG 只读源 `internal/pgsource`：pgx v5.11.0 接线（SQL 白名单 + 只读事务 + `default_transaction_read_only=on` 三层只读保障），`ReadSource` 接口 + 内存假源 + `connector.Source` 适配器；已落 11 个单测，待真实 PG 联调。
+- ⬜ 冲突自动裁决边界深测：优先级相等/缺省/手动模式、同源变更自动解决、并发写入（`sync_conflict_deep2_test.go` 8 例、`conflict_resolve_deep2_test.go` 10 例已交付）。
+
 ### 后续版本
 
 - ⬜ HTTP / WebDAV 数据源连接器。

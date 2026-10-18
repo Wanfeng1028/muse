@@ -23,7 +23,7 @@
   - default 分支：按 priority 处理，其中低优先级挂起路径同上。
 - CSV 增量导入 `import_csv.go` 的 `decideUpsert` 返回 `"conflict"` 处（语义与 `sync.go` 一致，带 `*store.Conflict`）。
 
-以上每一处 `RecordConflict` 返回新 id 且事务提交成功后，投递 `conflict.pending`。
+以上各处在事务内 `RecordConflict` 落库；事务提交成功后，`sync.go` / `import_csv.go` 调用 `FireTableConflicts(st, 表名, 本次开始时间)` 回查该表本次新增的冲突并异步投递 `conflict.pending`（实现为按表+时间窗口扫描，而非逐条直投，效果等价）。
 
 ### 2.2 自动裁决 resolved_auto
 
@@ -31,13 +31,13 @@
 - `sync.go`：同源内容变化，`UpsertRow` 直接更新并 `ResolveConflictsByPK(tx, ti.Name, pk, "resolved_auto")`。
 - `import_csv.go`：`decideUpsert` 返回 `"updated"` 且其中含同源更新，`ResolveConflictsByPK(..., "resolved_auto")`。
 
-以上每一处状态落库且事务提交成功后，投递 `conflict.resolved_auto`。
+以上各处状态落库后，同样在事务提交成功后经 `FireTableConflicts` 回查投递 `conflict.resolved_auto`（`resolved_auto` 的判定窗口为 `ResolvedAt >= since`，`ResolvedAt` 为空时回退用 `CreatedAt`）。
 
 ### 2.3 人工解决 resolved
 
 - `server.go` `handleResolveConflict`：`POST /api/conflicts/{id}/resolve` 成功后调 `ResolveConflict(id, "resolved")`。
 
-在 HTTP 成功响应之后投递 `conflict.resolved`。
+在 HTTP 成功响应之后投递 `conflict.resolved`。实现上是先 `writeJSON` 返回 200，再 `NotifyAsync(EventResolved, 回查到的冲突行)`；回查失败只记日志，不影响已返回的响应。
 
 ## 3. payload 契约
 
