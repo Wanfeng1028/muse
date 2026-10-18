@@ -103,6 +103,7 @@
 - **v0.11.1「结构化日志 + request_id」（2026-10-16）**：`internal/log` 包（slog JSON，SB_LOG_LEVEL）+ 中间件（X-Request-ID 透传/生成 32 位随机、注入 context、响应头回写、http.request 日志 request_id/method/path/status/latency_ms）；错误体统一带 request_id；store 层关键操作打带 request_id 日志；`go test ./...` **216/216**，`go vet`/`gofmt` 全洁；真实冒烟（生成/透传/错误体 request_id、日志 grep 定位）全通
 - **v0.12「Prometheus 指标 + API 限流」（2026-10-17）**：`internal/metrics`（手写 Prometheus exposition 零新依赖：`http_requests_total{method,route,status}`/`http_request_duration_seconds`/`notes_total`/`reviews_due`/`reviews_graded_total{grade}`/`push_sent_total{channel,status}`，`GET /metrics`，`SB_METRICS_TOKEN` 可选 bearer 鉴权）+ `internal/ratelimit`（token bucket 按 IP+用户双维度，读写独立桶，429 + `Retry-After` + request_id 错误体）+ 中间件链 request_id → metrics → ratelimit → mux + 7 个 `SB_METRICS_*`/`SB_RATE_LIMIT_*` 环境变量（非法值启动 fail-fast）；`go test ./...` 全绿（metrics 8/8、ratelimit 7/7，均过 `-race`），`go vet`/`gofmt` 全洁；真实冒烟（/metrics 指标值正确、读桶 7×200 后 429、写桶更严 2×201 后 429、非法配置 exit 1）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.12.md`（9 项未通过诚实排期 v0.13：基础告警规则/备份恢复实测/故障演练等）；已知限制：reviews_due 仅默认用户、限流单机内存、histogram buckets 固定不可配
 - **v0.13「告警规则 + 备份恢复/故障演练实测 + 重试泛型」（2026-10-17）**：`prometheus/rules/second-brain.yml` 6 条告警规则（5xx 率/推送失败/P99 延迟/429 突增/死信/存活）+ OPERATIONS.md 告警章节；`scripts/backup-drill.sh`（建库→备份→删库→恢复→一致性校验）真实跑通 **7/7**；`scripts/fault-drill.sh`（kill -9 恢复/只读目录与 DB 文件启动 fail-fast）真实跑通 **3/3**；偿还 v0.11 技术债：`internal/push/retry.go` 抽取泛型 `withRetry`；`go test ./...` **239 例全绿**
+- **深测轮 r6（2026-10-18，已合入，全绿）**：8 个 deep2 文件 69 测试（store 外键/UNIQUE/复合主键约束冲突、级联删除、Open 幂等/嵌套建目录；api/log/metrics/push/ratelimit/review/search 第二轮）全绿；修**真 bug**：`store.Open` 改走 DSN `_pragma=busy_timeout(5000)`——单次 Exec 只影响当时拿到的单连接，连接池新连接无 busy_timeout；go.mod 把 webpush-go 从 indirect 提为直接依赖；`go test ./...` 全绿（commit 57c9463）
 
 ## drama-factory「AI 短剧工坊」
 
@@ -230,6 +231,7 @@
 - **v1.7「RBAC 细粒度权限」（2026-10-17）**：roles 表（admin/editor/viewer 三档）+ 用户管理 API（列表/设角色/撤销会话）+ 前端「用户与权限」页（角色徽标/下拉改角色/只读用户看权限说明矩阵）；注册接口统一 201 CREATED 语义，10 个测试文件过时 200 断言全量修复 + rbac 测试用户名合规化（3~32 字符）；`cargo test` **143/143** 全过；docs/RBAC.md；2 张截图亲眼验收。已知问题：viewer 页桌面图标与权限矩阵重叠、admin 页为测试脏用户名，两处排期干净种子数据重拍
 - **v1.7.1「告警规则补齐」（2026-10-17）**：补齐 v1.6 未通过项——`prometheus/rules/mini-os.yml`（分享读失败率/5xx 率等）+ OPERATIONS.md 告警章节
 - **v1.8「分享读接口限流」（2026-10-17）**：分享读独立令牌桶（IP 单维度，与登录桶类型/状态双隔离）；`MINIOS_SHARE_RPS`（默认 5）/`MINIOS_SHARE_BURST`（默认 30）/`MINIOS_SHARE_RATE_LIMIT_ENABLED`（默认 true），非法值启动 fail-fast（stderr 点名 + exit 2）；覆盖 `GET /api/s/:token/*` 与 `GET /api/share/list`；探针免限流；share.html 429 UX（「看的人有点多」+ 实时倒计时 + disabled 重试按钮）；指标 `minios_share_rate_limited_total`；`cargo test` **151/151**、clippy 零警告、fmt 通过、真实冒烟 14/14、2 张截图亲眼验收。破坏性变更：旧 env `MINIOS_SHARE_READ_RPM`/`MINIOS_SHARE_READ_BURST` 设了就启动失败；`auth_ops_total{op="share_ratelimited"}` 移除。诚实缺口：NAT 下多用户共享出口 IP 会误伤（已知限制）；Dependabot、注册限流、密码策略、2FA 仍排期
+- **深测轮 r6（2026-10-18，已合入，全绿）**：8 个 deep2 文件 59 测试（auth 会话矩阵、VFS 并发、路径穿越、迁移版本、分享限流配置、静态回退、上传限制、ws 握手）全绿；`cargo test` 全绿、clippy 零警告；产品无真 bug（commit 57c9463）
 
 **后续计划**：
 
@@ -426,6 +428,7 @@
 - **v1.5「全文 RSS 输出 + HTTP 层限流」（2026-10-16）**：`GET /feed.xml`（正文优先用抓取时 trafilatura 提取的 content_text，无正文回落摘要去标签文本；`?feed_id=`/`?folder=` 过滤，50 篇封顶；ETag + If-None-Match 304）+ HTTP 层 IP 令牌桶限流（默认 60 req/min，`FEEDFLOW_RATE_LIMIT_RPS`/`_BURST`/`_ENABLED` 环境变量，超限 429 + Retry-After，`/healthz` 与 `/metrics` 免限流，Prometheus 新增 `feedflow_http_rate_limited_total`）；tests/test_feedxml.py 8 例 + tests/test_ratelimit.py 5 例；运维手册新增第 9 节"限流调参"；pytest 115/115、ruff 全洁
 - **v1.5.1 依赖升级（2026-10-16）**：trafilatura 2.2.0→2.3.1（PyPI 当前最新，2.3.0 发版说明无破坏性变更）；验收抓包：CHANGELOG 曾声称"已换 2.3.1 跑过测试"，实测 venv 仍为 2.2.0，已真升级并重跑 pytest **115/115** 全过
 - **v1.6「阅读体验」（2026-10-16）**：键盘快捷键（j/k 上下篇、o 新标签页打开原文、r 标已读/未读、s 加星、? 帮助浮层）+ 阅读进度记忆（DB 迁移 v4 `articles.scroll_pos`、`POST /api/articles/<id>/progress` 非负校验，前端防抖 500ms 保存 + 重进恢复）+ OPML 导出加固（None-safe、`dateCreated`）；验收抓真 bug：滚动容器误判 `#reader-pane`（实际为 `.col-reader`），致进度保存恒为 0，已修；门面截图右栏空态违规已重拍；pytest **129/129**、ruff 全洁；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v1.6.md`。~~已知遗留：`PUT /api/folders/<id>` 调不存在的 `store.get_folder`（历史 bug，排期下轮）~~（已在 2026-10-17 修复：补 `store.get_folder` 实现 + 回归测试，真实冒烟通过）
+- **深测轮 r6（2026-10-18，已合入，全绿）**：8 个 deep2 文件 83 测试（api、backup、dedup、fetcher、opml_scheduler、ranking、rss、seed 第二轮）全绿；pytest **447/447** 全过、ruff 全洁；产品无真 bug（commit 57c9463）
 
 **后续计划**：
 
