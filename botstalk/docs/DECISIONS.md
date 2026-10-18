@@ -150,3 +150,29 @@ test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gat
 **影响**：
 - `gateway/src/doudizhu/cards.ts` 中 `tryStraight` 注释已写明该口径。
 - `gateway/test/doudizhu-cards.deep.test.ts` 用例锁定 A2345 为 invalid。
+
+## 2026-10-18：presence/usage 端点按网关全局返回（presence 是网关全局概念）
+
+**决策**：
+- `GET /api/rooms/:room/presence` 与 `GET /api/rooms/:room/usage` 取 `listPresence` 全量，不按 room 过滤。
+- 端点保持返回全量排序 presence。
+- presence 是网关全局概念，adapter 心跳不归属某个 room。
+
+**理由（依据）**：
+- presence 表没有 room 字段，见 `db.ts` 签名：`upsertPresence` 只收 `adapter_id`/`status`/`last_seen_ms`/`usage_in`/`usage_out`。
+- adapter 的 presence 心跳是网关级存活信号，不归属某个 room。
+- `listPresence` 本来就返回全表，签名逐字为 `export function listPresence(db: Db): PresenceRow[] {`。
+- 服务端用 `sortPresence` 排序（online 排前、同状态按 `adapter_id` 字典序），逐字为：
+  `function sortPresence<T extends { adapter_id: string; status: string }>(rows: T[]): T[] {`
+  `  return [...rows].sort((a, b) => {`
+  `    const aOnline = a.status === "online" ? 0 : 1;`
+  `    const bOnline = b.status === "online" ? 0 : 1;`
+  `    if (aOnline !== bOnline) return aOnline - bOnline;`
+  `    return a.adapter_id < b.adapter_id ? -1 : a.adapter_id > b.adapter_id ? 1 : 0;`
+  `  });`
+  `}`
+- URL 里的 `:room` 段保留只为路由对称，不参与过滤。
+- 单条读取走 `getPresence`，签名逐字为 `export function getPresence(db: Db, adapter_id: string): PresenceRow | undefined {`。
+
+**影响**：
+- `gateway/test/presence-usage.r2.test.ts` 中 3 处"行为待确认"注释转为语义锁定用例，行为不变。

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.1 - 2026-10-18
+### 新增
+- 测试纵深 r3（斗地主）：牌型判定纵深 21 例（连对/飞机带翅/四带二边界）、canBeat 压牌纵深 23 例、叫分状态机纵深 13 例、AI 自由领出 12 例、AI 压牌策略 12 例。
+- 测试纵深 r3（网关）：rooms-router 未覆盖分支 8 例（未知 intent 静默丢弃、回执 task 不存在仍广播、候选能力过滤、定向不看 room、routeStream 落库内容）、artifacts 7 例（invalid_request 非法 body、handle 非 artifact 路径返回 false、mime 空串）、db gateway_state 8 例、pending_frames 8 例、Hub.getOnlineAdapters(room) 6 例、静态文件服务 serveStatic 8 例、loadConfig 10 例。
+- 测试纵深 r3（protocol）：ResendQueue.getMissingBySeq 8 例、SeqTracker 未覆盖分支 8 例、StreamTracker 未覆盖分支 7 例、codec parse/validate 未覆盖分支 10 例、GapRateLimiter 边界 6 例。
+- docs/DECISIONS.md 新增决策"2026-10-18：presence/usage 端点按网关全局返回"：presence 是网关全局概念，adapter 心跳不归属某个 room；GET /api/rooms/:room/presence 与 /usage 取 listPresence 全量，不按 room 过滤。
+### 变更
+- gateway/test/presence-usage.r2.test.ts：3 处"行为待确认：未按 room 过滤"注释转为语义锁定用例（引用 DECISIONS 条目），测试行为不变。
+- 本轮无源码行为变更，仅测试与文档。
+
 ## v0.4.0 - 2026-10-17
 ### 新增
 - 房间类型：workroom（工作坊）/ playroom（娱乐厅），协议层 packages/protocol/src/rooms-types.ts（类型、权限矩阵、路由策略、游戏清单）。
