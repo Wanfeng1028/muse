@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { SendIcon, ChevronDown, CheckIcon, StopIcon, GitIcon, FolderIcon, MonitorIcon, MicIcon, GoalIcon, ZapIcon } from '../icons';
+import { SendIcon, ChevronDown, CheckIcon, StopIcon, GitIcon, FolderIcon, MonitorIcon, MicIcon, GoalIcon, ZapIcon, DocIcon } from '../icons';
 import { models } from '../../data/mock';
 
 // 真实 Codex composer（flaviocopes.com 真机截图逐像素对照）：

@@ -47,7 +47,7 @@ export const projects = [
   },
 ];
 
-export const models = ['5.6 Sol', '5.6 Sol High', '5.1']; 
+export const models = ['5.6 Sol', '5.6 Terra', '6 Sol'];
 export const sandboxModes = ['Suggest', 'Auto Edit', 'Full Auto'];
 
 // 新建线程三模式（官方定义）

@@ -159,3 +159,9 @@ export const ClockColorIcon = ({ size = 18 }) => (
 export const DocIcon = ({ size = 14 }) => (
   <I size={size}><path d="M4 2.5h5.5L13 6v11.5H4V2.5Z" strokeLinejoin="round" /><path d="M9.5 2.5V6H13" /></I>
 );
+export const ChatGPTLogo = ({ size = 40 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+    <path d="M12 3c-1.5 0-2.9.5-4 1.4C6.9 5.3 6 6.7 6 8.2c0 .5.1 1 .3 1.5C5.1 10.3 4.5 11.1 4.5 12c0 1.5.9 2.9 2 3.8-.2.5-.3 1-.3 1.5 0 1.5.9 2.9 2 3.8 1.1.9 2.5 1.4 4 1.4 1.5 0 2.9-.5 4-1.4 1.1-.9 2-2.3 2-3.8 0-.5-.1-1-.3-1.5 1.1-.9 2-2.3 2-3.8 0-.9-.6-1.7-1.8-2.3.2-.5.3-1 .3-1.5 0-1.5-.9-2.9-2-3.8C15.9 3.5 14.5 3 12 3Z" strokeLinejoin="round"/>
+    <circle cx="12" cy="12" r="2.5" />
+  </svg>
+);

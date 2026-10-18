@@ -6,7 +6,7 @@ import RightPanel from './components/RightPanel';
 import SettingsView from './components/settings/SettingsView';
 import SchedulesView from './components/schedules/SchedulesView';
 import CommandPalette from './components/palette/CommandPalette';
-import { CodexLogo, GitIcon, MoreIcon, PanelIcon, CloudIcon, WandIcon, BookIcon, ListIcon, ClockColorIcon } from './components/icons';
+import { CodexLogo, ChatGPTLogo, GitIcon, MoreIcon, PanelIcon, CloudIcon, WandIcon, BookIcon, ListIcon, ClockColorIcon } from './components/icons';
 import { projects as seedProjects, models } from './data/mock';
 
 // 真实 Codex 布局（六份实证报告）：
@@ -22,7 +22,7 @@ export default function App() {
   const [projects, setProjects] = useState(seedProjects);
   const [activeProjectId, setActiveProjectId] = useState('p1');
   const [activeThreadId, setActiveThreadId] = useState('t1');
-  const [model, setModel] = useState('gpt-5.2');
+  const [model, setModel] = useState('5.6 Sol');
   const [streaming, setStreaming] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [rightPanel, setRightPanel] = useState(null); // null | review | terminal | browser | files
@@ -141,6 +141,7 @@ export default function App() {
     }
     return (
       <div className="main" style={{ flex: 1 }}>
+        {activeThread && activeThread.messages.length > 0 && (
         <div className="topbar">
           <div className="topbar-title">{activeThread ? activeThread.title : 'Codex'}</div>
           <span style={{ flex: 1 }} />
@@ -169,11 +170,12 @@ export default function App() {
           </div>
           <button className="icon-btn sm" title="Thread options"><MoreIcon size={15} /></button>
         </div>
+        )}
         {activeThread && activeThread.messages.length > 0 ? (
           <ThreadView thread={activeThread} streaming={streaming} />
         ) : (
           <div className="empty-state">
-            <div className="empty-logo-lg"><CodexLogo size={48} /></div>
+            <div className="empty-logo-lg"><ChatGPTLogo size={48} /></div>
             <div className="empty-title-xl">What should we build in <u>{activeProject?.name}</u>?</div>
             <div className="suggestion-cards">
               {[
