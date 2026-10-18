@@ -183,7 +183,8 @@ docker logs second-brain 2>&1 | grep '"note.created"' | grep '"user":"alice"'
 
 - 开关与鉴权：SB_METRICS_ENABLED（默认 true）、SB_METRICS_TOKEN（为空则 /metrics 无需鉴权；非空时需 Authorization: Bearer <token>，否则 401）。
 - 抓取：GET /metrics，Prometheus 文本格式；Prometheus 配置示例 scrape_interval 15s。
-- 指标表：http_requests_total{method,route,status}、http_request_duration_seconds{method,route}（histogram，buckets 0.005~10）、push_sent_total{channel,status}（status 含 sent/failed/failed_permanent/skipped）、reviews_graded_total{grade}、notes_total、reviews_due（默认用户的今日到期数）。
+- 指标表：http_requests_total{method,route,status}、http_request_duration_seconds{method,route}（histogram，buckets 0.005~10）、push_sent_total{channel,status}（status 含 sent/failed/failed_permanent/skipped）、reviews_graded_total{grade}、notes_total、reviews_due（默认用户的今日到期数，保留兼容）、reviews_due_by_user{user}（v0.14+：每个用户的今日到期数）。
+
 - 注意：/metrics 自身不被 metrics 中间件记录；429 拒绝会被计数。
 
 ## API 限流（v0.12+）
@@ -196,7 +197,8 @@ docker logs second-brain 2>&1 | grep '"note.created"' | grep '"user":"alice"'
 
 ## 告警规则（v0.13+）
 
-规则文件在 `prometheus/rules/second-brain.yml`，group 名 `second-brain-alerts`，每 30 秒评估一次。所有规则都带 `summary`、`description`、`runbook_url`，`runbook_url` 指回本节。规则里只用服务真实暴露的指标：`http_requests_total`、`http_request_duration_seconds`、`push_sent_total`、`reviews_graded_total`、`notes_total`、`reviews_due`、`up`。
+规则文件在 `prometheus/rules/second-brain.yml`，group 名 `second-brain-alerts`，每 30 秒评估一次。所有规则都带 `summary`、`description`、`runbook_url`，`runbook_url` 指回本节。规则里只用服务真实暴露的指标：`http_requests_total`、`http_request_duration_seconds`、`push_sent_total`、`reviews_graded_total`、`notes_total`、`reviews_due`、`reviews_due_by_user`、`up`。
+
 
 ### 规则说明和阈值
 

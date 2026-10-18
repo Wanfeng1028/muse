@@ -107,12 +107,7 @@ func Open(path string) (*Store, error) {
 		return nil, err
 	}
 
-	if err := migrateReviewsUser(db); err != nil {
-		db.Close()
-		return nil, err
-	}
-
-	if err := migratePushLogUser(db); err != nil {
+	if err := Migrate(db); err != nil {
 		db.Close()
 		return nil, err
 	}

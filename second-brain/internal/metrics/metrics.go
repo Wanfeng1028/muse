@@ -43,6 +43,7 @@ type Registry struct {
 	pushSent     map[pushKey]uint64
 	reviewGraded map[int]uint64
 	gauges       map[string]func() float64
+	gaugeVecs    map[string]func() map[string]float64
 }
 
 // httpKey 唯一标识一条 http_requests_total 时间序列。
@@ -100,6 +101,7 @@ func New() *Registry {
 		pushSent:     make(map[pushKey]uint64),
 		reviewGraded: make(map[int]uint64),
 		gauges:       make(map[string]func() float64),
+		gaugeVecs:    make(map[string]func() map[string]float64),
 	}
 }
 
@@ -176,6 +178,22 @@ func (r *Registry) SetGaugeFunc(name string, fn func() float64) {
 	r.gauges[name] = fn
 }
 
+// SetGaugeLabelsFunc 注册带 label 的 gauge 序列取值回调。
+// 目前仅 "reviews_due_by_user" 使用，label 名固定为 "user"；其它名字会被忽略。
+// fn 返回 map[label值]数值；fn 为 nil 表示删除；fn panic 时按空 map 处理。
+func (r *Registry) SetGaugeLabelsFunc(name string, fn func() map[string]float64) {
+	if name != "reviews_due_by_user" {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if fn == nil {
+		delete(r.gaugeVecs, name)
+		return
+	}
+	r.gaugeVecs[name] = fn
+}
+
 // isKnownGauge 判断 name 是否属于契约允许的 gauge 集合。
 func isKnownGauge(name string) bool {
 	return name == "notes_total" || name == "reviews_due"
@@ -224,6 +242,10 @@ func (r *Registry) render() string {
 	for k, fn := range r.gauges {
 		gauges[k] = fn
 	}
+	gaugeVecs := make(map[string]func() map[string]float64, len(r.gaugeVecs))
+	for k, fn := range r.gaugeVecs {
+		gaugeVecs[k] = fn
+	}
 	r.mu.Unlock()
 
 	var b strings.Builder
@@ -244,6 +266,7 @@ func (r *Registry) render() string {
 	// 便于人工 diff 与测试断言。
 	writeGauge(&b, "notes_total", "当前笔记总数。", gauges["notes_total"])
 	writeGauge(&b, "reviews_due", "当前到期待复习的条目数。", gauges["reviews_due"])
+	writeGaugeVec(&b, "reviews_due_by_user", "按用户统计的今日到期待复习条目数。", gaugeVecs["reviews_due_by_user"])
 
 	return b.String()
 }
@@ -409,6 +432,40 @@ func writeGauge(b *strings.Builder, name, help string, fn func() float64) {
 	b.WriteByte(' ')
 	b.WriteString(formatFloat(safeCall(fn)))
 	b.WriteByte('\n')
+}
+
+func writeGaugeVec(b *strings.Builder, name, help string, fn func() map[string]float64) {
+	if fn == nil {
+		return
+	}
+	writeMetricHeader(b, name, help, "gauge")
+	vals := safeCallVec(fn)
+	keys := make([]string, 0, len(vals))
+	for k := range vals {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		b.WriteString(name)
+		b.WriteString(`{user="`)
+		b.WriteString(escapeLabelValue(k))
+		b.WriteString(`"} `)
+		b.WriteString(formatFloat(vals[k]))
+		b.WriteByte('\n')
+	}
+}
+
+func safeCallVec(fn func() map[string]float64) (m map[string]float64) {
+	defer func() {
+		if recover() != nil {
+			m = map[string]float64{}
+		}
+	}()
+	m = fn()
+	if m == nil {
+		m = map[string]float64{}
+	}
+	return m
 }
 
 // safeCall 调用 fn 并把 panic 转换为 NaN。

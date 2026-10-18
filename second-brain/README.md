@@ -148,7 +148,9 @@ docker logs second-brain 2>&1 | grep '"request_id":"9f3a1c..."'
 | `push_sent_total` | counter | `channel`、`status` | 推送结果；`status` 取值为 `sent`/`failed`/`failed_permanent`/`skipped` |
 | `reviews_graded_total` | counter | `grade` | 复习评分次数，按评分值分桶 |
 | `notes_total` | gauge | 无 | 当前笔记总数，抓取时实时查库 |
-| `reviews_due` | gauge | 无 | 默认用户今天到期的复习数，抓取时实时查库 |
+| `reviews_due` | gauge | 无 | 默认用户今天到期的复习数，抓取时实时查库（保留兼容） |
+| `reviews_due_by_user` | gauge | `user` | 每个用户今天到期的复习数，抓取时实时查库（v0.14+） |
+
 
 `/metrics` 自己不会被 metrics 中间件记录，抓取它不会污染上面的数据。
 

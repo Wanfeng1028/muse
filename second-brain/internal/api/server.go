@@ -195,7 +195,22 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	// 搜索
 	mux.HandleFunc("GET /api/search", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query().Get("q")
+		format := r.URL.Query().Get("format")
+		legacy := false
+		switch format {
+		case "", "object":
+			legacy = false
+		case "legacy":
+			legacy = true
+		default:
+			writeError(w, r, http.StatusBadRequest, "无效的 format 参数")
+			return
+		}
 		if strings.TrimSpace(q) == "" {
+			if legacy {
+				writeJSON(w, http.StatusOK, []store.Note{})
+				return
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"query": "",
 				"terms": []string{},
@@ -246,6 +261,10 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 				"score":  rn.Score,
 				"fields": fields,
 			})
+		}
+		if legacy {
+			writeJSON(w, http.StatusOK, outNotes)
+			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"query": q,
@@ -371,6 +390,30 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 			return math.NaN()
 		}
 		return float64(rs.DueToday)
+	})
+
+	reg.SetGaugeLabelsFunc("reviews_due_by_user", func() map[string]float64 {
+		out := map[string]float64{}
+		now := time.Now()
+		users, err := st.ListUsersWithDueReviews(now)
+		if err != nil {
+			return out
+		}
+		seen := map[string]bool{}
+		for _, u := range users {
+			rs, err := st.ReviewStats(now, u)
+			if err != nil {
+				continue
+			}
+			out[u] = float64(rs.DueToday)
+			seen[u] = true
+		}
+		if !seen[store.DefaultUser] {
+			if rs, err := st.ReviewStats(now, store.DefaultUser); err == nil {
+				out[store.DefaultUser] = float64(rs.DueToday)
+			}
+		}
+		return out
 	})
 
 	// 中间件链（外层 -> 内层）：request_id -> metrics -> ratelimit -> mux。
