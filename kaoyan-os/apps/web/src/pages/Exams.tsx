@@ -32,6 +32,8 @@ export default function Exams() {
   const [records, setRecords] = useState<ExamRecord[]>([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [recordsError, setRecordsError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
 
   // 趋势数据状态
   const [trend, setTrend] = useState<ExamTrendPoint[]>([]);
@@ -168,6 +170,28 @@ export default function Exams() {
       await loadSummary();
     } catch (e) {
       setRecordsError(e instanceof Error ? e.message : '删除失败');
+    }
+  };
+
+  // 导出 CSV：按当前筛选科目导出，点击后直接下载文件
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await api.exportExamsCsv(
+        subjectFilter === 'all' ? undefined : subjectFilter
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'kaoyan-exams.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setRecordsError(e instanceof Error ? e.message : '导出失败');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -422,24 +446,34 @@ export default function Exams() {
       <div className="card">
         <div className="form-row" style={{ justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0 }}>考试记录</h2>
-          <label>
-            筛选{' '}
-            <select
-              className="select"
-              value={subjectFilter}
-              onChange={(e) =>
-                setSubjectFilter(e.target.value as SubjectFilter)
-              }
+          <div className="form-row" style={{ gap: 8 }}>
+            <button
+              className="btn btn-sm"
+              onClick={handleExport}
+              disabled={exporting}
             >
-              <option value="all">全部</option>
-              {SUBJECTS.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              {exporting ? '导出中…' : '导出 CSV'}
+            </button>
+            <label>
+              筛选{' '}
+              <select
+                className="select"
+                value={subjectFilter}
+                onChange={(e) =>
+                  setSubjectFilter(e.target.value as SubjectFilter)
+                }
+              >
+                <option value="all">全部</option>
+                {SUBJECTS.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
+
 
         {recordsLoading ? (
           <div className="loading">加载中…</div>

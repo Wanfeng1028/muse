@@ -247,3 +247,13 @@ export interface HeatmapResponse {
   activeDays: number;
 }
 
+/** 错题掌握率响应 */
+export interface MistakeSummary {
+  subject: string | null;
+  total: number;
+  mastered: number;
+  unmastered: number;
+  masteredRate: number;
+}
+
+

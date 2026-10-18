@@ -5,7 +5,9 @@ import {
   type Mistake,
   type CreateMistakeInput,
   type UpdateMistakeInput,
+  type MistakeSummary,
 } from '@kaoyan/shared';
+
 import { nowIso } from '../db';
 
 // 数据库行结构
@@ -33,8 +35,47 @@ function rowToMistake(row: MistakeRow): Mistake {
 }
 
 export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): void {
+  // 错题掌握率：可选 subject 过滤
+  app.get('/api/mistakes/summary', async (request, reply) => {
+    const query = request.query as { subject?: string };
+    const subject = query.subject;
+
+    if (subject !== undefined && !isSubjectKey(subject)) {
+      return reply.code(400).send({ error: '无效的 subject 参数' });
+    }
+
+    const rows = subject
+      ? (db
+          .prepare('SELECT mastered FROM mistakes WHERE subject = ?')
+          .all(subject) as Array<{ mastered: number }>)
+      : (db.prepare('SELECT mastered FROM mistakes').all() as Array<{
+          mastered: number;
+        }>);
+
+    const total = rows.length;
+    let mastered = 0;
+    for (const row of rows) {
+      if (row.mastered === 1) {
+        mastered += 1;
+      }
+    }
+    const unmastered = total - mastered;
+    const masteredRate =
+      total === 0 ? 0 : Math.round((mastered / total) * 10000) / 10000;
+
+    const result: MistakeSummary = {
+      subject: subject ?? null,
+      total,
+      mastered,
+      unmastered,
+      masteredRate,
+    };
+    return reply.send(result);
+  });
+
   // 列表：可选 subject、mastered、q
   app.get('/api/mistakes', async (request, reply) => {
+
     const query = request.query as {
       subject?: string;
       mastered?: string;

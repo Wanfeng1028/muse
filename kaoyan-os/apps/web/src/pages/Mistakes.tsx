@@ -3,9 +3,11 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   SUBJECTS,
   type Mistake,
+  type MistakeSummary,
   type SubjectKey,
   type CreateMistakeInput,
 } from '@kaoyan/shared'
+
 import { api } from '../api'
 
 // 筛选状态下拉选项类型
@@ -44,6 +46,10 @@ export default function Mistakes() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 掌握率汇总（跟随科目筛选）
+  const [summary, setSummary] = useState<MistakeSummary | null>(null)
+
+
   // 当前展开查看详情的错题 id
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
@@ -71,6 +77,23 @@ export default function Mistakes() {
       setLoading(false)
     }
   }, [subject, mastered, q])
+
+  // 掌握率汇总跟随科目筛选
+  useEffect(() => {
+    let cancelled = false
+    api
+      .mistakeSummary(subject === 'all' ? undefined : subject)
+      .then((s) => {
+        if (!cancelled) setSummary(s)
+      })
+      .catch(() => {
+        if (!cancelled) setSummary(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [subject])
+
 
   // 筛选条件变化时重新加载
   useEffect(() => {
@@ -126,6 +149,34 @@ export default function Mistakes() {
 
   return (
     <div className="page">
+      {/* 掌握率汇总 */}
+      {summary && summary.total > 0 && (
+        <div className="card" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+          <div>
+            <div className="stat-label">全部错题</div>
+            <div className="stat-value">{summary.total}</div>
+          </div>
+          <div>
+            <div className="stat-label">已掌握</div>
+            <div className="stat-value" style={{ color: '#22b07d' }}>
+              {summary.mastered}
+            </div>
+          </div>
+          <div>
+            <div className="stat-label">未掌握</div>
+            <div className="stat-value" style={{ color: '#e05d5d' }}>
+              {summary.unmastered}
+            </div>
+          </div>
+          <div>
+            <div className="stat-label">掌握率</div>
+            <div className="stat-value">
+              {(summary.masteredRate * 100).toFixed(1)}%
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 页头与筛选栏 */}
       <div className="page-header">
         <h1>错题本</h1>

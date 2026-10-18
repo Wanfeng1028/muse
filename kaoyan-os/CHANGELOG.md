@@ -4,7 +4,26 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.7.2] - 2026-10-18
+
+### Added
+
+- 后端：GET /api/mistakes/summary（可选 ?subject=，非法值 400）返回错题掌握率：total/mastered/unmastered/masteredRate（4 位小数）；packages/shared 新增 MistakeSummary 类型。
+- 前端：错题页新增掌握率汇总条（全部/已掌握/未掌握/掌握率，跟随科目筛选）。
+- 测试：apps/server/tests/mistakes-summary.test.ts 6 例；服务端 vitest 384/384 全绿；server/web tsc 零错。
+- 另：exams-summary 边界深测 tests/exams-summary.deep.test.ts 8 例。
+
+## [1.7.1] - 2026-10-18
+
+### Added
+
+- 后端：GET /api/exams/export（可选 ?subject=，非法值 400）导出真题记录为 CSV：表头 id,subject,subject_name,paper,score,total_score,rate,duration_minutes,taken_at，按 taken_at 升序；RFC4180 转义；带 BOM（Excel 直接认中文）；Content-Disposition 附件下载。
+- 前端：真题页考试记录卡片新增「导出 CSV」按钮，按当前筛选科目导出并直接下载 kaoyan-exams.csv。
+- 测试：apps/server/tests/exams-export.test.ts 8 例；服务端 vitest 全绿；server/web tsc 零错。
+
 ## [1.7.0] - 2026-10-18
+
+
 
 ### Added
 

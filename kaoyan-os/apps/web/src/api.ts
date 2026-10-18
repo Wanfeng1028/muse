@@ -7,8 +7,10 @@ import type {
   FocusStats,
   PlanSummary,
   Mistake,
+  MistakeSummary,
   CreateMistakeInput,
   UpdateMistakeInput,
+
   CreateWordInput,
   WordWithState,
   SrsState,
@@ -133,6 +135,10 @@ export const api = {
     request<Mistake>(`/mistakes/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deleteMistake: (id: number) =>
     request<void>(`/mistakes/${id}`, { method: 'DELETE' }),
+  // 错题掌握率汇总
+  mistakeSummary: (subject?: string) =>
+    request<MistakeSummary>(`/mistakes/summary${qs({ subject })}`),
+
 
   // 单词
   listWords: () => request<WordWithState[]>('/words'),
@@ -159,6 +165,14 @@ export const api = {
     request<ExamRecord>('/exams', { method: 'POST', body: JSON.stringify(input) }),
   deleteExam: (id: number) =>
     request<void>(`/exams/${id}`, { method: 'DELETE' }),
+
+  // 考试 CSV 导出：返回 Blob，由调用方触发下载
+  exportExamsCsv: async (subject?: string): Promise<Blob> => {
+    const res = await fetch(BASE + `/exams/export${qs({ subject })}`);
+    if (!res.ok) throw new Error(`导出失败（${res.status}）`);
+    return await res.blob();
+  },
+
 
 
   // 设置

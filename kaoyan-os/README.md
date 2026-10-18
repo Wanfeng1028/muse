@@ -182,9 +182,9 @@ docker run -d \
 | health | `GET /api/health` | 服务健康检查 |
 | plans | `GET/POST /api/plans`，`PATCH/DELETE /api/plans/:id` | 复习计划增删改查与完成状态 |
 | focus | `GET/POST /api/focus` | 番茄专注会话记录与统计 |
-| mistakes | `GET/POST /api/mistakes`，`PATCH/DELETE /api/mistakes/:id` | 错题归档、错因与重做状态 |
+| mistakes | `GET/POST /api/mistakes`，`PATCH/DELETE /api/mistakes/:id`，`GET /api/mistakes/summary` | 错题归档、错因与重做状态、掌握率汇总 |
 | words | `GET/POST /api/words`，`POST /api/words/:id/review` | 词条管理与 SRS 复习结果提交 |
-| exams | `GET/POST /api/exams`，`GET /api/exams/trend`，`GET /api/exams/summary` | 真题计时记录、得分率趋势与本阶段汇总统计 |
+| exams | `GET/POST /api/exams`，`GET /api/exams/trend`，`GET /api/exams/summary`，`GET /api/exams/export` | 真题计时记录、得分率趋势、本阶段汇总统计与 CSV 导出 |
 | settings | `GET/PUT /api/settings` | 考试日期、科目等配置 |
 | stats | `GET /api/stats/weekly`，`GET /api/stats/heatmap` | 周报聚合（专注分钟/计划完成率/新增错题/模考场次/连续打卡 + 7 天每日专注分钟）；热力图聚合（专注/计划/错题/模考按天聚合 + 连续打卡统计） |
 
