@@ -1,3 +1,27 @@
+## v0.18.0（2026-10-19）——Wave4：v09 剩余失败攻坚
+
+### 新增
+- F-T009B：synonyms.cpp 新增同义词边 人群→人挤人，修 v09-t009-q08（search）。
+- F-T019：searcher.cpp 新增 tryAdjacentPrefixProbe（相邻 token 前缀/子串交叉探测），
+  处理查询侧/索引侧 jieba 切词错位（如"长期不弹琴"[长期][不][弹琴] vs 索引[长期][不弹]）。
+  关键实现细节：helper 内用 CutForSearch 将空白粗块展开为细 token；触发条件按 jtoks 计数。
+
+### 回滚（诚实记录）
+- F-RERANK（contentTokens/R2b 50%/R2c/去重）：目标未达成，引入 t004-q06、t009-q04 回归，已全量回滚。
+- F-T006A（同起点前缀吸收）：与 v0.14 重叠 token 保留行为冲突，已回滚。
+
+### 测试
+- 新增 17 个 gtest（test_adjacent_probe_v018.cpp 8个，test_synonyms_v018.cpp 9个），全绿。
+- ctest 394/394 通过。
+
+### 评测
+- v09s 194/200（97.0%，+1，零回归）。
+- 剩余 6 个失败：t006-q11（架构级不可修复）、t013-q05（语义鸿沟不可修复）、
+  t007-q08（search）、t018-q09/t019-q12/t021-q12（locate 路径，下轮攻坚）。
+
+### 已知问题
+- locate 路径 4 个失败需下轮专项（passage 排序阶段）。
+
 ## v0.17.0（2026-10-19）——Wave3 收官
 
 ### 新增

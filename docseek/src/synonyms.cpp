@@ -1,4 +1,4 @@
-// docseek 同义词表实现（v0.16.1：5 组）
+// docseek 同义词表实现（v0.16.1：6 组）
 // 仅收录经 v09 样本 corpus 证据确认的映射，其余一律不展开。
 #include "docseek/synonyms.h"
 
@@ -13,6 +13,9 @@ const char* const kExpandHeShi[] = {"舒服"};
 // "好按" → {"舒服"}      // v09-t018-q09：期望文档 v09_t018_01.html，文档原话"算舒服"
 const char* const kExpandHaoAn[] = {"舒服"};
 
+// "人群" → {"人挤人"}    // v09-t009-q08：期望文档标题含"人挤人"不含"人群"
+const char* const kExpandRenQun[] = {"人挤人"};
+
 // "花费" → {"多少钱"}    // v09-t003-q08：期望文档"装备花了多少钱"，全文无"花费"
 const char* const kExpandHuaFei[] = {"多少钱"};
 
@@ -22,8 +25,9 @@ const char* const kExpandPoLie[] = {"裂"};
 // "小孩" → {"孩子"}      // v09-t007-q06：期望文档标题"孩子几岁学游泳合适"，全文无"小孩"
 const char* const kExpandXiaoHai[] = {"孩子"};
 
-// 表按 term 字节序排列：UTF-8 下 "合适" < "好按" < "小孩" < "破裂" < "花费"。
+// 表按 term 字节序排列：UTF-8 下 "人群" < "合适" < "好按" < "小孩" < "破裂" < "花费"。
 const SynonymEntry kSynonyms[] = {
+    {"人群", kExpandRenQun, 1},  // v09-t009-q08：期望文档标题含"人挤人"不含"人群"
     {"合适", kExpandHeShi, 1},
     {"好按", kExpandHaoAn, 1},
     {"小孩", kExpandXiaoHai, 1},

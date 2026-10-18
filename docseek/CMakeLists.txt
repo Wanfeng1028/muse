@@ -164,6 +164,8 @@ add_executable(docseek_tests
   tests/test_database.cpp
   tests/test_indexer.cpp
   tests/test_searcher.cpp
+  tests/test_adjacent_probe_v018.cpp
+  tests/test_synonyms_v018.cpp
   tests/test_locate.cpp
   tests/test_http_server.cpp
   tests/test_watcher.cpp

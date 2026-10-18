@@ -383,7 +383,9 @@ tests/test_d4_dfdrop.cpp 4 例（红绿验证通过）；评测零回归
 已回滚。**诚实记录**：v0.16.1 声称的 ctest 385/385 与 v07 56/56 在干净树上无法复现——
 ctest 有 5 个 pre-existing 失败、v07-038 同样在干净树失败；本轮改动引入 0 个新失败。
 
-**v0.17.0「Wave3 收官」（2026-10-19）**：W3A（rerankHits R1-R6，5 对）+ W3B（query_parser 胶水词/边界删除，3 对）
+**v0.17.0「Wave3 收官」（2026-10-19）****v0.18.0「Wave4：v09 剩余失败攻坚」（2026-10-19）**：7 失败诊断（dpsk 7 批）→ t009-q08 修（synonyms.cpp 新增边 人群→人挤人）→ t019-q12 修（searcher.cpp 新增 tryAdjacentPrefixProbe 相邻 token 前缀/子串交叉探测；关键修正：helper 内用 CutForSearch 将空白粗块展开为细 token，触发按 jtoks 计数）→ 17 个新 gtest 全绿 → 评测 v09s **194/200**（+1，零回归）。**诚实记录**：F-RERANK（contentTokens/R2b 50%/R2c/去重）目标未达成且引入 t004-q06、t009-q04 回归，已全量回滚；F-T006A（同起点前缀吸收）与 v0.14 重叠 token 保留行为冲突，已回滚；t006-q11（架构级）/t013-q05（语义鸿沟）判不可修复；t007-q08（search）/t018-q09/t019-q12/t021-q12（locate 路径）下轮攻坚。ctest 394/394 全过。发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.18.md`。
+
+：W3A（rerankHits R1-R6，5 对）+ W3B（query_parser 胶水词/边界删除，3 对）
 收编验证——双二进制隔离实测 v09s 192/200（+8，零回归），发现 t020-q12 被 W3A 的 R1"包含"加成
 过度提升致回归（足球文档反超钢琴文档 0.007），已收紧 R1"包含"为 +0.25 修复；P1（v09-t005-q01
 "戚风塌腰"）tryCharDecomposedSingle 第二击落地；v07-038（"超导材料制备"负测）经移除 stage 2

@@ -1102,6 +1102,104 @@ static std::vector<Hit> rerankHits(std::vector<Hit> hits,
     return hits;
 }
 
+// t019-q12 改动点 3 保守版：相邻 token 前缀/子串交叉探测。
+//
+// 背景：查询侧切词（parseNaturalQuery/jieba CutForSearch）与索引侧切词在
+// 连续中文片段上可能错位，例如"长期不弹琴"查询侧切为 [长期][不][弹琴]，
+// 而文档侧切为 [长期][不弹]。此时 AND 必空、D4 的 DF 探测（逐 token 展开）
+// 认不出"错位"、OR 召回被高频 token 稀释排序、子串回退不触发。
+//
+// 本函数只在 hits.empty() 时被调用。对 tokens 的每个相邻对 (a, b) 生成
+// 候选集合 {a+b, a+b首字, a首字+b}（"首字"指首个 UTF-8 码点），逐个用
+// db_.searchFts(quoteToken(cand), 1) 探测；任一候选命中即停（保守，避免
+// 组合爆炸）。命中后把 quoteToken(cand) 作为高权重项并入 OR 查询重查，
+// 结果写入 hits 并直接返回，由上层 rerankHits 排序。
+//
+// 复用设施：quoteToken、Database::searchFts、splitUtf8Codepoints；
+// orQuery 由调用点（Searcher::search 成员函数内）经 buildOrMatchQuery(rest) 算好传入。
+static void tryAdjacentPrefixProbe(const std::vector<std::string>& tokens,
+                                   const std::string& orQuery,
+                                   Database& db,
+                                   int limit,
+                                   std::vector<Hit>& hits) {
+    // 注意：tokens 是空白切分的粗块（如"长期不弹琴"整块），不是 jieba 细 token。
+    // 相邻探测必须在 jieba token 粒度上做：先把每个粗块用 CutForSearch 展开为
+    // 细 token 序列，再做相邻对候选生成。否则 a+b 候选（如"长期不弹琴琴弦"）
+    // 永远拼不出索引侧的真实连续片段（如"不弹"）。
+    std::vector<std::string> jtoks;
+    const cppjieba::Jieba* jieba = docseek::jiebaInstance();
+    if (jieba != nullptr) {
+        for (const std::string& t : tokens) {
+            std::vector<std::string> words;
+            try {
+                jieba->CutForSearch(t, words);
+            } catch (...) {
+                words.clear();
+            }
+            for (const std::string& w : words) {
+                if (!w.empty()) {
+                    jtoks.push_back(w);
+                }
+            }
+        }
+    } else {
+        jtoks = tokens;
+    }
+    if (jtoks.size() < 2) {
+        return;
+    }
+    for (size_t i = 0; i + 1 < jtoks.size(); ++i) {
+        const std::string& a = jtoks[i];
+        const std::string& b = jtoks[i + 1];
+
+        // UTF-8 首字提取：复用源码已有的 splitUtf8Codepoints。
+        std::vector<std::string> aCps = splitUtf8Codepoints(a);
+        std::vector<std::string> bCps = splitUtf8Codepoints(b);
+        const std::string aHead = aCps.empty() ? std::string() : aCps.front();
+        const std::string bHead = bCps.empty() ? std::string() : bCps.front();
+
+        // 候选集合（顺序即探测优先级）：
+        //   1) a + b      —— 相邻重组（如"不"+"弹琴"→"不弹琴"）
+        //   2) a + b首字  —— 关键候选（如"不"+"弹"→"不弹"，命中索引侧"不弹"）
+        //   3) a首字 + b  —— a 被过度切分时回补
+        std::vector<std::string> cands;
+        cands.push_back(a + b);
+        if (!bHead.empty()) {
+            cands.push_back(a + bHead);
+        }
+        if (!aHead.empty()) {
+            cands.push_back(aHead + b);
+        }
+
+        std::string hitCand;
+        for (const std::string& cand : cands) {
+            if (cand.empty()) {
+                continue;
+            }
+            std::vector<Hit> probe = db.searchFts(quoteToken(cand), 1);
+            if (!probe.empty()) {
+                hitCand = cand;
+                break;  // 保守：任一候选命中即停
+            }
+        }
+        if (hitCand.empty()) {
+            continue;
+        }
+
+        // 命中后重查：quoteToken(cand) OR <原 orQuery>。
+        std::string reQuery = quoteToken(hitCand);
+        if (!orQuery.empty()) {
+            reQuery += " OR ";
+            reQuery += orQuery;
+        }
+        std::vector<Hit> requery = db.searchFts(reQuery, limit * 2);
+        if (!requery.empty()) {
+            hits = std::move(requery);
+            return;  // 命中即返回，交由上层 filterByPhrases/rerankHits 收尾
+        }
+    }
+}
+
 std::vector<Hit> Searcher::search(const std::string& query, int limit) {
     if (query.empty() || limit <= 0) {
         return {};
@@ -1148,6 +1246,15 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
     // 1. 精确 AND：多取 2 倍做重排。
     const std::string matchQuery = buildMatchQuery(rest);
     std::vector<Hit> hits = db_.searchFts(matchQuery, limit * 2);
+
+    // 1.4 相邻 token 前缀/子串交叉探测（t019-q12 改动点 3 保守版）：
+    //     背景见 tryAdjacentPrefixProbe 注释。只在 hits.empty() 时触发；
+    //     已有结果的查询行为一字不变。
+    //     注意：tokens.size()>=2 的判断在 helper 内部按 jieba 展开后的 jtoks 做；
+    //     中文无空格查询的 tokens 常为单个粗块，不能在这里卡掉。
+    if (hits.empty() && !tokens.empty()) {
+        tryAdjacentPrefixProbe(tokens, buildOrMatchQuery(rest), db_, limit, hits);
+    }
 
     // 1.5 DF-zero 丢弃（D4）：AND 为空时丢弃零贡献 token，用剩余 token 重建 AND
     //     再查一次，避免直接掉进 OR/子串回退（AND 交集精度高于 OR 并集）。
