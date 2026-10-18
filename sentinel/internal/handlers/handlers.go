@@ -159,7 +159,7 @@ func (in *monitorInput) toMonitor() store.Monitor {
 	if in.Target != nil {
 		m.Target = *in.Target
 	}
-	if in.Method != nil {
+	if in.Method != nil && *in.Method != "" {
 		m.Method = *in.Method
 	}
 	if in.ExpectedStatus != nil {
@@ -214,10 +214,12 @@ func validateMonitor(m *store.Monitor) error {
 			return errors.New("tcp 目标必须为 host:port 形式")
 		}
 	}
-	switch m.Method {
-	case "GET", "HEAD", "POST":
-	default:
-		return errors.New("method 仅支持 GET/HEAD/POST")
+	if m.Kind == "http" {
+		switch m.Method {
+		case "", "GET", "HEAD", "POST":
+		default:
+			return errors.New("method 仅支持 GET/HEAD/POST")
+		}
 	}
 	if m.ExpectedStatus < 100 || m.ExpectedStatus > 599 {
 		return errors.New("expected_status 必须在 100~599 之间")

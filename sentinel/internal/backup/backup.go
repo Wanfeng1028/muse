@@ -25,6 +25,10 @@ type Info struct {
 // Backup 通过 VACUUM INTO 生成数据库备份，并按 keep 保留最新的若干个。
 // 返回备份文件路径。
 func Backup(dbPath, backupDir string, keep int) (string, error) {
+	if fi, err := os.Stat(dbPath); err != nil || fi.IsDir() {
+		log.Logger().Error("源数据库不存在", "dbPath", dbPath, "err", err)
+		return "", fmt.Errorf("源数据库不存在: %s", dbPath)
+	}
 	if err := os.MkdirAll(backupDir, 0o755); err != nil {
 		log.Logger().Error("创建备份目录失败", "dir", backupDir, "err", err)
 		return "", fmt.Errorf("创建备份目录失败: %w", err)
