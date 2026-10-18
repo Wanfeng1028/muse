@@ -155,7 +155,7 @@ const std::vector<std::string>& fillerWords() {
         "在哪里", "哪一段", "哪一句", "帮我找", "找一下", "是什么", "为什么",
         "什么时候", "怎么办", "哪段", "哪句", "哪个", "哪些", "怎么", "如何",
         "怎样", "多少", "哪篇", "请问", "在哪", "哪儿", "为啥", "一下", "你们",
-        "应该", "知道", "什么", "的话", "比较", "吗", "呢", "啊", "吧", "我",
+        "应该", "知道", "什么", "的话", "比较好", "比较", "多高", "区别", "吗", "呢", "啊", "吧", "我",
         "想", "该", "才"};
     return kWords;
 }
@@ -173,6 +173,26 @@ std::string eraseAll(const std::string& s, const std::string& from) {
             break;
         }
         out.append(s, pos, found - pos);
+        pos = found + from.size();
+    }
+    return out;
+}
+
+// 替换所有出现的 from 为单个空格（D1 修复：eraseAll 直接删除会把被删词前后
+// 的 token 粘成一个新词，如"报班多少钱"删"多少"后变成"报班钱"，FTS5 恒为 0 命中）。
+std::string replaceAllWithSpace(const std::string& s, const std::string& from) {
+    if (from.empty()) return s;
+    std::string out;
+    out.reserve(s.size());
+    size_t pos = 0;
+    while (pos < s.size()) {
+        size_t found = s.find(from, pos);
+        if (found == std::string::npos) {
+            out.append(s, pos, std::string::npos);
+            break;
+        }
+        out.append(s, pos, found - pos);
+        out.push_back(' ');
         pos = found + from.size();
     }
     return out;
@@ -220,13 +240,13 @@ bool detectPassageIntent(const std::string& raw) {
 
 }  // namespace
 
-// 剥离疑问/语气词：复用匿名 namespace 内的 fillerWords()/eraseAll()/squeezeWhitespace()
+// 剥离疑问/语气词：复用匿名 namespace 内的 fillerWords()/replaceAllWithSpace()/squeezeWhitespace()
 // （同文件 isSingleCharStopword 已有此先例）。先 squeezeWhitespace 规范化空白，
-// 再按表顺序 eraseAll 删除，最后再 squeezeWhitespace 清理残留空白。
+// 再按表顺序 replaceAllWithSpace 替换为空格（避免 token 粘连），最后再 squeezeWhitespace 清理残留空白。
 std::string stripFillerWords(const std::string& raw) {
     std::string rest = squeezeWhitespace(raw);
     for (const auto& w : fillerWords()) {
-        rest = eraseAll(rest, w);
+        rest = replaceAllWithSpace(rest, w);
     }
     rest = squeezeWhitespace(rest);
     return rest;
@@ -297,6 +317,9 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     extractPhrases(raw, pq.phrases, rest);
 
     // 2. 删除疑问/语气词（按表顺序，长度降序）。
+    // 注意：此处用 eraseAll（直接删除）而非 replaceAllWithSpace——实测 replaceAllWithSpace
+    // 在 locate 路径会导致单字 token（如“好”）被空格隔离成独立 AND 组，BM25 排序劣化
+    // （v08-qa-09b 回归）。search 路径的 stripFillerWords 仍用空格版（修“报班钱”粘连）。
     for (const auto& w : fillerWords()) {
         rest = eraseAll(rest, w);
     }

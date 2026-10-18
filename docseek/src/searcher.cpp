@@ -32,6 +32,40 @@ bool isAllStopwordsToken(const std::string& token) {
 }
 
 
+// 统计 UTF-8 码点个数，并判断是否为"单个 CJK 码点"（用于单字前缀查询）。
+// 只在 searcher.cpp 匿名 namespace 内使用，不依赖 query_parser.cpp 的内部函数。
+bool isSingleCjkCodepoint(const std::string& token) {
+    size_t codepoints = 0;
+    bool cjk = false;
+    for (size_t i = 0; i < token.size();) {
+        unsigned char c = static_cast<unsigned char>(token[i]);
+        size_t len = 1;
+        if ((c & 0x80) == 0x00) {
+            len = 1;
+        } else if ((c & 0xE0) == 0xC0) {
+            len = 2;
+        } else if ((c & 0xF0) == 0xE0) {
+            len = 3;
+        } else if ((c & 0xF8) == 0xF0) {
+            len = 4;
+        } else {
+            return false;  // 非法 UTF-8 首字节，保守放弃前缀
+        }
+        if (i + len > token.size()) return false;
+        ++codepoints;
+        if (codepoints > 1) return false;
+        // CJK 统一表意文字基本区 U+4E00..U+9FFF（UTF-8: E4B880..E9BFBF）。
+        if (len == 3 && c >= 0xE4 && c <= 0xE9) {
+            unsigned int cp = ((c & 0x0F) << 12) |
+                              ((static_cast<unsigned char>(token[i + 1]) & 0x3F) << 6) |
+                              (static_cast<unsigned char>(token[i + 2]) & 0x3F);
+            if (cp >= 0x4E00 && cp <= 0x9FFF) cjk = true;
+        }
+        i += len;
+    }
+    return codepoints == 1 && cjk;
+}
+
 // 将单个 token 用双引号包裹，内部的双引号转义为两个双引号（FTS5 字符串字面量规则）。
 std::string quoteToken(const std::string& token) {
     std::string out;
@@ -167,12 +201,21 @@ std::string expandTokenWithJoiner(const std::string& token, const std::string& j
     }
 
     // 把一组词转成查询片段：单成员直接引号，多成员 OR。
-    auto groupExpr = [](const std::vector<std::string>& g) {
-        if (g.size() == 1) return quoteToken(g[0]);
+    // 单个 CJK 码点且非停用词时改用 FTS5 前缀查询 "X"*（星号在右引号之外），
+    // 因为 jieba CutForSearch 的 query 侧与索引侧切分常对不上，单字精确查
+    // 会漏掉以该字为前缀的词（如"进"漏"进站"）。多字词/ASCII 词/单字停用词保持精确。
+    auto wordExpr = [](const std::string& w) {
+        if (isSingleCjkCodepoint(w) && !isSingleCharStopword(w)) {
+            return quoteToken(w) + "*";
+        }
+        return quoteToken(w);
+    };
+    auto groupExpr = [&wordExpr](const std::vector<std::string>& g) {
+        if (g.size() == 1) return wordExpr(g[0]);
         std::string e = "(";
         for (size_t i = 0; i < g.size(); ++i) {
             if (i > 0) e += " OR ";
-            e += quoteToken(g[i]);
+            e += wordExpr(g[i]);
         }
         e += ")";
         return e;
@@ -181,6 +224,10 @@ std::string expandTokenWithJoiner(const std::string& token, const std::string& j
     if (groups.size() == 1) {
         const std::vector<std::string>& g = groups.begin()->second;
         if (g.size() == 1) {
+            // 单字 CJK 非停用词走前缀；其余（多字词、ASCII、停用词）与原来一字不差。
+            if (g[0] == token) {
+                return wordExpr(token);
+            }
             return quoteToken(token);  // 与原来一字不差
         }
         return groupExpr(g);
@@ -196,12 +243,12 @@ std::string expandTokenWithJoiner(const std::string& token, const std::string& j
         // 同义词展开（B3-r2）：未被认领的词同样查表，命中则与 expansions 组成 OR 组。
         const SynonymEntry* e = findSynonyms(w.c_str());
         if (e == nullptr) {
-            out += quoteToken(w);
+            out += wordExpr(w);
             continue;
         }
-        std::string expr = "(" + quoteToken(w);
+        std::string expr = "(" + wordExpr(w);
         for (int k = 0; k < e->expansionCount; ++k) {
-            expr += " OR " + quoteToken(e->expansions[k]);
+            expr += " OR " + wordExpr(e->expansions[k]);
         }
         expr += ")";
         out += expr;
@@ -471,6 +518,8 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
         if (tokens.size() == 1) {
             // 单 token OR 召回偏宽，用 substringRecallPass 精确过滤：
             // 只保留原文确实包含查询每个切词的文档，避免"超导材料制备"误命中只含"材料"的文档。
+            // fail-open：若严格过滤导致零结果（如"戚风塌腰"的"戚风塌"切词 DF=0），
+            // 则保留未过滤的 OR 结果，避免误杀。
             std::vector<Hit> filtered;
             filtered.reserve(orHits.size());
             for (const Hit& h : orHits) {
@@ -483,7 +532,9 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
                 }
                 if (substringRecallPass(hay, tokens)) filtered.push_back(h);
             }
-            orHits = std::move(filtered);
+            if (!filtered.empty()) {
+                orHits = std::move(filtered);
+            }
         }
         hits = std::move(orHits);
     }
