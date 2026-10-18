@@ -19,4 +19,10 @@ ParsedQuery parseNaturalQuery(const std::string& raw);
 // 判断是否为单字中文停用词（查询展开等复用）。
 bool isSingleCharStopword(const std::string& w);
 
+// 抽取引号短语：支持 "..."、「...」、“...” 三种配对引号。
+// phrases 输出去重保序的短语；rest 输出移除短语后的剩余文本。
+// 未闭合的引号按普通字符保留在 rest 中。
+void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
+                    std::string& rest);
+
 }  // namespace docseek

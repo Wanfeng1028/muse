@@ -82,6 +82,7 @@ TEST(TokenizerPhrase, PhraseArtificialIntelligenceHits) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_ai");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -101,6 +102,7 @@ TEST(TokenizerPhrase, PhraseFullTextSearchHits) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_fts");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -136,6 +138,7 @@ TEST(TokenizerPhrase, PhraseHitsOnlyMatchingDocument) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_isolate");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -157,6 +160,7 @@ TEST(TokenizerPhrase, PhraseHitsMultipleDocuments) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_multi");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -198,6 +202,7 @@ TEST(TokenizerPhrase, PhraseRespectsLimit) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_limit");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -217,6 +222,7 @@ TEST(TokenizerPhrase, PhraseHitsTitleField) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_title");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -236,6 +242,7 @@ TEST(TokenizerPhrase, PhraseHitsBodyField) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_body");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);
@@ -271,6 +278,7 @@ TEST(TokenizerPhrase, PhraseAndWordQueryAgree) {
     requireJiebaReady();
 
     std::string dir = makeTempDir("docseek_phrase_agree");
+
     std::string dbPath = dir + "/index.db";
 
     docseek::Database db = docseek::Database::open(dbPath);

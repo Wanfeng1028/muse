@@ -142,63 +142,21 @@ std::string squeezeWhitespace(const std::string& s) {
     return out;
 }
 
-// 抽取引号短语：支持 "..."、「...」、“...” 三种。返回移除短语后的文本。
-void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
-                    std::string& rest) {
-    // 配对定界符（UTF-8 字节序列）。
-    struct Pair {
-        std::string open;
-        std::string close;
-    };
-    static const Pair kPairs[] = {
-        {"\"", "\""},
-        {"\xE3\x80\x8C", "\xE3\x80\x8D"},  // 「 」
-        {"\xE2\x80\x9C", "\xE2\x80\x9D"},  // “ ”
-    };
-
-    rest.clear();
-    std::unordered_set<std::string> seen;
-    size_t i = 0;
-    const size_t n = in.size();
-    while (i < n) {
-        bool matched = false;
-        for (const auto& p : kPairs) {
-            if (i + p.open.size() <= n &&
-                in.compare(i, p.open.size(), p.open) == 0) {
-                // 找闭合定界符。
-                size_t closePos = in.find(p.close, i + p.open.size());
-                if (closePos != std::string::npos) {
-                    std::string phrase =
-                        in.substr(i + p.open.size(), closePos - i - p.open.size());
-                    // 压缩空白后加入。
-                    std::string sq = squeezeWhitespace(phrase);
-                    pushUnique(phrases, seen, sq);
-                    i = closePos + p.close.size();
-                    matched = true;
-                    break;
-                }
-            }
-        }
-        if (!matched) {
-            rest.push_back(in[i]);
-            ++i;
-        }
-    }
-}
-
 // 按顺序整体替换为空的疑问/语气词表。
 // 注意：单字 "的"、"了" 已由 singleCharStopwords 在分词阶段过滤，
 // 此处不再列入，避免把名词短语（如"密码的规则"）切碎。
 // 表按字节长度严格降序排列，消除 "在哪"/"在哪里"、"哪段"/"哪一段" 等
 // 前后缀重叠对遍历顺序的依赖（先长后短，短词不会误吃长词前缀）。
+// 2026-10-18 补全"知道/什么/什么时候/怎么办/的话/比较"（D 类长问句噪音）；
+// "不"字永不入表——否定语义保护（如"不建议"），v08-qa-09d 教训。
 const std::vector<std::string>& fillerWords() {
     static const std::vector<std::string> kWords = {
         "帮我找一下", "有没有建议", "我想知道", "比较合适", "哪一篇", "有没有",
         "在哪里", "哪一段", "哪一句", "帮我找", "找一下", "是什么", "为什么",
-        "哪段", "哪句", "哪个", "哪些", "怎么", "如何", "怎样",
-        "多少", "哪篇", "请问", "在哪", "哪儿", "为啥", "一下", "你们",
-        "应该", "吗", "呢", "啊", "吧", "我", "想", "该",
-        "才"};
+        "什么时候", "怎么办", "哪段", "哪句", "哪个", "哪些", "怎么", "如何",
+        "怎样", "多少", "哪篇", "请问", "在哪", "哪儿", "为啥", "一下", "你们",
+        "应该", "知道", "什么", "的话", "比较", "吗", "呢", "啊", "吧", "我",
+        "想", "该", "才"};
     return kWords;
 }
 
@@ -265,6 +223,50 @@ bool detectPassageIntent(const std::string& raw) {
 // 单字中文停用词判断（供查询展开等复用）。
 bool isSingleCharStopword(const std::string& w) {
     return singleCharStopwords().count(w) > 0;
+}
+
+// 抽取引号短语：支持 "..."、「...」、“...” 三种。返回移除短语后的文本。
+void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
+                    std::string& rest) {
+    // 配对定界符（UTF-8 字节序列）。
+    struct Pair {
+        std::string open;
+        std::string close;
+    };
+    static const Pair kPairs[] = {
+        {"\"", "\""},
+        {"\xE3\x80\x8C", "\xE3\x80\x8D"},  // 「 」
+        {"\xE2\x80\x9C", "\xE2\x80\x9D"},  // “ ”
+    };
+
+    rest.clear();
+    std::unordered_set<std::string> seen;
+    size_t i = 0;
+    const size_t n = in.size();
+    while (i < n) {
+        bool matched = false;
+        for (const auto& p : kPairs) {
+            if (i + p.open.size() <= n &&
+                in.compare(i, p.open.size(), p.open) == 0) {
+                // 找闭合定界符。
+                size_t closePos = in.find(p.close, i + p.open.size());
+                if (closePos != std::string::npos) {
+                    std::string phrase =
+                        in.substr(i + p.open.size(), closePos - i - p.open.size());
+                    // 压缩空白后加入。
+                    std::string sq = squeezeWhitespace(phrase);
+                    pushUnique(phrases, seen, sq);
+                    i = closePos + p.close.size();
+                    matched = true;
+                    break;
+                }
+            }
+        }
+        if (!matched) {
+            rest.push_back(in[i]);
+            ++i;
+        }
+    }
 }
 
 ParsedQuery parseNaturalQuery(const std::string& raw) {

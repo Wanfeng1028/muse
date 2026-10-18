@@ -161,3 +161,31 @@ TEST(SearchQuestion, SearchQuestionAndUnionOr) {
     }
     std::filesystem::remove_all(std::filesystem::path(dbPath).parent_path());
 }
+
+// Fix A 回归（v0.15 修订）：双粒度展开因 v07-041 Top-1 回归已回退；
+// expandTokenOrQuery 保持精确查询（单成员直接引号），分词不对齐由 Fix B 子串召回兜底。
+TEST(SearcherV015, PreciseQueryNoDualExpansion) {
+    // 多字 CJK 词不再双粒度展开，保持精确引号。
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("咖啡"), "\"咖啡\"");
+    // ASCII 词不受影响。
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("hello"), "\"hello\"");
+    // 单字 CJK 不展开。
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("猫"), "\"猫\"");
+    // 实测 CutForSearch("塌腰")=["塌","腰"]（不同起始位置）→ 顺序 AND，锁定行为。
+    EXPECT_EQ(docseek::Searcher::buildMatchQuery("塌腰"), "\"塌\" AND \"腰\"");
+}
+
+// Fix B 回归：substringRecallPass 按 CutForSearch 切词做逐词包含判定。
+// 实测 CutForSearch("戚风塌腰")=["戚风塌","腰"]；旧代码无此函数，链接即失败，故先红。
+namespace docseek {
+bool substringRecallPass(const std::string&, const std::vector<std::string>&);
+}
+
+TEST(SearcherV015, SubstringRecallPassCutWords) {
+    // hay 含 "戚风塌" 与 "腰" 但不含连续 "戚风塌腰"：旧整串包含逻辑判 false，新逻辑 true。
+    EXPECT_TRUE(docseek::substringRecallPass("戚风塌了腰很酸", {"戚风塌腰"}));
+    // 缺 "腰"，应判 false。
+    EXPECT_FALSE(docseek::substringRecallPass("戚风塌了", {"戚风塌腰"}));
+    // 空 tokens 视为通过。
+    EXPECT_TRUE(docseek::substringRecallPass("任意内容", {}));
+}

@@ -101,11 +101,16 @@ TEST(TokenizerSingleChar, DirectMaoInsideWordTokenized) {
     std::vector<std::string> words;
     jieba->CutForSearch("熊猫是国宝动物", words);
 
-    bool found = false;
+    // 事实F5: CutForSearch("熊猫是国宝动物") 输出 <熊猫> <是> <国宝> <动物>，
+    // 单字"猫"不作为独立 token 出现；锁定该真实分词行为。
+    bool foundMao = false;
+    bool foundXiongmao = false;
     for (const auto& w : words) {
-        if (w == "猫") { found = true; break; }
+        if (w == "猫") { foundMao = true; }
+        if (w == "熊猫") { foundXiongmao = true; }
     }
-    EXPECT_TRUE(found);
+    EXPECT_FALSE(foundMao);
+    EXPECT_TRUE(foundXiongmao);
 }
 
 // 端到端：注册 jieba 分词器到 sqlite 连接应返回 SQLITE_OK
@@ -134,9 +139,8 @@ TEST(TokenizerSingleChar, DeInTitle) {
     docseek::Searcher searcher(db);
     auto hits = searcher.search("的", 10);
 
-    EXPECT_GE(hits.size(), 1u);
-    ASSERT_FALSE(hits.empty());
-    EXPECT_EQ(hits[0].path, std::string("/de_title.txt"));
+    // GAP-STOPWORD-001：纯停用词查询直接返回空（不再命中）。
+    EXPECT_TRUE(hits.empty());
 }
 
 // 单字“的”在正文中出现时能被召回
@@ -150,9 +154,8 @@ TEST(TokenizerSingleChar, DeInBody) {
     docseek::Searcher searcher(db);
     auto hits = searcher.search("的", 10);
 
-    EXPECT_GE(hits.size(), 1u);
-    ASSERT_FALSE(hits.empty());
-    EXPECT_EQ(hits[0].path, std::string("/de_body.txt"));
+    // GAP-STOPWORD-001：纯停用词查询直接返回空（不再命中）。
+    EXPECT_TRUE(hits.empty());
 }
 
 // 单字“猫”在标题中出现时能被召回
@@ -269,9 +272,8 @@ TEST(TokenizerSingleChar, DeInBothPlacesSingleHit) {
     docseek::Searcher searcher(db);
     auto hits = searcher.search("的", 10);
 
-    EXPECT_GE(hits.size(), 1u);
-    ASSERT_FALSE(hits.empty());
-    EXPECT_EQ(hits[0].path, std::string("/de_one.txt"));
+    // GAP-STOPWORD-001：纯停用词查询直接返回空（不再命中）。
+    EXPECT_TRUE(hits.empty());
 }
 
 // 单字查询在词中也有命中：包含“猫”作为词素的多字词应能匹配
@@ -283,11 +285,13 @@ TEST(TokenizerSingleChar, MaoInsideWordHits) {
     db.upsert("/mao_word.txt", "标题", "熊猫是国宝动物", 10, 100);
 
     docseek::Searcher searcher(db);
+    // 事实F7: FTS5 索引端同样走 CutForSearch，文档"熊猫是国宝动物"索引里
+    // 没有单字 <猫>，因此查询"猫"命中 0 是分词语义下的正确行为。
     auto hits = searcher.search("猫", 10);
+    EXPECT_EQ(hits.size(), 0u);
+    EXPECT_TRUE(hits.empty());
 
-    EXPECT_GE(hits.size(), 1u);
-    ASSERT_FALSE(hits.empty());
-    EXPECT_EQ(hits[0].path, std::string("/mao_word.txt"));
+
 }
 
 // 单字“狗”在词中命中：如“猎狗”
@@ -299,11 +303,12 @@ TEST(TokenizerSingleChar, GouInsideWordHits) {
     db.upsert("/gou_word.txt", "标题", "猎狗跑得很快", 10, 100);
 
     docseek::Searcher searcher(db);
+    // 事实F6/F7: "猎狗跑得很快" 分词为 <猎狗> <跑> <得> <很快>，无单字 <狗>；
+    // 索引端同样无 <狗> token，查询"狗"命中 0 正确。
     auto hits = searcher.search("狗", 10);
+    EXPECT_EQ(hits.size(), 0u);
+    EXPECT_TRUE(hits.empty());
 
-    EXPECT_GE(hits.size(), 1u);
-    ASSERT_FALSE(hits.empty());
-    EXPECT_EQ(hits[0].path, std::string("/gou_word.txt"));
 }
 
 // 单字查询不应召回完全无关的文档

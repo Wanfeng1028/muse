@@ -14,6 +14,22 @@
 
 namespace docseek {
 namespace {
+// 单 token 全停用词判断："的了在了"这类无空白单 token，CutForSearch 切出
+// [的,了,在,了] 全是单字停用词时，视为纯停用词查询（GAP-STOPWORD-001 补强）。
+bool isAllStopwordsToken(const std::string& token) {
+    if (token.empty()) return false;
+    if (isSingleCharStopword(token)) return true;
+    std::vector<std::string> words;
+    if (const cppjieba::Jieba* jieba = jiebaInstance()) {
+        jieba->CutForSearch(token, words);
+    }
+    if (words.empty()) return false;
+    for (const auto& w : words) {
+        if (!isSingleCharStopword(w)) return false;
+    }
+    return true;
+}
+
 
 // 将单个 token 用双引号包裹，内部的双引号转义为两个双引号（FTS5 字符串字面量规则）。
 std::string quoteToken(const std::string& token) {
@@ -90,7 +106,7 @@ SearchWeights Searcher::weights() const {
 //
 // 词的起始位置用与 jiebaXTokenize 相同的"全文 occurrence 扫描 + 已认领集合"
 // 定位，保证查询侧与索引侧一致。任一词定位失败则退化为 quoteToken(token)。
-std::string expandTokenOrQuery(const std::string& token) {
+std::string expandTokenWithJoiner(const std::string& token, const std::string& joiner) {
     std::vector<std::string> words;
     const cppjieba::Jieba* jieba = jiebaInstance();
     if (jieba != nullptr) {
@@ -105,13 +121,19 @@ std::string expandTokenOrQuery(const std::string& token) {
     // 按起始字节偏移分组（std::map 自动按 key 排序）。
     std::set<std::pair<std::string, size_t>> claimed;
     std::vector<LocatedToken> located = claimTokenPositions(token, words, claimed);
-    size_t expected = 0;
+    // Fix A：认领失败不再整串退化。用认领成功的词继续构造分组；
+    // 未被认领的词各自退化为 quoteToken(w) 并 AND 追加。
+    std::set<std::string> claimedWords;
+    for (const LocatedToken& lt : located) claimedWords.insert(lt.word);
+    std::vector<std::string> unclaimed;
     for (const std::string& w : words) {
-        if (!w.empty()) ++expected;
+        if (w.empty()) continue;
+        if (claimedWords.find(w) == claimedWords.end() &&
+            std::find(unclaimed.begin(), unclaimed.end(), w) == unclaimed.end()) {
+            unclaimed.push_back(w);
+        }
     }
-    if (located.size() != expected) {
-        return quoteToken(token);  // 定位失败，退化为原文
-    }
+
     std::map<size_t, std::vector<std::string>> groups;
     for (const LocatedToken& lt : located) {
         std::vector<std::string>& g = groups[lt.byteOffset];
@@ -119,7 +141,7 @@ std::string expandTokenOrQuery(const std::string& token) {
             g.push_back(lt.word);
         }
     }
-    if (groups.empty()) {
+    if (groups.empty() && unclaimed.empty()) {
         return quoteToken(token);
     }
 
@@ -145,10 +167,24 @@ std::string expandTokenOrQuery(const std::string& token) {
 
     std::string out;
     for (const auto& kv : groups) {
-        if (!out.empty()) out += " AND ";
+        if (!out.empty()) out += joiner;
         out += groupExpr(kv.second);
     }
+    for (const std::string& w : unclaimed) {
+        if (!out.empty()) out += joiner;
+        out += quoteToken(w);
+    }
     return out;
+}
+
+// AND 连接版（原 expandTokenOrQuery 行为，一字不差）。
+std::string expandTokenOrQuery(const std::string& token) {
+    return expandTokenWithJoiner(token, " AND ");
+}
+
+// 单 token 查询的 OR 放宽版（GAP-TOK-001）：组间 OR 连接，召回更宽。
+std::string expandTokenOrSingle(const std::string& token) {
+    return expandTokenWithJoiner(token, " OR ");
 }
 
 std::string Searcher::buildMatchQuery(const std::string& query) {
@@ -232,11 +268,70 @@ bool containsFolded(const std::string& haystack, const std::string& needle) {
     return h.find(n) != std::string::npos;
 }
 
+// 子串召回精验（Fix B）：对每个查询 token 按 CutForSearch 切词，要求
+// hay（标题+正文原文）包含切出的每一个非空词（ASCII 大小写折叠）。
+// 旧逻辑要求"原文连续包含整串 token"，在查询/索引分词粒度不对齐时漏召回
+// （如查询"戚风塌腰"成词、文档中"总塌腰"被索引成"塌"/"腰"）。
+// 只在 search()/searchQuestion() 的 hits.empty() 分支调用。
+bool substringRecallPass(const std::string& hay, const std::vector<std::string>& tokens) {
+    const cppjieba::Jieba* jieba = jiebaInstance();
+    for (const std::string& t : tokens) {
+        std::vector<std::string> words;
+        if (jieba != nullptr) {
+            try {
+                jieba->CutForSearch(t, words);
+            } catch (...) {
+                words.clear();
+            }
+        }
+        if (words.empty()) {
+            words.push_back(t);  // 切词不可用时退化为整串（旧行为）
+        }
+        for (const std::string& w : words) {
+            if (w.empty()) continue;
+            if (!containsFolded(hay, w)) return false;
+        }
+    }
+    return true;
+}
+
+// 短语后过滤：只保留 title+原文（取不到原文则用 snippet）按 containsFolded
+// 连续包含每个短语的 hit。phrases 为空时原样返回。
+std::vector<Hit> filterByPhrases(std::vector<Hit> hits, Database& db,
+                                 const std::vector<std::string>& phrases) {
+    if (phrases.empty()) {
+        return hits;
+    }
+    std::vector<Hit> out;
+    out.reserve(hits.size());
+    for (auto& h : hits) {
+        std::string body;
+        if (auto content = db.getContentById(h.doc_id)) {
+            body = *content;
+        } else {
+            body = h.snippet;
+        }
+        const std::string haystack = h.title + "\n" + body;
+        bool ok = true;
+        for (const auto& p : phrases) {
+            if (!containsFolded(haystack, p)) {
+                ok = false;
+                break;
+            }
+        }
+        if (ok) {
+            out.push_back(std::move(h));
+        }
+    }
+    return out;
+}
+
 static std::vector<Hit> rerankHits(std::vector<Hit> hits,
                             const std::vector<std::string>& tokens,
                             const std::string& query,
                             const SearchWeights& weights,
-                            int limit) {
+                            int limit,
+                            const std::vector<std::string>& phrases) {
     if (hits.empty()) {
         return {};
     }
@@ -276,6 +371,16 @@ static std::vector<Hit> rerankHits(std::vector<Hit> hits,
         hits.resize(static_cast<size_t>(limit));
     }
 
+    // 短语加成：title 或 snippet 连续包含短语，+phraseBoost。
+    for (auto& h : hits) {
+        const std::string haystack = h.title + "\n" + h.snippet;
+        for (const auto& p : phrases) {
+            if (containsFolded(haystack, p)) {
+                h.score += weights.phraseBoost;
+            }
+        }
+    }
+
     return hits;
 }
 
@@ -284,28 +389,75 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
         return {};
     }
 
-    const std::vector<std::string> tokens = splitTokens(query);
-    if (tokens.empty()) {
-        // 查询只有空白字符，视为空查询。
+    // 引号短语先剥离：rest 参与分词召回，phrases 走后过滤与加成。
+    std::vector<std::string> phrases;
+    std::string rest;
+    extractPhrases(query, phrases, rest);
+
+    // 停用词过滤：单字停用词不参与检索与排序（GAP-STOPWORD-001）。
+    // 注意只过滤整个 token 恰为单字停用词的情况，不拆多字 token；
+    // "不"字不在停用词表（否定语义保护），不受影响。
+    std::vector<std::string> tokens = splitTokens(rest);
+    tokens.erase(std::remove_if(tokens.begin(), tokens.end(), isSingleCharStopword),
+                 tokens.end());
+    // 单 token 全停用词（如"的了在了"）：切词全是单字停用词时也视为纯停用词查询。
+    if (tokens.size() == 1 && phrases.empty() && isAllStopwordsToken(tokens[0])) {
+        return {};
+    }
+    if (tokens.empty() && phrases.empty()) {
+        // 纯停用词（或空白）查询：直接返回空。
         return {};
     }
 
+    // 纯短语查询：用短语各自展开 OR 召回候选，后过滤留精确包含者。
+    if (tokens.empty() && !phrases.empty()) {
+        std::string phraseOrQuery;
+        for (size_t i = 0; i < phrases.size(); ++i) {
+            if (i > 0) {
+                phraseOrQuery += " OR ";
+            }
+            phraseOrQuery += expandTokenOrQuery(phrases[i]);
+        }
+        std::vector<Hit> phraseHits = db_.searchFts(phraseOrQuery, limit * 2);
+        phraseHits = filterByPhrases(std::move(phraseHits), db_, phrases);
+        return rerankHits(std::move(phraseHits), tokens, query, weights_, limit, phrases);
+    }
+
     // 1. 精确 AND：多取 2 倍做重排。
-    const std::string matchQuery = buildMatchQuery(query);
+    const std::string matchQuery = buildMatchQuery(rest);
     std::vector<Hit> hits = db_.searchFts(matchQuery, limit * 2);
 
-    // 2. OR 回退：AND 无结果且 token 数 >= 2 时放宽为 OR。
-    if (hits.empty() && tokens.size() >= 2) {
-        const std::string orQuery = buildOrMatchQuery(query);
-        hits = db_.searchFts(orQuery, limit * 2);
+    // 2. OR 回退：AND 无结果时放宽为 OR；单 token 查询把组间 AND 换成 OR（GAP-TOK-001）。
+    if (hits.empty() && !tokens.empty()) {
+        const std::string orQuery =
+            tokens.size() >= 2 ? buildOrMatchQuery(rest) : expandTokenOrSingle(tokens[0]);
+        std::vector<Hit> orHits = db_.searchFts(orQuery, limit * 2);
+        if (tokens.size() == 1) {
+            // 单 token OR 召回偏宽，用 substringRecallPass 精确过滤：
+            // 只保留原文确实包含查询每个切词的文档，避免"超导材料制备"误命中只含"材料"的文档。
+            std::vector<Hit> filtered;
+            filtered.reserve(orHits.size());
+            for (const Hit& h : orHits) {
+                std::string hay = h.title;
+                if (auto content = db_.getContentById(h.doc_id)) {
+                    hay.push_back('\n');
+                    hay += *content;
+                } else {
+                    hay += h.snippet;
+                }
+                if (substringRecallPass(hay, tokens)) filtered.push_back(h);
+            }
+            orHits = std::move(filtered);
+        }
+        hits = std::move(orHits);
     }
 
     // 3. 子串召回回退（T2 修复）：AND 与 OR 都无结果时，把中文 token 拆成单字
-    //    做 OR 粗筛，再用"原文按 token 逐个包含查询子串"精验后保留。
+    //    做 OR 粗筛，再用 substringRecallPass 按 CutForSearch 切词逐个包含精验后保留。
     //    jieba 最长匹配受上下文影响，查询词（如"猫砂"）在索引词汇表中不存在，
     //    但其单字（如"猫"）通常在索引里。纯单字 OR 会过度召回（如"量子纠缠"
-    //    的"量/子"遍地都是），因此只保留原文（或标题）中确实连续包含每个
-    //    查询 token 的文档——这正是"子串查询"的定义。本阶段只在前两阶段都
+    //    的"量/子"遍地都是），因此只保留原文（或标题）中按 CutForSearch 切词
+    //    逐个包含每个查询 token 的文档。本阶段只在前两阶段都
     //    为空时触发，不影响任何已有查询的结果。
     if (hits.empty()) {
         const std::string subQuery = buildSubstringRecallQuery(tokens);
@@ -319,16 +471,13 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
                 } else {
                     hay += h.snippet;
                 }
-                bool allFound = true;
-                for (const std::string& t : tokens) {
-                    if (!containsFolded(hay, t)) { allFound = false; break; }
-                }
-                if (allFound) hits.push_back(h);
+                if (substringRecallPass(hay, tokens)) hits.push_back(h);
             }
         }
     }
 
-    return rerankHits(std::move(hits), tokens, query, weights_, limit);
+    hits = filterByPhrases(std::move(hits), db_, phrases);
+    return rerankHits(std::move(hits), tokens, query, weights_, limit, phrases);
 }
 
 std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {
@@ -336,21 +485,66 @@ std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {
         return {};
     }
 
-    const std::vector<std::string> tokens = splitTokens(query);
-    if (tokens.empty()) {
-        // 查询只有空白字符，视为空查询。
+    // 引号短语先剥离：rest 参与分词召回，phrases 走后过滤与加成。
+    std::vector<std::string> phrases;
+    std::string rest;
+    extractPhrases(query, phrases, rest);
+
+    // 停用词过滤：单字停用词不参与检索与排序（GAP-STOPWORD-001）。
+    // 注意只过滤整个 token 恰为单字停用词的情况，不拆多字 token；
+    // "不"字不在停用词表（否定语义保护），不受影响。
+    std::vector<std::string> tokens = splitTokens(rest);
+    tokens.erase(std::remove_if(tokens.begin(), tokens.end(), isSingleCharStopword),
+                 tokens.end());
+    // 单 token 全停用词（如"的了在了"）：切词全是单字停用词时也视为纯停用词查询。
+    if (tokens.size() == 1 && phrases.empty() && isAllStopwordsToken(tokens[0])) {
+        return {};
+    }
+    if (tokens.empty() && phrases.empty()) {
+        // 纯停用词（或空白）查询：直接返回空。
         return {};
     }
 
+    // 纯短语查询：用短语各自展开 OR 召回候选，后过滤留精确包含者。
+    if (tokens.empty() && !phrases.empty()) {
+        std::string phraseOrQuery;
+        for (size_t i = 0; i < phrases.size(); ++i) {
+            if (i > 0) {
+                phraseOrQuery += " OR ";
+            }
+            phraseOrQuery += expandTokenOrQuery(phrases[i]);
+        }
+        std::vector<Hit> phraseHits = db_.searchFts(phraseOrQuery, limit * 2);
+        phraseHits = filterByPhrases(std::move(phraseHits), db_, phrases);
+        return rerankHits(std::move(phraseHits), tokens, query, weights_, limit, phrases);
+    }
+
     // 1. 精确 AND：多取 2 倍做重排。
-    const std::string matchQuery = buildMatchQuery(query);
+    const std::string matchQuery = buildMatchQuery(rest);
     std::vector<Hit> hits = db_.searchFts(matchQuery, limit * 2);
 
-    // 2. OR 并集：token 数 >= 2 时恒执行 OR，与 AND 结果按 doc_id 取并集，
+    // 2. OR 并集：恒执行 OR（单 token 时组间 OR 放宽，GAP-TOK-001），与 AND 结果按 doc_id 取并集、
     //    冲突时保留 AND 版本（先放入 AND，再追加 OR 中未见过的 doc_id）。
-    if (tokens.size() >= 2) {
-        const std::string orQuery = buildOrMatchQuery(query);
+    if (!tokens.empty()) {
+        const std::string orQuery =
+            tokens.size() >= 2 ? buildOrMatchQuery(rest) : expandTokenOrSingle(tokens[0]);
         std::vector<Hit> orHits = db_.searchFts(orQuery, limit * 2);
+        if (tokens.size() == 1) {
+            // 单 token OR 召回偏宽，用 substringRecallPass 精确过滤（同 search 阶段 2）。
+            std::vector<Hit> filtered;
+            filtered.reserve(orHits.size());
+            for (const Hit& h : orHits) {
+                std::string hay = h.title;
+                if (auto content = db_.getContentById(h.doc_id)) {
+                    hay.push_back('\n');
+                    hay += *content;
+                } else {
+                    hay += h.snippet;
+                }
+                if (substringRecallPass(hay, tokens)) filtered.push_back(h);
+            }
+            orHits = std::move(filtered);
+        }
         std::set<int64_t> seen;
         for (const Hit& h : hits) {
             seen.insert(h.doc_id);
@@ -376,16 +570,13 @@ std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {
                 } else {
                     hay += h.snippet;
                 }
-                bool allFound = true;
-                for (const std::string& t : tokens) {
-                    if (!containsFolded(hay, t)) { allFound = false; break; }
-                }
-                if (allFound) hits.push_back(h);
+                if (substringRecallPass(hay, tokens)) hits.push_back(h);
             }
         }
     }
 
-    return rerankHits(std::move(hits), tokens, query, weights_, limit);
+    hits = filterByPhrases(std::move(hits), db_, phrases);
+    return rerankHits(std::move(hits), tokens, query, weights_, limit, phrases);
 }
 
 }  // namespace docseek

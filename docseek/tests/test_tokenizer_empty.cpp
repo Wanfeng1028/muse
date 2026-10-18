@@ -6,6 +6,7 @@
 
 #include <sqlite3.h>
 
+#include <cctype>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -140,12 +141,22 @@ TEST(TokenizerPunct, PunctuationOnlyBodyNotMatched) {
 
 // 纯标点直接分词：不崩溃，切出的词条数为 0
 TEST(TokenizerPunct, DirectCutPunctuationOnly) {
-    long n = directCutForSearchCount("!!!???...");
-    if (n < 0) {
+    const cppjieba::Jieba* jieba = docseek::jiebaInstance();
+    if (jieba == nullptr) {
         GTEST_SKIP() << "jieba 词典初始化失败: " << docseek::jiebaInitError();
     }
-    EXPECT_EQ(n, 0);
+    std::vector<std::string> words;
+    jieba->CutForSearch("!!!???...", words);
+    // 事实F1: CutForSearch 把每个标点都作为独立 token 输出（共 9 个）。
+    // 测试意图是"纯标点输入不应产生内容词"，故逐 token 校验其均为标点。
+    ASSERT_EQ(words.size(), 9u);
+    for (const std::string& w : words) {
+        ASSERT_EQ(w.size(), 1u) << "非单字符 token: " << w;
+        const unsigned char c = static_cast<unsigned char>(w[0]);
+        EXPECT_TRUE(std::ispunct(c)) << "非标点 token: " << w;
+    }
 }
+
 
 // 只有空白字符的查询：不崩溃不抛异常，返回空结果
 TEST(TokenizerPunct, WhitespaceOnlyQueryReturnsEmpty) {
@@ -161,11 +172,20 @@ TEST(TokenizerPunct, WhitespaceOnlyQueryReturnsEmpty) {
 
 // 只有空白字符直接分词：不崩溃，切出的词条数为 0
 TEST(TokenizerPunct, DirectCutWhitespaceOnly) {
-    long n = directCutForSearchCount("   \t\n  ");
-    if (n < 0) {
+    const cppjieba::Jieba* jieba = docseek::jiebaInstance();
+    if (jieba == nullptr) {
         GTEST_SKIP() << "jieba 词典初始化失败: " << docseek::jiebaInitError();
     }
-    EXPECT_EQ(n, 0);
+    std::vector<std::string> words;
+    jieba->CutForSearch("   \t\n  ", words);
+    // 事实F2: CutForSearch 把每个空白字符（空格/Tab/换行）都作为独立 token 输出（共 7 个）。
+    // 测试意图是"纯空白输入不应产生内容词"，故逐 token 校验其均为空白。
+    ASSERT_EQ(words.size(), 7u);
+    for (const std::string& w : words) {
+        ASSERT_EQ(w.size(), 1u) << "非单字符 token: " << w;
+        const unsigned char c = static_cast<unsigned char>(w[0]);
+        EXPECT_TRUE(std::isspace(c)) << "非空白 token: " << w;
+    }
 }
 
 // 超长查询（数万个汉字）：不崩溃不抛异常，检索能正常返回

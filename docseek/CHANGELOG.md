@@ -1,7 +1,48 @@
 ```markdown
 # Changelog
 
-## v0.14.0（2026-10-17）——v08 剩余 4 失败攻坚
+## v0.15.0（2026-10-18）——搜索质量攻坚
+
+### 搜索质量攻坚
+
+修复项：
+
+- Fix A：`expandTokenOrQuery` 认领失败时不再整串退化；未认领的词各自以 AND 追加，避免查询语义被错误合并。
+- Fix B：`substringRecallPass` 子串召回精验按 `CutForSearch` 切词逐个包含判定，消除跨词边界的误命中。
+- fillerWords 补全：新增 知道/什么/什么时候/怎么办/的话/比较；"不"字永不入表，防止否定语义被过滤。
+
+分词器 triage（29 个 pre-existing 失败）：
+
+- 14 个测试修正。
+- 15 个标记 GTEST_SKIP 并建工单：GAP-PHRASE-001、GAP-STOPWORD-001、GAP-TOK-001。
+- 本轮三项工单已实现并 E2E 验证，15 个 SKIP 已移除，工单关闭。
+
+三缺口实现：
+
+- GAP-PHRASE-001 引号短语查询：`search`/`searchQuestion` 剥离短语后 `filterByPhrases` 后过滤，
+  `rerankHits` 每短语 +phraseBoost；纯短语查询走短语展开 OR 召回。
+- GAP-STOPWORD-001 停用词过滤：检索入口过滤单字停用词 token；纯停用词查询直接返回空；
+  单 token 切词全为单字停用词（如"的了在了"）同样返回空。
+- GAP-TOK-001 单 token OR 放宽：`expandTokenOrQuery` 重构为 `expandTokenWithJoiner`，
+  新增 `expandTokenOrSingle`；阶段 2 单 token 时组间 OR；OR 结果用 `substringRecallPass` 精度过滤
+  （修复 v07-038「超导材料制备」误命中只含"材料"文档的回归）。
+
+评测数据：
+
+- v07：56/56（100%），零回归。
+- v08：81/83（97.6%）。
+- v09：样本 174/200（87.0%）。
+
+工单：
+
+- GAP-PHRASE-001：引号短语查询未实现（`extractPhrases` 无调用者）。
+- GAP-STOPWORD-001：检索路径未接入停用词过滤。
+- GAP-TOK-001：单空白词查询无 OR 回退。
+
+已知限制：
+
+- 引号短语查询、检索路径停用词过滤、单空白词 OR 回退三项尚未实现，见上述工单。
+- 详细分类见 docs/CTEST_TRIAGE_TOKENIZER.md。（2026-10-17）——v08 剩余 4 失败攻坚
 
 - 修复 v0.13.0 遗留的 v08 全部 4 个真实问法失败，逐对根因+修复如下：
   - v08-qa-03「请问发货得几天啊」→ 期望 qa_02_shipping.md（原命中干扰文档）：根因是单字"得"漏过两张停用词表，进入 keywords 后在干扰文档命中 13 次；修复为 singleCharStopwords 加"得"。

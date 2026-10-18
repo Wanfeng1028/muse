@@ -142,5 +142,26 @@ TEST(QueryParserV014, FullWidthPunctuationStripped) {
     EXPECT_TRUE(contains(parsed.keywords, "价格"));
 }
 
+// v0.15 fillerWords 回归：D 类 t007-q11「什么时候」穿透，应被丢弃。
+TEST(QueryParserV015, FillerWordsV015DropsNoise) {
+    auto k1 = parseNaturalQuery("自由泳换气的时候头应该什么时候转过去").keywords;
+    EXPECT_FALSE(contains(k1, "什么时候"));
+    EXPECT_FALSE(contains(k1, "什么"));
+
+    auto k2 = parseNaturalQuery("长期不弹琴的话，琴弦应该怎么处理比较好").keywords;
+    EXPECT_FALSE(contains(k2, "的话"));
+    EXPECT_FALSE(contains(k2, "比较"));
+    EXPECT_TRUE(contains(k2, "琴弦"));
+
+    auto k3 = parseNaturalQuery("怕水怎么办").keywords;
+    EXPECT_FALSE(contains(k3, "怎么办"));
+}
+
+// v0.15 否定语义保护：「不」字永不入表，不能把「不建议」误拆成「建议」。
+TEST(QueryParserV015, NegationBuIsPreserved) {
+    auto k = parseNaturalQuery("不建议熬夜").keywords;
+    EXPECT_TRUE(contains(k, "不建议") || contains(k, "不"));
+}
+
 }  // namespace
 }  // namespace docseek
