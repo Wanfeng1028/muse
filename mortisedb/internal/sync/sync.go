@@ -323,6 +323,7 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 							return ts, fmt.Errorf("覆盖写入失败: %w", err)
 						}
 						ts.Updated++
+						ts.Conflicts++
 						if _, err := st.RecordConflict(tx, store.Conflict{
 							TableName: ti.Name,
 							PK:        pk,
@@ -374,6 +375,19 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 							return ts, fmt.Errorf("覆盖写入失败: %w", err)
 						}
 						ts.Updated++
+						ts.Conflicts++
+						if _, err := st.RecordConflict(tx, store.Conflict{
+							TableName: ti.Name,
+							PK:        pk,
+							SourceA:   existSource,
+							SourceB:   sc.Name,
+							RowJSON:   conflictRow,
+							Status:    "resolved_auto",
+							CreatedAt: nowRFC3339(),
+						}); err != nil {
+							rollback()
+							return ts, fmt.Errorf("记录冲突失败: %w", err)
+						}
 					} else {
 						if _, err := st.RecordConflict(tx, store.Conflict{
 							TableName: ti.Name,
