@@ -85,7 +85,10 @@ func Open(path string) (*Store, error) {
 			}
 		}
 	}
-	db, err := sql.Open("sqlite", path)
+	// 通过 DSN 的 _pragma 参数设置 busy_timeout：该 PRAGMA 会随连接池中每个新连接自动执行，
+	// 而单次 db.Exec 只影响当时拿到的那一个连接，无法覆盖池中其它连接。
+	dsn := path + "?_pragma=busy_timeout(5000)"
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}

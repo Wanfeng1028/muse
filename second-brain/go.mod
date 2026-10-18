@@ -2,10 +2,12 @@ module github.com/Wanfeng1028/muse/second-brain
 
 go 1.23
 
-require modernc.org/sqlite v1.34.2
+require (
+	github.com/SherClockHolmes/webpush-go v1.2.0
+	modernc.org/sqlite v1.34.2
+)
 
 require (
-	github.com/SherClockHolmes/webpush-go v1.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
