@@ -14,7 +14,17 @@ export const projects = [
         branch: 'main',
         status: 'idle',
         model: '5.6 Sol',
-        messages: [],
+        messages: [
+          { role: 'user', text: 'Review the email spam patterns in src/filters/' },
+          {
+            role: 'agent',
+            thinking: '先看一下现有的过滤规则。',
+            tools: [
+              { name: 'read', target: 'src/filters/spam.ts', status: 'ok', output: '→ 120 lines' },
+            ],
+            text: '看了一下，`spam.ts` 里有 3 条规则。建议：\n\n1. 发件人黑名单支持通配符\n2. 关键词权重可配置\n3. 加一层贝叶斯打分',
+          },
+        ],
       },
       {
         id: 't2',
