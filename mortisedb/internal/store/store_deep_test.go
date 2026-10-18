@@ -225,11 +225,11 @@ func TestDeep_HMACVerify_Boundaries(t *testing.T) {
 	good := hmacSign(secret, body)
 
 	cases := []struct {
-		name    string
-		secret  string
-		body    []byte
-		sig     string
-		wantOK  bool
+		name   string
+		secret string
+		body   []byte
+		sig    string
+		wantOK bool
 	}{
 		{"正常", secret, body, good, true},
 		{"错误密钥", "wrong-key", body, good, false},
