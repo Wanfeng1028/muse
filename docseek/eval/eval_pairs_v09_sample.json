@@ -533,7 +533,9 @@
   "expected": "v09_t007_02.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 007.json"
+  "note": "v09 corpus batch 007.json",
+  "verdict": "keep",
+  "review_note": "文档明确给出价格（小班十节课一千六/一对一三千二）；B 类措辞差异，保留"
  },
  {
   "id": "v09-t007-q08",
@@ -805,7 +807,9 @@
   "expected": "v09_t013_05.md",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 013.json"
+  "note": "v09 corpus batch 013.json",
+  "verdict": "weak-top3",
+  "review_note": "期望文档语义相关但全文无\"版\"字，\"排版\"词形缺失；弱评测对，top-3 口径单记"
  },
  {
   "id": "v09-t013-q06",
@@ -1061,7 +1065,9 @@
   "expected": "v09_t018_01.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 018.json"
+  "note": "v09 corpus batch 018.json",
+  "verdict": "weak-top3",
+  "review_note": "文档以数值作答与\"多高合适\"零重叠；弱评测对，top-3 口径单记"
  },
  {
   "id": "v09-t018-q02",

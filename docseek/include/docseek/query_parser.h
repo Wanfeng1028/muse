@@ -25,4 +25,8 @@ bool isSingleCharStopword(const std::string& w);
 void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
                     std::string& rest);
 
+// 剥离疑问/语气词（复用 fillerWords 表），供 search/searchQuestion 查询构建调用，
+// 与 parseNaturalQuery 的过滤行为对齐；"不"永不入表，否定语义保留；空输入返回空。
+std::string stripFillerWords(const std::string& raw);
+
 }  // namespace docseek

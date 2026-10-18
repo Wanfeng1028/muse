@@ -82,7 +82,9 @@ add_library(docseek_core STATIC
   src/dict.cpp
   src/jieba_tokenizer.cpp
   src/query_parser.cpp
+  src/synonyms.cpp
   src/token_locate.cpp
+
   src/passage_ranker.cpp
   src/pdf_extractor.cpp
   src/office_extractor.cpp
@@ -199,6 +201,8 @@ add_executable(docseek_tests
   tests/test_v015_filler_words.cpp
   tests/test_v015_search_question.cpp
   tests/test_v015_single_token_precision.cpp
+  tests/test_v016_b_fix1.cpp
+  tests/test_v016_b_cases.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

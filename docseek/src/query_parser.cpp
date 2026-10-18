@@ -220,6 +220,18 @@ bool detectPassageIntent(const std::string& raw) {
 
 }  // namespace
 
+// 剥离疑问/语气词：复用匿名 namespace 内的 fillerWords()/eraseAll()/squeezeWhitespace()
+// （同文件 isSingleCharStopword 已有此先例）。先 squeezeWhitespace 规范化空白，
+// 再按表顺序 eraseAll 删除，最后再 squeezeWhitespace 清理残留空白。
+std::string stripFillerWords(const std::string& raw) {
+    std::string rest = squeezeWhitespace(raw);
+    for (const auto& w : fillerWords()) {
+        rest = eraseAll(rest, w);
+    }
+    rest = squeezeWhitespace(rest);
+    return rest;
+}
+
 // 单字中文停用词判断（供查询展开等复用）。
 bool isSingleCharStopword(const std::string& w) {
     return singleCharStopwords().count(w) > 0;

@@ -3,6 +3,7 @@
 #include "docseek/token_locate.h"
 
 #include "docseek/query_parser.h"
+#include "docseek/synonyms.h"
 #include "docseek/jieba_tokenizer.h"
 
 #include <algorithm>
@@ -141,6 +142,26 @@ std::string expandTokenWithJoiner(const std::string& token, const std::string& j
             g.push_back(lt.word);
         }
     }
+
+    // 同义词展开（B3-r2）：组内每个词精确查同义词表，命中的 expansions 并入同一 OR 组。
+    // 中文查询多为无空白单 token，词组级是唯一能命中表内词的层级；
+    // 仅当组内出现表内词时激活，其余情况行为与原来一字不差。
+    for (auto& kv : groups) {
+        std::vector<std::string>& g = kv.second;
+        std::vector<std::string> extra;
+        for (const std::string& w : g) {
+            const SynonymEntry* e = findSynonyms(w.c_str());
+            if (e == nullptr) continue;
+            for (int k = 0; k < e->expansionCount; ++k) {
+                std::string ex(e->expansions[k]);
+                if (std::find(g.begin(), g.end(), ex) == g.end() &&
+                    std::find(extra.begin(), extra.end(), ex) == extra.end()) {
+                    extra.push_back(ex);
+                }
+            }
+        }
+        g.insert(g.end(), extra.begin(), extra.end());
+    }
     if (groups.empty() && unclaimed.empty()) {
         return quoteToken(token);
     }
@@ -172,7 +193,18 @@ std::string expandTokenWithJoiner(const std::string& token, const std::string& j
     }
     for (const std::string& w : unclaimed) {
         if (!out.empty()) out += joiner;
-        out += quoteToken(w);
+        // 同义词展开（B3-r2）：未被认领的词同样查表，命中则与 expansions 组成 OR 组。
+        const SynonymEntry* e = findSynonyms(w.c_str());
+        if (e == nullptr) {
+            out += quoteToken(w);
+            continue;
+        }
+        std::string expr = "(" + quoteToken(w);
+        for (int k = 0; k < e->expansionCount; ++k) {
+            expr += " OR " + quoteToken(e->expansions[k]);
+        }
+        expr += ")";
+        out += expr;
     }
     return out;
 }
@@ -394,6 +426,10 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
     std::string rest;
     extractPhrases(query, phrases, rest);
 
+    // B-fix1：search 路径对齐 locate 路径的疑问词过滤，剥离"怎么办"等疑问/语气词，
+    // 避免其被 AND 进查询；引号短语已先剥离不受影响。
+    rest = stripFillerWords(rest);
+
     // 停用词过滤：单字停用词不参与检索与排序（GAP-STOPWORD-001）。
     // 注意只过滤整个 token 恰为单字停用词的情况，不拆多字 token；
     // "不"字不在停用词表（否定语义保护），不受影响。
@@ -489,6 +525,10 @@ std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {
     std::vector<std::string> phrases;
     std::string rest;
     extractPhrases(query, phrases, rest);
+
+    // B-fix1：search 路径对齐 locate 路径的疑问词过滤，剥离"怎么办"等疑问/语气词，
+    // 避免其被 AND 进查询；引号短语已先剥离不受影响。
+    rest = stripFillerWords(rest);
 
     // 停用词过滤：单字停用词不参与检索与排序（GAP-STOPWORD-001）。
     // 注意只过滤整个 token 恰为单字停用词的情况，不拆多字 token；

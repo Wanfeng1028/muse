@@ -13,3 +13,5 @@ docseek.db
 .vscode/
 .idea/
 compile_commands.json
+/build-a15/
+/build-dtriage/
