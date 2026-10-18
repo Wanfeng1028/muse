@@ -22,15 +22,28 @@ public class VideoProviderRouter {
     private final ApplicationContext applicationContext;
     private final Environment environment;
     private final ShotVideoRouter shotVideoRouter;
+    private final ProviderDescriptorRegistry descriptorRegistry;
+
 
     private volatile LastFallback lastFallback;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public VideoProviderRouter(ApplicationContext applicationContext, Environment environment,
-                               ShotVideoRouter shotVideoRouter) {
+                               ShotVideoRouter shotVideoRouter, ProviderDescriptorRegistry descriptorRegistry) {
         this.applicationContext = applicationContext;
         this.environment = environment;
         this.shotVideoRouter = shotVideoRouter;
+        this.descriptorRegistry = descriptorRegistry;
     }
+
+    /**
+     * 测试兼容构造器：descriptorRegistry 为 null 时 descriptor: 通道不可用。
+     */
+    public VideoProviderRouter(ApplicationContext applicationContext, Environment environment,
+                               ShotVideoRouter shotVideoRouter) {
+        this(applicationContext, environment, shotVideoRouter, null);
+    }
+
 
     public record RouteResult(String providerName, String providerTaskId, String fallbackReason) {
     }
@@ -95,7 +108,14 @@ public class VideoProviderRouter {
     }
 
     public VideoProvider providerFor(String name) {
+        if (name != null && name.startsWith("descriptor:")) {
+            if (descriptorRegistry == null) {
+                throw new IllegalStateException("描述符 provider 注册表未装配");
+            }
+            return descriptorRegistry.buildProvider(name.substring("descriptor:".length()));
+        }
         if ("agnes".equals(name)) {
+
             return applicationContext.getBean("agnesVideoProvider", VideoProvider.class);
         }
         if ("qwen".equals(name)) {

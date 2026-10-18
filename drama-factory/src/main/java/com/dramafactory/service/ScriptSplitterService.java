@@ -40,6 +40,9 @@ public class ScriptSplitterService {
     /** 代理鉴权使用的凭证标识。 */
     private static final String CREDENTIAL = "custom.weixin-chatapi";
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ScriptSplitterService.class);
+
+
     /** 系统提示词：严格要求只输出 JSON 数组。 */
     private static final String SYSTEM_PROMPT =
             "你是短剧分镜师。把用户粘贴的剧本原文拆成结构化分镜，只输出 JSON 数组，不要任何解释文字。"
@@ -57,6 +60,8 @@ public class ScriptSplitterService {
     private final VideoTaskRepository videoTaskRepository;
     private final CredentialResolver credentialResolver;
     private final SkillService skillService;
+    private final PromptFileService promptFileService;
+
     private final ObjectMapper objectMapper;
     private final String model;
     private final int maxTokens;
@@ -75,7 +80,8 @@ public class ScriptSplitterService {
                                  SkillService skillService,
                                  ObjectMapper objectMapper,
                                  @Value("${drama.script-splitter.model:Deepseek-v4-flash}") String model,
-                                 @Value("${drama.script-splitter.max-tokens:3000}") int maxTokens) {
+                                 @Value("${drama.script-splitter.max-tokens:3000}") int maxTokens,
+                                 PromptFileService promptFileService) {
         this(episodeRepository, shotRepository, videoTaskRepository, credentialResolver, skillService,
                 objectMapper, model, maxTokens,
                 request -> {
@@ -83,7 +89,8 @@ public class ScriptSplitterService {
                             .connectTimeout(Duration.ofSeconds(15))
                             .build();
                     return client.send(request, HttpResponse.BodyHandlers.ofString());
-                });
+                }, promptFileService);
+
     }
 
     // 测试注入 HttpExchange stub，避免真实网络调用；不许改成 public
@@ -95,7 +102,8 @@ public class ScriptSplitterService {
                           ObjectMapper objectMapper,
                           String model,
                           int maxTokens,
-                          HttpExchange httpExchange) {
+                          HttpExchange httpExchange,
+                          PromptFileService promptFileService) {
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
         this.videoTaskRepository = videoTaskRepository;
@@ -105,7 +113,9 @@ public class ScriptSplitterService {
         this.model = model;
         this.maxTokens = maxTokens;
         this.httpExchange = httpExchange;
+        this.promptFileService = promptFileService;
     }
+
 
 
     /**
@@ -278,14 +288,26 @@ public class ScriptSplitterService {
      * @param skillPrompt Skill 渲染后的 prompt，为空时不注入
      * @return 模型返回文本
      */
-    private String callModel(String scriptText, String skillPrompt) {
-        ObjectNode body = objectMapper.createObjectNode();
+    /**
+     * 解析系统提示词：优先读 data/prompts/shot-splitter.md，文件缺失或读取失败时回退内置常量。
+     */
+    private String resolveSystemPrompt() {
+        try {
+            return promptFileService.body("shot-splitter");
+        } catch (Exception e) {
+            log.warn("提示词文件 shot-splitter 加载失败，回退内置常量: {}", e.getMessage());
+            return SYSTEM_PROMPT;
+        }
+    }
+
+    private String callModel(String scriptText, String skillPrompt) {        ObjectNode body = objectMapper.createObjectNode();
 
         body.put("model", model);
         ArrayNode messages = body.putArray("messages");
         ObjectNode systemMsg = messages.addObject();
         systemMsg.put("role", "system");
-        String systemContent = SYSTEM_PROMPT;
+        String systemContent = resolveSystemPrompt();
+
         if (skillPrompt != null && !skillPrompt.isBlank()) {
             systemContent = systemContent + "\n\n【Skill 增强】\n" + skillPrompt;
         }

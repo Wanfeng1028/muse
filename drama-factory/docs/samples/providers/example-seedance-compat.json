@@ -1,0 +1,40 @@
+{
+  "id": "seedance-compat",
+  "label": "示例兼容通道（占位）",
+  "version": "1.0",
+  "models": [
+    {
+      "id": "demo-video-model",
+      "label": "示例视频模型",
+      "type": "video"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "keyRef": "env:DEMO_VIDEO_API_KEY"
+  },
+  "submit": {
+    "method": "POST",
+    "url": "https://example.com/v1/video/submit",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"model\":\"{{model}}\",\"prompt\":\"{{prompt}}\",\"duration\":{{seconds}}}",
+    "taskIdPath": "data.task_id"
+  },
+  "poll": {
+    "method": "GET",
+    "url": "https://example.com/v1/video/tasks/{{taskId}}",
+    "statusPath": "data.status",
+    "statusMap": {
+      "queued": "QUEUED",
+      "running": "PROCESSING",
+      "succeeded": "COMPLETED",
+      "failed": "FAILED"
+    },
+    "videoUrlPath": "data.video_url",
+    "errorPath": "data.error_message",
+    "progressPath": "data.progress"
+  }
+}
+

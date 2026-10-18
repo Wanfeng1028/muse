@@ -61,7 +61,8 @@ class ScriptSplitterServiceTest {
                 mock(SkillService.class),
                 objectMapper,
                 "Deepseek-v4-flash",
-                3000);
+                3000, null);
+
     }
 
 
