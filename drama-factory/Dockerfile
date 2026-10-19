@@ -10,7 +10,7 @@
 #   阶段二用 JRE 镜像运行，并安装 ffmpeg（剪辑成片必需）
 
 # ---------- 阶段一：构建 ----------
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /build
 
 # 先只拷贝 pom.xml，利用 Docker 层缓存离线拉取依赖
