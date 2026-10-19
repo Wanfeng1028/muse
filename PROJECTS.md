@@ -313,6 +313,7 @@
 - ~~旧端点 POST /api/bills/ocr 埋点~~（v2.9 已知限制，已在 v2.10 交付 ledger_bills_ocr_* 指标集）
 
 - **深耕轮 2026-10-19 晚（已合入）**：银行账单导入/自动分类匹配深测（test_import_idempotency_deep.py 等）；services.py 改动验证通过；README 补全（功能/快速开始/配置）。
+- **深耕轮 2026-10-19 夜（本 lane）**：新增账本平衡审计（services.audit_ledger() + GET /api/audit + main.py 注册）：复式恒等式 Σ余额==Σ期初+Σ收入-Σ支出（转账在账户间抵消；转入/转出和按账户归属统计，与 account_balance 语义对齐）+ 引用完整性检查（transfer 缺 to/转入悬空/自转/转入已归档警告/跨币种警告；income/expense 缺分类/分类 kind 不一致/账户悬空；SQLite 未开 FK=0 脏数据真实可存在）；tests/test_audit_deep.py 9 例全绿；修实现 1 处（转入和曾按行统计致悬空转入漏报恒等式破裂）；真实服务冒烟：干净库 ok=true，转入账户悬空脏数据 → TRANSFER_TO_ACCOUNT_NOT_FOUND + IDENTITY_BROKEN（diff=-5000）。侦探匹配纵深（tests/test_matching_deep5.py 24 例：模糊互包含误判边界/规则子串/历史票数合并计票/候选置信度/归一化指纹/贪心配对/别名精确语义；pytest 24/24、ruff 全洁）；修测试侧 1 处（C2 漏算模糊分支合并计票）；诚实记录已知边界：“现金贷”类商户名含账户名会被误判为转账建议、“星巴克代购”类会被模糊历史误分类（测试注释已记录，本轮不改匹配逻辑）。
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
@@ -499,6 +500,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - pip 依赖定期扫描机制（等 gh token 补 workflow 权限后统一处理）
 
 - **深耕轮 2026-10-19 晚（已合入）**：去重聚类/重要性排序/API 分页搜索深测（test_dedup_deep4.py、test_api_pagination_search_deep2.py 等）；store.py 改动验证通过。
+- **深耕轮 2026-10-19 夜（本 lane）**：去重聚类纵深（tests/test_dedup_deep5.py 34 例：标题党变体/英文大小写、跨源同事件异述、近似重复、14 天窗口边界、短文本 Jaccard、簇代表多候选、backfill 幂等；pytest 34/34、ruff 全洁）+ FTS5 搜索边界纵深（tests/test_fts5_boundary_deep.py 26 例：全角引号/书名号/emoji、AND/OR/NOT 退化、列名冒号、连字符、超长查询、trigram 长度边界、OperationalError 回退；pytest 26/26、ruff 全洁）；修**真 bug**：store.py 缺 `import sqlite3` 致 FTS5 MATCH 回退路径 NameError→500（上一轮加的回退保护从未被实际执行过，E1 mock 测试抓出），另清 highlight_snippet 未使用变量；真实服务冒烟：/search 对"苹果"/iPhone-17/O'Brien/AND/全角引号/**\* 全 200 无 500，正常词命中验证通过。诚实记录：跨源同事件不同写法 Jaccard 仅约 0.09 < 0.35 阈值会被漏聚，为当前两阶段算法已知边界（测试注释已记录）。
 
 ## linkshort「短链 LinkShort · 自托管短链服务」
 

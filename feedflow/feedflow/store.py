@@ -1,5 +1,6 @@
 """数据访问层：所有函数首参为 db_path，返回 dict 或 dict 列表。"""
 import html
+import sqlite3
 from datetime import UTC, datetime, timedelta
 
 from . import dedup
@@ -580,7 +581,6 @@ def highlight_snippet(text, keyword, max_len=120):
     snippet = text[start:end]
 
     escaped_snippet = html.escape(snippet)
-    escaped_kw = html.escape(keyword)
 
     lower_snippet = snippet.lower()
     pos = lower_snippet.find(lower_kw)

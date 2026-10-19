@@ -610,3 +610,132 @@ async def upcoming_recurring(s: AsyncSession, days: int = 30) -> list[dict]:
 
     result.sort(key=lambda x: x["next_date"])
     return result
+
+
+# ---------------------------------------------------------------------------
+# 账本平衡审计
+# ---------------------------------------------------------------------------
+
+
+async def audit_ledger(s: AsyncSession) -> dict:
+    """账本平衡审计：验证复式记账恒等式与引用完整性。
+
+    恒等式：Σ各账户余额 == Σ期初 + Σ收入 - Σ支出。
+    账户余额公式（与 account_balance 一致）：
+      期初 + 收入 - 支出 - 转出 + 转入。
+    求和后转账项为 Σ转入 - Σ转出：每笔转账在转出方记 -X、在转入方记 +X，
+    恒等式成立当且仅当每笔转出的 X 都有对应的转入 X（to_account 有效）。
+    若某笔 transfer 的 to_account_id 悬空（SQLite 未强制外键），
+    转入的 +X 丢失，恒等式破裂，diff_cents = 转入和 - 转出和 != 0。
+
+    返回 {
+      "ok": bool,  # 无 error 级问题
+      "error_count": int, "warning_count": int,
+      "issues": [{"code","severity","detail","transaction_id"}, ...],
+      "totals": {"accounts","transactions","opening_sum_cents","income_sum_cents",
+                 "expense_sum_cents","transfer_out_sum_cents","transfer_in_sum_cents"},
+      "identity": {"balance_sum_cents","expected_cents","diff_cents","holds"},
+    }
+    issues 按 severity（error 在前）再按 transaction_id 排序。
+    """
+    accounts = (await s.execute(select(Account))).scalars().all()
+    txns = (await s.execute(select(Transaction))).scalars().all()
+    by_account = {a.id: a for a in accounts}
+    categories = {c.id: c for c in (await s.execute(select(Category))).scalars().all()}
+
+    issues: list[dict] = []
+
+    def add_issue(code, severity, detail, txn_id=None, **extra):
+        item = {"code": code, "severity": severity, "detail": detail,
+                "transaction_id": txn_id}
+        item.update(extra)
+        issues.append(item)
+
+    opening_sum = sum(int(a.opening_balance_cents) for a in accounts)
+    income_sum = expense_sum = tout_sum = tin_sum = 0
+    for t in txns:
+        amt = int(t.amount_cents)
+        if t.type == "income":
+            income_sum += amt
+        elif t.type == "expense":
+            expense_sum += amt
+        elif t.type == "transfer":
+            # 与 account_balance 语义对齐：转出按 account_id 归属账户统计，
+            # 转入按 to_account_id 归属账户统计；悬空引用不计入任何一方。
+            if t.account_id in by_account:
+                tout_sum += amt
+            if t.to_account_id is not None and t.to_account_id in by_account:
+                tin_sum += amt
+        else:
+            add_issue("UNKNOWN_TYPE", "error", f"未知交易类型 {t.type!r}", t.id)
+        acc = by_account.get(t.account_id)
+        if acc is None:
+            add_issue("ACCOUNT_NOT_FOUND", "error",
+                      f"交易账户 {t.account_id} 不存在", t.id)
+        if t.type == "transfer":
+            if t.to_account_id is None:
+                add_issue("TRANSFER_MISSING_TO", "error", "转账缺少转入账户", t.id)
+            elif t.to_account_id == t.account_id:
+                add_issue("TRANSFER_SELF", "error", "转入与转出为同一账户", t.id)
+            else:
+                to_acc = by_account.get(t.to_account_id)
+                if to_acc is None:
+                    add_issue("TRANSFER_TO_ACCOUNT_NOT_FOUND", "error",
+                              f"转入账户 {t.to_account_id} 不存在", t.id)
+                else:
+                    if to_acc.is_archived:
+                        add_issue("TRANSFER_TO_ARCHIVED", "warning",
+                                  f"转入账户 {to_acc.name!r} 已归档", t.id)
+                    if acc is not None and acc.currency != to_acc.currency:
+                        add_issue("TRANSFER_CROSS_CURRENCY", "warning",
+                                  f"跨币种转账 {acc.currency}->{to_acc.currency}，"
+                                  "余额公式未做汇率折算", t.id)
+        elif t.type in ("income", "expense"):
+            if t.category_id is None:
+                add_issue("TRANSACTION_MISSING_CATEGORY", "error",
+                          f"{t.type} 缺少分类", t.id)
+            else:
+                cat = categories.get(t.category_id)
+                if cat is None:
+                    add_issue("CATEGORY_NOT_FOUND", "error",
+                              f"分类 {t.category_id} 不存在", t.id)
+                elif cat.kind != t.type:
+                    add_issue("CATEGORY_KIND_MISMATCH", "error",
+                              f"分类 kind={cat.kind!r} 与交易类型 {t.type!r} 不一致",
+                              t.id)
+
+    balance_sum = opening_sum + income_sum - expense_sum - tout_sum + tin_sum
+    expected = opening_sum + income_sum - expense_sum
+    diff = balance_sum - expected
+    holds = diff == 0
+    if not holds:
+        add_issue("IDENTITY_BROKEN", "error",
+                  f"复式恒等式破裂：Σ余额={balance_sum}，期望={expected}，差={diff}",
+                  None)
+
+    issues.sort(key=lambda i: (0 if i["severity"] == "error" else 1,
+                               i["transaction_id"] if i["transaction_id"] is not None else -1))
+    errors = sum(1 for i in issues if i["severity"] == "error")
+    warnings = sum(1 for i in issues if i["severity"] == "warning")
+    return {
+        "ok": errors == 0,
+        "error_count": errors,
+        "warning_count": warnings,
+        "issues": issues,
+        "totals": {
+            "accounts": len(accounts),
+            "transactions": len(txns),
+            "opening_sum_cents": opening_sum,
+            "income_sum_cents": income_sum,
+            "expense_sum_cents": expense_sum,
+            "transfer_out_sum_cents": tout_sum,
+            "transfer_in_sum_cents": tin_sum,
+        },
+        "identity": {
+            "balance_sum_cents": balance_sum,
+            "expected_cents": expected,
+            "diff_cents": diff,
+            "holds": holds,
+        },
+    }
+

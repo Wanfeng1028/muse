@@ -16,6 +16,7 @@ from ledger.logging import RequestIdMiddleware, get_logger, setup_logging
 from ledger.models import Category, Currency, Recurring
 from ledger.routers import (
     accounts,
+    audit,
     bills,
     budgets,
     categories,
@@ -101,6 +102,7 @@ def create_app() -> FastAPI:
     app.include_router(metrics.router)
     app.include_router(bills.router)
     app.include_router(accounts.router)
+    app.include_router(audit.router)
     app.include_router(categories.router)
     app.include_router(transactions.router)
     app.include_router(currencies.router)
