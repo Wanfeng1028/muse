@@ -113,6 +113,35 @@ async fn register_cookie(app: &axum::Router, username: &str, password: &str) -> 
     (id, cookie)
 }
 
+async fn login_cookie(app: &axum::Router, username: &str, password: &str) -> String {
+    let body = serde_json::to_vec(&serde_json::json!({
+        "username": username,
+        "password": password,
+    }))
+    .unwrap();
+    let req = Request::builder()
+        .method("POST")
+        .uri("/api/auth/login")
+        .header("content-type", "application/json")
+        .body(Body::from(body))
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(
+        resp.status(),
+        StatusCode::OK,
+        "login {} failed",
+        username
+    );
+    let set_cookie = resp
+        .headers()
+        .get("set-cookie")
+        .expect("missing set-cookie")
+        .to_str()
+        .unwrap()
+        .to_string();
+    set_cookie.split(';').next().unwrap().to_string()
+}
+
 async fn set_role(app: &axum::Router, admin_cookie: &str, user_id: i64, role: &str) {
     let body = serde_json::to_vec(&serde_json::json!({ "role": role })).unwrap();
     let req = Request::builder()
@@ -151,8 +180,10 @@ async fn plugin_flow() {
     let (_admin_id, admin_cookie) = register_cookie(&app, "admin", "adminpass123").await;
 
     // 注册 viewer1 并降为 viewer（刚注册默认是 editor，有插件管理权限，不符合 403 用例）
-    let (viewer_id, viewer_cookie) = register_cookie(&app, "viewer1", "viewerpass1").await;
+    let (viewer_id, _stale_cookie) = register_cookie(&app, "viewer1", "viewerpass1").await;
     set_role(&app, &admin_cookie, viewer_id, "viewer").await;
+    // 真实行为：set_role 会撤销该用户全部 session，旧 cookie 已失效；重新登录拿新 cookie 再断言 403。
+    let viewer_cookie = login_cookie(&app, "viewer1", "viewerpass1").await;
 
     let zip_ok = build_zip(&[
         ("plugin.json", &manifest_json("demo", &["fs.read"])[..]),
