@@ -46,7 +46,7 @@ func TestCheckNow_SequentialDown_SingleOpen(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		sched.CheckNow(mid, 0)
+		sched.CheckNow(context.Background(), mid, 0)
 	}
 
 	incidents, err := st.ListIncidents(mid, 100)
@@ -100,7 +100,7 @@ func TestDownRecoverDown_ReopensNewIncident(t *testing.T) {
 		t.Fatalf("CreateMonitor failed: %v", err)
 	}
 
-	sched.CheckNow(mid, 0)
+	sched.CheckNow(context.Background(), mid, 0)
 
 	okMon := store.Monitor{
 		Name:           "down-recover-down",
@@ -116,12 +116,12 @@ func TestDownRecoverDown_ReopensNewIncident(t *testing.T) {
 	if err := st.UpdateMonitor(mid, okMon); err != nil {
 		t.Fatalf("UpdateMonitor to success failed: %v", err)
 	}
-	sched.CheckNow(mid, 0)
+	sched.CheckNow(context.Background(), mid, 0)
 
 	if err := st.UpdateMonitor(mid, failingMonitor("down-recover-down")); err != nil {
 		t.Fatalf("UpdateMonitor to failure failed: %v", err)
 	}
-	sched.CheckNow(mid, 0)
+	sched.CheckNow(context.Background(), mid, 0)
 
 	incidents, err := st.ListIncidents(mid, 100)
 	if err != nil {
@@ -203,7 +203,7 @@ func TestManualTickInterleaved_NoDuplicate(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			sched.CheckNow(mid, 0)
+			sched.CheckNow(context.Background(), mid, 0)
 		}()
 	}
 	for i := 0; i < tickN; i++ {

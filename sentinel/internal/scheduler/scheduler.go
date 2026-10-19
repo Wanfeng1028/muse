@@ -140,7 +140,7 @@ func (s *Scheduler) runOne(ctx context.Context, m store.Monitor, prevOk, hasPrev
 		return
 	}
 
-	c, retries := checker.CheckWithRetry(m, s.maxRetries)
+	c, retries := checker.CheckWithRetryCtx(ctx, m, s.maxRetries)
 	metrics.Default.RecordCheck(c.Ok == 1, c.LatencyMs, retries > 0)
 
 	if _, err := s.store.InsertCheck(c); err != nil {
@@ -151,7 +151,7 @@ func (s *Scheduler) runOne(ctx context.Context, m store.Monitor, prevOk, hasPrev
 }
 
 // CheckNow 同步执行一次检查（供 API 手动触发）。
-func (s *Scheduler) CheckNow(id int64, maxRetries int) (store.Check, error) {
+func (s *Scheduler) CheckNow(ctx context.Context, id int64, maxRetries int) (store.Check, error) {
 	m, err := s.store.GetMonitor(id)
 	if err != nil {
 		return store.Check{}, err
@@ -167,7 +167,7 @@ func (s *Scheduler) CheckNow(id int64, maxRetries int) (store.Check, error) {
 		prevOk = last.Ok == 1
 	}
 
-	c, retries := checker.CheckWithRetry(m, maxRetries)
+	c, retries := checker.CheckWithRetryCtx(ctx, m, maxRetries)
 	metrics.Default.RecordCheck(c.Ok == 1, c.LatencyMs, retries > 0)
 
 	if _, err := s.store.InsertCheck(c); err != nil {

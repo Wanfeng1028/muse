@@ -21,7 +21,7 @@ import (
 //
 //	s.RegisterSoulRoutes(mux)
 //
-// 注册的 14 条路由：
+// 注册的 15 条路由：
 //
 //	GET    /api/monitors/{id}/profile
 //	GET    /api/monitors/{id}/sla
@@ -33,6 +33,7 @@ import (
 //	DELETE /api/status-pages/{id}/monitors/{monitor_id}
 //	POST   /api/status-pages/auto
 //	PUT    /api/status-pages/{id}/theme
+//	POST   /api/status-pages/{id}/snapshot        下载单文件静态 HTML 快照
 //	GET    /api/status/{slug}          （公开，白名单已含 /api/status/ 前缀）
 //	POST   /api/status/{slug}/subscribe     （公开）
 //	GET    /api/status/{slug}/confirm       （公开）
@@ -50,6 +51,7 @@ func (s *Server) RegisterSoulRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/status-pages/{id}/monitors/{monitor_id}", s.handleRemovePageMonitor)
 	mux.HandleFunc("POST /api/status-pages/auto", s.handleAutoStatusPage)
 	mux.HandleFunc("PUT /api/status-pages/{id}/theme", s.handleUpdateStatusPageTheme)
+	mux.HandleFunc("POST /api/status-pages/{id}/snapshot", s.handleStatusPageSnapshot)
 
 	// 公开路由。
 	mux.HandleFunc("GET /api/status/{slug}", s.handlePublicStatus)

@@ -48,7 +48,7 @@ func TestManualAndTickConcurrent_DuplicateOpenIncident(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			_, _ = sched.CheckNow(m.ID, 0)
+			_, _ = sched.CheckNow(context.Background(), m.ID, 0)
 		}()
 	}
 	for i := 0; i < 20; i++ {

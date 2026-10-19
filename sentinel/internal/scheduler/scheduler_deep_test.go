@@ -309,7 +309,7 @@ func TestCheckNow_UnknownMonitor(t *testing.T) {
 	st := newTestStore(t)
 	s := New(st, nil, 2, 5, 0)
 
-	if _, err := s.CheckNow(999999, 0); err == nil {
+	if _, err := s.CheckNow(context.Background(), 999999, 0); err == nil {
 		t.Fatalf("expected error for unknown monitor, got nil")
 	}
 }

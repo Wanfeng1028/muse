@@ -19,14 +19,38 @@ type DayStat struct {
 
 // SLAReport 表示某个月的 SLA 报告。
 type SLAReport struct {
-	Month            string  `json:"month"`
-	UptimePct        float64 `json:"uptime_pct"`
-	TotalChecks      int     `json:"total_checks"`
-	DownIncidents    int     `json:"down_incidents"`
-	TotalDowntimeSec int64   `json:"total_downtime_sec"`
-	Target           float64 `json:"sla_target"`
-	Met              bool    `json:"met"`
+	Month            string         `json:"month"`
+	UptimePct        float64        `json:"uptime_pct"`
+	TotalChecks      int            `json:"total_checks"`
+	DownIncidents    int            `json:"down_incidents"`
+	TotalDowntimeSec int64          `json:"total_downtime_sec"`
+	Target           float64        `json:"sla_target"`
+	Met              bool           `json:"met"`
+	MTTRSec          float64        `json:"mttr_sec"`
+	Severity         SeverityCounts `json:"severity"`
+	OpenIncidents    int            `json:"open_incidents"`
 }
+
+// SeverityCounts 表示按单次事件宕机时长分级的计数。
+type SeverityCounts struct {
+	P1 int `json:"p1"`
+	P2 int `json:"p2"`
+	P3 int `json:"p3"`
+}
+
+// classifySeverity 按单次事件宕机秒数分级：
+// P1 严重 >= 1800 秒，P2 中等 >= 300 秒且 < 1800 秒，P3 轻微 < 300 秒。
+func classifySeverity(secs int64) int {
+	switch {
+	case secs >= 1800:
+		return 1
+	case secs >= 300:
+		return 2
+	default:
+		return 3
+	}
+}
+
 
 // StatusPage 表示一个状态页。
 type StatusPage struct {
@@ -203,6 +227,10 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 	now := time.Now().UTC()
 	var sumDown int64
 	var count int
+	var closedCount int
+	var closedSum int64
+	var severity SeverityCounts
+	var openCount int
 	for rows.Next() {
 		var startedAt string
 		var endedAt sql.NullString
@@ -213,12 +241,33 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 		count++
 		if downtime.Valid {
 			sumDown += downtime.Int64
+			closedCount++
+			closedSum += downtime.Int64
+			switch classifySeverity(downtime.Int64) {
+			case 1:
+				severity.P1++
+			case 2:
+				severity.P2++
+			default:
+				severity.P3++
+			}
 		} else {
 			// 未关闭：按 now - started_at 估算。
+			openCount++
 			if t, perr := time.Parse(time.RFC3339, startedAt); perr == nil {
 				secs := int64(now.Sub(t).Seconds())
 				if secs > 0 {
 					sumDown += secs
+					switch classifySeverity(secs) {
+					case 1:
+						severity.P1++
+					case 2:
+						severity.P2++
+					default:
+						severity.P3++
+					}
+				} else {
+					severity.P3++
 				}
 			}
 		}
@@ -228,9 +277,15 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 	}
 	report.DownIncidents = count
 	report.TotalDowntimeSec = sumDown
+	if closedCount > 0 {
+		report.MTTRSec = float64(closedSum) / float64(closedCount)
+	}
+	report.Severity = severity
+	report.OpenIncidents = openCount
 	report.Met = report.UptimePct >= report.Target
 	return report, nil
 }
+
 
 // CreateStatusPage 创建状态页，返回新 ID。
 func (s *Store) CreateStatusPage(tenantID int64, slug, title string) (int64, error) {

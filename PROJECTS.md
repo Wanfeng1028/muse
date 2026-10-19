@@ -357,6 +357,8 @@
 - Go 工具链升级后依赖复扫、`incidents.html` 模拟数据债（v0.7 未排期，继续挂账）
 
 - **深耕轮 2026-10-19 晚（已合入）**：Webhook 持久化队列重投（SQLite 队列表 + 指数退避 worker + 查询/手动重投 API）；sms_tencent 改动验证通过；新增 docs/SMS_TENCENT_GAP.md、docs/TECH_DEBT_GAP_incidents.md、config_sms_tencent_test.go。
+- **深耕轮 2026-10-19 夜（sentinel lane）**：① SLA 月报 v2——`MonthlySLA` 新增 `mttr_sec`（仅已关闭事件平均恢复时长）、`severity` 分级（P1>=30min/P2>=5min/P3<5min，未关闭按查询时刻估算参与分级）、`open_incidents`，旧字段语义不变，口径文档 `docs/SLA_METHOD.md`；② 状态页一键发布静态快照——`POST /api/status-pages/{id}/snapshot`（需鉴权）生成单文件 HTML 附件（内联 CSS、零外部资源、总览横幅+状态 pill+30 天可用性+90 天色条，深色主题透出），真实冒烟+截图 `docs/screenshots/snapshot-dark-20261019.png` 亲眼验收通过（去 AI 味）；③ 检查器 context 传播——`checker.CheckWithRetryCtx`（HTTP WithContext/TCP DialContext/退避可中断）+ `scheduler.runOne`/`CheckNow(ctx,...)` 接入（`handleCheckNow` 传 `r.Context()`），3 个中断边界测试；`go test ./...` 全绿（含 store/checker/scheduler -race）、handlers 142 通过；冒烟发现 `POST /api/monitors` 忽略 `is_public`（排期修）。CHANGELOG 0.8.3。
+
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 

@@ -2,6 +2,22 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.8.3] - 2026-10-19
+
+### 新增
+- SLA 月报 v2（`MonthlySLA`）：新增 `mttr_sec`（仅已关闭事件的平均恢复时长）、`severity`（按单事件宕机时长分级 P1>=30min/P2>=5min/P3<5min，未关闭事件按查询时刻估算参与分级）、`open_incidents`（区间内开始且仍未关闭的事件数）；旧字段语义不变。口径文档 `docs/SLA_METHOD.md`（uptime=检查成功占比、无检查记 100 的假设声明、downtime/open 估算、MTTR 定义域、分级阈值理由、UTC 归属）。
+- 状态页一键发布静态快照：`POST /api/status-pages/{id}/snapshot`（需鉴权），生成单文件 HTML（内联 CSS、零外部资源）作为附件下载，含总览横幅（全部正常/N 个服务异常/部分未知）、每 monitor 状态 pill + 30 天可用性 + 最近检查/延迟 + 90 天每日可用性色条；深色主题与 accent_color 透出；全部文本转义。
+- 检查器 context 传播：`checker.CheckWithRetryCtx(ctx, ...)`（HTTP `req.WithContext`、TCP `DialContext`、退避等待可被 ctx 中断、首次 attempt 前取消返回 Ok=0 的 Check）；`CheckWithRetry` 改为薄封装，语义不变；`scheduler.runOne` 与 `Scheduler.CheckNow(ctx, ...)` 接入 ctx（`handleCheckNow` 传 `r.Context()`）。
+
+### 实测
+- `go test ./...` 全绿（含 -race：store/checker/scheduler）；handlers 142 测试通过。
+- 真实服务冒烟：18231 端口起服，2 监控（1 up/1 down）各 CheckNow 3 次 → 状态页快照 200、180 个 data-day 条、Content-Disposition 附件、body 零 http(s):// 外部引用；截图 `docs/screenshots/snapshot-dark-20261019.png` 亲眼验收通过（深色主题、双 pill、色条正常、无 AI 味）。
+- ctx 中断实测：3s sleep 目标在 100ms/200ms 取消后均 2.5s 内返回；完整退避 15.5s 被中断到 <5s。
+
+### 已知限制
+- `POST /api/monitors` 创建时忽略 `is_public`（冒烟中发现：新建监控 is_public 恒为 0，需 `PUT /api/monitors/{id}/public` 或显式 attach 到状态页；排期后续修）。
+- 快照为下载附件形态，未做服务端持久化/定时生成（排期后续）。
+
 ## [0.8.2] - 2026-10-19
 
 ### 修复

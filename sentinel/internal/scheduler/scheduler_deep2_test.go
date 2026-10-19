@@ -34,7 +34,7 @@ func TestDeep2_CheckNow_KnownMonitorNoLastCheck(t *testing.T) {
 	}
 	s := New(st, fn, 2, 5, 0)
 
-	c, err := s.CheckNow(m.ID, 0)
+	c, err := s.CheckNow(context.Background(), m.ID, 0)
 	if err != nil {
 		t.Fatalf("CheckNow failed: %v", err)
 	}
@@ -67,10 +67,10 @@ func TestDeep2_CheckNow_SecondCallHasHistory(t *testing.T) {
 
 	s := New(st, nil, 2, 5, 0)
 
-	if _, err := s.CheckNow(m.ID, 0); err != nil {
+	if _, err := s.CheckNow(context.Background(), m.ID, 0); err != nil {
 		t.Fatalf("first CheckNow failed: %v", err)
 	}
-	if _, err := s.CheckNow(m.ID, 0); err != nil {
+	if _, err := s.CheckNow(context.Background(), m.ID, 0); err != nil {
 		t.Fatalf("second CheckNow failed: %v", err)
 	}
 

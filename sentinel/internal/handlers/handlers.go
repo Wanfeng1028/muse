@@ -599,7 +599,7 @@ func (s *Server) handleCheckNow(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, "读取监控失败")
 		return
 	}
-	c, err := s.sched.CheckNow(id, s.checkRetries)
+	c, err := s.sched.CheckNow(r.Context(), id, s.checkRetries)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
