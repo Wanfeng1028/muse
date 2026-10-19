@@ -118,6 +118,29 @@
     <h4 class="mt-3" data-i18n="review.history">审核历史</h4>
     <ul class="timeline" id="historyList"></ul>
 
+    <h4 class="mt-3" data-i18n="review.continuity">分镜连续性检查</h4>
+    <div id="continuitySection">
+      <div class="text-secondary mb-2" id="continuitySummary"></div>
+      <div class="table-responsive" id="continuityTableWrap">
+        <table class="table table-vcenter card-table">
+          <thead>
+            <tr>
+              <th data-i18n="review.continuityShot">镜号</th>
+              <th data-i18n="review.continuitySeverity">级别</th>
+              <th data-i18n="review.continuityRule">规则</th>
+              <th data-i18n="review.continuityIssue">问题</th>
+              <th data-i18n="review.continuitySuggestion">建议</th>
+            </tr>
+          </thead>
+          <tbody id="continuityBody"></tbody>
+        </table>
+      </div>
+      <div class="state-empty is-hidden" id="continuityEmpty">
+        <i data-lucide="check-circle"></i>
+        <span data-i18n="review.continuityNone">未发现连续性问题</span>
+      </div>
+    </div>
+
     <div class="mb-3 mt-3">
       <label class="form-label" for="commentInput" data-i18n="review.comment">意见</label>
       <textarea id="commentInput" class="form-control" rows="3" data-i18n-ph="review.commentPh" placeholder="审核意见 / 驳回原因"></textarea>

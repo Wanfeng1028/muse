@@ -5,6 +5,8 @@ import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.Episode;
 import com.dramafactory.repository.EpisodeRepository;
 import com.dramafactory.service.ReviewService;
+import com.dramafactory.service.ScriptSplitterService;
+import com.dramafactory.service.ShotContinuityChecker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,16 +41,20 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final EpisodeRepository episodeRepository;
+    private final ScriptSplitterService scriptSplitterService;
 
     /**
      * 构造器注入。
      *
      * @param reviewService     审核流核心服务
      * @param episodeRepository 剧集仓储，仅用于校验 path 归属
+     * @param scriptSplitterService 分镜拆分服务（含连续性检查入口）
      */
-    public ReviewController(ReviewService reviewService, EpisodeRepository episodeRepository) {
+    public ReviewController(ReviewService reviewService, EpisodeRepository episodeRepository,
+                            ScriptSplitterService scriptSplitterService) {
         this.reviewService = reviewService;
         this.episodeRepository = episodeRepository;
+        this.scriptSplitterService = scriptSplitterService;
     }
 
     /**
@@ -215,6 +222,36 @@ public class ReviewController {
     }
 
     /**
+     * 分镜连续性检查报告（只读，不影响审核状态机）。
+     * 校验器异常时降级返回空报告，不许抛错影响审核页加载。
+     *
+     * @param projectId 项目 ID
+     * @param episodeId 剧集 ID
+     * @return 连续性报告 DTO
+     */
+    @GetMapping("/continuity")
+    @Operation(summary = "分镜连续性检查报告")
+    public ContinuityReportDto continuity(@Parameter(description = "项目主键") @PathVariable Long projectId,
+                                          @Parameter(description = "剧集主键") @PathVariable Long episodeId) {
+        assertEpisodeBelongsToProject(projectId, episodeId);
+        ShotContinuityChecker.ContinuityReport report;
+        try {
+            report = scriptSplitterService.checkContinuity(episodeId);
+        } catch (Exception e) {
+            log.warn("连续性检查失败，降级返回空报告：episodeId={}", episodeId, e);
+            return new ContinuityReportDto(0, false, List.of());
+        }
+        List<ContinuityIssueDto> issues = new ArrayList<>();
+        if (report.issues() != null) {
+            for (ShotContinuityChecker.ContinuityIssue i : report.issues()) {
+                issues.add(new ContinuityIssueDto(i.shotNo(), i.shotId(), i.rule(),
+                        i.severity().name(), i.severity().getLabel(), i.message(), i.suggestion()));
+            }
+        }
+        return new ContinuityReportDto(report.shotsChecked(), report.hasWarnings(), issues);
+    }
+
+    /**
      * 校验 path 里的 projectId 与 episode 归属一致；不一致按资源不存在处理。
      * 归属他人的检查交给 ReviewService 的 requireOwner（ForbiddenException，映射为 403）。
      *
@@ -247,5 +284,31 @@ public class ReviewController {
      */
     public record ReviewActionRequest(@NotNull(message = "version 不能为空") Integer version,
                                       String comment) {
+    }
+
+    /**
+     * 连续性问题 DTO。
+     *
+     * @param shotNo        镜号
+     * @param shotId        分镜 ID
+     * @param rule          规则名
+     * @param severity      严重级别：WARN/INFO
+     * @param severityLabel 严重级别中文标签
+     * @param message       问题描述
+     * @param suggestion    修改建议
+     */
+    public record ContinuityIssueDto(int shotNo, Long shotId, String rule, String severity,
+                                     String severityLabel, String message, String suggestion) {
+    }
+
+    /**
+     * 连续性报告 DTO。
+     *
+     * @param shotsChecked 已检查的分镜数
+     * @param hasWarnings  是否包含警告级别问题
+     * @param issues       问题列表
+     */
+    public record ContinuityReportDto(int shotsChecked, boolean hasWarnings,
+                                       List<ContinuityIssueDto> issues) {
     }
 }

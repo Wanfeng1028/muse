@@ -64,7 +64,19 @@
     'review.noData': { 'zh-CN': '（无）', en: '(none)' },
     'review.noProject': { 'zh-CN': '没有项目', en: 'No project' },
     'review.pickEpisode': { 'zh-CN': '请选择剧集', en: 'Pick an episode' },
-    'review.noEpisode': { 'zh-CN': '没有剧集', en: 'No episodes' }
+    'review.noEpisode': { 'zh-CN': '没有剧集', en: 'No episodes' },
+    'review.continuity': { 'zh-CN': '分镜连续性检查', en: 'Shot continuity check' },
+    'review.continuityShot': { 'zh-CN': '镜号', en: 'Shot' },
+    'review.continuitySeverity': { 'zh-CN': '级别', en: 'Severity' },
+    'review.continuityRule': { 'zh-CN': '规则', en: 'Rule' },
+    'review.continuityIssue': { 'zh-CN': '问题', en: 'Issue' },
+    'review.continuitySuggestion': { 'zh-CN': '建议', en: 'Suggestion' },
+    'review.continuityNone': { 'zh-CN': '未发现连续性问题', en: 'No continuity issues found' },
+    'review.continuityChecked': { 'zh-CN': '已检查', en: 'Checked' },
+    'review.continuityShotsUnit': { 'zh-CN': '镜', en: 'shots' },
+    'review.continuityIssuesUnit': { 'zh-CN': '个问题', en: 'issues' },
+    'review.sevWarn': { 'zh-CN': '警告', en: 'Warning' },
+    'review.sevInfo': { 'zh-CN': '提示', en: 'Info' }
   };
 
   if (window.DFI18N) DFI18N.register(PAGE_I18N);
@@ -289,7 +301,8 @@
     try {
       var results = await Promise.all([
         api(base + '/review?kind=' + encodeURIComponent(kind)),
-        api(base + '/review/history?kind=' + encodeURIComponent(kind) + '&page=0&size=50')
+        api(base + '/review/history?kind=' + encodeURIComponent(kind) + '&page=0&size=50'),
+        api(base + '/review/continuity').catch(function () { return null; })
       ]);
       var info = results[0] || {};
       var history = results[1] || [];
@@ -339,6 +352,8 @@
         });
       }
 
+      renderContinuity(results[2]);
+
       document.getElementById('commentInput').value = info.lastComment || '';
 
       renderActions(kind, info.status);
@@ -349,6 +364,49 @@
         showToast(err.message || _t('review.loadFailed', '加载失败'));
       }
     }
+  }
+
+  function severityPill(sev, sevLabel) {
+    var text = sevLabel || (sev === 'WARN' ? _t('review.sevWarn', '警告') : _t('review.sevInfo', '提示'));
+    var cls = sev === 'WARN' ? 'sp-amber' : 'sp-gray';
+    return '<span class="status-pill ' + cls + '">' + escapeHtml(text) + '</span>';
+  }
+
+  function renderContinuity(report) {
+    var section = document.getElementById('continuitySection');
+    if (!section) return;
+    var summary = document.getElementById('continuitySummary');
+    var wrap = document.getElementById('continuityTableWrap');
+    var body = document.getElementById('continuityBody');
+    var empty = document.getElementById('continuityEmpty');
+    if (!report) { section.classList.add('is-hidden'); return; }
+    section.classList.remove('is-hidden');
+    var issues = report.issues || [];
+    var checked = report.shotsChecked != null ? report.shotsChecked : 0;
+    summary.textContent = _t('review.continuityChecked', '已检查') + ' ' + checked + ' ' +
+      _t('review.continuityShotsUnit', '镜') + ' · ' + issues.length + ' ' +
+      _t('review.continuityIssuesUnit', '个问题');
+    body.innerHTML = '';
+    if (!issues.length) {
+      wrap.classList.add('is-hidden');
+      empty.classList.remove('is-hidden');
+      if (window.lucide) lucide.createIcons();
+      applyI18nTo(empty);
+      return;
+    }
+    wrap.classList.remove('is-hidden');
+    empty.classList.add('is-hidden');
+    issues.forEach(function (it) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + escapeHtml(it.shotNo != null ? it.shotNo : '') + '</td>' +
+        '<td>' + severityPill(it.severity, it.severityLabel) + '</td>' +
+        '<td>' + escapeHtml(it.rule || '') + '</td>' +
+        '<td>' + escapeHtml(it.message || '') + '</td>' +
+        '<td>' + escapeHtml(it.suggestion || '') + '</td>';
+      body.appendChild(tr);
+    });
+    applyI18nTo(section);
   }
 
   function renderActions(kind, status) {
