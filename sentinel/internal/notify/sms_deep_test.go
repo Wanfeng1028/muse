@@ -1,6 +1,7 @@
 package notify
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -306,7 +307,7 @@ func TestSmsDeepAliyunSendNetworkErrorRetries(t *testing.T) {
 
 	var mu sync.Mutex
 	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		hits++
 		mu.Unlock()
@@ -319,7 +320,7 @@ func TestSmsDeepAliyunSendNetworkErrorRetries(t *testing.T) {
 		AccessKeySecret: "secret",
 		SignName:        "sign",
 		TemplateCode:    "SMS_1",
-		Endpoint:        strings.TrimPrefix(srv.URL, "http://"),
+		Endpoint:        strings.TrimPrefix(srv.URL, "https://"),
 		HTTPClient:      srv.Client(),
 	}
 	s, err := NewAliyunSMSSender(cfg)
@@ -355,7 +356,7 @@ func TestSmsDeepAliyunSendProbeTimeout(t *testing.T) {
 	var mu sync.Mutex
 	var hits int
 	release := make(chan struct{})
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		hits++
 		mu.Unlock()
@@ -370,8 +371,8 @@ func TestSmsDeepAliyunSendProbeTimeout(t *testing.T) {
 		AccessKeySecret: "secret",
 		SignName:        "sign",
 		TemplateCode:    "SMS_1",
-		Endpoint:        strings.TrimPrefix(srv.URL, "http://"),
-		HTTPClient:      &http.Client{Timeout: 300 * time.Millisecond},
+		Endpoint:        strings.TrimPrefix(srv.URL, "https://"),
+		HTTPClient:      &http.Client{Timeout: 300 * time.Millisecond, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}},
 	}
 	s, err := NewAliyunSMSSender(cfg)
 	if err != nil {
