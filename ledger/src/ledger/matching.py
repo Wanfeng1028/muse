@@ -309,6 +309,127 @@ def detect_transfer_pair(
     return pairs
 
 
+def detect_transfer_pair_cross_batch(
+    new_items: list[dict],
+    old_items: list[dict],
+    account_names: dict[int, str],
+    abs_tol_cents: int = 100,
+    pct_tol: float = 1,
+    date_window_days: int = 3,
+) -> list[tuple[int, int]]:
+    """跨批次转账配对：new_items 与 old_items 之间做一出一入的配对。
+
+    new_items 为当前批次条目，old_items 为其他批次候选条目（调用方已过滤为
+    未配对、未认领）。两者 dict 形状与 detect_transfer_pair 的 items 完全一致。
+
+    只生成跨批次配对：
+      - new 的 out 配 old 的 in；
+      - new 的 in 配 old 的 out；
+      - new-new 与 old-old 之间绝不配对。
+
+    每个条目最多用一次（new 侧与 old 侧各自全局互斥）。贪心顺序：先处理
+    new 的 out（按 id 升序），再处理 new 的 in（按 id 升序）；每个 new 条目在
+    old 侧按 id 升序取第一个满足条件的候选。
+
+    配对条件与 detect_transfer_pair 完全一致：方向相反、amount_within 金额
+    容差、within_date_window 日期窗口、至少一方 counterparty 经 detect_transfer
+    能对上任一自有账户名。
+
+    返回 [(out_id, in_id), ...]，out 在前；当 new 的 in 配 old 的 out 时，
+    元组为 (old_out_id, new_in_id)。
+    """
+    if not new_items or not old_items:
+        return []
+
+    new_outs = sorted(
+        (item for item in new_items if (item.get("direction") or "") == "out"),
+        key=lambda item: int(item["id"]),
+    )
+    new_ins = sorted(
+        (item for item in new_items if (item.get("direction") or "") == "in"),
+        key=lambda item: int(item["id"]),
+    )
+    old_ins = sorted(
+        (item for item in old_items if (item.get("direction") or "") == "in"),
+        key=lambda item: int(item["id"]),
+    )
+    old_outs = sorted(
+        (item for item in old_items if (item.get("direction") or "") == "out"),
+        key=lambda item: int(item["id"]),
+    )
+
+    used_new: set[int] = set()
+    used_old: set[int] = set()
+    pairs: list[tuple[int, int]] = []
+
+    # new 的 out 配 old 的 in
+    for new_out in new_outs:
+        new_out_id = int(new_out["id"])
+        if new_out_id in used_new:
+            continue
+        for old_in in old_ins:
+            old_in_id = int(old_in["id"])
+            if old_in_id in used_old:
+                continue
+            if not amount_within(
+                int(new_out["amount_cents"]),
+                int(old_in["amount_cents"]),
+                abs_tol_cents,
+                pct_tol,
+            ):
+                continue
+            if not within_date_window(
+                str(new_out["occurred_on"]),
+                str(old_in["occurred_on"]),
+                date_window_days,
+            ):
+                continue
+            if (
+                detect_transfer(str(new_out.get("counterparty") or ""), account_names) is None
+                and detect_transfer(str(old_in.get("counterparty") or ""), account_names) is None
+            ):
+                continue
+            used_new.add(new_out_id)
+            used_old.add(old_in_id)
+            pairs.append((new_out_id, old_in_id))
+            break
+
+    # new 的 in 配 old 的 out
+    for new_in in new_ins:
+        new_in_id = int(new_in["id"])
+        if new_in_id in used_new:
+            continue
+        for old_out in old_outs:
+            old_out_id = int(old_out["id"])
+            if old_out_id in used_old:
+                continue
+            if not amount_within(
+                int(old_out["amount_cents"]),
+                int(new_in["amount_cents"]),
+                abs_tol_cents,
+                pct_tol,
+            ):
+                continue
+            if not within_date_window(
+                str(old_out["occurred_on"]),
+                str(new_in["occurred_on"]),
+                date_window_days,
+            ):
+                continue
+            if (
+                detect_transfer(str(old_out.get("counterparty") or ""), account_names) is None
+                and detect_transfer(str(new_in.get("counterparty") or ""), account_names) is None
+            ):
+                continue
+            used_new.add(new_in_id)
+            used_old.add(old_out_id)
+            pairs.append((old_out_id, new_in_id))
+            break
+
+    return pairs
+
+
+
 def compile_rule_pattern(pattern: str):
     """编译用户正则，失败或不安全返回 None（调用方跳过该规则，绝不抛异常）。
 

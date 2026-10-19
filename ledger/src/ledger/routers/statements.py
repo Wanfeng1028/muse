@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import time
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import delete, func, select
@@ -916,6 +917,64 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
         pair_ids.add(out_id)
         pair_ids.add(in_id)
 
+    # 跨批次转账配对：仅使用本批次未被同批次配对占用的条目（new_left），
+    # 与其他批次中 status=="pending" 且 suggested_action=="transfer" 的候选条目配对。
+    # 幂等性：重复 confirm 同一批次时 items 为空（status 已非 preview），
+    # new_left 为空，直接跳过，老条目上的 transfer-pair-xbatch 标记保持不变。
+    cross_ids: set[int] = set()
+    old_input: list[dict] = []
+    old_obj_by_id: dict[int, StatementItem] = {}
+    new_left = [d for d in pair_input if d["id"] not in pair_ids]
+    if new_left:
+        # 本批次条目日期范围，按 TRANSFER_PAIR_DATE_WINDOW_DAYS 构造候选窗口
+        dates = [d["occurred_on"] for d in new_left]
+        lo_date = date.fromisoformat(min(dates)) - timedelta(days=TRANSFER_PAIR_DATE_WINDOW_DAYS)
+        hi_date = date.fromisoformat(max(dates)) + timedelta(days=TRANSFER_PAIR_DATE_WINDOW_DAYS)
+        lo_bound = lo_date.isoformat()
+        hi_bound = hi_date.isoformat()
+        # 候选窗口约束：禁止全表扫 statement_items
+        stmt = (
+            select(StatementItem)
+            .where(
+                StatementItem.batch_id != batch_id,
+                StatementItem.status == "pending",
+                StatementItem.suggested_action == "transfer",
+                StatementItem.match_source.notin_(["transfer-pair", "transfer-pair-xbatch"]),
+                StatementItem.occurred_on >= lo_bound,
+                StatementItem.occurred_on <= hi_bound,
+            )
+        )
+        old_items = (await session.execute(stmt)).scalars().all()
+        for obj in old_items:
+            old_obj_by_id[obj.id] = obj
+            old_input.append(
+                {
+                    "id": obj.id,
+                    "occurred_on": obj.occurred_on,
+                    "amount_cents": obj.amount_cents,
+                    "direction": obj.direction,
+                    "counterparty": obj.counterparty or "",
+                }
+            )
+        cross_pairs = matching.detect_transfer_pair_cross_batch(
+            new_left,
+            old_input,
+            account_names,
+            TRANSFER_PAIR_ABS_TOL_CENTS,
+            TRANSFER_PAIR_PCT_TOL,
+            TRANSFER_PAIR_DATE_WINDOW_DAYS,
+        )
+        for out_id, in_id in cross_pairs:
+            cross_ids.add(out_id)
+            cross_ids.add(in_id)
+        # 命中跨批次配对的老条目：只改 match_source 与 confidence，status 保持 pending 不动
+        for old_id in cross_ids:
+            if old_id in old_obj_by_id:
+                obj = old_obj_by_id[old_id]
+                obj.match_source = "transfer-pair-xbatch"
+                obj.confidence = 90
+
+
     for item in items:
         # 重复指纹
         if item.fingerprint in all_fps or item.fingerprint in batch_fps:
@@ -936,8 +995,12 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
             if item.id in pair_ids:
                 item.match_source = "transfer-pair"
                 item.confidence = 90
+            elif item.id in cross_ids:
+                item.match_source = "transfer-pair-xbatch"
+                item.confidence = 90
             else:
                 item.match_source = "none"
+
             pending_count += 1
             continue
 
