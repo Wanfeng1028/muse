@@ -290,7 +290,7 @@ describe('cross-user 404 oracle deep isolation', () => {
       method: 'POST',
       url: '/api/focus',
       headers: { cookie: cookieA },
-      payload: { minutes: 60, startedAt: '2025-04-03' },
+      payload: { subject: 'math', minutes: 60, startedAt: '2025-04-03' },
     });
     expect(focusRes.statusCode).toBe(201);
 
@@ -355,7 +355,7 @@ describe('cross-user 404 oracle deep isolation', () => {
       method: 'POST',
       url: '/api/focus',
       headers: { cookie: cookieA },
-      payload: { minutes: 60, startedAt: '2025-05-01' },
+      payload: { subject: 'math', minutes: 60, startedAt: '2025-05-01' },
     });
     expect(focusRes.statusCode).toBe(201);
 

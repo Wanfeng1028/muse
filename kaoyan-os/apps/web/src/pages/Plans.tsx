@@ -5,6 +5,7 @@ import {
   type SubjectKey,
   type Plan,
   type PlanSummary,
+  type PlanProgress,
   type AutoScheduleInput,
   type AutoScheduleItem,
   type AutoScheduleResult,
@@ -376,6 +377,11 @@ export default function Plans() {
         <div className="list plans-list">
           {plans.map((plan) => {
             const s = subjectMap[plan.subject];
+            const actual =
+              summary?.plans?.find((p) => p.id === plan.id)?.actualMinutes ?? 0;
+            const planned = plan.plannedMinutes;
+            const pct =
+              planned > 0 ? Math.min(100, Math.round((actual / planned) * 100)) : 0;
             return (
               <div className="list-item plans-list-item" key={plan.id}>
                 <div className="plans-item-main">
@@ -407,6 +413,17 @@ export default function Plans() {
                   >
                     删除
                   </button>
+                </div>
+                <div className="plans-item-progress">
+                  <span className="stat-label">
+                    已专注 {actual} / {planned} 分钟
+                  </span>
+                  <div className="progress">
+                    <div
+                      className="progress-bar"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             );

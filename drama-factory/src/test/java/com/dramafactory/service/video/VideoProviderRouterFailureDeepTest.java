@@ -62,6 +62,7 @@ class VideoProviderRouterFailureDeepTest {
         }
 
         FakeVideoProvider succeedWith(String taskId) {
+            this.submitError = null;
             this.submitResult = taskId;
             return this;
         }
@@ -314,11 +315,12 @@ class VideoProviderRouterFailureDeepTest {
         CircuitBreaker cb = cbRegistry.circuitBreaker("agnes");
         assertThat(cb.getState()).isEqualTo(CircuitBreaker.State.OPEN);
 
-        // 等待进入 HALF_OPEN
+        // Resilience4j 熔断器是惰性转移：waitDuration 过后状态仍为 OPEN，
+        // 下一次调用时才进入 HALF_OPEN 并放行试探调用
         Thread.sleep(400);
-        assertThat(cb.getState()).isEqualTo(CircuitBreaker.State.HALF_OPEN);
+        assertThat(cb.getState()).isEqualTo(CircuitBreaker.State.OPEN);
 
-        // 放行成功调用
+        // 放行成功调用：触发 HALF_OPEN 试探，成功后回到 CLOSED
         raw.succeedWith("recovered-task");
         String taskId = provider.submit(null, 5);
         assertThat(taskId).isEqualTo("recovered-task");

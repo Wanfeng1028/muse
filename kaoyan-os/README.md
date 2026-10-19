@@ -13,7 +13,7 @@
 | 模块 | 说明 |
 | --- | --- |
 | 复习计划排程 | 按科目与阶段编排任务，跟踪每日/每周完成情况 |
-| 番茄专注计时 | 专注会话记录，累计有效学习时长并回流到仪表盘 |
+| 番茄专注计时 | 专注会话记录，累计有效学习时长并回流到仪表盘；可关联今日复习计划，计划页显示每条计划的"已专注/计划分钟"达成率进度条 |
 | 错题本 | 按科目/知识点归档错题，记录错因与重做状态 |
 | 单词 SRS | 基于 SM-2 简化算法的间隔重复调度，管理复习队列与到期词 |
 | 真题计时与得分统计 | 套卷计时、按题型/科目录入得分，输出趋势统计与本阶段汇总（场次/平均分/得分率/最高分/进步幅度） |
@@ -180,8 +180,8 @@ docker run -d \
 | 分组 | 主要端点 | 说明 |
 | --- | --- | --- |
 | health | `GET /api/health` | 服务健康检查 |
-| plans | `GET/POST /api/plans`，`PATCH/DELETE /api/plans/:id` | 复习计划增删改查与完成状态 |
-| focus | `GET/POST /api/focus` | 番茄专注会话记录与统计 |
+| plans | `GET/POST /api/plans`，`PATCH/DELETE /api/plans/:id`，`GET /api/plans/summary` | 复习计划增删改查与完成状态；summary 返回逐计划 actualMinutes（关联专注分钟和） |
+| focus | `GET/POST /api/focus`（POST 可选 planId 关联计划） | 番茄专注会话记录与统计 |
 | mistakes | `GET/POST /api/mistakes`，`PATCH/DELETE /api/mistakes/:id`，`GET /api/mistakes/summary` | 错题归档、错因与重做状态、掌握率汇总 |
 | words | `GET/POST /api/words`，`POST /api/words/:id/review` | 词条管理与 SRS 复习结果提交 |
 | exams | `GET/POST /api/exams`，`GET /api/exams/trend`，`GET /api/exams/summary`，`GET /api/exams/export` | 真题计时记录、得分率趋势、本阶段汇总统计与 CSV 导出 |

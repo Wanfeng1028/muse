@@ -152,7 +152,7 @@ class CinematographyVocabularyDeepTest {
         textures.add("  暖光  ");
         textures.add(null);
         textures.add("   ");
-        String prompt = vocab.buildShotPrompt("特写", "推镜", "  主角的脸  ", textures, "柔光", "  noir  ");
+        String prompt = vocab.buildShotPrompt("特写", "推镜头", "  主角的脸  ", textures, "柔光", "  noir  ");
         assertThat(prompt).startsWith("close-up. push-in. 主角的脸, 暖光");
         assertThat(prompt).contains("Style: noir");
         assertThat(prompt).doesNotContain("null");

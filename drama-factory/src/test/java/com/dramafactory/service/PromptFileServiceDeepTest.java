@@ -60,7 +60,7 @@ class PromptFileServiceDeepTest {
 
     @Test
     void 非法文件名不被识别_不进入缓存(@TempDir Path tmp) throws Exception {
-        Files.writeString(tmp.resolve("9bad-name.md"), md("9bad-name", "数字开头"));
+        Files.writeString(tmp.resolve("-bad.md"), md("-bad", "横杠开头（首字符不在 [a-zA-Z0-9]）"));
         Files.writeString(tmp.resolve("bad name.md"), md("bad name", "空格"));
         Files.writeString(tmp.resolve("noext"), md("noext", "无扩展名"));
         Files.writeString(tmp.resolve("valid.md"), md("valid", "合法"));
@@ -70,7 +70,7 @@ class PromptFileServiceDeepTest {
 
         Set<String> names = service.names();
         assertThat(names).contains("valid");
-        assertThat(names).doesNotContain("9bad-name", "bad name", "noext");
+        assertThat(names).doesNotContain("-bad", "bad name", "noext");
     }
 
     @Test
@@ -248,7 +248,7 @@ class PromptFileServiceDeepTest {
 
         String rendered = service.render("bigvar", Map.of("v", "OK"));
         assertThat(rendered).doesNotContain("{{v}}");
-        assertThat(rendered.split("\n", -1).length).isEqualTo(lines + 1);
+        assertThat(rendered.split("\n", -1).length).isEqualTo(lines); // parse 已 strip 结尾空白，无尾随换行
         assertThat(rendered).startsWith("x=OK\n");
     }
 

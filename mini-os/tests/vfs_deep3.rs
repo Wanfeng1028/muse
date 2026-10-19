@@ -165,20 +165,21 @@ async fn create_parent_of_other_user_404() {
 }
 
 #[tokio::test]
-async fn create_duplicate_name_same_dir_201_documents() {
+async fn create_duplicate_name_same_dir_409() {
+    // 2026-10-19：同级同名不再允许，第二个创建返回 409。
     let (app, admin, _editor) = setup().await;
     let payload = serde_json::json!({"name": "dup.txt", "kind": "file"});
     let r1 = api(&app, &admin, "POST", "/api/fs", Some(payload.clone())).await;
     assert_eq!(r1.status(), StatusCode::CREATED);
-    let n1 = read_json(r1).await;
-    let id1 = n1.get("id").and_then(|v| v.as_i64()).unwrap();
 
     let r2 = api(&app, &admin, "POST", "/api/fs", Some(payload)).await;
-    assert_eq!(r2.status(), StatusCode::CREATED);
-    let n2 = read_json(r2).await;
-    let id2 = n2.get("id").and_then(|v| v.as_i64()).unwrap();
-    assert_ne!(id1, id2);
-    assert_eq!(n2.get("name").and_then(|v| v.as_str()).unwrap(), "dup.txt");
+    assert_eq!(r2.status(), StatusCode::CONFLICT);
+    let body = read_json(r2).await;
+    let msg = body.get("error").and_then(|v| v.as_str()).unwrap_or("");
+    assert!(
+        msg.contains("同名"),
+        "error should mention 同名, got: {msg}"
+    );
 }
 
 #[tokio::test]
@@ -654,13 +655,13 @@ async fn list_order_folders_first_then_alpha() {
     )
     .await;
     assert_eq!(r.status(), StatusCode::CREATED);
-    // 建 file "a"
+    // 建 file "c"（2026-10-19 起文件与文件夹同名互斥，改用 c 保序）
     let r = api(
         &app,
         &admin,
         "POST",
         "/api/fs",
-        Some(serde_json::json!({"name": "a", "kind": "file"})),
+        Some(serde_json::json!({"name": "c", "kind": "file"})),
     )
     .await;
     assert_eq!(r.status(), StatusCode::CREATED);
@@ -679,12 +680,12 @@ async fn list_order_folders_first_then_alpha() {
         items[1].get("kind").and_then(|v| v.as_str()).unwrap(),
         "file"
     );
-    assert_eq!(items[1].get("name").and_then(|v| v.as_str()).unwrap(), "a");
+    assert_eq!(items[1].get("name").and_then(|v| v.as_str()).unwrap(), "b");
     assert_eq!(
         items[2].get("kind").and_then(|v| v.as_str()).unwrap(),
         "file"
     );
-    assert_eq!(items[2].get("name").and_then(|v| v.as_str()).unwrap(), "b");
+    assert_eq!(items[2].get("name").and_then(|v| v.as_str()).unwrap(), "c");
 }
 
 #[tokio::test]

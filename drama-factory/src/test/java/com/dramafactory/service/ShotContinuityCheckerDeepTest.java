@@ -98,24 +98,26 @@ class ShotContinuityCheckerDeepTest {
     @Test
     void shotSizeJumpAcrossThreeRanksDetectedAsWarnWithSortedIssueOrder() {
         List<Shot> shots = new ArrayList<>();
-        shots.add(shot(3, ShotSize.YUAN_JING, CameraMove.GU_DING, "远景", "", ""));
+        shots.add(shot(2, ShotSize.YUAN_JING, CameraMove.GU_DING, "远景", "", ""));
         shots.add(shot(1, ShotSize.TE_XIE, CameraMove.GU_DING, "特写", "", ""));
-        shots.add(shot(2, ShotSize.ZHONG_JING, CameraMove.GU_DING, "中景", "", ""));
+        shots.add(shot(4, ShotSize.YUAN_JING, CameraMove.GU_DING, "远景2", "", ""));
+        shots.add(shot(3, ShotSize.TE_XIE, CameraMove.GU_DING, "特写2", "", ""));
 
         ShotContinuityChecker.ContinuityReport report = checker.check(shots);
 
         List<ShotContinuityChecker.ContinuityIssue> hits = issuesByRule(report, "SHOT_SIZE_JUMP");
-        assertThat(hits).hasSize(1);
-        assertThat(hits.get(0).severity()).isEqualTo(ShotContinuityChecker.Severity.WARN);
-        assertThat(hits.get(0).shotNo()).isEqualTo(2);
-        assertThat(report.shotsChecked()).isEqualTo(3);
-        // 排序后：1(特写) -> 2(中景) diff=2 不报；2(中景) -> 3(远景) diff=1 不报；实际只有 1->3 会跳
-        // 真实排序结果：1 特写(0) -> 2 中景(2) diff=2 不报，2 中景(2) -> 3 远景(4) diff=2 不报
-        // 因此上面已断言只有一个，这里额外验证 issue 列表按 shotNo 升序
+        assertThat(hits).hasSize(3);
+        assertThat(hits).allMatch(i -> i.severity() == ShotContinuityChecker.Severity.WARN);
+        assertThat(hits).extracting(ShotContinuityChecker.ContinuityIssue::shotNo)
+                .containsExactly(2, 3, 4);
+        assertThat(report.shotsChecked()).isEqualTo(4);
+        // issue 列表整体按 shotNo 升序
         List<ShotContinuityChecker.ContinuityIssue> all = report.issues();
         for (int i = 0; i + 1 < all.size(); i++) {
             assertThat(all.get(i).shotNo()).isLessThanOrEqualTo(all.get(i + 1).shotNo());
         }
+        // 景别交替变化，不触发单调
+        assertThat(issuesByRule(report, "MONOTONOUS_RUN")).isEmpty();
     }
 
     @Test
@@ -202,7 +204,7 @@ class ShotContinuityCheckerDeepTest {
     @Test
     void nullShotNoEntriesSortedLastAndDoNotBreakReport() {
         List<Shot> shots = new ArrayList<>();
-        shots.add(shot(null, ShotSize.ZHONG_JING, CameraMove.GU_DING, "no-no", "", ""));
+        shots.add(shot(null, ShotSize.YUAN_JING, CameraMove.GU_DING, "no-no", "", ""));
         shots.add(shot(1, ShotSize.ZHONG_JING, CameraMove.GU_DING, "a", "", ""));
         shots.add(shot(2, ShotSize.ZHONG_JING, CameraMove.GU_DING, "b", "", ""));
 
@@ -261,7 +263,7 @@ class ShotContinuityCheckerDeepTest {
 
         ShotContinuityChecker.ContinuityReport report = checker.check(shots);
 
-        assertThat(report.shotsChecked()).isEqualTo(3);
+        assertThat(report.shotsChecked()).isEqualTo(2);
         assertThat(report.hasWarnings()).isFalse();
     }
 
@@ -411,7 +413,8 @@ class ShotContinuityCheckerDeepTest {
         assertThat(cfg.infoDeviationPct()).isEqualTo(8.0);
         assertThat(cfg.shotSizeDominancePct()).isEqualTo(0.6);
 
-        assertThatThrownBy(() -> ShotContinuityChecker.PacingConfig.defaults(120).equals(null))
-                .isNotNull();
+        assertThat(ShotContinuityChecker.PacingConfig.defaults(120).equals(null)).isFalse();
+        assertThat(ShotContinuityChecker.PacingConfig.defaults(120)
+                .equals(ShotContinuityChecker.PacingConfig.defaults(120))).isTrue();
     }
 }

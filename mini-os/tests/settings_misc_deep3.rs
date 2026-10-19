@@ -49,7 +49,7 @@ fn authed(method: Method, uri: &str, token: &str) -> Request<Body> {
     Request::builder()
         .method(method)
         .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .header(header::COOKIE, token.to_string())
         .body(Body::empty())
         .unwrap()
 }
@@ -58,7 +58,7 @@ fn authed_json(method: Method, uri: &str, token: &str, body: Value) -> Request<B
     Request::builder()
         .method(method)
         .uri(uri)
-        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .header(header::COOKIE, token.to_string())
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body.to_string()))
         .unwrap()
@@ -227,8 +227,8 @@ async fn stats_accuracy_mixed() {
     let body = multipart_body(boundary, "ten.bin", &[0u8; 10]);
     let req = Request::builder()
         .method(Method::POST)
-        .uri("/api/fs/upload")
-        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .uri("/api/files/upload")
+        .header(header::COOKIE, token.to_string())
         .header(
             header::CONTENT_TYPE,
             format!("multipart/form-data; boundary={}", boundary),
@@ -302,10 +302,12 @@ async fn stats_isolation() {
 async fn apps_list_6_unique_ids() {
     let state = init_state(":memory:", "static");
     let router = app(state);
+    let token = register(&router, "alice", "pw123456").await;
 
     let req = Request::builder()
         .method(Method::GET)
         .uri("/api/apps")
+        .header(header::COOKIE, token)
         .body(Body::empty())
         .unwrap();
     let resp = router.clone().oneshot(req).await.unwrap();
@@ -401,7 +403,7 @@ async fn migrate_legacy_moves_nodes_and_settings() {
         )
         .unwrap();
         conn.execute(
-            "INSERT INTO settings (user_id, key, value) VALUES (1, 'theme', 'legacy-dark')",
+            "INSERT OR REPLACE INTO settings (user_id, key, value) VALUES (1, 'theme', 'legacy-dark')",
             [],
         )
         .unwrap();
@@ -466,7 +468,7 @@ async fn migrate_legacy_current_setting_wins_on_conflict() {
     {
         let conn = state.db.lock().unwrap();
         conn.execute(
-            "INSERT INTO settings (user_id, key, value) VALUES (1, 'theme', 'light')",
+            "INSERT OR REPLACE INTO settings (user_id, key, value) VALUES (1, 'theme', 'light')",
             [],
         )
         .unwrap();

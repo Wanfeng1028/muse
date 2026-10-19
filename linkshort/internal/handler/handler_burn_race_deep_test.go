@@ -12,11 +12,10 @@ import (
 	"github.com/Wanfeng1028/muse/linkshort/internal/store"
 )
 
-// TestBurnRaceConcurrentGet 验并发访问 burn 链接时的真实行为。
-// 注意：不许断言"只有 1 次 302"。handleRedirect 的注释已写明并发下
-// 两次请求可能都通过 clicks 检查（单连接串行写入只是缓解，没做分布式锁）。
-// 所以真实情况是：凡是在 MarkBurned 生效之前跑完 loadActiveLink 的请求都会 302，
-// 而且每个 302 都在 302 之前先记了一次访问。
+// TestBurnRaceConcurrentGet 验并发访问 burn 链接时的精确语义：
+// TryBurn 的单条条件 UPDATE 保证全局恰好 1 次 302，
+// 其余请求要么在 loadActiveLink 命中 enabled=0 → 410"链接已阅销毁"，
+// 要么在 purge 链删行后 → 404"短链不存在"。
 func TestBurnRaceConcurrentGet(t *testing.T) {
 	st, h := newDeep3Router(t)
 
@@ -45,7 +44,7 @@ func TestBurnRaceConcurrentGet(t *testing.T) {
 	wg.Wait()
 
 	got302 := 0
-	got410 := 0
+	gotNon302 := 0
 	for _, c := range codes {
 		if c == http.StatusInternalServerError {
 			t.Fatalf("出现 500，不该有：codes=%v", codes)
@@ -53,15 +52,18 @@ func TestBurnRaceConcurrentGet(t *testing.T) {
 		switch c {
 		case http.StatusFound:
 			got302++
-		case http.StatusGone:
-			got410++
+		case http.StatusGone, http.StatusNotFound:
+			gotNon302++
 		}
 	}
-	if got302+got410 != n {
-		t.Fatalf("302 数 + 410 数 = %d，期望 %d，codes=%v", got302+got410, n, codes)
+	if got302 != 1 {
+		t.Fatalf("302 数 = %d，期望恰好 1，codes=%v", got302, codes)
+	}
+	if got302+gotNon302 != n {
+		t.Fatalf("302 数 + 非 302 数 = %d，期望 %d，codes=%v", got302+gotNon302, n, codes)
 	}
 
-	// 每个 302 恰好记一次访问，410 的请求根本没进 finishRedirect，不记访问。
+	// 每个 302 恰好记一次访问。
 	link, err := st.GetLinkBySlug("burnrace")
 	if err != nil {
 		t.Fatalf("GetLinkBySlug: %v", err)

@@ -21,7 +21,8 @@ export function initSchema(db: DatabaseSync): void {
       subject TEXT NOT NULL,
       minutes INTEGER NOT NULL DEFAULT 0,
       started_at TEXT NOT NULL,
-      note TEXT NULL
+      note TEXT NULL,
+      plan_id INTEGER NULL
     );
 
     CREATE TABLE IF NOT EXISTS mistakes (
@@ -94,6 +95,12 @@ export function initSchema(db: DatabaseSync): void {
     db.exec("ALTER TABLE words ADD COLUMN memory_tip TEXT NOT NULL DEFAULT ''");
   }
 
+  // 老库迁移：focus_sessions 表补 plan_id 列（v1.11.0 专注-计划联动）
+  const focusCols = db.prepare('PRAGMA table_info(focus_sessions)').all() as Array<{ name: string }>;
+  if (!focusCols.some((c) => c.name === 'plan_id')) {
+    db.exec('ALTER TABLE focus_sessions ADD COLUMN plan_id INTEGER NULL');
+  }
+
   // 老库迁移：settings 表在多用户迁移前先确保存在（IF NOT EXISTS 已在上面创建）
   // 注：不在 initSchema 里做 settings 重建，交给 migrateToMultiUser 处理
 
@@ -163,6 +170,7 @@ export function migrateToMultiUser(db: DatabaseSync): void {
       minutes INTEGER NOT NULL DEFAULT 0,
       started_at TEXT NOT NULL,
       note TEXT NULL,
+      plan_id INTEGER NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE`,
     mistakes: `id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -187,7 +195,14 @@ export function migrateToMultiUser(db: DatabaseSync): void {
     if (!hasUserIdColumn(db, table)) {
       db.exec(`ALTER TABLE ${table} ADD COLUMN user_id INTEGER`);
       db.prepare(`UPDATE ${table} SET user_id = ? WHERE user_id IS NULL`).run(localId);
-      rebuildTable(db, table, newDefs[table], cols);
+      let copyCols = cols;
+      if (table === 'focus_sessions') {
+        const fc = db.prepare('PRAGMA table_info(focus_sessions)').all() as Array<{ name: string }>;
+        if (fc.some((c) => c.name === 'plan_id')) {
+          copyCols = cols + ', plan_id';
+        }
+      }
+      rebuildTable(db, table, newDefs[table], copyCols);
     }
   }
 

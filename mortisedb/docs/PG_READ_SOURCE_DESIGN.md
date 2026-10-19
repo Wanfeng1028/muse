@@ -96,13 +96,22 @@ UnifyTypes 是 sync 包里做类型统一的函数。PG 源不自己实现一套
 
 ### 第一层：应用层 SQL 白名单
 
-所有要发给 PG 的 SQL，先过一道正则白名单，只放行 SELECT 和 WITH 开头的查询：
+所有要发给 PG 的 SQL，先过一道字面量/注释感知的词法白名单，零数据库往返即可拒绝常见绕过。
 
-```go
-var readOnlySQL = regexp.MustCompile(`(?is)^\s*(select|with)\b`)
-```
+实现要点：先调用 `stripLiteralsAndComments` 把单引号字符串（含 `''` 转义）、双引号标识符（含 `""` 转义）、dollar-quoted（`$$...$$` 与 `$tag$...$tag$`）、行注释（`--` 到换行）、块注释（`/*...*/`，不支持嵌套）全部替换为空格（保持词边界不断裂），再对剥离后的文本做检查。
 
-不匹配的直接返回错误，不建立到数据库的往返。这一层挡掉拼错的写语句，成本最低。
+四条拒绝规则（顺序执行，命中即返回）：
+
+1. 剥离后文本 trim 后必须匹配 `^(?is)\s*(select|with)\b`，否则报「只读校验失败：SQL 必须以 SELECT 或 WITH 开头」。
+2. 剥离后文本含 `;`，报「只读校验失败：SQL 中不允许包含分号，禁止多语句」。
+3. 剥离后文本含独立单词（大小写不敏感、单词边界）`insert|update|delete|merge`，报「只读校验失败：不允许 INSERT/UPDATE/DELETE/MERGE 写操作」；含独立单词 `into`，报「只读校验失败：不允许 SELECT INTO 建表」。
+4. 剥离后文本出现危险函数调用（单词 `pg_sleep|pg_terminate_backend|pg_cancel_backend|dblink_exec|dblink_connect` 后跟可选空白再跟 `(`），报「只读校验失败：不允许调用危险函数 <name>」。
+
+这四条一起挡住：`WITH d AS (DELETE FROM users RETURNING *) SELECT * FROM d` 这类 WITH 体内 DML、`SELECT * INTO new_table FROM t` 建表、`select pg_sleep(100000)` 这类只读事务拦不住的资源耗尽、以及多语句拼接。
+
+误伤面声明：字符串、注释、引用标识符里的关键字不会被误杀（先剥离再匹配）；但裸列名/标识符恰好叫 `update`、`into` 这类关键字的病态查询会被误拒。这是可接受的取舍，需要时用双引号 `"update"` 规避。
+
+与第二、三层的诚实分工：第二层 `default_transaction_read_only=on` 的只读事务本就能挡住 DML，第三层只读账号权限做最终兜底。第一层的价值是零数据库往返的快速拒绝，并额外挡住只读事务挡不住的资源耗尽调用（`pg_sleep` 等）。
 
 ### 第二层：PG 只读事务
 

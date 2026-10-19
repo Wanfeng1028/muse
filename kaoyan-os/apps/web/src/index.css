@@ -1928,6 +1928,10 @@ ol {
     margin-top: 8px;
   }
 }
+.mobile-nav {
+  display: none;
+}
+
 /* === MOBILE v1.9.0: 全局导航移动端化 === */
 @media (max-width: 768px) {
   .sidebar {

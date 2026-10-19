@@ -89,6 +89,7 @@ export interface FocusSession {
   minutes: number;
   startedAt: string;
   note: string | null;
+  planId: number | null;
 }
 
 /** 创建专注输入 */
@@ -97,6 +98,7 @@ export interface CreateFocusInput {
   minutes: number;
   startedAt?: string;
   note?: string;
+  planId?: number;
 }
 
 /** 单日专注统计 */
@@ -114,11 +116,22 @@ export interface FocusStats {
 }
 
 /** 计划完成情况汇总 */
+/** 单条计划的执行进度（计划分钟 vs 实际专注分钟） */
+export interface PlanProgress {
+  id: number;
+  title: string;
+  subject: SubjectKey;
+  plannedMinutes: number;
+  actualMinutes: number;
+  done: boolean;
+}
+
 export interface PlanSummary {
   date: string;
   total: number;
   done: number;
   completionRate: number;
+  plans: PlanProgress[];
 }
 
 /** 错题 */

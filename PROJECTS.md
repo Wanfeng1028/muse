@@ -57,6 +57,7 @@
 - **深测轮 r8（2026-10-18，deep2）**：6 个 deep2 文件 35 测试——words SRS 进阶（grade=2 五轮 interval 精确序列 1→3→8→20→50，r3 随 ease 上限修复更新）、vocab 播种纵深（2000 条合成数据幂等零新增）、周报"和上周比一比"（跨年周 2024-12-30）、热力图 streak 纵深（闰年 2-29、replace 主键冲突 500 且 ROLLBACK 后原数据完整、merge 四表语义矩阵）；vitest **314/314**（29 文件）、tsc 零错。2 个疑似缺陷已修复（产品拍板落地）：grade=2 ease 加上限 2.5（标准 SM-2，与下限 1.3 对称）、`POST /api/focus` startedAt 非法日期字符串返回 400（不再入库）
 - **深测轮 r3（2026-10-18，已合入，全绿）**：2 个产品缺陷修复——words SRS grade=2 时 `ease = Math.min(2.5, ease + 0.05)`（标准 SM-2 上限，与下限 1.3 对称；连带更新 6 处旧测试期望，interval 序列 1→3→8→21→57 收敛为 1→3→8→20→50）、`POST /api/focus` startedAt 非法值 400（`Date.parse` 校验）；3 个 deep3 文件 39 新测试（exams/stats/backup-seed 纵深）；vitest **353/353**（29→33 文件）、server/web tsc 零错
 - **缺陷修复 + 深测轮 r3（2026-10-18，deep3）**：产品拍板落地 2 缺陷——words.ts grade=2 ease 上钳制 2.5（连带更新 6 处旧测试期望：五轮序列/答错重置链/boundary 4 处）、focus.ts startedAt 非法返回 400；新增 3 个 deep3 文件 35 测试（exams 12：trend 排序与 rate 四位小数/全字段校验；stats 11：周区间开闭/streak 口径/heatmap 窗口；backup-seed 12：export→import round-trip/replace/merge 语义/seed 幂等）；vitest **353/353**（32 文件）、tsc（server+web）零错、真实服务冒烟通过（focus 非法 400/合法 201、words 六轮 1→3→8→20→50→125 且 ease 恒 2.5）。
+- **深耕轮 2026-10-19 深夜（已合入，全绿）**：①plan_id 迁移路径深测——新增 tests/plans_focus_diff.deep3.test.ts 2 例（老库 ALTER ADD COLUMN plan_id 迁移后列存在+老数据保留+迁移幂等、migrateToMultiUser 重建时 copyCols 保留 plan_id，静默丢数据回归点锁死）；②超时抖动修复——dpsk 生成 apps/server/vitest.config.ts（testTimeout/hookTimeout 30s；本机 2 核/673MB 下 bcrypt+Fastify 启动撞 5s 悬崖）；vitest **610/610**（63 文件）、server/web tsc 零错、vite build 成功；Plans/Pomodoro 两页真实截图亲眼验收（布局撑满、无错字、真实数据）。
 
 - **v1.7.0「真题汇总条」（2026-10-18）**：后端 `GET /api/exams/summary?subject=`（count/avgScore 1 位/avgRate 加权 4 位/best+bestTakenAt 并列最早/latest/first/improvement；非法 subject 400）+ `packages/shared` 新增 `ExamSummary` 类型；前端真题页新增「本阶段汇总」卡片（跟随趋势图科目；进步幅度正绿负红、<2 场显示—）；`exams-summary.test.ts` 9 例；vitest **362/362**（33 文件）；server/web tsc 零错；真实服务冒烟（7 条记录，summary 断言一致）；浅/深两张截图亲眼验收（数据自洽、布局撑满、零 console 错误）；README/CHANGELOG 同步
 - **v1.7.1「真题 CSV 导出」（2026-10-18）**：后端 `GET /api/exams/export?subject=`（非法 400）：列 id,subject,subject_name,paper,score,total_score,rate,duration_minutes,taken_at，按 taken_at 升序；RFC4180 转义；BOM（Excel 直接认中文）；Content-Disposition 附件下载；前端真题页考试记录卡片新增「导出 CSV」按钮（按当前筛选科目直接下载 kaoyan-exams.csv）；`exams-export.test.ts` 8 例 + `exams-summary.deep.test.ts` 8 例边界深测（零分母/退步/并列/同 taken_at/id 口径/空 subject 400）；附带修复 K1 回合丢失的 exams.ts 全文件缩进
@@ -216,6 +217,7 @@
 - **OpenMontage 工具链集成（2026-10-19）**：VideoProviderRouter 七维评分路由（taskFit 0.30/outputQuality 0.20/control 0.15/reliability 0.15/costEfficiency 0.10/latency 0.05/continuity 0.05，新增 ProviderScoreCard/RoutingDecision/CutRhythmChecker，OpenMontage 按"抄 95%"自有实现）；UsageService 计费台账 CostLedger；pipeline-templates 新增 talking-head/screen-demo/animated-explainer 3 个 YAML；skills-bundled LICENSE 回填 + 社区 skill 收录（auto-subtitles/busybee 系列等）；docs 新增 OPENMONTAGE_RESEARCH/PIPELINE_TEMPLATES/SKILL_AUDIT/BACKUP_DRILL_AUTH；本轮修 5 个测试 bug（全系测试代码问题：ProviderScoreCardTest 构造器参数错位 3 处、VideoProviderRouterRankedTest mock 了单参数 getProperty 而实现用双参数 1 处），实现类零改动；目标类测试 20/20 全绿、UsageService 相关 92 全绿；全量 3017 中 76 个失败为 canvas/ffmpeg/recipe/egress 等 pre-existing（无一引用本轮改动类）
 
 - **深耕轮 2026-10-19 晚（已合入 commit 5acd746）**：13 个新 *DeepTest 文件（RunExecutor 失败注入 16 用例、CostLedger 并发、ProviderRouting 评分、CutRhythmChecker、ShotVideoRouter、VideoProviderRouterFailure 等）；修真 bug：Toonflow 集成误用已存在的 Flyway V10 版本号（V10__prompt_recipe.sql 已存在），重命名为 V20__shot_video_params.sql；3 篇发版 DoD 对照报告（docs/dod-toonflow-integration.md、dod-openmontage-integration.md、dod-hyperframes-integration.md，诚实标注未通过项）；skill/ 镜像同步 3 个 toonflow skills（之前遗漏）、修索引 4 处（3 版本号+1 缺 name）、openmontage 156 条补 rewriteNote（来源如实标注）。
+- **深耕轮 2026-10-19 深夜（已合入，全绿）**：ShotContinuityChecker 9 行改动 + 7 个测试文件 + OPERATIONS.md 的稳定性验证——限范围 mvn -o 6 个测试类 **111/111** 全过（ShotContinuityCheckerDeepTest 17、CutRhythmCheckerDeepTest 27、VideoNormalizationServiceDeepTest 16、PromptFileServiceDeepTest 16、CinematographyVocabularyDeepTest 17、VideoProviderRouterFailureDeepTest 18），离线构建一次成功。
 
 ## mini-os「网页操作系统」
 
@@ -252,6 +254,7 @@
 - **v1.7.1「告警规则补齐」（2026-10-17）**：补齐 v1.6 未通过项——`prometheus/rules/mini-os.yml`（分享读失败率/5xx 率等）+ OPERATIONS.md 告警章节
 - **v1.8「分享读接口限流」（2026-10-17）**：分享读独立令牌桶（IP 单维度，与登录桶类型/状态双隔离）；`MINIOS_SHARE_RPS`（默认 5）/`MINIOS_SHARE_BURST`（默认 30）/`MINIOS_SHARE_RATE_LIMIT_ENABLED`（默认 true），非法值启动 fail-fast（stderr 点名 + exit 2）；覆盖 `GET /api/s/:token/*` 与 `GET /api/share/list`；探针免限流；share.html 429 UX（「看的人有点多」+ 实时倒计时 + disabled 重试按钮）；指标 `minios_share_rate_limited_total`；`cargo test` **151/151**、clippy 零警告、fmt 通过、真实冒烟 14/14、2 张截图亲眼验收。破坏性变更：旧 env `MINIOS_SHARE_READ_RPM`/`MINIOS_SHARE_READ_BURST` 设了就启动失败；`auth_ops_total{op="share_ratelimited"}` 移除。诚实缺口：NAT 下多用户共享出口 IP 会误伤（已知限制）；Dependabot、注册限流、密码策略、2FA 仍排期
 - **深测轮 r6（2026-10-18，已合入，全绿）**：8 个 deep2 文件 59 测试（auth 会话矩阵、VFS 并发、路径穿越、迁移版本、分享限流配置、静态回退、上传限制、ws 握手）全绿；`cargo test` 全绿、clippy 零警告；产品无真 bug（commit 57c9463）
+- **深耕轮 2026-10-19 深夜（已合入，全绿）**：①handlers.rs diff 深测——新增 tests/handlers_diff_deep3.rs 16 例（create_fs 同级同名 409、update_fs 重命名冲突排除自身、migrate_legacy 冲突时当前用户优先）；②修 2 个真 bug：get_share file 分支 mime_type 为空时 mime_guess::from_path 兜底（与 file_download_response 同模式）、ws_messages_deep3 upgrade_ws 读掉 HTTP 101 响应头致 8 个测试双边互等死锁（删多余读头循环）；测试侧 1 处断言修正（delete_fs 契约 204 非 200）；cargo test **53 target / 598 用例全绿**。
 
 **后续计划**：
 
@@ -260,6 +263,7 @@
 - docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
 
 - **深耕轮 2026-10-19 晚（已合入）**：mig006_expiry/plugin_rollback 深测验证通过；新增深测文件；备份演练脚本。
+- **深耕 lane（linkshort/mortisedb/mini-os，2026-10-19 晚）**：①VFS 同级同名冲突 409——create_fs/update_fs 在同 user_id+同 parent_id（`IS ?` NULL 安全比较）下重名（文件↔文件夹互斥）→ 409"同名文件已存在"；9 例边界测试（跨目录/跨用户放行、trim 后判重、重命名自身幂等 200、无 name 更新不触发）；修 dpsk 测试侧编造 1 处（CreateNodeRequest 是 camelCase，`parent_id` 应为 `parentId`）。②插件 install/uninstall/preview API 边界深测 12 例（重复安装 400、卸载不存在 404、装→卸→重装、恶意 manifest id、缺 plugin.json、zip slip preview 400、viewer 403×2、空 body 400；每测试独立数据目录+ENV_LOCK 串行）；用测试锁定产品行为：set_user_role 会吊销该用户全部旧会话（旧会话后续请求是 401 而非 403），viewer 用例改为重新登录后断言 403；修 dpsk 测试侧 3 处（register 201 非 200、id 取 as_i64 非 as_str、http_body_util 未引入改 axum::body::to_bytes）。
 
 ## ledger「钱迹 · 个人财务管家」
 
@@ -545,12 +549,14 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **v1.10.0「密码失败高告警」（2026-10-17）**：`internal/passalert.Tracker` 按 slug 滑动窗口计数（阈值 `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` 默认 10 / 窗口 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` 默认 5m），跨越阈值瞬间触发一次、回落重布防；触发后 warn 日志 + `linkshort_password_fail_alerts_total` + 异步 POST 复用 `LINKSHORT_ALERT_WEBHOOK_URL`（10s 超时，失败不影响主流程）；`prometheus/rules/linkshort.yml` 新增 `LinkshortPasswordFailRateHigh`/`LinkshortPasswordFailAlertFired`；13 例新增测试，`go test ./... -race` **149 例全过**；真实冒烟（阈值 3 下 4 次失败恰好触发 1 次）
 - **v1.8.0「访问地域统计」（2026-10-17）**：`internal/geo` 新包——china.go（内置中国省域 IP 段抽样表，CIDR 最长前缀匹配，精度边界诚实声明）/ chain.go（解析责任链：CDN 头 → MMDB → 内置表 → unknown，ReloadFromEnv）/ header.go（CDN 厂商头解析）；handler 新增 `clientIP`（X-Forwarded-For 首段 → X-Real-IP → RemoteAddr 去端口，信任假设有注释）；finishRedirect 改用 clientIP 做 ipHash + `geo.LookupRequest`；`st.RecordVisitGeo` 落库国家/省份；新增 `GET /api/stats/geo`（国家/省份 TopN + unknown 占比）；`go test ./... -race` **129/129** 全过、go vet/gofmt 全洁；CHANGELOG v1.8.0。已知缺口：Web UI 暂无地域面板（API 就绪，排期下轮）
 - **深测轮 r7（2026-10-18）**：7 个 deep2 文件（store/handler/auth/util/purge/qr）全绿，`go test ./...` 12 包全过；修 dpsk 测试侧编造 15+ 处（store.NewStore/store.New(dir)/CreateLink 单参、store.Config 应为 config.Config、NewRouter 需 *config.Config、RecordVisit 传 slug 应传 id、model.Link 字段类型等）；产品无真 bug
+- **深耕轮 2026-10-19 深夜（已合入，全绿）**：burn 语义缺口补齐——诚实判定旧测试 6 类场景已覆盖，仅 2 个真实缺口：burn+max_visits 并存时 burn 优先防御分支、finishRedirect 的 TryBurn 抢占失败分支（410“链接已阅销毁”且不记访问）；新增 handler_burn_semantics_deep2_test.go 2 例全绿；go test ./... 14 包全绿。
 
 **后续计划**：
 
 - ~~地域分布 Web UI 面板~~（已在 v1.9 交付）
 
 - **深耕轮 2026-10-19 晚（已合入）**：burn 彻底删除选项（API+store+测试）；burn 竞态/访问画像深测验证通过。
+- **深耕 lane（linkshort/mortisedb/mini-os，2026-10-19 晚）**：①原子限次/原子阅后即焚——修掉已知的并发超发竞态：store.TryBurn（`UPDATE … WHERE burn=1 AND enabled=1` 原子抢占）+ TryConsumeVisit（`UPDATE … WHERE max_visits IS NULL OR clicks<max_visits` 原子消费并计数）+ RecordVisitNoCount（已计数路径只插 visits 行防双计）；finishRedirect 删掉 Clicks 快照检查；旧 TestBurnRaceConcurrentGet 的"放任超发"断言收紧为精确语义（burn 链 32 并发恰 1 次 302、max_visits=5 链 20 并发恰 5 次 302）；`go test ./... -race` 全绿；真实服务冒烟（burn 302→410→410、max2 302→302→410→410）。②时段统计 API：store.HourlyStats（UTC 24 小时分布 + 星期分布，`strftime('%H'/'%w')`，days 过滤）+ `GET /api/stats/hourly`（days 仅允许 1/7/30）；真实服务冒烟验证（6 次访问落 hours[13]=6）。
 
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
@@ -589,6 +595,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - Dependabot（等用户在 GitHub Settings 手动开启）
 
 - **深耕轮 2026-10-19 晚（已合入）**：views list 自动注册 yaml 声明视图；pg_adapter/pgsource 深测验证通过。
+- **深耕 lane（linkshort/mortisedb/mini-os，2026-10-19 晚）**：pgsource 只读 SQL 白名单安全加固——AssertReadOnlySQL 升级为字面量/注释感知扫描（单引号含 `''` 转义/双引号标识符/dollar-quoted/行+块注释全部剥离为空格），新增拒绝：WITH 体内 DML（INSERT/UPDATE/DELETE/MERGE，如 `WITH d AS (DELETE…) SELECT`）、`SELECT … INTO` 建表、危险函数（pg_sleep/pg_terminate_backend/pg_cancel_backend/dblink_exec/dblink_connect）；旧 TestGuardBoundaryEvasion 三处旧断言同步翻转（WITH 夹带 DELETE 改为拒绝、注释开头与字符串内分号改为通过并重写注释）；新增 guard_hardening_deep_test.go 20+ 对抗用例（含注释分隔关键字、大小写混杂、多 CTE、内部 columnsSQL/primaryKeySQL 回归）；设计文档第 4 节第一层小节重写（四条规则+误伤面声明+与只读事务/只读账号的诚实分工）；`go test ./...` 15 包全绿。
+- **深耕轮 2026-10-19 深夜（已合入，全绿）**：pgsource 白名单对抗纵深——新增 pgsource_whitelist_adversarial_deep_test.go 18 例（注释拆分关键字、dollar-quoted 藏 DML、字符串不误杀、WITH 体内 DML、SELECT INTO、全角 Unicode、堆叠分号、pg_sleep 嵌套）+ strip_literals_unit_deep_test.go（引号转义/自定义 tag/未闭合容错/位置对齐）；修测试侧 6 处 want 空格数 off-by-one（实现零改动）；go test ./... 15 包全绿。
 
 ## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」
 

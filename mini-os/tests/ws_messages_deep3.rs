@@ -27,7 +27,7 @@ async fn build_test_app() -> (axum::Router, String) {
         .unwrap();
 
     let resp = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::CREATED);
 
     let cookie = resp
         .headers()
@@ -67,19 +67,6 @@ async fn upgrade_ws(addr: std::net::SocketAddr, cookie: Option<&str>) -> TcpStre
     );
 
     stream.write_all(req.as_bytes()).await.unwrap();
-
-    let mut buf = Vec::new();
-    let mut byte = [0u8; 1];
-    loop {
-        let n = stream.read(&mut byte).await.unwrap();
-        if n == 0 {
-            break;
-        }
-        buf.push(byte[0]);
-        if buf.len() >= 4 && &buf[buf.len() - 4..] == b"\r\n\r\n" {
-            break;
-        }
-    }
 
     stream
 }

@@ -458,6 +458,56 @@ func (s *Store) DeleteLink(id int64) error {
 	return nil
 }
 
+// TryBurn 原子抢占 burn=1 链接的阅后即焚名额：
+// 单条条件 UPDATE 将 enabled 由 1 置 0，只有第一个抢到的调用返回 true。
+// 返回 false 表示"名额已被抢走，或链接非 burn/不存在"——调用方已在
+// loadActiveLink 确认链接存在，故 false 一律视为该链已销毁。
+func (s *Store) TryBurn(id int64) (bool, error) {
+	res, err := s.db.Exec(
+		`UPDATE links SET enabled = 0, burned_at = ?, updated_at = ? WHERE id = ? AND burn = 1 AND enabled = 1`,
+		formatTime(nowUTC()), formatTime(nowUTC()), id,
+	)
+	if err != nil {
+		return false, fmt.Errorf("try burn: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("try burn rows: %w", err)
+	}
+	return n == 1, nil
+}
+
+// TryConsumeVisit 原子消费一次限次访问额度并同时计数：
+// 单条条件 UPDATE 只在 clicks < max_visits（或 max_visits 为 NULL）时自增 clicks。
+// 返回 true 表示已成功计数（额度已消费），false 表示额度用完。
+// 调用方约定：返回 true 时需另行调用 RecordVisitNoCount 落 visits 行，
+// 保证"每次 302 恰好对应 clicks+1 与一条 visits 记录"。
+func (s *Store) TryConsumeVisit(id int64) (bool, error) {
+	res, err := s.db.Exec(
+		`UPDATE links SET clicks = clicks + 1 WHERE id = ? AND (max_visits IS NULL OR clicks < max_visits)`,
+		id,
+	)
+	if err != nil {
+		return false, fmt.Errorf("try consume visit: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("try consume visit rows: %w", err)
+	}
+	return n == 1, nil
+}
+
+// insertVisitRow 在给定事务中插入一条 visits 记录（含地域四列），不触碰 clicks。
+func insertVisitRow(tx *sql.Tx, linkID int64, ipHash, ua, referer, countryCode, countryName, province, city string) error {
+	if _, err := tx.Exec(
+		`INSERT INTO visits (link_id, ts, ip_hash, ua, referer, country_code, country_name, province, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		linkID, formatTime(nowUTC()), ipHash, ua, referer, countryCode, countryName, province, city,
+	); err != nil {
+		return fmt.Errorf("insert visit: %w", err)
+	}
+	return nil
+}
+
 // RecordVisit 在事务中插入 visits 并给 links.clicks 加 1。
 // 老入口：地域记空=unknown。
 func (s *Store) RecordVisit(linkID int64, ipHash, ua, referer string) error {
@@ -475,14 +525,32 @@ func (s *Store) RecordVisitGeo(linkID int64, ipHash, ua, referer, countryCode, c
 		_ = tx.Rollback()
 	}()
 
-	if _, err := tx.Exec(
-		`INSERT INTO visits (link_id, ts, ip_hash, ua, referer, country_code, country_name, province, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		linkID, formatTime(nowUTC()), ipHash, ua, referer, countryCode, countryName, province, city,
-	); err != nil {
-		return fmt.Errorf("insert visit: %w", err)
+	if err := insertVisitRow(tx, linkID, ipHash, ua, referer, countryCode, countryName, province, city); err != nil {
+		return err
 	}
 	if _, err := tx.Exec(`UPDATE links SET clicks = clicks + 1 WHERE id = ?`, linkID); err != nil {
 		return fmt.Errorf("increment clicks: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+	return nil
+}
+
+// RecordVisitNoCount 只插入一条 visits 记录（含地域四列），不修改 clicks。
+// 供"已通过 TryConsumeVisit 完成计数"的路径使用，避免重复计数。
+func (s *Store) RecordVisitNoCount(linkID int64, ipHash, ua, referer, countryCode, countryName, province, city string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	// 保证出错时回滚。
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	if err := insertVisitRow(tx, linkID, ipHash, ua, referer, countryCode, countryName, province, city); err != nil {
+		return err
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
@@ -603,6 +671,85 @@ func (s *Store) GeoStats(linkID int64, days int, country string, n int) (GeoOver
 		UnknownPct:  unknownPct,
 		Days:        days,
 	}, nil
+}
+
+// HourlyStats 时段分布：24 小时点击分布（UTC 0-23）+ 星期分布（0=周日）。
+// linkID>0 时只统计该短链；days>0 时只统计最近 days 天；days<=0 不限时间。
+type HourlyStats struct {
+	Hours    []int64 // 长度恒 24
+	Weekdays []int64 // 长度恒 7，索引 0=周日（与 SQLite strftime('%w') 一致）
+	Total    int64
+	Days     int
+	LinkID   int64
+}
+
+// HourlyStats 查询时段分布。
+func (s *Store) HourlyStats(linkID int64, days int) (HourlyStats, error) {
+	var st HourlyStats
+	st.Hours = make([]int64, 24)
+	st.Weekdays = make([]int64, 7)
+	st.Days = days
+	st.LinkID = linkID
+
+	where := " WHERE 1=1"
+	var args []any
+	if linkID > 0 {
+		where += " AND link_id = ?"
+		args = append(args, linkID)
+	}
+	if days > 0 {
+		cutoff := formatTime(nowUTC().AddDate(0, 0, -days))
+		where += " AND ts >= ?"
+		args = append(args, cutoff)
+	}
+
+	rows, err := s.db.Query("SELECT CAST(strftime('%H', ts) AS INTEGER) AS h, COUNT(*) FROM visits"+where+" GROUP BY h", args...)
+	if err != nil {
+		return st, fmt.Errorf("query hourly stats: %w", err)
+	}
+	for rows.Next() {
+		var h int
+		var c int64
+		if err := rows.Scan(&h, &c); err != nil {
+			rows.Close()
+			return st, fmt.Errorf("scan hourly stats: %w", err)
+		}
+		if h >= 0 && h < 24 {
+			st.Hours[h] = c
+		}
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return st, fmt.Errorf("iterate hourly stats: %w", err)
+	}
+	rows.Close()
+
+	wrows, err := s.db.Query("SELECT CAST(strftime('%w', ts) AS INTEGER) AS w, COUNT(*) FROM visits"+where+" GROUP BY w", args...)
+	if err != nil {
+		return st, fmt.Errorf("query hourly stats: %w", err)
+	}
+	for wrows.Next() {
+		var w int
+		var c int64
+		if err := wrows.Scan(&w, &c); err != nil {
+			wrows.Close()
+			return st, fmt.Errorf("scan hourly stats: %w", err)
+		}
+		if w >= 0 && w < 7 {
+			st.Weekdays[w] = c
+		}
+	}
+	if err := wrows.Err(); err != nil {
+		wrows.Close()
+		return st, fmt.Errorf("iterate hourly stats: %w", err)
+	}
+	wrows.Close()
+
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM visits"+where, args...).Scan(&st.Total); err != nil {
+		return st, fmt.Errorf("count hourly stats: %w", err)
+	}
+
+	return st, nil
 }
 
 // StatsOverview 返回整体统计：总短链数、启用数、总点击数、今日点击数。

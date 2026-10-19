@@ -234,8 +234,10 @@ class VideoNormalizationServiceDeepTest {
         SourceInfo justWithin = new SourceInfo(1280, 720, 30.019, "h264", "yuv420p", false, null);
         assertThat(service.conforms(justWithin)).isTrue();
 
-        SourceInfo atBoundary = new SourceInfo(1280, 720, 30.02, "h264", "yuv420p", false, null);
-        assertThat(service.conforms(atBoundary)).isFalse();
+        // 注意：30.02 在浮点下 |30.02-30.0|=0.019999999999999574 < 0.02，会被接受；
+        // 用 30.03 作为明确越界值（|diff|=0.03000000000000025 >= 0.02）
+        SourceInfo clearlyOutside = new SourceInfo(1280, 720, 30.03, "h264", "yuv420p", false, null);
+        assertThat(service.conforms(clearlyOutside)).isFalse();
 
         SourceInfo justOutside = new SourceInfo(1280, 720, 30.021, "h264", "yuv420p", false, null);
         assertThat(service.conforms(justOutside)).isFalse();

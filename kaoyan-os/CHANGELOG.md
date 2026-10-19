@@ -4,6 +4,18 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.11.0] - 2026-10-19
+
+### Added
+
+- 后端：focus_sessions 表新增 plan_id 列（新库建表 + 老库 ALTER 迁移 + migrateToMultiUser 重建保留该列）；POST /api/focus 接受可选 planId（非正整数 400，计划不存在或非当前用户 404），写入关联并回显；GET /api/focus 列表项含 planId；GET /api/plans/summary 新增 plans 明细（每项 id/title/subject/plannedMinutes/actualMinutes/done，actualMinutes 为关联专注分钟之和）；DELETE /api/plans/:id 先将关联专注记录的 plan_id 置 NULL 再删计划；packages/shared 新增 PlanProgress 类型，FocusSession/CreateFocusInput/PlanSummary 扩展。
+- 前端：复习计划页每条计划下方新增"已专注 X/Y 分钟"达成率行 + Tabler 进度条；番茄专注页新增"关联计划"下拉（今日计划，不关联/单选，计时开始后锁定），专注结束落库时带 planId。
+- 测试：tests/focus-plan-link.test.ts 8 例（关联写入读出、planId 非法 400、不存在/他人 404、summary 聚合、删计划置空、跨日期口径、不带 planId 回归）；tests/plans-autoschedule.deep3.test.ts 8 例（单日窗口/紧窗口 discarded 精确口径/dailyMinutes=30 新学全丢/顺延顶出 examDate/多用户幂等隔离/preview-POST 一致性/重复科目错峰/400 全覆盖）。
+
+### Fixed
+
+- 修复 v1.9.0 遗留：.mobile-nav 桌面端未隐藏导致顶部泄漏一行移动端导航，加桌面默认 display:none。
+
 ## [1.7.2] - 2026-10-18
 
 ### Added

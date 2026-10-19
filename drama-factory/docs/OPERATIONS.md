@@ -142,6 +142,228 @@ docker compose logs -f drama-factory
 
 参数是备份目录路径。恢复完成后按提示重启服务。
 
+### 3.3 备份恢复实测步骤
+
+本节给出一条从备份到恢复、再到失败回退的完整可复现路径。所有命令均以仓库根目录（`APP_HOME`）为当前目录，脚本内部会自行 `cd "$APP_HOME"`。脚本涉及的关键路径：
+
+- 数据目录：`data/`
+- 数据库文件：`data/drama-factory.mv.db`
+- 媒体目录：`data/media/`
+- 配置文件：`data/settings.json`
+- 备份产物目录：`backups/`
+
+日志前缀：`backup.sh` 输出 `[backup]`，`restore.sh` 输出 `[restore]`，均为 `[前缀] YYYY-MM-DD HH:MM:SS 消息` 格式。
+
+#### 3.3.1 前提检查
+
+`backup.sh` 在执行前会做两项前置检查（见脚本"0. 前置检查"）：
+
+- `data/` 目录必须存在，否则 `fail "数据目录不存在: $DATA_DIR"`。
+- `data/drama-factory.mv.db` 必须存在，否则 `fail "H2 数据库文件不存在: $DB_FILE (应用是否已初始化?)"`。
+
+实测前先确认：
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+test -d data && echo "data 目录存在"
+test -f data/drama-factory.mv.db && echo "DB 文件存在"
+ls -l data/drama-factory.mv.db
+```
+
+若第二条不通过，说明应用尚未初始化，需先启动应用跑完 Flyway 迁移再备份。
+
+#### 3.3.2 完整实测流程
+
+**第 1 步：手动触发一次备份**
+
+```bash
+./scripts/backup.sh
+```
+
+预期输出（时间戳与 jar 路径随环境变化）：
+
+```text
+[backup] 2025-01-01 03:00:01 开始备份, 应用目录: /opt/drama-factory
+[backup] 2025-01-01 03:00:01 使用 H2 jar: /root/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar
+[backup] 2025-01-01 03:00:01 [1/4] 通过 H2 BACKUP TO 在线导出数据库 ...
+[backup] 2025-01-01 03:00:02      数据库导出完成: 1.2M
+[backup] 2025-01-01 03:00:02 [2/4] 打包媒体目录与 settings.json ...
+[backup] 2025-01-01 03:00:02      media 归档: 8.4M
+[backup] 2025-01-01 03:00:02      settings.json 已复制
+[backup] 2025-01-01 03:00:02 [3/4] 生成 manifest.txt ...
+[backup] 2025-01-01 03:00:02      manifest 记录 3 个文件
+[backup] 2025-01-01 03:00:02 [4/4] 打包备份 ...
+[backup] 2025-01-01 03:00:03      备份完成: /opt/drama-factory/backups/drama-factory-20250101-030001.tar.gz (2.3M)
+[backup] 2025-01-01 03:00:03 应用保留策略: 仅保留最近 7 个备份包
+[backup] 2025-01-01 03:00:03      无需清理
+[backup] 2025-01-01 03:00:03 备份成功, 退出
+```
+
+产物路径格式：`backups/drama-factory-YYYYMMDD-HHMMSS.tar.gz`。记录本次路径供后续步骤使用：
+
+```bash
+PKG="$(ls -1t backups/drama-factory-*.tar.gz | head -n1)"
+echo "$PKG"
+```
+
+**第 2 步：校验备份产物 manifest 的 sha256**
+
+备份包内的 `manifest.txt` 中，每个文件行格式为 `<sha256>  <相对路径>`。脚本自身在校验时是 `cd` 到解包根目录后对每行跑 `sha256sum` 并比对。手工复核用 `sha256sum -c`：
+
+```bash
+WORK="$(mktemp -d)"
+tar -xzf "$PKG" -C "$WORK"
+PKG_ROOT="$(find "$WORK" -maxdepth 1 -mindepth 1 -type d | head -n1)"
+
+# manifest.txt 是脚本自定义格式（无 sha256sum 的 " *file" 标记），需先转换成 sha256sum -c 可读格式
+( cd "$PKG_ROOT" && grep '^[0-9a-f]\{64\}' manifest.txt | awk '{print $1"  "$2}' > /tmp/manifest.sha256 )
+( cd "$PKG_ROOT" && sha256sum -c /tmp/manifest.sha256 )
+```
+
+预期每行输出 `db.zip: OK`、`media.tar.gz: OK`、`settings.json: OK`（实际文件名与 manifest 内容一致）。任一行为 `FAILED` 即备份包损坏，弃用该包重做备份。
+
+**第 3 步：模拟灾难（停服务 + 备份当前 data 目录）**
+
+先停服务。`restore.sh` 的检查逻辑是：`curl -fsS --max-time 2 http://127.0.0.1:${PORT}/api/health` 成功，或 `pgrep -f 'drama-factory.*\.jar'` 命中，即判定"应用正在运行"。
+
+```bash
+# 若用 systemd
+sudo systemctl stop drama-factory
+
+# 若用 docker compose
+docker compose down
+
+# 确认端口已释放、进程已退出
+curl -fsS --max-time 2 http://127.0.0.1:8081/api/health && echo "仍在运行" || echo "已停止"
+pgrep -f 'drama-factory.*\.jar' || echo "无残留 java 进程"
+```
+
+对当前 `data/` 做一份目录级快照，作为第 5 步回退依据（脚本内部还会再生成一次 `backups/pre-restore-<ts>.tar.gz` 快照，这里额外保留一份用于对比）：
+
+```bash
+SNAP_TS="$(date '+%Y%m%d-%H%M%S')"
+cp -a data "data.disaster-snapshot-$SNAP_TS"
+echo "灾难前快照: data.disaster-snapshot-$SNAP_TS"
+```
+
+**第 4 步：执行恢复并冒烟**
+
+```bash
+./scripts/restore.sh "$PKG"
+```
+
+预期输出（节选，时间戳随环境变化）：
+
+```text
+[restore] 2025-01-01 03:10:00 检查应用是否在运行 ...
+[restore] 2025-01-01 03:10:00 使用 H2 jar: /root/.m2/repository/com/h2database/h2/2.2.224/h2-2.2.224.jar
+[restore] 2025-01-01 03:10:00 解包备份到临时目录: /opt/drama-factory/backups/.staging-restore.XXXXXX
+[restore] 2025-01-01 03:10:00 备份包清单:
+    # drama-factory backup manifest
+    timestamp: 20250101-030001
+    ...
+[restore] 2025-01-01 03:10:00 校验备份包内文件 sha256 ...
+[restore] 2025-01-01 03:10:00      校验通过
+[restore] 2025-01-01 03:10:00 [0/4] 生成恢复前快照 ...
+[restore] 2025-01-01 03:10:01      在线导出当前数据库 ...
+[restore] 2025-01-01 03:10:02      恢复前快照: /opt/drama-factory/backups/pre-restore-20250101-031000.tar.gz
+[restore] 2025-01-01 03:10:02 [1/4] 恢复 H2 数据库 ...
+[restore] 2025-01-01 03:10:02      旧数据库文件已改名为: .../data/drama-factory.mv.db.pre-restore-20250101-031000.bak
+[restore] 2025-01-01 03:10:03      数据库恢复完成: 1.2M
+[restore] 2025-01-01 03:10:03 [2/4] 恢复 media 目录 ...
+[restore] 2025-01-01 03:10:03 [3/4] 恢复 settings.json ...
+[restore] 2025-01-01 03:10:03 [4/4] 一致性冒烟检查 ...
+[restore] 2025-01-01 03:10:03      H2 文件: /opt/drama-factory/data/drama-factory.mv.db (1234567 字节)
+[restore] 2025-01-01 03:10:03      media 目录: /opt/drama-factory/data/media
+
+============================================================
+恢复完成。请按以下步骤手动验证:
+...
+============================================================
+[restore] 2025-01-01 03:10:03 恢复流程结束
+```
+
+脚本结束后起服务并打健康检查（`PORT` 默认 `8081`，与 `restore.sh` 中一致）：
+
+```bash
+# systemd
+sudo systemctl start drama-factory
+
+# 或 docker compose
+docker compose up -d
+
+# 等待启动完成
+tail -f logs/*.log
+
+# 冒烟
+curl -fsS http://127.0.0.1:8081/api/health
+```
+
+`curl -fsS` 成功（退出码 0 且返回体为健康响应）即恢复通过。
+
+**第 5 步：恢复失败时回退**
+
+两种回退途径，任选其一。
+
+途径 A：用第 3 步保留的目录级快照整体还原：
+
+```bash
+sudo systemctl stop drama-factory   # 或 docker compose down
+rm -rf data
+mv "data.disaster-snapshot-$SNAP_TS" data
+sudo systemctl start drama-factory
+curl -fsS http://127.0.0.1:8081/api/health
+```
+
+途径 B：用 `restore.sh` 内部生成的恢复前快照（`backups/pre-restore-<ts>.tar.gz`）再恢复一次：
+
+```bash
+ls -1t backups/pre-restore-*.tar.gz | head -n1
+./scripts/restore.sh "backups/pre-restore-<上面列出的时间戳>.tar.gz"
+```
+
+若数据库单独损坏而 media/settings 完好，也可直接改回 `.bak` 文件（`restore.sh` 结束时提示的回滚方法）：
+
+```bash
+mv "data/drama-factory.mv.db.pre-restore-<ts>.bak" data/drama-factory.mv.db
+```
+
+#### 3.3.3 保留策略验证（`BACKUP_KEEP=2`）
+
+连跑三次备份，断言 `backups/drama-factory-*.tar.gz` 只剩 2 个。
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+
+# 清空既有备份包，避免干扰断言（保留日志等其它文件）
+rm -f backups/drama-factory-*.tar.gz
+
+BACKUP_KEEP=2 ./scripts/backup.sh
+sleep 1
+BACKUP_KEEP=2 ./scripts/backup.sh
+sleep 1
+BACKUP_KEEP=2 ./scripts/backup.sh
+
+count="$(ls -1 backups/drama-factory-*.tar.gz | wc -l)"
+echo "剩余备份包数量: $count"
+[ "$count" -eq 2 ] || { echo "断言失败: 期望 2, 实际 $count"; exit 1; }
+
+ls -1t backups/drama-factory-*.tar.gz
+```
+
+第三次备份的日志中应出现 `应用保留策略: 仅保留最近 2 个备份包` 与 `删除过期备份: .../drama-factory-<最旧时间戳>.tar.gz`，且 `ls -1t` 只列出最新两个包。
+
+#### 3.3.4 常见失败对照表
+
+| 现象 | 脚本中的 fail 信息（原文） | 处理方式 |
+| --- | --- | --- |
+| DB 文件被锁 | `[restore] ... [错误] 应用正在运行 (端口 $PORT 或 java 进程存活)。请先停服再恢复, 或加 --force (后果自负)`；若加 `--force` 后 H2 仍报错，会走到 `步骤 1/4 失败: H2 Restore 返回非零。旧文件保留在 $DB_FILE.pre-restore-$SNAP_TS.bak, 可手动回滚` | 先 `systemctl stop drama-factory` 或 `docker compose down`，确认 `curl -fsS http://127.0.0.1:8081/api/health` 失败、`pgrep -f 'drama-factory.*\.jar'` 无输出，再重跑 `restore.sh`。不要依赖 `--force` 绕过运行检查。 |
+| `H2_JAR` 找不到 | `找不到 H2 jar, 请设置 H2_JAR 环境变量指向 h2-*.jar`（backup 与 restore 均会触发）；若 `H2_JAR` 已设置但文件不存在，则报 `H2_JAR 指定的文件不存在: $H2_JAR` | 显式指定：`H2_JAR=/abs/path/h2-2.2.224.jar ./scripts/backup.sh`；或把 jar 放到脚本搜索路径 `$HOME/.m2/repository` 或 `$M2_REPO`（默认 `$HOME/workspace/muse-build/.m2repo`）下。 |
+| manifest 校验失败 | `备份包完整性校验失败` | 备份包已损坏或被截断。弃用该包，回到第 1 步重新备份；确认备份过程中磁盘未满、`tar` 未被中断。若只是单个文件缺失，`sha256 不匹配: <rel>` 会先打到 stderr，可据文件名定位。 |
+| 备份包结构异常 | `备份包结构异常: 未找到根目录` | 传入的 tar 包不是 `backup.sh` 产出的格式（根目录应为 `drama-factory-YYYYMMDD-HHMMSS/`）。确认参数指向 `backups/drama-factory-*.tar.gz`，而不是 `pre-restore-*.tar.gz`。 |
+| 备份包缺少必要文件 | `备份包中缺少 db.zip` 或 `备份包中缺少 manifest.txt` | 备份包被裁剪过。改用完整包重试。 |
+| 数据目录或 DB 文件缺失（备份侧） | `数据目录不存在: $DATA_DIR` 或 `H2 数据库文件不存在: $DB_FILE (应用是否已初始化?)` | 先启动应用完成初始化，确认 `data/drama-factory.mv.db` 生成后再备份。 |
+
 ---
 
 ## 4. 升级

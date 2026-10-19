@@ -525,6 +525,18 @@ pub async fn create_fs(
         }
     }
 
+    // 同级同名检查：同用户、同父目录下不许重名（文件与文件夹互相冲突）。
+    let conflict: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM vfs_nodes WHERE user_id = ?1 AND parent_id IS ?2 AND name = ?3",
+            params![user.id, parent_id, name],
+            |r| r.get(0),
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    if conflict > 0 {
+        return Err(err(StatusCode::CONFLICT, "同名文件已存在"));
+    }
+
     conn.execute(
         "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content, content_blob) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![user.id, parent_id, name, req.kind, content, content_blob],
@@ -575,6 +587,28 @@ pub async fn update_fs(
     if let Some(n) = &req.name {
         if n.trim().is_empty() {
             return Err(err(StatusCode::BAD_REQUEST, "名称不能为空"));
+        }
+    }
+
+    // 同级同名检查：重命名时若与同父目录下其他节点重名则冲突。
+    if let Some(n) = &req.name {
+        let trimmed = n.trim();
+        let parent_id: Option<i64> = conn
+            .query_row(
+                "SELECT parent_id FROM vfs_nodes WHERE id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        let conflict: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM vfs_nodes WHERE user_id = ?1 AND parent_id IS ?2 AND name = ?3 AND id != ?4",
+                params![user.id, parent_id, trimmed, id],
+                |r| r.get(0),
+            )
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        if conflict > 0 {
+            return Err(err(StatusCode::CONFLICT, "同名文件已存在"));
         }
     }
 
@@ -1226,10 +1260,11 @@ pub async fn migrate_legacy(
         None => return Err(err(StatusCode::GONE, "无可迁移数据")),
     };
 
-    // 先删目标用户下与 legacy 同 key 的设置，避免 (user_id,key) 冲突
+    // 冲突时当前用户的设置优先：删 legacy 侧与当前用户同 key 的设置，
+    // 避免 (user_id,key) 冲突，同时不丢用户刚做的显式设置。
     conn.execute(
         "DELETE FROM settings WHERE user_id = ?1 AND key IN (SELECT key FROM settings WHERE user_id = ?2)",
-        params![user.id, legacy_id],
+        params![legacy_id, user.id],
     )
     .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
     conn.execute(
@@ -1999,12 +2034,19 @@ pub async fn get_share(State(state): State<Arc<AppState>>, Path(token): Path<Str
                 .into_response())
             } else {
                 let size = blob.as_ref().map(|b| b.len()).unwrap_or(content.len()) as i64;
+                // mime_type 为空时按文件名兜底推断（与 file_download_response 同模式），
+                // 保证分享元信息的 mimeType 始终有值。
+                let mime_type = mime.filter(|m|!m.is_empty()).unwrap_or_else(|| {
+                    mime_guess::from_path(&name)
+                        .first_or_octet_stream()
+                        .to_string()
+                });
                 Ok(Json(ShareInfo {
                     token,
                     name,
                     kind,
                     size,
-                    mime_type: mime,
+                    mime_type: Some(mime_type),
                     share_type: "file".to_string(),
                 })
                 .into_response())

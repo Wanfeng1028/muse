@@ -4,6 +4,7 @@ import {
   DEFAULT_SETTINGS,
   type SubjectKey,
   type Settings,
+  type Plan,
 } from '@kaoyan/shared';
 import { api } from '../api';
 
@@ -49,6 +50,8 @@ export default function Pomodoro() {
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(DEFAULT_SETTINGS.pomodoroMinutes * 60);
   const [todayMinutes, setTodayMinutes] = useState(0);
+  const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
+  const [planId, setPlanId] = useState<number | ''>('');
 
   // 记录目标结束时间戳，用于防漂移
   const endAtRef = useRef<number | null>(null);
@@ -59,11 +62,13 @@ export default function Pomodoro() {
   const subjectRef = useRef(subject);
   const settingsRef = useRef(settings);
   const runningRef = useRef(running);
+  const planIdRef = useRef<number | ''>(planId);
 
   modeRef.current = mode;
   subjectRef.current = subject;
   settingsRef.current = settings;
   runningRef.current = running;
+  planIdRef.current = planId;
 
   // 拉取设置
   useEffect(() => {
@@ -95,9 +100,28 @@ export default function Pomodoro() {
       });
   }, []);
 
+  // 本地日期 -> YYYY-MM-DD
+  const todayLocal = () => {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  };
+
+  // 拉取今日计划（供"关联计划"下拉）
+  const loadTodayPlans = useCallback(() => {
+    api
+      .listPlans({ date: todayLocal() })
+      .then((list) => setTodayPlans(list))
+      .catch(() => {
+        // 忽略错误
+      });
+  }, []);
+
   useEffect(() => {
     refreshToday();
-  }, [refreshToday]);
+    loadTodayPlans();
+  }, [refreshToday, loadTodayPlans]);
 
   // 专注自然结束的处理
   const finishFocus = useCallback(() => {
@@ -105,10 +129,12 @@ export default function Pomodoro() {
     // 蜂鸣两声
     beep(2);
     // 落库
+    const pid = planIdRef.current;
     api
       .createFocus({
         subject: subjectRef.current,
         minutes: s.pomodoroMinutes,
+        ...(pid === '' ? {} : { planId: pid }),
       })
       .then(() => refreshToday())
       .catch(() => {
@@ -219,6 +245,22 @@ export default function Pomodoro() {
             {SUBJECTS.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-row pomo-plan-row">
+          <label className="pomo-plan-label">关联计划</label>
+          <select
+            className="select pomo-plan-select"
+            value={planId}
+            disabled={running || mode === 'break'}
+            onChange={(e) => setPlanId(Number(e.target.value) || '')}
+          >
+            <option value="">不关联</option>
+            {todayPlans.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.title}（{o.plannedMinutes} 分钟）
               </option>
             ))}
           </select>

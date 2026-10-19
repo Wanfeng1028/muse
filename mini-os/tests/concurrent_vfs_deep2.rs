@@ -1,4 +1,3 @@
-
 use axum::body::Body;
 use axum::http::{header, Request, StatusCode};
 use futures_util::future::join_all;
@@ -143,8 +142,9 @@ async fn concurrent_upload_different_names_all_succeed() {
 
 #[tokio::test]
 async fn concurrent_create_fs_same_name_documents_behavior() {
-    // NOTE: create_fs has NO duplicate-name check in the source, unlike upload_file.
-    // All concurrent same-name folder creations therefore succeed (10x 201).
+    // NOTE 2026-10-19: create_fs now rejects duplicate sibling names with 409.
+    // The db mutex serializes check+insert, so exactly one concurrent
+    // same-name creation wins (1x 201, 9x 409).
     let state = mini_os::init_state(":memory:", "static");
     let app = mini_os::build_app(state);
     let cookie = register_and_cookie(&app, "raceuser3").await;
@@ -169,12 +169,19 @@ async fn concurrent_create_fs_same_name_documents_behavior() {
 
     let results = join_all(handles).await;
     let mut created = 0usize;
+    let mut conflicted = 0usize;
     for r in results {
-        let status = r.unwrap();
-        assert_eq!(status, StatusCode::CREATED);
-        created += 1;
+        match r.unwrap() {
+            StatusCode::CREATED => created += 1,
+            StatusCode::CONFLICT => conflicted += 1,
+            other => panic!("unexpected status: {other}"),
+        }
     }
-    assert_eq!(created, 10);
+    assert_eq!(
+        created, 1,
+        "exactly one concurrent same-name create should win"
+    );
+    assert_eq!(conflicted, 9);
 
     let req = Request::builder()
         .method("GET")
@@ -191,7 +198,7 @@ async fn concurrent_create_fs_same_name_documents_behavior() {
         .iter()
         .filter(|n| n["name"] == Value::String("dup".to_string()))
         .count();
-    assert_eq!(dup_count, 10);
+    assert_eq!(dup_count, 1);
 }
 
 #[tokio::test]

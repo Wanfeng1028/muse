@@ -25,6 +25,7 @@ interface FocusRow {
   minutes: number;
   started_at: string;
   note: string | null;
+  plan_id: number | null;
 }
 
 interface DaySumRow {
@@ -40,6 +41,7 @@ function mapFocus(row: FocusRow): FocusSession {
     minutes: row.minutes,
     startedAt: row.started_at,
     note: row.note === null ? null : row.note,
+    planId: row.plan_id ?? null,
   };
 }
 
@@ -55,7 +57,7 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
     }
     const rows = db
       .prepare(
-        'SELECT id, subject, minutes, started_at, note FROM focus_sessions WHERE user_id = ? ORDER BY started_at DESC LIMIT ?'
+        'SELECT id, subject, minutes, started_at, note, plan_id FROM focus_sessions WHERE user_id = ? ORDER BY started_at DESC LIMIT ?'
       )
       .all(req.user!.id, limit) as unknown as FocusRow[];
     return reply.send(rows.map(mapFocus));
@@ -111,11 +113,26 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       finalNote = note;
     }
 
+    // 校验 planId：可选；提供时必须为正整数且为当前用户的计划
+    let finalPlanId: number | null = null;
+    if (body.planId !== undefined) {
+      if (!Number.isInteger(body.planId) || (body.planId as number) <= 0) {
+        return reply.code(400).send({ error: 'planId 非法' });
+      }
+      const plan = db
+        .prepare('SELECT id FROM plans WHERE id = ? AND user_id = ?')
+        .get(body.planId, req.user!.id) as unknown as { id: number } | undefined;
+      if (!plan) {
+        return reply.code(404).send({ error: '计划不存在' });
+      }
+      finalPlanId = body.planId;
+    }
+
     const result = db
       .prepare(
-        'INSERT INTO focus_sessions (user_id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO focus_sessions (user_id, subject, minutes, started_at, note, plan_id) VALUES (?, ?, ?, ?, ?, ?)'
       )
-      .run(req.user!.id, subject, minutes, finalStartedAt, finalNote);
+      .run(req.user!.id, subject, minutes, finalStartedAt, finalNote, finalPlanId);
 
     const id = Number(result.lastInsertRowid);
     const session: FocusSession = {
@@ -124,6 +141,7 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       minutes,
       startedAt: finalStartedAt,
       note: finalNote,
+      planId: finalPlanId,
     };
 
     return reply.code(201).send(session);

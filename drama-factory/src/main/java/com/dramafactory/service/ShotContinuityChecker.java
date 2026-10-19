@@ -129,8 +129,13 @@ public class ShotContinuityChecker {
             return new ContinuityReport(new ArrayList<>(), 0);
         }
 
-        // 复制后按 shotNo 排序，shotNo 为 null 的排最后；不修改原 list
-        List<Shot> sorted = new ArrayList<>(shots);
+        // 复制后按 shotNo 排序，shotNo 为 null 的排最后；null 元素直接丢弃（与后继逐对检查的 null 容忍语义一致）；不修改原 list
+        List<Shot> sorted = new ArrayList<>();
+        for (Shot s : shots) {
+            if (s != null) {
+                sorted.add(s);
+            }
+        }
         sorted.sort(Comparator.comparing(Shot::getShotNo, Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<ContinuityIssue> issues = new ArrayList<>();

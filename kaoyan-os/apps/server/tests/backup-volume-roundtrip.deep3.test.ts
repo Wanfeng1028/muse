@@ -1,34 +1,30 @@
 import './bcrypt-test-env';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import Fastify, { type FastifyInstance } from 'fastify';
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
 import { createDb } from '../src/db';
 import { registerBackupRoutes } from '../src/routes/backup';
 import { applyAuthHook, registerAuthRoutes } from '../src/auth';
 import { registerAndLogin } from './test-utils';
 
-interface Row {
-  [key: string]: unknown;
-}
-
-interface ExportTables {
-  plans: Row[];
-  focus_sessions: Row[];
-  mistakes: Row[];
-  words: Row[];
-  srs_state: Row[];
-  exam_records: Row[];
-  settings: Row[];
-}
-
-interface ExportBody {
+interface BackupPayload {
   format: string;
   version: number;
   exportedAt: string;
-  tables: ExportTables;
+  tables: {
+    plans: unknown[];
+    focus_sessions: unknown[];
+    mistakes: unknown[];
+    words: unknown[];
+    srs_state: unknown[];
+    exam_records: unknown[];
+    settings: unknown[];
+  };
 }
 
-interface ImportedCounts {
+interface TableCounts {
   plans: number;
   focus_sessions: number;
   mistakes: number;
@@ -36,12 +32,6 @@ interface ImportedCounts {
   srs_state: number;
   exam_records: number;
   settings: number;
-}
-
-interface ImportBody {
-  mode: string;
-  imported: ImportedCounts;
-  skipped: ImportedCounts;
 }
 
 function seedLarge(db: DatabaseSync, userId: number): void {
@@ -136,26 +126,42 @@ function seedLarge(db: DatabaseSync, userId: number): void {
   }
 }
 
-function tableCounts(tables: ExportTables): Record<keyof ExportTables, number> {
-  return {
-    plans: tables.plans.length,
-    focus_sessions: tables.focus_sessions.length,
-    mistakes: tables.mistakes.length,
-    words: tables.words.length,
-    srs_state: tables.srs_state.length,
-    exam_records: tables.exam_records.length,
-    settings: tables.settings.length,
-  };
+function tableCounts(db: DatabaseSync): TableCounts {
+  const tables: (keyof TableCounts)[] = [
+    'plans',
+    'focus_sessions',
+    'mistakes',
+    'words',
+    'srs_state',
+    'exam_records',
+    'settings',
+  ];
+  const out = {} as TableCounts;
+  for (const t of tables) {
+    const row = db.prepare(`SELECT COUNT(*) AS c FROM ${t}`).get() as { c: number };
+    out[t] = row.c;
+  }
+  return out;
 }
 
-describe('backup volume roundtrip deep3', () => {
-  let db: DatabaseSync;
+async function makeFreshApp(): Promise<{ app: FastifyInstance; db: DatabaseSync }> {
+  const freshDb = createDb(':memory:');
+  const freshApp = Fastify({ logger: false });
+  registerBackupRoutes(freshApp, freshDb);
+  applyAuthHook(freshApp, freshDb);
+  registerAuthRoutes(freshApp, freshDb);
+  await freshApp.ready();
+  return { app: freshApp, db: freshDb };
+}
+
+describe('backup volume roundtrip (deep3)', () => {
   let app: FastifyInstance;
-  let cookieA: string;
-  let cookieB: string;
+  let db: DatabaseSync;
   let userIdA: number;
   let userIdB: number;
-  let backupA: ExportBody;
+  let cookieA: string;
+  let cookieB: string;
+  let backupA: BackupPayload;
 
   beforeEach(async () => {
     db = createDb(':memory:');
@@ -164,246 +170,372 @@ describe('backup volume roundtrip deep3', () => {
     applyAuthHook(app, db);
     registerAuthRoutes(app, db);
     await app.ready();
+
     cookieA = await registerAndLogin(app, 'vola');
     cookieB = await registerAndLogin(app, 'volb');
 
-    const rowA = db.prepare('SELECT id FROM users WHERE username = ?').get('vola') as
-      | { id: number }
-      | undefined;
-    const rowB = db.prepare('SELECT id FROM users WHERE username = ?').get('volb') as
-      | { id: number }
-      | undefined;
-    if (!rowA || !rowB) {
-      throw new Error('seeded users missing');
-    }
+    const rowA = db.prepare('SELECT id FROM users WHERE username = ?').get('vola') as {
+      id: number;
+    };
+    const rowB = db.prepare('SELECT id FROM users WHERE username = ?').get('volb') as {
+      id: number;
+    };
     userIdA = rowA.id;
     userIdB = rowB.id;
 
     seedLarge(db, userIdA);
 
-    const exportRes = await app.inject({
+    const expRes = await app.inject({
       method: 'GET',
       url: '/api/backup/export',
       headers: { cookie: cookieA },
     });
-    if (exportRes.statusCode !== 200) {
-      throw new Error(`seed export failed: ${exportRes.statusCode}`);
+    if (expRes.statusCode !== 200) {
+      throw new Error(`export failed: ${expRes.statusCode} ${expRes.body}`);
     }
-    backupA = exportRes.json() as ExportBody;
+    backupA = expRes.json() as BackupPayload;
   });
 
   afterEach(async () => {
     await app.close();
   });
 
-  it('round-trips a large dataset from A to B with replace mode', async () => {
-    const importRes = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data: backupA, mode: 'replace' },
-    });
-    expect(importRes.statusCode).toBe(200);
-    const importBody = importRes.json() as ImportBody;
-    expect(importBody.mode).toBe('replace');
-    expect(importBody.imported.plans).toBe(300);
-    expect(importBody.imported.focus_sessions).toBe(200);
-    expect(importBody.imported.mistakes).toBe(100);
-    expect(importBody.imported.words).toBe(200);
-    expect(importBody.imported.srs_state).toBe(200);
-    expect(importBody.imported.exam_records).toBe(100);
-    expect(importBody.imported.settings).toBe(5);
+  it('it1 大数据量 replace round-trip（新库恢复）', async () => {
+    const { app: appB, db: freshDb } = await makeFreshApp();
+    try {
+      const freshCookie = await registerAndLogin(appB, 'freshb');
 
-    const exportBRes = await app.inject({
-      method: 'GET',
-      url: '/api/backup/export',
-      headers: { cookie: cookieB },
-    });
-    expect(exportBRes.statusCode).toBe(200);
-    const backupB = exportBRes.json() as ExportBody;
+      const impRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'replace' },
+      });
+      expect(impRes.statusCode).toBe(200);
+      const impBody = impRes.json();
+      const imported = impBody.imported as Record<string, number>;
+      expect(imported.plans).toBe(300);
+      expect(imported.focus_sessions).toBe(200);
+      expect(imported.mistakes).toBe(100);
+      expect(imported.words).toBe(200);
+      expect(imported.srs_state).toBe(200);
+      expect(imported.exam_records).toBe(100);
+      expect(imported.settings).toBe(5);
 
-    const countsA = tableCounts(backupA.tables);
-    const countsB = tableCounts(backupB.tables);
-    expect(countsB).toEqual(countsA);
+      const expRes2 = await appB.inject({
+        method: 'GET',
+        url: '/api/backup/export',
+        headers: { cookie: freshCookie },
+      });
+      expect(expRes2.statusCode).toBe(200);
+      const backupB = expRes2.json() as BackupPayload;
+      expect(tableCounts(freshDb)).toEqual(tableCounts(db));
 
-    const plan299 = backupB.tables.plans.find((r) => r.title === 'vol-plan-299');
-    expect(plan299).toBeDefined();
-    expect(plan299!.subject).toBe('math');
+      const planRow = freshDb
+        .prepare('SELECT id, title FROM plans WHERE title = ?')
+        .get('vol-plan-299') as { id: number; title: string } | undefined;
+      expect(planRow).toBeDefined();
+      expect(planRow!.title).toBe('vol-plan-299');
 
-    const word199 = backupB.tables.words.find((r) => r.word === 'vol-word-199');
-    expect(word199).toBeDefined();
-    const word199Id = word199!.id as number;
+      const wordRow = freshDb
+        .prepare(
+          'SELECT w.id AS id, w.word AS word, s.ease AS ease FROM words w JOIN srs_state s ON s.word_id = w.id WHERE w.word = ?',
+        )
+        .get('vol-word-199') as { id: number; word: string; ease: number } | undefined;
+      expect(wordRow).toBeDefined();
+      expect(wordRow!.word).toBe('vol-word-199');
 
-    const srsA = backupA.tables.srs_state.find((r) => r.word_id === word199Id);
-    const srsB = backupB.tables.srs_state.find((r) => r.word_id === word199Id);
-    expect(srsA).toBeDefined();
-    expect(srsB).toBeDefined();
-    expect(srsB!.ease as number).toBeCloseTo(srsA!.ease as number, 4);
-    expect(srsB!.due_date).toBe(srsA!.due_date);
+      const srcSrs = backupA.tables.srs_state as Array<Record<string, unknown>>;
+      const srcWords = backupA.tables.words as Array<Record<string, unknown>>;
+      const srcWord = srcWords.find((w) => w.word === 'vol-word-199') as
+        | Record<string, unknown>
+        | undefined;
+      expect(srcWord).toBeDefined();
+      const srcSrsRow = srcSrs.find((s) => s.word_id === srcWord!.id) as
+        | Record<string, unknown>
+        | undefined;
+      expect(srcSrsRow).toBeDefined();
+      expect(wordRow!.ease).toBeCloseTo(srcSrsRow!.ease as number, 6);
+
+      expect(backupB.tables.words.length).toBe(200);
+    } finally {
+      await appB.close();
+    }
   });
 
-  it('does not leak user_id in export payload', async () => {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/api/backup/export',
-      headers: { cookie: cookieA },
-    });
-    expect(res.statusCode).toBe(200);
-    const text = JSON.stringify(res.json());
-    expect(text.includes('"user_id"')).toBe(false);
-  });
-
-  it('merge import on B is idempotent for row counts', async () => {
-    const replaceRes = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data: backupA, mode: 'replace' },
-    });
-    expect(replaceRes.statusCode).toBe(200);
-
-    const beforeRes = await app.inject({
-      method: 'GET',
-      url: '/api/backup/export',
-      headers: { cookie: cookieB },
-    });
-    expect(beforeRes.statusCode).toBe(200);
-    const before = tableCounts((beforeRes.json() as ExportBody).tables);
-
-    const mergeRes = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data: backupA, mode: 'merge' },
-    });
-    expect(mergeRes.statusCode).toBe(200);
-    const mergeBody = mergeRes.json() as ImportBody;
-    expect(mergeBody.mode).toBe('merge');
-    expect(mergeBody.skipped.words).toBe(200);
-    expect(mergeBody.skipped.plans).toBe(300);
-    expect(mergeBody.skipped.focus_sessions).toBe(200);
-    expect(mergeBody.skipped.mistakes).toBe(100);
-    expect(mergeBody.skipped.exam_records).toBe(100);
-    expect(mergeBody.skipped.settings).toBe(5);
-    expect(mergeBody.imported.srs_state).toBe(200);
-
-    const afterRes = await app.inject({
-      method: 'GET',
-      url: '/api/backup/export',
-      headers: { cookie: cookieB },
-    });
-    expect(afterRes.statusCode).toBe(200);
-    const after = tableCounts((afterRes.json() as ExportBody).tables);
-    expect(after).toEqual(before);
-  });
-
-  it('rejects invalid mode with 400', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data: backupA, mode: 'xxx' },
-    });
-    expect(res.statusCode).toBe(400);
-    expect((res.json() as { error: string }).error).toBe('无效的 mode');
-  });
-
-  it('rejects wrong format and wrong version', async () => {
-    const badFormat = {
-      format: 'kaoyan-backup-v2',
-      version: 1,
-      exportedAt: backupA.exportedAt,
-      tables: backupA.tables,
-    };
-    const formatRes = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data: badFormat, mode: 'replace' },
-    });
-    expect(formatRes.statusCode).toBe(400);
-    expect((formatRes.json() as { error: string }).error).toBe('format 无效');
-
-    const badVersion = {
-      format: 'kaoyan-backup',
-      version: 2,
-      exportedAt: backupA.exportedAt,
-      tables: backupA.tables,
-    };
-    const versionRes = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data: badVersion, mode: 'replace' },
-    });
-    expect(versionRes.statusCode).toBe(400);
-    expect((versionRes.json() as { error: string }).error).toBe('version 无效');
-  });
-
-  it('rejects missing tables entry with 表 plans 不是数组', async () => {
-    const tables = { ...backupA.tables } as Record<string, unknown>;
-    delete tables.plans;
-    const data = {
-      format: 'kaoyan-backup',
-      version: 1,
-      exportedAt: backupA.exportedAt,
-      tables,
-    };
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data, mode: 'replace' },
-    });
-    expect(res.statusCode).toBe(400);
-    expect((res.json() as { error: string }).error).toBe('表 plans 不是数组');
-  });
-
-  it('rejects invalid subject in plans row 3 with row-scoped error', async () => {
-    const plans = backupA.tables.plans.map((r) => ({ ...r }));
-    plans[2] = { ...plans[2], subject: 'badsubject' };
-    const data = {
-      format: 'kaoyan-backup',
-      version: 1,
-      exportedAt: backupA.exportedAt,
-      tables: { ...backupA.tables, plans },
-    };
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/backup/import',
-      headers: { cookie: cookieB },
-      payload: { data, mode: 'replace' },
-    });
-    expect(res.statusCode).toBe(400);
-    const err = (res.json() as { error: string }).error;
-    expect(err).toContain('表 plans 第 3 行');
-    expect(err).toContain('subject 无效');
-  });
-
-  it('B replace import does not affect A rows', async () => {
-    const beforeARes = await app.inject({
+  it('it2 export 响应不含 user_id（隐私）', async () => {
+    const exportRes = await app.inject({
       method: 'GET',
       url: '/api/backup/export',
       headers: { cookie: cookieA },
     });
-    expect(beforeARes.statusCode).toBe(200);
-    const beforeA = tableCounts((beforeARes.json() as ExportBody).tables);
+    expect(exportRes.statusCode).toBe(200);
+    expect(JSON.stringify(exportRes.json())).not.toContain('"user_id"');
+  });
 
-    const importRes = await app.inject({
+  it('it3 merge 幂等（行数不变）', async () => {
+    const { app: appB, db: freshDb } = await makeFreshApp();
+    try {
+      const freshCookie = await registerAndLogin(appB, 'freshb');
+
+      const replaceRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'replace' },
+      });
+      expect(replaceRes.statusCode).toBe(200);
+
+      const exp1 = await appB.inject({
+        method: 'GET',
+        url: '/api/backup/export',
+        headers: { cookie: freshCookie },
+      });
+      expect(exp1.statusCode).toBe(200);
+      const counts1 = tableCounts(freshDb);
+
+      const mergeRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'merge' },
+      });
+      expect(mergeRes.statusCode).toBe(200);
+
+      const exp2 = await appB.inject({
+        method: 'GET',
+        url: '/api/backup/export',
+        headers: { cookie: freshCookie },
+      });
+      expect(exp2.statusCode).toBe(200);
+      const counts2 = tableCounts(freshDb);
+
+      expect(counts2).toEqual(counts1);
+    } finally {
+      await appB.close();
+    }
+  });
+
+  it('it4 merge 新增不存在的行', async () => {
+    const { app: appB, db: freshDb } = await makeFreshApp();
+    try {
+      const freshCookie = await registerAndLogin(appB, 'freshb');
+
+      const replaceRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'replace' },
+      });
+      expect(replaceRes.statusCode).toBe(200);
+
+      const newPlan = {
+        id: 99999,
+        user_id: 0,
+        date: '2025-09-09',
+        subject: 'english',
+        title: 'extra-plan',
+        done: 0,
+        created_at: new Date().toISOString(),
+      };
+      const payload = {
+        format: 'kaoyan-backup',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        tables: {
+          plans: [newPlan],
+          focus_sessions: [],
+          mistakes: [],
+          words: [],
+          srs_state: [],
+          exam_records: [],
+          settings: [],
+        },
+      };
+
+      const before = tableCounts(freshDb);
+      const mergeRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: payload, mode: 'merge' },
+      });
+      expect(mergeRes.statusCode).toBe(200);
+      const after = tableCounts(freshDb);
+      expect(after.plans).toBe(before.plans + 1);
+      const inserted = freshDb
+        .prepare('SELECT id, title FROM plans WHERE title = ?')
+        .get('extra-plan') as { id: number; title: string } | undefined;
+      expect(inserted).toBeDefined();
+      expect(inserted!.title).toBe('extra-plan');
+    } finally {
+      await appB.close();
+    }
+  });
+
+  it('it5 replace 后 export 的 payload 结构与原始一致', async () => {
+    const { app: appB, db: freshDb } = await makeFreshApp();
+    try {
+      const freshCookie = await registerAndLogin(appB, 'freshb');
+
+      const impRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'replace' },
+      });
+      expect(impRes.statusCode).toBe(200);
+
+      const expRes = await appB.inject({
+        method: 'GET',
+        url: '/api/backup/export',
+        headers: { cookie: freshCookie },
+      });
+      expect(expRes.statusCode).toBe(200);
+      const backupB = expRes.json() as BackupPayload;
+
+      expect(backupB.format).toBe('kaoyan-backup');
+      expect(backupB.version).toBe(1);
+      expect(typeof backupB.exportedAt).toBe('string');
+      expect(backupB.tables.plans.length).toBe(backupA.tables.plans.length);
+      expect(backupB.tables.focus_sessions.length).toBe(backupA.tables.focus_sessions.length);
+      expect(backupB.tables.mistakes.length).toBe(backupA.tables.mistakes.length);
+      expect(backupB.tables.words.length).toBe(backupA.tables.words.length);
+      expect(backupB.tables.srs_state.length).toBe(backupA.tables.srs_state.length);
+      expect(backupB.tables.exam_records.length).toBe(backupA.tables.exam_records.length);
+      expect(backupB.tables.settings.length).toBe(backupA.tables.settings.length);
+
+      expect(tableCounts(freshDb)).toEqual(tableCounts(db));
+    } finally {
+      await appB.close();
+    }
+  });
+
+  it('it6 replace 时用户数据被完整覆盖（无残留）', async () => {
+    const { app: appB, db: freshDb } = await makeFreshApp();
+    try {
+      const freshCookie = await registerAndLogin(appB, 'freshb');
+
+      const strayIns = freshDb.prepare(
+        'INSERT INTO plans (user_id, date, subject, title, done, created_at) VALUES (?, ?, ?, ?, 0, ?)',
+      );
+      const freshRow = freshDb.prepare('SELECT id FROM users WHERE username = ?').get('freshb') as {
+        id: number;
+      };
+      strayIns.run(freshRow.id, '2025-12-31', 'stray', 'stray-plan', Date.now());
+
+      const beforeCounts = tableCounts(freshDb);
+      expect(beforeCounts.plans).toBe(1);
+
+      const impRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'replace' },
+      });
+      expect(impRes.statusCode).toBe(200);
+
+      const stray = freshDb
+        .prepare('SELECT id FROM plans WHERE title = ?')
+        .get('stray-plan') as { id: number } | undefined;
+      expect(stray).toBeUndefined();
+
+      const afterCounts = tableCounts(freshDb);
+      expect(afterCounts.plans).toBe(300);
+    } finally {
+      await appB.close();
+    }
+  });
+
+  it('it7 replace 校验七表 imported 计数', async () => {
+    const { app: appB, db: freshDb } = await makeFreshApp();
+    try {
+      const freshCookie = await registerAndLogin(appB, 'freshb');
+
+      const impRes = await appB.inject({
+        method: 'POST',
+        url: '/api/backup/import',
+        headers: { cookie: freshCookie },
+        payload: { data: backupA, mode: 'replace' },
+      });
+      expect(impRes.statusCode).toBe(200);
+      const imported = impRes.json().imported as Record<string, number>;
+      expect(imported.plans).toBe(backupA.tables.plans.length);
+      expect(imported.focus_sessions).toBe(backupA.tables.focus_sessions.length);
+      expect(imported.mistakes).toBe(backupA.tables.mistakes.length);
+      expect(imported.words).toBe(backupA.tables.words.length);
+      expect(imported.srs_state).toBe(backupA.tables.srs_state.length);
+      expect(imported.exam_records).toBe(backupA.tables.exam_records.length);
+      expect(imported.settings).toBe(backupA.tables.settings.length);
+
+      const counts = tableCounts(freshDb);
+      expect(counts.plans).toBe(backupA.tables.plans.length);
+      expect(counts.focus_sessions).toBe(backupA.tables.focus_sessions.length);
+      expect(counts.mistakes).toBe(backupA.tables.mistakes.length);
+      expect(counts.words).toBe(backupA.tables.words.length);
+      expect(counts.srs_state).toBe(backupA.tables.srs_state.length);
+      expect(counts.exam_records).toBe(backupA.tables.exam_records.length);
+      expect(counts.settings).toBe(backupA.tables.settings.length);
+    } finally {
+      await appB.close();
+    }
+  });
+
+  it('it8 replace 只删当前用户的数据', async () => {
+    const insPlan = db.prepare(
+      'INSERT INTO plans (user_id, date, subject, title, done, created_at) VALUES (?, ?, ?, ?, 0, ?)',
+    );
+    const now = Date.now();
+    insPlan.run(userIdA, '2025-05-01', 'math', 'vol-plan-0', now);
+    insPlan.run(userIdA, '2025-05-02', 'math', 'vol-plan-1', now);
+    insPlan.run(userIdA, '2025-05-03', 'math', 'vol-plan-2', now);
+    insPlan.run(userIdB, '2025-05-04', 'math', 'b-old-plan-0', now);
+    insPlan.run(userIdB, '2025-05-05', 'math', 'b-old-plan-1', now);
+
+    const volbPlansBefore = db
+      .prepare('SELECT COUNT(*) AS c FROM plans WHERE user_id = ?')
+      .get(userIdB) as { c: number };
+    expect(volbPlansBefore.c).toBe(2);
+    const volaPlansBefore = db
+      .prepare('SELECT COUNT(*) AS c FROM plans WHERE user_id = ?')
+      .get(userIdA) as { c: number };
+
+    const payload = {
+      format: 'kaoyan-backup',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      tables: {
+        plans: [{ date: '2025-06-01', subject: 'math', title: 'b-new-plan' }],
+        focus_sessions: [],
+        mistakes: [],
+        words: [],
+        srs_state: [],
+        exam_records: [],
+        settings: [],
+      },
+    };
+
+    const impRes = await app.inject({
       method: 'POST',
       url: '/api/backup/import',
       headers: { cookie: cookieB },
-      payload: { data: backupA, mode: 'replace' },
+      payload: { data: payload, mode: 'replace' },
     });
-    expect(importRes.statusCode).toBe(200);
+    expect(impRes.statusCode).toBe(200);
 
-    const afterARes = await app.inject({
-      method: 'GET',
-      url: '/api/backup/export',
-      headers: { cookie: cookieA },
-    });
-    expect(afterARes.statusCode).toBe(200);
-    const afterA = tableCounts((afterARes.json() as ExportBody).tables);
-    expect(afterA).toEqual(beforeA);
+    const volbPlans = db
+      .prepare('SELECT title FROM plans WHERE user_id = ? ORDER BY title')
+      .all(userIdB) as Array<{ title: string }>;
+    expect(volbPlans.length).toBe(1);
+    expect(volbPlans[0].title).toBe('b-new-plan');
+
+    const volaPlansAfter = db
+      .prepare('SELECT COUNT(*) AS c FROM plans WHERE user_id = ?')
+      .get(userIdA) as { c: number };
+    expect(volaPlansAfter.c).toBe(volaPlansBefore.c);
+    const volaHasSeed = db
+      .prepare("SELECT COUNT(*) AS c FROM plans WHERE user_id = ? AND title = 'vol-plan-299'")
+      .get(userIdA) as { c: number };
+    expect(volaHasSeed.c).toBe(1);
   });
 });

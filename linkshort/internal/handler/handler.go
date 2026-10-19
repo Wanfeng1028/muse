@@ -103,6 +103,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Get("/stats/top-links", func(w http.ResponseWriter, req *http.Request) { handleTopLinks(w, req, st) })
 		api.Get("/stats/top-referers", func(w http.ResponseWriter, req *http.Request) { handleTopReferers(w, req, st) })
 		api.Get("/stats/geo", func(w http.ResponseWriter, req *http.Request) { handleStatsGeo(w, req, st) })
+		api.Get("/stats/hourly", func(w http.ResponseWriter, req *http.Request) { handleStatsHourly(w, req, st) })
 
 		api.Post("/import", func(w http.ResponseWriter, req *http.Request) { handleImport(w, req, st) })
 		api.Get("/export.csv", func(w http.ResponseWriter, req *http.Request) { handleExport(w, req, st) })
@@ -271,9 +272,9 @@ func loadActiveLink(w http.ResponseWriter, r *http.Request, st *store.Store, slu
 
 // handleRedirect 处理短链跳转（GET /{slug}）。
 // 带密码的短链先渲染密码输入页，密码校验走 POST /{slug}。
-// 并发说明：两次并发访问可能都通过 clicks 检查（单连接串行写入缓解，
-// 未做分布式锁，文档已注明）。
+// 并发安全：限次/burn 名额由 store 层单条条件 UPDATE 原子抢占，保证精确语义。
 func handleRedirect(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
+
 	slug := chi.URLParam(r, "slug")
 	link, ok := loadActiveLink(w, r, st, slug)
 	if !ok {
@@ -339,45 +340,75 @@ func clientIP(r *http.Request) string {
 // finishRedirect 执行跳转前的最终检查（限次访问）并完成跳转。
 // 只有成功解锁（密码正确或无密码）才会走到这里：记访问、处理阅后即焚、302。
 func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st *store.Store, cfg *config.Config) {
-	if link.MaxVisits != nil && link.Clicks >= *link.MaxVisits {
-		metrics.Default.IncRedirect("gone")
-		http.Error(w, "链接已达访问上限", http.StatusGone)
-		return
-	}
-
-	// 记录访问，失败只记日志不阻断跳转。
+	// 统一准备访问上下文。失败只记日志不阻断跳转。
 	// clientIP 优先取 X-Forwarded-For / X-Real-IP（反向代理部署的常见形态），直连时退化为 RemoteAddr。
 	cip := clientIP(r)
 	ipHash := hashIP(cip)
 	ua := truncate(r.UserAgent(), 256)
 	referer := truncate(r.Referer(), 512)
 	loc := geo.LookupRequest(cip, r.Header.Get)
+
+	// burn 优先：API 层面若同时设置 burn 与 max_visits，burn 语义胜出。
+	if link.Burn {
+		burned, err := st.TryBurn(link.ID)
+		if err != nil {
+			metrics.Default.IncRedirect("error")
+			http.Error(w, "服务器错误", http.StatusInternalServerError)
+			return
+		}
+		if !burned {
+			metrics.Default.IncRedirect("gone")
+			http.Error(w, "链接已阅销毁", http.StatusGone)
+			return
+		}
+		if err := st.RecordVisitGeo(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province, loc.City); err != nil {
+			log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
+		}
+		metrics.Default.IncBurned()
+		purgeCause := ""
+		if link.PurgeAfterBurn {
+			purgeCause = "per-link"
+		} else if cfg.BurnPurgeAfterDestroy {
+			purgeCause = "env"
+		}
+		if purgeCause != "" {
+			if perr := st.PurgeLink(link.ID); perr != nil {
+				log.Printf("handler: 彻底删除已销毁链接失败 link=%d: %v", link.ID, perr)
+			} else {
+				log.Printf("handler: 彻底删除已销毁链接 link=%d slug=%s cause=%s", link.ID, link.Slug, purgeCause)
+				metrics.Default.IncBurnPurged()
+			}
+		}
+		metrics.Default.IncRedirect("ok")
+		http.Redirect(w, r, link.URL, http.StatusFound)
+		return
+	}
+
+	// max_visits 限次分支：单条条件 UPDATE 原子消费额度并计数。
+	if link.MaxVisits != nil {
+		ok, err := st.TryConsumeVisit(link.ID)
+		if err != nil {
+			metrics.Default.IncRedirect("error")
+			http.Error(w, "服务器错误", http.StatusInternalServerError)
+			return
+		}
+		if !ok {
+			metrics.Default.IncRedirect("gone")
+			http.Error(w, "链接已达访问上限", http.StatusGone)
+			return
+		}
+		if err := st.RecordVisitNoCount(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province, loc.City); err != nil {
+			log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
+		}
+		metrics.Default.IncRedirect("ok")
+		http.Redirect(w, r, link.URL, http.StatusFound)
+		return
+	}
+
+	// 普通分支：原样记录访问（visits 行 + clicks+1）后跳转。
 	if err := st.RecordVisitGeo(link.ID, ipHash, ua, referer, loc.CountryCode, loc.CountryName, loc.Province, loc.City); err != nil {
 		log.Printf("handler: 记录访问失败 link=%d: %v", link.ID, err)
 	}
-
-	if link.Burn {
-		if err := st.MarkBurned(link.ID); err != nil {
-			log.Printf("handler: 标记阅后销毁失败 link=%d: %v", link.ID, err)
-		} else {
-			metrics.Default.IncBurned()
-			purgeCause := ""
-			if link.PurgeAfterBurn {
-				purgeCause = "per-link"
-			} else if cfg.BurnPurgeAfterDestroy {
-				purgeCause = "env"
-			}
-			if purgeCause != "" {
-				if perr := st.PurgeLink(link.ID); perr != nil {
-					log.Printf("handler: 彻底删除已销毁链接失败 link=%d: %v", link.ID, perr)
-				} else {
-					log.Printf("handler: 彻底删除已销毁链接 link=%d slug=%s cause=%s", link.ID, link.Slug, purgeCause)
-					metrics.Default.IncBurnPurged()
-				}
-			}
-		}
-	}
-
 	metrics.Default.IncRedirect("ok")
 	http.Redirect(w, r, link.URL, http.StatusFound)
 }
@@ -872,6 +903,29 @@ func handleStatsGeo(w http.ResponseWriter, r *http.Request, st *store.Store) {
 		"total_clicks": ov.TotalClicks,
 		"total_uv":     ov.TotalUV,
 		"days":         ov.Days,
+	})
+}
+
+func handleStatsHourly(w http.ResponseWriter, req *http.Request, st *store.Store) {
+	linkID := int64(parseIntDefault(req.URL.Query().Get("link_id"), 0))
+	if linkID < 0 {
+		linkID = 0
+	}
+	days := parseIntDefault(req.URL.Query().Get("days"), 30)
+	if days != 1 && days != 7 && days != 30 {
+		days = 30
+	}
+	hs, err := st.HourlyStats(linkID, days)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"hours":        hs.Hours,
+		"weekdays":     hs.Weekdays,
+		"total_clicks": hs.Total,
+		"days":         hs.Days,
+		"link_id":      hs.LinkID,
 	})
 }
 

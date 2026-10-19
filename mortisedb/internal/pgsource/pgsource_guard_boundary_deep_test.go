@@ -8,26 +8,25 @@ import (
 
 // TestGuardBoundaryEvasion 测白名单正则的边界，也就是它拦不住什么、又能拦住什么。
 func TestGuardBoundaryEvasion(t *testing.T) {
-	// WITH 里夹带 DELETE，前缀正则只看开头是不是 WITH，所以照样放过。
-	// 这不是 bug，是设计上就只把白名单当第一层。真正的写保护靠 PG 会话参数
-	// default_transaction_read_only=on 以及 EnsureReadOnlyConnStr 改写连接串，
-	// 还有只读账号权限，三层一起兜底（见设计文档第 4 节）。
-	if err := AssertReadOnlySQL("WITH d AS (DELETE FROM t) SELECT 1"); err != nil {
-		t.Fatalf("WITH 夹带写操作按真实行为应当通过白名单，却返回错误: %v", err)
-	}
-
-	// 以 SQL 注释开头，前缀正则匹配不上，直接拒。
-	err := AssertReadOnlySQL("-- pick\nSELECT 1")
+	// 2026-10-19 加固：白名单升级为字面量/注释感知，不再放行 WITH 体内 DML。
+	// 第一层现在会词法扫描剥离后的文本，WITH 体内出现 DELETE/UPDATE/INSERT/MERGE
+	// 一律拒绝，零数据库往返。真正写保护仍由第二层只读事务和第三层只读账号兜底。
+	err := AssertReadOnlySQL("WITH d AS (DELETE FROM t) SELECT 1")
 	if err == nil {
-		t.Fatalf("注释开头的语句应当被拒绝")
+		t.Fatalf("WITH 夹带写操作现在应当被拒绝，却通过了白名单")
 	}
 	if !strings.Contains(err.Error(), "只读") {
 		t.Fatalf("错误信息里应当含 '只读'，实际: %v", err)
 	}
 
-	// 字符串字面量里的分号也照拒，因为实现就是 strings.Contains 整个串找分号。
-	if err := AssertReadOnlySQL("select 'a;b'"); err == nil {
-		t.Fatalf("字符串里的分号也应当被拒绝")
+	// 变更：以 SQL 注释开头现在被剥离，剥离后以 SELECT 开头，应当通过。
+	if err := AssertReadOnlySQL("-- pick\nSELECT 1"); err != nil {
+		t.Fatalf("注释剥离后以 SELECT 开头的语句现在应当通过，实际错误: %v", err)
+	}
+
+	// 变更：字符串字面量里的分号不再误杀，因为先剥离字面量再检查分号。
+	if err := AssertReadOnlySQL("select 'a;b'"); err != nil {
+		t.Fatalf("字符串里的分号现在不再误杀，应当通过，实际错误: %v", err)
 	}
 
 	// TABLE t 不是 select/with 开头，拒。

@@ -149,13 +149,11 @@ class CutRhythmCheckerDeepTest {
 
     @Test
     void cutsPerMinuteExactlyAtDenseThresholdDoesNotTriggerDense() {
-        // 目标 cutsPerMinute == 40.0：取 40 镜每镜 1s，total = 40s，cutsPerMinute = 40/40*60 = 60 不对
-        // 用 n 镜每镜 d 秒：n/(n*d)*60 = 60/d。要 ==40 -> d=1.5
-        // 取 40 镜每镜 1.5s：total = 60s，cutsPerMinute = 40/60*60 = 40.0 恰等于阈值
+        // 目标 cutsPerMinute == 40.0：helper 对 Number 做 intValue() 截断，1.5 会变 1s，
+        // 故用整数秒凑：2 镜时长 1s、2s -> total = 3s，cutsPerMinute = 2/3*60 = 40.0 恰等于阈值
         List<Shot> shots = new ArrayList<>();
-        for (int i = 1; i <= 40; i++) {
-            shots.add(shot(i, 1500L + i, 1.5));
-        }
+        shots.add(shot(1, 1501L, 1));
+        shots.add(shot(2, 1502L, 2));
 
         CutRhythmChecker.RhythmReport report = checker.check(shots);
 
@@ -285,12 +283,13 @@ class CutRhythmCheckerDeepTest {
 
     @Test
     void monotonousRunGapJustOverOneSecondBreaksRun() {
-        // 第三镜与第二镜差 1.0001 > 1.0，打破单调段
+        // helper 对 Number 做 intValue() 截断，小数差会被抹平；整数秒下最小 >1.0 间隔是 2：
+        // 5->6 差 1 不打破，6->8 差 2>1.0 打破单调段
         List<Shot> shots = new ArrayList<>();
         shots.add(shot(1, 2201L, 5.0));
-        shots.add(shot(2, 2202L, 5.5));
-        shots.add(shot(3, 2203L, 6.5001));
-        shots.add(shot(4, 2204L, 6.6));
+        shots.add(shot(2, 2202L, 6));
+        shots.add(shot(3, 2203L, 8));
+        shots.add(shot(4, 2204L, 8));
 
         CutRhythmChecker.RhythmReport report = checker.check(shots);
 
@@ -477,6 +476,10 @@ class CutRhythmCheckerDeepTest {
         };
         bomb.setId(3101L);
         bomb.setDurationSeconds(5);
+        Shot normal = new Shot();
+        normal.setShotNo(1);
+        normal.setDurationSeconds(5);
+        shots.add(normal);
         shots.add(bomb);
 
         assertThatThrownBy(() -> checker.check(shots))
@@ -516,7 +519,7 @@ class CutRhythmCheckerDeepTest {
         for (int i = 4; i <= 13; i++) {
             shots.add(shot(i, 3300L + i, 2.0));
         }
-        shots.add(shot(14, 3314L, 40.0));
+        shots.add(shot(14, 3314L, 25.0));
 
         CutRhythmChecker.RhythmConfig config = new CutRhythmChecker.RhythmConfig(100.0, 0.0, 0.0, 1000.0);
         CutRhythmChecker.RhythmReport report = checker.check(shots, config);

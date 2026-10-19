@@ -5,7 +5,9 @@ import {
   type CreatePlanInput,
   type UpdatePlanInput,
   type PlanSummary,
+  type PlanProgress,
   type AutoScheduleItem,
+  type SubjectKey,
   isSubjectKey,
   SUBJECTS,
 } from '@kaoyan/shared';
@@ -188,7 +190,36 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const done = Number(row?.done ?? 0);
     const completionRate = total === 0 ? 0 : Number((done / total).toFixed(4));
 
-    const summary: PlanSummary = { date, total, done, completionRate };
+    const summary: PlanSummary = { date, total, done, completionRate, plans: [] };
+
+    const planRows = db
+      .prepare(
+        'SELECT p.id AS id, p.title AS title, p.subject AS subject, ' +
+          'p.planned_minutes AS planned_minutes, p.done AS done, ' +
+          'COALESCE(SUM(f.minutes), 0) AS actual_minutes ' +
+          'FROM plans p LEFT JOIN focus_sessions f ON f.plan_id = p.id AND f.user_id = p.user_id ' +
+          'WHERE p.date = ? AND p.user_id = ? GROUP BY p.id ORDER BY p.id ASC',
+      )
+      .all(date, req.user!.id) as unknown as Array<{
+      id: number;
+      title: string;
+      subject: string;
+      planned_minutes: number;
+      done: number;
+      actual_minutes: number;
+    }>;
+
+    summary.plans = planRows.map(
+      (r): PlanProgress => ({
+        id: r.id,
+        title: r.title,
+        subject: r.subject as SubjectKey,
+        plannedMinutes: Number(r.planned_minutes),
+        actualMinutes: Number(r.actual_minutes),
+        done: r.done === 1,
+      }),
+    );
+
     return reply.send(summary);
   });
 
@@ -332,6 +363,11 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
       return reply.code(404).send({ error: '计划不存在' });
     }
 
+    // 删计划不断专注链：关联的专注记录 plan_id 置空
+    db.prepare('UPDATE focus_sessions SET plan_id = NULL WHERE plan_id = ? AND user_id = ?').run(
+      id,
+      req.user!.id,
+    );
     db.prepare('DELETE FROM plans WHERE id = ? AND user_id = ?').run(id, req.user!.id);
     return reply.send({ ok: true });
   });

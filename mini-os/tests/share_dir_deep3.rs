@@ -99,7 +99,11 @@ async fn create_dir(app: &axum::Router, cookie: &str, parent: Option<i64>, name:
         body["parentId"] = json!(p);
     }
     let resp = post_json(app, "/api/fs", Some(cookie), &body).await;
-    assert_eq!(resp.status(), StatusCode::OK, "create_dir {name} failed");
+    assert_eq!(
+        resp.status(),
+        StatusCode::CREATED,
+        "create_dir {name} failed"
+    );
     let v = read_json(resp).await;
     v["id"].as_i64().unwrap()
 }
@@ -116,7 +120,11 @@ async fn create_text_file(
         body["parentId"] = json!(p);
     }
     let resp = post_json(app, "/api/fs", Some(cookie), &body).await;
-    assert_eq!(resp.status(), StatusCode::OK, "create_file {name} failed");
+    assert_eq!(
+        resp.status(),
+        StatusCode::CREATED,
+        "create_file {name} failed"
+    );
     let v = read_json(resp).await;
     v["id"].as_i64().unwrap()
 }
@@ -134,7 +142,7 @@ async fn upload_binary(
 ) -> i64 {
     let boundary = "----testboundaryXYZ";
     let body = multipart_body(boundary, "file", filename, data);
-    let mut uri = "/api/fs/upload".to_string();
+    let mut uri = "/api/files/upload".to_string();
     if let Some(p) = parent {
         uri = format!("{uri}?parentId={p}");
     }
@@ -149,7 +157,7 @@ async fn upload_binary(
         .body(Body::from(body))
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK, "upload failed");
+    assert_eq!(resp.status(), StatusCode::CREATED, "upload failed");
     let v = read_json(resp).await;
     v["id"].as_i64().unwrap()
 }
@@ -527,7 +535,7 @@ async fn delete_node_then_share_gone_404() {
         .body(Body::empty())
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::NO_CONTENT);
 
     let resp = get(&app, &format!("/api/s/{token}"), None).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
