@@ -72,6 +72,13 @@ drama:
     provider: ${VIDEO_PROVIDER:mock}
     poll-interval-ms: ${VIDEO_POLL_MS:10000}
     max-attempts: ${VIDEO_MAX_ATTEMPTS:8}
+  # 官方 Skill 库：内置 skill 随发行物走（resources/skills-bundled），用户点击安装后落到 skills.dir
+  skills:
+    dir: ${DRAMA_SKILLS_DIR:data/skills}
+  # 官方 skillhub（挂在项目官网下）：为空则禁用远端，只用内置 skill；
+  # 启用后软件内安装 skill 时直接从该地址下载（约定见 docs/skillhub-server-convention.md）
+  skillhub:
+    base-url: ${DRAMA_SKILLHUB_BASE_URL:}
   storage: ${DRAMA_STORAGE:./data/media}
   ffmpeg: ${FFMPEG_PATH:ffmpeg}
   ffprobe: ${FFPROBE_PATH:ffprobe}
