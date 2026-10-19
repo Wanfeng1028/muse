@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "shotSize": [
+    {"label": "特写", "en": "close-up", "alt": ["extreme close-up"], "note": "Use for tight facial detail or a single object that carries strong emotion."},
+    {"label": "近景", "en": "medium close-up", "note": "Use for dialogue-driven beats where the character's face and upper body fill the frame."},
+    {"label": "中景", "en": "medium shot", "note": "Use as the workhorse framing for conversations and everyday action."},
+    {"label": "全景", "en": "wide shot", "alt": ["full shot"], "note": "Use to show a character's whole body within their surroundings."},
+    {"label": "远景", "en": "extreme long shot", "note": "Use to establish a location or emphasize scale and isolation."}
+  ],
+  "cameraMove": [
+    {"label": "固定机位", "en": "static shot", "alt": ["locked-off shot"], "note": "Use for calm, observational moments where the frame should not move."},
+    {"label": "推镜头", "en": "push-in", "alt": ["dolly-in"], "note": "Use to build intimacy or tension by moving closer to the subject."},
+    {"label": "拉镜头", "en": "pull-back", "alt": ["dolly-out"], "note": "Use to reveal context or create a sense of detachment."},
+    {"label": "摇镜头", "en": "pan", "alt": ["tilt"], "note": "Use to scan a space horizontally or vertically from a fixed position."},
+    {"label": "移镜头", "en": "dolly", "alt": ["tracking"], "note": "Use to travel with the subject through space for a fluid feel."},
+    {"label": "跟镜头", "en": "tracking shot", "alt": ["follow shot"], "note": "Use to keep pace with a moving character and sustain momentum."},
+    {"label": "升降", "en": "crane shot", "alt": ["crane up", "crane down"], "note": "Use for sweeping vertical reveals or dramatic transitions."}
+  ],
+  "cameraAngle": [
+    {"zh": "平视", "en": "eye-level shot", "note": "Neutral, natural perspective aligned with the subject's gaze."},
+    {"zh": "俯拍", "en": "high-angle shot", "note": "Makes the subject look smaller or more vulnerable."},
+    {"zh": "仰拍", "en": "low-angle shot", "note": "Makes the subject look larger, dominant, or heroic."},
+    {"zh": "顶拍", "en": "top-down shot", "alt": ["bird's-eye view"], "note": "Straight-down view for graphic, god-like, or disorienting effect."},
+    {"zh": "过肩", "en": "over-the-shoulder shot", "note": "Classic dialogue framing that anchors the listener in frame."},
+    {"zh": "主观视角", "en": "POV shot", "note": "Shows what the character sees to build identification."}
+  ],
+  "lighting": [
+    {"zh": "柔光", "en": "soft light", "note": "Diffused light that flatters skin and softens shadows."},
+    {"zh": "硬光", "en": "hard light", "note": "Sharp, directional light producing crisp, dramatic shadows."},
+    {"zh": "黄金时刻", "en": "golden hour", "note": "Warm, low-angle sunlight near sunrise or sunset."},
+    {"zh": "高调", "en": "high-key lighting", "note": "Bright, low-contrast lighting for upbeat or comedic scenes."},
+    {"zh": "低调", "en": "low-key lighting", "note": "Dark, high-contrast lighting for mystery or tension."},
+    {"zh": "轮廓光", "en": "rim light", "note": "Back light that outlines the subject to separate them from the background."},
+    {"zh": "冷暖色温", "en": "warm/cool color temperature", "note": "Contrast between warm and cool tones to create mood or division."}
+  ],
+  "composition": [
+    {"zh": "三分法", "en": "rule of thirds", "note": "Place key subjects on the thirds intersections for balance."},
+    {"zh": "浅景深", "en": "shallow depth of field", "note": "Isolate the subject with a blurred background."},
+    {"zh": "焦点转移", "en": "rack focus", "note": "Shift focus between planes to guide attention."},
+    {"zh": "引导线", "en": "leading lines", "note": "Use environmental lines to draw the eye toward the subject."},
+    {"zh": "对称构图", "en": "symmetrical composition", "note": "Mirror elements around a center axis for order or tension."}
+  ]
+}

@@ -63,6 +63,29 @@ public class ScriptSplitterService {
     private final PromptFileService promptFileService;
     private final ReviewService reviewService;
 
+    private ShotContinuityChecker shotContinuityChecker;
+
+    /**
+     * 连续性校验器可选注入：无 Spring 上下文的单测中不调用，为 null 时跳过检查，老行为零变化。
+     */
+    @Autowired(required = false)
+    void setContinuityChecker(ShotContinuityChecker checker) {
+        this.shotContinuityChecker = checker;
+    }
+
+    private CinematographyVocabulary cinematographyVocabulary;
+    private boolean cinematographyEnabled = false;
+
+    /**
+     * 镜头语言词汇表可选注入：无 Spring 上下文的单测中不调用，字段保持 null/false，老行为零变化。
+     */
+    @Autowired(required = false)
+    void setCinematography(CinematographyVocabulary vocabulary,
+                           @Value("${drama.cinematography.enabled:false}") boolean enabled) {
+        this.cinematographyVocabulary = vocabulary;
+        this.cinematographyEnabled = enabled;
+    }
+
     private final ObjectMapper objectMapper;
     private final String model;
     private final int maxTokens;
@@ -191,6 +214,24 @@ public class ScriptSplitterService {
             saved.add(shotRepository.save(shot));
         }
 
+        // 6.5 连续性检查：只报告不阻断，异常不影响分镜结果
+        if (shotContinuityChecker != null) {
+            try {
+                ShotContinuityChecker.ContinuityReport report = shotContinuityChecker.check(saved);
+                for (ShotContinuityChecker.ContinuityIssue issue : report.issues()) {
+                    if (issue.severity() == ShotContinuityChecker.Severity.WARN) {
+                        log.warn("连续性检查[{}] 第{}镜: {} 建议: {}",
+                                issue.rule(), issue.shotNo(), issue.message(), issue.suggestion());
+                    } else {
+                        log.info("连续性检查[{}] 第{}镜: {} 建议: {}",
+                                issue.rule(), issue.shotNo(), issue.message(), issue.suggestion());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("连续性检查失败（不影响分镜结果）: {}", e.getMessage());
+            }
+        }
+
         // 7. 更新剧集状态
         episode.setStatus(EpisodeStatus.SCRIPTED);
         episodeRepository.save(episode);
@@ -295,14 +336,27 @@ public class ScriptSplitterService {
      */
     /**
      * 解析系统提示词：优先读 data/prompts/shot-splitter.md，文件缺失或读取失败时回退内置常量。
+     * 镜头语言词汇表默认关闭（drama.cinematography.enabled=false），关闭时输出与原来字节一致。
      */
     private String resolveSystemPrompt() {
+        String base;
         try {
-            return promptFileService.body("shot-splitter");
+            base = promptFileService.body("shot-splitter");
         } catch (Exception e) {
             log.warn("提示词文件 shot-splitter 加载失败，回退内置常量: {}", e.getMessage());
-            return SYSTEM_PROMPT;
+            base = SYSTEM_PROMPT;
         }
+        if (cinematographyEnabled && cinematographyVocabulary != null) {
+            try {
+                String appendix = cinematographyVocabulary.renderAppendix();
+                if (appendix != null && !appendix.isBlank()) {
+                    base = base + "\n\n" + appendix;
+                }
+            } catch (Exception e) {
+                log.warn("镜头语言词汇表加载失败，本次不追加: {}", e.getMessage());
+            }
+        }
+        return base;
     }
 
     private String callModel(String scriptText, String skillPrompt) {        ObjectNode body = objectMapper.createObjectNode();
@@ -509,6 +563,20 @@ public class ScriptSplitterService {
                 shot.getCreatedAt(),
                 shot.getUpdatedAt()
         );
+    }
+
+    /**
+     * 对指定剧集的分镜做连续性检查（供控制台/审核链路按需调用）。
+     *
+     * @param episodeId 剧集 ID
+     * @return 连续性报告
+     */
+    public ShotContinuityChecker.ContinuityReport checkContinuity(Long episodeId) {
+        if (shotContinuityChecker == null) {
+            throw new IllegalStateException("连续性检查器未装配");
+        }
+        List<Shot> shots = shotRepository.findByEpisodeIdOrderByShotNoAsc(episodeId);
+        return shotContinuityChecker.check(shots);
     }
 }
 
