@@ -79,7 +79,7 @@ class ServiceBranchV224BTest {
                 3000,
                 request -> {
                     throw new IllegalStateException("不应走到网络调用");
-                }, null);
+                }, null, mock(ReviewService.class));
 
 
         assertThrows(IllegalStateException.class,
@@ -124,7 +124,7 @@ class ServiceBranchV224BTest {
                 new ObjectMapper(),
                 "Deepseek-v4-flash",
                 3000,
-                exchange, null);
+                exchange, null, mock(ReviewService.class));
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> service.splitFromScript(1L, "剧本"));
         assertEquals("大模型返回内容为空", ex.getMessage());

@@ -33,7 +33,7 @@ class SkillScriptGenerateTest {
     @BeforeEach
     void setUp() {
         scriptService = new ScriptService(episodeRepository, sceneRepository,
-                llmScriptService, characterService, skillService);
+                llmScriptService, characterService, skillService, mock(ReviewService.class));
     }
 
     private Episode episode() {

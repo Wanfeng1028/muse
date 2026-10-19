@@ -100,7 +100,7 @@ class ScriptSplitterCallModelTest {
         objectMapper = new ObjectMapper();
         fakeExchange = new CapturingExchange();
         service = new ScriptSplitterService(episodeRepository, shotRepository, videoTaskRepository,
-                credentialResolver, mock(SkillService.class), objectMapper, "Deepseek-v4-flash", 3000, fakeExchange, null);
+                credentialResolver, mock(SkillService.class), objectMapper, "Deepseek-v4-flash", 3000, fakeExchange, null, mock(ReviewService.class));
 
 
         Episode episode = new Episode();

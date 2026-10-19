@@ -61,6 +61,7 @@ public class ScriptSplitterService {
     private final CredentialResolver credentialResolver;
     private final SkillService skillService;
     private final PromptFileService promptFileService;
+    private final ReviewService reviewService;
 
     private final ObjectMapper objectMapper;
     private final String model;
@@ -81,7 +82,8 @@ public class ScriptSplitterService {
                                  ObjectMapper objectMapper,
                                  @Value("${drama.script-splitter.model:Deepseek-v4-flash}") String model,
                                  @Value("${drama.script-splitter.max-tokens:3000}") int maxTokens,
-                                 PromptFileService promptFileService) {
+                                 PromptFileService promptFileService,
+                                 ReviewService reviewService) {
         this(episodeRepository, shotRepository, videoTaskRepository, credentialResolver, skillService,
                 objectMapper, model, maxTokens,
                 request -> {
@@ -89,7 +91,7 @@ public class ScriptSplitterService {
                             .connectTimeout(Duration.ofSeconds(15))
                             .build();
                     return client.send(request, HttpResponse.BodyHandlers.ofString());
-                }, promptFileService);
+                }, promptFileService, reviewService);
 
     }
 
@@ -103,7 +105,8 @@ public class ScriptSplitterService {
                           String model,
                           int maxTokens,
                           HttpExchange httpExchange,
-                          PromptFileService promptFileService) {
+                          PromptFileService promptFileService,
+                          ReviewService reviewService) {
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
         this.videoTaskRepository = videoTaskRepository;
@@ -114,6 +117,7 @@ public class ScriptSplitterService {
         this.maxTokens = maxTokens;
         this.httpExchange = httpExchange;
         this.promptFileService = promptFileService;
+        this.reviewService = reviewService;
     }
 
 
@@ -163,6 +167,7 @@ public class ScriptSplitterService {
         // 1. 参数校验
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode", episodeId));
+        reviewService.resetOnBoardRegenerated(episodeId);
         if (scriptText == null || scriptText.isBlank()) {
             throw new IllegalArgumentException("剧本原文不能为空");
         }

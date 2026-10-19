@@ -31,13 +31,16 @@ public class EpisodeStatusFlowService {
     private final EpisodeRepository episodeRepository;
     private final ShotRepository shotRepository;
     private final VideoTaskRepository videoTaskRepository;
+    private final ReviewService reviewService;
 
     public EpisodeStatusFlowService(EpisodeRepository episodeRepository,
                                     ShotRepository shotRepository,
-                                    VideoTaskRepository videoTaskRepository) {
+                                    VideoTaskRepository videoTaskRepository,
+                                    ReviewService reviewService) {
         this.episodeRepository = episodeRepository;
         this.shotRepository = shotRepository;
         this.videoTaskRepository = videoTaskRepository;
+        this.reviewService = reviewService;
     }
 
     /**
@@ -81,7 +84,8 @@ public class EpisodeStatusFlowService {
     }
 
     /**
-     * 质检通过：直接将剧集状态置为 REVIEWED。
+     * 质检通过：仅当该集剧本审核已 APPROVED 时才将剧集状态置为 REVIEWED（v3.0 设计 K 章）；
+     * 剧本未过审时保持原状态，不写 REVIEWED。
      *
      * @param episodeId 剧集 ID
      */
@@ -91,9 +95,13 @@ public class EpisodeStatusFlowService {
                 .orElseThrow(() -> new ResourceNotFoundException("Episode", episodeId));
 
         EpisodeStatus previous = episode.getStatus();
-        episode.setStatus(EpisodeStatus.REVIEWED);
-        episodeRepository.save(episode);
-        log.info("剧集质检通过：episodeId={}, {} -> REVIEWED", episodeId, previous);
+        if (reviewService.isScriptApproved(episodeId)) {
+            episode.setStatus(EpisodeStatus.REVIEWED);
+            episodeRepository.save(episode);
+            log.info("剧集质检通过：episodeId={}, {} -> REVIEWED", episodeId, previous);
+        } else {
+            log.info("剧集质检通过但剧本未过审，保持状态：episodeId={}, status={}", episodeId, previous);
+        }
     }
 
     /**

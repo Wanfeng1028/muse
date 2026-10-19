@@ -1,0 +1,283 @@
+# 审核流设计（v3.0）
+
+## A. 痛点与目标
+
+`EpisodeStatus.REVIEWED` 只是一个"是否被看过的标记"，没有审核人、没有轮次、没有意见、没有版本，谁审的、审的是哪版剧本、为什么通过都查不到；Harness 需要独立的审核流：审核对象、审核人、审核结论、审核历史都要能查、能挡、能回溯，且不能被并发点击覆盖。
+
+## B. 审核对象定义
+
+审核记录挂在 Episode 上，`review_item.episode_id` 外键指向 episode。
+
+- SCRIPT 审核：每个 Episode 最多一条 `kind='SCRIPT'` 记录，审的是"当前这版剧本"。
+- BOARD 审核：每个 Episode 最多一条 `kind='BOARD'` 记录，审的是"当前这版分镜"。
+
+与 Episode 生命周期的关系（规则必须明确）：
+
+- 剧本首次生成（`ScriptService.generate`）：不存在 SCRIPT 记录则创建一条，状态 DRAFT。
+- 剧本重新生成（同 Episode 再次 `generate`）：把已存在的 SCRIPT 记录强制打回 DRAFT，清空 `current_reviewer_id`、`submitted_at`、`l1_reviewer_id`、`l2_reviewer_id`，`version` 加一，并向 `review_history` 写一条 `from=旧状态, to=DRAFT, reason='script_regenerated'` 的记录。**重生成一定打回 DRAFT，不管之前是 PENDING_L1/PENDING_L2/APPROVED/REJECTED。**
+- 分镜重新生成（`splitFromScript`）：同 SCRIPT，BOARD 记录打回 DRAFT，写历史。
+- Episode 删除：`review_item`、`review_history` 一起级联删除（历史只在同一 Episode 内保留，跨 Episode 不迁移）。
+
+## C. 剧本两级审核状态机
+
+状态集合：`DRAFT`、`PENDING_L1`、`PENDING_L2`、`APPROVED`、`REJECTED`。
+
+角色定义：
+
+- 提交人（author）：调用"提交审核"的人，记为 `submitted_by`。
+- 一审人（l1 reviewer）：`review_item.l1_reviewer_id` 记录的人。
+- 二审人（l2 reviewer）：`review_item.l2_reviewer_id` 记录的人。
+- 同一时刻，提交人、一审人、二审人三者互不相同。
+
+合法流转表（from → event → to）：
+
+| from | event | to | 前置条件 |
+|---|---|---|---|
+| DRAFT | SUBMIT | PENDING_L1 | 提交人 = 当前用户；`version` 与请求一致；记录当前状态为 DRAFT |
+| PENDING_L1 | L1_APPROVE | PENDING_L2 | 当前用户 ≠ `submitted_by`；当前用户 ≠ `l2_reviewer_id`；`version` 一致 |
+| PENDING_L1 | L1_REJECT | DRAFT | 当前用户 ≠ `submitted_by`；`version` 一致 |
+| PENDING_L2 | L2_APPROVE | APPROVED | 当前用户 ≠ `submitted_by`；当前用户 ≠ `l1_reviewer_id`；`version` 一致 |
+| PENDING_L2 | L2_REJECT | REJECTED | 当前用户 ≠ `submitted_by`；`version` 一致 |
+| APPROVED | REGENERATE | DRAFT | 由 `ScriptService.generate` 触发；非 API |
+| REJECTED | REGENERATE | DRAFT | 由 `ScriptService.generate` 触发；非 API |
+
+`APPROVED` 是终态（只能被 REGENERATE 打回）；`REJECTED` 也是终态（同上）。其余事件组合（例如 DRAFT → L1_APPROVE、PENDING_L1 → L2_APPROVE、APPROVED → SUBMIT、REJECTED → SUBMIT）一律拒绝，返回 400。
+
+## D. 分镜单级审核状态机
+
+状态集合：`DRAFT`、`PENDING`、`APPROVED`。
+
+| from | event | to | 前置条件 |
+|---|---|---|---|
+| DRAFT | SUBMIT | PENDING | 提交人 = 当前用户；`version` 一致 |
+| PENDING | APPROVE | APPROVED | 当前用户 ≠ `submitted_by`；`version` 一致 |
+| PENDING | REJECT | DRAFT | 当前用户 ≠ `submitted_by`；`version` 一致 |
+| APPROVED | REGENERATE | DRAFT | 由 `splitFromScript` 触发；非 API |
+
+分镜没有 REJECTED：分镜是"场次拆解"，驳回意味着"这一版不能用，重新拆"，退回 DRAFT 让作者直接改；不需要保留一个"被驳回"的终态来区分"没提交过"和"被打回"。剧本之所以要 REJECTED，是因为二级审核通过后已经对外可用，二审驳回后需要显式标记"这版已定论为不可用"，避免被误当成 DRAFT 重新提交。
+
+## E. 越权与自审规则
+
+通用检查点（每个 API 都跑）：
+
+1. `episodeId` 存在，否则 `ResourceNotFoundException` → 404。
+2. `episode.project` 属于 `currentUser.currentUserId()`，否则 `ForbiddenException` → 403。
+3. 记录 `kind` 与 API 期望一致，否则 404（当作资源不存在处理）。
+
+自审规则（v3.0a 修正：原"自审 403"硬拦截在单用户部署下造成死锁——提交只能由项目 owner 发起，owner 又被禁止审批自己的提交，审核永远到不了 APPROVED；改为透明记录）：
+
+- SUBMIT：`submitted_by` 写为当前用户。
+- L1_APPROVE / L1_REJECT / L2_APPROVE / L2_REJECT / BOARD APPROVE / REJECT：不再拦截提交人自审；审核人 id 照常记入 `l1_reviewer_id` / `l2_reviewer_id`。
+- 详情接口返回 `selfReviewed` 字段：`l1_reviewer_id` 或 `l2_reviewer_id` 等于 `submitted_by` 即为 true，前端应对自审做醒目提示。
+- 查询类 API（详情/历史/队列）：只做项目归属检查。
+- 跨项目访问的 403（项目归属检查）保持不变。
+
+每个 API 的检查点：
+
+| API | 项目归属 | 自审 | 状态前置 | 版本 |
+|---|---|---|---|---|
+| POST /submit | 是 | 否 | 是 | 是 |
+| POST /l1/approve | 是 | 是 | 是 | 是 |
+| POST /l1/reject | 是 | 是 | 是 | 是 |
+| POST /l2/approve | 是 | 是 | 是 | 是 |
+| POST /l2/reject | 是 | 是 | 是 | 是 |
+| GET /review | 是 | 否 | 否 | 否 |
+| GET /review/history | 是 | 否 | 否 | 否 |
+| GET /review/queue | 是 | 否 | 否 | 否 |
+
+## F. 并发控制
+
+`review_item` 有 `version` 字段，`@Version` 乐观锁。任何写接口必须带上请求方读到的 `version`：
+
+- 请求 `version` 与库中不一致：返回 409，body 带上服务端当前 `version` 与 `status`，让前端刷新后重试。
+- 两个 tab 同时点"一审通过"：只有一个成功，另一个 409。
+- 幂等：如果请求的 `event` 对应的 `to` 与库中 `status` 已经相同（例如已 PENDING_L2 又收到一次 L1_APPROVE），返回 200，body 里 `changed=false`，不写历史、不加 version。这是"重复提交同一状态"的语义。
+- 状态不同但 version 相同的非法流转（例如已 APPROVED 又收到 SUBMIT）：返回 400，不做幂等处理。
+
+## G. Run 执行门
+
+`RunExecutor` 的 tick 里，进入 VIDEO 步骤前查 `review_item(kind='SCRIPT', episode_id=run.episodeId)`：
+
+- 状态 = APPROVED：正常执行该步骤。
+- 状态 ≠ APPROVED：不抛异常，不杀 tick。把该 step 保持 PENDING，把 run 置 PAUSED，调用 `runLogService` 写一条日志，message 固定为 `"等待剧本过审"`，记录 `stepId`、当前审核状态、`review_item.version`。
+- 用户改完剧本、走完审核拿到 APPROVED 后，调用现有 `RunService.resume` 继续。
+
+与现有 QC 门的区别与共存：
+
+- 现有 QC 门：run 进 `WAITING_APPROVAL`，等的是"人审批这一步的产物"，恢复入口是 `RunService` 的审批接口。
+- 审核门：run 进 `PAUSED`，等的是"上游剧本的审核状态变成 APPROVED"，恢复入口是 `RunService.resume`。
+- 两者互不影响：QC 门只看当前 step 的产物，审核门只看 `review_item`。同一个 run 可能先因审核门 PAUSED，过审 resume 后再因 QC 门 WAITING_APPROVAL，都是允许的。
+
+## H. 审核历史审计
+
+`review_history` 只增不删不改。每次成功流转（包括 REGENERATE 触发的打回）写一行：`review_item_id`、`kind`、`episode_id`、`from_status`、`to_status`、`event`、`actor_id`、`comment`、`created_at`、`item_version_after`。
+
+查询接口 `GET /api/projects/{projectId}/episodes/{episodeId}/review/history?kind=SCRIPT`，按 `created_at` 升序返回。分页参数 `page`、`size`。
+
+## I. 数据模型（V18__review_flow.sql）
+
+```sql
+CREATE TABLE review_item (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    episode_id BIGINT NOT NULL,
+    kind VARCHAR(16) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    submitted_by VARCHAR(128),
+    submitted_at TIMESTAMP,
+    l1_reviewer_id VARCHAR(128),
+    l1_reviewed_at TIMESTAMP,
+    l2_reviewer_id VARCHAR(128),
+    l2_reviewed_at TIMESTAMP,
+    last_comment VARCHAR(1024),
+    version INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_review_item_episode FOREIGN KEY (episode_id) REFERENCES episodes(id),
+    CONSTRAINT uq_review_item_episode_kind UNIQUE (episode_id, kind),
+    CONSTRAINT ck_review_item_kind CHECK (kind IN ('SCRIPT','BOARD'))
+);
+
+CREATE INDEX idx_review_item_episode ON review_item(episode_id);
+CREATE INDEX idx_review_item_status ON review_item(status);
+CREATE INDEX idx_review_item_kind_status ON review_item(kind, status);
+
+CREATE TABLE review_history (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    review_item_id BIGINT NOT NULL,
+    episode_id BIGINT NOT NULL,
+    kind VARCHAR(16) NOT NULL,
+    from_status VARCHAR(32),
+    to_status VARCHAR(32) NOT NULL,
+    event VARCHAR(32) NOT NULL,
+    actor_id VARCHAR(128),
+    comment VARCHAR(1024),
+    item_version_after INT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_review_history_item FOREIGN KEY (review_item_id) REFERENCES review_item(id)
+);
+
+CREATE INDEX idx_review_history_item ON review_history(review_item_id, created_at);
+CREATE INDEX idx_review_history_episode ON review_history(episode_id, created_at);
+```
+
+## J. REST API 草案
+
+统一前缀 `/api/projects/{projectId}/episodes/{episodeId}/review`。
+
+提交审核（SCRIPT 或 BOARD 同一接口）：
+
+```
+POST /submit
+Request:  { "kind": "SCRIPT", "version": 3 }
+Response: { "kind": "SCRIPT", "status": "PENDING_L1", "version": 4, "changed": true }
+```
+
+一审通过：
+
+```
+POST /script/l1/approve
+Request:  { "version": 4, "comment": "..." }
+Response: { "status": "PENDING_L2", "version": 5, "changed": true }
+```
+
+一审驳回：
+
+```
+POST /script/l1/reject
+Request:  { "version": 4, "comment": "..." }
+Response: { "status": "DRAFT", "version": 5, "changed": true }
+```
+
+二审通过：
+
+```
+POST /script/l2/approve
+Request:  { "version": 5, "comment": "..." }
+Response: { "status": "APPROVED", "version": 6, "changed": true }
+```
+
+二审驳回：
+
+```
+POST /script/l2/reject
+Request:  { "version": 5, "comment": "..." }
+Response: { "status": "REJECTED", "version": 6, "changed": true }
+```
+
+分镜通过 / 驳回：
+
+```
+POST /board/approve
+POST /board/reject
+Request:  { "version": 2, "comment": "..." }
+Response: { "status": "APPROVED" | "DRAFT", "version": 3, "changed": true }
+```
+
+查审核详情：
+
+```
+GET /?kind=SCRIPT
+Response: { "kind": "SCRIPT", "status": "PENDING_L2", "version": 5,
+            "submittedBy": "u1", "l1ReviewerId": "u2", "l2ReviewerId": null }
+```
+
+查历史：
+
+```
+GET /history?kind=SCRIPT&page=0&size=20
+Response: { "items": [ { "fromStatus": "DRAFT", "toStatus": "PENDING_L1",
+                         "event": "SUBMIT", "actorId": "u1",
+                         "comment": null, "createdAt": "..." } ] }
+```
+
+查审核队列：
+
+```
+GET /queue?status=PENDING_L1&kind=SCRIPT
+Response: { "items": [ { "episodeId": 12, "kind": "SCRIPT",
+                         "status": "PENDING_L1", "version": 4 } ] }
+```
+
+错误码：
+
+- 400：非法流转（当前状态不接受该 event）、`kind` 与 API 不匹配。
+- 403：跨项目访问、自审。
+- 404：Episode 不存在、review_item 不存在。
+- 409：`version` 与库中不一致。
+
+## K. 与现有 EpisodeStatus 的关系
+
+审核状态独立存储，写审核 API 不直接改 `Episode.status`。联动规则如下（明确，不含糊）：
+
+- 剧本 SCRIPT 记录进入 APPROVED：不改 EpisodeStatus（保持 `SCRIPTED`）。`EpisodeStatus.REVIEWED` 不再作为审核信号使用。
+- QC 步骤在 run 内通过（`harness.qc.manual-approval` 相关审批走完）：如果该 Episode 的 SCRIPT 记录为 APPROVED，则把 `Episode.status` 置为 `REVIEWED`；如果 SCRIPT 记录不是 APPROVED，保持原值，不写 REVIEWED。这样 REVIEWED 的语义变成"剧本过审且 QC 也过了"，和审核流对齐。
+- 剧本重生成打回 DRAFT 时，不改 `Episode.status`（避免把已经 QC 过的集数状态改回去）；只通过 `review_item.status` 表达"当前这版剧本不可用"。
+- 分镜 BOARD 记录不参与 `Episode.status` 联动。
+
+## L. 测试要点
+
+状态机单测必须覆盖的非法流转用例（至少 8 个）：
+
+1. DRAFT 上调 L1_APPROVE。
+2. DRAFT 上调 L2_APPROVE。
+3. DRAFT 上调 L1_REJECT。
+4. PENDING_L1 上调 SUBMIT。
+5. PENDING_L1 上调 L2_APPROVE。
+6. PENDING_L2 上调 L1_APPROVE。
+7. PENDING_L2 上调 L1_REJECT。
+8. APPROVED 上调 SUBMIT。
+9. APPROVED 上调 L2_APPROVE。
+10. REJECTED 上调 L2_APPROVE。
+11. BOARD 记录上调 SCRIPT 的 l1/l2 事件。
+12. SCRIPT 记录上调 BOARD 的 approve/reject。
+
+以上每条断言返回 400，且 `review_history` 不新增行。
+
+并发测试思路：两个线程同时带同一 `version` 调 `/script/l1/approve`，一个 200 一个 409；断言库里只有一条 L1 通过历史，`version` 只加一。
+
+越权测试思路：
+
+- 用 `currentUser` 切到非项目归属用户，调所有写接口，断言 403，且 `review_item` 不变。
+- 提交人再调 L1/L2 审批，断言 403；一审人再调 L2 审批，断言 403。
+- 不存在 `episodeId` 调写接口，断言 404；存在但 `kind` 不符（例如 Episode 只有 SCRIPT 记录却查 BOARD），断言 404。
+- 查询接口用非项目归属用户，断言 403。

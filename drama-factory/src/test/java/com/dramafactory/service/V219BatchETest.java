@@ -51,7 +51,7 @@ class V219BatchETest {
         VideoTaskRepository videoTaskRepository = mock(VideoTaskRepository.class);
 
         EpisodeStatusFlowService service =
-                new EpisodeStatusFlowService(episodeRepository, shotRepository, videoTaskRepository);
+                new EpisodeStatusFlowService(episodeRepository, shotRepository, videoTaskRepository, mock(ReviewService.class));
 
         Episode episode = new Episode();
         episode.setId(9L);

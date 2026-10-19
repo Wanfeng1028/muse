@@ -1,6 +1,7 @@
 
 package com.dramafactory.service;
 
+import com.dramafactory.service.ReviewService;
 import com.dramafactory.dto.Records;
 import com.dramafactory.model.AgentStep;
 import com.dramafactory.model.AgentStepStatus;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -65,6 +67,7 @@ class RunExecutorTest {
     private Environment environment;
     private ObjectMapper objectMapper;
     private SkillService skillService;
+    private ReviewService reviewService;
     private RunExecutor executor;
 
     @BeforeEach
@@ -80,9 +83,12 @@ class RunExecutorTest {
         environment = mock(Environment.class);
         objectMapper = new ObjectMapper();
         skillService = mock(SkillService.class);
+        reviewService = mock(ReviewService.class);
+        // 默认审核门放行（旧行为）；拦截场景由 RunExecutorReviewGateTest 覆盖
+        when(reviewService.isScriptApproved(anyLong())).thenReturn(true);
         executor = new RunExecutor(runRepository, agentStepRepository, videoTaskRepository,
                 scriptService, scriptSplitterService, videoTaskService, finalCutService,
-                runLogService, environment, objectMapper, skillService);
+                runLogService, environment, objectMapper, skillService, reviewService);
     }
 
     /** 构造一个 RUNNING 状态的 Run，并 stub findById 返回它。 */

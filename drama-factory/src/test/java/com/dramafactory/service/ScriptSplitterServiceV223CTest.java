@@ -115,7 +115,7 @@ class ScriptSplitterServiceV223CTest {
         return new ScriptSplitterService(
                 episodeRepository, shotRepository, videoTaskRepository,
                 credentialResolver, skillService, objectMapper,
-                "Deepseek-v4-flash", 3000, exchange, null);
+                "Deepseek-v4-flash", 3000, exchange, null, mock(ReviewService.class));
 
     }
 

@@ -33,6 +33,7 @@ public class ScriptService {
     private final LlmScriptService llmScriptService;
     private final CharacterService characterService;
     private final SkillService skillService;
+    private final ReviewService reviewService;
 
     private final ScriptGenerator scriptGenerator = new ScriptGenerator();
 
@@ -49,12 +50,14 @@ public class ScriptService {
                          SceneRepository sceneRepository,
                          LlmScriptService llmScriptService,
                          CharacterService characterService,
-                         SkillService skillService) {
+                         SkillService skillService,
+                         ReviewService reviewService) {
         this.episodeRepository = episodeRepository;
         this.sceneRepository = sceneRepository;
         this.llmScriptService = llmScriptService;
         this.characterService = characterService;
         this.skillService = skillService;
+        this.reviewService = reviewService;
     }
 
     /**
@@ -163,6 +166,7 @@ public class ScriptService {
 
         episode.setStatus(EpisodeStatus.SCRIPTED);
         episodeRepository.save(episode);
+        reviewService.resetOnScriptRegenerated(episodeId);
 
         long latencyMs = System.currentTimeMillis() - t0;
         return new Records.GenerateScriptResponse(episodeId, drafts.size(), sb.toString(), source, usedModel, latencyMs,

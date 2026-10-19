@@ -2,6 +2,7 @@
 
 package com.dramafactory.service;
 
+import com.dramafactory.service.ReviewService;
 import com.dramafactory.model.AgentStep;
 import com.dramafactory.model.AgentStepStatus;
 import com.dramafactory.model.AgentType;
@@ -68,7 +69,7 @@ class RunExecutorV229D2Test {
     void setUp() {
         runExecutor = new RunExecutor(runRepository, agentStepRepository, videoTaskRepository,
                 scriptService, scriptSplitterService, videoTaskService, finalCutService,
-                runLogService, environment, objectMapper, skillService);
+                runLogService, environment, objectMapper, skillService, mock(ReviewService.class));
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
     }
 

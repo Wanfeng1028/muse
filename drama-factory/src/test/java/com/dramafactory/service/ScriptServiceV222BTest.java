@@ -18,6 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,7 +47,7 @@ class ScriptServiceV222BTest {
     private SkillService skillService;
 
     private ScriptService newService() {
-        return new ScriptService(episodeRepository, sceneRepository, llmScriptService, characterService, skillService);
+        return new ScriptService(episodeRepository, sceneRepository, llmScriptService, characterService, skillService, mock(ReviewService.class));
     }
 
     private void stubAiEmpty() {

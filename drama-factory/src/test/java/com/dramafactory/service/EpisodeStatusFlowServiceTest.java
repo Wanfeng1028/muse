@@ -25,6 +25,7 @@ class EpisodeStatusFlowServiceTest {
     private EpisodeRepository episodeRepository;
     private ShotRepository shotRepository;
     private VideoTaskRepository videoTaskRepository;
+    private ReviewService reviewService;
     private EpisodeStatusFlowService service;
 
     @BeforeEach
@@ -32,7 +33,8 @@ class EpisodeStatusFlowServiceTest {
         episodeRepository = mock(EpisodeRepository.class);
         shotRepository = mock(ShotRepository.class);
         videoTaskRepository = mock(VideoTaskRepository.class);
-        service = new EpisodeStatusFlowService(episodeRepository, shotRepository, videoTaskRepository);
+        reviewService = mock(ReviewService.class);
+        service = new EpisodeStatusFlowService(episodeRepository, shotRepository, videoTaskRepository, reviewService);
     }
 
     private Episode episode(Long id, EpisodeStatus status) {
@@ -136,11 +138,25 @@ class EpisodeStatusFlowServiceTest {
         Episode episode = episode(1L, EpisodeStatus.GENERATED);
         when(episodeRepository.findById(1L)).thenReturn(Optional.of(episode));
         when(episodeRepository.save(any(Episode.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(reviewService.isScriptApproved(1L)).thenReturn(true);
 
         service.markQcApproved(1L);
 
         assertEquals(EpisodeStatus.REVIEWED, episode.getStatus());
         verify(episodeRepository).save(episode);
+    }
+
+    @Test
+    void markQcApproved_scriptNotApproved_keepsStatus() {
+        // v3.0 设计 K 章：剧本未过审时 QC 通过也不写 REVIEWED
+        Episode episode = episode(1L, EpisodeStatus.GENERATED);
+        when(episodeRepository.findById(1L)).thenReturn(Optional.of(episode));
+        when(reviewService.isScriptApproved(1L)).thenReturn(false);
+
+        service.markQcApproved(1L);
+
+        assertEquals(EpisodeStatus.GENERATED, episode.getStatus());
+        verify(episodeRepository, never()).save(any());
     }
 
     @Test

@@ -85,7 +85,7 @@ class RunExecutorBranch3Test {
                 runLogService,
                 environment,
                 new ObjectMapper(),
-                skillService);
+                skillService, mock(ReviewService.class));
     }
 
     private Run runningRun(Long id) {

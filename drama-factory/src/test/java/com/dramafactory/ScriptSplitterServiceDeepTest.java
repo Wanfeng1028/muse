@@ -174,7 +174,9 @@ class ScriptSplitterServiceDeepTest {
                     ObjectMapper.class,
                     String.class,
                     int.class,
-                    exchangeType);
+                    exchangeType,
+                    Class.forName("com.dramafactory.service.PromptFileService"),
+                    Class.forName("com.dramafactory.service.ReviewService"));
             ctor.setAccessible(true);
             return (ScriptSplitterService) ctor.newInstance(
                     episodeRepository,
@@ -185,7 +187,9 @@ class ScriptSplitterServiceDeepTest {
                     objectMapper,
                     "Deepseek-v4-flash",
                     3000,
-                    exchange);
+                    exchange,
+                    mock(Class.forName("com.dramafactory.service.PromptFileService")),
+                    mock(Class.forName("com.dramafactory.service.ReviewService")));
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("构造 ScriptSplitterService 失败", e);
         }

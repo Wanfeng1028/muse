@@ -4,11 +4,15 @@ import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.DramaProject;
 import com.dramafactory.model.Episode;
 import com.dramafactory.model.EpisodeStatus;
+import com.dramafactory.model.ReviewItem;
+import com.dramafactory.model.ReviewKind;
+import com.dramafactory.model.ReviewStatus;
 import com.dramafactory.model.Shot;
 import com.dramafactory.model.VideoTask;
 import com.dramafactory.model.VideoTaskStatus;
 import com.dramafactory.repository.DramaProjectRepository;
 import com.dramafactory.repository.EpisodeRepository;
+import com.dramafactory.repository.ReviewItemRepository;
 import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 import com.dramafactory.service.EpisodeStatusFlowService;
@@ -51,6 +55,9 @@ class EpisodeStatusFlowServiceDeepTest {
     @Autowired
     private VideoTaskRepository videoTaskRepository;
 
+    @Autowired
+    private ReviewItemRepository reviewItemRepository;
+
     @BeforeEach
     void cleanDatabase() {
         videoTaskRepository.deleteAll();
@@ -68,6 +75,15 @@ class EpisodeStatusFlowServiceDeepTest {
         episode.setProject(savedProject);
         episode.setEpisodeNo(1);
         return episodeRepository.save(episode);
+    }
+
+    /** v3.0 K 章：QC 通过写 REVIEWED 的前提是剧本审核已 APPROVED。 */
+    private void approveScript(Episode episode) {
+        ReviewItem item = new ReviewItem();
+        item.setEpisode(episode);
+        item.setKind(ReviewKind.SCRIPT);
+        item.setStatus(ReviewStatus.APPROVED);
+        reviewItemRepository.save(item);
     }
 
     private Shot createShot(Long episodeId, int shotNo) {
@@ -221,6 +237,7 @@ class EpisodeStatusFlowServiceDeepTest {
     void markQcApproved_draftToReviewed() {
         // given: DRAFT 剧集
         Episode episode = createEpisode(EpisodeStatus.DRAFT);
+        approveScript(episode);
 
         // when
         episodeStatusFlowService.markQcApproved(episode.getId());
@@ -235,6 +252,7 @@ class EpisodeStatusFlowServiceDeepTest {
     void markQcApproved_calledTwice_idempotent() {
         // given: SCRIPTED 剧集
         Episode episode = createEpisode(EpisodeStatus.SCRIPTED);
+        approveScript(episode);
 
         // when: 连续两次通过
         episodeStatusFlowService.markQcApproved(episode.getId());
@@ -425,6 +443,7 @@ class EpisodeStatusFlowServiceDeepTest {
     void illegalTransition_draftDirectlyToReviewed_thenRejectedReturnsScripted() {
         // given: DRAFT 剧集，未经过 GENERATED 直接质检通过
         Episode episode = createEpisode(EpisodeStatus.DRAFT);
+        approveScript(episode);
 
         // when: 先通过，再打回
         episodeStatusFlowService.markQcApproved(episode.getId());

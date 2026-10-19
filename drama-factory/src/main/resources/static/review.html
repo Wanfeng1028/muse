@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="review.pageTitle">审核队列 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css">
+</head>
+<body>
+<div class="page">
+<div class="page-head">
+  <h1 data-i18n="review.heading">审核队列</h1>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="projectSelect" data-i18n="review.project">项目</label>
+        <select id="projectSelect" class="form-select"></select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label" for="kindFilter" data-i18n="review.kind">类型</label>
+        <select id="kindFilter" class="form-select">
+          <option value="" data-i18n="review.kindAll">全部</option>
+          <option value="SCRIPT" data-i18n="review.kindScript">剧本</option>
+          <option value="BOARD" data-i18n="review.kindBoard">分镜</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label" for="statusFilter" data-i18n="review.status">状态</label>
+        <select id="statusFilter" class="form-select">
+          <option value="" data-i18n="review.statusAll">全部</option>
+          <option value="DRAFT" data-i18n="review.statusDraft">草稿</option>
+          <option value="PENDING_L1" data-i18n="review.statusPendingL1">待一审</option>
+          <option value="PENDING_L2" data-i18n="review.statusPendingL2">待二审</option>
+          <option value="PENDING" data-i18n="review.statusPending">待审核</option>
+          <option value="APPROVED" data-i18n="review.statusApproved">已通过</option>
+          <option value="REJECTED" data-i18n="review.statusRejected">已驳回</option>
+        </select>
+      </div>
+    </div>
+    <hr class="my-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-12 col-md-5">
+        <label class="form-label" for="episodeSelect" data-i18n="review.episode">剧集</label>
+        <select id="episodeSelect" class="form-select"></select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label" for="newKind" data-i18n="review.newKind">审核类型</label>
+        <select id="newKind" class="form-select">
+          <option value="SCRIPT" data-i18n="review.kindScript">剧本</option>
+          <option value="BOARD" data-i18n="review.kindBoard">分镜</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-4">
+        <button type="button" class="btn btn-primary" id="submitReviewBtn" data-i18n="review.submitReview">发起审核</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table">
+        <thead>
+          <tr>
+            <th data-i18n="review.colEpisodeNo">集号</th>
+            <th data-i18n="review.colTitle">标题</th>
+            <th data-i18n="review.colKind">类型</th>
+            <th data-i18n="review.colStatus">状态</th>
+            <th data-i18n="review.colSubmittedBy">提交人</th>
+            <th data-i18n="review.colActions">操作</th>
+          </tr>
+        </thead>
+        <tbody id="queueBody"></tbody>
+      </table>
+    </div>
+    <div class="state-empty is-hidden" id="queueEmpty">
+      <i data-lucide="inbox"></i>
+      <span data-i18n="review.emptyHint">这里还没有需要审核的内容，先去剧集页生成剧本吧</span>
+    </div>
+  </div>
+</div>
+
+<div class="card is-hidden" id="detailCard">
+  <div class="card-header">
+    <h3 class="card-title" id="detailTitle">-</h3>
+    <div class="card-actions">
+      <span id="detailKindBadge" class="badge bg-secondary-lt">-</span>
+      <span id="detailStatusBadge">-</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-warning is-hidden" id="selfReviewedAlert" role="alert">
+      <span data-i18n="review.selfReviewed">这是你自己提交的内容，系统已记下自审</span>
+    </div>
+
+    <dl class="row">
+      <dt class="col-4 col-md-3" data-i18n="review.submittedBy">提交人</dt>
+      <dd class="col-8 col-md-9" id="dSubmittedBy">-</dd>
+      <dt class="col-4 col-md-3" data-i18n="review.l1Reviewer">一审人</dt>
+      <dd class="col-8 col-md-9" id="dL1">-</dd>
+      <dt class="col-4 col-md-3" data-i18n="review.l2Reviewer">二审人</dt>
+      <dd class="col-8 col-md-9" id="dL2">-</dd>
+      <dt class="col-4 col-md-3" data-i18n="review.version">版本</dt>
+      <dd class="col-8 col-md-9" id="dVersion">-</dd>
+      <dt class="col-4 col-md-3" data-i18n="review.lastComment">最后意见</dt>
+      <dd class="col-8 col-md-9" id="dLastComment">-</dd>
+    </dl>
+
+    <h4 class="mt-3" data-i18n="review.history">审核历史</h4>
+    <ul class="timeline" id="historyList"></ul>
+
+    <div class="mb-3 mt-3">
+      <label class="form-label" for="commentInput" data-i18n="review.comment">意见</label>
+      <textarea id="commentInput" class="form-control" rows="3" data-i18n-ph="review.commentPh" placeholder="审核意见 / 驳回原因"></textarea>
+    </div>
+
+    <div class="btn-list" id="actionBar"></div>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<script src="/i18n.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+  <script src="/review.js"></script>
+</body>
+</html>

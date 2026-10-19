@@ -5,8 +5,19 @@
 
 ## [Unreleased]
 
-### Fixed（深测轮 r3，2026-10-18）
+### Added（v3.0 审核流，2026-10-19）
+- 剧本两级审核状态机：DRAFT → PENDING_L1 →（驳回回 DRAFT / 通过去 PENDING_L2）→ APPROVED / REJECTED。
+- 分镜单级审核状态机：DRAFT → PENDING → APPROVED / REJECTED。
+- Run 执行门：VIDEO 步骤执行前要求该集剧本为 APPROVED，未过审则 run 置 PAUSED 等待（日志"等待剧本过审"），过审后 resume 继续。
+- 审核历史审计：review_history 表记录每次流转（谁、何时、事件、意见、版本号），只增不删。
+- 审核队列页：review.html（Tabler 1.6.1），待审列表 + 批准/驳回按钮 + 意见输入。
+- 自审透明标记：ReviewDetailResponse.selfReviewed 字段，前端醒目提示，不硬拦截同人提交与审批。
+- REST API：/api/projects/{projectId}/episodes/{episodeId}/review/submit|l1|l2|reject|history，/api/projects/{projectId}/review/queue。错误码：非法流转 409、跨项目 403、kind 不匹配 404。
+- Flyway V18__review_flow.sql：review_item / review_history 表，episode 删除级联。
+- 新增测试：ReviewServiceTest 29 例、ReviewApiTest 9 例、RunExecutorReviewGateTest 3 例。
+- 设计文档：docs/REVIEW_FLOW.md。
 
+### Fixed（深测轮 r3，2026-10-18）
 - PromptRecipeService.apply 并发丢更新：改为 `@Modifying` 原子自增 + `@Transactional`。
 - UsageService.summary/requests 的"不限时间"查询：`LocalDateTime.MIN` 在 H2 上比较返回空，改用 1970-01-01 下界常量 `TIME_BEGIN`。
 - GlobalExceptionHandler 新增 `DataIntegrityViolationException` -> 400 映射（超长入参不再 500）。

@@ -8,6 +8,14 @@ import com.dramafactory.model.RunStatus;
 import com.dramafactory.repository.AgentStepRepository;
 import com.dramafactory.repository.RunRepository;
 import com.dramafactory.service.RunExecutor;
+import com.dramafactory.model.DramaProject;
+import com.dramafactory.model.Episode;
+import com.dramafactory.model.ReviewItem;
+import com.dramafactory.model.ReviewKind;
+import com.dramafactory.model.ReviewStatus;
+import com.dramafactory.repository.DramaProjectRepository;
+import com.dramafactory.repository.EpisodeRepository;
+import com.dramafactory.repository.ReviewItemRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +61,15 @@ class RunExecutorDeepTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private DramaProjectRepository projectRepository;
+
+    @Autowired
+    private EpisodeRepository episodeRepository;
+
+    @Autowired
+    private ReviewItemRepository reviewItemRepository;
+
     private Run newRun(String title) {
         Run run = new Run();
         run.setStatus(RunStatus.RUNNING);
@@ -75,6 +92,26 @@ class RunExecutorDeepTest {
 
     private List<AgentStep> stepsOf(Long runId) {
         return agentStepRepository.findByRunIdOrderBySeqNoAsc(runId);
+    }
+
+    /** 为某 step 建一个带 APPROVED 剧本审核的剧集，并把 episodeId 挂到 step 上。 */
+    private void approveScriptFor(AgentStep step) {
+        DramaProject project = new DramaProject();
+        project.setTitle("门禁测试项目");
+        project.setOwnerId("test");
+        project = projectRepository.save(project);
+        Episode episode = new Episode();
+        episode.setProject(project);
+        episode.setEpisodeNo(1);
+        episode.setTitle("E1");
+        episode = episodeRepository.save(episode);
+        ReviewItem item = new ReviewItem();
+        item.setEpisode(episode);
+        item.setKind(ReviewKind.SCRIPT);
+        item.setStatus(ReviewStatus.APPROVED);
+        reviewItemRepository.save(item);
+        step.setEpisodeId(episode.getId());
+        agentStepRepository.save(step);
     }
 
     @BeforeEach
@@ -411,6 +448,8 @@ class RunExecutorDeepTest {
         newStep(runId, 1, AgentType.SCRIPT, AgentStepStatus.SUCCEEDED);
         newStep(runId, 2, AgentType.BOARD, AgentStepStatus.SUCCEEDED);
         AgentStep pending = newStep(runId, 3, AgentType.VIDEO, AgentStepStatus.PENDING);
+        // v3.0 审核门：VIDEO 步需要该集剧本审核为 APPROVED，否则 tick 会 PAUSED 而不是消费 step
+        approveScriptFor(pending);
 
         // when: tick
         runExecutor.tick();

@@ -58,7 +58,7 @@ class LlmTransportV222ETest {
         when(characterService.listByProject(any()))
                 .thenReturn(List.of(new Records.CharacterResponse(1L, 9L, "甲", null, "   ", null, null, null)));
 
-        ScriptService service = new ScriptService(episodeRepository, sceneRepository, llm, characterService, skillService);
+        ScriptService service = new ScriptService(episodeRepository, sceneRepository, llm, characterService, skillService, mock(ReviewService.class));
 
         assertEquals("ai", service.generate(1L, "ai").source());
     }

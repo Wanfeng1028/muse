@@ -104,6 +104,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(ReviewConflictException.class)
+    @ResponseBody
+    public ResponseEntity<Records.ErrorResponse> handleReviewConflict(ReviewConflictException ex) {
+        Records.ErrorResponse body = new Records.ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                LocalDateTime.now(),
+                MDC.get("request_id")
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseBody
     public ResponseEntity<Records.ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {

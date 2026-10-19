@@ -64,6 +64,7 @@ public class RunExecutor {
     private final Environment environment;
     private final ObjectMapper objectMapper;
     private final SkillService skillService;
+    private final ReviewService reviewService;
 
     public RunExecutor(RunRepository runRepository,
                        AgentStepRepository agentStepRepository,
@@ -75,7 +76,8 @@ public class RunExecutor {
                        RunLogService runLogService,
                        Environment environment,
                        ObjectMapper objectMapper,
-                       SkillService skillService) {
+                       SkillService skillService,
+                       ReviewService reviewService) {
         this.runRepository = runRepository;
         this.agentStepRepository = agentStepRepository;
         this.videoTaskRepository = videoTaskRepository;
@@ -87,6 +89,7 @@ public class RunExecutor {
         this.environment = environment;
         this.objectMapper = objectMapper;
         this.skillService = skillService;
+        this.reviewService = reviewService;
     }
 
     /**
@@ -163,6 +166,20 @@ public class RunExecutor {
                 }
             }
             return;
+        }
+
+        // 审核门（v3.0）：VIDEO 步骤执行前要求该集剧本审核为 APPROVED；未过审则 run 置 PAUSED 等待，
+        // 不抛异常、不杀 tick；用户过审后调 resume 继续，下次 tick 会重新检查此门。
+        if (current.getAgentType() == AgentType.VIDEO) {
+            Long gateEpisodeId = current.getEpisodeId();
+            boolean approved = gateEpisodeId != null && reviewService.isScriptApproved(gateEpisodeId);
+            if (!approved) {
+                fresh.setStatus(RunStatus.PAUSED);
+                runRepository.save(fresh);
+                runLogService.append(fresh.getId(), current.getSeqNo(), "等待剧本过审");
+                log.info("Run[id={}] VIDEO 步骤等待剧本过审，episodeId={}", fresh.getId(), gateEpisodeId);
+                return;
+            }
         }
 
         // QC 审批门：如果该 step 需要人工审批，step 保持 RUNNING（等人工），run 置 WAITING_APPROVAL，本 tick 不再推进

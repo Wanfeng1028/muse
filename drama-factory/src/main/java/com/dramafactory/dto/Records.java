@@ -16,6 +16,8 @@ import com.dramafactory.model.FinalCutStatus;
 import com.dramafactory.model.AgentStepStatus;
 import com.dramafactory.model.AgentType;
 import com.dramafactory.model.RunStatus;
+import com.dramafactory.model.ReviewKind;
+import com.dramafactory.model.ReviewStatus;
 
 public final class Records {
 
@@ -473,5 +475,25 @@ public final class Records {
     }
     /** 视频通道信息。 */
     public record ChannelInfo(String current, List<String> available, String note) {
+    }
+
+    /** 审核操作结果。 */
+    public record ReviewResult(ReviewKind kind, ReviewStatus status, int version, boolean changed) {
+    }
+
+    /** 审核详情。 */
+    public record ReviewDetailResponse(ReviewKind kind, ReviewStatus status, int version, String submittedBy,
+                                       String l1ReviewerId, String l2ReviewerId, String lastComment,
+                                       boolean selfReviewed) {
+    }
+
+    /** 审核历史行。 */
+    public record ReviewHistoryResponse(String fromStatus, String toStatus, String event, String actorId,
+                                        String comment, LocalDateTime createdAt) {
+    }
+
+    /** 审核队列条目。 */
+    public record ReviewQueueItem(Long episodeId, Integer episodeNo, String episodeTitle, ReviewKind kind,
+                                  ReviewStatus status, int version, String submittedBy) {
     }
 }

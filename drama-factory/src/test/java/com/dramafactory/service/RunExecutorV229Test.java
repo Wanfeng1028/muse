@@ -2,6 +2,7 @@
 
 package com.dramafactory.service;
 
+import com.dramafactory.service.ReviewService;
 import com.dramafactory.model.AgentStep;
 import com.dramafactory.model.AgentStepStatus;
 import com.dramafactory.model.AgentType;
@@ -100,7 +101,7 @@ class RunExecutorV229Test {
                 runLogService,
                 environment,
                 objectMapper,
-                skillService);
+                skillService, mock(ReviewService.class));
         // 关闭 QC 人工审批门，避免被提前拦截
         when(environment.getProperty("harness.qc.manual-approval")).thenReturn("false");
     }

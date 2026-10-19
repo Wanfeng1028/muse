@@ -88,7 +88,7 @@ class RunExecutorBranch2Test {
                 environment,
                 objectMapper,
                 skillService
-        );
+        , mock(ReviewService.class));
     }
 
     private Run runningRun(long id) {
