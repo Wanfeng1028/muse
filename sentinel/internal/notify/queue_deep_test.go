@@ -38,6 +38,19 @@ func newQueueSender(t *testing.T) (*QueueSender, *store.Store) {
 	return q, st
 }
 
+func newMonitor(t *testing.T, st *store.Store, name string) int64 {
+	t.Helper()
+	mid, err := st.CreateMonitor(store.Monitor{
+		Name: name, Kind: "http", Target: "http://example.com",
+		Method: "GET", ExpectedStatus: 200, TimeoutSec: 5,
+		IntervalSec: 60, Enabled: 1, TenantID: 1,
+	})
+	if err != nil {
+		t.Fatalf("CreateMonitor: %v", err)
+	}
+	return mid
+}
+
 func TestBackoffForBoundary(t *testing.T) {
 	q := &QueueSender{}
 	cases := []struct {
@@ -71,15 +84,16 @@ func TestBackoffForBoundary(t *testing.T) {
 
 func TestEnqueueWebhookEmptyURL(t *testing.T) {
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "empty-url")
 
-	if err := q.EnqueueWebhook(1, "", "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, "", "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("空 URL 应返回 nil, got=%v", err)
 	}
-	if err := q.EnqueueWebhook(1, "   ", "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, "   ", "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("纯空格 URL 应返回 nil, got=%v", err)
 	}
 
-	now := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
+	now := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	items, err := st.ClaimDueDeliveries(now, 100)
 	if err != nil {
 		t.Fatalf("捞取到期投递失败: %v", err)
@@ -91,9 +105,11 @@ func TestEnqueueWebhookEmptyURL(t *testing.T) {
 
 func TestEnqueueWebhookInvalidURLAndOverlong(t *testing.T) {
 	q, st := newQueueSender(t)
+	midInvalid := newMonitor(t, st, "invalid-url")
+	midLong := newMonitor(t, st, "long-url")
 
 	invalidURL := "ht tp://bad url"
-	if err := q.EnqueueWebhook(2, invalidURL, "firing", "n", "t", "2024-01-01T00:00:00Z", "boom"); err != nil {
+	if err := q.EnqueueWebhook(midInvalid, invalidURL, "firing", "n", "t", "2024-01-01T00:00:00Z", "boom"); err != nil {
 		t.Fatalf("非法 URL 入队应成功(仅做持久化), got=%v", err)
 	}
 
@@ -105,11 +121,11 @@ func TestEnqueueWebhookInvalidURLAndOverlong(t *testing.T) {
 		}
 		longURL = "http://example.com/" + string(buf)
 	}
-	if err := q.EnqueueWebhook(3, longURL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(midLong, longURL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("超长 URL 入队应成功, got=%v", err)
 	}
 
-	now := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
+	now := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	items, err := st.ClaimDueDeliveries(now, 100)
 	if err != nil {
 		t.Fatalf("捞取到期投递失败: %v", err)
@@ -137,14 +153,15 @@ func TestEnqueueWebhookInvalidURLAndOverlong(t *testing.T) {
 
 func TestEnqueueWebhookPayloadRoundTrip(t *testing.T) {
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "payload-round-trip")
 
 	url := "http://127.0.0.1:1/hook"
-	err := q.EnqueueWebhook(7, url, "firing", "cpu", "host-1", "2024-05-01T00:00:00Z", "high load")
+	err := q.EnqueueWebhook(mid, url, "firing", "cpu", "host-1", "2024-05-01T00:00:00Z", "high load")
 	if err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
-	now := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
+	now := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	items, err := st.ClaimDueDeliveries(now, 100)
 	if err != nil {
 		t.Fatalf("捞取到期投递失败: %v", err)
@@ -159,21 +176,21 @@ func TestEnqueueWebhookPayloadRoundTrip(t *testing.T) {
 	if d.Event != "firing" {
 		t.Fatalf("Event 不匹配: got=%q", d.Event)
 	}
-	if d.MonitorID != 7 {
-		t.Fatalf("MonitorID 不匹配: got=%d", d.MonitorID)
+	if d.MonitorID != mid {
+		t.Fatalf("MonitorID 不匹配: got=%d want=%d", d.MonitorID, mid)
 	}
 	var p map[string]any
 	if err := json.Unmarshal([]byte(d.Payload), &p); err != nil {
 		t.Fatalf("payload 反序列化失败: %v", err)
 	}
-	if p["Event"] != "firing" {
-		t.Fatalf("payload.Event 不匹配: %v", p["Event"])
+	if p["event"] != "firing" {
+		t.Fatalf("payload.event 不匹配: %v", p["event"])
 	}
-	if p["Name"] != "cpu" {
-		t.Fatalf("payload.Name 不匹配: %v", p["Name"])
+	if p["name"] != "cpu" {
+		t.Fatalf("payload.name 不匹配: %v", p["name"])
 	}
-	if p["Service"] != "sentinel" {
-		t.Fatalf("payload.Service 不匹配: %v", p["Service"])
+	if p["service"] != "sentinel" {
+		t.Fatalf("payload.service 不匹配: %v", p["service"])
 	}
 }
 
@@ -187,7 +204,8 @@ func TestProcessDueSuccessMarksDone(t *testing.T) {
 	defer srv.Close()
 
 	q, st := newQueueSender(t)
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	mid := newMonitor(t, st, "success-done")
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
@@ -198,7 +216,7 @@ func TestProcessDueSuccessMarksDone(t *testing.T) {
 		t.Fatalf("期望请求 1 次, got=%d", got)
 	}
 
-	now := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
+	now := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	items, err := st.ClaimDueDeliveries(now, 100)
 	if err != nil {
 		t.Fatalf("捞取到期投递失败: %v", err)
@@ -215,8 +233,9 @@ func TestProcessDueNetworkErrorMarksRetry(t *testing.T) {
 	srv.Close()
 
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "network-error-retry")
 	q.BaseBackoffSec = 1
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
@@ -247,8 +266,9 @@ func TestProcessDueNon2xxMarksRetry(t *testing.T) {
 	defer srv.Close()
 
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "non2xx-retry")
 	q.BaseBackoffSec = 1
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
@@ -276,9 +296,10 @@ func TestProcessDueMaxAttemptsMarksFailed(t *testing.T) {
 	defer srv.Close()
 
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "max-attempts-failed")
 	q.MaxAttempts = 2
 	q.BaseBackoffSec = 1
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
@@ -294,6 +315,9 @@ func TestProcessDueMaxAttemptsMarksFailed(t *testing.T) {
 		t.Fatalf("第一次后应保留 1 条, got=%d", len(items))
 	}
 
+	if err := st.MarkDeliveryAttempt(items[0].ID, time.Now().UTC().Add(-time.Hour).Format(time.RFC3339), "test"); err != nil {
+		t.Fatalf("回拨 next_retry_at 失败: %v", err)
+	}
 	if err := q.ProcessDue(context.Background()); err != nil {
 		t.Fatalf("第二次 ProcessDue 失败: %v", err)
 	}
@@ -314,8 +338,9 @@ func TestProcessDueProbeTimeout(t *testing.T) {
 	defer srv.Close()
 
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "probe-timeout")
 	q.BaseBackoffSec = 1
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
@@ -344,8 +369,9 @@ func TestProcessDueContextCanceled(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	q, _ := newQueueSender(t)
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "ctx-canceled")
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 
@@ -362,6 +388,7 @@ func TestProcessDueContextCanceled(t *testing.T) {
 
 func TestEnqueueWebhookConcurrentIdempotency(t *testing.T) {
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "concurrent-idempotency")
 
 	const workers = 8
 	const perWorker = 5
@@ -371,15 +398,15 @@ func TestEnqueueWebhookConcurrentIdempotency(t *testing.T) {
 	errCh := make(chan error, workers*perWorker)
 	for i := 0; i < workers; i++ {
 		wg.Add(1)
-		go func(idx int) {
+		go func() {
 			defer wg.Done()
 			for j := 0; j < perWorker; j++ {
-				if err := q.EnqueueWebhook(int64(idx), url, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+				if err := q.EnqueueWebhook(mid, url, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 					errCh <- err
 					return
 				}
 			}
-		}(i)
+		}()
 	}
 	wg.Wait()
 	close(errCh)
@@ -387,21 +414,21 @@ func TestEnqueueWebhookConcurrentIdempotency(t *testing.T) {
 		t.Fatalf("并发入队失败: %v", err)
 	}
 
-	now := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
+	now := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	items, err := st.ClaimDueDeliveries(now, 1000)
 	if err != nil {
 		t.Fatalf("捞取到期投递失败: %v", err)
 	}
-	if len(items) != workers*perWorker {
-		t.Fatalf("并发入队数量不匹配: got=%d want=%d", len(items), workers*perWorker)
+	if len(items) != 1 {
+		t.Fatalf("并发幂等入队应仅保留 1 行: got=%d", len(items))
 	}
 
 	seen := make(map[int64]bool)
 	for _, it := range items {
 		seen[it.ID] = true
 	}
-	if len(seen) != workers*perWorker {
-		t.Fatalf("投递记录 ID 存在重复: unique=%d total=%d", len(seen), workers*perWorker)
+	if len(seen) != len(items) {
+		t.Fatalf("投递记录 ID 存在重复: unique=%d total=%d", len(seen), len(items))
 	}
 }
 
@@ -416,7 +443,8 @@ func TestProcessDueConcurrentClaimNoDoubleDelivery(t *testing.T) {
 	q, st := newQueueSender(t)
 	const n = 20
 	for i := 0; i < n; i++ {
-		if err := q.EnqueueWebhook(int64(i), srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+		mid := newMonitor(t, st, fmt.Sprintf("concurrent-claim-%d", i))
+		if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 			t.Fatalf("入队失败: %v", err)
 		}
 	}
@@ -438,7 +466,7 @@ func TestProcessDueConcurrentClaimNoDoubleDelivery(t *testing.T) {
 		t.Fatalf("并发 ProcessDue 失败: %v", err)
 	}
 
-	now := time.Now().UTC().Add(-time.Hour).Format(time.RFC3339)
+	now := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	items, err := st.ClaimDueDeliveries(now, 1000)
 	if err != nil {
 		t.Fatalf("捞取到期投递失败: %v", err)
@@ -485,12 +513,13 @@ func TestProcessDueBreakerOpenSkipsDelivery(t *testing.T) {
 	defer srv.Close()
 
 	q, st := newQueueSender(t)
+	mid := newMonitor(t, st, "breaker-open")
 	q.BaseBackoffSec = 1
 	q.Breakers = NewBreakerRegistry(1, time.Hour)
 	br := q.Breakers.Get(srv.URL)
 	br.AfterRequest(false)
 
-	if err := q.EnqueueWebhook(1, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
+	if err := q.EnqueueWebhook(mid, srv.URL, "firing", "n", "t", "2024-01-01T00:00:00Z", ""); err != nil {
 		t.Fatalf("入队失败: %v", err)
 	}
 

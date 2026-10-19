@@ -208,6 +208,22 @@ TEST_F(WatcherTest, SubDir) {
     fs::create_directory(sub, ec);
     ASSERT_FALSE(ec) << "创建子目录失败: " << ec.message();
 
+    // 根因：新建子目录的 inotify watch 是 loop 线程收到父目录 IN_CREATE
+    // 后才异步装上的；若在其就绪前创建 b.txt，该事件不会投递给尚未安装
+    // 的 watch，且 inotify 不补发已错过的边沿，导致永久丢失 → 随机超时。
+    // 故先轮询 watched() 确认子目录 watch 已就绪，再创建文件。
+    const std::string subNorm = Norm(sub);
+    const bool armed = WaitFor(
+        [&]() {
+            const auto watched = w.watched();
+            for (const auto& s : watched) {
+                if (s == subNorm) return true;
+            }
+            return false;
+        },
+        std::chrono::milliseconds(5000));
+    ASSERT_TRUE(armed) << "新建子目录的 inotify watch 未在期限内就绪：" << subNorm;
+
     const fs::path b = sub / "b.txt";
     {
         std::ofstream ofs(b, std::ios::binary | std::ios::trunc);

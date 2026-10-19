@@ -90,6 +90,124 @@ interlude-lint lint <剧本文件> [--log-level LEVEL] [--log-json] [--format te
 
 日志走 stderr，报告走 stdout，两者分开，方便脚本里管道处理。
 
+## replay --aggregate（多对局聚合复盘）
+
+一次把多个对局日志聚合起来复盘，看哪些路径走得最多、哪个抉择点被选得最多、哪个场景最容易流失。
+
+用法：
+
+```bash
+interlude-lint replay <对局日志.json> [<对局日志.json> ...] --aggregate [--log-level LEVEL] [--log-json] [--out FILE]
+```
+
+参数：
+
+- `--aggregate`：聚合模式开关。给了这个开关才算聚合模式。一个对局日志都不给，会打印用法并以退出码 2 退出。不开这个开关就只能给一个对局日志文件，给多了就报参数错误。`--aggregate` 和 `--script` 互斥，一起给就往 stderr 打印 `--aggregate 与 --script 互斥`，退出码 2。
+- positional：一个或多个对局日志文件。
+- `--out`：把报告写到文件，不给就打印到 stdout。
+- `--log-level` / `--log-json`：会被接受，但当前实现里不生效（解析后没有传给日志门面）。
+
+常用路径榜单默认取前 10 条。实现里调用 `AggregateAnalyzer.analyze(sessions)`，签名是 `fun analyze(sessions: List<List<SessionEvent>>, topN: Int = 10)`。
+
+退出码：
+
+- 0：成功。
+- 2：参数错误 / 文件不存在 / 读取文件失败 / 对局日志解析失败 / `--aggregate` 与 `--script` 互斥 / 写入报告失败。
+
+出错时往 stderr 打的文案：
+
+- `文件不存在: <路径>`
+- `读取文件失败: <路径>`
+- `对局日志解析失败: <消息>`
+- `写入报告失败: <路径>`
+- `--aggregate 与 --script 互斥`
+
+报告结构（由 `AggregateMarkdown.render` 生成）：
+
+```
+# 多对局聚合复盘报告
+- 对局数：N
+- 事件总数：M
+
+## 常用路径 TopN
+| 路径 | 局数 | 占比 |
+| --- | --- | --- |
+
+## 抉择点分布
+| 选项 | 目标 | 选择次数 | 占比 |
+| --- | --- | --- | --- |
+
+## 流失点聚合
+| 场景 | 流失局数 | 流失率 |
+| --- | --- | --- |
+```
+
+三个表都没数据时分别打 `暂无路径数据。`、`暂无抉择点数据。`、`未发现流失点。`。占比用 `String.format("%.1f", value * 100) + "%"` 格式化。
+
+日志走 stderr，op=replay，成功时记 `聚合复盘报告已生成: sessions=N, events=M`。
+
+示例 1：三个对局，报告打到 stdout。
+
+```bash
+interlude-lint replay a.json b.json c.json --aggregate
+```
+
+其中 a.json、b.json 走的是"开场 → 分岔口 → 结局"且正常结束，c.json 走到"开场 → 支线"就停了（没有 SessionEnd，流失在支线）。输出：
+
+```
+# 多对局聚合复盘报告
+- 对局数：3
+- 事件总数：10
+
+## 常用路径 TopN
+| 路径 | 局数 | 占比 |
+| --- | --- | --- |
+| 开场 → 分岔口 → 结局 | 2 | 66.7% |
+| 开场 → 支线 | 1 | 33.3% |
+
+## 抉择点分布
+
+### 分岔口
+
+| 选项 | 目标 | 选择次数 | 占比 |
+| --- | --- | --- | --- |
+| 往左 | 结局 | 2 | 100.0% |
+
+## 流失点聚合
+| 场景 | 流失局数 | 流失率 |
+| --- | --- | --- |
+| 支线 | 1 | 33.3% |
+```
+
+示例 2：三个对局，都没有抉择点事件，有一局流失，报告写到 report.md。
+
+```bash
+interlude-lint replay a.json b.json c.json --aggregate --out report.md
+```
+
+其中 a.json、b.json 走的是"开场 → 结局"且正常结束，c.json 走到"开场 → 岔路"就停了（没有 SessionEnd，流失在岔路），三个日志里都没有抉择点事件。report.md 内容：
+
+```
+# 多对局聚合复盘报告
+- 对局数：3
+- 事件总数：8
+
+## 常用路径 TopN
+| 路径 | 局数 | 占比 |
+| --- | --- | --- |
+| 开场 → 结局 | 2 | 66.7% |
+| 开场 → 岔路 | 1 | 33.3% |
+
+## 抉择点分布
+
+暂无抉择点数据。
+
+## 流失点聚合
+| 场景 | 流失局数 | 流失率 |
+| --- | --- | --- |
+| 岔路 | 1 | 33.3% |
+```
+
 ## 备份与恢复
 
 - `interlude-lint lint <剧本文件>` 在打开剧本前自动写 .bak 备份；`interlude-lint restore` 在恢复前自动备份当前工作文件。备份失败只记 warn 日志，不中断主流程。

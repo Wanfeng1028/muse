@@ -9,30 +9,43 @@ interface WerewolfLobbyProps {
   onClose: () => void;
 }
 
-const DEFAULT_COUNT = 9;
-const MIN_COUNT = 6;
-const MAX_COUNT = 12;
+const SUPPORTED_COUNTS: number[] = [6, 7, 8, 9, 10, 11, 12];
 
-function buildSeats(count: number, defaultSeat: string): string[] {
-  const seats: string[] = [];
+const ROLE_CONFIG: Record<number, string> = {
+  6: '2 狼人 · 3 平民 · 预言家',
+  7: '2 狼人 · 3 平民 · 预言家 · 女巫',
+  8: '2 狼人 · 4 平民 · 预言家 · 女巫',
+  9: '3 狼人 · 3 平民 · 预言家 · 女巫 · 猎人',
+  10: '3 狼人 · 3 平民 · 预言家 · 女巫 · 猎人 · 守卫',
+  11: '3 狼人 · 4 平民 · 预言家 · 女巫 · 猎人 · 守卫',
+  12: '4 狼人 · 4 平民 · 预言家 · 女巫 · 猎人 · 守卫',
+};
+
+function buildSeats(defaultSeat: string, count: number): string[] {
+  const next: string[] = [];
   for (let i = 0; i < count; i += 1) {
-    seats.push(i === 0 ? defaultSeat : '');
+    next.push(i === 0 ? defaultSeat : '');
   }
-  return seats;
+  return next;
 }
 
 export default function WerewolfLobby({ defaultSeat, err, onStart, onClose }: WerewolfLobbyProps) {
-  const [count, setCount] = useState(DEFAULT_COUNT);
-  const [seats, setSeats] = useState<string[]>(() => buildSeats(DEFAULT_COUNT, defaultSeat));
+  const [count, setCount] = useState(9);
+  const [seats, setSeats] = useState<string[]>(() => buildSeats(defaultSeat, 9));
   const [starting, setStarting] = useState(false);
 
   const changeCount = (next: number) => {
-    const clamped = Math.min(MAX_COUNT, Math.max(MIN_COUNT, next));
-    setCount(clamped);
+    if (!SUPPORTED_COUNTS.includes(next)) {
+      return;
+    }
+    setCount(next);
     setSeats((prev) => {
       const out: string[] = [];
-      for (let i = 0; i < clamped; i += 1) {
-        out.push(i < prev.length ? prev[i] : i === 0 ? defaultSeat : '');
+      for (let i = 0; i < next; i += 1) {
+        out.push(prev[i] !== undefined ? prev[i] : '');
+      }
+      if (out[0] === '' && defaultSeat) {
+        out[0] = defaultSeat;
       }
       return out;
     });
@@ -78,7 +91,7 @@ export default function WerewolfLobby({ defaultSeat, err, onStart, onClose }: We
 
   let reason = '';
   if (!countMatch) {
-    reason = '座位数和人数对不上';
+    reason = '人数和座位数量对不上';
   } else if (!allFilled) {
     reason = '还有座位没填';
   } else if (!unique) {
@@ -100,21 +113,37 @@ export default function WerewolfLobby({ defaultSeat, err, onStart, onClose }: We
   return (
     <div className="werewolf-lobby">
       <div className="werewolf-lobby-title">开一局狼人杀</div>
-      <div className="werewolf-lobby-hint">6 到 12 人都能开，人不够就让 AI 凑。</div>
+      <div className="werewolf-lobby-hint">6 到 12 人都能开，人不够就让 AI 凑</div>
 
-      <div className="werewolf-lobby-countrow">
-        <span className="werewolf-lobby-countlabel">人数</span>
-        <button className="btn-ghost" type="button" onClick={() => changeCount(count - 1)} disabled={count <= MIN_COUNT}>
+      <div className="werewolf-lobby-count">
+        <span className="werewolf-lobby-count-label">人数</span>
+        <button
+          className="btn-ghost"
+          type="button"
+          onClick={() => changeCount(count - 1)}
+          disabled={!SUPPORTED_COUNTS.includes(count - 1)}
+        >
           -
         </button>
-        <span className="werewolf-lobby-countvalue">{count}</span>
-        <button className="btn-ghost" type="button" onClick={() => changeCount(count + 1)} disabled={count >= MAX_COUNT}>
+        <span className="werewolf-lobby-count-value">{count}</span>
+        <button
+          className="btn-ghost"
+          type="button"
+          onClick={() => changeCount(count + 1)}
+          disabled={!SUPPORTED_COUNTS.includes(count + 1)}
+        >
           +
         </button>
-        <button className="btn-ghost" type="button" onClick={fillAllAi}>
-          一键 AI 补满
-        </button>
       </div>
+
+      <div className="werewolf-lobby-roles">
+        <div className="werewolf-lobby-roles-title">角色构成</div>
+        <div className="werewolf-lobby-roles-list">{ROLE_CONFIG[count]}</div>
+      </div>
+
+      <button className="btn-ghost" type="button" onClick={fillAllAi}>
+        一键 AI 补满
+      </button>
 
       {seats.map((s, i) => (
         <div className="werewolf-lobby-row" key={i}>

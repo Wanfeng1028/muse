@@ -28,7 +28,7 @@ make dev
 - 统计：服务端渲染 SVG 图表，零前端构建。
 - CSV 导入导出：自己的数据随时带走。
 - 周期账单：房租、订阅这类固定支出自动记。
-- Web UI：7 个页面，Jinja2 服务端渲染。
+- Web UI：12 个页面，Jinja2 服务端渲染（`/`、`/transactions`、`/currencies`、`/accounts`、`/categories`、`/budgets`、`/recurring`、`/import`、`/statement`、`/bills`、`/bills/review`、`/detective`）。
 
 ### v2.0 银行账单侦探
 
@@ -106,6 +106,25 @@ make dev
 | GET | `/api/metrics` | Prometheus 指标 |
 | GET | `/api/currencies` | 汇率列表 |
 | PUT | `/api/currencies/{code}` | 新增/更新汇率 |
+| GET/POST/PUT/DELETE | `/api/transactions` | 交易管理 |
+| GET/POST/PUT/DELETE | `/api/accounts` | 账户管理（含 `/{account_id}/transactions`） |
+| GET/POST/PUT/DELETE | `/api/categories` | 分类管理 |
+| GET/POST/PUT/DELETE | `/api/budgets` | 预算管理（含 `/yearly`） |
+| GET/POST/PUT/DELETE | `/api/recurring` | 周期账单管理（含 `/upcoming`） |
+| GET/PATCH/DELETE | `/api/merchant-aliases` | 商户别名管理 |
+| GET | `/api/stats/summary` | 统计汇总 |
+| GET | `/api/stats/trend` | 统计趋势 |
+| GET | `/api/stats/by-category` | 按分类统计 |
+| GET | `/api/stats/net-worth` | 净资产统计 |
+| POST | `/api/import/csv` | CSV 导入（multipart） |
+| GET | `/api/export/csv` | CSV 导出 |
+| POST | `/api/statements/ocr` | 账单 OCR 解析预览（multipart） |
+| POST | `/api/bills/ocr` | 拍照记账 OCR 识别（multipart） |
+| GET | `/api/bills/review` | OCR 审核队列 |
+| GET | `/api/bills/review/{review_id}/image` | 审核原图 |
+| POST | `/api/bills/review/{review_id}/confirm` | 确认入账 |
+| POST | `/api/bills/review/{review_id}/reject` | 驳回 |
+| POST | `/api/bills/review/batch` | 批量审核 |
 
 ## 为什么不用随手记 / Excel 记账
 
@@ -117,7 +136,7 @@ make dev
 
 ## 开发
 
-make test   # pytest，173 例
+make test   # pytest，889 例（2026-10-19 实测）
 
 lint：
 

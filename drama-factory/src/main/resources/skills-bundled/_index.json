@@ -2336,7 +2336,7 @@
       "license": "MIT",
       "source": "HBAI-Ltd/Toonflow-app",
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/canvas/SKILL.md",
-      "version": "1.0.0",
+      "version": "2.1.0",
       "author": "playhouse",
       "rewritten": true,
       "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/canvas：功能对齐，SKILL.md 为独立重写，未复制原文"
@@ -2348,7 +2348,7 @@
       "license": "MIT",
       "source": "HBAI-Ltd/Toonflow-app",
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/workflow/SKILL.md",
-      "version": "1.0.0",
+      "version": "2.7.0",
       "author": "playhouse",
       "rewritten": true,
       "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
@@ -2360,7 +2360,7 @@
       "license": "MIT",
       "source": "HBAI-Ltd/Toonflow-app",
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/v118workflow/SKILL.md",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "playhouse",
       "rewritten": true,
       "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/v118workflow：功能对齐，SKILL.md 为独立重写，未复制原文"

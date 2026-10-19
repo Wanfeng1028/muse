@@ -1,10 +1,121 @@
-# Dependabot 配置（仓库级）
-# 注意：Dependabot 不支持 CMake FetchContent，
-# cppjieba / googletest 的版本检查走季度人工流程，见 docseek/docs/OPERATIONS.md。
+# Dependabot 配置说明（monorepo 根）
+# 本文件位于仓库根目录，是整个 monorepo 的统一 Dependabot 配置。
+# 仓库结构为一个子目录一个项目，各项目的 workflow 与 Dockerfile 分散在各自目录下。
+#
+# 覆盖范围说明：
+# - github-actions 生态监控 directory "/"，即仓库根，可覆盖全仓库所有子项目 .github/workflows 下的 Actions。
+# - docker 生态按项目目录逐一监控，凡是含 Dockerfile 的项目目录都单列一条，避免遗漏。
+#
+# 无法自动升级、需人工季度检查的依赖：
+# Dependabot 不认识 CMake 的 FetchContent 机制，因此 docseek 通过 FetchContent 拉取的两个第三方依赖
+# 无法由 Dependabot 自动开 PR 升级，改为每季度人工核对一次。
+#   - cppjieba：在 docseek/CMakeLists.txt 中以 GIT_TAG v5.6.2 固定
+#   - googletest：在 docseek/CMakeLists.txt 中以 v1.14.0 归档包固定
+# 季度人工检查时执行以下命令查看上游最新 tag，再决定是否手动提升 CMakeLists 中的版本：
+#   git ls-remote --tags https://github.com/yanyiwu/cppjieba.git
+#   git ls-remote --tags https://github.com/google/googletest.git
+# 具体操作步骤与责任人记录在 docseek/docs/OPERATIONS.md，按季度例行执行。
+#
+# 另注：Threads、ZLIB 这类系统库由 CMake 的 find_package 在构建时解析，
+# 不属于仓库内被钉死的第三方版本，因此不纳入 Dependabot 监控。
+
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    labels: ["dependencies"]
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/kaoyan-os"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/second-brain"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/drama-factory"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/mini-os"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/ledger"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/sentinel"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/docseek"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/feedflow"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/linkshort"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "docker"
+    directory: "/mortisedb"
+    schedule:
+      interval: "weekly"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"

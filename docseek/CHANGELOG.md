@@ -1,3 +1,19 @@
+## v0.18.2（2026-10-19）——工程化收尾
+
+### 收敛
+- 清掉工作区遗留改动：`src/query_parser.cpp` 的 fillerWords 加了"想知道"，问句胶水词表从 7 个扩到 10 个（新增"好/让/下来"）；`src/searcher.cpp` 在单 token AND 非空时补 `tryCharDecomposedSingle` 分解召回，修掉 v09-t007-q08 漏召回；`docs/NOTE-q11-unfixable.md` 记录 v09-t006-q11 不可修复的原因。
+- 上面这些改完，构建通过，ctest 51/51 全绿。
+
+### 新增
+- 仓库根加 `.github/dependabot.yml`，只盯 github-actions 和 docker 两个真实生态，directory 指到 `/docseek`。cppjieba v5.6.2、googletest v1.14.0 是 CMake FetchContent 钉死的版本，Dependabot 管不到，所以在注释里写清楚人工定期检查的命令。
+- 新增 `docs/DRILL-2026-10-19.md`，是一次真做的故障演练记录：备份、serve 查询、kill -9 后查 WAL 完整、删库恢复、无效备份被拒 exit=2，7 步全过。里面也记了 `pkill -f` 误杀当前 shell 这个操作教训。
+
+### 测试
+- 修 `tests/test_watcher.cpp` 里 `WatcherTest.SubDir` 这个 flaky 测试。根因是新子目录的 inotify watch 由 loop 线程异步装上，文件要是先创建了事件就永久丢了。改成 `create_directory` 之后轮询 `w.watched()` 确认 watch 就绪（5 秒超时）再写文件。连续跑 8 次全过。
+
+### 运维
+- 演练脚本按真实顺序走了一遍，没有跳步，恢复流程能落地。
+
 ## v0.18.1（2026-10-19）——Wave5：v09 剩余失败攻坚（下）
 
 ### 新增

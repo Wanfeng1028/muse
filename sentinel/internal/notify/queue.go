@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -115,6 +116,20 @@ func (q *QueueSender) EnqueueWebhook(monitorID int64, url, event, name, target, 
 }
 
 // postWebhookOnce 执行一次 webhook POST 请求。非 2xx 返回中文错误。
+// webhookStatusError 表示下游返回了非 2xx 状态码。
+// Permanent 为 true 表示该失败不可通过重试解决（4xx 且非 408/429）。
+type webhookStatusError struct {
+	StatusCode int
+	Permanent  bool
+}
+
+func (e *webhookStatusError) Error() string {
+	if e.Permanent {
+		return fmt.Sprintf("永久失败: 非 2xx 状态码: %d", e.StatusCode)
+	}
+	return fmt.Sprintf("非 2xx 状态码: %d", e.StatusCode)
+}
+
 func postWebhookOnce(url string, body []byte) error {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
@@ -130,13 +145,18 @@ func postWebhookOnce(url string, body []byte) error {
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
 	_ = resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("非 2xx 状态码: %d", resp.StatusCode)
+		return &webhookStatusError{
+			StatusCode: resp.StatusCode,
+			Permanent:  resp.StatusCode >= 400 && resp.StatusCode < 500 && resp.StatusCode != 408 && resp.StatusCode != 429,
+		}
 	}
 	return nil
 }
 
 // ProcessDue 扫描到期的投递记录并逐条尝试投递。
-// 成功标记 done；失败按 attempt 与 max_attempts 决定 retrying 或 failed。
+// 成功标记 done；失败分类处理：永久失败（4xx 且非 408/429）立即标记 failed，
+// 不消耗重试；可重试失败（网络错/超时/5xx/408/429）在耗尽 attempt 后标记 dead，
+// 否则标记 retrying 并安排下次重试。
 // BreakerStates 返回各下游 host 的熔断状态（0=闭合，1=断开，2=半开）；
 // 未配置熔断注册表时返回 nil。供 /api/metrics 导出。
 func (q *QueueSender) BreakerStates() map[string]int {
@@ -153,6 +173,9 @@ func (q *QueueSender) BreakerStates() map[string]int {
 
 func (q *QueueSender) ProcessDue(ctx context.Context) error {
 
+	if err := q.Store.RecoverStaleDeliveries(time.Now().UTC()); err != nil {
+		return fmt.Errorf("捞取到期投递失败: %w", err)
+	}
 	now := time.Now().UTC().Format(time.RFC3339)
 	items, err := q.Store.ClaimDueDeliveries(now, 100)
 	if err != nil {
@@ -171,6 +194,9 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 			br = q.Breakers.Get(d.URL)
 			if !br.BeforeRequest() {
 				log.Logger().Warn("webhook 投递被熔断跳过", "delivery_id", d.ID, "url", d.URL, "state", br.State().String())
+				if err := q.Store.ReleaseClaim(d.ID); err != nil {
+					log.Logger().Error("释放认领失败", "delivery_id", d.ID, "err", err)
+				}
 				continue
 			}
 		}
@@ -197,7 +223,15 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 			}
 
 			if attempts >= maxAttempts {
-				if err := q.Store.MarkDeliveryFailed(d.ID, errMsg); err != nil {
+				var statusErr *webhookStatusError
+				permanent := errors.As(err, &statusErr) && statusErr.Permanent
+				var markErr error
+				if permanent {
+					markErr = q.Store.MarkDeliveryFailed(d.ID, errMsg)
+				} else {
+					markErr = q.Store.MarkDeliveryDead(d.ID, errMsg)
+				}
+				if markErr != nil {
 					log.Logger().Error("标记投递最终失败失败", "delivery_id", d.ID, "error", err)
 				}
 				log.Logger().Warn("Webhook 投递最终失败",
@@ -214,6 +248,23 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 			}
 
 			next := time.Now().UTC().Add(q.BackoffFor(attempts)).Format(time.RFC3339)
+			var statusErr *webhookStatusError
+			permanent := errors.As(err, &statusErr) && statusErr.Permanent
+			if permanent {
+				if markErr := q.Store.MarkDeliveryFailed(d.ID, errMsg); markErr != nil {
+					log.Logger().Error("标记投递永久失败失败", "delivery_id", d.ID, "error", markErr)
+				}
+				log.Logger().Warn("Webhook 投递永久失败",
+					"delivery_id", d.ID,
+					"url", d.URL,
+					"attempt", attempts,
+					"error", err,
+				)
+				if br != nil {
+					br.AfterRequest(false)
+				}
+				continue
+			}
 			if err := q.Store.MarkDeliveryAttempt(d.ID, next, errMsg); err != nil {
 				log.Logger().Error("记录投递重试失败", "delivery_id", d.ID, "error", err)
 			}

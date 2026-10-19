@@ -139,8 +139,35 @@ func (s *Store) CountDeliveriesByStatus() (map[string]int, error) {
 	return out, nil
 }
 
-// ClaimDueDeliveries 捞取所有到期（next_retry_at <= now）且状态为 pending/retrying 的记录，
-// 按 next_retry_at 升序返回，limit 钳制到 1~1000。
+// deliveryLease 是 'delivering' 瞬时态的最大存活时长；超过该时长的 delivering 行
+// 视为 worker 崩溃留下的僵尸行，会被 RecoverStaleDeliveries 打回 retrying。
+const deliveryLease = 10 * time.Minute
+
+// ClaimDueDeliveries 原子认领所有到期（next_retry_at <= now）且状态为 pending/retrying 的记录，
+// 按 next_retry_at 升序返回，limit 钳制到 1~1000。认领即把 status 置为瞬时态 'delivering'，
+// 单条 UPDATE ... RETURNING 依赖 SQLite 写串行化保证并发 worker 不重复认领同一行。
+// ReleaseClaim 把一次认领回滚：仅当行仍为 'delivering' 时，按 next_retry_at
+// 恢复为 pending（已到期）或 retrying（未到期）。时间戳用 utcNow() 以保证
+// 与 updated_at 列的 RFC3339 字符串格式一致（字符串比较依赖该格式）。
+func (s *Store) ReleaseClaim(id int64) error {
+	now := utcNow()
+	res, err := s.db.Exec(
+		`UPDATE webhook_deliveries SET status = CASE WHEN next_retry_at <= ? THEN 'pending' ELSE 'retrying' END, updated_at = ? WHERE id = ? AND status = 'delivering'`,
+		now, now, id,
+	)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 func (s *Store) ClaimDueDeliveries(now string, limit int) ([]Delivery, error) {
 	if limit <= 0 {
 		limit = 1
@@ -150,12 +177,16 @@ func (s *Store) ClaimDueDeliveries(now string, limit int) ([]Delivery, error) {
 	}
 
 	rows, err := s.db.Query(
-		`SELECT id, monitor_id, url, event, payload, status, attempt, max_attempts,
-next_retry_at, last_error, created_at, updated_at
-FROM webhook_deliveries
+		`UPDATE webhook_deliveries
+SET status = 'delivering', updated_at = ?
+WHERE id IN (
+SELECT id FROM webhook_deliveries
 WHERE status IN ('pending','retrying') AND next_retry_at IS NOT NULL AND next_retry_at <= ?
-ORDER BY next_retry_at ASC LIMIT ?`,
-		now, limit,
+ORDER BY next_retry_at ASC LIMIT ?
+)
+RETURNING id, monitor_id, url, event, payload, status, attempt, max_attempts,
+next_retry_at, last_error, created_at, updated_at`,
+		now, now, limit,
 	)
 	if err != nil {
 		return nil, err
@@ -174,6 +205,19 @@ ORDER BY next_retry_at ASC LIMIT ?`,
 		return nil, err
 	}
 	return out, nil
+}
+
+// RecoverStaleDeliveries 把超过 deliveryLease 仍停留在 'delivering' 的僵尸行打回 'retrying'，
+// 供 worker 崩溃后重新认领投递。
+func (s *Store) RecoverStaleDeliveries(now time.Time) error {
+	cutoff := now.UTC().Add(-deliveryLease).Format(time.RFC3339)
+	_, err := s.db.Exec(
+		`UPDATE webhook_deliveries
+SET status = 'retrying', updated_at = ?
+WHERE status = 'delivering' AND updated_at <= ?`,
+		now.UTC().Format(time.RFC3339), cutoff,
+	)
+	return err
 }
 
 // MarkDeliveryDone 把投递记录标记为成功。无行返回 sql.ErrNoRows。
@@ -237,7 +281,28 @@ func (s *Store) MarkDeliveryFailed(id int64, lastError string) error {
 	return nil
 }
 
-// RetryDelivery 手动重试一条投递记录：只允许 status 为 failed/retrying 的行，
+// MarkDeliveryDead 把投递记录标记为 dead（可重试失败耗尽重试次数），
+// 同时把 attempt+1，使 attempt 真实反映已执行的投递次数。
+// WHERE 带 status='delivering' 守卫，只有认领者能写终态。
+func (s *Store) MarkDeliveryDead(id int64, lastError string) error {
+	res, err := s.db.Exec(
+		`UPDATE webhook_deliveries SET attempt = attempt + 1, status = 'dead', last_error = ?, updated_at = ? WHERE id = ? AND status = 'delivering'`,
+		lastError, utcNow(), id,
+	)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+// RetryDelivery 手动重试一条投递记录：只允许 status 为 failed/dead/retrying 的行，
 // 重置为 pending、attempt=0、next_retry_at=now。
 func (s *Store) RetryDelivery(id int64) error {
 	var status string
@@ -245,7 +310,7 @@ func (s *Store) RetryDelivery(id int64) error {
 	if err != nil {
 		return err
 	}
-	if status != "failed" && status != "retrying" {
+	if status != "failed" && status != "dead" && status != "retrying" {
 		return errInvalidDeliveryStatus
 	}
 
@@ -253,7 +318,7 @@ func (s *Store) RetryDelivery(id int64) error {
 	res, err := s.db.Exec(
 		`UPDATE webhook_deliveries
 SET status = 'pending', attempt = 0, next_retry_at = ?, last_error = '', updated_at = ?
-WHERE id = ? AND status IN ('failed','retrying')`,
+WHERE id = ? AND status IN ('failed','dead','retrying')`,
 		now, now, id,
 	)
 	if err != nil {

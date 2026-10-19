@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import calendar
 import csv
+import hashlib
+
 import io
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -366,11 +368,35 @@ async def budget_progress(s: AsyncSession, month: str) -> list[dict]:
     return result
 
 
+def _txn_fingerprint(
+    occurred_on,
+    txn_type,
+    account_id,
+    to_account_id,
+    category_id,
+    amount_cents,
+    note,
+) -> str:
+    """把一笔交易的各字段拼起来算 sha256，用来判断是否重复。None 当空串处理。"""
+    parts = [
+        "" if occurred_on is None else str(occurred_on),
+        "" if txn_type is None else str(txn_type),
+        "" if account_id is None else str(account_id),
+        "" if to_account_id is None else str(to_account_id),
+        "" if category_id is None else str(category_id),
+        "" if amount_cents is None else str(amount_cents),
+        "" if note is None else str(note),
+    ]
+    joined = "\x1f".join(parts)
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
+
+
 # ---------------------------------------------------------------------------
 # CSV 导入
 # ---------------------------------------------------------------------------
 
 _TYPE_MAP = {
+
     "收入": "income",
     "支出": "expense",
     "转账": "transfer",
@@ -414,7 +440,10 @@ async def import_csv_rows(s: AsyncSession, text: str) -> dict:
         }
     idx_note = header.index("note") if "note" in header else -1
 
+    seen_fingerprints: set[str] = set()
+
     for line_no, raw in enumerate(rows[1:], start=2):
+
         # 空行跳过
         if not raw or all((c or "").strip() == "" for c in raw):
             skipped += 1
@@ -474,6 +503,34 @@ async def import_csv_rows(s: AsyncSession, text: str) -> dict:
                     raise ValueError(f"分类不存在或类型不匹配: {category_name}")
                 category_id = cat.id
 
+            fingerprint = _txn_fingerprint(
+                date_str,
+                txn_type,
+                acc.id,
+                to_account_id,
+                category_id,
+                amount_cents,
+                note,
+            )
+            if fingerprint in seen_fingerprints:
+                skipped += 1
+                continue
+
+            existing_id = await s.scalar(
+                select(Transaction.id).where(
+                    Transaction.occurred_on == date_str,
+                    Transaction.type == txn_type,
+                    Transaction.account_id == acc.id,
+                    Transaction.to_account_id == to_account_id,
+                    Transaction.category_id == category_id,
+                    Transaction.amount_cents == amount_cents,
+                    Transaction.note == note,
+                )
+            )
+            if existing_id is not None:
+                skipped += 1
+                continue
+
             now = _now_iso()
             txn = Transaction(
                 type=txn_type,
@@ -487,7 +544,9 @@ async def import_csv_rows(s: AsyncSession, text: str) -> dict:
                 updated_at=now,
             )
             s.add(txn)
+            seen_fingerprints.add(fingerprint)
             created += 1
+
         except ValueError as e:
             errors.append(f"第{line_no}行: {e}")
             skipped += 1

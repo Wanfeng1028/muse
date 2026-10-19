@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 import re
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
@@ -112,6 +113,10 @@ def parse_date(text: str) -> str:
         match = pattern.match(cleaned)
         if match:
             year, month, day = match.groups()
+            try:
+                datetime.date(int(year), int(month), int(day))
+            except ValueError:
+                raise ValueError(f"日期无法解析：{text}")
             return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
     raise ValueError(f"日期无法解析：{text}")
 

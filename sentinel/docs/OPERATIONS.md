@@ -165,6 +165,14 @@ readinessProbe: { httpGet: { path: /readyz,  port: 8200 } }
 - `sentinel_webhooks_sent_total`：累计 webhook 发送次数（counter）
 - `sentinel_webhook_failures_total`：累计 webhook 投递失败次数（counter）
 - `sentinel_webhook_queue_backlog{status="pending"|"retrying"}`：webhook 队列积压（gauge，v0.6 新增，pending+retrying 即队列积压）
+
+### webhook 队列认领语义
+
+worker 通过单条 `UPDATE ... WHERE id IN (SELECT id ... LIMIT ?) ... RETURNING <列>` 原子认领到期投递：
+SQLite 写操作串行化保证并发 worker 不重复认领同一行。认领即把 `status` 置为瞬时态 `delivering`。
+worker 在认领后、标记前崩溃会留下 `delivering` 僵尸行；`ProcessDue` 每次开头会把
+`status='delivering' AND updated_at <= now-lease` 的行打回 `retrying`，lease 为 10 分钟。
+`delivering` 不计入 `sentinel_webhook_queue_backlog`。
 - `sentinel_http_requests_total{method,path,status}`：HTTP 请求计数（counter）
 
 说明：

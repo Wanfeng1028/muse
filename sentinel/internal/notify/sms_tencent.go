@@ -25,7 +25,9 @@ type TencentConfig struct {
 	Region     string
 	Endpoint   string
 	HTTPClient *http.Client
+	DryRun     bool
 }
+
 
 // TencentSMSSender 腾讯云短信发送器。
 type TencentSMSSender struct {
@@ -37,7 +39,9 @@ type TencentSMSSender struct {
 	region      string
 	endpoint    string
 	httpClient  *http.Client
+	dryRun      bool
 }
+
 
 // Provider 返回发送器标识，供短信发送记录使用。
 func (s *TencentSMSSender) Provider() string { return "tencent" }
@@ -71,8 +75,10 @@ func NewTencentSMSSender(cfg TencentConfig) (*TencentSMSSender, error) {
 		region:      region,
 		endpoint:    endpoint,
 		httpClient:  client,
+		dryRun:      cfg.DryRun,
 	}, nil
 }
+
 
 // tencentSign 按腾讯云 TC3-HMAC-SHA256 规范计算 Authorization 头值。
 // payload 必须是紧凑 JSON（无空格），由调用方保证。
@@ -164,6 +170,11 @@ func (s *TencentSMSSender) doSend(e164 string, payload []byte) error {
 		host = strings.TrimPrefix(s.endpoint, "http://")
 	}
 
+	if s.dryRun {
+		log.Logger().Info("腾讯云短信 dry-run 命中，不真实发送", "phone", e164)
+		return nil
+	}
+
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("构造腾讯云短信请求失败: %w", err)
@@ -176,6 +187,7 @@ func (s *TencentSMSSender) doSend(e164 string, payload []byte) error {
 	req.Header.Set("Authorization", authorization)
 
 	resp, err := s.httpClient.Do(req)
+
 	if err != nil {
 		return fmt.Errorf("请求腾讯云短信接口失败: %w", err)
 	}

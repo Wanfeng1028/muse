@@ -59,6 +59,11 @@ fun Application.configureRoutes(
             call.respond(HttpStatusCode.OK, hub.monitorSnapshot(store.getShow()))
         }
 
+        // 运维只读入口：返回当前 oplog 全部条目，seq 从 1 开始
+        get("/api/oplog") {
+            call.respond(HttpStatusCode.OK, hub.missedOps(0L))
+        }
+
         webSocket("/ws") {
             var myClientId: String? = null
             var myRole: ClientRole? = null

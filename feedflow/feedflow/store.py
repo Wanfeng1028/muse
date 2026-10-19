@@ -1,4 +1,5 @@
 """数据访问层：所有函数首参为 db_path，返回 dict 或 dict 列表。"""
+import html
 from datetime import UTC, datetime, timedelta
 
 from . import dedup
@@ -549,6 +550,49 @@ def search_articles(db_path, q, limit=50):
         return [dict(r) for r in rows]
     finally:
         conn.close()
+
+
+def highlight_snippet(text, keyword, max_len=120):
+    """在文本里高亮关键词，返回带 <mark> 的片段。"""
+    if not text:
+        return ""
+    if not keyword:
+        return html.escape(text)
+
+    lower_text = text.lower()
+    lower_kw = keyword.lower()
+    idx = lower_text.find(lower_kw)
+
+    if idx == -1:
+        escaped = html.escape(text)
+        if len(escaped) <= max_len:
+            return escaped
+        return escaped[:max_len]
+
+    kw_len = len(keyword)
+    half = max(0, (max_len - kw_len) // 2)
+    start = max(0, idx - half)
+    end = min(len(text), idx + kw_len + half)
+
+    if end - start > max_len:
+        end = start + max_len
+
+    snippet = text[start:end]
+
+    escaped_snippet = html.escape(snippet)
+    escaped_kw = html.escape(keyword)
+
+    lower_snippet = snippet.lower()
+    pos = lower_snippet.find(lower_kw)
+
+    if pos == -1:
+        return escaped_snippet
+
+    before = html.escape(snippet[:pos])
+    matched = html.escape(snippet[pos:pos + kw_len])
+    after = html.escape(snippet[pos + kw_len:])
+
+    return before + "<mark>" + matched + "</mark>" + after
 
 
 def stats(db_path):

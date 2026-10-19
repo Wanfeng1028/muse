@@ -397,8 +397,8 @@ func TestClaimDueDeliveriesBoundaryAndOrder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("捞取失败: %v", err)
 	}
-	if len(all) != 4 {
-		t.Fatalf("期望 4 行，实际 %d", len(all))
+	if len(all) != 3 {
+		t.Fatalf("期望 3 行，实际 %d", len(all))
 	}
 	for i := 1; i < len(all); i++ {
 		if all[i-1].NextRetryAt.String > all[i].NextRetryAt.String {
@@ -606,16 +606,16 @@ func TestClaimDueDeliveriesConcurrentNoDuplicateOverlap(t *testing.T) {
 		t.Fatalf("期望看到 %d 个不同 id，实际 %d", total, len(seen))
 	}
 	for id, n := range seen {
-		if n != workerCount {
-			t.Fatalf("id %d 应被每个 worker 看到一次，实际 %d", id, n)
+		if n != 1 {
+			t.Fatalf("id %d 应恰好被认领一次，实际 %d", id, n)
 		}
 	}
 	again, err := s.ClaimDueDeliveries("2001-01-01T00:00:00Z", 1000)
 	if err != nil {
 		t.Fatalf("再次捞取失败: %v", err)
 	}
-	if len(again) != total {
-		t.Fatalf("再次捞取期望 %d 行，实际 %d", total, len(again))
+	if len(again) != 0 {
+		t.Fatalf("再次捞取期望 0 行，实际 %d", len(again))
 	}
 	start := time.Now()
 	if time.Since(start) > 5*time.Second {

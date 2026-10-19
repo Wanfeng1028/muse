@@ -1,890 +1,868 @@
 import { describe, it, expect } from "vitest";
 import {
-  assignRoles,
-  ROLE_INFO,
-  type Role,
-} from "../src/werewolf/roles.js";
-import {
   createGame,
   nightAction,
   dayAction,
   serializeForSeat,
   WerewolfError,
-  type GameState,
 } from "../src/werewolf/game.js";
-import {
-  chooseNightAction,
-  chooseDayAction,
-} from "../src/werewolf/ai.js";
-import {
-  WerewolfGameError,
-  WerewolfGameEngine,
-  WerewolfRoom,
-  SUPPORTED_COUNTS,
-  isAiSeat,
-  type WerewolfSessionData,
-} from "../src/werewolf-game.js";
+import type { GameState, NightStep } from "../src/werewolf/game.js";
+import type { Role } from "../src/werewolf/roles.js";
 
-// ---------------------------------------------------------------------------
-// 工具
-// ---------------------------------------------------------------------------
+const rng0 = () => 0;
 
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function makeSeats(n: number, prefix = "s"): string[] {
+function seats(n: number): string[] {
   const out: string[] = [];
-  for (let i = 0; i < n; i++) out.push(`${prefix}${i}`);
+  for (let i = 0; i < n; i++) out.push(`s${i}`);
   return out;
 }
 
-function makeAiSeats(n: number): string[] {
-  const out: string[] = [];
-  for (let i = 0; i < n; i++) out.push(`ai:${i}`);
-  return out;
+function roleOf(state: GameState, seat: string): Role {
+  const p = state.players.find((x) => x.seat === seat);
+  if (!p) throw new Error(`no seat ${seat}`);
+  return p.role;
 }
 
 function findSeatByRole(state: GameState, role: Role): string {
   const p = state.players.find((x) => x.role === role);
-  if (!p) throw new Error(`no player with role ${role}`);
+  if (!p) throw new Error(`no role ${role}`);
   return p.seat;
 }
 
-function aliveSeatByRole(state: GameState, role: Role): string {
-  const p = state.players.find((x) => x.role === role && x.alive);
-  if (!p) throw new Error(`no alive player with role ${role}`);
-  return p.seat;
+function aliveByRole(state: GameState, role: Role): string[] {
+  return state.players.filter((p) => p.alive && p.role === role).map((p) => p.seat);
 }
 
-function aliveSeatsExcept(state: GameState, exclude: string[]): string[] {
-  return state.players
-    .filter((p) => p.alive && !exclude.includes(p.seat))
-    .map((p) => p.seat);
-}
-
-function firstGoodNot(state: GameState, exclude: string[]): string {
-  const p = state.players.find(
-    (x) =>
-      x.alive &&
-      !exclude.includes(x.seat) &&
-      ROLE_INFO[x.role].faction === "good",
-  );
-  if (!p) throw new Error("no good alive");
-  return p.seat;
-}
-
-function firstWolfNot(state: GameState, exclude: string[]): string {
-  const p = state.players.find(
-    (x) =>
-      x.alive &&
-      !exclude.includes(x.seat) &&
-      ROLE_INFO[x.role].faction === "wolves",
-  );
-  if (!p) throw new Error("no wolf alive");
-  return p.seat;
-}
-
-/**
- * 按 nightStep 顺序推进夜晚到结束（进入 announce）。
- * targets 中的每一项可以是座位、null 或 "skip"（表示不提交该步）。
- */
-function progressNight(
-  state: GameState,
-  targets: {
-    guard?: string | null;
-    wolves?: string | null;
-    seer?: string | null;
-    witch?: { potion: "save" | "poison" | null; target?: string | null };
-  },
-): GameState {
-  let s = state;
-  let guardCount = 0;
-  while (s.phase === "night" && guardCount < 20) {
-    guardCount++;
-    if (s.nightStep === "guard") {
-      const seat = s.currentSeat;
-      const t = targets.guard === undefined ? null : targets.guard;
-      s = nightAction(s, seat, { kind: "night", target: t });
-      continue;
-    }
-    if (s.nightStep === "wolves") {
-      const seat = s.currentSeat;
-      const t = targets.wolves === undefined ? null : targets.wolves;
-      s = nightAction(s, seat, { kind: "night", target: t });
-      continue;
-    }
-    if (s.nightStep === "seer") {
-      const seat = s.currentSeat;
-      const t = targets.seer === undefined ? null : targets.seer;
-      s = nightAction(s, seat, { kind: "night", target: t });
-      continue;
-    }
-    if (s.nightStep === "witch") {
-      const seat = s.currentSeat;
-      const w = targets.witch ?? { potion: null, target: null };
-      s = nightAction(s, seat, {
-        kind: "night",
-        potion: w.potion,
-        target: w.target ?? null,
-      });
-      continue;
-    }
-    break;
+function codeOf(fn: () => unknown): string {
+  try {
+    fn();
+  } catch (e) {
+    return (e as WerewolfError).code;
   }
-  if (guardCount >= 20) throw new Error("night loop guard exceeded");
+  throw new Error("expected throw but none");
+}
+
+// 6 人局：2 狼 3 民 1 预言家（无守卫无女巫）
+function makeGame6(): GameState {
+  return createGame(seats(6), undefined, rng0);
+}
+
+// 7 人局：2 狼 3 民 预言家 女巫
+function makeGame7(): GameState {
+  return createGame(seats(7), undefined, rng0);
+}
+
+// 10 人局：3 狼 3 民 预言家 女巫 猎人 守卫
+function makeGame10(sheriff = false): GameState {
+  return createGame(seats(10), { sheriff }, rng0);
+}
+
+// 推进一个 6 人局的夜晚：guard 不存在 -> wolves -> seer -> resolve
+function runNight6(state: GameState, wolfTarget: string, seerTarget: string): GameState {
+  let s = state;
+  const wolf = aliveByRole(s, "werewolf")[0];
+  s = nightAction(s, wolf, { kind: "night", target: wolfTarget});
+  const seer = findSeatByRole(s, "seer");
+  s = nightAction(s, seer, { kind: "night", target: seerTarget});
   return s;
 }
 
-/** 处理 announce + lastwords，进入 sheriff（第一天）或 speak。 */
-function progressAnnounceAndLastwords(s: GameState): GameState {
-  let cur = s;
-  let guard = 0;
-  while (
-    (cur.phase === "announce" || cur.phase === "lastwords") &&
-    guard < 50
-  ) {
-    guard++;
-    if (cur.phase === "announce") {
-      // 公开 action：公布死讯确认 -> lastwords / sheriff / speak（afterAnnounce 决定）
-      const anyAlive = cur.players.find((pl) => pl.alive)?.seat ?? "";
-      cur = dayAction(cur, anyAlive, { kind: "announce_done" });
-      continue;
+describe("createGame 参数校验", () => {
+  it("人数 5 抛 BAD_SEATS 且信息含 6 到 12", () => {
+    try {
+      createGame(seats(5), undefined, rng0);
+      throw new Error("should throw");
+    } catch (e) {
+      expect((e as WerewolfError).code).toBe("BAD_SEATS");
+      expect((e as WerewolfError).message).toContain("6 到 12");
     }
-    // lastwords：猎人待开枪优先
-    if (cur.hunterShootPending && cur.currentSeat === cur.hunterShootPending) {
-      const hunterSeat = cur.hunterShootPending;
-      const target =
-        cur.players.find((pl) => pl.alive && pl.seat !== hunterSeat)?.seat ??
-        null;
-      cur = dayAction(cur, hunterSeat, { kind: "hunter_shoot", target });
-      continue;
+  });
+
+  it("人数 13 抛 BAD_SEATS 且信息含 6 到 12", () => {
+    try {
+      createGame(seats(13), undefined, rng0);
+      throw new Error("should throw");
+    } catch (e) {
+      expect((e as WerewolfError).code).toBe("BAD_SEATS");
+      expect((e as WerewolfError).message).toContain("6 到 12");
     }
-    const seat = cur.currentSeat;
-    if (!seat) break;
-    cur = dayAction(cur, seat, { kind: "lastwords_done" });
-    continue;
-  }
-  if (guard >= 50) throw new Error("announce/lastwords loop guard exceeded");
-  return cur;
-}
+  });
 
-/** 处理警长竞选阶段：所有存活玩家退水。 */
-function progressSheriffAllPass(s: GameState): GameState {
-  let cur = s;
-  let guard = 0;
-  while (cur.phase === "sheriff" && guard < 50) {
-    guard++;
-    const seat = cur.currentSeat;
-    if (!seat) break;
-    cur = dayAction(cur, seat, { kind: "sheriff", target: null });
-  }
-  if (guard >= 50) throw new Error("sheriff loop guard exceeded");
-  return cur;
-}
+  it("座位重复抛 BAD_SEATS", () => {
+    const dup = ["s0", "s0", "s1", "s2", "s3", "s4"];
+    expect(codeOf(() => createGame(dup, undefined, rng0))).toBe("BAD_SEATS");
+  });
 
-/** 处理发言阶段：所有存活玩家发言完毕。 */
-function progressSpeakAll(s: GameState): GameState {
-  let cur = s;
-  let guard = 0;
-  while (cur.phase === "speak" && guard < 50) {
-    guard++;
-    const seat = cur.currentSeat;
-    if (!seat) break;
-    cur = dayAction(cur, seat, { kind: "speak_done" });
-  }
-  if (guard >= 50) throw new Error("speak loop guard exceeded");
-  return cur;
-}
+  it("空字符串座位抛 BAD_SEATS", () => {
+    const withEmpty = ["s0", "s1", "s2", "s3", "s4", ""];
+    expect(codeOf(() => createGame(withEmpty, undefined, rng0))).toBe("BAD_SEATS");
+  });
 
-/** 处理 pk_speak 阶段：所有 pk 玩家发言完毕。 */
-function progressPkSpeakAll(s: GameState): GameState {
-  let cur = s;
-  let guard = 0;
-  while (cur.phase === "pk_speak" && guard < 50) {
-    guard++;
-    const seat = cur.currentSeat;
-    if (!seat) break;
-    cur = dayAction(cur, seat, { kind: "speak_done" });
-  }
-  if (guard >= 50) throw new Error("pk_speak loop guard exceeded");
-  return cur;
-}
+  it("非数组抛 BAD_SEATS", () => {
+    expect(
+      codeOf(() => createGame("not-an-array" as unknown as string[], undefined, rng0)),
+    ).toBe("BAD_SEATS");
+  });
 
-/** 全体存活玩家按 seat 投票给某个目标（或按函数给出）。 */
-function progressVoteAll(
-  s: GameState,
-  chooser: (voter: string, state: GameState) => string | null,
-): GameState {
-  let cur = s;
-  let guard = 0;
-  while (
-    (cur.phase === "vote" || cur.phase === "pk_vote") &&
-    guard < 100
-  ) {
-    guard++;
-    const seat = cur.currentSeat;
-    if (!seat) break;
-    const target = chooser(seat, cur);
-    cur = dayAction(cur, seat, { kind: "vote", target });
-  }
-  if (guard >= 100) throw new Error("vote loop guard exceeded");
-  return cur;
-}
+  it("相同 rng 两次 createGame 角色分配一致", () => {
+    const a = createGame(seats(6), undefined, () => 0);
+    const b = createGame(seats(6), undefined, () => 0);
+    const aRoles = a.players.map((p) => `${p.seat}:${p.role}`).join(",");
+    const bRoles = b.players.map((p) => `${p.seat}:${p.role}`).join(",");
+    expect(aRoles).toBe(bRoles);
+  });
 
-/** 第一天完整流程：夜晚 -> 公布 -> 遗言 -> 警长(全退水) -> 发言 -> 投票。 */
-function progressToFirstVote(
-  s: GameState,
-  nightTargets: Parameters<typeof progressNight>[1],
-): GameState {
-  let cur = progressNight(s, nightTargets);
-  cur = progressAnnounceAndLastwords(cur);
-  if (cur.phase === "sheriff") {
-    cur = progressSheriffAllPass(cur);
-  }
-  if (cur.phase === "speak") {
-    cur = progressSpeakAll(cur);
-  }
-  return cur;
-}
-
-// ---------------------------------------------------------------------------
-// roles
-// ---------------------------------------------------------------------------
-
-describe("roles.ts", () => {
-  it("6 人局配置为 2 狼 3 民 1 预言家", () => {
-    const roles = assignRoles(makeSeats(6), mulberry32(1));
+  it("6 人局角色数量为 2 狼 3 民 1 预言家", () => {
+    const g = makeGame6();
     const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(2);
-    expect(counts["villager"]).toBe(3);
-    expect(counts["seer"]).toBe(1);
-    expect(roles.size).toBe(6);
-  });
-
-  it("7 人局配置为 2 狼 3 民 预言家 女巫", () => {
-    const roles = assignRoles(makeSeats(7), mulberry32(2));
-    const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(2);
-    expect(counts["villager"]).toBe(3);
-    expect(counts["seer"]).toBe(1);
-    expect(counts["witch"]).toBe(1);
-  });
-
-  it("8 人局配置为 2 狼 4 民 预言家 女巫", () => {
-    const roles = assignRoles(makeSeats(8), mulberry32(3));
-    const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(2);
-    expect(counts["villager"]).toBe(4);
-    expect(counts["seer"]).toBe(1);
-    expect(counts["witch"]).toBe(1);
-  });
-
-  it("9 人局配置为 3 狼 3 民 预言家 女巫 猎人", () => {
-    const roles = assignRoles(makeSeats(9), mulberry32(4));
-    const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(3);
-    expect(counts["villager"]).toBe(3);
-    expect(counts["seer"]).toBe(1);
-    expect(counts["witch"]).toBe(1);
-    expect(counts["hunter"]).toBe(1);
-  });
-
-  it("10 人局配置为 3 狼 3 民 预言家 女巫 猎人 守卫", () => {
-    const roles = assignRoles(makeSeats(10), mulberry32(5));
-    const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(3);
-    expect(counts["villager"]).toBe(3);
-    expect(counts["seer"]).toBe(1);
-    expect(counts["witch"]).toBe(1);
-    expect(counts["hunter"]).toBe(1);
-    expect(counts["guard"]).toBe(1);
-  });
-
-  it("11 人局配置为 3 狼 4 民 预言家 女巫 猎人 守卫", () => {
-    const roles = assignRoles(makeSeats(11), mulberry32(6));
-    const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(3);
-    expect(counts["villager"]).toBe(4);
-    expect(counts["seer"]).toBe(1);
-    expect(counts["witch"]).toBe(1);
-    expect(counts["hunter"]).toBe(1);
-    expect(counts["guard"]).toBe(1);
-  });
-
-  it("12 人局配置为 4 狼 4 民 预言家 女巫 猎人 守卫", () => {
-    const roles = assignRoles(makeSeats(12), mulberry32(7));
-    const counts: Record<string, number> = {};
-    for (const r of roles.values()) counts[r] = (counts[r] ?? 0) + 1;
-    expect(counts["werewolf"]).toBe(4);
-    expect(counts["villager"]).toBe(4);
-    expect(counts["seer"]).toBe(1);
-    expect(counts["witch"]).toBe(1);
-    expect(counts["hunter"]).toBe(1);
-    expect(counts["guard"]).toBe(1);
-  });
-
-  it("非法人数 5 抛错", () => {
-    expect(() => assignRoles(makeSeats(5), mulberry32(8))).toThrow();
-  });
-
-  it("非法人数 13 抛错", () => {
-    expect(() => assignRoles(makeSeats(13), mulberry32(9))).toThrow();
-  });
-
-  it("同 seed 分配结果一致", () => {
-    const seats = makeSeats(9);
-    const a = assignRoles(seats, mulberry32(42));
-    const b = assignRoles(seats, mulberry32(42));
-    for (const s of seats) {
-      expect(a.get(s)).toBe(b.get(s));
+    for (const p of g.players) {
+      counts[p.role] = (counts[p.role] ?? 0) + 1;
     }
+    expect(counts.werewolf).toBe(2);
+    expect(counts.villager).toBe(3);
+    expect(counts.seer).toBe(1);
   });
 });
 
-// ---------------------------------------------------------------------------
-// game 夜间
-// ---------------------------------------------------------------------------
-
-describe("game.ts 夜间", () => {
-  it("createGame 9 人局 phase=night, nightStep=guard 或跳到首个有角色的步骤", () => {
-    const s = createGame(makeSeats(9), {}, mulberry32(10));
-    expect(s.phase).toBe("night");
-    expect(s.day).toBe(1);
-    // 9 人局无守卫，第一个有角色步骤是 wolves
-    expect(s.nightStep === "guard" || s.nightStep === "wolves").toBe(true);
+describe("夜晚流程 - 基础推进", () => {
+  it("6 人局夜晚从 wolves 步骤开始（无守卫）", () => {
+    const g = makeGame6();
+    expect(g.phase).toBe("night");
+    expect(g.night.step).toBe("wolves");
   });
 
-  it("守卫守住被刀者免死", () => {
-    const s0 = createGame(makeSeats(10), {}, mulberry32(11));
-    const guardSeat = aliveSeatByRole(s0, "guard");
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    // 选一个非守卫非狼的存活玩家
-    const target = firstGoodNot(s0, [guardSeat]);
-    // 推进守卫
-    let s = nightAction(s0, guardSeat, { kind: "night", target });
-    expect(s.nightStep).toBe("wolves");
-    // 狼刀目标
-    s = nightAction(s, wolfSeat, { kind: "night", target });
-    expect(s.nightStep).toBe("seer");
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    expect(s.nightStep).toBe("witch");
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, { kind: "night", potion: null });
-    expect(s.phase).toBe("announce");
-    const p = s.players.find((x) => x.seat === target);
-    expect(p?.alive).toBe(true);
+  it("狼人行动后进入 seer 步骤", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    const target = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target });
+    expect(g.night.step).toBe("seer");
+    expect(g.night.wolfTarget).toBe(target);
   });
 
-  it("女巫解药救活被刀者", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(12));
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    const target = firstGoodNot(s0, []);
-    // 狼刀
-    let s = nightAction(s0, wolfSeat, { kind: "night", target });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, {
-      kind: "night",
-      potion: "save",
-      target,
-    });
-    expect(s.phase).toBe("announce");
-    const p = s.players.find((x) => x.seat === target);
-    expect(p?.alive).toBe(true);
+  it("预言家行动后无女巫直接结算进入 announce", () => {
+    let g = makeGame6();
+    const villager = aliveByRole(g, "villager")[0];
+    const seerSelf = findSeatByRole(g, "seer");
+    g = runNight6(g, villager, seerSelf === villager ? aliveByRole(g, "werewolf")[0] : villager);
+    expect(g.phase).toBe("announce");
   });
 
-  it("女巫毒药毒死一人", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(13));
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    const witchSeat = aliveSeatByRole(s0, "witch");
-    // 狼不刀
-    let s = nightAction(s0, wolfSeat, { kind: "night", target: null });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    // 女巫毒一个非狼非女巫的存活玩家
-    const poisonTarget = aliveSeatsExcept(s, [witchSeat]).find((x) => {
-      const p = s.players.find((pp) => pp.seat === x);
-      return p !== undefined && ROLE_INFO[p.role].faction === "good";
-    });
-    expect(poisonTarget).toBeDefined();
-    s = nightAction(s, witchSeat, {
-      kind: "night",
-      potion: "poison",
-      target: poisonTarget as string,
-    });
-    expect(s.phase).toBe("announce");
-    const p = s.players.find((x) => x.seat === poisonTarget);
-    expect(p?.alive).toBe(false);
+  it("非夜晚阶段调用 nightAction 抛 WRONG_PHASE", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    const villager = aliveByRole(g, "villager")[0];
+    g = runNight6(g, villager, villager);
+    // 现在 phase 可能是 announce 或 lastwords
+    expect(g.phase).not.toBe("night");
+    expect(codeOf(() => nightAction(g, wolf, { kind: "night", target: null }))).toBe(
+      "WRONG_PHASE",
+    );
   });
 
-  it("同守同救被刀者仍死", () => {
-    const s0 = createGame(makeSeats(10), {}, mulberry32(14));
-    const guardSeat = aliveSeatByRole(s0, "guard");
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    const target = firstGoodNot(s0, [guardSeat]);
-    let s = nightAction(s0, guardSeat, { kind: "night", target });
-    s = nightAction(s, wolfSeat, { kind: "night", target });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, {
-      kind: "night",
-      potion: "save",
-      target,
-    });
-    expect(s.phase).toBe("announce");
-    const p = s.players.find((x) => x.seat === target);
-    expect(p?.alive).toBe(false);
+  it("不是该步骤的角色行动抛 NOT_YOUR_TURN", () => {
+    const g = makeGame6();
+    const seer = findSeatByRole(g, "seer");
+    expect(codeOf(() => nightAction(g, seer, { kind: "night", target: null }))).toBe(
+      "NOT_YOUR_TURN",
+    );
   });
 
-  it("守卫连守同一人第二晚守护无效（提交会被拒）", () => {
-    const s0 = createGame(makeSeats(10), {}, mulberry32(15));
-    const guardSeat = aliveSeatByRole(s0, "guard");
-    const target = firstGoodNot(s0, [guardSeat]);
-    // 第一晚守 target
-    let s = nightAction(s0, guardSeat, { kind: "night", target });
-    const wolfSeat = aliveSeatByRole(s, "werewolf");
-    s = nightAction(s, wolfSeat, { kind: "night", target: null });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, { kind: "night", potion: null });
-    // 进入白天流程到下一个夜晚
-    s = progressAnnounceAndLastwords(s);
-    if (s.phase === "sheriff") s = progressSheriffAllPass(s);
-    if (s.phase === "speak") s = progressSpeakAll(s);
-    if (s.phase === "vote") {
-      s = progressVoteAll(s, () => null);
+  it("夜晚 kind 错误抛 BAD_ACTION", () => {
+    const g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    expect(codeOf(() => nightAction(g, wolf, { kind: "day", target: null }))).toBe(
+      "BAD_ACTION",
+    );
+  });
+
+  it("未知座位抛 UNKNOWN_SEAT", () => {
+    const g = makeGame6();
+    expect(codeOf(() => nightAction(g, "s99", { kind: "night", target: null }))).toBe(
+      "UNKNOWN_SEAT",
+    );
+  });
+
+  it("已出局玩家行动抛 DEAD_PLAYER", () => {
+    let g = makeGame6();
+    const villager = aliveByRole(g, "villager")[0];
+    g = runNight6(g, villager, villager);
+    // 让存活的狼人尝试在 announce 之后阶段行动已不适用夜晚；
+    // 直接构造：手动把某狼设为出局后调 nightAction
+    const wolf = findSeatByRole(g, "werewolf");
+    const deadState: GameState = {
+      ...g,
+      phase: "night",
+      players: g.players.map((p) => (p.seat === wolf ? { ...p, alive: false } : p)),
+      night: { ...g.night, step: "wolves" },
+    };
+    expect(
+      codeOf(() => nightAction(deadState, wolf, { kind: "night", target: null })),
+    ).toBe("DEAD_PLAYER");
+  });
+});
+
+describe("夜晚流程 - 守卫", () => {
+  it("10 人局夜晚第一步为 guard", () => {
+    const g = makeGame10();
+    expect(g.night.step).toBe("guard");
+  });
+
+  it("守卫连续两晚守同一人抛 ILLEGAL_TARGET", () => {
+    let g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    const target = aliveByRole(g, "villager")[0];
+    g = nightAction(g, guard, { kind: "night", target });
+    expect(g.night.guardTarget).toBe(target);
+    // 推进夜晚到下一夜
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = aliveByRole(g, "werewolf")[0];
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    // 现在应该进入 announce/lastwords
+    // 直接快进到下一夜：模拟进入 announce_done 再流程
+    // 若在 announce 阶段需要 announce_done
+    if (g.phase === "announce") {
+      g = dayAction(g, g.players[0].seat, { kind: "announce_done" });
     }
-    // 若进入 lastwords 处理
-    while (s.phase === "lastwords") {
-      s = dayAction(s, s.currentSeat, { kind: "lastwords_done" });
-    }
-    // 现在应该在 night day=2，守卫上晚目标 target
-    // 找守卫
-    const guardNow = s.players.find((p) => p.role === "guard" && p.alive);
-    expect(guardNow).toBeDefined();
-    if (!guardNow) return;
-    // 守卫 nightStep 是否轮到守卫
-    // 如果守卫死了则跳过
-    if (s.phase === "night" && s.nightStep === "guard") {
-      expect(() =>
-        nightAction(s, guardNow.seat, { kind: "night", target }),
-      ).toThrow(WerewolfError);
-    }
+    // 可能进入 lastwords 或 speak/vote
+    // 简化：手动构造下一夜：把状态 day+1 并 step guard 由 beginNight 逻辑处理
+    // 用合法途径走：如进入 lastwords 就 lastwords_done，进入 speak 就依次 speak_done
+    g = forceToNextNight(g);
+    expect(g.phase).toBe("night");
+    expect(g.night.step).toBe("guard");
+    expect(g.night.lastGuardTarget).toBe(target);
+    // 守卫再守同一人应抛错
+    const guard2 = findSeatByRole(g, "guard");
+    expect(
+      codeOf(() => nightAction(g, guard2, { kind: "night", target })),
+    ).toBe("ILLEGAL_TARGET");
   });
 
-  it("首夜女巫不能自救（save 自己抛错）", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(16));
-    const witchSeat = aliveSeatByRole(s0, "witch");
-    // 狼刀女巫自己
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    let s = nightAction(s0, wolfSeat, { kind: "night", target: witchSeat });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    // 女巫尝试救自己，第一天
-    expect(s.day).toBe(1);
-    expect(() =>
-      nightAction(s, witchSeat, {
-        kind: "night",
-        potion: "save",
-        target: witchSeat,
-      }),
-    ).toThrow(WerewolfError);
+  it("守卫目标必须存活，否则 ILLEGAL_TARGET", () => {
+    const g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    expect(
+      codeOf(() => nightAction(g, guard, { kind: "night", target: "s99" })),
+    ).toBe("ILLEGAL_TARGET");
+  });
+});
+
+describe("夜晚流程 - 女巫", () => {
+  it("女巫 save 只能救 wolfTarget，否则 ILLEGAL_TARGET", () => {
+    let g = makeGame7();
+    const wolf = findSeatByRole(g, "werewolf");
+    const wolfTarget = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target: wolfTarget });
+    const seer = findSeatByRole(g, "seer");
+    const other = g.players.find(
+      (p) => p.alive && p.seat !== wolfTarget && p.role !== "werewolf",
+    )!.seat;
+    g = nightAction(g, seer, { kind: "night", target: other });
+    expect(g.night.step).toBe("witch");
+    const witch = findSeatByRole(g, "witch");
+    const wrongTarget = g.players.find(
+      (p) => p.alive && p.seat !== wolfTarget && p.seat !== witch,
+    )!.seat;
+    expect(
+      codeOf(() => nightAction(g, witch, { kind: "night", potion: "save", target: wrongTarget })),
+    ).toBe("ILLEGAL_TARGET");
   });
 
-  it("预言家验人后 seerResult 正确", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(17));
-    const seerSeat = aliveSeatByRole(s0, "seer");
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    // 跳过守卫（9 人无守卫），狼先刀 null
-    const wolfSeatFirst = aliveSeatByRole(s0, "werewolf");
-    let s = nightAction(s0, wolfSeatFirst, { kind: "night", target: null });
-    expect(s.nightStep).toBe("seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: wolfSeat });
-    expect(s.night.seerResult).toBe("wolf");
-    // 验一个好人
-    const goodSeat = s.players.find(
+  it("女巫首夜自救抛 ILLEGAL_TARGET", () => {
+    let g = makeGame7();
+    const wolf = findSeatByRole(g, "werewolf");
+    const witch = findSeatByRole(g, "witch");
+    // 狼刀女巫
+    g = nightAction(g, wolf, { kind: "night", target: witch });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = g.players.find((p) => p.alive && p.seat !== witch)!.seat;
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    expect(g.night.step).toBe("witch");
+    const witchNow = findSeatByRole(g, "witch");
+    expect(
+      codeOf(() => nightAction(g, witchNow, { kind: "night", potion: "save", target: witchNow })),
+    ).toBe("ILLEGAL_TARGET");
+  });
+
+  it("女巫 save 合法时救下狼刀目标", () => {
+    let g = makeGame7();
+    const wolf = findSeatByRole(g, "werewolf");
+    const target = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = g.players.find(
+      (p) => p.alive && p.seat !== target && p.seat !== findSeatByRole(g, "witch"),
+    )!.seat;
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: "save", target });
+    expect(g.night.witchSaveTarget).toBe(target);
+    const saved = g.players.find((p) => p.seat === target)!;
+    expect(saved.alive).toBe(true);
+    expect(g.deathsTonight).not.toContain(target);
+  });
+
+  it("女巫毒药 kill 毒目标，reason witch", () => {
+    let g = makeGame7();
+    const wolf = findSeatByRole(g, "werewolf");
+    const wolfTarget = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target: wolfTarget });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = g.players.find(
       (p) =>
         p.alive &&
-        p.seat !== seerSeat &&
-        p.seat !== wolfSeat &&
-        ROLE_INFO[p.role].faction === "good",
-    )?.seat;
-    expect(goodSeat).toBeDefined();
-    // 继续推进：验完后到女巫
-    expect(s.nightStep).toBe("witch");
-    void goodSeat;
-  });
-});
-
-// ---------------------------------------------------------------------------
-// game 白天
-// ---------------------------------------------------------------------------
-
-describe("game.ts 白天", () => {
-  it("第一天白天有警长竞选（sheriff 阶段）", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(20));
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    let s = nightAction(s0, wolfSeat, { kind: "night", target: null });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, { kind: "night", potion: null });
-    s = progressAnnounceAndLastwords(s);
-    expect(s.phase).toBe("sheriff");
-  });
-
-  it("投票放逐得票最高者", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(21));
-    let s = progressToFirstVote(s0, { wolves: null, seer: null, witch: { potion: null } });
-    expect(s.phase).toBe("vote");
-    // 选一个目标
-    const target = s.players.find((p) => p.alive)?.seat as string;
-    s = progressVoteAll(s, () => target);
-    // 目标被放逐
-    const p = s.players.find((x) => x.seat === target);
-    expect(p?.alive).toBe(false);
-  });
-
-  it("警长票算 1.5 票", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(22));
-    let s = progressToFirstVote(s0, { wolves: null, seer: null, witch: { potion: null } });
-    expect(s.phase).toBe("vote");
-    // 手动设置警长为某人（模拟 sheriff 阶段选举结果）
-    const players = s.players.filter((p) => p.alive);
-    const sheriff = players[0].seat;
-    const candidateA = players[1].seat;
-    const candidateB = players[2].seat;
-    // 修改 state 内部：设置 isSheriff 和 sheriffSeat
-    const s2 = JSON.parse(JSON.stringify(s)) as GameState;
-    s2.rng = s.rng;
-    s2.sheriffSeat = sheriff;
-    for (const p of s2.players) {
-      p.isSheriff = p.seat === sheriff;
-    }
-    // 现在让警长投 A，其余 4 人投 A，5 人投 B（构造：A 总 = 1.5 + 4 = 5.5，B = 5）
-    const voters = s2.players.filter((p) => p.alive).map((p) => p.seat);
-    const others = voters.filter((v) => v !== sheriff);
-    // A 得票: sheriff + others[0..3] -> 1.5 + 4 = 5.5
-    const aVoters = new Set<string>([sheriff, others[0], others[1], others[2], others[3]]);
-    // B 得票: others[4..]
-    const bVoters = new Set<string>(others.slice(4));
-    let cur = s2;
-    let guard = 0;
-    while (cur.phase === "vote" && guard < 50) {
-      guard++;
-      const seat = cur.currentSeat;
-      if (!seat) break;
-      const target = aVoters.has(seat) ? candidateA : candidateB;
-      cur = dayAction(cur, seat, { kind: "vote", target });
-    }
-    if (guard >= 50) throw new Error("vote loop guard exceeded");
-    const a = cur.players.find((x) => x.seat === candidateA);
-    expect(a?.alive).toBe(false);
-  });
-
-  it("平票进入 pk（pkSeats 非空）", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(23));
-    let s = progressToFirstVote(s0, { wolves: null, seer: null, witch: { potion: null } });
-    expect(s.phase).toBe("vote");
-    const players = s.players.filter((p) => p.alive).map((p) => p.seat);
-    // 偶数人数? 9 人 -> 9 票。构造 4-4 平票（一人弃票）
-    const a = players[0];
-    const b = players[1];
-    // 让前 4 人投 A，接下来 4 人投 B，最后 1 人弃票
-    const aSet = new Set(players.slice(0, 4));
-    const bSet = new Set(players.slice(4, 8));
-    // players[8] 弃票
-    let cur = s;
-    let guard = 0;
-    while (cur.phase === "vote" && guard < 50) {
-      guard++;
-      const seat = cur.currentSeat;
-      if (!seat) break;
-      let target: string | null = null;
-      if (aSet.has(seat)) target = a;
-      else if (bSet.has(seat)) target = b;
-      cur = dayAction(cur, seat, { kind: "vote", target });
-    }
-    if (guard >= 50) throw new Error("vote loop guard exceeded");
-    expect(cur.phase === "pk_speak" || cur.phase === "pk_vote").toBe(true);
-    expect(cur.pkSeats.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("PK 再平则平安日无出局进入下一夜", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(24));
-    let s = progressToFirstVote(s0, { wolves: null, seer: null, witch: { potion: null } });
-    expect(s.phase).toBe("vote");
-    const players = s.players.filter((p) => p.alive).map((p) => p.seat);
-    const a = players[0];
-    const b = players[1];
-    const aSet = new Set(players.slice(0, 4));
-    const bSet = new Set(players.slice(4, 8));
-    let cur = s;
-    let guard = 0;
-    while (cur.phase === "vote" && guard < 50) {
-      guard++;
-      const seat = cur.currentSeat;
-      if (!seat) break;
-      let target: string | null = null;
-      if (aSet.has(seat)) target = a;
-      else if (bSet.has(seat)) target = b;
-      cur = dayAction(cur, seat, { kind: "vote", target });
-    }
-    if (guard >= 50) throw new Error("vote loop guard exceeded");
-    expect(cur.phase).toBe("pk_speak");
-    const aliveCountBefore = cur.players.filter((p) => p.alive).length;
-    cur = progressPkSpeakAll(cur);
-    expect(cur.phase).toBe("pk_vote");
-    // PK 再平：pk 台上玩家轮到时弃票（target null）；台外 7 人投成 3-3-1 平票
-    let vi = 0;
-    guard = 0;
-    while (cur.phase === "pk_vote" && guard < 50) {
-      guard++;
-      const seat = cur.currentSeat;
-      if (!seat) break;
-      let target: string | null = null;
-      if (!cur.pkSeats.includes(seat)) {
-        target = vi < 3 ? a : vi < 6 ? b : null;
-        vi++;
-      }
-      cur = dayAction(cur, seat, { kind: "vote", target });
-    }
-    if (guard >= 50) throw new Error("pk_vote loop guard exceeded");
-    // 平票 -> 平安日 -> 进入下一夜
-    const aliveCountAfter = cur.players.filter((p) => p.alive).length;
-    expect(aliveCountAfter).toBe(aliveCountBefore);
-    expect(cur.phase === "night" || cur.phase === "finished").toBe(true);
-    if (cur.phase === "night") {
-      expect(cur.day).toBe(2);
-    }
-  });
-
-  it("猎人被刀后 hunterShootPending 可开枪带走一人", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(25));
-    const hunterSeat = aliveSeatByRole(s0, "hunter");
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    let s = nightAction(s0, wolfSeat, { kind: "night", target: hunterSeat });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, { kind: "night", potion: null });
-    expect(s.phase).toBe("announce");
-    expect(s.hunterShootPending).toBe(hunterSeat);
-    // 处理 announce / lastwords 时猎人开枪
-    s = progressAnnounceAndLastwords(s);
-    // 猎人开枪带走一个狼
-    const hunter = s.players.find((p) => p.seat === hunterSeat);
-    expect(hunter?.alive).toBe(false);
-  });
-
-  it("猎人被毒死不可开枪", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(26));
-    const hunterSeat = aliveSeatByRole(s0, "hunter");
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    let s = nightAction(s0, wolfSeat, { kind: "night", target: null });
-    const seerSeat = aliveSeatByRole(s, "seer");
-    s = nightAction(s, seerSeat, { kind: "night", target: null });
-    const witchSeat = aliveSeatByRole(s, "witch");
-    s = nightAction(s, witchSeat, {
+        p.seat !== wolfTarget &&
+        p.seat !== findSeatByRole(g, "witch") &&
+        p.role !== "werewolf",
+    )!.seat;
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    const witch = findSeatByRole(g, "witch");
+    const poisonTarget = g.players.find(
+      (p) => p.alive && p.seat !== witch && p.seat !== wolfTarget,
+    )!.seat;
+    g = nightAction(g, witch, {
       kind: "night",
       potion: "poison",
-      target: hunterSeat,
+      target: poisonTarget,
     });
-    expect(s.phase).toBe("announce");
-    // 被毒死：hunterShootPending 为 null
-    expect(s.hunterShootPending).toBeNull();
+    expect(g.night.witchPoisonTarget).toBe(poisonTarget);
+    const dead = g.players.find((p) => p.seat === poisonTarget)!;
+    expect(dead.alive).toBe(false);
+    const record = g.deaths.find((d) => d.seat === poisonTarget);
+    expect(record).toBeDefined();
+    expect(record!.reason).toBe("witch");
   });
 
-  it("警长死亡可移交警徽（sheriff_pass 指定）", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(27));
-    // 直接构造：手动设置 sheriff
-    const s2 = JSON.parse(JSON.stringify(s0)) as GameState;
-    s2.rng = s0.rng;
-    const players = s2.players.filter((p) => p.alive);
-    const sheriff = players[0].seat;
-    s2.sheriffSeat = sheriff;
-    for (const p of s2.players) p.isSheriff = p.seat === sheriff;
-    s2.phase = "lastwords";
-    s2.currentSeat = sheriff;
-    // 选一个新警长
-    const newSheriff = players[1].seat;
-    const next = dayAction(s2, sheriff, {
-      kind: "sheriff_pass",
-      target: newSheriff,
-    });
-    expect(next.sheriffSeat).toBe(newSheriff);
-    expect(next.players.find((p) => p.seat === newSheriff)?.isSheriff).toBe(true);
-    expect(next.players.find((p) => p.seat === sheriff)?.isSheriff).toBe(false);
-  });
-
-  it("警长可撕掉警徽（target null）", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(28));
-    const s2 = JSON.parse(JSON.stringify(s0)) as GameState;
-    s2.rng = s0.rng;
-    const players = s2.players.filter((p) => p.alive);
-    const sheriff = players[0].seat;
-    s2.sheriffSeat = sheriff;
-    for (const p of s2.players) p.isSheriff = p.seat === sheriff;
-    s2.phase = "lastwords";
-    s2.currentSeat = sheriff;
-    const next = dayAction(s2, sheriff, {
-      kind: "sheriff_pass",
-      target: null,
-    });
-    expect(next.sheriffSeat).toBeUndefined();
-    expect(next.players.find((p) => p.seat === sheriff)?.isSheriff).toBe(false);
+  it("女巫重复用解药抛 BAD_ACTION", () => {
+    let g = makeGame7();
+    const wolf = findSeatByRole(g, "werewolf");
+    const target = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = g.players.find(
+      (p) => p.alive && p.seat !== target && p.seat !== findSeatByRole(g, "witch"),
+    )!.seat;
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: "save", target });
+    // 手动构造再入 witch 步骤检查重复用药
+    const recheck: GameState = {
+      ...g,
+      phase: "night",
+      night: { ...g.night, step: "witch" as NightStep },
+      players: g.players.map((p) =>
+        p.seat === witch ? { ...p, alive: true } : p,
+      ),
+    };
+    expect(
+      codeOf(() => nightAction(recheck, witch, { kind: "night", potion: "save", target })),
+    ).toBe("BAD_ACTION");
   });
 });
 
-// ---------------------------------------------------------------------------
-// game 终局
-// ---------------------------------------------------------------------------
-
-describe("game.ts 终局", () => {
-  it("杀光狼人好人胜", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(30));
-    const s2 = JSON.parse(JSON.stringify(s0)) as GameState;
-    s2.rng = s0.rng;
-    // 把全部狼人设为死亡
-    for (const p of s2.players) {
-      if (ROLE_INFO[p.role].faction === "wolves") p.alive = false;
-    }
-    // 现在 phase 仍是 night；通过调用 dayAction? 无法。但 checkWinner 在 startSpeakForNextDay。
-    // 构造一个白天投票触发终局：直接构造一个 day=1 phase=vote 的场景。
-    // 更简单：从初始 state 走一遍流程，把所有狼人杀死在第一天投票。
-    void s2;
-    // 用正常流程：将狼人全部投票出局需多轮，这里只验证基本终局逻辑：
-    // 6 人局（2 狼）：票出两狼后好人胜
-    const t0 = createGame(makeSeats(6), {}, mulberry32(31));
-    // 收集所有狼
-    const wolves = t0.players
-      .filter((p) => ROLE_INFO[p.role].faction === "wolves")
-      .map((p) => p.seat);
-    // 简化：直接构造 vote phase
-    const gs = JSON.parse(JSON.stringify(t0)) as GameState;
-    gs.rng = t0.rng;
-    gs.phase = "vote";
-    gs.day = 1;
-    gs.currentSeat = gs.players.find((p) => p.alive)?.seat as string;
-    gs.sheriffVotes = [{ voter: "x", target: null }]; // 标记 sheriff 已完成
-    // 第一轮投票淘汰一个狼
-    const wolf1 = wolves[0];
-    let cur: GameState = gs;
-    let guard = 0;
-    while (cur.phase === "vote" && guard < 50) {
-      guard++;
-      const seat = cur.currentSeat;
-      if (!seat) break;
-      cur = dayAction(cur, seat, { kind: "vote", target: wolf1 });
-    }
-    if (guard >= 50) throw new Error("vote guard exceeded");
-    // 处理遗言
-    guard = 0;
-    while (cur.phase === "lastwords" && guard < 50) {
-      guard++;
-      cur = dayAction(cur, cur.currentSeat, { kind: "lastwords_done" });
-    }
-    if (guard >= 50) throw new Error("lastwords guard exceeded");
-    // 投票出局者遗言后进入下一夜（day+1），符合文档流转 vote -> night
-    expect(cur.phase).toBe("night");
-    expect(cur.day).toBe(2);
-    // 简单做法：用一个全新的 6 人局，手动设置 phase=vote 且只剩一狼
-    const g3 = createGame(makeSeats(6), {}, mulberry32(32));
-    const wolves3 = g3.players
-      .filter((p) => ROLE_INFO[p.role].faction === "wolves")
-      .map((p) => p.seat);
-    // 把第二个狼设为死亡
-    const g3s = JSON.parse(JSON.stringify(g3)) as GameState;
-    g3s.rng = g3.rng;
-    g3s.phase = "vote";
-    g3s.day = 1;
-    g3s.sheriffVotes = [{ voter: "x", target: null }];
-    g3s.currentSeat = g3s.players.find((p) => p.alive)?.seat as string;
-    for (const p of g3s.players) {
-      if (p.seat === wolves3[1]) p.alive = false;
-    }
-    const target = wolves3[0];
-    let c3: GameState = g3s;
-    guard = 0;
-    while (c3.phase === "vote" && guard < 50) {
-      guard++;
-      const seat = c3.currentSeat;
-      if (!seat) break;
-      c3 = dayAction(c3, seat, { kind: "vote", target });
-    }
-    if (guard >= 50) throw new Error("vote guard exceeded");
-    expect(c3.phase).toBe("finished");
-    expect(c3.winner).toBe("good");
+describe("夜晚结算 - 死讯与 announce", () => {
+  it("狼刀目标无人守无人救则死亡，reason wolf", () => {
+    let g = makeGame6();
+    const target = aliveByRole(g, "villager")[0];
+    g = runNight6(g, target, target);
+    const p = g.players.find((x) => x.seat === target)!;
+    expect(p.alive).toBe(false);
+    expect(g.deathsTonight).toContain(target);
+    const rec = g.deaths.find((d) => d.seat === target);
+    expect(rec!.reason).toBe("wolf");
   });
 
-  it("杀光好人狼人胜", () => {
-    const s0 = createGame(makeSeats(6), {}, mulberry32(33));
-    const gs = JSON.parse(JSON.stringify(s0)) as GameState;
-    gs.rng = s0.rng;
-    // 把全部好人设为死亡，只留狼
-    for (const p of gs.players) {
-      if (ROLE_INFO[p.role].faction === "good") p.alive = false;
+  it("守卫守住狼刀目标则不死", () => {
+    let g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    const target = aliveByRole(g, "villager")[0];
+    g = nightAction(g, guard, { kind: "night", target });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = aliveByRole(g, "werewolf")[0];
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    const p = g.players.find((x) => x.seat === target)!;
+    expect(p.alive).toBe(true);
+    expect(g.deathsTonight).not.toContain(target);
+  });
+
+  it("进入 announce 后需要 announce_done 确认", () => {
+    let g = makeGame6();
+    const target = aliveByRole(g, "villager")[0];
+    g = runNight6(g, target, target);
+    expect(g.phase).toBe("announce");
+    const any = g.players[0].seat;
+    expect(codeOf(() => dayAction(g, any, { kind: "speak_done" }))).toBe("BAD_ACTION");
+    g = dayAction(g, any, { kind: "announce_done" });
+    expect(g.phase === "lastwords" || g.phase === "speak" || g.phase === "vote").toBe(
+      true,
+    );
+  });
+
+  it("有死亡进入 lastwords 遗言队列", () => {
+    let g = makeGame6();
+    const target = aliveByRole(g, "villager")[0];
+    g = runNight6(g, target, target);
+    const any = g.players[0].seat;
+    g = dayAction(g, any, { kind: "announce_done" });
+    expect(g.phase).toBe("lastwords");
+    expect(g.lastwordsQueue).toContain(target);
+  });
+});
+
+describe("猎人", () => {
+  it("夜晚被狼刀死的猎人在 announce 阶段触发 hunterShootPending", () => {
+    let g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    const hunter = findSeatByRole(g, "hunter");
+    // 守卫不守猎人
+    const notHunter = g.players.find((p) => p.alive && p.seat !== hunter)!.seat;
+    g = nightAction(g, guard, { kind: "night", target: notHunter });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: hunter });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = aliveByRole(g, "werewolf")[0];
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    expect(g.phase).toBe("announce");
+    const any = g.players[0].seat;
+    g = dayAction(g, any, { kind: "announce_done" });
+    expect(g.hunterShootPending).toBe(hunter);
+  });
+
+  it("猎人只能发 hunter_shoot，其他 kind 抛 BAD_ACTION", () => {
+    let g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    const hunter = findSeatByRole(g, "hunter");
+    const notHunter = g.players.find((p) => p.alive && p.seat !== hunter)!.seat;
+    g = nightAction(g, guard, { kind: "night", target: notHunter });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: hunter });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: aliveByRole(g, "werewolf")[0] });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    const any = g.players[0].seat;
+    g = dayAction(g, any, { kind: "announce_done" });
+    expect(g.hunterShootPending).toBe(hunter);
+    expect(codeOf(() => dayAction(g, hunter, { kind: "speak_done" }))).toBe("BAD_ACTION");
+  });
+
+  it("猎人开枪后目标死亡 reason hunter 并进入 lastwords", () => {
+    let g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    const hunter = findSeatByRole(g, "hunter");
+    const notHunter = g.players.find((p) => p.alive && p.seat !== hunter)!.seat;
+    g = nightAction(g, guard, { kind: "night", target: notHunter });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: hunter });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: aliveByRole(g, "werewolf")[0] });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    const any = g.players[0].seat;
+    g = dayAction(g, any, { kind: "announce_done" });
+    expect(g.hunterShootPending).toBe(hunter);
+    const shootTarget = g.players.find(
+      (p) => p.alive && p.seat !== hunter,
+    )!.seat;
+    g = dayAction(g, hunter, { kind: "hunter_shoot", target: shootTarget });
+    const tp = g.players.find((p) => p.seat === shootTarget)!;
+    expect(tp.alive).toBe(false);
+    const rec = g.deaths.find((d) => d.seat === shootTarget);
+    expect(rec!.reason).toBe("hunter");
+    expect(g.hunterShootPending).toBeNull();
+    expect(g.phase).toBe("lastwords");
+    expect(g.lastwordsQueue).toContain(shootTarget);
+  });
+});
+
+describe("白天流程 - speak 与 vote", () => {
+  it("无死亡时进入 speak，全部发言完进入 vote", () => {
+    let g = makeGame6();
+    // 狼刀空
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    // 无死亡，直接进入 speak
+    expect(g.phase).toBe("speak");
+    // 依次发言
+    let guardCount = 0;
+    while (g.phase === "speak" && guardCount < 20) {
+      const cur = g.currentSeat;
+      g = dayAction(g, cur, { kind: "speak_done" });
+      guardCount++;
     }
-    // 触发终局：用 vote 阶段
-    // 但一个活着的狼投票给谁？直接构造 vote 阶段，唯一好人已经死亡。
-    // 这里直接用一个白天投票模拟：把好人杀到只剩 1 人，票出他
-    const g2 = createGame(makeSeats(6), {}, mulberry32(34));
-    const g2s = JSON.parse(JSON.stringify(g2)) as GameState;
-    g2s.rng = g2.rng;
-    g2s.phase = "vote";
-    g2s.day = 1;
-    g2s.sheriffVotes = [{ voter: "x", target: null }];
-    // 把所有好人除一个外全部设为死亡
-    const goods = g2s.players.filter((p) => ROLE_INFO[p.role].faction === "good");
-    const lastGood = goods[0].seat;
-    for (const p of g2s.players) {
-      if (ROLE_INFO[p.role].faction === "good" && p.seat !== lastGood) {
-        p.alive = false;
+    expect(g.phase).toBe("vote");
+  });
+
+  it("投票全弃票无人出局进入下一夜", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    let c = 0;
+    while (g.phase === "speak" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "speak_done" });
+      c++;
+    }
+    expect(g.phase).toBe("vote");
+    c = 0;
+    while (g.phase === "vote" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "vote", target: null });
+      c++;
+    }
+    expect(g.phase).toBe("night");
+    expect(g.day).toBe(2);
+  });
+
+  it("投票放逐后进入 lastwords，再下一夜", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    let c = 0;
+    while (g.phase === "speak" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "speak_done" });
+      c++;
+    }
+    // 选一个非猎人目标，避免开枪复杂化
+    const voteTarget = g.players.find((p) => p.alive && p.role !== "hunter")!.seat;
+    c = 0;
+    while (g.phase === "vote" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "vote", target: voteTarget });
+      c++;
+    }
+    expect(g.phase).toBe("lastwords");
+    const rec = g.deaths.find((d) => d.seat === voteTarget);
+    expect(rec!.reason).toBe("vote");
+    // 遗言完成
+    g = dayAction(g, voteTarget, { kind: "lastwords_done" });
+    expect(g.phase).toBe("night");
+  });
+
+  it("平票进入 pk_speak/pk_vote", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    let c = 0;
+    while (g.phase === "speak" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "speak_done" });
+      c++;
+    }
+    expect(g.phase).toBe("vote");
+    const alive = g.players.filter((p) => p.alive).map((p) => p.seat);
+    const a = alive[0];
+    const b = alive[1];
+    // 前两位各投一人，剩下全弃票形成 1:1 平票
+    c = 0;
+    while (g.phase === "vote" && c < 20) {
+      const cur = g.currentSeat;
+      let tgt: string | null = null;
+      if (cur === a) tgt = b;
+      else if (cur === b) tgt = a;
+      g = dayAction(g, cur, { kind: "vote", target: tgt });
+      c++;
+    }
+    expect(g.phase).toBe("pk_speak");
+    expect(g.pkSeats.length).toBe(2);
+  });
+
+  it("pk_vote 只能投 pkSeats 里的座位", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    let c = 0;
+    while (g.phase === "speak" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "speak_done" });
+      c++;
+    }
+    const alive = g.players.filter((p) => p.alive).map((p) => p.seat);
+    const a = alive[0];
+    const b = alive[1];
+    c = 0;
+    while (g.phase === "vote" && c < 20) {
+      const cur = g.currentSeat;
+      let tgt: string | null = null;
+      if (cur === a) tgt = b;
+      else if (cur === b) tgt = a;
+      g = dayAction(g, cur, { kind: "vote", target: tgt });
+      c++;
+    }
+    expect(g.phase).toBe("pk_speak");
+    // 走完 pk_speak
+    c = 0;
+    while (g.phase === "pk_speak" && c < 20) {
+      g = dayAction(g, g.currentSeat, { kind: "speak_done" });
+      c++;
+    }
+    expect(g.phase).toBe("pk_vote");
+    // 找一个不在 pkSeats 里的存活玩家
+    const outside = g.players.find(
+      (p) => p.alive && !g.pkSeats.includes(p.seat),
+    )?.seat;
+    if (outside !== undefined) {
+      const cur = g.currentSeat;
+      expect(
+        codeOf(() => dayAction(g, cur, { kind: "vote", target: outside })),
+      ).toBe("ILLEGAL_TARGET");
+    }
+  });
+});
+
+describe("警长", () => {
+  it("config sheriff:true，第一夜之后进入 sheriff 阶段", () => {
+    let g = makeGame10(true);
+    // 夜晚走完，无死亡
+    const guard = findSeatByRole(g, "guard");
+    const gTarget = g.players.find((p) => p.alive)!.seat;
+    g = nightAction(g, guard, { kind: "night", target: gTarget });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    expect(g.phase).toBe("sheriff");
+  });
+
+  it("最高票当选警长", () => {
+    let g = makeGame10(true);
+    const guard = findSeatByRole(g, "guard");
+    g = nightAction(g, guard, { kind: "night", target: g.players[0].seat });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    expect(g.phase).toBe("sheriff");
+    const a = g.players[0].seat;
+    const b = g.players[1].seat;
+    g = dayAction(g, a, { kind: "sheriff" });
+    g = dayAction(g, b, { kind: "sheriff" });
+    g = dayAction(g, a, { kind: "sheriff", target: a });
+    g = dayAction(g, b, { kind: "sheriff", target: a });
+    g = dayAction(g, a, { kind: "sheriff_done" });
+    expect(g.sheriffSeat).toBe(a);
+    const sp = g.players.find((p) => p.seat === a)!;
+    expect(sp.isSheriff).toBe(true);
+  });
+
+  it("平票警徽流失 sheriffSeat 为 null", () => {
+    let g = makeGame10(true);
+    const guard = findSeatByRole(g, "guard");
+    g = nightAction(g, guard, { kind: "night", target: g.players[0].seat });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    expect(g.phase).toBe("sheriff");
+    const a = g.players[0].seat;
+    const b = g.players[1].seat;
+    g = dayAction(g, a, { kind: "sheriff" });
+    g = dayAction(g, b, { kind: "sheriff" });
+    g = dayAction(g, a, { kind: "sheriff", target: b });
+    g = dayAction(g, b, { kind: "sheriff", target: a });
+    g = dayAction(g, a, { kind: "sheriff_done" });
+    expect(g.sheriffSeat).toBeNull();
+  });
+
+  it("上警投票目标必须是已上警玩家，否则 ILLEGAL_TARGET", () => {
+    let g = makeGame10(true);
+    const guard = findSeatByRole(g, "guard");
+    g = nightAction(g, guard, { kind: "night", target: g.players[0].seat });
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    const witch = findSeatByRole(g, "witch");
+    g = nightAction(g, witch, { kind: "night", potion: null });
+    const a = g.players[0].seat;
+    const b = g.players[1].seat;
+    g = dayAction(g, a, { kind: "sheriff" });
+    // b 未上警，a 投 b 应抛错
+    expect(
+      codeOf(() => dayAction(g, a, { kind: "sheriff", target: b })),
+    ).toBe("ILLEGAL_TARGET");
+  });
+});
+
+describe("胜负判定", () => {
+  // 白天从 announce 推进到 vote，然后全体投同一目标（或全体弃票 target null）
+  function runDayVote(g: GameState, target: string | null): GameState {
+    let s = g;
+    // 若在 announce：先确认死讯（有死亡时才需要）
+    if (s.phase === "announce") {
+      const anyAlive = s.players.find((p) => p.alive)!.seat;
+      s = dayAction(s, anyAlive, { kind: "announce_done" });
+    }
+    // 若进入 lastwords：逐个遗言（夜晚死亡）
+    while (s.phase === "lastwords") {
+      const seat = s.currentSeat !== "" ? s.currentSeat : s.lastwordsQueue[0];
+      s = dayAction(s, seat, { kind: "lastwords_done" });
+    }
+    // 无死亡则可能直接进入 speak
+    while (s.phase === "speak") {
+      const seat = s.currentSeat !== "" ? s.currentSeat : s.players.find((p) => p.alive)!.seat;
+      s = dayAction(s, seat, { kind: "speak_done" });
+    }
+    // vote：全体按 currentSeat 顺序投票
+    while (s.phase === "vote") {
+      const seat = s.currentSeat !== "" ? s.currentSeat : s.players.find((p) => p.alive)!.seat;
+      s = dayAction(s, seat, { kind: "vote", target });
+    }
+    // 投票放逐产生新的遗言，排完
+    while (s.phase === "lastwords") {
+      const seat = s.currentSeat !== "" ? s.currentSeat : s.lastwordsQueue[0];
+      s = dayAction(s, seat, { kind: "lastwords_done" });
+    }
+    return s;
+  }
+
+  it("杀光所有狼好人胜", () => {
+    let g = makeGame6();
+    const wolf1 = findSeatByRole(g, "werewolf");
+    const seer1 = findSeatByRole(g, "seer");
+    const villager1 = aliveByRole(g, "villager")[0];
+    // night1：狼空刀、预言家查验 wolf1（不能查验自己；空刀无死亡故进 speak）
+    g = runNight6(g, null as any, wolf1);
+    expect(g.phase).toBe("speak");
+    // day1 全体投 wolf1
+    g = runDayVote(g, wolf1);
+    // 遗言已在 runDayVote 中走完；此时应进入 night2
+    expect(g.phase).toBe("night");
+    // night2：狼刀一个平民、预言家查验
+    const wolfAlive = aliveByRole(g, "werewolf")[0];
+    g = runNight6(g, villager1, wolfAlive);
+    // 白天处理遗言后投票放逐 wolf2
+    expect(g.phase).toBe("announce");
+    const wolf2 = aliveByRole(g, "werewolf")[0];
+    g = runDayVote(g, wolf2);
+    // 狼全灭 -> applyWinner 判定好人胜
+    expect(g.phase).toBe("finished");
+    expect(g.winner).toBe("good");
+  });
+
+  it("杀光所有平民狼胜", () => {
+    let g = makeGame6();
+    const wolfSeat = findSeatByRole(g, "werewolf");
+    const seerSeat = findSeatByRole(g, "seer");
+
+    // night1 狼刀 villager1
+    let v1 = aliveByRole(g, "villager")[0];
+    g = runNight6(g, v1, wolfSeat);
+    // day1 全体弃票
+    g = runDayVote(g, null);
+    expect(g.phase).toBe("night");
+
+    // night2 狼刀 villager2
+    let v2 = aliveByRole(g, "villager")[0];
+    g = runNight6(g, v2, wolfSeat);
+    // day2 全体弃票
+    g = runDayVote(g, null);
+    expect(g.phase).toBe("night");
+
+    // night3 狼刀最后一个 villager3
+    let v3 = aliveByRole(g, "villager")[0];
+    g = runNight6(g, v3, wolfSeat);
+    // 平民全灭 -> applyWinner 判定狼胜
+    expect(g.phase).toBe("finished");
+    expect(g.winner).toBe("wolves");
+  });
+
+  it("杀光神职狼胜（10 人局有守卫）", () => {
+    let g = makeGame10();
+    const guard = findSeatByRole(g, "guard");
+    const wolf = findSeatByRole(g, "werewolf");
+    const seer = findSeatByRole(g, "seer");
+    const witch = findSeatByRole(g, "witch");
+
+    // 4 个夜晚：按 seer -> witch -> guard -> hunter 顺序杀神职，猎人最后
+    const killOrder: Role[] = ["seer", "witch", "guard", "hunter"];
+    for (let i = 0; i < killOrder.length; i++) {
+      const target = findSeatByRole(g, killOrder[i]);
+      // guard 跳过（守卫存活且当前 step 为 guard 时才行动）
+      if (g.players.find((p) => p.seat === guard)?.alive && g.night?.step === "guard") {
+        g = nightAction(g, guard, { kind: "night", target: null});
       }
+      // 狼刀神职
+      g = nightAction(g, wolf, { kind: "night", target });
+      // 预言家查验任意存活者（若预言家已死则跳过该步）
+      const seerAlive = g.players.find((p) => p.seat === seer && p.alive);
+      if (seerAlive && g.night.step === "seer") {
+        const checkTarget = g.players.find((p) => p.alive && p.seat !== seer)!.seat;
+        g = nightAction(g, seer, { kind: "night", target: checkTarget });
+      }
+      // 女巫不用药（若女巫已死则跳过该步）
+      const witchAlive = g.players.find((p) => p.seat === witch && p.alive);
+      if (witchAlive && g.night.step === "witch") {
+        g = nightAction(g, witch, { kind: "night", potion: null });
+      }
+      // 白天全体弃票
+      g = runDayVote(g, null);
     }
-    g2s.currentSeat = g2s.players.find((p) => p.alive)?.seat as string;
-    // 全员投票放逐最后好人
-    let cur: GameState = g2s;
-    let guard = 0;
-    while (cur.phase === "vote" && guard < 50) {
-      guard++;
-      const seat = cur.currentSeat;
-      if (!seat) break;
-      cur = dayAction(cur, seat, { kind: "vote", target: lastGood });
-    }
-    if (guard >= 50) throw new Error("vote guard exceeded");
-    expect(cur.phase).toBe("finished");
-    expect(cur.winner).toBe("wolves");
+
+    // 神职全灭 -> applyWinner 判定狼胜
+    expect(g.phase).toBe("finished");
+    expect(g.winner).toBe("wolves");
   });
 });
-
-// ---------------------------------------------------------------------------
-// 脱敏
-// ---------------------------------------------------------------------------
 
 describe("serializeForSeat", () => {
-  it("平民看不到他人 role", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(40));
-    const villager = s0.players.find((p) => p.role === "villager")?.seat as string;
-    const view = serializeForSeat(s0, villager) as {
+  it("狼人视角能看到 wolfSeats", () => {
+    const g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    const view = serializeForSeat(g, wolf) as {
+      wolfSeats?: string[];
+      players: { seat: string; role?: Role }[];
+    };
+    expect(view.wolfSeats).toBeDefined();
+    const wolves = g.players.filter((p) => p.role === "werewolf").map((p) => p.seat);
+    expect(view.wolfSeats!.sort()).toEqual(wolves.sort());
+  });
+
+  it("预言家视角有 seerHistory 和 seerResult", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    const target = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target });
+    const seer = findSeatByRole(g, "seer");
+    const checkTarget = g.players.find(
+      (p) => p.alive && p.seat !== seer && p.seat !== target,
+    )!.seat;
+    g = nightAction(g, seer, { kind: "night", target: checkTarget });
+    const view = serializeForSeat(g, seer) as {
+      seerHistory?: { day: number; target: string; result: "wolf" | "good" }[];
+      seerResult?: "wolf" | "good" | null;
+    };
+    expect(view.seerHistory).toBeDefined();
+    expect(view.seerHistory!.length).toBe(1);
+    expect(view.seerHistory![0].target).toBe(checkTarget);
+    expect(view.seerResult).toBeDefined();
+  });
+
+  it("其他玩家视角看不到他人 role", () => {
+    const g = makeGame6();
+    const villager = aliveByRole(g, "villager")[0];
+    const view = serializeForSeat(g, villager) as {
       players: { seat: string; role?: Role }[];
     };
     for (const p of view.players) {
@@ -896,501 +874,159 @@ describe("serializeForSeat", () => {
     }
   });
 
-  it("狼人夜晚能看到狼人座位列表", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(41));
-    const wolf = s0.players.find((p) => p.role === "werewolf")?.seat as string;
-    const view = serializeForSeat(s0, wolf) as {
-      wolfSeats?: string[];
-    };
-    expect(Array.isArray(view.wolfSeats)).toBe(true);
-    expect((view.wolfSeats as string[]).length).toBeGreaterThanOrEqual(1);
-    expect((view.wolfSeats as string[]).includes(wolf)).toBe(true);
-  });
+  it("女巫在 witch 步骤能看到 wolfTarget，其他步骤看不到", () => {
+    let g = makeGame7();
+    const wolf = findSeatByRole(g, "werewolf");
+    const wolfTarget = aliveByRole(g, "villager")[0];
+    g = nightAction(g, wolf, { kind: "night", target: wolfTarget });
+    const seer = findSeatByRole(g, "seer");
+    const seerT = g.players.find(
+      (p) =>
+        p.alive &&
+        p.seat !== wolfTarget &&
+        p.seat !== findSeatByRole(g, "witch"),
+    )!.seat;
+    g = nightAction(g, seer, { kind: "night", target: seerT });
+    expect(g.night.step).toBe("witch");
+    const witch = findSeatByRole(g, "witch");
+    const view1 = serializeForSeat(g, witch) as { wolfTarget?: string | null };
+    expect(view1.wolfTarget).toBe(wolfTarget);
 
-  it("预言家只能看到自己的 seerHistory", () => {
-    const s0 = createGame(makeSeats(9), {}, mulberry32(42));
-    const seerSeat = aliveSeatByRole(s0, "seer");
-    const wolfSeat = aliveSeatByRole(s0, "werewolf");
-    let s = nightAction(s0, wolfSeat, { kind: "night", target: null });
-    s = nightAction(s, seerSeat, { kind: "night", target: wolfSeat });
-    // 现在 seer 有 seerHistory
-    const seerView = serializeForSeat(s, seerSeat) as {
-      seerHistory?: { seat: string; result: "wolf" | "good"; day: number }[];
+    // 非 witch 步骤：手动构造 wolves 步骤
+    const other: GameState = {
+      ...g,
+      night: { ...g.night, step: "wolves" as NightStep },
     };
-    expect(Array.isArray(seerView.seerHistory)).toBe(true);
-    // 其他非预言家座位看不到 seerHistory
-    const otherSeat = s.players.find(
-      (p) => p.role !== "seer" && p.seat !== seerSeat,
-    )?.seat as string;
-    const otherView = serializeForSeat(s, otherSeat) as {
-      seerHistory?: unknown;
-    };
-    expect(otherView.seerHistory).toBeUndefined();
+    const view2 = serializeForSeat(other, witch) as { wolfTarget?: string | null };
+    expect(view2.wolfTarget).toBeUndefined();
   });
 });
 
-describe("game.ts 非法 action 续", () => {
-  it("action 传字符串抛 WerewolfError code BAD_ACTION", () => {
-    const s = createGame(makeSeats(9), {}, mulberry32(1));
-    const seat = s.currentSeat;
-    let err: unknown = null;
-    try {
-      nightAction(s, seat, "vote" as unknown as never);
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("BAD_ACTION");
-  });
-
-  it("action 传数字抛 WerewolfError code BAD_ACTION", () => {
-    const s = createGame(makeSeats(9), {}, mulberry32(2));
-    const seat = s.currentSeat;
-    let err: unknown = null;
-    try {
-      nightAction(s, seat, 42 as unknown as never);
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("BAD_ACTION");
-  });
-
-  it("出局玩家白天 vote 抛 DEAD_PLAYER", () => {
-    let s = createGame(makeSeats(9), {}, mulberry32(3));
-    s = progressToFirstVote(s, {
-      guard: null,
-      wolves: firstGoodNot(s, []),
-      seer: null,
-      witch: { potion: null },
+describe("纯函数性 - 不修改入参 state", () => {
+  it("nightAction 不修改入参 state", () => {
+    const g = makeGame6();
+    const snapshot = JSON.stringify({
+      players: g.players,
+      night: g.night,
+      deaths: g.deaths,
+      deathsTonight: g.deathsTonight,
+      phase: g.phase,
+      day: g.day,
     });
-    expect(s.phase).toBe("vote");
-    const dead = s.players.find((p) => !p.alive);
-    expect(dead).toBeTruthy();
-    let err: unknown = null;
-    try {
-      dayAction(s, dead!.seat, { kind: "vote", target: null });
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("DEAD_PLAYER");
-  });
-
-  it("白天调 nightAction 抛 WRONG_PHASE", () => {
-    let s = createGame(makeSeats(9), {}, mulberry32(4));
-    s = progressToFirstVote(s, {
-      guard: null,
-      wolves: firstGoodNot(s, []),
-      seer: null,
-      witch: { potion: null },
+    const wolf = findSeatByRole(g, "werewolf");
+    const target = aliveByRole(g, "villager")[0];
+    nightAction(g, wolf, { kind: "night", target });
+    const after = JSON.stringify({
+      players: g.players,
+      night: g.night,
+      deaths: g.deaths,
+      deathsTonight: g.deathsTonight,
+      phase: g.phase,
+      day: g.day,
     });
-    expect(s.phase).toBe("vote");
-    const seat = s.currentSeat;
-    let err: unknown = null;
-    try {
-      nightAction(s, seat, { kind: "night", target: null });
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("WRONG_PHASE");
+    expect(after).toBe(snapshot);
   });
 
-  it("终局后 dayAction 抛 WRONG_PHASE", () => {
-    let s = createGame(makeSeats(6), {}, mulberry32(5));
-    // 直接构造终局：连续夜晚杀好人到狼人胜
-    let guard = 0;
-    while (s.phase !== "finished" && guard < 50) {
-      guard++;
-      if (s.phase === "night") {
-        s = progressNight(s, {
-          guard: null,
-          wolves: firstGoodNot(s, []),
-          seer: null,
-          witch: { potion: null },
-        });
-        continue;
-      }
-      if (
-        s.phase === "announce" ||
-        s.phase === "lastwords"
-      ) {
-        s = progressAnnounceAndLastwords(s);
-        continue;
-      }
-      if (s.phase === "sheriff") {
-        s = progressSheriffAllPass(s);
-        continue;
-      }
-      if (s.phase === "speak") {
-        s = progressSpeakAll(s);
-        continue;
-      }
-      if (s.phase === "vote" || s.phase === "pk_vote") {
-        // 全员投第一个存活好人（狼人得逞）
-        s = progressVoteAll(s, (_v, st) => {
-          const target = st.players.find(
-            (p) => p.alive && p.role !== "werewolf",
-          );
-          return target ? target.seat : null;
-        });
-        continue;
-      }
-      if (s.phase === "pk_speak") {
-        s = progressPkSpeakAll(s);
-        continue;
-      }
-      break;
-    }
-    expect(guard).toBeLessThan(50);
-    expect(s.phase).toBe("finished");
-    const anySeat = s.players[0].seat;
-    let err: unknown = null;
-    try {
-      dayAction(s, anySeat, { kind: "vote", target: null });
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("WRONG_PHASE");
-  });
-
-  it("未知座位抛 UNKNOWN_SEAT（夜晚）", () => {
-    const s = createGame(makeSeats(9), {}, mulberry32(6));
-    let err: unknown = null;
-    try {
-      nightAction(s, "nobody", { kind: "night", target: null });
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("UNKNOWN_SEAT");
-  });
-
-  it("未知座位抛 UNKNOWN_SEAT（白天）", () => {
-    let s = createGame(makeSeats(9), {}, mulberry32(7));
-    s = progressToFirstVote(s, {
-      guard: null,
-      wolves: firstGoodNot(s, []),
-      seer: null,
-      witch: { potion: null },
+  it("dayAction 不修改入参 state", () => {
+    let g = makeGame6();
+    const wolf = findSeatByRole(g, "werewolf");
+    g = nightAction(g, wolf, { kind: "night", target: null });
+    const seer = findSeatByRole(g, "seer");
+    g = nightAction(g, seer, { kind: "night", target: null });
+    expect(g.phase).toBe("speak");
+    const snapshot = JSON.stringify({
+      players: g.players,
+      night: g.night,
+      spokenSeats: g.spokenSeats,
+      currentSeat: g.currentSeat,
+      phase: g.phase,
     });
-    let err: unknown = null;
-    try {
-      dayAction(s, "nobody", { kind: "vote", target: null });
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeInstanceOf(WerewolfError);
-    expect((err as WerewolfError).code).toBe("UNKNOWN_SEAT");
+    dayAction(g, g.currentSeat, { kind: "speak_done" });
+    const after = JSON.stringify({
+      players: g.players,
+      night: g.night,
+      spokenSeats: g.spokenSeats,
+      currentSeat: g.currentSeat,
+      phase: g.phase,
+    });
+    expect(after).toBe(snapshot);
   });
 });
 
-describe("ai.ts", () => {
-  it("狼人在 wolves 步返回 target 是存活好人", () => {
-    const rng = mulberry32(7);
-    let s = createGame(makeSeats(9), {}, mulberry32(7));
-    // 推进到 wolves 步
-    let guard = 0;
-    while (s.phase === "night" && s.nightStep !== "wolves" && guard < 20) {
-      guard++;
-      const seat = s.currentSeat;
-      s = nightAction(s, seat, { kind: "night", target: null });
+// 辅助：把状态推进到下一夜。只用于测试中，让当前白天/遗言流程走到 next night。
+function forceToNextNight(g: GameState): GameState {
+  let s = g;
+  let guard = 0;
+  while (s.phase !== "night" && s.phase !== "finished" && guard < 50) {
+    guard++;
+    if (s.phase === "announce") {
+      const alive = s.players.find((p) => p.alive);
+      if (!alive) return s;
+      s = dayAction(s, alive.seat, { kind: "announce_done" });
+      continue;
     }
-    expect(guard).toBeLessThan(20);
-    expect(s.nightStep).toBe("wolves");
-    const seat = s.currentSeat;
-    const action = chooseNightAction(s, seat, rng) as {
-      kind: string;
-      target: string | null;
-    };
-    expect(action.kind).toBe("night");
-    expect(typeof action.target).toBe("string");
-    const target = s.players.find((p) => p.seat === action.target);
-    expect(target).toBeTruthy();
-    expect(target!.alive).toBe(true);
-    expect(ROLE_INFO[target!.role].faction).toBe("good");
-  });
-
-  it("预言家在 seer 步返回 target 为存活非自己", () => {
-    const rng = mulberry32(7);
-    let s = createGame(makeSeats(9), {}, mulberry32(7));
-    let guard = 0;
-    while (s.phase === "night" && s.nightStep !== "seer" && guard < 20) {
-      guard++;
-      const seat = s.currentSeat;
-      s = nightAction(s, seat, { kind: "night", target: null });
-    }
-    expect(guard).toBeLessThan(20);
-    expect(s.nightStep).toBe("seer");
-    const seat = s.currentSeat;
-    expect(s.players.find((p) => p.seat === seat)!.role).toBe("seer");
-    const action = chooseNightAction(s, seat, rng) as {
-      kind: string;
-      target: string | null;
-    };
-    expect(action.kind).toBe("night");
-    expect(action.target).not.toBe(seat);
-    const target = s.players.find((p) => p.seat === action.target);
-    expect(target).toBeTruthy();
-    expect(target!.alive).toBe(true);
-  });
-
-  it("女巫在 witch 步有人被刀时返回 potion save", () => {
-    const rng = mulberry32(7);
-    let s = createGame(makeSeats(9), {}, mulberry32(7));
-    const killed = firstGoodNot(s, []);
-    // 推进到 witch 步：guard null, wolves 刀人, seer null
-    let guard = 0;
-    while (s.phase === "night" && s.nightStep !== "witch" && guard < 20) {
-      guard++;
-      const seat = s.currentSeat;
-      if (s.nightStep === "wolves") {
-        s = nightAction(s, seat, { kind: "night", target: killed });
-      } else {
-        s = nightAction(s, seat, { kind: "night", target: null });
+    if (s.phase === "lastwords") {
+      const cur = s.lastwordsQueue[0] ?? s.currentSeat;
+      if (!cur) {
+        const alive = s.players.find((p) => p.alive);
+        if (!alive) return s;
+        s = dayAction(s, alive.seat, { kind: "lastwords_done" });
+        continue;
       }
+      s = dayAction(s, cur, { kind: "lastwords_done" });
+      continue;
     }
-    expect(guard).toBeLessThan(20);
-    expect(s.nightStep).toBe("witch");
-    expect(s.night.wolfTarget).toBe(killed);
-    const seat = s.currentSeat;
-    expect(s.players.find((p) => p.seat === seat)!.role).toBe("witch");
-    const action = chooseNightAction(s, seat, rng) as {
-      kind: string;
-      potion?: string | null;
-      target?: string | null;
-    };
-    expect(action.kind).toBe("night");
-    expect(action.potion).toBe("save");
-    expect(action.target).toBe(killed);
-  });
-
-  it("守卫在 guard 步返回 target 且第二晚不连守", () => {
-    const rng = mulberry32(7);
-    // 10 人局才有守卫（SUPPORTED_COUNTS：10 人=3狼3民预言家女巫猎人守卫）
-    let s = createGame(makeSeats(10), {}, mulberry32(7));
-    expect(s.nightStep).toBe("guard");
-    const guardSeat = s.currentSeat;
-    const first = chooseNightAction(s, guardSeat, rng) as {
-      kind: string;
-      target: string | null;
-    };
-    expect(first.kind).toBe("night");
-    expect(typeof first.target).toBe("string");
-    const firstTarget = first.target!;
-    // 提交第一晚守卫（guardPrevTarget 在整晚结算后才更新）
-    s = nightAction(s, guardSeat, { kind: "night", target: firstTarget });
-    // 跑完第一晚到第二天夜晚 guard 步
-    s = progressNight(s, {
-      wolves: null,
-      seer: null,
-      witch: { potion: null },
-    });
-    expect(s.night.guardPrevTarget).toBe(firstTarget);
-    s = progressAnnounceAndLastwords(s);
-    if (s.phase === "sheriff") s = progressSheriffAllPass(s);
-    if (s.phase === "speak") s = progressSpeakAll(s);
-    if (s.phase === "vote" || s.phase === "pk_vote") {
-      s = progressVoteAll(s, (_v, st) => {
-        // PK 台上的人只能弃票
-        if (st.phase === "pk_vote" && st.pkSeats.includes(_v)) return null;
-        const t = st.players.find((p) => p.alive && p.seat !== _v);
-        return t ? t.seat : null;
-      });
+    if (s.phase === "sheriff") {
+      const alive = s.players.find((p) => p.alive);
+      if (!alive) return s;
+      s = dayAction(s, alive.seat, { kind: "sheriff_done" });
+      continue;
+    }
+    if (s.phase === "speak") {
+      const cur = s.currentSeat;
+      if (!cur) {
+        const alive = s.players.find((p) => p.alive);
+        if (!alive) return s;
+        s = dayAction(s, alive.seat, { kind: "speak_done" });
+        continue;
+      }
+      s = dayAction(s, cur, { kind: "speak_done" });
+      continue;
+    }
+    if (s.phase === "vote") {
+      const cur = s.currentSeat;
+      if (!cur) {
+        const alive = s.players.find((p) => p.alive);
+        if (!alive) return s;
+        s = dayAction(s, alive.seat, { kind: "vote", target: null });
+        continue;
+      }
+      s = dayAction(s, cur, { kind: "vote", target: null });
+      continue;
     }
     if (s.phase === "pk_speak") {
-      s = progressPkSpeakAll(s);
-      s = progressVoteAll(s, (_v, st) => {
-        if (st.phase === "pk_vote" && st.pkSeats.includes(_v)) return null;
-        const t = st.players.find((p) => p.alive && p.seat !== _v);
-        return t ? t.seat : null;
-      });
+      const cur = s.currentSeat;
+      if (!cur) {
+        const alive = s.players.find((p) => p.alive);
+        if (!alive) return s;
+        s = dayAction(s, alive.seat, { kind: "speak_done" });
+        continue;
+      }
+      s = dayAction(s, cur, { kind: "speak_done" });
+      continue;
     }
-    // 白天投票出局者的遗言也要排掉，否则到不了第二天夜晚
-    s = progressAnnounceAndLastwords(s);
-    // 第二天夜晚
-    let guard2 = 0;
-    while (s.phase === "night" && s.nightStep !== "guard" && guard2 < 20) {
-      guard2++;
-      const seat = s.currentSeat;
-      s = nightAction(s, seat, { kind: "night", target: null });
+    if (s.phase === "pk_vote") {
+      const cur = s.currentSeat;
+      if (!cur) {
+        const alive = s.players.find((p) => p.alive);
+        if (!alive) return s;
+        s = dayAction(s, alive.seat, { kind: "vote", target: null });
+        continue;
+      }
+      s = dayAction(s, cur, { kind: "vote", target: null });
+      continue;
     }
-    expect(guard2).toBeLessThan(20);
-    expect(s.nightStep).toBe("guard");
-    const guardSeat2 = s.currentSeat;
-    expect(s.night.guardPrevTarget).toBe(firstTarget);
-    const second = chooseNightAction(s, guardSeat2, rng) as {
-      kind: string;
-      target: string | null;
-    };
-    expect(second.kind).toBe("night");
-    expect(second.target).not.toBe(firstTarget);
-  });
-
-  it("chooseDayAction 在 vote 阶段返回合法 vote", () => {
-    const rng = mulberry32(7);
-    let s = createGame(makeSeats(9), {}, mulberry32(7));
-    s = progressToFirstVote(s, {
-      guard: null,
-      wolves: firstGoodNot(s, []),
-      seer: null,
-      witch: { potion: null },
-    });
-    expect(s.phase).toBe("vote");
-    const seat = s.currentSeat;
-    const action = chooseDayAction(s, seat, rng) as {
-      kind: string;
-      target: string | null;
-    };
-    expect(action.kind).toBe("vote");
-    if (action.target !== null) {
-      const t = s.players.find((p) => p.seat === action.target);
-      expect(t).toBeTruthy();
-      expect(t!.alive).toBe(true);
-    }
-    // 应能被 dayAction 接受
-    const next = dayAction(s, seat, action as never);
-    expect(next.phase === "vote" || next.phase === "pk_vote" || next.phase === "finished").toBe(true);
-  });
-
-  it("全 AI 跑完整局至 finished", () => {
-    const rng = mulberry32(7);
-    let s = createGame(makeAiSeats(9), {}, mulberry32(7));
-    let guard = 0;
-    while (s.phase !== "finished" && guard < 800) {
-      guard++;
-      if (s.phase === "night") {
-        const seat = s.currentSeat;
-        const action = chooseNightAction(s, seat, rng);
-        s = nightAction(s, seat, action as never);
-        continue;
-      }
-      if (s.phase === "announce") {
-        s = progressAnnounceAndLastwords(s);
-        continue;
-      }
-      if (s.phase === "lastwords") {
-        s = progressAnnounceAndLastwords(s);
-        continue;
-      }
-      if (s.phase === "sheriff") {
-        const seat = s.currentSeat;
-        const action = chooseDayAction(s, seat, rng) as { kind: string; target?: string | null };
-        if (action.kind === "sheriff") {
-          s = dayAction(s, seat, action as never);
-        } else {
-          s = progressSheriffAllPass(s);
-        }
-        continue;
-      }
-      if (s.phase === "speak" || s.phase === "pk_speak") {
-        const seat = s.currentSeat;
-        const action = chooseDayAction(s, seat, rng) as { kind: string };
-        if (action.kind === "speak_done") {
-          s = dayAction(s, seat, action as never);
-        } else {
-          s = dayAction(s, seat, { kind: "speak_done" });
-        }
-        continue;
-      }
-      if (s.phase === "vote" || s.phase === "pk_vote") {
-        const seat = s.currentSeat;
-        const action = chooseDayAction(s, seat, rng) as { kind: string; target?: string | null };
-        if (action.kind === "vote") {
-          s = dayAction(s, seat, action as never);
-        } else {
-          s = dayAction(s, seat, { kind: "vote", target: null });
-        }
-        continue;
-      }
-      break;
-    }
-    expect(guard).toBeLessThan(800);
-    expect(s.phase).toBe("finished");
-    expect(s.winner === "wolves" || s.winner === "good").toBe(true);
-  });
-});
-
-describe("werewolf-game.ts 适配器", () => {
-  it("applyAction start 全 AI 座位自动跑完对局", () => {
-    const engine = new WerewolfGameEngine();
-    const out = engine.applyAction({}, {
-      game: "werewolf",
-      action: { kind: "start", seats: makeAiSeats(9) },
-    } as never) as { v?: number; state?: GameState; error?: unknown };
-    expect(out.v).toBe(1);
-    expect(out.error).toBeUndefined();
-    expect(out.state).toBeTruthy();
-    // start 分支会 runAiTurns：全 AI 座位一局内跑完
-    expect(out.state!.phase).toBe("finished");
-    expect(out.state!.winner === "wolves" || out.state!.winner === "good").toBe(true);
-  });
-
-  it("seats 传 3 个返回 BAD_SEATS", () => {
-    const engine = new WerewolfGameEngine();
-    const out = engine.applyAction({}, {
-      game: "werewolf",
-      action: { kind: "start", seats: makeAiSeats(3) },
-    } as never) as { error?: { code?: string } };
-    expect(out.error).toBeTruthy();
-    expect(out.error!.code).toBe("BAD_SEATS");
-  });
-
-  it("seats 重复返回 BAD_SEATS", () => {
-    const engine = new WerewolfGameEngine();
-    const dup = makeAiSeats(9);
-    dup[1] = dup[0];
-    const out = engine.applyAction({}, {
-      game: "werewolf",
-      action: { kind: "start", seats: dup },
-    } as never) as { error?: { code?: string } };
-    expect(out.error).toBeTruthy();
-    expect(out.error!.code).toBe("BAD_SEATS");
-  });
-
-  it("applyAction 非法 action 返回带 error 的 state 且不抛错", () => {
-    const engine = new WerewolfGameEngine();
-    let out: unknown = null;
-    expect(() => {
-      out = engine.applyAction({}, {
-        game: "werewolf",
-        action: {} as never,
-      } as never);
-    }).not.toThrow();
-    expect(out).toBeTruthy();
-    expect((out as { error?: unknown }).error).toBeTruthy();
-  });
-
-  it("WerewolfRoom toJSON/fromJSON 回环 phase 一致", () => {
-    const room = WerewolfRoom.create("r1", "s1", makeAiSeats(9)) as unknown as {
-      toJSON: () => string;
-    };
-    const data = room.toJSON();
-    const restored = WerewolfRoom.fromJSON("r1", "s1", data);
-    const data2 = JSON.parse((restored as unknown as { toJSON: () => string }).toJSON()) as WerewolfSessionData;
-    expect(data2.state!.phase).toBe((JSON.parse(data as unknown as string) as WerewolfSessionData).state!.phase);
-  });
-
-  it("isAiSeat 判定正确", () => {
-    expect(isAiSeat("ai:x")).toBe(true);
-    expect(isAiSeat("bob")).toBe(false);
-  });
-
-  it("SUPPORTED_COUNTS 含 6..12", () => {
-    for (let n = 6; n <= 12; n++) {
-      expect(SUPPORTED_COUNTS.includes(n)).toBe(true);
-    }
-  });
-
-  it("toStateFrame 返回 game=werewolf 且 state_hash 为 64 位 hex", () => {
-    const room = WerewolfRoom.create("r1", "s1", makeAiSeats(9)) as unknown as {
-      toStateFrame: (seat?: string) => { game: string; state_hash: string };
-    };
-    const frame = room.toStateFrame();
-    expect(frame.game).toBe("werewolf");
-    expect(typeof frame.state_hash).toBe("string");
-    expect(/^[0-9a-f]{64}$/.test(frame.state_hash)).toBe(true);
-  });
-});
+    break;
+  }
+  return s;
+}

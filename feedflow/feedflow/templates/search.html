@@ -32,7 +32,7 @@
               <span class="search-time">{{ a.published_at[:16].replace('T', ' ') }}</span>
             {% endif %}
           </div>
-          <p class="search-snippet">{{ (a.content_text or a.summary or '')[:120] }}</p>
+          <p class="search-snippet">{{ a.snippet|safe if a.snippet else (a.content_text or a.summary or '')[:120] }}</p>
         </li>
       {% endfor %}
     </ul>

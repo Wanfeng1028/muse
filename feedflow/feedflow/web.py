@@ -116,6 +116,10 @@ def search_page():
     db_path = _cfg()["db_path"]
     q = request.args.get("q", "")
     articles = store.search_articles(db_path, q) if q.strip() else []
+    for a in articles:
+        a["snippet"] = store.highlight_snippet(
+            a.get("content_text") or a.get("summary") or "", q
+        )
     return render_template("search.html", q=q, articles=articles)
 
 

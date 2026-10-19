@@ -1301,6 +1301,27 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
         tryDfPrunedAnd(tokens, db_, limit, hits);
     }
 
+    // 1.6 单 token AND 非空时的漏召回补刀（v09-t007-q08 修复）：单 token 查询
+    //     的 AND 展开（expandTokenOrQuery）会把"三个月"这类多字词按 CutForSearch
+    //     切成单字 AND，只要索引里"三…个…月"分散出现就命中一批无关文档；而真正
+    //     连续含"三个月"的期望文档因索引侧 token 粒度不同不进 AND 结果。此时候
+    //     选集非空，阶段 2/3 的 empty-only 守卫全部跳过，漏召回无法补救。
+    //     这里补一刀：单 token 且 AND 非空时，尝试 tryCharDecomposedSingle 的
+    //     分解 + 全字精滤召回，把结果按 doc_id 去重并入 hits，交给 rerankHits
+    //     用短语加成排序。多 token 与 AND 为空的路径完全不受影响。
+    if (tokens.size() == 1 && !hits.empty()) {
+        std::vector<Hit> extra;
+        if (tryCharDecomposedSingle(tokens[0], db_, limit, extra)) {
+            std::set<int64_t> seen;
+            for (const Hit& h : hits) seen.insert(h.doc_id);
+            for (const Hit& h : extra) {
+                if (seen.insert(h.doc_id).second) {
+                    hits.push_back(h);
+                }
+            }
+        }
+    }
+
     // 2. OR 回退：AND 无结果时放宽为 OR；单 token 查询把组间 AND 换成 OR（GAP-TOK-001）。
     if (hits.empty() && !tokens.empty()) {
         const std::string orQuery =

@@ -247,7 +247,8 @@ async def test_import_missing_file_field_returns_422(client):
 
 
 @pytest.mark.asyncio
-async def test_import_duplicate_rows_both_created(client):
+async def test_import_duplicate_rows_within_file_deduped(client):
+    # 幂等导入：同一文件内的完全重复行只建一条，其余跳过
     await _create_account(client, "现金")
     csv_bytes = _make_csv_bytes(
         [
@@ -258,12 +259,12 @@ async def test_import_duplicate_rows_both_created(client):
     resp = await _import(client, csv_bytes)
     assert resp.status_code == 200
     body = resp.json()
-    assert body["created"] == 2
-    assert body["skipped"] == 0
+    assert body["created"] == 1
+    assert body["skipped"] == 1
 
     export = await client.get("/api/export/csv")
     rows = list(csv.reader(io.StringIO(export.text)))
-    assert len(rows) - 1 == 2
+    assert len(rows) - 1 == 1
 
 
 @pytest.mark.asyncio
