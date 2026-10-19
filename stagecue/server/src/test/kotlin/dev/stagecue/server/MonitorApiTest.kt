@@ -6,6 +6,8 @@ import dev.stagecue.server.db.SqliteShowStore
 import dev.stagecue.shared.model.Cue
 import dev.stagecue.shared.model.CueType
 import dev.stagecue.shared.model.Show
+import dev.stagecue.shared.model.MonitorState
+import kotlinx.serialization.json.Json
 import dev.stagecue.shared.protocol.*
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
@@ -36,12 +38,21 @@ class MonitorApiTest {
         val settings = SettingsStore(ds)
         val hub = SyncHub()
         application { module(store, hub, settings) }
+        val before = System.currentTimeMillis()
         val response = client.get("/api/monitor")
         assertEquals(HttpStatusCode.OK, response.status)
         val body = response.bodyAsText()
-        assertTrue(body.contains("\"current\""), "body=$body")
-        assertTrue(body.contains("\"current\":null"), "body=$body")
-        assertTrue(!body.contains("\"next\":null") || body.contains("\"next\""), "body=$body")
+        val after = System.currentTimeMillis()
+        // 根因：服务端 ContentNegotiation 配了 prettyPrint = true，字符串 contains 断言依赖空格格式必挂；
+        // 改为解析 JSON 后断言结构，不再依赖序列化格式。
+        val snapshot = Json { ignoreUnknownKeys = true }.decodeFromString<MonitorState>(body)
+        assertNull(snapshot.current)
+        assertNotNull(snapshot.next)
+        assertEquals("cue-001", snapshot.next?.id)
+        assertNull(snapshot.remainingMs)
+        assertFalse(snapshot.rehearsal)
+        assertTrue(snapshot.serverTimeMs in before..after,
+            "serverTimeMs=${snapshot.serverTimeMs} not in [$before, $after]")
     }
 
     @Test

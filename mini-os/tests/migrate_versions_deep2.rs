@@ -24,7 +24,7 @@ fn column_names(conn: &Connection, table: &str) -> Vec<String> {
 }
 
 #[test]
-fn applied_versions_returns_sorted_five() {
+fn applied_versions_returns_sorted_six() {
     let conn = mini_os::db::open_db(":memory:").unwrap();
     let versions = applied_versions(&conn).unwrap();
     assert_eq!(
@@ -34,7 +34,8 @@ fn applied_versions_returns_sorted_five() {
             "002".to_string(),
             "003".to_string(),
             "004".to_string(),
-            "005".to_string()
+            "005".to_string(),
+            "006".to_string()
         ]
     );
 }
@@ -62,8 +63,9 @@ fn run_migrations_repairs_dropped_005() {
     run_migrations(&conn).unwrap();
 
     let versions = applied_versions(&conn).unwrap();
-    assert_eq!(versions.len(), 5);
+    assert_eq!(versions.len(), 6);
     assert_eq!(versions[4], "005");
+    assert_eq!(versions[5], "006");
 
     let after = column_names(&conn, "users");
     assert!(after.iter().any(|n| n == "role"));
@@ -97,9 +99,10 @@ fn open_db_migrates_foreign_sqlite_file() {
     assert_eq!(count, 1);
 
     let versions = applied_versions(&conn).unwrap();
-    assert_eq!(versions.len(), 5);
+    assert_eq!(versions.len(), 6);
     assert_eq!(versions[0], "001");
     assert_eq!(versions[4], "005");
+    assert_eq!(versions[5], "006");
 
     let _ = std::fs::remove_file(&path);
 }

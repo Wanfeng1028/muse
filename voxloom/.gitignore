@@ -75,3 +75,6 @@ coverage*.info
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# LoadTest 运行时产物（大文件，测试结束自动删除）
+tests/VoxLoom.LoadTest/work/

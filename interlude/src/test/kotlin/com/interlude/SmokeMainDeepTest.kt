@@ -14,7 +14,7 @@ class SmokeMainDeepTest {
         val buffer = ByteArrayOutputStream()
         try {
             System.setOut(PrintStream(buffer, true, "UTF-8"))
-            main()
+            runSmoke()
         } finally {
             System.setOut(originalOut)
         }
@@ -67,7 +67,7 @@ class SmokeMainDeepTest {
         val buffer = ByteArrayOutputStream()
         try {
             System.setOut(PrintStream(buffer, true, "UTF-8"))
-            main()
+            runSmoke()
         } finally {
             System.setOut(originalOut)
         }

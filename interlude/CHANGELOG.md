@@ -6,6 +6,7 @@
 ## [Unreleased]
 
 ### Added
+- 多对局聚合复盘：`AggregateAnalyzer` 跨 session 聚合常用路径 TopN / 抉择点分布 / 流失点；`AggregateMarkdown` 输出 Markdown 聚合报告；CLI `replay --aggregate`（多日志输入、`--out`，与 `--script` 互斥）；`AggregateAnalyzerTest` 新增测试。
 
 - 玩家路径热力分析：`HeatmapAnalyzer` 对多份对局日志做 choice 节点访问频次聚合与流失点（高跳出 choice）识别；`HeatmapJson` 输出 JSON 报告（node_id/visits/drop_rate）；`HeatmapText` 渲染人类可读文本报告（Top 热门路径 / Top 流失点表格）；CLI 新增 `heatmap` 子命令（多日志输入、`--format text|json`、`--out`）。
 - 热力分析测试 16 例（HeatmapTest 8 / HeatmapTextTest 8：空日志/单路径/环路/流失识别/阈值过滤/CLI）。

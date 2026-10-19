@@ -61,6 +61,9 @@ public sealed class WaveformLod
             var prevMin = mins[^1];
             var prevMax = maxs[^1];
             int nextCount = (prevMin.Length + bucketSize - 1) / bucketSize;
+            // bucketSize=1 时 nextCount == prevMin.Length，聚合无法再收缩；
+            // 不终止会导致无限循环（2026-10-19 深测发现真 bug）。
+            if (nextCount >= prevMin.Length) break;
             var nextMin = new float[nextCount];
             var nextMax = new float[nextCount];
 

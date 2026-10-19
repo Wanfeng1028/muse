@@ -28,17 +28,13 @@ object Database {
     fun init(dataDir: File): DataSource {
         if (!dataDir.exists()) dataDir.mkdirs()
         val dbFile = File(dataDir, "stagecue.db")
+        // pragma 必须走 JDBC URL 参数：PRAGMA 是 per-connection 的，
+        // 在单个连接上 execute 只对该连接生效，连接池的新连接拿不到。
+        // URL 参数让 sqlite-jdbc 为每个新连接自动应用这些 pragma。
         val ds = SQLiteDataSource().apply {
-            url = "jdbc:sqlite:${dbFile.absolutePath}"
+            url = "jdbc:sqlite:${dbFile.absolutePath}?journal_mode=WAL&busy_timeout=5000&foreign_keys=ON"
         }
         lastMigrationsApplied = migrate(ds)
-        ds.connection.use { conn ->
-            conn.createStatement().use { st ->
-                st.execute("PRAGMA journal_mode=WAL")
-                st.execute("PRAGMA busy_timeout=5000")
-                st.execute("PRAGMA foreign_keys=ON")
-            }
-        }
         importJsonIfNeeded(dataDir, ds)
         return ds
     }

@@ -7,8 +7,11 @@ import com.interlude.lint.Report
 import com.interlude.lint.Severity
 import com.interlude.lint.Validator
 import com.interlude.log.Log
+import com.interlude.replay.AggregateAnalyzer
+import com.interlude.replay.AggregateMarkdown
 import com.interlude.replay.ReplayAnalyzer
 import com.interlude.replay.ReplayMarkdown
+import com.interlude.replay.SessionEvent
 import com.interlude.replay.SessionLog
 import com.interlude.replay.SessionLogParseException
 import java.io.File
@@ -19,7 +22,7 @@ private const val USAGE = """用法: interlude-lint <命令> [选项]
 命令:
 lint <剧本文件> 校验剧本
 restore <剧本文件> 列出或恢复备份
-replay <对局日志.json> 生成复盘报告
+replay <对局日志.json> 生成复盘报告（加 --aggregate 时为多对局聚合模式）
 heatmap <对局日志.json> [更多日志...] 生成路径热力报告
 
 lint 选项:
@@ -38,6 +41,7 @@ replay 选项:
 --log-json 日志以 JSON 行输出到 stderr
 --script FILE 关联的剧本文件（用于场景富化；不给则只按日志生成）
 --out FILE 报告写到文件（默认打印到 stdout）
+--aggregate 多对局聚合模式：positional 参数为多个对局日志，输出聚合报告（与 --script 互斥）
 
 heatmap 选项:
 --log-level LEVEL 日志级别: trace/debug/info/warn/error (默认 info)
@@ -257,6 +261,7 @@ fun runReplay(args: Array<String>): Int {
     var logJson = false
     var scriptPath: String? = null
     var outPath: String? = null
+    var aggregate = false
     val positional = mutableListOf<String>()
 
     var i = 1
@@ -281,13 +286,62 @@ fun runReplay(args: Array<String>): Int {
                 outPath = args[i + 1]
                 i += 2
             }
+            "--aggregate" -> {
+                aggregate = true
+                i += 1
+            }
             else -> {
                 positional.add(args[i])
                 i += 1
             }
         }
     }
-    if (positional.size != 1) printUsageAndExit()
+    if (aggregate) {
+        if (positional.isEmpty()) printUsageAndExit()
+    } else {
+        if (positional.size != 1) printUsageAndExit()
+    }
+    if (aggregate) {
+        if (scriptPath != null) {
+            System.err.println("--aggregate 与 --script 互斥")
+            return 2
+        }
+        val sessions = mutableListOf<List<SessionEvent>>()
+        for (logPath in positional) {
+            val logFile = File(logPath)
+            if (!logFile.exists()) {
+                System.err.println("文件不存在: $logPath")
+                return 2
+            }
+            val logText = try {
+                logFile.readText()
+            } catch (e: Exception) {
+                System.err.println("读取文件失败: $logPath")
+                return 2
+            }
+            val events = try {
+                SessionLog.parse(logText)
+            } catch (e: SessionLogParseException) {
+                System.err.println("对局日志解析失败: ${e.message}")
+                return 2
+            }
+            sessions.add(events)
+        }
+        val report = AggregateAnalyzer.analyze(sessions)
+        val markdown = AggregateMarkdown.render(report)
+        if (outPath != null) {
+            try {
+                File(outPath).writeText(markdown)
+            } catch (e: Exception) {
+                System.err.println("写入报告失败: $outPath")
+                return 2
+            }
+        } else {
+            println(markdown)
+        }
+        Log.info("replay", "聚合复盘报告已生成: sessions=${report.sessionCount}, events=${report.totalEvents}")
+        return 0
+    }
     val logPath = positional[0]
 
     val logFile = File(logPath)

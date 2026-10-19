@@ -117,20 +117,21 @@ fn run_migrations_is_idempotent_on_repeat_calls() {
     run_migrations(&conn).expect("second run_migrations");
     run_migrations(&conn).expect("third run_migrations");
 
-    // 断言点 1：版本记录没有重复插入（当前共 5 个版本：001-005）。
+    // 断言点 1：版本记录没有重复插入（当前共 6 个版本：001-006）。
     assert_eq!(migration_count(&conn, "001"), 1);
     assert_eq!(migration_count(&conn, "002"), 1);
     assert_eq!(migration_count(&conn, "003"), 1);
     assert_eq!(migration_count(&conn, "004"), 1);
     assert_eq!(migration_count(&conn, "005"), 1);
+    assert_eq!(migration_count(&conn, "006"), 1);
 
-    // 断言点 2：总行数就是五个版本，没有多余记录。
+    // 断言点 2：总行数就是六个版本，没有多余记录。
     let total: i64 = conn
         .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
             row.get(0)
         })
         .expect("count all migrations");
-    assert_eq!(total, 5);
+    assert_eq!(total, 6);
 }
 
 // ---------------------------------------------------------------------------
@@ -417,12 +418,13 @@ fn concurrent_run_migrations_applies_each_version_once() {
 
     let guard = shared.lock().expect("lock db");
 
-    // 断言点 1：每个版本恰好一条记录（当前共 5 个版本：001-005）。
+    // 断言点 1：每个版本恰好一条记录（当前共 6 个版本：001-006）。
     assert_eq!(migration_count(&guard, "001"), 1);
     assert_eq!(migration_count(&guard, "002"), 1);
     assert_eq!(migration_count(&guard, "003"), 1);
     assert_eq!(migration_count(&guard, "004"), 1);
     assert_eq!(migration_count(&guard, "005"), 1);
+    assert_eq!(migration_count(&guard, "006"), 1);
 
     // 断言点 2：总记录数就是五个版本。
     let total: i64 = guard
@@ -430,7 +432,7 @@ fn concurrent_run_migrations_applies_each_version_once() {
             row.get(0)
         })
         .expect("count all migrations");
-    assert_eq!(total, 5);
+    assert_eq!(total, 6);
 }
 
 // ---------------------------------------------------------------------------
