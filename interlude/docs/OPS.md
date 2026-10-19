@@ -251,10 +251,10 @@ interlude-lint lint src/main/resources/scripts/sample.interlude --log-level debu
 
 测试分两层：
 
-- 单元层：ParserTest（DSL 解析与行号）、ValidatorTest（5 条校验规则）、ExtractorTest（本地化抽取）、GraphLayoutTest（分支图布局算法），共 24 例。
+- 单元层：ParserTest（DSL 解析与行号）、ValidatorTest（6 条校验规则）、ExtractorTest（本地化抽取）、GraphLayoutTest（分支图布局算法），共 24 例。
 - 端到端层：EndToEndTest 4 例，从 `src/main/resources` 读示例剧本跑全链路。
 
-示例剧本 `src/main/resources/scripts/sample.interlude` 有 9 个场景，里面埋了 5 个已知问题，端到端测试就是围绕它写的。
+示例剧本 `src/main/resources/scripts/sample.interlude` 有 9 个场景，里面埋了 6 个已知问题，端到端测试就是围绕它写的。
 
 本机跑测试按上面「本机直编」那节的三条命令来。
 

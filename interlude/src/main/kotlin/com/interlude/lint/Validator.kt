@@ -46,7 +46,48 @@ object Validator {
 
         checkUnreachable(story, issues)
 
+        checkUnusedVars(story, issues)
+
         return issues.sortedWith(compareBy({ it.severity.ordinal }, { it.line }))
+    }
+
+    private fun checkUnusedVars(story: Story, issues: MutableList<Issue>) {
+        val used = mutableSetOf<String>()
+        for (scene in story.scenes) {
+            for (st in scene.statements) {
+                when (st) {
+                    is Text -> used.addAll(extractPlaceholders(st.value))
+                    is SetVar -> used.addAll(collectVarRefs(st.expr))
+                    is Choice -> {
+                        val cond = st.condition
+                        if (cond != null) used.addAll(collectVarRefs(cond))
+                    }
+                    is Jump -> {
+                        val cond = st.condition
+                        if (cond != null) used.addAll(collectVarRefs(cond))
+                    }
+                    else -> {}
+                }
+            }
+        }
+
+        val reported = mutableSetOf<String>()
+        for (scene in story.scenes) {
+            for (st in scene.statements) {
+                if (st is SetVar && st.name !in used && st.name !in reported) {
+                    reported.add(st.name)
+                    issues.add(
+                    Issue(
+                    Severity.WARNING,
+                    "UNUSED_VAR",
+                    "变量 '${st.name}' 被 set 赋值后从未使用",
+                    scene.id,
+                    st.line
+                    )
+                    )
+                }
+            }
+        }
     }
 
     private fun collectAssignedVars(story: Story): Set<String> {

@@ -24,11 +24,11 @@ class EndToEndTest {
     }
 
     @Test
-    fun `sample script yields exactly five known issues`() {
+    fun `sample script yields exactly six known issues`() {
         val story = Parser(source).parse()
         val issues = Validator.validate(story)
 
-        assertEquals(5, issues.size, "sample.interlude should yield exactly 5 issues")
+        assertEquals(6, issues.size, "sample.interlude should yield exactly 6 issues")
 
         val first = issues[0]
         assertEquals(Severity.ERROR, first.severity)
@@ -39,27 +39,34 @@ class EndToEndTest {
 
         val second = issues[1]
         assertEquals(Severity.WARNING, second.severity)
-        assertEquals("DEAD_END", second.code)
-        assertEquals("orphan", second.sceneId)
-        assertEquals(37, second.line)
+        assertEquals("UNUSED_VAR", second.code)
+        assertEquals("hall", second.sceneId)
+        assertEquals(11, second.line)
+        assertTrue(second.message.contains("met_stranger"), "second issue message should mention met_stranger")
 
         val third = issues[2]
         assertEquals(Severity.WARNING, third.severity)
-        assertEquals("UNREACHABLE", third.code)
+        assertEquals("DEAD_END", third.code)
         assertEquals("orphan", third.sceneId)
         assertEquals(37, third.line)
 
         val fourth = issues[3]
         assertEquals(Severity.WARNING, fourth.severity)
-        assertEquals("DEAD_END", fourth.code)
-        assertEquals("deadend", fourth.sceneId)
-        assertEquals(40, fourth.line)
+        assertEquals("UNREACHABLE", fourth.code)
+        assertEquals("orphan", fourth.sceneId)
+        assertEquals(37, fourth.line)
 
         val fifth = issues[4]
         assertEquals(Severity.WARNING, fifth.severity)
-        assertEquals("UNREACHABLE", fifth.code)
+        assertEquals("DEAD_END", fifth.code)
         assertEquals("deadend", fifth.sceneId)
         assertEquals(40, fifth.line)
+
+        val sixth = issues[5]
+        assertEquals(Severity.WARNING, sixth.severity)
+        assertEquals("UNREACHABLE", sixth.code)
+        assertEquals("deadend", sixth.sceneId)
+        assertEquals(40, sixth.line)
     }
 
     @Test
@@ -70,13 +77,17 @@ class EndToEndTest {
         val lines = text.lines()
 
         assertEquals(
-            "issues: 5 (errors: 1, warnings: 4)",
+            "issues: 6 (errors: 1, warnings: 5)",
             lines.first(),
-            "text report header must reflect 5 issues, 1 error, 4 warnings"
+            "text report header must reflect 6 issues, 1 error, 5 warnings"
         )
         assertTrue(
             lines.any { it.startsWith("[ERROR] UNINIT_VAR hall:13 ") },
             "text report should contain the ERROR UNINIT_VAR hall:13 line"
+        )
+        assertTrue(
+            lines.any { it.startsWith("[WARNING] UNUSED_VAR hall:11 ") },
+            "text report should contain the WARNING UNUSED_VAR hall:11 line"
         )
         assertTrue(
             lines.any { it.startsWith("[WARNING] DEAD_END orphan:37 ") },
@@ -89,15 +100,16 @@ class EndToEndTest {
     }
 
     @Test
-    fun `json report carries summary and all five codes`() {
+    fun `json report carries summary and all six codes`() {
         val story = Parser(source).parse()
         val issues = Validator.validate(story)
         val json = Report.formatJson(issues)
 
-        assertTrue(json.contains("\"issues\":5"))
+        assertTrue(json.contains("\"issues\":6"))
         assertTrue(json.contains("\"errors\":1"))
-        assertTrue(json.contains("\"warnings\":4"))
+        assertTrue(json.contains("\"warnings\":5"))
         assertTrue(json.contains("\"code\":\"UNINIT_VAR\""))
+        assertTrue(json.contains("\"code\":\"UNUSED_VAR\""))
         assertTrue(json.contains("\"code\":\"DEAD_END\""))
         assertTrue(json.contains("\"code\":\"UNREACHABLE\""))
     }
