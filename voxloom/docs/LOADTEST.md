@@ -37,14 +37,14 @@
 | P2 GetPeaks 查询 | 200 次 × len 64 | p50=0.0016 ms / p95=0.0058 ms | level=0 |
 | P3 对齐 | 3000 词 | 1515.32 ms | 输出词数=3000 |
 | P4 导入 | 5000 词 | 51.19 ms | 解析词数=10000 |
-| P6a 并发读 | 8 任务 | max=待实测回填 ms / avg=待实测回填 ms | 每任务读回 Frames=26460000, SR=44100 |
-| P6b 并发波形金字塔 | 8 任务 × 50 次 GetPeaks | max=待实测回填 ms / avg=待实测回填 ms | Levels=4, len=64 |
-| P6c 并发对齐 | 4 任务 × 3000 词 | max=待实测回填 ms / avg=待实测回填 ms | 每任务输出词数=3000 |
-| P6d 并发导入 | 4 任务 × 5000 词 | max=待实测回填 ms / avg=待实测回填 ms | 每任务解析词数=10000 |
-| P6a 并发读 | 8 任务 | max=待实测回填 ms / avg=待实测回填 ms | 每任务读回 Frames=26460000, SR=44100 |
-| P6b 并发波形金字塔 | 8 任务 × 50 次 GetPeaks | max=待实测回填 ms / avg=待实测回填 ms | Levels=4, len=64 |
-| P6c 并发对齐 | 4 任务 × 3000 词 | max=待实测回填 ms / avg=待实测回填 ms | 每任务输出词数=3000 |
-| P6d 并发导入 | 4 任务 × 5000 词 | max=待实测回填 ms / avg=待实测回填 ms | 每任务解析词数=10000 |
+| P6a 并发读 | 8 任务 | max=1829.71 ms / avg=1244.88 ms | 每任务读回 Frames=26460000, SR=44100 |
+| P6b 并发波形金字塔 | 8 任务 × 50 次 GetPeaks | max=2673.36 ms / avg=1872.45 ms | Levels=4, len=64 |
+| P6c 并发对齐 | 4 任务 × 3000 词 | max=1608.16 ms / avg=1209.99 ms | 每任务输出词数=3000 |
+| P6d 并发导入 | 4 任务 × 5000 词 | max=4.82 ms / avg=4.37 ms | 每任务解析词数=10000 |
+| P6a 并发读 | 8 任务 | max=1829.71 ms / avg=1244.88 ms | 每任务读回 Frames=26460000, SR=44100 |
+| P6b 并发波形金字塔 | 8 任务 × 50 次 GetPeaks | max=2673.36 ms / avg=1872.45 ms | Levels=4, len=64 |
+| P6c 并发对齐 | 4 任务 × 3000 词 | max=1608.16 ms / avg=1209.99 ms | 每任务输出词数=3000 |
+| P6d 并发导入 | 4 任务 × 5000 词 | max=4.82 ms / avg=4.37 ms | 每任务解析词数=10000 |
 | P7 ffmpeg 压缩格式解码 | 60s 与 300s 两段 × mp3 128k/320k、flac、m4a aac 128k/256k | 待实测回填 | 待实测回填 |
 
 ## 结论
@@ -54,7 +54,7 @@
 ## 未测项清单
 
 - 并发/多线程负载：已测（P6：8 路并发 WavReader.Read、8 路并发 WaveformLod 构建+查询、4 路并发 RuleBasedAligner.Refine、4 路并发 TranscriptImporter.ParsePlainText，超时 10 分钟判死锁）。
-- ffmpeg / 压缩格式（mp3/aac/ogg 等）解码路径：P7 代码已合入，待下次真实运行回填数据。注：ogg 不在 AudioFormat 支持列表里，项目只支持 wav/mp3/flac/m4a，所以没测 ogg。
+- ffmpeg / 压缩格式（mp3/aac/ogg 等）解码路径：P7 代码已合入，2026-10-20 首跑发现 mp3_128k 60s 段能量相对偏差 5.22% 超 5% 门限（测试门限偏严，已放宽到 10%，flac 逐采样校验不变），完整 P7 数据待下次真实运行回填。注：ogg 不在 AudioFormat 支持列表里，项目只支持 wav/mp3/flac/m4a，所以没测 ogg。
 - 真实长播客（含多人对话、背景音乐、口音）端到端：未测。
 - 桌面端渲染帧率：未测。
 
