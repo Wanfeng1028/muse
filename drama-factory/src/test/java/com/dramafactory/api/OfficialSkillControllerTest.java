@@ -14,6 +14,7 @@ import java.nio.file.Path;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -44,7 +45,7 @@ class OfficialSkillControllerTest {
     void officialListsBundledSkills() throws Exception {
         mockMvc.perform(get("/api/official-skills/official"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(35))
+                .andExpect(jsonPath("$.length()", greaterThanOrEqualTo(35)))
                 .andExpect(jsonPath("$[?(@.id=='video-shots')].license").value(hasItem("Apache-2.0")))
                 .andExpect(jsonPath("$[?(@.id=='video-shots')].source").value(hasItem("bundled")))
                 .andExpect(jsonPath("$[?(@.id=='video-shots')].installed").value(hasItem(false)))

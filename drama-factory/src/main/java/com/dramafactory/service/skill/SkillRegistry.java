@@ -33,6 +33,12 @@ public class SkillRegistry {
 
     private static final String BUNDLED_INDEX = "/skills-bundled/_index.json";
 
+    /**
+     * OpenMontage skill 索引片段（独立文件，避免与他人在改的 _index.json 冲突）。
+     * 缺失时仅记 warn，不影响主索引加载。
+     */
+    private static final String BUNDLED_INDEX_OPENMONTAGE = "/skills-bundled/_index.openmontage.json";
+
     private final Path skillsDir;
 
     private final List<SkillDescriptor> bundled = new ArrayList<>();
@@ -48,16 +54,41 @@ public class SkillRegistry {
     }
 
     private void loadBundled() {
-        try (InputStream in = getClass().getResourceAsStream(BUNDLED_INDEX)) {
+        loadIndex(BUNDLED_INDEX, true);
+        loadIndex(BUNDLED_INDEX_OPENMONTAGE, false);
+        // 去重：同一 id 只保留首次出现的条目（主索引优先于片段），防止双索引合并时重复
+        Set<String> seen = new HashSet<>();
+        bundled.removeIf(d -> {
+            if (!seen.add(d.getId())) {
+                log.warn("内置 skill id 重复，仅保留首次出现: {}", d.getId());
+                return true;
+            }
+            return false;
+        });
+        bundled.sort(Comparator.comparing(SkillDescriptor::getId));
+    }
+
+    /**
+     * 加载单个内置 skill 索引文件并追加到 bundled 列表。
+     *
+     * @param indexPath 索引资源路径
+     * @param required  为 true 时缺失/非法记 error，为 false 时记 warn 并跳过
+     */
+    private void loadIndex(String indexPath, boolean required) {
+        try (InputStream in = getClass().getResourceAsStream(indexPath)) {
             if (in == null) {
-                log.error("内置 skill 索引缺失，bundled 列表为空: {}", BUNDLED_INDEX);
+                if (required) {
+                    log.error("内置 skill 索引缺失，bundled 列表为空: {}", indexPath);
+                } else {
+                    log.warn("可选 skill 索引缺失，跳过: {}", indexPath);
+                }
                 return;
             }
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(new String(in.readAllBytes(), StandardCharsets.UTF_8));
             JsonNode skills = root.get("skills");
             if (skills == null || !skills.isArray()) {
-                log.error("内置 skill 索引格式非法，bundled 列表为空: {}", BUNDLED_INDEX);
+                log.error("内置 skill 索引格式非法，跳过: {}", indexPath);
                 return;
             }
             for (JsonNode entry : skills) {
@@ -89,9 +120,8 @@ public class SkillRegistry {
                     log.error("读取内置 skill 失败，跳过: id={}, resource={}, reason={}", id, resource, e.getMessage());
                 }
             }
-            bundled.sort(Comparator.comparing(SkillDescriptor::getId));
         } catch (IOException e) {
-            log.error("解析内置 skill 索引失败，bundled 列表为空: {} ({})", BUNDLED_INDEX, e.getMessage());
+            log.error("解析内置 skill 索引失败，跳过: {} ({})", indexPath, e.getMessage());
         }
     }
 
