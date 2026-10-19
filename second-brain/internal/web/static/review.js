@@ -112,6 +112,13 @@
     if (grading) grading.hidden = false;
     if (done) done.hidden = true;
     if (card) card.hidden = false;
+    const hardBtn = $el('btn-hard-toggle');
+    if (hardBtn) {
+      const isHard = !!(item && item.hard);
+      hardBtn.setAttribute('aria-pressed', isHard ? 'true' : 'false');
+      hardBtn.classList.toggle('is-hard', isHard);
+      hardBtn.textContent = isHard ? '已标记为困难' : '标记为困难';
+    }
   }
 
   function showDone() {
@@ -121,19 +128,42 @@
     if (card) card.hidden = true;
     if (grading) grading.hidden = true;
     if (done) done.hidden = false;
+    const total = state.total || 0;
+    const hardMarked = state.hardMarkedThisSession || 0;
+    const setNum = (id, v) => {
+      const el = $el(id);
+      if (el) el.textContent = String(v);
+    };
+    setNum('done-num-reviewed', total);
+    setNum('done-num-hard', hardMarked);
+    const hintEl = $el('review-done-hint');
     api('/api/review/stats')
       .then((stats) => {
-        const total = state.total || 0;
         const streakDays = (stats && stats.streakDays) || 0;
+        const reviewed7d = (stats && stats.reviewed7d) || 0;
+        setNum('done-num-streak', streakDays);
+        setNum('done-num-week', reviewed7d);
         const textEl = $el('review-done-text');
         if (textEl) {
           textEl.textContent = '今天复习了 ' + total + ' 篇，连续坚持 ' + streakDays + ' 天';
+        }
+        // 提示语：只陈述事实，不加油打气
+        if (hintEl) {
+          if (hardMarked > 0) {
+            hintEl.textContent = '其中 ' + hardMarked + ' 篇标了困难，它们会更早回来。';
+          } else if (total > 0) {
+            hintEl.textContent = '没有标困难的卡片。';
+          } else {
+            hintEl.textContent = '';
+          }
         }
         refreshBadge();
       })
       .catch(() => {
         refreshBadge();
       });
+    // 下一轮开始时清零本轮计数
+    state.hardMarkedThisSession = 0;
   }
 
   function showEmpty() {
@@ -162,6 +192,19 @@
     const doneBtn = done ? done.querySelector('button') : null;
     const doneText = $el('review-done-text');
     if (doneText) doneText.textContent = '都复习完了';
+    // 空队列时也填充完成面板的真实数字（本轮复习 0 篇，但连续天数/近 7 天是真实值）
+    const setNum = (id, v) => {
+      const el = $el(id);
+      if (el) el.textContent = String(v);
+    };
+    setNum('done-num-reviewed', 0);
+    setNum('done-num-hard', 0);
+    api('/api/review/stats')
+      .then((stats) => {
+        setNum('done-num-streak', (stats && stats.streakDays) || 0);
+        setNum('done-num-week', (stats && stats.reviewed7d) || 0);
+      })
+      .catch(() => {});
   }
 
   window.__sbStartReview = async function () {
@@ -322,10 +365,39 @@
   };
 
 
+  function bindHardToggle() {
+    const btn = $el('btn-hard-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const item = state.queue[state.idx];
+      if (!item) return;
+      const target = !(btn.getAttribute('aria-pressed') === 'true');
+      btn.disabled = true;
+      try {
+        await api('/api/review/' + encodeURIComponent(item.id) + '/hard', {
+          method: 'POST',
+          body: { hard: target },
+        });
+        item.hard = target;
+      } catch (e) {
+        // 失败不改本地态，按钮保持原样
+      }
+      btn.disabled = false;
+      if (item.hard === target) {
+        btn.setAttribute('aria-pressed', String(target));
+        btn.classList.toggle('is-hard', target);
+        btn.textContent = target ? '已标记为困难' : '标记为困难';
+        if (target) state.hardMarkedThisSession = (state.hardMarkedThisSession || 0) + 1;
+        else state.hardMarkedThisSession = Math.max(0, (state.hardMarkedThisSession || 0) - 1);
+      }
+    });
+  }
+
   function init() {
     ensureBanner();
     bindFlip();
     bindGrades();
+    bindHardToggle();
     bindDigest();
     bindExit();
     refreshBadge();

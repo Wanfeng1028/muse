@@ -135,7 +135,7 @@ function showView(name) {
     const el = $("editor-view");
     if (!el) return;
   });
-  const views = { editor: $("editor-view"), graph: $("graph-view"), review: $("review-view"), push: $("push-view") };
+  const views = { editor: $("editor-view"), graph: $("graph-view"), review: $("review-view"), push: $("push-view"), stats: $("stats-view") };
   Object.entries(views).forEach(([k, el]) => {
     if (el) el.hidden = k !== name;
   });
@@ -145,6 +145,9 @@ function showView(name) {
   if (navNotes) navNotes.classList.toggle("is-active", name === "editor" || name === "graph");
   if (navReview) navReview.classList.toggle("is-active", name === "review");
   if (navPush) navPush.classList.toggle("is-active", name === "push");
+  const navStats = $("nav-stats");
+  if (navStats) navStats.classList.toggle("is-active", name === "stats");
+  if (name === "stats") loadReviewStatsView();
 }
 window.__sbShowView = showView;
 
@@ -591,6 +594,10 @@ async function drawGraph() {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
+  // 图谱视图变换状态挂在 canvas 元素上，避免新增顶层变量；drawGraph 每次重绘都读取它
+  if (!canvas._gz) canvas._gz = { scale: 1, tx: 0, ty: 0 };
+  const gz = canvas._gz;
+
   let data;
   try {
     data = await api("/api/graph");
@@ -601,6 +608,32 @@ async function drawGraph() {
 
   const nodes = (data && data.nodes) || [];
   const edges = (data && data.edges) || [];
+
+  // 孤立节点聚合：统计每个节点的度，度 0 即为孤立
+  const degree = {};
+  nodes.forEach((n) => { degree[n.id] = 0; });
+  edges.forEach((e) => {
+    const s = e.source ?? e.from;
+    const t = e.target ?? e.to;
+    if (degree[s] !== undefined) degree[s] += 1;
+    if (degree[t] !== undefined) degree[t] += 1;
+  });
+  const isolated = nodes.filter((n) => degree[n.id] === 0);
+  // 孤立节点 >= 8 个才聚合，小图没必要
+  if (isolated.length >= 8) {
+    const isolatedIds = {};
+    isolated.forEach((n) => { isolatedIds[n.id] = true; });
+    const members = isolated.map((n) => n.id);
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      if (isolatedIds[nodes[i].id]) nodes.splice(i, 1);
+    }
+    nodes.push({
+      id: "__isolated__",
+      title: "孤立笔记 x" + isolated.length,
+      isolated: true,
+      members: members,
+    });
+  }
 
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth || 800;
@@ -625,43 +658,302 @@ async function drawGraph() {
   const cy = h / 2;
   const R = Math.min(w, h) / 2 - 60;
   const pos = {};
+  // 初始位置：按序号排成圆（确定性，无随机抖动）
   nodes.forEach((n, i) => {
     const angle = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
     pos[n.id] = { x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) };
   });
 
-  // 连线
-  ctx.strokeStyle = "#c8c8c8";
-  ctx.lineWidth = 1;
-  edges.forEach((e) => {
-    const a = pos[e.source ?? e.from];
-    const b = pos[e.target ?? e.to];
-    if (!a || !b) return;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.stroke();
-  });
+  // 力导向布局：同步迭代一次算完，canvas 静态渲染不做动画
+  // 复杂度 O(n^2)，300 节点约 1350 万次运算，JS 秒级内可接受；
+  // 节点数继续增长时建议改为空间网格近似或降迭代次数。
+  if (nodes.length > 1) {
+    const k = 90;
+    const iters = nodes.length > 200 ? 60 : 150;
+    const maxStep = 12;
+    for (let it = 0; it < iters; it++) {
+      const disp = {};
+      nodes.forEach((n) => { disp[n.id] = { x: 0, y: 0 }; });
+      // 斥力：每对节点 F = k*k / dist，方向推开
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = pos[nodes[i].id];
+          const b = pos[nodes[j].id];
+          let dx = a.x - b.x;
+          let dy = a.y - b.y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 1) dist = 1;
+          const f = (k * k) / dist;
+          const ux = dx / dist;
+          const uy = dy / dist;
+          disp[nodes[i].id].x += ux * f;
+          disp[nodes[i].id].y += uy * f;
+          disp[nodes[j].id].x -= ux * f;
+          disp[nodes[j].id].y -= uy * f;
+        }
+      }
+      // 引力：每条边 F = dist*dist / k * 0.02，沿边拉近
+      edges.forEach((e) => {
+        const s = e.source ?? e.from;
+        const t = e.target ?? e.to;
+        const a = pos[s];
+        const b = pos[t];
+        if (!a || !b) return;
+        let dx = a.x - b.x;
+        let dy = a.y - b.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 1) dist = 1;
+        const f = (dist * dist) / k * 0.02;
+        const ux = dx / dist;
+        const uy = dy / dist;
+        disp[s].x -= ux * f;
+        disp[s].y -= uy * f;
+        disp[t].x += ux * f;
+        disp[t].y += uy * f;
+      });
+      // 重力：向心小力 0.01 * (中心 - 位置)，防飞散
+      nodes.forEach((n) => {
+        const p = pos[n.id];
+        disp[n.id].x += 0.01 * (cx - p.x);
+        disp[n.id].y += 0.01 * (cy - p.y);
+      });
+      // 位移钳制：单次迭代单节点位移不超过 12px
+      nodes.forEach((n) => {
+        const d = disp[n.id];
+        let len = Math.sqrt(d.x * d.x + d.y * d.y);
+        if (len > maxStep) {
+          d.x = d.x / len * maxStep;
+          d.y = d.y / len * maxStep;
+        }
+        pos[n.id].x += d.x;
+        pos[n.id].y += d.y;
+      });
+    }
+    // 平移缩放进画布：留 40px 边距，按包围盒等比 fit
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    nodes.forEach((n) => {
+      const p = pos[n.id];
+      if (p.x < minX) minX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y > maxY) maxY = p.y;
+    });
+    const spanX = Math.max(maxX - minX, 1);
+    const spanY = Math.max(maxY - minY, 1);
+    const targetW = w - 80;
+    const targetH = h - 80;
+    const scale = Math.min(targetW / spanX, targetH / spanY);
+    const offX = 40 + (targetW - spanX * scale) / 2 - minX * scale;
+    const offY = 40 + (targetH - spanY * scale) / 2 - minY * scale;
+    nodes.forEach((n) => {
+      const p = pos[n.id];
+      p.x = p.x * scale + offX;
+      p.y = p.y * scale + offY;
+    });
+  }
 
-  // 节点
-  nodes.forEach((n) => {
-    const p = pos[n.id];
-    const isCur = n.id === state.currentId;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, isCur ? 10 : 7, 0, Math.PI * 2);
-    ctx.fillStyle = isCur ? "#2b7de9" : "#7aa9e0";
-    ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  // 世界/屏幕坐标换算
+  const toScreen = (x, y) => ({ sx: x * gz.scale + gz.tx, sy: y * gz.scale + gz.ty });
+  const toWorld = (mx, my) => ({ wx: (mx - gz.tx) / gz.scale, wy: (my - gz.ty) / gz.scale });
 
-    ctx.fillStyle = "#333";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    const label = (n.title || "无标题").slice(0, 10);
-    ctx.fillText(label, p.x, p.y + 12);
-  });
+  let hoverId = canvas._hoverId || null;
+
+  const hitTest = (mx, my) => {
+    let found = null;
+    nodes.forEach((n) => {
+      const p = pos[n.id];
+      if (!p) return;
+      const s = toScreen(p.x, p.y);
+      const isCur = n.id === state.currentId;
+      const isIso = n.id === "__isolated__";
+      const r = isCur ? 10 : isIso ? 13 : 7;
+      const dx = mx - s.sx;
+      const dy = my - s.sy;
+      if (dx * dx + dy * dy <= (r + 4) * (r + 4)) found = n;
+    });
+    return found;
+  };
+
+  const render = () => {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(gz.tx, gz.ty);
+    ctx.scale(gz.scale, gz.scale);
+
+    // 连线
+    ctx.strokeStyle = "#c8c8c8";
+    ctx.lineWidth = 1;
+    edges.forEach((e) => {
+      const a = pos[e.source ?? e.from];
+      const b = pos[e.target ?? e.to];
+      if (!a || !b) return;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    });
+
+    // 节点
+    const boxes = [];
+    nodes.forEach((n) => {
+      const p = pos[n.id];
+      if (!p) return;
+      const isCur = n.id === state.currentId;
+      const isIso = n.id === "__isolated__";
+      const r = isCur ? 10 : isIso ? 13 : 7;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = isCur ? "#2b7de9" : "#7aa9e0";
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const label = (n.title || "无标题").slice(0, 10);
+      const lw = label.length * 12;
+      const lx = p.x - lw / 2;
+      const ly = p.y + 12;
+      let skip = false;
+      if (!isCur && !isIso) {
+        for (const b of boxes) {
+          if (lx < b.x + b.w && lx + lw > b.x && ly < b.y + b.h && ly + 12 > b.y) {
+            skip = true;
+            break;
+          }
+        }
+      }
+      if (!skip) {
+        boxes.push({ x: lx, y: ly, w: lw, h: 12 });
+        ctx.fillStyle = "#333";
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText(label, p.x, p.y + 12);
+      }
+    });
+
+    ctx.restore();
+
+    // 悬停浮层（屏幕坐标）
+    if (hoverId && pos[hoverId.id]) {
+      const s = toScreen(pos[hoverId.id].x, pos[hoverId.id].y);
+      const title = (hoverId.title || "无标题").slice(0, 20);
+      ctx.font = "12px sans-serif";
+      const tw = ctx.measureText(title).width;
+      const sub = "双击打开笔记";
+      ctx.font = "11px sans-serif";
+      const sw = ctx.measureText(sub).width;
+      const pw = Math.max(tw, sw) + 16;
+      const ph = 40;
+      let px = s.sx + 14;
+      let py = s.sy - ph / 2;
+      if (px + pw > w) px = s.sx - pw - 14;
+      if (px < 0) px = 0;
+      if (py < 0) py = 0;
+      if (py + ph > h) py = h - ph;
+      ctx.beginPath();
+      const rr = 6;
+      ctx.moveTo(px + rr, py);
+      ctx.lineTo(px + pw - rr, py);
+      ctx.quadraticCurveTo(px + pw, py, px + pw, py + rr);
+      ctx.lineTo(px + pw, py + ph - rr);
+      ctx.quadraticCurveTo(px + pw, py + ph, px + pw - rr, py + ph);
+      ctx.lineTo(px + rr, py + ph);
+      ctx.quadraticCurveTo(px, py + ph, px, py + ph - rr);
+      ctx.lineTo(px, py + rr);
+      ctx.quadraticCurveTo(px, py, px + rr, py);
+      ctx.closePath();
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      ctx.strokeStyle = "#ddd";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = "#333";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(title, px + 8, py + 6);
+      ctx.fillStyle = "#999";
+      ctx.font = "11px sans-serif";
+      ctx.fillText(sub, px + 8, py + 24);
+    }
+  };
+
+  if (!canvas._gbound) {
+    canvas._gbound = true;
+
+    canvas.addEventListener(
+      "wheel",
+      (ev) => {
+        ev.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const mx = ev.clientX - rect.left;
+        const my = ev.clientY - rect.top;
+        const before = toWorld(mx, my);
+        const factor = ev.deltaY < 0 ? 1.1 : 1 / 1.1;
+        let ns = gz.scale * factor;
+        if (ns < 0.3) ns = 0.3;
+        if (ns > 4) ns = 4;
+        gz.scale = ns;
+        gz.tx = mx - before.wx * gz.scale;
+        gz.ty = my - before.wy * gz.scale;
+        render();
+      },
+      { passive: false }
+    );
+
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    canvas.addEventListener("mousedown", (ev) => {
+      dragging = true;
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+    });
+
+    canvas.addEventListener("mousemove", (ev) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = ev.clientX - rect.left;
+      const my = ev.clientY - rect.top;
+      if (dragging) {
+        gz.tx += ev.clientX - lastX;
+        gz.ty += ev.clientY - lastY;
+        lastX = ev.clientX;
+        lastY = ev.clientY;
+        render();
+        return;
+      }
+      const hit = hitTest(mx, my);
+      const nid = hit ? hit.id : null;
+      if (nid !== hoverId) {
+        hoverId = hit;
+        canvas._hoverId = hoverId;
+        render();
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      dragging = false;
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      dragging = false;
+      if (hoverId) {
+        hoverId = null;
+        canvas._hoverId = null;
+        render();
+      }
+    });
+
+    canvas.addEventListener("dblclick", () => {
+      // 双击暂不跳转，后续在此接入打开笔记逻辑
+    });
+  }
+
+  render();
 }
 
 // ---------- 附件 ----------
@@ -879,6 +1171,107 @@ function bindEvents() {
     showView("review");
     window.__sbStartReview?.();
   });
+  $("nav-stats")?.addEventListener("click", () => showView("stats"));
+  $("btn-stats-close")?.addEventListener("click", () => showView("editor"));
+}
+
+// ---------- 复习统计 ----------
+async function loadReviewStatsView() {
+  try {
+    const [trendRes, masteryRes] = await Promise.all([
+      api("/api/review/trend?days=7"),
+      api("/api/review/mastery"),
+    ]);
+    drawTrend(trendRes && trendRes.trend ? trendRes.trend : []);
+    renderMastery(masteryRes && masteryRes.mastery ? masteryRes.mastery : []);
+  } catch (e) {
+    console.error("复习统计加载失败", e);
+  }
+}
+
+// 7 日趋势条形图：深色 reviewed 柱 + 浅色 added 柱并排，无图表库
+function drawTrend(trend) {
+  const canvas = $("trend-canvas");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 600;
+  const h = 180;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const emptyEl = $("trend-empty");
+  const maxV = Math.max(1, ...trend.map((d) => Math.max(d.reviewed || 0, d.added || 0)));
+  const allZero = trend.every((d) => !(d.reviewed || 0) && !(d.added || 0));
+  if (emptyEl) emptyEl.hidden = !allZero;
+  if (allZero) return;
+
+  const padL = 8, padB = 22, padT = 10;
+  const n = trend.length || 1;
+  const slotW = (w - padL * 2) / n;
+  const barW = Math.min(14, slotW / 3);
+  trend.forEach((d, i) => {
+    const cx = padL + slotW * i + slotW / 2;
+    const rh = (h - padB - padT) * ((d.reviewed || 0) / maxV);
+    const ah = (h - padB - padT) * ((d.added || 0) / maxV);
+    // added 浅色柱在左，reviewed 深色柱在右
+    ctx.fillStyle = "#c9d6e8";
+    ctx.fillRect(cx - barW - 2, h - padB - ah, barW, ah);
+    ctx.fillStyle = "#2b7de9";
+    ctx.fillRect(cx + 2, h - padB - rh, barW, rh);
+    // 日期标签 MM-DD
+    ctx.fillStyle = "#999";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText((d.date || "").slice(5), cx, h - 8);
+    // 柱顶数字（>0 才标）
+    if (d.reviewed > 0) {
+      ctx.fillStyle = "#333";
+      ctx.fillText(String(d.reviewed), cx + 2 + barW / 2, h - padB - rh - 4);
+    }
+  });
+  // 图例
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#2b7de9";
+  ctx.fillRect(padL, 4, 10, 10);
+  ctx.fillStyle = "#666";
+  ctx.fillText("复习", padL + 14, 13);
+  ctx.fillStyle = "#c9d6e8";
+  ctx.fillRect(padL + 60, 4, 10, 10);
+  ctx.fillStyle = "#666";
+  ctx.fillText("新增", padL + 74, 13);
+}
+
+function renderMastery(mastery) {
+  const tbody = $("mastery-tbody");
+  const emptyEl = $("mastery-empty");
+  const table = $("mastery-table");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  const empty = !mastery.length;
+  if (emptyEl) emptyEl.hidden = !empty;
+  if (table) table.style.display = empty ? "none" : "";
+  mastery.forEach((m) => {
+    const tr = document.createElement("tr");
+    // EF 条：1.3~2.5+ 映射为宽度百分比，基准 1.3
+    const pct = Math.max(4, Math.min(100, ((m.avgEf - 1.3) / 1.4) * 100));
+    tr.innerHTML =
+      "<td>" + escapeHtmlStats(m.tag) + "</td>" +
+      "<td>" + m.total + "</td>" +
+      "<td><span class='ef-bar'><span class='ef-fill' style='width:" + pct.toFixed(0) + "%'></span></span> " +
+      m.avgEf.toFixed(2) + "</td>" +
+      "<td>" + m.hard + "</td>" +
+      "<td>" + m.due + "</td>";
+    tbody.appendChild(tr);
+  });
+}
+
+function escapeHtmlStats(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
 }
 
 // ---------- 初始化 ----------

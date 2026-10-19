@@ -20,10 +20,12 @@ type Migration struct {
 var Migrations = []Migration{
 	{Version: 1, Name: "reviews_user_id", Up: migrateReviewsUser},
 	{Version: 2, Name: "push_log_user_id", Up: migratePushLogUser},
+	{Version: 3, Name: "reviews_is_hard", Up: migrateReviewsIsHard},
+	{Version: 4, Name: "notes_client_note_id", Up: migrateNotesClientNoteID},
 }
 
 // CurrentSchemaVersion 是当前代码期望的数据库 schema 版本。
-const CurrentSchemaVersion = 2
+const CurrentSchemaVersion = 4
 
 // GetSchemaVersion 返回当前数据库的 schema 版本号。
 // 若 schema_version 表不存在则创建；表为空时视为版本 0 并写入一行 0。

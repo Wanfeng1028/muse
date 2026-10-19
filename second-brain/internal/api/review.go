@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -42,6 +43,16 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			EF           float64  `json:"ef"`
 			IntervalDays int      `json:"intervalDays"`
 			Repetitions  int      `json:"repetitions"`
+			Hard         bool     `json:"hard"`
+		}
+		// 批量查询困难标记；查询失败则降级为全部 hard=false，不阻断队列返回。
+		ids := make([]int64, 0, len(dues))
+		for _, d := range dues {
+			ids = append(ids, d.Note.ID)
+		}
+		hardMap, hardErr := st.HardMarkMap(ids, CurrentUser(r))
+		if hardErr != nil {
+			hardMap = nil
 		}
 		items := make([]queueItem, 0, len(dues))
 		for _, d := range dues {
@@ -56,6 +67,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 				EF:           d.EF,
 				IntervalDays: d.IntervalDays,
 				Repetitions:  d.Repetitions,
+				Hard:         hardMap[d.Note.ID],
 			})
 		}
 		writeJSON(w, http.StatusOK, items)
@@ -106,6 +118,39 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 		writeJSON(w, http.StatusOK, resp)
 	})
 
+	// 标记/取消标记困难卡片
+	// 路由说明：Go 1.22+ ServeMux 中 "POST /api/review/{id}/hard" 比 "POST /api/review/{id}" 更具体，
+	// 优先匹配，二者无冲突。
+	mux.HandleFunc("POST /api/review/{id}/hard", func(w http.ResponseWriter, r *http.Request) {
+		id, ok := parseID(w, r)
+		if !ok {
+			return
+		}
+		var req struct {
+			Hard *bool `json:"hard"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, r, http.StatusBadRequest, "invalid body")
+			return
+		}
+		if req.Hard == nil {
+			writeError(w, r, http.StatusBadRequest, "invalid body")
+			return
+		}
+		if err := st.SetHardMark(id, CurrentUser(r), *req.Hard); err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				writeError(w, r, http.StatusNotFound, "note not found")
+				return
+			}
+			writeError(w, r, http.StatusInternalServerError, "internal error")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"id":   id,
+			"hard": *req.Hard,
+		})
+	})
+
 	// 复习统计
 	mux.HandleFunc("GET /api/review/stats", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -118,6 +163,46 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			return
 		}
 		writeJSON(w, http.StatusOK, stats)
+	})
+
+	// 复习趋势（最近 days 天，默认 7，上限 60）
+	mux.HandleFunc("GET /api/review/trend", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		days := parseIntDefault(r.URL.Query().Get("days"), 7)
+		if days <= 0 {
+			days = 7
+		}
+		if days > 60 {
+			days = 60
+		}
+		trend, err := st.ReviewTrend(time.Now(), CurrentUser(r), days)
+		if err != nil {
+			writeError(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"days":  days,
+			"trend": trend,
+		})
+	})
+
+	// 各科掌握度（按标签聚合）
+	mux.HandleFunc("GET /api/review/mastery", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		mastery, err := st.ReviewMastery(time.Now(), CurrentUser(r))
+		if err != nil {
+			writeError(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"mastery": mastery,
+		})
 	})
 
 	// 今日摘要

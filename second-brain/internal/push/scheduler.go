@@ -176,7 +176,9 @@ func RunPushForUser(ctx context.Context, st *store.Store, senders SenderSet, pc 
 		metrics.Default().IncPushSent(name, "sent")
 		results = append(results, PushResult{Channel: name, User: user, Status: "sent", Detail: ""})
 	}
-	if senders.WebPush != nil && len(items) > 0 {
+	// P2-5：无到期复习时 WebPush 也推送一条空 digest（与 SMTP/Webhook 行为一致），
+	// 而不是静默跳过。
+	if senders.WebPush != nil {
 		const wpName = "webpush"
 		if st.HasPushedFor(dateKey, wpName, user) {
 			metrics.Default().IncPushSent(wpName, "skipped")
@@ -201,9 +203,12 @@ func sendWebPushDigest(ctx context.Context, st *store.Store, wp *notify.WebPushS
 	}
 	title := "第二大脑 · 复习提醒"
 	var body string
-	if dueCount == 1 {
+	switch {
+	case dueCount == 0:
+		body = "今天没有到期的笔记，好好休息"
+	case dueCount == 1:
 		body = "有 1 篇笔记到期了，点开看看"
-	} else {
+	default:
 		body = fmt.Sprintf("今天有 %d 篇笔记到期了，点开看看", dueCount)
 	}
 	const targetURL = "/#review"

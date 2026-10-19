@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
+	"strings"
 	"time"
 
 	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
@@ -88,11 +90,23 @@ func (s *Store) RecordReview(ctx context.Context, noteID int64, grade int, today
 	// 使用纯函数包计算新状态
 	next := review.Next(cur, review.Grade(grade), today)
 
+	// 困难卡片联动：已标记困难的卡片打出"困难"(grade=3)时，间隔减半（至少 1 天），
+	// 到期日按新间隔重算。GetHardMark 出错时不阻断正常复习流程（降级为无惩罚）。
+	if grade == int(review.GradeHard) {
+		if hard, herr := s.GetHardMark(noteID, user); herr == nil && hard {
+			next.IntervalDays = next.IntervalDays / 2
+			if next.IntervalDays < 1 {
+				next.IntervalDays = 1
+			}
+			next.DueDate = today.UTC().AddDate(0, 0, next.IntervalDays).Format("2006-01-02")
+		}
+	}
+
 	// 更新（或插入）复习记录
 	now := today.UTC().Format(time.RFC3339)
 	_, err = s.db.Exec(
-		`INSERT INTO reviews (note_id, user_id, ef, interval_days, repetitions, due_date, last_reviewed_at, reviewed_count)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+		`INSERT INTO reviews (note_id, user_id, ef, interval_days, repetitions, due_date, last_reviewed_at, reviewed_count, is_hard)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)
 		 ON CONFLICT(note_id, user_id) DO UPDATE SET
 		   ef = excluded.ef,
 		   interval_days = excluded.interval_days,
@@ -274,6 +288,92 @@ func (s *Store) calcStreak(today time.Time, user string) (int, error) {
 	return streak, nil
 }
 
+// DayTrend 单日复习趋势
+type DayTrend struct {
+	Date     string `json:"date"`
+	Reviewed int    `json:"reviewed"`
+	Added    int    `json:"added"`
+}
+
+// ReviewTrend 返回最近 days 天（含 today）的每日复习趋势，按日期升序排列。
+// days<=0 时默认 7 天，days>60 时钳制为 60 天。
+// 日期口径统一按 UTC 计算（与 dateOnly 一致，不做时区转换）。
+// Reviewed 为该用户在指定 UTC 日期复习过的去重笔记数；
+// Added 为指定 UTC 日期创建的笔记数（笔记全局共享，不按用户过滤）。
+func (s *Store) ReviewTrend(today time.Time, user string, days int) ([]DayTrend, error) {
+	if days <= 0 {
+		days = 7
+	}
+	if days > 60 {
+		days = 60
+	}
+	user = NormalizeUser(user)
+
+	// 计算日期列表（升序，老→新）
+	dates := make([]string, 0, days)
+	byDate := make(map[string]*DayTrend, days)
+	for i := days - 1; i >= 0; i-- {
+		d := dateOnly(today.AddDate(0, 0, -i))
+		dates = append(dates, d)
+		byDate[d] = &DayTrend{Date: d}
+	}
+	start := dates[0]
+
+	// 复习数：按用户过滤，substr 取 UTC 日期
+	reviewRows, err := s.db.Query(
+		`SELECT substr(last_reviewed_at,1,10) AS d, COUNT(DISTINCT note_id)
+		 FROM reviews
+		 WHERE user_id = ? AND substr(last_reviewed_at,1,10) >= ?
+		 GROUP BY d`, user, start)
+	if err != nil {
+		return nil, err
+	}
+	defer reviewRows.Close()
+	for reviewRows.Next() {
+		var d string
+		var n int
+		if err := reviewRows.Scan(&d, &n); err != nil {
+			return nil, err
+		}
+		if row, ok := byDate[d]; ok {
+			row.Reviewed = n
+		}
+	}
+	if err := reviewRows.Err(); err != nil {
+		return nil, err
+	}
+
+	// 新增数：笔记全局共享，不按用户过滤
+	noteRows, err := s.db.Query(
+		`SELECT substr(created_at,1,10) AS d, COUNT(*)
+		 FROM notes
+		 WHERE substr(created_at,1,10) >= ?
+		 GROUP BY d`, start)
+	if err != nil {
+		return nil, err
+	}
+	defer noteRows.Close()
+	for noteRows.Next() {
+		var d string
+		var n int
+		if err := noteRows.Scan(&d, &n); err != nil {
+			return nil, err
+		}
+		if row, ok := byDate[d]; ok {
+			row.Added = n
+		}
+	}
+	if err := noteRows.Err(); err != nil {
+		return nil, err
+	}
+
+	out := make([]DayTrend, 0, days)
+	for _, d := range dates {
+		out = append(out, *byDate[d])
+	}
+	return out, nil
+}
+
 // DigestNotes 摘要指定用户的笔记：优先取到期笔记，不足则用从未复习/最久未复习的笔记补足
 func (s *Store) DigestNotes(today time.Time, n int, user string) ([]Note, error) {
 	user = NormalizeUser(user)
@@ -384,4 +484,179 @@ func (s *Store) fillTags(notes []Note) ([]Note, error) {
 		}
 	}
 	return notes, nil
+}
+
+// SetHardMark 设置或取消某条笔记的"困难卡片"标记。
+// 笔记不存在返回 ErrNotFound。无复习记录时先插入初始状态行再置标记，
+// 不调用 RecordReview，避免推进 SM-2 状态。
+func (s *Store) SetHardMark(noteID int64, user string, hard bool) error {
+	user = NormalizeUser(user)
+
+	var exists int
+	err := s.db.QueryRow(`SELECT 1 FROM notes WHERE id = ?`, noteID).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+
+	hardVal := 0
+	if hard {
+		hardVal = 1
+	}
+
+	now := time.Now().UTC()
+	dueDate := now.AddDate(0, 0, 1).Format("2006-01-02")
+
+	_, err = s.db.Exec(
+		`INSERT INTO reviews (note_id, user_id, ef, interval_days, repetitions, due_date, last_reviewed_at, reviewed_count, is_hard)
+		 VALUES (?, ?, 2.5, 0, 0, ?, NULL, 0, ?)
+		 ON CONFLICT(note_id, user_id) DO UPDATE SET
+		   is_hard = excluded.is_hard`,
+		noteID, user, dueDate, hardVal,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetHardMark 返回某条笔记的"困难卡片"标记。
+// 无复习记录时返回 (false, nil)，不返回 ErrNotFound。
+func (s *Store) GetHardMark(noteID int64, user string) (bool, error) {
+	user = NormalizeUser(user)
+
+	var isHard int
+	err := s.db.QueryRow(
+		`SELECT is_hard FROM reviews WHERE note_id = ? AND user_id = ?`,
+		noteID, user,
+	).Scan(&isHard)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return isHard != 0, nil
+}
+
+// ListHardNotes 返回被标记为困难的笔记，按 last_reviewed_at ASC 排序（NULL 最前）。
+// limit <= 0 时默认 50。
+func (s *Store) ListHardNotes(user string, limit int) ([]Note, error) {
+	user = NormalizeUser(user)
+	if limit <= 0 {
+		limit = 50
+	}
+
+	rows, err := s.db.Query(
+		`SELECT n.id, n.title, n.body, n.created_at, n.updated_at
+		 FROM reviews r
+		 JOIN notes n ON n.id = r.note_id
+		 WHERE r.user_id = ? AND r.is_hard = 1
+		 ORDER BY r.last_reviewed_at ASC
+		 LIMIT ?`,
+		user, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var notes []Note
+	for rows.Next() {
+		var n Note
+		if err := rows.Scan(&n.ID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt); err != nil {
+			return nil, err
+		}
+		notes = append(notes, n)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(notes) == 0 {
+		return []Note{}, nil
+	}
+	return s.fillTags(notes)
+}
+
+// HardMarkMap 批量查询指定笔记在当前用户下是否被标记为困难。
+// ids 为空时直接返回空 map，不查库。返回 map 中仅包含 is_hard=1 的 note_id。
+func (s *Store) HardMarkMap(ids []int64, user string) (map[int64]bool, error) {
+	out := make(map[int64]bool)
+	if len(ids) == 0 {
+		return out, nil
+	}
+	u := NormalizeUser(user)
+	placeholders := make([]string, 0, len(ids))
+	args := make([]interface{}, 0, len(ids)+1)
+	args = append(args, u)
+	for _, id := range ids {
+		placeholders = append(placeholders, "?")
+		args = append(args, id)
+	}
+	query := "SELECT note_id FROM reviews WHERE user_id=? AND is_hard=1 AND note_id IN (" +
+		strings.Join(placeholders, ",") + ")"
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
+// TagMastery 表示某标签下的复习掌握度统计。
+type TagMastery struct {
+	Tag   string  `json:"tag"`
+	Total int     `json:"total"`
+	AvgEF float64 `json:"avgEf"`
+	Hard  int     `json:"hard"`
+	Due   int     `json:"due"`
+}
+
+// ReviewMastery 按标签聚合当前用户的复习掌握度。
+// 口径：INNER JOIN reviews，只统计该用户有复习记录的卡片；无标签笔记不计入；
+// Total=0 的标签不出现。按 Total DESC 排序。
+func (s *Store) ReviewMastery(today time.Time, user string) ([]TagMastery, error) {
+	u := NormalizeUser(user)
+	todayStr := dateOnly(today)
+	rows, err := s.db.Query(`
+SELECT t.name,
+       COUNT(DISTINCT r.note_id) AS total,
+       AVG(r.ef) AS avg_ef,
+       SUM(r.is_hard) AS hard,
+       SUM(CASE WHEN r.due_date <= ? THEN 1 ELSE 0 END) AS due
+FROM tags t
+JOIN note_tags nt ON nt.tag_id = t.id
+JOIN notes n ON n.id = nt.note_id
+JOIN reviews r ON r.note_id = n.id AND r.user_id = ?
+GROUP BY t.id, t.name
+HAVING COUNT(DISTINCT r.note_id) > 0
+ORDER BY total DESC, t.name ASC
+`, todayStr, u)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := []TagMastery{}
+	for rows.Next() {
+		var m TagMastery
+		if err := rows.Scan(&m.Tag, &m.Total, &m.AvgEF, &m.Hard, &m.Due); err != nil {
+			return nil, err
+		}
+		m.AvgEF = math.Round(m.AvgEF*100) / 100
+		out = append(out, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

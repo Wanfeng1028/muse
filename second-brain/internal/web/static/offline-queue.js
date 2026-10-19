@@ -5,7 +5,9 @@
  * 记录：{ id, method, url, headers, body, enqueuedAt }（body 为字符串或 null）
  *
  * ⚠️ 幂等诚实声明（务必阅读）：
- *   后端 POST /api/notes 没有客户端幂等键。因此「离线新建笔记」在联网回放时
+ *   2026-10-20 起后端 POST /api/notes 支持客户端幂等键 clientNoteId（P1-6 已偿还），
+ *   入队时自动注入；回放重复提交时服务端按幂等键去重，不再产生重复笔记。
+ *   此前："后端没有客户端幂等键。因此「离线新建笔记」在联网回放时
  *   会在服务端生成一个【全新的 id】，与离线期间本地临时使用的任何 id 无关，
  *   也无法保证不产生重复笔记。若同一份离线数据被回放两次，就会重复创建。
  *   相比之下，PUT /api/notes/{id}、DELETE /api/notes/{id}、POST /api/review/{id}
@@ -154,11 +156,24 @@
     if (!method) return Promise.reject(new TypeError('enqueue(op): method 必填'));
     if (!url) return Promise.reject(new TypeError('enqueue(op): url 必填'));
 
+    // P1-6：离线新建笔记在入队时生成客户端幂等键，回放重复提交时服务端去重。
+    var bodyStr = normalizeBody(op.body);
+    if (method === 'POST' && /^\/api\/notes(\?|$)/.test(String(url)) && typeof bodyStr === 'string') {
+      try {
+        var bodyObj = JSON.parse(bodyStr);
+        if (bodyObj && typeof bodyObj === 'object' && !bodyObj.clientNoteId) {
+          bodyObj.clientNoteId = (window.crypto && window.crypto.randomUUID)
+            ? window.crypto.randomUUID()
+            : ('cid-' + Date.now() + '-' + Math.floor(Math.random() * 1e9));
+          bodyStr = JSON.stringify(bodyObj);
+        }
+      } catch (e) { /* 非 JSON body，原样入队 */ }
+    }
     var record = {
       method: method,
       url: String(url),
       headers: normalizeHeaders(op.headers),
-      body: normalizeBody(op.body),
+      body: bodyStr,
       enqueuedAt: Date.now()
     };
 

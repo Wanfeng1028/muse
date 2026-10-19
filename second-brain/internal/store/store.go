@@ -22,13 +22,14 @@ var ErrNotFound = errors.New("note not found")
 
 // Note 数据模型。
 type Note struct {
-	ID        int64    `json:"id"`
-	Title     string   `json:"title"`
-	Body      string   `json:"body"`
-	Tags      []string `json:"tags"`
-	Pinned    bool     `json:"pinned"`
-	CreatedAt string   `json:"createdAt"`
-	UpdatedAt string   `json:"updatedAt"`
+	ID           int64    `json:"id"`
+	Title        string   `json:"title"`
+	Body         string   `json:"body"`
+	Tags         []string `json:"tags"`
+	Pinned       bool     `json:"pinned"`
+	CreatedAt    string   `json:"createdAt"`
+	UpdatedAt    string   `json:"updatedAt"`
+	ClientNoteID string   `json:"clientNoteId,omitempty"`
 }
 
 // TagCount 标签及其笔记数量。
@@ -125,7 +126,8 @@ func createSchema(db *sql.DB) error {
 			body TEXT NOT NULL DEFAULT '',
 			pinned INTEGER NOT NULL DEFAULT 0,
 			created_at TEXT NOT NULL,
-			updated_at TEXT NOT NULL
+			updated_at TEXT NOT NULL,
+			client_note_id TEXT
 		)`,
 		`CREATE TABLE IF NOT EXISTS tags (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -151,6 +153,7 @@ func createSchema(db *sql.DB) error {
 			due_date TEXT NOT NULL,
 			last_reviewed_at TEXT,
 			reviewed_count INTEGER NOT NULL DEFAULT 0,
+			is_hard INTEGER NOT NULL DEFAULT 0,
 			PRIMARY KEY (note_id, user_id)
 		)`,
 		`CREATE TABLE IF NOT EXISTS attachments (
@@ -242,6 +245,21 @@ func (s *Store) CreateNote(n Note) (Note, error) {
 // CreateNoteFor 创建笔记，复习行归属指定用户。ctx 用于携带 request_id 做全链路日志。
 func (s *Store) CreateNoteFor(ctx context.Context, n Note, user string) (Note, error) {
 	user = NormalizeUser(user)
+	// P1-6：客户端幂等键。离线回放重复提交同一 clientNoteId 时直接返回已建笔记，
+	// 不产生重复行。键长度上限 64。
+	if n.ClientNoteID != "" {
+		if len(n.ClientNoteID) > 64 {
+			return Note{}, fmt.Errorf("clientNoteId 过长")
+		}
+		var existingID int64
+		err := s.db.QueryRow(`SELECT id FROM notes WHERE client_note_id = ?`, n.ClientNoteID).Scan(&existingID)
+		if err == nil {
+			return s.GetNote(existingID)
+		}
+		if err != sql.ErrNoRows {
+			return Note{}, err
+		}
+	}
 	now := nowRFC3339()
 	n.CreatedAt = now
 	n.UpdatedAt = now
@@ -259,8 +277,8 @@ func (s *Store) CreateNoteFor(ctx context.Context, n Note, user string) (Note, e
 	defer tx.Rollback()
 
 	res, err := tx.Exec(
-		`INSERT INTO notes(title, body, pinned, created_at, updated_at) VALUES(?,?,?,?,?)`,
-		n.Title, n.Body, pinned, n.CreatedAt, n.UpdatedAt,
+		`INSERT INTO notes(title, body, pinned, created_at, updated_at, client_note_id) VALUES(?,?,?,?,?,?)`,
+		n.Title, n.Body, pinned, n.CreatedAt, n.UpdatedAt, nullIfEmpty(n.ClientNoteID),
 	)
 	if err != nil {
 		return Note{}, err

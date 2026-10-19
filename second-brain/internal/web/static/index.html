@@ -42,6 +42,7 @@
             <span id="review-badge" class="nav-badge">0</span>
           </button>
         </li>
+        <li><button id="nav-stats" class="nav-item" type="button">复习统计</button></li>
         <li><button id="nav-push" class="nav-item" type="button">推送设置</button></li>
       </ul>
     </nav>
@@ -143,6 +144,7 @@
           <p id="review-snippet" class="review-snippet">新建一些笔记，它们会按记忆节奏出现在这里。</p>
           <div id="review-tags" class="review-tags"></div>
           <button id="btn-flip" class="btn btn-primary" type="button">翻面看全文</button>
+          <button id="btn-hard-toggle" class="hard-toggle" type="button" aria-pressed="false">标记为困难</button>
         </div>
         <div id="review-back" class="review-face" hidden>
           <div class="review-face-label">背面</div>
@@ -171,9 +173,51 @@
       </div>
 
       <div id="review-done" class="review-done" hidden>
+        <div class="review-face-label">今日完成</div>
         <h3 id="review-done-text">今天的复习做完了。</h3>
+        <div class="done-stats">
+          <div class="done-stat">
+            <span class="done-num" id="done-num-reviewed">0</span>
+            <span class="done-label">复习篇数</span>
+          </div>
+          <div class="done-stat">
+            <span class="done-num" id="done-num-hard">0</span>
+            <span class="done-label">标记困难</span>
+          </div>
+          <div class="done-stat">
+            <span class="done-num" id="done-num-streak">0</span>
+            <span class="done-label">连续天数</span>
+          </div>
+          <div class="done-stat">
+            <span class="done-num" id="done-num-week">0</span>
+            <span class="done-label">近 7 天复习</span>
+          </div>
+        </div>
+        <p class="done-hint" id="review-done-hint"></p>
         <button id="btn-digest" class="btn btn-primary" type="button">再看一遍今日回顾</button>
       </div>
+    </div>
+
+    <div id="stats-view" class="stats-view" hidden>
+      <div class="review-header">
+        <h2>复习统计</h2>
+        <button id="btn-stats-close" class="btn btn-secondary" type="button">返回</button>
+      </div>
+      <section class="stats-section">
+        <h3>近 7 天趋势</h3>
+        <canvas id="trend-canvas" class="trend-canvas" height="180"></canvas>
+        <p class="stats-empty" id="trend-empty" hidden>最近 7 天还没有复习记录。</p>
+      </section>
+      <section class="stats-section">
+        <h3>各科掌握度</h3>
+        <table class="mastery-table" id="mastery-table">
+          <thead>
+            <tr><th>标签</th><th>卡片</th><th>平均 EF</th><th>困难</th><th>今日到期</th></tr>
+          </thead>
+          <tbody id="mastery-tbody"></tbody>
+        </table>
+        <p class="stats-empty" id="mastery-empty" hidden>还没有带标签的复习卡片。</p>
+      </section>
     </div>
 
     <div id="push-view" class="push-view" hidden>

@@ -901,6 +901,27 @@ code {
 
 .review-card .btn { align-self: flex-start; }
 
+/* 困难标记切换钮：默认描边态，已标记时填色态；无 emoji、无渐变 */
+.hard-toggle {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--text-3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.hard-toggle:hover { color: var(--text); border-color: var(--text-3); }
+.hard-toggle:disabled { opacity: 0.5; cursor: default; }
+.hard-toggle.is-hard {
+  color: #fff;
+  background: #b3261e;
+  border-color: #b3261e;
+}
+.hard-toggle.is-hard:hover { color: #fff; background: #9c1f18; }
+
 /* ---------- Review grading ---------- */
 
 .review-grading {
@@ -997,6 +1018,39 @@ code {
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
+}
+
+.done-stats {
+  display: flex;
+  gap: 28px;
+  margin: 6px 0 2px;
+}
+.done-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 64px;
+}
+.done-num {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.done-label {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.done-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.done-hint:empty { display: none; }
+@media (max-width: 520px) {
+  .done-stats { gap: 18px; }
+  .done-num { font-size: 24px; }
 }
 
 /* ---------- Graph view ---------- */
@@ -1603,4 +1657,67 @@ code {
   margin-top: 6px;
   font-size: 12px;
   color: var(--text-3);
+}
+
+/* ---------- 复习统计视图 ---------- */
+.stats-view {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 22px;
+  max-width: 860px;
+}
+.stats-section h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.trend-canvas {
+  width: 100%;
+  height: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.stats-empty {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.mastery-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.mastery-table th,
+.mastery-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.mastery-table th {
+  font-weight: 600;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.mastery-table tr:last-child td { border-bottom: none; }
+.ef-bar {
+  display: inline-block;
+  width: 80px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.ef-fill {
+  display: block;
+  height: 100%;
+  background: #2b7de9;
+  border-radius: 3px;
 }

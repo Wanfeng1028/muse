@@ -338,9 +338,21 @@ SM-2 四档说明：
 
 ![翻面全文](docs/screenshots/review-back.png)
 
-完成态：
+完成态（v0.15 数据面板）：
 
 ![完成态](docs/screenshots/review-done.png)
+
+困难标记按钮（v0.15）：
+
+![抽认卡困难标记](docs/screenshots/review-card.png)
+
+复习统计页（v0.15）：
+
+![复习统计](docs/screenshots/review-stats.png)
+
+知识图谱（v0.15 力导向布局）：
+
+![知识图谱](docs/screenshots/graph.png)
 
 反向链接面板（v0.5.0）：
 
