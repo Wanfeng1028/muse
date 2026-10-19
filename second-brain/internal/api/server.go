@@ -229,6 +229,16 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 		if terms == nil {
 			terms = []string{}
 		}
+		fallback := false
+		if len(ranked) == 0 && len(terms) >= 2 {
+			notesAny, err2 := st.SearchNotesAny(q)
+			if err2 != nil {
+				writeError(w, r, http.StatusInternalServerError, err2.Error())
+				return
+			}
+			ranked = search.RankOr(notesAny, q, 0)
+			fallback = len(ranked) > 0
+		}
 		outNotes := make([]store.Note, 0, len(ranked))
 		meta := make([]map[string]any, 0, len(ranked))
 		for _, rn := range ranked {
@@ -267,10 +277,11 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"query": q,
-			"terms": terms,
-			"notes": outNotes,
-			"meta":  meta,
+			"query":    q,
+			"terms":    terms,
+			"notes":    outNotes,
+			"meta":     meta,
+			"fallback": fallback,
 		})
 	})
 

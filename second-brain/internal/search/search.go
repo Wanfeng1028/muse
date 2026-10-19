@@ -363,6 +363,8 @@ type RankedNote struct {
 	Note    store.Note
 	Score   float64
 	Matches []Match
+	// HitCount 表示 OR 语义下命中的查询词个数；AND 路径填 len(terms)。
+	HitCount int
 }
 
 // RankDetailed 按 ScoreDetailed 降序稳定排序，过滤 0 分。
@@ -388,6 +390,34 @@ type orTokenScore struct {
 	matches  []Match
 }
 
+// RankOr 按 OR 语义对笔记排序：任一 token 命中即收录，
+// 先按 HitCount 降序、再按 Score 降序稳定排序；limit>0 时截断。
+// HitCount 直接写入 RankedNote.HitCount，避免外部用原索引做 key 造成错位。
+func RankOr(notes []store.Note, query string, limit int) []RankedNote {
+	tokens := Tokenize(query)
+	if len(tokens) == 0 {
+		return nil
+	}
+	items := make([]RankedNote, 0, len(notes))
+	for _, n := range notes {
+		s, hits, m := orScore(n.Title, n.Body, n.Tags, tokens)
+		if s <= 0 {
+			continue
+		}
+		items = append(items, RankedNote{Note: n, Score: s, Matches: m, HitCount: hits})
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		if items[i].HitCount != items[j].HitCount {
+			return items[i].HitCount > items[j].HitCount
+		}
+		return items[i].Score > items[j].Score
+	})
+	if limit > 0 && len(items) > limit {
+		items = items[:limit]
+	}
+	return items
+}
+
 // orScore 对单条笔记按 OR 语义打分：对每个 token 单独调用 ScoreDetailed，
 // 命中即计入（分数>0），并累加命中 token 数。标题命中额外加权。
 func orScore(title, body string, tags []string, tokens []string) (float64, int, []Match) {
@@ -410,7 +440,7 @@ func orScore(title, body string, tags []string, tokens []string) (float64, int, 
 }
 
 // SearchWithFallback 先按 AND 语义搜索（Rank）；结果为空且 query 分词后 token 数>=2 时，
-// 改用 OR 语义重搜（任一 token 命中即收），并按命中 token 数降序、标题命中加权排序。
+// 改用 OR 语义重搜（任一 token 命中即收），委托给 RankOr 排序。
 func SearchWithFallback(notes []store.Note, query string, limit int) []RankedNote {
 	tokens := Tokenize(query)
 	if len(tokens) > 0 {
@@ -427,7 +457,7 @@ func SearchWithFallback(notes []store.Note, query string, limit int) []RankedNot
 			}
 			if ok {
 				s, m := ScoreDetailed(n.Title, n.Body, n.Tags, query)
-				and = append(and, RankedNote{Note: n, Score: s, Matches: m})
+				and = append(and, RankedNote{Note: n, Score: s, Matches: m, HitCount: len(tokens)})
 			}
 		}
 		if len(and) > 0 {
@@ -441,28 +471,5 @@ func SearchWithFallback(notes []store.Note, query string, limit int) []RankedNot
 	if len(tokens) < 2 {
 		return nil
 	}
-	items := make([]RankedNote, 0, len(notes))
-	hitCounts := make(map[int]int, len(notes))
-	for i, n := range notes {
-		s, hits, m := orScore(n.Title, n.Body, n.Tags, tokens)
-		if s <= 0 {
-			continue
-		}
-		items = append(items, RankedNote{Note: n, Score: s, Matches: m})
-		hitCounts[i] = hits
-	}
-	sort.SliceStable(items, func(i, j int) bool {
-		if hitCounts[i] != hitCounts[j] {
-			return hitCounts[i] > hitCounts[j]
-		}
-		return items[i].Score > items[j].Score
-	})
-	out := make([]RankedNote, 0, len(items))
-	for _, it := range items {
-		out = append(out, it)
-		if limit > 0 && len(out) >= limit {
-			break
-		}
-	}
-	return out
+	return RankOr(notes, query, limit)
 }

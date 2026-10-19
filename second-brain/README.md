@@ -251,7 +251,7 @@ docker run -d -p 8080:8080 -v sb-data:/data second-brain
 | GET | `/api/health` | 健康检查，返回服务与数据库状态 |
 | GET/POST | `/api/notes` | 列出或创建笔记 |
 | GET/PUT/DELETE | `/api/notes/{id}` | 读取、更新、删除单条笔记 |
-| GET | `/api/search?q=` | 全文搜索，返回 `{"query","terms","notes","meta"}`（meta 含 score 与命中字段：标题/标签/正文），按相关性排序。v0.8.0 起响应体由数组改为对象；v0.14+ 支持 `?format=legacy` 返回旧数组形状（给老客户端兼容用），非法 format 值返回 400 |
+| GET | `/api/search?q=` | 全文搜索，返回 `{"query","terms","notes","meta"}`（meta 含 score 与命中字段：标题/标签/正文），按相关性排序。v0.8.0 起响应体由数组改为对象；v0.14+ 支持 `?format=legacy` 返回旧数组形状（给老客户端兼容用），非法 format 值返回 400；v0.15+ 多词查询 AND 无结果时自动降级 OR 语义召回（响应含 "fallback": true，legacy 格式同样生效） |
 | GET | `/api/tags` | 标签列表及计数 |
 | GET | `/api/stats` | 统计概览 |
 | GET | `/api/graph` | 知识图谱节点与边 |

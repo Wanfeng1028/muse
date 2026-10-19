@@ -1,6 +1,6 @@
 # 技术债清单（2026-10-16 快照）
 
-> 状态更新：2026-10-19 复核，P0-1、P1-1~P1-4、P2-1、P2-8、P2-9 确认已交付；P2-6 本轮交付。P1-5 待 gh token 补 workflow 权限；P1-6、P2-5 待确认；P2-2/P2-3/P2-4 为平台限制。
+> 状态更新：2026-10-19 复核，P0-1、P1-1~P1-4、P2-1、P2-8、P2-9 确认已交付；P2-6 本轮交付；P2-7 当晚深耕轮交付。P1-5 待 gh token 补 workflow 权限；P1-6、P2-5 待确认；P2-2/P2-3/P2-4 为平台限制。
 
 ## P0（影响发版/生产）
 
@@ -29,7 +29,7 @@
 | P2-4 | Web Push / iOS | iOS 需 16.4+ 且已安装到主屏幕才能用推送 | 低版本或未装到主屏幕的 iOS 用户收不到推送 | 待确认 | v0.10 已知限制："iOS 需 16.4+ 且已安装到主屏幕" |
 | P2-5 | Web Push | 无到期复习时不推送 | 用户当天没到期内容就收不到任何提醒 | 待确认 | v0.10 已知限制："无到期复习时不推送" |
 | P2-6 | 搜索 | CJK 仍逐字切分 | 中文搜索切分粒度粗，可能影响召回/排序 | ✅ 2026-10-19 交付：Tokenize 已接入 SegmentCJK 词典分词（internal/search/search.go） | v0.8.0 已知边界："CJK 仍逐字切分、多词 AND 语义" |
-| P2-7 | 搜索 | 多词查询是 AND 语义 | 多词查询结果偏严，漏召回 | 待确认 | v0.8.0 已知边界："CJK 仍逐字切分、多词 AND 语义" |
+| P2-7 | 搜索 | 多词查询是 AND 语义 | 多词查询结果偏严，漏召回 | ✅ 2026-10-19 晚深耕轮交付：`GET /api/search` AND 无结果且分词≥2 时自动降级 OR 语义（`search.RankOr` + `store.SearchNotesAny`，响应 `"fallback": true`，`?format=legacy` 同样生效）；顺带修复 `SearchWithFallback` 的 hitCounts 排序错位真 bug（RankedNote 新增 HitCount 字段），回归测试 `TestRankOrHitCountRegression3` 已验证旧实现确会错排 | v0.8.0 已知边界："CJK 仍逐字切分、多词 AND 语义" |
 | P2-8 | 搜索 API | `GET /api/search` 响应体数组改对象 `{query,terms,notes,meta}`，是不兼容变更 | 旧客户端按数组解析会坏 | ✅ 已交付（2026-10-19 核实）。证据 v0.14，GET /api/search?format=legacy（internal/api/server.go）。已在 v0.14 交付：`?format=legacy` 返回旧数组形状，默认仍为对象 | v0.8.0："响应体数组→对象 `{query,terms,notes,meta}`（不兼容变更，已标注）" |
 
 | P2-9 | 推送聚合 | 定时推送暂按默认 `local` 用户聚合 | 非 `local` 用户的定时推送行为与预期不一致 | ✅ 已交付（2026-10-19 核实）。证据 v0.9，internal/push/scheduler.go RunPushForUser。后续计划支持按用户推送（v0.9 已做按用户推送，此项为 v0.6 当时描述） | v0.6.0："定时推送暂按默认 `local` 用户聚合（后续计划支持按用户推送）" |

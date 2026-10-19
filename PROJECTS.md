@@ -119,6 +119,7 @@
 - **v0.14 后续批（2026-10-18，已合入）**：`docs/ERROR_HANDLING.md`（还 v0.12 未通过：重试策略/幂等清单/降级清单/fail-fast/未覆盖缺口诚实列出）；推送测试通道包 `push.WrapWithRetry`（调度器早有，`POST /api/push/test` 此前直连，一次抖动即误报）+ `push_retry_test.go` 3 例 API 集成测试（重试后成功/耗尽/4xx 不重试）；告警 `SecondBrainUserDueBacklog`（某用户待复习 >20 篇持续 1h，severity info，OPERATIONS 告警一览更新为 7 条）；README 搜索 API 行补充 `?format=legacy`；`go test ./...` 全绿；真服务冒烟（reviews_due_by_user{user="local"}、legacy 数组、非法 format 400、schema_version=2）
 
 - **深耕轮 2026-10-19 晚（已合入）**：attachments/export/push/review/search/metrics 六包 deep2 纵深测试；search_cjk_boundary 深测验证通过。
+- **深耕轮 2026-10-19 深夜·搜索/复习/图谱三纵深（已合入）**：①搜索 P2-7 收尾——`GET /api/search` AND 无结果且分词≥2 时自动降级 OR 语义（新增 `search.RankOr` + `store.SearchNotesAny`，响应 `"fallback": true`，`?format=legacy` 同样生效；README 已同步）；**修真 bug**：`SearchWithFallback` 的 hitCounts 用追加前原索引做 key、原地 sort 后比较错位（RankedNote 新增 HitCount 字段根治），回归测试 `TestRankOrHitCountRegression3` 用 3 元素用例实证旧实现确会错排（旧 [2,1,3] vs 新 [2,3,1]）；②复习引擎纵深——`sm2_deep4_test.go`（连续 10 次忘记 EF 不降/间隔恒 1、EF 下限 1.3 钳制、连续简单单调增长、非法评分原样返回、闰日 2028-02-29/时区 Asia/Shanghai 边界）+ `review_deep3_test.go` 真实 HTTP（到期队列 due_date ASC 确定性、limit 0/999 边界、跨用户评分互不污染、非法 grade 400/404）；③图谱边界——`graph_deep3_test.go`（环保留双边/自引用跳过/重复边去重/悬空链接无边/大小写不敏感/空库/标签附着）+ api 三例（空库 `[]` 非 null）。`go test ./...` 10 包全绿，`-race` 抽跑 search/review 通过，`go vet`/`gofmt` 全洁；真实进程冒烟（OR 降级 fallback=true、legacy 数组、AND 不降级、graph、review queue）全通。TECH_DEBT.md P2-7 标已交付。
 
 ## drama-factory「AI 短剧工坊」
 

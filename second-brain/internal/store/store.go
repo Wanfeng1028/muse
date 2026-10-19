@@ -507,6 +507,61 @@ func (s *Store) SearchNotes(q string) ([]Note, error) {
 	return notes, nil
 }
 
+// SearchNotesAny 与 SearchNotes 逻辑相同，唯一区别是多词之间用 OR 连接：
+// 任一字段命中任一查询词即返回该笔记。供多词查询 AND 无结果时的 OR 降级使用。
+func (s *Store) SearchNotesAny(q string) ([]Note, error) {
+	fields := strings.Fields(q)
+	clauses := []string{}
+	args := []interface{}{}
+	for _, f := range fields {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		like := "%" + f + "%"
+		clauses = append(clauses, "(title LIKE ? OR body LIKE ? OR EXISTS (SELECT 1 FROM note_tags nt JOIN tags t ON t.id = nt.tag_id WHERE nt.note_id = notes.id AND t.name LIKE ?))")
+		args = append(args, like, like, like)
+	}
+
+	query := `SELECT id, title, body, pinned, created_at, updated_at FROM notes`
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " OR ")
+	}
+	query += " ORDER BY pinned DESC, updated_at DESC"
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	notes := []Note{}
+	ids := []int64{}
+	for rows.Next() {
+		n, err := scanNote(rows)
+		if err != nil {
+			return nil, err
+		}
+		notes = append(notes, n)
+		ids = append(ids, n.ID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	tagMap, err := s.tagsForNotes(ids)
+	if err != nil {
+		return nil, err
+	}
+	for i := range notes {
+		if t, ok := tagMap[notes[i].ID]; ok {
+			notes[i].Tags = t
+		} else {
+			notes[i].Tags = []string{}
+		}
+	}
+	return notes, nil
+}
+
 // ListTags 列出所有标签及数量。
 func (s *Store) ListTags() ([]TagCount, error) {
 	rows, err := s.db.Query(
