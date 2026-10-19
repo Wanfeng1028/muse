@@ -1,5 +1,5 @@
 # 构建阶段：使用 Rust 官方镜像编译 release 版本
-FROM rust:1.83-slim AS build
+FROM rust:1.98-slim AS build
 WORKDIR /src
 
 # 先复制清单文件并创建占位源文件，以便缓存依赖下载与编译层
