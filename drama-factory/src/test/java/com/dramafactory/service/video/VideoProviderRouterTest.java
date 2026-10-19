@@ -18,6 +18,7 @@ import com.dramafactory.model.Shot;
 class VideoProviderRouterTest {
 
     private static final String AGNES = "agnes";
+    private static final String MINIMAX = "minimax";
     private static final String NOVAI = "novai";
     private static final String DOUBAO = "doubao";
     private static final String PAINTED = "painted";
@@ -94,8 +95,8 @@ class VideoProviderRouterTest {
         VideoProviderRouter router = new VideoProviderRouter(contextWithAll(), environmentWithPreferred(AGNES), null);
 
         // 2026-10-16 起 qwen 因额度耗尽摘除；本地兜底通道 htmlrender/painted 仍在
-        // DEFAULT_ORDER，链：agnes → novai → doubao → htmlrender → painted
-        assertEquals(List.of(AGNES, NOVAI, DOUBAO, "htmlrender", PAINTED), router.chain());
+        // DEFAULT_ORDER，链：agnes → minimax → novai → doubao → htmlrender → painted
+        assertEquals(List.of(AGNES, MINIMAX, NOVAI, DOUBAO, "htmlrender", PAINTED), router.chain());
     }
 
     @Test
@@ -121,6 +122,8 @@ class VideoProviderRouterTest {
         ApplicationContext ctx = mock(ApplicationContext.class);
         when(ctx.getBean("agnesVideoProvider", VideoProvider.class))
                 .thenReturn(failingProvider(AGNES, new RateLimitedException("agnes 限流", 60)));
+        when(ctx.getBean("miniMaxH3VideoProvider", VideoProvider.class))
+                .thenReturn(failingProvider(MINIMAX, new RateLimitedException("minimax 限流", 60)));
         when(ctx.getBean("novAiVideoProvider", VideoProvider.class)).thenReturn(successProvider(NOVAI));
         when(ctx.getBean("doubaoEmailVideoProvider", VideoProvider.class)).thenReturn(successProvider(DOUBAO));
         when(ctx.getBean("mockVideoProvider", VideoProvider.class)).thenReturn(successProvider(MOCK));
@@ -144,6 +147,8 @@ class VideoProviderRouterTest {
         ApplicationContext ctx = mock(ApplicationContext.class);
         when(ctx.getBean("agnesVideoProvider", VideoProvider.class))
                 .thenReturn(failingProvider(AGNES, new RuntimeException("agnes 调用超时（TimeLimiter）")));
+        when(ctx.getBean("miniMaxH3VideoProvider", VideoProvider.class))
+                .thenReturn(failingProvider(MINIMAX, new RuntimeException("minimax 调用超时")));
         when(ctx.getBean("novAiVideoProvider", VideoProvider.class)).thenReturn(successProvider(NOVAI));
         when(ctx.getBean("doubaoEmailVideoProvider", VideoProvider.class)).thenReturn(successProvider(DOUBAO));
         when(ctx.getBean("mockVideoProvider", VideoProvider.class)).thenReturn(successProvider(MOCK));
@@ -160,6 +165,8 @@ class VideoProviderRouterTest {
         ApplicationContext ctx = mock(ApplicationContext.class);
         when(ctx.getBean("agnesVideoProvider", VideoProvider.class))
                 .thenReturn(failingProvider(AGNES, new RuntimeException("boom")));
+        when(ctx.getBean("miniMaxH3VideoProvider", VideoProvider.class))
+                .thenReturn(failingProvider(MINIMAX, new RuntimeException("boom2")));
         when(ctx.getBean("novAiVideoProvider", VideoProvider.class)).thenReturn(successProvider(NOVAI));
         when(ctx.getBean("doubaoEmailVideoProvider", VideoProvider.class)).thenReturn(successProvider(DOUBAO));
         when(ctx.getBean("mockVideoProvider", VideoProvider.class)).thenReturn(successProvider(MOCK));

@@ -17,6 +17,12 @@ public class ShotVideoRouter {
             return preferred;
         }
 
+        // H3 原生带立体声音轨：台词量大的分镜优先走 minimax，对白不用再单独配音
+        String dialogue = shot.getDialogue();
+        if (dialogue != null && dialogue.strip().length() >= 10) {
+            return "minimax";
+        }
+
         String videoPrompt = shot.getVideoPrompt();
         String description = shot.getDescription();
         if (videoPrompt == null && description == null) {

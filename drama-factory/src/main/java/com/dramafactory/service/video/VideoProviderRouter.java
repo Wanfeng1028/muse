@@ -16,7 +16,7 @@ public class VideoProviderRouter {
 
     private static final Logger log = LoggerFactory.getLogger(VideoProviderRouter.class);
 
-    private static final List<String> DEFAULT_ORDER = List.of("agnes", "novai", "doubao", "htmlrender", "painted");
+    private static final List<String> DEFAULT_ORDER = List.of("agnes", "minimax", "novai", "doubao", "htmlrender", "painted");
     private static final String MOCK = "mock";
 
     private final ApplicationContext applicationContext;
@@ -117,6 +117,15 @@ public class VideoProviderRouter {
         if ("agnes".equals(name)) {
 
             return applicationContext.getBean("agnesVideoProvider", VideoProvider.class);
+        }
+        if ("minimax".equals(name)) {
+            return applicationContext.getBean("miniMaxH3VideoProvider", VideoProvider.class);
+        }
+        if ("comfyui".equals(name)) {
+            return applicationContext.getBean("localH3VideoProvider", VideoProvider.class);
+        }
+        if ("local-h3".equals(name)) {
+            return applicationContext.getBean("localH3VideoProvider", VideoProvider.class);
         }
         if ("qwen".equals(name)) {
             return applicationContext.getBean("qwenVideoProvider", VideoProvider.class);
