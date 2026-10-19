@@ -261,6 +261,93 @@ public class CinematographyVocabulary {
     }
 
     /**
+     * 查询光线中文标签对应的英文术语。
+     *
+     * @param zhLabel 中文标签（会先 trim）
+     * @return 匹配的英文术语；找不到返回 {@link Optional#empty()}
+     */
+    public Optional<String> englishLighting(String zhLabel) {
+        return lookupZh(lighting, zhLabel);
+    }
+
+    /**
+     * 查询构图中文标签对应的英文术语。
+     *
+     * @param zhLabel 中文标签（会先 trim）
+     * @return 匹配的英文术语；找不到返回 {@link Optional#empty()}
+     */
+    public Optional<String> englishComposition(String zhLabel) {
+        return lookupZh(composition, zhLabel);
+    }
+
+    /**
+     * 在 zh/en 条目列表中按中文标签精确匹配。
+     *
+     * @param entries 条目列表
+     * @param zhLabel 中文标签
+     * @return 英文术语；找不到返回 empty
+     */
+    private static Optional<String> lookupZh(List<ZhEntry> entries, String zhLabel) {
+        if (zhLabel == null) {
+            return Optional.empty();
+        }
+        String trimmed = zhLabel.trim();
+        if (trimmed.isEmpty()) {
+            return Optional.empty();
+        }
+        for (ZhEntry e : entries) {
+            if (trimmed.equals(e.zh)) {
+                return Optional.ofNullable(e.en);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 按 camera → movement → subject → lighting → style 五层顺序组装分镜英文 prompt。
+     *
+     * <p>各层取自本词表：景别与运镜用中文标签查英文术语，光线用中文标签查英文术语；
+     * 查不到的标签该层直接跳过，绝不编造英文。空层跳过，非空层之间用 ". " 连接。</p>
+     *
+     * @param shotSizeLabel   景别中文标签，可为 null/空
+     * @param cameraMoveLabel 运镜中文标签，可为 null/空
+     * @param subject         主体描述（中文或英文原文），可为 null/空
+     * @param textureKeywords 质感关键词列表，可为 null/空，拼接到主体层之后
+     * @param lightingLabel   光线中文标签，可为 null/空
+     * @param styleHint       风格提示，可为 null/空，会以 "Style: " 前缀拼接到末层
+     * @return 组装后的 prompt；全部为空时返回空串
+     */
+    public String buildShotPrompt(String shotSizeLabel, String cameraMoveLabel,
+                                  String subject, List<String> textureKeywords,
+                                  String lightingLabel, String styleHint) {
+        List<String> layers = new ArrayList<>();
+        englishShotSize(shotSizeLabel).ifPresent(layers::add);
+        englishCameraMove(cameraMoveLabel).ifPresent(layers::add);
+        StringBuilder subjectPart = new StringBuilder();
+        if (subject != null && !subject.isBlank()) {
+            subjectPart.append(subject.trim());
+        }
+        if (textureKeywords != null) {
+            for (String keyword : textureKeywords) {
+                if (keyword != null && !keyword.isBlank()) {
+                    if (subjectPart.length() > 0) {
+                        subjectPart.append(", ");
+                    }
+                    subjectPart.append(keyword.trim());
+                }
+            }
+        }
+        if (subjectPart.length() > 0) {
+            layers.add(subjectPart.toString());
+        }
+        englishLighting(lightingLabel).ifPresent(layers::add);
+        if (styleHint != null && !styleHint.isBlank()) {
+            layers.add("Style: " + styleHint.trim());
+        }
+        return String.join(". ", layers);
+    }
+
+    /**
      * 获取词表版本号。
      *
      * @return 版本号

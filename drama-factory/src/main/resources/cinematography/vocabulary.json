@@ -1,20 +1,29 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "shotSize": [
     {"label": "特写", "en": "close-up", "alt": ["extreme close-up"], "note": "Use for tight facial detail or a single object that carries strong emotion."},
     {"label": "近景", "en": "medium close-up", "note": "Use for dialogue-driven beats where the character's face and upper body fill the frame."},
     {"label": "中景", "en": "medium shot", "note": "Use as the workhorse framing for conversations and everyday action."},
     {"label": "全景", "en": "wide shot", "alt": ["full shot"], "note": "Use to show a character's whole body within their surroundings."},
-    {"label": "远景", "en": "extreme long shot", "note": "Use to establish a location or emphasize scale and isolation."}
+    {"label": "远景", "en": "extreme long shot", "note": "Use to establish a location or emphasize scale and isolation."},
+    {"label": "大远景", "en": "extreme wide shot", "note": "Use for vast environments where the landscape itself is the subject."},
+    {"label": "建立镜头", "en": "establishing shot", "note": "Use once per location to orient the viewer before cutting closer."},
+    {"label": "过肩镜头", "en": "over-the-shoulder shot", "alt": ["OTS shot"], "note": "Use for dialogue to anchor the listener in frame."},
+    {"label": "插入镜头", "en": "insert shot", "note": "Use for a telling detail that punctuates the scene."}
   ],
   "cameraMove": [
     {"label": "固定机位", "en": "static shot", "alt": ["locked-off shot"], "note": "Use for calm, observational moments where the frame should not move."},
     {"label": "推镜头", "en": "push-in", "alt": ["dolly-in"], "note": "Use to build intimacy or tension by moving closer to the subject."},
     {"label": "拉镜头", "en": "pull-back", "alt": ["dolly-out"], "note": "Use to reveal context or create a sense of detachment."},
-    {"label": "摇镜头", "en": "pan", "alt": ["tilt"], "note": "Use to scan a space horizontally or vertically from a fixed position."},
+    {"label": "摇镜头", "en": "pan", "alt": ["tilt", "pan left", "pan right"], "note": "Use to scan a space horizontally or vertically from a fixed position."},
     {"label": "移镜头", "en": "dolly", "alt": ["tracking"], "note": "Use to travel with the subject through space for a fluid feel."},
     {"label": "跟镜头", "en": "tracking shot", "alt": ["follow shot"], "note": "Use to keep pace with a moving character and sustain momentum."},
-    {"label": "升降", "en": "crane shot", "alt": ["crane up", "crane down"], "note": "Use for sweeping vertical reveals or dramatic transitions."}
+    {"label": "升降", "en": "crane shot", "alt": ["crane up", "crane down"], "note": "Use for sweeping vertical reveals or dramatic transitions."},
+    {"label": "手持", "en": "handheld", "alt": ["handheld camera"], "note": "Use for documentary-style immediacy and nervous energy."},
+    {"label": "环绕", "en": "orbital shot", "alt": ["360-degree orbit"], "note": "Use to circle the subject for a dramatic reveal."},
+    {"label": "快速摇镜", "en": "whip pan", "note": "Use a fast pan for abrupt, high-energy transitions."},
+    {"label": "变焦推进", "en": "zoom-in", "note": "Use an in-lens zoom to intensify focus without moving the camera."},
+    {"label": "变焦拉出", "en": "zoom-out", "note": "Use an out-lens zoom to widen context without moving the camera."}
   ],
   "cameraAngle": [
     {"zh": "平视", "en": "eye-level shot", "note": "Neutral, natural perspective aligned with the subject's gaze."},
@@ -31,13 +40,21 @@
     {"zh": "高调", "en": "high-key lighting", "note": "Bright, low-contrast lighting for upbeat or comedic scenes."},
     {"zh": "低调", "en": "low-key lighting", "note": "Dark, high-contrast lighting for mystery or tension."},
     {"zh": "轮廓光", "en": "rim light", "note": "Back light that outlines the subject to separate them from the background."},
-    {"zh": "冷暖色温", "en": "warm/cool color temperature", "note": "Contrast between warm and cool tones to create mood or division."}
+    {"zh": "冷暖色温", "en": "warm/cool color temperature", "note": "Contrast between warm and cool tones to create mood or division."},
+    {"zh": "自然光", "en": "natural light", "note": "Use ambient daylight or practical sources for a realistic feel."},
+    {"zh": "蓝调时刻", "en": "blue hour", "note": "Use cool twilight tones for calm or melancholic transitions."},
+    {"zh": "霓虹", "en": "neon glow", "alt": ["neon-lit"], "note": "Use saturated neon color spill for urban night scenes."},
+    {"zh": "剪影", "en": "silhouette", "alt": ["backlit silhouette"], "note": "Use strong backlight to reduce the subject to a dark shape."},
+    {"zh": "体积光", "en": "volumetric light", "note": "Use visible light rays through haze or dust for atmosphere."},
+    {"zh": "阴天柔光", "en": "soft overcast light", "note": "Use diffused cloudy daylight for even, shadowless exposure."},
+    {"zh": "钨丝暖光", "en": "tungsten warm light", "note": "Use warm interior practicals for cozy night scenes."}
   ],
   "composition": [
     {"zh": "三分法", "en": "rule of thirds", "note": "Place key subjects on the thirds intersections for balance."},
     {"zh": "浅景深", "en": "shallow depth of field", "note": "Isolate the subject with a blurred background."},
     {"zh": "焦点转移", "en": "rack focus", "note": "Shift focus between planes to guide attention."},
     {"zh": "引导线", "en": "leading lines", "note": "Use environmental lines to draw the eye toward the subject."},
-    {"zh": "对称构图", "en": "symmetrical composition", "note": "Mirror elements around a center axis for order or tension."}
+    {"zh": "对称构图", "en": "symmetrical composition", "note": "Mirror elements around a center axis for order or tension."},
+    {"zh": "深景深", "en": "deep focus", "alt": ["deep depth of field"], "note": "Keep foreground and background sharp to show layered action."}
   ]
 }
