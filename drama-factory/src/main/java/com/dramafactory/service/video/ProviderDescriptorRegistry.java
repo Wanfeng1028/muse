@@ -43,6 +43,12 @@ public class ProviderDescriptorRegistry {
     private final Map<String, CachedEntry> cache = new HashMap<>();
 
     /**
+     * id -&gt; 主描述符（按文件名排序取首个）。多个文件声明同一 id 时，
+     * 生效对象必须确定，不能依赖 HashMap 迭代顺序碰运气；冲突会在日志里告警。
+     */
+    private final Map<String, CachedEntry> primaryById = new HashMap<>();
+
+    /**
      * 全 registry 共享的 HTTP 客户端（连接复用）。测试走注入的 VideoHttpGateway，不受影响。
      */
     private static final HttpClient SHARED_CLIENT = HttpClient.newBuilder()
@@ -109,6 +115,29 @@ public class ProviderDescriptorRegistry {
         }
 
         cache.entrySet().removeIf(entry -> !Files.exists(entry.getValue().file()));
+
+        rebuildPrimaryIndex();
+    }
+
+    /**
+     * 重建 id 主索引：按文件绝对路径排序，同一 id 只保留首个，其余记 warn。
+     * 必须在持有对象锁时调用（reloadIfChanged 已是 synchronized）。
+     */
+    private void rebuildPrimaryIndex() {
+        primaryById.clear();
+        List<CachedEntry> sorted = new ArrayList<>(cache.values());
+        sorted.sort(Comparator.comparing(e -> e.file().toString()));
+        for (CachedEntry entry : sorted) {
+            String id = entry.descriptor().getId();
+            CachedEntry existing = primaryById.get(id);
+            if (existing == null) {
+                primaryById.put(id, entry);
+            } else {
+                log.warn("描述符 id 重复: {}（{} 与 {}），按文件名排序仅 {} 生效",
+                        id, existing.file().getFileName(), entry.file().getFileName(),
+                        existing.file().getFileName());
+            }
+        }
     }
 
     /**
@@ -134,12 +163,8 @@ public class ProviderDescriptorRegistry {
      */
     public synchronized Optional<ProviderDescriptor> byId(String id) {
         reloadIfChanged();
-        for (CachedEntry entry : cache.values()) {
-            if (entry.descriptor().getId().equals(id)) {
-                return Optional.of(entry.descriptor());
-            }
-        }
-        return Optional.empty();
+        CachedEntry entry = primaryById.get(id);
+        return entry == null ? Optional.empty() : Optional.of(entry.descriptor());
     }
 
     /**
@@ -148,7 +173,7 @@ public class ProviderDescriptorRegistry {
      * @param id 描述符 id
      * @return Provider 实例
      */
-    public DescriptorVideoProvider buildProvider(String id) {
+    public synchronized DescriptorVideoProvider buildProvider(String id) {
         ProviderDescriptor descriptor = byId(id)
                 .orElseThrow(() -> new IllegalArgumentException("未知描述符 provider: " + id));
         VideoHttpGateway gateway = request -> {

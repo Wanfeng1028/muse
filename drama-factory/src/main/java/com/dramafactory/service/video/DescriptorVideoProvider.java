@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -18,6 +19,11 @@ import java.util.function.Supplier;
 public class DescriptorVideoProvider implements VideoProvider {
 
     private static final int PREVIEW_LIMIT = 300;
+    /**
+     * 单次请求硬超时：厂商接口只 hang 不返回时，宁可快速失败走降级，
+     * 也不让调用线程无限期阻塞。
+     */
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
 
     private final ProviderDescriptor descriptor;
     private final ObjectMapper objectMapper;
@@ -86,7 +92,8 @@ public class DescriptorVideoProvider implements VideoProvider {
         String method = submit.getMethod() == null || submit.getMethod().isBlank()
                 ? "POST" : submit.getMethod();
 
-        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url));
+        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url))
+                .timeout(REQUEST_TIMEOUT);
         if (submit.getHeaders() != null) {
             for (Map.Entry<String, String> e : submit.getHeaders().entrySet()) {
                 builder.header(e.getKey(), renderTemplate(e.getValue(), vars));
@@ -136,7 +143,8 @@ public class DescriptorVideoProvider implements VideoProvider {
         String method = poll.getMethod() == null || poll.getMethod().isBlank() ? "GET" : poll.getMethod();
 
         String key = apiKeySupplier.get();
-        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url));
+        HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create(url))
+                .timeout(REQUEST_TIMEOUT);
         if (key != null && !key.isBlank()) {
             applyAuth(builder, key);
         }
@@ -273,7 +281,7 @@ public class DescriptorVideoProvider implements VideoProvider {
                 break;
             }
             sb.append(template, i, start);
-            String name = template.substring(start + 2, end);
+            String name = template.substring(start + 2, end).trim();
             String value = vars == null ? null : vars.get(name);
             sb.append(value == null ? "" : value);
             i = end + 2;
