@@ -397,7 +397,7 @@ public:
                 Locator locator(db_, searcher);
                 LocateOptions lopts;
                 lopts.limit = limit;
-                std::vector<Passage> anchors = locator.locate(q, lopts);
+                std::vector<PassageContext> anchors = locator.locateWithContext(q, lopts);
                 std::ostringstream oss;
                 oss << "{\"query\":\"" << jsonEscape(q) << "\",\"keywords\":[";
                 for (size_t i = 0; i < pq.keywords.size(); ++i) {
@@ -406,7 +406,7 @@ public:
                 }
                 oss << "],\"anchors\":[";
                 for (size_t i = 0; i < anchors.size(); ++i) {
-                    const Passage& a = anchors[i];
+                    const Passage& a = anchors[i].passage;
                     if (i) oss << ',';
                     oss << "{\"doc_id\":" << a.doc_id
                         << ",\"path\":\"" << jsonEscape(a.path)
@@ -419,7 +419,15 @@ public:
                         if (j) oss << ',';
                         oss << '"' << jsonEscape(a.matched_terms[j]) << '"';
                     }
-                    oss << "],\"text\":\"" << jsonEscape(a.text) << "\"}";
+                    oss << "],\"text\":\"" << jsonEscape(a.text) << "\""
+                        << ",\"context\":\"" << jsonEscape(anchors[i].context) << "\""
+                        << ",\"highlights\":[";
+                    for (size_t j = 0; j < anchors[i].highlights.size(); ++j) {
+                        if (j) oss << ',';
+                        oss << "[" << anchors[i].highlights[j].first
+                            << "," << anchors[i].highlights[j].second << "]";
+                    }
+                    oss << "]}";
                 }
                 oss << "]}";
                 return HttpResponse::json(oss.str());

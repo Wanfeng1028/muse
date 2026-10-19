@@ -36,6 +36,8 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
   - 使用 FTS5 `MATCH`，多个词之间为**隐式 AND**。
   - **BM25** 相关性排序；标题加成权重默认 1.0、短语加成默认 2.0，可用 flag 或环境变量调整。
   - 返回 **30 token 摘要片段**。
+  - `--explain` 输出评分分量明细（base_bm25/title_bonus/phrase_bonus/structural_bonus 四项之和恒等于分值，v0.19.0）。
+  - 中文分词器 v0.21.0 起新增自研 bigram 方案（零词典依赖，详见 `docs/TOKENIZER_DESIGN.md`）。
 
 - `stats`：查看索引统计信息。
 - `prune`：清理失效/无效记录。
@@ -56,6 +58,7 @@ DocSeek 的目标是：用最小的依赖、最简的部署方式，为本地纯
   - `Ctrl+C` 优雅停止。
 - HTTP API 与内嵌 Web UI（详见下方 API 表格）。
 - Web UI 由 `web/index.html` 内嵌为 C++ 字符串直接提供，无需额外静态文件部署。
+- Web 搜索结果支持关键词高亮与"为什么这篇排第一"评分可解释区块（v0.21.0），效果见 `docs/screenshots/search-explain-v021.png`（真实服务截图）。
 
 ---
 
@@ -72,12 +75,15 @@ docseek locate "退款流程写在哪一段"
 
 ![locate 终端截图](docs/screenshots/locate-cli.png)
 
+v0.21.0 起 `locate` 返回原文前后文（命中点前后各约 60 字）与高亮偏移：CLI 文本模式打印"原文片段："（`<<>>` 标记命中词），`--json` 与 `GET /api/locate` 增加 `context`/`highlights` 字段；问句支持"找出提到'退款政策'的那段话"这类表达（目标短语自动抽取）。
+
 - `search` 给你文档列表；`locate` 给你**文件:行号锚点 + 命中词高亮的原文段落**。
 - PDF 文档的 locate 结果额外带页码：`GET /api/locate` 返回 `page_no` 字段（1-based，0 表示不适用），Web UI 搜索结果展示 PDF 文件类型徽标。
 - 离线运行：中文疑问句规则解析 → jieba 关键词抽取 → 混合召回 → 段落滑动窗口重排序 → 行号锚定，无模型、无 GPU。
 - Web 服务同样可用：首页"自然语言定位"卡片，或 `GET /api/locate?q=...`。
 
 ![locate 网页截图](docs/screenshots/locate-web.png)
+![locate 自然语言截图](docs/screenshots/locate-nl-v021.png)
 
 为什么不用 ripgrep / Everything / 云 AI 问答：ripgrep 要你先想好关键词、给的是行不是段落；Everything 只认文件名；云 AI 要上传文档（涉密场景出局）且给的是生成答案不是原文锚点。文溯四条同时满足：离线、中文、自然语言、返回原文位置。
 
@@ -86,7 +92,7 @@ docseek locate "退款流程写在哪一段"
 | 语言标准 | C++17 |
 | 构建系统 | CMake >= 3.28 |
 | 编译器 | GCC |
-| 检索内核 | SQLite FTS5 + **cppjieba 中文分词器**（v0.3.0 起；v0.2.0 及之前为 `unicode61`） |
+| 检索内核 | SQLite FTS5 + 中文分词器（v0.3.0 起 cppjieba；v0.21.0 起新增自研 bigram 零词典分词器，见 `docs/TOKENIZER_DESIGN.md`；v0.2.0 及之前为 `unicode61`） |
 | 混合检索 | BM25 + AND→OR 回退 + 标题/短语加成重排序；v0.7.0 起权重可配置（v2） |
 
 | SQLite 来源 | amalgamation，vendored 于 `third_party/sqlite3` |

@@ -565,4 +565,234 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     return pq;
 }
 
+namespace {
+
+// 去掉首尾的 UTF-8 空白与常见中英文标点（不引入正则，逐字节判断）。
+bool isTrimmableByte(unsigned char c) {
+    if (c == ' ' || c == '\t' || c == '\n' || c == '\r') return true;
+    return false;
+}
+
+// 判断某个 UTF-8 编码的标点是否应被剥离（仅识别常见 3 字节全角标点与 ASCII 标点）。
+bool isPunctAt(const std::string& s, size_t i, size_t& len) {
+    unsigned char c = static_cast<unsigned char>(s[i]);
+    if (c < 0x80) {
+        len = 1;
+        switch (c) {
+            case ',': case '.': case '!': case '?': case ';': case ':':
+            case '\'': case '"': case '(': case ')': case '[': case ']':
+            case '{': case '}': case '<': case '>': case '~': case '`':
+            case '-': case '_': case '=': case '+': case '*': case '/':
+            case '\\': case '|': case '@': case '#': case '$': case '%':
+            case '^': case '&':
+                return true;
+            default:
+                return false;
+        }
+    }
+    // 全角标点：以 UTF-8 3 字节序列判断首字节 0xE3/0xEF 等。
+    if (i + 2 < s.size()) {
+        unsigned char b1 = static_cast<unsigned char>(s[i + 1]);
+        unsigned char b2 = static_cast<unsigned char>(s[i + 2]);
+        // ！ U+FF01
+        if (c == 0xEF && b1 == 0xBC && b2 == 0x81) { len = 3; return true; }
+        // ？ U+FF1F
+        if (c == 0xEF && b1 == 0xBC && b2 == 0x9F) { len = 3; return true; }
+        // 。 U+3002
+        if (c == 0xE3 && b1 == 0x80 && b2 == 0x82) { len = 3; return true; }
+        // ， U+FF0C
+        if (c == 0xEF && b1 == 0xBC && b2 == 0x8C) { len = 3; return true; }
+        // 、 U+3001
+        if (c == 0xE3 && b1 == 0x80 && b2 == 0x81) { len = 3; return true; }
+        // ： U+FF1A
+        if (c == 0xEF && b1 == 0xBC && b2 == 0x9A) { len = 3; return true; }
+        // ； U+FF1B
+        if (c == 0xEF && b1 == 0xBC && b2 == 0x9B) { len = 3; return true; }
+    }
+    len = 0;
+    return false;
+}
+
+// 去除首尾空白与标点；全部为空白/标点时返回空串。
+std::string trimWhitespaceAndPunct(const std::string& in) {
+    size_t b = 0;
+    size_t e = in.size();
+    while (b < e) {
+        unsigned char c = static_cast<unsigned char>(in[b]);
+        if (isTrimmableByte(c)) { ++b; continue; }
+        size_t plen = 0;
+        if (isPunctAt(in, b, plen) && plen > 0) { b += plen; continue; }
+        break;
+    }
+    while (e > b) {
+        // 反向判断：需要检查尾部最后一个 UTF-8 码点。
+        size_t start = e - 1;
+        // 回退到码点起始。
+        while (start > b &&
+               (static_cast<unsigned char>(in[start]) & 0xC0) == 0x80) {
+            --start;
+        }
+        unsigned char c = static_cast<unsigned char>(in[start]);
+        if (isTrimmableByte(c)) { e = start; continue; }
+        size_t plen = 0;
+        if (isPunctAt(in, start, plen) && plen > 0 && start + plen == e) {
+            e = start;
+            continue;
+        }
+        break;
+    }
+    if (e <= b) return std::string();
+    return in.substr(b, e - b);
+}
+
+// 反复剥离前导疑问词/指代词与空白标点。
+std::string stripLeadingFiller(const std::string& in) {
+    static const std::vector<std::string> leads = {
+        "请问", "请告诉我", "帮我找", "帮我查", "找出",
+        "查找", "搜索", "那个", "这个"};
+    std::string s = in;
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        s = trimWhitespaceAndPunct(s);
+        if (s.empty()) break;
+        for (const auto& w : leads) {
+            if (w.empty()) continue;
+            if (s.size() >= w.size() && s.compare(0, w.size(), w) == 0) {
+                s = s.substr(w.size());
+                changed = true;
+                break;
+            }
+        }
+    }
+    return trimWhitespaceAndPunct(s);
+}
+
+}  // namespace
+
+std::string extractLocateTarget(const std::string& raw) {
+    if (raw.empty()) return std::string();
+
+    // ① 引号短语优先。
+    std::vector<std::string> phrases;
+    std::string rest;
+    extractPhrases(raw, phrases, rest);
+    if (!phrases.empty()) return phrases[0];
+
+    // ② 触发词之后、最近终结词之前。
+    static const std::vector<std::string> triggers = {
+        "提到", "写到", "说到", "讲到", "谈到", "介绍"};
+    static const std::vector<std::string> ends = {
+        "的那段", "的那句", "的那部分", "在哪里", "在哪", "哪里",
+        "哪一段", "哪一句", "是什么", "吗", "？", "?", "。"};
+
+    size_t trigPos = std::string::npos;
+    size_t trigLen = 0;
+    for (const auto& t : triggers) {
+        size_t p = raw.find(t);
+        if (p != std::string::npos) {
+            if (trigPos == std::string::npos || p < trigPos) {
+                trigPos = p;
+                trigLen = t.size();
+            }
+        }
+    }
+    if (trigPos != std::string::npos) {
+        size_t begin = trigPos + trigLen;
+        size_t endPos = raw.size();
+        for (const auto& e : ends) {
+            size_t p = raw.find(e, begin);
+            if (p != std::string::npos && p < endPos) {
+                endPos = p;
+            }
+        }
+        for (const auto& t : triggers) {
+            size_t p = raw.find(t, begin);
+            if (p != std::string::npos && p < endPos) {
+                endPos = p;
+            }
+        }
+        if (endPos > begin) {
+            std::string cand = trimWhitespaceAndPunct(raw.substr(begin, endPos - begin));
+            static const std::vector<std::string> leadParticles = {
+                "了", "的", "着", "过", "呢", "吗", "啊"};
+            bool stripped = true;
+            while (stripped && !cand.empty()) {
+                stripped = false;
+                for (const auto& lp : leadParticles) {
+                    if (cand.size() >= lp.size() && cand.compare(0, lp.size(), lp) == 0) {
+                        cand = cand.substr(lp.size());
+                        stripped = true;
+                        break;
+                    }
+                }
+            }
+            cand = trimWhitespaceAndPunct(cand);
+            static const std::vector<std::string> tailParticles = {
+                "是", "的", "了", "呢", "吗", "啊", "吧"};
+            bool tailStripped = true;
+            while (tailStripped && !cand.empty()) {
+                tailStripped = false;
+                for (const auto& tp : tailParticles) {
+                    if (cand.size() >= tp.size() &&
+                        cand.compare(cand.size() - tp.size(), tp.size(), tp) == 0) {
+                        cand = cand.substr(0, cand.size() - tp.size());
+                        tailStripped = true;
+                        break;
+                    }
+                }
+            }
+            cand = trimWhitespaceAndPunct(cand);
+            if (!cand.empty()) return cand;
+        }
+    }
+
+    // ③ 位置词之前的核心词。
+    static const std::vector<std::string> locs = {
+        "写在哪", "在哪", "哪里", "何处",
+        "那部分", "那段", "那句", "那一段", "那一句"};
+    size_t locPos = std::string::npos;
+    for (const auto& l : locs) {
+        size_t p = raw.find(l);
+        if (p != std::string::npos) {
+            if (locPos == std::string::npos || p < locPos) {
+                locPos = p;
+            }
+        }
+    }
+    if (locPos != std::string::npos && locPos > 0) {
+        std::string cand = stripLeadingFiller(raw.substr(0, locPos));
+        static const std::vector<std::string> leadParticles = {"一下"};
+        bool stripped = true;
+        while (stripped && !cand.empty()) {
+            stripped = false;
+            for (const auto& lp : leadParticles) {
+                if (cand.size() >= lp.size() && cand.compare(0, lp.size(), lp) == 0) {
+                    cand = cand.substr(lp.size());
+                    stripped = true;
+                    break;
+                }
+            }
+        }
+        cand = trimWhitespaceAndPunct(cand);
+        static const std::vector<std::string> tailParticles = {"是","的","了","呢","吗","啊","吧"};
+        bool tailStripped = true;
+        while (tailStripped && !cand.empty()) {
+            tailStripped = false;
+            for (const auto& tp : tailParticles) {
+                if (cand.size() >= tp.size() && cand.compare(cand.size() - tp.size(), tp.size(), tp) == 0) {
+                    cand = cand.substr(0, cand.size() - tp.size());
+                    tailStripped = true;
+                    break;
+                }
+            }
+        }
+        cand = trimWhitespaceAndPunct(cand);
+        if (!cand.empty()) return cand;
+    }
+
+    // ④ 未抽到目标。
+    return std::string();
+}
+
 }  // namespace docseek

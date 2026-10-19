@@ -25,4 +25,13 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                                   const std::string& content,
                                   const ParsedQuery& pq, int topK);
 
+// 带原文前后文的定位结果：context 是命中词首次出现位置前后各 60 个 Unicode
+// 字符的原文窗口（UTF-8 安全，不截断多字节字符）；highlights 是 matched_terms
+// 在 context 内的全部不重叠出现位置，字节偏移 [start, end)，按 start 升序。
+struct PassageContext {
+    Passage passage;
+    std::string context;
+    std::vector<std::pair<int,int>> highlights;
+};
+
 }  // namespace docseek

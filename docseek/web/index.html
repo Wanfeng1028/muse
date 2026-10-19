@@ -183,6 +183,77 @@
     color: #2f5b8f;
     font-weight: 600;
   }
+  .result-explain{margin-top:8px;border:1px solid #e8edf4;border-radius:6px;background:#fcfdff;padding:6px 10px;font-size:12px;color:#46505e}
+  .result-explain summary{cursor:pointer;font-size:13px;color:#2f5b8f;font-weight:600}
+  .result-explain-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .result-explain-label{flex:0 0 auto;min-width:84px;font-size:12px;color:#46505e}
+  .result-explain-bar{flex:1 1 auto;height:8px;background:#eef4ff;border-radius:6px;overflow:hidden}
+  .result-explain-fill{display:block;height:100%;background:#2f7cf6;border-radius:6px}
+  .result-explain-val{flex:0 0 auto;min-width:44px;text-align:right;font-size:12px;color:#7a8798}
+  .result-explain-desc{margin-top:2px;margin-left:92px;font-size:12px;color:#7a8798}
+  .result-explain-final{margin-top:8px;padding-top:6px;border-top:1px solid #e8edf4;font-size:13px;color:#2f5b8f;font-weight:600}
+
+  .result-explain {
+    margin-top: 8px;
+    border: 1px solid #e8edf4;
+    border-radius: 6px;
+    background: #fcfdff;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: #46505e;
+  }
+  .result-explain summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: #2f5b8f;
+    font-weight: 600;
+  }
+  .result-explain-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .result-explain-label {
+    flex: 0 0 auto;
+    min-width: 84px;
+    font-size: 12px;
+    color: #46505e;
+  }
+  .result-explain-bar {
+    flex: 1 1 auto;
+    height: 8px;
+    background: #eef4ff;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .result-explain-fill {
+    display: block;
+    height: 100%;
+    background: #2f7cf6;
+    border-radius: 6px;
+  }
+  .result-explain-val {
+    flex: 0 0 auto;
+    min-width: 44px;
+    text-align: right;
+    font-size: 12px;
+    color: #7a8798;
+  }
+  .result-explain-desc {
+    margin-top: 2px;
+    margin-left: 92px;
+    font-size: 12px;
+    color: #7a8798;
+  }
+  .result-explain-final {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #e8edf4;
+    font-size: 13px;
+    color: #2f5b8f;
+    font-weight: 600;
+  }
   :root {
     --mark-bg: #fff3b0;
   }
@@ -567,149 +638,6 @@
     }
     return out;
   }
---- END PATCH ===
-
-=== PATCH: docseek/web/index.html ===
---- OLD ---
-      html += '<span class="result-idx">' + idx + '</span>';
-      html += '<span class="result-title">' + escapeHtml(title) + '</span>';
-      if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }
-      html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
-      html += '</div>';
-      html += '<div class="result-path">' + escapeHtml(path) + '</div>';
-      if (snippet) {
-        html += '<div class="result-snippet">' + renderSnippet(snippet) + '</div>';
-      }
-      html += '</div>';
---- NEW ---
-      html += '<span class="result-idx">' + idx + '</span>';
-      html += '<span class="result-title">' + highlight(title, keywords) + '</span>';
-      if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }
-      html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
-      html += '</div>';
-      html += '<div class="result-path">' + highlight(path, keywords) + '</div>';
-      if (snippet) {
-        html += '<div class="result-snippet">' + buildSnippet(snippet, keywords) + '</div>';
-      }
-      html += '</div>';
---- END PATCH ===
-
-=== PATCH: docseek/web/index.html ===
---- OLD ---
-  function renderResults(data, q) {
-    var box = $("results");
-    var items = [];
-    if (Array.isArray(data)) {
-      items = data;
-    } else if (data && Array.isArray(data.results)) {
-      items = data.results;
-    } else if (data && Array.isArray(data.hits)) {
-      items = data.hits;
-    }
-    if (items.length === 0) {
-      box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的文档</div>';
-      return;
-    }
---- NEW ---
-  function renderResults(data, q) {
-    var box = $("results");
-    var items = [];
-    if (Array.isArray(data)) {
-      items = data;
-    } else if (data && Array.isArray(data.results)) {
-      items = data.results;
-    } else if (data && Array.isArray(data.hits)) {
-      items = data.hits;
-    }
-    if (items.length === 0) {
-      box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的文档</div>';
-      return;
-    }
-    var keywords = splitKeywords(q);
---- END PATCH ===
-
-=== FILE: docs/SERVE_UI.md ===
-# docseek serve 的 Web UI 搜索高亮
-
-本文说明 `docseek serve` 子命令自带 Web UI（`web/index.html`）里搜索结果的
-关键词高亮行为，以及需要留意的边界情况。
-
-## 高亮做什么
-
-在“搜索”卡片里输入关键词并点“搜索”后，结果列表每一项的标题、路径、摘要
-三处都会把命中词用 `<mark>` 包起来。颜色由 CSS 变量 `--mark-bg` 控制：
-
-- 浅色（默认）：`#fff3b0`
-- 深色（`@media (prefers-color-scheme: dark)`）：`#5c4a00`
-
-页面上负责这件事的是 `highlight(text, keywords)` 函数，配套的还有
-`buildSnippet(text, keywords)` 用来从摘要原文里切一段带高亮的片段。
-
-## highlight 的行为
-
-- 大小写不敏感。搜 `Python` 能命中 `python`，搜 `python` 也能命中 `Python`。
-- 关键词里的正则特殊字符会被转义后再构造 `RegExp`，所以像 `C++`、`a.b`、
-  `(x)`、`$100`、`[test]` 这类词都能原样命中，不会当成正则。
-- 文本先切分再对每段调用 `escapeHtml`，所以原文里的 `<script>`、`&`、`"` 等
-  会被转义成 `&lt;script&gt;`、`&amp;`、`&quot;`，不会注入页面。
-- 多个关键词各自扫描，命中区间合并去重，重叠部分只包一层 `<mark>`。
-- 命中词之间的文本和命中词内部的文本都走 `escapeHtml`，只有命中词本身被
-  `<mark>` 包裹。
-
-## 摘要片段怎么切
-
-`buildSnippet` 以第一个命中词为中心：
-
-- 命中词前 60 个字符、后 60 个字符组成片段。
-- 片段左边界向左扩展到词边界，右边界向右扩展到词边界。也就是说不会把
-  一个英文单词从中间截断。
-- 中文按字处理，汉字之间不会做词边界扩展，直接以字符为准。
-- 片段被裁剪时（左边有裁、右边有裁）在对应侧加省略号 `…`。
-- 整段摘要没有任何命中词时，退化为开头最多 120 个字符（同样向右扩展到词
-  边界）。
-
-## 关键词怎么切
-
-用户输入的查询串由 `splitKeywords(q)` 按空白切分：
-
-- 输入 `机器学习 模型` 得到 `["机器学习", "模型"]`。
-- 输入 `C++` 得到 `["C++"]`，整串作为一个关键词，含 `+` 也不会被当正则。
-- 输入为空或全是空白时返回空数组，此时 `highlight` 只做 HTML 转义，不加
-  `<mark>`。
-
-## 边界与注意
-
-- **query 为空不请求**：`doSearch` 里先 `trim` 再判断，空串直接显示
-  “请输入关键词后再搜索”，不会发 HTTP 请求。`/api/search` 只在有非空 query
-  时被调用。
-- **关键词含正则字符**：`C++`、`a.b`、`x*y`、`(foo)`、`[bar]`、`{n}`、`$`、`^`、
-  `|`、`\` 都能正确高亮。函数里用 `escapeRegExp` 逐个转义，再用 `"gi"` 构造
-  `RegExp`。
-- **XSS**：原文里的 `<img onerror=...>`、`<script>` 之类都会先转义再拼 HTML，
-  高亮不会绕过转义。
-- **重叠命中**：关键词 `ab` 和 `abc` 同时存在时，命中区间合并，`abc` 只包一层
-  `<mark>`，不会出现嵌套 `<mark>`。
-- **空关键词**：`splitKeywords` 会丢弃空串，`highlight` 遇到空数组时只转义。
-- **服务端 snippet 已有 `<em>` 标记**：`renderSnippet` 会把服务端返回的
-  `<b>`/`<em>`/`<strong>` 转成 `<em>`；搜索页现在走的是前端
-  `buildSnippet` + `highlight` 这条路，`renderSnippet` 保留给其它入口用。
-- **深色模式**：只改 `--mark-bg`，文字颜色用 `inherit`，不会在深色背景上出现
-  亮底黑字的刺眼组合。
-
-## 本地手工验证
-
-1. 启动：`docseek serve`（默认监听本地端口，具体见命令帮助）。
-2. 浏览器打开首页，在“搜索”输入框里输入 `C++`，点搜索。
-3. 期望：结果里出现的 `C++` 被黄色（浅色模式）或暗黄（深色模式）背景包住，
-   标题、路径、摘要三处都生效。
-4. 输入框留空点搜索，期望：结果区显示“请输入关键词后再搜索”，网络面板里没有
-   `/api/search` 请求。
-5. 输入 `机器学习`，期望摘要片段里命中词前后各约 60 字，被截断处有 `…`，
-   英文单词不会被从中间切开。
-=== END ===
-=== PATCH: docs/SERVE_UI.md ===
---- OLD ---
-=== NEW ---
 
   function requestJSON(method, url, body) {
     var opts = {
@@ -784,7 +712,7 @@
     box.innerHTML = '<div class="empty">搜索中…</div>';
     var btn = $("btnSearch");
     btn.disabled = true;
-    var url = API.search + "?q=" + encodeURIComponent(q) + "&limit=" + limit;
+    var url = API.search + "?q=" + encodeURIComponent(q) + "&limit=" + limit + "&explain=true";
     requestJSON("GET", url).then(function (data) {
       renderResults(data, q);
     }).catch(function (err) {
@@ -809,8 +737,10 @@
       box.innerHTML = '<div class="empty">未找到与“' + escapeHtml(q) + '”相关的文档</div>';
       return;
     }
+    var keywords = splitKeywords(q);
     var html = "";
     for (var i = 0; i < items.length; i++) {
+
       var it = items[i] || {};
       var idx = i + 1;
       var title = it.title ? it.title : "(无标题)";
@@ -830,15 +760,55 @@
         else if (ext === "pdf") { typeLabel = "PDF"; }
       }
       html += '<span class="result-idx">' + idx + '</span>';
-      html += '<span class="result-title">' + escapeHtml(title) + '</span>';
+      html += '<span class="result-title">' + highlight(title, keywords) + '</span>';
+
       if (typeLabel) { html += '<span class="result-type">' + escapeHtml(typeLabel) + '</span>'; }
       html += '<span class="result-score">score ' + escapeHtml(score) + '</span>';
       html += '</div>';
-      html += '<div class="result-path">' + escapeHtml(path) + '</div>';
+      html += '<div class="result-path">' + highlight(path, keywords) + '</div>';
       if (snippet) {
-        html += '<div class="result-snippet">' + renderSnippet(snippet) + '</div>';
+        html += '<div class="result-snippet">' + buildSnippet(snippet, keywords) + '</div>';
+      }
+      if (it.explain) {
+        var ex = it.explain;
+        var exBase = Number(ex.base_bm25) || 0;
+        var exTitle = Number(ex.title_bonus) || 0;
+        var exPhrase = Number(ex.phrase_bonus) || 0;
+        var exStruct = Number(ex.structural_bonus) || 0;
+        var exFinal = Number(ex.final) || 0;
+        var exMax = Math.max(exBase, exTitle, exPhrase, exStruct);
+        if (exMax <= 0) { exMax = 1; }
+        html += '<details class="result-explain">';
+        html += '<summary>为什么这篇排第一</summary>';
+        html += '<div class="result-explain-row">';
+        html += '<span class="result-explain-label">基础相关性</span>';
+        html += '<span class="result-explain-bar"><span class="result-explain-fill" style="width:' + (exBase / exMax * 100).toFixed(2) + '%"></span></span>';
+        html += '<span class="result-explain-val">' + escapeHtml(exBase.toFixed(3)) + '</span>';
+        html += '</div>';
+        html += '<div class="result-explain-desc">正文词频算出来的底分</div>';
+        html += '<div class="result-explain-row">';
+        html += '<span class="result-explain-label">标题命中加成</span>';
+        html += '<span class="result-explain-bar"><span class="result-explain-fill" style="width:' + (exTitle / exMax * 100).toFixed(2) + '%"></span></span>';
+        html += '<span class="result-explain-val">' + escapeHtml(exTitle.toFixed(3)) + '</span>';
+        html += '</div>';
+        html += '<div class="result-explain-desc">关键词出现在标题里</div>';
+        html += '<div class="result-explain-row">';
+        html += '<span class="result-explain-label">短语命中加成</span>';
+        html += '<span class="result-explain-bar"><span class="result-explain-fill" style="width:' + (exPhrase / exMax * 100).toFixed(2) + '%"></span></span>';
+        html += '<span class="result-explain-val">' + escapeHtml(exPhrase.toFixed(3)) + '</span>';
+        html += '</div>';
+        html += '<div class="result-explain-desc">完整短语连续出现</div>';
+        html += '<div class="result-explain-row">';
+        html += '<span class="result-explain-label">结构加成</span>';
+        html += '<span class="result-explain-bar"><span class="result-explain-fill" style="width:' + (exStruct / exMax * 100).toFixed(2) + '%"></span></span>';
+        html += '<span class="result-explain-val">' + escapeHtml(exStruct.toFixed(3)) + '</span>';
+        html += '</div>';
+        html += '<div class="result-explain-desc">位置与版式等结构信号</div>';
+        html += '<div class="result-explain-final">综合得分 ' + escapeHtml(exFinal.toFixed(3)) + '</div>';
+        html += '</details>';
       }
       html += '</div>';
+
     }
     box.innerHTML = html;
   }

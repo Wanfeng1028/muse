@@ -367,12 +367,37 @@ std::string highlightLine(const std::string& line, const std::vector<std::string
     return out;
 }
 
+// 按 highlights 偏移给 context 加 << >> 标记，并把换行替换为空格避免冲乱版式。
+static std::string renderContextWithHighlights(const docseek::PassageContext& pc) {
+    const std::string& ctx = pc.context;
+    std::string out;
+    out.reserve(ctx.size() + pc.highlights.size() * 4);
+    size_t cursor = 0;
+    for (const auto& h : pc.highlights) {
+        int s = h.first;
+        int e = h.second;
+        if (s < 0 || e < s || static_cast<size_t>(e) > ctx.size()) continue;
+        if (static_cast<size_t>(s) < cursor) continue;
+        out.append(ctx, cursor, static_cast<size_t>(s) - cursor);
+        out += "<<";
+        out.append(ctx, static_cast<size_t>(s), static_cast<size_t>(e - s));
+        out += ">>";
+        cursor = static_cast<size_t>(e);
+    }
+    out.append(ctx, cursor, ctx.size() - cursor);
+    // context 内换行替换为空格，保持单行版式。
+    for (char& c : out) {
+        if (c == '\n' || c == '\r') c = ' ';
+    }
+    return out;
+}
+
 int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
     docseek::Searcher searcher(db);
     docseek::Locator locator(db, searcher);
     docseek::LocateOptions lopts;
     lopts.limit = o.limit;
-    std::vector<docseek::Passage> anchors = locator.locate(o.query, lopts);
+    std::vector<docseek::PassageContext> anchors = locator.locateWithContext(o.query, lopts);
     docseek::ParsedQuery pq = docseek::parseNaturalQuery(o.query);
 
     if (json) {
@@ -383,7 +408,7 @@ int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
         }
         std::cout << "],\"anchors\":[";
         for (size_t i = 0; i < anchors.size(); ++i) {
-            const auto& a = anchors[i];
+            const auto& a = anchors[i].passage;
             if (i) std::cout << ",";
             std::cout << "{"
                       << "\"doc_id\":" << a.doc_id << ","
@@ -396,7 +421,15 @@ int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
                 if (j) std::cout << ",";
                 std::cout << "\"" << jsonEscape(a.matched_terms[j]) << "\"";
             }
-            std::cout << "],\"text\":\"" << jsonEscape(a.text) << "\"}";
+            std::cout << "],\"text\":\"" << jsonEscape(a.text) << "\""
+                      << ",\"context\":\"" << jsonEscape(anchors[i].context) << "\""
+                      << ",\"highlights\":[";
+            for (size_t j = 0; j < anchors[i].highlights.size(); ++j) {
+                if (j) std::cout << ",";
+                std::cout << "[" << anchors[i].highlights[j].first
+                          << "," << anchors[i].highlights[j].second << "]";
+            }
+            std::cout << "]}";
         }
         std::cout << "]}\n";
         return 0;
@@ -415,7 +448,7 @@ int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
     std::vector<std::string> terms = pq.keywords;
     terms.insert(terms.end(), pq.phrases.begin(), pq.phrases.end());
     for (size_t i = 0; i < anchors.size(); ++i) {
-        const auto& a = anchors[i];
+        const auto& a = anchors[i].passage;
         std::cout << (i + 1) << ". " << a.path << ":" << a.line_start << "-" << a.line_end
                   << "  （评分 " << std::fixed << std::setprecision(3) << a.score << "）\n";
         std::istringstream iss(a.text);
@@ -426,6 +459,7 @@ int cmdLocate(docseek::Database& db, const LocateCmdOpts& o, bool json) {
             std::cout << "    " << ln << " | " << highlightLine(line, terms, useColor) << "\n";
             ++ln;
         }
+        std::cout << "    原文片段：" << renderContextWithHighlights(anchors[i]) << "\n";
         std::cout << "\n";
     }
     return 0;

@@ -30,4 +30,11 @@ void extractPhrases(const std::string& in, std::vector<std::string>& phrases,
 // 与 parseNaturalQuery 的过滤行为对齐；"不"永不入表，否定语义保留；空输入返回空。
 std::string stripFillerWords(const std::string& raw);
 
+// 从定位类问句中抽取用户真正想找的目标短语。
+// 识别顺序：①引号短语优先（复用 extractPhrases，支持 "..." / 「...」/ “...”）；
+// ②「提到/写到/说到/讲到/谈到/介绍」之后、「的那段/的那句/的那部分/在哪里/在哪/哪里/哪一段/是什么/吗/?/？/。」之前；
+// ③「写在哪/在哪/哪里/何处」之前，剥离前导疑问词（请问/请告诉我/帮我找/找出/查找/搜索/那个/这个）后剩余的核心词；
+// ④都抽不到返回空串。全部基于 std::string::find 的 UTF-8 字节匹配，不依赖 ICU。
+std::string extractLocateTarget(const std::string& raw);
+
 }  // namespace docseek

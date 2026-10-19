@@ -81,6 +81,8 @@ add_library(docseek_core STATIC
   src/service.cpp
   src/dict.cpp
   src/jieba_tokenizer.cpp
+  src/bigram_tokenizer.cpp
+
   src/query_parser.cpp
   src/synonyms.cpp
   src/token_locate.cpp
@@ -211,6 +213,10 @@ add_executable(docseek_tests
   tests/test_v016_b_fix1.cpp
   tests/test_v016_b_cases.cpp
   tests/test_query_understanding_v020.cpp
+  tests/test_locate_target.cpp
+  tests/test_bigram_tokenizer.cpp
+  tests/test_locate_context.cpp
+  tests/test_http_contract.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

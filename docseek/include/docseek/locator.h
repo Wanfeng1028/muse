@@ -22,6 +22,11 @@ public:
     std::vector<Passage> locate(const std::string& rawQuery,
                                 const LocateOptions& opts = LocateOptions{});
 
+    // 与 locate() 相同的召回排序管线，额外为每个段落计算原文前后文与高亮偏移。
+    // 无命中返回空 vector；超长文档（>2MB）只扫描前 2MB 定位锚点。
+    std::vector<PassageContext> locateWithContext(const std::string& rawQuery,
+                                                 const LocateOptions& opts = LocateOptions{});
+
 private:
     Database& db_;
     Searcher& searcher_;

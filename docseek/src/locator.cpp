@@ -167,4 +167,131 @@ std::vector<Passage> Locator::locate(const std::string& rawQuery,
     return all;
 }
 
+namespace {
+
+// UTF-8 码点长度（1-4 字节），遇到非法首字节按 1 字节处理，避免死循环。
+inline size_t utf8CharLen(unsigned char c) {
+    if (c < 0x80) return 1;
+    if ((c & 0xE0) == 0xC0) return 2;
+    if ((c & 0xF0) == 0xE0) return 3;
+    if ((c & 0xF8) == 0xF0) return 4;
+    return 1;
+}
+
+// 向前推进 n 个 Unicode 码点，返回字节下标；若越界返回字符串长度。
+inline size_t advanceChars(const std::string& s, size_t pos, size_t n) {
+    size_t i = pos;
+    while (i < s.size() && n > 0) {
+        i += utf8CharLen(static_cast<unsigned char>(s[i]));
+        --n;
+    }
+    return i > s.size() ? s.size() : i;
+}
+
+// 从 pos 向后回退 n 个 Unicode 码点，返回字节下标；若越界返回 0。
+inline size_t retreatChars(const std::string& s, size_t pos, size_t n) {
+    size_t i = pos;
+    while (i > 0 && n > 0) {
+        --i;
+        // 回退到某个字符首字节（非 UTF-8 续字节 10xxxxxx）。
+        while (i > 0 && (static_cast<unsigned char>(s[i]) & 0xC0) == 0x80) {
+            --i;
+        }
+        --n;
+    }
+    return i;
+}
+
+// 在 context 内扫描所有匹配词的不重叠出现，ASCII 大小写不敏感，中文精确匹配。
+// 返回按 start 升序的去重偏移列表。
+std::vector<std::pair<int,int>> scanHighlights(
+    const std::string& context, const std::vector<std::string>& terms) {
+    std::vector<std::pair<int,int>> hits;
+    for (const auto& term : terms) {
+        if (term.empty()) continue;
+        size_t pos = 0;
+        while (pos + term.size() <= context.size()) {
+            bool ok = true;
+            for (size_t k = 0; k < term.size(); ++k) {
+                unsigned char a = static_cast<unsigned char>(context[pos + k]);
+                unsigned char b = static_cast<unsigned char>(term[k]);
+                // ASCII 大小写不敏感；非 ASCII 字节精确比较（中文精确匹配）。
+                if (a < 0x80 && b < 0x80) {
+                    if (std::tolower(a) != std::tolower(b)) { ok = false; break; }
+                } else if (a != b) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                hits.emplace_back(static_cast<int>(pos),
+                                  static_cast<int>(pos + term.size()));
+                pos += term.size();  // 不重叠
+            } else {
+                pos += utf8CharLen(static_cast<unsigned char>(context[pos]));
+            }
+        }
+    }
+    std::sort(hits.begin(), hits.end());
+    hits.erase(std::unique(hits.begin(), hits.end()), hits.end());
+    return hits;
+}
+
+}  // namespace
+
+std::vector<PassageContext> Locator::locateWithContext(const std::string& rawQuery,
+                                                       const LocateOptions& opts) {
+    std::vector<Passage> anchors = locate(rawQuery, opts);
+    std::vector<PassageContext> out;
+    out.reserve(anchors.size());
+    // 超长文档只取前 2MB 做锚点定位，避免全量扫描拖慢响应。
+    constexpr size_t kMaxScan = 2 * 1024 * 1024;
+    constexpr size_t kHalfWindow = 60;
+
+    for (const auto& a : anchors) {
+        PassageContext pc;
+        pc.passage = a;
+
+        std::optional<std::string> contentOpt = db_.getContentById(a.doc_id);
+        if (!contentOpt.has_value() || contentOpt->empty()) {
+            out.push_back(std::move(pc));
+            continue;
+        }
+        std::string full = *contentOpt;
+        if (full.size() > kMaxScan) {
+            full.resize(kMaxScan);
+        }
+
+        // 找首个 matched_terms 在全文中的位置（ASCII 大小写不敏感，中文精确）。
+        size_t anchorPos = std::string::npos;
+        size_t anchorLen = 0;
+        for (const auto& term : a.matched_terms) {
+            if (term.empty()) continue;
+            size_t p = findTermCi(full, term);
+            if (p != std::string::npos) {
+                anchorPos = p;
+                anchorLen = term.size();
+                break;
+            }
+        }
+
+        if (anchorPos == std::string::npos) {
+            // 无命中：取全文前 120 个 Unicode 字符作为 context，highlights 为空。
+            size_t endPos = advanceChars(full, 0, 120);
+            pc.context = full.substr(0, endPos);
+            out.push_back(std::move(pc));
+            continue;
+        }
+
+        size_t ctxStart = retreatChars(full, anchorPos, kHalfWindow);
+        size_t ctxEnd = advanceChars(full, anchorPos + anchorLen, kHalfWindow);
+        pc.context = full.substr(ctxStart, ctxEnd - ctxStart);
+
+        // 在 context 内扫描全部 matched_terms 的不重叠出现。
+        pc.highlights = scanHighlights(pc.context, a.matched_terms);
+        out.push_back(std::move(pc));
+    }
+    return out;
+}
+
 }  // namespace docseek

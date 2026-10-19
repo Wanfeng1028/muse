@@ -1,3 +1,25 @@
+## v0.21.0（2026-10-20）——中文分词深化与原文定位
+
+### 新增
+
+- 自研 bigram 中文分词器（`include/docseek/bigram_tokenizer.h`、`src/bigram_tokenizer.cpp`）：零词典依赖、零第三方依赖。CJK 采用 overlapping bigram（`k += 1` 重叠滑动），ASCII 词统一小写，数字串（含 `.`、`,` 与 `%`、`％`）整体保护，内嵌约 40 个单字中文停用词，用于过滤单字 token 与双停用字 bigram。
+- bigram 分词器专名附加只增不减：地名后缀（省/市/区/县/镇/乡/村/路/街/道/号/楼）前 1-5 字成段；百家姓首字须位于 CJK run 开头，后 1-2 字成姓名；附加 token 以 `FTS5_TOKEN_COLOCATED` 输出。FTS5 tokenizer 名为 `bigram`，token 带字节起止偏移；查询侧 `bigramCutForSearch` 与索引侧切分保持一致。设计决策见 `docs/TOKENIZER_DESIGN.md`。
+- 新增 `extractLocateTarget`（`src/query_parser.cpp`）：从“找出提到‘退款政策’的那段话”这类问句中抽取定位目标短语。规则为引号优先 → 触发词（提到/写到/说到/讲到/谈到/介绍）配合终结词（的那段/的那句/的那部分/在哪里/在哪/哪里/哪一段 等）→ 位置词（写在哪/在哪/哪里/何处/那部分/那段/那句 等）；前后助词（了/的/着/过/呢/吗/啊/是/吧）剥离；出现多个触发词时取第一个。
+- 新增 `Locator::locateWithContext`（`src/locator.cpp`）：与 `locate()` 走同一管线，额外返回命中点前后各 60 个 Unicode 字符的原文前后文（UTF-8 安全）与 `highlights` 字节偏移；超长文档只扫描前 2MB。CLI `locate` 文本模式打印“原文片段：”（以 `<<>>` 标记命中词），`--json` 增加 `context`/`highlights` 字段；`/api/locate` 同步增加对应字段。
+- serve Web UI：搜索结果接入 `highlight`/`buildSnippet` 实现关键词高亮；新增“为什么这篇排第一”可解释区块（details 展开，四项横条加综合得分）。
+
+### 修复
+
+- bigram 切分步长由 `k += 2` 改为 `k += 1`，恢复重叠 bigram，修正跨字词漏召回。
+- 姓氏附加增加 CJK run 开头约束，避免把词中字符误判为姓氏。
+- 终结词修正为“的那部分”（原“的那部分”写法有误无法匹配）。
+- 修复此前轮次误写入 `web/index.html` 的 PATCH 评审文本污染，JS 语法已恢复正常。
+
+### 测试
+
+- 新增 `tests/test_bigram_tokenizer.cpp`（34 例）、`tests/test_locate_target.cpp`（35 例）、`tests/test_locate_context.cpp`（12 例）、`tests/test_http_contract.cpp`（13 例，真实进程加真实 socket，无 mock）。
+- 全量 528/528 通过（排除 6 个已知慢或 hang 用例：`WatcherTest.SubDir`、`TokenizerPerf.*`、`TokenizerLong` 3 个）。
+
 ## v0.20.0（2026-10-20）——查询理解升级
 
 ### 新增
