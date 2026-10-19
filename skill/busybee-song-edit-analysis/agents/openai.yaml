@@ -1,0 +1,4 @@
+interface:
+  display_name: "Song Edit Analysis"
+  short_description: "Beat maps and energy guides for video edits"
+  default_prompt: "Use $song-edit-analysis to analyze this song for beat-synced video editing and footage energy matching."

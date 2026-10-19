@@ -1,0 +1,589 @@
+---
+name: claude-video-skill
+version: 1.0.0
+description: >
+  Build a short HD film (product promo, demo or highlight reel, concept or
+  research explainer) three ways: cut an existing screen recording with ffmpeg;
+  compose it frame by frame from offscreen captures of the real UI (Qt,
+  web/Electron, or any X11 window) plus real camera footage; or draw the idea
+  itself, with animated people and robots, diagrams that draw themselves,
+  typeset equations and charts from logs. Covers auditing footage for dynamic
+  moments, aspect-correct crops and push-ins, animated lower thirds, crossfades,
+  light and dark cuts from one compositor, side-by-sides synced at cut time,
+  metric charts that draw themselves, GL/3D window capture over X11, and a
+  numeric check that a captured UI panel is animating rather than flickering.
+  Use when asked to make a promo/teaser/demo video, an explainer, concept or
+  research video, cut a highlight reel, film a product "without screen
+  capture", or fix pacing, zoom, aspect-ratio, caption or flickering-UI
+  problems in an edit.
+---
+
+# claude-video-skill
+
+Three ways to make a short film (a product promo, a demo reel, or a concept or
+research explainer), no paid tools and no MCP:
+
+* **Mode A — cut a recording.** ffmpeg `filter_complex`, driven by
+  `scripts/build_promo.py`. Use it when a recording already contains the shots.
+* **Mode B — compose from captures.** Frames built in PIL (`scripts/promo_kit.py`)
+  from plates: offscreen captures of the real UI (`scripts/capture_ui.py`) and
+  cuts of real footage (`scripts/plates.py`). Use it when there is no usable
+  recording, when the UI has moved on since the last one, or when the film has
+  to show the product exactly as it ships today.
+* **Mode C — draw the idea.** Characters, diagrams, equations and charts from
+  logs, drawn in the same compositor (`scripts/explain_kit.py`,
+  `scripts/walker.py`), with Mode B plates wherever the real thing exists. Use it
+  for explainers: what the film has to show cannot be filmed. See "Mode C —
+  explainer films" below.
+
+Mode B is also the answer when a Mode A cut keeps failing on "the UI is stale /
+that page doesn't exist any more".
+
+**Read this whole file before cutting a film.** Every pitfall below was hit in
+production and cost a full redo — none of them are hypothetical.
+## Workflow (do these in order)
+
+### 1. Probe the source
+```
+ffprobe -v error -show_entries format=duration -show_entries stream=width,height,r_frame_rate \
+  -of default=noprint_wrappers=1 SRC.mp4
+```
+Screen recordings are frequently variable-frame-rate (e.g. `r_frame_rate=1000/1`)
+and odd dimensions (e.g. `1922x1077`). Always normalize with `fps=30` (or your
+target) inside the filter chain and scale to an exact even output size — never
+assume the source is clean CFR 1920x1080.
+
+### 2. Audit the footage — do not skip this
+Use `scripts/contact_sheet.py` to tile frames across the timeline and **look
+at them** before picking any timestamp:
+```
+python3 scripts/contact_sheet.py SRC.mp4 --start 0 --end 60 --step 2 --out sheet1.jpg
+```
+Then read the resulting jpg. Repeat over the full runtime, denser (`--step
+0.5`–`1`) around anything that looks promising.
+
+**Why this matters:** the single biggest failure mode in these edits is
+picking "meaningless" content — idle forms, empty state ("no data yet"),
+`STOPPED` buttons, warning banners, dropdown menus mid-click. All of this
+looks fine in a script/outline but reads as dead/unfinished on screen. The
+actual dynamic, cinematic moments (a robot mid-motion, hands reaching toward
+camera, a dashboard mid-populate) are usually just a few seconds away from
+the boring ones and are easy to miss without literally looking at tiled
+frames first. Re-scan aggressively — the first pass is very often wrong.
+
+Sort timestamps **numerically** when eyeballing a tiled sheet, not by
+filename string — `"8.3"` sorts after `"22.1"` lexically. `contact_sheet.py`
+handles this for you; if you tile frames some other way, watch for it.
+
+### 3. Pick disjoint, exact-aspect crops
+For each shot you want to highlight, note the ROI as `(x, y, w, h)` in source
+pixel coordinates. Don't worry about hitting the exact output aspect ratio by
+hand — `build_promo.py`'s `fit_crop_to_aspect()` re-fits every crop box to
+the exact output ratio automatically, centered on your ROI. **Never** scale a
+crop with `force_original_aspect_ratio=disable` — that stretches the image
+(warped UI text, distorted proportions) and was the #1 visible defect in the
+first few attempts of this workflow.
+
+### 4. Write a config and generate
+See `scripts/build_promo.py`'s config schema (below). Then:
+```
+python3 scripts/build_promo.py config.json          # generates + renders
+python3 scripts/build_promo.py config.json --filter-only   # just the graph, for inspection
+```
+
+### 5. Verify by re-extracting frames from the OUTPUT
+Never trust the encode log alone. After rendering:
+```
+ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 OUT.mp4
+```
+and confirm it matches the generator's printed "expected total duration"
+**exactly**. If it doesn't, stop and read the pitfall below before doing
+anything else — a mismatch here means the file is silently broken even
+though ffmpeg exited 0 with no errors. Then pull a few frames from the
+output itself (not the source) to confirm crops aren't distorted, captions
+render, and cuts land where intended.
+
+## Config schema (`build_promo.py`)
+
+```jsonc
+{
+  "source": "/path/to/raw.webm",
+  "output": "/path/to/promo.mp4",
+  "source_width": 1920, "source_height": 1080,   // for crop clamping
+  "width": 1920, "height": 1080, "fps": 30,
+  "accent": "0xE0A94B",                           // MUST be a string, not a bare hex int (see pitfall)
+  "crossfade": 0.3,
+  "segments": [
+    {"start": 6.2, "end": 11.0, "crop": null},    // no crop/caption = plain full-frame shot (e.g. a branded intro)
+    {
+      "start": 42.0, "end": 45.5,
+      "crop": [180, 140, 1000, 563],              // [x, y, w, h] in SOURCE pixels, any aspect — auto-fitted
+      "style": "push_in",                          // default; "static_zoom" or "none" also available
+      "kicker": "DIGITAL TWIN",                    // small letter-spaced label
+      "title": "Real-Time Teleoperation, 34-DOF"   // main caption line
+    }
+  ],
+  "closing": {
+    "start": 147.3, "end": 148.0,                 // a short still moment to freeze — MUST be disjoint from every segment above
+    "hold": 3.6,                                   // total closing-card duration after freezing
+    "title": "WEGO HUMANOID STUDIO",
+    "subtitle": "The Complete End-to-End Humanoid Physical AI Platform"
+  }
+}
+```
+
+Every `segments[].{start,end}` and `closing.{start,end}` must be a **disjoint**
+window of source time — see the overlap pitfall below. The script prints a
+warning if it detects two windows overlapping; don't ignore it.
+
+## Pitfalls (all hit for real — read before you improvise around this script)
+
+### Overlapping source-time trims silently corrupt output duration
+If two `trim` branches read overlapping windows of the same `[0:v]` input and
+both eventually feed the same `xfade` chain, the final output duration comes
+out **wildly wrong** (observed: a 24.8s expected cut rendered as 144.3s) with
+**zero errors or warnings from ffmpeg** — it just silently produces a broken
+file. This reproduces even when the second branch is derived via `split`
+from the first rather than a second direct `trim` on `[0:v]` — the fix is
+not "avoid double-trimming," it's "every branch's source time window must be
+disjoint from every other branch's, period." This is why a closing freeze
+frame should come from a distinct late timestamp, not from re-using/splitting
+the intro. `build_promo.py` checks this automatically and warns; don't
+silence or bypass that check.
+
+### `force_original_aspect_ratio=disable` on a crop stretches the image
+Any crop whose `w:h` isn't already exactly the output ratio needs to either
+be letterboxed (`decrease` + `pad`) or — better — re-fit to the exact ratio
+before scaling (what `fit_crop_to_aspect()` does). `disable` forces a
+non-uniform stretch and it is very easy to not notice until you look closely
+at rendered text/UI elements and see them warped.
+
+### Starting a shot already zoomed in reads as abrupt
+A shot that opens directly on a tight crop, with only a mild secondary zoom
+inside that crop, never shows the viewer the wide establishing context — it
+reads as if the "real" opening was clipped off. Use the `push_in` style
+(default): animate from the full frame (zoom=1, centered) to the target ROI
+crop (exact zoom to fill frame, centered on ROI) over the shot's duration,
+eased (ease-out cubic). This also directly fixes "the interesting bit got
+clipped" complaints on branded intro/logo animations — find the actual start
+of the reveal animation (scan frame-by-frame around where you *think* it
+starts; it's usually a couple seconds earlier than assumed) rather than
+starting on its resting/settled frame.
+
+### Bare hex color literals
+`BORDER = 0xE0A94B` (Python int) silently prints as a decimal string when
+interpolated into an ffmpeg filter string (`"14713419"`), which ffmpeg
+either rejects or misinterprets — no crash, just a wrong-colored element
+that's easy to miss in a quick render check. Always keep color values as
+strings: `BORDER = "0xE0A94B"`.
+
+### Asymmetric drop shadows read as "inconsistent border"
+If you add a soft shadow behind a bordered inset/frame, offset it (dx, dy)
+from center and it reads as an uneven/inconsistent border even when the
+border stroke itself is uniform — the eye reads shadow-visible-on-two-sides
+as "thicker there." Center shadows exactly behind their frame unless an
+offset is a deliberate design choice.
+
+### A constantly-blurred background reads as static even with content changing
+Blurring a background for the full duration of a video (e.g. behind a
+picture-in-picture inset) reads as "nothing is moving" regardless of what's
+actually playing under the blur, because blur removes the legible detail
+that signals motion. If layering a blurred backdrop, keep it brief/contextual
+(e.g. a few seconds under a closing card) rather than the sustained state for
+most of the runtime — or add a continuous slow zoom (Ken Burns, see
+`push_in_zoompan`/`zoompan` usage in `build_promo.py`) so it visibly moves.
+When in doubt, prefer a single clean full-screen cut over a blurred-backdrop
+layering trick — it's the safer default and was the actual fix that turned a
+rejected "trash" edit into an accepted one.
+
+## Mode B — compose from captures (no screen recording)
+
+Frames are composed in PIL and encoded from a PNG sequence. Three kinds of plate
+feed the compositor:
+
+1. **The real UI, captured offscreen** — `scripts/capture_ui.py`. Three
+   backends, one contract (a PNG sequence plus a per-frame driver hook):
+   | backend | what it drives | grabs |
+   |---|---|---|
+   | `qt` | PyQt5/6, PySide2/6 — window built by your own factory function | whole window, or one panel by `attr:` / `name:` / `class:` / `text:` selector |
+   | `web` | any URL, incl. an Electron renderer, via headless Chromium (Playwright) | page, or one element by CSS selector |
+   | `x11` | anything on an X display (GTK, native, a game); run it under Xvfb | a region, via ffmpeg `x11grab` |
+   This is not a screen recording: nobody's desktop, notifications or cursor get
+   in, and the plates cannot go stale because they are made from the app itself.
+2. **Real footage**, cut to the exact size the layout uses — `scripts/plates.py`.
+   Mode A's auditing rules apply unchanged: look at a contact sheet first.
+3. **The drawn layer** — background, cards, typography, transitions:
+   `scripts/promo_kit.py`.
+
+A film is then a list of `(name, function, length_in_frames)` — each beat names
+a draw function and how many frames it occupies. `--only <beat>` renders that beat alone, numbered
+from 0 — a preview into a scratch directory. To re-render one beat IN PLACE,
+pass its global frame range from `--map` as `--start/--end` (pad by the
+12-frame dissolve on each side); `--only` into the real frame directory
+overwrites the film's opening frames instead, and the encode looks fine.
+
+### Drive the UI through its own entry points
+Feed the state machine the way the product does — the stdout its subprocesses
+print, the dicts its readers emit, the actions its store dispatches — instead of
+setting label text. The capture then cannot disagree with the shipping product,
+and progress bars, counters and charts animate for free. The same shape works
+for both Qt and web drivers: feed each its own native event/output stream.
+
+### Grab PANELS, not pixel crops of a window
+Cropping a fixed rectangle out of a window capture is what makes a film look
+like jumping screenshots: any text whose width changes re-flows the layout under
+your fixed box, and anything past the crop line — progress bars, ETA rows,
+totals — is silently cut off. Grab the panel widget/element *itself*: whole,
+stable, nothing clipped. Capture it at 2x device scale so the compositor can
+blow it up and keep the type crisp.
+
+### Capture window plates at DISPLAY aspect
+A window sized to the app's natural shape (say 1500x1400) reads as a phone
+screenshot and wastes half of a 16:9 frame. Capture full-window plates at
+1920x1080 logical with ~1.25x device scale — it fills the cut like a real
+monitor and still downsamples crisply.
+
+### A page's real content is often narrower than the viewport
+The DISPLAY-aspect advice above is for a native app window. A marketing or
+product *page* is different: it frequently centers its content in a CSS
+`max-width` column — 900-1200px is typical — inside a much wider viewport, with
+the rest left as blank margin. Capturing the full 1920px viewport for a beat
+that's supposed to be about one page section wastes 40%+ of the frame on that
+margin, and the screenshot then gets shrunk *again* to fit a card in the
+compositor — body text that was already 12-14px on the real page becomes
+illegible twice over. Check the page's own CSS for the wrapping container's
+`max-width` and capture at (or a little over) that width instead, paired with
+`--scale 2` so the eventual downscale into the card stays crisp rather than
+soft. A tool page's H1 is usually worth dropping from the capture entirely in
+favour of a title drawn natively by the compositor (`tracked_text`/`caption`)
+— vector type stays legible at any card size, screenshot type doesn't.
+
+### Silence the app's own data sources — EVERY FRAME
+Real readers (a telemetry poller, a rate monitor, a websocket) keep publishing
+"offline / 0 Hz" when no hardware or backend is attached, and they overwrite the
+state you inject *between grabs*. On screen that is a panel flickering between
+LIVE and "no data" every other frame — the single most common defect in this
+mode. Stubbing the starter once at setup is not enough: if the app armed it with
+something like `QTimer.singleShot(300, self._ensure_reader)` (or a `setInterval`
+registered at import), that timer captured the original callable before your
+stub existed and will resurrect the reader a moment later. Stop it in the
+per-frame tick.
+
+### Time-series widgets usually reject non-monotonic x
+A rolling chart typically drops any point whose x is ≤ the last one. Two
+consequences: a whole-window back-fill re-sent each frame silently does nothing,
+and any *other* producer stamping points at the wall clock parks itself ahead of
+your back-dated ones and rejects everything you feed. Stop that producer, clear
+the series, then feed timestamps that march forward across frames, spread over
+the chart's window so the line spans it instead of spiking at "now".
+
+### Layout traps
+* Chart panels are usually far taller than data panels (e.g. 858x976 vs
+  1036x386 at 2x). Lay them side by side; stacking two pushes the second off
+  frame.
+* Two captures of the same UI in different languages or themes must be **wiped
+  or cut**, never cross-dissolved — overlapping glyphs are unreadable mush.
+  `promo_kit.wipe()` does a hard edge with a lit seam.
+* Keep captions clear of the frame edge: a 52 px title at y=968 with a subtitle
+  under it is already cut off at 1080.
+* A label dropped into a fixed-width box overflows silently the moment the string
+  is not the one you designed against — product names and translations never are.
+  Measure it: `promo_kit.fit_font(role, text, size, box_w - pad)`.
+* `from promo_kit import *` gives you `P`; it is mutated in place by `run()` so it
+  follows `--theme`. Do not copy it into a constant of your own, or your film
+  draws one theme while the kit draws the other.
+* A caption over a busy UI plate needs a ground, not a bigger font.
+  `promo_kit.glass()` frosts whatever is already behind the box.
+* Bilingual captions: headline in one language, the line beneath in the other.
+  `caption()` sets the title in the `title` role and the subtitle in `body`, so
+  map each to a face that has the glyphs —
+  `--font-map '{"title": "<CJK face>", "body": "<Latin face>"}'`.
+* A walk through a sequence reads as one story when it is numbered:
+  `caption(..., step="01")`. A column of chips hangs off a right edge with
+  `chip(..., anchor="r")` — no measuring first.
+
+### Footage: frame the subject, then check all four edges
+Real footage is never framed for your card. Cut the plate, run
+`contact_sheet.py` on the PLATE rather than the source, and check every edge:
+
+* A wide crop of a busy scene pulls in whatever stands next to the subject — a
+  second person, a second device, the next screen over — and a tall subject in
+  a 16:9 crop loses its top or bottom. Crop on the subject at the subject's
+  shape (a 4:5 portrait card for a standing figure or a phone) and let the
+  layout make room for it.
+* Real clips open on dead air: setup, a pause, a hand reaching for the button.
+  Cut from where the action starts, found on the sheet — not from 0.
+* A side-by-side (reference / result, before / after, source / copy) is synced
+  at CUT time. Find the same moment in both sheets, start each plate there,
+  and index both with the same `i`. `label()` names the two sides; `arrow()`
+  draws the "becomes" between them.
+
+### Stills: push in, but not far
+A still — a product shot, a generated image, a slide — needs motion to read as
+film. `push(im, zoom, focus, size)` crops toward `focus` and resamples in one
+affine op, and it closes two traps:
+
+* `Image.crop` with a box past the image edge does not fail; it pads with
+  black, which lands as a dark band along one side of the card. `push()` clamps
+  the window inside the image.
+* A push past ~1.10x on a full-figure or full-product shot crops off the very
+  thing the shot is of. Keep it small; the motion is what matters, not the zoom.
+
+### Capturing a GL or 3D window over X11
+3D viewers, game engines, CAD, map views, simulators — anything drawing through
+GLFW — need four things the `qt` and `web` backends do for you:
+
+* **Input through XTEST.** `xdotool key --window ID` sends synthetic events,
+  and GLFW drops them without a word. `windowactivate` the window first, then
+  `xdotool key` / `click` with no `--window`.
+* **Hide the app's own chrome.** Side panels, toolbars and debug overlays go
+  through the app's own shortcuts; frame its camera on the subject; grab only
+  the client area (`xwininfo -id` gives the absolute origin and size). A first
+  grab of the whole window — chrome in, subject small in the middle — was
+  unusable.
+* **No cursor, and start the action after the grab.** `capture_ui.py --backend
+  x11` passes `-draw_mouse 0` and calls `--driver` once the first frame has
+  landed. Scripting ffmpeg yourself, do both, or the opening of the action is
+  over before frame one.
+* **`set -e` capture scripts.** `xdotool windowactivate` can exit non-zero under
+  some window managers (a `_NET_WM_DESKTOP` property error) even though the
+  window did activate, and that aborts the whole capture. `|| true` it.
+
+### Numbers on screen are claims
+A chart, a counter or a "built in 3 hours" card is the part of a film people
+quote. Treat it that way:
+
+* Draw the metric as it was logged. `line_chart(xs, ys, w, h, prog, ...)` builds
+  the chart once at 2x and reveals it as `prog` runs, with a live readout at the
+  front. If you bridge an artefact — a restart that briefly resets a running
+  average, an outage gap, a backfill — confirm both sides meet at the same
+  level and write the bridge down in the notes that ship with the film. Drawn
+  raw, a restart dip reads as a collapse.
+* Two metrics that belong together go on ONE axes, not two cards: a baseline
+  against a treatment, the seeds of one run. `line_chart(xs, None, w, h, prog,
+  series=[(ys, colour, name), ...])` draws each line at the same front with a
+  legend; a `None` in a series is a missing sample and the line bridges it, so
+  say so if the gap is real. The single-series call is unchanged.
+* Put the measurement basis on screen in one small line ("measured from logs ·
+  one-time setup excluded"), and make every number reproducible from files and
+  timestamps.
+* Count a number up, and land it in the exact form you will stand behind
+  (`~3 h`, not `2.97 h`).
+* Clear the rights on anything third-party in shot before a public post:
+  music, logos, a performance, someone else's UI.
+
+### Structure: make the seams mean something
+If every beat cross-dissolves, the film reads as one continuous even wash and the
+viewer never feels a section change. Name the arrival of the beats that open a
+section, and leave the rest alone:
+
+    BEATS = [("title", b_title, 90),
+             ("loop",  b_loop, 210, "flash"),
+             ("app",   b_app, 140, "wipe"),
+             ("panel", b_panel, 150)]          # "dissolve" is the default
+
+`flash` passes through the palette's FLASH colour, so its midpoint is a fully
+flat frame — white in light, black in dark. That is a beat when the cut is fast
+and an encoding glitch when it is not; `promo_kit.transition` documents the
+softer bloom-over-dissolve variant to swap in.
+
+Kinetic type has one arithmetic constraint. With `tracked_text(..., prog=,
+stagger=)`, keep `stagger * len(text) + 0.22 <= 1.0`. Above that `prog` saturates
+before the last characters have finished their own ramp, and the line settles
+permanently half-lit — it reads as a rendering bug, not an animation.
+
+### Motion: judder, stepping, and one-frame jolts
+Three defects that all read as "the transitions are not smooth", with three
+different causes:
+
+* **Judder from stretched plates.** A 60-frame capture shown across a 185-frame
+  beat repeats each captured frame three times. Index plates FRACTIONALLY —
+  `i * (len(seq(name)) - 1) / (n - 1)` — and blend the two neighbours;
+  `promo_kit.frame_at()` does the blend for you.
+* **Real motion plays at real time.** Stretching is for UI captures, whose
+  timing is yours to choose. Footage of anything with a natural speed — people,
+  a product in use, a recorded animation, a screen video of a real interaction —
+  plays at the speed it was shot: index it at `i * plate_fps / FPS`
+  (`plates.py` normalises to 30, so just `i`) and size the beat to the clip.
+  Stretched, it plays in slow motion, and two clips side by side drift apart.
+* **Stepping from integer geometry.** A 40 px push-in over 150 frames moves
+  0.27 px per frame, so pasting at integer coordinates stair-steps every few
+  frames. Scale on a float and place on a float; `promo_kit` resamples through
+  one affine op — `plate(..., zoom=)` and `push()` both — so slow moves glide.
+* **Jolts from captured state changes.** A theme swap or page switch that
+  happens between two captured frames lands as a single-frame jump. Ease it
+  across ~8 frames by blending the plate frames either side of it, and
+  cross-dissolve wherever two halves of a beat meet rather than cutting.
+
+Verify with `scripts/check_flicker.py FRAMES` (no `--box` = whole frame): it
+reports repeated frames, jolts and A-B-A oscillation in one pass. Judge repeats
+on the MAX pixel delta, not the mean — a title card with a slow background has a
+near-zero mean diff and is not a repeated frame at all.
+
+### Score
+`scripts/score.py` synthesises an original cue at the film's exact length:
+
+    score.py --seconds 63.4 --bpm 118 --energy drive --out score.wav
+
+Written rather than downloaded on purpose — an original cue has no licence
+question, no attribution line, and no "royalty free" claim to verify — and it
+can be written to the edit instead of the edit being cut to a track. Sections
+scale with `--seconds`: pad-only intro, arpeggio in early, drums in at ~19 %,
+riser before the end, drums out for the closing card.
+
+Those fractions are a guess about where your sections are, and a guess lands the
+drums *near* the cut rather than on it. Once the beat map exists, hand over the
+real times:
+
+    python film.py --map          # every beat's start, in seconds
+    score.py --seconds 75.0 --cue arp=2.9,drums=7.8,hats16=41.8,riser=67.8 \
+             --fills 7.6,14.8,25.0,41.6,52.4,64.0 --out score.wav
+
+Anything omitted from `--cue` keeps its default fraction. Put `--fills` on the
+section starts, and pass the same `--bpm` to the compositor so `promo_kit.pulse()`
+breathes on the same tempo the score is in.
+
+Energy is structural, not a mix decision: `--energy calm` is a half-time kick
+and no bass pulse; `--energy drive` is four-on-the-floor, an eighth-note bass,
+claps on 2 and 4 and sixteenth hats. If a cue "feels too calm", the fix is the
+arrangement and where the drums enter — not the volume.
+
+Mux with `loudnorm`, and check the result: `-15 LUFS` integrated with true peak
+under `-1.5 dBTP` sits right for a music-only promo (`ffmpeg -i out.mp4 -af
+loudnorm=print_format=summary -f null /dev/null`).
+
+### Ship light and dark from one compositor
+Take the palettes from the product's own theme table (`--palette theme.json`),
+parameterise the film with `--theme`, and capture one plate set per theme. Dark
+needs its own treatment: black shadows vanish, so raise the alpha and keep the
+hairline border, and the closing flash fades to black rather than white.
+
+### Keep the compositor fast enough to iterate
+Naive PIL work runs ~2 s/frame — an hour per pass, which kills iteration.
+~0.18 s/frame is achievable and `promo_kit.py` already does it: build the static
+background once and copy it, paint glow/particles at quarter resolution then
+upscale, cache card shadows by (size, radius), cap the decoded plate cache, and
+save with `compress_level=1`.
+
+Then use every core. `--shard K/N` renders slice K of N into the same `--out`:
+
+    for k in $(seq 0 11); do python film.py --shard $k/12 --out frames & done; wait
+
+The slices are contiguous and every frame is identical to a sequential render; a
+1600-frame film comes back in about three minutes this way.
+
+### Verify flicker numerically, not by eye
+`scripts/check_flicker.py FRAMES --box x0,y0,x1,y1` crops to the panel and looks
+for A-B-A oscillation (this frame matches the one two back but differs from the
+one before). Zero oscillations with a small residual per-frame delta is what
+"animating smoothly" looks like; anything else is flicker you would have
+shipped. Exit code 1 on failure, so it belongs in the build script.
+
+## Mode C — explainer films: draw the idea
+
+Some films explain a concept rather than show a product: a research result, a
+method, how a system works. There is no UI to capture, and the clearest picture
+is often one nobody can film (an analogy, a force no camera sees, a
+definition). Draw it. Mode B's compositor carries the whole
+thing; `scripts/explain_kit.py` and `scripts/walker.py` add the pieces:
+
+| call | what it is for |
+|---|---|
+| `tex(r"$...$", px, colour)` | a formula typeset by matplotlib mathtext (Computer Modern, no LaTeX install), as an RGBA image |
+| `reveal(img, im, x, y, prog)` | paste an image left to right, an equation being written |
+| `node(img, box, title, sub, prog, accent)` | a diagram box that pops in; text measured to the box |
+| `edge(img, pts, prog, g, colour, dashed=, label=)` | a polyline edge that draws itself, then carries flow dots |
+| `bars(img, box, groups, prog, vmax, mean=, horizontal=)` | grouped bars that grow and count up, with interval whiskers and a mean line |
+| `chart_map(xs, w, h, lo, hi)` | `line_chart`'s data -> pixel map, so a band, threshold or marker lands on the plotted value |
+| `walker.render(style, phi, c, L, size, ground_y, x0)` | a side-view person or humanoid robot from one gait model, with a `hook` to draw props between trunk and near arm |
+
+Look before you render: `film.py --probe intro:40,200 loop:140 --out probe.jpg`
+puts any frames of any beats on one sheet in seconds. Probe each beat at its
+landing, its busiest moment and its last frame, and fix what you see before the
+full render.
+
+### Characters: one skeleton, constrained to the ground
+* **Pin the stance foot.** Each frame, lift the pelvis so the lower foot sits on
+  the floor. The walk gets its bob for free, and the feet never sink into the
+  belt or float above it. Integrating the trunk height any other way drifts.
+* **Move the floor at the stance foot's speed.** A treadmill belt or a floor
+  grid that runs at any other speed makes the planted foot skate.
+  `walker.stance_speed(L, c)` is the speed per gait cycle.
+* **Integrate the phase.** `phi += 1 / cycle_frames` per frame. With
+  `phi = i / cycle` and a cycle length that changes with time, the gait jumps.
+* **One skeleton, two styles.** A person and a robot drawn on the same joints
+  and phase can turn into each other mid-stride: a scan line with the robot to
+  its left and the person to its right reads as the same body changing.
+* **Supersample.** PIL lines and polygons are not antialiased. Draw the figure
+  and its props at 2x on one layer and LANCZOS it down once.
+* **Layer order is anatomy.** A harness, a backpack or a tool goes over the trunk
+  and under the near arm. Draw it from the `hook`, or it lies on top of the arm.
+
+### Across beats: hand the motion over
+Beats overlap by `XF` frames, so the next beat's frame 0 is this beat's frame
+`n - XF`. Start a continuing walk from the phase and floor offset at that frame,
+not at frame `n`, or the dissolve blends two strides a few frames apart. Start
+any move in the new beat (a figure sliding aside, a zoom) after `XF`: even a
+3 px shift inside the dissolve shows as a ghost of the head.
+
+### Equations
+* `math_to_image` paints an opaque white background. Render black on white and
+  turn the luminance into alpha (what `tex()` does), or every formula sits in a
+  white box on a tinted card.
+* mathtext has no `\color` and no `cases`/`array`. Write a piecewise function as
+  one expression (`f_0 \min(1, \max(0, (T-t)/(0.9T)))`), and mark a term by
+  drawing under it at `tex_x(prefix)`.
+* Write the formula on screen with `reveal()`, then the line that says what each
+  symbol is and its value. A formula with no numbers is decoration.
+
+### Diagrams and charts in an explainer
+* Reveal a diagram in the order the reader should read it: nodes, then edges,
+  then the one edge that matters. A forbidden path is a dashed edge with an X
+  and a label, not an absent edge, so the viewer sees the path that does not
+  exist.
+* **Never clip a chart's y axis below the data.** A rate drawn on a 0–40 % axis
+  turned a curve that starts at 100 % into a plateau that never happened.
+  Use the full range and mark the threshold that matters.
+* Show a definition by doing it: slide the window of a sustained-threshold
+  endpoint along the real logged values and stop it where the analysis code
+  stops. Assert in the data-prep script that the code's answer equals the
+  published number.
+* Anything drawn rather than measured, like a typical schedule or a schematic
+  curve, carries an on-screen chip saying ILLUSTRATIVE.
+* A long label in a side column runs off the frame at 1920 px. Measure it with
+  `fit_font`, and fade floors and grids out toward their ends rather than
+  stopping them on a hard edge in mid-frame.
+
+## Render settings
+`libx264`, `-crf 16` (visually near-lossless, fine for short films — raise
+toward 20-23 if file size matters more than quality), `-pix_fmt yuv420p`
+(compatibility), `-movflags +faststart` (streams before fully downloaded),
+`-preset slow` for a deliverable (`ultrafast` only for throwaway debug renders).
+
+For a Mode B PNG sequence: `scripts/encode.sh frames/ out.mp4 [fps]`. Keep crf
+at 16 or below — UI plates are full of hairline borders and 1 px chart strokes
+that a looser quantiser turns to mush.
+
+## Fonts
+`DejaVu Sans Bold` (`/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf`) is
+reliably present on Debian/Ubuntu-family boxes and reads clean at both small
+(kicker) and large (title) sizes; `promo_kit.py` defaults to it. Check with
+`fc-list | grep -i bold` on other systems.
+
+In Mode B, prefer the product's own fonts (`--fonts DIR --font-map map.json`) so
+the film and the UI are one typeface family. PIL has no letter-spacing — draw
+display type character by character and add tracking (`tracked_text`). CJK needs
+a font that actually has the glyphs (Noto Sans CJK, Pretendard); Latin-only
+faces render Hangul/Kanji as boxes, and `fc-list :lang=ko` tells you what is
+installed.
+
+## Beat structure that survived client review
+Open on the wordmark — a cold open on footage was cut as "useless" — then: the
+whole product in one shot → the range it supports → the live workflow → each
+capability as its own beat → the settings that prove it is a real product (theme
+toggle, language toggle) → close on the same card the film opened with. ~60 s,
+beats of 5-7 s, 12-frame dissolves.
+
+Two asks that come back every review: show *every* supported variant rather than
+one example, and show the product's own chrome (a dropdown mid-switch, a toggle
+being clicked) rather than only its output.

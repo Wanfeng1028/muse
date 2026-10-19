@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Explainer"
+  short_description: "Review, render, and verify vertical explainers"
+  default_prompt: "Use $video-explainer to turn this brief into a reviewed, verified vertical explainer."

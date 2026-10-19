@@ -1,0 +1,4 @@
+interface:
+  display_name: "Edit Delivery QA"
+  short_description: "Verify final video edits before delivery"
+  default_prompt: "Use $edit-delivery-qa to check this finished edit, timeline CSV, and contact sheet before delivery."

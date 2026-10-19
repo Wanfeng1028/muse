@@ -1,0 +1,30 @@
+{
+  "_comment": "Customize the look without touching code. Colors are hex. Positions/margins are in a 1080x1920 frame. Restart nothing — scripts read this on every run.",
+
+  "caption_style": "word-pop",
+  "_caption_style_options": ["word-pop", "capcut", "clean", "label", "karaoke", "one-word", "boxed", "bicolor"],
+
+  "accent_color": "#FFFF00",
+  "hook_accent_color": "#FFFF00",
+
+  "font": "assets/fonts/DejaVuSans-Bold.ttf",
+  "font_family": "DejaVu Sans",
+  "_font_note": "To use another font: drop a .ttf in assets/fonts/, set 'font' to its path and 'font_family' to the font's real family name (what libass matches on).",
+
+  "caption_max_chars": 16,
+  "caption_pos_y": 1360,
+
+  "hook_seconds": 4,
+  "hook_pos_y": 175,
+
+  "max_download_height": 1080,
+  "_max_download_height_note": "Cap for YouTube downloads. 1080 is plenty for TikTok/Insta/Shorts (they recompress anyway). Bump to 1440 only if you want sharper face-cam crops (the crop is a vertical slice of the frame, so a taller source = crisper vertical).",
+
+  "safe_zone": {
+    "top": 120,
+    "bottom": 320,
+    "left": 70,
+    "right": 130,
+    "_note": "bottom/right reserve room for TikTok/Reels UI (buttons column on the right, caption+bar at the bottom). Captions/hook are kept inside these margins."
+  }
+}
