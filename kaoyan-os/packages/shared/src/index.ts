@@ -134,6 +134,14 @@ export interface PlanSummary {
   plans: PlanProgress[];
 }
 
+/** 排期区间查询参数 */
+export interface PlansRangeQuery { from: string; to: string; }
+/** 单日负荷 */
+export interface DayLoadItem { id: number; date: string; subject: SubjectKey; title: string; plannedMinutes: number; kind: 'new' | 'review' | 'manual'; done: boolean; }
+export interface DayLoad { date: string; items: DayLoadItem[]; totalMinutes: number; overloaded: boolean; }
+/** 周负荷预警响应 */
+export interface OverloadResponse { weekStart: string; weekEnd: string; dailyMinutes: number; overloadedDays: number; days: DayLoad[]; }
+
 /** 错题 */
 export interface Mistake {
   id: number;
@@ -281,6 +289,34 @@ export interface HeatmapResponse {
   currentStreak: number;
   bestStreak: number;
   activeDays: number;
+}
+
+/** 组卷条目（组卷时隐藏 analysis，考完再看解析） */
+export interface QuizItem {
+  id: number;
+  subject: SubjectKey;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+/** 组卷输入 */
+export interface QuizGenerateInput {
+  subject?: SubjectKey;
+  unmasteredOnly?: boolean; // 缺省 true：只组未掌握的
+  from?: string; // 创建日期下限 YYYY-MM-DD
+  to?: string;   // 创建日期上限 YYYY-MM-DD
+  limit?: number; // 缺省 20，范围 1..100
+}
+/** 批改输入 */
+export interface QuizGradeInput {
+  results: Array<{ mistakeId: number; correct: boolean }>;
+}
+/** 批改结果 */
+export interface QuizGradeResult {
+  total: number;
+  correct: number;
+  wrong: number;
+  updatedIds: number[];
 }
 
 /** 错题掌握率响应 */

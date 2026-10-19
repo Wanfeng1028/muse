@@ -12,6 +12,7 @@ import {
   SUBJECTS,
 } from '@kaoyan/shared';
 import { todayStr, addDays } from '../db';
+import { computeDayLoads } from '../schedule-stats';
 
 // 数据库行类型（snake_case）
 interface PlanRow {
@@ -501,5 +502,97 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     }
 
     return reply.send({ created, skipped, discarded, items });
+  });
+
+  // 区间查询：from/to（含），最多 62 天
+  app.get('/api/plans/range', async (req, reply) => {
+    const userId = req.user!.id;
+    const q = req.query as Record<string, unknown>;
+
+    if (!isValidDate(q.from) || !isValidDate(q.to)) {
+      return reply.code(400).send({ error: 'from/to 格式非法，应为 YYYY-MM-DD' });
+    }
+    const from = q.from;
+    const to = q.to;
+
+    if (from > to) {
+      return reply.code(400).send({ error: 'from 不能晚于 to' });
+    }
+
+    // 计算天数（含端点）
+    const [fy, fm, fd] = from.split('-').map(Number);
+    const [ty, tm, td] = to.split('-').map(Number);
+    const fromUtc = Date.UTC(fy, fm - 1, fd);
+    const toUtc = Date.UTC(ty, tm - 1, td);
+    const days = Math.round((toUtc - fromUtc) / 86400000) + 1;
+    if (days > 62) {
+      return reply.code(400).send({ error: '区间不能超过 62 天' });
+    }
+
+    const rows = db
+      .prepare(
+        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans' +
+          ' WHERE user_id = ? AND date >= ? AND date <= ?' +
+          ' ORDER BY date ASC, id ASC',
+      )
+      .all(userId, from, to) as unknown as PlanRow[];
+
+    return reply.send(rows.map(mapPlan));
+  });
+
+  // 单日负荷预警：weekStart + dailyMinutes，返回 7 天 DayLoad
+  app.get('/api/plans/overload', async (req, reply) => {
+    const userId = req.user!.id;
+    const q = req.query as Record<string, unknown>;
+
+    if (!isValidDate(q.weekStart)) {
+      return reply.code(400).send({ error: 'weekStart 格式非法，应为 YYYY-MM-DD' });
+    }
+    const weekStart = q.weekStart;
+
+    const dailyMinutesRaw = q.dailyMinutes;
+    const dailyMinutes =
+      typeof dailyMinutesRaw === 'string'
+        ? Number(dailyMinutesRaw)
+        : typeof dailyMinutesRaw === 'number'
+          ? dailyMinutesRaw
+          : NaN;
+    if (
+      !Number.isInteger(dailyMinutes) ||
+      dailyMinutes < 30 ||
+      dailyMinutes > 1440
+    ) {
+      return reply.code(400).send({ error: 'dailyMinutes 非法' });
+    }
+
+    const weekEnd = addDays(weekStart, 6);
+
+    const rows = db
+      .prepare(
+        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans' +
+          ' WHERE user_id = ? AND date >= ? AND date <= ?' +
+          ' ORDER BY date ASC, id ASC',
+      )
+      .all(userId, weekStart, weekEnd) as unknown as PlanRow[];
+
+    const plansForStats = rows.map((r) => ({
+      id: r.id,
+      date: r.date,
+      subject: r.subject as SubjectKey,
+      title: r.title,
+      plannedMinutes: r.planned_minutes,
+      done: r.done === 1,
+    }));
+
+    const days = computeDayLoads(plansForStats, dailyMinutes, weekStart, 7);
+    const overloadedDays = days.filter((d) => d.overloaded).length;
+
+    return reply.send({
+      weekStart,
+      weekEnd,
+      dailyMinutes,
+      overloadedDays,
+      days,
+    });
   });
 }

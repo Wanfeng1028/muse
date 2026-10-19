@@ -4,6 +4,23 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.0] - 2026-10-20
+
+### Added
+
+- 智能排期 v2（甘特周视图）：后端 apps/server/src/schedule-stats.ts 纯函数 kindOf（标题含"智能排期·"+"新学"/"复习"判 kind）与 computeDayLoads（连续 N 天 DayLoad：items 按分钟降序、totalMinutes 求和、overloaded = 总和 > dailyMinutes）；GET /api/plans/range?from&to（区间≤62 天，400 全覆盖）与 GET /api/plans/overload?weekStart&dailyMinutes（7 天负荷 + overloadedDays）；packages/shared 新增 PlansRangeQuery/DayLoadItem/DayLoad/OverloadResponse。前端 /plans/gantt：7 列周视图（周一..周日），新学实心/复习描边/手动灰三色块，已完成半透明删除线，列头总分钟数 + 超负荷标签 + 顶部预警条，HTML5 拖拽改日期（PATCH /api/plans/:id），图例齐备；gantt- 全套 CSS 浅/深两套。测试：tests/plans-range-overload.test.ts 18 例（纯函数 6 + range 6 + overload 6，含 overloaded 边界"等于不算超"、用户隔离、62/63 天边界）。
+- 错题本"一键组卷"：POST /api/mistakes/quiz/generate（subject/unmasteredOnly 缺省 true/from/to/limit 缺省 20 上限 100；未掌握优先排序；返回 QuizItem 不含 analysis；严格日期校验复用 plans.ts 同款 isValidDate 语义）与 POST /api/mistakes/quiz/grade（results 非空≤200、无重复 id、全量预校验后原子写库；correct=true→mastered=1、false→0；updatedIds 只含实际变化的 id 升序）；packages/shared 新增 QuizItem/QuizGenerateInput/QuizGradeInput/QuizGradeResult。前端 /mistakes/quiz 三段式（组卷条件→自评答题→成绩回写），打印样式 @media print 适配（打印时隐藏导航/表单/自评按钮）。测试：tests/mistakes-quiz.test.ts 16 例（含 404 原子性：混入非法 id 时全不更新；跨用户 id 404）。
+- API 契约文档：docs/API.md（10 章：认证/计划/专注/错题/单词/真题/统计/备份/设置/健康检查 + 附录 A 错误码速查 + 附录 B 同步机制说明，48 个接口标题）；tests/api-docs-sync.test.ts 用 onRoute 钩子枚举全部注册路由，逐个断言文档含对应反引号标题，路由数下限 40。
+- 深色模式查漏：全 11 页走查，补齐排期/组卷/甘特/打印相关深色覆盖；修 ScheduleGantt 行内硬编码浅色（改走 CSS 类 + --gantt-c 变量）与 subjectLabel 读错 SUBJECTS 字段致 tooltip 显示英文 key 的真 bug。
+
+### Fixed
+
+- POST /api/mistakes/quiz/generate 的 from/to 曾用双反斜杠正则（`/^\\d{4}-\\d{2}-\\d{2}$/` 的字面量误写，实际匹配含反斜杠的字符串，导致带 from/to 的请求恒 400；且 '2026-13-01' 这类非法月份能通过），改为与 plans.ts 同款严格 isValidDate。
+- ScheduleGantt 的 subjectLabel 误读 SUBJECTS 不存在的 label 字段，tooltip 显示 "math" 等英文 key，改为读 name。
+- ScheduleGantt 的 `(SUBJECTS as Record<string, ...>)` 在 tsc 严格模式下 TS2352 编译失败，改为 find 查找。
+- 深色模式走查追加修复（真机截图验收）：`apps/web/src/index.css` 的 `:root` / `[data-theme="dark"]` 声明 `color-scheme: light` / `color-scheme: dark`（原生 select/date/file 控件深色跟随，不再是白色）；`apps/web/src/App.tsx` 的 NAV_ITEMS 里 `/plans` 与 `/mistakes` 的 NavLink `end` 改为 `true`（`/plans/gantt` 与 `/mistakes/quiz` 页不再双高亮）；桌面端 `.brand` 加 `white-space: nowrap`（品牌字不再被断成"考研指/挥舱"两行）。
+- 测试 bug 修复：`tests/plans-range-overload.test.ts` 的 createPlan 传 subject 中文名致 5 例 `expected 400 to be 201` 失败，改为传 subject key（math/english/politics）后 21/21 通过；`tests/api-docs-sync.test.ts` 的文档路径少一层 `../` 致 beforeAll ENOENT、3 例被 skip，修正为 `../../../docs/API.md` 后 3/3 通过。
+
 ## [1.11.0] - 2026-10-19
 
 ### Added

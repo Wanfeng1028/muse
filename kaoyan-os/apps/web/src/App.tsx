@@ -13,6 +13,8 @@ import Exams from './pages/Exams';
 import DataTransfer from './pages/DataTransfer';
 import Weekly from './pages/Weekly';
 import Heatmap from './pages/Heatmap';
+import ScheduleGantt from './pages/ScheduleGantt';
+import Quiz from './pages/Quiz';
 import Login from './pages/Login';
 
 
@@ -26,9 +28,11 @@ function applyTheme(theme: Theme) {
 // 导航项定义
 const NAV_ITEMS = [
   { to: '/', label: '仪表盘', end: true },
-  { to: '/plans', label: '复习计划', end: false },
+  { to: '/plans', label: '复习计划', end: true },
+  { to: '/plans/gantt', label: '排期周视图', end: true },
   { to: '/pomodoro', label: '番茄专注', end: false },
-  { to: '/mistakes', label: '错题本', end: false },
+  { to: '/mistakes', label: '错题本', end: true },
+  { to: '/mistakes/quiz', label: '错题组卷', end: true },
   { to: '/words', label: '单词 SRS', end: false },
   { to: '/vocab', label: '词库浏览', end: false },
   { to: '/exams', label: '真题统计', end: false },
@@ -50,8 +54,8 @@ function daysUntil(examDate: string): number {
 // 底部导航前 5 个主 tab
 const MOBILE_TABS = [
   { to: '/', label: '仪表盘', end: true },
-  { to: '/plans', label: '复习计划', end: false },
-  { to: '/mistakes', label: '错题本', end: false },
+  { to: '/plans', label: '复习计划', end: true },
+  { to: '/mistakes', label: '错题本', end: true },
   { to: '/words', label: '单词', end: false },
   { to: '/exams', label: '真题', end: false },
 ];
@@ -96,6 +100,8 @@ function MobileNav({
   const closeSheet = () => setSheetOpen(false);
 
   const actions: MoreAction[] = [
+    { key: 'gantt', label: '排期周视图', to: '/plans/gantt' },
+    { key: 'quiz', label: '错题组卷', to: '/mistakes/quiz' },
     { key: 'pomodoro', label: '番茄专注', to: '/pomodoro' },
     { key: 'vocab', label: '词库浏览', to: '/vocab' },
     { key: 'weekly', label: '周报', to: '/weekly' },
@@ -326,8 +332,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/plans" element={<Plans />} />
+          <Route path="/plans/gantt" element={<ScheduleGantt />} />
           <Route path="/pomodoro" element={<Pomodoro />} />
           <Route path="/mistakes" element={<Mistakes />} />
+          <Route path="/mistakes/quiz" element={<Quiz />} />
           <Route path="/words" element={<Words />} />
           <Route path="/vocab" element={<Vocab />} />
           <Route path="/exams" element={<Exams />} />

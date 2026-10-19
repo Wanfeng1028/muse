@@ -23,6 +23,9 @@
 | 深色模式 | 浅/深主题一键切换，偏好存服务端多端同步，深色板为 slate 家族配色体系 |
 | 自律热力图 | 近 1/3/6 个月专注热力图、当前/最长连续打卡与累计专注天数，点击格子查看当日专注、计划、错题、模考明细 |
 | 周报 | 本周概览卡、7 天专注条形、计划完成率圆环、上周对比、连续打卡 |
+| 排期周视图 | 甘特式 7 列周视图：新学/复习/手动三色块，拖拽改日期，单日超负荷预警 |
+| 错题组卷 | 按科目/掌握度/时间范围组卷，自评答对错，打印友好，批改回写掌握度 |
+| API 文档 | docs/API.md：全部端点参数/错误码表，测试强制代码文档同步 |
 
 
 ## 深色模式
@@ -74,6 +77,39 @@ v1.4.0 起 /weekly 周报页升级为完整周报视图。数据来自 GET /api/
 ![周报视图（浅色）](docs/screenshots/light-weekly.png)
 
 ![周报视图（深色）](docs/screenshots/dark-weekly.png)
+
+## 排期周视图（甘特）
+
+v1.12.0 起 /plans/gantt 排期周视图：把一周的计划铺成甘特式的 7 列（周一到周日），一眼看出哪天排多了。
+
+- 色块按类型区分：新学=科目色实心白字，复习=科目色描边淡底，手动添加=中性灰；已完成的半透明加删除线。
+- 列头显示日期、周几和当天总分钟数；当天总分钟超过"每日分钟数"时，列头标"超负荷"，页面顶部出预警条，直说超了多少分钟。
+- 色块可以直接拖到另一天的列上，松开就改期（调 PATCH /api/plans/:id）。
+- 数据：GET /api/plans/overload?weekStart=&dailyMinutes= 一次拿 7 天的负荷明细；GET /api/plans/range?from=&to= 按区间拉计划（最多 62 天）。
+- 视觉就是信息密度优先的工具表：颜色只用科目四色加灰加警告橙红，深色模式跟 data-theme 走，没有写死的颜色。
+
+![排期周视图（浅色）](docs/screenshots/gantt-light.png)
+
+![排期周视图（深色）](docs/screenshots/gantt-dark.png)
+
+## 错题组卷
+
+v1.12.0 起 /mistakes/quiz 错题组卷：从错题本里按条件抽一套题，当场自测，测完掌握度自动回写。
+
+1. 组卷条件：科目、只组未掌握（默认勾上）、错题创建日期范围、题数（1~100）。
+2. 答题：每题显示题目内容，自己先做，然后点"答对了"或"答错了"；右上角"打印试卷"可打出纸质版（打印样式已适配）。
+3. 成绩：正确率、答对/答错数，以及"回写了 N 道题的掌握度"；答对的标已掌握，答错的打回未掌握。
+- 组卷接口故意不返回解析（analysis），做完之前看不到答案。
+
+![错题组卷（组卷条件）](docs/screenshots/quiz-form.png)
+
+![错题组卷（答题与成绩）](docs/screenshots/quiz-result.png)
+
+## API 文档
+
+v1.12.0 起 docs/API.md 为全部接口的契约文档：每章按方法/路径/认证/参数表/成功示例/错误码表写全，另有错误码速查附录。
+
+- tests/api-docs-sync.test.ts 用 Fastify 的 onRoute 钩子把注册的路由全枚举出来，逐个断言文档里有对应的 `METHOD /api/xxx` 标题；以后加接口、改路径、删接口，必须同步改文档，否则测试挂掉。
 
 ## 技术栈
 
@@ -187,6 +223,8 @@ docker run -d \
 | exams | `GET/POST /api/exams`，`GET /api/exams/trend`，`GET /api/exams/summary`，`GET /api/exams/export` | 真题计时记录、得分率趋势、本阶段汇总统计与 CSV 导出 |
 | settings | `GET/PUT /api/settings` | 考试日期、科目等配置 |
 | stats | `GET /api/stats/weekly`，`GET /api/stats/heatmap` | 周报聚合（专注分钟/计划完成率/新增错题/模考场次/连续打卡 + 7 天每日专注分钟）；热力图聚合（专注/计划/错题/模考按天聚合 + 连续打卡统计） |
+| 排期 | `GET /api/plans/range?from=&to=`，`GET /api/plans/overload?weekStart=&dailyMinutes=` | 区间计划查询（≤62 天）；周负荷明细与单日超负荷判定 |
+| 组卷 | `POST /api/mistakes/quiz/generate`，`POST /api/mistakes/quiz/grade` | 按条件组卷（不含解析）；自评批改并回写掌握度 |
 
 | 备份导入 | `GET /api/backup/export`，`POST /api/backup/import`，`POST /api/import/words`，`POST /api/import/mistakes` | 全量备份导出/恢复（覆盖·合并）、单词 CSV / 错题 CSV 导入 |
 

@@ -7,9 +7,21 @@ import {
   type UpdateMistakeInput,
   type MistakeSummary,
   type ExamRecord,
+  type QuizItem,
+  type QuizGradeResult,
 } from '@kaoyan/shared';
 
 import { nowIso } from '../db';
+
+// 严格日期校验 YYYY-MM-DD（含闰年/月份合法性）
+function isValidDate(s: unknown): s is string {
+  if (typeof s !== 'string') return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, day] = s.split('-').map(Number);
+  const d = new Date(s + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return false;
+  return d.getFullYear() === y && d.getMonth() + 1 === m && d.getDate() === day;
+}
 
 // 数据库行结构
 interface MistakeRow {
@@ -316,4 +328,198 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
 
       return reply.send(result);
     });
+
+  // 一键组卷：按条件抽取错题（隐藏 analysis）
+  app.post('/api/mistakes/quiz/generate', async (request, reply) => {
+    const body = request.body as {
+      subject?: unknown;
+      unmasteredOnly?: unknown;
+      from?: unknown;
+      to?: unknown;
+      limit?: unknown;
+    } | undefined;
+
+    if (!body || typeof body !== 'object') {
+      return reply.code(400).send({ error: '请求体无效' });
+    }
+
+    let subject: string | undefined;
+    if (body.subject !== undefined) {
+      if (typeof body.subject !== 'string' || !isSubjectKey(body.subject)) {
+        return reply.code(400).send({ error: 'subject 非法' });
+      }
+      subject = body.subject;
+    }
+
+    let unmasteredOnly = true;
+    if (body.unmasteredOnly !== undefined) {
+      if (typeof body.unmasteredOnly !== 'boolean') {
+        return reply.code(400).send({ error: 'unmasteredOnly 非法' });
+      }
+      unmasteredOnly = body.unmasteredOnly;
+    }
+
+    let from: string | undefined;
+    if (body.from !== undefined) {
+      if (!isValidDate(body.from)) {
+        return reply.code(400).send({ error: 'from/to 格式非法，应为 YYYY-MM-DD' });
+      }
+      from = body.from;
+    }
+    let to: string | undefined;
+    if (body.to !== undefined) {
+      if (!isValidDate(body.to)) {
+        return reply.code(400).send({ error: 'from/to 格式非法，应为 YYYY-MM-DD' });
+      }
+      to = body.to;
+    }
+    if (from !== undefined && to !== undefined && from > to) {
+      return reply.code(400).send({ error: 'from 不能晚于 to' });
+    }
+
+    let limit = 20;
+    if (body.limit !== undefined) {
+      if (
+        typeof body.limit !== 'number' ||
+        !Number.isInteger(body.limit) ||
+        body.limit < 1 ||
+        body.limit > 100
+      ) {
+        return reply.code(400).send({ error: 'limit 非法' });
+      }
+      limit = body.limit;
+    }
+
+    const conditions: string[] = ['user_id = ?'];
+    const params: (string | number)[] = [request.user!.id];
+
+    if (subject !== undefined) {
+      conditions.push('subject = ?');
+      params.push(subject);
+    }
+    if (unmasteredOnly) {
+      conditions.push('mastered = 0');
+    }
+    if (from !== undefined) {
+      conditions.push('substr(created_at, 1, 10) >= ?');
+      params.push(from);
+    }
+    if (to !== undefined) {
+      conditions.push('substr(created_at, 1, 10) <= ?');
+      params.push(to);
+    }
+
+    params.push(limit);
+
+    const where = ` WHERE ${conditions.join(' AND ')}`;
+    const rows = db
+      .prepare(
+        `SELECT id, subject, title, content, created_at FROM mistakes${where} ORDER BY mastered ASC, id ASC LIMIT ?`
+      )
+      .all(...params) as unknown as Array<{
+        id: number;
+        subject: string;
+        title: string;
+        content: string;
+        created_at: string;
+      }>;
+
+    const result: QuizItem[] = rows.map((row) => ({
+      id: row.id,
+      subject: row.subject as QuizItem['subject'],
+      title: row.title,
+      content: row.content,
+      createdAt: row.created_at,
+    }));
+
+    return reply.send(result);
+  });
+
+  // 批改：回写 mastered，全部校验通过后统一更新
+  app.post('/api/mistakes/quiz/grade', async (request, reply) => {
+    const body = request.body as { results?: unknown } | undefined;
+
+    if (!body || typeof body !== 'object') {
+      return reply.code(400).send({ error: '请求体无效' });
+    }
+
+    const rawResults = body.results;
+    if (!Array.isArray(rawResults) || rawResults.length === 0) {
+      return reply.code(400).send({ error: 'results 不能为空' });
+    }
+    if (rawResults.length > 200) {
+      return reply.code(400).send({ error: 'results 不能超过 200 条' });
+    }
+
+    const seen = new Set<number>();
+    const items: Array<{ mistakeId: number; correct: boolean }> = [];
+    for (const entry of rawResults) {
+      if (!entry || typeof entry !== 'object') {
+        return reply.code(400).send({ error: 'results 项非法' });
+      }
+      const item = entry as { mistakeId?: unknown; correct?: unknown };
+      if (
+        typeof item.mistakeId !== 'number' ||
+        !Number.isInteger(item.mistakeId) ||
+        item.mistakeId <= 0 ||
+        typeof item.correct !== 'boolean'
+      ) {
+        return reply.code(400).send({ error: 'results 项非法' });
+      }
+      if (seen.has(item.mistakeId)) {
+        return reply.code(400).send({ error: 'mistakeId 不能重复' });
+      }
+      seen.add(item.mistakeId);
+      items.push({ mistakeId: item.mistakeId, correct: item.correct });
+    }
+
+    const userId = request.user!.id;
+    const existing = new Map<number, number>();
+    for (const item of items) {
+      const row = db
+        .prepare('SELECT id, mastered FROM mistakes WHERE id = ? AND user_id = ?')
+        .get(item.mistakeId, userId) as { id: number; mastered: number } | undefined;
+      if (!row) {
+        return reply.code(404).send({ error: '错题不存在' });
+      }
+      existing.set(item.mistakeId, row.mastered);
+    }
+
+    const updatedIds: number[] = [];
+    let correct = 0;
+    let wrong = 0;
+
+    for (const item of items) {
+      if (item.correct) {
+        correct += 1;
+      } else {
+        wrong += 1;
+      }
+      const target = item.correct ? 1 : 0;
+      const prev = existing.get(item.mistakeId)!;
+      if (prev !== target) {
+        updatedIds.push(item.mistakeId);
+      }
+    }
+
+    for (const item of items) {
+      const target = item.correct ? 1 : 0;
+      db.prepare('UPDATE mistakes SET mastered = ? WHERE id = ? AND user_id = ?').run(
+        target,
+        item.mistakeId,
+        userId
+      );
+    }
+
+    updatedIds.sort((a, b) => a - b);
+
+    const result: QuizGradeResult = {
+      total: items.length,
+      correct,
+      wrong,
+      updatedIds,
+    };
+
+    return reply.send(result);
+  });
 }

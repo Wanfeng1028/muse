@@ -9,10 +9,15 @@ import type {
   AutoScheduleInput,
   AutoScheduleItem,
   AutoScheduleResult,
+  OverloadResponse,
   Mistake,
   MistakeSummary,
   CreateMistakeInput,
   UpdateMistakeInput,
+  QuizItem,
+  QuizGenerateInput,
+  QuizGradeInput,
+  QuizGradeResult,
 
   CreateWordInput,
   WordWithState,
@@ -147,6 +152,10 @@ export const api = {
     request<{ items: AutoScheduleItem[] }>(`/plans/auto-schedule/preview${qs(params)}`),
   autoSchedule: (input: AutoScheduleInput) =>
     request<AutoScheduleResult>('/plans/auto-schedule', { method: 'POST', body: JSON.stringify(input) }),
+  plansRange: (from: string, to: string) =>
+    request<Plan[]>(`/plans/range${qs({ from, to })}`),
+  plansOverload: (weekStart: string, dailyMinutes: number) =>
+    request<OverloadResponse>(`/plans/overload${qs({ weekStart, dailyMinutes })}`),
 
   // 专注
   listFocus: (limit?: number) => request<FocusSession[]>(`/focus${qs({ limit })}`),
@@ -174,6 +183,10 @@ export const api = {
     request<MistakeSummary>(`/mistakes/summary${qs({ subject })}`),
   mistakeSourceExams: (id: number, windowDays?: number) =>
     request<ExamRecord[]>(`/mistakes/${id}/source-exams${qs({ windowDays })}`),
+  generateQuiz: (input: QuizGenerateInput) =>
+    request<QuizItem[]>('/mistakes/quiz/generate', { method: 'POST', body: JSON.stringify(input) }),
+  gradeQuiz: (input: QuizGradeInput) =>
+    request<QuizGradeResult>('/mistakes/quiz/grade', { method: 'POST', body: JSON.stringify(input) }),
 
 
   // 单词
