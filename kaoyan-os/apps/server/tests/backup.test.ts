@@ -1,13 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { buildApp } from '../src/app';
+import { registerAndLogin } from './test-utils';
 import type { FastifyInstance } from 'fastify';
 
 let app: FastifyInstance;
 
+  let authCookie = '';
 beforeAll(async () => {
   app = await buildApp({ dbPath: ':memory:' });
   await app.ready();
-});
+
+  authCookie = await registerAndLogin(app, 'backuptest');});
 
 afterAll(async () => {
   await app.close();
@@ -25,7 +28,7 @@ const SEVEN_TABLES = [
 
 describe('backup export', () => {
   it('returns format/version/tables with 7 tables', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/backup/export' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/backup/export' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.format).toBe('kaoyan-backup');
@@ -39,14 +42,14 @@ describe('backup export', () => {
 
 describe('backup import replace roundtrip', () => {
   it('imports modified payload and updates word meaning', async () => {
-    const create = await app.inject({
+    const create = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words',
       payload: { word: 'zztestword1', meaning: 'zz原含义' },
     });
     expect([200, 201]).toContain(create.statusCode);
 
-    const exp = await app.inject({ method: 'GET', url: '/api/backup/export' });
+    const exp = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/backup/export' });
     expect(exp.statusCode).toBe(200);
     const payload = exp.json();
 
@@ -56,7 +59,7 @@ describe('backup import replace roundtrip', () => {
     expect(target).toBeTruthy();
     target.meaning = 'zz改后含义';
 
-    const imp = await app.inject({
+    const imp = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: { data: payload },
@@ -65,7 +68,7 @@ describe('backup import replace roundtrip', () => {
     const impBody = imp.json();
     expect(impBody.imported.words).toBeGreaterThanOrEqual(1);
 
-    const list = await app.inject({ method: 'GET', url: '/api/words' });
+    const list = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     expect(list.statusCode).toBe(200);
     const listBody = list.json();
     const words = Array.isArray(listBody) ? listBody : listBody.words ?? listBody.data ?? [];
@@ -77,14 +80,14 @@ describe('backup import replace roundtrip', () => {
 
 describe('backup import validation', () => {
   it('rejects invalid format and does not write', async () => {
-    const before = await app.inject({ method: 'GET', url: '/api/words' });
+    const before = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const beforeBody = before.json();
     const beforeWords = Array.isArray(beforeBody)
       ? beforeBody
       : beforeBody.words ?? beforeBody.data ?? [];
     expect(beforeWords.find((w: any) => w.word === 'zztestword1')).toBeTruthy();
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: { data: { format: 'nope', version: 1, tables: {} } },
@@ -92,7 +95,7 @@ describe('backup import validation', () => {
     expect(res.statusCode).toBe(400);
     expect(res.json().error).toBeTruthy();
 
-    const after = await app.inject({ method: 'GET', url: '/api/words' });
+    const after = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const afterBody = after.json();
     const afterWords = Array.isArray(afterBody)
       ? afterBody
@@ -101,7 +104,7 @@ describe('backup import validation', () => {
   });
 
   it('rejects version !== 1', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: { data: { format: 'kaoyan-backup', version: 2, tables: {} } },
@@ -110,10 +113,10 @@ describe('backup import validation', () => {
   });
 
   it('rejects invalid row with table name in error', async () => {
-    const exp = await app.inject({ method: 'GET', url: '/api/backup/export' });
+    const exp = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/backup/export' });
     const payload = exp.json();
     payload.tables.mistakes.push({ subject: 'nonsense', title: 'x' });
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: { data: payload },
@@ -125,10 +128,10 @@ describe('backup import validation', () => {
 
 describe('backup import merge', () => {
   it('skips existing words and imports new ones with autoincrement id', async () => {
-    const exp = await app.inject({ method: 'GET', url: '/api/backup/export' });
+    const exp = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/backup/export' });
     const payload = exp.json();
 
-    const merge1 = await app.inject({
+    const merge1 = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: { data: payload, mode: 'merge' },
@@ -144,14 +147,14 @@ describe('backup import merge', () => {
       meaning: 'zzmerge含义',
     });
 
-    const merge2 = await app.inject({
+    const merge2 = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: { data: payload, mode: 'merge' },
     });
     expect(merge2.statusCode).toBe(200);
 
-    const list = await app.inject({ method: 'GET', url: '/api/words' });
+    const list = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const listBody = list.json();
     const words = Array.isArray(listBody)
       ? listBody
@@ -166,7 +169,7 @@ describe('POST /api/import/words', () => {
   it('imports valid CSV with quoted commas', async () => {
     const csv =
       'word,phonetic,meaning,example\nzzcsv1,,csv含义一,\nzzcsv2,/x/,csv含义二,"带,逗号的例句"';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/words',
       payload: { csv },
@@ -175,7 +178,7 @@ describe('POST /api/import/words', () => {
     const body = res.json();
     expect(body.imported).toBe(2);
 
-    const list = await app.inject({ method: 'GET', url: '/api/words' });
+    const list = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const listBody = list.json();
     const words = Array.isArray(listBody)
       ? listBody
@@ -189,7 +192,7 @@ describe('POST /api/import/words', () => {
 
   it('handles duplicates, empty rows and empty meaning', async () => {
     const csv = 'word,phonetic,meaning,example\nzzcsv1,,dup,\n,,空词,\nzzcsv3,,,';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/words',
       payload: { csv },
@@ -205,7 +208,7 @@ describe('POST /api/import/words', () => {
 
   it('rejects CSV missing required columns', async () => {
     const csv = 'word,phonetic\nzzx,,';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/words',
       payload: { csv },
@@ -215,7 +218,7 @@ describe('POST /api/import/words', () => {
 
   it('handles BOM prefix', async () => {
     const csv = '\uFEFFword,phonetic,meaning,example\nzzbom,,bom含义,';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/words',
       payload: { csv },
@@ -229,7 +232,7 @@ describe('POST /api/import/words', () => {
 describe('POST /api/import/mistakes', () => {
   it('imports valid mistake CSV', async () => {
     const csv = 'subject,title,content,analysis\nmath,zz错题一,题干,解析';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -238,7 +241,7 @@ describe('POST /api/import/mistakes', () => {
     const body = res.json();
     expect(body.imported).toBe(1);
 
-    const list = await app.inject({
+    const list = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/mistakes?q=' + encodeURIComponent('zz错题一'),
     });
@@ -250,7 +253,7 @@ describe('POST /api/import/mistakes', () => {
 
   it('rejects invalid subject as error row', async () => {
     const csv = 'subject,title\nnonsense,zz坏行';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -263,7 +266,7 @@ describe('POST /api/import/mistakes', () => {
 
   it('rejects empty title as error row', async () => {
     const csv = 'subject,title\nmath,';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
+import { registerAndLogin } from './test-utils';
 
 function todayLocal(): string {
   const d = new Date();
@@ -22,10 +23,12 @@ function addDaysLocal(dateStr: string, n: number): string {
 
 describe('GET /api/stats/weekly', () => {
   let app: FastifyInstance;
+  let authCookie = '';
 
   beforeAll(async () => {
     app = buildApp({ dbPath: ':memory:' });
     await app.ready();
+    authCookie = await registerAndLogin(app, 'weeklytest');
   });
 
   afterAll(async () => {
@@ -33,7 +36,7 @@ describe('GET /api/stats/weekly', () => {
   });
 
   it('无参数返回本周一与 weekEnd', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     const today = todayLocal();
@@ -45,7 +48,7 @@ describe('GET /api/stats/weekly', () => {
   });
 
   it('?start=2026-10-12 返回指定周', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/stats/weekly?start=2026-10-12' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly?start=2026-10-12' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.weekStart).toBe('2026-10-12');
@@ -53,44 +56,44 @@ describe('GET /api/stats/weekly', () => {
   });
 
   it('非法 start 返回 400', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/stats/weekly?start=not-a-date' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly?start=not-a-date' });
     expect(res.statusCode).toBe(400);
   });
 
   it('专注时长计入 focusMinutes 与 focusBySubject.math', async () => {
-    const before = (await app.inject({ method: 'GET', url: '/api/stats/weekly' })).json();
-    const post = await app.inject({
+    const before = (await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' })).json();
+    const post = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/focus',
       payload: { subject: 'math', minutes: 30 },
     });
     expect(post.statusCode).toBe(201);
-    const after = (await app.inject({ method: 'GET', url: '/api/stats/weekly' })).json();
+    const after = (await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' })).json();
     expect(after.focusMinutes - before.focusMinutes).toBe(30);
     expect(after.focusBySubject.math - before.focusBySubject.math).toBe(30);
   });
 
   it('完成的计划计入 plansDone', async () => {
-    const before = (await app.inject({ method: 'GET', url: '/api/stats/weekly' })).json();
-    const created = await app.inject({
+    const before = (await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' })).json();
+    const created = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/plans',
       payload: { date: todayLocal(), subject: 'english', title: '周报测试计划', plannedMinutes: 20 },
     });
     expect(created.statusCode).toBe(201);
     const { id } = created.json();
-    const patched = await app.inject({
+    const patched = await app.inject({ headers: { cookie: authCookie },
       method: 'PATCH',
       url: `/api/plans/${id}`,
       payload: { done: true },
     });
     expect(patched.statusCode).toBe(200);
-    const after = (await app.inject({ method: 'GET', url: '/api/stats/weekly' })).json();
+    const after = (await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' })).json();
     expect(after.plansDone - before.plansDone).toBe(1);
   });
 
   it('focusMinutesByDay 长度为 7 且总和等于 focusMinutes', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
 
@@ -105,11 +108,11 @@ describe('GET /api/stats/weekly', () => {
   });
 
   it('向本周某天补专注记录后对应下标增加', async () => {
-    const before = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const before = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     const beforeBody = before.json();
     const target = addDaysLocal(beforeBody.weekStart, 2);
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/focus',
       payload: {
@@ -120,7 +123,7 @@ describe('GET /api/stats/weekly', () => {
     });
     expect(res.statusCode).toBe(201);
 
-    const after = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const after = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     const afterBody = after.json();
 
     expect(afterBody.focusMinutesByDay[2] - beforeBody.focusMinutesByDay[2]).toBe(25);
@@ -130,7 +133,7 @@ describe('GET /api/stats/weekly', () => {
   it('今天补专注后 currentStreak 至少为 1', async () => {
     const target = todayLocal();
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/focus',
       payload: {
@@ -141,16 +144,16 @@ describe('GET /api/stats/weekly', () => {
     });
     expect(res.statusCode).toBe(201);
 
-    const after = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const after = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     expect(after.json().currentStreak).toBeGreaterThanOrEqual(1);
   });
 
   it('向 -30 天补孤立记录不影响 currentStreak', async () => {
-    const before = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const before = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     const beforeBody = before.json();
     const target = addDaysLocal(todayLocal(), -30);
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/focus',
       payload: {
@@ -161,7 +164,7 @@ describe('GET /api/stats/weekly', () => {
     });
     expect(res.statusCode).toBe(201);
 
-    const after = await app.inject({ method: 'GET', url: '/api/stats/weekly' });
+    const after = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/weekly' });
     const afterBody = after.json();
 
     expect(afterBody.currentStreak - beforeBody.currentStreak).toBe(0);
@@ -171,7 +174,7 @@ describe('GET /api/stats/weekly', () => {
   });
 
   it('start 格式错误返回 400', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=20261012',
     });

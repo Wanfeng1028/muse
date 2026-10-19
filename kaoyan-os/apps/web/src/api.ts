@@ -62,14 +62,22 @@ export interface VocabStatus {
 }
 const BASE = '/api';
 
-// 通用请求封装：自动 JSON、错误解析、204 处理
+// 401 统一跳登录：排除 /api/auth/* 自身，避免登录页请求也被弹走
+function handleUnauthorized(url: string) {
+  if (url.startsWith('/auth/')) return;
+  const path = window.location.pathname;
+  if (path === '/login') return;
+  window.location.href = '/login';
+}
+
+// 通用请求封装：自动 JSON、错误解析、204 处理、401 跳登录
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((init?.headers as Record<string, string>) || {}),
   };
 
-  const res = await fetch(BASE + url, { ...init, headers });
+  const res = await fetch(BASE + url, { ...init, headers, credentials: 'same-origin' });
 
   if (!res.ok) {
     let message = res.statusText || String(res.status);
@@ -79,6 +87,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     } catch {
       // 忽略解析失败，使用状态码文本
     }
+    if (res.status === 401) handleUnauthorized(url);
     throw new Error(message);
   }
 
@@ -86,6 +95,11 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+export interface AuthUser {
+  id: number;
+  username: string;
+  createdAt: string;
+}
 // 构建查询字符串
 function qs(params?: Record<string, unknown>): string {
   if (!params) return '';
@@ -102,6 +116,19 @@ export const api = {
   // 健康检查
   health: () => request<{ ok: boolean }>('/health'),
 
+  // 认证
+  register: (username: string, password: string) =>
+    request<AuthUser>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+  login: (username: string, password: string) =>
+    request<AuthUser>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
+  me: () => request<AuthUser>('/auth/me'),
   // 计划
   listPlans: (params?: { date?: string; subject?: string }) =>
     request<Plan[]>(`/plans${qs(params)}`),
@@ -168,11 +195,16 @@ export const api = {
 
   // 考试 CSV 导出：返回 Blob，由调用方触发下载
   exportExamsCsv: async (subject?: string): Promise<Blob> => {
-    const res = await fetch(BASE + `/exams/export${qs({ subject })}`);
+    const res = await fetch(BASE + `/exams/export${qs({ subject })}`, {
+      credentials: 'same-origin',
+    });
+    if (res.status === 401) {
+      handleUnauthorized('/exams/export');
+      throw new Error('登录已过期，请重新登录。');
+    }
     if (!res.ok) throw new Error(`导出失败（${res.status}）`);
     return await res.blob();
   },
-
 
 
   // 设置

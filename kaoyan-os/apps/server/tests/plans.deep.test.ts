@@ -2,35 +2,34 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerPlansRoutes } from '../src/routes/plans';
+import { createDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-function makeApp(): { app: FastifyInstance; db: DatabaseSync } {
-  const db = new DatabaseSync(':memory:');
-  db.exec(`
-    CREATE TABLE plans (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      date TEXT NOT NULL,
-      subject TEXT NOT NULL,
-      title TEXT NOT NULL,
-      planned_minutes INTEGER NOT NULL,
-      done INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL
-    );
-  `);
+async function makeApp(): Promise<{ app: FastifyInstance; db: DatabaseSync; cookie: string }> {
+  const db = createDb(':memory:');
   const app = Fastify();
   registerPlansRoutes(app, db);
-  return { app, db };
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
+  await app.ready();
+  const cookie = await registerAndLogin(app, 'plansdeep');
+  return { app, db, cookie };
 }
+
 
 describe('plans routes deep', () => {
   let app: FastifyInstance;
   let db: DatabaseSync;
+  let authCookie: string;
 
   beforeEach(async () => {
-    const built = makeApp();
+    const built = await makeApp();
     app = built.app;
     db = built.db;
-    await app.ready();
+    authCookie = built.cookie;
   });
+
 
   afterEach(async () => {
     await app.close();
@@ -46,15 +45,18 @@ describe('plans routes deep', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/plans',
+        headers: { cookie: authCookie },
         payload: { date, subject: 'math', title, plannedMinutes: 60 },
       });
+
       expect(res.statusCode).toBe(201);
       created.push(res.json());
     }
-    const list = await app.inject({ method: 'GET', url: '/api/plans' });
+    const list = await app.inject({ method: 'GET', url: '/api/plans', headers: { cookie: authCookie } });
     expect(list.statusCode).toBe(200);
     const rows = list.json() as Array<{ date: string; title: string }>;
     expect(rows.length).toBe(2);
+
     expect(rows[0].date).toBe('2025-02-28');
     expect(rows[0].title).toBe('二月最后一天');
     expect(rows[1].date).toBe('2025-03-01');
@@ -65,16 +67,20 @@ describe('plans routes deep', () => {
     const ok = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2024-02-29', subject: 'english', title: '闰年多一天', plannedMinutes: 30 },
     });
+
     expect(ok.statusCode).toBe(201);
     expect(ok.json().date).toBe('2024-02-29');
 
     const bad = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2024-02-30', subject: 'english', title: '不存在的日期', plannedMinutes: 30 },
     });
+
     expect(bad.statusCode).toBe(400);
     expect(bad.json().error).toBe('date 格式非法，应为 YYYY-MM-DD');
   });
@@ -83,7 +89,9 @@ describe('plans routes deep', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/plans/summary?date=2025-01-01',
+      headers: { cookie: authCookie },
     });
+
     expect(res.statusCode).toBe(200);
     const body = res.json() as { date: string; total: number; done: number; completionRate: number };
     expect(body.date).toBe('2025-01-01');
@@ -98,8 +106,10 @@ describe('plans routes deep', () => {
       const res = await app.inject({
         method: 'POST',
         url: '/api/plans',
+        headers: { cookie: authCookie },
         payload: { date: '2025-06-01', subject: 'politics', title, plannedMinutes: 45 },
       });
+
       expect(res.statusCode).toBe(201);
       ids.push(res.json().id as number);
     }
@@ -107,15 +117,19 @@ describe('plans routes deep', () => {
       const patch = await app.inject({
         method: 'PATCH',
         url: `/api/plans/${id}`,
+        headers: { cookie: authCookie },
         payload: { done: true },
       });
+
       expect(patch.statusCode).toBe(200);
       expect(patch.json().done).toBe(true);
     }
     const res = await app.inject({
       method: 'GET',
       url: '/api/plans/summary?date=2025-06-01',
+      headers: { cookie: authCookie },
     });
+
     expect(res.statusCode).toBe(200);
     const body = res.json() as { total: number; done: number; completionRate: number };
     expect(body.total).toBe(3);
@@ -127,32 +141,40 @@ describe('plans routes deep', () => {
     const low = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-05-05', subject: 'math', title: '零分钟', plannedMinutes: 0 },
     });
+
     expect(low.statusCode).toBe(400);
     expect(low.json().error).toBe('plannedMinutes 必须为 1~1440 的数字');
 
     const high = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-05-05', subject: 'math', title: '超过一天', plannedMinutes: 1441 },
     });
+
     expect(high.statusCode).toBe(400);
     expect(high.json().error).toBe('plannedMinutes 必须为 1~1440 的数字');
 
     const min = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-05-05', subject: 'math', title: '一分钟', plannedMinutes: 1 },
     });
+
     expect(min.statusCode).toBe(201);
     expect(min.json().plannedMinutes).toBe(1);
 
     const max = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-05-05', subject: 'math', title: '一整天', plannedMinutes: 1440 },
     });
+
     expect(max.statusCode).toBe(201);
     expect(max.json().plannedMinutes).toBe(1440);
   });
@@ -161,31 +183,36 @@ describe('plans routes deep', () => {
     await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-04-01', subject: 'math', title: '数学一', plannedMinutes: 60 },
     });
     await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-04-01', subject: 'english', title: '英语一', plannedMinutes: 60 },
     });
     await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-04-02', subject: 'math', title: '数学二', plannedMinutes: 60 },
     });
 
-    const badDate = await app.inject({ method: 'GET', url: '/api/plans?date=2025-13-40' });
+    const badDate = await app.inject({ method: 'GET', url: '/api/plans?date=2025-13-40', headers: { cookie: authCookie } });
     expect(badDate.statusCode).toBe(400);
     expect(badDate.json().error).toBe('date 格式非法，应为 YYYY-MM-DD');
 
-    const badSubject = await app.inject({ method: 'GET', url: '/api/plans?subject=physics' });
+    const badSubject = await app.inject({ method: 'GET', url: '/api/plans?subject=physics', headers: { cookie: authCookie } });
     expect(badSubject.statusCode).toBe(400);
     expect(badSubject.json().error).toBe('subject 非法');
 
     const filtered = await app.inject({
       method: 'GET',
       url: '/api/plans?date=2025-04-01&subject=math',
+      headers: { cookie: authCookie },
     });
+
     expect(filtered.statusCode).toBe(200);
     const rows = filtered.json() as Array<{ title: string; subject: string; date: string }>;
     expect(rows.length).toBe(1);
@@ -198,16 +225,20 @@ describe('plans routes deep', () => {
     const missing = await app.inject({
       method: 'PATCH',
       url: '/api/plans/99999',
+      headers: { cookie: authCookie },
       payload: { done: true },
     });
+
     expect(missing.statusCode).toBe(404);
     expect(missing.json().error).toBe('计划不存在');
 
     const bad = await app.inject({
       method: 'PATCH',
       url: '/api/plans/abc',
+      headers: { cookie: authCookie },
       payload: { done: true },
     });
+
     expect(bad.statusCode).toBe(400);
     expect(bad.json().error).toBe('id 非法');
   });
@@ -216,28 +247,33 @@ describe('plans routes deep', () => {
     const created = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-07-07', subject: 'english', title: '待删除', plannedMinutes: 20 },
     });
+
     expect(created.statusCode).toBe(201);
     const id = created.json().id as number;
 
-    const first = await app.inject({ method: 'DELETE', url: `/api/plans/${id}` });
+    const first = await app.inject({ method: 'DELETE', url: `/api/plans/${id}`, headers: { cookie: authCookie } });
     expect(first.statusCode).toBe(200);
 
-    const second = await app.inject({ method: 'DELETE', url: `/api/plans/${id}` });
+    const second = await app.inject({ method: 'DELETE', url: `/api/plans/${id}`, headers: { cookie: authCookie } });
     expect(second.statusCode).toBe(404);
     expect(second.json().error).toBe('计划不存在');
 
-    const list = await app.inject({ method: 'GET', url: '/api/plans' });
+    const list = await app.inject({ method: 'GET', url: '/api/plans', headers: { cookie: authCookie } });
     expect(list.json().length).toBe(0);
+
   });
 
   it('新建缺省日期使用今天，返回 createdAt 为 ISO 字符串', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { subject: 'politics', title: '无日期计划', plannedMinutes: 90 },
     });
+
     expect(res.statusCode).toBe(201);
     const body = res.json() as { date: string; createdAt: string; done: boolean };
     const today = new Date();
@@ -253,16 +289,20 @@ describe('plans routes deep', () => {
     const blank = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-08-08', subject: 'math', title: '   ', plannedMinutes: 30 },
     });
+
     expect(blank.statusCode).toBe(400);
     expect(blank.json().error).toBe('title 不能为空');
 
     const badSubject = await app.inject({
       method: 'POST',
       url: '/api/plans',
+      headers: { cookie: authCookie },
       payload: { date: '2025-08-08', subject: 'physics', title: '物理计划', plannedMinutes: 30 },
     });
+
     expect(badSubject.statusCode).toBe(400);
     expect(badSubject.json().error).toBe('subject 非法');
   });

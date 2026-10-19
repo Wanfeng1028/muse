@@ -2,27 +2,20 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerMistakesRoutes } from '../src/routes/mistakes';
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec(`
-    CREATE TABLE mistakes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      subject TEXT NOT NULL,
-      title TEXT NOT NULL,
-      content TEXT NOT NULL DEFAULT '',
-      analysis TEXT NOT NULL DEFAULT '',
-      mastered INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT NOT NULL
-    );
-  `);
-  return db;
-}
+const TEST_USER = 'mistakesdeep';
+let authCookie = '';
 
 async function buildApp(db: DatabaseSync): Promise<FastifyInstance> {
   const app = Fastify();
   registerMistakesRoutes(app, db);
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, TEST_USER);
   return app;
 }
 
@@ -31,7 +24,7 @@ describe('mistakes 路由深度测试', () => {
   let app: FastifyInstance;
 
   beforeEach(async () => {
-    db = createDb();
+    db = createRealDb(':memory:');
     app = await buildApp(db);
   });
 
@@ -44,6 +37,7 @@ describe('mistakes 路由深度测试', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: {
         subject: 'math',
         title: '  极限的四则运算  ',
@@ -72,10 +66,11 @@ describe('mistakes 路由深度测试', () => {
       await app.inject({
         method: 'POST',
         url: '/api/mistakes',
+        headers: { cookie: authCookie },
         payload: { subject: 'english', title, content: '', analysis: '' },
       });
     }
-    const ok = await app.inject({ method: 'GET', url: '/api/mistakes' });
+    const ok = await app.inject({ method: 'GET', url: '/api/mistakes', headers: { cookie: authCookie } });
     expect(ok.statusCode).toBe(200);
     const list = ok.json() as Array<{ id: number; title: string }>;
     expect(list.length).toBe(3);
@@ -85,6 +80,7 @@ describe('mistakes 路由深度测试', () => {
     const bad = await app.inject({
       method: 'GET',
       url: '/api/mistakes?subject=not-a-subject',
+      headers: { cookie: authCookie },
     });
     expect(bad.statusCode).toBe(400);
     expect(bad.json().error).toBe('无效的 subject');
@@ -94,6 +90,7 @@ describe('mistakes 路由深度测试', () => {
     await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: {
         subject: 'math',
         title: '泰勒展开',
@@ -104,6 +101,7 @@ describe('mistakes 路由深度测试', () => {
     await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: {
         subject: 'math',
         title: '夹逼定理',
@@ -115,6 +113,7 @@ describe('mistakes 路由深度测试', () => {
     const badMastered = await app.inject({
       method: 'GET',
       url: '/api/mistakes?mastered=2',
+      headers: { cookie: authCookie },
     });
     expect(badMastered.statusCode).toBe(400);
     expect(badMastered.json().error).toBe('mastered 必须为 0 或 1');
@@ -122,6 +121,7 @@ describe('mistakes 路由深度测试', () => {
     const byTitle = await app.inject({
       method: 'GET',
       url: '/api/mistakes?q=%E6%B3%B0%E5%8B%92',
+      headers: { cookie: authCookie },
     });
     expect(byTitle.statusCode).toBe(200);
     const titleHits = byTitle.json() as Array<{ title: string }>;
@@ -130,6 +130,7 @@ describe('mistakes 路由深度测试', () => {
     const byContent = await app.inject({
       method: 'GET',
       url: '/api/mistakes?q=%E5%A4%B9%E9%80%BC',
+      headers: { cookie: authCookie },
     });
     expect(byContent.statusCode).toBe(200);
     const contentHits = byContent.json() as Array<{ title: string }>;
@@ -141,6 +142,7 @@ describe('mistakes 路由深度测试', () => {
     const created = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: {
         subject: 'math',
         title: '原题',
@@ -153,6 +155,7 @@ describe('mistakes 路由深度测试', () => {
     const patched = await app.inject({
       method: 'PATCH',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
       payload: { mastered: true, analysis: '新解析' },
     });
     expect(patched.statusCode).toBe(200);
@@ -164,6 +167,7 @@ describe('mistakes 路由深度测试', () => {
     const badType = await app.inject({
       method: 'PATCH',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
       payload: { mastered: 'yes' },
     });
     expect(badType.statusCode).toBe(400);
@@ -174,6 +178,7 @@ describe('mistakes 路由深度测试', () => {
     const created = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: {
         subject: 'math',
         title: '空体测试',
@@ -186,6 +191,7 @@ describe('mistakes 路由深度测试', () => {
     const res = await app.inject({
       method: 'PATCH',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
       payload: {},
     });
     expect(res.statusCode).toBe(200);
@@ -199,6 +205,7 @@ describe('mistakes 路由深度测试', () => {
     const created = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', title: '待删', content: '', analysis: '' },
     });
     const id = created.json().id as number;
@@ -206,6 +213,7 @@ describe('mistakes 路由深度测试', () => {
     const del = await app.inject({
       method: 'DELETE',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
     });
     expect(del.statusCode).toBe(200);
     expect(del.json().ok).toBe(true);
@@ -213,6 +221,7 @@ describe('mistakes 路由深度测试', () => {
     const again = await app.inject({
       method: 'DELETE',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
     });
     expect(again.statusCode).toBe(404);
     expect(again.json().error).toBe('错题不存在');
@@ -220,6 +229,7 @@ describe('mistakes 路由深度测试', () => {
     const badId = await app.inject({
       method: 'DELETE',
       url: '/api/mistakes/abc',
+      headers: { cookie: authCookie },
     });
     expect(badId.statusCode).toBe(400);
     expect(badId.json().error).toBe('id 非法');
@@ -229,6 +239,7 @@ describe('mistakes 路由深度测试', () => {
     const emptyTitle = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', title: '   ' },
     });
     expect(emptyTitle.statusCode).toBe(400);
@@ -237,6 +248,7 @@ describe('mistakes 路由深度测试', () => {
     const badSubject = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'physics', title: 'x' },
     });
     expect(badSubject.statusCode).toBe(400);
@@ -245,8 +257,8 @@ describe('mistakes 路由深度测试', () => {
     const badBody = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie, 'content-type': 'application/json' },
       payload: 'not-an-object',
-      headers: { 'content-type': 'application/json' },
     });
     expect(badBody.statusCode).toBe(400);
     expect(badBody.json().error).toBe('Bad Request');
@@ -256,6 +268,7 @@ describe('mistakes 路由深度测试', () => {
     const missing = await app.inject({
       method: 'PATCH',
       url: '/api/mistakes/99999',
+      headers: { cookie: authCookie },
       payload: { title: 'x' },
     });
     expect(missing.statusCode).toBe(404);
@@ -264,6 +277,7 @@ describe('mistakes 路由深度测试', () => {
     const badId = await app.inject({
       method: 'PATCH',
       url: '/api/mistakes/0',
+      headers: { cookie: authCookie },
       payload: { title: 'x' },
     });
     expect(badId.statusCode).toBe(400);
@@ -274,27 +288,32 @@ describe('mistakes 路由深度测试', () => {
     const a = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', title: 'm1', content: '', analysis: '' },
     });
     await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'english', title: 'e1', content: '', analysis: '' },
     });
     await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', title: 'm2', content: '', analysis: '' },
     });
     await app.inject({
       method: 'PATCH',
       url: `/api/mistakes/${a.json().id}`,
+      headers: { cookie: authCookie },
       payload: { mastered: true },
     });
 
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes?subject=math&mastered=1',
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     const list = res.json() as Array<{ title: string; subject: string }>;
@@ -307,6 +326,7 @@ describe('mistakes 路由深度测试', () => {
     const created = await app.inject({
       method: 'POST',
       url: '/api/mistakes',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', title: 't', content: 'c', analysis: 'a' },
     });
     const id = created.json().id as number;
@@ -314,6 +334,7 @@ describe('mistakes 路由深度测试', () => {
     const badContent = await app.inject({
       method: 'PATCH',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
       payload: { content: 123 },
     });
     expect(badContent.statusCode).toBe(400);
@@ -322,6 +343,7 @@ describe('mistakes 路由深度测试', () => {
     const badAnalysis = await app.inject({
       method: 'PATCH',
       url: `/api/mistakes/${id}`,
+      headers: { cookie: authCookie },
       payload: { analysis: false },
     });
     expect(badAnalysis.statusCode).toBe(400);

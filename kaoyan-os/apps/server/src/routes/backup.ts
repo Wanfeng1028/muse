@@ -135,21 +135,29 @@ function cellAt(cells: string[], idx: number | undefined): string {
 }
 
 export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): void {
-  app.get('/api/backup/export', async (_req, reply) => {
+  app.get('/api/backup/export', async (req, reply) => {
+    const userId = req.user!.id;
     const tables = {
-      plans: db.prepare('SELECT * FROM plans ORDER BY id ASC').all() as Row[],
+      plans: db.prepare('SELECT * FROM plans WHERE user_id = ? ORDER BY id ASC').all(userId) as Row[],
       focus_sessions: db
-        .prepare('SELECT * FROM focus_sessions ORDER BY id ASC')
-        .all() as Row[],
-      mistakes: db.prepare('SELECT * FROM mistakes ORDER BY id ASC').all() as Row[],
-      words: db.prepare('SELECT * FROM words ORDER BY id ASC').all() as Row[],
+        .prepare('SELECT * FROM focus_sessions WHERE user_id = ? ORDER BY id ASC')
+        .all(userId) as Row[],
+      mistakes: db.prepare('SELECT * FROM mistakes WHERE user_id = ? ORDER BY id ASC').all(userId) as Row[],
+      words: db.prepare('SELECT * FROM words WHERE user_id = ? ORDER BY id ASC').all(userId) as Row[],
       srs_state: db
-        .prepare('SELECT * FROM srs_state ORDER BY word_id ASC')
-        .all() as Row[],
+        .prepare(
+          'SELECT s.* FROM srs_state s JOIN words w ON w.id = s.word_id WHERE w.user_id = ? ORDER BY s.word_id ASC'
+        )
+        .all(userId) as Row[],
       exam_records: db
-        .prepare('SELECT * FROM exam_records ORDER BY id ASC')
-        .all() as Row[],
-      settings: db.prepare('SELECT * FROM settings ORDER BY key ASC').all() as Row[],
+        .prepare('SELECT * FROM exam_records WHERE user_id = ? ORDER BY id ASC')
+        .all(userId) as Row[],
+      settings: db.prepare('SELECT key, value FROM settings WHERE user_id = ? ORDER BY key ASC').all(userId) as Row[],
+    };
+    for (const name of Object.keys(tables) as (keyof typeof tables)[]) {
+      for (const row of tables[name]) {
+        delete row.user_id;
+      }
     };
     return reply.code(200).send({
       format: 'kaoyan-backup',
@@ -328,28 +336,30 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         try {
           db.exec('BEGIN');
           try {
-            db.exec('DELETE FROM srs_state');
-            db.exec('DELETE FROM words');
-            db.exec('DELETE FROM plans');
-            db.exec('DELETE FROM focus_sessions');
-            db.exec('DELETE FROM mistakes');
-            db.exec('DELETE FROM exam_records');
-            db.exec('DELETE FROM settings');
+            const userId = req.user!.id;
+            db.prepare('DELETE FROM srs_state WHERE word_id IN (SELECT id FROM words WHERE user_id = ?)').run(userId);
+            db.prepare('DELETE FROM words WHERE user_id = ?').run(userId);
+            db.prepare('DELETE FROM plans WHERE user_id = ?').run(userId);
+            db.prepare('DELETE FROM focus_sessions WHERE user_id = ?').run(userId);
+            db.prepare('DELETE FROM mistakes WHERE user_id = ?').run(userId);
+            db.prepare('DELETE FROM exam_records WHERE user_id = ?').run(userId);
+            db.prepare('DELETE FROM settings WHERE user_id = ?').run(userId);
 
             const insertSettings = db.prepare(
-              'INSERT INTO settings (key, value) VALUES (?, ?)'
+              'INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)'
             );
             for (const row of validated.settings) {
-              insertSettings.run(row.key as string, row.value as string);
+              insertSettings.run(userId, row.key as string, row.value as string);
               imported.settings += 1;
             }
 
             const insertExam = db.prepare(
-              'INSERT INTO exam_records (id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+              'INSERT INTO exam_records (id, user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
             );
             for (const row of validated.exam_records) {
               insertExam.run(
                 (row.id as number) ?? null,
+                userId,
                 row.subject as string,
                 row.paper as string,
                 typeof row.score === 'number' ? row.score : 0,
@@ -361,11 +371,12 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
             }
 
             const insertMistake = db.prepare(
-              'INSERT INTO mistakes (id, subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+              'INSERT INTO mistakes (id, user_id, subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
             );
             for (const row of validated.mistakes) {
               insertMistake.run(
                 (row.id as number) ?? null,
+                userId,
                 row.subject as string,
                 row.title as string,
                 typeof row.content === 'string' ? row.content : '',
@@ -379,11 +390,12 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
             }
 
             const insertFocus = db.prepare(
-              'INSERT INTO focus_sessions (id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?)'
+              'INSERT INTO focus_sessions (id, user_id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?, ?)'
             );
             for (const row of validated.focus_sessions) {
               insertFocus.run(
                 (row.id as number) ?? null,
+                userId,
                 row.subject as string,
                 typeof row.minutes === 'number' ? row.minutes : 0,
                 row.started_at as string,
@@ -395,11 +407,12 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
             }
 
             const insertPlan = db.prepare(
-              'INSERT INTO plans (id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+              'INSERT INTO plans (id, user_id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
             );
             for (const row of validated.plans) {
               insertPlan.run(
                 (row.id as number) ?? null,
+                userId,
                 row.date as string,
                 row.subject as string,
                 row.title as string,
@@ -411,22 +424,28 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
             }
 
             const insertWord = db.prepare(
-              'INSERT INTO words (id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)'
+              'INSERT INTO words (id, user_id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
+            const ownWordIds = new Set<number>();
             for (const row of validated.words) {
               const src =
                 typeof row.source === 'string' &&
                 ['builtin', 'core500', 'manual', 'csv'].includes(row.source)
                   ? row.source
                   : 'manual';
-              insertWord.run(
+              const info = insertWord.run(
                 (row.id as number) ?? null,
+                userId,
                 row.word as string,
                 typeof row.phonetic === 'string' ? row.phonetic : '',
                 row.meaning as string,
                 typeof row.example === 'string' ? row.example : '',
                 src
               );
+              const newId = Number(info.lastInsertRowid);
+              if (Number.isFinite(newId)) {
+                ownWordIds.add(newId);
+              }
               imported.words += 1;
             }
 
@@ -434,8 +453,13 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
               'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
             );
             for (const row of validated.srs_state) {
+              const wordId = row.word_id as number;
+              if (!ownWordIds.has(wordId)) {
+                skipped.srs_state += 1;
+                continue;
+              }
               insertSrs.run(
-                row.word_id as number,
+                wordId,
                 typeof row.ease === 'number' ? row.ease : 2.5,
                 typeof row.interval_days === 'number' ? row.interval_days : 0,
                 typeof row.repetitions === 'number' ? row.repetitions : 0,
@@ -458,13 +482,14 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         }
       } else {
         // merge
-        const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+        const mergeUserId = req.user!.id;
+        const findWord = db.prepare('SELECT id FROM words WHERE user_id = ? AND word = ?');
         const insertWord = db.prepare(
-          'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)'
+          'INSERT INTO words (user_id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)'
         );
         for (const row of validated.words) {
           const word = row.word as string;
-          const existing = findWord.get(word) as { id: number } | undefined;
+          const existing = findWord.get(mergeUserId, word) as { id: number } | undefined;
           if (existing) {
             skipped.words += 1;
             continue;
@@ -475,6 +500,7 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
               ? row.source
               : 'manual';
           const info = insertWord.run(
+            mergeUserId,
             word,
             typeof row.phonetic === 'string' ? row.phonetic : '',
             row.meaning as string,
@@ -486,13 +512,13 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
           }
         }
 
-        const wordExists = db.prepare('SELECT id FROM words WHERE id = ?');
+        const wordExists = db.prepare('SELECT id FROM words WHERE id = ? AND user_id = ?');
         const upsertSrs = db.prepare(
           'INSERT OR REPLACE INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
         );
         for (const row of validated.srs_state) {
           const wordId = row.word_id as number;
-          const found = wordExists.get(wordId) as { id: number } | undefined;
+          const found = wordExists.get(wordId, mergeUserId) as { id: number } | undefined;
           if (!found) {
             skipped.srs_state += 1;
             continue;
@@ -508,12 +534,13 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         }
 
         const insertPlan = db.prepare(
-          'INSERT INTO plans (id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO plans (id, user_id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
         for (const row of validated.plans) {
           try {
             insertPlan.run(
               (row.id as number) ?? null,
+              mergeUserId,
               row.date as string,
               row.subject as string,
               row.title as string,
@@ -528,12 +555,13 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         }
 
         const insertFocus = db.prepare(
-          'INSERT INTO focus_sessions (id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?)'
+          'INSERT INTO focus_sessions (id, user_id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?, ?)'
         );
         for (const row of validated.focus_sessions) {
           try {
             insertFocus.run(
               (row.id as number) ?? null,
+              mergeUserId,
               row.subject as string,
               typeof row.minutes === 'number' ? row.minutes : 0,
               row.started_at as string,
@@ -548,12 +576,13 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         }
 
         const insertMistake = db.prepare(
-          'INSERT INTO mistakes (id, subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO mistakes (id, user_id, subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
         for (const row of validated.mistakes) {
           try {
             insertMistake.run(
               (row.id as number) ?? null,
+              mergeUserId,
               row.subject as string,
               row.title as string,
               typeof row.content === 'string' ? row.content : '',
@@ -568,12 +597,13 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         }
 
         const insertExam = db.prepare(
-          'INSERT INTO exam_records (id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO exam_records (id, user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
         for (const row of validated.exam_records) {
           try {
             insertExam.run(
               (row.id as number) ?? null,
+              mergeUserId,
               row.subject as string,
               row.paper as string,
               typeof row.score === 'number' ? row.score : 0,
@@ -587,13 +617,30 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
           }
         }
 
-        const upsertSetting = db.prepare(
-          'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)'
+        const findSetting = db.prepare('SELECT value FROM settings WHERE user_id = ? AND key = ?');
+        const insertSetting = db.prepare(
+          'INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)'
+        );
+        const updateSetting = db.prepare(
+          'UPDATE settings SET value = ? WHERE user_id = ? AND key = ?'
         );
         for (const row of validated.settings) {
-          upsertSetting.run(row.key as string, row.value as string);
+          const key = row.key as string;
+          const value = row.value as string;
+          const existing = findSetting.get(mergeUserId, key) as { value: string } | undefined;
+          if (existing) {
+            if (existing.value === value) {
+              skipped.settings += 1;
+              continue;
+            }
+            updateSetting.run(value, mergeUserId, key);
+            imported.settings += 1;
+            continue;
+          }
+          insertSetting.run(mergeUserId, key, value);
           imported.settings += 1;
         }
+
       }
 
       return reply.code(200).send({ mode, imported, skipped });
@@ -633,9 +680,10 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         return reply.code(400).send({ error: '缺少必需列：word / meaning' });
       }
 
-      const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+      const csvUserId = req.user!.id;
+      const findWord = db.prepare('SELECT id FROM words WHERE user_id = ? AND word = ?');
       const insertWord = db.prepare(
-        'INSERT INTO words (word, phonetic, meaning, example) VALUES (?, ?, ?, ?)'
+        'INSERT INTO words (user_id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)'
       );
       const insertSrs = db.prepare(
         'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
@@ -667,14 +715,14 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
           }
           continue;
         }
-        const existing = findWord.get(word) as { id: number } | undefined;
+        const existing = findWord.get(csvUserId, word) as { id: number } | undefined;
         if (existing) {
           skippedExisting += 1;
           continue;
         }
         const phonetic = cellAt(cells, headerMap.get('phonetic')).trim();
         const example = cellAt(cells, headerMap.get('example')).trim();
-        const info = insertWord.run(word, phonetic, meaning, example);
+        const info = insertWord.run(csvUserId, word, phonetic, meaning, example, 'csv');
         const newId = info.lastInsertRowid as number;
         insertSrs.run(newId, 2.5, 0, 0, todayStr());
         imported += 1;
@@ -726,7 +774,7 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
       const analysisIdx = headerMap.get('analysis');
 
       const insertMistake = db.prepare(
-        'INSERT INTO mistakes (subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO mistakes (user_id, subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
       );
 
       let imported = 0;
@@ -758,7 +806,7 @@ export function registerBackupRoutes(app: FastifyInstance, db: DatabaseSync): vo
         }
         const content = contentIdx === undefined ? '' : cellAt(cells, contentIdx);
         const analysis = analysisIdx === undefined ? '' : cellAt(cells, analysisIdx);
-        insertMistake.run(subject, title, content, analysis, 0, nowIso());
+        insertMistake.run(req.user!.id, subject, title, content, analysis, 0, nowIso());
         imported += 1;
       }
 

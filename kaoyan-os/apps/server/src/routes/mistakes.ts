@@ -46,9 +46,9 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
 
     const rows = subject
       ? (db
-          .prepare('SELECT mastered FROM mistakes WHERE subject = ?')
-          .all(subject) as Array<{ mastered: number }>)
-      : (db.prepare('SELECT mastered FROM mistakes').all() as Array<{
+          .prepare('SELECT mastered FROM mistakes WHERE user_id = ? AND subject = ?')
+          .all(request.user!.id, subject) as Array<{ mastered: number }>)
+      : (db.prepare('SELECT mastered FROM mistakes WHERE user_id = ?').all(request.user!.id) as Array<{
           mastered: number;
         }>);
 
@@ -82,8 +82,8 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
       q?: string;
     };
 
-    const conditions: string[] = [];
-    const params: (string | number)[] = [];
+    const conditions: string[] = ['user_id = ?'];
+    const params: (string | number)[] = [request.user!.id];
 
     if (query.subject !== undefined && query.subject !== '') {
       if (!isSubjectKey(query.subject)) {
@@ -107,10 +107,11 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
       params.push(like, like);
     }
 
-    const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+    const where = ` WHERE ${conditions.join(' AND ')}`;
     const rows = db
       .prepare(`SELECT * FROM mistakes${where} ORDER BY id DESC`)
       .all(...params) as unknown as MistakeRow[];
+
 
     return reply.send(rows.map(rowToMistake));
   });
@@ -136,15 +137,15 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
 
     const result = db
       .prepare(
-        `INSERT INTO mistakes (subject, title, content, analysis, mastered, created_at)
-         VALUES (?, ?, ?, ?, 0, ?)`
+        `INSERT INTO mistakes (user_id, subject, title, content, analysis, mastered, created_at)
+         VALUES (?, ?, ?, ?, ?, 0, ?)`
       )
-      .run(body.subject, title, content, analysis, createdAt);
+      .run(request.user!.id, body.subject, title, content, analysis, createdAt);
 
     const id = Number(result.lastInsertRowid);
     const row = db
-      .prepare('SELECT * FROM mistakes WHERE id = ?')
-      .get(id) as unknown as MistakeRow;
+      .prepare('SELECT * FROM mistakes WHERE id = ? AND user_id = ?')
+      .get(id, request.user!.id) as unknown as MistakeRow;
 
     return reply.code(201).send(rowToMistake(row));
   });
@@ -158,8 +159,8 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
     }
 
     const existing = db
-      .prepare('SELECT * FROM mistakes WHERE id = ?')
-      .get(id) as unknown as MistakeRow | undefined;
+      .prepare('SELECT * FROM mistakes WHERE id = ? AND user_id = ?')
+      .get(id, request.user!.id) as unknown as MistakeRow | undefined;
     if (!existing) {
       return reply.code(404).send({ error: '错题不存在' });
     }
@@ -214,12 +215,13 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
 
     if (sets.length > 0) {
       values.push(id);
-      db.prepare(`UPDATE mistakes SET ${sets.join(', ')} WHERE id = ?`).run(...values);
+      values.push(request.user!.id);
+      db.prepare(`UPDATE mistakes SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(...values);
     }
 
     const updated = db
-      .prepare('SELECT * FROM mistakes WHERE id = ?')
-      .get(id) as unknown as MistakeRow;
+      .prepare('SELECT * FROM mistakes WHERE id = ? AND user_id = ?')
+      .get(id, request.user!.id) as unknown as MistakeRow;
 
     return reply.send(rowToMistake(updated));
   });
@@ -233,13 +235,13 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
     }
 
     const existing = db
-      .prepare('SELECT id FROM mistakes WHERE id = ?')
-      .get(id);
+      .prepare('SELECT id FROM mistakes WHERE id = ? AND user_id = ?')
+      .get(id, request.user!.id);
     if (!existing) {
       return reply.code(404).send({ error: '错题不存在' });
     }
 
-    db.prepare('DELETE FROM mistakes WHERE id = ?').run(id);
+    db.prepare('DELETE FROM mistakes WHERE id = ? AND user_id = ?').run(id, request.user!.id);
     return reply.send({ ok: true });
   });
 }

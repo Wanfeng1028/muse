@@ -3,28 +3,33 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerSettingsRoutes } from '../src/routes/settings';
 import { DEFAULT_SETTINGS } from '@kaoyan/shared';
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec('CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
-  return db;
-}
-
-async function createApp(db: DatabaseSync): Promise<FastifyInstance> {
+async function createApp(db: DatabaseSync): Promise<{ app: FastifyInstance; cookie: string }> {
   const app = Fastify();
   registerSettingsRoutes(app, db);
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   await app.ready();
-  return app;
+  const cookie = await registerAndLogin(app, 'settingsdeep');
+  return { app, cookie };
 }
+
 
 describe('settings deep', () => {
   let db: DatabaseSync;
   let app: FastifyInstance;
+  let authCookie: string;
 
   beforeEach(async () => {
-    db = createDb();
-    app = await createApp(db);
+    db = createRealDb(':memory:');
+    const built = await createApp(db);
+    app = built.app;
+    authCookie = built.cookie;
   });
+
 
   afterEach(async () => {
     await app.close();
@@ -32,10 +37,11 @@ describe('settings deep', () => {
   });
 
   it('GET 空表时返回全部默认值', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/settings' });
+    const res = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.examDate).toBe(DEFAULT_SETTINGS.examDate);
+
     expect(body.dailyGoalMinutes).toBe(DEFAULT_SETTINGS.dailyGoalMinutes);
     expect(body.pomodoroMinutes).toBe(DEFAULT_SETTINGS.pomodoroMinutes);
     expect(body.breakMinutes).toBe(DEFAULT_SETTINGS.breakMinutes);
@@ -46,6 +52,7 @@ describe('settings deep', () => {
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { dailyGoalMinutes: 300, pomodoroMinutes: 25, breakMinutes: 5 },
     });
     expect(res.statusCode).toBe(200);
@@ -55,8 +62,9 @@ describe('settings deep', () => {
     expect(body.breakMinutes).toBe(5);
 
     const rows = db
-      .prepare('SELECT key, value FROM settings ORDER BY key')
+      .prepare("SELECT key, value FROM settings WHERE user_id = (SELECT id FROM users WHERE username = 'settingsdeep') ORDER BY key")
       .all() as Array<{ key: string; value: string }>;
+
     expect(rows).toEqual([
       { key: 'break_minutes', value: '5' },
       { key: 'daily_goal_minutes', value: '300' },
@@ -68,21 +76,24 @@ describe('settings deep', () => {
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { dailyGoalMinutes: 1441 },
     });
     expect(res.statusCode).toBe(400);
     expect(res.json().error).toBe('invalid field: dailyGoalMinutes');
 
     const count = db
-      .prepare('SELECT COUNT(*) AS c FROM settings')
+      .prepare("SELECT COUNT(*) AS c FROM settings WHERE user_id = (SELECT id FROM users WHERE username = 'settingsdeep')")
       .get() as { c: number };
     expect(count.c).toBe(0);
+
   });
 
   it('PUT 数字字段为零或负数返回 400', async () => {
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { pomodoroMinutes: 0 },
     });
     expect(res.statusCode).toBe(400);
@@ -91,8 +102,10 @@ describe('settings deep', () => {
     const res2 = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { breakMinutes: -3 },
     });
+
     expect(res2.statusCode).toBe(400);
     expect(res2.json().error).toBe('invalid field: breakMinutes');
   });
@@ -101,6 +114,7 @@ describe('settings deep', () => {
     const bad = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { examDate: '2025/12/20' },
     });
     expect(bad.statusCode).toBe(400);
@@ -109,21 +123,24 @@ describe('settings deep', () => {
     const good = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { examDate: '2025-12-20' },
     });
     expect(good.statusCode).toBe(200);
     expect(good.json().examDate).toBe('2025-12-20');
 
     const row = db
-      .prepare('SELECT value FROM settings WHERE key = ?')
+      .prepare("SELECT value FROM settings WHERE user_id = (SELECT id FROM users WHERE username = 'settingsdeep') AND key = ?")
       .get('exam_date') as { value: string };
     expect(row.value).toBe('2025-12-20');
+
   });
 
   it('PUT theme 非法值返回 400，合法值落库', async () => {
     const bad = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { theme: 'blue' },
     });
     expect(bad.statusCode).toBe(400);
@@ -132,8 +149,10 @@ describe('settings deep', () => {
     const good = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { theme: 'dark' },
     });
+
     expect(good.statusCode).toBe(200);
     expect(good.json().theme).toBe('dark');
   });
@@ -142,13 +161,16 @@ describe('settings deep', () => {
     await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { dailyGoalMinutes: 240, theme: 'dark' },
     });
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { breakMinutes: 10 },
     });
+
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.dailyGoalMinutes).toBe(240);
@@ -161,33 +183,37 @@ describe('settings deep', () => {
     await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { pomodoroMinutes: 25 },
     });
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { pomodoroMinutes: 50 },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().pomodoroMinutes).toBe(50);
 
     const rows = db
-      .prepare('SELECT value FROM settings WHERE key = ?')
+      .prepare("SELECT value FROM settings WHERE user_id = (SELECT id FROM users WHERE username = 'settingsdeep') AND key = ?")
       .all('pomodoro_minutes') as Array<{ value: string }>;
+
     expect(rows).toHaveLength(1);
     expect(rows[0].value).toBe('50');
   });
 
   it('GET 读取时数字字段非数字则回退默认值', async () => {
-    db.prepare('INSERT INTO settings(key, value) VALUES(?, ?)').run(
+    db.prepare("INSERT INTO settings(user_id, key, value) VALUES((SELECT id FROM users WHERE username = 'settingsdeep'), ?, ?)").run(
       'daily_goal_minutes',
       'abc'
     );
-    db.prepare('INSERT INTO settings(key, value) VALUES(?, ?)').run(
+    db.prepare("INSERT INTO settings(user_id, key, value) VALUES((SELECT id FROM users WHERE username = 'settingsdeep'), ?, ?)").run(
       'pomodoro_minutes',
       '45'
     );
-    const res = await app.inject({ method: 'GET', url: '/api/settings' });
+    const res = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: authCookie } });
+
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.dailyGoalMinutes).toBe(DEFAULT_SETTINGS.dailyGoalMinutes);
@@ -195,11 +221,12 @@ describe('settings deep', () => {
   });
 
   it('GET 读取时 theme 非法值回退默认值', async () => {
-    db.prepare('INSERT INTO settings(key, value) VALUES(?, ?)').run(
+    db.prepare("INSERT INTO settings(user_id, key, value) VALUES((SELECT id FROM users WHERE username = 'settingsdeep'), ?, ?)").run(
       'theme',
       'rainbow'
     );
-    const res = await app.inject({ method: 'GET', url: '/api/settings' });
+    const res = await app.inject({ method: 'GET', url: '/api/settings', headers: { cookie: authCookie } });
+
     expect(res.statusCode).toBe(200);
     expect(res.json().theme).toBe(DEFAULT_SETTINGS.theme);
   });
@@ -208,21 +235,24 @@ describe('settings deep', () => {
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: { dailyGoalMinutes: 200, theme: 'purple' },
     });
     expect(res.statusCode).toBe(400);
     expect(res.json().error).toBe('invalid field: theme');
 
     const count = db
-      .prepare('SELECT COUNT(*) AS c FROM settings')
+      .prepare("SELECT COUNT(*) AS c FROM settings WHERE user_id = (SELECT id FROM users WHERE username = 'settingsdeep')")
       .get() as { c: number };
     expect(count.c).toBe(0);
+
   });
 
   it('PUT 空 body 返回默认值且不写库', async () => {
     const res = await app.inject({
       method: 'PUT',
       url: '/api/settings',
+      headers: { cookie: authCookie },
       payload: {},
     });
     expect(res.statusCode).toBe(200);
@@ -231,8 +261,9 @@ describe('settings deep', () => {
     expect(body.theme).toBe(DEFAULT_SETTINGS.theme);
 
     const count = db
-      .prepare('SELECT COUNT(*) AS c FROM settings')
+      .prepare("SELECT COUNT(*) AS c FROM settings WHERE user_id = (SELECT id FROM users WHERE username = 'settingsdeep')")
       .get() as { c: number };
     expect(count.c).toBe(0);
+
   });
 });

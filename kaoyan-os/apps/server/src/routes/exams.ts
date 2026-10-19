@@ -39,14 +39,14 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   // GET /api/exams - 按 taken_at 降序、id 降序返回考试记录
   app.get('/api/exams', async (req, reply) => {
     const query = req.query as { subject?: string };
-    const params: string[] = [];
-    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records';
+    const params: (string | number)[] = [req.user!.id];
+    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ?';
 
     if (query.subject !== undefined) {
       if (!isSubjectKey(query.subject)) {
         return reply.code(400).send({ error: '无效的 subject 参数' });
       }
-      sql += ' WHERE subject = ?';
+      sql += ' AND subject = ?';
       params.push(query.subject);
     }
 
@@ -58,14 +58,14 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   // GET /api/exams/trend - 按 taken_at 升序返回趋势点
   app.get('/api/exams/trend', async (req, reply) => {
     const query = req.query as { subject?: string };
-    const params: string[] = [];
-    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records';
+    const params: (string | number)[] = [req.user!.id];
+    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ?';
 
     if (query.subject !== undefined) {
       if (!isSubjectKey(query.subject)) {
         return reply.code(400).send({ error: '无效的 subject 参数' });
       }
-      sql += ' WHERE subject = ?';
+      sql += ' AND subject = ?';
       params.push(query.subject);
     }
 
@@ -92,14 +92,14 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   // GET /api/exams/summary - 真题汇总统计
   app.get('/api/exams/summary', async (req, reply) => {
     const query = req.query as { subject?: string };
-    const params: string[] = [];
-    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records';
+    const params: (string | number)[] = [req.user!.id];
+    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ?';
 
     if (query.subject !== undefined) {
       if (!isSubjectKey(query.subject)) {
         return reply.code(400).send({ error: '无效的 subject 参数' });
       }
-      sql += ' WHERE subject = ?';
+      sql += ' AND subject = ?';
       params.push(query.subject);
     }
 
@@ -129,15 +129,17 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const totalScoreSum = rows.reduce((sum, row) => sum + row.score, 0);
     const totalFullSum = rows.reduce((sum, row) => sum + row.total_score, 0);
     const avgScore = Math.round((totalScoreSum / count) * 10) / 10;
+    // avgRate 为“加权得分率”（总分之和 / 满分之和），与单场 rate 含义不同
     const avgRate = totalFullSum > 0 ? Math.round((totalScoreSum / totalFullSum) * 10000) / 10000 : 0;
 
-    // 最高分：并列取最早的一场（taken_at 最早，并列取 id 最小）
+    // 最高分：rows 已按 taken_at ASC, id ASC 排序，保留第一个达到最大分的即为“并列取最早”
     let best = rows[0];
     for (const row of rows) {
       if (row.score > best.score) {
         best = row;
       }
     }
+
 
     // 最早一场：taken_at 最早，并列取 id 最小
     let first = rows[0];
@@ -177,14 +179,14 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   // GET /api/exams/export - 导出考试记录为 CSV
   app.get('/api/exams/export', async (req, reply) => {
     const query = req.query as { subject?: string };
-    const params: string[] = [];
-    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records';
+    const params: (string | number)[] = [req.user!.id];
+    let sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ?';
 
     if (query.subject !== undefined) {
       if (!isSubjectKey(query.subject)) {
         return reply.code(400).send({ error: '无效的 subject 参数' });
       }
-      sql += ' WHERE subject = ?';
+      sql += ' AND subject = ?';
       params.push(query.subject);
     }
 
@@ -226,9 +228,13 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     const csv = '\ufeff' + lines.join('\n') + '\n';
 
+    const filename = query.subject !== undefined
+      ? `kaoyan-exams-${query.subject}.csv`
+      : 'kaoyan-exams.csv';
     reply
       .header('Content-Type', 'text/csv; charset=utf-8')
-      .header('Content-Disposition', 'attachment; filename="kaoyan-exams.csv"');
+      .header('Content-Disposition', `attachment; filename="${filename}"`);
+
 
     return reply.send(csv);
   });
@@ -286,17 +292,17 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     const result = db
       .prepare(
-        'INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
       )
-      .run(subject, paper, score, totalScore, duration, taken);
+      .run(req.user!.id, subject, paper, score, totalScore, duration, taken);
 
     const id = Number(result.lastInsertRowid);
 
     const row = db
       .prepare(
-        'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE id = ?'
+        'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE id = ? AND user_id = ?'
       )
-      .get(id) as unknown as ExamRow | undefined;
+      .get(id, req.user!.id) as unknown as ExamRow | undefined;
 
     if (!row) {
       return reply.code(500).send({ error: '创建失败' });
@@ -314,15 +320,13 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       return reply.code(400).send({ error: '无效的 id' });
     }
 
-    const existing = db
-      .prepare('SELECT id FROM exam_records WHERE id = ?')
-      .get(id) as unknown as { id: number } | undefined;
+    const result = db
+      .prepare('DELETE FROM exam_records WHERE id = ? AND user_id = ?')
+      .run(id, req.user!.id);
 
-    if (!existing) {
+    if (Number(result.changes) === 0) {
       return reply.code(404).send({ error: '记录不存在' });
     }
-
-    db.prepare('DELETE FROM exam_records WHERE id = ?').run(id);
 
     return reply.send({ ok: true });
   });

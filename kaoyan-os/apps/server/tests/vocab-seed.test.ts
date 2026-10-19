@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import { buildApp } from '../src/app';
+import { registerAndLogin } from './test-utils';
 import { createDb } from '../src/db';
 import {
   validateVocabEntry,
@@ -109,9 +110,11 @@ describe('words-500.json 数据文件', () => {
 
 describe('POST /api/words/seed-vocab', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
+  let authCookie = '';
 
   beforeEach(async () => {
     app = await buildApp({ dbPath: ':memory:' });
+    authCookie = await registerAndLogin(app, 'vocabseed');
   });
 
   afterEach(async () => {
@@ -119,7 +122,7 @@ describe('POST /api/words/seed-vocab', () => {
   });
 
   it('首次导入 imported=1380 skippedExisting=120', async () => {
-    const res = await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.imported).toBe(1380);
@@ -129,8 +132,8 @@ describe('POST /api/words/seed-vocab', () => {
   });
 
   it('第二次调用 imported=0 且 skippedExisting=1500', async () => {
-    await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
-    const res = await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
+    await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.imported).toBe(0);
@@ -138,21 +141,23 @@ describe('POST /api/words/seed-vocab', () => {
   });
 
   it('幂等：重复调用后总数不变', async () => {
-    await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
-    const first = await app.inject({ method: 'GET', url: '/api/words' });
+    await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
+    const first = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const firstCount = first.json().length;
-    await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
-    const second = await app.inject({ method: 'GET', url: '/api/words' });
+    await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
+    const second = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     expect(second.json().length).toBe(firstCount);
   });
 });
 
 describe('导入后的单词字段', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
+  let authCookie = '';
 
   beforeEach(async () => {
     app = await buildApp({ dbPath: ':memory:' });
-    await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
+    authCookie = await registerAndLogin(app, 'vocabseed');
+    await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
   });
 
   afterEach(async () => {
@@ -160,7 +165,7 @@ describe('导入后的单词字段', () => {
   });
 
   it('meaning 拼接为 pos + meanings_zh.join(；)', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/words' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const words = res.json();
     const sample = words.find((w: { source: string }) => w.source === 'core500');
     expect(sample).toBeTruthy();
@@ -176,7 +181,7 @@ describe('导入后的单词字段', () => {
   });
 
   it('example 含 ｜ 分隔且 source=core500', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/words' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const words = res.json();
     const sample = words.find((w: { source: string }) => w.source === 'core500');
     expect(sample).toBeTruthy();
@@ -185,7 +190,7 @@ describe('导入后的单词字段', () => {
   });
 
   it('core500 共 1380 个词，其中 1000 个 memory_tip 非空、380 个为空串', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/words' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const words = res.json();
     const vocab = words.filter((w: { source: string }) => w.source === 'core500');
     expect(vocab.length).toBe(1380);
@@ -202,10 +207,12 @@ describe('导入后的单词字段', () => {
 
 describe('GET /api/words/vocab-status', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
+  let authCookie = '';
 
   beforeEach(async () => {
     app = await buildApp({ dbPath: ':memory:' });
-    await app.inject({ method: 'POST', url: '/api/words/seed-vocab' });
+    authCookie = await registerAndLogin(app, 'vocabseed');
+    await app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/words/seed-vocab' });
   });
 
   afterEach(async () => {
@@ -213,34 +220,36 @@ describe('GET /api/words/vocab-status', () => {
   });
 
   it('初始 total=1380 mastered=0 pending=1380', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/words/vocab-status' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words/vocab-status' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ total: 1380, mastered: 0, pending: 1380 });
   });
 
   it('复习 3 个词后 mastered=3 pending=1377', async () => {
-    const list = await app.inject({ method: 'GET', url: '/api/words' });
+    const list = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' });
     const words = list.json();
     const vocab = words.filter((w: { source: string }) => w.source === 'core500');
     expect(vocab.length).toBeGreaterThanOrEqual(3);
     for (let i = 0; i < 3; i += 1) {
-      const r = await app.inject({
+      const r = await app.inject({ headers: { cookie: authCookie },
         method: 'POST',
         url: `/api/words/${vocab[i].id}/review`,
         payload: { grade: 2 },
       });
       expect(r.statusCode).toBe(200);
     }
-    const res = await app.inject({ method: 'GET', url: '/api/words/vocab-status' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words/vocab-status' });
     expect(res.json()).toEqual({ total: 1380, mastered: 3, pending: 1377 });
   });
 });
 
 describe('seedVocabFromEntries', () => {
   let db: DatabaseSync;
+  let localUserId: number;
 
   beforeEach(() => {
     db = createDb(':memory:');
+    localUserId = (db.prepare("SELECT id FROM users WHERE username = 'local'").get() as { id: number }).id;
   });
 
   afterEach(() => {
@@ -258,7 +267,7 @@ describe('seedVocabFromEntries', () => {
           { word: 'ok2' },
         ],
       },
-    ]);
+    ], localUserId);
     expect(result.imported).toBe(1);
     expect(result.skippedInvalid).toBe(3);
     expect(result.errors.length).toBe(3);
@@ -282,12 +291,12 @@ describe('seedVocabFromEntries', () => {
         ],
       },
     ];
-    const first = seedVocabFromEntries(db, input);
+    const first = seedVocabFromEntries(db, input, localUserId);
     expect(first.imported).toBe(2);
     const countAfterFirst = (
       db.prepare('SELECT COUNT(*) AS c FROM words').get() as { c: number }
     ).c;
-    const second = seedVocabFromEntries(db, input);
+    const second = seedVocabFromEntries(db, input, localUserId);
     expect(second.imported).toBe(0);
     expect(second.skippedExisting).toBe(2);
     const countAfterSecond = (
@@ -305,7 +314,7 @@ describe('seedVocabFromEntries', () => {
           { word: 'dup', meanings_zh: ['重复'] },
         ],
       },
-    ]);
+    ], localUserId);
     expect(result.imported).toBe(1);
     expect(result.skippedExisting).toBe(1);
     const count = (

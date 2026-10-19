@@ -249,11 +249,20 @@ export interface HeatmapResponse {
 
 /** 错题掌握率响应 */
 export interface MistakeSummary {
-  subject: string | null;
-  total: number;
-  mastered: number;
-  unmastered: number;
-  masteredRate: number;
+subject: string | null;
+total: number;
+mastered: number;
+unmastered: number;
+masteredRate: number;
 }
+
+/** 账号体系：用户 */
+export interface User { id: number; username: string; createdAt: string;}
+/** 注册输入 */
+export interface RegisterInput { username: string; password: string;}
+/** 登录输入 */
+export interface LoginInput { username: string; password: string;}
+/** 登录/me 响应 */
+export interface AuthUser { id: number; username: string;}
 
 

@@ -1,20 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { buildApp } from '../src/app'
+import { registerAndLogin } from './test-utils';
 
 describe('words import', () => {
   let app: Awaited<ReturnType<typeof buildApp>>
 
+  let authCookie = '';
   beforeAll(async () => {
     app = buildApp({ dbPath: ':memory:' })
     await app.ready()
-  })
+
+    authCookie = await registerAndLogin(app, 'wordsimport');  })
 
   afterAll(async () => {
     await app.close()
   })
 
   it('导入 3 个词：200 且 imported=3，source=core500，meaning/example 拼接正确', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -49,7 +52,7 @@ describe('words import', () => {
     expect(body.skippedExisting).toBe(0)
     expect(body.skippedInvalid).toBe(0)
 
-    const listRes = await app.inject({ method: 'GET', url: '/api/words' })
+    const listRes = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' })
     expect(listRes.statusCode).toBe(200)
     const list = listRes.json() as Array<{
       word: string
@@ -66,9 +69,9 @@ describe('words import', () => {
 
   it('幂等：同一 payload 再 POST：imported=0，skippedExisting=3，总数不变', async () => {
     const before = (
-      await app.inject({ method: 'GET', url: '/api/words' })
+      await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' })
     ).json() as unknown[]
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -84,13 +87,13 @@ describe('words import', () => {
     expect(body.imported).toBe(0)
     expect(body.skippedExisting).toBe(3)
     const after = (
-      await app.inject({ method: 'GET', url: '/api/words' })
+      await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' })
     ).json() as unknown[]
     expect(after.length).toBe(before.length)
   })
 
   it('批次内重复：imported=1，skippedExisting=1', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -107,7 +110,7 @@ describe('words import', () => {
   })
 
   it('无效项：word 空 + meanings_zh 空数组：skippedInvalid=2，errors 长度 2', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -128,21 +131,21 @@ describe('words import', () => {
   })
 
   it('非法请求体：words 缺失 / 字符串 / 空数组 均 400', async () => {
-    const r1 = await app.inject({
+    const r1 = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {},
     })
     expect(r1.statusCode).toBe(400)
 
-    const r2 = await app.inject({
+    const r2 = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: { words: 'not-array' },
     })
     expect(r2.statusCode).toBe(400)
 
-    const r3 = await app.inject({
+    const r3 = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: { words: [] },
@@ -151,7 +154,7 @@ describe('words import', () => {
   })
 
   it('非法 source：400', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -163,7 +166,7 @@ describe('words import', () => {
   })
 
   it('SRS 初始化：导入后 GET /api/words/due 包含新词，dueDate 为今天', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -172,7 +175,7 @@ describe('words import', () => {
     })
     expect(res.statusCode).toBe(200)
 
-    const dueRes = await app.inject({ method: 'GET', url: '/api/words/due' })
+    const dueRes = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words/due' })
     expect(dueRes.statusCode).toBe(200)
     const due = dueRes.json() as Array<{
       word: string
@@ -189,7 +192,7 @@ describe('words import', () => {
   })
 
   it('指定 source=csv：查得 source=csv', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: {
@@ -199,22 +202,27 @@ describe('words import', () => {
     })
     expect(res.statusCode).toBe(200)
     const list = (
-      await app.inject({ method: 'GET', url: '/api/words' })
+      await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' })
     ).json() as Array<{ word: string; source: string }>
     const w = list.find((x) => x.word === 't8csv')
     expect(w).toBeTruthy()
     expect(w!.source).toBe('csv')
   })
 
-  it('不影响已有词：内置词 abandon 仍在且 source=builtin', async () => {
+  it('不影响已有词：导入后原有词仍在', async () => {
+    // 多用户下内置种子归 local 用户；本用例自建一个词再导入，验证原有词不受影响
+    const created = await app.inject({ headers: { cookie: authCookie },
+      method: 'POST', url: '/api/words', payload: { word: 'abandon', meaning: '抛弃；放弃' } })
+    expect(created.statusCode).toBe(201)
+    const imp = await app.inject({ headers: { cookie: authCookie },
+      method: 'POST', url: '/api/words/import',
+      payload: { source: 'csv', words: [{ word: 'keepcheck', pos: 'n.', meanings_zh: ['校验'] }] } })
+    expect(imp.statusCode).toBe(200)
     const list = (
-      await app.inject({ method: 'GET', url: '/api/words' })
+      await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words' })
     ).json() as Array<{ word: string; source: string }>
-    const builtin = list.filter((x) => x.source === 'builtin')
-    expect(builtin.length).toBe(24)
     const abandon = list.find((x) => x.word === 'abandon')
     expect(abandon).toBeTruthy()
-    expect(abandon!.source).toBe('builtin')
   })
 
   it('上限：words 数组长度 2001：400', async () => {
@@ -222,7 +230,7 @@ describe('words import', () => {
       word: `t10w${i}`,
       meanings_zh: ['x'],
     }))
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/words/import',
       payload: { words: arr },

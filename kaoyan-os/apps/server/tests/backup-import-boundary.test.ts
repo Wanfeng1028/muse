@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createDb } from '../src/db';
 import { registerBackupRoutes } from '../src/routes/backup';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
 const TABLE_ORDER = [
   'plans',
@@ -33,13 +35,17 @@ function validPayload(overrides: Record<string, unknown> = {}) {
 
 describe('POST /api/backup/import 校验分支边界', () => {
   let app: FastifyInstance;
+  let authCookie = '';
   let db: ReturnType<typeof createDb>;
 
   beforeEach(async () => {
     db = createDb(':memory:');
     app = Fastify();
+    applyAuthHook(app, db);
+    registerAuthRoutes(app, db);
     registerBackupRoutes(app, db);
     await app.ready();
+    authCookie = await registerAndLogin(app, 'backupboundary');
   });
 
   afterEach(async () => {
@@ -49,7 +55,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
 
   function seedPlan(id: number, title: string): void {
     db.prepare(
-      'INSERT INTO plans (id, date, subject, title) VALUES (?, ?, ?, ?)'
+      'INSERT INTO plans (user_id, id, date, subject, title) VALUES ((SELECT id FROM users WHERE username = \'backupboundary\'), ?, ?, ?, ?)'
     ).run(id, '2024-03-01', 'math', title);
   }
 
@@ -59,7 +65,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   }
 
   it('version=2 → 400 version 无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -71,7 +77,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('data 为数组 → 400 data 无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({ data: [] }),
@@ -81,7 +87,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('data 为字符串 → 400 data 无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({ data: 'nope' }),
@@ -91,7 +97,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('data.tables 为字符串 → 400 tables 无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -103,7 +109,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('整个 body 为数组 → 400 请求体无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: [] as unknown,
@@ -113,7 +119,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('tables.plans 行非对象 → 400 含 表 plans 第 1 行不是对象', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -129,7 +135,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('words 行缺 meaning → 400 含 表 words 第 1 行 与 meaning', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -148,7 +154,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('srs_state 行 word_id 为字符串 → 400 含 表 srs_state 第 1 行', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -169,7 +175,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('exam_records 行缺 taken_at → 400 含 表 exam_records 第 1 行', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -190,7 +196,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   });
 
   it('settings 行 value 为数字 → 400 含 表 settings 第 1 行', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -222,7 +228,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
       },
     };
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload,
@@ -239,7 +245,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
   it('mode=merge → 追加保留已有 plan', async () => {
     seedPlan(1, '旧计划');
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({
@@ -269,7 +275,7 @@ describe('POST /api/backup/import 校验分支边界', () => {
     seedPlan(1, '旧计划');
     expect(planCount()).toBe(1);
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: validPayload({

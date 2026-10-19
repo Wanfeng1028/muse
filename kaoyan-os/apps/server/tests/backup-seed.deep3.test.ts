@@ -3,6 +3,9 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { createDb, todayStr, addDays } from '../src/db';
 import { registerBackupRoutes } from '../src/routes/backup';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { createSeededUser, registerAndLogin } from './test-utils';
+import { seedIfEmpty } from '../src/seed';
 import { seedIfEmpty } from '../src/seed';
 
 function emptyTables(): Record<string, unknown[]> {
@@ -27,15 +30,16 @@ function makePayload(tables: Record<string, unknown[]>, mode?: 'replace' | 'merg
   return mode === undefined ? { data } : { data, mode };
 }
 
-async function doExport(app: FastifyInstance) {
-  const res = await app.inject({ method: 'GET', url: '/api/backup/export' });
+async function doExport(app: FastifyInstance, cookie: string) {
+  const res = await app.inject({ method: 'GET', url: '/api/backup/export', headers: { cookie } });
   return { statusCode: res.statusCode, body: res.json() as any };
 }
 
-async function doImport(app: FastifyInstance, payload: unknown) {
+async function doImport(app: FastifyInstance, payload: unknown, cookie: string) {
   const res = await app.inject({
     method: 'POST',
     url: '/api/backup/import',
+    headers: { cookie },
     payload,
   });
   return { statusCode: res.statusCode, body: res.json() as any };
@@ -46,15 +50,35 @@ function countOf(db: DatabaseSync, table: string): number {
   return r.c;
 }
 
+// 按用户名统计行数（多用户隔离后的精确断言用）；srs_state 经 words 表归属
+function countOfUser(db: DatabaseSync, table: string, username: string): number {
+  const u = `(SELECT id FROM users WHERE username = '${username}')`;
+  if (table === 'srs_state') {
+    return (
+      db
+        .prepare(
+          `SELECT COUNT(*) AS c FROM srs_state s JOIN words w ON w.id = s.word_id WHERE w.user_id = ${u}`,
+        )
+        .get() as { c: number }
+    ).c;
+  }
+  return (db.prepare(`SELECT COUNT(*) AS c FROM ${table} WHERE user_id = ${u}`).get() as { c: number }).c;
+}
+
 describe('backup + seed 纵深测试（第三轮）', () => {
   let db: DatabaseSync;
   let app: FastifyInstance;
+  let authCookie = '';
 
   beforeEach(async () => {
     db = createDb(':memory:');
+    seedIfEmpty(db);
     app = Fastify({ logger: false });
+    applyAuthHook(app, db);
+    registerAuthRoutes(app, db);
     registerBackupRoutes(app, db);
     await app.ready();
+    authCookie = (await createSeededUser(db, app, 'backupseed')).cookie;
   });
 
   afterEach(async () => {
@@ -64,7 +88,7 @@ describe('backup + seed 纵深测试（第三轮）', () => {
 
   it('1. export 结构：format/version/exportedAt 合法且含全部 7 张表；seedIfEmpty 后行数符合播种量', async () => {
     seedIfEmpty(db);
-    const { statusCode, body } = await doExport(app);
+    const { statusCode, body } = await doExport(app, authCookie);
     expect(statusCode).toBe(200);
     expect(body.format).toBe('kaoyan-backup');
     expect(body.version).toBe(1);
@@ -97,17 +121,22 @@ describe('backup + seed 纵深测试（第三轮）', () => {
 
   it('2. export→import replace 全量 round-trip：新库 7 表行数一致且 srs_state 字段逐字段相等', async () => {
     seedIfEmpty(db);
-    const { body: exported } = await doExport(app);
+    const { body: exported } = await doExport(app, authCookie);
 
     const dbB = createDb(':memory:');
     const appB = Fastify({ logger: false });
+    applyAuthHook(appB, dbB);
+    registerAuthRoutes(appB, dbB);
     registerBackupRoutes(appB, dbB);
     await appB.ready();
+    const authCookieB = await registerAndLogin(appB, 'backupseedb');
     try {
-      const res = await doImport(appB, makePayload(exported.tables));
+      const res = await doImport(appB, makePayload(exported.tables), authCookieB);
       expect(res.statusCode).toBe(200);
       expect(res.body.mode).toBe('replace');
 
+      // 多用户语义：导出是按用户的；新库行数应与导出行数一致（源库全表还含 local 用户的一份种子）
+      const expTables = exported.tables as Record<string, unknown[]>;
       for (const t of [
         'plans',
         'focus_sessions',
@@ -117,12 +146,13 @@ describe('backup + seed 纵深测试（第三轮）', () => {
         'exam_records',
         'settings',
       ]) {
-        expect(countOf(dbB, t)).toBe(countOf(db, t));
+        expect(countOf(dbB, t)).toBe(expTables[t].length);
       }
 
-      const wordRow = db.prepare("SELECT id FROM words WHERE word = 'abandon'").get() as {
-        id: number;
-      };
+      const abandon = (expTables.words as Array<{ id: number; word: string }>).find(
+        (w) => w.word === 'abandon',
+      );
+      const wordRow = { id: (abandon as { id: number }).id };
       const aSrs = db
         .prepare(
           'SELECT word_id, ease, interval_days, repetitions, due_date FROM srs_state WHERE word_id = ?'
@@ -145,11 +175,13 @@ describe('backup + seed 纵深测试（第三轮）', () => {
   });
 
   it('3. replace 清空语义：本地已有计划在 import 不含该计划的备份后消失，imported.plans 等于备份行数', async () => {
+    // 用全新用户做受控数据集（beforeEach 的 backupseed 已带种子数据）
+    const freshCookie3 = await registerAndLogin(app, 'backupseed_t3');
     // 本测试 app 只注册了 backup 路由，直接插 DB 造本地计划
     db.prepare(
-      'INSERT INTO plans (date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done, created_at) VALUES ((SELECT id FROM users WHERE username = \'backupseed_t3\'), ?, ?, ?, ?, ?, ?)'
     ).run(todayStr(), 'math', '本地计划X', 30, 0, new Date().toISOString());
-    expect(countOf(db, 'plans')).toBe(1);
+    expect(countOfUser(db, 'plans', 'backupseed_t3')).toBe(1);
 
 
     const backupPlan = {
@@ -164,16 +196,18 @@ describe('backup + seed 纵深测试（第三轮）', () => {
     const tables = emptyTables();
     tables.plans = [backupPlan];
 
-    const { statusCode, body } = await doImport(app, makePayload(tables, 'replace'));
+    const { statusCode, body } = await doImport(app, makePayload(tables, 'replace'), freshCookie3);
     expect(statusCode).toBe(200);
     expect(body.mode).toBe('replace');
     expect(body.imported.plans).toBe(1);
 
-    const rows = db.prepare('SELECT title FROM plans').all() as Array<{ title: string }>;
+    const rows = db.prepare(`SELECT title FROM plans WHERE user_id = (SELECT id FROM users WHERE username = 'backupseed_t3')`).all() as Array<{ title: string }>;
     expect(rows.length).toBe(1);
     expect(rows[0].title).toBe('备份计划Y');
     const gone = db
-      .prepare("SELECT COUNT(*) AS c FROM plans WHERE title = '本地计划X'")
+      .prepare(
+        `SELECT COUNT(*) AS c FROM plans WHERE title = '本地计划X' AND user_id = (SELECT id FROM users WHERE username = \'backupseed_t3\')`,
+      )
       .get() as { c: number };
     expect(gone.c).toBe(0);
   });
@@ -204,7 +238,7 @@ describe('backup + seed 纵深测试（第三轮）', () => {
       },
     ];
 
-    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'));
+    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'), authCookie);
     expect(statusCode).toBe(200);
     expect(body.mode).toBe('merge');
     expect(body.skipped.words).toBe(1);
@@ -224,7 +258,11 @@ describe('backup + seed 纵深测试（第三轮）', () => {
 
   it('5. merge srs_state 悬空引用：word_id 不存在 skipped，存在则 upsert 覆盖 ease', async () => {
     seedIfEmpty(db);
-    const wordRow = db.prepare("SELECT id FROM words WHERE word = 'abandon'").get() as {
+    const wordRow = db
+      .prepare(
+        `SELECT id FROM words WHERE word = 'abandon' AND user_id = (SELECT id FROM users WHERE username = 'backupseed')`,
+      )
+      .get() as {
       id: number;
     };
     const beforeSrs = db
@@ -238,7 +276,7 @@ describe('backup + seed 纵深测试（第三轮）', () => {
       { word_id: wordRow.id, ease: 3.0, interval_days: 7, repetitions: 2, due_date: '2099-02-02' },
     ];
 
-    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'));
+    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'), authCookie);
     expect(statusCode).toBe(200);
     expect(body.skipped.srs_state).toBe(1);
     expect(body.imported.srs_state).toBe(1);
@@ -262,31 +300,32 @@ describe('backup + seed 纵深测试（第三轮）', () => {
   it('6. merge settings upsert：同 key 不同 value 被覆盖且 imported.settings 计数', async () => {
     seedIfEmpty(db);
     const before = db
-      .prepare("SELECT value FROM settings WHERE key = 'exam_date'")
+      .prepare(`SELECT value FROM settings WHERE key = 'exam_date' AND user_id = (SELECT id FROM users WHERE username = 'backupseed')`)
       .get() as { value: string };
     expect(before.value).not.toBe('2099-12-31');
 
     const tables = emptyTables();
     tables.settings = [{ key: 'exam_date', value: '2099-12-31' }];
 
-    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'));
+    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'), authCookie);
     expect(statusCode).toBe(200);
     expect(body.imported.settings).toBe(1);
     expect(body.skipped.settings).toBe(0);
 
     const after = db
-      .prepare("SELECT value FROM settings WHERE key = 'exam_date'")
+      .prepare(`SELECT value FROM settings WHERE key = 'exam_date' AND user_id = (SELECT id FROM users WHERE username = 'backupseed')`)
       .get() as { value: string };
     expect(after.value).toBe('2099-12-31');
 
-    const total = countOf(db, 'settings');
+    const total = countOfUser(db, 'settings', 'backupseed');
     expect(total).toBe(4);
   });
 
   it('7. merge 主键冲突转 skipped：同 id 的 plans 行被跳过，库中原 title 不变', async () => {
+    const freshCookie7 = await registerAndLogin(app, 'backupseed_t7');
     const created = db
       .prepare(
-        'INSERT INTO plans (date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done, created_at) VALUES ((SELECT id FROM users WHERE username = \'backupseed_t7\'), ?, ?, ?, ?, ?, ?)'
       )
       .run(todayStr(), 'math', '本地原计划', 45, 0, new Date().toISOString());
     const localId = Number(created.lastInsertRowid);
@@ -304,38 +343,38 @@ describe('backup + seed 纵深测试（第三轮）', () => {
       },
     ];
 
-    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'));
+    const { statusCode, body } = await doImport(app, makePayload(tables, 'merge'), freshCookie7);
     expect(statusCode).toBe(200);
     expect(body.skipped.plans).toBe(1);
     expect(body.imported.plans).toBe(0);
 
-    const row = db.prepare('SELECT title FROM plans WHERE id = ?').get(localId) as {
-      title: string;
-    };
+    const row = db
+      .prepare('SELECT title FROM plans WHERE id = ? AND user_id = (SELECT id FROM users WHERE username = ?)')
+      .get(localId, 'backupseed_t7') as { title: string };
     expect(row.title).toBe('本地原计划');
-    expect(countOf(db, 'plans')).toBe(1);
+    expect(countOfUser(db, 'plans', 'backupseed_t7')).toBe(1);
   });
 
   it('8. import 行级校验：mode/version/tables/行类型/subject 枚举 全部 400 且错误语义正确', async () => {
-    const badMode = await doImport(app, { data: makePayload(emptyTables()).data, mode: 'xxx' });
+    const badMode = await doImport(app, { data: makePayload(emptyTables()).data, mode: 'xxx' }, authCookie);
     expect(badMode.statusCode).toBe(400);
     expect(badMode.body.error).toBe('无效的 mode');
 
     const badVersion = await doImport(app, {
       data: { format: 'kaoyan-backup', version: 2, exportedAt: new Date().toISOString(), tables: emptyTables() },
-    });
+    }, authCookie);
     expect(badVersion.statusCode).toBe(400);
     expect(badVersion.body.error).toBe('version 无效');
 
     const tablesNoWords = emptyTables();
     delete (tablesNoWords as Record<string, unknown>).words;
-    const missing = await doImport(app, makePayload(tablesNoWords));
+    const missing = await doImport(app, makePayload(tablesNoWords), authCookie);
     expect(missing.statusCode).toBe(400);
     expect(String(missing.body.error)).toContain('words');
 
     const tablesBadRow = emptyTables();
     tablesBadRow.words = [{ word: 'ok', meaning: 'ok' }, 123];
-    const badRow = await doImport(app, makePayload(tablesBadRow));
+    const badRow = await doImport(app, makePayload(tablesBadRow), authCookie);
     expect(badRow.statusCode).toBe(400);
     expect(String(badRow.body.error)).toContain('第 2 行');
 
@@ -343,7 +382,7 @@ describe('backup + seed 纵深测试（第三轮）', () => {
     tablesBadSubject.focus_sessions = [
       { subject: 'art', minutes: 30, started_at: `${todayStr()}T09:00:00`, note: 'n' },
     ];
-    const badSubject = await doImport(app, makePayload(tablesBadSubject));
+    const badSubject = await doImport(app, makePayload(tablesBadSubject), authCookie);
     expect(badSubject.statusCode).toBe(400);
     expect(String(badSubject.body.error)).toContain('focus_sessions');
   });
@@ -360,44 +399,44 @@ describe('backup + seed 纵深测试（第三轮）', () => {
       'exam_records',
       'settings',
     ]) {
-      snap1[t] = countOf(db, t);
+      snap1[t] = countOfUser(db, t, 'local');
     }
     seedIfEmpty(db);
     for (const t of Object.keys(snap1)) {
-      expect(countOf(db, t)).toBe(snap1[t]);
+      expect(countOfUser(db, t, 'local')).toBe(snap1[t]);
     }
-    expect(countOf(db, 'words')).toBe(24);
-    expect(countOf(db, 'settings')).toBe(4);
-    expect(countOf(db, 'plans')).toBe(6);
-    expect(countOf(db, 'mistakes')).toBe(3);
-    expect(countOf(db, 'exam_records')).toBe(2);
-    expect(countOf(db, 'focus_sessions')).toBe(8);
-    expect(countOf(db, 'srs_state')).toBe(24);
+    expect(countOfUser(db, 'words', 'local')).toBe(24);
+    expect(countOfUser(db, 'settings', 'local')).toBe(4);
+    expect(countOfUser(db, 'plans', 'local')).toBe(6);
+    expect(countOfUser(db, 'mistakes', 'local')).toBe(3);
+    expect(countOfUser(db, 'exam_records', 'local')).toBe(2);
+    expect(countOfUser(db, 'focus_sessions', 'local')).toBe(8);
+    expect(countOfUser(db, 'srs_state', 'local')).toBe(24);
   });
 
   it('10. seedIfEmpty 不覆盖非空表：exam_date 保持覆盖值，各表独立判断', async () => {
     seedIfEmpty(db);
-    db.prepare("UPDATE settings SET value = '2099-01-01' WHERE key = 'exam_date'").run();
+    db.prepare(`UPDATE settings SET value = '2099-01-01' WHERE key = 'exam_date' AND user_id = (SELECT id FROM users WHERE username = 'local')`).run();
 
     seedIfEmpty(db);
     const after = db
-      .prepare("SELECT value FROM settings WHERE key = 'exam_date'")
+      .prepare(`SELECT value FROM settings WHERE key = 'exam_date' AND user_id = (SELECT id FROM users WHERE username = 'local')`)
       .get() as { value: string };
     expect(after.value).toBe('2099-01-01');
-    expect(countOf(db, 'settings')).toBe(4);
+    expect(countOfUser(db, 'settings', 'local')).toBe(4);
 
     const db2 = createDb(':memory:');
     db2
       .prepare(
-        'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO words (user_id, word, phonetic, meaning, example, source) VALUES ((SELECT id FROM users WHERE username = \'local\'), ?, ?, ?, ?, ?)'
       )
       .run('onlyone', '/o/', 'm', 'e', 'manual');
-    expect(countOf(db2, 'settings')).toBe(0);
+    expect(countOfUser(db2, 'settings', 'local')).toBe(0);
     seedIfEmpty(db2);
-    expect(countOf(db2, 'settings')).toBe(4);
-    expect(countOf(db2, 'words')).toBe(1);
-    expect(countOf(db2, 'srs_state')).toBe(0);
-    expect(countOf(db2, 'plans')).toBe(6);
+    expect(countOfUser(db2, 'settings', 'local')).toBe(4);
+    expect(countOfUser(db2, 'words', 'local')).toBe(1);
+    expect(countOfUser(db2, 'srs_state', 'local')).toBe(0);
+    expect(countOfUser(db2, 'plans', 'local')).toBe(6);
     db2.close();
   });
 
@@ -405,7 +444,9 @@ describe('backup + seed 纵深测试（第三轮）', () => {
     seedIfEmpty(db);
 
     const wordRow = db
-      .prepare("SELECT id, phonetic, meaning, source FROM words WHERE word = 'abandon'")
+      .prepare(
+        `SELECT id, phonetic, meaning, source FROM words WHERE word = 'abandon' AND user_id = (SELECT id FROM users WHERE username = 'local')`,
+      )
       .get() as any;
     expect(wordRow).toBeTruthy();
     expect(wordRow.source).toBe('builtin');
@@ -423,19 +464,25 @@ describe('backup + seed 纵深测试（第三轮）', () => {
 
     const today = todayStr();
     const todayFocus = db
-      .prepare("SELECT COUNT(*) AS c FROM focus_sessions WHERE started_at LIKE ?")
+      .prepare(
+        `SELECT COUNT(*) AS c FROM focus_sessions WHERE started_at LIKE ? AND user_id = (SELECT id FROM users WHERE username = 'local')`,
+      )
       .get(`${today}%`) as { c: number };
     expect(todayFocus.c).toBe(2);
 
     const yesterday = addDays(today, -1);
     const yesterdayFocus = db
-      .prepare("SELECT COUNT(*) AS c FROM focus_sessions WHERE started_at LIKE ?")
+      .prepare(
+        `SELECT COUNT(*) AS c FROM focus_sessions WHERE started_at LIKE ? AND user_id = (SELECT id FROM users WHERE username = 'local')`,
+      )
       .get(`${yesterday}%`) as { c: number };
     expect(yesterdayFocus.c).toBe(1);
   });
 
   it('12. 空库 export→import：各表为空数组，replace 导入到新库 imported 全 0', async () => {
-    const { statusCode, body } = await doExport(app);
+    // 空库语义：用全新无数据用户导出（beforeEach 已给 backupseed 播了种子，不能直接用 authCookie）
+    const emptyCookie = await registerAndLogin(app, 'backupseedempty');
+    const { statusCode, body } = await doExport(app, emptyCookie);
     expect(statusCode).toBe(200);
     const tables = body.tables as Record<string, unknown[]>;
     for (const t of [
@@ -453,10 +500,13 @@ describe('backup + seed 纵深测试（第三轮）', () => {
 
     const dbB = createDb(':memory:');
     const appB = Fastify({ logger: false });
+    applyAuthHook(appB, dbB);
+    registerAuthRoutes(appB, dbB);
     registerBackupRoutes(appB, dbB);
     await appB.ready();
+    const authCookieB = await registerAndLogin(appB, 'backupseedb');
     try {
-      const res = await doImport(appB, makePayload(tables, 'replace'));
+      const res = await doImport(appB, makePayload(tables, 'replace'), authCookieB);
       expect(res.statusCode).toBe(200);
       expect(res.body.mode).toBe('replace');
       for (const t of [

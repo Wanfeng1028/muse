@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { buildApp } from '../src/app';
+import { registerAndLogin } from './test-utils';
 
 type PlanItem = {
   id: string;
@@ -201,9 +202,11 @@ function importBackup(text: string): { items: PlanItem[]; wrongs: WrongItem[]; w
 
 describe('index.deep 排程与边界', () => {
   let app: ReturnType<typeof buildApp>;
+  let authCookie = '';
 
-  beforeEach(() => {
-    app = buildApp({ logger: false });
+  beforeEach(async () => {
+    app = buildApp({ dbPath: ':memory:', logger: false });
+    authCookie = await registerAndLogin(app, 'indextest');
   });
 
   afterEach(async () => {
@@ -313,7 +316,7 @@ describe('index.deep 排程与边界', () => {
   });
 
   it('番茄计时边界：注入的真实 Fastify 实例对未知路由返回 404 且带日志关闭配置', async () => {
-    const res = await app.inject({ method: 'GET', url: '/__not_exist__' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/__not_exist__' });
     expect(res.statusCode).toBe(404);
     expect(app.log).toBeDefined();
   });

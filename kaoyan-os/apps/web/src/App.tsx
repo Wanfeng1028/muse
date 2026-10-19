@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { DEFAULT_SETTINGS, type Settings } from '@kaoyan/shared';
 import { api } from './api';
+import UserMenu from './components/UserMenu';
 import Dashboard from './pages/Dashboard';
 import Plans from './pages/Plans';
 import Pomodoro from './pages/Pomodoro';
@@ -12,6 +13,7 @@ import Exams from './pages/Exams';
 import DataTransfer from './pages/DataTransfer';
 import Weekly from './pages/Weekly';
 import Heatmap from './pages/Heatmap';
+import Login from './pages/Login';
 
 
 type Theme = 'light' | 'dark';
@@ -45,11 +47,36 @@ function daysUntil(examDate: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+type AuthState =
+  | { status: 'loading' }
+  | { status: 'authed'; username: string }
+  | { status: 'anon' };
+
 export default function App() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [auth, setAuth] = useState<AuthState>({ status: 'loading' });
 
-  // 挂载时拉取设置，失败则用默认值兜底；两者都同步一次主题
+  // 先确认登录状态，再拉设置；未登录不发业务请求
   useEffect(() => {
+    let alive = true;
+    api
+      .me()
+      .then((me) => {
+        if (!alive) return;
+        setAuth({ status: 'authed', username: me.username });
+      })
+      .catch(() => {
+        if (!alive) return;
+        setAuth({ status: 'anon' });
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 登录后再拉设置，失败则用默认值兜底；两者都同步一次主题
+  useEffect(() => {
+    if (auth.status !== 'authed') return;
     let alive = true;
     api
       .getSettings()
@@ -66,7 +93,7 @@ export default function App() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [auth.status]);
 
   // 切换主题：先落库，成功后再更新本地状态与 DOM；失败保持原主题
   const toggleTheme = async () => {
@@ -81,6 +108,25 @@ export default function App() {
   };
 
   const remainDays = daysUntil(settings.examDate);
+
+  // 登录态未确认时占位，避免闪一下未登录页
+  if (auth.status === 'loading') {
+    return (
+      <div className="auth-loading" role="status" aria-live="polite">
+        加载中…
+      </div>
+    );
+  }
+
+  // 未登录：只渲染登录页，不挂侧栏
+  if (auth.status === 'anon') {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="app-layout">
@@ -115,6 +161,7 @@ export default function App() {
           >
             {settings.theme === 'dark' ? '浅色模式' : '深色模式'}
           </button>
+          <UserMenu username={auth.username} />
         </div>
       </aside>
 

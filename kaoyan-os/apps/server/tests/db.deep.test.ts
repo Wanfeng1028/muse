@@ -66,16 +66,19 @@ describe('db.deep.test.ts', () => {
 
   it('空计划：plans 表为空时聚合查询返回 0，插入两条后正确统计', () => {
     const db = createDb(':memory:');
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-1', 'x').lastInsertRowid) as number;
     const emptyRow = db
       .prepare('SELECT COUNT(*) AS c FROM plans')
       .get() as { c: number };
     expect(emptyRow.c).toBe(0);
 
     const insert = db.prepare(
-      'INSERT INTO plans (date, subject, title, planned_minutes, done) VALUES (?, ?, ?, ?, ?)'
+      'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done) VALUES (?, ?, ?, ?, ?, ?)'
     );
-    insert.run('2024-02-29', 'math', '导数专项', 90, 0);
-    insert.run('2024-02-29', 'english', '阅读训练', 60, 1);
+    insert.run(userId, '2024-02-29', 'math', '导数专项', 90, 0);
+    insert.run(userId, '2024-02-29', 'english', '阅读训练', 60, 1);
 
     const after = db
       .prepare('SELECT COUNT(*) AS c, SUM(planned_minutes) AS m FROM plans')
@@ -86,11 +89,14 @@ describe('db.deep.test.ts', () => {
 
   it('番茄计时边界：minutes=0 与 minutes=999 均可写入并按 started_at 排序', () => {
     const db = createDb(':memory:');
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-2', 'x').lastInsertRowid) as number;
     const insert = db.prepare(
-      'INSERT INTO focus_sessions (subject, minutes, started_at, note) VALUES (?, ?, ?, ?)'
+      'INSERT INTO focus_sessions (user_id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?)'
     );
-    insert.run('math', 0, '2024-03-01T08:00:00.000Z', '零分钟');
-    insert.run('math', 999, '2024-03-01T09:00:00.000Z', '超长');
+    insert.run(userId, 'math', 0, '2024-03-01T08:00:00.000Z', '零分钟');
+    insert.run(userId, 'math', 999, '2024-03-01T09:00:00.000Z', '超长');
 
     const rows = db
       .prepare('SELECT minutes FROM focus_sessions ORDER BY started_at ASC')
@@ -102,10 +108,13 @@ describe('db.deep.test.ts', () => {
 
   it('错题去重：相同 subject+title 视为同一道题，重复插入需能被应用层去重后仅保留一条', () => {
     const db = createDb(':memory:');
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-3', 'x').lastInsertRowid) as number;
     const insert = db.prepare(
-      'INSERT INTO mistakes (subject, title, content, analysis) VALUES (?, ?, ?, ?)'
+      'INSERT INTO mistakes (user_id, subject, title, content, analysis) VALUES (?, ?, ?, ?, ?)'
     );
-    insert.run('math', '极限计算错误', '原题A', '分析A');
+    insert.run(userId, 'math', '极限计算错误', '原题A', '分析A');
 
     const existing = db
       .prepare('SELECT id FROM mistakes WHERE subject = ? AND title = ?')
@@ -113,7 +122,7 @@ describe('db.deep.test.ts', () => {
     expect(existing).toBeDefined();
 
     if (!existing) {
-      insert.run('math', '极限计算错误', '原题A', '分析A');
+      insert.run(userId, 'math', '极限计算错误', '原题A', '分析A');
     }
     const count = db
       .prepare('SELECT COUNT(*) AS c FROM mistakes WHERE subject = ? AND title = ?')
@@ -124,10 +133,13 @@ describe('db.deep.test.ts', () => {
 
   it('单词 SRS：初始 due_date 为今天，正确后 interval_days 递增，错误后 repetitions 归零', () => {
     const db = createDb(':memory:');
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-4', 'x').lastInsertRowid) as number;
     const wordInsert = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
-    wordInsert.run('abandon', 'əˈbændən', '放弃', 'He abandoned it.', 'manual', 'a-ban-don');
+    wordInsert.run(userId, 'abandon', 'əˈbændən', '放弃', 'He abandoned it.', 'manual', 'a-ban-don');
 
     const wordRow = db
       .prepare('SELECT id FROM words WHERE word = ?')
@@ -170,8 +182,11 @@ describe('db.deep.test.ts', () => {
 
   it('导入 CSV 畸形行：空行、缺列、列数过多的行被跳过，仅合法行入库', () => {
     const db = createDb(':memory:');
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-5', 'x').lastInsertRowid) as number;
     const insert = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
 
     const csvLines = [
@@ -200,7 +215,7 @@ describe('db.deep.test.ts', () => {
         skipped += 1;
         continue;
       }
-      insert.run(cols[0], cols[1], cols[2], cols[3], cols[4], cols[5]);
+      insert.run(userId, cols[0], cols[1], cols[2], cols[3], cols[4], cols[5]);
       imported += 1;
     }
 
@@ -216,10 +231,13 @@ describe('db.deep.test.ts', () => {
   it('备份恢复 round-trip：写入数据 -> 备份文件 -> 从备份重开 -> 数据一致', () => {
     const srcPath = path.join(tmpDir, 'src.db');
     const db = createDb(srcPath);
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-6', 'x').lastInsertRowid) as number;
     db.prepare(
-      'INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run('math', '2024 真题一', 138, 150, 180, nowIso());
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('target_school', '示例大学');
+      'INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(userId, 'math', '2024 真题一', 138, 150, 180, nowIso());
+    db.prepare('INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)').run(userId, 'target_school', '示例大学');
     db.close();
 
     const backupPath = path.join(tmpDir, 'backup.db');
@@ -248,9 +266,12 @@ describe('db.deep.test.ts', () => {
 
   it('外键级联：删除 words 行时 srs_state 关联行被级联删除', () => {
     const db = createDb(':memory:');
+    const userId = (db
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-7', 'x').lastInsertRowid) as number;
     db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run('cascade', '', '', '', 'manual', '');
+      'INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(userId, 'cascade', '', '', '', 'manual', '');
     const wid = (db.prepare('SELECT id FROM words WHERE word = ?').get('cascade') as { id: number }).id;
     db.prepare(
       'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
@@ -283,6 +304,16 @@ describe('db.deep.test.ts', () => {
         source TEXT NOT NULL DEFAULT 'manual'
       );
     `);
+    legacy.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL
+      );
+    `);
+    const legacyUserId = (legacy
+      .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
+      .run('deep-user-8', 'x').lastInsertRowid) as number;
     legacy.prepare(
       'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)'
     ).run('legacy', '', '老数据', '', 'manual');

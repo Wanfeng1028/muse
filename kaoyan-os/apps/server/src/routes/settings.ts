@@ -19,8 +19,8 @@ const NUMBER_LIMITS: Record<'dailyGoalMinutes' | 'pomodoroMinutes' | 'breakMinut
 };
 
 // 从数据库读取全部 settings，并与默认值合并
-function readSettings(db: DatabaseSync): Settings {
-  const rows = db.prepare('SELECT key, value FROM settings').all() as Array<{
+function readSettings(db: DatabaseSync, userId: number): Settings {
+  const rows = db.prepare('SELECT key, value FROM settings WHERE user_id = ?').all(userId) as Array<{
     key: string;
     value: string;
   }>;
@@ -32,12 +32,13 @@ function readSettings(db: DatabaseSync): Settings {
     const raw = map.get(dbKey);
     if (raw === undefined) continue;
     if (field === 'examDate') {
-      result.examDate = raw;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) result.examDate = raw;
     } else if (field === 'theme') {
       if (raw === 'light' || raw === 'dark') result.theme = raw;
     } else {
-      const n = parseInt(raw, 10);
-      if (!Number.isNaN(n)) result[field] = n;
+      const n = Number(raw);
+      const limit = NUMBER_LIMITS[field as keyof typeof NUMBER_LIMITS];
+      if (Number.isInteger(n) && n > 0 && (limit === undefined || n <= limit)) result[field] = n;
     }
   }
   return result;
@@ -65,8 +66,8 @@ function validateField(
 
 export function registerSettingsRoutes(app: FastifyInstance, db: DatabaseSync): void {
   // 获取设置
-  app.get('/api/settings', async (_req, reply) => {
-    const settings = readSettings(db);
+  app.get('/api/settings', async (req, reply) => {
+    const settings = readSettings(db, req.user!.id);
     return reply.send(settings);
   });
 
@@ -84,14 +85,22 @@ export function registerSettingsRoutes(app: FastifyInstance, db: DatabaseSync): 
       updates.push([dbKey, check.value]);
     }
 
-    // upsert 合法字段
+    // upsert 合法字段（单事务保证原子性）
+    const userId = req.user!.id;
     const stmt = db.prepare(
-      'INSERT INTO settings(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+      'INSERT INTO settings(user_id, key, value) VALUES(?, ?, ?) ON CONFLICT(user_id, key) DO UPDATE SET value = excluded.value'
     );
-    for (const [key, value] of updates) {
-      stmt.run(key, value);
+    db.exec('BEGIN');
+    try {
+      for (const [key, value] of updates) {
+        stmt.run(userId, key, value);
+      }
+      db.exec('COMMIT');
+    } catch (err) {
+      db.exec('ROLLBACK');
+      throw err;
     }
 
-    return reply.send(readSettings(db));
+    return reply.send(readSettings(db, userId));
   });
 }

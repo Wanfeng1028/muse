@@ -2,16 +2,22 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createDb } from '../src/db';
 import { registerStatsRoutes } from '../src/routes/stats';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
 describe('GET /api/stats/weekly start 参数语义', () => {
   let app: FastifyInstance;
+  let authCookie = '';
   let db: ReturnType<typeof createDb>;
 
   beforeEach(async () => {
     db = createDb(':memory:');
     app = Fastify();
+    applyAuthHook(app, db);
+    registerAuthRoutes(app, db);
     registerStatsRoutes(app, db);
     await app.ready();
+    authCookie = await registerAndLogin(app, 'weeklystart');
   });
 
   afterEach(async () => {
@@ -19,7 +25,7 @@ describe('GET /api/stats/weekly start 参数语义', () => {
   });
 
   it('start 为周日时不归一，weekStart 原样返回且 weekEnd 为 +7 天', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=2026-10-18',
     });
@@ -30,7 +36,7 @@ describe('GET /api/stats/weekly start 参数语义', () => {
   });
 
   it('start=2024-02-30 不存在的日期宽松通过并原样返回', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=2024-02-30',
     });
@@ -43,7 +49,7 @@ describe('GET /api/stats/weekly start 参数语义', () => {
   });
 
   it('start 带时间后缀违反正则返回 400', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=2026-10-12T00:00:00',
     });
@@ -52,7 +58,7 @@ describe('GET /api/stats/weekly start 参数语义', () => {
   });
 
   it('start=2026-13-01 月份非法返回 400 start 日期无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=2026-13-01',
     });
@@ -61,7 +67,7 @@ describe('GET /api/stats/weekly start 参数语义', () => {
   });
 
   it('远期空周返回全零统计', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=2099-01-01',
     });
@@ -76,10 +82,10 @@ describe('GET /api/stats/weekly start 参数语义', () => {
 
   it('focusMinutesByDay 下标 0 对应 start 当天', async () => {
     db.prepare(
-      `INSERT INTO focus_sessions (subject, minutes, started_at) VALUES (?, ?, ?)`
+      `INSERT INTO focus_sessions (user_id, subject, minutes, started_at) VALUES ((SELECT id FROM users WHERE username = 'weeklystart'), ?, ?, ?)`
     ).run('math', 30, '2026-10-18T09:00:00');
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/weekly?start=2026-10-18',
     });

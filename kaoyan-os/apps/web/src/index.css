@@ -174,8 +174,62 @@ ol {
   color: #6a7183;
 }
 
-.theme-toggle {
+/* 登录态未确认时的占位，避免白屏闪烁 */
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: var(--text-muted, #888);
+  font-size: 14px;
+}
+
+/* 侧栏底部用户区：用户名 + 退出按钮 */
+.user-menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #2a2a2a);
+}
+
+.user-menu-name {
+  font-size: 13px;
+  color: var(--text-muted, #888);
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu-logout {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--border, #2a2a2a);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+}
+
+.user-menu-logout:hover:not(:disabled) {
+  border-color: var(--text-muted, #888);
+}
+
+.user-menu-logout:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.user-menu-err {
+  font-size: 12px;
+  color: var(--danger, #d9534f);
+  flex-basis: 100%;
+}
+
+.theme-toggle {  margin-top: 10px;
   padding: 5px 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-xs);
@@ -949,3 +1003,161 @@ ol {
 .wk-delta-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;}
 .wk-delta-row:last-child { border-bottom: none;}
 @media (max-width: 720px) {.wk-bars { gap: 6px;}}
+
+/* 登录页 */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--page-bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 32px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.login-brand {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.2px;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.5;
+}
+
+.login-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.login-tab {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sub);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.login-tab:hover {
+  color: var(--text-main);
+}
+
+.login-tab.active {
+  color: var(--c-math);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-sub);
+  letter-spacing: 0.3px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--text-main);
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-input::placeholder {
+  color: var(--text-sub);
+  opacity: 0.7;
+}
+
+.login-input:focus {
+  border-color: var(--c-math);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-math) 18%, transparent);
+}
+
+.login-hint {
+  font-size: 12px;
+  color: var(--text-sub);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.login-error {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--c-politics, #e05d5d);
+  text-align: left;
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--c-math);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.05s;
+}
+
+.login-submit:hover {
+  filter: brightness(1.06);
+}
+
+.login-submit:active {
+  transform: translateY(1px);
+}
+
+.login-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: none;
+}

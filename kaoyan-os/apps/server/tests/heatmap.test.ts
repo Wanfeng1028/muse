@@ -1,32 +1,35 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
+import { registerAndLogin } from './test-utils';
 import { todayStr, addDays } from '../src/db';
 
 let app: FastifyInstance;
 
+  let authCookie = '';
 beforeAll(async () => {
   app = await buildApp({ dbPath: ':memory:' });
   await app.ready();
-});
+
+  authCookie = await registerAndLogin(app, 'heatmaptest');});
 
 afterAll(async () => {
   await app.close();
 });
 
 async function getHeatmap() {
-  const res = await app.inject({ method: 'GET', url: '/api/stats/heatmap' });
+  const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/heatmap' });
   expect(res.statusCode).toBe(200);
   return res.json();
 }
 
 async function postFocus(body: Record<string, unknown>) {
-  return app.inject({ method: 'POST', url: '/api/focus', payload: body });
+  return app.inject({ headers: { cookie: authCookie }, method: 'POST', url: '/api/focus', payload: body });
 }
 
 describe('GET /api/stats/heatmap', () => {
   it('默认 3 个月', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/stats/heatmap' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/stats/heatmap' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     const endDate = todayStr();
@@ -40,7 +43,7 @@ describe('GET /api/stats/heatmap', () => {
   });
 
   it('months=1 返回 31 天', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/heatmap?months=1',
     });
@@ -51,13 +54,13 @@ describe('GET /api/stats/heatmap', () => {
   });
 
   it('months=0 与 months=7 返回 400', async () => {
-    const r0 = await app.inject({
+    const r0 = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/heatmap?months=0',
     });
     expect(r0.statusCode).toBe(400);
     expect(r0.json().error).toBe('months 参数无效');
-    const r7 = await app.inject({
+    const r7 = await app.inject({ headers: { cookie: authCookie },
       method: 'GET',
       url: '/api/stats/heatmap?months=7',
     });
@@ -92,7 +95,7 @@ describe('GET /api/stats/heatmap', () => {
     const beforePlansTotal = beforeToday?.plansTotal ?? 0;
     const beforePlansDone = beforeToday?.plansDone ?? 0;
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/plans',
       payload: {
@@ -105,7 +108,7 @@ describe('GET /api/stats/heatmap', () => {
     expect(res.statusCode).toBe(201);
     const created = res.json();
 
-    const patchRes = await app.inject({
+    const patchRes = await app.inject({ headers: { cookie: authCookie },
       method: 'PATCH',
       url: `/api/plans/${created.id}`,
       payload: { done: true },
@@ -122,6 +125,12 @@ describe('GET /api/stats/heatmap', () => {
   });
 
   it('向 -7 天补一条记录后 streak 各 +1', async () => {
+    // 先补 -6..-1 六天记录，与今天形成连续 7 天（旧单用户时代靠种子数据隐式提供）
+    for (let d = 6; d >= 1; d--) {
+      const day = addDays(todayStr(), -d);
+      const setup = await postFocus({ subject: 'math', minutes: 20, startedAt: `${day}T09:00:00` });
+      expect(setup.statusCode).toBe(201);
+    }
     const before = await getHeatmap();
     const target = addDays(todayStr(), -7);
 

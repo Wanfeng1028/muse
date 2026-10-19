@@ -55,9 +55,9 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
     }
     const rows = db
       .prepare(
-        'SELECT id, subject, minutes, started_at, note FROM focus_sessions ORDER BY started_at DESC LIMIT ?'
+        'SELECT id, subject, minutes, started_at, note FROM focus_sessions WHERE user_id = ? ORDER BY started_at DESC LIMIT ?'
       )
-      .all(limit) as unknown as FocusRow[];
+      .all(req.user!.id, limit) as unknown as FocusRow[];
     return reply.send(rows.map(mapFocus));
   });
 
@@ -80,21 +80,42 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       return reply.code(400).send({ error: 'minutes must be an integer between 1 and 1440' });
     }
 
-    // 校验 startedAt：提供时必须为可解析的有效日期字符串
+    // 校验 startedAt：提供时必须为合法的 ISO 8601 日期时间字符串，且可解析
+    // 强约束：以 YYYY-MM-DD 开头（保证 substr(1,10) 正确），长度 10~40，Date.parse 可解析
+    let finalStartedAt: string;
     if (startedAt !== undefined && startedAt !== null) {
-      if (typeof startedAt !== 'string' || Number.isNaN(Date.parse(startedAt))) {
+      if (typeof startedAt !== 'string') {
         return reply.code(400).send({ error: 'startedAt must be a valid date string' });
       }
+      const trimmed = startedAt.trim();
+      if (
+        !/^\d{4}-\d{2}-\d{2}/.test(trimmed) ||
+        trimmed.length < 10 ||
+        trimmed.length > 40 ||
+        Number.isNaN(Date.parse(trimmed))
+      ) {
+        return reply.code(400).send({ error: 'startedAt must be a valid date string' });
+      }
+      finalStartedAt = trimmed;
+    } else {
+      finalStartedAt = nowIso();
     }
 
-    const finalStartedAt = startedAt ?? nowIso();
-    const finalNote = note === undefined ? null : note;
+    // 校验 note：可选，若提供必须是字符串且长度 <= 500
+    let finalNote: string | null;
+    if (note === undefined || note === null) {
+      finalNote = null;
+    } else if (typeof note !== 'string' || note.length > 500) {
+      return reply.code(400).send({ error: 'note must be a string up to 500 chars' });
+    } else {
+      finalNote = note;
+    }
 
     const result = db
       .prepare(
-        'INSERT INTO focus_sessions (subject, minutes, started_at, note) VALUES (?, ?, ?, ?)'
+        'INSERT INTO focus_sessions (user_id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?)'
       )
-      .run(subject, minutes, finalStartedAt, finalNote);
+      .run(req.user!.id, subject, minutes, finalStartedAt, finalNote);
 
     const id = Number(result.lastInsertRowid);
     const session: FocusSession = {
@@ -102,8 +123,9 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       subject,
       minutes,
       startedAt: finalStartedAt,
-      note: finalNote === null ? null : finalNote,
+      note: finalNote,
     };
+
     return reply.code(201).send(session);
   });
 
@@ -124,10 +146,10 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const dayRows = db
       .prepare(
         "SELECT substr(started_at, 1, 10) AS day, SUM(minutes) AS minutes " +
-          'FROM focus_sessions WHERE substr(started_at, 1, 10) >= ? ' +
+          'FROM focus_sessions WHERE user_id = ? AND substr(started_at, 1, 10) >= ? ' +
           'GROUP BY day'
       )
-      .all(startDate) as unknown as DaySumRow[];
+      .all(req.user!.id, startDate) as unknown as DaySumRow[];
 
     const dayMap = new Map<string, number>();
     for (const r of dayRows) {
@@ -146,8 +168,8 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     // 全部历史总和
     const totalRow = db
-      .prepare('SELECT COALESCE(SUM(minutes), 0) AS total FROM focus_sessions')
-      .get() as unknown as { total: number };
+      .prepare('SELECT COALESCE(SUM(minutes), 0) AS total FROM focus_sessions WHERE user_id = ?')
+      .get(req.user!.id) as unknown as { total: number };
     const totalMinutes = Number(totalRow.total);
 
     const stats: FocusStats = {

@@ -4,6 +4,7 @@ import fastifyStatic from '@fastify/static';
 import path from 'node:path';
 import fs from 'node:fs';
 import { createDb } from './db';
+import { registerAuthRoutes, applyAuthHook } from './auth';
 import { seedIfEmpty } from './seed';
 import { registerPlansRoutes } from './routes/plans';
 import { registerFocusRoutes } from './routes/focus';
@@ -37,7 +38,9 @@ export function buildApp(opts?: { dbPath?: string; logger?: boolean }): FastifyI
   });
 
   // 注册各业务路由
-  registerPlansRoutes(app, db);
+applyAuthHook(app, db);
+registerAuthRoutes(app, db);
+registerPlansRoutes(app, db);
   registerFocusRoutes(app, db);
   registerMistakesRoutes(app, db);
   registerWordsRoutes(app, db);

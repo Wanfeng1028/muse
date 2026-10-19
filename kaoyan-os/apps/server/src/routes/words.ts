@@ -127,16 +127,16 @@ function toWordWithState(row: WordWithStateRow): WordWithState {
 }
 
 // 读取单个词的 WordWithState
-function getWordWithState(db: DatabaseSync, id: number): WordWithState | null {
+function getWordWithState(db: DatabaseSync, id: number, userId: number): WordWithState | null {
   const row = db
     .prepare(
       `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip,
               s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
        FROM words w
        LEFT JOIN srs_state s ON s.word_id = w.id
-       WHERE w.id = ?`,
+       WHERE w.id = ? AND w.user_id = ?`,
     )
-    .get(id) as WordWithStateRow | undefined;
+    .get(id, userId) as WordWithStateRow | undefined;
   if (!row) return null;
   return toWordWithState(row);
 }
@@ -156,6 +156,7 @@ export interface VocabSeedResult {
 export function seedVocabFromEntries(
   db: DatabaseSync,
   files: VocabFile[],
+  userId: number,
 ): VocabSeedResult {
   const errors: Array<{ file: string; index: number; message: string }> = [];
   const validEntries: Array<{ file: string; entry: VocabEntry }> = [];
@@ -175,9 +176,9 @@ export function seedVocabFromEntries(
   let imported = 0;
   let skippedExisting = 0;
 
-  const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+  const findWord = db.prepare('SELECT id FROM words WHERE user_id = ? AND word = ?');
   const insertWord = db.prepare(
-    'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?, ?)',
   );
   const insertSrs = db.prepare(
     'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
@@ -189,7 +190,7 @@ export function seedVocabFromEntries(
   try {
     for (const { entry } of validEntries) {
       const word = entry.word.trim();
-      const existing = findWord.get(word) as { id: number } | undefined;
+      const existing = findWord.get(userId, word) as { id: number } | undefined;
       if (existing) {
         skippedExisting += 1;
         continue;
@@ -214,6 +215,7 @@ export function seedVocabFromEntries(
         typeof entry.memory_tip === 'string' ? entry.memory_tip.trim() : '';
 
       const info = insertWord.run(
+        userId,
         word,
         phonetic,
         meaning,
@@ -248,21 +250,24 @@ export function getBundledVocabFiles(): VocabFile[] {
 
 export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): void {
   // GET /api/words：全部单词（含 SRS 状态），按 id 升序
-  app.get('/api/words', async () => {
+  app.get('/api/words', async (request) => {
+    const userId = request.user!.id;
     const rows = db
       .prepare(
         `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip,
                 s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
          FROM words w
          LEFT JOIN srs_state s ON s.word_id = w.id
+         WHERE w.user_id = ?
          ORDER BY w.id ASC`,
       )
-      .all() as unknown as WordWithStateRow[];
+      .all(userId) as unknown as WordWithStateRow[];
     return rows.map(toWordWithState);
   });
 
   // GET /api/words/due：今天到期的单词，按 due_date、id 升序
-  app.get('/api/words/due', async () => {
+  app.get('/api/words/due', async (request) => {
+    const userId = request.user!.id;
     const today = todayStr();
     const rows = db
       .prepare(
@@ -270,10 +275,10 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
                 s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date
          FROM words w
          JOIN srs_state s ON s.word_id = w.id
-         WHERE s.due_date <= ?
+         WHERE w.user_id = ? AND s.due_date <= ?
          ORDER BY s.due_date ASC, w.id ASC`,
       )
-      .all(today) as unknown as WordWithStateRow[];
+      .all(userId, today) as unknown as WordWithStateRow[];
     return rows.map(toWordWithState);
   });
 
@@ -294,25 +299,25 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     // 检查重复
     const existing = db
-      .prepare('SELECT id FROM words WHERE word = ?')
-      .get(word) as { id: number } | undefined;
+      .prepare('SELECT id FROM words WHERE user_id = ? AND word = ?')
+      .get(request.user!.id, word) as { id: number } | undefined;
     if (existing) {
       return reply.code(409).send({ error: '单词已存在' });
     }
 
     const today = todayStr();
     const insertWord = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO words (user_id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)',
     );
     const insertSrs = db.prepare(
       'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
     );
 
-    const result = insertWord.run(word, phonetic, meaning, example, 'manual');
+    const result = insertWord.run(request.user!.id, word, phonetic, meaning, example, 'manual');
     const newId = Number(result.lastInsertRowid);
     insertSrs.run(newId, 2.5, 0, 0, today);
 
-    const created = getWordWithState(db, newId);
+    const created = getWordWithState(db, newId, request.user!.id);
     return reply.code(201).send(created);
   });
 
@@ -331,8 +336,8 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       }
 
       const existing = db
-        .prepare('SELECT id FROM words WHERE id = ?')
-        .get(id) as { id: number } | undefined;
+        .prepare('SELECT id FROM words WHERE id = ? AND user_id = ?')
+        .get(id, request.user!.id) as { id: number } | undefined;
       if (!existing) {
         return reply.code(404).send({ error: '单词不存在' });
       }
@@ -373,15 +378,16 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
       if (srs) {
         db.prepare(
-          'UPDATE srs_state SET ease = ?, interval_days = ?, repetitions = ?, due_date = ? WHERE word_id = ?',
-        ).run(ease, intervalDays, repetitions, dueDate, id);
+          `UPDATE srs_state SET ease = ?, interval_days = ?, repetitions = ?, due_date = ?
+           WHERE word_id = ? AND EXISTS (SELECT 1 FROM words WHERE words.id = srs_state.word_id AND words.user_id = ?)`,
+        ).run(ease, intervalDays, repetitions, dueDate, id, request.user!.id);
       } else {
         db.prepare(
           'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
         ).run(id, ease, intervalDays, repetitions, dueDate);
       }
 
-      const updated = getWordWithState(db, id);
+      const updated = getWordWithState(db, id, request.user!.id);
       return reply.send(updated);
     },
   );
@@ -416,9 +422,9 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       let skippedInvalid = 0;
       const errors: { index: number; message: string }[] = [];
 
-      const findWord = db.prepare('SELECT id FROM words WHERE word = ?');
+      const findWord = db.prepare('SELECT id FROM words WHERE user_id = ? AND word = ?');
       const insertWord = db.prepare(
-        'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO words (user_id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)',
       );
       const insertSrs = db.prepare(
         'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)',
@@ -472,7 +478,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
           }
           seen.add(word);
 
-          const existing = findWord.get(word) as { id: number } | undefined;
+          const existing = findWord.get(request.user!.id, word) as { id: number } | undefined;
           if (existing) {
             skippedExisting += 1;
             continue;
@@ -497,7 +503,7 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
           const phonetic =
             typeof rawPhonetic === 'string' ? rawPhonetic.trim() : '';
 
-          const info = insertWord.run(word, phonetic, meaning, example, source);
+          const info = insertWord.run(request.user!.id, word, phonetic, meaning, example, source);
           const newId = Number(info.lastInsertRowid);
           insertSrs.run(newId, 2.5, 0, 0, today);
           imported += 1;
@@ -513,23 +519,24 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   );
 
   // POST /api/words/seed-vocab：播种内置词库（1000 旧库 + words-500）
-  app.post('/api/words/seed-vocab', async (_request, reply) => {
-    const result = seedVocabFromEntries(db, getBundledVocabFiles());
+  app.post('/api/words/seed-vocab', async (request, reply) => {
+    const result = seedVocabFromEntries(db, getBundledVocabFiles(), request.user!.id);
     return reply.send(result);
   });
 
   // GET /api/words/vocab-status：内置 500 词库统计
-  app.get('/api/words/vocab-status', async () => {
+  app.get('/api/words/vocab-status', async (request) => {
+    const userId = request.user!.id;
     const totalRow = db
-      .prepare("SELECT COUNT(*) AS c FROM words WHERE source = 'core500'")
-      .get() as { c: number };
+      .prepare("SELECT COUNT(*) AS c FROM words WHERE user_id = ? AND source = 'core500'")
+      .get(userId) as { c: number };
     const masteredRow = db
       .prepare(
         `SELECT COUNT(*) AS c FROM words w
          JOIN srs_state s ON s.word_id = w.id
-         WHERE w.source = 'core500' AND s.repetitions > 0`,
+         WHERE w.user_id = ? AND w.source = 'core500' AND s.repetitions > 0`,
       )
-      .get() as { c: number };
+      .get(userId) as { c: number };
     const total = totalRow.c;
     const mastered = masteredRow.c;
     return { total, mastered, pending: total - mastered };
@@ -541,14 +548,15 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     if (!Number.isInteger(id) || id <= 0) {
       return reply.code(400).send({ error: 'id 无效' });
     }
+    const userId = request.user!.id;
     const existing = db
-      .prepare('SELECT id FROM words WHERE id = ?')
-      .get(id) as { id: number } | undefined;
+      .prepare('SELECT id FROM words WHERE id = ? AND user_id = ?')
+      .get(id, userId) as { id: number } | undefined;
     if (!existing) {
       return reply.code(404).send({ error: '单词不存在' });
     }
     db.prepare('DELETE FROM srs_state WHERE word_id = ?').run(id);
-    db.prepare('DELETE FROM words WHERE id = ?').run(id);
+    db.prepare('DELETE FROM words WHERE id = ? AND user_id = ?').run(id, userId);
     return reply.send({ ok: true });
   });
 }

@@ -3,14 +3,9 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerMistakesRoutes } from '../src/routes/mistakes';
-
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec(
-    "CREATE TABLE mistakes (id INTEGER PRIMARY KEY AUTOINCREMENT, subject TEXT NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL DEFAULT '', analysis TEXT NOT NULL DEFAULT '', mastered INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')))",
-  );
-  return db;
-}
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
 function insertMistake(
   db: DatabaseSync,
@@ -18,20 +13,26 @@ function insertMistake(
   mastered: number,
 ): void {
   db.prepare(
-    'INSERT INTO mistakes (subject, title, mastered) VALUES (?, ?, ?)',
+    "INSERT INTO mistakes (user_id, subject, title, mastered) VALUES ((SELECT id FROM users WHERE username = 'mistakessummary'), ?, ?, ?)",
   ).run(subject, `t-${subject}-${mastered}-${Math.random()}`, mastered);
 }
+
 
 describe('GET /api/mistakes/summary', () => {
   let app: FastifyInstance;
   let db: DatabaseSync;
+  let authCookie: string;
 
   beforeEach(async () => {
-    db = createDb();
+    db = createRealDb(':memory:');
     app = Fastify();
     registerMistakesRoutes(app, db);
+    applyAuthHook(app, db);
+    registerAuthRoutes(app, db);
     await app.ready();
+    authCookie = await registerAndLogin(app, 'mistakessummary');
   });
+
 
   afterAll(async () => {
     if (app) {
@@ -43,6 +44,7 @@ describe('GET /api/mistakes/summary', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes/summary',
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
@@ -52,13 +54,16 @@ describe('GET /api/mistakes/summary', () => {
       unmastered: 0,
       masteredRate: 0,
     });
+
   });
 
   it('非法 subject 返回 400', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes/summary?subject=invalid',
+      headers: { cookie: authCookie },
     });
+
     expect(res.statusCode).toBe(400);
     expect(res.json()).toEqual({ error: '无效的 subject 参数' });
   });
@@ -73,6 +78,7 @@ describe('GET /api/mistakes/summary', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes/summary',
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
@@ -82,6 +88,7 @@ describe('GET /api/mistakes/summary', () => {
       unmastered: 2,
       masteredRate: 0.6,
     });
+
   });
 
   it('masteredRate 保留 4 位小数（1/3=0.3333）', async () => {
@@ -92,6 +99,7 @@ describe('GET /api/mistakes/summary', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes/summary',
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
@@ -101,6 +109,7 @@ describe('GET /api/mistakes/summary', () => {
       unmastered: 2,
       masteredRate: 0.3333,
     });
+
   });
 
   it('subject=math 过滤', async () => {
@@ -112,7 +121,9 @@ describe('GET /api/mistakes/summary', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes/summary?subject=math',
+      headers: { cookie: authCookie },
     });
+
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
       subject: 'math',
@@ -129,7 +140,9 @@ describe('GET /api/mistakes/summary', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/mistakes/summary?subject=politics',
+      headers: { cookie: authCookie },
     });
+
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
       subject: 'politics',

@@ -2,18 +2,11 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerExamsRoutes } from '../src/routes/exams';
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-const CREATE_TABLE_SQL = `
-  CREATE TABLE exam_records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    subject TEXT NOT NULL,
-    paper TEXT NOT NULL,
-    score REAL NOT NULL,
-    total_score REAL NOT NULL,
-    duration_minutes INTEGER,
-    taken_at TEXT NOT NULL
-  );
-`;
+const TEST_USER = 'examssummarydeep';
 
 type SummaryResponse = {
   subject: string | null;
@@ -32,12 +25,16 @@ type SummaryResponse = {
 let app: FastifyInstance;
 let db: DatabaseSync;
 
+let authCookie = '';
+
 async function setupApp(): Promise<void> {
-  db = new DatabaseSync(':memory:');
-  db.exec(CREATE_TABLE_SQL);
+  db = createRealDb(':memory:');
   app = Fastify();
   registerExamsRoutes(app, db);
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, TEST_USER);
 }
 
 function insert(
@@ -49,12 +46,12 @@ function insert(
   takenAt: string,
 ): void {
   db.prepare(
-    "INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES ((SELECT id FROM users WHERE username = 'examssummarydeep'), ?, ?, ?, ?, ?, ?)",
   ).run(subject, paper, score, totalScore, durationMinutes, takenAt);
 }
 
 async function fetchSummary(query: string): Promise<SummaryResponse> {
-  const res = await app.inject({ method: 'GET', url: `/api/exams/summary${query}` });
+  const res = await app.inject({ method: 'GET', url: `/api/exams/summary${query}`, headers: { cookie: authCookie } });
   expect(res.statusCode).toBe(200);
   return res.json() as SummaryResponse;
 }
@@ -146,7 +143,7 @@ describe('GET /api/exams/summary deep edge cases', () => {
   });
 
   it('subject= 空字符串时返回 400 与错误信息', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/exams/summary?subject=' });
+    const res = await app.inject({ method: 'GET', url: '/api/exams/summary?subject=', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(400);
     const body = res.json() as { error: string };
     expect(body.error).toBe('无效的 subject 参数');

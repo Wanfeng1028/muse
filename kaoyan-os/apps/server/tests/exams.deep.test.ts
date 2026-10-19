@@ -2,27 +2,20 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerExamsRoutes } from '../src/routes/exams';
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec(`
-    CREATE TABLE exam_records (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      subject TEXT NOT NULL,
-      paper TEXT NOT NULL,
-      score REAL NOT NULL,
-      total_score REAL NOT NULL,
-      duration_minutes INTEGER NOT NULL DEFAULT 0,
-      taken_at TEXT NOT NULL
-    );
-  `);
-  return db;
-}
+const TEST_USER = 'examsdeep';
+let authCookie = '';
 
 async function buildApp(db: DatabaseSync): Promise<FastifyInstance> {
   const app = Fastify();
   registerExamsRoutes(app, db);
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, TEST_USER);
   return app;
 }
 
@@ -31,7 +24,7 @@ describe('exams routes deep', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    db = createDb();
+    db = createRealDb(':memory:');
     app = await buildApp(db);
   });
 
@@ -42,14 +35,14 @@ describe('exams routes deep', () => {
 
   it('GET /api/exams 按 taken_at 降序且同日按 id 降序返回', async () => {
     const insert = db.prepare(
-      'INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)'
+      "INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES ((SELECT id FROM users WHERE username = 'examsdeep'), ?, ?, ?, ?, ?, ?)"
     );
     insert.run('math', 'A卷', 100, 150, 120, '2024-01-01');
     insert.run('math', 'B卷', 110, 150, 120, '2024-03-15');
     insert.run('math', 'C卷', 90, 150, 120, '2024-03-15');
     insert.run('english', 'D卷', 80, 100, 90, '2024-02-20');
 
-    const res = await app.inject({ method: 'GET', url: '/api/exams' });
+    const res = await app.inject({ method: 'GET', url: '/api/exams', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.length).toBe(4);
@@ -62,19 +55,19 @@ describe('exams routes deep', () => {
   });
 
   it('GET /api/exams 带 subject 过滤并拒绝无效 subject', async () => {
-    const ok = await app.inject({ method: 'GET', url: '/api/exams?subject=math' });
+    const ok = await app.inject({ method: 'GET', url: '/api/exams?subject=math', headers: { cookie: authCookie } });
     expect(ok.statusCode).toBe(200);
     const mathBody = ok.json();
     expect(mathBody.length).toBe(3);
     expect(mathBody.every((r: { subject: string }) => r.subject === 'math')).toBe(true);
 
-    const bad = await app.inject({ method: 'GET', url: '/api/exams?subject=physics' });
+    const bad = await app.inject({ method: 'GET', url: '/api/exams?subject=physics', headers: { cookie: authCookie } });
     expect(bad.statusCode).toBe(400);
     expect(bad.json().error).toBe('无效的 subject 参数');
   });
 
   it('GET /api/exams/trend 按 taken_at 升序并正确计算 rate', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/exams/trend' });
+    const res = await app.inject({ method: 'GET', url: '/api/exams/trend', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.length).toBe(4);
@@ -88,10 +81,10 @@ describe('exams routes deep', () => {
 
   it('GET /api/exams/trend total_score 为 0 时 rate 返回 0', async () => {
     db.prepare(
-      'INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)'
+      "INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES ((SELECT id FROM users WHERE username = 'examsdeep'), ?, ?, ?, ?, ?, ?)"
     ).run('politics', '零分卷', 0, 0, 0, '2024-04-01');
 
-    const res = await app.inject({ method: 'GET', url: '/api/exams/trend?subject=politics' });
+    const res = await app.inject({ method: 'GET', url: '/api/exams/trend?subject=politics', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.length).toBe(1);
@@ -103,6 +96,7 @@ describe('exams routes deep', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: {
         subject: 'english',
         paper: 'E卷',
@@ -124,13 +118,14 @@ describe('exams routes deep', () => {
   });
 
   it('POST /api/exams 拒绝空请求体、无效 subject 与空 paper', async () => {
-    const empty = await app.inject({ method: 'POST', url: '/api/exams', payload: {} });
+    const empty = await app.inject({ method: 'POST', url: '/api/exams', headers: { cookie: authCookie }, payload: {} });
     expect(empty.statusCode).toBe(400);
     expect(empty.json().error).toBe('无效的 subject');
 
     const badSubject = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'nope', paper: 'X', score: 1, totalScore: 10 },
     });
     expect(badSubject.statusCode).toBe(400);
@@ -139,6 +134,7 @@ describe('exams routes deep', () => {
     const blankPaper = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', paper: '   ', score: 1, totalScore: 10 },
     });
     expect(blankPaper.statusCode).toBe(400);
@@ -149,6 +145,7 @@ describe('exams routes deep', () => {
     const zeroTotal = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', paper: 'X', score: 0, totalScore: 0 },
     });
     expect(zeroTotal.statusCode).toBe(400);
@@ -157,6 +154,7 @@ describe('exams routes deep', () => {
     const scoreTooHigh = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', paper: 'X', score: 101, totalScore: 100 },
     });
     expect(scoreTooHigh.statusCode).toBe(400);
@@ -165,6 +163,7 @@ describe('exams routes deep', () => {
     const negativeDuration = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', paper: 'X', score: 50, totalScore: 100, durationMinutes: -1 },
     });
     expect(negativeDuration.statusCode).toBe(400);
@@ -175,6 +174,7 @@ describe('exams routes deep', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', paper: 'F卷', score: 60, totalScore: 100 },
     });
     expect(res.statusCode).toBe(201);
@@ -188,34 +188,35 @@ describe('exams routes deep', () => {
     const created = await app.inject({
       method: 'POST',
       url: '/api/exams',
+      headers: { cookie: authCookie },
       payload: { subject: 'math', paper: '待删', score: 10, totalScore: 100 },
     });
     const id = created.json().id;
 
-    const del = await app.inject({ method: 'DELETE', url: `/api/exams/${id}` });
+    const del = await app.inject({ method: 'DELETE', url: `/api/exams/${id}`, headers: { cookie: authCookie } });
     expect(del.statusCode).toBe(200);
     expect(del.json().ok).toBe(true);
 
-    const again = await app.inject({ method: 'DELETE', url: `/api/exams/${id}` });
+    const again = await app.inject({ method: 'DELETE', url: `/api/exams/${id}`, headers: { cookie: authCookie } });
     expect(again.statusCode).toBe(404);
     expect(again.json().error).toBe('记录不存在');
 
-    const badId = await app.inject({ method: 'DELETE', url: '/api/exams/0' });
+    const badId = await app.inject({ method: 'DELETE', url: '/api/exams/0', headers: { cookie: authCookie } });
     expect(badId.statusCode).toBe(400);
     expect(badId.json().error).toBe('无效的 id');
   });
 
   it('跨月与闰年 taken_at 排序保持字符串字典序正确', async () => {
-    const fresh = createDb();
+    const fresh = createRealDb(':memory:');
     const freshApp = await buildApp(fresh);
     const insert = fresh.prepare(
-      'INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)'
+      "INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES ((SELECT id FROM users WHERE username = 'examsdeep'), ?, ?, ?, ?, ?, ?)"
     );
     insert.run('math', '闰年2月', 50, 100, 60, '2024-02-29');
     insert.run('math', '跨年', 60, 100, 60, '2023-12-31');
     insert.run('math', '元旦', 70, 100, 60, '2024-01-01');
 
-    const res = await freshApp.inject({ method: 'GET', url: '/api/exams/trend' });
+    const res = await freshApp.inject({ method: 'GET', url: '/api/exams/trend', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.length).toBe(3);
@@ -228,14 +229,14 @@ describe('exams routes deep', () => {
   });
 
   it('空计划表时 GET 返回空数组而不是报错', async () => {
-    const empty = createDb();
+    const empty = createRealDb(':memory:');
     const emptyApp = await buildApp(empty);
 
-    const list = await emptyApp.inject({ method: 'GET', url: '/api/exams' });
+    const list = await emptyApp.inject({ method: 'GET', url: '/api/exams', headers: { cookie: authCookie } });
     expect(list.statusCode).toBe(200);
     expect(list.json()).toEqual([]);
 
-    const trend = await emptyApp.inject({ method: 'GET', url: '/api/exams/trend' });
+    const trend = await emptyApp.inject({ method: 'GET', url: '/api/exams/trend', headers: { cookie: authCookie } });
     expect(trend.statusCode).toBe(200);
     expect(trend.json()).toEqual([]);
 

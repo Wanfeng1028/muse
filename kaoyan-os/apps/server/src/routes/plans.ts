@@ -46,9 +46,10 @@ function isValidDate(s: unknown): s is string {
 export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): void {
   // 查询列表：可选 date / subject 过滤
   app.get('/api/plans', async (req, reply) => {
+    const userId = req.user!.id;
     const q = req.query as Record<string, unknown>;
-    const where: string[] = [];
-    const params: unknown[] = [];
+    const where: string[] = ['user_id = ?'];
+    const params: unknown[] = [userId];
 
     if (q.date !== undefined) {
       if (!isValidDate(q.date)) {
@@ -67,8 +68,9 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     const sql =
       'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans' +
-      (where.length ? ' WHERE ' + where.join(' AND ') : '') +
+      ' WHERE ' + where.join(' AND ') +
       ' ORDER BY date ASC, id ASC';
+
 
     const rows = db.prepare(sql).all(...(params as never[])) as unknown as PlanRow[];
     return reply.send(rows.map(mapPlan));
@@ -89,9 +91,9 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     const row = db
       .prepare(
-        'SELECT COUNT(*) AS total, COALESCE(SUM(done), 0) AS done FROM plans WHERE date = ?',
+        'SELECT COUNT(*) AS total, COALESCE(SUM(done), 0) AS done FROM plans WHERE date = ? AND user_id = ?',
       )
-      .get(date) as unknown as { total: number; done: number };
+      .get(date, req.user!.id) as unknown as { total: number; done: number };
 
     const total = Number(row?.total ?? 0);
     const done = Number(row?.done ?? 0);
@@ -135,16 +137,16 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const createdAt = new Date().toISOString();
     const info = db
       .prepare(
-        'INSERT INTO plans (date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, 0, ?)',
+        'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, 0, ?)',
       )
-      .run(date, body.subject, body.title, body.plannedMinutes, createdAt);
+      .run(req.user!.id, date, body.subject, body.title, body.plannedMinutes, createdAt);
 
     const id = Number(info.lastInsertRowid);
     const row = db
       .prepare(
-        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans WHERE id = ?',
+        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans WHERE id = ? AND user_id = ?',
       )
-      .get(id) as unknown as PlanRow;
+      .get(id, req.user!.id) as unknown as PlanRow;
 
     return reply.code(201).send(mapPlan(row));
   });
@@ -158,8 +160,8 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     }
 
     const existing = db
-      .prepare('SELECT id FROM plans WHERE id = ?')
-      .get(id) as unknown as { id: number } | undefined;
+      .prepare('SELECT id FROM plans WHERE id = ? AND user_id = ?')
+      .get(id, req.user!.id) as unknown as { id: number } | undefined;
     if (!existing) {
       return reply.code(404).send({ error: '计划不存在' });
     }
@@ -211,16 +213,17 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     if (sets.length > 0) {
       values.push(id);
-      db.prepare(`UPDATE plans SET ${sets.join(', ')} WHERE id = ?`).run(
+      values.push(req.user!.id);
+      db.prepare(`UPDATE plans SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(
         ...(values as never[]),
       );
     }
 
     const row = db
       .prepare(
-        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans WHERE id = ?',
+        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans WHERE id = ? AND user_id = ?',
       )
-      .get(id) as unknown as PlanRow;
+      .get(id, req.user!.id) as unknown as PlanRow;
 
     return reply.send(mapPlan(row));
   });
@@ -234,13 +237,13 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     }
 
     const existing = db
-      .prepare('SELECT id FROM plans WHERE id = ?')
-      .get(id) as unknown as { id: number } | undefined;
+      .prepare('SELECT id FROM plans WHERE id = ? AND user_id = ?')
+      .get(id, req.user!.id) as unknown as { id: number } | undefined;
     if (!existing) {
       return reply.code(404).send({ error: '计划不存在' });
     }
 
-    db.prepare('DELETE FROM plans WHERE id = ?').run(id);
+    db.prepare('DELETE FROM plans WHERE id = ? AND user_id = ?').run(id, req.user!.id);
     return reply.send({ ok: true });
   });
 }

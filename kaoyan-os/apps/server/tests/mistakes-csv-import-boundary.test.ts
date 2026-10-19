@@ -2,15 +2,22 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createDb } from '../src/db';
 import { registerBackupRoutes } from '../src/routes/backup';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
 let app: FastifyInstance;
+
+let authCookie = '';
 let db: ReturnType<typeof createDb>;
 
 beforeEach(async () => {
   db = createDb(':memory:');
   app = Fastify();
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   registerBackupRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, 'mistakescsv');
 });
 
 afterEach(async () => {
@@ -20,7 +27,7 @@ afterEach(async () => {
 
 describe('POST /api/import/mistakes 边界', () => {
   it('body 为数组时返回 400 请求体无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: [] as unknown as Record<string, unknown>,
@@ -30,7 +37,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('body 为字符串时返回 415 不支持的内容类型', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: 'subject,title\nmath,foo' as unknown as Record<string, unknown>,
@@ -39,7 +46,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('body 为 JSON 数组 [1,2,3] 时返回 400 请求体无效', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: [1, 2, 3] as unknown as Record<string, unknown>,
@@ -49,7 +56,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('csv 为空字符串返回 400 csv 不能为空', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv: '' },
@@ -59,7 +66,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('csv 为纯空白返回 400 csv 不能为空', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv: '   \n\t  ' },
@@ -69,7 +76,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('缺少 csv 字段返回 400 csv 不能为空', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: {} as Record<string, unknown>,
@@ -79,7 +86,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('csv 为纯换行符返回 400 csv 不能为空', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv: '\n\n' },
@@ -89,7 +96,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('csv 为带引号的空字段时返回 400 缺少必需列', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv: '""' },
@@ -99,7 +106,7 @@ describe('POST /api/import/mistakes 边界', () => {
   });
 
   it('表头只有 title 列时返回 400 缺少必需列', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv: 'title\nfoo' },
@@ -110,7 +117,7 @@ describe('POST /api/import/mistakes 边界', () => {
 
   it('表头前有 2 个空行时正常识别表头并导入', async () => {
     const csv = '\n\nsubject,title\nmath,题目A';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -126,7 +133,7 @@ describe('POST /api/import/mistakes 边界', () => {
 
   it('subject 非法时报错行号为 3', async () => {
     const csv = 'subject,title\nmath,题目A\nphysics,题目B';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -144,7 +151,7 @@ describe('POST /api/import/mistakes 边界', () => {
 
   it('title 为空时报错且不入库', async () => {
     const csv = 'subject,title\nmath,';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -167,7 +174,7 @@ describe('POST /api/import/mistakes 边界', () => {
     for (let i = 0; i < 60; i += 1) {
       lines.push(`physics,题目${i}`);
     }
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv: lines.join('\n') },
@@ -187,7 +194,7 @@ describe('POST /api/import/mistakes 边界', () => {
 
   it('content 用双引号包裹逗号时完整保留', async () => {
     const csv = 'subject,title,content\nmath,题目A,"a,b,c"';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -202,7 +209,7 @@ describe('POST /api/import/mistakes 边界', () => {
 
   it('无 content/analysis 列时导入成功且 content 为空字符串', async () => {
     const csv = 'subject,title\nmath,题目A';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },
@@ -218,7 +225,7 @@ describe('POST /api/import/mistakes 边界', () => {
 
   it('成功导入的错题 mastered=0', async () => {
     const csv = 'subject,title\nmath,题目A';
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/import/mistakes',
       payload: { csv },

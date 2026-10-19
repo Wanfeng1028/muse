@@ -3,6 +3,8 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { createDb, todayStr } from '../src/db';
 import { registerBackupRoutes } from '../src/routes/backup';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
 function emptyTables(): Record<string, unknown[]> {
   return {
@@ -30,12 +32,16 @@ function backupPayload(tables: Record<string, unknown[]>, mode: 'replace' | 'mer
 describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
   let db: DatabaseSync;
   let app: FastifyInstance;
+  let authCookie = '';
 
   beforeEach(async () => {
     db = createDb(':memory:');
     app = Fastify({ logger: false });
+    applyAuthHook(app, db);
+    registerAuthRoutes(app, db);
     registerBackupRoutes(app, db);
     await app.ready();
+    authCookie = await registerAndLogin(app, 'backupmerge');
   });
 
   afterEach(async () => {
@@ -45,13 +51,13 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
 
   it('merge 同 id 不同文本：按文本去重，视为新词插入', async () => {
     db.prepare(
-      "INSERT INTO words (id, word, meaning, source) VALUES (?, ?, ?, ?)"
+      "INSERT INTO words (user_id, id, word, meaning, source) VALUES ((SELECT id FROM users WHERE username = 'backupmerge'), ?, ?, ?, ?)"
     ).run(1, 'abandon', '原释义', 'manual');
 
     const tables = emptyTables();
     tables.words = [{ id: 1, word: 'abandon2', meaning: '新词释义' }];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'merge'),
@@ -79,13 +85,13 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
 
   it('merge 同文本不同 id：本地赢', async () => {
     db.prepare(
-      "INSERT INTO words (id, word, meaning, source) VALUES (?, ?, ?, ?)"
+      "INSERT INTO words (user_id, id, word, meaning, source) VALUES ((SELECT id FROM users WHERE username = 'backupmerge'), ?, ?, ?, ?)"
     ).run(1, 'abandon', '原释义', 'manual');
 
     const tables = emptyTables();
     tables.words = [{ id: 999, word: 'abandon', meaning: '新释义' }];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'merge'),
@@ -109,7 +115,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
 
   it('merge srs_state 同 word_id：备份赢（INSERT OR REPLACE）', async () => {
     db.prepare(
-      "INSERT INTO words (id, word, meaning, source) VALUES (?, ?, ?, ?)"
+      "INSERT INTO words (user_id, id, word, meaning, source) VALUES ((SELECT id FROM users WHERE username = 'backupmerge'), ?, ?, ?, ?)"
     ).run(1, 'abandon', '原释义', 'manual');
     db.prepare(
       'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
@@ -126,7 +132,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
       },
     ];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'merge'),
@@ -164,7 +170,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
       },
     ];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'merge'),
@@ -178,9 +184,9 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
 
   it('merge plans 同 id 本地赢、settings 同 key 备份赢', async () => {
     db.prepare(
-      'INSERT INTO plans (id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO plans (user_id, id, date, subject, title, planned_minutes, done, created_at) VALUES ((SELECT id FROM users WHERE username = \'backupmerge\'), ?, ?, ?, ?, ?, ?, ?)'
     ).run(1, '2024-03-01', 'math', '原计划', 0, 0, '2024-03-01T00:00:00');
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(
+    db.prepare('INSERT INTO settings (user_id, key, value) VALUES ((SELECT id FROM users WHERE username = \'backupmerge\'), ?, ?)').run(
       'theme',
       'light'
     );
@@ -191,7 +197,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
     ];
     tables.settings = [{ key: 'theme', value: 'dark' }];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'merge'),
@@ -217,7 +223,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
 
   it('replace 事务原子性：中途主键冲突 → 500 且原数据完整', async () => {
     db.prepare(
-      'INSERT INTO plans (id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO plans (user_id, id, date, subject, title, planned_minutes, done, created_at) VALUES ((SELECT id FROM users WHERE username = \'backupmerge\'), ?, ?, ?, ?, ?, ?, ?)'
     ).run(1, '2024-03-01', 'math', '原计划', 0, 0, '2024-03-01T00:00:00');
 
     const tables = emptyTables();
@@ -226,7 +232,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
       { id: 5, date: '2024-02-02', subject: 'english', title: 'B' },
     ];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'replace'),
@@ -264,7 +270,7 @@ describe('POST /api/backup/import - merge/replace 纵深第二轮', () => {
       },
     ];
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: '/api/backup/import',
       payload: backupPayload(tables, 'merge'),

@@ -2,28 +2,27 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerFocusRoutes } from '../src/routes/focus';
-import { todayStr, addDays } from '../src/db';
+import { todayStr, addDays, createDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
 interface Harness {
   app: FastifyInstance;
   db: DatabaseSync;
+  cookie: string;
 }
 
-function createHarness(): Harness {
-  const db = new DatabaseSync(':memory:');
-  db.exec(
-    'CREATE TABLE focus_sessions (' +
-      'id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-      'subject TEXT NOT NULL, ' +
-      'minutes INTEGER NOT NULL, ' +
-      'started_at TEXT NOT NULL, ' +
-      'note TEXT' +
-      ')'
-  );
+async function createHarness(): Promise<Harness> {
+  const db = createDb(':memory:');
   const app = Fastify();
   registerFocusRoutes(app, db);
-  return { app, db };
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
+  await app.ready();
+  const cookie = await registerAndLogin(app, 'focusdeep');
+  return { app, db, cookie };
 }
+
 
 async function closeHarness(h: Harness): Promise<void> {
   await h.app.close();
@@ -38,16 +37,18 @@ function insertSession(
   note: string | null
 ): void {
   db.prepare(
-    'INSERT INTO focus_sessions (subject, minutes, started_at, note) VALUES (?, ?, ?, ?)'
+    "INSERT INTO focus_sessions (user_id, subject, minutes, started_at, note) VALUES ((SELECT id FROM users WHERE username = 'focusdeep'), ?, ?, ?, ?)"
   ).run(subject, minutes, startedAt, note);
 }
+
 
 describe('focus routes deep coverage', () => {
   let h: Harness;
 
-  beforeEach(() => {
-    h = createHarness();
+  beforeEach(async () => {
+    h = await createHarness();
   });
+
 
   afterEach(async () => {
     await closeHarness(h);
@@ -60,11 +61,12 @@ describe('focus routes deep coverage', () => {
     insertSession(h.db, 'english', 45, midDate + 'T09:00:00.000Z', null);
     insertSession(h.db, 'politics', 60, todayStr() + 'T10:00:00.000Z', null);
 
-    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=31' });
+    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=31', headers: { cookie: h.cookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.days.length).toBe(31);
     const first = body.days[0];
+
     const last = body.days[30];
     expect(first.date).toBe(windowStart);
     expect(last.date).toBe(todayStr());
@@ -88,10 +90,11 @@ describe('focus routes deep coverage', () => {
     }
     expect(seq).toEqual([d2, d1, d0]);
 
-    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=31' });
+    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=31', headers: { cookie: h.cookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     const entry2 = body.days.find((d: { date: string }) => d.date === d2);
+
     const entry1 = body.days.find((d: { date: string }) => d.date === d1);
     const entry0 = body.days.find((d: { date: string }) => d.date === d0);
     expect(entry2.minutes).toBe(20);
@@ -100,11 +103,12 @@ describe('focus routes deep coverage', () => {
   });
 
   it('空计划：数据库没有任何记录时统计窗口全是 0 且总和为 0', async () => {
-    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=7' });
+    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=7', headers: { cookie: h.cookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.days.length).toBe(7);
     expect(body.todayMinutes).toBe(0);
+
     expect(body.weekMinutes).toBe(0);
     expect(body.totalMinutes).toBe(0);
     const allZero = body.days.every((d: { minutes: number }) => d.minutes === 0);
@@ -115,8 +119,10 @@ describe('focus routes deep coverage', () => {
     const ok1 = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'math', minutes: 1 },
     });
+
     expect(ok1.statusCode).toBe(201);
     const ok1Body = ok1.json();
     expect(ok1Body.minutes).toBe(1);
@@ -126,8 +132,10 @@ describe('focus routes deep coverage', () => {
     const ok1440 = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'english', minutes: 1440, note: '整日' },
     });
+
     expect(ok1440.statusCode).toBe(201);
     const ok1440Body = ok1440.json();
     expect(ok1440Body.minutes).toBe(1440);
@@ -136,16 +144,20 @@ describe('focus routes deep coverage', () => {
     const bad0 = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'math', minutes: 0 },
     });
+
     expect(bad0.statusCode).toBe(400);
     expect(bad0.json().error).toBe('minutes must be an integer between 1 and 1440');
 
     const bad1441 = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'math', minutes: 1441 },
     });
+
     expect(bad1441.statusCode).toBe(400);
     expect(bad1441.json().error).toBe('minutes must be an integer between 1 and 1440');
   });
@@ -154,24 +166,30 @@ describe('focus routes deep coverage', () => {
     const frac = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'math', minutes: 1.5 },
     });
+
     expect(frac.statusCode).toBe(400);
     expect(frac.json().error).toBe('minutes must be an integer between 1 and 1440');
 
     const strMinutes = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'math', minutes: '30' },
     });
+
     expect(strMinutes.statusCode).toBe(400);
     expect(strMinutes.json().error).toBe('minutes must be an integer between 1 and 1440');
 
     const badSubject = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'history', minutes: 30 },
     });
+
     expect(badSubject.statusCode).toBe(400);
     expect(badSubject.json().error).toBe('invalid subject');
   });
@@ -181,10 +199,11 @@ describe('focus routes deep coverage', () => {
     insertSession(h.db, 'math', 30, '2024-05-01T09:00:00.000Z', 'b');
     insertSession(h.db, 'math', 30, '2024-05-01T10:00:00.000Z', 'c');
 
-    const res = await h.app.inject({ method: 'GET', url: '/api/focus?limit=2' });
+    const res = await h.app.inject({ method: 'GET', url: '/api/focus?limit=2', headers: { cookie: h.cookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.length).toBe(2);
+
     expect(body[0].startedAt).toBe('2024-05-01T10:00:00.000Z');
     expect(body[1].startedAt).toBe('2024-05-01T09:00:00.000Z');
     const notes = body.map((s: { note: string }) => s.note);
@@ -195,17 +214,18 @@ describe('focus routes deep coverage', () => {
     for (let i = 0; i < 5; i++) {
       insertSession(h.db, 'english', 5, '2024-06-0' + (i + 1) + 'T08:00:00.000Z', 'w' + i);
     }
-    const resBig = await h.app.inject({ method: 'GET', url: '/api/focus?limit=99999' });
+    const resBig = await h.app.inject({ method: 'GET', url: '/api/focus?limit=99999', headers: { cookie: h.cookie } });
     expect(resBig.statusCode).toBe(200);
     expect(resBig.json().length).toBe(5);
 
-    const resBad = await h.app.inject({ method: 'GET', url: '/api/focus?limit=-3' });
+    const resBad = await h.app.inject({ method: 'GET', url: '/api/focus?limit=-3', headers: { cookie: h.cookie } });
     expect(resBad.statusCode).toBe(200);
     expect(resBad.json().length).toBe(5);
 
-    const resNaN = await h.app.inject({ method: 'GET', url: '/api/focus?limit=abc' });
+    const resNaN = await h.app.inject({ method: 'GET', url: '/api/focus?limit=abc', headers: { cookie: h.cookie } });
     expect(resNaN.statusCode).toBe(200);
     expect(resNaN.json().length).toBe(5);
+
   });
 
   it('导入 CSV 畸形行等价：缺少 startedAt 回退 nowIso，多余字段被忽略', async () => {
@@ -213,8 +233,10 @@ describe('focus routes deep coverage', () => {
     const res = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'math', minutes: 25, extra: 'ignored', nested: { a: 1 } },
     });
+
     expect(res.statusCode).toBe(201);
     const body = res.json();
     expect(body.note).toBe(null);
@@ -228,8 +250,10 @@ describe('focus routes deep coverage', () => {
     const res = await h.app.inject({
       method: 'POST',
       url: '/api/focus',
+      headers: { cookie: h.cookie },
       payload: { subject: 'politics', minutes: 40, note: '' },
     });
+
     expect(res.statusCode).toBe(201);
     const body = res.json();
     expect(body.note).toBe('');
@@ -244,13 +268,14 @@ describe('focus routes deep coverage', () => {
       startedAt: '2024-07-15T14:30:00.000Z',
       note: '背单词',
     };
-    const post = await h.app.inject({ method: 'POST', url: '/api/focus', payload });
+    const post = await h.app.inject({ method: 'POST', url: '/api/focus', headers: { cookie: h.cookie }, payload });
     expect(post.statusCode).toBe(201);
     const created = post.json();
     expect(created.id).toBeGreaterThan(0);
     expect(created.startedAt).toBe('2024-07-15T14:30:00.000Z');
 
-    const get = await h.app.inject({ method: 'GET', url: '/api/focus' });
+    const get = await h.app.inject({ method: 'GET', url: '/api/focus', headers: { cookie: h.cookie } });
+
     expect(get.statusCode).toBe(200);
     const list = get.json();
     expect(list.length).toBe(1);
@@ -266,10 +291,11 @@ describe('focus routes deep coverage', () => {
     insertSession(h.db, 'english', 45, todayStr() + 'T09:00:00.000Z', null);
     insertSession(h.db, 'politics', 25, addDays(todayStr(), -1) + 'T10:00:00.000Z', null);
 
-    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=7' });
+    const res = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=7', headers: { cookie: h.cookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.todayMinutes).toBe(75);
+
     expect(body.weekMinutes).toBe(100);
     expect(body.totalMinutes).toBe(100);
     const todayEntry = body.days.find((d: { date: string }) => d.date === todayStr());
@@ -279,16 +305,17 @@ describe('focus routes deep coverage', () => {
   it('备份恢复 round-trip：stats days 上限 31、下限 1，非法值回退 7', async () => {
     insertSession(h.db, 'math', 15, todayStr() + 'T08:00:00.000Z', null);
 
-    const big = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=999' });
+    const big = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=999', headers: { cookie: h.cookie } });
     expect(big.statusCode).toBe(200);
     expect(big.json().days.length).toBe(31);
 
-    const small = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=0' });
+    const small = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=0', headers: { cookie: h.cookie } });
     expect(small.statusCode).toBe(200);
     expect(small.json().days.length).toBe(1);
 
-    const nan = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=abc' });
+    const nan = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=abc', headers: { cookie: h.cookie } });
     expect(nan.statusCode).toBe(200);
     expect(nan.json().days.length).toBe(7);
+
   });
 });

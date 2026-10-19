@@ -3,34 +3,16 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerWordsRoutes } from '../src/routes/words';
 import { todayStr, addDays } from '../src/db';
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec(`
-    CREATE TABLE words (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      word TEXT NOT NULL UNIQUE,
-      phonetic TEXT NOT NULL DEFAULT '',
-      meaning TEXT NOT NULL DEFAULT '',
-      example TEXT NOT NULL DEFAULT '',
-      source TEXT NOT NULL DEFAULT 'core500',
-      memory_tip TEXT NOT NULL DEFAULT ''
-    );
-    CREATE TABLE srs_state (
-      word_id INTEGER PRIMARY KEY,
-      ease REAL NOT NULL DEFAULT 2.5,
-      interval_days INTEGER NOT NULL DEFAULT 0,
-      repetitions INTEGER NOT NULL DEFAULT 0,
-      due_date TEXT NOT NULL
-    );
-  `);
-  return db;
-}
+const TEST_USER = 'wordssrsdeep2';
 
 function seedWord(db: DatabaseSync, word: string, dueDate: string, repetitions = 0): number {
   const info = db
     .prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+      "INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES ((SELECT id FROM users WHERE username = 'wordssrsdeep2'), ?, ?, ?, ?, ?, ?)",
     )
     .run(word, '', '测试释义', '', 'core500', '');
   const id = Number(info.lastInsertRowid);
@@ -50,7 +32,7 @@ function seedWordCustom(
 ): number {
   const info = db
     .prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+      "INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES ((SELECT id FROM users WHERE username = 'wordssrsdeep2'), ?, ?, ?, ?, ?, ?)",
     )
     .run(word, '', '测试释义', '', 'core500', '');
   const id = Number(info.lastInsertRowid);
@@ -62,13 +44,18 @@ function seedWordCustom(
 
 let app: FastifyInstance;
 let db: DatabaseSync;
+let authCookie = '';
 
 beforeEach(async () => {
-  db = createDb();
+  db = createRealDb(':memory:');
   app = Fastify({ logger: false });
   registerWordsRoutes(app, db);
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, TEST_USER);
 });
+
 
 afterEach(async () => {
   await app.close();
@@ -81,8 +68,10 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'five', meaning: '测试释义' },
+      headers: { cookie: authCookie },
     });
     expect(create.statusCode).toBe(201);
+
     const id = create.json().id as number;
 
     const expectedIntervals = [1, 3, 8, 20, 50];
@@ -93,10 +82,12 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 2 },
+        headers: { cookie: authCookie },
       });
       expect(res.statusCode).toBe(200);
       const body = res.json();
       expect(body.state.intervalDays).toBe(expectedIntervals[i]);
+
       expect(body.state.repetitions).toBe(i + 1);
       expect(body.state.ease).toBeCloseTo(expectedEase[i], 10);
       expect(body.state.dueDate).toBe(addDays(todayStr(), expectedIntervals[i]));
@@ -108,8 +99,10 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'nocap', meaning: '测试释义' },
+      headers: { cookie: authCookie },
     });
     expect(create.statusCode).toBe(201);
+
     const id = create.json().id as number;
 
     const expectedIntervals = [
@@ -122,10 +115,12 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 2 },
+        headers: { cookie: authCookie },
       });
       expect(res.statusCode).toBe(200);
       last = res.json();
       expect(last.state.intervalDays).toBe(expectedIntervals[i]);
+
     }
 
     expect(last.state.ease).toBe(2.5);
@@ -137,6 +132,7 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'recovercap', meaning: '测试释义' },
+      headers: { cookie: authCookie },
     });
     expect(create.statusCode).toBe(201);
     const id = create.json().id as number;
@@ -144,7 +140,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 0 },
+      headers: { cookie: authCookie },
     });
+
     expect(down.statusCode).toBe(200);
     let last: any;
     for (let i = 0; i < 10; i++) {
@@ -152,10 +150,12 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 2 },
+        headers: { cookie: authCookie },
       });
       expect(res.statusCode).toBe(200);
       last = res.json();
       expect(last.state.ease).toBeLessThanOrEqual(2.5);
+
     }
     expect(last.state.ease).toBe(2.5);
   });
@@ -164,8 +164,10 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'again', meaning: '测试释义' },
+      headers: { cookie: authCookie },
     });
     expect(create.statusCode).toBe(201);
+
     const id = create.json().id as number;
 
     let last: any;
@@ -174,12 +176,14 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 0 },
+        headers: { cookie: authCookie },
       });
       expect(res.statusCode).toBe(200);
       last = res.json();
       expect(last.state.repetitions).toBe(0);
       expect(last.state.intervalDays).toBe(1);
       expect(last.state.ease).toBeGreaterThanOrEqual(1.3);
+
     }
     expect(last.state.ease).toBeCloseTo(1.3, 10);
 
@@ -187,7 +191,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 0 },
+      headers: { cookie: authCookie },
     });
+
     expect(seventh.statusCode).toBe(200);
     const body7 = seventh.json();
     expect(body7.state.repetitions).toBe(0);
@@ -200,8 +206,10 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'chain', meaning: '测试释义' },
+      headers: { cookie: authCookie },
     });
     expect(create.statusCode).toBe(201);
+
     const id = create.json().id as number;
 
     let res: any;
@@ -210,10 +218,12 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 2 },
+        headers: { cookie: authCookie },
       });
       expect(res.statusCode).toBe(200);
     }
     let body = res.json();
+
     expect(body.state.repetitions).toBe(3);
     expect(body.state.intervalDays).toBe(8);
     expect(body.state.ease).toBeCloseTo(2.5, 10);
@@ -222,7 +232,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 0 },
+      headers: { cookie: authCookie },
     });
+
     expect(wrong.statusCode).toBe(200);
     body = wrong.json();
     expect(body.state.repetitions).toBe(0);
@@ -233,7 +245,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
+      headers: { cookie: authCookie },
     });
+
     expect(again.statusCode).toBe(200);
     body = again.json();
     expect(body.state.repetitions).toBe(1);
@@ -247,7 +261,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${idA}/review`,
       payload: { grade: 1 },
+      headers: { cookie: authCookie },
     });
+
     expect(resA.statusCode).toBe(200);
     const bodyA = resA.json();
     expect(bodyA.state.intervalDays).toBe(6);
@@ -259,7 +275,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${idB}/review`,
       payload: { grade: 1 },
+      headers: { cookie: authCookie },
     });
+
     expect(resB.statusCode).toBe(200);
     const bodyB = resB.json();
     expect(bodyB.state.intervalDays).toBe(1);
@@ -271,6 +289,7 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'dueday', meaning: '测试释义' },
+      headers: { cookie: authCookie },
     });
     expect(create.statusCode).toBe(201);
     const id = create.json().id as number;
@@ -279,7 +298,9 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
+      headers: { cookie: authCookie },
     });
+
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.state.dueDate).toBe(addDays(todayStr(), body.state.intervalDays));
@@ -290,8 +311,10 @@ describe('words srs deep2 - SM-2 简化算法第二轮纵深', () => {
       method: 'POST',
       url: '/api/words/99999/review',
       payload: { grade: 2 },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(404);
+
     expect(res.json().error).toBe('单词不存在');
   });
 });

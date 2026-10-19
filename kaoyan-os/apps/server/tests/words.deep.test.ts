@@ -2,34 +2,16 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { DatabaseSync } from 'node:sqlite';
 import { registerWordsRoutes } from '../src/routes/words';
+import { createDb as createRealDb } from '../src/db';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec(`
-    CREATE TABLE words (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      word TEXT NOT NULL UNIQUE,
-      phonetic TEXT NOT NULL DEFAULT '',
-      meaning TEXT NOT NULL DEFAULT '',
-      example TEXT NOT NULL DEFAULT '',
-      source TEXT NOT NULL DEFAULT 'core500',
-      memory_tip TEXT NOT NULL DEFAULT ''
-    );
-    CREATE TABLE srs_state (
-      word_id INTEGER PRIMARY KEY,
-      ease REAL NOT NULL DEFAULT 2.5,
-      interval_days INTEGER NOT NULL DEFAULT 0,
-      repetitions INTEGER NOT NULL DEFAULT 0,
-      due_date TEXT NOT NULL
-    );
-  `);
-  return db;
-}
+const TEST_USER = 'wordsdeep';
 
 function seedWord(db: DatabaseSync, word: string, dueDate: string, repetitions = 0): number {
   const info = db
     .prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source, memory_tip) VALUES (?, ?, ?, ?, ?, ?)',
+      "INSERT INTO words (user_id, word, phonetic, meaning, example, source, memory_tip) VALUES ((SELECT id FROM users WHERE username = 'wordsdeep'), ?, ?, ?, ?, ?, ?)",
     )
     .run(word, '', '测试释义', '', 'core500', '');
   const id = Number(info.lastInsertRowid);
@@ -39,15 +21,21 @@ function seedWord(db: DatabaseSync, word: string, dueDate: string, repetitions =
   return id;
 }
 
+
 let app: FastifyInstance;
 let db: DatabaseSync;
+let authCookie = '';
 
 beforeEach(async () => {
-  db = createDb();
+  db = createRealDb(':memory:');
   app = Fastify({ logger: false });
   registerWordsRoutes(app, db);
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, TEST_USER);
 });
+
 
 afterEach(async () => {
   await app.close();
@@ -61,10 +49,12 @@ describe('words deep - SRS 排程边界', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(typeof body.state.intervalDays).toBe('number');
+
     expect(body.state.intervalDays).toBeGreaterThanOrEqual(1);
     expect(body.state.dueDate).not.toBe('2024-01-31');
     expect(body.state.dueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -76,10 +66,12 @@ describe('words deep - SRS 排程边界', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.state.dueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
     const parts = body.state.dueDate.split('-').map(Number);
     expect(parts[1]).toBeGreaterThanOrEqual(1);
     expect(parts[1]).toBeLessThanOrEqual(12);
@@ -89,11 +81,12 @@ describe('words deep - SRS 排程边界', () => {
 
   it('空计划边界：没有到期词时 due 列表返回空数组', async () => {
     seedWord(db, 'future-word', '2999-12-31');
-    const res = await app.inject({ method: 'GET', url: '/api/words/due' });
+    const res = await app.inject({ method: 'GET', url: '/api/words/due', headers: { cookie: authCookie } });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBe(0);
+
   });
 
   it('grade=0 应把 repetitions 归零并让 dueDate 落到今天', async () => {
@@ -102,11 +95,13 @@ describe('words deep - SRS 排程边界', () => {
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 0 },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.state.repetitions).toBe(0);
     expect(body.state.intervalDays).toBe(1);
+
   });
 });
 
@@ -118,15 +113,18 @@ describe('words deep - 单词去重', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'dup-word', meaning: '重复' },
+      headers: { cookie: authCookie },
     });
     expect(first.statusCode).toBe(201);
     const second = await app.inject({
       method: 'POST',
       url: '/api/words',
       payload: { word: 'dup-word', meaning: '重复' },
+      headers: { cookie: authCookie },
     });
     expect(second.statusCode).toBe(409);
-    const list = await app.inject({ method: 'GET', url: '/api/words' });
+    const list = await app.inject({ method: 'GET', url: '/api/words', headers: { cookie: authCookie } });
+
     expect(list.statusCode).toBe(200);
     const items = list.json().filter((w: { word: string }) => w.word === 'dup-word');
     expect(items.length).toBe(1);
@@ -139,8 +137,10 @@ describe('words deep - 单词 SRS 状态', () => {
       method: 'POST',
       url: '/api/words',
       payload: { word: 'srs-default-new', meaning: '默认' },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(201);
+
     const body = res.json();
     expect(body.state.ease).toBe(2.5);
     expect(body.state.intervalDays).toBe(0);
@@ -155,9 +155,11 @@ describe('words deep - 单词 SRS 状态', () => {
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 2 },
+        headers: { cookie: authCookie },
       });
       expect(res.statusCode).toBe(200);
       const interval = res.json().state.intervalDays;
+
       expect(interval).toBeGreaterThanOrEqual(prev);
       prev = interval;
     }
@@ -174,8 +176,10 @@ describe('words deep - 批量导入畸形行', () => {
         words: [{ word: 'validword', meanings_zh: ['有效'] }, { word: '', meanings_zh: ['空词'] }, 'badline'],
         source: 'manual',
       },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(200);
+
     const body = res.json();
     expect(body.imported).toBe(1);
     expect(body.skippedInvalid).toBeGreaterThanOrEqual(1);
@@ -187,8 +191,10 @@ describe('words deep - 批量导入畸形行', () => {
       method: 'POST',
       url: '/api/words/import',
       payload: { words: [] },
+      headers: { cookie: authCookie },
     });
     expect(res.statusCode).toBe(400);
+
   });
 });
 
@@ -197,8 +203,9 @@ describe('words deep - 备份恢复 round-trip', () => {
     seedWord(db, 'backup-a', '2024-03-01', 2);
     seedWord(db, 'backup-b', '2024-04-01', 4);
 
-    const snapshotRes = await app.inject({ method: 'GET', url: '/api/words' });
+    const snapshotRes = await app.inject({ method: 'GET', url: '/api/words', headers: { cookie: authCookie } });
     expect(snapshotRes.statusCode).toBe(200);
+
     const snapshot = snapshotRes.json();
     expect(Array.isArray(snapshot)).toBe(true);
     expect(snapshot.length).toBe(2);
@@ -216,12 +223,14 @@ describe('words deep - 备份恢复 round-trip', () => {
         })),
         source: 'manual',
       },
+      headers: { cookie: authCookie },
     });
     expect(restoreRes.statusCode).toBe(200);
     const restored = restoreRes.json();
     expect(restored.imported).toBe(2);
 
-    const list = await app.inject({ method: 'GET', url: '/api/words' });
+    const list = await app.inject({ method: 'GET', url: '/api/words', headers: { cookie: authCookie } });
+
     expect(list.statusCode).toBe(200);
     const items = list.json();
     expect(items.length).toBe(2);

@@ -2,16 +2,22 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { createDb, todayStr, addDays } from '../src/db';
 import { registerWordsRoutes } from '../src/routes/words';
+import { applyAuthHook, registerAuthRoutes } from '../src/auth';
+import { registerAndLogin } from './test-utils';
 import type { DatabaseSync } from 'node:sqlite';
 
 let db: DatabaseSync;
 let app: FastifyInstance;
+let authCookie = '';
 
 beforeEach(async () => {
   db = createDb(':memory:');
   app = Fastify();
+  applyAuthHook(app, db);
+  registerAuthRoutes(app, db);
   registerWordsRoutes(app, db);
   await app.ready();
+  authCookie = await registerAndLogin(app, 'wordsreview');
 });
 
 afterEach(async () => {
@@ -19,7 +25,7 @@ afterEach(async () => {
 });
 
 async function createWord(word: string, meaning: string): Promise<number> {
-  const res = await app.inject({
+  const res = await app.inject({ headers: { cookie: authCookie },
     method: 'POST',
     url: '/api/words',
     payload: { word, meaning },
@@ -32,7 +38,7 @@ describe('POST /api/words/:id/review - ease 下限钳制', () => {
   it('连续 10 次 grade=0 复习后 ease 恒 >= 1.3 且 repetitions 恒为 0', async () => {
     const id = await createWord('clamp', '钳制');
     for (let i = 0; i < 10; i += 1) {
-      const res = await app.inject({
+      const res = await app.inject({ headers: { cookie: authCookie },
         method: 'POST',
         url: `/api/words/${id}/review`,
         payload: { grade: 0 },
@@ -53,7 +59,7 @@ describe('POST /api/words/:id/review - ease 下限钳制', () => {
 describe('POST /api/words/:id/review - grade=1 首评分支', () => {
   it('repetitions=0 时 grade=1 使 intervalDays=1 且 ease 下降 0.05', async () => {
     const id = await createWord('firstHard', '首评困难');
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 1 },
@@ -69,7 +75,7 @@ describe('POST /api/words/:id/review - grade=1 首评分支', () => {
 describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
   it('reps=0 -> intervalDays=1, ease=2.5（上限钳制）', async () => {
     const id = await createWord('advA', '进阶A');
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
@@ -83,12 +89,12 @@ describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
 
   it('reps=1 -> intervalDays=3, ease=2.5（上限钳制）', async () => {
     const id = await createWord('advB', '进阶B');
-    await app.inject({
+    await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
     });
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
@@ -102,17 +108,17 @@ describe('POST /api/words/:id/review - grade=2 精确进阶', () => {
 
   it('reps=2 -> intervalDays = Math.round(3 * ease)', async () => {
     const id = await createWord('advC', '进阶C');
-    await app.inject({
+    await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
     });
-    await app.inject({
+    await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
     });
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade: 2 },
@@ -133,7 +139,7 @@ describe('POST /api/words/:id/review - grade 类型与范围校验', () => {
     ['null', null],
   ])('grade=%s 返回 400 且错误文案为 grade 必须为 0|1|2', async (_label, grade) => {
     const id = await createWord(`badgrade${String(_label)}`, '非法成绩');
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: { grade },
@@ -144,7 +150,7 @@ describe('POST /api/words/:id/review - grade 类型与范围校验', () => {
 
   it('缺失 grade 字段返回 400 且错误文案为 grade 必须为 0|1|2', async () => {
     const id = await createWord('missinggrade', '缺成绩');
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${id}/review`,
       payload: {},
@@ -157,7 +163,7 @@ describe('POST /api/words/:id/review - grade 类型与范围校验', () => {
 describe('POST /api/words/:id/review - 缺 srs_state 行的 INSERT 分支', () => {
   it('无 srs_state 的词 grade=2 返回 200 并插入 srs_state 行', async () => {
     const info = db
-      .prepare("INSERT INTO words (word, meaning) VALUES ('ghostword', '幽灵词')")
+      .prepare("INSERT INTO words (user_id, word, meaning) VALUES ((SELECT id FROM users WHERE username = 'wordsreview'), 'ghostword', '幽灵词')")
       .run();
     const ghostId = Number(info.lastInsertRowid);
 
@@ -166,7 +172,7 @@ describe('POST /api/words/:id/review - 缺 srs_state 行的 INSERT 分支', () =
       .get(ghostId) as { c: number };
     expect(before.c).toBe(0);
 
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'POST',
       url: `/api/words/${ghostId}/review`,
       payload: { grade: 2 },
@@ -202,7 +208,7 @@ describe('DELETE /api/words/:id - id 格式与不存在', () => {
     ['-1', '-1'],
     ['1.5', '1.5'],
   ])('id=%s 返回 400 且错误文案为 id 无效', async (_label, rawId) => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'DELETE',
       url: `/api/words/${rawId}`,
     });
@@ -211,7 +217,7 @@ describe('DELETE /api/words/:id - id 格式与不存在', () => {
   });
 
   it('不存在的 id 返回 404 且错误文案为 单词不存在', async () => {
-    const res = await app.inject({
+    const res = await app.inject({ headers: { cookie: authCookie },
       method: 'DELETE',
       url: '/api/words/999999',
     });
@@ -243,7 +249,7 @@ describe('GET /api/words/due - 未来 due_date 排除与排序', () => {
       futureId,
     );
 
-    const res = await app.inject({ method: 'GET', url: '/api/words/due' });
+    const res = await app.inject({ headers: { cookie: authCookie }, method: 'GET', url: '/api/words/due' });
     expect(res.statusCode).toBe(200);
     const list = res.json() as Array<{ id: number; state: { dueDate: string } }>;
     const ids = list.map((w) => w.id);

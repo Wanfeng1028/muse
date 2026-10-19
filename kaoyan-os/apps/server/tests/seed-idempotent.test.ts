@@ -89,7 +89,8 @@ describe('seedIfEmpty 幂等性与部分状态', () => {
 
   it('words 表已有 1 行时不再补种，但 plans 为空仍被种出 6 行', () => {
     const db = createDb(':memory:');
-    db.prepare('INSERT INTO words (word, source) VALUES (?, ?)').run('custom', 'manual');
+    const uid1 = (db.prepare("SELECT id FROM users WHERE username = 'local'").get() as { id: number }).id;
+    db.prepare('INSERT INTO words (user_id, word, source) VALUES (?, ?, ?)').run(uid1, 'custom', 'manual');
     expect(count(db, 'words')).toBe(1);
 
     seedIfEmpty(db);
@@ -103,7 +104,8 @@ describe('seedIfEmpty 幂等性与部分状态', () => {
 
   it('settings 表已有 1 行时不再补默认 4 行', () => {
     const db = createDb(':memory:');
-    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('exam_date', '2099-01-01');
+    const uid2 = (db.prepare("SELECT id FROM users WHERE username = 'local'").get() as { id: number }).id;
+    db.prepare('INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)').run(uid2, 'exam_date', '2099-01-01');
 
     seedIfEmpty(db);
 

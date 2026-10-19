@@ -8,19 +8,29 @@ import { addDays, nowIso, todayStr } from './db';
 export function seedIfEmpty(db: DatabaseSync): void {
   const today = todayStr();
   const now = nowIso();
+  // 多用户：示例数据播种到 local 保留用户下。
+  // 前置条件：调用方必须在 seedIfEmpty 之前执行 ensureLocalUser(db)，保证 users 表存在 username='local' 的行。
+  const localRow = db.prepare("SELECT id FROM users WHERE username = 'local'").get() as { id: number } | undefined;
+  if (!localRow) {
+    throw new Error('seedIfEmpty: local user not found; call ensureLocalUser(db) before seeding');
+  }
+  const localId = Number(localRow.id);
+
 
   // 1) settings 表为空时写入默认设置
-  const settingsCount = db.prepare('SELECT COUNT(*) AS c FROM settings').get() as { c: number };
+  const settingsCount = db.prepare('SELECT COUNT(*) AS c FROM settings WHERE user_id = ?').get(localId) as { c: number };
+
   if (settingsCount.c === 0) {
-    const insertSetting = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
-    insertSetting.run('exam_date', DEFAULT_SETTINGS.examDate);
-    insertSetting.run('daily_goal_minutes', String(DEFAULT_SETTINGS.dailyGoalMinutes));
-    insertSetting.run('pomodoro_minutes', String(DEFAULT_SETTINGS.pomodoroMinutes));
-    insertSetting.run('break_minutes', String(DEFAULT_SETTINGS.breakMinutes));
+    const insertSetting = db.prepare('INSERT INTO settings (user_id, key, value) VALUES (?, ?, ?)');
+    insertSetting.run(localId, 'exam_date', DEFAULT_SETTINGS.examDate);
+    insertSetting.run(localId, 'daily_goal_minutes', String(DEFAULT_SETTINGS.dailyGoalMinutes));
+    insertSetting.run(localId, 'pomodoro_minutes', String(DEFAULT_SETTINGS.pomodoroMinutes));
+    insertSetting.run(localId, 'break_minutes', String(DEFAULT_SETTINGS.breakMinutes));
   }
 
   // 2) words 表为空时插入 24 个考研核心单词并初始化 srs_state
-  const wordsCount = db.prepare('SELECT COUNT(*) AS c FROM words').get() as { c: number };
+  const wordsCount = db.prepare('SELECT COUNT(*) AS c FROM words WHERE user_id = ?').get(localId) as { c: number };
+
   if (wordsCount.c === 0) {
     const wordList: Array<{ word: string; phonetic: string; meaning: string; example: string }> = [
       { word: 'abandon', phonetic: '/əˈbændən/', meaning: '抛弃；放弃', example: 'He abandoned his car in the snow and walked home.' },
@@ -50,21 +60,24 @@ export function seedIfEmpty(db: DatabaseSync): void {
     ];
 
     const insertWord = db.prepare(
-      'INSERT INTO words (word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?)'
+      'INSERT INTO words (user_id, word, phonetic, meaning, example, source) VALUES (?, ?, ?, ?, ?, ?)'
+
     );
     const insertSrs = db.prepare(
       'INSERT INTO srs_state (word_id, ease, interval_days, repetitions, due_date) VALUES (?, ?, ?, ?, ?)'
     );
 
     for (const w of wordList) {
-      const result = insertWord.run(w.word, w.phonetic, w.meaning, w.example, 'builtin');
+      const result = insertWord.run(localId, w.word, w.phonetic, w.meaning, w.example, 'builtin');
+
       const wordId = Number(result.lastInsertRowid);
       insertSrs.run(wordId, 2.5, 0, 0, today);
     }
   }
 
   // 3) plans 表为空时插入 6 条今天的示例计划
-  const plansCount = db.prepare('SELECT COUNT(*) AS c FROM plans').get() as { c: number };
+  const plansCount = db.prepare('SELECT COUNT(*) AS c FROM plans WHERE user_id = ?').get(localId) as { c: number };
+
   if (plansCount.c === 0) {
     const planList: Array<{ subject: SubjectKey; title: string; plannedMinutes: number; done: number }> = [
       { subject: 'math', title: '高数极限与连续练习', plannedMinutes: 90, done: 1 },
@@ -76,15 +89,18 @@ export function seedIfEmpty(db: DatabaseSync): void {
     ];
 
     const insertPlan = db.prepare(
-      'INSERT INTO plans (date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+
     );
     for (const p of planList) {
-      insertPlan.run(today, p.subject, p.title, p.plannedMinutes, p.done, now);
+      insertPlan.run(localId, today, p.subject, p.title, p.plannedMinutes, p.done, now);
+
     }
   }
 
   // 4) mistakes 表为空时插入 3 条示例错题
-  const mistakesCount = db.prepare('SELECT COUNT(*) AS c FROM mistakes').get() as { c: number };
+  const mistakesCount = db.prepare('SELECT COUNT(*) AS c FROM mistakes WHERE user_id = ?').get(localId) as { c: number };
+
   if (mistakesCount.c === 0) {
     const mistakeList: Array<{
       subject: SubjectKey;
@@ -113,28 +129,35 @@ export function seedIfEmpty(db: DatabaseSync): void {
     ];
 
     const insertMistake = db.prepare(
-      'INSERT INTO mistakes (subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO mistakes (user_id, subject, title, content, analysis, mastered, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+
     );
     for (const m of mistakeList) {
-      insertMistake.run(m.subject, m.title, m.content, m.analysis, 0, now);
+      insertMistake.run(localId, m.subject, m.title, m.content, m.analysis, 0, now);
+
     }
   }
 
   // 5) exam_records 表为空时插入 2 条真题模拟记录
-  const examsCount = db.prepare('SELECT COUNT(*) AS c FROM exam_records').get() as { c: number };
+  const examsCount = db.prepare('SELECT COUNT(*) AS c FROM exam_records WHERE user_id = ?').get(localId) as { c: number };
+
   if (examsCount.c === 0) {
     const insertExam = db.prepare(
-      'INSERT INTO exam_records (subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+
     );
-    insertExam.run('math', '2025 年真题模拟', 118, 150, 180, addDays(today, -5));
-    insertExam.run('english', '英语一 2024 年真题', 72, 100, 180, addDays(today, -10));
+    insertExam.run(localId, 'math', '2025 年真题模拟', 118, 150, 180, addDays(today, -5));
+    insertExam.run(localId, 'english', '英语一 2024 年真题', 72, 100, 180, addDays(today, -10));
+
   }
 
   // 6) focus_sessions 表为空时插入 9 条专注记录（过去 6 天各 1 条 + 今天 2 条）
-  const focusCount = db.prepare('SELECT COUNT(*) AS c FROM focus_sessions').get() as { c: number };
+  const focusCount = db.prepare('SELECT COUNT(*) AS c FROM focus_sessions WHERE user_id = ?').get(localId) as { c: number };
+
   if (focusCount.c === 0) {
     const insertFocus = db.prepare(
-      'INSERT INTO focus_sessions (subject, minutes, started_at, note) VALUES (?, ?, ?, ?)'
+      'INSERT INTO focus_sessions (user_id, subject, minutes, started_at, note) VALUES (?, ?, ?, ?, ?)'
+
     );
 
     const pastSessions: Array<{ subject: SubjectKey; minutes: number; note: string }> = [
@@ -149,10 +172,11 @@ export function seedIfEmpty(db: DatabaseSync): void {
     for (let i = 0; i < pastSessions.length; i++) {
       const day = addDays(today, -(6 - i));
       const s = pastSessions[i];
-      insertFocus.run(s.subject, s.minutes, `${day}T09:00:00`, s.note);
+      insertFocus.run(localId, s.subject, s.minutes, `${day}T09:00:00`, s.note);
+
     }
 
-    insertFocus.run('math', 95, `${today}T09:00:00`, '高数极限练习');
-    insertFocus.run('major', 130, `${today}T14:00:00`, '信号与系统第3章');
+    insertFocus.run(localId, 'math', 95, `${today}T09:00:00`, '高数极限练习');
+    insertFocus.run(localId, 'major', 130, `${today}T14:00:00`, '信号与系统第3章');
   }
 }
