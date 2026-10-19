@@ -1,0 +1,266 @@
+{
+  "source": "heygen-com/hyperframes (Apache-2.0)",
+  "license": "Apache-2.0",
+  "note": "HTML 场景模板（lower-third/标题/转场）。原版依赖 GSAP CDN 与 Google Fonts，离线渲染前需改写为自包含（内联关键帧 CSS/JS、字体子集化内嵌），否则无网络时渲染失败。",
+  "blocks": [
+    {
+      "id": "hw-title",
+      "title": "Handwritten Title",
+      "description": "Handwritten display text with a scalar-driven word-by-word highlight sweep and a seeded squiggle underline sized to the text; boils",
+      "tags": [
+        "handwritten",
+        "typography",
+        "title-card",
+        "overlay"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 6,
+      "files": [
+        "demo.html",
+        "hw-title.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "hw-write-title",
+      "title": "Handwritten Write-On Title",
+      "description": "True glyph write-on: filled Caveat letterforms revealed by baked per-glyph centerline strokes traced in real stroke order with a curvature-adaptive pen-velocity ease (fast on straights, slow into curves, inter-stroke pen lifts); optional squiggle underline; boils",
+      "tags": [
+        "handwritten",
+        "typography",
+        "title-card",
+        "write-on",
+        "overlay"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 6,
+      "files": [
+        "hw-write-title.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "canopy-part-title",
+      "title": "Canopy Part Title",
+      "description": "Leaves sweep through the frame and part to reveal the headline.",
+      "tags": [
+        "3d-motion",
+        "title-card",
+        "leaves",
+        "organic",
+        "depth-of-field",
+        "two-headlines",
+        "sweep"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 12,
+      "files": [
+        "SKILL.md",
+        "canopy-part-title.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js",
+        "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/BokehPass.js",
+        "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/EffectComposer.js",
+        "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/RenderPass.js",
+        "https://fonts.googleapis.com",
+        "https://fonts.googleapis.com/css2?family=",
+        "https://fonts.googleapis.com/css2?family=Gelasio",
+        "https://fonts.gstatic.com"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "lower-third-bild",
+      "title": "Lower Third — BILD Style",
+      "description": "News-style lower third with tight-fit text boxes: white headline bar with red drop-shadow, red sub-line with white drop-shadow.",
+      "tags": [
+        "broadcast",
+        "lower-third",
+        "news",
+        "overlay"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 8,
+      "files": [
+        "lower-third-bild.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "yt-lower-third",
+      "title": "YouTube Lower Third",
+      "description": "Animated YouTube subscribe lower third with avatar and channel info",
+      "tags": [
+        "social",
+        "overlay",
+        "youtube"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 4.5,
+      "files": [
+        "registry-item.json",
+        "yt-lower-third.html"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js",
+        "https://fonts.googleapis.com",
+        "https://fonts.googleapis.com/css2?family=DM+Sans",
+        "https://fonts.gstatic.com"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "lt-clean-bar",
+      "title": "Lower Third — Clean Bar",
+      "description": "Minimal white-card lower third for podcasts/interviews: accent tab, name + role, clip-wipe entrance",
+      "tags": [
+        "lower-third",
+        "overlay",
+        "podcast",
+        "interview"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 4.8,
+      "files": [
+        "lt-clean-bar.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "lt-dark-card",
+      "title": "Lower Third — Dark Card",
+      "description": "Charcoal card lower third for bright footage: name, drawn accent underline, role; slide-up entrance",
+      "tags": [
+        "lower-third",
+        "overlay",
+        "podcast",
+        "interview",
+        "dark"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 4.8,
+      "files": [
+        "lt-dark-card.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "lt-mask-reveal",
+      "title": "Lower Third — Mask Reveal",
+      "description": "Cardless lower third: an accent sweep crosses and clip-path-reveals a heavy name, role fades up; for footage",
+      "tags": [
+        "lower-third",
+        "overlay",
+        "podcast",
+        "interview",
+        "bold"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 4.8,
+      "files": [
+        "lt-mask-reveal.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "lt-soft-pill",
+      "title": "Lower Third — Soft Pill",
+      "description": "Rounded white pill lower third for podcasts/interviews: status dot, name + role, scale-pop entrance",
+      "tags": [
+        "lower-third",
+        "overlay",
+        "podcast",
+        "interview",
+        "minimal"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 4.8,
+      "files": [
+        "lt-soft-pill.html",
+        "registry-item.json"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "whip-pan",
+      "title": "Whip Pan",
+      "description": "Shader transition simulating a fast camera whip pan",
+      "tags": [
+        "transition",
+        "shader"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 4,
+      "files": [
+        "registry-item.json",
+        "whip-pan.html"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js",
+        "https://fonts.googleapis.com/css2?family=Space+Mono"
+      ],
+      "offline_ready": false
+    },
+    {
+      "id": "transitions-dissolve",
+      "title": "Dissolve Transitions",
+      "description": "Showcase of dissolve and fade transitions",
+      "tags": [
+        "transition",
+        "showcase",
+        "crossfade"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "duration": 24,
+      "files": [
+        "registry-item.json",
+        "transitions-dissolve.html"
+      ],
+      "external_urls": [
+        "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"
+      ],
+      "offline_ready": false
+    }
+  ]
+}

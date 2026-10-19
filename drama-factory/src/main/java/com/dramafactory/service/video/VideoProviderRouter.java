@@ -21,7 +21,7 @@ public class VideoProviderRouter {
 
     private static final Logger log = LoggerFactory.getLogger(VideoProviderRouter.class);
 
-    private static final List<String> DEFAULT_ORDER = List.of("agnes", "minimax", "novai", "doubao", "htmlrender", "painted");
+    private static final List<String> DEFAULT_ORDER = List.of("agnes", "minimax", "novai", "doubao", "hyperframes", "htmlrender", "painted");
     private static final String MOCK = "mock";
 
     private final ApplicationContext applicationContext;
@@ -147,6 +147,9 @@ public class VideoProviderRouter {
         }
         if ("doubao".equals(name)) {
             return applicationContext.getBean("doubaoEmailVideoProvider", VideoProvider.class);
+        }
+        if ("hyperframes".equals(name)) {
+            return applicationContext.getBean("hyperFramesVideoProvider", VideoProvider.class);
         }
         if ("painted".equals(name)) {
             return applicationContext.getBean("paintedAnimationVideoProvider", VideoProvider.class);
