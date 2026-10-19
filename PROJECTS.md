@@ -309,6 +309,7 @@
 - **v2.9 OCR 可观测性指标第二版（2026-10-17）**：与 v2.8.1 为增量升级（改名 ledger_ocr_* + 全路径埋点 + failures 五分类 + confidence_avg gauge；旧指标名与旧测试已删除）；pytest 279 通过、1 跳过；真实冒烟验证各分类计数；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v2.9.md。
 - **深测轮 r3（2026-10-18）**：5 个深测文件 77 测试（__main__ 备份 keep 边界/修剪语义、backup、config 中文往返/并发双写、logging request_id/并发、seed 中文/极值/超长商户名）全绿；修 dpsk 10 处编造（Currency.id、transactions.amount/merchant 列、seed 建账户假设、asyncio.get_event_loop），测试按源码地面真相机械修正
 - **深测轮 r7（2026-10-18）**：8 个 deep2 文件 156 测试（matching 34/parser 13/statements_claim 20/bills_review/transactions 22/currencies_budgets/recurring/import_export 14）全绿；pytest **584/584**（1 跳过为既有 tesseract 缺失）；修 dpsk 20+ 处测试侧编造（API 形状、confirm 前置步骤、budgets month 必填、转账导出 "现金->银行"、金额单位元/分）；产品无真 bug
+- **v2.11 缺口关闭（2026-10-20，commit f847d88）**：生产 checklist 未通过项全部关闭——正则执行风险（check_pattern_safety/safe_regex_search：拒收嵌套量词/回溯引用/超长模式，haystack 熔断 500 字符；compile_rule_pattern 集成防护）+ preview 跳过原因链（停用/方向不匹配/非法正则/未命中）+ suggested_rule_id 落实（batch confirm 规则命中写规则 ID；修停用规则仍生效真 bug：match_by_rules 加 is_enabled 过滤）+ 并发建规则 IntegrityError→409；pytest **1117/1117**（1 跳过为既有 tesseract 缺失）；视觉验收 /rules、/workbench、/report 三页真实数据通过；docseek v0.21.1 同批：修查询 hang（超长/纯标点入口返回空），TokenizerLong 22 例全过
 
 **后续计划**：
 
