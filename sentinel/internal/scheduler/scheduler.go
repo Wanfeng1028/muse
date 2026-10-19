@@ -140,6 +140,16 @@ func (s *Scheduler) runOne(ctx context.Context, m store.Monitor, prevOk, hasPrev
 		return
 	}
 
+	// 重读上次检查：tick 扫描时刻传入的 prevOk/hasPrev 快照在 goroutine
+	// 排队等待 sem 期间可能过期（其间可插入完整的 CheckNow 开/关事件周期），
+	// 此处用最新状态覆盖，避免基于陈旧状态误开/漏关 incident。
+	if last, lerr := s.store.LastCheck(m.ID); lerr == nil {
+		hasPrev = last != nil
+		prevOk = hasPrev && last.Ok == 1
+	} else {
+		log.Logger().Warn("runOne 重读上次检查失败，沿用 tick 快照", "monitorID", m.ID, "err", lerr)
+	}
+
 	c, retries := checker.CheckWithRetryCtx(ctx, m, s.maxRetries)
 	metrics.Default.RecordCheck(c.Ok == 1, c.LatencyMs, retries > 0)
 
