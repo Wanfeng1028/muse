@@ -1,5 +1,6 @@
 ---
 name: shorz-mcp
+version: 1.0.0
 description: Control Shorz via MCP to create and edit projects, configure panels, import assets, generate videos and thumbnails, build and run Canvas node graphs, publish to YouTube or TikTok, and run headless single-file video/image edits (no project required).
 ---
 

@@ -1,5 +1,6 @@
 ---
 name: captions
+version: 1.0.0
 description: Add subtitles/captions to a video — burn them into the picture, or export an .srt/.vtt file (for YouTube etc.). Use whenever the user wants captions, subtitles, on-screen text of what's being said, an SRT/VTT file, or accessibility text. Covers auto-transcription, editing for accuracy, styling, and the verbatim-vs-clean gotcha.
 ---
 

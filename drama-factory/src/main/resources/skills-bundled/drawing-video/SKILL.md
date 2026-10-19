@@ -1,5 +1,6 @@
 ---
 name: drawing-video
+version: 1.0.0
 description: "Turn a short video into a narrated comic strip. Use when the user uploads a video (.mov/.mp4/etc.) and asks to make a comic from it, narrate it, draw it, Attenborough it, storyboard the clip, or otherwise wants a stills-plus-narration comic strip derived from footage. Covers probing and extracting frames, GROUNDING the actual storyline (native Gemini video parse or frame reading), composing narration in a chosen voice, generating comic panels with Gemini image models anchored to the real stills, QA-ing the panels, and compositing a titled strip. Do NOT use for plain video transcoding or trimming (that is processing-video) or for original illustration from a text prompt (that is invoking-gemini)."
 metadata:
   version: 1.0.1

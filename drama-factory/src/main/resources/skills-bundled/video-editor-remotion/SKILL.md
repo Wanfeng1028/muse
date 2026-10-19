@@ -1,5 +1,6 @@
 ---
-name: video-editor
+name: video-editor-remotion
+version: 1.0.0
 description: |
   Edits, processes, and renders videos using FFmpeg and Remotion. Handles video stitching, transitions, captions, teasers, and transcription.
 

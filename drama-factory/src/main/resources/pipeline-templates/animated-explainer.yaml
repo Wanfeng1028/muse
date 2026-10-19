@@ -1,0 +1,120 @@
+name: animated-explainer
+version: "1.0"
+description: 面向知识科普与概念讲解的动画视频流水线，从选题调研到发布共九个阶段，把成本估算与人工审批放在生产之前。
+category: generated
+stages:
+  - name: research
+    produces: [research_brief]
+    requiredArtifactsIn: []
+    checkpointRequired: false
+    humanApprovalDefault: false
+    reviewFocus:
+      - 选题是否落在有真实讨论热度的范围内
+      - 收集到的数据是否标注了可追溯的来源
+      - 观众常见疑问是否来自实际提问而非凭空推测
+      - 是否找到至少三个互不重复的切入角度
+    successCriteria:
+      - 调研简报列出至少三条带来源链接的关键事实
+      - 每个角度都写清它依据哪条事实成立
+  - name: proposal
+    produces: [proposal_packet, decision_log]
+    requiredArtifactsIn: [research_brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 几个方案在结构、开场方式和目标观众上是否真的不同
+      - 每个方案是否都引用了调研阶段的具体发现
+      - 成本拆分是否逐项列出，是否存在含糊的打包价
+      - 是否给出高成本与低成本两条可选路径
+    successCriteria:
+      - 提案包包含至少三个候选方案及其编号
+      - 成本清单逐项列明各环节的花费
+      - 未获得明确批准前不得进入生产阶段
+    subStages:
+      - name: sample
+        description: 当用户提供了参考视频时，先产出一段十几秒的样片确认视觉与旁白方向。
+        condition: 存在参考视频分析结果
+        humanApprovalDefault: true
+        reviewFocus:
+          - 样片是否忠实体现被选中的方案
+          - 旁白音色与语速是否符合批准的方向
+          - 画面风格是否与选定风格一致
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 全文字数是否落在目标时长的合理区间内
+      - 叙事是否遵循开场、铺陈、推进、高潮、收束的顺序
+      - 每段是否标注了朗读时的停顿与重音提示
+      - 引用的数据是否与调研简报保持一致
+    successCriteria:
+      - 脚本按段落标注预计时长
+      - 全文总时长与方案承诺的偏差不超过一成
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 脚本的每一段是否都有对应画面，没有空档
+      - 连续三个以上同类型画面是否已被打散
+      - 每个场景需要的素材是否在预算允许范围内
+      - 转场方式与整体节奏是否统一
+    successCriteria:
+      - 每个场景写明所需素材与预估时长
+      - 全片至少使用三种不同的画面类型
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 清单里的文件是否都真实存在于磁盘
+      - 旁白是否覆盖了脚本的全部段落
+      - 实际花费是否仍在批准的成本范围内
+      - 生成图片的画风是否前后一致
+    successCriteria:
+      - 每条素材标注来源与授权情况
+      - 所有素材路径均可解析到实际文件
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [scene_plan, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 每个剪辑点是否都引用了清单中存在的素材
+      - 字幕样式是否与选定风格匹配
+      - 背景音乐的音量衰减参数是否已配置
+      - 时间线上是否存在空隙或重叠
+    successCriteria:
+      - 剪辑决策覆盖全片时长，无遗漏段落
+      - 每个剪辑点都有对应的画面意图说明
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 成片时长是否落在目标时长上下五个百分点内
+      - 旁白与音乐的音量是否平衡且听得清楚
+      - 输出文件能否正常播放
+      - 实际使用的渲染方式是否与提案一致，若有更换必须记录原因
+    successCriteria:
+      - 渲染报告记录分辨率、码率与时长
+      - 输出文件通过基础格式校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, final_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 标题与简介是否准确概括了成片内容
+      - 关键词是否贴合主题而非泛泛而谈
+      - 章节标记是否与脚本段落对应
+      - 封面概念是否已确定
+    successCriteria:
+      - 每个平台的导出文件命名规范统一
+      - 元数据包含标题、简介与标签
+      - 封面草图或概念说明已附上

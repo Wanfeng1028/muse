@@ -1,5 +1,6 @@
 ---
 name: video-transitions
+version: 1.0.0
 description: Join two clips with a visible transition effect (wipe, slide, dissolve, pixelize, circle open/close, fade-to-black, etc.) using ffmpeg xfade. Use whenever the user wants a transition between shots/scenes, a scene change with an effect, or anything beyond a hard cut. For a barely-visible seam between adjacent cuts use the splice command instead; for generative effects on the footage itself use grok-video-edit.
 ---
 

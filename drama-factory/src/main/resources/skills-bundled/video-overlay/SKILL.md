@@ -1,5 +1,6 @@
 ---
 name: video-overlay
+version: 1.0.0
 description: Composite a graphic onto video — text, a logo/image, a static transparent PNG, or an animated effect — and place it accurately, including locking it to a moving subject (a face, eye, hand, object). Use whenever the user wants to add/overlay/burn-in/stick something onto footage, place a watermark or label, or position a graphic precisely. Covers transparency (RGBA), animated overlays, timed windows, and coordinate-finding.
 ---
 

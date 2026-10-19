@@ -292,6 +292,33 @@ public class UsageService {
         return result;
     }
 
+    /** 按视频供应商聚合用量。AgentStep 无供应商概念，不参与。 */
+    @Transactional(readOnly = true)
+    public List<ProviderUsage> byProvider() {
+        Map<String, ProviderAccumulator> grouped = new LinkedHashMap<>();
+
+        List<VideoTaskRow> videoRows = videoTaskRepository.findAllForModelUsage();
+        for (VideoTaskRow row : videoRows) {
+            String provider = row.getProvider();
+            if (provider == null || provider.isEmpty()) {
+                // 无供应商名不参与聚合分组
+                continue;
+            }
+            ProviderAccumulator acc = grouped.computeIfAbsent(provider, k -> new ProviderAccumulator(k));
+            acc.tokens = sumNullable(acc.tokens, row.getTokensUsed());
+            acc.costCents = sumNullable(acc.costCents, row.getCostCents());
+            acc.taskCount += 1;
+        }
+
+        List<ProviderUsage> result = new ArrayList<>(grouped.size());
+        for (ProviderAccumulator acc : grouped.values()) {
+            result.add(new ProviderUsage(acc.provider, acc.tokens, acc.costCents, acc.taskCount));
+        }
+        result.sort(Comparator.comparing(ProviderUsage::provider));
+        log.debug("usage byProvider: {} groups", result.size());
+        return result;
+    }
+
     /**
      * 按天聚合近 N 天（默认 30）数据，VideoTask 与 AgentStep 合并到同一日期。
      */
@@ -359,6 +386,9 @@ public class UsageService {
     /** 按模型/Agent 类型聚合。 */
     public record ModelUsage(String model, Long tokens, Long costCents, long taskCount) {}
 
+    /** 按视频供应商聚合。 */
+    public record ProviderUsage(String provider, Long tokens, Long costCents, long taskCount) {}
+
     /** 按天聚合。 */
     public record DailyUsage(LocalDate date, Long tokens, Long costCents, long videoCount, long stepCount) {}
 
@@ -382,6 +412,17 @@ public record FilterOptions(List<String> providers, List<String> models) {}
 
         ModelAccumulator(String model) {
             this.model = model;
+        }
+    }
+
+    private static final class ProviderAccumulator {
+        final String provider;
+        Long tokens;
+        Long costCents;
+        long taskCount;
+
+        ProviderAccumulator(String provider) {
+            this.provider = provider;
         }
     }
 

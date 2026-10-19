@@ -1,5 +1,6 @@
 ---
 name: parsing-video
+version: 1.0.0
 description: "Interpret video content visually by sampling frames into timestamped contact sheets that can be read as images. Use when: user asks what happens in a video; asks to summarize, describe, review, or QA video content or footage; asks about scenes, actions, people, or objects in a video; needs a storyboard-style overview of a clip; asks to find where something occurs in a video. Triggers on 'watch this video', 'what's in this video', 'summarize the video', 'describe the footage', 'contact sheet', 'storyboard', 'review this clip', 'find the scene where', 'scene detection', 'shot boundaries', 'detect cuts', 'dwell points'. For converting, trimming, or transcoding video, use processing-video instead."
 metadata:
   version: 0.4.0

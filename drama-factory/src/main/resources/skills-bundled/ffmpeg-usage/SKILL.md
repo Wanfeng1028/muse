@@ -1,5 +1,6 @@
 ---
 name: ffmpeg-usage
+version: 1.0.0
 description: "ffmpeg recipes and best practices: convert, concatenate, merge, resize, compress, GIF creation, audio extraction, subtitles, optimize for social platforms."
 ---
 

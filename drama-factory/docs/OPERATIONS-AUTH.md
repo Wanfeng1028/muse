@@ -83,7 +83,7 @@ scrape_configs:
 - 运行中默认拒绝恢复；`--force` 可强制，但会给出警告。
 - 恢复前自动对当前库打快照：`$APP_HOME/backups/auth/pre-restore-auth-<TS>.tar.gz`。
 - 恢复流程：解包 → 校验 manifest sha256 → 执行 `RESTORE` → `SELECT COUNT(*) FROM users;` 做完整性校验。
-- **演练建议**：每月至少一次在非生产环境执行完整备份 + 恢复演练。
+- **演练建议**：每月至少一次在非生产环境执行完整备份 + 恢复演练。 演练记录：docs/BACKUP_DRILL_AUTH_2026-10-19.md（2026-10-19 首次演练通过）。
 
 ## 4. 数据库迁移（Flyway）
 

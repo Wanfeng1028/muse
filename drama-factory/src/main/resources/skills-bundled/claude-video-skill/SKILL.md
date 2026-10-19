@@ -1,5 +1,6 @@
 ---
 name: claude-video-skill
+version: 1.0.0
 description: >
   Build a short HD film (product promo, demo or highlight reel, concept or
   research explainer) three ways: cut an existing screen recording with ffmpeg;

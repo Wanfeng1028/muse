@@ -89,6 +89,7 @@ docker compose logs -f drama-factory
 | `DRAMA_STORAGE` | `./data/media` | 媒体文件落盘目录。 |
 | `FFMPEG_PATH` | `ffmpeg` | ffmpeg 可执行文件路径。 |
 | `FFPROBE_PATH` | `ffprobe` | ffprobe 可执行文件路径。 |
+| `AUTH_COOKIE_SECURE` | `false` | httpOnly Cookie 是否加 `Secure` 标记。本地 HTTP 开发保持 false；**生产 HTTPS 必须设为 true**，否则浏览器会拒收带 Secure 的 Cookie 导致登录态异常。 |
 
 必填项说明：**没有严格必填项**——所有变量都有默认值，不配也能起。但生产环境必须显式配 `AUTH_JWT_SECRET`，否则等于裸奔。`VIDEO_PROVIDER=agnes` 时需要保证外部 provider 可达，否则视频任务会持续失败。
 
@@ -187,6 +188,10 @@ docker compose logs -f drama-factory
   - `DramaFactoryVideoQueueBacklog`（warning）——视频任务队列积压。
   - `DramaFactoryApprovalStuck`（warning）——审批卡住。
   - `DramaFactoryRunFailures`（warning）——Run 失败数超标。
+- 告警规则：`prometheus/rules/auth-service.yml`，共 3 条（job 名 `auth-service`，抓取 `localhost:8082/actuator/prometheus`，已接入 `prometheus.yml` 的 `rule_files` 与 `scrape_configs`）：
+  - `AuthServiceHighErrorRate`（critical）——5xx 错误率超 5%。
+  - `AuthServiceDown`（critical）——实例不可达。
+  - `AuthServiceLoginFailureSpike`（warning）——5 分钟登录失败超 50 次（疑似撞库）。
 - 告警对接：Prometheus 里配 `alerting.alertmanagers` 指向你们的 Alertmanager，规则文件路径写进 `rule_files`。
 
 业务指标说明（v2.4 起）：

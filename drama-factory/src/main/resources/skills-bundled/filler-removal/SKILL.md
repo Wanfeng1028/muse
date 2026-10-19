@@ -1,5 +1,6 @@
 ---
 name: filler-removal
+version: 1.0.0
 description: Remove filler words and disfluencies (um, uh, like, you know, basically) from a talking-head video so it sounds like they were never said. Use whenever the user wants to clean up speech, cut filler/hesitations, tighten a voiceover, or remove "um"s and "uh"s. Covers verbatim transcription, precise cutting rules, and the iterate-until-clean preview loop.
 ---
 

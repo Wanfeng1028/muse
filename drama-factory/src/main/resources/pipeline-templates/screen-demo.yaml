@@ -1,0 +1,115 @@
+name: screen-demo
+version: "1.0"
+description: 面向软件录屏演示的流水线，从需求确认到发布共八个阶段，脚本先于录制确定，操作步骤与旁白逐条对齐。
+category: screen_recording
+stages:
+  - name: requirement
+    produces: [demo_requirement]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 演示要展示的功能边界是否写清楚
+      - 目标观众的技术水平是否已确定
+      - 成片时长与演示步骤数量是否匹配
+      - 哪些步骤必须现场录制、哪些可以后期合成是否已区分
+    successCriteria:
+      - 需求文档列出演示涉及的全部功能点
+      - 明确标注目标平台与目标时长
+  - name: script
+    produces: [script, narration_map]
+    requiredArtifactsIn: [demo_requirement]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每一步操作是否都有对应的一句旁白
+      - 旁白是否用观众能听懂的说法而非内部术语
+      - 操作顺序是否与实际使用流程一致
+      - 是否标注了每步操作预计的耗时
+    successCriteria:
+      - 脚本中操作步骤与旁白一一编号对应
+      - 旁白总时长与目标时长偏差不超过一成
+  - name: recording_plan
+    produces: [recording_plan]
+    requiredArtifactsIn: [script, narration_map]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 录制环境是否已固定分辨率与缩放比例
+      - 演示数据是否已准备好且不包含真实隐私信息
+      - 每段录制对应的脚本区间是否已标注
+      - 重录成本高的步骤是否已单独列出
+    successCriteria:
+      - 录制计划列出每个片段的脚本起止编号
+      - 已列出需要清理的敏感信息清单
+    subStages:
+      - name: dry_run
+        description: 当演示步骤超过十步时，先用测试数据完整走一遍流程以确认脚本可执行。
+        condition: 演示步骤超过十步
+        humanApprovalDefault: true
+        reviewFocus:
+          - 脚本中的每一步是否都能实际操作出来
+          - 是否存在脚本未提及的弹窗或确认框
+          - 走查发现的偏差是否已回写脚本
+  - name: recording
+    produces: [raw_recording, recording_log]
+    requiredArtifactsIn: [recording_plan]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 录制的画面是否清晰、无窗口遮挡
+      - 操作节奏是否给观众留出了看清的时间
+      - 录制日志是否记录了每段的实际起止时间
+      - 出现口误或误操作的片段是否已标记待重录
+    successCriteria:
+      - 录制日志中每段都标注了对应的脚本编号
+      - 所有标记待重录的片段已列出补录计划
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [raw_recording, recording_log, recording_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 加载等待与无意义停顿是否已被剪掉或加速
+      - 局部放大是否只在关键操作处出现
+      - 放大与缩小的过渡是否平滑不突兀
+      - 每个剪辑点是否对应录制日志中的某段
+    successCriteria:
+      - 每个剪辑点标注所依据的录制日志条目
+      - 全片无长时间静止画面
+  - name: voice_subtitle
+    produces: [subtitle_track, audio_mix_report]
+    requiredArtifactsIn: [edit_decisions, narration_map]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 旁白是否与画面中的操作在同一时刻出现
+      - 字幕是否与旁白逐句对应
+      - 键盘敲击声与鼠标点击声是否已压到可接受范围
+    successCriteria:
+      - 字幕时间轴与旁白音频逐句对齐
+      - 音频报告记录人声与背景音的电平
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, subtitle_track, audio_mix_report]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 界面文字在缩放后是否仍然清晰可读
+      - 局部放大区域是否准确框住被讲解的控件
+      - 输出文件能否正常播放
+    successCriteria:
+      - 渲染报告记录分辨率、码率与时长
+      - 输出文件通过基础格式校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, final_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 标题与简介是否包含软件名称与关键功能词
+      - 章节标记是否与演示步骤一一对应
+      - 导出包是否包含成片、元数据与封面概念
+    successCriteria:
+      - 每个平台导出文件命名规范统一
+      - 导出目录包含成片、元数据与封面说明

@@ -1,5 +1,6 @@
 ---
 name: grok-video-edit
+version: 1.0.0
 description: Apply AI-generated visual edits to video using xAI / Grok — change object colors, add effects (smoke, fire, sparkles), restyle scenes, or alter what's in a clip ("make the sunglasses red", "add smoke from the gun", "make it sparkly"). Use whenever an edit can't be done deterministically with ffmpeg/overlays and needs generative reimagining of the footage. Covers trimming, chunking, audio mux, and seamless reassembly.
 ---
 

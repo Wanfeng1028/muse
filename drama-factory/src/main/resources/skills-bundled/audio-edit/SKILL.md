@@ -1,5 +1,6 @@
 ---
 name: audio-edit
+version: 1.0.0
 description: Clean up or mix a video's audio track — normalize loudness, reduce background noise/hiss, or add background music (optionally ducked under speech). Use whenever the user wants to fix quiet/loud/inconsistent audio, remove hiss/hum, or lay music under a talking-head/voiceover. For removing um/uh filler words use filler-removal instead; for replacing the audio entirely use plain ffmpeg map.
 ---
 

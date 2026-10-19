@@ -1,5 +1,6 @@
 ---
 name: cutting-rhythm
+version: 1.0.0
 description: Make an edit feel flowing, natural and snappy rather than merely accurate — split edits (J/L cuts), where to place a cut relative to speech and motion, how long to hold a shot, collapsing dead air, and cutting on the beat. Use whenever an edit is technically correct but feels choppy, abrupt, draggy, monotone or "AI-edited", when the user asks to tighten/pace/smooth a cut, or before finalizing any multi-clip edit. Complements edl-edit (which is the mechanics of the cut list) with the timing decisions that make it watchable.
 ---
 

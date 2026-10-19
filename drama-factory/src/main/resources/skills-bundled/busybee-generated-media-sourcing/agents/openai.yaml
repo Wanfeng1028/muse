@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generated Media Sourcing"
+  short_description: "Generate video clips and image plates for edits"
+  default_prompt: "Use $generated-media-sourcing to create or plan generated clips and image plates for this beat-synced edit."

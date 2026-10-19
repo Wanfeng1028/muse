@@ -1,5 +1,6 @@
 ---
 name: video-explainer
+version: 1.0.0
 description: Turn a research brief, finished script, or generated MP4 into a reviewed and verified vertical explainer video. Use when an agent should choose the simplest current production strategy, preserve strict final-artifact quality gates, run the deterministic Remotion fallback, diagnose the local toolchain, or verify an existing MP4 before any manual publication step.
 ---
 

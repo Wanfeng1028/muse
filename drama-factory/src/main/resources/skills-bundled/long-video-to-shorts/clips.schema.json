@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "clips.json — the shortlist contract between the PICK stage and the BUILD stage",
+  "type": "object",
+  "required": ["source", "language", "clips"],
+  "properties": {
+    "source": { "type": "string", "description": "path to work/source.mp4" },
+    "language": { "type": "string", "default": "fr" },
+    "clips": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "start", "end", "kind", "title"],
+        "properties": {
+          "id": { "type": "string", "description": "zero-padded, e.g. 01" },
+          "start": { "type": "string", "pattern": "^\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?$" },
+          "end": { "type": "string", "pattern": "^\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?$" },
+          "kind": { "enum": ["facecam", "screen"] },
+          "title": { "type": "string", "description": "hook headline banner (FR, punchy)" },
+          "hook": { "type": "boolean", "default": true },
+          "reason": { "type": "string", "description": "why this moment holds up" },
+          "face_center_x": {
+            "type": "number", "minimum": 0, "maximum": 1,
+            "description": "facecam only: horizontal face center as a fraction of source width"
+          },
+          "caption_identity": {
+            "type": "string",
+            "description": "facecam only: an embedded-captions CATALOG id (default anchor). Ignored for screen."
+          }
+        }
+      }
+    }
+  }
+}

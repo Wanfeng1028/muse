@@ -1,5 +1,6 @@
 ---
-name: video-editor
+name: video-editor-ffmpeg
+version: 1.0.0
 description: Expert guidance for video editing with ffmpeg, encoding best practices, and quality optimization. Use when working with video files, transcoding, remuxing, encoding settings, color spaces, or troubleshooting video quality issues.
 ---
 

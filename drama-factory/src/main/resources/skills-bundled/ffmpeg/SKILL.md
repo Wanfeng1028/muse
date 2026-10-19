@@ -1,5 +1,6 @@
 ---
 name: ffmpeg
+version: 1.0.0
 description: Expert guide for FFmpeg video/audio processing, conversion, streaming, and filtering. Use when working with video, audio, multimedia files, transcoding, format conversion, or when the user mentions ffmpeg, media processing, video conversion, audio conversion, streaming, or codecs.
 ---
 

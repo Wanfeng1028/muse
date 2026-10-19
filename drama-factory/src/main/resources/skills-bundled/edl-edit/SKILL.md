@@ -1,5 +1,6 @@
 ---
 name: edl-edit
+version: 1.0.0
 description: Build a multi-clip edit as an auditable JSON "edit decision list" (EDL) — a list of clips with source/in/out and a written rationale per pick — that one command renders to a finished video. Use whenever you're stitching several cuts/takes/segments into one video and want the edit to be reviewable, diffable, and re-runnable instead of a throwaway ffmpeg filtergraph. Covers the schema, the rationale discipline, multicam cutaways, and verifying the output by re-transcribing it.
 ---
 

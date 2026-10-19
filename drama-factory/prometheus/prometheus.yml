@@ -20,9 +20,10 @@ global:
   external_labels:
     service: drama-factory
 
-# 告警规则文件（见 prometheus/rules/drama-factory.yml）
+# 告警规则文件（主服务 + auth-service）
 rule_files:
   - "rules/drama-factory.yml"
+  - "rules/auth-service.yml"
 
 scrape_configs:
   - job_name: drama-factory
@@ -36,6 +37,15 @@ scrape_configs:
           - localhost:8081
         labels:
           instance: drama-factory-local
+  - job_name: auth-service
+    scrape_interval: 15s
+    metrics_path: /actuator/prometheus
+    scheme: http
+    static_configs:
+      - targets:
+          - localhost:8082
+        labels:
+          instance: auth-service-local
 
 # 可选：Alertmanager 接入后取消注释，让告警真正发出去
 # alerting:

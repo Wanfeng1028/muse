@@ -1,0 +1,113 @@
+name: talking-head
+version: "1.0"
+description: 面向真人口播视频的流水线，从原素材审查到发布共八个阶段，先摸清可用片段再规划剪辑。
+category: talking_head
+stages:
+  - name: source_review
+    produces: [source_media_review]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 原素材的分辨率与帧率是否满足成片要求
+      - 音轨是否存在明显底噪、爆音或断流
+      - 可用片段是否已逐条标注起止时间与问题
+      - 是否需要补拍，补拍清单是否写清
+    successCriteria:
+      - 审查报告列出每段素材的分辨率与音轨状态
+      - 不可用片段已标明原因与替代方案
+  - name: transcribe
+    produces: [transcript]
+    requiredArtifactsIn: [source_media_review]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 转写文本是否与人声逐句对应
+      - 时间戳是否与画面中的口型吻合
+      - 专业术语与专有名词的拼写是否正确
+    successCriteria:
+      - 转写文本带有逐句时间戳
+      - 抽查段落的人名与术语拼写无误
+  - name: proposal
+    produces: [proposal_packet, decision_log]
+    requiredArtifactsIn: [source_media_review, transcript]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 成片结构是否基于可用片段而非理想素材
+      - 预计时长是否与手头素材总量匹配
+      - 是否明确了需要舍弃的内容及其理由
+      - 是否说明了字幕与配乐的处理方向
+    successCriteria:
+      - 提案写明成片结构、目标时长与剪辑方向
+      - 决策日志记录舍弃了哪些片段以及原因
+    subStages:
+      - name: highlight_check
+        description: 当素材中出现了超出预期的高光片段时，单独产出一份高光备选清单供取舍。
+        condition: 审查阶段标记出高光片段
+        humanApprovalDefault: false
+        reviewFocus:
+          - 高光片段是否值得占用成片时长
+          - 该片段的音画质量是否达标
+          - 放入后是否打乱整体节奏
+  - name: edit_decision
+    produces: [edit_decisions]
+    requiredArtifactsIn: [proposal_packet, transcript]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个剪辑点是否都能追溯到转写文本中的某一句
+      - 删减后的语句是否仍然通顺连贯
+      - 停顿与口误的处理方式是否统一
+      - 剪辑理由是否逐条记录
+    successCriteria:
+      - 每个剪辑决策标注所依据的转写时间戳
+      - 全片时间线连续，无跳帧或黑场
+  - name: subtitle
+    produces: [subtitle_track]
+    requiredArtifactsIn: [edit_decisions, transcript]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 字幕断句是否跟随语义而非机械按字数切分
+      - 每屏字幕的行数与停留时间是否便于阅读
+      - 字幕时间轴是否与剪辑后的口型一致
+    successCriteria:
+      - 字幕文件的时间轴与成片逐句对应
+      - 每屏字幕不超过两行
+  - name: audio_mix
+    produces: [audio_mix_report]
+    requiredArtifactsIn: [edit_decisions]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 人声音量是否在整片内保持稳定
+      - 背景音乐是否在人声出现时自动让位
+      - 是否清除了明显的口水音与环境噪声
+    successCriteria:
+      - 音频报告记录各段人声与音乐的电平
+      - 人声段落无爆音且底噪低于可听阈值
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, subtitle_track, audio_mix_report]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 字幕是否与画面中的人声同步
+      - 成片是否与剪辑决策完全一致
+      - 输出文件能否正常播放
+    successCriteria:
+      - 渲染报告记录分辨率、码率与时长
+      - 输出文件通过基础格式校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, final_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 标题与简介是否与人物的表达意图一致
+      - 封面选用的帧是否代表本期主题
+      - 各平台导出的版本标注是否清晰
+    successCriteria:
+      - 每个平台导出文件命名规范统一
+      - 元数据包含标题、简介与标签

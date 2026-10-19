@@ -1,5 +1,6 @@
 ---
 name: remotion-graphics
+version: 1.0.0
 description: Create ANIMATED motion graphics — kinetic word-by-word captions, animated lower-thirds/name tags, branded intro/outro title cards, data-driven graphics (count-ups, growing bars) — as React/Remotion components, rendered to a transparent layer and composited over the footage with ffmpeg. OPTIONAL/heavy (needs Node + a headless-Chromium download, and a Remotion license for company use). Use only when an edit needs genuine motion design that PIL/ffmpeg overlays can't do; for a static label, watermark, or simple fade, use the video-overlay skill instead.
 ---
 

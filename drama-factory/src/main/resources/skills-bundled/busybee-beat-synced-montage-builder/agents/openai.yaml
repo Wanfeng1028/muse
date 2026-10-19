@@ -1,0 +1,4 @@
+interface:
+  display_name: "Beat-Synced Montage Builder"
+  short_description: "Build music-timed social video edits"
+  default_prompt: "Use $beat-synced-montage-builder to assemble a beat-synced social montage from this song analysis and footage folder."

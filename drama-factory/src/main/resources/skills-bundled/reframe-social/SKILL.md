@@ -1,5 +1,6 @@
 ---
 name: reframe-social
+version: 1.0.0
 description: Reframe a video to a different aspect ratio for social platforms — vertical 9:16 (Reels/Shorts/TikTok), square 1:1, or 4:5 portrait — from horizontal source. Use whenever the user wants to make a video vertical/square, fit it for Instagram/TikTok/YouTube Shorts, repurpose a 16:9 clip for social, or crop/pad to an aspect ratio. Covers crop-vs-pad choice, keeping an off-center subject in frame, and following a moving subject.
 ---
 

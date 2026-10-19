@@ -1,5 +1,6 @@
 ---
 name: shorts
+version: 1.0.0
 description: >
   Interactive longform-to-shortform video creator. Extracts viral-ready short clips
   from long videos using Claude as the orchestrator. Transcribes with faster-whisper

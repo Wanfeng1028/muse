@@ -8,8 +8,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class VideoProviderRouter {
@@ -26,6 +31,13 @@ public class VideoProviderRouter {
 
 
     private volatile LastFallback lastFallback;
+
+    /**
+     * 最近的路由决策日志，最多保留 50 条，超出时丢弃最旧记录。
+     */
+    private final Deque<RoutingDecision> decisionLog = new ArrayDeque<>();
+
+    private static final int MAX_DECISION_LOG = 50;
 
     @org.springframework.beans.factory.annotation.Autowired
     public VideoProviderRouter(ApplicationContext applicationContext, Environment environment,
@@ -184,6 +196,100 @@ public class VideoProviderRouter {
             }
         }
         throw new RuntimeException("所有视频通道均失败：" + String.join("；", failures));
+    }
+
+    /**
+     * 在 chain(shot) 给出的候选通道基础上，按评分卡加权分降序重排。
+     * 未打分的通道排在最后，并保持其在 chain(shot) 中的原相对顺序；
+     * scoreCards 为空时行为与 chain(shot) 完全一致。
+     */
+    public List<String> rankedChain(Shot shot, Map<String, ProviderScoreCard> scoreCards) {
+        List<String> base = chain(shot);
+        if (scoreCards == null || scoreCards.isEmpty()) {
+            return new ArrayList<>(base);
+        }
+        List<String> scored = new ArrayList<>();
+        List<String> unscored = new ArrayList<>();
+        for (String name : base) {
+            ProviderScoreCard card = scoreCards.get(name);
+            if (card != null) {
+                scored.add(name);
+            } else {
+                unscored.add(name);
+            }
+        }
+        scored.sort(Comparator.comparingDouble(
+                (String name) -> scoreCards.get(name).weightedScore()).reversed());
+        List<String> result = new ArrayList<>(scored.size() + unscored.size());
+        result.addAll(scored);
+        result.addAll(unscored);
+        return result;
+    }
+
+    /**
+     * 按评分卡执行路由并记录决策日志。
+     * 说明：Shot 类型在本类中仅出现过 submit(Shot,int) 与 chain(Shot) 两种用法，
+     * 无法确认其是否存在 getId()，因此 shotId 一律传 null（若后续确认可安全取 ID 再替换）。
+     */
+    public RoutingDecision routeWithScores(Shot shot, Map<String, ProviderScoreCard> scoreCards, String reason) {
+        List<String> ranked = rankedChain(shot, scoreCards);
+        String selected = ranked.isEmpty() ? null : ranked.get(0);
+
+        Map<String, Double> scoreMap = new LinkedHashMap<>();
+        if (scoreCards != null && !scoreCards.isEmpty()) {
+            for (String name : ranked) {
+                ProviderScoreCard card = scoreCards.get(name);
+                if (card != null) {
+                    scoreMap.put(name, card.weightedScore());
+                }
+            }
+        }
+
+        RoutingDecision decision = new RoutingDecision(
+                null,
+                ranked,
+                scoreMap,
+                selected,
+                reason,
+                LocalDateTime.now());
+
+        recordDecision(decision);
+        return decision;
+    }
+
+    /**
+     * 写入决策日志：超过上限丢弃最旧记录；任何异常都不允许向上抛出。
+     */
+    private void recordDecision(RoutingDecision decision) {
+        try {
+            synchronized (decisionLog) {
+                decisionLog.addLast(decision);
+                while (decisionLog.size() > MAX_DECISION_LOG) {
+                    decisionLog.pollFirst();
+                }
+            }
+        } catch (RuntimeException e) {
+            log.warn("记录路由决策日志失败：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 返回决策日志快照，顺序为从新到旧。
+     */
+    public List<RoutingDecision> recentDecisions() {
+        try {
+            synchronized (decisionLog) {
+                List<RoutingDecision> snapshot = new ArrayList<>(decisionLog.size());
+                java.util.Iterator<RoutingDecision> it = decisionLog.descendingIterator();
+                while (it.hasNext()) {
+                    snapshot.add(it.next());
+                }
+                return snapshot;
+            }
+        } catch (RuntimeException e) {
+            log.warn("读取路由决策日志失败：{}", e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     private String nextName(List<String> chain, int index) {
