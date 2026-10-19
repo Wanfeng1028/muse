@@ -194,9 +194,32 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 	tableStartedAt := nowRFC3339()
 	webhookNotifier := notify.FromConfig(cfg, nil)
 
-	// 确保目标表存在
+	// 确保目标表存在（空列时只建元数据列，保证 COUNT(*) 可查）
 	if err := st.EnsureTable(ti.Name, ti.Primary, ti.Columns); err != nil {
 		return ts, fmt.Errorf("建表失败 %s: %w", ti.Name, err)
+	}
+
+	// 空列（如零字节 CSV）：表已建、无行可拉，直接返回零统计。
+	if len(ti.Columns) == 0 {
+		return ts, nil
+	}
+
+	// schema 漂移补列：源表新增的列同步到目标表。
+	if err := st.AddMissingColumns(ti.Name, ti.Columns); err != nil {
+		return ts, fmt.Errorf("补列失败 %s: %w", ti.Name, err)
+	}
+
+	// 增量列漂移检测：配置的增量列在当前表头里消失了，旧水位线已无意义。
+	schemaDrifted := false
+	if incrementalCol != "" {
+		found := false
+		for _, c := range ti.Columns {
+			if c.Name == incrementalCol {
+				found = true
+				break
+			}
+		}
+		schemaDrifted = !found
 	}
 
 	// 主键列
@@ -217,15 +240,24 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 		colNames = append(colNames, c.Name)
 	}
 
-	// 读水位线
+	// 读水位线；增量列漂移时清空旧水位线与该源旧数据，走全量重载。
 	since := map[string]string{}
 	if incrementalCol != "" {
-		wm, err := st.GetWatermark(sc.Name, ti.Name, incrementalCol)
-		if err != nil {
-			return ts, fmt.Errorf("读水位线失败: %w", err)
-		}
-		if wm != "" {
-			since[incrementalCol] = wm
+		if schemaDrifted {
+			if err := st.DeleteWatermark(sc.Name, ti.Name, incrementalCol); err != nil {
+				return ts, fmt.Errorf("清除漂移水位线失败: %w", err)
+			}
+			if _, err := st.DeleteSourceRows(ti.Name, sc.Name); err != nil {
+				return ts, fmt.Errorf("清除漂移旧数据失败: %w", err)
+			}
+		} else {
+			wm, err := st.GetWatermark(sc.Name, ti.Name, incrementalCol)
+			if err != nil {
+				return ts, fmt.Errorf("读水位线失败: %w", err)
+			}
+			if wm != "" {
+				since[incrementalCol] = wm
+			}
 		}
 	}
 

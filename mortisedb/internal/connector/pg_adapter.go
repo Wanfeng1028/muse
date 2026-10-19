@@ -1,4 +1,4 @@
-package pgsource
+package connector
 
 import (
 	"context"
@@ -6,46 +6,46 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wanfeng1028/muse/mortisedb/internal/connector"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/pgsource"
 )
 
-// Adapter bridges a ReadSource into the connector.Source interface.
-type Adapter struct {
+// PGAdapter 把 pgsource.ReadSource 桥接为 connector.Source。
+type PGAdapter struct {
 	name      string
-	src       ReadSource
+	src       pgsource.ReadSource
 	cursorCol string
 	mu        sync.Mutex
-	cursors   map[string]Cursor
-	schemas   map[string]TableSchema
+	cursors   map[string]pgsource.Cursor
+	schemas   map[string]pgsource.TableSchema
 }
 
-// NewAdapter constructs an Adapter; empty cursorCol defaults to updated_at.
-func NewAdapter(name string, src ReadSource, cursorCol string) *Adapter {
+// NewPGAdapter 构造 PGAdapter；cursorCol 为空时默认 updated_at。
+func NewPGAdapter(name string, src pgsource.ReadSource, cursorCol string) *PGAdapter {
 	if cursorCol == "" {
 		cursorCol = "updated_at"
 	}
-	return &Adapter{
+	return &PGAdapter{
 		name:      name,
 		src:       src,
 		cursorCol: cursorCol,
-		cursors:   make(map[string]Cursor),
-		schemas:   make(map[string]TableSchema),
+		cursors:   make(map[string]pgsource.Cursor),
+		schemas:   make(map[string]pgsource.TableSchema),
 	}
 }
 
-// Name returns the adapter name.
-func (a *Adapter) Name() string {
+// Name 返回适配器名称。
+func (a *PGAdapter) Name() string {
 	return a.name
 }
 
-// Tables pulls schemas from the source and converts to connector.TableInfo.
-func (a *Adapter) Tables() ([]connector.TableInfo, error) {
+// Tables 拉取源端表结构并转换为 connector.TableInfo。
+func (a *PGAdapter) Tables() ([]TableInfo, error) {
 	schemas, err := a.src.PullTables(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	out := make([]connector.TableInfo, 0, len(schemas))
+	out := make([]TableInfo, 0, len(schemas))
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	for _, s := range schemas {
@@ -53,7 +53,7 @@ func (a *Adapter) Tables() ([]connector.TableInfo, error) {
 		for _, c := range s.Columns {
 			cols = append(cols, infer.Column{Name: c.Name, Type: c.MortiseType})
 		}
-		out = append(out, connector.TableInfo{
+		out = append(out, TableInfo{
 			Name:        s.Name,
 			SourceTable: s.Name,
 			Primary:     s.PrimaryKey,
@@ -64,8 +64,8 @@ func (a *Adapter) Tables() ([]connector.TableInfo, error) {
 	return out, nil
 }
 
-// Rows pulls incremental rows for table using since map.
-func (a *Adapter) Rows(table string, since map[string]string) ([]Row, error) {
+// Rows 按 since 游标拉取表的增量行。
+func (a *PGAdapter) Rows(table string, since map[string]string) ([]Row, error) {
 	a.mu.Lock()
 	cur := a.cursors[table]
 	if since != nil {
@@ -133,9 +133,9 @@ func (a *Adapter) Rows(table string, since map[string]string) ([]Row, error) {
 	return rows, nil
 }
 
-// Close closes the underlying source.
-func (a *Adapter) Close() error {
+// Close 关闭底层数据源。
+func (a *PGAdapter) Close() error {
 	return a.src.Close()
 }
 
-var _ connector.Source = (*Adapter)(nil)
+var _ Source = (*PGAdapter)(nil)

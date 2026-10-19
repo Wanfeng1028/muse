@@ -186,7 +186,7 @@ func (c *Config) validate() error {
 		seen[s.Name] = true
 
 		switch s.Type {
-		case "sqlite", "csv", "json", "dir":
+		case "sqlite", "csv", "json", "dir", "pg":
 		default:
 			return fmt.Errorf("数据源 %q 的 type 非法: %q", s.Name, s.Type)
 		}
@@ -201,7 +201,7 @@ func (c *Config) validate() error {
 			return fmt.Errorf("数据源 %q 的 incremental 缺少列名", s.Name)
 		}
 
-		if strings.TrimSpace(s.Path) == "" {
+		if s.Type != "pg" && strings.TrimSpace(s.Path) == "" {
 			return fmt.Errorf("数据源 %q 缺少 path", s.Name)
 		}
 
@@ -227,6 +227,28 @@ func (c *Config) validate() error {
 				if strings.TrimSpace(tm.PrimaryKey) == "" {
 					return fmt.Errorf("数据源 %q tables[%d].primary_key 不能为空", s.Name, j)
 				}
+			}
+		case "pg":
+			if strings.TrimSpace(s.Options["conn_str"]) == "" {
+				return fmt.Errorf("数据源 %q (pg) 缺少 options.conn_str", s.Name)
+			}
+			if len(s.Tables) > 0 {
+				for j, tm := range s.Tables {
+					if strings.TrimSpace(tm.Source) == "" {
+						return fmt.Errorf("数据源 %q tables[%d].source 不能为空", s.Name, j)
+					}
+					if strings.TrimSpace(tm.Target) == "" {
+						return fmt.Errorf("数据源 %q tables[%d].target 不能为空", s.Name, j)
+					}
+					if strings.TrimSpace(tm.PrimaryKey) == "" {
+						return fmt.Errorf("数据源 %q tables[%d].primary_key 不能为空", s.Name, j)
+					}
+					if tm.Target != tm.Source {
+						return fmt.Errorf("数据源 %q (pg) 暂不支持表改名: %q -> %q", s.Name, tm.Source, tm.Target)
+					}
+				}
+			} else if strings.TrimSpace(s.Table) == "" || strings.TrimSpace(s.PrimaryKey) == "" {
+				return fmt.Errorf("数据源 %q (pg) 必须填写 tables 或 table+primary_key", s.Name)
 			}
 		}
 	}

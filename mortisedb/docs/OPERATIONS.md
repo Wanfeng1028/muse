@@ -360,6 +360,23 @@ mortisedb query --config /etc/mortise/mortise.yaml \
 
 新增"导入"页：选数据源、选 CSV 文件、填目标表/主键（可选）、填列映射 JSON（可选）、上传。结果展示 inserted/updated/unchanged/error_rows 和错误列表。有挂起冲突时用朱砂色提示，并跳冲突页。
 
+### 7.9 增量列漂移与空文件
+
+#### 增量列漂移（表头改名）
+
+`Incremental: "column:X"` 配置后，若某次同步时列 X 不在当前 CSV 表头里（如 `ts` 改名为 `event_time`），旧水位线已无意义，继续按旧水位线过滤会静默丢掉所有行。此时触发漂移处理：
+
+1. 删除该源、该表、该列的旧水位线；
+2. 删除目标表中 `_m_source` 等于本源的旧行（只删本源的行，不影响其他源的数据）；
+3. 给目标表补上新增的列（`ALTER TABLE ADD COLUMN`，类型按列推断）；
+4. 按全量重载：全部行重新写入，计入 `Inserted`。
+
+注意：若增量列从一开始就不存在于表头，每次同步都会走全量重载（结果正确但非增量）。配置时请确保列名无误。
+
+#### 零字节空文件
+
+零字节 CSV 文件同步成功：返回 1 个表的零统计（`Inserted=0`），不建表、不写水位线、不报错。
+
 ## 8. 冲突 Webhook 通知
 
 
@@ -412,3 +429,11 @@ curl -s http://localhost:8421/metrics | grep 'conflict_webhook_deliveries_total.
 - **1.2.0**：YAML 声明视图自动注册（sync/serve/views sync 幂等注册+清理，_m_views 新增 origin 列）、e2e 编排脚本（scripts/e2e.sh）、docker-compose 一键部署（健康检查+资源限制+日志轮转）。
 - **1.1.0**：新增 `/metrics`、`backup`/`restore` 子命令、优雅关闭补强（HTTP 超时 + WAL checkpoint + 在途等待）、10 万行负载验证。
 - **0.1.0**：首个可用版本（多源同步、冲突策略、视图、调度、Web UI）。
+
+## 10. PostgreSQL 只读源运维
+
+- 只读账号建法指引：见 `docs/PG_READ_SOURCE_DESIGN.md` 第 4 节（三层保障：SQL 白名单/只读事务/只读账号）。
+- 双保险：连接串强制 `default_transaction_read_only=on`，`Open` 时用 `SHOW default_transaction_read_only` 校验，非只读直接报错拒绝启动。
+- 游标列必须由应用侧正确维护（每次写入刷新该列），否则增量拉取漏行；同一时间戳多行靠主键 tiebreak。
+- 表改名暂不支持：`tables[].target` 必须等于 `source`，否则配置校验拒绝。
+- 无真实 PG 环境时：单元测试走 `pgsource.NewFakeSource`；集成测试由 `MORTISE_TEST_PG_DSN` 门控跳过；`scripts/e2e.sh` 不含 pg 步骤。

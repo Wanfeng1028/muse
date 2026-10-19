@@ -27,32 +27,45 @@ func isCJK(r rune) bool {
 }
 
 // Tokenize 将输入字符串转为归一化的词元列表：
-// 小写、按非字母数字与 CJK 逐字切分、去停用词、去重保序。
+// 小写、按非字母数字切分、CJK 采用词典最大正向匹配分词（未命中回退逐字）、
+// 去停用词、去重保序。
 func Tokenize(s string) []string {
 	s = strings.ToLower(s)
 	var tokens []string
 	var buf strings.Builder
+	var cjkBuf strings.Builder
 
-	flush := func() {
+	flushLatin := func() {
 		if buf.Len() > 0 {
 			tokens = append(tokens, buf.String())
 			buf.Reset()
 		}
 	}
 
+	flushCJK := func() {
+		if cjkBuf.Len() > 0 {
+			tokens = append(tokens, SegmentCJK(cjkBuf.String(), cjkDictSet)...)
+			cjkBuf.Reset()
+		}
+	}
+
 	for _, r := range s {
 		switch {
 		case isCJK(r):
-			// CJK 逐字切分
-			flush()
-			tokens = append(tokens, string(r))
+			// 先 flush 拉丁缓冲，再攒入 CJK 缓冲
+			flushLatin()
+			cjkBuf.WriteRune(r)
 		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			// 先 flush CJK 缓冲，再攒入拉丁缓冲
+			flushCJK()
 			buf.WriteRune(r)
 		default:
-			flush()
+			flushLatin()
+			flushCJK()
 		}
 	}
-	flush()
+	flushLatin()
+	flushCJK()
 
 	// 去停用词 + 去重保序
 	seen := make(map[string]struct{}, len(tokens))
@@ -71,6 +84,35 @@ func Tokenize(s string) []string {
 		result = append(result, t)
 	}
 	return result
+}
+
+// isCJKTerm 报告 s 是否为全 CJK 词（非空且每个 rune 都是 CJK）。
+func isCJKTerm(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if !isCJK(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// cjkTermHitCount 返回查询词 term 在词频表 freq 中的命中次数。
+// CJK 查询词除精确匹配外，还统计"包含该词"的文档词（如查"量子"命中"量子力学"），
+// 用于弥补词典最大正向匹配把长词切成一个 token 导致的召回丢失；拉丁词只走精确匹配。
+func cjkTermHitCount(freq map[string]int, term string) int {
+	total := freq[term]
+	if !isCJKTerm(term) {
+		return total
+	}
+	for tok, c := range freq {
+		if tok != term && strings.Contains(tok, term) {
+			total += c
+		}
+	}
+	return total
 }
 
 // Score 计算笔记相对于查询的相关性分数：
@@ -212,12 +254,11 @@ func ScoreDetailed(title string, body string, tags []string, query string) (floa
 		}
 	}
 
-	// AND 语义：每个查询词必须在标题/标签/正文至少一处命中。
+	// AND 语义：每个查询词必须在标题/标签/正文至少一处命中（CJK 词含包含匹配）。
 	for _, term := range terms {
-		_, inTitle := titleFreq[term]
-		_, inTag := tagFreq[term]
-		_, inBody := bodyFreq[term]
-		if !inTitle && !inTag && !inBody {
+		if cjkTermHitCount(titleFreq, term) == 0 &&
+			cjkTermHitCount(tagFreq, term) == 0 &&
+			cjkTermHitCount(bodyFreq, term) == 0 {
 			return 0, nil
 		}
 	}
@@ -227,7 +268,7 @@ func ScoreDetailed(title string, body string, tags []string, query string) (floa
 	seenMatch := make(map[string]struct{}, len(terms)*3)
 
 	for _, term := range terms {
-		if c := titleFreq[term]; c > 0 {
+		if c := cjkTermHitCount(titleFreq, term); c > 0 {
 			titleScore += float64(c) * 3.0
 			key := string(FieldTitle) + "\x00" + term
 			if _, ok := seenMatch[key]; !ok {
@@ -235,7 +276,7 @@ func ScoreDetailed(title string, body string, tags []string, query string) (floa
 				matches = append(matches, Match{Field: FieldTitle, Term: term})
 			}
 		}
-		if c := tagFreq[term]; c > 0 {
+		if c := cjkTermHitCount(tagFreq, term); c > 0 {
 			tagScore += float64(c) * 2.0
 			key := string(FieldTag) + "\x00" + term
 			if _, ok := seenMatch[key]; !ok {
@@ -243,7 +284,7 @@ func ScoreDetailed(title string, body string, tags []string, query string) (floa
 				matches = append(matches, Match{Field: FieldTag, Term: term})
 			}
 		}
-		if c := bodyFreq[term]; c > 0 {
+		if c := cjkTermHitCount(bodyFreq, term); c > 0 {
 			bodyScore += float64(c) * 1.0
 			key := string(FieldBody) + "\x00" + term
 			if _, ok := seenMatch[key]; !ok {
@@ -341,10 +382,10 @@ func RankDetailed(notes []store.Note, query string) []RankedNote {
 
 // orTokenScore 表示单个 token 在一条笔记上的 OR 命中情况。
 type orTokenScore struct {
-	token     string
-	titleHit  bool
-	score     float64
-	matches   []Match
+	token    string
+	titleHit bool
+	score    float64
+	matches  []Match
 }
 
 // orScore 对单条笔记按 OR 语义打分：对每个 token 单独调用 ScoreDetailed，
@@ -425,4 +466,3 @@ func SearchWithFallback(notes []store.Note, query string, limit int) []RankedNot
 	}
 	return out
 }
-

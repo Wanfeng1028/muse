@@ -29,7 +29,7 @@ func TestTokenizeEnglishLowercaseAndStopwords(t *testing.T) {
 
 func TestTokenizeCJKPerCharacter(t *testing.T) {
 	tokens := Tokenize("第二大脑")
-	want := []string{"第", "二", "大", "脑"}
+	want := []string{"第二", "大", "脑"}
 	if len(tokens) != len(want) {
 		t.Fatalf("Tokenize length = %d (%v), want %d (%v)", len(tokens), tokens, len(want), want)
 	}

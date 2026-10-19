@@ -2,6 +2,7 @@
 package connector
 
 import (
+	"context"
 	"database/sql"
 	"encoding/csv"
 	"encoding/json"
@@ -11,11 +12,13 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Wanfeng1028/muse/mortisedb/internal/config"
 	"github.com/Wanfeng1028/muse/mortisedb/internal/infer"
+	"github.com/Wanfeng1028/muse/mortisedb/internal/pgsource"
 
 	_ "modernc.org/sqlite"
 )
@@ -50,9 +53,55 @@ func Open(cfg config.SourceConfig) (Source, error) {
 		return openSQLite(cfg)
 	case "dir":
 		return openDir(cfg)
+	case "pg":
+		return openPG(cfg)
 	default:
 		return nil, fmt.Errorf("不支持的数据源类型: %s", cfg.Type)
 	}
+}
+
+// openPG 打开 PostgreSQL 只读数据源，把 SourceConfig 映射为 pgsource.Config，
+// 再桥接为 connector.Source 返回。
+func openPG(cfg config.SourceConfig) (Source, error) {
+	if strings.TrimSpace(cfg.Options["conn_str"]) == "" {
+		return nil, fmt.Errorf("数据源 %q (pg) 缺少 options.conn_str", cfg.Name)
+	}
+	pcfg := pgsource.Config{
+		ConnStr: cfg.Options["conn_str"],
+	}
+	if len(cfg.Tables) > 0 {
+		tables := make([]string, 0, len(cfg.Tables))
+		for _, tm := range cfg.Tables {
+			tables = append(tables, tm.Source)
+		}
+		pcfg.Tables = tables
+	} else {
+		pcfg.Tables = []string{cfg.Table}
+	}
+
+	cursorCol := ""
+	if v := cfg.Options["cursor_column"]; strings.TrimSpace(v) != "" {
+		cursorCol = v
+	} else if strings.HasPrefix(cfg.Incremental, "column:") {
+		cursorCol = strings.TrimPrefix(cfg.Incremental, "column:")
+	} else {
+		cursorCol = "updated_at"
+	}
+
+	batchSize := 1000
+	if v := cfg.Options["batch_size"]; strings.TrimSpace(v) != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			batchSize = n
+		}
+	}
+	pcfg.CursorColumn = cursorCol
+	pcfg.BatchSize = batchSize
+
+	src, err := pgsource.Open(context.Background(), pcfg)
+	if err != nil {
+		return nil, err
+	}
+	return NewPGAdapter(cfg.Name, src, cursorCol), nil
 }
 
 // ---------------- csv ----------------
@@ -71,6 +120,12 @@ func openCSV(cfg config.SourceConfig) (Source, error) {
 	}
 	if cfg.PrimaryKey == "" {
 		return nil, fmt.Errorf("csv 数据源 %q 缺少 primary_key", cfg.Name)
+	}
+	// 零字节文件：无列可推断，返回空列的 source；sync 侧约定空列直接返回零统计。
+	if fi, statErr := os.Stat(cfg.Path); statErr != nil {
+		return nil, fmt.Errorf("读取 csv 文件状态失败: %w", statErr)
+	} else if fi.Size() == 0 {
+		return &csvSource{cfg: cfg, columns: nil}, nil
 	}
 	delim := cfg.Options["delimiter"]
 	cols, err := infer.InferCSV(cfg.Path, delim)

@@ -8,9 +8,9 @@ import (
 
 func TestScoreDetailed_TitleBeatsTagBeatsBody(t *testing.T) {
 	query := "量子"
-	titleScore, _ := ScoreDetailed("量子力学", "无关内容", nil, query)
+	titleScore, _ := ScoreDetailed("量子物理", "无关内容", nil, query)
 	tagScore, _ := ScoreDetailed("无关标题", "无关内容", []string{"量子"}, query)
-	bodyScore, _ := ScoreDetailed("无关标题", "这是一段关于量子力学的正文", nil, query)
+	bodyScore, _ := ScoreDetailed("无关标题", "这是一段关于量子物理的正文", nil, query)
 
 	if titleScore <= tagScore {
 		t.Fatalf("标题命中分数 %.4f 应大于标签命中分数 %.4f", titleScore, tagScore)
@@ -62,8 +62,8 @@ func TestScoreDetailed_CJKStopWord(t *testing.T) {
 }
 
 func TestScoreDetailed_BodyLengthNormalization(t *testing.T) {
-	short, _ := ScoreDetailed("无关标题", "量子力学", nil, "量子")
-	longBody := "量子力学"
+	short, _ := ScoreDetailed("无关标题", "量子物理", nil, "量子")
+	longBody := "量子物理"
 	for i := 0; i < 2000; i++ {
 		longBody += "填充内容"
 	}
@@ -80,10 +80,9 @@ func TestScoreDetailed_MatchesFields(t *testing.T) {
 	}
 	fieldSet := map[MatchField]bool{}
 	for _, m := range matches {
-		if m.Term != "量" && m.Term != "子" {
-			t.Fatalf("Matches.Term 应为 \"量\" 或 \"子\"，实际 %q", m.Term)
+		if m.Term != "量子" {
+			t.Fatalf("Matches.Term 应为 \"量子\"，实际 %q", m.Term)
 		}
-
 		fieldSet[m.Field] = true
 	}
 	if !fieldSet[FieldTitle] {
@@ -129,19 +128,18 @@ func TestScoreDetailed_EmptyQuery(t *testing.T) {
 }
 
 func TestQueryTerms_FiltersStop(t *testing.T) {
+	// 词典语义：停用字"的/了"被过滤；"量子"在词典 → 整词；
+	// "力学"不在词典 → 逐字切成 "力"、"学"。
 	terms := QueryTerms("的 量子 了 力学")
-	if len(terms) != 4 {
-		t.Fatalf("期望 4 个有效词，实际 %d: %v", len(terms), terms)
+	if len(terms) != 3 {
+		t.Fatalf("期望 3 个有效词，实际 %d: %v", len(terms), terms)
 	}
 
-	if terms[0] != "量" || terms[1] != "子" {
-		// Tokenize 对 CJK 逐字切分，所以"量子"会变成"量"和"子"
-	}
 	got := map[string]bool{}
 	for _, t := range terms {
 		got[t] = true
 	}
-	if !got["量"] || !got["子"] || !got["力"] || !got["学"] {
-		t.Fatalf("期望包含 量/子/力/学，实际 %v", terms)
+	if !got["量子"] || !got["力"] || !got["学"] {
+		t.Fatalf("期望包含 量子/力/学，实际 %v", terms)
 	}
 }

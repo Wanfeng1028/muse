@@ -205,7 +205,9 @@ func (s *Store) EnsureTable(table, pkCol string, cols []infer.Column) error {
 			b.WriteString(" PRIMARY KEY")
 		}
 	}
-	b.WriteString(", ")
+	if len(cols) > 0 {
+		b.WriteString(", ")
+	}
 	b.WriteString(quoteIdent("_m_hash"))
 	b.WriteString(" TEXT, ")
 	b.WriteString(quoteIdent("_m_source"))
@@ -218,6 +220,71 @@ func (s *Store) EnsureTable(table, pkCol string, cols []infer.Column) error {
 		return fmt.Errorf("确保表 %s 存在失败: %w", table, err)
 	}
 	return nil
+}
+
+// AddMissingColumns 给已存在的目标表补上缺失的列（schema 漂移时调用）。
+// 已存在的列跳过；表不存在时返回错误。
+func (s *Store) AddMissingColumns(table string, cols []infer.Column) error {
+	rows, err := s.DB.Query(fmt.Sprintf("PRAGMA table_info(%s)", quoteIdent(table)))
+	if err != nil {
+		return fmt.Errorf("读取表结构失败 %s: %w", table, err)
+	}
+	defer rows.Close()
+	existing := make(map[string]bool)
+	for rows.Next() {
+		var cid int
+		var name, ctype string
+		var notnull int
+		var dflt sql.NullString
+		var pk int
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
+			return fmt.Errorf("解析表结构失败 %s: %w", table, err)
+		}
+		existing[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("读取表结构失败 %s: %w", table, err)
+	}
+	for _, c := range cols {
+		if existing[c.Name] {
+			continue
+		}
+		stmt := fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s",
+			quoteIdent(table), quoteIdent(c.Name), infer.SQLiteType(c.Type))
+		if _, err := s.DB.Exec(stmt); err != nil {
+			return fmt.Errorf("补列失败 %s.%s: %w", table, c.Name, err)
+		}
+	}
+	return nil
+}
+
+// DeleteWatermark 删除指定源/表/列的水位线。
+func (s *Store) DeleteWatermark(source, table, column string) error {
+	_, err := s.DB.Exec(
+		`DELETE FROM "_m_watermarks" WHERE "source"=? AND "table_name"=? AND "column_name"=?`,
+		source, table, column,
+	)
+	if err != nil {
+		return fmt.Errorf("删除水位线失败: %w", err)
+	}
+	return nil
+}
+
+// DeleteSourceRows 删除目标表中某源同步的所有行（schema 漂移做全量重载前调用）。
+// 只删 _m_source 等于 source 的行，不影响其他源的数据。返回删除行数。
+func (s *Store) DeleteSourceRows(table, source string) (int64, error) {
+	res, err := s.DB.Exec(
+		fmt.Sprintf("DELETE FROM %s WHERE \"_m_source\"=?", quoteIdent(table)),
+		source,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("删除源数据失败 %s: %w", table, err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("读取删除行数失败 %s: %w", table, err)
+	}
+	return n, nil
 }
 
 // UpsertRow 插入或更新一行（按主键冲突）。

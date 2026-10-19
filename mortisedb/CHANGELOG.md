@@ -6,6 +6,8 @@
 
 ### 新增
 
+- `type: pg` 接入 SourceConfig 配置体系：`connector.Open` 支持 pg 类型（`options.conn_str` 必填，表声明走 `tables` 或 `table`+`primary_key`，`target` 必须等于 `source`）；`PGAdapter` 从 `internal/pgsource` 搬迁到 `internal/connector` 以破除循环导入；`mortise.yaml` 加 pg 示例（注释掉）；运维/使用文档同步。
+
 - PG 只读源 `internal/pgsource`：`types.go`（PG 类型→内部类型映射）、`guard.go`（只读 SQL 白名单 `(?is)^\s*(select|with)\b` + 分号拦截）、`iface.go`（`ReadSource` 接口：`PullTables`/`PullRows`/`Close`，`Cursor` 支持 `updated_at` + 主键 tiebreak 推进）、`fake.go`（内存假源，单元测试用）、`source.go`（pgx v5.11.0 真实接线：连接串强制 `default_transaction_read_only=on`，查询跑在 `pgx.ReadOnly` 事务里，表名/列名转义防注入）、`adapter.go`（`ReadSource` → `connector.Source` 适配器，游标断点续传，可直接喂给 `sync.Sync`）。
 - 依赖：`github.com/jackc/pgx/v5 v5.11.0`（纯 Go，无 cgo）。
 

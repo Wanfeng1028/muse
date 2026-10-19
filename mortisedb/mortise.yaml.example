@@ -55,6 +55,19 @@ sources:
     table: files
     primary_key: path
 
+  # ⑤ PostgreSQL 只读数据源（默认注释掉，需真实 PG；账号只授 SELECT，见 docs/PG_READ_SOURCE_DESIGN.md 第 4 节）
+  # - name: pg_orders
+  #   type: pg
+  #   incremental: "column:updated_at"
+  #   tables:
+  #     - source: orders
+  #       target: orders
+  #       primary_key: order_id
+  #   options:
+  #     conn_str: "postgres://muse_reader:change_me@127.0.0.1:5432/target_db"
+  #     cursor_column: "updated_at"
+  #     batch_size: "1000"
+
 # 视图定义
 views:
   - name: recent_orders

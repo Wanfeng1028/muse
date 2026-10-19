@@ -38,7 +38,7 @@ func main() {
 	defer src.Close()
 
 	// 第二个参数是数据源在同步层里的名字。
-	conn := pgsource.NewAdapter("pgmain", src, "")
+	conn := connector.NewPGAdapter("pgmain", src, "")
 	_ = conn
 
 	// 接线位置：把 conn 放进 sync.Sync 的 sources 列表即可，
@@ -53,7 +53,34 @@ func main() {
 - `Rows(table, since map[string]string)`
 - `Close()`
 
-`Config.CursorColumn` 为空时按 `updated_at` 处理；`NewAdapter` 的第三个参数是游标列名，传空串时同样走默认值。
+`Config.CursorColumn` 为空时按 `updated_at` 处理；`connector.NewPGAdapter` 的第三个参数是游标列名，传空串时同样走默认值。
+
+### 通过 connector.Open 打开（推荐）
+
+```go
+cfg := config.SourceConfig{
+    Name:        "pg_orders",
+    Type:        "pg",
+    Incremental: "column:updated_at",
+    Tables: []config.TableMap{
+        {Source: "orders", Target: "orders", PrimaryKey: "order_id"},
+    },
+    Options: map[string]string{
+        "conn_str":      "postgres://user:pass@host:5432/db?default_transaction_read_only=on",
+        "cursor_column": "updated_at",
+        "batch_size":    "1000",
+    },
+}
+src, err := connector.Open(cfg)
+```
+
+映射规则：
+
+- `ConnStr = options["conn_str"]`，必填，缺省直接报错。
+- `Tables` 取 `tables` 每项的 `source`；`tables` 为空时取单表 `table`。
+- `CursorColumn` 优先取 `options["cursor_column"]`；否则解析 `incremental` 的 `column:X`；否则默认 `updated_at`。
+- `BatchSize` 解析 `options["batch_size"]` 为正整数，解析失败或缺省时取 `1000`。
+- sync 层零改动，仍按既有 `connector.Source` 契约调用。
 
 ## 3. 只读保障三层
 
@@ -75,6 +102,8 @@ func main() {
 - 本机没有真实 PostgreSQL 时，用 `NewFakeSource` 构造假源来验证上层接线与游标推进逻辑。
 - `source.go` 目前只做了编译验证，依赖 `github.com/jackc/pgx/v5 v5.11.0`。
 - 与真实 PostgreSQL 的联调尚未完成，待补。
+- 真实 PG 集成测试由环境变量 `MORTISE_TEST_PG_DSN` 门控，未设置时 `t.Skipf` 跳过（本沙箱无 PG 环境，诚实声明）。
+- `scripts/e2e.sh` 不包含 pg 步骤（无 PG 环境）。
 
 ## 6. 限制
 
