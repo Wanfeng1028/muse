@@ -58,9 +58,19 @@ public class FinalCutService {
 
     private FinalCutService self;
 
+    private VideoNormalizationService normalizationService;
+
     @Autowired
     public void setSelf(@Lazy FinalCutService self) {
         this.self = self;
+    }
+
+    /**
+     * 规格统一服务（可选注入；单测直接 new 时为 null 则跳过规格统一，保持旧行为）。
+     */
+    @Autowired(required = false)
+    public void setNormalizationService(VideoNormalizationService normalizationService) {
+        this.normalizationService = normalizationService;
     }
 
     /**
@@ -195,10 +205,38 @@ public class FinalCutService {
             // v2.31：单次成片构建内所有 ffmpeg 步骤共享一份退避预算，总睡眠不超过预算。
             AtomicLong retryBudget = new AtomicLong(Math.max(0, ffmpegRetryTotalBudgetMs));
 
+            // 新增：规格统一——各家模型输出的分辨率/帧率/编码各不相同，成片前统一到目标规格。
+            // 放在拼接之前：concat demuxer 要求流参数一致，逐段先统一可避免混合拼接的音画问题；
+            // 字幕仍在统一规格之后烧录，保证字样清晰。单段失败不污染整批，失败段汇总后报错。
+            List<Path> uniformClips = clips;
+            if (normalizationService != null && normalizationService.isEnabled()) {
+                Path normDir = finalsDir.resolve(base + "_norm");
+                List<VideoNormalizationService.SegmentReport> reports =
+                        normalizationService.normalizeAll(clips, normDir);
+                List<Path> okClips = new ArrayList<>();
+                List<String> failedSegs = new ArrayList<>();
+                for (VideoNormalizationService.SegmentReport r : reports) {
+                    if (r.ok()) {
+                        okClips.add(r.output());
+                        if (r.upsampled()) {
+                            log.warn("分镜片段已升采样（非原生 {}x{} → 目标规格）: {}",
+                                    r.sourceWidth(), r.sourceHeight(), r.input().getFileName());
+                        }
+                    } else {
+                        failedSegs.add(r.input().getFileName() + ": " + r.errorMessage());
+                    }
+                }
+                if (!failedSegs.isEmpty()) {
+                    throw new IllegalStateException("分镜规格统一失败: " + String.join("; ", failedSegs));
+                }
+                uniformClips = okClips;
+            }
+
             // 第一步：拼接片段
             Path concatOut = finalsDir.resolve(base + "_concat.mp4");
+            final List<Path> clipsToConcat = uniformClips;
             withFfmpegRetry("concat", () -> {
-                ffmpegService.concatClips(clips, concatOut);
+                ffmpegService.concatClips(clipsToConcat, concatOut);
                 return null;
             }, retryBudget);
 

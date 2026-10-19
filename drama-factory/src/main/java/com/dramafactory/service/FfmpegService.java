@@ -59,6 +59,91 @@ public class FfmpegService {
         return ffmpeg;
     }
 
+    /**
+     * ffprobe 可执行文件路径或命令名。
+     */
+    public String getFfprobe() {
+        return ffprobe;
+    }
+
+    /**
+     * 可执行文件白名单校验（包可见，供单测）。
+     * 防路径注入：只允许本服务配置的 ffmpeg / ffprobe，首元素为其他值一律拒绝。
+     *
+     * @param cmd     命令及参数列表
+     * @param ffmpeg  允许的 ffmpeg
+     * @param ffprobe 允许的 ffprobe
+     */
+    static void validateExecutable(List<String> cmd, String ffmpeg, String ffprobe) {
+        if (cmd == null || cmd.isEmpty()) {
+            throw new FfmpegException("命令为空", false);
+        }
+        String exe = cmd.get(0);
+        if (!exe.equals(ffmpeg) && !exe.equals(ffprobe)) {
+            throw new FfmpegException("拒绝执行未授权的可执行文件: " + exe, false);
+        }
+    }
+
+    /**
+     * 执行外部命令并返回合并后的标准输出（stdout+stderr）。
+     * 仅允许调用本服务配置的 ffmpeg / ffprobe；超时、非零退出码抛 FfmpegException。
+     * 现有 private run() 方法一个字都不许动，本方法是独立实现。
+     *
+     * @param cmd            命令及参数列表（首元素必须为配置的 ffmpeg 或 ffprobe）
+     * @param timeoutSeconds 超时秒数
+     * @return 命令的标准输出文本
+     */
+    public String executeCapture(List<String> cmd, long timeoutSeconds) {
+        validateExecutable(cmd, this.ffmpeg, this.ffprobe);
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.redirectErrorStream(true);
+        Process process;
+        try {
+            process = pb.start();
+        } catch (IOException e) {
+            throw new FfmpegException("无法启动命令: " + String.join(" ", cmd), e, isTransientLaunchFailure(e));
+        }
+        StringBuilder output = new StringBuilder();
+        Thread reader = new Thread(() -> {
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    output.append(line).append('\n');
+                }
+            } catch (IOException e) {
+                log.warn("读取命令输出失败: {}", e.getMessage());
+            }
+        }, "ffmpeg-capture-reader");
+        reader.setDaemon(true);
+        reader.start();
+        boolean finished;
+        try {
+            finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            process.destroyForcibly();
+            throw new FfmpegInterruptedException("等待命令时被中断: " + String.join(" ", cmd), e);
+        }
+        if (!finished) {
+            process.destroyForcibly();
+            throw new FfmpegException("命令超时(" + timeoutSeconds + "s): " + String.join(" ", cmd), true);
+        }
+        try {
+            reader.join(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new FfmpegInterruptedException("等待输出读取时被中断: " + String.join(" ", cmd), e);
+        }
+        if (process.exitValue() != 0) {
+            String out = output.toString();
+            String snippet = out.length() > 500 ? out.substring(0, 500) : out;
+            throw new FfmpegException("命令执行失败(退出码 " + process.exitValue() + "): "
+                    + String.join(" ", cmd) + "\n输出: " + snippet, true);
+        }
+        return output.toString();
+    }
+
 
     /**
      * ffmpeg 执行异常，包装超时、非零退出码等错误。
