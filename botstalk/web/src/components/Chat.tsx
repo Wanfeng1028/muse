@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardList, Gamepad2, LogOut, Settings, Spade } from 'lucide-react';
+import { ClipboardList, Gamepad2, LogOut, Moon, Settings, Spade } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
 import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload } from '../api';
 import MessageList, { ChatItem } from './MessageList';
@@ -10,6 +10,9 @@ import GamePanel from './GamePanel';
 import DoudizhuPanel, { isDoudizhuState } from '../doudizhu/DoudizhuPanel';
 import DoudizhuResult from '../doudizhu/DoudizhuResult';
 import DoudizhuLobby from '../doudizhu/DoudizhuLobby';
+import WerewolfPanel, { isWerewolfState } from '../werewolf/WerewolfPanel';
+import WerewolfResult from '../werewolf/WerewolfResult';
+import WerewolfLobby from '../werewolf/WerewolfLobby';
 
 interface Props {
   nick: string;
@@ -34,6 +37,8 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [showGame, setShowGame] = useState(false);
   const [showDoudizhuLobby, setShowDoudizhuLobby] = useState(false);
   const [doudizhuErr, setDoudizhuErr] = useState<string | null>(null);
+  const [showWerewolfLobby, setShowWerewolfLobby] = useState(false);
+  const [werewolfErr, setWerewolfErr] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameStatePayload | null>(null);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -246,6 +251,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
           <Spade size={16} strokeWidth={2} />
           <span>斗地主</span>
         </button>
+        <button className="btn-ghost" type="button" onClick={() => { setWerewolfErr(null); setShowWerewolfLobby(true); }} title="开一局狼人杀">
+          <Moon size={16} strokeWidth={2} />
+          <span>狼人杀</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={() => setShowTasks((v) => !v)} title="任务追踪">
           <ClipboardList size={16} strokeWidth={2} />
           <span>任务</span>
@@ -326,7 +335,24 @@ export default function Chat({ nick, room, onLeave }: Props) {
         )
       )}
 
-      {showGame && gameState?.game !== 'doudizhu' && (
+      {showGame && gameState?.game === 'werewolf' && (
+        isWerewolfState(gameState.state) && gameState.state.phase === 'finished' ? (
+          <WerewolfResult
+            state={gameState.state}
+            seat={nick}
+            onRematch={() => { setWerewolfErr(null); setShowWerewolfLobby(true); }}
+            onClose={() => setShowGame(false)}
+          />
+        ) : (
+          <WerewolfPanel
+            state={gameState.state}
+            seat={nick}
+            onAction={(action) => socketRef.current?.sendGameAction('werewolf', action, nick)}
+          />
+        )
+      )}
+
+      {showGame && gameState?.game !== 'doudizhu' && gameState?.game !== 'werewolf' && (
         <GamePanel
           gameState={gameState}
           onSendAction={(game, action) => socketRef.current?.sendGameAction(game, action)}
@@ -348,6 +374,24 @@ export default function Chat({ nick, room, onLeave }: Props) {
             }
           }}
           onClose={() => setShowDoudizhuLobby(false)}
+        />
+      )}
+      {showWerewolfLobby && (
+        <WerewolfLobby
+          defaultSeat={nick}
+          err={werewolfErr}
+          onStart={async (seats) => {
+            try {
+              await createGameSession(room, 'werewolf', seats);
+              socketRef.current?.sendGameAction('werewolf', { kind: 'start', seats }, nick);
+              setShowWerewolfLobby(false);
+              setWerewolfErr(null);
+              setShowGame(true);
+            } catch (e) {
+              setWerewolfErr(e instanceof Error ? e.message : '开局失败');
+            }
+          }}
+          onClose={() => setShowWerewolfLobby(false)}
         />
       )}
       {showTasks && (

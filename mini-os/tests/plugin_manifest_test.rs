@@ -79,7 +79,11 @@ fn register_invalid_version_rejected() {
     let mut m = manifest("ver-test");
     m.version = "1.0".to_string();
     let err = reg.register(m).unwrap_err();
-    assert!(err.contains("semver"), "错误信息应提到 semver，实际：{}", err);
+    assert!(
+        err.contains("semver"),
+        "错误信息应提到 semver，实际：{}",
+        err
+    );
     assert_eq!(reg.list().len(), 0);
 }
 
@@ -144,10 +148,7 @@ fn register_invalid_permission_rejected() {
 fn register_all_allowed_permissions_ok() {
     let reg = PluginRegistry::new();
     let mut m = manifest("perm-all");
-    m.permissions = ALLOWED_PERMISSIONS
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+    m.permissions = ALLOWED_PERMISSIONS.iter().map(|s| s.to_string()).collect();
     assert!(reg.register(m).is_ok(), "三种白名单权限应全部接受");
     let list = reg.list();
     assert_eq!(list.len(), 1);
@@ -203,7 +204,9 @@ fn concurrent_register_same_id_only_one_wins() {
     let mut handles = Vec::new();
     for _ in 0..8 {
         let reg = Arc::clone(&reg);
-        handles.push(thread::spawn(move || reg.register(manifest("race")).is_ok()));
+        handles.push(thread::spawn(move || {
+            reg.register(manifest("race")).is_ok()
+        }));
     }
     let mut ok_count = 0;
     for h in handles {

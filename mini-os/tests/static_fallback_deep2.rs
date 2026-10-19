@@ -10,7 +10,12 @@ fn unique_dir(tag: &str) -> std::path::PathBuf {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    std::env::temp_dir().join(format!("minios-static-deep2-{}-{}-{}", tag, std::process::id(), nanos))
+    std::env::temp_dir().join(format!(
+        "minios-static-deep2-{}-{}-{}",
+        tag,
+        std::process::id(),
+        nanos
+    ))
 }
 
 fn setup_static_dir(tag: &str, files: &[(&str, &str)]) -> std::path::PathBuf {
@@ -50,7 +55,11 @@ async fn register_cookie(app: &Router, username: &str) -> String {
     set_cookie.split(';').next().unwrap().to_string()
 }
 
-async fn get_with_cookie(app: &Router, uri: &str, cookie: Option<&str>) -> axum::response::Response {
+async fn get_with_cookie(
+    app: &Router,
+    uri: &str,
+    cookie: Option<&str>,
+) -> axum::response::Response {
     let mut builder = Request::builder().method(Method::GET).uri(uri);
     if let Some(c) = cookie {
         builder = builder.header(header::COOKIE, c);
@@ -61,7 +70,10 @@ async fn get_with_cookie(app: &Router, uri: &str, cookie: Option<&str>) -> axum:
 
 #[tokio::test]
 async fn unknown_route_with_auth_serves_index_fallback() {
-    let dir = setup_static_dir("fallback-auth", &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")]);
+    let dir = setup_static_dir(
+        "fallback-auth",
+        &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")],
+    );
     let state: Arc<mini_os::AppState> = mini_os::init_state(":memory:", dir.to_str().unwrap());
     let app = mini_os::build_app(state);
     let cookie = register_cookie(&app, "fallbackuser1").await;
@@ -76,7 +88,9 @@ async fn unknown_route_with_auth_serves_index_fallback() {
         .unwrap()
         .to_string();
     assert!(ct.contains("text/html"), "content-type was {}", ct);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let body = String::from_utf8_lossy(&bytes);
     assert!(body.contains("MINI-OS-SPA-MARKER"), "body was {}", body);
 
@@ -89,13 +103,18 @@ async fn unknown_route_bypasses_auth_serves_index() {
     // build_app 中先挂 route_layer(auth/rbac/metrics)，再挂 fallback_service(serve_dir)，
     // 因此 fallback 不在鉴权中间件之后，未知路径直接由 ServeDir 处理，
     // 无 cookie 也会返回 200 的 index.html —— 这是 SPA 的常规设计（前端页面公开、API 受保护）。
-    let dir = setup_static_dir("fallback-noauth", &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")]);
+    let dir = setup_static_dir(
+        "fallback-noauth",
+        &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")],
+    );
     let state: Arc<mini_os::AppState> = mini_os::init_state(":memory:", dir.to_str().unwrap());
     let app = mini_os::build_app(state);
 
     let resp = get_with_cookie(&app, "/no/such/page", None).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let body = String::from_utf8_lossy(&bytes);
     assert!(body.contains("MINI-OS-SPA-MARKER"), "body was {}", body);
 
@@ -104,14 +123,19 @@ async fn unknown_route_bypasses_auth_serves_index() {
 
 #[tokio::test]
 async fn root_serves_index() {
-    let dir = setup_static_dir("root-index", &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")]);
+    let dir = setup_static_dir(
+        "root-index",
+        &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")],
+    );
     let state: Arc<mini_os::AppState> = mini_os::init_state(":memory:", dir.to_str().unwrap());
     let app = mini_os::build_app(state);
     let cookie = register_cookie(&app, "rootuser1").await;
 
     let resp = get_with_cookie(&app, "/", Some(&cookie)).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let body = String::from_utf8_lossy(&bytes);
     assert!(body.contains("MINI-OS-SPA-MARKER"), "body was {}", body);
 
@@ -141,7 +165,9 @@ async fn static_js_served_with_javascript_content_type() {
         .unwrap()
         .to_string();
     assert!(ct.contains("javascript"), "content-type was {}", ct);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     assert_eq!(bytes.as_ref(), b"console.log(1)");
 
     cleanup(&dir);
@@ -163,14 +189,19 @@ async fn missing_static_dir_returns_404() {
 
 #[tokio::test]
 async fn unknown_api_route_falls_back_to_index() {
-    let dir = setup_static_dir("api-fallback", &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")]);
+    let dir = setup_static_dir(
+        "api-fallback",
+        &[("index.html", "<html>MINI-OS-SPA-MARKER</html>")],
+    );
     let state: Arc<mini_os::AppState> = mini_os::init_state(":memory:", dir.to_str().unwrap());
     let app = mini_os::build_app(state);
     let cookie = register_cookie(&app, "apiuser1").await;
 
     let resp = get_with_cookie(&app, "/api/nope", Some(&cookie)).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let body = String::from_utf8_lossy(&bytes);
     assert!(body.contains("MINI-OS-SPA-MARKER"), "body was {}", body);
 

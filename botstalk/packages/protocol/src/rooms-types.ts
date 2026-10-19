@@ -28,6 +28,7 @@ export const PLAYROOM_GAMES: readonly string[] = [
   "draw_and_guess",
   "ai_roast_arena",
   "doudizhu",
+  "werewolf",
 ];
 
 export function gamesForRoomType(roomType: RoomType): readonly string[] {

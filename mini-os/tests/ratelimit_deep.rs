@@ -176,7 +176,9 @@ fn ip_and_account_dimensions_both_limit() {
     let now = Instant::now();
 
     assert!(
-        limiter.try_acquire_at("10.0.0.1", Some("alice"), now).is_ok(),
+        limiter
+            .try_acquire_at("10.0.0.1", Some("alice"), now)
+            .is_ok(),
         "第 1 次 (alice) 应放行"
     );
     assert!(
@@ -186,11 +188,7 @@ fn ip_and_account_dimensions_both_limit() {
 
     // IP 桶已空，即便账号 bob 还有余量，也应被 IP 维度拒绝。
     let r = limiter.try_acquire_at("10.0.0.1", Some("bob"), now);
-    assert!(
-        r.is_err(),
-        "IP 桶空时，换账号也不应放行，实际: {:?}",
-        r
-    );
+    assert!(r.is_err(), "IP 桶空时，换账号也不应放行，实际: {:?}", r);
 }
 
 #[test]

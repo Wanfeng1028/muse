@@ -54,6 +54,8 @@ pub enum Permission {
     ShareManage,
     /// 用户管理
     UsersManage,
+    /// 插件管理
+    PluginManage,
 }
 
 impl Permission {
@@ -65,6 +67,7 @@ impl Permission {
             Permission::ShareCreate => "分享创建",
             Permission::ShareManage => "分享管理",
             Permission::UsersManage => "用户管理",
+            Permission::PluginManage => "插件管理",
         }
     }
 }
@@ -82,6 +85,7 @@ pub fn has_permission(role: &Role, perm: &Permission) -> bool {
                 | Permission::ShareCreate
                 | Permission::ShareManage
                 | Permission::UsersManage
+                | Permission::PluginManage
         ),
         Role::Editor => matches!(
             perm,
@@ -89,6 +93,7 @@ pub fn has_permission(role: &Role, perm: &Permission) -> bool {
                 | Permission::FsWrite
                 | Permission::ShareCreate
                 | Permission::ShareManage
+                | Permission::PluginManage
         ),
         Role::Viewer => matches!(perm, Permission::FsRead),
     }
@@ -111,12 +116,13 @@ pub fn require(role: &Role, perm: &Permission) -> Result<(), String> {
 mod tests {
     use super::*;
 
-    const ALL_PERMISSIONS: [Permission; 5] = [
+    const ALL_PERMISSIONS: [Permission; 6] = [
         Permission::FsRead,
         Permission::FsWrite,
         Permission::ShareCreate,
         Permission::ShareManage,
         Permission::UsersManage,
+        Permission::PluginManage,
     ];
 
     #[test]

@@ -82,7 +82,8 @@ fn put_json(uri: &str, cookie: Option<&str>, body: &Value) -> Request<Body> {
     if let Some(c) = cookie {
         b = b.header(header::COOKIE, c);
     }
-    b.body(Body::from(serde_json::to_vec(body).unwrap())).unwrap()
+    b.body(Body::from(serde_json::to_vec(body).unwrap()))
+        .unwrap()
 }
 
 fn post_json(uri: &str, cookie: Option<&str>, body: &Value) -> Request<Body> {
@@ -93,7 +94,8 @@ fn post_json(uri: &str, cookie: Option<&str>, body: &Value) -> Request<Body> {
     if let Some(c) = cookie {
         b = b.header(header::COOKIE, c);
     }
-    b.body(Body::from(serde_json::to_vec(body).unwrap())).unwrap()
+    b.body(Body::from(serde_json::to_vec(body).unwrap()))
+        .unwrap()
 }
 
 #[tokio::test]
@@ -194,7 +196,8 @@ async fn unknown_role_string_fails_closed_to_viewer() {
         // 无法产生非法角色。这里用 PRAGMA ignore_check_constraints 临时关闭约束来
         // 模拟"脏数据"场景，以覆盖 rbac_middleware 中 unwrap_or(Viewer) 的 fail-closed 分支。
         // PRAGMA 按连接生效，state.db 锁住的是同一个 Connection，中间件读到的就是这个连接。
-        conn.execute("PRAGMA ignore_check_constraints=ON", []).unwrap();
+        conn.execute("PRAGMA ignore_check_constraints=ON", [])
+            .unwrap();
         conn.execute(
             "UPDATE users SET role = 'superuser' WHERE id = ?1",
             rusqlite::params![user_id],

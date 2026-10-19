@@ -36,6 +36,23 @@ pub struct AppState {
     pub share_limiter: Arc<crate::ratelimit::ShareReadLimiter>,
     /// 分享读限流总开关，来自 MINIOS_SHARE_RATE_LIMIT_ENABLED
     pub share_ratelimit_enabled: bool,
+    /// 插件数据目录，插件安装到 <data_dir>/plugins/<id>/
+    pub data_dir: String,
+}
+
+/// 解析插件数据目录：MINIOS_DATA_DIR 优先，否则 database_path 的父目录，否则 "data"。
+pub fn resolve_data_dir(database_path: &str) -> String {
+    if let Ok(dir) = std::env::var("MINIOS_DATA_DIR") {
+        if !dir.trim().is_empty() {
+            return dir;
+        }
+    }
+    if let Some(parent) = std::path::Path::new(database_path).parent() {
+        if !parent.as_os_str().is_empty() {
+            return parent.to_string_lossy().to_string();
+        }
+    }
+    "data".to_string()
 }
 
 /// 初始化全局状态（完整参数版，含分享读取限流配额与总开关）
@@ -74,6 +91,7 @@ pub fn init_state_with_full(
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
         share_limiter: Arc::new(crate::ratelimit::ShareReadLimiter::new(&share_limiter_cfg)),
         share_ratelimit_enabled,
+        data_dir: resolve_data_dir(database_path),
     })
 }
 
@@ -212,6 +230,10 @@ fn required_permission(
         | (&Method::PUT, "/api/fs/:id")
         | (&Method::DELETE, "/api/fs/:id")
         | (&Method::POST, "/api/files/upload") => Some(Permission::FsWrite),
+        (&Method::GET, "/api/plugins") => Some(Permission::FsRead),
+        (&Method::POST, "/api/plugins/preview")
+        | (&Method::POST, "/api/plugins/install")
+        | (&Method::DELETE, "/api/plugins/:id") => Some(Permission::PluginManage),
         (&Method::POST, "/api/shares") => Some(Permission::ShareCreate),
         (&Method::GET, "/api/shares") | (&Method::DELETE, "/api/shares/:id") => {
             Some(Permission::ShareManage)
@@ -314,11 +336,16 @@ pub fn build_app(state: Arc<AppState>) -> Router {
         .route("/api/auth/setup-needed", get(handlers::setup_needed))
         .route("/api/users", get(handlers::list_users))
         .route("/api/users/:id/role", put(handlers::set_user_role))
+        .route("/api/plugins", get(handlers::list_plugins))
+        .route("/api/plugins/preview", post(handlers::preview_plugin))
+        .route("/api/plugins/install", post(handlers::install_plugin))
+        .route("/api/plugins/:id", delete(handlers::uninstall_plugin))
         .route(
             "/api/shares",
             post(handlers::create_share).get(handlers::list_shares),
         )
         .route("/api/shares/:id", delete(handlers::delete_share))
+        .route("/api/shares/token/:token", delete(handlers::revoke_share))
         .route(
             "/api/s/:token",
             get(handlers::get_share).route_layer(axum::middleware::from_fn_with_state(

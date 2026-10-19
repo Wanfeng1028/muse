@@ -126,7 +126,9 @@ fn run_migrations_is_idempotent_on_repeat_calls() {
 
     // 断言点 2：总行数就是五个版本，没有多余记录。
     let total: i64 = conn
-        .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row.get(0))
+        .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+            row.get(0)
+        })
         .expect("count all migrations");
     assert_eq!(total, 5);
 }
@@ -140,7 +142,10 @@ fn migration_002_adds_blob_and_mime_columns() {
     let cols = vfs_columns(&conn);
 
     // 断言点 1：两个新列都在。
-    assert!(cols.iter().any(|c| c == "content_blob"), "content_blob 应存在");
+    assert!(
+        cols.iter().any(|c| c == "content_blob"),
+        "content_blob 应存在"
+    );
     assert!(cols.iter().any(|c| c == "mime_type"), "mime_type 应存在");
 
     // 断言点 2：原有列没被破坏。
@@ -185,7 +190,10 @@ fn migration_003_rebuilds_settings_with_composite_primary_key() {
     let cols = settings_columns(&conn);
 
     // 断言点 1：settings 现在有 user_id / key / value 三列。
-    assert!(cols.iter().any(|c| c == "user_id"), "settings.user_id 应存在");
+    assert!(
+        cols.iter().any(|c| c == "user_id"),
+        "settings.user_id 应存在"
+    );
     assert!(cols.iter().any(|c| c == "key"));
     assert!(cols.iter().any(|c| c == "value"));
 
@@ -418,7 +426,9 @@ fn concurrent_run_migrations_applies_each_version_once() {
 
     // 断言点 2：总记录数就是五个版本。
     let total: i64 = guard
-        .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row.get(0))
+        .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+            row.get(0)
+        })
         .expect("count all migrations");
     assert_eq!(total, 5);
 }

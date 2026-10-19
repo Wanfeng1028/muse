@@ -3,6 +3,7 @@ use std::env;
 /// 应用配置
 #[derive(Debug, Clone)]
 pub struct Config {
+    pub data_dir: String,
     pub port: u16,
     pub database_path: String,
     pub static_dir: String,
@@ -24,6 +25,7 @@ pub struct Config {
 impl Config {
     /// 从环境变量读取配置，缺失或解析失败时使用默认值
     pub fn from_env() -> Self {
+        let data_dir = compute_data_dir();
         let port = env::var("PORT")
             .ok()
             .and_then(|v| v.parse::<u16>().ok())
@@ -70,6 +72,7 @@ impl Config {
         };
 
         Config {
+            data_dir,
             port,
             database_path,
             static_dir,
@@ -83,4 +86,20 @@ impl Config {
             share_ratelimit_enabled: share_limit.enabled,
         }
     }
+}
+
+fn compute_data_dir() -> String {
+    if let Ok(dir) = std::env::var("MINIOS_DATA_DIR") {
+        if !dir.trim().is_empty() {
+            return dir;
+        }
+    }
+    if let Ok(db) = std::env::var("DATABASE_PATH") {
+        if let Some(parent) = std::path::Path::new(&db).parent() {
+            if !parent.as_os_str().is_empty() {
+                return parent.to_string_lossy().to_string();
+            }
+        }
+    }
+    "data".to_string()
 }

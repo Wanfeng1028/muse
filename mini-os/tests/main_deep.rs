@@ -169,7 +169,14 @@ fn parse_args_eq_form_and_positional() {
 // ===== 用例 2：--k v 形式解析，且开关无值 =====
 #[test]
 fn parse_args_space_form_and_flag() {
-    let raw = s(&["restore", "--db", "/tmp/x.db", "--backup", "/tmp/y.bak", "--force"]);
+    let raw = s(&[
+        "restore",
+        "--db",
+        "/tmp/x.db",
+        "--backup",
+        "/tmp/y.bak",
+        "--force",
+    ]);
     let a = parse_args(&raw);
 
     assert_eq!(a.get("db"), Some("/tmp/x.db"));
@@ -216,11 +223,8 @@ fn cmd_backup_bad_out_dir_returns_three() {
     let dir = unique_dir("backup_bad");
     let src = dir.join("src.db");
     let conn = db::open_db(src.to_str().unwrap()).expect("open_db 失败");
-    conn.execute(
-        "CREATE TABLE t(id INTEGER PRIMARY KEY)",
-        [],
-    )
-    .expect("建表失败");
+    conn.execute("CREATE TABLE t(id INTEGER PRIMARY KEY)", [])
+        .expect("建表失败");
     drop(conn);
 
     let bad_out = dir.join("no_such_dir").join("out.bak");
@@ -402,7 +406,11 @@ fn concurrent_useradd_same_username_only_one_wins() {
 
     let check = db::open_db(&db_arc).expect("重开库失败");
     let n: i64 = check
-        .query_row("SELECT COUNT(*) FROM users WHERE username=?1", ["晚风"], |r| r.get(0))
+        .query_row(
+            "SELECT COUNT(*) FROM users WHERE username=?1",
+            ["晚风"],
+            |r| r.get(0),
+        )
         .expect("查询失败");
     assert_eq!(n, 1);
 }

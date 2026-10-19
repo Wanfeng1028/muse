@@ -5,11 +5,12 @@ import type { ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
-import { getRoomHistory, listPresence, listTasks, getTask, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
+import { getRoomHistory, listPresenceForRoom, listTasks, getTask, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
 import type { TaskStatus } from "./db.js";
 import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
 import { DoudizhuGameEngine } from "./doudizhu-game.js";
+import { WerewolfGameEngine } from "./werewolf-game.js";
 import { routeMessage, routeStream } from "./router.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
@@ -156,7 +157,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         res.end('{"error":"room required"}');
         return;
       }
-      const rows = listPresence(db);
+      const rows = listPresenceForRoom(db, room);
       const members = sortPresence(rows).map((r) => ({
         adapter_id: r.adapter_id,
         status: r.status,
@@ -179,7 +180,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         res.end('{"error":"room required"}');
         return;
       }
-      const rows = sortPresence(listPresence(db));
+      const rows = sortPresence(listPresenceForRoom(db, room));
       let totalIn = 0;
       let totalOut = 0;
       const adapters = rows.map((r) => {
@@ -616,6 +617,8 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
   const hub = new Hub(db);
   // 把已经写好的斗地主引擎挂到网关，游戏 id 用 doudizhu
   hub.registerGameEngine("doudizhu", new DoudizhuGameEngine());
+  // 狼人杀引擎
+  hub.registerGameEngine("werewolf", new WerewolfGameEngine());
 
   hub.onMessage = (env: Envelope<MessagePayload>) => {
     routeMessage(hub, env, db);

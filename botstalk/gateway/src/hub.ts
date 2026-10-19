@@ -179,7 +179,7 @@ export class Hub {
           // ignore
         }
         this.conns.delete(hello.adapter_id);
-        store.upsertPresence(this.db, { adapter_id: hello.adapter_id, status: "offline", last_seen_ms: Date.now(), usage_in: existing.usageIn, usage_out: existing.usageOut });
+        store.upsertPresence(this.db, { adapter_id: hello.adapter_id, status: "offline", last_seen_ms: Date.now(), usage_in: existing.usageIn, usage_out: existing.usageOut, room: existing.room });
         this.broadcastPresence(existing.room, hello.adapter_id, "offline");
       }
 
@@ -202,7 +202,7 @@ export class Hub {
       conn.seqTracker.seen(env.sender, env.seq);
       conn.maxSeenSeq = env.seq;
 
-      store.upsertPresence(this.db, { adapter_id: hello.adapter_id, status: "online", last_seen_ms: Date.now(), usage_in: 0, usage_out: 0 });
+      store.upsertPresence(this.db, { adapter_id: hello.adapter_id, status: "online", last_seen_ms: Date.now(), usage_in: 0, usage_out: 0, room: env.room });
       this.broadcastPresence(env.room, hello.adapter_id, "online", false);
 
       // last_seen_seq 补发：v1.1 起 last_seen_seq 语义为客户端已见最大 gseq，
@@ -229,7 +229,7 @@ export class Hub {
         if (cur === conn) {
           this.conns.delete(conn.adapterId);
           try {
-            store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: "offline", last_seen_ms: Date.now(), usage_in: conn.usageIn, usage_out: conn.usageOut });
+            store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: "offline", last_seen_ms: Date.now(), usage_in: conn.usageIn, usage_out: conn.usageOut, room: conn.room });
           } catch {
             // DB 可能已在关停中关闭；presence 丢失可接受，不抛未捕获异常。
           }
@@ -296,7 +296,7 @@ export class Hub {
           conn.usageIn = p.usage.input_tokens;
           conn.usageOut = p.usage.output_tokens;
         }
-        store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: p.status, last_seen_ms: now, usage_in: conn.usageIn, usage_out: conn.usageOut });
+        store.upsertPresence(this.db, { adapter_id: conn.adapterId, status: p.status, last_seen_ms: now, usage_in: conn.usageIn, usage_out: conn.usageOut, room: conn.room });
         this.broadcastPresence(conn.room, conn.adapterId, p.status);
         break;
       }
@@ -465,7 +465,7 @@ export class Hub {
   sweep(nowMs: number = Date.now()): void {
     for (const [id, conn] of this.conns) {
       if (nowMs - conn.lastFrameAtMs > OFFLINE_AFTER_MS) {
-        store.upsertPresence(this.db, { adapter_id: id, status: "offline", last_seen_ms: nowMs, usage_in: conn.usageIn, usage_out: conn.usageOut });
+        store.upsertPresence(this.db, { adapter_id: id, status: "offline", last_seen_ms: nowMs, usage_in: conn.usageIn, usage_out: conn.usageOut, room: conn.room });
         try {
           conn.ws.terminate();
         } catch {

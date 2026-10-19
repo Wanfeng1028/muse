@@ -237,6 +237,10 @@ pub fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
         apply_005(conn)?;
     }
 
+    if !is_applied(conn, "006")? {
+        apply_006(conn)?;
+    }
+
     Ok(())
 }
 
@@ -276,6 +280,32 @@ fn apply_005(conn: &Connection) -> rusqlite::Result<()> {
     )?;
 
     tx.execute("INSERT INTO schema_migrations(version) VALUES ('005')", [])?;
+    tx.commit()?;
+    Ok(())
+}
+
+/// 迁移 006：shares 增加 expires_at 列（INTEGER NULL，NULL 表示永不过期）。
+/// 幂等写法与 apply_004 一致：PRAGMA table_info 判列存在 + ALTER TABLE ADD COLUMN。
+fn apply_006(conn: &Connection) -> rusqlite::Result<()> {
+    let tx = conn.unchecked_transaction()?;
+
+    let mut has_expires_at = false;
+    {
+        let mut stmt = tx.prepare("PRAGMA table_info(shares)")?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == "expires_at" {
+                has_expires_at = true;
+            }
+        }
+    }
+
+    if !has_expires_at {
+        tx.execute("ALTER TABLE shares ADD COLUMN expires_at INTEGER NULL", [])?;
+    }
+
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('006')", [])?;
     tx.commit()?;
     Ok(())
 }
@@ -339,7 +369,8 @@ mod tests {
                 "002".to_string(),
                 "003".to_string(),
                 "004".to_string(),
-                "005".to_string()
+                "005".to_string(),
+                "006".to_string()
             ]
         );
 
@@ -348,7 +379,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 5);
+        assert_eq!(count, 6);
 
         let blob_cols: i64 = conn
 
@@ -445,7 +476,8 @@ mod tests {
                 "002".to_string(),
                 "003".to_string(),
                 "004".to_string(),
-                "005".to_string()
+                "005".to_string(),
+                "006".to_string()
             ]
         );
         let count: i64 = conn
@@ -453,7 +485,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 5);
+        assert_eq!(count, 6);
     }
 
     #[test]
@@ -530,7 +562,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 5);
+        assert_eq!(count, 6);
     }
 
     #[test]
@@ -599,6 +631,6 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 5);
+        assert_eq!(count, 6);
     }
 }

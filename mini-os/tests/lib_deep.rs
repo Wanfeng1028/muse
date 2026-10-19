@@ -13,14 +13,12 @@
 
 use std::sync::Arc;
 
-
-
 // 从 lib crate 顶层引入（lib.rs 中 pub mod 与 pub fn 均为 crate 根路径）
-use mini_os::{init_state, init_state_with, init_state_with_full, AppState};
-use mini_os::rbac::{Permission, Role};
 use mini_os::ratelimit::{
     LoginLimitConfig, RateLimiter, ShareReadKey, ShareReadLimitConfig, ShareReadLimiter,
 };
+use mini_os::rbac::{Permission, Role};
+use mini_os::{init_state, init_state_with, init_state_with_full, AppState};
 
 /// 每个测试用独立临时目录，避免 sqlite 文件互相污染。
 fn tmp_dir(tag: &str) -> std::path::PathBuf {
@@ -71,17 +69,7 @@ fn init_state_with_full_sets_every_field_from_arguments() {
     let dbfile = db_path(&dir);
     let static_dir = static_path(&dir);
 
-    let state = init_state_with_full(
-        &dbfile,
-        &static_dir,
-        1234567,
-        7200,
-        3.5,
-        7,
-        9.5,
-        11,
-        true,
-    );
+    let state = init_state_with_full(&dbfile, &static_dir, 1234567, 7200, 3.5, 7, 9.5, 11, true);
 
     assert_eq!(state.static_dir, static_dir);
     assert_eq!(state.max_upload_bytes, 1234567);
@@ -232,7 +220,6 @@ async fn public_paths_bypass_auth_while_private_paths_require_login() {
 // 用例 5 已整体删除：required_permission 是 src/lib.rs 私有函数，外部测试不可直调。
 // 权限矩阵行为由 rbac 中间件的 HTTP 层测试覆盖。
 
-
 // ---------------------------------------------------------------------------
 // 用例 6：RBAC 角色解析——非法角色 fail-closed 到 Viewer（错误传播边界）
 // ---------------------------------------------------------------------------
@@ -262,7 +249,10 @@ fn role_parse_invalid_falls_back_to_viewer_and_require_rejects() {
 #[test]
 fn login_rate_limiter_denies_after_burst_exhausted() {
     // rps 用极小值（0.0 会在 Duration 换算时 panic）；测试期间不会补充 token
-    let cfg = LoginLimitConfig { rps: 0.000001, burst: 3 };
+    let cfg = LoginLimitConfig {
+        rps: 0.000001,
+        burst: 3,
+    };
     let limiter = RateLimiter::new(&cfg);
 
     // 前 3 次放行

@@ -46,7 +46,10 @@ fn manifest_json(id: &str, name: &str, version: &str, entry: &str) -> String {
 
 fn write_basic_plugin(data_dir: &Path) -> PathBuf {
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("hello", "Hello", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("hello", "Hello", "1.0.0", "main.js").as_bytes(),
+        ),
         ("main.js", b"console.log('hi');"),
     ]);
     let p = data_dir.join("hello.zip");
@@ -58,7 +61,10 @@ fn write_basic_plugin(data_dir: &Path) -> PathBuf {
 fn install_valid_zip_creates_dir_and_manifest() {
     let data = tmp_dir("valid");
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("hello", "Hello", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("hello", "Hello", "1.0.0", "main.js").as_bytes(),
+        ),
         ("main.js", b"console.log('hi');"),
         ("assets/a.txt", b"aaa"),
     ]);
@@ -83,11 +89,18 @@ fn install_valid_zip_creates_dir_and_manifest() {
 fn install_rejects_path_traversal() {
     let data = tmp_dir("traversal");
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("evil", "Evil", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("evil", "Evil", "1.0.0", "main.js").as_bytes(),
+        ),
         ("../escape.txt", b"pwned"),
     ]);
     let err = install_from_zip(&zip, &data).expect_err("含 .. 的 zip 必须被拒");
-    assert!(err.contains("路径穿越"), "错误信息应提到路径穿越，实际：{}", err);
+    assert!(
+        err.contains("路径穿越"),
+        "错误信息应提到路径穿越，实际：{}",
+        err
+    );
     assert!(!data.join("plugins").join("evil").exists());
     assert!(!data.join("escape.txt").exists());
 }
@@ -96,11 +109,18 @@ fn install_rejects_path_traversal() {
 fn install_rejects_absolute_path_entry() {
     let data = tmp_dir("abs");
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("abs", "Abs", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("abs", "Abs", "1.0.0", "main.js").as_bytes(),
+        ),
         ("/etc/passwd", b"x"),
     ]);
     let err = install_from_zip(&zip, &data).expect_err("绝对路径必须被拒");
-    assert!(err.contains("绝对路径"), "错误信息应提到绝对路径，实际：{}", err);
+    assert!(
+        err.contains("绝对路径"),
+        "错误信息应提到绝对路径，实际：{}",
+        err
+    );
     assert!(!data.join("plugins").join("abs").exists());
 }
 
@@ -110,7 +130,10 @@ fn install_rejects_oversize_uncompressed() {
     // 用高度可压缩的内容，让解压后 > 10MB
     let big = vec![0u8; (MAX_TOTAL_UNCOMPRESSED as usize) + 1024];
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("big", "Big", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("big", "Big", "1.0.0", "main.js").as_bytes(),
+        ),
         ("main.js", &big),
     ]);
     let err = install_from_zip(&zip, &data).expect_err("超 10MB 必须被拒");
@@ -149,7 +172,11 @@ fn install_rejects_missing_manifest() {
     let data = tmp_dir("nomanifest");
     let zip = make_zip(&[("main.js", b"console.log(1);")]);
     let err = install_from_zip(&zip, &data).expect_err("缺 plugin.json 必须被拒");
-    assert!(err.contains("plugin.json"), "错误信息应提到 plugin.json，实际：{}", err);
+    assert!(
+        err.contains("plugin.json"),
+        "错误信息应提到 plugin.json，实际：{}",
+        err
+    );
     let plugins = data.join("plugins");
     let count = if plugins.exists() {
         fs::read_dir(&plugins).unwrap().count()
@@ -162,12 +189,13 @@ fn install_rejects_missing_manifest() {
 #[test]
 fn install_rejects_invalid_manifest_json() {
     let data = tmp_dir("badjson");
-    let zip = make_zip(&[
-        ("plugin.json", b"{ not valid json "),
-        ("main.js", b"x"),
-    ]);
+    let zip = make_zip(&[("plugin.json", b"{ not valid json "), ("main.js", b"x")]);
     let err = install_from_zip(&zip, &data).expect_err("非法 json 必须被拒");
-    assert!(err.contains("plugin.json"), "错误信息应提到 plugin.json，实际：{}", err);
+    assert!(
+        err.contains("plugin.json"),
+        "错误信息应提到 plugin.json，实际：{}",
+        err
+    );
     assert!(!data.join("plugins").join("badjson").exists());
 }
 
@@ -177,7 +205,10 @@ fn install_rejects_id_mismatch_with_dir_name() {
     // manifest id 是 "real"，但我们不放顶层目录包裹，安装目录会按 manifest id 生成；
     // 这里构造一个 entry 前缀与 id 不同的包，验证 entry 校验仍通过、id 校验基于 manifest
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("real-id", "N", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("real-id", "N", "1.0.0", "main.js").as_bytes(),
+        ),
         ("main.js", b"x"),
     ]);
     let m = install_from_zip(&zip, &data).expect("合法包应安装成功");
@@ -194,13 +225,20 @@ fn install_rejects_id_mismatch_with_dir_name() {
 fn install_rejects_duplicate_install() {
     let data = tmp_dir("dup");
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("dup", "Dup", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("dup", "Dup", "1.0.0", "main.js").as_bytes(),
+        ),
         ("main.js", b"x"),
     ]);
     let m1 = install_from_zip(&zip, &data).unwrap();
     assert_eq!(m1.id, "dup");
     let err = install_from_zip(&zip, &data).expect_err("重复安装必须被拒");
-    assert!(err.contains("已安装"), "错误信息应提到已安装，实际：{}", err);
+    assert!(
+        err.contains("已安装"),
+        "错误信息应提到已安装，实际：{}",
+        err
+    );
     let dir = data.join("plugins").join("dup");
     assert!(dir.is_dir());
     assert!(dir.join("main.js").is_file());
@@ -227,7 +265,10 @@ fn install_rejects_empty_bytes() {
 fn uninstall_removes_installed_plugin() {
     let data = tmp_dir("uninstall");
     let zip = make_zip(&[
-        ("plugin.json", manifest_json("gone", "Gone", "1.0.0", "main.js").as_bytes()),
+        (
+            "plugin.json",
+            manifest_json("gone", "Gone", "1.0.0", "main.js").as_bytes(),
+        ),
         ("main.js", b"x"),
     ]);
     install_from_zip(&zip, &data).unwrap();
@@ -236,5 +277,9 @@ fn uninstall_removes_installed_plugin() {
     uninstall("gone", &data).expect("卸载应成功");
     assert!(!dir.exists());
     let err = uninstall("gone", &data).expect_err("再次卸载应报未安装");
-    assert!(err.contains("未安装"), "错误信息应提到未安装，实际：{}", err);
+    assert!(
+        err.contains("未安装"),
+        "错误信息应提到未安装，实际：{}",
+        err
+    );
 }

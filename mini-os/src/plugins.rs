@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
-use std::sync::RwLock;
 use std::path::{Component, Path, PathBuf};
+use std::sync::RwLock;
 
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +16,12 @@ pub const ALLOWED_PERMISSIONS: [&str; 3] = ["fs.read", "fs.write", "settings.rea
 /// 入口路径前缀。
 pub const ENTRY_PREFIX: &str = "/static/plugins/";
 
+/// 权限说明表：(权限名, 风险等级, 中文描述)。
+pub const PERMISSION_INFO: &[(&str, &str, &str)] = &[
+    ("fs.read", "中", "能读你的全部文件"),
+    ("fs.write", "高", "能修改或删除你的文件"),
+    ("settings.read", "低", "能读你的偏好设置"),
+];
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PluginManifest {
@@ -41,8 +47,13 @@ pub enum PluginError {
     InvalidEntryName(String),
     ManifestMissing,
     ManifestInvalid(String),
-    IdMismatch { manifest_id: String, dir_name: String },
+    IdMismatch {
+        manifest_id: String,
+        dir_name: String,
+    },
     AlreadyInstalled(String),
+    InvalidPermission(String),
+    DuplicatePermission(String),
     Io(String),
 }
 
@@ -59,12 +70,17 @@ impl std::fmt::Display for PluginError {
             InvalidEntryName(p) => write!(f, "非法条目名：{}", p),
             ManifestMissing => write!(f, "缺少 plugin.json"),
             ManifestInvalid(msg) => write!(f, "plugin.json 解析失败：{}", msg),
-            IdMismatch { manifest_id, dir_name } => write!(
+            IdMismatch {
+                manifest_id,
+                dir_name,
+            } => write!(
                 f,
                 "manifest id ({}) 与目录名 ({}) 不一致",
                 manifest_id, dir_name
             ),
             AlreadyInstalled(id) => write!(f, "插件 {} 已安装", id),
+            InvalidPermission(p) => write!(f, "插件申请了未知权限：{}", p),
+            DuplicatePermission(p) => write!(f, "插件权限重复：{}", p),
             Io(msg) => write!(f, "IO 错误：{}", msg),
         }
     }
@@ -90,9 +106,7 @@ fn validate_entry_name(raw: &str) -> Result<(), PluginError> {
     for comp in Path::new(raw).components() {
         match comp {
             Component::ParentDir => return Err(PathTraversal(raw.to_string())),
-            Component::RootDir | Component::Prefix(_) => {
-                return Err(AbsolutePath(raw.to_string()))
-            }
+            Component::RootDir | Component::Prefix(_) => return Err(AbsolutePath(raw.to_string())),
             Component::Normal(_) | Component::CurDir => {}
         }
     }
@@ -140,10 +154,19 @@ fn validate_manifest(m: &PluginManifest) -> Result<(), PluginError> {
     if m.entry.trim().is_empty() {
         return Err(ManifestInvalid("entry 不能为空".into()));
     }
-    validate_entry_name(&m.entry)
-        .map_err(|e| ManifestInvalid(format!("entry 非法：{}", e)))?;
+    validate_entry_name(&m.entry).map_err(|e| ManifestInvalid(format!("entry 非法：{}", e)))?;
     if !m.entry.ends_with(".js") {
         return Err(ManifestInvalid("entry 必须以 .js 结尾".into()));
+    }
+    let mut seen: Vec<&str> = Vec::new();
+    for p in &m.permissions {
+        if !ALLOWED_PERMISSIONS.contains(&p.as_str()) {
+            return Err(InvalidPermission(p.clone()));
+        }
+        if seen.contains(&p.as_str()) {
+            return Err(DuplicatePermission(p.clone()));
+        }
+        seen.push(p.as_str());
     }
     Ok(())
 }
@@ -169,8 +192,8 @@ fn install_from_zip_inner(
         return Err(EmptyArchive);
     }
     let cursor = std::io::Cursor::new(zip_bytes);
-    let mut archive = zip::ZipArchive::new(cursor)
-        .map_err(|e| ManifestInvalid(format!("zip 打不开：{}", e)))?;
+    let mut archive =
+        zip::ZipArchive::new(cursor).map_err(|e| ManifestInvalid(format!("zip 打不开：{}", e)))?;
 
     let file_count = archive.len();
     if file_count == 0 {
@@ -212,8 +235,8 @@ fn install_from_zip_inner(
     }
 
     let manifest_raw = manifest_raw.ok_or(ManifestMissing)?;
-    let manifest: PluginManifest = serde_json::from_slice(&manifest_raw)
-        .map_err(|e| ManifestInvalid(e.to_string()))?;
+    let manifest: PluginManifest =
+        serde_json::from_slice(&manifest_raw).map_err(|e| ManifestInvalid(e.to_string()))?;
     validate_manifest(&manifest)?;
 
     // 解压目录名必须与 manifest id 一致
@@ -283,6 +306,63 @@ fn install_from_zip_inner(
     Ok(manifest)
 }
 
+/// 只解析并校验 zip 内容，不写盘。成功返回 manifest，失败信息与 install_from_zip 一致。
+pub fn preview_from_zip(zip_bytes: &[u8]) -> Result<PluginManifest, String> {
+    preview_from_zip_inner(zip_bytes).map_err(|e| e.to_string())
+}
+
+fn preview_from_zip_inner(zip_bytes: &[u8]) -> Result<PluginManifest, PluginError> {
+    if zip_bytes.is_empty() {
+        return Err(EmptyArchive);
+    }
+    let cursor = std::io::Cursor::new(zip_bytes);
+    let mut archive =
+        zip::ZipArchive::new(cursor).map_err(|e| ManifestInvalid(format!("zip 打不开：{}", e)))?;
+
+    let file_count = archive.len();
+    if file_count == 0 {
+        return Err(EmptyArchive);
+    }
+    if file_count > MAX_FILE_COUNT {
+        return Err(TooManyFiles(file_count));
+    }
+
+    let mut total_size: u64 = 0;
+    let mut manifest_raw: Option<Vec<u8>> = None;
+    for i in 0..file_count {
+        let entry = archive
+            .by_index(i)
+            .map_err(|e| ManifestInvalid(format!("读 zip 条目失败：{}", e)))?;
+        let name = entry.name().to_string();
+        if entry.is_dir() {
+            continue;
+        }
+        validate_entry_name(&name)?;
+        total_size = total_size
+            .checked_add(entry.size())
+            .ok_or(UncompressedTooLarge(u64::MAX))?;
+        if total_size > MAX_TOTAL_UNCOMPRESSED {
+            return Err(UncompressedTooLarge(total_size));
+        }
+        if name == MANIFEST_NAME {
+            drop(entry);
+            let mut e2 = archive
+                .by_index(i)
+                .map_err(|e| ManifestInvalid(format!("读 zip 条目失败：{}", e)))?;
+            let mut buf = Vec::with_capacity(e2.size() as usize);
+            e2.read_to_end(&mut buf)
+                .map_err(|e| Io(format!("读 plugin.json 失败：{}", e)))?;
+            manifest_raw = Some(buf);
+        }
+    }
+
+    let manifest_raw = manifest_raw.ok_or(ManifestMissing)?;
+    let manifest: PluginManifest =
+        serde_json::from_slice(&manifest_raw).map_err(|e| ManifestInvalid(e.to_string()))?;
+    validate_manifest(&manifest)?;
+    Ok(manifest)
+}
+
 /// 列出已安装插件（读取每个目录的 plugin.json）
 pub fn list_installed(data_dir: &Path) -> Result<Vec<PluginManifest>, String> {
     let plugins_root = data_dir.join("plugins");
@@ -307,8 +387,8 @@ pub fn list_installed(data_dir: &Path) -> Result<Vec<PluginManifest>, String> {
         }
         let raw = fs::read(&manifest_path)
             .map_err(|e| format!("读 {} 失败：{}", manifest_path.display(), e))?;
-        let m: PluginManifest =
-            serde_json::from_slice(&raw).map_err(|e| format!("解析 {} 失败：{}", manifest_path.display(), e))?;
+        let m: PluginManifest = serde_json::from_slice(&raw)
+            .map_err(|e| format!("解析 {} 失败：{}", manifest_path.display(), e))?;
         out.push(m);
     }
     Ok(out)
@@ -324,73 +404,6 @@ pub fn uninstall(id: &str, data_dir: &Path) -> Result<(), String> {
         return Err(format!("插件 {} 未安装", id));
     }
     fs::remove_dir_all(&target).map_err(|e| format!("删除插件目录失败：{}", e))
-}
-
-#[cfg(test)]
-mod unit_tests {
-    use super::*;
-
-    #[test]
-    fn rejects_dotdot() {
-        let r = validate_entry_name("../evil.js");
-        assert!(matches!(r, Err(PathTraversal(_))));
-        assert!(r.is_err());
-    }
-
-    #[test]
-    fn rejects_absolute() {
-        assert!(matches!(
-            validate_entry_name("/etc/passwd"),
-            Err(AbsolutePath(_))
-        ));
-        assert!(validate_entry_name("/etc/passwd").is_err());
-    }
-
-    #[test]
-    fn rejects_windows_drive() {
-        let r = validate_entry_name("C:\\evil.js");
-        assert!(matches!(r, Err(AbsolutePath(_))));
-        assert!(r.is_err());
-    }
-
-    #[test]
-    fn accepts_normal_path() {
-        assert!(validate_entry_name("js/main.js").is_ok());
-        assert!(validate_entry_name("plugin.json").is_ok());
-    }
-
-    #[test]
-    fn manifest_validation_rejects_empty_id() {
-        let m = PluginManifest {
-            id: String::new(),
-            name: "n".into(),
-            version: "1.0.0".into(),
-            entry: "main.js".into(),
-            description: String::new(),
-            icon: String::new(),
-            permissions: vec![],
-        };
-        assert!(validate_manifest(&m).is_err());
-        assert!(matches!(
-            validate_manifest(&m),
-            Err(ManifestInvalid(_))
-        ));
-    }
-
-    #[test]
-    fn manifest_validation_rejects_non_js_entry() {
-        let m = PluginManifest {
-            id: "demo".into(),
-            name: "n".into(),
-            version: "1.0.0".into(),
-            entry: "main.wasm".into(),
-            description: String::new(),
-            icon: String::new(),
-            permissions: vec![],
-        };
-        assert!(validate_manifest(&m).is_err());
-        assert!(matches!(validate_manifest(&m), Err(ManifestInvalid(_))));
-    }
 }
 
 /// 插件注册表。用 RwLock 包住 HashMap，读多写少。
@@ -450,16 +463,15 @@ impl Default for PluginRegistry {
 }
 
 /// id：字母数字加连字符，长度 1-32。
-
 fn validate_id(id: &str) -> Result<(), String> {
     let len = id.chars().count();
-    if len < 1 || len > 32 {
-        return Err(format!("插件 id 长度必须在 1-32 字符之间，当前为 {} 字符", len));
+    if !(1..=32).contains(&len) {
+        return Err(format!(
+            "插件 id 长度必须在 1-32 字符之间，当前为 {} 字符",
+            len
+        ));
     }
-    if !id
-        .chars()
-        .all(|c| c.is_ascii_alphanumeric() || c == '-')
-    {
+    if !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
         return Err(format!("插件 id 只允许字母、数字和连字符，当前为：{}", id));
     }
     Ok(())
@@ -479,16 +491,10 @@ fn validate_version(version: &str) -> Result<(), String> {
             return Err(format!("插件 version 段不能为空，当前为：{}", version));
         }
         if !part.chars().all(|c| c.is_ascii_digit()) {
-            return Err(format!(
-                "插件 version 每段必须是数字，当前为：{}",
-                version
-            ));
+            return Err(format!("插件 version 每段必须是数字，当前为：{}", version));
         }
         if part.len() > 1 && part.starts_with('0') {
-            return Err(format!(
-                "插件 version 段不允许前导零，当前为：{}",
-                version
-            ));
+            return Err(format!("插件 version 段不允许前导零，当前为：{}", version));
         }
     }
     Ok(())
@@ -518,4 +524,68 @@ fn validate_permissions(permissions: &[String]) -> Result<(), String> {
         seen.push(p.as_str());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod unit_tests {
+    use super::*;
+
+    #[test]
+    fn rejects_dotdot() {
+        let r = validate_entry_name("../evil.js");
+        assert!(matches!(r, Err(PathTraversal(_))));
+        assert!(r.is_err());
+    }
+
+    #[test]
+    fn rejects_absolute() {
+        assert!(matches!(
+            validate_entry_name("/etc/passwd"),
+            Err(AbsolutePath(_))
+        ));
+        assert!(validate_entry_name("/etc/passwd").is_err());
+    }
+
+    #[test]
+    fn rejects_windows_drive() {
+        let r = validate_entry_name("C:\\evil.js");
+        assert!(matches!(r, Err(AbsolutePath(_))));
+        assert!(r.is_err());
+    }
+
+    #[test]
+    fn accepts_normal_path() {
+        assert!(validate_entry_name("js/main.js").is_ok());
+        assert!(validate_entry_name("plugin.json").is_ok());
+    }
+
+    #[test]
+    fn manifest_validation_rejects_empty_id() {
+        let m = PluginManifest {
+            id: String::new(),
+            name: "n".into(),
+            version: "1.0.0".into(),
+            entry: "main.js".into(),
+            description: String::new(),
+            icon: String::new(),
+            permissions: vec![],
+        };
+        assert!(validate_manifest(&m).is_err());
+        assert!(matches!(validate_manifest(&m), Err(ManifestInvalid(_))));
+    }
+
+    #[test]
+    fn manifest_validation_rejects_non_js_entry() {
+        let m = PluginManifest {
+            id: "demo".into(),
+            name: "n".into(),
+            version: "1.0.0".into(),
+            entry: "main.wasm".into(),
+            description: String::new(),
+            icon: String::new(),
+            permissions: vec![],
+        };
+        assert!(validate_manifest(&m).is_err());
+        assert!(matches!(validate_manifest(&m), Err(ManifestInvalid(_))));
+    }
 }

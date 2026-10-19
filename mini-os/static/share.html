@@ -197,6 +197,20 @@
     margin: 0 0 22px;
     line-height: 1.6;
   }
+  .empty .btn {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+    padding: 11px 18px;
+    border-radius: var(--radius);
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--primary);
+    transition: opacity .15s ease;
+  }
+  .empty .btn:hover { opacity: .9; }
   .link-plain {
     color: var(--primary);
     text-decoration: none;
@@ -314,6 +328,17 @@
     wrap.appendChild(el('h1', null, ['读取分享失败']));
     wrap.appendChild(el('p', null, ['网络或服务出了点问题，稍后再试一次。']));
     var a = el('a', { 'class': 'link-plain', 'href': '/' }, ['回到 mini-os']);
+    wrap.appendChild(a);
+    contentEl.appendChild(wrap);
+  }
+
+  function renderExpired() {
+    contentEl.innerHTML = '';
+    contentEl.className = 'empty';
+    var wrap = el('div', { 'class': 'empty' });
+    wrap.appendChild(el('h1', null, ['这个分享已过期']));
+    wrap.appendChild(el('p', null, ['分享者给它设了有效期，时间一到就自动作废了。需要的话找分享的人重新发一份。']));
+    var a = el('a', { 'class': 'btn', 'href': '/' }, ['返回首页']);
     wrap.appendChild(a);
     contentEl.appendChild(wrap);
   }
@@ -437,6 +462,10 @@
     fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (res) {
       if (res.status === 404) {
         renderNotFound();
+        return null;
+      }
+      if (res.status === 410) {
+        renderExpired();
         return null;
       }
       if (res.status === 429) {
@@ -594,6 +623,10 @@
     }).then(function (res) {
       if (res.status === 404) {
         renderNotFound();
+        return null;
+      }
+      if (res.status === 410) {
+        renderExpired();
         return null;
       }
       if (res.status === 429) {

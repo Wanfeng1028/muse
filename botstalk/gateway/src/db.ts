@@ -29,9 +29,16 @@ export function openDb(dataDir: string): DatabaseSync {
       status TEXT NOT NULL,
       last_seen_ms INTEGER NOT NULL,
       usage_in INTEGER NOT NULL DEFAULT 0,
-      usage_out INTEGER NOT NULL DEFAULT 0
+      usage_out INTEGER NOT NULL DEFAULT 0,
+      room TEXT
     );
   `);
+  {
+    const cols = db.prepare("PRAGMA table_info(presence)").all() as unknown as Array<{ name: string }>;
+    if (!cols.some((c) => c.name === "room")) {
+      db.exec("ALTER TABLE presence ADD COLUMN room TEXT");
+    }
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS artifacts (
       id TEXT PRIMARY KEY,
@@ -202,6 +209,7 @@ export interface PresenceRow {
   last_seen_ms: number;
   usage_in: number;
   usage_out: number;
+  room: string | null;
 }
 
 export function upsertPresence(
@@ -212,33 +220,47 @@ export function upsertPresence(
     last_seen_ms: number;
     usage_in: number;
     usage_out: number;
+    room?: string | null;
   },
 ): void {
   const stmt = db.prepare(
-    `INSERT INTO presence (adapter_id, status, last_seen_ms, usage_in, usage_out)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO presence (adapter_id, status, last_seen_ms, usage_in, usage_out, room)
+     VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT(adapter_id) DO UPDATE SET
        status = excluded.status,
        last_seen_ms = excluded.last_seen_ms,
        usage_in = excluded.usage_in,
-       usage_out = excluded.usage_out`,
+       usage_out = excluded.usage_out,
+       room = COALESCE(excluded.room, presence.room)`,
   );
-  stmt.run(p.adapter_id, p.status, p.last_seen_ms, p.usage_in, p.usage_out);
+  stmt.run(p.adapter_id, p.status, p.last_seen_ms, p.usage_in, p.usage_out, p.room ?? null);
 }
 
 export function getPresence(db: Db, adapter_id: string): PresenceRow | undefined {
   const stmt = db.prepare(
-    "SELECT adapter_id, status, last_seen_ms, usage_in, usage_out FROM presence WHERE adapter_id = ?",
+    "SELECT adapter_id, status, last_seen_ms, usage_in, usage_out, room FROM presence WHERE adapter_id = ?",
   );
   const row = stmt.get(adapter_id);
   return row as unknown as PresenceRow | undefined;
 }
 
+/**
+ * 网关全局全量 presence。端点不再使用（改为 listPresenceForRoom 按 room 过滤）；
+ * 保留导出供网关级用途及老调用方使用。
+ */
 export function listPresence(db: Db): PresenceRow[] {
   const stmt = db.prepare(
-    "SELECT adapter_id, status, last_seen_ms, usage_in, usage_out FROM presence",
+    "SELECT adapter_id, status, last_seen_ms, usage_in, usage_out, room FROM presence",
   );
   return stmt.all() as unknown as PresenceRow[];
+}
+
+/** 只返回指定房间的 presence。端点按 room 过滤用。 */
+export function listPresenceForRoom(db: Db, room: string): PresenceRow[] {
+  const stmt = db.prepare(
+    "SELECT adapter_id, status, last_seen_ms, usage_in, usage_out, room FROM presence WHERE room = ?",
+  );
+  return stmt.all(room) as unknown as PresenceRow[];
 }
 
 export interface ArtifactRow {

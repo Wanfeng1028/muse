@@ -30,14 +30,18 @@ pub struct Node {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateNodeRequest {
-    /// 父节点 id，缺省为根
+    /// 父节点 id，缺省为根；优先于 parent 生效
     pub parent_id: Option<i64>,
+    /// 父节点路径（如 "/docs"），parent_id 为空时解析它
+    pub parent: Option<String>,
     /// 名称
     pub name: String,
     /// 类型：只取 "file" 或 "folder"
     pub kind: String,
     /// 初始内容（可选）
     pub content: Option<String>,
+    /// 二进制内容（JSON 数字数组）；提供时存入 content_blob 并优先于 content
+    pub bytes: Option<Vec<u8>>,
 }
 
 /// 更新节点请求体
@@ -140,6 +144,9 @@ pub struct CreateShareRequest {
     /// 目录分享时的 VFS 路径，如 "/docs"；file 模式忽略
     #[serde(default)]
     pub path: Option<String>,
+    /// 过期时间（unix 秒），None 表示永不过期
+    #[serde(default)]
+    pub expires_at: Option<i64>,
 }
 
 /// POST /api/shares 响应
@@ -150,6 +157,8 @@ pub struct ShareCreated {
     pub token: String,
     /// 分享访问地址
     pub url: String,
+    /// 过期时间（unix 秒），None 表示永不过期
+    pub expires_at: Option<i64>,
 }
 
 /// GET /api/s/:token 响应（只读元信息）
@@ -236,4 +245,6 @@ pub struct ShareAdminItem {
     pub node_name: String,
     /// 创建时间
     pub created_at: String,
+    /// 过期时间（unix 秒），None 表示永不过期
+    pub expires_at: Option<i64>,
 }

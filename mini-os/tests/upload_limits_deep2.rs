@@ -65,7 +65,12 @@ fn multipart_body(boundary: &str, parts: &[(&str, Option<&str>, Option<&str>, &[
     out
 }
 
-fn upload_request(cookie: &str, boundary: &str, body: Vec<u8>, path: Option<&str>) -> Request<Body> {
+fn upload_request(
+    cookie: &str,
+    boundary: &str,
+    body: Vec<u8>,
+    path: Option<&str>,
+) -> Request<Body> {
     let uri = match path {
         Some(p) => format!("/api/files/upload?path={}", p),
         None => "/api/files/upload".to_string(),
@@ -73,7 +78,10 @@ fn upload_request(cookie: &str, boundary: &str, body: Vec<u8>, path: Option<&str
     Request::builder()
         .method("POST")
         .uri(uri)
-        .header(header::CONTENT_TYPE, format!("multipart/form-data; boundary={}", boundary))
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={}", boundary),
+        )
         .header(header::COOKIE, cookie)
         .body(Body::from(body))
         .unwrap()
@@ -121,7 +129,12 @@ async fn upload_exactly_at_limit_succeeds() {
     let boundary = "BNDLIMIT001";
     let body = multipart_body(
         boundary,
-        &[("file", Some("exact.bin"), Some("application/octet-stream"), &data)],
+        &[(
+            "file",
+            Some("exact.bin"),
+            Some("application/octet-stream"),
+            &data,
+        )],
     );
     let resp = app
         .clone()
@@ -143,7 +156,12 @@ async fn upload_one_byte_over_limit_rejected() {
     let boundary = "BNDOVER001";
     let body = multipart_body(
         boundary,
-        &[("file", Some("over.bin"), Some("application/octet-stream"), &data)],
+        &[(
+            "file",
+            Some("over.bin"),
+            Some("application/octet-stream"),
+            &data,
+        )],
     );
     let resp = app
         .clone()
@@ -152,7 +170,10 @@ async fn upload_one_byte_over_limit_rejected() {
         .unwrap();
     assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
     let json = read_json(resp).await;
-    assert_eq!(json["error"], serde_json::json!("文件过大，单文件上限为 0 MB"));
+    assert_eq!(
+        json["error"],
+        serde_json::json!("文件过大，单文件上限为 0 MB")
+    );
 }
 
 #[tokio::test]
@@ -182,7 +203,11 @@ async fn download_empty_file_zero_content_length() {
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
     assert_eq!(
-        resp.headers().get("content-length").unwrap().to_str().unwrap(),
+        resp.headers()
+            .get("content-length")
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "0"
     );
     let bytes = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
@@ -276,7 +301,12 @@ async fn upload_binary_non_utf8_roundtrips() {
     let boundary = "BNDPNG";
     let body = multipart_body(
         boundary,
-        &[("file", Some("pic.png"), Some("application/octet-stream"), &png_magic)],
+        &[(
+            "file",
+            Some("pic.png"),
+            Some("application/octet-stream"),
+            &png_magic,
+        )],
     );
     let up = app
         .clone()
@@ -310,7 +340,12 @@ async fn upload_limit_message_uses_configured_mb() {
     let boundary = "BNDBIG";
     let body = multipart_body(
         boundary,
-        &[("file", Some("big.bin"), Some("application/octet-stream"), &data)],
+        &[(
+            "file",
+            Some("big.bin"),
+            Some("application/octet-stream"),
+            &data,
+        )],
     );
     let resp = app
         .clone()
@@ -319,5 +354,8 @@ async fn upload_limit_message_uses_configured_mb() {
         .unwrap();
     assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
     let json = read_json(resp).await;
-    assert_eq!(json["error"], serde_json::json!("文件过大，单文件上限为 3 MB"));
+    assert_eq!(
+        json["error"],
+        serde_json::json!("文件过大，单文件上限为 3 MB")
+    );
 }

@@ -7,7 +7,28 @@
   var fileEl = document.getElementById('store-file');
   var installBtn = document.getElementById('store-install-btn');
 
+  var modalEl = document.getElementById('perm-modal');
+  var modalPluginEl = document.getElementById('perm-modal-plugin');
+  var modalPermsEl = document.getElementById('perm-modal-perms');
+  var modalErrorEl = document.getElementById('perm-modal-error');
+  var modalConfirmBtn = document.getElementById('perm-modal-confirm');
+  var modalCancelBtn = document.getElementById('perm-modal-cancel');
+
   var allPlugins = [];
+  var pendingInstall = null;
+
+  var PERMISSION_INFO = {
+    'fs.read': { label: '能读取你的全部文件', risk: 'mid', riskText: '中风险' },
+    'fs.write': { label: '能修改、删除你的文件', risk: 'high', riskText: '高风险' },
+    'settings.read': { label: '能读取你的偏好设置', risk: 'low', riskText: '低风险' }
+  };
+
+  function permissionInfo(id) {
+    if (Object.prototype.hasOwnProperty.call(PERMISSION_INFO, id)) {
+      return PERMISSION_INFO[id];
+    }
+    return { label: '未知权限', risk: 'high', riskText: '高风险' };
+  }
 
   function iconForName(name) {
     var n = (name || '').toLowerCase();
@@ -97,6 +118,73 @@
     });
   }
 
+  function closeModal() {
+    if (modalEl) {
+      modalEl.classList.remove('open');
+    }
+    if (modalErrorEl) {
+      modalErrorEl.textContent = '';
+      modalErrorEl.style.display = 'none';
+    }
+    pendingInstall = null;
+  }
+
+  function showModalError(message) {
+    if (modalErrorEl) {
+      modalErrorEl.textContent = message;
+      modalErrorEl.style.display = 'block';
+    }
+  }
+
+  function openConfirmModal(manifest) {
+    pendingInstall = manifest;
+    var name = manifest && manifest.name ? manifest.name : '未知插件';
+    var version = manifest && manifest.version ? manifest.version : '1.0.0';
+    modalPluginEl.textContent = name + ' v' + version;
+
+    var perms = manifest && Array.isArray(manifest.permissions) ? manifest.permissions : [];
+    modalPermsEl.innerHTML = '';
+    if (perms.length === 0) {
+      var emptyRow = document.createElement('div');
+      emptyRow.className = 'store-perm-row';
+      var emptyDesc = document.createElement('span');
+      emptyDesc.className = 'store-perm-desc';
+      emptyDesc.textContent = '这个插件没有申请任何权限';
+      emptyRow.appendChild(emptyDesc);
+      modalPermsEl.appendChild(emptyRow);
+    } else {
+      perms.forEach(function (perm) {
+        var info = permissionInfo(perm);
+        var row = document.createElement('div');
+        row.className = 'store-perm-row';
+
+        var idEl = document.createElement('span');
+        idEl.className = 'store-perm-id';
+        idEl.textContent = String(perm);
+
+        var descEl = document.createElement('span');
+        descEl.className = 'store-perm-desc';
+        descEl.textContent = info.label;
+
+        var riskEl = document.createElement('span');
+        riskEl.className = 'store-risk ' + info.risk;
+        riskEl.textContent = info.riskText;
+
+        row.appendChild(idEl);
+        row.appendChild(descEl);
+        row.appendChild(riskEl);
+        modalPermsEl.appendChild(row);
+      });
+    }
+
+    modalErrorEl.textContent = '';
+    modalErrorEl.style.display = 'none';
+    modalEl.classList.add('open');
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+
   function showError(id, message) {
     var el = listEl.querySelector('[data-error-for="' + id + '"]');
     if (el) {
@@ -147,11 +235,19 @@
   }
 
   function installFromCard(id) {
-    clearErrors();
-    fetch('/api/plugins/install', {
+    var target = allPlugins.filter(function (p) { return p.id === id; })[0];
+    showError(id, '这个插件还没有可用的安装包，请用本地 zip 安装');
+    if (target) {
+      // 保留搜索/过滤状态，仅提示
+    }
+  }
+
+  function installManifest(manifest) {
+    var form = new FormData();
+    form.append('manifest', JSON.stringify(manifest));
+    return fetch('/api/plugins/install', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id })
+      body: form
     })
       .then(function (res) {
         if (!res.ok) {
@@ -163,12 +259,8 @@
       })
       .then(function () {
         return loadPlugins();
-      })
-      .catch(function (err) {
-        showError(id, '安装失败：' + err.message);
       });
   }
-
   function uninstallPlugin(id) {
     clearErrors();
     fetch('/api/plugins/' + encodeURIComponent(id), { method: 'DELETE' })
@@ -188,13 +280,53 @@
       });
   }
 
-  function uploadAndInstall() {
+  function previewZip() {
     var file = fileEl.files && fileEl.files[0];
     if (!file) {
+      emptyEl.style.display = 'block';
+      emptyEl.textContent = '请先选择一个 zip 文件';
       return;
     }
     clearErrors();
     installBtn.disabled = true;
+
+    var form = new FormData();
+    form.append('file', file);
+
+    fetch('/api/plugins/preview', {
+      method: 'POST',
+      body: form
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          return res.text().then(function (text) {
+            throw new Error(text || ('解析失败（HTTP ' + res.status + '）'));
+          });
+        }
+        return res.json();
+      })
+      .then(function (manifest) {
+        openConfirmModal(manifest);
+      })
+      .catch(function (err) {
+        emptyEl.style.display = 'block';
+        emptyEl.textContent = '解析失败：' + err.message;
+      })
+      .then(function () {
+        installBtn.disabled = false;
+      });
+  }
+
+  function confirmInstall() {
+    if (!pendingInstall) {
+      return;
+    }
+    var file = fileEl.files && fileEl.files[0];
+    if (!file) {
+      showModalError('文件已经丢失，请重新选择');
+      return;
+    }
+    modalConfirmBtn.disabled = true;
 
     var form = new FormData();
     form.append('file', file);
@@ -213,22 +345,37 @@
       })
       .then(function () {
         fileEl.value = '';
+        closeModal();
         return loadPlugins();
       })
       .catch(function (err) {
-        emptyEl.style.display = 'block';
-        emptyEl.textContent = '安装失败：' + err.message;
+        showModalError('安装失败：' + err.message);
       })
       .then(function () {
-        installBtn.disabled = false;
+        modalConfirmBtn.disabled = false;
       });
   }
 
   if (installBtn) {
-    installBtn.addEventListener('click', uploadAndInstall);
+    installBtn.addEventListener('click', previewZip);
   }
   if (searchEl) {
     searchEl.addEventListener('input', applyFilter);
+  }
+  if (modalConfirmBtn) {
+    modalConfirmBtn.addEventListener('click', confirmInstall);
+  }
+  if (modalCancelBtn) {
+    modalCancelBtn.addEventListener('click', function () {
+      closeModal();
+    });
+  }
+  if (modalEl) {
+    modalEl.addEventListener('click', function (evt) {
+      if (evt.target === modalEl) {
+        closeModal();
+      }
+    });
   }
 
   loadPlugins();

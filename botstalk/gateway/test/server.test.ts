@@ -94,13 +94,14 @@ describe("http api", () => {
     expect(page.messages.every((m) => m.id < beforeId)).toBe(true);
   });
 
-  it("presence returns all members with usage", async () => {
+  it("presence returns room members with usage", async () => {
     upsertPresence(db, {
       adapter_id: "online-1",
       status: "online",
       last_seen_ms: 5000,
       usage_in: 10,
       usage_out: 20,
+      room: "lobby",
     });
     upsertPresence(db, {
       adapter_id: "offline-1",
@@ -108,6 +109,7 @@ describe("http api", () => {
       last_seen_ms: 4000,
       usage_in: 1,
       usage_out: 2,
+      room: "lobby",
     });
 
     const res = await fetch(`${base}/api/rooms/lobby/presence`);
@@ -142,6 +144,7 @@ describe("http api", () => {
       last_seen_ms: 5000,
       usage_in: 10,
       usage_out: 20,
+      room: "lobby",
     });
     upsertPresence(db, {
       adapter_id: "offline-1",
@@ -149,6 +152,7 @@ describe("http api", () => {
       last_seen_ms: 4000,
       usage_in: 1,
       usage_out: 2,
+      room: "lobby",
     });
 
     const res = await fetch(`${base}/api/rooms/lobby/usage`);

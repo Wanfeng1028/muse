@@ -24,11 +24,113 @@ use crate::models::{
     SetRoleRequest, SettingRequest, ShareAdminItem, ShareCreated, ShareDirEntry, ShareDirListing,
     ShareInfo, Stats, UpdateNodeRequest, UserInfo, UserWithRole,
 };
+use crate::plugins;
 use crate::AppState;
 use rand::TryRngCore;
 
 /// 统一的 API 返回类型别名
 type ApiResult = Result<Response, (StatusCode, Json<serde_json::Value>)>;
+
+fn plain_err(status: StatusCode, msg: &str) -> Response {
+    (status, msg.to_string()).into_response()
+}
+
+/// GET /api/plugins：列出已安装插件。
+pub async fn list_plugins(State(state): State<Arc<AppState>>) -> Response {
+    match plugins::list_installed(std::path::Path::new(&state.data_dir)) {
+        Ok(items) => Json(items).into_response(),
+        Err(e) => plain_err(StatusCode::INTERNAL_SERVER_ERROR, &e),
+    }
+}
+
+/// POST /api/plugins/preview：只解析校验 multipart 上传的 zip，不写盘。
+pub async fn preview_plugin(mut multipart: Multipart) -> Response {
+    let mut zip_bytes: Option<Vec<u8>> = None;
+    loop {
+        let field = match multipart.next_field().await {
+            Ok(Some(f)) => f,
+            Ok(None) => break,
+            Err(_) => return plain_err(StatusCode::BAD_REQUEST, "缺少文件字段"),
+        };
+        if field.name() != Some("file") {
+            continue;
+        }
+        let mut buf: Vec<u8> = Vec::new();
+        let mut field = field;
+        loop {
+            match field.chunk().await {
+                Ok(Some(chunk)) => buf.extend_from_slice(&chunk),
+                Ok(None) => break,
+                Err(_) => return plain_err(StatusCode::BAD_REQUEST, "缺少文件字段"),
+            }
+        }
+        zip_bytes = Some(buf);
+        break;
+    }
+    let bytes = match zip_bytes {
+        Some(b) => b,
+        None => return plain_err(StatusCode::BAD_REQUEST, "缺少文件字段"),
+    };
+    match plugins::preview_from_zip(&bytes) {
+        Ok(m) => Json(m).into_response(),
+        Err(e) => plain_err(StatusCode::BAD_REQUEST, &e),
+    }
+}
+
+/// POST /api/plugins/install：安装 multipart 上传的 zip。
+pub async fn install_plugin(
+    State(state): State<Arc<AppState>>,
+    mut multipart: Multipart,
+) -> Response {
+    let mut zip_bytes: Option<Vec<u8>> = None;
+    loop {
+        let field = match multipart.next_field().await {
+            Ok(Some(f)) => f,
+            Ok(None) => break,
+            Err(_) => return plain_err(StatusCode::BAD_REQUEST, "缺少文件字段"),
+        };
+        if field.name() != Some("file") {
+            continue;
+        }
+        let mut buf: Vec<u8> = Vec::new();
+        let mut field = field;
+        loop {
+            match field.chunk().await {
+                Ok(Some(chunk)) => buf.extend_from_slice(&chunk),
+                Ok(None) => break,
+                Err(_) => return plain_err(StatusCode::BAD_REQUEST, "缺少文件字段"),
+            }
+        }
+        zip_bytes = Some(buf);
+        break;
+    }
+    let bytes = match zip_bytes {
+        Some(b) => b,
+        None => return plain_err(StatusCode::BAD_REQUEST, "缺少文件字段"),
+    };
+    match plugins::install_from_zip(&bytes, std::path::Path::new(&state.data_dir)) {
+        Ok(m) => Json(m).into_response(),
+        Err(e) => plain_err(StatusCode::BAD_REQUEST, &e),
+    }
+}
+
+/// DELETE /api/plugins/:id：卸载插件。
+pub async fn uninstall_plugin(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Response {
+    match plugins::uninstall(&id, std::path::Path::new(&state.data_dir)) {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => {
+            let status = if e.contains("未安装") {
+                StatusCode::NOT_FOUND
+            } else {
+                StatusCode::BAD_REQUEST
+            };
+            plain_err(status, &e)
+        }
+    }
+}
 
 /// 上传接口查询参数
 #[derive(Deserialize)]
@@ -384,12 +486,28 @@ pub async fn create_fs(
     if req.kind != "file" && req.kind != "folder" {
         return Err(err(StatusCode::BAD_REQUEST, "kind 必须为 file 或 folder"));
     }
-    let content = req.content.unwrap_or_default();
+    // 内容：bytes（二进制数组）优先存入 content_blob；否则用 content 文本。
+    let (content, content_blob): (String, Option<Vec<u8>>) = match req.bytes {
+        Some(b) => (String::new(), Some(b)),
+        None => (req.content.unwrap_or_default(), None),
+    };
 
     let conn = state.db.lock().unwrap();
 
+    // 父节点：parent_id 优先；否则按 parent 路径解析。
+    let parent_id: Option<i64> = if req.parent_id.is_some() {
+        req.parent_id
+    } else if let Some(p) = req.parent.as_deref() {
+        match resolve_folder_id(&conn, Some(p), user.id) {
+            Ok(id) => id,
+            Err(msg) => return Err(err(StatusCode::BAD_REQUEST, msg)),
+        }
+    } else {
+        None
+    };
+
     // 校验父节点存在且为 folder
-    if let Some(pid) = req.parent_id {
+    if let Some(pid) = parent_id {
         let parent_kind: Option<String> = conn
             .query_row(
                 "SELECT kind FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
@@ -408,8 +526,8 @@ pub async fn create_fs(
     }
 
     conn.execute(
-        "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![user.id, req.parent_id, name, req.kind, content],
+        "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content, content_blob) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![user.id, parent_id, name, req.kind, content, content_blob],
     )
     .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
 
@@ -1247,7 +1365,8 @@ pub async fn list_shares(
     Extension(user): Extension<auth::CurrentUser>,
 ) -> ApiResult {
     let conn = state.db.lock().unwrap();
-    let base = "SELECT s.id, s.token, s.share_type, s.owner_id, u.username, s.created_at, v.name \
+    let base = "SELECT s.id, s.token, s.share_type, s.owner_id, u.username, s.created_at, v.name, \
+                s.expires_at \
                 FROM shares s \
                 JOIN users u ON u.id = s.owner_id \
                 JOIN vfs_nodes v ON v.id = s.node_id";
@@ -1272,6 +1391,7 @@ pub async fn list_shares(
                     owner_username: r.get(4)?,
                     created_at: r.get(5)?,
                     node_name: r.get(6)?,
+                    expires_at: r.get(7)?,
                 })
             })
             .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
@@ -1292,6 +1412,7 @@ pub async fn list_shares(
                     owner_username: r.get(4)?,
                     created_at: r.get(5)?,
                     node_name: r.get(6)?,
+                    expires_at: r.get(7)?,
                 })
             })
             .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
@@ -1301,6 +1422,42 @@ pub async fn list_shares(
     }
 
     Ok(Json(out).into_response())
+}
+
+/// DELETE /api/shares/token/:token：按 token 撤销分享（admin 任意，editor 仅自己创建的）
+pub async fn revoke_share(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Path(token): Path<String>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+
+    let owner_id: i64 = conn
+        .query_row(
+            "SELECT owner_id FROM shares WHERE token = ?1",
+            params![token],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?
+        .ok_or_else(|| err(StatusCode::NOT_FOUND, "分享不存在"))?;
+
+    let is_admin = matches!(
+        crate::rbac::Role::parse(&user.role),
+        Some(crate::rbac::Role::Admin)
+    );
+    if !is_admin && owner_id != user.id {
+        return Err(err_reason(
+            StatusCode::FORBIDDEN,
+            "权限不足",
+            "只能管理自己创建的分享",
+        ));
+    }
+
+    conn.execute("DELETE FROM shares WHERE token = ?1", params![token])
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    Ok(StatusCode::NO_CONTENT.into_response())
 }
 
 /// DELETE /api/shares/:id：删除分享（admin 任意，editor 仅自己创建的）
@@ -1353,7 +1510,7 @@ fn new_share_token() -> Result<String, String> {
     Ok(hex::encode(buf))
 }
 
-/// 分享查询行：(node_id, name, kind, content, content_blob, mime_type, share_type)
+/// 分享查询行：(node_id, name, kind, content, content_blob, mime_type, share_type, expires_at)
 type ShareRow = (
     i64,
     String,
@@ -1362,13 +1519,15 @@ type ShareRow = (
     Option<Vec<u8>>,
     Option<String>,
     String,
+    Option<i64>,
 );
 
 /// 按 token 查分享及其文件（公开接口用，不做用户隔离）
 fn lookup_share(conn: &rusqlite::Connection, token: &str) -> Result<Option<ShareRow>, String> {
     let row: Option<ShareRow> = conn
         .query_row(
-            "SELECT v.id, v.name, v.kind, v.content, v.content_blob, v.mime_type, s.share_type \
+            "SELECT v.id, v.name, v.kind, v.content, v.content_blob, v.mime_type, s.share_type, \
+             s.expires_at \
              FROM shares s JOIN vfs_nodes v ON v.id = s.node_id WHERE s.token = ?1",
             params![token],
             |r| {
@@ -1380,12 +1539,29 @@ fn lookup_share(conn: &rusqlite::Connection, token: &str) -> Result<Option<Share
                     r.get(4)?,
                     r.get(5)?,
                     r.get(6)?,
+                    r.get(7)?,
                 ))
             },
         )
         .optional()
         .map_err(|e| e.to_string())?;
     Ok(row)
+}
+
+/// 当前 unix 秒
+fn now_unix() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0)
+}
+
+/// 过期检查：expires_at 非空且 <= now 视为过期
+fn is_expired(expires_at: Option<i64>) -> bool {
+    match expires_at {
+        Some(ts) => ts <= now_unix(),
+        None => false,
+    }
 }
 
 /// 目录解析失败原因（创建分享时用）
@@ -1584,10 +1760,15 @@ pub async fn list_share(
 
     let row =
         lookup_share(&conn, &q.token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
-    let (root_id, _node_name, _node_kind, _content, _blob, _mime, share_type) = match row {
-        None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
-        Some(v) => v,
-    };
+    let (root_id, _node_name, _node_kind, _content, _blob, _mime, share_type, expires_at) =
+        match row {
+            None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
+            Some(v) => v,
+        };
+
+    if is_expired(expires_at) {
+        return Err(err(StatusCode::GONE, "分享已过期"));
+    }
 
     if share_type != "dir" {
         return Err(err(StatusCode::BAD_REQUEST, "仅目录分享支持浏览"));
@@ -1745,14 +1926,25 @@ pub async fn create_share(
         node_id
     };
 
+    let expires_at = match req.expires_at {
+        Some(ts) => {
+            if ts <= now_unix() {
+                return Err(err(StatusCode::BAD_REQUEST, "过期时间必须是未来时间"));
+            }
+            Some(ts)
+        }
+        None => None,
+    };
+
     // token 碰撞重试 3 次（概率极低，防御性）
     let mut token = String::new();
     let mut ok = false;
     for _ in 0..3 {
         token = new_share_token().map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
         let res = conn.execute(
-            "INSERT INTO shares (token, node_id, owner_id, share_type) VALUES (?1, ?2, ?3, ?4)",
-            params![token, node_id, user.id, stype],
+            "INSERT INTO shares (token, node_id, owner_id, share_type, expires_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![token, node_id, user.id, stype, expires_at],
         );
         match res {
             Ok(_) => {
@@ -1776,6 +1968,7 @@ pub async fn create_share(
         Json(ShareCreated {
             token: token.clone(),
             url: format!("/share.html?token={}", token),
+            expires_at,
         }),
     )
         .into_response())
@@ -1788,7 +1981,10 @@ pub async fn get_share(State(state): State<Arc<AppState>>, Path(token): Path<Str
         lookup_share(&conn, &token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
     match row {
         None => Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
-        Some((node_id, name, kind, content, blob, mime, share_type)) => {
+        Some((node_id, name, kind, content, blob, mime, share_type, expires_at)) => {
+            if is_expired(expires_at) {
+                return Err(err(StatusCode::GONE, "分享已过期"));
+            }
             if share_type == "dir" {
                 let size = subtree_bytes(&conn, node_id)
                     .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
@@ -1826,10 +2022,14 @@ pub async fn download_share(
     let conn = state.db.lock().unwrap();
     let row =
         lookup_share(&conn, &token).map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
-    let (root_id, name, kind, content, blob, mime_opt, share_type) = match row {
+    let (root_id, name, kind, content, blob, mime_opt, share_type, expires_at) = match row {
         None => return Err(err(StatusCode::NOT_FOUND, "分享不存在或已失效")),
         Some(v) => v,
     };
+
+    if is_expired(expires_at) {
+        return Err(err(StatusCode::GONE, "分享已过期"));
+    }
 
     if share_type == "dir" {
         let rel = q.path.as_deref().unwrap_or("");

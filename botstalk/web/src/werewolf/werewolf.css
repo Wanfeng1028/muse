@@ -1,0 +1,309 @@
+.werewolf-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--paper-raised);
+  border-top: 1px solid var(--line);
+}
+
+.werewolf-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-bar-day {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.werewolf-bar-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+}
+
+.werewolf-bar-turn {
+  color: var(--accent);
+}
+
+.werewolf-bar-sheriff {
+  color: var(--ink-soft);
+}
+
+.werewolf-bar-role {
+  color: var(--ink-soft);
+}
+
+.werewolf-seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.werewolf-seat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-seat.is-current {
+  border-color: var(--accent);
+}
+
+.werewolf-seat.is-dead {
+  opacity: 0.55;
+}
+
+.werewolf-seat.is-sheriff {
+  background: var(--accent-soft);
+}
+
+.werewolf-seat.is-mate {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.werewolf-seat-name {
+  color: var(--ink);
+}
+
+.werewolf-seat-badge {
+  font-size: 11px;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.werewolf-seat-role {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.werewolf-seat-state {
+  color: var(--ink-muted);
+}
+
+.werewolf-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.werewolf-block-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.werewolf-wait {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.werewolf-wolves {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-history {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-history-row {
+  color: var(--ink-soft);
+}
+
+.werewolf-deaths {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-death-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.werewolf-death-reason {
+  color: var(--ink-muted);
+}
+
+.werewolf-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.werewolf-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.werewolf-target.is-picked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.werewolf-witch-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.werewolf-empty {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.werewolf-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.werewolf-lobby-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.werewolf-lobby-hint {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.werewolf-lobby-countrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.werewolf-lobby-countlabel {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-lobby-countvalue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 24px;
+  text-align: center;
+}
+
+.werewolf-lobby-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.werewolf-lobby-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.werewolf-lobby-err {
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.werewolf-lobby-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.werewolf-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--paper-raised);
+  border-top: 1px solid var(--line);
+}
+
+.werewolf-result-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.werewolf-result-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.werewolf-result-row {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.werewolf-result-seat {
+  min-width: 80px;
+  color: var(--ink);
+}
+
+.werewolf-result-role {
+  min-width: 64px;
+}
+
+.werewolf-result-state {
+  color: var(--ink-muted);
+}
+
+.werewolf-result-actions {
+  display: flex;
+  gap: 8px;
+}

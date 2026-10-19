@@ -45,7 +45,7 @@ assets/
   "entry": "main.js",
   "description": "一个示例插件",
   "icon": "sparkles",
-  "permissions": ["fs.read", "net.http"]
+  "permissions": ["fs.read", "settings.read"]
 }
 ```
 
@@ -81,16 +81,16 @@ main();
 
 `permissions` 是一个字符串数组，每一项代表一项宿主能力。当前支持：
 
-| 权限 | 说明 |
-| --- | --- |
-| `fs.read` | 读取插件自身目录下的文件。路径被限制在插件目录内。 |
-| `fs.write` | 写入插件自身目录。不能写出插件目录之外。 |
-| `net.http` | 发起 HTTP/HTTPS 请求。请求会被记录到系统日志。 |
-| `ui.notify` | 调用系统通知。 |
-| `ui.taskbar` | 在任务栏注册图标和菜单。 |
+| 权限 | 风险 | 说明 |
+| --- | --- | --- |
+| `fs.read` | 中 | 能读你的全部文件 |
+| `fs.write` | 高 | 能修改或删除你的文件 |
+| `settings.read` | 低 | 能读你的偏好设置 |
 
 规则：
 
+- 权限必须落在白名单内，申请未知权限会被拒绝安装。
+- 同一权限不允许重复声明。
 - 未声明的权限调用对应 API 会立即失败，错误信息写明缺失的权限名。
 - 权限不会跨插件继承，每个插件独立声明。
 - 权限校验发生在宿主侧，插件无法绕过。
@@ -112,19 +112,26 @@ main();
 
 ## 6. 安装接口
 
-后端提供 `POST /api/plugins/install`。
+后端提供三个插件管理接口：
 
-- 请求体：`application/octet-stream`，即 zip 文件的原始字节。
-- 成功：返回 200 和 `PluginManifest` 的 JSON。
-- 失败：返回 400，响应体是纯文本中文错误信息，例如 `压缩包为空`、`缺少 plugin.json`、`解压后总大小超过 10MB 上限（实际 12345678 字节）`。
+- `GET /api/plugins`：列出已安装插件，返回 `PluginManifest` 数组 JSON。
+- `POST /api/plugins/preview`：只解析校验上传的 zip，不写盘，成功返回 `PluginManifest` JSON。
+- `POST /api/plugins/install`：解析校验并安装上传的 zip。
+- `DELETE /api/plugins/:id`：卸载插件，成功返回 204。
+
+`preview` 与 `install` 请求体均为 `multipart/form-data`，文件字段名为 `file`。
+
+- 成功：`preview`/`install` 返回 200 和 `PluginManifest` 的 JSON；`uninstall` 返回 204。
+- 失败：返回 400（卸载未安装的插件返回 404），响应体是纯文本中文错误信息，例如 `压缩包为空`、`缺少 plugin.json`、`解压后总大小超过 10MB 上限（实际 12345678 字节）`。
 
 示例：
 
 ```
 curl -X POST http://127.0.0.1:3000/api/plugins/install \
-  -H "Content-Type: application/octet-stream" \
-  --data-binary @hello.zip
+  -F "file=@hello.zip"
 ```
+
+插件数据目录由 `MINIOS_DATA_DIR` 决定：设置该环境变量时使用其值，否则取 `DATABASE_PATH` 的父目录，再否则回退到 `data`。插件安装到 `<data_dir>/plugins/<id>/`。
 
 安装成功后的目录结构：
 

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openDb, upsertPresence, getPresence, listPresence } from "../src/db.js";
+import { openDb, upsertPresence, getPresence, listPresence, listPresenceForRoom } from "../src/db.js";
 import { startServer } from "../src/server.js";
 import type { GatewayConfig } from "../src/config.js";
 import type { Envelope } from "@botstalk/protocol";
@@ -215,26 +215,8 @@ describe("presence-usage.r2", () => {
       }
     });
 
-    it("6a. 端点返回全量 presence，offline 排在 online 之后", async () => {
+    it("6a. 端点只返回本房间 presence，offline 排在 online 之后，其他房间不出现", async () => {
       const now = Date.now();
-      // 全量写入：两个 room 的 adapter 都进入 listPresence
-      upsertPresence(db, {
-        adapter_id: "z_online",
-        status: "online",
-        last_seen_ms: now,
-        usage_in: 0,
-        usage_out: 0,
-      });
-      upsertPresence(db, {
-        adapter_id: "a_offline",
-        status: "offline",
-        last_seen_ms: now,
-        usage_in: 0,
-        usage_out: 0,
-      });
-
-      // 该端点使用服务端自己打开的 db（同 dataDir），需要直接访问服务端的数据
-      // 这里用另一个独立连接的写法：使用同一 dataDir 打开并写入
       const srvDb = openDb(baseDir);
       upsertPresence(srvDb, {
         adapter_id: "z_online",
@@ -242,6 +224,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 0,
         usage_out: 0,
+        room: "room1",
       });
       upsertPresence(srvDb, {
         adapter_id: "a_offline",
@@ -249,6 +232,15 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 0,
         usage_out: 0,
+        room: "room1",
+      });
+      upsertPresence(srvDb, {
+        adapter_id: "m_other",
+        status: "online",
+        last_seen_ms: now,
+        usage_in: 0,
+        usage_out: 0,
+        room: "room2",
       });
 
       const res = await fetch(`http://127.0.0.1:${port}/api/rooms/room1/presence`);
@@ -256,13 +248,12 @@ describe("presence-usage.r2", () => {
       const body = (await res.json()) as {
         members: Array<{ adapter_id: string; status: string }>;
       };
-      // 语义锁定（DECISIONS 2026-10-18 presence 全局）：presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤
       expect(body.members.length).toBe(2);
       expect(body.members.map((m) => m.adapter_id)).toEqual(["z_online", "a_offline"]);
       expect(body.members.map((m) => m.status)).toEqual(["online", "offline"]);
     });
 
-    it("6b. 同状态按 adapter_id 字典序升序", async () => {
+    it("6b. 同状态按 adapter_id 字典序升序，且只含本房间", async () => {
       const now = Date.now();
       const srvDb = openDb(baseDir);
       upsertPresence(srvDb, {
@@ -271,6 +262,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 0,
         usage_out: 0,
+        room: "room1",
       });
       upsertPresence(srvDb, {
         adapter_id: "a",
@@ -278,6 +270,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 0,
         usage_out: 0,
+        room: "room1",
       });
       upsertPresence(srvDb, {
         adapter_id: "b",
@@ -285,12 +278,20 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 0,
         usage_out: 0,
+        room: "room1",
+      });
+      upsertPresence(srvDb, {
+        adapter_id: "d_other",
+        status: "online",
+        last_seen_ms: now,
+        usage_in: 0,
+        usage_out: 0,
+        room: "room2",
       });
 
-      const res = await fetch(`http://127.0.0.1:${port}/api/rooms/anything/presence`);
+      const res = await fetch(`http://127.0.0.1:${port}/api/rooms/room1/presence`);
       expect(res.status).toBe(200);
       const body = (await res.json()) as { members: Array<{ adapter_id: string }> };
-      // 语义锁定（DECISIONS 2026-10-18 presence 全局）：presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤
       expect(body.members.map((m) => m.adapter_id)).toEqual(["a", "c", "b"]);
     });
   });
@@ -326,7 +327,7 @@ describe("presence-usage.r2", () => {
       }
     });
 
-    it("7a. total.input_tokens / total.output_tokens 为各 adapter 之和", async () => {
+    it("7a. total.input_tokens / total.output_tokens 只累加本房间 adapter", async () => {
       const now = Date.now();
       const srvDb = openDb(baseDir);
       upsertPresence(srvDb, {
@@ -335,6 +336,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 10,
         usage_out: 20,
+        room: "room1",
       });
       upsertPresence(srvDb, {
         adapter_id: "b",
@@ -342,6 +344,15 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 5,
         usage_out: 7,
+        room: "room1",
+      });
+      upsertPresence(srvDb, {
+        adapter_id: "other",
+        status: "online",
+        last_seen_ms: now,
+        usage_in: 999,
+        usage_out: 999,
+        room: "room2",
       });
 
       const res = await fetch(`http://127.0.0.1:${port}/api/rooms/room1/usage`);
@@ -356,7 +367,6 @@ describe("presence-usage.r2", () => {
         }>;
         total: { input_tokens: number; output_tokens: number };
       };
-      // 语义锁定（DECISIONS 2026-10-18 presence 全局）：presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤
       expect(body.adapters.length).toBe(2);
       const map = new Map(body.adapters.map((x) => [x.adapter_id, x]));
       expect(map.get("a")).toMatchObject({
@@ -375,7 +385,7 @@ describe("presence-usage.r2", () => {
       expect(body.total).toEqual({ input_tokens: 15, output_tokens: 27 });
     });
 
-    it("7b. 单个 adapter 的 usage 更新不影响其他 adapter", async () => {
+    it("7b. 单个 adapter 的 usage 更新不影响本房间其他 adapter，其他房间不计入", async () => {
       const now = Date.now();
       const srvDb = openDb(baseDir);
       upsertPresence(srvDb, {
@@ -384,6 +394,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 1,
         usage_out: 2,
+        room: "room1",
       });
       upsertPresence(srvDb, {
         adapter_id: "b",
@@ -391,6 +402,15 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 3,
         usage_out: 4,
+        room: "room1",
+      });
+      upsertPresence(srvDb, {
+        adapter_id: "other",
+        status: "online",
+        last_seen_ms: now,
+        usage_in: 1000,
+        usage_out: 1000,
+        room: "room2",
       });
       // 只更新 a
       upsertPresence(srvDb, {
@@ -399,6 +419,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now + 1,
         usage_in: 100,
         usage_out: 200,
+        room: "room1",
       });
 
       const res = await fetch(`http://127.0.0.1:${port}/api/rooms/room1/usage`);
@@ -415,6 +436,7 @@ describe("presence-usage.r2", () => {
       expect(map.get("a")!.output_tokens).toBe(200);
       expect(map.get("b")!.input_tokens).toBe(3);
       expect(map.get("b")!.output_tokens).toBe(4);
+      expect(map.has("other")).toBe(false);
       expect(body.total).toEqual({ input_tokens: 103, output_tokens: 204 });
     });
   });
@@ -534,6 +556,7 @@ describe("presence-usage.r2", () => {
         last_seen_ms: now,
         usage_in: 11,
         usage_out: 22,
+        room: "room1",
       });
 
       const res = await fetch(`http://127.0.0.1:${port}/api/rooms/room1/presence`);
@@ -584,5 +607,99 @@ describe("presence-usage.r2", () => {
     // excludeSelf=false 那次，a 自己也收到
     expect(hub.sent.get("a")!.length).toBe(1);
     expect(hub.sent.get("a")![0].payload).toEqual({ adapter_id: "a", status: "online" });
+  });
+
+  // 15. 房间迁移隔离：adapter 换房间后旧房间不再含它
+  it("15. adapter 换房间后：旧房间不再含 a，新房间含 a", async () => {
+    const baseDir = mkdtempSync(join(tmpdir(), "botstalk-r2-migrate-"));
+    const config: GatewayConfig = {
+      port: 0,
+      dataDir: baseDir,
+      roomMaxMembersWorkroom: 50,
+      roomMaxMembersPlayroom: 200,
+      gameBroadcastThrottleMs: 500,
+    };
+    const srvDb = openDb(baseDir);
+    const server = startServer(config, srvDb);
+    const port = (server.httpServer.address() as { port: number }).port;
+    try {
+      const now = Date.now();
+      upsertPresence(srvDb, {
+        adapter_id: "a",
+        status: "online",
+        last_seen_ms: now,
+        usage_in: 1,
+        usage_out: 1,
+        room: "room1",
+      });
+      // 模拟重连换房间
+      upsertPresence(srvDb, {
+        adapter_id: "a",
+        status: "online",
+        last_seen_ms: now + 1,
+        usage_in: 2,
+        usage_out: 2,
+        room: "room2",
+      });
+
+      const res1 = await fetch(`http://127.0.0.1:${port}/api/rooms/room1/presence`);
+      const body1 = (await res1.json()) as { members: Array<{ adapter_id: string }> };
+      expect(body1.members.map((m) => m.adapter_id)).toEqual([]);
+
+      const res2 = await fetch(`http://127.0.0.1:${port}/api/rooms/room2/presence`);
+      const body2 = (await res2.json()) as { members: Array<{ adapter_id: string }> };
+      expect(body2.members.map((m) => m.adapter_id)).toEqual(["a"]);
+    } finally {
+      await server.close();
+      try { (srvDb as unknown as { close?: () => void }).close?.(); } catch { /* ignore */ }
+      try {
+        rmSync(baseDir, { recursive: true, force: true });
+      } catch {
+        /* ignore */
+      }
+    }
+  });
+
+  // 16. db 层：不传 room 不清空已有 room；listPresence 仍全量且带 room
+  it("16. upsertPresence 不传 room 保留原 room（COALESCE）；listPresence 全量含 room", () => {
+    const now = Date.now();
+    upsertPresence(db, {
+      adapter_id: "a",
+      status: "online",
+      last_seen_ms: now,
+      usage_in: 1,
+      usage_out: 1,
+      room: "room1",
+    });
+    // 不传 room：已有 room 值不能被清掉
+    upsertPresence(db, {
+      adapter_id: "a",
+      status: "offline",
+      last_seen_ms: now + 1,
+      usage_in: 2,
+      usage_out: 2,
+    });
+    const row = getPresence(db, "a");
+    expect(row!.room).toBe("room1");
+
+    upsertPresence(db, {
+      adapter_id: "b",
+      status: "online",
+      last_seen_ms: now,
+      usage_in: 3,
+      usage_out: 3,
+      room: "room2",
+    });
+
+    const all = listPresence(db);
+    expect(all.length).toBe(2);
+    const byId = new Map(all.map((r) => [r.adapter_id, r]));
+    expect(byId.get("a")!.room).toBe("room1");
+    expect(byId.get("b")!.room).toBe("room2");
+
+    const room1 = listPresenceForRoom(db, "room1");
+    expect(room1.map((r) => r.adapter_id)).toEqual(["a"]);
+    const room2 = listPresenceForRoom(db, "room2");
+    expect(room2.map((r) => r.adapter_id)).toEqual(["b"]);
   });
 });

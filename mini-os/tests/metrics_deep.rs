@@ -121,12 +121,7 @@ fn duration_histogram_accumulates_buckets_sum_and_count() {
         .lines()
         .find(|l| l.starts_with("http_request_duration_seconds_sum{method=\"GET\",route=\"/x\"}"))
         .unwrap();
-    let sum_val: f64 = sum_line
-        .rsplit(' ')
-        .next()
-        .unwrap()
-        .parse()
-        .unwrap();
+    let sum_val: f64 = sum_line.rsplit(' ').next().unwrap().parse().unwrap();
     assert!((sum_val - 0.803).abs() < 1e-9);
 }
 
@@ -212,10 +207,7 @@ fn share_ratelimited_counter_renders() {
 #[test]
 fn render_gauges_renders_files_bytes_and_sorted_shares() {
     let m = Metrics::new();
-    let shares = vec![
-        ("link".to_string(), 3i64),
-        ("code".to_string(), 7i64),
-    ];
+    let shares = vec![("link".to_string(), 3i64), ("code".to_string(), 7i64)];
     let out = m.render_gauges(42, 1024, &shares);
 
     assert!(has_line(&out, "# TYPE vfs_files_total gauge"));

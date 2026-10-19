@@ -86,7 +86,10 @@ fn node_rejects_missing_required_field() {
 
     let err = serde_json::from_value::<Node>(raw).expect_err("缺少 name 应当反序列化失败");
     let msg = err.to_string();
-    assert!(msg.contains("name"), "错误信息应提到缺失字段 name，实际: {msg}");
+    assert!(
+        msg.contains("name"),
+        "错误信息应提到缺失字段 name，实际: {msg}"
+    );
 }
 
 #[test]
@@ -229,8 +232,8 @@ fn register_and_login_requests_use_camel_case_and_roundtrip() {
     assert_eq!(login.username, "alice");
     assert_eq!(login.password, "s3cr3t!");
 
-    let setup: SetupNeededResponse =
-        serde_json::from_value(json!({ "needed": false })).expect("SetupNeededResponse 反序列化失败");
+    let setup: SetupNeededResponse = serde_json::from_value(json!({ "needed": false }))
+        .expect("SetupNeededResponse 反序列化失败");
     assert_eq!(setup.needed, false);
     let setup_value = serde_json::to_value(&setup).expect("SetupNeededResponse 序列化失败");
     assert_eq!(setup_value["needed"], json!(false));
@@ -284,6 +287,7 @@ fn share_created_and_admin_item_keep_expected_field_names() {
     let created = ShareCreated {
         token: "tok-001".to_string(),
         url: "/api/s/tok-001".to_string(),
+        expires_at: None,
     };
     let value = serde_json::to_value(&created).expect("ShareCreated 序列化失败");
     assert_eq!(value["token"], json!("tok-001"));
@@ -297,6 +301,7 @@ fn share_created_and_admin_item_keep_expected_field_names() {
         owner_username: "晚风".to_string(),
         node_name: "简历.pdf".to_string(),
         created_at: "2024-07-07T07:07:07Z".to_string(),
+        expires_at: None,
     };
     let item_value = serde_json::to_value(&item).expect("ShareAdminItem 序列化失败");
     assert_eq!(item_value["shareType"], json!("file"));

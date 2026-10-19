@@ -89,7 +89,7 @@ print(json.dumps({'username': '${username}', 'password': '${DEMO_PASSWORD}'}))
 ")
 
   local resp http_code
-  resp=$(curl -sS -o /tmp/shot_resp.$$ -w '%{http_code}' \
+  resp=$(curl -sS -o "${COOKIE_DIR}/resp.tmp" -w '%{http_code}' \
     -c "${cookie_jar}" \
     -H 'Content-Type: application/json' \
     -X POST "${BASE}/api/auth/register" \
@@ -101,7 +101,7 @@ print(json.dumps({'username': '${username}', 'password': '${DEMO_PASSWORD}'}))
   elif [[ "${http_code}" == "409" ]]; then
     echo "[复用] ${username} 已存在 (409)，改走登录" >&2
     local login_resp login_code
-    login_resp=$(curl -sS -o /tmp/shot_resp.$$ -w '%{http_code}' \
+    login_resp=$(curl -sS -o "${COOKIE_DIR}/resp.tmp" -w '%{http_code}' \
       -c "${cookie_jar}" \
       -H 'Content-Type: application/json' \
       -X POST "${BASE}/api/auth/login" \
@@ -109,15 +109,15 @@ print(json.dumps({'username': '${username}', 'password': '${DEMO_PASSWORD}'}))
     login_code="${login_resp}"
     check_status "${login_code}" 200 "登录 ${username}"
   else
-    cat /tmp/shot_resp.$$ >&2 || true
+    cat "${COOKIE_DIR}/resp.tmp" >&2 || true
     die "注册 ${username} 失败：HTTP ${http_code}"
   fi
 
   # 解析 id 与 role
   local id role
-  id=$(json_field id < /tmp/shot_resp.$$)
-  role=$(json_field role < /tmp/shot_resp.$$)
-  rm -f /tmp/shot_resp.$$
+  id=$(json_field id < "${COOKIE_DIR}/resp.tmp")
+  role=$(json_field role < "${COOKIE_DIR}/resp.tmp")
+  rm -f "${COOKIE_DIR}/resp.tmp"
 
   [[ -n "${id}" ]] || die "解析 ${username} 的 id 失败"
   echo "${id} ${role}"
@@ -137,7 +137,7 @@ print(json.dumps({'role': '${role}'}))
 ")
 
   local http_code
-  http_code=$(curl -sS -o /tmp/shot_resp.$$ -w '%{http_code}' \
+  http_code=$(curl -sS -o "${COOKIE_DIR}/resp.tmp" -w '%{http_code}' \
     -b "${admin_cookie}" \
     -H 'Content-Type: application/json' \
     -X PUT "${BASE}/api/users/${user_id}/role" \
@@ -145,11 +145,12 @@ print(json.dumps({'role': '${role}'}))
 
   check_status "${http_code}" 200 "设置用户 ${user_id} 角色为 ${role}"
   echo "[角色] 用户 ${user_id} -> ${role} (200)" >&2
-  rm -f /tmp/shot_resp.$$
+  rm -f "${COOKIE_DIR}/resp.tmp"
 }
 
-# 建文件夹或文件
-# 用法：create_fs <cookie> <name> <kind> [parent_id] [content]
+# 建文件夹或文件，回显创建节点的 id
+# 用法：create_fs <cookie> <name> <kind> [parentId] [content]
+# 回显：创建成功时输出节点 id
 create_fs() {
   local cookie="$1"
   local name="$2"
@@ -163,7 +164,7 @@ import json, sys
 obj = {'name': '${name}', 'kind': '${kind}'}
 pid = '${parent_id}'
 if pid != '':
-    obj['parent_id'] = int(pid)
+    obj['parentId'] = int(pid)
 content = sys.stdin.read()
 if content != '':
     obj['content'] = content
@@ -171,7 +172,7 @@ print(json.dumps(obj, ensure_ascii=False))
 " <<< "${content}")
 
   local http_code
-  http_code=$(curl -sS -o /tmp/shot_resp.$$ -w '%{http_code}' \
+  http_code=$(curl -sS -o "${COOKIE_DIR}/resp.tmp" -w '%{http_code}' \
     -b "${cookie}" \
     -H 'Content-Type: application/json' \
     -X POST "${BASE}/api/fs" \
@@ -179,39 +180,12 @@ print(json.dumps(obj, ensure_ascii=False))
 
   check_status "${http_code}" 201 "创建 ${kind} ${name}"
   echo "[文件] ${kind} ${name} 创建成功 (201)" >&2
-  rm -f /tmp/shot_resp.$$
+
+  local new_id
+  new_id=$(json_field id < "${COOKIE_DIR}/resp.tmp")
+  rm -f "${COOKIE_DIR}/resp.tmp"
+  echo "${new_id}"
 }
-
-# 建文件夹并回显其 id（列表匹配名字）
-# 用法：find_or_create_folder <cookie> <name> [parent_id]
-# 简化：直接创建，失败则忽略；返回不返回 id 由调用方决定
-# 这里为了造父子结构，我们按名字在返回里找 id。
-# 但 POST /api/fs 返回体字段未在事实来源里给出，故不解析返回 id；
-# 改为先建父文件夹，再用 name 走列表接口查找。列表接口 GET /api/fs
-# 未在事实来源中给出，所以改用「按已知 parent_id 建」的稳妥做法：
-# 事实来源只给了 POST /api/fs 和 GET /api/users，没有 GET /api/fs，
-# 因此我们不能查文件夹 id。解决方案：先建父文件夹，然后通过再次 POST
-# 时传 parent_id 需要 id——但拿不到。故改为不建父目录，直接用
-# parent_id 省略（根目录）建带路径语义的文件名。
-# 为保持真实感，我们在根下建文件夹 Documents / Desktop，
-# 然后把文件建在根下（因为拿不到 folder id）。
-# 但需求要求 Documents/项目计划.md 这种结构……
-# 事实来源没有 GET /api/fs，所以无法拿 folder id。
-# 折中：直接建文件名含斜杠的「文件」放在根下，或建两个顶层文件夹
-# 并在其下不建子文件。为满足「真实文件数据」且不编造 API，
-# 我们建 Documents、Desktop 两个文件夹，并在根下建文件，
-# 文件 content 里体现归属感。
-# 实际上更干净的做法：只建根下文件，名字用「项目计划.md」等，
-# 并额外建 Documents/Desktop 文件夹做视觉点缀。
-# 这里采用：建 Documents 文件夹、Desktop 文件夹、然后在根下建文件。
-# 但用户要求 Documents/项目计划.md 路径，我们无法实现真正的层级。
-# 为忠实于事实来源，我选择建文件夹 Documents 和 Desktop，
-# 并把文件建在根下，文件名直接用「项目计划.md」「待办.txt」。
-# 这样 viewer 页桌面图标不会重叠。
-
-# 上面思路太绕，直接简化：建两个文件夹 Documents / Desktop，
-# 文件建在根下（parent_id 省略），文件名保持中文真实名。
-# 因为无法获取 folder id，这是唯一不编造 API 的做法。
 
 # -----------------------------------------------------------------------------
 # 主流程
@@ -255,8 +229,8 @@ echo
 echo "--- 步骤 3：造真实文件数据 ---"
 
 # zhangwei：Documents 文件夹 + 项目计划.md + Desktop 文件夹 + 待办.txt
-create_fs "${COOKIE_ADMIN}" "Documents" "folder"
-create_fs "${COOKIE_ADMIN}" "Desktop" "folder"
+ADMIN_DOCS_ID=$(create_fs "${COOKIE_ADMIN}" "Documents" "folder")
+ADMIN_DESKTOP_ID=$(create_fs "${COOKIE_ADMIN}" "Desktop" "folder")
 
 PLAN_CONTENT=$(cat <<'EOF'
 项目计划（2025 年 Q2）
@@ -267,7 +241,7 @@ PLAN_CONTENT=$(cat <<'EOF'
 4. 跟设计确认一下暗色模式的对比度，有人反馈看久了眼睛酸。
 EOF
 )
-create_fs "${COOKIE_ADMIN}" "项目计划.md" "file" "" "${PLAN_CONTENT}"
+create_fs "${COOKIE_ADMIN}" "项目计划.md" "file" "${ADMIN_DOCS_ID}" "${PLAN_CONTENT}" >/dev/null
 
 TODO_CONTENT=$(cat <<'EOF'
 待办：
@@ -276,10 +250,10 @@ TODO_CONTENT=$(cat <<'EOF'
 - 把读书笔记里那本《设计数据密集型应用》还给图书馆。
 EOF
 )
-create_fs "${COOKIE_ADMIN}" "待办.txt" "file" "" "${TODO_CONTENT}"
+create_fs "${COOKIE_ADMIN}" "待办.txt" "file" "${ADMIN_DESKTOP_ID}" "${TODO_CONTENT}" >/dev/null
 
 # editor01：Documents 文件夹 + 读书笔记.md
-create_fs "${COOKIE_EDITOR}" "Documents" "folder"
+EDITOR_DOCS_ID=$(create_fs "${COOKIE_EDITOR}" "Documents" "folder")
 
 NOTE_CONTENT=$(cat <<'EOF'
 读书笔记：《设计数据密集型应用》第 5 章
@@ -291,7 +265,7 @@ NOTE_CONTENT=$(cat <<'EOF'
 回头再看看第 7 章事务隔离级别，上次没太看懂可重复读和幻读的区别。
 EOF
 )
-create_fs "${COOKIE_EDITOR}" "读书笔记.md" "file" "" "${NOTE_CONTENT}"
+create_fs "${COOKIE_EDITOR}" "读书笔记.md" "file" "${EDITOR_DOCS_ID}" "${NOTE_CONTENT}" >/dev/null
 
 # viewer01：不造文件（只读用户，空桌面更真实）
 echo "[跳过] viewer01 是只读用户，不造文件" >&2

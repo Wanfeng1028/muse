@@ -63,11 +63,7 @@ fn username_rejects_path_traversal_and_illegal_paths() {
     // act + assert
     for input in bad_inputs.iter() {
         let result = validate_username(input);
-        assert!(
-            result.is_err(),
-            "路径穿越/非法路径 {:?} 必须被拒绝",
-            input
-        );
+        assert!(result.is_err(), "路径穿越/非法路径 {:?} 必须被拒绝", input);
         let err = result.unwrap_err();
         // "." 和 ".." 因长度不足先触发长度错误，其余触发字符集错误；两种都是合法拒绝
         assert!(

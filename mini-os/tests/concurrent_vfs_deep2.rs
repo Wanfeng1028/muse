@@ -1,4 +1,3 @@
-use std::sync::Arc;
 
 use axum::body::Body;
 use axum::http::{header, Request, StatusCode};
@@ -46,19 +45,30 @@ fn multipart_body(boundary: &str, filename: &str, content: &[u8]) -> Vec<u8> {
     body
 }
 
-fn upload_request(cookie: &str, boundary: &str, filename: &str, content: &[u8], path: &str) -> Request<Body> {
+fn upload_request(
+    cookie: &str,
+    boundary: &str,
+    filename: &str,
+    content: &[u8],
+    path: &str,
+) -> Request<Body> {
     let body = multipart_body(boundary, filename, content);
     Request::builder()
         .method("POST")
         .uri(format!("/api/files/upload?path={}", path))
-        .header(header::CONTENT_TYPE, format!("multipart/form-data; boundary={}", boundary))
+        .header(
+            header::CONTENT_TYPE,
+            format!("multipart/form-data; boundary={}", boundary),
+        )
         .header(header::COOKIE, cookie)
         .body(Body::from(body))
         .unwrap()
 }
 
 async fn read_json(resp: axum::response::Response) -> Value {
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     serde_json::from_slice::<Value>(&bytes).unwrap()
 }
 
@@ -234,7 +244,11 @@ async fn concurrent_settings_upsert_single_row() {
         .unwrap()
         .to_string();
     let expected: Vec<String> = (0..20).map(|i| format!("v{}", i)).collect();
-    assert!(expected.contains(&theme_val), "theme value {} not in v0..v19", theme_val);
+    assert!(
+        expected.contains(&theme_val),
+        "theme value {} not in v0..v19",
+        theme_val
+    );
 
     let keys = json.as_object().unwrap();
     let theme_keys = keys.keys().filter(|k| *k == "theme").count();

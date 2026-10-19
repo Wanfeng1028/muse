@@ -98,10 +98,7 @@ fn open_db_rejects_directory_as_database_path() {
     let result = db::open_db(&path);
     assert!(result.is_err(), "把目录当数据库文件应返回错误");
     let msg = result.err().map(|e| e.to_string()).unwrap_or_default();
-    assert!(
-        !msg.is_empty(),
-        "错误信息不应为空，实际为空字符串"
-    );
+    assert!(!msg.is_empty(), "错误信息不应为空，实际为空字符串");
 
     let _ = fs::remove_dir_all(&dir);
 }
@@ -232,10 +229,7 @@ fn vfs_node_name_at_length_boundary_is_persisted() {
     );
     // 当前 schema 的 vfs_nodes.name 列没有 CHECK 约束，空名允许插入
     //（校验由应用层 sanitize_filename 处理）。本测试锁定该行为。
-    assert!(
-        empty_name.is_ok(),
-        "当前 schema 允许空名，应用层负责校验"
-    );
+    assert!(empty_name.is_ok(), "当前 schema 允许空名，应用层负责校验");
 
     drop(conn);
     let _ = fs::remove_dir_all(&dir);
@@ -261,10 +255,7 @@ fn duplicate_name_under_same_parent_is_rejected() {
     );
     // 当前 schema 的 vfs_nodes 表没有 (parent_id, name) 唯一约束，同名允许插入
     //（去重由应用层处理）。本测试锁定该行为。
-    assert!(
-        second.is_ok(),
-        "当前 schema 允许同名，应用层负责去重"
-    );
+    assert!(second.is_ok(), "当前 schema 允许同名，应用层负责去重");
 
     let count: i64 = conn
         .query_row(
@@ -291,10 +282,7 @@ fn backup_db_copies_data_and_refuses_overwrite() {
     }
 
     db::backup_db(&src, &dst).expect("首次备份应成功");
-    assert!(
-        std::path::Path::new(&dst).exists(),
-        "备份后目标文件应存在"
-    );
+    assert!(std::path::Path::new(&dst).exists(), "备份后目标文件应存在");
 
     let dst_conn = db::open_db(&dst).expect("打开备份库失败");
     let count: i64 = dst_conn
@@ -324,10 +312,7 @@ fn backup_db_missing_source_returns_error() {
     let result = db::backup_db(&src, &dst);
     assert!(result.is_err(), "源库不存在应返回错误");
     let msg = result.err().unwrap_or_default();
-    assert!(
-        !msg.is_empty(),
-        "源库缺失时错误信息不应为空"
-    );
+    assert!(!msg.is_empty(), "源库缺失时错误信息不应为空");
     assert!(
         !std::path::Path::new(&dst).exists(),
         "源库缺失时不应创建目标文件"
@@ -349,17 +334,13 @@ fn check_integrity_passes_on_fresh_db_and_fails_on_garbage_file() {
     db::check_integrity(&good).expect("新建库应通过完整性校验");
 
     let bad = dir.join("bad.db");
-    fs::write(&bad, b"this is definitely not a sqlite database file")
-        .expect("写入垃圾文件失败");
+    fs::write(&bad, b"this is definitely not a sqlite database file").expect("写入垃圾文件失败");
     let bad_path = bad.to_string_lossy().to_string();
 
     let result = db::check_integrity(&bad_path);
     assert!(result.is_err(), "垃圾文件应导致完整性校验失败");
     let msg = result.err().unwrap_or_default();
-    assert!(
-        !msg.is_empty(),
-        "校验失败时错误信息不应为空"
-    );
+    assert!(!msg.is_empty(), "校验失败时错误信息不应为空");
 
     let _ = fs::remove_dir_all(&dir);
 }

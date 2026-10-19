@@ -29,7 +29,15 @@ fn build_router() -> axum::Router {
     let static_dir = dir.join("static").to_string_lossy().to_string();
     let _ = std::fs::create_dir_all(&static_dir);
     let state = mini_os::init_state_with_full(
-        &db_path, &static_dir, 16 * 1024 * 1024, 3600, 1000.0, 1000, 1000.0, 1000, false,
+        &db_path,
+        &static_dir,
+        16 * 1024 * 1024,
+        3600,
+        1000.0,
+        1000,
+        1000.0,
+        1000,
+        false,
     );
     mini_os::build_app(state)
 }
@@ -47,7 +55,15 @@ fn build_router_authed() -> (axum::Router, String) {
     let static_dir = dir.join("static").to_string_lossy().to_string();
     let _ = std::fs::create_dir_all(&static_dir);
     let state = mini_os::init_state_with_full(
-        &db_path, &static_dir, 16 * 1024 * 1024, 3600, 1000.0, 1000, 1000.0, 1000, false,
+        &db_path,
+        &static_dir,
+        16 * 1024 * 1024,
+        3600,
+        1000.0,
+        1000,
+        1000.0,
+        1000,
+        false,
     );
     let token = {
         let conn = state.db.lock().expect("db lock");
@@ -58,7 +74,11 @@ fn build_router_authed() -> (axum::Router, String) {
         )
         .expect("insert user");
         let id: i64 = conn
-            .query_row("SELECT id FROM users WHERE username='deep_tester'", [], |r| r.get(0))
+            .query_row(
+                "SELECT id FROM users WHERE username='deep_tester'",
+                [],
+                |r| r.get(0),
+            )
             .expect("user id");
         mini_os::auth::create_session(&conn, id, 3600).expect("session")
     };
@@ -94,14 +114,16 @@ fn apps_registry_contains_files_editor_terminal() {
     assert!(ids.contains(&"about"));
     assert!(ids.contains(&"users"));
 
-    let files = apps.iter().find(|a| a.id == "files").expect("缺少 files 应用");
+    let files = apps
+        .iter()
+        .find(|a| a.id == "files")
+        .expect("缺少 files 应用");
     assert_eq!(files.name, "文件管理器");
     assert_eq!(files.description, "浏览与管理虚拟文件系统");
 }
 
 // percent_encode 是 src/handlers.rs 私有函数，不可直调；
 // 其行为由下面的上传文件名 multipart 测试在 HTTP 层覆盖。
-
 
 #[tokio::test]
 async fn download_query_rejects_dotdot_traversal() {
@@ -115,7 +137,9 @@ async fn download_query_rejects_dotdot_traversal() {
     let resp = tower::ServiceExt::oneshot(router, req).await.unwrap();
     assert_ne!(resp.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert!(v["error"].is_string());
     assert_eq!(v["error"], "非法路径");
@@ -133,7 +157,9 @@ async fn download_query_rejects_absolute_illegal_path() {
     let resp = tower::ServiceExt::oneshot(router, req).await.unwrap();
     assert_ne!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert!(v["error"].is_string());
 }
@@ -162,7 +188,9 @@ async fn upload_query_rejects_overlong_filename() {
     let resp = tower::ServiceExt::oneshot(router, req).await.unwrap();
     assert_ne!(resp.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(v["error"], "文件名过长");
 }
@@ -193,7 +221,9 @@ async fn upload_query_rejects_control_char_filename() {
     let resp = tower::ServiceExt::oneshot(router, req).await.unwrap();
     assert_ne!(resp.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(v["error"], "文件名含非法字符");
 }
@@ -221,7 +251,9 @@ async fn upload_query_accepts_chinese_filename() {
 
     assert_eq!(resp.status(), StatusCode::CREATED); // 上传成功返回 201
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert!(v.get("error").is_none());
 }
@@ -238,7 +270,9 @@ async fn download_query_dot_only_is_illegal() {
     let resp = tower::ServiceExt::oneshot(router, req).await.unwrap();
     let status = resp.status();
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(v["error"], "非法文件名");
     assert_ne!(status, StatusCode::OK);

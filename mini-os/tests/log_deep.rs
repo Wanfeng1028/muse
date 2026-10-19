@@ -20,8 +20,8 @@ use axum::Router;
 use tower::ServiceExt;
 
 use mini_os::log::{
-    format_rfc3339_millis, log_event, new_request_id, now_rfc3339_millis,
-    request_log_middleware, sanitize_request_id,
+    format_rfc3339_millis, log_event, new_request_id, now_rfc3339_millis, request_log_middleware,
+    sanitize_request_id,
 };
 
 // ---------------------------------------------------------------------------
@@ -46,10 +46,7 @@ fn format_rfc3339_millis_day_rollover_and_leap_day() {
     // 2024-02-29 相对 epoch 的天数 = 19782
     let days_2024_02_29: u64 = 19782;
     let base = days_2024_02_29 * 86_400_000 + 12 * 3_600_000 + 500;
-    assert_eq!(
-        format_rfc3339_millis(base),
-        "2024-02-29T12:00:00.500Z"
-    );
+    assert_eq!(format_rfc3339_millis(base), "2024-02-29T12:00:00.500Z");
 }
 
 #[test]
@@ -59,10 +56,7 @@ fn format_rfc3339_millis_pinned_and_boundary_seconds() {
         format_rfc3339_millis(1792133085123),
         "2026-10-16T06:44:45.123Z"
     );
-    assert_eq!(
-        format_rfc3339_millis(1792133085000),
-        "2026-10-16T06:44:45Z"
-    );
+    assert_eq!(format_rfc3339_millis(1792133085000), "2026-10-16T06:44:45Z");
     // 999ms 不跨秒
     assert_eq!(
         format_rfc3339_millis(1792133085999),
@@ -237,10 +231,7 @@ async fn middleware_falls_back_when_header_is_illegal() {
 async fn middleware_missing_header_still_injects_id() {
     let app = build_app();
 
-    let req = Request::builder()
-        .uri("/ping")
-        .body(Body::empty())
-        .unwrap();
+    let req = Request::builder().uri("/ping").body(Body::empty()).unwrap();
 
     let resp = app.oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);

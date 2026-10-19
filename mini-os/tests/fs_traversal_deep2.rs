@@ -142,7 +142,8 @@ async fn upload_path_empty_segment_rejected() {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     let v = body_json(resp).await;
     assert_eq!(v["error"], "非法路径");
-}#[tokio::test]
+}
+#[tokio::test]
 async fn upload_path_percent_encoded_control_char_rejected() {
     let (app, cookie) = test_app().await;
     let resp = upload_request(

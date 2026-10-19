@@ -176,3 +176,21 @@ test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gat
 
 **影响**：
 - `gateway/test/presence-usage.r2.test.ts` 中 3 处"行为待确认"注释转为语义锁定用例，行为不变。
+
+## 2026-10-19：presence/usage 端点改为按 room 过滤（推翻 2026-10-18 “网关全局”决策）
+
+**决策**：
+- `GET /api/rooms/:room/presence` 与 `GET /api/rooms/:room/usage` 只返回该房间成员，走新函数 `listPresenceForRoom(db, room)`。
+- `presence` 表新增 `room TEXT` 列（可空）。`openDb` 对老库用 `PRAGMA table_info(presence)` 检测缺列时才 `ALTER TABLE presence ADD COLUMN room TEXT`。
+- `upsertPresence` 新增可选参数 `room?: string | null`；INSERT 写入 `p.room ?? null`；ON CONFLICT 用 `room = COALESCE(excluded.room, presence.room)`——不传 room 时保留已有归属，传了新 room 时迁移归属（同一 adapter 重连到别的房间时房间归属跟着走）。
+- `PresenceRow` 新增 `room: string | null`；`getPresence` / `listPresence` 的 SELECT 补上 `room` 列。
+- `listPresence` 保留（网关全局全量），端点不再使用。
+- `hub.ts` 5 处 `store.upsertPresence` 调用全部传入 room：顶号传 `existing.room`、hello 传 `env.room`、ws close / presence 帧 / sweep 传 `conn.room`。
+
+**推翻 2026-10-18 决策**：
+- 原决策为“presence 是网关全局概念，端点返回全量 listPresence，不按 room 过滤”。该行为被 `PROJECTS.md` 登记为“测试锁定未修项”（`gateway/test/presence-usage.r2.test.ts` 中 6a/6b/7a/7b 标为待确认）。
+- 推翻原因：端点路径本身就是 `/api/rooms/:room/presence` 与 `/api/rooms/:room/usage`，返回全量是 bug，不是语义。多房间隔离要求端点只返回该房间成员。
+
+**影响**：
+- `gateway/test/presence-usage.r2.test.ts` 中 6a/6b/7a/7b 的“语义锁定（DECISIONS 2026-10-18 presence 全局）”注释删除，改为按 room 过滤的新语义；新增用例 15（房间迁移隔离）、用例 16（db 层 COALESCE 与 listPresence 全量含 room）。
+- 老调用方不传 `room` 仍可编译、仍向后兼容；不传时不清空已有 room 值。

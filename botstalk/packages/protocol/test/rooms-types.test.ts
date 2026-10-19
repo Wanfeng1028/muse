@@ -72,8 +72,9 @@ describe("游戏清单常量", () => {
     expect(WORKROOM_GAMES).toContain("vote_plan");
   });
 
-  it("PLAYROOM_GAMES 有 5 个且含 who_is_undercover", () => {
-    expect(PLAYROOM_GAMES).toHaveLength(5);
+  it("PLAYROOM_GAMES 有 6 个且含 who_is_undercover", () => {
+    expect(PLAYROOM_GAMES).toHaveLength(6);
+    expect(PLAYROOM_GAMES).toContain("werewolf");
     expect(PLAYROOM_GAMES).toContain("who_is_undercover");
     expect(PLAYROOM_GAMES).toContain("doudizhu");
   });
