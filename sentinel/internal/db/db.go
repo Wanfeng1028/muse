@@ -204,6 +204,12 @@ updated_at TEXT NOT NULL
 			`CREATE UNIQUE INDEX IF NOT EXISTS uq_incidents_open_monitor ON incidents(monitor_id) WHERE ended_at IS NULL`,
 		},
 	},
+	{
+		version: 11,
+		stmts: []string{
+			`CREATE UNIQUE INDEX IF NOT EXISTS uq_webhook_deliveries_dedup ON webhook_deliveries(monitor_id, url, event, payload) WHERE status IN ('pending','retrying')`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

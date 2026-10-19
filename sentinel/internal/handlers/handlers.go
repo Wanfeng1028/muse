@@ -706,24 +706,54 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 			monitorID = n
 		}
 	}
-	limit := 100
-	if v := r.URL.Query().Get("limit"); v != "" {
+
+	page := 1
+	if v := r.URL.Query().Get("page"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
-			limit = n
+			page = n
 		}
 	}
-	if limit < 1 {
-		limit = 1
+	if page < 1 {
+		page = 1
 	}
-	if limit > 1000 {
-		limit = 1000
+
+	pageSize := 20
+	pageSizeSet := false
+	if v := r.URL.Query().Get("page_size"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			pageSize = n
+			pageSizeSet = true
+		}
 	}
-	incidents, err := s.store.ListIncidents(monitorID, limit)
+	if !pageSizeSet {
+		if v := r.URL.Query().Get("limit"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil {
+				pageSize = n
+				page = 1
+			}
+		}
+	}
+	if pageSize < 1 {
+		pageSize = 1
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	total, err := s.store.CountIncidents(monitorID)
 	if err != nil {
 		logErr(r, "handleListIncidents", err)
 		writeErr(w, http.StatusInternalServerError, "读取事件失败")
 		return
 	}
+
+	incidents, err := s.store.ListIncidentsPaged(monitorID, (page-1)*pageSize, pageSize)
+	if err != nil {
+		logErr(r, "handleListIncidents", err)
+		writeErr(w, http.StatusInternalServerError, "读取事件失败")
+		return
+	}
+
 	items := make([]map[string]interface{}, 0, len(incidents))
 	for _, inc := range incidents {
 		var endedAt interface{}
@@ -744,7 +774,13 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 			"start_error":  inc.StartError,
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]interface{}{"items": items})
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"items":     items,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	})
 }
 
 func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {

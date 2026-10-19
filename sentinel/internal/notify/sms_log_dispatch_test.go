@@ -31,6 +31,7 @@ func (r *fakeRecorder) RecordSMSLog(phone, message, provider, status, errMsg str
 func TestNotifySMS_LogsSent(t *testing.T) {
 	rec := &fakeRecorder{}
 	n := &Notifier{
+		Channels:  []string{"sms"},
 		SMS:       SMSConfig{Phones: []string{"13800138000"}},
 		SMSSender: &MockSmsSender{},
 		SMSLogger: rec,
@@ -62,6 +63,7 @@ func TestNotifySMS_LogsSent(t *testing.T) {
 func TestNotifySMS_LogsFailed(t *testing.T) {
 	rec := &fakeRecorder{}
 	n := &Notifier{
+		Channels:  []string{"sms"},
 		SMS:       SMSConfig{Phones: []string{"13800138000"}},
 		SMSSender: &MockSmsSender{FailCount: 1},
 		SMSLogger: rec,

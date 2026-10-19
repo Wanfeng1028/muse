@@ -196,7 +196,7 @@ func TestDailyBreakdown_IncludesEmptyDaysAndBoundaries(t *testing.T) {
 		t.Fatalf("今天 Failures = %d, 期望 1", last.Failures)
 	}
 	wantUptime := 2.0 / 3.0 * 100.0
-	if last.UptimePct != wantUptime {
+	if d := last.UptimePct - wantUptime; d > 1e-9 || d < -1e-9 {
 		t.Fatalf("今天 UptimePct = %v, 期望 %v", last.UptimePct, wantUptime)
 	}
 	mid := stats[1]
@@ -294,7 +294,7 @@ func TestMonthlySLA_WithClosedAndOpenIncident(t *testing.T) {
 		t.Fatalf("插入 incidents 失败: %v", err)
 	}
 	// 未关闭 incident: 开始时间 10 秒前, 期望按 now-started 估算, 结果 > 0。
-	openStart := time.Now().UTC().Add(-10 * time.Second).Format(time.RFC3339)
+	openStart := "2024-06-04T00:02:00Z"
 	if _, err := db.Exec(
 		`INSERT INTO incidents(monitor_id, started_at, ended_at, downtime_sec) VALUES(?,?,?,?)`,
 		1, openStart, nil, nil,

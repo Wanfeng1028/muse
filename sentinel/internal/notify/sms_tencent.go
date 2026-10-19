@@ -39,6 +39,9 @@ type TencentSMSSender struct {
 	httpClient  *http.Client
 }
 
+// Provider 返回发送器标识，供短信发送记录使用。
+func (s *TencentSMSSender) Provider() string { return "tencent" }
+
 // NewTencentSMSSender 创建腾讯云短信发送器。
 func NewTencentSMSSender(cfg TencentConfig) (*TencentSMSSender, error) {
 	if cfg.SecretId == "" {

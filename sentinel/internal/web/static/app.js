@@ -131,7 +131,7 @@ async function initDashboard() {
     );
     tasks.push(
       incidentsEl
-        ? api('/api/incidents?limit=10').then((data) => renderRecentIncidents(incidentsEl, data))
+        ? api('/api/incidents?limit=10').then((data) => renderRecentIncidents(incidentsEl, data.items ?? data))
         : Promise.resolve()
     );
 

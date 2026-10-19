@@ -96,6 +96,9 @@ type MockSmsSender struct {
 	FailErr   error
 }
 
+// Provider 返回发送器标识，供短信发送记录使用。
+func (m *MockSmsSender) Provider() string { return "mock" }
+
 // Send 模拟发送：先校验手机号；FailCount>0 时前 N 次返回 FailErr（不记录）。
 func (m *MockSmsSender) Send(phone, message string) error {
 	if err := ValidatePhone(phone); err != nil {
@@ -148,6 +151,9 @@ type AliyunConfig struct {
 type AliyunSMSSender struct {
 	cfg AliyunConfig
 }
+
+// Provider 返回发送器标识，供短信发送记录使用。
+func (s *AliyunSMSSender) Provider() string { return "aliyun" }
 
 // NewAliyunSMSSender 构造阿里云短信发送器。
 func NewAliyunSMSSender(cfg AliyunConfig) (*AliyunSMSSender, error) {

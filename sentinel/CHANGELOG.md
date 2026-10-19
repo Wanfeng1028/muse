@@ -2,6 +2,20 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.8.2] - 2026-10-19
+
+### 修复
+- migration v11：部分唯一索引 `uq_webhook_deliveries_dedup ON webhook_deliveries(monitor_id, url, event, payload) WHERE status IN ('pending','retrying')`，关上 deliveries 并发幂等缺口（0.8.1 已知限制第一项）。
+- `EnqueueDelivery` 改为原子写法：`INSERT OR IGNORE` + 冲突时回查已存在行 id；16 goroutine 同 key 并发只插一行、返回同一 id。去重范围仍是 pending/retrying 行，已完成（done）的行不受影响，语义不变。
+- wecom `SendMarkdown`：URL 非法等请求构造失败统一包装为"企业微信 Webhook 发送失败"前缀，与发送失败同一口径（测试 TestWeComSendMarkdown_InvalidURL 要求）。
+- 测试修正 3 处（源码无问题）：`sms_log_dispatch_test.go` 两个用例补 `Channels: []string{"sms"}`（原来默认走 webhook，短信路径根本没执行）；`TestDailyBreakdown_IncludesEmptyDaysAndBoundaries` 浮点比较改 1e-9 容差；`TestMonthlySLA_WithClosedAndOpenIncident` 的未关闭 incident `started_at` 改为窗口内的 `"2024-06-04T00:02:00Z"`（原来用了 now，落在 2024-06 报告窗口外）。
+
+### 实测
+- 待本轮验证后填写。
+
+### 已知限制
+- 0.8.1 挂账的 deliveries 并发幂等缺口与 6 个失败测试已在本轮处理；剩余 1 个 pre-existing 失败待定位。
+
 ## [0.8.1] - 2026-10-19
 
 ### 新增

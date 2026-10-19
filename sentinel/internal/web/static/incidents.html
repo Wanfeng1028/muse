@@ -20,43 +20,208 @@
 
 <div class="page-header">
   <h1>事件</h1>
-  <p>这里能看到所有事件，以及每一条的处理情况。</p>
+  <p class="subtitle">这里能看到每次监控出问题到恢复的记录，可以按监控筛选，每页 20 条。</p>
 </div>
 
-<table class="data-table">
+<div class="page-header">
+  <label for="monitor-filter">监控</label>
+  <select id="monitor-filter">
+    <option value="">全部</option>
+  </select>
+</div>
+
+<div id="error-box" class="error-text" style="display:none;"></div>
+
+<table class="table">
   <thead>
     <tr>
-      <th>时间</th>
-      <th>标题</th>
+      <th>监控</th>
+      <th>开始时间</th>
+      <th>恢复时间</th>
+      <th>持续</th>
       <th>状态</th>
+      <th>原因</th>
     </tr>
   </thead>
   <tbody id="incidents-body">
   </tbody>
 </table>
 
+<div class="page-header">
+  <button id="prev-btn" class="btn" type="button">上一页</button>
+  <span id="page-info">第 1 页 / 共 1 页</span>
+  <button id="next-btn" class="btn" type="button">下一页</button>
+  <span id="total-info">共 0 条</span>
+</div>
+
 <script>
 (function () {
-  fetch("/api/incidents")
-    .then(function (resp) { return resp.json(); })
-    .then(function (rows) {
-      var body = document.getElementById("incidents-body");
-      body.innerHTML = "";
-      for (var i = 0; i < rows.length; i++) {
-        var r = rows[i];
-        var tr = document.createElement("tr");
-        var tdTime = document.createElement("td");
-        tdTime.textContent = r.created_at || "";
-        tr.appendChild(tdTime);
-        var tdTitle = document.createElement("td");
-        tdTitle.textContent = r.title || "";
-        tr.appendChild(tdTitle);
-        var tdStatus = document.createElement("td");
-        tdStatus.textContent = r.status || "";
-        tr.appendChild(tdStatus);
-        body.appendChild(tr);
+  var PAGE_SIZE = 20;
+  var state = { page: 1, total: 0, monitorId: "" };
+
+  var bodyEl = document.getElementById("incidents-body");
+  var errEl = document.getElementById("error-box");
+  var filterEl = document.getElementById("monitor-filter");
+  var prevBtn = document.getElementById("prev-btn");
+  var nextBtn = document.getElementById("next-btn");
+  var pageInfo = document.getElementById("page-info");
+  var totalInfo = document.getElementById("total-info");
+
+  function totalPages() {
+    if (state.total <= 0) return 1;
+    return Math.ceil(state.total / PAGE_SIZE);
+  }
+
+  function fmtDuration(sec, endedAt) {
+    if (endedAt) {
+      if (sec === null || sec === undefined || sec === "") return "-";
+      var n = Number(sec);
+      if (!isFinite(n) || n < 0) return "-";
+      if (n < 60) return n + "秒";
+      if (n < 3600) {
+        var m = Math.floor(n / 60);
+        var s = n % 60;
+        return m + "分" + s + "秒";
       }
-    });
+      var h = Math.floor(n / 3600);
+      var mm = Math.floor((n % 3600) / 60);
+      return h + "小时" + mm + "分";
+    }
+    if (sec === null || sec === undefined || sec === "") return "进行中";
+    var n2 = Number(sec);
+    if (!isFinite(n2) || n2 < 0) return "进行中";
+    if (n2 < 60) return n2 + "秒";
+    if (n2 < 3600) {
+      var m2 = Math.floor(n2 / 60);
+      var s2 = n2 % 60;
+      return m2 + "分" + s2 + "秒";
+    }
+    var h2 = Math.floor(n2 / 3600);
+    var mm2 = Math.floor((n2 % 3600) / 60);
+    return h2 + "小时" + mm2 + "分";
+  }
+
+  function renderEmpty() {
+    bodyEl.innerHTML = "";
+    var tr = document.createElement("tr");
+    var td = document.createElement("td");
+    td.className = "empty";
+    td.colSpan = 6;
+    td.textContent = "暂无事件";
+    tr.appendChild(td);
+    bodyEl.appendChild(tr);
+  }
+
+  function renderRows(items) {
+    bodyEl.innerHTML = "";
+    if (!items || items.length === 0) {
+      renderEmpty();
+      return;
+    }
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var tr = document.createElement("tr");
+
+      var tdMon = document.createElement("td");
+      tdMon.textContent = it.monitor_name || "";
+      tr.appendChild(tdMon);
+
+      var tdStart = document.createElement("td");
+      tdStart.textContent = it.started_at || "";
+      tr.appendChild(tdStart);
+
+      var tdEnd = document.createElement("td");
+      tdEnd.textContent = it.ended_at ? it.ended_at : "-";
+      tr.appendChild(tdEnd);
+
+      var tdDur = document.createElement("td");
+      tdDur.textContent = fmtDuration(it.downtime_sec, it.ended_at);
+      tr.appendChild(tdDur);
+
+      var tdStatus = document.createElement("td");
+      if (it.ended_at) {
+        tdStatus.textContent = "已恢复";
+        tdStatus.style.color = "#10b981";
+      } else {
+        tdStatus.textContent = "未恢复";
+        tdStatus.style.color = "#f59e0b";
+      }
+      tr.appendChild(tdStatus);
+
+      var tdErr = document.createElement("td");
+      tdErr.textContent = it.start_error || "";
+      tr.appendChild(tdErr);
+
+      bodyEl.appendChild(tr);
+    }
+  }
+
+  function updatePager() {
+    var tp = totalPages();
+    pageInfo.textContent = "第 " + state.page + " 页 / 共 " + tp + " 页";
+    totalInfo.textContent = "共 " + state.total + " 条";
+    prevBtn.disabled = state.page <= 1;
+    nextBtn.disabled = state.page >= tp;
+  }
+
+  function load() {
+    errEl.style.display = "none";
+    var url = "/api/incidents?page=" + state.page + "&page_size=" + PAGE_SIZE;
+    if (state.monitorId) {
+      url += "&monitor_id=" + encodeURIComponent(state.monitorId);
+    }
+    fetch(url)
+      .then(function (resp) { return resp.json(); })
+      .then(function (data) {
+        state.total = data.total || 0;
+        renderRows(data.items);
+        updatePager();
+      })
+      .catch(function (err) {
+        console.error(err);
+        errEl.textContent = "加载失败，请稍后重试";
+        errEl.style.display = "";
+      });
+  }
+
+  function loadMonitors() {
+    fetch("/api/monitors")
+      .then(function (resp) { return resp.json(); })
+      .then(function (rows) {
+        if (!Array.isArray(rows)) return;
+        for (var i = 0; i < rows.length; i++) {
+          var m = rows[i];
+          var opt = document.createElement("option");
+          opt.value = String(m.id);
+          opt.textContent = m.name || "";
+          filterEl.appendChild(opt);
+        }
+      })
+      .catch(function (err) {
+        console.error(err);
+      });
+  }
+
+  filterEl.addEventListener("change", function () {
+    state.monitorId = filterEl.value;
+    state.page = 1;
+    load();
+  });
+
+  prevBtn.addEventListener("click", function () {
+    if (state.page <= 1) return;
+    state.page = state.page - 1;
+    load();
+  });
+
+  nextBtn.addEventListener("click", function () {
+    if (state.page >= totalPages()) return;
+    state.page = state.page + 1;
+    load();
+  });
+
+  loadMonitors();
+  load();
 })();
 </script>
 </body>

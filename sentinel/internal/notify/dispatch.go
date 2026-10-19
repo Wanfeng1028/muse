@@ -114,7 +114,7 @@ func (n Notifier) Notify(t Target, event, name, target, at, errMsg string) []err
 					errs = append(errs, fmt.Errorf("sms 渠道发送失败（%s）: %w", ph, sendErr))
 				}
 				if n.SMSLogger != nil {
-					status := "success"
+					status := "sent"
 					errMsg := ""
 					if sendErr != nil {
 						status = "failed"

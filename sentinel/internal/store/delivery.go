@@ -30,24 +30,12 @@ func (s *Store) EnqueueDelivery(monitorID int64, url, event, payload string, max
 		maxAttempts = 8
 	}
 
-	var existingID int64
-	err := s.db.QueryRow(
-		`SELECT id FROM webhook_deliveries
-WHERE monitor_id = ? AND url = ? AND event = ? AND payload = ?
-AND status IN ('pending','retrying')
-ORDER BY id DESC LIMIT 1`,
-		monitorID, url, event, payload,
-	).Scan(&existingID)
-	if err == nil {
-		return existingID, nil
-	}
-	if err != sql.ErrNoRows {
-		return 0, err
-	}
-
 	now := utcNow()
+	// 原子幂等：依赖部分唯一索引 uq_webhook_deliveries_dedup
+	// (monitor_id, url, event, payload) WHERE status IN ('pending','retrying')。
+	// 并发下只有一个 INSERT 能成功，其余被忽略后回查到同一行 id。
 	res, err := s.db.Exec(
-		`INSERT INTO webhook_deliveries
+		`INSERT OR IGNORE INTO webhook_deliveries
 (monitor_id, url, event, payload, status, attempt, max_attempts, next_retry_at, last_error, created_at, updated_at)
 VALUES (?, ?, ?, ?, 'pending', 0, ?, ?, '', ?, ?)`,
 		monitorID, url, event, payload, maxAttempts, now, now, now,
@@ -55,7 +43,22 @@ VALUES (?, ?, ?, ?, 'pending', 0, ?, ?, '', ?, ?)`,
 	if err != nil {
 		return 0, err
 	}
-	return res.LastInsertId()
+	if n, _ := res.RowsAffected(); n == 1 {
+		return res.LastInsertId()
+	}
+
+	var existingID int64
+	err = s.db.QueryRow(
+		`SELECT id FROM webhook_deliveries
+WHERE monitor_id = ? AND url = ? AND event = ? AND payload = ?
+AND status IN ('pending','retrying')
+ORDER BY id DESC LIMIT 1`,
+		monitorID, url, event, payload,
+	).Scan(&existingID)
+	if err != nil {
+		return 0, err
+	}
+	return existingID, nil
 }
 
 // GetDelivery 按 id 查询一条投递记录。无行返回 sql.ErrNoRows。

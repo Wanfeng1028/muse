@@ -385,6 +385,70 @@ func (s *Store) ListIncidents(monitorID int64, limit int) ([]Incident, error) {
 	return out, nil
 }
 
+// CountIncidents 统计 incident 总数。
+// monitorID <= 0 时统计全部；否则仅统计指定 monitor 的。
+func (s *Store) CountIncidents(monitorID int64) (int, error) {
+	var (
+		n   int
+		err error
+	)
+	if monitorID <= 0 {
+		err = s.db.QueryRow(`SELECT COUNT(*) FROM incidents`).Scan(&n)
+	} else {
+		err = s.db.QueryRow(`SELECT COUNT(*) FROM incidents WHERE monitor_id = ?`, monitorID).Scan(&n)
+	}
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
+}
+
+// ListIncidentsPaged 按 started_at 降序、id 降序分页返回 incident 列表。
+// monitorID <= 0 时返回全部；否则仅返回指定 monitor 的。
+// offset < 0 按 0 处理；limit <= 0 按 20 处理。
+// JOIN monitors 表填充 MonitorName。
+func (s *Store) ListIncidentsPaged(monitorID int64, offset, limit int) ([]Incident, error) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if monitorID <= 0 {
+		rows, err = s.db.Query(
+			`SELECT i.id, i.monitor_id, i.started_at, i.ended_at, i.downtime_sec, i.start_error, m.name
+			 FROM incidents i JOIN monitors m ON m.id = i.monitor_id
+			 ORDER BY i.started_at DESC, i.id DESC LIMIT ? OFFSET ?`, limit, offset)
+	} else {
+		rows, err = s.db.Query(
+			`SELECT i.id, i.monitor_id, i.started_at, i.ended_at, i.downtime_sec, i.start_error, m.name
+			 FROM incidents i JOIN monitors m ON m.id = i.monitor_id
+			 WHERE i.monitor_id = ?
+			 ORDER BY i.started_at DESC, i.id DESC LIMIT ? OFFSET ?`, monitorID, limit, offset)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []Incident
+	for rows.Next() {
+		var it Incident
+		if err := rows.Scan(&it.ID, &it.MonitorID, &it.StartedAt, &it.EndedAt, &it.DowntimeSec, &it.StartError, &it.MonitorName); err != nil {
+			return nil, err
+		}
+		out = append(out, it)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Overview 返回全局概览统计。
 // total=monitors 总数；enabled=enabled=1 数；
 // up/down/unknown 按每个 monitor 的 LastCheck 的 ok 值统计（无检查记 unknown）；

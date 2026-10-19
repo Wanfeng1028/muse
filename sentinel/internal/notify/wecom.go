@@ -89,7 +89,7 @@ func (n WeComNotifier) SendMarkdown(event, name, target, at, errMsg string) erro
 	for attempt := 0; attempt < 3; attempt++ {
 		req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
 		if err != nil {
-			return fmt.Errorf("构造企业微信通知请求失败: %w", err)
+			return fmt.Errorf("企业微信 Webhook 发送失败: 构造请求失败: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
 
