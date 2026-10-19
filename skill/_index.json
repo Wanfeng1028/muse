@@ -2328,6 +2328,195 @@
       "license": "MIT",
       "source": "Joker-chichi/claude-mv-skill",
       "description": "Make hand-painted watercolour-and-ink cartoon videos (MP4) with code — p5.js + p5.brush rendered frame by frame in headless Chrome, encoded with ffmpeg — starring Clawd or any character. Use when the user asks to make an animation, animated short, cartoon, music video, lyric video, animated GIF/loop or \"a video of Clawd…\", or mentions the PDoomVideo / ClaudeAnimationBase approach. Covers storyboarding, the engine API, music and LRC lyric sync, cloud-friendly preview review, and choosing local or cloud rendering for the final video."
+    },
+    {
+      "id": "hyperframes-embedded-captions",
+      "name": "hyperframes-embedded-captions",
+      "version": "1.0.0",
+      "description": "Add captions or subtitles to an existing single-subject talking-head video without editing the footage. Use for plain verbatim captions, cinematic captions embedded behind the subject, VFX captions, “炸/特效/酷炫字幕,” or a named identity from the 35-style catalog. Route by visual identity, not by backend engine. The quiet `anchor` rail is the default; embed every word only when the user explicitly wants a fully cinematic treatment. The workflow runs locally end to end, including transcription and subject matting; split multi-shot footage before applying it.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-faceless-explainer",
+      "name": "hyperframes-faceless-explainer",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-figma",
+      "name": "hyperframes-figma",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-general-video",
+      "name": "hyperframes-general-video",
+      "version": "1.0.0",
+      "description": "Author or edit a custom HyperFrames composition when no specialized workflow fits, or when BRIEF.md sets flow: companion. Use for longer or multi-scene pieces, brand and sizzle reels, montages, static loops, static title cards, footage remixes, and freeform builds. Use motion-graphics instead for a short unnarrated motion-first unit, including an animated title. Route fresh creation through hyperframes before using this skill.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes",
+      "name": "hyperframes",
+      "version": "1.0.0",
+      "description": "Mandatory entry point: read this first for any request to make, create, edit, animate, or render a video, animation, or motion graphic, including a promo, explainer, captioned clip, title card, overlay, slideshow or interactive deck, Remotion port, or any HyperFrames HTML composition. Also use it to inspect, diagnose, validate, preview, publish, or batch-render an existing HyperFrames project. Inputs may be a website URL, GitHub PR, Figma design or URL, text or brief, existing footage, or music. It resumes project state, captures intent when applicable, selects and installs the owning workflow, and routes domain capabilities. HyperFrames is the default output framework unless the user explicitly chooses another framework for the deliverable or asks only to record a browser session.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-animation",
+      "name": "hyperframes-animation",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-audio",
+      "name": "hyperframes-audio",
+      "version": "1.0.0",
+      "description": "Use when audio already placed in a HyperFrames composition needs to be mixed: fade-in/fade-out, crossfade, track gain or volume, volume automation, ducking, a music bed that fights a voiceover (voiceover carve), effects on a track (EQ, compressor, limiter, gate, saturation, delay, reverb, chorus, phaser, bitcrush), automation envelopes drawn on a track's volume or any effect parameter, or one submix bus carrying a chain, a fader and an automation clock for several tracks at once (`<hf-audio-group>`). Don't use for sourcing or generating audio — finding BGM, SFX, or making a voiceover is `/media-use`. Don't use for clip timing or track layout, which is `/hyperframes-core`.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-cli",
+      "name": "hyperframes-cli",
+      "version": "1.0.0",
+      "description": "Use the HyperFrames CLI development loop: init, add, catalog, capture, lint, check, snapshot, compare, grade-compare, preview, play, present, beats, keyframes, single or batch render, publish, cloud, cloudrun, feedback, lambda, doctor, browser, info, upgrade, skills, compositions, timeline, history, clean, docs, benchmark, telemetry, transcribe, auth, tts, and remove-background. Also use when diagnosing build or render failures. validate, inspect, and layout are deprecated aliases; use check. Covers local, HeyGen-hosted cloud, AWS Lambda, and Google Cloud Run rendering.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-core",
+      "name": "hyperframes-core",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-creative",
+      "name": "hyperframes-creative",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-keyframes",
+      "name": "hyperframes-keyframes",
+      "version": "1.0.0",
+      "description": "Use when a HyperFrames composition needs a punch-in, punch-out, zoom, reframe, Ken Burns treatment, camera move, visual match/whip handoff, or other seek-safe 2D/3D keyframes; also for GSAP, CSS keyframes, Anime.js, WAAPI, FLIP, paths, masks, SVG morph/draw, text trails, 3D depth, or `hyperframes keyframes` diagnostics. Don't use for broad scene strategy, brand design, media sourcing, captions, or general video planning.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-registry",
+      "name": "hyperframes-registry",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-studio",
+      "name": "hyperframes-studio",
+      "version": "1.0.0",
+      "description": "Use when working with a person on a HyperFrames project in Studio: first, whether their message asks for a change at all (questions, loose ideas and \"don't change anything\" get an answer and a plan, not an edit); for a new film, the plan, storyboard and build order that the HyperFrames launch films follow; and how the timeline should be laid out so it reads well (one caption track, one element kind per track, every scene a sub-composition) and where captions and key content may sit (safe zones). Don't use for how to perform an individual edit (split, trim, retime, volume, copy, swap): that is `creator-editing-recipes.md` in `/hyperframes-core`.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-media-use",
+      "name": "hyperframes-media-use",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-motion-graphics",
+      "name": "hyperframes-motion-graphics",
+      "version": "1.0.0",
+      "description": "Use when creating a short, design-led motion graphic where motion is the message — kinetic typography, stat count-up, chart/data-viz hit, logo sting / brand lockup, lower-third / callout / social overlay, animated map (highlight regions, connect places, zoom to a location), animated tweet / news-article / headline, webpage / UI animation (scroll, cursor, callouts), or fusing a real image's geometry into a chart. Usually under 10s (up to ~30s), no narration or live-action subject; renders to MP4 or transparent overlay. Longer / narrated / multi-scene → /general-video. Unclear → /hyperframes.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-music-to-video",
+      "name": "hyperframes-music-to-video",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-pr-to-video",
+      "name": "hyperframes-pr-to-video",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-product-launch-video",
+      "name": "hyperframes-product-launch-video",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-remotion-to-hyperframes",
+      "name": "hyperframes-remotion-to-hyperframes",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-slideshow",
+      "name": "hyperframes-slideshow",
+      "version": "1.0.0",
+      "description": "Author a HyperFrames slideshow — a presentation, pitch deck, or interactive deck with discrete slides, fragment reveals, branching, hotspot navigation, and built-in presenter mode with speaker notes; also converts an existing page into a deck. Output is a navigable deck, not a rendered MP4. If the user didn't explicitly ask for a slideshow, confirm before authoring. Unclear → /hyperframes.",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "hyperframes-talking-head-recut",
+      "name": "hyperframes-talking-head-recut",
+      "version": "1.0.0",
+      "description": "",
+      "author": "heygen-com",
+      "license": "Apache-2.0",
+      "source": "heygen-com/hyperframes"
     }
   ]
 }
