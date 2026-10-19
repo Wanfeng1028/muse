@@ -182,7 +182,7 @@ def test_run_tick_fetch_exception_does_not_propagate_and_state_written(tmp_db, m
     calls = {"n": 0}
 
     def fake_fetch_feed(db_path, feed, user_agent, timeout=None, retries=None,
-                        extract_timeout=None):
+                        extract_timeout=None, dead_after=None):
         calls["n"] += 1
         if calls["n"] == 1:
             raise RuntimeError("boom")

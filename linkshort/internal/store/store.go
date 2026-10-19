@@ -405,6 +405,26 @@ func (s *Store) PurgeExpiredBurned(before time.Time) (int64, error) {
 	return n, nil
 }
 
+// PurgeExpiredLinks 删除 expires_at 非 NULL 且早于 before 的链接（时间链清理）。
+// burn 链由 PurgeExpiredBurned 按 burned_at 口径负责，本函数只看 expires_at；
+// 两条扫荡先后执行，同一行不会被重复计数（DELETE 幂等）。
+// expires_at 为 NULL（永不过期）的行不删。
+// 返回实际删除的行数；visits 通过外键 ON DELETE CASCADE 级联删除。
+func (s *Store) PurgeExpiredLinks(before time.Time) (int64, error) {
+	res, err := s.db.Exec(
+		`DELETE FROM links WHERE expires_at IS NOT NULL AND expires_at < ?`,
+		formatTime(before),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("purge expired links: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("rows affected: %w", err)
+	}
+	return n, nil
+}
+
 // PurgeLink 彻底删除一条链接。visits 表的外键 ON DELETE CASCADE 会级联删除该链接的访问日志。
 // 行不存在时返回 ErrNotFound。调用方负责只对 burn=1 且已销毁的链接调用。
 func (s *Store) PurgeLink(id int64) error {

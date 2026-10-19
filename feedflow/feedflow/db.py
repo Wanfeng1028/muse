@@ -256,6 +256,14 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "ALTER TABLE articles ADD COLUMN scroll_pos REAL NOT NULL DEFAULT 0",
         ],
     ),
+    (
+        5,
+        "feeds 新增 is_dead/dead_at（抓取源健康检查死源标记用）",
+        [
+            "ALTER TABLE feeds ADD COLUMN is_dead INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE feeds ADD COLUMN dead_at TEXT NOT NULL DEFAULT ''",
+        ],
+    ),
 ]
 
 

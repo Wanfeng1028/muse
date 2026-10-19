@@ -290,6 +290,40 @@ async def net_worth(s: AsyncSession) -> dict:
 # ---------------------------------------------------------------------------
 
 
+async def budget_yearly(s: AsyncSession, year: int) -> list[dict]:
+    """按年逐月汇总预算与支出：全部分类合并。"""
+    result: list[dict] = []
+    for mon in range(1, 13):
+        month = f"{year:04d}-{mon:02d}"
+        start, end = month_range(month)
+
+        budget_sum = await s.scalar(
+            select(func.coalesce(func.sum(Budget.amount_cents), 0)).where(Budget.year_month == month)
+        )
+        budget_cents = int(budget_sum)
+        has_budget = budget_cents > 0
+
+        spent = await s.scalar(
+            select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(
+                Transaction.type == "expense",
+                Transaction.occurred_on >= start,
+                Transaction.occurred_on < end,
+            )
+        )
+        spent_cents = int(spent)
+        pct = round(spent_cents / budget_cents * 100, 1) if budget_cents > 0 else 0.0
+        result.append(
+            {
+                "year_month": month,
+                "budget_cents": budget_cents,
+                "spent_cents": spent_cents,
+                "pct": pct,
+                "has_budget": has_budget,
+            }
+        )
+    return result
+
+
 async def budget_progress(s: AsyncSession, month: str) -> list[dict]:
     """当月全部预算，附分类名与 spent_cents/remaining_cents/pct。"""
     start, end = month_range(month)

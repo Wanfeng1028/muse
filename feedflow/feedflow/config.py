@@ -21,6 +21,7 @@ DEFAULT_FEVER_API_KEY = ""
 DEFAULT_RATE_LIMIT_RPS = 1.0
 DEFAULT_RATE_LIMIT_BURST = 60
 DEFAULT_RATE_LIMIT_ENABLED = True
+DEFAULT_FEED_DEAD_AFTER = 10
 
 
 
@@ -119,6 +120,12 @@ def load() -> dict:
         os.environ.get("FEEDFLOW_RATE_LIMIT_ENABLED"), DEFAULT_RATE_LIMIT_ENABLED
     )
 
+    feed_dead_after = _parse_int(
+        os.environ.get("FEEDFLOW_FEED_DEAD_AFTER"), DEFAULT_FEED_DEAD_AFTER
+    )
+    if feed_dead_after < 1:
+        feed_dead_after = DEFAULT_FEED_DEAD_AFTER
+
     return {
 
         "db_path": str(db_path),
@@ -136,6 +143,7 @@ def load() -> dict:
     "rate_limit_rps": rate_limit_rps,
     "rate_limit_burst": rate_limit_burst,
     "rate_limit_enabled": rate_limit_enabled,
+    "feed_dead_after": feed_dead_after,
 }
 
 
@@ -167,6 +175,16 @@ def validate(cfg: dict) -> None:
     cfg.setdefault("rate_limit_rps", DEFAULT_RATE_LIMIT_RPS)
     cfg.setdefault("rate_limit_burst", DEFAULT_RATE_LIMIT_BURST)
     cfg.setdefault("rate_limit_enabled", DEFAULT_RATE_LIMIT_ENABLED)
+    cfg.setdefault("feed_dead_after", DEFAULT_FEED_DEAD_AFTER)
+
+    # 校验死源阈值
+    feed_dead_after = cfg.get("feed_dead_after")
+    if (
+        not isinstance(feed_dead_after, int)
+        or isinstance(feed_dead_after, bool)
+        or feed_dead_after < 1
+    ):
+        _fail(f"FEEDFLOW_FEED_DEAD_AFTER 必须是大于等于 1 的整数，当前为 {feed_dead_after!r}")
 
     # 校验 port 范围
     port = cfg.get("port")

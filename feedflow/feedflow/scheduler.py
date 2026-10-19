@@ -67,7 +67,7 @@ def _job_state_set(db_path: str, key: str, value: str) -> None:
 
 def _run_tick(db_path: str, default_interval: int, user_agent: str,
               fetch_timeout, fetch_retries, extract_timeout,
-              catchup: bool = False) -> None:
+              catchup: bool = False, dead_after=None) -> None:
     """执行一次调度心跳：查询到期源并逐个抓取。
 
     :param db_path: SQLite 数据库路径。
@@ -106,6 +106,7 @@ def _run_tick(db_path: str, default_interval: int, user_agent: str,
                 timeout=fetch_timeout,
                 retries=fetch_retries,
                 extract_timeout=extract_timeout,
+                dead_after=dead_after,
             )
 
             status = result.get("status")
@@ -174,6 +175,7 @@ def start_scheduler(app):
     fetch_timeout = cfg.get("fetch_timeout")
     fetch_retries = cfg.get("fetch_retries")
     extract_timeout = cfg.get("extract_timeout")
+    dead_after = cfg.get("feed_dead_after")
 
 
     def tick():
@@ -186,6 +188,7 @@ def start_scheduler(app):
             fetch_retries,
             extract_timeout,
             catchup=False,
+            dead_after=dead_after,
         )
 
 
@@ -208,6 +211,7 @@ def start_scheduler(app):
                 fetch_retries,
                 extract_timeout,
                 catchup=True,
+                dead_after=dead_after,
 
             )
         else:
@@ -225,6 +229,7 @@ def start_scheduler(app):
                     fetch_timeout,
                     fetch_retries,
                     catchup=True,
+                    dead_after=dead_after,
                 )
     except Exception as exc:  # noqa: BLE001
         # 补跑失败不影响调度器启动。

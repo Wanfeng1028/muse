@@ -109,6 +109,21 @@ def delete_folder(folder_id: int):
     return "", 204
 
 
+@bp.post("/folders/<int:folder_id>/move")
+def move_folder(folder_id: int):
+    """上/下移动分组。"""
+    db = _db()
+    folder = store.get_folder(db, folder_id)
+    if folder is None:
+        return _err("分组不存在", 404)
+    data = _json_body()
+    direction = data.get("direction")
+    if direction not in ("up", "down"):
+        return _err("direction 非法", 400)
+    moved = store.move_folder(db, folder_id, direction)
+    return jsonify({"moved": bool(moved), "folder": store.get_folder(db, folder_id)})
+
+
 # ---------------------------------------------------------------------------
 # 文章
 # ---------------------------------------------------------------------------
@@ -316,6 +331,15 @@ def fetch_feed_now(feed_id: int):
         db, feed, cfg["user_agent"], extract_timeout=cfg["extract_timeout"]
     )
     return jsonify(result)
+
+
+@bp.post("/feeds/<int:feed_id>/reactivate")
+def reactivate_feed(feed_id: int):
+    """手动复活死源。"""
+    db = _db()
+    if not store.reactivate_feed(db, feed_id):
+        return _err("订阅源不存在", 404)
+    return jsonify(store.get_feed(db, feed_id))
 
 
 

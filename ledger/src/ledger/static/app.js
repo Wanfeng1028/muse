@@ -487,6 +487,137 @@ function initBudgetsPage() {
   });
 
   loadCategories();
+  initYearView();
+}
+
+function centsToYuan(cents) {
+  var n = Number(cents) || 0;
+  return (n / 100).toFixed(2);
+}
+
+function initYearView() {
+  var monthBtn = document.getElementById("view-month-btn");
+  var yearBtn = document.getElementById("view-year-btn");
+  var monthView = document.getElementById("month-view");
+  var yearView = document.getElementById("year-view");
+  var yearInput = document.getElementById("year-input");
+  var yearGrid = document.getElementById("year-grid");
+  if (!monthView || !yearView || !yearGrid) return;
+
+  var params = new URLSearchParams(location.search);
+  var nowYear = new Date().getFullYear();
+  var currentYear = parseInt(params.get("year"), 10);
+  if (isNaN(currentYear)) currentYear = nowYear;
+  var currentView = params.get("view") === "year" ? "year" : "month";
+
+  if (yearInput) yearInput.value = String(currentYear);
+
+  function renderView() {
+    if (currentView === "year") {
+      monthView.hidden = true;
+      yearView.hidden = false;
+      if (monthBtn) monthBtn.classList.remove("active");
+      if (yearBtn) yearBtn.classList.add("active");
+    } else {
+      monthView.hidden = false;
+      yearView.hidden = true;
+      if (monthBtn) monthBtn.classList.add("active");
+      if (yearBtn) yearBtn.classList.remove("active");
+    }
+  }
+
+  function heatClass(pct, hasBudget) {
+    if (!hasBudget) return "heat-none";
+    if (pct > 100) return "heat-over";
+    if (pct >= 80) return "heat-2";
+    if (pct >= 50) return "heat-1";
+    return "heat-0";
+  }
+
+  function renderGrid(data) {
+    var months = (data && data.months) || [];
+    var html = "";
+    months.forEach(function (m) {
+      var ym = m.year_month || "";
+      var label = parseInt(ym.slice(5, 7), 10) + " 月";
+      var hasBudget = !!m.has_budget;
+      var pct = Number(m.pct) || 0;
+      var cls = "year-cell " + heatClass(pct, hasBudget);
+      var overBadge = (hasBudget && pct > 100) ? '<span class="year-cell-badge">超支</span>' : "";
+      var body;
+      if (hasBudget) {
+        body = '<div class="year-cell-line">预算 ' + centsToYuan(m.budget_cents) + '</div>' +
+               '<div class="year-cell-line">已花费 ' + centsToYuan(m.spent_cents) + '</div>' +
+               '<div class="year-cell-line">执行率 ' + pct.toFixed(1) + '%</div>';
+      } else {
+        body = '<div class="year-cell-line">未设预算</div>';
+      }
+      html += '<div class="' + cls + '" data-month="' + ym + '">' +
+                '<div class="year-cell-head"><span class="year-cell-month">' + label + '</span>' + overBadge + '</div>' +
+                body +
+              '</div>';
+    });
+    yearGrid.innerHTML = html;
+  }
+
+  function loadYear(year) {
+    yearGrid.innerHTML = '<div class="empty">加载中…</div>';
+    fetch("/api/budgets/yearly?year=" + year)
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        renderGrid(data);
+      })
+      .catch(function () {
+        yearGrid.innerHTML = '<div class="empty">加载失败，请重试</div>';
+      });
+  }
+
+  if (monthBtn) {
+    monthBtn.addEventListener("click", function () {
+      currentView = "month";
+      renderView();
+      var p = new URLSearchParams(location.search);
+      p.set("view", "month");
+      location.search = p.toString();
+    });
+  }
+
+  if (yearBtn) {
+    yearBtn.addEventListener("click", function () {
+      currentView = "year";
+      renderView();
+      var p = new URLSearchParams(location.search);
+      p.set("view", "year");
+      p.set("year", String(currentYear));
+      location.search = p.toString();
+    });
+  }
+
+  if (yearInput) {
+    yearInput.addEventListener("change", function () {
+      var y = parseInt(yearInput.value, 10);
+      if (isNaN(y)) { yearInput.value = String(currentYear); return; }
+      currentYear = y;
+      var p = new URLSearchParams(location.search);
+      p.set("view", "year");
+      p.set("year", String(y));
+      location.search = p.toString();
+    });
+  }
+
+  yearGrid.addEventListener("click", function (e) {
+    var cell = e.target.closest ? e.target.closest(".year-cell") : null;
+    if (!cell) return;
+    var ym = cell.getAttribute("data-month");
+    if (!ym) return;
+    location.search = "?month=" + ym;
+  });
+
+  renderView();
+  if (currentView === "year") loadYear(currentYear);
 }
 
 /* ========== 周期账单页 ========== */
@@ -875,8 +1006,12 @@ function initReviewPage() {
 
     function confLabel(text, conf) {
         var pct = Math.round((Number(conf) || 0) * 100);
-        var cls = "conf" + (Number(conf) < 0.7 ? " conf-low" : "");
-        return '<label class="' + cls + '">' + text + '（' + pct + '%）</label>';
+        var isLow = Number(conf) < 0.7;
+        var cls = "conf" + (isLow ? " conf-low" : "");
+        var barCls = "conf-bar" + (isLow ? " conf-bar-low" : "");
+        return '<label class="' + cls + '">' + text + '（' + pct + '%）' +
+            '<span class="' + barCls + '"><i style="width:' + pct + '%"></i></span>' +
+            '</label>';
     }
 
     function catOptions(selectedId) {
@@ -916,6 +1051,15 @@ function initReviewPage() {
         var card = document.createElement("article");
         card.className = "review-card";
         card.dataset.id = item.id;
+
+        var selectBox = document.createElement("input");
+        selectBox.type = "checkbox";
+        selectBox.className = "rv-select";
+        selectBox.title = "选中以批量处理";
+        selectBox.addEventListener("change", function () {
+            updateBatchBar();
+        });
+        card.appendChild(selectBox);
 
         var thumb = document.createElement("img");
         thumb.className = "review-thumb";
@@ -1032,9 +1176,198 @@ function initReviewPage() {
             card.remove();
             if (!listEl.querySelector(".review-card")) renderEmpty();
             if (statusEl) statusEl.textContent = "已驳回 #" + item.id;
+            updateBatchBar();
         } catch (err) {
             alert("网络错误，驳回没成功，请重试。");
             btn.disabled = false;
+        }
+    }
+
+    var batchBar = null;
+
+    function ensureBatchBar() {
+        if (batchBar) return batchBar;
+        batchBar = document.createElement("div");
+        batchBar.id = "batch-bar";
+        batchBar.style.display = "none";
+        batchBar.innerHTML =
+            '<span class="batch-count" id="batch-count">已选 0 项</span>' +
+            '<button type="button" class="btn-ghost batch-select-all">全选</button>' +
+            '<button type="button" class="btn-ghost batch-clear">取消全选</button>' +
+            '<button type="button" class="btn-primary batch-confirm">批量确认入账</button>' +
+            '<button type="button" class="btn-ghost batch-reject">批量驳回</button>';
+        listEl.parentNode.insertBefore(batchBar, listEl);
+
+        batchBar.querySelector(".batch-select-all").addEventListener("click", function () {
+            var boxes = listEl.querySelectorAll(".rv-select");
+            for (var i = 0; i < boxes.length; i++) boxes[i].checked = true;
+            updateBatchBar();
+        });
+        batchBar.querySelector(".batch-clear").addEventListener("click", function () {
+            var boxes = listEl.querySelectorAll(".rv-select");
+            for (var i = 0; i < boxes.length; i++) boxes[i].checked = false;
+            updateBatchBar();
+        });
+        batchBar.querySelector(".batch-confirm").addEventListener("click", function () {
+            onBatchConfirm(this);
+        });
+        batchBar.querySelector(".batch-reject").addEventListener("click", function () {
+            onBatchReject(this);
+        });
+        return batchBar;
+    }
+
+    function getSelectedCards() {
+        var cards = listEl.querySelectorAll(".review-card");
+        var picked = [];
+        for (var i = 0; i < cards.length; i++) {
+            var box = cards[i].querySelector(".rv-select");
+            if (box && box.checked) picked.push(cards[i]);
+        }
+        return picked;
+    }
+
+    function updateBatchBar() {
+        var bar = ensureBatchBar();
+        var picked = getSelectedCards();
+        var countEl = bar.querySelector("#batch-count");
+        if (countEl) countEl.textContent = "已选 " + picked.length + " 项";
+        bar.style.display = picked.length ? "flex" : "none";
+    }
+
+    function collectCardPayload(card) {
+        var merchant = card.querySelector(".rv-merchant").value.trim();
+        var amountStr = card.querySelector(".rv-amount").value;
+        var occurredOn = card.querySelector(".rv-date").value;
+        var categoryId = card.querySelector(".rv-category").value;
+        var accountId = card.querySelector(".rv-account").value;
+        var note = card.querySelector(".rv-note").value.trim();
+        var amountNum = parseFloat(amountStr);
+        return {
+            merchant: merchant,
+            amountNum: amountNum,
+            occurred_on: occurredOn,
+            category_id: categoryId,
+            account_id: accountId,
+            note: note
+        };
+    }
+
+    function validateCard(payload) {
+        if (!payload.merchant) return "商户没填。";
+        if (!(payload.amountNum > 0)) return "金额要大于 0。";
+        if (!payload.occurred_on) return "日期没选。";
+        if (!payload.category_id) return "分类没选。";
+        if (!payload.account_id) return "账户没选。";
+        return "";
+    }
+
+    async function onBatchConfirm(btn) {
+        var picked = getSelectedCards();
+        if (!picked.length) return;
+
+        var items = [];
+        for (var i = 0; i < picked.length; i++) {
+            var p = collectCardPayload(picked[i]);
+            var err = validateCard(p);
+            if (err) {
+                alert("第 " + (i + 1) + " 张卡片有问题：" + err);
+                return;
+            }
+            items.push({
+                review_id: Number(picked[i].dataset.id),
+                merchant: p.merchant,
+                amount_cents: Math.round(p.amountNum * 100),
+                occurred_on: p.occurred_on,
+                category_id: Number(p.category_id),
+                account_id: Number(p.account_id),
+                note: p.note
+            });
+        }
+
+        var bar = ensureBatchBar();
+        var allBtns = bar.querySelectorAll("button");
+        for (var b = 0; b < allBtns.length; b++) allBtns[b].disabled = true;
+        btn.disabled = true;
+        try {
+            var res = await fetch("/api/bills/review/batch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "confirm", items: items })
+            });
+            if (!res.ok) {
+                alert("批量确认失败，请重试。");
+                return;
+            }
+            var data = await res.json();
+            var ok = data.succeeded || [];
+            var fail = data.failed || [];
+            for (var k = 0; k < ok.length; k++) {
+                var okCard = listEl.querySelector('.review-card[data-id="' + ok[k].review_id + '"]');
+                if (okCard) okCard.remove();
+            }
+            if (fail.length) {
+                var lines = [];
+                for (var f = 0; f < fail.length; f++) {
+                    lines.push("#" + fail[f].review_id + "：" + (fail[f].error || "未知错误"));
+                }
+                alert("有 " + fail.length + " 项没成功：\n" + lines.join("\n"));
+            }
+            if (statusEl) statusEl.textContent = "批量确认：成功 " + ok.length + " 项，失败 " + fail.length + " 项";
+            if (!listEl.querySelector(".review-card")) renderEmpty();
+        } catch (err) {
+            alert("网络错误，批量确认没成功，请重试。");
+        } finally {
+            for (var b2 = 0; b2 < allBtns.length; b2++) allBtns[b2].disabled = false;
+            updateBatchBar();
+        }
+    }
+
+    async function onBatchReject(btn) {
+        var picked = getSelectedCards();
+        if (!picked.length) return;
+        if (!confirm("确定驳回选中的 " + picked.length + " 条吗？")) return;
+
+        var ids = [];
+        for (var i = 0; i < picked.length; i++) {
+            ids.push(Number(picked[i].dataset.id));
+        }
+
+        var bar = ensureBatchBar();
+        var allBtns = bar.querySelectorAll("button");
+        for (var b = 0; b < allBtns.length; b++) allBtns[b].disabled = true;
+        btn.disabled = true;
+        try {
+            var res = await fetch("/api/bills/review/batch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "reject", items: ids })
+            });
+            if (!res.ok) {
+                alert("批量驳回失败，请重试。");
+                return;
+            }
+            var data = await res.json();
+            var ok = data.succeeded || [];
+            var fail = data.failed || [];
+            for (var k = 0; k < ok.length; k++) {
+                var okCard = listEl.querySelector('.review-card[data-id="' + ok[k].review_id + '"]');
+                if (okCard) okCard.remove();
+            }
+            if (fail.length) {
+                var lines = [];
+                for (var f = 0; f < fail.length; f++) {
+                    lines.push("#" + fail[f].review_id + "：" + (fail[f].error || "未知错误"));
+                }
+                alert("有 " + fail.length + " 项没成功：\n" + lines.join("\n"));
+            }
+            if (statusEl) statusEl.textContent = "批量驳回：成功 " + ok.length + " 项，失败 " + fail.length + " 项";
+            if (!listEl.querySelector(".review-card")) renderEmpty();
+        } catch (err) {
+            alert("网络错误，批量驳回没成功，请重试。");
+        } finally {
+            for (var b2 = 0; b2 < allBtns.length; b2++) allBtns[b2].disabled = false;
+            updateBatchBar();
         }
     }
 
@@ -1059,6 +1392,7 @@ function initReviewPage() {
             for (var i = 0; i < items.length; i++) {
                 renderItem(items[i]);
             }
+            updateBatchBar();
         } catch (err) {
             listEl.innerHTML = '<div class="review-empty">加载失败，请刷新页面重试。</div>';
         }

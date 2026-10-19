@@ -6,8 +6,11 @@
 <div class="toolbar">
   <label for="month">月份</label>
   <input type="month" id="month" value="{{ month }}" onchange="location.href='?month='+this.value">
+  <button type="button" id="view-month-btn" class="view-btn">月视图</button>
+  <button type="button" id="view-year-btn" class="view-btn">年视图</button>
 </div>
 
+<div id="month-view">
 <div id="budget-list">
   {% for b in items %}
   <div class="budget-row">
@@ -25,6 +28,15 @@
   {% else %}
   <div class="empty">本月暂无预算</div>
   {% endfor %}
+</div>
+</div>
+
+<div id="year-view" hidden>
+  <div class="toolbar">
+    <label for="year-input">年份</label>
+    <input type="number" id="year-input" min="1970" max="2999" step="1">
+  </div>
+  <div id="year-grid" class="year-grid"></div>
 </div>
 
 <h2>新增预算</h2>

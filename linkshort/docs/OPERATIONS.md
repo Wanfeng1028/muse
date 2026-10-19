@@ -216,6 +216,13 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 - 排障：日志里搜 `[purge]` 看每轮清理结果；`linkshort_links_purged_total` 持续为 0 先查 `GET /api/meta` 的 `purge_interval` / `purge_retention_days` 是否符合预期，再看是否有 burn 链真的到了保留期。
 - 与 v1.3 开关的关系：`LINKSHORT_BURN_PURGE_AFTER_DESTROY=true` 时销毁即删行，定时清理扫不到它们；默认 `false` 时才由定时清理兜底。
 
+### 3.7b 定时清理过期时间链（v1.11）
+
+同一后台 goroutine 的第二轮扫荡：删除 `expires_at` 早于"现在 − `LINKSHORT_PURGE_RETENTION_DAYS` 天"的链接。`expires_at` 为 NULL（永不过期）的行不删；visits 通过外键级联清除。
+
+- 与 3.7 的关系：burn 链走 `burned_at` 口径，时间链走 `expires_at` 口径，互不重叠；保留期共用同一套配置（`LINKSHORT_PURGE_INTERVAL` / `LINKSHORT_PURGE_RETENTION_DAYS`）。
+- 数据影响：被清理的链接 clicks 会从总览统计里消失（与 3.7 一致）。审计需求强就把保留天数设大，不要设 `0`。
+- 排障：日志里搜 `[purge]` 看每轮清理结果；`linkshort_expired_links_purged_total` 持续为 0 先查 `GET /api/meta` 的 `purge_interval` / `purge_retention_days` 是否符合预期，再看是否有时间链真的到了保留期。
 ### 3.8 备份健康自检与失败告警（v1.6）
 
 - 自检：`GET /api/backup/health`（需 API Key）读 `$LINKSHORT_BACKUP_DIR/last-backup.json`（backup.sh 每次运行原子写入），返回最近备份时间、完整性校验结果、目录备份份数；无备份/上次失败/完整性未通过/超过 `LINKSHORT_BACKUP_MAX_AGE_DAYS` 天（默认 7）时 `status` 为 `degraded`，HTTP 状态码仍是 200。

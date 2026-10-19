@@ -245,13 +245,8 @@ async def review_image(review_id: int, session: AsyncSession = Depends(get_sessi
     return Response(content=row.image, media_type=row.content_type or "image/png")
 
 
-@router.post("/review/{review_id}/confirm")
-async def confirm_review(
-    review_id: int,
-    payload: ReviewConfirmIn,
-    session: AsyncSession = Depends(get_session),
-) -> dict:
-    """确认审核记录并入账：创建支出交易，记录关联。"""
+async def _confirm_one(session: AsyncSession, review_id: int, payload: ReviewConfirmIn) -> dict:
+    """确认单条审核记录并入账（不 commit，由调用方决定提交/回滚）。"""
     row = await session.get(OcrReview, review_id)
     if row is None:
         raise HTTPException(status_code=404, detail="审核记录不存在")
@@ -272,13 +267,12 @@ async def confirm_review(
     row.status = "confirmed"
     row.transaction_id = int(txn["id"])
     row.updated_at = datetime.now(UTC).isoformat()
-    await session.commit()
+    await session.flush()
     return {"transaction_id": int(txn["id"]), "review_id": row.id}
 
 
-@router.post("/review/{review_id}/reject")
-async def reject_review(review_id: int, session: AsyncSession = Depends(get_session)) -> dict:
-    """驳回审核记录。"""
+async def _reject_one(session: AsyncSession, review_id: int) -> dict:
+    """驳回单条审核记录（不 commit，由调用方决定提交/回滚）。"""
     row = await session.get(OcrReview, review_id)
     if row is None:
         raise HTTPException(status_code=404, detail="审核记录不存在")
@@ -286,5 +280,110 @@ async def reject_review(review_id: int, session: AsyncSession = Depends(get_sess
         raise HTTPException(status_code=409, detail="该记录已处理，不可重复驳回")
     row.status = "rejected"
     row.updated_at = datetime.now(UTC).isoformat()
-    await session.commit()
+    await session.flush()
     return {"id": row.id, "status": row.status}
+
+
+@router.post("/review/{review_id}/confirm")
+async def confirm_review(
+    review_id: int,
+    payload: ReviewConfirmIn,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """确认审核记录并入账：创建支出交易，记录关联。"""
+    result = await _confirm_one(session, review_id, payload)
+    await session.commit()
+    return result
+
+
+@router.post("/review/{review_id}/reject")
+async def reject_review(review_id: int, session: AsyncSession = Depends(get_session)) -> dict:
+    """驳回审核记录。"""
+    result = await _reject_one(session, review_id)
+    await session.commit()
+    return result
+
+
+class ReviewBatchItem(BaseModel):
+    """批量确认时的单条入参：review_id + ReviewConfirmIn 全字段。"""
+
+    review_id: int
+    merchant: str = ""
+    amount_cents: int = Field(gt=0)
+    occurred_on: str
+    category_id: int
+    account_id: int
+    note: str = ""
+
+
+class ReviewBatchIn(BaseModel):
+    """批量操作请求体。"""
+
+    action: str
+    items: list
+
+
+@router.post("/review/batch")
+async def review_batch(
+    payload: ReviewBatchIn,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """批量确认或驳回审核记录，逐条独立处理。
+
+    reject 分支循环结束统一 commit；confirm 分支逐条 commit，避免与
+    create_transaction 内部新 session 争抢 SQLite 写锁。
+    """
+    if payload.action not in ("confirm", "reject"):
+        raise HTTPException(status_code=400, detail="action 非法，应为 confirm 或 reject")
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="items 不可为空")
+
+    succeeded: list[dict] = []
+    failed: list[dict] = []
+
+    if payload.action == "reject":
+        for raw in payload.items:
+            try:
+                review_id = int(raw)
+            except (TypeError, ValueError):
+                failed.append({"review_id": raw, "error": "review_id 非法"})
+                continue
+            try:
+                result = await _reject_one(session, review_id)
+            except HTTPException as exc:
+                await session.rollback()
+                failed.append({"review_id": review_id, "error": str(exc.detail)})
+                continue
+            await session.commit()
+            succeeded.append({"review_id": result["id"], "status": result["status"]})
+    else:
+        for raw in payload.items:
+            try:
+                item = ReviewBatchItem(**raw)
+            except Exception as exc:
+                rid = raw.get("review_id") if isinstance(raw, dict) else None
+                failed.append({"review_id": rid, "error": str(exc)})
+                continue
+            confirm_payload = ReviewConfirmIn(
+                merchant=item.merchant,
+                amount_cents=item.amount_cents,
+                occurred_on=item.occurred_on,
+                category_id=item.category_id,
+                account_id=item.account_id,
+                note=item.note,
+            )
+            try:
+                result = await _confirm_one(session, item.review_id, confirm_payload)
+            except HTTPException as exc:
+                await session.rollback()
+                failed.append({"review_id": item.review_id, "error": str(exc.detail)})
+                continue
+            await session.commit()
+            succeeded.append(
+                {
+                    "review_id": result["review_id"],
+                    "transaction_id": result["transaction_id"],
+                }
+            )
+
+    return {"succeeded": succeeded, "failed": failed}

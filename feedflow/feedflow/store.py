@@ -226,8 +226,12 @@ def delete_feed(db_path, feed_id):
 
 
 def set_fetch_result(db_path, feed_id, status, error, etag, modified,
-                     error_kind="", failures=None):
-    """抓取后更新源状态。failures 为 None 时不更新 consecutive_failures。"""
+                     error_kind="", failures=None, dead_after=None):
+    """抓取后更新源状态。failures 为 None 时不更新 consecutive_failures。
+
+    dead_after 有效时：连续失败达到阈值则置 is_dead=1 并记录 dead_at；
+    成功（status == "ok"）则清零 is_dead/dead_at 复活。
+    """
     with write_lock:
         conn = get_conn(db_path)
         try:
@@ -244,6 +248,22 @@ def set_fetch_result(db_path, feed_id, status, error, etag, modified,
             if failures is not None:
                 sets.append("consecutive_failures = ?")
                 params.append(failures)
+            if status == "ok":
+                sets.append("is_dead = ?")
+                params.append(0)
+                sets.append("dead_at = ?")
+                params.append("")
+            elif (
+                failures is not None
+                and isinstance(dead_after, int)
+                and not isinstance(dead_after, bool)
+                and dead_after >= 1
+                and failures >= dead_after
+            ):
+                sets.append("is_dead = ?")
+                params.append(1)
+                sets.append("dead_at = ?")
+                params.append(_now_iso())
             params.append(feed_id)
             conn.execute(
                 f"UPDATE feeds SET {', '.join(sets)} WHERE id = ?",
@@ -569,7 +589,8 @@ def due_feeds(db_path, now_iso, default_interval):
     conn = get_conn(db_path)
     try:
         rows = conn.execute(
-            "SELECT * FROM feeds WHERE enabled = 1 ORDER BY position ASC, id ASC"
+            "SELECT * FROM feeds WHERE enabled = 1 AND is_dead = 0 "
+            "ORDER BY position ASC, id ASC"
         ).fetchall()
     finally:
         conn.close()
@@ -597,6 +618,25 @@ def due_feeds(db_path, now_iso, default_interval):
         if last_dt <= now_dt - timedelta(minutes=interval):
             result.append(feed)
     return result
+
+
+def reactivate_feed(db_path, feed_id):
+    """手动复活死源：清零 is_dead/dead_at/consecutive_failures。
+
+    存在返回 True，不存在返回 False。
+    """
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cur = conn.execute(
+                "UPDATE feeds SET is_dead = 0, dead_at = '', consecutive_failures = 0 "
+                "WHERE id = ?",
+                (feed_id,),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            conn.close()
 
 
 def get_cluster_members(db_path, cluster_id, exclude_id=None):

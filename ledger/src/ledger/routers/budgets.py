@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ledger.database import get_session
 from ledger.models import Budget, Category
-from ledger.services import budget_progress
+from ledger.services import budget_progress, budget_yearly
 
 router = APIRouter(prefix="/api/budgets", tags=["budgets"])
 
@@ -30,6 +30,18 @@ async def list_budgets(
 ):
     """按月份返回预算列表，含 spent/remaining/pct。"""
     return await budget_progress(session, month)
+
+
+@router.get("/yearly")
+async def get_yearly_overview(
+    year: str = Query(..., description="YYYY"),
+    session: AsyncSession = Depends(get_session),
+):
+    """年度总览：逐月汇总预算与支出。"""
+    if len(year) != 4 or not year.isdigit():
+        raise HTTPException(status_code=422, detail="year 必须为 4 位年份")
+    months = await budget_yearly(session, int(year))
+    return {"year": year, "months": months}
 
 
 @router.post("", status_code=201)

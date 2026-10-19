@@ -33,6 +33,8 @@ type Registry struct {
 	burnLinksPurged int64
 	// linksPurged 定时清理删除的已销毁 burn 短链数。
 	linksPurged int64
+	// expiredLinksPurged 定时清理删除的过期时间链数。
+	expiredLinksPurged int64
 	// rateLimitRejected 统计限流拒绝次数（供后续任务使用）。
 	rateLimitRejected int64
 	// startTime 记录进程启动的 unix 秒。
@@ -127,6 +129,13 @@ func (m *Registry) IncLinksPurged(n int64) {
 	m.mu.Unlock()
 }
 
+// IncExpiredLinksPurged 累加定时清理删除的过期时间链数。
+func (m *Registry) IncExpiredLinksPurged(n int64) {
+	m.mu.Lock()
+	m.expiredLinksPurged += n
+	m.mu.Unlock()
+}
+
 // IncRateLimitRejected 记录一次限流拒绝。
 func (m *Registry) IncRateLimitRejected() {
 	m.mu.Lock()
@@ -180,6 +189,7 @@ func (m *Registry) Handler() http.HandlerFunc {
 		burned := m.burnLinksBurned
 		purged := m.burnLinksPurged
 		linksPurged := m.linksPurged
+		expiredPurged := m.expiredLinksPurged
 		rejected := m.rateLimitRejected
 		startTime := m.startTime
 		backupLastSuccessTS := m.backupLastSuccessTS
@@ -244,6 +254,10 @@ func (m *Registry) Handler() http.HandlerFunc {
 		b.WriteString("# HELP linkshort_links_purged_total 定时清理删除的已销毁 burn 短链总数。\n")
 		b.WriteString("# TYPE linkshort_links_purged_total counter\n")
 		fmt.Fprintf(&b, "linkshort_links_purged_total %d\n", linksPurged)
+
+		b.WriteString("# HELP linkshort_expired_links_purged_total 定时清理删除的过期时间链总数。\n")
+		b.WriteString("# TYPE linkshort_expired_links_purged_total counter\n")
+		fmt.Fprintf(&b, "linkshort_expired_links_purged_total %d\n", expiredPurged)
 
 		b.WriteString("# HELP linkshort_rate_limit_rejected_total 被限流拒绝的请求数。\n")
 		b.WriteString("# TYPE linkshort_rate_limit_rejected_total counter\n")

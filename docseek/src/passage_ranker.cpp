@@ -18,9 +18,12 @@ constexpr int kWindowStep = 3;
 // 复合短语加成权重；取值依据：大于位置项（0.05）、小于覆盖度主项（0.5）；
 // 实测 v07-024：主题文档 0.688+0.25=0.938 > 干扰文档 0.845。
 constexpr double kCompoundPhraseBonus = 0.25;
-// 数值范围答案加成：locate 问“范围/多少”且窗口含阿拉伯数字+紧邻单位时 +0.08（v09-t018-q09 gap 0.054，加成略大于 gap、远小于 0.25 的 compound 加成）。
+// 数值范围答案加成：当问句索取数值范围/数量，且窗口同时含阿拉伯数字与紧邻计量单位时，
+// 视为该窗口承载了可量化的答案，故对排序给固定加成。适用于可被“数字+单位”直接回答的问句；
+// 边界与局限：加成是固定值，不随命中数字或单位个数变化；对无单位、单位与数字不相邻、
+// 或答案以文字数词表达的情形不触发。
 constexpr double kRangeAnswerBonus = 0.08;
-constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：实测 gap≈0.07，取略大于 gap 以翻转排序
+constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：query 词以同义词变体在窗口命中时，视为概念级相关信号，对排序给固定加成。适用于同义词表可覆盖的查询词；边界与局限：加成是固定值，不随命中次数或同义词距离变化；触发词表是字面枚举，未登录的同义表达不触发。
 
 // 计算 UTF-8 码点数（非法字节按 1 推进，绝不死循环）。
 int countUtf8Codepoints(const std::string& s) {

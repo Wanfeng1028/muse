@@ -43,6 +43,10 @@
   .status-error { color:#A6360A; }
   .status-none { color:#B4AC9C; }
 
+  .health-badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; line-height:1.6; }
+  .health-dead { background:#A6360A; color:#FFFFFF; }
+  .health-flaky { background:#FEF3C7; color:#B45309; }
+
   .unread-badge { display:inline-block; min-width:20px; padding:1px 7px; border-radius:10px;
     background:#F4EFE4; color:#6B6355; font-size:11px; text-align:center; font-variant-numeric:tabular-nums; }
   .unread-badge.hot { background:#C2410C; color:#FFFFFF; }
@@ -150,6 +154,16 @@
   }
 
   function statusCell(feed) {
+    if (feed.is_dead) {
+      var deadTitle = '连续失败 ' + (feed.consecutive_failures || 0) + ' 次，已暂停调度';
+      if (feed.last_error) deadTitle += '：' + feed.last_error;
+      return '<span class="health-badge health-dead" title="' + escapeHtml(deadTitle) + '">已死</span>';
+    }
+    if (feed.consecutive_failures > 0) {
+      var flakyTitle = '连续失败 ' + feed.consecutive_failures + ' 次';
+      if (feed.last_error) flakyTitle += '：' + feed.last_error;
+      return '<span class="health-badge health-flaky" title="' + escapeHtml(flakyTitle) + '">抖动</span>';
+    }
     if (!feed.last_status) return '<span class="status-none">未抓取</span>';
     if (feed.last_status === 'ok') return '<span class="status-ok">正常</span>';
     return '<span class="status-error" title="' + escapeHtml(feed.last_error || '') + '">失败</span>';
@@ -171,6 +185,7 @@
         '<td>' + statusCell(f) + '</td>' +
         '<td class="num"><span class="unread-badge' + (f.unread > 0 ? ' hot' : '') + '">' + (f.unread || 0) + '</span></td>' +
         '<td class="actions">' +
+          (f.is_dead ? '<button class="btn small" data-act="reactivate" data-id="' + f.id + '">重新激活</button>' : '') +
           '<button class="btn small" data-act="fetch" data-id="' + f.id + '">抓取</button>' +
           '<button class="btn small" data-act="edit" data-id="' + f.id + '">编辑</button>' +
           '<button class="btn small danger" data-act="delete" data-id="' + f.id + '">删除</button>' +
@@ -215,6 +230,8 @@
       return '<li data-id="' + fo.id + '">' +
         '<span class="name">' + escapeHtml(fo.name) +
           ' <span class="muted" style="font-size:11px;color:#8A8172;">· ' + (fo.unread || 0) + ' 未读</span></span>' +
+        '<button class="btn small" data-act="move-up" data-id="' + fo.id + '">上移</button>' +
+        '<button class="btn small" data-act="move-down" data-id="' + fo.id + '">下移</button>' +
         '<button class="btn small" data-act="rename" data-id="' + fo.id + '">重命名</button>' +
         '<button class="btn small danger" data-act="delete" data-id="' + fo.id + '">删除</button>' +
       '</li>';
@@ -347,6 +364,13 @@
       }).catch(function (err) {
         toast(err.message);
       });
+    } else if (act === 'reactivate') {
+      api('POST', '/api/feeds/' + id + '/reactivate').then(function () {
+        toast('已重新激活');
+        return refreshAll();
+      }).catch(function (err) {
+        toast(err.message);
+      });
     }
   });
 
@@ -357,6 +381,20 @@
     var act = btn.getAttribute('data-act');
     var id = parseInt(btn.getAttribute('data-id'), 10);
     var li = btn.closest('li');
+
+    if (act === 'move-up' || act === 'move-down') {
+      var direction = act === 'move-up' ? 'up' : 'down';
+      api('POST', '/api/folders/' + id + '/move', { direction: direction }).then(function (res) {
+        if (res && res.moved) {
+          refreshAll();
+        } else {
+          toast(direction === 'up' ? '已经在最前面' : '已经在最后面');
+        }
+      }).catch(function (err) {
+        toast(err && err.message ? err.message : '移动失败');
+      });
+      return;
+    }
     if (act === 'rename') {
       var nameSpan = li.querySelector('.name');
       var current = nameSpan.textContent.trim().split(' · ')[0];

@@ -1483,6 +1483,71 @@ textarea:disabled {
   font-size: 15px;
 }
 
+/* ---------- 预算年视图 ---------- */
+.view-btn {
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.view-btn:hover { border-color: var(--blue); color: var(--blue); }
+.view-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+#year-view .toolbar { margin-bottom: 16px; }
+#year-input {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  width: 120px;
+}
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.year-cell {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.year-cell:hover { border-color: var(--border-strong); }
+.year-cell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.year-cell-month { font-weight: 600; font-size: 14px; }
+.year-cell-line { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.year-cell-badge {
+  font-size: 12px;
+  color: #fff;
+  background: var(--red);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+}
+.heat-0 { background: var(--card); }
+.heat-1 { background: var(--striped); }
+.heat-2 { background: #e8eef8; }
+.heat-over { background: #fdecec; border-color: var(--red); }
+.heat-none { background: var(--striped); color: var(--muted); }
+.heat-none .year-cell-line { color: var(--muted); }
+@media (max-width: 768px) {
+  .year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ---------- OCR 审核台 ---------- */
 #review-list { display: flex; flex-direction: column; gap: 16px;}
@@ -1499,6 +1564,13 @@ textarea:disabled {
 .review-actions { grid-column: 1 / -1; display: flex; gap: 10px; margin-top: 4px;}
 .review-provider { font-size: 12px; color: var(--muted);}
 .review-empty { text-align: left; padding: 40px 20px; color: var(--muted); background: var(--card); border: 1px dashed var(--border-strong); border-radius: var(--radius);}
+.rv-select { position: absolute; top: 12px; left: 12px; width: 18px; height: 18px; cursor: pointer; margin: 0; z-index: 2;}
+.review-card { position: relative;}
+#batch-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);}
+#batch-bar .batch-count { font-size: 13px; color: var(--muted); font-family: var(--font-num); margin-right: 4px;}
+.conf-bar { display: inline-block; width: 64px; height: 6px; margin-left: 6px; vertical-align: middle; background: var(--striped); border-radius: 3px; overflow: hidden;}
+.conf-bar i { display: block; height: 100%; background: var(--muted); border-radius: 3px;}
+.conf-bar-low i { background: var(--red);}
 @media (max-width: 768px) {.review-card { grid-template-columns: 1fr;}.review-thumb { width: 100%; max-height: 240px;}.review-fields { grid-template-columns: 1fr;}}
 /* ---------- 13. 移动端适配（≤768px） ---------- */
 /* 品牌 mark */

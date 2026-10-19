@@ -15,3 +15,13 @@ docseek.db
 compile_commands.json
 /build-a15/
 /build-dtriage/
+
+# 评测运行产物（2026-10-19 w1-docseek 收敛）：各轮评测的 work_* 运行目录、
+# 诊断目录与探针构建物均为可复现的中间产物，不入库；证据保留在磁盘原位。
+# 已入库的 tracked 文件不受影响。
+eval/work_*/
+eval/diag_v016x/
+eval/probe_b1/
+eval/__pycache__/
+*.db-shm
+*.db-wal

@@ -301,7 +301,7 @@ def _parse_entries(parsed: dict, db_path: str, feed_id: int, user_agent: str,
 
 def fetch_feed(db_path: str, feed: dict, user_agent: str,
                timeout: float = 20, retries: int = 3,
-               extract_timeout: float = 15) -> dict:
+               extract_timeout: float = 15, dead_after=None) -> dict:
 
     """抓取单个源，返回 {added, status, error}。
 
@@ -350,6 +350,7 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
             store.set_fetch_result(
                 db_path, feed_id, status, error, new_etag, new_modified,
                 error_kind=error_kind, failures=new_failures,
+                dead_after=dead_after,
             )
         except Exception as exc:  # noqa: BLE001
             logger.error(
@@ -406,6 +407,7 @@ def fetch_feed(db_path: str, feed: dict, user_agent: str,
         store.set_fetch_result(
             db_path, feed_id, status, error, new_etag, new_modified,
             error_kind=error_kind, failures=new_failures,
+            dead_after=dead_after,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error(
