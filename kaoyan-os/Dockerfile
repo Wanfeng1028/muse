@@ -1,5 +1,5 @@
 # 构建阶段：安装依赖并编译 monorepo 中的所有包
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 
 # 启用 corepack 以使用 package.json 中声明的 pnpm 版本
 RUN corepack enable
@@ -16,7 +16,7 @@ RUN pnpm install --no-frozen-lockfile
 RUN pnpm -r run build
 
 # 运行阶段：仅保留运行时所需内容
-FROM node:24-alpine
+FROM node:26-alpine
 
 RUN corepack enable
 
