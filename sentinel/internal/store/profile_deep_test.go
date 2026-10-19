@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -25,16 +26,20 @@ func newProfileTestStore(t *testing.T) (*Store, *sql.DB) {
 		`CREATE TABLE checks (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			monitor_id INTEGER NOT NULL,
+			checked_at TEXT NOT NULL,
 			ok INTEGER NOT NULL,
-			latency_ms INTEGER NOT NULL,
-			checked_at TEXT NOT NULL
+			status_code INTEGER,
+			latency_ms INTEGER NOT NULL DEFAULT 0,
+			error TEXT NOT NULL DEFAULT '',
+			cert_days_left INTEGER
 		)`,
 		`CREATE TABLE incidents (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			monitor_id INTEGER NOT NULL,
 			started_at TEXT NOT NULL,
 			ended_at TEXT,
-			downtime_sec INTEGER
+			downtime_sec INTEGER,
+			start_error TEXT NOT NULL DEFAULT ''
 		)`,
 		`CREATE TABLE status_pages (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -576,7 +581,7 @@ func TestProfileIdempotentReads(t *testing.T) {
 	if err != nil {
 		t.Fatalf("二次 MonthlySLA 错误: %v", err)
 	}
-	if ra != rb {
+	if !reflect.DeepEqual(ra, rb) {
 		t.Fatalf("重复 SLA 结果应一致: %+v vs %+v", ra, rb)
 	}
 }

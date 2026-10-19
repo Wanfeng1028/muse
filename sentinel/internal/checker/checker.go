@@ -73,8 +73,8 @@ func checkHTTP(m store.Monitor, timeout time.Duration) store.Check {
 		return c
 	}
 	defer resp.Body.Close()
-	// 丢弃响应体，避免连接无法复用。
-	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
+	// 读取响应体供关键字断言使用，同时避免连接无法复用。
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 
 	c.StatusCode = sql.NullInt64{Int64: int64(resp.StatusCode), Valid: true}
 
@@ -87,6 +87,12 @@ func checkHTTP(m store.Monitor, timeout time.Duration) store.Check {
 		c.CertDaysLeft = sql.NullInt64{Int64: int64(days), Valid: true}
 	}
 
+	if m.CertWarnDays > 0 && c.CertDaysLeft.Valid && c.CertDaysLeft.Int64 < int64(m.CertWarnDays) {
+		c.Ok = 0
+		c.Error = fmt.Sprintf("证书将于 %d 天后过期，低于预警阈值 %d 天", c.CertDaysLeft.Int64, m.CertWarnDays)
+		return c
+	}
+
 	expected := m.ExpectedStatus
 	if expected <= 0 {
 		expected = 200
@@ -95,6 +101,14 @@ func checkHTTP(m store.Monitor, timeout time.Duration) store.Check {
 		c.Ok = 0
 		c.Error = fmt.Sprintf("状态码不符: 期望 %d, 实际 %d", expected, resp.StatusCode)
 		return c
+	}
+
+	if m.Keyword != "" {
+		if kerr := AssertKeyword(body, m.Keyword, m.KeywordMode); kerr != nil {
+			c.Ok = 0
+			c.Error = kerr.Error()
+			return c
+		}
 	}
 
 	c.Ok = 1
@@ -170,8 +184,8 @@ func checkHTTPCtx(ctx context.Context, m store.Monitor, timeout time.Duration) s
 		return c
 	}
 	defer resp.Body.Close()
-	// 丢弃响应体，避免连接无法复用。
-	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
+	// 读取响应体供关键字断言使用，同时避免连接无法复用。
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 
 	c.StatusCode = sql.NullInt64{Int64: int64(resp.StatusCode), Valid: true}
 
@@ -184,6 +198,12 @@ func checkHTTPCtx(ctx context.Context, m store.Monitor, timeout time.Duration) s
 		c.CertDaysLeft = sql.NullInt64{Int64: int64(days), Valid: true}
 	}
 
+	if m.CertWarnDays > 0 && c.CertDaysLeft.Valid && c.CertDaysLeft.Int64 < int64(m.CertWarnDays) {
+		c.Ok = 0
+		c.Error = fmt.Sprintf("证书将于 %d 天后过期，低于预警阈值 %d 天", c.CertDaysLeft.Int64, m.CertWarnDays)
+		return c
+	}
+
 	expected := m.ExpectedStatus
 	if expected <= 0 {
 		expected = 200
@@ -192,6 +212,14 @@ func checkHTTPCtx(ctx context.Context, m store.Monitor, timeout time.Duration) s
 		c.Ok = 0
 		c.Error = fmt.Sprintf("状态码不符: 期望 %d, 实际 %d", expected, resp.StatusCode)
 		return c
+	}
+
+	if m.Keyword != "" {
+		if kerr := AssertKeyword(body, m.Keyword, m.KeywordMode); kerr != nil {
+			c.Ok = 0
+			c.Error = kerr.Error()
+			return c
+		}
 	}
 
 	c.Ok = 1

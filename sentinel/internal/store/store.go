@@ -25,8 +25,14 @@ type Monitor struct {
 	NotifyChannels string
 	// SMSPhones 短信接收号码，逗号分隔；空表示未配置。
 	SMSPhones string
-	CreatedAt string
-	UpdatedAt string
+	// CertWarnDays 证书过期预警阈值（天），0 表示不预警。
+	CertWarnDays int
+	// Keyword 关键字断言内容，空表示不断言。
+	Keyword string
+	// KeywordMode 关键字模式：exact / ignorecase / regex，空视为 exact。
+	KeywordMode string
+	CreatedAt   string
+	UpdatedAt   string
 }
 
 // Check 对应 checks 表的一行记录。
@@ -86,10 +92,11 @@ func (s *Store) CreateMonitor(m Monitor) (int64, error) {
 	now := utcNow()
 	res, err := s.db.Exec(
 		`INSERT INTO monitors
-			(name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			(name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, cert_warn_days, keyword, keyword_mode, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Name, m.Kind, m.Target, m.Method, m.ExpectedStatus, m.TimeoutSec,
-		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, m.NotifyChannels, m.SMSPhones, now, now,
+		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, m.NotifyChannels, m.SMSPhones,
+		m.CertWarnDays, m.Keyword, m.KeywordMode, now, now,
 	)
 	if err != nil {
 		return 0, err
@@ -101,11 +108,12 @@ func (s *Store) CreateMonitor(m Monitor) (int64, error) {
 func (s *Store) GetMonitor(id int64) (Monitor, error) {
 	var m Monitor
 	err := s.db.QueryRow(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, cert_warn_days, keyword, keyword_mode, created_at, updated_at
 		 FROM monitors WHERE id = ?`, id,
 	).Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 		&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
-		&m.WebhookURL, &m.NotifyChannels, &m.SMSPhones, &m.CreatedAt, &m.UpdatedAt)
+		&m.WebhookURL, &m.NotifyChannels, &m.SMSPhones,
+		&m.CertWarnDays, &m.Keyword, &m.KeywordMode, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Monitor{}, sql.ErrNoRows
@@ -118,7 +126,7 @@ func (s *Store) GetMonitor(id int64) (Monitor, error) {
 // ListMonitors 按 id 升序返回全部 monitor。
 func (s *Store) ListMonitors() ([]Monitor, error) {
 	rows, err := s.db.Query(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, cert_warn_days, keyword, keyword_mode, created_at, updated_at
 		 FROM monitors ORDER BY id ASC`)
 	if err != nil {
 		return nil, err
@@ -130,7 +138,8 @@ func (s *Store) ListMonitors() ([]Monitor, error) {
 		var m Monitor
 		if err := rows.Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
-			&m.WebhookURL, &m.NotifyChannels, &m.SMSPhones, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			&m.WebhookURL, &m.NotifyChannels, &m.SMSPhones,
+			&m.CertWarnDays, &m.Keyword, &m.KeywordMode, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -144,7 +153,7 @@ func (s *Store) ListMonitors() ([]Monitor, error) {
 // ListMonitorsByTenant 按 id 升序返回指定租户下的全部 monitor。
 func (s *Store) ListMonitorsByTenant(tenantID int64) ([]Monitor, error) {
 	rows, err := s.db.Query(
-		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, created_at, updated_at
+		`SELECT id, name, kind, target, method, expected_status, timeout_sec, interval_sec, enabled, tenant_id, is_public, webhook_url, notify_channels, sms_phones, cert_warn_days, keyword, keyword_mode, created_at, updated_at
 		 FROM monitors WHERE tenant_id = ? ORDER BY id ASC`, tenantID)
 	if err != nil {
 		return nil, err
@@ -156,7 +165,8 @@ func (s *Store) ListMonitorsByTenant(tenantID int64) ([]Monitor, error) {
 		var m Monitor
 		if err := rows.Scan(&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.TenantID, &m.IsPublic,
-			&m.WebhookURL, &m.NotifyChannels, &m.SMSPhones, &m.CreatedAt, &m.UpdatedAt); err != nil {
+			&m.WebhookURL, &m.NotifyChannels, &m.SMSPhones,
+			&m.CertWarnDays, &m.Keyword, &m.KeywordMode, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -172,10 +182,12 @@ func (s *Store) UpdateMonitor(id int64, m Monitor) error {
 	res, err := s.db.Exec(
 		`UPDATE monitors SET
 			name = ?, kind = ?, target = ?, method = ?, expected_status = ?, timeout_sec = ?,
-			interval_sec = ?, enabled = ?, tenant_id = ?, is_public = ?, webhook_url = ?, notify_channels = ?, sms_phones = ?, updated_at = ?
+			interval_sec = ?, enabled = ?, tenant_id = ?, is_public = ?, webhook_url = ?, notify_channels = ?, sms_phones = ?,
+			cert_warn_days = ?, keyword = ?, keyword_mode = ?, updated_at = ?
 		 WHERE id = ?`,
 		m.Name, m.Kind, m.Target, m.Method, m.ExpectedStatus, m.TimeoutSec,
-		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, m.NotifyChannels, m.SMSPhones, utcNow(), id,
+		m.IntervalSec, m.Enabled, m.TenantID, m.IsPublic, m.WebhookURL, m.NotifyChannels, m.SMSPhones,
+		m.CertWarnDays, m.Keyword, m.KeywordMode, utcNow(), id,
 	)
 	if err != nil {
 		return err

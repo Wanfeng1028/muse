@@ -2,7 +2,17 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.9.0] - 2026-10-20
+
+### 新增
+- 一键发布公开状态页：`POST /api/status-pages/{id}/publish` 将状态页静态站原子发布到磁盘目录（默认 `data/published/<slug>/`，含 `index.html`、`manifest.json` 与 `history/`，版本历史保留 10 版）；`POST /api/status-pages/{id}/publish/rollback` 回滚到上一版本；`GET /api/status-pages/{id}/publish` 查询发布状态。发布失败时旧版本不受影响。
+- 可用性画像 v1：`GET /api/monitors/{id}/profile` 新增 `jitter_score`（0~100，up/down 翻转频率）、`jitter_level`（稳定/轻微波动/波动明显/频繁抖动/数据不足）、`timeline`（近 30 天故障时间线）；`store.MonitorPortrait` 聚合；控制台 profile 页新增"稳定性画像"面板（抖动评分 + 故障时间线）。
+- SLA 月报 v3：`MonthlySLA` 新增 `attribution`（故障归因计数：timeout/dns/connection/cert/keyword/http_5xx/other）与 `attribution_pct`（占比，1 位小数）；`GET /api/monitors/{id}/sla.html?month=YYYY-MM` 导出中文 HTML 月报（含归因表与占比条形）；`docs/SLA_METHOD.md` 新增第 7 节。
+- 检查器纵深：monitor 新增 `cert_warn_days`（证书过期预警阈值天数，0=不预警）、`keyword`（关键字断言）、`keyword_mode`（exact/ignorecase/regex）；证书剩余天数低于阈值则检查失败（文案"证书将于 N 天后过期，低于预警阈值 D 天"）；DB 迁移 version 12；`POST/PUT /api/monitors` 支持三个新字段并校验（cert_warn_days 0~365、keyword 最长 500、keyword_mode 非法 400、regex 模式预编译）。
+- 测试：`go test ./...` 全绿；新增 publish E2E（生成→断言内容→增量更新→回滚→发布失败旧版本不受影响）、画像/归因/证书/关键字单测、失败注入（过期证书、关键字 miss、非法正则、发布目录不可写）。
+
 ## [0.8.4] - 2026-10-20
+
 
 ### 修复
 - `POST /api/monitors` 创建时忽略 `is_public`（0.8.3 已知限制第一条）：现在读取请求体 `is_public` 字段（0/1，不传按 0；非法值返回 400）。`PUT /api/monitors/{id}` 未传 `is_public` 时保留原值，不再静默重置。控制台新建表单新增"公开（状态页可见）"复选框，列表中公开项显示"公开"徽标。

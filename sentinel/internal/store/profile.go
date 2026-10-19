@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,16 +22,18 @@ type DayStat struct {
 
 // SLAReport 表示某个月的 SLA 报告。
 type SLAReport struct {
-	Month            string         `json:"month"`
-	UptimePct        float64        `json:"uptime_pct"`
-	TotalChecks      int            `json:"total_checks"`
-	DownIncidents    int            `json:"down_incidents"`
-	TotalDowntimeSec int64          `json:"total_downtime_sec"`
-	Target           float64        `json:"sla_target"`
-	Met              bool           `json:"met"`
-	MTTRSec          float64        `json:"mttr_sec"`
-	Severity         SeverityCounts `json:"severity"`
-	OpenIncidents    int            `json:"open_incidents"`
+	Month            string             `json:"month"`
+	UptimePct        float64            `json:"uptime_pct"`
+	TotalChecks      int                `json:"total_checks"`
+	DownIncidents    int                `json:"down_incidents"`
+	TotalDowntimeSec int64              `json:"total_downtime_sec"`
+	Target           float64            `json:"sla_target"`
+	Met              bool               `json:"met"`
+	MTTRSec          float64            `json:"mttr_sec"`
+	Severity         SeverityCounts     `json:"severity"`
+	OpenIncidents    int                `json:"open_incidents"`
+	Attribution      map[string]int     `json:"attribution"`
+	AttributionPct   map[string]float64 `json:"attribution_pct"`
 }
 
 // SeverityCounts 表示按单次事件宕机时长分级的计数。
@@ -51,6 +56,40 @@ func classifySeverity(secs int64) int {
 	}
 }
 
+// httpStatusRe 用于从 start_error 中提取 HTTP 状态码，匹配 实际 后跟 3 位数字。
+var httpStatusRe = regexp.MustCompile(`实际\s*([0-9]{3})`)
+
+// ClassifyFailureCause 对故障起始错误信息进行归因分类。
+// 判定顺序（自上而下，命中即返回）：keyword > cert > dns > timeout > connection > http_5xx > other。
+// 所有匹配均基于转小写后的子串匹配，http_5xx 额外使用正则提取状态码且要求 500<=code<=599（4xx 落 other）。
+// 空字符串返回 other。
+func ClassifyFailureCause(startError string) string {
+	s := strings.ToLower(startError)
+	if s == "" {
+		return "other"
+	}
+	if strings.Contains(s, "关键字") || strings.Contains(s, "keyword") {
+		return "keyword"
+	}
+	if strings.Contains(s, "证书") || strings.Contains(s, "certificate") || strings.Contains(s, "x509") || strings.Contains(s, "tls:") {
+		return "cert"
+	}
+	if strings.Contains(s, "no such host") || strings.Contains(s, "dns") || strings.Contains(s, "域名解析") {
+		return "dns"
+	}
+	if strings.Contains(s, "timeout") || strings.Contains(s, "deadline exceeded") || strings.Contains(s, "超时") {
+		return "timeout"
+	}
+	if strings.Contains(s, "connection refused") || strings.Contains(s, "connection reset") || strings.Contains(s, "connect:") || strings.Contains(s, "network is unreachable") || strings.Contains(s, "no route to host") {
+		return "connection"
+	}
+	if m := httpStatusRe.FindStringSubmatch(startError); m != nil {
+		if code, err := strconv.Atoi(m[1]); err == nil && code >= 500 && code <= 599 {
+			return "http_5xx"
+		}
+	}
+	return "other"
+}
 
 // StatusPage 表示一个状态页。
 type StatusPage struct {
@@ -215,7 +254,7 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 
 	// 区间内的 incidents。
 	rows, err := s.db.Query(
-		`SELECT started_at, ended_at, downtime_sec FROM incidents
+		`SELECT started_at, ended_at, downtime_sec, start_error FROM incidents
 		 WHERE monitor_id = ? AND started_at >= ? AND started_at < ?`,
 		monitorID, startStr, endStr,
 	)
@@ -231,14 +270,18 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 	var closedSum int64
 	var severity SeverityCounts
 	var openCount int
+	var attribution = map[string]int{}
 	for rows.Next() {
 		var startedAt string
 		var endedAt sql.NullString
 		var downtime sql.NullInt64
-		if err := rows.Scan(&startedAt, &endedAt, &downtime); err != nil {
+		var startError string
+		if err := rows.Scan(&startedAt, &endedAt, &downtime, &startError); err != nil {
 			return report, err
 		}
 		count++
+		cause := ClassifyFailureCause(startError)
+		attribution[cause]++
 		if downtime.Valid {
 			sumDown += downtime.Int64
 			closedCount++
@@ -282,10 +325,17 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 	}
 	report.Severity = severity
 	report.OpenIncidents = openCount
+	report.Attribution = attribution
+	attributionPct := map[string]float64{}
+	if report.DownIncidents > 0 {
+		for k, v := range attribution {
+			attributionPct[k] = math.Round(float64(v)/float64(report.DownIncidents)*100*10) / 10
+		}
+	}
+	report.AttributionPct = attributionPct
 	report.Met = report.UptimePct >= report.Target
 	return report, nil
 }
-
 
 // CreateStatusPage 创建状态页，返回新 ID。
 func (s *Store) CreateStatusPage(tenantID int64, slug, title string) (int64, error) {
@@ -372,7 +422,7 @@ func (s *Store) RemoveMonitorFromPage(pageID, monitorID int64) error {
 func (s *Store) ListPageMonitors(pageID int64) ([]Monitor, error) {
 	rows, err := s.db.Query(
 		`SELECT m.id, m.name, m.kind, m.target, m.method, m.expected_status, m.timeout_sec, m.interval_sec,
-		        m.enabled, m.webhook_url, m.tenant_id, m.is_public, m.created_at, m.updated_at
+		        m.enabled, m.webhook_url, m.tenant_id, m.is_public, m.cert_warn_days, m.keyword, m.keyword_mode, m.created_at, m.updated_at
 		 FROM monitors m
 		 JOIN status_page_monitors spm ON spm.monitor_id = m.id
 		 WHERE spm.page_id = ?
@@ -389,7 +439,8 @@ func (s *Store) ListPageMonitors(pageID int64) ([]Monitor, error) {
 		if err := rows.Scan(
 			&m.ID, &m.Name, &m.Kind, &m.Target, &m.Method, &m.ExpectedStatus,
 			&m.TimeoutSec, &m.IntervalSec, &m.Enabled, &m.WebhookURL,
-			&m.TenantID, &m.IsPublic, &m.CreatedAt, &m.UpdatedAt,
+			&m.TenantID, &m.IsPublic, &m.CertWarnDays, &m.Keyword, &m.KeywordMode,
+			&m.CreatedAt, &m.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

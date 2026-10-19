@@ -52,6 +52,23 @@
   .met-yes { color: #10b981; }
   .met-no { color: #ef4444; }
   .err { color: #ef4444; font-size: 13px; }
+  .jitter-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .jitter-score { font-size: 26px; font-weight: 600; color: #111827; font-variant-numeric: tabular-nums; }
+  .jitter-unit { font-size: 12px; color: #6b7280; font-weight: 400; margin-left: 8px; }
+  .jitter-level { font-size: 13px; padding: 3px 12px; border-radius: 12px; background: #eef1f5; color: #374151; }
+  .jitter-level.l-ok { background: #dcfce7; color: #166534; }
+  .jitter-level.l-warn { background: #fef3c7; color: #92400e; }
+  .jitter-level.l-bad { background: #fee2e2; color: #991b1b; }
+  .jitter-tip { font-size: 12px; color: #9ca3af; }
+  .tl-title { font-size: 13px; font-weight: 600; margin: 4px 0 10px; color: #111827; }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-top: 1px solid #f1f3f5; font-size: 13px; }
+  .tl-time { color: #6b7280; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tl-badge { font-size: 11px; padding: 1px 8px; border-radius: 10px; white-space: nowrap; }
+  .tl-badge.open { background: #fee2e2; color: #991b1b; }
+  .tl-badge.closed { background: #eef1f5; color: #6b7280; }
+  .tl-err { color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tl-empty { color: #9ca3af; }
 </style>
 </head>
 <body>
@@ -103,6 +120,17 @@
       <div class="track"><div class="fill" id="f99" style="width:0"></div></div>
       <div class="num" id="n99">—</div>
     </div>
+  </div>
+
+  <div class="panel">
+    <h2>稳定性画像</h2>
+    <div class="jitter-row">
+      <div class="jitter-score"><span id="jScore">—</span><span class="jitter-unit">抖动评分</span></div>
+      <div class="jitter-level" id="jLevel">—</div>
+      <div class="jitter-tip">100 次检查内 up/down 翻转越频繁，评分越高</div>
+    </div>
+    <h3 class="tl-title">故障时间线（近 30 天）</h3>
+    <ul class="timeline" id="timeline"><li class="tl-empty">暂无故障记录</li></ul>
   </div>
 
   <div class="panel">
@@ -217,6 +245,39 @@
       document.getElementById('m30').textContent = pct(d.uptime_30d);
       document.getElementById('mp95').textContent = d.latency ? ms(d.latency.p95) : '—';
       document.getElementById('mInc').textContent = (d.incidents_30d == null ? '—' : d.incidents_30d);
+
+
+      var js = d.jitter_score;
+      document.getElementById('jScore').textContent = (js == null ? '—' : Number(js).toFixed(2));
+      var jl = document.getElementById('jLevel');
+      jl.textContent = d.jitter_level || '—';
+      jl.className = 'jitter-level' + (d.jitter_level === '稳定' ? ' l-ok' : (d.jitter_level === '轻微波动' ? ' l-warn' : ((d.jitter_level === '波动明显' || d.jitter_level === '频繁抖动') ? ' l-bad' : '')));
+
+      var tl = document.getElementById('timeline');
+      tl.innerHTML = '';
+      var events = d.timeline || [];
+      if (!events.length) {
+        var li0 = document.createElement('li');
+        li0.className = 'tl-empty';
+        li0.textContent = '暂无故障记录';
+        tl.appendChild(li0);
+      }
+      events.forEach(function (ev) {
+        var li = document.createElement('li');
+        var tm = document.createElement('span');
+        tm.className = 'tl-time';
+        tm.textContent = (ev.started_at || '').replace('T', ' ').slice(0, 16);
+        var badge = document.createElement('span');
+        badge.className = 'tl-badge ' + (ev.open ? 'open' : 'closed');
+        badge.textContent = ev.open ? '进行中' : '已恢复';
+        var err = document.createElement('span');
+        err.className = 'tl-err';
+        var dur = ev.downtime_sec != null ? Math.round(ev.downtime_sec) + 's' : '';
+        err.textContent = (ev.start_error || '无错误信息') + (dur ? ' · ' + dur : '');
+        err.title = ev.start_error || '';
+        li.appendChild(tm); li.appendChild(badge); li.appendChild(err);
+        tl.appendChild(li);
+      });
 
       var lat = d.latency || { p50: 0, p95: 0, p99: 0 };
       var maxv = Math.max(lat.p99 || 0, 1);

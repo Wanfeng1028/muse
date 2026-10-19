@@ -42,6 +42,7 @@ import (
 func (s *Server) RegisterSoulRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/monitors/{id}/profile", s.handleMonitorProfile)
 	mux.HandleFunc("GET /api/monitors/{id}/sla", s.handleMonitorSLA)
+	mux.HandleFunc("GET /api/monitors/{id}/sla.html", s.handleMonitorSLAHTML)
 	mux.HandleFunc("PUT /api/monitors/{id}/public", s.handleMonitorSetPublic)
 
 	mux.HandleFunc("POST /api/status-pages", s.handleCreateStatusPage)
@@ -52,6 +53,9 @@ func (s *Server) RegisterSoulRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/status-pages/auto", s.handleAutoStatusPage)
 	mux.HandleFunc("PUT /api/status-pages/{id}/theme", s.handleUpdateStatusPageTheme)
 	mux.HandleFunc("POST /api/status-pages/{id}/snapshot", s.handleStatusPageSnapshot)
+	mux.HandleFunc("POST /api/status-pages/{id}/publish", s.handlePublishStatusPage)
+	mux.HandleFunc("POST /api/status-pages/{id}/publish/rollback", s.handlePublishRollback)
+	mux.HandleFunc("GET /api/status-pages/{id}/publish", s.handlePublishInfo)
 
 	// 公开路由。
 	mux.HandleFunc("GET /api/status/{slug}", s.handlePublicStatus)
@@ -105,6 +109,11 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 	if daily == nil {
 		daily = []store.DayStat{}
 	}
+	js, jl, _ := s.store.JitterScore(id, 7)
+	tl, _ := s.store.IncidentTimeline(id, 30, 50)
+	if tl == nil {
+		tl = []store.TimelineEvent{}
+	}
 
 	var current any = nil
 	var certDays any = nil
@@ -125,6 +134,9 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 		"current":        current,
 		"cert_days_left": certDays,
 		"daily":          daily,
+		"jitter_score":   js,
+		"jitter_level":   jl,
+		"timeline":       tl,
 	})
 }
 

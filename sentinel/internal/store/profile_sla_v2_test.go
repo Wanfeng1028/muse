@@ -18,7 +18,7 @@ func newSLATestStore(t *testing.T) *Store {
 	if _, err := db.Exec(`CREATE TABLE checks (id INTEGER PRIMARY KEY AUTOINCREMENT, monitor_id INTEGER NOT NULL, ok INTEGER NOT NULL, latency_ms INTEGER NOT NULL, checked_at TEXT NOT NULL)`); err != nil {
 		t.Fatalf("create checks: %v", err)
 	}
-	if _, err := db.Exec(`CREATE TABLE incidents (id INTEGER PRIMARY KEY AUTOINCREMENT, monitor_id INTEGER NOT NULL, started_at TEXT NOT NULL, ended_at TEXT, downtime_sec INTEGER)`); err != nil {
+	if _, err := db.Exec(`CREATE TABLE incidents (id INTEGER PRIMARY KEY AUTOINCREMENT, monitor_id INTEGER NOT NULL, started_at TEXT NOT NULL, ended_at TEXT, downtime_sec INTEGER, start_error TEXT NOT NULL DEFAULT '')`); err != nil {
 		t.Fatalf("create incidents: %v", err)
 	}
 	return &Store{db: db}

@@ -210,6 +210,14 @@ updated_at TEXT NOT NULL
 			`CREATE UNIQUE INDEX IF NOT EXISTS uq_webhook_deliveries_dedup ON webhook_deliveries(monitor_id, url, event, payload) WHERE status IN ('pending','retrying')`,
 		},
 	},
+	{
+		version: 12,
+		stmts: []string{
+			`ALTER TABLE monitors ADD COLUMN cert_warn_days INTEGER NOT NULL DEFAULT 0`,
+			`ALTER TABLE monitors ADD COLUMN keyword TEXT NOT NULL DEFAULT ''`,
+			`ALTER TABLE monitors ADD COLUMN keyword_mode TEXT NOT NULL DEFAULT ''`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

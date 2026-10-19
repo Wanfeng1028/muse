@@ -56,3 +56,22 @@ mttr_sec = 已关闭事件的 downtime_sec 之和 / 已关闭事件数量
 ## 6. 固定目标
 
 `sla_target` 固定为 99.9。`met` 为 `uptime_pct >= sla_target`。
+
+## 7. 故障归因（v3 新增）
+
+`attribution` 为区间内故障事件按原因的分类计数，`attribution_pct` 为各分类占比（`分类计数 / down_incidents * 100`，保留 1 位小数；0 事件时两者均为非 nil 空 map）。
+
+分类器 `ClassifyFailureCause(start_error)` 判定顺序（命中即返回）：
+
+| 顺序 | 分类 | 匹配规则（转小写后子串） |
+| --- | --- | --- |
+| 1 | keyword | 含"关键字"或"keyword" |
+| 2 | cert | 含"证书"/"certificate"/"x509"/"tls:" |
+| 3 | dns | 含"no such host"/"dns"/"域名解析" |
+| 4 | timeout | 含"timeout"/"deadline exceeded"/"超时" |
+| 5 | connection | 含"connection refused"/"connection reset"/"connect:"/"network is unreachable"/"no route to host" |
+| 6 | http_5xx | 文案匹配"实际 5xx"（正则提取 3 位状态码，500~599） |
+| 7 | other | 兜底；空字符串归 other；4xx 归 other |
+
+已关闭与未关闭事件均参与计数，同一事件只计一次。
+

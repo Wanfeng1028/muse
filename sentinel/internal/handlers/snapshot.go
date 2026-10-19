@@ -43,33 +43,7 @@ func (s *Server) handleStatusPageSnapshot(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	items := make([]snapshotItem, 0, len(monitors))
-	for _, m := range monitors {
-		it := snapshotItem{
-			Name:        m.Name,
-			Status:      "unknown",
-			LastChecked: "无数据",
-			LatencyMs:   0,
-		}
-		if lc, err := s.store.LastCheck(m.ID); err == nil && lc != nil {
-			if lc.Ok == 1 {
-				it.Status = "up"
-			} else {
-				it.Status = "down"
-			}
-			it.LastChecked = lc.CheckedAt
-			it.LatencyMs = lc.LatencyMs
-		}
-		if up, _, _, _, err := s.store.MonitorStats(m.ID, 30); err == nil {
-			it.Uptime30 = up
-		} else {
-			it.Uptime30 = 100
-		}
-		if daily, err := s.store.DailyBreakdown(m.ID, 90); err == nil {
-			it.Daily = daily
-		}
-		items = append(items, it)
-	}
+	items := buildPublishItems(s.store, monitors)
 
 	body := renderSnapshotHTML(page, items)
 

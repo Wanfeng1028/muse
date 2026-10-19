@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -31,6 +32,7 @@ type Server struct {
 	mailer       notify.Mailer
 	publicURL    string
 	queueSender  *notify.QueueSender
+	publishDir   string
 }
 
 // New 构造 Server。
@@ -139,6 +141,9 @@ type monitorInput struct {
 	WebhookURL     *string `json:"webhook_url"`
 	NotifyChannels *string `json:"notify_channels"`
 	SMSPhones      *string `json:"sms_phones"`
+	CertWarnDays   *int    `json:"cert_warn_days"`
+	Keyword        *string `json:"keyword"`
+	KeywordMode    *string `json:"keyword_mode"`
 }
 
 // toMonitor 把请求体转为 store.Monitor 并填默认值。
@@ -187,6 +192,15 @@ func (in *monitorInput) toMonitor() store.Monitor {
 	if in.IsPublic != nil {
 		m.IsPublic = *in.IsPublic
 	}
+	if in.CertWarnDays != nil {
+		m.CertWarnDays = *in.CertWarnDays
+	}
+	if in.Keyword != nil {
+		m.Keyword = *in.Keyword
+	}
+	if in.KeywordMode != nil {
+		m.KeywordMode = *in.KeywordMode
+	}
 	return m
 }
 
@@ -199,6 +213,8 @@ func validateMonitor(m *store.Monitor) error {
 	m.WebhookURL = strings.TrimSpace(m.WebhookURL)
 	m.NotifyChannels = strings.TrimSpace(m.NotifyChannels)
 	m.SMSPhones = strings.TrimSpace(m.SMSPhones)
+	m.Keyword = strings.TrimSpace(m.Keyword)
+	m.KeywordMode = strings.TrimSpace(m.KeywordMode)
 
 	if m.Name == "" {
 		return errors.New("名称不能为空")
@@ -254,6 +270,25 @@ func validateMonitor(m *store.Monitor) error {
 		}
 		m.SMSPhones = strings.Join(parsed, ",")
 	}
+	if m.CertWarnDays < 0 || m.CertWarnDays > 365 {
+		return errors.New("cert_warn_days 必须在 0~365 之间（0 表示不预警）")
+	}
+	if len(m.Keyword) > 500 {
+		return errors.New("keyword 长度不能超过 500")
+	}
+	switch m.KeywordMode {
+	case "", "exact", "ignorecase", "regex":
+	default:
+		return errors.New("keyword_mode 仅支持 exact/ignorecase/regex")
+	}
+	if m.KeywordMode == "" {
+		m.KeywordMode = "exact"
+	}
+	if m.Keyword != "" && m.KeywordMode == "regex" {
+		if _, err := regexp.Compile(m.Keyword); err != nil {
+			return fmt.Errorf("keyword 正则非法: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -294,6 +329,9 @@ func monitorJSON(m store.Monitor) map[string]interface{} {
 		"webhook_url":     m.WebhookURL,
 		"notify_channels": m.NotifyChannels,
 		"sms_phones":      m.SMSPhones,
+		"cert_warn_days":  m.CertWarnDays,
+		"keyword":         m.Keyword,
+		"keyword_mode":    m.KeywordMode,
 		"tenant_id":       m.TenantID,
 		"is_public":       m.IsPublic,
 		"created_at":      m.CreatedAt,

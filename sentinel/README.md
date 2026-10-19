@@ -34,6 +34,9 @@
 - 站点健康档案：`docs/screenshots/profile.png`
 - 公开状态页（浅色 / 深色 / 自定义主色三主题）：`docs/screenshots/status.png`、`docs/screenshots/status-dark.png`、`docs/screenshots/status-custom.png`
 - 投递队列：`docs/screenshots/deliveries.png`
+- 可用性画像 v1（抖动评分 + 故障时间线）：`docs/screenshots/profile-v2-20261020.png`
+- SLA 月报 HTML 导出：`docs/screenshots/sla-html-20261020.png`
+- 一键发布的公开状态页静态站：`docs/screenshots/status-published-20261020.png`
 
 ## 快速开始
 
@@ -83,12 +86,16 @@ open http://localhost:8200
 
 | 方法 | 路径 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| GET | `/api/monitors/{id}/profile` | 是 | 站点健康档案（可用性、延迟分位、30 天每日数据） |
+| GET | `/api/monitors/{id}/profile` | 是 | 站点健康档案（可用性、延迟分位、30 天每日数据、抖动评分、故障时间线） |
 | GET | `/api/monitors/{id}/sla?month=YYYY-MM` | 是 | 月度 SLA 报告 |
+| GET | `/api/monitors/{id}/sla.html?month=YYYY-MM` | 是 | 月度 SLA 报告（中文 HTML，可存档） |
 | PUT | `/api/monitors/{id}/public` | 是 | 设置是否公开，body `{"is_public":0|1}` |
 | POST | `/api/status-pages` | 是 | 新建状态页，body `{"slug":"...","title":"..."}` |
 | GET | `/api/status-pages` | 是 | 状态页列表 |
 | POST | `/api/status-pages/auto` | 是 | 自动生成状态页 |
+| POST | `/api/status-pages/{id}/publish` | 是 | 一键发布公开状态页静态站（原子写入，失败旧版本不受影响） |
+| POST | `/api/status-pages/{id}/publish/rollback` | 是 | 回滚到上一发布版本 |
+| GET | `/api/status-pages/{id}/publish` | 是 | 查询发布状态 |
 | GET | `/api/status/{slug}` | 否 | 公开状态页数据 |
 | PUT | `/api/status-pages/{id}/theme` | 是 | 设置状态页主题，body `{"theme":"light\|dark","accent_color":"#rrggbb"}` |
 | POST | `/api/status/{slug}/subscribe` | 否 | 订阅状态通知，body `{"email":"..."}`，返回 pending/already |
