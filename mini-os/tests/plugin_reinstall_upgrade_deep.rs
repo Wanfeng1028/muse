@@ -98,7 +98,14 @@ async fn app() -> Router {
     let db = db_path.to_string_lossy().to_string();
     let static_dir = base.join("static");
     let _ = std::fs::create_dir_all(&static_dir);
-    let state = mini_os::init_state_with(&db, &static_dir.to_string_lossy(), 1024 * 1024, 3600, 100.0, 100);
+    let state = mini_os::init_state_with(
+        &db,
+        &static_dir.to_string_lossy(),
+        1024 * 1024,
+        3600,
+        100.0,
+        100,
+    );
     mini_os::build_app(state)
 }
 
@@ -121,7 +128,11 @@ async fn register_cookie(router: &Router, username: &str) -> (i64, String) {
         .body(Body::from(serde_json::to_vec(&body).unwrap()))
         .unwrap();
     let resp = router.clone().oneshot(req).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::CREATED, "register should succeed");
+    assert_eq!(
+        resp.status(),
+        StatusCode::CREATED,
+        "register should succeed"
+    );
     let set_cookie = resp
         .headers()
         .get(header::SET_COOKIE)
@@ -174,7 +185,12 @@ async fn set_role(router: &Router, admin_cookie: &str, user_id: i64, role: &str)
     assert_eq!(resp.status(), StatusCode::OK, "set_role should succeed");
 }
 
-async fn install_zip(router: &Router, cookie: &str, filename: &str, zip: &[u8]) -> axum::response::Response {
+async fn install_zip(
+    router: &Router,
+    cookie: &str,
+    filename: &str,
+    zip: &[u8],
+) -> axum::response::Response {
     let boundary = "----minios-test-boundary";
     let body = multipart_body(boundary, filename, zip);
     let req = Request::builder()
@@ -195,9 +211,7 @@ async fn install_zip_no_file(router: &Router, cookie: &str) -> axum::response::R
     let boundary = "----minios-test-boundary-nofile";
     let mut body = Vec::new();
     body.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());
-    body.extend_from_slice(
-        b"Content-Disposition: form-data; name=\"other\"\r\n\r\nhello\r\n",
-    );
+    body.extend_from_slice(b"Content-Disposition: form-data; name=\"other\"\r\n\r\nhello\r\n");
     body.extend_from_slice(format!("--{}--\r\n", boundary).as_bytes());
     let req = Request::builder()
         .method(Method::POST)
@@ -287,7 +301,11 @@ async fn r1_reinstall_same_id_rejected() {
         ("main.js", b"v1-marker"),
     ]);
     let resp = install_zip(&router, &admin, "r1plug.zip", &zip_v1).await;
-    assert_eq!(resp.status(), StatusCode::OK, "first install should succeed");
+    assert_eq!(
+        resp.status(),
+        StatusCode::OK,
+        "first install should succeed"
+    );
     let _ = body_text(resp).await;
 
     // 磁盘上应该是 v1-marker
@@ -436,7 +454,10 @@ async fn r4_upgrade_intent_requires_uninstall() {
 
     // 同 id v2.0.0 -> 400 已安装
     let zip_v2 = build_zip(&[
-        ("plugin.json", &manifest_json_version("r4plug", "2.0.0", &[])),
+        (
+            "plugin.json",
+            &manifest_json_version("r4plug", "2.0.0", &[]),
+        ),
         ("main.js", b"r4-v2"),
     ]);
     let resp = install_zip(&router, &admin, "r4plug.zip", &zip_v2).await;

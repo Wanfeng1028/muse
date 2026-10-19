@@ -241,6 +241,53 @@ pub fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
         apply_006(conn)?;
     }
 
+    if !is_applied(conn, "007")? {
+        apply_007(conn)?;
+    }
+
+    Ok(())
+}
+
+/// 迁移 007：notes（速记便签）与 events（日程）表。
+/// 幂等：CREATE TABLE IF NOT EXISTS + schema_migrations 记账（风格与 006 一致）。
+fn apply_007(conn: &Connection) -> rusqlite::Result<()> {
+    let tx = conn.unchecked_transaction()?;
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL DEFAULT '',
+            body TEXT NOT NULL DEFAULT '',
+            pinned INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id)",
+        [],
+    )?;
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            starts_at TEXT NOT NULL,
+            ends_at TEXT,
+            all_day INTEGER NOT NULL DEFAULT 0,
+            done INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_events_user_start ON events(user_id, starts_at)",
+        [],
+    )?;
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('007')", [])?;
+    tx.commit()?;
     Ok(())
 }
 
@@ -370,7 +417,8 @@ mod tests {
                 "003".to_string(),
                 "004".to_string(),
                 "005".to_string(),
-                "006".to_string()
+                "006".to_string(),
+                "007".to_string()
             ]
         );
 
@@ -379,7 +427,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
 
         let blob_cols: i64 = conn
 
@@ -477,7 +525,8 @@ mod tests {
                 "003".to_string(),
                 "004".to_string(),
                 "005".to_string(),
-                "006".to_string()
+                "006".to_string(),
+                "007".to_string()
             ]
         );
         let count: i64 = conn
@@ -485,7 +534,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
     }
 
     #[test]
@@ -562,7 +611,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
     }
 
     #[test]
@@ -631,6 +680,6 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 6);
+        assert_eq!(count, 7);
     }
 }

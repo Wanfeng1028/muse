@@ -268,7 +268,8 @@ fn migrations_idempotent_on_same_file() {
                 "003".to_string(),
                 "004".to_string(),
                 "005".to_string(),
-                "006".to_string()
+                "006".to_string(),
+                "007".to_string()
             ]
         );
     }
@@ -284,7 +285,8 @@ fn migrations_idempotent_on_same_file() {
                 "003".to_string(),
                 "004".to_string(),
                 "005".to_string(),
-                "006".to_string()
+                "006".to_string(),
+                "007".to_string()
             ]
         );
         db::seed(&conn).unwrap();
@@ -329,7 +331,8 @@ fn migrations_upgrade_legacy_db() {
             "003".to_string(),
             "004".to_string(),
             "005".to_string(),
-            "006".to_string()
+            "006".to_string(),
+            "007".to_string()
         ]
     );
 

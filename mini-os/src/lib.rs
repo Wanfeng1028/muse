@@ -7,15 +7,17 @@ pub mod log;
 pub mod metrics;
 pub mod migrate;
 pub mod models;
+pub mod notes;
 pub mod plugins;
 pub mod ratelimit;
 pub mod rbac;
+pub mod terminal;
 
 use std::sync::{Arc, Mutex};
 
 use axum::{
     extract::{DefaultBodyLimit, State},
-    routing::{delete, get, post, put, Router},
+    routing::{delete, get, patch, post, put, Router},
 };
 
 use tower_http::{
@@ -38,6 +40,8 @@ pub struct AppState {
     pub share_ratelimit_enabled: bool,
     /// 插件数据目录，插件安装到 <data_dir>/plugins/<id>/
     pub data_dir: String,
+    /// 真 PTY 终端会话管理器（按用户隔离）。
+    pub terminals: Arc<crate::terminal::TerminalManager>,
 }
 
 /// 解析插件数据目录：MINIOS_DATA_DIR 优先，否则 database_path 的父目录，否则 "data"。
@@ -82,6 +86,13 @@ pub fn init_state_with_full(
         burst: share_read_burst,
         enabled: share_ratelimit_enabled,
     };
+    let data_dir = resolve_data_dir(database_path);
+    let terminals = Arc::new(crate::terminal::TerminalManager::new(
+        data_dir.clone(),
+        8,
+        1800,
+    ));
+    terminals.spawn_reaper();
     Arc::new(AppState {
         db: Mutex::new(conn),
         static_dir: static_dir.to_string(),
@@ -91,7 +102,8 @@ pub fn init_state_with_full(
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
         share_limiter: Arc::new(crate::ratelimit::ShareReadLimiter::new(&share_limiter_cfg)),
         share_ratelimit_enabled,
-        data_dir: resolve_data_dir(database_path),
+        data_dir,
+        terminals,
     })
 }
 
@@ -221,6 +233,7 @@ fn required_permission(
     use axum::http::Method;
     match (method, matched_path) {
         (&Method::GET, "/api/fs")
+        | (&Method::GET, "/api/fs/search")
         | (&Method::GET, "/api/fs/:id")
         | (&Method::GET, "/api/files/download")
         | (&Method::GET, "/api/settings")
@@ -229,7 +242,15 @@ fn required_permission(
         (&Method::POST, "/api/fs")
         | (&Method::PUT, "/api/fs/:id")
         | (&Method::DELETE, "/api/fs/:id")
+        | (&Method::PATCH, "/api/fs/:id/move")
         | (&Method::POST, "/api/files/upload") => Some(Permission::FsWrite),
+        (&Method::GET, "/api/notes") | (&Method::GET, "/api/events") => Some(Permission::NotesRead),
+        (&Method::POST, "/api/notes")
+        | (&Method::PUT, "/api/notes/:id")
+        | (&Method::DELETE, "/api/notes/:id")
+        | (&Method::POST, "/api/events")
+        | (&Method::PUT, "/api/events/:id")
+        | (&Method::DELETE, "/api/events/:id") => Some(Permission::NotesWrite),
         (&Method::GET, "/api/plugins") => Some(Permission::FsRead),
         (&Method::POST, "/api/plugins/preview")
         | (&Method::POST, "/api/plugins/install")
@@ -304,12 +325,30 @@ pub fn build_app(state: Arc<AppState>) -> Router {
         .route("/api/readyz", get(handlers::readyz))
         .route("/api/apps", get(handlers::list_apps))
         .route("/api/fs", get(handlers::list_fs).post(handlers::create_fs))
+        .route("/api/fs/search", get(handlers::search_fs))
+        .route(
+            "/api/notes",
+            get(notes::list_notes).post(notes::create_note),
+        )
+        .route(
+            "/api/notes/:id",
+            put(notes::update_note).delete(notes::delete_note),
+        )
+        .route(
+            "/api/events",
+            get(notes::list_events).post(notes::create_event),
+        )
+        .route(
+            "/api/events/:id",
+            put(notes::update_event).delete(notes::delete_event),
+        )
         .route(
             "/api/fs/:id",
             get(handlers::get_fs)
                 .put(handlers::update_fs)
                 .delete(handlers::delete_fs),
         )
+        .route("/api/fs/:id/move", patch(handlers::move_fs))
         .route(
             "/api/settings",
             get(handlers::get_settings).put(handlers::put_setting),

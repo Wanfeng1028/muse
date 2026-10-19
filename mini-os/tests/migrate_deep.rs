@@ -125,13 +125,13 @@ fn run_migrations_is_idempotent_on_repeat_calls() {
     assert_eq!(migration_count(&conn, "005"), 1);
     assert_eq!(migration_count(&conn, "006"), 1);
 
-    // 断言点 2：总行数就是六个版本，没有多余记录。
+    // 断言点 2：总行数就是七个版本，没有多余记录。
     let total: i64 = conn
         .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
             row.get(0)
         })
         .expect("count all migrations");
-    assert_eq!(total, 6);
+    assert_eq!(total, 7);
 }
 
 // ---------------------------------------------------------------------------
@@ -426,13 +426,13 @@ fn concurrent_run_migrations_applies_each_version_once() {
     assert_eq!(migration_count(&guard, "005"), 1);
     assert_eq!(migration_count(&guard, "006"), 1);
 
-    // 断言点 2：总记录数就是五个版本。
+    // 断言点 2：总记录数就是七个版本。
     let total: i64 = guard
         .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
             row.get(0)
         })
         .expect("count all migrations");
-    assert_eq!(total, 6);
+    assert_eq!(total, 7);
 }
 
 // ---------------------------------------------------------------------------

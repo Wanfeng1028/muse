@@ -1,6 +1,6 @@
 [package]
 name = "mini-os"
-version = "1.8.0"
+version = "1.9.0"
 
 edition = "2021"
 
@@ -23,6 +23,7 @@ rand = "0.9"
 sha2 = "0.10"
 hex = "0.4"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
+portable-pty = "0.8"
 
 [dev-dependencies]
 zip = { version = "0.6", default-features = false, features = ["deflate"] }

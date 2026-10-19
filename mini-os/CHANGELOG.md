@@ -1,6 +1,35 @@
 
 # Changelog
 
+## [1.9.0] - 2026-10-20
+
+### 新增
+- 真 PTY 终端：`src/terminal.rs`（portable-pty 0.8.1），按用户隔离、每用户上限 8
+  会话、空闲 30 分钟回收、Ctrl+C 发 SIGINT；WS 协议
+  term_open/input/resize/signal/close ↔ term_ready/output/exited/error；
+  前端 xterm.js 5.3.0 多标签页（fit/Ctrl+C 透传/断线重连）。
+- 文件管理 v2：`PATCH /api/fs/:id/move`（环检测 400/同名 409/跨用户 404/幂等）、
+  `GET /api/fs/search`（LIKE 转义防注入，返回面包屑 path）；
+  前端右键菜单（重命名/移动到…/删除二次确认）、可点击面包屑、防抖搜索框。
+- 笔记/日程：迁移 007（notes/events 表）；8 个 REST 接口（user_id 隔离，
+  title/时间格式校验）；RBAC 新增 NotesRead/NotesWrite（Viewer 只读）；
+  桌面小组件：今日日程（增删/勾选完成）+ 速记便签（防抖自动保存），
+  数据走后端 API。
+- 桌面：双击标题栏最大化/还原、右下角缩放、任务栏高亮、`window-resize` 事件；
+  Lucide SVG 应用图标；`docs/DESIGN.md` 纸墨视觉注记。
+
+### 测试
+- `cargo test` 全绿：新增 terminal_test 9、fs_v2_test 13、notes_test 9；
+  migrate 单测期望同步到 007。
+- WS 真机冒烟（raw socket）：401 未授权、term_ready、真命令回显、
+  Ctrl+C 中断 sleep 后 shell 存活。
+- 3 张截图亲眼验收：v19-desktop-widgets（多窗口同屏）、
+  v19-contextmenu（右键菜单）、v19-theme-dark（深色主题）。
+
+### 已知限制
+- 拖拽上传为整份重传，分片/断点续传未做（需求明确不做）。
+- xterm.js `allowProposedApi` 的 Ctrl+C 拦截行为待真实浏览器长期验证。
+
 ## [1.8.1] - 2026-10-17
 
 ### 修复

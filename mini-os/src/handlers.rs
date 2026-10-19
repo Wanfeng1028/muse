@@ -13,6 +13,7 @@ use axum::{
     Json,
 };
 use futures_util::stream;
+use futures_util::{SinkExt, StreamExt};
 use rusqlite::{params, OptionalExtension};
 use serde::Deserialize;
 use serde_json::json;
@@ -29,7 +30,7 @@ use crate::AppState;
 use rand::TryRngCore;
 
 /// 统一的 API 返回类型别名
-type ApiResult = Result<Response, (StatusCode, Json<serde_json::Value>)>;
+pub(crate) type ApiResult = Result<Response, (StatusCode, Json<serde_json::Value>)>;
 
 fn plain_err(status: StatusCode, msg: &str) -> Response {
     (status, msg.to_string()).into_response()
@@ -278,7 +279,7 @@ fn percent_encode(input: &str) -> String {
 }
 
 /// 构造错误响应。
-fn err(status: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {
+pub(crate) fn err(status: StatusCode, msg: &str) -> (StatusCode, Json<serde_json::Value>) {
     (status, Json(json!({ "error": msg })))
 }
 
@@ -291,43 +292,43 @@ fn err_reason(
     (status, Json(json!({ "error": msg, "reason": reason })))
 }
 
-/// 应用注册表：返回 5 个内置应用。
+/// 应用注册表：返回 6 个内置应用（图标为 Lucide 描边 SVG，见 docs/DESIGN.md 第 5 节）。
 pub fn apps_registry() -> Vec<AppInfo> {
     vec![
         AppInfo {
             id: "files".to_string(),
             name: "文件管理器".to_string(),
-            icon: "📁".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z\" /></svg>".to_string(),
             description: "浏览与管理虚拟文件系统".to_string(),
         },
         AppInfo {
             id: "editor".to_string(),
             name: "文本编辑器".to_string(),
-            icon: "📝".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\" /> <path d=\"M14 2v4a2 2 0 0 0 2 2h4\" /> <path d=\"M10 9H8\" /> <path d=\"M16 13H8\" /> <path d=\"M16 17H8\" /></svg>".to_string(),
             description: "创建与编辑文本文件".to_string(),
         },
         AppInfo {
             id: "terminal".to_string(),
             name: "终端".to_string(),
-            icon: "🖥️".to_string(),
-            description: "简易命令行界面".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 11 2-2-2-2\" /> <path d=\"M11 13h4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /></svg>".to_string(),
+            description: "真 PTY 终端，多标签页".to_string(),
         },
         AppInfo {
             id: "settings".to_string(),
             name: "设置".to_string(),
-            icon: "⚙️".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" /></svg>".to_string(),
             description: "主题与壁纸设置".to_string(),
         },
         AppInfo {
             id: "about".to_string(),
             name: "关于".to_string(),
-            icon: "ℹ️".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" /></svg>".to_string(),
             description: "系统信息与统计".to_string(),
         },
         AppInfo {
             id: "users".to_string(),
             name: "用户与权限".to_string(),
-            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3l7 3v6c0 4.2-2.9 7.5-7 9-4.1-1.5-7-4.8-7-9V6l7-3z\"/><circle cx=\"12\" cy=\"10\" r=\"2.2\"/><path d=\"M8.2 16.4c.7-1.6 2.1-2.5 3.8-2.5s3.1.9 3.8 2.5\"/></svg>".to_string(),
+            icon: "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /> <path d=\"M16 3.13a4 4 0 0 1 0 7.75\" /></svg>".to_string(),
             description: "查看用户列表、调整角色、读懂权限规则".to_string(),
         },
     ]
@@ -672,6 +673,206 @@ pub async fn delete_fs(
     }
     state.metrics.inc_vfs("delete");
     Ok(StatusCode::NO_CONTENT.into_response())
+}
+
+/// PATCH /api/fs/:id/move：移动节点到另一文件夹。
+/// body: { "parent_id": null | i64 }，null 表示移到根目录。
+#[derive(Deserialize)]
+pub struct MoveNodeRequest {
+    pub parent_id: Option<i64>,
+}
+
+pub async fn move_fs(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Path(id): Path<i64>,
+    Json(req): Json<MoveNodeRequest>,
+) -> ApiResult {
+    let conn = state.db.lock().unwrap();
+
+    // 1. 节点存在且归属当前用户
+    let (_kind, old_parent): (String, Option<i64>) = conn
+        .query_row(
+            "SELECT kind, parent_id FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            params![id, user.id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?
+        .ok_or_else(|| err(StatusCode::NOT_FOUND, "节点不存在"))?;
+
+    // 2. 目标父目录校验
+    if let Some(pid) = req.parent_id {
+        if pid == id {
+            return Err(err(StatusCode::BAD_REQUEST, "不能把自己移进自己"));
+        }
+        let target: Option<String> = conn
+            .query_row(
+                "SELECT kind FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+                params![pid, user.id],
+                |r| r.get(0),
+            )
+            .optional()
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        match target {
+            Some(k) if k == "folder" => {}
+            Some(_) => return Err(err(StatusCode::BAD_REQUEST, "目标不是文件夹")),
+            None => return Err(err(StatusCode::NOT_FOUND, "目标文件夹不存在")),
+        }
+        // 3. 环检测：沿 parent 链上爬，遇到 id 说明 pid 是 id 的后代
+        let mut cur = Some(pid);
+        while let Some(c) = cur {
+            if c == id {
+                return Err(err(StatusCode::BAD_REQUEST, "不能移到自己的子孙目录"));
+            }
+            cur = conn
+                .query_row(
+                    "SELECT parent_id FROM vfs_nodes WHERE id = ?1",
+                    params![c],
+                    |r| r.get::<_, Option<i64>>(0),
+                )
+                .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        }
+    }
+
+    // 4. 同级同名冲突（排除自己）
+    let name: String = conn
+        .query_row(
+            "SELECT name FROM vfs_nodes WHERE id = ?1",
+            params![id],
+            |r| r.get(0),
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let conflict: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM vfs_nodes WHERE user_id = ?1 AND parent_id IS ?2 AND name = ?3 AND id != ?4",
+            params![user.id, req.parent_id, name, id],
+            |r| r.get(0),
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    if conflict > 0 {
+        return Err(err(StatusCode::CONFLICT, "目标目录下同名文件已存在"));
+    }
+
+    // 5. 若 parent 没变，直接返回当前节点（幂等）
+    if old_parent == req.parent_id {
+        let node = conn
+            .query_row(
+                "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
+                 CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
+                 mime_type \
+                 FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+                params![id, user.id],
+                row_to_node,
+            )
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        return Ok(Json(node).into_response());
+    }
+
+    conn.execute(
+        "UPDATE vfs_nodes SET parent_id = ?1, updated_at = datetime('now') WHERE id = ?2",
+        params![req.parent_id, id],
+    )
+    .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    state.metrics.inc_vfs("move");
+
+    let node = conn
+        .query_row(
+            "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
+             CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
+             mime_type \
+             FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            params![id, user.id],
+            row_to_node,
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    Ok(Json(node).into_response())
+}
+
+/// GET /api/fs/search?q=关键词&limit=50：按文件名搜索（当前用户范围内）。
+/// 返回 [{ node..., "path": "/a/b" }]，path 为节点所在目录的完整路径（根为 "/"）。
+#[derive(Deserialize)]
+pub struct SearchQuery {
+    pub q: Option<String>,
+    pub limit: Option<i64>,
+}
+
+pub async fn search_fs(
+    State(state): State<Arc<AppState>>,
+    Extension(user): Extension<auth::CurrentUser>,
+    Query(query): Query<SearchQuery>,
+) -> ApiResult {
+    let q = query.q.unwrap_or_default().trim().to_string();
+    if q.is_empty() {
+        return Err(err(StatusCode::BAD_REQUEST, "搜索关键词不能为空"));
+    }
+    if q.chars().count() > 100 {
+        return Err(err(StatusCode::BAD_REQUEST, "搜索关键词过长"));
+    }
+    let limit = query.limit.unwrap_or(50).clamp(1, 200);
+
+    // LIKE 转义：把 \ % _ 当字面量
+    let escaped = q
+        .replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_");
+    let pattern = format!("%{}%", escaped);
+
+    let conn = state.db.lock().unwrap();
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
+             CASE WHEN kind='folder' THEN 0 ELSE COALESCE(LENGTH(content_blob), LENGTH(CAST(content AS BLOB)), 0) END AS size, \
+             mime_type \
+             FROM vfs_nodes WHERE user_id = ?1 AND name LIKE ?2 ESCAPE '\\' \
+             ORDER BY updated_at DESC LIMIT ?3",
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    let rows = stmt
+        .query_map(params![user.id, pattern, limit], row_to_node)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+
+    let mut out = Vec::new();
+    for row in rows {
+        let node = row.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        let path = folder_path(&conn, node.parent_id, user.id)
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        let mut v = serde_json::to_value(&node)
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+        v["path"] = serde_json::Value::String(path);
+        out.push(v);
+    }
+    state.metrics.inc_vfs("search");
+    Ok(Json(out).into_response())
+}
+
+/// 由 parent_id 链上爬拼出目录完整路径，如 "/a/b"；None 表根 "/"。
+fn folder_path(
+    conn: &rusqlite::Connection,
+    mut parent_id: Option<i64>,
+    user_id: i64,
+) -> Result<String, rusqlite::Error> {
+    let mut segs = Vec::new();
+    let mut guard = 0;
+    while let Some(pid) = parent_id {
+        guard += 1;
+        if guard > 100 {
+            break;
+        }
+        let (name, pp): (String, Option<i64>) = conn.query_row(
+            "SELECT name, parent_id FROM vfs_nodes WHERE id = ?1 AND user_id = ?2",
+            rusqlite::params![pid, user_id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )?;
+        segs.push(name);
+        parent_id = pp;
+    }
+    segs.reverse();
+    if segs.is_empty() {
+        Ok("/".to_string())
+    } else {
+        Ok("/".to_string() + &segs.join("/"))
+    }
 }
 
 /// GET /api/settings -> 键值映射
@@ -1048,10 +1249,12 @@ pub async fn get_stats(
 /// GET /ws WebSocket 升级
 pub async fn ws_handler(
     State(state): State<Arc<AppState>>,
+    Extension(user): Extension<crate::auth::CurrentUser>,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
-    let metrics = state.metrics.clone();
-    ws.on_upgrade(move |socket| handle_socket(socket, metrics))
+    let user_id = user.id;
+    let user_role = user.role.clone();
+    ws.on_upgrade(move |socket| handle_socket(socket, state, user_id, user_role))
 }
 
 /// Drop guard：确保 WebSocket 退出时连接数一定 -1。
@@ -1065,36 +1268,308 @@ impl Drop for WsConnGuard {
     }
 }
 
+/// 将 TermError 映射为对客户端可读的中文提示。
+fn term_err_msg(e: crate::terminal::TermError) -> &'static str {
+    use crate::terminal::TermError;
+    match e {
+        TermError::NotFound => "会话不存在",
+        TermError::Forbidden => "无权操作该会话",
+        TermError::LimitReached => "终端标签页已达上限（8 个）",
+        TermError::Io => "终端内部错误",
+    }
+}
+
 /// 处理单个 WebSocket 连接。
-async fn handle_socket(mut socket: WebSocket, metrics: Arc<Metrics>) {
-    metrics.ws_inc();
+async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: i64, user_role: String) {
+    state.metrics.ws_inc();
     // guard 在所有退出路径（return / break / panic 展开）上都触发 ws_dec
-    let _guard = WsConnGuard { metrics };
+    let _guard = WsConnGuard {
+        metrics: state.metrics.clone(),
+    };
+
+    let (mut sender, mut receiver) = socket.split();
 
     // 连接成功先发送 hello
-    let hello = json!({ "type": "hello", "message": "welcome to mini-os" }).to_string();
-    if socket.send(Message::Text(hello)).await.is_err() {
+    let hello = json!({
+        "type": "hello",
+        "message": "welcome to mini-os",
+        "term": "v1"
+    })
+    .to_string();
+    if sender.send(Message::Text(hello)).await.is_err() {
         return;
     }
 
-    // 循环处理文本消息，Close/错误则退出
-    while let Some(msg) = socket.recv().await {
-        match msg {
-            Ok(Message::Text(text)) => {
-                let echo = json!({ "type": "echo", "message": text }).to_string();
-                if socket.send(Message::Text(echo)).await.is_err() {
-                    break;
+    // reader 任务到主循环的转发通道
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(64);
+
+    // 记录每个会话的读任务 handle
+    let mut readers: std::collections::HashMap<String, tokio::task::JoinHandle<()>> =
+        std::collections::HashMap::new();
+
+    // 主循环：同时等客户端消息与 reader 转发
+    loop {
+        tokio::select! {
+            biased;
+
+            maybe_out = rx.recv() => {
+                match maybe_out {
+                    Some(s) => {
+                        if sender.send(Message::Text(s)).await.is_err() {
+                            break;
+                        }
+                    }
+                    None => break,
                 }
             }
-            Ok(Message::Binary(_)) => {
-                // 忽略二进制消息
+
+            maybe_msg = receiver.next() => {
+                match maybe_msg {
+                    Some(Ok(Message::Text(text))) => {
+                        // 尝试解析为终端协议 JSON
+                        let parsed: Option<serde_json::Value> =
+                            serde_json::from_str(&text).ok();
+
+                        let handled = match parsed.as_ref().and_then(|v| v.get("type")).and_then(|t| t.as_str()) {
+                            Some("term_open") => {
+                                let cols = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("cols"))
+                                    .and_then(|v| v.as_u64())
+                                    .and_then(|n| u16::try_from(n).ok())
+                                    .unwrap_or(80);
+                                let rows = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("rows"))
+                                    .and_then(|v| v.as_u64())
+                                    .and_then(|n| u16::try_from(n).ok())
+                                    .unwrap_or(24);
+
+                                let allowed = crate::rbac::Role::parse(&user_role)
+                                    .map(|r| {
+                                        crate::rbac::has_permission(
+                                            &r,
+                                            &crate::rbac::Permission::FsWrite,
+                                        )
+                                    })
+                                    .unwrap_or(false);
+                                if !allowed {
+                                    let msg = json!({
+                                        "type": "term_error",
+                                        "message": "权限不足：终端需要写入权限"
+                                    })
+                                    .to_string();
+                                    if sender.send(Message::Text(msg)).await.is_err() {
+                                        break;
+                                    }
+                                    true
+                                } else {
+                                    match state.terminals.open(user_id, cols, rows) {
+                                        Ok(session_id) => {
+                                            state.metrics.term_session_inc();
+                                            state.metrics.term_opened();
+
+                                            let ready = json!({
+                                                "type": "term_ready",
+                                                "session_id": session_id
+                                            })
+                                            .to_string();
+                                            if sender.send(Message::Text(ready)).await.is_err() {
+                                                // 回滚：已开的会话需要关闭并 dec
+                                                let _ = state.terminals.close(user_id, &session_id);
+                                                state.metrics.term_session_dec();
+                                                break;
+                                            }
+
+                                            // 为该会话 spawn 一个阻塞读任务
+                                            let mgr = state.terminals.clone();
+                                            let tx_clone = tx.clone();
+                                            let sid_for_task = session_id.clone();
+                                            let handle = tokio::task::spawn_blocking(move || {
+                                                let mut buf = [0u8; 8192];
+                                                loop {
+                                                    match mgr.read_chunk(user_id, &sid_for_task, &mut buf) {
+                                                        Ok(0) => break,
+                                                        Ok(n) => {
+                                                            let data = String::from_utf8_lossy(&buf[..n]).into_owned();
+                                                            let out = json!({
+                                                                "type": "term_output",
+                                                                "session_id": sid_for_task,
+                                                                "data": data
+                                                            })
+                                                            .to_string();
+                                                            if tx_clone.blocking_send(out).is_err() {
+                                                                break;
+                                                            }
+                                                        }
+                                                        Err(_) => break,
+                                                    }
+                                                }
+                                                // 自然退出：仅通知，不动 metrics
+                                                let exited = json!({
+                                                    "type": "term_exited",
+                                                    "session_id": sid_for_task
+                                                })
+                                                .to_string();
+                                                let _ = tx_clone.blocking_send(exited);
+                                            });
+                                            readers.insert(session_id, handle);
+                                            true
+                                        }
+                                        Err(e) => {
+                                            let msg = json!({
+                                                "type": "term_error",
+                                                "message": term_err_msg(e)
+                                            })
+                                            .to_string();
+                                            if sender.send(Message::Text(msg)).await.is_err() {
+                                                break;
+                                            }
+                                            true
+                                        }
+                                    }
+                                }
+                            }
+                            Some("term_input") => {
+                                let sid = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("session_id"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                let data = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("data"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                if let Err(e) = state.terminals.write(user_id, &sid, data.as_bytes()) {
+                                    let msg = json!({
+                                        "type": "term_error",
+                                        "session_id": sid,
+                                        "message": term_err_msg(e)
+                                    })
+                                    .to_string();
+                                    if sender.send(Message::Text(msg)).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                true
+                            }
+                            Some("term_resize") => {
+                                let sid = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("session_id"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                let cols = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("cols"))
+                                    .and_then(|v| v.as_u64())
+                                    .and_then(|n| u16::try_from(n).ok())
+                                    .unwrap_or(80);
+                                let rows = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("rows"))
+                                    .and_then(|v| v.as_u64())
+                                    .and_then(|n| u16::try_from(n).ok())
+                                    .unwrap_or(24);
+                                if let Err(e) = state.terminals.resize(user_id, &sid, cols, rows) {
+                                    let msg = json!({
+                                        "type": "term_error",
+                                        "session_id": sid,
+                                        "message": term_err_msg(e)
+                                    })
+                                    .to_string();
+                                    if sender.send(Message::Text(msg)).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                true
+                            }
+                            Some("term_signal") => {
+                                let sid = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("session_id"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                let signal = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("signal"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                if signal == "int" {
+                                    if let Err(e) = state.terminals.interrupt(user_id, &sid) {
+                                        let msg = json!({
+                                            "type": "term_error",
+                                            "session_id": sid,
+                                            "message": term_err_msg(e)
+                                        })
+                                        .to_string();
+                                        if sender.send(Message::Text(msg)).await.is_err() {
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    let msg = json!({
+                                        "type": "term_error",
+                                        "session_id": sid,
+                                        "message": "未知信号"
+                                    })
+                                    .to_string();
+                                    if sender.send(Message::Text(msg)).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                true
+                            }
+                            Some("term_close") => {
+                                let sid = parsed
+                                    .as_ref()
+                                    .and_then(|v| v.get("session_id"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                if let Some(handle) = readers.remove(&sid) {
+                                    handle.abort();
+                                    let _ = state.terminals.close(user_id, &sid);
+                                    state.metrics.term_session_dec();
+                                }
+                                true
+                            }
+                            _ => false,
+                        };
+
+                        if !handled {
+                            // 保持老行为：echo
+                            let echo = json!({ "type": "echo", "message": text }).to_string();
+                            if sender.send(Message::Text(echo)).await.is_err() {
+                                break;
+                            }
+                        }
+                    }
+                    Some(Ok(Message::Binary(_))) => {
+                        // 忽略二进制消息
+                    }
+                    Some(Ok(Message::Ping(_))) | Some(Ok(Message::Pong(_))) => {
+                        // 交给底层自动处理
+                    }
+                    Some(Ok(Message::Close(_))) => break,
+                    Some(Err(_)) => break,
+                    None => break,
+                }
             }
-            Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => {
-                // 交给底层自动处理
-            }
-            Ok(Message::Close(_)) => break,
-            Err(_) => break,
         }
+    }
+
+    // 连接断开：清理仍在 readers 表里的会话
+    for (sid, handle) in readers.drain() {
+        handle.abort();
+        let _ = state.terminals.close(user_id, &sid);
+        state.metrics.term_session_dec();
     }
 }
 
@@ -2036,7 +2511,7 @@ pub async fn get_share(State(state): State<Arc<AppState>>, Path(token): Path<Str
                 let size = blob.as_ref().map(|b| b.len()).unwrap_or(content.len()) as i64;
                 // mime_type 为空时按文件名兜底推断（与 file_download_response 同模式），
                 // 保证分享元信息的 mimeType 始终有值。
-                let mime_type = mime.filter(|m|!m.is_empty()).unwrap_or_else(|| {
+                let mime_type = mime.filter(|m| !m.is_empty()).unwrap_or_else(|| {
                     mime_guess::from_path(&name)
                         .first_or_octet_stream()
                         .to_string()

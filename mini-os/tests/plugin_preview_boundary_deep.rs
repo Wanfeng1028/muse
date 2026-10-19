@@ -110,11 +110,23 @@ async fn register_cookie(app: &axum::Router, username: &str, password: &str) -> 
         .body(Body::from(body))
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(resp.status(), StatusCode::CREATED, "register {} failed", username);
-    let set_cookie = resp.headers().get("set-cookie").expect("missing set-cookie")
-        .to_str().unwrap().to_string();
+    assert_eq!(
+        resp.status(),
+        StatusCode::CREATED,
+        "register {} failed",
+        username
+    );
+    let set_cookie = resp
+        .headers()
+        .get("set-cookie")
+        .expect("missing set-cookie")
+        .to_str()
+        .unwrap()
+        .to_string();
     let cookie = set_cookie.split(';').next().unwrap().to_string();
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     let id = v.get("id").and_then(|x| x.as_i64()).expect("missing id");
     (id, cookie)
@@ -134,8 +146,13 @@ async fn login_cookie(app: &axum::Router, username: &str, password: &str) -> Str
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK, "login {} failed", username);
-    let set_cookie = resp.headers().get("set-cookie").expect("missing set-cookie")
-        .to_str().unwrap().to_string();
+    let set_cookie = resp
+        .headers()
+        .get("set-cookie")
+        .expect("missing set-cookie")
+        .to_str()
+        .unwrap()
+        .to_string();
     set_cookie.split(';').next().unwrap().to_string()
 }
 
@@ -153,7 +170,9 @@ async fn set_role(app: &axum::Router, admin_cookie: &str, user_id: i64, role: &s
 }
 
 async fn body_text(resp: axum::response::Response) -> String {
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap_or_default();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap_or_default();
     String::from_utf8_lossy(&bytes).to_string()
 }
 
@@ -288,7 +307,10 @@ async fn p9_preview_evil_permission_400() {
     let app = app();
     let (_id, cookie) = register_cookie(&app, "p9_admin", "pw123456").await;
     let zip = build_zip(&[
-        ("plugin.json", manifest_json("p9_demo", &["net.evil"]).as_slice()),
+        (
+            "plugin.json",
+            manifest_json("p9_demo", &["net.evil"]).as_slice(),
+        ),
         ("main.js", b"console.log(1)"),
     ]);
     let boundary = "BND_p9";
@@ -329,7 +351,9 @@ async fn p11_preview_ok_no_disk_write() {
     let body = multipart_body(boundary, "x.zip", &zip);
     let resp = preview(&app, Some(&cookie), boundary, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&bytes).expect("json body");
     assert_eq!(v.get("id").and_then(|x| x.as_str()), Some(plugin_id));
     assert_eq!(v.get("version").and_then(|x| x.as_str()), Some("1.0.0"));
@@ -343,12 +367,14 @@ async fn p11_preview_ok_no_disk_write() {
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let list: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     let arr = list.as_array().cloned().unwrap_or_default();
-    let contains = arr.iter().any(|item| {
-        item.get("id").and_then(|x| x.as_str()) == Some(plugin_id)
-    });
+    let contains = arr
+        .iter()
+        .any(|item| item.get("id").and_then(|x| x.as_str()) == Some(plugin_id));
     assert!(!contains, "list should not contain {}", plugin_id);
 
     // data_dir 下 plugins/<id> 目录不存在
@@ -399,12 +425,14 @@ async fn p12_preview_installed_id_still_ok() {
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let list: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     let arr = list.as_array().cloned().unwrap_or_default();
-    let contains = arr.iter().any(|item| {
-        item.get("id").and_then(|x| x.as_str()) == Some(plugin_id)
-    });
+    let contains = arr
+        .iter()
+        .any(|item| item.get("id").and_then(|x| x.as_str()) == Some(plugin_id));
     assert!(contains, "list should contain {}", plugin_id);
 
     // 同 id 再 preview -> 200
@@ -412,7 +440,9 @@ async fn p12_preview_installed_id_still_ok() {
     let body = multipart_body(boundary, "x.zip", &zip);
     let resp = preview(&app, Some(&cookie), boundary, body).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let v: serde_json::Value = serde_json::from_slice(&bytes).expect("json body");
     assert_eq!(v.get("id").and_then(|x| x.as_str()), Some(plugin_id));
     assert_eq!(v.get("version").and_then(|x| x.as_str()), Some("1.0.0"));

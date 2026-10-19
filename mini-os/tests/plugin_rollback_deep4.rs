@@ -110,11 +110,7 @@ fn a1_file_dir_conflict_rolls_back() {
     ]);
 
     let err = install_from_zip(&bytes, &dir).unwrap_err();
-    assert!(
-        err.contains("建目录失败"),
-        "unexpected error: {}",
-        err
-    );
+    assert!(err.contains("建目录失败"), "unexpected error: {}", err);
 
     let plugins_root = dir.join("plugins");
     assert!(
@@ -207,10 +203,7 @@ fn a4_manifest_missing_entry_no_leftover() {
     let dir = work_dir("a4_missing_entry");
     // 缺 entry 字段
     let manifest = r#"{"id":"demo","name":"Demo","version":"1.0.0"}"#;
-    let bytes = build_zip_str(&[
-        ("plugin.json", manifest),
-        ("main.js", "console.log('m');"),
-    ]);
+    let bytes = build_zip_str(&[("plugin.json", manifest), ("main.js", "console.log('m');")]);
 
     let err = install_from_zip(&bytes, &dir).unwrap_err();
     assert!(err.contains("entry"), "unexpected error: {}", err);
@@ -383,16 +376,14 @@ fn b7_symlink_entry_neutralized_to_regular_file() {
         let mut w = zip::ZipWriter::new(&mut buf);
         w.start_file(
             "plugin.json",
-            zip::write::FileOptions::default()
-                .compression_method(zip::CompressionMethod::Deflated),
+            zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Deflated),
         )
         .unwrap();
         w.write_all(manifest.as_bytes()).unwrap();
 
         w.start_file(
             "main.js",
-            zip::write::FileOptions::default()
-                .compression_method(zip::CompressionMethod::Deflated),
+            zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Deflated),
         )
         .unwrap();
         w.write_all(b"console.log('m');").unwrap();
@@ -420,10 +411,7 @@ fn b7_symlink_entry_neutralized_to_regular_file() {
         !meta.file_type().is_symlink(),
         "symlink entry must be neutralized into a regular file"
     );
-    assert!(
-        meta.file_type().is_file(),
-        "link should be a regular file"
-    );
+    assert!(meta.file_type().is_file(), "link should be a regular file");
     let content = fs::read(&link_path).unwrap();
     assert_eq!(content, b"/etc/passwd");
 
@@ -443,23 +431,20 @@ fn b8_dir_entry_dotdot_skipped_install_ok() {
         // 目录条目 "../"：is_dir() 为 true
         w.add_directory(
             "../",
-            zip::write::FileOptions::default()
-                .compression_method(zip::CompressionMethod::Stored),
+            zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Stored),
         )
         .unwrap();
 
         w.start_file(
             "plugin.json",
-            zip::write::FileOptions::default()
-                .compression_method(zip::CompressionMethod::Deflated),
+            zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Deflated),
         )
         .unwrap();
         w.write_all(manifest.as_bytes()).unwrap();
 
         w.start_file(
             "main.js",
-            zip::write::FileOptions::default()
-                .compression_method(zip::CompressionMethod::Deflated),
+            zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Deflated),
         )
         .unwrap();
         w.write_all(b"console.log('m');").unwrap();

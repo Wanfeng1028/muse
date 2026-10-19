@@ -44,6 +44,7 @@ async function init() {
     console.error('加载应用列表失败', e);
   }
   renderDesktopIcons(appsRegistry);
+  renderWidgets();
 
   // 应用设置
   try {
@@ -103,7 +104,8 @@ function renderDesktopIcons(apps) {
     const icon = document.createElement('div');
     icon.className = 'desktop-icon';
     icon.dataset.appId = app.id;
-    icon.innerHTML = `<div class="icon-emoji">${app.icon}</div><div class="icon-label">${escapeHtml(app.name)}</div>`;
+    const isSvg = app.icon.indexOf('<svg') === 0;
+    icon.innerHTML = `<div class="${isSvg ? 'icon-tile' : 'icon-emoji'}">${app.icon}</div><div class="icon-label">${escapeHtml(app.name)}</div>`;
     icon.addEventListener('dblclick', () => openApp(app.id));
     grid.appendChild(icon);
   });
@@ -117,7 +119,11 @@ function renderStartMenu() {
   appsRegistry.forEach((app) => {
     const item = document.createElement('div');
     item.className = 'start-menu-item';
-    item.innerHTML = `<span class="menu-emoji">${app.icon}</span><span>${escapeHtml(app.name)}</span>`;
+    if (app.icon.indexOf('<svg') === 0) {
+      item.innerHTML = `<span class="menu-svg">${app.icon}</span><span>${escapeHtml(app.name)}</span>`;
+    } else {
+      item.innerHTML = `<span class="menu-emoji">${app.icon}</span><span>${escapeHtml(app.name)}</span>`;
+    }
     item.addEventListener('click', () => {
       openApp(app.id);
       menu.classList.add('hidden');
@@ -216,10 +222,17 @@ function openApp(appId) {
   const btnMin = document.createElement('button');
   btnMin.className = 'win-btn win-min';
   btnMin.textContent = '—';
+  btnMin.title = '最小化';
+  const btnMax = document.createElement('button');
+  btnMax.className = 'win-btn win-max';
+  btnMax.textContent = '▢';
+  btnMax.title = '最大化 / 还原';
   const btnClose = document.createElement('button');
   btnClose.className = 'win-btn win-close';
   btnClose.textContent = '×';
+  btnClose.title = '关闭';
   controls.appendChild(btnMin);
+  controls.appendChild(btnMax);
   controls.appendChild(btnClose);
   titlebar.appendChild(title);
   titlebar.appendChild(controls);
@@ -251,6 +264,44 @@ function openApp(appId) {
 
   // 拖拽
   makeDraggable(win, titlebar, winObj);
+
+  // 最大化 / 还原（双击标题栏同样触发）
+  function toggleMaximize() {
+    if (win.classList.contains('maximized')) {
+      win.classList.remove('maximized');
+      const g = winObj.savedGeom;
+      if (g) {
+        win.style.left = g.left;
+        win.style.top = g.top;
+        win.style.width = g.width;
+        win.style.height = g.height;
+      }
+    } else {
+      winObj.savedGeom = {
+        left: win.style.left,
+        top: win.style.top,
+        width: win.style.width,
+        height: win.style.height,
+      };
+      win.classList.add('maximized');
+    }
+    // xterm 终端窗口需要重算列数
+    win.dispatchEvent(new CustomEvent('window-resize'));
+  }
+  btnMax.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    toggleMaximize();
+  });
+  titlebar.addEventListener('dblclick', (ev) => {
+    if (ev.target.closest('.win-btn')) return;
+    toggleMaximize();
+  });
+
+  // 右下角缩放手柄
+  const resizeHandle = document.createElement('div');
+  resizeHandle.className = 'window-resize-handle';
+  win.appendChild(resizeHandle);
+  makeResizable(win, resizeHandle);
 
   // 任务栏按钮
   syncTaskbar();
@@ -290,9 +341,14 @@ function renderAppContent(appId, body) {
 
 // 聚焦窗口
 function focusWindow(winObj) {
-  state.windows.forEach((w) => w.el.classList.remove('focused'));
+  state.windows.forEach((w) => {
+    w.el.classList.remove('focused');
+    w.el.classList.remove('active');
+  });
   winObj.el.classList.add('focused');
+  winObj.el.classList.add('active');
   winObj.el.style.zIndex = ++state.zTop;
+  syncTaskbar();
 }
 
 // 关闭窗口
@@ -315,7 +371,13 @@ function syncTaskbar() {
     if (app && app.icon.indexOf('<svg') === 0) {
       btn.innerHTML = '<span class="title-icon">' + app.icon + '</span><span>' + escapeHtml(app.name) + '</span>';
     } else {
-      btn.textContent = (app ? app.icon + ' ' + app.name : w.appId);
+      btn.textContent = app ? app.name : w.appId;
+    }
+    if (w.el.classList.contains('active') && !w.el.classList.contains('minimized')) {
+      btn.classList.add('active');
+    }
+    if (w.el.classList.contains('minimized')) {
+      btn.classList.add('minimized');
     }
     btn.addEventListener('click', () => {
       if (w.el.classList.contains('minimized')) {
@@ -334,6 +396,18 @@ function makeDraggable(win, handle, winObj) {
 
   handle.addEventListener('mousedown', (ev) => {
     if (ev.target.closest('.win-btn')) return;
+    if (win.classList.contains('maximized')) {
+      // 拖拽最大化窗口时先还原为普通窗口（标准桌面行为）
+      win.classList.remove('maximized');
+      const g = winObj.savedGeom;
+      if (g) {
+        win.style.left = Math.max(0, ev.clientX - 200) + 'px';
+        win.style.top = Math.max(0, ev.clientY - 20) + 'px';
+        win.style.width = g.width;
+        win.style.height = g.height;
+      }
+      win.dispatchEvent(new CustomEvent('window-resize'));
+    }
     dragging = true;
     startX = ev.clientX;
     startY = ev.clientY;
@@ -357,6 +431,42 @@ function makeDraggable(win, handle, winObj) {
   document.addEventListener('mouseup', onUp);
 }
 
+// 使窗口可缩放（右下角手柄）
+function makeResizable(win, handle) {
+  let resizing = false;
+  let startX = 0, startY = 0, origW = 0, origH = 0;
+
+  handle.addEventListener('mousedown', (ev) => {
+    if (win.classList.contains('maximized')) return;
+    resizing = true;
+    startX = ev.clientX;
+    startY = ev.clientY;
+    const rect = win.getBoundingClientRect();
+    origW = rect.width;
+    origH = rect.height;
+    ev.preventDefault();
+    ev.stopPropagation();
+  });
+
+  function onMove(ev) {
+    if (!resizing) return;
+    const desktop = document.getElementById('desktop');
+    const maxW = desktop ? desktop.clientWidth : window.innerWidth;
+    const maxH = desktop ? desktop.clientHeight : window.innerHeight;
+    const w = Math.min(Math.max(320, origW + (ev.clientX - startX)), maxW);
+    const h = Math.min(Math.max(200, origH + (ev.clientY - startY)), maxH);
+    win.style.width = w + 'px';
+    win.style.height = h + 'px';
+  }
+  function onUp() {
+    if (!resizing) return;
+    resizing = false;
+    win.dispatchEvent(new CustomEvent('window-resize'));
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
 // ================= 文件管理器 =================
 function renderFiles(body) {
   const current = { parentId: null, parentStack: [] };
@@ -364,6 +474,7 @@ function renderFiles(body) {
     <div class="files-toolbar">
       <button class="btn-back">← 返回</button>
       <span class="files-path">/</span>
+      <input class="fs-search" type="search" placeholder="搜索文件名…" autocomplete="off">
       <button class="btn-new-folder">新建文件夹</button>
       <button class="btn-new-file">新建文件</button>
       <button class="btn-upload">上传</button>
@@ -462,18 +573,226 @@ function renderFiles(body) {
             }
           }
         });
+
+        if (!body._ctxHelpers) {
+          body._ctxHelpers = {
+            el: null,
+            close() { if (this.el) { this.el.remove(); this.el = null; } },
+          };
+          document.addEventListener('click', () => body._ctxHelpers.close());
+        }
+        const ctxH = body._ctxHelpers;
+        async function ctxRename(n) {
+          const name = prompt('重命名为', n.name);
+          if (!name || name === n.name) return;
+          try {
+            await api('/api/fs/' + n.id, { method: 'PUT', body: JSON.stringify({ name }) });
+            refresh();
+          } catch (e) { showError('重命名失败：' + e.message); }
+        }
+        async function ctxDelete(n) {
+          if (!confirm('确认删除「' + n.name + '」？')) return;
+          if (!confirm('再次确认：删除后无法恢复，继续吗？')) return;
+          try {
+            await api('/api/fs/' + n.id, { method: 'DELETE' });
+            refresh();
+          } catch (e) { showError('删除失败：' + e.message); }
+        }
+        async function ctxMove(n) {
+          const banned = new Set([n.id]);
+          if (n.kind === 'folder') {
+            const queue = [n.id];
+            let depth = 0;
+            while (queue.length > 0 && depth < 6) {
+              depth++;
+              const pid = queue.shift();
+              let kids = [];
+              try { kids = await api('/api/fs?parent_id=' + pid); } catch (e) { break; }
+              (kids || []).forEach((k) => {
+                banned.add(k.id);
+                if (k.kind === 'folder') queue.push(k.id);
+              });
+            }
+          }
+          const folders = [{ id: null, path: '/' }];
+          const queue = [null];
+          let depth = 0;
+          while (queue.length > 0 && depth < 6) {
+            depth++;
+            const pid = queue.shift();
+            let kids = [];
+            try { kids = await api(pid === null ? '/api/fs' : '/api/fs?parent_id=' + pid); } catch (e) { break; }
+            for (const k of (kids || [])) {
+              if (k.kind !== 'folder') continue;
+              if (banned.has(k.id)) continue;
+              const parentPath = folders.find((f) => f.id === pid);
+              const base = parentPath ? parentPath.path : '/';
+              const p = base.replace(/\/$/, '') + '/' + k.name;
+              folders.push({ id: k.id, path: p });
+              queue.push(k.id);
+            }
+          }
+          const overlay = document.createElement('div');
+          overlay.className = 'move-overlay';
+          const card = document.createElement('div');
+          card.className = 'move-card';
+          const title = document.createElement('div');
+          title.className = 'move-title';
+          title.textContent = '移动「' + n.name + '」到…';
+          const list = document.createElement('div');
+          list.className = 'move-list';
+          folders.forEach((f) => {
+            const r = document.createElement('div');
+            r.className = 'move-row';
+            r.textContent = f.path;
+            r.addEventListener('click', async () => {
+              try {
+                await api('/api/fs/' + n.id + '/move', { method: 'PATCH', body: JSON.stringify({ parent_id: f.id }) });
+                overlay.remove();
+                refresh();
+              } catch (e) { showError('移动失败：' + e.message); }
+            });
+            list.appendChild(r);
+          });
+          const cancel = document.createElement('button');
+          cancel.className = 'move-cancel';
+          cancel.textContent = '取消';
+          cancel.addEventListener('click', () => overlay.remove());
+          card.appendChild(title);
+          card.appendChild(list);
+          card.appendChild(cancel);
+          overlay.appendChild(card);
+          overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+          document.body.appendChild(overlay);
+        }
+        row.addEventListener('contextmenu', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          ctxH.close();
+          const menu = document.createElement('div');
+          menu.className = 'ctx-menu';
+          [
+            { label: '重命名', fn: () => ctxRename(node) },
+            { label: '移动到…', fn: () => ctxMove(node) },
+            { label: '删除', danger: true, fn: () => ctxDelete(node) },
+          ].forEach((it) => {
+            const mi = document.createElement('div');
+            mi.className = 'ctx-item' + (it.danger ? ' danger' : '');
+            mi.textContent = it.label;
+            mi.addEventListener('click', (ev2) => { ev2.stopPropagation(); ctxH.close(); it.fn(); });
+            menu.appendChild(mi);
+          });
+          document.body.appendChild(menu);
+          ctxH.el = menu;
+          menu.style.left = Math.min(ev.clientX, window.innerWidth - 180) + 'px';
+          menu.style.top = Math.min(ev.clientY, window.innerHeight - 160) + 'px';
+        });
         listEl.appendChild(row);
       });
     }
   }
 
   function updatePath() {
-    if (current.parentId === null || current.parentStack.length === 0) {
-      pathEl.textContent = '/';
-    } else {
-      const names = current.parentStack.map((p) => p.name);
-      pathEl.textContent = '/' + names.join('/');
+    pathEl.innerHTML = '';
+    const mkCrumb = (label, target) => {
+      const c = document.createElement('span');
+      c.className = 'crumb';
+      c.textContent = label;
+      c.addEventListener('click', () => {
+        current.parentStack = current.parentStack.slice(0, target.stackLen);
+        current.parentId = target.parentId;
+        clearSearch();
+        updatePath();
+        refresh();
+      });
+      return c;
+    };
+    const sep = () => {
+      const s = document.createElement('span');
+      s.className = 'crumb-sep';
+      s.textContent = '/';
+      return s;
+    };
+    pathEl.appendChild(mkCrumb('根目录', { stackLen: 0, parentId: null }));
+    const n = current.parentStack.length;
+    current.parentStack.forEach((p, i) => {
+      pathEl.appendChild(sep());
+      const pid = (i + 1 < n) ? current.parentStack[i + 1].id : current.parentId;
+      pathEl.appendChild(mkCrumb(p.name, { stackLen: i + 1, parentId: pid }));
+    });
+  }
+
+  // ---- 文件名搜索 ----
+  const searchInput = body.querySelector('.fs-search');
+  let searchTimer = null;
+  function clearSearch() {
+    if (searchInput && searchInput.value !== '') {
+      searchInput.value = '';
     }
+  }
+  async function runSearch(q) {
+    const query = q.trim();
+    if (!query) { refresh(); return; }
+    listEl.innerHTML = '<div class="empty">搜索中…</div>';
+    let results = [];
+    try {
+      results = await api('/api/fs/search?q=' + encodeURIComponent(query) + '&limit=50');
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty">搜索失败: ' + escapeHtml(e.message) + '</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    if (!results || results.length === 0) {
+      listEl.innerHTML = '<div class="empty">没有找到「' + escapeHtml(query) + '」</div>';
+      return;
+    }
+    results.forEach((node) => {
+      const row = document.createElement('div');
+      row.className = 'fs-row search-row';
+      const icon = node.kind === 'folder' ? '📁' : '📄';
+      row.innerHTML = '<span class="fs-icon">' + icon + '</span>' +
+        '<span class="fs-name">' + escapeHtml(node.name) + '</span>' +
+        '<span class="search-path">' + escapeHtml(node.path || '') + '</span>';
+      row.addEventListener('dblclick', () => {
+        if (node.kind === 'folder') {
+          navigateToPath(node.path + '/' + node.name).then(() => { clearSearch(); });
+        } else {
+          openApp('editor');
+          const editorWin = state.windows.find((w) => w.appId === 'editor');
+          if (editorWin) {
+            editorWin.body.innerHTML = '';
+            renderEditor(editorWin.body, node.id);
+          }
+          clearSearch();
+        }
+      });
+      listEl.appendChild(row);
+    });
+  }
+  async function navigateToPath(path) {
+    const segs = (path || '/').split('/').filter((s) => s.length > 0);
+    const stack = [];
+    let pid = null;
+    for (const seg of segs) {
+      const url = pid === null ? '/api/fs' : '/api/fs?parent_id=' + pid;
+      let kids = [];
+      try { kids = await api(url); } catch (e) { showError('进入失败：' + e.message); return; }
+      const hit = (kids || []).find((k) => k.kind === 'folder' && k.name === seg);
+      if (!hit) { showError('路径不存在：' + path); return; }
+      stack.push({ id: pid, name: seg });
+      pid = hit.id;
+    }
+    current.parentStack = stack;
+    current.parentId = pid;
+    updatePath();
+    refresh();
+  }
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => runSearch(searchInput.value), 300);
+    });
+    searchInput.addEventListener('keydown', (ev) => { ev.stopPropagation(); });
   }
 
   backBtn.addEventListener('click', () => {
@@ -806,77 +1125,200 @@ function renderEditor(body, nodeId) {
 // ================= 终端 =================
 function renderTerminal(body) {
   body.innerHTML = `
-    <div class="terminal">
-      <div class="terminal-output"></div>
-      <div class="terminal-input-line">
-        <span class="terminal-prompt">$</span>
-        <input class="terminal-input" type="text" autocomplete="off" />
-      </div>
-    </div>
-  `;
-  const output = body.querySelector('.terminal-output');
-  const input = body.querySelector('.terminal-input');
+    <div class="xterm-wrap">
+      <div class="xterm-tabs"></div>
+      <div class="xterm-viewport"></div>
+      <div class="xterm-status">连接中…</div>
+    </div>`;
+  const tabsEl = body.querySelector('.xterm-tabs');
+  const viewport = body.querySelector('.xterm-viewport');
+  const statusEl = body.querySelector('.xterm-status');
 
-  function print(text) {
-    const line = document.createElement('div');
-    line.className = 'terminal-line';
-    line.textContent = text;
-    output.appendChild(line);
-    output.scrollTop = output.scrollHeight;
+  const TERM_THEME = {
+    background: '#161511',
+    foreground: '#ece7d9',
+    cursor: '#d8a24a',
+    cursorAccent: '#161511',
+    selectionBackground: 'rgba(216, 162, 74, 0.35)',
+    black: '#161511', red: '#e06c5b', green: '#9db35c', yellow: '#d8a24a',
+    blue: '#7fa8c9', magenta: '#b085b0', cyan: '#7fb5a8', white: '#ece7d9',
+    brightBlack: '#5a5648', brightRed: '#e88a76', brightGreen: '#b3c47a',
+    brightYellow: '#e3b85e', brightBlue: '#93bcd6', brightMagenta: '#bd93bd',
+    brightCyan: '#93c4b8', brightWhite: '#fbf8ef'
+  };
+
+  const sessions = new Map();
+  let activeId = null;
+  let ws = null;
+  let reconnectTimer = null;
+  let dead = false;
+
+  function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+
+  function measureCell(term) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const fs = term.options.fontSize || 14;
+    ctx.font = fs + 'px ' + term.options.fontFamily;
+    const w = ctx.measureText('WWWWWWWWWW').width / 10;
+    return { w: Math.max(5, w), h: Math.ceil(fs * 1.5) };
   }
 
-  print('mini-os terminal. 输入 help 查看命令。');
+  function send(obj) {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+  }
 
-  input.addEventListener('keydown', async (ev) => {
-    if (ev.key !== 'Enter') return;
-    const raw = input.value.trim();
-    input.value = '';
-    if (!raw) return;
-    print('$ ' + raw);
-    const parts = raw.split(/\s+/);
-    const cmd = parts[0];
-    const args = parts.slice(1);
+  function fitTerm(rec) {
+    const rect = viewport.getBoundingClientRect();
+    if (rect.width < 40 || rect.height < 40) return;
+    const cell = measureCell(rec.term);
+    const cols = Math.max(20, Math.floor(rect.width / cell.w));
+    const rows = Math.max(8, Math.floor(rect.height / cell.h));
+    rec.term.resize(cols, rows);
+    send({ type: 'term_resize', session_id: rec.sid, cols, rows });
+  }
 
-    if (cmd === 'help') {
-      print('可用命令: help, clear, ls, stats, health, echo <text>');
-    } else if (cmd === 'clear') {
-      output.innerHTML = '';
-    } else if (cmd === 'ls') {
-      try {
-        const nodes = await api('/api/fs');
-        if (!nodes || nodes.length === 0) {
-          print('（空）');
-        } else {
-          nodes.forEach((n) => {
-            const icon = n.kind === 'folder' ? '📁' : '📄';
-            print(`${icon} ${n.name}`);
-          });
-        }
-      } catch (e) {
-        print('错误: ' + e.message);
+  function activate(sid) {
+    activeId = sid;
+    sessions.forEach((rec, id) => {
+      const on = id === sid;
+      rec.paneEl.classList.toggle('hidden', !on);
+      rec.tabEl.classList.toggle('active', on);
+    });
+    const rec = sessions.get(sid);
+    if (rec) { fitTerm(rec); rec.term.focus(); }
+  }
+
+  function closeSession(sid) {
+    const rec = sessions.get(sid);
+    if (!rec) return;
+    send({ type: 'term_close', session_id: sid });
+    rec.term.dispose();
+    rec.tabEl.remove();
+    rec.paneEl.remove();
+    sessions.delete(sid);
+    if (activeId === sid) {
+      const next = sessions.keys().next();
+      if (!next.done) activate(next.value);
+      else { activeId = null; openSession(); }
+    }
+  }
+
+  function openSession() {
+    const tabEl = document.createElement('div');
+    tabEl.className = 'xterm-tab';
+    tabEl.innerHTML = '<span class="xterm-tab-label">终端</span><button class="xterm-tab-x" title="关闭">×</button>';
+    const paneEl = document.createElement('div');
+    paneEl.className = 'xterm-pane hidden';
+    tabsEl.appendChild(tabEl);
+    viewport.appendChild(paneEl);
+    const term = new Terminal({
+      theme: TERM_THEME,
+      fontSize: 14,
+      fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Noto Sans Mono", monospace',
+      cursorBlink: true,
+      scrollback: 2000,
+      allowProposedApi: true
+    });
+    term.open(paneEl);
+    const tmpSid = 'pending-' + Math.random().toString(36).slice(2);
+    const rec = { term, tabEl, paneEl, sid: tmpSid };
+    sessions.set(tmpSid, rec);
+    tabEl.querySelector('.xterm-tab-x').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      closeSession(rec.sid);
+    });
+    tabEl.addEventListener('click', () => activate(rec.sid));
+    term.onData((data) => send({ type: 'term_input', session_id: rec.sid, data }));
+    term.attachCustomKeyEventHandler((ev) => {
+      if (ev.ctrlKey && !ev.shiftKey && !ev.altKey && !ev.metaKey) {
+        const k = ev.key.toLowerCase();
+        if (k === 'c') { send({ type: 'term_signal', session_id: rec.sid, signal: 'int' }); return false; }
+        if (k === 'd') { send({ type: 'term_input', session_id: rec.sid, data: '\x04' }); return false; }
       }
-    } else if (cmd === 'stats') {
-      try {
-        const s = await api('/api/stats');
-        print(`文件: ${s.files}  文件夹: ${s.folders}  总字节: ${s.totalBytes}`);
-      } catch (e) {
-        print('错误: ' + e.message);
+      return true;
+    });
+    send({ type: 'term_open', cols: 80, rows: 24 });
+    activate(tmpSid);
+    new ResizeObserver(() => { if (activeId === rec.sid) fitTerm(rec); }).observe(viewport);
+  }
+
+  function onMessage(ev) {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch (e) { return; }
+    if (msg.type === 'term_ready') {
+      const pending = [...sessions.entries()].find(([id]) => id.startsWith('pending-'));
+      if (pending) {
+        const [tmpId, r] = pending;
+        sessions.delete(tmpId);
+        r.sid = msg.session_id;
+        sessions.set(msg.session_id, r);
+        r.tabEl.querySelector('.xterm-tab-label').textContent = '终端 ' + sessions.size;
+        if (activeId === tmpId) activeId = msg.session_id;
+        fitTerm(r);
+        r.term.focus();
       }
-    } else if (cmd === 'health') {
-      try {
-        const h = await api('/api/health');
-        print(`状态: ${h.status}  版本: ${h.version}`);
-      } catch (e) {
-        print('错误: ' + e.message);
-      }
-    } else if (cmd === 'echo') {
-      print(args.join(' '));
-    } else {
-      print('未知命令: ' + cmd + '（输入 help 查看帮助）');
+      return;
+    }
+    if (msg.type === 'term_output') {
+      const rec = sessions.get(msg.session_id);
+      if (rec) rec.term.write(msg.data);
+      return;
+    }
+    if (msg.type === 'term_exited') {
+      const rec = sessions.get(msg.session_id);
+      if (rec) rec.term.writeln('\r\n[进程已退出 — 回车重开]');
+      return;
+    }
+    if (msg.type === 'term_error') {
+      const rec = activeId ? sessions.get(activeId) : null;
+      if (rec) rec.term.writeln('\r\n[错误] ' + msg.message);
+      else setStatus('[错误] ' + msg.message);
+      return;
+    }
+  }
+
+  function connect() {
+    if (dead) return;
+    setStatus('连接中…');
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const sock = new WebSocket(proto + '://' + location.host + '/ws');
+    ws = sock;
+    sock.addEventListener('open', () => {
+      setStatus('已连接');
+      if (sessions.size === 0) { openSession(); return; }
+      const n = sessions.size;
+      [...sessions.keys()].forEach((sid) => closeSession(sid));
+      for (let i = 0; i < Math.max(1, n); i++) openSession();
+    });
+    sock.addEventListener('message', onMessage);
+    sock.addEventListener('close', () => {
+      if (dead) return;
+      setStatus('连接断开，3 秒后重连…');
+      clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(connect, 3000);
+    });
+    sock.addEventListener('error', () => { try { sock.close(); } catch (e) {} });
+  }
+
+  const newTabBtn = document.createElement('button');
+  newTabBtn.className = 'xterm-newtab';
+  newTabBtn.textContent = '+ 新标签';
+  newTabBtn.addEventListener('click', () => openSession());
+  tabsEl.appendChild(newTabBtn);
+
+  const mo = new MutationObserver(() => {
+    if (!document.contains(body)) {
+      dead = true;
+      clearTimeout(reconnectTimer);
+      try { if (ws) ws.close(); } catch (e) {}
+      sessions.forEach((rec) => { try { rec.term.dispose(); } catch (e) {} });
+      mo.disconnect();
     }
   });
+  mo.observe(document.body, { childList: true, subtree: true });
 
-  input.focus();
+  connect();
 }
 
 // ================= 设置 =================
@@ -1112,5 +1554,176 @@ async function renderUsers(body) {
         if (prevRole) prevRole.innerHTML = prevHtml;
       }
     });
+  });
+}
+
+/* ============================================================
+   桌面小组件：今日日程 + 速记便签（v1.9.0）
+   数据全部走后端 API 持久化，不用 localStorage 做唯一存储。
+   ============================================================ */
+
+// 当天 00:00:00 与次日 00:00:00（本地时间，ISO 字符串）
+function todayRange() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  return { from: day + 'T00:00:00', to: addDays(day, 1) + 'T00:00:00', label: day };
+}
+function addDays(dayStr, n) {
+  const d = new Date(dayStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  const pad = (x) => String(x).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+// "2026-10-20T09:00:00" -> "09:00"
+function shortTime(iso) {
+  if (!iso) return '';
+  const m = iso.match(/T(\d{2}):(\d{2})/);
+  return m ? m[1] + ':' + m[2] : iso;
+}
+// 转义 HTML
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[c]);
+}
+
+// 渲染两个小组件到桌面右上角
+async function renderWidgets() {
+  const desktop = document.getElementById('desktop');
+  if (!desktop || document.getElementById('widget-panel')) return;
+  const panel = document.createElement('div');
+  panel.id = 'widget-panel';
+  panel.innerHTML =
+    '<div class="widget" id="widget-schedule">' +
+      '<div class="widget-title"><span>今日日程</span><span class="widget-date" id="widget-date"></span></div>' +
+      '<ul class="widget-list" id="widget-event-list"><li class="widget-empty">加载中…</li></ul>' +
+      '<div class="widget-add">' +
+        '<input id="widget-event-title" type="text" maxlength="60" placeholder="新日程，如：10:00 开会" />' +
+        '<button id="widget-event-add" title="添加">＋</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="widget" id="widget-note">' +
+      '<div class="widget-title"><span>速记便签</span><span class="widget-save-hint" id="widget-save-hint"></span></div>' +
+      '<textarea id="widget-note-body" placeholder="随手记点什么，自动保存…"></textarea>' +
+    '</div>';
+  desktop.appendChild(panel);
+  document.getElementById('widget-date').textContent = todayRange().label;
+  await refreshWidgetEvents();
+  await initWidgetNote();
+  bindWidgetEvents();
+}
+
+// 刷新今日日程列表
+async function refreshWidgetEvents() {
+  const list = document.getElementById('widget-event-list');
+  try {
+    const r = todayRange();
+    const events = await api('/api/events?from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to));
+    if (!events.length) {
+      list.innerHTML = '<li class="widget-empty">今天没有安排</li>';
+      return;
+    }
+    list.innerHTML = events.map((e) => {
+      const time = e.allDay ? '全天' : shortTime(e.startsAt) + (e.endsAt ? '–' + shortTime(e.endsAt) : '');
+      return '<li class="widget-event' + (e.done ? ' done' : '') + '" data-id="' + e.id + '">' +
+        '<button class="widget-check" data-act="toggle" title="' + (e.done ? '标为未完成' : '标为完成') + '">' +
+          (e.done ? '✓' : '') +
+        '</button>' +
+        '<span class="widget-event-text"><span class="widget-event-title">' + escHtml(e.title) + '</span>' +
+          '<span class="widget-event-time">' + escHtml(time) + '</span></span>' +
+        '<button class="widget-del" data-act="del" title="删除">×</button>' +
+      '</li>';
+    }).join('');
+  } catch (err) {
+    list.innerHTML = '<li class="widget-empty">加载失败</li>';
+  }
+}
+
+function bindWidgetEvents() {
+  const list = document.getElementById('widget-event-list');
+  list.addEventListener('click', async (ev) => {
+    const li = ev.target.closest('.widget-event');
+    if (!li) return;
+    const id = li.getAttribute('data-id');
+    const act = ev.target.getAttribute('data-act');
+    try {
+      if (act === 'toggle') {
+        const done = !li.classList.contains('done');
+        await api('/api/events/' + id, { method: 'PUT', body: JSON.stringify({ done }) });
+      } else if (act === 'del') {
+        if (!confirm('删除这条日程？')) return;
+        await api('/api/events/' + id, { method: 'DELETE' });
+      }
+      await refreshWidgetEvents();
+    } catch (e) { /* 静默：保持桌面不打扰 */ }
+  });
+
+  const input = document.getElementById('widget-event-title');
+  const addBtn = document.getElementById('widget-event-add');
+  const submit = async () => {
+    let title = input.value.trim();
+    if (!title) return;
+    // 支持 "10:00 开会" 快捷写法：开头的时间自动拆成 startsAt
+    let startsAt = null;
+    const m = title.match(/^(\d{1,2}):(\d{2})\s+(.+)$/);
+    const r = todayRange();
+    if (m) {
+      const hh = m[1].padStart(2, '0'), mm = m[2];
+      startsAt = r.from.slice(0, 11) + hh + ':' + mm + ':00';
+      title = m[3];
+    } else {
+      startsAt = r.from;
+    }
+    try {
+      await api('/api/events', {
+        method: 'POST',
+        body: JSON.stringify({ title, startsAt }),
+      });
+      input.value = '';
+      await refreshWidgetEvents();
+    } catch (e) { /* 静默 */ }
+  };
+  addBtn.addEventListener('click', submit);
+  input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') submit(); });
+}
+
+// 速记便签：绑定到第一条 pinned 便签，没有就自动建一条
+let widgetNoteId = null;
+let widgetNoteTimer = null;
+async function initWidgetNote() {
+  const ta = document.getElementById('widget-note-body');
+  const hint = document.getElementById('widget-save-hint');
+  try {
+    const notes = await api('/api/notes');
+    let note = notes.find((n) => n.pinned) || notes[0];
+    if (!note) {
+      note = await api('/api/notes', {
+        method: 'POST',
+        body: JSON.stringify({ title: '桌面速记', body: '' }),
+      });
+      await api('/api/notes/' + note.id, { method: 'PUT', body: JSON.stringify({ pinned: true }) });
+    }
+    widgetNoteId = note.id;
+    ta.value = note.body || '';
+  } catch (e) {
+    ta.placeholder = '便签加载失败';
+    ta.disabled = true;
+    return;
+  }
+  ta.addEventListener('input', () => {
+    hint.textContent = '输入中…';
+    clearTimeout(widgetNoteTimer);
+    widgetNoteTimer = setTimeout(async () => {
+      try {
+        await api('/api/notes/' + widgetNoteId, {
+          method: 'PUT',
+          body: JSON.stringify({ body: ta.value }),
+        });
+        hint.textContent = '已保存 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (e) {
+        hint.textContent = '保存失败';
+      }
+    }, 800);
   });
 }

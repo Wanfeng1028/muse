@@ -43,6 +43,10 @@ pub struct Metrics {
     durations: Mutex<HashMap<(String, String), Histogram>>,
     /// share_ratelimited：被分享读取限流拒绝的请求总数。
     share_ratelimited: AtomicU64,
+    /// minios_terminal_opened_total：终端会话累计打开次数。
+    terminal_opened: AtomicU64,
+    /// minios_terminal_sessions：当前存活终端会话数。
+    terminal_sessions: AtomicI64,
 }
 
 impl Metrics {
@@ -55,6 +59,8 @@ impl Metrics {
             ws: AtomicI64::new(0),
             durations: Mutex::new(HashMap::new()),
             share_ratelimited: AtomicU64::new(0),
+            terminal_opened: AtomicU64::new(0),
+            terminal_sessions: AtomicI64::new(0),
         }
     }
 
@@ -94,6 +100,21 @@ impl Metrics {
     /// WebSocket 连接数 -1。
     pub fn ws_dec(&self) {
         self.ws.fetch_sub(1, Ordering::SeqCst);
+    }
+
+    /// 终端会话打开计数 +1。
+    pub fn term_opened(&self) {
+        self.terminal_opened.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// 当前终端会话数 +1。
+    pub fn term_session_inc(&self) {
+        self.terminal_sessions.fetch_add(1, Ordering::SeqCst);
+    }
+
+    /// 当前终端会话数 -1。
+    pub fn term_session_dec(&self) {
+        self.terminal_sessions.fetch_sub(1, Ordering::SeqCst);
     }
 
     /// 渲染为 Prometheus exposition 文本。
@@ -201,6 +222,24 @@ impl Metrics {
         out.push_str(&format!(
             "ws_connections {}\n",
             self.ws.load(Ordering::SeqCst)
+        ));
+
+        // minios_terminal_opened_total
+        out.push_str(
+            "# HELP minios_terminal_opened_total Total number of terminal sessions opened.\n",
+        );
+        out.push_str("# TYPE minios_terminal_opened_total counter\n");
+        out.push_str(&format!(
+            "minios_terminal_opened_total {}\n",
+            self.terminal_opened.load(Ordering::Relaxed)
+        ));
+
+        // minios_terminal_sessions
+        out.push_str("# HELP minios_terminal_sessions Current number of live terminal sessions.\n");
+        out.push_str("# TYPE minios_terminal_sessions gauge\n");
+        out.push_str(&format!(
+            "minios_terminal_sessions {}\n",
+            self.terminal_sessions.load(Ordering::SeqCst)
         ));
 
         out

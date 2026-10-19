@@ -177,10 +177,15 @@ sudo systemctl start mini-os
 
 ### 4.1 版本化迁移
 
-v1.2.0 引入 `schema_migrations` 表做版本化迁移，当前有两步：
+v1.2.0 引入 `schema_migrations` 表做版本化迁移，当前共 7 步：
 
 - `001`：建 `vfs_nodes` / `settings` 表。
 - `002`：新增 `content_blob` / `mime_type` 列。
+- `003`：多用户（users 表，legacy 占位用户）。
+- `004`：shares 表 `share_type` 列（file/dir，老数据默认为 file）。
+- `005`：users 表 `role` 列 + CHECK 约束（admin/editor/viewer）。
+- `006`：shares 表新增 `expires_at` 列（分享过期时间）。
+- `007`（v1.9.0）：新建 `notes` / `events` 表（便签与日程）。
 
 迁移是幂等的，重复跑不会出问题。
 
@@ -458,6 +463,9 @@ share.html 收到 429 时：初始页显示「看的人有点多」+ N 秒倒计
 
 - 计数器 `minios_share_rate_limited_total` 记录被限流拒绝的分享读请求总数。
   可基于它加告警，例如 `rate(minios_share_rate_limited_total[5m])` 突增可能意味着有人在扫分享链接。
+- 终端指标（v1.9.0）：`minios_terminal_opened_total`（counter，累计打开的 PTY
+  会话数）、`minios_terminal_sessions`（gauge，当前存活会话数）。
+  gauge 持续走高不回落可能意味着会话泄漏（正常应随 WS 断开/空闲 30 分钟回收）。
 - 排障时结合 request_id 日志定位。
 
 ### 10.6 已知限制

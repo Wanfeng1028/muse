@@ -40,3 +40,21 @@
 - 第 1 轮：P0-1（迁 CI 到仓库根，等 token）、P0-2（docker 镜像/compose 实跑验证）。这两条卡在发版和部署验证上，先清。
 - 第 2 轮：P0-3（分享 token 过期/撤销，待确认方案）+ P1-4（分享读接口限流）、P1-5（告警规则示例）。分享相关风险一起收。
 - 第 3 轮：P1-2（session 滑动续期，待确认）、P1-3（gauge 抓取策略，待确认）。剩下可维护性/可观测性收尾。
+
+## v1.9.0 新增（2026-10-20）
+
+- P1-6：终端大输出背压。`term_output` 目前是 PTY 输出多少就推多少，
+  `cat` 大文件时内存与带宽无上限。出路：服务端按会话加环形缓冲 +
+  超限丢弃并提示"[输出过长，已截断]"。出处：docs/TERMINAL.md 已知限制。
+- P1-7：xterm.js `allowProposedApi` 的 Ctrl+C 拦截在真实浏览器长期行为未验证。
+  目前用 attachCustomKeyEventHandler 拦截，出路：补一个浏览器实测用例
+  （playwright 真浏览器按 Ctrl+C，看 shell 是否收到 SIGINT）。
+- P1-8：小组件在深色主题下仍用浅色 fallback（`var(--card-bg, rgba(255,255,255,0.92))`）。
+  能看但不跟随夜墨主题。出路：dark 主题补 `--card-bg` 等变量，小组件去掉 fallback 依赖。
+- P1-9：迁移单测的版本号是硬编码（`assert_eq!(count, 7)` 这类）。
+  每次加迁移都要改 3 个文件的 7 处断言。出路：单测里用
+  `migrate::MIGRATIONS.len()` 动态断言。
+- P1-10：`spawn_reaper` 在无 runtime 时退化为独立 OS 线程（v1.9 已修 panic），
+  但该线程的 runtime 生命周期与进程绑定，单测里每次 `init_state` 都起一个，
+  线程数随测试增长。出路：reaper 线程加 Once/static 去重，或测试用
+  `set_last_active_for_test` + 手动 `reap_idle` 代替。

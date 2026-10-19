@@ -221,11 +221,15 @@ fn a1_apply_006_adds_expires_at_column() {
         .expect("legacy expires_at");
     assert_eq!(legacy_expires, None, "旧分享行 expires_at 应为 NULL");
 
-    // applied_versions() 包含 "006"。
+    // applied_versions() 包含 "006" 与 "007"。
     let versions = mini_os::migrate::applied_versions(&conn).expect("applied_versions");
     assert!(
         versions.contains(&"006".to_string()),
         "applied_versions 应包含 006，实际是 {versions:?}"
+    );
+    assert!(
+        versions.contains(&"007".to_string()),
+        "007（notes/events 表）应在版本列表中，实际是 {versions:?}"
     );
 }
 
@@ -242,11 +246,13 @@ fn a2_run_migrations_is_idempotent() {
     mini_os::migrate::run_migrations(&conn).expect("first run");
     mini_os::migrate::run_migrations(&conn).expect("second run");
 
-    // schema_migrations 总行数还是 6。
+    // schema_migrations 总行数还是 7。
     let count: i64 = conn
-        .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row.get(0))
+        .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
+            row.get(0)
+        })
         .expect("count schema_migrations");
-    assert_eq!(count, 6, "连跑两遍后 schema_migrations 应还是 6 行");
+    assert_eq!(count, 7, "连跑两遍后 schema_migrations 应还是 7 行");
 
     // expires_at 列还是只有一个。
     let cols: i64 = conn

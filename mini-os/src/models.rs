@@ -227,6 +227,36 @@ pub struct SetRoleRequest {
     pub role: String,
 }
 
+/// 速记便签
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Note {
+    pub id: i64,
+    pub user_id: i64,
+    pub title: String,
+    pub body: String,
+    /// DB 中为 INTEGER 0/1，读写时用 `r.get::<_, i64>(i)? == 1` 转 bool，写时用 `if pinned {1} else {0}`。
+    pub pinned: bool,
+    pub updated_at: String,
+}
+
+/// 日程事件
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalEvent {
+    pub id: i64,
+    pub user_id: i64,
+    pub title: String,
+    /// ISO8601 本地时间字符串，如 "2026-10-20T09:00:00"
+    pub starts_at: String,
+    pub ends_at: Option<String>,
+    /// DB 中为 INTEGER 0/1，读写时用 `r.get::<_, i64>(i)? == 1` 转 bool，写时用 `if all_day {1} else {0}`。
+    pub all_day: bool,
+    /// DB 中为 INTEGER 0/1，读写时用 `r.get::<_, i64>(i)? == 1` 转 bool，写时用 `if done {1} else {0}`。
+    pub done: bool,
+    pub created_at: String,
+}
+
 /// GET /api/shares 条目（含归属信息，仅管理员/创建者可见）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

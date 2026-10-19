@@ -215,7 +215,9 @@ async fn same_name_different_folders_201() {
         &admin,
         "POST",
         "/api/fs",
-        Some(serde_json::json!({"name": "x.txt", "kind": "file", "content": "1", "parentId": d1_id})),
+        Some(
+            serde_json::json!({"name": "x.txt", "kind": "file", "content": "1", "parentId": d1_id}),
+        ),
     )
     .await;
     assert_eq!(resp.status(), StatusCode::CREATED);
@@ -225,7 +227,9 @@ async fn same_name_different_folders_201() {
         &admin,
         "POST",
         "/api/fs",
-        Some(serde_json::json!({"name": "x.txt", "kind": "file", "content": "2", "parentId": d2_id})),
+        Some(
+            serde_json::json!({"name": "x.txt", "kind": "file", "content": "2", "parentId": d2_id}),
+        ),
     )
     .await;
     assert_eq!(resp.status(), StatusCode::CREATED);

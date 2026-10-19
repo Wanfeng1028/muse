@@ -56,6 +56,10 @@ pub enum Permission {
     UsersManage,
     /// 插件管理
     PluginManage,
+    /// 便签/日程读取
+    NotesRead,
+    /// 便签/日程写入
+    NotesWrite,
 }
 
 impl Permission {
@@ -68,6 +72,8 @@ impl Permission {
             Permission::ShareManage => "分享管理",
             Permission::UsersManage => "用户管理",
             Permission::PluginManage => "插件管理",
+            Permission::NotesRead => "便签读取",
+            Permission::NotesWrite => "便签写入",
         }
     }
 }
@@ -86,6 +92,8 @@ pub fn has_permission(role: &Role, perm: &Permission) -> bool {
                 | Permission::ShareManage
                 | Permission::UsersManage
                 | Permission::PluginManage
+                | Permission::NotesRead
+                | Permission::NotesWrite
         ),
         Role::Editor => matches!(
             perm,
@@ -94,8 +102,10 @@ pub fn has_permission(role: &Role, perm: &Permission) -> bool {
                 | Permission::ShareCreate
                 | Permission::ShareManage
                 | Permission::PluginManage
+                | Permission::NotesRead
+                | Permission::NotesWrite
         ),
-        Role::Viewer => matches!(perm, Permission::FsRead),
+        Role::Viewer => matches!(perm, Permission::FsRead | Permission::NotesRead),
     }
 }
 

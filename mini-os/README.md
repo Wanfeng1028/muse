@@ -179,6 +179,9 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 ![Prometheus /metrics 输出（v1.6）](docs/screenshots/v16-metrics.png)
 ![用户与权限（viewer 只读视角，v1.7 重拍）](docs/screenshots/v17-users-viewer.png)
 ![用户与权限（admin 管理视角，v1.7 重拍）](docs/screenshots/v17-users-admin.png)
+![多窗口同屏（v1.9：文件管理器+真 PTY 终端+今日日程/速记便签小组件）](docs/screenshots/v19-desktop-widgets.png)
+![右键菜单（v1.9：重命名/移动到…/删除）](docs/screenshots/v19-contextmenu.png)
+![深色主题（v1.9）](docs/screenshots/v19-theme-dark.png)
 
 
 

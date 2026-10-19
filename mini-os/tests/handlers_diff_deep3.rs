@@ -59,11 +59,7 @@ fn authed_json(method: Method, uri: &str, token: &str, body: Value) -> Request<B
         .unwrap()
 }
 
-async fn create_node(
-    router: &Router,
-    token: &str,
-    body: Value,
-) -> (StatusCode, Value) {
+async fn create_node(router: &Router, token: &str, body: Value) -> (StatusCode, Value) {
     let req = authed_json(Method::POST, "/api/fs", token, body);
     let resp = router.clone().oneshot(req).await.unwrap();
     read_json(resp).await
@@ -89,7 +85,12 @@ async fn create_fs_duplicate_same_parent_file_conflict() {
     let token = register(&router, "alice").await;
 
     let (s1, v1) = create_file(&router, &token, "dup.txt").await;
-    assert_eq!(s1, StatusCode::CREATED, "first create should succeed: {:?}", v1);
+    assert_eq!(
+        s1,
+        StatusCode::CREATED,
+        "first create should succeed: {:?}",
+        v1
+    );
 
     let (s2, v2) = create_file(&router, &token, "dup.txt").await;
     assert_eq!(s2, StatusCode::CONFLICT);
@@ -204,12 +205,7 @@ async fn create_fs_invalid_inputs_still_bad_request() {
     let (s_ws, _) = create_file(&router, &token, "   ").await;
     assert_eq!(s_ws, StatusCode::BAD_REQUEST);
 
-    let (s_kind, _) = create_node(
-        &router,
-        &token,
-        json!({"name": "bad", "kind": "symlink"}),
-    )
-    .await;
+    let (s_kind, _) = create_node(&router, &token, json!({"name": "bad", "kind": "symlink"})).await;
     assert_eq!(s_kind, StatusCode::BAD_REQUEST);
 }
 
@@ -401,12 +397,7 @@ async fn migrate_legacy_current_user_settings_take_precedence() {
         .unwrap();
     }
 
-    let req = authed_json(
-        Method::POST,
-        "/api/auth/migrate-legacy",
-        &alice,
-        json!({}),
-    );
+    let req = authed_json(Method::POST, "/api/auth/migrate-legacy", &alice, json!({}));
     let resp = router.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
@@ -435,7 +426,10 @@ async fn migrate_legacy_current_user_settings_take_precedence() {
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(legacy_conflict, 0, "legacy conflicting row should be deleted");
+        assert_eq!(
+            legacy_conflict, 0,
+            "legacy conflicting row should be deleted"
+        );
     }
 }
 
@@ -445,21 +439,11 @@ async fn migrate_legacy_without_legacy_returns_gone() {
     let router = app(state);
     let alice = register(&router, "alice").await;
 
-    let req = authed_json(
-        Method::POST,
-        "/api/auth/migrate-legacy",
-        &alice,
-        json!({}),
-    );
+    let req = authed_json(Method::POST, "/api/auth/migrate-legacy", &alice, json!({}));
     let resp = router.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let req = authed_json(
-        Method::POST,
-        "/api/auth/migrate-legacy",
-        &alice,
-        json!({}),
-    );
+    let req = authed_json(Method::POST, "/api/auth/migrate-legacy", &alice, json!({}));
     let resp = router.clone().oneshot(req).await.unwrap();
     let (status, body) = read_json(resp).await;
     assert_eq!(status, StatusCode::GONE);
@@ -488,12 +472,7 @@ async fn migrate_legacy_moves_vfs_nodes_to_current_user() {
         .unwrap();
     }
 
-    let req = authed_json(
-        Method::POST,
-        "/api/auth/migrate-legacy",
-        &alice,
-        json!({}),
-    );
+    let req = authed_json(Method::POST, "/api/auth/migrate-legacy", &alice, json!({}));
     let resp = router.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
@@ -505,10 +484,13 @@ async fn migrate_legacy_moves_vfs_nodes_to_current_user() {
     let found = body
         .as_array()
         .map(|arr| {
-            arr.iter().any(|n| {
-                n.get("name").and_then(|v| v.as_str()) == Some("legacy.txt")
-            })
+            arr.iter()
+                .any(|n| n.get("name").and_then(|v| v.as_str()) == Some("legacy.txt"))
         })
         .unwrap_or(false);
-    assert!(found, "expected migrated legacy.txt in listing, got {:?}", body);
+    assert!(
+        found,
+        "expected migrated legacy.txt in listing, got {:?}",
+        body
+    );
 }

@@ -126,12 +126,7 @@ async fn login_cookie(app: &axum::Router, username: &str, password: &str) -> Str
         .body(Body::from(body))
         .unwrap();
     let resp = app.clone().oneshot(req).await.unwrap();
-    assert_eq!(
-        resp.status(),
-        StatusCode::OK,
-        "login {} failed",
-        username
-    );
+    assert_eq!(resp.status(), StatusCode::OK, "login {} failed", username);
     let set_cookie = resp
         .headers()
         .get("set-cookie")
