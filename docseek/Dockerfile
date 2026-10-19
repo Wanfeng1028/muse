@@ -1,5 +1,5 @@
 # 构建阶段：编译并运行测试（需联网，FetchContent 拉取 googletest）
-FROM debian:12-slim AS build
+FROM debian:13-slim AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -15,7 +15,7 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
     && ./build/docseek_tests
 
 # 运行阶段：仅包含可执行文件 + PDF 提取运行时依赖
-FROM debian:12-slim
+FROM debian:13-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
     && rm -rf /var/lib/apt/lists/*
