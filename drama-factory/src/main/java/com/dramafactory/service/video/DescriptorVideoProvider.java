@@ -150,6 +150,10 @@ public class DescriptorVideoProvider implements VideoProvider {
         }
         if ("GET".equalsIgnoreCase(method)) {
             builder.GET();
+        } else if (poll.getBody() != null && !poll.getBody().isBlank()) {
+            builder.header("Content-Type", "application/json");
+            builder.method(method, HttpRequest.BodyPublishers.ofString(
+                    renderTemplate(poll.getBody(), vars), StandardCharsets.UTF_8));
         } else {
             builder.method(method, HttpRequest.BodyPublishers.noBody());
         }

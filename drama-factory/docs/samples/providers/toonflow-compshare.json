@@ -1,0 +1,40 @@
+{
+  "id": "toonflow-compshare",
+  "label": "优云智算 ModelVerse（Toonflow 协议）",
+  "version": "1.0",
+  "models": [
+    {
+      "id": "doubao-seedance-2-0",
+      "label": "Doubao Seedance 2.0",
+      "type": "video"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "keyRef": "env:MODELVERSE_API_KEY"
+  },
+  "submit": {
+    "method": "POST",
+    "url": "https://api.modelverse.cn/v1/tasks/submit",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"model\":\"{{model}}\",\"input\":{\"content\":[{\"type\":\"text\",\"text\":\"{{prompt}}\"}]},\"parameters\":{\"duration\":{{seconds}},\"resolution\":\"720p\"}}",
+    "taskIdPath": "output.task_id"
+  },
+  "poll": {
+    "method": "GET",
+    "url": "https://api.modelverse.cn/v1/tasks/status?task_id={{taskId}}",
+    "statusPath": "output.task_status",
+    "statusMap": {
+      "Success": "COMPLETED",
+      "Failure": "FAILED",
+      "Expired": "FAILED",
+      "Cancelled": "FAILED",
+      "Canceled": "FAILED"
+    },
+    "videoUrlPath": "output.urls.0",
+    "errorPath": "output.error_message"
+  },
+  "doc": "优云智算 ModelVerse 通道，Bearer 鉴权使用环境变量 MODELVERSE_API_KEY。提交后由 output.task_id 跟踪任务，轮询返回的 output.task_status 映射为统一状态。仅收录公开分支；H3 分支使用另一套地址与密钥，此处不含，MiniMax H3 请使用独立 provider。"
+}

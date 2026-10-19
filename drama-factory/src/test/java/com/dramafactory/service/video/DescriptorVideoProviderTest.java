@@ -164,5 +164,62 @@ class DescriptorVideoProviderTest {
         assertThatThrownBy(() -> p.submit(shot, 5))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    private static ProviderDescriptor newPostBodyDescriptor() {
+        ProviderDescriptor d = new ProviderDescriptor();
+        d.setId("seedance-post-demo");
+        d.setLabel("Seedance Post Demo");
+
+        ProviderDescriptor.DescriptorAuth auth = new ProviderDescriptor.DescriptorAuth();
+        auth.setType("bearer");
+        auth.setKeyRef("env:DEMO_KEY");
+        d.setAuth(auth);
+
+        ProviderDescriptor.DescriptorEndpoint submit = new ProviderDescriptor.DescriptorEndpoint();
+        submit.setMethod("POST");
+        submit.setUrl("https://example.com/v1/videos");
+        submit.setHeaders(Map.of("Content-Type", "application/json"));
+        submit.setBody("{\"model\":\"{{model}}\",\"prompt\":\"{{prompt}}\",\"seconds\":{{seconds}}}");
+        submit.setTaskIdPath("data.task_id");
+        d.setSubmit(submit);
+
+        ProviderDescriptor.DescriptorPollEndpoint poll = new ProviderDescriptor.DescriptorPollEndpoint();
+        poll.setMethod("POST");
+        poll.setUrl("https://example.com/v1/videos/status");
+        poll.setBody("{\"taskIdCode\":\"{{taskId}}\"}");
+        poll.setStatusPath("data.status");
+        poll.setStatusMap(Map.of(
+                "queued", "QUEUED",
+                "processing", "PROCESSING",
+                "succeeded", "COMPLETED",
+                "failed", "FAILED"));
+        poll.setVideoUrlPath("data.video_url");
+        d.setPoll(poll);
+
+        ProviderDescriptor.DescriptorModel model = new ProviderDescriptor.DescriptorModel();
+        model.setId("seedance-2-0");
+        model.setLabel("Seedance 2.0");
+        model.setType("video");
+        d.setModels(List.of(model));
+
+        return d;
+    }
+
+    @Test
+    void poll_POST带body时以application_json发送() {
+        RecordingGateway gateway = new RecordingGateway();
+        gateway.nextBody = "{\"data\":{\"status\":\"succeeded\",\"video_url\":\"https://cdn.example/v.mp4\"}}";
+        DescriptorVideoProvider p = new DescriptorVideoProvider(
+                newPostBodyDescriptor(), new ObjectMapper(), gateway, () -> TEST_KEY);
+
+        p.poll("t-123");
+
+        assertThat(gateway.requests).hasSize(1);
+        HttpRequest req = gateway.requests.get(0);
+        assertThat(req.method()).isEqualTo("POST");
+        assertThat(req.headers().firstValue("Content-Type"))
+                .hasValueSatisfying(v -> assertThat(v).contains("application/json"));
+        assertThat(req.bodyPublisher()).isPresent();
+    }
 }
 

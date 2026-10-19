@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "id": "toonflow-metaso",
+  "label": "秘塔 MiniMax H3（Toonflow 协议）",
+  "doc": "通过秘塔开放接口调用 MiniMax-H3 视频生成能力。提交任务后返回 task_id，再按 task_id 轮询查询任务状态；当状态为成功时从 task.content.url 取回视频地址，失败时读取 task.error 获取原因。鉴权使用 Bearer Token，密钥由环境变量 METASO_API_KEY 提供。",
+  "models": [
+    {
+      "id": "MiniMax-H3",
+      "label": "MiniMax-H3",
+      "type": "video"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "keyRef": "env:METASO_API_KEY"
+  },
+  "submit": {
+    "method": "POST",
+    "url": "https://metaso.cn/api/minimax/v2/video_generation",
+    "body": "{\n      \"model\": \"{{model}}\",\n      \"duration\": {{seconds}},\n      \"resolution\": \"768P\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{{prompt}}\"\n        }\n      ]\n    }",
+    "taskIdPath": "task_id"
+  },
+  "poll": {
+    "method": "GET",
+    "url": "https://metaso.cn/api/minimax/v2/query/video_generation/{{taskId}}",
+    "statusPath": "task.status",
+    "statusMap": {
+      "succeeded": "COMPLETED",
+      "Succeeded": "COMPLETED",
+      "failed": "FAILED",
+      "Failed": "FAILED"
+    },
+    "videoUrlPath": "task.content.url",
+    "errorPath": "task.error"
+  }
+}

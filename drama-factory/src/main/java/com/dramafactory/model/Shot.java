@@ -65,6 +65,17 @@ public class Shot {
     @Column(length = 32)
     private String preferredProvider;
 
+    /** 期望生成分辨率（如 720p/1080p），为空时用通道默认 */
+    @Column(length = 16)
+    private String resolution;
+
+    /** 期望画面比例（如 16:9），为空时用通道默认 */
+    @Column(length = 16)
+    private String ratio;
+
+    /** 是否生成音频，为空时用通道默认 */
+    private Boolean generateAudio;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 
@@ -166,6 +177,30 @@ public class Shot {
 
     public void setPreferredProvider(String preferredProvider) {
         this.preferredProvider = preferredProvider;
+    }
+
+    public String getResolution() {
+        return resolution;
+    }
+
+    public void setResolution(String resolution) {
+        this.resolution = resolution;
+    }
+
+    public String getRatio() {
+        return ratio;
+    }
+
+    public void setRatio(String ratio) {
+        this.ratio = ratio;
+    }
+
+    public Boolean getGenerateAudio() {
+        return generateAudio;
+    }
+
+    public void setGenerateAudio(Boolean generateAudio) {
+        this.generateAudio = generateAudio;
     }
 
     public LocalDateTime getCreatedAt() {

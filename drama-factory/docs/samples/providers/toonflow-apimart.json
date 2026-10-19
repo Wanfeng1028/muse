@@ -1,0 +1,53 @@
+{
+  "id": "toonflow-apimart",
+  "label": "APIMart 聚合（Toonflow 协议，国内节点）",
+  "version": "1.0",
+  "models": [
+    {
+      "id": "seedance-2.5",
+      "label": "Seedance 2.5",
+      "type": "video"
+    },
+    {
+      "id": "seedance-2.0",
+      "label": "Seedance 2.0",
+      "type": "video"
+    },
+    {
+      "id": "wan3.0-video",
+      "label": "Wan 3.0",
+      "type": "video"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "keyRef": "env:APIMART_API_KEY"
+  },
+  "submit": {
+    "method": "POST",
+    "url": "https://api.apib.ai/v1/videos/generations",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"model\":\"{{model}}\",\"prompt\":\"{{prompt}}\",\"duration\":{{seconds}}}",
+    "taskIdPath": "data.data.0.task_id"
+  },
+  "poll": {
+    "method": "GET",
+    "url": "https://api.apib.ai/v1/tasks/{{taskId}}",
+    "statusPath": "status",
+    "statusMap": {
+      "completed": "COMPLETED",
+      "success": "COMPLETED",
+      "Completed": "COMPLETED",
+      "Success": "COMPLETED",
+      "failed": "FAILED",
+      "failure": "FAILED",
+      "Failed": "FAILED",
+      "Failure": "FAILED"
+    },
+    "videoUrlPath": "data.result.videos.0.url",
+    "errorPath": "data.error.message"
+  },
+  "doc": "APIMart 聚合通道，默认使用国内节点 api.apib.ai，Bearer 鉴权读取环境变量 APIMART_API_KEY。任务 id 位于 data.data[0].task_id，轮询任务详情取最终视频地址。海外节点只需把提交与轮询地址中的 api.apib.ai 替换为 api.apimart.ai，其余字段不变。该描述符仅覆盖文本生视频，参考图等高级模式不支持。"
+}

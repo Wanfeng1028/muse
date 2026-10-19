@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "id": "toonflow-tfrouter",
+  "label": "Toonflow 官方云路由 TF-Router（需官方 Key）",
+  "doc": "需要 Toonflow 官方 TF-Router Key；无 Key 时该通道抛清晰错误，不影响其他通道。提交生成请求后从 data 字段取任务标识，随后以 POST 方式轮询状态接口查询进度；成功时从 data.data 获取视频地址，失败时读取 data.failReason 得到错误说明。鉴权使用 Bearer Token，密钥由环境变量 TOONFLOW_TF_ROUTER_KEY 提供。",
+  "models": [
+    {
+      "id": "Seedance 2.5",
+      "label": "Seedance 2.5",
+      "type": "video"
+    },
+    {
+      "id": "Seedance 2.0",
+      "label": "Seedance 2.0",
+      "type": "video"
+    },
+    {
+      "id": "wan-3.0",
+      "label": "Wan 3.0",
+      "type": "video"
+    },
+    {
+      "id": "MiniMax-H3",
+      "label": "MiniMax-H3",
+      "type": "video"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "keyRef": "env:TOONFLOW_TF_ROUTER_KEY"
+  },
+  "submit": {
+    "method": "POST",
+    "url": "https://api.toonflow.net/v1/video/generateVideo",
+    "body": "{\n      \"model\": \"{{model}}\",\n      \"prompt\": \"{{prompt}}\",\n      \"duration\": {{seconds}}\n    }",
+    "taskIdPath": "data"
+  },
+  "poll": {
+    "method": "POST",
+    "url": "https://api.toonflow.net/v1/video/getVideoStatus",
+    "body": "{\n      \"taskICode\": \"{{taskId}}\"\n    }",
+    "statusPath": "status",
+    "statusMap": {
+      "success": "COMPLETED",
+      "completed": "COMPLETED",
+      "Success": "COMPLETED",
+      "Completed": "COMPLETED",
+      "failed": "FAILED",
+      "failure": "FAILED",
+      "error": "FAILED",
+      "rejected": "FAILED",
+      "Failed": "FAILED",
+      "Failure": "FAILED",
+      "Error": "FAILED",
+      "Rejected": "FAILED"
+    },
+    "videoUrlPath": "data.data",
+    "errorPath": "data.failReason"
+  }
+}

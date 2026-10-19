@@ -151,7 +151,17 @@ public class ProviderDescriptor {
             if (current == null) {
                 return null;
             }
-            current = current.get(segment);
+            if (current.isArray()) {
+                int index;
+                try {
+                    index = Integer.parseInt(segment);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+                current = (index < 0) ? null : current.get(index);
+            } else {
+                current = current.get(segment);
+            }
         }
         return current;
     }
@@ -292,6 +302,7 @@ public class ProviderDescriptor {
         private String videoUrlPath;
         private String errorPath;
         private String progressPath;
+        private String body;
 
         public String getMethod() {
             return method;
@@ -347,6 +358,14 @@ public class ProviderDescriptor {
 
         public void setProgressPath(String progressPath) {
             this.progressPath = progressPath;
+        }
+
+        public String getBody() {
+            return body;
+        }
+
+        public void setBody(String body) {
+            this.body = body;
         }
     }
 }

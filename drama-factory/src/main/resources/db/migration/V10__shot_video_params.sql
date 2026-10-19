@@ -1,0 +1,3 @@
+ALTER TABLE shots ADD COLUMN resolution VARCHAR(16);
+ALTER TABLE shots ADD COLUMN ratio VARCHAR(16);
+ALTER TABLE shots ADD COLUMN generate_audio BOOLEAN;

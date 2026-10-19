@@ -114,5 +114,28 @@ class ProviderDescriptorTest {
         JsonNode root = om.readTree("{\"data\":{\"task_id\":\"t1\"}}");
         assertThat(ProviderDescriptor.resolvePath(root, "")).isNull();
     }
+
+    @Test
+    void resolvePath_数组下标取值() throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        JsonNode root = om.readTree("{\"data\":[{\"url\":\"https://cdn.example/a.mp4\"}]}");
+        JsonNode node = ProviderDescriptor.resolvePath(root, "data.0.url");
+        assertThat(node).isNotNull();
+        assertThat(node.asText()).isEqualTo("https://cdn.example/a.mp4");
+    }
+
+    @Test
+    void resolvePath_下标越界返回null() throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        JsonNode root = om.readTree("{\"data\":[{\"url\":\"https://cdn.example/a.mp4\"}]}");
+        assertThat(ProviderDescriptor.resolvePath(root, "data.5.url")).isNull();
+    }
+
+    @Test
+    void resolvePath_数组上用非数字段返回null() throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        JsonNode root = om.readTree("{\"data\":[{\"url\":\"https://cdn.example/a.mp4\"}]}");
+        assertThat(ProviderDescriptor.resolvePath(root, "data.url")).isNull();
+    }
 }
 

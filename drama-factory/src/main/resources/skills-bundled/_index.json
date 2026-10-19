@@ -2328,6 +2328,42 @@
       "license": "MIT",
       "source": "Joker-chichi/claude-mv-skill",
       "description": "Make hand-painted watercolour-and-ink cartoon videos (MP4) with code — p5.js + p5.brush rendered frame by frame in headless Chrome, encoded with ffmpeg — starring Clawd or any character. Use when the user asks to make an animation, animated short, cartoon, music video, lyric video, animated GIF/loop or \"a video of Clawd…\", or mentions the PDoomVideo / ClaudeAnimationBase approach. Covers storyboarding, the engine API, music and LRC lyric sync, cloud-friendly preview review, and choosing local or cloud rendering for the final video."
+    },
+    {
+      "id": "toonflow-canvas",
+      "name": "toonflow-canvas",
+      "description": "Toonflow 画布操控手册，覆盖画布的新建切换重命名、节点的增删改移与连线、整图排布与视口调整，以及调用节点注册函数；适用于用户要求改动当前画布或搭建节点流程的场景。",
+      "license": "MIT",
+      "source": "HBAI-Ltd/Toonflow-app",
+      "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/canvas/SKILL.md",
+      "version": "1.0.0",
+      "author": "playhouse",
+      "rewritten": true,
+      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/canvas：功能对齐，SKILL.md 为独立重写，未复制原文"
+    },
+    {
+      "id": "toonflow-workflow",
+      "name": "toonflow-workflow",
+      "description": "在 Toonflow 当前画布中把创意、小说或定稿剧本制作成可查看的文本、图片资产和视频片段，支持复用素材、续作与局部修改。用于实际制作或继续已有项目；明确只要对话文字时不操作画布，讨论或编辑技能本身时不启动制作。",
+      "license": "MIT",
+      "source": "HBAI-Ltd/Toonflow-app",
+      "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/workflow/SKILL.md",
+      "version": "1.0.0",
+      "author": "playhouse",
+      "rewritten": true,
+      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
+    },
+    {
+      "id": "toonflow-v118workflow",
+      "name": "toonflow-v118workflow",
+      "description": "把 Toonflow v1.1.8 的编剧手法、12 类叙事技法、11 种美术风格与资产、分镜、图像及视频提示词知识，按阶段逐步制作并确认；统一维护剧本、资产与单集三块画布，用于旧流程复现、分集制作与续作；讨论或编辑技能本身不启动制作。",
+      "license": "MIT",
+      "source": "HBAI-Ltd/Toonflow-app",
+      "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/v118workflow/SKILL.md",
+      "version": "1.0.0",
+      "author": "playhouse",
+      "rewritten": true,
+      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/v118workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
     }
   ]
 }
