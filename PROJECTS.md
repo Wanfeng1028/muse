@@ -69,6 +69,8 @@
 - ~~考研核心 500 词词库扩充~~（已在 2026-10-17 交付：`src/seed/words-500.json` 接入 `POST /api/words/seed-vocab`，7 个词库文件共 1380 词、120 条重复去重，幂等；vitest 81/81；真实截图 vocab-1380.png）
 - ~~周报视图~~（已在 v1.4.0 交付）
 
+- **深耕轮 2026-10-19 晚（已合入）**：2 个遗留 deep2 测试验证通过（mistakes-summary/plans-autoschedule）；深测 r-next（focus/words/exams/backup 纵深）；2 篇发版 DoD 对照报告（docs/PRODUCTION_CHECKLIST_REPORT_v1.9.0.md、v1.10.0.md）。
+
 ## second-brain「第二大脑」
 
 **定位**：个人知识库系统，支持笔记、标签、搜索、双链与知识图谱，构建可生长的个人知识网络。**灵魂功能**：会主动帮你复习的第二大脑——SM-2 遗忘曲线调度 + 抽认卡复习流 + 每日回顾推送。
@@ -115,6 +117,8 @@
 - **深测轮 r6（2026-10-18，已合入，全绿）**：8 个 deep2 文件 69 测试（store 外键/UNIQUE/复合主键约束冲突、级联删除、Open 幂等/嵌套建目录；api/log/metrics/push/ratelimit/review/search 第二轮）全绿；修**真 bug**：`store.Open` 改走 DSN `_pragma=busy_timeout(5000)`——单次 Exec 只影响当时拿到的单连接，连接池新连接无 busy_timeout；go.mod 把 webpush-go 从 indirect 提为直接依赖；`go test ./...` 全绿（commit 57c9463）
 - **v0.14「生产对照遗留三项」（2026-10-18，已合入）**：①DB 迁移版本化（还 v0.12 未通过）：`internal/store/migrate.go`（Migration{Version,Name,Up} 注册表 + schema_version 表 + CurrentSchemaVersion=2，v1=reviews_user_id v2=push_log_user_id），OpenStore 改走统一 Migrate()，migrate_test.go 4 例；②reviews_due 按用户拆分（还 v0.12 未通过）：`internal/metrics` 新增 gauge vec 机制（label 转义+排序），`GET /metrics` 新增 `reviews_due_by_user{user}`，原 reviews_due 保留，gaugevec_test.go 5 例；③`GET /api/search?format=legacy`（还 TECH_DEBT P2-8）：返回 v0.8.0 前纯数组形状，非法 format 400，search_format_test.go 5 例；`go test ./...` **558 例全绿**（239+新增），`go vet`/`gofmt` 全洁；TECH_DEBT/OPERATIONS/README 同步；对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.14.md`
 - **v0.14 后续批（2026-10-18，已合入）**：`docs/ERROR_HANDLING.md`（还 v0.12 未通过：重试策略/幂等清单/降级清单/fail-fast/未覆盖缺口诚实列出）；推送测试通道包 `push.WrapWithRetry`（调度器早有，`POST /api/push/test` 此前直连，一次抖动即误报）+ `push_retry_test.go` 3 例 API 集成测试（重试后成功/耗尽/4xx 不重试）；告警 `SecondBrainUserDueBacklog`（某用户待复习 >20 篇持续 1h，severity info，OPERATIONS 告警一览更新为 7 条）；README 搜索 API 行补充 `?format=legacy`；`go test ./...` 全绿；真服务冒烟（reviews_due_by_user{user="local"}、legacy 数组、非法 format 400、schema_version=2）
+
+- **深耕轮 2026-10-19 晚（已合入）**：attachments/export/push/review/search/metrics 六包 deep2 纵深测试；search_cjk_boundary 深测验证通过。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -210,6 +214,8 @@
 - **官方 Skill 库前端页（2026-10-19）**：dpsk 生成 `official-skills.html` + `official-skills.js`（35 个 skill：17 内置 + 18 社区视频剪辑；install/uninstall 走 `/api/official-skills/install/{id}`、`/installed/{id}`；sourceUrl 外链；i18n osk.* 34 key；shell.js 6 处导航补丁）；`node --check` 双文件通过；真实 jar（18092）验收：`GET /api/official-skills/official` 返回 35、`POST install/audio-edit`→`GET installed`→`DELETE` 闭环全通；页面真实截图亲眼验收（搜索框+卡片+安装按钮+中英切换正常）。本轮另修 2 处 skill 文档断链：`claude-video-skill/SKILL.md` 引用的 `examples/film_example.py` 等不存在（dpsk 补 2 PATCH）、`video-explainer/SKILL.md` 引用的 `scripts/*` 不存在（dpsk 补路径澄清段落）。
 - **OpenMontage 工具链集成（2026-10-19）**：VideoProviderRouter 七维评分路由（taskFit 0.30/outputQuality 0.20/control 0.15/reliability 0.15/costEfficiency 0.10/latency 0.05/continuity 0.05，新增 ProviderScoreCard/RoutingDecision/CutRhythmChecker，OpenMontage 按"抄 95%"自有实现）；UsageService 计费台账 CostLedger；pipeline-templates 新增 talking-head/screen-demo/animated-explainer 3 个 YAML；skills-bundled LICENSE 回填 + 社区 skill 收录（auto-subtitles/busybee 系列等）；docs 新增 OPENMONTAGE_RESEARCH/PIPELINE_TEMPLATES/SKILL_AUDIT/BACKUP_DRILL_AUTH；本轮修 5 个测试 bug（全系测试代码问题：ProviderScoreCardTest 构造器参数错位 3 处、VideoProviderRouterRankedTest mock 了单参数 getProperty 而实现用双参数 1 处），实现类零改动；目标类测试 20/20 全绿、UsageService 相关 92 全绿；全量 3017 中 76 个失败为 canvas/ffmpeg/recipe/egress 等 pre-existing（无一引用本轮改动类）
 
+- **深耕轮 2026-10-19 晚（已合入 commit 5acd746）**：13 个新 *DeepTest 文件（RunExecutor 失败注入 16 用例、CostLedger 并发、ProviderRouting 评分、CutRhythmChecker、ShotVideoRouter、VideoProviderRouterFailure 等）；修真 bug：Toonflow 集成误用已存在的 Flyway V10 版本号（V10__prompt_recipe.sql 已存在），重命名为 V20__shot_video_params.sql；3 篇发版 DoD 对照报告（docs/dod-toonflow-integration.md、dod-openmontage-integration.md、dod-hyperframes-integration.md，诚实标注未通过项）；skill/ 镜像同步 3 个 toonflow skills（之前遗漏）、修索引 4 处（3 版本号+1 缺 name）、openmontage 156 条补 rewriteNote（来源如实标注）。
+
 ## mini-os「网页操作系统」
 
 **定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。
@@ -251,6 +257,8 @@
 - ~~分享读接口限流评估、告警规则示例（v1.6 未通过项排期）~~（已在 2026-10-17 交付：v1.7.1 告警规则补齐、v1.8 分享读接口限流）
 - 应用商店（插件化）
 - docker 镜像实跑验证（本机无 daemon）、Dependabot（等 gh token 补 workflow 权限后迁仓库根）
+
+- **深耕轮 2026-10-19 晚（已合入）**：mig006_expiry/plugin_rollback 深测验证通过；新增深测文件；备份演练脚本。
 
 ## ledger「钱迹 · 个人财务管家」
 
@@ -303,6 +311,8 @@
 - ~~pip 依赖定期扫描~~（v2.10 落地本地脚本版 scripts/deps_scan.py + 每周 workflow；Dependabot 等 gh token 补 workflow 权限后迁仓库根，与其他项目同）
 - ~~旧端点 POST /api/bills/ocr 埋点~~（v2.9 已知限制，已在 v2.10 交付 ledger_bills_ocr_* 指标集）
 
+- **深耕轮 2026-10-19 晚（已合入）**：银行账单导入/自动分类匹配深测（test_import_idempotency_deep.py 等）；services.py 改动验证通过；README 补全（功能/快速开始/配置）。
+
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
 **定位**：站点与服务可用性监控系统，覆盖监控目标管理、定时检查、停机事件与可用率统计的完整运维流程。**灵魂功能**：站点健康档案——每个站点可用性画像、月度 SLA 报告、一键生成公开状态页。
@@ -344,6 +354,8 @@
 - 短信告警（邮件/企业微信 webhook 已落地）
 - 分布式探针（多实例需先换 PostgreSQL）
 - Go 工具链升级后依赖复扫、`incidents.html` 模拟数据债（v0.7 未排期，继续挂账）
+
+- **深耕轮 2026-10-19 晚（已合入）**：Webhook 持久化队列重投（SQLite 队列表 + 指数退避 worker + 查询/手动重投 API）；sms_tencent 改动验证通过；新增 docs/SMS_TENCENT_GAP.md、docs/TECH_DEBT_GAP_incidents.md、config_sms_tencent_test.go。
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
@@ -438,6 +450,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **评测复盘 EVAL_V09（2026-10-18，已合入）**：`docs/EVAL_V09.md` + 评测基线库 work_v07_base/work_v08_base/work_v09_full/work_v09_sample（同日同构建实测对照组）。被测 v0.14.0：v09 样本 174/200（87.0%）、v09 全量 1228/1440（85.3%）、v07 56/56（100%）、v08 81/83（97.6%，2 个为已记录对抗变体）。26 个样本失败逐对根因：A 类查询/索引分词粒度不对齐 7 例（「戚风塌腰」等，cppjieba 上下文相关切分致 FTS5 恒 0 结果，三阶段回退兜不住）等类别已分类归档，v0.15 排期攻坚。ctest 基线 305/334：29 失败全部来自 2026-10-17 e7eae08 新增的 12 个 test_tokenizer_*.cpp（自提交起从未通过，pre-existing）
 - **失败注入测试（2026-10-19）**：dpsk 生成 `tests/test_failure_injection.cpp` 13 例（只读目录/空索引/超大文件跳过/缺失路径删除/并发搜索/损坏 DB/无效备份源/垃圾恢复拒绝/批量回滚/批量误用抛异常）；12 通过 + 1 跳过（root 下权限位不生效，`geteuid()==0` 时 `GTEST_SKIP`）；CMakeLists 接入测试列表；编译+运行验证通过
 
+- **深耕轮 2026-10-19 晚（已合入）**：v0.5 结构化日志 + request_id 全链路、backup/restore 子命令、docs/OPERATIONS.md、失败注入测试（词典缺失/DB 损坏）、故障演练文档（docs/DRILL-2026-10-19.md）；query_parser/searcher 改动验证通过。
+
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
 **定位**：自托管 RSS 阅读器，覆盖订阅管理、定时抓取、正文提取、三栏阅读、全文搜索与 OPML 导入导出的完整流程。
@@ -480,6 +494,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 **后续计划**：
 
 - pip 依赖定期扫描机制（等 gh token 补 workflow 权限后统一处理）
+
+- **深耕轮 2026-10-19 晚（已合入）**：去重聚类/重要性排序/API 分页搜索深测（test_dedup_deep4.py、test_api_pagination_search_deep2.py 等）；store.py 改动验证通过。
 
 ## linkshort「短链 LinkShort · 自托管短链服务」
 
@@ -527,6 +543,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 - ~~地域分布 Web UI 面板~~（已在 v1.9 交付）
 
+- **深耕轮 2026-10-19 晚（已合入）**：burn 彻底删除选项（API+store+测试）；burn 竞态/访问画像深测验证通过。
+
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
 **定位**：NAS 玩家/小团队的本地多源数据拼装层——把 SQLite/CSV/JSON/本地目录声明式映射成表，增量同步 + 冲突策略 + 类 SQL 查询视图 + 本地优先（数据落文件、可 Git 版本化）。Airbyte/dbt 对个人太重，Metabase 只读不解决拼装，这是真空位。
@@ -563,6 +581,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - Postgres/MySQL 只读源、冲突 Webhook 通知、~~视图定时物化~~（已在 v1.3.0 交付）、~~CSV 增量导入 API~~（已在 v1.4.0 交付）
 - Dependabot（等用户在 GitHub Settings 手动开启）
 
+- **深耕轮 2026-10-19 晚（已合入）**：views list 自动注册 yaml 声明视图；pg_adapter/pgsource 深测验证通过。
+
 ## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」
 
 **定位**：中文播客/有声书创作者的文字剪辑工作站——转写稿当时间轴，文字删改自动生成音频剪辑方案（保留呼吸节奏），语气词一键弱化，EDL 导出供 Premiere/Reaper 精修。Descript 闭源英文优先，开源侧中文文字剪辑是空位。
@@ -596,6 +616,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 **后续计划**：
 
 - v2：ONNX 本地声学模型精对齐 + 内置转写、限流熔断、多轨口误自动推荐最自然一版、定时自动备份、真实负载验证
+
+- **深耕轮 2026-10-19 晚（已合入）**：LOADTEST.md + LoadTest/Program.cs 改动验证；docs/OPERATIONS.md、敏感数据策略。
 
 ## interlude「幕间 Interlude · 分支叙事的 linter」
 
@@ -633,6 +655,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - ~~剧本杀复盘模式~~（已在 v1.4 交付）
 - ~~v2：玩家路径热力分析~~（已在 2026-10-17 交付）
 
+- **深耕轮 2026-10-19 晚（已合入）**：AggregateMarkdownBoundaryTest 验证通过；docs/OPS.md 更新；CHANGELOG 补全。
+
 ## stagecue「舞监台 StageCue」
 
 **定位**：小型剧团/脱口秀/校园演出的多端同步演出控台——时间轴 cue 编排（音频/灯光/字幕/演员提示）+ 导演台/返听屏/灯光台毫秒级时钟同步 + 排练模式 + 离线优先。QLab 只支持 Mac 闭源贵，开源里没有跨平台中文友好的。
@@ -668,6 +692,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **v0.4.0「可观测性收尾」（2026-10-16）**：Logback 日志轮转（控制台+文件双输出，按天+50MB 切分，保留 14 天，总量 512MB，root 级别跟 `STAGECUE_LOG_LEVEL`）+ Prometheus 告警规则 5 条（StageCueDown/WsDisconnectSpike/RateLimitSpike/BroadcastDrop/DbMigrationStuck）+ docker-compose 资源限制（512M/1c 上限、128M 预留）与日志轮转；`TECH_DEBT` 关闭 #3（告警规则）/#4（日志轮转/资源限制）；kotlinc 直编零错、JUnit **52/52**（新增 LogConfigTest/AlertRulesTest 各 4 例）；真实冒烟（:18080）：/api/show 5 条默认 cue、/readyz ready、/metrics 9 个 stagecue_ 指标、stagecue.log 正常落盘；发版对照报告 `docs/PRODUCTION_REPORT_v0.4.0.md`（诚实列 6 项未通过，带排期）
 - **深测轮 r3（2026-10-18）**：6 个深测文件（AuthorizeWriteMatrix/MonitorSnapshotBoundary/SettingsStore/ShowRoute/SyncHubMissedOps/WsRoute）；kotlinc 直编零错、JUnit **112/113**——唯一失败为既有 MonitorApiTest「monitor endpoint returns snapshot structure」（serverTimeMs 时间敏感断言，与本轮无关）
 - **深测轮 r5（2026-10-18）**：11 个深测文件 90 测试——server：TokenBucketDeepTest（9：注入时钟测 burst 耗尽/精确 refill/retryAfter 公式/时钟倒退/键隔离）+ SyncHubConnectDeepTest（8：空 clientId 抛错/roleOf/ClockPing 回显/setRehearsal 无 settings）+ SyncHubTriggerSnapshotDeepTest（9：去重不推移 lastFiredAtMs/乱序 order/remainingMs 钳零）+ BroadcastHubEdgeDeepTest（8：空广播/全员广播/重注册换 sink）+ StageMetricsEdgeDeepTest（8：各计数器 scrape 断言）+ ServerConfigEdgeDeepTest（9：host/cors/dataDir 空值/ping 取值/默认值完备）+ RehearsalRouteDeepTest（6：GET /api/rehearsal 默认 false/切换/跨实例持久化）；shared：WsMessageOpLogReplayDeepTest（7：OpLogReplay 往返/未知 kind 抛错）+ ModelDeepTest（8：Cue/Show/MonitorState 往返；纠正可空无默认字段缺失按 null 解码）+ SharedSyncEdgeDeepTest（10：ClockEstimator reset/精确 3 样本/EventDeduper 清除与容量 1/OpLogStore 字段保持）；desktop：DirectorClientDeepTest（8：首测导演台客户端，初始状态/未连接分支/log 裁剪 200 条）；kotlinc 直编零错；server JUnit **169/170**（唯一失败仍为 r3 既有 MonitorApiTest 时间敏感断言，与本轮无关）、shared **54/54**、desktop **8/8**；修 dpsk 测试侧编造 6 处（Prometheus 指标名缺 _total 后缀、type="audio" 字符串误作 CueType、缺 import/断言计数等），产品无真 bug
+
+- **深耕轮 2026-10-19 晚（已合入）**：Routes.kt 改动 + 3 个深测（BroadcastHubBackpressure/OpLogRoute/SyncHubReplayBoundary）验证通过；启动配置必填项校验；docs/TECH_DEBT.md。
 
 ## botstalk「个人 AI 团队办公室」
 
@@ -712,3 +738,6 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
   - feedflow：FTS5 搜索深测（23 测试全绿）+ 修真实 bug（单引号/保留字致 FTS5 500）
   - linkshort：地域统计 API 测试
   - 验收：各项目构建通过，新增测试全绿；诚实声明：dpsk 3 处编造（Open(path)/metrics.Counter/sql.NullString 假设）由编排机械修复并披露
+
+- **深耕轮 2026-10-19 晚（已合入）**：werewolf 7 文件改动验证通过（gateway+web）；botstalk/.gitignore 补 gateway/data/（测试 sqlite 产物不入库）。
+
