@@ -8,6 +8,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -24,11 +26,11 @@ class PipelineTemplateControllerDeepTest {
     private MockMvc mockMvc;
 
     @Test
-    void listTemplates_returns200WithThreeTemplates() throws Exception {
+    void listTemplates_returns200WithExpectedTemplates() throws Exception {
         mockMvc.perform(get("/api/pipeline-templates"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[*].name").value(org.hamcrest.Matchers.hasItem("cinematic")));
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(3))))
+                .andExpect(jsonPath("$[*].name", hasItems("cinematic", "documentary-montage", "clip-factory")));
     }
 
     @Test
