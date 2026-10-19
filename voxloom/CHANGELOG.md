@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added（多轨口误推荐）
+- 多轨口误自动推荐最自然一版：`Editing/TakeRecommender.cs`（TakeInput/TakeScore/Rank/RecommendBest/Explain）；自然度=语气词密度 + 语气词时长占比×50 + 长停顿密度×2（长停顿阈值 1.5 秒），分数越低越自然；并列按名称排序保证确定性；空输入/空白名称/空转写稿均有参数校验
+- 测试：TakeRecommenderDeepTests 14 例（校验 5/打分排序 6/指标解释 3），SmokeRunner 全绿
+
 ### Added（v2）
 - 定时自动备份：`AutoBackupService` 按配置间隔（默认 60 分钟）自动备份当前项目；桌面启动时运行、退出时停止；备份存 `backups/auto` 子目录、独立保留份数（默认 5 份）；无已加载项目时跳过；失败只记日志不阻断编辑
 - 配置项 `autoBackupEnabled` / `autoBackupIntervalMinutes` / `autoBackupRetentionCount` + `VOXLOOM_AUTOBACKUP_*` 环境变量覆盖；备份密码只从 `VOXLOOM_AUTOBACKUP_PASSWORD` 环境变量读取

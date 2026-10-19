@@ -2,6 +2,9 @@
 
 > 每轮发版前更新；还清一项就删一项，不许留僵尸条目。
 
+## v0.4.1 已偿还
+- HTTP 引擎可切换：`STAGECUE_HTTP_ENGINE`（cio/netty，默认 cio，非法值 fail-fast）+ `config/HttpEngine.kt` 工厂 + Main 接线 + OPERATIONS 运维章节；build.gradle.kts 加 ktor-server-netty 依赖；HttpEngineDeepTest 12 例全绿（本 VM 未实跑 Netty 启动，CI/生产环境验证）
+
 ## v0.4.0 已偿还
 - 告警规则：docs/alerts/stagecue.rules.yml 5 条规则（StageCueDown/WS 断开突增/限流 429 突增/广播丢包/迁移计数异常）+ alertmanager.example.yml 接收器示例 + OPERATIONS.md 告警章节
 - 日志轮转：Logback RollingFileAppender（按天 + 50MB 切分，保留 14 天，总量 512MB），日志目录 STAGECUE_DATA_DIR/logs
@@ -27,7 +30,6 @@
 | 2 | 依赖更新机制 | 无 Dependabot | 跟仓库统一配（仓库级事项） |
 | 5 | 滚动更新 / 零停机 | 单机应用，停机更新 | 声明为可接受限制（演出前窗口更新） |
 | 6 | 多人同时编辑同一份 show | 未支持（单导演假设） | 二期 |
-| 7 | 服务端引擎为 CIO 非 Netty | Ktor Netty 在本 VM 误用 KQueue 启动失败；CI/生产环境可用 Netty | 保留 CIO 为默认，配置项可切 |
 | 8 | 桌面 UI 运行时截图未验收 | VM 缺 libXtst.so.6 系统库，Compose Desktop 无法启动；代码已全量编译通过 | 有 GUI 环境后补 |
 | 9 | 移动端返听屏 / 灯光台 | v0.5 部分交付：MONITOR 只读接口（/api/monitor 快照+鉴权+上线推送）已落地；移动端 UI 与 LIGHTING 台仍待做 | 二期继续 |
 | 10 | 音频格式 | WAV/MP3 已支持 | FLAC/OGG 按用户需求再定 |

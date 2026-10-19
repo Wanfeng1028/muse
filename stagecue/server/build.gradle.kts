@@ -13,6 +13,7 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:3.1.3")
     implementation("io.ktor:ktor-server-cio:3.1.3")
+    implementation("io.ktor:ktor-server-netty:3.1.3")
     implementation("io.ktor:ktor-server-websockets:3.1.3")
     implementation("io.ktor:ktor-server-content-negotiation:3.1.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.3")

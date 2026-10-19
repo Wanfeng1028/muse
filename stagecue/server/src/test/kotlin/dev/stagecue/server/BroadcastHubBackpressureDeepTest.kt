@@ -2,14 +2,15 @@ package dev.stagecue.server
 
 import dev.stagecue.server.metrics.StageMetrics
 import dev.stagecue.server.ws.BroadcastHub
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.Collections
-import java.util.concurrent.CountDownLatch
 
 class BroadcastHubBackpressureDeepTest {
 
@@ -44,7 +45,7 @@ class BroadcastHubBackpressureDeepTest {
     fun `capacity one slow consumer keeps only newest`() {
         val (hub, metrics) = newHub(1)
         val received = Collections.synchronizedList(mutableListOf<String>())
-        val gate = CountDownLatch(1)
+        val gate = CompletableDeferred<Unit>()
         runBlocking {
             hub.register(
                 "slow",
@@ -57,7 +58,7 @@ class BroadcastHubBackpressureDeepTest {
             hub.broadcastExcept(null, "m1")
             hub.broadcastExcept(null, "m2")
             hub.broadcastExcept(null, "m3")
-            gate.countDown()
+            gate.complete(Unit)
             drainUntilStable(received)
             hub.unregister("slow")
         }
@@ -72,7 +73,7 @@ class BroadcastHubBackpressureDeepTest {
     fun `flood drops counted precisely`() {
         val (hub, metrics) = newHub(2)
         val received = Collections.synchronizedList(mutableListOf<String>())
-        val gate = CountDownLatch(1)
+        val gate = CompletableDeferred<Unit>()
         runBlocking {
             hub.register(
                 "slow",
@@ -83,7 +84,7 @@ class BroadcastHubBackpressureDeepTest {
                 this
             )
             repeat(10) { i -> hub.broadcastExcept(null, "m${i + 1}") }
-            gate.countDown()
+            gate.complete(Unit)
             drainUntilStable(received)
             hub.unregister("slow")
         }
@@ -95,12 +96,12 @@ class BroadcastHubBackpressureDeepTest {
         assertStrictlyIncreasing(seqs)
     }
 
-    @Test
+@Test
     fun `slow consumer does not starve fast consumer`() {
         val (hub, metrics) = newHub(2)
         val slowReceived = Collections.synchronizedList(mutableListOf<String>())
         val fastReceived = Collections.synchronizedList(mutableListOf<String>())
-        val gate = CountDownLatch(1)
+        val gate = CompletableDeferred<Unit>()
         runBlocking {
             hub.register(
                 "slow",
@@ -116,9 +117,12 @@ class BroadcastHubBackpressureDeepTest {
                 BroadcastHub.FrameSink { t -> fastReceived.add(t) },
                 this
             )
-            repeat(5) { i -> hub.broadcastExcept(null, "m${i + 1}") }
+            repeat(5) { i ->
+                hub.broadcastExcept(null, "m${i + 1}")
+                yield()
+            }
             drainUntilStable(fastReceived)
-            gate.countDown()
+            gate.complete(Unit)
             drainUntilStable(slowReceived)
             val afterSlow = droppedCount(metrics.scrape())
             hub.unregister("slow")
@@ -151,7 +155,7 @@ class BroadcastHubBackpressureDeepTest {
     fun `unregister during backpressure stops delivery`() {
         val (hub, _) = newHub(2)
         val received = Collections.synchronizedList(mutableListOf<String>())
-        val gate = CountDownLatch(1)
+        val gate = CompletableDeferred<Unit>()
         runBlocking {
             hub.register(
                 "slow",
@@ -165,7 +169,7 @@ class BroadcastHubBackpressureDeepTest {
             hub.broadcastExcept(null, "m2")
             hub.broadcastExcept(null, "m3")
             hub.unregister("slow")
-            gate.countDown()
+            gate.complete(Unit)
             delay(300)
             hub.broadcastExcept(null, "after")
             delay(300)

@@ -20,6 +20,7 @@
 | `STAGECUE_DATA_DIR` | `./data` | 数据目录，存放 stagecue.db（SQLite）与备份 |
 | `STAGECUE_RATE_LIMIT_RPS` | `60` | 每 IP 每秒补充的令牌数（限流速率） |
 | `STAGECUE_RATE_LIMIT_BURST` | `120` | 每 IP 令牌桶容量（突发上限） |
+| `STAGECUE_HTTP_ENGINE` | `cio` | HTTP 引擎：cio（默认）或 netty；非法值启动即报错退出 |
 
 示例：
 
@@ -186,6 +187,18 @@ systemctl start stagecue
 - `stagecue_ws_broadcast_dropped_total` 增长说明有慢消费者，检查该返听屏/灯光台的网络，或考虑调大队列（目前 64，改代码常量）。
 
 探针（/healthz、/readyz、/metrics）不走限流，反向代理的健康检查不会被误杀。
+
+## HTTP 引擎切换
+
+默认 CIO。生产/CI 环境如需 Netty：
+
+```bash
+export STAGECUE_HTTP_ENGINE=netty
+```
+
+- 取值大小写不敏感，仅接受 cio/netty，其他值启动时直接报错退出（fail-fast，不静默回退）。
+- Netty 在本开发 VM 上曾因误用 KQueue 启动失败（见 docs/TECH_DEBT.md #7），CI/生产 Linux 环境可用；切引擎后先跑一遍 /healthz 与 /readyz 冒烟。
+- 启动日志会打印实际生效的引擎（engine: cio/netty）。
 
 ## 常见故障
 

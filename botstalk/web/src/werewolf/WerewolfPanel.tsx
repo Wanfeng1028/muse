@@ -13,27 +13,24 @@ type Phase =
   | 'pk_vote'
   | 'finished';
 
-type NightStep = 'guard' | 'wolves' | 'seer' | 'witch';
-
-type Role = '狼人' | '平民' | '预言家' | '女巫' | '猎人' | '守卫';
+type DeathReason = 'wolf' | 'witch' | 'vote' | 'hunter';
 
 interface WerewolfPlayer {
   seat: string;
   alive: boolean;
   isSheriff: boolean;
-  role?: Role;
+  role?: string;
 }
 
 interface WerewolfDeath {
   seat: string;
-  reason: 'wolf' | 'poison' | 'vote' | 'shot';
-  day: number;
+  reason: DeathReason;
 }
 
-interface WerewolfSeerRecord {
-  seat: string;
-  result: string;
+interface SeerRecord {
   day: number;
+  target: string;
+  result: 'wolf' | 'good';
 }
 
 export interface WerewolfState {
@@ -41,17 +38,17 @@ export interface WerewolfState {
   day: number;
   players: WerewolfPlayer[];
   currentSeat: string;
-  nightStep?: NightStep;
   deaths: WerewolfDeath[];
   lastwordsQueue: string[];
-  lastwordsIdx: number;
-  sheriffSeat?: string;
-  votes: unknown;
+  sheriffSeat: string | null;
+  votes: Array<{ seat: string; target: string | null }>;
+  sheriffVotes: Array<{ seat: string; target: string | null }>;
   pkSeats: string[];
-  sheriffVotes: unknown;
-  hunterShootPending?: string;
+  pkVotes: Array<{ seat: string; target: string | null }>;
   wolfSeats?: string[];
-  seerHistory?: WerewolfSeerRecord[];
+  seerHistory?: SeerRecord[];
+  seerResult?: 'wolf' | 'good' | null;
+  wolfTarget?: string | null;
   winner?: 'wolves' | 'good';
 }
 
@@ -83,8 +80,14 @@ export function isWerewolfState(value: unknown): value is WerewolfState {
   }
   if (typeof v.currentSeat !== 'string') return false;
   if (!Array.isArray(v.deaths)) return false;
+  for (const d of v.deaths) {
+    const dd = d as Record<string, unknown>;
+    if (typeof dd.seat !== 'string') return false;
+    if (dd.reason !== 'wolf' && dd.reason !== 'witch' && dd.reason !== 'vote' && dd.reason !== 'hunter') {
+      return false;
+    }
+  }
   if (!Array.isArray(v.lastwordsQueue)) return false;
-  if (typeof v.lastwordsIdx !== 'number') return false;
   if (!Array.isArray(v.pkSeats)) return false;
   return true;
 }
@@ -107,25 +110,31 @@ const PHASE_TEXT: Record<Phase, string> = {
   finished: '已结束',
 };
 
-const NIGHT_STEP_TEXT: Record<NightStep, string> = {
-  guard: '守卫行动',
-  wolves: '狼人行动',
-  seer: '预言家查验',
-  witch: '女巫行动',
+const DEATH_REASON_TEXT: Record<DeathReason, string> = {
+  wolf: '被刀',
+  witch: '被毒',
+  vote: '放逐',
+  hunter: '被带走',
 };
 
-const DEATH_REASON_TEXT: Record<WerewolfDeath['reason'], string> = {
-  wolf: '被刀',
-  poison: '被毒',
-  vote: '放逐',
-  shot: '被带走',
+const ROLE_TEXT: Record<string, string> = {
+  werewolf: '狼人',
+  villager: '平民',
+  seer: '预言家',
+  witch: '女巫',
+  hunter: '猎人',
+  guard: '守卫',
 };
 
 function roleText(role: string): string {
-  return role;
+  return ROLE_TEXT[role] ?? role;
 }
 
-function targetList(players: WerewolfPlayer[], exclude?: string): WerewolfPlayer[] {
+function alivePlayers(players: WerewolfPlayer[]): WerewolfPlayer[] {
+  return players.filter((p) => p.alive);
+}
+
+function alivePlayersExcept(players: WerewolfPlayer[], exclude: string): WerewolfPlayer[] {
   return players.filter((p) => p.alive && p.seat !== exclude);
 }
 
@@ -142,44 +151,29 @@ export default function WerewolfPanel({ state, seat, onAction }: Props) {
 
   if (state.phase === 'finished') return null;
 
-  const { phase, day, players, currentSeat, nightStep, deaths, lastwordsQueue, lastwordsIdx } = state;
+  const { phase, day, players, currentSeat, deaths, lastwordsQueue } = state;
 
   const me = players.find((p) => p.seat === seat);
   const isMyTurn = currentSeat === seat;
-  const isHunterPending = state.hunterShootPending === seat;
 
-  const dayDeaths = deaths.filter((d) => d.day === day);
-  const currentLastwordsSeat = lastwordsIdx >= 0 && lastwordsIdx < lastwordsQueue.length
-    ? lastwordsQueue[lastwordsIdx]
-    : null;
 
   const phaseLabel = PHASE_TEXT[phase];
-  const turnLabel = nightStep ? NIGHT_STEP_TEXT[nightStep] : `${currentSeat} 行动`;
+  const PhaseIcon = phase === 'night' ? Moon : Sun;
 
-  const showNightTargets = phase === 'night' && isMyTurn && nightStep !== 'witch';
-  const showWitchActions = phase === 'night' && isMyTurn && nightStep === 'witch';
+  const hunterShootPendingSeat = (state as unknown as { hunterShootPending?: string }).hunterShootPending;
+  const isHunterPending = hunterShootPendingSeat === seat;
 
-  const handleNightPick = () => {
-    onAction({ kind: 'night', target: picked });
-  };
-
-  const handleNightSkip = () => {
-    onAction({ kind: 'night', target: null });
-  };
-
-  const handleWitchSave = () => {
-    if (!picked) return;
-    onAction({ kind: 'night', potion: 'save', target: picked });
-  };
-
-  const handleWitchPoison = () => {
-    if (!picked) return;
-    onAction({ kind: 'night', potion: 'poison', target: picked });
-  };
-
-  const handleWitchNone = () => {
-    onAction({ kind: 'night' });
-  };
+  const sheriffCandidates = (() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const sv of state.sheriffVotes) {
+      if (sv.target && !seen.has(sv.target)) {
+        seen.add(sv.target);
+        out.push(sv.target);
+      }
+    }
+    return out;
+  })();
 
   const renderSeats = () => (
     <div className="werewolf-seats">
@@ -207,287 +201,364 @@ export default function WerewolfPanel({ state, seat, onAction }: Props) {
 
   const renderRole = () => {
     if (!me || !me.role) return null;
+    const isWolf = me.role === 'werewolf';
+    const isSeer = me.role === 'seer';
     return (
       <div className="werewolf-role">
         <span className="werewolf-role-label">你的身份：</span>
         <span className="werewolf-role-value">{roleText(me.role)}</span>
-        {me.role === '狼人' && state.wolfSeats && state.wolfSeats.length > 0 && (
+        {isWolf && state.wolfSeats && state.wolfSeats.length > 0 && (
           <span className="werewolf-role-extra">
             队友：{state.wolfSeats.filter((s) => s !== seat).join('、') || '无'}
           </span>
         )}
-        {me.role === '预言家' && state.seerHistory && state.seerHistory.length > 0 && (
+        {isSeer && state.seerHistory && state.seerHistory.length > 0 && (
           <span className="werewolf-role-extra">
-            查验：{state.seerHistory.map((h) => `${h.seat}${h.result === 'wolf' ? '狼人' : '好人'}`).join('、')}
+            查验：
+            {state.seerHistory
+              .map((h) => `第${h.day}天 ${h.target} 是${h.result === 'wolf' ? '狼人' : '好人'}`)
+              .join('、')}
           </span>
         )}
       </div>
     );
   };
 
-  const renderTargetPicker = (onConfirm: () => void, confirmLabel: string, skipLabel?: string, onSkip?: () => void, requirePick?: boolean) => (
-    <div className="werewolf-targets">
-      <div className="werewolf-target-list">
-        {targetList(players, phase === 'night' && nightStep === 'seer' ? seat : undefined).map((p) => {
-          const cls = ['werewolf-target'];
-          if (picked === p.seat) cls.push('is-picked');
-          return (
-            <button
-              key={p.seat}
-              className={cls.join(' ')}
-              type="button"
-              onClick={() => setPicked(p.seat)}
-            >
-              {p.seat}
-            </button>
-          );
-        })}
-      </div>
-      <div className="werewolf-actions">
-        <button className="btn-primary" type="button" onClick={onConfirm} disabled={requirePick && !picked}>
-          <Check size={14} />
-          {confirmLabel}
-        </button>
-        {onSkip && (
-          <button className="btn-ghost" type="button" onClick={onSkip}>
-            <X size={14} />
-            {skipLabel ?? '跳过'}
+  const renderTargetButtons = (pool: WerewolfPlayer[]) => (
+    <div className="werewolf-target-list">
+      {pool.map((p) => {
+        const cls = ['werewolf-target'];
+        if (picked === p.seat) cls.push('is-picked');
+        return (
+          <button
+            key={p.seat}
+            className={cls.join(' ')}
+            type="button"
+            onClick={() => setPicked(p.seat)}
+          >
+            {p.seat}
           </button>
-        )}
+        );
+      })}
+    </div>
+  );
+
+  const renderHunterShoot = () => (
+    <div className="werewolf-targets">
+      {renderTargetButtons(alivePlayersExcept(players, seat))}
+      <div className="werewolf-actions">
+        <button
+          className="btn-primary"
+          type="button"
+          disabled={!picked}
+          onClick={() => picked && onAction({ kind: 'hunter_shoot', target: picked })}
+        >
+          <Skull size={14} />
+          开枪
+        </button>
       </div>
     </div>
   );
 
-  const renderActions = () => {
-    if (isHunterPending) {
+  const renderNight = () => {
+    if (!isMyTurn || !me || !me.role) {
+      return <div className="werewolf-wait">等 {currentSeat} 行动…</div>;
+    }
+    const role = me.role;
+
+    if (role === 'guard') {
       return (
         <div className="werewolf-targets">
-          <div className="werewolf-target-list">
-            {targetList(players, seat).map((p) => {
-              const cls = ['werewolf-target'];
-              if (picked === p.seat) cls.push('is-picked');
-              return (
-                <button
-                  key={p.seat}
-                  className={cls.join(' ')}
-                  type="button"
-                  onClick={() => setPicked(p.seat)}
-                >
-                  {p.seat}
-                </button>
-              );
-            })}
-          </div>
+          {renderTargetButtons(alivePlayers(players))}
           <div className="werewolf-actions">
             <button
               className="btn-primary"
               type="button"
               disabled={!picked}
-              onClick={() => picked && onAction({ kind: 'hunter_shoot', target: picked })}
+              onClick={() => picked && onAction({ kind: 'night', target: picked })}
+            >
+              <Check size={14} />
+              守护
+            </button>
+            <button
+              className="btn-ghost"
+              type="button"
+              onClick={() => onAction({ kind: 'night', target: null })}
+            >
+              <X size={14} />
+              空守
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (role === 'werewolf') {
+      return (
+        <div className="werewolf-targets">
+          {renderTargetButtons(alivePlayersExcept(players, seat))}
+          <div className="werewolf-actions">
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={!picked}
+              onClick={() => picked && onAction({ kind: 'night', target: picked })}
             >
               <Skull size={14} />
-              开枪
+              刀
+            </button>
+            <button
+              className="btn-ghost"
+              type="button"
+              onClick={() => onAction({ kind: 'night', target: null })}
+            >
+              <X size={14} />
+              空刀
             </button>
           </div>
         </div>
       );
     }
 
-    if (phase === 'night') {
-      if (!isMyTurn) {
-        return <div className="werewolf-wait">等 {currentSeat} 行动…</div>;
-      }
-      if (showNightTargets) {
-        const isWolves = nightStep === 'wolves';
-        const isGuard = nightStep === 'guard';
-        const isSeer = nightStep === 'seer';
-        const confirmLabel = isGuard ? '守护' : isWolves ? '刀' : isSeer ? '查验' : '确定';
-        const skipLabel = isGuard ? '空守' : isWolves ? '空刀' : isSeer ? '跳过' : '跳过';
-        return renderTargetPicker(handleNightPick, confirmLabel, skipLabel, handleNightSkip, isWolves);
-      }
-      if (showWitchActions) {
-        return (
-          <div className="werewolf-targets">
-            <div className="werewolf-target-list">
-              {targetList(players).map((p) => {
-                const cls = ['werewolf-target'];
-                if (picked === p.seat) cls.push('is-picked');
-                return (
-                  <button
-                    key={p.seat}
-                    className={cls.join(' ')}
-                    type="button"
-                    onClick={() => setPicked(p.seat)}
-                  >
-                    {p.seat}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="werewolf-actions">
-              <button className="btn-primary" type="button" onClick={handleWitchSave} disabled={!picked}>
-                <Sun size={14} />
-                用解药救
-              </button>
-              <button className="btn-primary" type="button" onClick={handleWitchPoison} disabled={!picked}>
-                <Skull size={14} />
-                用毒药
-              </button>
-              <button className="btn-ghost" type="button" onClick={handleWitchNone}>
-                <X size={14} />
-                不用药
-              </button>
-            </div>
-          </div>
-        );
-      }
-      return <div className="werewolf-wait">等 {currentSeat} 行动…</div>;
-    }
-
-    if (phase === 'announce') {
+    if (role === 'seer') {
       return (
-        <div className="werewolf-announce">
-          {dayDeaths.length > 0 ? (
-            <div className="werewolf-announce-list">
-              {dayDeaths.map((d) => (
-                <span key={d.seat} className="werewolf-announce-item">
-                  {d.seat} {DEATH_REASON_TEXT[d.reason]}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className="werewolf-announce-none">昨晚平安无事</div>
-          )}
+        <div className="werewolf-targets">
+          {renderTargetButtons(alivePlayersExcept(players, seat))}
           <div className="werewolf-actions">
-            <button className="btn-primary" type="button" onClick={() => onAction({ kind: 'announce_done' })}>
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={!picked}
+              onClick={() => picked && onAction({ kind: 'night', target: picked })}
+            >
               <Check size={14} />
-              知道了
+              查验
             </button>
           </div>
         </div>
       );
     }
 
-    if (phase === 'lastwords') {
-      if (currentLastwordsSeat === seat) {
-        return (
+    if (role === 'witch') {
+      const wolfTarget = state.wolfTarget ?? null;
+      return (
+        <div className="werewolf-targets">
+          <div className="werewolf-wait">
+            {wolfTarget ? `昨晚被刀：${wolfTarget}` : '昨晚平安'}
+          </div>
+          {renderTargetButtons(alivePlayers(players))}
           <div className="werewolf-actions">
-            <button className="btn-primary" type="button" onClick={() => onAction({ kind: 'lastwords_done' })}>
-              <Check size={14} />
-              遗言说完
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={!picked}
+              onClick={() => picked && onAction({ kind: 'night', potion: 'save', target: picked })}
+            >
+              <Sun size={14} />
+              用解药救
+            </button>
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={!picked}
+              onClick={() => picked && onAction({ kind: 'night', potion: 'poison', target: picked })}
+            >
+              <Skull size={14} />
+              用毒药
+            </button>
+            <button
+              className="btn-ghost"
+              type="button"
+              onClick={() => onAction({ kind: 'night' })}
+            >
+              <X size={14} />
+              不用药
             </button>
           </div>
-        );
-      }
-      if (currentLastwordsSeat) {
-        return <div className="werewolf-wait">等 {currentLastwordsSeat} 说遗言…</div>;
-      }
-      return <div className="werewolf-wait">等待遗言流程…</div>;
+        </div>
+      );
     }
 
-    if (phase === 'sheriff') {
-      if (isMyTurn) {
-        return (
-          <div className="werewolf-targets">
-            <div className="werewolf-target-list">
-              {targetList(players).map((p) => {
-                const cls = ['werewolf-target'];
-                if (picked === p.seat) cls.push('is-picked');
-                return (
-                  <button
-                    key={p.seat}
-                    className={cls.join(' ')}
-                    type="button"
-                    onClick={() => setPicked(p.seat)}
-                  >
-                    {p.seat}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="werewolf-actions">
-              <button
-                className="btn-primary"
-                type="button"
-                disabled={!picked}
-                onClick={() => picked && onAction({ kind: 'sheriff', target: picked })}
-              >
-                <Vote size={14} />
-                上警投票
-              </button>
-              <button className="btn-ghost" type="button" onClick={() => onAction({ kind: 'sheriff_pass' })}>
-                <X size={14} />
-                退水
-              </button>
-            </div>
-          </div>
-        );
-      }
-      return <div className="werewolf-wait">等 {currentSeat} 上警…</div>;
-    }
-
-    if (phase === 'speak' || phase === 'pk_speak') {
-      if (isMyTurn) {
-        return (
-          <div className="werewolf-actions">
-            <button className="btn-primary" type="button" onClick={() => onAction({ kind: 'speak_done' })}>
-              <Check size={14} />
-              发言结束
-            </button>
-          </div>
-        );
-      }
-      return <div className="werewolf-wait">等 {currentSeat} 发言…</div>;
-    }
-
-    if (phase === 'vote' || phase === 'pk_vote') {
-      if (isMyTurn) {
-        const pool = phase === 'pk_vote' && state.pkSeats.length > 0
-          ? players.filter((p) => p.alive && state.pkSeats.includes(p.seat))
-          : targetList(players, seat);
-        return (
-          <div className="werewolf-targets">
-            <div className="werewolf-target-list">
-              {pool.map((p) => {
-                const cls = ['werewolf-target'];
-                if (picked === p.seat) cls.push('is-picked');
-                return (
-                  <button
-                    key={p.seat}
-                    className={cls.join(' ')}
-                    type="button"
-                    onClick={() => setPicked(p.seat)}
-                  >
-                    {p.seat}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="werewolf-actions">
-              <button
-                className="btn-primary"
-                type="button"
-                disabled={!picked}
-                onClick={() => picked && onAction({ kind: 'vote', target: picked })}
-              >
-                <Vote size={14} />
-                投票
-              </button>
-              <button className="btn-ghost" type="button" onClick={() => onAction({ kind: 'vote', target: null })}>
-                <X size={14} />
-                弃票
-              </button>
-            </div>
-          </div>
-        );
-      }
-      return <div className="werewolf-wait">等 {currentSeat} 投票…</div>;
-    }
-
-    return null;
+    return <div className="werewolf-wait">等 {currentSeat} 行动…</div>;
   };
 
-  const PhaseIcon = phase === 'night' ? Moon : Sun;
+  const renderAnnounce = () => {
+    const list = lastwordsQueue;
+    return (
+      <div className="werewolf-announce">
+        {list.length > 0 ? (
+          <div className="werewolf-announce-list">
+            <span>昨晚出局：</span>
+            {list.map((s) => {
+              const d = deaths.find((x) => x.seat === s);
+              const reason = d ? DEATH_REASON_TEXT[d.reason] : '';
+              return (
+                <span key={s} className="werewolf-announce-item">
+                  {s}
+                  {reason ? ` ${reason}` : ''}
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="werewolf-announce-none">昨晚平安无事</div>
+        )}
+        <div className="werewolf-actions">
+          <button
+            className="btn-primary"
+            type="button"
+            onClick={() => onAction({ kind: 'announce_done' })}
+          >
+            <Check size={14} />
+            知道了
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderLastwords = () => {
+    if (currentSeat === seat) {
+      return (
+        <div className="werewolf-actions">
+          <button
+            className="btn-primary"
+            type="button"
+            onClick={() => onAction({ kind: 'lastwords_done' })}
+          >
+            <Check size={14} />
+            遗言说完
+          </button>
+        </div>
+      );
+    }
+    if (currentSeat) {
+      return <div className="werewolf-wait">等 {currentSeat} 说遗言…</div>;
+    }
+    return <div className="werewolf-wait">等待遗言流程…</div>;
+  };
+
+  const renderSheriff = () => {
+    const candidates = sheriffCandidates;
+    const candidatePlayers = players.filter((p) => candidates.includes(p.seat));
+    return (
+      <div className="werewolf-targets">
+        {candidatePlayers.length > 0 && renderTargetButtons(candidatePlayers)}
+        <div className="werewolf-actions">
+          <button
+            className="btn-primary"
+            type="button"
+            onClick={() => onAction({ kind: 'sheriff' })}
+          >
+            <Vote size={14} />
+            上警
+          </button>
+          <button
+            className="btn-ghost"
+            type="button"
+            onClick={() => onAction({ kind: 'sheriff_pass' })}
+          >
+            <X size={14} />
+            退水
+          </button>
+          {candidatePlayers.length > 0 && (
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={!picked}
+              onClick={() => picked && onAction({ kind: 'sheriff', target: picked })}
+            >
+              <Vote size={14} />
+              投票
+            </button>
+          )}
+          <button
+            className="btn-ghost"
+            type="button"
+            onClick={() => onAction({ kind: 'sheriff_done' })}
+          >
+            <Check size={14} />
+            结束上警投票
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSpeak = () => {
+    if (isMyTurn) {
+      return (
+        <div className="werewolf-actions">
+          <button
+            className="btn-primary"
+            type="button"
+            onClick={() => onAction({ kind: 'speak_done' })}
+          >
+            <Check size={14} />
+            发言结束
+          </button>
+        </div>
+      );
+    }
+    return <div className="werewolf-wait">等 {currentSeat} 发言…</div>;
+  };
+
+  const renderVote = (isPk: boolean) => {
+    if (!isMyTurn) {
+      return <div className="werewolf-wait">等 {currentSeat} 投票…</div>;
+    }
+    const pool = isPk && state.pkSeats.length > 0
+      ? players.filter((p) => state.pkSeats.includes(p.seat) && p.seat !== seat)
+      : alivePlayersExcept(players, seat);
+    return (
+      <div className="werewolf-targets">
+        {renderTargetButtons(pool)}
+        <div className="werewolf-actions">
+          <button
+            className="btn-primary"
+            type="button"
+            disabled={!picked}
+            onClick={() => picked && onAction({ kind: 'vote', target: picked })}
+          >
+            <Vote size={14} />
+            投票
+          </button>
+          <button
+            className="btn-ghost"
+            type="button"
+            onClick={() => onAction({ kind: 'vote', target: null })}
+          >
+            <X size={14} />
+            弃票
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderActions = () => {
+    if (isHunterPending) return renderHunterShoot();
+
+    switch (phase) {
+      case 'night':
+        return renderNight();
+      case 'announce':
+        return renderAnnounce();
+      case 'lastwords':
+        return renderLastwords();
+      case 'sheriff':
+        return renderSheriff();
+      case 'speak':
+      case 'pk_speak':
+        return renderSpeak();
+      case 'vote':
+        return renderVote(false);
+      case 'pk_vote':
+        return renderVote(true);
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="werewolf-panel">
@@ -498,7 +569,7 @@ export default function WerewolfPanel({ state, seat, onAction }: Props) {
         </span>
         <span className="werewolf-bar-day">第 {day} 天</span>
         <span className="werewolf-bar-turn">
-          轮到：{turnLabel}
+          轮到：{currentSeat}
           {isMyTurn ? '（你）' : ''}
         </span>
       </div>

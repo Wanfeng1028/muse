@@ -623,6 +623,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - v2：ONNX 本地声学模型精对齐 + 内置转写、限流熔断、多轨口误自动推荐最自然一版、定时自动备份、真实负载验证
 
 - **深耕轮 2026-10-19 晚（已合入）**：LOADTEST.md + LoadTest/Program.cs 改动验证；docs/OPERATIONS.md、敏感数据策略。
+- **深耕轮 2026-10-19 夜（本 lane，未 push）**：v2.x「多轨口误自动推荐最自然一版」：Editing/TakeRecommender.cs（TakeInput/TakeScore/Rank/RecommendBest/Explain；自然度=语气词密度+语气词时长占比×50+长停顿密度×2，长停顿阈值 1.5s）+ TakeRecommenderDeepTests 14 例；dotnet build 零错（1 warning 为既有 VoxLogger），SmokeRunner 反射直跑 366/366 全绿。
 
 ## interlude「幕间 Interlude · 分支叙事的 linter」
 
@@ -699,6 +700,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深测轮 r5（2026-10-18）**：11 个深测文件 90 测试——server：TokenBucketDeepTest（9：注入时钟测 burst 耗尽/精确 refill/retryAfter 公式/时钟倒退/键隔离）+ SyncHubConnectDeepTest（8：空 clientId 抛错/roleOf/ClockPing 回显/setRehearsal 无 settings）+ SyncHubTriggerSnapshotDeepTest（9：去重不推移 lastFiredAtMs/乱序 order/remainingMs 钳零）+ BroadcastHubEdgeDeepTest（8：空广播/全员广播/重注册换 sink）+ StageMetricsEdgeDeepTest（8：各计数器 scrape 断言）+ ServerConfigEdgeDeepTest（9：host/cors/dataDir 空值/ping 取值/默认值完备）+ RehearsalRouteDeepTest（6：GET /api/rehearsal 默认 false/切换/跨实例持久化）；shared：WsMessageOpLogReplayDeepTest（7：OpLogReplay 往返/未知 kind 抛错）+ ModelDeepTest（8：Cue/Show/MonitorState 往返；纠正可空无默认字段缺失按 null 解码）+ SharedSyncEdgeDeepTest（10：ClockEstimator reset/精确 3 样本/EventDeduper 清除与容量 1/OpLogStore 字段保持）；desktop：DirectorClientDeepTest（8：首测导演台客户端，初始状态/未连接分支/log 裁剪 200 条）；kotlinc 直编零错；server JUnit **169/170**（唯一失败仍为 r3 既有 MonitorApiTest 时间敏感断言，与本轮无关）、shared **54/54**、desktop **8/8**；修 dpsk 测试侧编造 6 处（Prometheus 指标名缺 _total 后缀、type="audio" 字符串误作 CueType、缺 import/断言计数等），产品无真 bug
 
 - **深耕轮 2026-10-19 晚（已合入）**：Routes.kt 改动 + 3 个深测（BroadcastHubBackpressure/OpLogRoute/SyncHubReplayBoundary）验证通过；启动配置必填项校验；docs/TECH_DEBT.md。
+- **收敛+深耕轮 2026-10-19 夜（本 lane，未 push）**：①收敛 BroadcastHubBackpressureDeepTest.kt：上一轮 CountDownLatch→CompletableDeferred 迁移漏了 3 处（import 已删、3 个测试仍在用，编不过），编排机械补齐；kotlinc 直编零错 + JUnit 5/5。②v0.4.1「HTTP 引擎可切换」（偿还 TECH_DEBT #7）：STAGECUE_HTTP_ENGINE（cio/netty，默认 cio，非法值 fail-fast）+ config/HttpEngine.kt 工厂 + Main.kt 接线（启动日志打印 engine）+ OPERATIONS.md 新增章节；HttpEngineDeepTest 12/12 全绿；诚实声明：本 VM 未实跑 Netty 启动（Netty 曾误用 KQueue 失败），CI/生产环境验证。
 
 ## botstalk「个人 AI 团队办公室」
 
@@ -745,4 +747,5 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
   - 验收：各项目构建通过，新增测试全绿；诚实声明：dpsk 3 处编造（Open(path)/metrics.Counter/sql.NullString 假设）由编排机械修复并披露
 
 - **深耕轮 2026-10-19 晚（已合入）**：werewolf 7 文件改动验证通过（gateway+web）；botstalk/.gitignore 补 gateway/data/（测试 sqlite 产物不入库）。
+- **收敛+深耕轮 2026-10-19 夜（本 lane，未 push）**：①收敛上一轮 werewolf Web 4 文件（WerewolfPanel 627 行重构、WerewolfResult 角色/死因英文 key 对齐、Chat.tsx game_state 内层 state 解包、ws.ts PROTOCOL_VERSION 1.2→1.3 对齐网关握手）：protocol/gateway/web tsc 零错、gateway vitest 640/640、新冒烟脚本 scripts/smoke-werewolf.mjs 12/12（建 playroom→开 session 201→1.3 hello 通过/1.2 被 4400 拒绝→WS start→game_state 广播→落库；workroom 开狼人杀 403）。②狼人杀纵深深测 r1：werewolf-statemachine.deep.test.ts 27 例 + werewolf-ai-vision.deep.test.ts 20 例，47/47 全绿；修测试侧 4 处（announce 阶段 currentSeat 为空、女巫救人后跳过 announce、10 人局 3 狼、放逐后先遗言再入夜），产品无真 bug。presence r2 遗留已确认为过期状态（commit 5a92cb7 已交付按 room 隔离），未重复动手。
 

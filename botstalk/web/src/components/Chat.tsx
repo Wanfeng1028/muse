@@ -87,7 +87,11 @@ export default function Chat({ nick, room, onLeave }: Props) {
       return;
     }
     if (frame.type === 'game_state') {
-      setGameState(frame.payload as unknown as GameStatePayload);
+      const p = frame.payload as unknown as GameStatePayload;
+      // 网关广播的 state 是引擎返回的 {v, state[, error]} 会话包，面板要内层 state
+      const s = p.state as { v?: unknown; state?: unknown } | null | undefined;
+      const inner = s && typeof s === 'object' && 'v' in s && 'state' in s ? s.state : p.state;
+      setGameState({ ...p, state: inner });
       return;
     }
     if (frame.type !== 'message') return;

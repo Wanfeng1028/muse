@@ -13,7 +13,7 @@ import dev.stagecue.server.ws.BroadcastHub
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
-import io.ktor.server.cio.CIO
+import dev.stagecue.server.config.httpEngineFactory
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.callid.CallId
@@ -59,7 +59,7 @@ fun main() {
     val metrics = StageMetrics()
     metrics.dbMigrationsApplied(Database.lastMigrationsApplied)
 
-    val server = embeddedServer(CIO, port = config.port, host = config.host) {
+    val server = embeddedServer(httpEngineFactory(config.httpEngine), port = config.port, host = config.host) {
         module(
             store, hub, settings, metrics,
             rateLimit = RateLimitSettings(config.rateLimitRps, config.rateLimitBurst),
@@ -92,9 +92,10 @@ fun main() {
 
     val dbFile = config.dataDir.resolve("stagecue.db").absolutePath
     log.info(
-        "StageCue server starting on {}:{} (data dir: {}, db: {}, logLevel: {})",
+        "StageCue server starting on {}:{} (engine: {}, data dir: {}, db: {}, logLevel: {})",
         config.host,
         config.port,
+        config.httpEngine,
         config.dataDir.absolutePath,
         dbFile,
         config.logLevel,

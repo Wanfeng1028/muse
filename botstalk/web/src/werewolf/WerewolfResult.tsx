@@ -9,11 +9,20 @@ interface WerewolfResultProps {
   onClose: () => void;
 }
 
+const ROLE_TEXT: Record<string, string> = {
+  werewolf: '狼人',
+  villager: '平民',
+  seer: '预言家',
+  witch: '女巫',
+  hunter: '猎人',
+  guard: '守卫',
+};
+
 const DEATH_REASON_TEXT: Record<string, string> = {
   wolf: '被刀',
-  poison: '被毒',
+  witch: '被毒',
   vote: '放逐',
-  shot: '被带走',
+  hunter: '被带走',
 };
 
 export default function WerewolfResult({ state, seat, onRematch, onClose }: WerewolfResultProps) {
@@ -28,33 +37,44 @@ export default function WerewolfResult({ state, seat, onRematch, onClose }: Were
   const { winner, players, wolfSeats, deaths } = state;
 
   const me = players.find((p) => p.seat === seat);
+
   let myCamp: 'wolves' | 'good' | null = null;
   if (me && me.role) {
-    myCamp = me.role === '狼人' ? 'wolves' : 'good';
+    myCamp = me.role === 'werewolf' ? 'wolves' : 'good';
   } else if (wolfSeats) {
     myCamp = wolfSeats.includes(seat) ? 'wolves' : 'good';
   }
 
+  const winnerText =
+    winner === 'wolves' ? '狼人阵营获胜' : winner === 'good' ? '好人阵营获胜' : '对局结束';
+
   const won = winner !== undefined && myCamp !== null && winner === myCamp;
-  const winnerText = winner === 'wolves' ? '狼人阵营获胜' : winner === 'good' ? '好人阵营获胜' : '对局结束';
 
   return (
     <div className="werewolf-result">
       <div className="werewolf-result-title">
         <Trophy size={16} strokeWidth={2} />
         <span>{winnerText}</span>
-        {myCamp !== null && <span>{won ? '你赢了' : '你输了'}</span>}
+        {winner !== undefined && myCamp !== null && <span>{won ? '你赢了' : '你输了'}</span>}
       </div>
 
       <div className="werewolf-result-rows">
         {players.map((p) => {
           const death = deaths.find((d) => d.seat === p.seat);
+          const roleText = p.role ? ROLE_TEXT[p.role] ?? p.role : '未知';
           return (
             <div className="werewolf-result-row" key={p.seat}>
-              <span>{p.seat}{p.seat === seat ? '（你）' : ''}</span>
-              <span>{p.role ?? ''}</span>
               <span>
-                {p.alive ? '存活' : death ? `出局 · ${DEATH_REASON_TEXT[death.reason] ?? ''}` : '出局'}
+                {p.seat}
+                {p.seat === seat ? '（你）' : ''}
+              </span>
+              <span>{roleText}</span>
+              <span>
+                {p.alive
+                  ? '存活'
+                  : death
+                    ? `出局 · ${DEATH_REASON_TEXT[death.reason] ?? ''}`
+                    : '出局'}
               </span>
             </div>
           );

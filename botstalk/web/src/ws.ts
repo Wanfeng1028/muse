@@ -17,7 +17,7 @@ export interface WSEvents {
   onFrame: (frame: InboundMessage) => void;
 }
 
-const PROTOCOL_VERSION = '1.2';
+const PROTOCOL_VERSION = '1.3';
 const HEARTBEAT_MS = 20_000;
 const RECONNECT_BASE_MS = 800;
 const RECONNECT_MAX_MS = 15_000;

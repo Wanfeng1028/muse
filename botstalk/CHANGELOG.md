@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+### 新增
+- 狼人杀纵深测试 r1：werewolf-statemachine.deep.test.ts 27 例（createGame 配置 7/夜晚状态机 11/白天与胜负 9）+ werewolf-ai-vision.deep.test.ts 20 例（AI 决策 10/视角隔离 10），47/47 全绿；修测试侧 4 处误解（announce 阶段 currentSeat 为空、女巫救人后跳过 announce、10 人局 3 狼、放逐后先遗言再入夜），产品无真 bug。
+- 狼人杀 E2E 冒烟脚本 scripts/smoke-werewolf.mjs：建 playroom→开 werewolf session（201）→WS hello 1.3 通过/1.2 被 4400 拒绝→game_action start→game_state 广播→状态落库；workroom 开狼人杀 403；12/12。
+### 修复
+- web/src/ws.ts：PROTOCOL_VERSION '1.2'→'1.3'，与协议层 PROTOCOL_VERSION_STR="1.3" 对齐（否则网关 hello 握手 4400 拒绝）。
+- web/src/werewolf/WerewolfResult.tsx：角色/死因 key 改英文（werewolf/villager/seer/witch/hunter/guard），与网关 serializeForSeat 对齐。
+- web/src/components/Chat.tsx：game_state 帧解包网关 {v, state} 会话包取内层 state。
+
 ## v0.4.1 - 2026-10-18
 ### 新增
 - 测试纵深 r3（斗地主）：牌型判定纵深 21 例（连对/飞机带翅/四带二边界）、canBeat 压牌纵深 23 例、叫分状态机纵深 13 例、AI 自由领出 12 例、AI 压牌策略 12 例。

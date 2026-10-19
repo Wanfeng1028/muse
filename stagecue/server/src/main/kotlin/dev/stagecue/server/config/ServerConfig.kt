@@ -16,6 +16,7 @@ data class ServerConfig(
     val corsAllowedOrigins: String = "*",
     val rateLimitRps: Int = 60,
     val rateLimitBurst: Int = 120,
+    val httpEngine: String = "cio",
 ) {
     companion object {
         /** 从环境变量读取并校验配置，失败抛 [ConfigException]。 */
@@ -105,6 +106,14 @@ data class ServerConfig(
                 v
             } ?: 120
 
+            val httpEngine = env["STAGECUE_HTTP_ENGINE"]?.let { raw ->
+                val lower = raw.lowercase()
+                if (lower != "cio" && lower != "netty") {
+                    throw ConfigException("STAGECUE_HTTP_ENGINE 必须是 cio/netty 之一，当前值：'$raw'")
+                }
+                lower
+            } ?: "cio"
+
             return ServerConfig(
                 port = port,
                 host = host,
@@ -114,6 +123,7 @@ data class ServerConfig(
                 corsAllowedOrigins = corsAllowedOrigins,
                 rateLimitRps = rateLimitRps,
                 rateLimitBurst = rateLimitBurst,
+                httpEngine = httpEngine,
             )
         }
     }
