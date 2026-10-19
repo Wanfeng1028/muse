@@ -118,14 +118,14 @@ export default function Weekly() {
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header wk-header">
         <div>
           <h1>周报</h1>
           <p className="stat-label" style={{ marginTop: 4}}>
             这一周学了多少，一页看完
           </p>
         </div>
-        <div className="form-row" style={{ gap: 8, alignItems: 'center'}}>
+        <div className="wk-nav-btns">
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -155,7 +155,7 @@ export default function Weekly() {
             <h2 style={{ margin: 0}}>{rangeLabel}</h2>
           </div>
 
-          <div className="grid grid-3" style={{ marginTop: 16}}>
+          <div className="grid grid-3 wk-stat-grid" style={{ marginTop: 16}}>
             <div className="stat-card">
               <div className="stat-value">
                 {focusHours} 小时 {focusMins} 分
@@ -174,7 +174,7 @@ export default function Weekly() {
             </div>
           </div>
 
-          <div className="grid grid-2" style={{ marginTop: 12}}>
+          <div className="grid grid-2 wk-stat-grid-2" style={{ marginTop: 12}}>
             <div className="stat-card">
               <div className="stat-value">{mistakesNew} 道</div>
               <div className="stat-label">本周新增错题</div>
@@ -212,9 +212,9 @@ export default function Weekly() {
 
           <div className="card" style={{ marginTop: 16}}>
             <h3>计划与科目</h3>
-            <div className="form-row" style={{ gap: 24, alignItems: 'center', marginTop: 12}}>
-              <div style={{ flex: '0 0 auto'}}>
-                <svg width={140} height={140} viewBox="0 0 140 140">
+            <div className="wk-subject-wrap">
+              <div className="wk-ring-wrap">
+                <svg width={140} height={140} viewBox="0 0 140 140" className="wk-ring-svg">
                   <circle
                     className="wk-ring-track"
                     cx={70}
@@ -247,25 +247,21 @@ export default function Weekly() {
                   完成 {plansDone} / {plansTotal}
                 </div>
               </div>
-              <div style={{ flex: 1, minWidth: 0}}>
+              <div className="wk-subject-list">
                 {SUBJECTS.map((s) => {
                   const mins = stats.focusBySubject[s.key]?? 0;
                   const pct =
                     totalFocus > 0? Math.round((mins / totalFocus) * 100): 0;
                   return (
-                    <div
-                      key={s.key}
-                      className="form-row"
-                      style={{ gap: 12, marginTop: 8, alignItems: 'center'}}
-                      >
-                      <span style={{ width: 90}}>{s.name}</span>
-                      <div className="progress" style={{ flex: 1}}>
+                    <div key={s.key} className="wk-subject-row">
+                      <span className="wk-subject-name">{s.name}</span>
+                      <div className="progress wk-subject-progress">
                         <div
                           className="progress-bar"
                           style={{ width: pct + '%', backgroundColor: s.color}}
                         />
                       </div>
-                      <span className="stat-label">{mins} 分钟</span>
+                      <span className="stat-label wk-subject-mins">{mins} 分钟</span>
                     </div>
                   );
                 })}
@@ -316,7 +312,7 @@ export default function Weekly() {
             <div className="progress" style={{ marginTop: 8}}>
               <div
                 className="progress-bar"
-                style={{ width: wordsRate + '%', backgroundColor: '#206bc4'}}
+                style={{ width: wordsRate + '%', backgroundColor: 'var(--c-math)' }}
               />
             </div>
             <div className="stat-label" style={{ marginTop: 16}}>

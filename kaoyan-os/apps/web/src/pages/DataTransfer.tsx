@@ -188,7 +188,7 @@ export default function DataTransfer() {
   }, []);
 
   return (
-    <div className="stack">
+    <div className="stack data-transfer-page">
       <div className="card stack">
         <h2>备份与恢复</h2>
         <p className="muted">
@@ -204,7 +204,7 @@ export default function DataTransfer() {
 
         <div className="stack">
           <p className="muted">恢复备份</p>
-          <div className="row">
+          <div className="row dt-row dt-row-file">
             <input
               ref={backupInputRef}
               type="file"
@@ -218,7 +218,7 @@ export default function DataTransfer() {
             />
             {backupFile && <span className="muted">{backupFile.name}</span>}
           </div>
-          <div className="row">
+          <div className="row dt-row dt-row-restore">
             <select
               value={restoreMode}
               onChange={(e) => setRestoreMode(e.target.value as 'replace' | 'merge')}
@@ -256,12 +256,12 @@ export default function DataTransfer() {
         <p className="muted">
           表头必须是 word,meaning，可加 phonetic,example。每行一个单词。
         </p>
-        <div className="row">
+        <div className="row dt-row">
           <button className="btn btn-ghost" onClick={handleWordsTemplate}>
             下载模板
           </button>
         </div>
-        <div className="row">
+        <div className="row dt-row dt-row-file">
           <input
             ref={wordsInputRef}
             type="file"
@@ -275,7 +275,7 @@ export default function DataTransfer() {
           />
           {wordsFile && <span className="muted">{wordsFile.name}</span>}
         </div>
-        <div className="row">
+        <div className="row dt-row">
           <button
             className="btn btn-primary"
             onClick={handleWordsImport}
@@ -301,12 +301,12 @@ export default function DataTransfer() {
         <p className="muted">
           表头必须是 subject,title，可加 content,analysis。subject 用 math/english/politics/major。
         </p>
-        <div className="row">
+        <div className="row dt-row">
           <button className="btn btn-ghost" onClick={handleMistakesTemplate}>
             下载模板
           </button>
         </div>
-        <div className="row">
+        <div className="row dt-row dt-row-file">
           <input
             ref={mistakesInputRef}
             type="file"
@@ -320,7 +320,7 @@ export default function DataTransfer() {
           />
           {mistakesFile && <span className="muted">{mistakesFile.name}</span>}
         </div>
-        <div className="row">
+        <div className="row dt-row">
           <button
             className="btn btn-primary"
             onClick={handleMistakesImport}

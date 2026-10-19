@@ -204,14 +204,14 @@ export default function Pomodoro() {
         <h1>番茄专注</h1>
       </div>
 
-      <div className="timer-wrap">
-        <div className="timer-mode">{mode === 'focus' ? '专注' : '休息'}</div>
-        <div className="timer-display">{fmt(remaining)}</div>
+      <div className="timer-wrap pomo-timer-wrap">
+        <div className="timer-mode pomo-mode">{mode === 'focus' ? '专注' : '休息'}</div>
+        <div className="timer-display pomo-display">{fmt(remaining)}</div>
 
-        <div className="form-row">
-          <label>科目</label>
+        <div className="form-row pomo-subject-row">
+          <label className="pomo-subject-label">科目</label>
           <select
-            className="select"
+            className="select pomo-subject-select"
             value={subject}
             disabled={mode === 'break'}
             onChange={(e) => setSubject(e.target.value as SubjectKey)}
@@ -224,22 +224,22 @@ export default function Pomodoro() {
           </select>
         </div>
 
-        <div className="form-row">
-          <button className="btn btn-primary" onClick={toggleRunning}>
+        <div className="form-row pomo-actions">
+          <button className="btn btn-primary pomo-btn" onClick={toggleRunning}>
             {running ? '暂停' : '开始'}
           </button>
-          <button className="btn btn-ghost" onClick={reset}>
+          <button className="btn btn-ghost pomo-btn" onClick={reset}>
             重置
           </button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="stat-card">
+      <div className="card pomo-stats-card">
+        <div className="stat-card pomo-stat-card">
           <div className="stat-value">{todayMinutes}</div>
           <div className="stat-label">今日专注（分钟）</div>
         </div>
-        <p className="stat-label">
+        <p className="stat-label pomo-stat-hint">
           专注 {settings.pomodoroMinutes} 分钟 / 休息 {settings.breakMinutes} 分钟
         </p>
       </div>

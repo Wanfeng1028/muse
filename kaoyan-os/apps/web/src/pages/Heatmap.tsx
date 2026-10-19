@@ -160,12 +160,12 @@ export default function Heatmap() {
       {error && <div className="error-box">{error}</div>}
       {loading && <div className="loading">加载中…</div>}
 
-      <div className="card">
-        <div className="form-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>
+      <div className="card hm-toolbar">
+        <div className="hm-toolbar-head">
+          <h2 className="hm-range">
             {data ? `${data.startDate} ~ ${data.endDate}` : '—'}
           </h2>
-          <div className="form-row" style={{ gap: 8, alignItems: 'center' }}>
+          <div className="hm-month-btns">
             {MONTH_OPTIONS.map((m: Months) => (
               <button
                 key={m}
@@ -180,7 +180,7 @@ export default function Heatmap() {
         </div>
       </div>
 
-      <div className="grid grid-3">
+      <div className="grid grid-3 hm-stat-grid">
         <div className="stat-card">
           <div className="stat-value">{data ? data.currentStreak : 0} 天</div>
           <div className="stat-label">当前连续打卡</div>
@@ -218,10 +218,12 @@ export default function Heatmap() {
                       selectedDate === day.date ? ' hm-selected' : ''
                     }`;
                     return (
-                      <div
+                      <button
+                        type="button"
                         className={cls}
                         key={ri}
                         title={cellTitle(day)}
+                        aria-label={cellTitle(day)}
                         onClick={() => setSelectedDate(day.date)}
                       />
                     );
@@ -261,7 +263,7 @@ export default function Heatmap() {
           {daySessions.length === 0 ? (
             <div className="empty">当日无专注会话记录</div>
           ) : (
-            <table className="table">
+            <table className="table hm-session-table">
               <thead>
                 <tr>
                   <th>科目</th>
@@ -272,10 +274,11 @@ export default function Heatmap() {
               <tbody>
                 {daySessions.map((s: FocusSession) => (
                   <tr key={s.id}>
-                    <td>{SUBJECTS.find((x) => x.key === s.subject)?.name ?? s.subject}</td>
-
-                    <td>{s.minutes}</td>
-                    <td>{s.note}</td>
+                    <td data-label="科目">
+                      {SUBJECTS.find((x) => x.key === s.subject)?.name ?? s.subject}
+                    </td>
+                    <td data-label="分钟">{s.minutes}</td>
+                    <td data-label="备注">{s.note}</td>
                   </tr>
                 ))}
               </tbody>

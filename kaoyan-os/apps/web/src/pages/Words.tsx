@@ -139,37 +139,57 @@ export default function Words() {
           <>
             <div
               className={`flashcard${flipped ? ' flipped' : ''}`}
+              role="button"
+              tabIndex={0}
               onClick={() => setFlipped((v) => !v)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setFlipped((v) => !v);
+                }
+              }}
             >
               <div className="flashcard-inner">
                 <div className="flashcard-front">
-                  <div style={{ fontSize: 28, fontWeight: 700 }}>{current.word}</div>
-                  <div style={{ color: '#888', marginTop: 8 }}>{current.phonetic}</div>
+                  <div className="flashcard-word">{current.word}</div>
+                  <div className="flashcard-phonetic">{current.phonetic}</div>
                 </div>
                 <div className="flashcard-back">
-                  <div style={{ fontSize: 18 }}>{current.meaning}</div>
+                  <div className="flashcard-meaning">{current.meaning}</div>
                   {current.example && (
-                    <div style={{ marginTop: 12, color: '#666' }}>{current.example}</div>
+                    <div className="flashcard-example">{current.example}</div>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="grade-row">
-              <button className="btn btn-danger" onClick={() => handleGrade(0)}>
+              <button
+                type="button"
+                className="btn btn-danger grade-btn"
+                onClick={() => handleGrade(0)}
+              >
                 不会
               </button>
-              <button className="btn btn-ghost" onClick={() => handleGrade(1)}>
+              <button
+                type="button"
+                className="btn btn-ghost grade-btn"
+                onClick={() => handleGrade(1)}
+              >
                 模糊
               </button>
-              <button className="btn btn-primary" onClick={() => handleGrade(2)}>
+              <button
+                type="button"
+                className="btn btn-primary grade-btn"
+                onClick={() => handleGrade(2)}
+              >
                 熟练
               </button>
             </div>
           </>
         ) : (
           <div className="empty">
-            {total > 0 ? `今日复习完成，共 ${total} 个单词 🎉` : '今日暂无需要复习的单词'}
+            {total > 0 ? `今日复习完成，共 ${total} 个单词` : '今日暂无需要复习的单词'}
           </div>
         )}
       </div>
@@ -177,16 +197,13 @@ export default function Words() {
       {/* ② 学习进度 */}
       <div className="card" style={{ marginTop: 16 }}>
         <h2>学习进度</h2>
-        <div className="form-row" style={{ gap: 24, marginBottom: 12 }}>
+        <div className="form-row words-stat-row" style={{ marginBottom: 12 }}>
           <span className="stat-label">词库总数 {words.length}</span>
           <span className="stat-label">已学习 {learned}</span>
           <span className="stat-label">今日待复习 {total}</span>
         </div>
         <div className="progress" style={{ marginBottom: 12 }}>
-          <div
-            className="progress-bar"
-            style={{ width: `${learnedRate}%`, backgroundColor: '#206bc4' }}
-          />
+          <div className="progress-bar" style={{ width: `${learnedRate}%` }} />
         </div>
         <div className="text-muted" style={{ fontSize: 13 }}>
           已学习 {learned} / {words.length}（{learnedRate}%）
@@ -198,7 +215,7 @@ export default function Words() {
       <div className="card" style={{ marginTop: 16 }}>
         <h2>词表管理</h2>
 
-        <form className="form-grid" onSubmit={handleSubmit} style={{ marginBottom: 16 }}>
+        <form className="form-grid words-form-grid" onSubmit={handleSubmit} style={{ marginBottom: 16 }}>
           <input
             className="input"
             placeholder="单词"
@@ -228,13 +245,12 @@ export default function Words() {
           </button>
         </form>
 
-        <div className="form-row" style={{ marginBottom: 12 }}>
+        <div className="form-row words-filter-row" style={{ marginBottom: 12 }}>
           <label className="form-label" style={{ margin: 0 }}>
             词库来源
           </label>
           <select
-            className="form-select"
-            style={{ width: 180 }}
+            className="form-select words-source-select"
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value as 'all' | WordSource)}
           >
@@ -255,34 +271,40 @@ export default function Words() {
         ) : filteredWords.length === 0 ? (
           <div className="empty">{sourceFilter === 'all' ? '暂无单词' : '该来源暂无单词'}</div>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>单词</th>
-                <th>音标</th>
-                <th>释义</th>
-                <th>来源</th>
-                <th>到期日</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredWords.map((w) => (
-                <tr key={w.id}>
-                  <td>{w.word}</td>
-                  <td>{w.phonetic}</td>
-                  <td>{w.meaning}</td>
-                  <td>{WORD_SOURCES[w.source] ?? w.source}</td>
-                  <td>{w.state.dueDate}</td>
-                  <td>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(w.id)}>
-                      删除
-                    </button>
-                  </td>
+          <div className="words-table-wrap">
+            <table className="table words-table">
+              <thead>
+                <tr>
+                  <th>单词</th>
+                  <th>音标</th>
+                  <th>释义</th>
+                  <th>来源</th>
+                  <th>到期日</th>
+                  <th>操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredWords.map((w) => (
+                  <tr key={w.id}>
+                    <td data-label="单词">{w.word}</td>
+                    <td data-label="音标">{w.phonetic}</td>
+                    <td data-label="释义">{w.meaning}</td>
+                    <td data-label="来源">{WORD_SOURCES[w.source] ?? w.source}</td>
+                    <td data-label="到期日">{w.state.dueDate}</td>
+                    <td data-label="操作">
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleDelete(w.id)}
+                      >
+                        删除
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

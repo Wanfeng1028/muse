@@ -167,6 +167,7 @@ add_executable(docseek_tests
   tests/test_adjacent_probe_v018.cpp
   tests/test_synonyms_v018.cpp
   tests/test_wave5_v0181.cpp
+  tests/test_failure_injection.cpp
   tests/test_locate.cpp
   tests/test_http_server.cpp
   tests/test_watcher.cpp

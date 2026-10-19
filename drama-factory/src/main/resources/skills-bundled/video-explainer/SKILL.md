@@ -43,6 +43,8 @@ For repository development, run commands from the repository root.
 
 ## Workflow
 
+This section mentions paths like `scripts/video-explainer.mjs`, `scripts/check_storyboard.py`, `scripts/verify-shorts.mjs`, `scripts/video_release_gate.py`, and `../../docs/RELEASE_GATE.md`. All of them are relative to the root of the cloned `claude-video-kit` repository described in the Install section above, not to this skill's own directory — this skill folder only ships `SKILL.md`, `agents/`, and `references/`, so running those commands from inside the skill directory will not find anything.
+
 1. Read the brief and run the capability challenge above. Select `direct_artifact`, `agent_orchestrated`, or `legacy_remotion`. Prefer the simplest strategy that can plausibly pass the same final acceptance contract.
 
 2. If using `direct_artifact` or `agent_orchestrated`, produce the final 9:16 MP4 without manufacturing legacy intermediate files just to satisfy the old recipe. Then skip to Step 6.

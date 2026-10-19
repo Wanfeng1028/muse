@@ -214,8 +214,8 @@ feed the compositor:
 3. **The drawn layer** — background, cards, typography, transitions:
    `scripts/promo_kit.py`.
 
-A film is then a list of `(name, function, length_in_frames)`; see
-`examples/film_example.py`. `--only <beat>` renders that beat alone, numbered
+A film is then a list of `(name, function, length_in_frames)` — each beat names
+a draw function and how many frames it occupies. `--only <beat>` renders that beat alone, numbered
 from 0 — a preview into a scratch directory. To re-render one beat IN PLACE,
 pass its global frame range from `--map` as `--start/--end` (pad by the
 12-frame dissolve on each side); `--only` into the real frame directory
@@ -225,8 +225,8 @@ overwrites the film's opening frames instead, and the encode looks fine.
 Feed the state machine the way the product does — the stdout its subprocesses
 print, the dicts its readers emit, the actions its store dispatches — instead of
 setting label text. The capture then cannot disagree with the shipping product,
-and progress bars, counters and charts animate for free.
-`examples/drivers_example.py` shows the shape for both Qt and web.
+and progress bars, counters and charts animate for free. The same shape works
+for both Qt and web drivers: feed each its own native event/output stream.
 
 ### Grab PANELS, not pixel crops of a window
 Cropping a fixed rectangle out of a window capture is what makes a film look

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="osk.pageTitle">官方 Skill 库 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1 data-i18n="osk.heading">官方 Skill 库</h1>
+    <p class="text-secondary" data-i18n="osk.subtitle">官方收录的视频剪辑 skills，一键安装到本地。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label" for="officialSearch" data-i18n="osk.search">搜索</label>
+          <input type="text" class="form-control" id="officialSearch" data-i18n-ph="osk.searchPh" placeholder="按名称、描述、作者搜索">
+        </div>
+      </div>
+      <div class="row g-3 mt-1" id="officialGrid"></div>
+      <div class="text-secondary text-center py-4" id="officialEmpty" data-i18n="osk.empty" hidden>没有找到匹配的 Skill</div>
+      <div class="alert alert-danger mt-3" id="officialError" hidden></div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 class="card-title" data-i18n="osk.installedTitle">已安装</h3>
+    </div>
+    <div class="card-body">
+      <div class="row g-3" id="installedGrid"></div>
+      <div class="text-secondary text-center py-4" id="installedEmpty" data-i18n="osk.installedEmpty" hidden>还没有安装任何官方 Skill</div>
+    </div>
+  </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+  <div id="toast" class="alert alert-info" role="alert" hidden></div>
+</div>
+
+<script src="/i18n.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/official-skills.js"></script>
+</body>
+</html>

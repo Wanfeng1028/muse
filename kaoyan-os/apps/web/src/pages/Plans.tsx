@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { api } from '../api';
 import {
   SUBJECTS,
   type SubjectKey,
@@ -111,7 +112,7 @@ export default function Plans() {
     <div className="page">
       <div className="page-header">
         <h1>复习计划</h1>
-        <div className="form-row">
+        <div className="form-row plans-filter-row">
           <input
             className="input"
             type="date"
@@ -134,8 +135,8 @@ export default function Plans() {
       </div>
 
       {/* 新增计划 */}
-      <form className="card" onSubmit={handleCreate}>
-        <div className="form-grid">
+      <form className="card plans-create-form" onSubmit={handleCreate}>
+        <div className="form-grid plans-form-grid">
           <input
             className="input"
             type="text"
@@ -175,7 +176,9 @@ export default function Plans() {
       </form>
 
       {/* 概要 */}
-      {summary && <div className="stat-card">{summaryText}</div>}
+      {summary && (
+        <div className="stat-card plans-summary-card">{summaryText}</div>
+      )}
 
       {error && <div className="error-box">{error}</div>}
 
@@ -184,33 +187,41 @@ export default function Plans() {
       ) : plans.length === 0 ? (
         <div className="empty">暂无计划</div>
       ) : (
-        <div className="list">
+        <div className="list plans-list">
           {plans.map((plan) => {
             const s = subjectMap[plan.subject];
             return (
-              <div className="list-item" key={plan.id}>
-                <input
-                  type="checkbox"
-                  checked={plan.done}
-                  onChange={() => void handleToggle(plan)}
-                />
-                <span className={`badge badge-${plan.subject}`}>{s?.name ?? plan.subject}</span>
-                <span
-                  style={{
-                    flex: 1,
-                    textDecoration: plan.done ? 'line-through' : 'none',
-                    color: plan.done ? '#999' : 'inherit',
-                  }}
-                >
-                  {plan.title}
-                </span>
-                <span>{plan.plannedMinutes} 分钟</span>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => void handleDelete(plan.id)}
-                >
-                  删除
-                </button>
+              <div className="list-item plans-list-item" key={plan.id}>
+                <div className="plans-item-main">
+                  <input
+                    className="plans-checkbox"
+                    type="checkbox"
+                    checked={plan.done}
+                    onChange={() => void handleToggle(plan)}
+                  />
+                  <span className={`badge badge-${plan.subject}`}>{s?.name ?? plan.subject}</span>
+                  <span
+                    className="plans-item-title"
+                    style={{
+                      flex: 1,
+                      textDecoration: plan.done ? 'line-through' : 'none',
+                      color: plan.done ? '#999' : 'inherit',
+                    }}
+                  >
+                    {plan.title}
+                  </span>
+                </div>
+                <div className="plans-item-meta">
+                  <span className="plans-item-minutes" data-label="时长">
+                    {plan.plannedMinutes} 分钟
+                  </span>
+                  <button
+                    className="btn btn-danger btn-sm plans-item-del"
+                    onClick={() => void handleDelete(plan.id)}
+                  >
+                    删除
+                  </button>
+                </div>
               </div>
             );
           })}

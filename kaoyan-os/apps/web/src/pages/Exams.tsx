@@ -222,7 +222,7 @@ export default function Exams() {
   }, [trend]);
 
   return (
-    <div className="page">
+    <div className="page exams-page">
       <div className="page-header">
         <h1>真题统计</h1>
       </div>
@@ -335,10 +335,10 @@ export default function Exams() {
       </div>
 
       {/* 本阶段汇总 */}
-      <div className="card">
-        <div className="form-row" style={{ justifyContent: 'space-between' }}>
+      <div className="card exams-summary">
+        <div className="form-row exams-summary-head" style={{ justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0 }}>本阶段汇总</h2>
-          <span style={{ color: '#888', fontSize: 13 }}>{SUBJECT_NAME[trendSubject]}</span>
+          <span className="exams-muted" style={{ fontSize: 13 }}>{SUBJECT_NAME[trendSubject]}</span>
         </div>
         {summaryLoading ? (
           <div className="loading">加载中…</div>
@@ -347,27 +347,39 @@ export default function Exams() {
         ) : !summary || summary.count === 0 ? (
           <div className="empty">还没有模考记录，先在上面记一场吧</div>
         ) : (
-          <div className="form-row" style={{ marginTop: 12, gap: 24 }}>
-            <div>
-              <div style={{ color: '#888', fontSize: 13 }}>模考场次</div>
-              <div style={{ fontSize: 24, fontWeight: 600 }}>{summary.count}</div>
+          <div className="form-row exams-summary-grid" style={{ marginTop: 12, gap: 24 }}>
+            <div className="exams-summary-item">
+              <div className="exams-summary-label" style={{ fontSize: 13 }}>模考场次</div>
+              <div className="exams-summary-value" style={{ fontSize: 24, fontWeight: 600 }}>{summary.count}</div>
             </div>
-            <div>
-              <div style={{ color: '#888', fontSize: 13 }}>平均分</div>
-              <div style={{ fontSize: 24, fontWeight: 600 }}>{summary.avgScore}</div>
+            <div className="exams-summary-item">
+              <div className="exams-summary-label" style={{ fontSize: 13 }}>平均分</div>
+              <div className="exams-summary-value" style={{ fontSize: 24, fontWeight: 600 }}>{summary.avgScore}</div>
             </div>
-            <div>
-              <div style={{ color: '#888', fontSize: 13 }}>平均得分率</div>
-              <div style={{ fontSize: 24, fontWeight: 600 }}>{(summary.avgRate * 100).toFixed(1)}%</div>
+            <div className="exams-summary-item">
+              <div className="exams-summary-label" style={{ fontSize: 13 }}>平均得分率</div>
+              <div className="exams-summary-value" style={{ fontSize: 24, fontWeight: 600 }}>{(summary.avgRate * 100).toFixed(1)}%</div>
             </div>
-            <div>
-              <div style={{ color: '#888', fontSize: 13 }}>最高分</div>
-              <div style={{ fontSize: 24, fontWeight: 600 }}>{summary.bestScore}</div>
-              <div style={{ color: '#888', fontSize: 12 }}>{summary.bestTakenAt}</div>
+            <div className="exams-summary-item">
+              <div className="exams-summary-label" style={{ fontSize: 13 }}>最高分</div>
+              <div className="exams-summary-value" style={{ fontSize: 24, fontWeight: 600 }}>{summary.bestScore}</div>
+              <div className="exams-summary-sub" style={{ fontSize: 12 }}>{summary.bestTakenAt}</div>
             </div>
-            <div>
-              <div style={{ color: '#888', fontSize: 13 }}>进步幅度</div>
-              <div style={{ fontSize: 24, fontWeight: 600, color: summary.count < 2 ? '#333' : summary.improvement > 0 ? '#22b07d' : summary.improvement < 0 ? '#e05d5d' : '#333' }}>
+            <div className="exams-summary-item">
+              <div className="exams-summary-label" style={{ fontSize: 13 }}>进步幅度</div>
+              <div
+                className={
+                  'exams-summary-value exams-improve ' +
+                  (summary.count < 2
+                    ? 'is-flat'
+                    : summary.improvement > 0
+                    ? 'is-up'
+                    : summary.improvement < 0
+                    ? 'is-down'
+                    : 'is-flat')
+                }
+                style={{ fontSize: 24, fontWeight: 600 }}
+              >
                 {summary.count < 2 ? '—' : summary.improvement > 0 ? `+${summary.improvement} 分` : summary.improvement < 0 ? `${summary.improvement} 分` : '持平'}
               </div>
             </div>
@@ -377,9 +389,9 @@ export default function Exams() {
 
       {/* 趋势图 */}
       <div className="card">
-        <div className="form-row" style={{ justifyContent: 'space-between' }}>
+        <div className="form-row exams-trend-head" style={{ justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0 }}>得分率趋势</h2>
-          <label>
+          <label className="exams-trend-subject">
             科目{' '}
             <select
               className="select"
@@ -407,11 +419,11 @@ export default function Exams() {
           >
             {/* 坐标轴底线 */}
             <line
+              className="exams-trend-axis"
               x1={40}
               y1={156}
               x2={560}
               y2={156}
-              stroke="#d8dce6"
               strokeWidth={1}
             />
             {/* 折线 */}
@@ -424,13 +436,13 @@ export default function Exams() {
             {/* 圆点与百分比标注 */}
             {trendChart.points.map((p, i) => (
               <g key={i}>
-                <circle cx={p.x} cy={p.y} r={4} fill="#4f7cff" />
+                <circle className="exams-trend-dot" cx={p.x} cy={p.y} r={4} />
                 <text
+                  className="exams-trend-text"
                   x={p.x}
                   y={p.y - 8}
                   fontSize={12}
                   textAnchor="middle"
-                  fill="#333"
                 >
                   {(p.rate * 100).toFixed(0)}%
                 </text>
@@ -443,18 +455,18 @@ export default function Exams() {
       </div>
 
       {/* 记录表 */}
-      <div className="card">
-        <div className="form-row" style={{ justifyContent: 'space-between' }}>
+      <div className="card exams-records">
+        <div className="form-row exams-records-head" style={{ justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0 }}>考试记录</h2>
-          <div className="form-row" style={{ gap: 8 }}>
+          <div className="form-row exams-records-actions" style={{ gap: 8 }}>
             <button
-              className="btn btn-sm"
+              className="btn btn-sm exams-export-btn"
               onClick={handleExport}
               disabled={exporting}
             >
               {exporting ? '导出中…' : '导出 CSV'}
             </button>
-            <label>
+            <label className="exams-filter">
               筛选{' '}
               <select
                 className="select"
@@ -482,7 +494,7 @@ export default function Exams() {
         ) : records.length === 0 ? (
           <div className="empty">暂无记录</div>
         ) : (
-          <table className="table">
+          <table className="table exams-table">
             <thead>
               <tr>
                 <th>日期</th>
@@ -497,19 +509,19 @@ export default function Exams() {
             <tbody>
               {records.map((r) => (
                 <tr key={r.id}>
-                  <td>{r.takenAt}</td>
-                  <td>
+                  <td data-label="日期">{r.takenAt}</td>
+                  <td data-label="科目">
                     <span className={`badge badge-${r.subject}`}>
                       {SUBJECT_NAME[r.subject]}
                     </span>
                   </td>
-                  <td>{r.paper}</td>
-                  <td>
+                  <td data-label="试卷">{r.paper}</td>
+                  <td data-label="得分">
                     {r.score}/{r.totalScore}
                   </td>
-                  <td>{rateOf(r)}</td>
-                  <td>{r.durationMinutes} 分钟</td>
-                  <td>
+                  <td data-label="得分率">{rateOf(r)}</td>
+                  <td data-label="时长">{r.durationMinutes} 分钟</td>
+                  <td data-label="操作" className="exams-table-action">
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(r.id)}

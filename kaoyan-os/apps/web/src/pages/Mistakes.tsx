@@ -151,27 +151,29 @@ export default function Mistakes() {
     <div className="page">
       {/* 掌握率汇总 */}
       {summary && summary.total > 0 && (
-        <div className="card" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-          <div>
-            <div className="stat-label">全部错题</div>
-            <div className="stat-value">{summary.total}</div>
-          </div>
-          <div>
-            <div className="stat-label">已掌握</div>
-            <div className="stat-value" style={{ color: '#22b07d' }}>
-              {summary.mastered}
+        <div className="card mistakes-summary">
+          <div className="mistakes-summary-track">
+            <div className="mistakes-summary-item">
+              <div className="stat-label">全部错题</div>
+              <div className="stat-value">{summary.total}</div>
             </div>
-          </div>
-          <div>
-            <div className="stat-label">未掌握</div>
-            <div className="stat-value" style={{ color: '#e05d5d' }}>
-              {summary.unmastered}
+            <div className="mistakes-summary-item">
+              <div className="stat-label">已掌握</div>
+              <div className="stat-value mistakes-summary-mastered">
+                {summary.mastered}
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="stat-label">掌握率</div>
-            <div className="stat-value">
-              {(summary.masteredRate * 100).toFixed(1)}%
+            <div className="mistakes-summary-item">
+              <div className="stat-label">未掌握</div>
+              <div className="stat-value mistakes-summary-unmastered">
+                {summary.unmastered}
+              </div>
+            </div>
+            <div className="mistakes-summary-item">
+              <div className="stat-label">掌握率</div>
+              <div className="stat-value">
+                {(summary.masteredRate * 100).toFixed(1)}%
+              </div>
             </div>
           </div>
         </div>
@@ -180,7 +182,7 @@ export default function Mistakes() {
       {/* 页头与筛选栏 */}
       <div className="page-header">
         <h1>错题本</h1>
-        <div className="form-row">
+        <div className="form-row mistakes-filter-row">
           {/* 科目筛选 */}
           <select
             className="select"
@@ -217,7 +219,7 @@ export default function Mistakes() {
       </div>
 
       {/* 新增错题表单 */}
-      <form className="card" onSubmit={handleSubmit}>
+      <form className="card mistakes-form" onSubmit={handleSubmit}>
         <div className="form-grid">
           <select
             className="select"
@@ -281,20 +283,24 @@ export default function Mistakes() {
           {list.map((m) => {
             const isOpen = expandedId === m.id
             return (
-              <div className="list-item" key={m.id}>
-                <div className="form-row">
+              <div className="list-item mistakes-item" key={m.id}>
+                <div className="mistakes-item-head">
                   <span className={`badge badge-${m.subject}`}>
                     {subjectName(m.subject)}
                   </span>
-                  {/* 点击标题展开/收起详情 */}
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    type="button"
-                    onClick={() => setExpandedId(isOpen ? null : m.id)}
-                  >
-                    {m.title}
-                  </button>
-                  <span className="stat-label">{formatDate(m.createdAt)}</span>
+                  <span className="stat-label mistakes-item-date">
+                    {formatDate(m.createdAt)}
+                  </span>
+                </div>
+                {/* 点击标题展开/收起详情 */}
+                <button
+                  className="btn btn-ghost btn-sm mistakes-item-title"
+                  type="button"
+                  onClick={() => setExpandedId(isOpen ? null : m.id)}
+                >
+                  {m.title}
+                </button>
+                <div className="mistakes-item-actions">
                   {/* 掌握状态切换 */}
                   <button
                     className="btn btn-sm"
@@ -315,12 +321,12 @@ export default function Mistakes() {
 
                 {/* 展开详情 */}
                 {isOpen && (
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <div style={{ whiteSpace: 'pre-wrap' }}>
+                  <div className="mistakes-item-detail">
+                    <div className="mistakes-item-detail-block">
                       <strong>题目：</strong>
                       {m.content}
                     </div>
-                    <div style={{ whiteSpace: 'pre-wrap', marginTop: '0.5rem' }}>
+                    <div className="mistakes-item-detail-block">
                       <strong>解析：</strong>
                       {m.analysis}
                     </div>

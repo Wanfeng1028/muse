@@ -62,7 +62,7 @@ export default function Login() {
   };
 
   return (
-    <div className="login-wrap">
+    <div className="login-wrap login-page">
       <div className="login-card">
         <div className="login-head">
           <div className="login-brand">考研指挥舱</div>

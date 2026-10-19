@@ -47,6 +47,155 @@ function daysUntil(examDate: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+// 底部导航前 5 个主 tab
+const MOBILE_TABS = [
+  { to: '/', label: '仪表盘', end: true },
+  { to: '/plans', label: '复习计划', end: false },
+  { to: '/mistakes', label: '错题本', end: false },
+  { to: '/words', label: '单词', end: false },
+  { to: '/exams', label: '真题', end: false },
+];
+
+// 更多动作表条目：除番茄专注走路由外，其余为回调
+type MoreAction = {
+  key: string;
+  label: string;
+  to?: string;
+  onSelect?: () => void;
+};
+
+// 移动端底部导航 + 更多动作表
+function MobileNav({
+  username,
+  theme,
+  remainDays,
+  examDate,
+  onToggleTheme,
+}: {
+  username: string;
+  theme: Theme;
+  remainDays: number;
+  examDate: string;
+  onToggleTheme: () => void;
+}) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const onLogout = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.logout();
+      window.location.href = '/login';
+    } catch (e) {
+      console.warn('[logout] 失败', e);
+      setBusy(false);
+    }
+  };
+
+  const closeSheet = () => setSheetOpen(false);
+
+  const actions: MoreAction[] = [
+    { key: 'pomodoro', label: '番茄专注', to: '/pomodoro' },
+    { key: 'vocab', label: '词库浏览', to: '/vocab' },
+    { key: 'weekly', label: '周报', to: '/weekly' },
+    { key: 'heatmap', label: '自律热力图', to: '/heatmap' },
+    { key: 'data', label: '数据导入导出', to: '/data' },
+    {
+      key: 'theme',
+      label: theme === 'dark' ? '切换浅色模式' : '切换深色模式',
+      onSelect: () => {
+        onToggleTheme();
+        closeSheet();
+      },
+    },
+    {
+      key: 'logout',
+      label: busy ? '退出中…' : '退出登录',
+      onSelect: () => {
+        void onLogout();
+      },
+    },
+  ];
+
+  return (
+    <>
+      <nav className="mobile-nav" aria-label="底部导航">
+        {MOBILE_TABS.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              isActive ? 'mobile-nav-tab active' : 'mobile-nav-tab'
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          className={sheetOpen ? 'mobile-nav-tab active' : 'mobile-nav-tab'}
+          onClick={() => setSheetOpen((v) => !v)}
+          aria-expanded={sheetOpen}
+        >
+          更多
+        </button>
+      </nav>
+
+      {sheetOpen ? (
+        <div className="mobile-sheet-mask" onClick={closeSheet}>
+          <div
+            className="mobile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="更多功能"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mobile-sheet-header">
+              <span className="mobile-sheet-user">{username}</span>
+              <span className="mobile-sheet-countdown">
+                距考试还有 {remainDays} 天（{examDate}）
+              </span>
+            </div>
+            <div className="mobile-sheet-list">
+              {actions.map((a) =>
+                a.to ? (
+                  <NavLink
+                    key={a.key}
+                    to={a.to}
+                    className="mobile-sheet-item"
+                    onClick={closeSheet}
+                  >
+                    {a.label}
+                  </NavLink>
+                ) : (
+                  <button
+                    key={a.key}
+                    type="button"
+                    className="mobile-sheet-item"
+                    onClick={a.onSelect}
+                    disabled={a.key === 'logout' && busy}
+                  >
+                    {a.label}
+                  </button>
+                ),
+              )}
+            </div>
+            <button
+              type="button"
+              className="mobile-sheet-cancel"
+              onClick={closeSheet}
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 type AuthState =
   | { status: 'loading' }
   | { status: 'authed'; username: string }
@@ -164,6 +313,14 @@ export default function App() {
           <UserMenu username={auth.username} />
         </div>
       </aside>
+
+      <MobileNav
+        username={auth.username}
+        theme={settings.theme}
+        remainDays={remainDays}
+        examDate={settings.examDate}
+        onToggleTheme={toggleTheme}
+      />
 
       <main className="main">
         <Routes>

@@ -106,10 +106,10 @@ export default function Dashboard() {
       </div>
 
       {/* 三张统计卡片 */}
-      <div className="grid grid-3">
+      <div className="grid grid-3 dash-stat-grid">
         <div className="stat-card card">
           <div className="stat-label">今日计划完成</div>
-          <div className="stat-value">
+          <div className="stat-value dash-stat-value">
             {summary ? `${summary.done}/${summary.total}` : '0/0'}
           </div>
           <div className="progress">
@@ -122,7 +122,7 @@ export default function Dashboard() {
 
         <div className="stat-card card">
           <div className="stat-label">今日专注分钟</div>
-          <div className="stat-value">
+          <div className="stat-value dash-stat-value">
             {todayMinutes} / {dailyGoal}
           </div>
           <div className="progress">
@@ -135,16 +135,16 @@ export default function Dashboard() {
 
         <div className="stat-card card">
           <div className="stat-label">待复习单词数</div>
-          <div className="stat-value">{dueWords.length}</div>
+          <div className="stat-value dash-stat-value">{dueWords.length}</div>
         </div>
       </div>
 
       {/* 第二行：专注图表 + 真题得分率 */}
-      <div className="grid grid-2">
+      <div className="grid grid-2 dash-row2">
         <div className="card">
           <h2>近 7 天专注</h2>
           {focus && focus.days.length > 0 ? (
-            <div className="chart-bars">
+            <div className="chart-bars dash-chart">
               {focus.days.map((d) => (
                 <div className="bar-col" key={d.date}>
                   <div
@@ -168,14 +168,23 @@ export default function Dashboard() {
         <div className="card">
           <h2>各科真题得分率</h2>
           {recentExams.length > 0 ? (
-            <ul className="list">
+            <ul className="list dash-exam-list">
               {recentExams.map((e) => {
                 const rate = e.totalScore > 0 ? (e.score / e.totalScore) * 100 : 0;
                 return (
-                  <li className="list-item" key={e.id}>
-                    <span>{e.paper}</span>
-                    <span className={subjectBadge(e.subject)}>{subjectName(e.subject)}</span>
-                    <span>{rate.toFixed(1)}%</span>
+                  <li className="list-item dash-exam-item" key={e.id}>
+                    <span className="dash-exam-paper" data-label="试卷">
+                      {e.paper}
+                    </span>
+                    <span
+                      className={`${subjectBadge(e.subject)} dash-exam-subject`}
+                      data-label="科目"
+                    >
+                      {subjectName(e.subject)}
+                    </span>
+                    <span className="dash-exam-rate" data-label="得分率">
+                      {rate.toFixed(1)}%
+                    </span>
                   </li>
                 );
               })}
@@ -187,14 +196,21 @@ export default function Dashboard() {
       </div>
 
       {/* 未掌握错题 */}
-      <div className="card">
+      <div className="card dash-mistake-card">
         <h2>未掌握错题（{mistakes.length}）</h2>
         {mistakes.length > 0 ? (
-          <ul className="list">
+          <ul className="list dash-mistake-list">
             {mistakes.slice(0, 5).map((m) => (
-              <li className="list-item" key={m.id}>
-                <span className={subjectBadge(m.subject)}>{subjectName(m.subject)}</span>
-                <span>{m.title}</span>
+              <li className="list-item dash-mistake-item" key={m.id}>
+                <span
+                  className={`${subjectBadge(m.subject)} dash-mistake-subject`}
+                  data-label="科目"
+                >
+                  {subjectName(m.subject)}
+                </span>
+                <span className="dash-mistake-title" data-label="题目">
+                  {m.title}
+                </span>
               </li>
             ))}
           </ul>
