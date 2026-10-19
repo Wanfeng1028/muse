@@ -7,6 +7,7 @@ import time
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ledger import matching, statement_parser
@@ -34,6 +35,7 @@ from ledger.schemas import (
     ClaimTransferIn,
     MatchRuleCreate,
     MatchRuleOut,
+    MatchRuleUpdate,
     MerchantAliasOut,
     MerchantAliasUpdate,
     ParsePreviewOut,
@@ -239,10 +241,12 @@ async def _load_rules(session: AsyncSession) -> list[dict]:
             continue
         rules.append(
             {
+                "id": r.id,
                 "keyword": r.keyword,
                 "category_id": r.category_id,
                 "direction": r.direction,
                 "priority": r.priority,
+                "is_enabled": r.is_enabled,
             }
         )
     return rules
@@ -938,10 +942,11 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
             continue
 
         # 规则匹配
-        rule_hit = matching.match_by_rules(counterparty, summary, direction, rules)
+        rule_hit = matching.match_by_rules(counterparty, summary, direction, rules, include_rule_id=True)
         matched_category_id: int | None = None
         matched_source: str | None = None
         matched_confidence = 0
+        matched_rule_id: int | None = None
 
         if rule_hit is not None:
             cid = rule_hit[0]
@@ -950,6 +955,7 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
                 matched_category_id = cid
                 matched_source = "rule"
                 matched_confidence = 95
+                matched_rule_id = rule_hit[2] if len(rule_hit) > 2 else None
 
         # 别名匹配：用户纠正一次即记住，优先级低于关键词规则
         if matched_category_id is None:
@@ -995,6 +1001,7 @@ async def confirm_batch(batch_id: int, session: AsyncSession = Depends(get_sessi
             item.confidence = matched_confidence
             item.transaction_id = tx.id
             item.suggested_action = "categorize"
+            item.suggested_rule_id = matched_rule_id if matched_source == "rule" else None
             auto_count += 1
             continue
 
@@ -1215,20 +1222,9 @@ async def skip_item(item_id: int, session: AsyncSession = Depends(get_session)) 
 async def list_match_rules(session: AsyncSession = Depends(get_session)) -> list[MatchRuleOut]:
     """列出所有匹配规则。"""
     rows = (await session.execute(select(MatchRule).order_by(MatchRule.priority.desc(), MatchRule.id))).scalars().all()
-    category_names = await _load_category_names(session)
     out: list[MatchRuleOut] = []
     for r in rows:
-        out.append(
-            MatchRuleOut(
-                id=r.id,
-                keyword=r.keyword,
-                category_id=r.category_id,
-                direction=r.direction,
-                priority=r.priority,
-                created_at=r.created_at,
-                category_name=category_names.get(r.category_id, ""),
-            )
-        )
+        out.append(await _rule_to_out(session, r))
     return out
 
 
@@ -1246,6 +1242,7 @@ async def create_match_rule(
         await session.execute(
             select(MatchRule).where(
                 MatchRule.keyword == payload.keyword,
+                MatchRule.pattern_type == payload.pattern_type,
                 MatchRule.direction == payload.direction,
             )
         )
@@ -1253,25 +1250,29 @@ async def create_match_rule(
     if dup is not None:
         raise HTTPException(status_code=409, detail="匹配规则已存在")
 
+    if payload.pattern_type == "regex":
+        unsafe_reason = matching.check_pattern_safety(payload.keyword)
+        if unsafe_reason is not None:
+            raise HTTPException(status_code=400, detail=unsafe_reason)
+        if matching.compile_rule_pattern(payload.keyword) is None:
+            raise HTTPException(status_code=400, detail="正则表达式非法")
     rule = MatchRule(
         keyword=payload.keyword,
+        pattern_type=payload.pattern_type,
         category_id=payload.category_id,
         direction=payload.direction,
         priority=payload.priority,
+        is_enabled=payload.is_enabled,
     )
     session.add(rule)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="匹配规则已存在")
     await session.refresh(rule)
 
-    return MatchRuleOut(
-        id=rule.id,
-        keyword=rule.keyword,
-        category_id=rule.category_id,
-        direction=rule.direction,
-        priority=rule.priority,
-        created_at=rule.created_at,
-        category_name=category.name,
-    )
+    return await _rule_to_out(session, rule)
 
 
 @router.delete("/api/match-rules/{rule_id}")
@@ -1285,8 +1286,297 @@ async def delete_match_rule(rule_id: int, session: AsyncSession = Depends(get_se
     return {"ok": True}
 
 
+_ALLOWED_PATTERN_TYPES = {"keyword", "regex", "fuzzy"}
+_ALLOWED_DIRECTIONS = {"in", "out", "both"}
+
+
+async def _rule_to_out(session: AsyncSession, rule: MatchRule) -> MatchRuleOut:
+    """把匹配规则实体转换为输出模型，附带分类名。"""
+    category_name = None
+    if rule.category_id is not None:
+        category = await session.get(Category, rule.category_id)
+        if category is not None:
+            category_name = category.name
+    return MatchRuleOut(
+        id=rule.id,
+        keyword=rule.keyword,
+        pattern_type=rule.pattern_type,
+        category_id=rule.category_id,
+        category_name=category_name,
+        direction=rule.direction,
+        priority=rule.priority,
+        is_enabled=rule.is_enabled,
+        hit_count=rule.hit_count,
+        created_at=rule.created_at,
+    )
+
+
+async def _check_rule_dup(
+    session: AsyncSession,
+    keyword: str,
+    pattern_type: str,
+    direction: str,
+    exclude_id: int | None = None,
+) -> bool:
+    """判断 keyword/pattern_type/direction 三元组是否已存在。"""
+    stmt = select(MatchRule).where(
+        MatchRule.keyword == keyword,
+        MatchRule.pattern_type == pattern_type,
+        MatchRule.direction == direction,
+    )
+    if exclude_id is not None:
+        stmt = stmt.where(MatchRule.id != exclude_id)
+    result = await session.execute(stmt)
+    return result.scalars().first() is not None
+
+
+@router.put("/api/match-rules/{rule_id}", response_model=MatchRuleOut)
+async def update_match_rule(
+    rule_id: int,
+    payload: MatchRuleUpdate,
+    session: AsyncSession = Depends(get_session),
+) -> MatchRuleOut:
+    """更新匹配规则。"""
+    rule = await session.get(MatchRule, rule_id)
+    if rule is None:
+        raise HTTPException(status_code=404, detail="匹配规则不存在")
+
+    if payload.category_id is not None:
+        category = await session.get(Category, payload.category_id)
+        if category is None:
+            raise HTTPException(status_code=404, detail="分类不存在")
+
+    if payload.pattern_type is not None and payload.pattern_type not in _ALLOWED_PATTERN_TYPES:
+        raise HTTPException(status_code=422, detail="pattern_type 非法")
+
+    if payload.direction is not None and payload.direction not in _ALLOWED_DIRECTIONS:
+        raise HTTPException(status_code=422, detail="direction 非法")
+
+    if payload.is_enabled is not None and payload.is_enabled not in (0, 1):
+        raise HTTPException(status_code=422, detail="is_enabled 必须为 0 或 1")
+
+    new_keyword = payload.keyword if payload.keyword is not None else rule.keyword
+    new_pattern_type = (
+        payload.pattern_type if payload.pattern_type is not None else rule.pattern_type
+    )
+    new_direction = payload.direction if payload.direction is not None else rule.direction
+
+    if new_pattern_type == "regex":
+        unsafe_reason = matching.check_pattern_safety(new_keyword)
+        if unsafe_reason is not None:
+            raise HTTPException(status_code=400, detail=unsafe_reason)
+        if matching.compile_rule_pattern(new_keyword) is None:
+            raise HTTPException(status_code=400, detail="正则表达式非法")
+
+    duplicated = await _check_rule_dup(
+        session, new_keyword, new_pattern_type, new_direction, exclude_id=rule_id
+    )
+    if duplicated:
+        raise HTTPException(status_code=409, detail="匹配规则已存在")
+
+    if payload.keyword is not None:
+        rule.keyword = payload.keyword
+    if payload.pattern_type is not None:
+        rule.pattern_type = payload.pattern_type
+    if payload.category_id is not None:
+        rule.category_id = payload.category_id
+    if payload.direction is not None:
+        rule.direction = payload.direction
+    if payload.priority is not None:
+        rule.priority = payload.priority
+    if payload.is_enabled is not None:
+        rule.is_enabled = payload.is_enabled
+
+    await session.commit()
+    await session.refresh(rule)
+    return await _rule_to_out(session, rule)
+
+
+@router.post("/api/match-rules/preview")
+async def preview_match_rule(
+    payload: dict,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """预览匹配结果并返回完整匹配链路。"""
+    counterparty = payload.get("counterparty", "")
+    summary = payload.get("summary", "")
+    direction = payload.get("direction", "out")
+
+    if direction not in _ALLOWED_DIRECTIONS:
+        raise HTTPException(status_code=422, detail="direction 非法")
+
+    rule_rows = (await session.execute(select(MatchRule))).scalars().all()
+    rules = [
+        {
+            "id": r.id,
+            "keyword": r.keyword,
+            "pattern_type": r.pattern_type,
+            "category_id": r.category_id,
+            "direction": r.direction,
+            "priority": r.priority,
+            "is_enabled": r.is_enabled,
+        }
+        for r in rule_rows
+    ]
+
+    alias_rows = (await session.execute(select(MerchantAlias))).scalars().all()
+    aliases = [
+        {
+            "alias": a.alias,
+            "category_id": a.category_id,
+            "direction": a.direction,
+        }
+        for a in alias_rows
+    ]
+
+    tx_type = "income" if direction == "in" else "expense"
+    history_stmt = (
+        select(Transaction)
+        .where(Transaction.type == tx_type, Transaction.category_id.is_not(None))
+        .limit(500)
+    )
+    history_rows = (await session.execute(history_stmt)).scalars().all()
+    history = [
+        {
+            "counterparty": (t.note or "").split(" ")[0],
+            "summary": t.note or "",
+            "category_id": t.category_id,
+            "direction": direction,
+        }
+        for t in history_rows
+    ]
+
+    top_categories: list[int] = []
+    hit = matching.match_best(
+        counterparty,
+        summary,
+        direction,
+        rules=rules,
+        aliases=aliases,
+        history=history,
+        top_categories=top_categories,
+    )
+
+    chain: list[dict] = []
+
+    # 别名匹配：返回 (category_id, confidence) 或 None，需解包取值
+    alias_hit = matching.match_by_alias(counterparty, direction, aliases)
+    alias_cid = alias_hit[0] if alias_hit else None
+    alias_conf = alias_hit[1] if alias_hit else 0
+    chain.append(
+        {
+            "source": "alias",
+            "rule_id": None,
+            "category_id": alias_cid,
+            "confidence": alias_conf,
+            "reason": "别名匹配命中" if alias_hit else "",
+            "matched": bool(alias_hit),
+        }
+    )
+
+    # 规则匹配：先归一化文本，再按 pattern_type 逐条判断，方向 any 表示不限
+    haystack = matching.normalize(counterparty + " " + summary)
+    for r in rules:
+        source = "rule_" + str(r.get("pattern_type") or "keyword")
+        if int(r.get("is_enabled", 1)) != 1:
+            chain.append(
+                {
+                    "source": source,
+                    "rule_id": r["id"],
+                    "category_id": None,
+                    "confidence": 0,
+                    "reason": "规则已停用",
+                    "matched": False,
+                }
+            )
+            continue
+        rd = r.get("direction") or "any"
+        if rd != "any" and rd != direction:
+            chain.append(
+                {
+                    "source": source,
+                    "rule_id": r["id"],
+                    "category_id": None,
+                    "confidence": 0,
+                    "reason": "方向不匹配（规则要求 " + str(rd) + "，当前 " + str(direction) + "）",
+                    "matched": False,
+                }
+            )
+            continue
+        kw = str(r.get("keyword") or "")
+        if r.get("pattern_type") == "regex":
+            compiled = matching.compile_rule_pattern(kw)
+            matched = bool(compiled and matching.safe_regex_search(compiled, haystack))
+            conf = 97
+            if not matched and compiled is None:
+                reason = "正则非法，调度时跳过"
+            elif matched:
+                reason = "规则「" + kw + "」命中"
+            else:
+                reason = "未命中"
+        else:
+            matched = bool(matching.normalize(kw)) and matching.normalize(kw) in haystack
+            conf = 95
+            reason = "规则「" + kw + "」命中" if matched else "未命中"
+        chain.append(
+            {
+                "source": source,
+                "rule_id": r["id"],
+                "category_id": r.get("category_id") if matched else None,
+                "confidence": conf if matched else 0,
+                "reason": reason,
+                "matched": matched,
+            }
+        )
+
+    # 历史记录匹配：返回 (category_id, confidence) 或 None，需解包取值
+    hist_hit = matching.match_by_history(counterparty, summary, direction, history)
+    category_id = hist_hit[0] if hist_hit else None
+    confidence = hist_hit[1] if hist_hit else 0
+    reason = "历史记录推断" if hist_hit else ""
+    chain.append(
+        {
+            "source": "history",
+            "rule_id": None,
+            "category_id": category_id,
+            "confidence": confidence,
+            "reason": reason,
+            "matched": bool(hist_hit),
+        }
+    )
+
+    chain.append(
+        {
+            "source": "suggest",
+            "rule_id": hit.get("rule_id"),
+            "category_id": hit.get("category_id"),
+            "confidence": hit.get("confidence", 0.0),
+            "reason": hit.get("reason", ""),
+            "matched": hit.get("category_id") is not None,
+        }
+    )
+
+    return {"hit": hit, "chain": chain}
+
+
+@router.post("/api/match-rules/{rule_id}/touch")
+async def touch_match_rule(
+    rule_id: int,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """命中计数加一。"""
+    rule = await session.get(MatchRule, rule_id)
+    if rule is None:
+        raise HTTPException(status_code=404, detail="匹配规则不存在")
+    rule.hit_count = (rule.hit_count or 0) + 1
+    await session.commit()
+    await session.refresh(rule)
+    return {"ok": True, "hit_count": rule.hit_count}
+
+
 @router.get("/api/merchant-aliases", response_model=list[MerchantAliasOut])
 async def list_merchant_aliases(session: AsyncSession = Depends(get_session)) -> list[MerchantAliasOut]:
+
     """列出全部商户别名。"""
     result = await session.execute(select(MerchantAlias).order_by(MerchantAlias.id.asc()))
     aliases = result.scalars().all()

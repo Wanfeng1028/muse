@@ -1,3 +1,8 @@
+## v0.21.1（2026-10-20）——查询 hang 修复
+
+- 修 hang：超长（>2000 字符）或纯标点查询在 Searcher::searchDetailed 入口直接返回空结果，不再进入分词/FTS5；关闭 v0.20.0 发版报告"TokenizerLong.VeryLongPunctuationQueryReturnsEmpty 预先存在 hang"项；
+- 回归测试：tests/test_tokenizer_empty.cpp 新增 3 例（VeryLongPunctuationQueryReturnsQuickly / LongMixedQueryNoCrash / NormalQueryStillRecalls）。
+
 ## v0.21.0（2026-10-20）——中文分词深化与原文定位
 
 ### 新增

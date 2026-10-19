@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block title %}月度报告{% endblock %}
+{% block content %}
+<div class="report-page">
+  <div class="report-toolbar">
+    <label>月份
+      <input type="month" id="ym" />
+    </label>
+    <label>口径
+      <select id="scheme"></select>
+    </label>
+    <button type="button" id="export-btn" class="btn">导出 HTML</button>
+  </div>
+
+  <div id="error-list" class="error-list" style="display:none;"></div>
+
+  <div id="summary" class="report-summary" hidden>
+    <div class="summary-item">
+      <div class="summary-label">本月收入</div>
+      <div class="summary-value" id="sum-income">0.00</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">本月支出</div>
+      <div class="summary-value" id="sum-expense">0.00</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">结余</div>
+      <div class="summary-value" id="sum-net">0.00</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">笔数</div>
+      <div class="summary-value" id="sum-count">0</div>
+    </div>
+  </div>
+
+  <div id="empty-state" class="empty-state" hidden>
+    这个月还没记账，先记一笔吧。
+  </div>
+
+  <div id="report-body" hidden>
+    <h2 class="section-title">分类支出</h2>
+    <div id="bars" class="bar-list"></div>
+
+    <h2 class="section-title">环比</h2>
+    <table class="data-table" id="mom-table">
+      <thead>
+        <tr>
+          <th>分类</th>
+          <th>本月</th>
+          <th>上月</th>
+          <th>差额</th>
+          <th>百分比</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2 class="section-title">Top 商户</h2>
+    <table class="data-table" id="merchant-table">
+      <thead>
+        <tr>
+          <th>商户</th>
+          <th>金额</th>
+          <th>笔数</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var ymInput = document.getElementById('ym');
+  var schemeSelect = document.getElementById('scheme');
+  var exportBtn = document.getElementById('export-btn');
+  var errorList = document.getElementById('error-list');
+  var summary = document.getElementById('summary');
+  var emptyState = document.getElementById('empty-state');
+  var reportBody = document.getElementById('report-body');
+  var currentData = null;
+
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function nowYm() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+  }
+
+  function fmt(cents) {
+    var v = (Number(cents) || 0) / 100;
+    return v.toFixed(2);
+  }
+
+  function fmtSigned(cents) {
+    var v = Number(cents) || 0;
+    var s = (v / 100).toFixed(2);
+    if (v > 0) return '+' + s;
+    return s;
+  }
+
+  function deltaClass(cents, kind) {
+    var v = Number(cents) || 0;
+    if (v === 0) return '';
+    // 支出增加为红、减少为绿；收入相反
+    var isExpense = kind === 'expense';
+    var up = v > 0;
+    if (isExpense) {
+      return up ? 'delta-red' : 'delta-green';
+    } else {
+      return up ? 'delta-green' : 'delta-red';
+    }
+  }
+
+  function showError(msg) {
+    errorList.style.display = '';
+    var div = document.createElement('div');
+    div.className = 'error-item';
+    div.textContent = msg;
+    errorList.appendChild(div);
+  }
+
+  function clearErrors() {
+    errorList.innerHTML = '';
+    errorList.style.display = 'none';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderBars(byCategory) {
+    var wrap = document.getElementById('bars');
+    wrap.innerHTML = '';
+    var expenses = (byCategory || []).filter(function (c) {
+      return c.kind === 'expense';
+    });
+    if (!expenses.length) {
+      var p = document.createElement('div');
+      p.className = 'muted';
+      p.textContent = '本月没有支出记录。';
+      wrap.appendChild(p);
+      return;
+    }
+    var max = 0;
+    expenses.forEach(function (c) {
+      if (c.amount_cents > max) max = c.amount_cents;
+    });
+    expenses.sort(function (a, b) { return b.amount_cents - a.amount_cents; });
+    expenses.forEach(function (c) {
+      var row = document.createElement('div');
+      row.className = 'bar-row';
+      var pct = max > 0 ? (c.amount_cents / max * 100) : 0;
+      row.innerHTML =
+        '<div class="bar-label">' + esc(c.name) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(2) + '%"></div></div>' +
+        '<div class="bar-amount">' + fmt(c.amount_cents) + '</div>';
+      wrap.appendChild(row);
+    });
+  }
+
+  function renderMom(mom) {
+    var tbody = document.querySelector('#mom-table tbody');
+    tbody.innerHTML = '';
+    if (!mom || !mom.length) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="5" class="muted">没有可比较的分类。</td>';
+      tbody.appendChild(tr);
+      return;
+    }
+    mom.forEach(function (m) {
+      var tr = document.createElement('tr');
+      var deltaPct = (m.delta_pct == null) ? '—' : (m.delta_pct > 0 ? '+' : '') + Number(m.delta_pct).toFixed(2) + '%';
+      var cls = deltaClass(m.delta_cents, m.kind);
+      tr.innerHTML =
+        '<td>' + esc(m.name) + '</td>' +
+        '<td>' + fmt(m.this_cents) + '</td>' +
+        '<td>' + fmt(m.last_cents) + '</td>' +
+        '<td class="' + cls + '">' + fmtSigned(m.delta_cents) + '</td>' +
+        '<td class="' + cls + '">' + deltaPct + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderMerchants(list) {
+    var tbody = document.querySelector('#merchant-table tbody');
+    tbody.innerHTML = '';
+    if (!list || !list.length) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="3" class="muted">本月没有商户记录。</td>';
+      tbody.appendChild(tr);
+      return;
+    }
+    list.forEach(function (m) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + esc(m.merchant) + '</td>' +
+        '<td>' + fmt(m.amount_cents) + '</td>' +
+        '<td>' + (m.count || 0) + '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function render(data) {
+    currentData = data;
+    document.getElementById('sum-income').textContent = fmt(data.income_cents);
+    document.getElementById('sum-expense').textContent = fmt(data.expense_cents);
+    document.getElementById('sum-net').textContent = fmt(data.net_cents);
+    document.getElementById('sum-count').textContent = data.tx_count || 0;
+
+    if (!data.tx_count) {
+      summary.hidden = true;
+      emptyState.hidden = false;
+      reportBody.hidden = true;
+      return;
+    }
+    summary.hidden = false;
+    emptyState.hidden = true;
+    reportBody.hidden = false;
+    renderBars(data.by_category);
+    renderMom(data.mom);
+    renderMerchants(data.top_merchants);
+  }
+
+  function loadReport() {
+    clearErrors();
+    var ym = ymInput.value || nowYm();
+    var scheme = schemeSelect.value || '';
+    var url = '/api/reports/monthly?year_month=' + encodeURIComponent(ym);
+    if (scheme) url += '&scheme=' + encodeURIComponent(scheme);
+    fetch(url)
+      .then(function (r) {
+        if (!r.ok) throw new Error('请求失败 ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        render(data);
+      })
+      .catch(function (err) {
+        showError('加载月度报告失败：' + err.message);
+        summary.hidden = true;
+        emptyState.hidden = true;
+        reportBody.hidden = true;
+      });
+  }
+
+  function loadSchemes() {
+    fetch('/api/reports/category-scheme')
+      .then(function (r) {
+        if (!r.ok) throw new Error('请求失败 ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        schemeSelect.innerHTML = '';
+        var schemes = (data && data.schemes) || [];
+        schemes.forEach(function (s) {
+          var opt = document.createElement('option');
+          opt.value = s.name;
+          opt.textContent = s.name;
+          if (data.active && s.name === data.active) opt.selected = true;
+          schemeSelect.appendChild(opt);
+        });
+        if (!schemes.length) {
+          var opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '默认';
+          schemeSelect.appendChild(opt);
+        }
+      })
+      .catch(function (err) {
+        showError('加载口径失败：' + err.message);
+      });
+  }
+
+  function buildExportHtml() {
+    if (!currentData) return '';
+    var ym = currentData.year_month || ymInput.value;
+    var css = ''
+      + 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:24px;color:#111;}'
+      + 'h1{font-size:18px;margin:0 0 16px;}'
+      + 'h2{font-size:14px;margin:20px 0 8px;}'
+      + '.summary{display:flex;gap:24px;margin-bottom:16px;}'
+      + '.summary-item{}'
+      + '.summary-label{font-size:12px;color:#666;}'
+      + '.summary-value{font-size:22px;font-weight:600;}'
+      + '.bar-row{display:flex;align-items:center;gap:8px;margin:4px 0;}'
+      + '.bar-label{width:120px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+      + '.bar-track{flex:1;background:#eee;height:12px;border-radius:2px;overflow:hidden;}'
+      + '.bar-fill{background:#2563eb;height:12px;}'
+      + '.bar-amount{width:80px;text-align:right;font-size:12px;}'
+      + 'table{width:100%;border-collapse:collapse;font-size:13px;}'
+      + 'th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #eee;}'
+      + 'th{color:#666;font-weight:500;}'
+      + '.delta-red{color:#dc2626;}'
+      + '.delta-green{color:#059669;}'
+      + '.muted{color:#999;}'
+      + '@media print{.no-print{display:none !important;}}';
+
+    var barsHtml = '';
+    var expenses = (currentData.by_category || []).filter(function (c) { return c.kind === 'expense'; });
+    if (expenses.length) {
+      var max = 0;
+      expenses.forEach(function (c) { if (c.amount_cents > max) max = c.amount_cents; });
+      expenses.sort(function (a, b) { return b.amount_cents - a.amount_cents; });
+      expenses.forEach(function (c) {
+        var pct = max > 0 ? (c.amount_cents / max * 100) : 0;
+        barsHtml += '<div class="bar-row">'
+          + '<div class="bar-label">' + esc(c.name) + '</div>'
+          + '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(2) + '%"></div></div>'
+          + '<div class="bar-amount">' + fmt(c.amount_cents) + '</div>'
+          + '</div>';
+      });
+    } else {
+      barsHtml = '<div class="muted">本月没有支出记录。</div>';
+    }
+
+    var momHtml = '';
+    (currentData.mom || []).forEach(function (m) {
+      var deltaPct = (m.delta_pct == null) ? '—' : (m.delta_pct > 0 ? '+' : '') + Number(m.delta_pct).toFixed(2) + '%';
+      var cls = deltaClass(m.delta_cents, m.kind);
+      momHtml += '<tr>'
+        + '<td>' + esc(m.name) + '</td>'
+        + '<td>' + fmt(m.this_cents) + '</td>'
+        + '<td>' + fmt(m.last_cents) + '</td>'
+        + '<td class="' + cls + '">' + fmtSigned(m.delta_cents) + '</td>'
+        + '<td class="' + cls + '">' + deltaPct + '</td>'
+        + '</tr>';
+    });
+    if (!momHtml) momHtml = '<tr><td colspan="5" class="muted">没有可比较的分类。</td></tr>';
+
+    var merchantHtml = '';
+    (currentData.top_merchants || []).forEach(function (m) {
+      merchantHtml += '<tr>'
+        + '<td>' + esc(m.merchant) + '</td>'
+        + '<td>' + fmt(m.amount_cents) + '</td>'
+        + '<td>' + (m.count || 0) + '</td>'
+        + '</tr>';
+    });
+    if (!merchantHtml) merchantHtml = '<tr><td colspan="3" class="muted">本月没有商户记录。</td></tr>';
+
+    return '<!DOCTYPE html>\n'
+      + '<html lang="zh-CN"><head><meta charset="utf-8">'
+      + '<title>钱迹月度报告 · ' + esc(ym) + '</title>'
+      + '<style>' + css + '</style></head><body>'
+      + '<h1>钱迹月度报告 · ' + esc(ym) + '</h1>'
+      + '<div class="summary">'
+      + '<div class="summary-item"><div class="summary-label">本月收入</div><div class="summary-value">' + fmt(currentData.income_cents) + '</div></div>'
+      + '<div class="summary-item"><div class="summary-label">本月支出</div><div class="summary-value">' + fmt(currentData.expense_cents) + '</div></div>'
+      + '<div class="summary-item"><div class="summary-label">结余</div><div class="summary-value">' + fmt(currentData.net_cents) + '</div></div>'
+      + '<div class="summary-item"><div class="summary-label">笔数</div><div class="summary-value">' + (currentData.tx_count || 0) + '</div></div>'
+      + '</div>'
+      + '<h2>分类支出</h2>' + barsHtml
+      + '<h2>环比</h2><table><thead><tr><th>分类</th><th>本月</th><th>上月</th><th>差额</th><th>百分比</th></tr></thead><tbody>' + momHtml + '</tbody></table>'
+      + '<h2>Top 商户</h2><table><thead><tr><th>商户</th><th>金额</th><th>笔数</th></tr></thead><tbody>' + merchantHtml + '</tbody></table>'
+      + '</body></html>';
+  }
+
+  exportBtn.addEventListener('click', function () {
+    if (!currentData) {
+      showError('还没加载出数据，无法导出。');
+      return;
+    }
+    var ym = currentData.year_month || ymInput.value;
+    var html = buildExportHtml();
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'report-' + ym + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  ymInput.value = nowYm();
+  ymInput.addEventListener('change', loadReport);
+  schemeSelect.addEventListener('change', loadReport);
+
+  loadSchemes();
+  loadReport();
+})();
+</script>
+{% endblock %}

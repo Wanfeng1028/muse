@@ -126,10 +126,18 @@ class StatementTemplate(Base):
 
 
 class MatchRule(Base):
-    """关键词规则表：命中后自动归类。"""
+    """侦探规则表：关键词或正则命中后自动归类。"""
 
     __tablename__ = "match_rules"
-    __table_args__ = (UniqueConstraint("keyword", "direction", name="uq_match_rules_keyword_direction"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "keyword",
+            "pattern_type",
+            "direction",
+            name="uq_match_rules_keyword_ptype_direction",
+        ),
+    )
+
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     keyword: Mapped[str] = mapped_column(String, nullable=False)
@@ -137,6 +145,9 @@ class MatchRule(Base):
     direction: Mapped[str] = mapped_column(String, nullable=False, default="any")
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+    pattern_type: Mapped[str] = mapped_column(String, nullable=False, default="keyword")
+    is_enabled: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    hit_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
 class MerchantAlias(Base):
@@ -150,6 +161,16 @@ class MerchantAlias(Base):
     category_id: Mapped[int] = mapped_column(Integer, ForeignKey("categories.id"), nullable=False)
     direction: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
+
+
+class ReportScheme(Base):
+    """月报分类口径表：name 为口径名（主键），scheme_json 存 {桶名: [分类名, ...]}。"""
+
+    __tablename__ = "report_schemes"
+
+    name: Mapped[str] = mapped_column(String, primary_key=True)
+    scheme_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow)
 
 
 class OcrReview(Base):
@@ -220,6 +241,7 @@ class StatementItem(Base):
     confidence: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     suggested_action: Mapped[str] = mapped_column(String, nullable=False, default="categorize")
     suggested_to_account_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("accounts.id"), nullable=True)
+    suggested_rule_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("match_rules.id"), nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="preview")
     claimed_category_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("categories.id"), nullable=True)
     transaction_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("transactions.id"), nullable=True)

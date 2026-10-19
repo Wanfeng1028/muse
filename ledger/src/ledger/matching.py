@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+import re
 
 _PUNCTUATION = "，。、；：！？,.!?:;·•|/-"
 
@@ -44,8 +45,9 @@ def match_by_rules(
     summary: str,
     direction: str,
     rules: list[dict],
-) -> tuple[int, int] | None:
-    """关键词规则匹配，返回 (category_id, 95) 或 None。
+    include_rule_id: bool = False,
+) -> tuple[int, int] | tuple[int, int, int | None] | None:
+    """关键词规则匹配，返回 (category_id, 95) 或 None。\n\n    include_rule_id=True 时返回 (category_id, 95, rule_id)。
 
     命中多条时取 priority 最大者，并列取 keyword 最长者。
     """
@@ -55,6 +57,8 @@ def match_by_rules(
     best: dict | None = None
     best_keyword_len = 0
     for rule in rules:
+        if int(rule.get("is_enabled", 1)) != 1:
+            continue
         keyword = rule.get("keyword") or ""
         norm_kw = normalize(keyword)
         if not norm_kw:
@@ -76,6 +80,8 @@ def match_by_rules(
             best_keyword_len = kw_len
     if best is None:
         return None
+    if include_rule_id:
+        return int(best["category_id"]), 95, best.get("id")
     return int(best["category_id"]), 95
 
 
@@ -301,3 +307,246 @@ def detect_transfer_pair(
             pairs.append((out_id, in_id))
             break
     return pairs
+
+
+def compile_rule_pattern(pattern: str):
+    """编译用户正则，失败或不安全返回 None（调用方跳过该规则，绝不抛异常）。
+
+    不安全指 check_pattern_safety 判定有 ReDoS 风险的模式。
+    """
+    if check_pattern_safety(pattern) is not None:
+        return None
+    try:
+        return re.compile(pattern)
+    except re.error:
+        return None
+
+
+def _regex_candidates(rules: list[dict], direction: str) -> list[dict]:
+    """筛选启用中的正则规则，且方向为 any 或与当前方向一致。"""
+    result: list[dict] = []
+    for rule in rules:
+        if rule.get("pattern_type") != "regex":
+            continue
+        if int(rule.get("is_enabled", 1)) != 1:
+            continue
+        rule_direction = rule.get("direction")
+        if rule_direction not in ("any", direction):
+            continue
+        result.append(rule)
+    return result
+
+
+def _pick_best_regex(candidates: list[dict], haystack: str) -> dict | None:
+    """在候选中挑出命中且最优的正则规则；决胜逻辑与关键词一致。"""
+    best: dict | None = None
+    best_priority = 0
+    best_len = 0
+    best_id = 0
+    for rule in candidates:
+        pattern = rule.get("keyword") or ""
+        compiled = compile_rule_pattern(str(pattern))
+        if compiled is None:
+            continue
+        if not safe_regex_search(compiled, haystack):
+            continue
+        priority = int(rule.get("priority") or 0)
+        kw_len = len(str(pattern))
+        rule_id = int(rule.get("id") or 0)
+        if best is None:
+            best = rule
+            best_priority = priority
+            best_len = kw_len
+            best_id = rule_id
+            continue
+        better = (
+            priority > best_priority
+            or (priority == best_priority and kw_len > best_len)
+            or (priority == best_priority and kw_len == best_len and rule_id < best_id)
+        )
+        if better:
+            best = rule
+            best_priority = priority
+            best_len = kw_len
+            best_id = rule_id
+    return best
+
+
+def _pick_best_keyword(
+    kw_rules: list[dict],
+    counterparty: str,
+    summary: str,
+    direction: str,
+) -> dict | None:
+    """在关键词规则中挑出命中且最优者，决胜与 match_by_rules 保持一致。"""
+    haystack = normalize(counterparty + summary)
+    if not haystack:
+        return None
+    best: dict | None = None
+    best_priority = 0
+    best_len = 0
+    best_id = 0
+    for rule in kw_rules:
+        keyword = rule.get("keyword") or ""
+        norm_kw = normalize(str(keyword))
+        if not norm_kw:
+            continue
+        rule_direction = rule.get("direction") or "any"
+        if rule_direction != "any" and rule_direction != direction:
+            continue
+        if norm_kw not in haystack:
+            continue
+        priority = int(rule.get("priority") or 0)
+        kw_len = len(norm_kw)
+        rule_id = int(rule.get("id") or 0)
+        if best is None:
+            best = rule
+            best_priority = priority
+            best_len = kw_len
+            best_id = rule_id
+            continue
+        better = (
+            priority > best_priority
+            or (priority == best_priority and kw_len > best_len)
+            or (priority == best_priority and kw_len == best_len and rule_id < best_id)
+        )
+        if better:
+            best = rule
+            best_priority = priority
+            best_len = kw_len
+            best_id = rule_id
+    return best
+
+
+def match_best(
+    counterparty: str,
+    summary: str,
+    direction: str,
+    *,
+    rules: list[dict],
+    aliases: list[dict],
+    history: list[dict],
+    top_categories: list[tuple[int, int]],
+) -> dict:
+    """统一调度：别名记忆 > 正则规则 > 关键词规则 > 历史 > 候选 > 无匹配。
+
+    返回 dict，键为 category_id/confidence/source/rule_id/reason。
+    """
+    alias_hit = match_by_alias(counterparty, direction, aliases)
+    if alias_hit is not None:
+        cid, conf = alias_hit
+        return {
+            "category_id": cid,
+            "confidence": conf,
+            "source": "alias",
+            "rule_id": None,
+            "reason": "别名记忆命中",
+        }
+
+    haystack = normalize(counterparty + " " + summary)
+    regex_candidates = _regex_candidates(rules, direction)
+    best_regex = _pick_best_regex(regex_candidates, haystack)
+
+    kw_rules: list[dict] = []
+    for rule in rules:
+        if rule.get("pattern_type", "keyword") != "keyword":
+            continue
+        if int(rule.get("is_enabled", 1)) != 1:
+            continue
+        kw_rules.append(rule)
+    best_kw = _pick_best_keyword(kw_rules, counterparty, summary, direction)
+
+    winner = None
+    winner_source = ""
+    if best_regex is not None and best_kw is not None:
+        rp = int(best_regex.get("priority") or 0)
+        kp = int(best_kw.get("priority") or 0)
+        if kp > rp:
+            winner, winner_source = best_kw, "rule_keyword"
+        elif rp > kp:
+            winner, winner_source = best_regex, "rule_regex"
+        else:
+            winner, winner_source = best_regex, "rule_regex"
+    elif best_regex is not None:
+        winner, winner_source = best_regex, "rule_regex"
+    elif best_kw is not None:
+        winner, winner_source = best_kw, "rule_keyword"
+    if winner is not None:
+        if winner_source == "rule_regex":
+            return {
+                "category_id": int(winner["category_id"]),
+                "confidence": 97,
+                "source": "rule_regex",
+                "rule_id": int(winner.get("id") or 0),
+                "reason": "正则规则「" + str(winner.get("keyword") or "") + "」命中",
+            }
+        return {
+            "category_id": int(winner["category_id"]),
+            "confidence": 95,
+            "source": "rule_keyword",
+            "rule_id": int(winner.get("id") or 0),
+            "reason": "关键词规则「" + str(winner.get("keyword") or "") + "」命中",
+        }
+
+    history_hit = match_by_history(counterparty, summary, direction, history)
+    if history_hit is not None:
+        cid, conf = history_hit
+        return {
+            "category_id": cid,
+            "confidence": conf,
+            "source": "history",
+            "rule_id": None,
+            "reason": "历史记录推断",
+        }
+
+    suggestions = suggest_candidates(counterparty, summary, direction, history, top_categories)
+    if suggestions:
+        cid, reason, conf = suggestions[0]
+        return {
+            "category_id": cid,
+            "confidence": conf,
+            "source": "suggest",
+            "rule_id": None,
+            "reason": reason,
+        }
+
+    return {
+        "category_id": None,
+        "confidence": 0,
+        "source": "none",
+        "rule_id": None,
+        "reason": "无匹配",
+    }
+
+
+MAX_REGEX_HAYSTACK = 500
+
+_NESTED_QUANTIFIER_RE = re.compile(
+    r"(\([^()]*[+*][^()]*\))[+*]|\([^()]*\)\{[0-9]+,[^}]*\}[+{]"
+)
+_BACKREF_RE = re.compile(r"\\[1-9]")
+_MULTI_DOTSTAR_RE = re.compile(r"\.\*.*\.\*")
+
+
+def check_pattern_safety(pattern: str) -> str | None:
+    """检查用户正则的安全性，返回 None 表示安全，否则返回拒绝原因。"""
+    if pattern is None or pattern.strip() == "":
+        return "正则不能为空"
+    if len(pattern) > 200:
+        return "正则过长（>200字符），请拆分成多条关键词规则"
+    if _NESTED_QUANTIFIER_RE.search(pattern):
+        return "含嵌套量词，有灾难性回溯风险"
+    if _BACKREF_RE.search(pattern):
+        return "暂不支持回溯引用，请用普通分组改写"
+    if _MULTI_DOTSTAR_RE.search(pattern):
+        return "连续多个 .* 有回溯风险，请收紧表达"
+    return None
+
+
+def safe_regex_search(compiled, haystack: str) -> bool:
+    """带 haystack 长度熔断的正则匹配，超长直接返回 False，绝不抛异常。"""
+    if haystack is None:
+        return False
+    if len(haystack) > MAX_REGEX_HAYSTACK:
+        return False
+    return bool(compiled.search(haystack))

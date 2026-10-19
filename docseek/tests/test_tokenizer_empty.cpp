@@ -262,4 +262,38 @@ TEST(TokenizerEmpty, EmptyDbSearchRobust) {
     auto hits2 = searcher.search(big, 10);
     EXPECT_TRUE(hits2.empty());
     EXPECT_EQ(hits2.size(), 0u);
+}TEST(TokenizerLong, VeryLongPunctuationQueryReturnsQuickly) {
+    docseek::Database db = openTempDb("docseek_tok_long_punct");
+    db.upsert("/lp.txt", "标题", "全文检索引擎测试文档", 100, 42);
+    docseek::Searcher searcher(db);
+    std::string punct;
+    punct.reserve(20000);
+    for (int i = 0; i < 20000; ++i) {
+        punct += "!";
+    }
+    auto start = std::chrono::steady_clock::now();
+    auto hits = searcher.search(punct, 10);
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    EXPECT_LT(elapsed_ms, 3000);
+    EXPECT_TRUE(hits.empty());
+}
+
+TEST(TokenizerLong, LongMixedQueryNoCrash) {
+    docseek::Database db = openTempDb("docseek_tok_mixed_long");
+    db.upsert("/lm.txt", "标题", "全文检索引擎测试文档", 100, 42);
+    docseek::Searcher searcher(db);
+    std::string mixed;
+    for (int i = 0; i < 3000; ++i) {
+        mixed += "索引";
+    }
+    ASSERT_NO_THROW(searcher.search(mixed, 10));
+}
+
+TEST(TokenizerLong, NormalQueryStillRecalls) {
+    docseek::Database db = openTempDb("docseek_tok_normal_recall");
+    db.upsert("/nr.txt", "标题", "全文检索引擎测试文档", 100, 42);
+    docseek::Searcher searcher(db);
+    auto hits = searcher.search("全文检索", 10);
+    EXPECT_FALSE(hits.empty());
 }

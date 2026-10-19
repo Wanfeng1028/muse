@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <cctype>
 
 namespace docseek {
 namespace {
@@ -1304,6 +1305,25 @@ static std::vector<Hit> finishScored(std::vector<ScoredHit> scored, std::vector<
 std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, std::vector<ScoreBreakdown>* breakdowns) {
     if (query.empty() || limit <= 0) {
         return {};
+    }
+
+    // 防御：超长/纯标点查询直接返回空（历史 hang：TokenizerLong.VeryLongPunctuationQueryReturnsEmpty）。
+    // 此类查询在分词与 FTS5 匹配阶段会退化为病态扫描，导致线程长时间占用。
+    {
+        constexpr std::size_t kMaxQueryChars = 2000;
+        std::size_t char_count = 0;
+        bool has_non_punct_non_space = false;
+        for (unsigned char c : query) {
+            if ((c & 0xC0) != 0x80) {
+                ++char_count;
+            }
+            if (std::isspace(c) == 0 && std::ispunct(c) == 0) {
+                has_non_punct_non_space = true;
+            }
+        }
+        if (char_count > kMaxQueryChars || !has_non_punct_non_space) {
+            return {};
+        }
     }
 
     // 引号短语先剥离：rest 参与分词召回，phrases 走后过滤与加成。

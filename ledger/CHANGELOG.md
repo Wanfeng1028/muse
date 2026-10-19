@@ -2,7 +2,55 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.11 - 2026-10-20
+
+### 新增
+
+- 侦探规则引擎 v2：MatchRule 新增 pattern_type（keyword/regex）、is_enabled、hit_count 三列。
+- StatementItem 新增 suggested_rule_id，用于记录命中的建议规则。
+- matching.py 新增 match_best 统一调度：别名记忆 85 > 正则规则 97 > 关键词规则 95 > 历史 > 候选。
+- 同级命中按 priority、长度、id 依次决胜；非法正则跳过不抛异常。
+- 新增 PUT /api/match-rules/{id}，用于更新规则字段。
+- 新增 POST /api/match-rules/preview，返回 chain 解释链。
+- 新增 POST /api/match-rules/{id}/touch，用于累计命中次数。
+- 前端新增 /rules 规则管理页，包含表格、启用开关、测试命中区。
+- 新增对账差异工作台 router workbench.py。
+- 新增 GET /api/workbench/batches，列出对账批次。
+- 新增 GET /api/workbench/batches/{id}/items，支持分页与 q 搜索。
+- 新增 POST /api/workbench/items/{id}/resolve，动作含 confirm/ignore/learn/transfer。
+- 新增 POST /api/workbench/batches/{id}/resolve-batch，采用部分成功语义。
+- 前端新增 /workbench 页，支持逐条确认/忽略/记成规则/转账与批量操作和进度。
+- 新增月度收支报告 router reports.py。
+- 新增 GET /api/reports/monthly，含分类汇总、环比、Top 商户、口径分桶。
+- 新增 GET+PUT /api/reports/category-scheme，默认“9月口径”。
+- 默认口径分桶为考研投入、一次性大项、饮食、日用、话费、交通。
+- 前端新增 /report 页，含年月选择、条形图、环比表、Top 商户、导出自包含 HTML。
+- 新增演示数据脚本 scripts/seed_workbench_demo.py。
+- 新增样例文件 docs/samples/cmb-statement-sample.csv。
+- 数据库迁移 v5 到 v6：match_rules 补 3 列，statement_items 补 suggested_rule_id，新建 report_schemes 表。
+
+### 测试
+
+- 新增 tests/test_import_boundary_deep2.py，覆盖 GBK 与 UTF-8-SIG 解码。
+- 覆盖金额千分位、括号负数、¥ 符号、全角逗号解析。
+- 覆盖中文日期解析与重复导入幂等。
+- pytest 全量待本轮实测后填。
+
+### 冒烟
+
+- 本轮冒烟范围：/rules、/workbench、/report 三页可打开，接口返回结构符合预期。
+- 冒烟未覆盖真实银行流水大批量场景，相关验证待后续执行。
+
+### 已知限制
+
+- 规则预览的解释链仅展示命中路径，不展示被跳过规则的跳过原因。
+- 批量对账为部分成功语义，前端仅汇总失败条数，未提供逐条失败明细导出。
+- 月度报告导出的 HTML 为自包含单文件，未做移动端适配。
+- 非法正则在调度中直接跳过，未在规则管理页给出显式告警。
+- 演示数据脚本仅生成示例数据，不校验与真实账套的字段兼容性。
+
 ## v2.10 - 2026-10-17
+
 
 ### 新增
 
@@ -221,3 +269,8 @@
 - 周期账单。
 - 7 页 Web UI。
 - pytest 34 例。
+6. 正则防护：创建/更新时拒绝嵌套量词、回溯引用、超长（>200 字符）正则并 400 明示；匹配侧 haystack>500 字符熔断跳过（v2.11.1 关闭本项）。
+7. 批量对账支持执行前预检（dry-run）与失败明细 CSV 导出（v2.11.1 关闭"失败明细未通过"项）。
+8. preview 解释链展示被跳过规则的原因（停用/方向不匹配/非法正则/未命中）（v2.11.1 关闭本项）。
+9. 提供 v6→v5 回滚脚本 scripts/rollback_v6_to_v5.py 与 docs/MIGRATION_RUNBOOK.md（v2.11.1 关闭"回滚未通过"项）。
+10. 并发创建相同规则存在理论竞态（先查后插），已捕获转 409（或记录为已知限制，以实际合入为准）。

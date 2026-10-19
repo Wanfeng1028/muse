@@ -326,6 +326,17 @@ class MatchRuleCreate(BaseModel):
     category_id: int
     direction: Literal["in", "out", "any"] = "any"
     priority: int = 0
+    pattern_type: Literal["keyword", "regex"] = "keyword"
+    is_enabled: int = 1
+
+    @field_validator("is_enabled")
+    @classmethod
+    def _validate_is_enabled(cls, v: int) -> int:
+        """限制 is_enabled 只能取 0 或 1，越界抛 422。"""
+        if v not in (0, 1):
+            raise ValueError("is_enabled 只能为 0 或 1")
+        return v
+
 
 
 class MatchRuleOut(BaseModel):
@@ -340,6 +351,21 @@ class MatchRuleOut(BaseModel):
     priority: int
     created_at: str
     category_name: str = ""
+    pattern_type: str
+    is_enabled: int
+    hit_count: int
+
+
+class MatchRuleUpdate(BaseModel):
+    """匹配规则更新入参，全部字段可选。"""
+
+    keyword: str | None = None
+    pattern_type: str | None = None
+    category_id: int | None = None
+    direction: str | None = None
+    priority: int | None = None
+    is_enabled: int | None = None
+
 
 
 class MerchantAliasOut(BaseModel):
@@ -430,6 +456,7 @@ class StatementItemOut(BaseModel):
     amount_cents: int
     direction: str
     suggested_category_id: int | None
+    suggested_rule_id: int | None = None
     match_source: str
     confidence: int
     suggested_action: str

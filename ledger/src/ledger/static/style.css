@@ -1727,3 +1727,20 @@ textarea:disabled {
   .page-header { flex-wrap: wrap; gap: 8px; }
   .page-header h1 { font-size: 20px; }
 }
+
+/* ---------- 月度报告 ---------- */
+.report-toolbar { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; }
+.report-toolbar .form-row { margin: 0; }
+.report-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.summary-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; text-align: left; }
+.summary-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.summary-value { font-size: 24px; font-weight: 700; color: var(--ink); font-family: var(--font-num); }
+.summary-value.pos { color: var(--green); }
+.summary-value.neg { color: var(--red); }
+.bar-list { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 8px 16px; margin-bottom: 16px; }
+.bar-row { display: grid; grid-template-columns: 90px 1fr 110px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.bar-row:last-child { border-bottom: none; }
+.bar-label { font-size: 14px; color: var(--ink); }
+.bar-track { height: 10px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--blue); border-radius: 5px; }
+.bar-amount { font-family: var(--font-num); font-size: 14px; color: var(--ink); text-align: right; }

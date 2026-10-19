@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+{% block title %}对账工作台{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="chart-toolbar">
+    <label>批次
+      <select id="batch-select"></select>
+    </label>
+    <label>搜索
+      <input id="q-input" type="text" placeholder="商户、摘要、金额" />
+    </label>
+    <label>状态
+      <select id="status-select">
+        <option value="pending">未处理</option>
+        <option value="resolved">已处理</option>
+        <option value="">全部</option>
+      </select>
+    </label>
+    <button class="btn" id="reload-btn">刷新</button>
+    <span class="muted" id="progress-text">还剩 0 条</span>
+  </div>
+  <p class="muted">对不上的都在这儿，一条一条过。</p>
+</div>
+
+<div class="card">
+  <div class="batch-toolbar">
+    <label><input type="checkbox" id="select-all" /> 全选</label>
+    <label>批量分类
+      <select id="batch-category">
+        <option value="">不指定</option>
+      </select>
+    </label>
+    <button class="btn btn-primary" id="batch-confirm-btn">批量确认</button>
+    <button class="btn" id="batch-ignore-btn">批量忽略</button>
+    <span class="muted" id="batch-count">已选 0 条</span>
+  </div>
+  <ul class="error-list" id="error-list" style="display:none;"></ul>
+  <table class="table" id="items-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>日期</th>
+        <th>商户</th>
+        <th>金额</th>
+        <th>方向</th>
+        <th>建议分类</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="items-body"></tbody>
+  </table>
+  <p class="muted" id="empty-state" style="display:none">这批都对上了，去喝杯水吧。</p>
+</div>
+
+<script id="categories-data" type="application/json">{{ categories_grouped | tojson }}</script>
+<script id="accounts-data" type="application/json">{{ accounts | tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var MATCH_SOURCE_LABEL = {
+    none: "没头绪",
+    alias: "记得你",
+    rule_regex: "正则规则",
+    rule_keyword: "关键词规则",
+    history: "历史推断",
+    suggest: "随便猜猜"
+  };
+
+  var state = {
+    batches: [],
+    batchId: null,
+    items: [],
+    page: 1,
+    pageSize: 50,
+    total: 0
+  };
+
+  var categoriesData = JSON.parse(document.getElementById("categories-data").textContent || "{}");
+  var accountsData = JSON.parse(document.getElementById("accounts-data").textContent || "[]");
+
+  var batchSelect = document.getElementById("batch-select");
+  var qInput = document.getElementById("q-input");
+  var statusSelect = document.getElementById("status-select");
+  var reloadBtn = document.getElementById("reload-btn");
+  var progressText = document.getElementById("progress-text");
+  var itemsBody = document.getElementById("items-body");
+  var emptyState = document.getElementById("empty-state");
+  var errorList = document.getElementById("error-list");
+  var selectAll = document.getElementById("select-all");
+  var batchCategory = document.getElementById("batch-category");
+  var batchConfirmBtn = document.getElementById("batch-confirm-btn");
+  var batchIgnoreBtn = document.getElementById("batch-ignore-btn");
+  var batchCount = document.getElementById("batch-count");
+
+  function formatAmount(cents) {
+    var n = Number(cents);
+    if (!isFinite(n)) n = 0;
+    var sign = n < 0 ? "-" : "";
+    var abs = Math.abs(n);
+    var yuan = Math.floor(abs / 100);
+    var fen = abs % 100;
+    return sign + yuan + "." + (fen < 10 ? "0" + fen : "" + fen);
+  }
+
+  function amountColor(direction) {
+    if (direction === "expense" || direction === "out") return "#dc2626";
+    if (direction === "income" || direction === "in") return "#059669";
+    return "";
+  }
+
+  function directionLabel(direction) {
+    if (direction === "expense" || direction === "out") return "支出";
+    if (direction === "income" || direction === "in") return "收入";
+    return direction || "";
+  }
+
+  function categoryKindFor(direction) {
+    if (direction === "expense" || direction === "out") return "expense";
+    if (direction === "income" || direction === "in") return "income";
+    return null;
+  }
+
+  function categoriesForDirection(direction) {
+    var kind = categoryKindFor(direction);
+    var out = [];
+    Object.keys(categoriesData || {}).forEach(function (key) {
+      var list = categoriesData[key] || [];
+      list.forEach(function (c) {
+        if (!kind || c.kind === kind) out.push(c);
+      });
+    });
+    return out;
+  }
+
+  function showError(msg) {
+    var li = document.createElement("li");
+    li.textContent = msg;
+    errorList.style.display = "";
+    errorList.appendChild(li);
+  }
+
+  function clearErrors() {
+    errorList.innerHTML = "";
+    errorList.style.display = "none";
+  }
+
+  function updateProgress() {
+    var pending = state.items.filter(function (it) { return !it._resolved; }).length;
+    progressText.textContent = "还剩 " + pending + " 条";
+  }
+
+  function updateBatchCount() {
+    var n = itemsBody.querySelectorAll("input.row-check:checked").length;
+    batchCount.textContent = "已选 " + n + " 条";
+  }
+
+  function buildCategorySelect(direction, selectedId) {
+    var sel = document.createElement("select");
+    var empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "选分类";
+    sel.appendChild(empty);
+    categoriesForDirection(direction).forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = String(c.id);
+      opt.textContent = c.name;
+      if (selectedId != null && String(selectedId) === String(c.id)) {
+        opt.selected = true;
+      }
+      sel.appendChild(opt);
+    });
+    return sel;
+  }
+
+  function markResolved(tr, label) {
+    tr.style.opacity = "0.5";
+    var actions = tr.querySelector(".row-actions");
+    if (actions) {
+      actions.innerHTML = "";
+      var span = document.createElement("span");
+      span.className = "muted";
+      span.textContent = label || "已处理";
+      actions.appendChild(span);
+    }
+    var check = tr.querySelector("input.row-check");
+    if (check) {
+      check.checked = false;
+      check.disabled = true;
+    }
+    updateBatchCount();
+    updateProgress();
+  }
+
+  function resolveItem(itemId, payload, tr) {
+    return fetch("/api/workbench/items/" + itemId + "/resolve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.text().then(function (t) {
+          throw new Error("条目 " + itemId + " 失败: " + (t || res.status));
+        });
+      }
+      if (tr) markResolved(tr);
+      return res.json().catch(function () { return null; });
+    }).catch(function (err) {
+      showError(err.message || String(err));
+    });
+  }
+
+  function renderItems() {
+    itemsBody.innerHTML = "";
+    if (!state.items.length) {
+      emptyState.style.display = "";
+      updateProgress();
+      updateBatchCount();
+      return;
+    }
+    emptyState.style.display = "none";
+
+    state.items.forEach(function (it) {
+      var tr = document.createElement("tr");
+
+      var tdCheck = document.createElement("td");
+      var check = document.createElement("input");
+      check.type = "checkbox";
+      check.className = "row-check";
+      check.value = String(it.id);
+      check.addEventListener("change", updateBatchCount);
+      tdCheck.appendChild(check);
+      tr.appendChild(tdCheck);
+
+      var tdDate = document.createElement("td");
+      tdDate.textContent = it.occurred_on || "";
+      tr.appendChild(tdDate);
+
+      var tdMerchant = document.createElement("td");
+      tdMerchant.textContent = it.counterparty || it.summary || "";
+      tr.appendChild(tdMerchant);
+
+      var tdAmount = document.createElement("td");
+      tdAmount.textContent = formatAmount(it.amount_cents);
+      tdAmount.style.color = amountColor(it.direction);
+      tr.appendChild(tdAmount);
+
+      var tdDir = document.createElement("td");
+      tdDir.textContent = directionLabel(it.direction);
+      tr.appendChild(tdDir);
+
+      var tdCat = document.createElement("td");
+      var catName = it.suggested_category_name || "没头绪";
+      var conf = (it.confidence != null) ? Math.round(Number(it.confidence)) : null;
+      var sourceLabel = MATCH_SOURCE_LABEL[it.match_source] || it.match_source || "";
+      var catText = catName;
+      if (it.suggested_category_name && conf != null) {
+        catText += "（" + conf + "%）";
+      }
+      tdCat.textContent = catText;
+      if (sourceLabel) {
+        var badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = sourceLabel;
+        badge.style.marginLeft = "6px";
+        tdCat.appendChild(badge);
+      }
+      tr.appendChild(tdCat);
+
+      var tdActions = document.createElement("td");
+      tdActions.className = "row-actions";
+
+      var catSel = buildCategorySelect(it.direction, it.suggested_category_id);
+      tdActions.appendChild(catSel);
+
+      var confirmBtn = document.createElement("button");
+      confirmBtn.className = "btn btn-primary";
+      confirmBtn.textContent = "确认";
+      confirmBtn.addEventListener("click", function () {
+        var cid = catSel.value;
+        resolveItem(it.id, {
+          action: "confirm",
+          category_id: cid ? Number(cid) : null
+        }, tr);
+      });
+      tdActions.appendChild(confirmBtn);
+
+      var ignoreBtn = document.createElement("button");
+      ignoreBtn.className = "btn";
+      ignoreBtn.textContent = "忽略";
+      ignoreBtn.addEventListener("click", function () {
+        resolveItem(it.id, { action: "ignore" }, tr);
+      });
+      tdActions.appendChild(ignoreBtn);
+
+      var learnBtn = document.createElement("button");
+      learnBtn.className = "btn";
+      learnBtn.textContent = "记成规则";
+      learnBtn.addEventListener("click", function () {
+        var cid = catSel.value;
+        if (!cid) {
+          showError("条目 " + it.id + " 记成规则需要先选分类");
+          return;
+        }
+        resolveItem(it.id, {
+          action: "learn",
+          category_id: Number(cid)
+        }, tr);
+      });
+      tdActions.appendChild(learnBtn);
+
+      var transferBtn = document.createElement("button");
+      transferBtn.className = "btn";
+      transferBtn.textContent = "转账";
+      transferBtn.addEventListener("click", function () {
+        var toId = window.prompt("转入账户 id（可用账户：" + accountsData.map(function (a) { return a.id + "=" + (a.name || ""); }).join(", ") + "）");
+        if (!toId) return;
+        resolveItem(it.id, {
+          action: "transfer",
+          to_account_id: Number(toId)
+        }, tr);
+      });
+      tdActions.appendChild(transferBtn);
+
+      tr.appendChild(tdActions);
+      itemsBody.appendChild(tr);
+    });
+
+    updateProgress();
+    updateBatchCount();
+  }
+
+  function loadItems() {
+    if (!state.batchId) {
+      state.items = [];
+      renderItems();
+      return;
+    }
+    clearErrors();
+    var params = new URLSearchParams();
+    var status = statusSelect.value;
+    if (status) params.set("status", status);
+    var q = qInput.value.trim();
+    if (q) params.set("q", q);
+    params.set("page", String(state.page));
+    params.set("page_size", String(state.pageSize));
+
+    fetch("/api/workbench/batches/" + state.batchId + "/items?" + params.toString())
+      .then(function (res) {
+        if (!res.ok) throw new Error("加载条目失败: " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        state.items = (data && data.items) || [];
+        state.total = (data && data.total) || 0;
+        renderItems();
+      })
+      .catch(function (err) {
+        showError(err.message || String(err));
+      });
+  }
+
+  function loadBatches() {
+    fetch("/api/workbench/batches")
+      .then(function (res) {
+        if (!res.ok) throw new Error("加载批次失败: " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        var list = Array.isArray(data) ? data : (data && data.items) || [];
+        state.batches = list;
+        batchSelect.innerHTML = "";
+        if (!state.batches.length) {
+          var opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "没有批次";
+          batchSelect.appendChild(opt);
+          state.batchId = null;
+          loadItems();
+          return;
+        }
+        state.batches.forEach(function (b) {
+          var opt = document.createElement("option");
+          opt.value = String(b.id);
+          var label = b.filename || ("批次 " + b.id);
+          if (b.account_name) label += " · " + b.account_name;
+          if (b.pending_count != null) label += "（待处理 " + b.pending_count + "）";
+          opt.textContent = label;
+          batchSelect.appendChild(opt);
+        });
+        state.batchId = state.batches[0].id;
+        batchSelect.value = String(state.batchId);
+        loadItems();
+      })
+      .catch(function (err) {
+        showError(err.message || String(err));
+      });
+  }
+
+  function loadCategories() {
+    var all = [];
+    Object.keys(categoriesData || {}).forEach(function (key) {
+      (categoriesData[key] || []).forEach(function (c) { all.push(c); });
+    });
+    all.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = String(c.id);
+      opt.textContent = c.name;
+      batchCategory.appendChild(opt);
+    });
+  }
+
+  function selectedItemIds() {
+    var ids = [];
+    itemsBody.querySelectorAll("input.row-check:checked").forEach(function (c) {
+      ids.push(Number(c.value));
+    });
+    return ids;
+  }
+
+  function resolveBatch(action) {
+    var ids = selectedItemIds();
+    if (!ids.length) {
+      showError("没有选中任何条目");
+      return;
+    }
+    var cid = batchCategory.value;
+    if (action === "confirm" && !cid) {
+      showError("批量确认需要先选分类");
+      return;
+    }
+    var payload = { item_ids: ids, action: action };
+    if (cid) payload.category_id = Number(cid);
+
+    fetch("/api/workbench/batches/" + state.batchId + "/resolve-batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (data) {
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok) {
+          showError("批量操作失败: " + result.status);
+        }
+        var data = result.data || {};
+        var failed = data.failed || data.errors || [];
+        if (Array.isArray(failed)) {
+          failed.forEach(function (f) {
+            showError("条目 " + (f.id != null ? f.id : "?") + " 失败: " + (f.reason || f.message || "未知原因"));
+          });
+        }
+        ids.forEach(function (id) {
+          var check = itemsBody.querySelector('input.row-check[value="' + id + '"]');
+          if (check) markResolved(check.closest("tr"));
+        });
+      })
+      .catch(function (err) {
+        showError(err.message || String(err));
+      });
+  }
+
+  batchSelect.addEventListener("change", function () {
+    state.batchId = batchSelect.value ? Number(batchSelect.value) : null;
+    state.page = 1;
+    loadItems();
+  });
+
+  reloadBtn.addEventListener("click", function () {
+    state.page = 1;
+    loadItems();
+  });
+
+  statusSelect.addEventListener("change", function () {
+    state.page = 1;
+    loadItems();
+  });
+
+  qInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      state.page = 1;
+      loadItems();
+    }
+  });
+
+  selectAll.addEventListener("change", function () {
+    itemsBody.querySelectorAll("input.row-check").forEach(function (c) {
+      if (!c.disabled) c.checked = selectAll.checked;
+    });
+    updateBatchCount();
+  });
+
+  batchConfirmBtn.addEventListener("click", function () { resolveBatch("confirm"); });
+  batchIgnoreBtn.addEventListener("click", function () { resolveBatch("ignore"); });
+
+  loadCategories();
+  loadBatches();
+})();
+</script>
+{% endblock %}

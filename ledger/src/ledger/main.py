@@ -25,9 +25,11 @@ from ledger.routers import (
     import_export,
     metrics,
     recurring,
+    reports,
     statements,
     stats,
     transactions,
+    workbench,
 )
 from ledger.seed import ensure_seed
 from ledger.services import (
@@ -111,6 +113,8 @@ def create_app() -> FastAPI:
     app.include_router(import_export.router)
     app.include_router(recurring.router)
     app.include_router(statements.router)
+    app.include_router(reports.router)
+    app.include_router(workbench.router)
 
     # ---------- 页面路由 ----------
 
@@ -301,6 +305,50 @@ def create_app() -> FastAPI:
             "detective.html",
             {"accounts": account_options, "categories_grouped": grouped},
         )
+
+    @app.get("/rules", response_class=HTMLResponse)
+    async def rules_page(request: Request):
+        """匹配规则页。"""
+        factory = get_session_factory()
+        async with factory() as session:
+            result = await session.execute(select(Category).order_by(Category.kind, Category.sort_order, Category.id))
+            rows = result.scalars().all()
+        grouped = {"expense": [], "income": []}
+        for row in rows:
+            d = {"id": row.id, "name": row.name, "icon": row.icon, "color": row.color}
+            if row.kind in grouped:
+                grouped[row.kind].append(d)
+        return templates.TemplateResponse(
+            request,
+            "rules.html",
+            {"categories_grouped": grouped},
+        )
+
+    @app.get("/workbench", response_class=HTMLResponse)
+    async def workbench_page(request: Request):
+        """对账差异工作台页。"""
+        factory = get_session_factory()
+        async with factory() as session:
+            accounts_list = await list_accounts_with_balance(session)
+            result = await session.execute(select(Category).order_by(Category.kind, Category.sort_order, Category.id))
+            rows = result.scalars().all()
+        account_options = [{"id": a["id"], "name": a["name"]} for a in accounts_list]
+        grouped = {"expense": [], "income": []}
+        for row in rows:
+            d = {"id": row.id, "name": row.name, "icon": row.icon, "color": row.color}
+            if row.kind in grouped:
+                grouped[row.kind].append(d)
+        return templates.TemplateResponse(
+            request,
+            "workbench.html",
+            {"accounts": account_options, "categories_grouped": grouped},
+        )
+
+    @app.get("/report", response_class=HTMLResponse)
+    async def report_page(request: Request):
+        """月度收支报告页。"""
+        return templates.TemplateResponse(request, "report.html", {})
+
 
     return app
 

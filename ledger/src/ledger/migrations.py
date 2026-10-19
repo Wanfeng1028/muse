@@ -15,7 +15,8 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncEngine
 
 
-CURRENT_VERSION = 5
+CURRENT_VERSION = 6
+
 
 V1_TABLES = ("accounts", "categories", "transactions", "budgets", "recurring")
 V2_TABLES = (
@@ -70,6 +71,53 @@ async def _migrate_v3_to_v4(conn) -> None:
     await conn.execute(text(_compile_create_table(table)))
 
 
+async def _migrate_v5_to_v6(conn) -> None:
+    """v5 -> v6：match_rules 加规则引擎列，statement_items 加 suggested_rule_id，新建 report_schemes 表。"""
+    from ledger import models  # noqa: F401 局部导入，避免循环
+    result = await conn.execute(text("PRAGMA table_info(match_rules)"))
+    rule_cols = {row[1] for row in result.fetchall()}
+    if "pattern_type" not in rule_cols:
+        await conn.execute(text("ALTER TABLE match_rules ADD COLUMN pattern_type TEXT NOT NULL DEFAULT 'keyword'"))
+    if "is_enabled" not in rule_cols:
+        await conn.execute(text("ALTER TABLE match_rules ADD COLUMN is_enabled INTEGER NOT NULL DEFAULT 1"))
+    if "hit_count" not in rule_cols:
+        await conn.execute(text("ALTER TABLE match_rules ADD COLUMN hit_count INTEGER NOT NULL DEFAULT 0"))
+    result = await conn.execute(text("PRAGMA table_info(statement_items)"))
+    item_cols = {row[1] for row in result.fetchall()}
+    if "suggested_rule_id" not in item_cols:
+        await conn.execute(text("ALTER TABLE statement_items ADD COLUMN suggested_rule_id INTEGER"))
+    await conn.execute(text(_compile_create_table(models.Base.metadata.tables["report_schemes"])))
+    result = await conn.execute(
+        text("SELECT sql FROM sqlite_master WHERE type='table' AND name='match_rules'")
+    )
+    create_sql = result.scalar_one_or_none() or ""
+    if "uq_match_rules_keyword_direction" in create_sql:
+        await conn.execute(text(
+            "CREATE TABLE match_rules_new ("
+            "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "
+            "keyword VARCHAR NOT NULL, "
+            "category_id INTEGER NOT NULL REFERENCES categories (id), "
+            "direction VARCHAR NOT NULL DEFAULT 'any', "
+            "priority INTEGER NOT NULL DEFAULT 0, "
+            "created_at VARCHAR NOT NULL, "
+            "pattern_type VARCHAR NOT NULL DEFAULT 'keyword', "
+            "is_enabled INTEGER NOT NULL DEFAULT 1, "
+            "hit_count INTEGER NOT NULL DEFAULT 0, "
+            "CONSTRAINT uq_match_rules_keyword_ptype_direction UNIQUE (keyword, pattern_type, direction)"
+            ")"
+        ))
+        await conn.execute(text(
+            "INSERT INTO match_rules_new "
+            "(id, keyword, category_id, direction, priority, created_at, pattern_type, is_enabled, hit_count) "
+            "SELECT id, keyword, category_id, direction, priority, created_at, "
+            "COALESCE(pattern_type, 'keyword'), COALESCE(is_enabled, 1), COALESCE(hit_count, 0) "
+            "FROM match_rules"
+        ))
+        await conn.execute(text("DROP TABLE match_rules"))
+        await conn.execute(text("ALTER TABLE match_rules_new RENAME TO match_rules"))
+
+
+
 async def _migrate_v4_to_v5(conn) -> None:
     """v4 -> v5：新建 ocr_reviews 表（OCR 审核队列）。"""
     from ledger import models  # noqa: F401  局部导入，避免循环
@@ -109,6 +157,8 @@ async def run_migrations(engine: AsyncEngine) -> int:
 
                 if version < 5:
                     await _migrate_v4_to_v5(conn)
+                if version < 6:
+                    await _migrate_v5_to_v6(conn)
 
             await conn.execute(text(f"PRAGMA user_version = {CURRENT_VERSION}"))
             return CURRENT_VERSION

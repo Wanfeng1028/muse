@@ -87,4 +87,4 @@ async def test_ready_db_down(client, monkeypatch):
 async def test_health_version(client):
     resp = await client.get("/api/health")
     assert resp.status_code == 200
-    assert resp.json()["version"] == "2.10.0"
+    assert resp.json()["version"] == "2.11.0"

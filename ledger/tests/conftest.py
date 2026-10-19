@@ -58,6 +58,7 @@ async def client(app):
             "match_rules",
             "merchant_aliases",
             "statement_templates",
+            "report_schemes",
             "currencies",
             "transactions",
             "budgets",

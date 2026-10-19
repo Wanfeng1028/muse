@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% block title %}匹配规则{% endblock %}
+{% block content %}
+<div class="chart-toolbar">
+  <button class="btn btn-primary" id="btn-new-rule">新建规则</button>
+</div>
+
+<div class="error-list" id="error-list" style="display:none;"></div>
+
+<div class="card">
+  <table class="table" id="rules-table">
+    <thead>
+      <tr>
+        <th>模式内容</th>
+        <th>模式类型</th>
+        <th>分类</th>
+        <th>方向</th>
+        <th>优先级</th>
+        <th>命中次数</th>
+        <th>启用</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="rules-tbody"></tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>测试命中</h3>
+  <div class="form-row">
+    <label>商户名</label>
+    <input type="text" id="preview-counterparty" placeholder="如 滴滴出行">
+  </div>
+  <div class="form-row">
+    <label>摘要</label>
+    <input type="text" id="preview-summary" placeholder="如 打车费">
+  </div>
+  <div class="form-row">
+    <label>方向</label>
+    <select id="preview-direction">
+      <option value="">不限</option>
+      <option value="expense">支出</option>
+      <option value="income">收入</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <button class="btn btn-primary" id="btn-preview">测试</button>
+  </div>
+  <div id="preview-result" class="muted"></div>
+</div>
+
+<div id="rule-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;">
+  <div class="card" style="max-width:480px;margin:80px auto;">
+    <h3 id="modal-title">新建规则</h3>
+    <div class="form-row">
+      <label>模式内容</label>
+      <input type="text" id="rule-keyword">
+    </div>
+    <div class="form-row">
+      <label>模式类型</label>
+      <select id="rule-pattern-type">
+        <option value="keyword">关键词</option>
+        <option value="regex">正则</option>
+      </select>
+    </div>
+    <div class="form-row" id="regex-hint-row" style="display:none;">
+      <span class="muted">支持 Python 正则，如 滴滴.*出行</span>
+    </div>
+    <div class="form-row">
+      <label>分类</label>
+      <select id="rule-category"></select>
+    </div>
+    <div class="form-row">
+      <label>方向</label>
+      <select id="rule-direction">
+        <option value="">不限</option>
+        <option value="expense">支出</option>
+        <option value="income">收入</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>优先级</label>
+      <input type="number" id="rule-priority" value="0">
+    </div>
+    <div class="form-row">
+      <label>启用</label>
+      <input type="checkbox" id="rule-enabled" checked>
+    </div>
+    <div class="form-row">
+      <button class="btn btn-primary" id="btn-save-rule">保存</button>
+      <button class="btn" id="btn-cancel-rule">取消</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var categoriesGrouped = {{ categories_grouped | tojson }};
+var editingId = null;
+
+function showError(msg) {
+  var el = document.getElementById('error-list');
+  el.style.display = '';
+  var div = document.createElement('div');
+  div.textContent = msg;
+  el.appendChild(div);
+}
+
+function clearErrors() {
+  var el = document.getElementById('error-list');
+  el.innerHTML = '';
+  el.style.display = 'none';
+}
+
+function patternTypeText(t) {
+  if (t === 'keyword') return '关键词';
+  if (t === 'regex') return '正则';
+  return t || '';
+}
+
+function directionText(d) {
+  if (d === 'out' || d === 'expense') return '支出';
+  if (d === 'in' || d === 'income') return '收入';
+  return '不限';
+}
+
+function categoryName(id) {
+  var all = (categoriesGrouped.expense || []).concat(categoriesGrouped.income || []);
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === id) return all[i].name;
+  }
+  return id || '';
+}
+
+function fillCategorySelect(sel, selectedId) {
+  sel.innerHTML = '';
+  var groups = [['expense', '支出'], ['income', '收入']];
+  for (var g = 0; g < groups.length; g++) {
+    var kind = groups[g][0];
+    var list = categoriesGrouped[kind] || [];
+    for (var i = 0; i < list.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = list[i].id;
+      opt.textContent = list[i].name;
+      if (list[i].id === selectedId) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+}
+
+function loadRules() {
+  clearErrors();
+  fetch('/api/match-rules')
+    .then(function(r) { if (!r.ok) throw new Error('加载规则失败：' + r.status); return r.json(); })
+    .then(function(rules) { renderRules(rules); })
+    .catch(function(e) { showError(e.message); });
+}
+
+function renderRules(rules) {
+  var tbody = document.getElementById('rules-tbody');
+  tbody.innerHTML = '';
+  for (var i = 0; i < rules.length; i++) {
+    var r = rules[i];
+    var tr = document.createElement('tr');
+    if (!r.is_enabled) tr.className = 'muted';
+
+    var tdKw = document.createElement('td');
+    tdKw.textContent = r.keyword || '';
+    tr.appendChild(tdKw);
+
+    var tdType = document.createElement('td');
+    tdType.textContent = patternTypeText(r.pattern_type);
+    tr.appendChild(tdType);
+
+    var tdCat = document.createElement('td');
+    tdCat.textContent = r.category_name || categoryName(r.category_id);
+    tr.appendChild(tdCat);
+
+    var tdDir = document.createElement('td');
+    tdDir.textContent = directionText(r.direction);
+    tr.appendChild(tdDir);
+
+    var tdPri = document.createElement('td');
+    tdPri.textContent = r.priority;
+    tr.appendChild(tdPri);
+
+    var tdHit = document.createElement('td');
+    tdHit.textContent = r.hit_count;
+    tr.appendChild(tdHit);
+
+    var tdEn = document.createElement('td');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!r.is_enabled;
+    cb.setAttribute('data-id', r.id);
+    cb.addEventListener('change', function() {
+      var id = this.getAttribute('data-id');
+      var enabled = this.checked;
+      fetch('/api/match-rules/' + id, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({is_enabled: enabled})
+      })
+      .then(function(res) { if (!res.ok) throw new Error('更新启用状态失败：' + res.status); loadRules(); })
+      .catch(function(e) { showError(e.message); });
+    });
+    tdEn.appendChild(cb);
+    tr.appendChild(tdEn);
+
+    var tdOp = document.createElement('td');
+    var btnEdit = document.createElement('button');
+    btnEdit.className = 'btn';
+    btnEdit.textContent = '编辑';
+    btnEdit.addEventListener('click', function() { openModal(r); });
+    var btnDel = document.createElement('button');
+    btnDel.className = 'btn';
+    btnDel.textContent = '删除';
+    btnDel.addEventListener('click', function() { deleteRule(r.id); });
+    tdOp.appendChild(btnEdit);
+    tdOp.appendChild(document.createTextNode(' '));
+    tdOp.appendChild(btnDel);
+    tr.appendChild(tdOp);
+
+    tbody.appendChild(tr);
+  }
+}
+
+function deleteRule(id) {
+  if (!confirm('确定删除该规则？')) return;
+  fetch('/api/match-rules/' + id, {method: 'DELETE'})
+    .then(function(r) { if (!r.ok) throw new Error('删除失败：' + r.status); loadRules(); })
+    .catch(function(e) { showError(e.message); });
+}
+
+function openModal(rule) {
+  clearErrors();
+  editingId = rule ? rule.id : null;
+  document.getElementById('modal-title').textContent = rule ? '编辑规则' : '新建规则';
+  document.getElementById('rule-keyword').value = rule ? (rule.keyword || '') : '';
+  document.getElementById('rule-pattern-type').value = rule ? (rule.pattern_type || 'keyword') : 'keyword';
+  fillCategorySelect(document.getElementById('rule-category'), rule ? rule.category_id : null);
+  document.getElementById('rule-direction').value = rule ? (rule.direction || '') : '';
+  document.getElementById('rule-priority').value = rule ? rule.priority : 0;
+  document.getElementById('rule-enabled').checked = rule ? !!rule.is_enabled : true;
+  toggleRegexHint();
+  document.getElementById('rule-modal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('rule-modal').style.display = 'none';
+  editingId = null;
+}
+
+function toggleRegexHint() {
+  var t = document.getElementById('rule-pattern-type').value;
+  document.getElementById('regex-hint-row').style.display = (t === 'regex') ? 'block' : 'none';
+}
+
+function saveRule() {
+  clearErrors();
+  var payload = {
+    keyword: document.getElementById('rule-keyword').value,
+    pattern_type: document.getElementById('rule-pattern-type').value,
+    category_id: document.getElementById('rule-category').value,
+    direction: document.getElementById('rule-direction').value || null,
+    priority: parseInt(document.getElementById('rule-priority').value, 10) || 0,
+    is_enabled: document.getElementById('rule-enabled').checked
+  };
+  var url = editingId ? ('/api/match-rules/' + editingId) : '/api/match-rules';
+  var method = editingId ? 'PUT' : 'POST';
+  fetch(url, {
+    method: method,
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) { if (!r.ok) throw new Error('保存失败：' + r.status); closeModal(); loadRules(); })
+  .catch(function(e) { showError(e.message); });
+}
+
+function sourceText(src) {
+  if (src === 'alias') return '别名记忆';
+  if (src === 'regex') return '正则规则';
+  if (src === 'keyword') return '关键词规则';
+  if (src === 'history') return '历史推断';
+  if (src === 'frequent') return '常用推荐';
+  return src || '';
+}
+
+function doPreview() {
+  clearErrors();
+  var body = {
+    counterparty: document.getElementById('preview-counterparty').value,
+    summary: document.getElementById('preview-summary').value,
+    direction: document.getElementById('preview-direction').value || null
+  };
+  fetch('/api/match-rules/preview', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  })
+  .then(function(r) { if (!r.ok) throw new Error('测试失败：' + r.status); return r.json(); })
+  .then(function(data) {
+    var el = document.getElementById('preview-result');
+    el.innerHTML = '';
+    var p = document.createElement('p');
+    p.textContent = data.hit ? '命中：是' : '命中：否';
+    el.appendChild(p);
+    if (data.chain && data.chain.length) {
+      var ol = document.createElement('ol');
+      for (var i = 0; i < data.chain.length; i++) {
+        var item = data.chain[i];
+        var li = document.createElement('li');
+        var text = sourceText(item.source || item.type || '');
+        if (item.category_name) text += ' → ' + item.category_name;
+        else if (item.category_id) text += ' → ' + categoryName(item.category_id);
+        if (item.detail) text += '（' + item.detail + '）';
+        li.textContent = text;
+        ol.appendChild(li);
+      }
+      el.appendChild(ol);
+    }
+  })
+  .catch(function(e) { showError(e.message); });
+}
+
+document.getElementById('btn-new-rule').addEventListener('click', function() { openModal(null); });
+document.getElementById('btn-cancel-rule').addEventListener('click', closeModal);
+document.getElementById('btn-save-rule').addEventListener('click', saveRule);
+document.getElementById('btn-preview').addEventListener('click', doPreview);
+document.getElementById('rule-pattern-type').addEventListener('change', toggleRegexHint);
+
+loadRules();
+</script>
+{% endblock %}
