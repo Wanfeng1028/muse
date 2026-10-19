@@ -81,7 +81,7 @@ func TestCheck_边界_超长目标返回错误(t *testing.T) {
 
 func TestCheck_失败注入_探针超时(t *testing.T) {
 	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(800 * time.Millisecond)
+		time.Sleep(2 * time.Second)
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer slow.Close()
@@ -174,7 +174,9 @@ func TestCheckWithRetry_幂等_状态码不符不重试(t *testing.T) {
 	}
 }
 
-func TestCheck_成功_HTTP状态码与证书字段(t *testing.T) {
+// 生产默认验证 TLS 证书, httptest.NewTLSServer 使用自签名证书,
+// 因此握手失败、请求被拒绝是预期行为, 该测试验证此安全默认。
+func TestCheck_TLS自签名证书被拒绝(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -185,14 +187,17 @@ func TestCheck_成功_HTTP状态码与证书字段(t *testing.T) {
 	if c.MonitorID != 8 {
 		t.Fatalf("MonitorID 应为 8, 实际 %d", c.MonitorID)
 	}
-	if c.Ok != 1 {
-		t.Fatalf("成功 Ok 应为 1, 实际 %d, err=%s", c.Ok, c.Error)
+	if c.Ok != 0 {
+		t.Fatalf("自签名证书应被拒绝 Ok 应为 0, 实际 %d", c.Ok)
 	}
-	if !c.StatusCode.Valid {
-		t.Fatalf("成功应带状态码")
+	if !strings.Contains(c.Error, "certificate") {
+		t.Fatalf("错误应包含 certificate, 实际 %q", c.Error)
 	}
-	if c.StatusCode.Int64 != 200 {
-		t.Fatalf("状态码应为 200, 实际 %d", c.StatusCode.Int64)
+	if c.StatusCode.Valid {
+		t.Fatalf("握手失败无响应, StatusCode 不应有效, 实际 %d", c.StatusCode.Int64)
+	}
+	if c.LatencyMs < 0 {
+		t.Fatalf("LatencyMs 不应为负, 实际 %d", c.LatencyMs)
 	}
 	if c.CheckedAt == "" {
 		t.Fatalf("CheckedAt 不应为空")

@@ -209,7 +209,7 @@ func TestManualRetryOrthogonalToBreaker(t *testing.T) {
 
 	ctx := context.Background()
 
-	// 一次失败即达 MaxAttempts=1 → failed；同时阈值 1 触发熔断 open。
+	// 一次失败即达 MaxAttempts=1 → dead；同时阈值 1 触发熔断 open。
 	if err := q.ProcessDue(ctx); err != nil {
 		t.Fatalf("ProcessDue #1: %v", err)
 	}
@@ -217,14 +217,14 @@ func TestManualRetryOrthogonalToBreaker(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetDelivery (1): %v", err)
 	}
-	if d.Status != "failed" {
-		t.Fatalf("期望 failed，实际 %s", d.Status)
+	if d.Status != "dead" {
+		t.Fatalf("期望 dead，实际 %s", d.Status)
 	}
 	if got := q.Breakers.Get(server.URL).State(); got != BreakerOpen {
 		t.Fatalf("期望熔断器 open，实际 %v", got)
 	}
 
-	// 手动重试：store 层不受熔断影响，failed → pending。
+	// 手动重试：store 层不受熔断影响，dead → pending。
 	if err := st.RetryDelivery(id); err != nil {
 		t.Fatalf("RetryDelivery 期望 nil，实际 %v", err)
 	}

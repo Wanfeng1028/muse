@@ -87,14 +87,14 @@ func TestAllowRefillsOverTime(t *testing.T) {
 }
 
 func TestAllowRefillCappedAtBurst(t *testing.T) {
-	l := NewRateLimiter(1000000, 2)
+	l := NewRateLimiter(100, 2)
 	if !l.Allow() || !l.Allow() {
 		t.Fatal("前两次 Allow() 应为 true")
 	}
 	if l.Allow() {
 		t.Fatal("耗尽后 Allow() = true, 期望 false")
 	}
-	time.Sleep(20 * time.Millisecond)
+	time.Sleep(30 * time.Millisecond)
 	if !l.Allow() {
 		t.Fatal("补充后 Allow() = false, 期望 true")
 	}

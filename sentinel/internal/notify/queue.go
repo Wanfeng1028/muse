@@ -234,6 +234,9 @@ func (q *QueueSender) ProcessDue(ctx context.Context) error {
 				if markErr != nil {
 					log.Logger().Error("标记投递最终失败失败", "delivery_id", d.ID, "error", err)
 				}
+				if markErr == nil && !permanent {
+					metrics.Default.RecordWebhookDeadLetter()
+				}
 				log.Logger().Warn("Webhook 投递最终失败",
 					"delivery_id", d.ID,
 					"url", d.URL,

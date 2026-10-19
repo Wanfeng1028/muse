@@ -442,21 +442,28 @@ func TestBreakerRegistryConcurrentGet(t *testing.T) {
 	}
 	wg.Wait()
 
-	first := results[0]
-	for i, br := range results {
-		if br == nil {
+	for i := range urls {
+		first := results[i]
+		if first == nil {
 			t.Fatalf("results[%d] is nil", i)
 		}
-		if br != first {
-			t.Fatalf("results[%d] differs from results[0]; registry returned different breakers for same key", i)
+		for g := 0; g < goroutines; g++ {
+			idx := g*len(urls) + i
+			br := results[idx]
+			if br == nil {
+				t.Fatalf("results[%d] is nil", idx)
+			}
+			if br != first {
+				t.Fatalf("results[%d] differs from results[%d]; registry returned different breakers for same key %q", idx, i, urls[i])
+			}
 		}
 	}
 
 	snap := r.Snapshot()
-	if len(snap) != 3 {
-		t.Fatalf("snapshot size = %d, want 3 (keys=%v)", len(snap), snap)
+	if len(snap) != 4 {
+		t.Fatalf("snapshot size = %d, want 4 (keys=%v)", len(snap), snap)
 	}
-	for _, k := range []string{"a.example.com", "b.example.com", "://bad-url"} {
+	for _, k := range []string{"a.example.com", "b.example.com", "://bad-url", ""} {
 		if _, ok := snap[k]; !ok {
 			t.Fatalf("snapshot missing key %q, got %v", k, snap)
 		}

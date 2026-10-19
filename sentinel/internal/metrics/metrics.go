@@ -29,6 +29,8 @@ type Registry struct {
 	checksRetried   atomic.Int64
 	webhooksSent    atomic.Int64
 	webhookFailed   atomic.Int64
+	// webhookDeadLetters 记录被移入死信队列的 webhook 投递次数。
+	webhookDeadLetters atomic.Int64
 	enqueueRejected atomic.Int64
 
 	checkLatencyMs atomic.Int64
@@ -82,6 +84,11 @@ func (m *Registry) RecordEnqueueRejected() {
 	m.enqueueRejected.Add(1)
 }
 
+// RecordWebhookDeadLetter 记录一次 webhook 投递被移入死信队列。
+func (m *Registry) RecordWebhookDeadLetter() {
+	m.webhookDeadLetters.Add(1)
+}
+
 // RecordHTTP 记录一次 HTTP 请求。
 func (m *Registry) RecordHTTP(method, path string, status int, latencyMs int64) {
 	norm := normalizePath(path)
@@ -127,6 +134,7 @@ func (m *Registry) Snapshot() map[string]interface{} {
 		"check_retries":    m.checksRetried.Load(),
 		"webhooks_sent":    m.webhooksSent.Load(),
 		"webhook_failures": m.webhookFailed.Load(),
+		"webhook_dead_letters": m.webhookDeadLetters.Load(),
 		"check_latency_ms": m.checkLatencyMs.Load(),
 	}
 
@@ -162,6 +170,7 @@ func (m *Registry) RenderPrometheus() string {
 	writeCounter("sentinel_check_retries_total", "Total number of retried checks.", m.checksRetried.Load())
 	writeCounter("sentinel_webhooks_sent_total", "Total number of webhook deliveries attempted.", m.webhooksSent.Load())
 	writeCounter("sentinel_webhook_failures_total", "Total number of webhook delivery failures.", m.webhookFailed.Load())
+	writeCounter("sentinel_webhook_dead_letters_total", "Total number of webhook deliveries moved to dead letter.", m.webhookDeadLetters.Load())
 	writeCounter("sentinel_webhook_enqueue_rejected_total", "Total number of webhook enqueue requests rejected by the rate limiter.", m.enqueueRejected.Load())
 
 	m.mu.Lock()

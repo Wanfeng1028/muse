@@ -45,9 +45,9 @@ func (s *Server) handleListDeliveries(w http.ResponseWriter, r *http.Request) {
 	status := strings.TrimSpace(q.Get("status"))
 	if status != "" {
 		switch status {
-		case "pending", "retrying", "done", "failed":
+		case "pending", "retrying", "done", "failed", "dead":
 		default:
-			writeErr(w, http.StatusBadRequest, "status 参数非法，只支持 pending/retrying/done/failed")
+			writeErr(w, http.StatusBadRequest, "status 参数非法，只支持 pending/retrying/done/failed/dead")
 			return
 		}
 	}

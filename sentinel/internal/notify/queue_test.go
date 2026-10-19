@@ -140,8 +140,8 @@ func TestProcessDueRetryThenFail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetDelivery after 3: %v", err)
 	}
-	if d.Status != "failed" {
-		t.Fatalf("expected failed, got status=%q attempt=%d", d.Status, d.Attempt)
+	if d.Status != "dead" {
+		t.Fatalf("expected dead, got status=%q attempt=%d", d.Status, d.Attempt)
 	}
 }
 

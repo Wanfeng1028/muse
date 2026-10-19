@@ -173,6 +173,55 @@ SQLite 写操作串行化保证并发 worker 不重复认领同一行。认领�
 worker 在认领后、标记前崩溃会留下 `delivering` 僵尸行；`ProcessDue` 每次开头会把
 `status='delivering' AND updated_at <= now-lease` 的行打回 `retrying`，lease 为 10 分钟。
 `delivering` 不计入 `sentinel_webhook_queue_backlog`。
+
+### webhook 死信队列语义
+
+死信就是可重试失败被耗干之后的终态：一条投递记录把 `maxAttempts`（默认 8 次）全部用完还是失败，就转入死信，语义上等于"系统自己搞不定了"，需要人工介入。
+
+失败分两类，处理方式不同：
+
+| 失败类型 | 判定 | 处理 | 是否消耗重试 |
+| --- | --- | --- | --- |
+| 永久失败 | 4xx 且非 408/429（如 400/401/404） | 立即转 `failed`，不重试 | 否 |
+| 可重试 | 网络错、超时、5xx、408、429 | 退避重试，耗尽后转 `dead` | 是 |
+
+状态机大致这样走：
+
+```
+pending ──> delivering ──> done
+               │
+               ├──> retrying ──> delivering ──> ...（退避重试循环）
+               ├──> failed   （永久失败，直接终态）
+               └──> dead     （可重试次数耗尽，终态）
+```
+
+`failed` 和 `dead` 都是终态，不会自己再动。唯一出口是手动重投：`POST /api/alerts/deliveries/{id}/retry`。
+
+`failed` 和 `dead` 的区别，以及历史口径：
+
+- 2026-10-19 之前产生的 `failed` 行是"耗尽"口径，语义上就是死信；
+- 2026-10-19 之后 `failed` 只表示永久失败，耗尽口径统一叫 `dead`；
+- 两者都能手动重投，处理上不用区别对待。
+
+相关接口：
+
+- 查死信：`GET /api/alerts/deliveries?status=dead`
+- 手动重投：`POST /api/alerts/deliveries/{id}/retry`（支持 `dead`）
+
+指标：
+
+- `sentinel_webhook_dead_letters_total`：counter，每次有记录转死信时 +1；
+- 建议给这个 counter 配告警规则，出现非零增长就有人看一眼。
+
+两条投递路径的分工，别搞混：
+
+| 路径 | 触发条件 | 行为 |
+| --- | --- | --- |
+| 队列路径 | 有 `monitor_id` | 持久化入队，退避重试，耗尽转死信，可手动重投 |
+| 同步 `Notifier.Send` | 无 `monitor_id` | 3 次 inline 重试后直接丢弃，不落库 |
+
+同步 `Notifier.Send` 因为拿不到 `monitor_id`，外键进不了队列表，所以只能 inline 重试后丢弃。这是已知取舍，不是 bug。
+<<<<<<< END
 - `sentinel_http_requests_total{method,path,status}`：HTTP 请求计数（counter）
 
 说明：
