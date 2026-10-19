@@ -6,6 +6,9 @@ import type {
   CreateFocusInput,
   FocusStats,
   PlanSummary,
+  AutoScheduleInput,
+  AutoScheduleItem,
+  AutoScheduleResult,
   Mistake,
   MistakeSummary,
   CreateMistakeInput,
@@ -140,6 +143,10 @@ export const api = {
     request<Plan>(`/plans/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deletePlan: (id: number) =>
     request<void>(`/plans/${id}`, { method: 'DELETE' }),
+  autoSchedulePreview: (params: { subjects: string; dailyMinutes: number; examDate: string; startDate?: string }) =>
+    request<{ items: AutoScheduleItem[] }>(`/plans/auto-schedule/preview${qs(params)}`),
+  autoSchedule: (input: AutoScheduleInput) =>
+    request<AutoScheduleResult>('/plans/auto-schedule', { method: 'POST', body: JSON.stringify(input) }),
 
   // 专注
   listFocus: (limit?: number) => request<FocusSession[]>(`/focus${qs({ limit })}`),
@@ -165,6 +172,8 @@ export const api = {
   // 错题掌握率汇总
   mistakeSummary: (subject?: string) =>
     request<MistakeSummary>(`/mistakes/summary${qs({ subject })}`),
+  mistakeSourceExams: (id: number, windowDays?: number) =>
+    request<ExamRecord[]>(`/mistakes/${id}/source-exams${qs({ windowDays })}`),
 
 
   // 单词
@@ -192,6 +201,8 @@ export const api = {
     request<ExamRecord>('/exams', { method: 'POST', body: JSON.stringify(input) }),
   deleteExam: (id: number) =>
     request<void>(`/exams/${id}`, { method: 'DELETE' }),
+  examRelatedMistakes: (id: number, windowDays?: number) =>
+    request<Mistake[]>(`/exams/${id}/related-mistakes${qs({ windowDays })}`),
 
   // 考试 CSV 导出：返回 Blob，由调用方触发下载
   exportExamsCsv: async (subject?: string): Promise<Blob> => {

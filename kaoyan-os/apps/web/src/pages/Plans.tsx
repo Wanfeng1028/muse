@@ -5,6 +5,9 @@ import {
   type SubjectKey,
   type Plan,
   type PlanSummary,
+  type AutoScheduleInput,
+  type AutoScheduleItem,
+  type AutoScheduleResult,
 } from '@kaoyan/shared';
 
 // 本地日期 -> YYYY-MM-DD
@@ -39,6 +42,70 @@ export default function Plans() {
   const [subject, setSubject] = useState<SubjectKey>('math');
   const [plannedMinutes, setPlannedMinutes] = useState<number>(60);
   const [newDate, setNewDate] = useState<string>(date);
+
+  // 智能排期弹窗
+  const [schedOpen, setSchedOpen] = useState(false);
+  const [schedSubjects, setSchedSubjects] = useState<SubjectKey[]>(['math']);
+  const [schedDailyMinutes, setSchedDailyMinutes] = useState(240);
+  const [schedExamDate, setSchedExamDate] = useState('2026-12-19');
+  const [schedStartDate, setSchedStartDate] = useState(localDateStr());
+  const [schedPreview, setSchedPreview] = useState<AutoScheduleItem[] | null>(null);
+  const [schedBusy, setSchedBusy] = useState(false);
+  const [schedError, setSchedError] = useState('');
+
+  const toggleSchedSubject = (key: SubjectKey) => {
+    setSchedSubjects((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+    setSchedPreview(null);
+  };
+
+  const handleSchedPreview = async () => {
+    if (schedSubjects.length === 0) {
+      setSchedError('请至少选择一个科目');
+      return;
+    }
+    setSchedBusy(true);
+    setSchedError('');
+    try {
+      const data = await api.autoSchedulePreview({
+        subjects: schedSubjects.join(','),
+        dailyMinutes: Number(schedDailyMinutes) || 0,
+        examDate: schedExamDate,
+        startDate: schedStartDate,
+      });
+      setSchedPreview(data.items);
+    } catch (e) {
+      setSchedError(e instanceof Error ? e.message : '生成预览失败');
+    } finally {
+      setSchedBusy(false);
+    }
+  };
+
+  const handleSchedConfirm = async () => {
+    if (schedSubjects.length === 0) {
+      setSchedError('请至少选择一个科目');
+      return;
+    }
+    setSchedBusy(true);
+    setSchedError('');
+    try {
+      const input: AutoScheduleInput = {
+        subjects: schedSubjects,
+        dailyMinutes: Number(schedDailyMinutes) || 0,
+        examDate: schedExamDate,
+        startDate: schedStartDate,
+      };
+      await api.autoSchedule(input);
+      setSchedOpen(false);
+      setSchedPreview(null);
+      await loadList();
+    } catch (e) {
+      setSchedError(e instanceof Error ? e.message : '生成失败');
+    } finally {
+      setSchedBusy(false);
+    }
+  };
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -111,7 +178,14 @@ export default function Plans() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>复习计划</h1>
+                <h1>复习计划</h1>
+                <button
+                  className="btn btn-primary btn-sm"
+                  type="button"
+                  onClick={() => setSchedOpen(true)}
+                >
+                  智能排期
+                </button>
         <div className="form-row plans-filter-row">
           <input
             className="input"
@@ -180,6 +254,118 @@ export default function Plans() {
         <div className="stat-card plans-summary-card">{summaryText}</div>
       )}
 
+      {schedOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 80,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+          onClick={() => setSchedOpen(false)}
+        >
+          <div
+            className="card"
+            style={{ width: '100%', maxWidth: 560, maxHeight: '85vh', overflowY: 'auto' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginTop: 0 }}>智能排期</h2>
+            <div className="form-row" style={{ gap: 12, flexWrap: 'wrap' }}>
+              {SUBJECTS.map((s) => (
+                <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <input
+                    type="checkbox"
+                    checked={schedSubjects.includes(s.key)}
+                    onChange={() => toggleSchedSubject(s.key)}
+                  />
+                  {s.name}
+                </label>
+              ))}
+            </div>
+            <div className="form-grid" style={{ marginTop: 12 }}>
+              <label>
+                每日分钟数
+                <input
+                  className="input"
+                  type="number"
+                  min={30}
+                  value={schedDailyMinutes}
+                  onChange={(e) => {
+                    setSchedDailyMinutes(Number(e.target.value));
+                    setSchedPreview(null);
+                  }}
+                />
+              </label>
+              <label>
+                考试日期
+                <input
+                  className="input"
+                  type="date"
+                  value={schedExamDate}
+                  onChange={(e) => {
+                    setSchedExamDate(e.target.value);
+                    setSchedPreview(null);
+                  }}
+                />
+              </label>
+              <label>
+                开始日期
+                <input
+                  className="input"
+                  type="date"
+                  value={schedStartDate}
+                  onChange={(e) => {
+                    setSchedStartDate(e.target.value);
+                    setSchedPreview(null);
+                  }}
+                />
+              </label>
+            </div>
+            {schedError && <div className="error-box">{schedError}</div>}
+            <div className="form-row" style={{ marginTop: 12, gap: 8 }}>
+              <button
+                className="btn btn-primary btn-sm"
+                type="button"
+                disabled={schedBusy}
+                onClick={() => void handleSchedPreview()}
+              >
+                {schedBusy ? '生成中…' : '生成预览'}
+              </button>
+              <button
+                className="btn btn-sm"
+                type="button"
+                onClick={() => setSchedOpen(false)}
+              >
+                关闭
+              </button>
+            </div>
+            {schedPreview && (
+              <div style={{ marginTop: 12 }}>
+                <div className="stat-label">共 {schedPreview.length} 条，先看前 10 条：</div>
+                <ul style={{ paddingLeft: 18, margin: '8px 0' }}>
+                  {schedPreview.slice(0, 10).map((item, i) => (
+                    <li key={i}>
+                      {item.date} {item.title}（{item.plannedMinutes} 分钟）
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  disabled={schedBusy}
+                  onClick={() => void handleSchedConfirm()}
+                >
+                  {schedBusy ? '写入中…' : `确认生成（${schedPreview.length} 条）`}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {error && <div className="error-box">{error}</div>}
 
       {loading ? (
@@ -230,18 +416,3 @@ export default function Plans() {
     </div>
   );
 }
-
-// ---- api 占位引用：实际项目由 @kaoyan/shared 或全局注入 ----
-// 为避免编译期缺失，这里声明所用到的接口签名（与后端契约一致）。
-declare const api: {
-  listPlans(params: { date: string; subject?: SubjectKey }): Promise<Plan[]>;
-  createPlan(input: {
-    date: string;
-    subject: SubjectKey;
-    title: string;
-    plannedMinutes: number;
-  }): Promise<Plan>;
-  updatePlan(id: number, input: { done?: boolean; date?: string; subject?: SubjectKey; title?: string; plannedMinutes?: number }): Promise<Plan>;
-  deletePlan(id: number): Promise<void>;
-  planSummary(date: string): Promise<PlanSummary>;
-};

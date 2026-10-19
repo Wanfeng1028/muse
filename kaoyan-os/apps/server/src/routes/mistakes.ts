@@ -6,6 +6,7 @@ import {
   type CreateMistakeInput,
   type UpdateMistakeInput,
   type MistakeSummary,
+  type ExamRecord,
 } from '@kaoyan/shared';
 
 import { nowIso } from '../db';
@@ -244,4 +245,75 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
     db.prepare('DELETE FROM mistakes WHERE id = ? AND user_id = ?').run(id, request.user!.id);
     return reply.send({ ok: true });
   });
+  app.get('/api/mistakes/:id/source-exams', async (request, reply) => {
+      const rawId = (request.params as { id: string }).id;
+      const id = Number(rawId);
+      if (!Number.isInteger(id) || id <= 0) {
+        return reply.code(400).send({ error: 'id 非法' });
+      }
+
+      const rawWindow = (request.query as { windowDays?: string }).windowDays;
+      let windowDays = 7;
+      if (rawWindow !== undefined) {
+        const parsed = Number(rawWindow);
+        if (!Number.isInteger(parsed) || parsed < 0 || parsed > 90) {
+          return reply.code(400).send({ error: 'windowDays 非法' });
+        }
+        windowDays = parsed;
+      }
+
+      const userId = request.user!.id;
+      const mistake = db
+      .prepare('SELECT id, user_id, subject, title, content, analysis, mastered, created_at FROM mistakes WHERE id = ? AND user_id = ?')
+      .get(id, userId) as MistakeRow | undefined;
+      if (!mistake) {
+        return reply.code(404).send({ error: '错题不存在' });
+      }
+
+      const mistakeDate = mistake.created_at.slice(0, 10);
+      const mParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(mistakeDate);
+      if (!mParts) {
+        return reply.send([]);
+      }
+      const mUtc = Date.UTC(Number(mParts[1]), Number(mParts[2]) - 1, Number(mParts[3]));
+
+      const rows = db
+      .prepare(
+        'SELECT id, user_id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ? AND subject = ? ORDER BY taken_at DESC, id DESC',
+        )
+      .all(userId, mistake.subject) as Array<{
+        id: number;
+        user_id: number;
+        subject: string;
+        paper: string;
+        score: number;
+        total_score: number;
+        duration_minutes: number;
+        taken_at: string;
+      }>;
+
+      const result: ExamRecord[] = [];
+      for (const row of rows) {
+        const tParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(row.taken_at);
+        if (!tParts) {
+          continue;
+        }
+        const tUtc = Date.UTC(Number(tParts[1]), Number(tParts[2]) - 1, Number(tParts[3]));
+        const diffDays = Math.round(Math.abs(tUtc - mUtc) / 86400000);
+        if (diffDays > windowDays) {
+          continue;
+        }
+        result.push({
+            id: row.id,
+            subject: row.subject as ExamRecord['subject'],
+            paper: row.paper,
+            score: row.score,
+            totalScore: row.total_score,
+            durationMinutes: row.duration_minutes,
+            takenAt: row.taken_at,
+          });
+      }
+
+      return reply.send(result);
+    });
 }

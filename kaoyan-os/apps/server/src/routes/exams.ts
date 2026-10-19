@@ -7,6 +7,7 @@ import {
   type ExamRecord,
   type ExamTrendPoint,
   type ExamSummary,
+  type Mistake,
 } from '@kaoyan/shared';
 
 import { todayStr } from '../db';
@@ -330,4 +331,73 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     return reply.send({ ok: true });
   });
+  app.get('/api/exams/:id/related-mistakes', async (request, reply) => {
+      const rawId = (request.params as { id: string }).id;
+      const id = Number(rawId);
+      if (!Number.isInteger(id) || id <= 0) {
+        return reply.code(400).send({ error: '无效的 id' });
+      }
+
+      const rawWindow = (request.query as { windowDays?: string }).windowDays;
+      let windowDays = 7;
+      if (rawWindow !== undefined) {
+        const parsed = Number(rawWindow);
+        if (!Number.isInteger(parsed) || parsed < 0 || parsed > 90) {
+          return reply.code(400).send({ error: 'windowDays 非法' });
+        }
+        windowDays = parsed;
+      }
+
+      const userId = request.user!.id;
+      const exam = db
+      .prepare('SELECT id, user_id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE id = ? AND user_id = ?')
+      .get(id, userId) as ExamRow | undefined;
+      if (!exam) {
+        return reply.code(404).send({ error: '记录不存在' });
+      }
+
+      const eParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(exam.taken_at);
+      if (!eParts) {
+        return reply.code(400).send({ error: 'takenAt 非法' });
+      }
+      const eUtc = Date.UTC(Number(eParts[1]), Number(eParts[2]) - 1, Number(eParts[3]));
+
+      const rows = db
+      .prepare('SELECT id, user_id, subject, title, content, analysis, mastered, created_at FROM mistakes WHERE user_id = ? AND subject = ? ORDER BY created_at DESC, id DESC')
+      .all(userId, exam.subject) as Array<{
+        id: number;
+        user_id: number;
+        subject: string;
+        title: string;
+        content: string;
+        analysis: string;
+        mastered: number;
+        created_at: string;
+      }>;
+
+      const result: Mistake[] = [];
+      for (const row of rows) {
+        const cDate = row.created_at.slice(0, 10);
+        const cParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(cDate);
+        if (!cParts) {
+          continue;
+        }
+        const cUtc = Date.UTC(Number(cParts[1]), Number(cParts[2]) - 1, Number(cParts[3]));
+        const diffDays = Math.round(Math.abs(cUtc - eUtc) / 86400000);
+        if (diffDays > windowDays) {
+          continue;
+        }
+        result.push({
+            id: row.id,
+            subject: row.subject as Mistake['subject'],
+            title: row.title,
+            content: row.content,
+            analysis: row.analysis,
+            mastered: row.mastered === 1,
+            createdAt: row.created_at,
+          });
+      }
+
+      return reply.send(result);
+    });
 }

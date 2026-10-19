@@ -5,6 +5,7 @@ import type {
   ExamSummary,
   SubjectKey,
   CreateExamInput,
+  Mistake,
 } from '@kaoyan/shared';
 
 import { SUBJECTS } from '@kaoyan/shared';
@@ -33,6 +34,36 @@ export default function Exams() {
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [recordsError, setRecordsError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+
+  // 相关错题：按考试记录 id 缓存
+  const [relatedOpenId, setRelatedOpenId] = useState<number | null>(null);
+  const [related, setRelated] = useState<Record<number, Mistake[]>>({});
+  const [relatedLoadingId, setRelatedLoadingId] = useState<number | null>(null);
+
+  const toggleRelated = useCallback(
+    async (r: ExamRecord) => {
+      if (relatedOpenId === r.id) {
+        setRelatedOpenId(null);
+        return;
+      }
+      if (related[r.id]) {
+        setRelatedOpenId(r.id);
+        return;
+      }
+      setRelatedLoadingId(r.id);
+      try {
+        const data = await api.examRelatedMistakes(r.id);
+        setRelated((prev) => ({ ...prev, [r.id]: data }));
+        setRelatedOpenId(r.id);
+      } catch {
+        setRelated((prev) => ({ ...prev, [r.id]: [] }));
+        setRelatedOpenId(r.id);
+      } finally {
+        setRelatedLoadingId(null);
+      }
+    },
+    [relatedOpenId, related],
+  );
 
 
   // 趋势数据状态
@@ -508,6 +539,7 @@ export default function Exams() {
             </thead>
             <tbody>
               {records.map((r) => (
+              <>
                 <tr key={r.id}>
                   <td data-label="日期">{r.takenAt}</td>
                   <td data-label="科目">
@@ -523,6 +555,14 @@ export default function Exams() {
                   <td data-label="时长">{r.durationMinutes} 分钟</td>
                   <td data-label="操作" className="exams-table-action">
                     <button
+                      className="btn btn-sm"
+                      style={{ marginRight: 8 }}
+                      onClick={() => void toggleRelated(r)}
+                      disabled={relatedLoadingId === r.id}
+                    >
+                      {relatedLoadingId === r.id ? '加载中…' : relatedOpenId === r.id ? '收起' : '相关错题'}
+                    </button>
+                    <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(r.id)}
                     >
@@ -530,7 +570,26 @@ export default function Exams() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                {relatedOpenId === r.id && (
+                  <tr className="exams-related-row">
+                    <td colSpan={7}>
+                      {related[r.id] === undefined || related[r.id].length === 0 ? (
+                        <span className="stat-label">附近没有错题记录</span>
+                      ) : (
+                        <ul style={{ margin: '4px 0', paddingLeft: 18 }}>
+                          {related[r.id].map((m) => (
+                            <li key={m.id}>
+                              <span className={`badge badge-${m.subject}`}>{SUBJECT_NAME[m.subject]}</span>{' '}
+                              {m.title}（{m.mastered ? '已掌握' : '未掌握'}）
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </>
+            ))}
             </tbody>
           </table>
         )}

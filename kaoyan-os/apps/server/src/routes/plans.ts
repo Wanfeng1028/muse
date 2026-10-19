@@ -5,9 +5,11 @@ import {
   type CreatePlanInput,
   type UpdatePlanInput,
   type PlanSummary,
+  type AutoScheduleItem,
   isSubjectKey,
+  SUBJECTS,
 } from '@kaoyan/shared';
-import { todayStr } from '../db';
+import { todayStr, addDays } from '../db';
 
 // 数据库行类型（snake_case）
 interface PlanRow {
@@ -41,6 +43,93 @@ function isValidDate(s: unknown): s is string {
   const d = new Date(s + 'T00:00:00');
   if (Number.isNaN(d.getTime())) return false;
   return d.getFullYear() === y && d.getMonth() + 1 === m && d.getDate() === day;
+}
+
+const REVIEW_OFFSETS = [1, 3, 7, 15, 30];
+const NEW_MINUTES = 60;
+const REVIEW_MINUTES = 30;
+
+function buildSchedule(
+  subjects: Plan['subject'][],
+  dailyMinutes: number,
+  examDate: string,
+  startDate: string,
+): { items: AutoScheduleItem[]; discarded: number } {
+  const raw: AutoScheduleItem[] = [];
+  let discarded = 0;
+  for (let si = 0; si < subjects.length; si++) {
+    const key = subjects[si];
+    const name = SUBJECTS.find((s) => s.key === key)?.name ?? key;
+    let n = 1;
+    while (true) {
+      const D = addDays(startDate, si + (n - 1) * 2);
+      if (D > examDate) break;
+      raw.push({
+        date: D,
+        subject: key,
+        title: `智能排期·${name} 新学${n}`,
+        plannedMinutes: NEW_MINUTES,
+        kind: 'new',
+      });
+      for (const offset of REVIEW_OFFSETS) {
+        const R = addDays(D, offset);
+        if (R > examDate) {
+          discarded++;
+          continue;
+        }
+        raw.push({
+          date: R,
+          subject: key,
+          title: `智能排期·${name} 复习${n}-${offset}天`,
+          plannedMinutes: REVIEW_MINUTES,
+          kind: 'review',
+        });
+      }
+      n++;
+    }
+  }
+
+  raw.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    const ka = a.kind === 'new' ? 0 : 1;
+    const kb = b.kind === 'new' ? 0 : 1;
+    return ka - kb;
+  });
+
+  const used: Record<string, number> = {};
+  const placed: AutoScheduleItem[] = [];
+  for (const item of raw) {
+    let d = item.date;
+    const minutes = item.plannedMinutes;
+    if (minutes > dailyMinutes) {
+      discarded++;
+      continue;
+    }
+    while ((used[d] ?? 0) + minutes > dailyMinutes) {
+      d = addDays(d, 1);
+    }
+    if (d > examDate) {
+      discarded++;
+      continue;
+    }
+    used[d] = (used[d] ?? 0) + minutes;
+    placed.push({
+      date: d,
+      subject: item.subject,
+      title: item.title,
+      plannedMinutes: minutes,
+      kind: item.kind,
+    });
+  }
+
+  placed.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    const ka = a.kind === 'new' ? 0 : 1;
+    const kb = b.kind === 'new' ? 0 : 1;
+    return ka - kb;
+  });
+
+  return { items: placed, discarded };
 }
 
 export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): void {
@@ -245,5 +334,136 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
 
     db.prepare('DELETE FROM plans WHERE id = ? AND user_id = ?').run(id, req.user!.id);
     return reply.send({ ok: true });
+  });
+  app.get('/api/plans/auto-schedule/preview', async (request, reply) => {
+    const q = request.query as Record<string, unknown>;
+
+    const subjectsRaw = q.subjects;
+    if (typeof subjectsRaw !== 'string' || subjectsRaw.trim() === '') {
+      return reply.code(400).send({ error: 'subjects 不能为空' });
+    }
+    const keys = subjectsRaw.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+    if (keys.length === 0) {
+      return reply.code(400).send({ error: 'subjects 不能为空' });
+    }
+    for (const k of keys) {
+      if (!isSubjectKey(k)) {
+        return reply.code(400).send({ error: 'subject 非法' });
+      }
+    }
+
+    const dailyMinutesRaw = q.dailyMinutes;
+    const dailyMinutes = typeof dailyMinutesRaw === 'string' ? Number(dailyMinutesRaw) : NaN;
+    if (
+      !Number.isInteger(dailyMinutes) ||
+      dailyMinutes < 30 ||
+      dailyMinutes > 1440
+    ) {
+      return reply.code(400).send({ error: 'dailyMinutes 非法' });
+    }
+
+    const examDate = q.examDate;
+    if (!isValidDate(examDate)) {
+      return reply.code(400).send({ error: 'examDate 非法' });
+    }
+
+    let startDate: string;
+    if (q.startDate === undefined || q.startDate === null || q.startDate === '') {
+      startDate = todayStr();
+    } else if (isValidDate(q.startDate)) {
+      startDate = q.startDate;
+    } else {
+      return reply.code(400).send({ error: 'startDate 非法' });
+    }
+
+    if (examDate < startDate) {
+      return reply.code(400).send({ error: 'examDate 不能早于 startDate' });
+    }
+
+    const { items } = buildSchedule(keys as Plan['subject'][], dailyMinutes, examDate, startDate);
+    return reply.send({ items });
+  });
+
+  app.post('/api/plans/auto-schedule', async (request, reply) => {
+    const body = (request.body ?? {}) as Record<string, unknown>;
+
+    const subjectsRaw = body.subjects;
+    if (!Array.isArray(subjectsRaw) || subjectsRaw.length === 0) {
+      return reply.code(400).send({ error: 'subjects 不能为空' });
+    }
+    for (const k of subjectsRaw) {
+      if (!isSubjectKey(k)) {
+        return reply.code(400).send({ error: 'subject 非法' });
+      }
+    }
+    const subjects = subjectsRaw as Plan['subject'][];
+
+    const dailyMinutes = body.dailyMinutes;
+    if (
+      typeof dailyMinutes !== 'number' ||
+      !Number.isInteger(dailyMinutes) ||
+      dailyMinutes < 30 ||
+      dailyMinutes > 1440
+    ) {
+      return reply.code(400).send({ error: 'dailyMinutes 非法' });
+    }
+
+    const examDate = body.examDate;
+    if (!isValidDate(examDate)) {
+      return reply.code(400).send({ error: 'examDate 非法' });
+    }
+
+    let startDate: string;
+    if (body.startDate === undefined || body.startDate === null || body.startDate === '') {
+      startDate = todayStr();
+    } else if (isValidDate(body.startDate)) {
+      startDate = body.startDate;
+    } else {
+      return reply.code(400).send({ error: 'startDate 非法' });
+    }
+
+    if (examDate < startDate) {
+      return reply.code(400).send({ error: 'examDate 不能早于 startDate' });
+    }
+
+    const userId = request.user!.id;
+    const { items: scheduled, discarded } = buildSchedule(subjects, dailyMinutes, examDate, startDate);
+
+    let created = 0;
+    let skipped = 0;
+    const items: Plan[] = [];
+
+    for (const item of scheduled) {
+      const existing = db
+        .prepare(
+          'SELECT id FROM plans WHERE user_id = ? AND date = ? AND subject = ? AND title = ?',
+        )
+        .get(userId, item.date, item.subject, item.title) as { id: number } | undefined;
+      if (existing) {
+        skipped++;
+        continue;
+      }
+      const createdAt = new Date().toISOString();
+      const result = db
+        .prepare(
+          'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        )
+        .run(
+          userId,
+          item.date,
+          item.subject,
+          item.title,
+          item.plannedMinutes,
+          0,
+          createdAt,
+        );
+      const row = db
+        .prepare('SELECT * FROM plans WHERE id = ?')
+        .get(Number(result.lastInsertRowid)) as unknown as PlanRow;
+      items.push(mapPlan(row));
+      created++;
+    }
+
+    return reply.send({ created, skipped, discarded, items });
   });
 }

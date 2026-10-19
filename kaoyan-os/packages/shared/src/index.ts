@@ -30,6 +30,29 @@ export interface Plan {
   createdAt: string;
 }
 
+/** 智能排期输入 */
+export interface AutoScheduleInput {
+  subjects: SubjectKey[];
+  dailyMinutes: number;
+  examDate: string;
+  startDate?: string;
+}
+/** 智能排期条目（预览用，不写库） */
+export interface AutoScheduleItem {
+  date: string;
+  subject: SubjectKey;
+  title: string;
+  plannedMinutes: number;
+  kind: 'new' | 'review';
+}
+/** 智能排期结果 */
+export interface AutoScheduleResult {
+  created: number;
+  skipped: number;
+  discarded: number;
+  items: Plan[];
+}
+
 /** 创建计划输入 */
 export interface CreatePlanInput {
   date: string;

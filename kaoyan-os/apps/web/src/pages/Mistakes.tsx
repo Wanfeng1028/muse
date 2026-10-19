@@ -6,6 +6,7 @@ import {
   type MistakeSummary,
   type SubjectKey,
   type CreateMistakeInput,
+  type ExamRecord,
 } from '@kaoyan/shared'
 
 import { api } from '../api'
@@ -56,6 +57,26 @@ export default function Mistakes() {
   // 新增表单状态与提交状态
   const [form, setForm] = useState<CreateMistakeInput>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
+
+  // 来源真题：按错题 id 缓存
+  const [sourceExams, setSourceExams] = useState<Record<number, ExamRecord[]>>({})
+  const [sourceLoadingId, setSourceLoadingId] = useState<number | null>(null)
+
+  const loadSourceExams = useCallback(
+    async (m: Mistake) => {
+      if (sourceExams[m.id]) return
+      setSourceLoadingId(m.id)
+      try {
+        const data = await api.mistakeSourceExams(m.id)
+        setSourceExams((prev) => ({ ...prev, [m.id]: data }))
+      } catch {
+        setSourceExams((prev) => ({ ...prev, [m.id]: [] }))
+      } finally {
+        setSourceLoadingId(null)
+      }
+    },
+    [sourceExams],
+  )
 
   // 按当前筛选条件加载错题列表
   const load = useCallback(async () => {
@@ -329,6 +350,31 @@ export default function Mistakes() {
                     <div className="mistakes-item-detail-block">
                       <strong>解析：</strong>
                       {m.analysis}
+                    </div>
+                    <div className="mistakes-item-detail-block">
+                      <strong>来源真题：</strong>
+                      {sourceExams[m.id] ? (
+                        sourceExams[m.id].length === 0 ? (
+                          <span className="stat-label">附近没有真题记录</span>
+                        ) : (
+                          <ul style={{ margin: '4px 0', paddingLeft: 18 }}>
+                            {sourceExams[m.id].map((e) => (
+                              <li key={e.id}>
+                                {e.takenAt} {e.paper}（{e.score}/{e.totalScore}）
+                              </li>
+                            ))}
+                          </ul>
+                        )
+                      ) : (
+                        <button
+                          className="btn btn-sm"
+                          type="button"
+                          disabled={sourceLoadingId === m.id}
+                          onClick={() => void loadSourceExams(m)}
+                        >
+                          {sourceLoadingId === m.id ? '加载中…' : '查看来源真题'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
