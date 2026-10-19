@@ -4,7 +4,24 @@
 本文件记录 linkshort 的所有重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+
+## [v1.11.0] - 2026-10-20
+
+### 新增
+- 新增访问画像 API：`GET /api/links/{id}/ua` 返回 `{total, devices[{name,count,pct}], browsers[...], os[...], crawler_count}`；`Store.UAStats` 纯 Go 分类（设备：手机/桌面/平板/爬虫/未知；浏览器：Chrome/Edge/Firefox/Safari/微信/QQ/其他；OS：Windows/macOS/Android/iOS/Linux/其他）。
+- 详情页新增“访问画像”面板：24 小时分布、星期分布、终端与 UA 三组比例条、地域；地域无数据时显示“地域数据未采集”不编造；爬虫访问诚实标注。
+- 新增 per-link 来源 Top：`Store.LinkTopReferers(linkID, n)` + `GET /api/links/{id}/referers`。
+
+### 修复
+- 修复详情页“来源 Top”此前误调全局接口的问题。
+
+### 测试
+- 新增 `handler_limits_deep_test.go`（9 例）：阅后即焚/限时限次边界深测全绿——max_visits=3 耗尽（3 次 302 后 410、visits 恰 3 行）、过期 410、burn 一次读取后 410 且 enabled=0、burn+purge 后行删除（GET /api/links/{id} 变 404）、max_visits=1 的 20 并发抢（恰 1 个 302）、burn 10 并发（恰 1 个 302）、burn+max_visits=1 时 burn 语义胜出、burn+max_visits=5 建链 400。
+- 新增 `handler_ua_test.go`（4 例）、`handler_link_referers_test.go`（3 例）、`link_top_referers_test.go`（4 例）、`ua_stats_deep_test.go`。
+- `go test ./...` 全绿，`go vet` 全洁。
+
 ## [v1.10.0] - 2026-10-17
+
 
 ### 新增
 

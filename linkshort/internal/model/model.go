@@ -44,3 +44,13 @@ type NamedStat struct {
 	Name   string // 名称（slug / referer 等）
 	Clicks int64  // 点击次数
 }
+
+// UAOverview 表示某个短链的 User-Agent 画像聚合结果。
+type UAOverview struct {
+	LinkID   int64       // 关联的短链 ID
+	Total    int64       // 参与统计的访问总数（UA 非空）
+	Bots     int64       // 被判为爬虫的访问数
+	Devices  []NamedStat // 设备分布：手机 / 桌面 / 平板 / 爬虫 / 未知（按 clicks 降序）
+	Browsers []NamedStat // 浏览器分布：Chrome / Edge / Firefox / Safari / 微信 / QQ / 其他（按 clicks 降序）
+	OSList   []NamedStat // 操作系统分布：Windows / macOS / Android / iOS / Linux / 其他（按 clicks 降序）
+}

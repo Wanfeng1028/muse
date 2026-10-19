@@ -410,3 +410,157 @@ def get_digest(db_path, n: int = 20, now=None) -> list[dict]:
     articles = [dict(r) for r in rows]
     ranked = rank_articles(db_path, articles, now=now)
     return ranked[:n]
+
+
+def get_digest_clusters(db_path, n: int = 10, now=None) -> list[dict]:
+    """聚类 Top N 视图：未读文章按 cluster_id 分组，返回每组摘要。
+
+    返回 list[dict]，按 cluster_score 降序取前 n。每个 dict 形状：
+        {
+            "cluster_id": int,              # solo 组用文章 id
+            "topic": str,                   # 代表文章标题
+            "members": int,                 # 簇内文章总数（含已读）
+            "sources": int,                 # 簇内不同 feed_id 数
+            "source_titles": list[str],     # 最多 5 个来源标题，按首次出现顺序
+            "unread": int,                  # 簇内未读数
+            "representative": dict,         # 代表文章行 dict（含 score_info）
+            "cluster_score": float,         # 代表文章分数
+            "cluster_reasons": list[str],   # 代表 reasons；多篇时补"同事件"
+            "latest_at": str,               # 成员最大 COALESCE(published_at, fetched_at)
+        }
+    n 非法（<=0 或非数字）时返回 []。
+    """
+    if n is None:
+        return []
+    try:
+        n_int = int(n)
+    except (TypeError, ValueError):
+        return []
+    if n_int <= 0:
+        return []
+
+    rows = db.query_all(
+        db_path,
+        """
+        SELECT a.*, f.title AS feed_title
+        FROM articles a
+        JOIN feeds f ON f.id = a.feed_id
+        WHERE a.is_read = 0
+        """,
+    )
+    unread_articles = [dict(r) for r in rows]
+    ranked = rank_articles(db_path, unread_articles, now=now)
+
+    groups: dict[object, list[dict]] = {}
+    for art in ranked:
+        cid = art.get("cluster_id")
+        if cid is None:
+            try:
+                aid = int(art.get("id") or 0)
+            except (TypeError, ValueError):
+                aid = 0
+            key: object = ("solo", aid)
+        else:
+            try:
+                key = int(cid)
+            except (TypeError, ValueError):
+                key = ("solo", int(art.get("id") or 0))
+        groups.setdefault(key, []).append(art)
+
+    out: list[dict] = []
+    for key, members in groups.items():
+        rep = members[0]
+        rep_info = rep.get("score_info") or {}
+        rep_score = float(rep_info.get("score", 0.0))
+
+        if isinstance(key, tuple) and key and key[0] == "solo":
+            solo_id = int(key[1])
+            cluster_id_val = solo_id
+            meta = db.query_one(
+                db_path,
+                """
+                SELECT COUNT(*) AS members,
+                       COUNT(DISTINCT feed_id) AS sources,
+                       SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) AS unread,
+                       MAX(COALESCE(published_at, fetched_at)) AS latest_at
+                FROM articles
+                WHERE id = ?
+                """,
+                (solo_id,),
+            )
+            title_rows = db.query_all(
+                db_path,
+                """
+                SELECT f.title AS title
+                FROM articles a
+                JOIN feeds f ON f.id = a.feed_id
+                WHERE a.id = ?
+                ORDER BY a.id ASC
+                """,
+                (solo_id,),
+            )
+        else:
+            cluster_id_val = int(key)
+            meta = db.query_one(
+                db_path,
+                """
+                SELECT COUNT(*) AS members,
+                       COUNT(DISTINCT feed_id) AS sources,
+                       SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) AS unread,
+                       MAX(COALESCE(published_at, fetched_at)) AS latest_at
+                FROM articles
+                WHERE cluster_id = ?
+                """,
+                (cluster_id_val,),
+            )
+            title_rows = db.query_all(
+                db_path,
+                """
+                SELECT f.title AS title
+                FROM articles a
+                JOIN feeds f ON f.id = a.feed_id
+                WHERE a.cluster_id = ?
+                ORDER BY a.id ASC
+                """,
+                (cluster_id_val,),
+            )
+
+        members_count = int((meta or {}).get("members") or 0)
+        sources_count = int((meta or {}).get("sources") or 0)
+        unread_count = int((meta or {}).get("unread") or 0)
+        latest_at_raw = (meta or {}).get("latest_at")
+        latest_at_str = "" if latest_at_raw is None else str(latest_at_raw)
+
+        seen_titles: list[str] = []
+        for r in title_rows:
+            t = r["title"]
+            if t is None:
+                continue
+            if t not in seen_titles:
+                seen_titles.append(t)
+            if len(seen_titles) >= 5:
+                break
+
+        reasons_src = rep_info.get("reasons") or []
+        cluster_reasons = list(reasons_src)
+        if members_count >= 2 and not any("同事件" in str(x) for x in cluster_reasons):
+            cluster_reasons.append(f"同事件 {members_count} 篇在跟")
+
+        out.append(
+            {
+                "cluster_id": cluster_id_val,
+                "topic": rep.get("title") or "",
+                "members": members_count,
+                "sources": sources_count,
+                "source_titles": seen_titles,
+                "unread": unread_count,
+                "representative": rep,
+                "cluster_score": rep_score,
+                "cluster_reasons": cluster_reasons,
+                "latest_at": latest_at_str,
+            }
+        )
+
+    out.sort(key=lambda d: (-d["cluster_score"], -d["cluster_id"]))
+    return out[:n_int]
+

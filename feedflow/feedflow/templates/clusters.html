@@ -1,0 +1,161 @@
+
+{% extends "base.html" %}
+
+{% block title %}聚类 Top{% endblock %}
+
+{% block content %}
+<style>
+  .clu-wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+    text-align: left;
+    color: #1C1A17;
+  }
+  .clu-head h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: 0.2px;
+  }
+  .clu-head p {
+    margin: 0 0 22px;
+    font-size: 13px;
+    color: #6B655B;
+    line-height: 1.6;
+  }
+  .clu-card {
+    background: #FFFFFF;
+    border: 1px solid #E7E2D6;
+    border-radius: 10px;
+    padding: 18px 20px 16px;
+    margin-bottom: 16px;
+  }
+  .clu-rank-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .clu-rank {
+    font-size: 13px;
+    font-weight: 600;
+    color: #C2410C;
+    min-width: 26px;
+  }
+  .clu-topic {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+  }
+  .clu-topic a {
+    color: #1C1A17;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .clu-topic a:hover {
+    border-bottom-color: #C2410C;
+  }
+  .clu-meta {
+    font-size: 12px;
+    color: #6B655B;
+    margin: 0 0 8px;
+    padding-left: 36px;
+  }
+  .clu-sources {
+    font-size: 12px;
+    color: #6B655B;
+    margin: 0 0 8px;
+    padding-left: 36px;
+    line-height: 1.6;
+  }
+  .clu-chips {
+    padding-left: 36px;
+    margin: 0 0 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .clu-chip {
+    display: inline-block;
+    font-size: 11px;
+    color: #6B655B;
+    background: #FAFAF7;
+    border: 1px solid #E7E2D6;
+    border-radius: 10px;
+    padding: 2px 8px;
+    line-height: 1.5;
+  }
+  .clu-summary {
+    font-family: system-ui, -apple-system, "Segoe UI", "Songti SC", "SimSun", serif;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #33302B;
+    margin: 0 0 8px;
+    padding-left: 36px;
+  }
+  .clu-folded {
+    font-size: 12px;
+    color: #8A8377;
+    margin: 0;
+    padding-left: 36px;
+  }
+  .clu-empty {
+    background: #FFFFFF;
+    border: 1px solid #E7E2D6;
+    border-radius: 10px;
+    padding: 40px 20px;
+    font-size: 14px;
+    color: #6B655B;
+    text-align: left;
+  }
+</style>
+
+<div class="clu-wrap">
+  <div class="clu-head">
+    <h1>聚类 Top</h1>
+    <p>把内容相近的文章并成一组，每组只看最重要的一篇；{{ today }} 共 {{ clusters|length }} 组。</p>
+  </div>
+
+  {% if clusters %}
+    {% for c in clusters %}
+    <div class="clu-card">
+      <div class="clu-rank-row">
+        <span class="clu-rank">#{{ loop.index }}</span>
+        <h2 class="clu-topic">
+          <a href="/?article={{ c.representative.id }}">{{ c.topic }}</a>
+        </h2>
+      </div>
+      <p class="clu-meta">
+
+        重要性 {{ "%.2f"|format(c.cluster_score) }} · {{ c.members }} 篇 · {{ c.sources }} 个来源 · {{ c.latest_at[:16]|replace("T", " ") }}
+
+      </p>
+      {% if c.source_titles %}
+      <p class="clu-sources">来源：{{ c.source_titles|join('、') }}</p>
+      {% endif %}
+      {% if c.cluster_reasons %}
+      <div class="clu-chips">
+        {% for r in c.cluster_reasons %}
+        <span class="clu-chip">{{ r }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <p class="clu-summary">
+        {% if c.representative.content_text %}
+          {{ c.representative.content_text[:140] }}
+        {% elif c.representative.summary %}
+          {{ c.representative.summary[:140] }}
+        {% endif %}
+      </p>
+      {% if c.members > 1 %}
+      <p class="clu-folded">还有 {{ c.members - 1 }} 篇同事件报道已折叠</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="clu-empty">今天没有可聚类的未读文章</div>
+  {% endif %}
+</div>
+{% endblock %}

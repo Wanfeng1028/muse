@@ -89,10 +89,12 @@ function initReader() {
     } else {
       const renderItem = (a) => {
         const cls = "article-item" + (state.selectedId === a.id ? " active" : "") + (a.is_read ? "" : " unread");
+
         let h = `<div class="${cls}" data-id="${a.id}">`;
-        h += `<div class="art-title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? " ★" : ""}</div>`;
-        h += `<div class="art-meta">${escapeHtml(a.feed_title || "")} · ${fmtTime(a.published_at || a.fetched_at)}</div>`;
+        h += `<div class="title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? '<span class="star">★</span>' : ""}</div>`;
+        h += `<div class="meta">${escapeHtml(a.feed_title || "")} · ${fmtTime(a.published_at || a.fetched_at)}</div>`;
         h += `</div>`;
+
         return h;
       };
       const seenClusters = new Set();

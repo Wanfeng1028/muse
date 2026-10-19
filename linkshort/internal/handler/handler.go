@@ -96,7 +96,11 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Patch("/links/{id}", func(w http.ResponseWriter, req *http.Request) { handlePatchLink(w, req, st, cfg) })
 		api.Delete("/links/{id}", func(w http.ResponseWriter, req *http.Request) { handleDeleteLink(w, req, st) })
 		api.Get("/links/{id}/qrcode.png", func(w http.ResponseWriter, req *http.Request) { handleQRCode(w, req, st, cfg) })
+
 		api.Get("/links/{id}/daily", func(w http.ResponseWriter, req *http.Request) { handleLinkDaily(w, req, st) })
+		api.Get("/links/{id}/referers", func(w http.ResponseWriter, req *http.Request) { handleLinkReferers(w, req, st) })
+
+		api.Get("/links/{id}/ua", func(w http.ResponseWriter, req *http.Request) { handleLinkUA(w, req, st) })
 
 		api.Get("/stats/overview", func(w http.ResponseWriter, req *http.Request) { handleStatsOverview(w, req, st) })
 		api.Get("/stats/daily", func(w http.ResponseWriter, req *http.Request) { handleStatsDaily(w, req, st) })
@@ -804,6 +808,59 @@ func handleLinkDaily(w http.ResponseWriter, r *http.Request, st *store.Store) {
 		items = append(items, map[string]any{"date": s.Date, "clicks": s.Clicks})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// handleLinkReferers 返回单条链接的来源 Top N。
+func handleLinkReferers(w http.ResponseWriter, r *http.Request, st *store.Store) {
+	id, ok := parseID(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "id 非法")
+		return
+	}
+	n := parseIntDefault(r.URL.Query().Get("n"), 8)
+	if n <= 0 || n > 100 {
+		n = 8
+	}
+	stats, err := st.LinkTopReferers(id, n)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": namedStats(stats)})
+}
+
+func handleLinkUA(w http.ResponseWriter, r *http.Request, st *store.Store) {
+
+	id, ok := parseID(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "id 非法")
+		return
+	}
+	ov, err := st.UAStats(id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	devs := make([]map[string]any, 0, len(ov.Devices))
+	for _, s := range ov.Devices {
+		devs = append(devs, map[string]any{"name": s.Name, "clicks": s.Clicks})
+	}
+	brows := make([]map[string]any, 0, len(ov.Browsers))
+	for _, s := range ov.Browsers {
+		brows = append(brows, map[string]any{"name": s.Name, "clicks": s.Clicks})
+	}
+	oss := make([]map[string]any, 0, len(ov.OSList))
+	for _, s := range ov.OSList {
+		oss = append(oss, map[string]any{"name": s.Name, "clicks": s.Clicks})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"link_id":  ov.LinkID,
+		"total":    ov.Total,
+		"bots":     ov.Bots,
+		"devices":  devs,
+		"browsers": brows,
+		"os":       oss,
+	})
 }
 
 // ---------- /api/stats ----------

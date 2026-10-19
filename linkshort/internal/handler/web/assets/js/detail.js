@@ -225,14 +225,16 @@
     });
   }
 
-  // 来源 Top
+
+  // 来源 Top（按本链统计）
   function loadReferers() {
     var table = document.getElementById("referer-table");
     if (!table) return;
     var tbody = table.querySelector("tbody");
     if (!tbody) return;
 
-    api("/api/stats/top-referers?n=8").then(function (data) {
+    api("/api/links/" + encodeURIComponent(id) + "/referers?n=8").then(function (data) {
+
       var items = (data && data.items) || [];
       tbody.innerHTML = "";
       if (!items.length) {
@@ -257,12 +259,113 @@
         tr2.appendChild(tdClicks);
         tbody.appendChild(tr2);
       }
+
     }).catch(function (err) {
       toast("加载来源失败：" + err.message);
     });
   }
 
+  // 访问画像：UA 分类 + 24小时/星期分布 + 地域
+  function loadProfile() {
+    loadUA();
+    loadHourlyWeekday();
+    loadGeo();
+  }
+
+  function uaBarList(ul, items) {
+    ul.innerHTML = "";
+    items = items || [];
+    if (!items.length) {
+      var li0 = document.createElement("li");
+      li0.className = "ua-empty";
+      li0.textContent = "暂无数据";
+      ul.appendChild(li0);
+      return;
+    }
+    var max = 0, i;
+    for (i = 0; i < items.length; i++) max = Math.max(max, items[i].clicks || 0);
+    for (i = 0; i < items.length; i++) {
+      var it = items[i];
+      var li = document.createElement("li");
+      var name = document.createElement("span");
+      name.className = "ua-name";
+      name.textContent = it.name || "未知";
+      var bar = document.createElement("span");
+      bar.className = "ua-bar";
+      var fill = document.createElement("span");
+      fill.className = "ua-fill";
+      fill.style.width = (max > 0 ? Math.round((it.clicks || 0) * 100 / max) : 0) + "%";
+      bar.appendChild(fill);
+      var num = document.createElement("span");
+      num.className = "ua-num mono";
+      num.textContent = it.clicks || 0;
+      li.appendChild(name); li.appendChild(bar); li.appendChild(num);
+      ul.appendChild(li);
+    }
+  }
+
+  function loadUA() {
+    api("/api/links/" + encodeURIComponent(id) + "/ua").then(function (data) {
+      uaBarList(document.getElementById("ua-devices"), data && data.devices);
+      uaBarList(document.getElementById("ua-browsers"), data && data.browsers);
+      uaBarList(document.getElementById("ua-os"), data && data.os);
+      var note = document.getElementById("ua-bots-note");
+      if (note && data && data.bots > 0) {
+        note.hidden = false;
+        note.textContent = "其中 " + data.bots + " 次被识别为爬虫访问，已计入设备分布的爬虫类。";
+      }
+    }).catch(function (err) {
+      toast("加载 UA 画像失败：" + err.message);
+    });
+  }
+
+  function loadHourlyWeekday() {
+    api("/api/stats/hourly?link_id=" + encodeURIComponent(id) + "&days=7").then(function (data) {
+      var hours = (data && data.hours) || [];
+      var hItems = [];
+      for (var h = 0; h < 24; h++) hItems.push({ date: h + "点", clicks: hours[h] || 0 });
+      barChart(document.getElementById("profile-hourly"), hItems);
+      var wds = (data && data.weekdays) || [];
+      var names = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+      var wItems = [];
+      for (var w = 0; w < 7; w++) wItems.push({ date: names[w] || ("W" + w), clicks: wds[w] || 0 });
+      barChart(document.getElementById("profile-weekday"), wItems);
+    }).catch(function (err) {
+      toast("加载时间分布失败：" + err.message);
+    });
+  }
+
+  function loadGeo() {
+    api("/api/stats/geo?link_id=" + encodeURIComponent(id) + "&days=30").then(function (data) {
+      var box = document.getElementById("profile-geo");
+      if (!box) return;
+      var items = (data && data.items) || [];
+      var total = (data && data.total_clicks) || 0;
+      if (!total || !items.length) {
+        box.innerHTML = '<p class="hint">地域数据未采集</p>';
+        return;
+      }
+      var html = '<table class="table"><thead><tr><th>地域</th><th style="width:90px" class="right">点击</th></tr></thead><tbody>';
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var name = it.country_name || it.country_code || "未知";
+        if (it.province) name += " " + it.province;
+        if (it.city) name += " " + it.city;
+        html += "<tr><td>" + esc(name) + '</td><td class="right mono">' + (it.clicks || 0) + "</td></tr>";
+      }
+      html += "</tbody></table>";
+      if (data.unknown_pct > 0) html += '<p class="hint">其中 ' + data.unknown_pct + '% 的访问未识别出地域</p>';
+      box.innerHTML = html;
+    }).catch(function (err) {
+      toast("加载地域分布失败：" + err.message);
+    });
+  }
+
+
+
   loadDetail();
   loadDaily();
   loadReferers();
+  loadProfile();
 })();
+

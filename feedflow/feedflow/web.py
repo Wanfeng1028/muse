@@ -211,6 +211,7 @@ def healthz():
     )
 
 
+
 @bp.get("/digest")
 def digest_page():
     """摘要页：按兴趣权重取 N 篇未读文章。"""
@@ -225,6 +226,23 @@ def digest_page():
         n=n,
         today=datetime.now(UTC).date().isoformat(),
     )
+
+
+@bp.get("/digest/clusters")
+def digest_clusters_page():
+    """聚类 Top 页：去重聚类后的 Top N 主题卡片流。"""
+    db_path = _cfg()["db_path"]
+    n = ranking.get_digest_n(db_path, default=int(_cfg().get("digest_n") or 20))
+    if n <= 0:
+        n = 20
+    clusters = ranking.get_digest_clusters(db_path, n)
+    return render_template(
+        "clusters.html",
+        clusters=clusters,
+        n=n,
+        today=datetime.now(UTC).date().isoformat(),
+    )
+
 
 
 @bp.get("/settings/interests")

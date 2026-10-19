@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -752,7 +753,156 @@ func (s *Store) HourlyStats(linkID int64, days int) (HourlyStats, error) {
 	return st, nil
 }
 
+// uaClassifyDevice 按 UA 字符串判定设备类型，返回「手机 / 桌面 / 平板 / 爬虫 / 未知」之一。
+// 判定顺序：先爬虫，再平板，再手机，再桌面，最后未知；匹配大小写不敏感。
+func uaClassifyDevice(ua string) string {
+	l := strings.ToLower(ua)
+	if uaIsBot(l) {
+		return "爬虫"
+	}
+	if strings.Contains(l, "ipad") || strings.Contains(l, "tablet") {
+		return "平板"
+	}
+	if strings.Contains(l, "mobile") || strings.Contains(l, "android") ||
+		strings.Contains(l, "iphone") || strings.Contains(l, "ipod") ||
+		strings.Contains(l, "phone") {
+		return "手机"
+	}
+	if strings.Contains(l, "windows") || strings.Contains(l, "macintosh") ||
+		strings.Contains(l, "linux") || strings.Contains(l, "x11") ||
+		strings.Contains(l, "desktop") {
+		return "桌面"
+	}
+	return "未知"
+}
+
+// uaIsBot 判断 UA 是否命中爬虫特征词。入参必须为小写。
+func uaIsBot(l string) bool {
+	keywords := []string{
+		"bot", "crawler", "spider", "slurp", "mediapartners",
+		"wget", "curl", "python-requests", "scrapy",
+	}
+	for _, k := range keywords {
+		if strings.Contains(l, k) {
+			return true
+		}
+	}
+	return false
+}
+
+// uaClassifyBrowser 按 UA 字符串判定浏览器，返回「Chrome / Edge / Firefox / Safari / 微信 / QQ / 其他」之一。
+// 判定顺序：先微信与 QQ，再 Edge，再 Chrome，再 Firefox，最后 Safari 与其他；匹配大小写不敏感。
+func uaClassifyBrowser(ua string) string {
+	l := strings.ToLower(ua)
+	if strings.Contains(l, "micromessenger") {
+		return "微信"
+	}
+	if strings.Contains(l, "mqqbrowser") || strings.Contains(l, "qq/") {
+		return "QQ"
+	}
+	if strings.Contains(l, "edg") {
+		return "Edge"
+	}
+	if strings.Contains(l, "chrome") {
+		return "Chrome"
+	}
+	if strings.Contains(l, "firefox") {
+		return "Firefox"
+	}
+	if strings.Contains(l, "safari") {
+		return "Safari"
+	}
+	return "其他"
+}
+
+// uaClassifyOS 按 UA 字符串判定操作系统，返回「Windows / macOS / Android / iOS / Linux / 其他」之一。
+// 判定顺序：Android 先于 Linux，iOS 先于 macOS；匹配大小写不敏感。
+func uaClassifyOS(ua string) string {
+	l := strings.ToLower(ua)
+	if strings.Contains(l, "windows") {
+		return "Windows"
+	}
+	if strings.Contains(l, "android") {
+		return "Android"
+	}
+	if strings.Contains(l, "iphone") || strings.Contains(l, "ipad") || strings.Contains(l, "ios") {
+		return "iOS"
+	}
+	if strings.Contains(l, "macintosh") || strings.Contains(l, "mac os") {
+		return "macOS"
+	}
+	if strings.Contains(l, "linux") || strings.Contains(l, "x11") {
+		return "Linux"
+	}
+	return "其他"
+}
+
+// sortNamedStatsDesc 按 clicks 降序排序；clicks 相同时按名称升序，保证结果稳定。
+func sortNamedStatsDesc(stats []model.NamedStat) {
+	sort.SliceStable(stats, func(i, j int) bool {
+		if stats[i].Clicks != stats[j].Clicks {
+			return stats[i].Clicks > stats[j].Clicks
+		}
+		return stats[i].Name < stats[j].Name
+	})
+}
+
+// UAStats 返回某个短链的 UA 画像聚合：设备 / 浏览器 / 操作系统分布与爬虫占比。
+// SQL 只做 ua 分组计数，分类逻辑全部在 Go 侧完成。
+func (s *Store) UAStats(linkID int64) (model.UAOverview, error) {
+	var ov model.UAOverview
+	ov.LinkID = linkID
+
+	rows, err := s.db.Query(
+		"SELECT ua, COUNT(*) AS c FROM visits WHERE link_id=? AND ua IS NOT NULL AND ua != '' GROUP BY ua ORDER BY c DESC",
+		linkID,
+	)
+	if err != nil {
+		return ov, fmt.Errorf("query ua stats: %w", err)
+	}
+	defer rows.Close()
+
+	devices := make(map[string]int64)
+	browsers := make(map[string]int64)
+	osList := make(map[string]int64)
+
+	for rows.Next() {
+		var ua string
+		var c int64
+		if err := rows.Scan(&ua, &c); err != nil {
+			return ov, fmt.Errorf("scan ua stats: %w", err)
+		}
+		device := uaClassifyDevice(ua)
+		devices[device] += c
+		if device == "爬虫" {
+			ov.Bots += c
+		}
+		browsers[uaClassifyBrowser(ua)] += c
+		osList[uaClassifyOS(ua)] += c
+		ov.Total += c
+	}
+	if err := rows.Err(); err != nil {
+		return ov, fmt.Errorf("iterate ua stats: %w", err)
+	}
+
+	ov.Devices = flattenNamedStats(devices)
+	ov.Browsers = flattenNamedStats(browsers)
+	ov.OSList = flattenNamedStats(osList)
+	return ov, nil
+}
+
+// flattenNamedStats 把「名称 -> 点击量」映射展开为按 clicks 降序的切片。
+func flattenNamedStats(m map[string]int64) []model.NamedStat {
+	out := make([]model.NamedStat, 0, len(m))
+	for name, clicks := range m {
+		out = append(out, model.NamedStat{Name: name, Clicks: clicks})
+	}
+	sortNamedStatsDesc(out)
+	return out
+}
+
 // StatsOverview 返回整体统计：总短链数、启用数、总点击数、今日点击数。
+
 func (s *Store) StatsOverview() (links, enabledLinks, totalClicks, todayClicks int64, err error) {
 	if err = s.db.QueryRow(`SELECT COUNT(*) FROM links`).Scan(&links); err != nil {
 		return 0, 0, 0, 0, fmt.Errorf("count links: %w", err)
@@ -869,6 +1019,7 @@ func (s *Store) TopLinks(n int) ([]model.NamedStat, error) {
 }
 
 // TopReferers 返回点击量最高的 n 个 referer（空 referer 用 "(direct)" 代替）。
+
 func (s *Store) TopReferers(n int) ([]model.NamedStat, error) {
 	if n < 1 {
 		n = 1
@@ -901,6 +1052,46 @@ func (s *Store) TopReferers(n int) ([]model.NamedStat, error) {
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate top referers: %w", err)
+	}
+	return out, nil
+}
+
+// LinkTopReferers 统计指定链接的来源 Top N。
+// 与 TopReferers 逻辑一致，只是通过 WHERE link_id = ? 限定到单条链接，
+// 避免把全局统计误当成某条链的数据展示。空 referer 记为 (direct)。
+func (s *Store) LinkTopReferers(linkID int64, n int) ([]model.NamedStat, error) {
+	if n < 1 {
+		n = 1
+	}
+	if n > 1000 {
+		n = 1000
+	}
+	rows, err := s.db.Query(
+		`SELECT CASE WHEN referer = '' THEN '(direct)' ELSE referer END AS r,
+		        COUNT(*) AS c
+		 FROM visits
+		 WHERE link_id = ?
+		 GROUP BY r
+		 ORDER BY c DESC, r ASC
+		 LIMIT ?`, linkID, n,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query link top referers: %w", err)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var out []model.NamedStat
+	for rows.Next() {
+		var st model.NamedStat
+		if err := rows.Scan(&st.Name, &st.Clicks); err != nil {
+			return nil, fmt.Errorf("scan link top referer: %w", err)
+		}
+		out = append(out, st)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate link top referers: %w", err)
 	}
 	return out, nil
 }

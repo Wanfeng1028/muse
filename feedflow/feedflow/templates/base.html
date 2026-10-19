@@ -12,7 +12,10 @@
     <a class="brand" href="{{ url_for('web.index') }}">信流 FeedFlow</a>
     <nav class="mainnav">
       <a href="{{ url_for('web.index') }}" class="{% if request.path == '/' %}active{% endif %}">阅读器</a>
+
       <a href="{{ url_for('web.digest_page') }}" class="{% if request.path == '/digest' %}active{% endif %}">今日必读</a>
+      <a href="{{ url_for('web.digest_clusters_page') }}" class="{% if request.path == '/digest/clusters' %}active{% endif %}">聚类 Top</a>
+
       <a href="{{ url_for('web.feeds_page') }}" class="{% if request.path.startswith('/feeds') %}active{% endif %}">订阅管理</a>
       <a href="{{ url_for('web.stats_page') }}" class="{% if request.path.startswith('/stats') %}active{% endif %}">统计</a>
       <a href="{{ url_for('web.opml_page') }}" class="{% if request.path.startswith('/opml') %}active{% endif %}">OPML</a>

@@ -18,9 +18,19 @@
 链接管理：列表里能启用/禁用、改过期时间、导出 CSV。列表新增"限制"列徽标，一眼看出限次/阅后即焚状态。
 
 
+
 ![详情](docs/screenshots/detail.png)
 
 详情：单条链接的短地址、二维码、访问日志和每日点击。
+
+## 访问画像
+
+详情页下半部分是这条短链的访问画像：24 小时分布、星期分布、终端与 UA（设备/浏览器/操作系统三组比例条，爬虫访问单独标注）、地域。地域无数据时如实显示"地域数据未采集"，不编造。配套 API：`GET /api/links/{id}/ua` 返回 `{total, devices, browsers, os, crawler_count}`。详情页"来源 Top"按本链聚合（`GET /api/links/{id}/referers`）。
+
+![访问画像](docs/screenshots/detail-profile.png)
+
+设计注记：画像面板用条形比例+数字，不用饼图花活；无数据如实标注，不许编造。
+
 
 ![新建短链](docs/screenshots/new.png)
 

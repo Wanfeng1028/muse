@@ -1,4 +1,19 @@
+
 # 更新日志
+
+## v1.7.0 — 2026-10-20
+
+### 新增
+- 新增“聚类 Top”视图（`/digest/clusters`）：去重聚类后的 Top N 事件卡片流，每卡片展示聚类主题、来源数、来源标题（至多 5 个）、重要性分（可解释，拆出 `cluster_score` 计算依据）、每篇成员的 `score_info`、“还有 N 篇已折叠”。导航栏新增“聚类 Top”入口。
+- 新增 `ranking.get_digest_clusters(db_path, n=10, now=None)`：未读文章经 `rank_articles` 排序后按 `cluster_id` 分组（NULL `cluster_id` 各自成 solo 组），返回 `cluster_id`/`topic`/`members`/`sources`/`source_titles`/`unread`/`representative`（含 `score_info`）/`cluster_score`/`cluster_reasons`/`latest_at`。
+- 种子数据加 `CLUSTER_DEMO`（3 事件 x 3 来源=9 篇，验证真实聚类 3 簇 x 3 篇）。
+
+### 修复
+- 修复阅读器 `app.js` 与 CSS 类名失配（`renderItem` 吐 `art-title`/`art-meta`/裸星号，CSS 写的是 `.title`/`.meta`/`.star`）：改回 `title`/`meta`/`<span class="star">`，未读加粗+红点+星标着色恢复。
+
+### 测试
+- 新增 `tests/test_digest_clusters.py`（9 例）、`tests/test_digest_clusters_page.py`（6 例）；本轮 pytest 全绿（3 个 flaky 失败已修：`rank_articles` 签名、`read_at` 列不存在、NULL 分组契约）。
+
 
 ## v1.6.1 — 2026-10-17
 

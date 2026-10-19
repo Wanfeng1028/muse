@@ -122,6 +122,7 @@
       </section>
     </div>
 
+
     <section class="panel">
       <div class="panel-head"><h2>来源 Top</h2></div>
       <table class="table" id="referer-table">
@@ -131,6 +132,99 @@
         <tbody></tbody>
       </table>
     </section>
+
+    <section class="panel" id="profile-panel">
+      <style>
+        #profile-panel .sub-h {
+          margin: 14px 0 8px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #444;
+        }
+        #profile-panel .two-col {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+        #profile-panel .two-col > div {
+          flex: 1 1 260px;
+          min-width: 240px;
+        }
+        #profile-panel .profile-ua {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+          background: #fafafa;
+          border: 1px solid #eaeaea;
+          border-radius: 4px;
+          padding: 10px 12px;
+        }
+        #profile-panel .ua-group {
+          flex: 1 1 160px;
+          min-width: 140px;
+        }
+        #profile-panel .ua-group h4 {
+          margin: 0 0 6px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #666;
+        }
+        #profile-panel .ua-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          font-size: 12px;
+          color: #333;
+        }
+
+        #profile-panel .ua-list li {
+          display: flex;
+          align-items: center;
+          padding: 2px 0;
+          border-bottom: 1px dashed #eee;
+        }
+
+
+        #profile-panel .ua-list li:last-child {
+          border-bottom: none;
+        }
+        #profile-panel .ua-list .ua-name { flex: none; min-width: 52px; }
+        #profile-panel .ua-list .ua-bar { flex: 1 1 auto; height: 8px; background: #f0ece4; border-radius: 4px; margin: 4px 8px 0; min-width: 40px; }
+        #profile-panel .ua-list .ua-fill { display: block; height: 8px; background: #B3402A; border-radius: 4px; }
+        #profile-panel .ua-list .ua-num { flex: none; min-width: 28px; text-align: right; }
+
+        #profile-panel #profile-geo {
+          background: #fafafa;
+          border: 1px solid #eaeaea;
+          border-radius: 4px;
+          padding: 10px 12px;
+          min-height: 40px;
+          font-size: 12px;
+          color: #333;
+        }
+      </style>
+      <div class="panel-head"><h2>访问画像</h2><span class="hint">近 30 天</span></div>
+      <div class="two-col">
+        <div>
+          <h3 class="sub-h">24 小时分布</h3>
+          <div class="chart" id="profile-hourly"></div>
+        </div>
+        <div>
+          <h3 class="sub-h">星期分布</h3>
+          <div class="chart" id="profile-weekday"></div>
+        </div>
+      </div>
+      <h3 class="sub-h">终端与 UA</h3>
+      <div class="profile-ua">
+        <div class="ua-group"><h4>设备</h4><ul id="ua-devices" class="ua-list"></ul></div>
+        <div class="ua-group"><h4>浏览器</h4><ul id="ua-browsers" class="ua-list"></ul></div>
+        <div class="ua-group"><h4>操作系统</h4><ul id="ua-os" class="ua-list"></ul></div>
+      </div>
+      <p class="hint" id="ua-bots-note" hidden></p>
+      <h3 class="sub-h">地域</h3>
+      <div id="profile-geo"><p class="hint">加载中…</p></div>
+    </section>
+
   </main>
 </div>
 
