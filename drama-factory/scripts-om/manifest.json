@@ -1,0 +1,879 @@
+{
+ "batches": [
+  {
+   "batch": "core-1",
+   "skills": [
+    {
+     "id": "openmontage-color-grading",
+     "src": "core/color-grading.md"
+    },
+    {
+     "id": "openmontage-ffmpeg",
+     "src": "core/ffmpeg.md"
+    },
+    {
+     "id": "openmontage-hyperframes",
+     "src": "core/hyperframes.md"
+    }
+   ]
+  },
+  {
+   "batch": "core-2",
+   "skills": [
+    {
+     "id": "openmontage-remotion",
+     "src": "core/remotion.md"
+    },
+    {
+     "id": "openmontage-subtitle-sync",
+     "src": "core/subtitle-sync.md"
+    },
+    {
+     "id": "openmontage-whisperx",
+     "src": "core/whisperx.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-1",
+   "skills": [
+    {
+     "id": "openmontage-3d-world-generation",
+     "src": "creative/3d-world-generation.md"
+    },
+    {
+     "id": "openmontage-animated-drawing",
+     "src": "creative/animated-drawing.md"
+    },
+    {
+     "id": "openmontage-animation-pipeline",
+     "src": "creative/animation-pipeline.md"
+    },
+    {
+     "id": "openmontage-bg-remove-usage",
+     "src": "creative/bg-remove-usage.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-2",
+   "skills": [
+    {
+     "id": "openmontage-broll-planning",
+     "src": "creative/broll-planning.md"
+    },
+    {
+     "id": "openmontage-cinematic",
+     "src": "creative/cinematic.md"
+    },
+    {
+     "id": "openmontage-data-visualization",
+     "src": "creative/data-visualization.md"
+    },
+    {
+     "id": "openmontage-diagram-gen-usage",
+     "src": "creative/diagram-gen-usage.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-3",
+   "skills": [
+    {
+     "id": "openmontage-enhancement-strategy",
+     "src": "creative/enhancement-strategy.md"
+    },
+    {
+     "id": "openmontage-face-restore-usage",
+     "src": "creative/face-restore-usage.md"
+    },
+    {
+     "id": "openmontage-image-gen-usage",
+     "src": "creative/image-gen-usage.md"
+    },
+    {
+     "id": "openmontage-image-provider-usage",
+     "src": "creative/image-provider-usage.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-4",
+   "skills": [
+    {
+     "id": "openmontage-ink-theater",
+     "src": "creative/ink-theater.md"
+    },
+    {
+     "id": "openmontage-lip-sync-usage",
+     "src": "creative/lip-sync-usage.md"
+    },
+    {
+     "id": "openmontage-long-form",
+     "src": "creative/long-form.md"
+    },
+    {
+     "id": "openmontage-manim-usage",
+     "src": "creative/manim-usage.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-5",
+   "skills": [
+    {
+     "id": "openmontage-music-gen-usage",
+     "src": "creative/music-gen-usage.md"
+    },
+    {
+     "id": "openmontage-scene-detect-usage",
+     "src": "creative/scene-detect-usage.md"
+    },
+    {
+     "id": "openmontage-screen-recording",
+     "src": "creative/screen-recording.md"
+    },
+    {
+     "id": "openmontage-short-form",
+     "src": "creative/short-form.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-6",
+   "skills": [
+    {
+     "id": "openmontage-sound-design",
+     "src": "creative/sound-design.md"
+    },
+    {
+     "id": "openmontage-stock-sourcing-usage",
+     "src": "creative/stock-sourcing-usage.md"
+    },
+    {
+     "id": "openmontage-storytelling",
+     "src": "creative/storytelling.md"
+    },
+    {
+     "id": "openmontage-talking-head-gen-usage",
+     "src": "creative/talking-head-gen-usage.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-7",
+   "skills": [
+    {
+     "id": "openmontage-typography",
+     "src": "creative/typography.md"
+    },
+    {
+     "id": "openmontage-upscale-usage",
+     "src": "creative/upscale-usage.md"
+    },
+    {
+     "id": "openmontage-video-editing",
+     "src": "creative/video-editing.md"
+    },
+    {
+     "id": "openmontage-video-gen-prompting",
+     "src": "creative/video-gen-prompting.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-8",
+   "skills": [
+    {
+     "id": "openmontage-video-stitching",
+     "src": "creative/video-stitching.md"
+    },
+    {
+     "id": "openmontage-video-understand-usage",
+     "src": "creative/video-understand-usage.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-prompting-1",
+   "skills": [
+    {
+     "id": "openmontage-grok-prompting",
+     "src": "creative/prompting/grok-prompting.md"
+    },
+    {
+     "id": "openmontage-hunyuan-prompting",
+     "src": "creative/prompting/hunyuan-prompting.md"
+    },
+    {
+     "id": "openmontage-ltx-prompting",
+     "src": "creative/prompting/ltx-prompting.md"
+    }
+   ]
+  },
+  {
+   "batch": "creative-prompting-2",
+   "skills": [
+    {
+     "id": "openmontage-seedance-prompting",
+     "src": "creative/prompting/seedance-prompting.md"
+    },
+    {
+     "id": "openmontage-sora-prompting",
+     "src": "creative/prompting/sora-prompting.md"
+    },
+    {
+     "id": "openmontage-veo-prompting",
+     "src": "creative/prompting/veo-prompting.md"
+    }
+   ]
+  },
+  {
+   "batch": "meta-1",
+   "skills": [
+    {
+     "id": "openmontage-animation-runtime-selector",
+     "src": "meta/animation-runtime-selector.md"
+    },
+    {
+     "id": "openmontage-bespoke-composition",
+     "src": "meta/bespoke-composition.md"
+    },
+    {
+     "id": "openmontage-capability-extension",
+     "src": "meta/capability-extension.md"
+    },
+    {
+     "id": "openmontage-checkpoint-protocol",
+     "src": "meta/checkpoint-protocol.md"
+    }
+   ]
+  },
+  {
+   "batch": "meta-2",
+   "skills": [
+    {
+     "id": "openmontage-creative-intake",
+     "src": "meta/creative-intake.md"
+    },
+    {
+     "id": "openmontage-onboarding",
+     "src": "meta/onboarding.md"
+    },
+    {
+     "id": "openmontage-reviewer",
+     "src": "meta/reviewer.md"
+    },
+    {
+     "id": "openmontage-skill-creator",
+     "src": "meta/skill-creator.md"
+    }
+   ]
+  },
+  {
+   "batch": "meta-3",
+   "skills": [
+    {
+     "id": "openmontage-taste-direction",
+     "src": "meta/taste-direction.md"
+    },
+    {
+     "id": "openmontage-video-reference-analyst",
+     "src": "meta/video-reference-analyst.md"
+    },
+    {
+     "id": "openmontage-voice-performance-director",
+     "src": "meta/voice-performance-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-animation-1",
+   "skills": [
+    {
+     "id": "openmontage-animation-asset-director",
+     "src": "pipelines/animation/asset-director.md"
+    },
+    {
+     "id": "openmontage-animation-compose-director",
+     "src": "pipelines/animation/compose-director.md"
+    },
+    {
+     "id": "openmontage-animation-edit-director",
+     "src": "pipelines/animation/edit-director.md"
+    },
+    {
+     "id": "openmontage-animation-executive-producer",
+     "src": "pipelines/animation/executive-producer.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-animation-2",
+   "skills": [
+    {
+     "id": "openmontage-animation-idea-director",
+     "src": "pipelines/animation/idea-director.md"
+    },
+    {
+     "id": "openmontage-animation-proposal-director",
+     "src": "pipelines/animation/proposal-director.md"
+    },
+    {
+     "id": "openmontage-animation-publish-director",
+     "src": "pipelines/animation/publish-director.md"
+    },
+    {
+     "id": "openmontage-animation-research-director",
+     "src": "pipelines/animation/research-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-animation-3",
+   "skills": [
+    {
+     "id": "openmontage-animation-scene-director",
+     "src": "pipelines/animation/scene-director.md"
+    },
+    {
+     "id": "openmontage-animation-script-director",
+     "src": "pipelines/animation/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-avatar-spokesperson-1",
+   "skills": [
+    {
+     "id": "openmontage-avatar-spokesperson-asset-director",
+     "src": "pipelines/avatar-spokesperson/asset-director.md"
+    },
+    {
+     "id": "openmontage-avatar-spokesperson-compose-director",
+     "src": "pipelines/avatar-spokesperson/compose-director.md"
+    },
+    {
+     "id": "openmontage-avatar-spokesperson-edit-director",
+     "src": "pipelines/avatar-spokesperson/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-avatar-spokesperson-2",
+   "skills": [
+    {
+     "id": "openmontage-avatar-spokesperson-executive-producer",
+     "src": "pipelines/avatar-spokesperson/executive-producer.md"
+    },
+    {
+     "id": "openmontage-avatar-spokesperson-idea-director",
+     "src": "pipelines/avatar-spokesperson/idea-director.md"
+    },
+    {
+     "id": "openmontage-avatar-spokesperson-publish-director",
+     "src": "pipelines/avatar-spokesperson/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-avatar-spokesperson-3",
+   "skills": [
+    {
+     "id": "openmontage-avatar-spokesperson-scene-director",
+     "src": "pipelines/avatar-spokesperson/scene-director.md"
+    },
+    {
+     "id": "openmontage-avatar-spokesperson-script-director",
+     "src": "pipelines/avatar-spokesperson/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-character-animation-1",
+   "skills": [
+    {
+     "id": "openmontage-character-animation-asset-director",
+     "src": "pipelines/character-animation/asset-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-character-design-director",
+     "src": "pipelines/character-animation/character-design-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-compose-director",
+     "src": "pipelines/character-animation/compose-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-edit-director",
+     "src": "pipelines/character-animation/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-character-animation-2",
+   "skills": [
+    {
+     "id": "openmontage-character-animation-executive-producer",
+     "src": "pipelines/character-animation/executive-producer.md"
+    },
+    {
+     "id": "openmontage-character-animation-proposal-director",
+     "src": "pipelines/character-animation/proposal-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-publish-director",
+     "src": "pipelines/character-animation/publish-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-research-director",
+     "src": "pipelines/character-animation/research-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-character-animation-3",
+   "skills": [
+    {
+     "id": "openmontage-character-animation-rig-plan-director",
+     "src": "pipelines/character-animation/rig-plan-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-scene-director",
+     "src": "pipelines/character-animation/scene-director.md"
+    },
+    {
+     "id": "openmontage-character-animation-script-director",
+     "src": "pipelines/character-animation/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-cinematic-1",
+   "skills": [
+    {
+     "id": "openmontage-cinematic-asset-director",
+     "src": "pipelines/cinematic/asset-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-compose-director",
+     "src": "pipelines/cinematic/compose-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-edit-director",
+     "src": "pipelines/cinematic/edit-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-executive-producer",
+     "src": "pipelines/cinematic/executive-producer.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-cinematic-2",
+   "skills": [
+    {
+     "id": "openmontage-cinematic-idea-director",
+     "src": "pipelines/cinematic/idea-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-proposal-director",
+     "src": "pipelines/cinematic/proposal-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-publish-director",
+     "src": "pipelines/cinematic/publish-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-research-director",
+     "src": "pipelines/cinematic/research-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-cinematic-3",
+   "skills": [
+    {
+     "id": "openmontage-cinematic-scene-director",
+     "src": "pipelines/cinematic/scene-director.md"
+    },
+    {
+     "id": "openmontage-cinematic-script-director",
+     "src": "pipelines/cinematic/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-clip-factory-1",
+   "skills": [
+    {
+     "id": "openmontage-clip-factory-asset-director",
+     "src": "pipelines/clip-factory/asset-director.md"
+    },
+    {
+     "id": "openmontage-clip-factory-compose-director",
+     "src": "pipelines/clip-factory/compose-director.md"
+    },
+    {
+     "id": "openmontage-clip-factory-edit-director",
+     "src": "pipelines/clip-factory/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-clip-factory-2",
+   "skills": [
+    {
+     "id": "openmontage-clip-factory-executive-producer",
+     "src": "pipelines/clip-factory/executive-producer.md"
+    },
+    {
+     "id": "openmontage-clip-factory-idea-director",
+     "src": "pipelines/clip-factory/idea-director.md"
+    },
+    {
+     "id": "openmontage-clip-factory-publish-director",
+     "src": "pipelines/clip-factory/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-clip-factory-3",
+   "skills": [
+    {
+     "id": "openmontage-clip-factory-scene-director",
+     "src": "pipelines/clip-factory/scene-director.md"
+    },
+    {
+     "id": "openmontage-clip-factory-script-director",
+     "src": "pipelines/clip-factory/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-documentary-montage-1",
+   "skills": [
+    {
+     "id": "openmontage-documentary-montage-asset-director",
+     "src": "pipelines/documentary-montage/asset-director.md"
+    },
+    {
+     "id": "openmontage-documentary-montage-compose-director",
+     "src": "pipelines/documentary-montage/compose-director.md"
+    },
+    {
+     "id": "openmontage-documentary-montage-edit-director",
+     "src": "pipelines/documentary-montage/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-documentary-montage-2",
+   "skills": [
+    {
+     "id": "openmontage-documentary-montage-executive-producer",
+     "src": "pipelines/documentary-montage/executive-producer.md"
+    },
+    {
+     "id": "openmontage-documentary-montage-idea-director",
+     "src": "pipelines/documentary-montage/idea-director.md"
+    },
+    {
+     "id": "openmontage-documentary-montage-scene-director",
+     "src": "pipelines/documentary-montage/scene-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-explainer-1",
+   "skills": [
+    {
+     "id": "openmontage-explainer-asset-director",
+     "src": "pipelines/explainer/asset-director.md"
+    },
+    {
+     "id": "openmontage-explainer-compose-director",
+     "src": "pipelines/explainer/compose-director.md"
+    },
+    {
+     "id": "openmontage-explainer-edit-director",
+     "src": "pipelines/explainer/edit-director.md"
+    },
+    {
+     "id": "openmontage-explainer-executive-producer",
+     "src": "pipelines/explainer/executive-producer.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-explainer-2",
+   "skills": [
+    {
+     "id": "openmontage-explainer-idea-director",
+     "src": "pipelines/explainer/idea-director.md"
+    },
+    {
+     "id": "openmontage-explainer-proposal-director",
+     "src": "pipelines/explainer/proposal-director.md"
+    },
+    {
+     "id": "openmontage-explainer-publish-director",
+     "src": "pipelines/explainer/publish-director.md"
+    },
+    {
+     "id": "openmontage-explainer-research-director",
+     "src": "pipelines/explainer/research-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-explainer-3",
+   "skills": [
+    {
+     "id": "openmontage-explainer-scene-director",
+     "src": "pipelines/explainer/scene-director.md"
+    },
+    {
+     "id": "openmontage-explainer-script-director",
+     "src": "pipelines/explainer/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-hybrid-1",
+   "skills": [
+    {
+     "id": "openmontage-hybrid-asset-director",
+     "src": "pipelines/hybrid/asset-director.md"
+    },
+    {
+     "id": "openmontage-hybrid-compose-director",
+     "src": "pipelines/hybrid/compose-director.md"
+    },
+    {
+     "id": "openmontage-hybrid-edit-director",
+     "src": "pipelines/hybrid/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-hybrid-2",
+   "skills": [
+    {
+     "id": "openmontage-hybrid-executive-producer",
+     "src": "pipelines/hybrid/executive-producer.md"
+    },
+    {
+     "id": "openmontage-hybrid-idea-director",
+     "src": "pipelines/hybrid/idea-director.md"
+    },
+    {
+     "id": "openmontage-hybrid-publish-director",
+     "src": "pipelines/hybrid/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-hybrid-3",
+   "skills": [
+    {
+     "id": "openmontage-hybrid-scene-director",
+     "src": "pipelines/hybrid/scene-director.md"
+    },
+    {
+     "id": "openmontage-hybrid-script-director",
+     "src": "pipelines/hybrid/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-localization-dub-1",
+   "skills": [
+    {
+     "id": "openmontage-localization-dub-asset-director",
+     "src": "pipelines/localization-dub/asset-director.md"
+    },
+    {
+     "id": "openmontage-localization-dub-compose-director",
+     "src": "pipelines/localization-dub/compose-director.md"
+    },
+    {
+     "id": "openmontage-localization-dub-edit-director",
+     "src": "pipelines/localization-dub/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-localization-dub-2",
+   "skills": [
+    {
+     "id": "openmontage-localization-dub-executive-producer",
+     "src": "pipelines/localization-dub/executive-producer.md"
+    },
+    {
+     "id": "openmontage-localization-dub-idea-director",
+     "src": "pipelines/localization-dub/idea-director.md"
+    },
+    {
+     "id": "openmontage-localization-dub-publish-director",
+     "src": "pipelines/localization-dub/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-localization-dub-3",
+   "skills": [
+    {
+     "id": "openmontage-localization-dub-scene-director",
+     "src": "pipelines/localization-dub/scene-director.md"
+    },
+    {
+     "id": "openmontage-localization-dub-script-director",
+     "src": "pipelines/localization-dub/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-podcast-repurpose-1",
+   "skills": [
+    {
+     "id": "openmontage-podcast-repurpose-asset-director",
+     "src": "pipelines/podcast-repurpose/asset-director.md"
+    },
+    {
+     "id": "openmontage-podcast-repurpose-compose-director",
+     "src": "pipelines/podcast-repurpose/compose-director.md"
+    },
+    {
+     "id": "openmontage-podcast-repurpose-edit-director",
+     "src": "pipelines/podcast-repurpose/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-podcast-repurpose-2",
+   "skills": [
+    {
+     "id": "openmontage-podcast-repurpose-executive-producer",
+     "src": "pipelines/podcast-repurpose/executive-producer.md"
+    },
+    {
+     "id": "openmontage-podcast-repurpose-idea-director",
+     "src": "pipelines/podcast-repurpose/idea-director.md"
+    },
+    {
+     "id": "openmontage-podcast-repurpose-publish-director",
+     "src": "pipelines/podcast-repurpose/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-podcast-repurpose-3",
+   "skills": [
+    {
+     "id": "openmontage-podcast-repurpose-scene-director",
+     "src": "pipelines/podcast-repurpose/scene-director.md"
+    },
+    {
+     "id": "openmontage-podcast-repurpose-script-director",
+     "src": "pipelines/podcast-repurpose/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-screen-demo-1",
+   "skills": [
+    {
+     "id": "openmontage-screen-demo-asset-director",
+     "src": "pipelines/screen-demo/asset-director.md"
+    },
+    {
+     "id": "openmontage-screen-demo-compose-director",
+     "src": "pipelines/screen-demo/compose-director.md"
+    },
+    {
+     "id": "openmontage-screen-demo-edit-director",
+     "src": "pipelines/screen-demo/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-screen-demo-2",
+   "skills": [
+    {
+     "id": "openmontage-screen-demo-executive-producer",
+     "src": "pipelines/screen-demo/executive-producer.md"
+    },
+    {
+     "id": "openmontage-screen-demo-idea-director",
+     "src": "pipelines/screen-demo/idea-director.md"
+    },
+    {
+     "id": "openmontage-screen-demo-publish-director",
+     "src": "pipelines/screen-demo/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-screen-demo-3",
+   "skills": [
+    {
+     "id": "openmontage-screen-demo-scene-director",
+     "src": "pipelines/screen-demo/scene-director.md"
+    },
+    {
+     "id": "openmontage-screen-demo-script-director",
+     "src": "pipelines/screen-demo/script-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-talking-head-1",
+   "skills": [
+    {
+     "id": "openmontage-talking-head-asset-director",
+     "src": "pipelines/talking-head/asset-director.md"
+    },
+    {
+     "id": "openmontage-talking-head-compose-director",
+     "src": "pipelines/talking-head/compose-director.md"
+    },
+    {
+     "id": "openmontage-talking-head-edit-director",
+     "src": "pipelines/talking-head/edit-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-talking-head-2",
+   "skills": [
+    {
+     "id": "openmontage-talking-head-executive-producer",
+     "src": "pipelines/talking-head/executive-producer.md"
+    },
+    {
+     "id": "openmontage-talking-head-idea-director",
+     "src": "pipelines/talking-head/idea-director.md"
+    },
+    {
+     "id": "openmontage-talking-head-publish-director",
+     "src": "pipelines/talking-head/publish-director.md"
+    }
+   ]
+  },
+  {
+   "batch": "pipelines-talking-head-3",
+   "skills": [
+    {
+     "id": "openmontage-talking-head-scene-director",
+     "src": "pipelines/talking-head/scene-director.md"
+    },
+    {
+     "id": "openmontage-talking-head-script-director",
+     "src": "pipelines/talking-head/script-director.md"
+    }
+   ]
+  }
+ ],
+ "total": 156
+}
