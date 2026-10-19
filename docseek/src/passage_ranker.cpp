@@ -113,24 +113,30 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
     phLower.reserve(pq.phrases.size());
     for (const auto& p : pq.phrases) phLower.push_back(toLowerAscii(p));
 
-    // 复合短语：关键词按序拼接（如"安装"+"步骤"→"安装步骤"）。
-    // 连续出现是比词袋更强的意图信号（与 Searcher 文档级的 phraseBoost 同原理）；
-    // 只在关键词不少于 2 个、拼接串非空、且拼接串不同于任一引号短语时生效
-    // （引号短语已有 phraseTerm 加成，避免重复）。
-    std::string queryCompound;
+    // 复合短语候选集（两路并集）：
+    // ① 全关键词按序拼接（历史行为）：短查询的全部关键词拼接后若在窗口连续出现，
+    // 是强主题信号；长拼接串几乎永不连续出现，自然失效，不引入误触发。
+    // ② 理解层重构的复合概念（如方位时间结构还原时\"还原词+其后紧邻 token\"
+    // 构成的深层相邻二元组）：连续出现是比词袋更强的意图信号
+    // （与 Searcher 文档级的 phraseBoost 同原理）。
+    // 表层相邻关键词二元组误触发率高（如否定词+动词在无关文档偶然相邻），不采用。
+    // 每个候选非空、且不同于任一引号短语时生效（引号短语已有 phraseTerm 加成，
+    // 避免重复）；去重后保留。
+    std::vector<std::string> queryCompounds;
+    auto tryAddCompound = [&](const std::string& raw) {
+        std::string c = toLowerAscii(raw);
+        if (c.empty()) return;
+        for (const auto& p: phLower) { if (c == p) return;}
+        for (const auto& q: queryCompounds) { if (c == q) return;}
+        queryCompounds.push_back(c);
+    };
     if (kwLower.size() >= 2) {
-        std::string c;
-        for (const auto& k : kwLower) c += k;
-        if (!c.empty()) {
-            bool dupPhrase = false;
-            for (const auto& p : phLower) {
-                if (c == p) {
-                    dupPhrase = true;
-                    break;
-                }
-            }
-            if (!dupPhrase) queryCompound = c;
-        }
+        std::string full;
+        for (const auto& k: kwLower) full += k;
+        tryAddCompound(full);
+    }
+    for (const auto& rc: pq.reconstructedCompounds) {
+        tryAddCompound(rc);
     }
 
     const int totalKeywords = static_cast<int>(pq.keywords.size());
@@ -242,11 +248,13 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
 
-        // 复合短语加成：窗口原文连续包含关键词拼接串。
-        if (!queryCompound.empty() &&
-            windowLower.find(queryCompound) != std::string::npos) {
-            score += kCompoundPhraseBonus;
-        }
+// 复合短语加成：窗口原文连续包含任一候选二元组即触发一次（不叠加）。
+for (const auto& qc: queryCompounds) {
+    if (windowLower.find(qc)!= std::string::npos) {
+        score += kCompoundPhraseBonus;
+        break;
+    }
+}
 
         // 数值范围答案加成：query 含范围类疑问词，且窗口含“阿拉伯数字+紧邻单位”。
         {

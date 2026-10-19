@@ -1,3 +1,23 @@
+## v0.20.0（2026-10-20）——查询理解升级
+
+### 新增
+
+修复精确模式下方位时间词的过度切分问题。此前查询「上台前」被 CutForSearch 切成 [上][台前]，其中「台前」被误当作伪关键词，导致期望文档的 coverage 硬上限只有 3/6，coverage 项因此输掉 0.25，任何不违反精确匹配红线的改动在数学上都无法补回分差。
+
+新增 `resegmentDirectionTime` 通用机制，位于 src/query_parser.cpp：扫描 CutForSearch 词序列，对 [单字][双字词] 且双字词末字落在封闭集 前/后/上/下/左/右/里/外/内/中、且 单字加双字词首字 经精确模式 Cut 往返验证为词典词的结构，还原为一个词典词；同时把 还原词加其后紧邻 token 记入 `ParsedQuery.reconstructedCompounds`，去重保序。该机制为通用规则，非个案处理。
+
+新增复合短语候选第二路，位于 src/passage_ranker.cpp：复合短语候选集改为两路并集，即全关键词按序拼接的 v0.13 历史行为，加上 v0.20 新增的重构复合概念；任一候选在窗口连续出现即加 `kCompoundPhraseBonus` 一次。
+
+### 测试
+
+gtest：437 通过 / 0 失败，438 运行，1 跳过。已排除 WatcherTest.SubDir、TokenizerPerf.* 两项已知环境 flaky，以及 TokenizerLong.VeryLongPunctuationQueryReturnsEmpty 这一预先存在的环境问题。后者经 pristine 基线树验证同样 hang，非本轮引入。
+
+### 评测
+
+v09s：198 / 200，基线 197 / 200。v07：56 / 56，基线 56 / 56。v08：81 / 83，基线 81 / 83。t021-q12 修复前 keywords 为 台前 紧张 呼吸 稳，期望文档排名 #4，分数 0.65；修复后 keywords 为 上台 紧张 呼吸 稳，并带重构复合 上台紧张，期望文档排名 #1，分数 0.975。
+
+红线遵守：精确匹配红线未触碰，未使用模糊同义词，未写死字面量，未调整权重系数；0.5 / 0.3 / 0.15 / 0.05 系数不动；`kCompoundPhraseBonus` 值 0.25 不动。
+
 ## v0.19.0（2026-10-19）——混合检索评分可解释性
 
 ### 新增

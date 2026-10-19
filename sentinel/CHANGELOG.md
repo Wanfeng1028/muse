@@ -2,6 +2,17 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.8.4] - 2026-10-20
+
+### 修复
+- `POST /api/monitors` 创建时忽略 `is_public`（0.8.3 已知限制第一条）：现在读取请求体 `is_public` 字段（0/1，不传按 0；非法值返回 400）。`PUT /api/monitors/{id}` 未传 `is_public` 时保留原值，不再静默重置。控制台新建表单新增"公开（状态页可见）"复选框，列表中公开项显示"公开"徽标。
+
+### 新增
+- `GET /api/incidents` 分页参数新增 `per_page`：优先级 `per_page` > `page_size` > `limit`；取值钳制 1~100，非法值回退默认 20；`page` 非法或 <1 按 1，超大页码返回空 `items` 不报错。响应契约不变（`{items, total, page, page_size}`）。
+
+### 已知限制
+- 快照为下载附件形态，未做服务端持久化/定时生成（排期后续）。
+
 ## [0.8.3] - 2026-10-19
 
 ### 新增
@@ -15,7 +26,6 @@
 - ctx 中断实测：3s sleep 目标在 100ms/200ms 取消后均 2.5s 内返回；完整退避 15.5s 被中断到 <5s。
 
 ### 已知限制
-- `POST /api/monitors` 创建时忽略 `is_public`（冒烟中发现：新建监控 is_public 恒为 0，需 `PUT /api/monitors/{id}/public` 或显式 attach 到状态页；排期后续修）。
 - 快照为下载附件形态，未做服务端持久化/定时生成（排期后续）。
 
 ## [0.8.2] - 2026-10-19

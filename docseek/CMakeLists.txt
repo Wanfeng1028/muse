@@ -210,6 +210,7 @@ add_executable(docseek_tests
   tests/test_v015_single_token_precision.cpp
   tests/test_v016_b_fix1.cpp
   tests/test_v016_b_cases.cpp
+  tests/test_query_understanding_v020.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

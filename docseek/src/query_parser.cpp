@@ -238,6 +238,114 @@ bool detectPassageIntent(const std::string& raw) {
     return false;
 }
 
+// 方位/时间单字封闭集（封闭语言学类）。
+bool isDirectionTimeChar(const std::string& s) {
+    // 集合：前 后 上 下 左 右 里 外 内 中（10 个单字）。
+    // 实现：static const std::unordered_set<std::string>，count(s) > 0。
+    static const std::unordered_set<std::string> kSet = {
+        "前", "后", "上", "下", "左", "右", "里", "外", "内", "中"
+    };
+    return kSet.count(s) > 0;
+}
+
+// 取首个 UTF-8 码点子串。
+std::string firstCodepoint(const std::string& s) {
+    // 空串返回空串；按首字节判定码点长度（1/2/3/4），截取返回；
+    // 长度超过 s.size() 时截断到 s.size()。
+    if (s.empty()) {
+        return std::string();
+    }
+    unsigned char c = static_cast<unsigned char>(s[0]);
+    std::size_t len = 1;
+    if ((c & 0x80) == 0x00) {
+        len = 1;
+    } else if ((c & 0xE0) == 0xC0) {
+        len = 2;
+    } else if ((c & 0xF0) == 0xE0) {
+        len = 3;
+    } else if ((c & 0xF8) == 0xF0) {
+        len = 4;
+    }
+    if (len > s.size()) {
+        len = s.size();
+    }
+    return s.substr(0, len);
+}
+
+// 取末个 UTF-8 码点子串。
+std::string lastCodepoint(const std::string& s) {
+    // 空串返回空串；从末尾向前跳过 10xxxxxx 后续字节，截取返回。
+    if (s.empty()) {
+        return std::string();
+    }
+    std::size_t i = s.size();
+    std::size_t start = i - 1;
+    while (start > 0) {
+        unsigned char c = static_cast<unsigned char>(s[start]);
+        if ((c & 0xC0) == 0x80) {
+            --start;
+        } else {
+            break;
+        }
+    }
+    return s.substr(start, i - start);
+}
+
+// 是否为双 CJK 码点（用 countUtf8Codepoints(s) == 2 且 hasNonAscii(s) 判定）。
+bool isTwoCharCjk(const std::string& s) {
+    return countUtf8Codepoints(s) == 2 && hasNonAscii(s);
+}
+
+// 精确模式往返验证：Cut(s) 恰好切出自身则为词典词。只用公开 Cut API。
+bool isDictWord(const cppjieba::Jieba* jieba, const std::string& s) {
+    // jieba 为空或 s 为空返回 false；
+    // vector<string> out; jieba->Cut(s, out); 返回 out.size()==1 && out[0]==s。
+    if (jieba == nullptr || s.empty()) {
+        return false;
+    }
+    std::vector<std::string> out;
+    jieba->Cut(s, out);
+    return out.size() == 1 && out[0] == s;
+}
+
+// 歧义重切（通用机制）：扫描 words，对每个相邻对 (words[i], words[i+1])，
+// 若 isSingleCjk(words[i]) 为真、isTwoCharCjk(words[i+1]) 为真、
+// isDirectionTimeChar(lastCodepoint(words[i+1])) 为真、
+// 且 isDictWord(jieba, words[i] + firstCodepoint(words[i+1])) 为真，
+// 则发射合并 token (words[i] + firstCodepoint(words[i+1]))，i 前进 2；
+// 否则发射 words[i]，i 前进 1。
+std::vector<std::string> resegmentDirectionTime(const cppjieba::Jieba* jieba,
+                                                 const std::vector<std::string>& words,
+                                                 std::vector<std::string>& outCompounds) {
+    std::vector<std::string> result;
+    std::unordered_set<std::string> seenCompound;
+    std::size_t i = 0;
+    while (i < words.size()) {
+        if (i + 1 < words.size() &&
+            isSingleCjk(words[i]) &&
+            isTwoCharCjk(words[i + 1]) &&
+            isDirectionTimeChar(lastCodepoint(words[i + 1])) &&
+            isDictWord(jieba, words[i] + firstCodepoint(words[i + 1]))) {
+            std::string merged = words[i] + firstCodepoint(words[i + 1]);
+            result.push_back(merged);
+            if (i + 2 < words.size()) {
+                const std::string& nxt = words[i + 2];
+                if (!nxt.empty() &&
+                    !isPunctuationOnly(nxt) &&
+                    !isAsciiSymbolOnly(nxt) &&
+                    seenCompound.insert(merged + nxt).second) {
+                    outCompounds.push_back(merged + nxt);
+                }
+            }
+            i += 2;
+        } else {
+            result.push_back(words[i]);
+            i += 1;
+        }
+}
+return result;
+}
+
 }  // namespace
 
 // 剥离疑问/语气词：复用匿名 namespace 内的 fillerWords()/replaceAllWithSpace()/squeezeWhitespace()
@@ -413,6 +521,11 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
         if (jieba != nullptr) {
             std::vector<std::string> words;
             jieba->CutForSearch(rest, words);
+            // 方位时间歧义重切（通用）：[单字][双字词] 的方位时间结构还原为词典词；
+            // 同时收集理解层重构的复合概念候选。
+            std::vector<std::string> reconCompounds;
+            words = resegmentDirectionTime(jieba, words, reconCompounds);
+            pq.reconstructedCompounds = reconCompounds;
             for (const auto& w : words) {
                 if (w.empty()) continue;
                 if (!hasNonAscii(w)) {

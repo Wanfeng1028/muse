@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -421,10 +420,6 @@
       color: #5e6e7e;
       padding: 40px !important;
     }
---- END PATCH ===
-
-=== PATCH: sentinel/internal/web/static/monitors.html ===
-
     .form-error {
       background: #fee9e9;
       color: #c2414a;
@@ -776,6 +771,10 @@
           <input type="checkbox" id="m-enabled" name="m-enabled" checked>
           <label for="m-enabled">启用监控</label>
         </div>
+        <div class="checkbox-field">
+          <input type="checkbox" id="m-public" name="m-public">
+          <label for="m-public">公开（状态页可见）</label>
+        </div>
         <div class="form-field">
           <label>短信告警</label>
           <div class="checkbox-field" style="gap:12px; flex-wrap:wrap;">
@@ -880,10 +879,6 @@
     resetFormToCreateMode();
     loadMonitors();
   }
---- END PATCH ===
-
-=== PATCH: sentinel/internal/web/static/monitors.html ===
-
   // 初始化
   function initMonitorsPage() {
     resetFormToCreateMode();
@@ -975,35 +970,48 @@
   }
 
   // ---------- 渲染表格 ----------
+  function setListPanels(visibleId) {
+    var ids = ['monitor-list-loading', 'monitor-empty-state', 'monitor-list-body'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el) el.style.display = (ids[i] === visibleId) ? 'block' : 'none';
+    }
+  }
+
   function renderMonitorTable() {
     const tbody = document.getElementById('monitor-tbody');
     if (!tbody) return;
 
     if (listState === 'loading') {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="7">正在加载监控列表…</td></tr>`;
+      setListPanels('monitor-list-loading');
       return;
     }
 
     if (listState === 'error') {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="7">加载失败：${escapeHtml(listError)} <button type="button" class="btn btn-outline btn-sm" onclick="loadMonitors()">重试</button></td></tr>`;
+      var descEl = document.getElementById('monitor-error-desc');
+      if (descEl) descEl.textContent = '错误：' + listError + '。点下面的按钮再试一次。';
+      setListPanels('monitor-empty-state');
       return;
     }
 
     if (monitors.length === 0) {
-      tbody.innerHTML = `<tr class="empty-row"><td colspan="7">暂无监控项，请点击上方「新建监控」添加</td></tr>`;
+      setListPanels('monitor-empty-state');
       return;
     }
+
+    setListPanels('monitor-list-body');
 
     let html = '';
     monitors.forEach(mon => {
       const statusClass = getStatusClass(mon.status);
       const statusText = getStatusText(mon.status);
       const enabledLabel = mon.enabled ? '' : ' (已禁用)';
+      const publicBadge = mon.is_public ? ' <span style="font-size:12px;color:#0f766e;background:#ccfbf1;border:1px solid #99f6e4;border-radius:4px;padding:1px 6px;margin-left:6px;">公开</span>' : '';
       const uptimeDisplay = uptimeDisplayFor(mon.id);
 
       html += `
         <tr data-id="${mon.id}">
-          <td><strong>${escapeHtml(mon.name)}</strong>${enabledLabel}</td>
+          <td><strong>${escapeHtml(mon.name)}</strong>${enabledLabel}${publicBadge}</td>
           <td>${escapeHtml(String(mon.kind || '').toUpperCase())}</td>
           <td style="max-width:200px; word-break:break-all;">${escapeHtml(mon.target)}</td>
           <td>${mon.interval}s</td>
@@ -1060,6 +1068,7 @@
           target: item.target || '',
           interval: item.interval_sec !== undefined ? item.interval_sec : (item.interval !== undefined ? item.interval : 0),
           enabled: enabledFlag,
+          is_public: item.is_public ? 1 : 0,
           status: status,
           uptime24h: uptime
         };
@@ -1092,6 +1101,7 @@
     document.getElementById('m-timeout').value = '10';
     document.getElementById('m-interval').value = '60';
     document.getElementById('m-enabled').checked = true;
+    document.getElementById('m-public').checked = false;
     document.getElementById('m-webhook').value = '';
     document.getElementById('btn-submit').innerText = '创建监控';
     document.querySelectorAll('.m-channel').forEach(function(el){ el.checked = el.value === 'webhook'; });
@@ -1139,7 +1149,8 @@
       webhook_url: val('m-webhook'),
       notify_channels: channels,
       sms_phones: val('m-sms-phones'),
-      enabled: document.getElementById('m-enabled').checked ? 1 : 0
+      enabled: document.getElementById('m-enabled').checked ? 1 : 0,
+      is_public: document.getElementById('m-public').checked ? 1 : 0
     };
     var url = editingId ? '/api/monitors/' + encodeURIComponent(editingId) : '/api/monitors';
     var method = editingId ? 'PUT' : 'POST';
@@ -1289,3 +1300,94 @@
     loadMonitors();
   }
   // ----------
+
+  // ---------- 缺失函数补齐（v0.8.4） ----------
+  function uptimeDisplayFor(id) {
+  var targetId = String(id);
+  for (var i = 0; i < monitors.length; i++) {
+    if (String(monitors[i].id) === targetId) {
+      var u = monitors[i].uptime24h;
+      if (u === null || u === undefined) return '-';
+      return Number(u).toFixed(1) + '%';
+    }
+  }
+  return '-';
+  }
+
+  async function checkNow(id) {
+    try {
+      var res = await sentinelFetch('/api/monitors/' + encodeURIComponent(id) + '/check', { method: 'POST' });
+      if (!res.ok) {
+        var edata = await res.json().catch(function(){ return {}; });
+        throw new Error((edata && edata.error) || ('HTTP ' + res.status));
+      }
+      alert('已触发检查');
+    } catch (e) {
+      alert(e && e.message ? e.message : '触发检查失败');
+    } finally {
+      loadMonitors();
+    }
+  }
+
+  async function deleteMonitor(id) {
+    if (!confirm('确定要删除该监控吗？')) return;
+    var res = await sentinelFetch('/api/monitors/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!res.ok) {
+      var edata = await res.json().catch(function(){ return {}; });
+      throw new Error((edata && edata.error) || ('HTTP ' + res.status));
+    }
+    alert('已删除');
+    loadMonitors();
+  }
+
+  async function editMonitor(id) {
+    try {
+      var res = await sentinelFetch('/api/monitors/' + encodeURIComponent(id), { method: 'GET' });
+      if (!res.ok) {
+        var edata = await res.json().catch(function(){ return {}; });
+        throw new Error((edata && edata.error) || ('HTTP ' + res.status));
+      }
+      var data = await res.json();
+
+      document.getElementById('m-name').value = data.name || '';
+      document.getElementById('m-kind').value = data.kind || '';
+      document.getElementById('m-target').value = data.target || '';
+      document.getElementById('m-method').value = data.method || '';
+      document.getElementById('m-expected').value = (data.expected_status === null || data.expected_status === undefined) ? '' : String(data.expected_status);
+      document.getElementById('m-timeout').value = (data.timeout_sec === null || data.timeout_sec === undefined) ? '' : String(data.timeout_sec);
+      document.getElementById('m-interval').value = (data.interval_sec === null || data.interval_sec === undefined) ? '' : String(data.interval_sec);
+      document.getElementById('m-webhook').value = data.webhook_url || '';
+      document.getElementById('m-enabled').checked = !!data.enabled;
+      document.getElementById('m-public').checked = !!data.is_public;
+      document.getElementById('m-sms-phones').value = data.sms_phones || '';
+
+      var channels = [];
+      if (data.notify_channels) {
+        channels = String(data.notify_channels).split(',');
+        for (var c = 0; c < channels.length; c++) {
+          channels[c] = channels[c].replace(/^\s+|\s+$/g, '');
+        }
+      }
+      var boxes = document.querySelectorAll('.m-channel');
+      for (var i = 0; i < boxes.length; i++) {
+        boxes[i].checked = false;
+      }
+      for (var j = 0; j < boxes.length; j++) {
+        if (channels.indexOf(boxes[j].value) !== -1) {
+          boxes[j].checked = true;
+        }
+      }
+
+      editingId = id;
+      document.getElementById('form-title').textContent = '编辑监控';
+      document.getElementById('btn-submit').textContent = '保存修改';
+      var cancelBtn = document.getElementById('btn-cancel-edit');
+      if (cancelBtn) cancelBtn.style.display = '';
+      window.scrollTo(0, 0);
+    } catch (err) {
+      alert('加载监控失败：' + (err && err.message ? err.message : err));
+    }
+  }
+</script>
+</body>
+</html>

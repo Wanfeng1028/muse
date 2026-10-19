@@ -135,6 +135,7 @@ type monitorInput struct {
 	TimeoutSec     *int    `json:"timeout_sec"`
 	IntervalSec    *int    `json:"interval_sec"`
 	Enabled        *int    `json:"enabled"`
+	IsPublic       *int    `json:"is_public"`
 	WebhookURL     *string `json:"webhook_url"`
 	NotifyChannels *string `json:"notify_channels"`
 	SMSPhones      *string `json:"sms_phones"`
@@ -182,6 +183,9 @@ func (in *monitorInput) toMonitor() store.Monitor {
 	}
 	if in.SMSPhones != nil {
 		m.SMSPhones = *in.SMSPhones
+	}
+	if in.IsPublic != nil {
+		m.IsPublic = *in.IsPublic
 	}
 	return m
 }
@@ -232,6 +236,9 @@ func validateMonitor(m *store.Monitor) error {
 	}
 	if m.Enabled != 0 && m.Enabled != 1 {
 		return errors.New("enabled 只能为 0 或 1")
+	}
+	if m.IsPublic != 0 && m.IsPublic != 1 {
+		return errors.New("is_public 只能为 0 或 1")
 	}
 	if m.NotifyChannels != "" {
 		parsed := notify.ParseChannels(m.NotifyChannels)
@@ -520,7 +527,8 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 		return
 	}
-	if _, err := s.store.GetMonitor(id); err != nil {
+	cur, err := s.store.GetMonitor(id)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			writeErr(w, http.StatusNotFound, "监控不存在")
 			return
@@ -536,6 +544,9 @@ func (s *Server) handleUpdateMonitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m := in.toMonitor()
+	if in.IsPublic == nil {
+		m.IsPublic = cur.IsPublic
+	}
 	if tid := middleware.TenantIDFrom(r.Context()); tid > 0 {
 		m.TenantID = tid
 	} else {
@@ -719,10 +730,18 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 
 	pageSize := 20
 	pageSizeSet := false
-	if v := r.URL.Query().Get("page_size"); v != "" {
+	if v := r.URL.Query().Get("per_page"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			pageSize = n
 			pageSizeSet = true
+		}
+	}
+	if !pageSizeSet {
+		if v := r.URL.Query().Get("page_size"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil {
+				pageSize = n
+				pageSizeSet = true
+			}
 		}
 	}
 	if !pageSizeSet {

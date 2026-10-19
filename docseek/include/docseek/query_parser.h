@@ -9,6 +9,7 @@ namespace docseek {
 struct ParsedQuery {
     std::vector<std::string> keywords;  // 去重保序
     std::vector<std::string> phrases;   // 引号短语，去重保序
+    std::vector<std::string> reconstructedCompounds;  // 理解层重构的复合概念候选，去重保序
     bool passageIntent = false;         // 是否明确要"段落/原文"
 };
 
