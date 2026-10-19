@@ -1,0 +1,118 @@
+name: cinematic
+version: "1.0"
+description: 面向品牌短片与电影感预告的流水线，从调研到发布共八个阶段，强调情绪弧线与交付承诺的可控性。
+category: cinematic
+stages:
+  - name: research
+    produces: [research_brief]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 视觉参考是否具体到可执行的画面元素
+      - 音乐方向是否给出了可落地的风格与节奏描述
+      - 动态镜头承诺是否与现有素材能力匹配
+    successCriteria:
+      - 参考清单覆盖全部关键场景
+      - 音乐方向说明包含至少一个可检索的示例
+      - 明确标注哪些镜头必须实拍、哪些可后期合成
+  - name: proposal
+    produces: [proposal_packet, decision_log]
+    requiredArtifactsIn: [research_brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 情绪推进是否有一条清晰的起承转合
+      - 交付形态是否与预算和时间约束一致
+      - 交付物承诺是否具体到数量与时长
+    successCriteria:
+      - 提案包含分段的情绪节点描述
+      - 明确列出最终交付的版本与规格
+      - 决策日志记录关键取舍与理由
+    subStages:
+      - name: sample
+        description: 当存在参考视频时，产出一段十到十五秒的预览片段以校验风格方向。
+        condition: 存在参考视频
+        humanApprovalDefault: true
+        reviewFocus:
+          - 预览片段是否体现提案中的情绪基调
+          - 节奏与色彩是否接近参考视频
+          - 是否值得按此方向继续投入
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 各段落之间是否有逐步升级的张力
+      - 对白与字幕卡是否保持克制
+      - 结尾是否留有情绪落点
+    successCriteria:
+      - 脚本按段落标注了情绪强度
+      - 对白或字幕总量不超过成片时长的两成
+      - 每一段都有明确的画面意图说明
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 关键帧是否已定义为可拍摄的具体画面
+      - 转场与画幅选择是否服务于整体情绪
+      - 场景顺序是否与脚本节奏一致
+    successCriteria:
+      - 每个场景列出主关键帧描述
+      - 转场方式与画幅比例均有明确理由
+      - 场景时长合计与目标时长误差在一秒内
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 外部素材与生成素材是否分开登记
+      - 音乐是否与情绪节点逐一对应
+      - 清单中的文件是否全部实际存在
+    successCriteria:
+      - 每条素材标注来源与授权状态
+      - 音乐段落与场景编号一一对应
+      - 缺失素材已列出替代方案
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [scene_plan, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 情绪节奏是否在剪辑点中得以保留
+      - 是否存在为了炫技而过度切分的情况
+      - 关键帧是否获得足够的停留时间
+    successCriteria:
+      - 每个剪辑点都有对应的情绪意图说明
+      - 主关键帧停留时长不低于两秒
+      - 全片平均镜头时长符合提案承诺
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 成片情绪与节奏是否与提案一致
+      - 对白与音乐是否清晰可辨
+      - 输出文件是否可正常播放
+    successCriteria:
+      - 渲染报告记录分辨率、码率与时长
+      - 音频无爆音且对白清晰
+      - 输出文件通过基础格式校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, final_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 各平台导出是否带有清晰的版本标注
+      - 标题与描述是否与成片内容一致
+      - 封面概念是否已确定
+    successCriteria:
+      - 每个平台导出文件命名规范统一
+      - 元数据包含标题、描述与标签
+      - 封面草图或概念说明已附上

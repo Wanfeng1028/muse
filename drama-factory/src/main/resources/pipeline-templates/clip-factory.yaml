@@ -1,0 +1,96 @@
+name: clip-factory
+version: "1.0"
+description: 将长视频拆解为多平台短视频的七阶段流水线，从选题到发布逐段把控切片质量与元数据。
+category: clips
+stages:
+  - name: idea
+    produces: [brief, decision_log]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 源内容类型是否已明确识别
+      - 目标平台组合与切片数量是否现实
+      - 选段标准是否清晰可复现
+    successCriteria:
+      - 简报注明源内容类型与总时长
+      - 列出目标平台及每个平台的切片数
+      - 说明选段标准并给出正反示例
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 是否提供带时间戳的完整转写
+      - 候选片段是否按吸引力排序
+      - 每个候选片段是否自成一体会
+    successCriteria:
+      - 转写包含时间戳且与源视频对齐
+      - 候选片段附排序依据
+      - 每个候选片段可独立观看
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 切入切出点是否干净利落
+      - 是否存在断句中间切断的问题
+      - 各平台的画幅处理是否已规划
+    successCriteria:
+      - 每个片段的入点与出点均有时间码
+      - 无中途切断句子的片段
+      - 说明各平台的画幅处理方式
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个片段是否配有时间对齐的字幕
+      - 音频电平是否全片一致
+      - 每个片段的素材是否已就绪
+    successCriteria:
+      - 字幕时间轴与片段对齐
+      - 全片音频电平差异在可接受范围内
+      - 清单中列出的素材全部存在
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [scene_plan, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 每个片段是否可独立成片
+      - 开头两到三秒是否形成钩子
+      - 字幕样式是否全片统一
+    successCriteria:
+      - 每个片段无需上下文即可看懂
+      - 钩子出现在前两到三秒内
+      - 字幕字体、字号与位置统一
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 全部片段是否均已渲染
+      - 输出规格是否符合各平台要求
+      - 音频质量是否一致
+    successCriteria:
+      - 渲染报告列出每个片段的状态
+      - 分辨率、比例与时长符合平台规格
+      - 各片段音频无爆音且电平一致
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, final_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个片段是否配有个性化元数据
+      - 发布顺序是否已规划
+      - 导出文件是否按平台分类
+    successCriteria:
+      - 每个片段有独立标题与描述
+      - 发布计划包含顺序与时间
+      - 导出目录按平台分组

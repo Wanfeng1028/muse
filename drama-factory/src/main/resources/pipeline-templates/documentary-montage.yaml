@@ -1,0 +1,70 @@
+name: documentary-montage
+version: "1.0"
+description: 以档案素材拼贴呈现单一主题的五阶段流水线，围绕一个核心问题组织画面与音乐。
+category: documentary
+stages:
+  - name: idea
+    produces: [brief]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 主题是否能用一句话问句概括
+      - 成片时长与结构是否具体可执行
+      - 音乐方案与收尾标识是否已规划
+    successCriteria:
+      - 简报包含一句核心主题问句
+      - 明确目标时长与段落数量
+      - 说明音乐基调与结尾标识方式
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个片段的画面描述是否足够具体
+      - 每段是否配有两到三条检索关键词
+      - 重点片段是否已标记且时长合理
+    successCriteria:
+      - 每段列出画面描述与检索词
+      - 至少标记两个重点片段
+      - 各段时长合计等于目标时长
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个片段是否恰好对应一条素材
+      - 是否存在同一素材被重复使用
+      - 素材来源与授权是否记录完整
+    successCriteria:
+      - 片段与素材一一对应
+      - 无重复使用记录
+      - 每条素材标注出处与许可
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [scene_plan, asset_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 重点片段是否获得最长停留
+      - 相邻镜头是否在主体与景别上有所变化
+      - 每个剪辑点是否都有存在理由
+    successCriteria:
+      - 重点片段时长为全片最长
+      - 相邻镜头主体或景别不重复
+      - 每个剪辑点附一句理由说明
+  - name: compose
+    produces: [render_report]
+    requiredArtifactsIn: [edit_decisions, asset_manifest, brief]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 成片时长是否与计划一致
+      - 调色是否统一无跳变
+      - 音乐与画面是否混合得当
+    successCriteria:
+      - 成片时长与计划误差不超过一秒
+      - 全片色温与对比度统一
+      - 输出文件通过基础格式校验
