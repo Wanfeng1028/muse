@@ -12,7 +12,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o /out/mortisedb ./cmd/mortisedb
 
 # 运行阶段：仅包含运行时所需内容
-FROM alpine:3.20
+FROM alpine:3.24
 
 # 安装 CA 证书与时区数据
 RUN apk add --no-cache ca-certificates tzdata
