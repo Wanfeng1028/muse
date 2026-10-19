@@ -61,6 +61,7 @@ struct SearchCmdOpts {
     int limit = 20;
     double titleBoost = readWeightEnv("DOCSEEK_TITLE_BOOST", 1.0);
     double phraseBoost = readWeightEnv("DOCSEEK_PHRASE_BOOST", 2.0);
+    bool explain = false;
 };
 
 
@@ -146,9 +147,10 @@ void printUsage() {
         "命令：\n"
         "  index <path>... [--ext .txt,.md] [--max-mb N]\n"
         "                   建立或更新索引（可指定多个文件或目录）\n"
-        "  search <query...> [--limit N] [--title-boost F] [--phrase-boost F]\n"
+        "  search <query...> [--limit N] [--title-boost F] [--phrase-boost F] [--explain]\n"
         "                   全文搜索，默认返回前 20 条\n"
         "                   --title-boost/--phrase-boost 设置权重（默认 1.0/2.0）\n"
+        "                   --explain 输出每条命中的评分分量明细\n"
 
         "  locate <query...> [--limit N]\n"
         "                   自然语言定位原文：问句直达文件:行号，默认返回前 5 段\n"
@@ -236,35 +238,83 @@ int cmdSearch(docseek::Database& db, const SearchCmdOpts& o, bool json) {
     weights.titleBoost = o.titleBoost;
     weights.phraseBoost = o.phraseBoost;
     docseek::Searcher s(db, weights);
-    auto hits = s.search(o.query, o.limit);
-
+    bool wantExplain = o.explain;
 
     if (json) {
         std::cout << "{\"query\":\"" << jsonEscape(o.query) << "\",\"hits\":[";
-        for (size_t i = 0; i < hits.size(); ++i) {
-            const auto& h = hits[i];
-            if (i) std::cout << ",";
-            std::cout << "{"
-                      << "\"doc_id\":" << h.doc_id << ","
-                      << "\"path\":\"" << jsonEscape(h.path) << "\","
-                      << "\"title\":\"" << jsonEscape(h.title) << "\","
-                      << "\"snippet\":\"" << jsonEscape(h.snippet) << "\","
-                      << "\"score\":" << std::fixed << std::setprecision(3) << h.score
-                      << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\""
-                      << "}";
+        if (wantExplain) {
+            auto hits = s.explain(o.query, o.limit);
+            for (size_t i = 0; i < hits.size(); ++i) {
+                const auto& e = hits[i];
+                const auto& h = e.hit;
+                const auto& b = e.breakdown;
+                if (i) std::cout << ",";
+                std::cout << "{"
+                          << "\"doc_id\":" << h.doc_id << ","
+                          << "\"path\":\"" << jsonEscape(h.path) << "\","
+                          << "\"title\":\"" << jsonEscape(h.title) << "\","
+                          << "\"snippet\":\"" << jsonEscape(h.snippet) << "\","
+                          << "\"score\":" << std::fixed << std::setprecision(3) << h.score
+                          << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\""
+                          << ",\"explain\":{\"base_bm25\":" << std::fixed << std::setprecision(3) << b.baseBm25
+                          << ",\"title_bonus\":" << std::fixed << std::setprecision(3) << b.titleBonus
+                          << ",\"phrase_bonus\":" << std::fixed << std::setprecision(3) << b.phraseBonus
+                          << ",\"structural_bonus\":" << std::fixed << std::setprecision(3) << b.structuralBonus
+                          << ",\"final\":" << std::fixed << std::setprecision(3) << b.finalScore
+                          << "}}";
+            }
+        } else {
+            auto hits = s.search(o.query, o.limit);
+            for (size_t i = 0; i < hits.size(); ++i) {
+                const auto& h = hits[i];
+                if (i) std::cout << ",";
+                std::cout << "{"
+                          << "\"doc_id\":" << h.doc_id << ","
+                          << "\"path\":\"" << jsonEscape(h.path) << "\","
+                          << "\"title\":\"" << jsonEscape(h.title) << "\","
+                          << "\"snippet\":\"" << jsonEscape(h.snippet) << "\","
+                          << "\"score\":" << std::fixed << std::setprecision(3) << h.score
+                          << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\""
+                          << "}";
+            }
         }
         std::cout << "]}\n";
     } else {
-        if (hits.empty()) {
-            std::cout << "没有找到匹配 \"" << o.query << "\" 的文档。\n";
+        if (wantExplain) {
+            auto hits = s.explain(o.query, o.limit);
+            if (hits.empty()) {
+                std::cout << "没有找到匹配 \"" << o.query << "\" 的文档。\n";
+            } else {
+                auto fx = [](double v) {
+                    std::ostringstream ss;
+                    ss << std::fixed << std::setprecision(3) << v;
+                    return ss.str();
+                };
+                for (size_t i = 0; i < hits.size(); ++i) {
+                    const auto& e = hits[i];
+                    const auto& h = e.hit;
+                    const auto& b = e.breakdown;
+                    std::cout << (i + 1) << ". " << h.path << "\n";
+                    std::cout << "   标题：" << h.title << "\n";
+                    std::cout << "   类型：" << (h.file_type.empty() ? "未知" : h.file_type) << "\n";
+                    std::cout << "   评分：" << std::fixed << std::setprecision(3) << h.score << "\n";
+                    std::cout << "   分项：base_bm25=" << fx(b.baseBm25) << " title=" << fx(b.titleBonus) << " phrase=" << fx(b.phraseBonus) << " structural=" << fx(b.structuralBonus) << "\n";
+                    std::cout << "   摘要：" << h.snippet << "\n";
+                }
+            }
         } else {
-            for (size_t i = 0; i < hits.size(); ++i) {
-                const auto& h = hits[i];
-                std::cout << (i + 1) << ". " << h.path << "\n";
-                std::cout << "   标题：" << h.title << "\n";
-                std::cout << "   类型：" << (h.file_type.empty() ? "未知" : h.file_type) << "\n";
-                std::cout << "   评分：" << std::fixed << std::setprecision(3) << h.score << "\n";
-                std::cout << "   摘要：" << h.snippet << "\n";
+            auto hits = s.search(o.query, o.limit);
+            if (hits.empty()) {
+                std::cout << "没有找到匹配 \"" << o.query << "\" 的文档。\n";
+            } else {
+                for (size_t i = 0; i < hits.size(); ++i) {
+                    const auto& h = hits[i];
+                    std::cout << (i + 1) << ". " << h.path << "\n";
+                    std::cout << "   标题：" << h.title << "\n";
+                    std::cout << "   类型：" << (h.file_type.empty() ? "未知" : h.file_type) << "\n";
+                    std::cout << "   评分：" << std::fixed << std::setprecision(3) << h.score << "\n";
+                    std::cout << "   摘要：" << h.snippet << "\n";
+                }
             }
         }
     }
@@ -592,6 +642,8 @@ int main(int argc, char** argv) {
                 return 1;
             }
 
+        } else if (a == "--explain" && command == "search") {
+            searchOpts.explain = true;
         } else if (a == "--limit" && (command == "search" || command == "locate")) {
 
             if (i + 1 >= argc) {

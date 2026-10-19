@@ -199,6 +199,8 @@ add_executable(docseek_tests
   tests/test_tokenizer_empty.cpp
   tests/test_tokenizer_stopword.cpp
   tests/test_tokenizer_phrase.cpp
+  tests/test_tokenizer_deep_v019.cpp
+  tests/test_explain_v019.cpp
   tests/test_tokenizer_perf.cpp
   tests/test_v015_substring_recall.cpp
   tests/test_v015_expand_fix_a.cpp

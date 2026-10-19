@@ -321,20 +321,46 @@ public:
                         return HttpResponse::json("{\"error\":\"phrase_boost 参数无效\"}", 400);
                     }
                 }
+                bool wantExplain = false;
+                auto eit = req.query.find("explain");
+                if (eit != req.query.end() && (eit->second == "true" || eit->second == "1")) {
+                    wantExplain = true;
+                }
                 Searcher searcher(db_, weights);
-                std::vector<Hit> hits = searcher.search(q, limit);
 
                 std::ostringstream oss;
                 oss << "{\"query\":\"" << jsonEscape(q) << "\",\"hits\":[";
-                for (size_t i = 0; i < hits.size(); ++i) {
-                    const Hit& h = hits[i];
-                    if (i) oss << ',';
-                    oss << "{\"doc_id\":" << h.doc_id
-                        << ",\"path\":\"" << jsonEscape(h.path)
-                        << "\",\"title\":\"" << jsonEscape(h.title)
-                        << "\",\"snippet\":\"" << jsonEscape(h.snippet)
-                        << "\",\"score\":" << formatScore(h.score)
-                        << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\"}";
+                if (wantExplain) {
+                    std::vector<ExplainedHit> hits = searcher.explain(q, limit);
+                    for (size_t i = 0; i < hits.size(); ++i) {
+                        const ExplainedHit& e = hits[i];
+                        const Hit& h = e.hit;
+                        const ScoreBreakdown& b = e.breakdown;
+                        if (i) oss << ',';
+                        oss << "{\"doc_id\":" << h.doc_id
+                            << ",\"path\":\"" << jsonEscape(h.path)
+                            << "\",\"title\":\"" << jsonEscape(h.title)
+                            << "\",\"snippet\":\"" << jsonEscape(h.snippet)
+                            << "\",\"score\":" << formatScore(h.score)
+                            << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\""
+                            << ",\"explain\":{\"base_bm25\":" << formatScore(b.baseBm25)
+                            << ",\"title_bonus\":" << formatScore(b.titleBonus)
+                            << ",\"phrase_bonus\":" << formatScore(b.phraseBonus)
+                            << ",\"structural_bonus\":" << formatScore(b.structuralBonus)
+                            << ",\"final\":" << formatScore(b.finalScore) << "}}";
+                    }
+                } else {
+                    std::vector<Hit> hits = searcher.search(q, limit);
+                    for (size_t i = 0; i < hits.size(); ++i) {
+                        const Hit& h = hits[i];
+                        if (i) oss << ',';
+                        oss << "{\"doc_id\":" << h.doc_id
+                            << ",\"path\":\"" << jsonEscape(h.path)
+                            << "\",\"title\":\"" << jsonEscape(h.title)
+                            << "\",\"snippet\":\"" << jsonEscape(h.snippet)
+                            << "\",\"score\":" << formatScore(h.score)
+                            << ",\"file_type\":\"" << jsonEscape(h.file_type) << "\"}";
+                    }
                 }
                 oss << "]}";
                 return HttpResponse::json(oss.str());

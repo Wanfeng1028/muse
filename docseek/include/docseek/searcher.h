@@ -16,6 +16,18 @@ struct SearchWeights {
     double phraseBoost = 2.0;
 };
 
+struct ScoreBreakdown {
+    double baseBm25 = 0.0;
+    double titleBonus = 0.0;
+    double phraseBonus = 0.0;
+    double structuralBonus = 0.0;
+    double finalScore = 0.0;
+};
+struct ExplainedHit {
+    Hit hit;
+    ScoreBreakdown breakdown;
+};
+
 class Searcher {
 public:
     explicit Searcher(Database& db);
@@ -39,6 +51,7 @@ public:
     // 仅供 Locator 对问句调用；search() 本体行为不变。
     std::vector<Hit> searchQuestion(const std::string& query, int limit);
 
+    std::vector<ExplainedHit> explain(const std::string& query, int limit);
 
     // 将查询按空白切分，每个 token 双引号包裹转义，空格连接（FTS5 隐式 AND）。
     static std::string buildMatchQuery(const std::string& query);
@@ -47,6 +60,7 @@ public:
     static std::string buildOrMatchQuery(const std::string& query);
 
 private:
+    std::vector<Hit> searchDetailed(const std::string& query, int limit, std::vector<ScoreBreakdown>* breakdowns);
     Database& db_;
     SearchWeights weights_;
 };

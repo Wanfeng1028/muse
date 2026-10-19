@@ -1,3 +1,13 @@
+## v0.19.0（2026-10-19）——混合检索评分可解释性
+
+### 新增
+- Searcher::explain(query, limit)：与 search() 完全相同的召回与排序管线，额外返回每个命中的评分分量明细（ScoreBreakdown：baseBm25/titleBonus/phraseBonus/structuralBonus/finalScore，四项之和恒等于 hit.score）。
+- CLI：`search --explain`（文本模式打印"分项："行，--json 模式每个 hit 加 explain 对象）。
+- HTTP：`GET /api/search?explain=true`（每个 hit 加 explain 对象，字段 base_bm25/title_bonus/phrase_bonus/structural_bonus/final）。
+
+### 测试
+- 新增 tests/test_explain_v019.cpp 6 例：分量求和恒等于分值、explain 与 search 排序分值一致、标题加成>0 隔离、引号短语加成>0、空查询与纯停用词返回空。
+
 ## v0.18.2（2026-10-19）——工程化收尾
 
 ### 收敛

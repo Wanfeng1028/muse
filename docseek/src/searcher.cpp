@@ -741,112 +741,110 @@ static int countSubstringOccurrences(const std::string& haystack,
     return count;
 }
 
-static std::vector<Hit> rerankHits(std::vector<Hit> hits,
-                            const std::vector<std::string>& tokens,
-                            const std::string& query,
-                            const SearchWeights& weights,
-                            int limit,
-                            const std::vector<std::string>& phrases,
-                            Database& db) {
-    if (hits.empty()) {
-        return {};
-    }
-
-    // 4. 重排序：bm25 基础分 + title 加成 + 短语加成。
+static void scoreOneHit(Hit& hit,
+                        const std::vector<std::string>& tokens,
+                        const std::string& query,
+                        const SearchWeights& weights,
+                        const std::vector<std::string>& phrases,
+                        Database& db,
+                        ScoreBreakdown& bd) {
+    bd = ScoreBreakdown{};
+    bd.baseBm25 = hit.score;
+    double finalScore = hit.score;  // base = -bm25，越大越相关
     const std::string longQuery = removeWhitespace(query);
 
-    for (Hit& hit : hits) {
-        double finalScore = hit.score;  // base = -bm25，越大越相关
-
-        // title 加成：每个 query token 在 title 中出现为子串，+1.0。
-        for (const std::string& token : tokens) {
-            if (hit.title.find(token) != std::string::npos) {
-                finalScore += weights.titleBoost;
-            }
-
+    // title 加成：每个 query token 在 title 中出现为子串，+1.0。
+    for (const std::string& token : tokens) {
+        if (hit.title.find(token) != std::string::npos) {
+            finalScore += weights.titleBoost;
+            bd.titleBonus += weights.titleBoost;
         }
 
-        // 短语加成：去掉空白的连续查询串出现在 title 或 snippet 中，+2.0。
-        if (!longQuery.empty()) {
-            if (hit.title.find(longQuery) != std::string::npos ||
-                hit.snippet.find(longQuery) != std::string::npos) {
-                finalScore += weights.phraseBoost;
-            }
+    }
 
+    // 短语加成：去掉空白的连续查询串出现在 title 或 snippet 中，+2.0。
+    if (!longQuery.empty()) {
+        if (hit.title.find(longQuery) != std::string::npos ||
+            hit.snippet.find(longQuery) != std::string::npos) {
+            finalScore += weights.phraseBoost;
+            bd.phraseBonus += weights.phraseBoost;
         }
 
-        // ===== 新增结构加成规则 R1-R6（全部在 phraseBoost 块之后执行） =====
-        // 前置：判断 title 是否退化为文件名 stem。
-        bool titleDegraded = false;
-        if (hit.title.empty()) {
+    }
+
+    // ===== 新增结构加成规则 R1-R6（全部在 phraseBoost 块之后执行） =====
+    // 前置：判断 title 是否退化为文件名 stem。
+    bool titleDegraded = false;
+    if (hit.title.empty()) {
+        titleDegraded = true;
+    } else {
+        std::string stem = hit.path;
+        size_t slash = stem.find_last_of('/');
+        if (slash != std::string::npos) {
+            stem = stem.substr(slash + 1);
+        }
+        size_t dot = stem.find_last_of('.');
+        if (dot != std::string::npos) {
+            stem = stem.substr(0, dot);
+        }
+        if (hit.title == stem) {
             titleDegraded = true;
-        } else {
-            std::string stem = hit.path;
-            size_t slash = stem.find_last_of('/');
-            if (slash != std::string::npos) {
-                stem = stem.substr(slash + 1);
-            }
-            size_t dot = stem.find_last_of('.');
-            if (dot != std::string::npos) {
-                stem = stem.substr(0, dot);
-            }
-            if (hit.title == stem) {
-                titleDegraded = true;
-            }
         }
+    }
 
-        // 取 content；取不到则跳过 R1-R6 全部规则。
-        std::string content;
-        bool hasContent = false;
-        if (auto c = db.getContentById(hit.doc_id)) {
-            content = *c;
-            hasContent = true;
-        }
+    // 取 content；取不到则跳过 R1-R6 全部规则。
+    std::string content;
+    bool hasContent = false;
+    if (auto c = db.getContentById(hit.doc_id)) {
+        content = *c;
+        hasContent = true;
+    }
 
-        if (hasContent) {
-            // R7（单 token 时间单位序数结构加成）
-            if (tokens.size() == 1) {
-                const std::string& tok = tokens[0];
-                std::string unit;
-                // 后缀匹配单位表：双字优先
-                const char* kU2[] = {"季度", "小时", "分钟"};
-                const char* kU1[] = {"月", "周", "天", "年"};
-                for (const char* u : kU2) {
+    if (hasContent) {
+        // R7（单 token 时间单位序数结构加成）
+        if (tokens.size() == 1) {
+            const std::string& tok = tokens[0];
+            std::string unit;
+            // 后缀匹配单位表：双字优先
+            const char* kU2[] = {"季度", "小时", "分钟"};
+            const char* kU1[] = {"月", "周", "天", "年"};
+            for (const char* u : kU2) {
+                std::string su(u);
+                if (tok.size() >= su.size() && tok.compare(tok.size() - su.size(), su.size(), su) == 0) { unit = su; break; }
+            }
+            if (unit.empty()) {
+                for (const char* u : kU1) {
                     std::string su(u);
                     if (tok.size() >= su.size() && tok.compare(tok.size() - su.size(), su.size(), su) == 0) { unit = su; break; }
                 }
-                if (unit.empty()) {
-                    for (const char* u : kU1) {
-                        std::string su(u);
-                        if (tok.size() >= su.size() && tok.compare(tok.size() - su.size(), su.size(), su) == 0) { unit = su; break; }
-                    }
+            }
+            if (!unit.empty() && (hit.title.find(tok) != std::string::npos || titleDegraded)) {
+                const char* kNum[] = {"一", "二", "三", "四", "五", "六", "七", "八", "九", "十"};
+                int distinct = 0;
+                int total = 0;
+                for (const char* n : kNum) {
+                    // 形态一：“第”+数字+“个”+单位（如“第一个月”）
+                    std::string patWithGe = std::string("第") + n + "个" + unit;
+                    int cntWithGe = countSubstringOccurrences(content, patWithGe);
+                    // 形态二：“第”+数字+单位（如“第一周”）
+                    std::string patPlain = std::string("第") + n + unit;
+                    int cntPlain = countSubstringOccurrences(content, patPlain);
+                    int cnt = cntWithGe + cntPlain;
+                    if (cnt > 0) ++distinct;
+                    total += cnt;
                 }
-                if (!unit.empty() && (hit.title.find(tok) != std::string::npos || titleDegraded)) {
-                    const char* kNum[] = {"一", "二", "三", "四", "五", "六", "七", "八", "九", "十"};
-                    int distinct = 0;
-                    int total = 0;
-                    for (const char* n : kNum) {
-                        // 形态一：“第”+数字+“个”+单位（如“第一个月”）
-                        std::string patWithGe = std::string("第") + n + "个" + unit;
-                        int cntWithGe = countSubstringOccurrences(content, patWithGe);
-                        // 形态二：“第”+数字+单位（如“第一周”）
-                        std::string patPlain = std::string("第") + n + unit;
-                        int cntPlain = countSubstringOccurrences(content, patPlain);
-                        int cnt = cntWithGe + cntPlain;
-                        if (cnt > 0) ++distinct;
-                        total += cnt;
-                    }
-                    if (distinct >= 2) {
-                        // distinct 奖励“按序数分节的结构化”，total 奖励“覆盖深度”
-                        finalScore += static_cast<double>(distinct) * 1.0 + static_cast<double>(total) * 0.5;
-                    }
+                if (distinct >= 2) {
+                    // distinct 奖励“按序数分节的结构化”，total 奖励“覆盖深度”
+                    finalScore += static_cast<double>(distinct) * 1.0 + static_cast<double>(total) * 0.5;
+                    bd.structuralBonus += static_cast<double>(distinct) * 1.0 + static_cast<double>(total) * 0.5;
                 }
             }
-            // R1（标题行 token 加成）：仅 titleDegraded 为真时。按 token 计：标题行
-            // stripHtmlTags 去首尾空白后，以该 token 开头则计 1.5（行首=包含的强化形式），
-            // 否则含该 token 子串则计 weights.titleBoost；二者取其一，不叠加。
-            // 每文档封顶 +2.0。R5 已并入此处，不再作为独立加成叠加。
-            if (titleDegraded) {
+        }
+        // R1（标题行 token 加成）：仅 titleDegraded 为真时。按 token 计：标题行
+        // stripHtmlTags 去首尾空白后，以该 token 开头则计 1.5（行首=包含的强化形式），
+        // 否则含该 token 子串则计 weights.titleBoost；二者取其一，不叠加。
+        // 每文档封顶 +2.0。R5 已并入此处，不再作为独立加成叠加。
+        if (titleDegraded) {
     std::vector<std::string> headings = extractHeadingTexts(content);
     double r1Gain = 0.0;
     for (const auto& tok : tokens) {
@@ -878,266 +876,319 @@ static std::vector<Hit> rerankHits(std::vector<Hit> hits,
         r1Gain = 2.0;
     }
     finalScore += r1Gain;
-            }
+    bd.structuralBonus += r1Gain;
+        }
 
-            // R2（块级同现）：仅 tokens.size()>=2 时。跳过含 "<title" 的行，跳过
-            // stripHtmlTags 后与 hit.title 完全相同的行。某一行同时含全部 token 子串则 +0.5，
-            // 每文档封顶 +1.0（至多两行起效）。
-            if (tokens.size() >= 2) {
-                double r2Gain = 0.0;
-                size_t linePos = 0;
-                while (linePos <= content.size()) {
-                    size_t nl = content.find('\n', linePos);
-                    std::string line = (nl == std::string::npos)
-                                           ? content.substr(linePos)
-                                           : content.substr(linePos, nl - linePos);
-                    if (!line.empty() && line.back() == '\r') {
-                        line.pop_back();
-                    }
-                    bool skip = false;
-                    if (line.find("<title") != std::string::npos) {
+        // R2（块级同现）：仅 tokens.size()>=2 时。跳过含 "<title" 的行，跳过
+        // stripHtmlTags 后与 hit.title 完全相同的行。某一行同时含全部 token 子串则 +0.5，
+        // 每文档封顶 +1.0（至多两行起效）。
+        if (tokens.size() >= 2) {
+            double r2Gain = 0.0;
+            size_t linePos = 0;
+            while (linePos <= content.size()) {
+                size_t nl = content.find('\n', linePos);
+                std::string line = (nl == std::string::npos)
+                                       ? content.substr(linePos)
+                                       : content.substr(linePos, nl - linePos);
+                if (!line.empty() && line.back() == '\r') {
+                    line.pop_back();
+                }
+                bool skip = false;
+                if (line.find("<title") != std::string::npos) {
+                    skip = true;
+                }
+                if (!skip) {
+                    if (stripHtmlTags(line) == hit.title) {
                         skip = true;
                     }
-                    if (!skip) {
-                        if (stripHtmlTags(line) == hit.title) {
-                            skip = true;
-                        }
-                    }
-                    if (!skip) {
-                        bool allPresent = true;
-                        for (const auto& tok : tokens) {
-                            if (tok.empty() || line.find(tok) == std::string::npos) {
-                                allPresent = false;
-                                break;
-                            }
-                        }
-                        if (allPresent) {
-                            r2Gain += 0.5;
-                            if (r2Gain >= 1.0) {
-                                r2Gain = 1.0;
-                                break;
-                            }
-                        }
-                    }
-                    if (nl == std::string::npos) {
-                        break;
-                    }
-                    linePos = nl + 1;
                 }
-                finalScore += r2Gain;
+                if (!skip) {
+                    bool allPresent = true;
+                    for (const auto& tok : tokens) {
+                        if (tok.empty() || line.find(tok) == std::string::npos) {
+                            allPresent = false;
+                            break;
+                        }
+                    }
+                    if (allPresent) {
+                        r2Gain += 0.5;
+                        if (r2Gain >= 1.0) {
+                            r2Gain = 1.0;
+                            break;
+                        }
+                    }
+                }
+                if (nl == std::string::npos) {
+                    break;
+                }
+                linePos = nl + 1;
             }
+            finalScore += r2Gain;
+            bd.structuralBonus += r2Gain;
+        }
 
-            // R2b（首段兑现）：仅 tokens.size()>=2 时。若 hit.title 含全部 token，且 content
-            // 第一个"有效行"同时含全部 token，则 finalScore += 0.5（每文档一次）。
-            // "有效行"定义：按 '\n' 切行，跳过含 "<title" 的行、跳过 stripHtmlTags+trimStr 后
-            // 与 hit.title 完全相同的行、跳过 stripHtmlTags+trimStr 后为空的行；第一个不跳过的
-            // 行即首个有效行。token 命中判断用去标签 trim 后的行文本。
-            // IR 依据：标题承诺了查询、开篇第一段就兑现，是强相关信号；标题缺 token 时不触发，
-            // 避免给"引言顺带提到"的文档加分。
-            if (tokens.size() >= 2) {
-                bool titleHasAll = true;
-                for (const auto& tok : tokens) {
-                    if (tok.empty() || hit.title.find(tok) == std::string::npos) {
-                        titleHasAll = false;
-                        break;
-                    }
+        // R2b（首段兑现）：仅 tokens.size()>=2 时。若 hit.title 含全部 token，且 content
+        // 第一个"有效行"同时含全部 token，则 finalScore += 0.5（每文档一次）。
+        // "有效行"定义：按 '\n' 切行，跳过含 "<title" 的行、跳过 stripHtmlTags+trimStr 后
+        // 与 hit.title 完全相同的行、跳过 stripHtmlTags+trimStr 后为空的行；第一个不跳过的
+        // 行即首个有效行。token 命中判断用去标签 trim 后的行文本。
+        // IR 依据：标题承诺了查询、开篇第一段就兑现，是强相关信号；标题缺 token 时不触发，
+        // 避免给"引言顺带提到"的文档加分。
+        if (tokens.size() >= 2) {
+            bool titleHasAll = true;
+            for (const auto& tok : tokens) {
+                if (tok.empty() || hit.title.find(tok) == std::string::npos) {
+                    titleHasAll = false;
+                    break;
                 }
-                if (titleHasAll) {
-                    std::string firstValid;
-                    bool foundValid = false;
-                    std::size_t lineStart = 0;
-                    while (lineStart <= content.size()) {
-                        std::size_t lineEnd = content.find('\n', lineStart);
-                        std::string line = (lineEnd == std::string::npos)
-                            ? content.substr(lineStart)
-                            : content.substr(lineStart, lineEnd - lineStart);
-                        if (line.find("<title") != std::string::npos) {
-                            // 跳过 <title 行
+            }
+            if (titleHasAll) {
+                std::string firstValid;
+                bool foundValid = false;
+                std::size_t lineStart = 0;
+                while (lineStart <= content.size()) {
+                    std::size_t lineEnd = content.find('\n', lineStart);
+                    std::string line = (lineEnd == std::string::npos)
+                        ? content.substr(lineStart)
+                        : content.substr(lineStart, lineEnd - lineStart);
+                    if (line.find("<title") != std::string::npos) {
+                        // 跳过 <title 行
+                    } else {
+                        std::string t = trimStr(stripHtmlTags(line));
+                        if (t.empty() || t == hit.title) {
+                            // 跳过空行或与 hit.title 完全相同的行
                         } else {
-                            std::string t = trimStr(stripHtmlTags(line));
-                            if (t.empty() || t == hit.title) {
-                                // 跳过空行或与 hit.title 完全相同的行
-                            } else {
-                                firstValid = t;
-                                foundValid = true;
-                                break;
-                            }
-                        }
-                        if (lineEnd == std::string::npos) {
+                            firstValid = t;
+                            foundValid = true;
                             break;
                         }
-                        lineStart = lineEnd + 1;
                     }
-                    if (foundValid) {
-                        bool lineHasAll = true;
-                        for (const auto& tok : tokens) {
-                            if (tok.empty() || firstValid.find(tok) == std::string::npos) {
-                                lineHasAll = false;
-                                break;
-                            }
+                    if (lineEnd == std::string::npos) {
+                        break;
+                    }
+                    lineStart = lineEnd + 1;
+                }
+                if (foundValid) {
+                    bool lineHasAll = true;
+                    for (const auto& tok : tokens) {
+                        if (tok.empty() || firstValid.find(tok) == std::string::npos) {
+                            lineHasAll = false;
+                            break;
                         }
-                        if (lineHasAll) {
-                            finalScore += 0.5;
-                        }
+                    }
+                    if (lineHasAll) {
+                        finalScore += 0.5;
+                        bd.structuralBonus += 0.5;
                     }
                 }
             }
+        }
 
-            // R3'（行首命中）：把 content 按行切分，对每行去标签、去列表标记后，若以 longQuery
-            // 开头则 +1.0（每文档只加一次）。
-            // 行首命中是文档把查询词当作条目/段首的强信号；跳过 # 标题行避免与 R1 重复计算。
-            if (!longQuery.empty()) {
-                size_t pos = 0;
-                while (pos <= content.size()) {
-                    size_t nl = content.find('\n', pos);
-                    std::string line = (nl == std::string::npos)
-                                           ? content.substr(pos)
-                                           : content.substr(pos, nl - pos);
-                    if (!line.empty() && line.back() == '\r') {
-                        line.pop_back();
-                    }
-                    std::string t = trimStr(stripHtmlTags(line));
-                    if (!t.empty() && t[0] == '#') {
-                        if (nl == std::string::npos) {
-                            break;
-                        }
-                        pos = nl + 1;
-                        continue;
-                    }
-                    std::string t2 = trimStr(stripListMarker(t));
-                    if (t2.size() >= longQuery.size() &&
-                        t2.compare(0, longQuery.size(), longQuery) == 0) {
-                        finalScore += 1.0;
-                        break;
-                    }
+        // R3'（行首命中）：把 content 按行切分，对每行去标签、去列表标记后，若以 longQuery
+        // 开头则 +1.0（每文档只加一次）。
+        // 行首命中是文档把查询词当作条目/段首的强信号；跳过 # 标题行避免与 R1 重复计算。
+        if (!longQuery.empty()) {
+            size_t pos = 0;
+            while (pos <= content.size()) {
+                size_t nl = content.find('\n', pos);
+                std::string line = (nl == std::string::npos)
+                                       ? content.substr(pos)
+                                       : content.substr(pos, nl - pos);
+                if (!line.empty() && line.back() == '\r') {
+                    line.pop_back();
+                }
+                std::string t = trimStr(stripHtmlTags(line));
+                if (!t.empty() && t[0] == '#') {
                     if (nl == std::string::npos) {
                         break;
                     }
                     pos = nl + 1;
+                    continue;
                 }
+                std::string t2 = trimStr(stripListMarker(t));
+                if (t2.size() >= longQuery.size() &&
+                    t2.compare(0, longQuery.size(), longQuery) == 0) {
+                    finalScore += 1.0;
+                    bd.structuralBonus += 1.0;
+                    break;
+                }
+                if (nl == std::string::npos) {
+                    break;
+                }
+                pos = nl + 1;
             }
+        }
 
-            // R4（主题前缀）：仅 titleDegraded 为真时。对每个 token：若其在 content 中出现 >=1 次则跳过；
-            // 否则枚举其真前缀（UTF-8 码点长度 >=3），若任一前缀在 content 中出现 >=3 次则 +0.5
-            //（每文档只加一次）。
-            if (titleDegraded) {
-                for (const auto& tok : tokens) {
-                    if (tok.empty()) {
-                        continue;
-                    }
-                    if (countSubstringOccurrences(content, tok) >= 1) {
-                        continue;
-                    }
-                    std::vector<std::string> cps = splitUtf8Codepoints(tok);
-                    if (cps.size() < 3) {
-                        continue;
-                    }
-                    bool added = false;
-                    std::string prefix;
-                    for (size_t k = 0; k + 1 < cps.size(); ++k) {
-                        prefix += cps[k];
-                        size_t cpLen = k + 1;
-                        if (cpLen >= 3) {
-                            if (countSubstringOccurrences(content, prefix) >= 3) {
-                                finalScore += 0.5;
-                                added = true;
-                                break;
-                            }
+        // R4（主题前缀）：仅 titleDegraded 为真时。对每个 token：若其在 content 中出现 >=1 次则跳过；
+        // 否则枚举其真前缀（UTF-8 码点长度 >=3），若任一前缀在 content 中出现 >=3 次则 +0.5
+        //（每文档只加一次）。
+        if (titleDegraded) {
+            for (const auto& tok : tokens) {
+                if (tok.empty()) {
+                    continue;
+                }
+                if (countSubstringOccurrences(content, tok) >= 1) {
+                    continue;
+                }
+                std::vector<std::string> cps = splitUtf8Codepoints(tok);
+                if (cps.size() < 3) {
+                    continue;
+                }
+                bool added = false;
+                std::string prefix;
+                for (size_t k = 0; k + 1 < cps.size(); ++k) {
+                    prefix += cps[k];
+                    size_t cpLen = k + 1;
+                    if (cpLen >= 3) {
+                        if (countSubstringOccurrences(content, prefix) >= 3) {
+                            finalScore += 0.5;
+                            bd.structuralBonus += 0.5;
+                            added = true;
+                            break;
                         }
                     }
-                    if (added) {
+                }
+                if (added) {
+                    break;
+                }
+            }
+        }
+
+
+
+        // R6'（行首命中 + 数字）：在同一按行切分的逻辑下，若某行去标签、去列表标记后以
+        // longQuery 开头且含数字（ASCII 0-9 或中文数字字符），则 +2.5（每文档只加一次，
+        // 可与 R3' 叠加）。行首命中是文档把查询词当作清单条目的强信号。
+        if (!longQuery.empty()) {
+            static const std::string cnDigits = "一二三四五六七八九十百千万两";
+            size_t pos = 0;
+            while (pos <= content.size()) {
+                size_t nl = content.find('\n', pos);
+                std::string line = (nl == std::string::npos)
+                                       ? content.substr(pos)
+                                       : content.substr(pos, nl - pos);
+                if (!line.empty() && line.back() == '\r') {
+                    line.pop_back();
+                }
+                std::string t = trimStr(stripHtmlTags(line));
+                if (!t.empty() && t[0] == '#') {
+                    if (nl == std::string::npos) {
+                        break;
+                    }
+                    pos = nl + 1;
+                    continue;
+                }
+                std::string t2 = trimStr(stripListMarker(t));
+                if (t2.size() < longQuery.size() ||
+                    t2.compare(0, longQuery.size(), longQuery) != 0) {
+                    if (nl == std::string::npos) {
+                        break;
+                    }
+                    pos = nl + 1;
+                    continue;
+                }
+                bool hasDigit = false;
+                for (char ch : t2) {
+                    if (ch >= '0' && ch <= '9') {
+                        hasDigit = true;
                         break;
                     }
                 }
-            }
-
-
-
-            // R6'（行首命中 + 数字）：在同一按行切分的逻辑下，若某行去标签、去列表标记后以
-            // longQuery 开头且含数字（ASCII 0-9 或中文数字字符），则 +2.5（每文档只加一次，
-            // 可与 R3' 叠加）。行首命中是文档把查询词当作清单条目的强信号。
-            if (!longQuery.empty()) {
-                static const std::string cnDigits = "一二三四五六七八九十百千万两";
-                size_t pos = 0;
-                while (pos <= content.size()) {
-                    size_t nl = content.find('\n', pos);
-                    std::string line = (nl == std::string::npos)
-                                           ? content.substr(pos)
-                                           : content.substr(pos, nl - pos);
-                    if (!line.empty() && line.back() == '\r') {
-                        line.pop_back();
-                    }
-                    std::string t = trimStr(stripHtmlTags(line));
-                    if (!t.empty() && t[0] == '#') {
-                        if (nl == std::string::npos) {
-                            break;
-                        }
-                        pos = nl + 1;
-                        continue;
-                    }
-                    std::string t2 = trimStr(stripListMarker(t));
-                    if (t2.size() < longQuery.size() ||
-                        t2.compare(0, longQuery.size(), longQuery) != 0) {
-                        if (nl == std::string::npos) {
-                            break;
-                        }
-                        pos = nl + 1;
-                        continue;
-                    }
-                    bool hasDigit = false;
-                    for (char ch : t2) {
-                        if (ch >= '0' && ch <= '9') {
+                if (!hasDigit) {
+                    for (size_t ci = 0; ci < cnDigits.size();) {
+                        size_t clen = utf8CharLen(static_cast<unsigned char>(cnDigits[ci]));
+                        std::string cp = cnDigits.substr(ci, clen);
+                        if (t2.find(cp) != std::string::npos) {
                             hasDigit = true;
                             break;
                         }
+                        ci += clen;
                     }
-                    if (!hasDigit) {
-                        for (size_t ci = 0; ci < cnDigits.size();) {
-                            size_t clen = utf8CharLen(static_cast<unsigned char>(cnDigits[ci]));
-                            std::string cp = cnDigits.substr(ci, clen);
-                            if (t2.find(cp) != std::string::npos) {
-                                hasDigit = true;
-                                break;
-                            }
-                            ci += clen;
-                        }
-                    }
-                    if (hasDigit) {
-                        finalScore += 2.5;
-                        break;
-                    }
-                    if (nl == std::string::npos) {
-                        break;
-                    }
-                    pos = nl + 1;
                 }
+                if (hasDigit) {
+                    finalScore += 2.5;
+                    bd.structuralBonus += 2.5;
+                    break;
+                }
+                if (nl == std::string::npos) {
+                    break;
+                }
+                pos = nl + 1;
             }
         }
-        // ===== 新增结构加成规则结束 =====
+    }
+    // ===== 新增结构加成规则结束 =====
 
-        hit.score = finalScore;
+    hit.score = finalScore;
+    bd.finalScore = finalScore;
+}
+
+static void applyQuotedPhraseBonus(Hit& hit,
+                                   const std::vector<std::string>& phrases,
+                                   const SearchWeights& weights,
+                                   ScoreBreakdown& bd) {
+    const std::string haystack = hit.title + "\n" + hit.snippet;
+    for (const auto& p : phrases) {
+        if (containsFolded(haystack, p)) {
+            hit.score += weights.phraseBoost;
+            bd.phraseBonus += weights.phraseBoost;
+        }
+    }
+}
+
+struct ScoredHit { Hit hit; ScoreBreakdown breakdown; };
+
+static std::vector<ScoredHit> rerankScored(std::vector<Hit> hits,
+                                           const std::vector<std::string>& tokens,
+                                           const std::string& query,
+                                           const SearchWeights& weights,
+                                           int limit,
+                                           const std::vector<std::string>& phrases,
+                                           Database& db) {
+    if (hits.empty()) {
+        return {};
     }
 
-    // 按总分降序排序。
-    std::stable_sort(hits.begin(), hits.end(),
-                     [](const Hit& a, const Hit& b) { return a.score > b.score; });
-
-    // 截断到 limit。
-    if (static_cast<int>(hits.size()) > limit) {
-        hits.resize(static_cast<size_t>(limit));
+    std::vector<ScoredHit> scored;
+    scored.reserve(hits.size());
+    for (Hit& hit : hits) {
+        ScoreBreakdown bd;
+        scoreOneHit(hit, tokens, query, weights, phrases, db, bd);
+        scored.push_back(ScoredHit{std::move(hit), bd});
     }
 
     // 短语加成：title 或 snippet 连续包含短语，+phraseBoost。
-    for (auto& h : hits) {
-        const std::string haystack = h.title + "\n" + h.snippet;
-        for (const auto& p : phrases) {
-            if (containsFolded(haystack, p)) {
-                h.score += weights.phraseBoost;
-            }
-        }
+    // 注意：必须在排序与截断之前执行（与原 rerankHits 顺序一致），否则加成影响不了排序。
+    for (auto& s : scored) {
+        applyQuotedPhraseBonus(s.hit, phrases, weights, s.breakdown);
     }
 
-    return hits;
+    // 按总分降序排序。
+    std::stable_sort(scored.begin(), scored.end(),
+                     [](const ScoredHit& a, const ScoredHit& b) { return a.hit.score > b.hit.score; });
+
+    // 截断到 limit。
+    if (static_cast<int>(scored.size()) > limit) {
+        scored.resize(static_cast<size_t>(limit));
+    }
+
+    return scored;
+}
+
+static std::vector<Hit> rerankHits(std::vector<Hit> hits,
+                            const std::vector<std::string>& tokens,
+                            const std::string& query,
+                            const SearchWeights& weights,
+                            int limit,
+                            const std::vector<std::string>& phrases,
+                            Database& db) {
+    std::vector<ScoredHit> scored = rerankScored(std::move(hits), tokens, query, weights, limit, phrases, db);
+    std::vector<Hit> out;
+    out.reserve(scored.size());
+    for (auto& s : scored) {
+        out.push_back(std::move(s.hit));
+    }
+    return out;
 }
 
 // t019-q12 改动点 3 保守版：相邻 token 前缀/子串交叉探测。
@@ -1238,7 +1289,19 @@ static void tryAdjacentPrefixProbe(const std::vector<std::string>& tokens,
     }
 }
 
-std::vector<Hit> Searcher::search(const std::string& query, int limit) {
+static std::vector<Hit> finishScored(std::vector<ScoredHit> scored, std::vector<ScoreBreakdown>* breakdowns) {
+    if (breakdowns) {
+        breakdowns->clear();
+        breakdowns->reserve(scored.size());
+        for (const auto& s : scored) breakdowns->push_back(s.breakdown);
+    }
+    std::vector<Hit> out;
+    out.reserve(scored.size());
+    for (auto& s : scored) out.push_back(std::move(s.hit));
+    return out;
+}
+
+std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, std::vector<ScoreBreakdown>* breakdowns) {
     if (query.empty() || limit <= 0) {
         return {};
     }
@@ -1278,7 +1341,7 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
         }
         std::vector<Hit> phraseHits = db_.searchFts(phraseOrQuery, limit * 2);
         phraseHits = filterByPhrases(std::move(phraseHits), db_, phrases);
-        return rerankHits(std::move(phraseHits), tokens, query, weights_, limit, phrases, db_);
+        return finishScored(rerankScored(std::move(phraseHits), tokens, query, weights_, limit, phrases, db_), breakdowns);
     }
 
     // 1. 精确 AND：多取 2 倍做重排。
@@ -1384,7 +1447,25 @@ std::vector<Hit> Searcher::search(const std::string& query, int limit) {
     }
 
     hits = filterByPhrases(std::move(hits), db_, phrases);
-    return rerankHits(std::move(hits), tokens, query, weights_, limit, phrases, db_);
+    return finishScored(rerankScored(std::move(hits), tokens, query, weights_, limit, phrases, db_), breakdowns);
+}
+
+std::vector<Hit> Searcher::search(const std::string& query, int limit) {
+    return searchDetailed(query, limit, nullptr);
+}
+
+std::vector<ExplainedHit> Searcher::explain(const std::string& query, int limit) {
+    std::vector<ScoreBreakdown> bds;
+    std::vector<Hit> hits = searchDetailed(query, limit, &bds);
+    std::vector<ExplainedHit> out;
+    out.reserve(hits.size());
+    for (size_t i = 0; i < hits.size(); ++i) {
+        ExplainedHit e;
+        e.hit = std::move(hits[i]);
+        e.breakdown = bds[i];
+        out.push_back(std::move(e));
+    }
+    return out;
 }
 
 std::vector<Hit> Searcher::searchQuestion(const std::string& query, int limit) {

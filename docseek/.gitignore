@@ -25,3 +25,4 @@ eval/probe_b1/
 eval/__pycache__/
 *.db-shm
 *.db-wal
+__pycache__/
