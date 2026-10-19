@@ -3,6 +3,7 @@ package com.dramafactory.service.skill;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,6 +64,23 @@ class SkillDescriptorTest {
                 """;
         assertThrows(IllegalArgumentException.class, () ->
                 SkillDescriptor.fromFrontmatter("x", content, SkillDescriptor.Source.BUNDLED, "MIT", null));
+    }
+
+    @Test
+    void fromFrontmatterSourceUrlOverload() {
+        SkillDescriptor d = SkillDescriptor.fromFrontmatter(
+                "captions", SAMPLE_B, SkillDescriptor.Source.BUNDLED, "MIT", "cap",
+                "https://github.com/watzing/claude-video-editor");
+        assertEquals("captions", d.getId());
+        assertEquals("https://github.com/watzing/claude-video-editor", d.getSourceUrl());
+        assertEquals(SkillDescriptor.Source.BUNDLED, d.getSource());
+    }
+
+    @Test
+    void fromFrontmatterDefaultsSourceUrlEmpty() {
+        SkillDescriptor d = SkillDescriptor.fromFrontmatter(
+                "captions", SAMPLE_B, SkillDescriptor.Source.BUNDLED, "MIT", "cap");
+        assertEquals("", d.getSourceUrl());
     }
 
     @Test

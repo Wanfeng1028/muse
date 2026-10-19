@@ -66,6 +66,17 @@ class SkillInstallServiceTest {
     }
 
     @Test
+    void installRewrittenSkillSucceeds(@TempDir Path tmp) throws Exception {
+        Path dir = tmp.resolve("skills");
+        Files.createDirectories(dir);
+        SkillInstallService s = serviceFor(dir);
+        // 改写收录的 skill 与普通内置 skill 一样可安装
+        SkillInstallService.InstallResult r = s.install("openmontage-video-edit", null);
+        assertEquals("openmontage-video-edit", r.id());
+        assertTrue(Files.isRegularFile(dir.resolve("openmontage-video-edit").resolve("SKILL.md")));
+    }
+
+    @Test
     void uninstallFlow(@TempDir Path tmp) throws Exception {
         Path dir = tmp.resolve("skills");
         Files.createDirectories(dir);

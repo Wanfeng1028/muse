@@ -1,1 +1,214 @@
-{"note":"官方内置 skill 索引。id 为内置目录名；originId 标注原始仓库中的 skill 名（重命名时用于溯源）。","skills":[{"id":"video-shots","license":"Apache-2.0","source":"eternityspring/reelbench-skills"},{"id":"video-sync","license":"Apache-2.0","source":"eternityspring/reelbench-skills"},{"id":"video-scrub","license":"Apache-2.0","source":"eternityspring/reelbench-skills"},{"id":"video-editor-ffmpeg","license":"MIT","originId":"video-editor","source":"ckorhonen/claude-skills"},{"id":"video-editor-remotion","license":"MIT","originId":"video-editor","source":"naveedharri/video-editor"},{"id":"editor","license":"MIT","source":"agamm/video-agent"},{"id":"edl-edit","license":"MIT","source":"agamm/video-agent"},{"id":"cutting-rhythm","license":"MIT","source":"agamm/video-agent"},{"id":"filler-removal","license":"MIT","source":"agamm/video-agent"},{"id":"captions","license":"MIT","source":"agamm/video-agent"},{"id":"reframe-social","license":"MIT","source":"agamm/video-agent"},{"id":"video-transitions","license":"MIT","source":"agamm/video-agent"},{"id":"video-overlay","license":"MIT","source":"agamm/video-agent"},{"id":"audio-edit","license":"MIT","source":"agamm/video-agent"},{"id":"color-grade","license":"MIT","source":"agamm/video-agent"},{"id":"remotion-graphics","license":"MIT","source":"agamm/video-agent"},{"id":"grok-video-edit","license":"MIT","source":"agamm/video-agent"}],"version":1}
+{
+  "note": "bundled 官方 skills：reelbench-* 来自 eternityspring/reelbench-skills（Apache-2.0）；其余 community 项为社区仓库的收录。license 字段为收录时该 skill 文本的许可；标 rewritten:true 的条目为功能重写（SKILL.md 与脚本为独立表达，未复制原文），sourceUrl 为功能来源，rewriteNote 说明改写情况。",
+  "version": 2,
+  "skills": [
+    {
+      "id": "video-shots",
+      "license": "Apache-2.0",
+      "source": "eternityspring/reelbench-skills"
+    },
+    {
+      "id": "video-sync",
+      "license": "Apache-2.0",
+      "source": "eternityspring/reelbench-skills"
+    },
+    {
+      "id": "video-scrub",
+      "license": "Apache-2.0",
+      "source": "eternityspring/reelbench-skills"
+    },
+    {
+      "id": "video-editor-ffmpeg",
+      "license": "MIT",
+      "originId": "video-editor",
+      "source": "ckorhonen/claude-skills"
+    },
+    {
+      "id": "video-editor-remotion",
+      "license": "MIT",
+      "originId": "video-editor",
+      "source": "naveedharri/video-editor"
+    },
+    {
+      "id": "editor",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "edl-edit",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "cutting-rhythm",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "filler-removal",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "captions",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "reframe-social",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "video-transitions",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "video-overlay",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "audio-edit",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "color-grade",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "remotion-graphics",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "grok-video-edit",
+      "license": "MIT",
+      "source": "agamm/video-agent"
+    },
+    {
+      "id": "shorz-mcp",
+      "license": "MIT",
+      "originId": "shorz-mcp",
+      "source": "Vossy/claude-video-editing-skill"
+    },
+    {
+      "id": "claude-video-skill",
+      "license": "MIT",
+      "source": "sulemank137/claude-video-skill"
+    },
+    {
+      "id": "video-explainer",
+      "license": "MIT",
+      "source": "runesleo/claude-video-kit"
+    },
+    {
+      "id": "video-editing",
+      "license": "MIT",
+      "source": "6missedcalls/video-editing-skill"
+    },
+    {
+      "id": "ffmpeg-usage",
+      "license": "MIT",
+      "originId": "ffmpeg-usage",
+      "source": "ychoi-kr/claude-ffmpeg-skill"
+    },
+    {
+      "id": "video-toolkit",
+      "license": "MIT",
+      "originId": "video_toolkit",
+      "source": "digitalsamba/claude-code-video-toolkit"
+    },
+    {
+      "id": "creating-video",
+      "license": "MIT",
+      "source": "oaustegard/claude-skills"
+    },
+    {
+      "id": "drawing-video",
+      "license": "MIT",
+      "source": "oaustegard/claude-skills"
+    },
+    {
+      "id": "parsing-video",
+      "license": "MIT",
+      "source": "oaustegard/claude-skills"
+    },
+    {
+      "id": "processing-video",
+      "license": "MIT",
+      "source": "oaustegard/claude-skills"
+    },
+    {
+      "id": "shorts",
+      "license": "MIT",
+      "source": "AgriciDaniel/claude-shorts"
+    },
+    {
+      "id": "autoshorts",
+      "license": "MIT",
+      "source": "Upload-Post/upload-post-skills"
+    },
+    {
+      "id": "clipify",
+      "license": "MIT",
+      "source": "louisedesadeleer/clipify"
+    },
+    {
+      "id": "ffmpeg",
+      "license": "MIT",
+      "source": "LixvYang/ffmpeg-skills"
+    },
+    {
+      "id": "watzing-video-editor",
+      "name": "video-editor",
+      "version": "",
+      "description": "Transcribe-and-trim workflow for videos: Whisper transcription, transcript-driven cut proposals, and a browser-based editor for fine-tuning.",
+      "author": "watzing",
+      "license": "MIT",
+      "source": "watzing/claude-video-editor",
+      "sourceUrl": "https://github.com/watzing/claude-video-editor",
+      "rewritten": true,
+      "rewriteNote": "改写自 watzing/claude-video-editor：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+    },
+    {
+      "id": "jordantobyll-video-edit",
+      "name": "video-edit",
+      "version": "",
+      "description": "Edit talking-head videos by removing silences with neural VAD and adding 3D swivel teaser transitions.",
+      "author": "jordantobyll",
+      "license": "MIT",
+      "source": "jordantobyll/video-editing-skills",
+      "sourceUrl": "https://github.com/jordantobyll/video-editing-skills",
+      "rewritten": true,
+      "rewriteNote": "改写自 jordantobyll/video-editing-skills（video-edit）：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+    },
+    {
+      "id": "jordantobyll-pan-3d-transition",
+      "name": "pan-3d-transition",
+      "version": "",
+      "description": "A Remotion (React) video app that builds montages from drone clips + photos with 3D swivel pan transitions between shots.",
+      "author": "jordantobyll",
+      "license": "MIT",
+      "source": "jordantobyll/video-editing-skills",
+      "sourceUrl": "https://github.com/jordantobyll/video-editing-skills",
+      "rewritten": true,
+      "rewriteNote": "改写自 jordantobyll/video-editing-skills（pan-3d-transition）：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+    },
+    {
+      "id": "openmontage-video-edit",
+      "name": "video-edit",
+      "version": "",
+      "description": "Edit videos locally using ffmpeg. Trim, concat, resize, speed, overlay, extract audio, compress, and convert.",
+      "author": "calesthio",
+      "license": "MIT",
+      "source": "calesthio/OpenMontage",
+      "sourceUrl": "https://github.com/calesthio/OpenMontage",
+      "rewritten": true,
+      "rewriteNote": "改写自 calesthio/OpenMontage：操作清单功能对齐，SKILL.md 为独立重写，未复制原文"
+    }
+  ]
+}

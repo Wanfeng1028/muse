@@ -94,6 +94,28 @@ class SkillRegistryTest {
         assertTrue(after.isEmpty());
     }
 
+    @Test
+    void rewrittenEntriesLoadAsBundledWithSourceUrl() {
+        SkillRegistry registry = new SkillRegistry("nonexistent-dir-xyz");
+
+        SkillDescriptor openmontage = registry.bundledOf("openmontage-video-edit").orElseThrow();
+        assertEquals(SkillDescriptor.Source.BUNDLED, openmontage.getSource());
+        assertEquals("MIT", openmontage.getLicense());
+        assertEquals("https://github.com/calesthio/OpenMontage", openmontage.getSourceUrl());
+
+        SkillDescriptor watzing = registry.bundledOf("watzing-video-editor").orElseThrow();
+        assertEquals("https://github.com/watzing/claude-video-editor", watzing.getSourceUrl());
+
+        assertEquals("https://github.com/jordantobyll/video-editing-skills",
+                registry.bundledOf("jordantobyll-video-edit").orElseThrow().getSourceUrl());
+        assertEquals("https://github.com/jordantobyll/video-editing-skills",
+                registry.bundledOf("jordantobyll-pan-3d-transition").orElseThrow().getSourceUrl());
+
+        // 非改写条目 sourceUrl 为空
+        assertEquals("", registry.bundledOf("video-shots").orElseThrow().getSourceUrl());
+        assertEquals("", registry.bundledOf("shorz-mcp").orElseThrow().getSourceUrl());
+    }
+
     private static boolean containsId(List<SkillDescriptor> list, String id) {
         for (SkillDescriptor descriptor : list) {
             if (id.equals(descriptor.getId())) {

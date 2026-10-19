@@ -68,6 +68,7 @@ public class SkillRegistry {
                 }
                 String license = text(entry, "license");
                 String originId = text(entry, "originId");
+                String sourceUrl = text(entry, "sourceUrl");
                 String resource = "/skills-bundled/" + id + "/SKILL.md";
                 try (InputStream skillIn = getClass().getResourceAsStream(resource)) {
                     if (skillIn == null) {
@@ -78,7 +79,7 @@ public class SkillRegistry {
                     SkillDescriptor descriptor;
                     try {
                         descriptor = SkillDescriptor.fromFrontmatter(
-                                id, content, SkillDescriptor.Source.BUNDLED, license, originId);
+                                id, content, SkillDescriptor.Source.BUNDLED, license, originId, sourceUrl);
                     } catch (IllegalArgumentException e) {
                         log.error("内置 skill 解析失败，跳过: id={}, resource={}, reason={}", id, resource, e.getMessage());
                         continue;

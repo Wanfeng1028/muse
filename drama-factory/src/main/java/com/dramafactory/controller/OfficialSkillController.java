@@ -44,7 +44,8 @@ public class OfficialSkillController {
 
     public record OfficialSkillDto(String id, String name, String version, String description,
                                    String author, String license, String source,
-                                   boolean installed, String installedVersion) {}
+                                   boolean installed, String installedVersion,
+                                   boolean installable, String sourceUrl) {}
 
     public record InstalledSkillDto(String id, String version) {}
 
@@ -62,7 +63,8 @@ public class OfficialSkillController {
             SkillRegistry.InstalledSkill inst = installedMap.get(d.getId());
             result.add(new OfficialSkillDto(d.getId(), d.getName(), d.getVersion(), d.getDescription(),
                     d.getAuthor(), d.getLicense(), "bundled",
-                    inst != null, inst == null ? "" : inst.version()));
+                    inst != null, inst == null ? "" : inst.version(),
+                    true, d.getSourceUrl()));
         }
         if (hubClient.isEnabled()) {
             try {
@@ -71,7 +73,8 @@ public class OfficialSkillController {
                         SkillRegistry.InstalledSkill inst = installedMap.get(h.id());
                         result.add(new OfficialSkillDto(h.id(), h.name(), h.version(), h.description(),
                                 h.author(), h.license(), "skillhub",
-                                inst != null, inst == null ? "" : inst.version()));
+                                inst != null, inst == null ? "" : inst.version(),
+                                true, ""));
                     }
                 }
             } catch (RuntimeException e) {

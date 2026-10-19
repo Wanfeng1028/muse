@@ -44,10 +44,23 @@ class OfficialSkillControllerTest {
     void officialListsBundledSkills() throws Exception {
         mockMvc.perform(get("/api/official-skills/official"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(17))
+                .andExpect(jsonPath("$.length()").value(35))
                 .andExpect(jsonPath("$[?(@.id=='video-shots')].license").value(hasItem("Apache-2.0")))
                 .andExpect(jsonPath("$[?(@.id=='video-shots')].source").value(hasItem("bundled")))
-                .andExpect(jsonPath("$[?(@.id=='video-shots')].installed").value(hasItem(false)));
+                .andExpect(jsonPath("$[?(@.id=='video-shots')].installed").value(hasItem(false)))
+                .andExpect(jsonPath("$[?(@.id=='watzing-video-editor')].installable").value(hasItem(true)))
+                .andExpect(jsonPath("$[?(@.id=='watzing-video-editor')].sourceUrl").value(hasItem("https://github.com/watzing/claude-video-editor")))
+                .andExpect(jsonPath("$[?(@.id=='video-shots')].installable").value(hasItem(true)));
+    }
+
+    @Test
+    void installRewrittenSkillReturns200() throws Exception {
+        mockMvc.perform(post("/api/official-skills/install/openmontage-video-edit")
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("openmontage-video-edit"))
+                .andExpect(jsonPath("$.source").value("bundled"));
     }
 
     @Test

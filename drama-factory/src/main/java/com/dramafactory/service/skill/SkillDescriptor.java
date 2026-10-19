@@ -18,6 +18,7 @@ public final class SkillDescriptor {
     private final String author;
     private final String license;
     private final String originId;
+    private final String sourceUrl;
     private final Source source;
 
     public enum Source {
@@ -26,7 +27,8 @@ public final class SkillDescriptor {
     }
 
     public SkillDescriptor(String id, String name, String version, String description,
-                           String author, String license, String originId, Source source) {
+                           String author, String license, String originId,
+                           String sourceUrl, Source source) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("id 不能为 null 或空");
         }
@@ -43,6 +45,7 @@ public final class SkillDescriptor {
         this.author = author == null ? "" : author;
         this.license = license == null ? "" : license;
         this.originId = originId;
+        this.sourceUrl = sourceUrl == null ? "" : sourceUrl;
         this.source = source;
     }
 
@@ -74,6 +77,10 @@ public final class SkillDescriptor {
         return originId;
     }
 
+    public String getSourceUrl() {
+        return sourceUrl;
+    }
+
     public Source getSource() {
         return source;
     }
@@ -93,12 +100,13 @@ public final class SkillDescriptor {
                 && Objects.equals(author, other.author)
                 && Objects.equals(license, other.license)
                 && Objects.equals(originId, other.originId)
+                && Objects.equals(sourceUrl, other.sourceUrl)
                 && source == other.source;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, version, description, author, license, originId, source);
+        return Objects.hash(id, name, version, description, author, license, originId, sourceUrl, source);
     }
 
     @Override
@@ -111,12 +119,22 @@ public final class SkillDescriptor {
                 + ", author='" + author + '\''
                 + ", license='" + license + '\''
                 + ", originId='" + originId + '\''
+                + ", sourceUrl='" + sourceUrl + '\''
                 + ", source=" + source
                 + '}';
     }
 
     public static SkillDescriptor fromFrontmatter(String id, String skillMd, Source source,
                                                   String defaultLicense, String originId) {
+        return fromFrontmatter(id, skillMd, source, defaultLicense, originId, "");
+    }
+
+    /**
+     * fromFrontmatter 的重载：允许传入来源 URL（用于改写收录条目的来源标注）。
+     */
+    public static SkillDescriptor fromFrontmatter(String id, String skillMd, Source source,
+                                                  String defaultLicense, String originId,
+                                                  String sourceUrl) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("id 不能为 null 或空");
         }
@@ -170,7 +188,7 @@ public final class SkillDescriptor {
             if (license == null) {
                 license = defaultLicense == null ? "" : defaultLicense;
             }
-            return new SkillDescriptor(id, name, version, description, author, license, originId, source);
+            return new SkillDescriptor(id, name, version, description, author, license, originId, sourceUrl, source);
         } catch (RuntimeException e) {
             throw new IllegalArgumentException("frontmatter YAML 解析失败: " + id + " (" + e.getMessage() + ")", e);
         }
