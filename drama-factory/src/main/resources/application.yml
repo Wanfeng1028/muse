@@ -72,6 +72,17 @@ drama:
     provider: ${VIDEO_PROVIDER:mock}
     poll-interval-ms: ${VIDEO_POLL_MS:10000}
     max-attempts: ${VIDEO_MAX_ATTEMPTS:8}
+    # htmlrender 双引擎（v2.33）：chromium=无头截图+ffmpeg（默认，零外部依赖变更）；
+    # hyperframes=HyperFrames CLI 渲染 composition.html，CLI 不可用时自动降级回 chromium
+    htmlrender:
+      engine: ${DRAMA_VIDEO_HTMLRENDER_ENGINE:chromium}
+      work-dir: ${DRAMA_VIDEO_HTMLRENDER_WORK_DIR:html-renders}
+      template: ${DRAMA_VIDEO_HTMLRENDER_TEMPLATE:scripts/html_scene_template.html}
+      render-script: ${DRAMA_VIDEO_HTMLRENDER_RENDER_SCRIPT:scripts/html_render.mjs}
+      fps: ${DRAMA_VIDEO_HTMLRENDER_FPS:24}
+    # HyperFrames CLI 地址（独立 hyperframes provider 与 htmlrender 引擎共用，运维单点配置）
+    hyperframes:
+      cli: ${DRAMA_VIDEO_HYPERFRAMES_CLI:hyperframes}
   # 官方 Skill 库：内置 skill 随发行物走（resources/skills-bundled），用户点击安装后落到 skills.dir
   skills:
     dir: ${DRAMA_SKILLS_DIR:data/skills}

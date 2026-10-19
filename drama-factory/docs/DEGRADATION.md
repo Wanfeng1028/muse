@@ -23,6 +23,13 @@ LLM 调用失败时不直接报错，回退到模板生成器。`?mode=ai/templa
 
 `service/video` 下 provider 有 mock/agnes/qwen 三个实现。`VideoProviderRouter` 按 `drama.video.provider` 首选构建优先级链（选 `agnes`→链为 `agnes,qwen`，用户亲命：Agnes 用户 API 免费优先；选 `qwen`→链为 `qwen,agnes`；`mock` 仅本地模拟，不降级到任何付费通道）。agnes 提交时抛限流/超时/异常，自动降级到 qwen（DashScope wan2.5 BYOK）；降级原因写入 `video_tasks.fallback_reason`（V13 迁移），warn 日志记录，可通过 `GET /api/settings/effective-provider` 查看当前链与最近一次降级。熔断与重试仍由 Resilience4j 提供：CircuitBreaker 防雪崩，指数退避重试 max-attempts=8。重试耗尽后任务报错，但状态机保留可重试性。手动切换：在设置中心改"默认视频通道"（改后立即生效）。
 
+#### htmlrender 双引擎（v2.33 新增）
+`HtmlRenderVideoProvider` 内部支持两种渲染引擎，由 `drama.video.htmlrender.engine` 选择（`chromium` 默认 | `hyperframes`）：
+- `chromium`：Node + 无头 Chromium 逐帧截图 + ffmpeg 合成（原有路径，零外部依赖变更）。
+- `hyperframes`：提交时先用 `hyperframes --version`（15 秒超时）探活 CLI；探活成功走 `hyperframes render -c composition.html -o out/video.mp4 --resolution 1080p --fps <fps> --no-browser-gpu`；探活失败或渲染失败自动降级回 chromium 管道并打 warn 日志，不抛错（降级是正常行为）。
+- CLI 地址复用 `drama.video.hyperframes.cli`（与独立 `hyperframes` provider 同 key，运维单点配置）。探活脚本：`scripts/hyperframes_probe.sh`（输出 engine 推荐值）。
+- poll() 语义不变（out/video.mp4 / FAILED 标记），VideoProviderRouter 链位置不变。
+
 ### ffmpeg（v2.29：瞬时/永久分类 + 有界重试）
 `FfmpegException#isTransient()` 做分类：超时、进程被信号杀死（137/143）、OOM 等抖动为**瞬时**；进程根本起不来（`无法启动命令`，如二进制缺失）、参数编程错误为**永久**。
 

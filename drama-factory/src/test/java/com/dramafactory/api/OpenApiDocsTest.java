@@ -143,7 +143,8 @@ class OpenApiDocsTest {
                 "runs", List.of("/api/runs", "/api/runs/{id}/pause"),
                 "videos", List.of("/api/video-tasks/{taskId}", "/media/videos/{taskId}"),
                 "scripts", List.of("/api/projects", "/api/episodes/{id}/generate-script"),
-                "admin", List.of("/api/health", "/api/settings/effective-provider")
+                "admin", List.of("/api/health", "/api/settings/effective-provider",
+                        "/api/skillhub/index", "/api/official-skills/official")
         );
 
         for (Map.Entry<String, List<String>> entry : expectedPathsByGroup.entrySet()) {

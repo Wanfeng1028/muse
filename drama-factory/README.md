@@ -23,6 +23,16 @@ Provider 做了接口抽象：
 
 - `AgnesVideoProvider`：真实调用 Agnes 接口。
 - `MockVideoProvider`：离线演示用，不联网也能跑通全流程。
+- `HyperFramesVideoProvider`：HyperFrames CLI 把 composition.html 逐帧渲染成 MP4（确定性渲染，无 GPU 时加 --no-browser-gpu）。
+- `HtmlRenderVideoProvider`：HTML 渲染降级通道，v2.33 起支持双引擎（`drama.video.htmlrender.engine`）：`chromium`（默认，无头截图 + ffmpeg 合成）或 `hyperframes`（CLI 不可用时自动降级回 chromium）。探活：`scripts/hyperframes_probe.sh`。
+![Skill 详情（含版本管理/评分/发布新版本）](docs/screenshots/skills-detail-light.png)
+
+### SkillHub（自有 skillhub，v2.33）
+我们自己的 skillhub 入口（挂在官方区导航"运行"分组下）：`GET /api/skillhub/index` 返回自有索引（hub=`playhouse-skillhub`，含全部内置与社区收录 skills，来源标注"官方出品"/"社区收录"，含安装状态），页面支持搜索、按来源筛选、一键安装到本地 `data/skills/`（走既有 `/api/official-skills/install/{id}`）。远端官网 skillhub 接入时客户端直接从官网下载（约定见 `docs/skillhub-server-convention.md`）。
+
+![SkillHub（搜索/筛选/一键安装）](docs/screenshots/skillhub-light.png)
+
+### 快捷工具集（P2-7）
 
 默认使用 mock，配置 `drama.video.provider=agnes` 切换到真实接口。
 

@@ -2338,8 +2338,8 @@
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/canvas/SKILL.md",
       "version": "2.1.0",
       "author": "playhouse",
-      "rewritten": true,
-      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/canvas：功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "与上游原文相似度 91%-98%（2026-10-20 difflib 实测），按近乎原文收录，已补上游 MIT LICENSE"
     },
     {
       "id": "toonflow-workflow",
@@ -2350,8 +2350,8 @@
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/workflow/SKILL.md",
       "version": "2.7.0",
       "author": "playhouse",
-      "rewritten": true,
-      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "与上游原文相似度 91%-98%（2026-10-20 difflib 实测），按近乎原文收录，已补上游 MIT LICENSE"
     },
     {
       "id": "toonflow-v118workflow",
@@ -2362,8 +2362,8 @@
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/v118workflow/SKILL.md",
       "version": "1.1.0",
       "author": "playhouse",
-      "rewritten": true,
-      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/v118workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "与上游原文相似度 91%-98%（2026-10-20 difflib 实测），按近乎原文收录，已补上游 MIT LICENSE"
     },
     {
       "id": "hyperframes-embedded-captions",

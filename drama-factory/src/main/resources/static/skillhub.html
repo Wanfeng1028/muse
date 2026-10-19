@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkillHub</title>
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('df-theme') || 'light';
+    document.documentElement.setAttribute('data-bs-theme', t);
+  } catch (e) {}
+})();
+</script>
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1 data-i18n="skh.heading">SkillHub</h1>
+    <p class="text-secondary" data-i18n="skh.subtitle">官方和社区收录的视频 skills，点一下装到本地用。</p>
+  </div>
+
+  <div id="skhError" class="alert alert-danger mb-3" role="alert" style="display:none;"></div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="row g-2 align-items-end mb-2">
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="skhSearch" data-i18n="skh.search">搜索</label>
+          <input id="skhSearch" type="search" class="form-control" autocomplete="off" data-i18n-ph="skh.searchPh" placeholder="按名称、描述或作者搜索">
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label" for="skhSource" data-i18n="skh.sourceFilter">来源</label>
+          <select id="skhSource" class="form-select">
+            <option value="" data-i18n="skh.sourceAll">全部</option>
+            <option value="官方出品" data-i18n="skh.sourceOfficial">官方出品</option>
+            <option value="社区收录" data-i18n="skh.sourceCommunity">社区收录</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="d-flex flex-column align-items-md-end">
+            <div class="text-secondary small" id="skhUpdated" data-i18n="skh.updatedAt">索引更新于 -</div>
+            <div class="text-secondary small mt-1"><span id="skhCount">-</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="skhGrid" class="row row-cards"></div>
+
+      <div id="skhEmpty" class="text-center text-secondary py-5" style="display:none;" data-i18n="skh.empty">没有找到匹配的 Skill，换个关键词试试</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="skhToastContainer"></div>
+
+<script src="/i18n.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/skillhub.js"></script>
+</body>
+</html>

@@ -86,6 +86,19 @@ docker compose logs -f drama-factory
 | `VIDEO_PROVIDER` | `mock` | 视频生成 provider。`agnes` 走真实外部服务，`mock` 本地造。 |
 | `VIDEO_POLL_MS` | `10000` | 视频任务状态轮询间隔（毫秒）。 |
 | `VIDEO_MAX_ATTEMPTS` | `8` | 单个视频任务最大轮询次数，超了判失败。 |
+| `DRAMA_VIDEO_HTMLRENDER_ENGINE` | `chromium` | htmlrender 渲染引擎：`chromium`（无头截图+ffmpeg，默认）或 `hyperframes`（HyperFrames CLI；CLI 不可用时自动降级回 chromium）。 |
+| `DRAMA_VIDEO_HYPERFRAMES_CLI` | `hyperframes` | HyperFrames CLI 可执行文件路径；独立 hyperframes provider 与 htmlrender 引擎共用。探活脚本 `scripts/hyperframes_probe.sh`。 |
+
+必填项说明：**没有严格必填项**——所有变量都有默认值，不配也能起。但生产环境必须显式配 `AUTH_JWT_SECRET`，否则等于裸奔。`VIDEO_PROVIDER=agnes` 时需要保证外部 provider 可达，否则视频任务会持续失败。
+
+### 2.1 HyperFrames 渲染引擎运维
+- 安装：`npm i -g hyperframes`（需 Node.js 22+）；探活：`scripts/hyperframes_probe.sh`（输出 JSON，`engine` 字段为推荐值）。
+- 无 GPU 机器：CLI 会自动走软件渲染，也可在配置中确认 `--no-browser-gpu` 行为（代码默认追加）。
+- 选型指引见 `docs/HYPERFRAMES_CHANNELS.md`；联调实测见 `docs/HYPERFRAMES_RENDER_PROBE_2026-10-20.md`。
+
+### 2.2 自有 SkillHub 运维
+- 索引接口 `GET /api/skillhub/index` 无外部依赖（数据来自内置 skills-bundled），可直接用于健康检查。
+- 远端官网 skillhub（`DRAMA_SKILLHUB_BASE_URL`）为空时禁用远端，只用内置；启用后安装走官网下载，包做 sha256 校验（约定见 `docs/skillhub-server-convention.md`）。
 | `DRAMA_STORAGE` | `./data/media` | 媒体文件落盘目录。 |
 | `FFMPEG_PATH` | `ffmpeg` | ffmpeg 可执行文件路径。 |
 | `FFPROBE_PATH` | `ffprobe` | ffprobe 可执行文件路径。 |

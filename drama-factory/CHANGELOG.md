@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-20 凌晨，lane A：skillhub / HyperFrames 渲染 / Toonflow 二阶段）
+- 自有 SkillHub：`GET /api/skillhub/index`（hub=playhouse-skillhub，全部内置+社区收录 skills，来源标注"官方出品"/"社区收录"，含 installed 状态；异常时返回空列表 200，不 500）+ 前端 `skillhub.html`（搜索/来源筛选/一键安装到 data/skills/，挂载"运行"分组导航，Tabler 风格）。测试：SkillHubIndexControllerTest 5 例。
+- HtmlRenderVideoProvider 双引擎：`drama.video.htmlrender.engine=chromium|hyperframes`（默认 chromium）；hyperframes 引擎经 `--version` 探活后走 `hyperframes render -c composition.html -o out/video.mp4 --resolution 1080p --fps <fps> --no-browser-gpu`，CLI 不可用/渲染失败自动降级 chromium 并打 warn。测试：HtmlRenderEngineSelectionTest 7 例。运维：`scripts/hyperframes_probe.sh`（JSON 探活，输出 engine 推荐值）。文档：docs/DEGRADATION.md 新增"htmlrender 双引擎"小节；application.yml/.env.example 新增配置说明。
+- Toonflow 二阶段：docs/TOONFLOW_DEEPSEEK_PROVIDER_EVAL.md（deepSeek 语言 provider 评估：能力事实/与 LlmScriptService 对照/价格待官网核验/并入建议走可配置 language-provider 注册表）；3 组 toonflow skills 合规复审 docs/TOONFLOW_SKILLS_REVIEW_2026-10-20.md（difflib 相似度 0.911–0.982，_index.json rewritten 标注失实已纠正，3 个目录补上游 MIT LICENSE）。
+- 4 个 Toonflow provider 描述符 QA：docs/TOONFLOW_DESCRIPTORS_QA_2026-10-20.md（schema 一致性逐项核验）。
+
 ### Added（v3.0 审核流，2026-10-19）
 - 剧本两级审核状态机：DRAFT → PENDING_L1 →（驳回回 DRAFT / 通过去 PENDING_L2）→ APPROVED / REJECTED。
 - 分镜单级审核状态机：DRAFT → PENDING → APPROVED / REJECTED。
