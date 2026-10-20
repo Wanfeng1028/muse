@@ -6,11 +6,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.Collections
 
-class BroadcastHubBackpressureDeepTestR2 {
+class BroadcastHubBackpressureDeepTestR2Test {
 
     private class HubAndSink(
         val hub: BroadcastHub,
@@ -53,9 +54,22 @@ class BroadcastHubBackpressureDeepTestR2 {
         val receivedA = Collections.synchronizedList(mutableListOf<String>())
         h.hub.register("A", { text -> receivedA.add(text) }, scope)
 
-        for (i in 1..5) h.hub.broadcastExcept(null, "a$i")
+        for (i in 1..5) {
+            h.hub.broadcastExcept(null, "a$i")
+            yield()
+        }
         drainUntilStable(receivedA, 5)
 
+        // Phase B1: b1..b3 发给 A（此时 B 尚未注册，只有 A 在线）。A 是 fast consumer，yield 排空，A 不丢。
+        for (i in 1..3) {
+            h.hub.broadcastExcept(null, "b$i")
+            yield()
+        }
+
+        // 注册 B（gate 卡住）。关键：从 register 到 Phase B2 结束，主线程没有任何挂起点，
+        // B 的 consumer 协程还没机会运行，channel 处于无人接收状态——
+        // b1/b2/b3 全部进 buffer，b1 被 DROP_OLDEST 挤掉（Kotlin channel 在有等待接收者时会直接 handoff 绕过 buffer，
+        // 若 B 的 consumer 已在运行，b1 会被直接交到它手里而不会被挤掉，测试就失去意义）。
         val gateB = CompletableDeferred<Unit>()
         val receivedB = Collections.synchronizedList(mutableListOf<String>())
         h.hub.register("B", { text ->
@@ -63,7 +77,10 @@ class BroadcastHubBackpressureDeepTestR2 {
             receivedB.add(text)
         }, scope)
 
-        for (i in 1..3) h.hub.broadcastExcept(null, "b$i")
+        // Phase B2: b1..b3 只发给 B，不 yield。B 的 consumer 尚未运行，无 handoff，b1 被挤掉，B 收到 [b2, b3]。
+        for (i in 1..3) {
+            h.hub.broadcastExcept("A", "b$i")
+        }
         gateB.complete(Unit)
 
         drainUntilStable(receivedB, 2)
