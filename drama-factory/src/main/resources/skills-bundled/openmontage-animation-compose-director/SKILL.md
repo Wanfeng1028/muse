@@ -6,68 +6,68 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 合成导演 — 动画管线
+# Compose Director - Animation Pipeline
 
-## 适用场景
+## When To Use
 
-本阶段负责把动画渲染出来，重点是文字清晰、时间准确、输出节奏稳定。对于 `image_animation` 方案，还要额外负责构建合成 JSON、挑选音乐、跑渲染前校验以及做渲染后自检。
+Render the animation with an emphasis on text sharpness, timing integrity, and consistent output cadence. For `image_animation` approach, this stage also includes building the composition JSON, sourcing music, running pre-render validation, and performing post-render self-review.
 
-## 运行时路由（第一步，强制）
+## Runtime Routing (MANDATORY first step)
 
-动手之前先读 `edit_decisions.render_runtime`。它在提案阶段就被锁定，不允许悄悄更改。本技能余下内容默认 `render_runtime="remotion"`（本管线的默认值）。如果提案锁的是别的运行时：
+Before any other work, read `edit_decisions.render_runtime`. It was locked at proposal and MUST NOT be changed silently. The rest of this skill assumes `render_runtime="remotion"` (the default for this pipeline). If the proposal locked a different runtime:
 
-- **`render_runtime="hyperframes"`**——HTML/CSS/GSAP 渲染。不要套用下面 Remotion 相关的章节（public/ 暂存、Remotion 合成 JSON）。改为：
-  1. 读 `skills/core/hyperframes.md` 了解完整路由模型；
-  2. 读 `.agents/skills/hyperframes/SKILL.md` 与 `.agents/skills/hyperframes-cli/SKILL.md` 了解编写契约与命令行用法；
-  3. 调用 `video_compose` 并传 `edit_decisions.render_runtime="hyperframes"`——它会委托给 `hyperframes_compose`，后者负责在 `projects/<名称>/hyperframes/` 下物化工作区，执行 `hyperframes check → render`，并返回 MP4 路径；
-  4. 渲染前 `hyperframes check` 必须通过。它统一了 lint、运行时、布局、动效与 WCAG 对比度检查；迭代阶段可用 `skip_contrast=true` 推迟对比度检查，但最终交付不行。
-- **`render_runtime="ffmpeg"`**——只做简单拼接与裁剪，没有合成。直接调用 `video_compose`，它不会自动升级到 Remotion。
-- **运行时不可用**——不要悄悄换成别的引擎。按 AGENT_GUIDE.md 的"显式上报阻塞"把问题摆到用户面前，等批准（记入 decision_log 作为 `render_runtime_selection` 决策）后再切。
+- **`render_runtime="hyperframes"`** — HTML/CSS/GSAP render. Do NOT follow the Remotion-specific sections below (public/ staging, Remotion composition JSON). Instead:
+  1. Read `skills/core/hyperframes.md` for the full routing model.
+  2. Read `.agents/skills/hyperframes/SKILL.md` and `.agents/skills/hyperframes-cli/SKILL.md` for authoring contract and CLI usage.
+  3. Call `video_compose` with `edit_decisions.render_runtime="hyperframes"` — it delegates to `hyperframes_compose`, which owns workspace materialization under `projects/<name>/hyperframes/`, runs `hyperframes check → render`, and returns the MP4 path.
+  4. `hyperframes check` MUST pass before render. It unifies lint, runtime, layout, motion, and WCAG contrast checks; contrast can be deferred with `skip_contrast=true` during iteration but not for final delivery.
+- **`render_runtime="ffmpeg"`** — simple concat/trim with no composition. Call `video_compose` directly; it will not auto-upgrade to Remotion.
+- **Runtime unavailable** — do NOT silently swap to a different engine. Surface the blocker to the user per AGENT_GUIDE.md > "Escalate Blockers Explicitly" and wait for approval (recorded as a `render_runtime_selection` decision in decision_log) before switching.
 
-渲染后自检（final_review）在所有运行时下都一样——同样的 ffprobe 探测、抽帧、音频抽查与承诺保全检查。`final_review.checks.promise_preservation.render_runtime_used` 必须等于实际运行的运行时。
+The post-render self-review (final_review) is identical across runtimes — same ffprobe probe, frame sampling, audio spotcheck, and promise preservation checks. `final_review.checks.promise_preservation.render_runtime_used` must equal the runtime that actually ran.
 
-**调用 `video_compose.execute()` 时把 `proposal_packet` 传进去。** 这样工具能直接对比提案锁定的运行时与 `edit_decisions` 中记录的运行时，一旦不一致就置 `runtime_swap_detected=true`。不传的话这项检查会变成 `skipped`，只能靠评审技能跨产物比对来抓偷换。
+**Pass `proposal_packet` to `video_compose.execute()`** when you invoke it. That lets the tool directly compare the proposal-locked runtime against the runtime recorded in `edit_decisions` and flip `runtime_swap_detected=true` if they diverge. Without it, the check is `skipped` and the reviewer skill has to catch swaps via cross-artifact comparison instead.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/render_report.schema.json` | 产物校验 |
-| 上游产物 | `edit_decisions`、`asset_manifest` | 时间计划与素材文件 |
-| 工具 | `video_compose`、`audio_mixer`、`video_stitch` | 最终组装 |
-| 工具 | `composition_validator` | 渲染前校验（强制） |
-| 工具 | `audio_probe` | 音乐时长检查 |
-| 风格手册 | 当前激活的 playbook | 渲染一致性 |
-| 参考 | `remotion-composer/public/demo-props/mori-no-seishin.json` | 合成 JSON 格式范例 |
-| 参考 | `skills/core/remotion.md` | Remotion 模式、anime_scene 类型、关键约束 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/render_report.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["edit"]["edit_decisions"]`, `state.artifacts["assets"]["asset_manifest"]` | Timing plan and asset files |
+| Tools | `video_compose`, `audio_mixer`, `video_stitch` | Final assembly |
+| Tools | `composition_validator` | Pre-render validation (MANDATORY) |
+| Tools | `audio_probe` | Music duration check |
+| Playbook | Active style playbook | Render consistency |
+| Reference | `remotion-composer/public/demo-props/mori-no-seishin.json` | Composition JSON format reference |
+| Reference | `skills/core/remotion.md` | Remotion patterns, anime_scene type, critical constraints |
 
-## 流程
+## Process
 
-### 1. 确保素材在 Remotion 公共目录中
+### 1. Ensure Assets Are in Remotion's Public Directory
 
-**关键：** Remotion 只能通过 `staticFile()` 访问文件，而它解析的根是 `remotion-composer/public/`。生成的图片和音乐必须先复制或软链进这个目录才能渲染。
+**CRITICAL:** Remotion can only access files via `staticFile()`, which resolves from `remotion-composer/public/`. Generated images and music files MUST be copied or symlinked into this directory before rendering.
 
 ```
-项目结构：
-  projects/<名称>/assets/images/*.png     ← 图片生成在这里
-  remotion-composer/public/<名称>/*.png   ← Remotion 从这里读
+Project structure:
+  projects/<name>/assets/images/*.png     ← where images were generated
+  remotion-composer/public/<name>/*.png   ← where Remotion reads them
 
-必须做：把图片和音乐都复制或软链到 public/<项目名>/
+Required: Copy or symlink images AND music into public/<project-name>/
 ```
 
-合成 JSON 里的图片路径相对于 `remotion-composer/public/`：
+Image paths in the composition JSON are relative to `remotion-composer/public/`:
 ```json
 "images": ["deep-ocean/scene1-a.png", "deep-ocean/scene1-b.png"]
 "src": "deep-ocean/ambient-music.mp3"
 ```
 
-**跳过这一步，渲染会因文件缺失报错，或者产出黑帧。**
+**If you skip this step, the render will fail with missing file errors or produce black frames.**
 
-### 2. 构建合成 JSON（image_animation 方案）
+### 2. Build the Composition JSON (image_animation approach)
 
-`anime_scene` 合成需要一份 JSON，放在 `remotion-composer/public/demo-props/<名称>.json`。
+For `anime_scene` compositions, build a JSON file at `remotion-composer/public/demo-props/<name>.json`.
 
-**必需结构：**
+**Required structure:**
 
 ```json
 {
@@ -78,9 +78,9 @@ metadata:
       "in_seconds": 0,
       "out_seconds": 5,
       "type": "anime_scene",
-      "images": ["<项目>/<图片a>.png", "<项目>/<图片b>.png"],
-      "animation": "<镜头运动>",
-      "particles": "<粒子类型>",
+      "images": ["<project>/<image-a>.png", "<project>/<image-b>.png"],
+      "animation": "<camera-motion>",
+      "particles": "<particle-type>",
       "particleColor": "#HEXCOLOR",
       "particleCount": 20,
       "particleIntensity": 0.5,
@@ -91,52 +91,51 @@ metadata:
     }
   ],
   "overlays": [...],
-  "audio": { "music": { "src": "<项目>/music.mp3", "volume": 0.15, "fadeInSeconds": 2, "fadeOutSeconds": 3 } }
+  "audio": { "music": { "src": "<project>/music.mp3", "volume": 0.15, "fadeInSeconds": 2, "fadeOutSeconds": 3 } }
 }
 ```
 
-**字段与 AnimeScene prop 对照：**
+**Prop name reference (JSON field → AnimeScene prop):**
 
-| JSON 字段 | 类型 | 取值 | 是否必填 |
-|-----------|------|------|----------|
-| `type` | string | `"anime_scene"` | 是 |
-| `images` | string[] | 1–4 个相对 `public/` 的图片路径 | 是 |
-| `animation` | string | `zoom-in`、`zoom-out`、`pan-left`、`pan-right`、`ken-burns`、`drift-up`、`drift-down`、`parallax`、`static` | 否（默认 `ken-burns`） |
-| `particles` | string | `fireflies`、`petals`、`sparkles`、`mist`、`light-rays` | 否 |
-| `particleColor` | string | 十六进制颜色 | 否（默认 `#FFE082`） |
-| `particleCount` | number | 1–50 | 否（默认 20） |
-| `particleIntensity` | number | 0–1 | 否（默认 0.6） |
-| `backgroundColor` | string | 场景背景的十六进制颜色 | 否（默认 `#0A0A1A`） |
-| `vignette` | boolean | 电影感暗角叠加 | 否（默认 true） |
-| `lightingFrom` | string | 起始渐变颜色（`rgba(...)` 或 `transparent`） | 否 |
-| `lightingTo` | string | 结束渐变颜色 | 否 |
+| JSON Field | Type | Values | Required |
+|------------|------|--------|----------|
+| `type` | string | `"anime_scene"` | YES |
+| `images` | string[] | 1-4 image paths relative to `public/` | YES |
+| `animation` | string | `zoom-in`, `zoom-out`, `pan-left`, `pan-right`, `ken-burns`, `drift-up`, `drift-down`, `parallax`, `static` | No (default: `ken-burns`) |
+| `particles` | string | `fireflies`, `petals`, `sparkles`, `mist`, `light-rays` | No |
+| `particleColor` | string | Hex color | No (default: `#FFE082`) |
+| `particleCount` | number | 1-50 | No (default: 20) |
+| `particleIntensity` | number | 0-1 | No (default: 0.6) |
+| `backgroundColor` | string | Hex color for scene background | No (default: `#0A0A1A`) |
+| `vignette` | boolean | Cinematic vignette overlay | No (default: true) |
+| `lightingFrom` | string | Starting gradient color (`rgba(...)` or `transparent`) | No |
+| `lightingTo` | string | Ending gradient color | No |
 
-**参考：** 完整可跑的例子见 `mori-no-seishin.json`（吉卜力森林）与 `deep-ocean.json`（水下生物荧光）。
+**References:** See `mori-no-seishin.json` (Ghibli forest) and `deep-ocean.json` (underwater bioluminescence) for complete working examples.
 
-### 3. 选音乐并找最佳起点
+### 3. Source Music and Find Optimal Offset
 
-用 `tools/audio/pixabay_music.py` 找与情绪相符的免版税氛围音乐。
+Use `tools/audio/pixabay_music.py` to find royalty-free ambient music matching the mood.
 
-**下载后必须跑音频能量分析：**
+**After downloading, run audio energy analysis (MANDATORY):**
 
 ```python
 from tools.analysis.audio_energy import AudioEnergy
 result = AudioEnergy().execute({
     "input_path": "path/to/music.mp3",
-    "video_duration_seconds": 30,  # 你的视频时长
+    "video_duration_seconds": 30,  # your video duration
 })
 data = result.data
-print(f"推荐起点: {data['recommended_offset_seconds']}s")
-print(f"理由: {data['offset_reason']}")
-print(f"是否需要循环: {data['needs_loop']}")
+print(f"Recommended offset: {data['recommended_offset_seconds']}s")
+print(f"Reason: {data['offset_reason']}")
+print(f"Needs loop: {data['needs_loop']}")
 ```
 
-这个工具会：
+This tool:
+1. **Finds the best section** — analyzes per-second loudness and finds the N-second window with highest average energy. Ambient music tracks often have quiet intros (10-30s) before the main melody kicks in.
+2. **Recommends loop** — if the music from the offset is shorter than the video, it tells you to enable looping.
 
-1. **找到最佳段落**——逐秒分析响度，找出平均能量最高的 N 秒窗口。氛围音乐常有 10 到 30 秒的安静前奏，主旋律才进来。
-2. **建议循环**——如果从起点算起音乐比视频短，就提示你开启循环。
-
-**把起点写进合成 JSON：**
+**Apply the offset in the composition JSON:**
 
 ```json
 "audio": {
@@ -151,97 +150,95 @@ print(f"是否需要循环: {data['needs_loop']}")
 }
 ```
 
-- `offsetSeconds`——从音轨的这个位置开始播放（跳过安静前奏）
-- `loop`——剩余音乐短于视频时设为 `true`
+- `offsetSeconds` — start playback from this point in the track (skips quiet intro)
+- `loop` — set to `true` if the remaining music is shorter than the video
 
-**如果工具返回 `needs_loop: true`：** 在合成 JSON 里设 `"loop": true`。Remotion 会无缝循环音频，音量淡入淡出每轮重置。
+**If the tool says `needs_loop: true`:** set `"loop": true` in the composition JSON. Remotion will loop the audio seamlessly with the volume fade resetting per loop.
 
-### 4. 渲染前校验（强制，无例外）
+### 4. Pre-Render Validation (MANDATORY — NO EXCEPTIONS)
 
-每次渲染前都跑 `composition_validator`：
+Run `composition_validator` before every render:
 
 ```python
 from tools.analysis.composition_validator import CompositionValidator
 result = CompositionValidator().execute({
-    "composition_path": "remotion-composer/public/demo-props/<名称>.json",
+    "composition_path": "remotion-composer/public/demo-props/<name>.json",
     "assets_root": "remotion-composer/public",
 })
-# 继续之前 result.data["valid"] 必须为 True
+# result.data["valid"] MUST be True before proceeding
 ```
 
-它能抓出：
+This catches:
+- Missing image/audio files that would cause black frames or render errors
+- Invalid cut timings (out ≤ in)
+- Audio longer than video duration
 
-- 会导致黑帧或渲染报错的缺失图片／音频文件；
-- 非法的镜头时间（out ≤ in）；
-- 音频长于视频时长。
+**If validation fails, fix the issue BEFORE rendering. Do not render an invalid composition.**
 
-**校验失败就先修，不要渲染非法合成。**
+### 5. Preserve Motion Timing
 
-### 5. 保留运动时间
+Do not let export settings or careless composition change the perceived timing of holds, stagger, or scene transitions.
 
-不要让导出设置或粗心的合成改变停顿、错位、场景过渡的实际观感时长。
+### 6. Protect Text And Diagram Sharpness
 
-### 6. 保护文字与图表锐利度
+Animation often fails on export through soft text, muddy thin lines, or cramped mobile framing.
 
-动画导出常栽在文字发虚、细线糊掉、或移动端取景太挤。
-
-### 7. 渲染
+### 7. Render
 
 ```bash
 cd remotion-composer
 npx remotion render Explainer \
-  --props="public/demo-props/<名称>.json" \
-  --output="<输出路径>/final.mp4" \
+  --props="public/demo-props/<name>.json" \
+  --output="<output-path>/final.mp4" \
   --codec=h264 --crf=18
 ```
 
-**注意：** 合成名是 `Explainer`，不是 `ExplainerVideo`。不要把 `src/index.ts` 指定为入口——Remotion 会自动发现。
+**Note:** The composition name is `Explainer` (not `ExplainerVideo`). Do NOT specify `src/index.ts` as entry point — Remotion auto-discovers it.
 
-### 8. 渲染后自检（强制）
+### 8. Post-Render Self-Review (MANDATORY)
 
-渲染完成后抽中间帧做目视检查：
+After rendering, extract mid-scene frames and visually inspect:
 
 ```bash
-# 每个场景中间抽一帧
+# Extract one frame from the middle of each scene
 ffmpeg -y -i final.mp4 \
   -vf "select='eq(n\,75)+eq(n\,225)+eq(n\,375)+eq(n\,525)+eq(n\,675)+eq(n\,825)'" \
   -vsync vfr frames/scene_%02d.png
 ```
 
-**逐帧检查：**
+**Check each frame for:**
+- [ ] Images are visible (not black/dark frames)
+- [ ] Particles are rendering (sparkles, fireflies, etc. visible)
+- [ ] Camera motion is evident (framing differs from static)
+- [ ] Overlays display at correct moments with clean text
+- [ ] Color palette is consistent across scenes
+- [ ] Vignette creates cinematic depth
 
-- [ ] 图片可见（不是黑帧或暗帧）
-- [ ] 粒子在渲染（闪光、萤火等可见）
-- [ ] 镜头运动明显（取景与静止时有差异）
-- [ ] 叠加层在正确时机出现且文字干净
-- [ ] 各场景色调一致
-- [ ] 暗角营造出电影纵深感
-
-**同时验证输出文件：**
+**Also verify the output file:**
 ```bash
 ffprobe -v quiet -print_format json -show_format -show_streams final.mp4
 ```
-- 时长在目标值 ±5% 以内？
-- 分辨率是 1920×1080？
-- 音频流存在？
+- Duration within ±5% of target?
+- Resolution matches 1920×1080?
+- Audio stream present?
 
-**发现问题时：** 定位原因（图片缺失、时间错误、渲染故障）并修好，再交给用户。
+**If issues are found:** identify the cause (missing images, wrong timing, rendering glitch) and fix before presenting to user.
 
-### 9. 用渲染元数据
+### 9. Use Render Metadata
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `render_fps`
 - `sharpness_checks`
 - `safe_zone_checks`
 - `variant_outputs`
 
-## 常见坑
+## Common Pitfalls
 
-- **忘了把素材拷到 `remotion-composer/public/`**——渲染失败的头号原因。图片生成到 `projects/<名称>/assets/`，但 Remotion 从 `public/` 读。
-- 渲染后文字发虚或有锯齿。
-- 压缩参数损伤图表。
-- 预览与最终输出的场景节奏不一致。
-- **跳过 `composition_validator`**——它能在浪费渲染时间之前抓出文件缺失、时间错误、音频不匹配。
-- **不抽帧自检**——没做过目视检查的渲染不算"完成"。黑帧、粒子丢失、图片不可见，光看文件大小往往看不出来。
-- **用 `useVideoConfig()` 的 `durationInFrames` 做场景级计时**——它返回的是整个合成的时长，不是该 Sequence 的时长。见 `skills/core/remotion.md` 的关键约束。
+- **Forgetting to copy assets to `remotion-composer/public/`** — the #1 cause of render failures. Images generate to `projects/<name>/assets/` but Remotion reads from `public/`.
+- Soft or aliased text after rendering.
+- Compression choices that damage diagrams.
+- Scene cadence changing between preview and final.
+- **Skipping `composition_validator`** — catches missing files, bad timings, audio mismatches before you waste render time.
+- **Not extracting frames for self-review** — a rendered video is not "done" until frames are visually inspected. Black frames, missing particles, or invisible images are not always obvious from file size alone.
+- **Using `durationInFrames` from `useVideoConfig()` for scene-level timing** — this returns the FULL composition duration, not the scene's Sequence duration. See `skills/core/remotion.md` Critical Constraints.

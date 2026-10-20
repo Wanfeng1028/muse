@@ -6,56 +6,56 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 总制片人 — 屏幕演示流水线
+# Executive Producer — Screen-Demo Pipeline
 
-## 适用时机
+## When to Use
 
-当你要产出一条屏幕演示视频时，你就是总制片人（EP）。你的职责是按顺序把每个阶段的导演拉起来、审阅其产物，然后决定放行还是打回重做。
+You are the **Executive Producer (EP)** for a screen-demo video. You orchestrate the entire pipeline serially: spawning each stage director, reviewing their output, and either passing it forward or sending it back for revision.
 
-本流水线**没有前期筹备阶段**（不做调研、不做提案），因为源素材已经存在。EP 的价值在于补上跨阶段的质量闸门，把文字可读性、声音清晰度和节奏问题尽早拦下来，避免拖到昂贵的合成环节才发现。
+**This pipeline has no pre-production stages** (no research, no proposal). Source footage already exists. The EP adds cross-stage quality gates that catch legibility, audio clarity, and pacing issues early — before the expensive compose step.
 
-## 为什么需要这一层
+## Why This Exists
 
-屏幕演示视频有一批并行执行时容易被忽略的典型故障：
+Screen-demo videos have specific failure modes that parallel execution misses:
 
-- 录屏里的界面文字经过裁切与缩放后变得无法辨认
-- 规划阶段看着合理的放大裁切区域，实拍中把关键控件挡掉了
-- 键盘敲击声与环境底噪一路留到成片
-- 加载画面、打字停顿等无效时间不加速就没法看
-- 标注浮层遮住了它本要强调的界面元素
-- 字幕位置与画面内容打架
+- Text in screen recordings becomes unreadable after crops and scaling
+- Zoom-crop regions that looked fine in planning obscure critical UI elements in practice
+- Keyboard noise and background hum survive into the final render
+- Dead time (loading screens, typing pauses) makes videos unwatchable without speed adjustments
+- Callout overlays block the very UI they're trying to highlight
+- Subtitle positioning conflicts with screen content
 
-EP 要在尽可能早的节点把这些都抓出来。
+The EP catches all of these at the earliest possible stage.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| 流水线 | `pipeline_defs/screen-demo.yaml` | 阶段定义、审阅重点、成功标准 |
-| 技能 | 全部 7 个导演技能 + `meta/reviewer` | 各阶段执行知识 |
-| Schema | 全部产物 schema | 校验 |
-| 手册 | 当前启用的风格手册 | 质量约束 |
-| 工具 | 完整工具注册表 | 可用能力 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Pipeline | `pipeline_defs/screen-demo.yaml` | Stage definitions, review focus, success criteria |
+| Skills | All 7 director skills + `meta/reviewer` | Stage execution knowledge |
+| Schemas | All artifact schemas | Validation |
+| Playbook | Active style playbook | Quality constraints |
+| Tools | Full tool registry | Available capabilities |
 
-## 累积状态
+## Cumulative State
 
 ```
 EP_STATE:
   pipeline: screen-demo
-  playbook: <所选手册名>
-  target_duration_seconds: <来自简报或由源素材估算>
-  budget_total_usd: <配置上限>
+  playbook: <selected playbook name>
+  target_duration_seconds: <from brief or estimated from source>
+  budget_total_usd: <configured limit>
   budget_spent_usd: 0.0
   budget_remaining_usd: <budget_total>
 
-  # 屏幕演示专属状态
-  source_resolution: null       # 原始录制分辨率
-  target_resolution: null       # 输出分辨率
-  has_voiceover: false          # 源素材是否带旁白
-  has_keyboard_noise: false     # 在脚本/素材阶段被标记
-  zoom_regions: []              # 场景规划给出的裁切区域，用于交叉核对
+  # Screen-demo specific state
+  source_resolution: null       # original recording resolution
+  target_resolution: null       # output resolution
+  has_voiceover: false          # does source have narration audio?
+  has_keyboard_noise: false     # flagged during script/asset stage
+  zoom_regions: []              # crop regions from scene plan, for cross-checking
 
-  # 各阶段累积产物（7 个阶段）
+  # Accumulated from each stage (7 stages)
   artifacts:
     idea: null          # → brief
     script: null        # → script
@@ -65,221 +65,221 @@ EP_STATE:
     compose: null       # → render_report
     publish: null       # → publish_log
 
-  # 跨阶段追踪
+  # Cross-stage tracking
   narration_durations: {}
   style_anchors: {}
   revision_counts: {}
   issues_log: []
 ```
 
-## 执行协议
+## Execution Protocol
 
-### 阶段 0：初始化
+### Phase 0: Initialize
 
-1. 载入流水线清单（`screen-demo.yaml`）
-2. 载入手册（用户指定或默认）
-3. 设定预算（来自配置或用户输入；默认 1 美元，屏幕演示通常成本很低）
-4. 初始化 EP_STATE
+1. Load the pipeline manifest (`screen-demo.yaml`)
+2. Load the playbook (from user selection or default)
+3. Set budget from configuration or user input (default: $1.00 — screen-demo is typically low-cost)
+4. Initialize EP_STATE
 
-### 阶段 1：串行执行各阶段
+### Phase 1: Execute Stages Serially
 
-按顺序推进：`idea → script → scene_plan → assets → edit → compose → publish`
+For each stage in order: `idea → script → scene_plan → assets → edit → compose → publish`
 
 ```
 EXECUTE_STAGE(stage_name):
 
-  1. 准备
-     - 载入该阶段的导演技能
-     - 把 EP_STATE 作为上下文注入
-     - 注入此前返修留下的 EP 反馈
+  1. PREPARE
+     - Load the director skill for this stage
+     - Inject EP_STATE as context
+     - Inject any EP feedback from previous revision attempts
 
-  2. 拉起导演
-     - 导演执行完整流程
-     - 导演产出产物
+  2. SPAWN DIRECTOR
+     - Director executes its full process
+     - Director produces an artifact
 
-  3. 审阅
-     - schema 校验
-     - 检查流水线清单里的 review_focus
-     - 检查流水线清单里的 success_criteria
-     - 执行 EP 专属跨阶段检查（见下文）
+  3. REVIEW
+     - Schema validation
+     - Check review_focus from pipeline manifest
+     - Check success_criteria from pipeline manifest
+     - Run EP-SPECIFIC CROSS-STAGE CHECKS (see below)
 
-  4. 闸门决策
-     通过 → 存储产物、更新追踪、继续
-     返修 → 返修计数加一，带反馈重跑（最多 3 次）
-     打回某阶段 → 从该阶段起重跑（每对阶段最多 1 次）
+  4. GATE DECISION
+     If PASS → store artifact, update tracking, continue
+     If REVISE → increment revision count, re-run with feedback (max 3)
+     If SEND_BACK(target_stage) → re-execute from target forward (max 1 per pair)
 ```
 
-### 阶段 2：终检
+### Phase 2: Final Quality Assurance
 
 ```
 FINAL_QA:
-  1. 探测输出视频：
-     - 时长：与演示内容是否相称？
-     - 分辨率：是否达到目标？
-     - 音频：旁白是否清晰？键盘噪声是否已清除？
-     - 文件：容器是否合法、体积是否合理？
+  1. PROBE the output video:
+     - Duration: reasonable for the demo content?
+     - Resolution: matches target?
+     - Audio: voiceover clear? Keyboard noise removed?
+     - File: valid container, reasonable size?
 
-  2. 可读性检查（屏幕演示命门）：
-     - 在输出分辨率下界面文字是否可读？
-     - 放大裁切区域是否确实展示了目标控件？
-     - 标注浮层是否没挡住关键内容？
+  2. LEGIBILITY CHECK (SCREEN-DEMO CRITICAL):
+     - Is UI text readable at the output resolution?
+     - Are zoom-crop regions showing the intended UI elements?
+     - Are callout overlays not obscuring critical content?
 
-  3. 节奏检查：
-     - 加载与打字停顿是否已加速或剪掉？
-     - 演示推进是否符合逻辑？
-     - 工作流步骤之间的转场是否顺滑？
+  3. PACING CHECK:
+     - Are loading/typing pauses sped up or cut?
+     - Does the demo flow logically?
+     - Are transitions between workflow steps smooth?
 
-  4. 字幕检查：
-     - 字幕是否与画面内容重叠？
-     - 字幕时间轴是否贴合语音？
+  4. SUBTITLE CHECK:
+     - Do subtitles not overlap with screen content?
+     - Is subtitle timing accurate to speech?
 
-  5. 预算结算：
-     - 实际总花费对比预算
-     - 记录各阶段成本明细
+  5. BUDGET RECONCILIATION:
+     - Total actual spend vs. budget
+     - Log per-stage cost breakdown
 
-  6. 决策：
-     全部通过 → 批准发布
-     可读性问题 → 打回合成（重渲）或打回场景（重规划裁切）
-     音频问题 → 打回合成（重混）
-     节奏问题 → 打回剪辑（重新配时）
+  6. DECISION:
+     If all pass → APPROVE for publish
+     If legibility issues → send back to compose (re-render) or scene (replan crops)
+     If audio issues → send back to compose (re-mix)
+     If pacing issues → send back to edit (re-time)
 ```
 
-## EP 专属跨阶段检查
+## EP-Specific Cross-Stage Checks
 
-### IDEA 阶段之后：
+### After IDEA stage:
 ```
-检查：源素材评估
-  - 源素材是否被引用且可访问？
-  - 目标平台与时长是否现实？
-  - 标注/放大需求是否已识别？
-  - 若无源素材：停止 —— 本流水线必须有源素材
-```
-
-### SCRIPT 阶段之后：
-```
-检查：转写质量
-  - 若源素材带旁白：转写是否准确并带时间戳？
-  - 关键界面操作是否标注了时间戳？
-  - 工作流步骤切分是否清晰？
-  - 为素材阶段标记是否存在键盘噪声
-
-检查：时长估算
-  - 预估输出时长与内容是否匹配？
-  - 若演示超过 5 分钟：建议裁剪或加速
+CHECK: Source assessment
+  - Is source footage referenced and accessible?
+  - Is target platform and duration realistic?
+  - Are callout/zoom needs identified?
+  - If no source footage: STOP — this pipeline requires source footage
 ```
 
-### SCENE_PLAN 阶段之后：
+### After SCRIPT stage:
 ```
-检查：放大裁切可行性
-  - 每个裁切区域是否捕获了目标控件？
-  - 裁切区域是否至少为源分辨率的 50%？（避免过度放大的像素化）
-  - 把 zoom_regions 存入 EP_STATE，供合成阶段核对
+CHECK: Transcript quality
+  - If source has voiceover: is transcript accurate and timestamped?
+  - Are key UI actions annotated with timestamps?
+  - Are workflow steps clearly segmented?
+  - Flag keyboard noise presence for asset stage
 
-检查：标注摆放
-  - 标注浮层（箭头、高亮、遮罩）是否避开了它引用的控件？
-  - 标注是否克制？（同时最多 2-3 个）
-
-检查：节奏规划
-  - 无效时间段落（加载、打字）是否已标记加速或剪掉？
-  - 速度变化是否平滑（不是生硬跳变）？
+CHECK: Duration estimate
+  - Estimated output duration reasonable for the content?
+  - If demo is > 5 minutes: suggest trimming or speed adjustments
 ```
 
-### ASSETS 阶段之后：
+### After SCENE_PLAN stage:
 ```
-检查：字幕定位
-  - 字幕是否避开了关键画面内容？
-  - 字幕字体在画面背景上是否可读？
+CHECK: Zoom-crop feasibility
+  - For each crop region: does it capture the intended UI element?
+  - Are crop regions at least 50% of source resolution? (avoid extreme zooms that pixelate)
+  - Store zoom_regions in EP_STATE for compose verification
 
-检查：音频质量
-  - 若使用了 audio_enhance：键盘噪声是否降低？
-  - 若生成了 TTS：旁白时序是否与画面动作对齐？
+CHECK: Callout placement
+  - Do callout overlays (arrows, highlights, masks) avoid obscuring the UI element they reference?
+  - Are callouts sparse? (max 2-3 concurrent callouts)
 
-检查：预算闸门
-  - 若 budget_spent > budget_total * 0.9 且仍有阶段未跑：
-      告警并调整剩余阶段
-```
-
-### EDIT 阶段之后：
-```
-检查：时间轴完整性
-  - 全部剪辑决策都引用了合法的源文件与素材
-  - 若加了背景音乐，是否配置了音频闪避
-  - 速度调整是否平滑（渐变而非跳变）
-
-检查：无效时间处理
-  - 加载画面与打字停顿是否被剪掉或加速
-  - 总无效时间低于输出时长的 10%
+CHECK: Pacing plan
+  - Are dead-time segments (loading, typing) flagged for speed-up or cut?
+  - Are speed changes smooth (not jarring jumps)?
 ```
 
-### COMPOSE 阶段之后：
+### After ASSETS stage:
 ```
-检查：输出校验
-  - ffprobe：时长、分辨率、编码、音频通道
-  - 输出分辨率下文字是否可读
-  - 音频清晰度 —— 旁白全程可听懂
+CHECK: Subtitle positioning
+  - Do subtitles avoid overlapping with key screen content?
+  - Is subtitle font readable against screen background?
 
-检查：画面锐度（屏幕演示命门）
-  - 录制中的界面文字必须可读
-  - 若裁切导致像素化：标记需重做场景规划
-  - 抗锯齿文字必须能在压缩后存活
-```
+CHECK: Audio quality
+  - If audio_enhance was used: is keyboard noise reduced?
+  - If TTS was generated: does narration timing match screen actions?
 
-## 反馈消息模板
-
-### 给脚本导演：
-```
-EP 反馈 — 脚本需返修
-原因：{reason}
-具体问题：{转写准确性 / 切分 / 时序}
-保留：{哪些做得好}
-修改：{具体要改什么}
+CHECK: Budget gate
+  - If budget_spent > budget_total * 0.9 and stages remain:
+      Alert and adjust remaining stages
 ```
 
-### 给场景导演：
+### After EDIT stage:
 ```
-EP 反馈 — 场景规划需返修
-原因：{reason}
-涉及场景：{scene_ids}
-约束：{裁切可行性 / 标注摆放 / 节奏}
-源分辨率：{W}x{H} — 最小裁切：{W/2}x{H/2}
-```
+CHECK: Timeline completeness
+  - All edit decisions reference valid source files and assets
+  - Audio ducking configured if background music added
+  - Speed adjustments are smooth (ramp, not jump)
 
-### 给合成导演：
-```
-EP 反馈 — 需重渲
-原因：{reason}
-具体问题：{可读性 / 音频 / 节奏}
-期望：{输出应该长什么样、听上去如何}
-实际：{产出的结果}
+CHECK: Dead time handling
+  - Loading screens and typing pauses either cut or sped up
+  - Total dead time < 10% of output duration
 ```
 
-## 质量闸门汇总
+### After COMPOSE stage:
+```
+CHECK: Output validation
+  - ffprobe: duration, resolution, codec, audio channels
+  - Text readability at output resolution
+  - Audio clarity — voiceover intelligible throughout
 
-| 闸门 | 所在阶段之后 | 检查内容 | 失败动作 |
-|------|-------------|---------|---------|
-| G1 | idea | 源素材评估、可行性 | 返修 idea |
-| G2 | script | 转写准确性、时长估算 | 返修 script |
-| G3 | scene_plan | 裁切可行性、标注摆放、节奏规划 | 返修 scene_plan |
-| G4 | assets | 字幕定位、音频质量、预算 | 返修 assets |
-| G5 | edit | 时间轴完整性、无效时间处理 | 返修 edit |
-| G6 | compose | 输出探测、画面锐度、音频清晰度 | 返修 compose 或打回上游 |
-| G7 | publish | 元数据、章节、导出打包 | 返修 publish |
-| FINAL | 全部 | 可读性、节奏、字幕、音频 | 打回指定阶段 |
+CHECK: Screen sharpness (SCREEN-DEMO CRITICAL)
+  - UI text in the recording must be readable
+  - If crops caused pixelation: flag for scene plan revision
+  - Anti-aliased text must survive compression
+```
 
-## 执行上限
+## Feedback Message Templates
 
-| 上限 | 取值 | 理由 |
-|------|------|------|
-| 单阶段最大返修次数 | 3 | 防止完美主义死循环 |
-| 单对阶段最大打回次数 | 1 | 防止来回踢皮球 |
-| 总打回次数上限 | 3 | 限制总返工量 |
-| 总预算上限 | 可配置（默认 1 美元） | 花费硬停 |
-| 总墙钟时间上限 | 10 分钟 | 屏幕演示比生成类流水线简单 |
+### To Script Director:
+```
+EP FEEDBACK — Script Revision Required
+Reason: {reason}
+Specific issue: {transcript_accuracy / segmentation / timing}
+Keep: {what was good}
+Change: {what specifically needs to change}
+```
 
-## 常见坑
+### To Scene Director:
+```
+EP FEEDBACK — Scene Plan Revision Required
+Reason: {reason}
+Affected scenes: {scene_ids}
+Constraint: {crop_feasibility / callout_placement / pacing}
+Source resolution: {W}x{H} — minimum crop: {W/2}x{H/2}
+```
 
-- **忽视文字可读性**：屏幕演示第一号问题。裁切后务必确认界面文字仍可读。
-- **裁切过度**：极端放大会像素化。最小裁切不低于源分辨率的 50%。
-- **留着无效时间**：加载画面与打字停顿必须处理，加速或剪掉。
-- **标注堆砌**：同时超过 2-3 个标注会让画面混乱。
-- **忽视键盘噪声**：源素材若有键盘声，早期就要标记给音频清理。
+### To Compose Director:
+```
+EP FEEDBACK — Re-render Required
+Reason: {reason}
+Specific issue: {legibility / audio / pacing}
+Expected: {what the output should look/sound like}
+Actual: {what was produced}
+```
+
+## Quality Gates Summary
+
+| Gate | After Stage | What's Checked | Fail Action |
+|------|-------------|---------------|-------------|
+| G1 | idea | Source assessment, feasibility | Revise idea |
+| G2 | script | Transcript accuracy, duration estimate | Revise script |
+| G3 | scene_plan | Crop feasibility, callout placement, pacing plan | Revise scene_plan |
+| G4 | assets | Subtitle positioning, audio quality, budget | Revise assets |
+| G5 | edit | Timeline completeness, dead time handling | Revise edit |
+| G6 | compose | Output probe, screen sharpness, audio clarity | Revise compose OR send-back |
+| G7 | publish | Metadata, chapters, export packaging | Revise publish |
+| FINAL | all | Legibility, pacing, subtitles, audio | Send-back to specific stage |
+
+## Execution Limits
+
+| Limit | Value | Rationale |
+|-------|-------|-----------|
+| Max revisions per stage | 3 | Prevent perfectionism loops |
+| Max send-backs per stage pair | 1 | Prevent ping-pong |
+| Max total send-backs | 3 | Cap total re-work |
+| Max total budget | Configurable (default $1) | Hard stop on spending |
+| Max total wall-time | 10 minutes | Screen-demo is simpler than generated pipelines |
+
+## Common Pitfalls
+
+- **Ignoring text readability**: The #1 screen-demo issue. Always verify UI text is readable after crops.
+- **Over-cropping**: Extreme zooms pixelate. Minimum crop should be 50% of source resolution.
+- **Leaving dead time**: Loading screens and typing pauses must be handled. Speed-up or cut.
+- **Callout overload**: More than 2-3 concurrent callouts creates visual chaos.
+- **Ignoring keyboard noise**: If the source has keyboard sounds, flag it early for audio cleanup.

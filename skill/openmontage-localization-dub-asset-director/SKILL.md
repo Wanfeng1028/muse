@@ -6,49 +6,48 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 素材总监 · 本地化配音流水线
+# Asset Director - Localization Dub Pipeline
 
-## 何时使用本阶段
+## When To Use
 
-本阶段负责组装本地化素材包：翻译后的字幕文件、配音音轨、可选的唇形同步渲染结果，以及最终成片所需的语言专属替换素材。
+This stage produces the localized asset kit: translated subtitle files, dubbed audio, optional lip-sync renders, and any language-specific replacements needed for the final outputs.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/asset_manifest.schema.json` | 校验产出物结构 |
-| 前置产出 | `state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]`、`state.artifacts["idea"]["brief"]` | 提供语言方案与转写包 |
-| 工具 | `tts_selector`、`subtitle_gen`、`lip_sync`、`audio_enhance` | 生成配音、字幕及可选的唇形同步；`tts_selector` 会自动从注册表发现全部可用 TTS 供应商 |
-| Playbook | 当前启用的风格手册 | 约束字幕规范与替换文案规则 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/asset_manifest.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]`, `state.artifacts["idea"]["brief"]` | Language plan and transcript package |
+| Tools | `tts_selector`, `subtitle_gen`, `lip_sync`, `audio_enhance` — `tts_selector` auto-discovers all available TTS providers from the registry | Dubbed audio, subtitle, and optional lip-sync production |
+| Playbook | Active style playbook | Subtitle and replacement-text rules |
 
-## 流程
+## Process
 
-### 1. 先出字幕素材
+### 1. Produce Subtitle Assets First
 
-为每种语言先生成字幕或说明文字包。即使后续配音生成或唇形同步被阻塞，字幕也能作为可评审的兜底交付物。
+Create the subtitle or caption package for each language. This gives a reviewable fallback even if dubbed-audio generation or lip sync is blocked.
 
-### 1b. 主角场景样片（强制）
+### 1b. Hero Scene Sample (Mandatory)
 
-在批量生成素材之前：
+Before batch asset generation:
+1. Identify the hero scene (the visual peak of the video)
+2. Generate ONE sample dubbed audio clip for that scene in the target language
+3. Present it: "This is the voice direction for the most important scene. Does this match what you're imagining? I'll generate the rest in this style."
+4. Wait for approval before proceeding to batch generation
 
-1. 找出主角场景，也就是整支视频的视觉高点；
-2. 只针对该场景生成一段目标语言的配音样片；
-3. 提交给用户确认，例如说明：「这是全片最关键场景的配音方向，是否符合你的预期？确认后我会按同样风格批量生成。」
-4. 等待批准后再进入批量生产。
+This prevents the most expensive mistake: generating 10+ dubbed assets in a direction the user doesn't like.
 
-这一步能规避代价最高的错误：按用户不认可的方向一次性生成十几条配音素材。
+### 2. Generate Dubbed Audio Per Language
 
-### 2. 按语言生成配音音频
+Use the approved translated script package, not raw machine output. Record which voice or synthesis path was used for each language.
 
-必须基于已通过翻译评审的脚本包，而不是机器直译的原始输出。同时记录每种语言使用的音色或合成路径。
+### 3. Treat Lip Sync As Optional
 
-### 3. 唇形同步视为可选项
+Only generate lip-sync assets for scenes and languages that actually need it. If the tool path is blocked, record that and keep the dub-audio path alive.
 
-只为确实需要的场景与语言生成唇形同步素材。如果工具链路被阻塞，就记录下来，同时保持配音音轨这条路径可用。
+### 4. Use Metadata For Localization Truth
 
-### 4. 用元数据记录本地化事实
-
-推荐使用的元数据键：
+Recommended metadata keys:
 
 - `subtitle_assets_by_language`
 - `dub_audio_assets_by_language`
@@ -57,50 +56,54 @@ metadata:
 - `pronunciation_warnings`
 - `blocked_assets`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 字幕素材已存在；
-- 计划内的配音语言都有对应音轨；
-- 唇形同步明确保持为可选；
-- 所有被引用的文件都真实存在。
+- subtitle assets exist,
+- dubbed audio assets exist for planned dub outputs,
+- lip-sync remains explicitly optional,
+- every referenced file exists.
 
-## 制作中途的事实核查
+### Mid-Production Fact Verification
 
-若在素材生成过程中遇到不确定之处：
+If you encounter uncertainty during asset generation:
+- Use `web_search` to verify visual accuracy of subjects (e.g. what does this building actually look like?)
+- Use `web_search` to find reference images before generating illustrations
+- Log verification in the decision log: `category="visual_accuracy_check"`
 
-- 用 `web_search` 核实被摄对象的真实外观，例如某栋建筑实际长什么样；
-- 在生成插画前先用 `web_search` 找参考图；
-- 在决策日志中记录核查动作：`category="visual_accuracy_check"`。
+Visual accuracy matters. If the script mentions a specific place, person, or object,
+verify what it actually looks like before generating images. Don't rely on
+the AI model's training data — it may be wrong or outdated.
 
-视觉准确性很重要。如果脚本提到某个具体地点、人物或物品，生成图像前先确认其真实样貌。不要依赖模型训练数据，它可能已经过时或本身就是错的。
+## Common Pitfalls
 
-## 常见陷阱
+- Generating dubbed audio before finalizing translation review.
+- Treating lip sync as mandatory for every language.
+- Failing to record which language asset maps to which voice and subtitle set.
 
-- 翻译评审尚未定稿就开始生成配音。
-- 把每种语言都当成必须做唇形同步。
-- 没有记录哪种语言素材对应哪个音色和哪套字幕。
 
-## 遇到不会做的情况
+## When You Do Not Know How
 
-若遇到拿不准的生成技巧、供应商行为或提示词模式：
+If you encounter a generation technique, provider behavior, or prompting pattern you are unsure about:
 
-1. **上网检索**当前最佳实践——模型与 API 变化很快，智能体的训练数据可能已陈旧；
-2. **查看 `.agents/skills/`** 是否已有 Layer 3 知识，例如供应商专属提示词指南、API 用法；
-3. **如果两者都没有帮助**，在 `projects/<project-name>/skills/<name>.md` 写一份项目级 skill，把你学到的东西记录下来；
-4. **在 skill 中引用来源链接**，保证知识可追溯；
-5. **写进决策日志**：`category: "capability_extension"`，`subject: "learned technique: <name>"`。
+1. **Search the web** for current best practices — models and APIs change frequently, and the agent's training data may be stale
+2. **Check `.agents/skills/`** for existing Layer 3 knowledge (provider-specific prompting guides, API patterns)
+3. **If neither helps**, write a project-scoped skill at `projects/<project-name>/skills/<name>.md` documenting what you learned
+4. **Reference source URLs** in the skill so the knowledge is traceable
+5. **Log it** in the decision log: `category: "capability_extension"`, `subject: "learned technique: <name>"`
 
-以下情形尤其需要这样做：
+This is especially important for:
+- **Video generation prompting** — models respond to specific vocabularies that change with each version
+- **Image model parameters** — optimal settings for FLUX, GPT Image, Imagen differ and evolve
+- **Audio provider quirks** — voice cloning, music generation, and TTS each have model-specific best practices
+- **Remotion component patterns** — new composition techniques emerge as the framework evolves
 
-- **视频生成提示词**——不同版本模型对特定词汇的反应差异很大；
-- **图像模型参数**——FLUX、GPT Image、Imagen 的最优配置各不相同且持续演进；
-- **音频供应商的怪癖**——声音克隆、音乐生成、TTS 各有自己的最佳实践；
-- **Remotion 组件模式**——框架演进过程中会不断出现新的合成技巧。
-
-不要依赖陈旧知识。拿不准就先检索。
+Do not rely on stale knowledge. When in doubt, search first.
 
 ---
 
-## 门禁提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段受人工审批门控（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，展示摘要（Backlot 面板会渲染产出物），然后**结束当前回合**。不要在同一回复中启动下一阶段。审批按门逐个生效——早先说过的一次「可以继续」不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

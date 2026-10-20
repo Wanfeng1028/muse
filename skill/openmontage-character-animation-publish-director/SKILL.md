@@ -6,32 +6,38 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 角色动画流水线 · 发布导演
+# Publish Director - Character Animation Pipeline
 
-## 目标
+## Goal
 
-为最终角色动画交付物打包，附带诚实的元数据，并给出**以角色为主**的缩略图概念。
+Package the final character-animation deliverable with honest metadata and a
+strong character-forward thumbnail concept.
 
-## 要求
+## Requirements
 
-- 说明实际的视觉处理方式：本地骨架角色动画、程序化特效、Remotion/HyperFrames 渲染，或混合方式。
-- 挑选一帧能清晰读出主角情绪的画面作为海报帧。
-- 若产物为样片，必须标注为样片。
-- 若成片受某参考素材启发，需描述灵感来源，但不得声称是复制品。
+- Mention the actual visual treatment: local rigged character animation,
+  procedural effects, Remotion/HyperFrames render, or mixed.
+- Pick a poster frame where the main character's emotion is readable.
+- If the output is a sample, label it as a sample.
+- If the final is inspired by a reference, describe the inspiration without
+  claiming duplication.
 
-## 输出
+## Output
 
-产出 `publish_log`，包含：
+Produce `publish_log` with:
 
-- 最终视频路径
-- 缩略图/海报帧说明
-- 标题备选
-- 描述文案
-- 各平台导出注意事项
-- 局限说明或后续建议
+- final video path,
+- thumbnail/poster-frame notes,
+- title ideas,
+- description,
+- platform-specific export notes,
+- limitations or follow-up recommendations.
 
 ---
 
-## 闸门提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为闸门（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染产物），并**结束本轮回复**。不得在同一回复中启动下一阶段。批准是逐闸门生效的——早先的“可以继续”不覆盖本闸门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

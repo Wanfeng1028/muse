@@ -6,114 +6,111 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 场景检测使用指南
+# Scene Detection Usage for OpenMontage
 
-本技能说明如何在 OpenMontage 中用 `scene_detect` 工具自动识别镜头边界，为剪辑阶段提供分场依据。
+> Sources: PySceneDetect documentation, FFmpeg scenedetect filter docs, PySceneDetect
+> GitHub issues #187 (threshold tuning) and #226 (adaptive discussion)
 
-## 速查卡
+## Quick Reference Card
 
-| 项目 | 取值 |
-|------|------|
-| 默认方法 | `content`（ContentDetector），适配多数内容 |
-| 默认阈值 | 27.0（取值范围 0–255） |
-| 最短场景 | 默认 1.0s，教学视频建议 2.0–3.0s |
-| 调优方式 | 先导出统计 CSV，查看 content_val 列 |
-| 硬切 | 用 content 检测器 |
-| 淡入淡出黑场 | 用 threshold 检测器 |
-| 混合内容 | 用 adaptive 检测器 |
+```
+DEFAULT METHOD:   content (ContentDetector) — works for most content
+DEFAULT THRESH:   27.0 (range 0-255)
+MIN SCENE LEN:    1.0s default, 2.0-3.0s for educational video
+TUNING:           Generate stats CSV first, inspect content_val column
+HARD CUTS:        Use content detector
+FADE TO BLACK:    Use threshold detector
+MIXED CONTENT:    Use adaptive detector
+```
 
-## 算法选型
+## Algorithm Selection
 
-| 方法 | 默认阈值 | 适用场景 | 原理 |
-|------|----------|----------|------|
-| `content` | 27.0 | 镜头之间的硬切 | 比较相邻帧的 HSV 色彩差异（0–255） |
-| `threshold` | 12.0 | 淡入/淡出黑场 | 基于平均像素亮度，检测经过黑场的转场 |
-| `adaptive` | 3.0 | 含相机运动的混合内容 | 对帧差取滑动平均，随局部节奏自适应 |
+| Method | Default Threshold | Best For | How It Works |
+|--------|------------------|----------|-------------|
+| `content` | 27.0 | Hard cuts between shots | HSV color difference between adjacent frames (0-255) |
+| `threshold` | 12.0 | Fades to/from black | Average pixel intensity; detects transitions through black |
+| `adaptive` | 3.0 | Mixed content with camera motion | Rolling average of frame differences; adapts to local pace |
 
-## 阈值调优指南
+## Threshold Tuning Guide
 
-### ContentDetector（默认，先从这里开始）
+### ContentDetector (Default, Start Here)
 
-| 现象 | 处理 | 新阈值 |
-|------|------|--------|
-| 误切过多 | 提高阈值 | 35–45 |
-| 漏掉真实切点 | 降低阈值 | 20–22 |
-| 快节奏内容（MV、动作） | 提高 | 35–40 |
-| 慢速/静态内容（口播、演示） | 降低 | 20–25 |
-| 动画内容（Manim、动效） | 提高 | 30–35 |
+| Symptom | Action | New Threshold |
+|---------|--------|---------------|
+| Too many false cuts | Raise threshold | 35-45 |
+| Missing real cuts | Lower threshold | 20-22 |
+| Fast-paced content (music videos, action) | Raise | 35-40 |
+| Slow/static content (talking heads, presentations) | Lower | 20-25 |
+| Animated content (Manim, motion graphics) | Raise | 30-35 |
 
 ### AdaptiveDetector
 
-- 对滑动平均值施加倍数（默认 3.0）。
-- 当快速相机运动导致误报时，表现优于 ContentDetector。
-- 适合 OpenMontage 解说视频：Manim 片段静止，实拍片段有运动。
+- Multiplier on rolling average (default 3.0)
+- Better than ContentDetector when there's fast camera motion causing false positives
+- Good default for OpenMontage explainers where Manim segments are static but live-action may have motion
 
 ### ThresholdDetector
 
-- 仅用于确有淡入淡出黑场转场的视频。
-- 大多数 AI 生成视频不使用淡场，优先选 `content` 或 `adaptive`。
+- Only for videos with deliberate fade-to-black transitions
+- Most AI-generated video does NOT use fades — prefer `content` or `adaptive`
 
-## 调优工作流
+## Tuning Workflow
 
-1. 先生成统计文件：
+1. **Generate stats file first:**
+   ```bash
+   scenedetect -i video.mp4 --stats stats.csv detect-content
+   ```
 
-```bash
-scenedetect -i video.mp4 --stats stats.csv detect-content
-```
+2. **Inspect `stats.csv`** — look at the `content_val` column. Peaks = scene changes.
 
-该命令对输入视频运行内容检测并将逐帧统计写入 CSV。
+3. **Set threshold** just below the smallest real peak.
 
-2. 检查 `stats.csv` 中的 `content_val` 列，峰值位置即场景变化点。
+4. **Set `min_scene_length`** to suppress micro-scenes:
+   - Educational video: 2.0-3.0s minimum
+   - Fast-paced content: 0.5-1.0s
+   - Default: 1.0s
 
-3. 将阈值设在最小真实峰值之下。
+### Component Weights (Advanced)
 
-4. 设置 `min_scene_length` 抑制碎片场景：
-   - 教学视频：最短 2.0–3.0s
-   - 快节奏内容：0.5–1.0s
-   - 默认：1.0s
-
-### 分量权重（进阶）
-
-ContentDetector 得分是 HSV 与边缘差异的加权和：
+ContentDetector score = weighted sum of HSV + edge differences:
 
 ```
 weights = (delta_hue, delta_sat, delta_lum, delta_edges)
-默认值: (1.0, 1.0, 1.0, 0.0)
+Default: (1.0, 1.0, 1.0, 0.0)
 ```
 
-对于色彩变化多但真实切点少的动画内容：
-
+For animated content with color transitions but few actual cuts:
 ```
 weights=(1.0, 0.5, 1.0, 0.2), threshold=32
 ```
 
-## 检测后处理
+## Post-Processing Detected Scenes
 
-拿到场景列表后需做清理：
+After detection, clean up the scene list:
 
-1. 合并过短片段：任何短于 `min_scene_length` 的场景并入相邻场景。
-2. 校验边界：确认场景边界与解说停顿对齐（解说类视频）。
-3. 标注场景：将检测结果映射到脚本段落，供剪辑阶段使用。
+1. **Merge too-short segments** — any scene under `min_scene_length` should be merged with the adjacent scene
+2. **Validate boundaries** — check that scene boundaries align with narration pauses (for explainers)
+3. **Label scenes** — map detected scenes to script sections for the edit stage
 
-## 分内容类型预设
+## Content-Type Presets
 
-| 内容类型 | 方法 | 阈值 | 最短场景 |
-|----------|------|------|----------|
-| 单机位口播 | content | 22 | 3.0s |
-| 多机位口播 | content | 27 | 1.0s |
-| 屏幕录制 | content | 30 | 2.0s |
-| 动画解说 | adaptive | 3.0 | 2.0s |
-| 快节奏混剪 | content | 40 | 0.5s |
-| 含淡场的纪录片 | threshold | 12 | 2.0s |
+| Content Type | Method | Threshold | Min Scene Length |
+|-------------|--------|-----------|-----------------|
+| Talking head (single camera) | content | 22 | 3.0s |
+| Talking head (multi-camera) | content | 27 | 1.0s |
+| Screen recording | content | 30 | 2.0s |
+| Animated explainer | adaptive | 3.0 | 2.0s |
+| Fast-paced montage | content | 40 | 0.5s |
+| Documentary with fades | threshold | 12 | 2.0s |
 
-## 在 OpenMontage 中落地
+## Applying to OpenMontage
 
-使用 `scene_detect` 工具时：
+When using the `scene_detect` tool:
 
-1. 先用 `content` 方法、阈值 27，多数内容可直接适用。
-2. 口播流水线：阈值降到 22，`min_scene_length` 设为 3.0s。
-3. 动画解说流水线：使用 `adaptive`，沿用默认阈值 3.0。
-4. 调参前务必先导出统计 CSV，不要凭感觉猜阈值。
-5. 教学类内容把 `min_scene_length` 设为 2.0s，避免碎片场景。
-6. 用检测出的场景为剪辑阶段提供依据，把场景映射到脚本段落。
-7. AI 生成视频片段用 `content` 而非 `threshold`，这类素材极少出现黑场淡变。
+1. **Start with `content` method, threshold 27** — it works for most content
+2. **For talking-head pipeline**, lower threshold to 22 and set min_scene_length to 3.0s
+3. **For animated-explainer pipeline**, use `adaptive` with default threshold 3.0
+4. **Always generate stats CSV first** when tuning — don't guess thresholds
+5. **Set min_scene_length to 2.0s** for educational content to avoid micro-scenes
+6. **Use detected scenes to inform the edit stage** — map scenes to script sections
+7. **For AI-generated video clips**, use `content` not `threshold` — AI video rarely uses fade-to-black

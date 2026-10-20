@@ -6,87 +6,84 @@ metadata:
   license: AGPL-3.0
 ---
 
-# Grok 提示词指南
+# Grok Prompting
 
-当项目选定的提供方是 `grok_image` 或 `grok_video` 时，按本指南组织提示词。
+Use this when the chosen provider is `grok_image` or `grok_video`.
 
-## 什么时候该选 Grok
+## When Grok Is The Right Pick
 
-- 任务目标是对已有图像做修改，而不是从零生成。
-- 需要把多张素材图融合为同一张输出。
-- 需要生成一段受参考图影响、但不锁定首帧的短视频。
-- 希望图像与视频共用一套相近的提示语言，减少切换成本。
+- You need to edit an existing image instead of generating from scratch
+- You need to merge multiple source images into one output
+- You need a short video influenced by reference images without locking the first frame
+- You want one provider for both image and video generation with similar prompt language
 
 ## Grok Image
 
-### 推荐的提示词骨架
+### Best Prompt Shape
 
 ```
-[主体] + [动作或改动] + [场景] + [一个风格锚点] + [光线]
+[subject] + [action or change] + [setting] + [one style anchor] + [lighting]
 ```
 
-风格锚点只写一个，写多了会互相稀释。
+### Edit Prompts
 
-### 编辑类提示词
+For image edits, describe the intended transformation directly:
 
-做图像编辑时，直接说明想要达成的变化即可：
+- "Render this as a pencil sketch with detailed shading."
+- "Replace the plain t-shirt with a dark green bomber jacket."
+- "Combine these two people into the same sunny park scene."
 
-- “改成铅笔素描质感，保留细致排线阴影。”
-- “把身上的纯色T恤换成深绿色飞行夹克。”
-- “把这两个人放进同一个阳光明媚的公园场景里。”
+Do not over-specify every unchanged detail unless preservation is critical.
 
-除非某处细节必须原样保留，否则不必逐项罗列所有不变的元素。
+### Multi-Image Composites
 
-### 多图合成
+Tell Grok how to combine the inputs:
 
-需要明确告诉 Grok 各张输入图之间如何组合：
+- who comes from which source
+- what should stay separate
+- where the final scene takes place
 
-- 每个角色分别来自哪张图；
-- 哪些部分必须保持独立、不能混在一起；
-- 最终场景发生在什么地方。
-
-示例：
+Example:
 
 ```
-把图1中的人物和图2中的人物放在同一个黄昏的地铁站台上，
-两人并肩站立，电影感的钠灯光照，写实摄影风格。
+Place the person from image 1 and the person from image 2 on the same subway platform at dusk,
+standing shoulder to shoulder, cinematic sodium-vapor lighting, realistic photography.
 ```
 
 ## Grok Video
 
-### 推荐的提示词骨架
+### Best Prompt Shape
 
 ```
-[景别] + [运镜] + [主体] + [主要动作节拍] + [环境] + [光线] + [基调]
+[shot] + [camera movement] + [subject] + [main motion beat] + [environment] + [lighting] + [tone]
 ```
 
-### 参考图驱动的视频
+### Reference-Image Video
 
-Grok 支持在提示词中用 `<IMAGE_1>` 这类占位符引用素材图。
-当需要保持人物身份、服装或产品外观一致时使用这种方式。
+Grok supports prompts that refer to source images with placeholders like `<IMAGE_1>`.
+Use that when you need identity, wardrobe, or product consistency.
 
-示例：
+Example:
 
 ```
-中全景，缓慢推近。来自 <IMAGE_1> 的模特走上干净的白色T台，
-穿着 <IMAGE_2> 中的那件外套。柔和棚拍灯光，高端时尚广告质感，
-神情自信。
+Medium full shot, slow push-in. The model from <IMAGE_1> walks onto a clean white runway wearing
+the jacket from <IMAGE_2>. Soft studio lighting, premium fashion campaign, confident expression.
 ```
 
-### 图生视频与参考生视频的区别
+### Image-to-Video vs Reference-to-Video
 
-- 图生视频：源图充当开场画面，构图被继承。
-- 参考生视频：源图只影响内容取向，不冻结构图。
+- Use image-to-video when the source image should act like the opening frame.
+- Use reference-to-video when the source images should influence the content but not freeze the composition.
 
-## 常见错误
+## Common Mistakes
 
-- 把 Grok 的参考图当成严格分镜脚本。它只是影响输入，不是逐帧锁定。
-- 在单条片段请求里塞进多次场景切换。
-- 堆叠大量风格标签，却几乎不写场景信息。
-- 编辑提示词写成“弄得好看一点”这类模糊说法，而不是点明具体改动。
+- Treating Grok reference images like strict storyboards. They are influence inputs, not exact frame locks.
+- Writing multiple scene changes into one clip request.
+- Combining too many style labels with too little scene information.
+- Using vague edit prompts like "make it better" instead of naming the change.
 
-## OpenMontage 使用建议
+## OpenMontage Guidance
 
-- 涉及图像编辑或合成时，优先用 `grok_image`，而不是选择器里的默认主力工具。
-- 当创意简报依赖把输入图中的人物、服装或产品带入运动镜头时，优先用 `grok_video`。
-- 若交付物是纯电影感运动、且不受参考图约束，应先横向比较 Grok、Runway、Veo 与 Kling，再定提供方。
+- For image edits or compositing, prefer `grok_image` over the selector's default workhorse tools.
+- For reference-conditioned video, prefer `grok_video` when the brief depends on carrying people, clothing, or products from input images into motion.
+- If the deliverable is pure cinematic motion without reference constraints, compare Grok against Runway, Veo, and Kling before locking the provider.

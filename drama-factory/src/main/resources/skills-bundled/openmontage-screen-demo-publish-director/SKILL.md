@@ -6,91 +6,92 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 发布导演 — 屏幕演示流水线
+# Publish Director - Screen Demo Pipeline
 
-## 适用时机
+## When To Use
 
-把成片打包好，让用户能快速发布，同时让元数据如实反映实际任务、结果与所用工具。
+Package the finished demo so the user can publish it quickly and so the metadata reflects the actual task, result, and tools involved.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/publish_log.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["compose"]["render_report"]`、`state.artifacts["idea"]["brief"]`、`state.artifacts["script"]["script"]` | 视频、简报与章节 |
-| 手册 | 当前启用的风格手册 | 缩略图与文案调性 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/publish_log.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["compose"]["render_report"]`, `state.artifacts["idea"]["brief"]`, `state.artifacts["script"]["script"]` | Video, brief, and sections |
+| Playbook | Active style playbook | Thumbnail and copy tone |
 
-## 流程
+## Process
 
-### 1. 撰写可检索元数据
+### 1. Build Searchable Metadata
 
-屏幕演示标题最好把三样东西合在一起：
+Screen-demo titles work best when they combine:
 
-- 任务，
-- 工具，
-- 结果。
+- task,
+- tool,
+- outcome.
 
-好的范式：
+Good patterns:
 
-- `在 Next.js 项目里部署到 Vercel 的完整步骤`
-- `修复 React + Express 的 CORS 报错`
-- `给 Python 测试接入 GitHub Actions`
+- `How to deploy on Vercel from Next.js`
+- `Fix CORS in React + Express`
+- `Set up GitHub Actions for Python tests`
 
-关键词来源：
+Pull keywords from:
 
-- 软件名，
-- 框架名，
-- 命令，
-- 报错原文，
-- 结果类词，如部署、修复、打通、上线、发布。
+- software names,
+- frameworks,
+- commands,
+- exact error text,
+- outcome words such as `deploy`, `fix`, `connect`, `publish`, `ship`.
 
-### 2. 用章节标记做导航
+### 2. Use Chapter Markers As Navigation
 
-以脚本章节为基础生成章节标记与打包要点。一份好的屏幕演示包装，应让用户在按下播放前就能扫清整条工作流。
+Use script sections as the basis for chapter markers and packaging bullets. A good screen-demo package makes the workflow skimmable before the user even presses play.
 
-### 3. 缩略图策略
+### 3. Thumbnail Strategy
 
-若需要缩略图概念，它应当呈现：
+If a thumbnail concept is needed, it should show:
 
-- 结果状态，而非泛泛的设置界面，
-- 有辨识度的工具界面，
-- 2-4 个词的价值文案。
+- the result state, not a generic setup screen,
+- the recognizable tool surface,
+- 2-4 words of value text.
 
-概念存入 `publish_log.metadata.thumbnail_concepts`。
+Store the concept in `publish_log.metadata.thumbnail_concepts`.
 
-### 4. 按平台打包
+### 4. Package By Platform
 
-准备：
+Prepare:
 
-- 视频文件，
-- 标题与描述/配文，
-- 适用时附章节标记，
-- 关键词列表，
-- 缩略图概念说明。
+- video file,
+- title and description/caption,
+- chapter markers where relevant,
+- keyword list,
+- thumbnail concept notes.
 
-面向开发者或产品演示内容，另外打包：
+For developer or product-demo content, also package:
 
-- 片中出现的命令，
-- 提到的软件/版本，
-- 若是排障类演示，附报错术语。
+- commands shown,
+- software/version mentions,
+- error terms if it is a troubleshooting demo.
 
-### 5. 质量闸门
+### 5. Quality Gate
 
-- 元数据点明真实工具与任务，
-- 章节与实际渲染流程一致，
-- 导出目录干净且可复用，
-- 文案按平台定制，而非一稿复制。
+- metadata names the real tool and task,
+- chapters match the actual rendered flow,
+- export folders are clean and reusable,
+- copy is tailored to the platform instead of duplicated.
 
-## 常见坑
+## Common Pitfalls
 
-- 用泛泛标题发布，漏掉实际软件或任务。
-- YouTube、LinkedIn 与短视频平台共用同一段配文。
-- 只照脚本做章节标记，不核对渲染结果。
+- Publishing with generic titles that omit the actual software or task.
+- Using the same caption for YouTube, LinkedIn, and short-form social.
+- Building chapter markers from the script without checking the render.
 
 ---
 
-## 闸门提醒（有约束力）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为闸门（`human_approval_default: true`）。审阅通过后：
-以 `status="awaiting_human"` 存档，呈交摘要（Backlot 看板会渲染产物），然后**结束本轮**。
-不要在同一次回复里启动下一阶段。批准是按闸门计的 —— 之前的「继续吧」不覆盖本闸门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

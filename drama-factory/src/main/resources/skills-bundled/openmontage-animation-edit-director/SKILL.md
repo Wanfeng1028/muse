@@ -6,57 +6,57 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剪辑导演 — 动画管线
+# Edit Director - Animation Pipeline
 
-## 适用场景
+## When To Use
 
-本阶段把场景规划转化为达到动态分镜水准的剪辑方案。时间本身就是产品。
+This stage turns the scene plan into an animatic-grade edit plan. Timing is the product.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/edit_decisions.schema.json` | 产物校验 |
-| 上游产物 | `asset_manifest`、`scene_plan`、`script` | 素材、时间计划与节拍 |
-| 风格手册 | 当前激活的 playbook | 动效与字体规则 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/edit_decisions.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["assets"]["asset_manifest"]`, `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]` | Assets, timing plan, and beats |
+| Playbook | Active style playbook | Motion and typography rules |
 
-## 流程
+## Process
 
-### 1. 保护停顿时间
+### 1. Protect Hold Time
 
-关键揭示之后，要给观众留出处理画面的时间。不要把每个场景首尾相接塞满运动。
+After key reveals, plan enough time for the viewer to process the frame. Do not stack every scene edge to edge with motion.
 
-### 2. 次级元素错位入场
+### 2. Stagger Secondary Elements
 
-主要元素先到，支撑元素随后。剪辑决策应当强化层级关系。
+Primary element first, supporting elements second. The edit decisions should reinforce hierarchy.
 
-### 3. 让运动有意义
+### 3. Keep Motion Meaningful
 
-运动应当传达：
+Motion should signal:
 
-- 强调；
-- 过渡；
-- 变化；
-- 对比。
+- emphasis,
+- transition,
+- transformation,
+- contrast.
 
-### 4. 用元数据记录时间细节
+### 4. Use Metadata For Timing Detail
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `hold_windows`
 - `stagger_rules`
 - `transition_map`
 - `scene_timing_notes`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 关键信息有足够的停留时间；
-- 运动让层级更清楚；
-- 过渡保持一致；
-- 在目标平台上仍然可读。
+- key information has enough dwell time,
+- movement clarifies hierarchy,
+- transitions stay consistent,
+- the edit remains readable on the target platform.
 
-## 常见坑
+## Common Pitfalls
 
-- 时间线上塞满连续运动导致过载。
-- 所有元素一次性全部揭示。
-- 为了风格化动效牺牲可读性。
+- Overcrowding the timeline with continuous motion.
+- Revealing all elements at once.
+- Letting stylistic motion reduce readability.

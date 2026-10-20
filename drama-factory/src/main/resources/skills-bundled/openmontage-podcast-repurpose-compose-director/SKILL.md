@@ -6,76 +6,74 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 合成渲染统筹（播客再加工）
+# Compose Director - Podcast Repurpose Pipeline
 
-渲染播客衍生交付物时，音频保真度是第一优先级。画面是来衬托语音的，不能跟语音抢戏。
+## When To Use
 
-## 何时使用
+Render the podcast-derived outputs with audio fidelity as the top priority. The visuals need to support the speech, not compete with it.
 
-当剪辑决策已定、素材齐备，需要按不同平台规格渲染出成片时，进入本环节。
+## Runtime Routing (HARD CONSTRAINT — Remotion or FFmpeg only)
 
-## 运行时路由（硬约束——只用 Remotion 或 FFmpeg）
+Phase 1 deferred from HyperFrames. `edit_decisions.render_runtime` must be `"remotion"` (audiograms, composed outputs) or `"ffmpeg"` (pure-audio-led clip exports). HyperFrames caption-burn parity is deferred, and podcast outputs lean on Remotion's word-level caption stack.
 
-第一阶段暂缓 HyperFrames。`edit_decisions.render_runtime` 只能是 `"remotion"`（音频可视化、合成输出）或 `"ffmpeg"`（纯音频主导的切片导出）。HyperFrames 的字幕烧录对齐尚未实现，而播客产出依赖 Remotion 的词级字幕栈。
+- If `edit_decisions.render_runtime == "hyperframes"`, stop. Re-open the idea stage and surface the constraint to the user. Never silently rewrite the runtime.
+- Per AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)": tell the user HyperFrames exists and why it isn't viable on this pipeline, rather than silently locking remotion. Record a `render_runtime_selection` decision with hyperframes `rejected_because: "caption-burn parity deferred on podcast-repurpose"`.
+- Pass `proposal_packet`/`brief` to `video_compose.execute()` for end-to-end runtime-swap detection.
 
-- 若 `edit_decisions.render_runtime == "hyperframes"`，立即停止。回到创意环节，把该约束告知用户。绝不允许静默改写运行时。
-- 依据 AGENT_GUIDE.md 的“呈现两种合成运行时（硬性规则）”：要主动告诉用户 HyperFrames 的存在，以及它在本流水线为何不可用，而不是静默锁定 remotion。记录一条 `render_runtime_selection` 决策，注明 hyperframes `rejected_because: "caption-burn parity deferred on podcast-repurpose"`。
-- 把 `proposal_packet`/`brief` 传给 `video_compose.execute()`，以便检测端到端的运行时切换。
+## Prerequisites
 
-## 前置条件
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/render_report.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["edit"]["edit_decisions"]`, `state.artifacts["assets"]["asset_manifest"]` | Output plans and asset paths |
+| Tools | `video_compose`, `audio_mixer` | Rendering and mix control |
+| Playbook | Active style playbook | Brand consistency |
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/render_report.schema.json` | 校验产物结构 |
-| 前置产物 | `state.artifacts["edit"]["edit_decisions"]`、`state.artifacts["assets"]["asset_manifest"]` | 输出规划与素材路径 |
-| 工具 | `video_compose`、`audio_mixer` | 渲染与混音控制 |
-| Playbook | 当前生效的风格手册 | 保持品牌一致性 |
+## Process
 
-## 处理流程
+### 1. Render Highest-Value Outputs First
 
-### 1. 先渲染价值最高的产出
+Priority order:
 
-优先顺序：
+1. short highlight clips
+2. quote-led clips
+3. optional long-form companion video
 
-1. 短切片高光；
-2. 金句主导的切片；
-3. 可选的长视频配套内容。
+This keeps the most publishable assets available first.
 
-这样最先拿到的是最可直接发布的素材。
+### 2. Preserve Audio Quality
 
-### 2. 保住音质
+- avoid unnecessary re-encoding,
+- keep speech intelligible and stable,
+- use music sparingly and only when it does not compete,
+- verify subtitle sync after render.
 
-- 避免不必要的重复编码；
-- 保证语音清晰稳定；
-- 配乐要克制，只在不妨碍语音时使用；
-- 渲染完成后核对字幕同步。
+### 3. Respect Platform Shapes
 
-### 3. 遵循平台画幅
+- `9:16` for short-form social
+- `1:1` for quote-led or feed-safe clips
+- `16:9` for long-form YouTube companion output
 
-- `9:16`：短视频社交平台；
-- `1:1`：金句类或信息流安全画幅；
-- `16:9`：YouTube 长视频配套。
+### 4. Verify Every Deliverable
 
-### 4. 逐项验收每个交付物
+- correct duration,
+- correct aspect ratio,
+- readable subtitles,
+- accurate speaker attribution,
+- stable audio,
+- consistent brand treatment.
 
-- 时长正确；
-- 画幅比例正确；
-- 字幕可读；
-- 讲者归属准确；
-- 音频稳定；
-- 品牌处理一致。
+### 5. Use Render Report Metadata
 
-### 5. 用渲染报告元数据记录
-
-建议的元数据键：
+Recommended metadata keys:
 
 - `deliverable_groups`
 - `audio_notes`
 - `subtitle_checks`
 - `failed_outputs`
 
-## 常见坑
+## Common Pitfalls
 
-- 让视觉处理拖累了音质。
-- 先把长配套视频渲染完，反而耽误了最要紧的切片。
-- 忘记一个简单清晰的切片，胜过技术花哨但让人看不懂的切片。
+- Letting visual treatments degrade audio quality.
+- Rendering the full companion first and delaying the clips that matter most.
+- Forgetting that a simple, readable clip beats a technically elaborate but confusing one.

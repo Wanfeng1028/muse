@@ -6,56 +6,56 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剧本导演（电影感流水线）
+# Script Director - Cinematic Pipeline
 
-## 何时使用
+## When To Use
 
-本阶段为电影感作品搭建节拍图、精选台词、标题卡文案与揭示结构。你在塑造节奏，而不是写一篇密实的解说稿。
+This stage builds the beat map, selected lines, title-card copy, and reveal structure for the cinematic piece. You are shaping rhythm, not writing a dense explainer.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/script.schema.json` | 校验产物结构 |
-| 前置产物 | `state.artifacts["proposal"]["proposal_packet"]` | 情感弧线与事实来源 |
-| 工具 | `transcriber`、`scene_detect` | 可选的台词挖掘与素材审阅 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/script.schema.json` | Artifact validation |
+| Prior artifact | `state.artifacts["proposal"]["proposal_packet"]` | Emotional arc and source truth |
+| Tools | `transcriber`, `scene_detect` | Optional dialogue mining and source review |
 
-## 流程
+## Process
 
-### 1. 先搭节拍图
+### 1. Build A Beat Map First
 
-使用简单结构：
+Use a simple structure:
 
-- 钩子
-- 升级
-- 揭示
-- 落地
+- hook,
+- escalation,
+- reveal,
+- landing.
 
-若作品更长，可在中点加一次转折。不要让结构变成论文体。
+If the piece is longer, add one midpoint turn. Do not let it become essay-shaped.
 
-### 2. 谨慎使用台词
+### 2. Use Dialogue Sparingly
 
-若源素材中有语音，可用 `transcriber` 找出：
+If source speech exists, use `transcriber` to find:
 
-- 能独立成立的强句
-- 带情绪的短语
-- 简短的宣言
-- 揭示性短语
+- strong standalone lines,
+- emotional phrases,
+- concise declarations,
+- reveal phrases.
 
-若没有可用的台词，就让剧本走标题卡或旁白路线，并在元数据中说明。
+If there is no useful dialogue, keep the script title-led or narration-led and say so in metadata.
 
-### 3. 标题卡要短
+### 3. Keep Title Cards Short
 
-标题卡文案应像预告片：
+Title-card copy should feel trailer-like:
 
-- 字更少
-- 对比更强
-- 留白更多
-- 时点更准
+- fewer words,
+- more contrast,
+- more whitespace,
+- more timing precision.
 
-### 4. 把节拍事实存进元数据
+### 4. Store Beat Truth In Metadata
 
-推荐使用的元数据键：
+Recommended metadata keys:
 
 - `beat_map`
 - `dialogue_selects`
@@ -63,31 +63,35 @@ metadata:
 - `music_turns`
 - `silence_windows`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 节拍图升级清晰
-- 台词与标题卡不重复解释同一件事
-- 揭示落点独特
-- 收尾给观众留下一个最终感受或行动
+- the beat map escalates cleanly,
+- dialogue and title cards do not explain the same thing twice,
+- the reveal lands distinctly,
+- the landing gives the viewer a final feeling or action.
 
-### 制作中事实核验
+### Mid-Production Fact Verification
 
-若在写剧本时遇到不确定：
-- 用 `web_search` 核实事实性断言，再写入剧本
-- 用 `web_search` 查找参考图像以保证视觉准确
-- 在决策日志中记录核验：`category="visual_accuracy_check"`
+If you encounter uncertainty during script writing:
+- Use `web_search` to verify factual claims before committing them to the script
+- Use `web_search` to find reference images for visual accuracy
+- Log verification in the decision log: `category="visual_accuracy_check"`
 
-剧本中的每一条事实断言都应能追溯到 `research_brief`。若你写入研究里没有的断言，请补充调研并加上来源。不要杜撰统计数据、日期或归属。
+Every factual claim in the script should be traceable to the `research_brief`.
+If you make a claim that isn't in the research, do additional research and
+add the source. Do not invent statistics, dates, or attributions.
 
-## 常见坑
+## Common Pitfalls
 
-- 写整段解释性文字而非节拍。
-- 标题卡用得过多。
-- 过早亮出最好的时刻。
+- Writing full explanatory paragraphs instead of beats.
+- Using too many title cards.
+- Revealing the best moment too early.
 
 ---
 
-## 关卡提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为关卡（`human_approval_default: true`）。评审通过后：
-以 `status="awaiting_human"` 做 checkpoint，呈现摘要（Backlot 看板会渲染产物），并**结束你的回合**。不要在同一回复里开启下一阶段。批准按关卡生效——早前的“可以继续”不覆盖本关卡。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

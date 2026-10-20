@@ -6,77 +6,80 @@ metadata:
   license: AGPL-3.0
 ---
 
-# VEO 3.1 / VEO 3 提示词指南
+# VEO 3.1 / VEO 3 — Prompting Guide
 
-**词数：** VEO 3.1 的甜区在 100–250 词，再长收益递减。
+> Source: [Vertex AI Video Gen Prompt Guide](https://cloud.google.com/vertex-ai/generative-ai/docs/video/video-gen-prompt-guide)
+> For universal vocabulary, see: `skills/creative/video-gen-prompting.md`
 
-## VEO 专用十四要素结构
+**Word count:** VEO 3.1 sweet spot is 100–250 words; longer prompts stop helping.
 
-VEO 响应的提示结构是所有模型中最全面的：
+## VEO-Specific 14-Component Structure
 
-1. **主体** — 动作围绕的人或物
-2. **动作** — 运动、交互、表情
-3. **场景 / 语境** — 地点、时间、天气、年代
-4. **机位角度** — 景别与视角
-5. **镜头运动** — 动态位移
-6. **镜头 / 光学效果** — 相机"看"的方式
-7. **光照** — 光源、方向、质感
-8. **基调 / 情绪** — 情感调性
-9. **艺术风格** — 写实、电影感、动画、艺术流派
-10. **氛围** — 色彩、气效、质感
-11. **时间要素** — 节奏、时间流、韵律
-12. **音频** — 音效、环境声、对白（VEO 3 可生成对白）
-13. **电影术语** — 剪辑手法（match cut、montage、split diopter）
-14. **负向提示** — 需要排除的内容
+VEO responds to the most comprehensive prompt structure of any model:
 
-## VEO 的专长
+1. **Subject** — who/what the action revolves around
+2. **Action** — movements, interactions, expressions
+3. **Scene / Context** — location, time, weather, period
+4. **Camera Angles** — shot type and perspective
+5. **Camera Movements** — dynamic motion
+6. **Lens / Optical Effects** — how the camera "sees"
+7. **Lighting** — source, direction, quality
+8. **Tone / Mood** — emotional register
+9. **Artistic Style** — photorealistic, cinematic, animation, art movement
+10. **Ambiance** — color palettes, atmospheric effects, textures
+11. **Temporal Elements** — pacing, time flow, rhythm
+12. **Audio** — sound effects, ambient, dialogue (VEO 3 generates dialogue)
+13. **Cinematic Terms** — editing techniques (match cut, montage, split diopter)
+14. **Negative Prompt** — what to exclude
 
-- **对白生成**：VEO 3 原生生成角色台词，按自然语言书写即可。
-- **音频整合**：环境声、音乐与语音随视频一并生成。
-- **负向提示**：显式支持，如 "no text overlays, no watermarks, no lens flare"。
-- **剪辑词汇**：能理解 "match cut"、"jump cut"、"montage"、"split diopter" 作为提示词。
+## VEO-Specific Strengths
 
-### VEO 会字面遵循的运镜词汇
+- **Dialogue generation**: VEO 3 natively generates character speech. Write dialogue naturally.
+- **Audio integration**: Ambient sound, music, and voice are generated together with video.
+- **Negative prompts**: Explicitly supported — "no text overlays, no watermarks, no lens flare"
+- **Editing vocabulary**: Understands "match cut", "jump cut", "montage", "split diopter" as prompt terms.
 
-VEO 3.1 区分三个运镜族，并把各自的 token 当作独立原语。混淆它们（例如想要 dolly 却写了 zoom）会得到错误的运动。
+### Camera vocabulary VEO honors literally
 
-- **位移（机架物理移动）：** `dolly`（沿光轴进出）、`truck`（左右横移）、`pedestal`（上下升降）
-- **旋转（机架不动，机身转动）：** `pan`（偏航，左右）、`tilt`（俯仰，上下）、`roll`（荷兰角 / Z 轴）
-- **纯镜头（机架与机身都不动）：** `zoom`（焦段变化）、`rack focus` / `pull focus` / `focus tracking`（焦平面变化）
+VEO 3.1 distinguishes the three camera-motion families and treats their tokens as separate primitives. Mixing them up (e.g. asking for a "zoom" when you mean a "dolly") will produce the wrong move.
 
-dolly ≠ zoom，pan ≠ truck。VEO 只按领头 token 执行。
+- **Translation (rig physically moves):** `dolly` (in/out along the lens axis), `truck` (left/right laterally), `pedestal` (up/down vertically)
+- **Rotation (rig stays put, camera rotates):** `pan` (yaw, left/right), `tilt` (pitch, up/down), `roll` (Dutch / Z-axis)
+- **Lens-only (rig and body don't move):** `zoom` (focal length change), `rack focus` / `pull focus` / `focus tracking` (focal-plane change)
 
-## VEO 的镜头效果（独有）
+dolly ≠ zoom; pan ≠ truck. VEO follows whichever token leads.
 
-VEO 尤其响应多数模型忽略的光学效果：
+## VEO Lens Effects (Unique)
 
-| 效果 | 提示语言 |
+VEO specifically responds to optical effects most models ignore:
+
+| Effect | Prompt Language |
 |--------|----------------|
-| **Rack focus** | "snap focus from the blossom up front to the person behind"（瞬间切换） |
-| **Pull focus** | "slow focus drift from the lamp in front to the hallway behind"（渐变，比 rack 慢） |
-| **Focus tracking** | "keep the cyclist sharp as he rides past, background melting away"（焦点追随移动主体） |
-| **Dolly zoom（眩晕）** | "background stretches away while the heroine stands frozen in shock" |
-| **Fisheye** | "bulging fisheye warp, shot from a low board-level angle" |
-| **Anamorphic lens flare** | "long horizontal light streaks blooming off the low sun" |
+| **Rack focus** | "rack focus from foreground flower to background figure" (snap shift) |
+| **Pull focus** | "slow pull focus from the candle in the foreground to the doorway behind" (gradual, slower than rack) |
+| **Focus tracking** | "focus tracks the runner as she crosses frame; background stays soft" (focus follows a moving subject) |
+| **Dolly zoom (vertigo)** | "vertigo effect as character realizes the truth" |
+| **Fisheye** | "fisheye lens distortion, skatepark POV" |
+| **Anamorphic lens flare** | "anamorphic lens flare streaking horizontally from setting sun" |
 
-这三种对焦模式（rack、pull、tracking）各不相同，VEO 3.1 按论文所述严格区分。
+These three focus modes (rack, pull, tracking) are different — VEO 3.1 honors the distinction per the paper.
 
-## VEO 的艺术流派引用
+## VEO Art Movement References
 
-VEO 对具体艺术流派作为风格锚点响应良好：
-- "旋涡星空风的油彩笔触"（后印象派笔法参考）
-- "融化轮廓的超现实主义场景"
-- "建筑立面上的几何装饰花纹"
-- "包豪斯式的冲线条与三原色"
-- "做旧粗粒的图文小说风格"
-- "水墨洗练的中国风动画"
+VEO responds well to specific art movements as style anchors:
+- "Van Gogh-inspired swirling sky"
+- "Surrealist Dalí-esque melting landscape"
+- "Art Deco geometric patterns in the architecture"
+- "Bauhaus clean lines and primary colors"
+- "Gritty graphic novel illustration style"
+- "Chinese ink wash painting animation"
 
-## 防止字幕
+## Subtitle Prevention
 
-VEO 有对白时可能默认加字幕，避免方式：
-- 在负向提示中加入："no subtitles, no captions, no text overlays"
+VEO may add subtitles by default for dialogue. To prevent:
+- Add to negative prompt: "no subtitles, no captions, no text overlays"
 
-## 示例
+## Example
 
 ```
 Subject: A lone astronaut in a weathered white spacesuit

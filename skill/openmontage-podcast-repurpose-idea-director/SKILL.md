@@ -6,75 +6,75 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 创意导演 — 播客二次创作流水线
+# Idea Director - Podcast Repurpose Pipeline
 
-## 适用场景
+## When To Use
 
-当源素材是一集播客（纯音频或视频播客），且用户希望得到切片、社交资产或伴随长视频方案时，启用本流水线。
+Use this pipeline when the source is a podcast episode, either audio-only or video podcast, and the user wants clips, social assets, or a companion long-form video treatment.
 
-你的首要职责是：基于**实际存在的**素材，判断哪些产出是可行的。
+Your first responsibility is to decide what is feasible from the source that actually exists.
 
-## 运行时选择（强制——必须把约束摆到台面上，不许默默替用户决定）
+## Runtime Selection (MANDATORY — present the constraint, don't silently pick)
 
-锁定 `render_runtime = "remotion"`（声波图与合成类产出）或 `"ffmpeg"`（纯音频主导的切片导出）。**在第一阶段，HyperFrames 不是本流水线的合法运行时**——播客类产出依赖 Remotion 的逐词字幕链路，HyperFrames 尚无对等能力。
+Lock `render_runtime = "remotion"` (audiograms and composed outputs) or `"ffmpeg"` (pure-audio-led clip exports). **HyperFrames is NOT a valid runtime on this pipeline in Phase 1** — podcast outputs lean on Remotion's word-level caption stack, which has no HyperFrames parity yet.
 
-按 AGENT_GUIDE.md 中“必须同时呈现两种合成运行时（硬性规则）”的要求，把这一约束明确告知用户，例如：“你机器上装有 HyperFrames，但 podcast-repurpose 依赖 Remotion 的字幕烧录，因此这里 remotion 是唯一可行选项”。同时记录一条 `render_runtime_selection` 决策，其中 hyperframes 的 `rejected_because` 填 `"caption-burn parity deferred on podcast-repurpose"`。
+Per AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)": surface the constraint to the user — "HyperFrames is available on your machine, but podcast-repurpose depends on Remotion caption burn, so remotion is the only viable choice here". Record a `render_runtime_selection` decision with hyperframes `rejected_because: "caption-burn parity deferred on podcast-repurpose"`.
 
-## 参考输入
+## Reference Inputs
 
 - `docs/podcast-repurposing-best-practices.md`
 - `skills/creative/short-form.md`
 - `skills/creative/long-form.md`
 
-## 工作流程
+## Process
 
-### 1. 判定源素材类别
+### 1. Classify The Source
 
-记录源素材模式：
+Capture the source mode:
 
-- `audio_only`（纯音频）
-- `video_podcast`（视频播客）
-- `hybrid`（音频加静帧、封面图、嘉宾照片）
+- `audio_only`
+- `video_podcast`
+- `hybrid` (audio plus stills, cover art, guest photos)
 
-同时记录对话形态：
+Also capture the conversational format:
 
-- solo（独白）
-- interview（访谈）
-- panel（圆桌）
-- narrative / produced show（叙事/精编节目）
+- solo
+- interview
+- panel
+- narrative / produced show
 
-### 2. 选择与实际情况相符的交付物
+### 2. Choose Deliverables That Match Reality
 
-默认交付物应当是当前素材与工具条件下可实现的。
+Default deliverables should be feasible with the source and tools on hand.
 
-安全选项：
+Safe options:
 
-- 短视频高光切片
-- 声波图型或字幕主导型切片
-- 金句主导型切片
-- 至多一个整集伴随长视频版式
+- short-form highlight clips,
+- audiogram or caption-led clips,
+- quote-led clips,
+- one optional full-episode companion layout.
 
-除非源视频、品牌素材与可选图像确实齐备，否则不要假设可以做出高制作规格的整集 YouTube 方案。
+Do not assume a high-production full-episode YouTube treatment unless the source video, branding assets, and optional imagery actually exist.
 
-### 3. 设定合理的交付物配比
+### 3. Set A Sensible Deliverable Mix
 
-典型起点：
+Typical starting point:
 
-- `3-5` 条高光切片
-- 若节目有强金句，`1-3` 个金句主导型资产
-- 若源素材撑得住，可加一个可选的长视频伴随产出
+- `3-5` highlight clips
+- `1-3` quote-led assets if the episode has strong one-liners
+- optional long-form companion if the source justifies it
 
-### 4. 尊重平台差异
+### 4. Respect Platform Differences
 
-- `9:16` 用于 Shorts、Reels、TikTok
-- `1:1` 用于 LinkedIn 及更稳妥的信息流复用
-- `16:9` 用于 YouTube 伴随视频
+- `9:16` for Shorts, Reels, TikTok
+- `1:1` for LinkedIn and safer feed repurposing
+- `16:9` for YouTube companion video
 
-若源素材是纯音频，必须在简报中写明这一点。下游阶段不应规划根本不存在的“出镜说话人”视频。
+If the source is audio-only, make that explicit in the brief. Downstream stages should not plan speaker-framed video that does not exist.
 
-### 5. 构建简报
+### 5. Build The Brief
 
-用 `brief.metadata` 承载更丰富的播客专属契约字段：
+Use `brief.metadata` for the richer podcast-specific contract:
 
 - `source_mode`
 - `show_name`
@@ -86,21 +86,24 @@ metadata:
 - `brand_assets_available`
 - `full_episode_companion_feasible`
 
-### 6. 质量闸门
+### 6. Quality Gate
 
-- 交付物配比与实际源素材相符，
-- 切片数量相对节目时长是现实的，
-- 简报中写明视觉走向是源素材主导、金句主导还是声波图主导，
-- 长视频野心要与现有素材规模匹配。
+- the deliverable mix matches the actual source,
+- clip counts are realistic for the episode length,
+- the brief states whether visuals will be source-led, quote-led, or audiogram-led,
+- long-form ambitions are scaled to the available assets.
 
-## 常见陷阱
+## Common Pitfalls
 
-- 把纯音频源与视频播客源当成同一个制作问题。
-- 从一集内容偏弱的节目里规划过多交付物。
-- 在没有相应素材的情况下，承诺做视觉丰富的整集精编。
+- Treating audio-only and video-podcast sources as the same production problem.
+- Planning too many deliverables from a weak episode.
+- Promising a rich full-episode visual treatment without the assets to support it.
 
 ---
 
-## 闸门提醒（具有约束力）
+## Gate Reminder (Binding)
 
-本阶段默认需要人工审批（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染该交付物），然后**结束本轮回复**。不要在同一次回复里启动下一阶段。审批是按闸门逐一进行的——早先某次“可以继续”不覆盖本闸门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

@@ -6,63 +6,63 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 发布总监 — 解说视频流水线
+# Publish Director — Explainer Pipeline
 
-## 何时启用
+## When to Use
 
-你是生成式解说视频的发布负责人。手上有一份包含最终视频文件的 `render_report`。你的职责是让视频准备好分发：生成 SEO 元数据、制作缩略图、打包导出、记录发布事件。
+You are the Publisher for a generated explainer video. You have a `render_report` with the final video file. Your job is to prepare the video for distribution: generate SEO metadata, create thumbnails, package exports, and log the publish event.
 
-这是好视频触达观众的一步。没有恰当的元数据与包装，再好的内容也会被埋没。
+This is where a great video reaches its audience. Without proper metadata and packaging, even the best content gets buried.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/publish_log.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["compose"]["render_report"]`、`state.artifacts["proposal"]["proposal_packet"]`、`state.artifacts["research"]["research_brief"]` | 视频文件与原始提案 |
-| Playbook | 当前生效的风格 playbook | 缩略图视觉风格 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/publish_log.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["compose"]["render_report"]`, `state.artifacts["proposal"]["proposal_packet"]`, `state.artifacts["research"]["research_brief"]` | Video file and original proposal |
+| Playbook | Active style playbook | Visual style for thumbnail |
 
-## 流程
+## Process
 
-### 第 1 步：汇集上下文
+### Step 1: Gather Context
 
-收集元数据所需的全部信息：
-- **提案包**：标题、钩子、要点、目标平台、调性
-- **渲染报告**：输出路径、时长、分辨率
-- **脚本**：用于描述与章节的分段摘要
+Collect everything needed for metadata:
+- **Proposal packet**: title, hook, key points, target platform, tone
+- **Render report**: output path, duration, resolution
+- **Script**: section summaries for description/chapters
 
-### 第 2 步：生成 SEO 元数据
+### Step 2: Generate SEO Metadata
 
-**标题**（YouTube 上限 60 字符）：
-- 含提案包里的主关键词
-- 以钩子或数字开头
-- 避免标题党，但要有吸引力
-- 例：「向量数据库 60 秒讲清」优于「关于向量数据库」
+**Title** (max 60 characters for YouTube):
+- Include the primary keyword from the proposal packet
+- Lead with a hook or number
+- Avoid clickbait but be compelling
+- Examples: "Vector Databases Explained in 60 Seconds" > "About Vector Databases"
 
-**描述**（前 150 字符最关键——会出现在搜索结果中）：
-- 首行：用主价值主张重述钩子
-- 正文：覆盖的关键话题，自然嵌入相关关键词
-- 章节：为每个主要分段（来自脚本）加时间戳
-- 行动号召：订阅/点赞/关注
-- 链接：视频中提到的相关资源
+**Description** (first 150 chars are critical — shown in search):
+- Opening line: restate the hook with the main value proposition
+- Body: key topics covered, with relevant keywords naturally included
+- Chapters: timestamp markers for each major section (from script sections)
+- Call to action: subscribe/like/follow
+- Links: relevant resources mentioned in the video
 
-**标签/关键词**（因平台而异）：
-- 从提案包 key_points 派生 5-10 个具体标签
-- 泛与专混合：「机器学习」+「向量数据库教程」
-- 包含主题、格式（「解说」）及相关词
+**Tags/Keywords** (platform-dependent):
+- 5-10 specific tags derived from proposal packet's key_points
+- Mix broad and specific: "machine learning" + "vector database tutorial"
+- Include the topic, format ("explainer"), and related terms
 
-**话题标签**（社交平台）：
-- 3-5 个相关话题标签
-- 热门与垂类混合
+**Hashtags** (for social platforms):
+- 3-5 relevant hashtags
+- Mix trending and niche
 
-### 第 3 步：生成缩略图方案
+### Step 3: Generate Thumbnail Concept
 
-描述一张缩略图，需满足：
-1. 沿用 playbook 的视觉风格
-2. 视觉上呈现视频核心概念
-3. 含 3-5 个词（钩子或关键数据）
-4. 高对比、小尺寸下可读
-5. 文字使用 playbook 强调色
+Describe a thumbnail that:
+1. Uses the playbook's visual style
+2. Features the video's core concept visually
+3. Includes 3-5 words of text (the hook or key stat)
+4. Has high contrast and is readable at small sizes
+5. Uses the playbook's accent colors for text
 
 ```json
 {
@@ -74,11 +74,11 @@ metadata:
 }
 ```
 
-*注：实际缩略图生成走 image_selector（如可用），否则仅作为人工制作的方案。*
+*Note: Actual thumbnail generation happens via image_selector if available, otherwise it's a concept for manual creation.*
 
-### 第 4 步：创建章节标记
+### Step 4: Create Chapter Markers
 
-从脚本分段生成 YouTube 风格章节：
+From the script sections, generate YouTube-style chapters:
 
 ```
 0:00 - Introduction
@@ -89,13 +89,19 @@ metadata:
 2:30 - When to Use Vector DBs
 ```
 
-每个章节映射到脚本分段的 `start_seconds`。
+Each chapter maps to a script section's `start_seconds`.
 
-### 第 5 步：打包导出
+### Step 5: Package Export
 
-用 `export_bundle` 工具（能力 `publish`）确定性地完成打包——传入最终 `video_path`（来自 `render_report`）、`title`，以及你准备好的元数据（`description`、`tags`、`hashtags`、`chapters`，可选 `subtitles_path` 与 `thumbnail_path`/`thumbnail_concept`）。它会布置导出目录、写入元数据文件，并返回一份 schema 合法的 `publish_log`（`status: "exported"`），位于 `data["publish_log"]`，由你持久化为阶段产物。
+Use the `export_bundle` tool (capability `publish`) to do the packaging
+deterministically — pass it the final `video_path` (from `render_report`), the
+`title`, and the metadata you prepared (`description`, `tags`, `hashtags`,
+`chapters`, optional `subtitles_path` and `thumbnail_path`/`thumbnail_concept`).
+It lays out the export directory, writes the metadata files, and returns a
+schema-valid `publish_log` (`status: "exported"`) in `data["publish_log"]` that
+you persist as the stage artifact.
 
-产出结构如下：
+It produces this structure:
 
 ```
 exports/
@@ -111,11 +117,13 @@ exports/
       concept.json          # Thumbnail concept (or the copied thumbnail image)
 ```
 
-`export_bundle` 是本地、离线的打包器——它不上传。联网的发布器（例如 YouTube 上传器）会是另一个 `publish` 能力供应商。
+`export_bundle` is a local, offline packager — it does not upload. A networked
+publisher (e.g. a YouTube uploader) would be a separate `publish`-capability
+provider.
 
-### 第 6 步：构建发布日志
+### Step 6: Build Publish Log
 
-`export_bundle` 已经返回 schema 合法的 `publish_log` 于 `data["publish_log"]`——直接持久化它，不要手工拼。**不要**额外添加条目字段（schema 设了 `additionalProperties: false`，只允许 `platform`、`status`、`url`、`video_id`、`visibility`、`export_path`、`timestamp`、`metadata_used`、`error`）。其返回形如：
+`export_bundle` already returns a schema-valid `publish_log` in `data["publish_log"]` — persist that directly rather than hand-building one. Do **not** add extra entry fields (the schema sets `additionalProperties: false`; only `platform`, `status`, `url`, `video_id`, `visibility`, `export_path`, `timestamp`, `metadata_used`, `error` are allowed). The shape it returns:
 
 ```json
 {
@@ -137,36 +145,37 @@ exports/
 }
 ```
 
-### 第 7 步：自评
+### Step 7: Self-Evaluate
 
-打分（1-5）：
+Score (1-5):
 
-| 维度 | 问题 |
-|------|------|
-| **SEO 质量** | 标题和描述在该主题下会有好的排名吗？ |
-| **描述完整度** | 描述是否包含章节、CTA 和关键词？ |
-| **缩略图方案** | 这张缩略图能在信息流中脱颖而出吗？ |
-| **导出包** | 创作者需要的东西在导出目录里都齐了吗？ |
-| **平台契合** | 元数据是否为目标平台量身定制？ |
+| Criterion | Question |
+|-----------|----------|
+| **SEO quality** | Would this title and description rank well for the topic? |
+| **Description completeness** | Does the description include chapters, CTA, and keywords? |
+| **Thumbnail concept** | Would this thumbnail stand out in a feed? |
+| **Export package** | Is everything a creator needs in the export directory? |
+| **Platform fit** | Is metadata tailored to the target platform? |
 
-任何一项低于 3 分，修正。
+If any dimension scores below 3, revise.
 
-### 第 8 步：提交
+### Step 8: Submit
 
-将 publish_log 按 schema 校验，通过 checkpoint 持久化。
+Validate the publish_log against the schema and persist via checkpoint.
 
-## 常见坑
+## Common Pitfalls
 
-- **标题太泛**：「关于 X 的视频」永远输给「X 60 秒讲清」。要具体、要吸引。
-- **没有章节**：YouTube 会奖励带章节的视频。务必包含。
-- **描述堆砌关键词**：先为人写，再为搜索引擎写。用自然语言把关键词织进去。
-- **忘记 CTA**：每条描述都应以行动号召收尾。
-- **平台格式错配**：YouTube 描述与 TikTok 文案不同。按目标平台调整。
+- **Generic titles**: "Video About X" loses to "X Explained in 60 Seconds" every time. Be specific and compelling.
+- **No chapters**: YouTube rewards videos with chapters. Always include them.
+- **Description keyword stuffing**: Write for humans first, search engines second. Natural language with keywords woven in.
+- **Forgetting the CTA**: Every description should end with a call to action.
+- **Wrong platform format**: YouTube descriptions differ from TikTok captions. Tailor to the target platform.
 
 ---
 
-## 门禁提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为门禁（`human_approval_default: true`）。审阅通过后：
-以 `status="awaiting_human"` 打 checkpoint，展示摘要（Backlot 看板会渲染产物），然后**结束本轮回复**。不要在同一个回复里启动下一阶段。
-批准是按门禁逐次生效的——之前的「继续吧」不覆盖本门禁。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

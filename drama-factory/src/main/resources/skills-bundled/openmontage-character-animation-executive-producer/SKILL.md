@@ -6,64 +6,51 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 角色动画流水线 · 总制片人
+# Executive Producer - Character Animation Pipeline
 
-## 何时启用本流水线
+## When To Use
 
-当交付物依赖**可复用的动画角色**时，走本流水线。典型场景包括：
+Use this pipeline when the requested deliverable depends on reusable animated
+characters: cartoon shorts, mascot explainers, music-led character scenes,
+dialogue between simple characters, or reference-inspired local animation.
 
-- 卡通短片
-- 吉祥物式讲解视频
-- 以音乐驱动的角色场景
-- 简单角色之间的对话段
-- 受参考素材启发的本地动画
+Do not use this pipeline for one-off motion graphics with no acting. Route those
+to `animation`. Do not use it for avatar presenter lip-sync. Route that to
+`avatar-spokesperson`.
 
-**不适用**的情况：
+## Contract
 
-- 没有表演需求的一次性动态图形 → 改走 `animation` 流水线
-- 虚拟形象口型同步播报 → 改走 `avatar-spokesperson` 流水线
+The pipeline produces local, deterministic character animation. It does not
+silently substitute still-image motion for acting. If the character motion cannot
+be built with the available rigs, assets, or runtime, surface a blocker.
 
-## 契约
+## Stage Order
 
-本流水线产出的是**本地、确定性**的角色动画。严禁用静帧位移冒充角色表演。如果当前骨架、资产或运行时无法实现所需的角色运动，必须显式抛出阻塞项，而不是偷偷降级。
+1. `research` - understand reference, technique, and feasibility.
+2. `proposal` - present concepts, runtime options, cost, music plan, sample plan.
+3. `script` - write action-friendly beats and dialogue/narration.
+4. `character_design` - define characters, silhouettes, emotions, actions.
+5. `rig_plan` - define parts, pivots, layers, constraints, poses.
+6. `scene_plan` - map story beats to character scenes.
+7. `assets` - produce or source character parts, backgrounds, props, audio.
+8. `edit` - compile timed action timeline.
+9. `compose` - render through the approved runtime and run QA.
+10. `publish` - package the final output.
 
-## 阶段顺序
+## Governance Rules
 
-1. `research` —— 调研参考、技法与可行性
-2. `proposal` —— 给出概念方案、运行时选项、成本、音乐计划、样片计划
-3. `script` —— 撰写便于动作化的节拍与对白/旁白
-4. `character_design` —— 定义角色、剪影、情绪、动作
-5. `rig_plan` —— 定义部件、枢轴、图层、约束、姿势
-6. `scene_plan` —— 把故事节拍映射到角色场景
-7. `assets` —— 制作或采集角色部件、背景、道具、音频
-8. `edit` —— 编译带时间轴的动作剪辑
-9. `compose` —— 通过已批准的运行时渲染并执行 QA
-10. `publish` —— 打包最终产物
+- Run registry preflight before proposal.
+- If both Remotion and HyperFrames are available, present both before locking
+  `render_runtime`.
+- Produce a 10-15 second sample before full asset generation.
+- Character differences belong in rig data, not one-off code paths.
+- Every generated or runtime-authored asset must list Layer 3 skills read.
+- Use `character_animation_reviewer` plus final `final_review` before delivery.
 
-## 治理规则
+## Send-Back Triggers
 
-- 在 `proposal` 之前必须先跑 registry 预检。
-- 若 Remotion 与 HyperFrames 均可用，锁定 `render_runtime` 之前必须把两者都呈现给用户。
-- 在批量生成全部资产之前，先产出 10–15 秒样片。
-- 角色之间的差异应体现在骨架数据中，不得写成一次性的代码分支。
-- 每个生成式或运行时代写的资产都要列出所读取的 Layer 3 技能。
-- 交付前需经过 `character_animation_reviewer` 以及最终 `final_review`。
-
-## 打回触发条件
-
-出现以下情况必须打回重做：
-
-- `character_design` 缺少必需动作或情绪跨度不足
-- `rig_plan` 中需要活动的部件没有对应枢轴
-- `pose_library` 里没有可读的表演姿势
-- `action_timeline` 包含骨架无法渲染的动作
-- `compose` 使用了 `proposal` 阶段未批准的运行时
-
-## 关键检查清单
-
-- 是否已完成 registry 预检
-- 是否已明确 `render_runtime` 并获得用户批准
-- 样片是否已获批
-- 资产清单是否完整且注明来源
-- Layer 3 技能引用是否齐全
-- 是否已通过 `character_animation_reviewer` 与 `final_review`
+- `character_design` lacks required actions or emotional range.
+- `rig_plan` lacks pivots for moving parts.
+- `pose_library` has no readable acting poses.
+- `action_timeline` has actions that cannot be rendered by the rig.
+- Compose used a runtime not approved in proposal.

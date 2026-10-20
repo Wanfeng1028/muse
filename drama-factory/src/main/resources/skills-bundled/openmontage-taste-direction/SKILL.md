@@ -6,127 +6,129 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 品味方向（Taste Direction）
+# Taste Direction - Meta Skill
 
-在锁定视觉识别之前使用本技能。适用于情绪板、提案包、自定义剧本、工作室式艺术构图、图像参考批次，以及品牌色彩浓重的视频项目。
+## When to Use
 
-本技能定义剧坊的「视频品味档案」契约。它不是一套前端样式配方，产出物是一份紧凑的品味画像，会随提案、场景规划、素材提示词、剪辑、合成与审阅一路传递。
+Use this before committing to visual identity, mood boards, proposal packets, custom playbooks, atelier composition, image reference batches, or brand-heavy videos.
 
-## 输出契约
+This skill defines OpenMontage's video taste profile contract. Do not treat it as a frontend style recipe. The output is a compact video taste profile that travels through proposal, scene planning, asset prompts, edit, compose, and review.
 
-当提案或剧本需要更强的创作契约时，写出 `taste_profile`：
+## Output Contract
+
+Write a `taste_profile` when the proposal or playbook needs a stronger creative contract:
 
 ```json
 {
-  "design_read": "高端专家讲解：冷静权威、高信任度、少装饰。",
+  "design_read": "Premium expert explainer: calm authority, high trust, low ornament.",
   "visual_variance": 4,
   "motion_intensity": 3,
   "information_density": 5,
-  "palette_discipline": "中性底色，单一强调色，不使用装饰性渐变。",
-  "layout_variation": "在编辑式分屏与数据导向的全屏场景之间交替。",
-  "reference_strategy": "在批量生成素材之前，为每个场景族准备一张参考静帧。",
-  "anti_patterns": ["通用的 AI 紫色渐变背景"],
-  "quality_gates": ["每个场景都应自然传达设计读解，而不依赖解释性标签。"]
+  "palette_discipline": "Neutral base, one accent, no decorative gradients.",
+  "layout_variation": "Alternate editorial split frames with data-forward full-frame scenes.",
+  "reference_strategy": "One reference still per scene family before asset generation.",
+  "anti_patterns": ["generic AI-purple gradient backgrounds"],
+  "quality_gates": ["Every scene should carry the design read without explanatory labels."]
 }
 ```
 
-`visual_variance`、`motion_intensity`、`information_density` 均为 1-10 的整数旋钮：
+`visual_variance`, `motion_intensity`, and `information_density` are 1-10 integer dials:
 
-| 旋钮 | 低 | 中 | 高 |
+| Dial | Low | Mid | High |
 |------|-----|-----|------|
-| `visual_variance` | 紧密体系，语法重复 | 有意图的场景族模式 | 每个节拍可使用不同的视觉模式 |
-| `motion_intensity` | 平静定格，小幅转场 | 明确的动效强调与揭示 | 快速动态语言，频繁方向切换 |
-| `information_density` | 一帧一个想法 | 主想法加支撑细节 | 密集仪表盘、图解或分层标注 |
+| `visual_variance` | Tight system, repeated grammar | Pattern with purposeful scene families | Each beat may use a distinct visual mode |
+| `motion_intensity` | Calm holds, small transitions | Clear motion accents and reveals | Fast kinetic language, frequent directional changes |
+| `information_density` | One idea per frame | Main idea plus support detail | Dense dashboards, diagrams, or layered callouts |
 
-## 流程
+## Process
 
-### 1. 做出设计读解
+### 1. Make a Design Read
 
-在选择剧本或配色之前，先说明这支视频应当带来什么感受，以及原因。读解要与受众、承诺、平台与主题挂钩。
+Before choosing a playbook or palette, state what the video needs to feel like and why. Tie it to the audience, promise, platform, and subject matter.
 
-好的读解是具体的：
+Good reads are specific:
 
-- “面向投资人的 AI 发布：精准、克制、可信；避免浮夸视觉。”
-- “青少年科学短片：明亮、好奇、有动感；让看不见的物理变得可触。”
-- “安全事件讲解：紧张、精准；高对比、少装饰、证据易读。”
+- "Investor-facing AI launch: precise, restrained, and credible; avoid hype visuals."
+- "Youth science short: bright, curious, and kinetic; make invisible physics feel tactile."
+- "Security incident explainer: tense and surgical; high contrast, low ornament, readable evidence."
 
-差的读解只有形容词：
+Weak reads are only adjectives:
 
-- “现代又干净”
-- “电影感”
-- “专业”
+- "modern and clean"
+- "cinematic"
+- "professional"
 
-### 2. 设定三个旋钮
+### 2. Set the Three Dials
 
-在写概念之前先定下 `visual_variance`、`motion_intensity`、`information_density`。这些数字应能解释后续的取舍：
+Pick `visual_variance`, `motion_intensity`, and `information_density` before writing concepts. These numbers should explain later choices:
 
-- 高动效 + 低信息密度，意味着短促动态节拍，而非密集图解。
-- 低动效 + 高信息密度，意味着稳定画面、图表构建与长可读停留。
-- 高变化度意味着场景族需要更强的锚点：反复出现的字体、配色、构图或声音动机。
+- High motion plus low information means short kinetic beats, not dense diagrams.
+- Low motion plus high information means stable frames, chart builds, and long readable holds.
+- High variance means scene families need stronger anchors: recurring type, palette, framing, or sound motif.
 
-### 3. 选择风格路径
+### 3. Choose a Style Path
 
-依据旋钮选择三条路径之一：
+Use the dials to pick one of three paths:
 
-| 路径 | 适用场景 | 产物 |
-|------|----------|------|
-| 既有剧本 | 预设能诚实地匹配读解 | `production_plan.playbook` |
-| 自定义剧本 | 主题有自成一体的视觉世界 | 生成的 `styles/<name>.yaml` 并带 `taste_profile` |
-| 工作室艺术指导 | 主打作品需要一次性的视觉语言 | `production_plan.art_direction` 加 `taste_profile` |
+| Path | Use When | Artifact |
+|------|----------|----------|
+| Existing playbook | A preset honestly matches the read | `production_plan.playbook` |
+| Custom playbook | The subject has its own visual world | generated `styles/<name>.yaml` with `taste_profile` |
+| Atelier art direction | Hero work needs a one-off language | `production_plan.art_direction` plus `taste_profile` |
 
-不要让预设的可用性压过设计读解。若内容需要自定义视觉世界，就写自定义剧本或艺术指导。
+Do not let preset availability override the design read. If the content calls for a custom visual world, write the custom playbook or art direction.
 
-### 4. 规划参考
+### 4. Plan References
 
-若项目使用 AI 图像/视频、情绪板、品牌素材或工作室式构图，需制定参考策略：
+If the work uses AI image/video, mood boards, brand assets, or atelier composition, create a reference strategy:
 
-- 每个场景族或主要节拍使用一张参考静帧。
-- 不要把整个方向压缩进一张情绪板图片。
-- 品牌/产品项目在生成素材前，先创建或检查品牌套件。
-- 屏幕演示类项目，先检查真实 UI 并写一份重设计/审计说明，再叠加样式。
+- Use one reference still per scene family or major beat.
+- Do not compress the whole direction into one mood board image.
+- For brand/product work, create or inspect a brand kit before asset generation.
+- For screen demos, inspect the real UI and write a redesign/audit note before styling overlays.
 
-### 5. 将画像向下游传递
+### 5. Carry the Profile Downstream
 
-提案阶段：
+At proposal stage:
 
-- 写入 `production_plan.taste_profile`。
-- 在 `decision_log` 中记录风格/剧本选择。
-- 说明旋钮如何影响时长、构图模式与素材生成。
+- Add `production_plan.taste_profile`.
+- Log style/playbook selection in `decision_log`.
+- Explain how the dials affect runtime, composition mode, and asset generation.
 
-场景规划阶段：
+At scene planning:
 
-- 依据 `visual_variance` 变换布局。
-- 屏幕文本与标注控制在 `information_density` 范围内。
-- 依据 `motion_intensity` 确定转场族与运镜。
+- Vary layouts according to `visual_variance`.
+- Keep on-screen text and callouts within `information_density`.
+- Set transition families and camera movement from `motion_intensity`.
 
-素材阶段：
+At assets:
 
-- 将配色、质感、构图与参考策略写入图像/视频提示词。
-- 当画像依赖视觉微妙差异时，先出参考静帧再批量生成。
+- Include palette, texture, framing, and reference strategy in image/video prompts.
+- Generate reference stills before full batches when the profile depends on visual nuance.
 
-剪辑/合成阶段：
+At edit/compose:
 
-- 停留时长与剪辑节奏要匹配动效旋钮。
-- 避免添加违反设计读解的装饰性叠加。
+- Match hold times and cut rhythm to the motion dial.
+- Avoid adding decorative overlays that violate the design read.
 
-## 反默认清单
+## Anti-Default Checklist
 
-推进之前先标记以下情况：
+Flag these before moving forward:
 
-- 没有主题理由的通用 AI 紫色渐变或默认企业蓝视觉。
-- 当 `visual_variance` 为 4 及以上时，每次剪切都用同一种转场。
-- 动效过强导致旁白难以跟上。
-- 当 `information_density` 为 4 或更低时仍使用密集标注。
-- 纯文字幻灯片，除非设计读解有意要求字体叙事。
-- 情绪板好看但不能映射到具体场景族。
-- 品牌/产品视频始终没有展示或检查真实的品牌/产品表面。
+- Generic AI-purple gradients or default corporate-blue visuals with no subject reason.
+- Same transition on every cut when `visual_variance` is 4 or higher.
+- Kinetic motion that makes narration harder to follow.
+- Dense callouts when `information_density` is 4 or lower.
+- Text-only slides unless the design read intentionally calls for typographic storytelling.
+- Mood boards that look attractive but do not map to concrete scene families.
+- Brand/product videos that never show or inspect the real brand/product surface.
 
-## 审阅钩子
+## Review Hooks
 
-审阅者应检查：
+Reviewer should check:
 
-- `taste_profile.design_read` 是否解释了真实的创作取舍？
-- 场景规划与剪辑是否尊重三个旋钮？
-- 反模式是否被真正规避？
-- 当 AI 图像/视频或工作室作品依赖视觉微妙差异时，参考策略是否到位？
-- 若替换标题后这支视频可以属于任何主题，说明品味方向过于泛泛。
+- Does `taste_profile.design_read` explain a real creative choice?
+- Do scene plans and edits respect the three dials?
+- Are anti-patterns actually avoided?
+- Is the reference strategy present when AI images/video or atelier work depends on visual nuance?
+- Could this video belong to any topic after replacing the title? If yes, the taste direction is too generic.

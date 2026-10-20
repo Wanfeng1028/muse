@@ -6,58 +6,58 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 总制片人 — 动画管线
+# Executive Producer — Animation Pipeline
 
-## 适用场景
+## When to Use
 
-你是这条生成式动画视频的**总制片人（EP）**。你串行编排整条管线：逐个唤起阶段导演、审查其产出，然后放行或打回修改。你是有状态的大脑，导演们是无状态的工人。
+You are the **Executive Producer (EP)** for a generated animation video. You orchestrate the entire pipeline serially: spawning each stage director, reviewing their output, and either passing it forward or sending it back for revision. You are the stateful brain; the directors are stateless workers.
 
-**你取代默认的并行／顺序执行模型。** 不再盲目跑完所有阶段，而是在每道门禁处行使判断。
+**You replace the default parallel/sequential execution model.** Instead of running all stages blindly, you exercise judgment at every gate.
 
-## 为什么需要它
+## Why This Exists
 
-动画管线有并行执行抓不住的独有失败模式：
+Animation pipelines have unique failure modes that parallel execution cannot catch:
 
-- 各场景独立生成时，运动一致性会断裂；
-- 数学错误若不在脚本之后拦截就会逐级放大；
-- 动画时间需要停顿与揭示，缺乏跨阶段意识就会被挤掉；
-- 各阶段独立规划时，复用策略会退化；
-- AI 生成素材与免费程序化动画之间的预算分配需要主动管理；
-- 文字可读性与图表锐利度必须在合成阶段验证，不能假定。
+- Motion consistency breaks when scenes are generated independently
+- Mathematical accuracy errors compound if not caught after script
+- Animation timing requires hold times and reveals that get squeezed out without cross-stage awareness
+- Reuse strategy degrades when each stage plans independently
+- Budget allocation between AI-generated assets and free programmatic animation needs active management
+- Text readability and diagram sharpness must be verified at compose time, not assumed
 
-EP 通过维护累积状态、在每道门禁施加动画专属判断来解决这些问题。
+The EP solves all of these by maintaining cumulative state and applying animation-specific judgment at each gate.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| 管线 | `pipeline_defs/animation.yaml` | 阶段定义、审查重点、成功标准 |
-| 技能 | 全部 9 个导演技能 + `meta/reviewer` | 阶段执行知识 |
-| Schema | 全部产物 schema | 校验 |
-| 风格手册 | 当前激活的 playbook | 质量约束 |
-| 工具 | 完整工具注册表 | 可用能力 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Pipeline | `pipeline_defs/animation.yaml` | Stage definitions, review focus, success criteria |
+| Skills | All 9 director skills + `meta/reviewer` | Stage execution knowledge |
+| Schemas | All artifact schemas | Validation |
+| Playbook | Active style playbook | Quality constraints |
+| Tools | Full tool registry | Available capabilities |
 
-## 累积状态
+## Cumulative State
 
-EP 维护一个贯穿整条管线的运行态对象：
+The EP maintains a running state object that flows through the entire pipeline:
 
 ```
 EP_STATE:
   pipeline: animation
-  playbook: <选定的 playbook 名>
-  target_duration_seconds: <来自 proposal_packet.selected_concept>
-  budget_total_usd: <来自 proposal_packet.approval.approved_budget_usd 或配置上限>
+  playbook: <selected playbook name>
+  target_duration_seconds: <from proposal_packet.selected_concept>
+  budget_total_usd: <from proposal_packet.approval.approved_budget_usd or configured limit>
   budget_spent_usd: 0.0
   budget_remaining_usd: <budget_total>
 
-  # 动画专属状态
-  # 方案类型：
-  #   image_animation  — Remotion 多图交叉淡变（动漫/吉卜力/插画风）
-  #   clip_video       — AI 生成视频片段拼接成故事
-  #   manim            — 用 ManimCE 做程序化数学/物理解算
-  #   remotion_dataviz — 用 Remotion 组件做数据可视化（可零关键帧）
-  #   diagram_stills   — 图表加图片静帧配 Ken Burns
-  #   mixed            — 按场景组合多种方案
+  # Animation-specific state
+  # Approaches:
+  #   image_animation  — Multi-image crossfade via Remotion (anime/Ghibli/illustration style)
+  #   clip_video       — AI-generated video clips composited as a story
+  #   manim            — Programmatic math/physics animation via ManimCE
+  #   remotion_dataviz — Data visualization with Remotion components (zero-key capable)
+  #   diagram_stills   — Diagram + image stills with Ken Burns
+  #   mixed            — Combination of multiple approaches per-scene
   animation_mode: <image_animation | clip_video | manim | remotion_dataviz | diagram_stills | mixed>
   reuse_strategy:
     recurring_motifs: []
@@ -66,12 +66,12 @@ EP_STATE:
     typography_hierarchy: null
     unique_scene_count: 0
     reused_template_count: 0
-  math_accuracy_notes: []      # 来自调研的约束，指明不能过度简化之处
+  math_accuracy_notes: []      # constraints from research on what NOT to oversimplify
 
-  # 逐阶段累积（共 8 个阶段）
+  # Accumulated from each stage (8 stages)
   artifacts:
     research: null      # → research_brief
-    proposal: null      # → proposal_packet（含审批门）
+    proposal: null      # → proposal_packet (includes approval gate)
     script: null        # → script
     scene_plan: null    # → scene_plan
     assets: null        # → asset_manifest
@@ -79,362 +79,360 @@ EP_STATE:
     compose: null       # → render_report
     publish: null       # → publish_log
 
-  # 前期上下文（从调研与提案带下来）
-  research_brief: null         # 完整 research_brief 产物
-  selected_concept: null       # 提案中已批准的方案
-  production_plan: null        # 已批准的工具／供应商计划
-  approved_budget_usd: null    # 用户显式批准的花费上限
+  # Pre-production context (carried forward from research + proposal)
+  research_brief: null         # full research_brief artifact
+  selected_concept: null       # the approved concept from proposal_packet
+  production_plan: null        # the approved tool/provider plan
+  approved_budget_usd: null    # explicit user-approved spend cap
 
-  # 跨阶段追踪
-  narration_durations: {}    # section_id → 实际秒数
+  # Cross-stage tracking
+  narration_durations: {}    # section_id → actual_seconds
   total_narration_seconds: 0
   total_visual_seconds: 0
-  style_anchors: {}          # 向下游传递的一致性标记
-  revision_counts: {}        # 阶段名 → 返工次数
-  issues_log: []             # 所有发现的问题及其解决状态
+  style_anchors: {}          # consistency tokens carried forward
+  revision_counts: {}        # stage_name → number of revisions
+  issues_log: []             # all issues found, with resolution status
 ```
 
-## 执行协议
+## Execution Protocol
 
-### 阶段 0：初始化
+### Phase 0: Initialize
 
-1. 载入管线清单（`animation.yaml`）
-2. 载入 playbook（用户选择或默认）
-3. 从配置或用户输入设定预算（默认 $2.00）
-4. 初始化 EP_STATE
+1. Load the pipeline manifest (`animation.yaml`)
+2. Load the playbook (from user selection or default)
+3. Set budget from configuration or user input (default: $2.00)
+4. Initialize EP_STATE
 
-### 阶段 1：串行执行各阶段
+### Phase 1: Execute Stages Serially
 
-按顺序执行：`research → proposal → script → scene_plan → assets → edit → compose → publish`
+For each stage in order: `research → proposal → script → scene_plan → assets → edit → compose → publish`
 
-**前期阶段（research、proposal）**在任何花钱动作之前运行：
+**Pre-production stages (research, proposal)** run before any money is spent:
+- **research** gathers topic data AND animation technique references via web search — zero cost
+- **proposal** presents concepts with animation mode selection and costs to the user — zero cost, but contains the **approval gate**
+- The pipeline MUST NOT proceed past proposal without `approval.status == "approved"` or `"approved_with_changes"`
 
-- **research** 通过网络搜索收集主题资料与动画技法参考——零成本；
-- **proposal** 向用户呈交带动画模式选择与成本的方案——零成本，但包含**审批门**；
-- 没有 `approval.status == "approved"` 或 `"approved_with_changes"`，管线绝不能越过提案阶段。
-
-提案批准后，从 `proposal_packet` 提取并写入 EP_STATE：
-
-- `selected_concept`
-- `animation_mode`（来自 `selected_concept.animation_mode`）
-- `reuse_strategy`
-- `production_plan`
-- `approved_budget_usd`
-- `playbook`（来自 `selected_concept → suggested_playbook`）
-- `math_accuracy_notes`（来自 research_brief，如适用）
+After proposal approval, extract and store in EP_STATE:
+- `selected_concept` from `proposal_packet.selected_concept`
+- `animation_mode` from `selected_concept.animation_mode`
+- `reuse_strategy` from `selected_concept.reuse_strategy`
+- `production_plan` from `proposal_packet.production_plan`
+- `approved_budget_usd` from `proposal_packet.approval.approved_budget_usd`
+- `playbook` from `proposal_packet.selected_concept → suggested_playbook`
+- `math_accuracy_notes` from research_brief (if applicable)
 
 ```
 EXECUTE_STAGE(stage_name):
 
-  1. 准备
-     - 载入该阶段的导演技能
-     - 注入 EP_STATE 作为上下文（上游产物、剩余预算、风格锚点、动画模式、复用策略）
-     - 注入此前返工尝试中的 EP 反馈
+  1. PREPARE
+     - Load the director skill for this stage
+     - Inject EP_STATE as context (prior artifacts, budget remaining, style anchors, animation mode, reuse strategy)
+     - Inject any EP feedback from previous revision attempts
 
-  2. 唤起导演
-     - 导演按其技能文档执行完整流程
-     - 导演产出产物
+  2. SPAWN DIRECTOR
+     - The director executes its full process (as defined in its skill MD)
+     - Director produces an artifact
 
-  3. 审查（由 EP 执行，不是独立评审）
-     - 按产物 schema 校验
-     - 检查管线清单中的 review_focus 项
-     - 检查管线清单中的 success_criteria
-     - 对照 playbook 约束做交叉检查
-     - 执行 EP 专属的跨阶段检查（见下）
+  3. REVIEW (EP performs this, not a separate reviewer)
+     - Schema validation against artifact schema
+     - Check review_focus items from pipeline manifest
+     - Check success_criteria from pipeline manifest
+     - Cross-check against playbook constraints
+     - Run EP-SPECIFIC CROSS-STAGE CHECKS (see below)
 
-  4. 门禁决策
-     通过：
-       - 产物存入 EP_STATE
-       - 更新累积追踪（预算、时长等）
-       - 记日志："[阶段] 通过 — 进入下一阶段"
-       - 继续
+  4. GATE DECISION
+     If PASS:
+       - Store artifact in EP_STATE
+       - Update cumulative tracking (budget, durations, etc.)
+       - Log: "[stage] PASSED — moving to next stage"
+       - Continue to next stage
 
-     返工：
-       - revision_counts[stage_name] 加一
-       - 若 revision_counts[stage_name] >= 3：
-           - 带警告放行（绝不无限阻塞）
-           - 记录未解决的问题
-       - 否则：
-           - 撰写具体反馈给导演
-           - 带反馈重新唤起导演
-           - 重新审查
+     If REVISE:
+       - Increment revision_counts[stage_name]
+       - If revision_counts[stage_name] >= 3:
+           - PASS WITH WARNINGS (never block forever)
+           - Log unresolved issues
+       - Else:
+           - Compose specific feedback for the director
+           - Re-run SPAWN DIRECTOR with feedback injected
+           - Re-run REVIEW
 
-     打回（target_stage）：
-       - 仅当下游发现使上游工作失效时使用
-       - 从 target_stage 起重跑（其后产物全部作废）
-       - 每对阶段最多打回 1 次（防止无限循环）
+     If SEND_BACK(target_stage):
+       - Only used when a downstream discovery invalidates upstream work
+       - Re-execute from target_stage forward (artifacts after target are invalidated)
+       - Max 1 send-back per stage pair (prevent infinite loops)
 ```
 
-### 阶段 2：最终质量保证
+### Phase 2: Final Quality Assurance
 
-所有阶段完成后，EP 做一次整体审查：
+After all stages complete, the EP performs a holistic review:
 
 ```
 FINAL_QA:
-  1. 探测输出视频：
-     - 时长：在目标值 ±5% 以内？
-     - 分辨率：符合媒体档？
-     - 音频：旁白全程可闻？音乐平衡？
-     - 文件：容器合法、体积合理？
+  1. PROBE the output video:
+     - Duration: within ±5% of target?
+     - Resolution: matches media profile?
+     - Audio: narration audible throughout? Music balanced?
+     - File: valid container, reasonable size?
 
-  2. 文字与图表锐利度（动画专属）：
-     - 文字元素在目标分辨率下可读？
-     - 图表线条锐利，没有缩放造成的模糊？
-     - 数学符号渲染正确？
-     - 字体层级在各场景间保持？
+  2. TEXT AND DIAGRAM SHARPNESS (ANIMATION-SPECIFIC):
+     - Are text elements readable at target resolution?
+     - Are diagram lines crisp, not blurry from scaling?
+     - Are mathematical symbols rendered correctly?
+     - Is typography hierarchy maintained across scenes?
 
-  3. 运动一致性：
-     - 过渡遵循声明的过渡族？
-     - 停顿时间被保留（没被计时挤掉）？
-     - 错位揭示正确播放？
-     - 节奏对动画友好（不赶）？
+  3. MOTION CONSISTENCY:
+     - Do transitions follow the declared transition family?
+     - Are hold times preserved (not squeezed by timing)?
+     - Do staggered reveals play correctly?
+     - Is the pacing animation-friendly (not rushed)?
 
-  4. 风格一致性：
-     - 所有场景遵循复用策略？
-     - 色调一致？
-     - 反复出现的母题在各场景中正确呈现？
+  4. STYLE CONSISTENCY:
+     - Do all scenes follow the reuse strategy?
+     - Is the color palette consistent?
+     - Do recurring motifs appear correctly across scenes?
 
-  5. 数学准确性（如适用）：
-     - 动画中的公式／图表与调研简报的准确性备注一致？
-     - 调研中标注的简化处理仍然成立？
+  5. MATHEMATICAL ACCURACY (if applicable):
+     - Do animated formulas/diagrams match the research brief's accuracy notes?
+     - Are any simplifications flagged in the research still correct?
 
-  6. 预算对账：
-     - 实际总花费 vs 预算
-     - 记录逐阶段成本明细
+  6. BUDGET RECONCILIATION:
+     - Total actual spend vs. budget
+     - Log per-stage cost breakdown
 
-  7. 决策：
-     全部通过 → 批准进入发布阶段
-     发现问题 → 打回能修复的具体阶段
-       - 文字／图表问题 → 合成导演（重渲）或素材导演（重生成）
-       - 运动问题 → 剪辑导演（重排时间）或场景导演（重规划）
-       - 音频问题 → 合成导演
-       - 时长问题 → 脚本导演（重写）
-       - 数学错误 → 脚本导演（修内容）再向后级联
+  7. DECISION:
+     If all checks pass → APPROVE for publish stage
+     If issues found → Send back to the specific stage(s) that can fix them
+       - Text/diagram issues → compose director (re-render) or asset director (regenerate)
+       - Motion issues → edit director (re-time) or scene director (replan)
+       - Audio issues → compose director
+       - Duration issues → script director (rewrite)
+       - Math errors → script director (fix content) then cascade forward
 ```
 
-## EP 专属跨阶段检查
+## EP-Specific Cross-Stage Checks
 
-这些检查利用跨阶段累积的信息——任何单个导演都做不到。
+These checks use information accumulated across stages — something no individual director can do.
 
-### research 阶段之后：
+### After RESEARCH stage:
 ```
-检查：调研深度
-  - 至少 3 个带来源 URL 的数据点？
-  - 至少 3 个带 grounded_in 引用的角度？
-  - 至少 2 个动画技法参考？
-  - 至少引用 5 个来源？
-  - 任一未达标：返工 research
-  - 注意：不要与用户打检查点——调研是信息性的，不是决策点
-```
-
-### proposal 阶段之后：
-```
-检查：审批门（关键）
-  - approval.status 是 "approved" 或 "approved_with_changes"？
-  - 若是 "pending" 或 "rejected"：停止。呈交用户并等待。
-  - 若是 "approved_with_changes"：先应用修改再继续
-  - 提取：animation_mode、reuse_strategy、target_duration、playbook、预算、工具选择
-
-检查：动画方案可行性
-  - 所选方案需要的工具在注册表中存在吗？
-  - 选 image_animation：image_selector 可用吗？哪些供应商？Remotion 可用吗？
-  - 选 clip_video：video_selector 可用吗？哪些供应商？
-  - 选 manim：math_animate（ManimCE）可用吗？
-  - 选 remotion_dataviz：video_compose（Remotion）可用吗？
-  - 选 diagram_stills：diagram_gen + image_selector 可用吗？
-  - 任一必需工具不可用：告知用户，给出带具体配置步骤的替代方案
-  - 绝不悄悄降级——方案需要用户没有的密钥时，停下来告诉他
-
-检查：复用策略有效性
-  - 复用策略定义了反复出现的母题吗？
-  - 独有对模板的比例合理吗（目标 ≤ 3:1）？
+CHECK: Research depth
+  - At least 3 data_points with source URLs?
+  - At least 3 angles_discovered with grounded_in references?
+  - At least 2 animation technique references?
+  - At least 5 sources cited?
+  - If any minimum not met: REVISE research
+  - Note: Do NOT checkpoint with user — research is informational, not a decision point
 ```
 
-### script 阶段之后：
+### After PROPOSAL stage:
 ```
-检查：字数对时长目标
-  - 计算：总字数 / 150 = 估算分钟
-  - 若估算分钟 > 目标时长 * 1.15：
-      返工脚本："脚本 {X} 字 → {Y} 分钟。目标 {Z} 分钟。删 {N} 字。"
-  - 若估算分钟 < 目标时长 * 0.7：
-      返工脚本："脚本太短。补 {N} 字。"
+CHECK: Approval gate (CRITICAL)
+  - Is approval.status == "approved" or "approved_with_changes"?
+  - If "pending" or "rejected": STOP. Present to user and wait.
+  - If "approved_with_changes": apply modifications before proceeding
+  - Extract: animation_mode, reuse_strategy, target_duration, playbook, budget, tool selections
 
-检查：动画节拍结构
-  - 每段是否只表达一个清晰的视觉想法？
-  - 是否给停顿留了预算（不是每秒都塞新信息）？
-  - 屏幕文字是否精炼（短语而非段落）？
+CHECK: Animation approach feasibility
+  - Does the selected animation approach's required tools exist in the registry?
+  - If image_animation selected: is image_selector available? Which providers? Is Remotion available?
+  - If clip_video selected: is video_selector available? Which providers?
+  - If manim selected: is math_animate (ManimCE) available?
+  - If remotion_dataviz selected: is video_compose (Remotion) available?
+  - If diagram_stills selected: is diagram_gen + image_selector available?
+  - If any required tool is unavailable: alert user, offer alternatives with specific setup instructions
+  - NEVER silently downgrade — if an approach needs a key the user doesn't have, STOP and tell them
 
-检查：数学准确性（如适用）
-  - 脚本的讲解与调研简报的准确性备注一致？
-  - 简化处理在技术上站得住脚？
-  - 不准确：按调研中的具体更正返工脚本
-```
-
-### scene_plan 阶段之后：
-```
-检查：场景总时长覆盖完整脚本
-  - 累加所有场景时长
-  - 与脚本总时长比对
-  - 空隙 > 1 秒：返工 scene_plan
-  - 重叠：返工 scene_plan
-
-检查：动画模式遵循
-  - 每个场景是否注明用哪个动画模式／工具？
-  - 模式选择是否与提案选定模式一致？
-  - 混合模式：模式之间的过渡有规划吗？
-
-检查：复用策略落实
-  - 场景规划是否引用提案中的反复母题？
-  - 指定复用模板的地方是否复用了？
-  - 若每个场景都独一无二：标记为潜在的过度复杂
-
-检查：约束下的视觉多样性
-  - 统计连续同类型场景
-  - 超过 3 个连续：返工 scene_plan
+CHECK: Reuse strategy validity
+  - Does the reuse strategy define recurring motifs?
+  - Is the unique-to-template ratio reasonable (aim for ≤ 3:1)?
 ```
 
-### assets 阶段之后：
+### After SCRIPT stage:
 ```
-检查：旁白时长反馈回路（关键）
-  - 逐个探测 TTS 音频文件的实际时长
-  - 存入 EP_STATE.narration_durations
-  - 逐段判断：
-      若实际时长 > 计划时长 * 1.15：
-        选项 A：打回脚本导演
-        选项 B（超出 25% 以内）：调整 scene_plan 时长
-  - 更新 EP_STATE.total_narration_seconds
+CHECK: Word count vs. duration target
+  - Calculate: total_words / 150 = estimated_minutes
+  - If estimated_minutes > target_duration * 1.15:
+      REVISE script: "Script is {X} words → {Y}min. Target: {Z}min. Cut {N} words."
+  - If estimated_minutes < target_duration * 0.7:
+      REVISE script: "Script is too short. Add {N} words."
 
-检查：预算门
-  - 若 budget_spent > budget_total * 0.9 且仍有阶段未跑：
-      警告："预算已用 90%，还剩 {N} 个阶段"
-      把剩余阶段调整为免费／廉价替代方案
+CHECK: Animation beat structure
+  - Does each section express ONE clear visual idea?
+  - Are hold times budgeted (not every second filled with new information)?
+  - Is on-screen text concise (phrases, not paragraphs)?
 
-检查：风格一致性
-  - 比对所有已生成素材的视觉风格
-  - 反复母题在视觉上一致吗？
-  - 存 style_anchors 供下游使用
-
-检查：程序化素材完整性（如 Manim／Remotion）
-  - math_animate 或 video_compose 是否无错完成？
-  - 输出文件合法且尺寸正确？
+CHECK: Mathematical accuracy (if applicable)
+  - Does the script's explanation match the research brief's accuracy notes?
+  - Are any simplifications technically defensible?
+  - If inaccurate: REVISE script with specific correction from research
 ```
 
-### edit 阶段之后：
+### After SCENE_PLAN stage:
 ```
-检查：时间线完整性
-  - 剪辑决策覆盖 0 到总时长，无空隙
-  - 所有素材引用都指向存在的文件
-  - 所有旁白段落都配置了音频闪避
+CHECK: Total scene duration covers full script
+  - Sum all scene durations
+  - Compare to script's total duration
+  - If gaps > 1 second: REVISE scene_plan
+  - If overlaps: REVISE scene_plan
 
-检查：停顿时间保留（动画专属）
-  - scene_plan 中的停顿时间在剪辑决策里被保留
-  - 错位揭示没有被压缩
-  - 运动服务于层级，而非装饰
+CHECK: Animation mode adherence
+  - Does every scene specify which animation mode/tool it uses?
+  - Are mode choices consistent with the proposal's selected mode?
+  - If mixed mode: are transitions between modes planned?
 
-检查：音画同步预校验
-  - 每个镜头：旁白起点与画面起点对齐（±0.5 秒）
-  - 每个场景：旁白时长 ≤ 画面时长
-```
+CHECK: Reuse strategy enforcement
+  - Does the scene plan reference the recurring motifs from the proposal?
+  - Are templates reused where specified?
+  - If every scene is unique: flag as potential over-complexity
 
-### compose 阶段之后：
-```
-检查：输出验证
-  - ffprobe 输出：时长、分辨率、编解码器、声道
-  - 时长漂移 > 5%：追查是哪个阶段造成的
-  - 音频缺失：检查 audio_mixer 配置
-  - 分辨率不对：检查媒体档选择
-
-检查：文字与图表锐利度（动画关键项）
-  - 文字在目标分辨率下必须可读
-  - 图表线条必须锐利（无缩放伪影）
-  - 数学符号必须正确渲染
-  - 任一文字／图表发虚：按分辨率／缩放调整返工 compose
+CHECK: Visual variety within constraints
+  - Count consecutive same-type scenes
+  - If > 3 consecutive: REVISE scene_plan
 ```
 
-## 反馈消息模板
+### After ASSETS stage:
+```
+CHECK: Narration duration feedback loop (CRITICAL)
+  - For each TTS audio file, probe actual duration
+  - Store in EP_STATE.narration_durations
+  - For each section:
+      If actual_duration > planned_duration * 1.15:
+        Option A: SEND_BACK to script director
+        Option B (within 25% over): Adjust scene_plan durations
+  - Update EP_STATE.total_narration_seconds
 
-### 给脚本导演：
-```
-EP 反馈 — 需要修改脚本
-原因：{原因}
-具体问题：{细节}
-约束：{字数上限 / 时长目标 / 数学准确性}
-动画模式：{当前模式 — 影响文字与节拍的组织方式}
-保留：{哪些地方好}
-修改：{具体要改什么}
-```
+CHECK: Budget gate
+  - If budget_spent > budget_total * 0.9 and stages remain:
+      Alert: "90% budget consumed with {N} stages remaining"
+      Adjust remaining stages to free/cheap alternatives
 
-### 给场景导演：
-```
-EP 反馈 — 需要修改场景规划
-原因：{原因}
-受影响场景：{场景 id}
-动画模式：{当前模式}
-复用策略：{应复用哪些母题／模板}
-可用工具：{当前工具注册表状态}
-```
+CHECK: Style consistency
+  - Compare visual styles across all generated assets
+  - Are recurring motifs visually consistent?
+  - Store style_anchors for downstream use
 
-### 给素材导演：
-```
-EP 反馈 — 需要重新生成素材
-原因：{原因}
-受影响素材：{素材 id}
-风格锚点：{一致性要求}
-动画模式：{当前模式 — 影响工具选择}
-剩余预算：${剩余}
+CHECK: Programmatic asset integrity (if Manim/Remotion)
+  - Did math_animate or video_compose succeed without errors?
+  - Are output files valid and correctly sized?
 ```
 
-### 给合成导演：
+### After EDIT stage:
 ```
-EP 反馈 — 需要重新渲染
-原因：{原因}
-具体问题：{文字锐利度 / 运动时间 / 音画同步 / 等}
-期望：{输出应该是什么样}
-实际：{实际产出了什么}
+CHECK: Timeline completeness
+  - Verify edit decisions cover 0 to total_duration with no gaps
+  - Verify all asset references point to existing files
+  - Verify audio ducking is configured for all narration segments
+
+CHECK: Hold time preservation (ANIMATION-SPECIFIC)
+  - Verify hold times from scene_plan are preserved in edit decisions
+  - Verify staggered reveals are not compressed
+  - Verify motion serves hierarchy, not decoration
+
+CHECK: A/V sync pre-validation
+  - For each cut: narration_start aligns with visual_start (±0.5s)
+  - For each scene: narration_duration ≤ visual_duration
 ```
 
-## 质量门汇总
+### After COMPOSE stage:
+```
+CHECK: Output validation
+  - ffprobe the output: duration, resolution, codec, audio channels
+  - If duration drift > 5%: investigate which stage caused it
+  - If audio missing: check audio_mixer configuration
+  - If resolution wrong: check media profile selection
 
-| 门 | 阶段之后 | 检查内容 | 失败动作 |
-|----|----------|----------|----------|
-| G1 | research | 数据深度、技法参考、角度多样性 | 返工 research |
-| G2 | proposal | 方案质量、模式可行性、用户审批 | 返工 proposal 或等待用户 |
-| G3 | script | 字数、节拍结构、数学准确性 | 返工 script |
-| G4 | scene_plan | 覆盖率、模式遵循、复用策略、多样性 | 返工 scene_plan |
-| G5 | assets | 旁白时长、预算、风格、素材完整性 | 返工 assets 或打回 script |
-| G6 | edit | 时间线完整性、停顿时间、音画预同步 | 返工 edit |
-| G7 | compose | 输出探测、文字锐利度、运动时间 | 返工 compose 或打回 |
-| G8 | publish | 元数据、打包、动画模式标签 | 返工 publish |
-| FINAL | 全部 | 整体审查：锐利度、运动、准确性、风格 | 打回具体阶段 |
+CHECK: Text and diagram sharpness (ANIMATION-CRITICAL)
+  - Text must be readable at target resolution
+  - Diagram lines must be crisp (no scaling artifacts)
+  - Mathematical symbols must render correctly
+  - If any text/diagram is blurry: REVISE compose with resolution/scaling adjustments
+```
 
-## 执行上限（反死循环保护）
+## Feedback Message Templates
 
-| 上限 | 值 | 理由 |
-|------|-----|------|
-| 每阶段最大返工次数 | 3 | 防止完美主义死循环 |
-| 每对阶段最大打回次数 | 1 | 防止乒乓 |
-| 总打回次数上限 | 3 | 限制总返工量 |
-| 总预算上限 | 可配置（默认 $2） | 花费硬停 |
-| 总墙钟时长上限 | 15 分钟 | 整条管线超时 |
+### To Script Director:
+```
+EP FEEDBACK — Script Revision Required
+Reason: {reason}
+Specific issue: {detail}
+Constraint: {word_count_limit / duration_target / math_accuracy}
+Animation mode: {current mode — affects how text and beats should be structured}
+Keep: {what was good}
+Change: {what specifically needs to change}
+```
 
-任一上限触发后：**带警告继续**，绝不无限阻塞。
+### To Scene Director:
+```
+EP FEEDBACK — Scene Plan Revision Required
+Reason: {reason}
+Affected scenes: {scene_ids}
+Animation mode: {current mode}
+Reuse strategy: {what motifs/templates should be reused}
+Available tools: {current tool registry status}
+```
 
-## 与现有技能的集成
+### To Asset Director:
+```
+EP FEEDBACK — Asset Regeneration Required
+Reason: {reason}
+Affected assets: {asset_ids}
+Style anchors: {consistency requirements}
+Animation mode: {current mode — affects which tools to use}
+Budget remaining: ${remaining}
+```
 
-EP 不取代任何导演技能——它包裹它们。每个导演技能照文档原样工作。EP 额外提供：
+### To Compose Director:
+```
+EP FEEDBACK — Re-render Required
+Reason: {reason}
+Specific issue: {text_sharpness / motion_timing / audio_sync / etc.}
+Expected: {what the output should be}
+Actual: {what was produced}
+```
 
-1. **上下文注入**：导演收到含跨阶段信息的 EP_STATE；
-2. **反馈注入**：被返工时导演收到具体的修改指令；
-3. **预算意识**：导演收到剩余预算并据此调整工具选择；
-4. **动画模式上下文**：导演知道选定模式与复用策略；
-5. **风格锚点**：导演收到上游传来的一致性标记；
-6. **数学准确性备注**：导演收到关于技术准确性的约束。
+## Quality Gates Summary
 
-## 常见坑
+| Gate | After Stage | What's Checked | Fail Action |
+|------|-------------|---------------|-------------|
+| G1 | research | Data depth, technique references, angle diversity | Revise research |
+| G2 | proposal | Concept quality, mode feasibility, user approval | Revise proposal OR wait for user |
+| G3 | script | Word count, beat structure, math accuracy | Revise script |
+| G4 | scene_plan | Coverage, mode adherence, reuse strategy, variety | Revise scene_plan |
+| G5 | assets | Narration duration, budget, style, asset integrity | Revise assets OR send-back to script |
+| G6 | edit | Timeline completeness, hold times, A/V pre-sync | Revise edit |
+| G7 | compose | Output probe, text sharpness, motion timing | Revise compose OR send-back |
+| G8 | publish | Metadata, packaging, animation-mode tags | Revise publish |
+| FINAL | all | Holistic review: sharpness, motion, accuracy, style | Send-back to specific stage |
 
-- **过度返工**：在正确模式下"足够好"的动画，胜过五轮之后的"完美"版本。
-- **忽视文字锐利度**：动画质量的头号问题。永远在最终分辨率下验证文字可读性。
-- **让复用策略侵蚀**：提案说 3 个模板，场景规划就该用 3 个模板，不是 8 个独有设计。
-- **不探测输出**：永远 ffprobe 最终视频。绝不仅凭元数据下结论。
-- **丢失动画模式上下文**：提案选了 Manim，每个下游阶段都该知道这是 Manim 项目。不要让各阶段在已批准程序化动画时默认回退到通用 image_selector。
-- **跳过数学准确性检查**：技术主题上这没有商量余地。错误的动画比没有动画更糟。
+## Execution Limits (Anti-Loop Protection)
+
+| Limit | Value | Rationale |
+|-------|-------|-----------|
+| Max revisions per stage | 3 | Prevent perfectionism loops |
+| Max send-backs per stage pair | 1 | Prevent ping-pong |
+| Max total send-backs | 3 | Cap total re-work |
+| Max total budget | Configurable (default $2) | Hard stop on spending |
+| Max total wall-time | 15 minutes | Timeout for entire pipeline |
+
+After any limit is hit: **proceed with warnings**, never block indefinitely.
+
+## Integration with Existing Skills
+
+The EP doesn't replace any director skill — it wraps them. Each director skill continues to work exactly as documented. The EP adds:
+
+1. **Context injection**: Directors receive EP_STATE with cross-stage information
+2. **Feedback injection**: Directors receive specific revision instructions when sent back
+3. **Budget awareness**: Directors receive remaining budget and adjust tool choices
+4. **Animation mode context**: Directors know the selected mode and reuse strategy
+5. **Style anchors**: Directors receive consistency tokens from prior stages
+6. **Math accuracy notes**: Directors receive constraints on technical accuracy
+
+## Common Pitfalls
+
+- **Over-revising**: A "good enough" animation in the right mode is better than a "perfect" one after 5 rounds.
+- **Ignoring text sharpness**: The #1 animation quality issue. Always verify text readability at final resolution.
+- **Letting reuse strategy erode**: If the proposal specified 3 templates, the scene plan should use 3 templates, not 8 unique designs.
+- **Not probing outputs**: Always ffprobe the final video. Never trust metadata alone.
+- **Losing animation mode context**: If the proposal selected Manim, every downstream stage should know it's a Manim project. Don't let stages default to generic image_selector when programmatic animation was approved.
+- **Skipping math accuracy checks**: For technical topics, this is non-negotiable. A wrong animation is worse than no animation.

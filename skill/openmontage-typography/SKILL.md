@@ -6,225 +6,229 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 视频排版规范
+# Typography for Video Production
 
-本技能用于在视频合成与素材生成阶段决定文字图层的字体、字号、位置与动效，保证可读性与平台合规。
+> Sources: School of Motion typography guides, legibility.info video text rules, Wave.video font
+> pairing research, EBU/SMPTE broadcast standards, Netflix subtitle spec, BBC subtitle guidelines,
+> WCAG 2.1 contrast requirements, Easings.net, postplanify.com safe zone data (2026)
 
-## 速查表
+## Quick Reference Card
 
 ```
-标题字号：      1080p 用 60-90px  |  4K 用 120-180px
-正文字号：      1080p 用 40-60px  |  4K 用 80-120px
-字幕字号：      1080p 不低于 42px |  约等于画面高度的 3-5%
-每行字符上限：  字幕 32-42 字     |  叠加层 30 字
-行数上限：      字幕 2 行         |  叠加层 3 行
-阅读速度：      每秒 21 字符      |  160-200 词/分钟
-标题安全区：    画面 80%（1080p 边距 192px）
-动作安全区：    画面 90%（1080p 边距 96px）
-字体族数量：    每个视频最多 1-2 种
-对比度：        最低 4.5:1，理想 7:1
-淡入时长：      透明度变化 0.3s | 位移/缩放 0.5-1.0s
+TITLE SIZE:       60-90px at 1080p  |  120-180px at 4K
+BODY SIZE:        40-60px at 1080p  |  80-120px at 4K
+SUBTITLE SIZE:    42px+ at 1080p    |  3-5% of video height
+MAX CHARS/LINE:   32-42 (subtitles) |  30 (overlays)
+MAX LINES:        2 (subtitles)     |  3 (overlays)
+READING SPEED:    21 chars/sec      |  160-200 WPM
+TITLE SAFE:       80% of frame (192px margin at 1080p)
+ACTION SAFE:      90% of frame (96px margin at 1080p)
+FONT FAMILIES:    1-2 per video maximum
+CONTRAST:         4.5:1 minimum, 7:1 optimal
+FADE DURATION:    0.3s opacity  |  0.5-1.0s slide/scale
 ```
 
-## 字体选择
+## Font Selection
 
-### 推荐字体
+### Recommended Video Fonts
 
-| 类别 | 字体 | 适用场景 |
-|------|------|----------|
-| 正文/字幕 | Inter、Open Sans、Roboto、Source Sans Pro、Lato、DM Sans | 正文、字幕、说明文字 |
-| 标题 | Montserrat Bold、Bebas Neue、Oswald Bold、Poppins Bold | 标题、章节名、关键数据 |
-| 编辑风格 | Playfair Display、Roboto Slab | 高端、电影感、纪录片 |
-| 系统安全 | Helvetica Neue、Arial、Avenir Next | 无法加载自定义字体时 |
+| Category | Fonts | Use For |
+|----------|-------|---------|
+| **Body / Captions** | Inter, Open Sans, Roboto, Source Sans Pro, Lato, DM Sans | All body text, subtitles, captions |
+| **Headlines** | Montserrat Bold, Bebas Neue, Oswald Bold, Poppins Bold | Titles, section headers, key stats |
+| **Editorial** | Playfair Display, Roboto Slab | Luxury, cinematic, documentary |
+| **System Safe** | Helvetica Neue, Arial, Avenir Next | When custom fonts unavailable |
 
-### 搭配原则
+### Font Pairing Rules
 
-- 单个视频只用 1-2 个字体族，超过会显得杂乱。
-- 用醒目的展示体做标题，用中性无衬线体做正文。
-- 标题与正文的字号差至少 50%。
-- 动效图形与字幕优先用无衬线体，运动中更清晰。
-- 衬线体仅用于电影感标题卡或编辑类内容。
-- 手写体与装饰体只能用于主视觉标题，绝不用于正文，也不要在运动中使用。
+- Limit to **1-2 font families** per video — more creates visual noise
+- Pair a **display/bold heading** font with a **neutral body** font
+- Size difference between title and body: at least **50% larger**
+- **Sans-serif** for motion graphics and captions (holds up in motion)
+- **Serif** only for cinematic title cards and editorial content
+- **Script/decorative** fonts: hero titles only, never body, never in motion
 
-### 可靠搭配
+### Proven Pairings
 
-| 标题字体 | 正文字体 | 风格 |
-|----------|----------|------|
-| Bebas Neue | Open Sans | 冲击力强，社媒广告 |
-| Montserrat Bold | Lato | 干净现代 |
-| Oswald Bold | Raleway | 对比强烈 |
-| Playfair Display | Inter | 编辑感 |
-| Poppins Bold | Poppins Light | 单字体族层级 |
+| Heading | Body | Style |
+|---------|------|-------|
+| Bebas Neue | Open Sans | High-impact, social ads |
+| Montserrat Bold | Lato | Clean modern |
+| Oswald Bold | Raleway | Strong contrast |
+| Playfair Display | Inter | Editorial |
+| Poppins Bold | Poppins Light | Single-family hierarchy |
 
-## 字号设定
+## Text Sizing
 
-### 最小可读字号
+### Minimum Readable Sizes
 
-| 元素 | 1080p（px） | 4K（px） | 备注 |
-|------|-------------|----------|------|
-| 标题/主视觉 | 60-90 | 120-180 | 需在缩略图尺寸下仍可辨认 |
-| 正文 | 40-60 | 80-120 | 可读性的绝对下限 |
-| 字幕 | 42 以上 | 84 以上 | 无障碍要求 |
-| 下三分之一姓名 | 48-60 | 96-120 | 使用粗体 |
-| 下三分之一职位 | 36-44 | 72-88 | 使用细体或常规体 |
-| 缩略图文字 | — | — | 在 120-160px 宽的展示尺寸下须可读 |
+| Element | 1080p (px) | 4K (px) | Notes |
+|---------|-----------|---------|-------|
+| Title / Hero text | 60-90 | 120-180 | Must be readable as thumbnail |
+| Body text | 40-60 | 80-120 | Absolute minimum for readability |
+| Subtitles | 42+ | 84+ | Accessibility requirement |
+| Lower third name | 48-60 | 96-120 | Bold weight |
+| Lower third role | 36-44 | 72-88 | Light/regular weight |
+| Thumbnail text | — | — | Must read at 120-160px wide display |
 
-## 安全区
+## Safe Zones
 
-### 广播标准
+### Broadcast Standard
 
-| 区域 | 覆盖比例 | 1080p 边距 | 用途 |
-|------|----------|------------|------|
-| 标题安全区 | 画面 80% | 水平 192px，垂直 108px | 所有文字必须落在其中 |
-| 动作安全区 | 画面 90% | 水平 96px，垂直 54px | 所有重要内容 |
+| Zone | Coverage | Margin at 1080p | Purpose |
+|------|----------|----------------|---------|
+| **Title Safe** | 80% of frame | 192px H, 108px V | All text must stay within |
+| **Action Safe** | 90% of frame | 96px H, 54px V | All important content |
 
-1920x1080 下标题安全区内框为 1536x864px；3840x2160 下为 3072x1728px。
+At 1920x1080: Title Safe = inner **1536x864px**
+At 3840x2160: Title Safe = inner **3072x1728px**
 
-### 竖屏平台安全区（1080x1920）
+### Platform-Specific Safe Zones (Vertical 1080x1920)
 
-| 平台 | 安全区 | 顶部占用 | 底部占用 | 右侧占用 |
-|------|--------|----------|----------|----------|
-| TikTok | 900x1492 | 108px | 320px | 120px |
-| Instagram Reels | 996x1400 | 210px | 310px | 84px |
-| YouTube Shorts | 984x1500 | 120px | 300px | 96px |
-| Facebook Reels | 1080x1520 | 100px | 300px | 60px |
-| Instagram Stories | 1080x1620 | 100px | 200px | — |
+| Platform | Safe Zone | Top Dead | Bottom Dead | Right Dead |
+|----------|-----------|----------|-------------|------------|
+| **TikTok** | 900x1492 | 108px | 320px | 120px |
+| **Instagram Reels** | 996x1400 | 210px | 310px | 84px |
+| **YouTube Shorts** | 984x1500 | 120px | 300px | 96px |
+| **Facebook Reels** | 1080x1520 | 100px | 300px | 60px |
+| **Instagram Stories** | 1080x1620 | 100px | 200px | — |
 
-跨平台通用安全区为居中 900x1400px，在所有上述平台都成立。
+**Universal cross-platform safe zone: 900x1400px centered** — works on all platforms.
 
-## 文字动画时序
+## Text Animation Timing
 
-### 屏幕停留时间
+### Duration on Screen
 
-- 按每秒 13 字符计算最短停留时间。
-- 30 字符一行至少停留 2.3 秒。
-- 通用换算：每 63 字符约 3 秒。
-- 标题卡通常 3-6 秒。
-- 动画结束后，每 13 字符至少静止保留 1 秒。
+- Reading speed: **13 characters per second** minimum dwell time
+- 30-character line: minimum **2.3 seconds**
+- General rule: **3 seconds per 63 characters**
+- Title cards: **3-6 seconds**
+- After animation completes, hold motionless for **1 second per 13 characters**
 
-### 动画时长
+### Animation Durations
 
-| 动画类型 | 时长 | 适用场景 |
-|----------|------|----------|
-| 淡入淡出 | 0.3-0.5s | 低调、通用 |
-| 位移/缩放入场 | 0.5-1.0s | 常规动效 |
-| 动态文字入场 | 1.0-2.0s | 强烈、有活力 |
-| 下三分之一入场 | 1.0-2.0s | 人物身份标识 |
-| 下三分之一出场 | 0.5-1.0s | 快速离场 |
+| Animation Type | Duration | Use Case |
+|---------------|----------|----------|
+| Fade in/out | 0.3-0.5s | Subtle, universal |
+| Slide / scale entrance | 0.5-1.0s | Standard motion graphics |
+| Kinetic text entrance | 1.0-2.0s | Bold, energetic |
+| Lower third entrance | 1.0-2.0s | Speaker identification |
+| Lower third exit | 0.5-1.0s | Quick departure |
 
-### 缓动曲线
+### Easing Curves
 
-| 缓动 | 三次贝塞尔 | 用途 |
-|------|------------|------|
-| easeOutCubic | `(0.33, 1, 0.68, 1)` | 文字入场（减速到位），默认选择 |
-| easeOutQuart | `(0.25, 1, 0.5, 1)` | 更干脆的入场，动态文字 |
-| easeInOutQuad | `(0.45, 0, 0.55, 1)` | 平滑的位置过渡 |
-| easeInOutCubic | `(0.65, 0, 0.35, 1)` | 缩放与透明度变化 |
-| easeInCubic | `(0.32, 0, 0.67, 0)` | 出场（加速离开） |
+| Easing | Cubic Bezier | Use For |
+|--------|-------------|---------|
+| **easeOutCubic** | `(0.33, 1, 0.68, 1)` | Text entrances (decelerates into place) — **default choice** |
+| **easeOutQuart** | `(0.25, 1, 0.5, 1)` | Snappier entrance, kinetic type |
+| **easeInOutQuad** | `(0.45, 0, 0.55, 1)` | Smooth position transitions |
+| **easeInOutCubic** | `(0.65, 0, 0.35, 1)` | Scale and opacity changes |
+| **easeInCubic** | `(0.32, 0, 0.67, 0)` | Exits (accelerates out) |
 
-文字动画不要使用线性缓动，会显得机械。
+**Never use linear easing** for text animations — it feels robotic.
 
-### 揭示手法
+### Reveal Techniques
 
-| 手法 | 观感 | 适用 |
-|------|------|------|
-| 遮罩揭示 | 电影感 | 标题卡、高端内容 |
-| 缩放弹出 | 有活力 | 社媒、短视频 |
-| 逐字符错开 | 自然流动 | 动态排版 |
-| 逐词同步 | 有代入感 | 口播字幕、TikTok |
-| 淡入 | 低调 | 商务、企业内容 |
+| Technique | Feel | Best For |
+|-----------|------|----------|
+| Mask reveal | Cinematic | Title cards, premium content |
+| Scale pop | Energetic | Social media, short-form |
+| Character stagger | Natural flow | Kinetic typography |
+| Word-by-word sync | Engaging | Talking-head captions, TikTok |
+| Fade | Subtle | Professional, corporate |
 
-## 字幕排版
+## Subtitle & Caption Typography
 
-### 规格
+### Specifications
 
-| 参数 | 取值 | 依据 |
-|------|------|------|
-| 字号 | 1080p 下不低于 42px | 无障碍标准 |
-| 每行字符上限 | 32-42 | 视平台而定 |
-| 行数上限 | 每块 2 行 | 通用标准 |
-| 行距 | 1.3 倍 | 可读性标准 |
-| 背景 | 半透明黑色，70-80% 不透明度 | 对比度要求 |
-| 替代样式 | 白字加 2-4px 深色描边 | 无底框风格 |
-| 最低对比度 | 4.5:1（白字黑底为 21:1） | WCAG AA |
-| 底边距 | 距边缘至少 60px | 移动端手势区避让 |
-| 画面宽度占比 | 不超过 90% | 标题安全区合规 |
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| Font size | 42px+ at 1080p | Accessibility standard |
+| Max characters per line | 32-42 | Platform dependent (see below) |
+| Max lines | 2 per block | Universal standard |
+| Line spacing | 1.3x | Readability standard |
+| Background | Semi-transparent black, 70-80% opacity | Contrast requirement |
+| Alternative style | White text + 2-4px dark stroke | No-box style |
+| Minimum contrast | 4.5:1 (white on black = 21:1) | WCAG AA |
+| Bottom margin | 60px from edge minimum | Mobile gesture clearance |
+| Within frame width | 90% maximum | Title safe compliance |
 
-### 各平台字符上限
+### Character Limits by Platform
 
-| 平台 | 每行最大字符数 |
-|------|----------------|
+| Platform | Max Chars/Line |
+|----------|---------------|
 | YouTube | 42 |
 | Netflix | 42 |
 | BBC | 37 |
-| 电视广播 | 37-42 |
-| 影院 | 40-45 |
+| TV broadcast | 37-42 |
+| Cinema | 40-45 |
 
-### 字幕时序
+### Caption Timing
 
-| 参数 | 取值 |
-|------|------|
-| 最短显示时长 | 1 秒 |
-| 最长显示时长 | 6-7 秒 |
-| 阅读速度 | 每秒 21 字符 |
-| 淡入过渡 | 0.3 秒 |
-| 相邻字幕间隔 | 2 帧 |
-| 与音频同步容差 | 3 帧以内 |
+| Parameter | Value |
+|-----------|-------|
+| Minimum duration | 1 second |
+| Maximum duration | 6-7 seconds |
+| Reading speed | 21 characters/second |
+| Fade-in transition | 0.3 seconds |
+| Gap between captions | 2 frames |
+| Sync tolerance | 3 frames of audio |
 
-### 各平台阅读速度
+### Reading Speed by Platform
 
-| 平台 | 词/分钟 |
-|------|---------|
+| Platform | WPM |
+|----------|-----|
 | TikTok / Instagram Reels | 180-200 |
 | YouTube | 160-180 |
 | LinkedIn | 140-160 |
-| 教育类内容 | 120-140 |
+| Educational content | 120-140 |
 
-## 下三分之一字幕条
+## Lower Thirds
 
-### 标准规格（1080p）
+### Standard Specs (1080p)
 
-- 叠加区域为 1920x360px，位于画面下三分之一。
-- 使用无衬线字体（Helvetica、Open Sans、Roboto）。
-- 白色文字配投影或半透明底条。
-- 姓名用粗体且字号更大，职位用细体且字号更小。
+- Overlay region: **1920x360px** (bottom third)
+- Sans-serif fonts (Helvetica, Open Sans, Roboto)
+- White text with drop shadow or semi-transparent background bar
+- Name: bold, larger weight
+- Role/subtitle: lighter weight, smaller
 
-### 时序
+### Timing
 
-| 阶段 | 时长 |
-|------|------|
-| 入场动画 | 1-2 秒 |
-| 停留展示 | 3-6 秒 |
-| 出场动画 | 0.5-1 秒 |
+| Phase | Duration |
+|-------|----------|
+| Entrance animation | 1-2 seconds |
+| Display | 3-6 seconds |
+| Exit animation | 0.5-1 second |
 
-## 对比度与可读性
+## Contrast & Readability
 
-### WCAG 要求
+### WCAG Requirements
 
-| 元素 | 最低对比度 | 标准 |
-|------|------------|------|
-| 正文 | 4.5:1 | WCAG AA |
-| 大号文字（大于 18pt） | 3:1 | WCAG AA |
-| 增强正文 | 7:1 | WCAG AAA |
-| UI 组件 | 3:1 | WCAG 2.1 |
+| Element | Min Ratio | Standard |
+|---------|----------|----------|
+| Body text | 4.5:1 | WCAG AA |
+| Large text (>18pt) | 3:1 | WCAG AA |
+| Enhanced body | 7:1 | WCAG AAA |
+| UI components | 3:1 | WCAG 2.1 |
 
-### 视频上叠加文字的处理手法
+### Text-Over-Video Techniques
 
-1. 半透明底框：文字后方加 70-80% 黑色，最稳妥。
-2. 文字描边：浅色文字外加深色 2-4px 轮廓。
-3. 投影：轻微阴影制造层次，在复杂背景上不太可靠。
-4. 区域压暗：文字区后方加渐变遮罩。
-5. 全屏压暗：文字密集的画面整体加 30-50% 暗层。
+1. **Semi-transparent box** — 70-80% black opacity behind text (most reliable)
+2. **Text stroke** — 2-4px dark outline around light text
+3. **Drop shadow** — subtle shadow for depth (less reliable on busy backgrounds)
+4. **Darkened region** — gradient overlay behind text area
+5. **Full-screen overlay** — 30-50% dark overlay for text-heavy screens
 
-## 在 OpenMontage 中应用
+## Applying to OpenMontage
 
-在合成与素材阶段为视频生成文字时：
+When generating text for video in the compose/asset stages:
 
-1. 字体选择：优先使用上文推荐字体，正文首选 Inter 或 Open Sans，标题用 Montserrat Bold。
-2. 字号检查：1080p 下任何文字都不得低于 40px。
-3. 安全区：所有文字置于 80% 标题安全区内；竖屏或短视频使用居中的 900x1400px 通用安全区。
-4. 字幕样式：42px 以上，最多 2 行，每行不超过 42 字符，背景为 75% 不透明度的半透明色块。
-5. 动画：入场使用 easeOutCubic，动画结束后每 13 字符至少静止保留 1 秒。
-6. 对比度：在实际调色后的代表帧上验证至少 4.5:1，优先采用深底白字（可达 21:1）。
-7. 平台适配：参照上文平台安全区表调整文字位置。
-8. Remotion 渲染：所有字体族须通过组件中的 `@import` 或 `fontFamily` 加载，并在 Docker/Lambda 环境中验证字体可正常渲染。
+1. **Font selection** — use the recommended video fonts above; prefer Inter or Open Sans for body, Montserrat Bold for titles
+2. **Size check** — never go below 40px at 1080p for any text element
+3. **Safe zones** — all text within 80% title-safe area; for vertical/short-form, use the 900x1400px universal safe zone
+4. **Subtitle styling** — 42px+, max 2 lines, max 42 chars/line, semi-transparent background at 75% opacity
+5. **Animation** — use easeOutCubic for entrances, hold text for at least 1 second per 13 characters after animation
+6. **Contrast** — verify 4.5:1 minimum on a representative graded frame; prefer white-on-dark-background (21:1)
+7. **Platform targeting** — check the platform safe zone table above and adjust text placement accordingly
+8. **Remotion rendering** — all font families must be loaded via `@import` or `fontFamily` in the component; test that fonts render in the Docker/Lambda environment

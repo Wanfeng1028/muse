@@ -6,56 +6,58 @@ metadata:
   license: AGPL-3.0
 ---
 
-# Scene Director · 剪辑工厂流水线
+# Scene Director - Clip Factory Pipeline
 
-## 何时使用
+## When To Use
 
-当你需要为每一段已选中的片段规划如何在目标平台上取景与包装时，进入本阶段。此处的判断会直接证明或推翻某个片段的可用性。
+You are planning how each selected clip will be framed and packaged for its destination platform. This is where clip viability gets proven or disproven.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/scene_plan.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["script"]["script"]`、`state.artifacts["idea"]["brief"]` | 已选片段与平台目标 |
-| 工具 | `frame_sampler`、`scene_detect` | 画面抽帧检查与边界确认 |
-| Playbook | 当前启用的风格 playbook | 版式语言与安全区定义 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/scene_plan.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["script"]["script"]`, `state.artifacts["idea"]["brief"]` | Selected clips and platform goals |
+| Tools | `frame_sampler`, `scene_detect` | Visual checks and boundary inspection |
+| Playbook | Active style playbook | Layout language and safe zones |
 
-## 流程
+## Process
 
-### 1. 为每个片段挑选合适的画幅
+### 1. Choose The Right Frame For Each Clip
 
-不要一律套用 `9:16`。
+Do not default every clip to `9:16`.
 
-- 人脸为主的裁切成立时用 `9:16`；
-- 说话人与环境上下文同等重要时用 `1:1`；
-- 涉及幻灯片、演示或多人并排宽度时用 `16:9`。
+Use:
 
-OpenMontage 目前还没有一等公民级别的自动重构图能力。若某个竖版裁切效果薄弱，就老老实实改用更安全的画幅，而不是假设裁切一定能成功。
+- `9:16` when a face-first crop works,
+- `1:1` when speaker plus context both matter,
+- `16:9` when slides, demos, or multi-speaker width are essential.
 
-### 2. 规划首秒构图
+OpenMontage does not yet have first-class auto-reframe. If a vertical crop is weak, plan a safer aspect ratio instead of pretending the crop will work.
 
-对每个片段明确以下要素：
+### 2. Plan First-Second Composition
 
-- 观众在第 1 帧看到什么；
-- 钩子文本可以安全出现的位置；
-- 字幕可以放置的位置；
-- 说话人是否需要推近（punch-in），还是原始取景已经足够。
+For each clip, define:
 
-### 3. 统一整批风格
+- what the viewer sees on frame 1,
+- where hook text can safely appear,
+- where subtitles can live,
+- whether the speaker needs a punch-in or whether the original framing is already good.
 
-借助 scene plan 锁定系列一致性：
+### 3. Standardize The Batch
 
-- 顶部钩子区一致；
-- 字幕区一致；
-- 水印／品牌区一致；
-- 下三分之一（lower-third）逻辑一致。
+Use the scene plan to lock series consistency:
 
-### 4. 将重构图细节写入 metadata
+- same top hook zone,
+- same subtitle zone,
+- same watermark / brand area,
+- same lower-third logic.
 
-schema 本身是通用的，因此更丰富的版式备注放入 `scene_plan.metadata`。
+### 4. Store Reframe Detail In Metadata
 
-推荐的 metadata 键：
+The schema is generic, so store richer layout notes in `scene_plan.metadata`.
+
+Recommended metadata keys:
 
 - `clip_layouts`
 - `safe_zones`
@@ -63,28 +65,29 @@ schema 本身是通用的，因此更丰富的版式备注放入 `scene_plan.met
 - `speaker_positions`
 - `platform_variants`
 
-### 5. 用 scene 表示交付物
+### 5. Use Scenes To Represent Deliverables
 
-每个 scene 应对应一个片段变体或一个片段族交付物。`description` 保持人类可读，`required_assets` 用于声明钩子叠加层、下三分之一或品牌边框等素材。
+Each scene should map to one clip variant or one clip family deliverable. Keep `description` human-readable and use `required_assets` for hook overlays, lower thirds, or branded frames.
 
-### 6. 质量门
+### 6. Quality Gate
 
-- 每个片段都具备平台感知的取景方案；
-- 钩子区与字幕区不重叠冲突；
-- 效果差的竖版裁切被诚实地降级处理；
-- 整批一起渲染时视觉上保持一致。
+- every clip has a platform-aware framing plan,
+- hook and subtitle zones do not collide,
+- weak vertical crops are downgraded honestly,
+- the batch will feel visually consistent when rendered together.
 
-## 常见坑
+## Common Pitfalls
 
-- 把宽画幅直接中心裁切，就号称完成了竖版优化。
-- 只盯人脸，忽略幻灯片或屏幕共享内容。
-- 让每个片段各自发明一套版式。
-- 忘记首帧决定观众是否继续看下去。
+- Center-cropping a wide shot and calling it vertical optimization.
+- Ignoring slide or screen-share content while focusing only on faces.
+- Letting each clip invent its own layout.
+- Forgetting that the first frame determines whether a viewer keeps watching.
 
 ---
 
-## 关卡提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段默认需要人工审批（`human_approval_default: true`）。评审通过后：
-用 `status="awaiting_human"` 打检查点，展示摘要（Backlot 看板会渲染产物），然后**结束本轮**。不要在同一次回复里启动下一阶段。
-审批是按关卡独立的——之前某次“继续吧”不覆盖本关卡。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

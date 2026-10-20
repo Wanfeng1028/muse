@@ -6,306 +6,312 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 提案总监 — 影视化流水线
+# Proposal Director — Cinematic Pipeline
 
-## 何时使用
+## When to Use
 
-你是影视化项目（预告片、品牌片、蒙太奇、戏剧化剪辑）的**提案总监**，位置在研究总监与脚本总监之间。你收到一份包含视觉参考、情绪调研与影视化方向选项的 `research_brief`，把它转化为具体、可评审的提案，供用户在花钱之前批准。
+You are the **Proposal Director** for a cinematic video (trailers, brand films, montages, dramatic edits). You sit between the Research Director and the Script Director. You receive a `research_brief` full of visual references, mood research, and cinematic direction options, and transform it into a concrete, reviewable proposal that the user approves before any money is spent.
 
-**这里是审批门禁。** 用户说"开始"之前，下游任何环节都不启动。
+**This is the approval gate.** Nothing downstream runs until the user says "go."
 
-## 运行时选择（必填字段 — `render_runtime`）
+## Runtime Selection (required field — `render_runtime`)
 
-影视化提案必须同时锁定 `renderer_family`（创作语法：`cinematic-trailer`、`documentary-montage` 等）与 `render_runtime`（技术引擎）。决策矩阵见 `skills/meta/animation-runtime-selector.md` 与 `skills/core/hyperframes.md`；治理契约见 `AGENT_GUIDE.md` → "Present Both Composition Runtimes (HARD RULE)"。
+Cinematic proposals must lock **both** a `renderer_family` (creative grammar: `cinematic-trailer`, `documentary-montage`, etc.) and a `render_runtime` (technical engine). Read `skills/meta/animation-runtime-selector.md` and `skills/core/hyperframes.md` for the decision matrix, and `AGENT_GUIDE.md` → "Present Both Composition Runtimes (HARD RULE)" for the governance contract.
 
-**强制流程 — 两种运行时都要呈现，不许悄悄默认：**
+**MANDATORY workflow — present both runtimes, don't silently default:**
 
-1. 查询 `video_compose.get_info()["render_engines"]`。若 `remotion` 与 `hyperframes` 同时为 `True`，进入第 2 步。
-2. 结合本简报向用户呈现两种运行时：
-   - **Remotion** — 一句话说明契合点（可提 `CinematicRenderer`、`<OffthreadVideo>`、现有转场栈），一句话说明取舍。
-   - **HyperFrames** — 一句话说明契合点（可提动态标题序列、注册表着色器转场、HTML 原生字体动效），一句话说明取舍。
-3. 结合简报的 `delivery_promise`（尤其是 `motion_required`）、`renderer_family` 与已确认的基调，给出一个带理由的推荐。
-4. 等待用户明确批准。在批准之前，不要把 `render_runtime` 写入 `proposal_packet.production_plan`。
-5. 在 `decision_log` 中记录一条 `render_runtime_selection` 决策，`options_considered` 里要同时列出两种运行时，若 ffmpeg 也是现实选项则一并列出。
+1. Query `video_compose.get_info()["render_engines"]`. If both `remotion` and `hyperframes` are `True`, proceed to step 2.
+2. Present both runtimes to the user with brief-specific analysis:
+   - **Remotion** — one line on fit (mention `CinematicRenderer`, `<OffthreadVideo>`, existing transition stack if applicable), one line on tradeoff.
+   - **HyperFrames** — one line on fit (mention kinetic title sequences, registry shader transitions, or HTML-native typographic motion if applicable), one line on tradeoff.
+3. Recommend one with rationale tied to the brief's `delivery_promise` (especially `motion_required`), `renderer_family`, and approved tone.
+4. Wait for explicit user approval. Do NOT write `render_runtime` into `proposal_packet.production_plan` before approval.
+5. Log a `render_runtime_selection` decision in `decision_log` with BOTH runtimes in `options_considered` plus `ffmpeg` if it was a realistic option.
 
-推荐时的契合速查（不是自动决策）：
+Fit cheat-sheet for the recommendation (NOT an auto-decision):
 
-- 由运动片段驱动、用 `<OffthreadVideo>` 加调色叠加的预告片 → 倾向 **Remotion**。
-- HTML/GSAP 驱动的预告片：动态标题序列、发布会片花、以字体为视觉语法的品牌片 → 倾向 **HyperFrames**。
-- 着色器转场或注册表颗粒叠加 → 倾向 **HyperFrames**。
-- 只是把源素材顺序拼接、无合成需求 → **ffmpeg**。
+- Video-led trailer with motion clips via `<OffthreadVideo>` + color-graded overlays → lean **Remotion**.
+- HTML/GSAP-driven trailer: kinetic title sequence, launch reel, brand film where the visual grammar is typographic → lean **HyperFrames**.
+- Shader transitions or registry grain overlays → lean **HyperFrames**.
+- Simplest source-footage concat with no composition → **ffmpeg**.
 
-**动态硬性要求的交付物**：若 `delivery_promise.motion_required=true`，所选运行时即为承诺。禁止静默降级为 FFmpeg Ken Burns 或静帧动画。若渲染时所选运行时不可用，合成阶段必须升级上报，不得自行替换。
+**Motion-required deliverables**: if `delivery_promise.motion_required=true`, the chosen runtime is a commitment. Silent downgrade to FFmpeg Ken Burns or still-led animatic is forbidden. If the chosen runtime becomes unavailable at render time, compose must escalate, not substitute.
 
-若明确承诺 3D 世界效果，查询 `3d_world_generation`。当
-`threejs_world` 与 HyperFrames 均可用时，即便云端视频生成不可用，这仍是一条真实的动态路径：它会生成可连续编辑的场景图与确定性相机。请在提案中记录该工具、本地 $0 生成成本、HyperFrames 运行时与 atelier 模式。
+For an explicit 3D-world promise, query `3d_world_generation`. When
+`threejs_world` and HyperFrames are available, this is a real motion path even
+if cloud video generation is unavailable: it authors a continuous editable
+scene graph with a deterministic camera. Record the tool, local $0 generation
+cost, HyperFrames runtime, and atelier mode in the proposal.
 
-若两种运行时都可用却只考虑了一种，`render_runtime_selection` 决策会被评审判定为 CRITICAL 级问题。
+A `render_runtime_selection` decision with only one option considered when both were available is a CRITICAL reviewer finding.
 
-## 前置条件
+## Prerequisites
 
-| 层 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/proposal_packet.schema.json` | 产物校验 |
-| 上游产物 | 研究总监产出的 `research_brief` | 视觉参考、情绪调研、影视化方向 |
-| 流水线清单 | `pipeline_defs/cinematic.yaml` | 阶段与工具定义 |
-| 工具注册表 | `support_envelope()` 输出 | 当前实际可用的能力 |
-| 成本追踪 | `tools/cost_tracker.py` | 成本估算数据 |
-| 风格手册 | `styles/*.yaml` | 可用视觉风格 |
-| 用户输入 | 主题、素材、偏好 | 创作方向 |
+| Schema | `schemas/artifacts/proposal_packet.schema.json` | Artifact validation |
+| Prior artifact | `research_brief` from Research Director | Visual references, mood research, cinematic directions |
+| Pipeline manifest | `pipeline_defs/cinematic.yaml` | Stage and tool definitions |
+| Tool registry | `support_envelope()` output | What's actually available right now |
+| Cost tracker | `tools/cost_tracker.py` | Cost estimation data |
+| Style playbooks | `styles/*.yaml` | Available visual styles |
+| User input | Subject, footage, preferences | Creative direction |
 
-## 流程
+## Process
 
-### 步骤 0：检查是否存在参考视频上下文
+### Step 0: Check for Reference Video Context
 
-在开始提案工作前，先检查本项目是否已有 VideoAnalysisBrief。
+Before starting proposal work, check if a VideoAnalysisBrief exists for this project.
 
-**存在 VideoAnalysisBrief 时 — 参考感知的影视化概念设计：**
+**When a VideoAnalysisBrief is present — Reference-Aware Cinematic Concept Design:**
 
-**硬性规则：不许照搬。** 每个概念选项必须：
-1. 指出至少一个从参考片保留的影视化元素（情绪、节奏、色调、镜头语言）；
-2. 指出至少一个被改变的元素（情绪弧线、视觉处理、题材、声音设计）；
-3. 解释该改动为何能带来不同的情绪冲击。
+**HARD RULE: No carbon copies.** Each concept option MUST:
+1. Name at least ONE cinematic element it keeps from the reference (mood, pacing, color palette, shot language)
+2. Name at least ONE element it changes (emotional arc, visual treatment, subject matter, sound design)
+3. Explain WHY the change creates a different emotional impact
 
-**影视化差异化模式：**
+**Cinematic differentiation patterns:**
 
-| 模式 | 示例 |
+| Pattern | Example |
 |---------|---------|
-| **同情绪，换题材** | 参考：暗黑科幻氛围 → 我们：把同样的暗黑感用到深海 |
-| **同题材，换情绪弧线** | 参考：紧张→揭示 → 我们：惊叹→宏大 |
-| **同节奏，换视觉语言** | 参考：手持粗粝 → 我们：固定机位几何感 |
-| **同色域，换光照** | 参考：温暖黄金时刻 → 我们：暖调但用钨丝灯/室内 |
+| **Same mood, different subject** | Reference: dark sci-fi mood → Ours: same darkness applied to deep ocean |
+| **Same subject, different emotional arc** | Reference: tension→reveal → Ours: wonder→scale |
+| **Same pacing, different visual language** | Reference: handheld raw → Ours: locked-off geometric |
+| **Same color world, different lighting** | Reference: warm golden hour → Ours: warm but tungsten/interior |
 
-**强制样片流程：** 概念通过后，在正式制作前先产出一段 10–15 秒的影视化样片。这对影视化项目极为关键——情绪错配越到后期修复越昂贵。呈现时需同时给出画面、声音与音乐。
+**Mandatory Sample Protocol:** After concept approval, produce a 10-15 second cinematic
+sample BEFORE full production. This is critical for cinematic work — mood mismatches are
+expensive to fix downstream. Present with visual + audio + music.
 
-**没有 VideoAnalysisBrief 时：** 跳过本步骤，正常推进。
+**When no VideoAnalysisBrief is present:** Skip this step and proceed normally.
 
-### 步骤 1：吸收研究结果
+### Step 1: Absorb the Research
 
-通读 `research_brief`，提取：
+Read the `research_brief` thoroughly. Extract:
 
-- **`research_summary`** — 研究者给出的最强创作方向。
-- **`angles_discovered`** — 这些是你原始的影视化方向候选。
-- **视觉参考** — 支撑每个方向的真实先例。
-- **音频方向** — 音乐情绪与声音设计笔记。
-- **素材现实** — 用户实际拥有的素材/静帧。
-- **动态承诺** — 是否强制要求动态。
+- **`research_summary`** — the researcher's strongest creative direction.
+- **`angles_discovered`** — these are your raw cinematic direction candidates.
+- **Visual references** — the real-world precedents that inform each direction.
+- **Audio direction** — music mood and sound design notes.
+- **Source reality** — what footage/stills the user actually has.
+- **Motion commitment** — whether motion is required.
 
-### 步骤 2：执行预检
+### Step 2: Run Preflight
 
-设计概念之前，先弄清有哪些工具可用：
+Before designing concepts, know what tools are available:
 
 ```bash
 python -c "from tools.tool_registry import registry; import json; registry.discover(); print(json.dumps(registry.support_envelope(), indent=2))"
 ```
-（用途：打印当前工具注册表的支持范围，用于判断可用的生成、渲染与增强能力。）
 
-记录：
-- 视频生成服务商 — **对影视化至关重要**。若要求动态，这些必须可用。
-- 图像生成服务商 — 用于支撑画面与情绪插入。
-- TTS 服务商 — 用于旁白（如适用；不少影视化作品无旁白）。
-- 音乐生成 — 如实检查可用性。
-- 增强工具 — color_grade、audio_enhance 对影视化价值很高。
-- **Remotion 渲染引擎** — 检查 `video_compose.get_info()["render_engines"]["remotion"]`。
+Record:
+- Video generation providers — **critical for cinematic**. If motion is required, these must be available.
+- Image generation providers — for support visuals and mood inserts
+- TTS providers — for narration (if applicable; many cinematic pieces are narration-free)
+- Music generation — check availability honestly
+- Enhancement tools — color_grade, audio_enhance are high-value for cinematic
+- **Remotion render engine** — check `video_compose.get_info()["render_engines"]["remotion"]`
 
-**动态硬性要求的执行：** 若研究简报标记 `motion_required: true`，必须确认视频生成或源素材确实能提供动态。若二者都不可用，**不要悄悄降级为静帧主导**，而是如实呈现约束，交由用户决定。
+**Motion-required enforcement:** If the research brief indicates `motion_required: true`, verify that video generation or source footage can actually deliver motion. If neither is available, **do not silently downgrade to still-led**. Instead, present the constraint honestly and let the user decide.
 
-### 步骤 2c：情绪板（在概念之前）
+### Step 2c: Mood Board (Before Concepts)
 
-在展开完整概念之前，先给一份快速情绪板，以便尽早发现方向错位。影视化工作尤其容易出现基调偏差，这一步很关键：
+Before developing full concepts, present a quick mood board to catch direction mismatches early. Cinematic work is especially susceptible to tone misalignment, so this step is critical:
 
-- **3–5 张参考图**（来自网络搜索 — 真实电影剧照，而非通用库存图）；
-- **色彩方向**（2–3 套调色：例如低饱和冷调 vs 暖金 vs 高反差黑色电影）；
-- **基调参照**（"参考：泰伦斯·马力克遇上《国家地理》"，或"参考：大卫·芬奇式预告片节奏"）；
-- **1–2 条音乐情绪参照**（风格 + 能量 + 情绪走向，例如"环境合成器推向管弦高潮"）。
+- **3-5 reference images** (from web search — real film stills, not generic stock)
+- **Color palette direction** (2-3 palettes: e.g. desaturated cold vs warm golden vs high-contrast noir)
+- **Tone references** ("Think: Terrence Malick meets National Geographic" or "Think: David Fincher trailer pacing")
+- **1-2 music mood references** (genre + energy + emotional arc, e.g. "ambient synth building to orchestral crescendo")
 
-问一句：**"这是你想象中的感觉吗？有哪几项跑偏了？"**
+Ask: **"Does this FEEL like what you're imagining? Any of these off-track?"**
 
-这比先做 3 个完整影视化方向便宜得多，能在基调错配被写进概念设计之前就抓住它。如果用户说"少一点阴郁，多一点活力"，你就省下了一轮概念。
+This is cheaper than building 3 full cinematic directions and catches tone mismatches before they're embedded in concept design. If the user says "less moody, more energetic," you've saved a concept round.
 
-### 步骤 3：设计概念方向
+### Step 3: Design Concept Directions
 
-构建**至少 3 个真正不同的影视化方向**，从研究简报的 `angles_discovered` 出发。
+Build **at least 3 genuinely different cinematic directions.** Start from the `angles_discovered` in the research brief.
 
-对每个概念，填齐 `proposal_packet.concept_options` 中的全部字段：
+For each concept, specify all fields in `proposal_packet.concept_options`:
 
-#### 3a：标题与情绪钩子
+#### 3a: Title and Emotional Hook
 
-影视化钩子与讲解型钩子不同 — 它唤起的是**感受**，不是信息缺口。
+Cinematic hooks are different from explainer hooks — they evoke **feeling**, not information gaps.
 
-| 模式 | 适用时机 |
+| Pattern | When to Use |
 |---------|-------------|
-| **感官** | "你先听见它，才看见它。一个本不该存在的频率。" | 情绪为悬念/紧张时 |
-| **尺度转换** | "在你读完这句话的时间里，470 万个数据包跨过了大西洋。" | 概念涉及尺度时 |
-| **亲密** | "她在清晨六点给它们浇水。在城市醒来之前，在任何人注视之前。" | 情绪为亲密/人文时 |
-| **挑衅** | "他们告诉我们那是噪声。不是的。" | 概念涉及揭示时 |
-| **反差** | "距华尔街三个街区，一片长满三叶草的屋顶上，四万只蜜蜂正在建造一座城市。" | 主题在语境中出人意料时 |
+| **Sensory** | "You hear it before you see it. A frequency that shouldn't exist." | When the mood is mystery/tension |
+| **Scale shift** | "In the time it takes to read this sentence, 4.7 million packets crossed the Atlantic." | When the concept involves scale |
+| **Intimate** | "She waters them at 6am. Before the city wakes. Before anyone watches." | When the mood is intimate/human |
+| **Provocation** | "They told us the message was noise. It wasn't." | When the concept involves a reveal |
+| **Contrast** | "Three blocks from Wall Street, on a rooftop covered in clover, 40,000 bees are building a city." | When the subject is surprising in context |
 
-#### 3b：情绪弧线
+#### 3b: Emotional Arc
 
-每个影视化概念都需要明确的弧线：
+Every cinematic concept needs an explicit arc:
 
-| 弧线 | 结构 | 最适合 |
+| Arc | Structure | Best For |
 |-----|-----------|----------|
-| `紧张 → 揭示` | 先积累不安，再兑现 | 先导片、科幻、惊悚 |
-| `惊叹 → 宏大` | 从微小开始，扩展到巨大 | 自然、科技、宇宙 |
-| `亲密 → 回馈` | 近身、私人，再到应得的时刻 | 纪录、人文 |
-| `紧迫 → 化解` | 快节奏冲向令人满足的收尾 | 产品、动作、发布 |
-| `悬念 → 行动号召` | 以好奇牵引行动 | 品牌片、营销 |
-| `静 → 爆发` | 强高潮前的平静 | 音乐视频、艺术片 |
+| `tension → reveal` | Build unease, then pay it off | Teasers, sci-fi, thriller |
+| `wonder → scale` | Start small, expand to massive | Nature, tech, cosmos |
+| `intimacy → payoff` | Close, personal, then earned moment | Documentary, human interest |
+| `urgency → resolution` | Fast pace to satisfying close | Product, action, launch |
+| `mystery → CTA` | Intrigue that leads to action | Brand films, campaigns |
+| `stillness → eruption` | Calm before powerful climax | Music videos, art films |
 
-#### 3c：交付承诺
+#### 3c: Delivery Promise
 
-影视化项目需明确分类：
+For cinematic, explicitly classify:
 
 ```yaml
 delivery_promise:
-  promise_type: motion_led  # 或 source_led、hybrid
-  motion_required: true     # 仅当用户批准静帧主导时才为 false
-  source_required: false    # 用户有素材时为 true
-  tone_mode: cinematic      # cinematic、raw、intimate、epic
-  quality_floor: presentable  # draft、presentable、broadcast
-  approved_fallback: null   # animatic、still_led，或 null（无降级）
+  promise_type: motion_led  # or source_led, hybrid
+  motion_required: true     # false only if user approves still-led
+  source_required: false    # true if user has footage
+  tone_mode: cinematic      # cinematic, raw, intimate, epic
+  quality_floor: presentable  # draft, presentable, broadcast
+  approved_fallback: null   # animatic, still_led, or null (no fallback)
 ```
 
-**规则：** `motion_led` 禁止静帧主导降级，除非用户明确批准 `animatic` 作为兜底。
+**Rule:** `motion_led` forbids still-led fallback unless the user explicitly approves `animatic` as the fallback.
 
-#### 3d：视觉处理
+#### 3d: Visual Treatment
 
-对每个概念，定义：
-- **色彩** — 给出具体十六进制参考，而不是只说"暗"；
-- **光照方式** — high_key、low_key、自然光、黄金时刻等；
-- **镜头语言** — 主要景别、运镜；
-- **质感** — 胶片颗粒、干净数码、变形宽银幕、手持；
-- **字体** — 若使用标题卡，说明风格与克制程度。
+For each concept, define:
+- **Color palette** — specific hex references, not just "dark"
+- **Lighting approach** — high_key, low_key, natural, golden_hour, etc.
+- **Camera language** — dominant shot sizes, movements
+- **Texture** — film grain, clean digital, anamorphic, handheld
+- **Typography** — if title cards are used, their style and restraint level
 
-#### 3e：渲染族选择
+#### 3e: Renderer Family Selection
 
-选择渲染族并在提案中锁定：
+Choose the renderer family and lock it in the proposal:
 
-| 族 | 何时用 | 合成 |
+| Family | When | Composition |
 |--------|------|-------------|
-| `cinematic-trailer` | 预告片、先导片、含生成/源视频的品牌片 | CinematicRenderer |
-| `presenter` | 带影视化增强的讲解人出镜 | TalkingHead |
-| `explainer-data` | 仅当这本质是讲解片、只是想要影视化包装 | Explainer |
+| `cinematic-trailer` | Trailers, teasers, brand films with generated/source video | CinematicRenderer |
+| `presenter` | Talking head with cinematic enhancement | TalkingHead |
+| `explainer-data` | Only if this is really an explainer that wants cinematic dressing | Explainer |
 
-**规则：** 渲染族在此选定并在分镜规划前锁定。合成阶段若要更改，必须记录决策并向用户明示。
+**Rule:** The renderer family is selected here and locked before scene planning. The compose stage cannot change it without logging a decision and surfacing the change to the user.
 
-### 步骤 4：渐进揭示、多样性检查与概念选择
+### Step 4: Progressive Reveal, Diversity Check, and Concept Selection
 
-#### 4a：渐进揭示
+#### 4a: Progressive Reveal
 
-不要一次性把整份提案倒出来，逐步建立理解：
+Don't dump the full proposal at once. Build understanding step by step:
 
-1. **研究摘要**（2–3 句）："关于这个主题及其视觉潜力，我找到了这些……"
-   → 用户回应，必要时纠偏。
-2. **情绪板**（来自步骤 2c，已呈现）
-   → 用户确认感觉。
-3. **概念方向**（3 个以上情绪/视觉路径）：
-   → 逐一呈现每个概念的情绪钩子、弧线与视觉处理。
-4. **邀请混搭**（见下方 4c）。
-5. **选定方向的制作计划**（工具、成本、渲染族）：
-   → 用户批准预算与做法。
+1. **Research summary** (2-3 sentences): "Here's what I found about the subject and its visual potential..."
+   → User reacts, course-corrects if needed.
+2. **Mood board** (from Step 2c — already presented)
+   → User confirms feel.
+3. **Concept directions** (3+ emotional/visual approaches):
+   → Present each concept's emotional hook, arc, and visual treatment.
+4. **Invite mixing** (see 4c below).
+5. **Production plan for selected direction** (tools, cost, renderer family):
+   → User approves budget and approach.
 
-每一步都是用户在下一步建立之前纠偏的机会。
+Each step is a chance for the user to course-correct before the next step builds on it.
 
-#### 4b：多样性检查
+#### 4b: Diversity Check
 
-呈现概念前检查：
-- [ ] 没有两个概念共用同一情绪弧线
-- [ ] 没有两个概念使用相同视觉处理
-- [ ] 至少一个概念承担创作风险
-- [ ] 各概念的视觉参考来自不同来源
-- [ ] 每个概念在现有能力下可实现（或说明缺什么）
+Before presenting concepts:
+- [ ] No two concepts share the same emotional arc
+- [ ] No two concepts use the same visual treatment
+- [ ] At least one concept takes a creative risk
+- [ ] Each concept's visual references are from different sources
+- [ ] Each concept is achievable with current capabilities (or states what's missing)
 
-#### 4c：邀请混搭
+#### 4c: Invite Mixing
 
-呈现概念后，总要说一句类似的话：
-> "你也可以混搭元素——比如用概念 A 的情绪弧线，配概念 C 的视觉处理与概念 B 的音乐方向。哪一部分最打动你？"
+After presenting concepts, always say something like:
+> "You can also mix elements — for example, Concept A's emotional arc with Concept C's visual treatment and Concept B's music direction. What speaks to you?"
 
-若用户混搭，在 proposal_packet 中新建一条混合概念条目并明确归属："情绪弧线来自概念 A，视觉处理来自概念 C，音乐方向来自概念 B。"
+If the user mixes, create a new hybrid concept entry in the proposal_packet with clear attribution: "Emotional arc from Concept A, visual treatment from Concept C, music direction from Concept B."
 
-让用户自由选择、组合、修改或完全改向。
+Let the user select, combine, modify, or redirect entirely.
 
-### 步骤 5：配乐方案（影视化强制）
+### Step 5: Music Plan (Mandatory for Cinematic)
 
-影视化视频的成败很大程度取决于音频。在用户批准之前先把配乐情况摆出来。
+Cinematic videos live and die by their audio. Surface the music situation before the user approves.
 
-按以下顺序检查可用性：
-1. **用户曲库** — 查询 `registry.get_by_capability("music_library")` 并列出可用曲目；
-2. **免版税搜索** — 查询 `registry.get_by_capability("music_search")`，报告服务商与授权；
-3. **音乐生成 API** — 查询 `registry.get_by_capability("music_generation")`，如实报告状态、成本与质量；
-4. **自带路径** — 用户可把曲目放进 `music_library/`。
+Check availability in this order:
+1. **User music library** — query `registry.get_by_capability("music_library")` and list available tracks
+2. **Royalty-free search** — query `registry.get_by_capability("music_search")` and report providers/licensing
+3. **Music generation APIs** — query `registry.get_by_capability("music_generation")` and report status, cost, and quality honestly
+4. **Bring-your-own path** — user can drop a track in `music_library/`
 
-明确列出选项：
+Present explicit options:
 ```
 MUSIC PLAN
-├── 你的曲库: [N 首 / 空]
-├── 免版税搜索: [服务商 / 不可用]
-├── AI 生成: [服务商] — [可用/不可用] [成本]
-└── 自带: 在素材阶段前把曲目放进 music_library/
+├── Your music library: [N tracks / empty]
+├── Royalty-free search: [providers / unavailable]
+├── AI generation: [provider] — [AVAILABLE/UNAVAILABLE] [cost]
+└── Bring your own: Drop a track in music_library/ before asset stage
 
-推荐: [结合情绪调研的具体推荐]
+Recommendation: [specific recommendation based on mood research]
 ```
 
-### 步骤 6：制定制作计划
+### Step 6: Build Production Plan
 
-针对选定概念，设计逐阶段计划，含具体服务商、成本与如实取舍。
+For the selected concept, design the stage-by-stage plan with specific providers, costs, and honest tradeoffs.
 
-**影视化专项工具优先级：**
-- **调色** — 高优先级。没有调色的影视化输出会显得平淡。
-- **音频增强** — 高优先级。情绪驱动类作品中音频动态更重要。
-- **视频生成** — 若要求动态，则不可协商。
-- **音乐** — 必须敲定。任何影视化作品都不应出现"意外静音"。
+**Cinematic-specific tool priorities:**
+- **Color grade** — high priority. Cinematic output without grade looks flat.
+- **Audio enhance** — high priority. Audio dynamics matter more in mood-driven work.
+- **Video generation** — if motion-required, this is non-negotiable.
+- **Music** — must be resolved. No cinematic piece should have silence as a surprise.
 
-### 步骤 7：成本估算
+### Step 7: Cost Estimate
 
-逐项如实列出成本。影视化通常比讲解片更贵（更多生成片段、音乐、调色环节）。
+Itemize all costs honestly. Cinematic tends to be more expensive than explainer (more generated clips, music, grade passes).
 
-### 步骤 8：呈现与批准
+### Step 8: Present and Approve
 
-清晰呈现概念，邀请用户：
-- 直接选定其一；
-- 混搭多个概念的元素；
-- 提出修改；
-- 完全改向。
+Present concepts clearly. Invite the user to:
+- Select one as-is
+- Mix elements from multiple concepts
+- Request modifications
+- Redirect entirely
 
-设置 `approval.status: "pending"`。未经批准，流水线不得继续。
+Set `approval.status: "pending"`. Pipeline does NOT proceed without approval.
 
-### 步骤 9：提交
+### Step 9: Submit
 
-按 schema 校验 `proposal_packet` 并提交。
+Validate `proposal_packet` against schema and submit.
 
-## 常见坑
+## Common Pitfalls
 
-- **靠黑边说电影感**：上下加黑边不等于摄影。处理方案必须包含镜头语言、光照、运动与情绪弧线。
-- **隐瞒动态降级**：若要求动态的内容实际上会变成 Ken Burns 静帧，必须明说。
-- **把音乐当补丁**：影视化工作中，音乐占氛围的一半，要尽早摆上台面。
-- **三个"暗黑阴郁"的版本**：三个情绪基调相同、只有标题不同的概念其实是一个概念。多样性意味着不同的弧线、不同的情绪、不同的风险。
-- **忽视素材现实**：若用户没有素材、生成工具也有限，提案必须反映这一点，而不是假装约束不存在。
+- **Calling it cinematic because of black bars**: Letterboxing is not cinematography. The treatment must include shot language, lighting, movement, and emotional arc.
+- **Hiding motion downgrade**: If motion-required content will actually be still images with Ken Burns, say so explicitly.
+- **Music as afterthought**: In cinematic work, music is 50% of the mood. Surface it early.
+- **Three versions of "dark and moody"**: Three concepts with the same emotional register but different titles are one concept. Diversity means different arcs, different moods, different risks.
+- **Ignoring source reality**: If the user has no footage and limited generation tools, the proposal must reflect that — not pretend the constraints don't exist.
 
-## 当你不知道怎么做时
 
-遇到不确定的生成技术、服务商行为或提示词模式时：
+## When You Do Not Know How
 
-1. **搜索网络** 了解当前最佳实践 — 模型与 API 变化频繁，智能体的训练数据可能已过时；
-2. **检查 `.agents/skills/`** 是否已有 Layer 3 知识（服务商专属提示词指南、API 模式）；
-3. **若两者都无帮助**，在 `projects/<项目名>/skills/<名称>.md` 写一份项目级 skill，记录你学到的东西；
-4. **在 skill 中引用来源 URL**，让知识可追溯；
-5. **在决策日志中记录**：`category: "capability_extension"`，`subject: "learned technique: <名称>"`。
+If you encounter a generation technique, provider behavior, or prompting pattern you are unsure about:
 
-以下情形尤其重要：
-- **视频生成提示词** — 各模型对不同版本的关键词响应不同；
-- **图像模型参数** — FLUX、GPT Image、Imagen 的最优设置各有差异且持续演变；
-- **音频服务商怪癖** — 声音克隆、音乐生成、TTS 各有模型专属最佳实践；
-- **Remotion 组件模式** — 随框架演进不断出现新的合成技术。
+1. **Search the web** for current best practices — models and APIs change frequently, and the agent's training data may be stale
+2. **Check `.agents/skills/`** for existing Layer 3 knowledge (provider-specific prompting guides, API patterns)
+3. **If neither helps**, write a project-scoped skill at `projects/<project-name>/skills/<name>.md` documenting what you learned
+4. **Reference source URLs** in the skill so the knowledge is traceable
+5. **Log it** in the decision log: `category: "capability_extension"`, `subject: "learned technique: <name>"`
 
-不要依赖过时知识。拿不准时，先搜索。
+This is especially important for:
+- **Video generation prompting** — models respond to specific vocabularies that change with each version
+- **Image model parameters** — optimal settings for FLUX, GPT Image, Imagen differ and evolve
+- **Audio provider quirks** — voice cloning, music generation, and TTS each have model-specific best practices
+- **Remotion component patterns** — new composition techniques emerge as the framework evolves
+
+Do not rely on stale knowledge. When in doubt, search first.
 
 ---
 
-## 门禁提醒（约束）
+## Gate Reminder (Binding)
 
-本阶段以人工确认为门禁（`human_approval_default: true`）。评审通过后：
-以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染产物），并**结束本轮回复**。不要在同一轮回复里启动下一阶段。
-门禁按次生效——此前的一次"继续"不覆盖本次门禁。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

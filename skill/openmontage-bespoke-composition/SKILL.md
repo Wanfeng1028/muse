@@ -6,103 +6,182 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 定制合成（工坊模式）
+# Bespoke Composition (Atelier Mode)
 
-本技能指导**从零手写合成**而非拼装现成场景类型。这是“每次手工缝制”的路径：主角作品的每个像素都是新写的，没有两部视频共享同一种视觉语言。
+Meta-skill for **hand-authoring a composition from scratch** instead of assembling stock
+scene-types. This is the "hand-stitched every time" path: for hero pieces, every pixel of the
+look is written fresh so no two videos share a visual language.
 
-当你为某个作品选择了**工坊模式**时（参见“何时使用”）读本技能。它不提供组件——它把你路由到所需的*原则、引擎机制和工具接线*，确保你构建的东西既正确又独特。
+Read this whenever you've chosen **atelier mode** for a piece (see "When to use"). It does not
+hand you components — it routes you to the *principles, engine mechanics, and tool wiring* you
+need so that what you build is correct, and distinct.
 
-> 统领以下一切的唯一规则：**复用引擎知识，绝不复用创意组件。** Remotion 如何解析资源是引擎知识——可以自由复用。上一部视频长什么样是创意决策——绝不复用。
+> The single rule that governs everything below: **reuse engine knowledge, never creative
+> components.** How Remotion resolves an asset is engine knowledge — reuse it freely. How a
+> previous video looked is a creative decision — never reuse it.
 
-## 何时使用本技能（创作模式是提案决策）
+## When to use this skill (authoring mode is a proposal decision)
 
-OpenMontage 分离三个正交轴，全部在提案阶段锁定：
+OpenMontage separates three orthogonal axes, all locked at proposal:
 
-- `renderer_family` — 创作语法
-- `render_runtime` — 技术引擎（remotion / hyperframes / ffmpeg）
-- **`composition_mode`** — **templated**（拼装现成 `cut.type` 场景）**vs. atelier**（手写）
+- `renderer_family` — creative grammar
+- `render_runtime` — technical engine (remotion / hyperframes / ffmpeg)
+- **`composition_mode`** — **templated** (assemble stock `cut.type` scenes) **vs. atelier** (hand-author)
 
-**工坊模式**默认用于：营销、发布会、必须出彩的解说、品牌片、任何质量至上的单次交付物。**模板模式**用于：批量输出、本地化变体、快速草稿、低风险内部片段——可靠的一致性就够了，定制成本不划算的场景。在提案时向用户展示这个选择，并记入 `decision_log`（`category: "composition_mode"`），与展示运行时的方式相同。
+Pick **atelier** by default for: marketing, launches, explainers that must impress, brand
+pieces, anything single-deliverable where quality is the point. Pick **templated** for: batch
+output, localization variants, quick drafts, low-stakes internal clips — places where reliable
+sameness is fine and bespoke cost is unjustified. Present the choice to the user at proposal and
+log it in `decision_log` (`category: "composition_mode"`), the same way you present runtime.
 
-### 工坊模式与两种运行时
+### Atelier and the two runtimes
 
-两种运行时对“定制”的处理不同——在假设同一套法则适用之前先读这段：
+The two runtimes treat "bespoke" differently — read this before assuming the doctrine maps the same way to both:
 
-- **Remotion** 提供 `cut.type` 现成场景注册表（`text_card`、`stat_card`、`bar_chart` 等），由 `Explainer`/`CinematicRenderer` 合成调度。这是模板化默认。**工坊模式是逃生舱**——`composition_mode: "atelier"` 将渲染路由到 `_render_via_atelier` 并完全绕过注册表，Agent 在 `projects/<slug>/` 下手写自己的 React 合成。
-- **HyperFrames 本质就是工坊。** HF 中没有 cut-schema——每个合成都是手写的 `index.html`，带 `data-*` 计时属性和你自己写的 GSAP timeline。注册表（`hyperframes add`）是*块*注册表（颗粒覆盖、转场）——是你合成的可选输入，不是调度整个渲染的场景目录。**选择 `render_runtime: "hyperframes"` 时，作品已经是工坊风格；`composition_mode: "atelier"` 是隐含的。** 本技能的原则（艺术方向、场景独立性、无主角组件脊柱、独立性审查）同样适用。通过 `hyperframes_compose` 渲染（或对纯手写合成用 `npx hyperframes render`——参见第 5 节）。
+- **Remotion** ships a `cut.type` registry of stock scenes (`text_card`, `stat_card`, `bar_chart`, …) dispatched by the `Explainer`/`CinematicRenderer` compositions. That's the templated default. **Atelier mode is the escape hatch** — `composition_mode: "atelier"` routes the render to `_render_via_atelier` and bypasses the registry entirely, so the agent hand-writes its own React composition under `projects/<slug>/`.
+- **HyperFrames is inherently atelier.** There is no cut-schema in HF — every composition is a hand-authored `index.html` with `data-*` timing attributes and a GSAP timeline you wrote. The registry (`hyperframes add`) is a *block* registry (grain overlays, transitions) — it's optional inputs to your composition, not a scene catalog dispatching the whole render. **When `render_runtime: "hyperframes"` is chosen, the piece is already atelier-style; `composition_mode: "atelier"` is implicit.** The principles in this skill (art direction, scene distinctness, no hero-component spine, distinctness review) apply equally. Render via `hyperframes_compose` (or `npx hyperframes render` for hand-authored compositions — see section 5).
 
-所以：如果 `render_runtime == "remotion"` 且是主角作品，记录 `composition_mode: "atelier"` 决策。如果 `render_runtime == "hyperframes"`，工坊是默认行为，无需论证；本技能仍会在你编写合成之前引导你走同样的原则。
+So: if `render_runtime == "remotion"` and the piece is hero work, log a `composition_mode: "atelier"` decision. If `render_runtime == "hyperframes"`, atelier is the default behavior and you don't need to argue for it; this skill still routes you through the same principles before you write the composition.
 
-如果工坊模式生效（任一运行时），Remotion 现成 `cut.type` 目录、作为场景消费的 `hyperframes-registry` 成品块（而非原始输入）、fixtures 以及任何预制的创意组件都**不可用**——它们是冻结的外观，会重新引入同质化。
+If atelier is in play (either runtime), the stock Remotion `cut.type` catalog, `hyperframes-registry` finished blocks consumed as scenes (vs as raw inputs), fixtures, and any pre-baked creative component are **off-limits** — they are frozen looks and reintroduce sameness.
 
-## 构建路径
+## The construction route
 
-按此顺序创作。每一步都把你路由到已有知识——不要跳过第一步。
+Author in this order. Each step routes you to existing knowledge — do not skip the first one.
 
-### 1. 为*这个主题*确定艺术方向——分歧引擎
+### 1. Commit to an art direction *for this subject* — the divergence engine
+Before writing any component, decide a visual language that fits **this** topic and no other.
+Read **`skills/meta/taste-direction.md`** first and write the `taste_profile`: the design read,
+`visual_variance`, `motion_intensity`, `information_density`, reference strategy, and
+anti-patterns. Then use the **`visual-style`** Layer 3 skill (CREATE mode) to lock: palette, type personality,
+motion character, layout system, and **one signature device** unique to this piece. Difference
+between videos is guaranteed here — not by withholding components, but by forcing a fresh
+direction each time. Write it down (a short `art-direction.md` in the project) and build to it.
 
-在编写任何组件之前，决定一个只适合**这个**主题的视觉语言。先读 **`skills/meta/taste-direction.md`** 并写 `taste_profile`：设计解读、`visual_variance`、`motion_intensity`、`information_density`、参考策略和反模式。然后用 **`visual-style`** Layer 3 技能（CREATE 模式）锁定：调色板、字体个性、运动特征、布局系统和本作品独有的**一个标志性装置**。视频之间的差异在这里得到保证——不是靠扣留组件，而是靠每次强制新的方向。写下来（项目中的简短 `art-direction.md`）并据此构建。
+Ask yourself: *what visual metaphor belongs to this subject that I have not used before?* If the
+answer resembles a past piece, you haven't found the direction yet.
 
-问自己：*什么视觉隐喻属于这个主题而我从没用过？* 如果答案像过去的某个作品，你还没找到方向。
+### 1.5 Plan each scene as its own composition — no hero-component spine
+The most insidious form of templating sneaks back in at the *scene* level: pick one striking
+visual (a candle, a browser frame, a score ring), then re-use it every scene with different
+text underneath. The piece feels custom because the hero is custom — but every scene is
+mechanically the same composition. That's branded slides, not a film. **Don't do that.**
 
-### 1.5 每个场景规划为独立合成——无主角组件脊柱
+The signature device named in your art-direction is meant to appear in **one or at most two
+beats** — typically the climactic moment — not as the visual scaffolding of every scene. It
+earns its weight by being scarce.
 
-最阴险的模板化会在*场景*层面溜回来：选一个醒目的视觉（蜡烛、浏览器框、评分环），然后每个场景都复用它，只是下面换文字。作品感觉定制因为主角是定制的——但每个场景机械地是同一个合成。那是品牌幻灯片，不是电影。**不要那样做。**
+For each scene in the plan, answer concretely *before* writing code:
 
-艺术方向中命名的标志性装置应该出现在**一个或至多两个节拍**——通常是高潮时刻——而不是每个场景的视觉脚手架。它靠稀缺赢得分量。
+- **What is this scene's primary visual subject?** It must be *different* from the previous
+  scene's. A character. A diagram. A piece of evidence. A landscape. A typographic moment. The
+  signature device. A void. Each scene's primary subject is its job.
+- **Why does this beat exist?** What does it do for the story that no other beat does? If you
+  can collapse two scenes into one without losing meaning, you should.
+- **How does it differ visually from the scene before and after?** Different composition (rule
+  of thirds vs centered vs split). Different scale (intimate close vs wide field). Different
+  motion register (still vs busy). Different palette emphasis. Different type treatment.
+- **If you removed the signature device from this scene, would the scene still work?** If yes,
+  the signature device probably doesn't belong in this scene — it's there as filler. Cut it.
 
-对计划中的每个场景，在写代码之前具体回答：
+The reviewer enforces this as a "scene_distinctness" check (see
+`skills/meta/reviewer.md` → Composition Authoring Mode Review): a recorded inventory of
+each scene's primary subject + first frame, and an explicit answer to "do any two scenes
+share their primary visual subject?" Yes ⇒ CRITICAL ⇒ re-plan.
 
-- **这个场景的主要视觉主体是什么？** 必须*不同于*前一个场景。一个角色。一张图表。一件证据。一片风景。一个排版时刻。标志性装置。一个虚空。每个场景的主要主体就是它的职责。
-- **这个节拍为什么存在？** 它为故事做了什么其他节拍做不到的事？如果两个场景能合并而不丢意义，就该合并。
-- **它跟前后的场景视觉上如何不同？** 不同构图（三分法 vs 居中 vs 分割）。不同尺度（亲密特写 vs 广袤视野）。不同运动寄存器（静止 vs 繁忙）。不同调色重点。不同字体处理。
-- **如果从这个场景移除标志性装置，场景还成立吗？** 如果成立，标志性装置可能不属于这个场景——它是填充物。删掉。
+The corollary: the per-scene plan is a *first-class artifact*, not implied. Write it down
+(in `art-direction.md` or a sibling `scenes.md`) before authoring `Composition.tsx`.
 
-审查者将此作为 "scene_distinctness" 检查强制执行（参见 `skills/meta/reviewer.md` → Composition Authoring Mode Review）：记录每个场景的主要主体 + 首帧清单，并明确回答“有没有两个场景共享主要视觉主体？”有 ⇒ CRITICAL ⇒ 重新规划。
+### 2. Decide the motion language — principles, not presets
+Reach for **principle** skills, never finished animations:
+- **`framer-motion`** and **`lottie-bodymovin`** — Disney's 12 principles (anticipation, staging,
+  follow-through, slow-in/out, arc, timing, exaggeration, appeal). Runtime-agnostic; apply the
+  *principles* in your own Remotion `spring()`/`interpolate()` code.
+- The HyperFrames `references/motion-principles.md` — easing as emotion, timing as weight.
 
-推论：逐场景计划是*一等工件*，不是隐含的。在编写 `Composition.tsx` 之前写下来（在 `art-direction.md` 或同级的 `scenes.md` 中）。
+### 3. Reach for a richer vocabulary only when the concept demands it
 
-### 2. 决定运动语言——原则，而非预设
+**On Remotion** — most scenes are Remotion primitives. Escalate when the *idea* needs it, not
+by default: `gsap-*` (kinetic typography via SplitText, shape morph via MorphSVG, curved
+motion via MotionPath, line-draw via DrawSVG, custom easing), `threejs-*` (3D), `d3-viz`
+(data-driven custom charts — build the chart by hand; do **not** drop in the stock
+`bar_chart`/`line_chart`), `manim-*` (math), `canvas-procedural-animation` (particles/weather).
 
-使用**原则**技能，绝不用成品动画：
-- **`framer-motion`** 和 **`lottie-bodymovin`** — 迪士尼 12 原则（预备、舞台、跟随、缓入缓出、弧线、节奏、夸张、吸引力）。运行时无关；在你自己的 Remotion `spring()`/`interpolate()` 代码中应用这些*原则*。
-- HyperFrames 的 `references/motion-principles.md` — 缓动即情感，节奏即重量。
+**On HyperFrames** — the vocabulary lives in `/hyperframes-animation`: 36+ atomic motion
+**rules** (`kinetic-beat-slam`, `3d-text-depth-layers`, `motion-blur-streak`,
+`physics-press-reaction`, `multi-phase-camera`, `depth-of-field-blur`, …), 15+ scene
+**blueprints** (`kinetic-type-beats`, `comparison-split`, `dataviz-countup`,
+`constellation-hub`, `ticker-takeover`, `device-surface-showcase`, …), 16 **transition**
+families (`css-distortion`, `css-destruction`, `css-radial`, `css-light`, `css-mechanical`,
+…), and **7 runtime adapters** under one composition: GSAP default, plus Lottie, Three.js,
+Anime.js, CSS keyframes, WAAPI, and TypeGPU (GPU compute). The headline capability is
+`adapters/html-in-canvas-patterns.md` — capture live HTML/CSS as a GPU texture and render
+through WebGL/Three.js for cinematic bloom, shatter, liquid, portal effects. Use it for 1–3
+hero beats per video, not every beat. **Compose 2–4 distinct atomic rules per beat** and use
+**at least 3 different easings across the piece** — that's the doctrine baked into the
+animation skill, not optional polish.
 
-### 3. 仅在概念需要时使用更丰富的词汇
+For HF creative direction (palette/type/narration/beat planning) read `/hyperframes-creative`.
+For HF assets (TTS/BGM/SFX/transcription/background-removal) read `/hyperframes-media` or
+`/media-use`. For HF CLI workflow (init/lint/validate/inspect/snapshot/beats/render) read
+`/hyperframes-cli`. The `/hyperframes` router skill maps it all.
 
-**在 Remotion 上** — 大多数场景是 Remotion 原语。当*创意*需要时才升级，而非默认：`gsap-*`（SplitText 动态排版、MorphSVG 形状变形、MotionPath 曲线运动、DrawSVG 线条绘制、自定义缓动）、`threejs-*`（3D）、`d3-viz`（数据驱动自定义图表——手工构建图表；**不要**使用现成的 `bar_chart`/`line_chart`）、`manim-*`（数学）、`canvas-procedural-animation`（粒子/天气）。
+### 4. Get the engine mechanics right — the gotcha codex
+This is the only place you "reuse": the engine's solved problems. These are facts about how
+the framework works, not looks.
 
-**在 HyperFrames 上** — 词汇在 `/hyperframes-animation`：36+ 原子运动**规则**（`kinetic-beat-slam`、`3d-text-depth-layers`、`motion-blur-streak`、`physics-press-reaction`、`multi-phase-camera`、`depth-of-field-blur` 等）、15+ 场景**蓝图**（`kinetic-type-beats`、`comparison-split`、`dataviz-countup`、`constellation-hub`、`ticker-takeover`、`device-surface-showcase` 等）、16 个**转场**族（`css-distortion`、`css-destruction`、`css-radial`、`css-light`、`css-mechanical` 等），以及一个合成下的 **7 个运行时适配器**：GSAP 默认，外加 Lottie、Three.js、Anime.js、CSS keyframes、WAAPI 和 TypeGPU（GPU 计算）。头号能力是 `adapters/html-in-canvas-patterns.md`——将实时 HTML/CSS 捕获为 GPU 纹理并通过 WebGL/Three.js 渲染，实现电影感 bloom、破碎、液体、传送门效果。每部视频用于 1–3 个主角节拍，不是每个节拍。**每个节拍组合 2–4 个不同的原子规则**，并且**全片至少使用 3 种不同缓动**——这是动画技能内建的法则，不是可选的润色。
+**For Remotion**, study `.agents/skills/remotion-best-practices` (19 rule files: timing,
+transitions, text-animations, transparent video, fonts, audio, sequencing, measuring text).
+You may also read the stock components in `remotion-composer/src/components/` **as a
+mechanics codex — to learn idioms, never to import or imitate a look.**
 
-HF 创意方向（调色/字体/旁白/节拍规划）读 `/hyperframes-creative`。HF 资产（TTS/BGM/SFX/转写/去背景）读 `/hyperframes-media` 或 `/media-use`。HF CLI 工作流（init/lint/validate/inspect/snapshot/beats/render）读 `/hyperframes-cli`。`/hyperframes` 路由技能映射全部。
+**For HyperFrames**, the composition contract is in `/hyperframes-core` (the `data-*`
+timing attributes — `data-start`, `data-duration`, `data-track-index` — plus the
+mandatory `class="clip"`, `data-composition-id`, `window.__timelines` registration, sub-
+composition mounts). Run `npx hyperframes lint && npx hyperframes validate` after every
+change — they catch missing root attrs, missing clip ids, GSAP-target unresolved, overlapping
+tweens, and contrast failures before render. Use `npx hyperframes snapshot . --at <times>`
+to spot-check beats visually before committing to a full render.
 
-### 4. 把引擎机制搞对——坑点法典
+Recurring mechanics that bite if you don't know them:
+- **Determinism**: no `Math.random()` / `Date.now()` per frame — use Remotion `random(seed)` or a
+  seeded helper, or particles/easing flicker across the render.
+- **Per-scene duration**: `useVideoConfig().durationInFrames` returns the *composition* length, not
+  your scene's. Drive scene-local timing from a passed `durationInFrames`/`Sequence`, not the global.
+- **Asset paths**: URLs and `staticFile()` (public/) work everywhere; **`<Audio>` rejects `file://`**
+  (only `<OffthreadVideo>`/`<Img>` accept absolute `file://`). Put audio/video in a per-project
+  public dir and reference via `staticFile`. Mirror the `resolveAsset` helper.
+- **GSAP-in-Remotion**: use a `paused` timeline and `.seek(frame/fps)` — never `requestAnimationFrame`
+  — so frames render deterministically.
+- **Fonts (Remotion)**: `loadFont()` from `@remotion/google-fonts/<Name>` at module scope, once.
+- **HF data-* contract**: every timed element needs `data-start`, `data-duration`,
+  `data-track-index`, AND `class="clip"` — without `clip` the framework won't manage
+  visibility and your element will be onscreen the whole timeline. Root `<body>` needs
+  `data-composition-id`, `data-start="0"`, `data-duration`, `data-width`, `data-height`.
+  Every timeline must be `gsap.timeline({ paused: true })` and registered as
+  `window.__timelines["<composition-id>"]`. Use stable `id` attributes on clips and on
+  GSAP targets — `nth-of-type` selectors are flaky at validate time.
+- **Captions vs on-screen text — pick one role, never both for the same content.** Decide
+  once per piece, before authoring: are captions adding meaning the spoken words can't carry
+  (a number, a name, a translation, a quote attribution), OR are they accessibility subtitles
+  echoing the narration? If your scene already displays a SerifLine that reads the script
+  verbatim, do NOT also emit an auto-caption with the same text — the doubled phrase looks
+  amateurish even when the rest of the scene is beautiful. Empty `captions=[]` in props, or
+  scope captions only to scenes where the on-screen text differs from what's being said.
 
-这是唯一“复用”的地方：引擎已解决的问题。这些是关于框架如何工作的事实，不是外观。
+### 5. Render through the runtime-appropriate bespoke path
+Bespoke compositions are **throwaway and project-local** — they never enter any shared registry.
 
-**对于 Remotion**，研读 `.agents/skills/remotion-best-practices`（19 个规则文件：计时、转场、文字动画、透明视频、字体、音频、排序、文字测量）。你也可以读 `remotion-composer/src/components/` 中的现成组件**作为机制法典——学习惯用法，绝不导入或模仿外观。**
-
-**对于 HyperFrames**，合成合约在 `/hyperframes-core`（`data-*` 计时属性——`data-start`、`data-duration`、`data-track-index`——加上必需的 `class="clip"`、`data-composition-id`、`window.__timelines` 注册、子合成挂载）。每次改动后运行 `npx hyperframes lint && npx hyperframes validate`——它们在渲染前捕获缺失根属性、缺失 clip id、GSAP 目标未解析、重叠 tween 和对比度失败。用 `npx hyperframes snapshot . --at <times>` 在提交完整渲染前目视抽查节拍。
-
-不知道就会踩的常见机制：
-- **确定性**：不要逐帧 `Math.random()` / `Date.now()`——用 Remotion `random(seed)` 或种子化辅助函数，否则粒子/缓动会在渲染中闪烁。
-- **逐场景时长**：`useVideoConfig().durationInFrames` 返回的是*合成*长度，不是你的场景长度。场景局部计时用传入的 `durationInFrames`/`Sequence` 驱动，不要用全局值。
-- **资源路径**：URL 和 `staticFile()`（public/）到处可用；**`<Audio>` 拒绝 `file://`**（只有 `<OffthreadVideo>`/`<Img>` 接受绝对 `file://`）。把音频/视频放在项目级 public 目录并通过 `staticFile` 引用。镜像 `resolveAsset` 辅助函数。
-- **Remotion 中的 GSAP**：用 `paused` timeline 和 `.seek(frame/fps)`——绝不用 `requestAnimationFrame`——以便帧确定性渲染。
-- **字体（Remotion）**：在模块作用域调用一次 `loadFont()`（来自 `@remotion/google-fonts/<Name>`）。
-- **HF data-* 合约**：每个计时元素都需要 `data-start`、`data-duration`、`data-track-index` 和 `class="clip"`——没有 `clip` 框架不会管理可见性，元素会整条时间线都在屏幕上。根 `<body>` 需要 `data-composition-id`、`data-start="0"`、`data-duration`、`data-width`、`data-height`。每个 timeline 必须是 `gsap.timeline({ paused: true })` 并注册为 `window.__timelines["<composition-id>"]`。clip 和 GSAP 目标使用稳定的 `id` 属性——`nth-of-type` 选择器在 validate 时不稳定。
-- **字幕 vs 屏幕文字——选一个角色，同一内容绝不用两者。** 每部作品在编写前决定一次：字幕是在添加口语无法承载的意义（数字、名字、翻译、引文出处），还是回显旁白的无障碍字幕？如果你的场景已经显示逐字读稿的 SerifLine，就不要再输出相同文字的字幕——重复短语即使场景其余部分很漂亮也显得业余。props 中 `captions=[]`，或只对屏幕文字与所说内容不同的场景限定字幕。
-
-### 5. 通过运行时对应的工坊路径渲染
-
-工坊合成是**一次性且项目本地**的——绝不进入任何共享注册表。
-
-#### Remotion 工坊路径
-
-- 在 `projects/<slug>/` 下编写（gitignored）。渲染工具自动通过 mtime-skip 复制将你的 `.tsx`/`.ts` 源码暂存到 `remotion-composer/projects/<slug>/`，让 webpack 解析 `node_modules`——你的真源留在 `projects/` 下。
-- 用 `python scripts/scaffold_atelier_project.py <slug>` 脚手架——只生成引擎管道（entry / Root / 空白 `Composition.tsx` / `art-direction.md` / props 模板 / README）。零创意内容；占位符是故意丑陋的黑屏，让渲染后审查正确地拒绝交付未创作的脚手架。
-- 媒体放在 `projects/<slug>/public/` 并作为 `bespoke.public_dir` 传入。
-- 通过 `video_compose` 的 `operation="render"` 渲染：
+#### Remotion atelier path
+- Author under `projects/<slug>/` (gitignored). The render tool auto-stages your `.tsx`/`.ts`
+  source into `remotion-composer/projects/<slug>/` via mtime-skip copy so webpack can resolve
+  `node_modules` — your source-of-truth stays under `projects/`.
+- Scaffold with `python scripts/scaffold_atelier_project.py <slug>` — emits engine
+  plumbing only (entry / Root / blank `Composition.tsx` / `art-direction.md` / props
+  template / README). Zero creative content; the placeholder is a deliberately ugly black
+  screen so the post-render review correctly refuses to ship the scaffold unauthored.
+- Keep media in `projects/<slug>/public/` and pass that as `bespoke.public_dir`.
+- Render via `video_compose` `operation="render"`:
 
 ```json
 edit_decisions = {
@@ -114,49 +193,94 @@ edit_decisions = {
     "props_path": "<absolute path to artifacts/props.json>",
     "public_dir": "<absolute path to projects/<slug>/public/>",
     "art_direction": "<short note or path to art-direction.md — REQUIRED>",
-    "scale": 0.5,          // 0.5 用于快速草稿；最终 1080p 去掉此值
-    "crf": 18,             // 清晰最终
+    "scale": 0.5,          // 0.5 for a fast draft; drop for the 1080p final
+    "crf": 18,             // crisp final
     "concurrency": 8
   }
 }
 ```
 
-工坊模式下不需要 `asset_manifest` 或 `cuts`——合成拥有自己的资源。工具的 `_run_atelier_checks` 在源文件从现成注册表导入（`src/components`、`src/Explainer` 等）时使渲染失败，并在缺少 `art_direction` 时警告。
+No `asset_manifest` or `cuts` are required in atelier mode — the composition owns its own assets.
+The tool's `_run_atelier_checks` fails the render if any source file imports from the stock
+registry (`src/components`, `src/Explainer`, etc.), and warns if `art_direction` is missing.
 
-#### HyperFrames 路径
+#### HyperFrames path
+- Scaffold with `npx hyperframes init <slug>` (run from `projects/`). HF init generates
+  `index.html`, `meta.json`, `package.json`, and a per-project `CLAUDE.md` that auto-routes
+  the agent into `/hyperframes` — so the next session knows exactly which sub-skills to load.
+- Author `index.html` by hand. Every clip needs `class="clip"` + the three `data-*` timing
+  attrs + a stable `id`. Mount sub-compositions via `data-composition-src` once the timeline
+  on one file grows past 4 clips (the lint catches density).
+- For music-driven pieces, run `npx hyperframes beats .` after dropping the track in
+  `assets/` — it emits `beats/<audio>.json` with `{time, strength}` per beat so the agent
+  can land scenes on real drops (not guesses).
+- Verify before render: `npx hyperframes lint . && npx hyperframes validate . && npx hyperframes snapshot . --at <times>`.
+  Snapshot is HF's native visual-spotcheck (contact-sheet of PNG frames at chosen
+  timestamps) — use it the same way an atelier `final_review.visual_spotcheck` would.
+- **Render**: call `video_compose` with `render_runtime: "hyperframes"`,
+  `composition_mode: "atelier"`, and the authored `workspace_path`. It routes to
+  `hyperframes_compose.render_existing`, which preserves `index.html` and runs
+  the unified check gate, strict render, and post-render review. Call `npx
+  hyperframes render` directly only while debugging the runtime outside a pipeline.
 
-- 用 `npx hyperframes init <slug>` 脚手架（在 `projects/` 下运行）。HF init 生成 `index.html`、`meta.json`、`package.json` 和每项目 `CLAUDE.md`，自动将 Agent 路由到 `/hyperframes`——下个会话就知道该加载哪些子技能。
-- 手写 `index.html`。每个 clip 需要 `class="clip"` + 三个 `data-*` 计时属性 + 稳定的 `id`。当一个文件的 timeline 超过 4 个 clip 时（lint 会捕获密度），通过 `data-composition-src` 挂载子合成。
-- 音乐驱动作品，在把音轨放入 `assets/` 后运行 `npx hyperframes beats .`——它输出 `beats/<audio>.json`，包含每个节拍的 `{time, strength}`，让 Agent 落在真实 drop 上（不是猜测）。
-- 渲染前验证：`npx hyperframes lint . && npx hyperframes validate . && npx hyperframes snapshot . --at <times>`。Snapshot 是 HF 的原生视觉抽查（选定时间戳的 PNG 帧接触表）——像工坊的 `final_review.visual_spotcheck` 一样使用。
-- **渲染**：调用 `video_compose`，`render_runtime: "hyperframes"`、`composition_mode: "atelier"` 和已创作的 `workspace_path`。它路由到 `hyperframes_compose.render_existing`，保留 `index.html` 并运行统一检查门、严格渲染和渲染后审查。仅在管线外调试运行时时才直接调用 `npx hyperframes render`。
+## Guardrails so this doesn't backfire
 
-## 防止适得其反的护栏
+- **Distinctness review (replaces conformance review).** Before final render, ask: *could this be
+  any other product's video? Does it reuse a look I've made before?* If yes, the art direction
+  failed — return to step 1. This is the inverse of "does it match the reference."
+- **No silent fallback to stock.** "Keep it simple" applies to *mechanics* (a 10-line spring is
+  fine), never to *design* (simple ≠ reaching for `text_card`). If you catch yourself adding a
+  stock `cut.type` to a hero piece, stop.
+- **Cost honesty.** Atelier costs more agent tokens and iteration than templated. Say so at proposal
+  so the user opts in knowingly. Quality varies more without a stock baseline — mitigate with strong
+  principle skills (above) and the distinctness review, not by reintroducing reuse.
+- **Checkpoint cadence.** Follow `skills/meta/checkpoint-protocol.md`: present script + scene plan
+  for approval BEFORE generating assets, then the **assets gate**, then a first-render checkpoint.
+  Do not batch-generate ahead of sign-off, and **do not render a draft to earn the assets review** —
+  the assets gate is held *before* compose (see below).
 
-- **独立性审查（替代合规审查）。** 最终渲染前问：*这可能是任何其他产品的视频吗？它复用了我以前做过的外观吗？* 如果是，艺术方向失败了——回到第 1 步。这是“它匹配参考吗”的反面。
-- **不得静默回退到现成。** “保持简单”适用于*机制*（10 行弹簧没问题），绝不适用于*设计*（简单 ≠ 用 `text_card`）。如果你发现自己在主角作品里加现成 `cut.type`，停下来。
-- **成本诚实。** 工坊比模板化消耗更多 Agent token 和迭代。在提案时说明，让用户知情选择。没有现成基线时质量波动更大——用强原则技能（见上）和独立性审查来缓解，而不是重新引入复用。
-- **检查点节奏。** 遵循 `skills/meta/checkpoint-protocol.md`：在生成资源之前提交脚本 + 场景计划审批，然后是**资源门**，再是首渲染检查点。不要在签核之前批量生成，**不要为了获得资源审查而渲染草稿**——资源门在 compose *之前*（见下）。
-
-- **在资源门用逐场景静帧填充胶片条。** 工坊场景的“资源”是 `.tsx` 合成——无法缩略图化——所以静帧存在之前看板无法展示。合成编译后，为每个场景在代表帧渲染一张静帧到 `projects/<slug>/snapshots/<scene_id>.png`，让资源门胶片条显示真实帧而非“◆ BESPOKE”占位符。用 Remotion 静帧渲染器（快——每场景一帧），由 scene_plan 计时驱动：
+- **Populate the filmstrip with per-scene stills at the assets gate.** A bespoke scene's "asset" is
+  a `.tsx` composition — not thumbnailable — so the board can't show it until a still exists. Once
+  the composition compiles, render one still per scene at a representative frame into
+  `projects/<slug>/snapshots/<scene_id>.png`, so the assets-gate filmstrip shows real frames instead
+  of "◆ BESPOKE" placeholders. Use Remotion's still renderer (fast — one frame each), driven off the
+  scene_plan timings:
 
   ```bash
-  # 每场景一张静帧，位于场景中段帧（fps * mid_seconds），输出到 snapshots/<scene_id>.png
+  # one still per scene at mid-scene frame (fps * mid_seconds), into snapshots/<scene_id>.png
   npx remotion still projects/<slug>/index.tsx <CompositionId> \
     projects/<slug>/snapshots/<scene_id>.png \
     --frame=<mid_frame> --props=<abs artifacts/props.json> --public-dir=<abs public/>
   ```
 
-  读取 scene_plan 并渲染所有静帧的辅助脚本在 `scripts/atelier_snapshots.py`（`python scripts/atelier_snapshots.py <slug>`）。然后在资源门停下。完整/草稿渲染是**compose**阶段，在批准之后。
+  A helper that reads the scene_plan and renders all stills is at
+  `scripts/atelier_snapshots.py` (`python scripts/atelier_snapshots.py <slug>`). Then STOP at the
+  assets gate. The full/draft render is the **compose** stage, after approval.
 
-## 已有先例（学*工作流*，不是外观）
+## Worked precedents (for the *workflow*, not the look)
 
-两个参考作品——每个运行时一个——研读**流程**，绝不研读视觉语言：
+Two reference pieces — one per runtime — to study **processes**, never visual languages:
 
-- **Remotion 工坊** — Phantom Reach 解说（`projects/phantom-reach-explainer/`）：Playwright 捕获的应用画面加 PII 模糊层 → 逐句 TTS 用静默节拍拼接 → 免费 Pixabay 音乐 → 手写 Remotion 场景（自定义 intro、评分环、agentic 流程、CTA），一次性紫色主题。Compound Snowball（`projects/compound-snowball/`）和 Library of Alexandria（`projects/alexandria-fire/`）另外两个——三个 Remotion 工坊作品，三种完全不同的视觉语言。
+- **Remotion atelier** — Phantom Reach explainer (`projects/phantom-reach-explainer/`):
+  Playwright-captured app footage with a PII-blur layer → per-sentence TTS stitched with
+  silence beats → free Pixabay music → hand-authored Remotion scenes (custom intro,
+  score-ring, agentic flow, CTA) on a one-off violet theme.
+  Compound Snowball (`projects/compound-snowball/`) and Library of Alexandria
+  (`projects/alexandria-fire/`) are two more — three Remotion atelier pieces, three
+  completely different visual languages.
 
-- **HyperFrames** — `in-a-hurry`（`projects/in-a-hurry/`）：音乐驱动动态排版作品，用 HF 0.7 的 `beats` 命令将场景计时锁定到真实 drop。演练了 `/hyperframes-animation` 的 **5 个类别**：`kinetic-beat-slam`、`3d-text-depth-layers`（堆叠挤出）、`motion-blur-streak`（回声残影）、`transitions/css-distortion`（色差 RGB 分离）和 `adapters/html-in-canvas-patterns`（Three.js + UnrealBloom 用于主角 punchline）。每个节拍用不同缓动（`expo.out`、`back.out(2)`、`circ.out`、`sine.inOut`）。
+- **HyperFrames** — `in-a-hurry` (`projects/in-a-hurry/`): a music-driven kinetic-typography
+  piece using the new HF 0.7 `beats` command to lock scene timing to real drops. Exercises
+  **5 categories** of `/hyperframes-animation`: `kinetic-beat-slam`, `3d-text-depth-layers`
+  (stacked extrusion), `motion-blur-streak` (echo-ghost trails), `transitions/css-distortion`
+  (chromatic-aberration RGB-split), and `adapters/html-in-canvas-patterns` (Three.js +
+  UnrealBloom on a hero punchline). Each beat uses a distinct easing (`expo.out`,
+  `back.out(2)`, `circ.out`, `sine.inOut`).
 
-**不要复现其中任何视觉语言**——下一部作品必须看起来完全不像它们。这才是重点。只研读*流程*（决策、排序、门、验证）。
+**Do not reproduce any of their visual languages** — the next piece must look nothing like
+any of them. That is the whole point. Study only the *process* (decisions, ordering, gates,
+verification).
 
-另见：`skills/meta/animation-runtime-selector.md`（运行时 + 库路由）、`AGENT_GUIDE.md` → "Composition Authoring Mode"、`/hyperframes`（HF 路由和能力图）。
+See also: `skills/meta/animation-runtime-selector.md` (runtime + library routing),
+`AGENT_GUIDE.md` → "Composition Authoring Mode", `/hyperframes` (the HF router and
+capability map).

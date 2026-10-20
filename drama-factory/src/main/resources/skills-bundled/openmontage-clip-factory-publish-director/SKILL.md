@@ -6,69 +6,72 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 发布导演 — 剪辑工厂流水线
+# Publish Director - Clip Factory Pipeline
 
-## 适用场景
+## When To Use
 
-本阶段把片段批量打包成一份分发方案。目标不只是导出文件，而是搭出一个能持续运转的内容引擎。
+This stage packages the clip batch into a distribution plan. The goal is not just exported files. The goal is a usable content engine.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/publish_log.schema.json` | 产出物校验 |
-| 前置产出物 | `state.artifacts["compose"]["render_report"]`、`state.artifacts["idea"]["brief"]`、`state.artifacts["script"]["script"]` | 输出结果、排序、目标 |
-| Playbook | 当前生效的风格 playbook | 品牌调性 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/publish_log.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["compose"]["render_report"]`, `state.artifacts["idea"]["brief"]`, `state.artifacts["script"]["script"]` | Outputs, rankings, and goals |
+| Playbook | Active style playbook | Brand voice |
 
-## 流程
+## Process
 
-### 1. 用最强片段打头阵
+### 1. Lead With The Strongest Clip
 
-不要按时间顺序排期，要按排序排期。
+Do not schedule by chronology. Schedule by ranking.
 
-首发片段通常应当是：
+The first published clip should usually be:
 
-- 最强的钩子
-- 最干净、最能独立成立的片段
-- 与本批次目标最契合的片段
+- the strongest hook,
+- the cleanest standalone clip,
+- the clip most aligned with the batch goal.
 
-### 2. 按平台定制文案
+### 2. Tailor Copy By Platform
 
-每个平台都需要自己的语气与包装方式：
+Each platform needs its own tone and packaging:
 
-- TikTok / Reels：直接、快、钩子先行
-- Shorts：可检索、贴合关键词
-- LinkedIn：洞察导向、更职业化
-- X：短促有力、便于表达观点
+- TikTok / Reels: direct, fast, hook-led
+- Shorts: searchable, keyword-aware
+- LinkedIn: insight-led and more professional
+- X: short, punchy, opinion-friendly
 
-### 3. 把批量打包干净
+### 3. Package The Batch Cleanly
 
-按平台分组，并附上可直接粘贴的文字素材，而不仅仅是视频文件。
+Group by platform and include ready-to-paste text assets, not just video files.
 
-### 4. 保留批次真实信息
+### 4. Preserve Batch Truth
 
-在 `publish_log.metadata` 中存储：
+Store in `publish_log.metadata`:
 
 - `clip_catalog`
 - `posting_order`
 - `platform_copy_map`
 - `schedule_notes`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 最强片段是否领先于整个投放节奏
-- 文案是否为每个平台单独定制
-- 导出文件夹是否无需额外整理即可使用
-- 批次目录是否清晰地把排序、文件路径、发布意图关联起来
+- strongest clips lead the rollout,
+- captions are platform-specific,
+- export folders are usable without extra cleanup,
+- the batch catalog clearly links ranking, file paths, and publishing intent.
 
-## 常见陷阱
+## Common Pitfalls
 
-- 把整批片段安排在同一天发。
-- 所有平台共用一条文案。
-- 渲染完成后丢失了排序/先后逻辑。
+- Publishing the whole batch on the same day.
+- Using one caption everywhere.
+- Losing the rank/order logic after rendering is complete.
 
 ---
 
-## 质量门提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段需经人工审批（`human_approval_default: true`）。评审通过后：用 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染产出物），然后**结束本轮**。不得在同一回复里启动下一阶段。审批按门独立生效——此前的“继续”不代表本门已通过。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

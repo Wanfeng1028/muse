@@ -6,63 +6,63 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 创意总监 — 数字人口播流水线
+# Idea Director - Avatar Spokesperson Pipeline
 
-## 适用场景
+## When To Use
 
-当交付物是以主播为核心的数字人口播视频时使用本流水线：代言广告、产品介绍、入职致辞、内部通报，或一段短脚本讲解，其中说话人始终是视觉锚点。
+Use this pipeline when the deliverable is a presenter-led avatar video: a spokesperson spot, product intro, onboarding message, internal comms update, or short scripted explainer where the speaker remains the visual anchor.
 
-你的首要任务，是在任何人开始为不可能的生产条件写精美文案之前，**诚实地**判定虚拟形象路线。
+Your first job is to classify the avatar path honestly before anyone writes polished copy for an impossible production setup.
 
-## 运行时选择（强制 — 要摆出约束，不许悄悄替用户选）
+## Runtime Selection (MANDATORY — present the constraint, don't silently pick)
 
-锁定 `render_runtime = "remotion"`。**第一阶段里 HyperFrames 不是本流水线的合法运行时** —— avatar-spokesperson 依赖 Remotion 的 `TalkingHead` 合成与 `remotion_caption_burn`，而这两者在 HyperFrames 上还没有对齐实现。
+Lock `render_runtime = "remotion"`. **HyperFrames is NOT a valid runtime on this pipeline in Phase 1** — avatar-spokesperson depends on the Remotion `TalkingHead` composition and `remotion_caption_burn`, and neither has HyperFrames parity yet.
 
-依据 AGENT_GUIDE.md 的「必须同时呈现两种合成运行时（硬规则）」：不要默认选择。对用户说明："你机器上 HyperFrames 可用，但 avatar-spokesperson 依赖 Remotion 的 TalkingHead 合成与字幕烧录，因此这里 remotion 是唯一可行运行时 —— 可以继续吗？" 记录一条 `render_runtime_selection` 决策，其中 hyperframes 的 `rejected_because: "TalkingHead + caption parity deferred on avatar-spokesperson"`。
+Per AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)": do NOT silently default. Tell the user: "HyperFrames is available on your machine, but avatar-spokesperson depends on the Remotion TalkingHead composition and caption burn, so remotion is the only viable runtime here — OK to proceed?" Record a `render_runtime_selection` decision with hyperframes `rejected_because: "TalkingHead + caption parity deferred on avatar-spokesperson"`.
 
-## 参考输入
+## Reference Inputs
 
 - `docs/avatar-spokesperson-best-practices.md`
 - `skills/creative/storytelling.md`
 - `skills/creative/short-form.md`
 
-## 流程
+## Process
 
-### 1. 判定虚拟形象路线
+### 1. Classify The Avatar Path
 
-记录项目实际属于哪种生产模式：
+Record which production mode the project actually has:
 
 - `platform_avatar`
 - `photo_talking_head`
 - `presenter_plate_lip_sync`
 
-同时记录虚拟形象是已经存在，还是需要在本次运行之外另行创建。
+Also record whether the avatar already exists or still has to be created outside the current run.
 
-### 2. 定义信息形态
+### 2. Define The Message Shape
 
-记录以下内容：
+Capture:
 
-- 目标受众，
-- 核心卖点或 CTA，
-- 目标时长，
-- 目标平台，
-- 视频属于销售导向、入职导向、支持导向还是公告导向。
+- audience,
+- core offer or CTA,
+- runtime target,
+- platform targets,
+- whether the video is sales, onboarding, support, or announcement led.
 
-口播视频最好只承担一个明确任务。
+Spokesperson videos work best when they have one clear job.
 
-### 3. 记录素材现实
+### 3. Capture Source Reality
 
-简报中应明确写出：
+The brief should explicitly state:
 
-- 是否提供干净旁白，
-- 是否接受 TTS，
-- 是否存在品牌背景或叠加层，
-- 是否必须配字幕，
-- 是否需要多语言版本。
+- whether clean narration is supplied,
+- whether TTS is acceptable,
+- whether brand backgrounds or overlays exist,
+- whether subtitles are required,
+- whether multilingual variants are expected.
 
-### 4. 构建简报
+### 4. Build The Brief
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `avatar_path`
 - `avatar_exists`
@@ -73,22 +73,24 @@ metadata:
 - `deliverable_mix`
 - `missing_capabilities`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 虚拟形象路线明确，
-- 信息足够聚焦，适配口播格式，
-- 旁白或虚拟形象的缺失依赖在早期就可见，
-- 交付物匹配真实素材条件。
+- the avatar path is explicit,
+- the message is narrow enough for a spokesperson format,
+- missing narration or avatar dependencies are visible early,
+- deliverables fit the actual source setup.
 
-## 常见坑
+## Common Pitfalls
 
-- 把泛泛的「生成一段视频」需求当成确定性的虚拟形象工作流。
-- 在确认虚拟形象与旁白路线之前就写好 CTA。
-- 在主构图尚未验证前就规划多种画幅比例。
+- Treating a generic generated-video request as a deterministic avatar workflow.
+- Writing the CTA before confirming the avatar and narration path.
+- Planning multiple aspect ratios before the hero layout is proven.
 
 ---
 
-## 门控提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为门（`human_approval_default: true`）。评审通过后：
-用 `status="awaiting_human"` 打检查点，展示摘要（Backlot 看板会渲染该产物），并**结束本轮回复**。不要在同一条回复里开始下一阶段。审批是按门独立的 —— 之前某次的「继续」不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

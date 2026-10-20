@@ -6,73 +6,87 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 创作意图采集（Creative Intake）
+# Creative Intake
 
-在启动调研阶段之前，先通过有针对性的提问摸清用户意图。简报不清晰时，不要贸然开工。
+Before the research stage, gather user intent through targeted questions.
+Do NOT start production on a vague brief.
 
-## 需要采集的核心问题
+## Required Questions (ask conversationally, not as a survey)
 
-以对话方式自然穿插提问，不要当成问卷逐条抛出：
+1. **Purpose**: What is this video FOR? (educate, sell, inspire, document, entertain)
+2. **Audience**: Who will watch it? (age, expertise, context — "my team" vs "YouTube public")
+3. **Platform**: Where will it live? (YouTube, internal Slack, social media, presentation, website)
+4. **Tone**: What should it FEEL like? (serious, playful, cinematic, raw, warm, provocative)
+5. **References**: Any videos you admire or want this to feel like?
+6. **Outcome**: What should the viewer DO or FEEL after watching?
+7. **Constraints**: Budget ceiling? Timeline? Must-include content?
 
-1. **目的**：这条视频是做什么用的？（教学、销售、启发、记录、娱乐）
-2. **受众**：谁会看？（年龄层、专业程度、观看场景——"我的团队"还是"YouTube 公众"）
-3. **平台**：视频投放到哪里？（YouTube、内部 Slack、社交媒体、演示、网站）
-4. **调性**：希望给人什么感觉？（严肃、活泼、电影感、粗粝、温暖、挑衅）
-5. **参考**：有没有喜欢的视频或希望贴近的风格？
-6. **效果**：观众看完后应该做什么、感受到什么？
-7. **约束**：预算上限？时间节点？必须包含的内容？
+## How to Ask
 
-## 提问方式
+Don't dump all 7 questions at once. Start with purpose and audience,
+then let the conversation flow. Fill in gaps naturally.
 
-不要一次性把七个问题全部倒出来。先从目的和受众入手，让对话自然推进，其余信息在交流中逐步补齐。
+If the user gives a detailed brief, skip questions they've already answered.
 
-如果用户已经给了详细简报，跳过他们已回答的部分。先识别用户已提供的信息——比如用户说"我要给 Instagram 做一条电影感品牌片"，那么目的（启发/销售）、平台（Instagram）、调性（电影感）都已明确，只需追问缺失项。
+Identify what the user has already told you. If they said "I want a
+cinematic brand film for Instagram," you already have purpose (inspire/sell),
+platform (Instagram), and tone (cinematic). Ask what's missing.
 
-## 处理模糊需求
+## Handling Vague Briefs
 
-当用户说"帮我做个关于 X 的视频"时：
+When the user says something like "make me a video about X":
 
-1. 先确认你理解了主题，让用户感到被听懂。
-2. 提出最关键的一个缺失问题（通常是目的或受众）。
-3. 根据回答，继续追问下一个最重要的缺口。
-4. 信息足够启动调研时就停止提问。不需要完美答案——调研阶段会补全细节。
+1. Acknowledge the topic — show you understood.
+2. Ask the single most important missing question first (usually purpose or audience).
+3. Based on their answer, ask the next most important gap.
+4. Stop asking when you have enough to start research. You don't need perfect answers — research will fill in details.
 
-## 处理详细简报
+## Handling Detailed Briefs
 
-当用户提供了多段文字简报或文档时：
+When the user provides a multi-paragraph brief or a document:
 
-1. 用一两句话概括你的理解。
-2. 指出缺口："我对受众和调性已经很清楚，但想确认一下——有没有期望达成的具体效果？"
-3. 如果平台和约束条件未提及，主动确认。
+1. Summarize what you understood (1-2 sentences).
+2. Call out any gaps: "I have a clear picture of the audience and tone, but I'd love to know — is there a specific outcome you're hoping for?"
+3. Confirm the platform and constraints if not stated.
 
-## 输出产物
+## Output
 
-产出一份 `intake_brief`（非正式、不做 schema 校验），作为调研阶段的起始上下文。内容应包含：
+Produce an `intake_brief` (informal, not schema-validated) that the
+research stage uses as its starting context. Include:
 
-- 用户原话中透露意图的关键引用
-- 七个问题的明确回答（标注哪些是用户明说的、哪些是推断的）
-- 用户提到的参考视频或图片
-- 必须遵守的约束条件（预算、时间线、必须包含的内容）
+- Direct quotes from the user where their language reveals intent
+- Explicit answers to each of the 7 questions (mark any that were inferred vs stated)
+- Any reference videos/images the user mentioned
+- Constraints that must be honored (budget, timeline, must-include)
 
-`intake_brief` 作为上下文传递给 research-director，不是正式交付物。它的存在是为了防止调研阶段凭空捏造用户从未表达的意图。
+The intake_brief is passed as context to the research-director, not as a
+formal artifact. It exists to prevent the research stage from inventing
+intent that the user never expressed.
 
-## 处理参考视频输入
+## Handling Reference Video Input
 
-当用户提供视频链接或文件作为创作起点时：
+When the user provides a video URL or file as their starting point:
 
-1. **阅读 video-reference-analyst 技能**（`skills/meta/video-reference-analyst.md`），按该协议执行。不要走标准创作意图采集流程。
-2. VideoAnalysisBrief 会直接提供调性、结构、节奏、受众信号和风格信息，替代大部分采集问题。
-3. 仍需确认的剩余问题：
-   - 你的版本要做什么主题？（如果与参考不同）
-   - 时长多少？
-   - 是否需要旁白？
-   - 预算上限？
-4. **不要问"想要什么感觉"**——参考视频本身就是这个问题的答案。从 VideoAnalysisBrief 中提取调性即可。
+1. **Read the video-reference-analyst skill** (`skills/meta/video-reference-analyst.md`)
+   and follow its protocol. Do not proceed with standard creative intake.
 
-## 禁止事项
+2. The VideoAnalysisBrief replaces the need for most intake questions — it provides
+   tone, structure, pacing, audience signals, and style information directly from the
+   reference.
 
-- 不要以编号问卷形式呈现，这是对话，不是填表。
-- 不要重复提问用户已在首条消息中回答过的问题。
-- 不要在简报清晰时无谓拖延——该推进就推进。
-- 不要替用户没回答的问题编造答案。标注为"未指定"，让调研阶段处理歧义。
-- 不要默认用户想要解说类视频。很多用户想要电影感、动画或素材主导的作品，注意捕捉信号。
+3. The remaining intake questions are:
+   - What topic/subject for YOUR version? (if different from reference)
+   - How long?
+   - Narration yes/no?
+   - Budget ceiling?
+
+4. Do NOT ask "what should it feel like?" — the reference video IS the answer to that
+   question. Extract tone from the VideoAnalysisBrief instead.
+
+## What NOT To Do
+
+- Do not present a numbered survey. This is a conversation, not a form.
+- Do not ask questions the user already answered in their initial message.
+- Do not delay production unnecessarily — if the brief is clear, move on.
+- Do not invent answers for questions the user didn't address. Mark them as "not specified" and let the research stage handle ambiguity.
+- Do not assume the user wants an explainer. Many users want cinematic, animation, or source-led work. Listen for signals.

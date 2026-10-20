@@ -6,53 +6,67 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 电影感流程 · 合成总监
+# Compose Director - Cinematic Pipeline
 
-## 何时启用
+## When To Use
 
-以对调色、音频动态和画框处理的细致关注来渲染电影感作品。这不是通用的导出步骤。
+Render the cinematic piece with careful attention to grade, audio dynamics, and frame treatment. This is not a generic export step.
 
-## 运行时路由（强制第一步）
+## Runtime Routing (MANDATORY first step)
 
-阅读 `edit_decisions.render_runtime`。电影感作品路由到：
+Read `edit_decisions.render_runtime`. Cinematic work routes to:
 
-- **`render_runtime="remotion"`**——使用 `CinematicRenderer` 的视频主导预告片默认选项。将视频片段、转场和氛围叠加层保持在一次基于 React 的渲染中。
-- **`render_runtime="hyperframes"`**——用于动态标题卡、HTML/GSAP 驱动的预告片、发布卷轴风格合成或显式 Three.js 世界飞行浏览。参见 `skills/core/hyperframes.md`。渲染前 `hyperframes check` 必须通过。
-- **`render_runtime="ffmpeg"`**——无合成的简单源素材拼接。
+- **`render_runtime="remotion"`** — default for video-led trailers using `CinematicRenderer`. Keeps video clips, transitions, and ambient overlays in one React-based pass.
+- **`render_runtime="hyperframes"`** — for kinetic title cards, HTML/GSAP-driven trailers, launch-reel-style compositions, or explicit Three.js world fly-throughs. See `skills/core/hyperframes.md`. `hyperframes check` must pass before render.
+- **`render_runtime="ffmpeg"`** — simple source-footage concat with no composition.
 
-对于 Blender 世界影片，FFmpeg 是编号 Blender 图像序列和音频的批准打包器。它不得合成摄像机运动或用平移/缩放效果替代缺失的 Blender 帧。
+For a Blender world film, FFmpeg is the approved packager for the numbered
+Blender image sequence and audio. It must not synthesize camera motion or replace
+missing Blender frames with pan/zoom effects.
 
-### 快速全曲节拍蒙太奇（BMTS-Lite）
+### Fast Full-Song Beat Montage (BMTS-Lite)
 
-当已批准的简报要求从一条提供的音乐轨道和已选视频片段快速制作蒙太奇——无需参考匹配、旁白、标题或语义片段选择——使用 `bgm_montage_lite` 作为完整渲染路径。传入源音频、所有预期源片段、项目目录和请求的宽高比（默认 `auto`）。该工具在流、尺寸、时长和全解码检查后返回 MP4、时间线、音频图和 OpenMontage 渲染报告。
+When the approved brief calls for a quick montage from one supplied music track
+and already-selected video clips—with no reference matching, narration, titles,
+or semantic clip selection—use `bgm_montage_lite` as the complete render path.
+Pass the source audio, all intended source clips, the project directory, and the
+requested aspect ratio (`auto` by default). The tool returns the MP4, timeline,
+audiomap, and an OpenMontage render report after stream, dimension, duration,
+and full-decode checks.
 
-这与专业参考引导的 BGM Montage 集成不同：Lite 不需要参考视频或 API 密钥，并有意保留 BMTS-Lite 源重用和自动取景。不要为此路由添加语义选择、严格重用限制、代理视觉审查依赖或第二渲染引擎。对于作者化场景和混合媒体工作，使用现有合成运行时；专业 BGM Montage 路由仍然是参考风格匹配及其更严格质量门禁的选择。
+This is distinct from the professional reference-guided BGM Montage integration:
+Lite does not need a reference video or API key and intentionally retains BMTS-Lite
+source reuse and automatic framing. Do not add semantic selection, strict reuse
+limits, Agent visual-review dependencies, or a second rendering engine to this
+route. Use the existing composition runtimes for authored scenes and mixed-media
+work; the professional BGM Montage route remains the choice for reference-style
+matching and its stricter quality gates.
 
-`delivery_promise.motion_required=true` 意味着锁定的运行时是承诺。静默切换到另一个运行时（包括 FFmpeg Ken Burns）是严重治理违规。如果锁定的运行时失败，按 AGENT_GUIDE.md > "Escalate Blockers Explicitly" 升级。
+`delivery_promise.motion_required=true` means the locked runtime is a commitment. Silent swap to another runtime (including FFmpeg Ken Burns) is a CRITICAL governance violation. If the locked runtime fails, escalate per AGENT_GUIDE.md > "Escalate Blockers Explicitly."
 
-**将 `proposal_packet` 传给 `video_compose.execute()`**，使工具的 `runtime_swap_detected` 检查直接与 `proposal_packet.production_plan.render_runtime` 比较。没有它，交换检查在工具内被跳过，只有审查 skill 能捕获漂移。
+**Pass `proposal_packet` to `video_compose.execute()`** so the tool's `runtime_swap_detected` check compares directly against `proposal_packet.production_plan.render_runtime`. Without it the swap check is skipped in-tool and only the reviewer skill catches the drift.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/render_report.schema.json` | 产物校验 |
-| 前置产物 | `state.artifacts["edit"]["edit_decisions"]`、`state.artifacts["assets"]["asset_manifest"]` | 剪辑计划与媒体素材 |
-| 工具 | `video_compose`、`audio_mixer`、`video_stitch`、`video_trimmer`、`color_grade`、`audio_enhance` | 渲染与后期 |
-| Playbook | 当前风格 playbook | 后期一致性 |
+| Schema | `schemas/artifacts/render_report.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["edit"]["edit_decisions"]`, `state.artifacts["assets"]["asset_manifest"]` | Edit plan and media assets |
+| Tools | `video_compose`, `audio_mixer`, `video_stitch`, `video_trimmer`, `color_grade`, `audio_enhance` | Render and finishing |
+| Playbook | Active style playbook | Finish consistency |
 
-## 流程
+## Process
 
-### 0. 渲染前检查硬性要求
+### 0. Check Hard Requirements Before Rendering
 
-如果已批准的简报或场景计划将运动作为硬性要求，验证渲染路径仍保留该承诺。
+If the approved brief or scene plan makes motion a hard requirement, verify that the render path still preserves that promise.
 
-- 如果需要 Remotion 但不可用或失败，立即停止并将问题上报给用户。
-- 不要为运动主导的预告片、先导片或代理视频切换到仅 FFmpeg 的静帧回退。
-- 除非用户明确批准降级，不要将作品转换为动画分镜。
-- 如果渲染引擎发生实质性变化，在渲染前告知用户并解释原因。
+- If Remotion is required and unavailable or failing, stop and bubble the issue to the user immediately.
+- Do not switch to an FFmpeg-only still-image fallback for a motion-led trailer, teaser, or agent video.
+- Do not convert the piece into an animatic unless the user explicitly approves that downgrade.
+- If the render engine changes materially, tell the user before rendering and explain why.
 
-**强制 Remotion 预检（当场景计划包含任何 Remotion 场景类型——标题卡、数据卡、anime/hero_title、结束标签、叠加层——每次渲染前运行）：**
+**Mandatory Remotion preflight (run before every render when the scene plan includes any Remotion scene type — title cards, stat cards, anime/hero_title, end-tag, overlays):**
 
 ```bash
 python -c "
@@ -63,44 +77,43 @@ print('Render engines:', info.get('render_engines'))
 print('Remotion note:', info.get('remotion_note'))
 "
 ```
-该命令查询工具注册表，确认 Remotion 是否在可用渲染引擎列表中。
 
-如果 Remotion 不在可用渲染引擎中，按决策沟通契约停止并向用户报告。未经批准不得替换为降低保真度的渲染路径。
+If Remotion is not in the available render engines, stop and report to the user per the Decision Communication Contract. Do not substitute a reduced-fidelity render path without approval.
 
-### 1. 有意识地使用画框处理
+### 1. Use Frame Treatment Deliberately
 
-只有在有助于作品时才使用信箱、24fps 意图或重度调色。不要因为流程名称叫电影感就应用它们。
+Only use letterbox, 24fps intent, or heavy grading if they help the piece. Do not apply them because the pipeline name says cinematic.
 
-### 2. 保留音频动态
+### 2. Preserve Audio Dynamics
 
-混音应允许：
+The mix should allow:
 
-- 安静时刻，
-- 冲击时刻，
-- 清晰的对白或旁白，
-- 受控的音乐渐强。
+- quiet moments,
+- impact moments,
+- clear dialogue or narration,
+- controlled music swells.
 
-### 3. 验证最终情绪
+### 3. Verify The Final Mood
 
-检查：
+Check:
 
-- 开场帧，
-- 揭示节拍，
-- 最终落点，
-- 相关处的字幕可读性。
+- opening frame,
+- reveal beat,
+- final landing,
+- subtitle readability where relevant.
 
-### 4. 使用渲染元数据
+### 4. Use Render Metadata
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `frame_treatment`
 - `grade_profile`
 - `mix_notes`
 - `variant_outputs`
 
-## 常见陷阱
+## Common Pitfalls
 
-- 将音频压平使作品失去动态。
-- 对需要每个像素的素材应用信箱。
-- 让调色或锐化损坏面部或文字。
-- 悄悄将被阻止的 Remotion 渲染替换为低保真度静帧导出。
+- Flattening the audio so the piece loses dynamics.
+- Applying letterbox to footage that needs every pixel.
+- Letting grading or sharpening damage faces or text.
+- Silently swapping a blocked Remotion render for a lower-fidelity still-image export.

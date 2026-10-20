@@ -6,305 +6,328 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 视频生成提示词通用指南
+# Video Generation Prompting — Universal Guide
 
-## 适用场景
+## When to Use
 
-为视频生成系列工具（`video_selector`、`seedance_video`、`heygen_video`、`wan_video`、`hunyuan_video`、`ltx_video_local`、`ltx_video_modal`、`cogvideo_video`）撰写提示词时使用。本技能覆盖跨模型的通用提示词词汇。默认优先选择下表中的 Seedance 2.0。
+When writing prompts for the video generation family (`video_selector`, `seedance_video`,
+`heygen_video`, `wan_video`, `hunyuan_video`, `ltx_video_local`, `ltx_video_modal`,
+`cogvideo_video`). This skill covers the universal prompt vocabulary that works across all
+video generation models. For the **preferred premium default**, see the Seedance 2.0 row
+in the table below.
 
-## 各模型专用指南
+For model-specific tips, see the linked guides below.
 
-| 模型 | 指南 | 关键要点 |
-|------|------|----------|
-| Seedance 2.0（standard / fast） | `creative/prompting/seedance-prompting.md` 与 Layer 3 `.agents/skills/seedance-2-0/` | 配置了 `FAL_KEY` 或 HeyGen 时的首选。单次生成即带同步音频、多镜头、导演级运镜、引号对白驱动唇形同步、参考图生视频。 |
-| Sora 2 / Sora 2 Pro | OpenAI Sora 2 Cookbook | 结构化模板最丰富，支持镜头、滤镜、调色、画内声、服装、后期等高级字段。 |
-| VEO 3.1 / VEO 3 | Vertex AI Prompt Guide | 词汇参考表最全，14 组件提示词结构。 |
-| Grok Imagine Video | `creative/prompting/grok-prompting.md` | 需要 `<IMAGE_1>` 这类参考图占位符并保持人物/产品一致性时最佳。 |
-| LTX-2 | LTX Prompting Guide | 6 要素结构，支持音频与语音提示，有较完善的禁忌说明。 |
-| HunyuanVideo 1.5 | Tencent Prompt Handbook | 公式：主体 + 运动 + 场景 + [镜头] + [机位] + [灯光] + [风格] + [氛围]。 |
-| Runway Gen-4 | Runway Prompting Guide | 重点描述运动而非外观，一个片段只放一个场景，越简单越好。 |
-| Kling 2.6 | Kling Prompt Guide | 四段式结构，支持 `++强调++` 语法标注关键元素。 |
-| Kling 官方 | Layer 3 `.agents/skills/kling-official/` | 直连官方 API，用 `provider="kling_official"` 与 fal.ai 版区分；`api_family` 选择 Classic、Turbo 或 Omni，Turbo 图生视频需要 URL 参考图。 |
-| Wan 2.1 / CogVideoX | 使用本通用指南 | 没有官方提示词指南，标准电影摄影词汇即可。 |
+## Model-Specific Guides
 
-## 顺序很重要
+| Model | Guide | Key Insight |
+|-------|-------|-------------|
+| **Seedance 2.0 (standard / fast)** | `creative/prompting/seedance-prompting.md` + Layer 3 `.agents/skills/seedance-2-0/` | **Preferred premium default** when `FAL_KEY` or HeyGen is configured. Single-pass synced audio, multi-shot generation, director-level camera, lip-sync from quoted dialogue, reference-to-video (9 img + 3 vid + 3 audio). Elo 1269 (#1 on Artificial Analysis). |
+| **Sora 2 / Sora 2 Pro** | [OpenAI Sora 2 Cookbook](https://developers.openai.com/cookbook/examples/sora/sora2_prompting_guide) | Richest structured template. Advanced fields: lenses, filtration, grade, diegetic sound, wardrobe, finishing. |
+| **VEO 3.1 / VEO 3** | [Vertex AI Prompt Guide](https://cloud.google.com/vertex-ai/generative-ai/docs/video/video-gen-prompt-guide) | Best vocabulary reference tables. 14-component prompt structure. |
+| **Grok Imagine Video** | `creative/prompting/grok-prompting.md` | Best when prompts need reference-image placeholders like `<IMAGE_1>` and identity/product carryover. |
+| **LTX-2** | [LTX Prompting Guide](https://docs.ltx.video/api-documentation/prompting-guide) | 6-element structure. Audio/voice prompting. Strong "what to avoid" section. |
+| **HunyuanVideo 1.5** | [Tencent Prompt Handbook](https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/assets/HunyuanVideo_1_5_Prompt_Handbook_EN.md) | Formula: Subject + Motion + Scene + [Shot] + [Camera] + [Lighting] + [Style] + [Atmosphere]. |
+| **Runway Gen-4** | [Runway Prompting Guide](https://help.runwayml.com/hc/en-us/articles/39789879462419-Gen-4-Video-Prompting-Guide) | "Focus on motion, not appearance." One scene per clip. Simplicity wins. |
+| **Kling 2.6** | [Kling Prompt Guide](https://fal.ai/learn/devs/kling-2-6-pro-prompt-guide) | 4-part structure. Supports `++emphasis++` syntax for key elements. |
+| **Kling Official** | Layer 3 `.agents/skills/kling-official/` | Direct official API. Use `provider="kling_official"` to distinguish it from fal.ai Kling. `api_family` selects Classic, Turbo, or Omni; Turbo image-to-video needs a URL reference image. |
+| **Wan 2.1 / CogVideoX** | Use this generic guide | No official prompt guide. Standard cinematographic vocabulary works well. |
 
-列举多个主体或事件时：
+## Order Matters
 
-- 有时间先后时按时间顺序写，例如"先 X 进入，随后 Y 作出反应"。
-- 与时间无关时按重要性排序：人物先于物体，画面最大或居中的主体优先，其次是次要主体。
+When listing multiple subjects or events:
 
-## 提示词要自足
+- **Temporal order** when events unfold over time ("First X enters, then Y reacts").
+- **Prominence order** when temporal isn't relevant — humans before objects, largest/most-centered first, then secondary subjects.
 
-写提示词时假设读者从未见过目标视频，仅凭文字就能想象出主体、场景、运动与运镜。读者想象不出来，模型也渲染不出来。
+## Self-Contained Prompt
 
-## 通用提示词公式
+> Write the prompt so that someone who has never seen the intended video could picture the subjects, scene, motion, and camera work from your text alone. If a reader could not picture it, a generation model will not render it.
 
-已有研究（CMU/Harvard）表明视觉语言模型能可靠描述主体与场景，却常在运动、空间与运镜上失手。强制提示词填满全部五个槽位是收益最大的改动。
+## Universal Prompt Formula
 
-OpenMontage 的规范五要素骨架：
+Prior work (CMU/Harvard, "Building a Precise Video Language with Human-AI Oversight") shows VLMs reliably describe subject + scene but fail on motion, spatial, and camera. **Forcing prompts to fill all five slots is the highest-leverage change.**
+
+The OpenMontage canonical 5-aspect skeleton:
 
 ```
-[主体]      类型 + 关键视觉特征 + 多主体时如何区分
-[主体运动]  按时间顺序的动作；主体与物体、主体与主体之间的交互；群体动作
-[场景]      叠加层（单独列出！）+ 视角 + 环境 + 时间 + 场景动态
-[空间]      景别 + 画面内位置 + 景深层次（前/中/后）+ 相对机位高度
-            —— 以及这些在片段中如何变化
-[机位]      播放速度 → 镜头畸变 → 高度 → 角度 → 对焦/景深 → 稳定度 → 运动
+[Subject]        type + key visual attributes + how to disambiguate when multiple
+[Subject Motion] actions in temporal order; subject↔object and subject↔subject interactions; group action
+[Scene]          overlays (separately!) + POV + setting + time of day + scene dynamics
+[Spatial]        shot size + position-in-frame + depth (FG/MG/BG) + camera-height-relative
+                 — and how those CHANGE during the clip
+[Camera]         playback speed → lens distortion → height → angle → focus/DoF → steadiness → movement
 ```
 
-提示词越短创作自由度越大，越长控制力越强。
+**Shorter prompts = more creative freedom. Longer prompts = more control.**
 
-### 各模型的提示词长度
+### Prompt Length by Model
 
-| 模型 | 最佳区间 | 说明 |
-|------|----------|------|
-| Seedance 2.0 | 主镜头 200-400 词，插入镜头 80-150 词 | 偏好长而结构化的五要素提示词 |
-| Wan 2.2 | 200-400 词 | 基于长描述微调 |
-| Sora 2 / VEO 3.1 | 100-250 词 | 超过约 250 词后收益趋平 |
-| LTX-2 | 不超过 80 词 | 再长会退化，保持精炼 |
-| Runway Gen-4 | 不超过 60 词 | 重点写运动而非外观 |
+Empirical sweet spots from the paper's Section 6 findings — different models reward different prompt densities:
 
-### 叠加层不等于场景景深
+| Model | Sweet Spot | Notes |
+|---|---|---|
+| Seedance 2.0 | 200–400 words for hero shots, 80–150 for inserts | Reward long, structured 5-aspect prompts |
+| Wan 2.2 | 200–400 words | Fine-tuned on long captions |
+| Sora 2 / VEO 3.1 | 100–250 words | Plateau past ~250 |
+| LTX-2 | ≤ 80 words | Degrades past that, keep tight |
+| Runway Gen-4 | ≤ 60 words | "Focus on motion, not appearance" |
 
-叠加层（标题、HUD、字幕、水印、边框图形）不属于场景的前/中/后景深轴。要单独列出其内容与位置，不要写"叠加层位于前景"。
+### Overlays Are Not Scene Depth
 
-## 镜头景别
+> Overlays (titles, HUD, subtitles, watermarks, framing graphics) are NOT part of the scene's foreground/midground/background depth axis. List them separately with content and placement. Never say "overlay in the foreground."
 
-| 景别 | 使用场景 |
-|------|----------|
-| 远景/建立镜头 | 开场交代地点 |
-| 全景/长镜头 | 人物全身连同环境 |
-| 中景 | 腰部以上，兼顾细节与语境 |
-| 中近景 | 胸部以上，对话式亲近感 |
-| 特写 | 面部或关键物体，强调情绪 |
-| 大特写 | 孤立细节（眼睛、水滴、质感） |
-| 过肩镜头 | 对话构图，建立联系 |
-| 主观视角 | 观众代入角色 |
-| 鸟瞰/俯拍 | 地图式总览，全知感 |
-| 仰拍 | 直向上看，强调高度 |
-| 斜角镜头 | 地平线倾斜，不安或紧张 |
-| 低角度 | 主体显得强大、主导 |
-| 高角度 | 主体显得渺小、脆弱 |
+---
 
-## 运镜
+## Camera Shot Types
 
-现有模型容易混淆平移、旋转与纯镜头变化，提示词要分组书写以免模型混淆：
+| Shot | When to Use |
+|------|-------------|
+| **Wide / establishing shot** | Open a scene, show location context |
+| **Full / long shot** | Subject head-to-toe with environment |
+| **Medium shot** | Waist up, balances detail with context |
+| **Medium close-up** | Chest up, conversational intimacy |
+| **Close-up** | Face or key object, emphasize emotion |
+| **Extreme close-up** | Isolated detail (eye, drop, texture) |
+| **Over-the-shoulder** | Conversation framing, connection |
+| **Point-of-view (POV)** | Viewer becomes the character |
+| **Bird's-eye / top-down** | Map-like overview, omniscient feel |
+| **Worm's-eye view** | Looking straight up, emphasize height |
+| **Dutch / canted angle** | Tilted horizon, unease or tension |
+| **Low-angle** | Subject appears powerful, dominant |
+| **High-angle** | Subject appears small, vulnerable |
 
-| 分组 | 基本类型 | 规则 |
-|------|----------|------|
-| 位移（机位物理移动） | 推近/拉远、左/右横移、升/降 | "dolly forward toward subject" |
-| 旋转（机位原地转动） | 左/右摇、上/下俯仰、顺时针/逆时针滚转 | "pan right across the room" |
-| 纯镜头（机位不动） | 变焦、变焦点、跟焦 | "zoom in" 不等于 "dolly in" |
-| 混合/标志性 | 移轴变焦、环绕、摇臂、甩镜、跟拍、手持 | 移轴变焦只在揭示性时刻使用 |
-| 静止状态 | static（完全无运动）、微抖、锁定机位 | 写 "static" 就必须零运动、零焦点变化、零变焦 |
+## Camera Movements
 
-推近不等于变焦：推近是机位位移，变焦是焦距变化，模型会跟随占主导的那个词。摇镜不等于横移：摇镜是旋转，横移是侧向位移。
+The paper shows current models confuse translation, rotation, and lens-only changes — group your prompts so the model can't conflate them:
 
-静止镜头是严格定义。若画面存在任何运动、焦点变化或变焦，就不要写 "static camera"，改用对应的运动类型。
+| Group | Primitives | Rule |
+|---|---|---|
+| **Translation** (camera physically moves) | dolly in/out, truck left/right, pedestal up/down | "dolly forward toward subject" |
+| **Rotation** (camera pivots in place) | pan left/right, tilt up/down, roll CW/CCW | "pan right across the room" |
+| **Lens-only** (no camera move) | zoom in/out, rack focus, pull focus, focus tracking | "zoom in" ≠ "dolly in" |
+| **Hybrid / signature** | dolly zoom (vertigo), arc/orbit, crane, whip pan, tracking/follow, handheld | "vertigo" only at moments of revelation |
+| **Stillness states** | static (NO movement at all — strict), micro-shake, locked-off | "static" requires zero movement, focus change, or zoom |
 
-## 机位高度（相对地面）
+> **dolly ≠ zoom.** dolly is camera translation; zoom is focal-length change. Models follow whichever token dominates. **pan ≠ truck.** pan rotates, truck translates laterally.
 
-| 类型 | 示例 |
-|------|------|
-| 航拍高度 | "drone-altitude wide of the city" |
-| 屋顶高度 | "rooftop height looking across the street" |
-| 平视高度 | "framed at eye level" |
-| 腰部高度 | "hip-height tracking shot" |
-| 贴地高度 | "low to the ground, ankle height" |
-| 水面高度 | "skimming the water surface" |
-| 水下 | "submerged below the surface" |
+> **Static shot is strict.** A static shot has zero movement, zero focus change, zero zoom. If any of those occur, do NOT write "static camera" — pick the right movement primitive.
 
-## 机位角度（相对主体）
+## Camera Height (relative to ground)
 
-| 类型 | 定义 |
-|------|------|
-| 鸟瞰 | 严格垂直向下，与航拍不同 |
-| 高角度 | 俯视主体 |
-| 平角度 | 机位与主体同高 |
-| 低角度 | 仰视主体 |
-| 仰拍 | 垂直向上看 |
-| 斜角（固定） | 地平线倾斜并保持 |
-| 斜角（滚动） | 镜头中地平线倾角发生变化 |
+| Primitive | Example |
+|---|---|
+| Aerial-level | "drone-altitude wide of the city" |
+| Overhead-level | "rooftop height looking across the street" |
+| Eye-level | "framed at eye level" |
+| Hip-level | "hip-height tracking shot" |
+| Ground-level | "low to the ground, ankle height" |
+| Water-level | "skimming the water surface" |
+| Underwater | "submerged below the surface" |
 
-鸟瞰是严格垂直向下，航拍指的是高度。无人机以 45° 俯拍属于航拍高度下的高角度，不是鸟瞰。
+## Camera Angle (relative to subject)
 
-## 视角
+| Primitive | Definition |
+|---|---|
+| **Bird's-eye** | strict top-down. Not the same as aerial. |
+| High angle | looking down on subject |
+| Level angle | camera and subject at same height |
+| Low angle | looking up at subject |
+| Worm's-eye | looking straight up |
+| **Dutch angle (fixed)** | tilted horizon held steady |
+| **Dutch angle (rolling)** | horizon tilt changes during shot |
 
-| 视角 | 示例 |
-|------|------|
-| 第一人称 | "the camera follows the character's viewpoint as they walk" |
-| 无人机 | "aerial drone footage of city skyline" |
-| 过肩 | "OTS framing of the laptop screen" |
-| 俯视斜角 | "top-down view of the chess board, tilted slightly" |
-| 行车记录仪 | "vehicle dashcam framing of the road" |
-| 客观/中性 | 默认，无特定视角时使用 |
+> **bird's-eye = strict top-down. aerial = altitude.** A drone shot at 45° looking down is a high angle from aerial height, NOT bird's-eye.
 
-## 灯光词汇
+## Point of View (POV)
 
-| 术语 | 效果 |
-|------|------|
-| 自然光 | 柔和写实（晨光、阴天、月光） |
-| 黄金时刻 | 暖阳、长影、浪漫 |
-| 高调布光 | 明亮均匀、轻快，适合喜剧与生活类 |
-| 低调布光 | 暗调高反差，适合惊悚与剧情 |
-| 伦勃朗光 | 面颊上的三角光，经典肖像 |
-| 黑色电影光 | 深阴影配硬高光 |
-| 体积光 | 光线穿过雾尘可见 |
-| 逆光 | 光在主体后方，剪影效果 |
-| 侧光 | 强方向性，戏剧性阴影 |
-| 实用光源 | 画面内光源（台灯、蜡烛、霓虹） |
-| 轮廓光 | 勾出主体边缘，与背景分离 |
+| POV | Example |
+|---|---|
+| First-person | "the camera follows the character's viewpoint as they walk" |
+| Drone | "aerial drone footage of city skyline" |
+| Over-the-shoulder | "OTS framing of the laptop screen" |
+| Top-down oblique | "top-down view of the chess board, tilted slightly" |
+| Dashcam | "vehicle dashcam framing of the road" |
+| Objective / Neutral | (default — use when no specific POV) |
 
-灯光方向修饰词：主光、补光、反射光、轮廓光、溢光、负补光。色温可分为暖调（钨丝灯、琥珀）、冷调（日光、蓝）与混合。
+## Lighting Vocabulary
 
-## 镜头与光学效果
+| Term | Effect |
+|------|--------|
+| **Natural light** | Soft, realistic (morning sun, overcast, moonlight) |
+| **Golden hour** | Warm sunlight, long shadows, romantic |
+| **High-key** | Bright, even, cheerful — comedy, lifestyle |
+| **Low-key** | Dark, high contrast — thriller, drama |
+| **Rembrandt** | Triangle of light on cheek, classic portrait |
+| **Film noir** | Deep shadows, stark highlights |
+| **Volumetric** | Visible light rays through atmosphere (fog, dust) |
+| **Backlighting** | Light behind subject, silhouette effect |
+| **Side lighting** | Strong directional, dramatic shadows |
+| **Practical lights** | In-frame sources (lamps, candles, neon signs) |
+| **Rim / edge light** | Highlights subject outline, separates from background |
 
-| 效果 | 结果 |
-|------|------|
-| 广角镜头（24-35mm） | 视野更宽，透视夸张 |
-| 长焦（85mm 以上） | 透视压缩，主体突出 |
-| 变形宽银幕 | 画面拉伸，标志性眩光 |
-| 镜头眩光 | 强光打在镜头上形成光条 |
+**Lighting direction modifiers**: key light, fill light, bounce, rim, spill, negative fill.
 
-### 镜头畸变
+**Color temperature**: warm (tungsten, amber), cool (daylight, blue), mixed.
 
-以下两种畸变模型会当作不同效果处理，不可互换：
+## Lens & Optical Effects
 
-| 类型 | 效果 |
-|------|------|
-| 鱼眼 | 极端弯曲，边缘强烈外凸 |
-| 桶形 | 轻微畸变，直线略微外弯 |
+| Effect | Result |
+|--------|--------|
+| **Wide-angle lens** (24-35mm) | Broader view, exaggerated perspective |
+| **Telephoto** (85mm+) | Compressed perspective, subject isolation |
+| **Anamorphic** | Stretched aspect, signature lens flares |
+| **Lens flare** | Streaks from bright light hitting lens |
 
-### 对焦与景深
+### Lens Distortion
 
-| 类型 | 定义 |
-|------|------|
-| 深焦 | 从前到后全部清晰 |
-| 浅景深 | 主体清晰，背景虚化 |
-| 极浅景深 | 焦平面极薄 |
-| 变焦点 | 镜头中在两个主体之间切换焦点 |
-| 拉焦点 | 渐进式焦点偏移，比变焦点更慢 |
-| 跟焦 | 焦点跟随移动主体 |
+The paper distinguishes two primitives that models honor as separate effects — they are NOT interchangeable:
 
-若镜头中景深发生变化，要标注起始与结束的焦平面（前/中/后/失焦）。
+| Primitive | Effect |
+|---|---|
+| **Fisheye** | extreme curvature, edges bent strongly outward |
+| **Barrel** | mild distortion, straight lines bow slightly outward |
 
-## 主体转场
+### Focus / Depth of Field
 
-主体进入、离开或交接焦点时，明确写出转场类型：
+| Primitive | Definition |
+|---|---|
+| Deep focus | everything sharp, FG to BG |
+| Shallow DoF | subject sharp, background bokeh |
+| Extremely shallow DoF | razor-thin focal plane |
+| Rack focus | shifts focus between two subjects mid-shot |
+| Pull focus | gradual focus shift (slower than rack) |
+| Focus tracking | focus follows a moving subject |
 
-| 类型 | 使用时机 |
-|------|----------|
-| 主体显现 | 新主体进入画面（由主体运动或机位运动引起） |
-| 主体消失 | 主体离开画面 |
-| 主体切换 | 焦点从一个主体转到另一个（常通过变焦点或机位运动） |
-| 复杂交替 | 多个主体之间反复切换焦点 |
+When DoF changes during a shot, label start AND end focal plane (FG/MG/BG/out-of-focus).
 
-始终注明原因："由主体运动"或"由机位运动"。这能解锁多镜头提示词中的揭示式运镜。
+## Subject Transitions
 
-## 多镜头提示词的身份锚定
+When subjects enter, leave, or hand off focus, name the transition explicitly:
 
-模型在剪辑点之间会丢失角色身份，除非你重新陈述。多镜头提示词的每个镜头中，对每个具名主体逐字重复同样的 3-6 个区分性视觉特征。代词与"同一个角色"不管用。
+| Primitive | When |
+|---|---|
+| **Subject revealing** | a new subject enters frame (by subject movement OR camera movement) |
+| **Subject disappearing** | a subject exits frame |
+| **Subject switching** | focus shifts from one subject to another (often via rack focus or camera move) |
+| **Complex alternating** | subjects alternate focus multiple times |
 
-示例："Aang —— 光头、额头蓝色箭头纹身、橙黄长袍 —— 拄下手杖。…… Aang —— 光头、额头蓝色箭头纹身、橙黄长袍 —— 转向镜头。"
+Always name the cause: "by subject movement" or "by camera movement". This unlocks reveal-style camerawork in multi-shot prompts.
 
-## 风格与美学参考
+## Identity Anchoring for Multi-Shot Prompts
 
-### 电影风格
-黑色电影、年代剧、惊悚、现代爱情；纪录片、艺术片、实验电影；太空歌剧、奇幻、恐怖；1970 年代爱情片、90 年代纪实风格。
+> Models lose character identity across cuts unless you re-state it. In every shot of a multi-shot prompt, repeat the same 3–6 disambiguating visual attributes for each named subject verbatim. Pronouns and "the same character" do not work.
+>
+> Example: "Aang — bald, blue arrow tattoo on forehead, orange-and-yellow robes — plants his staff. … Aang — bald, blue arrow tattoo on forehead, orange-and-yellow robes — turns to camera."
 
-### 动画风格
-吉卜力/日式动画；经典迪士尼、皮克斯式 3D；定格、黏土动画；手绘 2D/3D 混合；赛璐璐着色、低多边形 3D。
+## Style & Aesthetic References
 
-### 艺术流派
-印象派、超现实、装饰艺术、包豪斯；水彩、炭笔速写、水墨；图像小说、蓝图示意。
+### Cinematic Styles
+- Film noir, period drama, thriller, modern romance
+- Documentary, arthouse, experimental film
+- Epic space opera, fantasy, horror
+- 1970s romantic drama, 90s documentary-style
 
-### 胶片与调色
-柯达暖调、富士冷调；16mm 黑白、35mm 化学反差；复古颗粒、高光晕染；青橙调色。
+### Animation Styles
+- Studio Ghibli / Japanese anime
+- Classic Disney, Pixar-like 3D
+- Stop-motion, claymation
+- Hand-painted 2D/3D hybrid
+- Cel-shaded, low-poly 3D
 
-## 时间效果
+### Art Movements
+- Impressionistic, surrealist, Art Deco, Bauhaus
+- Watercolor, charcoal sketch, ink wash
+- Graphic novel, blueprint schematic
 
-### 播放速度
+### Film Stock / Grade
+- Kodak warm grade, Fuji cool tones
+- 16mm black-and-white, 35mm photochemical contrast
+- Vintage grain overlay, halation on speculars
+- Teal-and-orange color grade
 
-研究定义了六种明确的播放速度类型，不可混用：
+## Temporal Effects
 
-| 类型 | 定义 |
-|------|------|
-| 延时摄影 | 事件远快于实时（流云疾走） |
-| 快动作 | 略快于实时（1-3 倍） |
-| 慢动作 | 慢于实时 |
-| 定格动画 | 逐帧离散运动 |
-| 变速 | 同一镜头内快慢混合 |
-| 倒放 | 反向播放 |
+### Playback Speed
 
-### 其他时间手法
+The paper defines six explicit playback-speed primitives. Use the right one — they're not synonymous:
 
-| 效果 | 用途 |
-|------|------|
-| 定格 | 戏剧性停顿 |
-| 快速剪辑 | 能量、紧迫感 |
-| 长镜头 | 沉浸、张力 |
-| 淡入淡出 | 场景转换 |
-| 匹配剪辑 | 场景之间的视觉连续 |
+| Primitive | Definition |
+|---|---|
+| Time-lapse | events significantly faster than real time (clouds racing) |
+| Fast-motion | slightly faster than real (1x–3x) |
+| Slow-motion | slower than real |
+| Stop-motion | frame-by-frame discrete movements |
+| Speed-ramp | mix of fast and slow within the same shot |
+| Time-reversed | plays in reverse |
 
-## 音频描述
+### Other Temporal Devices
 
-支持音频生成的模型（LTX-2、Sora 2、VEO 3）会响应以下内容：
+| Effect | Use |
+|--------|-----|
+| **Freeze-frame** | Dramatic pause |
+| **Rapid cuts** | Energy, urgency |
+| **Continuous / long take** | Immersion, tension |
+| **Fade in / fade out** | Scene transitions |
+| **Match cut** | Visual continuity between scenes |
 
-环境音：风声、雨声、车流、人群低语、林中鸟鸣、机械嗡鸣。
-画内声：脚步、开门吱呀、玻璃碰撞、键盘敲击。
-嗓音风格：耳语、平静旁白、活力播报、庄重。
-音乐情绪："背景轻柔钢琴"、"轻快电子乐"。
+## Audio Descriptions
 
-对白要放在引号里，例如：`Character says: "Hello world."`
+Models that support audio generation (LTX-2, Sora 2, VEO 3) respond to:
 
-## 应当避免的写法
+**Ambient**: wind, rain, traffic, crowd murmur, forest birds, mechanical hum
+**Diegetic sound**: footsteps, door creaking, glass clinking, keyboard typing
+**Voice style**: whisper, calm narration, energetic announcer, gravitas
+**Music mood**: "soft piano in background", "upbeat electronic"
 
-用情绪的可视化成因替换情绪形容词：
+Put dialogue in quotation marks: `Character says: "Hello world."`
 
-- "悲伤的角色" → "面颊有泪痕、肩膀耷拉、盯着空椅子"
-- "电影感氛围" → "低调伦勃朗主光 + 35mm 变形镜头 + 压暗阴影、暗部提亮两档"
-- "史诗感" → "低角度、24mm 广角、太阳在主体正后方、边缘镜头眩光"
+## What to Avoid
 
-"inspiring"、"powerful"、"moody"、"epic" 这类词无法约束像素。
+> **Replace emotional adjectives with the visual cause of the emotion.**
+> - "sad character" → "tears on cheek, shoulders slumped, staring at empty chair"
+> - "cinematic mood" → "low-key Rembrandt key + 35mm anamorphic + crushed shadows, lifted-by-2-stops shadow detail"
+> - "epic" → "low-angle, 24mm wide, sun directly behind subject, lens flare on the rim"
+>
+> "Inspiring," "powerful," "moody," "epic" do not constrain pixels.
 
-静止镜头是严格定义，若存在任何运动、焦点变化或变焦，就不要写 "static camera"，改用正确的运动类型。
+> **Static shot is strict.** A static shot has zero movement, zero focus change, zero zoom. If any of those occur, do NOT write "static camera" — pick the right movement primitive.
 
-| 不要写 | 原因 | 改为 |
-|--------|------|------|
-| "美丽场景" | 太笼统，无视觉信息 | "湿润的鹅卵石街道，暖色路灯映在积水中" |
-| "人物快速移动" | 看不到具体动作 | "女子冲刺三步并翻越栏杆" |
-| "电影感外观" | 所有模型本来就在追求 | 具体写"变形镜头、浅景深、黄金时刻光照" |
-| "悲伤的角色" | 内在状态不可见 | "面颊有泪痕、肩膀耷拉、盯着空椅子" |
-| 可读文字/标志 | 模型无法可靠渲染文字 | 避免带文字的招牌，或接受不完美渲染 |
-| 复杂物理 | 混乱运动会造成伪影 | 保持物理简单，跳舞走路可行，爆炸有风险 |
-| 多角色对话 | 多人对白会破坏同步 | 每个片段只放一个说话人，或用反应镜头 |
-| 提示词过载 | 元素太多导致画面不连贯 | 从简单开始，逐项叠加复杂度 |
-| 冲突的光照 | 如"正午强光"加"深阴影" | 选定一种布光并贯彻 |
+| Don't | Why | Do Instead |
+|-------|-----|-----------|
+| "Beautiful scene" | Too vague, no visual info | "Wet cobblestone street, warm streetlamp glow reflecting in puddles" |
+| "Person moves quickly" | No visible action | "Woman sprints three steps and vaults over the railing" |
+| "Cinematic look" | Every model already tries this | Specify: "anamorphic lens, shallow DOF, golden hour lighting" |
+| "Sad character" | Internal states aren't visible | "Tears on cheek, shoulders slumped, staring at empty chair" |
+| Readable text / logos | Models can't render text reliably | Avoid signs with text, or accept imperfect rendering |
+| Complex physics | Chaotic motion causes artifacts | Keep physics simple; dancing/walking OK, explosions risky |
+| Multiple characters talking | Multi-person dialogue breaks sync | One speaker per clip, or use reaction shots |
+| Overloaded prompts | Too many elements = incoherent | Start simple, layer complexity one element at a time |
+| Conflicting lighting | "Bright noon" + "dark shadows" | Pick one lighting setup and commit |
 
-## 提示词迭代策略
+## Prompt Iteration Strategy
 
-1. 从简单开始：主体 + 动作 + 环境，先看模型给出什么。
-2. 每次只加一个元素：先加机位，再加灯光，最后加风格。
-3. 某个镜头效果不好时，退回简化：固定机位、简化动作，再试一次。
-4. 需要跨片段一致时，重复同样的风格、灯光与调色描述。
-5. 善用随机种子：找到好结果就保存种子，用于生成变体。
-6. 使用 Grok 参考图生视频时，用 `<IMAGE_1>`、`<IMAGE_2>` 等在提示词中为每张源图指定明确角色。
+1. **Start simple** — subject + action + setting. See what the model gives you.
+2. **Add one element at a time** — camera, then lighting, then style.
+3. **If a shot misfires** — strip back. Freeze camera, simplify action, try again.
+4. **For consistency across clips** — repeat the same style/lighting/grade description.
+5. **Use seed values** — when you find a good result, save the seed for variations.
+6. **For Grok reference-image video** — assign each source image a clear role in the prompt using `<IMAGE_1>`, `<IMAGE_2>`, etc.
 
-## 示例：通用提示词模板
+## Example: Generic Prompt Template
 
 ```
-[景别]: 中近景，略低角度
-[机位]: 缓慢推近
-[主体]: 一位六十多岁的沧桑渔民，花白胡须，
-        深色羊毛毛衣，粗糙的双手攥着绳索
-[动作]: 他双手交替拉绳，肌肉紧绷，
-        随后停下望向海面
-[场景]: 黎明时的木码头，平静的灰色海面，远处雾堤，
-        海鸥在上空盘旋
-[灯光]: 柔和阴天，地平线云层透出暖光，
-        初升太阳形成轻柔轮廓光
-[风格]: 纪录片摄影，35mm 胶片颗粒，
-        低饱和大地色调配冷蓝灰
-[音频]: 绳索吱呀、水声拍岸、远处鸥鸣、风声
+[Shot]: Medium close-up, slight low angle
+[Camera]: Slow dolly-in
+[Subject]: A weathered fisherman in his 60s, salt-and-pepper beard,
+           dark wool sweater, calloused hands gripping a rope
+[Action]: He pulls the rope hand-over-hand, muscles straining,
+          then pauses and looks out to sea
+[Setting]: Wooden dock at dawn, calm grey ocean, distant fog bank,
+           seagulls wheeling overhead
+[Lighting]: Soft overcast with warm break in clouds on the horizon,
+            gentle rim light from the rising sun
+[Style]: Documentary cinematography, 35mm film grain,
+         muted earth tones with a cold blue-grey palette
+[Audio]: Rope creaking, water lapping, distant gull cries, wind
 ```

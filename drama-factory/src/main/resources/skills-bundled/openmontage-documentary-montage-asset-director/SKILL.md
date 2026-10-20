@@ -6,83 +6,131 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 素材总监 · 纪录片蒙太奇流水线
+# Asset Director - Documentary Montage Pipeline
 
-## 适用时机
+## When To Use
 
-分镜表已经就绪，接下来要把每个槽位填上真实的视频片段。有两条路可走。
+The shot list exists. You now have to actually go out and find the
+clips that fill each slot. There are two paths:
 
-### 快速路径：直接搜索（按幕制作时推荐）
+### Standard Path: Corpus + CLIP Retrieval
 
-1. 调用 `direct_clip_search`，把查询广播到所有可用素材源，每个查询下载 2-3 条片段。无需 CLIP 嵌入、无需语料索引、无需 .npy 文件。
-2. 查看自动抽出的缩略图（可交给子代理读图），核对画面与槽位描述是否吻合。
-3. 人工把最合适的片段指派给对应槽位。
+1. **Build the corpus** — fan the scene director's queries out across
+   all available stock sources (Pexels, Pixabay Video, Coverr, Mixkit,
+   Archive.org, NARA, Library of Congress, Pond5 PD, Videvo, NASA, ESA,
+   JAXA, NOAA, Dareful, Wikimedia, Unsplash) and download/embed the candidates.
+2. **Pick per slot** — run CLIP retrieval against the corpus with each
+   slot description and choose one winner per slot.
 
-适合场景：逐幕推进、幕间需要用户确认、单幕槽位数少于 30、需要快速迭代。
+Best for: 50+ slot productions, automated diversification, hands-off
+slot filling where CLIP similarity ranking matters.
 
-### 标准路径：语料库 + CLIP 检索
+### Fast Path: Direct Search (Recommended for act-by-act production)
 
-1. 把分镜导演给出的查询广播到所有素材源（Pexels、Pixabay Video、Coverr、Mixkit、Archive.org、NARA、国会图书馆、Pond5 PD、Videvo、NASA、ESA、JAXA、NOAA、Dareful、Wikimedia、Unsplash），下载并建立嵌入索引。
-2. 对每个槽位，用其描述在语料库上跑 CLIP 检索，选出最佳一条。
+1. **Search and download** — use `direct_clip_search` to fan out
+   across all available providers and download 2-3 clips per query.
+   No CLIP embeddings, no corpus index, no .npy files.
+2. **Inspect thumbnails** — browse the extracted thumbnails (or use a
+   sub-agent) to verify visual matches against slot descriptions.
+3. **Map clips to slots** — manually assign the best clip to each slot
+   based on visual inspection.
 
-适合场景：50 个槽位以上的大型制作、需要自动化多样性、需要按 CLIP 相似度排序填充。
+Best for: act-by-act production with user review between acts, fast
+iteration, productions under 30 slots per act.
 
-### 跨幕复用
+**Cross-act reuse:** When producing act-by-act, clips downloaded for
+earlier acts can fill slots in later acts. Point the agent at
+previously downloaded directories and reuse clips that match new slot
+descriptions. This saved 40-50% of download time in production.
 
-按幕制作时，前几幕已下载的片段往往能填后续幕的槽位。把代理指向既有目录，优先复用与新槽位描述相符的片段。实测可节省 40-50% 的下载耗时。
+**Parallel workflow:** While `direct_clip_search` runs in background,
+simultaneously generate TTS narration, build audio mixes, create
+subtitles, and search for music. This dramatically reduces total
+production time.
 
-### 并行作业
+**Fallback:** If the fast path yields poor visual matches for specific
+slots, use `corpus_builder` + `clip_search` for just those slots.
+The two approaches are not mutually exclusive.
 
-`direct_clip_search` 在后台跑的同时，可以并行生成旁白 TTS、搭建混音、制作字幕、搜索音乐。整体制作时间会明显缩短。
+The output is an `asset_manifest` mapping every slot to exactly one
+clip with full provenance.
 
-### 回退策略
+## Prerequisites
 
-快速路径下某些槽位画面不匹配时，只对这些槽位改用 `corpus_builder` + `clip_search`。两种方式可以混用。
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/asset_manifest.schema.json` | Artifact validation |
+| Prior artifact | `state.artifacts["scene_plan"]["scene_plan"]` | Slot descriptions + queries + preferred_sources |
+| Prior artifact | `state.artifacts["idea"]["brief"]` | `era_mix`, `sources_allowed`, `music_plan` |
+| Tool (fast path) | `direct_clip_search` | Lightweight multi-provider search + download |
+| Tool (standard path) | `corpus_builder` | Populates the retrieval index with CLIP embeddings |
+| Tool (standard path) | `clip_search` | Ranks clips against slot descriptions |
+| Tool (optional) | `music_gen`, user's `music_library/` | Score bed |
 
-最终产出是一份 `asset_manifest`：每个槽位恰好对应一条片段，并附带完整来源信息。
+## Mental Model
 
-## 前置依赖
+The corpus is NOT a stock library. It is a search index the agent
+builds on demand. You do not scroll through it — you query it.
 
-| 层 | 资源 | 用途 |
-|----|------|------|
-| Schema | `schemas/artifacts/asset_manifest.schema.json` | 产物校验 |
-| 前置产物 | `state.artifacts["scene_plan"]["scene_plan"]` | 槽位描述、查询、偏好素材源 |
-| 前置产物 | `state.artifacts["idea"]["brief"]` | `era_mix`、`sources_allowed`、`music_plan` |
-| 工具（快速路径） | `direct_clip_search` | 轻量级多源搜索与下载 |
-| 工具（标准路径） | `corpus_builder` | 建立带 CLIP 嵌入的检索索引 |
-| 工具（标准路径） | `clip_search` | 按槽位描述排序候选片段 |
-| 工具（可选） | `music_gen`、用户的 `music_library/` | 配乐床 |
+Three rules that follow from that:
 
-## 心智模型
+1. **Build before picking.** Never call `clip_search.rank_for_slot`
+   on a corpus that doesn't contain candidates for that slot's query
+   family. The ranking will return junk and you'll waste the slot.
+2. **Grow, don't replace.** The corpus is append-only. If a slot's
+   retrieval is weak, add more queries and rebuild — don't start over.
+3. **Pick per slot, not per clip.** Every clip only belongs to one
+   slot in the final edit. Use `exclude_ids` to prevent double-use.
 
-语料库不是素材库，而是代理按需构建的检索索引。你不去翻它，而是去查询它。由此得出三条规则：
+## Children's / Fairy-Tale Content — Source Override
 
-1. **先建库再挑选。** 若语料库中没有该槽位查询族对应的候选，就不要调 `clip_search.rank_for_slot`，否则排序结果是垃圾，槽位白白浪费。
-2. **只增不换。** 语料库是追加式的。某槽位检索效果差，就补查询再扩充，不要推倒重来。
-3. **按槽位挑，不按片段挑。** 一条片段在成片中只属于一个槽位。用 `exclude_ids` 防止重复使用。
+When the scene plan's `metadata.tone` or `metadata.target_audience`
+indicates children's content (fairy tale, bedtime story, kids'
+explainer, animated story), **override normal source routing** and
+acquire exclusively from Pixabay Video.
 
-## 儿童/童话类内容：素材源覆盖规则
+### Why Pixabay Video Only
 
-当分镜计划的 `metadata.tone` 或 `metadata.target_audience` 显示是儿童内容（童话、睡前故事、少儿科普、动画故事）时，**覆盖常规素材源路由**，只从 Pixabay Video 获取。
+Pixabay's community library contains thousands of AI-generated fantasy
+animations — glowing forests, enchanted landscapes, magical creatures —
+uploaded by creators using Midjourney/Stable Diffusion video workflows.
+These dramatically outperform real footage for children's engagement.
+No other free source has comparable depth in this style.
 
-### 为什么只用 Pixabay Video
+### Acquisition Rules
 
-Pixabay 社区里有大量由 Midjourney / Stable Diffusion 视频工作流产出的 AI 奇幻动画素材——发光森林、魔法景观、奇幻生物。在吸引儿童方面，这类素材远超实拍画面，其他免费源在这个风格上没有同等深度。
+1. **Source lock.** Set `sources: ["pixabay_video"]` for ALL queries.
+   Do not mix real footage providers (Pexels, Dareful, etc.) with
+   fantasy clips — the style clash breaks immersion for children.
 
-### 采集规则
+2. **Query rewriting.** The scene director will have already rewritten
+   slot descriptions for fantasy style. If you need to write fallback
+   queries, prepend fantasy keywords:
+   - Magic keywords: `fairy tale`, `fantasy`, `enchanted`, `magical`,
+     `glowing`, `dreamy`, `mystical`, `fairy`, `enchanted forest`,
+     `magical world`
+   - Example: slot needs "caterpillar on leaf" → query
+     `"fairy tale caterpillar magical forest glowing"`
 
-1. **源锁定。** 所有查询的 `sources` 一律设为 `["pixabay_video"]`。不要把实拍源（Pexels、Dareful 等）与奇幻片段混用，风格冲突会破坏儿童的沉浸感。
-2. **查询改写。** 分镜导演通常已把槽位描述改写成奇幻风格。若需要自写兜底查询，前置奇幻关键词：`fairy tale`、`fantasy`、`enchanted`、`magical`、`glowing`、`dreamy`、`mystical`、`fairy`、`enchanted forest`、`magical world`。示例：槽位需要"叶子上的毛毛虫"，查询写成 `"fairy tale caterpillar magical forest glowing"`。
-3. **视觉一致性检查。** 下载后逐一确认所有片段都是 AI 奇幻美学。哪怕是 CLIP 分数更高的实拍片段，也必须拒收。一条实拍片段就能打破整段魔法氛围。
-4. **兜底。** Pixabay 返回空结果时，换奇幻关键词再试，每个槽位最多重写两次。仍为空则上报用户，不要悄悄换成实拍素材。
+3. **Visual consistency check.** After downloading, verify that ALL
+   clips share the AI-generated fantasy aesthetic. Reject any clip
+   that looks like real footage — even if the CLIP score is higher.
+   A single real clip in a fantasy montage breaks the spell.
 
-## 流程 · 快速路径（直接搜索）
+4. **Fallback.** If Pixabay returns no fantasy results for a slot,
+   rewrite the query with different fantasy keywords before trying
+   broader terms. Two rewrites per slot. If still empty, flag the
+   slot to the user — do not silently substitute real footage.
 
-适用于逐幕推进、幕间需人工确认，或总槽位数不超过约 30 的情况。
+## Process — Fast Path (Direct Search)
 
-### F1. 后台启动 `direct_clip_search`
+Use this when producing act-by-act with user review between acts, or
+when the total slot count is under ~30.
 
-边搜边并行处理旁白、音频、字幕：
+### F1. Run `direct_clip_search` In Background
+
+Fire off the search while you work on narration/audio/subtitles in
+parallel:
 
 ```python
 direct_clip_search.execute({
@@ -91,9 +139,9 @@ direct_clip_search.execute({
         {"query": "cesium atomic clock laboratory", "slot_id": "slot_01"},
         {"query": "laser beam laboratory optics",   "slot_id": "slot_02"},
         {"query": "satellite dish night sky",        "slot_id": "slot_03"},
-        # ... 每个槽位一条
+        # ... one per slot
     ],
-    "sources": ["pexels", "pixabay_video", "coverr", "mixkit", "archive_org"],  # 省略则搜索所有可用源
+    "sources": ["pexels", "pixabay_video", "coverr", "mixkit", "archive_org"],  # or omit for all available
     "clips_per_query": 3,
     "filters": {
         "min_duration": 3,
@@ -103,84 +151,114 @@ direct_clip_search.execute({
     },
 })
 ```
-上例为第二幕每个槽位发起一条查询、每查询下载 3 条候选；`filters` 用于过滤时长、朝向与分辨率。
 
-关键参数：
+**Key parameters:**
+- `clips_per_query=3` is the sweet spot. Enough choice, fast download.
+- Omit `sources` to search all available providers automatically.
+- Set `skip_existing=true` (default) to avoid re-downloading on retry.
 
-- `clips_per_query=3` 是最佳平衡点，既有选择余地又下载够快。
-- 省略 `sources` 会自动搜索所有可用源。
-- `skip_existing=true`（默认）在重试时避免重复下载。
+### F2. Inspect Thumbnails
 
-### F2. 查看缩略图
+Browse `<output_dir>/thumbnails/` to verify each clip. Use a sub-agent
+to read thumbnail images for visual confirmation if needed.
 
-浏览 `<output_dir>/thumbnails/` 逐一核对；必要时用子代理读图确认。每个槽位从下载集合中挑出最匹配的一条。
+For each slot, pick the best-matching clip from the downloaded set.
 
-### F3. 跨幕复用
+### F3. Cross-Act Reuse
 
-处理第 2-5 幕时，先检查前几幕的片段再决定是否新下载。常见的主题重叠包括：实验室镜头（显微镜、激光、科研人员）、科技镜头（服务器、卫星、电路）、自然/抽象镜头（山脉、太空、延时）。
+When working on Acts 2-5, check clips from earlier acts before
+downloading new ones. Many thematic overlaps exist across acts:
 
-把代理指向先前各幕的目录，先把已有片段映射到新槽位，再考虑新搜索。
+- Laboratory footage (microscopes, lasers, scientists)
+- Technology shots (servers, satellites, circuits)
+- Nature/abstract footage (mountains, space, time-lapse)
 
-### F4. 定点补缺
+Point the agent at previous act directories and map existing clips
+to new slots before running new searches.
 
-初次搜索后仍无合适匹配的槽位，按顺序处理：
+### F4. Fill Gaps With Targeted Searches
 
-1. 重写查询（换成更具体的名词、不同措辞）。
-2. 只针对这些查询再跑一次 `direct_clip_search`。
-3. 仍无匹配，就仅对这些槽位回退到 `corpus_builder` + `clip_search`。
+If specific slots have no good match after the initial search:
+1. Rewrite the query (more concrete nouns, different vocabulary).
+2. Run `direct_clip_search` with just those queries.
+3. If still no match, fall back to `corpus_builder` + `clip_search`
+   for those specific slots only.
 
-### F5. 记录 asset_manifest
+### F5. Record The Asset Manifest
 
-格式与标准路径第 9 步相同，只是 `source_tool` 填 `"direct_clip_search"`。
+Same format as the standard path (see step 9 below). The `source_tool`
+field should be `"direct_clip_search"` instead of `"corpus_builder"`.
 
 ---
 
-## 流程 · 标准路径（语料库 + CLIP 检索）
+## Process — Standard Path (Corpus + CLIP Retrieval)
 
-适用于 50 槽位以上的大型制作、需要自动 CLIP 排序、或快速路径匹配不佳的情况。
+Use this for large productions (50+ slots), when you need automated
+CLIP-based ranking, or when the fast path yields poor matches.
 
-### 1. 确定语料库目录
+### 1. Resolve The Corpus Directory
 
-约定放在 `projects/<project-name>/corpus/`。所有 `corpus_builder` 与 `clip_search` 调用共用同一个 `corpus_dir`。语料库可跨次运行复用——分镜导演后续加槽位时，扩充既有库即可，不必重建。
+Decide where the corpus lives. Convention:
 
-### 2. 把查询广播给 `corpus_builder`
+```
+projects/<project-name>/corpus/
+```
 
-读取 `scene_plan.metadata.slots[]`，收集所有槽位的 `queries[]`，去重，并按 `preferred_sources` 分组。按素材源集合分别调用：
+The same `corpus_dir` is passed to every `corpus_builder` and
+`clip_search` call. The corpus is reusable across re-runs — if the
+scene director adds slots later, you can grow the same corpus instead
+of rebuilding from scratch.
+
+### 2. Fan Out The Queries Into `corpus_builder`
+
+Read `scene_plan.metadata.slots[]`. Collect every `queries[]` array
+across every slot. De-duplicate. Group by `preferred_sources`.
+
+Call `corpus_builder.execute(...)` with one fan-out per source set:
 
 ```python
+# Example shape. The agent constructs this from the shot list.
 corpus_builder.execute({
     "corpus_dir": "projects/<name>/corpus",
     "queries": [
         {"query": "raindrop on asphalt slow motion", "kind": "video", "per_source": 8},
         {"query": "wet city street night neon",       "kind": "video", "per_source": 8},
         {"query": "taxi heavy rain yellow",           "kind": "video", "per_source": 6},
-        # ... 每条唯一槽位查询一条
+        # ... one entry per unique slot query
     ],
-    "sources": ["pexels", "archive_org", "wikimedia"],   # 取自 preferred_sources 并集
+    "sources": ["pexels", "archive_org", "wikimedia"],   # from preferred_sources union
     "filters": {
         "min_duration": 3,
         "max_duration": 40,
         "orientation": "landscape",
         "min_width": 1280,
     },
-    "max_new_clips": 150,
+    "max_new_clips": 150,          # enlarge the search space
     "thumbs_per_video": 5,
 })
 ```
-该调用把一组去重查询广播到指定源，每个查询每源取若干候选，并限制新增片段总量与抽帧数量。
 
-广播规则：
+**Rules for the fan-out:**
 
-- 若 brief 指定了某素材源而 `corpus_builder.source_provider_menu` 显示该源不可用，立刻停下并上报，不要悄悄降级到其余源。
-- 语料库规模按槽位数的 8-12 倍预算。15 槽位的蒙太奇应有约 150 条候选，检索才有真正的选择空间。
-- 每查询每源 `per_source` 取 4-8 通常够用，推到 20+ 主要增加噪声。
-- `era_mix = "vintage"` 时，单独跑一批限制在 `["archive_org"]` 且查询符合年代的广播。Prelinger 搜索慢，不要与现代 Pexels 批次交错。
-- 任一槽位的 `preferred_sources` 含 `nasa`，就跑一小批 nasa 专用批次。NASA 慢且结果冷门。
-- `unsplash` 只有图片，只能作辅助源，不能当运动为主的纪录片剪接主干。
+- If the brief pins a source and `corpus_builder.source_provider_menu`
+  says that source is unavailable, STOP and surface it. Do not silently
+  drop to the remaining sources.
+- Budget the corpus for 8-12x the slot count. A 15-slot montage wants
+  ~150 candidates so retrieval has real choices.
+- `per_source` of 4-8 per query is usually enough. Pushing to 20+
+  mostly adds noise.
+- If `era_mix = "vintage"`, run a separate fan-out restricted to
+  `["archive_org"]` with period-appropriate queries. Prelinger search
+  is slow — don't interleave it with the modern Pexels batch.
+- If any slot has `nasa` in `preferred_sources`, run ONE small
+  `nasa`-only batch. NASA is slow and its results are niche.
+- `unsplash` is image-only. Use it as a support source, not the
+  backbone of a motion-led documentary cut.
 
-### 3. 检索前先做语料库体检
+### 3. Sanity-Check The Corpus Before Retrieval
 
-在花 token 排序前，先调 `clip_search` 的 `operation=stats`：
+Before spending tokens on slot picks, call `clip_search` with
+`operation=stats`:
 
 ```python
 clip_search.execute({
@@ -188,66 +266,94 @@ clip_search.execute({
     "corpus_dir": "projects/<name>/corpus",
 })
 ```
-该调用读取语料库统计信息，用于判断规模、来源分布与运动强度是否健康。
 
-看 `rows`、`per_source`、`per_kind`、`mean_motion_score`，排查三种失败模式：
+Look at `rows`, `per_source`, `per_kind`, `mean_motion_score`. You're
+checking for three failure modes:
 
-- `rows < 50`：库太小，扩充。
-- `per_source` 严重偏斜（如 98% pexels、2% archive_org）而 brief 是复古题材：补一批 archive_org。
-- `mean_motion_score < 1.0`：库里全是静态片段，成片会像幻灯片。换查询重跑，或在排序时加 `motion_min`。
+- `rows < 50` — corpus is too small. Grow it.
+- `per_source` heavily skewed (e.g. 98% pexels, 2% archive_org) on a
+  vintage brief — run a targeted archive_org fan-out.
+- `mean_motion_score < 1.0` — corpus is full of static clips and will
+  make for a slideshow. Rerun with different queries, or apply
+  `motion_min` at rank time.
 
-### 4. 逐槽位排序候选
+### 4. Rank Candidates Per Slot
 
-对 `scene_plan.metadata.slots[]` 中每个槽位调用 `operation=rank_for_slot`：
+For each slot in `scene_plan.metadata.slots[]`, call `clip_search`
+with `operation=rank_for_slot`:
 
 ```python
 clip_search.execute({
     "operation": "rank_for_slot",
     "corpus_dir": "projects/<name>/corpus",
-    "query_text": slot["description"],      # 用 description，不要用 queries
+    "query_text": slot["description"],      # NOT slot["queries"] — the description is richer
     "k": 30 if slot.get("hero") else 12,
     "tag_weight": 0.3,
     "motion_min": 1.5,
     "kind": "video",
-    "exclude_ids": already_picked_ids,
+    "exclude_ids": already_picked_ids,      # global accumulator
 })
 ```
-该调用用槽位描述作为文本查询，在语料库中排序候选，同时排除已锁定片段并过滤低运动素材。
 
-要点：
+Key points:
 
-- 用槽位的 **description**，不是 queries。描述是分镜导演写的富含名词与形容词的语义文本，CLIP 排序效果更好。
-- `tag_weight=0.3` 是视觉嵌入（70%）与源标签嵌入（30%）的混合。Pexels URL 标签强而视觉通道噪声大时提到 0.5；Prelinger 这种长散文式标签降到 0.15。
-- 每次都要传 `exclude_ids`，把已锁定片段全带上，避免同一把"钥匙开门"的镜头赢下两个槽位。
+- Use the slot **description**, not the queries. The description is
+  the rich noun-and-adjective string the scene director wrote. CLIP
+  ranks it better than short search phrases.
+- `tag_weight=0.3` blends visual embedding (70%) with source-tag
+  embedding (30%). Raise to 0.5 when Pexels URL tags are strong and
+  the visual channel is noisy. Lower to 0.15 for Prelinger where tags
+  are long prose.
+- Always pass `exclude_ids` with every clip already locked to a slot,
+  so the same key-in-door clip doesn't win two slots.
 
-### 5. 用判断挑选，不要只看分数
+### 5. Pick With Judgement, Not By Score
 
-排名第一未必是对的。看前 3-5 条，逐一评估：
+The top result is not always the right pick. Look at the top 3-5 and
+judge each one against:
 
-- **年代匹配。** 2022 年的 4K Pexels 镜头放进关于家的挽歌式清单蒙太奇里合适吗？也许，也许不。
-- **运动匹配。** 分镜导演给出的调性表会决定镜头保持时长。若目标保持 4.0 秒而片段只有 2 秒且带快速甩镜，就撑不住。
-- **构图衔接。** 这条片段与相邻槽位已选的片段放一起是否成立？如果 slot_02 是雨中屋顶远景，slot_03 的首选也是雨中屋顶远景，那就选第二顺位。
-- **情绪调性。** CLIP 会把"夜晚空荡人行道"匹配到明亮的拉斯维加斯霓虹剪辑。挽歌式 brief 下霓虹镜头是错的。0.42 的分数压不过调性。
+- **Era fit.** Does a 2022 4K Pexels shot belong in an elegiac list
+  montage about home? Maybe. Maybe not.
+- **Motion fit.** The tone table from the scene director tells you
+  how long the hold will be. If the clip has a 4.0s hold target and
+  the clip is 2s long with a fast whip pan, it won't stretch.
+- **Compositional carry.** Will this clip work NEXT to the clips
+  picked for the adjacent slots? You don't know yet — but if slot_02
+  is a wide rooftop-in-rain and the top hit for slot_03 is also a
+  wide rooftop-in-rain, pick the #2 instead.
+- **Emotional register.** CLIP will happily match "empty city
+  sidewalk at night" to a bright neon Vegas cutaway. The neon shot is
+  WRONG for an elegiac brief. Score 0.42 does not override tone.
 
-CLIP ViT-B/32 余弦分数的经验阈值：
+**Acceptable-score rules of thumb (CLIP ViT-B/32 cosine):**
 
-- `>= 0.30`：强匹配，通常可用。
-- `0.22-0.30`：可能可用，需要人工判断。
-- `< 0.22`：语料库里没有你需要的东西。扩充，不要硬挑。
+- `>= 0.30` — strong match, usually usable.
+- `0.22-0.30` — plausible, needs human judgement.
+- `< 0.22` — the corpus doesn't contain what you need. Grow it,
+  don't force a pick.
 
-### 6. 检索效果弱时扩充语料库
+### 6. Grow The Corpus When Retrieval Is Weak
 
-若某槽位最高分低于 0.22，不要从烂中挑最不烂的。按顺序：
+If a slot's top score is below 0.22, do NOT pick the best-of-a-bad-
+bunch. Instead:
 
-1. 重写该槽位的查询——可能过于抽象，或词汇与年代不符。
-2. 只针对这一个槽位的新查询再跑一次 `corpus_builder.execute(...)`。构建器会跳过已入索引的片段，代价很低。
-3. 重新排序。
+1. Rewrite the slot's queries — maybe too abstract, maybe wrong
+   vocabulary for the era.
+2. Run another `corpus_builder.execute(...)` pass with just the new
+   queries for that one slot. The builder skips clips already in the
+   index, so this is cheap.
+3. Re-rank.
 
-每个槽位最多扩充两轮。三轮后仍拿不到 0.22 以上，就告知创意总监：该槽位在开放素材源中不可实现，建议弃用或让用户自备素材。
+Two growth passes per slot is plenty. If three passes can't find a
+score above 0.22, tell the idea director the slot is unfilmable from
+open corpora and recommend either dropping the slot or letting the
+user supply the footage.
 
-### 7. 相邻片段去重
+### 7. Diversify Adjacent Picks
 
-每个槽位有一条候选后，按时间线顺序得到一串 clip_id。相邻画面重复会毁掉剪辑。对整个列表跑 `clip_search.diversify`：
+Once you have one candidate per slot, you have a list of clip_ids in
+timeline order. Visually-redundant adjacent shots kill the edit. Run
+`clip_search.diversify` across the list:
 
 ```python
 clip_search.execute({
@@ -258,24 +364,34 @@ clip_search.execute({
     "diversity": 0.5,
 })
 ```
-该调用按时间线顺序检查候选列表的视觉多样性，必要时剔除冗余片段。
 
-若 `diversify` 丢掉了某条片段，说明你的两个选择视觉上几乎一致。对片段被丢掉的槽位重新排序，把幸存的"孪生兄弟"放进 `exclude_ids`。
+If `diversify` drops a clip, it's telling you two of your picks are
+visually identical. Re-rank the slot whose clip got dropped with
+`exclude_ids` including the surviving twin.
 
-### 8. 处理音乐计划
+### 8. Handle The Music Plan
 
-读 `brief.music_plan`，严格照创意总监记录的计划执行，不要自创来源：
+Read `brief.music_plan`. Execute exactly the plan the idea director
+recorded — do not invent a new source here:
 
-- **`source=library`**：确认 `music_plan.path` 文件存在，在 manifest 中记为 `type=music`、`subtype=library`。
-- **`source=user`**：同上，`subtype=provided`。
-- **`source=generated`**：用 brief 中的种子提示词调用指定的音乐工具。先试听单条，确认情绪后再批量。记录提供方与成本。
-- **`source=none`**：不要生成静音，也不要因为剪辑显得单薄就塞一条曲目。用户批准了"无音乐"，就无音乐运行。
+- **`source=library`**: Verify the file at `music_plan.path` exists.
+  Record it in the asset manifest as `type=music`, `subtype=library`.
+- **`source=user`**: Same, with `subtype=provided`.
+- **`source=generated`**: Call the named music tool with the seed
+  prompt from the brief. Sample first, batch only after confirming
+  mood. Record provider and cost.
+- **`source=none`**: Do not generate silence. Do not swap in a track
+  because the edit feels thin. If the user approved "no music", run
+  with no music.
 
-**此阶段绝不切换音乐来源。** 这属于决策沟通契约违规——更换音乐模式是重大制作变更，必须在提案阶段获得用户批准。
+**Never switch music source at this stage.** That's a Decision
+Communication Contract violation — changing music mode is a major
+production change and needs user approval at proposal time.
 
-### 9. 记录 asset_manifest
+### 9. Record The Asset Manifest
 
-每个槽位产出一条 asset，按规范 schema 输出。纪录片蒙太奇特有字段放在 `metadata` 下：
+Emit one asset per slot using the canonical schema. Documentary-
+montage-specific fields live in `metadata`:
 
 ```json
 {
@@ -321,36 +437,53 @@ clip_search.execute({
   }
 }
 ```
-上例给出每条视频素材的完整溯源字段（路径、来源工具、时长、分辨率、提供方、许可证、原始 URL），以及 music 条目和 metadata 中的语料库统计与拒收记录。
 
-`rejected_picks` 日志很关键。剪辑总监觉得某条选择不对时，会读它去找第二顺位。
+The `rejected_picks` log matters. The edit director reads it when a
+pick feels wrong and needs to reach for the #2 option.
 
-### 10. 质量门
+### 10. Quality Gate
 
-- 分镜计划中每个槽位恰好映射到一条 asset。
-- 每条被选片段的 `score >= 0.22`（记录在 rejected-picks 日志中），或有"用户批准覆盖"的备注。
-- 没有任何 clip_id 同时作为两个槽位的首选。
-- 最终列表跑 `diversify` 无残留（无丢片，或丢片已全部补位）。
-- `corpus_stats` 的行数至少是槽位数的 8 倍。
-- 音乐 asset 存在，或 `music_plan.source = "none"` 且有显式确认。
-- 复古 brief 下，至少 60% 的选择来自 `archive_org`。
-- 所有文件路径可解析。
+- Every slot in the scene plan has exactly one asset mapped to it.
+- Every picked clip has `score >= 0.22` in the rejected-picks log
+  (or a logged "user-approved override" note).
+- No clip_id appears as the primary pick for two slots.
+- `diversify` ran clean on the final list (no dropped picks, or all
+  dropped picks were re-filled).
+- `corpus_stats` shows at least 8x the slot count in rows.
+- Music asset exists OR `music_plan.source = "none"` with explicit
+  acknowledgement.
+- For vintage briefs, at least 60% of picks come from `archive_org`.
+- All file paths resolve.
 
-## 常见坑
+## Common Pitfalls
 
-- **对空语料库跑 `clip_search.rank_for_slot`。** 会拿到空 `results` 或奇怪的形状报错。建库后先 `stats` 再排序。
-- **只看分数挑选。** 分数是判断的输入，不是判断本身。挽歌式作品塞满高分的 Pexels 高清阳光镜头，无论分数多高都会不对味。
-- **忘记 `exclude_ids`。** 没有它，同一个绝佳片段会赢下所有槽位，蒙太奇变成一张图的幻灯片。
-- **悄悄替换音乐。** 用户说了"不要音乐"，代理觉得"剪辑太单薄"还是生成了。这是重大变更，需要批准——参见 `skills/pipelines/documentary-montage/executive-producer.md` 的跨阶段规则。
-- **无限扩充语料库。** 每个弱槽位最多两轮扩充。再多说明开放素材源里大概确实没有，槽位本身需要改。
-- **把槽位查询当排序文本用。** queries 是给素材 API 的搜索短语，descriptions 是给 CLIP 的语义文本。两者不同，排序要用 descriptions。
-- **丢失溯源信息。** 每条片段都必须在 manifest 里带 `provider`、`original_url`、`license`。这是下游任何发布环节的硬要求。
+- **Running `clip_search.rank_for_slot` against an empty corpus.**
+  You will get an empty `results` list or a cryptic shape error.
+  Always call `stats` after a build, before ranking.
+- **Picking by score alone.** Score is an input to judgement, not the
+  judgement. An elegiac piece full of top-scored Pexels HD sunshine
+  will feel wrong regardless of scores.
+- **Forgetting `exclude_ids`.** Without it, the same amazing clip
+  wins every slot and the montage becomes a slideshow of one image.
+- **Quiet music substitution.** User said "none", agent generated
+  anyway because "the edit felt thin". This is a major change and
+  needs approval — see `skills/pipelines/documentary-montage/executive-producer.md`
+  cross-stage rules.
+- **Growing the corpus unboundedly.** Two growth passes per weak slot
+  is the limit. Beyond that, the footage probably doesn't exist in
+  the open corpora and the slot needs to change.
+- **Using slot queries as the rank text.** Queries are search phrases
+  for stock APIs; descriptions are semantic text for CLIP. They are
+  different. Rank on descriptions.
+- **Losing provenance.** Every clip must carry `provider`,
+  `original_url`, and `license` in the manifest. These are the
+  non-negotiables for any downstream publishing step.
 
-## 检索配方
+## Retrieval Recipes
 
-几个常用检索动作：
+A few retrieval moves that come up often:
 
-### "找到我喜欢这条片段的 N 个变体"
+### "Find N variants of this one clip I love"
 
 ```python
 clip_search.execute({
@@ -362,11 +495,11 @@ clip_search.execute({
     "candidate_pool": 40,
 })
 ```
-该调用以一条种子片段为基准，在语料库中找若干风格相近但不重复的候选。
 
-用于某槽位需要"再找五条类似的镜头"，比如一组同调性的门口镜头。
+Used when a slot wants "five more shots like this one" — e.g. a
+catalogue of doorways all filmed in the same register.
 
-### "我有 20 条候选，裁到 8 条不重复的"
+### "I have 20 candidates, trim to 8 non-redundant picks"
 
 ```python
 clip_search.execute({
@@ -377,9 +510,8 @@ clip_search.execute({
     "diversity": 0.5,
 })
 ```
-该调用在候选集合中去重，输出指定数量的多样片段。
 
-### "查一条片段的完整元数据"
+### "Look up one clip's full metadata"
 
 ```python
 clip_search.execute({
@@ -388,12 +520,15 @@ clip_search.execute({
     "clip_id": "archive_org_Prelinger_HomeMovies_0042",
 })
 ```
-该调用按 clip_id 读取片段在语料库中的全部元数据。
 
-用于剪辑总监锁定成片前确认提供方与 URL。
+Used when the edit director wants to confirm the provider/URL before
+locking the cut.
 
 ---
 
-## 门禁提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为门（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 面板会渲染产物），然后**结束本轮**。不要在同一响应里启动下一阶段。批准按门生效——先前的"继续"不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

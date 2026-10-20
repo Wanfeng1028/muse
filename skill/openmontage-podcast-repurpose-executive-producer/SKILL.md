@@ -6,33 +6,33 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 执行制片人 — 播客二次创作流水线
+# Executive Producer — Podcast Repurpose Pipeline
 
-## 适用场景
+## When to Use
 
-当项目目标是把一集已有播客（纯音频或视频播客）拆解为多种衍生交付物时，你担任本流水线的执行制片人（EP）。你按顺序驱动各阶段，并在关键节点插入质量闸门，重点盯住四件事：原始音频是否保真、切片挑选是否过硬、多个交付物之间是否风格统一、成品是否达到可直接发布的状态。
+You are the **Executive Producer (EP)** for a podcast repurpose project. You orchestrate the pipeline serially with quality gates focused on **audio preservation, clip selection quality, multi-deliverable consistency, and posting readiness**.
 
-本流水线**没有前期制作阶段**。素材已经存在，你的核心工作是管理从单一来源中抽取多种交付物所带来的复杂度。
+**No pre-production stages.** Source audio/video exists. The EP manages the complexity of extracting multiple deliverables (clips, quote cards, companion video) from a single source.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 作用 |
-|------|------|------|
-| 流水线 | `pipeline_defs/podcast-repurpose.yaml` | 阶段定义 |
-| 技能 | 全部 7 个导演技能 + `meta/reviewer` | 各阶段执行 |
-| Schema | 全部交付物 schema | 校验 |
-| 手册 | 当前启用的风格手册 | 质量约束 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Pipeline | `pipeline_defs/podcast-repurpose.yaml` | Stage definitions |
+| Skills | All 7 director skills + `meta/reviewer` | Stage execution |
+| Schemas | All artifact schemas | Validation |
+| Playbook | Active style playbook | Quality constraints |
 
-## 累积状态
+## Cumulative State
 
 ```
 EP_STATE:
   pipeline: podcast-repurpose
-  playbook: <已选手册>
-  budget_total_usd: <配置值>
+  playbook: <selected>
+  budget_total_usd: <configured>
   budget_spent_usd: 0.0
 
-  # 播客特有字段
+  # Podcast-specific
   source_format: null          # solo / interview / panel
   deliverable_types: []        # audiogram_clips / quote_clips / companion_video
   clip_count_target: 0
@@ -51,93 +51,93 @@ EP_STATE:
   issues_log: []
 ```
 
-## EP 专属的跨阶段检查
+## EP-Specific Cross-Stage Checks
 
-### IDEA 阶段之后
+### After IDEA stage:
 ```
-检查：素材评估
-  - 是否已判定源播客的对话形态（独白 / 访谈 / 圆桌）？
-  - 交付物类型是否明确，且与源音频时长匹配？
-  - 目标切片数量在给定源时长下是否可达？
-```
-
-### SCRIPT 阶段之后
-```
-检查：转写质量
-  - 整集是否已完整转写，时间戳是否准确？
-  - 多人对话场景是否带说话人分离？
-  - 是否已标出高光片段与可引用金句？
-  - 候选切片数量是否不少于目标切片数？
+CHECK: Source assessment
+  - Source podcast format identified (solo, interview, panel)?
+  - Output types specified and realistic for source length?
+  - Clip count target achievable given source duration?
 ```
 
-### SCENE_PLAN 阶段之后
+### After SCRIPT stage:
 ```
-检查：切片的独立可看性
-  - 每个规划中的切片脱离整集上下文后是否仍然成立？
-  - 每个切片开头是否有强钩子？
-  - 视觉处理方式是否恰当（声波图 / 金句主导 / 字幕主导）？
-
-检查：伴随长视频的可行性
-  - 若计划做伴随视频：是否为轻量处理（而非过度包装）？
-  - 章节结构是否与话题切换点对齐？
+CHECK: Transcript quality
+  - Full episode transcribed with accurate timestamps?
+  - Speaker diarization present if multi-speaker?
+  - Highlight segments and quotable moments identified?
+  - At least N candidate clips where N >= clip_count_target?
 ```
 
-### ASSETS 阶段之后
+### After SCENE_PLAN stage:
 ```
-检查：音频保真
-  - 原播客音质是否被保留（无劣化）？
-  - 说话人相关素材（照片、姓名卡）是否前后一致？
-  - 所有交付物是否都已生成字幕？
-  - 预算闸门：达到 90% 阈值时预警
-```
+CHECK: Clip standalone quality
+  - Does each planned clip make sense without episode context?
+  - Does each clip have a strong opening hook?
+  - Are visual treatments appropriate (audiogram vs quote-led vs caption-led)?
 
-### EDIT 阶段之后
-```
-检查：切片开场
-  - 每个切片是否在开头 3 秒内抛出钩子
-  - 出处信息（节目名、说话人）是否出现且不拖节奏
-  - 金句卡与字幕的时序是否正确
-
-检查：交付物一致性
-  - 所有切片的视觉风格是否统一
-  - 所有切片的音量水平是否统一
+CHECK: Companion video feasibility
+  - If companion video planned: is it light-touch (not over-produced)?
+  - Does chapter structure align with topic transitions?
 ```
 
-### COMPOSE 阶段之后
+### After ASSETS stage:
 ```
-检查：多交付物验证
-  - 计划中的交付物是否全部渲染完成（切片 + 伴随视频）？
-  - 每个切片是否满足平台规格（分辨率、宽高比）？
-  - 音频质量相对原播客是否无损失？
-  - 波形/动态处理是否与各版式匹配？
+CHECK: Audio preservation
+  - Original podcast audio quality preserved (no degradation)?
+  - Speaker-specific assets (photos, name cards) consistent?
+  - Subtitles generated for all deliverables?
+  - Budget gate: 90% threshold warning
 ```
 
-## 质量闸门一览
+### After EDIT stage:
+```
+CHECK: Clip openings
+  - Each clip opens with its hook within first 3 seconds
+  - Attribution (show name, speaker) present but not slow
+  - Quote cards and captions timed correctly
 
-| 闸门 | 位于阶段 | 检查内容 | 失败处理 |
-|------|---------|---------|---------|
-| G1 | idea | 源形态、交付物类型 | 返修 |
-| G2 | script | 转写质量、高光点 | 返修 |
-| G3 | scene_plan | 切片质量、伴随视频可行性 | 返修 |
-| G4 | assets | 音频保真、字幕、预算 | 返修 |
-| G5 | edit | 切片钩子、交付物一致性 | 返修 |
-| G6 | compose | 多交付物探测、音频质量 | 返修或打回 |
-| G7 | publish | 逐条切片元数据、发布排期 | 返修 |
-| FINAL | 全部 | 音频质量、切片挑选、一致性 | 打回 |
+CHECK: Deliverable consistency
+  - Visual style consistent across all clips
+  - Audio levels consistent across all clips
+```
 
-## 执行限制
+### After COMPOSE stage:
+```
+CHECK: Multi-deliverable validation
+  - All planned deliverables rendered (clips + companion if planned)?
+  - Each clip meets platform specs (resolution, aspect ratio)?
+  - Audio quality preserved from original podcast?
+  - Waveform/motion treatments correct per layout?
+```
 
-| 限制项 | 数值 |
-|--------|------|
-| 单阶段最大返修次数 | 3 |
-| 每对相邻阶段最大打回次数 | 1 |
-| 全局最大打回次数 | 3 |
-| 总预算上限 | 可配置（默认 1 美元） |
-| 总墙钟时间上限 | 12 分钟 |
+## Quality Gates Summary
 
-## 常见陷阱
+| Gate | After Stage | What's Checked | Fail Action |
+|------|-------------|---------------|-------------|
+| G1 | idea | Source format, deliverable types | Revise |
+| G2 | script | Transcript quality, highlights | Revise |
+| G3 | scene_plan | Clip quality, companion feasibility | Revise |
+| G4 | assets | Audio preservation, subtitles, budget | Revise |
+| G5 | edit | Clip hooks, deliverable consistency | Revise |
+| G6 | compose | Multi-deliverable probe, audio quality | Revise or send-back |
+| G7 | publish | Per-clip metadata, posting schedule | Revise |
+| FINAL | all | Audio quality, clip selection, consistency | Send-back |
 
-- **把源音频做坏了**：播客音频本身就是产品。任何时候都不要用更低码率重编码。
-- **切片依赖上下文**：每个切片必须能独立成立。自检方法：一个陌生人能看懂这条切片吗？
-- **伴随视频过度制作**：整集伴随视频应当轻量处理——波形、字幕、话题图形即可，不要拍成电影。
-- **切片风格不统一**：同一集产出的所有切片，看起来要像出自同一套体系。
+## Execution Limits
+
+| Limit | Value |
+|-------|-------|
+| Max revisions per stage | 3 |
+| Max send-backs per stage pair | 1 |
+| Max total send-backs | 3 |
+| Max total budget | Configurable (default $1) |
+| Max total wall-time | 12 minutes |
+
+## Common Pitfalls
+
+- **Degrading source audio**: The podcast audio is the product. Never re-encode at lower quality.
+- **Context-dependent clips**: Every clip must stand alone. Test: would a stranger understand this clip?
+- **Over-producing companion video**: Full-episode companion should be light-touch — waveforms, captions, topic graphics. Not a feature film.
+- **Inconsistent clip styling**: All clips from one episode should look like they belong together.

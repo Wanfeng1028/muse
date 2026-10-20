@@ -6,114 +6,110 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 混元视频 1.5 提示词指南
+# HunyuanVideo 1.5 — Prompting Guide
 
-> 参考来源：腾讯官方提示词手册
-> 通用词汇另见：`skills/creative/video-gen-prompting.md`
+> Source: [Tencent Prompt Handbook](https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5/blob/main/assets/HunyuanVideo_1_5_Prompt_Handbook_EN.md)
+> For universal vocabulary, see: `skills/creative/video-gen-prompting.md`
 
-**篇幅控制：** 混元 1.5 在 80–200 词区间表现最好，写成长篇大论并不会带来收益。
+**Word count:** Hunyuan 1.5 reads well at 80–200 words; doesn't reward 400-word essays.
 
-## 提示词公式
+## HunyuanVideo Prompt Formula
 
-### 文生视频
-
+### Text-to-Video
 ```
-主体 + 运动 + 场景 + [景别] + [运镜] + [光线] + [风格] + [氛围]
-```
-
-### 图生视频
-
-```
-主体运动动态 + 场景运动动态 + [运镜]
+Subject + Motion + Scene + [Shot Type] + [Camera Movement] + [Lighting] + [Style] + [Atmosphere]
 ```
 
-做图生视频时，把笔墨集中在“怎么动”上，外观由输入图决定，不必复述。
+### Image-to-Video
+```
+Subject Motion Dynamics + Scene Motion Dynamics + [Camera Movement]
+```
 
-## 混元擅长的方向
+For I2V, focus on describing MOTION, not appearance (the image provides appearance).
 
-### 用光线制造氛围
+## HunyuanVideo-Specific Strengths
 
-腾讯官方强调：**“光是氛围的灵魂。”**
+### Lighting as Atmosphere
+Tencent emphasizes: **"Light is the soul of atmosphere."**
 
-描述光线时从多个维度切入：
+Describe lighting with multiple dimensions:
+- **Style**: soft, hard, neon, ambient
+- **Direction**: side-lit, backlit, overhead, underlighting
+- **Quality**: harsh spotlight, diffuse glow
+- **Shadows**: long dramatic shadows, soft shadow edges
+- **Color temperature**: golden hour warmth, cool daylight blue
+- **Reflections**: wet surface reflections, metallic glints
 
-- **质感**：柔和、硬朗、霓虹、环境光
-- **方向**：侧光、逆光、顶光、底光
-- **强度**：刺眼的聚光灯、漫射的柔光
-- **阴影**：拉长的戏剧性阴影、边缘柔和的阴影
-- **色温**：黄金时刻的暖调、日光的冷蓝
-- **反射**：湿滑地面的倒影、金属上的高光
+### Camera Movement Library
 
-### 运镜词库
-
-| 运镜 | 类型 | 混元提示词写法 |
+| Movement | Type | HunyuanVideo Prompt |
 |----------|------|-------------------|
-| 升降 / 位移 | 垂直平移 | “camera rises vertically” |
-| 横移 / 跟拍 | 水平平移 | “camera tracks left alongside subject” |
-| 推近 | 平移（前推） | “camera pushes forward toward subject” |
-| 拉远 | 平移（后拉） | “camera pulls back from subject” |
-| 摇摄 | 旋转（偏航） | “camera pans right across the scene” |
-| 俯仰 | 旋转（俯仰） | “camera tilts upward to follow the rocket” |
-| 滚转 | 旋转（Z 轴 / 荷兰角） | “camera rolls clockwise into a Dutch tilt” |
-| 环绕 | 圆周 | “camera orbits around subject” |
-| 跟随 | 锁定 | “camera follows subject from behind” |
-| 变焦 | 仅镜头（焦距） | “camera slowly zooms in on the figure” |
-| 移焦 | 仅镜头（焦平面，瞬切） | “rack focus from the foreground bottle to the figure in the background” |
-| 拉焦 | 仅镜头（焦平面，渐变） | “camera shifts focus from foreground X to background Y” |
-| 固定 | 不动 | “static camera, no movement” |
+| Crane / Pedestal | Translation (vertical) | "camera rises vertically" |
+| Truck / Tracking | Translation (horizontal) | "camera tracks left alongside subject" |
+| Dolly In | Translation (push) | "camera pushes forward toward subject" |
+| Dolly Out | Translation (pull) | "camera pulls back from subject" |
+| Pan | Rotation (yaw) | "camera pans right across the scene" |
+| Tilt | Rotation (pitch) | "camera tilts upward to follow the rocket" |
+| Roll | Rotation (Z-axis / Dutch) | "camera rolls clockwise into a Dutch tilt" |
+| Orbit | Circular | "camera orbits around subject" |
+| Follow | Lock-on | "camera follows subject from behind" |
+| Zoom | Lens-only (focal length) | "camera slowly zooms in on the figure" |
+| Rack focus | Lens-only (focal plane, snap) | "rack focus from the foreground bottle to the figure in the background" |
+| Pull focus | Lens-only (focal plane, gradual) | "camera shifts focus from foreground X to background Y" |
+| Static | Fixed | "static camera, no movement" |
 
-### 动态景深镜头要写清起点与终点
+### Focal-plane labels at start AND end of dynamic-DoF shots
 
-当镜头涉及焦点变化时，混元对“从哪到哪”都有明确说明的效果更好。起焦位置与落焦位置都要写出来，不要留一个默认。
+Hunyuan benefits when both endpoints of focus-changing shots are stated. State where focus starts AND where it lands — don't leave one implicit.
 
-示例：“浅景深；起始对焦在前景的酒瓶上；到结尾焦点拉到背景的人物身上。”
+Example: "shallow DoF; focus on the foreground bottle at start; focus pulls to the figure in the background by end."
 
-只写一端时，混元往往会退化成深景深，或者一直停在错误的那一层。
+Without both endpoints, Hunyuan often defaults to deep focus or holds on the wrong plane.
 
-### 风格关键词
+### Style Keywords
 
-**写实 / 电影感**：
-- 黑色电影、硬科幻、电影摄影
-- 年代剧、战争纪录片、自然纪录片
+**Photorealistic / Cinematic**:
+- Film noir, hard sci-fi, cinematic photography
+- Period drama, war documentary, nature documentary
 
-**动画 / 插画**：
-- 2D 动画、日式动画
-- 水彩、中国水墨
-- 低多边形 3D、像素画
+**Animation / Illustration**:
+- 2D animation, Japanese anime
+- Watercolor painting, Chinese ink wash
+- Low-poly 3D, pixel art
 
-## 图生视频最佳实践
+## I2V Best Practice
 
-使用图生视频时，输入图已经定义了外观。提示词只需描述三件事：
+When using image-to-video, the input image defines appearance. Your prompt should ONLY describe:
+1. How the subject moves
+2. How the environment changes
+3. Camera motion
 
-1. 主体如何运动
-2. 环境如何变化
-3. 摄影机如何移动
+**Good I2V prompt**: "The woman's hair blows in the wind as she turns to face the camera. Leaves scatter across the path. Camera slowly dollies in."
 
-**好的图生视频提示词**：“女子的头发被风吹起，她转身面向镜头。落叶沿小径散开。摄影机缓慢推近。”
+**Bad I2V prompt**: "A beautiful woman in a red dress standing in a forest" — this repeats what the image already shows.
 
-**差的图生视频提示词**：“一位穿红裙的美丽女子站在森林中”——这只是重复了画面里已有的信息。
+### Order motions temporally
 
-### 按时间顺序排列动作
+Describe motion in temporal order; if multiple movements occur, separate them ("first the camera pans right, then tilts upward"). Hunyuan executes motion in the order it appears in the prompt — bundling two movements into one clause causes one of them to be dropped or blended.
 
-描述动作时遵循时间先后；若有多段运动，拆成独立句子（“先向右摇摄，再向上仰拍”）。混元按提示词中出现的顺序执行运动，把两段运动塞进同一个从句会导致其中一段被丢弃或被混在一起。
-
-## 示例（文生视频）
-
-```
-一位穿飘逸白裙的年轻女子赤脚走在
-黄金时刻空旷的海滩上。她伸手划过
-浅浪，留下涟漪。头发被夕阳的暖侧光
-照亮。中景跟拍，摄影机以膝盖高度
-并行跟随。柔和的暖金色光线，长长的
-影子朝向镜头延伸。电影摄影风格，
-浅景深。宁静、沉思的氛围。
-```
-
-## 示例（图生视频）
+## Example (T2V)
 
 ```
-猫懒洋洋地伸了个懒腰，然后从窗台
-跳到地板上。尘埃在光柱中散开。
-摄影机保持固定，焦点从窗户轻微
-移到落地点。
+A young woman in a flowing white dress walks barefoot along
+a deserted beach at golden hour. She trails her hand through
+the shallow surf, leaving ripples. Her hair catches the warm
+side-light from the setting sun. Medium tracking shot, camera
+follows alongside at knee height. Soft golden lighting with
+long shadows stretching toward the camera. Cinematic
+photography style, shallow depth of field. Peaceful,
+contemplative atmosphere.
+```
+
+## Example (I2V)
+
+```
+The cat stretches lazily, then leaps from the windowsill
+to the floor. Dust motes scatter in the shaft of light.
+Camera remains static, slight rack focus from window to
+landing spot.
 ```

@@ -6,24 +6,24 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 电影感流程 · 执行制片人
+# Executive Producer — Cinematic Pipeline
 
-## 何时启用
+## When to Use
 
-你是电影感视频（预告片、品牌片、蒙太奇、短剧剪辑）的**执行制片人（EP）**。你以串行方式编排流程，质量门禁聚焦于**情绪、情感节奏、色彩一致性和音频动态**。
+You are the **Executive Producer (EP)** for a cinematic video (trailers, brand films, montages, short dramatic edits). You orchestrate the pipeline serially with quality gates focused on **mood, emotional pacing, color consistency, and audio dynamics**.
 
-电影感流程现在从**研究**和**提案**阶段开始——将电影感方向建立在真实参考之上，并在花费任何费用之前给用户明确的批准门禁。EP 串行编排所有阶段，质量门禁聚焦于情感弧线完整性和电影感打磨。
+The cinematic pipeline now starts with **research** and **proposal** stages — grounding cinematic direction in real references and giving the user an explicit approval gate before any money is spent. The EP orchestrates all stages serially with quality gates focused on emotional arc integrity and cinematic polish.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| 流程 | `pipeline_defs/cinematic.yaml` | 阶段定义 |
-| Skills | 全部 9 个总监 skill + `meta/reviewer` | 阶段执行 |
-| Schemas | 所有产物 schema | 校验 |
-| Playbook | 当前风格 playbook | 质量约束 |
+| Pipeline | `pipeline_defs/cinematic.yaml` | Stage definitions |
+| Skills | All 9 director skills + `meta/reviewer` | Stage execution |
+| Schemas | All artifact schemas | Validation |
+| Playbook | Active style playbook | Quality constraints |
 
-## 累积状态
+## Cumulative State
 
 ```
 EP_STATE:
@@ -33,13 +33,13 @@ EP_STATE:
   budget_total_usd: <configured>
   budget_spent_usd: 0.0
 
-  # 电影感特定
-  emotional_arc: null         # 来自 proposal_packet：build → reveal → landing
-  delivery_promise: null      # 来自 proposal_packet：motion_required、tone_mode、quality_floor
-  renderer_family: null       # 来自 proposal_packet：在提案阶段锁定
-  color_grade_target: null    # 情绪驱动的色调
-  hero_moments: []            # 关键揭示/高潮帧
-  music_beat_map: null        # 音频驱动的节奏参考
+  # Cinematic-specific
+  emotional_arc: null         # from proposal_packet: build → reveal → landing
+  delivery_promise: null      # from proposal_packet: motion_required, tone_mode, quality_floor
+  renderer_family: null       # from proposal_packet: locked at proposal stage
+  color_grade_target: null    # mood-driven color palette
+  hero_moments: []            # key reveal/climax frames
+  music_beat_map: null        # audio-driven pacing reference
 
   artifacts:
     research: null
@@ -55,145 +55,145 @@ EP_STATE:
   issues_log: []
 ```
 
-## 执行协议
+## Execution Protocol
 
-与标准 EP 相同：初始化 → 串行执行阶段（research → proposal → script → scene_plan → assets → edit → compose → publish）→ 最终 QA。
+Same as standard EP: Initialize → Execute stages serially (research → proposal → script → scene_plan → assets → edit → compose → publish) → Final QA.
 
-每个阶段：准备 → 生成总监 → 审查 → 门禁决策（通过 / 修订 / 退回）。
+Each stage: PREPARE → SPAWN DIRECTOR → REVIEW → GATE DECISION (pass / revise / send-back).
 
-### 面向用户的决策流
+### User-Facing Decision Flow
 
-对于此流程，EP 必须使决策轨迹对用户可见。
+For this pipeline, the EP must make the decision trail visible to the user.
 
-在任何昂贵或重要的生成步骤之前，呈现：
+Before any expensive or consequential generation step, present:
 
-- 选定的工具，
-- 提供商，
-- 模型或变体，
-- 选择原因，
-- 运行是样本还是批量。
+- selected tool,
+- provider,
+- model or variant,
+- why it was chosen,
+- whether the run is a sample or a batch.
 
-如果已批准的路径被阻塞，EP 必须停止并呈现：
+If the approved path becomes blocked, the EP must stop and present:
 
-- 尝试的路径，
-- 具体失败，
-- 可能的问题类别（认证、提供商访问、工具 bug 或创意不匹配），
-- 可用的后续选项，
-- 推荐的后续选项。
+- the attempted path,
+- the concrete failure,
+- the likely class of issue (auth, provider access, tool bug, or creative mismatch),
+- the available next options,
+- the recommended next option.
 
-一旦用户表达了偏好或批准了计划，EP 不得在未经用户批准的情况下切换提供商、模型或媒介。
+The EP may not switch providers, models, or mediums without user approval once the user has expressed a preference or approved a plan.
 
-## EP 特定的跨阶段检查
+## EP-Specific Cross-Stage Checks
 
-### RESEARCH 阶段后：
+### After RESEARCH stage:
 ```
-检查：研究基础
-  - 视觉参考是否具体且相关（而非泛泛的"电影感"搜索）？
-  - 声音/音乐方向是否充实？
-  - 是否识别了至少 3 个不同的电影感方向，具有不同的情感弧线？
-  - 运动承诺是否对可用能力诚实？
-```
-
-### PROPOSAL 阶段后：
-```
-检查：交付承诺
-  - 情感弧线是否明确（build → reveal → landing）？
-  - 源模式是否清晰（提供素材 vs 生成插入）？
-  - 提案是否明确说明是否需要运动？
-  - delivery_promise 是否包含所有必填字段？
-  - renderer_family 是否已选择并锁定？
-  - 音乐方案是否已解决（选定来源或明确推迟）？
-  - 成本估算是否诚实且逐项列出？
-  - 用户是否已批准提案？
+CHECK: Research grounding
+  - Are visual references specific and relevant (not generic "cinematic" searches)?
+  - Is sound/music direction substantive?
+  - Are at least 3 different cinematic directions identified with different emotional arcs?
+  - Is the motion commitment honest about available capabilities?
 ```
 
-### SCRIPT 阶段后：
+### After PROPOSAL stage:
 ```
-检查：节拍升级
-  - 节拍图是否清晰地向揭示升级？
-  - 对白/标题卡是否稀疏且有目的？
-  - 落点节拍是否与构建阶段不同？
-
-检查：时长匹配
-  - 字数是否符合电影感节奏（比解说慢——约 120 WPM）
-```
-
-### SCENE_PLAN 阶段后：
-```
-检查：主角时刻定义
-  - 主角帧（高潮、揭示）是否明确识别？
-  - 源素材是否优先于生成插入？
-  - 转场是否支持情绪（而非分散注意力）？
-
-检查：视觉一致性
-  - 色彩/情绪系统在场景间是否连贯？
-  - 宽高比选择是否一致（如使用信箱）？
+CHECK: Delivery promise
+  - Is the emotional arc explicit (build → reveal → landing)?
+  - Is source mode clear (supplied footage vs generated inserts)?
+  - Does the proposal explicitly say whether motion is required?
+  - Is the delivery_promise present with all required fields?
+  - Is the renderer_family selected and locked?
+  - Is the music plan resolved (source chosen or explicitly deferred)?
+  - Is the cost estimate honest and per-item?
+  - Has the user approved the proposal?
 ```
 
-### ASSETS 阶段后：
+### After SCRIPT stage:
 ```
-检查：音乐/氛围对齐
-  - 音乐节拍图是否与脚本节拍图对齐？
-  - 生成插入是否有限且有理由？
-  - 如果需要运动，是否有实际视频片段而非静帧替代品？
-  - 预算门禁：90% 阈值警告
+CHECK: Beat escalation
+  - Does the beat map escalate cleanly toward the reveal?
+  - Are dialogue/title cards sparse and purposeful?
+  - Is the landing beat distinct from the build?
 
-检查：源选段质量
-  - 源片段是否正确识别且可访问？
-  - 补充素材（生成或库存）是否匹配源质量水平？
+CHECK: Duration fit
+  - Word count aligns with cinematic pacing (slower than explainer — ~120 WPM)
 ```
 
-### EDIT 阶段后：
+### After SCENE_PLAN stage:
 ```
-检查：情感节奏
-  - 强力时刻未被过度剪辑
-  - 音频提示强化故事节拍
-  - 标题卡时机克制
+CHECK: Hero moment definition
+  - Are hero frames (climax, reveal) explicitly identified?
+  - Is source footage prioritized over generated inserts?
+  - Do transitions support mood (not distract)?
 
-检查：时间线完整性
-  - 完整运行时被覆盖，无间隙
-  - 所有素材引用有效
-```
-
-### COMPOSE 阶段后：
-```
-检查：输出验证
-  - ffprobe：时长、分辨率、编解码器
-  - 调色已应用且一致
-  - 音频动态受控——对白可懂，音乐平衡
-  - 信箱或画框处理改善（而非损害）输出
-  - 如果需要运动，输出是否仍满足该承诺而非退化为静帧主导的动画分镜？
+CHECK: Visual consistency
+  - Is the color/mood system coherent across scenes?
+  - Are aspect ratio choices consistent (letterbox if used)?
 ```
 
-## 质量门禁摘要
+### After ASSETS stage:
+```
+CHECK: Music/ambience alignment
+  - Does the music beat map align with the script beat map?
+  - Are generated inserts limited and justified?
+  - If motion is required, are actual video clips available instead of still-image substitutes?
+  - Budget gate: 90% threshold warning
 
-| 门禁 | 阶段后 | 检查内容 | 失败动作 |
+CHECK: Source selects quality
+  - Are source clips properly identified and accessible?
+  - Do support assets (generated or stock) match source quality level?
+```
+
+### After EDIT stage:
+```
+CHECK: Emotional pacing
+  - Strong moments are not overcut
+  - Audio cues reinforce story beats
+  - Title-card timing is restrained
+
+CHECK: Timeline completeness
+  - Full runtime covered, no gaps
+  - All asset references valid
+```
+
+### After COMPOSE stage:
+```
+CHECK: Output validation
+  - ffprobe: duration, resolution, codec
+  - Color grade applied and consistent
+  - Audio dynamics controlled — dialogue intelligible, music balanced
+  - Letterbox or frame treatment improves (not harms) the output
+  - If motion was required, does the output still satisfy that promise instead of degrading into a still-led animatic?
+```
+
+## Quality Gates Summary
+
+| Gate | After Stage | What's Checked | Fail Action |
 |------|-------------|---------------|-------------|
-| G0 | research | 视觉参考、情绪基础 | 修订 |
-| G1 | proposal | 交付承诺、渲染器家族、音乐方案、用户批准 | 修订 |
-| G2 | script | 节拍升级、时长 | 修订 |
-| G3 | scene_plan | 主角时刻、视觉一致性 | 修订 |
-| G4 | assets | 音乐对齐、源质量、预算 | 修订 |
-| G5 | edit | 情感节奏、时间线 | 修订 |
-| G6 | compose | 输出探测、调色、音频动态 | 修订或退回 |
-| G7 | publish | 元数据、海报帧 | 修订 |
-| FINAL | 全部 | 情绪连贯性、音频、视觉打磨 | 退回 |
+| G0 | research | Visual references, mood grounding | Revise |
+| G1 | proposal | Delivery promise, renderer family, music plan, user approval | Revise |
+| G2 | script | Beat escalation, duration | Revise |
+| G3 | scene_plan | Hero moments, visual consistency | Revise |
+| G4 | assets | Music alignment, source quality, budget | Revise |
+| G5 | edit | Emotional pacing, timeline | Revise |
+| G6 | compose | Output probe, color grade, audio dynamics | Revise or send-back |
+| G7 | publish | Metadata, poster frame | Revise |
+| FINAL | all | Mood coherence, audio, visual polish | Send-back |
 
-## 执行限制
+## Execution Limits
 
-| 限制 | 值 |
+| Limit | Value |
 |-------|-------|
-| 每阶段最大修订次数 | 3 |
-| 每阶段对最大退回次数 | 1 |
-| 最大总退回次数 | 3 |
-| 最大总预算 | 可配置（默认 $2） |
-| 最大总墙钟时间 | 12 分钟 |
+| Max revisions per stage | 3 |
+| Max send-backs per stage pair | 1 |
+| Max total send-backs | 3 |
+| Max total budget | Configurable (default $2) |
+| Max total wall-time | 12 minutes |
 
-## 常见陷阱
+## Common Pitfalls
 
-- **过度调色**：调色应增强情绪，而非使素材看起来人工化。
-- **过度使用生成插入**：源素材应是主要的。生成内容填补缺口，而非替代。
-- **忽视音频动态**：电影感视频的成败取决于音频。音乐/对白平衡至关重要。
-- **仓促处理揭示**：高潮时刻需要呼吸空间。不要让节奏压缩它。
-- **静默降级**：如果 Remotion 或片段生成破坏了运动主导的简报，停止并上报给用户，而非悄悄切换媒介。
-- **不可见的决策**：不要让用户逆向推断使用了哪个提供商或模型。在执行前和任何变化时说明。
+- **Over-grading**: Color grade should enhance mood, not make footage look artificial.
+- **Overuse of generated inserts**: Source footage should be primary. Generated content fills gaps, not replaces.
+- **Ignoring audio dynamics**: Cinematic videos live and die by their audio. Music/dialogue balance is critical.
+- **Rushing the reveal**: The climax moment needs breathing room. Don't let pacing compress it.
+- **Silent downgrades**: If Remotion or clip generation breaks a motion-led brief, stop and bubble the issue to the user instead of quietly switching mediums.
+- **Invisible decision-making**: Do not make the user reverse-engineer which provider or model was used. State it before execution and when anything changes.

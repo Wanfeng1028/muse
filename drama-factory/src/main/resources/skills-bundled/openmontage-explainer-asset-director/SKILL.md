@@ -6,47 +6,47 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 资产导演 — 解说流水线
+# Asset Director — Explainer Pipeline
 
-## 适用时机
+## When to Use
 
-你负责生成式解说视频的素材制作。手上会有带素材需求的 `scene_plan` 和含旁白文本的 `script`。目标是产出全部所需资产：旁白音频、图像、图表、代码片段、背景音乐。收尾前每个文件都必须真实存在于磁盘上。
+You are the Asset Producer for a generated explainer video. You have a `scene_plan` with required assets and a `script` with narration text. Your job is to generate every asset needed: narration audio, images, diagrams, code snippets, and background music. Every file must exist on disk before you finish.
 
-计划在这一步变成真实文件。缺失或低质量的素材会毁掉成片。
+This is where plans become real files. A missing or low-quality asset will torpedo the final video.
 
-## 动画实现选型
+## Animation authoring — which runtime
 
-动手写任何 Remotion 动画组件前，先读 `skills/meta/animation-runtime-selector.md`，它是决定用 Remotion 原语还是 GSAP 插件的路由权威。
+Before authoring any animated Remotion component for this pipeline, read **`skills/meta/animation-runtime-selector.md`**. It's the routing authority for deciding between Remotion primitives and GSAP plugins.
 
-常见解说场景的快速路由：
+Quick routing for common explainer needs:
 
-| 场景类型 | 推荐做法 |
+| Scene type | Recommended approach |
 |---|---|
-| 标题卡、淡入、滑动、缩放 | Remotion 原语 —— `interpolate()` + `spring()` |
-| 与旁白同步的词级字幕高亮 | 现成的 `CaptionOverlay` 组件（已在 `remotion-composer/src/components/`） |
-| 逐字符动态字体（“字母逐个炸开”） | GSAP SplitText —— 读 `.agents/skills/gsap-plugins/SKILL.md` |
-| 4 段以上补间组成的多步编排 | GSAP timeline —— 读 `.agents/skills/gsap-timeline/SKILL.md` |
-| Logo 构建（描边、路径揭示） | GSAP DrawSVG —— 读 `.agents/skills/gsap-plugins/SKILL.md` |
-| 数据图表（柱/线/饼/KPI） | Remotion 内置图表组件 —— 见 `remotion-composer/SCENE_TYPES.md` |
-| 终端或 CLI 演示 | Remotion TerminalScene —— 读 `.agents/skills/synthetic-screen-recording/SKILL.md` |
+| Title card, fade, slide, scale | Remotion primitives — `interpolate()` + `spring()` |
+| Word-level caption highlight synced to narration | Existing `CaptionOverlay` component (already in `remotion-composer/src/components/`) |
+| Per-character kinetic typography ("words explode in one letter at a time") | GSAP SplitText — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Multi-step choreography across 4+ tweens | GSAP timeline — read `.agents/skills/gsap-timeline/SKILL.md` |
+| Logo build (line drawing, stroke reveal) | GSAP DrawSVG — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Data chart (bar/line/pie/KPI) | Remotion built-in chart components — see `remotion-composer/SCENE_TYPES.md` |
+| Terminal or CLI demo | Remotion TerminalScene — read `.agents/skills/synthetic-screen-recording/SKILL.md` |
 
-**能简则简原则**：如果 Remotion 原语 20 行以内就能搞定某个场景，就用它。只有 GSAP 插件确实值那份打包体积时才引入。
+**The keep-it-simple bias:** if Remotion primitives solve a scene in ≤ 20 lines, use them. Only pull in GSAP when the plugin genuinely earns its bundle weight.
 
-## 前置条件
+## Prerequisites
 
-| 层 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/asset_manifest.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]`、`state.artifacts["proposal"]["proposal_packet"]` | 决定要做什么 |
-| Playbook | 当前生效的风格 playbook | 图像提示词、图表风格、音频偏好 |
-| 工具 | `tts_selector`、`image_selector`、`video_selector`、`diagram_gen`、`code_snippet`、`music_gen`，选择器会自动从注册表发现可用 provider | 生成能力 |
-| 成本跟踪 | `tools/cost_tracker.py` | 预算管控 |
+| Schema | `schemas/artifacts/asset_manifest.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]`, `state.artifacts["proposal"]["proposal_packet"]` | What to produce |
+| Playbook | Active style playbook | Image prompts, diagram style, audio preferences |
+| Tools | `tts_selector`, `image_selector`, `video_selector`, `diagram_gen`, `code_snippet`, `music_gen` — selectors auto-discover all available providers from the registry | Generation capabilities |
+| Cost tracker | `tools/cost_tracker.py` | Budget governance |
 
-## 流程
+## Process
 
-### 第 1 步：清点所需素材
+### Step 1: Inventory Required Assets
 
-遍历场景计划里每个场景，对每个 `required_assets` 条目建立资产任务：
+Walk every scene in the scene plan. For each `required_assets` entry, create an asset task:
 
 ```
 Asset Task:
@@ -58,108 +58,103 @@ Asset Task:
   estimated_cost: $0.00
 ```
 
-此外还要建：
+Also create tasks for:
+- **Narration audio** — one per script section (use `tts_selector` or a concrete TTS provider)
+- **Background music** — one track for the whole video (use `music_gen` or select from library)
+- **Sound effects** — per playbook's `sfx_style` (optional, use `music_gen` or stock)
 
-- **旁白音频** —— 每个脚本小节一条（用 `tts_selector` 或具体 TTS provider）
-- **背景音乐** —— 整片一条（用 `music_gen` 或从素材库选）
-- **音效** —— 按 playbook 的 `sfx_style`（可选，用 `music_gen` 或现成音效）
+### Step 2: Check Budget
 
-### 第 2 步：预算检查
+Before generating anything:
+1. Sum all estimated costs from the asset tasks
+2. Compare against the cost tracker's remaining budget
+3. If over budget:
+  - Switch expensive tools to cheaper alternatives (use `tts_selector` with `preferred_provider` to route to cheaper TTS; use `image_selector` to route to cheaper image providers)
+   - Reduce image count (combine similar scenes)
+   - Skip optional assets (SFX, B-roll)
+4. Get cost approval via cost tracker before proceeding
 
-动手生成之前：
+### Step 2b: Sample Preview (Prevents Wasted Spend)
 
-1. 汇总所有资产任务的预估成本
-2. 与成本跟踪器剩余预算比对
-3. 超预算时：
-   - 换便宜工具（用 `tts_selector` 的 `preferred_provider` 指向更便宜的 TTS；用 `image_selector` 指向更便宜的图像 provider）
-   - 减少图像数量（合并相似场景）
-   - 砍掉可选资产（音效、B-roll）
-4. 通过成本跟踪器取得费用批准后再继续
+Before batch-generating assets, produce one sample of each expensive asset type and present them to the user for approval:
 
-### 第 2b 步：样例预览（避免浪费性开销）
+1. **TTS sample**: Generate narration for `script.voice_performance.sample_section_id` when present; otherwise pick the section with the most demanding delivery. Play it for the user. Confirm voice, pace, pauses, emphasis, and tone are acceptable before generating the rest.
+2. **Image sample**: Generate one image for the most representative scene. Show it to the user. Confirm the style, quality, and prompt approach before batch-generating all images.
+3. **Music sample** (if using `music_gen`): Generate one short clip. Confirm mood and energy before committing.
 
-批量生成前，对每种高价资产先产出一条样例并交用户确认：
+If the user rejects a sample:
+- Adjust the parameters (voice, prompt style, provider) and regenerate the sample.
+- Do not batch-generate until the sample is approved.
+- Max 3 sample iterations per asset type before escalating to the user for a decision.
 
-1. **TTS 样例**：若脚本含 `script.voice_performance.sample_section_id` 就生成该节；否则挑演绎要求最高的一节。放给用户听，确认音色、语速、停顿、重音、语气都过关再批量跑其余部分。
-2. **图像样例**：为最具代表性的场景生成一张。给用户看，确认风格、质量、提示词思路后再批量出图。
-3. **音乐样例**（若用 `music_gen`）：生成一段短片段，确认情绪与能量再决定。
+This step typically costs $0.03–0.08 total and prevents $1–3 of wasted generation.
 
-用户打回样例时：
+### Step 3: Generate Narration
 
-- 调整参数（音色、提示风格、provider）并重新出样例。
-- 样例未通过前不要批量生成。
-- 每类资产最多迭代 3 次样例，仍不行就升级给用户决策。
+For each script section:
+1. Extract the narration text
+2. Read `script.voice_performance` and section `delivery_cues`
+3. Use `delivery_cues.provider_text` when present; otherwise transform the section text with purposeful punctuation and break tags only when the selected provider supports them
+4. Apply speaker directions from the script (pace, emphasis, emotion)
+5. Apply the playbook's `audio.voice_style`
+6. Map cues to provider parameters:
+   - OpenAI: `instructions` only with `model: "gpt-4o-mini-tts"`; use `response_format` for output format
+   - Google TTS: `input_type: "ssml"` when using `<break>` tags, plus `speaking_rate` in `0.25..2.0` and `pitch` in `-20..20`
+   - ElevenLabs: `stability`, `similarity_boost`, `style`, `speed`, and `use_speaker_boost`
+   - Azure: voice aliases (`andrew`, `brandon`, `ava`, `guy`, `jenny`) or any Azure short name, SSML `rate` (e.g. `"-4%"`), `pitch` (e.g. `"+1st"`), and `style` (e.g. `"narration-professional"`) — see the `azure-text-to-speech` skill
+7. Generate using `tts_selector` — it auto-routes to the best available TTS provider based on user preference and availability. Check the registry's `best_for` fields to understand each provider's strengths.
+8. Record the applied `voice_performance` metadata on each narration asset
+9. Verify the audio file exists and duration matches expected timing (±15%)
 
-这一步通常总共花 $0.03–0.08，能省下 $1–3 的废生成。
+**Pronunciation guide**: If the script contains technical terms, jargon, or names with non-obvious pronunciation, include a pronunciation map in the TTS request.
 
-### 第 3 步：生成旁白
+**Flat voice failure:** If the approved voice sounds monotone, robotic, rushed,
+or ignores intended pauses, do not batch the remaining sections. Revise the
+`voice_performance` plan or provider parameters and regenerate the sample.
 
-对每个脚本小节：
+### Step 4: Generate Visual Assets
 
-1. 取出旁白文本
-2. 读 `script.voice_performance` 与小节的 `delivery_cues`
-3. 有 `delivery_cues.provider_text` 就用它；否则仅在所选 provider 支持时，用有意义的标点和停顿标签改写小节文本
-4. 套用脚本里的说话人指示（语速、重音、情绪）
-5. 套用 playbook 的 `audio.voice_style`
-6. 把提示映射到 provider 参数：
-   - OpenAI：仅 `model: "gpt-4o-mini-tts"` 时支持 `instructions`；输出格式用 `response_format`
-   - Google TTS：用 `<break>` 标签时设 `input_type: "ssml"`，配合 `speaking_rate`（0.25..2.0）与 `pitch`（-20..20）
-   - ElevenLabs：`stability`、`similarity_boost`、`style`、`speed`、`use_speaker_boost`
-   - Azure：声音别名（`andrew`、`brandon`、`ava`、`guy`、`jenny`）或任意 Azure 短名，SSML 的 `rate`（如 `"-4%"`）、`pitch`（如 `"+1st"`）、`style`（如 `"narration-professional"`）—— 见 `azure-text-to-speech` 技能
-7. 用 `tts_selector` 生成 —— 它会按用户偏好与可用性自动路由到最合适的 TTS provider。查注册表的 `best_for` 字段了解各家强项。
-8. 在每个旁白资产上记录实际生效的 `voice_performance` 元数据
-9. 确认音频文件存在，时长与预期时间吻合（±15%）
+Process asset tasks grouped by tool for efficiency:
 
-**发音指南**：脚本里若有技术术语、行话或发音不直观的专名，在 TTS 请求里附上发音映射表。
+**Images (`image_selector`)**:
+1. Build the prompt from the scene's actual purpose:
+   - scene-specific shot/lighting/texture cues from `shot_language`, `shot_intent`, and `texture_keywords`
+   - an adapted visual anchor from the playbook or custom identity
+   - the concrete subject/action/environment
+   Use `lib/shot_prompt_builder.py` when helpful.
+2. Add negative prompt from playbook
+3. Include consistency anchors (same character/world/palette family), but do NOT reuse the exact same phrasing for every image
+4. Generate and verify the file exists
+5. If the result doesn't match expectations, refine the prompt and regenerate (max 2 retries)
 
-**平淡音色失败**：已确认的音色若听起来单调、机械、急促或忽略了预期停顿，不要批量跑其余小节。修订 `voice_performance` 计划或 provider 参数，重出样例。
+**Diagrams (`diagram_gen`)**:
+1. Convert the scene description into valid Mermaid syntax
+2. Apply playbook's `asset_generation.diagram_style`
+3. Generate SVG/PNG
+4. Verify all nodes and edges are present
 
-### 第 4 步：生成视觉资产
+**Code snippets (`code_snippet`)**:
+1. Extract language and code from the scene description
+2. Apply syntax highlighting theme from playbook's overlay styles
+3. Generate highlighted image or Remotion-compatible data
 
-按工具分组处理资产任务以提高效率：
+### Step 5: Generate Music
 
-**图像（`image_selector`）**：
+1. Read playbook's `audio.music_mood` and `audio.music_volume`
+2. Check the music decision from `proposal_packet.production_plan.music_source` (set by the Proposal Director)
+3. Source the background track in this priority order:
+   - **User-selected library track**: If the proposal specified a track from `music_library/`, copy it to `projects/<project>/assets/music/background_music.mp3`
+   - **User music library (`music_library/`)**: If the folder exists and has tracks, pick the best match for the playbook's `audio.music_mood`. List candidates by filename and let the EP decide.
+   - **Music generation API**: Use `music_gen` (ElevenLabs) or `suno_music` if available. Check status via registry first — if the tool is unavailable or quota-exhausted, skip immediately (do NOT attempt and fail silently).
+   - **No music available**: Log this clearly in the asset manifest as `"music_status": "unavailable"` with the reason. Do NOT silently produce a video without music — the EP and user should know.
+4. Duration should be at least as long as total video duration. If shorter, it can be looped by the compose stage.
+5. Verify the audio file exists at `projects/<project>/assets/music/background_music.mp3`
 
-1. 依据场景真实意图构建提示词：
-   - 来自 `shot_language`、`shot_intent`、`texture_keywords` 的场景专属镜头/灯光/质感线索
-   - 从 playbook 或自定义身份改编的视觉锚点
-   - 具体主体/动作/环境
-   必要时用 `lib/shot_prompt_builder.py`。
-2. 加上 playbook 的负面提示
-3. 加入一致性锚点（同一角色/世界/色系），但不要每张图都复用完全相同的措辞
-4. 生成并确认文件存在
-5. 结果不符预期就细化提示词并重生成（最多重试 2 次）
+**Critical:** If music generation fails or is unavailable, report it immediately in the asset manifest — do not defer the problem to the compose stage.
 
-**图表（`diagram_gen`）**：
+### Step 6: Build Asset Manifest
 
-1. 把场景描述转成合法 Mermaid 语法
-2. 套用 playbook 的 `asset_generation.diagram_style`
-3. 生成 SVG/PNG
-4. 核对所有节点与边都在
-
-**代码片段（`code_snippet`）**：
-
-1. 从场景描述中提取语言与代码
-2. 套用 playbook 覆盖层样式里的语法高亮主题
-3. 生成高亮图或 Remotion 兼容数据
-
-### 第 5 步：生成音乐
-
-1. 读 playbook 的 `audio.music_mood` 与 `audio.music_volume`
-2. 查 `proposal_packet.production_plan.music_source` 里的音乐决策（由提案导演设定）
-3. 按此优先级获取背景音乐：
-   - **用户选定素材库曲目**：提案指定了 `music_library/` 里某首就复制到 `projects/<project>/assets/music/background_music.mp3`
-   - **用户音乐库（`music_library/`）**：目录存在且有曲目，就按 playbook 的 `audio.music_mood` 挑最匹配的，列出候选文件名让 EP 定夺
-   - **音乐生成 API**：用 `music_gen`（ElevenLabs）或可用的 `suno_music`。先查注册表状态，工具不可用或额度耗尽就直接跳过（不要尝试后静默失败）
-   - **无音乐可用**：在资产清单里清晰记录 `"music_status": "unavailable"` 及原因。不要静默产出无音乐的视频 —— EP 和用户应当知情
-4. 时长至少覆盖全片时长。不足时合成阶段可循环
-5. 确认音频文件存在于 `projects/<project>/assets/music/background_music.mp3`
-
-**关键点**：音乐生成失败或不可用，立刻在资产清单里报告 —— 不要把问题留给合成阶段。
-
-### 第 6 步：构建资产清单
-
-把所有生成的资产汇总成清单：
+Assemble all generated assets into the manifest:
 
 ```json
 {
@@ -203,99 +198,101 @@ Asset Task:
 }
 ```
 
-### 生成提示词的前后自检
+### Pre/Post Self-Review for Generation Prompts
 
-> 向任何生成工具（`image_selector`、`diagram_gen`、`video_selector`，甚至 `code_snippet` 的样式提示）发送提示词之前，按 CHAI 监督回路（“Building a Precise Video Language with Human-AI Oversight”，arXiv 2604.21718v2）做三步自检。成本很低（不增加工具调用），收益很大（避免废生成）。这对 `diagram_gen` 的 Mermaid 提示和 `image_selector` 的插画提示同样适用 —— 糟糕的解说视觉失败方式一样：缺主体、缺取景、含糊地“让它看起来有教育感”。
+> Before sending a prompt to any generation tool — `image_selector`, `diagram_gen`, `video_selector`, even `code_snippet` styling prompts — run a three-step self-review modeled on the CHAI oversight loop ("Building a Precise Video Language with Human-AI Oversight", arXiv 2604.21718v2). Cost is small (no extra tool calls); benefit is large (avoids wasted generations). This applies just as strongly to `diagram_gen` Mermaid prompts and `image_selector` illustration prompts as it does to video generation — bad explainer visuals fail in the same way: missing subject, missing framing, vague "make it look educational."
 >
-> **第 1 步 — 前置描述。** 按你今天会写的方式先写一版提示，别过度修饰，力求完整初稿。
+> **Step 1 — Pre-caption pass.** Write the prompt the way you'd write it today. Do not over-edit; aim for a complete first draft.
 >
-> **第 2 步 — 评审。** 按 5 个维度打分（主体 / 主体运动 / 场景 / 空间取景 / 摄影机）。每个维度：
-> - 是否已指明？没指明是故意的（如“摄影机不适用 —— Remotion 原生场景”“无主体运动 —— 静态图表”）还是疏漏？
-> - 易混术语是否消歧？（dolly vs zoom、pan vs truck、鸟瞰 vs 航拍、鱼眼 vs 桶形、全景 vs 特写；图表则：flowchart vs sequence vs state、自上而下 vs 左右布局）
-> - 情绪化形容词（“干净”“专业”“现代”）是否换成了视觉成因（无衬线字体、充足留白、单色加一点强调色）？
-> - 多镜头提示：各镜头之间是否逐字固定了身份锚点？对反复出现的 `image_selector` 提示（同一角色或世界出现在多个场景），是否逐字指定了一致性锚点？
+> **Step 2 — Critique pass.** Score the draft against the 5-aspect checklist (Subject / Subject Motion / Scene / Spatial Framing / Camera). For each aspect:
+> - Is it specified? If not, is the omission deliberate (e.g., "Camera N/A — Remotion native scene", "no subject motion — static diagram") or accidental?
+> - Are confusable terms disambiguated? (dolly vs zoom, pan vs truck, bird's-eye vs aerial, fisheye vs barrel, full shot vs close-up; for diagrams: flowchart vs sequence vs state diagram, top-down vs left-right)
+> - Are emotional adjectives ("clean", "professional", "modern") replaced with their visual causes (sans-serif typography, generous whitespace, monochromatic palette with one accent)?
+> - For multi-shot prompts: is identity anchored verbatim across shots? For `image_selector` prompts that recur (a character or world appearing in multiple scenes), are consistency anchors specified verbatim?
 >
-> **第 3 步 — 后置描述。** 补齐缺失维度、修正易混术语、替换主观措辞后重写。发送给生成工具的是这一版。
+> **Step 3 — Post-caption pass.** Rewrite filling the missing aspects, fixing confusable terms, and replacing subjective language. The post-caption is what gets sent to the generation tool.
 >
-> 把（前置、评审、后置）三元组记录进资产元数据以备追溯。这与 CHAI 工作流一致，也留下可供审阅者审计的记录。
+> Log the (pre, critique, post) triplet in the asset metadata for traceability. This mirrors the CHAI workflow and creates a record the reviewer can audit.
 
-### 第 7 步：校验所有资产
+### Step 7: Verify All Assets
 
-**存在性检查：**
+**Existence check:**
+- [ ] Every asset `path` exists on disk
+- [ ] Every narration section has a corresponding audio file
+- [ ] Every scene with `required_assets` has all assets generated
+- [ ] Background music file exists
 
-- [ ] 每个资产 `path` 在磁盘上存在
-- [ ] 每个旁白小节都有对应音频文件
-- [ ] 每个带 `required_assets` 的场景，资产都已生成
-- [ ] 背景音乐文件存在
+**Quality check:**
+- [ ] Narration durations within ±15% of expected timing
+- [ ] Narration assets record `voice_performance.delivery_cues_applied`
+- [ ] Approved TTS sample uses the same provider, voice, and expressive settings as the batch
+- [ ] Images match the playbook's style (review consistency anchors)
+- [ ] Diagrams are legible and complete
+- [ ] Total cost within budget
 
-**质量检查：**
+### Step 8: Self-Evaluate
 
-- [ ] 旁白时长在预期时间 ±15% 内
-- [ ] 旁白资产记录了 `voice_performance.delivery_cues_applied`
-- [ ] 已通过的 TTS 样例与批量结果使用同一 provider、音色与表现力设置
-- [ ] 图像符合 playbook 风格（检查一致性锚点）
-- [ ] 图表清晰完整
-- [ ] 总成本在预算内
+Score (1-5):
 
-### 第 8 步：自评
-
-打分（1-5）：
-
-| 维度 | 问题 |
+| Criterion | Question |
 |-----------|----------|
-| **完整性** | 每个场景的必需资产都齐了吗？ |
-| **音频质量** | 旁白听起来自然、节奏对吗？ |
-| **视觉一致性** | 所有图像看起来属于同一支视频吗？ |
-| **预算遵从** | 总成本在批准的预算内吗？ |
-| **Playbook 保真度** | 资产符合 playbook 风格指南吗？ |
+| **Completeness** | Does every scene have all required assets? |
+| **Audio quality** | Does narration sound natural with correct pacing? |
+| **Visual consistency** | Do all images look like they belong to the same video? |
+| **Budget adherence** | Is total cost within the approved budget? |
+| **Playbook fidelity** | Do assets match the playbook's style guide? |
 
-任一项低于 3 分，先修再继续。
+If any dimension scores below 3, fix before proceeding.
 
-### 第 9 步：提交
+### Step 9: Submit
 
-对 asset_manifest 做 schema 校验，并通过 checkpoint 持久化。
+Validate the asset_manifest against the schema and persist via checkpoint.
 
-### 制作中事实核查
+### Mid-Production Fact Verification
 
-素材生成过程中遇到不确定：
+If you encounter uncertainty during asset generation:
+- Use `web_search` to verify visual accuracy of subjects (e.g. what does this building actually look like?)
+- Use `web_search` to find reference images before generating illustrations
+- Log verification in the decision log: `category="visual_accuracy_check"`
 
-- 用 `web_search` 核对主体视觉准确性（比如这栋楼实际长什么样？）
-- 用 `web_search` 在生成插画前找参考图
-- 决策日志记录：`category="visual_accuracy_check"`
+Visual accuracy matters. If the script mentions a specific place, person, or object,
+verify what it actually looks like before generating images. Don't rely on
+the AI model's training data — it may be wrong or outdated.
 
-视觉准确性很重要。脚本提到具体地点、人物或物品，就先生成前核实它的真实外观。不要依赖 AI 模型的训练数据 —— 可能过时或错误。
+## Common Pitfalls
 
-## 常见坑
+- **Generating before checking budget**: Always estimate total cost first. A 60-second video with 15 images can burn $3+ quickly.
+- **Inconsistent image style**: Each image_selector call is independent. Use consistent anchors, but adapt them per scene. If you paste the same style prefix into every prompt, the video will feel machine-made and repetitive.
+- **Ignoring narration timing**: If TTS produces 12s of audio for a 10s section, the edit phase will struggle. Check durations.
+- **Ignoring delivery cues**: Generating raw script text when `provider_text` or `delivery_cues` exist will flatten the read. Apply the voice-performance contract first.
+- **Missing pronunciation guide**: "PostgreSQL" or "Kubernetes" will be mispronounced without explicit guidance.
+- **One retry then give up**: If an image doesn't match, refine the prompt specifically — don't just retry the same prompt.
+- **AI-generating images with exact text (CTA, business names, contact info)**: AI image models frequently hallucinate wrong text — wrong business name, wrong phone number, misspelled words. **Never use AI image generation for scenes where text must be verbatim.** Use Remotion `text_card` type instead. This applies to: CTA screens, title cards with business names, contact info overlays, legal disclaimers. If a scene's `type` is `text_card` in the scene plan, do NOT generate an image for it — skip it and let the compose stage render it natively in Remotion.
 
-- **不查预算就生成**：永远先估算总成本。60 秒视频 15 张图能很快烧掉 $3+。
-- **图像风格不一致**：每次 `image_selector` 调用彼此独立。用一致锚点，但按场景调整。把同一段风格前缀贴进每条提示，视频会显得机械重复。
-- **忽略旁白时间**：10 秒小节若 TTS 出了 12 秒音频，剪辑阶段会很难办。务必核对时长。
-- **忽略演绎提示**：有 `provider_text` 或 `delivery_cues` 却直接读原始文本会拉平语调。先应用语音表现契约。
-- **缺发音指南**：“PostgreSQL”或“Kubernetes”没有明确指引就会被念错。
-- **只重试一次就放弃**：图不匹配就针对性地细化提示词 —— 别拿同一提示反复重试。
-- **用 AI 生成含精确文字的图像（CTA、商家名、联系方式）**：AI 图像模型经常幻觉出错误文本 —— 商家名错、电话错、拼写错。**凡文字必须逐字准确的场景，绝不用 AI 出图。** 改用 Remotion `text_card`。适用于：CTA 页、带商家名的标题卡、联系方式叠层、法律免责声明。场景计划里某场景 `type` 为 `text_card`，就不要为它生成图像 —— 跳过，让合成阶段用 Remotion 原生渲染。
 
-## 不确定怎么做时
+## When You Do Not Know How
 
-遇到拿不准的生成技法、provider 行为或提示模式：
+If you encounter a generation technique, provider behavior, or prompting pattern you are unsure about:
 
-1. **搜网** 找当前最佳实践 —— 模型和 API 变化快，agent 的训练数据可能过时
-2. **查 `.agents/skills/`** 里已有的 Layer 3 知识（provider 专属提示指南、API 模式）
-3. **都不管用**，就在 `projects/<project-name>/skills/<name>.md` 写一份项目级技能记录你的收获
-4. **标注来源 URL**，让知识可追溯
-5. **记录**到决策日志：`category: "capability_extension"`、`subject: "learned technique: <name>"`
+1. **Search the web** for current best practices — models and APIs change frequently, and the agent's training data may be stale
+2. **Check `.agents/skills/`** for existing Layer 3 knowledge (provider-specific prompting guides, API patterns)
+3. **If neither helps**, write a project-scoped skill at `projects/<project-name>/skills/<name>.md` documenting what you learned
+4. **Reference source URLs** in the skill so the knowledge is traceable
+5. **Log it** in the decision log: `category: "capability_extension"`, `subject: "learned technique: <name>"`
 
-对以下情况尤其重要：
+This is especially important for:
+- **Video generation prompting** — models respond to specific vocabularies that change with each version
+- **Image model parameters** — optimal settings for FLUX, GPT Image, Imagen differ and evolve
+- **Audio provider quirks** — voice cloning, music generation, and TTS each have model-specific best practices
+- **Remotion component patterns** — new composition techniques emerge as the framework evolves
 
-- **视频生成提示** —— 模型对各版本专属词汇的响应会变
-- **图像模型参数** —— FLUX、GPT Image、Imagen 的最佳设置不同且持续演进
-- **音频 provider 特性** —— 声音克隆、音乐生成、TTS 各有模型专属最佳实践
-- **Remotion 组件模式** —— 框架演进会带出新的合成技法
-
-不要依赖陈旧知识。拿不准就先搜。
+Do not rely on stale knowledge. When in doubt, search first.
 
 ---
 
-## 关卡提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为关卡（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打 checkpoint，呈现摘要（Backlot 看板会渲染产物），然后**结束本轮**。不要在同一次回复里启动下一阶段。批准按关卡生效 —— 早前的“继续”不覆盖本关卡。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

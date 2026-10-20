@@ -6,113 +6,114 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 图表生成使用规范
+# Diagram Generation Usage for OpenMontage
 
-> 参考来源：Mermaid.js 文档、`.agents/skills/beautiful-mermaid/` 现有技能、Mermaid-Sonar 复杂度分析研究、Mermaid GitHub issue #651（缩放）与 #3029（动画）。
+> Sources: Mermaid.js documentation, existing Layer 3 skill at `.agents/skills/beautiful-mermaid/`,
+> Mermaid-Sonar complexity analysis research, Mermaid GitHub issues #651 (scaling), #3029 (animation)
 
-## 速查卡
+## Quick Reference Card
 
 ```
-最大节点数（1080p）:  15-20 节点，20-25 条边
-最大节点数（4K）:     25-35 节点，35-45 条边
-最大节点数（竖屏）:   10-12 节点，12-15 条边
-最小字号:             1080p 下 16px，4K 下 14px
-渲染宽度:             最少 1200px
-渲染视口:             3840x2160（4K）以导出高清 PNG
-主题（深色底）:       tokyo-night 或 dracula
-主题（浅色底）:       github-light 或 catppuccin-latte
+MAX NODES (1080p):  15-20 nodes, 20-25 edges
+MAX NODES (4K):     25-35 nodes, 35-45 edges
+MAX NODES (vert):   10-12 nodes, 12-15 edges
+MIN FONT SIZE:      16px at 1080p, 14px at 4K
+RENDER WIDTH:       Minimum 1200px
+RENDER VIEWPORT:    3840x2160 (4K) for high-res PNG export
+THEME (dark bg):    tokyo-night or dracula
+THEME (light bg):   github-light or catppuccin-latte
 ```
 
-## 图表类型选择
+## Diagram Type Selection
 
-| 类型 | 视频适配度 | 最适合 |
-|------|-----------|-------|
-| **流程图（TD）** | 优秀 | 流程、决策树、算法 |
-| **时序图** | 良好 | API 调用、用户交互、消息流 |
-| **状态图** | 良好 | 状态机、生命周期、工作流状态 |
-| **类图** | 一般 | 架构（限制 3-5 个类） |
-| **ER 图** | 视频中较差 | 太密——仅简化到关键实体 |
-| **甘特图** | 一般 | 时间线、项目阶段 |
-| **思维导图** | 良好 | 概念概览、主题拆解 |
+| Type | Video Suitability | Best For |
+|------|------------------|----------|
+| **Flowchart (TD)** | Excellent | Process flows, decision trees, algorithms |
+| **Sequence diagram** | Good | API calls, user interactions, message flows |
+| **State diagram** | Good | State machines, lifecycle, workflow status |
+| **Class diagram** | Fair | Architecture (limit to 3-5 classes) |
+| **ER diagram** | Poor for video | Too dense — simplify to key entities only |
+| **Gantt chart** | Fair | Timelines, project phases |
+| **Mindmap** | Good | Concept overviews, topic breakdowns |
 
-**默认：** 除非内容明确需要其他类型，一律用流程图（自上而下 `TD`）。它阅读自然，也适合逐步构建。
+**Default:** Use flowcharts (top-down `TD`) unless the content specifically requires another type. They read naturally and build well step by step.
 
-## 视频复杂度限制
+## Complexity Limits for Video
 
-视频是瞬时的——观众无法缩放或滚动。相比静态文档，复杂度要减半。
+Video is transient — viewers can't zoom or scroll. Cut complexity in half compared to static documentation.
 
-| 目标分辨率 | 最大节点 | 最大边 | 最小字号（CSS） |
-|-----------|---------|-------|---------------|
-| 1920x1080（HD） | 15-20 | 20-25 | 16px |
-| 3840x2160（4K） | 25-35 | 35-45 | 14px |
-| 1080x1920（竖屏） | 10-12 | 12-15 | 18px |
+| Target Resolution | Max Nodes | Max Edges | Min Font Size (CSS) |
+|------------------|-----------|-----------|---------------------|
+| 1920x1080 (HD) | 15-20 | 20-25 | 16px |
+| 3840x2160 (4K) | 25-35 | 35-45 | 14px |
+| 1080x1920 (vertical) | 10-12 | 12-15 | 18px |
 
-**若超出限制：** 拆成多帧，每帧展示一个子集。这同时自然形成“逐步构建”的动画效果。
+**If your diagram exceeds these limits:** Split it into multiple frames, each showing a subset. This also creates a natural "building" animation for the video.
 
-## 视频配色主题
+## Color Themes for Video
 
-| 用途 | 主题 | 原因 |
-|------|------|------|
-| 深色视频背景 | `tokyo-night` 或 `dracula` | 高对比，可读 |
-| 浅色视频背景 | `github-light` 或 `catppuccin-latte` | 柔和、专业 |
-| 代码/开发者内容 | `one-dark` | 开发者受众熟悉 |
-| 最大对比 | `zinc-dark` | 中性，无色彩偏好 |
-| 企业/演示 | `nord-light` | 沉稳、专业 |
+| Use Case | Theme | Why |
+|----------|-------|-----|
+| Dark video background | `tokyo-night` or `dracula` | High contrast, readable |
+| Light video background | `github-light` or `catppuccin-latte` | Soft, professional |
+| Code/developer content | `one-dark` | Familiar to dev audience |
+| Maximum contrast | `zinc-dark` | Neutral, no color bias |
+| Corporate/presentation | `nord-light` | Calm, professional |
 
-**匹配 playbook：** 图表主题应与风格 playbook 的调色板协调。
+**Match the playbook:** The diagram theme should complement the style playbook's color palette.
 
-## 视频渐进构建
+## Progressive Building for Video
 
-Mermaid 原生不支持动画。用渐进渲染制造“构建”效果：
+Mermaid doesn't animate natively. Use progressive rendering to create a "building" effect:
 
-### 方法：多阶段渲染
+### Approach: Multi-Stage Renders
 
-1. 分阶段渲染图表——先 2 个节点，再 4 个，最后完整图。
-2. 每个阶段是独立的 Mermaid 渲染 → SVG → PNG。
-3. 在 FFmpeg 中交叉淡入或在阶段间切换。
-4. 观众逐步跟随逻辑。
+1. Render diagram in stages — first 2 nodes, then 4, then full diagram
+2. Each stage is a separate Mermaid render → SVG → PNG
+3. Crossfade or cut between stages in FFmpeg
+4. Viewers follow the logic step by step
 
-### 高亮当前步骤
+### Highlighting Current Step
 
-用 `classDef` 高亮活动节点、弱化已完成节点：
+Use `classDef` to highlight the active node and dim completed ones:
 
 ```mermaid
 graph TD
-    A[输入数据]:::completed --> B[处理]:::highlight
-    B --> C[输出]:::dimmed
+    A[Input Data]:::completed --> B[Process]:::highlight
+    B --> C[Output]:::dimmed
     classDef highlight fill:#f96,stroke:#333,stroke-width:3px
     classDef completed fill:#6c6,stroke:#333,stroke-width:1px
     classDef dimmed fill:#555,stroke:#333,opacity:0.5
 ```
 
-每步用不同的 `classDef` 分配生成一张 PNG，再在合成阶段排序播放。
+Generate one PNG per step with different `classDef` assignments, then sequence them in the compose stage.
 
-## 面向视频可读性的样式
+## Styling for Video Readability
 
-### 节点尺寸
-- 1080p 下节点最小宽度 150px。
-- 节点内边距 15-20px。
-- 每节点文字控制在 3-5 个词，必要时用缩写。
+### Node Sizing
+- Minimum node width: 150px at 1080p
+- Padding inside nodes: 15-20px
+- Keep text to 3-5 words per node — use abbreviations if needed
 
-### 边标签
-- 最多 1-2 个词。
-- 仅在关系从上下文不明显时才用边标签。
-- 优先给节点加标签，而非给边加标签。
+### Edge Labels
+- Keep to 1-2 words maximum
+- Use edge labels only when the relationship isn't obvious from context
+- Prefer labeled nodes over labeled edges
 
-### 布局方向
-- **自上而下（TD）：** 最适合流程、层级、流向。
-- **从左到右（LR）：** 最适合时间线、序列、管线。
-- 避免自下而上（BT）——对多数观众反直觉。
+### Layout Direction
+- **Top-down (TD):** Best for processes, hierarchies, flows
+- **Left-right (LR):** Best for timelines, sequences, pipelines
+- Avoid bottom-up (BT) — counterintuitive for most viewers
 
-## 在 OpenMontage 中应用
+## Applying to OpenMontage
 
-使用 `diagram_gen` 工具时：
+When using the `diagram_gen` tool:
 
-1. **检查复杂度**——1080p 下最多 15-20 节点。更大的图拆成多帧。
-2. **选主题**匹配视频的风格 playbook 与背景。
-3. **用渐进构建**——渲染各阶段并交叉淡入，形成视频中的“构建”效果。
-4. **用 classDef 高亮**——当前步骤橙色/红色，已完成绿色，待进行灰色。
-5. **文字极简**——每节点 3-5 个词，每条边标签 1-2 个词。
-6. **默认流程图 TD**，除非内容明确需要其他类型。
-7. **以 4K 视口渲染**（3840x2160），即便输出是 1080p——确保缩放后文字清晰。
-8. **测试可读性**——在合成前按实际视频帧尺寸查看渲染出的 PNG。
+1. **Check complexity** — max 15-20 nodes at 1080p. Split larger diagrams into multiple frames
+2. **Choose theme** to match the video's style playbook and background
+3. **Use progressive building** — render stages and crossfade for "building" effect in video
+4. **Highlight with classDef** — show the current step in orange/red, completed in green, upcoming in grey
+5. **Keep text minimal** — 3-5 words per node, 1-2 words per edge label
+6. **Default to flowchart TD** unless the content specifically requires another diagram type
+7. **Render at 4K viewport** (3840x2160) even for 1080p output — ensures crisp text when scaled
+8. **Test readability** — view the rendered PNG at actual video frame size before composing

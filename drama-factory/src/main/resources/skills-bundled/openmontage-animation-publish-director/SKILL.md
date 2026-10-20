@@ -6,55 +6,57 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 动画管线 · 发布总监
+# Publish Director - Animation Pipeline
 
-## 何时启用
+## When To Use
 
-对动画成片进行打包，使元数据、缩略图概念和平台呈现方式都真实反映项目的视觉体系。
+Package the animation so the metadata, thumbnail concept, and platform framing reflect the actual visual system of the project.
 
-## 前置条件
+## Prerequisites
 
-| 层 | 资源 | 用途 |
-|----|------|------|
-| Schema | `schemas/artifacts/publish_log.schema.json` | 产物校验 |
-| 前置产物 | `state.artifacts["compose"]["render_report"]`、`state.artifacts["proposal"]["proposal_packet"]`、`state.artifacts["research"]["research_brief"]`、`state.artifacts["script"]["script"]` | 最终输出与主题框定 |
-| 剧本 | 当前生效的风格剧本 | 视觉命名一致性 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/publish_log.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["compose"]["render_report"]`, `state.artifacts["proposal"]["proposal_packet"]`, `state.artifacts["research"]["research_brief"]`, `state.artifacts["script"]["script"]` | Final outputs and topic framing |
+| Playbook | Active style playbook | Visual naming consistency |
 
-## 流程
+## Process
 
-### 1. 让包装匹配动画模式
+### 1. Match Packaging To The Animation Mode
 
-示例：
+Examples:
 
-- 图解密集的视频应呈现结构化、易读的包装；
-- 动态排版作品应围绕强文案做包装；
-- 插画式动画应围绕主视觉做包装。
+- diagram-heavy videos should look structured and legible,
+- kinetic-type pieces should package around strong copy,
+- illustrative animation should package around hero imagery.
 
-### 2. 保留视觉体系的真实性
+### 2. Preserve Visual-System Truth
 
-在 `publish_log.metadata` 中保存：
+Store in `publish_log.metadata`:
 
 - `animation_mode`
 - `hero_frame_notes`
 - `thumbnail_concept`
 - `platform_notes`
 
-### 3. 质量闸门
+### 3. Quality Gate
 
-- 元数据契合实际动画模式；
-- 缩略图概念与最终视觉体系一致；
-- 导出按用途和平台清晰标注；
-- 打包结果无需额外手工处理即可使用。
+- metadata fits the actual animation mode,
+- thumbnail concept matches the final visual system,
+- exports are labeled by purpose and platform,
+- the package is usable without extra manual work.
 
-## 常见坑
+## Common Pitfalls
 
-- 写与动画风格无关的通用元数据。
-- 缩略图概念与最终画面脱节。
-- 混用平台版本却不做清晰标注。
+- Writing generic metadata that ignores the animation style.
+- Creating a thumbnail concept unrelated to the final frames.
+- Mixing platform variants without clear labels.
 
 ---
 
-## 闸门提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为闸门（`human_approval_default: true`）。评审通过后：
-用 `status="awaiting_human"` 打检查点，展示摘要（Backlot 看板会渲染该产物），然后**结束本轮对话**。不要在同一个回复里启动下一阶段。审批是按闸门独立的——此前的“继续”不覆盖本次闸门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

@@ -6,67 +6,68 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 发布总监 — 影视化流水线
+# Publish Director - Cinematic Pipeline
 
-## 何时使用
+## When To Use
 
-打包影视化成品及各种切条，让主版本保持清晰、分发意图一目了然。
+Package the cinematic piece and any cutdowns so the hero version stays clear and the distribution intent is obvious.
 
-## 前置条件
+## Prerequisites
 
-| 层 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/publish_log.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["compose"]["render_report"]`、`state.artifacts["proposal"]["proposal_packet"]`、`state.artifacts["research"]["research_brief"]`、`state.artifacts["script"]["script"]` | 最终输出与节拍图 |
-| 手册 | 当前启用的风格手册 | 基调与命名一致性 |
+| Schema | `schemas/artifacts/publish_log.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["compose"]["render_report"]`, `state.artifacts["proposal"]["proposal_packet"]`, `state.artifacts["research"]["research_brief"]`, `state.artifacts["script"]["script"]` | Final outputs and beat map |
+| Playbook | Active style playbook | Tone and naming consistency |
 
-## 流程
+## Process
 
-### 1. 区分主版本与衍生版本
+### 1. Separate Hero And Derivatives
 
-典型交付物：
+Typical deliverables:
 
-- 主预告片或品牌片；
-- 先导切条；
-- 社交切条；
-- 海报帧或缩略图概念。
+- hero trailer or brand film,
+- teaser cut,
+- social cutdown,
+- poster-frame or thumbnail concept.
 
-### 2. 元数据与基调对齐
+### 2. Match Metadata To Tone
 
-包装应反映真实情绪：
+Packaging should reflect the actual mood:
 
-- 戏剧化；
-- 高级感；
-- 神秘；
-- 沉思；
-- 紧迫。
+- dramatic,
+- premium,
+- mysterious,
+- reflective,
+- urgent.
 
-### 3. 保留剪辑真相
+### 3. Preserve Editorial Truth
 
-在 `publish_log.metadata` 中记录：
+Store in `publish_log.metadata`:
 
 - `hero_output`
 - `derivative_outputs`
 - `poster_frame_notes`
 - `distribution_notes`
 
-### 4. 质量门
+### 4. Quality Gate
 
-- 主版本导出有明确标识；
-- 衍生导出按用途标注；
-- 元数据与基调相符；
-- 打包结果无需手动清理即可使用。
+- hero export is clearly identified,
+- derivative exports are labeled by purpose,
+- metadata fits the tone,
+- the package is usable without manual cleanup.
 
-## 常见坑
+## Common Pitfalls
 
-- 先导片与主片输出命名不清、混作一团。
-- 元数据写得千篇一律，忽略情绪。
-- 把各种切条视为可互换。
+- Mixing teaser and hero outputs without clear naming.
+- Writing generic metadata that ignores the mood.
+- Treating all cutdowns as interchangeable.
 
 ---
 
-## 门禁提醒（约束）
+## Gate Reminder (Binding)
 
-本阶段以人工确认为门禁（`human_approval_default: true`）。评审通过后：
-以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染产物），并**结束本轮回复**。不要在同一轮回复里启动下一阶段。
-门禁按次生效——此前的一次"继续"不覆盖本次门禁。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

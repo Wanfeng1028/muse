@@ -6,84 +6,85 @@ metadata:
   license: AGPL-3.0
 ---
 
-# LTX-2 提示词指南
+# LTX-2 — Prompting Guide
 
-> 参考来源：LTX 官方提示词指南
-> 通用词汇另见：`skills/creative/video-gen-prompting.md`
+> Source: [LTX Official Prompting Guide](https://docs.ltx.video/api-documentation/prompting-guide)
+> For universal vocabulary, see: `skills/creative/video-gen-prompting.md`
 
-## LTX 专属六要素结构
+## LTX-Specific 6-Element Structure
 
-LTX-2 的提示词结构简洁、聚焦，按以下顺序展开：
+LTX-2 uses a clean, focused prompt structure:
 
-1. **确立镜头** —— 使用与题材匹配的摄影术语
-2. **设定场景** —— 光线、色彩、质感、氛围
-3. **描述动作** —— 从起点自然流动到终点的过程
-4. **定义角色** —— 用外貌线索（年龄、发型、衣着），而非抽象标签
-5. **运镜** —— 说明方式与时机；描述移动之后画面里出现了什么。（LTX 严格区分平移/旋转/镜头三类：`dolly` 不等于 `zoom`，`pan` 不等于 `truck`。选对类别——平移是机位移动，旋转是机位转向，仅镜头类只改变焦距或焦平面而机位不动。）
-6. **描述音频** —— 环境声、音乐、说话或歌唱
+1. **Establish the shot** — cinematography terms matching your genre
+2. **Set the scene** — lighting, color palette, textures, atmosphere
+3. **Describe the action** — natural sequence flowing from beginning to end
+4. **Define the character(s)** — physical cues (age, hair, clothes), not abstract labels
+5. **Camera movement(s)** — specify how and when; describe what appears AFTER the movement. (LTX honors the translation/rotation/lens distinction: `dolly` ≠ `zoom`, `pan` ≠ `truck`. Pick the right family — translation moves the rig, rotation pivots it, lens-only changes focal length or focal plane without moving the camera.)
+6. **Describe the audio** — ambient sound, music, speech, or singing
 
-### 严格固定镜头规则
+### Strict-Static-Shot rule
 
-一旦写了 “static camera”，这个镜头就不能有任何移动、任何焦点变化、任何变焦。LTX 对“固定”是字面理解的——后面再补一个运动动词，要么被忽略，要么产生自相矛盾的画面故障。二选一：要么固定，要么只写一个具名的运动。
+If you write "static camera," the shot must have NO movement, NO focus change, NO zoom. LTX takes "static" literally — adding any motion verb later in the prompt will either be ignored or will produce a glitch where the camera contradicts itself. Pick one: static, OR a single named movement.
 
-## LTX 专属技巧
+## LTX-Specific Tips
 
-### 移动之后要描述结果
+### Post-Movement Description
+LTX renders camera movements more accurately when you describe the result:
+- Instead of: "Camera pans left"
+- Write: "Camera pans left to reveal a bustling market square"
 
-如果你把镜头移动的落点写出来，LTX 渲染得会更准确：
-- 不要写：“Camera pans left”
-- 改成写：“Camera pans left to reveal a bustling market square”
+### Audio Prompting (Unique to LTX-2)
+LTX-2 generates synchronized audio. Use specific descriptors:
 
-### 音频提示（LTX-2 独有）
-LTX-2 会生成同步音频。使用具体的描述词：
-
-| 类别 | 示例 |
+| Category | Examples |
 |----------|---------|
-| **环境声** | “coffeeshop noise”、“wind and rain”、“forest with birdsong” |
-| **嗓音风格** | “energetic announcer”、“resonant voice with gravitas”、“childlike curiosity” |
-| **音量** | “whisper”、“mutter”、“shout”、“scream” |
-| **音乐** | “soft acoustic guitar”、“electronic beat building” |
+| **Ambient** | "coffeeshop noise", "wind and rain", "forest with birdsong" |
+| **Voice style** | "energetic announcer", "resonant voice with gravitas", "childlike curiosity" |
+| **Volume** | "whisper", "mutter", "shout", "scream" |
+| **Music** | "soft acoustic guitar", "electronic beat building" |
 
-对白放在引号里：`The narrator says: "Welcome to the future."`
-指定语言或口音：`speaks in British English with a warm tone`
+Dialogue goes in quotes: `The narrator says: "Welcome to the future."`
+Specify language/accent: `speaks in British English with a warm tone`
 
-### 风格分类
-LTX 把风格归为三大族：
+### Style Categories
+LTX organizes styles into three families:
 
-**动画**：定格动画、2D 动画、3D 动画、黏土动画、手绘
-**风格化**：漫画、赛博朋克、8-bit 像素、超现实、极简、绘画感
-**电影感**：年代剧、黑色电影、奇幻、惊悚、纪录片、艺术片
+**Animation**: stop-motion, 2D animation, 3D animation, claymation, hand-drawn
+**Stylized**: comic book, cyberpunk, 8-bit pixel, surreal, minimalist, painterly
+**Cinematic**: period drama, film noir, fantasy, thriller, documentary, arthouse
 
-## 应避免的写法（LTX 专属）
+## What to Avoid (LTX-Specific)
 
-| 避免 | 原因 |
+| Avoid | Reason |
 |-------|--------|
-| 内心情绪（“sad”、“confused”） | 改用视觉线索：眼泪、塌下的姿态、皱起的眉头 |
-| 可读文字与 logo | 无法稳定渲染 |
-| 复杂物理（爆炸、水花） | 容易产生瑕疵；简单运动没问题 |
-| 场景元素过载 | 角色和动作一多，连贯性会下降 |
-| 光线描述互相冲突 | 选定一套光线方案并贯彻到底 |
-| 一上来就写复杂 | 先写简单提示词，再逐层加内容 |
-| 超过约 80 词 | LTX-2 在此之后质量下滑。挑出最重要的 5–6 个要素即可。 |
+| Internal emotional states ("sad", "confused") | Use visual cues: tears, slumped posture, furrowed brow |
+| Readable text and logos | Not reliably rendered |
+| Complex physics (explosions, splashing) | Causes artifacts; simple motion is fine |
+| Overloaded scenes | Many characters/actions reduces coherence |
+| Conflicting lighting descriptions | Pick one setup, commit to it |
+| Starting complex | Build up: simple prompt first, add layers |
+| Prompts over ~80 words | LTX-2 degrades past that. Pick the most important 5–6 elements. |
 
-## LTX 技术说明
+## LTX Technical Notes
 
-- **时长**：单次生成约 5–8 秒
-- **音频**：自动生成；把你希望听到的内容写出来
-- **约 30% 的输出带有瑕疵** —— 换个 seed 重跑
-- **无法渲染可读文字** —— 不要写招牌或标题
-- **帧数必须满足** `(n-1) % 8 == 0`：可用值为 25、49、73、97、121、161、193
+- **Duration**: ~5-8 seconds per generation
+- **Audio**: Generated automatically; describe what you want to hear
+- **~30% of outputs have artifacts** — re-run with a different seed
+- **Cannot render readable text** — don't include signs or titles
+- **Frame count must satisfy** `(n-1) % 8 == 0`: valid counts are 25, 49, 73, 97, 121, 161, 193
 
-## 示例
+## Example
 
 ```
-一个广角建立镜头拍下雾气弥漫的清晨港口。
-饱经风霜的渔船轻轻摇晃，红蓝相间的漆皮
-斑驳剥落。一位灰发渔夫穿着深色羊毛大衣，
-肩扛一张沉网走上码头。他停了一下，望向雾墙，
-然后以沉稳、笃定的步伐走向最近的船。
-摄影机以腰高并行跟拍，在他走到船边、
-把网抛上船时缓慢推近。柔和的阴天光线，
-地平线附近的云层透出一道暖光。环境声为
-水波拍岸、绳索吱呀，以及远处的雾号。
+A wide establishing shot captures a misty morning harbor.
+Weathered fishing boats bob gently, their paint peeling in
+patches of red and blue. A grey-haired fisherman in a dark
+wool peacoat steps onto the dock, carrying a heavy net over
+one shoulder. He pauses, looks out at the fog bank, then
+walks toward the nearest boat with steady, deliberate steps.
+The camera tracks alongside him at waist height, slowly
+pushing in as he reaches the boat and tosses the net aboard.
+Soft overcast light with a warm break in the clouds near
+the horizon. Ambient sound of water lapping, rope creaking,
+and distant foghorn.
 ```

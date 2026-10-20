@@ -6,59 +6,59 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 电影感流程 · 剪辑总监
+# Edit Director - Cinematic Pipeline
 
-## 何时启用
+## When To Use
 
-本阶段将节拍图转化为有节奏的电影感时间线。节奏和克制比特效数量更重要。
+This stage turns the beat map into a paced cinematic timeline. Rhythm and restraint matter more than effect count.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/edit_decisions.schema.json` | 产物校验 |
-| 前置产物 | `state.artifacts["assets"]["asset_manifest"]`、`state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]` | 素材、主角帧、节拍图 |
-| Playbook | 当前风格 playbook | 排版与转场一致性 |
+| Schema | `schemas/artifacts/edit_decisions.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["assets"]["asset_manifest"]`, `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]` | Assets, hero frames, beat map |
+| Playbook | Active style playbook | Typography and transition consistency |
 
-## 流程
+## Process
 
-### 1. 先按情绪剪辑
+### 1. Cut By Emotion First
 
-剪切应遵循：
+Cuts should follow:
 
-- 情感强调，
-- 揭示时机，
-- 音乐转折，
-- 视觉对比。
+- emotional emphasis,
+- reveal timing,
+- musical turns,
+- visual contrast.
 
-不要仅针对信息密度优化。
+Do not optimize only for information density.
 
-### 2. 保护强力时刻
+### 2. Protect Strong Moments
 
-如果某个画面、台词或手势正在发挥作用，让它存在。不要用额外插入镜头过度覆盖它。
+If a look, line, or gesture is doing the work, let it live. Do not over-cover it with extra inserts.
 
-### 3. 用声音推动剪辑
+### 3. Use Sound To Push The Edit
 
-氛围音、冲击音、静音和音乐变化应帮助在场景间创造动力。
+Ambience, impacts, dropouts, and music changes should help create momentum between scenes.
 
-### 4. 使用元数据记录时间逻辑
+### 4. Use Metadata For Timing Logic
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `beat_timing`
 - `audio_turns`
 - `title_card_windows`
 - `reframe_notes`
 
-### 5. 质量门禁
+### 5. Quality Gate
 
-- 情感弧线完整，
-- 揭示清晰落地，
-- 标题卡稀疏且时机有意图，
-- 强力时刻未被覆盖素材掩埋。
+- the emotional arc is intact,
+- reveals land clearly,
+- title cards are sparse and timed with intent,
+- strong moments are not buried under coverage.
 
-## 常见陷阱
+## Common Pitfalls
 
-- 过度剪辑情感素材。
-- 默认使用速度斜坡或花哨转场。
-- 让标题卡取代剪辑清晰度。
+- Overcutting emotional material.
+- Using speed ramps or flashy transitions by default.
+- Letting title cards replace editorial clarity.

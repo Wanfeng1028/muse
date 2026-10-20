@@ -6,62 +6,73 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 角色动画流水线 · 提案导演
+# Proposal Director - Character Animation Pipeline
 
-## 目标
+## Goal
 
-呈现角色动画概念方案，并且对**本地骨架动画**、**复用**、**成本**以及**运行时选择**保持诚实。
+Present character-animation concepts that are honest about local rigged motion,
+reuse, cost, and runtime choice.
 
-## 提案必备要素
+## Required Proposal Elements
 
-每个方案选项必须包含：
+Each option must include:
 
-- 角色与角色定位
-- 视觉风格
-- 动作复杂度
-- 骨架复用策略
-- 样片计划
-- 音频架构
-- 音乐计划
-- 渲染运行时选项
-- 成本估算
-- 诚实的局限说明
+- characters and roles,
+- visual style,
+- action complexity,
+- rig reuse strategy,
+- sample plan,
+- audio architecture,
+- music plan,
+- render runtime options,
+- cost estimate,
+- honest limitation note.
 
-## 运行时选择
+## Runtime Selection
 
-推荐运行时之前，先阅读 `skills/meta/animation-runtime-selector.md`。
+Read `skills/meta/animation-runtime-selector.md` before recommending a runtime.
 
-当 Remotion 与 HyperFrames 均可用时：
+When both Remotion and HyperFrames are available:
 
-- **Remotion**：适合最终合成需要确定性的 React 渲染视频、字幕、音频、场景 JSON 与最终 MP4 治理的场景。
-- **HyperFrames**：适合角色场景以 HTML/SVG/GSAP 为主、能受益于 Web 原生编写、lint、validate 与 registry 块的情形。
-- **FFmpeg**：仅用于后处理。**不得**把 FFmpeg 选作角色表演的主运行时。
+- Remotion: best when the final composition needs deterministic React-rendered
+  video, captions, audio, scene JSON, and final MP4 governance.
+- HyperFrames: best when the character scene is HTML/SVG/GSAP-heavy and benefits
+  from web-native authoring, lint, validate, and registry blocks.
+- FFmpeg: post-processing only. Do not pick FFmpeg as the primary runtime for
+  character acting.
 
-推荐其中一种之前，必须把 Remotion 与 HyperFrames 两者都呈现给用户。在决策日志中以 `render_runtime_selection` 记录考虑过的替代方案，包含接受或拒绝 `hyperframes` 的理由。锁定 `render_runtime` 前需等待用户批准。
+Present both Remotion and HyperFrames to the user before recommending one.
+Record the alternatives considered in the decision log as
+`render_runtime_selection`, including why `hyperframes` was accepted or rejected.
+Wait for user approval before locking `render_runtime`.
 
-## 样片优先规则
+## Sample-First Rule
 
-在全面投产之前，先提出一个 10–15 秒样片，其中包含：
+Before full production, propose a 10-15 second sample containing:
 
-- 一个主要角色
-- 一次表情变化
-- 一次身体动作
-- 一种镜头或背景处理
-- 一个音频/音乐提示（如相关）
+- one main character,
+- one expression change,
+- one body action,
+- one camera/background treatment,
+- one audio/music cue if relevant.
 
-该样片获批之前，不得批量生成全部资产。
+Do not batch-generate all assets until this sample is approved.
 
-## 成本诚实
+## Cost Honesty
 
-本地骨架动画在渲染期便宜，但在编写复杂度上昂贵。需要分项报告：
+Local rigging is cheap at render time but expensive in authoring complexity.
+Report the difference:
 
-- 资产生成成本
-- TTS/音乐成本
-- 本地渲染成本
-- 人工复杂度风险
+- asset generation cost,
+- TTS/music cost,
+- local render cost,
+- manual complexity risk.
 
 ---
 
-## 闸门提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为闸门（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染产物），并**结束本轮回复**。不得在同一回复中启动下一阶段。批准是逐闸门生效的——早先的“可以继续”不覆盖本闸门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

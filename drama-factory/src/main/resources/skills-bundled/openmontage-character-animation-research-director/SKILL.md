@@ -6,43 +6,48 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 角色动画流水线 · 研究导演
+# Research Director - Character Animation Pipeline
 
-## 目标
+## Goal
 
-用真实参考与当下技法为角色动画计划奠定基础。针对参考视频，从 `video_analysis_brief` 入手：内容、节奏、运动分类、关键帧、色彩与制作复杂度。
+Ground the character-animation plan in real references and current technique.
+For reference videos, start from `video_analysis_brief`: content, pacing, motion
+classification, keyframes, color, and production complexity.
 
-## 流程
+## Process
 
-1. 识别参考实际使用的是什么：
-   - 骨架式本地动画
-   - 逐帧传统动画
-   - 视频生成
-   - 静帧位移
-   - 混合技法
-2. 调研 3–5 个相关案例或技法。
-3. 区分流水线可本地复现的部分，与需要人工绘制、视频生成或更大资产库的部分。
-4. 记录可复用的动画原语：
-   - 行走循环
-   - 眨眼
-   - 转头
-   - 伸手
-   - 扇翅
-   - 挤压/拉伸
-   - 镜头平移/视差
-   - 粒子/天气
+1. Identify what the reference actually uses:
+   - rigged local animation,
+   - frame-by-frame traditional animation,
+   - video generation,
+   - still-image motion,
+   - mixed techniques.
+2. Research 3-5 relevant examples or techniques.
+3. Separate what the pipeline can reproduce locally from what requires manual
+   illustration, video generation, or a larger asset library.
+4. Record reusable animation primitives:
+   - walk cycle,
+   - blink,
+   - head turn,
+   - reach,
+   - wing flap,
+   - squash/stretch,
+   - camera pan/parallax,
+   - particles/weather.
 
-## 输出指引
+## Output Guidance
 
-`research_brief` 应包含：
+The `research_brief` should include:
 
-- `character_animation_fit`：高/中/低
-- `reference_motion_type`
-- `required_character_actions`
-- `rig_complexity`
-- `manual_asset_risks`
-- `local_runtime_candidates`
+- `character_animation_fit`: high/medium/low,
+- `reference_motion_type`,
+- `required_character_actions`,
+- `rig_complexity`,
+- `manual_asset_risks`,
+- `local_runtime_candidates`.
 
-## 质量标准
+## Quality Bar
 
-当参考为手绘或逐帧动画时，必须明确指出。用户仍可选择本地骨架的灵感式风格，但提案不得暗示自动骨架能带来与传统动画完全一致的质量。
+Be explicit when a reference is hand-drawn or frame-by-frame. The user can still
+choose an inspired local rigged style, but the proposal must not imply exact
+traditional-animation quality from an automatic rig.

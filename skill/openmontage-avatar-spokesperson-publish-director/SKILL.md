@@ -6,27 +6,27 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 发布总监 — 数字人口播流水线
+# Publish Director - Avatar Spokesperson Pipeline
 
-## 适用场景
+## When To Use
 
-把完成的口播成品打包交付。本阶段要让别人一眼就能看出哪个文件是主剪、哪些是衍生版本，以及每个版本服务于什么信息与受众。
+Package the finished spokesperson outputs for delivery. This stage should make it obvious which file is the hero cut, which are derivatives, and what message or audience each version serves.
 
-## 流程
+## Process
 
-### 1. 清晰标注交付物
+### 1. Label Deliverables Clearly
 
-区分以下类别：
+Distinguish:
 
-- 主剪（hero cut），
-- 竖版衍生，
-- 方版衍生，
-- 语言版本，
-- 水印版或审核版。
+- hero cut,
+- vertical cutdown,
+- square cutdown,
+- language variants,
+- watermark or review versions.
 
-### 2. 元数据以信息为导向
+### 2. Keep Metadata Message-Led
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `audience_segment`
 - `cta_copy`
@@ -34,26 +34,28 @@ metadata:
 - `locale`
 - `thumbnail_concept`
 
-### 3. 打包评审备注
+### 3. Package Review Notes
 
-如果虚拟形象路线存在局限，例如肉眼可见的口型同步风险，应把该备注保留在交付包中，而不是藏起来。
+If the avatar path has limitations such as visible lip-sync risk, retain that note in the package instead of hiding it.
 
-### 4. 质量门
+### 4. Quality Gate
 
-- 导出文件命名清晰，
-- 元数据与预期信息一致，
-- 封面帧或缩略图概念能干净地呈现主播，
-- 评审备注始终随包附上。
+- exports are clearly named,
+- metadata matches the intended message,
+- poster frame or thumbnail concept features the presenter cleanly,
+- review notes stay attached to the package.
 
-## 常见坑
+## Common Pitfalls
 
-- 主剪与衍生版本混在一起，命名不清。
-- 复用泛化元数据，忽略了本次口播的卖点。
-- 丢掉对下游发布团队有意义的风险备注。
+- Mixing hero and derivative exports without clear naming.
+- Reusing generic metadata that ignores the spokesperson offer.
+- Dropping risk notes that matter for downstream publishing teams.
 
 ---
 
-## 门控提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为门（`human_approval_default: true`）。评审通过后：
-用 `status="awaiting_human"` 打检查点，展示摘要（Backlot 看板会渲染该产物），并**结束本轮回复**。不要在同一条回复里开始下一阶段。审批是按门独立的 —— 之前某次的「继续」不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

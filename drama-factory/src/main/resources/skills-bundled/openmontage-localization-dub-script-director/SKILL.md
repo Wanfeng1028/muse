@@ -6,73 +6,77 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剧本导演 · 本地化配音管线
+# Script Director - Localization Dub Pipeline
 
-## 何时启用
+## When To Use
 
-当需要把已批准的本地化简报转化为逐语言、可复核、有转写文本支撑的脚本包时启用。本阶段的目标是在任何配音音频生成之前，先确立文本层面的唯一事实来源。
+Turn the approved localization brief into a transcript-backed, reviewable script package for every target language. This stage should create text truth before any dubbing audio is generated.
 
-## 参考输入
+## Reference Inputs
 
 - `docs/localization-dubbing-best-practices.md`
 - `skills/creative/storytelling.md`
 
-## 流程
+## Process
 
-### 1. 建立源语言转写事实基线
+### 1. Build Source Transcript Truth
 
-以源语言转写稿为起点，修正其中明显错误，重点检查：
+Start with the source transcript and fix obvious errors in:
 
-- 人名；
-- 专业术语；
-- 说话人归属；
-- 数字；
-- 号召性用语（CTA）的措辞。
+- names,
+- terminology,
+- speaker allocation,
+- numbers,
+- CTA phrasing.
 
-修正后应形成一份可信、可引用的源文本。
+### 2. Produce Reviewable Target Copy
 
-### 2. 产出可复核的目标语言文案
+For each target language, generate text that can be reviewed before synthesis. Record where terms should remain unchanged.
 
-对每一种目标语言，先生成可供人工审阅的文本，再进入语音合成。逐条标注哪些术语必须保持不变。
+### 3. Preserve Structure Where Practical
 
-### 3. 尽量保持结构一致
+Keep section timing and sequence aligned to the source unless the translation clearly needs a different pacing strategy.
 
-除非翻译后明显需要不同的节奏策略，否则段落顺序与时间轴对齐方式应尽量跟随源片。
+### 4. Use Metadata For Localization Control
 
-### 4. 用元数据控制本地化
+Recommended metadata keys:
 
-推荐写入以下元数据键：
+- `source_transcript_status`
+- `target_language_sections`
+- `glossary_terms`
+- `protected_terms`
+- `pronunciation_notes`
+- `review_status_by_language`
 
-- `source_transcript_status`：源转写稿状态。
-- `target_language_sections`：各目标语言的段落划分。
-- `glossary_terms`：术语表条目。
-- `protected_terms`：禁止翻译或改写的词。
-- `pronunciation_notes`：发音提示。
-- `review_status_by_language`：逐语言的审校状态。
+### 5. Quality Gate
 
-### 5. 质量门
+- the source transcript is strong enough to trust,
+- target-language copy exists for every planned deliverable,
+- glossary terms are preserved,
+- the script package can be reviewed before audio generation.
 
-- 源转写稿质量足够可靠；
-- 每个计划中的交付物都有对应目标语言文案；
-- 术语表条目得到保留；
-- 脚本包在音频生成前可被完整审阅。
+### Mid-Production Fact Verification
 
-## 制作中的事实核查
+If you encounter uncertainty during script writing:
+- Use `web_search` to verify factual claims before committing them to the script
+- Use `web_search` to find reference images for visual accuracy
+- Log verification in the decision log: `category="visual_accuracy_check"`
 
-若在写脚本时遇到不确定的信息：
+Every factual claim in the script should be traceable to the `research_brief`.
+If you make a claim that isn't in the research, do additional research and
+add the source. Do not invent statistics, dates, or attributions.
 
-- 用 `web_search` 核实事实性陈述后再写入脚本。
-- 用 `web_search` 查找参考图以确保视觉准确。
-- 在决策日志中记录核查过程：`category="visual_accuracy_check"`。
+## Common Pitfalls
 
-脚本中的每一条事实性陈述都应能追溯到 `research_brief`。若某条陈述不在研究材料中，应补充调研并注明来源。严禁编造统计数字、日期或归属信息。
+- Generating audio from an unreviewed transcript.
+- Letting product names drift across languages.
+- Treating translation text as final timing without acknowledging length drift.
 
-## 常见坑
+---
 
-- 拿着未审阅的转写稿直接生成音频。
-- 让产品名在各语言之间随意漂移。
-- 把翻译文本当作最终时间轴长度，忽略译文长度膨胀带来的漂移。
+## Gate Reminder (Binding)
 
-## 人工审批门（强制）
-
-本阶段以人工审批为门禁（`human_approval_default: true`）。复核通过后：以 `status="awaiting_human"` 写入检查点，展示摘要（Backlot 看板会渲染产物），然后**结束本轮回复**。不得在同一轮里启动下一阶段。审批按门逐个生效——此前某次的"继续"不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

@@ -6,65 +6,63 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剪辑统筹（播客再加工）
+# Edit Director - Podcast Repurpose Pipeline
 
-本环节负责为短视频切片以及可选的整集配套内容搭建实际的时间线逻辑。音频始终是内容主体。
+## When To Use
 
-## 何时使用
+This stage creates the actual timeline logic for short clips and any optional full-episode companion asset. The audio remains the primary content.
 
-当素材清单与场景规划已就绪，需要决定每条切片怎么剪、字幕何时出现、讲者如何呈现时，进入本环节。
+## Prerequisites
 
-## 前置条件
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/edit_decisions.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["assets"]["asset_manifest"]`, `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]` | Assets, layouts, transcript timing |
+| Playbook | Active style playbook | Motion and subtitle rules |
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/edit_decisions.schema.json` | 校验产物结构 |
-| 前置产物 | `state.artifacts["assets"]["asset_manifest"]`、`state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]` | 素材、布局、逐字稿时序 |
-| Playbook | 当前生效的风格手册 | 动效与字幕规则 |
+## Process
 
-## 处理流程
+### 1. Build Clip Timelines Fast
 
-### 1. 快速搭建切片时间线
+For short-form clips:
 
-对短视频切片：
+- open on the hook,
+- start captions immediately,
+- make speaker attribution obvious,
+- let the ending land cleanly.
 
-- 开场即钩子；
-- 字幕立即出现；
-- 讲者归属一眼可辨；
-- 结尾干净利落。
+### 2. Match The Edit To The Treatment
 
-### 2. 剪辑方式匹配呈现形态
+- source-video clips should emphasize speaker framing and reactions,
+- audiogram clips should emphasize captions, speaker identity, and pacing,
+- quote-led clips should preserve enough reading time after the line lands.
 
-- 源视频切片：突出讲者取景与反应镜头；
-- 音频可视化切片：突出字幕、讲者身份与节奏；
-- 金句主导切片：金句落地后留出足够的阅读时间。
+### 3. Keep Full-Episode Companion Simple
 
-### 3. 整集配套内容保持简单
+If producing one:
 
-如果要产出：
+- use chapter cards,
+- use limited recurring visual systems,
+- do not force constant visual novelty if the assets are not there.
 
-- 使用章节卡；
-- 使用有限的几套重复视觉系统；
-- 素材不够时，不要强行追求画面不断变化。
+### 4. Use Metadata For Richer Timeline Notes
 
-### 4. 用元数据记录更细的时间线备注
-
-建议的元数据键：
+Recommended metadata keys:
 
 - `clip_timelines`
 - `quote_hold_times`
 - `speaker_change_markers`
 - `chapter_card_windows`
 
-### 5. 质检要点
+### 5. Quality Gate
 
-- 每条短切片都能快速抓住人；
-- 字幕与讲者归属齐备；
-- 金句切片的停留时间足够读完；
-- 长配套内容在编辑上诚实、在技术上可行。
+- every short clip hooks quickly,
+- captions and attribution are present,
+- quote-led clips hold long enough to read,
+- the long-form companion stays editorially honest and technically feasible.
 
-## 常见坑
+## Common Pitfalls
 
-- 做出千篇一律、忽略讲者是谁的音频可视化。
-- 音频一结束就掐掉金句切片，文字还没读完。
-- 把长配套内容做成对精剪视频播客的拙劣模仿。
+- Building generic audiograms that ignore who is speaking.
+- Ending quote clips as soon as the audio ends, before the text can be read.
+- Turning a long-form companion into a weak imitation of a fully produced video podcast.

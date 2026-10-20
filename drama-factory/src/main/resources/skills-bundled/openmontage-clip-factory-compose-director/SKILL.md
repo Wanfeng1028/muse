@@ -6,72 +6,72 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 合成总监（剪辑工厂流水线）
+# Compose Director - Clip Factory Pipeline
 
-## 适用时机
+## When To Use
 
-逐条渲染每个片子和各平台变体。这里的关键行为是一致性、批处理韧性，以及对部分失败的清晰上报。
+Render each clip and platform variant independently. The important behaviors here are consistency, batch resilience, and clear reporting of partial failures.
 
-## 运行时路由（硬性约束——仅限 Remotion 或 FFmpeg）
+## Runtime Routing (HARD CONSTRAINT — Remotion or FFmpeg only)
 
-本流水线在 HyperFrames 采纳计划中属于 Phase 1 延后项。`edit_decisions.render_runtime` 必须是 `"remotion"`（默认）或 `"ffmpeg"`（无合成的纯拼接任务）。HyperFrames 在此不是合法运行时——clip-factory 依赖 Remotion 的逐词字幕烧录，而 HyperFrames 的字幕对齐能力属于延后工作。
+This pipeline is Phase 1 deferred from the HyperFrames adoption schedule. `edit_decisions.render_runtime` must be `"remotion"` (default) or `"ffmpeg"` (pure-concat clip jobs with no composition). HyperFrames is NOT a valid runtime here — clip-factory depends on Remotion word-level caption burn, and HyperFrames caption parity is deferred work.
 
-- 若 `edit_decisions.render_runtime == "hyperframes"`，停止。重开 idea 阶段，把真实约束呈现给用户，并用一次 `render_runtime_selection` 决策把 `remotion` 锁定，其中记录 `hyperframes` 为 `rejected_because: "caption-burn parity deferred on clip-factory"`。
-- 依据 AGENT_GUIDE.md 的“展示两种合成运行时（硬性规则）”：该约束不是跳过沟通的借口。用户仍应看到 HyperFrames 的存在以及它在此不可用的原因。
-- 把 `proposal_packet` / `brief` 传给 `video_compose.execute()`，以便工具内的运行时切换检查端到端执行。
+- If `edit_decisions.render_runtime == "hyperframes"`, stop. Re-open the idea stage so the user can be presented the real constraint and lock `remotion` with a `render_runtime_selection` decision that records `hyperframes` as `rejected_because: "caption-burn parity deferred on clip-factory"`.
+- Per AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)": the constraint is NOT an excuse to skip the conversation. The user still gets to see that HyperFrames exists and why it isn't viable here.
+- Pass `proposal_packet`/`brief` to `video_compose.execute()` so the in-tool runtime-swap check runs end-to-end.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/render_report.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["edit"]["edit_decisions"]`、`state.artifacts["assets"]["asset_manifest"]` | 剪辑决策与素材 |
-| 工具 | `video_trimmer`、`video_compose`、`audio_mixer`、`color_grade` | 渲染管线 |
-| 媒体档 | `lib/media_profiles.py` | 平台目标 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/render_report.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["edit"]["edit_decisions"]`, `state.artifacts["assets"]["asset_manifest"]` | Clip edits and assets |
+| Tools | `video_trimmer`, `video_compose`, `audio_mixer`, `color_grade` | Render pipeline |
+| Media profiles | `lib/media_profiles.py` | Platform targets |
 
-## 流程
+## Process
 
-### 1. 把每个输出当作独立任务
+### 1. Treat Each Output As Its Own Job
 
-一条片子分发到三个平台，就是三个渲染任务。要显式命名并分别跟踪。
+One clip across three platforms is three render jobs. Name and track them explicitly.
 
-### 2. 能共享的都共享
+### 2. Reuse What Can Be Shared
 
-- 尽可能共用音频混音；
-- 共用字幕样式；
-- 共用叠加素材；
-- 源素材需要时共用调色。
+- shared audio mix where possible,
+- shared subtitle styling,
+- shared overlay assets,
+- shared grading if the source needs it.
 
-### 3. 软失败
+### 3. Fail Softly
 
-若某条片子或某个平台变体失败：
+If one clip or one platform variant fails:
 
-- 明确记录；
-- 继续完成批次其余部分；
-- 不要因此阻断已成功的导出。
+- log it clearly,
+- continue the rest of the batch,
+- do not block successful exports.
 
-### 4. 每个输出都要验证
+### 4. Verify Every Output
 
-每次渲染检查：
+Per render:
 
-- 时长正确；
-- 分辨率 / 宽高比正确；
-- 开头没有黑帧；
-- 钩子按时出现；
-- 字幕渲染正常；
-- 音频存在且一致。
+- correct duration,
+- correct resolution/aspect ratio,
+- no black opening frame,
+- hook appears on time,
+- subtitles render correctly,
+- audio is present and consistent.
 
-### 5. 使用渲染报告元数据
+### 5. Use Render Report Metadata
 
-推荐的元数据键：
+Recommended metadata keys:
 
 - `job_index`
 - `failed_jobs`
 - `shared_intermediates`
 - `platform_groupings`
 
-## 常见陷阱
+## Common Pitfalls
 
-- 任务本身互相独立，却无理由地串行渲染。
-- 把某条片子失败当成中止整批的理由。
-- 让某个平台变体悄悄用错构图或字幕区域。
+- Rendering sequentially without reason when jobs are independent.
+- Treating a failed clip as a reason to stop the batch.
+- Letting one platform variant quietly use the wrong framing or subtitle zone.

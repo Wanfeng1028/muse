@@ -6,58 +6,58 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剪辑统筹（混合流水线）
+# Edit Director - Hybrid Pipeline
 
-## 适用时机
+## When To Use
 
-本环节为"原始素材为主、支撑元素为辅"的视频设计分层剪辑逻辑。顺序至关重要：先锁定锚点剪辑，再叠加支撑层。
+This stage creates the layered edit logic for a source-led video with support elements. The order matters: anchor cut first, support layers second.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/edit_decisions.schema.json` | 校验产物合法性 |
-| 上游产物 | `state.artifacts["assets"]["asset_manifest"]`、`state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]` | 原始与支撑素材、时间线意图 |
-| Playbook | 当前启用的风格手册 | 字体与动效一致性 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/edit_decisions.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["assets"]["asset_manifest"]`, `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]` | Source/support assets and timeline intent |
+| Playbook | Active style playbook | Typography and motion consistency |
 
-## 流程
+## Process
 
-### 1. 先锁定锚点剪辑
+### 1. Lock The Anchor Cut First
 
-观众应当在支撑叠加出现之前就能看懂故事。锚点剪辑本身不成立的话，再多的支撑层也救不回来。
+The viewer should understand the story before support overlays are added. If the anchor cut is weak, support layers will not save it.
 
-### 2. 按优先级顺序叠加支撑
+### 2. Add Support In Priority Order
 
-典型顺序：
+Typical order:
 
-1. 字幕；
-2. 说话人或上下文标签；
-3. 图示或数据卡片；
-4. 可选插片；
-5. CTA 元素。
+1. subtitles,
+2. speaker or context labels,
+3. diagrams or stat cards,
+4. optional inserts,
+5. CTA elements.
 
-### 3. 保护可读性
+### 3. Protect Readability
 
-同一时刻不要堆叠过多支撑层。若字幕、标签、图表与叠加互相打架，就做减法。
+Never stack too many support layers in one moment. If subtitles, labels, charts, and overlays collide, simplify.
 
-### 4. 用元数据记录分层逻辑
+### 4. Use Metadata For Layering Logic
 
-推荐的元数据键：
+Recommended metadata keys:
 
 - `anchor_cut_notes`
 - `layer_order`
 - `overlay_windows`
 - `variant_edit_rules`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 锚点剪辑单独成立；
-- 支撑层起到澄清作用而非干扰；
-- 移动端可读性过关；
-- 各变体保持一致。
+- the anchor cut works on its own,
+- support layers clarify instead of distract,
+- mobile readability survives,
+- variants remain consistent.
 
-## 常见陷阱
+## Common Pitfalls
 
-- 试图用额外图形去补救一个本就不成立的剪辑。
-- 让支撑层与原片抢戏。
-- 把每个平台变体做成一套独立的剪辑哲学。
+- Trying to fix a weak cut with extra graphics.
+- Letting support layers compete with the source.
+- Building each platform variant as a separate editorial philosophy.

@@ -6,450 +6,449 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 执行制片 — 口播流水线
+# Executive Producer — Talking Head Pipeline
 
-## 何时使用
+## When to Use
 
-你负责一个口播视频项目的全局调度。流水线各阶段的导演是无状态执行者，而你是唯一持有累积状态的角色：按顺序唤醒每个阶段的导演、审阅其产物、决定放行还是打回修改。你取代了默认的盲目并行/串行执行方式，在每一道关卡上行使判断。
+You are the **Executive Producer (EP)** for a talking-head video project. You orchestrate the entire pipeline serially: spawning each stage director, reviewing their output, and either passing it forward or sending it back for revision. You are the stateful brain; the directors are stateless workers.
 
-## 为什么需要这一层
+**You replace the default parallel/sequential execution model.** Instead of running all stages blindly, you exercise judgment at every gate.
 
-口播流水线把一段真人讲话的原始素材加工成带字幕的成片。若缺少执行制片：
+## Why This Exists
 
-- 转写错误会静默传播到所有下游阶段
-- 字幕时间轴与语音漂移后没有反馈机制去纠正
-- 场景覆盖出现空洞，成片里留下无声片段
-- 最终渲染前没有音画同步校验
-- 无法只重跑单个阶段，必须全流程重来
-- 增强决策（人脸、调色、音频）脱离整体画面上下文
+The talking-head pipeline transforms raw footage of a person speaking into a polished, subtitled video. Without an EP:
+- Transcript errors propagate silently through all downstream stages
+- Subtitle timing drifts from speech with no feedback to correct it
+- Scene coverage gaps leave dead air in the final output
+- No A/V sync validation before the final render
+- No ability to send a single stage back without re-running everything
+- Enhancement decisions (face, color, audio) are made without context of the full picture
 
-执行制片通过维持累积状态、在每个关卡应用判断来解决这些问题。
+The EP solves all of these by maintaining cumulative state and applying judgment at each gate.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| 流水线 | `pipeline_defs/talking-head.yaml` | 阶段定义、审阅重点、成功标准 |
-| 技能 | 全部 7 个导演技能 + `meta/reviewer` | 阶段执行知识 |
-| Schema | 全部产物 schema | 校验 |
-| Playbook | 用户选择 / 从素材推导 / 安全回退 | 质量约束 |
-| 工具 | 完整工具注册表 | 可用能力 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Pipeline | `pipeline_defs/talking-head.yaml` | Stage definitions, review focus, success criteria |
+| Skills | All 7 director skills + `meta/reviewer` | Stage execution knowledge |
+| Schemas | All artifact schemas | Validation |
+| Playbook | user-selected, footage-derived, or safe fallback | Quality constraints |
+| Tools | Full tool registry | Available capabilities |
 
-## 与解说流水线的关键差异
+## Key Difference from Explainer EP
 
-口播流水线是**素材优先**，而非创意优先：
+The talking-head pipeline is **footage-first**, not idea-first:
 
-| 维度 | 解说 EP | 口播 EP |
-|------|---------|---------|
-| 源材料 | 无，全部生成 | 一开始就有原始素材 |
-| 脚本阶段 | 从零撰写 | 从转写中提取 |
-| 核心难点 | 创意生成质量 | 转写准确度 + 时间轴 |
-| 预算模型 | 中等（TTS + 图像生成） | 低（以处理为主，叠加可选） |
-| 时长来源 | 提案中设定目标 | 由原始素材长度决定 |
-| 关键同步 | 旁白 ↔ 画面时长 | 字幕 ↔ 语音时序 |
-| 前期阶段 | 调研 + 提案（2 阶段） | 创意（1 阶段），无需调研 |
+| Aspect | Explainer EP | Talking-Head EP |
+|--------|-------------|-----------------|
+| Source material | None — generates everything | Raw footage provided up front |
+| Script stage | Writes from scratch | Extracts from transcription |
+| Core challenge | Creative generation quality | Transcript accuracy + timing |
+| Budget model | Moderate (TTS + image gen) | Low (mostly processing, optional overlays) |
+| Duration source | Target set in proposal | Determined by raw footage length |
+| Critical sync | Narration ↔ visual duration | Subtitles ↔ speech timing |
+| Pre-production | Research + proposal (2 stages) | Idea (1 stage) — no research needed |
 
-## 累积状态
+## Cumulative State
 
-执行制片维护一个贯穿全流程的状态对象：
+The EP maintains a running state object that flows through the entire pipeline:
 
 ```
 EP_STATE:
   pipeline: talking-head
-  playbook: <所选 playbook 名称 / 自定义身份 / 安全回退>
-  raw_footage_path: <源素材路径>
-  raw_footage_duration_seconds: <来自 ffprobe>
-  raw_footage_resolution: <来自 ffprobe>
-  target_duration_seconds: <来自 brief，可短于原始素材>
-  budget_total_usd: <用户指定或默认 $0.50>
+  playbook: <selected playbook name, custom identity, or safe fallback>
+  raw_footage_path: <path to source footage>
+  raw_footage_duration_seconds: <from ffprobe>
+  raw_footage_resolution: <from ffprobe>
+  target_duration_seconds: <from brief, may be shorter than raw>
+  budget_total_usd: <from user or default: $0.50>
   budget_spent_usd: 0.0
   budget_remaining_usd: <budget_total>
 
+  # Accumulated from each stage (7 stages)
   artifacts:
     idea: null          # → brief
-    script: null        # → script（基于转写）
+    script: null        # → script (transcript-based)
     scene_plan: null    # → scene_plan
     assets: null        # → asset_manifest
     edit: null          # → edit_decisions
     compose: null       # → render_report
     publish: null       # → publish_log
 
-  transcript_segments: []        # 词级时间戳片段
-  transcript_confidence: null    # 平均词置信度
-  transcript_language: null      # 检测到的语言
-  subtitle_sync_offsets: {}      # section_id → 漂移秒数（正值 = 字幕偏晚）
+  # Transcript tracking (the core of talking-head quality)
+  transcript_segments: []        # word-level timestamped segments from transcriber
+  transcript_confidence: null    # average word confidence score
+  transcript_language: null      # detected language
+  subtitle_sync_offsets: {}      # section_id → drift_seconds (positive = subtitle late)
 
+  # Cross-stage tracking
   total_footage_seconds: 0
-  total_edit_seconds: 0
-  style_anchors: {}              # 叠加元素的风格一致性令牌
-  revision_counts: {}            # stage_name → 修订次数
-  issues_log: []                 # 全部问题及其解决状态
+  total_edit_seconds: 0        # may differ from footage if trimmed
+  style_anchors: {}            # consistency tokens for overlays
+  revision_counts: {}          # stage_name → number of revisions
+  issues_log: []               # all issues found, with resolution status
 
-  enhancements_applied: []       # face_enhance、color_grade、audio_enhance
-  audio_profile:
+  # Enhancement tracking
+  enhancements_applied: []     # face_enhance, color_grade, audio_enhance
+  audio_profile:               # from raw footage analysis
     has_background_noise: null
     audio_channels: null
     sample_rate: null
 ```
 
-## 执行协议
+## Execution Protocol
 
-### 阶段 0：初始化
+### Phase 0: Initialize
 
-1. 载入流水线清单 `talking-head.yaml`
-2. 载入 playbook：优先用户选择，其次品牌体系，再次从素材推导的视觉身份；只有在没有更强身份依据时才用 `clean-professional`
-3. 设定预算（默认 $0.50，口播以处理为主，开销低）
-4. 用 ffprobe 探测原始素材：时长、分辨率、帧率、音轨、编码
-5. 将素材元数据写入 EP_STATE
-6. 初始化 EP_STATE
+1. Load the pipeline manifest (`talking-head.yaml`)
+2. Load the playbook from user selection, brand system, or footage-derived visual identity. Use `clean-professional` only when no stronger identity is warranted.
+3. Set budget from configuration or user input (default: $0.50 — talking-head is mostly processing)
+4. Probe the raw footage with ffprobe: duration, resolution, fps, audio channels, codec
+5. Store footage metadata in EP_STATE
+6. Initialize EP_STATE
 
-### 阶段 1：串行执行各阶段
+### Phase 1: Execute Stages Serially
 
-按顺序执行：`idea → script → scene_plan → assets → edit → compose → publish`
+For each stage in order: `idea → script → scene_plan → assets → edit → compose → publish`
 
 ```
 EXECUTE_STAGE(stage_name):
 
-  1. 准备
-     - 载入该阶段的导演技能
-     - 注入 EP_STATE 作为上下文（先前产物、剩余预算、风格锚点）
-     - 注入上一轮修订时的反馈
+  1. PREPARE
+     - Load the director skill for this stage
+     - Inject EP_STATE as context (prior artifacts, budget remaining, style anchors)
+     - Inject any EP feedback from previous revision attempts
 
-  2. 唤醒导演
-     - 导演按其技能文档完整执行
-     - 产出一个 artifact
+  2. SPAWN DIRECTOR
+     - The director executes its full process (as defined in its skill MD)
+     - Director produces an artifact
 
-  3. 审阅（由 EP 本人执行，不另设审阅者）
-     - 对照 schema 做校验
-     - 检查流水线清单中的 review_focus 条目
-     - 检查 success_criteria
-     - 对照 playbook 约束
-     - 运行 EP 专属的跨阶段检查（见下文）
+  3. REVIEW (EP performs this, not a separate reviewer)
+     - Schema validation against artifact schema
+     - Check review_focus items from pipeline manifest
+     - Check success_criteria from pipeline manifest
+     - Cross-check against playbook constraints
+     - Run EP-SPECIFIC CROSS-STAGE CHECKS (see below)
 
-  4. 关卡决策
-     若 PASS：
-       - 将 artifact 存入 EP_STATE
-       - 更新累积追踪（预算、时长等）
-       - 记录 "[stage] PASSED — 进入下一阶段"
-       - 继续
+  4. GATE DECISION
+     If PASS:
+       - Store artifact in EP_STATE
+       - Update cumulative tracking (budget, durations, etc.)
+       - Log: "[stage] PASSED — moving to next stage"
+       - Continue to next stage
 
-     若 REVISE：
-       - revision_counts[stage_name] += 1
-       - 若 revision_counts[stage_name] >= 3：
-           带警告放行（绝不无限阻塞）
-           记录未解决问题
-       - 否则：
-           组装具体反馈注入导演
-           重新唤醒导演
-           重新审阅
+     If REVISE:
+       - Increment revision_counts[stage_name]
+       - If revision_counts[stage_name] >= 3:
+           - PASS WITH WARNINGS (never block forever)
+           - Log unresolved issues
+       - Else:
+           - Compose specific feedback for the director
+           - Re-run SPAWN DIRECTOR with feedback injected
+           - Re-run REVIEW
 
-     若 SEND_BACK(target_stage)：
-       - 这是 EP 的特权：把工作退回更早的阶段
-       - 仅在下游发现使上游成果失效时使用
-       - 例如：字幕同步检查发现转写时间戳错误
-         → 退回 script 导演："重新转写第 3 段，时间戳不对。"
-       - 从 target_stage 起重跑，其后产物全部作废
-       - 每对阶段最多退回 1 次，防止无限循环
+     If SEND_BACK(target_stage):
+       - This is the EP's special power: send work BACK to a prior stage
+       - Only used when a downstream discovery invalidates upstream work
+       - Example: Subtitle sync check reveals transcript has wrong timestamps
+         → Send back to script director: "Re-transcribe section 3. Timestamps are off."
+       - Re-execute from target_stage forward (artifacts after target are invalidated)
+       - Max 1 send-back per stage pair (prevent infinite loops)
 ```
 
-### 阶段 2：终检
+### Phase 2: Final Quality Assurance
 
-七个阶段全部完成后，EP 做整体审阅：
+After all 7 stages complete, the EP performs a holistic review:
 
 ```
 FINAL_QA:
-  1. 探测输出视频：
-     - 时长是否在目标（或原始素材时长）±5% 内？
-     - 分辨率是否匹配目标或原始素材？
-     - 语音是否全程可闻？有无削波？电平是否平衡？
-     - 容器是否合法？体积是否合理？
+  1. PROBE the output video:
+     - Duration: within ±5% of target (or raw footage duration)?
+     - Resolution: matches target or raw footage resolution?
+     - Audio: speech audible throughout? No clipping? Balanced levels?
+     - File: valid container, reasonable size?
 
-  2. 字幕同步（口播的关键项）：
-     - 逐条核对字幕时间戳与语音
-     - 每条字幕是否在对应词出现后 ±0.3s 内显示？
-     - 标记任何肉眼可见的不同步段落
-     - 容差 ±0.3 秒（比解说更严，因为语音就是内容本身）
+  2. SUBTITLE SYNC CHECK (CRITICAL for talking-head):
+     - Play-check subtitle timestamps against speech
+     - For each subtitle cue: does it appear within ±0.3s of the spoken word?
+     - Flag any section where subtitles are visibly out of sync
+     - Tolerance: ±0.3 seconds (tighter than explainer because speech is the content)
 
-  3. 音频质量：
-     - 素材有底噪时是否做了降噪？
-     - 电平是否归一化（语音目标 -16 LUFS）？
-     - 若加了背景音乐，闪避是否正确配置？
+  3. AUDIO QUALITY:
+     - Was noise reduction applied if footage had background noise?
+     - Are audio levels normalized? (target: -16 LUFS for speech)
+     - If background music was added: is ducking configured correctly?
 
-  4. 视觉质量：
-     - 若启用了 face_enhance，效果是否自然？
-     - 若启用了 color_grade，是否一致？
-     - 若加了叠加元素，时间点是否正确？
+  4. VISUAL QUALITY:
+     - If face_enhance was available and applied: does it look natural?
+     - If color_grade was available and applied: is it consistent?
+     - If overlays were added: do they appear at the right timestamps?
 
-  5. 预算对账：
-     - 实际总支出 vs. 预算
-     - 记录各阶段成本明细
+  5. BUDGET RECONCILIATION:
+     - Total actual spend vs. budget
+     - Log per-stage cost breakdown
 
-  6. 决策：
-     全部通过 → 批准进入 publish
-     发现问题 → 退回能修复它的具体阶段：
-       - 字幕时序 → asset 导演（重生成字幕）
-       - 音频问题 → compose 导演（重混）
-       - 视觉增强问题 → compose 导演（重渲染）
-       - 覆盖空洞 → scene 导演（重规划）或 edit 导演（重剪）
-       - 转写错误 → script 导演（重新转写）
+  6. DECISION:
+     If all checks pass → APPROVE for publish stage
+     If issues found → Send back to the specific stage(s) that can fix them
+       - Subtitle timing → asset director (regenerate subtitles)
+       - Audio issues → compose director (remix)
+       - Visual enhancement issues → compose director (re-render)
+       - Coverage gaps → scene director (replan) or edit director (re-cut)
+       - Transcript errors → script director (re-transcribe)
 ```
 
-## EP 专属跨阶段检查
+## EP-Specific Cross-Stage Checks
 
-这些检查依赖跨阶段累积的信息，单个导演无法完成。
+These checks use information accumulated across stages — something no individual director can do.
 
-### idea 阶段之后
-
+### After IDEA stage:
 ```
-检查：素材可用性
-  - 素材是否有音轨？（无音轨 = 口播流水线无法继续）
-  - 音质是否足够？（信噪比）
-  - 时长对目标平台是否合理？
-  - 若时长超过目标 3 倍：标记需要大幅裁剪
-  - 注意：idea 阶段本身会与用户确认，这是人工批准关卡
-```
-
-### script 阶段之后
-
-```
-检查：转写质量（关键，下游全部依赖它）
-  - 平均词置信度
-  - 若 avg_confidence < 0.8：
-      要求修订："转写置信度偏低（{X}）。若未使用 large-v3 模型请切换。
-      若仍偏低，标记具体低置信段供人工复核。"
-  - 抽查时间戳是否单调递增
-  - 抽查是否有超过 2 秒的空白（可能漏词）
-  - 将 transcript_segments 存入 EP_STATE 供下游生成字幕
-
-检查：段落边界
-  - 段落是否对齐自然的话题切换？
-  - 时间戳是否落在素材时长范围内？
-  - 是否有段落超过 60 秒？（可能需要切分以便场景规划）
+CHECK: Footage viability
+  - Does the footage have audio? (No audio = cannot proceed with talking-head pipeline)
+  - Is the audio quality sufficient? (Signal-to-noise ratio)
+  - Is the footage duration reasonable for target platform?
+  - If duration > 3x target: flag that significant trimming is needed
+  - Note: Idea stage DOES checkpoint with user — this is the approval gate
 ```
 
-### scene_plan 阶段之后
-
+### After SCRIPT stage:
 ```
-检查：完整覆盖
-  - 累加所有场景时长
-  - 与原始素材（或目标剪辑时长）比对
-  - 间隙 > 1 秒：退回 scene_plan
-  - 重叠：退回 scene_plan
+CHECK: Transcript quality (CRITICAL — everything downstream depends on this)
+  - Average word confidence score (from transcriber output)
+  - If avg_confidence < 0.8:
+      REVISE: "Transcript confidence is low ({X}). Try model: large-v3 if not already used.
+      If still low, flag specific low-confidence sections for manual review."
+  - Spot-check: do timestamps increase monotonically?
+  - Spot-check: are there gaps > 2 seconds with no words? (may indicate missed speech)
+  - Store transcript_segments in EP_STATE for downstream subtitle generation
 
-检查：增强可行性
-  - 对每个计划中的增强（人脸、调色、叠加）验证工具注册表中存在对应工具
-  - 若计划了 face_enhance 但工具不可用：从计划移除并记警告
-  - 若计划了叠加图片：确认图像工具可用
-
-检查：叠加对齐
-  - 若叠加元素锚定在特定时间戳，验证这些时间戳落在转写得到的真实场景边界内
-```
-
-### assets 阶段之后
-
-```
-检查：字幕同步（口播关键）
-  - 将字幕条时间戳与转写词时间戳比对
-  - 每条：|字幕起始 - 词起始| < 0.3s
-  - 将偏移量写入 EP_STATE.subtitle_sync_offsets
-  - 若偏移 > 0.5s：退回 assets："字幕条 {id} 偏移 {X}s，请依据原始转写片段重生成。"
-
-检查：音频抽取
-  - 是否从素材抽出了音频？
-  - 需要时是否做了降噪？
-  - 电平是否在合理范围？
-
-检查：预算闸
-  - 若 budget_spent > budget_total * 0.8 且仍有阶段待跑：
-      告警："已消耗 80% 预算，还剩 {N} 个阶段"
-      调整后续阶段，跳过可选增强
+CHECK: Section boundaries
+  - Do sections align with natural topic changes?
+  - Are timestamps within the raw footage duration?
+  - Any section longer than 60s? (May need splitting for better scene planning)
 ```
 
-### edit 阶段之后
-
+### After SCENE_PLAN stage:
 ```
-检查：时间线完整性
-  - 确认剪辑决策覆盖 0 到总时长且无空洞
-  - 确认所有剪切源文件都指向 asset_manifest 中真实存在的路径
-  - 确认字幕配置存在且指向合法字幕文件
+CHECK: Full coverage
+  - Sum all scene durations
+  - Compare to raw footage duration (or target edit duration)
+  - Gaps > 1 second: REVISE scene_plan
+  - Overlaps: REVISE scene_plan
 
-检查：裁剪有效性
-  - 若素材被裁短：保留的是正确段落吗？
-  - 保留段落是否与 scene_plan 一致？
-  - 剪切间过渡是否平滑（非刻意时不应有跳切）？
-```
+CHECK: Enhancement feasibility
+  - For each planned enhancement (face, color, overlay):
+      Verify the required tool exists in the registry
+  - If face_enhance planned but unavailable: remove from plan, log warning
+  - If overlay images planned: verify image tools are available
 
-### compose 阶段之后
-
-```
-检查：输出验证
-  - ffprobe 输出：时长、分辨率、编码、声道
-  - 时长漂移 > 5%：追查是哪一阶段造成
-  - 无音频：检查抽取与混音
-  - 分辨率错误：检查是否被 face_enhance 或 color_grade 改变
-  - 字幕：若要求烧录，确认输出中可见
+CHECK: Overlay alignment
+  - If overlays are planned at specific timestamps, verify those timestamps
+    fall within actual scene boundaries from the transcript
 ```
 
-## 反馈消息模板
-
-把工作退回导演时使用以下结构化反馈：
-
-### 给 Script 导演
-
+### After ASSETS stage:
 ```
-EP 反馈 — 需要修订脚本
-原因：{reason}
-具体问题：{transcript_quality / timestamp_error / section_boundary}
-受影响段落：{section_ids}
-操作：{re-transcribe / re-segment / re-align}
-转写设置：{model / language hints if applicable}
-```
+CHECK: Subtitle sync (CRITICAL for talking-head)
+  - Compare subtitle cue timestamps to transcript word timestamps
+  - For each cue: |subtitle_start - word_start| < 0.3s
+  - Store sync offsets in EP_STATE.subtitle_sync_offsets
+  - If any offset > 0.5s: REVISE assets: "Subtitle cue {id} is {X}s off.
+    Re-generate from original transcript segments."
 
-### 给 Scene 导演
+CHECK: Audio extraction
+  - Was audio extracted from raw footage?
+  - Was noise reduction applied if needed?
+  - Are audio levels in a reasonable range?
 
-```
-EP 反馈 — 需要修订场景规划
-原因：{reason}
-受影响场景：{scene_ids}
-约束：{coverage / feasibility / timing}
-可用工具：{current tool registry status}
+CHECK: Budget gate
+  - If budget_spent > budget_total * 0.8 and stages remain:
+      Alert: "80% budget consumed with {N} stages remaining"
+      Adjust remaining stages to skip optional enhancements
 ```
 
-### 给 Asset 导演
-
+### After EDIT stage:
 ```
-EP 反馈 — 需要重新生成素材
-原因：{reason}
-受影响素材：{asset_ids}
-具体修复：{subtitle_resync / audio_renormalize / overlay_regen}
-转写参照：{original transcript segments for re-alignment}
-剩余预算：${remaining}
-```
+CHECK: Timeline completeness
+  - Verify edit decisions cover 0 to total_edit_duration with no gaps
+  - Verify all cut source files reference existing paths from asset_manifest
+  - Verify subtitle configuration is present and points to valid subtitle file
 
-### 给 Edit 导演
-
-```
-EP 反馈 — 需要修订剪辑
-原因：{reason}
-具体问题：{gap_at_timestamp / invalid_reference / missing_subtitle_config}
-素材清单：{current valid asset paths}
+CHECK: Trim validation
+  - If footage was trimmed (edit is shorter than raw): are the right sections kept?
+  - Do the kept sections match the scene_plan?
+  - Are transitions between cuts smooth (no jump cuts unless intentional)?
 ```
 
-### 给 Compose 导演
-
+### After COMPOSE stage:
 ```
-EP 反馈 — 需要重渲染
-原因：{reason}
-具体问题：{subtitle_sync / audio_quality / resolution / duration}
-期望：{what the output should be}
-实际：{what was produced}
-增强调整：{skip/add face_enhance, color_grade, etc.}
-```
-
-## 质量关卡一览
-
-| 关卡 | 位于阶段后 | 检查内容 | 失败动作 |
-|------|-----------|---------|---------|
-| G1 | idea | 素材可用性、音轨存在、用户批准 | 修订 brief 或中止流水线 |
-| G2 | script | 转写置信度、时间戳、段落边界 | 修订脚本（重新转写） |
-| G3 | scene_plan | 完整覆盖、增强可行性、叠加对齐 | 修订 scene_plan |
-| G4 | assets | 字幕同步、音频抽取、预算 | 修订 assets 或退回 script |
-| G5 | edit | 时间线完整性、裁剪有效、字幕配置 | 修订 edit |
-| G6 | compose | 输出探测、时长、音频、字幕烧录 | 修订 compose 或退回 edit/assets |
-| G7 | publish | 元数据、打包 | 修订 publish |
-| FINAL | 全部 | 字幕同步、音频质量、视觉质量 | 退回指定阶段 |
-
-## 执行上限（防循环）
-
-| 上限 | 值 | 理由 |
-|------|----|------|
-| 每阶段最大修订次数 | 3 | 防止完美主义死循环 |
-| 每对阶段最大退回次数 | 1 | 防止阶段间来回踢皮球 |
-| 最大总退回次数 | 3 | 封顶整体返工量 |
-| 最大总预算 | 可配置（默认 $0.50） | 硬性支出上限 |
-| 最大总墙钟时间 | 10 分钟 | 全流程超时（比解说短，因为生成任务少） |
-
-任一上限触发后：**带警告继续**，绝不无限阻塞。
-
-## 与现有技能的集成方式
-
-执行制片不替换任何导演技能，而是把它们包裹起来。每个导演技能照旧运行，EP 额外提供：
-
-1. **上下文注入**：导演获得含跨阶段信息的 EP_STATE
-2. **反馈注入**：被退回时导演收到具体修订指令
-3. **预算感知**：导演获知剩余预算，可据此选择工具
-4. **转写连续性**：EP 把转写数据一路传递下去，保证字幕生成与剪辑决策使用同一份事实来源
-
-## EP 运行示例（精简）
-
-```
-[EP] 启动流水线：talking-head v2.0
-[EP] 默认预算 $0.50 | Playbook：从素材推导的身份（或安全回退）
-
-[EP] 探测原始素材：interview_raw.mp4
-[EP] → 时长 4m22s | 1920x1080 | 30fps | 立体声 AAC
-[EP] 素材可用，有音轨，继续。
-
-[EP] === 阶段 1：idea ===
-[EP] 唤醒 idea-director……素材：interview_raw.mp4
-[EP] Brief："与 CTO 谈 API 安全" | 目标 3m00s（从 4m22s 裁剪）
-[EP] 平台：用户指定 LinkedIn（原提议 Shorts 时长不符，已纠正）
-[EP] G1 通过 — brief 引用素材、时长目标现实、用户已批准。
-
-[EP] === 阶段 2：script ===
-[EP] 唤醒 script-director……
-[EP] 转写：WhisperX large-v3，处理 4m22s 音频……
-[EP] 结果：612 词，平均置信度 0.91，语言 en。
-[EP] 识别出 8 个段落，时间戳单调递增。✓
-[EP] G2 通过 — 置信度良好，段落对齐话题切换。
-
-[EP] === 阶段 3：scene_plan ===
-[EP] 唤醒 scene-director……
-[EP] 规划 8 个场景，总时长 3m02s（目标 3m00s）。
-[EP] 增强项：全场 face_enhance、color_grade、0:00-0:05 下三分之一叠加。
-[EP] 检查 face_enhance 工具……可用 ✓
-[EP] G3 通过 — 覆盖完整，增强可执行。
-
-[EP] === 阶段 4：assets ===
-[EP] 唤醒 asset-director……
-[EP] 生成字幕：82 条，SRT 格式。
-[EP] 同步检查：最大偏移 0.18s，全部在 0.3s 容差内。✓
-[EP] 音频已抽取并归一化至 -16 LUFS。✓
-[EP] 下三分之一叠加通过 recraft_image 生成，花费 $0.02。
-[EP] 预算：已用 $0.02，余 $0.48。
-[EP] G4 通过。
-
-[EP] === 阶段 5：edit ===
-[EP] 唤醒 edit-director……
-[EP] 时间线 3m02s，7 处剪切，字幕已启用。
-[EP] 裁剪：去掉 0:00-0:12（静默）与 3:45-4:22（跑题）。
-[EP] G5 通过 — 时间线完整，引用有效。
-
-[EP] === 阶段 6：compose ===
-[EP] 唤醒 compose-director……
-[EP] face_enhance 处理 8 个场景；color_grade 统一暖色调；audio_enhance 降噪。
-[EP] video_compose 输出 → output/talking-head-final.mp4
-[EP] 探测输出：3m01s、1920x1080、立体声、H.264。✓
-[EP] 预算：已用 $0.18。
-[EP] G6 通过。
-
-[EP] === 阶段 7：publish ===
-[EP] 唤醒 publish-director……
-[EP] G7 通过 — 标题、描述、章节、缩略图已配置。
-
-[EP] === 终检 ===
-[EP] 时长 3m01s ✓ | 字幕最大漂移 0.18s ✓ | 音频 -16.2 LUFS ✓
-[EP] 人脸增强自然 ✓ | 调色一致 ✓ | 叠加时序正确 ✓
-[EP] 预算 $0.18 / $0.50 ✓
-[EP] 流水线完成 — 0 次修订、0 次退回
-[EP] 输出：output/talking-head-final.mp4
+CHECK: Output validation
+  - ffprobe the output: duration, resolution, codec, audio channels
+  - Duration drift > 5%: investigate which stage caused it
+  - Audio missing: check audio extraction and mixing
+  - Resolution wrong: check if face_enhance or color_grade changed it
+  - Subtitles: if burn-in was requested, verify they're visible in output
 ```
 
-## 常见陷阱
+## Feedback Message Templates
 
-- **忽视转写质量**：下游全部依赖转写。置信度低必须在 script 阶段修好，别让坏时间戳传到字幕与剪辑。
-- **过度增强**：人脸增强与调色都是可选项。素材本身好看就跳过，不要为处理而处理。
-- **字幕风格不匹配**：字幕样式必须来自 playbook，不能让 asset 导演用默认 SRT 样式。
-- **不探测素材**：开工前必须 ffprobe。无音轨或容器损坏的视频会浪费每一个下游阶段。
-- **裁剪过狠**：edit 导演可能剪掉看似跑题但有价值的上下文。EP 应结合 brief 确认被裁内容确实无用。
-- **丢失转写数据**：EP 必须把 `transcript_segments` 从 script 阶段一路带到素材生成。字幕时序依赖同一份词级数据。
+When sending work back to a director, use these structured feedback messages:
+
+### To Script Director:
+```
+EP FEEDBACK — Script Revision Required
+Reason: {reason}
+Specific issue: {transcript_quality / timestamp_error / section_boundary}
+Affected sections: {section_ids}
+Action: {re-transcribe / re-segment / re-align}
+Transcriber settings: {model / language hints if applicable}
+```
+
+### To Scene Director:
+```
+EP FEEDBACK — Scene Plan Revision Required
+Reason: {reason}
+Affected scenes: {scene_ids}
+Constraint: {coverage / feasibility / timing}
+Available tools: {current tool registry status}
+```
+
+### To Asset Director:
+```
+EP FEEDBACK — Asset Regeneration Required
+Reason: {reason}
+Affected assets: {asset_ids}
+Specific fix: {subtitle_resync / audio_renormalize / overlay_regen}
+Transcript reference: {original transcript segments for re-alignment}
+Budget remaining: ${remaining}
+```
+
+### To Edit Director:
+```
+EP FEEDBACK — Edit Revision Required
+Reason: {reason}
+Specific issue: {gap_at_timestamp / invalid_reference / missing_subtitle_config}
+Asset manifest: {current valid asset paths}
+```
+
+### To Compose Director:
+```
+EP FEEDBACK — Re-render Required
+Reason: {reason}
+Specific issue: {subtitle_sync / audio_quality / resolution / duration}
+Expected: {what the output should be}
+Actual: {what was produced}
+Enhancement adjustments: {skip/add face_enhance, color_grade, etc.}
+```
+
+## Quality Gates Summary
+
+| Gate | After Stage | What's Checked | Fail Action |
+|------|-------------|---------------|-------------|
+| G1 | idea | Footage viability, audio presence, user approval | Revise brief OR stop pipeline |
+| G2 | script | Transcript confidence, timestamps, section boundaries | Revise script (re-transcribe) |
+| G3 | scene_plan | Full coverage, enhancement feasibility, overlay alignment | Revise scene_plan |
+| G4 | assets | Subtitle sync, audio extraction, budget | Revise assets OR send-back to script |
+| G5 | edit | Timeline completeness, trim validation, subtitle config | Revise edit |
+| G6 | compose | Output probe, duration, audio, subtitle burn-in | Revise compose OR send-back to edit/assets |
+| G7 | publish | Metadata, packaging | Revise publish |
+| FINAL | all | Subtitle sync, audio quality, visual quality | Send-back to specific stage |
+
+## Execution Limits (Anti-Loop Protection)
+
+| Limit | Value | Rationale |
+|-------|-------|-----------|
+| Max revisions per stage | 3 | Prevent perfectionism loops |
+| Max send-backs per stage pair | 1 | Prevent ping-pong between stages |
+| Max total send-backs | 3 | Cap total pipeline re-work |
+| Max total budget | Configurable (default $0.50) | Hard stop on spending |
+| Max total wall-time | 10 minutes | Timeout for entire pipeline (shorter than explainer — less generation) |
+
+After any limit is hit: **proceed with warnings**, never block indefinitely.
+
+## Integration with Existing Skills
+
+The EP doesn't replace any director skill — it wraps them. Each director skill continues to work exactly as documented. The EP adds:
+
+1. **Context injection**: Directors receive EP_STATE with cross-stage information they couldn't access before
+2. **Feedback injection**: Directors receive specific revision instructions when sent back
+3. **Budget awareness**: Directors receive remaining budget and can adjust tool choices accordingly
+4. **Transcript continuity**: The EP carries transcript data forward, ensuring subtitle generation and edit decisions use the same source of truth
+
+## Example EP Run (Abbreviated)
+
+```
+[EP] Starting pipeline: talking-head v2.0
+[EP] Default budget: $0.50 | Playbook: footage-derived identity (or safe fallback)
+
+[EP] Probing raw footage: interview_raw.mp4
+[EP] → Duration: 4m22s | Resolution: 1920x1080 | FPS: 30 | Audio: stereo AAC
+[EP] Footage looks viable. Audio present. Proceeding.
+
+[EP] === STAGE 1: idea ===
+[EP] Spawning idea-director... Footage: interview_raw.mp4
+[EP] Brief: "Interview with CTO on API security" | Target: 3m00s (trim from 4m22s)
+[EP] Platform: YouTube Shorts → wait, that's < 60s. User said LinkedIn.
+[EP] G1 PASS — Brief references footage, duration target realistic, user approved.
+
+[EP] === STAGE 2: script ===
+[EP] Spawning script-director with brief...
+[EP] Transcriber: WhisperX large-v3. Processing 4m22s audio...
+[EP] Transcript: 612 words, avg confidence 0.91. Language: en.
+[EP] 8 sections identified. Timestamps monotonic. ✓
+[EP] G2 PASS — Confidence good, sections align with topic changes.
+
+[EP] === STAGE 3: scene_plan ===
+[EP] Spawning scene-director with script...
+[EP] 8 scenes planned. Total duration: 3m02s (target 3m00s).
+[EP] Enhancements: face_enhance on all scenes, color_grade, lower-third overlay at 0:00-0:05.
+[EP] face_enhance: checking registry... AVAILABLE ✓
+[EP] G3 PASS — Full coverage, enhancements feasible.
+
+[EP] === STAGE 4: assets ===
+[EP] Spawning asset-director with scene_plan + script...
+[EP] Subtitles generated: 82 cues, SRT format.
+[EP] Sync check: max offset 0.18s. All within 0.3s tolerance. ✓
+[EP] Audio extracted and normalized to -16 LUFS. ✓
+[EP] Lower-third overlay generated via recraft_image. Cost: $0.02.
+[EP] Budget: $0.02 spent, $0.48 remaining.
+[EP] G4 PASS — Subtitles synced, audio clean, assets on disk.
+
+[EP] === STAGE 5: edit ===
+[EP] Spawning edit-director with scene_plan + asset_manifest...
+[EP] Timeline: 3m02s with 7 cuts. Subtitles enabled.
+[EP] Trim: removed 0:00-0:12 (dead air) and 3:45-4:22 (off-topic).
+[EP] G5 PASS — Timeline complete, all references valid.
+
+[EP] === STAGE 6: compose ===
+[EP] Spawning compose-director with edit_decisions + asset_manifest...
+[EP] face_enhance applied: 8 scenes processed.
+[EP] color_grade applied: unified warm tone.
+[EP] audio_enhance: noise reduction applied.
+[EP] video_compose: final render → output/talking-head-final.mp4
+[EP] Output probe: 3m01s, 1920x1080, stereo audio, H.264. ✓
+[EP] Budget: $0.18 spent (face_enhance + color_grade + overlays).
+[EP] G6 PASS
+
+[EP] === STAGE 7: publish ===
+[EP] Spawning publish-director with render_report...
+[EP] G7 PASS — Title, description, chapters, thumbnail configured.
+
+[EP] === FINAL QA ===
+[EP] Duration: 3m01s ✓ | Subtitle sync: max drift 0.18s ✓ | Audio: -16.2 LUFS ✓
+[EP] Face enhance: natural ✓ | Color: consistent ✓ | Overlays: timed correctly ✓
+[EP] Budget: $0.18 / $0.50 ✓
+[EP] PIPELINE COMPLETE — 0 revisions, 0 send-backs
+[EP] Output: output/talking-head-final.mp4
+```
+
+## Common Pitfalls
+
+- **Ignoring transcript quality**: Everything downstream depends on the transcript. If confidence is low, fix it in the script stage — don't let bad timestamps propagate to subtitles and edits.
+- **Over-enhancing**: Face enhance and color grade are optional. If the raw footage looks good, skip them. Don't add processing for the sake of it.
+- **Subtitle style mismatch**: The subtitle style must come from the playbook. Don't let the asset director use default SRT styling when the playbook specifies font/color/position.
+- **Not probing raw footage**: Always ffprobe before starting. A video with no audio track or a corrupt container will waste every downstream stage.
+- **Trimming too aggressively**: The edit director may cut sections that seem off-topic but contain valuable context. The EP should verify that trimmed content is genuinely unnecessary by checking against the brief.
+- **Losing transcript data**: The EP must carry `transcript_segments` from the script stage all the way to asset generation. Subtitle timing depends on the exact same word-level data the transcriber produced.

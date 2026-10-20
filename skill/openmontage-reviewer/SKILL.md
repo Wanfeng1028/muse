@@ -6,97 +6,97 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 审查者（Reviewer）— 元技能
+# Reviewer — Meta Skill
 
-## 适用时机
+## When to Use
 
-任何管线阶段的工作完成后、打检查点之前。你是"工作完成"与"工作验收"之间的质量关卡。本技能用指令驱动的自审协议替代 Python reviewer 类。
+After completing any pipeline stage's work — before checkpointing. You are the quality gate between "work done" and "work accepted." This skill replaces the Python reviewer class with an instruction-driven self-review protocol.
 
-每个阶段都必须审查，没有例外。审查质量决定最终视频是否值得观看。
+Every stage gets reviewed. No exceptions. The review quality determines whether the final video is worth watching.
 
-## 批评质量（CHAI 规则）
+## Critique Quality (CHAI Rules)
 
-> 发现不等于批评。发现指出问题；批评告诉下一阶段怎么修。CMU/哈佛 CHAI 研究（"Building a Precise Video Language with Human-AI Oversight"，arXiv 2604.21718v2）表明，从三个维度衡量的批评质量直接决定下游产出质量。每次审查都必须应用这三条。
+> Findings ≠ critiques. A finding identifies a problem; a critique tells the next stage how to fix it. The CMU/Harvard CHAI study ("Building a Precise Video Language with Human-AI Oversight", arXiv 2604.21718v2) showed that critique quality, measured on three axes, directly governs downstream output quality. Apply all three to every reviewer pass.
 >
-> **准确。** 每条发现必须引用具体的产物字段、行号或可见素材帧。禁止臆造的批评——如果你指不出问题在哪，就是在猜。
+> **Accurate.** Every finding must reference a concrete artifact field, line number, or visible asset frame. Forbid hallucinated criticism — if you cannot point to where the problem is, you are guessing.
 >
-> **完整。** 一次审查只抓到一个错误却漏掉第二个，比标记"需要再审一轮"继续更糟。如果发现一个严重问题，先扫完同类问题再返回。模式匹配：这个产物里同样的错误还可能藏在哪里？
+> **Complete.** A reviewer pass that catches one mistake while missing a second is worse than scoring "needs another pass" and continuing. If you find one critical issue, scan for the rest of the same class before returning. Pattern-match: where else in this artifact could the same mistake be hiding?
 >
-> **建设性。** 每条"critical"发现必须提出具体修复方案，不能只指出问题。"字幕错了" → "字幕写的是'右边的人'；人实际在画面左侧。改为'画面左侧的人'。"如果提不出修复方案，标记为"investigation"而非"critical"。
+> **Constructive.** Every "critical" finding MUST propose a concrete fix, not just identify the problem. "Caption is wrong" → "Caption says 'man on the right'; the man is on the left of the frame. Replace with 'the man on the left of the frame.'" If you cannot propose a fix, label the finding as "investigation" not "critical."
 >
-> 去掉任何一条属性都会可测量地损害管线产出。审查者是瓶颈——必须严格。
+> Removing any of these three properties measurably hurts pipeline output. The reviewer is the choke point — be rigorous.
 
-## 协议
+## Protocol
 
-### 第一步：加载审查上下文
+### Step 1: Load Review Context
 
-审查前收集：
-1. 管线清单中本阶段的**审查焦点项**（`review_focus` 字段）
-2. 管线清单中本阶段的**成功标准**（`success_criteria` 字段）
-3. **活跃 playbook** 的质量规则
-4. 本阶段产出的**产物**
+Before reviewing, gather:
+1. **Review focus items** from the pipeline manifest for this stage (`review_focus` field)
+2. **Success criteria** from the manifest for this stage (`success_criteria` field)
+3. **Active playbook** quality rules
+4. **The artifact** produced by the stage
 
-### 第二步：Schema 校验
+### Step 2: Schema Validation
 
-首先做不可协商的检查：
-- 对照 JSON schema 校验产物（`schemas/artifacts/<name>.schema.json`）
-- 如果 schema 校验失败，这是 **critical** 发现——立即修复，不得继续
+First, the non-negotiable check:
+- Validate the artifact against its JSON schema (`schemas/artifacts/<name>.schema.json`)
+- If schema validation fails, this is a **critical** finding — fix immediately, do not proceed
 
-### 第三步：对照焦点项审查
+### Step 3: Review Against Focus Items
 
-对清单中的每个 `review_focus` 项：
-1. 针对该具体标准评估产物
-2. 分配严重级别：
-   - **critical** — 继续前必须修复。产物损坏、不完整或有严重错误。**按 CHAI 规则，每条 critical 发现必须附带 `proposed_fix`（具体替换文本、精确字段值或明确纠正动作）。没有修复方案的 critical 降级为 `investigation`。**
-   - **suggestion** — 应该修复。显著提升质量但不阻塞进度。**suggestion 必须附带 `proposed_change` 描述如何改进。**
-   - **nitpick** — 可以修复。锦上添花的小打磨。可独立存在，无需附带修改方案。
-   - **investigation** — 真实关切但无法定位修复方案。留到下一轮处理，不阻塞。
-3. 写出具体、可操作的发现（不要含糊）
+For each `review_focus` item from the manifest:
+1. Evaluate the artifact against this specific criterion
+2. Assign a severity:
+   - **critical** — Must fix before proceeding. The artifact is broken, incomplete, or dangerously wrong. **Per CHAI rules, every critical finding MUST carry a `proposed_fix` (concrete replacement text, exact field value, or specific corrective action). A critical finding without a proposed fix is downgraded to `investigation`.**
+   - **suggestion** — Should fix. Improves quality significantly but doesn't block progress. **Suggestions MUST carry a `proposed_change` describing how to improve.**
+   - **nitpick** — Could fix. Minor polish that's nice-to-have. May stand alone without a proposed change.
+   - **investigation** — A real concern but you cannot pinpoint the fix. Surface it for the next round; do not block on it.
+3. Write a specific, actionable finding (not vague)
 
-**好的发现：**"第 3 节旁白 180 词配 10 秒窗口——即 1080 词/分钟，不可能念完。砍到 25 词。"
-**差的发现：**"脚本可能太长了。"
+**Good finding:** "Section 3 narration is 180 words for a 10-second window — that's 1080 wpm, impossible to speak. Cut to 25 words."
+**Bad finding:** "Script might be too long."
 
-### 第四步：对照 Playbook 交叉检查
+### Step 4: Cross-Check Against Playbook
 
-如果有活跃的风格 playbook，验证：
-- [ ] 色彩引用匹配 playbook 调色板
-- [ ] 转场类型在 playbook 允许集合内
-- [ ] 节奏规则被遵守（最小/最大时长）
-- [ ] 素材描述包含 playbook 风格线索
-- [ ] 质量规则未被违反
+If a style playbook is active, verify:
+- [ ] Color references match playbook palette
+- [ ] Transition types are in the playbook's allowed set
+- [ ] Pacing rules are respected (min/max durations)
+- [ ] Asset descriptions include playbook style cues
+- [ ] Quality rules are not violated
 
-每项违规为 **suggestion** 级发现。
+Each violation is a **suggestion** severity finding.
 
-### 第四步 b：品味方向审查
+### Step 4b: Taste Direction Review
 
-如果存在 `proposal_packet.production_plan.taste_profile` 或活跃 playbook 的 `taste_profile`，验证：
-- [ ] `design_read` 解释了简报、受众和交付承诺；不只是"现代/简洁/专业"
-- [ ] `visual_variance`、`motion_intensity` 和 `information_density` 在场景布局、节奏、标注密度和素材提示中有所体现
-- [ ] 当工坊级工作、AI 图片/视频、产品/品牌视觉或情绪板依赖视觉细微差别时，`reference_strategy` 已提供
-- [ ] 列出的 `anti_patterns` 确实被避免
-- [ ] 质量门控足够具体，下一阶段可以执行
+If `proposal_packet.production_plan.taste_profile` or the active playbook's `taste_profile` exists, verify:
+- [ ] `design_read` explains the brief, audience, and delivery promise; it is not just "modern/clean/professional"
+- [ ] `visual_variance`, `motion_intensity`, and `information_density` are reflected in scene layout, pacing, callout density, and asset prompts
+- [ ] `reference_strategy` is present when atelier work, AI image/video, product/brand visuals, or mood boards depend on visual nuance
+- [ ] Listed `anti_patterns` are actually avoided
+- [ ] Quality gates are concrete enough for the next stage to enforce
 
-在提案阶段，缺失 `taste_profile` 对预设/低风险工作是 **suggestion**，对工坊级、产品/品牌、发布、主视觉或自定义 playbook 工作是 **critical**。在 scene_plan/edit/compose 阶段，除非违反已批准的交付承诺，否则刻度偏差视为 **suggestion**。
+At proposal stage, a missing `taste_profile` is a **suggestion** for preset/low-stakes work and a **critical** finding for atelier, product/brand, launch, hero, or custom-playbook work. At scene_plan/edit/compose, treat dial violations as **suggestion** unless they break the approved delivery promise.
 
-### 第五步：评估成功标准
+### Step 5: Evaluate Success Criteria
 
-对清单中的每个 `success_criteria` 项：
-- 标准是否满足？（是/否/部分）
-- 如果未满足，创建 **critical** 发现
+For each `success_criteria` item from the manifest:
+- Is the criterion met? (yes/no/partial)
+- If not met, create a **critical** finding
 
-### 第六步：做出决策
+### Step 6: Make a Decision
 
-按严重级别统计发现：
+Count findings by severity:
 
-| 场景 | 动作 |
-|------|------|
-| 0 个 critical，有 suggestion/nitpick | **通过** — 进入检查点。记录 suggestion 备查。 |
-| 1+ 个 critical 发现 | **修订** — 修复所有 critical 发现，重新审查（最多 2 轮）。 |
-| 2 轮修订后仍有 critical | **带警告通过** — 继续推进，记录未解决问题。永远不要无限阻塞。 |
+| Scenario | Action |
+|----------|--------|
+| 0 critical, any suggestions/nitpicks | **Pass** — proceed to checkpoint. Note suggestions for the record. |
+| 1+ critical findings | **Revise** — fix all critical findings, then re-review (max 2 rounds). |
+| After 2 revision rounds, still critical | **Pass with warnings** — proceed anyway, note unresolved issues. Never block indefinitely. |
 
-### 第七步：记录审查
+### Step 7: Record Review
 
-按以下结构组织审查：
+Structure your review as:
 
 ```
 ## Review: [stage_name] — Round [N]
@@ -105,14 +105,14 @@ metadata:
 
 ### Findings
 
-1. [CRITICAL] 发现标题
-   - Description: 问题是什么
-   - Action: 修复什么
+1. [CRITICAL] Title of finding
+   - Description: What's wrong
+   - Action: What to fix
    - Status: pending / fixed / accepted / deferred
 
-2. [SUGGESTION] 发现标题
-   - Description: 哪里可以更好
-   - Action: 如何改进
+2. [SUGGESTION] Title of finding
+   - Description: What could be better
+   - Action: How to improve
    - Status: pending / accepted / deferred
 
 ### Summary
@@ -123,237 +123,240 @@ metadata:
 - Success criteria met: N/M
 ```
 
-## 核心原则
+## Key Principles
 
-1. **具体，不含糊。**"钩子不够强"没有用。"钩子提出了问题但没有制造紧迫感——试试用 key_point #2 中令人惊讶的数据开头"才可操作。
+1. **Be specific, not vague.** "The hook is weak" is useless. "The hook asks a question but doesn't create urgency — try leading with the surprising stat from key_point #2" is actionable.
 
-2. **Critical 就是 Critical。** 不要夸大严重级别。缺失 schema 字段是 critical。略啰嗦的段落是 suggestion。逗号拼接是 nitpick。
+2. **Critical means critical.** Don't inflate severity. A missing schema field is critical. A slightly wordy paragraph is a suggestion. A comma splice is a nitpick.
 
-3. **最多两轮。** 目标是交付，不是完美。两轮修订后带警告通过，继续推进。完美主义会杀死管线。
+3. **Two rounds max.** The goal is shipping, not perfection. After two revision rounds, pass with warnings and move on. Perfectionism kills pipelines.
 
-4. **审查产物，不审查过程。** 你检查的是输出，不是怎么产出的。如果简报有说服力，agent 用了不寻常的方法也无所谓。
+4. **Review the artifact, not the process.** You're checking the output, not how it was produced. If the brief is compelling, it doesn't matter if the agent used an unusual approach.
 
-5. **Playbook 是法律。** 如果 playbook 规定"屏幕上不超过 3 种颜色"，那不是建议——是约束。违规一律标记。
+5. **Playbook is law.** If the playbook says "no more than 3 colors on screen," that's not a suggestion — it's a constraint. Violations are always flagged.
 
-## 各阶段审查重点
+## Stage-Specific Review Guidance
 
-| 阶段 | 最关键的事 |
-|------|-----------|
-| research | 来源多样性、声明可验证性、视觉参考质量 |
-| proposal | 交付承诺清晰度、渲染器族和渲染运行时选择、音乐/语音方案、决策日志已启动 |
-| idea | 钩子独特性、调研深度、角度多样性 |
-| script | 时间精度、叙事弧线、增强线索密度 |
-| scene_plan | 全覆盖、视觉多样性、素材可行性、幻灯片风险评分 |
-| assets | 文件存在性、风格一致性、预算遵守 |
-| edit | 时间线覆盖、音频同步、字幕存在、交付承诺合规 |
-| compose | 可播放性、时长精度、音频质量、合成前校验通过 |
-| publish | SEO 质量、元数据完整性、导出打包 |
+| Stage | What matters most |
+|-------|-----------------|
+| research | Source diversity, claim verifiability, visual reference quality |
+| proposal | Delivery promise clarity, renderer family AND render runtime selection, music/voice plan, decision log started |
+| idea | Hook uniqueness, research depth, angle diversity |
+| script | Timing accuracy, narrative arc, enhancement cue density |
+| scene_plan | Full coverage, visual variety, asset feasibility, slideshow risk score |
+| assets | File existence, style consistency, budget adherence |
+| edit | Timeline coverage, audio sync, subtitle presence, delivery promise compliance |
+| compose | Playability, duration accuracy, audio quality, pre-compose validation pass |
+| publish | SEO quality, metadata completeness, export packaging |
 
-## 参考对齐审查
+## Reference Alignment Review
 
-当存在 VideoAnalysisBrief 时（参考驱动制作），在**每个阶段**运行。
+Run at **every stage** when a VideoAnalysisBrief exists (reference-driven production).
 
-### 检查项：
+### Checks:
 
-1. **依据检查：** 输出是否引用了 VideoAnalysisBrief 中的具体发现，还是在凭空编造？
-   - 提案提到"快节奏"但参考的 pacing_style 是"slow_contemplative" → **CRITICAL**
-   - 脚本声称参考有旁白但 VideoAnalysisBrief 显示无旁白 → **CRITICAL**
+1. **Grounding check:** Does the output reference specific findings from the
+   VideoAnalysisBrief, or is it making things up about the reference?
+   - Proposal mentions "fast pacing" but reference pacing_style is "slow_contemplative" → **CRITICAL**
+   - Script claims reference has narration but VideoAnalysisBrief shows no narration → **CRITICAL**
 
-2. **差异化检查：** 每个概念/场景是否与参考有明确创意差异，还是照抄？
-   - 提案是参考的碳拷贝（相同主题、相同结构、相同处理） → **CRITICAL**
-   - 每个概念至少有一个元素必须与参考不同 → 弱则为 **SUGGESTION**
-   - 简报中的创意差异化种子应反映在提案中
+2. **Differentiation check:** Does each concept/scene have a clear creative
+   difference from the reference, or is it a copy?
+   - Proposal is a carbon copy of the reference (same topic, same structure, same treatment) → **CRITICAL**
+   - At least one element per concept MUST differ from the reference → **SUGGESTION** if weak
+   - Creative differentiation seeds from the brief should be reflected in proposals
 
-3. **承诺保持：** 用户说喜欢的参考元素是否仍存在于输出中？
-   - 用户说"我喜欢这个节奏"但 scene_plan 的场景长度翻倍 → **SUGGESTION**
-   - 用户说"保持钩子风格"但脚本用了不同钩子 → **SUGGESTION**
+3. **Promise preservation:** Are the elements the user said they loved about the
+   reference still present in the output?
+   - User said "I love the pacing" but scene_plan has 2x longer scenes → **SUGGESTION**
+   - User said "keep the hook style" but script uses a different hook → **SUGGESTION**
 
-4. **费用对齐：** 费用估算是否仍准确，还是范围蔓延了？
-   - 实际支出超过估算 >30% 且未经用户重新批准 → **CRITICAL**
-   - 在已批准提案之外新增了素材 → **SUGGESTION**
+4. **Cost alignment:** Is the cost estimate still accurate, or has scope crept?
+   - If actual spend exceeds estimate by >30% without user re-approval → **CRITICAL**
+   - If new assets were added beyond the approved proposal → **SUGGESTION**
 
-### 严重级别：
-- 关于参考视频的事实错误：**CRITICAL**
-- 无差异化的碳拷贝：**CRITICAL**
-- 弱差异化（仅表面改动）：**SUGGESTION**
-- 用户偏好未被遵守：**SUGGESTION**
-- 费用偏差 >30%：**CRITICAL**
+### Severity:
+- Factual errors about the reference video: **CRITICAL**
+- Carbon copy with no differentiation: **CRITICAL**
+- Weak differentiation (surface-level changes only): **SUGGESTION**
+- User preference not honored: **SUGGESTION**
+- Cost drift >30%: **CRITICAL**
 
-## 幻灯片风险审查
+## Slideshow Risk Review
 
-在 **scene_plan** 和 **edit** 阶段运行。使用 `lib/slideshow_risk.py` 计算评分。
+Run at **scene_plan** and **edit** stages. Use `lib/slideshow_risk.py` to compute the score.
 
-### scene_plan 阶段：
-1. 计算 `score_slideshow_risk(scenes, renderer_family=renderer_family)`
-2. 如果判定为 **"fail"**（平均 ≥ 4.0）：**CRITICAL** — 场景计划必须修改后才能继续
-3. 如果判定为 **"revise"**（平均 ≥ 3.0）：**SUGGESTION** — 标记得分 ≥ 3.5 的具体维度
-4. 如果判定为 **"strong"** 或 **"acceptable"**：在审查摘要中记录，无需发现
+### At scene_plan stage:
+1. Compute `score_slideshow_risk(scenes, renderer_family=renderer_family)`
+2. If verdict is **"fail"** (average ≥ 4.0): **CRITICAL** — scene plan must be revised before proceeding
+3. If verdict is **"revise"** (average ≥ 3.0): **SUGGESTION** — flag specific dimensions scoring ≥ 3.5
+4. If verdict is **"strong"** or **"acceptable"**: note in review summary, no finding needed
 
-### edit 阶段：
-1. 用完整 edit_decisions 重新计算：`score_slideshow_risk(scenes, edit_decisions, renderer_family)`
-2. 相同阈值适用——如果 edit 阶段使情况恶化（评分高于 scene_plan），标记
+### At edit stage:
+1. Recompute with full edit_decisions: `score_slideshow_risk(scenes, edit_decisions, renderer_family)`
+2. Same thresholds apply — if the edit stage made things worse (higher score than scene_plan), flag it
 
-### 各维度标记内容：
-| 维度 | 得分 ≥ 3.0 时的说明 |
-|------|---------------------|
-| repetition | "X 个场景使用相同布局/景别——变化视觉语法" |
-| decorative_visuals | "X 个场景没有明确目的（无 information_role 或 shot_intent）" |
-| weak_motion | "有镜头运动但缺乏叙事依据" |
-| weak_shot_intent | "X 个场景缺少 shot_intent——这个画面为什么存在？" |
-| typography_overreliance | "X% 的场景是文字/数据卡——视频感觉像动画幻灯片" |
-| unsupported_cinematic_claims | "声称电影感但缺少主视觉时刻/灯光/运动" |
+### What to flag per dimension:
+| Dimension | What to say when score ≥ 3.0 |
+|-----------|------------------------------|
+| repetition | "X scenes use the same layout/shot size — vary the visual grammar" |
+| decorative_visuals | "X scenes have no stated purpose (no information_role or shot_intent)" |
+| weak_motion | "Camera movement exists but lacks narrative justification" |
+| weak_shot_intent | "X scenes are missing shot_intent — why does this frame exist?" |
+| typography_overreliance | "X% of scenes are text/stat cards — video feels like animated slides" |
+| unsupported_cinematic_claims | "Claiming cinematic but missing hero moments / lighting / movement" |
 
-## 决策日志审查
+## Decision Log Review
 
-在提案之后的**每个阶段**运行。决策日志（`schemas/artifacts/decision_log.schema.json`）是累积审计轨迹。
+Run at **every stage** after proposal. The decision log (`schemas/artifacts/decision_log.schema.json`) is a cumulative audit trail.
 
-### 检查项：
-1. **存在性**：检查点是否引用了 `decision_log_ref`？提案阶段后仍未引用，标记为 **SUGGESTION**。
-2. **覆盖度**：每个重大选择是否都有条目？必须记录的决策：
-   - 提供商选择（哪个图片/视频/音频工具及原因）
-   - 风格/playbook 选择
-   - 音乐曲目选择
-   - 语音选择
-   - 渲染器族选择
-   - 任何回退或降级（如动态 → 静态）
-3. **质量**：每条决策应包含：
-   - 至少 2 个 `options_considered`（不只是选中的那个）
-   - 非套话的 `reason`（"最佳选项"不是理由）
-   - 正确的 `confidence`（0.0–1.0）——如果全是 1.0 则标记（不现实）
-4. **用户可见性**：标记 `user_visible: true` 的决策应该是用户真正关心的（不是内部路由）
+### Checks:
+1. **Existence**: Does the checkpoint reference a `decision_log_ref`? If not after proposal stage, flag as **SUGGESTION**.
+2. **Coverage**: Does every major choice have an entry? Key decisions that MUST be logged:
+   - Provider selection (which image/video/audio tool and why)
+   - Style/playbook selection
+   - Music track selection
+   - Voice selection
+   - Renderer family selection
+   - Any fallback or downgrade (e.g., motion → still)
+3. **Quality**: Each decision should have:
+   - At least 2 `options_considered` (not just the one picked)
+   - A `reason` that isn't boilerplate ("best option" is not a reason)
+   - Correct `confidence` (0.0–1.0) — flag if everything is 1.0 (unrealistic)
+4. **User visibility**: Decisions marked `user_visible: true` should be ones the user would actually care about (not internal routing)
 
-### 严重级别：
-- 提案后缺失决策日志：**SUGGESTION**（首次），**CRITICAL**（edit 阶段仍缺失）
-- 只考虑了 1 个选项的决策：**SUGGESTION** — "记录被拒绝的替代方案以供审计"
-- 所有决策置信度都是 1.0：**SUGGESTION** — "置信度不现实——至少提供商选择涉及权衡"
+### Severity:
+- Missing decision log after proposal: **SUGGESTION** (first time), **CRITICAL** (if still missing at edit stage)
+- Decision with only 1 option considered: **SUGGESTION** — "Log rejected alternatives for auditability"
+- All decisions at confidence 1.0: **SUGGESTION** — "Unrealistic confidence — at least provider selection involves tradeoffs"
 
-## 创意差异化审查
+## Creative Differentiation Review
 
-在 **scene_plan** 和 **edit** 阶段运行。防止"每条视频看起来都一样"的失败模式。
+Run at **scene_plan** and **edit** stages. Prevents the "every video looks the same" failure mode.
 
-### 检查项：
-1. **变化检查**（仅 scene_plan）：使用 `lib/variation_checker.py` → `check_scene_variation(scenes)`。
-   - 判定为 "poor"（评分 ≤ 2）：**CRITICAL** — "场景计划缺乏多样性：[列出违规]"
-   - 判定为 "fair"（评分 ≤ 3）：**SUGGESTION** — 记录检查器给出的具体建议
+### Checks:
+1. **Variation check** (scene_plan only): Use `lib/variation_checker.py` → `check_scene_variation(scenes)`.
+   - If verdict is "poor" (score ≤ 2): **CRITICAL** — "Scene plan lacks variety: [list violations]"
+   - If verdict is "fair" (score ≤ 3): **SUGGESTION** — note specific suggestions from the checker
 
-2. **Playbook 对齐**：活跃 playbook 是否适合此内容？
-   - 电影感预告片用"clean-professional"主题 → 标记不匹配
-   - 教育解说用"anime-ghibli"主题且用户未要求 → 标记
+2. **Playbook alignment**: Is the active playbook appropriate for this content?
+   - Cinematic trailer using "clean-professional" theme → flag mismatch
+   - Educational explainer using "anime-ghibli" theme without user request → flag
 
-3. **镜头语言完整性**（scene_plan）：
-   - 每个场景至少应有 `shot_size` 和 `shot_intent`
-   - 主视觉时刻应有完整 shot_language（全部 6 个字段）
-   - shot_language 为空的场景标记为 **SUGGESTION**
+3. **Shot language completeness** (scene_plan):
+   - Every scene should have at least `shot_size` and `shot_intent`
+   - Hero moments should have full shot_language (all 6 fields)
+   - Flag scenes with empty shot_language as **SUGGESTION**
 
-4. **渲染器族匹配**（edit 阶段）：
-   - edit_decisions 中的 `renderer_family` 是否与提案时设置的一致？
-   - 无决策日志记录原因就变更 → **CRITICAL**
+4. **Renderer family match** (edit stage):
+   - Does `renderer_family` in edit_decisions match what was set at proposal?
+   - If changed without documented reason in decision log → **CRITICAL**
 
-5. **渲染运行时匹配**（edit 和 compose 阶段）：
-   - edit_decisions 中的 `render_runtime` 必须匹配 proposal_packet.production_plan.render_runtime
-   - 无 decision_log 中的 `render_runtime_selection` 决策就变更 → **CRITICAL**
-   - compose 阶段 `final_review.checks.promise_preservation.runtime_swap_detected` 必须为 `false`。若为 `true` 且无已批准的 `render_runtime_selection` 决策 → **CRITICAL**
-   - compose 时运行时不可用不是静默切换的借口——正确做法是升级、获批准、记录决策，再运行。
+5. **Render runtime match** (edit and compose stages):
+   - `render_runtime` in edit_decisions must match proposal_packet.production_plan.render_runtime
+   - If changed without a `render_runtime_selection` decision logged in decision_log → **CRITICAL**
+   - At compose stage, `final_review.checks.promise_preservation.runtime_swap_detected` must be `false`. If `true` without an approved `render_runtime_selection` decision → **CRITICAL**
+   - Runtime unavailable at compose time is not an excuse for silent swap — the correct behavior is to escalate, get approval, log a decision, then run.
 
-6. **运行时选择展示了两个选项**（提案阶段，强制）：
-   - 查询 `video_compose.get_info()["render_engines"]`。如果 `remotion` 和 `hyperframes` 都显示 `True`，`decision_log` 中的 `render_runtime_selection` 决策必须在 `options_considered` 中包含两个运行时。
-   - 两个运行时都可用时，`options_considered` 只列一个 → **CRITICAL**。Agent 静默默认了；用户未被展示替代方案。重新打开提案阶段，展示两者。
-   - 如果只有一个运行时可用，`options_considered` 仍须列出不可用的那个并附 `rejected_because: "runtime not available on this machine"`——否则审计轨迹丢失了"选择是受限的而非自主的"这一事实。
-   - 按 AGENT_GUIDE.md > "Present Both Composition Runtimes (HARD RULE)"：管线建议的"默认"运行时不是跳过与用户对话的许可证。
+6. **Runtime selection presented both options** (proposal stage, MANDATORY):
+   - Query `video_compose.get_info()["render_engines"]`. If both `remotion` and `hyperframes` show `True`, the `render_runtime_selection` decision in `decision_log` MUST have BOTH runtimes in `options_considered`.
+   - A `render_runtime_selection` with only one runtime in `options_considered` when both were available on the machine → **CRITICAL**. The agent silently defaulted; the user was not presented the alternative. Re-open the proposal stage and present both.
+   - If only one runtime was available, `options_considered` must still list the unavailable one with `rejected_because: "runtime not available on this machine"` — otherwise the audit trail loses the fact that the choice was constrained, not discretionary.
+   - Per AGENT_GUIDE.md > "Present Both Composition Runtimes (HARD RULE)": the pipeline's suggested "default" runtime is NOT a license to skip the conversation with the user.
 
-## 交付承诺审查
+## Delivery Promise Review
 
-在 **edit** 和 **compose** 阶段运行。使用 `lib/delivery_promise.py`。
+Run at **edit** and **compose** stages. Uses `lib/delivery_promise.py`.
 
-### edit 阶段：
-1. 从提案包或 edit_decisions 元数据中提取交付承诺
-2. 对解析后的剪辑列表运行 `promise.validate_cuts(cuts)`
-3. 如果 `valid` 为 False：**CRITICAL** — "交付承诺违规：[违规列表]"
-4. 检查 `motion_ratio`：运动主导的承诺如果运动剪辑 < 50%，即使技术上有效也要标记
+### At edit stage:
+1. Extract delivery promise from proposal packet or edit_decisions metadata
+2. Run `promise.validate_cuts(cuts)` against the resolved cut list
+3. If `valid` is False: **CRITICAL** — "Delivery promise violation: [violations]"
+4. Check `motion_ratio`: if a motion-led promise has < 50% motion cuts, flag even if technically valid
 
-### compose 阶段：
-1. video_compose.py 中的 `_pre_compose_validation()` 自动执行此检查
-2. 审查应验证校验未被绕过（检查渲染报告中的警告）
-3. 如果运动主导的承诺在低运动比下渲染成功，标记为 **SUGGESTION**
+### At compose stage:
+1. The `_pre_compose_validation()` in video_compose.py enforces this automatically
+2. Review should verify the validation was not bypassed (check render report for warnings)
+3. If render succeeded despite low motion ratio on a motion-led promise, flag as **SUGGESTION**
 
-## 源素材理解审查
+## Source Understanding Review
 
-当存在用户提供的媒体文件时，在 **research** 和 **proposal** 阶段运行。
+Run at **research** and **proposal** stages when user-supplied media files exist.
 
-### 检查项：
-1. **存在性**：如果项目收到了用户提供的文件，是否存在 `source_media_review` 产物？
-   - 有用户媒体但无 `source_media_review`：**CRITICAL** — "用户提供了媒体但 agent 在规划前未检查。先运行 `lib/source_media_review.review_source_media()`。"
-2. **实际检查**：每个文件条目是否有 `reviewed: true` 和非空 `technical_probe`？
-   - 缺少 `reviewed` 或 `technical_probe` 为空：**CRITICAL** — "source_media_review 声称已审查但无探测数据。文件未被实际检查。"
-3. **规划反映**：`planning_implications` 是否出现在提案的制作计划中？
-   - 如果识别出质量风险（如低分辨率、单声道音频）但提案未提及：**SUGGESTION** — "源素材存在质量风险，提案未涉及。"
-4. **内容准确性**：计划是否依赖源素材实际不包含的内容？
-   - 如计划假设有采访对话但 transcript_summary 显示无语音：**CRITICAL** — "计划假设有对话但源素材不含语音。"
-5. **无臆造内容**：Agent 不得仅凭文件名推断不支持的内容。如果 `content_summary` 写"采访素材"但探测只显示 3 秒无声视频，标记为 **CRITICAL**。
+### Checks:
+1. **Existence**: If user-supplied files were provided to the project, does a `source_media_review` artifact exist?
+   - If user media exists but no `source_media_review`: **CRITICAL** — "User supplied media but the agent did not inspect it before planning. Run `lib/source_media_review.review_source_media()` before proceeding."
+2. **Actual inspection**: Does every file entry have `reviewed: true` and a non-empty `technical_probe`?
+   - If `reviewed` is missing or `technical_probe` is empty: **CRITICAL** — "The source_media_review claims review but contains no probe data. The file was not actually inspected."
+3. **Planning reflection**: Do the `planning_implications` appear in the proposal's production plan?
+   - If quality risks were identified (e.g. low resolution, mono audio) but the proposal doesn't mention them: **SUGGESTION** — "Source media has quality risks that the proposal does not address."
+4. **Content accuracy**: Does the plan rely on content that the source media does not actually contain?
+   - E.g. plan assumes interview dialogue but transcript_summary shows no speech: **CRITICAL** — "Plan assumes dialogue but source media contains no speech."
+5. **No hallucinated content**: The agent must not infer unsupported content from filenames alone. If `content_summary` says "interview footage" but the probe only shows 3s of silent video, flag as **CRITICAL**.
 
-### 严重级别：
-- 用户文件存在时缺失 `source_media_review`：提案阶段 **CRITICAL**
-- 未审查的文件（无探测）：**CRITICAL**
-- 计划未反映质量风险：**SUGGESTION**
-- 计划假设源中不存在的内容：**CRITICAL**
+### Severity:
+- Missing `source_media_review` when user files exist: **CRITICAL** at proposal stage
+- Unreviewed files (no probe): **CRITICAL**
+- Plan doesn't reflect quality risks: **SUGGESTION**
+- Plan assumes content not in source: **CRITICAL**
 
-## 最终自审审查
+## Final Self-Review Review
 
-在 **compose** 和 **publish** 阶段运行。确保 agent 审查了实际渲染输出。
+Run at **compose** and **publish** stages. Ensures the agent reviewed the actual rendered output.
 
-### compose 阶段：
-1. **存在性**：`render_report` 旁边是否有 `final_review` 产物？
-   - 缺失：**CRITICAL** — "compose 产出了 render_report 但没有 final_review。Agent 必须在呈现前检查渲染输出。"
-2. **状态检查**：`final_review.status` 是什么？
-   - `pass` → OK，继续
-   - `revise` → Agent 应在呈现前修复问题。如果管线仍继续：**CRITICAL** — "自审发现需要修订的问题但 agent 仍然呈现了。"
-   - `fail` → 管线不得继续。如果继续了：**CRITICAL**
-3. **检查完整性**：全部 5 项必需检查必须有数据：
-   - `technical_probe` 必须显示有效容器和合理时长/分辨率
-   - `visual_spotcheck` 必须有 `frames_sampled >= 4`
-   - `audio_spotcheck` 必须报告旁白/音乐存在情况
-   - `promise_preservation` 必须确认 `delivery_promise_honored`
-   - `subtitle_check` 必须报告存在/缺失
-   - 任何检查数据缺失：**SUGGESTION** — "自审检查 [X] 数据不完整"
-4. **承诺保持**：如果 `promise_preservation.silent_downgrade_detected` 为 true：**CRITICAL** — "自审检测到从运动主导到静态主导的静默降级。"
+### At compose stage:
+1. **Existence**: Does a `final_review` artifact exist alongside the `render_report`?
+   - If missing: **CRITICAL** — "Compose produced a render_report but no final_review. The agent must inspect the rendered output before presenting it."
+2. **Status check**: What is `final_review.status`?
+   - `pass` → OK, proceed
+   - `revise` → The agent should have fixed issues before presenting. If the pipeline continued anyway: **CRITICAL** — "Self-review found revise-worthy issues but the agent presented anyway."
+   - `fail` → The pipeline MUST NOT proceed. If it did: **CRITICAL**
+3. **Check completeness**: All 5 required checks must have data:
+   - `technical_probe` must show a valid container with plausible duration/resolution
+   - `visual_spotcheck` must have `frames_sampled >= 4`
+   - `audio_spotcheck` must report narration/music presence
+   - `promise_preservation` must confirm `delivery_promise_honored`
+   - `subtitle_check` must report presence/absence
+   - Any check with missing data: **SUGGESTION** — "Self-review check [X] has incomplete data"
+4. **Promise preservation**: If `promise_preservation.silent_downgrade_detected` is true: **CRITICAL** — "Self-review detected silent downgrade from motion-led to still-led."
 
-### publish 阶段：
-1. 验证 `final_review` 作为必需产物被传递
-2. 如果 `final_review.status` 不是 `pass`：**CRITICAL** — "自审未通过不得发布"
-3. 如果 `final_review.issues_found` 非空且 `recommended_action` 不是 `present_to_user`：**SUGGESTION** — "自审发现问题；发布前确认已解决"
+### At publish stage:
+1. Verify that `final_review` was passed through as a required artifact
+2. If `final_review.status` is not `pass`: **CRITICAL** — "Cannot publish with a non-passing self-review"
+3. If `final_review.issues_found` is non-empty and `recommended_action` is not `present_to_user`: **SUGGESTION** — "Self-review found issues; verify they were resolved before publishing"
 
-## 合成创作模式审查
+## Composition Authoring Mode Review
 
-模板化→工坊级的反转（`AGENT_GUIDE.md` → "Composition Authoring Mode" + `skills/meta/bespoke-composition.md`）是治理，不是建议。审查者是执行点：没有这些检查，下一个 agent 会悄悄退回标准剪辑 schema，每条视频又开始看起来一样。
+The templated→atelier inversion (`AGENT_GUIDE.md` → "Composition Authoring Mode" + `skills/meta/bespoke-composition.md`) is governance, not a suggestion. The reviewer is the enforcement point: without these checks, the next agent quietly defaults back to the stock cut-schema and every video starts looking the same again.
 
-### 提案阶段：
-1. `decision_log` 必须包含 `composition_mode` 决策，`options_considered: ["templated","atelier"]` 和与简报挂钩的真实原因的 `selected` 值。
-   - 完全缺失 `composition_mode` 决策：**CRITICAL** — "提案缺少 composition_mode 选择。工坊级 vs 模板化是强制展示的决策（参见 AGENT_GUIDE.md → Composition Authoring Mode）。"
-   - 只考虑一个选项的决策：**CRITICAL** — "composition_mode 决策未展示模板化和工坊级两个替代方案。"
-2. 对于**主视觉工作**（简报标记为营销/发布/品牌片/有质量门槛的解说/任何质量即目的的单次交付）且 `selected == "templated"`：**CRITICAL** — "主视觉简报锁定了 composition_mode='templated'。按原则默认是工坊级；模板化需要在 `decision_log.<entry>.reason` 中有明确理由（如本地化变体、批量、限时草稿）。" 仅当理由字段指明受认可的例外时才抑制。
-3. 如果 `composition_mode == "atelier"` 且 `proposal_packet` 缺少 `art_direction` 声明（调色板、字体、运动、签名装置）：**CRITICAL** — "工坊级提案缺少艺术方向承诺。按 `skills/meta/bespoke-composition.md` 第 1 步，艺术方向必须在编写场景*之前*写下来。"
+### At proposal stage:
+1. `decision_log` must contain a `composition_mode` decision with `options_considered: ["templated","atelier"]` and a `selected` value with a real reason tied to the brief.
+   - Missing `composition_mode` decision entirely: **CRITICAL** — "Proposal missing composition_mode choice. Atelier vs templated is a mandatory presented decision (see AGENT_GUIDE.md → Composition Authoring Mode)."
+   - Decision logged with only one option considered: **CRITICAL** — "composition_mode decision logged without presenting both templated and atelier alternatives."
+2. For **hero work** (brief tagged marketing / launch / brand piece / explainer-with-quality-bar / any single-deliverable where quality is the point) where `selected == "templated"`: **CRITICAL** — "Hero brief locked composition_mode='templated'. Default is atelier per doctrine; templated requires an explicit reason in `decision_log.<entry>.reason` (e.g. localization variant, batch, time-boxed draft)." Only suppress if the reason field names a sanctioned exception.
+3. If `composition_mode == "atelier"` and `proposal_packet` lacks an `art_direction` declaration (palette, type, motion, signature device): **CRITICAL** — "Atelier proposal missing art-direction commitment. Per `skills/meta/bespoke-composition.md` step 1, art direction must be written down *before* authoring scenes."
 
-### scene_plan / edit 阶段（当 composition_mode == "atelier" 时）：
-1. `edit_decisions.composition_mode` 必须等于 `"atelier"`，且 `edit_decisions.bespoke.{entry, composition_id, art_direction}` 必须全部设置。
-   - 缺少 `entry`/`composition_id` 中任一项：**CRITICAL** — "工坊级合成契约不完整；渲染将被 `_render_via_atelier` 拒绝。"
-   - 缺少 `art_direction`：**CRITICAL** — "工坊级无艺术方向声明；审查者无法评估独特性。"
-2. `edit_decisions.cuts` 中出现任何标准 `cut.type` 场景类型（`text_card`、`stat_card`、`bar_chart`、`kpi_grid`、`callout`、`comparison`、`hero_title`、`terminal_scene`、`anime_scene`、`progress_bar`、`pie_chart`、`line_chart`）：**CRITICAL** — "工坊级作品引用了标准 cut.type {name}。手工编写场景；标准注册表是机制法典，不是零件箱（`skills/meta/bespoke-composition.md`）。"
+### At scene_plan / edit stage (when composition_mode == "atelier"):
+1. `edit_decisions.composition_mode` must equal `"atelier"` and `edit_decisions.bespoke.{entry, composition_id, art_direction}` must all be set.
+   - Missing any of `entry`/`composition_id`: **CRITICAL** — "Atelier compose contract incomplete; render will be rejected by `_render_via_atelier`."
+   - Missing `art_direction`: **CRITICAL** — "Atelier without an art-direction declaration; reviewer cannot evaluate distinctness."
+2. Any presence of stock `cut.type` scene-types (`text_card`, `stat_card`, `bar_chart`, `kpi_grid`, `callout`, `comparison`, `hero_title`, `terminal_scene`, `anime_scene`, `progress_bar`, `pie_chart`, `line_chart`) in `edit_decisions.cuts`: **CRITICAL** — "Atelier piece reaches for stock cut.type {name}. Hand-author the scene; the stock registry is a mechanics codex, not a parts bin (`skills/meta/bespoke-composition.md`)."
 
-### compose 阶段（当 composition_mode == "atelier" 时）：
-1. compose 阶段的 `final_review.checks.atelier` 块必须存在。缺失：**CRITICAL** — "工坊级渲染跳过了原则检查——`_render_via_atelier` 返回时没有 `atelier` 检查；排查工具接线。"
-2. 如果 `final_review.checks.atelier.stock_reuse_detected == true`：**CRITICAL** — "工坊级项目内导入了标准注册表（{offending_imports[0].file} → {offending_imports[0].import}）。手工编写场景；不要从标准 src/ 导入。"
-3. 如果 `final_review.checks.atelier.art_direction_declared == false`：**CRITICAL** — "工坊级渲染无艺术方向声明。重新渲染前设置 `edit_decisions.bespoke.art_direction`。"
-4. **场景独特性——无主视觉组件脊柱（强制记录）。** 每个场景采样一帧代表帧（如每个 `props.sections[i]` 的中间窗口），在审查记录中回答：
-   - *每个场景是否有独特的主要视觉主体？* 如果两个或更多场景共享主要视觉（同一个主元素仅换字幕——不离开的蜡烛、每一拍都出现的浏览器框、作为脚手架的评分环）：**CRITICAL** — "检测到主视觉组件脊柱：场景 {ids} 共享主要视觉主体。按 `skills/meta/bespoke-composition.md` 第 1.5 步，每个场景必须有自己的构图；签名装置属于一个高潮节拍，不是脚手架。重新规划受影响场景。"
-   - *`art_direction` 中命名的签名装置是否至少在一个节拍中出现？*（否 ⇒ CRITICAL，重新编写或更新声明以匹配实际构建的内容）
-   - *签名装置是否出现在**大多数**节拍中？*（是 ⇒ CRITICAL——见上方主视觉组件脊柱；签名应该是稀缺的）
-   此检查不能静默跳过；缺少逐场景清单记录本身就是 **CRITICAL**（"scene_distinctness 清单未记录"）。
-5. **字幕/屏幕文字去重（强制检查）。** 将活跃字幕文本与同一时间窗口内渲染的任何屏幕文字比较：
-   - 如果内容相同（字幕重复了场景标题/旁白已在朗读的标题）：**CRITICAL** — "字幕在 {t}s 重复屏幕文字（'{text}'）。每条作品决定一次：字幕是增加意义（数字、名称、翻译）还是无障碍字幕；不要对同一行两者都做。要么清除这些场景的 `captions=[]`，要么移除冗余的屏幕 SerifLine。"
-6. **独特性审查（人工判断，强制）。** 批准渲染前，审查者必须在审查记录中明确回答：
-   - *"这条视频可能是其他任何产品的视频吗？"*（是 ⇒ CRITICAL，重新编写艺术方向）
-   - *"它的视觉语言是否复用了我之前作品的外观？"*（是 ⇒ CRITICAL，重新编写）
-   独特性是工具无法自动化的品味判断领域；审查者未回答此问题本身就是 **CRITICAL** 发现（"distinctness review 未记录"）。
+### At compose stage (when composition_mode == "atelier"):
+1. The compose stage's `final_review.checks.atelier` block must exist. If absent: **CRITICAL** — "Atelier render skipped doctrine checks — `_render_via_atelier` returned without `atelier` checks; investigate tool wiring."
+2. If `final_review.checks.atelier.stock_reuse_detected == true`: **CRITICAL** — "Stock-registry import inside bespoke project ({offending_imports[0].file} → {offending_imports[0].import}). Hand-author the scene; do not import from the stock src/."
+3. If `final_review.checks.atelier.art_direction_declared == false`: **CRITICAL** — "Atelier render with no art-direction declaration. Set `edit_decisions.bespoke.art_direction` before re-render."
+4. **Scene distinctness — no hero-component spine (mandatory record).** Sample one representative frame per scene (e.g. mid-window of each `props.sections[i]`) and answer in the review record:
+   - *Does each scene have a distinct primary visual subject?* If two or more scenes share their primary visual (same hero element merely re-captioned — the candle that never leaves, the browser frame on every beat, the score ring as scaffolding): **CRITICAL** — "Hero-component spine detected: scenes {ids} share their primary visual subject. Per `skills/meta/bespoke-composition.md` step 1.5, each scene must earn its own composition; the signature device belongs to one climactic beat, not as scaffolding. Re-plan the affected scenes."
+   - *Is the signature device named in `art_direction` actually present in at least one beat?* (no ⇒ CRITICAL, re-author or update the declaration to match what was actually built)
+   - *Is the signature device present in **most** beats?* (yes ⇒ CRITICAL — see hero-component-spine above; signature is meant to be scarce)
+   This check cannot be skipped silently; absence of a recorded scene-by-scene inventory is itself **CRITICAL** ("scene_distinctness inventory not recorded").
+5. **Captions / on-screen text dedup (mandatory check).** Compare the active caption text to any on-screen text rendered in the same time window:
+   - If they are the same content (caption echoes the scene's title/headline that the narration is already reading aloud): **CRITICAL** — "Caption duplicates on-screen text at {t}s ('{text}'). Decide once per piece whether captions add meaning (numbers, names, translations) or are accessibility subtitles; do not do both for the same line. Either clear `captions=[]` for these scenes or remove the redundant on-screen SerifLine."
+6. **Distinctness review (human-judged, mandatory).** Before approving the render, the reviewer must explicitly answer in the review record:
+   - *"Could this video be any other product's video?"* (yes ⇒ CRITICAL, re-author art direction)
+   - *"Does its visual language reuse a look from a prior piece I've made?"* (yes ⇒ CRITICAL, re-author)
+   Distinctness is taste-call territory the tool can't automate; reviewer absence on this question is itself a **CRITICAL** finding ("distinctness review not recorded").
 
-### publish 阶段（当 composition_mode == "atelier" 时）：
-1. 上述全部六项工坊级 compose 阶段检查（`atelier` 块存在性、stock_reuse、art_direction_declared、scene_distinctness、字幕/文字去重、人工独特性审查）必须在审查记录中显示 `resolved`。任何未解决：**CRITICAL** — "工坊级作品存在未解决的原则或独特性发现，不得发布。"
+### At publish stage (when composition_mode == "atelier"):
+1. All six atelier compose-stage checks above (existence of `atelier` block, stock_reuse, art_direction_declared, scene_distinctness, captions/text dedup, human distinctness review) must show `resolved` in the review record. Any unresolved: **CRITICAL** — "Cannot publish atelier piece with unresolved doctrine or distinctness findings."

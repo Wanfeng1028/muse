@@ -6,33 +6,36 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 语音表演导演（Voice Performance Director）
+# Voice Performance Director
 
-只要流水线会用 TTS 生成旁白，就使用本元技能。
+Use this meta skill whenever a pipeline will generate narration with TTS.
 
-目标是让生成的旁白听起来被**导演**过，而不仅仅是被朗读。不要把表现力留作提示词里的“自然朗读”。从剧本到素材生成都要携带具体的语音表演计划，再用样片验证。
+The goal is to make generated narration sound directed, not merely read. Do not
+leave expressiveness as "read naturally" in a prompt. Carry a concrete voice
+performance plan from script to asset generation, then verify it with a sample.
 
-## 必需契约
+## Required Contract
 
-每份旁白主导的剧本都应包含顶层 `voice_performance` 对象，并在 schema 允许的地方包含段落级 `delivery_cues`。
+Every narration-led script should include a top-level `voice_performance`
+object and section-level `delivery_cues` where the schema allows it.
 
-顶层语音表演：
+Top-level voice performance:
 
 ```json
 {
-  "performance_intent": "温暖、果断的产品旁白，带人类式停顿。",
+  "performance_intent": "Warm, decisive product narrator with human pauses.",
   "pacing_profile": "conversational",
-  "energy_curve": "克制的钩子，中段更温暖，结尾更从容",
-  "pause_policy": "铺垫句后短停，反转或重要主张前长停。",
+  "energy_curve": "measured hook, warmer middle, more deliberate close",
+  "pause_policy": "Use short pauses after setup lines and longer pauses before reversals or important claims.",
   "provider_notes": {
-    "openai": "用 instructions 表达情绪弧线与强调。",
-    "google_tts": "当所选声音支持时，使用带 break 标签的 SSML 输入。",
-    "elevenlabs": "使用较低 stability 与中等 style 以获得富有表现力的旁白。"
+    "openai": "Use instructions for emotional arc and emphasis.",
+    "google_tts": "Use SSML input with break tags when the selected voice supports it.",
+    "elevenlabs": "Use lower stability and moderate style for expressive narration."
   }
 }
 ```
 
-段落级 delivery cues：
+Section-level delivery cues:
 
 ```json
 {
@@ -41,40 +44,58 @@ metadata:
   "emphasis_words": ["not", "process"],
   "pause_before_seconds": 0.2,
   "pause_after_seconds": 0.7,
-  "delivery_note": "先铺垫对比，再在最后一句放慢。",
+  "delivery_note": "Set up the contrast, then slow down on the final phrase.",
   "provider_text": "This is not just another tool. <break time=\"0.6s\"/> It is a process."
 }
 ```
 
-## 写作规则
+## Writing Rules
 
-- 写口语，不要写论文语言。优先短句、轻缩写、清晰标点。
-- 把静默当结构用。在反转前、意外主张后、最终收束前加停顿。
-- 停顿标签要有目的。过多停顿会显得做作且拖沓。
-- 避免“自然”“有感染力”“富有表现力”这类泛化指示，除非搭配确切的节奏、强调、停顿或能量提示。
-- 每段尽量只给一个表演想法。若一段需要三次情绪转折，就拆段。
+- Write spoken language, not essay language. Prefer short sentences, light
+  contractions, and clear punctuation.
+- Use silence as structure. Add a pause before reversals, after surprising
+  claims, and before the final takeaway.
+- Keep pause tags purposeful. Too many breaks sound theatrical and slow.
+- Avoid generic directions such as "natural", "engaging", or "expressive"
+  unless they are paired with exact pace, emphasis, pause, or energy cues.
+- Prefer one delivery idea per section. If a section needs three emotional
+  turns, split it.
 
-## 提供商映射
+## Provider Mapping
 
-- OpenAI TTS：发送 `instructions` 时使用 `model: "gpt-4o-mini-tts"`。把情绪弧线、节奏、强调与角色放入 `instructions`；输入文本保持干净但有标点。不要把 `instructions` 发给 `tts-1` 或 `tts-1-hd`。
-- Google TTS：仅在需要加 break 标签或其他 SSML 时使用 `input_type: "ssml"`。工具会把它映射到 Google 的 `input.ssml`，并在需要时用 `<speak>...</speak>` 包裹。`speaking_rate` 保持在 Google 支持的 `0.25..2.0` 范围内，pitch 在 `-20..20` 范围内。
-- ElevenLabs：用较低 `stability` 获得更多变化，中等 `style` 增加表现力，`speed` 在提供商的 `0.7..1.2` 范围内，`similarity_boost` 保持足够高以保留音色。
-- 离线/基础声音：依赖标点、更短句子与显式分段，因为提供商层面的情绪控制可能不可用。
+- OpenAI TTS: use `model: "gpt-4o-mini-tts"` when sending `instructions`.
+  Put the emotional arc, pacing, emphasis, and role in `instructions`; keep the
+  input text clean but punctuated. Do not send `instructions` to `tts-1` or
+  `tts-1-hd`.
+- Google TTS: use `input_type: "ssml"` only when adding break tags or other
+  SSML. The tool maps this to Google `input.ssml` and wraps the utterance in
+  `<speak>...</speak>` when needed. Keep `speaking_rate` in Google's supported
+  `0.25..2.0` range and pitch in `-20..20`.
+- ElevenLabs: use lower `stability` for more variation, moderate `style` for
+  expressiveness, `speed` in the provider's `0.7..1.2` range, and keep
+  `similarity_boost` high enough to preserve the voice.
+- Offline/basic voices: rely on punctuation, shorter sentences, and explicit
+  segment splitting because provider-level emotion controls may be unavailable.
 
-## 样片关卡
+## Sample Gate
 
-批量旁白生成之前：
+Before batch narration generation:
 
-1. 从表演最敏感的段落生成样片，而不是默认取第一段。
-2. 校验声音、节奏、停顿、强调与情绪弧线。
-3. 若样片平淡，先调整 `voice_performance` 计划或提供商设置，再生成其余部分。
-4. 将批准的样片路径与提供商设置记入素材清单。
+1. Generate a sample from the most performance-sensitive section, not
+   automatically the first section.
+2. Verify voice, pace, pauses, emphasis, and emotional arc.
+3. If the sample is flat, adjust the `voice_performance` plan or provider
+   settings before generating the rest.
+4. Record the approved sample path and provider settings in the asset manifest.
 
-## 失败条件
+## Failure Conditions
 
-以下视为质量失败：
+Treat these as quality failures:
 
-- 旁白主导的剧本没有 `voice_performance` 计划。
-- 段落指示只说“自然朗读”或“有表现力”，没有具体的停顿、强调、节奏或能量提示。
-- 样片获批后，TTS 提供商、声音、语速或模型被更改而未重新出样片。
-- 在已有结构化 `provider_text` 或 `delivery_cues` 的情况下，最终旁白却用原始剧本文本生成。
+- A narration-led script has no `voice_performance` plan.
+- Section directions only say "read naturally" or "expressive" with no concrete
+  pause, emphasis, pace, or energy cue.
+- TTS provider, voice, speed, or model changes after sample approval without a
+  new sample.
+- Final narration is generated from raw script text while structured
+  `provider_text` or `delivery_cues` were present.

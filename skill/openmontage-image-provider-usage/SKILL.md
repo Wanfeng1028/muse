@@ -6,121 +6,128 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 图像提供商使用指南
+# Image Provider Usage for OpenMontage
 
-> 如何在图像生成和图库提供商之间选择，以及如何高效使用每一个。补充 `image-gen-usage.md`（深入覆盖 FLUX 提示词）。
+> How to choose between image generation and stock providers, and how to use each effectively.
+> Supplements the existing `image-gen-usage.md` (which covers FLUX prompting in depth).
 
-## 提供商全景
+## Provider Landscape
 
-### 生成提供商（AI 创建图像）
+### Generation Providers (AI creates the image)
 
-| 工具 | 提供商 | 费用 | 速度 | 最适合 |
-|------|--------|------|------|--------|
-| `flux_image` | FLUX 2 Pro via fal.ai | ~$0.03-0.05 | ~5-10s | 照片写实、通用、主力工具 |
-| `grok_image` | Grok Imagine Image (xAI) | $0.02/输出 + $0.002/输入编辑图 | ~5-15s | 图像编辑、风格迁移、多图合成 |
-| `openai_image` | GPT Image 2 (OpenAI) | ~$0.01-0.21 | ~5-15s | 复杂指令、图中文字、多元素 |
-| `recraft_image` | Recraft V4 via fal.ai | ~$0.04-0.25 | ~5-10s | Logo、SVG 矢量、品牌资产、文字渲染（见下方注意事项） |
-| `local_diffusion` | Stable Diffusion（本地） | 免费 | ~30s+ | 离线、隐私、免费 |
-| `image_gen` | 多提供商（旧版，已弃用） | 不定 | 不定 | **已弃用**——请使用 `image_selector` 或各提供商工具 |
+| Tool | Provider | Cost | Speed | Best For |
+|------|----------|------|-------|----------|
+| `flux_image` | FLUX 2 Pro via fal.ai | ~$0.03-0.05 | ~5-10s | Photorealism, general purpose, workhorse |
+| `grok_image` | Grok Imagine Image (xAI) | $0.02/output + $0.002/input edit image | ~5-15s | Image edits, style transfer, multi-image compositing |
+| `openai_image` | GPT Image 2 (OpenAI) | ~$0.01-0.21 | ~5-15s | Complex instructions, text in images, multi-element |
+| `recraft_image` | Recraft V4 via fal.ai | ~$0.04-0.25 | ~5-10s | Logos, SVG vectors, brand assets, text rendering (see caveat below) |
+| `local_diffusion` | Stable Diffusion (local) | Free | ~30s+ | Offline, privacy, free |
+| `image_gen` | Multi (legacy, deprecated) | Varies | Varies | **Deprecated** — use `image_selector` or per-provider tools |
 
-### 图库提供商（搜索并下载现有图像）
+### Stock Providers (search and download existing images)
 
-| 工具 | 提供商 | 费用 | 速度 | 最适合 |
-|------|--------|------|------|--------|
-| `pexels_image` | Pexels | 免费 | ~2-5s | 高质量摄影、色彩过滤 |
-| `pixabay_image` | Pixabay | 免费 | ~2-5s | 大库、分类过滤、插画 |
+| Tool | Provider | Cost | Speed | Best For |
+|------|----------|------|-------|----------|
+| `pexels_image` | Pexels | Free | ~2-5s | High-quality photography, color filtering |
+| `pixabay_image` | Pixabay | Free | ~2-5s | Large library, category filtering, illustrations |
 
-### 选择器
+### Selector
 
-| 工具 | 用途 |
-|------|------|
-| `image_selector` | 根据偏好和可用性路由到最佳提供商 |
+| Tool | Purpose |
+|------|---------|
+| `image_selector` | Routes to the best available provider based on preference and availability |
 
-## 按场景类型选择提供商
+## Provider Selection by Scene Type
 
-| 场景类型 | 首选提供商 | 原因 | 备选 |
-|----------|------------|------|------|
-| **真实照片**（城市、自然、人物） | `pexels_image` | 真实照片优于 AI 写实 | `pixabay_image` → `flux_image` |
-| **技术图表** | `diagram_gen` | 结构化、可编辑 | `flux_image` 配合图表提示词 |
-| **抽象/概念插画** | `flux_image` | AI 擅长自定义概念 | `openai_image` |
-| **风格迁移/重绘现有图像** | `grok_image` | 原生编辑流程、强提示变换 | `openai_image` |
-| **多图合并/合成** | `grok_image` | 可将多张源图合并为一个场景 | `openai_image` |
-| **Logo 或品牌资产** | `recraft_image` | 支持 SVG、文字精确 | `openai_image` |
-| **含文字/标注的图像** | `openai_image` | 最佳文字渲染（GPT Image 2） | `recraft_image` |
-| **复杂多元素构图** | `openai_image` | 最佳指令遵循 | `flux_image` |
-| **主视觉图（关键画面）** | `flux_image` | 最高视觉质量 | `openai_image` |
-| **缩略图** | `flux_image` 或 `recraft_image` | 需要足够吸睛 | — |
-| **预算/免费项目** | `pexels_image` 或 `pixabay_image` | 免费、即时 | `local_diffusion` |
-| **离线/隔离网络** | `local_diffusion` | 无需网络 | — |
+| Scene Type | Primary Provider | Why | Fallback |
+|-----------|-----------------|-----|----------|
+| **Real-world photo** (city, nature, people) | `pexels_image` | Real photos > AI for realism | `pixabay_image` → `flux_image` |
+| **Technical diagram** | `diagram_gen` | Structured, editable | `flux_image` with diagram prompt |
+| **Abstract/conceptual illustration** | `flux_image` | AI excels at custom concepts | `openai_image` |
+| **Style transfer / repaint of an existing image** | `grok_image` | Native edit flow, strong promptable transforms | `openai_image` |
+| **Multi-image merge / composite** | `grok_image` | Can combine multiple source images into one scene | `openai_image` |
+| **Logo or brand asset** | `recraft_image` | SVG support, text accuracy | `openai_image` |
+| **Image with text/labels** | `openai_image` | Best text rendering (GPT Image 2) | `recraft_image` |
+| **Complex multi-element composition** | `openai_image` | Best instruction following | `flux_image` |
+| **Hero image (key visual)** | `flux_image` | Highest visual quality | `openai_image` |
+| **Thumbnail** | `flux_image` or `recraft_image` | Needs to be eye-catching | — |
+| **Budget/free project** | `pexels_image` or `pixabay_image` | Free, immediate | `local_diffusion` |
+| **Offline/air-gapped** | `local_diffusion` | No network needed | — |
 
-## 提供商特定注意事项
+## Provider-Specific Caveats
 
 ### Recraft V4 via fal.ai
-- **`style` 参数导致 422 错误**（截至 2026-04）。fal.ai 的 Recraft V4 端点拒绝 `style` 枚举值（`digital_illustration`、`realistic_image` 等）。**解决方案：** 将风格方向编码到提示词文本中（如写"牙齿横截面的数字插画"而非 `style="digital_illustration"`）。`image_size` 和 `colors` 参数正常可用。
-- **精确商业名称的文字渲染不可靠。** Recraft（与所有 AI 图像模型一样）可能幻觉出错误文字。对于文字必须逐字准确的场景（CTA 画面、商业名称、电话号码），使用 Remotion `text_card` 而非生成含文字的图像。
+- **`style` parameter causes 422 errors** (as of 2026-04). The `style` enum values (`digital_illustration`, `realistic_image`, etc.) are rejected by fal.ai's Recraft V4 endpoint. **Workaround:** encode style direction in the prompt text instead (e.g. "digital illustration of a tooth cross-section" rather than `style="digital_illustration"`). The `image_size` and `colors` parameters work fine.
+- **Text rendering is unreliable for exact business names.** Recraft (like all AI image models) may hallucinate wrong text. For any scene where text must be verbatim (CTA screens, business names, phone numbers), use Remotion `text_card` instead of generating an image with text.
 
-## 成本-质量权衡
+## Cost-Quality Tradeoff
 
 ```
-制作路径：高级
-├── 主视觉图：flux_image ($0.05/张)
-├── 辅助视觉：flux_image ($0.03/张)
-├── 文字叠加：openai_image ($0.05/张 中等)
-├── B-roll 静帧：pexels_image ($0.00)
-└── 10 张图总计：约 $0.35
 
-制作路径：标准
-├── 全部生成：flux_image ($0.03/张)
-├── B-roll 静帧：pexels_image ($0.00)
-└── 10 张图总计：约 $0.25
+PRODUCTION PATH: Premium
+├── Hero images: flux_image ($0.05/img)
+├── Supporting visuals: flux_image ($0.03/img)
+├── Text overlays: openai_image ($0.05/img medium)
+├── B-roll stills: pexels_image ($0.00)
+└── Total for 10 images: ~$0.35
 
-制作路径：预算
-├── 全部图库：pexels_image + pixabay_image ($0.00)
-├── 图表：diagram_gen ($0.00)
-└── 总计：$0.00
+PRODUCTION PATH: Standard
+├── All generated: flux_image ($0.03/img)
+├── B-roll stills: pexels_image ($0.00)
+└── Total for 10 images: ~$0.25
 
-制作路径：离线
-├── 全部生成：local_diffusion ($0.00)
-├── 图表：diagram_gen ($0.00)
-└── 总计：$0.00（但更慢、质量更低）
+PRODUCTION PATH: Budget
+├── All stock: pexels_image + pixabay_image ($0.00)
+├── Diagrams: diagram_gen ($0.00)
+└── Total: $0.00
+
+PRODUCTION PATH: Offline
+├── All generated: local_diffusion ($0.00)
+├── Diagrams: diagram_gen ($0.00)
+└── Total: $0.00 (but slower, lower quality)
 ```
 
-当任务从现有图像出发、且应仅路由到支持编辑的提供商时，使用 `generation_mode="edit"`。
+Use `generation_mode="edit"` when the task starts from an existing image and should route only to edit-capable providers.
 
-## 使用图像选择器
+## Using the Image Selector
 
-多数情况下使用 `image_selector` 并让其路由：
+For most cases, use `image_selector` and let it route:
 
 ```python
-# 选择器自动寻找最佳可用提供商
+# The selector finds the best available provider
 result = image_selector.execute({
-    "prompt": "现代数据中心的鸟瞰图",
-    "preferred_provider": "auto",  # 或 "flux"、"pexels" 等
+    "prompt": "aerial view of a modern data center",
+    "preferred_provider": "auto",  # or "flux", "pexels", etc.
     "output_path": "assets/images/scene-3.png"
 })
 ```
 
-当你明确知道哪种提供商最适合该场景类型时，用 `preferred_provider` 覆盖。
-用 `allowed_providers` 限制为免费或本地选项：
+Override with `preferred_provider` when you know which provider is best for the scene type.
+Use `allowed_providers` to restrict to free or local options:
 
 ```python
-# 预算模式：仅使用免费提供商
+# Budget mode: only free providers
 result = image_selector.execute({
-    "prompt": "服务器机房内景",
+    "prompt": "server room interior",
     "allowed_providers": ["pexels", "pixabay", "local_diffusion"],
     "output_path": "assets/images/scene-3.jpg"
 })
 ```
 
-## 混合来源的一致性处理
+## Consistency Across Mixed Sources
 
-在同一视频中混用图库和生成图像时，视觉一致性是挑战。
+When mixing stock and generated images in the same video, visual consistency is the challenge.
 
-### 策略：统一调色
-在合成阶段将剧本的调色 LUT 同时应用于图库和生成图像。这统一了观感。`color_grade` 增强工具负责处理。
+### Strategy: Color Grade Everything
+Apply the playbook's color grading LUT to both stock and generated images in the compose stage.
+This unifies the look. The `color_grade` enhancement tool handles this.
 
-### 策略：匹配视觉身份，而非复制前缀
-生成图像时，将剧本的情绪、色调、质感和媒介适配为简短的场景专属锚点。搜索图库时，按相同的情感和视觉品质过滤：色彩、光照、环境、构图、年代和质感。将剧本作为一致性来源，而非逐字粘贴的脚本。
+### Strategy: Match The Visual Identity, Not A Copied Prefix
+When generating images, adapt the playbook's mood, palette, texture, and medium
+into a short scene-specific anchor. When searching stock, filter for the same
+emotional and visual qualities: color, lighting, environment, composition, era,
+and texture. Use the playbook as a consistency source, not a script to paste.
 
-### 策略：避免场景内混用风格
-不要在同一场景中一个元素用图库照片、另一个用 AI 插画。保持每个场景内部一致——要么全图库，要么全生成。
+### Strategy: Avoid Mixing Styles Within a Scene
+Don't use a stock photo for one element and an AI illustration for another in the same scene.
+Keep each scene internally consistent — all stock or all generated.

@@ -6,25 +6,25 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 创意总监（影视化流水线）
+# Idea Director - Cinematic Pipeline
 
-## 何时使用
+## When To Use
 
-当项目目标是预告片、品牌片、戏剧化蒙太奇，或任何以节奏、氛围、情绪递进为主要卖点的情绪化短片时，使用本阶段。
+Use this pipeline for trailers, brand films, dramatic montages, or mood-led short videos where rhythm, atmosphere, and emotional escalation matter more than direct explanation.
 
-不要仅仅因为用户说了一句"要电影感"就启用本流水线。如果项目本质上是产品演示、讲解视频或素材再利用，应改走对应路线。
+Do not use this pipeline just because the user said "make it look cinematic." If the project is really a screen demo, explainer, or repurposing job, route it there instead.
 
-## 参考输入
+## Reference Inputs
 
 - `docs/cinematic-best-practices.md`
 - `skills/creative/cinematic.md`
 - `skills/creative/storytelling.md`
 
-## 流程
+## Process
 
-### 1. 判定素材现实
+### 1. Classify The Source Reality
 
-记录素材来源模式：
+Capture the source mode:
 
 - `footage_only`
 - `footage_plus_stills`
@@ -32,33 +32,33 @@ metadata:
 - `generated_support`
 - `mixed_montage`
 
-同时判断交付是否强制要求动态画面，将结果以布尔值写入 `brief.metadata.motion_required`。
+Also classify whether the requested delivery is motion-required. Store this as a boolean in `brief.metadata.motion_required`.
 
-当视频的核心卖点依赖于运动镜头或动画构图、而非静态帧时，置 `motion_required = true`。典型情形包括：
+Set `motion_required = true` when the promise of the video depends on moving shots or animated compositions rather than static frames. This includes:
 
-- 科幻预告片；
-- 电影感先导片；
-- 动作或造势剪辑；
-- 智能体/虚拟形象输出；
-- 任何质量取决于生成视频片段的概念。
+- sci-fi trailers,
+- cinematic teasers,
+- action or hype edits,
+- agent/avatar outputs,
+- any concept whose quality depends on generated video clips.
 
-除非用户已提供，或当前环境确实能产出，否则不要假定已有库存素材、生成的 B-roll 或音乐。
+Do not assume stock, generated b-roll, or music exists unless the user has provided it or the environment can actually make it.
 
-### 2. 定义情绪弧线
+### 2. Define The Emotional Arc
 
-用平实语言选定弧线：
+Choose the arc in plain language:
 
-- 紧张 → 揭示
-- 惊叹 → 宏大
-- 亲密 → 回馈
-- 紧迫 → 化解
-- 悬念 → 行动号召
+- tension -> reveal
+- wonder -> scale
+- intimacy -> payoff
+- urgency -> resolution
+- mystery -> CTA
 
-简报要告诉后续阶段：这条片子希望让观众感受到什么，而不只是讲的是什么。
+The brief should tell later stages what the video is trying to make the viewer feel, not just what it is about.
 
-### 3. 确定交付形态
+### 3. Pick The Delivery Shape
 
-常见输出形态：
+Common output shapes:
 
 - `teaser`
 - `trailer`
@@ -66,9 +66,9 @@ metadata:
 - `mood_cut`
 - `social_cutdown`
 
-更细的规划信息存入 `brief.metadata`。
+Store longer planning detail in `brief.metadata`.
 
-推荐元数据字段：
+Recommended metadata keys:
 
 - `source_mode`
 - `motion_required`
@@ -80,66 +80,67 @@ metadata:
 - `aspect_ratio_plan`
 - `rights_constraints`
 
-### 4. 对方案做现实核查
+### 4. Reality Check The Treatment
 
-如果用户素材薄弱且没有生成路径，要直说。电影感成品依然需要足够的画面或声音素材来撑起氛围。
+If the user has weak source media and no generation path, say so. A cinematic result still needs enough visual or audio material to carry mood.
 
-若 `motion_required = true`，必须明确说明动态实现路径：
+If `motion_required = true`, be explicit about the motion path:
 
-- 确认计划使用的片段生成服务商；
-- 确认目标构图是否需要 Remotion；
-- 若任一环节不可用或不稳定，将方案标记为 blocked，而不是悄悄改成静帧方案。
+- confirm the planned clip-generation providers,
+- confirm whether Remotion is required for the intended composition,
+- if either is unavailable or unstable, mark the treatment as blocked rather than silently redesigning it around still images.
 
-### 5. 配乐方案（强制）
+### 5. Music Plan (Mandatory)
 
-影视化视频的成败很大程度取决于音频。**在用户确认简报之前，先把配乐情况摆到台面上。**
+Cinematic videos live and die by their audio. **Surface the music situation before the user approves the brief.**
 
-按以下顺序检查可用性：
+Check availability in this order:
 
-1. **用户曲库**：查询 `registry.get_by_capability("music_library")` 并查看 `music_library/` 目录，列出可用曲目及其时长、情绪。
-2. **免版税搜索**：查询 `registry.get_by_capability("music_search")`，报告可用服务商、授权限制及密钥要求。
-3. **音乐生成 API**：查询 `registry.get_by_capability("music_generation")`，如实报告状态、配额、成本与质量取舍。
-4. **自带曲目**：用户可从其他授权渠道把曲目放入 `music_library/`。
+1. **User music library:** Check `registry.get_by_capability("music_library")` and inspect `music_library/`. List available tracks with durations and moods.
+2. **Royalty-free search:** Check `registry.get_by_capability("music_search")`. Report available providers, licensing constraints, and any key requirement.
+3. **Music generation APIs:** Check `registry.get_by_capability("music_generation")`. Report status, quota, cost, and quality tradeoffs.
+4. **Bring your own:** The user can drop a track from another licensed source into `music_library/`.
 
-向用户明确列出选项：
+Present explicit options:
 
 ```
 MUSIC PLAN
-├── 你的曲库: [N 首 / 空]
-├── 免版税搜索: [服务商 / 不可用]
-├── AI 生成: [服务商] — [可用/不可用] [成本]
-└── 自带: 在素材阶段前把曲目放进 music_library/
+├── Your music library: [N tracks / empty]
+├── Royalty-free search: [providers / unavailable]
+├── AI generation: [provider] — [AVAILABLE/UNAVAILABLE] [cost]
+└── Bring your own: Drop a track in music_library/ before asset stage
 
-选项:
-  (a) 使用曲库曲目（哪一首？）
-  (b) 搜索免版税服务商
-  (c) 提供自己的曲目
-  (d) 通过 API 生成（如可用）
-  (e) 不带音乐继续（影视化项目不推荐）
+Options:
+  (a) Use a library track (which one?)
+  (b) Search a royalty-free provider
+  (c) Provide your own track
+  (d) Generate via API (if available)
+  (e) Proceed without music (not recommended for cinematic)
 ```
 
-把最终选择连同来源与路径/提示词写入 `brief.metadata.music_strategy`。
+Record the decision in `brief.metadata.music_strategy` with the chosen source and path/prompt.
 
-### 6. 质量门
+### 6. Quality Gate
 
-- 素材现实明确；
-- 简报写明动态是否为硬性要求；
-- 情绪弧线具体；
-- 输出形态与现有素材匹配；
-- 配乐方案已敲定（选好来源或明确延后）；
-- 之所以称其为影视化有明确理由，而不是只贴了个标签。
+- the source truth is explicit,
+- the brief says whether motion is a hard requirement,
+- the emotional arc is specific,
+- the output shape fits the available assets,
+- the music plan is resolved (source chosen or explicitly deferred),
+- the treatment is cinematic for a reason, not by label only.
 
-## 常见坑
+## Common Pitfalls
 
-- 把带黑边的普通剪辑说成电影感。
-- 未检查工具就假定能生成插入镜头。
-- 把动态主导的简报悄悄改成静帧主导的先导片。
-- 规划预告片形态却没有揭示或回馈节点。
+- Calling something cinematic when it is really just a normal edit with black bars.
+- Assuming generated inserts are available without checking tools.
+- Quietly turning a motion-led brief into a still-led teaser.
+- Planning a trailer shape with no reveal or payoff.
 
 ---
 
-## 门禁提醒（约束）
+## Gate Reminder (Binding)
 
-本阶段以人工确认为门禁（`human_approval_default: true`）。评审通过后：
-以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染产物），并**结束本轮回复**。不要在同一轮回复里启动下一阶段。
-门禁按次生效——此前的一次"继续"不覆盖本次门禁。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

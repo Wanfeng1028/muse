@@ -6,24 +6,24 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 执行制片人 — 剪辑工厂流水线
+# Executive Producer — Clip Factory Pipeline
 
-## 适用场景
+## When to Use
 
-在剪辑工厂项目中，你承担执行制片人（EP）的角色。整条流水线按顺序推进，质量门重点关注：**片段挑选质量、批量一致性、钩子摆放位置、分平台适配**。
+You are the **Executive Producer (EP)** for a clip factory project. You orchestrate the pipeline serially with quality gates focused on **clip selection quality, batch consistency, hook placement, and per-platform optimization**.
 
-本流水线**没有前期制作阶段**——长视频源素材已经存在。EP 的任务是管理多个独立短视频片段的抽取工作，既让每条片段能够独立成立，又要维持整个系列的调性统一。
+**No pre-production stages.** Long-form source content exists. The EP manages the extraction of multiple independent short clips, ensuring each stands alone while maintaining series consistency.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| 流水线 | `pipeline_defs/clip-factory.yaml` | 阶段定义 |
-| 技能 | 全部 7 个导演技能 + `meta/reviewer` | 各阶段执行 |
-| Schema | 所有产出物 schema | 校验 |
-| Playbook | 当前生效的风格 playbook | 质量约束 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Pipeline | `pipeline_defs/clip-factory.yaml` | Stage definitions |
+| Skills | All 7 director skills + `meta/reviewer` | Stage execution |
+| Schemas | All artifact schemas | Validation |
+| Playbook | Active style playbook | Quality constraints |
 
-## 累计状态
+## Cumulative State
 
 ```
 EP_STATE:
@@ -32,10 +32,10 @@ EP_STATE:
   budget_total_usd: <configured>
   budget_spent_usd: 0.0
 
-  # 剪辑工厂专有字段
+  # Clip-factory specific
   source_type: null            # webinar / stream / presentation / interview
   clip_count_target: 0
-  platform_targets: []         # 每条片段的目标平台
+  platform_targets: []         # per-clip platform assignments
   clips_completed: 0
 
   artifacts:
@@ -51,94 +51,94 @@ EP_STATE:
   issues_log: []
 ```
 
-## EP 专属跨阶段检查
+## EP-Specific Cross-Stage Checks
 
-### IDEA 阶段结束后
+### After IDEA stage:
 ```
-CHECK: 素材与目标
-  - 是否已识别源内容的类型？
-  - 目标片段数与源时长是否匹配？（经验值：每 5-10 分钟源素材产出 1 条）
-  - 是否已确定平台组合？
-  - 片段筛选标准是否清晰？
-```
-
-### SCRIPT 阶段结束后
-```
-CHECK: 转写与排序
-  - 是否完成了带准确时间戳的全量转写？
-  - 候选片段数量 N 是否 ≥ 目标片段数？
-  - 每个候选是否自洽（可独立成立）？
-  - 候选是否按质量/传播潜力排过序？
+CHECK: Source and targets
+  - Source content type identified?
+  - Clip count target realistic for source duration? (rule of thumb: 1 clip per 5-10 min source)
+  - Platform mix defined?
+  - Clip selection criteria clear?
 ```
 
-### SCENE_PLAN 阶段结束后
+### After SCRIPT stage:
 ```
-CHECK: 片段边界
-  - 每条片段出入点是否干净（不切在句中）？
-  - 是否规划了分平台的画幅（竖屏 / 方形 / 横屏）？
-  - 是否存在超出平台时长上限的片段？
-
-CHECK: 批量多样性
-  - 片段是否覆盖了源素材的不同话题/瞬间？
-  - 是否避免了全部片段都取自同一段内容？
+CHECK: Transcript and ranking
+  - Full transcription with accurate timestamps?
+  - At least N candidate clips where N >= clip_count_target?
+  - Each candidate is self-contained (standalone test)?
+  - Clips ranked by quality/engagement potential?
 ```
 
-### ASSETS 阶段结束后
+### After SCENE_PLAN stage:
 ```
-CHECK: 批量一致性
-  - 每条片段是否都有时间偏移正确的字幕？
-  - 共用品牌资产（片头卡、钩子模板）是否就绪？
-  - 所有片段音频是否做过一致化处理？
-  - 预算门：触及 90% 阈值时告警
-```
+CHECK: Clip boundaries
+  - Each clip has clean in/out points (no mid-sentence cuts)?
+  - Platform-specific framing planned (vertical vs square vs landscape)?
+  - No clip exceeds platform max duration?
 
-### EDIT 阶段结束后
-```
-CHECK: 钩子摆放
-  - 每条片段的钩子是否落在前 2-3 秒内？
-  - 字幕样式是否在所有片段间统一？
-  - 每条剪辑是否彼此独立（无跨片段依赖）？
-
-CHECK: 完整性
-  - 是否为每个规划过的片段都产出了剪辑决策？
+CHECK: Batch diversity
+  - Clips cover different topics/moments from the source?
+  - Not all clips from one section of the source?
 ```
 
-### COMPOSE 阶段结束后
+### After ASSETS stage:
 ```
-CHECK: 批量渲染校验
-  - 所有片段是否渲染成功？
-  - 每条片段是否满足目标平台规格（分辨率、宽高比）？
-  - 跨片段音频电平是否一致？
-  - 是否有片段存在渲染瑕疵？
+CHECK: Batch consistency
+  - Per-clip subtitles with correct time offsets?
+  - Shared branding assets (title cards, hooks) prepared?
+  - Audio normalized consistently across all clips?
+  - Budget gate: 90% threshold warning
 ```
 
-## 质量门汇总
+### After EDIT stage:
+```
+CHECK: Hook placement
+  - Each clip has its hook within first 2-3 seconds?
+  - Subtitle styling consistent across all clips?
+  - Each edit is independent (no cross-clip dependencies)?
 
-| 门 | 所属阶段 | 检查内容 | 失败处理 |
-|----|----------|----------|----------|
-| G1 | idea | 素材评估、片段目标 | 打回修改 |
-| G2 | script | 转写质量、片段排序 | 打回修改 |
-| G3 | scene_plan | 片段边界、批量多样性 | 打回修改 |
-| G4 | assets | 批量一致性、音频归一化 | 打回修改 |
-| G5 | edit | 钩子位置、完整性 | 打回修改 |
-| G6 | compose | 批量渲染探针、平台规格 | 打回修改或退回上游 |
-| G7 | publish | 单条元数据、发布顺序 | 打回修改 |
-| FINAL | 全部 | 片段质量、一致性、钩子 | 退回上游 |
+CHECK: Completeness
+  - Edit decisions exist for every planned clip?
+```
 
-## 执行上限
+### After COMPOSE stage:
+```
+CHECK: Batch render validation
+  - All clips rendered successfully?
+  - Each clip meets target platform specs (resolution, aspect ratio)?
+  - Audio levels consistent across clips?
+  - No clip has rendering artifacts?
+```
 
-| 上限项 | 值 |
-|--------|-----|
-| 单阶段最大返修次数 | 3 |
-| 单阶段对最大退回次数 | 1 |
-| 总退回次数上限 | 3 |
-| 总预算上限 | 可配置（默认 $1） |
-| 总墙钟时长上限 | 12 分钟 |
+## Quality Gates Summary
 
-## 常见陷阱
+| Gate | After Stage | What's Checked | Fail Action |
+|------|-------------|---------------|-------------|
+| G1 | idea | Source assessment, clip targets | Revise |
+| G2 | script | Transcript quality, clip ranking | Revise |
+| G3 | scene_plan | Clip boundaries, batch diversity | Revise |
+| G4 | assets | Batch consistency, audio normalization | Revise |
+| G5 | edit | Hook placement, completeness | Revise |
+| G6 | compose | Batch render probe, platform specs | Revise or send-back |
+| G7 | publish | Per-clip metadata, posting order | Revise |
+| FINAL | all | Clip quality, consistency, hooks | Send-back |
 
-- **依赖上下文的片段**：每条片段必须能单独看懂，不能出现“正如我前面说的”这类开场。
-- **钩子太慢**：社交类片段需要在 2-3 秒内抓住观众，把最有意思的部分提前。
-- **音频电平不统一**：源素材不同区段的音量差异很大，务必归一化。
-- **漏掉平台适配**：YouTube 片段和 TikTok 片段的宽高比要求不同。
-- **片段全来自同一段**：从整段素材中分散取材的批量效果，远好于从同一 10 分钟里硬抠 5 条。
+## Execution Limits
+
+| Limit | Value |
+|-------|-------|
+| Max revisions per stage | 3 |
+| Max send-backs per stage pair | 1 |
+| Max total send-backs | 3 |
+| Max total budget | Configurable (default $1) |
+| Max total wall-time | 12 minutes |
+
+## Common Pitfalls
+
+- **Context-dependent clips**: Each clip must make sense alone. No "as I was saying" openings.
+- **Slow hooks**: Social clips need to hook in 2-3 seconds. Front-load the interesting part.
+- **Inconsistent audio levels**: Clips from different parts of the source have different audio levels. Normalize.
+- **Missing platform optimization**: A YouTube clip and a TikTok clip need different aspect ratios.
+- **All clips from one section**: Diverse clips from across the source perform better than 5 clips from the same 10 minutes.

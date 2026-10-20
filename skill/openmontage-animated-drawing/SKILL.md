@@ -6,79 +6,74 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 动画绘图（让已有画作真实动起来）
+# Animated Drawing — animate a supplied drawing/photo with real mocap
 
-> 命令：`/animated-drawing` · **路线 A（位图）。** 姊妹技能：`/ink-art`（矢量、从零生成）。
-> 底层工具：Meta 开源的 **AnimatedDrawings**（github.com/facebookresearch/AnimatedDrawings，代码 MIT，仓库已于 2025 年归档）。
+> Command: `/animated-drawing` · **Path A (raster).** Sibling: `/ink-art` (vector, from scratch).
+> Tool: Meta open-source **AnimatedDrawings** (github.com/facebookresearch/AnimatedDrawings — code MIT, repo archived 2025).
 
-**适用时机：** 用户手里已经有一张**类人**角色画稿或照片，并希望**这张图本身**动起来（跳舞／行走／跳跃／挥手）。产物是原画经形变后生成的位图 **透明 GIF 或 MP4**。若要从零**创作**一个矢量涂鸦并让它自己画出来再动，请改用 **`/ink-art`**。
+**When to use:** the user *has* a drawing or photo of a **humanoid** character and wants **that image** to move (dance / walk / jump / wave). Output = a raster **GIF (transparent) or MP4** of the original drawing *warped* to the motion. To **create** a vector doodle from scratch that draws itself and moves → use **`/ink-art`** instead.
 
-**它能做什么：** 自动为画稿绑定骨架（预测 16 关节），再把 BVH 动捕片段通过 As-Rigid-As-Possible 网格形变重定向到平面贴图上。它只**移动一张已完成的画**，没有描线／自我绘制式揭示效果（那属于 `/ink-art`）。
+**What it does:** auto-rigs the drawing (predicts a 16-joint skeleton), then retargets a BVH mocap clip onto it via As-Rigid-As-Possible mesh warp of the flat texture. It only *moves an already-complete drawing* — there is **no draw-on / self-sketching reveal** (that's `/ink-art`).
 
-## 选择角色来源——必须先询问（严禁静默复用内置角色）
+## Choose a character source — ASK FIRST (never silently reuse a bundled char)
 
-该工具会动画化**你给它的任意图像**，前提是**手绘类人**（头、双臂、双腿，肢体彼此分离，浅色纯底）。开工前**先向用户列出下列选项**并让其选定（用户没有素材时默认走生成）：
+The tool animates *whatever image you give it*, and it needs a **drawn humanoid** (head, 2 arms, 2 legs, limbs separated, plain light bg). Before building, **present the user these options** and pick one (default to *generate* when they have nothing) — this is also what stops every video looking like the same mascot:
 
-1. **用户上传画稿**——本人绘制的类人涂鸦。效果最佳，因为那是他自己的角色。
-2. **用户上传照片或其他图像**——先做**涂鸦化**处理（`image_selector` img2img，FLUX/Recraft，提示词大意："把这张图变成儿童蜡笔简笔画，类人，全身，纯白背景"），再绑骨。手绘感来自这一步；直接拿原照片做形变效果很差。
-3. **新生成一个角色** ⭐（推荐默认）——用 `image_selector`（FLUX/Imagen），提示词大意："儿童蜡笔风格的类人角色，全身，正面朝向，A 字姿势，四肢分开，纯白背景，无阴影，无文字。"每条视频都能得到不同角色。
-4. **取用图库角色**——`pixabay_image` / `pexels_image`，过滤条件为浅底上的手绘类人。命中率不稳定（图库多为照片），优先选第 3 项。
+1. **User uploads a drawing** — their own humanoid doodle. Best result; it's their character.
+2. **User uploads a photo / any image** — first **doodle-ify it** (`image_selector` img2img, FLUX/Recraft: "turn this into a simple child's crayon doodle of a humanoid, full body, plain white bg") → then rig. (The "hand-drawn" look comes from this step; a raw photo warps badly.)
+3. **Generate a fresh character** ⭐ (recommended default) — `image_selector` (FLUX/Imagen): *"a child's crayon drawing of a character, full body, front-facing, A-pose with arms and legs separated, plain white background, no shadow, no text."* Unique every video.
+4. **Grab a stock character** — `pixabay_image` / `pexels_image`, filtered to a *drawn humanoid on a plain bg*. Hit-or-miss (most stock is photos) — prefer #3.
 
-内置示例角色**仅供演示**，不得作为用户成片角色交付。选项 1–4 均依赖下方的自动绑骨 Docker 服务；服务未启动要如实告知用户。
+Bundled example characters are **demo-only** — do not ship them as the user's character. Options 1–4 all need the **auto-rig Docker service** (below); if it isn't up, say so.
 
-## 两种运行模式
+## Two run modes
 
-**A · 内置角色 + 预设动作——开箱即用，无需 Docker（已在 Windows 验证）：**
+**A · Bundled character + preset motion — turnkey, no Docker (verified on Windows):**
 ```bash
-# 浅克隆官方仓库并进入目录，避免拉取完整历史
 git clone --depth 1 https://github.com/facebookresearch/AnimatedDrawings.git && cd AnimatedDrawings
-# 仓库锁定 Python 3.8 与旧版 wheel，用 uv 安装该解释器
+# the repo pins Python 3.8 + old wheels; get 3.8 via uv:
 uv python install 3.8 && uv venv --python 3.8 .venv
-# 以可编辑模式安装项目本体
 uv pip install --python .venv -e .
-# 仓库代码引用了 pkg_resources 却未声明依赖，需手动补 setuptools
-uv pip install --python .venv "setuptools<81"
-# 跑官方导出 GIF 的示例配置，验证环境可用
+uv pip install --python .venv "setuptools<81"      # repo imports pkg_resources but doesn't declare it
 .venv/Scripts/python -c "from animated_drawings import render; render.start('./examples/config/mvc/export_gif_example.yaml')"
 ```
-CPU 上约 10–12 秒出片，无需 GPU、Docker 或额外模型下载。
+~10–12 s/clip on CPU, no GPU/Docker/model download.
 
-**B · 为新画稿自动绑骨——重载路径（Docker + 约 670 MB 模型，约 16 GB 内存）：**
+**B · Auto-rig a NEW drawing — heavy (Docker + ~670 MB models, ~16 GB RAM):**
 ```bash
-# 一条命令完成检测→分割→绑骨→重定向→渲染
-python image_to_animation.py drawing.png out_dir
+python image_to_animation.py drawing.png out_dir    # detect → segment → rig → retarget → render
 ```
-依赖仓库自带的 TorchServe 容器（`docker/` 目录），会下载 `drawn_humanoid_detector.mar`（311 MB）与 `drawn_humanoid_pose_estimator.mar`（357 MB）。Windows 上只能通过该容器运行绑骨栈（OpenMMLab 实际仅支持 Linux）。
+Needs the repo's TorchServe container (`docker/`) which downloads `drawn_humanoid_detector.mar` (311 MB) + `drawn_humanoid_pose_estimator.mar` (357 MB). Windows: run the rig stack only via that container (OpenMMLab is Linux-only in practice).
 
-## 输入要求（自动绑骨路径）
-一张清晰绘制的**类人**，大致 T/A 姿势（肢体分开不重叠），置于**浅色纯底**（分割基于阈值 + 洪水填充），画面中只能有一个人物。
+## Input requirements (auto-rig)
+One clearly-drawn **humanoid**, roughly T/A-pose (limbs separated, not overlapping), on a **plain light background** (segmentation is threshold + floodfill), exactly one figure.
 
-## 由 agent 生成的配置（全部为 YAML）
-`char_cfg.yaml`（附带 `texture.png`、`mask.png`，由 `image_to_annotations.py` 自动产出）· **动作**配置（BVH + 帧区间 + 地平面）· **重定向**配置（BVH 关节到骨架关节的映射；骨架一致时复用内置的 `fair1_ppf` / `cmu1_pfp`）· **MVC** 配置（`controller.MODE: video_render`、`OUTPUT_VIDEO_PATH`，可选 `WINDOW_DIMENSIONS` / `CLEAR_COLOR` / `BACKGROUND_IMAGE` / `CAMERA_POS`）。
+## Config the agent generates (all YAML)
+`char_cfg.yaml` (+ `texture.png`, `mask.png`; auto-produced by `image_to_annotations.py`) · a **motion** config (bvh + frames + groundplane) · a **retarget** config (BVH-joint → rig-joint; reuse bundled `fair1_ppf` / `cmu1_pfp` unless the skeleton differs) · an **MVC** config (`controller.MODE: video_render`, `OUTPUT_VIDEO_PATH`, optional `WINDOW_DIMENSIONS` / `CLEAR_COLOR` / `BACKGROUND_IMAGE` / `CAMERA_POS`).
 
-## 预设动作与重定向配置的对应（必须匹配 BVH 骨架）
-每个内置 BVH 属于不同骨架体系，配错重定向配置会直接崩溃（报错形如 `ValueError: 'RightArm' is not in list`）。对应关系如下：
+## Preset motions → retarget config (MUST match the BVH skeleton)
+Each bundled BVH is a different skeleton family; using the wrong retarget config **crashes** (`ValueError: 'RightArm' is not in list`). Pair them:
 
-| 动作 | BVH 目录 | 重定向配置 |
+| Motion | BVH folder | retarget config |
 |---|---|---|
-| `dab`、`wave_hello`、`jumping`、`zombie` | `bvh/fair1/` | `fair1_ppf` |
+| `dab`, `wave_hello`, `jumping`, `zombie` | `bvh/fair1/` | `fair1_ppf` |
 | `jumping_jacks` | `bvh/cmu1/` | `cmu1_pfp` |
 | `jesse_dance` | `bvh/rokoko/` | `mixamo_fff` |
 
-其他 BVH 需自行匹配骨架，或另写重定向配置。长片段务必用 `end_frame_idx` 截断（例如 `wave_hello` 有 839 帧），否则渲染耗时数分钟；含地面接触的动作（`dab`、`wave_hello`）渲染约慢 8 倍。
+Any other BVH → match its skeleton (or write a retarget config). **Cap long clips** with `end_frame_idx` (`wave_hello` is 839 frames) or the render runs for minutes; ground-contact clips (`dab`, `wave_hello`) render ~8× slower.
 
-## 角色多样性——动画化用户自己的画（解决"永远是同一个吉祥物"）
-内置角色**仅供演示**。真实使用中角色应来自用户**提供**的素材，每条视频都不同。对于"随便给我做条视频"且没有画稿的请求，应**新生成一个角色**（图像生成，提示词如"儿童蜡笔风格的……"，输出浅底 PNG）并**自动绑骨**（Docker 路线），从而每次角色都不同。**绝不可跨视频复用内置角色**，否则所有成片都像同一个吉祥物。
+## Character variety — animate the USER's drawing (fixes "always the same character")
+Bundled characters are **demo-only**. In real use the character is whatever the user **supplies** — unique per video. For a "just make me a video" request with no drawing, **generate a fresh character** (image-gen: "a child's crayon drawing of a …" → PNG on plain light bg) and **auto-rig it** (Docker path) → a different character every time. **Never reuse a bundled char across videos**, or every output looks like the same mascot.
 
-## 合成进 HyperFrames（后半程，真正出片所必需）
-AnimatedDrawings 只输出运动中的角色本身。要形成含背景、气球、配乐的**视频**，需在 HyperFrames 中合成：
-- **透明输出：** 在 MVC 配置中设 `view.CLEAR_COLOR: [0,0,0,0]`，得到透明帧。
-- **GIF 在确定性 HyperFrames 渲染中会卡死。** 转成带 alpha 的 **VP9 WebM**：`ffmpeg -i char.gif -c:v libvpx-vp9 -pix_fmt yuva420p char.webm`（`ffprobe` 会误报 `yuv420p`，alpha 实际完好）。
-- **视频契约（linter 强制，跑 `npm run check`）：** `<video>` 必须是舞台的**直接子元素并带独立 `id`**，不可嵌在带时间轴的 `<div>` 里（嵌套会导致画面冻结）；每个片段需自己的 `data-track-index`；淡出需补一条硬杀 `tl.set(el,{opacity:0})`。
-- 文字与**对话气泡**用 HTML 覆盖层 div，字体使用完整的 `ink-theater/assets/patrickhand.ttf`（参见 ink-theater 的字体坑）。
-- **流水线豁免：** `/animated-drawing` 与 `/ink-art` 属创意入口，不适用 Rule-Zero 流水线，无需 `.yaml` 清单。
+## Compositing into HyperFrames (the second half — required for a real video)
+AnimatedDrawings only outputs the moving character. To make a *video* (background, balloons, music), composite in HyperFrames:
+- **Transparent output:** `view.CLEAR_COLOR: [0,0,0,0]` in the MVC config → transparent frames.
+- **A GIF FREEZES in a deterministic HyperFrames render.** Convert to **VP9 WebM w/ alpha**: `ffmpeg -i char.gif -c:v libvpx-vp9 -pix_fmt yuva420p char.webm`. (`ffprobe` misreports `yuv420p` — alpha is intact.)
+- **Video contract (the linter enforces — run `npm run check`):** `<video>` must be a **direct stage child with its own `id`**, NOT nested in a timed `<div>` (nesting **freezes** it); each clip needs its own `data-track-index`; fades need a trailing hard-kill `tl.set(el,{opacity:0})`.
+- Text/**balloons** = HTML overlay divs with the full `ink-theater/assets/patrickhand.ttf` (see the ink-theater font gotcha).
+- **Pipeline-exempt:** `/animated-drawing` + `/ink-art` are creative entry points, not Rule-Zero pipelines — no `.yaml` manifest.
 
-## 输出与诚实的局限
-输出透明 GIF 或 MP4（H.264，`avc1`），分辨率取自 `WINDOW_DIMENSIONS`（示例为 500×500）。**仅限位图**（对画稿像素做形变，放大可见拉伸贴图）、**仅限类人**、**无描线揭示**、**背景粗糙**。它是个"让你的涂鸦活过来"的趣味效果；自动绑骨路线背后依赖 Docker 服务。它不是通用矢量引擎——若需要自我绘制式的白墨矢量涂鸦，请用 `/ink-art`。
+## Output & honest limits
+GIF (transparent) / MP4 (H.264, `avc1`), resolution from `WINDOW_DIMENSIONS` (examples 500×500). **Raster only** (warps the drawing's pixels — zoom shows stretched texture), **humanoid-only**, **no draw-on reveal**, **crude background**. A delightful "your doodle comes to life" novelty; behind a Docker service for the auto-rig path. Not a general vector engine — for white-ink vector doodles that draw themselves, use `/ink-art`.
 
-会话评测样例渲染位于 `.tmp/animated-drawings/out/`（如 `char3_dab.gif`、`char1_zombie.mp4`）。
+Sample renders from the session eval: `.tmp/animated-drawings/out/` (`char3_dab.gif`, `char1_zombie.mp4`).

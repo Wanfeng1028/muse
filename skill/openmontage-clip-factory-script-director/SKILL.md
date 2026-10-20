@@ -6,31 +6,31 @@ metadata:
   license: AGPL-3.0
 ---
 
-# Script Director · 剪辑工厂流水线
+# Script Director - Clip Factory Pipeline
 
-## 何时使用
+## When To Use
 
-本阶段把长视频源素材转换为排序后的候选清单，再收敛为最终片段选择。你的任务是挖掘出彩瞬间，而不是把整段源素材做摘要。
+This stage converts the long-form source into a ranked candidate list and then into the final clip selections. You are mining for standout moments, not summarizing the entire source.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/script.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["idea"]["brief"]` | 批次目标与平台定位 |
-| 工具 | `transcriber`、`scene_detect` | 以转录为先的筛选与画面校验 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/script.schema.json` | Artifact validation |
+| Prior artifact | `state.artifacts["idea"]["brief"]` | Batch goals and platform targets |
+| Tools | `transcriber`, `scene_detect` | Transcript-first selection and visual checks |
 
-## 流程
+## Process
 
-### 1. 转录完整源素材
+### 1. Transcribe The Full Source
 
-先跑 `transcriber`。转录文本是搜索钩子的工作面，而不是事后补的附属品。
+Use `transcriber` first. The transcript is the search surface for hooks, not an afterthought.
 
-`scene_detect` 只用来在可疑片段附近核对画面边界、说话人切换或幻灯片切换。
+Use `scene_detect` only to sanity-check visual boundaries, speaker changes, or slide changes near promising moments.
 
-### 2. 为候选瞬间打分
+### 2. Score Candidate Moments
 
-依据 brief 中的排序准则，对每个瞬间评估：
+Use the brief's ranking criteria and evaluate each moment on:
 
 - `hook`
 - `coherence`
@@ -38,35 +38,35 @@ metadata:
 - `energy`
 - `platform_fit`
 
-这与当下主流剪辑产品谈论爆款潜力与片段质量的方式一致，同时让判断过程保持透明。
+This mirrors the way modern clipping products talk about virality and clip quality, while keeping the judgment transparent.
 
-### 3. 执行独立可看性检验
+### 3. Apply The Standalone Test
 
-每个入选片段都必须让一个毫无背景的观众看得懂。
+Every approved clip must make sense to a cold viewer.
 
-出现以下情况应拒绝或扩展片段范围：
+Reject or widen clips that contain:
 
-- 代词指向不明确；
-- 引用了更早的上下文；
-- 在重点落地之前有冗长铺垫；
-- 结尾在回报点之前就停了。
+- unresolved pronouns,
+- references to earlier context,
+- long lead-ins before the point lands,
+- endings that stop before the payoff.
 
-### 4. 敲定最终批次
+### 4. Select The Final Batch
 
-挑选能满足批次目标的最小集合。
+Pick the smallest set that best satisfies the batch goal.
 
-在以下维度上保持多样性：
+Maintain diversity across:
 
-- 源素材区段；
-- 说话人；
-- 片段族；
-- 能量水平。
+- source sections,
+- speakers,
+- clip families,
+- energy levels.
 
-### 5. 用 metadata 承载排序真相
+### 5. Use Metadata For Ranking Truth
 
-script schema 字段不多，因此把更丰富的批次分析放入 `script.metadata`。
+The script schema is small, so store the richer batch analysis in `script.metadata`.
 
-推荐的 metadata 键：
+Recommended metadata keys:
 
 - `candidate_clips`
 - `selected_clip_ids`
@@ -75,42 +75,44 @@ script schema 字段不多，因此把更丰富的批次分析放入 `script.met
 - `source_coverage_map`
 - `platform_assignments`
 
-每个候选应记录：
+Each candidate should record:
 
-- 源 in/out；
-- 钩子文本；
-- 入选或落选理由；
-- 各评分维度；
-- 可能的裁切可行性。
+- source in/out,
+- hook text,
+- reason selected or rejected,
+- scoring dimensions,
+- likely crop viability.
 
-### 6. 质量门
+### 6. Quality Gate
 
-- 排名靠前的片段确实是最强的，而不是最早被找到的；
-- 每个入选片段都通过独立可看性检验；
-- 整批有意识地覆盖源素材，而不是全挤在一个区段；
-- 低质量候选被诚实拒绝。
+- the top-ranked clips are genuinely the strongest, not just the earliest found,
+- every selected clip passes the standalone test,
+- the set covers the source deliberately instead of clustering in one section,
+- low-quality candidates are rejected honestly.
 
-## 制作中事实核查
+### Mid-Production Fact Verification
 
-如果在写脚本时遇到不确定的内容：
-- 在把事实性论断写进脚本之前，用 `web_search` 核实；
-- 用 `web_search` 查找参考图像以保证视觉准确；
-- 在决策日志中记录核查：`category="visual_accuracy_check"`。
+If you encounter uncertainty during script writing:
+- Use `web_search` to verify factual claims before committing them to the script
+- Use `web_search` to find reference images for visual accuracy
+- Log verification in the decision log: `category="visual_accuracy_check"`
 
-脚本中的每条事实性论断都应能追溯到 `research_brief`。
-如果提出研究材料中没有的论断，就补充研究并加上出处。不要编造统计数据、日期或归属信息。
+Every factual claim in the script should be traceable to the `research_brief`.
+If you make a claim that isn't in the research, do additional research and
+add the source. Do not invent statistics, dates, or attributions.
 
-## 常见坑
+## Common Pitfalls
 
-- 直接信任初筛时间戳，不做转录级别的复核。
-- 选出过多平淡、能量相同的片段。
-- 按时间顺序保留而不是按质量排序。
-- 转录质量问题影响筛选准确性时却当作小问题。
+- Trusting first-pass candidate timestamps without transcript-level review.
+- Selecting too many calm, same-energy clips.
+- Preserving chronological order instead of ranking by quality.
+- Treating transcript quality issues as minor when they affect selection accuracy.
 
 ---
 
-## 关卡提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段默认需要人工审批（`human_approval_default: true`）。评审通过后：
-用 `status="awaiting_human"` 打检查点，展示摘要（Backlot 看板会渲染产物），然后**结束本轮**。不要在同一次回复里启动下一阶段。
-审批是按关卡独立的——之前某次“继续吧”不覆盖本关卡。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

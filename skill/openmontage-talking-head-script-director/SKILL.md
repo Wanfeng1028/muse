@@ -6,72 +6,79 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 脚本导演 — 口播管线
+# Script Director — Talking Head Pipeline
 
-## 适用场景
+## When to Use
 
-当已有 Brief 与原始口播素材时启用本技能。任务是把素材转录，并整理成带时间戳分段的脚本产物。与讲解管线不同——后者从零撰写脚本——这里做的是提取并结构化已有语音。
+You have a brief and raw talking-head footage. Your job is to transcribe the footage and structure it into a script artifact with timestamped sections.
 
-## 前置资源
+Unlike the explainer pipeline (which writes a script from scratch), you're extracting and structuring existing speech.
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/script.schema.json` | 校验脚本产物 |
-| 前置产物 | `state.artifacts["idea"]["brief"]` | 提供内容上下文 |
-| 工具 | `transcriber`（WhisperX） | 带时间戳的语音转文字 |
+## Prerequisites
 
-## 流程
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/script.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["idea"]["brief"]` | Content context |
+| Tools | `transcriber` (WhisperX) | Speech-to-text with timestamps |
 
-### 步骤 1：转录
+## Process
 
-用 transcriber 工具获取词级时间戳：
-- 模型选择：追求质量用 `large-v3`，追求速度用 `base`。
-- 开启词级对齐以获得精确时序。
-- 记录语言检测结果。
+### Step 1: Transcribe
 
-### 步骤 2：切分为段落
+Use the transcriber tool to get word-level timestamps:
+- Model: `large-v3` for best quality, `base` for speed
+- Enable word-level alignment for precise timing
+- Note language detection result
 
-把转录文本归入逻辑段落：
-- 依据内容识别主题变化。
-- 尊重自然停顿（静默超过 1.5 秒视为潜在段落边界）。
-- 每段包含：id、text、start_seconds、end_seconds。
+### Step 2: Segment into Sections
 
-### 步骤 3：补全段落元数据
+Group the transcript into logical sections:
+- Detect topic changes by content
+- Respect natural pauses (> 1.5s silence = potential section break)
+- Each section gets: id, text, start_seconds, end_seconds
 
-为每段补充：
-- 增强线索（可放叠加层、B-roll 或文字卡的位置）。
-- 说话人备注（音频中可察觉的强调、语速变化）。
+### Step 3: Enhance Section Metadata
 
-### 步骤 4：构建脚本产物
+For each section, add:
+- Enhancement cues (where overlays, b-roll, or text cards could go)
+- Speaker notes (emphasis, pace changes detected in audio)
 
-汇总结构化脚本，包含：
-- 总时长（来自转录结果）。
-- 所有段落及其时间戳。
-- 每段的增强线索。
+### Step 4: Build Script Artifact
 
-### 步骤 5：自评
+Assemble the structured script with:
+- Total duration (from transcript)
+- All sections with timestamps
+- Enhancement cues per section
 
-| 标准 | 自问 |
-|------|------|
-| 转录准确度 | 文字是否正确？（抽查若干段落） |
-| 时间戳准确度 | 段落边界是否对齐真实语音？ |
-| 覆盖度 | 脚本是否覆盖素材全时长？ |
+### Step 5: Self-Evaluate
 
-### 步骤 6：提交
+| Criterion | Question |
+|-----------|----------|
+| **Transcription accuracy** | Are the words correct? (Spot-check a few sections) |
+| **Timestamp accuracy** | Do section boundaries align with actual speech? |
+| **Coverage** | Does the script span the full footage duration? |
 
-按 schema 校验脚本，并通过 checkpoint 持久化。
+### Step 6: Submit
 
-### 制作中的事实核查
+Validate the script against the schema and persist via checkpoint.
 
-撰写脚本时若遇到不确定之处：
-- 用 `web_search` 在写入脚本前核实事实性表述。
-- 用 `web_search` 查找参考图像以保证视觉准确。
-- 在决策日志中记录核查：`category="visual_accuracy_check"`。
+### Mid-Production Fact Verification
 
-脚本中每个事实性表述都应能追溯到 `research_brief`。若提出研究材料中没有的说法，须补充研究并附上来源。不得虚构统计数据、日期或归属。
+If you encounter uncertainty during script writing:
+- Use `web_search` to verify factual claims before committing them to the script
+- Use `web_search` to find reference images for visual accuracy
+- Log verification in the decision log: `category="visual_accuracy_check"`
+
+Every factual claim in the script should be traceable to the `research_brief`.
+If you make a claim that isn't in the research, do additional research and
+add the source. Do not invent statistics, dates, or attributions.
 
 ---
 
-## 关卡提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工批准为门（`human_approval_default: true`）。评审通过后：用 `status="awaiting_human"` 打 checkpoint，呈交摘要（Backlot 面板会渲染产物），并**结束本轮回复**。不得在同一回复里启动下一阶段。批准是按关卡独立的——此前的“继续”不覆盖本关卡。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

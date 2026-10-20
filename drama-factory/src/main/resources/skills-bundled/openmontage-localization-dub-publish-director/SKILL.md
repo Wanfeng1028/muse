@@ -6,27 +6,27 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 发布导演 — 本地化配音流水线
+# Publish Director - Localization Dub Pipeline
 
-## 何时使用
+## When To Use
 
-将已完成的本地化产物打包，使下游团队能直接找到对应语言的视频、字幕与元数据组合，无需人工再整理。
+Package the completed localization outputs so downstream teams can find the right video, subtitle, and metadata bundle for each language without manual cleanup.
 
-## 流程
+## Process
 
-### 1. 按语言打包
+### 1. Package By Locale
 
-每个语言包应清晰区分：
+Each language package should clearly separate:
 
-- 视频成品；
-- 字幕文件；
-- 转写稿或已审批的脚本副本；
-- 评审备注；
-- 元数据。
+- video output,
+- subtitle files,
+- transcript or approved script copy,
+- review notes,
+- metadata.
 
-### 2. 命名务必精确
+### 2. Keep Naming Precise
 
-建议的元数据字段：
+Recommended metadata keys:
 
 - `locale`
 - `language_name`
@@ -34,25 +34,28 @@ metadata:
 - `subtitle_included`
 - `review_owner`
 
-### 3. 保留评审上下文
+### 3. Preserve Review Context
 
-如果某个语言版本存在发音注意事项、时长警告或缺失对口型的情况，必须把这条备注一并放进发布包。
+If a language output has pronunciation caveats, timing warnings, or missing lip sync, keep that note in the published package.
 
-### 4. 质量门
+### 4. Quality Gate
 
-- 各语言包标注清晰；
-- 元数据与实际处理方式一致；
-- 配套的文本资产齐备；
-- 警告与评审备注未丢失。
+- locale packages are clearly labeled,
+- metadata matches the actual treatment,
+- supporting text assets are present,
+- warnings and review notes are not lost.
 
-## 常见坑
+## Common Pitfalls
 
-- 发布本地化成片时没带上对应的字幕或转写文件。
-- 把"配音版"与"仅字幕版"混用同一个泛化文件名。
-- 删掉了说明已知问题的 QA 备注。
+- Shipping localized videos without the matching subtitle or transcript files.
+- Mixing audio-dub and subtitle-only variants under the same generic filename.
+- Removing the QA notes that explain known issues.
 
 ---
 
-## 门禁提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为门（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染该产物），并**结束本轮回复**。不要在同一条回复中启动下一阶段。审批是逐门独立的——之前某次的"可以继续"不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

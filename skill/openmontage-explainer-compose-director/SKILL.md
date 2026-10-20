@@ -6,96 +6,92 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 合成导演 — 解说流水线
+# Compose Director — Explainer Pipeline
 
-## 适用时机
+## When to Use
 
-你负责生成式解说视频的合成。手上有含完整剪辑时间线的 `edit_decisions` 和含全部文件路径的 `asset_manifest`。任务是把成片渲染出来：拼接画面、叠加音频、烧录字幕、编码到目标格式。
+You are the Compositor for a generated explainer video. You have `edit_decisions` with the complete edit timeline and an `asset_manifest` with all file paths. Your job is to render the final video: assemble visuals, layer audio, burn subtitles, and encode to the target format.
 
-这是视频成为可播放文件前的最后技术阶段，一切在此汇合。
+This is the last technical stage before the video exists as a playable file. Everything converges here.
 
-## 运行时路由（强制第一步）
+## Runtime Routing (MANDATORY first step)
 
-先读 `edit_decisions.render_runtime`。它在提案阶段锁定，不得静默更改。本技能后续步骤（Remotion public/ 暂存、词级字幕烧录等）都假设 `render_runtime="remotion"`，这是数据驱动解说的默认值。
+Read `edit_decisions.render_runtime` before anything else. It was locked at proposal and must not be changed silently. The rest of this skill's process steps (Remotion public/ staging, word-level caption burn, etc.) assume `render_runtime="remotion"` — the default for data-driven explainers.
 
-- **`render_runtime="hyperframes"`** —— HTML/CSS/GSAP 渲染。不要走下面的 Remotion 专属步骤，改为读 `skills/core/hyperframes.md`、`.agents/skills/hyperframes/SKILL.md`、`.agents/skills/hyperframes-cli/SKILL.md`。原样把 edit_decisions 传给 `video_compose` —— 它会委派给 `hyperframes_compose`，在 `projects/<name>/hyperframes/` 下生成工作区，跑 `lint → validate → render`，返回 MP4。lint 与 validate 都必须通过才能渲染；迭代期对比度可延后，但最终交付不行。
-- **`render_runtime="ffmpeg"`** —— 简单拼接/裁剪。直接调 `video_compose`；此运行时被显式锁定时它不会自动升级到 Remotion。
-- **运行时不可用** —— 按 AGENT_GUIDE.md > “Escalate Blockers Explicitly” 明确上报阻塞，取得用户批准（在 decision_log 记为 `render_runtime_selection` 决策）后再切换。
+- **`render_runtime="hyperframes"`** — HTML/CSS/GSAP render. Do NOT follow the Remotion-specific steps below. Instead: read `skills/core/hyperframes.md`, `.agents/skills/hyperframes/SKILL.md`, and `.agents/skills/hyperframes-cli/SKILL.md`. Call `video_compose` with the edit_decisions unchanged — it will delegate to `hyperframes_compose`, which materializes a workspace under `projects/<name>/hyperframes/`, runs `lint → validate → render`, and returns the MP4. Both lint AND validate must pass before render; contrast can be deferred during iteration but not for final delivery.
+- **`render_runtime="ffmpeg"`** — simple concat/trim. Call `video_compose` directly; it will NOT auto-upgrade to Remotion when this runtime is explicitly locked.
+- **Runtime unavailable** — surface the blocker per AGENT_GUIDE.md > "Escalate Blockers Explicitly" and get user approval (recorded as a `render_runtime_selection` decision in decision_log) before switching.
 
-`final_review.checks.promise_preservation.render_runtime_used` 必须等于实际使用的运行时；除非有获批决策授权切换，`runtime_swap_detected` 必须为 `false`。
+`final_review.checks.promise_preservation.render_runtime_used` must equal the runtime that actually ran; `runtime_swap_detected` must be `false` unless an approved decision authorizes the swap.
 
-**把 `proposal_packet` 传给 `video_compose.execute()`**，这样工具内的切换检测才能真正触发。不传的话 `runtime_swap_check` 会被报成 `skipped`，你只能靠审阅技能的跨产物比对。
+**Pass `proposal_packet` to `video_compose.execute()`** so in-tool swap detection can actually fire. Without it the `runtime_swap_check` is reported as `skipped` and you have to rely on the reviewer skill's cross-artifact comparison instead.
 
-## 前置条件
+## Prerequisites
 
-| 层 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/render_report.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["edit"]["edit_decisions"]`、`state.artifacts["assets"]["asset_manifest"]` | 决定渲染什么 |
-| Playbook | 当前生效的风格 playbook | 质量目标 |
-| 工具 | `video_compose`、`audio_mixer` | 渲染能力 |
-| 媒体档 | `lib/media_profiles.py` | 输出格式规格（分辨率、编码、码率） |
+| Schema | `schemas/artifacts/render_report.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["edit"]["edit_decisions"]`, `state.artifacts["assets"]["asset_manifest"]` | What to render |
+| Playbook | Active style playbook | Quality targets |
+| Tools | `video_compose`, `audio_mixer` | Rendering capabilities |
+| Media profiles | `lib/media_profiles.py` | Output format specs (resolution, codec, bitrate) |
 
-## 流程
+## Process
 
-### 第 1 步：选择渲染策略
+### Step 1: Choose Render Strategy
 
-依据剪辑决策挑选渲染方式：
+Based on the edit decisions, pick the rendering approach:
 
-**Remotion 渲染**（默认 —— 除非明确覆盖，一律用它）：
+**Remotion render** (DEFAULT — use this unless explicitly overridden):
+- Animated text cards, stat cards, chart scenes
+- Complex transitions (morph, zoom, ken-burns)
+- Programmatic motion graphics
+- Audio embedding (narration + music with fade/volume)
+- Word-level captions via CaptionOverlay component
+- Best for: ALL explainer videos, both image-based and animation-heavy
 
-- 动画文字卡、数据卡、图表场景
-- 复杂转场（morph、zoom、ken-burns）
-- 程序化动态图形
-- 音频嵌入（旁白 + 音乐，带淡入淡出/音量）
-- 通过 CaptionOverlay 组件实现词级字幕
-- 最适合：所有解说视频，无论图基还是动画密集型
+**FFmpeg pipeline** (FALLBACK — only when Remotion is unavailable):
+- Static images with Ken Burns
+- Audio layering
+- SRT subtitle burn-in
+- Best for: environments without Node.js/Remotion installed
 
-**FFmpeg 管线**（兜底 —— 仅当 Remotion 不可用）：
+**IMPORTANT: When using Remotion, ALL of these go through Remotion — not FFmpeg:**
+- Audio (narration + music) → Remotion `audio` prop, NOT external audio_mixer
+- Subtitles → Remotion `captions` prop (word-level), NOT SRT burn via FFmpeg
+- Text overlays (CTA, titles) → Remotion `text_card` cut type, NOT AI-generated images
 
-- 静态图加 Ken Burns
-- 音频叠层
-- SRT 字幕烧录
-- 最适合：没装 Node.js/Remotion 的环境
+### Step 2: Audio Acquisition (Narration, Music, Subtitles)
 
-**重要：用 Remotion 时，以下全部走 Remotion，不走 FFmpeg：**
+Before rendering, present the user with audio options and get their preferences.
 
-- 音频（旁白 + 音乐）→ Remotion 的 `audio` prop，不用外部 `audio_mixer`
-- 字幕 → Remotion 的 `captions` prop（词级），不用 FFmpeg 烧 SRT
-- 文字叠层（CTA、标题）→ Remotion 的 `text_card` cut 类型，不用 AI 生成图像
+**Present to the user:**
 
-### 第 2 步：音频获取（旁白、音乐、字幕）
-
-渲染前先向用户呈现音频选项并取得偏好。
-
-**向用户呈现：**
-
-> **本视频的音频设置：**
+> **Audio setup for this video:**
 >
-> **旁白：** 我可以用 OpenAI TTS（`gpt-4o-mini-tts` —— $0.015/分钟，6 种音色，支持声音指导）生成 TTS 旁白。你想要哪种音色和语气？我会根据视频主题提议一个，或你自选：
-> - `onyx` —— 低沉、权威（纪录片、科技）
-> - `echo` —— 共鸣、未来感（产品广告、科幻）
-> - `nova` —— 明亮、有活力（欢快、解说）
-> - `fable` —— 温暖、叙事（故事、教育）
-> - `shimmer` —— 表现力强、温暖（自然、生活方式）
-> - `alloy` —— 中性、平衡（通用）
+> **Narration:** I can generate TTS narration using OpenAI TTS (`gpt-4o-mini-tts` — $0.015/min, 6 voices, voice direction). Which voice and tone would you like? I'll propose a voice based on the video topic, or you can choose:
+> - `onyx` — deep, authoritative (documentaries, tech)
+> - `echo` — resonant, futuristic (product ads, sci-fi)
+> - `nova` — bright, energetic (upbeat, explainers)
+> - `fable` — warm, storytelling (narratives, education)
+> - `shimmer` — expressive, warm (organic, lifestyle)
+> - `alloy` — neutral, balanced (general purpose)
 >
-> **音乐：** 我可以自动从 Pixabay 找免版税背景音乐（无需密钥）。若有 `FREESOUND_API_KEY`，还能搜 Freesound 作备份。
+> **Music:** I can automatically find royalty-free background music from Pixabay (no key needed). If you have a `FREESOUND_API_KEY`, I can also search Freesound as a backup.
 >
-> **字幕：** 我会对最终旁白用 WhisperX 转写生成词级字幕，通过 Remotion captions 烧进视频。
+> **Subtitles:** I'll generate word-level subtitles using WhisperX transcription of the final narration, burned into the video via Remotion captions.
 >
-> 要我按推荐继续，还是调整什么？
+> Want me to proceed with my recommendations, or adjust anything?
 
-**用户确认后：**
+**After user confirms:**
 
-1. **写带时长预算的旁白脚本**（见场景导演第 4b 步）：
-   - 从 cuts 计算视频时长
-   - 按视频时长 85-90% 预算
-   - 纪录片 2.0-2.5 词/秒，活力型 2.5-3.0
-   - 生成 TTS 前先核字数
+1. **Write narration script with duration budget** (see scene-director Step 4b):
+   - Calculate video duration from cuts
+   - Budget at 85-90% of video duration
+   - Use 2.0-2.5 words/sec for documentary, 2.5-3.0 for energetic
+   - Verify word count before generating TTS
 
-2. **生成 TTS 旁白：**
-
+2. **Generate TTS narration:**
    ```python
    from tools.audio.openai_tts import OpenAITTS
    result = OpenAITTS().execute({
@@ -104,12 +100,11 @@ metadata:
        'instructions': '<voice direction matching video tone>',
        'output_path': 'path/to/narration.mp3',
    })
-   # 关键：核对 result.data['audio_duration_seconds'] 与视频时长
-   # 旁白超出视频 >1s 就缩短脚本重新生成
+   # CRITICAL: Check result.data['audio_duration_seconds'] vs video duration
+   # If narration exceeds video by >1s: shorten script and regenerate
    ```
 
-3. **下载背景音乐：**
-
+3. **Download background music:**
    ```python
    from tools.audio.pixabay_music import PixabayMusic
    result = PixabayMusic().execute({
@@ -120,8 +115,7 @@ metadata:
    })
    ```
 
-4. **用 WhisperX 生成字幕：**
-
+4. **Generate subtitles via WhisperX:**
    ```python
    from tools.analysis.transcriber import Transcriber
    result = Transcriber().execute({
@@ -129,12 +123,11 @@ metadata:
        'model_size': 'base',
        'language': 'en',
    })
-   # 把 word_timestamps 转成 Remotion caption 格式：
+   # Convert word_timestamps to Remotion caption format:
    # [{ "word": "Hello", "startMs": 0, "endMs": 340 }, ...]
    ```
 
-5. **组装带音频配置的 composition JSON：**
-
+5. **Assemble composition JSON** with audio config:
    ```json
    {
      "audio": {
@@ -145,37 +138,34 @@ metadata:
    }
    ```
 
-### 第 3 步：准备渲染输入
+### Step 3: Prepare Render Inputs
 
-对剪辑决策里的每个 cut：
+For each cut in the edit decisions:
+1. Verify the source asset exists at its declared path
+2. Check asset dimensions/duration match expectations
+3. Prepare transform parameters (scale, position, crop)
 
-1. 核对该源资产在声明路径存在
-2. 检查资产尺寸/时长是否符合预期
-3. 准备变换参数（缩放、位置、裁剪）
+For audio:
+1. Verify narration duration fits within video duration (use `audio_probe`)
+2. Verify music duration covers video duration
+3. Prepare ducking parameters from edit decisions
 
-音频方面：
+### Step 3: Determine Output Profile
 
-1. 用 `audio_probe` 核对旁白时长在视频时长内
-2. 核对音乐时长覆盖视频时长
-3. 从剪辑决策准备闪避参数
+Read the target platform from the brief artifact. Map to a media profile:
 
-### 第 3 步（续）：确定输出档
-
-从 brief 产物读目标平台，映射到媒体档：
-
-| 平台 | 档 | 分辨率 | 说明 |
+| Platform | Profile | Resolution | Notes |
 |----------|---------|-----------|-------|
-| YouTube | `youtube_landscape` | 1920x1080 | 多数解说默认 |
-| TikTok/Reels | `tiktok` | 1080x1920 | 竖屏，需重构图 |
-| Twitter/X | `twitter_landscape` | 1280x720 | 较短格式 |
-| LinkedIn | `linkedin` | 1920x1080 | 职场语境 |
+| YouTube | `youtube_landscape` | 1920x1080 | Default for most explainers |
+| TikTok/Reels | `tiktok` | 1080x1920 | Vertical, needs reframing |
+| Twitter/X | `twitter_landscape` | 1280x720 | Shorter format |
+| LinkedIn | `linkedin` | 1920x1080 | Professional context |
 
-用 `ffmpeg_output_args(get_profile(name))` 取精确编码参数。
+Get the exact encoding parameters via `ffmpeg_output_args(get_profile(name))`.
 
-### 第 4 步：渲染视频
+### Step 4: Render Video
 
-调用 `video_compose`：
-
+Call the `video_compose` tool with:
 ```
 {
   "operation": "render",
@@ -191,19 +181,22 @@ metadata:
 }
 ```
 
-若用 Remotion 处理动画段：
+If using Remotion for animated segments:
+1. Generate Remotion composition data from edit decisions
+2. Call `video_compose` with `operation: "remotion_render"` for animated segments
+3. Assemble Remotion outputs with remaining segments via FFmpeg
 
-1. 从剪辑决策生成 Remotion composition 数据
-2. 对动画段调 `video_compose` 的 `operation: "remotion_render"`
-3. 用 FFmpeg 把 Remotion 输出与其余段拼起来
+**Zero-key Remotion render (component-only videos):**
+When all scenes are Remotion component types (hero_title, stat_card, bar_chart, line_chart,
+pie_chart, kpi_grid, comparison, callout, progress_bar, text_card), render the entire video
+as a single Remotion composition using the Explainer entry point. No FFmpeg assembly needed.
+The edit_decisions cuts array maps directly to Remotion props. See `skills/core/remotion.md`
+for the proven formula — especially the all-dark-background rule for visual consistency.
 
-**零密钥 Remotion 渲染（纯组件视频）：**
-当所有场景都是 Remotion 组件类型（hero_title、stat_card、bar_chart、line_chart、pie_chart、kpi_grid、comparison、callout、progress_bar、text_card），把整片作为单个 Remotion composition 用 Explainer 入口渲染。无需 FFmpeg 拼接。edit_decisions 的 cuts 数组直接映射到 Remotion props。见 `skills/core/remotion.md` 的成熟公式 —— 尤其是视觉一致性的全深色背景规则。
+### Step 5: Audio Post-Processing
 
-### 第 5 步：音频后期处理
-
-**Remotion 路径（默认）：** 完全跳过外部音频混音。Remotion 通过 `<Audio>` 组件原生处理所有音频。在 composition props 里传音频源：
-
+**Remotion path (DEFAULT):** Skip external audio mixing entirely. Remotion handles all audio
+natively via `<Audio>` components. Pass audio sources in the composition props:
 ```json
 {
   "audio": {
@@ -212,27 +205,25 @@ metadata:
   }
 }
 ```
+Remotion renders audio and video in a single pass — no external muxing needed.
+Do NOT use `audio_mixer` for ducking/mixing when rendering via Remotion.
 
-Remotion 一次渲染音频和视频 —— 无需外部混流。用 Remotion 渲染时**不要**用 `audio_mixer` 做闪避/混音。
+**FFmpeg fallback (ONLY when Remotion is unavailable):**
+Call the `audio_mixer` tool to:
+1. Layer narration segments in order
+2. Mix background music at playbook volume
+3. Apply ducking (music dips during narration)
+4. Normalize overall audio levels
+5. Output the final mixed audio track
+The video_compose tool will mux this with the video.
 
-**FFmpeg 兜底（仅当 Remotion 不可用）：**
-调 `audio_mixer` 工具：
+### Step 5b: Generate Subtitles (Mandatory)
 
-1. 按顺序叠放旁白段
-2. 按 playbook 音量混入背景音乐
-3. 应用闪避（旁白时音乐下沉）
-4. 归一化整体音频电平
-5. 输出最终混音轨
-`video_compose` 会把它与视频混流。
+Subtitles are mandatory for all explainer content. Generate them from the narration audio — do NOT skip this step.
 
-### 第 5b 步：生成字幕（强制）
+**Remotion path (DEFAULT — when using Remotion render):**
 
-所有解说内容都必须有字幕。从旁白音频生成 —— 不要跳过。
-
-**Remotion 路径（默认 —— 用 Remotion 渲染时）：**
-
-1. **转写**整段旁白，用 `transcriber` 工具（whisperx）：
-
+1. **Transcribe** the full narration using the `transcriber` tool (whisperx):
    ```python
    from tools.analysis.transcriber import Transcriber
    result = Transcriber().execute({
@@ -241,11 +232,10 @@ Remotion 一次渲染音频和视频 —— 无需外部混流。用 Remotion �
        'language': 'en',
        'output_dir': 'projects/<project>/assets/audio'
    })
-   # result.data 含带词级时间戳的 segments
+   # result.data contains segments with word-level timestamps
    ```
 
-2. **转成 Remotion WordCaption 格式**（不是 SRT）：
-
+2. **Convert to Remotion WordCaption format** (NOT SRT):
    ```python
    captions = []
    for segment in result.data['segments']:
@@ -257,8 +247,7 @@ Remotion 一次渲染音频和视频 —— 无需外部混流。用 Remotion �
            })
    ```
 
-3. **把 captions 加进 composition props** —— 与 `cuts`、`audio` 并列：
-
+3. **Add captions to composition props** — they go in the `captions` array alongside `cuts` and `audio`:
    ```json
    {
      "cuts": [...],
@@ -270,29 +259,30 @@ Remotion 一次渲染音频和视频 —— 无需外部混流。用 Remotion �
    }
    ```
 
-   Remotion 的 CaptionOverlay 会把这些渲染成逐词高亮字幕，用主题的 `captionHighlightColor` 与 `captionBackgroundColor`。这优于 FFmpeg 烧 SRT，因为它产生与旁白同步的动画词级高亮。
+   Remotion's CaptionOverlay renders these as word-by-word highlighted captions with the theme's
+   `captionHighlightColor` and `captionBackgroundColor`. This is superior to FFmpeg SRT burn because
+   it produces animated word-level highlighting synchronized to narration.
 
-**FFmpeg 兜底（仅当 Remotion 不可用）：**
+**FFmpeg fallback (ONLY when Remotion is unavailable):**
 
-Remotion 不可用则退回 SRT 生成 + FFmpeg 烧录：
+If Remotion is not available, fall back to SRT generation + FFmpeg burn:
+   ```python
+   from tools.subtitle.subtitle_gen import SubtitleGen
+   SubtitleGen().execute({
+       'segments': transcription_data['segments'],
+       'format': 'srt',
+       'output_path': 'projects/<project>/assets/subtitles.srt',
+       'max_words_per_cue': 8,
+       'max_chars_per_line': 42
+   })
+   # Then burn with video_compose operation='burn_subtitles'
+   ```
 
-```python
-from tools.subtitle.subtitle_gen import SubtitleGen
-SubtitleGen().execute({
-    'segments': transcription_data['segments'],
-    'format': 'srt',
-    'output_path': 'projects/<project>/assets/subtitles.srt',
-    'max_words_per_cue': 8,
-    'max_chars_per_line': 42
-})
-# 再用 video_compose operation='burn_subtitles' 烧录
-```
+**The final deliverable MUST have subtitles** — either via Remotion captions or FFmpeg burn.
 
-**最终交付必须带字幕** —— 或 Remotion captions 或 FFmpeg 烧录。
+### Step 5c: Pre-Render Validation (Mandatory)
 
-### 第 5c 步：渲染前校验（强制）
-
-**渲染前必跑 composition 校验器。** 它能在浪费渲染时间前抓出问题。
+**Always run the composition validator before rendering.** This catches problems that waste render time.
 
 ```python
 from tools.analysis.composition_validator import CompositionValidator
@@ -300,41 +290,39 @@ result = CompositionValidator().execute({
     'composition_path': 'path/to/composition.json',
     'assets_root': 'remotion-composer/public',
 })
-# 进入渲染前 result.data['valid'] 必须为 True
-# 为 False：先修报告的错误（缺资产、音画不匹配等）
+# result.data['valid'] MUST be True before proceeding to render
+# If False: fix the reported errors first (missing assets, audio-video mismatch, etc.)
 ```
 
-常见抓出项：
+Common catches:
+- Narration audio longer than video (would be cut off)
+- Missing image/audio files (render would fail)
+- Music shorter than video (silence at end)
 
-- 旁白音频长于视频（会被截断）
-- 缺图像/音频文件（渲染会失败）
-- 音乐短于视频（末尾静音）
+**Do not skip this step.** If validation fails, fix the issue and re-validate before rendering.
 
-**不要跳过这一步。** 校验失败就修问题再校验，然后才渲染。
+### Step 6: Post-Render Self-Review (Mandatory — ALL steps required)
 
-### 第 6 步：渲染后自审（强制 —— 所有子步必做）
+After rendering, the agent **must review its own output** before presenting to the user. This catches issues the validator can't see (visual quality, audio sync, subtitle readability).
 
-渲染后，agent 必须在呈现给用户前**审查自己的输出**。这能抓出校验器看不到的问题（视觉质量、音画同步、字幕可读性）。
+**CRITICAL: You MUST complete ALL of steps 6a through 6e. Do NOT skip any step.
+The most common agent failure is doing 6a (frames) and 6c (visual) while skipping
+6b (audio transcription) — which misses catastrophic issues like missing audio entirely.**
 
-**关键：必须完成 6a 到 6e 全部子步，一个都不能跳。最常见的 agent 失误是做了 6a（抽帧）和 6c（视觉）却跳过 6b（音频转写）—— 那会漏掉完全没音频之类的灾难性问题。**
-
-**6a. 探测渲染文件（最先 —— 其余检查的门禁）：**
-
+**6a. Probe rendered file (FIRST — gate for all other checks):**
 ```bash
 ffprobe -v quiet -print_format json -show_format -show_streams rendered_video.mp4
 ```
+Verify:
+- Video stream exists (codec_type: "video") with correct resolution
+- **Audio stream exists (codec_type: "audio")** — if NO audio stream, STOP and fix immediately
+- Duration is within ±5% of target
+- File size is reasonable (not 0 bytes)
 
-核对：
+**If audio stream is missing: the render did not embed audio. Do NOT proceed to present
+the video to the user. Fix the audio configuration and re-render.**
 
-- 视频流存在（codec_type: "video"）且分辨率正确
-- **音频流存在（codec_type: "audio"）** —— 没有音频流就立刻停下修
-- 时长在目标 ±5% 内
-- 文件大小合理（非 0 字节）
-
-**音频流缺失即说明渲染没嵌入音频。不要继续把视频呈现给用户。修好音频配置重新渲染。**
-
-**6b. 抽取审查帧：**
-
+**6b. Extract review frames:**
 ```python
 from tools.analysis.frame_sampler import FrameSampler
 midpoints = [(cut['in_seconds'] + cut['out_seconds']) / 2 for cut in cuts]
@@ -347,8 +335,7 @@ FrameSampler().execute({
 })
 ```
 
-**6c. 转写渲染后的音频（强制 —— 不要跳）：**
-
+**6c. Transcribe rendered audio (MANDATORY — do NOT skip):**
 ```python
 from tools.analysis.transcriber import Transcriber
 result = Transcriber().execute({
@@ -357,64 +344,59 @@ result = Transcriber().execute({
     'language': 'en',
     'output_dir': 'path/to/review-frames',
 })
-# 返回 0 词：音频静音/缺失 —— 停下修
-# 词数 < 脚本词数的 80%：音频被截断 —— 排查
+# If result returns 0 words: audio is silent/missing — STOP and fix
+# If word count < 80% of script word count: audio is cut off — investigate
 ```
 
-**6d. 视觉检查 —— 逐帧看：**
+**6d. Visual inspection — review each frame:**
+- Does the background color/gradient match intent? (watch for white backgrounds on dark-themed videos)
+- Are images rendering correctly? (not blank, not stretched)
+- Are subtitles/captions visible and properly spaced?
+- Are overlays (section titles, stat reveals) positioned correctly?
+- Is the opening scene visually strong? (important for social media thumbnails)
+- Does the CTA/closing screen show correct text? (AI-generated text in images frequently hallucinates — use Remotion text_card for any text that must be exact)
 
-- 背景色/渐变是否符合意图？（警惕深色主题视频出现白背景）
-- 图像渲染正确吗？（非空白、非拉伸）
-- 字幕/说明可见且间距合理吗？
-- 叠层（章节标题、数据揭示）位置对吗？
-- 开场画面视觉够强吗？（社交媒体缩略图很重要）
-- CTA/收尾画面文字正确吗？（图像里 AI 生成的文字经常幻觉 —— 必须精确的文字用 Remotion text_card）
+**6e. Audio inspection — check transcript against script:**
+- Is the full narration captured? (compare last transcribed word to last scripted word)
+- Any words cut off at the end? (narration exceeding video duration)
+- Timing alignment — do narration segments roughly match their intended scenes?
+- Is background music audible? (transcriber may not capture music, but ffprobe confirms audio stream)
 
-**6e. 音频检查 —— 把转写稿与脚本比对：**
+**6f. Compile and present review to user:**
 
-- 旁白是否完整？（把转写最后一个词与脚本最后一个词比对）
-- 末尾有词被截断吗？（旁白超出视频时长）
-- 时序对齐 —— 旁白段大致对应其预期场景吗？
-- 背景音乐可听见吗？（转写器可能抓不到音乐，但 ffprobe 能确认音频流）
-
-**6f. 汇总并向用户呈现审查结果：**
-
-> **“[视频标题]” 渲染后审查：**
+> **Post-render review for "[Video Title]":**
 >
-> **文件：** [时长]s，[分辨率]，[文件大小] —— 音频流：[存在/缺失]
-> **音频：** [完整/在 Xs 处截断] —— 从渲染输出转写出 [N]/[M] 词
-> **画面：** [检查 N 个场景] —— [问题或“全部场景渲染正常”]
-> **字幕：** [Remotion CaptionOverlay / FFmpeg SRT / 缺失] —— [词级高亮工作/有问题]
-> **发现问题：** [列出问题及严重程度]
+> **File:** [duration]s, [resolution], [file size] — audio stream: [present/MISSING]
+> **Audio:** [Complete/Cut off at Xs] — [N]/[M] words transcribed from rendered output
+> **Visuals:** [N scenes inspected] — [issues or "all scenes rendering correctly"]
+> **Captions:** [Remotion CaptionOverlay / FFmpeg SRT / MISSING] — [word-level highlight working / issues]
+> **Issues found:** [list any issues with severity]
 >
-> **建议：** [需要修什么，若有]
+> **Recommendations:** [what to fix, if anything]
 >
-> 要我修这些问题重渲染，还是可以定稿了？
+> Want me to fix these issues and re-render, or is this good to go?
 
-**只有用户批准后（或 agent 发现零问题），视频才算定稿。**
+**Only after user approves (or agent finds zero issues) should the video be considered final.**
 
-### 第 6 步（旧）：文件与内容校验
+### Step 6-old: File and Content Verification
 
-**文件校验：**
+**File verification:**
+- [ ] Output file exists at declared path
+- [ ] File size is reasonable (not 0 bytes, not suspiciously small)
+- [ ] File is a valid container (ffprobe succeeds)
 
-- [ ] 输出文件在声明路径存在
-- [ ] 文件大小合理（非 0 字节、非可疑地小）
-- [ ] 文件是合法容器（ffprobe 通过）
+**Content verification:**
+- [ ] Duration within ±5% of target
+- [ ] Resolution matches selected profile
+- [ ] Audio channels present (stereo)
+- [ ] No audio clipping or silence gaps > 1s
 
-**内容校验：**
+**Quality check (covered by self-review above):**
+- [ ] Visual: all scene frames inspected
+- [ ] Audio: full transcription verified
+- [ ] Subtitles: visible and correctly timed
 
-- [ ] 时长在目标 ±5% 内
-- [ ] 分辨率符合所选档
-- [ ] 音频声道存在（立体声）
-- [ ] 无音频削波或 > 1s 的静音间隙
-
-**质量检查（由上面的自审覆盖）：**
-
-- [ ] 视觉：所有场景帧已检查
-- [ ] 音频：完整转写已核对
-- [ ] 字幕：可见且时序正确
-
-### 第 7 步：构建渲染报告
+### Step 7: Build Render Report
 
 ```json
 {
@@ -444,28 +426,28 @@ result = Transcriber().execute({
 }
 ```
 
-### 第 8 步：自评
+### Step 8: Self-Evaluate
 
-打分（1-5）：
+Score (1-5):
 
-| 维度 | 问题 |
+| Criterion | Question |
 |-----------|----------|
-| **可播放性** | 视频在标准播放器里无错播放吗？ |
-| **时长准确度** | 实际时长在目标 ±5% 内吗？ |
-| **音频质量** | 旁白清晰、音乐平衡、无削波吗？ |
-| **画面质量** | 图像锐利、转场平滑、无伪影吗？ |
-| **字幕准确度** | 字幕存在、可读、同步吗？ |
+| **Playability** | Does the video play without errors in a standard player? |
+| **Duration accuracy** | Is actual duration within ±5% of target? |
+| **Audio quality** | Is narration clear, music balanced, no clipping? |
+| **Visual quality** | Are images sharp, transitions smooth, no artifacts? |
+| **Subtitle accuracy** | Are subtitles present, readable, and synced? |
 
-任一项低于 3 分，排查并重渲染。
+If any dimension scores below 3, investigate and re-render.
 
-### 第 9 步：提交
+### Step 9: Submit
 
-对 render_report 做 schema 校验，并通过 checkpoint 持久化。
+Validate the render_report against the schema and persist via checkpoint.
 
-## 常见坑
+## Common Pitfalls
 
-- **资产文件缺失**：开渲染前永远核对每个被引用的文件存在。渲染中途缺文件浪费时间。
-- **音频同步漂移**：旁白段间的累积计时误差导致音画失步。用绝对时间戳，不用相对偏移。
-- **字幕编码**：把字幕烧进视频（硬字幕）以获得最大兼容性。社交媒体别依赖软字幕。
-- **单遍编码**：同文件大小下两遍编码质量更好，值得多花的渲染时间。
-- **忽略媒体档**：YouTube 与 TikTok 要求差别很大。永远先查目标档。
+- **Missing asset files**: Always verify every referenced file exists before starting the render. A missing file mid-render wastes time.
+- **Audio sync drift**: Accumulated timing errors across narration segments cause audio-visual desync. Use absolute timestamps, not relative offsets.
+- **Subtitle encoding**: Burn subtitles into the video (hardcoded) for maximum compatibility. Don't rely on soft subtitles for social media.
+- **Single-pass encode**: Two-pass encoding produces better quality at the same file size. Worth the extra render time.
+- **Ignoring media profile**: YouTube and TikTok have very different requirements. Always check the target profile.

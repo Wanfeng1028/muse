@@ -6,77 +6,77 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 创意导演 — 口播流水线
+# Idea Director — Talking Head Pipeline
 
-## 何时使用
+## When to Use
 
-你正在启动一个口播视频项目，手上已有一段真人讲话的原始素材。你的职责是分析素材、理解其中内容，并产出一份 brief，凝练内容的本质与制作目标。
+You are starting a talking-head video project. You have raw footage of a person speaking. Your job is to analyze the footage, understand what it contains, and build a brief that captures the content's essence and production goals.
 
-与解说流水线从选题出发不同，你从既有素材出发。brief 记录的是你手头有什么、以及最终视频应该长什么样。
+Unlike the explainer pipeline (which starts from a topic), you start from existing footage. The brief documents what you're working with and what the final video should look like.
 
-## 运行时选择（强制 — 呈现约束，不要静默选择）
+## Runtime Selection (MANDATORY — present the constraint, don't silently pick)
 
-锁定 `render_runtime = "remotion"`（首选，使用 `TalkingHead` + `remotion_caption_burn`）或 `"ffmpeg"`（用于无合成的源素材拼接）。**本流水线第一阶段 HyperFrames 不是合法运行时** —— TalkingHead 合成与词级字幕烧录在 HyperFrames 上尚无对等实现。
+Lock `render_runtime = "remotion"` (preferred — uses `TalkingHead` + `remotion_caption_burn`) or `"ffmpeg"` (for source-footage concat with no composition). **HyperFrames is NOT a valid runtime on this pipeline in Phase 1** — the TalkingHead composition and word-level caption burn have no HyperFrames parity yet.
 
-依据 AGENT_GUIDE.md 中"必须同时呈现两种合成运行时（硬规则）"：不得静默默认 remotion。需告知用户："HyperFrames 可用，但口播依赖 Remotion 的 TalkingHead 合成，因此 remotion 是唯一可行的合成选择（或 ffmpeg 做粗剪）—— 是否继续？"并记录一条 `render_runtime_selection` 决策，把 hyperframes 列为被拒选项（`rejected_because: "TalkingHead + caption parity deferred on talking-head"`）。
+Per AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)": do NOT silently default to remotion. Tell the user: "HyperFrames is available, but talking-head depends on the Remotion TalkingHead composition, so remotion is the only viable composition choice (or ffmpeg for a raw cut) — OK to proceed?" Record a `render_runtime_selection` decision with hyperframes as a rejected option (`rejected_because: "TalkingHead + caption parity deferred on talking-head"`).
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/brief.schema.json` | 产物校验 |
-| 输入 | 原始素材文件路径 | 源材料 |
-| 工具 | `ffprobe`（shell 调用） | 素材元数据提取 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/brief.schema.json` | Artifact validation |
+| Inputs | Raw footage file path | Source material |
+| Tools | `ffprobe` (via shell) | Footage metadata extraction |
 
-## 流程
+## Process
 
-### 步骤 1：探测素材
+### Step 1: Inspect the Footage
 
-用 ffprobe 提取元数据：
+Use ffprobe to extract metadata:
+- Duration
+- Resolution
+- Frame rate
+- Audio channels and codec
+- File size
 
-- 时长
-- 分辨率
-- 帧率
-- 音轨数与编码
-- 文件体积
+This tells you what you're working with — quality, length, format.
 
-由此了解手头素材的质量、长度与格式。
+### Step 2: Quick Content Assessment
 
-### 步骤 2：快速内容评估
+Watch/scan the footage mentally (or sample frames if frame_sampler is available):
+- What is the person talking about?
+- How long is the raw footage?
+- What's the intended platform? (Ask the user if unclear)
+- Is there good audio? Background noise?
 
-通览素材（若 frame_sampler 可用则抽样帧）：
+### Step 3: Build the Brief
 
-- 讲话者在谈什么主题？
-- 原始素材多长？
-- 目标平台是什么？（不明确时询问用户）
-- 音频是否可用？有无底噪？
+Create a brief artifact documenting:
+- **Title**: Descriptive title based on footage content
+- **Hook**: What makes this worth watching?
+- **Key points**: Main topics covered in the footage
+- **Tone**: Match the speaker's actual tone (casual, professional, educational)
+- **Style**: Derive the overlay/look direction from the footage, speaker persona, audience, and platform. `clean-professional` is a safe fallback, not the default answer to every talking-head brief.
+- **Target platform**: Where this will be published
+- **Target duration**: May be shorter than raw footage (trimmed)
 
-### 步骤 3：撰写 brief
+### Step 4: Self-Evaluate
 
-创建 brief 产物，记录：
+| Criterion | Question |
+|-----------|----------|
+| **Accuracy** | Does the brief reflect what's actually in the footage? |
+| **Completeness** | Are all required brief fields present? |
+| **Platform fit** | Is the target platform appropriate for this content? |
 
-- **标题**：基于素材内容的描述性标题
-- **钩子**：这段内容为何值得一看
-- **要点**：素材覆盖的主要话题
-- **语气**：匹配讲话者的真实语气（随意、专业、教学）
-- **风格**：从素材、讲话者人设、受众与平台推导叠加与观感方向。`clean-professional` 是安全回退，不是每份口播 brief 的默认答案
-- **目标平台**：发布渠道
-- **目标时长**：可短于原始素材（经裁剪）
+### Step 5: Submit
 
-### 步骤 4：自评
-
-| 标准 | 问题 |
-|------|------|
-| **准确** | brief 是否反映了素材真实内容？ |
-| **完整** | 所有必填字段是否齐备？ |
-| **平台契合** | 目标平台是否适合此内容？ |
-
-### 步骤 5：提交
-
-对照 schema 校验 brief，并通过 checkpoint 持久化。
+Validate the brief against the schema and persist via checkpoint.
 
 ---
 
-## 关卡提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段默认需要人工批准（`human_approval_default: true`）。审阅通过后：以 `status="awaiting_human"` 打 checkpoint，呈现摘要（Backlot 看板会渲染产物），并**结束本轮回复**。不要在同一回复中启动下一阶段。批准按关卡独立生效 —— 之前说过的一句"继续"不覆盖本关卡。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

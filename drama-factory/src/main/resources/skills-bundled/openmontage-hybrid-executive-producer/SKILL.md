@@ -6,37 +6,37 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 混合管线总制片人（Executive Producer）
+# Executive Producer — Hybrid Pipeline
 
-## 适用场景
+## When to Use
 
-当你负责一支**混合型视频**——把真实源素材与设计/生成的支撑素材结合——你就是总制片人（EP）。你按顺序调度整条管线，并在每个质量关口重点审查**源素材与支撑层的平衡、叠加层密度、跨媒介一致性**。
+You are the **Executive Producer (EP)** for a hybrid video that combines source footage with designed or generated support assets. You orchestrate the pipeline serially with quality gates focused on **source/support balance, overlay density, and cross-medium coherence**.
 
-混合管线**没有前期筹备阶段**。用户直接提供方向与源素材。EP 的职责是确保生成的支撑层起到增强作用，而不是盖过源素材。
+**No pre-production stages.** The user provides direction and source material. The EP ensures generated support layers enhance rather than eclipse the source.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| 管线 | `pipeline_defs/hybrid.yaml` | 阶段定义 |
-| 技能 | 全部 7 个导演技能 + `meta/reviewer` | 阶段执行 |
-| Schema | 所有 artifact schema | 校验 |
-| Playbook | 当前激活的风格 playbook | 质量约束 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Pipeline | `pipeline_defs/hybrid.yaml` | Stage definitions |
+| Skills | All 7 director skills + `meta/reviewer` | Stage execution |
+| Schemas | All artifact schemas | Validation |
+| Playbook | Active style playbook | Quality constraints |
 
-## 累积状态结构
+## Cumulative State
 
 ```
 EP_STATE:
   pipeline: hybrid
-  playbook: <所选>
-  target_duration_seconds: <来自 brief>
-  budget_total_usd: <配置值>
+  playbook: <selected>
+  target_duration_seconds: <from brief>
+  budget_total_usd: <configured>
   budget_spent_usd: 0.0
 
-  # 混合管线专有
-  anchor_medium: null         # 源素材类型（访谈、产品、录屏等）
-  support_layers: []          # 计划的支撑类型（图解、浮层、图形等）
-  source_to_support_ratio: null  # 目标比例（例如 70/30）
+  # Hybrid-specific
+  anchor_medium: null         # source footage type (interview, product, screen, etc.)
+  support_layers: []          # planned support types (diagrams, overlays, graphics, etc.)
+  source_to_support_ratio: null  # target balance (e.g., 70/30 source/support)
 
   artifacts:
     idea: null
@@ -51,87 +51,87 @@ EP_STATE:
   issues_log: []
 ```
 
-## 跨阶段检查（EP 专有）
+## EP-Specific Cross-Stage Checks
 
-### IDEA 阶段之后
+### After IDEA stage:
 ```
-检查：锚定媒介是否清晰
-  - 锚定媒介是否被明确指出？
-  - 支撑层是否有充分理由（填补真实缺口，而非装饰）？
-  - 源素材清单是否现实可行？
-```
-
-### SCRIPT 阶段之后
-```
-检查：源素材与支撑层的节奏分离
-  - 以源素材为主的段落与以支撑为主的段落是否清晰分开？
-  - 脚本是否避免依赖尚不存在的素材？
-  - 旁白/对白计划是否现实？
+CHECK: Anchor medium clarity
+  - Is the anchor medium explicitly identified?
+  - Are support layers justified (filling real gaps, not decorating)?
+  - Is the source inventory realistic?
 ```
 
-### SCENE_PLAN 阶段之后
+### After SCRIPT stage:
 ```
-检查：源素材优先性
-  - 在预期位置，源素材是否仍保持视觉主导？
-  - 浮层与支撑层是否让画面过载？
-  - 同时并存的浮层上限：2 层
-
-检查：变体规划
-  - 若计划平台变体：是否现实？
-  - 宽高比变体是否仍保持可读性？
+CHECK: Source/support beat separation
+  - Are source-led and support-led beats clearly separated?
+  - Does the script avoid relying on unsupported assets?
+  - Is narration/dialogue plan realistic?
 ```
 
-### ASSETS 阶段之后
+### After SCENE_PLAN stage:
 ```
-检查：源素材与支撑素材的质量匹配
-  - 生成的支撑素材是否与源素材质量等级匹配？
-  - 共享模板素材是否在多场景复用？
-  - 预算关口：达 90% 时告警
-```
+CHECK: Source primacy
+  - Does source footage remain visually primary where intended?
+  - Are overlay and support layers not overloading the frame?
+  - Max concurrent overlay layers: 2
 
-### EDIT 阶段之后
-```
-检查：锚定剪辑的连贯性
-  - 在添加支撑层之前，锚定剪辑本身是否连贯？
-  - 支撑视觉是澄清了内容，还是造成干扰？
-  - 变体逻辑在各交付物间是否一致？
+CHECK: Variant planning
+  - If platform variants planned: are they realistic?
+  - Do aspect-ratio variants maintain readability?
 ```
 
-### COMPOSE 阶段之后
+### After ASSETS stage:
 ```
-检查：输出验证
-  - ffprobe：时长、分辨率、编码
-  - 最终渲染中源素材与支撑层是否仍保持平衡
-  - 音频在实拍与生成元素之间是否连贯
-  - 宽高比变体是否保留可读性
+CHECK: Source/support quality match
+  - Do generated support assets match the quality level of source footage?
+  - Are shared template assets reused across scenes?
+  - Budget gate: 90% threshold warning
 ```
 
-## 质量关口一览
+### After EDIT stage:
+```
+CHECK: Anchor-cut coherence
+  - Is the anchor cut coherent BEFORE support layers are added?
+  - Do support visuals clarify rather than distract?
+  - Is variant logic consistent across deliverables?
+```
 
-| 关口 | 位于阶段之后 | 检查内容 | 失败动作 |
-|------|--------------|----------|----------|
-| G1 | idea | 锚定媒介、支撑理由 | 修订 |
-| G2 | script | 源/支撑分离、旁白计划 | 修订 |
-| G3 | scene_plan | 源素材优先、浮层密度、变体 | 修订 |
-| G4 | assets | 质量匹配、复用、预算 | 修订 |
-| G5 | edit | 锚定剪辑连贯、支撑清晰 | 修订 |
-| G6 | compose | 平衡、变体、音频连贯 | 修订或退回 |
-| G7 | publish | 元数据、源素材构成标注 | 修订 |
-| FINAL | 全部 | 源/支撑平衡、可读性 | 退回 |
+### After COMPOSE stage:
+```
+CHECK: Output validation
+  - ffprobe: duration, resolution, codec
+  - Source and support layers remain balanced in the final render
+  - Audio stays coherent across footage and generated elements
+  - Aspect-ratio variants preserve readability
+```
 
-## 执行限额
+## Quality Gates Summary
 
-| 限额 | 值 |
-|------|-----|
-| 每阶段最大修订次数 | 3 |
-| 每对阶段间最大退回次数 | 1 |
-| 总退回上限 | 3 |
-| 总预算上限 | 可配置（默认 $2） |
-| 总墙钟时间上限 | 12 分钟 |
+| Gate | After Stage | What's Checked | Fail Action |
+|------|-------------|---------------|-------------|
+| G1 | idea | Anchor medium, support justification | Revise |
+| G2 | script | Source/support separation, narration plan | Revise |
+| G3 | scene_plan | Source primacy, overlay density, variants | Revise |
+| G4 | assets | Quality match, reuse, budget | Revise |
+| G5 | edit | Anchor-cut coherence, support clarity | Revise |
+| G6 | compose | Balance, variants, audio coherence | Revise or send-back |
+| G7 | publish | Metadata, source-mix labeling | Revise |
+| FINAL | all | Source/support balance, readability | Send-back |
 
-## 常见陷阱
+## Execution Limits
 
-- **支撑盖过源素材**：生成的图形不应主导画面。源素材才是锚点。
-- **浮层过载**：同时并存的浮层最多 2 层。更多会带来视觉噪声。
-- **质量不一致**：源素材是 1080p 手持拍摄，而支撑层是精致的 4K 图形，落差会非常刺眼。
-- **忽视变体可读性**：在 16:9 下清晰的文字浮层，到 9:16 可能完全无法阅读。
+| Limit | Value |
+|-------|-------|
+| Max revisions per stage | 3 |
+| Max send-backs per stage pair | 1 |
+| Max total send-backs | 3 |
+| Max total budget | Configurable (default $2) |
+| Max total wall-time | 12 minutes |
+
+## Common Pitfalls
+
+- **Support eclipsing source**: Generated graphics should not dominate. Source footage is the anchor.
+- **Overlay overload**: Max 2 concurrent overlay layers. More creates visual noise.
+- **Inconsistent quality**: If source is 1080p handheld and support is slick 4K graphics, the mismatch is jarring.
+- **Ignoring variant readability**: Text overlays that work at 16:9 may be unreadable at 9:16.

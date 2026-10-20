@@ -6,61 +6,61 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 创意导演 — 本地化配音流水线
+# Idea Director - Localization Dub Pipeline
 
-## 何时使用
+## When To Use
 
-当用户已有源视频，希望得到翻译后的交付物时启用本流水线：包括字幕、配音音轨，或一种乃至多种目标语言的本地化成片。
+Use this pipeline when the user has a source video and wants translated deliverables: subtitles, dubbed audio, or localized videos in one or more target languages.
 
-你的首要职责是判断究竟需要哪一种本地化，因为"只上字幕""只配旁白""连口型一起配"是三种性质完全不同的工作。
+Your first responsibility is to define what kind of localization is actually required, because subtitle-only, dubbed-audio, and lip-synced translation are different jobs.
 
-## 运行环境选择（强制 — 要说明约束，不许默默选定）
+## Runtime Selection (MANDATORY — present the constraint, don't silently pick)
 
-将 `render_runtime` 锁定为 `"remotion"`（需要逐语言字幕烧录 / 对口型的合成型交付）或 `"ffmpeg"`（仅在源片上烧字幕、不做任何合成）。**在 Phase 1 中 HyperFrames 不是本流水线的合法运行时**——本地化依赖 Remotion 的字幕能力栈，而"配音+对口型"还依赖 Remotion 的 TalkingHead 管线。
+Lock `render_runtime = "remotion"` (composed deliverables with per-locale caption burn / lip-sync) or `"ffmpeg"` (pure subtitle-burn over source with no composition). **HyperFrames is NOT a valid runtime on this pipeline in Phase 1** — localization depends on Remotion's caption stack and, for dubbed-with-lip-sync, on the Remotion TalkingHead pipeline.
 
-依据 AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)"：不要默默默认选择 remotion。要明确告知用户："HyperFrames 是可用的，但 localization-dub 依赖 Remotion 的字幕 + TalkingHead 对等能力，Phase 1 尚未具备——remotion 是唯一可行选项"。同时记录一条 `render_runtime_selection` 决策，注明 hyperframes 的 `rejected_because: "caption + lip-sync parity deferred on localization-dub"`。
+Per AGENT_GUIDE.md → "Present Both Composition Runtimes (HARD RULE)": do NOT silently default to remotion. Tell the user: "HyperFrames is available, but localization-dub depends on Remotion caption + TalkingHead parity that isn't there yet in Phase 1 — remotion is the only viable choice". Record a `render_runtime_selection` decision with hyperframes `rejected_because: "caption + lip-sync parity deferred on localization-dub"`.
 
-## 参考输入
+## Reference Inputs
 
 - `docs/localization-dubbing-best-practices.md`
 - `skills/creative/short-form.md`
 - `skills/creative/long-form.md`
 
-## 流程
+## Process
 
-### 1. 界定本地化范围
+### 1. Define The Localization Scope
 
-需采集：
+Capture:
 
-- 源语言；
-- 目标语言；
-- 审核责任人；
-- 是否需要术语审核或法务审核；
-- 用户要的是字幕、配音音轨、对口型，还是混合方案。
+- source language,
+- target languages,
+- review owner,
+- whether glossary or legal review is required,
+- whether the user needs subtitles, dubbed audio, lip-sync, or a mix.
 
-### 2. 归类源片形态
+### 2. Classify The Source
 
-记录源片模式：
+Record the source mode:
 
 - `single_speaker`
 - `multi_speaker`
 - `voiceover_led`
 - `speaker_led_on_camera`
 
-同时记录画面文字或动态图形是否需要人工替换或遮挡处理。
+Also record whether on-screen text or motion graphics will need manual replacement or coverage.
 
-### 3. 挑选与实际相符的交付物
+### 3. Pick Deliverables That Match Reality
 
-可能的交付物：
+Possible deliverables:
 
-- 仅字幕包；
-- 无对口型的配音成片；
-- 带对口型的本地化成片；
-- 逐语言导出包。
+- subtitle package only,
+- dubbed video without lip sync,
+- lip-synced localized video,
+- per-language export bundle.
 
-### 4. 编写简报
+### 4. Build The Brief
 
-建议的元数据字段：
+Recommended metadata keys:
 
 - `source_language`
 - `target_languages`
@@ -70,21 +70,24 @@ metadata:
 - `review_requirements`
 - `timing_risks`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 本地化范围已明确；
-- 目标产出切实可行；
-- 术语表与审核要求已记录；
-- 由说话人数或可见嘴部带来的风险升高已显式呈现。
+- localization scope is explicit,
+- target outputs are realistic,
+- glossary and review requirements are captured,
+- risk increases from speaker count or visible mouths are surfaced.
 
-## 常见坑
+## Common Pitfalls
 
-- 把所有翻译需求都当成配音需求。
-- 等到音频生成之后才想起术语控制。
-- 在视觉上难以处理的源片上承诺对口型却不预先警示。
+- Calling every translation request a dubbing request.
+- Ignoring glossary control until after audio is generated.
+- Promising lip sync on visually difficult source footage without warning.
 
 ---
 
-## 门禁提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为门（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，呈现摘要（Backlot 看板会渲染该产物），并**结束本轮回复**。不要在同一条回复中启动下一阶段。审批是逐门独立的——之前某次的"可以继续"不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

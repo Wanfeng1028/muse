@@ -6,36 +6,36 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剪辑总监 — 屏幕演示流水线
+# Edit Director - Screen Demo Pipeline
 
-## 何时使用
+## When To Use
 
-本阶段将计划转化为具体的、符合 schema 的剪辑方案：裁剪、调速、叠加、字幕和转场。剪辑要足够简单以便用当前工具执行，同时足够明确以便合成阶段可预测。
+This stage turns the plan into a concrete, schema-valid edit: trims, speeds, overlays, subtitles, and transitions. Keep the edit simple enough to execute with the current tooling and explicit enough that composition is predictable.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
+| Layer | Resource | Purpose |
 |-------|----------|---------|
-| Schema | `schemas/artifacts/edit_decisions.schema.json` | 工件校验 |
-| 前置工件 | `state.artifacts["assets"]["asset_manifest"]`、`state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]` | 素材、视觉计划、时序 |
-| 手册 | 当前激活的风格手册 | 叠加与节奏规则 |
+| Schema | `schemas/artifacts/edit_decisions.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["assets"]["asset_manifest"]`, `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]` | Assets, visual plan, timing |
+| Playbook | Active style playbook | Overlay and pacing rules |
 
-## 流程
+## Process
 
-### 1. 从最小可行剪辑开始
+### 1. Start With The Smallest Clear Edit
 
-屏幕演示越过度剪辑越糟。按此顺序构建时间线：
+Screen demos get worse when over-edited. Build the timeline in this order:
 
-1. 裁掉或剪去无效时间
-2. 应用速度变更
-3. 放置叠加
-4. 设定字幕行为
-5. 定义音频行为
-6. 在 `edit_decisions.metadata` 中记录详细的裁切/变速备注
+1. trim or cut dead time,
+2. apply speed changes,
+3. place overlays,
+4. set subtitle behavior,
+5. define audio behavior,
+6. capture detailed crop/ramp notes in `edit_decisions.metadata`.
 
-### 2. 保持 Schema 整洁
+### 2. Keep The Schema Clean
 
-用 `cuts[]` 记录实际源片段和速度变更。`overlays[]`、`subtitles`、`music` 和 `transitions` 仅用于 schema 已建模的内容。屏幕演示特有的细节放在 metadata 中：
+Use `cuts[]` for actual source segments and speed changes. Use `overlays[]`, `subtitles`, `music`, and `transitions` only for things the schema already models. Put screen-demo-specific detail in metadata:
 
 - `crop_keyframes`
 - `speed_plan`
@@ -43,53 +43,53 @@ metadata:
 - `audio_notes`
 - `variant_notes`
 
-### 3. 剪辑规则
+### 3. Editing Rules
 
-- 观众应在前几秒内看到有意义的动作或结果
-- 结果时刻保持正常速度
-- 打字、安装和等待应加速或删除
-- 剪辑不得在词语中间开始或在结果呈现前结束
-- 不要通过剪辑引入超出场景计划要求的额外运动
+- the viewer should see useful motion or result within the first seconds,
+- result moments stay at normal speed,
+- typing, installs, and waiting should be accelerated or removed,
+- no cut starts mid-word or ends before the payoff lands,
+- do not introduce more motion through editing than the scene plan asked for.
 
-### 4. 叠加规则
+### 4. Overlay Rules
 
-- 钩子或步骤标签可以立即出现
-- 标注应在动作发生前稍早出现
-- 模糊遮罩必须视为关键项而非可选项
-- 字幕和标注不得争夺同一空间
+- hook or step label can appear immediately,
+- callouts should appear slightly before the action,
+- blur masks must be treated as critical, not optional,
+- subtitles and callouts must not compete for the same space.
 
-### 5. 音频规则
+### 5. Audio Rules
 
-- 保持主语音清晰且居中
-- 静音或大幅降低无意义的加速噪音
-- 仅在背景音乐能增加价值且能在闪避处理后优雅存活时才使用
-- 如果生成了旁白，确保其适配收紧后的时间线
+- keep primary speech clear and centered,
+- mute or greatly reduce meaningless sped-up noise,
+- only use background music if it adds value and survives ducking gracefully,
+- if narration was generated, ensure it fits the tightened timeline.
 
-### 6. 质量门禁
+### 6. Quality Gate
 
-**时间线完整性：**
-- [ ] 剪辑覆盖完整的预期时间线
-- [ ] 无意外黑帧间隙
-- [ ] 变速斜坡不重叠
-- [ ] 有效时长与简报紧密匹配
+**Timeline integrity:**
+- [ ] Cuts cover the full intended timeline
+- [ ] No accidental black gaps
+- [ ] Speed ramps don't overlap
+- [ ] Effective duration matches the brief closely
 
-**叠加完整性：**
-- [ ] 每个计划中的标注或遮罩都已体现
-- [ ] 无叠加冲突
-- [ ] 锚定 UI 的叠加已足够清晰地记录，以便合成阶段定位
+**Overlay integrity:**
+- [ ] Every planned callout or mask is represented
+- [ ] No overlay collisions
+- [ ] UI-anchored overlays are documented clearly enough to position during compose
 
-**音频完整性：**
-- [ ] 主音频或旁白覆盖整个时间线
-- [ ] 加速段落有刻意设计的音频处理
-- [ ] 音乐（如有）不会与指令竞争
+**Audio integrity:**
+- [ ] Primary audio or narration covers the entire timeline
+- [ ] Speed-up segments have intentional audio treatment
+- [ ] Music, if present, will not compete with instruction
 
-**字幕完整性：**
-- [ ] 所有旁白段落均有字幕
-- [ ] 位置覆盖保护了重要 UI 内容
-- [ ] 计划的速度变更后字幕时序仍然有效
+**Subtitle integrity:**
+- [ ] Subtitles are present for all narrated sections
+- [ ] Position overrides protect important UI content
+- [ ] Subtitle timing still works after planned speed changes
 
-## 常见陷阱
+## Common Pitfalls
 
-- 用工作流不需要的电影式转场过度构建剪辑。
-- 让加速音频变成刺耳的点击和打字声墙。
-- 忘记裁切和速度计划应放在 metadata 中，而非任意 schema 字段。
+- Overbuilding the edit with cinematic transitions the workflow does not need.
+- Letting sped-up audio become a wall of harsh clicks and typing.
+- Forgetting that crop and speed plans live in metadata, not arbitrary schema fields.

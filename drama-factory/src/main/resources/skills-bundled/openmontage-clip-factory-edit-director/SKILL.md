@@ -6,69 +6,69 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剪辑总监（剪辑工厂流水线）
+# Edit Director - Clip Factory Pipeline
 
-## 适用时机
+## When To Use
 
-本阶段把通过审核的片子变成彼此独立的迷你剪辑。每条都必须能单独成立，但整批看起来仍应像同一系列。
+This stage turns the approved clips into independent mini-edits. Each clip must work alone, but the collection should still feel like a coherent series.
 
-## 前置条件
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/edit_decisions.schema.json` | 产物校验 |
-| 上游产物 | `state.artifacts["assets"]["asset_manifest"]`、`state.artifacts["scene_plan"]["scene_plan"]`、`state.artifacts["script"]["script"]` | 素材、布局、转录文本 |
-| 手册 | 当前生效的风格 playbook | 转场与字幕一致性 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/edit_decisions.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["assets"]["asset_manifest"]`, `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]` | Assets, layouts, transcripts |
+| Playbook | Active style playbook | Transition and subtitle consistency |
 
-## 流程
+## Process
 
-### 1. 建立共享剪辑模板
+### 1. Build A Shared Edit Template
 
-先锁定批次默认值：
+Lock the batch defaults first:
 
-- 字幕样式；
-- 钩子出现时机；
-- 下三分之一出现时机；
-- 水印行为；
-- 音频淡入淡出时长。
+- subtitle style,
+- hook timing,
+- lower-third timing,
+- watermark behavior,
+- audio fade lengths.
 
-然后只在必要处做逐条覆盖。
+Then apply per-clip overrides only where necessary.
 
-### 2. 优化开头 2-3 秒
+### 2. Optimize The First 2-3 Seconds
 
-对每条片子：
+For every clip:
 
-- 从动作、人脸或结果切入；
-- 需要时立刻显示钩子文案；
-- 字幕从第一个说出的词开始；
-- 避免拖延重点的开场铺垫。
+- start on motion, face, or result,
+- show hook text immediately if needed,
+- let subtitles begin with the first spoken word,
+- avoid intros that delay the point.
 
-### 3. 保持边界干净
+### 3. Keep Boundaries Clean
 
-- 不要在词中间切；
-- 重点落地后不留尾部静音；
-- 钩子之前不要“为铺垫而铺垫”；
-- 除非片尾卡确实值这段时间，否则不加。
+- no cuts mid-word,
+- no trailing silence after the point lands,
+- no "setup for setup's sake" before the hook,
+- no outro cards unless they earn the time.
 
-### 4. 用元数据承载多变体细节
+### 4. Use Metadata For Multi-Variant Detail
 
-推荐的元数据键：
+Recommended metadata keys:
 
 - `batch_template`
 - `clip_variants`
 - `hook_windows`
 - `cta_windows`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 每条片子自洽独立；
-- 开头几秒抓人；
-- 叠加层堆叠在移动端可读；
-- 整批保持一致的样式与淡入淡出。
+- each clip is self-contained,
+- the first seconds hook fast,
+- overlay stack is readable on mobile,
+- the batch retains consistent styling and fades.
 
-## 常见陷阱
+## Common Pitfalls
 
-- 做成一条精彩集锦，而不是彼此独立的片子。
-- 让品牌元素拖延钩子。
-- 同一画面上同时堆钩子文案、字幕、水印和下三分之一，过于拥挤。
-- 整批转场时长不一致。
+- Building one highlight reel instead of independent clips.
+- Letting branding delay the hook.
+- Overcrowding the screen with hook text, subtitles, watermark, and lower third simultaneously.
+- Applying inconsistent transition timing across the batch.

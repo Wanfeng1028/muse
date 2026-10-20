@@ -6,170 +6,185 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 素材导演 — 动画管线
+# Asset Director - Animation Pipeline
 
-## 适用场景
+## When To Use
 
-本阶段产出动画所需的实际素材：旁白配音、结构化图表、数学动画、运动背景、代码画面，以及可反复使用的字体与版式体系。它位于场景规划之后、剪辑之前，是整条管线中花钱最集中的环节。
+This stage prepares the actual animated ingredients: narration, diagrams, math renders, motion backgrounds, code visuals, and reusable type or layout systems.
 
-## 动画运行时选择
+## Animation authoring — which runtime
 
-在动手写任何动效组件之前，先查阅 `skills/meta/animation-runtime-selector.md` 决定运行时。动画管线是最有可能需要 GSAP 插件的场景——标志变形、曲线路径运镜、动态文字、FLIP 布局过渡都属于这一类。
+Before authoring motion-graphics components, read **`skills/meta/animation-runtime-selector.md`** for runtime routing. Animation is the pipeline most likely to justify GSAP plugins — logo morphs, curved camera paths, kinetic type, FLIP transitions.
 
-常见需求与推荐方案对照：
+Quick routing for common animation-pipeline needs:
 
-| 动效类型 | 推荐做法 |
+| Motion type | Recommended approach |
 |---|---|
-| 两个 SVG 标志之间的形变 | GSAP MorphSVG，读 `.agents/skills/gsap-plugins/SKILL.md` |
-| SVG 线条描边揭示 | GSAP DrawSVG，读同一插件文档 |
-| 物体沿曲线路径移动 | GSAP MotionPath |
-| 逐字或逐词的标题揭示 | GSAP SplitText |
-| 自定义贝塞尔或弹性缓动 | GSAP CustomEase |
-| 布局到布局的元素飞入（FLIP） | GSAP Flip |
-| 多元素多步骤编排 | GSAP timeline，读 `.agents/skills/gsap-timeline/SKILL.md` |
-| 粒子叠加或背景运动 | Remotion 现成的 `ParticleOverlay` 组件 |
-| 数学动画（函数图像、公式） | Manim，读 `.agents/skills/manim-composer` 与 `manimce-best-practices` |
-| 吉卜力／日式动画风格的静帧场景 | Remotion 的 `AnimeScene` 组件配合 FLUX 出图 |
+| SVG logo morph between two shapes | GSAP MorphSVG — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Line drawing / stroke reveal on SVG | GSAP DrawSVG — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Object following a curved path | GSAP MotionPath — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Per-character / per-word title reveals | GSAP SplitText — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Custom bezier or elastic easing | GSAP CustomEase — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Layout-to-layout element flight (FLIP) | GSAP Flip — read `.agents/skills/gsap-plugins/SKILL.md` |
+| Multi-step sequence across many elements | GSAP timeline — read `.agents/skills/gsap-timeline/SKILL.md` |
+| Particle overlay / background motion | Remotion `ParticleOverlay` component (already exists) |
+| Mathematical animation (graphs, equations) | Manim — read `.agents/skills/manim-composer`, `.agents/skills/manimce-best-practices` |
+| Ghibli / anime-style still-driven scene | Remotion `AnimeScene` component + FLUX image gen |
 
-**Remotion 确定性铁律：** 任何在 Remotion 组件内使用的 GSAP，都必须由 `useCurrentFrame()` 驱动时间轴进度，绝不能用 `requestAnimationFrame`。写法范例见 `.agents/skills/gsap-react/SKILL.md`。
+**Remotion determinism rule:** every GSAP use inside a Remotion component must drive timeline progress from `useCurrentFrame()` — never `requestAnimationFrame`. Pattern examples in `.agents/skills/gsap-react/SKILL.md`.
 
-## 前置资源
+## Prerequisites
 
-| 层级 | 资源 | 用途 |
-|------|------|------|
-| Schema | `schemas/artifacts/asset_manifest.schema.json` | 产物校验 |
-| 上游产物 | `scene_plan`、`script`、`proposal_packet` | 工具路径与节拍图 |
-| 工具 | `tts_selector`、`image_selector`、`video_selector`、`math_animate`、`diagram_gen`、`code_snippet`、`threejs_world`、`music_gen`、`fal_elevenlabs_music` | 选择器会自动从注册表发现所有可用供应商 |
-| 风格手册 | 当前激活的 playbook | 视觉一致性约束 |
+| Layer | Resource | Purpose |
+|-------|----------|---------|
+| Schema | `schemas/artifacts/asset_manifest.schema.json` | Artifact validation |
+| Prior artifacts | `state.artifacts["scene_plan"]["scene_plan"]`, `state.artifacts["script"]["script"]`, `state.artifacts["proposal"]["proposal_packet"]` | Tool path and beat map |
+| Tools | `tts_selector`, `image_selector`, `video_selector`, `math_animate`, `diagram_gen`, `code_snippet`, `threejs_world`, `music_gen`, `fal_elevenlabs_music` — selectors auto-discover all available providers from the registry | Asset production options |
+| Playbook | Active style playbook | Visual consistency |
 
-## 流程
+## Process
 
-### 1. 先做确定性素材
+### 1. Start With Deterministic Assets
 
-优先选择方差最低的可行路径：
+Prefer the lowest-variance useful path:
 
-- 结构化图表用 `diagram_gen`，不要直接交给通用出图；
-- 代码画面用 `code_snippet`；
-- 真实数学运动用 `math_animate`；
-- 已有素材优先于新生成素材。
+- `diagram_gen` before generic image generation for structured diagrams,
+- `code_snippet` for code scenes,
+- `math_animate` for real math motion,
+- provided artwork before new generation.
 
-若需要真正的三维环境，先读 `skills/creative/3d-world-generation.md` 以及该工具的 `threejs-world-generation` 三层技能，再使用 `threejs_world`，且要排在图像或视频生成之前。构建电影感的可编辑工作区，同时跑一遍语义或线框诊断。把可编辑工作区注册为 `type: "3d_world"`；快照放进素材评审，最终 MP4 交给合成阶段。
+For a real 3D environment, read `skills/creative/3d-world-generation.md` and
+the tool's `threejs-world-generation` Layer 3 skill, then use
+`threejs_world` before any image or video generator. Build the cinematic
+workspace plus a semantic or wireframe diagnostic pass. Register the editable
+workspace as `type: "3d_world"`; snapshots belong in the assets review, while
+the final MP4 belongs to compose.
 
-### 1b. 样本预览（避免浪费预算）
+### 1b. Sample Preview (Prevents Wasted Spend)
 
-批量生成前，先对每一类昂贵素材各出一个样本给用户看：
+Before batch-generating assets, produce one sample of each expensive type and show the user:
 
-1. **TTS 样本**（旁白驱动型项目）：如果 `script.voice_performance.sample_section_id` 存在就生成该段；否则挑选情绪或节奏变化最明显的段落。确认音色、语速、停顿、重音与语气之后才能批量。
-2. **视觉样本**：先出一张有代表性的场景画面（图表、插画或动态背景）。确认风格与质量后再批量。
+1. **TTS sample** (if narration-led): Generate `script.voice_performance.sample_section_id` when present; otherwise choose the section with the strongest emotional or pacing change. Confirm voice, pace, pauses, emphasis, and tone before batching.
+2. **Visual sample**: Generate one representative scene visual (diagram, illustration, or motion background). Confirm style and quality before batching the rest.
 
-若被否决，调整参数重试，最多 3 轮。未通过前不许批量。
+If rejected, adjust parameters and retry (max 3 iterations). Do not batch until approved.
 
-### 1c. 图像驱动动画的多图生成（方案 A）
+### 1c. Multi-Image Generation for Image-Based Animation (Approach A)
 
-当 `animation_mode == "image_animation"` 时，每个场景需要 **2 到 3 张图**来做交叉淡入淡出——正是这一点让静帧看起来像在动。
+When `animation_mode == "image_animation"`, each scene needs **2-3 images** for crossfade animation. This is what makes stills look like movement.
 
-**出图工作流：**
+**Image generation workflow:**
 
-1. **定义视觉系统**——一组在整个项目里复用的锚点。它保证视觉连贯，又不会把每个镜头压成同一个提示词。把它存成可复用元数据。
+1. **Define a VISUAL SYSTEM** — a reusable set of anchors used across all images in the project. This ensures visual coherence without flattening every shot into the same prompt. Store it as reusable metadata.
    ```
-   示例："手绘自然奇幻，苔绿与琥珀暖色调，
-   柔和漫射光，笔触感植被纹理，温柔的惊奇感。"
+   Example: "Hand-painted nature fantasy, warm moss-and-amber palette,
+   soft diffused light, painterly foliage textures, gentle wonder."
    ```
-   然后按场景做局部适配：
-   - 场景 1：远景建立镜头，森林山谷，薄雾，日出
-   - 场景 2：近景角色节拍，灯笼光晕，飘浮孢子
-   - 场景 3：抽象魔法能量揭示，更亮的强调色对比
+   Then adapt it per scene:
+   - Scene 1: wide establishing forest valley, mist, sunrise
+   - Scene 2: close character beat, lantern glow, drifting spores
+   - Scene 3: abstract magical energy reveal, brighter accent contrast
 
-2. **做种子管理**——同一场景的 A/B 变体使用相邻的种子值（例如 100 与 101）。相同提示词加不同种子等于相同构图加细微差异，正好形成自然的交叉淡变运动。
+2. **Use seed management** — for each scene, use nearby seed values (e.g., seed 100 and 101) for the A/B variants. Same prompt + different seed = same composition with subtle differences = natural crossfade motion.
 
-3. **先出一张测试图**——只渲染一个场景，确认视觉系统在 1920×1080 下效果合格，再开始全量生成。
+3. **Generate one test image first** — render a single scene to verify the visual system produces good results at 1920×1080 before batch generating all images.
 
-4. **批量生成**——生成全部场景图。磁盘上已存在的文件直接跳过，保证幂等。
+4. **Batch generation** — generate all scene images. Skip any that already exist on disk (idempotent).
 
-5. **合成 JSON**——每个场景写成 `type: "anime_scene"`，带 `images: ["path/a.png", "path/b.png"]`，外加镜头运动、粒子类型与光照配置。
+5. **Composition JSON** — each scene gets `type: "anime_scene"` with `images: ["path/a.png", "path/b.png"]` plus camera motion, particle type, and lighting config.
 
-**成本估算：** 每场景 2 到 3 张图，按供应商不同约 $0.03–$0.13 一张。
+**Cost estimation:** 2-3 images per scene × $0.03-0.13/image depending on provider.
 
-**参考：** 批量生成的成熟写法见 `projects/mori-no-seishin/generate_images.py`。
+**Reference:** See `projects/mori-no-seishin/generate_images.py` for the proven batch generation pattern.
 
-6. **拷贝到 Remotion 公共目录**——图片生成完后必须复制到 `remotion-composer/public/<项目名>/`，Remotion 才能通过 `staticFile()` 访问。合成 JSON 里的图片路径都相对于这个目录：
+6. **Copy to Remotion public directory** — After generating all images, copy them to `remotion-composer/public/<project-name>/` so Remotion can access them via `staticFile()`. Image paths in the composition JSON are relative to this directory:
    ```
-   remotion-composer/public/<项目名>/scene1-a.png   ← Remotion 从这里读
-   remotion-composer/public/<项目名>/ambient-music.mp3  ← 音乐同理
+   remotion-composer/public/<project-name>/scene1-a.png   ← Remotion reads from here
+   remotion-composer/public/<project-name>/ambient-music.mp3  ← Music too
    ```
-   **跳过这一步，渲染就会因找不到文件而失败。** 这是新项目渲染失败的第一大原因。
+   **If you skip this step, the render will fail with missing file errors.** This is the #1 cause of render failures for new projects.
 
-### 2. 搭建可复用体系
+### 2. Build Reusable Systems
 
-只做一次的东西：
+Create once:
 
-- 字体处理方案；
-- 下三分之一条或标签样式；
-- 反复出现的母题素材；
-- 背景容器。
+- typography treatments,
+- lower-third or label styles,
+- repeated motif assets,
+- background containers.
 
-### 3. 旁白可选，但必须明确声明
+### 3. Narration Is Optional, But The Plan Must Be Explicit
 
-若项目是旁白驱动，就产出或获取旁白。先读 `skills/meta/voice-performance-director.md`，再按 `script.voice_performance` 和各段落的 `delivery_cues` 构造 TTS 请求。存在 `provider_text` 时优先使用，把提示线索映射到供应商的控制参数，并把实际应用的设置记录在每个旁白素材上。若是文字驱动或音乐驱动，在元数据里写清楚。
+If the project is narration-led, produce or source narration. Read
+`skills/meta/voice-performance-director.md`, then apply `script.voice_performance`
+and each section's `delivery_cues` when building TTS requests. Use
+`provider_text` when present, map cues to provider controls, and record the
+applied settings on each narration asset. If it is text-led or music-led, say so
+clearly in metadata.
 
-### 4. 用元数据记录可行性真相
+### 4. Use Metadata For Feasibility Truth
 
-推荐元数据键：
+Recommended metadata keys:
 
 - `tool_path_map`
 - `reusable_assets`
 - `narration_assets`
-- `voice_performance`：样本审批路径、供应商设置、是否应用了表演提示
+- `voice_performance`: sample approval path, provider settings, and whether delivery cues were applied
 - `scene_asset_index`
 - `blocked_assets`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 每个场景的素材路径明确；
-- 可复用素材确实被复用；
-- 缺失的能力如实上报；
-- 每一个被引用的文件都真实存在；
-- 旁白驱动型素材应用了已批准的语音表演设置。
+- the asset path is explicit per scene,
+- reusable assets are actually reused,
+- missing capabilities are surfaced honestly,
+- every referenced file exists,
+- narration-led assets apply the approved voice-performance settings.
 
-## 制作中的事实核查
+### Mid-Production Fact Verification
 
-素材生成过程中遇到不确定时：
+If you encounter uncertainty during asset generation:
+- Use `web_search` to verify visual accuracy of subjects (e.g. what does this building actually look like?)
+- Use `web_search` to find reference images before generating illustrations
+- Log verification in the decision log: `category="visual_accuracy_check"`
 
-- 用 `web_search` 核实被拍摄对象的真实外观（例如这栋建筑实际长什么样）；
-- 生成插画前先用 `web_search` 找参考图；
-- 在决策日志中记录：`category="visual_accuracy_check"`。
+Visual accuracy matters. If the script mentions a specific place, person, or object,
+verify what it actually looks like before generating images. Don't rely on
+the AI model's training data — it may be wrong or outdated.
 
-视觉准确性很重要。脚本提到具体地点、人物或物件时，先核实其真实样貌再出图。不要依赖模型训练数据——它可能错误或过时。
+## Common Pitfalls
 
-## 常见坑
+- Using high-variance generation when a deterministic asset would work better.
+- Rebuilding the same title or label system repeatedly.
+- Hiding failed asset paths instead of reporting them.
+- Treating TTS as raw text-to-audio. Narration-led animation needs pauses,
+  emphasis, and pace cues carried from the script into the generated audio.
+- Treating "consistency" as "same prompt every time." Good animation keeps a recognizable world while still letting each beat feel fresh.
 
-- 明明确定性素材更合适，却用了高方差生成。
-- 反复重建同一套标题或标签系统。
-- 把失败的素材路径藏起来而不上报。
-- 把 TTS 当成纯粹的文字转语音。旁白驱动型动画需要把脚本里的停顿、重音和节奏线索带入生成的音频。
-- 把"一致性"理解成"每次都用同一个提示词"。好的动画在保持可辨识世界的同时，让每个节拍仍然新鲜。
 
-## 不会做的时候怎么办
+## When You Do Not Know How
 
-遇到不确定的生成技术、供应商行为或提示词模式：
+If you encounter a generation technique, provider behavior, or prompting pattern you are unsure about:
 
-1. **上网搜**当前最佳实践——模型和 API 变化很快，训练数据可能已过时；
-2. **查 `.agents/skills/`** 里已有的三层知识（供应商提示词指南、API 模式）；
-3. **两者都帮不上**，就在 `projects/<项目名>/skills/<名称>.md` 写一份项目级技能，把学到的东西记下来；
-4. **在技能里标注来源 URL**，让知识可追溯；
-5. **写进决策日志**：`category: "capability_extension"`，`subject: "learned technique: <名称>"`。
+1. **Search the web** for current best practices — models and APIs change frequently, and the agent's training data may be stale
+2. **Check `.agents/skills/`** for existing Layer 3 knowledge (provider-specific prompting guides, API patterns)
+3. **If neither helps**, write a project-scoped skill at `projects/<project-name>/skills/<name>.md` documenting what you learned
+4. **Reference source URLs** in the skill so the knowledge is traceable
+5. **Log it** in the decision log: `category: "capability_extension"`, `subject: "learned technique: <name>"`
 
-以下情况尤其重要：
+This is especially important for:
+- **Video generation prompting** — models respond to specific vocabularies that change with each version
+- **Image model parameters** — optimal settings for FLUX, GPT Image, Imagen differ and evolve
+- **Audio provider quirks** — voice cloning, music generation, and TTS each have model-specific best practices
+- **Remotion component patterns** — new composition techniques emerge as the framework evolves
 
-- **视频生成提示词**——模型对词汇的反应随版本变化；
-- **图像模型参数**——FLUX、GPT Image、Imagen 的最优设置各不相同且在演进；
-- **音频供应商怪癖**——声音克隆、音乐生成、TTS 各有模型专属的最佳实践；
-- **Remotion 组件模式**——框架演进会带来新的合成技巧。
-
-不要依赖过时知识。拿不准就先搜。
+Do not rely on stale knowledge. When in doubt, search first.
 
 ---
 
-## 门禁提醒（强制）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为门（`human_approval_default: true`）。评审通过后：以 `status="awaiting_human"` 打检查点，展示摘要（Backlot 面板会渲染产物），然后**结束本轮对话**。不要在同一次回复里启动下一阶段。审批是逐门生效的——之前说过的一句"继续"不覆盖本门。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.

@@ -6,50 +6,50 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剪辑总监 · 数字人口播流水线
+# Edit Director - Avatar Spokesperson Pipeline
 
-## 适用时机
+## When To Use
 
-把规划好的播报场景与已产出的素材剪辑成连贯的口播时间线。质量标准是播报节奏稳、辅助层可读、CTA 落点清晰。
+Turn the planned presenter scenes and produced assets into a coherent spokesperson timeline. The quality bar is steady delivery, readable support layers, and a clear CTA landing.
 
-## 处理流程
+## Process
 
-### 1. 先剪播报主线
+### 1. Cut The Presenter Track First
 
-先组接核心口播表演，再叠加辅助层。播报剪得弱，靠额外图形也救不回来。
+Assemble the core spokesperson performance before adding support layers. If the presenter cut is weak, extra graphics will not rescue it.
 
-### 2. 克制地添加辅助层
+### 2. Add Support Layers Sparingly
 
-只在真正有帮助的地方使用叠加元素：
+Use overlays only where they help:
 
-- 简短佐证点；
-- 产品名称；
-- 价格或功能卡；
-- CTA 强化；
-- 字幕。
+- short proof points,
+- product names,
+- pricing or feature cards,
+- CTA reinforcement,
+- subtitles.
 
-### 3. 尊重口语节奏
+### 3. Respect Spoken Rhythm
 
-该停顿的地方保留停顿，用来强调。不要剪得太紧，让数字人显得急促或机械。
+Keep pauses where they help emphasis. Do not trim so tightly that the avatar feels rushed or robotic.
 
-### 4. 清晰规划交付物
+### 4. Plan Deliverables Clearly
 
-建议使用的元数据键：
+Recommended metadata keys:
 
 - `hero_cut_order`
 - `cta_frame_range`
 - `overlay_timing_map`
 - `variant_decisions`
 
-### 5. 质量门
+### 5. Quality Gate
 
-- 播报人物始终是锚点；
-- 叠加元素时机干净；
-- 场景转场平稳且有意为之；
-- CTA 只落一次，且清晰。
+- the presenter remains the anchor,
+- overlays are timed cleanly,
+- scene transitions are calm and intentional,
+- the CTA lands once and clearly.
 
-## 常见陷阱
+## Common Pitfalls
 
-- 靠过度剪辑去制造所谓能量感。
-- 让字幕、侧栏、角标抢同一块区域。
-- 结尾没有干净的 CTA 停留。
+- Overcutting to simulate energy.
+- Letting captions, side panels, and lower thirds compete for the same area.
+- Ending without a clean CTA hold.

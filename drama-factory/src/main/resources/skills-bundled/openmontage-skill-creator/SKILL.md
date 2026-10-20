@@ -6,115 +6,115 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 技能创建者（Skill Creator）— 元技能
+# Skill Creator — Meta Skill
 
-## 适用时机
+## When to Use
 
-当你遇到现有技能无法覆盖的需求，且这个缺口是**可复用的**——不是一次性任务。本技能教你如何在管线运行中动态创建新技能。
+When you encounter a situation where no existing skill covers what you need to do, and the gap is reusable — not a one-off task. This skill teaches you to create new skills dynamically during a pipeline run.
 
-需要创建新技能的示例：
-- 某个场景需要现有技能未覆盖的可视化技术（如"交互式地图动画"）
-- 有新工具可用但没有使用技能（如新的 TTS 提供商）
-- 多个阶段反复出现某种模式，值得固化
+Examples of when to create a new skill:
+- A scene requires a visualization technique not covered by existing skills (e.g., "interactive map animation")
+- A new tool is available but has no usage skill (e.g., a new TTS provider)
+- A recurring pattern emerges across multiple stages that could be codified
 
-**不要**为以下情况创建技能：
-- 不会复现的一次性任务
-- 已有技能覆盖的内容
-- 纯工具配置（那属于工具代码）
+Do NOT create a skill for:
+- One-off tasks that won't recur
+- Things already covered by an existing skill
+- Pure tool configuration (that belongs in tool code)
 
-## 协议
+## Protocol
 
-### 第一步：识别缺口
+### Step 1: Identify the Gap
 
-明确说明：
-1. **你需要做什么**而现有技能未覆盖
-2. **为什么可复用**——未来的管线会受益吗？
-3. **放在哪里**——属于哪一层、哪个目录？
+Clearly articulate:
+1. **What you need to do** that no existing skill covers
+2. **Why it's reusable** — will future pipelines benefit?
+3. **Where it fits** — which layer and directory?
 
-### 第二步：调研最佳实践
+### Step 2: Research Best Practices
 
-编写技能前先调研：
-1. **网络搜索**该任务的成熟方法
-2. **仓库中现有技能**的结构模式
-3. **工具文档**——技能将引用的任何工具
+Before writing the skill, research:
+1. **Web search** for established approaches to this task
+2. **Existing skills** in the repo for structural patterns
+3. **Tool documentation** for any tools the skill will reference
 
-### 第三步：选择技能类型
+### Step 3: Choose the Skill Type
 
-| 类型 | 目录 | 用途 |
-|------|------|------|
-| 阶段导演 | `skills/pipelines/<pipeline>/` | 如何执行特定管线阶段 |
-| 元技能 | `skills/meta/` | 跨领域协议（审查、检查点等） |
-| 工具技能 | `.agents/skills/` | 如何有效使用特定 API 或工具 |
-| 风格技能 | `styles/` | 视觉/音频风格定义（YAML playbook） |
+| Type | Directory | Purpose |
+|------|-----------|---------|
+| Stage director | `skills/pipelines/<pipeline>/` | How to execute a specific pipeline stage |
+| Meta skill | `skills/meta/` | Cross-cutting protocol (review, checkpoint, etc.) |
+| Tool skill | `.agents/skills/` | How to use a specific API or tool effectively |
+| Style skill | `styles/` | Visual/audio style definition (YAML playbook) |
 
-### 第四步：编写技能
+### Step 4: Write the Skill
 
-遵循以下结构（根据技能类型调整）：
+Follow this structure (adapt to skill type):
 
 ```markdown
-# [技能名称] — [上下文]
+# [Skill Name] — [Context]
 
-## 适用时机
-[1-2 句话：什么情况触发此技能]
+## When to Use
+[1-2 sentences: what situation triggers this skill]
 
-## 前置条件
-[所需资源表：schema、前置产物、工具、其他技能]
+## Prerequisites
+[Table of required resources: schemas, prior artifacts, tools, other skills]
 
-## 流程
+## Process
 
-### 第 1 步：[第一个动作]
-[清晰的指令和示例]
+### Step 1: [First action]
+[Clear instructions with examples]
 
-### 第 2 步：[第二个动作]
-[清晰的指令和示例]
+### Step 2: [Second action]
+[Clear instructions with examples]
 
 ...
 
-### 第 N 步：自评
-[质量评分表，1-5 分制]
+### Step N: Self-Evaluate
+[Quality rubric: scoring table with 1-5 scale]
 
-### 第 N+1 步：提交
-[如何持久化输出]
+### Step N+1: Submit
+[How to persist the output]
 
-## 常见陷阱
-[需要避免的错误列表]
+## Common Pitfalls
+[Bullet list of mistakes to avoid]
 ```
 
-### 好技能的核心原则
+### Key Principles for Good Skills
 
-1. **教思考，不只教操作。** 说"生成一张图片"的技能没有用。说"考虑这个场景的情感节拍，调研顶级创作者如何可视化这个概念，然后编写一个包含 playbook 风格锚点的提示"的技能才有价值。
+1. **Teach thinking, not just doing.** A skill that says "generate an image" is useless. A skill that says "consider the emotional beat of this scene, research how top creators visualize this concept, then craft a prompt that includes the playbook's style anchors" is valuable.
 
-2. **包含示例。** 展示好输出长什么样，差输出长什么样。对比比单纯指令更能教会人。
+2. **Include examples.** Show what good output looks like. Show what bad output looks like. The contrast teaches more than instructions alone.
 
-3. **引用具体资源。** 不要说"检查 schema"，要说"对照 `schemas/artifacts/brief.schema.json` 校验"。不要说"用一个工具"，要说"使用 `image_selector` 并传入 playbook 的 `image_prompt_prefix`"。
+3. **Reference concrete resources.** Don't say "check the schema." Say "validate against `schemas/artifacts/brief.schema.json`." Don't say "use a tool." Say "use `image_selector` with the playbook's `image_prompt_prefix`."
 
-4. **包含自评评分表。** 每个技能都应以评分表结尾。这迫使 agent 在继续之前检查自己的工作。
+4. **Include a self-evaluation rubric.** Every skill should end with a scoring table. This forces the agent to check its own work before proceeding.
 
-5. **记录陷阱。** 这个技能执行得不好时会发生什么？明确警告。
+5. **Document pitfalls.** What goes wrong when this skill is executed poorly? Warn explicitly.
 
-6. **有主见。** 说"你可以做 A 或 B"的技能不如说"做 A 因为[原因]，但当[条件]时回退到 B"的技能有用。
+6. **Be opinionated.** A skill that says "you could do A or B" is less useful than one that says "do A because [reason], but fall back to B when [condition]."
 
-### 第五步：注册技能
+### Step 5: Register the Skill
 
-编写技能文件后：
-1. 在 `skills/INDEX.md` 中添加条目
-2. 如果是管线阶段技能，确保管线清单在阶段的 `skill` 字段中引用它
-3. 如果是工具技能，放到 `.agents/skills/<tool-name>/`
+After writing the skill file:
+1. Add an entry to `skills/INDEX.md`
+2. If it's a pipeline stage skill, ensure the pipeline manifest references it in the stage's `skill` field
+3. If it's a tool skill, place it in `.agents/skills/<tool-name>/`
 
-### 第六步：验证
+### Step 6: Validate
 
-快速检查：
-- [ ] 文件是格式良好的 Markdown，标题清晰
-- [ ] 所有引用的 schema、工具和资源都存在
-- [ ] 流程步骤已编号且可操作
-- [ ] 自评评分表已包含
-- [ ] 常见陷阱部分已包含
-- [ ] 无孤立引用（提到的所有内容在仓库中都存在）
+Quick checks:
+- [ ] File is well-formed markdown with clear headers
+- [ ] All referenced schemas, tools, and resources exist
+- [ ] Process steps are numbered and actionable
+- [ ] Self-evaluation rubric is present
+- [ ] Common pitfalls section is present
+- [ ] No orphan references (everything mentioned exists in the repo)
 
-## 常见陷阱
+## Common Pitfalls
 
-- **为一次性任务创建技能**：如果永远不会再做，直接内联做掉。技能是为模式而存在的。
-- **指令模糊**："做好一点"不是技能。具体性才是技能的价值所在。
-- **没有自评**：没有评分表，agent 无法知道是否正确执行了技能。
-- **缺少前置条件**：引用了 `image_selector` 但未在前置条件中列出的技能会让未来的 agent 困惑。
-- **过度工程**：简单任务写 500 行技能不如 50 行的。复杂度要匹配任务。
+- **Creating skills for one-off tasks**: If you'll never do this again, just do it inline. Skills are for patterns.
+- **Vague instructions**: "Make it good" is not a skill. Specificity is what makes a skill useful.
+- **No self-evaluation**: Without a rubric, the agent has no way to know if it followed the skill correctly.
+- **Missing prerequisites**: A skill that references `image_selector` but doesn't list it in prerequisites will confuse future agents.
+- **Over-engineering**: A 500-line skill for a simple task is worse than a 50-line one. Match complexity to the task.

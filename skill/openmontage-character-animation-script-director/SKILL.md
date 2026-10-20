@@ -6,67 +6,49 @@ metadata:
   license: AGPL-3.0
 ---
 
-# 剧本导演（Script Director）
+# Script Director - Character Animation Pipeline
 
-## 目标
+## Goal
 
-剧本要写成**可表演的动画节拍**，而不是一段旁白配画面。
+Write scripts as performable animation beats, not just narration.
 
-## 工作流程
+## Process
 
-1. **锁定音频架构**。四选一，开写前必须确定：
-   - 纯音乐
-   - 旁白
-   - 角色对白
-   - 旁白 + 角色音效 / 对白
+1. Lock audio architecture:
+   - music-only,
+   - narrator,
+   - character dialogue,
+   - narrator plus character sounds/dialogue.
+2. Break the story into beats that can be acted with poses.
+3. For each beat, state what changes visually:
+   - emotion,
+   - gaze,
+   - body pose,
+   - prop interaction,
+   - camera,
+   - environment.
 
-2. **把故事拆成可以用姿态表演的节拍**。每个节拍应当对应一组明确的姿态变化。
+## Writing Rules
 
-3. **为每个节拍写明视觉上发生了什么变化**：
-   - 情绪
-   - 视线
-   - 身体姿态
-   - 道具交互
-   - 镜头
-   - 环境
+- Prefer short visual beats with readable holds.
+- Avoid action that needs many unique hand-drawn poses unless approved.
+- Dialogue should be short enough for mouth-shape approximation.
+- Silent/music-led scenes need stronger physical acting notes.
 
-## 写作规则
+## Output Notes
 
-- 优先使用短小的视觉节拍，配合可读的停留（hold）。
-- 除非已获批准，避免需要大量独立手绘姿态的动作。
-- 对白要足够短，以便用口型近似（mouth-shape approximation）表现。
-- 无声或纯音乐驱动的场景，需要更强的肢体表演注释。
+In the `script` artifact metadata, include:
 
-## 输出说明
-
-在 `script` 产物的 metadata 中，必须包含：
-
-- `audio_architecture`
-- `character_beats`
-- `required_emotions`
-- `required_actions`
-
-```json
-{
-  "audio_architecture": "narrator_plus_dialogue",
-  "character_beats": [],
-  "required_emotions": [],
-  "required_actions": []
-}
-```
-
-以上字段用于下游绑定与场景规划阶段反查需求，缺一不可。
+- `audio_architecture`,
+- `character_beats`,
+- `required_emotions`,
+- `required_actions`.
 
 ---
 
-## 关口提醒（强制约束）
+## Gate Reminder (Binding)
 
-本阶段以人工审批为关口，`human_approval_default: true`。
-
-评审通过后：
-
-- 以 `status="awaiting_human"` 写入检查点；
-- 呈现摘要（Backlot 看板会渲染产物）；
-- **结束本轮回复**。
-
-不得在同一轮回复中启动下一阶段。审批按关口独立计算——之前某一次“继续”不覆盖当前关口。
+This stage gates on human approval (`human_approval_default: true`). After review passes:
+checkpoint with `status="awaiting_human"`, present the summary (the Backlot board renders
+the artifact), and **END YOUR TURN**. Do not start the next stage in the same response.
+Approval is per-gate — an earlier "go ahead" does not cover this gate.
