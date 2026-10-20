@@ -88,9 +88,11 @@ def test_seed_each_feed_has_four_articles(tmp_db):
     seed.ensure_seed(tmp_db)
     rows = _feeds_rows(tmp_db)
     assert len(rows) == 6
+    # 新 seed：6 源共 33 篇（24 篇基础 + 9 篇聚类演示），每源至少 4 篇
+    assert _table_count(tmp_db, "articles") == 33
     for feed in rows:
         arts = _articles_for(tmp_db, feed["id"])
-        assert len(arts) == 4
+        assert len(arts) >= 4
         for art in arts:
             assert art["title"]
             assert art["link"]
@@ -105,7 +107,7 @@ def test_seed_is_idempotent_on_repeated_calls(tmp_db):
     assert _table_count(tmp_db, "feeds") == first_feeds
     assert _table_count(tmp_db, "articles") == first_articles
     assert first_feeds == 6
-    assert first_articles == 24
+    assert first_articles == 33
 
 
 def test_seed_skips_when_feeds_table_nonempty(tmp_db):
@@ -148,13 +150,13 @@ def test_seed_article_links_unique_within_feed(tmp_db):
         arts = _articles_for(tmp_db, feed["id"])
         links = [a["link"] for a in arts]
         assert len(links) == len(set(links))
-        assert len(arts) == 4
+        assert len(arts) >= 4
 
 
 def test_seed_published_times_within_recent_window(tmp_db):
     seed.ensure_seed(tmp_db)
     arts = _articles_rows(tmp_db)
-    assert len(arts) == 24
+    assert len(arts) == 33
     times = sorted(a["published_at"] for a in arts)
     assert times[0] != times[-1]
     assert times[0] < times[-1]
@@ -168,7 +170,7 @@ def test_seed_mixes_read_and_unread_state(tmp_db):
     assert 0 in read_flags or 1 in read_flags
     unread = [a for a in arts if a["is_read"] == 0]
     read = [a for a in arts if a["is_read"] == 1]
-    assert len(unread) + len(read) == 24
+    assert len(unread) + len(read) == 33
 
 
 def test_seed_has_starred_articles(tmp_db):
@@ -178,7 +180,7 @@ def test_seed_has_starred_articles(tmp_db):
     unstarred = [a for a in arts if a["is_starred"] == 0]
     assert len(starred) >= 1
     assert len(unstarred) >= 1
-    assert len(starred) + len(unstarred) == 24
+    assert len(starred) + len(unstarred) == 33
 
 
 def test_seed_article_content_present_and_chinese(tmp_db):
@@ -210,7 +212,7 @@ def test_seed_reinitializes_clean_database(tmp_db):
     assert _table_count(tmp_db, "feeds") == 0
     seed.ensure_seed(tmp_db)
     assert _table_count(tmp_db, "feeds") == 6
-    assert _table_count(tmp_db, "articles") == 24
+    assert _table_count(tmp_db, "articles") == 33
 
 
 def test_seed_survives_when_db_file_absent(tmp_path):

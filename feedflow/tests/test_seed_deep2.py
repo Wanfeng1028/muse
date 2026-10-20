@@ -83,7 +83,7 @@ def test_article_guid_format(tmp_db):
     ensure_seed(tmp_db)
 
     rows = query_all(tmp_db, "SELECT guid FROM articles")
-    pattern = re.compile(r"^demo-(ruanyf|coolshell|sspai|jiqizhixin|36kr|v2ex)-\d+$")
+    pattern = re.compile(r"^demo-(ruanyf|coolshell|sspai|jiqizhixin|36kr|v2ex)-\d+$|^demo-cluster-\d+-\d+$")
     assert rows
     for r in rows:
         assert pattern.match(r["guid"]), r["guid"]

@@ -28,4 +28,15 @@ std::vector<LocatedToken> claimTokenPositions(
     const std::vector<std::string>& words,
     std::set<std::pair<std::string, size_t>>& claimed);
 
+// 批量版本的 claimTokenPositions：语义与对 words 逐词调用
+// claimTokenPositions 完全一致（顺序、跳过空词与定位失败词、
+// 每个词实例获得其首个未被 (词, 起始字节) 认领的位置、
+// 推进步长 p+1 允许重叠出现、claimed 集合语义不变），
+// 但每个去重词只做一次全文扫描。
+// 复杂度 O(去重词数 x 文本长度 + 总词数)。
+std::vector<LocatedToken> claimTokenPositionsBatched(
+    const std::string& text,
+    const std::vector<std::string>& words,
+    std::set<std::pair<std::string, size_t>>& claimed);
+
 }  // namespace docseek

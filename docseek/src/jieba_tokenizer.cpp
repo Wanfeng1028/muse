@@ -274,13 +274,20 @@ int jiebaXTokenize(Fts5Tokenizer* pTokenizer, void* pCtx, int /*flags*/,
     // 与 T2 回退路径共享同一实现；claimed 由本函数持有并在逐词调用间共享。
     std::set<std::pair<std::string, size_t>> claimed;
 
+    // 批量认领：语义与逐词调用 claimTokenPositions 完全一致，
+    // 但每个去重词只做一次全文扫描。located 按 words 顺序排列
+    // （跳过空词与定位失败词），用 word 相等配对消费。
+    std::vector<LocatedToken> located = claimTokenPositionsBatched(input, words, claimed);
+    size_t li = 0;
     for (const std::string& w : words) {
         if (w.empty()) continue;
 
-        std::vector<LocatedToken> got = claimTokenPositions(input, {w}, claimed);
-        if (!got.empty()) {
-            emitToken(pText, (int)got[0].byteOffset,
-                      (int)(got[0].byteOffset + got[0].word.size()), pCtx, xToken);
+        // located 保持 words 顺序，word 相等即为本实例；若本实例定位失败，
+        // located[li] 必为后文另一个词（或越界），于是走回退路径，li 不推进。
+        if (li < located.size() && located[li].word == w) {
+            const LocatedToken& lt = located[li++];
+            emitToken(pText, (int)lt.byteOffset,
+                      (int)(lt.byteOffset + lt.word.size()), pCtx, xToken);
             continue;
         }
 

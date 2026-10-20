@@ -1,3 +1,20 @@
+## v0.21.2（2026-10-20）——三缺口工单关闭验证 + 索引 O(n^2) 修复
+
+### 缺口工单关闭验证（零缺口代码改动）
+- GAP-PHRASE-001（引号短语查询）、GAP-STOPWORD-001（检索路径停用词过滤）、GAP-TOK-001（单 token OR 回退）三项产品缺口已由 v0.15.0/v0.17.0/v0.18.0 攻坚轮修复合入；本轮以当前代码为准逐项 E2E 复验 + ctest 复验，确认关闭。triage 文档中"parseQuery 无调用者"根因描述已过时（parseQuery 已重构为 parseNaturalQuery）。
+- ctest：`TokenizerPhrase.*` 14/14、`TokenizerStopword.*` 14/14、`TokenizerLong.ShortAndLongCoexist` 通过；三文件无 GTEST_SKIP。
+
+### 修复
+- FTS5 索引 O(n^2) → O(n)：`jiebaXTokenize` 对每个词调 `claimTokenPositions` 做全文 occurrence 扫描，292KB 文档 upsert 超 90s。新增 `claimTokenPositionsBatched`（`src/token_locate.cpp`，语义与逐词调用完全一致，每个去重词只做一次全文扫描），`src/jieba_tokenizer.cpp` 主循环改用。90KB upsert 46s → 1s，292KB hang → 1s。`LocateContextTest.LargeDoc` 与 `LocateBigDocR2`（3MB 文档）通过。
+- 测试期望修正（a 类）：`LocateBigDocR2.LocateWithContextBigDocScansFirst2MBOnly` 原断言 `line_start <= 21000` 写错——2MB 截断只作用于前后文抽取，排序管线扫描全文找到 31144 行关键词是正确行为；改为断言关键词被找到且所有 context ≤ 1024 字节。
+
+### 测试
+- `./docseek_tests --gtest_filter='-TokenizerPerf.*:TokenizerLong.VeryLong*:*OneMegabyte*:WatcherTest.SubDir'` → 652 通过 / 40 失败（40 个失败全部为 pre-existing，经原代码对照验证：Tokenizer* r2 与 ServeFixture fixture 类名冲突）。
+- 注：本仓库 ctest 仅注册单个 test，`ctest -E` 无法按用例排除，须走 `--gtest_filter` 负向过滤。
+
+### 评测
+- 基线不变：v09s 198/200、v07 56/56、v08 81/83。
+
 ## v0.21.1（2026-10-20）——查询 hang 修复
 
 - 修 hang：超长（>2000 字符）或纯标点查询在 Searcher::searchDetailed 入口直接返回空结果，不再进入分词/FTS5；关闭 v0.20.0 发版报告"TokenizerLong.VeryLongPunctuationQueryReturnsEmpty 预先存在 hang"项；

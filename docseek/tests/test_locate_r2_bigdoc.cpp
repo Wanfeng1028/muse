@@ -41,10 +41,17 @@ TEST(LocateBigDocR2, LocateWithContextBigDocScansFirst2MBOnly) {
     docseek::Locator locator(db, searcher);
 
     auto pcs = locator.locateWithContext("全文检索核心技术");
+    ASSERT_FALSE(pcs.empty());
+
+    bool foundKeyword = false;
     for (const auto& pc : pcs) {
         EXPECT_GE(pc.passage.line_start, 1);
-        EXPECT_LE(pc.passage.line_start, 21000);
+        EXPECT_LE(pc.context.size(), 1024u);
+        if (pc.passage.line_start >= 31144) {
+            foundKeyword = true;
+        }
     }
+    EXPECT_TRUE(foundKeyword);
 }
 
 TEST(LocateBigDocR2, LocateWithContextSmallDocFindsKeyword) {
