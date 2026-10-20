@@ -498,7 +498,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-20 晚「否定语境感知」（已合入，单元全绿；eval 09d 未完全翻转，根因已定位）**：v0.14 遗留 v08-qa-09d「多久备份一回数据才算合适，能给点建议不」攻坚——`stripTrailingQuestionBu()`（src/query_parser.cpp 匿名 namespace，stripTrailingPredicates 同风格）：只剥字符串尾部句尾语气词「不」（等价于吗），「得不」（不得不）与句中否定（不建议/不能/不要）一律不动；parseNaturalQuery 2.6 与 stripFillerWords 双路径对齐；tests 新增 QueryParserV016 3 例。step193plan 生成函数体（dpsk 当轮 429 限流切换；模型两轮只交思考过程未交 PATCH，第 3 版从 reasoning 抢救出完整函数体后机械应用——教训：复杂任务必须把全部原文逐字贴进 prompt，不许让模型"自己摘取"锚定）。验证：QueryParser* 19/19 全绿；全量 ctest 零新增失败（45 失败全为 pre-existing，stash 对照确认：ServeFixture 夹具重名/Tokenizer 系列/HybridSearchVsQR2）；改前改后实测对照：locate 关键词 10→9（去不）、tok_05_mixed passage 分 0.595→0.530、search 路径 Top-1=qa_05_backup.md。locate 仍未翻转的精确根因：passage_ranker 的 coverage 未加权，单字噪音（算/能/点）+ 高频「建议」主导评分，与文档级 BM25 脱钩——下轮独立里程碑做 passage 评分 IDF/词长加权（含全量 eval 回归）。
 - **深耕轮 2026-10-20 深夜「v021 段落评分 IDF×词长加权」（已合入 b83767a，新测试全绿）**：兑现上一轮立的里程碑——`Database::docFrequency(term)`（FTS5 MATCH 走 jieba 分词，空词/未知词返回 0）+ `termLengthWeight`（1 码点 0.35 / 2 码点 0.7 / 3+ 码点 1.0，压单字噪音）+ `TermWeights`（idf×词长权重表，idf=log((N+1)/(df+1))+1）+ `rankPassages` 加权重载（全 1.0 权重时与旧版逐位相同）；`Locator::locate` 改走加权版。3 个深测文件（docfrequency 10 例/passage 加权/v021 回归）。验证：cmake 零错；新测试全绿；全量套件 11 失败经 pristine 树 stash 对照确认为既存环境问题（TokenizerPunctTest/ServeErrParamR2 在干净树同样失败，与本轮无关）。eval 质量回归（新旧二进制 NDCG/MRR 对照）已排入深夜波次由协调员执行。
 - **深耕轮 2026-10-21（已合入，72c3569）**：QueryParser V017"不/没"边界 6 测试全绿（否定词尾缀保护）。
-- **遗留 2026-10-21 待下轮**：v09 eval 1440 pairs 中 134 项失败未分类；下轮先做失败分类（回归/环境/真问题），再决定修不修。
+- **遗留 2026-10-21 待下轮**：v09 eval 1440 pairs 中 134 项失败未分类；下轮先做失败分类（回归/环境/真问题），再决定修不修。eval 产物在 ~/workspace/muse-build/nightwave-2026-10-20/docseek-eval/out/（eval_v09_old/new.log）。
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
