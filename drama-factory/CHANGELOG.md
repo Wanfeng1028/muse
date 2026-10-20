@@ -5,6 +5,29 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-20 晚：DoD 未通过项 F2/F3/F4 部署运维补齐）
+- F4 依赖更新机制：`.github/dependabot.yml` 升级——maven / github-actions / docker 三生态，每周一（Asia/Shanghai）检查，open-pull-requests-limit 5，commit 前缀 `chore(deps)`，reviewer Wanfeng1028；新增 `spring-boot` 依赖分组（`org.springframework.boot:*` 同批升级）；springdoc 继续钉死 2.6.x（2.7+ 要求 Spring Framework 6.2，本项目 Spring Boot 3.3.5 对应 Spring 6.1.x，见 docs/DEPENDENCY_POLICY.md 附录 B）；npm 生态未启用（仓库无根 package.json，src/main/resources/skills-bundled/ 下约 90 个 package.json 均为 vendored 第三方模板，不适合 dependabot 跟踪）。
+- F2 一键部署事实核验：`Dockerfile`（多阶段：maven:3.9-eclipse-temurin-21 构建 → eclipse-temurin:21-jre 运行，内置 ffmpeg；HEALTHCHECK 用 wget 探 http://localhost:8081/api/health）、`compose.yml`（单服务一键部署：docker compose up -d --build）、`docker-compose.yml`（auth + app + nginx 全栈）、`.env.example`（全部环境变量占位齐全）逐项与 `src/main/resources/application.yml`（端口 ${PORT:8081}，默认 8081）、`HealthController`（@RequestMapping("/api") + @GetMapping("/health") 即 /api/health）、`target/drama-factory-1.0.0.jar`（实际构建产物名）核对一致；`compose.yml` 的 healthcheck 由 curl 改为 wget（eclipse-temurin:21-jre 镜像不带 curl，与 Dockerfile 自带 HEALTHCHECK 一致）；`docker-compose.yml` 的 app 服务补 healthcheck（wget 探 /api/health）与 mem_limit: 1g。
+- F3 本文件：即本次更新本身，补"已知限制"与"升级指南"两节。
+
+### Added（OpenMontage 集成变更补记，2026-10-19）
+- Java 源码 5 个：service/video/VideoProviderRouter.java（七维评分路由）、service/video/ProviderScoreCard.java、service/video/RoutingDecision.java、service/CutRhythmChecker.java、service/UsageService.java（计费台账）。
+- 配置/资源：prometheus/prometheus.yml（抓取配置）、resources/pipeline-templates/ 下 animated-explainer / screen-demo / talking-head 三个 pipeline YAML 模板、resources/skills-bundled/ 下 OpenMontage skill 库收录（AGPL-3.0 来源如实标注）。
+- 文档 5 篇：docs/OPENMONTAGE_RESEARCH.md、docs/PIPELINE_TEMPLATES.md、docs/SKILL_AUDIT_2026-10-19.md、docs/BACKUP_DRILL_AUTH_2026-10-19.md、docs/OPERATIONS.md、docs/OPERATIONS-AUTH.md。
+- 注：HyperFrames 渲染双引擎（chromium/hyperframes，drama.video.htmlrender.engine）已记于本文件"深耕轮 2026-10-20 凌晨 lane A"条目，不重复记录。
+
+### 已知限制（发版级声明，2026-10-20）
+- 容器化一键部署已提供（Dockerfile / compose.yml / docker-compose.yml / .env.example），但未经本机实测、未做生产压测，生产上线前必须实测验证。
+- 本轮 OpenMontage/HyperFrames 集成范围内无可观测性指标埋点代码（渲染时长、CLI 失败率等未暴露）；仓库既有基础业务指标见 v2.4 条目，Prometheus 抓取配置仅覆盖既有端点。
+- 滚动更新/零停机未验证：当前升级动作为停机更新（见升级指南），不支持滚动更新。
+
+### 升级指南
+- 停服务：docker compose down（或 kill 掉 java 进程）。
+- 备份：./scripts/backup.sh（没备份不许往下走；备份恢复详见 docs/OPERATIONS.md 第 4 节）。
+- 拉代码并重建：git pull 后 docker compose build && docker compose up -d（裸 jar 方式：替换 target/drama-factory-1.0.0.jar 后重启；Flyway 启动时自动执行 src/main/resources/db/migration/ 下未执行的迁移脚本）。
+- 验证健康端点：curl -s http://localhost:8081/api/health 返回 200 且 JSON 状态正常。
+- 回滚：./scripts/restore.sh backups/<备份目录>，换回旧 jar 重启（详见 docs/OPERATIONS.md 第 5 节）。
+
 ### Added（视频通道硬约束前置校验，2026-10-20）
 - `docs/OPERATIONS.md` 新增「视频通道硬约束」一节：`constraints` 字段含义、提交前校验流程、违规 400 错误体格式（`VIDEO_CONSTRAINT_VIOLATION` + `channel`/`field`/`value`/`allowed`/`source`）、新通道补约束的步骤（出处必须能查证）。
 - `README.md` 视频生成任务章节补硬约束说明 + 4 个模型 × 核验值的约束表（agnes-video-2.5-flash / minimax music-3.0 / hyperframes / htmlrender（chromium）），核验日期 2026-10-20，每个值带出处。

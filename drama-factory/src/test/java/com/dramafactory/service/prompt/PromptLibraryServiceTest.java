@@ -15,7 +15,7 @@ class PromptLibraryServiceTest {
     @Test
     void loadsAllMarkdownEntries() {
         List<PromptLibraryService.PromptSummary> all = service.list(null);
-        assertEquals(26, all.size());
+        assertEquals(35, all.size());
 
         List<String> ids = all.stream().map(PromptLibraryService.PromptSummary::id).toList();
         assertTrue(ids.contains("yuai-deepseek-prompt"));

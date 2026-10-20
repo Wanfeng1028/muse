@@ -1,10 +1,10 @@
-# Dependabot 依赖自动更新配置（v2.5 生产级补强第 4 轮）。
-# 说明：本仓库的 CI 暂时放在各项目自己的 .github 目录下，
-# 根目录迁移被 token 权限卡住，所以这份配置也先放这里。
-# 注：springdoc 大版本钉死 2.6.x——2.7+ 要求 Spring Framework 6.2，本项目 Spring Boot 3.3.5 对应 Spring 6.1.x，升上去起不来（详见 docs/DEPENDENCY_POLICY.md 附录 B）。
+# 本文件用于配置 Dependabot，自动检查并更新仓库依赖。
+# 检查节奏：每周一（Asia/Shanghai）执行一次依赖更新检查。
+# commit 前缀规范：所有 Dependabot 提交的 commit message 均以 chore(deps) 开头。
+# springdoc 钉死 2.6.x 原因：springdoc 2.7+ 要求 Spring Framework 6.2，而 Spring Boot 3.3.5 对应 Spring 6.1.x，升上去服务起不来。
+# npm 未启用的原因：仓库没有根 package.json；src/main/resources/skills-bundled/ 下约 90 个 package.json 均为 vendored 第三方 skill 模板，不适合 dependabot 跟踪。
 version: 2
 updates:
-  # Maven：跟踪 pom.xml 里声明的依赖版本（含 springdoc 2.6.0、resilience4j、logstash encoder 等）
   - package-ecosystem: "maven"
     directory: "/"
     schedule:
@@ -14,15 +14,19 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-    reviewers:
-      - "Wanfeng1028"
-    ignore:
-      - dependency-name: "org.springdoc:*"
-        versions: ">=3"
     commit-message:
       prefix: "chore(deps)"
-
-  # GitHub Actions：跟踪 .github/workflows 下的 action 版本
+    reviewers:
+      - "Wanfeng1028"
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+        apply-to: "version-updates"
+    ignore:
+      - dependency-name: "org.springdoc:*"
+        versions:
+          - ">=3"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -34,8 +38,6 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "chore(deps)"
-
-  # Docker：跟踪 compose.yml / Dockerfile 里的基础镜像 tag
   - package-ecosystem: "docker"
     directory: "/"
     schedule:

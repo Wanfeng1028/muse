@@ -13,7 +13,21 @@
     'prm.sourceLabel': { 'zh-CN': '来源', en: 'Source' },
     'prm.pathLabel': { 'zh-CN': '路径', en: 'Path' },
     'prm.loadFailed': { 'zh-CN': '加载失败', en: 'Failed to load' },
-    'prm.requestFailed': { 'zh-CN': '请求失败', en: 'Request failed' }
+    'prm.requestFailed': { 'zh-CN': '请求失败', en: 'Request failed' },
+    'prm.kicker': { 'zh-CN': 'PROMPT LIBRARY · 实测收录', en: 'PROMPT LIBRARY · TESTED' },
+    'prm.tagAll': { 'zh-CN': '全部', en: 'All' },
+    'prm.favOnly': { 'zh-CN': '只看收藏', en: 'Favorites only' },
+    'prm.pageInfo': { 'zh-CN': '第 {page} / {pages} 页 · 共 {total} 条', en: 'Page {page} / {pages} · {total} items' },
+    'prm.prevPage': { 'zh-CN': '上一页', en: 'Previous' },
+    'prm.nextPage': { 'zh-CN': '下一页', en: 'Next' },
+    'prm.favAdd': { 'zh-CN': '已加入收藏', en: 'Added to favorites' },
+    'prm.favRemove': { 'zh-CN': '已取消收藏', en: 'Removed from favorites' },
+    'prm.copied': { 'zh-CN': '全文已复制到剪贴板', en: 'Full text copied to clipboard' },
+    'prm.copyFailed': { 'zh-CN': '复制失败，请手动选择复制', en: 'Copy failed, please select and copy manually' },
+    'prm.emptyFiltered': { 'zh-CN': '没有找到与当前筛选匹配的提示词，换个关键词或清空筛选试试。', en: 'No prompts match the current filters. Try a different keyword or clear the filters.' },
+    'prm.emptyAll': { 'zh-CN': '提示词库现在是空的。提示词由后端自动从 resources/prompt-library/ 目录下的 Markdown 文件加载（子目录名即来源分类），新增 .md 文件后重启服务即可收录。', en: 'The prompt library is currently empty. Prompts are loaded automatically by the backend from Markdown files under resources/prompt-library/ (subdirectory names become source categories). Add a new .md file and restart the service to include it.' },
+    'prm.favTitle': { 'zh-CN': '收藏/取消收藏', en: 'Add to / remove from favorites' },
+    'prm.copyBtn': { 'zh-CN': '一键复制全文', en: 'Copy full text' }
   };
 
   if (window.DFI18N) DFI18N.register(PAGE_I18N);
@@ -42,7 +56,9 @@
         const data = await res.json();
         if (data && (data.detail || data.message)) msg = data.detail || data.message;
       } catch (e) {}
-      throw new Error(msg);
+      var err = new Error(msg);
+      err.status = res.status;
+      throw err;
     }
     if (res.status === 204) return null;
     return res.json();
@@ -76,24 +92,40 @@
 
   var state = {
     prompts: [],
-    filter: ''
+    filter: '',
+    tag: '',
+    page: 0,
+    size: 20,
+    totalElements: 0,
+    totalPages: 0,
+    usePaging: true,
+    favoritesOnly: false,
+    favorites: {}
   };
 
   function cardHtml(p) {
+    var isFav = state.favorites[p.id] ? true : false;
+    var starSvg = isFav
+      ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star text-warning"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>'
+      : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>';
     return ''
       + '<div class="col-md-6 col-lg-4">'
-      +   '<div class="card h-100">'
+      +   '<div class="card h-100 prm-card">'
       +     '<div class="card-body">'
       +       '<h3 class="card-title mb-1">' + esc(p.title || p.id) + '</h3>'
       +       '<div class="text-secondary mb-2">' + esc(p.summary || '') + '</div>'
-      +       '<div class="text-secondary small">'
+      +       '<div class="prm-meta mb-3">'
       +         esc(_t('prm.sourceLabel', '来源')) + ': ' + esc(p.source || '-')
       +         ' · ' + esc(p.path || '-')
       +       '</div>'
       +     '</div>'
-      +     '<div class="card-footer d-flex align-items-center justify-content-end">'
-      +       '<button type="button" class="btn btn-sm btn-primary" data-action="view" data-id="' + esc(p.id) + '">'
+      +     '<div class="card-footer d-flex align-items-center justify-content-between">'
+      +       '<button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" data-action="view" data-id="' + esc(p.id) + '">'
+      +         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>'
       +         esc(_t('prm.view', '查看全文')) + '</button>'
+      +       '<button type="button" class="btn btn-sm btn-ghost-secondary" data-action="fav" data-id="' + esc(p.id) + '" title="' + esc(_t('prm.favTitle', '收藏/取消收藏')) + '">'
+      +         starSvg
+      +       '</button>'
       +     '</div>'
       +   '</div>'
       + '</div>';
@@ -104,7 +136,19 @@
     var empty = document.getElementById('promptEmpty');
     if (!grid) return;
     grid.innerHTML = state.prompts.map(cardHtml).join('');
-    if (empty) empty.hidden = state.prompts.length !== 0;
+    if (empty) {
+      if (state.prompts.length !== 0) {
+        empty.hidden = true;
+      } else {
+        var hasFilter = state.filter || state.tag || state.favoritesOnly;
+        if (hasFilter) {
+          empty.textContent = _t('prm.emptyFiltered', '没有找到与当前筛选匹配的提示词，换个关键词或清空筛选试试。');
+        } else {
+          empty.textContent = _t('prm.emptyAll', '提示词库现在是空的。提示词由后端自动从 resources/prompt-library/ 目录下的 Markdown 文件加载（子目录名即来源分类），新增 .md 文件后重启服务即可收录。');
+        }
+        empty.hidden = false;
+      }
+    }
     refreshIcons();
   }
 
@@ -124,15 +168,192 @@
 
   async function loadPrompts() {
     clearError();
+    if (state.favoritesOnly) {
+      try {
+        var favData = await api('/api/prompts/favorites');
+        state.prompts = Array.isArray(favData) ? favData : [];
+        state.totalElements = state.prompts.length;
+        state.totalPages = 1;
+        state.page = 0;
+        renderGrid();
+        renderPager();
+      } catch (e) {
+        state.prompts = [];
+        renderGrid();
+        showError(_t('prm.loadFailed', '加载失败') + ': ' + (e && e.message ? e.message : ''));
+      }
+      return;
+    }
+    if (state.usePaging) {
+      try {
+        var qs = '?q=' + encodeURIComponent(state.filter || '')
+          + '&tag=' + encodeURIComponent(state.tag || '')
+          + '&page=' + state.page
+          + '&size=' + state.size;
+        var data = await api('/api/prompts/page' + qs);
+        state.prompts = Array.isArray(data.content) ? data.content : [];
+        state.page = typeof data.page === 'number' ? data.page : 0;
+        state.size = typeof data.size === 'number' ? data.size : 20;
+        state.totalElements = typeof data.totalElements === 'number' ? data.totalElements : 0;
+        state.totalPages = typeof data.totalPages === 'number' ? data.totalPages : 0;
+        renderGrid();
+        renderPager();
+      } catch (e) {
+        if ((e && e.status === 404) || (e && e.message && e.message.indexOf('404') !== -1)) {
+          state.usePaging = false;
+          loadPrompts();
+        } else {
+          state.prompts = [];
+          renderGrid();
+          showError(_t('prm.loadFailed', '加载失败') + ': ' + (e && e.message ? e.message : ''));
+        }
+      }
+      return;
+    }
     try {
       var url = '/api/prompts' + (state.filter ? '?q=' + encodeURIComponent(state.filter) : '');
       var data = await api(url);
-      state.prompts = Array.isArray(data) ? data : [];
+      var arr = Array.isArray(data) ? data : [];
+      if (state.tag) {
+        arr = arr.filter(function (p) {
+          return (p.tags || []).indexOf(state.tag) !== -1 || p.source === state.tag;
+        });
+      }
+      state.prompts = arr;
+      state.totalElements = arr.length;
+      state.totalPages = 1;
+      state.page = 0;
       renderGrid();
+      renderPager();
     } catch (e) {
       state.prompts = [];
       renderGrid();
       showError(_t('prm.loadFailed', '加载失败') + ': ' + (e && e.message ? e.message : ''));
+    }
+  }
+
+  async function loadTags() {
+    try {
+      var tags = await api('/api/prompts/tags');
+      if (Array.isArray(tags)) {
+        renderTagChips(tags);
+      } else {
+        var chips = document.getElementById('tagChips');
+        if (chips) chips.hidden = true;
+      }
+    } catch (e) {
+      var chips = document.getElementById('tagChips');
+      if (chips) chips.hidden = true;
+    }
+  }
+
+  function renderTagChips(tags) {
+    var container = document.getElementById('tagChips');
+    if (!container) return;
+    container.hidden = false;
+    var html = '';
+    html += '<button type="button" class="prm-chip' + (state.tag === '' ? ' is-active' : '') + '" data-tag="">' + esc(_t('prm.tagAll', '全部')) + '</button>';
+    for (var i = 0; i < tags.length; i++) {
+      var t = tags[i];
+      html += '<button type="button" class="prm-chip' + (state.tag === t ? ' is-active' : '') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>';
+    }
+    container.innerHTML = html;
+  }
+
+  async function loadFavorites() {
+    try {
+      var favs = await api('/api/prompts/favorites');
+      state.favorites = {};
+      if (Array.isArray(favs)) {
+        for (var i = 0; i < favs.length; i++) {
+          if (favs[i] && favs[i].id) state.favorites[favs[i].id] = true;
+        }
+      }
+    } catch (e) {
+      state.favorites = {};
+    }
+  }
+
+  function renderPager() {
+    var pager = document.getElementById('pager');
+    if (!pager) return;
+    var prev = document.getElementById('pagePrev');
+    var next = document.getElementById('pageNext');
+    var info = document.getElementById('pageInfo');
+    if (state.favoritesOnly || !state.usePaging) {
+      pager.hidden = true;
+      return;
+    }
+    pager.hidden = false;
+    if (prev) {
+      prev.disabled = state.page <= 0;
+      prev.textContent = _t('prm.prevPage', '上一页');
+    }
+    if (next) {
+      next.disabled = state.page >= state.totalPages - 1;
+      next.textContent = _t('prm.nextPage', '下一页');
+    }
+    if (info) {
+      var tpl = _t('prm.pageInfo', '第 {page} / {pages} 页 · 共 {total} 条');
+      info.textContent = tpl
+        .replace('{page}', String(state.page + 1))
+        .replace('{pages}', String(state.totalPages))
+        .replace('{total}', String(state.totalElements));
+    }
+  }
+
+  async function toggleFavorite(id) {
+    var isFav = state.favorites[id] ? true : false;
+    try {
+      if (isFav) {
+        await api('/api/prompts/' + encodeURIComponent(id) + '/favorite', { method: 'DELETE' });
+        delete state.favorites[id];
+        showToast(_t('prm.favRemove', '已取消收藏'));
+      } else {
+        await api('/api/prompts/' + encodeURIComponent(id) + '/favorite', { method: 'POST' });
+        state.favorites[id] = true;
+        showToast(_t('prm.favAdd', '已加入收藏'));
+      }
+      renderGrid();
+    } catch (e) {
+      showToast((e && e.message ? e.message : _t('prm.requestFailed', '请求失败')));
+    }
+  }
+
+  function copyDetailText() {
+    var content = document.getElementById('promptDetailContent');
+    if (!content) return;
+    var text = content.textContent || '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast(_t('prm.copied', '全文已复制到剪贴板'));
+      }).catch(function () {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    if (ok) {
+      showToast(_t('prm.copied', '全文已复制到剪贴板'));
+    } else {
+      showToast(_t('prm.copyFailed', '复制失败，请手动选择复制'));
     }
   }
 
@@ -154,6 +375,10 @@
         card.hidden = false;
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+      var copyBtn = document.getElementById('copyPromptBtn');
+      if (copyBtn) {
+        copyBtn.onclick = function () { copyDetailText(); };
+      }
     } catch (e) {
       showToast((e && e.message ? e.message : _t('prm.requestFailed', '请求失败')));
     }
@@ -167,8 +392,45 @@
         if (timer) clearTimeout(timer);
         timer = setTimeout(function () {
           state.filter = search.value || '';
+          state.page = 0;
           loadPrompts();
         }, 300);
+      });
+    }
+    var favSwitch = document.getElementById('favOnlySwitch');
+    if (favSwitch) {
+      favSwitch.addEventListener('change', function () {
+        state.favoritesOnly = favSwitch.checked;
+        state.page = 0;
+        loadPrompts();
+      });
+    }
+    var tagChips = document.getElementById('tagChips');
+    if (tagChips) {
+      tagChips.addEventListener('click', function (ev) {
+        var chip = ev.target.closest ? ev.target.closest('[data-tag]') : null;
+        if (!chip) return;
+        state.tag = chip.getAttribute('data-tag') || '';
+        state.page = 0;
+        loadPrompts();
+      });
+    }
+    var prev = document.getElementById('pagePrev');
+    if (prev) {
+      prev.addEventListener('click', function () {
+        if (state.page > 0) {
+          state.page = state.page - 1;
+          loadPrompts();
+        }
+      });
+    }
+    var next = document.getElementById('pageNext');
+    if (next) {
+      next.addEventListener('click', function () {
+        if (state.page < state.totalPages - 1) {
+          state.page = state.page + 1;
+          loadPrompts();
+        }
       });
     }
     document.addEventListener('click', function (ev) {
@@ -178,6 +440,7 @@
       var id = btn.getAttribute('data-id');
       if (!id) return;
       if (action === 'view') viewPrompt(id);
+      if (action === 'fav') toggleFavorite(id);
     });
     var back = document.getElementById('promptBackBtn');
     if (back) {
@@ -188,9 +451,11 @@
     }
   }
 
-  function init() {
+  async function init() {
     bindEvents();
     applyI18nTo(document);
+    await loadFavorites();
+    loadTags();
     loadPrompts();
   }
 

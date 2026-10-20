@@ -1,5 +1,7 @@
 package com.dramafactory.service.prompt;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -10,15 +12,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+
 public class PromptLibraryService {
 
     private static final Logger log = LoggerFactory.getLogger(PromptLibraryService.class);
@@ -27,11 +39,16 @@ public class PromptLibraryService {
     private static final String MARKER = "/prompt-library/";
     private static final String ROOT_SOURCE = "根目录";
     private static final int SUMMARY_MAX = 200;
+    private static final String FAVORITES_DIR = ".drama-factory";
+    private static final String FAVORITES_FILE = "prompt-favorites.json";
 
     private final List<PromptDetail> entries;
+
     private final Map<String, PromptDetail> byId;
+    private final Set<String> favorites = ConcurrentHashMap.newKeySet();
 
     public PromptLibraryService() {
+
         List<PromptDetail> loaded = new ArrayList<>();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         try {
@@ -74,9 +91,11 @@ public class PromptLibraryService {
         this.entries = List.copyOf(index.values());
         this.byId = index;
         log.info("提示词库加载完成，共 {} 条记录", this.entries.size());
+        loadFavorites();
     }
 
     public List<PromptSummary> list(String q) {
+
         String keyword = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
         List<PromptSummary> result = new ArrayList<>();
         for (PromptDetail detail : entries) {
@@ -88,20 +107,169 @@ public class PromptLibraryService {
         return result;
     }
 
+    public Page<PromptSummary> list(String q, String tag, int page, int size) {
+        String keyword = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
+        String tagFilter = tag == null ? "" : tag.trim();
+        List<PromptSummary> filtered = new ArrayList<>();
+        for (PromptDetail detail : entries) {
+            if (!keyword.isEmpty() && !matches(detail, keyword)) {
+                continue;
+            }
+            if (!tagFilter.isEmpty() && !tagFilter.equals(detail.source())) {
+                continue;
+            }
+            filtered.add(new PromptSummary(detail.id(), detail.title(), detail.source(),
+                    detail.path(), detail.summary()));
+        }
+        int normalizedPage = page < 0 ? 0 : page;
+        int normalizedSize = size <= 0 ? 20 : Math.min(size, 100);
+        long totalElements = filtered.size();
+        int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + normalizedSize - 1) / normalizedSize);
+        long from = (long) normalizedPage * normalizedSize;
+        List<PromptSummary> content;
+        if (from >= totalElements) {
+            content = new ArrayList<>();
+        } else {
+            int start = (int) from;
+            int end = (int) Math.min(from + normalizedSize, totalElements);
+            content = new ArrayList<>(filtered.subList(start, end));
+        }
+
+        return new Page<>(content, normalizedPage, normalizedSize, totalElements, totalPages);
+    }
+
     public Optional<PromptDetail> get(String id) {
+
         if (id == null) {
             return Optional.empty();
         }
         return Optional.ofNullable(byId.get(id));
     }
 
+    public List<String> tags() {
+        Set<String> unique = new LinkedHashSet<>();
+        for (PromptDetail detail : entries) {
+            unique.add(detail.source());
+        }
+        List<String> result = new ArrayList<>(unique);
+        result.sort(Comparator.naturalOrder());
+        return result;
+    }
+
+
+    public boolean addFavorite(String id) {
+        if (id == null || !byId.containsKey(id)) {
+            return false;
+        }
+        if (favorites.contains(id)) {
+            return true;
+        }
+        favorites.add(id);
+        saveFavorites();
+        return true;
+    }
+
+    public boolean removeFavorite(String id) {
+        if (id == null || !byId.containsKey(id)) {
+            return false;
+        }
+        if (!favorites.contains(id)) {
+            return true;
+        }
+        favorites.remove(id);
+        saveFavorites();
+        return true;
+    }
+
+    public boolean isFavorite(String id) {
+        if (id == null) {
+            return false;
+        }
+        return favorites.contains(id);
+    }
+
+    public List<PromptSummary> favorites() {
+        List<PromptSummary> result = new ArrayList<>();
+        for (PromptDetail detail : entries) {
+            if (favorites.contains(detail.id())) {
+                result.add(new PromptSummary(detail.id(), detail.title(), detail.source(),
+                        detail.path(), detail.summary()));
+            }
+        }
+        return result;
+    }
+
+    private void loadFavorites() {
+        Path file = favoritesFile();
+        if (file == null) {
+            log.warn("无法确定用户主目录，跳过收藏加载");
+            return;
+        }
+        if (!Files.exists(file)) {
+            return;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<String> ids = mapper.readValue(file.toFile(), new TypeReference<List<String>>() {});
+            if (ids != null) {
+                for (String id : ids) {
+                    if (id != null && byId.containsKey(id)) {
+                        favorites.add(id);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("加载收藏失败，使用空集合：{}", e.getMessage());
+            favorites.clear();
+        }
+    }
+
+
+    private void saveFavorites() {
+        Path file = favoritesFile();
+        if (file == null) {
+            log.warn("无法确定用户主目录，跳过收藏保存");
+            return;
+        }
+        try {
+            Files.createDirectories(file.getParent());
+            List<String> ids = new ArrayList<>(favorites);
+            Collections.sort(ids);
+            ObjectMapper mapper = new ObjectMapper();
+            Path tmp = Files.createTempFile(file.getParent(), "prompt-favorites", ".tmp");
+            try {
+                mapper.writeValue(tmp.toFile(), ids);
+                try {
+                    Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                } catch (AtomicMoveNotSupportedException e) {
+                    Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } finally {
+                Files.deleteIfExists(tmp);
+            }
+        } catch (Exception e) {
+            log.warn("保存收藏失败：{}", e.getMessage());
+        }
+    }
+
+    private Path favoritesFile() {
+        String home = System.getProperty("user.home");
+        if (home == null || home.isBlank()) {
+            return null;
+        }
+        return Paths.get(home, FAVORITES_DIR, FAVORITES_FILE);
+    }
+
     private boolean matches(PromptDetail detail, String keyword) {
+
         String title = detail.title() == null ? "" : detail.title().toLowerCase(Locale.ROOT);
         String summary = detail.summary() == null ? "" : detail.summary().toLowerCase(Locale.ROOT);
         return title.contains(keyword) || summary.contains(keyword);
     }
 
     private String relativePathOf(Resource resource) throws IOException {
+
+
         String url = resource.getURL().toString();
         int idx = url.indexOf(MARKER);
         if (idx < 0) {
@@ -199,6 +367,8 @@ public class PromptLibraryService {
         }
         return name;
     }
+
+    public record Page<T>(List<T> content, int page, int size, long totalElements, int totalPages) {}
 
     public record PromptSummary(String id, String title, String source, String path, String summary) {}
 

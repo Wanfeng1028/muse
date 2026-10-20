@@ -15,6 +15,7 @@
 #       改为 qwen / agnes 即切换到对应真实通道。
 #       AUTH_JWT_SECRET 为空时主服务 API 为开放模式（仅适合单机）；
 #       auth-service 缺失该密钥则拒绝启动。
+# 注意：本文件未经本机 docker 实测（本机无 docker 环境），生产上线前请实测验证。
 
 services:
   auth:
@@ -42,7 +43,7 @@ services:
     expose:
       - "8081"
     ports:
-      - "8081:8081"
+      - "${PORT:-8081}:8081"
     volumes:
       - ./data:/app/data
     env_file:
@@ -56,6 +57,14 @@ services:
       # 视频通道：mock 先跑通链路；改 qwen / agnes 即切换通道
       VIDEO_PROVIDER: "mock"
       DRAMA_STORAGE: "/app/data/media"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-8081}/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    mem_limit: 1g
+    mem_reservation: 512m
     restart: unless-stopped
     depends_on:
       - auth

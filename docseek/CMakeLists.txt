@@ -262,6 +262,9 @@ add_executable(docseek_tests
   tests/test_locate_r2_linebase.cpp
   tests/test_locate_r2_punctfail.cpp
   tests/test_locate_r2_multidoc.cpp
+  tests/test_ds_tokenizer_deep.cpp
+  tests/test_ds_hybrid_deep.cpp
+  tests/test_ds_locate_deep.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

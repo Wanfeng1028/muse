@@ -230,6 +230,8 @@
 
 - **深耕轮 2026-10-20 傍晚「成本账本看板」（已合入）**：后端新增 `CostLedgerService.summarizeTrend(days)`（[1,90]钳制、按日期升序、空天补零）+ `budgetStatus()`（构造器注入 BillingProperties，reserve() 复用抽出的 usableBudget）；Controller 新增 `GET /api/cost-ledger/trend?days`（默认14、非法400）、`GET /api/cost-ledger/budget`；`GET /api/cost-ledger/entries` 新增 limit（默认100、最大500、非法400）。前端 `cost-ledger.html` 看板页（导航"运行"→"成本账本"）：预算卡+使用率进度条、今日/近7天/累计/供应商数 KPI、14 天 SVG 趋势图（7/14/30 切换）、按供应商条形、明细表；中英双语、Tabler 原生。新增 6 个测试文件 24 例全绿；修 dpsk 测试 bug 1 个。视觉验收：36 条跨 14 天种子数据，真机截图亲眼验收（修 5 处真 bug：asset 路径/css-js 子目录、hidden/d-none 混用、PAGE_I18N 格式、key 命名不一致、"仅告警"重复）。文档：README/OPERATIONS/CHANGELOG 同步；截图 docs/screenshots/cost-ledger/。
 
+- **深耕轮 2026-10-20 深夜「提示词库正式功能」（待合入）**：用户亲定提示词库做成正式功能（API+前端页可浏览搜索）。后端：PromptController 新增 `GET /page`（q/tag/page/size，PageDto）、`GET /tags`、`GET /favorites`、`POST/DELETE /{id}/favorite`（未知 id→404），收藏持久化 `~/.drama-factory/prompt-favorites.json`（原子写+排序）；前端：新建 `prompts.html/js/css` 三件套（列表+搜索+标签 chips+分页+详情+一键复制+收藏开关，去 AI 味：左对齐、无紫渐变、无居中、中英双语），降级兼容老后端（/page 404→走旧接口，chips/pager 自动隐藏）；入库 9 个新提示词文件（motion-engineering/neon-jump/waoowaoo/x-posts，原件直拷+_SOURCE 如实记录），库 26→35；26/25 之谜破案——POSIX locale 下 maven-resources-plugin 静默跳过中文文件名资源（README-存档说明.md），`git mv` 改全 ASCII 文件名修；新增 16 个测试文件约 150 例；`docs/PROMPT_LIBRARY.md` 功能文档；视觉验收：真机截图亲眼看（修 4 处真 bug：i18n key 裸奔、收藏开关未过滤、chips 类名不符契约、复制按钮缺 i18n 注册）。DoD 排期：F1 完成（VideoProviderRouterScoringTest）、F2/F3/F4 文档补齐。多项目深测：docseek 3 文件 32 例全绿（已入库）、ledger/feedflow/linkshort/sentinel 部分交付（429 硬停所致）。
+
 ## mini-os「网页操作系统」
 
 **定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。
