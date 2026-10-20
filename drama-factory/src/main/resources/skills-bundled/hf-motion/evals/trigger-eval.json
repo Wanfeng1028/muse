@@ -1,0 +1,137 @@
+[
+  {
+    "query": "/video:hf-motion intro-kinetic name=홍길동 team=가나다팀",
+    "should_trigger": true,
+    "note": "slash-literal: update if the skill is renamed"
+  },
+  {
+    "query": "내 자기소개 15초 키네틱 타이포 영상 만들어줘. 이름은 김철수, 데이터팀이야",
+    "should_trigger": true
+  },
+  {
+    "query": "intro-kinetic 레시피로 이름이랑 구독자 수만 바꿔서 영상 하나 더 뽑아줘",
+    "should_trigger": true
+  },
+  {
+    "query": "make my kinetic intro video again, same template, but with name=Jane Doe and three flash words",
+    "should_trigger": true
+  },
+  {
+    "query": "지난번 그 자기소개 모션그래픽 뼈대 그대로 쓰고 내용만 우리 팀장님 걸로 교체해줘",
+    "should_trigger": true
+  },
+  {
+    "query": "which hf-motion recipes exist and what parameters does intro-kinetic take?",
+    "should_trigger": true
+  },
+  {
+    "query": "render the self-intro motion graphic recipe at 116 bpm with tools=Notion Kit|Daily Log",
+    "should_trigger": true
+  },
+  {
+    "query": "/video:hf-motion",
+    "should_trigger": true,
+    "note": "no recipe given: the skill lists recipes and asks"
+  },
+  {
+    "query": "make a 6s pixel dissolve that swaps 어제의 나 into 오늘의 나",
+    "should_trigger": true,
+    "note": "pixel-dissolve is implemented: text A dissolves cell by cell into text B"
+  },
+  {
+    "query": "/video:hf-motion pixel-dissolve textA=작년의 나 textB=올해의 나 pixelSize=24",
+    "should_trigger": true,
+    "note": "slash-literal: update if the skill is renamed"
+  },
+  {
+    "query": "픽셀 디졸브 레시피로 문구만 바꿔서 6초짜리 영상 뽑아줘",
+    "should_trigger": true
+  },
+  {
+    "query": "아이디어가 완성된 영상으로 바뀌는 6초짜리 원 팝 전환 영상 만들어줘",
+    "should_trigger": true,
+    "note": "circle-pop is implemented: a circle pops, fills the frame and becomes scene B"
+  },
+  {
+    "query": "/video:hf-motion circle-pop textA=기획서 textB=런칭 완료 popOrigin=0.15,0.8",
+    "should_trigger": true,
+    "note": "slash-literal: update if the skill is renamed"
+  },
+  {
+    "query": "노트북 화면 속으로 카메라가 들어가는 6초 영상 만들어줘, 화면 문구는 모션 그래픽",
+    "should_trigger": true,
+    "note": "screen-dive is implemented: camera dives into a drawn laptop screen"
+  },
+  {
+    "query": "/video:hf-motion screen-dive screenText=새로운 화면 diveAt=1.5",
+    "should_trigger": true,
+    "note": "slash-literal: update if the skill is renamed"
+  },
+  {
+    "query": "screen-dive recipe with my own screen text, zoom into the laptop until it fills the frame",
+    "should_trigger": true
+  },
+  {
+    "query": "MOTION 글자 사이로 내 캐릭터 이미지가 지나가는 텍스트 샌드위치 영상 만들어줘",
+    "should_trigger": true,
+    "note": "text-sandwich is implemented: the user's character image passes in front of some letters and behind others"
+  },
+  {
+    "query": "/video:hf-motion text-sandwich word=MOTION characterImage=./alex.png direction=rtl",
+    "should_trigger": true,
+    "note": "slash-literal: update if the skill is renamed"
+  },
+  {
+    "query": "camera flies through the letters of our brand name into the next scene",
+    "should_trigger": true,
+    "note": "letter-flythrough is implemented: the camera flies into a big letter's hole"
+  },
+  {
+    "query": "AI 글자 구멍 속으로 카메라가 뚫고 들어가서 다음 장면이 나오는 6초 영상",
+    "should_trigger": true,
+    "note": "letter-flythrough is implemented: zoom into the counter of A, next scene inside it"
+  },
+  {
+    "query": "/video:hf-motion letter-flythrough letters=OK nextText=다음 장면",
+    "should_trigger": true,
+    "note": "slash-literal: update if the skill is renamed"
+  },
+  {
+    "query": "제품 런칭 영상 60초짜리 웹사이트 캡처해서 만들어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "이 유튜브 인터뷰 영상에 자막 입혀줘",
+    "should_trigger": false
+  },
+  {
+    "query": "build me an html slide deck for tomorrow's team meeting",
+    "should_trigger": false
+  },
+  {
+    "query": "이 PR 내용을 설명하는 영상으로 만들어줘",
+    "should_trigger": false
+  },
+  {
+    "query": "지금 변경사항 커밋하고 PR 올려줘",
+    "should_trigger": false
+  },
+  {
+    "query": "rebase this branch onto main and fix the conflicts",
+    "should_trigger": false
+  },
+  {
+    "query": "버튼이 로더, 음악 플레이어, 슬라이더, 토글로 계속 변하는 UI 모션 루프 영상 만들어줘",
+    "should_trigger": true,
+    "note": "ui-morph is implemented"
+  },
+  {
+    "query": "애플 키노트 스타일 런치 영상, 사진 9장으로 리퀴드 글래스 효과 넣어서 만들어줘",
+    "should_trigger": true,
+    "note": "launch-film is implemented"
+  },
+  {
+    "query": "가사에 맞춰서 비트 싱크된 뮤직비디오 만들어줘",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand name (wordmark)","default":"slotwise"},
+  {"id":"tagline","type":"string","label":"Tagline under the first lockup","default":"Your week, planned for you."},
+  {"id":"domain","type":"string","label":"Domain on the end card","default":"slotwise.app"},
+  {"id":"hook1","type":"string","label":"Hook, first line","default":"Your week"},
+  {"id":"hook2","type":"string","label":"Hook, big line","default":"doesn’t fit."},
+  {"id":"placeholder","type":"string","label":"Prompt placeholder","default":"Tell Slotwise what matters…"},
+  {"id":"prompt","type":"string","label":"Typed prompt ([brackets] become chips)","default":"Protect my [mornings]. [Gym Tue + Thu]. Ship the deck by [Friday]."},
+  {"id":"clashes","type":"string","label":"Clash count before planning","default":"12"},
+  {"id":"result","type":"string","label":"Result, bold part","default":"Week planned"},
+  {"id":"resultSub","type":"string","label":"Result, detail","default":"20 moved · 14 to next week"},
+  {"id":"feat1","type":"string","label":"Feature 1 (| = line break)","default":"Meetings|make room."},
+  {"id":"feat2","type":"string","label":"Feature 2 (| = line break)","default":"Mornings|stay yours."},
+  {"id":"feat3","type":"string","label":"Feature 3 (| = line break)","default":"Overruns|fit too."},
+  {"id":"endA","type":"string","label":"End line, first word","default":"Everything"},
+  {"id":"endB","type":"string","label":"End line, second word (the red dot is its period)","default":"fits"},
+  {"id":"user","type":"string","label":"User name in the sidebar","default":"Sam Rivera"},
+  {"id":"role","type":"string","label":"User role","default":"Head of Product"},
+  {"id":"accent","type":"color","label":"Accent (now-line, dot, send button)","default":"#e3173e"},
+  {"id":"ink","type":"color","label":"Ink","default":"#0b0b0c"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InterTight-700.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --accent: #e3173e; --ink: #0b0b0c; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fbfbfb; font-family: "Inter", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      .abs { position: absolute; left: 0; top: 0; }
+      #scene { overflow: hidden; background: #fbfbfb; }
+
+      /* ---------- intro ---------- */
+      #introL { background: #fbfbfb; }
+      #iAll, #iCam { transform-origin: 960px 540px; }
+      .hl { position: absolute; left: 0; width: 1920px; height: 1.5px; background: #e7e7ea; transform-origin: 960px 0; }
+      .vl { position: absolute; top: 0; width: 1.5px; height: 1080px; background: #ececef; }
+      .tl { position: absolute; left: 50px; width: 80px; text-align: right; font: 500 14px/1 "Inter"; color: #9c9ca3; font-variant-numeric: tabular-nums; }
+      .ic { position: absolute; left: 0; top: 0; width: 264px; border-radius: 10px; padding: 12px 16px; border: 2.5px solid transparent; }
+      .ic b { display: block; font: 600 19px/1.15 "Inter"; letter-spacing: -0.01em; white-space: nowrap; }
+      .ic i { display: block; font: 500 14px/1.2 "Inter"; font-style: normal; color: #a3a3a9; margin-top: 4px; white-space: nowrap; }
+      .ic.g { background: #ededee; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06); color: #1a1a1c; }
+      .ic.o { background: #fff; border-color: #151516; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06); color: #151516; }
+      .ic.b { background: #0e0e0f; color: #fff; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16); }
+      .ic.b i { color: #8c8c92; }
+      .ic.thin { padding: 7px 16px; }
+      #iLine { position: absolute; left: 0; top: 539px; width: 1920px; height: 2.5px; background: var(--accent); transform-origin: 960px 50%; }
+      #iBadge { position: absolute; left: 75px; top: 525px; width: 72px; height: 30px; border-radius: 7px; background: var(--accent); color: #fff; font: 700 15px/30px "Inter"; text-align: center; font-variant-numeric: tabular-nums; }
+      .hook { position: absolute; left: 0; width: 1920px; text-align: center; white-space: nowrap; font-weight: 600; color: var(--ink); line-height: 1; }
+      .hook span { display: inline-block; }
+      #yw { top: 264px; font-size: 132px; letter-spacing: -0.035em; }
+      #df { top: 625px; font-size: 350px; letter-spacing: -0.05em; }
+
+      /* ---------- dark lockup ---------- */
+      #darkL { background: radial-gradient(ellipse 62% 62% at 50% 48%, #1c1c1e 0%, #0e0e0f 58%, #070707 100%); }
+      .mp { position: absolute; left: 0; top: 0; }
+      #dWmClip { position: absolute; left: 0; top: 0; overflow: hidden; height: 300px; }
+      #dWm { position: absolute; left: 0; top: 0; font: 700 190px/1 "Inter Tight"; letter-spacing: -0.035em; color: #fff; white-space: nowrap; }
+      #dTag { position: absolute; left: 0; top: 671px; width: 1920px; text-align: center; font: 400 34px/1 "Inter"; color: #9d9da3; letter-spacing: -0.005em; white-space: nowrap; }
+      #dTag span { display: inline-block; white-space: pre; }
+      #morph { position: absolute; left: 0; top: 0; background: #fff; }
+
+      /* ---------- app window ---------- */
+      #appL { perspective: 2400px; perspective-origin: 960px 540px; }
+      #appBg { background: radial-gradient(ellipse 70% 70% at 50% 45%, #f4f5f7 0%, #eceef1 70%, #e6e8ec 100%); }
+      #win { position: absolute; left: 0; top: 0; width: 1476px; height: 910px; transform-style: preserve-3d; }
+      #winBg { position: absolute; left: 0; top: 0; width: 1476px; height: 910px; border-radius: 22px; background: #fdfdfd; }
+      #body { position: absolute; left: 0; top: 0; width: 1476px; height: 910px; transform-style: preserve-3d; }
+      #side { position: absolute; left: 0; top: 0; width: 254px; height: 910px; border-right: 1px solid #ededf0; background: #fafafb; border-radius: 22px 0 0 22px; }
+      .tlight { position: absolute; top: 21px; width: 10px; height: 10px; border-radius: 50%; background: #dcdce1; }
+      #sBrand { position: absolute; left: 20px; top: 62px; height: 24px; display: flex; align-items: center; gap: 9px; font: 700 18px/1 "Inter Tight"; letter-spacing: -0.02em; }
+      #sBrand svg { width: 21px; height: 21px; }
+      .sLab { position: absolute; left: 20px; font: 500 12px/1 "Inter"; color: #9a9aa0; }
+      #sMonth { position: absolute; left: 20px; top: 120px; font: 600 13px/1 "Inter"; }
+      .sArr { position: absolute; top: 118px; font: 500 15px/1 "Inter"; color: #555; }
+      .mh, .md { position: absolute; width: 24px; margin-left: -12px; text-align: center; font: 400 12px/24px "Inter"; font-variant-numeric: tabular-nums; }
+      .mh { color: #9a9aa0; font-size: 11px; }
+      .md.we { color: #a8a8ae; }
+      .md.today { background: var(--ink); color: #fff; border-radius: 50%; font-weight: 600; }
+      #wkHi { position: absolute; left: 21px; top: 222px; width: 148px; height: 26px; border-radius: 8px; background: #efeff2; }
+      #prio { position: absolute; left: 0; top: 0; width: 254px; }
+      .pr { position: absolute; left: 20px; width: 212px; height: 30px; border-radius: 8px; border: 1px solid #e9e9ec; background: #fff; display: flex; align-items: center; padding: 0 10px; font: 500 12.5px/1 "Inter"; }
+      .pr i { width: 6px; height: 6px; border-radius: 1.5px; background: var(--ink); margin-right: 9px; }
+      .pr em { margin-left: auto; font-style: normal; color: #9a9aa0; font-size: 11px; }
+      .cal { position: absolute; left: 20px; display: flex; align-items: center; gap: 10px; font: 500 13px/1 "Inter"; }
+      .cal i { width: 12px; height: 12px; border-radius: 3px; }
+      #user { position: absolute; left: 20px; top: 850px; display: flex; align-items: center; gap: 10px; }
+      #user i { width: 28px; height: 28px; border-radius: 50%; background: #ececef; font: 600 10px/28px "Inter"; font-style: normal; text-align: center; color: #555; }
+      #user b { display: block; font: 600 13px/1.2 "Inter"; }
+      #user span { display: block; font: 400 11px/1.3 "Inter"; color: #9a9aa0; }
+      #hdr { position: absolute; left: 254px; top: 0; width: 1222px; height: 64px; border-bottom: 1px solid #ededf0; }
+      #hL { position: absolute; left: 22px; top: 0; height: 64px; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+      #hMonth { font: 700 19px/1 "Inter"; letter-spacing: -0.02em; }
+      #hWeek { font: 400 19px/1 "Inter"; color: #8b8b91; letter-spacing: -0.01em; }
+      #clash { margin-left: 10px; height: 24px; border-radius: 12px; padding: 0 11px; display: flex; align-items: center; gap: 7px; font: 600 12.5px/1 "Inter"; white-space: nowrap; transform-origin: 0 50%; }
+      #clash.bad { background: #fdebef; color: #d2204b; }
+      #clash.bad i { width: 6px; height: 6px; border-radius: 50%; background: #d8264f; }
+      #clash.ok { background: #f1f1f3; color: #2a2a2d; }
+      #clash svg { width: 12px; height: 12px; }
+      #hR { position: absolute; right: 24px; top: 0; height: 64px; display: flex; align-items: center; gap: 12px; font: 500 13px/1 "Inter"; }
+      #hR .arr { color: #555; font-size: 15px; letter-spacing: 8px; }
+      #today { height: 28px; padding: 0 12px; border-radius: 8px; border: 1px solid #e3e3e7; display: flex; align-items: center; font-weight: 600; }
+      #seg { height: 30px; border-radius: 9px; background: #f1f1f3; display: flex; align-items: center; padding: 3px; gap: 2px; color: #7e7e84; }
+      #seg span { padding: 0 11px; height: 24px; line-height: 24px; border-radius: 7px; }
+      #seg span.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+      .dh { position: absolute; top: 64px; height: 55px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+      .dh span { font: 400 13px/1 "Inter"; color: #8b8b91; }
+      .dh b { font: 600 17px/1 "Inter"; font-variant-numeric: tabular-nums; }
+      .dh b.today { background: var(--ink); color: #fff; border-radius: 7px; padding: 4px 7px; font-size: 15px; }
+      .gl { position: absolute; background: #efeff2; }
+      .wt { position: absolute; left: 262px; width: 43px; text-align: right; font: 400 12px/1 "Inter"; color: #9c9ca2; font-variant-numeric: tabular-nums; }
+      #evs { position: absolute; left: 0; top: 0; width: 1476px; height: 910px; transform-style: preserve-3d; }
+      .ev { position: absolute; left: 0; top: 0; border-radius: 7px; background: #ededef; padding: 7px 10px; overflow: hidden; color: #141416; border: 1.5px solid transparent; }
+      .ev b { display: block; font: 600 13px/16px "Inter"; letter-spacing: -0.005em; white-space: nowrap; }
+      .ev i { display: block; font: 400 11px/14px "Inter"; font-style: normal; color: #8e8e94; margin-top: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .ev.short { padding: 6px 10px; }
+      .ev.short b { display: inline; }
+      .ev.short i { display: inline; margin-left: 6px; }
+      .ev.h { background: repeating-linear-gradient(135deg, #f0f0f2 0 7px, #fafafb 7px 14px); border-color: #e6e6e9; }
+      .ev.k { background: #0b0b0c; color: #fff; }
+      .ev.k i { color: #9a9aa0; }
+      .ev.o { background: #fff; border-color: #151516; }
+      .av { display: flex; gap: 3px; margin-top: 6px; }
+      .av span { position: relative; width: 14px; height: 14px; border-radius: 50%; background: #dcdce0; font: 600 5.5px/14px "Inter"; text-align: center; color: #444; }
+      .av span i { position: absolute; right: -3px; bottom: -3px; width: 8px; height: 8px; margin: 0; border-radius: 50%; background: var(--ink); color: #fff; }
+      .av span i svg { position: absolute; left: 1.5px; top: 1.5px; width: 5px; height: 5px; }
+      #qs { position: absolute; left: 0; top: 0; width: 126px; border-radius: 9px; background: #fff; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.05); padding: 9px 10px; transform-origin: 50% 50%; }
+      #qs b { display: block; font: 600 12px/15px "Inter"; }
+      #qs span { display: block; font: 400 9.5px/13px "Inter"; color: #8e8e94; margin-top: 1px; white-space: nowrap; }
+      #qsPill { display: inline-flex; align-items: center; gap: 3px; margin-top: 6px; height: 17px; padding: 0 7px; border-radius: 5px; font: 500 8.5px/17px "Inter"; white-space: nowrap; }
+      #qsPill.pend { background: #f0f0f2; color: #77777d; }
+      #qsPill.done { background: var(--ink); color: #fff; }
+      #qsPill svg { width: 7px; height: 7px; }
+      #prot { position: absolute; left: 0; top: 0; height: 24px; padding: 0 10px; border-radius: 7px; background: #2a2a2d; color: #fff; display: flex; align-items: center; gap: 6px; font: 500 11px/1 "Inter"; white-space: nowrap; }
+      #prot svg { width: 11px; height: 11px; }
+      #plus { position: absolute; left: 0; top: 0; height: 17px; padding: 0 6px; border-radius: 5px; background: var(--accent); color: #fff; font: 600 9px/17px "Inter"; white-space: nowrap; }
+      #wNow { position: absolute; left: 0; top: 0; width: 1476px; height: 910px; }
+      #wBadge { position: absolute; left: 262px; top: 0; width: 41px; height: 18px; border-radius: 5px; background: var(--accent); color: #fff; font: 700 10.5px/18px "Inter"; text-align: center; font-variant-numeric: tabular-nums; }
+      #wDot { position: absolute; left: 313px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+      #wLine { position: absolute; left: 318px; top: 0; width: 231.6px; height: 2px; background: var(--accent); }
+      #wFaint { position: absolute; left: 549.6px; top: 0; width: 926px; height: 1px; background: var(--accent); opacity: 0.22; }
+      #pb { position: absolute; left: 546px; top: 823px; width: 700px; height: 59px; border-radius: 30px; background: #fff; border: 1px solid #ebebee; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08); }
+      #pbIcon { position: absolute; left: 22px; top: 19px; width: 21px; height: 21px; }
+      #pbT { position: absolute; left: 56px; top: 0; right: 64px; height: 57px; line-height: 57px; font: 400 16px/57px "Inter"; white-space: pre; color: var(--ink); overflow: hidden; }
+      #pbT.ph { color: #a0a0a6; }
+      #pbT .act { color: var(--accent); }
+      #pbT .chip { background: #ededf0; border-radius: 5px; padding: 1px 4px; font-weight: 600; }
+      #pbT .caret { display: inline-block; width: 1.5px; height: 19px; background: var(--ink); vertical-align: -4px; margin-left: 1px; }
+      #pbR { position: absolute; left: 56px; top: 0; height: 57px; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+      #pbR i { width: 19px; height: 19px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center; }
+      #pbR i svg { width: 11px; height: 11px; }
+      #pbR b { font: 600 16px/1 "Inter"; letter-spacing: -0.01em; }
+      #pbR span { font: 400 16px/1 "Inter"; color: #8e8e94; }
+      #pbS { position: absolute; left: 650px; top: 9.5px; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; }
+      #pbS svg { width: 16px; height: 16px; }
+
+      /* ---------- features ---------- */
+      #fPanel { position: absolute; left: 0; top: 0; width: 768px; height: 1080px; background: #f7f7f8; border-right: 1px solid #ececef; }
+      .ft { position: absolute; left: 98px; top: 0; font: 650 118px/0.95 "Inter"; letter-spacing: -0.045em; white-space: nowrap; color: var(--ink); }
+
+      /* ---------- tessellation ---------- */
+      #tessL { background: radial-gradient(ellipse 70% 70% at 50% 45%, #f4f5f7 0%, #eceef1 70%, #e6e8ec 100%); }
+
+      /* ---------- end ---------- */
+      #endBg { background: #fbfbfb; }
+      #eLine { position: absolute; left: 0; top: 0; white-space: nowrap; font: 600 170px/1 "Inter"; letter-spacing: -0.035em; color: var(--ink); }
+      #eLine span { display: inline-block; white-space: pre; }
+      #eP { color: transparent; }
+      #eU { position: absolute; left: 0; top: 0; height: 13px; border-radius: 7px; background: var(--ink); transform-origin: 0 50%; }
+      .bar { position: absolute; left: 0; top: 0; background: var(--ink); }
+      #eWmClip { position: absolute; left: 0; top: 0; overflow: hidden; height: 300px; }
+      #eWm { position: absolute; left: 0; top: 0; font: 700 180px/1 "Inter Tight"; letter-spacing: -0.035em; color: var(--ink); white-space: nowrap; }
+      #eDom { position: absolute; left: 0; top: 656px; width: 1920px; text-align: center; font: 500 28px/1 "Inter"; color: #58585e; white-space: nowrap; }
+
+      #dot { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--accent); }
+      #cursor { position: absolute; left: 0; top: 0; width: 64px; height: 64px; transform-origin: 13px 7px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="33" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="33" data-track-index="0">
+        <div id="introL" class="layer">
+          <div id="iAll" class="layer">
+            <div id="iCam" class="layer"><div id="iGrid" class="layer"></div><div id="iCards" class="layer"></div></div>
+            <div id="iNow" class="layer"><div id="iLine"></div><div id="iBadge">08:42</div></div>
+            <div id="yw" class="hook"></div>
+            <div id="df" class="hook"></div>
+          </div>
+        </div>
+
+        <div id="darkL" class="layer">
+          <div id="dTop" class="mp"></div>
+          <div id="dBot" class="mp"></div>
+          <div id="dWmClip"><div id="dWm"></div></div>
+          <div id="dTag"></div>
+          <div id="morph"></div>
+        </div>
+
+        <div id="appL" class="layer">
+          <div id="appBg" class="layer"></div>
+          <div id="win"></div>
+        </div>
+
+        <div id="featL" class="layer">
+          <div id="fPanel"></div>
+          <div id="ft1" class="ft"></div>
+          <div id="ft2" class="ft"></div>
+          <div id="ft3" class="ft"></div>
+        </div>
+
+        <div id="tessL" class="layer"><canvas id="tessC" class="layer" width="1920" height="1080"></canvas></div>
+
+        <div id="endL" class="layer">
+          <div id="endBg" class="layer"></div>
+          <div id="eLine"><span id="eA"></span><span> </span><span id="eB"></span><span id="eP">.</span></div>
+          <div id="eU"></div>
+          <div id="b1" class="bar"></div>
+          <div id="b2" class="bar"></div>
+          <div id="eWmClip"><div id="eWm"></div></div>
+          <div id="eDom"></div>
+        </div>
+
+        <canvas id="fx" class="layer" width="1920" height="1080"></canvas>
+        <div id="dot"></div>
+        <svg id="cursor" viewBox="0 0 24 24"><path d="M5 2.5 L5 19.5 L9.4 15.4 L12.3 21.6 L15.1 20.3 L12.3 14.3 L18.4 14.1 Z" fill="#0b0b0c" stroke="#fff" stroke-width="1.4" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 33, TAU = Math.PI * 2;
+        const ACC = v.accent, INK = v.ink;
+        const accA = (a) => { const n = parseInt(String(ACC).replace("#", ""), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const ios = (u) => -(Math.cos(Math.PI * u) - 1) / 2;
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const blur = (el, b) => { el.style.filter = b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none"; };
+        const fade = (el, a) => { K.show(el, a > 0.002); el.style.opacity = C(a).toFixed(3); };
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) {
+            const ns = "http://www.w3.org/2000/svg", f = document.createElementNS(ns, "filter");
+            f.setAttribute("id", "mb_" + key); f.setAttribute("x", "-40%"); f.setAttribute("y", "-40%"); f.setAttribute("width", "180%"); f.setAttribute("height", "180%");
+            g = document.createElementNS(ns, "feGaussianBlur"); f.appendChild(g);
+            let defs = document.getElementById("mbDefs");
+            if (!defs) { const svg = document.createElementNS(ns, "svg"); svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.style.position = "absolute"; defs = document.createElementNS(ns, "defs"); defs.id = "mbDefs"; svg.appendChild(defs); document.body.appendChild(svg); }
+            defs.appendChild(f); MBF[key] = g;
+          }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+        const mk = (tag, cls, parent, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+        const hm = (h) => { let H = Math.floor(h + 1e-6), M = Math.round((h - H) * 60); if (M === 60) { H++; M = 0; } return String(H).padStart(2, "0") + ":" + String(M).padStart(2, "0"); };
+        const px = (n) => n.toFixed(1) + "px";
+        const place = (el, x, y, w, h) => { el.style.transform = "translate(" + px(x) + "," + px(y) + ")"; if (w != null) el.style.width = px(w); if (h != null) el.style.height = px(h); };
+        const MARK = (fill, dot) => '<svg viewBox="0 0 100 100"><rect x="0" y="0" width="100" height="42" rx="13" fill="' + fill + '"/><rect x="0" y="58" width="52" height="42" rx="13" fill="' + fill + '"/><circle cx="79" cy="79" r="21" fill="' + dot + '"/></svg>';
+        const CHECK = (c) => '<svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3L9.6 3.6" fill="none" stroke="' + c + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        // mark geometry: two blocks and the now-dot, inside a size x size box
+        const markRects = (x, y, s) => ({ top: [x, y, s, 0.42 * s], bot: [x, y + 0.58 * s, 0.52 * s, 0.42 * s], dot: [x + 0.79 * s, y + 0.79 * s, 0.21 * s], r: 0.13 * s });
+        const setPiece = (el, r, rad) => { place(el, r[0], r[1], r[2], r[3]); el.style.borderRadius = px(rad); };
+        const dotEl = $("dot");
+        const setDot = (x, y, r, a) => { if (a != null && a <= 0.002) { K.show(dotEl, false); return; } K.show(dotEl, true); place(dotEl, x - r, y - r, 2 * r, 2 * r); dotEl.style.opacity = a == null ? "1" : C(a).toFixed(3); };
+        const fx = $("fx").getContext("2d");
+
+        // ================= intro =================
+        const iGrid = $("iGrid"), iCards = $("iCards");
+        const nowY = 540, hourPx = 120, nowH = 8.7;
+        const iy = (h) => nowY + (h - nowH) * hourPx;
+        const HL = [], VL = [], TL = [];
+        for (let h = 4; h <= 14; h++) { const d = mk("div", "hl", iGrid); d.style.top = px(iy(h)); HL.push({ el: d, y: iy(h) }); }
+        for (let k = -1; k <= 6; k++) { const x = 270 + k * 276; const d = mk("div", "vl", iGrid); d.style.left = px(x); d.style.transformOrigin = "0 " + px(nowY); VL.push({ el: d, x }); }
+        for (let h = 5; h <= 12; h++) { const d = mk("div", "tl", iGrid, hm(h)); d.style.top = px(iy(h) + 14); TL.push({ el: d, y: iy(h) }); }
+        const POOL = ["Review", "Check-in", "Standup", "Handoff", "Retro", "Budget", "Onboarding", "Partner intro", "Sync", "1:1", "Design crit", "Kickoff", "Roadmap", "Pricing", "Interview", "Demo", "Follow-up", "All-hands", "Board prep", "QBR prep", "Quick chat", "Launch sync", "Metrics", "Planning"];
+        const IC = [
+          ["1:1", "g", -1, 6.0, 0.75, 1.55], ["Board prep", "g", 5, 10.0, 0.5, 1.63], ["1:1", "g", 4, 10.3, 0.25, 1.7], ["Roadmap", "g", 6, 10.0, 0.6, 1.78],
+          ["Offsite", "b", 3, 5.0, 0.25, 1.86], ["Sync", "o", 0, 7.5, 0.75, 1.93], ["Quick chat", "g", 2, 10.5, 0.5, 2.02], ["Kickoff", "o", 3, 10.45, 0.22, 2.1],
+          ["Demo", "g", 0, 5.0, 0.25, 2.18], ["Launch sync", "g", 1, 5.5, 0.6, 2.26], ["QBR prep", "g", 4, 6.0, 1.0, 2.34], ["Vendor call", "b", 3, 10.7, 0.22, 2.42],
+          ["Planning", "g", 1, 8.4, 0.5, 2.5], ["Design crit", "g", 4, 8.5, 0.5, 2.58], ["All-hands", "b", 0, 7.75, 0.22, 2.66], ["Hiring panel", "b", 2, 10.85, 0.22, 2.74],
+          ["Pricing", "g", 5, 12.5, 0.5, 2.82], ["Follow-up", "g", -1, 11.0, 0.5, 2.9], ["Customer call", "g", 0, 11.3, 0.4, 2.98], ["Interview", "g", 5, 8.0, 0.5, 3.06],
+          ["Metrics", "g", 6, 8.0, 0.6, 3.14], ["QBR prep", "g", 4, 8.75, 0.45, 3.22],
+        ];
+        for (let k = 0; k < 26; k++) {
+          const r1 = R(k * 3.7 + 11), r2 = R(k * 5.3 + 7), r3 = R(k * 7.1 + 3), r4 = R(k * 2.9 + 17);
+          IC.push([POOL[Math.floor(r1 * POOL.length)], r2 < 0.16 ? "b" : r2 < 0.3 ? "o" : "g", Math.floor(r3 * 8) - 1, Math.round((4.9 + r4 * 7.8) * 4) / 4, [0.25, 0.5, 0.75, 1][Math.floor(R(k * 9.1) * 4)], 3.3 + k * 0.08]);
+        }
+        const ICARDS = IC.map((c, i) => {
+          const [title, st, col, h, d, ta] = c;
+          const hgt = Math.max(40, d * hourPx - 6), thin = hgt < 64;
+          const el = mk("div", "ic " + st + (thin ? " thin" : ""), iCards, "<b>" + esc(title) + "</b>" + (thin ? "" : "<i>" + hm(h) + "</i>"));
+          el.style.height = px(hgt);
+          const a = R(i * 3.1 + 0.5) * TAU, dist = 700 + 500 * R(i * 5.7 + 1);
+          return { el, x: 270 + col * 276 + 6, y: iy(h) + 3, ta, ox: Math.cos(a) * dist, oy: Math.sin(a) * dist, rot: (R(i * 7.3 + 2) - 0.5) * 50, i };
+        });
+        // a few cards get shoved around while the week piles up
+        const SHOVE = [3, 9, 13, 17, 21, 25, 30, 36].map((i, k) => ({ i, t0: 4.35 + k * 0.14, dx: (R(i * 1.9) < 0.5 ? -1 : 1) * 276 * (R(i * 2.3) < 0.7 ? 1 : 0.5), dy: (R(i * 4.1) - 0.5) * 140 }));
+        const yw = $("yw"), df = $("df");
+        yw.innerHTML = v.hook1.split(" ").map((w) => "<span>" + esc(w) + "</span>").join(" ");
+        df.innerHTML = "<span>" + esc(v.hook2) + "</span>";
+        const ywW = [...yw.children], dfS = df.children[0];
+
+        function intro(t) {
+          const on = t < 5.96;
+          K.show($("introL"), on);
+          if (!on) return;
+          // grid draws itself out from the now-line
+          HL.forEach((l) => { const d = Math.abs(l.y - nowY) / 540; const u = E.outCubic(P(t, 0.98 + d * 0.16, 1.34 + d * 0.16)); l.el.style.transform = "scaleX(" + u.toFixed(3) + ")"; l.el.style.opacity = C(u * 2); });
+          VL.forEach((l) => { const d = Math.abs(l.x - 960) / 960; const u = E.outCubic(P(t, 1.08 + d * 0.14, 1.42 + d * 0.14)); l.el.style.transform = "scaleY(" + u.toFixed(3) + ")"; l.el.style.opacity = C(u * 2); });
+          TL.forEach((l) => { const d = Math.abs(l.y - nowY) / 540; l.el.style.opacity = P(t, 1.06 + d * 0.1, 1.22 + d * 0.1); });
+          const lu = E.outCubic(P(t, 0.84, 1.14));
+          $("iLine").style.transform = "scaleX(" + lu.toFixed(4) + ")";
+          K.show($("iLine"), lu > 0);
+          const bu = E.outBack(P(t, 1.04, 1.2), 2);
+          $("iBadge").style.opacity = C(bu * 2); $("iBadge").style.transform = "scale(" + L(0.6, 1, C(bu, 0, 1.2)).toFixed(3) + ")";
+          // cards fly in and pile up
+          ICARDS.forEach((c) => {
+            const u = P(t, c.ta, c.ta + 0.32);
+            if (u <= 0) { K.show(c.el, false); return; }
+            K.show(c.el, true);
+            const e = E.outBack(u, 1.1), f = 1 - E.outCubic(u);
+            let x = c.x + c.ox * (1 - e), y = c.y + c.oy * (1 - e);
+            const jig = P(t, 3.6, 4.3);
+            x += Math.sin((t - 3.6) * 1.7 + c.i * 1.3) * 7 * jig; y += Math.cos((t - 3.6) * 1.4 + c.i) * 5 * jig;
+            SHOVE.forEach((s) => { if (s.i === c.i) { const w = ioq(P(t, s.t0, s.t0 + 0.34)); x += s.dx * w; y += s.dy * w; } });
+            c.el.style.transform = "translate(" + px(x) + "," + px(y) + ") rotate(" + (c.rot * f).toFixed(2) + "deg) scale(" + L(1.15, 1, E.outCubic(u)).toFixed(3) + ")";
+            c.el.style.opacity = C(u * 3).toFixed(3);
+            blur(c.el, 16 * f * f);
+          });
+          // camera: slow push, then the pile goes out of focus behind the headline
+          const push = L(1, 1.06, ios(P(t, 1.3, 5.5)));
+          const dof = P(t, 4.12, 4.5);
+          const iCam = $("iCam");
+          iCam.style.transform = "scale(" + push.toFixed(4) + ")";
+          iCam.style.filter = dof > 0.01 ? "blur(" + (2.6 * dof).toFixed(2) + "px)" : "none";
+          iCam.style.opacity = L(1, 0.84, dof).toFixed(3);
+          // headline
+          ywW.forEach((w, k) => { const a = 2.06 + k * 0.12, u = E.outCubic(P(t, a, a + 0.22)); w.style.opacity = C(u * 1.6); w.style.filter = u < 1 ? "blur(" + (18 * (1 - u)).toFixed(1) + "px)" : "none"; w.style.transform = "scale(" + L(1.08, 1, u).toFixed(3) + ")"; });
+          const du = E.outCubic(P(t, 3.93, 4.3));
+          dfS.style.opacity = C(du * 1.5); dfS.style.filter = du < 1 ? "blur(" + (34 * (1 - du)).toFixed(1) + "px)" : "none"; dfS.style.transform = "scale(" + L(1.07, 1, du).toFixed(3) + ")";
+          K.show(yw, t >= 2.06); K.show(df, t >= 3.93);
+          // everything collapses into the now-dot
+          const im = P(t, 5.7, 5.84);
+          $("iAll").style.transform = im > 0 ? "scale(" + Math.exp(Math.log(0.02) * Math.pow(im, 1.5)).toFixed(4) + ")" : "none";
+          $("iAll").style.filter = im > 0.01 ? "blur(" + (8 * im).toFixed(1) + "px)" : "none";
+          $("iAll").style.opacity = (1 - P(t, 5.74, 5.79)).toFixed(3);
+        }
+
+        // ================= dark lockup =================
+        const dTop = $("dTop"), dBot = $("dBot"), dWm = $("dWm"), dWmClip = $("dWmClip"), morph = $("morph");
+        dTop.style.background = "#fff"; dBot.style.background = "#fff";
+        dWm.textContent = v.brand;
+        $("dTag").innerHTML = v.tagline.split(" ").map((w) => "<span>" + esc(w) + " </span>").join("");
+        const dTagW = [...$("dTag").children];
+        let dWmW = 0;
+        const measureDark = () => { const a = $("darkL").style.display, b = dWmClip.style.display; $("darkL").style.display = ""; dWmClip.style.display = ""; const w = dWm.offsetWidth; $("darkL").style.display = a; dWmClip.style.display = b; return w; };
+        // window size and where it sits when it first lands
+        const W = 1476, H = 910, WF = { Fx: 738, Fy: 455, Sx: 960, Sy: 540 };
+        const SEND = [1216, 852.5];
+
+        function dark(t) {
+          const on = t >= 5.86 && t < 14.02;
+          K.show($("darkL"), on);
+          if (!on) return;
+          const r = L(0, 1300, E.outCubic(P(t, 5.88, 6.2)));
+          const m = r < 1290 ? "radial-gradient(circle at 960px 540px, #000 " + px(r) + ", rgba(0,0,0,0) " + px(r + 60) + ")" : "none";
+          $("darkL").style.webkitMaskImage = m; $("darkL").style.maskImage = m;
+          const markOn = t >= 6.1 && t < 9.5;
+          K.show(dTop, markOn); K.show(dBot, markOn && t < 9.4);
+          K.show(dWmClip, t >= 6.95 && t < 9.0); K.show($("dTag"), t >= 7.2 && t < 8.9); K.show(morph, t >= 9.1 && t < 9.54);
+          if (!markOn) { dotForDark(t, null); return; }
+          if (!dWmW) dWmW = measureDark();
+          // big mark -> lockup -> back to centre
+          const big = 240, small = 148, gap = 40;
+          const lockW = small + gap + dWmW, lockX = 960 - lockW / 2, lockY = 531 - small / 2;
+          let s = big, x = 960 - big / 2, y = 540 - big / 2;
+          const shrink = ioq(P(t, 6.8, 7.18));
+          s = L(big, small, shrink); x = L(960 - big / 2, lockX, shrink); y = L(540 - big / 2, lockY, shrink);
+          const back = ioq(P(t, 8.76, 8.96));
+          if (back > 0) { s = L(small, 160, back); x = L(lockX, 960 - 80, back); y = L(lockY, 540 - 80, back); }
+          const settle = 1 + 0.035 * bump(t, 6.38, 6.7);
+          const mr = markRects(x, y, s * settle);
+          // pieces fly in
+          const ut = E.outCubic(P(t, 6.16, 6.44)), ub = E.outCubic(P(t, 6.2, 6.48));
+          const top = mr.top.slice(), bot = mr.bot.slice();
+          top[0] -= 760 * (1 - ut); top[1] -= 60 * (1 - ut);
+          bot[1] += 560 * (1 - ub);
+          setPiece(dTop, top, mr.r); setPiece(dBot, bot, mr.r);
+          const mv = Math.max(shrink > 0 && shrink < 1 ? 1 : 0, back > 0 && back < 1 ? 1 : 0);
+          mblur(dTop, "dt", (1 - ut) * 40 + mv * 10 * bump(t, 6.8, 7.18) + 14 * bump(t, 8.76, 8.96), 0);
+          mblur(dBot, "db", mv * 10 * bump(t, 6.8, 7.18) + 14 * bump(t, 8.76, 8.96), (1 - ub) * 40);
+          dTop.style.opacity = C(ut * 3); dBot.style.opacity = C(ub * 3);
+          // wordmark slides out from behind the mark; later the mark swallows it again
+          const mRight = x + s * settle;
+          const wmX = lockX + small + gap;
+          const wu = E.outCubic(P(t, 6.98, 7.3));
+          const clipL = Math.max(mRight + 6, back > 0 ? mRight : 0);
+          dWmClip.style.left = px(clipL); dWmClip.style.top = px(lockY + small - 0.8633 * 190 - 40); dWmClip.style.width = px(Math.max(0, 1920 - clipL)); dWmClip.style.height = "300px";
+          dWm.style.left = px(wmX - clipL - (1 - wu) * 0.55 * dWmW); dWm.style.top = "40px";
+          dWm.style.opacity = C(wu * 2);
+          dTagW.forEach((w, k) => { const a = 7.24 + k * 0.07, u = E.outCubic(P(t, a, a + 0.22)); w.style.opacity = C(u * 1.5) * (1 - P(t, 8.66, 8.84)); w.style.filter = u < 1 ? "blur(" + (12 * (1 - u)).toFixed(1) + "px)" : "none"; });
+          // the top block opens up into the app window, the dot becomes the send button
+          const mo = Math.pow(P(t, 9.1, 9.46), 2.6);
+          if (t >= 9.1) {
+            const ws = 0.95, wx = 960 - WF.Fx * ws, wy = 540 - WF.Fy * ws;
+            const rx = L(mr.top[0], wx, mo), ry = L(mr.top[1], wy, mo), rw = L(mr.top[2], W * ws, mo), rh = L(mr.top[3], H * ws, mo);
+            place(morph, rx, ry, rw, rh); morph.style.borderRadius = px(L(mr.r, 21, mo));
+            morph.style.opacity = (1 - P(t, 9.46, 9.54)).toFixed(3);
+            mblur(morph, "mo", 12 * mo * (1 - P(t, 9.44, 9.5)), 12 * mo * (1 - P(t, 9.44, 9.5)));
+            dTop.style.opacity = "0";
+            const bs = 1 - E.inCubic(P(t, 9.26, 9.4));
+            setPiece(dBot, [mr.bot[0] + mr.bot[2] * (1 - bs) / 2, mr.bot[1] + mr.bot[3] * (1 - bs) / 2, mr.bot[2] * bs, mr.bot[3] * bs], mr.r * bs);
+          }
+          dotForDark(t, mr);
+        }
+        function dotForDark(t, mr) {
+          if (t < 5.86 || t >= 9.5) return;
+          if (!mr) { setDot(960, 540, 13); return; }
+          const u = E.outCubic(P(t, 6.14, 6.4));
+          let x = L(960, mr.dot[0], u), y = L(540, mr.dot[1], u), r = L(13, mr.dot[2], u);
+          const mo = Math.pow(P(t, 9.1, 9.46), 2.6);
+          if (mo > 0) { const ws = 0.95; x = L(x, 960 + (SEND[0] - WF.Fx) * ws, mo); y = L(y, 540 + (SEND[1] - WF.Fy) * ws, mo); r = L(r, 20 * ws, mo); }
+          setDot(x, y, r, 1 - P(t, 9.44, 9.5));
+        }
+
+        // ================= app window =================
+        const GT = 158, HH = 72, CX0 = 318, CW = 231.6;
+        const colX = (d) => CX0 + d * CW;
+        const tY = (h) => GT + (h - 9) * HH;
+        const win = $("win");
+        const winBg = mk("div", "", win); winBg.id = "winBg";
+        const body = mk("div", "", win); body.id = "body";
+        const side = mk("div", "", body); side.id = "side";
+        [25, 45, 65].forEach((x) => { const d = mk("div", "tlight", side); d.style.left = px(x - 5); });
+        mk("div", "", side, MARK(INK, ACC) + "<span>" + esc(v.brand) + "</span>").id = "sBrand";
+        mk("div", "", side, "September").id = "sMonth";
+        mk("div", "sArr", side, "‹").style.left = "203px"; mk("div", "sArr", side, "›").style.left = "224px";
+        mk("div", "", side).id = "wkHi";
+        ["M", "T", "W", "T", "F", "S", "S"].forEach((d, i) => { const s = mk("div", "mh", side, d); s.style.left = px(34 + i * 30); s.style.top = "140px"; });
+        for (let n = 1; n <= 30; n++) {
+          const col = n % 7, row = Math.floor(n / 7);
+          const s = mk("div", "md" + (col >= 5 ? " we" : "") + (n === 14 ? " today" : ""), side, String(n));
+          s.style.left = px(34 + col * 30); s.style.top = px(167 + row * 28);
+        }
+        const prio = mk("div", "", side); prio.id = "prio";
+        mk("div", "sLab", prio, "Priorities").style.top = "338px";
+        [["Deep work mornings", "Mon–Fri"], ["Ship Q4 deck", "by Fri"], ["Gym", "Tue, Thu"]].forEach((p, k) => { const d = mk("div", "pr", prio, "<i></i>" + esc(p[0]) + "<em>" + esc(p[1]) + "</em>"); d.style.top = px(358 + k * 36); });
+        const calLab = mk("div", "sLab", side, "Calendars");
+        const cals = [["Work", "background:#e9e9ec"], ["Focus", "background:" + INK], ["Personal", "background:repeating-linear-gradient(135deg,#dcdce0 0 2px,#fff 2px 4px);border:1px solid #dcdce0"]].map((c, k) => mk("div", "cal", side, '<i style="' + c[1] + '"></i>' + c[0]));
+        const setCals = (y0) => { calLab.style.top = px(y0); cals.forEach((c, k) => { c.style.top = px(y0 + 24 + k * 27); }); };
+        setCals(492);
+        mk("div", "", side, "<i>" + esc(v.user.split(" ").map((w) => w[0]).join("").slice(0, 2)) + "</i><div><b>" + esc(v.user) + "</b><span>" + esc(v.role) + "</span></div>").id = "user";
+        const hdr = mk("div", "", body); hdr.id = "hdr";
+        hdr.innerHTML = '<div id="hL"><span id="hMonth">September 2026</span><span id="hWeek">Week 38</span><div id="clash"></div></div><div id="hR"><span class="arr">‹›</span><span id="today">Today</span><div id="seg"><span>Day</span><span class="on">Week</span><span>Month</span></div></div>';
+        const clash = $("clash");
+        const setClash = (n) => {
+          if (n > 0) { clash.className = "bad"; clash.innerHTML = "<i></i>" + n + (n === 1 ? " clash" : " clashes"); }
+          else { clash.className = "ok"; clash.innerHTML = CHECK("#2a2a2d") + "No clashes"; }
+        };
+        const DAYS = [["Mon", 14], ["Tue", 15], ["Wed", 16], ["Thu", 17], ["Fri", 18]];
+        const dhs = DAYS.map((d, i) => { const e = mk("div", "dh", body, "<span>" + d[0] + "</span><b" + (i === 0 ? ' class="today"' : "") + ">" + d[1] + "</b>"); e.style.left = px(colX(i) + 12); return e; });
+        const gl = (x, y, w, h) => { const e = mk("div", "gl", body); place(e, x, y, w, h); return e; };
+        gl(254, 119, W - 254, 1);
+        for (let h = 9; h <= 19; h++) gl(CX0, tY(h), W - CX0, 1);
+        for (let d = 0; d < 5; d++) gl(colX(d), 119, 1, H - 119);
+        const WTS = [];
+        for (let h = 9; h <= 19; h++) { const e = mk("div", "wt", body, hm(h)); e.style.top = px(tY(h) - 6); WTS.push(e); }
+        const evs = mk("div", "", body); evs.id = "evs";
+        const wNow = mk("div", "", body); wNow.id = "wNow";
+        wNow.innerHTML = '<div id="wFaint"></div><div id="wLine"></div><div id="wDot"></div><div id="wBadge"></div>';
+        const setNow = (h) => { const y = tY(h); $("wBadge").style.top = px(y - 9); $("wBadge").textContent = hm(h); $("wDot").style.top = px(y - 5); $("wLine").style.top = px(y - 1); $("wFaint").style.top = px(y - 0.5); };
+        setNow(8.7);
+        const pb = mk("div", "", win); pb.id = "pb";
+        pb.innerHTML = '<div id="pbIcon">' + MARK(INK, ACC) + '</div><div id="pbT"></div><div id="pbR"><i>' + CHECK("#fff") + '</i><b></b><span></span></div><div id="pbS"><svg viewBox="0 0 16 16"><path d="M8 12.5V3.5M4 7.3L8 3.3l4 4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+        $("pbR").querySelector("b").textContent = v.result; $("pbR").querySelector("span").textContent = v.resultSub;
+        const pbT = $("pbT");
+
+        // ---- events: [title, style, messy [day,start,end,lane] | null, final | null, extra] ----
+        // lane 0 = full width, 1 = left, 2 = right (a clash)
+        const EV = [
+          ["Standup", "g", [0, 9, 9.5, 0], [0, 9, 9.5, 0]], ["Design review", "g", [0, 9.25, 10.5, 2], [0, 13, 14, 0]], ["1:1 · Maya", "g", [0, 10, 10.75, 1], [0, 14, 14.5, 0]],
+          ["Hiring sync", "g", [0, 11, 12, 1], null], ["Roadmap", "g", [0, 11.5, 12.75, 2], [0, 14.5, 15.5, 0]], ["Lunch · Leo", "h", [0, 13, 14, 0], [0, 12, 13, 0]],
+          ["Vendor call", "g", [0, 14, 15, 1], null], ["Metrics review", "g", [0, 14.5, 15.5, 2], [0, 15.5, 16.25, 0]], ["Interview", "g", [0, 16, 17, 0], [0, 16.25, 17.25, 0]],
+          ["Ops check-in", "g", [0, 17, 17.75, 0], null], ["Deep work", "k", null, [0, 9.5, 12, 0], "mon"],
+          ["Standup", "g", [1, 9, 9.5, 0], [1, 9, 9.5, 0]], ["Pricing sync", "g", [1, 9.5, 10.5, 1], [1, 13, 14, 0]], ["Customer call", "g", [1, 10, 11, 2], [1, 14, 15, 0]],
+          ["Brand review", "g", [1, 11, 12, 0], null], ["Partner intro", "g", [1, 13, 14, 0], null], ["Planning", "g", [1, 14, 15.5, 1], [1, 15, 16.25, 0]],
+          ["Design crit", "g", [1, 15, 16, 2], null], ["Retro", "g", [1, 16.5, 17.5, 0], [1, 16.25, 17, 0]], ["Deep work", "k", null, [1, 9.5, 12, 0], "tue"], ["Gym", "h", null, [1, 17.25, 18.25, 0]],
+          ["Standup", "g", [2, 9, 9.5, 0], [2, 9, 9.5, 0]], ["All-hands", "g", [2, 10, 11, 1], [2, 13, 14, 0]], ["Interview", "g", [2, 10.5, 11.5, 2], null],
+          ["Sync · Priya", "g", [2, 11.5, 12, 0], null], ["Budget", "g", [2, 13, 14, 0], [2, 14, 14.75, 0]], ["Onboarding", "g", [2, 14, 15, 1], [2, 14.75, 15.75, 0]],
+          ["QBR prep", "g", [2, 14.5, 16, 2], [2, 15.75, 17, 0]], ["Coffee chat", "g", [2, 16, 16.5, 0], null], ["Q4 deck", "o", [2, 16.5, 17.5, 0], [2, 9.5, 12, 0], "deck"],
+          ["Standup", "g", [3, 9, 9.5, 0], [3, 9, 9.5, 0]], ["Roadmap", "g", [3, 9.5, 11, 1], [3, 14, 15, 0], "avatars"], ["Offsite plan", "g", [3, 10, 11, 2], null],
+          ["1:1 · Jonas", "g", [3, 11.5, 12, 0], null], ["Customer call", "g", [3, 13, 14, 1], [3, 13, 14, 0]], ["Design review", "g", [3, 13.5, 14.5, 2], null],
+          ["Hiring panel", "g", [3, 15, 16.5, 1], [3, 15, 16.25, 0]], ["Board prep", "g", [3, 16, 17, 2], [3, 16.25, 17, 0]], ["Deep work", "k", null, [3, 9.5, 12, 0], "thu"], ["Gym", "h", null, [3, 17.25, 18.25, 0]],
+          ["Standup", "g", [4, 9, 9.5, 0], [4, 9, 9.5, 0]], ["Weekly metrics", "g", [4, 9.5, 10.5, 1], null], ["Launch sync", "g", [4, 10, 11, 2], [4, 14, 15, 0]],
+          ["Demo day", "g", [4, 11, 12, 0], [4, 11.5, 12.5, 0]], ["Team lunch", "h", [4, 12.5, 13.5, 0], [4, 12.5, 13.5, 0]], ["Vendor review", "g", [4, 14, 15, 0], null],
+          ["Team social", "h", [4, 16, 17.5, 0], [4, 16, 17.5, 0]], ["Q4 deck · final", "k", null, [4, 9.5, 11.5, 0], "fri"],
+        ];
+        const same = (a, b) => a && b && a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+        const EVS = EV.map((d, i) => {
+          const el = mk("div", "ev " + d[1], evs, "<b></b><i></i>");
+          const e = { i, title: d[0], st: d[1], m: d[2], f: d[3], tag: d[4] || "", el, tb: el.children[0], ti: el.children[1], lastT: "", lastI: "", lastCls: "" };
+          if (e.tag === "avatars") { const av = mk("div", "av", el); ["MR", "JL", "PS", "AK"].forEach((n) => mk("span", "", av, n + "<i>" + CHECK("#fff") + "</i>")); e.av = [...av.children].map((s) => s.querySelector("i")); }
+          e.kind = !e.m ? "new" : !e.f ? "out" : same(e.m, e.f) ? "stay" : "move";
+          e.clash = !!(e.m && e.m[3]);
+          return e;
+        });
+        // replanning order: the afternoons reshuffle column by column, the extras leave for next week,
+        // then the protected blocks drop in from above
+        const mvDay = [0, 0, 0, 0, 0], outDay = [0, 0, 0, 0, 0];
+        EVS.forEach((e) => {
+          if (e.kind === "move" && e.tag !== "deck") e.ts = 14.28 + e.m[0] * 0.15 + mvDay[e.m[0]]++ * 0.08;
+          else if (e.kind === "out") e.ts = 14.95 + e.m[0] * 0.09 + outDay[e.m[0]]++ * 0.07;
+          else if (e.kind === "stay") e.ts = 14.5 + R(e.i * 3.7 + 1) * 0.8;
+        });
+        const TSNEW = { mon: 15.45, tue: 15.62, thu: 15.78, fri: 15.92 };
+        EVS.forEach((e) => { if (e.tag === "deck") e.ts = 15.0; if (e.kind === "new") e.ts = e.st === "k" ? TSNEW[e.tag] : e.f[0] === 1 ? 15.98 : 16.1; });
+        const box = (p) => {
+          const cw = CW - 6; let x = colX(p[0]) + 3, w = cw;
+          if (p[3] === 1) w = cw * 0.52; else if (p[3] === 2) { x += cw * 0.42; w = cw * 0.58; }
+          return [x, tY(p[1]) + 1, w, (p[2] - p[1]) * HH - 2];
+        };
+        const lerpBox = (a, b, u) => [L(a[0], b[0], u), L(a[1], b[1], u), L(a[2], b[2], u), L(a[3], b[3], u)];
+        const setText = (e, title, s0, s1, cls) => {
+          const short = s1 - s0 <= 0.5 + 1e-6;
+          const ti = short ? hm(s0) : hm(s0) + " – " + hm(s1);
+          const c = "ev " + cls + (short ? " short" : "");
+          if (title !== e.lastT) { e.tb.textContent = title; e.lastT = title; }
+          if (ti !== e.lastI) { e.ti.textContent = ti; e.lastI = ti; }
+          if (c !== e.lastCls) { e.el.className = c; e.lastCls = c; }
+        };
+        const qs = mk("div", "", evs); qs.id = "qs";
+        qs.innerHTML = '<b>Quick sync?</b><span>Leo · Mon 10:30</span><div id="qsPill"></div>';
+        const prot = mk("div", "", evs); prot.id = "prot";
+        prot.innerHTML = '<svg viewBox="0 0 12 12"><rect x="2.5" y="5.2" width="7" height="5.3" rx="1.2" fill="#fff"/><path d="M4 5.3V4a2 2 0 0 1 4 0v1.3" fill="none" stroke="#fff" stroke-width="1.3"/></svg>Protected';
+        const plus = mk("div", "", evs, "+30 min"); plus.id = "plus";
+
+        // event state for any t
+        function evFrame(e, t) {
+          let bx = null, z = 0, o = 1, bl = 0, sh = 0, title = e.title, cls = e.st, p0 = null, border = "transparent", scale = 1;
+          if (t < 14.0) {
+            if (!e.m) return null;
+            p0 = e.m; bx = box(e.m);
+            const a = 9.48 + e.m[0] * 0.05 + (e.m[1] - 9) * 0.035, u = E.outCubic(P(t, a, a + 0.16));
+            if (u <= 0) return null;
+            o = u; bx[1] += 10 * (1 - u); scale = L(0.97, 1, u);
+            if (e.clash) { const c = P(t, 10.08, 10.22); if (c > 0) border = "rgba(214,38,79," + (0.9 * c).toFixed(2) + ")"; }
+          } else if (t < 18.0) {
+            if (e.clash) { const c = 1 - P(t, 13.95, 14.1); if (c > 0) border = "rgba(214,38,79," + (0.9 * c).toFixed(2) + ")"; }
+            if (e.kind === "stay") { p0 = e.f; bx = box(e.f); z = 34 * bump(t, e.ts, e.ts + 0.9); sh = z / 60; }
+            else if (e.kind === "out") {
+              const u = P(t, e.ts, e.ts + 0.46);
+              if (u >= 1) return null;
+              p0 = e.m; bx = box(e.m); bx[0] += 420 * E.inQuad(u); z = 70 * E.outCubic(P(t, e.ts - 0.3, e.ts + 0.1)); o = 1 - E.inQuad(u); bl = 2.5 * u; sh = z / 90;
+            } else if (e.kind === "move" && e.tag === "deck") {
+              // the task lifts off the afternoon and comes back down as a protected morning block
+              const u = P(t, e.ts, e.ts + 0.72);
+              bx = lerpBox(box(e.m), box(e.f), ioq(u)); p0 = u < 0.45 ? e.m : e.f;
+              z = 460 * Math.sin(Math.PI * u); sh = C(z / 150); bl = 2 * bump(t, e.ts, e.ts + 0.72);
+              if (u >= 0.45) { cls = "k"; title = "Q4 deck · draft"; }
+            } else if (e.kind === "move") {
+              const u = ioq(P(t, e.ts, e.ts + 0.56));
+              bx = lerpBox(box(e.m), box(e.f), u); p0 = u < 0.5 ? e.m : e.f;
+              z = 70 * bump(t, e.ts - 0.12, e.ts + 0.7); sh = z / 70; bl = 3.5 * bump(t, e.ts, e.ts + 0.56);
+            } else {
+              if (t < e.ts) return null;
+              p0 = e.f; bx = box(e.f);
+              const u = P(t, e.ts, e.ts + 0.42), h0 = e.st === "k" ? 620 : 280;
+              z = h0 * (1 - E.inQuad(u)); o = C(u * 20); sh = C(z / 160) + (u < 1 ? 0.2 : 0); bl = u < 1 ? 2.5 * u : 0;
+            }
+          } else {
+            if (!e.f) return null;
+            p0 = e.f; bx = box(e.f);
+            if (e.tag === "deck") { cls = "k"; title = "Q4 deck · draft"; }
+          }
+          return { bx, z, o, bl, sh, title, cls, p0, border, scale };
+        }
+
+        // scene overrides after the replanning
+        const nowAt = (t) => (t >= 22.0 ? L(13 + 57 / 60, 14.25, ios(P(t, 22.0, 23.3))) : t >= 21.8 ? L(8.7, 13 + 57 / 60, P(t, 21.8, 22.0)) : 8.7);
+        const RUN = { 14: [14.5, 15], 14.5: [15, 16], 15.5: [16, 16.5], 16.25: [16.5, 17.5] };
+        function evOverride(e, t, fr) {
+          if (!fr) return fr;
+          // meetings make room: the Thursday roadmap slides to Friday 15:00
+          if (e.tag === "avatars" && t >= 18.0) {
+            const u = ioq(P(t, 18.62, 18.98));
+            const to = [4, 15, 16, 0];
+            fr.bx = lerpBox(box(e.f), box(to), u); fr.p0 = u < 0.5 ? e.f : to;
+            const lift = bump(t, 18.55, 19.1);
+            fr.sh = lift * 0.8; fr.scale = 1 + 0.04 * lift;
+            if (t >= 18.55) fr.cls = "o";
+          }
+          // overruns fit too: the design review runs long, the afternoon slides down
+          if (t >= 21.9 && e.f && e.f[0] === 0 && e.f[1] >= 13) {
+            if (e.f[1] === 13) {
+              const endH = L(Math.max(14, nowAt(t) + 1 / 60), 14.5, ioq(P(t, 22.62, 22.86)));
+              fr.bx = box([0, 13, endH, 0]); fr.p0 = [0, 13, endH, 0];
+              fr.border = accA((0.9 * P(t, 22.12, 22.3)).toFixed(2));
+            } else if (RUN[e.f[1]]) {
+              const to = [0, RUN[e.f[1]][0], RUN[e.f[1]][1], 0], push = ioq(P(t, 22.62, 23.02));
+              fr.bx = lerpBox(box(e.f), box(to), push); fr.p0 = push < 0.5 ? e.f : to;
+              const hot = bump(t, 22.55, 23.12);
+              if (hot > 0) fr.border = "rgba(21,21,22," + C(hot * 1.6).toFixed(2) + ")";
+            }
+          }
+          return fr;
+        }
+
+        function drawEvents(t) {
+          EVS.forEach((e) => {
+            const fr = evOverride(e, t, evFrame(e, t));
+            if (!fr || fr.o <= 0.002) { K.show(e.el, false); return; }
+            K.show(e.el, true);
+            const [x, y, w, h] = fr.bx;
+            setText(e, fr.title, fr.p0[1], fr.p0[2], fr.cls);
+            e.el.style.width = px(w); e.el.style.height = px(h);
+            e.el.style.transform = "translate3d(" + px(x) + "," + px(y) + "," + px(fr.z) + ")" + (fr.scale !== 1 ? " scale(" + fr.scale.toFixed(3) + ")" : "");
+            e.el.style.opacity = fr.o < 1 ? fr.o.toFixed(3) : "";
+            e.el.style.borderColor = fr.border !== "transparent" ? fr.border : "";
+            e.el.style.boxShadow = fr.sh > 0.01 ? "0 " + (6 + 26 * fr.sh).toFixed(1) + "px " + (14 + 30 * fr.sh).toFixed(1) + "px rgba(0,0,0," + (0.06 + 0.14 * fr.sh).toFixed(3) + ")" : "";
+            blur(e.el, fr.bl);
+            if (e.av) e.av.forEach((c, k) => { const u = E.outBack(P(t, 19.3 + k * 0.07, 19.44 + k * 0.07), 2); c.style.transform = "scale(" + C(u, 0, 1.3).toFixed(3) + ")"; c.style.opacity = C(u * 3); });
+          });
+        }
+
+        // ---- typing ----
+        const PR = [];
+        { let chip = -1, ci = 0; for (const ch of v.prompt) { if (ch === "[") { chip = ci++; continue; } if (ch === "]") { chip = -1; continue; } PR.push({ c: ch, chip }); } }
+        const prStr = (a, b) => PR.slice(a, b).map((p) => p.c).join("");
+        function typed(N) {
+          let act = N;
+          if (N > 0) {
+            const last = PR[N - 1];
+            if (last.chip >= 0) { let i = N - 1; while (i > 0 && PR[i - 1].chip === last.chip) i--; act = i; }
+            else if (last.c !== " " && last.c !== ".") { let i = N - 1; while (i > 0 && PR[i - 1].c !== " " && PR[i - 1].chip < 0) i--; act = i; }
+          }
+          let html = "", i = 0;
+          while (i < N) {
+            if (i >= act) { html += '<span class="act">' + esc(prStr(i, N)) + "</span>"; break; }
+            if (PR[i].chip >= 0) { let j = i; while (j < N && PR[j].chip === PR[i].chip) j++; html += '<span class="chip">' + esc(prStr(i, j)) + "</span>"; i = j; }
+            else { let j = i; while (j < N && j < act && PR[j].chip < 0) j++; html += esc(prStr(i, j)); i = j; }
+          }
+          return html + '<i class="caret"></i>';
+        }
+        let lastTyped = -2;
+        function promptBar(t) {
+          const res = t >= 17.52;
+          K.show(pbT, !res); K.show($("pbR"), res);
+          if (res) { const u = E.outCubic(P(t, 17.52, 17.8)); $("pbR").style.opacity = u; $("pbR").style.transform = "translateY(" + px(8 * (1 - u)) + ")"; return; }
+          let N = t >= 10.94 && t < 14.0 ? Math.min(PR.length, Math.floor((t - 10.94) * 29.5)) : -1;
+          if (N !== lastTyped) {
+            lastTyped = N;
+            if (N < 0) { pbT.className = "ph"; pbT.textContent = v.placeholder; }
+            else { pbT.className = ""; pbT.innerHTML = N === 0 ? '<i class="caret"></i>' : typed(N); }
+          }
+        }
+
+        // ---- cameras ----
+        const cam = (Fx, Fy, Sx, Sy, s, ax, az) => ({ Fx, Fy, Sx, Sy, s, ax: ax || 0, az: az || 0 });
+        const mixCam = (a, b, u) => cam(L(a.Fx, b.Fx, u), L(a.Fy, b.Fy, u), L(a.Sx, b.Sx, u), L(a.Sy, b.Sy, u), L(a.s, b.s, u), L(a.ax, b.ax, u), L(a.az, b.az, u));
+        const onScreen = (c, lx, ly) => [c.Sx + (lx - c.Fx) * c.s, c.Sy + (ly - c.Fy) * c.s];
+        // re-anchor a flat camera on a different local point without moving the picture
+        const anchor = (c, lx, ly) => { const p = onScreen(c, lx, ly); return cam(lx, ly, p[0], p[1], c.s); };
+        const applyCam = (c) => {
+          win.style.transformOrigin = px(c.Fx) + " " + px(c.Fy);
+          win.style.transform = "translate3d(" + px(c.Sx - c.Fx) + "," + px(c.Sy - c.Fy) + ",0)" + (c.ax || c.az ? " rotateX(" + c.ax.toFixed(3) + "deg) rotateZ(" + c.az.toFixed(3) + "deg)" : "") + " scale(" + c.s.toFixed(4) + ")";
+        };
+        const PERSP = 2400;
+        const proj = (lx, ly, lz, c, D) => {
+          D = D || PERSP;
+          const x = (lx - c.Fx) * c.s, y = (ly - c.Fy) * c.s, z = (lz || 0) * c.s;
+          const az = (c.az * Math.PI) / 180, ax = (c.ax * Math.PI) / 180;
+          const x1 = x * Math.cos(az) - y * Math.sin(az), y1 = x * Math.sin(az) + y * Math.cos(az);
+          const y2 = y1 * Math.cos(ax) - z * Math.sin(ax), z2 = y1 * Math.sin(ax) + z * Math.cos(ax);
+          const k = D / (D - z2);
+          return [960 + (c.Sx + x1 - 960) * k, 540 + (c.Sy + y2 - 540) * k];
+        };
+        const FULL = cam(738, 455, 960, 540, 1);
+        const PBC = [896, 852.5];
+        const pbShift = (t) => (t >= 10.42 && t < 14.0 ? -330 * ioq(P(t, 10.42, 11.2)) : 0);
+        const C3 = [
+          [14.0, cam(560, 330, 1262, 545, 2.02, 40.5, -12.1)],
+          [14.4, cam(560, 330, 1255, 551, 1.974, 40.07, -11.94)],
+          [15.5, cam(650, 390, 1307, 611, 1.636, 34.9, -8.88)],
+          [16.0, cam(700, 420, 1318, 627, 1.474, 34.1, -7.49)],
+          [16.6, cam(738, 455, 1198, 641, 1.282, 24.3, -4.94)],
+          [17.35, cam(738, 455, 960, 539, 0.99, 0, 0)],
+        ];
+        const keyCam = (keys, t) => {
+          if (t <= keys[0][0]) return keys[0][1];
+          for (let k = 0; k < keys.length - 1; k++) if (t < keys[k + 1][0]) { const u = (t - keys[k][0]) / (keys[k + 1][0] - keys[k][0]); return mixCam(keys[k][1], keys[k + 1][1], k === keys.length - 2 ? ioq(u) : u); }
+          return keys[keys.length - 1][1];
+        };
+        const S6A = cam(1014, 374, 765, 16, 2.49), S6B = cam(276, 92, 810, 84, 2.54), S6C = cam(276, 374, 810, 66, 2.54);
+        const FLAT = cam(738, 455, 960, 539, 0.99);
+        function winCam(t) {
+          if (t < 10.42) return cam(738, 455, 960, 540, L(0.95, 1, E.outCubic(P(t, 9.42, 9.92))));
+          if (t < 13.1) {
+            const fy = PBC[1] + pbShift(t), a0 = onScreen(FULL, PBC[0], PBC[1]);
+            if (t < 11.2) { const u = ioq(P(t, 10.42, 11.2)); return cam(PBC[0], fy, L(a0[0], 967, u), L(a0[1], 603, u), L(1, 2.21, u)); }
+            const u = ios(P(t, 11.2, 13.1));
+            return cam(PBC[0], fy, L(967, 962, u), L(603, 592, u), L(2.21, 2.55, u));
+          }
+          if (t < 14.0) { const fy = PBC[1] - 330; const c = cam(PBC[0], fy, 962, 592, 2.55); const d = cam(SEND[0], fy, 1116, 585, 3.5); return mixCam(anchor(c, SEND[0], fy), d, E.inOutCubic(P(t, 13.1, 13.42))); }
+          if (t < 18.0) return keyCam(C3, t);
+          if (t < 19.85) return mixCam(anchor(FLAT, S6A.Fx, S6A.Fy), S6A, E.inOutCubic(P(t, 18.0, 18.36)));
+          if (t < 21.8) return mixCam(anchor(S6A, S6B.Fx, S6B.Fy), S6B, E.inOutCubic(P(t, 19.85, 20.1)));
+          if (t < 23.4) return mixCam(anchor(S6B, S6C.Fx, S6C.Fy), S6C, E.inOutCubic(P(t, 21.8, 22.08)));
+          const back = mixCam(anchor(S6C, FULL.Fx, FULL.Fy), FULL, E.inOutCubic(P(t, 23.4, 23.8)));
+          const sh = E.inQuad(P(t, 24.25, 24.72));
+          return cam(back.Fx, back.Fy, back.Sx, back.Sy, back.s * L(1, 0.8, sh));
+        }
+
+        function app(t) {
+          const on = t >= 9.4 && t < 24.86;
+          K.show($("appL"), on);
+          if (!on) return;
+          K.show($("appBg"), t >= 13.96);
+          const c = winCam(t);
+          applyCam(c);
+          win.style.opacity = t < 9.52 ? P(t, 9.4, 9.5).toFixed(3) : (1 - P(t, 24.72, 24.86)).toFixed(3);
+          // window shadow depends on what is behind it
+          winBg.style.boxShadow = t < 14 ? "0 50px 120px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05)" : "0 30px 80px rgba(20,24,40,.12), 0 0 0 1px rgba(0,0,0,.04)";
+          // push-in blur while the prompt is typed
+          const pbl = t < 14 ? 4.5 * P(t, 10.45, 10.95) : 0;
+          const whip = t >= 18 && t < 24 ? 2 * bump(t, 18.0, 18.36) + 5 * bump(t, 23.4, 23.8) : 0;
+          body.style.filter = pbl > 0.2 ? "blur(" + pbl.toFixed(2) + "px)" : "none";
+          if (t >= 19.85 && t < 20.1) mblur(win, "wx", 14 * bump(t, 19.85, 20.1), 5 * bump(t, 19.85, 20.1));
+          else if (t >= 21.8 && t < 22.08) mblur(win, "wy", 1.5 * bump(t, 21.8, 22.08), 16 * bump(t, 21.8, 22.08));
+          else win.style.filter = whip > 0.2 ? "blur(" + whip.toFixed(2) + "px)" : "none";
+          // clash badge
+          const cN = parseInt(v.clashes, 10) || 12;
+          let n = cN;
+          if (t >= 14.4) { const K5 = [[14.4, 1], [15.0, 0.75], [15.5, 0.42], [16.0, 0.09], [16.35, 0]]; let f = 0; for (let k = 0; k < K5.length - 1; k++) if (t >= K5[k][0] && t < K5[k + 1][0]) f = L(K5[k][1], K5[k + 1][1], (t - K5[k][0]) / (K5[k + 1][0] - K5[k][0])); n = Math.round(cN * f); }
+          setClash(n);
+          const cb = E.outBack(P(t, 10.0, 10.16), 2);
+          clash.style.opacity = C(cb * 2); clash.style.transform = "scale(" + C(cb, 0, 1.2).toFixed(3) + ")";
+          // sidebar priorities after the plan lands
+          const pu = E.outCubic(P(t, 17.5, 17.8));
+          prio.style.opacity = pu; K.show(prio, pu > 0);
+          prio.style.transform = "translateY(" + px(6 * (1 - pu)) + ")";
+          setCals(L(492, 500, pu));
+          // chrome fades before the week becomes a tile
+          const ch = P(t, 24.28, 24.62);
+          [side, hdr, pb, $("wBadge")].concat(dhs, WTS).forEach((e) => { e.style.opacity = (1 - ch).toFixed(3); });
+          winBg.style.transform = "translate(" + px(290 * ch) + "," + px(119 * ch) + ")";
+          winBg.style.width = px(W - 290 * ch); winBg.style.height = px(H - 119 * ch); winBg.style.borderRadius = px(L(22, 16, ch));
+          // now-line: 08:42, later the overrun clock
+          setNow(nowAt(t));
+          drawEvents(t);
+          promptBar(t);
+          pb.style.transform = "translateY(" + px(pbShift(t)) + ")";
+          // send button: pressed, then it floods the screen
+          const press = bump(t, 13.45, 13.56);
+          $("pbS").style.transform = "scale(" + (1 - 0.1 * press).toFixed(3) + ")";
+          $("pbS").querySelector("svg").style.opacity = (1 - P(t, 13.56, 13.62)).toFixed(3);
+          K.show($("pbS"), !(t >= 13.62 && t < 14.0));
+          // quick sync card and the protected badge
+          const qsOn = t >= 20.0 && t < 21.85;
+          K.show(qs, qsOn); K.show(prot, t >= 20.8 && t < 21.86);
+          if (qsOn) {
+            const a = E.outBack(P(t, 20.02, 20.22), 1.6), dn = ioq(P(t, 20.3, 20.72)), mv = ioq(P(t, 21.04, 21.34));
+            let qx = L(458, 454, dn), qy = L(126, 178, dn);
+            qx = L(qx, 573, mv); qy = L(qy, 391, mv);
+            qs.style.transform = "translate(" + px(qx) + "," + px(qy) + ") scale(" + (C(a, 0, 1.2) * (1 + 0.06 * bump(t, 20.3, 20.72))).toFixed(3) + ")";
+            qs.style.opacity = C(a * 2);
+            const done = t >= 21.24;
+            const pill = $("qsPill");
+            pill.className = done ? "done" : "pend";
+            pill.innerHTML = done ? CHECK("#fff") + "Moved to Fri 13:30" : "Invite pending";
+            qs.style.boxShadow = "0 " + px(10 + 10 * bump(t, 20.3, 21.34)) + " " + px(24 + 12 * bump(t, 20.3, 21.34)) + " rgba(0,0,0,.14), 0 0 0 1px rgba(0,0,0,.05)";
+          }
+          if (t >= 20.8 && t < 21.86) { const u = E.outBack(P(t, 20.84, 21.0), 2); place(prot, colX(0) + 11, tY(12) - 29); prot.style.transform += " scale(" + C(u, 0, 1.2).toFixed(3) + ")"; prot.style.transformOrigin = "0 50%"; prot.style.opacity = C(u * 2); }
+          const plOn = t >= 22.3 && t < 24.3;
+          K.show(plus, plOn);
+          if (plOn) { const u = E.outBack(P(t, 22.36, 22.52), 2); place(plus, colX(0) + CW - 6 - 52, tY(13) + 7); plus.style.transform += " scale(" + C(u, 0, 1.2).toFixed(3) + ")"; plus.style.opacity = C(u * 2); }
+        }
+
+        // ================= feature captions =================
+        const FT = [v.feat1, v.feat2, v.feat3].map((s, k) => { const e = $("ft" + (k + 1)); e.innerHTML = s.split("|").map(esc).join("<br>"); return e; });
+        function feats(t) {
+          const on = t >= 18.0 && t < 23.48;
+          K.show($("featL"), on);
+          if (!on) return;
+          const pan = E.inOutCubic(P(t, 18.0, 18.36));
+          $("fPanel").style.transform = "translateX(" + px(-780 * (1 - pan)) + ")";
+          $("featL").style.opacity = (1 - P(t, 23.3, 23.46)).toFixed(3);
+          const baseY = 540 - 118 * 0.95;
+          // the captions sit in one column that scrolls up a slot at each whip
+          const s2 = E.inOutCubic(P(t, 21.76, 21.95)), moving = bump(t, 21.76, 21.95);
+          const a1 = E.outCubic(P(t, 18.3, 18.5)), o1 = P(t, 19.82, 19.93), a2 = E.outCubic(P(t, 19.9, 20.06));
+          FT.forEach((f, k) => {
+            const d = k === 0 ? -s2 : k - 1 - s2;
+            const vis = k === 0 ? t < 19.93 : k === 1 ? t >= 19.9 && Math.abs(d) < 0.98 : Math.abs(d) < 0.98;
+            K.show(f, vis);
+            if (!vis) return;
+            f.style.top = px(baseY + d * 440);
+            const fadeIn = k === 0 ? C(a1 * 1.5) * (1 - o1) : k === 1 ? C(a2 * 1.5) : 1;
+            f.style.opacity = (C(1.6 - Math.abs(d) * 1.9) * fadeIn).toFixed(3);
+            const bl = k === 0 ? 14 * (1 - a1) + 16 * o1 : k === 1 ? 16 * (1 - a2) : 0;
+            if (moving > 0.02) mblur(f, "f" + k, 1, 16 * moving);
+            else f.style.filter = bl > 0.3 ? "blur(" + bl.toFixed(1) + "px)" : "none";
+          });
+        }
+
+        // ================= tessellation =================
+        // every tile is a copy of the planned week; drawn on a canvas with a projected affine per tile
+        // and pre-shrunk sprites standing in for depth-of-field blur
+        const TW = 1186, TH = 791, GX0 = 290, GY0 = 119, PADT = 40, PERSP_T = 4000;
+        const PITCH = [TW + 110, TH + 70], NOWT = [CX0 - GX0, tY(14.25) - GY0], TR = 6;
+        const tcx = $("tessC").getContext("2d");
+        const offC = document.createElement("canvas"); offC.width = 1920; offC.height = 1080;
+        const ocx = offC.getContext("2d");
+        let SPR = null, TILES = null;
+        function buildSprites() {
+          const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+          const rr = (g, x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+          const W0 = TW + 2 * PADT, H0 = TH + 2 * PADT;
+          const card = mkc(W0, H0), cg = card.getContext("2d");
+          for (let k = 10; k >= 1; k--) { cg.fillStyle = "rgba(20,24,40,0.012)"; rr(cg, PADT - k * 2.5, PADT - k * 2.5 + 12, TW + k * 5, TH + k * 5, 16 + k * 2.5); cg.fill(); }
+          cg.fillStyle = "#fdfdfd"; rr(cg, PADT, PADT, TW, TH, 16); cg.fill();
+          const cont = mkc(W0, H0), g = cont.getContext("2d"), contD = mkc(W0, H0), gD = contD.getContext("2d"), blk = mkc(W0, H0), k2 = blk.getContext("2d"), blkD = mkc(W0, H0), k2D = blkD.getContext("2d");
+          [g, gD, k2, k2D].forEach((c) => c.translate(PADT - GX0, PADT - GY0));
+          [g, gD].forEach((c) => { c.fillStyle = "#efeff2"; for (let h = 9; h <= 19; h++) c.fillRect(CX0, tY(h), W - CX0, 1); for (let d = 0; d < 5; d++) c.fillRect(colX(d), GY0, 1, H - GY0); });
+          const T = 24.5;
+          EVS.forEach((e) => {
+            const fr = evOverride(e, T, evFrame(e, T));
+            if (!fr) return;
+            [0, 1].forEach((detail) => {
+            const [x, y, w, h] = fr.bx, dark = fr.cls === "k", c = dark ? (detail ? k2D : k2) : detail ? gD : g;
+            if (dark) { c.fillStyle = "#0b0b0c"; rr(c, x, y, w, h, 7); c.fill(); }
+            else if (fr.cls === "h") { c.save(); rr(c, x, y, w, h, 7); c.clip(); c.fillStyle = "#fafafb"; c.fillRect(x, y, w, h); c.strokeStyle = "#ececef"; c.lineWidth = 5; for (let q = -h; q < w; q += 14) { c.beginPath(); c.moveTo(x + q, y + h); c.lineTo(x + q + h, y); c.stroke(); } c.restore(); c.strokeStyle = "#e6e6e9"; c.lineWidth = 1.5; rr(c, x, y, w, h, 7); c.stroke(); }
+            else { c.fillStyle = fr.cls === "o" && detail ? "#fff" : "#ededef"; rr(c, x, y, w, h, 7); c.fill(); if (fr.cls === "o" && detail) { c.strokeStyle = "#151516"; c.lineWidth = 1.5; c.stroke(); } }
+            if (dark && !detail) return;
+            const short = fr.p0[2] - fr.p0[1] <= 0.5 + 1e-6, ti = short ? hm(fr.p0[1]) : hm(fr.p0[1]) + " – " + hm(fr.p0[2]);
+            c.textBaseline = "alphabetic";
+            c.font = "600 13px Inter"; c.fillStyle = dark ? "#fff" : detail ? "#141416" : "#c4c4c9"; c.fillText(fr.title, x + 10, y + 20);
+            c.font = "400 11px Inter"; c.fillStyle = dark ? "#9a9aa0" : detail ? "#8e8e94" : "#d6d6da";
+            if (short) c.fillText(ti, x + 16 + c.measureText(fr.title).width * 1.2, y + 20); else if (h > 36) c.fillText(ti, x + 10, y + 36);
+            });
+          });
+          const levels = (src) => { const out = [src]; let cur = src; for (let k = 1; k <= 8; k++) { const c = mkc(cur.width / 2, cur.height / 2); c.getContext("2d").drawImage(cur, 0, 0, c.width, c.height); out.push(c); cur = c; } return out; };
+          SPR = { card: levels(card), cont: levels(cont), contD: levels(contD), blk: levels(blk), blkD: levels(blkD), W0, H0 };
+          TILES = [];
+          for (let j = -TR; j <= TR; j++) for (let i = -TR; i <= TR; i++) {
+            const d = Math.hypot(i, j * 1.15);
+            TILES.push({ i, j, d, t0: i === 0 && j === 0 ? 0 : 24.76 + d * 0.07 + R(i * 7.7 + j * 3.1) * 0.06, fill: 0.04 + R(i * 3.3 + j * 5.9) * 0.08 });
+          }
+          TILES.sort((p, q) => p.j - q.j || Math.abs(q.i) - Math.abs(p.i));
+        }
+        const T7 = [
+          [24.72, cam(NOWT[0], NOWT[1], 960 + (CX0 - 738) * 0.8, 540 + (tY(14.25) - 455) * 0.8, 0.8, 0, 0)],
+          [25.3, cam(NOWT[0], NOWT[1], 768, 574, 0.41, 14, -3)],
+          [26.0, cam(NOWT[0], NOWT[1], 813, 562, 0.27, 33, -8.5)],
+          [27.0, cam(NOWT[0], NOWT[1], 828, 561, 0.24, 35, -7)],
+          [27.9, cam(NOWT[0], NOWT[1], 836, 556, 0.2, 38, -7)],
+        ];
+        const keyCamE = (keys, t) => {
+          if (t <= keys[0][0]) return keys[0][1];
+          for (let k = 0; k < keys.length - 1; k++) if (t < keys[k + 1][0]) { const u = (t - keys[k][0]) / (keys[k + 1][0] - keys[k][0]); return mixCam(keys[k][1], keys[k + 1][1], k === 0 ? 1.6 * (u * u * u - 2 * u * u + u) + (3 * u * u - 2 * u * u * u) : ios(u)); }
+          return keys[keys.length - 1][1];
+        };
+        function tess(t) {
+          const on = t >= 24.7 && t < 29.1;
+          K.show($("tessL"), on);
+          if (!on) return;
+          if (!SPR) buildSprites();
+          $("tessL").style.opacity = P(t, 24.7, 24.8).toFixed(3);
+          const c = keyCamE(T7, t), g = tcx;
+          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 1920, 1080);
+          g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+          // zoomed far out the cards melt into one white sheet of stripes
+          const sheet = P(t, 26.1, 26.9), gapX = L(110, 0, ioq(P(t, 25.9, 26.9)));
+          if (sheet > 0) { g.fillStyle = "rgba(251,251,251," + sheet.toFixed(3) + ")"; g.fillRect(0, 0, 1920, 1080); }
+          const dof = 0, glob = 30 * Math.pow(P(t, 27.12, 27.72), 1.3) + 1.0 * P(t, 25.0, 25.4);
+          // the late, heavy blur is one continuous blur of the whole field: draw small, then scale up
+          const f = glob > 2 ? 1 + (glob - 2) / 1.3 : 1, inv = 1 / f, dc = f > 1 ? ocx : g;
+          if (f > 1) { ocx.setTransform(1, 0, 0, 1, 0, 0); ocx.clearRect(0, 0, Math.ceil(1920 * inv) + 2, Math.ceil(1080 * inv) + 2); ocx.imageSmoothingEnabled = true; ocx.imageSmoothingQuality = "high"; }
+          TILES.forEach((T) => {
+            const u = T.t0 ? P(t, T.t0, T.t0 + 0.22) : 1;
+            if (u <= 0) return;
+            const sc = L(0.9, 1, E.outCubic(u)), cx = T.i * (TW + gapX) + TW / 2, cy = T.j * PITCH[1] + TH / 2;
+            const hw = (TW / 2 + PADT) * sc, hh = (TH / 2 + PADT) * sc;
+            const tl = proj(cx - hw, cy - hh, 0, c, PERSP_T), tr = proj(cx + hw, cy - hh, 0, c, PERSP_T), bl = proj(cx - hw, cy + hh, 0, c, PERSP_T);
+            const br = [tr[0] + bl[0] - tl[0], tr[1] + bl[1] - tl[1]];
+            if (Math.max(tl[0], tr[0], bl[0], br[0]) < -20 || Math.min(tl[0], tr[0], bl[0], br[0]) > 1940 || Math.max(tl[1], tr[1], bl[1], br[1]) < -20 || Math.min(tl[1], tr[1], bl[1], br[1]) > 1100) return;
+            const ux = [tr[0] - tl[0], tr[1] - tl[1]], vy = [bl[0] - tl[0], bl[1] - tl[1]];
+            const scl = Math.max(Math.hypot(ux[0], ux[1]) / SPR.W0, Math.hypot(vy[0], vy[1]) / SPR.H0);
+            const pc = proj(cx, cy, 0, c, PERSP_T);
+            const b = f > 1 ? 0 : glob;
+            let lf = Math.max(0, Math.log2(1 / Math.max(scl * inv, 1e-4)) - 0.3);
+            if (b > 0.3) lf = Math.max(lf, Math.log2(Math.max(1, (2 * b) / scl)));
+            lf = Math.min(lf, 7.99);
+            const k0 = Math.floor(lf), fr = lf - k0;
+            const A = C(u * 2), ca = T.t0 ? P(t, T.t0 + 0.04, T.t0 + 0.18) : 1, ba = T.t0 ? P(t, T.t0 + T.fill, T.t0 + T.fill + 0.12) : 1;
+            [k0, k0 + 1].forEach((k, n) => {
+              const w = n ? fr : 1;
+              if (w <= 0.01) return;
+              const sw = SPR.card[k].width, sh = SPR.card[k].height;
+              dc.setTransform((ux[0] / sw) * inv, (ux[1] / sw) * inv, (vy[0] / sh) * inv, (vy[1] / sh) * inv, tl[0] * inv, tl[1] * inv);
+              dc.globalAlpha = A * w * (1 - sheet); if (sheet < 1) dc.drawImage(SPR.card[k], 0, 0);
+              const melt = 1 - 0.85 * P(t, 27.2, 27.8);
+              if (ca > 0) {
+                const det = T.t0 ? 0 : 1 - P(t, 24.9, 25.4);
+                if (det < 1) { dc.globalAlpha = A * w * ca * melt; dc.drawImage(SPR.cont[k], 0, 0); }
+                if (det > 0) { dc.globalAlpha = A * w * ca * det; dc.drawImage(SPR.contD[k], 0, 0); }
+              }
+              if (ba > 0) { dc.globalAlpha = A * w * ba; dc.drawImage((T.t0 ? SPR.blk : SPR.blkD)[k], 0, 0); }
+            });
+          });
+          g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1;
+          if (f > 1) { ocx.setTransform(1, 0, 0, 1, 0, 0); ocx.globalAlpha = 1; const w0 = Math.ceil(1920 * inv) + 1, h0 = Math.ceil(1080 * inv) + 1; g.drawImage(offC, 0, 0, w0, h0, 0, 0, w0 * f, h0 * f); }
+          const veil = 0.55 * P(t, 27.25, 27.9);
+          if (veil > 0) { g.fillStyle = "rgba(250,250,251," + veil.toFixed(3) + ")"; g.fillRect(0, 0, 1920, 1080); }
+          // the centre tile keeps its now-line for a moment
+          const nl = 1 - P(t, 24.9, 25.25);
+          if (nl > 0) {
+            const a = proj(NOWT[0], NOWT[1], 0, c, PERSP_T), e = proj(NOWT[0] + CW, NOWT[1], 0, c, PERSP_T);
+            g.strokeStyle = accA(nl.toFixed(3)); g.lineWidth = Math.max(1, 2 * c.s); g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(e[0], e[1]); g.stroke();
+          }
+        }
+
+        // ================= end =================
+        const eA = $("eA"), eB = $("eB"), eP = $("eP"), eLine = $("eLine"), eU = $("eU"), b1 = $("b1"), b2 = $("b2"), eWm = $("eWm"), eWmClip = $("eWmClip");
+        eA.textContent = v.endA; eB.textContent = v.endB; eWm.textContent = v.brand; $("eDom").textContent = v.domain;
+        let EG = null;
+        const measureEnd = () => {
+          const endL = $("endL"), prev = [endL.style.display, eLine.style.display, eWmClip.style.display];
+          endL.style.display = ""; eLine.style.display = ""; eWmClip.style.display = "";
+          const fs = 170, base = 590, w = eLine.offsetWidth;
+          const x0 = 960 - w / 2 + 6;
+          eLine.style.left = px(x0); eLine.style.top = px(base - 0.8633 * fs);
+          const G = { fs, base, a: { x: x0 + eA.offsetLeft, w: eA.offsetWidth }, b: { x: x0 + eB.offsetLeft, w: eB.offsetWidth }, p: { x: x0 + eP.offsetLeft + eP.offsetWidth / 2 }, wm: eWm.offsetWidth };
+          endL.style.display = prev[0]; eLine.style.display = prev[1]; eWmClip.style.display = prev[2];
+          return G;
+        };
+        const endGeo = (t, G) => {
+          const big = 225, small = 140, gap = 38;
+          const lockW = small + gap + G.wm, lockX = 960 - lockW / 2, lockY = 502 - small / 2;
+          const toLock = ioq(P(t, 29.8, 30.12));
+          const ms = L(big, small, toLock) * (1 + 0.02 * P(t, 30.3, 31.9));
+          return { mr: markRects(L(960 - big / 2, lockX, toLock), L(540 - big / 2, lockY, toLock), ms), fold: ioq(P(t, 29.1, 29.62)), van: E.inCubic(P(t, 32.12, 32.28)), lockX, lockY, small, gap };
+        };
+        function end(t) {
+          const on = t >= 27.66;
+          K.show($("endL"), on);
+          if (!on) return;
+          if (!EG) EG = measureEnd();
+          const G = EG, g = endGeo(t, G), mr = g.mr;
+          $("endBg").style.opacity = P(t, 28.9, 29.06).toFixed(3);
+          const textOn = t < 29.08;
+          K.show(eLine, textOn); K.show(eU, textOn && t >= 28.5);
+          // words
+          const wa = E.outCubic(P(t, 27.72, 28.02));
+          eA.style.transform = "translateX(" + px(-900 * (1 - wa)) + ")"; eA.style.opacity = C(wa * 3);
+          mblur(eA, "ea", wa > 0 ? 50 * (1 - wa) : 0, 0);
+          const wb = E.outCubic(P(t, 27.86, 28.0));
+          eB.style.opacity = C(wb * 1.5); eB.style.filter = wb < 1 ? "blur(" + (16 * (1 - wb)).toFixed(1) + "px)" : "none";
+          const tf = P(t, 29.0, 29.07);
+          eLine.style.opacity = (1 - tf).toFixed(3);
+          const uu = E.outCubic(P(t, 28.55, 28.86));
+          place(eU, G.a.x, G.base + 30, G.a.w); eU.style.transform += " scaleX(" + uu.toFixed(3) + ")"; eU.style.opacity = (1 - tf).toFixed(3);
+          // words turn into blocks, blocks fold into the mark
+          const barsOn = t >= 28.99 && t < 32.3;
+          K.show(b1, barsOn); K.show(b2, barsOn);
+          if (barsOn) {
+            const y0 = G.base - 0.74 * G.fs - 12, hB = G.fs * 1.1;
+            const R1 = [G.a.x - 6, y0, G.a.w + 12, hB], R2 = [G.b.x - 6, y0, G.b.w + 12, hB];
+            const shrinkTo = (r) => { const cx = L(r[0] + r[2] / 2, mr.dot[0], g.van), cy = L(r[1] + r[3] / 2, mr.dot[1], g.van), k = 1 - g.van; return [cx - r[2] * k / 2, cy - r[3] * k / 2, r[2] * k, r[3] * k]; };
+            setPiece(b1, shrinkTo(lerpBox(R1, mr.top, g.fold)), L(16, mr.r, g.fold) * (1 - g.van));
+            setPiece(b2, shrinkTo(lerpBox(R2, mr.bot, g.fold)), L(16, mr.r, g.fold) * (1 - g.van));
+            b1.style.opacity = P(t, 28.99, 29.05).toFixed(3); b2.style.opacity = b1.style.opacity;
+            const fv = bump(t, 29.1, 29.62), lv = bump(t, 29.8, 30.12);
+            mblur(b1, "b1", 26 * fv + 10 * lv, 6 * fv); mblur(b2, "b2", 22 * fv + 10 * lv, 6 * fv);
+          }
+          // wordmark and domain
+          const wmOn = t >= 29.84 && t < 32.2;
+          K.show(eWmClip, wmOn); K.show($("eDom"), t >= 30.0 && t < 32.05);
+          if (wmOn) {
+            const clipL = mr.top[0] + mr.top[2] + 4;
+            const inU = E.outCubic(P(t, 29.86, 30.2)), outU = E.inCubic(P(t, 31.92, 32.12));
+            eWmClip.style.left = px(clipL); eWmClip.style.top = px(g.lockY + g.small - 0.8633 * 180 - 40); eWmClip.style.width = px(1920 - clipL);
+            eWm.style.left = px(g.lockX + g.small + g.gap - clipL - 0.6 * G.wm * (1 - inU) - (G.wm + g.gap) * outU); eWm.style.top = "40px";
+            eWm.style.opacity = C(inU * 2) * (1 - P(t, 32.06, 32.12));
+            mblur(eWm, "ew", 30 * bump(t, 31.92, 32.14), 0);
+          }
+          $("eDom").style.opacity = (E.outCubic(P(t, 30.02, 30.3)) * (1 - P(t, 31.9, 32.0))).toFixed(3);
+        }
+        const tessDotPos = (t) => { const c = keyCamE(T7, Math.max(24.72, t)); return [c.Sx, c.Sy]; };
+        const tessDotR = (t) => L(4, 7, P(t, 24.72, 25.3));
+        // the now-dot from the tiles onwards: it flies into the period, becomes the mark's dot, and ends alone
+        function dotLate(t) {
+          if (t < 24.72) return;
+          if (t < 27.5) { const p = tessDotPos(t); setDot(p[0], p[1], tessDotR(t)); return; }
+          if (!EG) EG = measureEnd();
+          const G = EG, period = [G.p.x, G.base - 12];
+          if (t < 29.08) {
+            if (t < 28.2) {
+              const fl = P(t, 27.5, 28.26), from = tessDotPos(27.5), q = 1 - fl;
+              const x = q * q * from[0] + 2 * q * fl * 1320 + fl * fl * (period[0] + 20), y = q * q * from[1] + 2 * q * fl * 250 + fl * fl * (period[1] - 150);
+              setDot(x, y, L(tessDotR(27.5), 12, P(t, 27.5, 28.1)));
+            } else {
+              const land = E.outBounce(P(t, 28.2, 28.46));
+              setDot(L(period[0] + 20, period[0], E.outCubic(P(t, 28.2, 28.3))), L(period[1] - 150, period[1], land), 12);
+            }
+            return;
+          }
+          const g = endGeo(t, G), mr = g.mr;
+          if (t < 32.28) { setDot(L(period[0], mr.dot[0], g.fold), L(period[1], mr.dot[1], g.fold), L(12, mr.dot[2], g.fold)); return; }
+          const u = ioq(P(t, 32.3, 32.5));
+          setDot(L(mr.dot[0], 960, u), L(mr.dot[1], 540, u), L(mr.dot[2], 14, u));
+        }
+
+        // ================= fx: red floods =================
+        function flood(t) {
+          fx.clearRect(0, 0, 1920, 1080);
+          const disc = (x, y, r, soft) => { const g = fx.createRadialGradient(x, y, Math.max(0, r - soft), x, y, r + soft); g.addColorStop(0, ACC); g.addColorStop(1, accA(0)); fx.fillStyle = g; fx.fillRect(0, 0, 1920, 1080); };
+          // opening: the whole frame is the now-dot
+          if (t < 0.46) { const r = 15 + 1584 * Math.pow(1 - t / 0.45, 2.7); disc(960, 540, r, 2 + r * 0.05); }
+          // zoom streaks while the week collapses into the dot
+          const zs = bump(t, 5.72, 5.92);
+          if (zs > 0) {
+            for (let k = 0; k < 26; k++) {
+              const a = R(k * 4.3 + 2) * TAU, r0 = L(30, 170, R(k * 1.7)) * L(1.5, 0.6, P(t, 5.72, 5.92)), len = L(120, 320, R(k * 2.9));
+              const cx = Math.cos(a), cy = Math.sin(a) * 0.36;
+              const x0 = 960 + cx * r0, y0 = 540 + cy * r0, x1 = 960 + cx * (r0 + len), y1 = 540 + cy * (r0 + len);
+              const tone = R(k * 5.5) < 0.3 ? "20,20,22" : "120,120,126";
+              [[48, 0.1], [28, 0.18], [12, 0.3]].forEach(([wd, al]) => {
+                const gr = fx.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, "rgba(" + tone + "," + (al * zs).toFixed(3) + ")"); gr.addColorStop(1, "rgba(" + tone + ",0)");
+                fx.strokeStyle = gr; fx.lineWidth = wd * L(0.6, 1.2, R(k * 8.3)); fx.lineCap = "round"; fx.beginPath(); fx.moveTo(x0, y0); fx.lineTo(x1, y1); fx.stroke();
+              });
+            }
+          }
+          // send button floods the screen
+          if (t >= 13.58 && t < 14.0) {
+            const c = winCam(Math.min(t, 13.99)), p = onScreen(c, SEND[0], SEND[1] - 330);
+            const r = 20 * c.s + 2400 * Math.pow(P(t, 13.58, 14.05), 4);
+            disc(p[0], p[1], r, 6 + r * 0.03);
+          }
+          // the red collapses into the tilted now-line
+          if (t >= 13.99 && t < 14.3) {
+            const c = winCam(t), a = proj(262, tY(8.7), 0, c), b = proj(1476, tY(8.7), 0, c);
+            const k = (b[1] - a[1]) / (b[0] - a[0]), yl = a[1] - k * a[0], yr = yl + k * 1920;
+            const top = L(1400, 1, E.outCubic(P(t, 13.98, 14.16))), bot = L(560, 1, E.outCubic(P(t, 13.97, 14.2)));
+            fx.fillStyle = ACC; fx.beginPath(); fx.moveTo(-10, yl - top); fx.lineTo(1930, yr - top); fx.lineTo(1930, yr + bot); fx.lineTo(-10, yl + bot); fx.closePath(); fx.fill();
+          }
+        }
+
+        // ================= cursor =================
+        function cursor(t) {
+          const on = t >= 13.2 && t < 13.64;
+          K.show($("cursor"), on);
+          if (!on) return;
+          const u = E.outCubic(P(t, 13.2, 13.42));
+          const x = L(1500, 1126, u), y = L(860, 596, u), s = 1 - 0.12 * bump(t, 13.45, 13.56);
+          $("cursor").style.transform = "translate(" + px(x - 13) + "," + px(y - 7) + ") scale(" + s.toFixed(3) + ")";
+          $("cursor").style.opacity = (C(P(t, 13.2, 13.26) * 1) * (1 - P(t, 13.58, 13.64))).toFixed(3);
+        }
+
+        function render(t) {
+          flood(t);
+          intro(t);
+          if (t < 5.86) { if (t >= 0.44) setDot(960, 540, t < 5.5 ? (t < 0.46 ? 15 : L(15, 13, P(t, 0.46, 0.8))) : 13); else K.show(dotEl, false); }
+          dark(t);
+          if (t >= 9.5 && t < 24.72) K.show(dotEl, false);
+          app(t);
+          feats(t);
+          tess(t);
+          end(t);
+          dotLate(t);
+          cursor(t);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { dWmW = 0; EG = null; SPR = null; render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

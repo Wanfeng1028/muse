@@ -1,0 +1,521 @@
+[
+  {
+    "id": "ltx-2-5-fast-api",
+    "name": "LTX 2.5 Fast / LTX API",
+    "family": "ltx",
+    "provider": "ltx",
+    "variant": "",
+    "release_date": "2026-08-11",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "audio-driven-video",
+      "native-audio",
+      "first-last-frame",
+      "multishot",
+      "automatic-duration"
+    ],
+    "unsupported_capabilities": [
+      "retake",
+      "extend",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "ltx-2-5-fast"
+    ],
+    "source_ids": [
+      "ltx25-release",
+      "ltx25-api"
+    ],
+    "novel_abilities": [
+      "Audio-driven generation",
+      "Last-frame guidance",
+      "Model-predicted duration"
+    ],
+    "limits": {
+      "min_seconds": 6,
+      "max_seconds": 20,
+      "profiles": [
+        {
+          "resolutions": [
+            "720p",
+            "1080p"
+          ],
+          "fps": [
+            24,
+            25
+          ],
+          "seconds": [
+            6,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
+            20
+          ]
+        },
+        {
+          "resolutions": [
+            "720p",
+            "1080p"
+          ],
+          "fps": [
+            48,
+            50
+          ],
+          "seconds": [
+            6,
+            8,
+            10
+          ]
+        },
+        {
+          "resolutions": [
+            "1440p",
+            "2160p"
+          ],
+          "fps": [
+            24,
+            25,
+            48,
+            50
+          ],
+          "seconds": [
+            6,
+            8,
+            10
+          ]
+        }
+      ],
+      "auto_duration_forbidden_tasks": [
+        "transition"
+      ]
+    },
+    "aliases": [
+      "ltx-2-5",
+      "ltx2.5",
+      "ltx-2-5-fast"
+    ],
+    "notes": [
+      "Duration profiles describe text/image generation; audio-driven duration follows input audio and requires separate preflight.",
+      "Auto-duration does not mean unlimited duration.",
+      "For automatic duration on the API, duration must explicitly be null; omission is not equivalent. Auto-duration cannot be combined with last-frame anchoring on image-to-video."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "operation_limits": {
+      "audio-driven": {
+        "duration_follows_input_audio": true
+      }
+    }
+  },
+  {
+    "id": "ltx-2-5-pro-api",
+    "name": "LTX 2.5 Pro / LTX API",
+    "family": "ltx",
+    "provider": "ltx",
+    "variant": "",
+    "release_date": "2026-08-11",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "audio-driven-video",
+      "native-audio",
+      "first-last-frame",
+      "multishot",
+      "automatic-duration"
+    ],
+    "unsupported_capabilities": [
+      "retake",
+      "extend",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "ltx-2-5-pro"
+    ],
+    "source_ids": [
+      "ltx25-release",
+      "ltx25-api"
+    ],
+    "novel_abilities": [
+      "Higher-quality hosted tier with a distinct duration ceiling"
+    ],
+    "limits": {
+      "profiles": [
+        {
+          "resolutions": [
+            "720p",
+            "1080p",
+            "1440p",
+            "2160p"
+          ],
+          "fps": [
+            24,
+            25,
+            48,
+            50
+          ],
+          "seconds": [
+            6,
+            8,
+            10
+          ]
+        }
+      ],
+      "min_seconds": 6,
+      "max_seconds": 10,
+      "auto_duration_forbidden_tasks": [
+        "transition"
+      ]
+    },
+    "aliases": [
+      "ltx-2-5",
+      "ltx2.5",
+      "ltx-2-5-pro"
+    ],
+    "notes": [
+      "Do not copy the Fast 20-second mode into Pro.",
+      "A2V follows the source audio; inspect its endpoint separately.",
+      "For automatic duration on the API, duration must explicitly be null; omission is not equivalent. Auto-duration cannot be combined with last-frame anchoring on image-to-video."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "operation_limits": {
+      "audio-driven": {
+        "duration_follows_input_audio": true
+      }
+    }
+  },
+  {
+    "id": "ltx-2-5-local",
+    "name": "LTX 2.5 / local checkpoints",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "dev/distilled",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "native-audio",
+      "multishot",
+      "local-weights",
+      "lora-inference",
+      "lora-training",
+      "automatic-duration"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-card",
+      "ltx25-diffusers"
+    ],
+    "novel_abilities": [
+      "Connected multishot generation",
+      "New diffusion decoder and duration predictor",
+      "Specialized LoRA pipelines"
+    ],
+    "limits": {
+      "width_multiple": 32,
+      "height_multiple": 32,
+      "frame_count_modulus": 8,
+      "frame_count_remainder": 1
+    },
+    "aliases": [
+      "ltx-2-5",
+      "ltx2.5",
+      "ltx-local"
+    ],
+    "notes": [
+      "Open-weight release date is not inferred from the API release or repository update date.",
+      "Checkpoint, encoder, decoder, scheduler and LoRA compatibility must be locked together.",
+      "Int8 ComfyUI and Diffusers artifacts are not interchangeable.",
+      "VRAM and commercial license eligibility are preflight checks, not promises.",
+      "Specialized in/outpainting, EXR, restore, Dub-It and Foley routes are separate records; plain local weights do not establish adapter compatibility."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [
+      "Lightricks/LTX-2.5",
+      "Lightricks/LTX-2.5-Diffusers"
+    ]
+  },
+  {
+    "id": "ltx-2-3-pro-api",
+    "name": "LTX 2.3 Pro / retake and extension fallback",
+    "family": "ltx",
+    "provider": "ltx",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "audio-driven-video",
+      "native-audio",
+      "retake",
+      "extend"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "ltx-2-3-pro"
+    ],
+    "source_ids": [
+      "ltx-models"
+    ],
+    "novel_abilities": [
+      "Keep this older route when a new model lacks retake or extension"
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-3",
+      "ltx2.3"
+    ],
+    "notes": [
+      "Older capability-specific fallback, not the newest default.",
+      "Current API duration, retake window and output constraints must be checked before running."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.3"
+  },
+  {
+    "id": "ltx-2-5-local-inout",
+    "name": "LTX 2.5 / ComfyUI in-outpainting",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "inpainting",
+      "outpainting",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-inout"
+    ],
+    "novel_abilities": [
+      "In/outpainting uses a task-specific IC-LoRA and mask, not the plain generation pipeline."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-5-local-inout",
+      "ltx-2-5"
+    ],
+    "notes": [
+      "In/outpainting uses a task-specific IC-LoRA and mask, not the plain generation pipeline.",
+      "The documented adapter is reused from LTX 2.3; pin it with the listed LTX 2.5 model stack."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "compatible-checkpoints"
+    ]
+  },
+  {
+    "id": "ltx-2-5-python-exr",
+    "name": "LTX 2.5 / Python native EXR pipeline",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "exr-hdr-roundtrip",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-exr"
+    ],
+    "novel_abilities": [
+      "Native EXR preservation uses the Python pipeline; no ComfyUI native EXR flow was documented."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-5-python-exr",
+      "ltx-2-5"
+    ],
+    "notes": [
+      "Native EXR preservation uses the Python pipeline; no ComfyUI native EXR flow was documented.",
+      "This is not the SDR-to-HDR IC-LoRA, whose 2.5 compatibility is still under development."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [],
+    "required_tools": [
+      "ltx-python-pipeline",
+      "compatible-checkpoints"
+    ]
+  },
+  {
+    "id": "ltx-2-5-local-restore",
+    "name": "LTX 2.5 / ComfyUI Restore and Refine Details",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "video-restoration",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-restore"
+    ],
+    "novel_abilities": [
+      "Use the TiledFusion Upscale workflow and the task-specific adapters."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-5-local-restore",
+      "ltx-2-5"
+    ],
+    "notes": [
+      "Use the TiledFusion Upscale workflow and the task-specific adapters.",
+      "Restored colors, detail and faces are generated interpretations, not recovered ground truth."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "task-specific-adapters"
+    ]
+  },
+  {
+    "id": "ltx-2-3-local-dubit",
+    "name": "LTX 2.3 / Dub-It IC-LoRA beta",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "dubbing",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx23-dubit"
+    ],
+    "novel_abilities": [
+      "The official guide validates this on 2.3; 2.5 support remains in development."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-3-local-dubit",
+      "ltx-2-3"
+    ],
+    "notes": [
+      "The official guide validates this on 2.3; 2.5 support remains in development.",
+      "Preserve authorized speaker identity and record consent; verify language and actual lip synchronization."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.3",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "dubit-adapter"
+    ]
+  },
+  {
+    "id": "ltx-2-3-local-foley",
+    "name": "LTX 2.3 / Foley LoRA",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "video-to-audio",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx23-foley"
+    ],
+    "novel_abilities": [
+      "Validated on 2.3, not 2.5; use a muted input clip and the dedicated Foley adapter."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-3-local-foley",
+      "ltx-2-3"
+    ],
+    "notes": [
+      "Validated on 2.3, not 2.5; use a muted input clip and the dedicated Foley adapter.",
+      "This synthesizes sound effects, not speech or music, while preserving original video frames."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.3",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "video-helper-suite",
+      "foley-adapter"
+    ]
+  }
+]

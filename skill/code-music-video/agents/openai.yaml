@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Music Video"
+  short_description: "Music-driven code scenes, timing checks and offline video"
+  default_prompt: "Use $code-music-video to plan a music-driven code video, validate its timing, and choose a renderer for a short test export."

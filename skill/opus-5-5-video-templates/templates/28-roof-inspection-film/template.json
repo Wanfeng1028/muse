@@ -1,0 +1,36 @@
+{
+  "id": "28-roof-inspection-film",
+  "title": "Service brand film — field-note photo, a roof cutaway that comes apart in layers, three inspection close-ups, photos pinned on a turning house, a report, options, a booking form, the mark, an end card",
+  "category": "brand film / local service",
+  "duration": 28.5,
+  "size": "1920x1080",
+  "demoBrand": "ROWAN (fictional)",
+  "source": {
+    "author": "@everestchris6",
+    "post": "https://x.com/everestchris6/status/2104234619025682463",
+    "note": "Remade from scratch in HyperFrames after an AI-made concept film for a roofing inspection brand; the scene order, the type system and the transitions follow it. The original's own fictional brand is replaced with a different one. The five photos were generated with the Claude Imagine MCP; the house, the roof cutaway, the turning view with pinned photos, the shingle tiles and the extruded mark are drawn live by a small orthographic 3D renderer into SVG, so they turn and come apart for real instead of being stills."
+  },
+  "scenes": [
+    "field-note photo of shingles at sunset; SMALL / DETAILS. rise out of a mask on a lime bar",
+    "BIG / DECISIONS. on lime, a 0.3 s flash",
+    "Built in layers: the front roof plane separates into shingles, underlayment, deck and rafters with labelled callouts",
+    "three inspection close-ups (surface, junction, drainage) with a lime reticle and a growing thumbnail strip; a lime bar wipes between them",
+    "Every photo. In context: the camera turns around the house while the three photos pin to it and line up on the right",
+    "the report: a cursor picks the second photo, an annotation draws, the matching row lights up, the photo grows into the next scene",
+    "Talk through options: three tiles — a pass of the scanner, a ringed repair, a roof lifted off and replaced",
+    "START WITH A VISIT: a cursor opens the time picker, chooses, and books; the card turns into the confirmation",
+    "CONFIDENCE / OVERHEAD. over a house photo",
+    "the mark: four extruded bars fly in and lock together",
+    "end card: the brand rises letter by letter with the line, the button and the outlined mark"
+  ],
+  "variables": ["brand", "fieldNote", "open1", "open1Sub", "open2", "layersLabel", "layersTitle", "layers", "scope1", "scope2", "scope3", "context", "photos", "report", "opt1", "opt2", "opt3", "optLine", "visit", "form", "touch", "confirm", "hero", "tagline", "cta", "lime", "forest", "paper", "ink", "moss"],
+  "images": [
+    { "file": "assets/img/roof.jpg", "use": "opening shot", "model": "gpt-image-2.5 1k 16:9", "prompt": "Low-angle macro photo across an asphalt shingle roof at golden hour: dark grey architectural shingles with sparkling mineral granules in sharp focus in the lower half of the frame, the roof plane rising from the lower left toward a ridge at the upper right, the sun flaring just above the ridge, soft pale sky taking up the upper left of the frame, shallow depth of field. No text, no logos." },
+    { "file": "assets/img/measure.jpg", "use": "close-up 1, report photo 1", "model": "gpt-image-2.5 1k 16:9", "prompt": "Close-up photo of a roofing inspector's hand in a black work glove holding a small wooden folding ruler against dark grey asphalt shingles on a roof, measuring a shingle tab, the hand on the right half of the frame, soft daylight, shallow depth of field with a blurred green tree line at the top right. No text, no logos, no faces." },
+    { "file": "assets/img/flashing.jpg", "use": "close-up 2, report photo 2", "model": "gpt-image-2.5 1k 16:9", "prompt": "Close-up photo of a roof-to-wall junction on a house: dark asphalt shingles in the lower left meeting a cream horizontal vinyl siding wall on the right, with clean silver metal step flashing running along the joint diagonally across the frame, soft overcast daylight, crisp detail. No text, no logos." },
+    { "file": "assets/img/gutter.jpg", "use": "close-up 3, report photo 3", "model": "gpt-image-2.5 1k 16:9", "prompt": "Close-up photo of a white aluminium rain gutter running diagonally from the lower left to the upper right along the edge of a dark shingle roof, a little clear rainwater flowing in it, a white gutter bracket, a lush green garden with shrubs and trees softly blurred on the right and below, soft daylight after rain. No text, no logos." },
+    { "file": "assets/img/house.jpg", "use": "CONFIDENCE OVERHEAD shot", "model": "gpt-image-2.5 1k 16:9", "prompt": "Photo of a beautiful two-storey suburban house with cream siding, stone accents, a dark grey shingle roof with several gables and black-framed windows, warm lights on by the front door, a lush green garden and trees, a wet stone path after rain, soft overcast daylight. Wide shot with the house centred and some open lawn at the bottom left. No text, no logos, no people." }
+  ],
+  "notes": "Scene times are in S; the two lime wipes in WIPE. The house is built in house() from boxes and planes (walls, gables, openings, two roof planes, chimney); camera(phi, theta, scale, cx, cy) is an orthographic view, so any angle works. The cutaway's layer names come from `layers`; the report rows are in rowTxt. Credits used for the demo: 5 gpt-image-2.5 images = 15.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

@@ -1,0 +1,569 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xiaolu-motion.local/storyboard-0.1.json",
+  "title": "xiaolu-motion storyboard v0.1",
+  "description": "分镜 JSON：底片（真人口播/录屏）+ 运镜 + 叠层组件 + 转场 + 音效/音乐提示 + QA 约束。字段说明见 timeline/SCHEMA.md。",
+  "type": "object",
+  "required": [
+    "version",
+    "canvas",
+    "style",
+    "duration"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "0.1"
+    },
+    "canvas": {
+      "type": "object",
+      "required": [
+        "w",
+        "h",
+        "fps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "w": {
+          "const": 1080
+        },
+        "h": {
+          "enum": [
+            1920,
+            1440
+          ]
+        },
+        "fps": {
+          "enum": [
+            30,
+            60
+          ]
+        }
+      }
+    },
+    "style": {
+      "type": "string",
+      "minLength": 1
+    },
+    "style_overrides": {
+      "type": "object"
+    },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 900
+    },
+    "base": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/clip"
+      }
+    },
+    "words": {
+      "type": "string"
+    },
+    "shots": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/shot"
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/transition"
+      }
+    },
+    "music": {
+      "$ref": "#/$defs/music"
+    },
+    "qa": {
+      "$ref": "#/$defs/qa"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "camera": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/camkey"
+      },
+      "description": "L4 全局镜头：所有层共用；底片 depth=1，图形层按各自 depth 视差。"
+    },
+    "finish": {
+      "$ref": "#/$defs/finish"
+    }
+  },
+  "$defs": {
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "word": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "occurrence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "edge": {
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
+        "offset": {
+          "type": "number"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "word"
+          ]
+        },
+        {
+          "required": [
+            "text"
+          ]
+        }
+      ]
+    },
+    "time": {
+      "oneOf": [
+        {
+          "type": "number",
+          "minimum": 0
+        },
+        {
+          "$ref": "#/$defs/anchor"
+        }
+      ]
+    },
+    "end": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/time"
+        },
+        {
+          "type": "object",
+          "required": [
+            "dur"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "dur": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "ease": {
+      "enum": [
+        "lin",
+        "linear",
+        "step",
+        "sineIn",
+        "sineOut",
+        "sineInOut",
+        "quadIn",
+        "quadOut",
+        "cubicIn",
+        "cubicOut",
+        "cubicInOut",
+        "quintInOut",
+        "expoIn",
+        "expoOut",
+        "expoInOut"
+      ]
+    },
+    "camkey": {
+      "type": "object",
+      "required": [
+        "t"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "t": {
+          "$ref": "#/$defs/time"
+        },
+        "zoom": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "cx": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ease": {
+          "$ref": "#/$defs/ease"
+        }
+      }
+    },
+    "clip": {
+      "type": "object",
+      "required": [
+        "src",
+        "in",
+        "out",
+        "at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "src": {
+          "type": "string",
+          "minLength": 1
+        },
+        "in": {
+          "type": "number",
+          "minimum": 0
+        },
+        "out": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "at": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fit": {
+          "enum": [
+            "cover"
+          ]
+        },
+        "audio": {
+          "type": "boolean"
+        },
+        "camera": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/camkey"
+          }
+        },
+        "matte": {
+          "type": "string",
+          "description": "L2 人像遮罩：与 src 同时基同尺寸的灰度视频（白=人）。"
+        }
+      }
+    },
+    "sfx": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "at": {
+          "oneOf": [
+            {
+              "enum": [
+                "start",
+                "mid",
+                "end"
+              ]
+            },
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "$ref": "#/$defs/anchor"
+            },
+            {
+              "type": "object",
+              "required": [
+                "rel"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "rel": {
+                  "type": "number"
+                }
+              }
+            }
+          ]
+        },
+        "gain_db": {
+          "type": "number",
+          "maximum": 12
+        },
+        "pan": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "dur": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "shot": {
+      "type": "object",
+      "required": [
+        "id",
+        "component",
+        "start",
+        "end"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+$"
+        },
+        "component": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "start": {
+          "$ref": "#/$defs/time"
+        },
+        "end": {
+          "$ref": "#/$defs/end"
+        },
+        "params": {
+          "type": "object"
+        },
+        "z": {
+          "type": "integer"
+        },
+        "sfx": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sfx"
+          }
+        },
+        "note": {
+          "type": "string"
+        },
+        "layer": {
+          "enum": [
+            "behind",
+            "front"
+          ],
+          "description": "behind=L1 人身后（需要 matte 才真正在人后），front=L3 人前（默认）。"
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.5,
+          "description": "视差系数：0 屏幕锁定（HUD），1 与底片同动，中间值视差。默认 0。"
+        },
+        "invert": {
+          "type": "boolean",
+          "description": "反相混合（difference）：单独渲一层 overlay_invert.mov，在人前图形（L3）之后按 bg·(1−a)+|bg·a−O| 合成，白墨在亮底变暗、暗底保持亮。只允许声明了 invert 支持的组件（目前 chapter_tag）；不能与 layer: behind 同用。默认 false。"
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "at",
+        "dur"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+$"
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "at": {
+          "$ref": "#/$defs/time"
+        },
+        "dur": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 5
+        },
+        "align": {
+          "enum": [
+            "center",
+            "start",
+            "end"
+          ]
+        },
+        "params": {
+          "type": "object"
+        },
+        "z": {
+          "type": "integer"
+        },
+        "sfx": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sfx"
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "music": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "enum": [
+            "synth",
+            "file",
+            "none"
+          ]
+        },
+        "preset": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        },
+        "gain_db": {
+          "type": "number"
+        },
+        "duck": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "under": {
+              "enum": [
+                "voice"
+              ]
+            },
+            "depth_db": {
+              "type": "number",
+              "maximum": 0
+            }
+          }
+        }
+      }
+    },
+    "qa": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "safe_zone": {
+          "type": "string"
+        },
+        "avoid": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "face",
+              "captions"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "captions": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "srt": {
+              "type": "string"
+            },
+            "media": {
+              "type": "string"
+            },
+            "band": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          }
+        },
+        "face": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "track": {
+              "type": "string"
+            },
+            "pad": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.5
+            }
+          }
+        },
+        "sample_every": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "overlap_tolerance_px": {
+          "type": "number",
+          "minimum": 0
+        },
+        "min_font_px": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "finish": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "L5 统一收尾：同时作用于人像和图形。",
+      "properties": {
+        "contrast": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1.5
+        },
+        "saturation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "brightness": {
+          "type": "number",
+          "minimum": -0.2,
+          "maximum": 0.2
+        },
+        "gamma": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2
+        },
+        "grain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "light_sweep": {
+          "type": "object",
+          "description": "预留：光扫（未实现）"
+        }
+      }
+    }
+  }
+}

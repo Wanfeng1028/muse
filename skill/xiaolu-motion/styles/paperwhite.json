@@ -1,0 +1,25 @@
+{
+  "name": "paperwhite",
+  "version": "0.1",
+  "extends": "base",
+  "description": "纸白：纸白底、墨色字、亮蓝强调、琥珀结果色。强调蓝 #2F6BFF 为暂定值，以用户拍板为准。",
+  "colors": {
+    "bg": "#F6F3EC",
+    "bg_glow": "#FFFDF8",
+    "panel": "#F6F3EC",
+    "panel_2": "#FFFFFF",
+    "text": "#1D1B18",
+    "text_dim": "#6F6A61",
+    "accent": "#2F6BFF",
+    "accent_hi": "#1E4FD8",
+    "accent_2": "#E8A33D",
+    "result": "#E8A33D",
+    "hair": "#DDD6C8",
+    "stroke": "#CFC7B6",
+    "highlight_bg": "#2F6BFF",
+    "highlight_text": "#FFFFFF"
+  },
+  "post": {
+    "bloom": [0.25, 0.15]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "17-vertical-app-update",
+  "title": "Vertical app update — what's new in five screens (9:16)",
+  "category": "app launch / mobile / vertical",
+  "duration": 15,
+  "size": "1080x1920",
+  "demoBrand": "Tickly (fictional)",
+  "source": {
+    "author": "@SebastianRoehl",
+    "post": "https://x.com/SebastianRoehl/status/2103912457836323096",
+    "note": "Remade from scratch in HyperFrames after the HabitKit update reel; structure and pacing follow it. Brand, copy and every app screen are ours and fictional; the original's iCloud wording is replaced with a generic cloud backup."
+  },
+  "scenes": [
+    "habit grid assembles tile by tile, What's new in + wordmark",
+    "grid scatters around a new-habit form, segmented header slides Yes/No → Count → Measure",
+    "decimals: a gauge counts up to 7.5 km, turns into a check, colour tiles flood the frame",
+    "Done for today? completed rows collapse out of the list",
+    "vertical whip to cloud backup: backing up, backed up, backup saved",
+    "new phone: welcome back, restore, restoring, restored, squares travel along an arc",
+    "tiles fly home into the grid, wordmark and typed tagline"
+  ],
+  "variables": ["brandA", "brandB", "kicker", "tagline", "label1", "seg1", "seg2", "seg3", "sub1", "sub2", "sub3", "label2", "amount", "unit", "head3a", "head3b", "label4", "head4a", "head4b", "head5a", "head5b", "accent", "lime", "purple", "green", "coral"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"brandA\":\"Streak\",\"brandB\":\"ly\"}'"
+}

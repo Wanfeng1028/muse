@@ -1,0 +1,13 @@
+interface:
+  display_name: 광고 영상 분석
+  short_description: "광고의 대사·행동·컷 관계를 분석하고 Seedance 프롬프트로 변환"
+  default_prompt: "$video-ad-analyzer로 이 영상의 대사·행동·화면 전환 관계를 분석하고, 제공한 새 광고 내용에 맞춰 Seedance 프롬프트를 작성해주세요."
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

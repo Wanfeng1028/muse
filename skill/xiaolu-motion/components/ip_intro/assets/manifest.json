@@ -1,0 +1,9 @@
+{
+ "version": 1,
+ "note": "ip_intro 预加载清单。组件在浏览器里 import 时读取本文件和 covers/covers.json（本机封面，不入库），把列出的图片全部解码好，draw() 只按 key 取图。新增大头贴：放进 stickers/ 再在这里登记。当前三张是占位素材（简单合成图形，非真人），换成你自己的：见 README.md「生成资产」一节，跑 tools/cutout.py 处理你自己的蓝底/纯色底照片。",
+ "stickers": [
+  {"key": "smile", "file": "stickers/smile.png", "desc": "微笑，占位素材（合成图形，非真人）", "source": "placeholder — replace with your own via tools/cutout.py"},
+  {"key": "surprise", "file": "stickers/surprise.png", "desc": "惊讶，占位素材（合成图形，非真人）", "source": "placeholder — replace with your own via tools/cutout.py"},
+  {"key": "wink", "file": "stickers/wink.png", "desc": "眨眼，占位素材（合成图形，非真人）", "source": "placeholder — replace with your own via tools/cutout.py"}
+ ]
+}

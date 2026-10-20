@@ -1,0 +1,66 @@
+/* ===================================================================
+   ground.css — the MARK-DRIVEN GROUND: a background built around one
+   travelling element (a logo, a dot, a cursor). Pairs with ground.js.
+
+   Layers, bottom to top, all inside .mg-space (a fixed design-space box
+   that is scaled to the stage, so every number in JS is a plain px in
+   the design grid):
+
+     .mg-dots    a pale dot grid (never moves)
+     .mg-wave    the SAME grid, brighter, behind a travelling mask —
+                 only mask-position animates, so the dots stay put and a
+                 brightness WAVE walks through them
+     .mg-ring    thin drifting orbit rings (ambient, not mark-driven)
+     .mg-orb     the SVG: two path rings centred on the landing point,
+                 the flight path, and the lit arc behind the mark
+     .mg-glow    three wide soft colour fields (the landing glow, the
+                 previous landing fading, the ambient field)
+
+   All motion is written per frame by ground.js as a pure function of
+   logical time t — nothing here animates on its own, so the ground is
+   frame-exact under slow-clock capture (see the smooth-render skill).
+   =================================================================== */
+
+.mg-ground{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;
+  background:var(--mg-bg,#f7f5fd);
+  --mg-dot:rgba(124,58,237,.22);      /* the resting dot grid            */
+  --mg-dot2:rgba(124,58,237,.55);     /* the dots inside the wave        */
+  --mg-ring:rgba(124,58,237,.16);     /* the ambient orbit rings         */
+  --mg-path:rgba(124,58,237,.55);     /* the path rings (alpha set in JS)*/
+  --mg-blur:none;                     /* optional softening of the glows */
+}
+/* dark ground: the same layers, pale ink, plus a hero glow under everything */
+.mg-ground.mg-dark{background:var(--mg-bg,#07050f);
+  --mg-dot:rgba(196,181,253,.20);
+  --mg-dot2:rgba(196,181,253,.50);
+  --mg-ring:rgba(196,181,253,.22);
+  --mg-path:rgba(196,181,253,.9);
+}
+.mg-ground.mg-dark::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:var(--mg-heroglow,radial-gradient(110% 70% at 50% 122%,
+    rgba(124,58,237,.45) 0%, rgba(76,29,149,.25) 40%, transparent 75%));}
+
+/* the design space: ground.js sizes it (w × h) and scales it to the stage */
+.mg-space{position:absolute;left:0;top:0;transform-origin:0 0;overflow:visible;}
+
+/* --- dot grid + brightness wave ---------------------------------- */
+.mg-dots,.mg-wave{position:absolute;inset:0;background-position:0 0;}
+.mg-dots{background-image:radial-gradient(circle at 50% 50%, var(--mg-dot) 2.4px, transparent 3px);}
+.mg-wave{background-image:radial-gradient(circle at 50% 50%, var(--mg-dot2) 2.9px, transparent 3.5px);
+  -webkit-mask-repeat:repeat;mask-repeat:repeat;}   /* mask-image / -size / -position written by ground.js */
+
+/* --- ambient orbit rings (slow drift, <= ~60px over 40s) ---------- */
+.mg-ring{position:absolute;border:2px solid var(--mg-ring);border-radius:50%;will-change:transform;}
+
+/* --- the mark's own geometry ------------------------------------- */
+.mg-orb{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.mg-orb .mg-c,.mg-orb .mg-pb{fill:none;}
+.mg-orb .mg-pl{fill:none;stroke-linecap:round;}
+
+/* --- the colour fields ------------------------------------------- */
+/* Softness comes from the radial-gradient FALLOFF (a small solid core,
+   then a long fade), not from filter:blur — blur is software-rasterized
+   in headless Chromium/Edge and starves capture. Pass {blur:N} to
+   GROUND.init only if your pipeline can afford it; it is cosmetic. */
+.mg-glow{position:absolute;left:0;top:0;border-radius:50%;will-change:transform;
+  filter:var(--mg-blur,none);}

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=830" />
+    <title>circle-pop</title>
+    <script>
+      // circle-pop CONFIG: every piece of on-screen text and every tunable.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs circle-pop <dir> --update` so the static timing
+      // attributes follow; the timeline refuses to build if they disagree.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "textA": "아이디어",
+        "textB": "완성된 영상",
+        "transitionAt": 3,
+        "popOrigin": "center",
+        "popColor": "red",
+        "overshoot": 1.15,
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d"
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "IntroSans";
+        src: url("assets/fonts/NanumSquare_acEB.ttf") format("truetype");
+        font-weight: 800;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #stage {
+        position: relative;
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--paper);
+        font-family: "IntroSans", sans-serif;
+        font-weight: 800;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px;
+        text-align: center;
+      }
+      .word { font-size: 180px; line-height: 1.1; white-space: nowrap; }
+      #sA { z-index: 1; }
+      #sB { z-index: 2; }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG
+         (root data-duration is read statically by the engine, before any
+         script runs). Do not hand-edit them. -->
+    <div
+      id="stage"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="6"
+      data-fps="30"
+      data-width="1080"
+      data-height="830"
+    >
+      <!-- A and B overlap and occlude each other on purpose while the circle
+           grows; the allow-overlap / allow-occlusion attributes mark it for check -->
+      <!-- Scene A: holds until the circle covers the frame -->
+      <section id="sA" class="clip" data-start="0" data-duration="3.9" data-track-index="0">
+        <div class="content"><div id="textA" class="word" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div></div>
+      </section>
+
+      <!-- Scene B: its background is the circle (clip-path), so the pop
+           becomes B without a cut; text B pops in while it fills the frame -->
+      <section id="sB" class="clip" data-start="3" data-duration="3" data-track-index="1">
+        <div class="content"><div id="textB" class="word" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div></div>
+      </section>
+    </div>
+
+    <script>
+      const C = CONFIG;
+      const $ = (id) => document.getElementById(id);
+      const win = (id) => {
+        const el = $(id);
+        return { start: +el.dataset.start, end: +el.dataset.start + +el.dataset.duration, dur: +el.dataset.duration };
+      };
+      const W = 1080, H = 830;
+      const POP = 0.4, FILL = 0.5; // same numbers as recipe.mjs (selfcheck pins them)
+      const TEXT_IN = 0.55; // text B pop, starts with the fill
+
+      // ---- palette: exactly three colours. B's background is the pop colour;
+      // A sits on paper (charcoal when the pop itself is paper); text takes
+      // the contrasting colour.
+      const root = document.documentElement.style;
+      root.setProperty("--paper", C.paper);
+      root.setProperty("--charcoal", C.charcoal);
+      root.setProperty("--red", C.red);
+      const ink = { paper: "charcoal", charcoal: "paper", red: "paper" };
+      const bgA = C.popColor === "paper" ? "charcoal" : "paper";
+      for (const [scene, bg] of [["sA", bgA], ["sB", C.popColor]]) {
+        $(scene).style.background = `var(--${bg})`;
+        $(scene).style.color = `var(--${ink[bg]})`;
+      }
+      $("stage").style.background = document.body.style.background = `var(--${bgA})`;
+
+      // ---- guard: the static timing attributes must match CONFIG
+      const near = (a, b) => Math.abs(a - b) <= 1e-3;
+      if (!near(win("sB").start, C.transitionAt) || !near(win("sA").end, C.transitionAt + POP + FILL)) {
+        throw new Error("circle-pop: timing attributes disagree with CONFIG; re-run scaffold --update");
+      }
+
+      // ponytail: per-glyph width estimate instead of measuring the loaded font
+      // (same rule as intro-kinetic). Shrinks only, never grows.
+      const fit = (text, px, maxW = W - 160) => {
+        let em = 0;
+        for (const ch of text) {
+          if (/[ㄱ-힣一-鿿]/.test(ch)) em += 0.95;
+          else if (/[\s,.]/.test(ch)) em += 0.3;
+          else if (/[A-Z]/.test(ch)) em += 0.7;
+          else em += 0.6;
+        }
+        return Math.min(px, Math.floor(maxW / Math.max(em, 0.01)));
+      };
+      for (const [id, text] of [["textA", C.textA], ["textB", C.textB]]) {
+        $(id).textContent = text;
+        $(id).style.fontSize = fit(text, 180) + "px";
+      }
+
+      // ---- circle geometry: origin, the pop radius, the radius that covers
+      // every corner from that origin
+      const [fx, fy] = C.popOrigin === "center" ? [0.5, 0.5] : C.popOrigin.split(",").map(Number);
+      const ox = fx * W, oy = fy * H;
+      const R0 = 0.25 * Math.min(W, H);
+      const RC = Math.ceil(Math.max(Math.hypot(ox, oy), Math.hypot(W - ox, oy), Math.hypot(ox, H - oy), Math.hypot(W - ox, H - oy)));
+      const OS = Math.min(1.5, Math.max(1, C.overshoot)); // clamped even if CONFIG was hand-edited
+
+      // Radius at t seconds after the pop starts. Clamped at both tween
+      // boundaries, so any seek lands on an exact value: t <= 0 is no circle,
+      // t >= POP + FILL is the full cover. Pop: 0 -> R0*OS (cubic out, 60 %)
+      // -> R0 (sine in-out, 40 %); fill: R0 -> RC (quad in).
+      const radius = (t, R0, RC, OS) => {
+        if (t <= 0) return 0;
+        if (t >= POP + FILL) return RC;
+        const up = 0.6 * POP;
+        if (t < up) { const p = t / up; return R0 * OS * (1 - (1 - p) ** 3); }
+        if (t < POP) { const p = (t - up) / (POP - up); return R0 * (OS + (1 - OS) * (0.5 - 0.5 * Math.cos(Math.PI * p))); }
+        const p = (t - POP) / FILL;
+        return R0 + (RC - R0) * p * p;
+      };
+      const draw = (t) => {
+        const rad = radius(t, R0, RC, OS);
+        $("sB").style.clipPath = rad >= RC ? "none" : `circle(${rad.toFixed(2)}px at ${ox}px ${oy}px)`;
+        // While the circle grows each text straddles its edge, and check's
+        // contrast pass takes the median pixel of the whole text box, so it
+        // measures B's ink on A's background (a false 1:1). The documented
+        // data-layout-ignore opts both texts out only while the circle is
+        // partial; before and after, both are audited as usual. No paint.
+        for (const id of ["textA", "textB"]) $(id).toggleAttribute("data-layout-ignore", rad > 0 && rad < RC);
+      };
+
+      // ---- timeline: positions = scene windows (from the DOM)
+      const tl = gsap.timeline({ paused: true });
+      const wA = win("sA"), wB = win("sB");
+      tl.fromTo("#textA", { scale: 1.08 }, { scale: 1, duration: 0.8, ease: "power3.out" }, wA.start);
+      const prog = { t: 0 };
+      tl.fromTo(prog, { t: 0 }, { t: POP + FILL, duration: POP + FILL, ease: "none", onUpdate: () => draw(prog.t) }, wB.start);
+      // text B rides in with the fill (inside the circle, so no frame is a bare
+      // colour field): 0.7 -> OS -> 1 in two explicit tweens, so the overshoot
+      // is clamped to exact values at each boundary
+      const tIn = wB.start + POP;
+      tl.fromTo("#textB", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: OS, duration: 0.6 * TEXT_IN, ease: "power2.out" }, tIn);
+      tl.fromTo("#textB", { scale: OS }, { scale: 1, duration: 0.4 * TEXT_IN, ease: "sine.inOut", immediateRender: false }, tIn + 0.6 * TEXT_IN);
+      tl.set({}, {}, win("stage").end);
+
+      draw(0);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

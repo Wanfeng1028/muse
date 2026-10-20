@@ -1,0 +1,16 @@
+{
+  "id": "02-showreel-kinetic",
+  "title": "Motion reel — identity, easing, morphing, systems, depth, kinetic type",
+  "category": "motion / brand reel",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "Claude Imagine",
+  "source": {
+    "author": "@stephanlivera",
+    "post": "https://x.com/stephanlivera/status/2103315922098470926",
+    "note": "Remade from scratch in HyperFrames after the original. The original's starburst resembles Anthropic's Claude mark, so the final icon is our own four-point sparkle."
+  },
+  "variables": ["word", "sub", "hud", "ringText", "meta", "red", "blue", "lime", "cream", "night"],
+  "limits": { "word": "up to ~8 characters at this size", "sub": "one or two short words" },
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"word\":\"ACME\",\"sub\":\"studio\"}'"
+}

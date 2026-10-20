@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=830" />
+    <title>text-sandwich</title>
+    <script>
+      // text-sandwich CONFIG: every piece of on-screen text and every tunable.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs text-sandwich <dir> --update` so the static timing
+      // attributes follow; the timeline refuses to build if they disagree.
+      // characterImage is the user's source file; the scaffold copies it to
+      // assets/character.png, which is what the page shows.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "word": "MOTION",
+        "characterImage": "alex.png",
+        "direction": "ltr",
+        "passAt": 1.5,
+        "passDur": 2.5,
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d"
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "IntroSans";
+        src: url("assets/fonts/NanumSquare_acEB.ttf") format("truetype");
+        font-weight: 800;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #stage {
+        position: relative;
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--paper);
+        font-family: "IntroSans", sans-serif;
+        font-weight: 800;
+      }
+      /* The sandwich: the same word is laid out twice in identical full-canvas
+         boxes. #back shows every letter, #front shows only letters 2, 4, 6,
+         ..., and the character sits between them, so it covers letters 1, 3,
+         5, ... and is covered by the others. */
+      .layer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 830px;
+      }
+      .word {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--charcoal);
+        white-space: pre;
+        line-height: 1;
+      }
+      .l { display: inline-block; }
+      #front .l:not(.over) { visibility: hidden; }
+      #back { z-index: 1; }
+      #character { z-index: 2; }
+      #front { z-index: 3; }
+      /* accent: a red base line under the word, part of the back layer */
+      #bar {
+        position: absolute;
+        left: 140px;
+        top: 560px;
+        width: 800px;
+        height: 14px;
+        background: var(--red);
+        transform-origin: 0 50%;
+      }
+      /* contain-fit: any image size or aspect ratio fits the 420x620 box
+         without cropping or stretching */
+      #char {
+        position: absolute;
+        left: 0;
+        top: 105px;
+        width: 420px;
+        height: 620px;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG
+         (root data-duration is read statically by the engine, before any
+         script runs). Do not hand-edit them. -->
+    <div
+      id="stage"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="6"
+      data-fps="30"
+      data-width="1080"
+      data-height="830"
+    >
+      <!-- Back slice: every letter + the accent bar -->
+      <div id="back" class="clip layer" data-start="0" data-duration="6" data-track-index="0">
+        <div id="bar"></div>
+        <div id="wordBack" class="word layer"></div>
+      </div>
+
+      <!-- Filling: the user's character, only while it crosses (off-canvas at both ends).
+           The words overlap and occlude on purpose: that is the effect. -->
+      <div id="character" class="clip layer" data-start="1.5" data-duration="2.5" data-track-index="1" data-layout-allow-overflow="true">
+        <img id="char" src="assets/character.png" alt="" />
+      </div>
+
+      <!-- Front slice: the same word, only letters 2, 4, 6, ... visible -->
+      <div id="front" class="clip layer" data-start="0" data-duration="6" data-track-index="2">
+        <div id="wordFront" class="word layer"></div>
+      </div>
+    </div>
+
+    <script>
+      const C = CONFIG;
+      const $ = (id) => document.getElementById(id);
+      const win = (id) => {
+        const el = $(id);
+        return { start: +el.dataset.start, end: +el.dataset.start + +el.dataset.duration, dur: +el.dataset.duration };
+      };
+      const W = 1080;
+
+      // ---- palette: exactly three colours (the character image is the user's own)
+      const root = document.documentElement.style;
+      root.setProperty("--paper", C.paper);
+      root.setProperty("--charcoal", C.charcoal);
+      root.setProperty("--red", C.red);
+
+      // ---- guard: the static timing attributes must match CONFIG
+      const pass = win("character");
+      const near = (a, b) => Math.abs(a - b) <= 1e-3;
+      if (!near(pass.start, C.passAt) || !near(pass.dur, C.passDur)) {
+        throw new Error("text-sandwich: timing attributes disagree with CONFIG; re-run scaffold --update");
+      }
+
+      // ponytail: per-glyph width estimate instead of measuring the loaded font
+      // (same rule as intro-kinetic). Shrinks only, never grows.
+      const fit = (text, px, maxW = W - 120) => {
+        let em = 0;
+        for (const ch of text) {
+          if (/[ㄱ-힣一-鿿]/.test(ch)) em += 0.95;
+          else if (/[\s,.]/.test(ch)) em += 0.3;
+          else if (/[A-Z]/.test(ch)) em += 0.7;
+          else em += 0.6;
+        }
+        return Math.min(px, Math.floor(maxW / Math.max(em, 0.01)));
+      };
+
+      // ---- the two slices: identical layout, letter by letter. Spaces count
+      // for layout but not for the front/back alternation.
+      const word = C.word.trim();
+      const size = fit(word, 260) + "px";
+      for (const box of [$("wordBack"), $("wordFront")]) {
+        box.style.fontSize = size;
+        let k = 0;
+        for (const ch of word) {
+          const s = document.createElement("span");
+          s.className = "l";
+          // the sandwich overlaps and occludes letters on purpose: mark it for check
+          s.dataset.layoutAllowOverlap = "true";
+          s.dataset.layoutAllowOcclusion = "true";
+          s.textContent = ch;
+          if (ch.trim()) s.classList.toggle("over", k++ % 2 === 1);
+          box.appendChild(s);
+        }
+      }
+
+      // ---- the pass: the image box starts and ends fully off-canvas
+      const boxW = $("char").offsetWidth;
+      const [x0, x1] = C.direction === "ltr" ? [-boxW, W] : [W, -boxW];
+
+      // ---- timeline: positions = CONFIG + scene windows (from the DOM)
+      const tl = gsap.timeline({ paused: true });
+      const rise = { y: 90, opacity: 0, duration: 0.6, ease: "power3.out", stagger: 0.06 };
+      // both slices get the same tween, so the front letters stay glued to the back ones
+      tl.from("#wordBack .l", rise, 0.1);
+      tl.from("#wordFront .l", rise, 0.1);
+      tl.from("#bar", { scaleX: 0, duration: 0.6, ease: "power3.out" }, 0.3);
+      tl.fromTo("#char", { x: x0 }, { x: x1, duration: pass.dur, ease: "none", immediateRender: false }, pass.start);
+      // hold: a slow push on both slices from where the entrance left them
+      tl.fromTo(".word", { scale: 1 }, { scale: 1.03, duration: win("stage").end - pass.end, ease: "none", immediateRender: false }, pass.end);
+      tl.set({}, {}, win("stage").end);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

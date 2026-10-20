@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Invoices · Invoicer</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#f9fafb;margin:0;color:#111827}
+header{background:#111827;color:#fff;padding:14px 28px;font-weight:600}
+main{padding:28px;max-width:900px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px #0001}
+td,th{padding:12px 16px;border-bottom:1px solid #e5e7eb;text-align:left}
+button{font-size:15px;padding:10px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}
+#form{display:none;margin:20px 0;background:#fff;padding:20px;border-radius:10px;box-shadow:0 1px 6px #0001;gap:12px;grid-template-columns:1fr 1fr 1fr auto}
+#form.open{display:grid}
+input,select{font-size:15px;padding:9px;border:1px solid #d1d5db;border-radius:8px}
+#toast{position:fixed;right:24px;bottom:24px;background:#16a34a;color:#fff;padding:14px 20px;border-radius:10px;display:none}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:middle}
+@keyframes s{to{transform:rotate(360deg)}}
+</style></head><body>
+<header>Invoicer</header>
+<main>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h1>Invoices</h1>
+    <button data-testid="new-invoice">New invoice</button>
+  </div>
+  <div id="form">
+    <input id="customer" placeholder="Customer">
+    <input id="amount" type="number" placeholder="Amount (USD)">
+    <select id="due"><option value="7">Due in 7 days</option><option value="14">Due in 14 days</option><option value="30">Due in 30 days</option></select>
+    <button id="save" data-testid="save-invoice">Save</button>
+  </div>
+  <table><thead><tr><th>#</th><th>Customer</th><th>Amount</th></tr></thead><tbody id="rows"></tbody></table>
+</main>
+<div id="toast" data-testid="toast">Invoice saved</div>
+<script>
+const rows = document.getElementById('rows');
+const row = i => `<tr><td>${i.id}</td><td>${i.customer}</td><td>$${i.amount}</td></tr>`;
+fetch('/api/invoices').then(r => r.json()).then(l => rows.innerHTML = l.map(row).join(''));
+document.querySelector('[data-testid=new-invoice]').onclick = () => document.getElementById('form').classList.add('open');
+document.getElementById('save').onclick = async () => {
+  const btn = document.getElementById('save');
+  btn.innerHTML = '<span class="spin"></span> Saving';
+  const r = await fetch('/api/invoices', {method: 'POST',
+    body: JSON.stringify({customer: customer.value, amount: amount.value, due: due.value})});
+  if (!r.ok) { console.error('save failed', r.status, await r.text()); return; }   // bug: spinner never stops
+  const inv = await r.json();
+  rows.insertAdjacentHTML('beforeend', row(inv));
+  btn.textContent = 'Save';
+  const t = document.getElementById('toast'); t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000);
+};
+</script></body></html>

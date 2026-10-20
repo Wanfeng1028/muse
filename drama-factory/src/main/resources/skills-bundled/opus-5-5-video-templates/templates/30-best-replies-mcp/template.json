@@ -1,0 +1,28 @@
+{
+  "id": "30-best-replies-mcp",
+  "title": "Best-replies MCP promo — a post and its reply wall, an agent calls two tools, the kept replies get stamped, the best one gets the red carpet",
+  "category": "developer tool / MCP launch",
+  "duration": 20,
+  "size": "1920x1080",
+  "demoBrand": "Replyfire (fictional)",
+  "source": {
+    "author": "@robj3d3",
+    "post": "https://x.com/robj3d3/status/2103949734520279060",
+    "note": "Remade from scratch in HyperFrames after the SuperX MCP video; structure and pacing follow it. The brand, the post, every person, handle and reply are fictional placeholders (gradient initials instead of photos), the social-network look is generic (no platform logo), and the post URL uses the reserved .example domain."
+  },
+  "scenes": [
+    "a post with a video preview; the camera pulls back into a wall of replies and the reply count turns red",
+    "hook: 60 replies. Which ones matter?",
+    "an AI agent window with the MCP connected pill; the prompt is typed and sent",
+    "two tool calls run with live progress (collect, then refine) and turn green",
+    "a grid of replies filters down to the kept ones while the counter rolls; 'replies' becomes 'kept.'",
+    "one kept reply flies up and gets an 'It made it.' stamp with a drawn ring and sparks",
+    "four more replies swap in with slides and 3D flips, highlighted phrases in red",
+    "spotlight, red carpet, gold border, 'Best reply' badge and confetti for the best one",
+    "Any agent. Any stack. — MCP, CLI and API panels, which fly apart into a warm flare",
+    "end card: flame mark, wordmark, tagline, button and domain over rising embers"
+  ],
+  "variables": ["brand", "domain", "cta", "tagA", "tagB", "postName", "postHandle", "postDate", "postText", "embedTagA", "embedTagB", "replies", "reposts", "likes", "views", "hookA", "hookB", "hookC", "agent", "prompt", "tool1", "tool2", "target", "criterion", "collected", "kept", "keptWord", "stamp", "r1", "r2", "r3", "r4", "r5", "best", "bestBadge", "anyA", "anyB", "red", "gold", "night"],
+  "notes": "Replies are 'Name | handle | text'; words in [brackets] are highlighted (red, or gold for the best reply). Keep replies, collected and kept consistent. The small cards in the wall and the filter grid draw from the FIRST, LAST and LINES lists in the script. The CLI and API panels are generated from brand, domain, tool names, target and criterion. Replies may contain emoji; they render with the system emoji font, so check a frame when rendering on Linux.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

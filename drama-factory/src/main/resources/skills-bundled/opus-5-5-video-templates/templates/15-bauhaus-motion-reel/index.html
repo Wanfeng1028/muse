@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"name","type":"string","label":"Studio name (lowercase)","default":"forma"},
+  {"id":"role","type":"string","label":"Italic line","default":"motion studio"},
+  {"id":"word1","type":"string","label":"Type scene line 1 (needs an i)","default":"motion"},
+  {"id":"word2","type":"string","label":"Type scene line 2 (needs an i)","default":"design"},
+  {"id":"meta","type":"string","label":"Final small line","default":"MOTION REEL 2026   /   EVERY FRAME WRITTEN IN CODE"},
+  {"id":"orange","type":"color","label":"Orange","default":"#fd4c1a"},
+  {"id":"blue","type":"color","label":"Blue","default":"#2b40f5"},
+  {"id":"yellow","type":"color","label":"Yellow","default":"#f8bd2d"},
+  {"id":"cream","type":"color","label":"Cream","default":"#eee9e2"},
+  {"id":"night","type":"color","label":"Dark","default":"#0b0b0d"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Archivo-normal-100-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InstrumentSerif-italic-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --orange: #fd4c1a; --blue: #2b40f5; --yellow: #f8bd2d; --cream: #eee9e2; --night: #0b0b0d; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--night); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .abs { position: absolute; }
+      .mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; white-space: pre; }
+
+      /* type scene */
+      #type { background: var(--cream); }
+      .word { position: absolute; left: 0; width: 1920px; text-align: center; font-family: Archivo, sans-serif; font-size: 320px; line-height: 1; white-space: nowrap; color: #0e0e10; }
+      .word .l { display: inline-block; font-variation-settings: "wght" 900, "wdth" 100; }
+      .guide { position: absolute; left: 0; width: 1920px; height: 2px; background: rgba(0, 0, 0, 0.1); }
+      .guide span { position: absolute; left: 40px; top: -20px; font: 500 13px/1 "IBM Plex Mono"; letter-spacing: 0.14em; color: #8d8a84; }
+      .tdot { position: absolute; left: 0; top: 0; width: 72px; height: 72px; margin: -36px 0 0 -36px; border-radius: 50%; background: var(--orange); }
+      #bdot { background: #0e0e10; }
+      #tring { position: absolute; left: 0; top: 0; width: 200px; height: 200px; margin: -100px 0 0 -100px; border-radius: 50%; border: 3px solid var(--orange); }
+
+      /* identity */
+      #id { left: 0; top: 0; }
+      #idWord { position: absolute; left: 0; top: 0; font-family: Archivo, sans-serif; font-size: 340px; line-height: 1; white-space: nowrap; color: #f0ebe8; font-variation-settings: "wght" 850, "wdth" 100; letter-spacing: -0.01em; }
+      #idWord .l { display: inline-block; }
+      #idDot { position: absolute; left: 0; top: 0; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: var(--orange); }
+      #idRole { position: absolute; left: 0; top: 592px; width: 1920px; text-align: center; font-family: "Instrument Serif", serif; font-style: italic; font-size: 118px; line-height: 1; color: #f0ebe8; white-space: nowrap; }
+      #idLine { position: absolute; left: 504px; top: 744px; width: 912px; height: 2px; background: #3a3a40; transform-origin: 50% 50%; }
+      #idMeta { position: absolute; left: 0; top: 782px; width: 1920px; text-align: center; font-size: 15px; color: #8a8a90; }
+
+      /* hud */
+      #hud { z-index: 30; font-size: 15px; }
+      #hud div { position: absolute; line-height: 1.55; }
+      #hTL { left: 44px; top: 38px; } #hTR { right: 44px; top: 38px; text-align: right; } #hBL { left: 44px; bottom: 38px; } #hBR { right: 44px; bottom: 38px; text-align: right; }
+      #hTL b, #hTR b { font-weight: 500; }
+      #prog { position: absolute; right: 44px; bottom: 44px; width: 180px; height: 2px; }
+      #prog i { position: absolute; top: -5px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--orange); }
+      #hInfo { right: 44px; bottom: 84px; text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <canvas id="cv" class="layer" width="1920" height="1080"></canvas>
+
+        <div id="type" class="layer">
+          <div class="guide" id="g1"><span>TITTLE</span></div>
+          <div class="guide" id="g2"><span>X-HEIGHT</span></div>
+          <div class="guide" id="g3"><span>BASELINE</span></div>
+          <div id="w1" class="word"></div>
+          <div id="w2" class="word"></div>
+          <div id="tring"></div>
+          <div id="bdot" class="tdot"></div>
+          <div id="odot" class="tdot"></div>
+        </div>
+
+        <div id="id" class="layer">
+          <div id="idWord"></div>
+          <div id="idDot"></div>
+          <div id="idRole"></div>
+          <div id="idLine"></div>
+          <div id="idMeta" class="mono"></div>
+        </div>
+
+        <div id="hud" class="layer">
+          <div id="hTL" class="mono"></div>
+          <div id="hTR" class="mono"></div>
+          <div id="hBL" class="mono"></div>
+          <div id="hInfo" class="mono"></div>
+          <div id="prog"><i></i></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 15, TAU = Math.PI * 2;
+        const OR = v.orange, BL = v.blue, YE = v.yellow, CR = v.cream, NI = v.night, BK = "#0e0e10";
+        const cv = $("cv"), cx = cv.getContext("2d");
+        const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+        const hexRGB = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const fontsP = document.fonts ? Promise.all([document.fonts.load("800 100px Archivo"), document.fonts.load("500 15px 'IBM Plex Mono'")]) : null;
+
+        // ---------------- helpers ----------------
+        const dotGrid = (() => { const c = mk(1920, 1080), g = c.getContext("2d"); g.fillStyle = "rgba(255,255,255,0.06)"; for (let y = 30; y < 1080; y += 60) for (let x = 30; x < 1920; x += 60) g.fillRect(x - 1, y - 1, 2, 2); return c; })();
+        const circle = (x, y, r, col, a) => { if (r <= 0) return; cx.save(); if (a !== undefined) cx.globalAlpha = a; cx.fillStyle = col; cx.beginPath(); cx.arc(x, y, r, 0, TAU); cx.fill(); cx.restore(); };
+        const OFF = mk(1920, 1080), off = OFF.getContext("2d");
+        // copies of an image shifted in red and cyan, for glitch frames
+        const rgbSplit = (src, d, a) => {
+          cx.drawImage(src, 0, 0);
+          if (d < 0.5) return;
+          cx.save(); cx.globalCompositeOperation = "screen"; cx.globalAlpha = a;
+          cx.drawImage(tint(src, "#ff1850"), -d, 0); cx.drawImage(tint(src, "#18e0ff"), d, 0);
+          cx.restore();
+        };
+        const TINT = mk(1920, 1080), tctx = TINT.getContext("2d");
+        const tint = (src, col) => { tctx.globalCompositeOperation = "source-over"; tctx.clearRect(0, 0, 1920, 1080); tctx.drawImage(src, 0, 0); tctx.globalCompositeOperation = "multiply"; tctx.fillStyle = col; tctx.fillRect(0, 0, 1920, 1080); tctx.globalCompositeOperation = "destination-in"; tctx.drawImage(src, 0, 0); return TINT; };
+        const slices = (src, t, amt) => { for (let y = 0; y < 1080; y += 60) { const k = Math.floor(y / 60), dx = (R(k * 7.1 + Math.floor(t * 30)) - 0.5) * amt * (R(k + Math.floor(t * 30) * 3.3) > 0.55 ? 1 : 0); cx.drawImage(src, 0, y, 1920, 60, dx, y, 1920, 60); } };
+
+        // ================= S0 · the dot =================
+        const GROUND = 650, BR = 40;
+        const ballY = (t) => {
+          if (t < 0.2) return L(-60, 610, E.inQuad(P(t, 0, 0.2)));
+          if (t < 0.8) { const u = P(t, 0.24, 0.8); return L(610, 255, 0.5 * u + 0.5 * E.outQuad(u)); }
+          if (t < 1.0) return L(255, 610, E.inQuad(P(t, 0.8, 1.0)));
+          if (t < 1.3) return L(610, 440, E.outQuad(P(t, 1.0, 1.3)));
+          return L(440, 610, E.inQuad(P(t, 1.3, 1.5)));
+        };
+        function sDot(t) {
+          cx.fillStyle = NI; cx.fillRect(0, 0, 1920, 1080);
+          cx.drawImage(dotGrid, 0, 0);
+          const fall = E.inQuad(P(t, 1.53, 1.66));
+          const dip = 26 * bump(t, 0.18, 0.3) + 30 * bump(t, 0.97, 1.12) + 70 * E.outCubic(P(t, 1.47, 1.53)) * (1 - fall * 0.2);
+          const grow = E.outCubic(P(t, 0, 0.22));
+          const x0 = L(960, 334, grow), x1 = L(960, 1586, grow);
+          cx.save();
+          cx.translate(0, fall * 260);
+          const passes = fall > 0.02 ? 6 : 1;
+          for (let p = 0; p < passes; p++) {
+            cx.save();
+            cx.globalAlpha = (passes > 1 ? 0.28 : 1) * (1 - fall);
+            cx.translate(0, -p * fall * 22);
+            cx.strokeStyle = t > 1.47 ? "rgb(255," + Math.round(L(239, 150, bump(t, 1.47, 1.6))) + "," + Math.round(L(239, 110, bump(t, 1.47, 1.6))) + ")" : "#efefef";
+            cx.lineWidth = 3;
+            cx.beginPath(); cx.moveTo(x0, GROUND); cx.quadraticCurveTo(960, GROUND + dip * 2, x1, GROUND); cx.stroke();
+            cx.fillStyle = "#6c6c72";
+            for (let x = 334, k = 0; x <= 1586; x += 57.1, k++) { if (x < x0 || x > x1) continue; const h = k % 5 === 0 ? 20 : 10; cx.fillRect(x - 1, GROUND + 38, 2, h); }
+            cx.restore();
+          }
+          cx.restore();
+          cx.save(); cx.globalAlpha = P(t, 0.35, 0.5) * (1 - P(t, 1.5, 1.6)); cx.font = "500 15px 'IBM Plex Mono'"; cx.fillStyle = "#77777d";
+          cx.fillText("F I G .  0 1", 334, 780); cx.textAlign = "right"; cx.fillText("S Q U A S H   +   S T R E T C H", 1586, 780); cx.restore();
+          if (t >= 1.62) return;
+          // shadow ellipse
+          const h = GROUND - BR - ballY(t);
+          cx.save(); cx.strokeStyle = "rgba(160,160,168,0.45)"; cx.lineWidth = 2;
+          const sw = 150 * (0.55 + 0.45 * C(1 - h / 420));
+          cx.beginPath(); cx.ellipse(960, GROUND + dip, sw, 24 * (0.55 + 0.45 * C(1 - h / 420)), 0, 0, TAU); cx.globalAlpha = P(t, 0.25, 0.4) * (1 - P(t, 1.45, 1.55)); cx.stroke(); cx.restore();
+          // ghosts
+          for (let k = 6; k >= 1; k--) {
+            const tg = t - k * 0.024; if (tg < 0.22) continue;
+            const yg = ballY(tg);
+            cx.save(); cx.strokeStyle = OR; cx.globalAlpha = 0.5 * (1 - k / 7) * (1 - P(t, 1.45, 1.55)); cx.lineWidth = 2.5;
+            cx.beginPath(); cx.arc(960, yg, BR, 0, TAU); cx.stroke(); cx.restore();
+          }
+          // ball
+          const y = ballY(t), vy = (ballY(t + 0.01) - ballY(t - 0.01)) / 0.02;
+          let sy = 1 + C(Math.abs(vy) / 2400, 0, 0.35), sx = 1 / sy;
+          const sq = Math.max(0.35 * bump(t, 0.18, 0.3), 0.45 * bump(t, 0.97, 1.1));
+          if (sq > 0) { sy = 1 - sq; sx = 1 + sq * 0.9; }
+          const smash = E.outCubic(P(t, 1.47, 1.56));
+          if (smash > 0) { sy = L(sy, 0.25, smash); sx = L(sx, 2.1, smash); }
+          const cyb = Math.min(y, GROUND - BR * sy + dip * (smash > 0 ? 1.4 : 1));
+          cx.save(); cx.translate(960, cyb + (sy < 1 ? BR * (1 - sy) : 0)); cx.scale(sx, sy);
+          cx.globalAlpha = P(t, 0.02, 0.06) * (1 - P(t, 1.55, 1.62));
+          if (smash > 0) { cx.shadowColor = OR; cx.shadowBlur = 40 * smash; }
+          cx.fillStyle = OR; cx.beginPath(); cx.arc(0, 0, BR, 0, TAU); cx.fill(); cx.restore();
+        }
+
+        // ================= S1 · type =================
+        const I_RE = /i/;
+        const buildWord = (el, text) => {
+          el.textContent = "";
+          let iSpan = null;
+          const spans = [...text].map((c) => { const s = document.createElement("span"); s.className = "l"; s.textContent = c === " " ? "\u00a0" : c === "i" && !iSpan ? "ı" : c; if (c === "i" && !iSpan) iSpan = s; el.appendChild(s); return s; });
+          return { spans, iSpan };
+        };
+        const W1 = buildWord($("w1"), v.word1), W2 = buildWord($("w2"), v.word2);
+        const odot = $("odot"), bdot = $("bdot"), tring = $("tring");
+        const rel = (el) => { const r = el.getBoundingClientRect(), s = $("scene").getBoundingClientRect(); return [r.left - s.left, r.top - s.top, r.width, r.height]; };
+        function sType(t) {
+          const on = t >= 1.62 && t < 3.97;
+          K.show($("type"), on || (t >= 11.35 && t < 11.46));
+          if (!on && !(t >= 11.35 && t < 11.46)) return;
+          const flash = t >= 11.35;
+          const tt = flash ? 3.2 : t;
+          const light = tt >= 2.04;
+          $("type").style.background = light ? CR : "transparent";
+          [W1, W2].forEach((W) => W.spans.forEach((s) => (s.style.color = light ? BK : "#f0ebe8")));
+          const two = E.inOutCubic(P(tt, 2.55, 2.78));
+          const w1 = $("w1"), w2 = $("w2");
+          w1.style.top = L(330, 180, two).toFixed(1) + "px";
+          w2.style.top = "520px";
+          // letters fall in
+          W1.spans.forEach((s, k) => {
+            const a = 1.62 + k * 0.036, u = E.outCubic(P(tt, a, a + 0.22));
+            const y = (1 - u) * 330;
+            let wd = 100, wg = 900;
+            const wave = P(tt, 2.9, 3.62);
+            if (wave > 0) { const ph = tt * 7 - k * 0.8; wd = 100 + 25 * Math.sin(ph) * bump(tt, 2.9, 3.62); wg = 900 - 380 * Math.max(0, -Math.sin(ph + 0.6)) * bump(tt, 2.9, 3.62); }
+            s.style.fontVariationSettings = '"wght" ' + wg.toFixed(0) + ', "wdth" ' + wd.toFixed(1);
+            s.style.transform = "translateY(" + y.toFixed(1) + "px)";
+            s.style.opacity = u > 0 ? 1 : 0;
+          });
+          W2.spans.forEach((s, k) => {
+            const a = 2.58 + k * 0.03, u = E.outCubic(P(tt, a, a + 0.22));
+            let wd = 100, wg = 900;
+            if (tt > 2.9) { const ph = tt * 7 - (k + 3) * 0.8; wd = 100 + 25 * Math.sin(ph) * bump(tt, 2.9, 3.62); wg = 900 - 380 * Math.max(0, -Math.sin(ph + 0.6)) * bump(tt, 2.9, 3.62); }
+            s.style.fontVariationSettings = '"wght" ' + wg.toFixed(0) + ', "wdth" ' + wd.toFixed(1);
+            s.style.opacity = C(u * 1.5);
+            s.style.transform = "translateY(" + ((1 - u) * 120).toFixed(1) + "px)";
+          });
+          $("w1").style.clipPath = tt < 2.04 ? "inset(-400px -400px 60px -400px)" : "none";
+          // guides
+          const gA = P(tt, 2.04, 2.12) * (1 - P(tt, 2.5, 2.62));
+          [["g1", 318], ["g2", 408], ["g3", 596]].forEach(([id, y]) => { $(id).style.top = y + "px"; $(id).style.opacity = gA; });
+          // dots
+          const [ix1, iy1, iw1] = rel(W1.iSpan), [ix2, iy2, iw2] = rel(W2.iSpan);
+          const fs = 320, xh = 0.53 * fs;
+          const d1x = ix1 + iw1 / 2, d1y = iy1 + fs * 0.795 - xh - 58;
+          const d2x = ix2 + iw2 / 2, d2y = iy2 + fs * 0.795 - xh - 58;
+          let dx = d1x, dy = d1y, sxd = 1, syd = 1;
+          if (tt < 2.0) { const q = (tt - 1.9) / 0.1; dy = d1y - 183 + 145 * q + 38 * q * q; syd = 1 + 0.4 * C((q + 2.4) / 3.4); sxd = 1 / syd; }
+          else if (tt < 2.62) { const b = bump(tt, 2.0, 2.08); syd = 1 - 0.35 * b; sxd = 1 + 0.35 * b; const h = bump(tt, 2.36, 2.56); dy = d1y - 60 * h; syd *= 1 + 0.35 * bump(tt, 2.4, 2.52); }
+          else { const u = E.inOutCubic(P(tt, 2.62, 2.86)); dx = L(d1x, d2x, u); dy = L(d1y, d2y, u) - Math.sin(Math.PI * u) * 120; const b = bump(tt, 2.86, 2.96); syd = 1 - 0.3 * b; sxd = 1 + 0.3 * b; }
+          odot.style.opacity = tt >= 1.64 ? 1 : 0;
+          odot.style.transform = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px) scale(" + sxd.toFixed(3) + "," + syd.toFixed(3) + ")";
+          bdot.style.opacity = P(tt, 2.7, 2.78);
+          bdot.style.transform = "translate(" + d1x.toFixed(1) + "px," + d1y.toFixed(1) + "px)";
+          const ru = P(tt, 2.03, 2.4);
+          tring.style.opacity = ru > 0 && ru < 1 ? (0.9 * (1 - ru)).toFixed(3) : 0;
+          tring.style.transform = "translate(" + d1x.toFixed(1) + "px," + d1y.toFixed(1) + "px) scale(" + L(0.3, 1.2, E.outCubic(ru)).toFixed(3) + ")";
+          // rgb split on the dark → cream cut
+          const rgb = bump(tt, 1.9, 2.1) + (flash ? 1 : 0);
+          [$("w1"), $("w2")].forEach((w) => (w.style.textShadow = rgb > 0.05 ? (-14 * rgb).toFixed(1) + "px 0 rgba(255,24,80,.85), " + (14 * rgb).toFixed(1) + "px 0 rgba(24,224,255,.85)" : "none"));
+          $("w1").style.filter = tt > 2.03 && tt < 2.2 ? "blur(" + ((1 - P(tt, 2.03, 2.2)) * 10).toFixed(1) + "px)" : "none";
+          if (tt >= 3.6) $("w1").style.filter = "none";
+          // exit: smear, then dive into the orange dot
+          const sm = P(tt, 3.62, 3.78);
+          const q = Math.max(0, (tt - 3.8) / 0.1);
+          const lsc = Math.log(1.9) * ioq(P(tt, 3.64, 3.8)) + 1.05 * q + 0.33 * q * q;
+          const ty = $("type");
+          ty.style.transformOrigin = d2x.toFixed(1) + "px " + d2y.toFixed(1) + "px";
+          ty.style.transform = lsc > 0.001 ? "scale(" + Math.exp(lsc).toFixed(3) + ")" : "none";
+          ty.style.filter = sm > 0 && !flash ? "blur(" + (sm * 10 * (1 - 0.55 * C(q))).toFixed(1) + "px)" : "none";
+          $("w2").style.filter = "none";
+          if (flash) { ty.style.transform = "translateX(" + ((R(Math.floor(t * 60)) - 0.5) * 40).toFixed(1) + "px)"; }
+        }
+
+        // ================= S2 · shapes =================
+        const S = 214, GX = -3, GY = 5, COLS = 9, ROWS = 5;
+        const SHAPES = ["circle", "quarter", "half", "diamond", "stripes", "tri", "ring", "quarter", "half", "circle"];
+        const PAL = [[CR, BK], [BK, CR], [BL, CR], [YE, BK], [CR, BL], [CR, YE], [BK, YE], [BL, YE], [YE, BL], [CR, BK], [BK, BL]];
+        const tiles = [];
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+          const k = r * COLS + c;
+          tiles.push({ c, r, k, x: GX + c * S, y: GY + r * S, shape: SHAPES[Math.floor(R(k * 3.1 + 1) * SHAPES.length)], pal: PAL[Math.floor(R(k * 5.7 + 2) * PAL.length)], rot: Math.floor(R(k * 2.3 + 3) * 4), alt: SHAPES[Math.floor(R(k * 4.9 + 9) * SHAPES.length)], altPal: PAL[Math.floor(R(k * 6.1 + 5) * PAL.length)], tr: R(k * 1.7 + 4) > 0.5 ? 1 : 0, center: c === 4 && r === 2 });
+        }
+        const drawShape = (g, shape, pal, rot, s) => {
+          g.fillStyle = pal[0]; g.fillRect(-s / 2, -s / 2, s, s);
+          g.rotate(rot * Math.PI / 2);
+          g.fillStyle = pal[1]; g.strokeStyle = pal[1];
+          g.beginPath();
+          if (shape === "circle") { g.arc(0, 0, s * 0.36, 0, TAU); g.fill(); }
+          else if (shape === "quarter") { g.moveTo(-s / 2, -s / 2); g.arc(-s / 2, -s / 2, s, 0, Math.PI / 2); g.closePath(); g.fill(); }
+          else if (shape === "half") { g.arc(0, s / 2, s / 2, Math.PI, 0); g.closePath(); g.fill(); }
+          else if (shape === "diamond") { const d = s * 0.36; g.moveTo(0, -d); g.lineTo(d, 0); g.lineTo(0, d); g.lineTo(-d, 0); g.closePath(); g.fill(); }
+          else if (shape === "stripes") { for (let i = 0; i < 4; i++) g.fillRect(-s / 2 + s * 0.06, -s / 2 + s * (0.09 + i * 0.235), s * 0.88, s * 0.12); }
+          else if (shape === "tri") { g.moveTo(-s / 2, -s / 2); g.lineTo(s / 2, s / 2); g.lineTo(-s / 2, s / 2); g.closePath(); g.fill(); }
+          else if (shape === "ring") { g.lineWidth = s * 0.12; g.arc(0, 0, s * 0.3, 0, TAU); g.stroke(); }
+        };
+        const drawTruchet = (g, o, s) => {
+          g.fillStyle = CR; g.fillRect(-s / 2, -s / 2, s, s);
+          g.rotate(o * Math.PI / 2);
+          g.strokeStyle = BK; g.lineWidth = s * 0.155; g.lineCap = "butt";
+          g.beginPath(); g.arc(-s / 2, -s / 2, s / 2, 0, Math.PI / 2); g.stroke();
+          g.beginPath(); g.arc(s / 2, s / 2, s / 2, Math.PI, Math.PI * 1.5); g.stroke();
+        };
+        const tileZoom = (t) => L(1.8, 1, E.inOutCubic(P(t, 4.18, 4.4)));
+        function drawTiles(g, t, opts) {
+          g.fillStyle = !opts.static && t >= 5.74 ? NI : CR; g.fillRect(0, 0, 1920, 1080);
+          const z = opts.static ? 1 : tileZoom(t);
+          g.save(); g.translate(960, 540); g.scale(z, z); g.translate(-960, -540);
+          tiles.forEach((tl) => {
+            let ox = 0, oy = 0, blurN = 1, bdx = 0, bdy = 0;
+            const dcx = tl.c - 4, dcy = tl.r - 2, dist = Math.hypot(dcx, dcy);
+            if (!opts.static) {
+              const a = 4.08 + dist * 0.03, u = E.outCubic(P(t, a, a + 0.22));
+              const ang = Math.atan2(dcy || 0.001, dcx || 0.001);
+              const far = 260 * (1 - u);
+              ox = Math.cos(ang) * far; oy = Math.sin(ang) * far;
+              if (u < 0.95) { blurN = 5; bdx = -Math.cos(ang) * 60 * (1 - u); bdy = -Math.sin(ang) * 60 * (1 - u); }
+              const d4 = Math.abs(tl.c - 4) / 4;
+              const ds = 5.72 + (1 - d4) * 0.058 + (R(tl.k * 3.3) - 0.5) * 0.03 + (4 - tl.r) * 0.008;
+              const drop = tl.center ? 0 : E.inQuad(P(t, ds, ds + 0.2));
+              if (drop > 0) { oy += drop * 1200; blurN = 6; bdy = 6 + drop * 16; tl.tilt = (R(tl.k * 5.5) - 0.5) * 0.6 * drop; tl.shrink = L(1, 0.6, drop); } else { tl.tilt = 0; tl.shrink = 1; }
+            }
+            // column flip into truchet
+            const fa = 5.06 + Math.abs(tl.c - 4) * 0.07;
+            const fl = opts.static ? 0 : P(t, fa, fa + 0.16);
+            const scaleX = fl > 0 && fl < 1 ? Math.abs(Math.cos(Math.PI * fl)) : 1;
+            const truchet = !opts.static && fl >= 0.5;
+            // bauhaus shuffles
+            let rot = tl.rot, shape = tl.shape, pal = tl.pal, spin = 0;
+            if (!opts.static) {
+              const beat = Math.floor((t - 4.45) / 0.22);
+              if (t > 4.45 && R(tl.k * 9.1 + beat) > 0.62) { const u = P((t - 4.45) % 0.22, 0, 0.14); spin = E.inOutCubic(u); }
+              if (t > 4.45) rot += Math.max(0, beat) % 4;
+              if (t > 4.7 && R(tl.k * 2.2) > 0.6) { shape = tl.alt; pal = tl.altPal; }
+            }
+            for (let b = blurN - 1; b >= 0; b--) {
+              g.save();
+              g.globalAlpha = blurN > 1 ? (b === 0 ? 1 : 0.3 * (1 - b / blurN)) : 1;
+              g.translate(tl.x + S / 2 + ox - bdx * b, tl.y + S / 2 + oy - bdy * b);
+              if (!opts.static && tl.tilt) { g.rotate(tl.tilt); g.scale(tl.shrink, tl.shrink); }
+              g.scale(scaleX, 1);
+              if (truchet) {
+                drawTruchet(g, tl.tr, S + 1);
+              } else {
+                g.rotate(spin * Math.PI / 2);
+                drawShape(g, shape, pal, rot, S + 1);
+              }
+              g.restore();
+            }
+          });
+          g.restore();
+        }
+        function sShape(t) {
+          if (t < 4.0) { cx.fillStyle = OR; cx.fillRect(0, 0, 1920, 1080); return; }
+          drawTiles(cx, t, {});
+          // the orange dot shrinks out of the full-screen fill
+          const u = E.outCubic(P(t, 4.0, 4.3));
+          const r = L(1150, 76 * tileZoom(t), u);
+          const soft = L(90, 0, u);
+          if (soft > 1) {
+            const gr = cx.createRadialGradient(960, 540, Math.max(0, r - soft), 960, 540, r + soft);
+            gr.addColorStop(0, OR); gr.addColorStop(1, "rgba(253,76,26,0)");
+            cx.fillStyle = CR; cx.globalAlpha = 1 - P(t, 4.12, 4.19); cx.fillRect(0, 0, 1920, 1080); cx.globalAlpha = 1;
+            cx.fillStyle = gr; cx.fillRect(0, 0, 1920, 1080);
+          } else circle(960, 540, r, OR);
+          if (t >= 5.74) { const f = P(t, 5.74, 5.98); if (t > 5.93) { cx.fillStyle = NI; cx.globalAlpha = P(t, 5.93, 5.99); cx.fillRect(0, 0, 1920, 1080); cx.globalAlpha = 1; } circle(960, 540, 76 + 8 * f, OR); }
+        }
+
+        // ================= S3 · dimension =================
+        const NP = 1600;
+        const parts = [];
+        for (let i = 0; i < NP; i++) {
+          const q = R(i * 1.37 + 0.5);
+          parts.push({ col: q < 0.05 ? OR : q < 0.16 ? "#8e9bff" : "#dfe3f5", len: L(9, 16, R(i * 2.1 + 1)), s0: R(i * 3.3 + 2), s1: R(i * 4.7 + 3) });
+        }
+        const GA = Math.PI * (3 - Math.sqrt(5));
+        const shapePos = (kind, i, t) => {
+          if (kind === 0) { const y = 1 - (i / (NP - 1)) * 2, r = Math.sqrt(1 - y * y), th = GA * i; return [Math.cos(th) * r * 360, y * 360, Math.sin(th) * r * 360]; }
+          if (kind === 1) { const ring = i % 16, a = (Math.floor(i / 16) / (NP / 16)) * TAU; const b = (ring / 16) * TAU; const rr = 330 + 105 * Math.cos(b); return [Math.cos(a) * rr, 105 * Math.sin(b), Math.sin(a) * rr]; }
+          if (kind === 2) { const d = 1100 * Math.sqrt((i + 0.5) / NP), a = i * GA; const x = Math.cos(a) * d, z = Math.sin(a) * d; return [x, Math.sin(d * 0.014 - t * 4) * 90 * Math.exp(-d / 1400), z]; }
+          const arm = i % 2, k = Math.floor(i / 2) / (NP / 2); const a = k * 3.0 * Math.PI + arm * Math.PI; const rr = 30 + k * 620; const sp = (R(i * 5.3) - 0.5) * 60 * (0.3 + k); return [Math.cos(a) * rr + sp, (R(i * 7.7) - 0.5) * 24, Math.sin(a) * rr + sp];
+        };
+        const cam = (t) => {
+          const ry = t * 0.5;
+          const tilt = t < 6.75 ? 0.25 : t < 7.05 ? L(0.25, 1.0, ioq(P(t, 6.75, 7.0))) : t < 7.55 ? L(1.0, 0.38, ioq(P(t, 7.05, 7.35))) : L(0.38, 1.05, ioq(P(t, 7.55, 7.8)));
+          return { ry, tilt };
+        };
+        const project = (p, c) => {
+          const cy = Math.cos(c.ry), sy = Math.sin(c.ry), ct = Math.cos(c.tilt), st = Math.sin(c.tilt);
+          const x1 = p[0] * cy - p[2] * sy, z1 = p[0] * sy + p[2] * cy;
+          const y2 = p[1] * ct - z1 * st, z2 = p[1] * st + z1 * ct;
+          const f = 980 / (980 + z2 + 400);
+          return [960 + x1 * f * 1.25, 540 + y2 * f * 1.25, f];
+        };
+        const posAt = (i, t) => {
+          const seg = [[6.04, 6.36, -1, 0], [6.62, 6.95, 0, 1], [7.0, 7.3, 1, 2], [7.5, 7.8, 2, 3], [7.86, 8.02, 3, -2]];
+          let a = -1, b = 0, u = 0;
+          if (t < 6.02) return [0, 0, 0];
+          for (const [t0, t1, s0, s1] of seg) { if (t >= t0) { a = s0; b = s1; u = P(t, t0, t1); } }
+          const pA = a === -1 ? [0, 0, 0] : shapePos(a, i, t);
+          const pB = b === -2 ? [0, 0, 0] : shapePos(b, i, t);
+          let e = a === -1 ? E.outQuad(u) : ioq(C(u * 1.1 - parts[i].s0 * 0.1));
+          if (a === -1) { const rf = L(e * L(0.28, 1.15, parts[i].s1), 1, ioq(P(u, 0.45, 1))); return pB.map((q) => q * rf); }
+          return [L(pA[0], pB[0], e), L(pA[1], pB[1], e), L(pA[2], pB[2], e)];
+        };
+        function sDim(t, g) {
+          g = g || cx;
+          g.fillStyle = "#09090b"; g.fillRect(0, 0, 1920, 1080);
+          const gl = g.createRadialGradient(960, 540, 0, 960, 540, 620);
+          gl.addColorStop(0, "rgba(24,36,110,0.95)"); gl.addColorStop(0.55, "rgba(16,22,64,0.6)"); gl.addColorStop(1, "rgba(9,9,11,0)");
+          g.fillStyle = gl; g.fillRect(0, 0, 1920, 1080);
+          const c = cam(t), c0 = { ry: cam(t - 0.016).ry, tilt: c.tilt };
+          g.lineCap = "round";
+          for (let i = 0; i < NP; i++) {
+            const p = project(posAt(i, t), c), q = project(posAt(i, t - 0.016), c0);
+            let dx = p[0] - q[0], dy = p[1] - q[1];
+            const m = Math.hypot(dx, dy);
+            const len = parts[i].len * p[2] * (1 + Math.min(2.5, m / 10));
+            if (m < 0.4) { dx = 1; dy = 0.3; }
+            const n = Math.hypot(dx, dy);
+            g.strokeStyle = parts[i].col; g.globalAlpha = C(0.35 + p[2] * 0.7);
+            g.lineWidth = 2.2 * p[2] + 0.4;
+            g.beginPath(); g.moveTo(p[0] - (dx / n) * len / 2, p[1] - (dy / n) * len / 2); g.lineTo(p[0] + (dx / n) * len / 2, p[1] + (dy / n) * len / 2); g.stroke();
+          }
+          g.globalAlpha = 1;
+          g.fillStyle = OR; g.beginPath(); g.arc(960, 540, 15, 0, TAU); g.fill();
+        }
+
+        // ================= S4 · fluid =================
+        const NB = 18;
+        const balls = [];
+        for (let i = 0; i < NB; i++) balls.push({ a: (i / NB) * TAU + R(i + 0.3) * 0.3, rr: L(300, 460, R(i * 2.7)), r: L(18, 46, R(i * 3.9 + 1)), ph: R(i * 5.1) * TAU });
+        const MW = 480, MH = 270, MS = 4;
+        const MB = mk(MW, MH), mbx = MB.getContext("2d"), mimg = mbx.createImageData(MW, MH);
+        const FB = new Float32Array(MW * MH), SB = new Float32Array(MW * MH);
+        const ballsAt = (t) => {
+          const out = [];
+          const four = [[788, 320], [1228, 480], [684, 600], [1128, 760]];
+          balls.forEach((b, i) => {
+            let x, y, r;
+            const ring = [960 + Math.cos(b.a + t * 0.25) * b.rr * 1.12, 560 + Math.sin(b.a + t * 0.25) * b.rr * 0.86];
+            const wob = Math.sin(t * 3 + b.ph) * 14;
+            const ringP = [ring[0] + wob, ring[1] + Math.cos(t * 2.6 + b.ph) * 12];
+            const oneR = 112 / Math.sqrt(NB);
+            if (t < 8.18) { const u = E.outCubic(P(t, 8.02, 8.2)); x = L(960, ringP[0], u); y = L(540, ringP[1], u); r = b.r * L(0.4, 1, u); if (i === 0) r = L(20, 34, u); }
+            else if (t < 8.62) { x = ringP[0]; y = ringP[1]; r = b.r; if (i === 0) { x = 960; y = 540; r = L(34, 44, P(t, 8.2, 8.6)); } }
+            else if (t < 9.1) { const u = ioq(P(t, 8.44 + R(i) * 0.06, 8.64 + R(i) * 0.06)); x = L(ringP[0], 960, u); y = L(ringP[1], 540, u); r = L(b.r, oneR, u); if (i === 0) { x = 960; y = 540; r = L(44, oneR, u); } }
+            else if (t < 9.3) { const u = ioq(P(t, 9.02, 9.22)); const side = i % 2 ? 1 : -1; const off = (Math.floor(i / 2) % 3 - 1) * 30; x = L(960, 960 + side * 235, u); y = L(540, 540 + off, u); r = oneR * L(1, 0.95, u); }
+            else if (t < 9.48) { const u = ioq(P(t, 9.3, 9.44)); const side = i % 2 ? 1 : -1; const off = (Math.floor(i / 2) % 3 - 1) * 30; const k = i % 4; x = L(960 + side * 235, four[k][0], u); y = L(540 + off, four[k][1], u); r = oneR * L(0.95, 0.72, u); }
+            else { const u = ioq(P(t, 9.48, 9.64)); const k = i % 4; const j = i % 12; x = L(four[k][0], 240 + j * 106, u); y = L(four[k][1], 560 - j * 1.5 + (j === 11 ? -140 : 0), u); r = L(oneR * 0.72, i < 12 ? 26 : 5, u); }
+            out.push([x, y, r]);
+          });
+          return out;
+        };
+        const BASE = hexRGB(OR).map((c) => c + (255 - c) * 0.12);
+        function drawBlue(g) {
+          const gr = g.createRadialGradient(960, 470, 0, 960, 470, 1150);
+          gr.addColorStop(0, "#3348ff"); gr.addColorStop(1, "#2334d0");
+          g.fillStyle = gr; g.fillRect(0, 0, 1920, 1080);
+        }
+        function sFluid(t) {
+          drawBlue(cx);
+          if (t >= 9.82) return;
+          const bs = ballsAt(t).map(([x, y, r]) => [x / MS, y / MS, (r / MS) * (r / MS)]);
+          const d = mimg.data;
+          for (let py = 0; py < MH; py++) for (let px = 0; px < MW; px++) {
+            let f = 0, fs = 0;
+            for (let k = 0; k < bs.length; k++) {
+              const dx = px - bs[k][0], dy = py - bs[k][1];
+              f += bs[k][2] / (dx * dx + dy * dy + 0.5);
+              const dy2 = py - 3 - bs[k][1];
+              fs += bs[k][2] / (dx * dx + dy2 * dy2 + 0.5);
+            }
+            FB[py * MW + px] = f;
+            SB[py * MW + px] = fs;
+          }
+          const hgt = (x, y) => { const f = FB[C(y, 0, MH - 1) * MW + C(x, 0, MW - 1)]; return f <= 1 ? 0 : 1 - Math.exp(-(f - 1) * 1.2); };
+          const hx = -0.4, hy = -0.55, hz = 1.73, hl = Math.hypot(hx, hy, hz);
+          for (let py = 0; py < MH; py++) for (let px = 0; px < MW; px++) {
+            const o = (py * MW + px) * 4, f = FB[py * MW + px];
+            const a = C((f - 0.9) / 0.2);
+            if (a <= 0) { const sh = C((SB[py * MW + px] - 0.75) / 0.4) * 0.28; d[o] = 10; d[o + 1] = 16; d[o + 2] = 90; d[o + 3] = Math.round(sh * 255); continue; }
+            let nx = -(hgt(px + 1, py) - hgt(px - 1, py)) * 4, ny = -(hgt(px, py + 1) - hgt(px, py - 1)) * 4, nz = 1;
+            const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
+            const diff = Math.max(0, -0.4 * nx - 0.55 * ny + 0.73 * nz);
+            const spec = Math.pow(Math.max(0, (nx * hx + ny * hy + nz * hz) / hl), 40);
+            const k = 0.94 + 0.2 * (diff - 0.75);
+            d[o] = Math.min(255, BASE[0] * k + 255 * spec * 0.22);
+            d[o + 1] = Math.min(255, BASE[1] * k + 255 * spec * 0.22);
+            d[o + 2] = Math.min(255, BASE[2] * k + 255 * spec * 0.22);
+            d[o + 3] = Math.round(a * 255);
+          }
+          mbx.putImageData(mimg, 0, 0);
+          cx.save(); cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = "high"; cx.drawImage(MB, 0, 0, 1920, 1080); cx.restore();
+        }
+        // capsules (bars) shared by the fluid tail and the data scene
+        const capsule = (g, x, yb, w, h, col, shade) => {
+          const r = w / 2; h = Math.max(h, w);
+          g.save();
+          g.shadowColor = "rgba(8,12,80,0.35)"; g.shadowBlur = 14; g.shadowOffsetY = 8;
+          g.fillStyle = col; g.beginPath(); g.moveTo(x - r, yb - r); g.arc(x, yb - r, r, Math.PI, 0, true); g.lineTo(x + r, yb - h + r); g.arc(x, yb - h + r, r, 0, Math.PI, true); g.closePath(); g.fill();
+          g.shadowColor = "transparent";
+          if (shade) { const gr = g.createLinearGradient(x - r, 0, x + r, 0); gr.addColorStop(0, "rgba(255,255,255,0.35)"); gr.addColorStop(0.45, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(0,0,40,0.14)"); g.fillStyle = gr; g.fill(); }
+          g.restore();
+        };
+
+        // ================= S5 · data =================
+        const LINE = [];
+        for (let i = 0; i <= 300; i++) { const u = i / 300; const base = 0.6 + 0.22 * (1 - Math.exp(-u * 10)); LINE.push(C(base + 0.05 * Math.sin(i * 0.45) * (0.5 + R(Math.floor(i / 4))) + 0.05 * (R(i * 2.3) - 0.5) + (i > 3 && i < 18 ? 0.22 * Math.sin(i * 1.3) * (1 - i / 18) : 0) - (u < 0.012 ? 0.7 * (1 - u / 0.012) : 0))); }
+        const STATS = [["FRAMES RENDERED", null], ["BEATS PER MINUTE", "120"], ["PARTICLES", "1600"], ["TILES", "45"]];
+        const roll = (str, t, t0) => [...str].map((ch, k) => { if (!/\d/.test(ch)) return ch; const u = P(t, t0 + k * 0.05, t0 + 0.3 + k * 0.05); return u >= 1 ? ch : String(Math.floor(R(k * 13 + Math.floor(t * 40)) * 10)); }).join("");
+        function sData(t, g) {
+          g = g || cx;
+          drawBlue(g);
+          if (t < 10.02) {
+            // pills rising out of the row of balls
+            const u = ioq(P(t, 9.8, 10.02));
+            for (let j = 0; j < 12; j++) { const x = L(240 + j * 106, 210 + j * 136, u), hMax = 120 + 180 * Math.abs(Math.sin(j * 1.3 + 0.5)); const col = u < 0.5 ? "#f7b08e" : "#efece4"; capsule(g, x, L(578, 900, u), L(36, 64, u), L(36, hMax, u), col, true); }
+            return;
+          }
+          g.save();
+          // stats
+          STATS.forEach(([label, val], i) => {
+            const x = 180 + i * 400;
+            const valS = val || String(Math.floor(t * 60)).padStart(4, "0");
+            g.font = "800 104px Archivo"; g.fillStyle = "#efece4"; g.textBaseline = "alphabetic";
+            g.globalAlpha = P(t, 10.02 + i * 0.06, 10.12 + i * 0.06);
+            g.fillText(roll(valS, t, 10.04 + i * 0.08), x, 222);
+            g.fillStyle = "rgba(239,236,228,0.45)"; g.fillRect(x, 244, 330, 2);
+            g.font = "500 14px 'IBM Plex Mono'"; g.fillStyle = "rgba(239,236,228,0.6)"; g.fillText(label.split("").join(" "), x, 272);
+          });
+          g.globalAlpha = 1;
+          g.font = "500 14px 'IBM Plex Mono'"; g.fillStyle = "rgba(239,236,228,0.55)"; g.fillText("M O T I O N   E N E R G Y   O F   T H I S   R E E L", 180, 306);
+          // chart
+          const cx0 = 180, cx1 = 1740, cy0 = 330, cy1 = 552;
+          g.strokeStyle = "rgba(239,236,228,0.18)"; g.lineWidth = 1.5;
+          g.beginPath(); g.moveTo(cx0, cy1); g.lineTo(cx1, cy1); g.stroke();
+          [0, 5, 10, 15].forEach((s, i) => { const x = L(cx0, cx1, s / 15); g.fillStyle = "rgba(239,236,228,0.5)"; g.font = "500 13px 'IBM Plex Mono'"; g.fillText(s + "S", x - 6, cy1 + 26); });
+          const head = L(0.02, t / 15, E.outCubic(P(t, 10.05, 10.7)));
+          const hi = Math.floor(head * 300);
+          const X = (i) => L(cx0, cx1, i / 300), Y = (i) => L(cy1, cy0, LINE[i]);
+          g.beginPath(); g.moveTo(X(0), cy1);
+          for (let i = 0; i <= hi; i++) g.lineTo(X(i), Y(i));
+          g.lineTo(X(hi), cy1); g.closePath(); g.fillStyle = "rgba(255,255,255,0.13)"; g.fill();
+          g.beginPath(); for (let i = 0; i <= hi; i++) (i ? g.lineTo(X(i), Y(i)) : g.moveTo(X(i), Y(i)));
+          g.strokeStyle = "#efece4"; g.lineWidth = 2.5; g.stroke();
+          g.setLineDash([6, 6]); g.strokeStyle = "rgba(255,90,40,0.6)"; g.beginPath(); g.moveTo(X(hi), cy0 - 10); g.lineTo(X(hi), 900); g.stroke(); g.setLineDash([]);
+          g.fillStyle = OR; g.beginPath(); g.arc(X(hi), Y(hi), 13, 0, TAU); g.fill();
+          g.font = "500 13px 'IBM Plex Mono'"; g.fillText("N O W", X(hi) + 14, cy1 + 26);
+          // bars
+          for (let j = 0; j < 12; j++) {
+            const x = 210 + j * 136;
+            const h = 110 + 170 * Math.abs(Math.sin(j * 1.3 + 0.5 + t * 3.1 * (0.6 + R(j) * 0.8))) * (0.7 + 0.3 * Math.sin(t * 7 + j));
+            capsule(g, x, 900, 64, h, "#efece4", true);
+            const peak = 110 + 170 * (0.75 + 0.25 * Math.sin(j * 2.1 + Math.floor(t * 2)));
+            g.fillStyle = "rgba(239,236,228,0.55)"; g.fillRect(x - 32, 900 - Math.max(h, peak) - 18, 64, 2);
+          }
+          g.fillStyle = "rgba(239,236,228,0.18)"; g.fillRect(180, 912, 1560, 1.5);
+          g.fillStyle = "rgba(239,236,228,0.45)"; g.fillText("S P E C T R U M   /   L I V E", 180, 944);
+          g.restore();
+        }
+
+        // ================= S6 · identity =================
+        const idSpans = K.chars($("idWord"), v.name);
+        $("idRole").textContent = v.role;
+        $("idMeta").textContent = v.meta;
+        function sId(t) {
+          const on = t >= 11.95;
+          K.show($("id"), on);
+          if (!on) return;
+          cx.fillStyle = NI; cx.fillRect(0, 0, 1920, 1080);
+          const gl = cx.createRadialGradient(960, 520, 0, 960, 540, 900);
+          gl.addColorStop(0, "rgba(34,34,44,0.9)"); gl.addColorStop(1, "rgba(11,11,13,0)");
+          cx.fillStyle = gl; cx.fillRect(0, 0, 1920, 1080);
+          const w = $("idWord"), W = w.offsetWidth, dotGap = 18, total = W + dotGap + 64;
+          const x0 = 960 - total / 2, top = 272;
+          w.style.transform = "translate(" + x0.toFixed(1) + "px," + top + "px)";
+          idSpans.forEach((s, k) => {
+            const a = 11.97 + k * 0.015, u = E.outCubic(P(t, a, a + 0.22));
+            s.style.opacity = C(u * 2);
+            s.style.transform = "translateX(" + ((1 - u) * -240).toFixed(1) + "px)";
+            s.style.filter = u < 0.95 ? "blur(" + ((1 - u) * 14).toFixed(1) + "px)" : "none";
+          });
+          const dx = x0 + W + dotGap + 32, base = top + 340 * 0.8;
+          const du = P(t, 12.12, 12.34);
+          const dy = L(-120, base - 32, E.inQuad(du));
+          const land = bump(t, 12.34, 12.46);
+          const dd = $("idDot");
+          dd.style.opacity = du > 0 ? 1 : 0;
+          dd.style.transform = "translate(" + dx.toFixed(1) + "px," + (dy + land * 10).toFixed(1) + "px) scale(" + (du < 1 ? 0.7 : 1 + land * 0.35) + "," + (du < 1 ? 1.9 : 1 - land * 0.35) + ")";
+          dd.style.filter = du > 0 && du < 1 ? "blur(3px)" : "none";
+          const ru = E.outCubic(P(t, 12.48, 12.84));
+          $("idRole").style.opacity = ru; $("idRole").style.transform = "translateY(" + ((1 - ru) * 30).toFixed(1) + "px)";
+          $("idLine").style.transform = "scaleX(" + E.inOutCubic(P(t, 12.7, 13.05)).toFixed(3) + ")";
+          const MC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+";
+          $("idMeta").textContent = t < 12.88 ? "" : [...v.meta].map((ch, k, arr) => (ch === " " || ch === "/" || t >= 12.9 + (k / arr.length) * 0.6 ? ch : MC[Math.floor(R(k * 7.3 + Math.floor(t * 30)) * MC.length)])).join("");
+        }
+
+        // ================= HUD =================
+        const SECS = [[0, "00 / THE DOT"], [1.62, "01 / TYPE"], [3.97, "02 / SHAPE"], [6.0, "03 / DIMENSION"], [8.04, "04 / FLUID"], [10.0, "05 / DATA"], [11.95, "06 / IDENTITY"]];
+        const NAMES = ["SPHERE", "TORUS", "RIPPLE FIELD", "SPIRAL"];
+        function hud(t, theme) {
+          const col = theme === "light" ? "#1a1a1c" : theme === "blue" ? "#e6e8ff" : "#e8e6e0";
+          const sub = theme === "light" ? "#8a8780" : theme === "blue" ? "#9aa4ff" : "#6a6a72";
+          const s = Math.floor(t), f = Math.floor((t - s) * 60);
+          $("hTL").innerHTML = '<b style="color:' + col + '">' + v.name.toUpperCase() + '</b><br><span style="color:' + sub + '">MOTION REEL 2026</span>';
+          $("hTR").innerHTML = '<b style="color:' + col + '">00:00:' + String(s).padStart(2, "0") + ":" + String(f).padStart(2, "0") + '</b><br><span style="color:' + sub + '">120 BPM   60 FPS</span>';
+          const sec = SECS.filter((x) => t >= x[0]).pop()[1];
+          $("hBL").innerHTML = '<span style="color:' + col + '">' + sec + "</span>";
+          let info = "";
+          if (t >= 6.2 && t < 7.95) { const k = t < 6.85 ? 0 : t < 7.1 ? 1 : t < 7.65 ? 2 : 3; info = "N 1600 / " + NAMES[k] + "<br>ROT.Y " + ((t * 0.5 * 57.3) % 360).toFixed(1).padStart(5, "0") + "°   FOCAL 980"; }
+          else if (t >= 8.3 && t < 9.95) info = "METABALLS / " + (t < 8.62 ? "SPLASH" : t < 9.1 ? "MERGE" : t < 9.4 ? "DIVIDE" : "FOUR");
+          else if (t >= 2.1 && t < 3.7) { const wd = 100 + 25 * Math.sin(t * 7 - 1.6) * bump(t, 2.9, 3.62), wg = 900 - 380 * Math.max(0, -Math.sin(t * 7 - 1.0)) * bump(t, 2.9, 3.62); info = "ARCHIVO   WGHT " + wg.toFixed(0) + "   WDTH " + wd.toFixed(1); }
+          $("hInfo").innerHTML = '<span style="color:' + sub + '">' + info + "</span>";
+          $("prog").style.background = theme === "light" ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.25)";
+          $("prog").querySelector("i").style.left = (t / DUR * 180).toFixed(1) + "px";
+          $("hud").style.opacity = t > 12.9 ? L(1, 0.45, P(t, 12.9, 13.3)) : 1;
+          K.show($("hBL"), true);
+        }
+
+        // ================= render =================
+        function render(t) {
+          let theme = "dark";
+          cx.clearRect(0, 0, 1920, 1080);
+          if (t < 1.66) sDot(t);
+          else if (t < 3.97) { cx.fillStyle = t >= 2.04 ? CR : NI; cx.fillRect(0, 0, 1920, 1080); if (t < 2.04) cx.drawImage(dotGrid, 0, 0); if (t < 1.76) { cx.save(); cx.globalAlpha = 0.3 * (1 - P(t, 1.66, 1.76)); cx.strokeStyle = OR; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(960, 40, 30, 40, 0, 0, TAU); cx.stroke(); cx.restore(); } if (t >= 2.04) theme = "light"; }
+          else if (t < 6.0) { sShape(t); theme = t < 5.74 ? "light" : "dark"; }
+          else if (t < 8.04) { sDim(t); if (t > 7.9) { off.clearRect(0, 0, 1920, 1080); off.drawImage(cv, 0, 0); cx.clearRect(0, 0, 1920, 1080); rgbSplit(OFF, 18 * P(t, 7.9, 8.02), 0.9); } }
+          else if (t < 9.82) { sFluid(t); theme = "blue"; }
+          else if (t < 11.35) {
+            theme = "blue";
+            if (t < 11.0) sData(t);
+            else { sData(t, off); cx.clearRect(0, 0, 1920, 1080); const amt = P(t, 11.0, 11.3); slices(OFF, t, 90 * amt); off.clearRect(0, 0, 1920, 1080); off.drawImage(cv, 0, 0); cx.clearRect(0, 0, 1920, 1080); rgbSplit(OFF, 6 + 14 * amt, 0.85); }
+          }
+          else if (t < 11.95) {
+            if (t < 11.46) theme = "light";
+            else if (t < 11.62) { drawTiles(off, 4.9, { static: true }); rgbSplit(OFF, 10, 0.8); theme = "light"; }
+            else if (t < 11.8) { sDim(7.84, off); cx.clearRect(0, 0, 1920, 1080); rgbSplit(OFF, 12, 0.85); }
+            else { cx.fillStyle = "#050506"; cx.fillRect(0, 0, 1920, 1080); }
+          }
+          sType(t);
+          sId(t);
+          hud(t, theme);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (fontsP) fontsP.then(() => render(lastT));
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

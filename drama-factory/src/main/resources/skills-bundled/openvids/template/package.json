@@ -1,0 +1,23 @@
+{
+  "name": "openvids-film",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Film out/film.mp4 --codec h264 --crf 16",
+    "still": "remotion still src/index.ts Film out/still.png --frame=176",
+    "timeline": "node scripts/timeline_json.mjs ."
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.532",
+    "@remotion/google-fonts": "4.0.532",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}

@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=830" />
+    <title>screen-dive</title>
+    <script>
+      // screen-dive CONFIG: every piece of on-screen text and every tunable.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs screen-dive <dir> --update` so the static timing
+      // attributes follow; the timeline refuses to build if they disagree.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "screenText": "모션 그래픽",
+        "diveAt": 2,
+        "diveDur": 2.5,
+        "deviceStyle": "laptop",
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d"
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "IntroSans";
+        src: url("assets/fonts/NanumSquare_acEB.ttf") format("truetype");
+        font-weight: 800;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--paper);
+      }
+      #stage {
+        position: relative;
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--paper);
+        font-family: "IntroSans", sans-serif;
+        font-weight: 800;
+      }
+      /* Both layers are full-canvas boxes with the same origin, so one camera
+         tween moves the drawn laptop and the screen content as one object. */
+      .layer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 830px;
+        transform-origin: 0 0;
+      }
+      #device { z-index: 1; }
+      #screen { z-index: 2; }
+
+      /* Hero frame, static: the glass is 540x415 = exactly half the canvas
+         (same 1080:830 ratio), so the dive lands at scale 2 on whole pixels.
+         Lid 248..832 x 170..635, base 170..910 x 635..661: nothing near an edge. */
+      #lid {
+        position: absolute;
+        left: 248px;
+        top: 170px;
+        width: 584px;
+        height: 465px;
+        border-radius: 22px;
+        background: var(--charcoal);
+      }
+      #lens {
+        position: absolute;
+        left: 287px;
+        top: 11px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--paper);
+      }
+      #base {
+        position: absolute;
+        left: 170px;
+        top: 635px;
+        width: 740px;
+        height: 26px;
+        background: var(--charcoal);
+        clip-path: polygon(0 30%, 100% 30%, 96% 100%, 4% 100%);
+        border-radius: 0 0 14px 14px;
+      }
+      #notch {
+        position: absolute;
+        left: 310px;
+        top: 8px;
+        width: 120px;
+        height: 6px;
+        border-radius: 0 0 6px 6px;
+        background: var(--paper);
+      }
+      #glass {
+        position: absolute;
+        left: 270px;
+        top: 198px;
+        width: 540px;
+        height: 415px;
+        overflow: hidden;
+        background: var(--red);
+      }
+      /* The screen content is authored at full canvas size and shown at half
+         scale inside the glass: after the dive the net scale is exactly 1. */
+      #content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1080px;
+        height: 830px;
+        transform: scale(0.5);
+        transform-origin: 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px;
+        text-align: center;
+        color: var(--paper);
+      }
+      .word { font-size: 170px; line-height: 1.1; white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG
+         (root data-duration is read statically by the engine, before any
+         script runs). Do not hand-edit them. -->
+    <div
+      id="stage"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="6"
+      data-fps="30"
+      data-width="1080"
+      data-height="830"
+    >
+      <!-- The camera scales both layers far past the canvas on purpose; the
+           allow-overflow attributes mark it for check. -->
+      <!-- Device (lid + base, CSS only): leaves when the dive lands, already off-canvas -->
+      <div id="device" class="clip layer" data-start="0" data-duration="4.5" data-track-index="0" data-layout-allow-overflow="true">
+        <div id="lid"><div id="lens"></div></div>
+        <div id="base"><div id="notch"></div></div>
+      </div>
+
+      <!-- Screen: the same DOM from the first frame to the last, so the dive is one continuous move -->
+      <div id="screen" class="clip layer" data-start="0" data-duration="6" data-track-index="1" data-layout-allow-overflow="true">
+        <div id="glass">
+          <div id="content"><div id="screenText" class="word"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const C = CONFIG;
+      const $ = (id) => document.getElementById(id);
+      const win = (id) => {
+        const el = $(id);
+        return { start: +el.dataset.start, end: +el.dataset.start + +el.dataset.duration, dur: +el.dataset.duration };
+      };
+      const W = 1080, H = 830;
+
+      // ---- palette: exactly three colours
+      const root = document.documentElement.style;
+      root.setProperty("--paper", C.paper);
+      root.setProperty("--charcoal", C.charcoal);
+      root.setProperty("--red", C.red);
+
+      // ---- guard: the static timing attributes must match CONFIG
+      const near = (a, b) => Math.abs(a - b) <= 1e-3;
+      if (!near(win("device").end, C.diveAt + C.diveDur) || !near(win("screen").end, win("stage").end)) {
+        throw new Error("screen-dive: timing attributes disagree with CONFIG; re-run scaffold --update");
+      }
+
+      // ponytail: per-glyph width estimate instead of measuring the loaded font
+      // (same rule as intro-kinetic). Shrinks only, never grows.
+      const fit = (text, px, maxW = W - 160) => {
+        let em = 0;
+        for (const ch of text) {
+          if (/[ㄱ-힣一-鿿]/.test(ch)) em += 0.95;
+          else if (/[\s,.]/.test(ch)) em += 0.3;
+          else if (/[A-Z]/.test(ch)) em += 0.7;
+          else em += 0.6;
+        }
+        return Math.min(px, Math.floor(maxW / Math.max(em, 0.01)));
+      };
+      $("screenText").textContent = C.screenText;
+      $("screenText").style.fontSize = fit(C.screenText, 170) + "px";
+
+      // ---- camera: the transform that maps the glass onto the whole canvas,
+      // read from the static hero layout (never literal numbers)
+      const g = $("glass");
+      const s = W / g.offsetWidth;
+      if (!near(s * g.offsetHeight, H)) throw new Error("screen-dive: glass ratio must match the canvas");
+      const cam = { x: -g.offsetLeft * s, y: -g.offsetTop * s, scale: s };
+      const layers = ["#device", "#screen"];
+
+      // ---- timeline: positions = CONFIG + scene windows (from the DOM)
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(layers, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: "power3.out" }, 0);
+      tl.fromTo("#screenText", { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" }, 0.4);
+      // the dive: one scale+translate on both layers, so it is a move, never a cut
+      tl.fromTo(layers, { x: 0, y: 0, scale: 1 }, { ...cam, duration: C.diveDur, ease: "power3.inOut", immediateRender: false }, C.diveAt);
+      // full-screen hold: a slow push from where the dive left the text (no jump)
+      const land = win("device").end;
+      tl.fromTo("#screenText", { scale: 1 }, { scale: 1.04, duration: win("stage").end - land, ease: "none", immediateRender: false }, land);
+      tl.set({}, {}, win("stage").end);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

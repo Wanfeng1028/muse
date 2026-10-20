@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Wordmark (keep the final period, it becomes the dot)","default":"framed."},
+  {"id":"tagline","type":"string","label":"Tagline","default":"from your screen to your wall."},
+  {"id":"pill","type":"string","label":"First button","default":"Frame it"},
+  {"id":"relight","type":"string","label":"Frosted word over the photo","default":"relight."},
+  {"id":"slider","type":"string","label":"Slider label","default":"Golden hour"},
+  {"id":"date","type":"string","label":"Lock screen date","default":"Friday, September 25"},
+  {"id":"time","type":"string","label":"Lock screen time","default":"9:41"},
+  {"id":"track","type":"string","label":"Now playing, title","default":"field notes 02"},
+  {"id":"trackSub","type":"string","label":"Now playing, subtitle","default":"made with code"},
+  {"id":"favs","type":"string","label":"Six favourite tiles (;-separated letters)","default":"B;K;R;T;L;D"},
+  {"id":"nav","type":"string","label":"Site nav (;-separated)","default":"prints;frames;journal"},
+  {"id":"siteCta","type":"string","label":"Site header button","default":"Order"},
+  {"id":"hero1","type":"string","label":"Site headline, line 1","default":"your photos,"},
+  {"id":"hero2","type":"string","label":"Site headline, line 2","default":"on your wall."},
+  {"id":"desc1","type":"string","label":"Site text, line 1","default":"gallery-grade prints of the photos you"},
+  {"id":"desc2","type":"string","label":"Site text, line 2","default":"already love. framed by hand, shipped in a week."},
+  {"id":"drop","type":"string","label":"Drop zone hint","default":"drop a photo to print it"},
+  {"id":"prodTitle","type":"string","label":"Product title","default":"the print"},
+  {"id":"prodDesc1","type":"string","label":"Product text, line 1","default":"archival pigment on cotton paper."},
+  {"id":"prodDesc2","type":"string","label":"Product text, line 2","default":"framed by hand, ready to hang."},
+  {"id":"frameLabel","type":"string","label":"Frame label","default":"frame"},
+  {"id":"sizeLabel","type":"string","label":"Size label","default":"size"},
+  {"id":"sizes","type":"string","label":"Three sizes (;-separated)","default":"30×40;50×70;70×100"},
+  {"id":"price","type":"string","label":"Price","default":"$129"},
+  {"id":"order","type":"string","label":"Order button","default":"Order print"},
+  {"id":"ordered","type":"string","label":"After the click","default":"Ordered"},
+  {"id":"printing","type":"string","label":"Progress label","default":"Printing"},
+  {"id":"shipping","type":"string","label":"Shipping label","default":"On its way"},
+  {"id":"shipWhen","type":"string","label":"Shipping time","default":"today"},
+  {"id":"ink","type":"color","label":"Ink","default":"#0b0b0d"},
+  {"id":"paper","type":"color","label":"Background","default":"#ecebe6"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Archivo-wdth-62-125-wght-100-900.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --ink: #0b0b0d; --paper: #ecebe6; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Inter", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; }
+      .abs { position: absolute; left: 0; top: 0; }
+      .wide { font-family: "Archivo Wide", sans-serif; font-stretch: 125%; font-weight: 900; letter-spacing: -0.02em; }
+      .cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+      #scene { overflow: hidden; background: var(--paper); }
+      #paper { background: radial-gradient(ellipse 70% 60% at 50% 42%, #f3f2ee 0%, var(--paper) 60%, #e6e5e0 100%); }
+      #ribbon { object-fit: cover; transform: translateY(22%) rotate(12deg) scale(1.5); filter: saturate(0.62) brightness(1.1); }
+      #wm { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 172px; line-height: 1; }
+      #wm span { display: inline-block; }
+      #tag { position: absolute; left: 0; width: 1080px; top: 641px; text-align: center; font: 400 24px/1 "Inter"; color: #6d6c68; letter-spacing: -0.005em; }
+      #glow { position: absolute; left: 140px; top: 360px; width: 800px; height: 360px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%); }
+      #pill { position: absolute; left: 0; top: 0; background: var(--ink); overflow: hidden; }
+      #pillT { position: absolute; left: 0; width: 100%; top: 0; text-align: center; color: #fff; font: 600 48px/1 "Inter"; letter-spacing: -0.01em; white-space: nowrap; }
+      #ap { position: absolute; left: 0; top: 0; overflow: hidden; background: #26272b; }
+      #ap img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; }
+      #apC { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+      .tile { position: absolute; left: 0; top: 0; overflow: hidden; background: #ddd; box-shadow: 0 8px 22px rgba(20, 20, 18, 0.12); }
+      .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      #view { overflow: hidden; }
+      #vCam { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; transform-origin: 0 0; }
+      #vCam img { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; }
+      .frost { position: absolute; left: 0; top: 0; white-space: nowrap; color: transparent; -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: 1.2px rgba(255, 255, 255, 0.55); background-repeat: no-repeat; }
+      #relight { width: 1080px; text-align: center; top: 214px; font-size: 124px; line-height: 1.25; filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.12)); }
+      .glass { position: absolute; left: 0; top: 0; background: rgba(255, 255, 255, 0.07); border: 2px solid rgba(255, 255, 255, 0.72); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 0 24px rgba(255, 255, 255, 0.12), 0 12px 34px rgba(0, 0, 0, 0.12); -webkit-backdrop-filter: blur(3px) brightness(1.06); backdrop-filter: blur(3px) brightness(1.06); overflow: hidden; }
+      .ico { position: absolute; top: 0; width: 46px; height: 46px; margin-left: -23px; }
+      .ico svg { width: 46px; height: 46px; display: block; overflow: visible; }
+      #pLab { position: absolute; left: 50px; top: 46px; display: flex; align-items: center; gap: 14px; color: #fff; font: 500 30px/1 "Inter"; white-space: nowrap; }
+      #pVal { position: absolute; right: 50px; top: 49px; color: #fff; font: 500 28px/1 "Inter"; font-variant-numeric: tabular-nums; }
+      #pTrack { position: absolute; left: 50px; right: 50px; top: 150px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.35); }
+      #pFill { position: absolute; left: 0; top: 0; height: 5px; border-radius: 3px; background: #fff; }
+      #pKnob { position: absolute; top: -27px; width: 92px; height: 58px; margin-left: -46px; border-radius: 29px; background: rgba(255, 255, 255, 0.18); border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
+      #lens { position: absolute; left: 0; top: 0; border-radius: 50%; overflow: hidden; border: 2.5px solid rgba(255, 255, 255, 0.8); box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.35), 0 24px 60px rgba(0, 0, 0, 0.3); }
+      #lens img { position: absolute; left: 0; top: 0; }
+      #phone { position: absolute; left: 0; top: 0; background: #0a0a0b; }
+      #screen { position: absolute; overflow: hidden; background: #2b3a2a; }
+      #scrImg { position: absolute; left: 0; top: 0; }
+      #date { position: absolute; left: 0; text-align: center; color: #fff; font-weight: 600; white-space: nowrap; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.18); }
+      #time { left: 0; text-align: center; font-weight: 700; letter-spacing: -0.035em; line-height: 1; -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5); filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.1)); }
+      #widget .t1 { position: absolute; color: #fff; font-weight: 700; white-space: nowrap; }
+      #widget .t2 { position: absolute; color: rgba(255, 255, 255, 0.72); font-weight: 400; white-space: nowrap; }
+      #widget .ctl { position: absolute; color: #fff; }
+      #widget .ctl svg { display: block; width: 100%; height: 100%; }
+      #wTrack { position: absolute; background: rgba(255, 255, 255, 0.35); border-radius: 2px; }
+      #wFill { position: absolute; left: 0; top: 0; height: 100%; background: #fff; border-radius: 2px; }
+      #home { position: absolute; background: #fff; border-radius: 4px; }
+      #island { position: absolute; background: #000; border-radius: 30px; }
+      #br { position: absolute; left: 0; top: 0; width: 1230px; height: 900px; transform-origin: 0 0; }
+      #brIn { position: absolute; left: 0; top: 0; width: 1230px; height: 900px; border-radius: 22px; overflow: hidden; background: #edece8; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06); }
+      #brShadow { position: absolute; left: 0; top: 0; width: 1230px; height: 900px; border-radius: 22px; box-shadow: 0 40px 90px rgba(30, 40, 90, 0.22); }
+      #chrome { position: absolute; left: 0; top: 0; width: 1230px; height: 68px; background: #f3f4ef; border-bottom: 1px solid #e3e2dc; }
+      .tl { position: absolute; top: 24px; width: 21px; height: 21px; border-radius: 50%; }
+      .tab { position: absolute; top: 12px; height: 44px; border-radius: 12px; display: flex; align-items: center; gap: 12px; padding: 0 18px; font: 500 21px/1 "Inter"; color: #4b4a46; white-space: nowrap; }
+      .tab.on { background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+      .pg { position: absolute; left: 0; top: 68px; width: 1230px; height: 832px; }
+      .lab { position: absolute; font: 600 22px/1 "Inter"; color: #3d3c38; white-space: nowrap; }
+      .fav { position: absolute; width: 96px; height: 96px; border-radius: 22px; display: flex; align-items: center; justify-content: center; font: 600 36px/1 "Inter"; }
+      .rl { position: absolute; width: 320px; height: 172px; border-radius: 24px; background: #e0dfd9; }
+      .nav { position: absolute; font: 500 20px/1 "Inter"; color: #5a5955; }
+      #siteCta, #orderBtn { position: absolute; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+      #drop { position: absolute; border: 2.5px dashed #b4b2ab; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font: 500 21px/1 "Inter"; color: #8a8984; }
+      #sitePhoto { position: absolute; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 44px rgba(20, 20, 18, 0.2); }
+      #panelL { position: absolute; border-radius: 30px; background: #e5e2db; }
+      #pf { position: absolute; left: 0; top: 0; box-shadow: 0 16px 34px rgba(20, 18, 14, 0.22); }
+      #pfMat { position: absolute; background: #f7f6f2; }
+      #pfImg { position: absolute; overflow: hidden; }
+      .sw { position: absolute; width: 46px; height: 46px; border-radius: 50%; margin: -23px 0 0 -23px; }
+      #swRing { position: absolute; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; border: 3px solid var(--ink); }
+      #seg { position: absolute; border-radius: 16px; background: #e1dfd8; }
+      #segOn { position: absolute; top: 6px; height: 50px; border-radius: 12px; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+      .segL { position: absolute; top: 0; height: 62px; line-height: 62px; text-align: center; font: 500 21px/62px "Inter"; color: #3d3c38; }
+      #orderIn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; color: #fff; }
+      #flyPill { position: absolute; left: 0; top: 0; background: #000; }
+      #drag { position: absolute; left: 0; top: 0; overflow: hidden; border-radius: 14px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3); }
+      #drag img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+      #wallCam { transform-origin: 0 0; }
+      #wallImg { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; }
+      #fg { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; transform-origin: 0 0; }
+      #fgFrame { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; background: url(assets/img/wall.jpg) 0 0 / 1080px 1080px; clip-path: inset(190px 270px 200px 272px); }
+      #fgPhoto { position: absolute; left: 373.5px; top: 310px; width: 333px; height: 452px; overflow: hidden; }
+      #fgPhoto img { position: absolute; left: -59.5px; top: 0; width: 452px; height: 452px; }
+      #haze { position: absolute; left: 373.5px; top: 310px; width: 333px; height: 452px; }
+      #hands { position: absolute; left: 145px; top: 503px; width: 838px; height: 577px; }
+      #cursor { position: absolute; left: 0; top: 0; width: 26px; height: 32px; transform-origin: 0 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="29" data-width="1080" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="29" data-track-index="0">
+        <div id="paper" class="layer"></div>
+        <img id="ribbon" class="layer" src="assets/img/ribbon.jpg" alt="" />
+        <div id="s1" class="layer"><div id="glow"></div><div id="wm" class="wide"></div><div id="tag"></div></div>
+        <div id="grid" class="layer"></div>
+        <div id="ap"><img id="apImg" src="assets/img/door.jpg" alt="" /><canvas id="apC" width="742" height="742"></canvas></div>
+        <div id="pill"><span id="pillT"></span></div>
+        <div id="wallS" class="layer">
+          <div id="wallCam" class="layer">
+            <img id="wallImg" src="assets/img/wall.jpg" alt="" />
+            <div id="fg">
+              <div id="fgFrame"></div>
+              <div id="fgPhoto"><img src="assets/img/astro.jpg" alt="" /></div>
+              <canvas id="haze" width="333" height="452"></canvas>
+              <img id="hands" src="assets/img/hands_cut.png" alt="" />
+            </div>
+          </div>
+        </div>
+        <div id="view" class="layer">
+          <div id="vCam"><img id="vA" src="assets/img/arch.jpg" alt="" /><img id="vG" src="assets/img/arch_gold.jpg" alt="" /></div>
+          <div id="relight" class="frost wide"></div>
+          <div id="tb" class="glass"></div>
+          <div id="panel" class="glass"><div id="pLab"></div><div id="pVal"></div><div id="pTrack"><div id="pFill"></div><div id="pKnob"></div></div></div>
+        </div>
+        <div id="lens"><img id="lensBase" src="assets/img/arch_gold.jpg" alt="" /><img id="lensImg" src="assets/img/astro.jpg" alt="" /></div>
+        <div id="phone">
+          <div id="screen">
+            <img id="scrImg" src="assets/img/astro.jpg" alt="" />
+            <div id="date"></div>
+            <div id="time" class="frost"></div>
+            <div id="widget" class="glass"><div class="t1"></div><div class="t2"></div><div class="ctl" id="c1"></div><div class="ctl" id="c2"></div><div class="ctl" id="c3"></div><div id="wTrack"><div id="wFill"></div></div></div>
+            <div id="home"></div>
+          </div>
+          <div id="island"></div>
+        </div>
+        <div id="flyPill"></div>
+        <div id="br">
+          <div id="brShadow"></div>
+          <div id="brIn">
+            <div id="chrome"></div>
+            <div id="pStart" class="pg"></div>
+            <div id="pSite" class="pg"></div>
+            <div id="pProd" class="pg"></div>
+            <div id="brBlack" class="abs" style="width: 1230px; height: 900px; background: #000"></div>
+          </div>
+        </div>
+        <div id="drag"><img src="assets/img/astro.jpg" alt="" /></div>
+        <canvas id="fx" class="layer" width="1080" height="1080"></canvas>
+        <svg id="cursor" viewBox="0 0 26 32"><path d="M2 1.5 L2 24.5 L7.6 19.3 L11.3 27.6 L15 26 L11.4 17.9 L19 17.9 Z" fill="#0b0b0d" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 29, TAU = Math.PI * 2;
+        const INK = v.ink;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const ios = (u) => -(Math.cos(Math.PI * u) - 1) / 2;
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const px = (n) => n.toFixed(1) + "px";
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const fade = (el, a) => { K.show(el, a > 0.002); el.style.opacity = C(a).toFixed(3); };
+        const box = (el, x, y, w, h, r) => { el.style.left = px(x); el.style.top = px(y); el.style.width = px(w); el.style.height = px(h); if (r != null) el.style.borderRadius = px(r); };
+        const list = (s) => String(s).split(";").map((x) => x.trim());
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) { const ns = "http://www.w3.org/2000/svg", f = document.createElementNS(ns, "filter"); f.setAttribute("id", "mb_" + key); f.setAttribute("x", "-50%"); f.setAttribute("y", "-50%"); f.setAttribute("width", "200%"); f.setAttribute("height", "200%"); g = document.createElementNS(ns, "feGaussianBlur"); f.appendChild(g); let defs = document.getElementById("mbDefs"); if (!defs) { const svg = document.createElementNS(ns, "svg"); svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.style.position = "absolute"; defs = document.createElementNS(ns, "defs"); defs.id = "mbDefs"; svg.appendChild(defs); document.body.appendChild(svg); } defs.appendChild(f); MBF[key] = g; }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+        // piecewise keys: [[t, a, b, ...], ...] -> eased values
+        const keyed = (keys, t, ez) => {
+          if (t <= keys[0][0]) return keys[0].slice(1);
+          for (let k = 0; k < keys.length - 1; k++) if (t < keys[k + 1][0]) { const u = (ez || ios)((t - keys[k][0]) / (keys[k + 1][0] - keys[k][0])); return keys[k].slice(1).map((x, i) => L(x, keys[k + 1][i + 1], u)); }
+          return keys[keys.length - 1].slice(1);
+        };
+        const fx = $("fx").getContext("2d");
+
+        // ---------- shutter: a disc or rect of blades with an n-gon aperture ----------
+        function shutter(g, shape, cx, cy, Rr, open, rot, alpha) {
+          g.save();
+          g.beginPath(); shape(g); g.clip();
+          const gr = g.createRadialGradient(cx, cy, 0, cx, cy, Rr * 1.2);
+          gr.addColorStop(0, "rgba(52,53,58," + alpha + ")"); gr.addColorStop(1, "rgba(28,29,32," + alpha + ")");
+          g.fillStyle = gr; g.fillRect(cx - Rr * 2, cy - Rr * 2, Rr * 4, Rr * 4);
+          const a = Rr * open, n = 6, V = [];
+          for (let k = 0; k < n; k++) { const ang = rot + (k * TAU) / n; V.push([cx + Math.cos(ang) * a, cy + Math.sin(ang) * a]); }
+          g.globalCompositeOperation = "destination-out";
+          g.beginPath(); V.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill();
+          g.globalCompositeOperation = "source-over";
+          g.strokeStyle = "rgba(255,255,255," + (0.3 * alpha).toFixed(3) + ")"; g.lineWidth = 3;
+          V.forEach((p, k) => { const q = V[(k + 1) % n], dx = q[0] - p[0], dy = q[1] - p[1], d = Math.hypot(dx, dy) || 1; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(p[0] + (dx / d) * Rr * 3, p[1] + (dy / d) * Rr * 3); g.stroke(); });
+          g.restore();
+        }
+        const rrect = (g, x, y, w, h, r) => { r = Math.max(0, Math.min(r, w / 2, h / 2)); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+
+        // ================= S1 / S9: wordmark, dot, pill =================
+        const wm = $("wm"), pill = $("pill"), pillT = $("pillT");
+        const word = String(v.brand), hasDot = word.endsWith(".");
+        const letters = [...(hasDot ? word.slice(0, -1) : word)].map((c) => { const s = document.createElement("span"); s.textContent = c === " " ? "\u00a0" : c; wm.appendChild(s); return s; });
+        const per = document.createElement("span"); per.textContent = "."; per.style.color = "transparent"; wm.appendChild(per);
+        $("tag").textContent = v.tagline;
+        pillT.textContent = v.pill;
+        let WG = null;
+        function measureWord() {
+          const s1 = $("s1"), pv = s1.style.display; s1.style.display = "";
+          const w = wm.offsetWidth; wm.style.left = px(540 - w / 2); wm.style.top = "0px";
+          const bl = document.createElement("span"); bl.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline"; wm.appendChild(bl);
+          const base0 = bl.getBoundingClientRect().top - wm.getBoundingClientRect().top; wm.removeChild(bl);
+          wm.style.top = px(560 - base0);
+          const r0 = wm.getBoundingClientRect();
+          const L0 = letters.map((s) => { const b = s.getBoundingClientRect(); return { x: b.left - r0.left, w: b.width }; });
+          const pb = per.getBoundingClientRect();
+          const dotD = 0.2 * 172;
+          WG = { x0: 540 - w / 2, L0, dotX: pb.left + dotD * 0.62, dotY: 560 - dotD / 2, dotD };
+          s1.style.display = pv;
+        }
+        // the black shape: dot -> pill -> circle (start), full screen -> pill -> dot (end)
+        const PILL = { w: 450, h: 143 };
+        function s1(t) {
+          const on = t < 1.25 || t >= 27.2;
+          K.show($("s1"), on);
+          if (!WG) measureWord();
+          if (!on) return;
+          const end = t >= 27.2;
+          letters.forEach((s, i) => {
+            const n = letters.length;
+            if (!end) {
+              const a = 0.52 + i * 0.02, u = P(t, a, a + 0.34);
+              s.style.opacity = (1 - E.inQuad(u)).toFixed(3);
+              s.style.transform = "translateX(" + px(30 * u) + ")";
+              mblur(s, "l" + i, 16 * Math.sin(Math.PI * Math.min(u, 0.999)) + 10 * u, 0);
+            } else {
+              const u = E.outCubic(P(t, 27.32, 27.76)), from = WG.dotX - (WG.x0 + WG.L0[i].x + WG.L0[i].w / 2);
+              s.style.opacity = C(P(t, 27.32, 27.42) * 1).toFixed(3);
+              s.style.transform = "translateX(" + px(from * (1 - u)) + ") scaleX(" + L(0.4, 1, u).toFixed(3) + ")";
+              mblur(s, "l" + i, u < 1 ? 28 * (1 - u) : 0, 0);
+            }
+          });
+          const tg = $("tag");
+          if (!end) { tg.style.opacity = (1 - P(t, 0.42, 0.6)).toFixed(3); tg.style.filter = blurS(8 * P(t, 0.42, 0.6)); tg.style.transform = "none"; }
+          else { const u = E.outCubic(P(t, 28.12, 28.5)); tg.style.opacity = u.toFixed(3); tg.style.filter = blurS(8 * (1 - u)); tg.style.transform = "translateY(" + px(10 * (1 - u)) + ")"; }
+          $("glow").style.opacity = (end ? 0 : 0.7 * bump(t, 0.55, 1.25)).toFixed(3);
+        }
+        function pillShape(t) {
+          const on = t < 2.62 || t >= 26.5;
+          K.show(pill, on);
+          if (!on) return;
+          if (!WG) measureWord();
+          const d = WG.dotD, cx0 = WG.dotX, cy0 = WG.dotY;
+          let x = cx0, y = cy0, w = d, h = d, r = d / 2, a = 1;
+          if (t < 2.62) {
+            const m = ioq(P(t, 1.1, 1.34)), gr = E.outCubic(P(t, 1.26, 1.44));
+            x = L(cx0, 540, m); y = L(cy0, 540, m); w = L(d, PILL.w, gr); h = L(d, PILL.h, gr); r = h / 2;
+            w += 60 * bump(t, 1.1, 1.34);
+            const pr = 1 - 0.035 * bump(t, 2.25, 2.4);
+            w *= pr; h *= pr;
+            const c = ioq(P(t, 2.36, 2.56));
+            w = L(w, 346, c); h = L(h, 346, c); r = L(r, 173, c);
+            a = 1 - P(t, 2.52, 2.62);
+            const tu = E.outCubic(P(t, 1.72, 2.08)), to = P(t, 2.36, 2.46);
+            pillT.style.top = px(h / 2 - 24 + 90 * (1 - tu));
+            pillT.style.opacity = (1 - to).toFixed(3);
+            K.show(pillT, true);
+          } else {
+            // the black screen shrinks into the pill, then into the dot of the wordmark
+            const s = ioq(P(t, 26.58, 26.98));
+            w = L(1080, PILL.w, s); h = L(1080, PILL.h, s); r = L(0, PILL.h / 2, E.inQuad(s));
+            const dd = ioq(P(t, 27.04, 27.24));
+            x = L(540, cx0, dd); y = L(540, cy0, dd); w = L(w, d, dd); h = L(h, d, dd); r = L(r, d / 2, dd);
+            K.show(pillT, false);
+          }
+          box(pill, x - w / 2, y - h / 2, w, h, r);
+          pill.style.opacity = a.toFixed(3);
+        }
+
+        // ================= S2: aperture, rounded square =================
+        const ap = $("ap"), apImg = $("apImg"), apC = $("apC").getContext("2d");
+        function aperture(t) {
+          const on = t >= 2.5 && t < 3.9;
+          K.show(ap, on);
+          if (!on) return;
+          // circle (346) -> rounded square (742) -> centre tile (225)
+          const g1 = ioq(P(t, 3.04, 3.4)), g2 = ioq(P(t, 3.56, 3.88));
+          let s = L(346, 742, g1), r = L(173, 56, ioq(P(t, 3.04, 3.36)));
+          s = L(s, 225, g2); r = L(r, 15, g2);
+          box(ap, 540 - s / 2, 540 - s / 2, s, s, r);
+          ap.style.opacity = P(t, 2.5, 2.6).toFixed(3);
+          ap.style.boxShadow = "0 " + px(14 + 10 * g1) + " " + px(40) + " rgba(20,20,18," + (0.18 * P(t, 2.9, 3.2)).toFixed(3) + ")";
+          // the doorway sits in the middle of the aperture while it opens, then the photo relaxes to a plain crop
+          const c = 1 - ioq(P(t, 3.04, 3.4));
+          apImg.style.transform = "scale(" + L(1, 1.18, c).toFixed(3) + ")";
+          // shutter
+          const W = 742;
+          apC.clearRect(0, 0, W, W);
+          const op = E.inOutCubic(P(t, 2.56, 2.98));
+          if (op < 1) shutter(apC, (g) => g.arc(W / 2, W / 2, W / 2, 0, TAU), W / 2, W / 2, W / 2, L(0.07, 1.3, op), 0.25 + 0.9 * op, 1);
+        }
+
+        // ================= S3: the grid =================
+        const GI = ["mountain", "earth", "cyclist", "portrait", "door", "arch", "nebula", "hills", "hole"];
+        const grid = $("grid");
+        const TL = GI.map((n, k) => { const el = document.createElement("div"); el.className = "tile"; el.innerHTML = '<img src="assets/img/' + n + '.jpg" alt="" />'; grid.appendChild(el); return { el, n, c: k % 3, r: Math.floor(k / 3), k }; });
+        const L0 = (tl) => ({ x: 193.5 + tl.c * 234, y: 193.5 + tl.r * 234, s: 225 });
+        // featured layout: four columns, the arch takes the top-right 2x2
+        const F = { mountain: [0, 0], earth: [1, 0], portrait: [0, 1], cyclist: [1, 1], nebula: [0, 2], door: [1, 2], hills: [2, 2], hole: [3, 2] };
+        const L1 = (tl) => tl.n === "arch" ? { x: 191.5 + 2 * 176, y: 279.5, s: 345 } : { x: 191.5 + F[tl.n][0] * 176, y: 279.5 + F[tl.n][1] * 176, s: 169 };
+        const ARCH = { cx: 191.5 + 2 * 176 + 172.5, cy: 279.5 + 172.5 }, ZS = (1080 * 1.12) / 345;
+        function gridScene(t) {
+          const on = t >= 3.5 && t < 6.18;
+          K.show(grid, on);
+          if (!on) return;
+          const rl = ioq(P(t, 5.12, 5.38));
+          TL.forEach((tl) => {
+            const a = L0(tl), b = L1(tl);
+            let x = L(a.x, b.x, rl), y = L(a.y, b.y, rl), s = L(a.s, b.s, rl);
+            const dc = tl.c - 1, dr = tl.r - 1, dist = Math.hypot(dc, dr);
+            let o = 1, bl = 0, sc = 1;
+            if (tl.n === "door") { K.show(tl.el, t >= 3.88); }
+            else {
+              // the neighbours slide out from behind the centre tile
+              const t0 = 3.6 + dist * 0.05, u = E.outCubic(P(t, t0, t0 + 0.5));
+              K.show(tl.el, u > 0);
+              x -= dc * 234 * (1 - u); y -= dr * 234 * (1 - u); sc = L(0.86, 1, u); o = C(u * 3); bl = 10 * Math.sin(Math.PI * Math.min(u, 0.999)) + 4 * (1 - u);
+            }
+            if (tl.n === "arch") sc *= 1 + 0.04 * (P(t, 4.9, 5.04) - P(t, 5.1, 5.22));
+            const cx = x + s / 2, cy = y + s / 2;
+            box(tl.el, cx - (s * sc) / 2, cy - (s * sc) / 2, s * sc, s * sc, 15 * sc);
+            tl.el.style.opacity = o.toFixed(3);
+            tl.el.style.filter = blurS(bl);
+          });
+          // the camera dives into the arch
+          const z = E.inOutCubic(P(t, 5.45, 6.15)), S = L(1, ZS, z);
+          grid.style.transformOrigin = "0 0";
+          const fxp = ARCH.cx + (540 - ARCH.cx) * z, fyp = ARCH.cy + (540 - ARCH.cy) * z;
+          grid.style.transform = z > 0 ? "translate(" + px(fxp - ARCH.cx * S) + "," + px(fyp - ARCH.cy * S) + ") scale(" + S.toFixed(4) + ")" : "none";
+          grid.style.filter = blurS(5 * bump(t, 5.5, 6.12));
+        }
+
+        // ================= S4: viewer, relight, toolbar, slider =================
+        const vCam = $("vCam"), vG = $("vG"), relight = $("relight"), tb = $("tb"), panel = $("panel");
+        relight.textContent = v.relight;
+        const ICON = {
+          share: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 7.2l4-3.8 4 3.8M7 11H5.8v8.5h12.4V11H17"/></svg>',
+          heart: '<svg viewBox="0 0 24 24"><path id="hPath" d="M12 20.2s-7.6-4.6-7.6-10.3A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.5c0 5.7-7.6 10.3-7.6 10.3z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+          info: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.6M12 7.6v.2"/></svg>',
+          sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.3" fill="#fff"/><circle cx="15" cy="16" r="2.3" fill="#fff"/></svg>',
+        };
+        const TBX = [108, 264, 420, 576];
+        ["share", "heart", "info", "sliders"].forEach((k, i) => { const d = document.createElement("div"); d.className = "ico"; d.style.left = px(TBX[i]); d.innerHTML = ICON[k]; tb.appendChild(d); });
+        const icos = [...tb.querySelectorAll(".ico")];
+        $("pLab").innerHTML = '<svg viewBox="0 0 24 24" style="width:30px;height:30px" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><span>' + esc(v.slider) + "</span>";
+        const VK = [[6.15, 1.12, 540, 540], [7.35, 1.25, 540, 560], [7.8, 2.1, 540, 760], [8.35, 2.16, 540, 760], [8.68, 1.35, 540, 700], [10.45, 1.42, 540, 690]];
+        const vcam = (t) => keyed(VK, t);
+        const SLK = [[8.72, 0], [9.0, 6], [9.4, 70], [9.8, 100], [12, 100]];
+        const slider = (t) => keyed(SLK, t, (u) => u)[0];
+        const TB = { cx: 540, cy: 905, w: 684, h: 147 }, PN = { cx: 540, cy: 885, w: 990, h: 214 };
+        const frostBg = (el, url, s, fxv, fyv, ex, ey) => {
+          const size = 1080 * s, left = 540 - fxv * s - ex, top = 540 - fyv * s - ey;
+          el.style.backgroundImage = "linear-gradient(rgba(255,255,255,0.22),rgba(255,255,255,0.22)), url(" + url + ")";
+          el.style.backgroundSize = "100% 100%, " + px(size) + " " + px(size);
+          el.style.backgroundPosition = "0 0, " + px(left) + " " + px(top);
+        };
+        function viewer(t) {
+          const on = t >= 6.15 && t < 11.42;
+          K.show($("view"), on);
+          if (!on) return;
+          const [s, fxv, fyv] = vcam(t);
+          vCam.style.transform = "translate(" + px(540 - fxv * s) + "," + px(540 - fyv * s) + ") scale(" + s.toFixed(4) + ")";
+          vCam.style.filter = blurS(5 * bump(t, 7.35, 7.8) + 4 * bump(t, 8.35, 8.68));
+          const val = slider(t);
+          vG.style.opacity = (val / 100).toFixed(3);
+          // relight.
+          const ru = E.outCubic(P(t, 6.45, 6.82)), ro = P(t, 7.02, 7.32);
+          fade(relight, ru * (1 - ro));
+          relight.style.filter = blurS(14 * (1 - ru) + 14 * ro) === "none" ? "drop-shadow(0 4px 18px rgba(0,0,0,0.12))" : blurS(14 * (1 - ru) + 14 * ro);
+          relight.style.transform = "translateY(" + px(16 * (1 - ru) - 12 * ro) + ")";
+          frostBg(relight, "assets/img/arch_blur.jpg", s, fxv, fyv, 0, 214);
+          // toolbar
+          const ta = E.outCubic(P(t, 7.45, 7.75)), mo = ioq(P(t, 8.3, 8.62));
+          K.show(tb, ta > 0 && mo < 1);
+          K.show(panel, mo > 0 && t < 10.5);
+          if (ta > 0 && mo < 1) {
+            const w = L(L(120, TB.w, ta), PN.w, mo), h = L(L(40, TB.h, ta), PN.h, mo), cy = L(L(990, TB.cy, ta), PN.cy, mo);
+            box(tb, 540 - w / 2, cy - h / 2, w, h, h / 2);
+            tb.style.opacity = C(ta * 2).toFixed(3);
+            icos.forEach((ic, i) => { const iu = E.outBack(P(t, 7.55 + i * 0.04, 7.75 + i * 0.04), 2); ic.style.top = px(h / 2 - 23); ic.style.left = px(TBX[i] + (w - TB.w) / 2); ic.style.transform = "scale(" + C(iu, 0, 1.2).toFixed(3) + ")"; ic.style.opacity = (C(iu * 2) * (1 - P(t, 8.3, 8.4))).toFixed(3); });
+            const hp = $("hPath"), hf = P(t, 7.82, 7.86);
+            hp.setAttribute("fill", hf > 0 ? "#fff" : "none");
+            icos[1].style.transform = "scale(" + (C(E.outBack(P(t, 7.55 + 0.04, 7.79), 2), 0, 1.2) * (1 + 0.25 * bump(t, 7.82, 8.02))).toFixed(3) + ")";
+          }
+          if (mo > 0 && t < 10.5) {
+            const w = L(TB.w, PN.w, mo), h = L(TB.h, PN.h, mo), cy = L(TB.cy, PN.cy, mo);
+            const po = P(t, 10.2, 10.42);
+            box(panel, 540 - w / 2, cy - h / 2 + 30 * po, w, h, L(TB.h / 2, 46, mo));
+            panel.style.opacity = (1 - po).toFixed(3);
+            panel.style.filter = blurS(10 * po);
+            const cu = P(t, 8.48, 8.66);
+            ["pLab", "pVal", "pTrack"].forEach((id) => { $(id).style.opacity = cu.toFixed(3); });
+            $("pVal").textContent = String(Math.round(val));
+            $("pFill").style.width = val.toFixed(2) + "%";
+            $("pKnob").style.left = val.toFixed(2) + "%";
+          }
+        }
+        // the knob in screen coordinates, for the cursor
+        const knobAt = (val) => [PN.cx - PN.w / 2 + 50 + ((PN.w - 100) * val) / 100, PN.cy - PN.h / 2 + 152];
+
+        // ================= lens =================
+        const lens = $("lens"), lensImg = $("lensImg");
+        function lensScene(t) {
+          const on = t >= 10.4 && t < 11.42;
+          K.show(lens, on);
+          if (!on) return;
+          const r = t < 10.62 ? L(0, 260, E.outCubic(P(t, 10.4, 10.62))) : t < 11.0 ? L(260, 292, P(t, 10.62, 11.0)) : L(292, 800, E.inCubic(P(t, 11.0, 11.38)));
+          const ax = 540, ay = 545;
+          box(lens, ax - r, ay - r, 2 * r, 2 * r);
+          lens.style.borderWidth = px(L(2.5, 0, P(t, 11.15, 11.38)));
+          // inside: the next photo, zoomed on the crescent, settles to a normal framing
+          const z = ioq(P(t, 11.0, 11.38)), s0 = L(2.7, 2.25, P(t, 10.4, 11.0)), s = L(s0, 1, z), fxv = L(705, 540, z), fyv = L(169, 540, z), sx = L(ax, 540, z), sy = L(ay, 540, z);
+          const size = 1080 * s;
+          box(lensImg, sx - fxv * s - (ax - r), sy - fyv * s - (ay - r), size, size);
+          lensImg.style.filter = blurS(18 * (1 - P(t, 10.5, 10.9)));
+          lensImg.style.opacity = P(t, 10.52, 10.82).toFixed(3);
+          const [vs, vfx, vfy] = vcam(t), m = 1.14, lb = $("lensBase");
+          box(lb, ax + (540 - vfx * vs - ax) * m - (ax - r), ay + (540 - vfy * vs - ay) * m - (ay - r), 1080 * vs * m, 1080 * vs * m);
+          K.show(lb, t < 10.86);
+        }
+
+        // ================= S5 / S6: lock screen, phone =================
+        const phone = $("phone"), screen = $("screen"), scrImg = $("scrImg"), dateEl = $("date"), timeEl = $("time"), widget = $("widget"), home = $("home"), island = $("island");
+        dateEl.textContent = v.date; timeEl.textContent = v.time;
+        widget.querySelector(".t1").textContent = v.track; widget.querySelector(".t2").textContent = v.trackSub;
+        const PREV = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M11 7v10l-7-5zM20 7v10l-7-5z"/></svg>', NEXT = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M13 7v10l7-5zM4 7v10l7-5z"/></svg>';
+        const PLAY = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 5v14l12-7z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4.2" height="14" rx="1"/><rect x="13.8" y="5" width="4.2" height="14" rx="1"/></svg>';
+        $("c1").innerHTML = PREV; $("c3").innerHTML = NEXT;
+        // phone rectangle over time: full frame -> centred phone -> parked on the left
+        const PK = [[13.0, 540, 540, 1080, 1080, 0, 0], [13.4, 520, 535, 380, 640, 50, 8], [13.8, 436, 540, 250, 518, 40, 7], [14.2, 227, 541, 240, 507, 40, 7]];
+        const phoneRect = (t) => keyed(PK, t, ioq);
+        let playIcon = "";
+        function lockAndPhone(t) {
+          const on = t >= 11.36 && t < 21.9;
+          K.show(phone, on);
+          if (!on) return;
+          const [cx, cy, w, h, rad, bez] = phoneRect(t);
+          box(phone, cx - w / 2, cy - h / 2, w, h, rad);
+          phone.style.boxShadow = bez > 0.5 ? "0 30px 60px rgba(20,30,80," + (0.28 * P(t, 13.0, 13.4)).toFixed(3) + ")" : "none";
+          const SW = w - 2 * bez, SH = h - 2 * bez;
+          box(screen, bez, bez, SW, SH, Math.max(0, rad - bez * 0.8));
+          const mv = bump(t, 13.45, 14.15);
+          if (mv > 0.02) mblur(phone, "ph", 16 * mv, 2 * mv); else phone.style.filter = "none";
+          // the photo covers the screen, centred a little left so the astronaut stays in view
+          const D = Math.max(SW, SH), fxv = L(0.5, 0.45, C((1080 - SW) / 800)), il = SW / 2 - D * fxv, it = SH / 2 - D / 2;
+          box(scrImg, il, it, D, D);
+          // lock screen layout scales with the screen height
+          const k = SH / 1080;
+          const du = E.outCubic(P(t, 11.5, 11.78));
+          dateEl.style.width = px(SW); dateEl.style.top = px(94 * k); dateEl.style.fontSize = px(33 * k);
+          dateEl.style.opacity = du.toFixed(3); dateEl.style.filter = blurS(8 * (1 - du));
+          const tu = E.outCubic(P(t, 11.62, 12.05));
+          timeEl.style.width = px(SW); timeEl.style.top = px(150 * k); timeEl.style.fontSize = px(292 * k); timeEl.style.webkitTextStrokeWidth = px(1.5 * Math.max(0.4, k));
+          timeEl.style.opacity = tu.toFixed(3); timeEl.style.filter = tu < 1 ? blurS(20 * (1 - tu)) : "drop-shadow(0 6px 22px rgba(0,0,0,0.1))";
+          timeEl.style.backgroundImage = "linear-gradient(rgba(255,255,255,0.3),rgba(255,255,255,0.3)), url(assets/img/astro_blur.jpg)";
+          timeEl.style.backgroundSize = "100% 100%, " + px(D) + " " + px(D);
+          timeEl.style.backgroundPosition = "0 0, " + px(il) + " " + px(it - 150 * k);
+          // the now-playing widget
+          const nar = C((1080 - SW) / 700), wW = Math.min(684 * k, SW * 0.92), wH = 128 * k * L(1, 1.15, nar);
+          const wu = E.outCubic(P(t, 12.0, 12.32));
+          const wx = SW / 2 - wW / 2, wy = SH - 90 * k - wH;
+          box(widget, wx, wy + 110 * k * (1 - wu), wW, wH, wH / 2);
+          widget.style.opacity = wu.toFixed(3); widget.style.filter = blurS(10 * (1 - wu));
+          const f = wH / 128;
+          const t1 = widget.querySelector(".t1"), t2 = widget.querySelector(".t2");
+          t1.style.left = px(30 * f); t1.style.top = px(30 * f); t1.style.fontSize = px(22 * f);
+          t2.style.left = px(30 * f); t2.style.top = px(60 * f); t2.style.fontSize = px(17 * f);
+          [["c1", wW - 154 * f], ["c2", wW - 92 * f], ["c3", wW - 34 * f]].forEach(([id, x]) => { const c = $(id); box(c, x - 13 * f, 30 * f, 26 * f, 26 * f); });
+          const playing = t >= 12.56;
+          const want = playing ? PAUSE : PLAY;
+          if (playIcon !== want) { $("c2").innerHTML = want; playIcon = want; }
+          $("c2").style.transform = "scale(" + (1 + 0.2 * bump(t, 12.56, 12.72)).toFixed(3) + ")";
+          box($("wTrack"), 30 * f, wH - 24 * f, wW - 60 * f, 3.2 * f);
+          $("wFill").style.width = (30 + 4 * P(t, 12.56, 21) * 10).toFixed(2) + "%";
+          box(home, SW / 2 - 67 * k, SH - 30 * k, 135 * k, 5 * k);
+          home.style.opacity = P(t, 12.0, 12.3).toFixed(3);
+          const iw = 0.3 * SW, ih = 0.095 * SW;
+          box(island, cx - w / 2 + w / 2 - iw / 2, bez + 0.022 * SH, iw, ih, ih / 2);
+          island.style.left = px(w / 2 - iw / 2);
+          island.style.opacity = P(t, 13.15, 13.4).toFixed(3);
+        }
+
+        // ================= S6 / S7: browser =================
+        const br = $("br"), brIn = $("brIn");
+        const BK = [[14.3, 0.5, 412, 315], [16.1, 0.5, 412, 315], [16.58, 0.78, 110, 180], [17.2, 0.8, 100, 170], [17.6, 0.86, 11, 150], [18.0, 0.87, 0, 140], [19.2, 0.95, -180, 60], [20.2, 1.25, -602, -262], [21.6, 1.32, -668, -311]];
+        const bcam = (t) => keyed(BK, t);
+        const toScr = (t, nx, ny) => { const [k, ox, oy] = bcam(t); return [ox + nx * k, oy + ny * k]; };
+        const FAV = list(v.favs), FAVC = [["#efe2d0", "#a7835a"], ["#d9e1ec", "#5c7090"], ["#dfe7da", "#64805a"], ["#efdcdc", "#a05d5d"], ["#e2def0", "#6e66a0"], ["#ebe6d2", "#8c7f4f"]];
+        $("chrome").innerHTML = '<div class="tl" style="left:30px;background:#ff5f57"></div><div class="tl" style="left:61px;background:#febc2e"></div><div class="tl" style="left:92px;background:#28c840"></div><svg viewBox="0 0 24 24" style="position:absolute;left:138px;top:22px;width:26px;height:26px" fill="none" stroke="#6b6a66" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M9 5v14"/></svg><div class="tab" id="tab1" style="left:230px;width:290px"><span style="color:#8a8984">★</span>Start Page</div><div class="tab" id="tab2" style="left:540px;width:300px"><span style="display:inline-block;width:22px;height:10px;border-radius:5px;background:' + INK + '"></span>' + esc(word.replace(/\.$/, "")) + '</div><div style="position:absolute;right:30px;top:16px;font:300 34px/1 Inter;color:#6b6a66">+</div>';
+        $("pStart").innerHTML = '<div class="lab" style="left:100px;top:84px;font-size:26px">Favorites</div>' + FAV.slice(0, 6).map((f, i) => '<div class="fav" style="left:' + (106 + i * 150) + "px;top:142px;background:" + FAVC[i][0] + ";color:" + FAVC[i][1] + '">' + esc(f) + "</div>").join("") + '<div class="lab" style="left:100px;top:302px;font-size:26px">Reading List</div>' + [0, 1, 2].map((i) => '<div class="rl" style="left:' + (100 + i * 354) + 'px;top:366px"></div>').join("");
+        const NAV = list(v.nav);
+        $("pSite").innerHTML = '<div class="wide" style="position:absolute;left:58px;top:40px;font-size:34px;line-height:1">' + esc(word.replace(/\.$/, "")) + "</div>" + NAV.map((n, i) => '<div class="nav" style="left:' + (700 + i * 100) + 'px;top:48px">' + esc(n) + "</div>").join("") + '<div id="siteCta" style="left:1040px;top:34px;width:130px;height:46px;border-radius:23px;font:600 19px/1 Inter">' + esc(v.siteCta) + '</div><div id="hero" class="wide" style="position:absolute;left:58px;top:140px;font-size:62px;line-height:1.1;white-space:nowrap">' + esc(v.hero1) + "<br>" + esc(v.hero2) + '</div><div id="heroD" style="position:absolute;left:58px;top:318px;font:400 21px/1.5 Inter;color:#6d6c68;white-space:nowrap">' + esc(v.desc1) + "<br>" + esc(v.desc2) + '</div><div id="drop" style="left:365px;top:150px;width:500px;height:420px"><svg viewBox="0 0 24 24" style="width:44px;height:44px" fill="none" stroke="#9a9993" stroke-width="1.5"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M5 17l4.5-4.5 3 3 2.5-2.5 4 4"/></svg><span>' + esc(v.drop) + '</span></div><div id="sitePhoto" style="left:365px;top:150px;width:500px;height:420px"><img class="cover" src="assets/img/astro.jpg" alt="" /></div><div style="position:absolute;left:58px;top:742px;width:420px;height:44px;border-radius:22px;background:#e4e2dc"></div>';
+        const SZ = list(v.sizes);
+        $("pProd").innerHTML = '<div id="panelL" style="left:40px;top:40px;width:580px;height:752px"></div><div id="pf"><div id="pfMat"></div><div id="pfImg"><img class="cover" src="assets/img/astro.jpg" alt="" style="object-position:40% 50%" /></div></div><div class="wide" style="position:absolute;left:680px;top:92px;font-size:58px;line-height:1;white-space:nowrap">' + esc(v.prodTitle) + '</div><div style="position:absolute;left:680px;top:176px;font:400 23px/1.45 Inter;color:#6d6c68;white-space:nowrap">' + esc(v.prodDesc1) + "<br>" + esc(v.prodDesc2) + '</div><div class="lab" style="left:680px;top:282px;font-size:21px">' + esc(v.frameLabel) + '</div><div class="sw" style="left:703px;top:342px;background:linear-gradient(140deg,#d2a676,#a77a4c)"></div><div class="sw" style="left:769px;top:342px;background:#141416"></div><div class="sw" style="left:835px;top:342px;background:#f4f4f1;border:1.5px solid #d3d1ca"></div><div id="swRing" style="left:703px;top:342px"></div><div class="lab" style="left:680px;top:408px;font-size:21px">' + esc(v.sizeLabel) + '</div><div id="seg" style="left:680px;top:440px;width:500px;height:62px"><div id="segOn"></div>' + SZ.map((s, i) => '<div class="segL" style="left:' + i * 166.7 + 'px;width:166.7px">' + esc(s) + "</div>").join("") + '</div><div style="position:absolute;left:680px;top:540px;font:700 36px/1 Inter;letter-spacing:-0.01em">' + esc(v.price) + '</div><div id="orderBtn" style="left:680px;top:610px;width:500px;height:80px;border-radius:40px"><div id="orderIn"></div></div>';
+        const pf = $("pf"), pfMat = $("pfMat"), pfImg = $("pfImg");
+        const FSIZE = [[220, 290], [276, 360], [340, 446]];
+        const SPIN = (a) => '<svg viewBox="0 0 24 24" style="width:30px;height:30px;transform:rotate(' + a.toFixed(0) + 'deg)"><path d="M12 3a9 9 0 1 1-8.5 6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
+        const CHK = (w) => '<svg viewBox="0 0 24 24" style="width:' + w + "px;height:" + w + 'px"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const PRN = '<svg viewBox="0 0 24 24" style="width:26px;height:26px" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M7 9V4h10v5M7 17H5a1.5 1.5 0 0 1-1.5-1.5V10.5A1.5 1.5 0 0 1 5 9h14a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 19 17h-2"/><rect x="7" y="14" width="10" height="6" rx="1"/></svg>';
+        const TRUCK = '<svg viewBox="0 0 30 20" style="width:34px;height:22px" fill="#fff"><rect x="1" y="3" width="17" height="11" rx="1.5"/><path d="M19 7h5l4 4v3h-9z"/><circle cx="7" cy="16" r="2.6" stroke="#000" stroke-width="1.2"/><circle cx="23" cy="16" r="2.6" stroke="#000" stroke-width="1.2"/></svg>';
+        let lastOrder = "";
+        function browser(t) {
+          const on = t >= 14.52 && t < 21.9;
+          K.show(br, on);
+          K.show($("ribbon"), t >= 12.95 && t < 22.0);
+          if (!on) return;
+          const [k, ox, oy] = bcam(t);
+          br.style.transform = "translate(" + px(ox) + "," + px(oy) + ") scale(" + k.toFixed(4) + ")";
+          const zb = bump(t, 16.1, 16.58) * 4 + bump(t, 17.2, 17.6) * 3 + bump(t, 19.2, 20.2) * 2;
+          br.style.filter = blurS(zb);
+          $("brBlack").style.opacity = (1 - P(t, 14.72, 14.95)).toFixed(3);
+          // tabs and pages
+          const site = t >= 15.5;
+          $("tab1").className = "tab" + (site ? "" : " on"); $("tab2").className = "tab" + (site ? " on" : "");
+          const sw = P(t, 15.5, 15.62), pr = E.inOutCubic(P(t, 17.2, 17.6)), so = P(t, 17.2, 17.42), pi = E.outCubic(P(t, 17.3, 17.62));
+          fade($("pStart"), 1 - sw);
+          K.show($("pSite"), sw > 0 && so < 1); $("pSite").style.opacity = (sw * (1 - so)).toFixed(3);
+          $("pSite").style.transform = "translateX(" + px(-420 * pr) + ")"; $("pSite").style.filter = blurS(12 * pr);
+          K.show($("pProd"), pi > 0); $("pProd").style.opacity = pi.toFixed(3);
+          $("pProd").style.transform = "translateX(" + px(360 * (1 - pi)) + ")"; $("pProd").style.filter = blurS(12 * (1 - pi));
+          // the drop zone fills with the photo
+          const dropped = P(t, 16.05, 16.2), lay = ioq(P(t, 16.28, 16.72));
+          fade($("sitePhoto"), dropped); $("drop").style.opacity = (1 - dropped).toFixed(3);
+          box($("sitePhoto"), L(365, 690, lay), L(150, 112, lay), L(500, 480, lay), L(420, 560, lay));
+          ["hero", "heroD"].forEach((id, i) => { const e = $(id), u = E.outCubic(P(t, 16.4 + i * 0.08, 16.8 + i * 0.08)); e.style.opacity = u.toFixed(3); e.style.transform = "translateX(" + px(-40 * (1 - u)) + ")"; e.style.filter = blurS(10 * (1 - u)); });
+          $("drop").style.borderColor = t >= 15.62 && t < 16.05 ? "#8a8984" : "#b4b2ab";
+          // product page: frame colour, size, order button states
+          const black = P(t, 18.5, 18.66), big = ioq(P(t, 19.0, 19.3));
+          $("swRing").style.left = px(L(703, 769, ioq(P(t, 18.5, 18.68))));
+          const fw = L(FSIZE[1][0], FSIZE[2][0], big), fh = L(FSIZE[1][1], FSIZE[2][1], big), fb = 13 + 3 * big;
+          const pcx = 330, pcy = 40 + 376;
+          box(pf, pcx - fw / 2, pcy - fh / 2, fw, fh);
+          pf.style.background = black > 0 ? "rgb(" + [Math.round(L(185, 20, black)), Math.round(L(138, 20, black)), Math.round(L(90, 22, black))].join(",") + ")" : "linear-gradient(140deg,#c99b6a,#a77a4c)";
+          const mp = fw * 0.12;
+          box(pfMat, fb, fb, fw - 2 * fb, fh - 2 * fb);
+          box(pfImg, fb + mp, fb + mp, fw - 2 * fb - 2 * mp, fh - 2 * fb - 2 * mp);
+          const segX = L(166.7, 333.4, ioq(P(t, 18.98, 19.2)));
+          box($("segOn"), segX + 6, 6, 166.7 - 12, 50, 12);
+          const ob = $("orderBtn"), oi = $("orderIn");
+          // the button drops into place, then gets pressed
+          const od = E.outBack(P(t, 17.62, 18.12), 1.3);
+          ob.style.transform = "translateY(" + px(-380 * (1 - od)) + ") scale(" + (1 - 0.03 * bump(t, 19.33, 19.47)).toFixed(3) + ")";
+          if (t < 18.2) mblur(ob, "ob", 2, 26 * bump(t, 17.62, 18.0)); else ob.style.filter = "none";
+          let html = "", key = "";
+          if (t < 19.4) { key = "a"; html = '<div style="position:absolute;left:0;width:100%;top:0;line-height:80px;text-align:center;font:600 26px/80px Inter">' + esc(v.order) + "</div>"; }
+          else if (t < 19.86) { key = "s" + Math.floor(t * 30); html = '<div style="position:absolute;left:235px;top:25px">' + SPIN((t - 19.4) * 720) + "</div>"; }
+          else if (t < 20.36) { key = "o"; html = '<div style="position:absolute;left:0;width:100%;top:0;display:flex;align-items:center;justify-content:center;gap:12px;height:80px;font:600 26px/1 Inter">' + CHK(28) + esc(v.ordered) + "</div>"; }
+          else if (t < 21.05) { const pc = Math.round(L(4, 100, E.inCubic(P(t, 20.4, 20.98)))); key = "p" + pc; html = '<div style="position:absolute;left:40px;top:18px;display:flex;align-items:center;gap:12px;font:600 23px/1 Inter">' + PRN + esc(v.printing) + '</div><div style="position:absolute;right:40px;top:22px;font:600 21px/1 Inter;font-variant-numeric:tabular-nums">' + pc + '%</div><div style="position:absolute;left:40px;right:40px;top:58px;height:3px;background:rgba(255,255,255,0.25);border-radius:2px"><div style="width:' + pc + '%;height:3px;background:#fff;border-radius:2px"></div></div>'; }
+          else if (t >= 21.46) { key = "c"; html = '<div style="position:absolute;left:0;width:100%;top:0;height:80px;display:flex;align-items:center;justify-content:center">' + CHK(34) + "</div>"; }
+          else { const tr = ioq(P(t, 21.1, 21.42)); key = "w" + Math.round(tr * 60); html = '<div style="position:absolute;left:40px;top:16px;font:600 23px/1 Inter">' + esc(v.shipping) + '</div><div style="position:absolute;right:40px;top:18px;font:500 20px/1 Inter;color:rgba(255,255,255,0.7)">' + esc(v.shipWhen) + '</div><div style="position:absolute;left:40px;right:40px;top:58px;height:3px;background:rgba(255,255,255,0.25);border-radius:2px"><div style="width:' + (100 * tr).toFixed(1) + '%;height:3px;background:#fff;border-radius:2px"></div></div><div style="position:absolute;left:' + (24 + 386 * tr).toFixed(1) + 'px;top:47px">' + TRUCK + "</div>"; }
+          if (key !== lastOrder) { oi.innerHTML = html; lastOrder = key; }
+          const col = ioq(P(t, 21.42, 21.6));
+          ob.style.width = px(L(500, 80, col)); ob.style.left = px(680 + 210 * col);
+        }
+
+        // ---------- the black pill that flies out of the phone and becomes the window ----------
+        function flyPill(t) {
+          const on = t >= 14.0 && t < 14.62;
+          K.show($("flyPill"), on);
+          if (!on) return;
+          const [pcx, pcy, pw, ph] = phoneRect(t);
+          const f = E.inOutCubic(P(t, 14.0, 14.22)), g = E.outCubic(P(t, 14.22, 14.44));
+          const sx = 225, sy = 541 - 507 / 2 + 22, x = L(sx, 700, f), y = L(sy, 545, f) - 60 * Math.sin(Math.PI * f);
+          let w = L(72, 150, f), h = L(22, 40, f), r = h / 2;
+          const bx = 412, by = 315, bw = 615, bh = 450;
+          const X = L(x - w / 2, bx, g), Y = L(y - h / 2, by, g), W = L(w, bw, g), H = L(h, bh, g);
+          box($("flyPill"), X, Y, W, H, L(r, 11, g));
+          mblur($("flyPill"), "fp", 14 * bump(t, 14.0, 14.24), 2);
+          $("flyPill").style.opacity = (1 - P(t, 14.56, 14.62)).toFixed(3);
+        }
+
+        // ---------- the dragged photo ----------
+        function drag(t, cur) {
+          const on = t >= 15.02 && t < 16.22;
+          K.show($("drag"), on);
+          if (!on) return;
+          const [pcx, pcy, pw, ph, prad, pb] = phoneRect(t);
+          const lift = ioq(P(t, 15.02, 15.22)), drop = ioq(P(t, 15.96, 16.2));
+          const sw0 = pw - 2 * pb, sh0 = ph - 2 * pb, sx0 = pcx - sw0 / 2, sy0 = pcy - sh0 / 2;
+          const w1 = 130, h1 = 165, x1 = cur[0] - w1 * 0.45, y1 = cur[1] - h1 * 0.4;
+          const d0 = toScr(16.2, 365, 68 + 150), d1 = toScr(16.2, 865, 68 + 570);
+          let x = L(sx0, x1, lift), y = L(sy0, y1, lift), w = L(sw0, w1, lift), h = L(sh0, h1, lift);
+          x = L(x, d0[0], drop); y = L(y, d0[1], drop); w = L(w, d1[0] - d0[0], drop); h = L(h, d1[1] - d0[1], drop);
+          box($("drag"), x, y, w, h, L(30, 10, lift));
+          $("drag").style.opacity = (C(P(t, 15.02, 15.08) * 1) * (1 - P(t, 16.15, 16.22))).toFixed(3);
+          $("drag").style.transform = "rotate(" + (4 * lift * (1 - drop)).toFixed(2) + "deg)";
+        }
+
+        // ================= S8: the wall =================
+        const wallS = $("wallS"), wallCam = $("wallCam"), fg = $("fg"), hands = $("hands"), haze = $("haze").getContext("2d");
+        const FR = { x: 272, y: 190, w: 538, h: 690 }, IN = { x: 305, y: 223, w: 472, h: 624 };
+        function wall(t) {
+          const on = t >= 21.84 && t < 26.62;
+          K.show(wallS, on);
+          if (!on) return;
+          // the frame is lifted toward the camera
+          const lf = ioq(P(t, 25.0, 25.5)), Ls = L(1, 1.3, lf), lty = -22 * lf;
+          const fcx = 541, fcy = 535;
+          fg.style.transform = "translate(" + px(fcx * (1 - Ls)) + "," + px(fcy * (1 - Ls) + lty) + ") scale(" + Ls.toFixed(4) + ")";
+          K.show($("fgFrame"), lf > 0);
+          // hands come in from below
+          const hu = E.outCubic(P(t, 23.1, 23.85));
+          hands.style.transform = "translateY(" + px(440 * (1 - hu)) + ")";
+          K.show(hands, hu > 0);
+          // the print develops: a milky haze washes over it and clears
+          haze.clearRect(0, 0, 333, 452);
+          const hz = bump(t, 24.3, 25.0);
+          if (hz > 0) {
+            for (let k = 0; k < 9; k++) {
+              const x = R(k * 3.1) * 333, y = R(k * 5.7) * 452 + (t - 24.3) * L(-40, 40, R(k * 2.2)), r = L(120, 260, R(k * 7.3));
+              const g = haze.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(236,238,232," + (0.75 * hz).toFixed(3) + ")"); g.addColorStop(1, "rgba(236,238,232,0)");
+              haze.fillStyle = g; haze.fillRect(0, 0, 333, 452);
+            }
+          }
+          // the camera dives into the black of the backpack
+          const pcx = fcx + (540 - fcx) * Ls, pcy = fcy + (536 - fcy) * Ls + lty;
+          const bxl = fcx + (443 - fcx) * Ls, byl = fcy + (561 - fcy) * Ls + lty;
+          // first frame the astronaut (half way from the photo centre to the backpack), then fall into the backpack
+          const FAx = pcx + (bxl - pcx) * 0.5, FAy = pcy + (byl - pcy) * 0.5;
+          const a = ioq(P(t, 25.42, 25.86)), SA = 3.3 * (1 + 0.12 * P(t, 25.86, 26.4)), sA = L(1, SA, a), ax = L(FAx, 540, a), ay = L(FAy, 540, a);
+          const B0x = 540 + (bxl - FAx) * SA, B0y = 540 + (byl - FAy) * SA;
+          const b = P(t, 26.4, 26.6), sB = Math.exp(Math.log(14) * E.inCubic(b)), cbx = L(B0x, 540, ioq(b)), cby = L(B0y, 540, ioq(b));
+          // screen = CB + ((A + (X - Pc) * sA) - B0) * sB, as one translate + scale
+          const S = sA * sB, Tx = b > 0 ? cbx + (ax - FAx * sA - B0x) * sB : ax - FAx * sA, Ty = b > 0 ? cby + (ay - FAy * sA - B0y) * sB : ay - FAy * sA;
+          wallCam.style.transform = a > 0 ? "translate(" + px(Tx) + "," + px(Ty) + ") scale(" + S.toFixed(4) + ")" : "none";
+          wallCam.style.filter = blurS(3 * bump(t, 25.42, 25.86) + 6 * b);
+        }
+
+        // ================= fx canvas: black circle -> rounded square -> frame -> iris =================
+        function fxLayer(t) {
+          fx.clearRect(0, 0, 1080, 1080);
+          if (t >= 21.64 && t < 22.98) {
+            const bc = toScr(21.5, 930, 650 + 68);
+            const g1 = E.inQuad(P(t, 21.64, 21.86)), g2 = ioq(P(t, 21.86, 22.12)), g3 = ioq(P(t, 22.1, 22.4));
+            fx.save();
+            fx.fillStyle = "#050506";
+            if (t < 21.86) { const r = L(53, 820, g1); fx.beginPath(); fx.arc(L(bc[0], 540, g1), L(bc[1], 540, g1), r, 0, TAU); fx.fill(); }
+            else {
+              // circle -> rounded square -> the frame on the wall
+              const r0 = 800, w = L(L(2 * r0, 995, g2), FR.w, g3), h = L(L(2 * r0, 1046, g2), FR.h, g3);
+              const cx = L(540, FR.x + FR.w / 2, g3), cy = L(540, FR.y + FR.h / 2, g3), rr = L(L(r0, 110, g2), 3, g3);
+              const fa = 1 - P(t, 22.84, 22.96);
+              fx.globalAlpha = fa;
+              fx.beginPath(); rrect(fx, cx - w / 2, cy - h / 2, w, h, rr); fx.fill();
+              if (t >= 22.4) {
+                // the iris inside the frame
+                const op = E.inOutCubic(P(t, 22.46, 22.84));
+                fx.globalCompositeOperation = "destination-out";
+                fx.beginPath(); rrect(fx, IN.x, IN.y, IN.w, IN.h, 2); fx.fill();
+                fx.globalCompositeOperation = "source-over";
+                shutter(fx, (g) => rrect(g, IN.x, IN.y, IN.w, IN.h, 2), IN.x + IN.w / 2, IN.y + IN.h / 2, 410, L(0.0, 1.3, op), 0.4 + op, fa);
+              }
+            }
+            fx.restore();
+            // the check mark rides the centre of the black
+            const ck = 1 - P(t, 22.0, 22.1);
+            if (ck > 0) {
+              const kx = t < 21.86 ? L(bc[0], 540, g1) : 540, ky = t < 21.86 ? L(bc[1], 540, g1) : 540, ks = L(1, 1.5, g1);
+              fx.save(); fx.globalAlpha = ck; fx.strokeStyle = "#fff"; fx.lineWidth = 5 * ks; fx.lineCap = "round"; fx.lineJoin = "round";
+              fx.beginPath(); fx.moveTo(kx - 15 * ks, ky + 1 * ks); fx.lineTo(kx - 4 * ks, ky + 12 * ks); fx.lineTo(kx + 17 * ks, ky - 11 * ks); fx.stroke(); fx.restore();
+            }
+          }
+          // black at the bottom of the dive, handed to the pill
+          const bk = P(t, 26.46, 26.58);
+          if (bk > 0 && t < 26.62) { fx.fillStyle = "rgba(11,11,13," + bk.toFixed(3) + ")"; fx.fillRect(0, 0, 1080, 1080); }
+        }
+
+        // ================= cursor =================
+        const CKS = [];
+        const ck = (t, x, y) => CKS.push([t, x, y]);
+        ck(0, 889, 862); ck(1.4, 889, 862); ck(1.8, 855, 826); ck(2.22, 612, 572); ck(2.4, 612, 572); ck(2.65, 640, 600); ck(3.05, 850, 837); ck(3.4, 871, 855); ck(3.85, 871, 855); ck(4.25, 871, 742); ck(4.6, 812, 676); ck(5.0, 781, 556); ck(6.6, 781, 556); ck(7.0, 749, 603); ck(7.4, 520, 990); ck(7.72, 466, 912); ck(7.9, 466, 912); ck(8.2, 778, 912);
+        const k0 = knobAt(0);
+        ck(8.32, 778, 912); ck(8.68, k0[0] + 6, k0[1] + 4);
+        [[9.0, 6], [9.4, 70], [9.8, 100], [10.15, 100]].forEach(([tt, vv]) => { const p = knobAt(vv); ck(tt, p[0] + 6, p[1] + 4); });
+        ck(10.38, 540, 545); ck(10.62, 540, 545); ck(11.1, 960, 780); ck(11.4, 878, 749); ck(12.15, 860, 800); ck(12.48, 799, 910); ck(12.62, 799, 910); ck(13.1, 839, 877); ck(14.55, 893, 826); ck(14.98, 232, 560); ck(15.05, 232, 560);
+        const tabS = toScr(15.4, 690, 34), dz = toScr(15.9, 615, 68 + 360);
+        ck(15.42, tabS[0], tabS[1] + 6); ck(15.55, tabS[0] + 4, tabS[1] + 8); ck(15.92, dz[0], dz[1]); ck(16.25, dz[0] - 20, dz[1] + 30);
+        [[17.0, 940, 68 + 400], [17.15, 940, 68 + 400], [17.85, 760, 68 + 480], [18.45, 769, 68 + 342], [18.55, 769, 68 + 342], [18.95, 1100, 68 + 471], [19.05, 1100, 68 + 471], [19.35, 930, 68 + 650], [21.4, 930, 68 + 650]].forEach(([tt, nx, ny]) => { const p = toScr(tt, nx, ny); ck(tt, p[0] + 4, p[1] + 6); });
+        ck(26.9, 927, 900); ck(27.45, 889, 862); ck(29, 889, 862);
+        const CLICKS = [2.3, 5.15, 7.8, 8.25, 12.55, 15.05, 17.1, 18.5, 19.0, 19.35];
+        const cursorAt = (t) => { for (let i = 0; i < CKS.length - 1; i++) if (t < CKS[i + 1][0]) { const a = CKS[i], b = CKS[i + 1], u = ioq((t - a[0]) / (b[0] - a[0])); return [L(a[1], b[1], u), L(a[2], b[2], u)]; } const l = CKS[CKS.length - 1]; return [l[1], l[2]]; };
+        function cursor(t) {
+          const cu = $("cursor"), on = t < 21.62 || t >= 26.9;
+          K.show(cu, on);
+          if (!on) return [0, 0];
+          const p = cursorAt(t), pr = CLICKS.reduce((m, a) => Math.max(m, bump(t, a - 0.04, a + 0.12)), 0);
+          cu.style.transform = "translate(" + px(p[0] - 2) + "," + px(p[1] - 1.5) + ") scale(" + (1 - 0.16 * pr).toFixed(3) + ")";
+          cu.style.opacity = (t >= 26.9 ? P(t, 26.9, 27.05) : 1 - P(t, 21.55, 21.62)).toFixed(3);
+          return p;
+        }
+
+        function render(t) {
+          s1(t);
+          pillShape(t);
+          aperture(t);
+          gridScene(t);
+          viewer(t);
+          lensScene(t);
+          wall(t);
+          lockAndPhone(t);
+          flyPill(t);
+          browser(t);
+          const cp = cursor(t);
+          drag(t, cp);
+          fxLayer(t);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { WG = null; render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

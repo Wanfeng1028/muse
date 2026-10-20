@@ -1,0 +1,54 @@
+{
+  "packs": {
+    "kenney-tech": {
+      "title": "Kenney tech: interface clicks, digital power-ups, punchy impacts",
+      "licence": "CC0 1.0",
+      "credit": "Kenney (kenney.nl): Interface Sounds, Digital Audio, Impact Sounds",
+      "archives": {
+        "interface": {
+          "url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+          "sha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232"
+        },
+        "digital": {
+          "url": "https://kenney.nl/media/pages/assets/digital-audio/216eac4753-1677590265/kenney_digital-audio.zip",
+          "sha256": "24e6ce28b76a6d8c89cff4d331e0965ff5c3de8a73c612028e9d363cc64e4f06"
+        },
+        "impact": {
+          "url": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+          "sha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8"
+        }
+      },
+      "cues": {
+        "hit": ["impact/impactPunch_heavy_000.ogg", "impact/impactPunch_heavy_001.ogg", "impact/impactPunch_heavy_002.ogg"],
+        "riser": ["digital/powerUp1.ogg"],
+        "down": ["digital/lowDown.ogg"],
+        "type": ["interface/click_002.ogg", "interface/click_003.ogg", "interface/click_004.ogg"],
+        "tick": ["interface/tick_001.ogg", "interface/tick_002.ogg"],
+        "pop": ["interface/drop_002.ogg", "interface/drop_003.ogg"],
+        "ding": ["interface/confirmation_002.ogg"],
+        "stamp": ["impact/impactSoft_heavy_000.ogg", "impact/impactSoft_heavy_001.ogg"],
+        "error": ["interface/error_004.ogg"]
+      }
+    }
+  },
+  "music": {
+    "holizna-chill-beats": {
+      "title": "HoliznaCC0, Chill Beats: lo-fi instrumentals",
+      "licence": "CC0 1.0",
+      "credit": "HoliznaCC0 (holiznacc0.bandcamp.com), Chill Beats collection",
+      "page": "https://opengameart.org/content/chill-beats-collection",
+      "archive": {
+        "url": "https://opengameart.org/sites/default/files/chill_beats.zip",
+        "sha256": "53ce04d6c124843235ccfbea94be3f8c6afb3cfd3c6924badc124a4ec0d49f37"
+      },
+      "tracks": {
+        "city-in-the-rearview": "01 HoliznaCC0 - City In The Rearview.mp3",
+        "families": "03 HoliznaCC0 - Families.mp3",
+        "opinions": "05 HoliznaCC0 - Opinions.mp3",
+        "old-age": "06 HoliznaCC0 - Old Age.mp3",
+        "dream-pop": "08 HoliznaCC0 - Dream Pop.mp3",
+        "autumn": "28 HoliznaCC0 - Autumn.mp3"
+      }
+    }
+  }
+}

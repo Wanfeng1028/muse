@@ -1,0 +1,26 @@
+{
+  "id": "24-one-time-bundle",
+  "title": "One-time bundle promo — subscription pile-up, vortex, tool slides, screenshot wall, pay-once deal, social proof",
+  "category": "product launch / pricing",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "Toolnest (fictional)",
+  "source": {
+    "author": "@simonhoiberg",
+    "post": "https://x.com/simonhoiberg/status/2103916672080097521",
+    "note": "Remade from scratch in HyperFrames after the FounderStack promo; structure and pacing follow it. Brand, product names, screenshots, prices and numbers are fictional placeholders — replace them all before publishing."
+  },
+  "scenes": [
+    "20 subscription cards pile up while a monthly-spend pill counts up; headline with RGB glitch",
+    "three hard beats (Every. / Single. / Month.) on a red tint, then the cards swirl into a vortex",
+    "the lockup: diamond mark with chevrons, wordmark wipes in over a blue floor grid",
+    "four full-screen tool slides with outlined background words and flip transitions",
+    "a tilted 3D wall of product screenshots, headline rises letter by letter, 20 feature chips light up",
+    "white wipe to the deal: struck-through subscription prices, circled one-time price",
+    "counter rolls to the customer number with rays, stars, rating and guarantee pill",
+    "end lockup with tagline and a URL pill with a shine"
+  ],
+  "variables": ["brandA", "brandB", "domain", "code", "probA", "probB", "probC", "beat1", "beat2", "beat3", "t1Name", "t1Sub", "t1Tag", "t2Name", "t2Sub", "t2Tag", "t3Name", "t3Sub", "t3Tag", "t4Name", "t4Sub", "t4Tag", "fourA", "fourB1", "fourB2", "essA", "essB", "deal1", "deal2a", "deal2b", "prices", "count", "countLabel", "rating", "guarantee", "tag1", "tag2", "blue", "pink", "night", "ink"],
+  "notes": "Card names and prices in the opening pile live in the CARDS array; the screenshot wall is drawn on canvas from the SHOTS functions, and the feature chips come from FEATS. Keep the four tool slides in sync with the four product names. Never attach a real brand's customer count, rating or guarantee unless they are true.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

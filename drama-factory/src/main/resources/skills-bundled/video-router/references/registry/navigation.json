@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0.0",
+  "entrypoint": "skills/video-router/SKILL.md",
+  "lanes": {
+    "procedural": [
+      "motion",
+      "math",
+      "3d",
+      "finishing",
+      "quality-review"
+    ],
+    "generative": [
+      "generate",
+      "animate-image",
+      "reference",
+      "transition",
+      "audio-driven",
+      "edit",
+      "extend",
+      "retake",
+      "multishot",
+      "train-lora",
+      "document-to-video",
+      "draft-enhance",
+      "inpaint",
+      "outpaint",
+      "restore",
+      "exr-hdr",
+      "dub",
+      "foley"
+    ],
+    "hybrid": [
+      "hybrid"
+    ]
+  },
+  "families": {
+    "flux": {
+      "guide": "docs/models/flux.md",
+      "model_ids": [
+        "flux-3-video"
+      ],
+      "upstream_skill_ids": [
+        "calesthio--bfl-api"
+      ],
+      "versions": {
+        "3": {
+          "bfl": [
+            "flux-3-video"
+          ]
+        }
+      }
+    },
+    "gemini-omni": {
+      "guide": "docs/models/gemini-omni.md",
+      "model_ids": [
+        "gemini-omni-1-1-flash"
+      ],
+      "upstream_skill_ids": [
+        "calesthio--gemini-omni",
+        "chatcut-inc--video-gen"
+      ],
+      "versions": {
+        "1.1": {
+          "google": [
+            "gemini-omni-1-1-flash"
+          ]
+        }
+      }
+    },
+    "happyhorse": {
+      "guide": "docs/models/happyhorse.md",
+      "model_ids": [
+        "happyhorse-1-1-t2v",
+        "happyhorse-1-1-i2v",
+        "happyhorse-1-1-r2v",
+        "happyhorse-1-0-edit"
+      ],
+      "upstream_skill_ids": [
+        "inference-sh--ai-video-generation",
+        "inference-sh--happyhorse",
+        "sogni-ai--sogni-creative-agent-skill"
+      ],
+      "versions": {
+        "1.0": {
+          "alibaba": [
+            "happyhorse-1-0-edit"
+          ]
+        },
+        "1.1": {
+          "alibaba": [
+            "happyhorse-1-1-t2v",
+            "happyhorse-1-1-i2v",
+            "happyhorse-1-1-r2v"
+          ]
+        }
+      }
+    },
+    "kling": {
+      "guide": "docs/models/kling.md",
+      "model_ids": [
+        "kling-3-0",
+        "kling-3-0-turbo-standard"
+      ],
+      "upstream_skill_ids": [
+        "calesthio--kling-official",
+        "chatcut-inc--video-gen",
+        "inference-sh--video-prompting-guide",
+        "inference-sh--ai-video-generation",
+        "inovue--fal-skill-creator",
+        "scenario-labs--scenario-kling"
+      ],
+      "versions": {
+        "3.0": {
+          "fal": [
+            "kling-3-0",
+            "kling-3-0-turbo-standard"
+          ]
+        }
+      }
+    },
+    "ltx": {
+      "guide": "docs/models/ltx.md",
+      "model_ids": [
+        "ltx-2-5-fast-api",
+        "ltx-2-5-pro-api",
+        "ltx-2-5-local",
+        "ltx-2-3-pro-api",
+        "ltx-2-5-local-inout",
+        "ltx-2-5-python-exr",
+        "ltx-2-5-local-restore",
+        "ltx-2-3-local-dubit",
+        "ltx-2-3-local-foley"
+      ],
+      "upstream_skill_ids": [
+        "artokun--ltx-director",
+        "artokun--ltxv2-video",
+        "benjiyaya--ltx-2-5-prompter",
+        "calesthio--ltx2",
+        "sogni-ai--sogni-creative-agent-skill",
+        "sogni-ai--loop-maker"
+      ],
+      "versions": {
+        "2.3": {
+          "ltx": [
+            "ltx-2-3-pro-api"
+          ],
+          "self-hosted": [
+            "ltx-2-3-local-dubit",
+            "ltx-2-3-local-foley"
+          ]
+        },
+        "2.5": {
+          "ltx": [
+            "ltx-2-5-fast-api",
+            "ltx-2-5-pro-api"
+          ],
+          "self-hosted": [
+            "ltx-2-5-local",
+            "ltx-2-5-local-inout",
+            "ltx-2-5-python-exr",
+            "ltx-2-5-local-restore"
+          ]
+        }
+      }
+    },
+    "minimax": {
+      "guide": "docs/models/minimax.md",
+      "model_ids": [
+        "minimax-h3-fal",
+        "minimax-h3-local-fl",
+        "minimax-h3-local-ref",
+        "h3-max-fal",
+        "h3-max-turbo-fal",
+        "h3-max-chatcut"
+      ],
+      "upstream_skill_ids": [
+        "artokun--minimax-h3-video",
+        "calesthio--minimax-h3",
+        "chatcut-inc--video-gen",
+        "inovue--fal-skill-creator",
+        "joevenner--minimax-music",
+        "joevenner--minimax-speech",
+        "joevenner--minimax-video",
+        "minimax-ai--3d-animation-short-generator",
+        "minimax-ai--brand-promo-video-generator",
+        "minimax-ai--co-op-game-intro-generator",
+        "minimax-ai--h3-prompt-writing",
+        "minimax-ai--handdrawn-live-video-generator",
+        "minimax-ai--minimalist-product-ad-generator",
+        "minimax-ai--music-video-subtitle-generator",
+        "minimax-ai--paper-collage-explainer-generator",
+        "minimax-ai--papercraft-stop-motion-explainer",
+        "minimax-ai--mmx-cli",
+        "minimax-ai--minimax-music-gen",
+        "scenario-labs--scenario-minimax-video",
+        "sogni-ai--sogni-creative-agent-skill"
+      ],
+      "versions": {
+        "H3 Max": {
+          "chatcut": [
+            "h3-max-chatcut"
+          ],
+          "fal": [
+            "minimax-h3-fal",
+            "h3-max-fal"
+          ],
+          "self-hosted": [
+            "minimax-h3-local-fl",
+            "minimax-h3-local-ref"
+          ]
+        },
+        "H3 Max Turbo": {
+          "fal": [
+            "h3-max-turbo-fal"
+          ]
+        }
+      }
+    },
+    "seedance": {
+      "guide": "docs/models/seedance.md",
+      "model_ids": [
+        "seedance-2-5-byteplus",
+        "seedance-2-5-chatcut",
+        "seedance-2-5-scenario"
+      ],
+      "upstream_skill_ids": [
+        "calesthio--seedance-2-5",
+        "chatcut-inc--video-gen",
+        "inference-sh--video-prompting-guide",
+        "inference-sh--ai-video-generation",
+        "inference-sh--image-to-video",
+        "inference-sh--seedance",
+        "inovue--fal-skill-creator",
+        "scenario-labs--scenario-seedance-music-video",
+        "scenario-labs--scenario-seedance-storyboard",
+        "scenario-labs--scenario-seedance",
+        "sogni-ai--sogni-creative-agent-skill"
+      ],
+      "versions": {
+        "2.5": {
+          "byteplus": [
+            "seedance-2-5-byteplus"
+          ],
+          "chatcut": [
+            "seedance-2-5-chatcut"
+          ],
+          "scenario": [
+            "seedance-2-5-scenario"
+          ]
+        }
+      }
+    },
+    "wan": {
+      "guide": "docs/models/wan.md",
+      "model_ids": [
+        "wan-3-0",
+        "wan-3-0-prime",
+        "wan-2-7-videoedit"
+      ],
+      "upstream_skill_ids": [
+        "artokun--director",
+        "artokun--video-extend",
+        "artokun--wan-flf-video",
+        "artokun--wan-multitalk",
+        "artokun--wan-scail-replacement",
+        "artokun--wan-t2v-video",
+        "inference-sh--ai-video-generation",
+        "inference-sh--image-to-video",
+        "inference-sh--p-video",
+        "sogni-ai--sogni-creative-agent-skill"
+      ],
+      "versions": {
+        "2.7": {
+          "alibaba": [
+            "wan-2-7-videoedit"
+          ]
+        },
+        "3.0": {
+          "alibaba": [
+            "wan-3-0",
+            "wan-3-0-prime"
+          ]
+        }
+      }
+    }
+  },
+  "controllers": [
+    "opus-5-5",
+    "astra"
+  ]
+}

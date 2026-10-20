@@ -1,0 +1,31 @@
+{
+  "version": "0.1",
+  "notes": "反相混合角标对照示例：同一帧两个 chapter_tag，上面普通 front 白字，下面 invert: true（difference 合成）。底片四段各 2 秒：亮底 #F0F0F0、暗底 #101010、中灰 #808080、黑→白水平渐变（用来看中灰死区；加了一层静态颗粒，纯净渐变会让 pixel_qa 的 Apple Vision 矩形检测误报 empty_card）。底片生成命令（在本目录执行）：ffmpeg -f lavfi -i \"color=c=0xF0F0F0:s=1080x1440:r=30:d=2,format=rgb24\" -f lavfi -i \"color=c=0x101010:s=1080x1440:r=30:d=2,format=rgb24\" -f lavfi -i \"color=c=0x808080:s=1080x1440:r=30:d=2,format=rgb24\" -f lavfi -i \"color=c=black:s=1080x1440:r=30:d=2,format=gbrp,geq=r='X*255/(W-1)':g='X*255/(W-1)':b='X*255/(W-1)',noise=alls=6:allf=u\" -filter_complex \"[0:v][1:v][2:v][3:v]concat=n=4:v=1:a=0,scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv420p[v]\" -map \"[v]\" -c:v libx264 -preset slow -crf 16 -g 60 -color_primaries bt709 -color_trc bt709 -colorspace bt709 -color_range tv base.mp4",
+  "canvas": { "w": 1080, "h": 1440, "fps": 30 },
+  "style": "base",
+  "duration": 8.0,
+  "base": [
+    { "id": "b1", "src": "base.mp4", "in": 0.0, "out": 8.0, "at": 0.0 }
+  ],
+  "shots": [
+    {
+      "id": "plain",
+      "component": "chapter_tag",
+      "start": 0.2,
+      "end": 7.8,
+      "params": { "n": "01", "zh": "普通白字", "en": "Plain", "index": 0, "count": 4, "right": "FRONT", "y": 0.17 },
+      "sfx": [{ "id": "tick", "at": "start" }]
+    },
+    {
+      "id": "inverted",
+      "component": "chapter_tag",
+      "start": 0.2,
+      "end": 7.8,
+      "invert": true,
+      "params": { "n": "02", "zh": "反相角标", "en": "Invert", "index": 1, "count": 4, "right": "INVERT", "y": 0.27 }
+    }
+  ],
+  "transitions": [],
+  "music": { "mode": "none" },
+  "qa": { "safe_zone": "xhs_3x4", "avoid": ["face", "captions"] }
+}

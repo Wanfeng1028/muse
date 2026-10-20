@@ -1,0 +1,67 @@
+<title>{{TITLE}}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Share page for one cut (longform.py share): a screening room. One wide player, a chapter strip under it, nothing else.
+   Single dark look, matched to the film. The video streams as fMP4 HLS through hls.js because the artifact host serves
+   neither .m3u8 nor .ts: segments are named .mp4 and the playlist index.txt. */
+:root {
+  --bg: #0b0b0b; --panel: #151513; --line: #2a2926; --ink: #e8e6e1; --muted: #9a968d; --accent: {{ACCENT}};
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+main { max-width: 1080px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(28px, 4.4vw, 44px); line-height: 1.1; margin: 4px 0 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+.player { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+video { width: 100%; height: 100%; display: block; background: #000; }
+.chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0; }
+.chapters button { width: 100%; text-align: left; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; font: inherit; cursor: pointer; display: grid; gap: 2px; }
+.chapters button:hover { border-color: var(--muted); }
+.chapters button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chapters button[aria-current="true"] { border-color: var(--accent); }
+.chapters .t { font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600; }
+.chapters .n { font-size: 14px; }
+.foot { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+.err { color: var(--ink); background: var(--panel); border: 1px solid var(--accent); border-radius: 4px; padding: 10px 12px; }
+</style>
+<main>
+  <header>
+    <div class="eyebrow">{{EYEBROW}}</div>
+    <h1>{{HEADLINE}}</h1>
+    <p class="lede">{{LEDE}}</p>
+  </header>
+  <div class="player">
+    <video id="v" controls playsinline preload="metadata" poster="{{POSTER}}"></video>
+  </div>
+  <p id="err" class="err" hidden>This browser couldn't load the video stream. Try Chrome, Safari, Firefox or Edge.</p>
+  <ul class="chapters" id="ch"></ul>
+  <p class="foot">{{FOOT}}</p>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<script>
+const CH = {{CHAPTERS}};
+const v = document.getElementById("v"), list = document.getElementById("ch"), src = "v/index.txt";
+const secs = s => { const [m, x] = s.split(":").map(Number); return m * 60 + x; };
+CH.forEach(([t, n]) => {
+  const li = document.createElement("li"), b = document.createElement("button");
+  b.type = "button"; b.innerHTML = '<span class="t"></span><span class="n"></span>';
+  b.querySelector(".t").textContent = t; b.querySelector(".n").textContent = n;
+  b.addEventListener("click", () => { v.currentTime = secs(t); v.play().catch(() => {}); });
+  li.appendChild(b); list.appendChild(li);
+});
+v.addEventListener("timeupdate", () => {
+  let k = 0; CH.forEach(([t], i) => { if (v.currentTime >= secs(t)) k = i; });
+  list.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-current", i === k ? "true" : "false"));
+});
+const fail = () => { document.getElementById("err").hidden = false; };
+if (window.Hls && Hls.isSupported()) {
+  const h = new Hls({ maxBufferLength: 30 }); h.loadSource(src); h.attachMedia(v);
+  h.on(Hls.Events.ERROR, (e, d) => { if (d.fatal) fail(); });
+}
+else fail();
+</script>

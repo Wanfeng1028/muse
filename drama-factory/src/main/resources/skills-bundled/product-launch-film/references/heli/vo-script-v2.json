@@ -1,0 +1,47 @@
+{
+ "note": "Heli-Harness v2 narration. start/slot are provisional; the timeline is fitted to the measured takes.",
+ "lines": [
+  {
+   "id": "01-problem",
+   "start": 0,
+   "slot": 9999,
+   "text": "[casual] You start a fix in Claude Code. Two tries, no luck. Next morning you open Codex... and it’s starting from zero."
+  },
+  {
+   "id": "02-record",
+   "start": 0,
+   "slot": 9999,
+   "text": "[confident] Heli-Harness keeps a work record for the task: what changed, what failed, and the next smallest step."
+  },
+  {
+   "id": "03-switch",
+   "start": 0,
+   "slot": 9999,
+   "text": "So when Codex starts, it gets that record, first thing. Same in Grok Build, OpenCode, Kimi. Switch tools, keep the thread."
+  },
+  {
+   "id": "04-skills",
+   "start": 0,
+   "slot": 9999,
+   "text": "[matter-of-fact] And it won’t let agents guess. Check the claim before you fix it. Two failed fixes? Stop and diagnose. Codex tries a third patch anyway... and the hook says no."
+  },
+  {
+   "id": "05-done",
+   "start": 0,
+   "slot": 9999,
+   "text": "Same with “done.” No passing check, no complete. Record the run, and now it closes."
+  },
+  {
+   "id": "06-rules",
+   "start": 0,
+   "slot": 9999,
+   "text": "Underneath, one rulebook for every agent. A push waits for your grant, and some commands never run at all."
+  },
+  {
+   "id": "07-close",
+   "start": 0,
+   "slot": 9999,
+   "text": "[warm, confident] Heli-Harness. Switch tools, keep the thread."
+  }
+ ]
+}

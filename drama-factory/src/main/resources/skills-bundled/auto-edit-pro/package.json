@@ -1,0 +1,54 @@
+{
+  "name": "chuanyuntian-auto-edit-pro",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "川云添 · 自动剪辑 Pro — 71 种固定种子混合风格、10 种语义结构的全屏舞台口播视觉包装 Agent Skill。",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && remotion compositions packages/remotion-renderer/src/index.ts",
+    "package-video": "tsx scripts/package-video.ts",
+    "make:synthetic": "tsx scripts/make-synthetic.ts",
+    "example:synthetic": "tsx scripts/package-video.ts --video examples/synthetic-horizontal/input.mp4 --srt examples/synthetic-horizontal/input.srt --out examples/synthetic-horizontal/run --renderer remotion",
+    "checksums": "node scripts/generate-checksums.mjs",
+    "verify:public": "node scripts/verify-public-repo.mjs",
+    "verify:all": "npm test && npm run typecheck && npm run build && npm run verify:public",
+    "demo:styles": "tsx scripts/demo-styles.ts",
+    "preview:styles": "node scripts/serve-style-demos.mjs",
+    "verify:styles": "tsx scripts/verify-style-renderers.ts",
+    "list:styles": "tsx scripts/list-styles.ts"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.507",
+    "@remotion/cli": "4.0.507",
+    "@remotion/media": "4.0.507",
+    "@remotion/renderer": "4.0.507",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.507",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.3",
+    "tsx": "4.23.11",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  },
+  "author": "川云添 (cytxnyu)",
+  "homepage": "https://github.com/cytxnyu/chuanyuntian-auto-edit-pro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cytxnyu/chuanyuntian-auto-edit-pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cytxnyu/chuanyuntian-auto-edit-pro/issues"
+  }
+}

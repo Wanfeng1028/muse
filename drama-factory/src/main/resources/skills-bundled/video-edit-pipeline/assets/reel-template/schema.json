@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vertical proof reel plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "scenes"],
+  "properties": {
+    "version": {"const": 1},
+    "fps": {"enum": [30, 60], "default": 30},
+    "scenes": {"type": "array", "minItems": 1, "maxItems": 24, "items": {"$ref": "#/$defs/scene"}}
+  },
+  "$defs": {
+    "video": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "source_start_s", "source_end_s"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "source_start_s": {"type": "number", "minimum": 0},
+        "source_end_s": {"type": "number", "exclusiveMinimum": 0},
+        "muted": {"type": "boolean", "default": false},
+        "position": {"$ref": "#/$defs/position"}
+      }
+    },
+    "position": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "minimum": 0, "maximum": 1}, "default": [0.5, 0.5]},
+    "proof": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "kind", "label", "verified"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["image", "video"]},
+        "label": {"type": "string", "minLength": 1, "maxLength": 72},
+        "verified": {"const": true},
+        "source_url": {"type": "string"},
+        "captured_at": {"type": "string"},
+        "source_start_s": {"type": "number", "minimum": 0},
+        "source_end_s": {"type": "number", "exclusiveMinimum": 0},
+        "position": {"$ref": "#/$defs/position"}
+      },
+      "allOf": [{"if": {"properties": {"kind": {"const": "video"}}}, "then": {"required": ["source_start_s", "source_end_s"]}}]
+    },
+    "caption": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start_s", "end_s", "text"],
+      "properties": {
+        "start_s": {"type": "number", "minimum": 0},
+        "end_s": {"type": "number", "exclusiveMinimum": 0},
+        "text": {"type": "string", "minLength": 1, "maxLength": 80},
+        "highlight": {"type": "array", "maxItems": 7, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "scene": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "duration_s"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-zA-Z0-9_-]+$", "maxLength": 64},
+        "duration_s": {"type": "number", "exclusiveMinimum": 0, "maximum": 120},
+        "heading": {"type": "string", "maxLength": 64},
+        "camera": {"$ref": "#/$defs/video"},
+        "proof": {"$ref": "#/$defs/proof"},
+        "captions": {"type": "array", "maxItems": 300, "items": {"$ref": "#/$defs/caption"}},
+        "cta": {
+          "type": "object", "additionalProperties": false, "required": ["text"],
+          "properties": {
+            "text": {"type": "string", "minLength": 1, "maxLength": 24},
+            "eyebrow": {"type": "string", "maxLength": 32},
+            "subtitle": {"type": "string", "maxLength": 72}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "bpm": 120,
+  "duration": 60,
+  "audio": false,
+  "scenes": [
+    { "id": "S01", "start": 0.0, "end": 3.5, "title": "Hook", "handoff": "dip" },
+    { "id": "S02", "start": 3.5, "end": 7.0, "title": "Stakes", "handoff": "dip" },
+    { "id": "S03", "start": 7.0, "end": 12.0, "title": "The problem", "handoff": "cut" },
+    { "id": "S04", "start": 12.0, "end": 16.0, "title": "Reveal", "handoff": "dip" },
+    { "id": "S05", "start": 16.0, "end": 22.0, "title": "01 Step one", "handoff": "dip" },
+    { "id": "S06", "start": 22.0, "end": 28.0, "title": "02 Step two", "handoff": "dip" },
+    { "id": "S07", "start": 28.0, "end": 36.0, "title": "03 Step three", "handoff": "dip" },
+    { "id": "S08", "start": 36.0, "end": 42.0, "title": "04 Step four", "handoff": "dip" },
+    { "id": "S09", "start": 42.0, "end": 48.0, "title": "Proof", "handoff": "dip" },
+    { "id": "S10", "start": 48.0, "end": 52.0, "title": "Speed", "handoff": "dip", "exit": 12 },
+    { "id": "S11", "start": 52.0, "end": 56.0, "title": "Close", "handoff": "xfade" },
+    { "id": "S12", "start": 56.0, "end": 60.0, "title": "End card", "handoff": "cut" }
+  ]
+}

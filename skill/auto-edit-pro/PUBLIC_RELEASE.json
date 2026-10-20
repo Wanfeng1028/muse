@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-07",
+  "status": "local-validation-passed",
+  "repository": "https://github.com/cytxnyu/chuanyuntian-auto-edit-pro",
+  "skill": "auto-edit-pro",
+  "skillSHA256": "552848F79D1CE9D7A7A5578051D7D47A1D2D4CC5CC47912781D4156B733BAA7C",
+  "selectedSkillBytesPreserved": true,
+  "testsPassed": 771,
+  "typecheckExit": 0,
+  "privateMediaIncluded": false,
+  "sourceStageUnmodified": true,
+  "lineEndings": "original bytes preserved for reproducible hashes"
+}

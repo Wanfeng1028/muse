@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{TITLE}}</title>
+<style>
+  html, body { margin: 0; padding: 0; }
+  #stage { position: relative; overflow: hidden; }
+  svg { position: absolute; inset: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+<svg id="svg"><defs></defs><g id="world"></g><g id="top"></g></svg>
+<div id="caps"></div>
+</div>
+<script src="kit.js"></script>
+<script>
+// {{TITLE}}: the storyboard's argument chain maps onto the K.scene() calls below, bar by bar.
+// Every style is a pure function of t. Time comes from the music's grid: K.b(bar, beat).
+const { b, C } = K.setup({ format: "{{FORMAT}}", bpm: {{BPM}}, bars: {{BARS}}, title: "{{TITLE}}" });
+
+// ── scenes (names show in the preview timeline) ─────────
+K.scene("open", 0, 2);
+K.scene("turn", 2, 6);
+K.scene("payoff", 6, {{BARS}});
+
+// ── build the world once ────────────────────────────────
+const stage = K.banded("stage-1");            // everything in here stops above the caption band
+const camG = K.el("g", {}, stage);
+const mark = K.el("rect", { fill: C.ACCENT }, camG);
+const line = K.el("rect", { fill: C.GREY }, camG);
+const title = K.text("{{TITLE}}", { "font-size": 88, "text-anchor": "middle" }, K.top);
+const titleClip = K.clipRect("titleClip");
+title.setAttribute("clip-path", "url(#titleClip)");
+K.label("{{TITLE}}", b(6), null, "large title");   // in-scene text: register it so the blind read and the preview see it
+
+// ── captions: whole phrases, in the caption band ────────
+K.caption([["A caption rises out of the mask line."]], b(0, 0.25), b(2) - 0.26);
+K.caption([["Each scene grows out of "], ["the last.", C.ACCENT]], b(2, 0.25), b(6) - 0.26);
+
+// ── render(t): the whole film as a function of time ────
+K.run(t => {
+  const cx = K.W / 2, cy = K.BAND / 2;
+  // a camera push across the first scenes (zoom in log space)
+  K.cam(camG, cx, cy, K.kfLog(t, [[0, 1.0], [b(4), 1.25], [b(6), 1.0]]));
+  // a mark springs in on the downbeat, then becomes a line (one shape, two states)
+  const pop = K.step(t, b(0, 0.5), 14, 0.6), toLine = K.eio(K.prog(t, b(2), b(2, 2)));
+  const w = K.lerp(120 * pop, 520, toLine), h = K.lerp(120 * pop, 12, toLine);
+  K.set(mark, K.rect(cx - w / 2, cy - h / 2, w, h, K.lerp(24, 6, toLine)));
+  // something moves on every beat: the line ticks forward
+  const beats = Math.max(0, Math.floor((t - b(2, 2)) / K.BEAT));
+  K.set(line, K.rect(cx - 260, cy + 40, Math.min(520, beats * 40) * (t > b(2, 2) ? 1 : 0), 6, 3));
+  // the title rises out of its own mask line at the payoff
+  const rise = K.eout(K.prog(t, b(6), b(6) + 0.35));
+  K.set(titleClip, { x: 0, y: K.H * 0.42 - 100, width: K.W, height: 128 });
+  K.set(title, { x: K.W / 2, y: K.H * 0.42 + (1 - rise) * 130 });
+});
+</script>
+</body>
+</html>

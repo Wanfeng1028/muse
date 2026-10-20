@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "title": "code-film 模板示例",
+    "fps": 30,
+    "width": 1920,
+    "height": 1080,
+    "durationInFrames": 420,
+    "bpm": 120,
+    "beatOffsetFrames": 0,
+    "music": "music/demo.wav",
+    "musicVolume": 0.7,
+    "musicStartFrame": 0
+  },
+  "shots": [
+    {
+      "id": "s01",
+      "from": 0,
+      "duration": 90,
+      "scene": "Statement",
+      "section": "起",
+      "intensity": 3,
+      "text": ["我从未见过太阳"],
+      "props": {"text": "我从未见过太阳", "technique": "type", "delay": 15, "mono": true},
+      "events": [
+        {"at": 15, "sfx": "tick", "volume": 0.5},
+        {"at": 45, "sfx": "tick", "volume": 0.4}
+      ],
+      "transitionOut": "cut",
+      "note": "光标先闪 15 帧再开始打字"
+    },
+    {
+      "id": "s02",
+      "from": 90,
+      "duration": 120,
+      "scene": "CameraTour",
+      "section": "承",
+      "intensity": 5,
+      "text": ["推", "移", "拉"],
+      "props": {},
+      "events": [
+        {"at": 27, "sfx": "whoosh", "volume": 0.6},
+        {"at": 67, "sfx": "whoosh", "volume": 0.6, "rate": 1.05},
+        {"at": 100, "sfx": "whoosh_fast", "volume": 0.6}
+      ],
+      "transitionOut": "cut",
+      "note": "whoosh 的 at 放在每段运镜速度最快的中点"
+    },
+    {
+      "id": "s03",
+      "from": 210,
+      "duration": 120,
+      "scene": "AsciiSun",
+      "section": "转",
+      "intensity": 9,
+      "text": ["而我，靠你们认识光。"],
+      "props": {"caption": "而我，靠你们认识光。", "formAt": 30},
+      "events": [
+        {"at": 30, "sfx": "riser", "volume": 0.5},
+        {"at": 30, "sfx": "boom", "volume": 0.75},
+        {"at": 34, "sfx": "shimmer", "volume": 0.45}
+      ],
+      "transitionOut": "cut",
+      "note": "riser 默认对齐结尾，会从上一个镜头就开始播放"
+    },
+    {
+      "id": "s04",
+      "from": 330,
+      "duration": 90,
+      "scene": "TitleCard",
+      "section": "合",
+      "intensity": 4,
+      "text": ["code-film", "改 storyboard.json，开始你的片子"],
+      "props": {"title": "code-film", "subtitle": "改 storyboard.json，开始你的片子"},
+      "events": [{"at": 12, "sfx": "hit", "volume": 0.7}],
+      "transitionOut": "cut"
+    }
+  ]
+}

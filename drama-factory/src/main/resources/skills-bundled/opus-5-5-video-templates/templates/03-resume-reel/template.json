@@ -1,0 +1,16 @@
+{
+  "id": "03-resume-reel",
+  "title": "15-second résumé reel — every frame on purpose",
+  "category": "motion / personal reel",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "fictional designer \"Nova\"",
+  "source": {
+    "author": "@ajith_io",
+    "post": "https://x.com/ajith_io/status/2103449416325890146",
+    "note": "Remade from scratch in HyperFrames after the original; structure and pacing follow it, copy and name are placeholders."
+  },
+  "variables": ["name", "role", "line1", "line2", "line3", "skills1", "skills2", "skills3", "skills4", "meta", "red", "blue", "yellow", "cream", "night"],
+  "limits": { "name": "short first name or studio name (≤ 8 characters)", "line2": "one word" },
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"name\":\"Rio\",\"role\":\"BRAND DESIGNER\"}'"
+}

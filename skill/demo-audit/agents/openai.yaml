@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Audit"
+  short_description: "Independently check screen, speech, and proof before sharing"
+  default_prompt: "Use $demo-audit to audit the actual recording against its approved story."

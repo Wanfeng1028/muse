@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "name": "Northwind",
+  "handle": "northwind.example",
+  "colors": {
+    "primary": "#ff6a3d",
+    "secondary": "#ffc24b",
+    "bg": "#0f1115",
+    "text": "#f2f0ec"
+  },
+  "fonts": {
+    "display": { "google": "Space Grotesk" },
+    "mono": { "google": "JetBrains Mono" }
+  },
+  "logos": {
+    "mark": "logos/mark.svg",
+    "wordmark": { "onDark": "logos/wordmark-light.svg", "onLight": "logos/wordmark-dark.svg" }
+  },
+  "background": { "style": "glow" },
+  "audio": { "levels": { "music": 0.18 }, "sfx": { "whoosh": { "gain": 0.5 }, "type": { "mute": true } } },
+  "rules": { "competitorLogos": false }
+}

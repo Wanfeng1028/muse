@@ -1,0 +1,23 @@
+{
+  "name": "narrator-warm-en-us",
+  "id": "REPLACE_WITH_ELEVENLABS_VOICE_ID",
+  "model": "eleven_v4",
+  "language": "en",
+  "settings": {
+    "stability": 0.55,
+    "similarity": 0.75
+  },
+  "context": {
+    "before": "A warm, sincere narrator talks to a friend about something that made her life easier, measured but present.",
+    "after": "She smiles and lets the moment land."
+  },
+  "tags": ["softly", "warmly", "cheerfully", "thoughtfully", "excited"],
+  "dictionaries": [],
+  "normalization": "auto",
+  "output_format": "mp3_44100_128",
+  "references": [
+    "out/vo/takes/l03b.mp3",
+    "out/vo/takes/l11a.mp3"
+  ],
+  "notes": "Cast 2026-10-06 by blind test (voice_qa.py --screen-voices --blind). Re-run the casting test when the model changes; v4 is retrained over time. Settings on v4: stability and similarity only."
+}

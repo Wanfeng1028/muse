@@ -1,0 +1,46 @@
+{
+  "_about": "The look of the reel overlays. These are DEFAULTS: change a value here and every reel, variant and cover picks it up. Colors are #RRGGBB. Sizes are pixels on the 1080x1920 reel. Set WHITEBOARD_LOOK=/path/to/another.json to use a different file without editing this one.",
+  "font": {
+    "_about": "The first candidate found on this Mac is used. Futura ships with macOS in /System/Library/Fonts/Supplemental; the others are fallbacks for a Mac without it. The style is matched by name inside the font file, so a different index on another macOS version does not matter.",
+    "candidates": [
+      {
+        "path": "/System/Library/Fonts/Supplemental/Futura.ttc",
+        "family": "Futura",
+        "style": "Bold"
+      },
+      {
+        "path": "/System/Library/Fonts/Avenir Next.ttc",
+        "family": "Avenir Next",
+        "style": "Bold"
+      },
+      {
+        "path": "/System/Library/Fonts/HelveticaNeue.ttc",
+        "family": "Helvetica Neue",
+        "style": "Bold"
+      },
+      {
+        "path": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+        "family": "Arial",
+        "style": "Bold"
+      }
+    ]
+  },
+  "headline": {
+    "_about": "The panel that opens the reel. cap_px is the capital letter height of a line with no size prefix; a line written as NN:TEXT sets its own.",
+    "panel_color": "#5E1C28",
+    "text_color": "#F0EEE6",
+    "cap_px": 56,
+    "pad_x": 36,
+    "pad_y": 34,
+    "corner_radius": 22
+  },
+  "captions": {
+    "_about": "The word timed chips. The text is filled with a top to bottom gradient and sits on a soft black shadow; there is no box behind it.",
+    "cap_px": 60,
+    "gradient_top": "#FAFAF8",
+    "gradient_bottom": "#AEB0B6",
+    "shadow_alpha": 166,
+    "shadow_blur": 10,
+    "shadow_dy": 1
+  }
+}

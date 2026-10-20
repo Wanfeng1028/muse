@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Video routing request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "agent": {
+      "type": "string"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date"
+    },
+    "audio_only": {
+      "type": "boolean"
+    },
+    "auto_duration": {
+      "type": "boolean"
+    },
+    "available_tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "budget_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "engine": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string"
+    },
+    "fps": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "host": {
+      "enum": [
+        "generic",
+        "claude-code",
+        "codex"
+      ]
+    },
+    "input_audio_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 5
+    },
+    "media_local_only": {
+      "type": "boolean"
+    },
+    "model": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string"
+    },
+    "recent_only": {
+      "type": "boolean"
+    },
+    "reference_audio": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reference_audio_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "reference_images": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reference_video_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "reference_videos": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "require": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "text-to-video",
+          "image-to-video",
+          "reference-to-video",
+          "native-audio",
+          "multishot",
+          "first-last-frame",
+          "audio-only-reference",
+          "audio-driven-video",
+          "motion-transfer",
+          "document-input",
+          "web-input",
+          "video-editing",
+          "stateful-editing",
+          "extend",
+          "retake",
+          "draft-enhance",
+          "motion-graphics",
+          "editable-code",
+          "exact-text",
+          "math-animation",
+          "product-visualization",
+          "sound-synthesis",
+          "subtitle-timing",
+          "batch-variants",
+          "alpha-output",
+          "quality-review",
+          "local-weights",
+          "lora-inference",
+          "lora-training",
+          "image-reference",
+          "video-reference",
+          "audio-reference",
+          "inpainting",
+          "outpainting",
+          "video-restoration",
+          "exr-hdr-roundtrip",
+          "dubbing",
+          "video-to-audio",
+          "automatic-duration"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "resolution": {
+      "type": "string"
+    },
+    "runtime": {
+      "enum": [
+        "either",
+        "local",
+        "cloud"
+      ]
+    },
+    "task": {
+      "type": "string",
+      "enum": [
+        "motion",
+        "generate",
+        "animate-image",
+        "reference",
+        "transition",
+        "audio-driven",
+        "edit",
+        "extend",
+        "retake",
+        "multishot",
+        "hybrid",
+        "math",
+        "3d",
+        "finishing",
+        "train-lora",
+        "document-to-video",
+        "draft-enhance",
+        "quality-review",
+        "inpaint",
+        "outpaint",
+        "restore",
+        "exr-hdr",
+        "dub",
+        "foley"
+      ]
+    }
+  }
+}

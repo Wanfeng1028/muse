@@ -1,0 +1,4 @@
+interface:
+  display_name: "Wan 3.0 Prompt Writing"
+  short_description: "Turn rough video ideas into Wan 3.0-ready prompts"
+  default_prompt: "Use $wan3-prompt-writing to turn my rough video concept into a copy-ready Wan 3.0 prompt."

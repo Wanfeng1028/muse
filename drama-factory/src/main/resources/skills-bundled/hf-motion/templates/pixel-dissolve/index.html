@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=830" />
+    <title>pixel-dissolve</title>
+    <script>
+      // pixel-dissolve CONFIG: every piece of on-screen text and every tunable.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs pixel-dissolve <dir> --update` so the static timing
+      // attributes follow; the timeline refuses to build if they disagree.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "textA": "어제의 나",
+        "textB": "오늘의 나",
+        "transitionAt": 3,
+        "transitionDur": 1,
+        "pixelSize": 40,
+        "bgA": "charcoal",
+        "bgB": "paper",
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d"
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "IntroSans";
+        src: url("assets/fonts/NanumSquare_acEB.ttf") format("truetype");
+        font-weight: 800;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--charcoal);
+      }
+      #stage {
+        position: relative;
+        width: 1080px;
+        height: 830px;
+        overflow: hidden;
+        background: var(--charcoal);
+        font-family: "IntroSans", sans-serif;
+        font-weight: 800;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px;
+        text-align: center;
+      }
+      .word { font-size: 180px; line-height: 1.1; white-space: nowrap; }
+      #sA { z-index: 1; }
+      #sB { z-index: 2; }
+      #fx { z-index: 3; background: var(--red); }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG
+         (root data-duration is read statically by the engine, before any
+         script runs). Do not hand-edit them. -->
+    <div
+      id="stage"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="6"
+      data-fps="30"
+      data-width="1080"
+      data-height="830"
+    >
+      <!-- A and B overlap and occlude each other on purpose while the cells
+           swap; the allow-overlap / allow-occlusion attributes mark it for check -->
+      <!-- Scene A: holds until the dissolve has finished -->
+      <section id="sA" class="clip" data-start="0" data-duration="4" data-track-index="0">
+        <div class="content"><div id="textA" class="word" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div></div>
+      </section>
+
+      <!-- Scene B: revealed cell by cell from transitionAt, then holds -->
+      <section id="sB" class="clip" data-start="3" data-duration="3" data-track-index="1">
+        <div class="content"><div id="textB" class="word" data-layout-allow-overlap="true" data-layout-allow-occlusion="true"></div></div>
+      </section>
+
+      <!-- Pixel layer: each cell flashes in the accent just before it turns to B -->
+      <div id="fx" class="clip" data-start="3" data-duration="1" data-track-index="2" data-layout-allow-overflow="true"></div>
+    </div>
+
+    <script>
+      const C = CONFIG;
+      const $ = (id) => document.getElementById(id);
+      const win = (id) => {
+        const el = $(id);
+        return { start: +el.dataset.start, end: +el.dataset.start + +el.dataset.duration, dur: +el.dataset.duration };
+      };
+      const W = 1080, H = 830;
+
+      // ---- palette: exactly three colours; text takes the contrasting one
+      const root = document.documentElement.style;
+      root.setProperty("--paper", C.paper);
+      root.setProperty("--charcoal", C.charcoal);
+      root.setProperty("--red", C.red);
+      const ink = { paper: "charcoal", charcoal: "paper", red: "paper" };
+      for (const [scene, bg] of [["sA", C.bgA], ["sB", C.bgB]]) {
+        $(scene).style.background = `var(--${bg})`;
+        $(scene).style.color = `var(--${ink[bg]})`;
+      }
+
+      // ---- guard: the static timing attributes must match CONFIG
+      const near = (a, b) => Math.abs(a - b) <= 1e-3;
+      if (!near(win("sB").start, C.transitionAt) || !near(win("fx").dur, C.transitionDur) || !near(win("sA").end, C.transitionAt + C.transitionDur)) {
+        throw new Error("pixel-dissolve: timing attributes disagree with CONFIG; re-run scaffold --update");
+      }
+
+      // ponytail: per-glyph width estimate instead of measuring the loaded font
+      // (same rule as intro-kinetic). Shrinks only, never grows.
+      const fit = (text, px, maxW = W - 160) => {
+        let em = 0;
+        for (const ch of text) {
+          if (/[ㄱ-힣一-鿿]/.test(ch)) em += 0.95;
+          else if (/[\s,.]/.test(ch)) em += 0.3;
+          else if (/[A-Z]/.test(ch)) em += 0.7;
+          else em += 0.6;
+        }
+        return Math.min(px, Math.floor(maxW / Math.max(em, 0.01)));
+      };
+      for (const [id, text] of [["textA", C.textA], ["textB", C.textB]]) {
+        $(id).textContent = text;
+        $(id).style.fontSize = fit(text, 180) + "px";
+      }
+
+      // ---- seeded cell order: mulberry32(719) + Fisher-Yates, never an unseeded RNG
+      // (same code as recipe.mjs cellOrder(); the scaffold selfcheck pins it)
+      const cellOrder = (n, seed) => {
+        let s = seed >>> 0;
+        const rand = () => {
+          s = (s + 0x6d2b79f5) >>> 0;
+          let t = s;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+        const order = Array.from({ length: n }, (_, i) => i);
+        for (let i = n - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        return order;
+      };
+      const P = C.pixelSize;
+      const cols = Math.ceil(W / P), rows = Math.ceil(H / P), N = cols * rows;
+      // one joined path + per-cell offsets: a frame slices a substring, no per-frame join
+      const rects = cellOrder(N, 719).map((c) => `M${(c % cols) * P} ${Math.floor(c / cols) * P}h${P}v${P}h-${P}z`);
+      const all = rects.join(""), off = [0];
+      for (const r of rects) off.push(off[off.length - 1] + r.length);
+      const NONE = "polygon(0 0, 0 0, 0 0)";
+      const cells = (from, to) => (to <= from ? NONE : `path("${all.slice(off[from], off[to])}")`);
+
+      // Cell r (in seeded order) turns accent at r/N * (D - F) and to scene B
+      // F seconds later; at D every cell shows B. F = 20 % of the dissolve.
+      const fx = win("fx");
+      const D = fx.dur, F = 0.2 * D;
+      const count = (t) => Math.max(0, Math.min(N, Math.floor((t / (D - F)) * N + 1e-9)));
+      const draw = (t) => {
+        const kRed = count(t), kB = count(t - F);
+        $("sB").style.clipPath = kB >= N ? "none" : cells(0, kB);
+        $("fx").style.clipPath = cells(kB, kRed);
+        // Mid-dissolve each text sits on two or three colours at once, and
+        // check's contrast pass takes the median pixel of the whole text box,
+        // so it measures B's ink on A's background (a false 1:1). The
+        // documented data-layout-ignore opts both texts out only while cells
+        // are swapping; before and after, both are audited as usual. No paint.
+        for (const id of ["textA", "textB"]) $(id).toggleAttribute("data-layout-ignore", kRed > 0 && kB < N);
+      };
+
+      // ---- timeline: positions = scene windows (from the DOM)
+      const tl = gsap.timeline({ paused: true });
+      const wA = win("sA"), wB = win("sB");
+      tl.fromTo("#textA", { scale: 1.08 }, { scale: 1, duration: 0.8, ease: "power3.out" }, wA.start);
+      const prog = { t: 0 };
+      tl.fromTo(prog, { t: 0 }, { t: D, duration: D, ease: "none", onUpdate: () => draw(prog.t) }, fx.start);
+      tl.fromTo("#textB", { scale: 1.06 }, { scale: 1, duration: D + 0.5, ease: "power2.out" }, wB.start);
+      tl.set({}, {}, win("stage").end);
+
+      draw(0);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

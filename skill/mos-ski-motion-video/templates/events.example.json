@@ -1,0 +1,11 @@
+[
+  {"t": 0.0, "type": "whoosh", "gain": 0.8},
+  {"t": 0.5, "type": "pop", "gain": 0.9},
+  {"t": 1.0, "type": "pop", "gain": 0.9},
+  {"t": 1.5, "type": "pop", "gain": 1.0},
+  {"t": 2.85, "type": "click", "gain": 1.0},
+  {"t": 4.2, "type": "bell", "gain": 0.7},
+  {"t": 6.0, "type": "swipe", "gain": 0.8},
+  {"t": 6.6, "type": "shutter", "gain": 0.6},
+  {"t": 9.0, "type": "whoosh", "gain": 0.9}
+]

@@ -1,0 +1,48 @@
+{
+  "file": "demo.wav",
+  "mood": "melancholic",
+  "bpm": 120.0,
+  "fps": 30,
+  "framesPerBeat": 15.0,
+  "barFrames": 60.0,
+  "durationSec": 14.0,
+  "durationInFrames": 420,
+  "sections": [
+    {
+      "name": "intro",
+      "startBar": 1,
+      "bars": 2,
+      "startSec": 0.0,
+      "endSec": 4.0,
+      "startFrame": 0,
+      "endFrame": 120
+    },
+    {
+      "name": "build",
+      "startBar": 3,
+      "bars": 2,
+      "startSec": 4.0,
+      "endSec": 8.0,
+      "startFrame": 120,
+      "endFrame": 240
+    },
+    {
+      "name": "peak",
+      "startBar": 5,
+      "bars": 2,
+      "startSec": 8.0,
+      "endSec": 12.0,
+      "startFrame": 240,
+      "endFrame": 360
+    },
+    {
+      "name": "outro",
+      "startBar": 7,
+      "bars": 1,
+      "startSec": 12.0,
+      "endSec": 14.0,
+      "startFrame": 360,
+      "endFrame": 420
+    }
+  ]
+}

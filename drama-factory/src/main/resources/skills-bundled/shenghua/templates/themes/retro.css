@@ -1,0 +1,58 @@
+:root{--bg:var(--brand-bg);--s1:var(--brand-surface1);--s2:var(--brand-surface2);--border:var(--brand-border);--accent:var(--brand-primary);--ink:var(--brand-primary-ink);--body:var(--brand-text);--muted:var(--brand-muted);--green:var(--brand-success);--red:var(--brand-error);--W:{{width}}px;--H:{{height}}px}
+/* A CRT: the phosphor glows in the kit's colour (its readable shade) on a near-black version of the kit's canvas */
+:root{--phosphor:var(--brand-primary-ink);--crt:color-mix(in srgb,var(--brand-bg) 55%,#000);--crt-panel:color-mix(in srgb,var(--phosphor) 5%,var(--crt));--crt-frame:color-mix(in srgb,var(--phosphor) 22%,var(--crt));--crt-dim:color-mix(in srgb,var(--phosphor) 50%,var(--crt))}
+:root{--panel:var(--crt-panel);--panel-fg:var(--phosphor);--frame:var(--crt-frame);--radius:4px;--display:"{{brand.fonts.mono}}";--ticker-bg:var(--phosphor);--ticker-fg:var(--crt)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:var(--W);height:var(--H);overflow:hidden;background:var(--crt);font-family:"{{brand.fonts.mono}}","Courier New",monospace;color:var(--phosphor)}
+#world{position:absolute;inset:0;overflow:hidden;background:var(--crt)}
+#cam{position:absolute;inset:0;transform-origin:50% 45%}
+.shot{position:absolute;inset:0;visibility:hidden;overflow:hidden}
+.abs{position:absolute}
+.cx{position:absolute;left:0;right:0;text-align:center}
+.mono{font-family:"{{brand.fonts.mono}}","Courier New",monospace}
+.pink{color:var(--accent)}
+.green{color:var(--green)}
+.muted{color:var(--crt-dim)}
+.xl{font-weight:700;font-stretch:100%;letter-spacing:.04em;line-height:1.1;text-transform:uppercase}
+.kick{font-family:"{{brand.fonts.mono}}","Courier New",monospace;color:var(--phosphor);font-size:32px;letter-spacing:.28em;text-transform:uppercase}
+.card{background:var(--crt-panel);border:2px solid var(--crt-frame);border-radius:4px;box-shadow:0 0 30px color-mix(in srgb,var(--phosphor) 12%,transparent)}
+.gridbg{display:none}
+.glow{display:none}
+.photo{position:absolute;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}
+.face{background:#000}
+.face>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.badge{display:inline-block;font-family:"{{brand.fonts.mono}}","Courier New",monospace;font-size:30px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--crt);background:var(--phosphor);border-radius:2px;padding:12px 24px;box-shadow:0 0 20px color-mix(in srgb,var(--phosphor) 40%,transparent)}
+.hl{position:relative;display:inline-block;padding:0 .12em}
+.hl i{position:absolute;inset:.08em 0 0;background:var(--phosphor);transform-origin:left;z-index:-1;border-radius:2px;opacity:.35}
+.strike{position:absolute;left:-4%;right:-4%;top:50%;height:.08em;background:var(--phosphor);border-radius:99px;transform-origin:left;box-shadow:0 0 12px var(--phosphor)}
+.stamp{border:8px solid currentColor;border-radius:4px;padding:10px 36px;font-weight:700;letter-spacing:.08em;line-height:1}
+.scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 2px,transparent 2px 4px),repeating-linear-gradient(90deg,color-mix(in srgb,var(--phosphor) 3%,transparent) 0 1px,transparent 1px 2px);pointer-events:none}
+.vhs{font-family:"{{brand.fonts.mono}}","Courier New",monospace;font-weight:700;color:var(--phosphor);text-shadow:0 0 8px color-mix(in srgb,var(--phosphor) 60%,transparent)}
+.track{position:absolute;left:0;right:0;height:30px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--phosphor) 12%,transparent),transparent);filter:blur(1px)}
+.term{position:absolute;left:80px;right:80px;border-radius:4px;background:var(--crt);border:2px solid var(--crt-frame);box-shadow:0 0 40px color-mix(in srgb,var(--phosphor) 12%,transparent);overflow:hidden}
+.term .bar{height:64px;display:flex;align-items:center;gap:12px;padding-left:24px;border-bottom:2px solid var(--crt-frame);font-family:"{{brand.fonts.mono}}","Courier New",monospace;font-size:22px;color:var(--crt-dim)}
+.term .bar i{width:16px;height:16px;border-radius:50%;background:var(--crt-frame)}
+.term pre{font-family:"{{brand.fonts.mono}}","Courier New",monospace;font-size:36px;line-height:1.5;padding:32px 36px;color:var(--phosphor);white-space:pre-wrap;text-shadow:0 0 6px color-mix(in srgb,var(--phosphor) 40%,transparent)}
+.err{color:var(--red);text-shadow:0 0 6px color-mix(in srgb,var(--red) 50%,transparent)}
+/* The caret has no CSS animation: renderText() blinks it from t so renders stay deterministic */
+.caret{display:inline-block;width:.55em;height:1em;background:var(--phosphor);vertical-align:-.12em;margin-left:4px}
+.logo{width:260px;height:260px;display:flex;align-items:center;justify-content:center;background:var(--crt-panel);border:2px solid var(--crt-frame);border-radius:4px;box-shadow:0 0 20px color-mix(in srgb,var(--phosphor) 12%,transparent)}
+.logo img{width:90px;height:90px;filter:invert(1) drop-shadow(0 0 6px var(--phosphor))}
+.pkt{position:absolute;width:28px;height:28px;border-radius:50%;background:var(--phosphor);box-shadow:0 0 12px var(--phosphor)}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 70% at 50% 45%,transparent 55%,rgba(0,0,0,.7));z-index:80}
+#grain{position:absolute;inset:0;width:var(--W);height:var(--H);opacity:.12;mix-blend-mode:screen;z-index:81;image-rendering:pixelated}
+#flash{position:absolute;inset:0;background:var(--phosphor);opacity:0;z-index:82;mix-blend-mode:screen}
+#pinkflash{position:absolute;inset:0;background:var(--accent);opacity:0;z-index:82;mix-blend-mode:screen}
+#captions{position:absolute;left:70px;right:70px;top:{{captionTop}}px;z-index:90;display:flex;justify-content:center}
+#capbox{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:58px;font-weight:700;font-stretch:100%;letter-spacing:.02em;line-height:1.1;text-align:center;text-transform:uppercase}
+#capbox span{color:var(--phosphor);position:relative;text-shadow:0 0 8px color-mix(in srgb,var(--phosphor) 50%,transparent);opacity:.45}
+#capbox span.on,#capbox span.now{opacity:1}
+#capbox span.now::before{content:"";position:absolute;inset:4px -10px -2px;background:color-mix(in srgb,var(--phosphor) 25%,transparent);border-radius:4px;z-index:-1}
+#prog{position:absolute;left:0;bottom:0;height:8px;background:var(--phosphor);z-index:95;box-shadow:0 0 12px var(--phosphor)}
+#sig{position:absolute;left:0;right:0;top:92px;text-align:center;font-family:"{{brand.fonts.mono}}","Courier New",monospace;font-size:26px;color:color-mix(in srgb,var(--phosphor) 45%,transparent);z-index:95}
+#sig b{color:var(--phosphor)}
+.logo-chip{background:var(--crt-panel);border:2px solid var(--crt-frame);border-radius:4px;box-shadow:0 0 24px color-mix(in srgb,var(--phosphor) 15%,transparent)}
+.doc-frame{background:var(--crt-panel);border:2px solid var(--crt-frame);border-radius:4px;box-shadow:0 0 40px color-mix(in srgb,var(--phosphor) 12%,transparent)}
+.doc-hl{background:color-mix(in srgb,var(--phosphor) 20%,transparent);border-color:var(--phosphor);border-radius:2px;box-shadow:0 0 14px color-mix(in srgb,var(--phosphor) 40%,transparent)}
+.doc-src{color:var(--crt-dim)}

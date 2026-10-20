@@ -1,0 +1,23 @@
+{
+  "id": "01-launch-paper",
+  "title": "Paper launch film — marker notes, bouncing ball, one chat",
+  "category": "product launch / brand reel",
+  "duration": 15,
+  "size": "1920x1080 (drawn on a 1280x720 stage, scaled 1.5x)",
+  "demoBrand": "Claude Imagine",
+  "source": {
+    "author": "@ik_builds",
+    "post": "https://x.com/ik_builds/status/2103890476885585923",
+    "note": "The first remake (trial of 2026-09-30), rebranded and turned into a template. Structure and pacing follow the Mebbian launch film; copy and brand are ours. The end-card icon is the image-frame mark from public/imgs/claude-imagine/logo-alpha.png."
+  },
+  "scenes": [
+    "ball drops onto a paper line with onion-skin ghosts and a trail",
+    "marker notes and four cards (prompt, moodboard, sticky, shot list) arrive",
+    "hard cut to dark, the cards are pulled into the ball",
+    "kinetic two-line headline falls letter by letter, scatters",
+    "chart: flat 'text only' line vs an S-curve 'images + video', bracket note",
+    "the ball arcs into the end card and lands as the sun of the icon, wordmark, tagline, circled URL"
+  ],
+  "variables": ["line1", "line2", "note1", "note2", "note3", "note4a", "note4b", "note5", "card1", "stamp", "sticky", "axisY", "ceil", "more", "team", "wordmark", "tagline", "url", "disclaimer", "iconColor"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"line1\":\"ACME STUDIO\",\"line2\":\"SHIPS IT ALL\",\"wordmark\":\"Acme Studio\",\"url\":\"acme.studio\",\"disclaimer\":\"\"}'"
+}

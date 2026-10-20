@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"hookA","type":"string","label":"Hook line 1","default":"How many jobs"},
+  {"id":"hookB","type":"string","label":"Hook line 2","default":"will you apply to"},
+  {"id":"hookC","type":"string","label":"Hook line 3 (blue)","default":"before you get hired?"},
+  {"id":"jobs","type":"string","label":"Ten job titles (| separated)","default":"Marketing Analyst|Social Media Lead|Marketing Assistant|CRM Analyst|Content Strategist|Paid Media Analyst|Marketing Coordinator|Brand Designer|SEO Specialist|Growth Analyst"},
+  {"id":"jobLabel","type":"string","label":"Label on each job card","default":"JOB"},
+  {"id":"countOne","type":"string","label":"Counter, one","default":"job"},
+  {"id":"countMany","type":"string","label":"Counter, many","default":"jobs"},
+  {"id":"cur","type":"string","label":"Currency prefix","default":"$"},
+  {"id":"dec","type":"string","label":"Decimal separator","default":"."},
+  {"id":"perJob","type":"string","label":"Pay-per-job price","default":"2.90"},
+  {"id":"monthly","type":"string","label":"Pro price per month","default":"4.83"},
+  {"id":"payLabel","type":"string","label":"Left card label","default":"PAY PER JOB"},
+  {"id":"paySub","type":"string","label":"Left card subtitle","default":"we rewrite each one"},
+  {"id":"rowWord","type":"string","label":"Row word","default":"Job"},
+  {"id":"totalWord","type":"string","label":"Total word","default":"Total"},
+  {"id":"proLabel","type":"string","label":"Right card label","default":"PRO, EVERY JOB"},
+  {"id":"proUnit","type":"string","label":"Next to the Pro price","default":"a month, 6-month plan"},
+  {"id":"perJobWord","type":"string","label":"After the per-job price","default":"per job"},
+  {"id":"proSub","type":"string","label":"Right card note","default":"you tailor each one with AI and an ATS check"},
+  {"id":"bannerA","type":"string","label":"Green banner, line 1","default":"From 2 jobs a month, Pro has already paid for itself."},
+  {"id":"bannerB","type":"string","label":"Green banner, line 2 ({n} = jobs)","default":"You are at {n}."},
+  {"id":"badge","type":"string","label":"Plan badge","default":"PRO"},
+  {"id":"featA","type":"string","label":"Feature title, line 1","default":"What you get"},
+  {"id":"featB","type":"string","label":"Feature title, line 2","default":"with Pro"},
+  {"id":"f1","type":"string","label":"Feature 1 (| = line break)","default":"PDF without the|CVtune watermark"},
+  {"id":"f2","type":"string","label":"Feature 2","default":"Premium templates|ready to download"},
+  {"id":"f3","type":"string","label":"Feature 3","default":"Unlimited AI,|no monthly cap"},
+  {"id":"f4","type":"string","label":"Feature 4","default":"ATS check with|a fix for every item"},
+  {"id":"f5","type":"string","label":"Feature 5","default":"An AI cover letter|for every job"},
+  {"id":"darkLabel","type":"string","label":"Math slide label","default":"The math nobody does"},
+  {"id":"darkA","type":"string","label":"Math line 1","default":"Every week without this job"},
+  {"id":"darkB","type":"string","label":"Math line 2, before the number","default":"costs"},
+  {"id":"weekFrom","type":"string","label":"Weekly cost, counter start","default":"574"},
+  {"id":"weekTo","type":"string","label":"Weekly cost, counter end","default":"924"},
+  {"id":"darkC","type":"string","label":"Math line 3, white part","default":"Pro costs"},
+  {"id":"daily","type":"string","label":"Math line 3, blue part","default":"$0.16 a day."},
+  {"id":"foot","type":"string","label":"Footnote","default":"Calculator example: a $4,000/month job · Pro, 6-month plan"},
+  {"id":"coTitle","type":"string","label":"Checkout title","default":"6 months up front — $29 once"},
+  {"id":"coSub","type":"string","label":"Checkout line ({m} = monthly)","default":"Works out to {m} a month, no auto-renewal."},
+  {"id":"save","type":"string","label":"Savings pill","default":"Save 34%"},
+  {"id":"button","type":"string","label":"Checkout button","default":"Pay $29.00"},
+  {"id":"guarantee","type":"string","label":"Guarantee line","default":"7-day money-back guarantee · one-time payment"},
+  {"id":"alt","type":"string","label":"Line under the card","default":"or $7.29 month to month by card · cancel in 3 clicks"},
+  {"id":"brand","type":"string","label":"Brand","default":"CVtune"},
+  {"id":"tag1","type":"string","label":"End line 1","default":"More jobs ahead?"},
+  {"id":"tag2","type":"string","label":"End line 2","default":"With Pro, you tailor your resume for every one."},
+  {"id":"url","type":"string","label":"URL pill","default":"cvtune.app/pro"},
+  {"id":"blue","type":"color","label":"Blue","default":"#2563eb"},
+  {"id":"ink","type":"color","label":"Ink","default":"#141414"},
+  {"id":"night","type":"color","label":"Math slide background","default":"#1b1a17"},
+  {"id":"green","type":"color","label":"Green","default":"#15803d"},
+  {"id":"paper","type":"color","label":"Background","default":"#fcfcfd"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/DMSerifDisplay-normal-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/DMSans-normal-100-1000.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --blue: #2563eb; --ink: #141414; --night: #1b1a17; --green: #15803d; --paper: #fcfcfd; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "DM Sans", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .abs { position: absolute; left: 0; top: 0; }
+      .serif { font-family: "DM Serif Display", serif; font-weight: 400; }
+      .mask { position: absolute; overflow: hidden; white-space: nowrap; }
+      .mask > span { display: inline-block; white-space: pre; }
+      #scene { background: var(--paper); }
+
+      /* hook */
+      .hk { left: 160px; height: 132px; font-size: 96px; line-height: 118px; letter-spacing: -0.01em; }
+      .hk.b { color: var(--blue); }
+      .job { position: absolute; left: 0; top: 0; width: 435px; height: 129px; border-radius: 12px; background: #fff; border: 1px solid #e3e6ee; box-shadow: 0 10px 26px rgba(20, 30, 60, 0.08); padding: 24px 26px; }
+      .job .lb { display: flex; align-items: center; gap: 9px; font: 600 15px/1 "DM Sans"; letter-spacing: 0.1em; color: #8a93a8; }
+      .job .lb svg { width: 21px; height: 21px; }
+      .job b { display: block; margin-top: 22px; font: 600 25px/1 "DM Sans"; letter-spacing: -0.01em; color: #1d2230; white-space: nowrap; }
+      #count { left: 1150px; top: 766px; font: 600 27px/1 "DM Sans"; color: var(--blue); }
+
+      /* comparison */
+      #pay { left: 160px; top: 140px; width: 640px; border-radius: 12px; background: #fff; border: 1.5px solid #e8e8ec; overflow: hidden; }
+      #payL { position: absolute; left: 40px; top: 38px; font: 600 20px/1 "DM Sans"; letter-spacing: 0.07em; color: #6b6b70; }
+      #payS { position: absolute; left: 40px; top: 70px; font: 400 24px/1 "DM Sans"; color: #3c3c40; }
+      #payD { position: absolute; left: 40px; right: 40px; top: 118px; border-top: 1.5px dashed #dedee2; }
+      .pr { position: absolute; left: 40px; right: 40px; height: 44px; font: 400 27px/44px "DM Sans"; color: #333; }
+      .pr span { position: absolute; right: 0; top: 0; font-weight: 500; color: #111; }
+      #payT { position: absolute; left: 40px; right: 40px; height: 150px; }
+      #payT hr { border: 0; border-top: 1.5px solid #dedee2; }
+      #payT i { position: absolute; left: 0; top: 92px; font: 400 25px/1 "DM Sans"; font-style: normal; color: #555; }
+      #payA { position: absolute; right: 0; top: 16px; font-size: 96px; line-height: 1.2; color: #6f6c66; white-space: nowrap; }
+      #strike { position: absolute; left: 0; top: 0; height: 4px; background: #d23b4c; border-radius: 2px; transform-origin: 0 50%; }
+      #pro { left: 880px; top: 140px; width: 880px; height: 360px; border-radius: 14px; background: #f1f5fd; border: 2px solid var(--blue); }
+      #proIn { position: absolute; left: 0; top: 0; width: 880px; height: 360px; }
+      #proL { position: absolute; left: 46px; top: 42px; font: 600 20px/1 "DM Sans"; letter-spacing: 0.06em; color: var(--blue); }
+      #proP { position: absolute; left: 44px; top: 58px; display: flex; align-items: baseline; gap: 22px; white-space: nowrap; }
+      #proP b { font: 400 118px/1.1 "DM Serif Display"; letter-spacing: -0.01em; color: #111; }
+      #proP span { font: 400 27px/1 "DM Sans"; color: #555; }
+      #proJ { position: absolute; left: 46px; top: 206px; font: 600 29px/1 "DM Sans"; color: var(--blue); white-space: nowrap; }
+      #proS { position: absolute; left: 46px; top: 262px; font: 400 24px/1 "DM Sans"; color: #555; white-space: nowrap; }
+      #ban { left: 880px; top: 530px; width: 880px; height: 130px; border-radius: 12px; background: #eaf9ef; padding: 30px 36px; font: 600 28px/46px "DM Sans"; color: var(--green); white-space: nowrap; }
+
+      /* features */
+      #fBlue { left: 0; top: 0; border-radius: 16px; background: var(--blue); }
+      #fBadge { left: 160px; top: 169px; height: 40px; padding: 0 12px; border-radius: 8px; background: #fff; color: var(--blue); font: 700 28px/40px "DM Sans"; }
+      .ft { left: 160px; height: 104px; font-size: 96px; line-height: 104px; color: #fff; }
+      .fc { position: absolute; left: 0; top: 0; width: 544px; height: 374px; border-radius: 16px; background: #fff; border: 1.5px solid #e7e9ef; overflow: hidden; }
+      .fc .tt { position: absolute; left: 40px; top: 252px; font: 500 36px/38px "DM Sans"; letter-spacing: -0.01em; color: #1a1a1a; white-space: nowrap; }
+      .fc .ck { position: absolute; right: 22px; top: 22px; width: 36px; height: 36px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; }
+      .fc .ck svg { width: 18px; height: 18px; }
+      .il { position: absolute; left: 0; top: 0; }
+      .doc { position: absolute; background: #fff; border: 1.5px solid #dcdde3; border-radius: 4px; }
+      .ln { position: absolute; height: 5px; border-radius: 3px; background: #e6e7eb; }
+      .tag { position: absolute; left: 4px; top: 4px; padding: 0 7px; height: 18px; border-radius: 4px; background: var(--blue); color: #fff; font: 600 12px/18px "DM Sans"; }
+      .cap { position: absolute; width: 140px; margin-left: -70px; text-align: center; font: 400 19px/1 "DM Sans"; color: #666; white-space: nowrap; }
+      .chip { position: absolute; height: 34px; padding: 0 12px; border-radius: 17px; font: 600 16px/34px "DM Sans"; white-space: nowrap; }
+      .chip.lb { background: #e8effd; color: var(--blue); text-align: center; }
+      .chip.gr { background: #eaf7ee; color: var(--green); font-size: 19px; border-radius: 8px; }
+      .chip.bk { background: #111; color: #fff; font: 500 20px/44px "DM Sans"; height: 44px; border-radius: 22px; padding: 0 18px; }
+      .rl { position: absolute; left: 40px; font: 500 22px/1 "DM Sans"; color: #222; white-space: nowrap; }
+
+      /* math */
+      #darkL { background: var(--night); }
+      #dLab { left: 160px; top: 243px; font: 400 21px/1 "DM Sans"; color: #8f8c86; }
+      .dl { left: 160px; height: 96px; font-size: 76px; line-height: 92px; color: #fff; }
+      .dl .bl { color: #8fb1ff; }
+      #dFoot { left: 160px; top: 660px; font: 400 19px/1 "DM Sans"; color: #8f8c86; white-space: nowrap; }
+
+      /* checkout */
+      #co { left: 460px; top: 280px; width: 1000px; height: 420px; border-radius: 14px; background: #f5f7fc; border: 2px solid #a9bff0; }
+      #coT { position: absolute; left: 46px; top: 32px; font: 400 58px/1.2 "DM Serif Display"; color: #151515; white-space: nowrap; }
+      #coS { position: absolute; left: 48px; top: 134px; display: flex; align-items: center; gap: 14px; font: 400 23px/1 "DM Sans"; color: #333; white-space: nowrap; }
+      #coS b { font-weight: 700; color: #111; }
+      #coS i { font-style: normal; height: 28px; padding: 0 12px; border-radius: 14px; background: #1f9d48; color: #fff; font: 700 16px/28px "DM Sans"; }
+      #coB { position: absolute; left: 46px; top: 208px; width: 904px; height: 88px; border-radius: 9px; background: var(--blue); color: #fff; text-align: center; font: 600 27px/88px "DM Sans"; }
+      #coG { position: absolute; left: 0; width: 996px; top: 338px; display: flex; justify-content: center; align-items: center; gap: 10px; font: 400 21px/1 "DM Sans"; color: #555; white-space: nowrap; }
+      #coG svg { width: 22px; height: 22px; }
+      #coA { left: 0; top: 748px; width: 1920px; text-align: center; font: 400 21px/1 "DM Sans"; color: #777; white-space: nowrap; }
+      #flood { left: 0; top: 0; background: var(--blue); }
+
+      /* end */
+      #endL { background: var(--blue); }
+      #eLock { left: 0; top: 300px; height: 160px; display: flex; align-items: center; gap: 26px; white-space: nowrap; }
+      #eMark { width: 124px; height: 150px; }
+      #eWm { font: 400 150px/1 "DM Serif Display"; color: #fff; letter-spacing: -0.01em; }
+      #eWm span { display: inline-block; }
+      #eBadge { height: 100px; padding: 0 20px; border-radius: 12px; background: #fff; color: var(--blue); font: 700 64px/100px "DM Sans"; margin-left: 8px; }
+      #eT1 { left: 0; top: 515px; width: 1920px; text-align: center; font: 500 50px/1 "DM Sans"; color: #fff; white-space: nowrap; }
+      #eT2 { left: 0; top: 588px; width: 1920px; text-align: center; font: 400 56px/1.1 "DM Serif Display"; color: #fff; white-space: nowrap; }
+      #eUrl { left: 0; top: 692px; height: 70px; padding: 0 36px; border-radius: 35px; background: #fff; color: var(--blue); font: 600 30px/70px "DM Sans"; white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <div id="hookL" class="layer">
+          <div id="hk1" class="mask hk serif" style="top: 262px"><span></span></div>
+          <div id="hk2" class="mask hk serif" style="top: 371px"><span></span></div>
+          <div id="hk3" class="mask hk serif b" style="top: 480px"><span></span></div>
+          <div id="stack" class="abs"></div>
+          <div id="count" class="abs"></div>
+        </div>
+
+        <div id="compL" class="layer">
+          <div id="pay" class="abs">
+            <div id="payL"></div><div id="payS"></div><div id="payD"></div>
+            <div id="rows"></div>
+            <div id="payT"><hr id="payHr" /><i></i><div id="payA" class="serif"></div><div id="strike"></div></div>
+          </div>
+          <div id="ban" class="abs"><div id="banA"></div><div id="banB"></div></div>
+          <div id="pro" class="abs"><div id="proIn"><div id="proL"></div><div id="proP"><b></b><span></span></div><div id="proJ"></div><div id="proS"></div></div></div>
+        </div>
+
+        <div id="featL" class="layer">
+          <div id="fBlue" class="abs"></div>
+          <div id="fBadge" class="abs"></div>
+          <div id="ft1" class="mask ft serif" style="top: 318px"><span></span></div>
+          <div id="ft2" class="mask ft serif" style="top: 404px"><span></span></div>
+          <div id="fGrid" class="abs"></div>
+        </div>
+
+        <div id="darkL" class="layer">
+          <div id="dLab" class="abs"></div>
+          <div id="dl1" class="mask dl serif" style="top: 300px"><span></span></div>
+          <div id="dl2" class="mask dl serif" style="top: 392px"><span></span></div>
+          <div id="dl3" class="mask dl serif" style="top: 512px"><span></span></div>
+          <div id="dFoot" class="abs"></div>
+        </div>
+
+        <div id="coL" class="layer">
+          <div id="co" class="abs">
+            <div id="coT"></div>
+            <div id="coS"></div>
+            <div id="coB"></div>
+            <div id="coG"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#1f9d48" stroke-width="2" /><path d="M8 12.3l2.7 2.7L16.3 9.4" fill="none" stroke="#1f9d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg><span></span></div>
+          </div>
+          <div id="coA" class="abs"></div>
+          <div id="flood" class="abs"></div>
+        </div>
+
+        <div id="endL" class="layer">
+          <div id="eLock" class="abs">
+            <svg id="eMark" viewBox="0 0 124 150"><path d="M14 4h66l38 38v92a12 12 0 0 1-12 12H14A12 12 0 0 1 2 134V16A12 12 0 0 1 14 4z" fill="#fff" /><path d="M80 4v26a12 12 0 0 0 12 12h26" fill="none" stroke="#2563eb" stroke-width="6" stroke-linejoin="round" opacity="0.35" /><rect x="22" y="70" width="58" height="9" rx="4.5" fill="#2563eb" /><rect x="22" y="92" width="80" height="9" rx="4.5" fill="#2563eb" opacity="0.55" /><rect x="22" y="114" width="44" height="9" rx="4.5" fill="#2563eb" opacity="0.55" /><path d="M40 20l4.6 10.4L55 35l-10.4 4.6L40 50l-4.6-10.4L25 35l10.4-4.6z" fill="#2563eb" /></svg>
+            <div id="eWm"></div>
+            <div id="eBadge"></div>
+          </div>
+          <div id="eT1" class="abs"></div>
+          <div id="eT2" class="abs"></div>
+          <div id="eUrl" class="abs"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 15;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const px = (n) => n.toFixed(1) + "px";
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const num = (s) => parseFloat(String(s).replace(",", ".")) || 0;
+        const money = (x) => v.cur + x.toFixed(2).replace(".", v.dec).replace(/\B(?=(\d{3})+(?!\d))/g, v.dec === "," ? "." : ",");
+        const CHK = (c, w) => '<svg viewBox="0 0 24 24" style="width:' + w + "px;height:" + w + 'px"><path d="M6 12.4l4 4L18.2 8" fill="none" stroke="' + c + '" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const BAG = '<svg viewBox="0 0 24 24" fill="none" stroke="' + v.blue + '" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg>';
+        // a line of text that rises inside its mask
+        const rise = (el, t, t0, d, dist) => { const u = E.outExpo(P(t, t0, t0 + d)); el.style.transform = "translateY(" + px((dist || 130) * (1 - u)) + ")"; el.style.opacity = u > 0 ? "1" : "0"; };
+        const PER = num(v.perJob), MON = num(v.monthly), NJ = 10;
+
+        // ================= hook =================
+        const hk = [$("hk1"), $("hk2"), $("hk3")].map((m, k) => { const s = m.children[0]; s.textContent = [v.hookA, v.hookB, v.hookC][k]; return s; });
+        const TITLES = v.jobs.split("|").map((s) => s.trim()).filter(Boolean);
+        const stack = $("stack");
+        const JOBS = [];
+        for (let k = 0; k < NJ; k++) {
+          const el = document.createElement("div"); el.className = "job";
+          el.innerHTML = '<div class="lb">' + BAG + esc(v.jobLabel) + "</div><b>" + esc(TITLES[k % TITLES.length] || "") + "</b>";
+          stack.appendChild(el);
+          const tk = [0.28, 0.55, 0.68, 0.78, 0.88, 1.02, 1.16, 1.3, 1.43, 1.56][k];
+          JOBS.push({ el, tk, x: 1150 + 28 * k, y: 585 - 27 * k, r: (R(k * 3.1) - 0.5) * 3, sx: 2020 + 60 * R(k * 1.7), sy: 760 + 160 * R(k * 2.3), sr: -48 + 16 * R(k * 5.1) });
+        }
+        function hook(t) {
+          const on = t < 1.95;
+          K.show($("hookL"), on);
+          if (!on) return;
+          hk.forEach((s, k) => rise(s, t, 0.03 + k * 0.05, 0.62));
+          let n = 0;
+          JOBS.forEach((j) => {
+            const u = P(t, j.tk - 0.36, j.tk);
+            if (u <= 0) { K.show(j.el, false); return; }
+            K.show(j.el, true);
+            if (u >= 1) n++;
+            const e = E.outCubic(u), q = 1 - e;
+            // curve in from the lower right corner
+            const x = L(j.sx, j.x, e) - 120 * Math.sin(Math.PI * e) * 0.4, y = L(j.sy, j.y, e) + 60 * Math.sin(Math.PI * e);
+            const rot = L(j.sr, j.r, E.outCubic(P(u, 0, 0.85)));
+            j.el.style.transform = "translate(" + px(x) + "," + px(y) + ") rotate(" + rot.toFixed(2) + "deg)";
+            j.el.style.filter = blurS(q * 6);
+          });
+          $("count").textContent = n === 0 ? "" : n + " " + (n === 1 ? v.countOne : v.countMany);
+          const out = P(t, 1.76, 1.85);
+          $("hookL").style.opacity = (1 - out).toFixed(3);
+        }
+
+        // ================= comparison =================
+        $("payL").textContent = v.payLabel; $("payS").textContent = v.paySub;
+        $("payT").querySelector("i").textContent = v.totalWord;
+        $("proL").textContent = v.proLabel;
+        $("proP").children[0].textContent = money(MON); $("proP").children[1].textContent = v.proUnit;
+        $("proS").textContent = v.proSub;
+        $("banA").textContent = v.bannerA;
+        const rowsEl = $("rows");
+        const ROWT = [2.38, 2.56, 2.8, 3.02, 3.26, 3.44, 3.62, 3.78, 3.94, 4.25];
+        const ROWS = ROWT.map((tr, k) => { const d = document.createElement("div"); d.className = "pr"; d.style.top = px(138 + k * 44); d.innerHTML = esc(v.rowWord) + " " + (k + 1) + "<span>" + esc(money(PER)) + "</span>"; rowsEl.appendChild(d); return { el: d, tr }; });
+        function comp(t) {
+          const on = t >= 1.84 && t < 5.8;
+          K.show($("compL"), on);
+          if (!on) return;
+          const pay = $("pay"), pro = $("pro"), ban = $("ban");
+          // how many rows are in, and the row that is arriving
+          let n = 0;
+          ROWS.forEach((r, k) => {
+            const u = E.outCubic(P(t, r.tr, r.tr + 0.2));
+            K.show(r.el, u > 0);
+            r.el.style.opacity = u.toFixed(3);
+            r.el.style.transform = "translateY(" + px(10 * (1 - u)) + ")";
+            if (t >= r.tr) n = k + 1;
+          });
+          const grow = ROWS.reduce((h, r, k) => h + 44 * E.outCubic(P(t, r.tr, r.tr + 0.2)), 0);
+          const tTop = 118 + grow + (grow > 0 ? 18 : 0);
+          $("payT").style.top = px(tTop);
+          $("payHr").style.opacity = C(grow / 44).toFixed(3);
+          pay.style.height = px(tTop + 150);
+          // the total counts up to the new sum each time a row lands
+          let tot = 0;
+          ROWS.forEach((r) => { tot += PER * E.outCubic(P(t, r.tr + 0.02, r.tr + 0.3)); });
+          $("payA").textContent = money(Math.round(tot * 100) / 100);
+          const st = E.inOutCubic(P(t, 5.02, 5.3));
+          const aW = $("payA").offsetWidth;
+          const strike = $("strike");
+          strike.style.left = px(560 - aW - 4); strike.style.top = px(16 + 96 * 0.62); strike.style.width = px(aW + 8);
+          strike.style.transform = "scaleX(" + st.toFixed(3) + ")"; K.show(strike, st > 0);
+          // pro card: price per job drops with every row
+          $("proJ").textContent = money(MON / Math.max(1, n)) + " " + v.perJobWord;
+          $("banB").textContent = v.bannerB.replace("{n}", n);
+          const pu = E.outCubic(P(t, 1.9, 2.12)), ru = E.outCubic(P(t, 2.02, 2.26)), bu = E.outCubic(P(t, 2.9, 3.12));
+          pay.style.opacity = pu.toFixed(3); pay.style.transform = "translateY(" + px(14 * (1 - pu)) + ")";
+          ban.style.opacity = bu.toFixed(3); ban.style.transform = "translateY(" + px(12 * (1 - bu)) + ")"; K.show(ban, bu > 0);
+          // exit: the pay card and banner leave, the pro card becomes the blue feature tile
+          const ex = P(t, 5.55, 5.63);
+          if (ex > 0) { pay.style.opacity = (pu * (1 - ex)).toFixed(3); ban.style.opacity = (bu * (1 - ex)).toFixed(3); pay.style.transform += " scale(" + L(1, 0.97, ex).toFixed(3) + ")"; }
+          const mo = E.inOutCubic(P(t, 5.56, 5.78));
+          const x = L(880, 120, mo), y = L(140, 135, mo), w = L(880, 544, mo), h = L(360, 374, mo);
+          pro.style.left = px(x); pro.style.top = px(y); pro.style.width = px(w); pro.style.height = px(h);
+          const col = (a, b, u) => { const A = a.match(/\w\w/g).map((z) => parseInt(z, 16)), B = b.match(/\w\w/g).map((z) => parseInt(z, 16)); return "rgb(" + A.map((q, i) => Math.round(L(q, B[i], u))).join(",") + ")"; };
+          pro.style.background = col("f1f5fd", v.blue.replace("#", ""), E.inOutCubic(P(t, 5.64, 5.8)));
+          pro.style.borderColor = mo > 0 ? "transparent" : "";
+          pro.style.opacity = ru.toFixed(3);
+          $("proIn").style.opacity = (1 - P(t, 5.55, 5.61)).toFixed(3);
+          pro.style.filter = blurS(6 * bump(t, 5.56, 5.78));
+        }
+
+        // ================= features =================
+        const TILE = [[120, 135], [688, 135], [1256, 135], [120, 527], [688, 527], [1256, 527]];
+        $("fBadge").textContent = v.badge;
+        const ftS = [$("ft1"), $("ft2")].map((m, k) => { const s = m.children[0]; s.textContent = [v.featA, v.featB][k]; return s; });
+        const blue = v.blue;
+        const docLines = (x, y, w, n, gap, h) => { let s = ""; for (let i = 0; i < n; i++) s += '<div class="ln" style="left:' + x + "px;top:" + (y + i * gap) + "px;width:" + (i === n - 1 ? w * 0.6 : w) + "px;height:" + (h || 5) + 'px"></div>'; return s; };
+        const ILL = [
+          // watermark-free PDF
+          '<div class="doc" style="left:194px;top:14px;width:156px;height:202px">' + docLines(14, 22, 126, 8, 19) + "</div>",
+          // three templates
+          [["sidebar", 85], ["exec", 221], ["cols", 357]].map(([k, x], i) => {
+            let inner = '<div class="tag">Pro</div>';
+            if (k === "sidebar") inner += '<div style="position:absolute;left:0;top:0;width:34px;height:100%;background:#eceef2"></div>' + docLines(44, 30, 48, 5, 17);
+            if (k === "exec") inner += '<div style="position:absolute;left:0;top:0;width:100%;height:24px;background:#d9dbe1"></div>' + docLines(10, 40, 38, 4, 16) + docLines(56, 40, 38, 4, 16);
+            if (k === "cols") inner += docLines(10, 30, 38, 5, 17) + docLines(56, 30, 38, 5, 17);
+            return '<div class="doc" style="left:' + x + 'px;top:14px;width:104px;height:140px">' + inner + '</div><div class="cap" style="left:' + (x + 52) + 'px;top:170px">' + ["Sidebar", "Executive", "Two columns"][i] + "</div>";
+          }).join("") + '<div style="position:absolute;left:257px;top:196px;width:32px;height:30px;border-radius:5px;background:#e8effd"><svg viewBox="0 0 24 24" style="position:absolute;left:4px;top:3px;width:24px;height:24px"><path d="M12 5v10M7.5 11l4.5 4.5 4.5-4.5M6.5 19h11" fill="none" stroke="' + blue + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>',
+          // unlimited AI
+          '<div class="chip gr" style="left:24px;top:24px">Unlimited AI</div><div class="chip bk" style="left:92px;top:109px"><span style="margin-right:8px">✦</span>Improve with AI</div>' +
+            [[40, 52], [100, 66], [174, 52], [234, 76], [318, 38]].map(([x, w], i) => '<div class="ln" style="left:' + x + "px;top:148px;width:" + w + "px;height:14px;border-radius:4px;background:" + (i === 2 ? "#cfdcfb" : "#e6e7eb") + '"></div>').join("") +
+            '<div style="position:absolute;left:370px;top:132px;height:42px;padding:0 10px;border:1.5px solid #e1e3e8;border-radius:6px;background:#fff;font:600 19px/40px DM Sans;color:' + blue + ';white-space:nowrap">Apply <span style="font-weight:400;color:#777">Discard</span></div>',
+          // ATS check
+          [["Keywords", "Show in resume"], ["Content", "Fix with AI"], ["Formatting", "Fix with AI"]].map(([a, b], i) => '<div class="rl" style="top:' + (80 + i * 60) + 'px">' + a + '</div><div class="chip lb" style="left:261px;top:' + (72 + i * 60) + 'px;width:150px">' + b + '</div><div style="position:absolute;left:436px;top:' + (74 + i * 60) + 'px">' + CHK("#1a7f5a", 28) + "</div>").join(""),
+          // cover letter
+          '<div class="doc" style="left:124px;top:20px;width:298px;height:178px;border-radius:6px"><div style="position:absolute;left:20px;top:18px;font:600 19px/1 DM Sans;color:#222">Cover letter</div>' + docLines(20, 56, 256, 5, 21) + '</div><div class="chip lb" style="left:136px;top:210px;height:32px;line-height:32px;width:128px">Download PDF</div><div class="chip lb" style="left:281px;top:210px;height:32px;line-height:32px;width:136px">Download Word</div>',
+        ];
+        const fGrid = $("fGrid");
+        const FEAT = [v.f1, v.f2, v.f3, v.f4, v.f5].map((txt, k) => {
+          const el = document.createElement("div"); el.className = "fc";
+          el.innerHTML = '<div class="il">' + ILL[k] + '</div><div class="tt">' + txt.split("|").map(esc).join("<br>") + '</div><div class="ck">' + CHK("#fff", 18) + "</div>";
+          fGrid.appendChild(el);
+          const [x, y] = TILE[k + 1];
+          return { el, x, y, ta: [6.1, 6.55, 7.05, 7.5, 7.95][k], ck: el.querySelector(".ck"), il: el.querySelector(".il") };
+        });
+        function feat(t) {
+          const on = t >= 5.78 && t < 9.42;
+          K.show($("featL"), on);
+          if (!on) return;
+          const fb = $("fBlue");
+          fb.style.left = "120px"; fb.style.top = "135px"; fb.style.width = "544px"; fb.style.height = "374px";
+          const bu = E.outBack(P(t, 5.92, 6.1), 2);
+          $("fBadge").style.transform = "scale(" + C(bu, 0, 1.2).toFixed(3) + ")"; $("fBadge").style.opacity = C(bu * 2).toFixed(3); $("fBadge").style.transformOrigin = "0 50%";
+          ftS.forEach((s, k) => rise(s, t, 5.76 + k * 0.08, 0.5, 110));
+          FEAT.forEach((f) => {
+            const u = E.outCubic(P(t, f.ta, f.ta + 0.28));
+            K.show(f.el, u > 0);
+            f.el.style.transform = "translate(" + px(f.x) + "," + px(f.y + 18 * (1 - u)) + ")";
+            f.el.style.opacity = u.toFixed(3);
+            f.il.style.opacity = P(t, f.ta + 0.08, f.ta + 0.34).toFixed(3);
+            const cu = E.outBack(P(t, f.ta + 0.3, f.ta + 0.46), 2.4);
+            f.ck.style.transform = "scale(" + C(cu, 0, 1.25).toFixed(3) + ")"; f.ck.style.opacity = C(cu * 3).toFixed(3);
+          });
+        }
+
+        // ================= math =================
+        $("dLab").textContent = v.darkLabel;
+        const dS = [$("dl1"), $("dl2"), $("dl3")].map((m) => m.children[0]);
+        dS[0].textContent = v.darkA;
+        dS[2].innerHTML = esc(v.darkC) + ' <span class="bl">' + esc(v.daily) + "</span>";
+        $("dFoot").textContent = v.foot;
+        const WF = num(v.weekFrom), WT = num(v.weekTo);
+        function math(t) {
+          const on = t >= 9.4 && t < 11.3;
+          K.show($("darkL"), on);
+          if (!on) return;
+          $("dLab").style.opacity = P(t, 9.42, 9.56).toFixed(3);
+          rise(dS[0], t, 9.48, 0.6, 100);
+          rise(dS[1], t, 9.6, 0.6, 100);
+          rise(dS[2], t, 10.26, 0.6, 100);
+          dS[1].textContent = v.darkB + " " + money(Math.round(L(WF, WT, E.outCubic(P(t, 9.66, 10.2))))) + ".";
+          $("dFoot").style.opacity = P(t, 10.55, 10.75).toFixed(3);
+        }
+
+        // ================= checkout =================
+        $("coT").textContent = v.coTitle;
+        $("coS").innerHTML = "<span>" + esc(v.coSub).replace("{m}", "<b>" + esc(money(MON)) + "</b>") + "</span><i>" + esc(v.save) + "</i>";
+        $("coB").textContent = v.button;
+        $("coG").querySelector("span").textContent = v.guarantee;
+        $("coA").textContent = v.alt;
+        function checkout(t) {
+          const on = t >= 11.3 && t < 13.08;
+          K.show($("coL"), on);
+          if (!on) return;
+          const cu = E.outCubic(P(t, 11.3, 11.46));
+          $("co").style.opacity = cu.toFixed(3);
+          const tu = E.outCubic(P(t, 11.32, 11.52));
+          $("coT").style.opacity = tu.toFixed(3); $("coT").style.filter = blurS(8 * (1 - tu));
+          const su = E.outCubic(P(t, 11.82, 11.98));
+          $("coS").style.opacity = su.toFixed(3); $("coS").style.transform = "translateY(" + px(8 * (1 - su)) + ")";
+          const bu = E.outCubic(P(t, 12.08, 12.24));
+          $("coB").style.opacity = bu.toFixed(3); $("coB").style.transform = "translateY(" + px(10 * (1 - bu)) + ")";
+          $("coG").style.opacity = P(t, 12.4, 12.58).toFixed(3);
+          $("coA").style.opacity = P(t, 12.6, 12.78).toFixed(3);
+          // the button grows until it is the whole frame
+          const fu = P(t, 12.84, 13.06), fl = $("flood");
+          K.show(fl, fu > 0);
+          if (fu > 0) {
+            const e = E.inOutCubic(fu), bx = 460 + 46, by = 280 + 208;
+            const x = L(bx, -20, e), y = L(by, -20, e), w = L(904, 1960, e), h = L(88, 1120, e);
+            fl.style.left = px(x); fl.style.top = px(y); fl.style.width = px(w); fl.style.height = px(h); fl.style.borderRadius = px(9 * (1 - e));
+          }
+        }
+
+        // ================= end =================
+        const eWm = $("eWm");
+        const WM = [...v.brand].map((c) => { const s = document.createElement("span"); s.textContent = c === " " ? "\u00a0" : c; eWm.appendChild(s); return s; });
+        $("eBadge").textContent = v.badge;
+        $("eT1").textContent = v.tag1; $("eT2").textContent = v.tag2;
+        $("eUrl").textContent = v.url + "  →";
+        let lockW = 0, urlW = 0;
+        function end(t) {
+          const on = t >= 13.04;
+          K.show($("endL"), on);
+          if (!on) return;
+          if (!lockW) { lockW = $("eLock").offsetWidth; urlW = $("eUrl").offsetWidth; }
+          const lk = $("eLock");
+          lk.style.left = px(960 - lockW / 2);
+          const mu = E.outCubic(P(t, 13.16, 13.42));
+          $("eMark").style.opacity = mu.toFixed(3); $("eMark").style.transform = "translateX(" + px(-16 * (1 - mu)) + ")";
+          WM.forEach((s, k) => { const a = 13.24 + k * 0.05, u = E.outCubic(P(t, a, a + 0.26)); s.style.opacity = u.toFixed(3); s.style.filter = blurS(8 * (1 - u)); });
+          const bb = E.outBack(P(t, 13.62, 13.8), 2);
+          $("eBadge").style.transform = "scale(" + C(bb, 0, 1.2).toFixed(3) + ")"; $("eBadge").style.opacity = C(bb * 2).toFixed(3);
+          const t1 = E.outCubic(P(t, 13.82, 14.06)), t2 = E.outCubic(P(t, 13.9, 14.14));
+          $("eT1").style.opacity = t1.toFixed(3); $("eT1").style.transform = "translateY(" + px(14 * (1 - t1)) + ")";
+          $("eT2").style.opacity = t2.toFixed(3); $("eT2").style.transform = "translateY(" + px(14 * (1 - t2)) + ")";
+          const uu = E.outBack(P(t, 14.1, 14.28), 1.8);
+          const url = $("eUrl");
+          url.style.left = px(960 - urlW / 2);
+          url.style.transform = "scale(" + C(uu, 0, 1.2).toFixed(3) + ")"; url.style.opacity = C(uu * 2).toFixed(3);
+        }
+
+        // shrink a line's font if the copy is longer than the space it has
+        const fitEls = [[hk, 900], [ftS, 456], [dS, 1600], [[$("coT")], 904], [[$("eT2")], 1700]];
+        const baseSize = new Map();
+        function fitAll() {
+          fitEls.forEach(([els, maxW]) => els.forEach((el) => {
+            const box = el.closest(".layer") || el, prev = box.style.display; box.style.display = "";
+            if (!baseSize.has(el)) baseSize.set(el, parseFloat(getComputedStyle(el).fontSize));
+            const b = baseSize.get(el); el.style.fontSize = b + "px";
+            const w = el.scrollWidth || el.offsetWidth;
+            if (w > maxW) el.style.fontSize = (b * maxW / w).toFixed(2) + "px";
+            box.style.display = prev;
+          }));
+        }
+        fitAll();
+
+        function render(t) {
+          hook(t);
+          comp(t);
+          feat(t);
+          math(t);
+          checkout(t);
+          end(t);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lockW = 0; fitAll(); render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>intro-kinetic</title>
+    <script>
+      // intro-kinetic CONFIG: every piece of on-screen text and every tunable.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs intro-kinetic <dir> --update` so the static timing
+      // attributes and the music bed follow; the timeline refuses to build if
+      // they disagree with this block.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "title": "윤병우 자기소개",
+        "name": "윤병우",
+        "team": "AX/PI팀",
+        "employer": "삼성 시니어 엔지니어",
+        "years": 23,
+        "yearsUnit": "년차",
+        "subsLabel": "유튜브 구독자",
+        "subsTarget": 195000,
+        "subsDisplay": "",
+        "subsFormat": "ko",
+        "toolsLabel": "직접 만든 [AI] 도구",
+        "tools": ["AutoKliq", "Second Brain"],
+        "flash": ["시간", "돈", "감정", "자유"],
+        "finale": ["실리콘밸리 개발자가 알려주는", "[시간, 돈, 감정]에서", "[자유]로워지는 법"],
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d",
+        "bpm": 120
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "IntroSans";
+        src: url("assets/fonts/NanumSquare_acEB.ttf") format("truetype");
+        font-weight: 800;
+        font-style: normal;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--charcoal);
+      }
+      #stage {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--charcoal);
+        font-family: "IntroSans", sans-serif;
+        font-weight: 800;
+        color: var(--paper);
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .bg-charcoal { background: var(--charcoal); color: var(--paper); }
+      .bg-paper { background: var(--paper); color: var(--charcoal); }
+      .bg-red { background: var(--red); color: var(--paper); }
+      .content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        padding: 120px 160px;
+        text-align: center;
+      }
+      .red { color: var(--red); }
+      .mask { overflow: hidden; padding: 0 0 0.16em; line-height: 1.1; }
+      .mask > span { display: block; }
+      /* covers: full-frame panels that become the next scene's background */
+      .cover { position: absolute; inset: 0; z-index: 5; }
+
+      /* scene 1 */
+      #s1-name { font-size: 300px; line-height: 1; letter-spacing: -0.02em; }
+      #s1-bar { position: relative; z-index: 2; width: 820px; height: 26px; background: var(--red); }
+      #s1-sub { font-size: 76px; letter-spacing: 0.04em; }
+      /* scene 2 */
+      #s2-title { font-size: 110px; }
+      #s2-row { display: flex; align-items: baseline; justify-content: center; gap: 24px; }
+      #s2-num { font-size: 380px; line-height: 1; color: var(--red); font-variant-numeric: tabular-nums; display: inline-block; min-width: 1.15em; }
+      #s2-unit { font-size: 170px; display: inline-block; }
+      #s2-iris {
+        position: absolute; left: 50%; top: 50%;
+        width: 2300px; height: 2300px; margin: -1150px 0 0 -1150px;
+        border-radius: 50%; background: var(--paper); z-index: 5;
+      }
+      /* scene 3 */
+      #s3-title { font-size: 120px; }
+      #s3-num { font-size: 270px; line-height: 1.05; color: var(--red); font-variant-numeric: tabular-nums; white-space: nowrap; }
+      #s3-cover { background: var(--charcoal); }
+      /* scene 4 */
+      #s4 .content { gap: 18px; }
+      #s4-label { font-size: 96px; }
+      .tool { font-size: 210px; line-height: 1.05; white-space: nowrap; }
+      #s4-cover { background: var(--red); }
+      /* scene 5: one full-frame panel per flash word, stacked in beat order */
+      .flash-panel { position: absolute; inset: 0; visibility: hidden; opacity: 0; }
+      .flash { font-size: 400px; line-height: 1; white-space: nowrap; }
+      .flash-panel.bg-charcoal .flash { color: var(--red); }
+      #s5-cover { background: var(--charcoal); }
+      /* scene 6 */
+      #s6 .content { gap: 10px; }
+      .fin-lead { font-size: 104px; }
+      .fin-big { font-size: 156px; }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG
+         (root data-duration and <audio> timing are read statically by the
+         engine, before any script runs). Do not hand-edit them. -->
+    <div
+      id="stage"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="15"
+      data-fps="30"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- Scene 1: name hook -->
+      <section id="s1" class="clip bg-charcoal" data-start="0" data-duration="2" data-track-index="0">
+        <div class="content">
+          <div id="s1-name"></div>
+          <div id="s1-bar" data-layout-allow-overflow="true"></div>
+          <div id="s1-sub"></div>
+        </div>
+      </section>
+
+      <!-- Transition 1->2: the red bar (now full frame) lifts away -->
+      <div id="t12" class="clip" data-start="2" data-duration="0.25" data-track-index="2">
+        <div id="t12-panel" class="cover bg-red" data-layout-allow-overflow="true"></div>
+      </div>
+
+      <!-- Scene 2: employer + years count-up -->
+      <section id="s2" class="clip bg-charcoal" data-start="2" data-duration="2" data-track-index="0">
+        <div class="content">
+          <div class="mask"><span id="s2-title"></span></div>
+          <div id="s2-row"><span id="s2-num">0</span><span id="s2-unit"></span></div>
+        </div>
+        <div id="s2-iris" data-layout-allow-overflow="true"></div>
+      </section>
+
+      <!-- Scene 3: subscriber count-up -->
+      <section id="s3" class="clip bg-paper" data-start="4" data-duration="2" data-track-index="0">
+        <div class="content">
+          <div class="mask"><span id="s3-title"></span></div>
+          <div id="s3-num">0</div>
+        </div>
+        <div id="s3-cover" class="cover" data-layout-allow-overflow="true"></div>
+      </section>
+
+      <!-- Scene 4: tools, one every two beats -->
+      <section id="s4" class="clip bg-charcoal" data-start="6" data-duration="3" data-track-index="0">
+        <div class="content" id="s4-content">
+          <div class="mask"><span id="s4-label"></span></div>
+        </div>
+        <div id="s4-cover" class="cover" data-layout-allow-overflow="true"></div>
+      </section>
+
+      <!-- Scene 5: one flash word per beat -->
+      <section id="s5" class="clip bg-red" data-start="9" data-duration="2" data-track-index="0">
+        <div id="s5-panels"></div>
+        <div id="s5-cover" class="cover" data-layout-allow-overflow="true"></div>
+      </section>
+
+      <!-- Scene 6: finale, one line every two beats -->
+      <section id="s6" class="clip bg-charcoal" data-start="11" data-duration="4" data-track-index="0">
+        <div class="content" id="s6-content"></div>
+      </section>
+
+      <!-- Audio: music bed + sparse SFX -->
+      <audio id="music" src="assets/music.m4a" data-start="0" data-duration="15" data-track-index="10" data-volume="0.85"></audio>
+      <audio id="sfx-impact-open" src="assets/sfx/impact-bass-1.mp3" data-start="0" data-duration="2" data-track-index="11" data-volume="0.3"></audio>
+      <audio id="sfx-whoosh-1" src="assets/sfx/whoosh-short.mp3" data-start="1.7" data-duration="0.57" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-whoosh-2" src="assets/sfx/whoosh-short.mp3" data-start="3.7" data-duration="0.57" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-whoosh-3" src="assets/sfx/whoosh-short.mp3" data-start="5.7" data-duration="0.57" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-whoosh-4" src="assets/sfx/whoosh-short.mp3" data-start="8.7" data-duration="0.57" data-track-index="12" data-volume="0.3"></audio>
+      <audio id="sfx-impact-finale" src="assets/sfx/impact-bass-1.mp3" data-start="11" data-duration="2" data-track-index="11" data-volume="0.35"></audio>
+    </div>
+
+    <script>
+      const C = CONFIG;
+      const B = 60 / C.bpm; // one beat in seconds; every cut sits on a beat
+      const $ = (id) => document.getElementById(id);
+      const win = (id) => {
+        const el = $(id);
+        return { start: +el.dataset.start, end: +el.dataset.start + +el.dataset.duration, dur: +el.dataset.duration };
+      };
+
+      // ---- palette: exactly three colours
+      const root = document.documentElement.style;
+      root.setProperty("--paper", C.paper);
+      root.setProperty("--charcoal", C.charcoal);
+      root.setProperty("--red", C.red);
+      document.title = C.title;
+
+      // ---- guard: the static timing attributes must match CONFIG
+      // (scene lengths in beats; same plan as the scaffold's recipe.mjs)
+      const T = C.tools.length, F = C.flash.length, L = C.finale.length;
+      const beats = { s1: 4, s2: 4, s3: 4, s4: 2 + 2 * T, s5: F, s6: 2 * L + 2 };
+      for (const [id, n] of Object.entries(beats)) {
+        if (Math.abs(win(id).dur - n * B) > 1e-3) {
+          throw new Error(`intro-kinetic: #${id} lasts ${win(id).dur}s but CONFIG implies ${n * B}s; re-run scaffold --update`);
+        }
+      }
+
+      // ponytail: per-glyph width estimate instead of measuring the loaded font
+      // (Hangul ~0.95em, digits/lowercase ~0.6em). Shrinks only, never grows;
+      // move to __hyperframes.fitTextFontSize after document.fonts.ready if a
+      // param ever overflows despite this.
+      const fit = (text, px, maxW = 1600) => {
+        let em = 0;
+        for (const ch of text) {
+          if (/[ㄱ-힣一-鿿]/.test(ch)) em += 0.95;
+          else if (/[\s,.]/.test(ch)) em += 0.3;
+          else if (/[A-Z]/.test(ch)) em += 0.7;
+          else em += 0.6;
+        }
+        return Math.min(px, Math.floor(maxW / Math.max(em, 0.01)));
+      };
+      const sized = (el, text, px) => { el.style.fontSize = fit(text, px) + "px"; return el; };
+      // "[word]" marks a highlight in the red accent; text nodes only, no HTML
+      const marked = (el, src) => {
+        src.split(/(\[[^\]]*\])/).forEach((part) => {
+          if (!part) return;
+          if (part.startsWith("[") && part.endsWith("]")) {
+            const s = document.createElement("span");
+            s.className = "red";
+            s.textContent = part.slice(1, -1);
+            el.appendChild(s);
+          } else el.appendChild(document.createTextNode(part));
+        });
+        return el;
+      };
+      const plain = (s) => s.replace(/[[\]]/g, "");
+
+      // ---- fill text from CONFIG
+      sized($("s1-name"), C.name, 300).textContent = C.name;
+      sized($("s1-sub"), C.team, 76).textContent = C.team;
+      sized($("s2-title"), C.employer, 110).textContent = C.employer;
+      $("s2-unit").textContent = C.yearsUnit;
+      sized($("s3-title"), C.subsLabel, 120).textContent = C.subsLabel;
+      marked(sized($("s4-label"), plain(C.toolsLabel), 96), C.toolsLabel);
+      const toolPx = T >= 3 ? 170 : 210;
+      const toolEls = C.tools.map((name, i) => {
+        const d = document.createElement("div");
+        d.className = "tool" + (i % 2 ? " red" : "");
+        d.textContent = name;
+        sized(d, name, toolPx);
+        $("s4-content").appendChild(d);
+        return d;
+      });
+      const bgCycle = ["bg-red", "bg-paper", "bg-charcoal"];
+      const flashEls = C.flash.map((word, i) => {
+        const p = document.createElement("div");
+        p.className = "flash-panel " + bgCycle[i % 3];
+        p.style.zIndex = String(i + 1);
+        p.innerHTML = '<div class="content"><div class="flash"></div></div>';
+        const w = p.querySelector(".flash");
+        w.textContent = word;
+        sized(w, word, 400);
+        $("s5-panels").appendChild(p);
+        return { panel: p, word: w };
+      });
+      const finEls = C.finale.map((line, i) => {
+        const m = document.createElement("div");
+        m.className = "mask";
+        const s = document.createElement("span");
+        const lead = i === 0 && L > 1;
+        s.className = lead ? "fin-lead" : "fin-big";
+        marked(sized(s, plain(line), lead ? 104 : 156), line);
+        m.appendChild(s);
+        $("s6-content").appendChild(m);
+        return s;
+      });
+      const fmt = (v) => {
+        if (C.subsFormat === "comma") return Math.round(v).toLocaleString("en-US");
+        const k = Math.round(v / 1000);
+        const man = Math.floor(k / 10), cheon = k % 10;
+        if (man === 0) return cheon + "천";
+        return cheon === 0 ? man + "만" : man + "만 " + cheon + "천";
+      };
+      const subsFinal = C.subsDisplay || fmt(C.subsTarget);
+      sized($("s3-num"), subsFinal, 270);
+
+      // ---- timeline: positions = scene window (from the DOM) + beats
+      const tl = gsap.timeline({ paused: true });
+
+      // A transition panel half over a scene puts its text on two colours at
+      // once, and check's contrast pass takes the median pixel of the whole
+      // text box, so it can measure the text against the panel (a false 1:1:
+      // paper iris over paper type). The documented data-layout-ignore opts
+      // that scene's text out only while the panel is mid-move; every hold is
+      // audited as usual. Attribute only, no paint. One toggler per element:
+      // scene 2 has two panels, so the lift marks #s2 and the iris its content.
+      const unaudited = (sel) => function () {
+        const p = this.progress();
+        document.querySelector(sel).toggleAttribute("data-layout-ignore", p > 0 && p < 1);
+      };
+
+      // Scene 1: name slams on beat 0, bar on 1, subtitle on 2, bar fills the frame into the cut
+      const w1 = win("s1");
+      tl.fromTo("#s1-name", { scale: 1.9 }, { scale: 1, duration: 0.3, ease: "power4.out" }, w1.start);
+      tl.to("#s1-name", { keyframes: [{ x: -14 }, { x: 12 }, { x: -6 }, { x: 0 }], duration: 0.16, ease: "none" }, w1.start + 0.3);
+      tl.fromTo("#s1-bar", { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: "expo.out" }, w1.start + 1 * B);
+      tl.fromTo("#s1-sub", { autoAlpha: 0, y: 60 }, { autoAlpha: 1, y: 0, duration: 0.3, ease: "power3.out" }, w1.start + 2 * B);
+      tl.fromTo("#s1-bar", { scaleY: 1 }, { scaleY: 90, scaleX: 3, duration: 0.25, ease: "power3.in", immediateRender: false, onUpdate: unaudited("#s1 .content") }, w1.end - 0.25);
+
+      // Transition 1->2: red panel lifts away revealing scene 2
+      const wt = win("t12");
+      tl.fromTo("#t12-panel", { yPercent: 0 }, { yPercent: -100, duration: wt.dur, ease: "power3.out", onUpdate: unaudited("#s2") }, wt.start);
+
+      // Scene 2: employer line, years count-up, paper iris into the cut
+      const w2 = win("s2");
+      tl.fromTo("#s2-title", { yPercent: 110 }, { yPercent: 0, duration: 0.35, ease: "power4.out" }, w2.start);
+      tl.fromTo("#s2-row", { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.25, ease: "power3.out" }, w2.start + 0.5 * B);
+      const yearsEl = $("s2-num");
+      const py = { v: 0 };
+      tl.to(py, {
+        v: C.years, duration: 0.9, ease: "power3.out",
+        onUpdate: () => { yearsEl.textContent = String(Math.round(py.v)); },
+      }, w2.start + 1 * B);
+      tl.fromTo("#s2-unit", { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.25, ease: "back.out(1.8)" }, w2.start + 2 * B);
+      tl.fromTo("#s2-num", { scale: 1.12 }, { scale: 1, duration: 0.25, ease: "power2.out", immediateRender: false }, w2.start + 2 * B);
+      tl.fromTo("#s2-iris", { scale: 0 }, { scale: 1, duration: 0.25, ease: "power2.in", onUpdate: unaudited("#s2 .content") }, w2.end - 0.25);
+
+      // Scene 3: subscriber count-up, charcoal block rises into the cut
+      const w3 = win("s3");
+      tl.fromTo("#s3-title", { yPercent: 110 }, { yPercent: 0, duration: 0.35, ease: "power4.out" }, w3.start);
+      const subsEl = $("s3-num");
+      const ps = { v: 0 };
+      tl.fromTo("#s3-num", { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1, duration: 0.25, ease: "power3.out" }, w3.start + 1 * B);
+      tl.to(ps, {
+        v: C.subsTarget, duration: 1.0, ease: "power3.out",
+        onUpdate: () => { subsEl.textContent = ps.v >= C.subsTarget && C.subsDisplay ? C.subsDisplay : fmt(ps.v); },
+      }, w3.start + 1 * B);
+      tl.fromTo("#s3-num", { scale: 1.1 }, { scale: 1, duration: 0.2, ease: "power2.out", immediateRender: false }, w3.start + 3 * B);
+      tl.fromTo("#s3-cover", { yPercent: 100 }, { yPercent: 0, duration: 0.25, ease: "power3.in", onUpdate: unaudited("#s3 .content") }, w3.end - 0.25);
+
+      // Scene 4: label, then one tool every two beats; red bar sweeps into the cut
+      const w4 = win("s4");
+      tl.fromTo("#s4-label", { yPercent: 110 }, { yPercent: 0, duration: 0.35, ease: "power4.out" }, w4.start);
+      toolEls.forEach((el, i) => {
+        const at = w4.start + (2 + 2 * i) * B;
+        if (i % 2 === 0) {
+          tl.fromTo(el, { autoAlpha: 0, x: -500 }, { autoAlpha: 1, x: 0, duration: 0.3, ease: "expo.out" }, at);
+        } else {
+          tl.fromTo(el, { autoAlpha: 0, scale: 1.7 }, { autoAlpha: 1, scale: 1, duration: 0.3, ease: "power4.out" }, at);
+          tl.to(el, { keyframes: [{ x: -10 }, { x: 9 }, { x: -4 }, { x: 0 }], duration: 0.14, ease: "none" }, at + 0.3);
+        }
+      });
+      tl.fromTo("#s4-cover", { xPercent: -100 }, { xPercent: 0, duration: 0.25, ease: "power3.in", onUpdate: unaudited("#s4-content") }, w4.end - 0.25);
+
+      // Scene 5: one word per beat, hard on-beat; charcoal slab drops into the finale impact
+      const w5 = win("s5");
+      flashEls.forEach(({ panel, word }, i) => {
+        const at = w5.start + i * B;
+        tl.set(panel, { autoAlpha: 1 }, at);
+        if (i > 0) tl.set(flashEls[i - 1].panel, { autoAlpha: 0 }, at); // one panel up at a time
+        tl.fromTo(word, { scale: 1.35 }, { scale: 1, duration: 0.15, ease: "power4.out" }, at);
+      });
+      tl.fromTo("#s5-cover", { yPercent: -100 }, { yPercent: 0, duration: 0.2, ease: "power4.in", onUpdate: unaudited("#s5-panels") }, w5.end - 0.2);
+
+      // Scene 6: one finale line every two beats, then hold
+      const w6 = win("s6");
+      finEls.forEach((el, i) => {
+        tl.fromTo(el, { yPercent: i === 0 ? 60 : 110 }, { yPercent: 0, duration: 0.4, ease: "power4.out" }, w6.start + 2 * i * B);
+      });
+      tl.set({}, {}, w6.end);
+
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

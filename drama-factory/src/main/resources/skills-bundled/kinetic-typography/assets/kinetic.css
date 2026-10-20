@@ -1,0 +1,51 @@
+/* ===== Kinetic typography building blocks ===== */
+/* Pair with kinetic.js: call splitWords() once at boot, toggle .show on a scene to play. */
+
+/* --- 1. Word-cascade headline reveal --- */
+/* Each line masks its words; words rise into place one after another (global --wi stagger). */
+.head .ln{display:block;overflow:hidden;padding:.04em .02em .12em;}   /* the mask */
+.head .wd{display:inline-block;will-change:transform,opacity;}
+@keyframes wordrise{from{opacity:0;transform:translateY(112%);}to{opacity:1;transform:none;}}
+.show .head .wd{animation:wordrise .72s cubic-bezier(.2,.85,.2,1) backwards;
+  animation-delay:calc(.08s + var(--wi,0) * .065s);}   /* later words start later → cascade */
+
+/* --- 2. Hero → cards-push → reveal staging ---
+   Layout: a scene wraps a .lead (kicker + .head + .sub) and a .cardstage (or any content panel).
+   Phase 1 (no .cardsin): headline is centered as ONE line; kicker/sub hidden; stage off-screen.
+   Phase 2 (.cardsin added): lead slides to its docked side while the stage slides in from the
+   opposite edge (reads as "the content pushes the headline aside"); then kicker(top)+sub(bottom)
+   slide out of the headline. Add dk-left or dk-right to pick the docked side. */
+.choreo .lead{position:absolute;top:50%;width:30cqw;z-index:6;transform:translateY(-50%);
+  transition:transform .85s cubic-bezier(.5,.04,.18,1);}
+.dk-left  .lead{left:6cqw;            --heroX: 29cqw;}
+.dk-right .lead{left:auto;right:6cqw; --heroX:-29cqw;}
+.choreo:not(.cardsin) .lead{transform:translate(var(--heroX),-50%) scale(1.12);text-align:center;}
+.choreo.cardsin .lead{text-align:left;}
+.choreo:not(.cardsin) .head{white-space:nowrap;}              /* one centered line in the hero */
+.choreo:not(.cardsin) .head .ln{display:inline-block;}
+.choreo:not(.cardsin) .head .ln + .ln{margin-left:.3em;}
+
+.choreo .cardstage{position:absolute;top:8cqh;height:80cqh;transform:none;opacity:1;
+  transition:transform .85s cubic-bezier(.5,.04,.18,1),opacity .55s;}
+.dk-left  .cardstage{left:38cqw;width:56cqw;--stageHide:translateX( 72cqw);}
+.dk-right .cardstage{left:6cqw; width:56cqw;--stageHide:translateX(-72cqw);}
+.choreo:not(.cardsin) .cardstage{transform:var(--stageHide);opacity:0;}
+
+.choreo .kicker{position:absolute;left:0;bottom:100%;margin:0 0 1cqw;width:34cqw;
+  transition:transform .6s cubic-bezier(.3,.7,.2,1),opacity .5s;transition-delay:.62s;}
+.choreo .sub{position:absolute;left:0;top:100%;margin:1cqw 0 0;width:32cqw;
+  transition:transform .6s cubic-bezier(.3,.7,.2,1),opacity .5s;transition-delay:.76s;}
+.choreo:not(.cardsin) .kicker{opacity:0;transform:translateY( 1.7cqw);}  /* tucked into the headline */
+.choreo:not(.cardsin) .sub   {opacity:0;transform:translateY(-1.7cqw);}
+.choreo.cardsin .kicker,.choreo.cardsin .sub{opacity:1;transform:none;}  /* slide top/bottom out */
+
+/* --- 3. Fractured ("cracked") word --- */
+/* Two clipped copies of the word along a jagged seam; --ck 0 = solid, 1 = fully cracked.
+   Wrap the word: <span class="crackword" data-text="cracks">cracks</span>  (set color via parent). */
+.crackword{position:relative;display:inline-block;color:transparent;--ck:0;}
+.crackword::before,.crackword::after{content:attr(data-text);position:absolute;left:0;top:0;color:#fff;white-space:nowrap;pointer-events:none;}
+.crackword::before{clip-path:polygon(0% 0%,100% 0%,100% 45%,78% 54%,60% 44%,40% 56%,20% 45%,0% 55%);
+  transform:translate(calc(var(--ck)*-.012em),calc(var(--ck)*-.02em));}
+.crackword::after {clip-path:polygon(0% 55%,20% 45%,40% 56%,60% 44%,78% 54%,100% 45%,100% 100%,0% 100%);
+  transform:translate(calc(var(--ck)*.04em),calc(var(--ck)*.06em)) rotate(calc(var(--ck)*.6deg));
+  text-shadow:-.012em -.01em .01em rgba(229,71,99,calc(var(--ck)*.6));}  /* red glint in the fissure */

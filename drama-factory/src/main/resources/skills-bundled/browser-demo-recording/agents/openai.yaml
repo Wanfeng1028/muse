@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser Demo Recording"
+  short_description: "Capture an approved walkthrough in a real browser"
+  default_prompt: "Use $browser-demo-recording to capture this approved demo plan in the browser."

@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>motion-studio</title>
+<style>
+  :root { --bg: #111110; --panel: #181817; --line: #2e2e2c; --ink: #e8e6e1; --grey: #969691; --accent: #e8772e; --done: #5f7f5a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 13px/1.4 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  body { display: grid; grid-template-columns: 1fr 320px; grid-template-rows: 44px 1fr 118px; height: 100vh; }
+  header { grid-column: 1 / 3; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+  header .name { font-weight: 600; margin-right: 8px; }
+  button, select { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 9px; font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--grey); }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  #clock { font-variant-numeric: tabular-nums; min-width: 190px; color: var(--grey); }
+  #flash { margin-left: auto; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  #flash.show { opacity: 1; }
+  #viewer { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  #frame { position: relative; box-shadow: 0 0 0 1px var(--line); }
+  #frame iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #0b0b0b; }
+  aside { grid-row: 2 / 4; grid-column: 2; border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--grey); margin: 12px 12px 6px; }
+  #noteForm { padding: 0 12px 10px; border-bottom: 1px solid var(--line); }
+  #noteForm textarea { width: 100%; height: 64px; resize: vertical; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px; font: inherit; }
+  #noteForm .row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; color: var(--grey); }
+  #notes { overflow-y: auto; padding: 6px 12px 12px; flex: 1; }
+  .note { border: 1px solid var(--line); border-radius: 6px; padding: 7px 8px; margin-bottom: 6px; cursor: pointer; }
+  .note:hover { border-color: var(--grey); }
+  .note .meta { color: var(--grey); font-size: 11px; margin-bottom: 2px; }
+  .note.done { opacity: .55; }
+  .note.done .meta::after { content: " · done"; color: var(--done); }
+  .note .reply { color: var(--done); margin-top: 4px; font-size: 12px; }
+  #timeline { grid-column: 1; border-top: 1px solid var(--line); position: relative; cursor: pointer; user-select: none; }
+  #timeline svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .help { color: var(--grey); font-size: 11px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  kbd { border: 1px solid var(--line); border-radius: 3px; padding: 0 3px; font-size: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <span class="name" id="name">motion-studio</span>
+  <button id="barBack" title="previous bar ([)">⏮</button>
+  <button id="play" title="play / pause (space)">▶</button>
+  <button id="barFwd" title="next bar (])">⏭</button>
+  <select id="speed" title="speed"><option value="1">1×</option><option value="0.5">0.5×</option><option value="0.25">0.25×</option></select>
+  <button id="loop" title="loop the current scene (L)">loop scene</button>
+  <button id="mute" title="mute (M)">sound on</button>
+  <span id="clock">0.00 s</span>
+  <span id="flash">reloaded</span>
+</header>
+<div id="viewer"><div id="frame"><iframe id="film"></iframe></div></div>
+<aside>
+  <h2>Note at playhead</h2>
+  <form id="noteForm">
+    <textarea id="noteText" placeholder="e.g. hard cut here · slow this push to 0.7× · this caption is unclear"></textarea>
+    <div class="row"><span id="noteAt">at 0.00 s</span><button type="submit">Pin note ⏎</button></div>
+  </form>
+  <h2>Notes</h2>
+  <div id="notes"></div>
+  <div class="help"><kbd>space</kbd> play · <kbd>←</kbd><kbd>→</kbd> frame · <kbd>shift</kbd>+arrows beat · <kbd>[</kbd><kbd>]</kbd> bar · <kbd>n</kbd> note · <kbd>L</kbd> loop · <kbd>M</kbd> mute</div>
+</aside>
+<div id="timeline"><svg id="tl"></svg></div>
+<script>
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const FPS = 30;
+let info, W = null, DUR = 1, S = null, t = 0, playing = false, speed = 1, loop = false, muted = false;
+let lastMtime = 0, clockStart = 0, tStart = 0, notes = [];
+const audio = new Audio();
+audio.preload = "auto";
+
+const beat = () => S ? 60 / S.bpm : null;
+const bar = () => S ? 4 * 60 / S.bpm : null;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const fmt = x => x.toFixed(2) + " s";
+function barBeat(x) {
+  if (!S) return "";
+  const B = bar(), bt = beat();
+  return ` · bar ${Math.floor(x / B)} · beat ${Math.floor((x % B) / bt) + 1}`;
+}
+function sceneAt(x) { return S ? (S.scenes.find(s => x >= s.from && x < s.to) || null) : null; }
+
+async function init() {
+  info = await (await fetch("/api/info")).json();
+  $("name").textContent = info.film;
+  document.title = info.film + " · motion-studio";
+  loadFilm(0);
+  loadNotes();
+  setInterval(poll, 1000);
+  setInterval(loadNotes, 3000);
+}
+
+function loadFilm(keepT) {
+  const f = $("film");
+  f.onload = () => {
+    W = f.contentWindow;
+    DUR = W.DUR || 1;
+    S = W.STUDIO || null;
+    const st = W.document.getElementById("stage").getBoundingClientRect();
+    const fw = S ? S.format.w : Math.round(st.width), fh = S ? S.format.h : Math.round(st.height);
+    f.width = fw; f.height = fh; f.dataset.w = fw; f.dataset.h = fh;
+    fit();
+    drawTimeline();
+    seek(keepT);
+    if (S && S.warnings && S.warnings.length) S.warnings.forEach(w => console.warn("LINT:", w));
+  };
+  f.src = info.url + "?v=" + Date.now();
+  if (info.mix) { audio.src = info.mix + "?v=" + Date.now(); audio.muted = muted; }
+}
+
+function fit() {
+  const f = $("film"), v = $("viewer");
+  const fw = +f.dataset.w || 1080, fh = +f.dataset.h || 1350;
+  const s = Math.min((v.clientWidth - 24) / fw, (v.clientHeight - 24) / fh);
+  f.style.transform = `scale(${s})`;
+  $("frame").style.width = fw * s + "px"; $("frame").style.height = fh * s + "px";
+}
+window.addEventListener("resize", () => { fit(); drawTimeline(); });
+
+function seek(x) {
+  t = clamp(x, 0, DUR - 1e-4);
+  if (W && W.seek) W.seek(t);
+  $("clock").textContent = fmt(t) + barBeat(t);
+  $("noteAt").textContent = "at " + fmt(t) + barBeat(t);
+  if (!playing && info && info.mix) audio.currentTime = t;
+  drawPlayhead();
+}
+
+function play() {
+  playing = true; $("play").textContent = "❚❚";
+  tStart = t; clockStart = performance.now();
+  if (info.mix) { audio.currentTime = t; audio.playbackRate = speed; audio.play().catch(() => {}); }
+  requestAnimationFrame(tick);
+}
+function pause() { playing = false; $("play").textContent = "▶"; audio.pause(); }
+function tick() {
+  if (!playing) return;
+  let x = info.mix && !audio.paused && speed === audio.playbackRate ? audio.currentTime : tStart + (performance.now() - clockStart) / 1000 * speed;
+  const sc = loop ? sceneAt(tStart) : null;
+  if (sc && x >= sc.to) { x = sc.from; tStart = x; clockStart = performance.now(); if (info.mix) audio.currentTime = x; }
+  if (x >= DUR) { seek(DUR - 1e-4); pause(); return; }
+  t = x; if (W && W.seek) W.seek(t);
+  $("clock").textContent = fmt(t) + barBeat(t);
+  $("noteAt").textContent = "at " + fmt(t) + barBeat(t);
+  drawPlayhead();
+  requestAnimationFrame(tick);
+}
+
+async function poll() {
+  try {
+    const { mtime } = await (await fetch("/api/mtime")).json();
+    if (lastMtime && mtime > lastMtime) {
+      const was = playing; pause(); loadFilm(t);
+      $("flash").classList.add("show"); setTimeout(() => $("flash").classList.remove("show"), 1200);
+      if (was) setTimeout(play, 400);
+    }
+    lastMtime = mtime;
+  } catch (e) {}
+}
+
+// ── timeline ─────────────────────────────────────────────
+let playhead;
+function x2t(px) { return px / $("timeline").clientWidth * DUR; }
+function t2x(x) { return x / DUR * $("timeline").clientWidth; }
+function drawTimeline() {
+  const svg = $("tl"); svg.innerHTML = "";
+  const w = $("timeline").clientWidth, h = $("timeline").clientHeight;
+  const el = (tag, a) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+  if (S) {
+    S.scenes.forEach((s, i) => {
+      el("rect", { x: t2x(s.from), y: 6, width: t2x(s.to) - t2x(s.from) - 1, height: 26, fill: i % 2 ? "#232321" : "#1d1d1c" });
+      const lbl = el("text", { x: t2x(s.from) + 6, y: 23, fill: "#969691", "font-size": 11 }); lbl.textContent = s.name;
+    });
+    const B = bar(), bt = beat();
+    for (let x = 0; x <= DUR + 1e-6; x += bt) {
+      const isBar = Math.abs(x / B - Math.round(x / B)) < 1e-6;
+      el("line", { x1: t2x(x), x2: t2x(x), y1: isBar ? 34 : 50, y2: 62, stroke: isBar ? "#5a5956" : "#333331" });
+      if (isBar) { const n = el("text", { x: t2x(x) + 3, y: 46, fill: "#6d6c68", "font-size": 10 }); n.textContent = Math.round(x / B); }
+    }
+    (S.text || []).forEach(tx => {
+      el("rect", { x: t2x(tx.t0), y: 66, width: Math.max(2, t2x(tx.t1 ?? DUR) - t2x(tx.t0)), height: 6, rx: 2, fill: tx.where === "caption" ? "#4a4a47" : "#3a3a38" });
+    });
+  } else {
+    for (let x = 0; x <= DUR; x += 1) {
+      el("line", { x1: t2x(x), x2: t2x(x), y1: x % 5 ? 50 : 34, y2: 62, stroke: "#444" });
+      if (x % 5 === 0) { const n = el("text", { x: t2x(x) + 3, y: 46, fill: "#6d6c68", "font-size": 10 }); n.textContent = x + "s"; }
+    }
+  }
+  notes.forEach(n => {
+    const g = el("g", {});
+    el("line", { x1: t2x(n.t), x2: t2x(n.t), y1: 76, y2: h - 6, stroke: n.status === "open" ? "#e8772e" : "#5f7f5a", "stroke-width": 2 });
+    el("circle", { cx: t2x(n.t), cy: 80, r: 5, fill: n.status === "open" ? "#e8772e" : "#5f7f5a" });
+  });
+  playhead = el("line", { y1: 0, y2: h, stroke: "#e8e6e1", "stroke-width": 1.5 });
+  drawPlayhead();
+}
+function drawPlayhead() { if (playhead) { const x = t2x(t); playhead.setAttribute("x1", x); playhead.setAttribute("x2", x); } }
+let dragging = false;
+$("timeline").addEventListener("mousedown", e => { dragging = true; const was = playing; pause(); seek(x2t(e.offsetX)); });
+window.addEventListener("mousemove", e => { if (dragging) seek(x2t(e.clientX - $("timeline").getBoundingClientRect().left)); });
+window.addEventListener("mouseup", () => { dragging = false; });
+
+// ── notes ────────────────────────────────────────────────
+async function loadNotes() {
+  try { notes = (await (await fetch("/api/notes")).json()).notes; } catch (e) { return; }
+  const box = $("notes"); box.innerHTML = "";
+  [...notes].sort((a, b) => a.t - b.t).forEach(n => {
+    const d = document.createElement("div");
+    d.className = "note" + (n.status === "done" ? " done" : "");
+    d.innerHTML = `<div class="meta">#${n.id} · ${fmt(n.t)}${n.where ? " · " + n.where : ""}</div><div></div>` + (n.reply ? `<div class="reply"></div>` : "");
+    d.children[1].textContent = n.text; if (n.reply) d.children[2].textContent = "↳ " + n.reply;
+    d.onclick = () => { pause(); seek(n.t); };
+    box.appendChild(d);
+  });
+  drawTimeline();
+}
+$("noteForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const text = $("noteText").value.trim();
+  if (!text) return;
+  const sc = sceneAt(t);
+  await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ t, text, where: (sc ? sc.name : "") + barBeat(t).replace(" · ", " ") }) });
+  $("noteText").value = ""; $("noteText").blur(); loadNotes();
+});
+$("noteText").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("noteForm").requestSubmit(); } });
+
+// ── controls ─────────────────────────────────────────────
+$("play").onclick = () => playing ? pause() : play();
+$("barBack").onclick = () => { pause(); const B = bar() || 1; seek(Math.max(0, Math.ceil(t / B - 1e-6) - 1) * B); };
+$("barFwd").onclick = () => { pause(); const B = bar() || 1; seek(Math.floor(t / B + 1e-6 + 1) * B); };
+$("speed").onchange = e => { speed = +e.target.value; if (playing) { pause(); play(); } };
+$("loop").onclick = () => { loop = !loop; $("loop").classList.toggle("on", loop); };
+$("mute").onclick = () => { muted = !muted; audio.muted = muted; $("mute").textContent = muted ? "muted" : "sound on"; $("mute").classList.toggle("on", muted); };
+window.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA") { if (e.key === "Escape") e.target.blur(); return; }
+  const step = e.shiftKey ? (beat() || 0.5) : 1 / FPS;
+  if (e.code === "Space") { e.preventDefault(); playing ? pause() : play(); }
+  else if (e.key === "ArrowRight") { pause(); seek(t + step); }
+  else if (e.key === "ArrowLeft") { pause(); seek(t - step); }
+  else if (e.key === "]") $("barFwd").onclick();
+  else if (e.key === "[") $("barBack").onclick();
+  else if (e.key === "n") { e.preventDefault(); pause(); $("noteText").focus(); }
+  else if (e.key === "l" || e.key === "L") $("loop").onclick();
+  else if (e.key === "m" || e.key === "M") $("mute").onclick();
+});
+init();
+</script>
+</body>
+</html>

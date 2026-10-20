@@ -1,0 +1,4 @@
+interface:
+  display_name: "Seedance 2.5 Prompt Writing"
+  short_description: "Write Seedance scene, reference, and edit prompts"
+  default_prompt: "Use $sd25-pe to turn my scene idea and references into a Seedance 2.5 prompt."

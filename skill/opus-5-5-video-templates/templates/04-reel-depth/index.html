@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"name","type":"string","label":"Final wordmark","default":"IMAGINE"},
+  {"id":"role","type":"string","label":"Role line","default":"CLAUDE IMAGINE — IMAGE &amp; VIDEO"},
+  {"id":"year","type":"string","label":"Right label","default":"SHOWREEL 2026"},
+  {"id":"avail","type":"string","label":"Status line","default":"AVAILABLE INSIDE CLAUDE"},
+  {"id":"kicker","type":"string","label":"Italic kicker","default":"every frame of this reel is code"},
+  {"id":"w1","type":"string","label":"Word 1","default":"EVERY"},
+  {"id":"w2","type":"string","label":"Word 2","default":"is"},
+  {"id":"w3","type":"string","label":"Decoded word","default":"CODE"},
+  {"id":"ticker","type":"string","label":"Ticker word","default":"MOTION"},
+  {"id":"hud","type":"string","label":"HUD label","default":"CLAUDE IMAGINE"},
+  {"id":"orange","type":"color","label":"Orange","default":"#ee4a26"},
+  {"id":"blue","type":"color","label":"Blue","default":"#2f3cf5"},
+  {"id":"cream","type":"color","label":"Cream","default":"#f1eee7"},
+  {"id":"night","type":"color","label":"Dark","default":"#0c0c0e"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Archivo-normal-100-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InstrumentSerif-italic-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0c0c0e; }
+      #root, .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .hud { position: absolute; font: 500 15px/1 "IBM Plex Mono", monospace; letter-spacing: 0.1em; }
+      /* keep the webfonts warm for canvas text */
+      #warm { position: absolute; left: -9999px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <canvas id="cv" width="1920" height="1080" class="layer"></canvas>
+        <div id="hudL" class="hud" style="left:84px;top:54px"></div>
+        <div id="hudR" class="hud" style="right:84px;top:54px">128 BPM &nbsp; 60 FPS &nbsp; 1920×1080</div>
+        <div id="hudBL" class="hud" style="left:84px;top:1012px"></div>
+        <div id="hudBR" class="hud" style="right:84px;top:1012px"></div>
+        <div id="warm"><span style="font-family:Archivo;font-weight:900">A</span><span style="font-family:Inter">A</span><span style="font-family:'Instrument Serif';font-style:italic">A</span><span style="font-family:'IBM Plex Mono'">A</span></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const { $, clamp, prog, lerp, E, rnd } = K;
+        const v = K.vars(); K.bind(v);
+        const DUR = 15, W = 1920, H = 1080;
+        const cv = $("cv"), ctx = cv.getContext("2d");
+        $("hudL").innerHTML = `<b>${v.hud}</b> &nbsp;&nbsp; <span style="opacity:.55">MOTION REEL 2026</span>`;
+        const col = (k) => v[k];
+        const wide = (px, w = 900, wd = 125) => `${w} ${px}px Archivo`;
+
+        // draw text with Archivo width axis via fontVariationSettings-less fallback: canvas supports font-stretch keywords
+        function wideText(c, txt, x, y, px, color, opts = {}) {
+          c.save(); c.font = `${opts.italic ? "italic " : ""}${opts.w || 900} ${px}px Archivo`; try { c.fontStretch = opts.stretch || "expanded"; } catch (e) {}
+          c.fillStyle = color; c.textAlign = opts.align || "center"; c.textBaseline = "alphabetic"; c.fillText(txt, x, y); c.restore();
+        }
+
+        // ------------------------------------------------ scenes (each draws a full frame in a W x H box)
+        const LINE_Y = 700;
+        function sBounce(c, tl) {
+          c.fillStyle = col("night"); c.fillRect(0, 0, W, H);
+          c.strokeStyle = "#8a8a90"; c.lineWidth = 2; c.beginPath(); c.moveTo(560, LINE_Y); c.lineTo(1370, LINE_Y); c.stroke();
+          // bounces: impacts every 0.42s, heights decaying
+          const T = 0.42, k = Math.floor(tl / T), u = (tl % T) / T, h = 420 * Math.pow(0.72, k);
+          const x = 1250 - tl * 260, y = LINE_Y - 44 - 4 * h * u * (1 - u);
+          c.strokeStyle = "rgba(160,160,170,0.45)"; c.lineWidth = 2;
+          for (let j = 0; j <= k; j++) { const hh = 420 * Math.pow(0.72, j), x0 = 1250 - j * T * 260; c.beginPath(); for (let q = 0; q <= 20; q++) { const uu = q / 20; const xx = x0 - uu * T * 260, yy = LINE_Y - 44 - 4 * hh * uu * (1 - uu); q ? c.lineTo(xx, yy) : c.moveTo(xx, yy); } c.stroke(); }
+          const vy = Math.abs(1 - 2 * u), sq = u < 0.08 || u > 0.92 ? 0.72 : 1 + 0.35 * vy * (1 - 0.72 * (k > 2)), sx = 1 / Math.sqrt(sq);
+          c.save(); c.translate(x, y + 44 * (1 - sq)); c.scale(sx * 1.25, sq * 1.25); c.filter = `blur(${u > 0.1 && u < 0.9 ? 3 : 1}px)`;
+          c.fillStyle = col("orange"); c.beginPath(); c.arc(0, 0, 44, 0, Math.PI * 2); c.fill(); c.restore(); c.filter = "none";
+        }
+        function sBurst(c, tl) { sBounce(c, 1.5); const r = 44 + 2200 * E.inCubic(clamp(tl / 0.5)); c.save(); c.filter = "blur(12px)"; c.fillStyle = col("orange"); c.beginPath(); c.arc(1200, 560, r, 0, Math.PI * 2); c.fill(); c.restore(); c.filter = "none"; }
+        function sEvery(c, tl) {
+          c.fillStyle = col("orange"); c.fillRect(0, 0, W, H);
+          c.fillStyle = "#1b0d08"; c.font = "500 17px 'IBM Plex Mono'"; c.textAlign = "left"; c.fillText("[01]", 330, 330);
+          const u = E.outExpo(clamp(tl / 0.25)); c.save(); c.translate(960, 690); c.scale(lerp(1.3, 1, u), 1); wideText(c, v.w1, 0, 0, 330, "#15090a"); c.restore();
+          c.fillStyle = "#15090a"; c.fillRect(330, 730, 1260 * E.outCubic(clamp((tl - 0.1) / 0.3)), 12);
+        }
+        function sIs(c, tl) {
+          c.fillStyle = col("cream"); c.fillRect(0, 0, W, H);
+          const u = E.inOutCubic(clamp((tl - 0.1) / 0.7));
+          c.save(); c.transform(1, 0, -0.18 * (1 - u), 1, 0, 0);
+          for (let k = 5; k >= 0; k--) { const off = (1 - u) * 900 + k * 26 * (1 - u); c.globalAlpha = k ? 0.12 : 1; c.fillStyle = col("blue"); c.font = "400 1150px Inter"; c.textAlign = "center"; c.fillText(v.w2, 1060 + off, 1330); }
+          c.globalAlpha = 1; c.restore();
+        }
+        const glyphs = "#}{[]<>/\\=+*%$&@0123456789ABCDEF";
+        function sCode(c, tl) {
+          c.fillStyle = col("blue"); c.fillRect(0, 0, W, H);
+          c.fillStyle = "rgba(255,255,255,0.10)"; c.font = "400 18px 'IBM Plex Mono'"; c.textAlign = "left";
+          for (let r = 0; r < 26; r++) c.fillText("const frame = (t) => ease(t) * duration; // " + (r * 17 + 3), 150 + (r % 3) * 30, 200 + r * 30);
+          const n = v.w3.length, settled = Math.floor(clamp(tl / 0.45) * (n + 1));
+          let txt = ""; for (let i = 0; i < n; i++) txt += i < settled ? v.w3[i] : glyphs[Math.floor(rnd(i * 13 + Math.floor(tl * 30)) * glyphs.length)];
+          [["#ff3b3b", -10], ["#35e0ff", 10], ["#ffffff", 0]].forEach(([cc, dx]) => { c.globalAlpha = cc === "#ffffff" ? 1 : 0.7; wideText(c, txt, 960 + dx, 700, 300, cc); });
+          c.globalAlpha = 1; c.fillStyle = "#fff"; c.fillRect(230, 820, 240 * clamp(tl / 0.4), 14); c.fillStyle = "#ff3b3b"; c.fillRect(480, 820, 60, 14);
+        }
+        function sTarget(c, tl) {
+          c.fillStyle = "#1a1a1c"; c.fillRect(0, 0, W, H);
+          const s = E.outBack(clamp(tl / 0.25), 1.8);
+          c.strokeStyle = "#7a7a80"; c.lineWidth = 3; [150, 110].forEach((r) => { c.beginPath(); c.arc(960, 540, r * s, 0, Math.PI * 2); c.stroke(); });
+          c.fillStyle = "#e7e7ea"; c.beginPath(); c.arc(960, 540, 12, 0, Math.PI * 2); c.fill();
+          c.fillStyle = "#ee4a26"; for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2 + tl * 3; c.beginPath(); c.arc(960 + Math.cos(a) * 70 * s, 540 + Math.sin(a) * 70 * s, 5, 0, Math.PI * 2); c.fill(); }
+        }
+        function sDots(c, tl) {
+          c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+          const R = 760 * E.inOutCubic(clamp(tl / 0.55));
+          for (let y = 0; y < 12; y++) for (let x = 0; x < 20; x++) {
+            const px = 70 + x * 94, py = 70 + y * 94, d = Math.hypot(px - 960, py - 540), k = clamp((R - d) / 120);
+            if (k <= 0) { c.fillStyle = "#f2f2f2"; c.beginPath(); c.arc(px, py, 20, 0, Math.PI * 2); c.fill(); continue; }
+            if (d < R - 240) { c.fillStyle = "#f2f2f2"; c.fillRect(px - 20, py - 6, 40, 12); c.fillRect(px - 6, py - 20, 12, 40); }
+            else { c.fillStyle = col("blue"); c.save(); c.translate(px, py); c.rotate(k * 0.8); c.fillRect(-18, -18, 36, 36); c.restore(); }
+          }
+        }
+        function sSquares(c, tl) {
+          c.fillStyle = "#000"; c.fillRect(0, 0, W, H);
+          for (let y = 0; y < 11; y++) for (let x = 0; x < 19; x++) {
+            const px = 70 + x * 100, py = 60 + y * 100, w = Math.sin(x * 0.55 + y * 0.35 - tl * 7), a = w * 0.9;
+            const kind = rnd(x * 31 + y * 7), fill = w > 0.75 ? (kind > 0.5 ? col("orange") : col("blue")) : "#f2f2f2";
+            c.save(); c.translate(px, py); c.rotate(a); c.fillStyle = fill; const s = 28 + 6 * w; c.beginPath(); c.roundRect(-s, -s, 2 * s, 2 * s, 8); c.fill(); c.restore();
+          }
+        }
+        // 2.5D prism field with perspective
+        function sCubes(c, tl, cam = 0) {
+          const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#26262a"); g.addColorStop(1, "#0e0e10"); c.fillStyle = g; c.fillRect(0, 0, W, H);
+          const N = 28, S = 100, F = 1100, camY = -1000, camZ = -560 + tl * 90, pitch = 0.62;
+          const proj = (x, y, z) => { const zz = z - camZ, yy = y - camY; const cy = Math.cos(pitch), sy = Math.sin(pitch); const y2 = yy * cy - zz * sy, z2 = yy * sy + zz * cy; const s = F / z2; return [W / 2 + (x + 60 + cam) * s, H / 2 + 40 + y2 * s, z2]; };
+          const cells = [];
+          for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { const x = (i - N / 2) * S, z = j * S; const h = 70 + 170 * (0.5 + 0.5 * Math.sin(i * 0.7 + tl * 2.2) * Math.cos(j * 0.5 - tl * 1.6)) + 90 * rnd(i * 19 + j); const k = rnd(i * 7 + j * 13); cells.push({ x, z, h, colr: k > 0.9 ? col("orange") : k > 0.83 ? col("blue") : "#c9c9ce" }); }
+          cells.sort((a, b) => b.z - a.z || Math.abs(b.x) - Math.abs(a.x));
+          const shade = (hex, f) => { const n = parseInt(hex.slice(1), 16); const r = Math.min(255, ((n >> 16) & 255) * f), gg = Math.min(255, ((n >> 8) & 255) * f), b = Math.min(255, (n & 255) * f); return `rgb(${r | 0},${gg | 0},${b | 0})`; };
+          for (const q of cells) {
+            const w = S * 0.6, x0 = q.x, x1 = q.x + w, z0 = q.z, z1 = q.z + w, top = -q.h;
+            const T = [proj(x0, top, z0), proj(x1, top, z0), proj(x1, top, z1), proj(x0, top, z1)];
+            const Fr = [proj(x0, top, z0), proj(x1, top, z0), proj(x1, 0, z0), proj(x0, 0, z0)];
+            const side = q.x > -300 + 0 ? [proj(x0, top, z0), proj(x0, top, z1), proj(x0, 0, z1), proj(x0, 0, z0)] : [proj(x1, top, z0), proj(x1, top, z1), proj(x1, 0, z1), proj(x1, 0, z0)];
+            const poly = (pts, fill) => { c.fillStyle = fill; c.beginPath(); pts.forEach((p, n) => (n ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); c.closePath(); c.fill(); };
+            const fog = clamp(1 - q.z / 2700); c.globalAlpha = 0.25 + 0.75 * fog; poly(side, shade(q.colr, 0.38)); poly(Fr, shade(q.colr, 0.6)); poly(T, shade(q.colr, 0.95)); c.globalAlpha = 1;
+          }
+          // glossy ball bouncing on the field
+          const bz = 720, bx = -60 + 120 * Math.sin(tl * 2), bh = 260 + 130 * Math.abs(Math.sin(tl * 4.2));
+          const p = proj(bx, -bh, bz), r = 70 * (F / p[2]);
+          const gr = c.createRadialGradient(p[0] - r * 0.35, p[1] - r * 0.4, r * 0.1, p[0], p[1], r); gr.addColorStop(0, "#ffb3a3"); gr.addColorStop(0.35, "#f0442a"); gr.addColorStop(1, "#7a1206");
+          c.fillStyle = gr; c.beginPath(); c.arc(p[0], p[1], r, 0, Math.PI * 2); c.fill();
+        }
+        function sTicker(c, tl) {
+          c.fillStyle = col("blue"); c.fillRect(0, 0, W, H);
+          for (let r = 0; r < 8; r++) {
+            const y = 120 + r * 125, dir = r % 2 ? -1 : 1, off = ((tl * 520 * dir) % 1100) - 1100;
+            if (r === 3) { c.fillStyle = col("orange"); c.fillRect(0, y - 100, W, 118); }
+            for (let k = 0; k < 7; k++) {
+              const x = off + k * 560 + (r % 3) * 120;
+              const heavy = (k + r) % 2 === 0;
+              if (r === 3) { if (k === 2) wideText(c, v.ticker, 960, y, 104, "#111", { w: 900 }); continue; }
+              c.save(); c.font = `${heavy ? 900 : 300} 104px Archivo`; try { c.fontStretch = heavy ? "expanded" : "condensed"; } catch (e) {}
+              c.fillStyle = "#ffffff"; c.textAlign = "left"; c.fillText(v.ticker + " ·", x, y); c.restore();
+            }
+          }
+        }
+        function sParticles(c, tl) {
+          c.fillStyle = "#0a0a0c"; c.fillRect(0, 0, W, H);
+          const m = E.inOutCubic(clamp((tl - 0.35) / 0.6)), rot = m > 0.5 ? 0.35 * Math.sin(tl * 1.3) : tl * 1.4;
+          for (let i = 0; i < 1600; i++) {
+            const a = rnd(i) * Math.PI * 2, b = Math.acos(2 * rnd(i + 5000) - 1);
+            const sp = [Math.sin(b) * Math.cos(a) * 260, Math.cos(b) * 260, Math.sin(b) * Math.sin(a) * 260];
+            const s = rnd(i + 900) * Math.PI * 2, jit = (rnd(i + 77) - 0.5) * 60;
+            const jit2 = (rnd(i + 177) - 0.5) * 120, jit3 = (rnd(i + 277) - 0.5) * 120; const lx = Math.sin(s) * 430, ly = Math.sin(s) * Math.cos(s) * 320, ra = -1.05; const rib = [lx * Math.cos(ra) - ly * Math.sin(ra) + jit2, lx * Math.sin(ra) + ly * Math.cos(ra) + jit3, Math.cos(s) * 160 + jit];
+            let x = lerp(sp[0], rib[0], m), y = lerp(sp[1], rib[1], m), z = lerp(sp[2], rib[2], m);
+            const cr = Math.cos(rot), sr = Math.sin(rot); [x, z] = [x * cr - z * sr, x * sr + z * cr];
+            const k = 900 / (900 + z);
+            const near = Math.abs(Math.sin(s)) < 0.35; const tint = m > 0.2 ? (near && rnd(i + 3) > 0.3 ? col("blue") : s >= Math.PI && rnd(i + 4) > 0.25 ? col("orange") : "#f2f2f4") : "#d8d8dc";
+            c.fillStyle = tint; c.globalAlpha = 0.55 + 0.45 * k * 0.8; c.fillRect(960 + x * k - 2, 540 + y * k - 2, 4 * k, 4 * k);
+          }
+          c.globalAlpha = 1;
+        }
+        function sCollage(c, tl) {
+          c.fillStyle = "#050506"; c.fillRect(0, 0, W, H);
+          const cells = [[sBounce, 0.9], [sDots, 0.5], [sCubes, 1.0], [sEvery, 0.5], [sTicker, 0.8], [sParticles, 0.9]];
+          const cw = W / 3, ch = H / 2;
+          cells.forEach(([fn, t0], i) => {
+            const cx = (i % 3) * cw, cy = Math.floor(i / 3) * ch, pop = E.outBack(clamp((tl - i * 0.06) / 0.25), 1.4);
+            c.save(); c.beginPath(); c.rect(cx + 6, cy + 6, cw - 12, ch - 12); c.clip(); c.translate(cx + cw / 2, cy + ch / 2); c.scale(pop / 3, pop / 2); c.translate(-W / 2, -H / 2); fn(c, t0 + tl); c.restore();
+          });
+        }
+        function sFinal(c, tl) {
+          c.fillStyle = col("night"); c.fillRect(0, 0, W, H);
+          const name = v.name; c.save(); c.font = "900 250px Archivo"; try { c.fontStretch = "expanded"; } catch (e) {}
+          const full = c.measureText(name + ".").width, x0 = 960 - full / 2; let x = x0;
+          for (let i = 0; i < name.length; i++) {
+            const ch = name[i], wch = c.measureText(ch).width, u = clamp((tl - i * 0.06) / 0.28);
+            c.save(); c.beginPath(); c.rect(x, 640 - 250 * E.outCubic(u), wch + 4, 260); c.clip(); c.fillStyle = col("cream"); c.textAlign = "left"; c.fillText(ch, x, 640); c.restore();
+            x += wch;
+          }
+          const du = E.outBack(clamp((tl - 0.55) / 0.2), 2.2); c.fillStyle = col("orange"); c.beginPath(); c.arc(x + 42, 620, 30 * du, 0, Math.PI * 2); c.fill();
+          c.restore();
+          const lu = clamp((tl - 0.6) / 0.3); c.fillStyle = "#3a3a3e"; c.fillRect(x0, 690, (full + 60) * E.outCubic(lu), 2);
+          c.globalAlpha = clamp((tl - 0.7) / 0.25); c.fillStyle = "#e9e7e0"; c.font = "500 22px 'IBM Plex Mono'"; c.textAlign = "left"; c.fillText(v.role, x0, 740); c.textAlign = "right"; c.fillText(v.year, x0 + full + 60, 740);
+          c.globalAlpha = clamp((tl - 0.95) / 0.25); c.fillStyle = col("orange"); c.beginPath(); c.arc(x0 + 8, 812, 6, 0, Math.PI * 2); c.fill(); c.fillStyle = "#8c8a84"; c.font = "500 16px 'IBM Plex Mono'"; c.textAlign = "left"; c.fillText(v.avail, x0 + 26, 818);
+          c.textAlign = "right"; c.font = "italic 400 34px 'Instrument Serif'"; c.fillText(v.kicker, x0 + full + 60, 820); c.globalAlpha = 1;
+        }
+
+        const timeline = [
+          [0, 2.35, sBounce, "01 — SQUASH & STRETCH"], [2.35, 2.85, sBurst, "01 — SQUASH & STRETCH"], [2.85, 3.5, sEvery, "02 — KINETIC TYPE"], [3.5, 4.1, sIs, "02 — KINETIC TYPE"],
+          [4.1, 4.65, sCode, "02 — KINETIC TYPE"], [4.65, 5.0, sTarget, "03 — SYSTEMS"], [5.0, 5.95, sDots, "03 — SYSTEMS"], [5.95, 6.95, sSquares, "03 — SYSTEMS"],
+          [6.95, 8.45, sCubes, "04 — DEPTH"], [8.45, 10.4, sTicker, "05 — TYPE"], [10.4, 11.95, sParticles, "06 — PARTICLES"], [11.95, 13.55, sCollage, "07 — EDIT"], [13.55, 15.01, sFinal, "08 — FIN"],
+        ];
+        function render(t) {
+          const seg = timeline.find((s) => t >= s[0] && t < s[1]) || timeline[timeline.length - 1];
+          ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.filter = "none"; ctx.globalAlpha = 1;
+          seg[2](ctx, t - seg[0]);
+          // glitch bars on cuts
+          const cut = timeline.find((s) => Math.abs(t - s[0]) < 0.05 && s[0] > 0);
+          if (cut) { for (let i = 0; i < 6; i++) { const y = rnd(i + Math.floor(t * 60)) * H; ctx.fillStyle = i % 2 ? "rgba(47,60,245,0.8)" : "rgba(255,255,255,0.6)"; ctx.fillRect(0, y, W, 10 + rnd(i + 3) * 40); } }
+          const light = [sEvery, sIs].includes(seg[2]);
+          const hc = light ? "#1a1a1a" : "#e6e6e6";
+          ["hudL", "hudR", "hudBL", "hudBR"].forEach((id) => { $(id).style.color = hc; });
+          const fr = Math.floor(t * 60); $("hudBL").textContent = `00:00:${String(Math.floor(fr / 60)).padStart(2, "0")}:${String(fr % 60).padStart(2, "0")}   ● ${"▮".repeat(1 + (Math.floor(t * 2.13) % 4))}`;
+          $("hudBR").textContent = seg[3];
+        }
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

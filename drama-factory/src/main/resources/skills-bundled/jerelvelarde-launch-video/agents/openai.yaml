@@ -1,0 +1,4 @@
+interface:
+  display_name: "Launch Video"
+  short_description: "Build, render, and hand off product launch films"
+  default_prompt: "Use $launch-video to create a product launch film with editable source and an editor handoff."

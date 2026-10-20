@@ -1,0 +1,41 @@
+# clean: neutral base for project themes. It is not a brand. For a real video, run
+# `theme.py init --repo <project>` so the theme follows that project's design, then adjust by hand.
+name: clean
+canvas: [1920, 1080]          # output size; the recording is framed inside it
+frame:
+  width: 1472                 # recording width on the canvas (height keeps the aspect ratio)
+  top: 120                    # px from the top of the canvas
+  double_rule: 0              # outer hairline gap; 0 = single rule
+colors:                       # #RRGGBB or #RRGGBBAA
+  paper: "#F7F7F5"            # canvas ground
+  paper_deep: "#EDEDEA"
+  ink: "#17181A"              # text
+  ink_60: "#17181A9E"
+  ink_40: "#17181A80"
+  ink_12: "#17181A1F"         # frame rule
+  ink_08: "#17181A14"
+  seal: "#2563EB"             # accent: step chips, intro dash
+  seal_text: "#FFFFFF"        # text on the accent
+grain: 0                      # film grain opacity, 0 = off
+fonts:                        # first existing file wins; bare names are looked up in ~/.cache/web-video/fonts
+  display: [/System/Library/Fonts/Supplemental/Arial Unicode.ttf, /System/Library/Fonts/Supplemental/Arial.ttf,
+            C:/Windows/Fonts/segoeui.ttf, C:/Windows/Fonts/arial.ttf,
+            /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf, /usr/share/fonts/dejavu/DejaVuSans.ttf]
+  display_italic: [/System/Library/Fonts/Supplemental/Arial Italic.ttf, C:/Windows/Fonts/segoeuii.ttf,
+                   C:/Windows/Fonts/ariali.ttf, /usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf,
+                   /usr/share/fonts/dejavu/DejaVuSans-Oblique.ttf]
+  mono: [/System/Library/Fonts/Menlo.ttc, C:/Windows/Fonts/consola.ttf,
+         /usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf, /usr/share/fonts/dejavu/DejaVuSansMono.ttf]
+brand: ""                     # top-left label (project name); empty = none
+seal_glyph: ""                # chip next to the brand; empty = none
+watermark_glyph: ""           # giant faint glyph on the canvas; empty = none
+vertical_note: ""             # vertical text at the right edge; empty = none
+eyebrow: ""                   # small label above the intro title
+numerals: arabic              # step chips: arabic (01 02) or hanzi (一 二, needs a `hanzi` font)
+caption:
+  size: 42
+  band_gap: 30
+card:
+  title_size: 84
+  subtitle_size: 34
+  stamp_glyph: ""             # small rotated chip after the title; empty = none

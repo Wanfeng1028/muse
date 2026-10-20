@@ -1,0 +1,576 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="vendor/fonts.css">
+<link rel="stylesheet" href="kit/fonts.css">
+<style>{{theme.css}}</style></head>
+<body>
+<div id="world"><div id="bg" class="bg-{{brand.background}}"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div><div id="cam"><div id="presenter"><i></i><img id="prImg" alt=""></div>
+<!-- BEGIN SHOTS -->
+
+<section class="shot" id="s01">
+  <div class="glow" style="width:1400px;height:1400px;left:-160px;top:200px"></div>
+  <div class="cx kick" id="s01k" style="top:420px">Did you know</div>
+  <div class="cx xl" id="s01a" style="top:540px;font-size:250px">JAVA</div>
+  <div class="cx xl" id="s01b" style="top:840px;font-size:92px;line-height:1.05">wasn't built for <span style="position:relative;display:inline-block" class="pink">the web?<span class="strike" id="s01s"></span></span></div>
+</section>
+
+<section class="shot" id="s02">
+  <div class="gridbg" id="s02g"></div>
+  <div class="cx xl" id="s02b" style="top:660px;font-size:96px">a completely</div>
+  <div class="cx xl" id="s02c" style="top:790px;font-size:136px"><span class="hl"><i id="s02hl"></i>DIFFERENT</span></div>
+  <div class="cx xl" id="s02d" style="top:960px;font-size:96px">problem.</div>
+</section>
+
+<section class="shot" id="s03" style="background:var(--brand-surface1)">
+  <div class="term" style="top:360px;height:760px">
+    <div class="bar"><i></i><i></i><i></i>&nbsp;terminal</div>
+    <pre id="s03pre"></pre>
+  </div>
+</section>
+
+<!-- END SHOTS -->
+</div></div>
+<canvas id="grain" width="{{grainWidth}}" height="{{grainHeight}}"></canvas>
+<div id="vig"></div><div id="flash"></div><div id="pinkflash"></div>
+<div id="captions"><div id="capbox"></div></div>
+<div id="sig">{{brand.signature}}</div>
+<div id="prog"></div>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="words.js"></script>
+<script src="speech.js"></script>
+<!-- face positions measured by key_greenscreen.py and find_media.py (only with setup.sh --vision); window.FACES={} otherwise -->
+<script src="faces.js"></script>
+<!-- excerpt.js (docCard captures) writes this; fill_template.py writes window.EXCERPTS={} otherwise -->
+<script src="excerpts.js"></script>
+<script>
+const D = {{duration}}, E = "power2.out", EI = "power2.inOut", EX = "expo.out";
+const tl = gsap.timeline({paused:true});
+// Per-theme motion profile from templates.json: default entry, shake and flash strength, caption pulse, caption style
+const BRAND = {{brand.json}};
+const THEME = Object.assign({enter:null, shake:1, flash:1, pulse:1, captions:null}, {{theme.motion}});
+const SFX = [];
+const q = s => document.querySelector(s);
+
+// An analytic damped spring as a pure function of progress: stiffness sets the speed, damping the
+// overshoot. Anywhere a GSAP ease string goes, springEase() fits; pop/slam/rise also take "spring"
+function springEase(stiffness=170, damping=12){
+  const w0 = Math.sqrt(stiffness), z = damping/(2*w0);
+  let f;
+  if(z >= 1){ f = p => 1 - (1 + w0*p)*Math.exp(-w0*p); }   // critical damping or stiffer: no overshoot
+  else { const wd = w0*Math.sqrt(1-z*z); f = p => 1 - Math.exp(-z*w0*p)*(Math.cos(wd*p) + z*w0/wd*Math.sin(wd*p)); }
+  const end = f(1);
+  return p => p<=0 ? 0 : p>=1 ? 1 : f(p)/end;
+}
+const asEase = (ease, fallback) => ease == null ? fallback : ease === "spring" ? springEase() : ease;
+
+// Every shot registers its window so `render.js check` can seek to each one without the shot list
+const SHOTS = [];
+
+function shot(id, s, e, enter){
+  SHOTS.push({id, s, e});
+  tl.set("#"+id,{visibility:"visible"},s);
+  tl.set("#"+id,{visibility:"hidden"},e);
+  if(enter === undefined) enter = THEME.enter;
+  if(enter === "slide"){ tl.fromTo("#"+id,{xPercent:100},{xPercent:0,duration:.45,ease:"power3.out"},s); SFX.push({t:s-.12,type:"whoosh"}); }
+  if(enter === "wipe"){ tl.fromTo("#"+id,{clipPath:"inset(0% 100% 0% 0%)"},{clipPath:"inset(0% 0% 0% 0%)",duration:.45,ease:"power3.inOut"},s); SFX.push({t:s-.1,type:"whoosh"}); }
+  if(enter === "iris"){ tl.fromTo("#"+id,{clipPath:"circle(0% at 50% 45%)"},{clipPath:"circle(120% at 50% 45%)",duration:.6,ease:"power2.in"},s); SFX.push({t:s-.1,type:"whoosh"}); }
+  if(enter === "soft"){ tl.fromTo("#"+id,{scale:1.06,opacity:0,filter:"blur(12px)"},{scale:1,opacity:1,filter:"blur(0px)",duration:.6,ease:E},s); }
+  if(enter === "flash"){ tl.fromTo("#flash",{opacity:.9},{opacity:0,duration:.35,ease:E,immediateRender:false},s); SFX.push({t:s,type:"hit",power:.5}); }
+  if(enter === "glitch"){ tl.fromTo("#"+id,{x:-40,filter:"hue-rotate(90deg) saturate(3)"},{keyframes:[{x:30,duration:.04},{x:-20,duration:.04},{x:10,duration:.04},{x:0,filter:"hue-rotate(0deg) saturate(1)",duration:.06}],immediateRender:false},s); SFX.push({t:s,type:"error"}); }
+  if(enter === "whip"){ tl.fromTo("#"+id,{xPercent:40,filter:"blur(30px)"},{xPercent:0,filter:"blur(0px)",duration:.28,ease:EX},s); SFX.push({t:s-.12,type:"whoosh"}); }
+  if(enter === "whipUp"){ tl.fromTo("#"+id,{yPercent:30,filter:"blur(30px)"},{yPercent:0,filter:"blur(0px)",duration:.28,ease:EX},s); SFX.push({t:s-.12,type:"whoosh"}); }
+  if(enter === "zoom"){ tl.fromTo("#"+id,{scale:1.5,filter:"blur(24px)",opacity:0},{scale:1,filter:"blur(0px)",opacity:1,duration:.35,ease:EX},s); SFX.push({t:s-.1,type:"whoosh"}); }
+  if(enter === "fade"){ tl.fromTo("#"+id,{opacity:0},{opacity:1,duration:.5,ease:E},s); }
+}
+function hit(t, power=1){
+  SFX.push({t,type:"hit",power});
+  const flash = power*THEME.flash; power *= THEME.shake;
+  tl.fromTo("#cam",{scale:1+.05*power},{scale:1,duration:.45,ease:EX,immediateRender:false},t);
+  tl.fromTo("#cam",{x:-18*power,y:10*power},{keyframes:[{x:14*power,y:-8*power,duration:.04},{x:-8*power,y:6*power,duration:.04},{x:0,y:0,duration:.08}],immediateRender:false},t);
+  tl.fromTo("#flash",{opacity:.35*flash},{opacity:0,duration:.3,ease:E,immediateRender:false},t);
+}
+function slam(sel, t, power=1, ease){
+  tl.fromTo(sel,{scale:2.4,opacity:0,filter:"blur(20px)"},{scale:1,opacity:1,filter:"blur(0px)",duration:.22,ease:asEase(ease,EX)},t-.08);
+  hit(t, power);
+}
+function rise(sel, t, d=.45, ease){ tl.fromTo(sel,{y:70,opacity:0},{y:0,opacity:1,duration:d,ease:asEase(ease,EX)},t); }
+function pop(sel, t, d=.4, ease){
+  if(typeof d !== "number"){ ease = d; d = .4; }   // pop(sel, t, "spring")
+  tl.fromTo(sel,{scale:.4,opacity:0},{scale:1,opacity:1,duration:d,ease:asEase(ease,"back.out(2)")},t); SFX.push({t,type:"pop"});
+}
+// One pop per matched element, gap seconds apart: a list, a grid of cards, a row of chips
+function stagger(sel, t, gap=.09){
+  document.querySelectorAll(sel).forEach((el,i)=>{
+    tl.fromTo(el,{scale:.4,opacity:0},{scale:1,opacity:1,duration:.4,ease:"back.out(2)"},t+i*gap);
+    SFX.push({t:t+i*gap,type:"pop"});
+  });
+}
+function stamp(sel, t){ tl.fromTo(sel,{scale:3,opacity:0},{scale:1,opacity:1,duration:.2,ease:EX},t); SFX.push({t,type:"stamp"}); }
+function drift(sel, s, e, from, to){ tl.fromTo(sel,from,{...to,duration:e-s,ease:"none"},s); }
+// Slow pan-and-zoom on a still so a photo held for seconds never looks frozen
+function kenBurns(sel, s, e, dir="in"){
+  const wide = {scale:1, xPercent:0}, close = {scale:1.18, xPercent:dir==="left"?-4:dir==="right"?4:0};
+  tl.fromTo(sel, dir==="out"?close:wide, {...(dir==="out"?wide:close), duration:e-s, ease:"none"}, s);
+}
+// A smooth ease-in-out push on a held frame (a face shot, a photo, a clip) between two times;
+// replaces kenBurns, never stacks with it — one scale tween per element
+function punchIn(sel, t0, t1, scale=1.08){
+  tl.fromTo(sel,{scale:1},{scale,duration:t1-t0,ease:"sine.inOut"},t0);
+}
+// A ~0.3s snap zoom and settle on one emphasis word; silent — pair with hit() if it needs a sound
+function punchPulse(sel, t, amount=.08){
+  tl.fromTo(sel,{scale:1},{keyframes:[{scale:1+amount,duration:.08,ease:"power3.out"},{scale:1,duration:.22,ease:"power2.inOut"}],immediateRender:false},t);
+}
+function lowerThird(sel, s, e){
+  tl.fromTo(sel,{clipPath:"inset(0% 100% 0% 0%)"},{clipPath:"inset(0% 0% 0% 0%)",duration:.45,ease:EX},s);
+  tl.fromTo(sel+" .lower-role",{y:20,opacity:0},{y:0,opacity:1,duration:.35,ease:EX},s+.25);
+  tl.to(sel,{clipPath:"inset(0% 0% 0% 100%)",duration:.35,ease:"power2.in"},e-.35);
+  SFX.push({t:s,type:"whoosh"});
+}
+function ticker(sel, s, e, speed=160){ tl.fromTo(sel,{x:0},{x:-speed*(e-s),duration:e-s,ease:"none"},s); }
+
+const TYPERS = [], COUNTERS = [];
+function typer(el, text, s, e){ TYPERS.push({el:q(el),text,s,e}); SFX.push({t:s,type:"type",dur:e-s}); }
+// sep=true prints 200,000 instead of 200000; leave it off for years
+function counter(el, from, to, s, e, sep=false){ COUNTERS.push({el:q(el),from,to,s,e,sep}); SFX.push({t:s,type:"tick",dur:e-s}); }
+// Content that changes at a moment (5 → 6, RUNNING → HUNG); before the first swap the element shows its authored HTML
+const SWAPS = [];
+function swap(el, t, html){
+  const target = q(el);
+  let entry = SWAPS.find(x=>x.el===target);
+  if(!entry){ entry = {el:target, original:target.innerHTML, at:[]}; SWAPS.push(entry); }
+  entry.at.push({t, html}); entry.at.sort((a,b)=>a.t-b.t);
+}
+
+// Camera and clip frames come from extract_face.sh / extract_clip.sh, numbered by edit frame, so seeking stays frame-exact
+const MEDIA = [];
+function faceCam(id, s, e, enter){ shot(id, s, e, enter); MEDIA.push({img:q("#"+id+">img"),dir:"face",fix:"extract_face.sh",s,e}); }
+function clip(sel, name, s, e){ MEDIA.push({img:q(sel),dir:"clips/"+name,fix:`extract_clip.sh … ${name} ${s} ${e}`,s,e}); }
+function broll(sel, name, s, e){ clip(sel, name, s, e); }   // alias: b-roll is just a clip under narration
+
+// Presenter mode: the keyed speaker from key_greenscreen.py (presenter/fNNNNN.webp, numbered by edit frame) on a
+// layer under every shot; pip layouts raise it above the shots as a framed corner bubble. Layouts are fractions
+// of the frame, so one shot list works on landscape, vertical, square and portrait canvases
+const W = {{width}}, H = {{height}};
+// Near-wide canvases split left/right; tall and square ones stack the speaker at the bottom with panels on top
+const TALL = W / H <= 1.2;
+// faces.js: face positions key_greenscreen.py measured in the take and find_media.py in fetched photos (only
+// with the optional vision setup; empty otherwise). A measured face becomes the image's object-position, so
+// object-fit:cover can never crop it out of frame — a constant of the file, so rendering stays a pure function of t
+const FACES = window.FACES || {};
+const facePos = f => `${(f[0]*100).toFixed(1)}% ${(f[1]*100).toFixed(1)}%`;
+if(FACES.presenter){ const img = q("#prImg"); img.style.objectPosition = facePos(FACES.presenter); img.style.transformOrigin = facePos(FACES.presenter); }
+document.querySelectorAll(".photo img, .pip img").forEach(img => {
+  const f = FACES[img.getAttribute("src")];
+  if(f) img.style.objectPosition = facePos(f);
+});
+const PRESENTER_LAYOUTS = TALL ? {
+  full:{x:0, y:0, scale:1, transformOrigin:"50% 30%"},
+  "split-left":{x:0, y:.28*H, scale:.78, transformOrigin:"50% 30%"},
+  "split-right":{x:0, y:.28*H, scale:.78, transformOrigin:"50% 30%"},
+  close:{x:0, y:.02*H, scale:1.12, transformOrigin:"50% 30%"},
+  "pip-br":{x:-.05*W, y:-.24*H, scale:.42, transformOrigin:"100% 100%", pip:1},
+  "pip-bl":{x:.05*W, y:-.24*H, scale:.42, transformOrigin:"0% 100%", pip:1},
+  "pip-tr":{x:-.05*W, y:.15*H, scale:.42, transformOrigin:"100% 0%", pip:1},
+  "pip-tl":{x:.05*W, y:.15*H, scale:.42, transformOrigin:"0% 0%", pip:1},
+} : {
+  full:{x:0, y:0, scale:1, transformOrigin:"50% 30%"},
+  "split-left":{x:-.26*W, y:.028*H, scale:.96, transformOrigin:"50% 30%"},
+  "split-right":{x:.26*W, y:.028*H, scale:.96, transformOrigin:"50% 30%"},
+  close:{x:0, y:.037*H, scale:1.16, transformOrigin:"50% 30%"},
+  "pip-br":{x:-.03*W, y:-.22*H, scale:.3, transformOrigin:"100% 100%", pip:1},
+  "pip-bl":{x:.03*W, y:-.22*H, scale:.3, transformOrigin:"0% 100%", pip:1},
+  "pip-tr":{x:-.03*W, y:.14*H, scale:.3, transformOrigin:"100% 0%", pip:1},
+  "pip-tl":{x:.03*W, y:.14*H, scale:.3, transformOrigin:"0% 0%", pip:1},
+};
+// split stays as an alias of split-left
+const LAYOUT_ALIASES = {split:"split-left"};
+// A position from the presenter brief becomes the layout presenter("auto", …) resolves to for every shot
+const POSITION_LAYOUTS = {left:"split-left", right:"split-right", "bottom-right":"pip-br", "bottom-left":"pip-bl", full:"full"};
+// With no position chosen, auto cycles sides and corners so two presenter shots never share a layout back to back
+const AUTO_CYCLE = ["split-left", "pip-br", "split-right", "pip-bl", "pip-tr", "pip-tl"];
+let positionLayout = null, autoIdx = 0;
+function presenterPosition(pos){
+  if(pos === "auto" || pos == null){ positionLayout = null; return; }
+  const layout = POSITION_LAYOUTS[pos];
+  if(!layout) throw new Error(`presenter position "${pos}" is not auto, ${Object.keys(POSITION_LAYOUTS).join(", ")}`);
+  positionLayout = layout;
+}
+// push zooms the speaker slowly through each layout; off by default because it softens footage
+const PRESENTER = {push:0, halo:false, fade:null};
+let presenterLayout = null, presenterOn = false;
+function presenterStyle(options){
+  Object.assign(PRESENTER, options);
+  const el = q("#presenter");
+  el.classList.toggle("halo", !!PRESENTER.halo);
+  el.classList.remove("fade-left", "fade-right");
+  if(PRESENTER.fade) el.classList.add("fade-" + PRESENTER.fade);
+}
+function presenter(layout, s, e){
+  layout = LAYOUT_ALIASES[layout] || layout;
+  if(layout === "auto"){
+    if(positionLayout) layout = positionLayout;
+    else { do { layout = AUTO_CYCLE[autoIdx++ % AUTO_CYCLE.length]; } while(layout === presenterLayout); }
+  }
+  const to = PRESENTER_LAYOUTS[layout];
+  if(!to) throw new Error(`presenter layout "${layout}" is not one of ${Object.keys(PRESENTER_LAYOUTS).join(", ")}, split or auto`);
+  MEDIA.push({img:q("#prImg"), dir:"presenter", ext:"webp", fix:"key_greenscreen.py", s, e});
+  document.body.classList.add("has-presenter");
+  // The pip frame is a class so the timeline can apply it per seek; it rides with the halo/fade classes
+  const cls = [PRESENTER.halo && "halo", PRESENTER.fade && "fade-" + PRESENTER.fade, to.pip && "pip"].filter(Boolean).join(" ");
+  tl.set("#presenter", {attr:{class:cls}}, s);
+  // With a measured speaker face, non-pip layouts also shift by the face's offset, so an off-centre speaker
+  // lands exactly where a centred one would; a pip keeps its bubble put and relies on #prImg's object-position
+  const faceVars = name => {
+    const {pip, ...vars} = PRESENTER_LAYOUTS[name];
+    if(FACES.presenter && !pip) vars.x += (0.5 - FACES.presenter[0]) * W;
+    return vars;
+  };
+  const toVars = faceVars(layout);
+  // fromTo with explicit start values, so frames rendered out of order by parallel workers agree
+  if(presenterOn){ tl.fromTo("#presenter", faceVars(presenterLayout), {...toVars, duration:.7, ease:"power3.inOut", immediateRender:false}, s); }
+  else tl.fromTo("#presenter", {...toVars, opacity:0}, {...toVars, opacity:1, duration:s ? .35 : 0, ease:E, immediateRender:false}, s);
+  if(PRESENTER.push) tl.fromTo("#prImg", {scale:1}, {scale:1 + PRESENTER.push, duration:e - s, ease:"none", immediateRender:false}, s);
+  presenterLayout = layout; presenterOn = true;
+}
+function presenterOff(s){
+  if(!presenterOn) return;
+  // Keep decoding through the fade, so the speaker never freezes as it fades
+  MEDIA.push({img:q("#prImg"), dir:"presenter", ext:"webp", fix:"key_greenscreen.py", s, e:s + .35});
+  tl.fromTo("#presenter", {opacity:1}, {opacity:0, duration:.3, ease:E, immediateRender:false}, s);
+  presenterOn = false;
+}
+
+// Building blocks for long-form and presenter edits; scene-blocks.md shows each one
+function fromRight(sel, t, d=.55){ tl.fromTo(sel,{x:80,opacity:0},{x:0,opacity:1,duration:d,ease:EX},t); }
+function grow(sel, t, d=.4){ tl.fromTo(sel,{scaleX:0},{scaleX:1,duration:d,ease:EX},t); }
+function draw(sel, t, d=.8){ tl.fromTo(sel,{strokeDashoffset:1},{strokeDashoffset:0,duration:d,ease:"power2.inOut"},t); }   // path with pathLength="1"
+function check(sel, t){ tl.fromTo(sel,{scale:.4,opacity:0},{scale:1,opacity:1,duration:.4,ease:"back.out(2)"},t); SFX.push({t, type:"ding"}); }
+function cross(sel, t){ tl.fromTo(sel,{scale:.4,opacity:0},{scale:1,opacity:1,duration:.35,ease:"back.out(2)"},t); SFX.push({t, type:"error"}); }
+function fadeOut(sel, t, d=.3){ tl.fromTo(sel,{opacity:1},{opacity:0,duration:d,ease:E,immediateRender:false},t); }
+function slide(sel, x0, x1, t, d=.9){ tl.fromTo(sel,{left:x0},{left:x1,duration:d,ease:"power2.inOut"},t); SFX.push({t, type:"whoosh"}); }
+// A quoted excerpt from a paper or article (excerpt.js captures the image and the highlight box):
+// the passage in a framed card, the source title below, the accent box drawing over the quoted lines
+const EXCERPTS = window.EXCERPTS || {};
+function docCard(containerSel, name, t0, t1){
+  const ex = EXCERPTS[name];
+  if(!ex) throw new Error(`excerpts.js has no excerpt "${name}" — run: node scripts/excerpt.js <work> <url> --text "the quoted passage" --name ${name}`);
+  const card = document.createElement("div");
+  card.className = "doc-card";
+  card.innerHTML = `<div class="doc-frame"><img alt=""><i class="doc-hl"></i></div><div class="doc-src"></div>`;
+  card.querySelector("img").src = ex.image;
+  card.querySelector(".doc-src").textContent = (ex.source && ex.source.title) || "";
+  q(containerSel).appendChild(card);
+  tl.set(card,{visibility:"visible"},t0);
+  tl.fromTo(card,{y:60,opacity:0},{y:0,opacity:1,duration:.45,ease:EX},t0);
+  const hl = card.querySelector(".doc-hl");
+  if(ex.highlight){
+    const {x, y, w, h} = ex.highlight;
+    hl.style.left = x*100+"%"; hl.style.top = y*100+"%"; hl.style.width = w*100+"%"; hl.style.height = h*100+"%";
+    tl.fromTo(hl,{scaleX:0},{scaleX:1,duration:.4,ease:"power2.inOut"},t0+.3);
+  } else hl.style.display = "none";
+  tl.set(card,{visibility:"hidden"},t1);
+}
+// A chapter card is its own shot; the speaker steps out for it
+function chapter(id, s, e, number, title){
+  const el = document.createElement("section");
+  el.className = "shot"; el.id = id;
+  el.innerHTML = `<div class="chap"><div class="no">CHAPTER ${number}</div><div class="tt">${title}</div><div class="rule"></div></div>`;
+  q("#cam").appendChild(el);
+  presenterOff(s); shot(id, s, e, "wipe");
+  rise(`#${id} .no`, s + .1, .4); rise(`#${id} .tt`, s + .2, .5); grow(`#${id} .rule`, s + .5, .6);
+}
+
+// Diagram motion (long-form): positions are shot pixels of the element's centre, like send(). Each move starts where the
+// last one on that element ended, so every tween has explicit start values; call the moves for one element in time order
+const POS = new Map();
+function posOf(el){ if(!POS.has(el)) POS.set(el, {left:parseFloat(el.style.left)||0, top:parseFloat(el.style.top)||0}); return POS.get(el); }
+function moveTo(sel, x, y, t, d=.6, sound=null){
+  const el = q(sel);
+  tl.fromTo(el, {...posOf(el)}, {left:x, top:y, duration:d, ease:"power3.inOut", immediateRender:false}, t);
+  POS.set(el, {left:x, top:y});
+  if(sound) SFX.push({t, type:sound});
+}
+// The centre of an element in shot pixels, from the authored layout: where a tile lands in a .slot
+function centerOf(sel){
+  const el = q(sel);
+  let x = el.offsetWidth/2, y = el.offsetHeight/2;
+  for(let node = el; node && !node.classList.contains("shot"); node = node.offsetParent){ x += node.offsetLeft; y += node.offsetTop; }
+  return {x, y};
+}
+// A scheduling timeline: rows of blocks [{t, e, text, cls}] in video seconds, laid on an axis that spans s..e;
+// each block grows from its t to its e as the video plays, so the chart fills in under the narration
+const GANTTS = [];
+function gantt(sel, rows, s, e){
+  const el = q(sel);
+  el.classList.add("gantt");
+  el.innerHTML = rows.map(row=>`<div class="g-row"><div class="g-label">${row.label}</div><div class="g-track">${
+    row.blocks.map(b=>`<div class="g-block ${b.cls||""}"><span>${b.text||""}</span></div>`).join("")}</div></div>`).join("");
+  const blocks = [];
+  el.querySelectorAll(".g-row").forEach((rowEl, i)=>rowEl.querySelectorAll(".g-block").forEach((node, j)=>{
+    const b = rows[i].blocks[j];
+    node.style.left = ((b.t-s)/(e-s)*100).toFixed(3)+"%";
+    blocks.push({node, t:b.t, e:b.e});
+  }));
+  GANTTS.push({blocks, s, e});
+}
+
+// Lines with mixed colours: [{t, e, html}] rebuilt every frame so seeking stays deterministic
+const TERMINALS = [];
+function terminal(el, lines){ TERMINALS.push({el:q(el),lines}); lines.forEach(l=>{ if(l.e>l.t) SFX.push({t:l.t,type:"type",dur:l.e-l.t}); }); }
+
+// Character hosts (script mode). speech.js says who speaks when; mouths, blinks and bobs are pure functions of t
+const SPEECH = window.SPEECH || [];
+const HOST_SVG = {
+  drone: `<svg viewBox="-110 -135 220 230"><g class="h-rig">
+    <circle r="92" fill="var(--accent)" opacity=".1"/>
+    <path class="ink" d="M-28 48 L-40 76 M-22 76 L-56 76 M28 48 L40 76 M22 76 L56 76" fill="none" style="stroke-width:9"/>
+    <path d="M-28 48 L-40 76 M-22 76 L-56 76 M28 48 L40 76 M22 76 L56 76" fill="none" stroke="#d9dee7" stroke-width="4" stroke-linecap="round"/>
+    <rect class="ink" x="-7" y="-94" width="14" height="36" rx="5" fill="#d9dee7" style="stroke-width:4"/>
+    <ellipse class="ink h-prop" cx="0" cy="-98" rx="76" ry="10" fill="#d9dee7" style="stroke-width:4"/>
+    <circle class="ink" cy="-98" r="9" fill="var(--accent)" style="stroke-width:4"/>
+    <circle class="ink" r="62" fill="var(--accent)"/>
+    <path d="M32 29 A50 50 0 0 1 -32 29" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="7"/>
+    <g class="h-eye"><circle class="ink" cy="-6" r="33" fill="#fff" style="stroke-width:5"/>
+      <g class="h-pupil"><circle cy="-6" r="15" fill="var(--host-ink)"/><circle cx="5" cy="-12" r="4.5" fill="#fff"/></g></g>
+    <path class="h-happy" d="M-22 4 Q0 -26 22 4" fill="none" stroke="var(--host-ink)" stroke-width="8" stroke-linecap="round"/>
+    <g class="h-sweat"><path class="ink" d="M-78 -52 C-69 -38 -71 -30 -78 -30 C-85 -30 -87 -38 -78 -52Z" fill="#5ab0ff" style="stroke-width:3"/>
+      <path class="ink" d="M74 -64 C83 -50 81 -42 74 -42 C67 -42 65 -50 74 -64Z" fill="#5ab0ff" style="stroke-width:3"/></g>
+  </g></svg>`,
+  keeper: `<svg viewBox="-135 -385 270 395"><g class="h-rig">
+    <ellipse cx="0" cy="0" rx="115" ry="18" fill="#000" opacity=".35"/>
+    <rect class="ink" x="-54" y="-20" width="42" height="20" rx="9" fill="#3a2a20" style="stroke-width:5"/>
+    <rect class="ink" x="12" y="-20" width="42" height="20" rx="9" fill="#3a2a20" style="stroke-width:5"/>
+    <g class="h-arm"><path d="M-50 -190 L-84 -104" stroke="var(--host-ink)" stroke-width="30" stroke-linecap="round"/>
+      <path d="M-50 -190 L-84 -104" stroke="var(--host-alt)" stroke-width="19" stroke-linecap="round"/>
+      <circle class="ink" cx="-84" cy="-104" r="14" fill="var(--host-skin)" style="stroke-width:4"/></g>
+    <g class="h-breathe">
+    <path class="ink" d="M-96 -16 L96 -16 C82 -120 72 -170 58 -205 C30 -222 -30 -222 -58 -205 C-72 -170 -82 -120 -96 -16Z" fill="var(--host-alt)"/>
+    <g fill="var(--accent)">${[-3,-2,-1,0,1,2,3].map(i=>`<rect x="${i*25-6}" y="-50" width="12" height="12" transform="rotate(45 ${i*25} -44)"/>`).join("")}</g>
+    <rect class="ink" x="-40" y="-182" width="80" height="118" rx="14" fill="#fff1dc" style="stroke-width:4"/>
+    <rect class="ink" x="-12" y="-226" width="24" height="22" rx="4" fill="var(--host-skin)" style="stroke-width:4"/>
+    <g class="h-head">
+      <circle class="ink" cy="-324" r="25" fill="var(--host-hair)" style="stroke-width:5"/>
+      <circle class="ink" cy="-264" r="50" fill="var(--host-skin)"/>
+      <path class="ink" d="M-50 -264 A50 50 0 0 1 50 -264 C36 -286 -36 -286 -50 -264Z" fill="var(--host-hair)" style="stroke-width:5"/>
+      <circle cx="-31" cy="-242" r="7" fill="var(--accent)" opacity=".35"/><circle cx="31" cy="-242" r="7" fill="var(--accent)" opacity=".35"/>
+      <g class="h-eye"><circle cx="-20" cy="-259" r="5.5" fill="var(--host-ink)"/><circle cx="20" cy="-259" r="5.5" fill="var(--host-ink)"/></g>
+      <g fill="#fff" fill-opacity=".18" class="ink" style="stroke-width:4"><circle cx="-20" cy="-260" r="16"/><circle cx="20" cy="-260" r="16"/></g>
+      <path class="ink" d="M-4 -262 L4 -262 M-36 -262 L-49 -266 M36 -262 L49 -266" style="stroke-width:4"/>
+      <path class="h-smile" d="M-11 -240 A12 12 0 0 0 11 -240" fill="none" stroke="var(--host-ink)" stroke-width="4" stroke-linecap="round"/>
+      <ellipse class="h-mouth" cx="0" cy="-234" rx="9" ry="6" fill="var(--host-ink)"/>
+    </g></g>
+    <path d="M50 -190 L36 -118" stroke="var(--host-ink)" stroke-width="30" stroke-linecap="round"/>
+    <path d="M50 -190 L36 -118" stroke="var(--host-alt)" stroke-width="19" stroke-linecap="round"/>
+    <g transform="translate(58 -136) rotate(-7)"><rect class="ink" x="-34" y="-48" width="68" height="92" rx="8" fill="#b98a55" style="stroke-width:4"/>
+      <rect x="-26" y="-36" width="52" height="72" rx="4" fill="#fff1dc"/>
+      <path d="M-18 -24 H18 M-18 -9 H18 M-18 6 H18 M-18 21 H18" stroke="#4a5366" stroke-width="3"/>
+      <rect class="ink" x="-14" y="-55" width="28" height="14" rx="4" fill="#d9dee7" style="stroke-width:3"/></g>
+    <circle class="ink" cx="32" cy="-116" r="14" fill="var(--host-skin)" style="stroke-width:4"/>
+  </g></svg>`,
+};
+const HOSTS = [], MOODS = [], LOOKS = [], POINTS = [];
+// host("#s04pip","drone","pip"): the element gets the character; `who` matches the speaker name in the script
+function host(sel, kind, who){ const el = q(sel); el.classList.add("host"); el.innerHTML = HOST_SVG[kind]; HOSTS.push({el, kind, who, n:HOSTS.length}); }
+function mood(sel, m, s, e){ MOODS.push({el:q(sel), m, s, e}); }          // "panic" | "happy"
+function look(sel, x, y, s, e){ LOOKS.push({el:q(sel), x, y, s, e}); }    // pupil direction, -1..1
+function point(sel, s, e){ POINTS.push({el:q(sel), s, e}); }             // keeper raises her arm
+function bubble(sel, s, e){
+  tl.set(sel,{visibility:"visible"},s);
+  tl.fromTo(sel,{scale:.3,opacity:0},{scale:1,opacity:1,duration:.35,ease:"back.out(2)"},s);
+  tl.to(sel,{opacity:0,duration:.2},e-.2); tl.set(sel,{visibility:"hidden"},e);
+  SFX.push({t:s,type:"pop"});
+}
+// line("pip",0) is Pip's first line in speech.js: {s, e, text}. Cut to it instead of typing times
+function line(who, n=0){ const l = SPEECH.filter(x=>x.who===who)[n]; if(!l) throw new Error(`speech.js has no line ${n} for ${who}`); return l; }
+// The bubble already shows the words, so captions step aside while it is up
+const SAID = [];
+function say(sel, who, n=0){ const l = line(who, n); bubble(sel, l.s-.1, l.e+.6); SAID.push([l.s-.1, l.e+.6]); return l; }
+// A token flies along an arc to (x, y) in shot pixels and lands with a pop
+function send(sel, x, y, s, d=.6, arc=140){
+  const el = q(sel), {left:x0, top:y0} = posOf(el);
+  tl.fromTo(sel,{left:x0,top:y0},{keyframes:[{left:(x0+x)/2,top:Math.min(y0,y)-arc,duration:d/2,ease:"sine.out"},{left:x,top:y,duration:d/2,ease:"sine.in"}],immediateRender:false},s);
+  POS.set(el, {left:x, top:y});
+  SFX.push({t:s,type:"whoosh"}); SFX.push({t:s+d,type:"pop"});
+}
+const within = (list, el, t) => list.find(m=>m.el===el && t>=m.s && t<m.e);
+function renderHosts(t){
+  HOSTS.forEach(({el, kind, who, n})=>{
+    const talking = SPEECH.some(x=>x.who===who && t>=x.s && t<=x.e);
+    const m = within(MOODS, el, t), mo = m ? m.m : "";
+    const g = within(LOOKS, el, t);
+    const ph = (t + n*.77) % 3.3, open = ph > .16 ? 1 : Math.max(.08, Math.abs(ph-.08)/.08);
+    const rig = el.querySelector(".h-rig");
+    if(kind === "drone"){
+      const bob = Math.sin(t*3.2)*8 - (talking ? Math.abs(Math.sin(t*16))*9 : 0), shake = mo==="panic" ? Math.sin(t*55)*5 : 0;
+      rig.setAttribute("transform", `translate(${shake.toFixed(2)} ${bob.toFixed(2)})`);
+      el.querySelector(".h-prop").setAttribute("rx", (76*(.2+.8*Math.abs(Math.cos(t*38)))).toFixed(1));
+      const eye = el.querySelector(".h-eye");
+      eye.style.display = mo==="happy" ? "none" : "";
+      eye.setAttribute("transform", `translate(0 -6) scale(1 ${open.toFixed(3)}) translate(0 6)`);
+      el.querySelector(".h-pupil").setAttribute("transform", g ? `translate(${g.x*11} ${g.y*11})` : "");
+      el.querySelector(".h-happy").style.display = mo==="happy" ? "" : "none";
+      el.querySelector(".h-sweat").style.display = mo==="panic" ? "" : "none";
+    } else {
+      rig.querySelector(".h-breathe").setAttribute("transform", `translate(0 ${(Math.sin(t*2.1)*2.5).toFixed(2)})`);
+      rig.querySelector(".h-head").setAttribute("transform", talking ? `translate(0 ${(Math.sin(t*6)*1.5).toFixed(2)})` : "");
+      el.querySelector(".h-eye").setAttribute("transform", `translate(0 -259) scale(1 ${open.toFixed(3)}) translate(0 259)`);
+      const mouth = el.querySelector(".h-mouth");
+      mouth.style.display = talking ? "" : "none"; mouth.setAttribute("ry", (1.5+Math.abs(Math.sin(t*13))*4.5).toFixed(2));
+      el.querySelector(".h-smile").style.display = talking ? "none" : "";
+      const p = within(POINTS, el, t), k = p ? Math.min(1,(t-p.s)/.4, (p.e-t)/.4) : 0;
+      el.querySelector(".h-arm").setAttribute("transform", `rotate(${(111*(1-Math.pow(1-k,3))).toFixed(1)} -50 -190)`);
+    }
+  });
+}
+
+tl.to("#prog",{width:"100%",duration:D,ease:"none"},0);
+
+// BEGIN TIMELINE
+shot("s01",0,2.7);
+rise("#s01k",0.02,.35);
+slam("#s01a",.44,1.2);
+rise("#s01b",1.46,.35);
+tl.fromTo("#s01s",{scaleX:0},{scaleX:1,duration:.25,ease:EX},2.1); hit(2.12,.7);
+
+shot("s02",2.7,6.1,"whip");
+rise("#s02b",4.1,.35);
+rise("#s02c",4.5,.3);
+tl.fromTo("#s02hl",{scaleX:0},{scaleX:1,duration:.3,ease:EX},4.58); hit(4.6,.6);
+rise("#s02d",5.05,.3);
+drift("#s02g",2.7,6.1,{y:0},{y:-180});
+
+shot("s03",6.1,D,"zoom");
+terminal("#s03pre",[
+  {t:6.3,e:7.2,html:"$ make device_a\n"},
+  {t:7.5,e:7.5,html:"<span class='err'>Segmentation fault (core dumped)</span>\n"},
+]);
+hit(7.5,1); SFX.push({t:7.5,type:"error"});
+// END TIMELINE
+
+// Captions hide where the spoken word is already the visual: [[from, to], …]
+const NOCAP = [[0,2.7],[4.1,5.6]];
+
+// "phrase": the whole phrase shows dimmed, one pulse, the theme marks the spoken word.
+// "pop": each word pops in on its own timestamp, the theme still marks the spoken word.
+// "rise": each word rises in on its own timestamp — pop's pacing without the scale.
+// "fade": the whole phrase fades in once; the calmest style.
+// "off": no burned-in captions (long-form: upload captions.srt instead).
+// null: the theme's pick (templates.json → motion.captions), falling back to "phrase".
+const CAP_STYLE = null;
+const CAP = CAP_STYLE || THEME.captions || "phrase";
+// Pop captions tick once per keyword at the word's own timestamp — quiet by default: keywords only,
+// and never inside a NOCAP window where the captions are hidden
+if(CAP === "pop") (window.PHRASES || []).forEach(p => p.forEach(w => {
+  if(w.k && !NOCAP.concat(SAID).some(([a,b]) => w.s >= a && w.s < b)) SFX.push({t:w.s, type:"tick", dur:.07});
+}));
+
+const capbox = q("#capbox"); let lastPhrase = -1;
+function renderCaptions(t){
+  // words.js may still be the empty placeholder on a preview render, before transcription
+  const PH = window.PHRASES || [];
+  const hidden = CAP === "off" || NOCAP.concat(SAID).some(([a,b])=>t>=a&&t<b);
+  const idx = PH.findIndex((p,i)=>{const n=PH[i+1];return t>=p[0].s-.05 && t<(n?Math.min(n[0].s-.05,p[p.length-1].e+.6):p[p.length-1].e+.6);});
+  if(hidden || idx<0){ capbox.style.visibility="hidden"; return; }
+  capbox.style.visibility="visible";
+  if(idx!==lastPhrase){ capbox.innerHTML = PH[idx].map(w=>`<span>${w.t}</span>`).join(""); lastPhrase = idx; }
+  const state = w => (t>=w.e?"on":(t>=w.s?"now":"")) + (w.k?" kw":"");
+  if(CAP === "pop" || CAP === "rise"){
+    capbox.style.transform = "none";
+    // A pure function of t, like everything else, so any frame can be rendered alone
+    [...capbox.children].forEach((el,i)=>{
+      const w = PH[idx][i];
+      el.className = state(w);
+      if(t < w.s){ el.style.opacity = 0; el.style.transform = CAP === "pop" ? "scale(.6)" : "translateY(26px)"; return; }
+      if(CAP === "pop"){
+        const k = Math.min(1,(t-w.s)/.14), overshoot = 1+.45*(1-k)*(1-k)*THEME.pulse;
+        el.style.opacity = 1;
+        el.style.transform = `scale(${overshoot.toFixed(3)})`;
+      } else {
+        const k = Math.min(1,(t-w.s)/.18);
+        el.style.opacity = k.toFixed(3);
+        el.style.transform = `translateY(${((1-k)*26).toFixed(1)}px)`;
+      }
+    });
+    return;
+  }
+  if(CAP === "fade"){
+    capbox.style.transform = "none";
+    capbox.style.opacity = Math.min(1,(t-PH[idx][0].s)/.3).toFixed(3);
+    [...capbox.children].forEach((el,i)=>{ el.className = state(PH[idx][i]); });
+    return;
+  }
+  const pulse = Math.max(0,1-(t-PH[idx][0].s)/.15);
+  capbox.style.transform = `translateY(${pulse*30*THEME.pulse}px) scale(${1+pulse*.08*THEME.pulse})`;
+  [...capbox.children].forEach((el,i)=>{ el.className = state(PH[idx][i]); });
+}
+
+// Types a fraction of a line's visible characters; tags and entities stay whole, so a coloured line never breaks mid-tag
+function typedHtml(html, k){
+  const parts = html.match(/<[^>]*>|&[#\w]+;|[^<&]/g) || [];
+  let left = Math.floor(parts.filter(p=>p[0]!=="<").length*k), out = "";
+  for(const part of parts){
+    if(part[0]==="<"){ out += part; continue; }
+    if(left-- <= 0) continue;
+    out += part;
+  }
+  return out;
+}
+
+function renderText(t){
+  TYPERS.forEach(({el,text,s,e})=>{
+    const n = t<s?0:t>=e?text.length:Math.floor((t-s)/(e-s)*text.length);
+    el.textContent = text.slice(0,n);
+  });
+  COUNTERS.forEach(({el,from,to,s,e,sep})=>{
+    const k = t<s?0:t>=e?1:(t-s)/(e-s);
+    const n = Math.round(from+(to-from)*(1-Math.pow(1-k,3)));
+    el.textContent = sep ? n.toLocaleString("en-US") : n;
+  });
+  SWAPS.forEach(({el,original,at})=>{
+    const html = at.reduce((shown,x)=>t>=x.t?x.html:shown, original);
+    if(el.innerHTML !== html) el.innerHTML = html;
+  });
+  GANTTS.forEach(({blocks,s,e})=>blocks.forEach(({node,t:from,e:to})=>{
+    node.style.visibility = t>=from ? "visible" : "hidden";
+    node.style.width = t>=from ? ((Math.min(t,to)-from)/(e-s)*100).toFixed(3)+"%" : "0";
+  }));
+  TERMINALS.forEach(({el,lines})=>{
+    let html = "";
+    lines.forEach(l=>{ if(t<l.t) return; const k = l.e>l.t?Math.min(1,(t-l.t)/(l.e-l.t)):1; html += k<1?typedHtml(l.html,k):l.html; });
+    el.innerHTML = html + "<span class='caret'></span>";
+    // The caret blinks as a pure function of t; a CSS animation would run on the wall clock (invariant 1)
+    el.querySelector(".caret").style.visibility = Math.floor(t*2)%2 ? "hidden" : "inherit";
+  });
+}
+
+const grain = q("#grain").getContext("2d");
+const grainImage = grain.createImageData(q("#grain").width, q("#grain").height);
+function renderGrain(frame){
+  let seed = (frame*2654435761)>>>0;
+  const d = grainImage.data;
+  for(let i=0;i<d.length;i+=4){ seed = (seed*1664525+1013904223)>>>0; const v = seed>>>24; d[i]=d[i+1]=d[i+2]=v; d[i+3]=255; }
+  grain.putImageData(grainImage,0,0);
+}
+
+// The renderer awaits this, so a screenshot never captures a camera or clip frame that hasn't decoded yet
+function renderMedia(t, frame){
+  return Promise.all(MEDIA.filter(({s,e})=>t>=s&&t<e).map(({img,dir,fix,ext})=>{
+    const src = `${dir}/f${String(frame).padStart(5,"0")}.${ext || "jpg"}`;
+    if(img.getAttribute("src")===src) return null;
+    img.src = src;
+    return img.decode().catch(()=>{ throw new Error(`missing frame ${src} at t=${t.toFixed(2)}; re-run ${fix} with this shot's in/out`); });
+  }));
+}
+
+// The kit's background drifts as a pure function of t; styles other than glow and gradient stay still
+const BG = [...document.querySelectorAll("#bg > i")];
+function renderBg(t){
+  BG.forEach((el,i)=>{ el.style.transform = `translate(${(Math.sin(t*(.11+i*.02)+i)*160).toFixed(1)}px,${(Math.cos(t*(.08+i*.015)+i*2)*90).toFixed(1)}px)`; });
+}
+
+window.SFX = SFX; window.DURATION = D; window.SHOTS = SHOTS; window.BRAND = BRAND;
+window.renderAt = t => { const frame = Math.round(t*30); tl.seek(t,false); renderCaptions(t); renderText(t); renderHosts(t); renderGrain(frame); renderBg(t); return renderMedia(t, frame); };
+</script>
+</body></html>

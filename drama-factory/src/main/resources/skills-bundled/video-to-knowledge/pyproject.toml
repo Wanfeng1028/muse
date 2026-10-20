@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-to-knowledge-skill"
+version = "0.1.0"
+description = "Evidence-linked video knowledge for Douyin, Bilibili, Xiaohongshu and YouTube"
+requires-python = ">=3.10"
+license = "MIT"
+
+[project.scripts]
+v2k = "videoknowledge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

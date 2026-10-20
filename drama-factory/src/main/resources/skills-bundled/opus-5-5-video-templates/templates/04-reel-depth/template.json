@@ -1,0 +1,16 @@
+{
+  "id": "04-reel-depth",
+  "title": "Showreel with depth — bounce, kinetic type, systems, 3D field, ticker, particles, edit",
+  "category": "motion / brand reel",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "Claude Imagine",
+  "source": {
+    "author": "@shneural",
+    "post": "https://x.com/shneural/status/2103151003272962130",
+    "note": "The original post compares two models; only the first 15 seconds (the Opus 5.5 reel) are remade. Drawn entirely on canvas so any frame renders on its own."
+  },
+  "variables": ["name", "role", "year", "avail", "kicker", "w1", "w2", "w3", "ticker", "hud", "orange", "blue", "cream", "night"],
+  "limits": { "name": "≤ 8 characters", "w3": "≤ 6 characters (decode effect)" },
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

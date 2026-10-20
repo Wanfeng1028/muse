@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Story Review"
+  short_description: "Review exact demo scenes and words before capture"
+  default_prompt: "Use $demo-story-review to review this demo one scene at a time."

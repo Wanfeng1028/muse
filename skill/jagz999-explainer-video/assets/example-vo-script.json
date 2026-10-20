@@ -1,0 +1,58 @@
+[
+{
+"id": "intro",
+"text": "Let's open the Mirror Security Playground, where you can run protected inference, guardrails, search, connectors, and the S D K quickstart, and see exactly how your data is handled at every layer."
+},
+{
+"id": "overview",
+"text": "This is the Mirror Security Playground. The same protected gateway underneath, powered by VectaX, runs every primitive you see here."
+},
+{
+"id": "cards",
+"text": "There are five primitives to try. First, protected inference. Then, protected guardrails. Next, protected search. After that, managed connectors. And finally, the S D K quickstart. Each one presets the lane, the guardrails, and the prompt."
+},
+{
+"id": "lanes",
+"text": "Everything starts with a lane. There are two. The protected lane, which runs closed source provider models inside a confidential boundary. And the end to end encrypted lane, for open weight models."
+},
+{
+"id": "inference",
+"text": "Let's start with protected inference. We send a prompt through the protected Mirror lane, pick a model route, and attach an already created service credential."
+},
+{
+"id": "providers",
+"text": "You can route to any provider. OpenAI, Azure, Anthropic, Google, Bedrock, Mistral, and more. The provider keys never leave the confidential boundary."
+},
+{
+"id": "deliver",
+"text": "Now we type our prompt, and click send. The reply comes back encrypted, and decrypts to plaintext only on the client side, right here in your browser. Client seal, Mirror route, protected compute, and response seal. Every stage is attested."
+},
+{
+"id": "proof",
+"text": "Then we open the Mirror proof. The prompt was sent as ciphertext. Reveal it, and you see the plaintext only you can unseal. The encryption parameters, the round trip, the compute, and every attested stage, are all right here."
+},
+{
+"id": "guardrails",
+"text": "Next, protected guardrails. These run AgentIQ policies directly on the encrypted ciphertext. P I I detection. Prompt injection. Bias and toxicity. And intent and policy."
+},
+{
+"id": "grd-run",
+"text": "We type an instruction, and send it. The findings come back encrypted, then decrypt to structured scores. Prompt injection at one point zero, P I I flagged, with bias and policy scored, all with proof attached."
+},
+{
+"id": "search",
+"text": "Protected search lets us query a VectaX collection over the encrypted lane. We type a query, and send it. The matches come back encrypted, then decrypt, with proof beside every hit."
+},
+{
+"id": "connectors",
+"text": "Managed connectors inspect readiness over the protected route. We pick a connector, and ask Mirror to check it. The evidence comes back encrypted, then decrypts to a clear status, with tenant scoped proof."
+},
+{
+"id": "sdk",
+"text": "Finally, the S D K quickstart. You choose which client, which language, and which model. Then Mirror surfaces the live catalog and the protected Gateway auth contract, ready to integrate."
+},
+{
+"id": "outro",
+"text": "That's the Mirror Security Playground. The trust layer for the intelligence era."
+}
+]

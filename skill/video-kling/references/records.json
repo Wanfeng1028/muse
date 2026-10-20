@@ -1,0 +1,94 @@
+[
+  {
+    "id": "kling-3-0",
+    "name": "Kling Video 3.0 / fal",
+    "family": "kling",
+    "provider": "fal",
+    "variant": "",
+    "release_date": "2026-02-05",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "native-audio",
+      "multishot"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "kling3-release",
+      "kling3-fal"
+    ],
+    "novel_abilities": [
+      "Explicit multi-shot storyboarding and reusable elements"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "kling",
+      "kling3",
+      "kling-3"
+    ],
+    "notes": [
+      "Outside the six-month release window; retain for explicit Kling requests and compatible existing projects.",
+      "Resolve v3 versus o3, Standard versus Pro, and the operation-specific endpoint before execution.",
+      "Kling VIDEO 3.0 and VIDEO 3.0 Omni are not the same API surface."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/kling.md",
+    "skill_id": "video-kling",
+    "model_version": "3.0"
+  },
+  {
+    "id": "kling-3-0-turbo-standard",
+    "name": "Kling 3.0 Turbo Standard / fal",
+    "family": "kling",
+    "provider": "fal",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "native-audio",
+      "multishot"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "fal-ai/kling-video/v3/turbo/standard/text-to-video"
+    ],
+    "source_ids": [
+      "kling3-turbo"
+    ],
+    "novel_abilities": [
+      "Faster 720P creation tier"
+    ],
+    "limits": {
+      "resolutions": [
+        "720p"
+      ]
+    },
+    "aliases": [
+      "kling-turbo"
+    ],
+    "notes": [
+      "Exact variant release date is unverified; the family launch date is not substituted.",
+      "This record intentionally covers only the verified text-to-video endpoint."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/kling.md",
+    "skill_id": "video-kling",
+    "model_version": "3.0"
+  }
+]

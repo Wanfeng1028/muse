@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>My Product · 60s promo (starter)</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* ===================== 设计令牌（改这里就换掉整片气质）=====================
+         原则：低饱和底 + 近黑字 + 单一强调色（拆解五部大厂片得到的共识，
+         强调色占比 <5%，并且它必须承载叙事含义）。 */
+      :root{
+        --paper:#FFFDF8; --paper-2:#F3EEE4; --paper-3:#E8E1D2;
+        --ink:#16151A; --ink-2:#3B393F; --muted:#6D685F;
+        --accent:#C13A2C;           /* 唯一强调色：只用于「痛点/对比/关键词」 */
+        --good:#1E7A4D;
+        --display:"Noto Sans SC",sans-serif;   /* 换成你的品牌标题字体 */
+        --body:"Noto Sans SC",sans-serif;
+        --mono:"JetBrains Mono",monospace;
+      }
+      @font-face{font-family:"JetBrains Mono";src:url("assets/fonts/JetBrainsMono-400.woff2") format("woff2");font-weight:400;font-display:block;}
+
+      *{margin:0;padding:0;box-sizing:border-box;}
+      html,body{width:1920px;height:1080px;overflow:hidden;background:#0b0b0d;}
+      #root{position:relative;width:100%;height:100%;overflow:hidden;}
+      .clip{position:absolute;inset:0;}
+      /* container-type:size 让所有尺寸用 cqw 表达 —— 换分辨率不用改一处数值 */
+      .scene{container-type:size;width:100%;height:100%;overflow:hidden;
+             background:var(--paper);color:var(--ink);font-family:var(--body);}
+      .grid-bg{position:absolute;inset:0;z-index:1;
+        background-image:linear-gradient(var(--paper-3) .12cqw,transparent .12cqw),
+                         linear-gradient(90deg,var(--paper-3) .12cqw,transparent .12cqw);
+        background-size:4cqw 4cqw;opacity:.7;}
+      .grain{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:.045;
+        background-image:repeating-conic-gradient(var(--ink) 0% 25%,transparent 0% 50%);
+        background-size:3px 3px;mix-blend-mode:multiply;}
+      .headline{font-family:var(--display);line-height:.96;}
+      .kicker{display:inline-block;background:var(--ink);color:var(--paper);
+              font-family:var(--mono);font-size:1.25cqw;letter-spacing:.14em;
+              text-transform:uppercase;padding:.5cqw 1cqw;}
+      /* HUD 层：不随摄影机变换移动，避免边缘文字被推出画布 */
+      /* padding-right 给右上角品牌角标让位；否则 topbar 右端文字会钻到角标下面 */
+      .topbar{position:absolute;top:3.3cqw;left:3.3cqw;right:3.3cqw;padding-right:190px;z-index:55;display:flex;
+              justify-content:space-between;font-family:var(--mono);font-size:1.25cqw;
+              letter-spacing:.06em;text-transform:uppercase;}
+      .pill{border:.2cqw solid var(--ink);border-radius:999px;padding:.35cqw 1.1cqw;}
+      .metabar{position:absolute;bottom:3.3cqw;left:3.3cqw;right:3.3cqw;z-index:55;display:flex;
+               justify-content:space-between;font-family:var(--mono);font-size:1.25cqw;
+               letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);}
+      /* 真实照片卡片：封面必须是真图，不能是「封面」占位文字（v9 的用户反馈） */
+      .card{position:absolute;width:22cqw;height:15cqw;background:var(--paper);
+            border:.28cqw solid var(--ink);box-shadow:.7cqw .7cqw 0 var(--ink);
+            overflow:hidden;display:flex;flex-direction:column;}
+      .card img{width:100%;flex:1;min-height:0;object-fit:cover;display:block;}
+      .card .cap{height:2.2cqw;display:flex;align-items:center;padding:0 .8cqw;
+                 font-family:var(--mono);font-size:.95cqw;color:var(--ink-2);
+                 border-top:.22cqw solid var(--ink);}
+      .brandbug{position:absolute;inset:auto;top:44px;right:52px;z-index:95;display:flex;align-items:center;
+                gap:12px;background:var(--paper);border:4px solid var(--ink);
+                box-shadow:9px 9px 0 var(--ink);padding:11px 20px 11px 14px;}
+      .brandbug .bb-name{font-family:var(--display);font-size:32px;line-height:1;}
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="12">
+      <!-- 全程固定品牌角标：inset:auto 是关键，否则 .clip 的 inset:0 会盖住整屏 -->
+      <div id="brandbug" class="clip brandbug" data-start="0" data-duration="12" data-track-index="30">
+        <div><div class="bb-name">MY PRODUCT</div></div>
+      </div>
+
+      <audio id="bgm" src="assets/bgm.mp3" data-start="0" data-duration="12"
+             data-volume="0.6" data-fade-in="0.5" data-fade-out="1.2"></audio>
+
+      <!-- ===== S1 · 痛点（0–6s）：一屏一个主张 + 真实封面卡 ===== -->
+      <section id="s1" class="clip scene" data-start="0" data-duration="6" data-track-index="0">
+        <div class="grid-bg"></div>
+        <div class="flow" id="s1-flow" data-layout-ignore></div>
+        <div data-layout-allow-overlap style="position:absolute;left:3.3cqw;bottom:7cqw;z-index:40;
+             max-width:74cqw;background:var(--paper);border:.4cqw solid var(--ink);
+             box-shadow:1.1cqw 1.1cqw 0 var(--ink);padding:1.9cqw 2.3cqw;">
+          <div class="kicker" id="s1-k">00 · 用观众的原话</div>
+          <h1 class="headline" id="s1-h1" style="margin-top:1.3cqw;font-size:6.4cqw;">
+            一句话戳中痛点<span style="color:var(--accent)">用用户自己的话</span></h1>
+          <div id="s1-sub" style="margin-top:1.1cqw;font-size:1.7cqw;font-weight:700;color:var(--ink-2);">
+            只写一行。第二行会稀释主张。
+          </div>
+        </div>
+        <div class="topbar"><span>MY PRODUCT</span><span></span></div>
+        <div class="grain"></div>
+      </section>
+
+      <!-- ===== S2 · 收尾（6–12s）：慢下来，让主张落地 ===== -->
+      <section id="s2" class="clip scene" data-start="6" data-duration="6" data-track-index="1">
+        <div class="grid-bg"></div>
+        <div id="s2-cta" style="position:absolute;inset:0;display:flex;flex-direction:column;
+             align-items:center;justify-content:center;z-index:40;text-align:center;">
+          <div class="headline" style="font-size:6cqw;">结尾留白两秒</div>
+          <div class="headline" style="font-size:6cqw;margin-top:.8cqw;color:var(--accent);">再上 Logo 与 CTA</div>
+          <div id="s2-url" style="margin-top:2.4cqw;font-family:var(--mono);font-size:1.7cqw;
+               border:.3cqw solid var(--ink);box-shadow:.65cqw .65cqw 0 var(--ink);padding:.6cqw 1.5cqw;">
+            your-site.example
+          </div>
+        </div>
+        <div class="metabar"><span>MY PRODUCT</span><span>02 · 02</span></div>
+        <div class="grain"></div>
+      </section>
+    </div>
+
+    <script>
+      /* ================================================================
+         骨架说明（照抄即可，改文案/素材/时长）
+         1) 节拍网格：先用 make_beat_grid.py 分析你的 BGM，生成 beat-grid.json，
+            再把 BEAT_T 粘进来；不要在渲染时重新分析（确定性）。
+         2) 场景边界 = 网格上的重拍，用 onBeat() 吸附。
+         3) 每个场景三层运动：整机位 + 网格漂移 + 元素呼吸（否则截图感）。
+         4) 数字用 proxy+onUpdate 逐帧插值，不要「每拍 set 一次」。
+         ================================================================ */
+      const BEAT_T=[0.859,1.718,2.577,3.437,4.296,5.155,5.991,6.873,7.709,8.568,9.427,10.286,11.146,12.005];
+      const onBeat=(t,off=0)=>{let b=BEAT_T[0];for(const x of BEAT_T){if(Math.abs(x-t)<Math.abs(b-t))b=x;}return +(b+off).toFixed(3);};
+      const E={ex:"expo.out",p3:"power3.out",p2:"power2.out",b:"back.out(1.7)",i:"power2.in",e2:"expo.inOut"};
+      const tl=gsap.timeline({paused:true});
+
+      /* ---- S1：卡片「生长式」入场 ----
+         反面教材：四面硬滑入 + 统一 ease → PPT 翻页感。
+         正确做法：略小略偏 + 轻微旋转 + 从模糊到清晰的「长大」，统一 easeOutExpo。 */
+      const flow=document.getElementById('s1-flow');
+      const CARDS=[ /* 换成你自己的真实封面图片路径，不要留占位文字 */
+        {img:'assets/covers/1.jpg',cap:'标题 · 01'},
+        {img:'assets/covers/2.jpg',cap:'标题 · 02'},
+        {img:'assets/covers/3.jpg',cap:'标题 · 03'},
+        {img:'assets/covers/4.jpg',cap:'标题 · 04'},
+        {img:'assets/covers/5.jpg',cap:'标题 · 05'},
+        {img:'assets/covers/6.jpg',cap:'标题 · 06'}
+      ];
+      const POS=[[3,7],[27,10],[52,7],[74,11],[7,48],[46,46]];
+      CARDS.forEach((c,i)=>{
+        const el=document.createElement('div');
+        el.className='card';
+        el.style.left=POS[i][0]+'cqw'; el.style.top=POS[i][1]+'cqw';
+        el.style.transform='rotate('+((i%3-1)*2)+'deg)';
+        el.innerHTML='<img src="'+c.img+'" alt="">'+'<div class="cap">'+c.cap+'</div>';
+        flow.appendChild(el);
+      });
+      gsap.utils.toArray('#s1 .card').forEach((el,i)=>{
+        const dir=i%4, dx=[-34,30,-26,32][dir], dy=[-22,-24,24,20][dir];
+        tl.fromTo(el,
+          {opacity:0,scale:.80,x:dx,y:dy,rotation:(dir<2?-1:1)*3.2,filter:'blur(6px) saturate(.6)'},
+          {opacity:1,scale:1,x:0,y:0,rotation:(i%3-1)*2,filter:'blur(0px) saturate(1)',
+           duration:.62,ease:E.ex,transformOrigin:'50% 60%'},
+          .06+i*.05);
+      });
+      tl.fromTo('#s1-k',{x:-70,opacity:0},{x:0,opacity:1,duration:.34,ease:E.p3},onBeat(1.718,.06));
+      tl.fromTo('#s1-h1',{scale:1.14,opacity:0,rotation:-1},{scale:1,opacity:1,rotation:0,duration:.46,ease:E.ex},onBeat(1.718,.06));
+      tl.fromTo('#s1-sub',{y:26,opacity:0},{y:0,opacity:1,duration:.42,ease:E.p3},onBeat(2.577,.06));
+
+      /* ---- S2：结尾呼吸 —— 先静 1.4s，再落 URL（拆解共识：主张要「停得住」）---- */
+      tl.fromTo('#s2-cta',{y:70,opacity:0,scale:.95},{y:0,opacity:1,scale:1,duration:.7,ease:E.ex},6.2);
+      tl.fromTo('#s2-url',{y:36,opacity:0,scale:.92},{y:0,opacity:1,scale:1,duration:.5,ease:E.b},8.6);
+
+      /* ---- 三层运动：整机位 + 网格漂移 + 元素呼吸 ---- */
+      const SC={s1:[0,6],s2:[6,12]};
+      const CAM={s1:{from:{scale:1.05,x:-26,y:14},to:{scale:1.08,x:28,y:-12},ease:'none'},
+                 s2:{from:{scale:1.08,x:20,y:-12},to:{scale:1.04,x:0,y:0},ease:'sine.inOut'}};
+      const CHROME=['topbar','metabar','brandbug','card'];
+      const camLayers={};
+      Object.keys(SC).forEach(id=>{
+        const sec=document.getElementById(id);
+        const layer=document.createElement('div');
+        layer.style.cssText='position:absolute;inset:0;';
+        [...sec.children].forEach(el=>{
+          if(!CHROME.some(c=>el.classList.contains(c))) layer.appendChild(el);
+        });
+        sec.insertBefore(layer,sec.firstChild);
+        camLayers[id]=layer;
+      });
+      Object.entries(SC).forEach(([id,[a,b]])=>{
+        const dur=+(b-a).toFixed(3), cam=CAM[id];
+        tl.fromTo(camLayers[id],{scale:cam.from.scale,x:cam.from.x,y:cam.from.y},
+          {scale:cam.to.scale,x:cam.to.x,y:cam.to.y,duration:dur,ease:cam.ease,
+           immediateRender:false,transformOrigin:'50% 50%'},a);
+        tl.fromTo('#'+id+' .grid-bg',{backgroundPosition:'0px 0px'},
+          {backgroundPosition:'76.8px 76.8px',duration:dur,ease:'none',immediateRender:false},a);
+      });
+
+      window.__timelines=window.__timelines||{};
+      window.__timelines['main']=tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,80 @@
+{
+  "whoosh": {
+    "file": "sfx/whoosh.wav",
+    "duration": 1.5886,
+    "peak": 0.6652,
+    "align": "peak"
+  },
+  "whoosh_fast": {
+    "file": "sfx/whoosh_fast.wav",
+    "duration": 1.1001,
+    "peak": 0.2568,
+    "align": "peak"
+  },
+  "hit": {
+    "file": "sfx/hit.wav",
+    "duration": 1.1123,
+    "peak": 0.0051,
+    "align": "peak"
+  },
+  "boom": {
+    "file": "sfx/boom.wav",
+    "duration": 4.1442,
+    "peak": 0.2966,
+    "align": "start"
+  },
+  "sub_drop": {
+    "file": "sfx/sub_drop.wav",
+    "duration": 2.0,
+    "peak": 0.0112,
+    "align": "start"
+  },
+  "riser": {
+    "file": "sfx/riser.wav",
+    "duration": 2.5,
+    "peak": 2.4674,
+    "align": "end"
+  },
+  "reverse_swell": {
+    "file": "sfx/reverse_swell.wav",
+    "duration": 1.6,
+    "peak": 1.5711,
+    "align": "end"
+  },
+  "tick": {
+    "file": "sfx/tick.wav",
+    "duration": 0.06,
+    "peak": 0.0052,
+    "align": "peak"
+  },
+  "click": {
+    "file": "sfx/click.wav",
+    "duration": 0.04,
+    "peak": 0.005,
+    "align": "peak"
+  },
+  "pop": {
+    "file": "sfx/pop.wav",
+    "duration": 0.18,
+    "peak": 0.0059,
+    "align": "peak"
+  },
+  "glitch": {
+    "file": "sfx/glitch.wav",
+    "duration": 0.45,
+    "peak": 0.1619,
+    "align": "start"
+  },
+  "shimmer": {
+    "file": "sfx/shimmer.wav",
+    "duration": 2.2,
+    "peak": 1.1372,
+    "align": "start"
+  },
+  "drone": {
+    "file": "sfx/drone.wav",
+    "duration": 8.0,
+    "peak": 4.7243,
+    "align": "start"
+  }
+}

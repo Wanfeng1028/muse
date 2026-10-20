@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Production Pipeline"
+  short_description: "Rehearse many demos cheaply, then voice and render in one queue"
+  default_prompt: "Use $demo-production-pipeline to plan a rehearse-then-render pipeline for this set of demos."

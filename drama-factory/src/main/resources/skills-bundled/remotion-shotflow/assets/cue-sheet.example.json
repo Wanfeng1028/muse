@@ -1,0 +1,29 @@
+{
+  "fps": 30,
+  "duration_s": 8,
+  "cues": [
+    {
+      "id": "cards-received",
+      "asset": "audio/soft-confirm.wav",
+      "verification": "designed",
+      "target_s": 3.2,
+      "source_in_s": 0.0,
+      "source_anchor_s": 0.06,
+      "source_out_s": 0.4,
+      "playback_rate": 1,
+      "note": "原创卡片归位确认音位置；示例资产未随包提供，替换成实际可用的音效并校准内部锚点。"
+    },
+    {
+      "id": "result-reveal",
+      "asset": "audio/soft-reveal.wav",
+      "verification": "designed",
+      "target_s": 5.0,
+      "source_in_s": 0.1,
+      "source_anchor_s": 0.2,
+      "source_out_s": 0.7,
+      "playback_rate": 1,
+      "note": "原创结果揭示音；最终音色与层级需要试听。"
+    }
+  ],
+  "asset_status": "planned"
+}

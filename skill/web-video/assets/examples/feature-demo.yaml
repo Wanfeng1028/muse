@@ -1,0 +1,33 @@
+# Example: client walkthrough of the "New invoice" feature on the bundled fixture app.
+mode: feature-demo
+url: http://localhost:8765
+viewport: [1280, 720]
+lang: vi
+title: "Tạo hoá đơn mới"
+outro: "Xong! Hoá đơn đã được lưu."
+steps:
+  - caption: "Đăng nhập"
+    hidden: true
+    do:
+      - goto /login
+      - 'fill #email | demo@example.com'
+      - 'fill #password | demo-pass'
+      - 'click [data-testid="sign-in"]'
+      - wait_url **/
+  - caption: "Mở danh sách hoá đơn"
+    do: 'expect h1'
+    wait: 900
+  - caption: "Bấm New invoice để tạo hoá đơn"
+    do: 'click [data-testid="new-invoice"]'
+  - caption: "Nhập khách hàng và số tiền"
+    say: "Chỉ cần nhập tên khách hàng và số tiền."
+    do:
+      - 'type #customer | Công ty Ánh Dương'
+      - 'type #amount | 250'
+  - caption: "Chọn hạn thanh toán"
+    do: 'select #due | 14'
+  - caption: "Lưu: hoá đơn xuất hiện ngay trong danh sách"
+    do:
+      - 'click [data-testid="save-invoice"]'
+      - 'expect [data-testid="toast"]'
+    wait: 1500

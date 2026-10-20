@@ -1,0 +1,25 @@
+{
+  "id": "15-bauhaus-motion-reel",
+  "title": "Bauhaus motion reel — one dot through six techniques",
+  "category": "motion / showreel",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "forma (fictional)",
+  "source": {
+    "author": "@condzxyz",
+    "post": "https://x.com/condzxyz/status/2103556754550469102",
+    "note": "Remade from scratch in HyperFrames after the Bauhaus motion reel; structure and pacing follow it. The studio name, lines and on-screen numbers are ours; the numbers describe this composition (1600 particles, 45 tiles)."
+  },
+  "scenes": [
+    "00 the dot: squash and stretch on a sagging ground line, onion-skin ghosts",
+    "01 type: letters rise, cut to cream, the dot drops onto the i, variable-font wave, dive into the dot",
+    "02 shape: bauhaus tile grid explodes in from a zoom, shuffles, flips to truchet, falls away",
+    "03 dimension: 1600 dashes burst into a sphere, torus, ripple field and spiral",
+    "04 fluid: shaded metaballs splash, merge, divide into two, four and a row",
+    "05 data: rolling counters, energy line, live capsule bars, glitch out",
+    "06 identity: wordmark, dot, italic role and decoded meta line"
+  ],
+  "variables": ["name", "role", "word1", "word2", "meta", "orange", "blue", "yellow", "cream", "night"],
+  "notes": "word1 and word2 each need a lowercase i: its dot is the orange ball.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"name\":\"kinetik\",\"orange\":\"#ff3b6b\"}'"
+}

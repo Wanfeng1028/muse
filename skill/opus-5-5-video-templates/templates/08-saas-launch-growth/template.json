@@ -1,0 +1,27 @@
+{
+  "id": "08-saas-launch-growth",
+  "title": "SaaS launch film — blank page to growth",
+  "category": "product launch / SaaS",
+  "duration": 30,
+  "size": "1920x1080",
+  "demoBrand": "Upwell (fictional)",
+  "source": {
+    "author": "@DanielSmidstrup",
+    "post": "https://x.com/DanielSmidstrup/status/2104013515623170390",
+    "note": "Remade from scratch in HyperFrames after the ClimbX launch film; structure and pacing follow it, brand, logo, product copy and numbers are ours and fictional."
+  },
+  "scenes": [
+    "dot grows into a flag, mountain logo draws itself",
+    "orange blank page: floating empty composers, hook question",
+    "iris close, flash, logo lockup with particle burst",
+    "logo flies into the app sidebar, quick tour of three pages",
+    "counter to 10 ready posts, idea cards stack, click Edit",
+    "editor: typed line, post rating bars, Ready to post badge, schedule click",
+    "week calendar receives the post, zoom out to the month",
+    "night scene: engage card, reply sent, notification pills",
+    "growth line",
+    "final lockup with stats and CTA"
+  ],
+  "variables": ["brand", "domain", "taglinePre", "taglineHi", "hook", "placeholder", "count", "countLabel", "countSub", "countSubHi", "author", "handle", "postLine1", "postLine2", "postTyped", "scheduleSlot", "studioHead", "studioHeadHi", "calHead", "calHeadHi", "engageHead", "engageHeadHi", "engageQuestion", "engageReply", "growthLabel", "finalLine", "finalLineHi", "stat1", "stat1Label", "stat2", "stat2Label", "stat3", "stat3Label", "cta", "accent", "ink", "dark", "good"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"brand\":\"Acme\",\"domain\":\"acme.io\",\"accent\":\"#2f6bff\"}'"
+}

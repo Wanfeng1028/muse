@@ -1,0 +1,49 @@
+{
+  "format_version": 1,
+  "source": "interview.srt",
+  "timing": "approximate speech cues",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 7.5,
+      "text": "We almost closed the company. It was the hardest week of the year.",
+      "id": "s0001"
+    },
+    {
+      "start": 7.5,
+      "end": 16.0,
+      "text": "We had built a product without speaking to a single customer.",
+      "id": "s0002"
+    },
+    {
+      "start": 16.0,
+      "end": 25.0,
+      "text": "So we stopped coding for a week and started asking questions.",
+      "id": "s0003"
+    },
+    {
+      "start": 25.0,
+      "end": 34.0,
+      "text": "One teacher told us she needed feedback for her students immediately.",
+      "id": "s0004"
+    },
+    {
+      "start": 34.0,
+      "end": 42.0,
+      "text": "We built a tiny demo that same evening and showed it to her.",
+      "id": "s0005"
+    },
+    {
+      "start": 42.0,
+      "end": 51.5,
+      "text": "The next morning she asked when she could use it in her class.",
+      "id": "s0006"
+    },
+    {
+      "start": 51.5,
+      "end": 61.0,
+      "text": "The lesson was simple. We needed to listen before we built anything.",
+      "id": "s0007"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sign in · Invoicer</title>
+<style>
+body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#f3f4f6;display:grid;place-items:center;height:100vh;margin:0}
+form{background:#fff;padding:32px;border-radius:12px;box-shadow:0 4px 20px #0001;width:320px;display:grid;gap:12px}
+input,button{font-size:16px;padding:10px;border-radius:8px;border:1px solid #d1d5db}
+button{background:#2563eb;color:#fff;border:0;cursor:pointer}
+</style></head><body>
+<form id="login">
+  <h2>Sign in</h2>
+  <input id="email" name="email" type="email" placeholder="Email">
+  <input id="password" name="password" type="password" placeholder="Password">
+  <button type="submit" data-testid="sign-in">Sign in</button>
+  <p id="err" style="color:#b91c1c"></p>
+</form>
+<script>
+document.getElementById('login').addEventListener('submit', async e => {
+  e.preventDefault();
+  const r = await fetch('/api/login', {method:'POST', body: JSON.stringify({email: email.value, password: password.value})});
+  if (r.ok) location.href = '/'; else document.getElementById('err').textContent = 'Wrong email or password';
+});
+</script></body></html>

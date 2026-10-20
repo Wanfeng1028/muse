@@ -1,0 +1,7 @@
+interface:
+  display_name: "川云添 · 自动剪辑 Pro"
+  short_description: "71 种固定种子混合风格的口播全屏舞台，先审方案与关键帧，再渲染成片"
+  icon_small: "./assets/brand-mark.svg"
+  icon_large: "./assets/brand-mark.svg"
+  brand_color: "#34D4BF"
+  default_prompt: "使用 $auto-edit-pro 检查我的视频与对应 SRT，保留原片和原声，以固定种子从 71 种已登记风格中混合，保存方案不重抽，先给出全屏舞台包装方案；批准后自动进入 Gate B 和 C，最终获得 Gate D 批准才渲染。"

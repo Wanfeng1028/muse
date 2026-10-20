@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remotion Particle Film"
+  short_description: "Build deterministic GPU particle films in Remotion"
+  default_prompt: "Use $remotion-particle-film to build and export a 60-second particle film."

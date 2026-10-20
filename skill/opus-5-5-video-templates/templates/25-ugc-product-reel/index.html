@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"cap1","type":"string","label":"Caption over the unboxing (empty = none)","default":""},
+  {"id":"cap2","type":"string","label":"Caption over the swatch (empty = none)","default":""},
+  {"id":"cap3","type":"string","label":"Caption over the lips (empty = none)","default":""},
+  {"id":"endTag","type":"string","label":"Line on the last shot (empty = none)","default":""},
+  {"id":"grain","type":"string","label":"Film grain 0–1","default":"0.35"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #111; font-family: "Inter", sans-serif; }
+      .layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+      #scene { overflow: hidden; background: #111; }
+      .shot { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; }
+      .cap { position: absolute; left: 0; width: 1080px; text-align: center; white-space: nowrap; }
+      .cap span { display: inline-block; padding: 14px 26px; border-radius: 16px; background: rgba(255, 255, 255, 0.94); color: #141414; font: 700 50px/1.15 "Inter"; letter-spacing: -0.01em; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
+      #endTag { position: absolute; left: 0; width: 1080px; top: 230px; text-align: center; color: #2b2522; font: 600 58px/1.1 "Inter"; letter-spacing: -0.02em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div id="scene" class="clip layer" data-start="0" data-duration="10" data-track-index="0">
+        <img id="sh0" class="shot" src="assets/img/box.jpg" alt="" />
+        <img id="sh1" class="shot" src="assets/img/box.jpg" alt="" />
+        <img id="sh2" class="shot" src="assets/img/wand.jpg" alt="" />
+        <img id="sh3" class="shot" src="assets/img/swatch.jpg" alt="" />
+        <img id="sh4" class="shot" src="assets/img/lips.jpg" alt="" />
+        <img id="sh5" class="shot" src="assets/img/lips.jpg" alt="" />
+        <img id="sh6" class="shot" src="assets/img/cafe.jpg" alt="" />
+        <img id="sh7" class="shot" src="assets/img/hero.jpg" alt="" />
+        <canvas id="fx" class="layer" width="540" height="960" style="width: 1080px; height: 1920px"></canvas>
+        <div id="c1" class="cap" style="top: 1460px"><span></span></div>
+        <div id="c2" class="cap" style="top: 1500px"><span></span></div>
+        <div id="c3" class="cap" style="top: 1560px"><span></span></div>
+        <div id="endTag"></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 10;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const px = (n) => n.toFixed(1) + "px";
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        // shots: [start, end, scale from, scale to, focus x from, to, focus y from, to, rotation from, to]
+        // focus is the image point (0..1) kept at the centre of the frame
+        const SH = [
+          [0.0, 1.25, 1.12, 1.24, 0.47, 0.47, 0.58, 0.5, -1.5, 0.5],
+          [1.25, 2.45, 1.75, 1.88, 0.48, 0.5, 0.6, 0.58, -3, -1],
+          [2.45, 3.55, 1.08, 1.17, 0.52, 0.52, 0.52, 0.42, 1, -0.5],
+          [3.55, 4.85, 1.1, 1.18, 0.45, 0.5, 0.52, 0.5, 0, 0.8],
+          [4.85, 6.35, 1.04, 1.12, 0.5, 0.5, 0.44, 0.42, 0, 0],
+          [6.35, 7.45, 1.42, 1.48, 0.55, 0.55, 0.38, 0.38, 0, 0],
+          [7.45, 8.75, 1.13, 1.08, 0.52, 0.46, 0.5, 0.5, 0, 0],
+          [8.75, 10.0, 1.04, 1.1, 0.5, 0.5, 0.56, 0.54, 0, 0],
+        ];
+        const els = SH.map((_, i) => $("sh" + i));
+        // the lift in the unboxing and the pout on the close-up
+        const extra = (i, t) => {
+          if (i === 0) { const u = ioq(P(t, 0.55, 1.2)); return { s: 1 + 0.07 * u, y: -60 * u }; }
+          if (i === 5) return { s: 1 + 0.015 * Math.sin((t - 6.35) * 5.2), y: 0 };
+          return { s: 1, y: 0 };
+        };
+        const caps = [["c1", v.cap1, 0.25, 1.15], ["c2", v.cap2, 3.7, 4.75], ["c3", v.cap3, 5.0, 7.3]];
+        caps.forEach(([id, txt]) => { $(id).querySelector("span").textContent = txt; K.show($(id), !!txt); });
+        $("endTag").textContent = v.endTag;
+        const fx = $("fx").getContext("2d");
+        const grain = C(parseFloat(v.grain) || 0);
+
+        function render(t) {
+          // handheld: slow sway plus a little jitter
+          const hx = 5 * Math.sin(t * 1.9) + 2.5 * Math.sin(t * 5.3 + 1), hy = 5 * Math.sin(t * 1.5 + 2) + 2.5 * Math.sin(t * 4.7), hr = 0.35 * Math.sin(t * 1.2 + 0.5);
+          SH.forEach((s, i) => {
+            const on = t >= s[0] && (t < s[1] || (i === SH.length - 1 && t <= DUR));
+            K.show(els[i], on);
+            if (!on) return;
+            const u = P(t, s[0], s[1]), e = 0.35 * u + 0.65 * ioq(u);
+            const ex = extra(i, t), sc = L(s[2], s[3], e) * ex.s, fxv = L(s[4], s[5], e) * 1080, fyv = L(s[6], s[7], e) * 1920, rot = L(s[8], s[9], e) + hr;
+            // a quick settle after each cut
+            const kick = 1 - E.outCubic(P(t, s[0], s[0] + 0.18));
+            // never let an edge show: the scale is at least what the focus point, the sway and the tilt need
+            const Smin = Math.max(540 / fxv, 540 / (1080 - fxv), 960 / fyv, 960 / (1920 - fyv)) * (1.014 + Math.abs(rot) * 0.032);
+            const S = Math.max(sc, Smin) * (1 + 0.035 * kick);
+            els[i].style.transformOrigin = px(fxv) + " " + px(fyv);
+            els[i].style.transform = "translate(" + px(540 - fxv + hx) + "," + px(960 - fyv + hy + ex.y) + ") rotate(" + rot.toFixed(3) + "deg) scale(" + S.toFixed(4) + ")";
+            els[i].style.filter = blurS(6 * kick * kick);
+          });
+          // captions pop in and out
+          caps.forEach(([id, txt, a, b]) => {
+            if (!txt) return;
+            const el = $(id), u = E.outBack(P(t, a, a + 0.22), 1.8), o = P(t, b - 0.15, b);
+            K.show(el, t >= a && t < b);
+            el.style.transform = "scale(" + C(u, 0, 1.15).toFixed(3) + ") rotate(" + (-2 + 2 * C(u)).toFixed(2) + "deg)";
+            el.style.opacity = (C(u * 2) * (1 - o)).toFixed(3);
+          });
+          if (v.endTag) { const u = E.outCubic(P(t, 9.0, 9.4)); $("endTag").style.opacity = u.toFixed(3); $("endTag").style.transform = "translateY(" + px(20 * (1 - u)) + ")"; }
+          // grain and a soft sun flicker
+          fx.clearRect(0, 0, 540, 960);
+          if (grain > 0) {
+            const f = Math.floor(t * 24);
+            fx.globalAlpha = 0.09 * grain;
+            for (let k = 0; k < 2600; k++) { const x = R(k * 1.37 + f * 13.1) * 540, y = R(k * 2.91 + f * 7.7) * 960; fx.fillStyle = R(k + f) > 0.5 ? "#fff" : "#000"; fx.fillRect(x, y, 1.2, 1.2); }
+            fx.globalAlpha = 1;
+          }
+          const fl = 0.04 * (0.5 + 0.5 * Math.sin(t * 3.1)) * (0.6 + 0.4 * Math.sin(t * 7.9));
+          fx.fillStyle = "rgba(255,240,220," + fl.toFixed(3) + ")"; fx.fillRect(0, 0, 540, 960);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+[
+  {
+    "id": "flux-3-video",
+    "name": "FLUX.3 Video / BFL",
+    "family": "flux",
+    "provider": "bfl",
+    "variant": "",
+    "release_date": "2026-07-23",
+    "release_date_kind": "early-access",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio",
+      "extend",
+      "draft-enhance"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "flux-3-video"
+    ],
+    "source_ids": [
+      "flux3-release",
+      "flux3-api"
+    ],
+    "novel_abilities": [
+      "A selected draft can be enhanced rather than resampled",
+      "Multiple keyframes in one creation request",
+      "Continuation as a distinct v2v mode"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 20,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "720p",
+        "1080p"
+      ],
+      "max_keyframes": 10,
+      "extension_min_seconds": 5,
+      "extension_max_seconds": 15
+    },
+    "aliases": [
+      "flux3",
+      "flux-3",
+      "flux.3"
+    ],
+    "notes": [
+      "t2v, i2v and v2v are mode values, not separate model IDs.",
+      "Video-edit and video-upscale tools are distinct surfaces; do not attach their abilities to this endpoint.",
+      "The documented FHD canvas can be 1920x1088, not exactly 1920x1080.",
+      "No released local video weights are asserted."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/flux.md",
+    "skill_id": "video-flux",
+    "model_version": "3",
+    "operation_limits": {
+      "extend": {
+        "min_seconds": 5,
+        "max_seconds": 15,
+        "fps": [
+          24
+        ]
+      }
+    }
+  }
+]

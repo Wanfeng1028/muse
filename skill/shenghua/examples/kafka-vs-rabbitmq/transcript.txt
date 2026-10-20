@@ -1,0 +1,31 @@
+[0.00] Okay,@0.00
+[0.64] quick@0.64 question.@0.84
+[1.68] If@1.68 I@1.82 told@1.94 you@2.12 RabbitMQ@2.32
+[2.94] deletes@2.94 your@3.36 messages@3.52 the@3.86 moment@4.18
+[4.48] someone@4.48 reads@4.78 them@5.16 and@5.42 Kafka@5.88
+[6.14] basically@6.14 never@6.76 does,@7.06
+[7.86] would@7.86 you@7.96 know@8.10 which@8.22 one@8.42
+[8.60] to@8.60 use@8.74 and@8.98 why@9.50 that@9.72
+[9.94] one@9.94 detail@10.20 changes@10.58 everything@11.12 about@11.58
+[11.90] how@11.90 you@12.12 design@12.28 your@12.62 system?@12.78
+[13.60] Most@13.60 tutorials@13.82 show@14.22 you@14.74 both@14.90
+[15.12] tools@15.12 and@15.52 call@16.00 it@16.22 a@16.34
+[16.42] day.@16.42
+[17.00] I'm@17.00 not@17.16 going@17.30 to@17.44 do@17.56
+[17.70] that.@17.70
+[18.36] By@18.36 the@18.54 end@18.64 of@18.86 this,@18.98
+[19.52] you'll@19.52 understand@19.76 the@20.24 one@20.46 architectural@20.70
+[21.22] decision@21.22 that@21.82 explains@22.02 basically@22.54 every@23.22
+[23.72] other@23.72 difference@24.04 between@24.48 these@24.82 two@25.12
+[25.46] with@25.46 real@26.08 Spring@26.36 Boot@26.64 Code,@26.98
+[27.32] real@27.32 numbers,@27.86
+[28.76] and@28.76 zero@28.82 hand@29.12 waving.@29.42
+[30.26] Let's@30.26 get@30.36 into@30.46 it.@30.70
+[31.36] Kafka@31.36 versus@31.50 RabbitMQ.@32.02
+[33.26] Everyone@33.26 treats@33.56 this@33.92 like@34.22 a@34.42
+[34.50] cage@34.50 match.@34.76
+[35.72] It's@35.72 not.@35.90
+[36.56] It's@36.56 one@36.76 question.@36.90
+[37.80] Do@37.80 you@37.94 need@38.04 a@38.20 queue@38.28
+[38.52] or@38.52 do@39.12 you@39.24 need@39.34 a@39.48
+[39.56] log?@39.56

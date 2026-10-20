@@ -1,0 +1,751 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Long-form film</title>
+<style>
+  html, body { margin: 0; padding: 0; }
+  #stage { position: relative; overflow: hidden; }
+  svg { position: absolute; inset: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+<svg id="svg"><defs></defs><g id="world"></g><g id="top"></g></svg>
+<div id="caps"></div>
+</div>
+<script src="kit.js"></script>
+<script src="figure.js"></script>
+<script src="timeline.js"></script>
+<script>
+// Long-form engine: a narrated film is a list of segments (timeline.js, written by longform.py from the
+// script and the measured narration). Each segment has a scene type; every style is a pure function of t.
+const TL = window.TIMELINE;
+K.setup({ format: "16x9", bpm: 60, bars: Math.ceil(TL.duration / 4), title: TL.title,
+          palette: TL.palette || {} });
+K.DUR = TL.duration; window.STUDIO.duration = TL.duration;
+const C = K.C, W = K.W, H = K.H;
+const SEGS = TL.segments;
+const FONT = "Georgia, serif", SANS = "Helvetica Neue, Helvetica, Arial, sans-serif";
+
+// chapters show in the preview timeline
+(TL.chapters || []).forEach(ch => window.STUDIO.scenes.push({ name: ch.title, from: ch.t0, to: ch.t1 }));
+
+// ── layers ───────────────────────────────────────────────
+const bgG = K.group("bg");
+const dots = [];
+{ const r = K.rng(11);
+  for (let i = 0; i < 70; i++) dots.push({ x: r() * W, y: r() * H, s: 1 + r() * 2.2, v: 4 + r() * 10, el: K.el("circle", { fill: "#2a2a28" }, bgG) }); }
+const sceneG = K.group("scenes");
+const overlayG = K.group("overlay");   // per-segment text that must not move with a scene's camera (s.ov)
+const footG = K.group("foot");
+const sourceT = K.text("", { "font-family": SANS, "font-size": 20, fill: C.GREY, x: 60, y: H - 36 }, footG);
+const chapterT = K.text("", { "font-family": SANS, "font-size": 20, fill: C.GREY, x: W - 60, y: 52, "text-anchor": "end", "letter-spacing": 3 }, footG);
+
+// ── helpers ──────────────────────────────────────────────
+const clipN = { n: 0 };
+function maskText(str, attrs, parent) {           // text that rises out of its own mask line
+  const id = "m" + (clipN.n++);
+  const clip = K.clipRect(id);
+  const g = K.el("g", { "clip-path": `url(#${id})` }, parent);
+  const t = K.text(str, Object.assign({ "font-family": FONT }, attrs), g);
+  return { g, t, clip, size: +attrs["font-size"] || 40 };
+}
+function placeMask(m, x, y, p, anchor) {          // p: 0 hidden below line → 1 risen
+  const s = m.size;
+  K.set(m.clip, { x: -50, y: y - s * 1.05, width: W + 100, height: s * 1.35 });
+  K.set(m.t, { x, y: y + (1 - p) * s * 1.3, "text-anchor": anchor || "middle" });
+}
+function wrapWords(str, maxChars) {
+  const words = String(str).split(/\s+/), lines = [];
+  let cur = "";
+  words.forEach(w => { if ((cur + " " + w).trim().length > maxChars && cur) { lines.push(cur); cur = w; } else cur = (cur + " " + w).trim(); });
+  if (cur) lines.push(cur);
+  return lines;
+}
+// data items may be plain strings or {text, at}; an item with "at" was timed to its word by longform.py (item.t)
+function txt(x) { return typeof x === "string" ? x : (x && x.text) || ""; }
+function cueT(x, fallback) { return x && typeof x === "object" && x.t != null ? x.t - 0.05 : fallback; }
+// the word clock for hand-built scenes: when is `phrase` said in segment s (nth occurrence)?
+function said(s, phrase, nth = 1) {
+  const norm = w => w.toLowerCase().replace(/[’]/g, "'").replace(/[^a-z0-9']/g, "");
+  const want = phrase.split(/\s+/).map(norm), ws = s.words || [];
+  let hits = 0;
+  for (let i = 0; i + want.length <= ws.length; i++)
+    if (want.every((w, k) => norm(ws[i + k][0]) === w || (k === want.length - 1 && norm(ws[i + k][0]).startsWith(w))) && ++hits === nth) return ws[i][1];
+  window.STUDIO.warnings.push(`said(): "${phrase}" not found in ${s.id}`);
+  return s.t0 + 0.5;
+}
+// camera keys from event times: sorted, at least `gap` s apart, so the camera never jumps between two keys at once
+function camKeys(t0, v0, evs, gap = 0.8) {
+  const keys = [[t0, v0]];
+  evs.slice().sort((a, b) => a[0] - b[0]).forEach(([t, v]) => {
+    const last = keys[keys.length - 1];
+    if (t < last[0] + gap) { if (t <= last[0] + 1e-6 && keys.length > 1) { last[1] = v; return; } t = last[0] + gap; }
+    keys.push([t, v]);
+  });
+  return keys;
+}
+function fmtNum(v, dec) { return v.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+// enter/leave envelope for a segment: in over 0.45 s, out over 0.3 s (a push, not a fade)
+function env(t, s) { return { i: K.eout(K.prog(t, s.t0, s.t0 + 0.45)), o: K.ein(K.prog(t, s.t1 - 0.3, s.t1)), p: K.prog(t, s.t0, s.t1) }; }
+// stagger: item k of n reveals across the first `span` of the segment
+function revealAt(s, k, n, span = 0.7, lead = 0.35) { return s.t0 + lead + (s.t1 - s.t0 - lead) * span * (n <= 1 ? 0 : k / (n - 1)); }
+
+// ── scene builders: build(seg, group) returns render(t) ──
+const B = {};
+
+B.chapter = (s, g) => {
+  const num = maskText(s.data.kicker || "", { "font-family": SANS, "font-size": 30, fill: C.ACCENT, "letter-spacing": 6 }, g);
+  const lines = wrapWords(s.data.title, 26).map(l => maskText(l, { "font-size": 92, fill: C.INK }, g));
+  const rule = K.el("rect", { fill: C.ACCENT }, g);
+  K.label(s.data.title, s.t0, s.t1, "chapter card");
+  return t => {
+    const e = env(t, s), y0 = H / 2 - (lines.length - 1) * 55;
+    placeMask(num, W / 2, y0 - 110, K.eout(K.prog(t, s.t0, s.t0 + 0.4)) * (1 - e.o));
+    lines.forEach((m, k) => placeMask(m, W / 2, y0 + k * 110, K.eout(K.prog(t, s.t0 + 0.12 + k * 0.1, s.t0 + 0.55 + k * 0.1)) * (1 - e.o)));
+    const rw = 220 * K.eio(K.prog(t, s.t0 + 0.2, s.t0 + 0.9)) * (1 - e.o);
+    K.set(rule, K.rect(W / 2 - rw / 2, y0 + lines.length * 110 - 50, rw, 5, 2));
+  };
+};
+
+B.statement = (s, g) => {
+  const items = (s.data.lines || wrapWords(s.data.text, 30)), lines = items.map(txt);
+  const acc = s.data.accent || [];
+  const ms = lines.map((l, k) => maskText(l, { "font-size": s.data.size || 76, fill: acc.includes(k) ? C.ACCENT : C.INK }, g));
+  ms.forEach(m => K.label(m.t.textContent, s.t0, s.t1, "statement"));
+  const lh = (s.data.size || 76) * 1.3;
+  return t => {
+    const e = env(t, s), y0 = H * 0.46 - (lines.length - 1) * lh / 2;
+    ms.forEach((m, k) => {
+      const tk = cueT(items[k], revealAt(s, k, lines.length, s.data.span || 0.45, 0.1));
+      placeMask(m, W / 2, y0 + k * lh, K.eout(K.prog(t, tk, tk + 0.35)) * (1 - e.o));
+    });
+  };
+};
+
+B.compare = (s, g) => {
+  const L = s.data.left, R = s.data.right;
+  const hl = maskText(L.title, { "font-family": SANS, "font-size": 30, fill: C.GREY, "letter-spacing": 4 }, g);
+  const hr = maskText(R.title, { "font-family": SANS, "font-size": 30, fill: C.ACCENT, "letter-spacing": 4 }, g);
+  const li = L.items.map(x => maskText(txt(x), { "font-size": 44, fill: C.GREY }, g));
+  const ri = R.items.map(x => maskText(txt(x), { "font-size": 44, fill: C.INK }, g));
+  const div = K.el("rect", { fill: "#2c2c2a" }, g);
+  const strikes = L.items.map(() => K.el("rect", { fill: C.ACCENT }, g));
+  [L.title, R.title, ...L.items, ...R.items].forEach(x => K.label(txt(x), s.t0, s.t1, "two columns"));
+  return t => {
+    const e = env(t, s), o = 1 - e.o, xl = W * 0.27, xr = W * 0.73, y0 = 300;
+    placeMask(hl, xl, y0, e.i * o); placeMask(hr, xr, y0, K.eout(K.prog(t, s.t0 + 0.2, s.t0 + 0.6)) * o);
+    const dh = (H - 380) * K.eio(K.prog(t, s.t0, s.t0 + 0.8)) * o;
+    K.set(div, K.rect(W / 2 - 1, 230, 2, dh));
+    const n = Math.max(li.length, ri.length);
+    li.forEach((m, k) => { const tk = cueT(L.items[k], revealAt(s, k, n, 0.35, 0.3)); placeMask(m, xl, y0 + 110 + k * 90, K.eout(K.prog(t, tk, tk + 0.35)) * o); });
+    ri.forEach((m, k) => {
+      const tk = cueT(R.items[k], revealAt(s, k, n, 0.5, 0.3) + (s.t1 - s.t0) * 0.35);
+      placeMask(m, xr, y0 + 110 + k * 90, K.eout(K.prog(t, tk, tk + 0.35)) * o);
+      const sl = strikes[k];
+      if (sl) { const bb = li[k].t.getComputedTextLength(), sw = bb * K.eio(K.prog(t, tk - 0.2, tk + 0.2)) * o;
+        K.set(sl, K.rect(xl - bb / 2, y0 + 110 + k * 90 - 15, sw, 4)); }
+    });
+  };
+};
+
+B.stat = (s, g) => {
+  const d = s.data;
+  const big = maskText("", { "font-size": 200, fill: C.ACCENT }, g);
+  const lab = wrapWords(d.label, 44).map(l => maskText(l, { "font-size": 50, fill: C.INK }, g));
+  // notes: [{text, at}] — follow-up lines that land on their words under the label, so a long stat scene keeps moving
+  const notes = (d.notes || []).map(x => ({ x, m: maskText(txt(x), { "font-family": SANS, "font-size": 34, fill: C.GREY }, g) }));
+  K.label((d.prefix || "") + fmtNum(d.value, d.decimals || 0) + (d.suffix || "") + " " + d.label, s.t0, s.t1, "big number");
+  notes.forEach(n => K.label(txt(n.x), s.t0, s.t1, "stat note"));
+  return t => {
+    const e = env(t, s), o = 1 - e.o;
+    const c0 = cueT(d, s.t0 + 0.2), cnt = K.eout(K.prog(t, c0, c0 + Math.min(2.0, (s.t1 - c0) * 0.5)));
+    big.t.textContent = (d.prefix || "") + fmtNum(d.value * cnt, d.decimals || 0) + (d.suffix || "");
+    placeMask(big, W / 2, H * 0.47, e.i * o * (d.t != null ? K.eout(K.prog(t, c0 - 0.15, c0 + 0.15)) : 1));   // a cued number waits for its word instead of sitting at 0
+    lab.forEach((m, k) => { const tk = s.t0 + 0.6 + k * 0.12; placeMask(m, W / 2, H * 0.47 + 110 + k * 66, K.eout(K.prog(t, tk, tk + 0.35)) * o); });
+    const ny = H * 0.47 + 110 + lab.length * 66 + 30;
+    notes.forEach((n, k) => { const tk = cueT(n.x, revealAt(s, k + 1, notes.length + 1, 0.8, 0.4)); placeMask(n.m, W / 2, ny + k * 52, K.eout(K.prog(t, tk, tk + 0.35)) * o); });
+  };
+};
+
+B.sms = (s, g) => {
+  const d = s.data;
+  const pw = 520, ph = 900, px = W / 2 - pw / 2 + (d.offset || 0), py = 90;
+  const phone = K.el("rect", { fill: "#151515", stroke: "#3a3a38", "stroke-width": 3 }, g);
+  const screen = K.el("rect", { fill: "#000" }, g);
+  const notch = K.el("rect", { fill: "#151515" }, g);
+  const who = K.text(d.sender || "+1 (555) 010-0199", { "font-family": SANS, "font-size": 24, fill: C.INK, "text-anchor": "middle" }, g);
+  const whoSub = K.text(d.senderNote || "Text Message", { "font-family": SANS, "font-size": 18, fill: C.GREY, "text-anchor": "middle" }, g);
+  const lines = wrapWords(d.text, 30);
+  const bub = K.el("rect", { fill: "#262628" }, g);
+  const tl = lines.map(l => K.text(l, { "font-family": SANS, "font-size": 25, fill: C.INK }, g));
+  const linkLine = K.el("rect", { fill: C.ACCENT }, g);
+  const reply = d.reply ? K.el("rect", { fill: "#0a84ff" }, g) : null;
+  const replyT = d.reply ? K.text(d.reply, { "font-family": SANS, "font-size": 25, fill: "#fff", "text-anchor": "middle" }, g) : null;
+  K.label(d.text, s.t0, s.t1, "text message on a phone");
+  return t => {
+    const e = env(t, s), o = 1 - e.o;
+    const yo = (1 - e.i) * (H - 60) + e.o * -(H - 60);
+    K.set(phone, K.rect(px, py + yo, pw, ph, 64)); K.set(screen, K.rect(px + 18, py + 18 + yo, pw - 36, ph - 36, 50));
+    K.set(notch, K.rect(W / 2 - 70 + (d.offset || 0), py + 30 + yo, 140, 34, 17));
+    K.set(who, { x: px + pw / 2, y: py + 120 + yo }); K.set(whoSub, { x: px + pw / 2, y: py + 148 + yo });
+    
+    const tb = cueT(d, s.t0 + 0.5), typed = K.prog(t, tb, tb + Math.min(1.6, (s.t1 - s.t0) * 0.35));
+    const nShow = Math.ceil(lines.length * typed);
+    const bh = 26 + lines.length * 34, bw = pw - 110, bx = px + 40, by = py + 200 + yo;
+    const pop = K.step(t, tb - 0.15, 16, 0.7);
+    K.set(bub, K.rect(bx, by, bw * Math.min(1, pop), bh * Math.min(1, pop), 26)); 
+    tl.forEach((x, k) => { K.set(x, { x: bx + 24, y: by + 42 + k * 34 }); x.style.opacity = k < nShow ? 1 : 0; });
+    if (d.highlight != null) {
+      const k = d.highlight, x = tl[k], len = x.getComputedTextLength();
+      const hp = K.eio(K.prog(t, tb + 1.9, tb + 2.5));
+      K.set(linkLine, K.rect(bx + 24, by + 50 + k * 34, len * hp, 4));
+      x.setAttribute("fill", hp > 0.5 ? C.ACCENT : C.INK);
+    } else K.set(linkLine, K.rect(0, 0, 0, 0));
+    if (reply) {
+      const rt = s.t0 + (d.replyAt || 0.6) * (s.t1 - s.t0), rp = K.step(t, rt, 16, 0.7);
+      const rw = 90, rx = px + pw - 40 - rw, ry = by + bh + 40;
+      K.set(reply, K.rect(rx + rw * (1 - Math.min(1, rp)), ry, rw * Math.min(1, rp), 56, 26)); 
+      K.set(replyT, { x: rx + rw / 2, y: ry + 37 }); replyT.style.opacity = t > rt + 0.1 ? 1 : 0;
+    }
+  };
+};
+
+B.flow = (s, g) => {   // a chain of labelled nodes along one line; the line draws through them
+  const d = s.data, n = d.nodes.length;
+  const line = K.el("rect", { fill: C.GREY }, g);
+  const items = d.nodes.map((nd, k) => {
+    const c = K.el("circle", { fill: C.BG, stroke: k === (d.accent ?? -1) ? C.ACCENT : C.INK, "stroke-width": 4 }, g);
+    const lab = wrapWords(txt(nd), 14).map(l => maskText(l, { "font-family": SANS, "font-size": 30, fill: k === (d.accent ?? -1) ? C.ACCENT : C.INK }, g));
+    K.label(txt(nd), s.t0, s.t1, "flow diagram");
+    return { c, lab };
+  });
+  const title = d.title ? maskText(d.title, { "font-size": 54, fill: C.INK }, g) : null;
+  if (d.title) K.label(d.title, s.t0, s.t1, "diagram title");
+  return t => {
+    const e = env(t, s), o = 1 - e.o, x0 = 220, x1 = W - 220, y = H * 0.52;
+    if (title) placeMask(title, W / 2, 200, e.i * o);
+    const lastT = cueT(d.nodes[n - 1], revealAt(s, n - 1, n, d.span || 0.75, 0.4));
+    const lp = K.prog(t, s.t0 + 0.3, lastT + 0.2);
+    K.set(line, K.rect(x0, y - 2, (x1 - x0) * lp * o, 4));
+    items.forEach((it, k) => {
+      const x = n === 1 ? W / 2 : K.lerp(x0, x1, k / (n - 1)), tk = cueT(d.nodes[k], revealAt(s, k, n, d.span || 0.75, 0.4));
+      const r = 26 * Math.min(1.2, K.step(t, tk, 15, 0.55)) * o;
+      K.set(it.c, { cx: x, cy: y, r: Math.max(0, r) });
+      it.lab.forEach((m, j) => placeMask(m, x, y + 80 + j * 38, K.eout(K.prog(t, tk + 0.05, tk + 0.4)) * o));
+    });
+  };
+};
+
+B.hub = (s, g) => {    // one centre, spokes revealed around it
+  const d = s.data, n = d.spokes.length;
+  const centre = K.el("circle", { fill: C.ACCENT }, g);
+  const ct = maskText(d.center, { "font-family": SANS, "font-size": 32, fill: C.BG, "font-weight": 700 }, g);
+  const spokes = d.spokes.map(sp => ({ l: K.el("line", { stroke: C.GREY, "stroke-width": 3 }, g), c: K.el("circle", { fill: C.BG, stroke: C.INK, "stroke-width": 3 }, g),
+    lab: wrapWords(txt(sp), 16).map(l => maskText(l, { "font-family": SANS, "font-size": 28, fill: C.INK }, g)) }));
+  [d.center, ...d.spokes].forEach(x => K.label(txt(x), s.t0, s.t1, "hub diagram"));
+  return t => {
+    const e = env(t, s), o = 1 - e.o, cx = W / 2, cy = H * 0.5, R = 330;
+    const cr = 95 * Math.min(1.15, K.step(t, s.t0 + 0.1, 12, 0.6)) * o;
+    K.set(centre, { cx, cy, r: Math.max(0, cr) });
+    placeMask(ct, cx, cy + 11, K.eout(K.prog(t, s.t0 + 0.3, s.t0 + 0.6)) * o);
+    spokes.forEach((sp, k) => {
+      const a = -Math.PI / 2 + k * 2 * Math.PI / n, tk = cueT(d.spokes[k], revealAt(s, k, n, 0.7, 0.6));
+      const p = K.eio(K.prog(t, tk, tk + 0.4)) * o;
+      const x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * 0.78;
+      const rx = cx + Math.cos(a) * 95, ry = cy + Math.sin(a) * 95 * 0.78;   // spokes grow out from the rim, never across the centre
+      K.set(sp.l, { x1: rx, y1: ry, x2: K.lerp(rx, x, p), y2: K.lerp(ry, y, p) }); K.show(sp.l, p > 0.001);
+      K.set(sp.c, { cx: x, cy: y, r: 16 * Math.min(1.2, K.step(t, tk + 0.35, 15, 0.6)) * o });
+      const below = Math.sin(a) > 0.2, ly = below ? y + 56 : y - 36 - (sp.lab.length - 1) * 34;
+      sp.lab.forEach((m, j) => placeMask(m, x, ly + j * 34, K.eout(K.prog(t, tk + 0.4, tk + 0.7)) * o));
+    });
+  };
+};
+
+B.list = (s, g) => {
+  const d = s.data, n = d.items.length;
+  const title = d.title ? maskText(d.title, { "font-size": 58, fill: C.INK }, g) : null;
+  const rows = d.items.map((it, k) => ({ box: K.el("rect", { fill: "none", stroke: C.ACCENT, "stroke-width": 3 }, g),
+    tick: K.el("path", { fill: "none", stroke: C.ACCENT, "stroke-width": 5, "stroke-linecap": "round", "stroke-linejoin": "round" }, g),
+    m: maskText(txt(it), { "font-size": 44, fill: C.INK }, g) }));
+  if (d.title) K.label(d.title, s.t0, s.t1, "list title");
+  d.items.forEach(x => K.label(txt(x), s.t0, s.t1, "list"));
+  return t => {
+    const e = env(t, s), o = 1 - e.o, x0 = d.x || 360, y0 = d.title ? 330 : 260, gap = Math.min(110, 560 / Math.max(1, n - 1));
+    if (title) placeMask(title, x0 - 20, 200, e.i * o, "start");
+    rows.forEach((r, k) => {
+      const tk = cueT(d.items[k], revealAt(s, k, n, d.span || 0.8, 0.5)), y = y0 + k * gap, p = K.step(t, tk, 15, 0.6) * o;
+      K.set(r.box, K.rect(x0 - 20 - 40 * Math.min(1, p) / 2 + 20 - 20, y - 34, 40 * Math.min(1, p), 40 * Math.min(1, p), 6));
+      const tp = K.eio(K.prog(t, tk + 0.2, tk + 0.45)) * o;
+      r.tick.setAttribute("d", `M ${x0 - 32} ${y - 14} L ${x0 - 22} ${y - 4} L ${x0 - 22 + 22 * tp} ${y - 4 - 24 * tp}`);
+      r.tick.style.opacity = tp > 0.01 ? 1 : 0;
+      placeMask(r.m, x0 + 40, y, K.eout(K.prog(t, tk + 0.05, tk + 0.4)) * o, "start");
+    });
+  };
+};
+
+B.quote = (s, g) => {
+  const d = s.data, lines = wrapWords("“" + d.text + "”", 40);
+  const ms = lines.map(l => maskText(l, { "font-size": 58, fill: C.INK, "font-style": "italic" }, g));
+  const who = maskText("— " + d.who, { "font-family": SANS, "font-size": 28, fill: C.ACCENT, "letter-spacing": 2 }, g);
+  const bar = K.el("rect", { fill: C.ACCENT }, g);
+  K.label(d.text + " — " + d.who, s.t0, s.t1, "quote card");
+  return t => {
+    const e = env(t, s), o = 1 - e.o, lh = 80, y0 = H * 0.44 - (lines.length - 1) * lh / 2;
+    K.set(bar, K.rect(250, y0 - 60, 8, (lines.length * lh + 20) * K.eio(K.prog(t, s.t0, s.t0 + 0.6)) * o));
+    ms.forEach((m, k) => placeMask(m, 300, y0 + k * lh, K.eout(K.prog(t, s.t0 + 0.15 + k * 0.12, s.t0 + 0.5 + k * 0.12)) * o, "start"));
+    placeMask(who, 300, y0 + lines.length * lh + 30, K.eout(K.prog(t, s.t0 + 0.8, s.t0 + 1.1)) * o, "start");
+  };
+};
+
+B.bars = (s, g) => {   // horizontal bar chart, values revealed one by one
+  const d = s.data, n = d.rows.length, max = Math.max(...d.rows.map(r => r[1]));
+  const title = maskText(d.title, { "font-size": 52, fill: C.INK }, g);
+  const rows = d.rows.map(([lab, v], k) => ({ r: K.el("rect", { fill: k === (d.accent ?? -1) ? C.ACCENT : C.GREY }, g),
+    l: maskText(lab, { "font-family": SANS, "font-size": 30, fill: C.INK }, g), v: maskText("", { "font-family": SANS, "font-size": 30, fill: C.INK }, g), val: v }));
+  K.label(d.title, s.t0, s.t1, "chart title");
+  d.rows.forEach(([lab, v]) => K.label(`${lab}: ${(d.prefix || "")}${fmtNum(v, d.decimals || 0)}${d.suffix || ""}`, s.t0, s.t1, "bar chart"));
+  return t => {
+    const e = env(t, s), o = 1 - e.o, x0 = 620, wmax = 980, y0 = 330, gap = Math.min(100, 520 / Math.max(1, n - 1));
+    placeMask(title, W / 2, 200, e.i * o);
+    rows.forEach((r, k) => {
+      const tk = cueT(d.rows[k][2], revealAt(s, k, n, 0.6, 0.5)), p = K.eout(K.prog(t, tk, tk + 0.8)) * o, y = y0 + k * gap;
+      K.set(r.r, K.rect(x0, y - 30, wmax * r.val / max * p, 40, 4));
+      placeMask(r.l, x0 - 30, y, K.eout(K.prog(t, tk - 0.1, tk + 0.25)) * o, "end");
+      r.v.t.textContent = (d.prefix || "") + fmtNum(r.val * p / Math.max(o, 1e-6), d.decimals || 0) + (d.suffix || "");
+      placeMask(r.v, x0 + wmax * r.val / max * p + 20, y, K.eout(K.prog(t, tk + 0.2, tk + 0.5)) * o, "start");
+    });
+  };
+};
+
+B.title = (s, g) => {   // the cold-open title card
+  const d = s.data, lines = wrapWords(d.title, 22);
+  const ms = lines.map((l, k) => maskText(l, { "font-size": 110, fill: k === lines.length - 1 ? C.ACCENT : C.INK }, g));
+  const sub = d.sub ? maskText(d.sub, { "font-family": SANS, "font-size": 32, fill: C.GREY, "letter-spacing": 3 }, g) : null;
+  ms.forEach(m => K.label(m.t.textContent, s.t0, s.t1, "title card"));
+  return t => {
+    const e = env(t, s), o = 1 - e.o, lh = 130, y0 = H * 0.45 - (lines.length - 1) * lh / 2;
+    ms.forEach((m, k) => placeMask(m, W / 2, y0 + k * lh, K.eout(K.prog(t, s.t0 + 0.1 + k * 0.15, s.t0 + 0.55 + k * 0.15)) * o));
+    if (sub) placeMask(sub, W / 2, y0 + lines.length * lh + 10, K.eout(K.prog(t, s.t0 + 0.7, s.t0 + 1.0)) * o);
+  };
+};
+
+// ── people: stage scenes with rigged figures (figure.js) ─────────────
+// data: { set: "street"|"room"|"desk"|"blank", kicker?, cast: [{id, x: 0..1, h?, skin, hair, hairColor, shirt, pants,
+//         kind: "person"|"silhouette", face, pose, enter: "left"|"right"}],
+//         beats: [{at, who, pose?, face?, emote?: "?"|"!"|"$"|"…", say?, think?, notify?, move?: x, glow?: true}] }
+// Every beat with "at" fires on its spoken word; a beat without one fires at `time` (0..1 of the segment).
+function drawSet(kind, g) {
+  const gy = 900;
+  if (kind !== "blank") K.el("rect", { x: -300, y: -300, width: W + 600, height: gy + 300, fill: kind === "street" ? "#0d0e10" : "#100f0e" }, g);
+  const floor = K.el("rect", { fill: "#131312" }, g);
+  K.set(floor, K.rect(-200, gy, W + 400, H - gy + 200));
+  K.el("rect", { x: -200, y: gy - 2, width: W + 400, height: 3, fill: "#2a2a28" }, g);
+  const r = K.rng(kind.length * 7 + 3);
+  if (kind === "street") {
+    for (let i = 0; i < 9; i++) {
+      const bw = 140 + r() * 160, bh = 220 + r() * 300, bx = -60 + i * 240 + r() * 40;
+      K.el("rect", { x: bx, y: gy - bh, width: bw, height: bh, fill: i % 2 ? "#161615" : "#191918" }, g);
+      for (let wy = gy - bh + 30; wy < gy - 60; wy += 56) for (let wx = bx + 22; wx < bx + bw - 30; wx += 46)
+        if (r() > 0.55) K.el("rect", { x: wx, y: wy, width: 20, height: 28, fill: r() > 0.7 ? "#3a3222" : "#232321" }, g);
+    }
+    K.el("rect", { x: 1500, y: gy - 430, width: 10, height: 430, fill: "#2a2a28" }, g);
+    K.el("rect", { x: 1460, y: gy - 440, width: 70, height: 14, rx: 7, fill: "#2a2a28" }, g);
+  } else if (kind === "room") {
+    K.el("rect", { x: 220, y: 230, width: 360, height: 300, rx: 6, fill: "#151a20", stroke: "#2a2a28", "stroke-width": 8 }, g);
+    K.el("rect", { x: 396, y: 230, width: 8, height: 300, fill: "#2a2a28" }, g);
+    K.el("rect", { x: 1240, y: gy - 170, width: 520, height: 120, rx: 26, fill: "#24211f" }, g);
+    K.el("rect", { x: 1220, y: gy - 230, width: 560, height: 90, rx: 30, fill: "#2b2724" }, g);
+    K.el("rect", { x: 1250, y: gy - 50, width: 18, height: 50, fill: "#1b1918" }, g); K.el("rect", { x: 1732, y: gy - 50, width: 18, height: 50, fill: "#1b1918" }, g);
+  } else if (kind === "desk") {
+    K.el("rect", { x: 1060, y: gy - 300, width: 640, height: 22, rx: 4, fill: "#2b2724" }, g);
+    K.el("rect", { x: 1090, y: gy - 278, width: 16, height: 278, fill: "#221f1d" }, g); K.el("rect", { x: 1654, y: gy - 278, width: 16, height: 278, fill: "#221f1d" }, g);
+    K.el("path", { d: `M 1300 ${gy - 300} L 1330 ${gy - 470} L 1560 ${gy - 470} L 1590 ${gy - 300} Z`, fill: "#1b1d20", stroke: "#33363a", "stroke-width": 4 }, g);
+  }
+  return gy;
+}
+function bubble(g) {   // a speech or thought bubble that pops from a point; text wraps inside
+  const box = K.el("rect", { fill: C.INK }, g), tail = K.el("path", { fill: C.INK }, g);
+  const lines = [0, 1, 2, 3].map(() => K.text("", { "font-family": SANS, "font-size": 30, fill: C.BG, "text-anchor": "middle" }, g));
+  return { box, tail, lines, set(str, x, y, p, kind) {
+    const ls = wrapWords(str || "", 24).slice(0, 4), w = Math.max(...ls.map(l => l.length), 6) * 15.5 + 50, h = ls.length * 38 + 30;
+    const sc = Math.max(0, Math.min(1.08, p)), bx = x - w / 2 * sc, by = y - (h + 40) * sc;
+    K.set(box, K.rect(bx, by, w * sc, h * sc, kind === "think" ? 40 * sc : 20 * sc));
+    tail.setAttribute("d", kind === "think" ? `M ${x - 6 * sc} ${y - 30 * sc} a ${9 * sc} ${9 * sc} 0 1 0 0.1 0 M ${x - 18 * sc} ${y - 8 * sc} a ${5 * sc} ${5 * sc} 0 1 0 0.1 0`
+                                            : `M ${x - 18 * sc} ${y - 41 * sc} L ${x} ${y - 6 * sc} L ${x + 12 * sc} ${y - 41 * sc} Z`);
+    lines.forEach((l, k) => { l.textContent = sc > 0.85 ? (ls[k] || "") : ""; K.set(l, { x, y: by + 50 + k * 38 }); });
+  } };
+}
+const EMOTE = { "?": "?", "!": "!", "$": "$", "…": "…", "x": "✕" };
+B.stage = (s, g) => {
+  const d = s.data, gy = drawSet(d.set || "blank", g);
+  const kick = d.kicker ? maskText(d.kicker, { "font-family": SANS, "font-size": 28, fill: C.ACCENT, "letter-spacing": 5 }, s.ov) : null;
+  const cast = {}, order = [];
+  (d.cast || []).forEach((c, i) => { cast[c.id] = { c, fig: F.figure(g, c), seed: i * 3 + 1 }; order.push(c.id); });
+  const fx = K.el("g", {}, g);
+  const beats = (d.beats || []).map(b => Object.assign({ T: b.t != null ? b.t : s.t0 + (b.time || 0) * (s.t1 - s.t0) }, b)).sort((a, b) => a.T - b.T);
+  beats.forEach(b => { if (b.say || b.think) K.label(b.say || b.think, b.T, s.t1, b.say ? "speech bubble" : "thought bubble");
+                       if (b.notify) K.label(b.notify, b.T, s.t1, "phone notification"); });
+  if (d.kicker) K.label(d.kicker, s.t0, s.t1, "scene label");
+  const bubbles = {}, emotes = {}, notes = {};
+  order.forEach(id => { bubbles[id] = bubble(fx); emotes[id] = K.text("", { "font-family": SANS, "font-size": 70, "font-weight": 700, fill: C.ACCENT, "text-anchor": "middle" }, fx);
+    const n = K.el("g", {}, fx); notes[id] = { g: n, box: K.el("rect", { fill: "#262628", stroke: "#3a3a38", "stroke-width": 2 }, n),
+      from: K.text("", { "font-family": SANS, "font-size": 20, fill: C.GREY }, n), lines: [0, 1, 2, 3].map(() => K.text("", { "font-family": SANS, "font-size": 24, fill: C.INK }, n)) }; });
+  return t => {
+    const e = env(t, s), o = 1 - e.o;
+    if (kick) placeMask(kick, 90, 120, e.i * o, "start");
+    order.forEach(id => {
+      const A = cast[id], c = A.c, h = c.h || 540;
+      let keys = [[s.t0 - 1, c.pose || "stand"]], x = c.x * W, face = c.face || (c.x > 0.5 ? "left" : "right"), walking = 0;
+      // entrance: walk in from off-frame over the first 1.6 s
+      if (c.enter) { const x0 = c.enter === "left" ? -200 : W + 200, p = K.prog(t, s.t0, s.t0 + 1.6);
+        if (p < 1) walking = 1; x = K.lerp(x0, x, K.smooth(p)); if (p < 1) face = c.enter === "left" ? "right" : "left"; }
+      let say = null, sayT = 0, kind = "say", emote = null, emoT = 0, glow = 0, note = null, noteT = 0, noteFrom = "MESSAGES · now";
+      beats.filter(b => b.who === id && b.T <= t + 1e-6).forEach(b => {
+        if (b.pose) keys.push([b.T, b.pose]);
+        if (b.face) face = b.face;
+        if (b.say || b.think) { say = b.say || b.think; kind = b.say ? "say" : "think"; sayT = b.T; }
+        if (b.say === "" || b.think === "") say = null;
+        if (b.emote) { emote = b.emote; emoT = b.T; }
+        if (b.glow) glow = Math.max(glow, Math.exp(-(t - b.T) * 0.6));
+        if (b.notify) { note = b.notify; noteT = b.T; noteFrom = b.from || "MESSAGES · now"; }
+      });
+      // walking to a new mark
+      beats.filter(b => b.who === id && b.move != null).forEach(b => {
+        const x1 = b.move * W, dur = Math.max(0.8, Math.abs(x1 - x) / 260), p = K.prog(t, b.T, b.T + dur);
+        if (t >= b.T) { if (p < 1) { walking = 1; face = x1 > x ? "right" : "left"; } x = K.lerp(x, x1, K.smooth(p)); }
+      });
+      let pose = F.at(t, keys);
+      pose = Object.assign(F.idle(t, A.seed, pose), {});
+      if (walking) pose = F.walk(t * 2.4, pose);
+      const buzz = glow > 0.6 ? Math.sin(t * 90) * 1.5 : 0;
+      const pts = F.place(A.fig, x + buzz, gy, h, pose, { face, glow });
+      const hx = pts.head[0], hy = pts.head[1] - h * 0.13;
+      bubbles[id].set(say, hx + (face === "left" ? -60 : 60), hy - 10, say ? K.step(t, sayT, 14, 0.62) : 0, kind);
+      const ep = emote && t - emoT < 1.4 ? K.step(t, emoT, 16, 0.5) * (1 - K.ein(K.prog(t, emoT + 1.1, emoT + 1.4))) : 0;
+      emotes[id].textContent = ep > 0.02 ? (EMOTE[emote] || emote) : "";
+      K.set(emotes[id], { x: hx + (face === "left" ? 70 : -70), y: hy - 20 - 30 * ep, "font-size": 70 * Math.max(0, ep) });
+      const N = notes[id], np = note ? Math.min(1.06, K.step(t, noteT, 15, 0.65)) : 0;
+      if (np > 0.01) {
+        const ls = wrapWords(note, 25).slice(0, 4), nw = 390, nh = 52 + ls.length * 30, side = face === "left" ? -1 : 1;
+        const ax = pts.hand[0] + side * 40, nx = side > 0 ? ax : ax - nw, ny = pts.head[1] - nh / 2 - 20;
+        K.show(N.g, true);
+        N.g.setAttribute("transform", `translate(${ax} ${pts.hand[1]}) scale(${np}) translate(${-ax} ${-pts.hand[1]})`);
+        K.set(N.box, K.rect(nx, ny, nw, nh, 18)); N.from.textContent = noteFrom; K.set(N.from, { x: nx + 20, y: ny + 30 });
+        N.lines.forEach((l, k) => { l.textContent = ls[k] || ""; K.set(l, { x: nx + 20, y: ny + 62 + k * 30 }); });
+      } else K.show(N.g, false);
+    });
+    // the camera leans in toward whoever acted last
+    const last = beats.filter(b => b.T <= t && b.who && cast[b.who]).pop(), focus = last ? cast[last.who].c : (d.cast || [])[0];
+    const fxp = focus ? focus.x * W : W / 2, p = K.eio(K.prog(t, s.t0, s.t1));
+    const fx = K.kf(t, camKeys(s.t0, W / 2, beats.filter(b => b.who && cast[b.who]).map(b => [b.T, K.lerp(W / 2, cast[b.who].c.x * W, 0.35)])));
+    void fxp; void o;
+    g.__cam = { cx: fx, cy: K.lerp(H / 2, gy - 330, 0.25 * p), z: 1 + 0.09 * p };
+  };
+};
+
+// ── the evidence board: cards pinned up as they are named, red string between them, a stamp on the verdict ──
+// data: { title?, cards: [{id, x, y (0..1), title, text?, icon?: "phone"|"bank"|"card"|"person"|"money"|"web"|"doc", at?}],
+//         strings: [{from, to, at?}], stamp?: {on, text, at?} }
+const ICONS = {
+  phone: "M -14 -24 h 28 a 5 5 0 0 1 5 5 v 38 a 5 5 0 0 1 -5 5 h -28 a 5 5 0 0 1 -5 -5 v -38 a 5 5 0 0 1 5 -5 Z M -5 16 h 10",
+  bank: "M -26 -6 L 0 -24 L 26 -6 Z M -22 -2 v 20 M -8 -2 v 20 M 8 -2 v 20 M 22 -2 v 20 M -28 22 h 56",
+  card: "M -28 -18 h 56 a 5 5 0 0 1 5 5 v 30 a 5 5 0 0 1 -5 5 h -56 a 5 5 0 0 1 -5 -5 v -30 a 5 5 0 0 1 5 -5 Z M -33 -6 h 66 M -22 10 h 16",
+  person: "M 0 -24 a 10 10 0 1 1 -0.1 0 Z M -20 22 c 0 -16 8 -22 20 -22 c 12 0 20 6 20 22 Z",
+  money: "M -28 -16 h 56 v 32 h -56 Z M 0 -8 a 8 8 0 1 1 -0.1 0 Z",
+  web: "M 0 -24 a 24 24 0 1 1 -0.1 0 Z M -24 0 h 48 M 0 -24 c -12 12 -12 36 0 48 M 0 -24 c 12 12 12 36 0 48",
+  doc: "M -18 -24 h 26 l 10 10 v 38 h -36 Z M -10 -6 h 20 M -10 4 h 20 M -10 14 h 14",
+};
+B.board = (s, g) => {
+  const d = s.data, r = K.rng(s.id.length * 13 + 5);
+  const panel = K.el("rect", { fill: "#16140f", stroke: "#2c2820", "stroke-width": 6 }, g);
+  const specks = [...Array(140)].map(() => K.el("circle", { cx: 90 + r() * (W - 180), cy: 110 + r() * (H - 260), r: 0.8 + r() * 1.6, fill: "#221e17" }, g));
+  void specks;
+  const title = d.title ? maskText(d.title, { "font-family": SANS, "font-size": 30, fill: C.GREY, "letter-spacing": 5 }, s.ov) : null;
+  const strG = K.el("g", {}, g), cardG = K.el("g", {}, g);
+  const n = d.cards.length;
+  const cards = d.cards.map((c, k) => {
+    const cg = K.el("g", {}, cardG), w = c.w || 300, tl = wrapWords(c.title, 16), xl = wrapWords(c.text || "", 26).slice(0, 3);
+    const h = (c.icon ? 74 : 26) + tl.length * 38 + xl.length * 28 + 30;
+    K.el("rect", { x: -w / 2 + 6, y: -h / 2 + 8, width: w, height: h, rx: 4, fill: "#000", opacity: 0.35 }, cg);
+    K.el("rect", { x: -w / 2, y: -h / 2, width: w, height: h, rx: 4, fill: c.kind === "note" ? "#e9d98a" : "#e6e2d8" }, cg);
+    let y = -h / 2 + 26;
+    if (c.icon) { K.el("path", { d: ICONS[c.icon] || ICONS.doc, transform: `translate(0 ${y + 24})`, fill: "none", stroke: "#2b2722", "stroke-width": 3.5, "stroke-linejoin": "round", "stroke-linecap": "round" }, cg); y += 74; }
+    tl.forEach(l => { K.text(l, { x: 0, y: y + 26, "text-anchor": "middle", "font-family": SANS, "font-weight": 700, "font-size": 30, fill: "#1d1a17" }, cg); y += 38; });
+    xl.forEach(l => { K.text(l, { x: 0, y: y + 22, "text-anchor": "middle", "font-family": FONT, "font-size": 23, fill: "#4a443c" }, cg); y += 28; });
+    const pin = K.el("circle", { cx: 0, cy: -h / 2 + 12, r: 9, fill: C.ACCENT, stroke: "#7a3a14", "stroke-width": 2 }, cg);
+    void pin;
+    K.label(c.title + (c.text ? ": " + c.text : ""), s.t0, s.t1, "evidence card");
+    return { c, g: cg, x: c.x * W, y: c.y * H, h, rot: (r() - 0.5) * 6, T: cueT(c, revealAt(s, k, n, 0.6, 0.4)) };
+  });
+  const byId = Object.fromEntries(cards.map(c => [c.c.id, c]));
+  const strings = (d.strings || []).map((st, k) => ({ st, el: K.el("path", { fill: "none", stroke: "#c2412d", "stroke-width": 4, "stroke-linecap": "round" }, strG),
+    T: cueT(st, Math.max(byId[st.from].T, byId[st.to].T) + 0.4 + k * 0.15) }));
+  const stamp = d.stamp ? (() => { const sg = K.el("g", {}, g);
+    const box = K.el("rect", { fill: "none", stroke: "#c2412d", "stroke-width": 8, rx: 10 }, sg);
+    const tx = K.text(d.stamp.text, { "font-family": SANS, "font-weight": 800, "font-size": 84, fill: "#c2412d", "text-anchor": "middle", "letter-spacing": 6 }, sg);
+    K.label(d.stamp.text, s.t0, s.t1, "stamp");
+    return { sg, box, tx, T: cueT(d.stamp, s.t0 + (s.t1 - s.t0) * 0.75) }; })() : null;
+  if (d.title) K.label(d.title, s.t0, s.t1, "board title");
+  return t => {
+    const e = env(t, s), o = 1 - e.o;
+    K.set(panel, K.rect(60, 90, W - 120, H - 200, 8));
+    if (title) placeMask(title, 90, 66, e.i * o, "start");
+    // camera leans toward the newest card
+    const fx = K.kf(t, camKeys(s.t0, W / 2, cards.map(c => [c.T, K.lerp(W / 2, c.x, 0.4)]))), fy = K.kf(t, camKeys(s.t0, H / 2, cards.map(c => [c.T, K.lerp(H / 2, c.y, 0.4)]))), shown = 0;
+    const shake = stamp ? K.bump(t, stamp.T + 0.12, 7) * 10 : 0;
+    cards.forEach(c => {
+      const p = Math.min(1.1, K.step(t, c.T, 15, 0.55)) * o;
+      K.show(c.g, p > 0.01);
+      c.g.setAttribute("transform", `translate(${c.x} ${c.y - (1 - Math.min(1, p)) * 40}) rotate(${c.rot}) scale(${Math.max(0, p)})`);
+    });
+    strings.forEach(st => {
+      const a = byId[st.st.from], b = byId[st.st.to], p = K.eio(K.prog(t, st.T, st.T + 0.6)) * o;
+      const ax = a.x, ay = a.y - a.h / 2 + 12, bx = K.lerp(ax, b.x, p), by = K.lerp(ay, b.y - b.h / 2 + 12, p);
+      const sag = 40 * p;
+      st.el.setAttribute("d", p > 0.001 ? `M ${ax} ${ay} Q ${(ax + bx) / 2} ${(ay + by) / 2 + sag} ${bx} ${by}` : "");
+    });
+    if (stamp) {
+      const on = byId[d.stamp.on] || { x: W / 2, y: H / 2 }, p = K.prog(t, stamp.T, stamp.T + 0.18);
+      const sc = t < stamp.T ? 0 : K.lerp(1.8, 1, K.ein(p)) * o;
+      K.show(stamp.sg, sc > 0.01);
+      const w = stamp.tx.getComputedTextLength() + 60;
+      K.set(stamp.box, { x: -w / 2, y: -62, width: w, height: 100 }); K.set(stamp.tx, { x: 0, y: 18 });
+      stamp.sg.setAttribute("transform", `translate(${on.x + 30} ${on.y + (on.h || 0) * 0.55}) rotate(-12) scale(${sc})`);   // low on the card, so its title stays readable
+    }
+    const z = 1.0 + 0.05 * K.eio(K.prog(t, s.t0, s.t1));
+    void fx; void fy; void shown; void shake;
+    g.__cam = { cx: fx, cy: fy + shake, z };
+  };
+};
+
+// ── a crowd: rows of seated people on phones; the camera starts on one and pulls back to show the room ──
+// data: { rows, cols, label?, from?: 0..1 (pull-back start), to?: 0..1, count?: {value, prefix?, suffix?, label?, at?} }
+B.crowd = (s, g) => {
+  const d = s.data, rows = d.rows || 4, cols = d.cols || 8, room = K.el("g", {}, g);
+  const people = F.crowd(room, rows * cols, s.id.length * 5 + 2, { each: { pants: "#22262c" } });
+  const desks = [], seeds = K.rng(41);
+  const sp = [];
+  for (let rr = 0; rr < rows; rr++) for (let cc = 0; cc < cols; cc++) {
+    const k = rr * cols + cc, sc = 0.55 + rr * 0.15, x = W / 2 + (cc - (cols - 1) / 2) * 230 * sc, y = 430 + rr * 150;
+    const u = 300 * sc / 92;
+    sp.push({ x, y, h: 300 * sc, ph: seeds() * 10, face: cc < cols / 2 ? "right" : "left" });
+    desks.push(K.el("rect", { x: x - 70 * sc, y: y - 31 * u, width: 140 * sc, height: 6 * u, rx: 2, fill: "#2b2724" }, room));
+  }
+  // later rows are nearer: draw them on top
+  // nearer rows draw on top; each bench sits behind its sitter
+  people.forEach((f, k) => { room.appendChild(desks[k]); room.appendChild(f.root); });
+  const label = d.label ? maskText(d.label, { "font-size": 64, fill: C.INK }, g) : null;
+  const cnt = d.count ? maskText("", { "font-size": 140, fill: C.ACCENT }, g) : null;
+  const cntL = d.count && d.count.label ? maskText(d.count.label, { "font-family": SANS, "font-size": 34, fill: C.INK }, g) : null;
+  if (d.label) K.label(d.label, s.t0, s.t1, "crowd label");
+  if (d.count) K.label(`${d.count.prefix || ""}${fmtNum(d.count.value, 0)}${d.count.suffix || ""} ${d.count.label || ""}`, s.t0, s.t1, "count");
+  const hero = sp[Math.floor(cols / 2) + (rows - 1) * cols];
+  return t => {
+    const e = env(t, s), o = 1 - e.o;
+    people.forEach((f, k) => {
+      const q = sp[k], glow = 0.5 + 0.5 * Math.sin(t * (1.3 + (q.ph % 1)) + q.ph);
+      F.place(f, q.x, q.y, q.h, F.idle(t * 0.7, k, "sitphone"), { face: q.face, glow });
+    });
+    const p0 = s.t0 + (s.t1 - s.t0) * (d.from ?? 0.05), p1 = s.t0 + (s.t1 - s.t0) * (d.to ?? 0.6), p = K.eio(K.prog(t, p0, p1));
+    const z = Math.exp(K.lerp(Math.log(2.6), Math.log(1.0), p));
+    const cx = K.lerp(hero.x, W / 2, p), cy = K.lerp(hero.y - hero.h * 0.5, H * 0.5, p);
+    room.setAttribute("transform", `translate(${W / 2} ${H / 2}) scale(${z}) translate(${-cx} ${-cy})`);
+    if (label) placeMask(label, W / 2, 150, K.eout(K.prog(t, p1 - 0.3, p1 + 0.2)) * o);
+    if (cnt) {
+      const c0 = cueT(d.count, p1), k = K.eout(K.prog(t, c0, c0 + 1.6));
+      cnt.t.textContent = (d.count.prefix || "") + fmtNum(d.count.value * k, 0) + (d.count.suffix || "");
+      placeMask(cnt, W / 2, 860, K.eout(K.prog(t, c0 - 0.1, c0 + 0.25)) * o);
+      if (cntL) placeMask(cntL, W / 2, 920, K.eout(K.prog(t, c0 + 0.2, c0 + 0.5)) * o);
+    }
+  };
+};
+
+
+// ── a full illustrated panel (webtoon / motion comic): one composed image per beat, a real camera over it ──
+// data: { image: "panels/p03.png", shot?: "EST"|"WIDE"|"MED"|"CU"|"ECU"|"INS"|"OTS"|"TWO", focus?: [x, y] (0..1 of the frame),
+//         camera?: "push"|"pull"|"pan-left"|"pan-right"|"tilt-up"|"tilt-down"|"hold" | {from: {x, y, z}, to: {x, y, z}},
+//         flashback?: true, caption_card?: "text" | {text, at?, hold?}, freeze?: true | {at}, shake?: {at, amp?},
+//         enter?: "cut"|"fade", exit?: "cut"|"fade" }
+// The camera crops and scales the still (z >= 1 keeps the frame covered); each shot type has a default move.
+const SHOT_CAM = { EST: ["pull", 1.16, 1.0], WIDE: ["pan", 1.08, 1.08], MED: ["push", 1.02, 1.08], CU: ["push", 1.04, 1.13],
+                   ECU: ["push", 1.08, 1.2], INS: ["push", 1.03, 1.1], OTS: ["pan", 1.1, 1.12], TWO: ["push", 1.0, 1.05] };
+const PANEL_IMAGES = [];
+function panelCam(d) {
+  if (d.camera && typeof d.camera === "object") return d.camera;
+  const [fx, fy] = d.focus || [0.5, 0.45], [def, z0, z1] = SHOT_CAM[d.shot] || ["push", 1.02, 1.08];
+  let mv = d.camera || def;
+  if (mv === "pan") mv = fx < 0.5 ? "pan-left" : "pan-right";
+  const zp = Math.max(z0, z1, 1.08), dx = 0.05, c = { x: 0.5, y: 0.5 }, f = { x: fx, y: fy };
+  switch (mv) {
+    case "pull":      return { from: { ...f, z: Math.max(z0, z1) }, to: { ...c, z: Math.min(z0, z1) } };
+    case "pan-left":  return { from: { x: 0.5 + dx, y: fy, z: zp }, to: { x: 0.5 - dx, y: fy, z: zp } };
+    case "pan-right": return { from: { x: 0.5 - dx, y: fy, z: zp }, to: { x: 0.5 + dx, y: fy, z: zp } };
+    case "tilt-up":   return { from: { x: fx, y: 0.5 + dx, z: zp }, to: { x: fx, y: 0.5 - dx, z: zp } };
+    case "tilt-down": return { from: { x: fx, y: 0.5 - dx, z: zp }, to: { x: fx, y: 0.5 + dx, z: zp } };
+    case "hold":      return { from: { ...f, z: 1.03 }, to: { ...f, z: 1.045 } };
+    default:          return { from: { x: K.lerp(0.5, fx, 0.4), y: K.lerp(0.5, fy, 0.4), z: Math.min(z0, z1) }, to: { ...f, z: Math.max(z0, z1) } };
+  }
+}
+let fbVig = null;
+B.panel = (s, g) => {
+  const d = s.data || {}, id = "pf" + s.id.replace(/\W/g, "");
+  PANEL_IMAGES.push(d.image);
+  // grade: saturation (dropped on a freeze), then sepia for a flashback
+  const flt = K.el("filter", { id, "color-interpolation-filters": "sRGB" }, K.defs);
+  const sat = K.el("feColorMatrix", { type: "saturate", values: d.flashback ? 0.55 : 1 }, flt);
+  if (d.flashback) K.el("feColorMatrix", { type: "matrix", values: ".393 .769 .189 0 0  .349 .686 .168 0 0  .272 .534 .131 0 0  0 0 0 1 0" }, flt);
+  K.el("rect", { x: 0, y: 0, width: W, height: H, fill: "#000" }, g);
+  const img = K.el("image", { href: d.image, x: 0, y: 0, width: W, height: H, preserveAspectRatio: "xMidYMid slice", filter: `url(#${id})` }, g);
+  void img;
+  if (d.flashback) {
+    if (!fbVig) {
+      const gr = K.el("radialGradient", { id: "fbvig", cx: "50%", cy: "50%", r: "70%" }, K.defs);
+      K.el("stop", { offset: "40%", "stop-color": "#1a1206", "stop-opacity": 0 }, gr);
+      K.el("stop", { offset: "100%", "stop-color": "#1a1206", "stop-opacity": 0.75 }, gr);
+      fbVig = true;
+    }
+    K.el("rect", { x: 0, y: 0, width: W, height: H, fill: "url(#fbvig)" }, s.ov);
+  }
+  let card = null;
+  if (d.caption_card) {
+    const cc = typeof d.caption_card === "string" ? { text: d.caption_card } : d.caption_card;
+    const c0 = cueT(cc, s.t0 + 0.15), c1 = cc.hold ? c0 + cc.hold : s.t1;
+    const cg = K.el("g", {}, s.ov);
+    const tx = K.text(cc.text, { "font-family": FONT, "font-size": 38, fill: "#f2ead8", x: 92, y: 118 }, cg);
+    const bw = Math.max(260, cc.text.length * 19 + 64);
+    cg.insertBefore(K.el("rect", { x: 60, y: 66, width: bw, height: 76, rx: 4, fill: "#0d0c0a", "fill-opacity": 0.86, stroke: "#f2ead8", "stroke-opacity": 0.35 }, cg), tx);
+    K.label(cc.text, c0, c1, "caption card");
+    card = { g: cg, c0, c1 };
+  }
+  const cam = panelCam(d);
+  const fz = d.freeze ? (d.freeze === true ? s.t1 - 0.6 : cueT(d.freeze, s.t1 - 0.6)) : null;
+  const sh = d.shake ? { t: cueT(d.shake, s.t0), a: d.shake.amp || 14 } : null;
+  return t => {
+    const end = fz != null ? Math.min(fz, s.t1) : s.t1;
+    const p = K.eio(K.prog(Math.min(t, end), s.t0, end));
+    let z = Math.exp(K.lerp(Math.log(cam.from.z), Math.log(cam.to.z), p));
+    z = Math.max(1, z);
+    let cx = K.lerp(cam.from.x, cam.to.x, p) * W, cy = K.lerp(cam.from.y, cam.to.y, p) * H;
+    if (sh && t >= sh.t) {
+      const k = Math.exp(-(t - sh.t) * 7) * sh.a;
+      cx += k * Math.sin((t - sh.t) * 71); cy += k * Math.sin((t - sh.t) * 53 + 1.3);
+    }
+    // keep the frame covered: the camera can't look past the still's edge
+    const hw = W / (2 * z), hh = H / (2 * z);
+    cx = Math.min(Math.max(cx, hw), W - hw); cy = Math.min(Math.max(cy, hh), H - hh);
+    g.__cam = { z, cx, cy };
+    if (fz != null) K.set(sat, { values: (d.flashback ? 0.55 : 1) * K.lerp(1, 0.3, K.eout(K.prog(t, fz, fz + 0.25))) });
+    const fin = d.enter === "fade" ? K.eout(K.prog(t, s.t0, s.t0 + 0.45)) : 1, fout = d.exit === "fade" ? 1 - K.ein(K.prog(t, s.t1 - 0.45, s.t1)) : 1;
+    g.setAttribute("opacity", Math.min(fin, fout));
+    if (card) card.g.setAttribute("opacity", K.eout(K.prog(t, card.c0, card.c0 + 0.25)) * (1 - K.ein(K.prog(t, card.c1 - 0.25, card.c1))));
+  };
+};
+
+const OPAQUE = new Set(["stage", "board", "crowd"]);   // scenes with their own set: no drifting dots behind them
+const FULL = new Set(["panel"]);                       // full-frame images: they cut (or fade), and nothing shows behind them
+
+// ── build every segment once ─────────────────────────────
+const built = SEGS.map((s, i) => {
+  const g = K.el("g", {}, sceneG);
+  s.ov = K.el("g", {}, overlayG);
+  const fn = (B[s.type] || B.statement)(s, g);
+  // scenes with their own set wipe on and off (left to right, 0.45 s) instead of cutting: no hard pops, no fades
+  let wipe = null;
+  if (OPAQUE.has(s.type)) {
+    const id = "wipe" + i; wipe = K.clipRect(id, 0, -50, 0, H + 100); g.setAttribute("clip-path", `url(#${id})`);
+    g.insertBefore(K.el("rect", { x: -400, y: -400, width: W + 800, height: H + 800, fill: C.BG }, g), g.firstChild);   // paints every pixel
+  }
+  return { s, g, fn, wipe, next: SEGS[i + 1] };
+});
+const WIPE = 0.45;
+
+// ── burned-in captions (optional, "captions": true): word-lit pages built from the aligned words ──
+// Long-form 16:9 usually ships captions as a YouTube caption track (out/captions.vtt) instead; burn them for shorts.
+const capPages = [];
+if (TL.captions) {
+  const capsDiv = document.getElementById("caps");
+  SEGS.forEach(s => {
+    const ws = s.words || [];
+    let page = [];
+    const flush = () => { if (page.length) capPages.push({ s, words: page }); page = []; };
+    ws.forEach((w, k) => {
+      page.push(w);
+      const chars = page.map(x => x[0]).join(" ").length, end = /[.!?]$/.test(w[0]), comma = /[,;:]$/.test(w[0]);
+      // short pages (about four words) so the eye can't run ahead of the voice
+      if (end || page.length >= 4 || chars > 26 || (comma && page.length >= 2)) flush();
+    });
+    flush();
+  });
+  capPages.forEach((pg, i) => {
+    const next = capPages[i + 1];
+    pg.t0 = pg.words[0][1] - 0.05;
+    pg.t1 = next && next.s === pg.s ? next.words[0][1] - 0.05 : Math.min(pg.s.t1, pg.words[pg.words.length - 1][2] + 0.5);
+    const box = document.createElement("div"), inner = document.createElement("div");
+    Object.assign(box.style, { position: "absolute", left: "80px", width: (W - 160) + "px", top: (H - 128) + "px", height: "64px", overflow: "hidden", textAlign: "center",
+      fontFamily: SANS, fontSize: "44px", fontWeight: "600", lineHeight: "64px", fontStyle: pg.s.mono ? "italic" : "normal" });
+    pg.spans = pg.words.map(w => { const sp = document.createElement("span"); sp.textContent = w[0] + " "; sp.style.whiteSpace = "pre"; inner.appendChild(sp); return sp; });
+    box.appendChild(inner); capsDiv.appendChild(box);
+    pg.box = box; pg.inner = inner;
+    window.STUDIO.text.push({ t0: pg.t0, t1: pg.t1, where: "caption", text: pg.words.map(w => w[0]).join(" ") });
+  });
+}
+
+// vignette: a radial darkening over the scenes, under the captions (grade.vignette 0 turns it off)
+const vig = (() => {
+  const amt = (TL.grade && TL.grade.vignette != null) ? TL.grade.vignette : 0.35;
+  if (!amt) return null;
+  const gr = K.el("radialGradient", { id: "vig", cx: "50%", cy: "50%", r: "75%" }, K.defs);
+  K.el("stop", { offset: "55%", "stop-color": "#000", "stop-opacity": 0 }, gr);
+  K.el("stop", { offset: "100%", "stop-color": "#000", "stop-opacity": amt }, gr);
+  return K.el("rect", { x: 0, y: 0, width: W, height: H, fill: "url(#vig)" }, K.top);
+})();
+void vig;
+
+// panel images must be decoded before a frame is taken (render.py waits on STUDIO.ready)
+window.STUDIO.ready = Promise.all([...new Set(PANEL_IMAGES.filter(Boolean))].map(src => {
+  const im = new Image(); im.src = src;
+  return im.decode().catch(() => { (window.STUDIO.warnings = window.STUDIO.warnings || []).push(`panel image missing or unreadable: ${src}`); });
+}));
+
+// ── render(t) ────────────────────────────────────────────
+K.run(t => {
+  dots.forEach(d => K.set(d.el, { cx: (d.x + t * d.v) % W, cy: d.y, r: d.s }));
+  K.show(bgG, !built.some(b => (OPAQUE.has(b.s.type) && t >= b.s.t0 + WIPE && t <= b.s.t1) || (FULL.has(b.s.type) && t >= b.s.t0 && t <= b.s.t1)));
+  let src = "", chap = "";
+  built.forEach(b => {
+    const on = t >= b.s.t0 - 0.01 && t <= b.s.t1 + 0.01 + (b.wipe ? WIPE : 0);
+    K.show(b.g, on); K.show(b.s.ov, on && t <= b.s.t1 + 0.01);
+    if (b.wipe && on) {
+      const inn = K.eio(K.prog(t, b.s.t0, b.s.t0 + WIPE)), out = !b.next || !OPAQUE.has(b.next.type) ? K.eio(K.prog(t, b.s.t1, b.s.t1 + WIPE)) : 0;
+      const pad = 200;                                     // the scene camera can zoom; keep the clip wider than the frame
+      K.set(b.wipe, { x: -pad + out * (W + 2 * pad), width: Math.max(0, (W + 2 * pad) * (inn - out)), y: -pad, height: H + 2 * pad });
+    }
+    if (on) {
+      b.fn(t);
+      // slow drift so nothing sits still (1.0 → 1.03), or the scene's own camera if it set one
+      const cam = b.g.__cam, z = cam ? cam.z : K.lerp(1, 1.03, K.prog(t, b.s.t0, b.s.t1));
+      b.g.setAttribute("transform", `translate(${W / 2} ${H / 2}) scale(${z}) translate(${-(cam ? cam.cx : W / 2)} ${-(cam ? cam.cy : H / 2)})`);
+      src = b.s.source || ""; chap = FULL.has(b.s.type) ? "" : b.s.chapter || "";   // a drama panel carries no chapter label
+    }
+  });
+  sourceT.textContent = src ? "Source: " + src : "";
+  chapterT.textContent = chap.toUpperCase();
+  capPages.forEach(pg => {
+    // a page leaves in the 0.18 s before the next one rises, so two pages never share the band
+    const vis = t >= pg.t0 && t < pg.t1;
+    pg.box.style.visibility = vis ? "visible" : "hidden";
+    if (!vis) return;
+    const up = K.eout(K.prog(t, pg.t0, pg.t0 + 0.12)), gone = K.ein(K.prog(t, pg.t1 - 0.1, pg.t1));
+    pg.inner.style.transform = `translateY(${(1 - up) * 100 - gone * 100}%)`;
+    pg.spans.forEach((sp, k) => {
+      const w = pg.words[k], nx = pg.words[k + 1], lit = K.prog(t, w[1] - 0.02, w[1] + 0.08);
+      const now = t >= w[1] - 0.02 && (!nx || t < nx[1] - 0.02) && t < w[2] + 0.15;   // one word at a time, lit as it is said
+      sp.style.color = now ? C.ACCENT : K.mix("#6b6b67", pg.s.mono ? "#e9dcc0" : C.INK, lit);   // inner monologue reads warmer
+    });
+  });
+});
+</script>
+</body>
+</html>

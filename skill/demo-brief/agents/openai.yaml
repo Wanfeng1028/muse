@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Brief"
+  short_description: "Ground a demo in its audience, proof, and scope"
+  default_prompt: "Use $demo-brief to clarify the viewer, outcome, and evidence for this demo."

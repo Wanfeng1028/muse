@@ -1,0 +1,26 @@
+{
+  "id": "18-kinetic-type-cat",
+  "title": "Kinetic typography with a running cat — cut-paper title reel",
+  "category": "motion / title sequence",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "MICHI TV (fictional show)",
+  "source": {
+    "author": "@higgsfield_ai",
+    "post": "https://x.com/higgsfield_ai/status/2103963588012744859",
+    "note": "Remade from scratch in HyperFrames after the animation half of the El Gato Prime post (the original is a square split-screen with an After Effects screen recording underneath; only the animation is remade, at 16:9). The title words, sticker and closing line are ours; the Higgsfield corner badge is dropped."
+  },
+  "scenes": [
+    "cat eye opens inside hand-drawn rings, ticks and sparkles, pupil dilates and the camera dives in",
+    "road run: outlined title marquee, cat with ghost trails, black title pops and flies off",
+    "hero word 1 zooms out onto a boiling starburst, claw slashes, lime shape takes over",
+    "word 2 letters drop in with extrusion, the O holds an eye that becomes a cream wipe",
+    "cream dot grid: the cat gets a crown and smears off, word 3 pops in, purple wipe",
+    "fast cuts: word 1, word 2, eye, outlined word 3, flying cat",
+    "tilted rows of the full title scroll both ways, cats run through, dark band wipe",
+    "final: moon, rings, spaced top line, hero word slams in, crown, sparkles, tagline"
+  ],
+  "variables": ["w1", "w2", "w3", "sub", "stk1", "stk2", "lime", "purple", "cream", "ink"],
+  "notes": "The O-eye in scene 4 appears when word 2 ends in O. Leave stk1 empty to hide the corner sticker. Everything is drawn in code: no image assets.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"w1\":\"LA\",\"w2\":\"NOCHE\",\"w3\":\"BRAVA\"}'"
+}

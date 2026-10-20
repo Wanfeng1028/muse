@@ -1,0 +1,178 @@
+[
+  {
+    "id": "seedance-2-5-byteplus",
+    "name": "Seedance 2.5 / BytePlus",
+    "family": "seedance",
+    "provider": "byteplus",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "audio-driven-video",
+      "multishot",
+      "video-editing",
+      "extend",
+      "motion-transfer",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "dreamina-seedance-2-5-260628"
+    ],
+    "source_ids": [
+      "seed25-launch",
+      "seed25-model",
+      "seed25-schema",
+      "seed25-las"
+    ],
+    "novel_abilities": [
+      "Longer single-pass stories",
+      "Audio-only conditioning",
+      "Timestamp-guided editing and continuation",
+      "White-model and green-screen creative control"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 30
+    },
+    "aliases": [
+      "seedance",
+      "seedance-2-5",
+      "seedance2.5"
+    ],
+    "notes": [
+      "The checkpoint suffix is not the public launch date.",
+      "Reference count, output format and regional access must be checked on the chosen ModelArk or LAS surface.",
+      "Do not copy Seedance 2.0 limits into 2.5."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/seedance.md",
+    "skill_id": "video-seedance",
+    "model_version": "2.5"
+  },
+  {
+    "id": "seedance-2-5-chatcut",
+    "name": "Seedance 2.5 / ChatCut",
+    "family": "seedance",
+    "provider": "chatcut",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "underlying-model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "image-reference",
+      "video-reference",
+      "audio-reference",
+      "video-editing",
+      "extend"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "seedance-2-5"
+    ],
+    "source_ids": [
+      "chatcut-video-contract",
+      "seed25-launch"
+    ],
+    "novel_abilities": [
+      "Seedance 2.5 integration with editor job tracking",
+      "Documented 50-reference adapter ceiling"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "max_reference_files": 50
+    },
+    "aliases": [
+      "seedance",
+      "seedance-2-5",
+      "chatcut-seedance"
+    ],
+    "notes": [
+      "Release date refers to the underlying model, not verified adapter availability.",
+      "Resolve the live tool schema; direct-provider field names and capabilities must not be inherited."
+    ],
+    "evidence": "provider-skill-documented",
+    "runtime_tested": false,
+    "playbook": "models/seedance.md",
+    "skill_id": "video-seedance",
+    "required_tools": [
+      "chatcut-mcp",
+      "chatcut-project"
+    ],
+    "surface_availability_date": null,
+    "model_version": "2.5"
+  },
+  {
+    "id": "seedance-2-5-scenario",
+    "name": "Seedance 2.5 / Scenario",
+    "family": "seedance",
+    "provider": "scenario",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "underlying-model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "image-reference",
+      "video-reference",
+      "audio-reference",
+      "video-editing",
+      "extend"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "scenario-seedance-contract",
+      "seed25-launch"
+    ],
+    "novel_abilities": [
+      "Live discovery and schema-driven Seedance 2.5 workflow",
+      "Adapter-specific input and edit-duration semantics"
+    ],
+    "limits": {},
+    "aliases": [
+      "seedance",
+      "seedance-2-5",
+      "scenario-seedance"
+    ],
+    "notes": [
+      "Release date refers to the underlying model, not verified adapter availability.",
+      "Resolve the live tool schema; direct-provider field names and capabilities must not be inherited."
+    ],
+    "evidence": "provider-skill-documented",
+    "runtime_tested": false,
+    "playbook": "models/seedance.md",
+    "skill_id": "video-seedance",
+    "required_tools": [
+      "scenario-mcp",
+      "scenario-core-skill"
+    ],
+    "surface_availability_date": null,
+    "model_version": "2.5"
+  }
+]

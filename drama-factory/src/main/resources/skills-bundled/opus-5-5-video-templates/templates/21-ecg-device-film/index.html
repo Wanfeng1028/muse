@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Maker (top right)","default":"ORVICA"},
+  {"id":"model","type":"string","label":"Product name","default":"CARDIA E12"},
+  {"id":"modelSub","type":"string","label":"Line under the name at the start","default":"12-Channel Resting ECG Monitor with Printer"},
+  {"id":"f1","type":"string","label":"Feature 1: tag|title|line","default":"DISPLAY|8″ Capacitive Touchscreen|1024 × 600 High-Resolution Display"},
+  {"id":"f2","type":"string","label":"Feature 2: tag|title|line","default":"WORKFLOW|Smart Auto Workflow|5 Steps. 3 Seconds. One Touch."},
+  {"id":"f3","type":"string","label":"Feature 3: tag|title|line","default":"ENDURANCE|10-Hour Battery Life|Up to 350 ECG Prints on a Single Charge"},
+  {"id":"f4","type":"string","label":"Feature 4: tag|title|line","default":"MONITORING|30-Minute Full Disclosure|Continuous Long-Term ECG Recording"},
+  {"id":"f5","type":"string","label":"Feature 5: tag|title|line","default":"INTELLIGENCE|Built-In ECG Interpretation|Clinical-Grade Analysis in Seconds"},
+  {"id":"f6","type":"string","label":"Feature 6: tag|title|line","default":"SECURITY|Patient Data Protected|Encrypted Storage for Every Record"},
+  {"id":"f7","type":"string","label":"Feature 7: tag|title|line","default":"REPORTING|Built-In Thermal Printer|3-Channel Print Format, Instantly"},
+  {"id":"endSub","type":"string","label":"Line under the name at the end","default":"Precision ECG Diagnostics for Hospitals & Clinics"},
+  {"id":"battery","type":"string","label":"Battery figure on the screen","default":"10 h"},
+  {"id":"tagColor","type":"color","label":"Tag colour","default":"#1f6fd8"},
+  {"id":"ink","type":"color","label":"Title colour","default":"#17212c"},
+  {"id":"subColor","type":"color","label":"Line colour","default":"#356592"},
+  {"id":"trace","type":"color","label":"Trace colour on the dark screens","default":"#5ff0ff"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/PlusJakartaSans-normal-200-800.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #dfe9f3; font-family: "Inter", sans-serif; }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      #scene { overflow: hidden; background: #dfe9f3; }
+      .cam { position: absolute; left: 0; top: 0; width: 1672px; height: 941px; transform-origin: 0 0; }
+      .cam img { position: absolute; left: 0; top: 0; width: 1672px; height: 941px; }
+      .cam canvas.scr { position: absolute; left: 0; top: 0; width: 1024px; height: 576px; transform-origin: 0 0; }
+      #pwr { position: absolute; left: 0; top: 0; width: 60px; height: 60px; border-radius: 50%; border: 3px solid rgba(255, 180, 120, 0.95); box-shadow: 0 0 18px rgba(255, 170, 110, 0.9), inset 0 0 12px rgba(255, 200, 150, 0.8); }
+      #pwrGlow { position: absolute; left: 0; top: 0; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 236, 210, 0.95), rgba(255, 190, 140, 0.35) 50%, transparent); }
+      #paperW { position: absolute; left: 0; top: 0; width: 1000px; height: 10px; overflow: hidden; transform-origin: 0 0; }
+      #paperW canvas { position: absolute; left: 0; top: 0; width: 1000px; height: 1300px; }
+      #paperW .shade { position: absolute; left: 0; top: 0; width: 1000px; height: 90px; background: linear-gradient(to bottom, rgba(40, 30, 40, 0.3), rgba(40, 30, 40, 0)); }
+      #rays { mix-blend-mode: screen; filter: blur(10px); }
+      #haze { background: radial-gradient(70% 70% at 50% 45%, #ffffff, #eef4fa); }
+      #flash { background: #fff; }
+      #flare { background: radial-gradient(40% 55% at 92% 0%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 70%); mix-blend-mode: screen; }
+      #shield { position: absolute; left: 0; top: 0; width: 330px; height: 372px; overflow: visible; transform-origin: 0 0; filter: drop-shadow(0 0 8px rgba(70, 205, 255, 0.95)) drop-shadow(0 0 24px rgba(70, 190, 255, 0.6)); }
+      #shield path { fill: none; stroke: #c4f6ff; stroke-linecap: round; stroke-linejoin: round; }
+      #band { position: absolute; left: 0; top: 690px; width: 1920px; height: 390px; background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(246, 250, 253, 0.84) 52%, rgba(248, 251, 254, 0.94)); }
+      #ttl { position: absolute; left: 0; top: 0; width: 1920px; text-align: center; }
+      #ttl .h { position: absolute; left: 0; top: 890px; width: 1920px; font: 800 76px/1.1 "Plus Jakarta Sans"; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
+      #ttl .s { position: absolute; left: 0; top: 988px; width: 1920px; font: 500 33px/1.2 "Inter"; color: var(--subColor); white-space: nowrap; }
+      #tag { position: absolute; left: 110px; top: 66px; height: 60px; padding: 0 30px; border-radius: 30px; background: var(--tagColor); color: #fff; font: 800 25px/60px "Inter"; letter-spacing: 0.14em; white-space: nowrap; box-shadow: 0 6px 18px color-mix(in srgb, var(--tagColor) 40%, transparent); }
+      #brand { position: absolute; right: 116px; top: 70px; font: 800 24px/1 "Inter"; letter-spacing: 0.24em; color: var(--ink); white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="40.5" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="40.5" data-track-index="0">
+        <div id="camF" class="cam"><canvas id="scrF" class="scr" width="1024" height="576"></canvas><img src="assets/img/front.webp" alt="" /><div id="pwrGlow"></div><div id="pwr"></div></div>
+        <div id="camC" class="cam"><canvas id="scrC" class="scr" width="2048" height="1152"></canvas><img src="assets/img/close.webp" alt="" /></div>
+        <div id="camT" class="cam"><canvas id="scrT" class="scr" width="1024" height="576"></canvas><img src="assets/img/three.webp" alt="" /></div>
+        <div id="camS" class="cam"><img src="assets/img/slot.jpg" alt="" /><div id="paperW"><canvas id="paper" width="1000" height="1300"></canvas><div class="shade"></div></div></div>
+        <canvas id="rays" class="layer" width="960" height="540" style="width: 1920px; height: 1080px"></canvas>
+        <div id="flare" class="layer"></div>
+        <svg id="shield" viewBox="0 0 330 372">
+          <path id="sh0" pathLength="1" stroke-width="7" d="M165 12 C 222 44 270 52 314 54 L 314 176 C 314 268 246 326 165 360 C 84 326 16 268 16 176 L 16 54 C 60 52 108 44 165 12 Z" />
+          <path id="sh1" pathLength="1" stroke-width="3.5" d="M165 44 C 212 70 250 77 284 79 L 284 178 C 284 252 230 300 165 328 C 100 300 46 252 46 178 L 46 79 C 80 77 118 70 165 44 Z" />
+          <path id="shF" d="M165 44 C 212 70 250 77 284 79 L 284 178 C 284 252 230 300 165 328 C 100 300 46 252 46 178 L 46 79 C 80 77 118 70 165 44 Z" style="fill: rgba(130, 225, 255, 0.24); stroke: none" />
+          <path id="sh2" pathLength="1" stroke-width="11" d="M104 190 L 148 234 L 232 144" />
+        </svg>
+        <div id="haze" class="layer"></div>
+        <div id="band"></div>
+        <div id="ttl"><div class="h"></div><div class="s"></div></div>
+        <div id="tag"></div>
+        <div id="brand" data-var="brand"></div>
+        <div id="flash" class="layer"></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 40.5, W = 1024, H = 576;
+        const px = (n) => n.toFixed(1) + "px";
+        const blurS = (b) => (b > 0.3 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const ioc = E.inOutCubic, oc = E.outCubic;
+        const split = (s, n) => { const a = String(s || "").split("|"); while (a.length < n) a.push(""); return a; };
+
+        // ---------- geometry ----------
+        function m3d(w, h, q) {
+          const [x0, y0] = q[0], [x1, y1] = q[1], [x2, y2] = q[2], [x3, y3] = q[3];
+          const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+          const den = dx1 * dy2 - dx2 * dy1, g = (dx3 * dy2 - dx2 * dy3) / den, k = (dx1 * dy3 - dx3 * dy1) / den;
+          const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+          return "matrix3d(" + [a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].join(",") + ")";
+        }
+        const grow = (q, f) => { const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, cy = (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4; return q.map(([x, y]) => [cx + (x - cx) * f, cy + (y - cy) * f]); };
+        function cam(el, cx, cy, s, r, k) {
+          const m = 1.012 + Math.abs(r) * 0.03;
+          const S = Math.max(s, Math.max(960 / cx, 960 / (1672 - cx), 540 / cy, 540 / (941 - cy)) * m) * k;
+          el.style.transform = "translate(960px,540px) rotate(" + r.toFixed(3) + "deg) scale(" + S.toFixed(4) + ") translate(" + px(-cx) + "," + px(-cy) + ")";
+        }
+        // screen corners in each still (image px), found with tools/screen_quad.py
+        const QF = [[677.3, 200.0], [993.2, 200.0], [996.0, 376.0], [674.2, 376.0]];
+        const QC = [[359.5, 160.0], [1309.0, 160.0], [1331.6, 713.0], [335.8, 713.0]];
+        const QT = [[646.9, 292.2], [905.6, 259.6], [981.1, 385.8], [717.6, 424.2]];
+        $("scrF").style.transform = m3d(W, H, grow(QF, 1.012));
+        $("scrC").style.transform = m3d(W, H, grow(QC, 1.008));
+        $("scrT").style.transform = m3d(W, H, grow(QT, 1.015));
+        const cF = $("scrF").getContext("2d"), cC = $("scrC").getContext("2d"), cT = $("scrT").getContext("2d");
+        cC.setTransform(2, 0, 0, 2, 0, 0);
+
+        // ---------- drawing kit ----------
+        const gs = (x, m, s) => Math.exp(-((x - m) * (x - m)) / (2 * s * s));
+        const ecg = (p) => 0.13 * gs(p, 0.14, 0.03) - 0.1 * gs(p, 0.244, 0.009) + gs(p, 0.262, 0.011) - 0.28 * gs(p, 0.283, 0.011) + 0.3 * gs(p, 0.48, 0.05);
+        function trace(c, x0, x1, yb, amp, per, off, col, lw, glow, seed = 0) {
+          if (x1 <= x0) return;
+          c.beginPath();
+          for (let x = x0; x <= x1 + 0.01; x += 1.5) {
+            const q = (x + off) / per, k = Math.floor(q), a = amp * (0.9 + 0.2 * R(k * 7.3 + seed));
+            const y = yb - a * ecg(q - k) + 1.4 * Math.sin(x * 0.045 + seed);
+            x === x0 ? c.moveTo(x, y) : c.lineTo(x, y);
+          }
+          c.strokeStyle = col; c.lineWidth = lw; c.lineJoin = "round"; c.shadowColor = col; c.shadowBlur = glow; c.stroke(); c.shadowBlur = 0;
+        }
+        const yAt = (x, yb, amp, per, off, seed = 0) => { const q = (x + off) / per, k = Math.floor(q); return yb - amp * (0.9 + 0.2 * R(k * 7.3 + seed)) * ecg(q - k) + 1.4 * Math.sin(x * 0.045 + seed); };
+        function grid(c, step, col, major, mcol, x0 = 0, y0 = 0, w = W, h = H) {
+          c.lineWidth = 1;
+          for (let x = x0; x <= x0 + w; x += step) { c.strokeStyle = Math.round((x - x0) / step) % major === 0 ? mcol : col; c.beginPath(); c.moveTo(x + 0.5, y0); c.lineTo(x + 0.5, y0 + h); c.stroke(); }
+          for (let y = y0; y <= y0 + h; y += step) { c.strokeStyle = Math.round((y - y0) / step) % major === 0 ? mcol : col; c.beginPath(); c.moveTo(x0, y + 0.5); c.lineTo(x0 + w, y + 0.5); c.stroke(); }
+        }
+        const rr = (c, x, y, w, h, r) => { c.beginPath(); c.roundRect(x, y, w, h, r); };
+        const txt = (c, s, x, y, font, col, al = "left") => { c.font = font; c.fillStyle = col; c.textAlign = al; c.textBaseline = "middle"; c.fillText(s, x, y); };
+        const dot = (c, x, y, r, col) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "#ffffff"); g.addColorStop(0.25, col); g.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = g; c.fillRect(x - r, y - r, 2 * r, 2 * r); };
+        const glare = (c, a = 0.07) => { const g = c.createLinearGradient(0, 0, W, H); g.addColorStop(0, "rgba(255,255,255," + a + ")"); g.addColorStop(0.45, "rgba(255,255,255,0)"); c.fillStyle = g; c.fillRect(0, 0, W, H); };
+        const TR = v.trace;
+
+        // ---------- the screens ----------
+        // 1 · monitor with a sweeping trace
+        function scrIntro(c, t) {
+          const g = c.createRadialGradient(512, 300, 40, 512, 300, 620); g.addColorStop(0, "#0c4250"); g.addColorStop(1, "#03161b");
+          c.fillStyle = g; c.fillRect(0, 0, W, H);
+          grid(c, 32, "rgba(90,210,230,0.06)", 5, "rgba(90,210,230,0.13)");
+          txt(c, "HR 72", 32, 36, "600 22px 'IBM Plex Mono'", "rgba(120,235,250,0.85)");
+          txt(c, "II  ·  25 mm/s", W - 32, 36, "500 18px 'IBM Plex Mono'", "rgba(120,235,250,0.6)", "right");
+          const head = (t * 430) % (W - 80) + 40, per = 300, off = 120;
+          c.globalAlpha = 0.35; trace(c, Math.min(W - 40, head + 46), W - 40, 330, 150, per, off, TR, 3, 4, 2); c.globalAlpha = 1;
+          trace(c, 40, head, 330, 150, per, off, TR, 3.4, 14, 2);
+          dot(c, head, yAt(head, 330, 150, per, off, 2), 26, TR);
+          glare(c);
+        }
+        // 2 · the display wakes: a point of light, a teal field, the grid, then a trace
+        function scrDisplay(c, t) {
+          c.fillStyle = "#020608"; c.fillRect(0, 0, W, H);
+          const fill = oc(P(t, 0.9, 2.1));
+          if (fill > 0) {
+            const g = c.createRadialGradient(512, 288, 0, 512, 288, 40 + 760 * fill);
+            g.addColorStop(0, "#3fd0e6"); g.addColorStop(0.35, "#168aa0"); g.addColorStop(1, "rgba(8,60,72," + (0.2 + 0.8 * fill).toFixed(3) + ")");
+            c.fillStyle = g; c.fillRect(0, 0, W, H);
+          }
+          const gr = P(t, 2.0, 2.6);
+          if (gr > 0) { c.globalAlpha = gr; grid(c, 36, "rgba(200,250,255,0.07)", 4, "rgba(200,250,255,0.16)"); c.globalAlpha = 1; }
+          const pt = P(t, 0.25, 1.4), fade = 1 - P(t, 1.6, 2.4);
+          if (pt > 0 && fade > 0) {
+            c.globalAlpha = fade;
+            dot(c, 512, 288, 16 + 120 * oc(pt), "#bff6ff");
+            const sg = c.createRadialGradient(512, 288, 0, 512, 288, 1);
+            c.save(); c.translate(512, 288); c.scale(140 + 520 * oc(pt), 7 + 10 * oc(pt));
+            sg.addColorStop(0, "rgba(220,252,255,0.95)"); sg.addColorStop(1, "rgba(120,230,255,0)"); c.fillStyle = sg; c.beginPath(); c.arc(0, 0, 1, 0, Math.PI * 2); c.fill(); c.restore();
+            c.globalAlpha = 1;
+          }
+          const tr = P(t, 2.5, 4.4);
+          if (tr > 0) { const head = 40 + 900 * tr; trace(c, 40, head, 300, 140, 330, 60, "#e9fdff", 3.2, 12, 5); dot(c, head, yAt(head, 300, 140, 330, 60, 5), 24, "#bff6ff"); }
+          glare(c, 0.05);
+        }
+        // 3 · one-touch workflow: monitor → patients → analysis → rhythm → summary
+        const PATIENTS = [["20481", "M. Haddad", "54", "M", "09:12"], ["20480", "R. Silva", "61", "F", "08:55"], ["20479", "J. Okafor", "47", "M", "08:31"], ["20478", "L. Moreau", "72", "F", "08:02"], ["20477", "S. Tanaka", "39", "F", "Yesterday"], ["20476", "D. Novak", "66", "M", "Yesterday"], ["20475", "E. Rossi", "58", "F", "Yesterday"], ["20474", "K. Lind", "44", "M", "Mon"], ["20473", "P. Mensah", "70", "M", "Mon"]];
+        function pageMonitor(c, t) {
+          c.fillStyle = "#04080b"; c.fillRect(0, 0, W, H);
+          c.fillStyle = "#0e1a24"; c.fillRect(0, 0, W, 50);
+          txt(c, "ID 20481", 24, 26, "600 20px Inter", "#a9bccb"); rr(c, W - 118, 11, 94, 28, 14); c.fillStyle = v.tagColor; c.fill(); txt(c, "AUTO", W - 71, 26, "800 15px Inter", "#fff", "center");
+          ["I", "II", "V1"].forEach((n, i) => { txt(c, n, 24, 140 + i * 140, "600 18px 'IBM Plex Mono'", "rgba(120,235,250,0.7)"); trace(c, 70, W - 30, 160 + i * 140, 70, 230, t * 260 + i * 40, TR, 2.4, 8, i + 3); });
+        }
+        function pagePatients(c) {
+          c.fillStyle = "#f4f7fa"; c.fillRect(0, 0, W, H);
+          c.fillStyle = v.tagColor; c.fillRect(0, 0, W, 54); txt(c, "Patients", 26, 28, "700 23px Inter", "#fff");
+          rr(c, W - 250, 12, 226, 30, 15); c.fillStyle = "rgba(255,255,255,0.22)"; c.fill(); txt(c, "Search", W - 230, 28, "500 15px Inter", "rgba(255,255,255,0.85)");
+          const cols = [26, 140, 420, 520, 620];
+          ["ID", "Name", "Age", "Sex", "Last ECG"].forEach((h, i) => txt(c, h, cols[i], 80, "700 15px Inter", "#6a7f93"));
+          PATIENTS.forEach((r, j) => {
+            const y = 102 + j * 50;
+            if (j === 0) { c.fillStyle = "#dbe9fb"; c.fillRect(0, y, W, 50); } else if (j % 2) { c.fillStyle = "#eef2f6"; c.fillRect(0, y, W, 50); }
+            r.forEach((s, i) => txt(c, s, cols[i], y + 25, (i === 1 ? "600 " : "500 ") + "18px Inter", "#24384c"));
+          });
+        }
+        function pageGauge(c, p) {
+          const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#0d1a46"); g.addColorStop(1, "#1b2f70"); c.fillStyle = g; c.fillRect(0, 0, W, H);
+          c.fillStyle = "#2c66e0"; c.fillRect(0, 0, W, 54); txt(c, "Analyzing ECG…", W / 2, 28, "700 22px Inter", "#fff", "center");
+          const cx = 512, cy = 330, r = 158, a0 = Math.PI * 0.75, a1 = a0 + Math.PI * 1.5 * p;
+          c.lineCap = "round"; c.lineWidth = 28; c.strokeStyle = "rgba(255,255,255,0.12)"; c.beginPath(); c.arc(cx, cy, r, a0, a0 + Math.PI * 1.5); c.stroke();
+          const cg = c.createConicGradient(a0 - 0.05, cx, cy); cg.addColorStop(0, "#38a3ff"); cg.addColorStop(0.3, "#41e0ff"); cg.addColorStop(0.55, "#ffb340"); cg.addColorStop(0.75, "#ff4d4d"); cg.addColorStop(1, "#ff4d4d");
+          if (p > 0.005) { c.strokeStyle = cg; c.beginPath(); c.arc(cx, cy, r, a0, a1); c.stroke(); }
+          c.lineCap = "butt";
+          c.save(); c.translate(cx, cy); c.rotate(a1); c.fillStyle = "#e9f2ff"; c.beginPath(); c.moveTo(0, -6); c.lineTo(r - 44, 0); c.lineTo(0, 6); c.closePath(); c.fill(); c.restore();
+          c.fillStyle = "#e9f2ff"; c.beginPath(); c.arc(cx, cy, 14, 0, Math.PI * 2); c.fill();
+          txt(c, Math.round(p * 100) + "%", cx, cy + 92, "700 46px Inter", "#fff", "center");
+          txt(c, "Interpretation", cx, cy + 136, "500 18px Inter", "rgba(220,232,255,0.7)", "center");
+        }
+        function pageRhythm(c, t) {
+          c.fillStyle = "#020405"; c.fillRect(0, 0, W, H);
+          grid(c, 32, "rgba(255,255,255,0.035)", 5, "rgba(255,255,255,0.08)");
+          txt(c, "Rhythm  ·  II", 24, 32, "600 18px Inter", "rgba(200,215,225,0.7)"); txt(c, "72 bpm", W - 24, 32, "600 18px 'IBM Plex Mono'", "rgba(120,235,250,0.85)", "right");
+          trace(c, 30, W - 30, 300, 80, 210, t * 300, "#d9f6ff", 2.2, 6, 9);
+        }
+        function pageSummary(c) {
+          c.fillStyle = "#eef3f8"; c.fillRect(0, 0, W, H);
+          const card = (x, y, w, h) => { c.save(); c.shadowColor = "rgba(30,60,100,0.12)"; c.shadowBlur = 16; c.shadowOffsetY = 4; rr(c, x, y, w, h, 18); c.fillStyle = "#fff"; c.fill(); c.restore(); };
+          card(24, 24, 470, 250); card(518, 24, 482, 250); card(24, 298, 976, 254);
+          txt(c, "Patient", 48, 58, "700 17px Inter", "#6a7f93");
+          c.fillStyle = "#cfe0f6"; c.beginPath(); c.arc(100, 150, 46, 0, Math.PI * 2); c.fill(); c.fillStyle = "#86a9d6"; c.beginPath(); c.arc(100, 136, 17, 0, Math.PI * 2); c.fill(); c.beginPath(); c.ellipse(100, 182, 30, 18, 0, Math.PI, 0); c.fill();
+          txt(c, PATIENTS[0][1], 168, 136, "700 26px Inter", "#1d2f42"); txt(c, PATIENTS[0][2] + " yrs · " + PATIENTS[0][3] + " · ID " + PATIENTS[0][0], 168, 172, "500 17px Inter", "#6a7f93");
+          txt(c, "Lead check", 542, 58, "700 17px Inter", "#6a7f93");
+          ["RA", "LA", "RL", "LL", "V1", "V2", "V3", "V4", "V5", "V6"].forEach((n, i) => { const x = 572 + (i % 5) * 86, y = 124 + Math.floor(i / 5) * 76; c.fillStyle = "#3ccf7e"; c.beginPath(); c.arc(x, y, 15, 0, Math.PI * 2); c.fill(); txt(c, n, x, y + 30, "600 13px Inter", "#6a7f93", "center"); });
+          txt(c, "Filters", 48, 332, "700 17px Inter", "#6a7f93");
+          [["AC", "50 Hz", 0.55], ["EMG", "35 Hz", 0.38], ["Baseline", "0.05 Hz", 0.2]].forEach(([n, val, f], i) => {
+            const y = 392 + i * 54; txt(c, n, 48, y, "600 17px Inter", "#24384c"); rr(c, 200, y - 5, 640, 10, 5); c.fillStyle = "#dde6ef"; c.fill(); rr(c, 200, y - 5, 640 * f, 10, 5); c.fillStyle = v.tagColor; c.fill();
+            c.fillStyle = "#fff"; c.beginPath(); c.arc(200 + 640 * f, y, 11, 0, Math.PI * 2); c.fill(); c.strokeStyle = v.tagColor; c.lineWidth = 3; c.stroke(); txt(c, val, 976, y, "600 17px 'IBM Plex Mono'", "#24384c", "right");
+          });
+        }
+        const PAGES = [[0, 0.85, pageMonitor], [0.85, 1.65, pagePatients], [1.65, 2.95, pageGauge], [2.95, 3.85, pageRhythm], [3.85, 9, pageSummary]];
+        function scrWork(c, t) {
+          PAGES.forEach(([a, b, fn], i) => {
+            const al = i === 0 ? 1 - P(t, b - 0.06, b + 0.06) : P(t, a - 0.06, a + 0.06) * (1 - P(t, b - 0.06, b + 0.06));
+            if (al <= 0) return;
+            c.globalAlpha = al; fn(c, fn === pageGauge ? ioc(P(t, a + 0.1, b - 0.15)) : t); c.globalAlpha = 1;
+          });
+          glare(c, 0.05);
+        }
+        // 4 · battery
+        function scrBattery(c, t) {
+          c.fillStyle = "#05090c"; c.fillRect(0, 0, W, H);
+          const bx = 352, by = 150, bw = 320, bh = 150;
+          rr(c, bx, by, bw, bh, 22); c.lineWidth = 8; c.strokeStyle = "#e9f1f6"; c.stroke();
+          rr(c, bx + bw + 8, by + 48, 18, 54, 6); c.fillStyle = "#e9f1f6"; c.fill();
+          const n = 5, gap = 10, cw = (bw - 32 - gap * (n - 1)) / n;
+          for (let i = 0; i < n; i++) {
+            const on = P(t, 0.5 + i * 0.32, 0.62 + i * 0.32), pulse = i === n - 1 ? 0.75 + 0.25 * Math.sin(t * 6) : 1;
+            if (on <= 0) continue;
+            c.globalAlpha = on * (t > 2.3 ? pulse : 1); rr(c, bx + 16 + i * (cw + gap), by + 16, cw, bh - 32, 8); c.fillStyle = "#3fd98a"; c.shadowColor = "#3fd98a"; c.shadowBlur = 14; c.fill(); c.shadowBlur = 0; c.globalAlpha = 1;
+          }
+          txt(c, v.battery, W / 2, 400, "800 84px Inter", "#ffffff", "center");
+          txt(c, "Battery life", W / 2, 470, "500 26px Inter", "rgba(190,210,222,0.75)", "center");
+          glare(c, 0.06);
+        }
+        // 5 · full disclosure on red paper
+        function redPaper(c) {
+          const g = c.createRadialGradient(512, 260, 60, 512, 260, 700); g.addColorStop(0, "#9a1418"); g.addColorStop(1, "#5b070a"); c.fillStyle = g; c.fillRect(0, 0, W, H);
+          grid(c, 12, "rgba(255,110,110,0.12)", 5, "rgba(255,130,130,0.3)", 40, 70, 944, 456);
+        }
+        const GREEN = "#9bff7a";
+        function scrMonitor(c, t) {
+          redPaper(c);
+          txt(c, "FULL DISCLOSURE", 40, 40, "700 16px Inter", "rgba(255,220,220,0.8)"); txt(c, "30:00  ·  II", W - 40, 40, "600 16px 'IBM Plex Mono'", "rgba(255,220,220,0.75)", "right");
+          const head = 60 + 900 * C(P(t, 0.25, 4.4));
+          trace(c, 60, head, 210, 74, 52, 10, GREEN, 2.6, 10, 11);
+          dot(c, head, yAt(head, 210, 74, 52, 10, 11), 18, GREEN);
+          for (let i = 0; i < 6; i++) txt(c, "0" + (i + 1) + ":00", 92 + i * 160, 330, "500 13px 'IBM Plex Mono'", "rgba(255,210,210,0.5)");
+          trace(c, 60, 960, 420, 50, 52, 30, "rgba(155,255,122,0.35)", 1.6, 0, 12);
+          glare(c, 0.05);
+        }
+        // 6 · interpretation: a scan line sweeps the strip and labels the beats
+        function scrAnalyze(c, t) {
+          redPaper(c);
+          txt(c, "INTERPRETATION", 40, 40, "700 16px Inter", "rgba(255,220,220,0.8)");
+          const head = 300 + 664 * C(P(t, 0.1, 4.2));
+          trace(c, 60, head, 200, 74, 52, 10, GREEN, 2.6, 10, 11);
+          const scan = 60 + 860 * C(P(t, 0.3, 4.3));
+          for (let k = 0; k < 18; k++) {
+            const x = 60 + k * 52 + 12; if (x > scan || x > head) break;
+            const special = k === 7 || k === 13;
+            txt(c, special ? "V" : "N", x, 106, "700 15px Inter", special ? "#ffe066" : "rgba(255,255,255,0.85)", "center");
+          }
+          for (let i = 0; i < 4; i++) for (let j = 0; j < 7; j++) txt(c, "+", 110 + j * 136, 340 + i * 50, "400 18px Inter", "rgba(255,200,200,0.35)", "center");
+          const g = c.createLinearGradient(60, 0, scan, 0); g.addColorStop(0, "rgba(70,170,255,0.2)"); g.addColorStop(1, "rgba(150,215,255,1)");
+          c.fillStyle = g; c.shadowColor = "#4fb4ff"; c.shadowBlur = 18; c.fillRect(60, 268, scan - 60, 7); c.shadowBlur = 0;
+          dot(c, scan, 271, 30, "#9fd6ff");
+          [["HR", "74 bpm", 0.2], ["QRS", "94 ms", 0.4], ["QT/QTc", "386/412 ms", 0.6], ["Axis", "48°", 0.8]].forEach(([k, val, at], i) => {
+            const u = P(t, 0.4 + at * 3.6, 0.7 + at * 3.6); if (u <= 0) return;
+            c.globalAlpha = u; txt(c, k, 60 + i * 230, 500, "600 15px Inter", "rgba(255,215,215,0.75)"); txt(c, val, 60 + i * 230, 528, "700 21px 'IBM Plex Mono'", "#ffffff"); c.globalAlpha = 1;
+          });
+          glare(c, 0.05);
+        }
+        // 7 & 9 · 12-lead report
+        const LEADS = ["I", "aVR", "V1", "V4", "II", "aVL", "V2", "V5", "III", "aVF", "V3", "V6"];
+        function scrReport(c, cool) {
+          c.fillStyle = cool ? "#eaf7fb" : "#fbf7f7"; c.fillRect(0, 0, W, H);
+          c.fillStyle = cool ? "#d6edf5" : "#efe6e7"; c.fillRect(0, 0, W, 46);
+          txt(c, "12-lead report", 24, 24, "700 18px Inter", "#3b4f63"); txt(c, "25 mm/s  10 mm/mV", W - 24, 24, "500 15px 'IBM Plex Mono'", "#5e7387", "right");
+          grid(c, 10, cool ? "rgba(70,170,200,0.12)" : "rgba(225,95,110,0.14)", 5, cool ? "rgba(60,150,190,0.3)" : "rgba(210,70,90,0.32)", 20, 60, 984, 496);
+          for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) {
+            const x0 = 30 + k * 244, yb = 170 + r * 150;
+            txt(c, LEADS[r * 4 + k], x0 + 4, yb - 66, "600 14px Inter", "#3b4f63");
+            trace(c, x0, x0 + 236, yb, 46 + 14 * R(r * 4 + k), 118, k * 37 + r * 11, "#1d2833", 1.8, 0, r * 4 + k);
+          }
+          trace(c, 30, 994, 540, 30, 118, 5, "#1d2833", 1.6, 0, 40);
+          glare(c, 0.08);
+        }
+        const scrFinal = (c) => scrReport(c, true);
+        const scrSecurity = (c) => scrReport(c, false);
+
+        // ---------- printer paper ----------
+        const pc = $("paper").getContext("2d");
+        function drawPaper() {
+          pc.fillStyle = "#fcf3f3"; pc.fillRect(0, 0, 1000, 1300);
+          pc.lineWidth = 1;
+          for (let x = 0; x <= 1000; x += 9) { pc.strokeStyle = (x / 9) % 5 === 0 ? "rgba(214,72,92,0.34)" : "rgba(226,110,126,0.15)"; pc.beginPath(); pc.moveTo(x + 0.5, 0); pc.lineTo(x + 0.5, 1300); pc.stroke(); }
+          for (let y = 0; y <= 1300; y += 9) { pc.strokeStyle = (y / 9) % 5 === 0 ? "rgba(214,72,92,0.34)" : "rgba(226,110,126,0.15)"; pc.beginPath(); pc.moveTo(0, y + 0.5); pc.lineTo(1000, y + 0.5); pc.stroke(); }
+          const names = ["II", "V1", "V5"];
+          for (let r = 0; r < 9; r++) {
+            const yb = 110 + r * 136;
+            pc.font = "700 18px Inter"; pc.fillStyle = "#3a2a2e"; pc.fillText(names[r % 3], 22, yb - 46);
+            trace(pc, 60, 975, yb, 54, 150, r * 23, "#26262b", 2.2, 0, 20 + r);
+          }
+          pc.font = "600 14px 'IBM Plex Mono'"; pc.fillStyle = "#6a4a52"; pc.fillText("25 mm/s   10 mm/mV   40 Hz", 600, 40);
+        }
+        drawPaper();
+        const paperW = $("paperW"), paperCv = $("paper");
+        // slot lips in slot.jpg and where the paper's leading edge ends up when fully out
+        const S0 = [296, 393], S1 = [1188, 465], N0f = [-60, 905], N1f = [980, 1040], PL = 760;
+
+        // ---------- rays ----------
+        const rc = $("rays").getContext("2d");
+        function rays(t, a) {
+          rc.clearRect(0, 0, 960, 540);
+          if (a <= 0) return;
+          for (let i = 0; i < 9; i++) {
+            const x = 960 * (0.08 + 0.105 * i) + 28 * Math.sin(t * 0.22 + i * 1.7), ang = ((i - 4) * 5.5 + 2.2 * Math.sin(t * 0.17 + i)) * Math.PI / 180;
+            const len = 620, w0 = 18 + 10 * R(i), w1 = 120 + 70 * R(i + 9);
+            const g = rc.createLinearGradient(0, 0, 0, len); g.addColorStop(0, "rgba(255,255,255," + (0.42 * a * (0.6 + 0.4 * Math.sin(t * 0.5 + i * 2.1))).toFixed(3) + ")"); g.addColorStop(1, "rgba(255,255,255,0)");
+            rc.save(); rc.translate(x, -40); rc.rotate(ang); rc.fillStyle = g; rc.beginPath(); rc.moveTo(-w0, 0); rc.lineTo(w0, 0); rc.lineTo(w1, len); rc.lineTo(-w1, len); rc.closePath(); rc.fill(); rc.restore();
+          }
+        }
+
+        // ---------- scenes ----------
+        const camEl = { F: $("camF"), C: $("camC"), T: $("camT"), S: $("camS") };
+        const ctxOf = { F: cF, C: cC, T: cT };
+        const feats = [v.f1, v.f2, v.f3, v.f4, v.f5, v.f6, v.f7].map((s) => split(s, 3));
+        // [start, end, still, camera from [cx, cy, scale, rot], camera to, screen, rays]
+        const SC = [
+          [0, 4.9, "F", [840, 470, 1.22, 0], [837, 466, 1.6, 0], scrIntro, 0.6],
+          [4.9, 9.1, "C", [836, 452, 1.36, 0], [836, 440, 1.6, 0], scrDisplay, 0],
+          [9.1, 13.9, "F", [837, 432, 1.5, 0], [837, 428, 1.64, 0], scrWork, 0.35],
+          [13.9, 17.9, "T", [826, 470, 1.72, -2.5], [846, 452, 1.95, 2.5], scrBattery, 0.5],
+          [17.9, 22.7, "C", [828, 430, 1.26, -1.5], [842, 420, 1.36, 0.5], scrMonitor, 0],
+          [22.7, 27.3, "C", [836, 476, 1.16, 0], [836, 462, 1.27, 0], scrAnalyze, 0],
+          [27.3, 31.4, "F", [940, 452, 1.16, 0], [934, 450, 1.27, 0], scrSecurity, 0.45],
+          [31.4, 36.2, "S", [720, 430, 1.62, -3], [640, 486, 1.22, 0], null, 0],
+          [36.2, 40.5, "T", [836, 372, 2.1, 3], [836, 466, 1.22, 0], scrFinal, 0.6],
+        ];
+        const texts = [[null, v.model, v.modelSub]].concat(feats).concat([[null, v.model, v.endSub]]);
+        const ttlH = document.querySelector("#ttl .h"), ttlS = document.querySelector("#ttl .s"), tag = $("tag"), brand = $("brand"), band = $("band");
+        const haze = $("haze"), flash = $("flash"), flare = $("flare"), shield = $("shield"), pwr = $("pwr"), pwrGlow = $("pwrGlow");
+        const shp = ["sh0", "sh1", "sh2"].map((id) => $(id)), shF = $("shF");
+        // the red power button in front.webp
+        const PWR = [686, 447];
+
+        function render(t) {
+          let i = SC.length - 1; for (let k = 0; k < SC.length; k++) if (t < SC[k][1]) { i = k; break; }
+          const [s0, s1, still, a, b, scr, ra] = SC[i];
+          const u = P(t, s0, s1), lt = t - s0;
+          Object.keys(camEl).forEach((k) => K.show(camEl[k], k === still));
+          // camera: a slow move per scene, a kick in after each cut and a blur out before the next
+          const e = i === SC.length - 1 ? oc(P(t, s0, s0 + 3.4)) : 0.35 * u + 0.65 * ioc(u);
+          const kin = 1 - oc(P(t, s0, s0 + 0.32)), kout = i < SC.length - 1 ? E.inQuad(P(t, s1 - 0.22, s1)) : 0;
+          const el = camEl[still];
+          cam(el, L(a[0], b[0], e), L(a[1], b[1], e), L(a[2], b[2], e), L(a[3], b[3], e), (1 + 0.05 * (i ? kin : 0)) * (1 + 0.06 * kout));
+          el.style.filter = blurS((i ? 12 * kin * kin : 0) + 14 * kout);
+          flash.style.opacity = (0.32 * Math.max(i ? kin * kin : 0, kout)).toFixed(3);
+          if (scr) scr(ctxOf[still], lt);
+          rays(t, ra * (i === 0 ? P(t, 0.2, 1.4) : 1));
+          K.show($("rays"), ra > 0);
+          // intro: the device comes out of the haze
+          const hz = 1 - oc(P(t, 0.1, 1.5));
+          K.show(haze, hz > 0.002); haze.style.opacity = (0.9 * hz).toFixed(3);
+          if (i === 0) el.style.filter = blurS(10 * hz + 14 * kout);
+          // light catching the screen corner in the close-ups
+          K.show(flare, i === 4 || i === 1); flare.style.opacity = (i === 4 ? 0.9 * P(t, s0 + 0.3, s0 + 1.2) : 0.35 * P(t, s0 + 1, s0 + 2)).toFixed(3);
+          // power button pulses during the workflow
+          const pOn = i === 2;
+          K.show(pwr, pOn); K.show(pwrGlow, pOn);
+          if (pOn) {
+            const pulse = (q) => { const z = ((q % 1.6) + 1.6) % 1.6 / 1.6; return z; };
+            const z = pulse(lt + 1.2), sc = 1 + 1.4 * oc(z), op = (1 - z) * C(lt * 3);
+            pwr.style.transform = "translate(" + px(PWR[0] - 30) + "," + px(PWR[1] - 30) + ") scale(" + sc.toFixed(3) + ")"; pwr.style.opacity = op.toFixed(3);
+            pwrGlow.style.transform = "translate(" + px(PWR[0] - 60) + "," + px(PWR[1] - 60) + ") scale(" + (0.55 + 0.1 * Math.sin(lt * 6)).toFixed(3) + ")"; pwrGlow.style.opacity = (0.85 * C(lt * 3)).toFixed(3);
+          }
+          // shield over the device
+          const shOn = i === 6;
+          K.show(shield, shOn);
+          if (shOn) {
+            const fl = 7 * Math.sin(lt * 1.8);
+            shield.style.transform = "translate(" + px(1062) + "," + px(468 + fl) + ") scale(" + (1.16 + 0.05 * oc(P(lt, 0.3, 1.2))).toFixed(3) + ")";
+            K.draw(shp[0], ioc(P(lt, 0.35, 1.25))); K.draw(shp[1], ioc(P(lt, 0.5, 1.35))); K.draw(shp[2], oc(P(lt, 1.35, 1.75)));
+            shF.style.opacity = (P(lt, 1.0, 1.5) * (0.8 + 0.2 * Math.sin(lt * 4))).toFixed(3);
+            shield.style.opacity = (1 - P(t, s1 - 0.25, s1)).toFixed(3);
+          }
+          // printer paper
+          const pu = P(t, 31.95, 35.7), ppOn = i === 7, Lp = ppOn ? PL * (0.25 * ioc(pu) + 0.75 * pu) : 0;
+          K.show(paperW, ppOn && Lp > 2);
+          if (ppOn && Lp > 2) {
+            const f = Lp / PL, N0 = [L(S0[0], N0f[0], f), L(S0[1], N0f[1], f)], N1 = [L(S1[0], N1f[0], f), L(S1[1], N1f[1], f)];
+            // the box runs from the slot (top) to the leading edge (bottom); the sheet moves out with it
+            paperW.style.height = px(Lp);
+            paperW.style.transform = m3d(1000, Lp, [S0, S1, N1, N0]);
+            paperCv.style.top = px(Lp - 1300);
+          }
+          // titles
+          const tx = texts[i], tIn = (d) => oc(P(t, s0 + d, s0 + d + 0.5)), tOut = i < SC.length - 1 ? P(t, s1 - 0.4, s1 - 0.1) : 0;
+          const del = i === 0 ? 0.75 : i === 7 ? 1.1 : 0.35;
+          if (ttlH.dataset.k !== String(i)) { ttlH.dataset.k = String(i); ttlH.textContent = tx[1]; ttlS.textContent = tx[2]; tag.textContent = tx[0] || ""; }
+          const h = tIn(del), s = tIn(del + 0.15), g = oc(P(t, s0 + del - 0.15, s0 + del + 0.25));
+          ttlH.style.opacity = (h * (1 - tOut)).toFixed(3); ttlH.style.filter = blurS(14 * (1 - h) + 8 * tOut); ttlH.style.transform = "translateY(" + px(16 * (1 - h)) + ")";
+          ttlS.style.opacity = (s * (1 - tOut)).toFixed(3); ttlS.style.transform = "translateY(" + px(12 * (1 - s)) + ")";
+          band.style.opacity = (g * (1 - 0.6 * tOut)).toFixed(3);
+          K.show(tag, !!tx[0]);
+          const tg = oc(P(t, s0 + 0.2, s0 + 0.55));
+          tag.style.opacity = (tg * (1 - tOut)).toFixed(3); tag.style.transform = "translateX(" + px(-24 * (1 - tg)) + ")";
+          const bOn = i === 0 || i === SC.length - 1;
+          K.show(brand, bOn);
+          brand.style.opacity = (bOn ? oc(P(t, s0 + 0.6, s0 + 1.1)) * (1 - tOut) : 0).toFixed(3);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { drawPaper(); render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

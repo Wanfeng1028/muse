@@ -1,0 +1,31 @@
+{
+  "id": "20-product-parody-launch",
+  "title": "Keynote-style product launch (parody) — a hero product on white, features, a size counter, a macro close-up, a battery gag, a card, the price",
+  "category": "product launch / parody",
+  "duration": 20,
+  "size": "1920x1080",
+  "demoBrand": "Baguette Pro (parody, no real brand)",
+  "source": {
+    "author": "@raphaelaubryy",
+    "post": "https://x.com/raphaelaubryy/status/2104178266990858739",
+    "note": "Remade from scratch in HyperFrames after the 'Baguette Pro' keynote parody; structure and pacing follow it. The three photos were generated with the Claude Imagine MCP (nano-banana-2, 2k); none of the original's images are used."
+  },
+  "scenes": [
+    "'Introducing' — the product is revealed by a soft wipe from left to right on a white stage",
+    "the name rises in, holds, and leaves upwards; the product keeps growing slowly",
+    "a feature line in black and gold under the product, a little steam",
+    "a size counter rolls up while a gold ruler draws under the product, with a footnote",
+    "the camera pushes into the product and cuts to a full-screen macro close-up with two lines",
+    "the close-up folds into a battery icon that drains and refills, with a footnote",
+    "the battery is pushed out by a card with a second photo and a two-line joke",
+    "'Designed in … Baked every morning.' then the product returns for the name, price and availability"
+  ],
+  "variables": ["intro", "name", "f1a", "f1b", "sizeFrom", "sizeTo", "sizeUnit", "sizeNote", "c1", "c2", "batt", "battNote", "z1", "z2", "p1", "p2", "price", "avail", "gold", "rule", "ink", "paper"],
+  "images": [
+    { "file": "assets/img/baguette.jpg", "use": "hero product on white (background lifted to pure white, cropped to the product and its shadow)", "model": "nano-banana-2 2k 16:9", "prompt": "Studio product photograph of one thick, plump, rustic artisan French baguette lying perfectly horizontal, seen exactly from the side, centered, spanning about 85% of the frame width. Deeply caramelized dark golden-brown crust, dramatic diagonal scoring with raised crispy ears, blistered and crackled surface, darker tips. Isolated on a pure white seamless background with a soft natural contact shadow underneath. Crisp, high detail, premium tech-launch product shot. Nothing else in the frame, no text." },
+    { "file": "assets/img/crust.jpg", "use": "full-screen macro close-up, then the battery fill", "model": "nano-banana-2 2k 16:9", "prompt": "Extreme macro close-up of a freshly torn French baguette filling the whole frame: on the left a thick, deeply caramelized golden-brown crust dusted with flour, crackled and blistered; on the right the airy open crumb with glossy irregular holes. Warm low side light, shallow depth of field, rich texture, editorial food photography. No text." },
+    { "file": "assets/img/stack.jpg", "use": "the card", "model": "nano-banana-2 2k 3:4", "prompt": "Three thick chunks of rustic baguette stacked loosely on top of each other in a small tower, each showing golden crust on the outside and soft open crumb where it was cut, slightly off-balance. Dramatic soft studio light from the upper left on a pure black background, centered, vertical composition, premium food photography. No text." }
+  ],
+  "notes": "To launch a different product, generate three images with the same prompts (swap the subject), keep the file names, and update IMG in the script: the pixel span of the product inside baguette.jpg (bx0, bx1) and its vertical centre (cy), so it is placed by its real width. The hero image is drawn with mix-blend-mode: multiply, so its background must be pure white. Keep the parody clearly a parody: no real company's logo, product names or claims.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "11-synthwave-app-promo",
+  "title": "Synthwave app promo — neon reel in six techniques",
+  "category": "app launch / retro",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "BLAST (fictional)",
+  "source": {
+    "author": "@trymirage",
+    "post": "https://x.com/trymirage/status/2103542300844474452",
+    "note": "Remade from scratch in HyperFrames after the SPAM synthwave promo; structure and pacing follow it. Brand, icon, copy and handles are ours and fictional."
+  },
+  "scenes": [
+    "01 ignition: dot, trim-path outline, app icon with stacked neon outlines",
+    "four camera-HUD cards: shoot / post / repeat / blast it (pixel type)",
+    "03 3D tunnel of photo cards with neon frames",
+    "04 parallax flyover: synthwave landscape, 3D pixel headline",
+    "05 product UI: phone feed, new-photos pill, like burst, counter",
+    "06 procedural grid: x1 → x4 → x16 → x64 icons, collapse to a flash",
+    "final: icon stack, chrome wordmark, typed tagline, footer"
+  ],
+  "variables": ["brand", "tagline", "word1", "word2", "word3", "word4a", "word4b", "flyText", "newCount", "user", "reel", "footer", "pink", "cyan", "orange", "yellow"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"brand\":\"GLOW\",\"word4a\":\"GLOW\"}'"
+}

@@ -1,0 +1,12 @@
+{
+  "_note": "Narration for ConnectraV3Sound. `start` is the absolute frame (60fps) in ConnectraV3. `text` may use misaki phoneme overrides [word](/IPA/) for Kokoro; scripts strip them to plain text for other engines.",
+  "lines": [
+    {"id": "01-problem", "start": 150, "text": "Ten machines. Ten terminals. And only one of you."},
+    {"id": "02-connect", "start": 436, "text": "Install [Connectra](/kənˈɛktɹə/) on each machine. Sign in once, and every device connects, outbound."},
+    {"id": "03-command", "start": 846, "text": "Now one chat reaches all of them. The agent lists your devices, then runs the update on each one."},
+    {"id": "04-agents", "start": 1482, "text": "It works with any [MCP](/ˌɛmsˌiˈpi/) client. Your web assistant, your [IDE](/ˌaɪdˌiˈi/), your terminal."},
+    {"id": "05-anyone", "start": 1952, "text": "For [AI](/ˌeɪˈaɪ/) builders, infra teams, developers, and anyone with a phone."},
+    {"id": "06-trust", "start": 2332, "text": "The cloud can ask. Your machine decides."},
+    {"id": "07-close", "start": 2716, "text": "Every agent. Every device. Connected by [Connectra](/kənˈɛktɹə/)."}
+  ]
+}

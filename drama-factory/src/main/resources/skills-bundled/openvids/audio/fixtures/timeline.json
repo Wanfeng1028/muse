@@ -1,0 +1,14 @@
+{
+  "fps": 30,
+  "total": 330,
+  "scenes": [
+    {"id": "S1", "name": "Open", "from": 0, "dur": 90},
+    {"id": "S2", "name": "Work", "from": 90, "dur": 150},
+    {"id": "S3", "name": "Lockup", "from": 240, "dur": 90}
+  ],
+  "cues": {
+    "S1": {"headline": 12, "mark": 48},
+    "S2": {"chips": [18, 30, 42, 54, 66], "meterFull": 120},
+    "S3": {"lockup": 16, "url": 48}
+  }
+}

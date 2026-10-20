@@ -1,0 +1,175 @@
+[
+  {
+    "id": "remotion",
+    "name": "Remotion",
+    "kind": "render-engine",
+    "capabilities": [
+      "editable-code",
+      "exact-text",
+      "batch-variants",
+      "subtitle-timing",
+      "motion-graphics"
+    ],
+    "runtime": "local",
+    "toolchain": [
+      "node",
+      "react",
+      "chromium",
+      "ffmpeg"
+    ],
+    "skill_ids": [
+      "remotion-dev--remotion-best-practices",
+      "remotion-dev--remotion-create",
+      "remotion-dev--remotion-render"
+    ],
+    "summary": "React compositions for frame-addressable video and reusable variants.",
+    "notes": [
+      "Existing React components favor this route.",
+      "Review the current framework license and render deployment separately from the skill license."
+    ],
+    "checked_at": "2026-10-01",
+    "release_date": null,
+    "runtime_tested": false,
+    "playbook": "motion.md"
+  },
+  {
+    "id": "hyperframes",
+    "name": "Hyperframes",
+    "kind": "render-engine",
+    "capabilities": [
+      "editable-code",
+      "exact-text",
+      "motion-graphics",
+      "subtitle-timing",
+      "batch-variants"
+    ],
+    "runtime": "local",
+    "toolchain": [
+      "node",
+      "html",
+      "gsap",
+      "chromium",
+      "ffmpeg"
+    ],
+    "skill_ids": [
+      "heygen-com--hyperframes",
+      "heygen-com--motion-graphics",
+      "heygen-com--hyperframes-animation"
+    ],
+    "summary": "HTML and timeline-based motion with an agent-oriented render workflow.",
+    "notes": [],
+    "checked_at": "2026-10-01",
+    "release_date": null,
+    "runtime_tested": false,
+    "playbook": "motion.md"
+  },
+  {
+    "id": "canvas-ffmpeg",
+    "name": "Canvas / SVG / FFmpeg",
+    "kind": "render-engine",
+    "capabilities": [
+      "editable-code",
+      "exact-text",
+      "motion-graphics",
+      "sound-synthesis"
+    ],
+    "runtime": "local",
+    "toolchain": [
+      "node",
+      "canvas",
+      "chromium",
+      "ffmpeg"
+    ],
+    "skill_ids": [
+      "latent-spaces--brag-slim",
+      "siegerts--creating-canvas-video-animations",
+      "iart-ai--javascript-animation"
+    ],
+    "summary": "Lean code-drawn animation without a generative video service.",
+    "notes": [
+      "Seed randomness and evaluate every frame from absolute time.",
+      "Opus 5.5-specific brag-slim dispatch is an upstream workflow choice, not a benchmark claim."
+    ],
+    "checked_at": "2026-10-01",
+    "release_date": null,
+    "runtime_tested": false,
+    "playbook": "motion.md"
+  },
+  {
+    "id": "manim",
+    "name": "Manim",
+    "kind": "render-engine",
+    "capabilities": [
+      "editable-code",
+      "exact-text",
+      "math-animation",
+      "motion-graphics"
+    ],
+    "runtime": "local",
+    "toolchain": [
+      "python",
+      "manim",
+      "ffmpeg",
+      "latex-optional"
+    ],
+    "skill_ids": [
+      "iart-ai--manim"
+    ],
+    "summary": "Mathematical and diagram animation with explicit transformations.",
+    "notes": [],
+    "checked_at": "2026-10-01",
+    "release_date": null,
+    "runtime_tested": false,
+    "playbook": "motion.md"
+  },
+  {
+    "id": "blender",
+    "name": "Blender",
+    "kind": "render-engine",
+    "capabilities": [
+      "editable-code",
+      "product-visualization",
+      "motion-graphics",
+      "alpha-output"
+    ],
+    "runtime": "local",
+    "toolchain": [
+      "blender",
+      "python"
+    ],
+    "skill_ids": [],
+    "summary": "Scripted 3D scenes, lighting, camera choreography and rendered passes.",
+    "notes": [
+      "blender-mcp is an integration, not a video model or a standalone skill."
+    ],
+    "checked_at": "2026-10-01",
+    "release_date": null,
+    "runtime_tested": false,
+    "playbook": "motion.md"
+  },
+  {
+    "id": "ffmpeg",
+    "name": "FFmpeg finishing",
+    "kind": "render-engine",
+    "capabilities": [
+      "subtitle-timing",
+      "alpha-output",
+      "batch-variants",
+      "quality-review"
+    ],
+    "runtime": "local",
+    "toolchain": [
+      "ffmpeg",
+      "ffprobe"
+    ],
+    "skill_ids": [
+      "calesthio--ffmpeg"
+    ],
+    "summary": "Assembly, encoding, subtitle muxing, audio checks and technical QC.",
+    "notes": [],
+    "checked_at": "2026-10-01",
+    "release_date": null,
+    "runtime_tested": false,
+    "playbook": "motion.md"
+  }
+]

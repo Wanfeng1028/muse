@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>千容AI · 15s 概念宣传片</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* ===================== 设计令牌 =====================
+         封闭配色：暖纸白底 + 墨黑字 + 单一强调色（千容橙，用量<5%，只承载"行动/成长"）。
+         素材口径：概念版 —— 无真实产品界面，右下角全程带"概念演示"标注。 */
+      :root{
+        --paper:#F7F5F0; --paper-2:#EFE9DC; --paper-3:#DDD5C3;
+        --ink:#1B1B1F; --ink-2:#4A4742; --muted:#8A857C;
+        --accent:#E56028;
+        --display:"Noto Sans SC",sans-serif;
+        --body:"Noto Sans SC",sans-serif;
+      }
+      *{margin:0;padding:0;box-sizing:border-box;}
+      html,body{width:1080px;height:1920px;overflow:hidden;background:#0b0b0d;}
+      #root{position:relative;width:100%;height:100%;overflow:hidden;}
+      .clip{position:absolute;inset:0;}
+      /* container-type:size → 所有尺寸用 cqw，换分辨率不改数值 */
+      .scene{container-type:size;width:100%;height:100%;overflow:hidden;
+             background:var(--paper);color:var(--ink);font-family:var(--body);}
+      .grid-bg{position:absolute;inset:0;z-index:1;
+        background-image:linear-gradient(var(--paper-3) .16cqw,transparent .16cqw),
+                         linear-gradient(90deg,var(--paper-3) .16cqw,transparent .16cqw);
+        background-size:4.5cqw 4.5cqw;opacity:.6;}
+      .grain{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:.04;
+        background-image:repeating-conic-gradient(var(--ink) 0% 25%,transparent 0% 50%);
+        background-size:3px 3px;mix-blend-mode:multiply;}
+      .headline{font-family:var(--display);line-height:.98;font-weight:900;letter-spacing:-.01em;}
+      .kicker{display:inline-block;background:var(--ink);color:var(--paper);
+              font-family:var(--display);font-size:2.2cqw;font-weight:700;letter-spacing:.18em;
+              padding:.9cqw 2cqw;}
+      /* 打字机字符（初始全隐，JS 逐字亮起） */
+      .ty{display:inline-block;opacity:0;}
+      .accent{color:var(--accent);}
+      /* 光标演员：全片唯一的"人" */
+      #cursor{position:absolute;z-index:90;width:5.6cqw;height:6.6cqw;pointer-events:none;
+              filter:drop-shadow(.5cqw .5cqw 0 rgba(27,27,31,.16));}
+      /* S3 清单行 */
+      .check-row{display:flex;align-items:center;gap:2.8cqw;opacity:0;}
+      .check-box{width:7cqw;height:7cqw;border:.5cqw solid var(--ink);position:relative;flex:none;
+                 background:var(--paper);}
+      .check-box svg{position:absolute;inset:.6cqw;}
+      .row-txt{font-family:var(--display);font-size:5.6cqw;font-weight:900;letter-spacing:.01em;}
+      .bar{height:2.2cqw;background:var(--paper-3);border-radius:999px;overflow:hidden;}
+      .bar-fill{height:100%;width:0;background:var(--ink);border-radius:999px;}
+      /* 幽灵字（环境层） */
+      .ghost{position:absolute;z-index:2;font-family:var(--display);font-weight:900;
+             color:var(--paper-3);letter-spacing:.02em;pointer-events:none;}
+      .brandbug{position:absolute;inset:auto;top:44px;right:48px;z-index:95;display:flex;align-items:center;
+                gap:10px;background:var(--paper);border:3px solid var(--ink);
+                box-shadow:7px 7px 0 var(--ink);padding:10px 16px 10px 12px;}
+      .brandbug .bb-name{font-family:var(--display);font-size:30px;font-weight:900;line-height:1;}
+      .brandbug .bb-tag{font-family:var(--display);font-size:17px;font-weight:700;letter-spacing:.1em;
+                        color:var(--ink-2);}
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="15">
+      <!-- 全程固定品牌角标 -->
+      <div id="brandbug" class="clip brandbug" data-start="0" data-duration="15" data-track-index="30">
+        <div><div class="bb-name">千容AI</div></div>
+        <div><div class="bb-tag">概念演示</div></div>
+      </div>
+
+      <audio id="bgm" src="assets/bgm.wav" data-start="0" data-duration="15"
+             data-volume="0.72" data-fade-in="0.3" data-fade-out="1.4"></audio>
+
+      <!-- 光标演员（root 层，不随摄影机变换） -->
+      <svg id="cursor" viewBox="0 0 28 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 2 L26 17.5 L14.8 19.9 L18.6 29.6 L14.4 31.2 L10.6 21.5 L2 26 Z"
+              fill="var(--ink)" stroke="var(--paper)" stroke-width="1.6"/>
+      </svg>
+
+      <!-- ===== S1 · 痛点打字机（0–3.5s）===== -->
+      <section id="s1" class="clip scene" data-start="0" data-duration="3.5" data-track-index="0">
+        <div class="grid-bg"></div>
+        <div id="s1-ghost" class="ghost" data-layout-ignore></div>
+        <div id="s1-block" data-layout-allow-overlap
+             style="position:absolute;left:8cqw;right:8cqw;top:32cqw;z-index:40;">
+          <div id="s1-l1" class="headline" style="font-size:9.8cqw;"></div>
+          <div id="s1-l2" class="headline" style="font-size:12cqw;margin-top:3cqw;"></div>
+        </div>
+        <div class="grain"></div>
+      </section>
+
+      <!-- ===== S2 · 转·产品落地（3.5–6.5s）===== -->
+      <section id="s2" class="clip scene" data-start="3.5" data-duration="3" data-track-index="1">
+        <div class="grid-bg"></div>
+        <div id="s2-main" data-layout-allow-overlap
+             style="position:absolute;left:0;right:0;top:36cqw;text-align:center;z-index:40;">
+          <div id="s2-brand" class="headline" style="font-size:13.5cqw;">千容AI</div>
+          <div id="s2-sub" style="margin-top:3.4cqw;font-family:var(--display);font-weight:700;
+               font-size:6.8cqw;color:var(--ink-2);">
+            每天 <span id="s2-num" class="accent">0</span> 分钟
+          </div>
+          <div id="s2-btn" style="margin:6cqw auto 0;width:46cqw;background:var(--ink);color:var(--paper);
+               font-family:var(--display);font-size:3.8cqw;font-weight:700;letter-spacing:.12em;
+               padding:2.8cqw 0;text-align:center;border-radius:999px;">开始学习</div>
+        </div>
+        <div class="grain"></div>
+      </section>
+
+      <!-- ===== S3 · 证·学习闭环（6.5–11s）===== -->
+      <section id="s3" class="clip scene" data-start="6.5" data-duration="4.5" data-track-index="2">
+        <div class="grid-bg"></div>
+        <div id="s3-main" data-layout-allow-overlap
+             style="position:absolute;left:9cqw;right:9cqw;top:27cqw;z-index:40;">
+          <div class="kicker" id="s3-k">从零到会用</div>
+          <div id="s3-rows" style="margin-top:7cqw;"></div>
+        </div>
+        <div id="s3-bar" class="bar" data-layout-allow-overlap
+             style="position:absolute;left:9cqw;right:9cqw;bottom:15cqw;z-index:40;">
+          <div id="s3-barfill" class="bar-fill"></div>
+        </div>
+        <div class="grain"></div>
+      </section>
+
+      <!-- ===== S4 · CTA 收尾（11–15s，近静帧）===== -->
+      <section id="s4" class="clip scene" data-start="11" data-duration="4" data-track-index="3">
+        <div class="grid-bg"></div>
+        <div id="s4-main" data-layout-allow-overlap
+             style="position:absolute;left:0;right:0;top:33cqw;text-align:center;z-index:40;">
+          <div id="s4-l1" class="headline" style="font-size:17.5cqw;">学AI</div>
+          <div id="s4-l2" class="headline" style="font-size:17.5cqw;margin-top:1.8cqw;">找<span class="accent">千容</span></div>
+          <div id="s4-sub" style="margin-top:4.5cqw;font-size:3cqw;color:var(--muted);
+               letter-spacing:.14em;font-weight:700;">每天 10 分钟 · 从零到会用</div>
+        </div>
+        <div class="grain"></div>
+      </section>
+
+      <!-- 诚实标注（root 固定层，不随摄影机变换） -->
+      <div id="s4-tag" data-layout-allow-overlap data-start="11" data-duration="4" data-track-index="55"
+           style="position:absolute;right:54px;bottom:60px;z-index:96;font-family:var(--display);
+           font-size:21px;color:var(--ink-2);letter-spacing:.06em;">概念演示 · 非真实产品界面</div>
+    </div>
+
+    <script>
+      /* ================================================================
+         节拍网格：make_beat_grid.py 从 bgm.wav 分析出的真实脉冲（117.45 BPM，
+         拍长 0.51084s），场景边界全部用 onBeat() 吸附，不信任标注 BPM。
+         ================================================================ */
+      const BEAT_T=[0.38,0.8908,1.4017,1.9125,2.4234,2.9342,3.445,3.9559,4.4667,4.9776,5.4884,5.9992,6.5101,7.0209,7.5317,8.0426,8.5534,9.0643,9.5751,10.0859,10.5968,11.1076,11.6185,12.1293,12.6401,13.151,13.6618,14.1727,14.6835];
+      const onBeat=(t,off=0)=>{let b=BEAT_T[0];for(const x of BEAT_T){if(Math.abs(x-t)<Math.abs(b-t))b=x;}return +(b+off).toFixed(3);};
+      const E={ex:"expo.out",p3:"power3.out",p2:"power2.out",b:"back.out(1.7)",i:"power2.in",e2:"expo.inOut"};
+      const tl=gsap.timeline({paused:true});
+
+      /* ---- 打字机：逐字亮起（每字 0.085s，中文以字为节奏单位）---- */
+      function typeInto(el,text,accentRegex){
+        const frag=document.createDocumentFragment();
+        [...text].forEach(ch=>{
+          const s=document.createElement('span');
+          s.className='ty';
+          if(accentRegex&&accentRegex.test(ch)) s.classList.add('accent');
+          s.textContent=ch;
+          frag.appendChild(s);
+        });
+        el.appendChild(frag);
+        return el.querySelectorAll('.ty');
+      }
+      const l1=typeInto(document.getElementById('s1-l1'),'收藏了 50 个教程，',/[0-9]/);
+      const l2=typeInto(document.getElementById('s1-l2'),'一个都没看完？',null);
+
+      /* ---- S1 动画（0–3.5s）---- */
+      tl.to(l1,{opacity:1,duration:.01,stagger:.16,ease:'none'},onBeat(0.38,.05));
+      tl.to(l2,{opacity:1,duration:.01,stagger:.14,ease:'none'},onBeat(2.55,.05));
+      // 光标：行 1 打完后再滑入，停在痛点文字旁（2.42-2.56 按压取消，避免干扰打字检测）
+      tl.fromTo('#cursor',{x:0,y:0,scale:.6,opacity:0},
+        {x:'74cqw',y:'40cqw',scale:1,opacity:1,duration:.5,ease:E.ex},onBeat(2.2,.05));
+
+      /* ---- S2 动画（3.5–6.5s）---- */
+      tl.fromTo('#s2-brand',{y:70,opacity:0,scale:.94},{y:0,opacity:1,scale:1,duration:.55,ease:E.ex},onBeat(3.445,.05));
+      tl.fromTo('#s2-num',{textContent:0},{textContent:10,duration:1,ease:'power1.out',
+        onUpdate:function(){this.targets()[0].textContent=Math.round(this.targets()[0].textContent);}},onBeat(3.9559,.05));
+      tl.fromTo('#s2-sub',{y:30,opacity:0},{y:0,opacity:1,duration:.4,ease:E.p3},onBeat(3.9559,.05));
+      tl.fromTo('#s2-btn',{scale:.9,opacity:0},{scale:1,opacity:1,duration:.4,ease:E.b},onBeat(4.9776,.05));
+      // 光标移到按钮并按压
+      tl.to('#cursor',{x:'27cqw',y:'66cqw',duration:.5,ease:E.ex,immediateRender:false},onBeat(4.98,.05));
+      tl.to('#cursor',{scale:.9,duration:.14,ease:E.i,immediateRender:false},onBeat(5.49,.02));
+      tl.to('#cursor',{scale:1,duration:.2,ease:E.b,immediateRender:false},onBeat(5.63,.02));
+
+      /* ---- S3 清单（6.5–11s）：三行逐条打勾 + 进度条 ---- */
+      const ROWS=[['认识大模型','01'],['上手提示词','02'],['做出第一个AI应用','03']];
+      const rowsWrap=document.getElementById('s3-rows');
+      const rowEls=ROWS.map((r,i)=>{
+        const row=document.createElement('div');
+        row.className='check-row';
+        row.style.marginTop=(i===0?'0':'3.6cqw');
+        row.innerHTML='<div class="check-box"><svg viewBox="0 0 32 32" fill="none">'
+          +'<path d="M6 17 L13 24 L26 8" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" '
+          +'stroke-linejoin="round" stroke-dasharray="34" stroke-dashoffset="34"/></svg></div>'
+          +'<div class="row-txt">'+r[0]+'</div>';
+        rowsWrap.appendChild(row);
+        return row;
+      });
+      const marks=rowEls.map(r=>r.querySelector('path'));
+      // 逐行入场 + 打勾（每 1.5s 一行，吸附拍点）
+      [onBeat(6.5101,.05),onBeat(8.0426,.05),onBeat(9.5751,.05)].forEach((t,i)=>{
+        tl.fromTo(rowEls[i],{x:60,opacity:0},{x:0,opacity:1,duration:.42,ease:E.ex},t);
+        tl.to(marks[i],{strokeDashoffset:0,duration:.3,ease:E.p2},t+.28);
+      });
+      // 进度条：随清单推进，三段填充（6.5→11 连续缓推）
+      const barProxy={v:0};
+      tl.fromTo('#s3-barfill',{width:'0%'},{width:'100%',duration:4.4,ease:'power1.inOut'},onBeat(6.5101,.05));
+      // 光标：悬停在清单右侧，随打勾轻点
+      tl.to('#cursor',{x:'80cqw',y:'34cqw',duration:.4,ease:E.ex,immediateRender:false},onBeat(6.51,.1));
+      tl.to('#cursor',{scale:.93,duration:.13,ease:E.i,immediateRender:false},onBeat(8.05,.02));
+      tl.to('#cursor',{scale:1,duration:.2,ease:E.b,immediateRender:false},onBeat(8.18,.02));
+      tl.to('#cursor',{scale:.93,duration:.13,ease:E.i,immediateRender:false},onBeat(9.58,.02));
+      tl.to('#cursor',{scale:1,duration:.2,ease:E.b,immediateRender:false},onBeat(9.71,.02));
+
+      /* ---- S4 CTA（11–15s）：压入后近静帧 ---- */
+      tl.fromTo('#s4-l1',{y:80,opacity:0},{y:0,opacity:1,duration:.5,ease:E.ex},onBeat(11.1076,.05));
+      tl.fromTo('#s4-l2',{y:80,opacity:0},{y:0,opacity:1,duration:.5,ease:E.ex},onBeat(11.6185,.05));
+      tl.fromTo('#s4-sub',{y:30,opacity:0},{y:0,opacity:1,duration:.45,ease:E.p3},onBeat(12.1293,.05));
+      tl.fromTo('#s4-tag',{opacity:0},{opacity:1,duration:.4},onBeat(12.64,.05));
+      // 光标移到 CTA 旁轻点后淡出
+      tl.to('#cursor',{x:'68cqw',y:'47cqw',duration:.45,ease:E.ex,immediateRender:false},onBeat(12.15,.05));
+      tl.to('#cursor',{scale:.9,duration:.13,ease:E.i,immediateRender:false},onBeat(12.65,.02));
+      tl.to('#cursor',{opacity:0,duration:.35,ease:'none'},onBeat(13.16,.02));
+
+      /* ---- 幽灵字（S1 环境层）---- */
+      const ghostEl=document.getElementById('s1-ghost');
+      const GHOSTS=[['AI 教程','26cqw','24cqw','16cqw'],['Prompt','70cqw','58cqw','11cqw'],
+                    ['Agent','30cqw','72cqw','9cqw'],['大模型','64cqw','84cqw','13cqw']];
+      GHOSTS.forEach((g,i)=>{
+        const el=document.createElement('div');
+        el.className='ghost';
+        el.style.left=g[1]; el.style.top=g[2]; el.style.fontSize=g[3];
+        el.style.opacity=.5;
+        el.textContent=g[0];
+        ghostEl.appendChild(el);
+        tl.fromTo(el,{x:-30,y:0,opacity:.55},{x:30,y:-16,opacity:.15,duration:3.3,ease:'none'},0);
+      });
+
+      /* ---- 三层运动：整机位 + 网格漂移（每镜都活着）---- */
+      const SC={s1:[0,3.5],s2:[3.5,6.5],s3:[6.5,11],s4:[11,15]};
+      const CAM={s1:{from:{scale:1.05,x:0,y:0},to:{scale:1.07,x:0,y:-10},ease:'none'},
+                 s2:{from:{scale:1.07,x:0,y:-10},to:{scale:1.09,x:0,y:8},ease:'none'},
+                 s3:{from:{scale:1.09,x:0,y:8},to:{scale:1.11,x:0,y:-6},ease:'none'},
+                 s4:{from:{scale:1.11,x:0,y:-6},to:{scale:1.13,x:0,y:-14},ease:'none'}};
+      const CHROME=['topbar','metabar','brandbug','card'];
+      const camLayers={};
+      Object.keys(SC).forEach(id=>{
+        const sec=document.getElementById(id);
+        const layer=document.createElement('div');
+        layer.style.cssText='position:absolute;inset:0;';
+        [...sec.children].forEach(el=>{
+          if(!CHROME.some(c=>el.classList.contains(c))) layer.appendChild(el);
+        });
+        sec.insertBefore(layer,sec.firstChild);
+        camLayers[id]=layer;
+      });
+      Object.entries(SC).forEach(([id,[a,b]])=>{
+        const dur=+(b-a).toFixed(3), cam=CAM[id];
+        tl.fromTo(camLayers[id],{scale:cam.from.scale,x:cam.from.x,y:cam.from.y},
+          {scale:cam.to.scale,x:cam.to.x,y:cam.to.y,duration:dur,ease:cam.ease,
+           immediateRender:false,transformOrigin:'50% 50%'},a);
+        tl.fromTo('#'+id+' .grid-bg',{backgroundPosition:'0px 0px'},
+          {backgroundPosition:'54px 54px',duration:dur,ease:'none',immediateRender:false},a);
+      });
+
+      window.__timelines=window.__timelines||{};
+      window.__timelines['main']=tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand name","default":"Viewcraft"},
+  {"id":"domain","type":"string","label":"Domain","default":"viewcraft.app"},
+  {"id":"head1","type":"string","label":"Headline 1 (| = line break)","default":"Find creators|in your niche."},
+  {"id":"head2","type":"string","label":"Headline 2","default":"See what&#39;s working|for them."},
+  {"id":"head3","type":"string","label":"Headline 3","default":"Make it yours."},
+  {"id":"head4","type":"string","label":"Headline 4","default":"Score it|before you post."},
+  {"id":"promise1","type":"string","label":"Promise line 1","default":"500 followers in 30 days"},
+  {"id":"promise2","type":"string","label":"Promise line 2","default":"or get a full refund."},
+  {"id":"goal","type":"string","label":"Follower goal","default":"500"},
+  {"id":"head5","type":"string","label":"Headline 5","default":"Learn what actually|moves views."},
+  {"id":"spike","type":"string","label":"Spike multiplier","default":"11.8x"},
+  {"id":"author","type":"string","label":"Creator handle","default":"@ninabuilds"},
+  {"id":"postA","type":"string","label":"Inspiration line 1","default":"The first version took a weekend."},
+  {"id":"postB","type":"string","label":"Inspiration line 2","default":"Making it reliable took a year."},
+  {"id":"postC","type":"string","label":"Inspiration line 3","default":"Nobody posts about the second part."},
+  {"id":"rewrite1","type":"string","label":"Rewritten line","default":"The weekend version got the likes. The reliable one got the customers."},
+  {"id":"rewrite2","type":"string","label":"Typed line","default":"Build for the second part. That is where the money is."},
+  {"id":"score","type":"string","label":"Coach score","default":"92"},
+  {"id":"reach","type":"string","label":"Reach range","default":"1.4K–3.6K"},
+  {"id":"accent","type":"color","label":"Accent","default":"#b4531d"},
+  {"id":"ink","type":"color","label":"Ink","default":"#201b17"},
+  {"id":"paper","type":"color","label":"Background","default":"#ebe4dc"},
+  {"id":"green","type":"color","label":"Promise background","default":"#4b7f46"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --accent: #b4531d; --ink: #201b17; --paper: #ebe4dc; --green: #4b7f46; --card: #f6f2ed; --line: #e3dbd2; --mut: #7b736b; --soft: #efe9e2; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: Inter, sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .abs { position: absolute; }
+      svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; vertical-align: -0.12em; }
+      #bg { background: radial-gradient(ellipse 40% 45% at 76% 18%, rgba(214, 180, 150, 0.55), rgba(214, 180, 150, 0) 70%), radial-gradient(ellipse 60% 55% at 45% 55%, rgba(246, 242, 237, 0.7), rgba(246, 242, 237, 0) 70%), radial-gradient(ellipse 45% 40% at 10% 95%, rgba(170, 160, 150, 0.35), rgba(170, 160, 150, 0) 70%), var(--paper); }
+      #greenBg { background: radial-gradient(ellipse 55% 55% at 50% 42%, #5d9557 0%, var(--green) 55%, #3b6b37 100%); }
+
+      /* headlines */
+      .hd { position: absolute; left: 0; width: 1920px; text-align: center; font: 600 136px/150px Inter, sans-serif; letter-spacing: -0.045em; color: var(--ink); white-space: nowrap; }
+      .wl { display: block; }
+      .wm { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 0.05em 0.2em; margin: 0 -0.02em -0.2em; }
+      .wi { display: inline-block; }
+      .dot { display: inline-block; color: var(--accent); transform-origin: 50% 80%; }
+
+      /* modal */
+      .ui { position: absolute; left: 0; top: 0; transform-origin: 0 0; font-family: Inter; }
+      #modal { width: 630px; background: var(--card); border-radius: 22px; box-shadow: 0 30px 80px rgba(80, 55, 35, 0.16), 0 2px 8px rgba(80, 55, 35, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.6); padding: 22px 24px; }
+      #modal .eyb { font: 700 10px/1 Inter; letter-spacing: 0.1em; color: var(--accent); display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+      #modal h3 { font: 700 19px/1 Inter; margin-top: 12px; letter-spacing: -0.01em; }
+      #modal .st { font: 400 12.5px/1 Inter; color: var(--mut); margin-top: 10px; }
+      #modal .x { position: absolute; right: 18px; top: 22px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--mut); background: #faf7f3; }
+      .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; font: 500 12px/1 Inter; }
+      .meta b { font-weight: 600; border: 1px solid var(--line); border-radius: 12px; padding: 5px 8px; font-size: 11px; background: #faf7f3; }
+      .chips { display: flex; flex-wrap: wrap; gap: 9px 7px; margin-top: 16px; width: 560px; }
+      .chip { height: 29px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--line); background: #f1ebe4; font: 500 11.5px/27px Inter; color: #3d3630; white-space: nowrap; box-shadow: 0 1px 2px rgba(80, 55, 35, 0.05); }
+      .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 3px 8px rgba(180, 83, 29, 0.3); }
+      .inrow { display: flex; align-items: flex-end; gap: 12px; margin-top: 28px; }
+      .search { flex: 1; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: #f3eee8; display: flex; align-items: center; gap: 8px; padding: 0 12px; font: 400 12px/1 Inter; color: #9a918a; white-space: nowrap; }
+      .minf { width: 110px; } .minf span { display: block; font: 500 10px/1 Inter; color: var(--mut); margin-bottom: 6px; }
+      .minf div { height: 40px; border-radius: 12px; border: 1px solid var(--line); background: #f3eee8; font: 500 13px/40px Inter; padding-left: 12px; }
+      .disc { height: 40px; width: 172px; text-align: center; padding: 0 12px; border-radius: 20px; background: var(--accent); color: #fff; font: 600 13.5px/40px Inter; white-space: nowrap; box-shadow: 0 6px 14px rgba(180, 83, 29, 0.3); }
+      #prog { margin-top: 18px; border-radius: 14px; border: 1px solid #e6c7b4; background: #f3e6dd; padding: 14px 16px; overflow: hidden; }
+      #prog .top { display: flex; justify-content: space-between; font: 500 12px/1 Inter; } #prog .top b { color: var(--accent); font-size: 13px; }
+      #prog .steps { display: flex; gap: 42px; margin-top: 14px; font: 500 11.5px/1 Inter; }
+      #prog .steps span { display: flex; gap: 6px; align-items: center; }
+      #prog .steps i { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font: 700 9px/14px Inter; text-align: center; font-style: normal; }
+      #prog .steps i.on { background: var(--accent); color: #fff; }
+      #prog .bar { height: 5px; border-radius: 3px; background: #ead7ca; margin-top: 14px; overflow: hidden; } #prog .bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+      #prog .pct { font: 500 11px/1 Inter; color: var(--mut); margin-top: 12px; }
+      #results { margin-top: 18px; overflow: hidden; }
+      .cr { display: flex; align-items: center; gap: 14px; height: 76px; border-radius: 14px; border: 1px solid var(--line); background: #f3eee8; padding: 0 14px; margin-bottom: 10px; }
+      .cr .av { width: 42px; height: 42px; border-radius: 50%; color: #fff; font: 700 13px/42px Inter; text-align: center; }
+      .cr .nm { flex: 1; font: 600 13px/1.35 Inter; } .cr .nm span { display: block; font: 400 11px/1.35 Inter; color: var(--mut); } .cr .nm em { display: block; font: 600 11px/1.35 Inter; font-style: normal; color: #4a423c; }
+      .trk { height: 28px; width: 118px; text-align: center; padding: 0 8px; border-radius: 14px; background: var(--accent); color: #fff; font: 600 11.5px/28px Inter; white-space: nowrap; }
+      .trk.done { background: #f1d9c9; color: #8b4a22; }
+
+      /* post card */
+      #post { width: 490px; height: 253px; background: var(--card); border-radius: 18px; box-shadow: 0 26px 60px rgba(80, 55, 35, 0.16), 0 1px 3px rgba(80, 55, 35, 0.06); padding: 18px 22px; }
+      #post .hdr { display: flex; align-items: center; gap: 10px; font: 600 11px/1 Inter; } #post .hdr span { color: var(--mut); font-weight: 400; }
+      #post .av { width: 32px; height: 32px; border-radius: 50%; background: #f1d9c9; color: #8b4a22; font: 700 11px/32px Inter; text-align: center; }
+      #post p { font: 400 13px/1 Inter; margin-top: 21px; } #post p:first-of-type { margin-top: 18px; }
+      #post .stats { display: flex; justify-content: space-between; font: 400 10.5px/1 Inter; color: var(--mut); margin-top: 24px; } #post .stats b { color: var(--ink); font-weight: 600; }
+      #post .acts { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
+      #post .acts .u { height: 24px; padding: 0 10px; border-radius: 12px; background: #8b3a12; color: #fff; font: 600 9.5px/24px Inter; }
+      #post .acts .m { height: 24px; padding: 0 10px; border-radius: 12px; border: 1px solid #d9b9a4; color: var(--accent); font: 600 9.5px/22px Inter; }
+      #pill { left: 0; top: 0; padding: 12px 22px; border-radius: 26px; background: #f3e1d4; color: #9a4417; font: 700 56px/1 Inter; box-shadow: 0 8px 20px rgba(180, 83, 29, 0.18); white-space: nowrap; transform-origin: 50% 50%; }
+
+      /* editor world */
+      #ed { width: 2280px; height: 1210px; background: var(--card); border-radius: 30px; box-shadow: 0 40px 90px rgba(80, 55, 35, 0.14), 0 2px 6px rgba(80, 55, 35, 0.05); }
+      .pl { position: absolute; height: 56px; padding: 0 24px; border-radius: 28px; border: 1px solid var(--line); background: #f3eee8; font: 500 26px/54px Inter; white-space: nowrap; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 6px rgba(80, 55, 35, 0.06); }
+      .pl svg.i { color: var(--accent); }
+      .lnk { position: absolute; font: 500 26px/1 Inter; color: var(--accent); text-decoration: underline; text-underline-offset: 6px; white-space: nowrap; }
+      .tx { position: absolute; font: 400 31px/1 Inter; white-space: nowrap; }
+      .hlx { background: rgba(214, 150, 110, 0.28); border-radius: 6px; padding: 4px 6px; margin-left: -6px; }
+      #sep { position: absolute; left: 1684px; top: 0; width: 1px; height: 1210px; background: var(--line); }
+      .sbox { position: absolute; width: 260px; height: 104px; border-radius: 18px; border: 1px solid var(--line); background: #f3eee8; padding: 18px 20px; }
+      .sbox b { display: block; font: 700 40px/1 Inter; } .sbox span { display: block; font: 400 22px/1 Inter; color: var(--mut); margin-top: 14px; }
+      .brow { position: absolute; left: 1720px; width: 530px; font: 600 25px/1 Inter; }
+      .brow em { position: absolute; right: 0; top: 0; font: 400 22px/1 Inter; font-style: normal; color: var(--mut); }
+      .brow i { position: absolute; left: 0; top: 40px; height: 7px; border-radius: 4px; background: #e6ddd4; width: 40px; }
+      .brow i.f { background: var(--accent); }
+      #caret2 { display: inline-block; width: 3px; height: 34px; background: var(--accent); vertical-align: -6px; margin-left: 2px; }
+
+      /* calendar */
+      #cal { width: 1424px; height: 688px; background: var(--card); border-radius: 26px; box-shadow: 0 36px 80px rgba(80, 55, 35, 0.15); padding: 32px; }
+      #cal h4 { font: 700 30px/1 Inter; } #cal .sub { font: 400 19px/1 Inter; color: var(--mut); margin-top: 12px; }
+      #cal .nav { position: absolute; right: 36px; top: 40px; font: 500 20px/1 Inter; color: #4a423c; }
+      .ccol { position: absolute; top: 110px; width: 334px; height: 546px; border-radius: 18px; border: 1px solid var(--line); padding: 14px; }
+      .ccol.today { border: 2px solid #d59a78; }
+      .ccol .h { display: flex; justify-content: space-between; font: 600 17px/1 Inter; color: #4a423c; margin-bottom: 14px; }
+      .slot { height: 118px; border-radius: 14px; margin-bottom: 10px; border: 1px solid #ece5dd; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 500 22px/1 Inter; color: #3d3630; position: relative; }
+      .slot i { width: 22px; height: 22px; border-radius: 50%; background: #f3dcd0; color: var(--accent); font: 700 15px/22px Inter; text-align: center; font-style: normal; margin-top: 10px; }
+      .slot.g, .slot.o { align-items: flex-start; justify-content: flex-start; padding: 14px 14px; font: 400 16px/1.35 Inter; }
+      .slot.g { background: #dcebd6; border-color: #a9cb9f; } .slot.o { background: #f3dccd; border-color: #e2b69b; }
+      .slot small { font: 500 15px/1 Inter; } .slot b { font: 700 13px/1 Inter; letter-spacing: 0.04em; margin-top: 8px; }
+      .slot .tt { color: #5d554e; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+
+      /* promise + doc + logo */
+      .pr { position: absolute; left: 260px; font: 500 110px/1 Inter; letter-spacing: -0.03em; white-space: nowrap; }
+      #doc { perspective: 2600px; }
+      #docInner { position: absolute; left: 0; top: 0; transform-origin: 50% 0; }
+      .dcard { position: absolute; left: 0; width: 980px; background: #fbf9f6; border-radius: 26px; box-shadow: 0 40px 80px rgba(80, 55, 35, 0.16); padding: 40px 46px; }
+      .dcard h5 { font: 700 30px/1 Inter; } .dcard .sub { font: 400 18px/1 Inter; color: var(--mut); margin-top: 10px; }
+      .th { position: relative; padding-left: 62px; margin-top: 46px; }
+      .th .a { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #f5d3b8, #c98a61); }
+      .th .h { font: 700 18px/1 Inter; } .th .h span { font-weight: 400; color: var(--mut); margin-left: 8px; }
+      .th p { font: 400 22px/1.5 Inter; margin-top: 16px; }
+      .th .q { font: 600 16px/1 Inter; color: var(--accent); margin-top: 12px; }
+      .th .mk { background: rgba(214, 150, 110, 0.3); border-radius: 5px; padding: 1px 5px; }
+      .th .bx { margin-top: 16px; border-radius: 14px; background: #f3dccd; padding: 16px 18px; font: 400 19px/1.45 Inter; color: #5a3a24; }
+      .vline { position: absolute; left: 21px; top: 52px; bottom: -50px; width: 2px; background: #e3b99c; }
+      #icon { left: 0; top: 0; width: 240px; height: 240px; border-radius: 58px; background: linear-gradient(160deg, #fbf9f6, #efe8e0); box-shadow: 0 24px 50px rgba(80, 55, 35, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.8); }
+      #strokes { left: 0; top: 0; width: 240px; height: 240px; }
+      #wmark { left: 0; top: 0; font: 700 150px/1 Inter; letter-spacing: -0.05em; white-space: nowrap; }
+      #wclip { left: 0; top: 0; height: 200px; overflow: hidden; }
+      #dom { left: 0; top: 880px; width: 1920px; text-align: center; font: 500 30px/1 Inter; color: #4a423c; }
+      #cursor { left: 0; top: 0; width: 34px; height: 44px; transform-origin: 3px 3px; z-index: 40; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="30" data-track-index="0">
+        <svg width="0" height="0" style="position: absolute"><defs id="defs"></defs></svg>
+        <div id="bg" class="layer"></div>
+        <div id="greenBg" class="layer"></div>
+
+        <div id="h1" class="hd" style="top: 390px"></div>
+        <div id="h2" class="hd" style="top: 390px"></div>
+        <div id="h3" class="hd" style="top: 465px"></div>
+        <div id="h4" class="hd" style="top: 390px"></div>
+        <div id="h5" class="hd" style="top: 390px"></div>
+
+        <!-- modal -->
+        <div id="modalWrap" class="layer">
+          <div id="modal" class="ui">
+            <div class="eyb">✺ RESEARCH LAYER</div>
+            <div class="x">✕</div>
+            <h3>Add creators</h3>
+            <div class="st">Choose up to three niches, or enter a more specific query.</div>
+            <div class="meta"><span>4 / 4 searches left today</span><b id="niches">1/3 niches</b></div>
+            <div class="chips" id="chips"></div>
+            <div class="inrow"><div class="search">⌕&nbsp; Optional: e.g. bootstrapped SaaS founders</div><div class="minf"><span>Minimum followers</span><div>1000</div></div><div class="disc" id="disc">Discover creators</div></div>
+            <div id="prog"><div class="top"><span>Researching</span><b id="pstate">Searching</b></div><div class="steps" id="steps"></div><div class="bar"><i id="pbar"></i></div><div class="pct" id="ppct">0% complete</div></div>
+            <div id="results"></div>
+          </div>
+        </div>
+
+        <!-- chart + post -->
+        <canvas id="chart" class="layer" width="1920" height="1080"></canvas>
+        <div id="postWrap" class="layer">
+          <div id="post" class="ui">
+            <div class="hdr"><div class="av" id="pav"></div><div><span id="phandle"></span></div><div style="flex: 1"></div></div>
+            <p id="pa"></p><p id="pb"></p><p id="pc"></p>
+            <div class="stats"><b>41.2K views</b><span>903 likes</span><span>88 reposts</span></div>
+            <div class="acts" id="acts"><span class="u">+ Use this idea</span><span class="m">✦ More angles</span></div>
+          </div>
+          <div id="pill" class="abs"></div>
+        </div>
+
+        <!-- editor world -->
+        <div id="edWrap" class="layer">
+          <div id="ed" class="ui">
+            <div class="pl" style="left: 50px; top: 56px">Ready post</div>
+            <div class="pl" style="left: 300px; top: 56px">Hot take</div>
+            <div class="lnk" style="left: 514px; top: 72px">Insert from Inspiration</div>
+            <div class="tx" style="left: 432px; top: 176px; font-size: 24px; color: var(--mut)">From <b style="color: var(--ink)" id="efrom"></b></div>
+            <div class="pl" id="writeBtn" style="left: 700px; top: 160px; width: 360px"></div>
+            <div class="pl" style="left: 1090px; top: 160px" data-ic="spark">Improve</div>
+            <div class="pl" style="left: 1340px; top: 160px" data-ic="thread">Make thread</div>
+            <div class="abs" style="left: 66px; top: 280px; width: 44px; height: 44px; border-radius: 50%; background: #f1d9c9; color: #8b4a22; font: 700 18px/44px Inter; text-align: center">S</div>
+            <div class="tx" style="left: 132px; top: 290px; font: 600 27px/1 Inter">Sam Lee <span style="font-weight: 400; color: var(--mut); font-size: 23px">@samshipsfast</span></div>
+            <div class="tx" id="left" style="left: 1500px; top: 292px; width: 132px; text-align: right; font-size: 23px; color: var(--mut)">180 left</div>
+            <div id="orig"><div class="tx" style="left: 150px; top: 370px"><span class="hlx" id="oa"></span></div><div class="tx" style="left: 150px; top: 494px"><span class="hlx" id="ob"></span></div><div class="tx" style="left: 150px; top: 618px"><span class="hlx" id="oc"></span></div></div>
+            <div id="rew"><div class="tx" id="ra" style="left: 150px; top: 370px"></div><div class="tx" style="left: 150px; top: 446px"><span id="rb"></span><span id="caret2"></span></div></div>
+            <div class="abs" style="left: 40px; right: 636px; top: 1080px; height: 1px; background: var(--line)"></div>
+            <div class="pl" style="left: 50px; top: 1110px">+ Add post</div>
+            <div class="pl" style="left: 900px; top: 1110px">✓ Save</div>
+            <div class="pl" id="schBtn" style="left: 1100px; top: 1110px; width: 214px; justify-content: center"></div>
+            <div class="pl" style="left: 1340px; top: 1110px; background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600">Post ↗</div>
+            <div id="sep"></div>
+            <div class="pl" style="left: 1720px; top: 44px">Coach</div>
+            <div class="sbox" id="sb1" style="left: 1720px; top: 140px"><b id="scoreN">—</b><span>Overall score</span></div>
+            <div class="sbox" id="sb2" style="left: 1998px; top: 140px"><b id="shipT" style="color: #9a918a">—</b><span id="shipS">Score a draft</span></div>
+            <div class="pl" id="runBtn" style="left: 1730px; top: 300px; width: 520px; justify-content: center">↗ Run Post Coach</div>
+            <div class="abs" id="okc" style="left: 1956px; top: 300px; width: 64px; height: 64px; border-radius: 50%; background: #3f8a4a; color: #fff; font: 700 30px/64px Inter; text-align: center; box-shadow: 0 6px 14px rgba(63, 138, 74, 0.35)">✓</div>
+            <div class="brow" style="top: 402px">Structure<em id="l0">—</em><i id="b0"></i></div>
+            <div class="brow" style="top: 482px">Delivery<em>Ready</em><i class="f" style="width: 480px"></i></div>
+            <div class="brow" style="top: 562px">Engagement<em id="l2">—</em><i id="b2"></i></div>
+            <div id="reachB" class="abs" style="left: 1720px; top: 660px; width: 540px">
+              <div style="font: 600 25px/1 Inter; color: var(--mut)">Reach heuristic</div>
+              <div id="reachN" style="font: 700 60px/1 Inter; margin-top: 22px; letter-spacing: -0.02em; color: #8f877f"></div>
+              <div style="font: 400 21px/1.5 Inter; color: #aaa198; margin-top: 16px">An estimate from similar posts, not a promise.<br />Based on your last 24 posts (~1.3K median views).</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- calendar -->
+        <div id="calWrap" class="layer">
+          <div id="cal" class="ui">
+            <h4>Next 4 days</h4>
+            <div class="sub">Click any empty slot to write. Drag a scheduled post to move it.</div>
+            <div class="nav">‹ &nbsp;Sep 27 — Sep 30&nbsp; ›</div>
+            <div id="ccols"></div>
+          </div>
+        </div>
+
+        <!-- promise -->
+        <div id="promise" class="layer">
+          <canvas id="gchart" class="layer" width="1920" height="1080"></canvas>
+          <div id="p1" class="pr" style="top: 405px; color: #fff"></div>
+          <div id="p2" class="pr" style="top: 545px; color: #efe2c9"></div>
+        </div>
+
+        <!-- doc -->
+        <div id="doc" class="layer"><div id="docInner"></div></div>
+
+        <!-- logo -->
+        <div id="logo" class="layer">
+          <div id="wclip" class="abs"><div id="wmark" class="abs"></div></div>
+          <div id="icon" class="abs"><svg id="strokes" viewBox="0 0 240 240" class="abs"><g id="sL"><path d="M66 58 L120 182" stroke="var(--accent)" stroke-width="30" stroke-linecap="round" fill="none" /></g><g id="sR"><path d="M174 58 L120 182" stroke="#2c2622" stroke-width="30" stroke-linecap="round" fill="none" opacity="0.92" /></g></svg></div>
+          <div id="dom" class="abs"></div>
+        </div>
+
+        <canvas id="fx" class="layer" width="1920" height="1080"></canvas>
+        <svg id="cursor" class="abs" viewBox="0 0 17 22"><path d="M1.5 1.5 L1.5 17.5 L5.4 13.8 L8.1 20 L10.7 18.9 L8.1 12.8 L13.6 12.8 Z" fill="#111" stroke="#fff" stroke-width="1.3" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 30;
+        const ACC = v.accent;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+
+        const IC = {
+          spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+          thread: '<path d="M4 5h16v10H9l-5 4z"/>',
+          cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+        };
+        const ic = (n) => '<svg class="i" viewBox="0 0 24 24">' + IC[n] + "</svg>";
+        document.querySelectorAll("[data-ic]").forEach((el) => el.insertAdjacentHTML("afterbegin", ic(el.dataset.ic)));
+
+        // ---------- motion blur ----------
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) {
+            const ns = "http://www.w3.org/2000/svg";
+            const f = document.createElementNS(ns, "filter");
+            f.setAttribute("id", "mb_" + key);
+            f.setAttribute("x", "-30%"); f.setAttribute("y", "-30%"); f.setAttribute("width", "160%"); f.setAttribute("height", "160%");
+            g = document.createElementNS(ns, "feGaussianBlur");
+            f.appendChild(g);
+            $("defs").appendChild(f);
+            MBF[key] = g;
+          }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+
+        // ---------- headlines: masked words ----------
+        const words = (el, text) => {
+          el.textContent = "";
+          const out = { words: [], dot: null };
+          const lines = String(text).split("|");
+          lines.forEach((ln, li) => {
+            const row = document.createElement("div");
+            row.className = "wl";
+            const ws = ln.split(" ");
+            ws.forEach((w, wi) => {
+              const m = document.createElement("span");
+              m.className = "wm";
+              let dot = false;
+              if (li === lines.length - 1 && wi === ws.length - 1 && /\.$/.test(w)) { dot = true; w = w.slice(0, -1); }
+              const inner = document.createElement("span");
+              inner.className = "wi";
+              inner.textContent = w;
+              m.appendChild(inner);
+              if (dot) { const d = document.createElement("span"); d.className = "dot"; d.textContent = "."; m.appendChild(d); out.dot = d; }
+              row.appendChild(m);
+              if (wi < ws.length - 1) row.appendChild(document.createTextNode(" "));
+              out.words.push(inner);
+            });
+            el.appendChild(row);
+          });
+          return out;
+        };
+        // words rise in from below the mask, leave through the top
+        const wordsAnim = (W, t, t0, st, t1) => {
+          W.words.forEach((w, i) => {
+            const u = E.outCubic(P(t, t0 + i * st, t0 + i * st + 0.34));
+            const o = t1 ? E.inCubic(P(t, t1 + i * 0.035, t1 + i * 0.035 + 0.2)) : 0;
+            w.style.transform = "translateY(" + ((1 - u) * 108 - o * 108).toFixed(1) + "%)";
+          });
+          if (W.dot) {
+            const du = E.outBack(P(t, t0 + W.words.length * st + 0.2, t0 + W.words.length * st + 0.42), 3);
+            W.dot.style.transform = "scale(" + du.toFixed(3) + ")";
+            if (t1) W.dot.style.opacity = 1 - P(t, t1 + 0.1, t1 + 0.2);
+          }
+        };
+        const H1 = words($("h1"), v.head1), H2 = words($("h2"), v.head2), H3 = words($("h3"), v.head3), H4 = words($("h4"), v.head4), H5 = words($("h5"), v.head5);
+        const P1 = words($("p1"), v.promise1), P2 = words($("p2"), v.promise2);
+        if (P2.dot) P2.dot.style.color = "inherit";
+
+        // ---------- modal content ----------
+        const CH = ["AI & Machine Learning", "Developer Tools", "SaaS / B2B Software", "Indie Hacking", "Content Creation", "Marketing & Growth", "Media Marketing", "Memes & Internet Culture", "Politics & Public Affairs", "Video Design", "E-commerce", "Finance & Fintech", "Health & Wellness", "Education & EdTech", "Design & Creative Tools", "Writing & Publishing", "Web3 & Crypto"];
+        const chipEls = CH.map((c, i) => { const d = document.createElement("div"); d.className = "chip"; d.innerHTML = (i === 2 || i === 3 ? '<span class="ck">✓ </span>' : "") + c; $("chips").appendChild(d); return d; });
+        chipEls[2].classList.add("on");
+        const ck3 = chipEls[3].querySelector(".ck");
+        $("steps").innerHTML = ["Searching", "Finding", "Scraping", "Validating"].map((s, i) => "<span><i>" + (i + 1) + "</i>" + s + "</span>").join("");
+        const stepIs = [...$("steps").querySelectorAll("i")];
+        const CR = [["NP", "Nina Park", v.author, "48.2K followers · 3.1K views", "#b4531d"], ["OR", "Omar Reyes", "@omarships", "31.5K followers · 2.4K views", "#4f7d4a"], ["AK", "Ada Kim", "@adaonsaas", "22.8K followers · 1.9K views", "#2c2622"]];
+        $("results").innerHTML = CR.map(([a, n, h, s, c], i) => '<div class="cr"><div class="av" style="background:' + c + '">' + a + '</div><div class="nm">' + n + "<span>" + h + "</span><em>" + s + '</em></div><div class="trk' + (i === 2 ? " done" : "") + '">' + (i === 2 ? "Tracked" : "+ Track creator") + "</div></div>").join("");
+        const crEls = [...$("results").querySelectorAll(".cr")];
+        const trk0 = crEls[0].querySelector(".trk");
+
+        // ---------- post card ----------
+        $("pav").textContent = (v.author.replace(/[^A-Za-z]/g, "")[0] || "N").toUpperCase();
+        $("phandle").innerHTML = "<b style='color:var(--ink);font-weight:600'>" + v.author + "</b> · 2h ago";
+        $("pa").textContent = v.postA; $("pb").textContent = v.postB; $("pc").textContent = v.postC;
+        $("pill").textContent = v.spike;
+
+        // ---------- editor ----------
+        $("efrom").textContent = v.author;
+        $("oa").textContent = v.postA; $("ob").textContent = v.postB; $("oc").textContent = v.postC;
+        $("ra").textContent = v.rewrite1;
+        const writeBtn = $("writeBtn"), schBtn = $("schBtn");
+        const setW = (s) => { if (writeBtn.dataset.s === s) return; writeBtn.dataset.s = s; writeBtn.innerHTML = ic("spark") + (s === "go" ? "Writing…" : "Write in your tone"); };
+        const setS = (s) => { if (schBtn.dataset.s === s) return; schBtn.dataset.s = s; schBtn.innerHTML = s === "done" ? '<span style="color:#3f8a4a;font-weight:700">✓ Scheduled</span>' : ic("cal") + "Schedule"; schBtn.style.background = s === "done" ? "#dcebd6" : ""; schBtn.style.borderColor = s === "done" ? "#a9cb9f" : ""; };
+        $("reachN").textContent = v.reach;
+
+        // ---------- calendar ----------
+        const COLS = [
+          ["SAT", "27", true, [["o", "9:10 AM", "The best growth loop is the one you keep", "POSTED"], ["g", "12:40 PM", "Nobody asks for a roadmap", "SCHEDULED"], ["e", "4:15 PM"], ["e", "7:30 PM"]]],
+          ["SUN", "28", false, [["g", "9:10 AM", "Your first hundred followers care", "SCHEDULED"], ["e", "12:40 PM"], ["g", "4:15 PM", "A useful opinion has enough detail", "SCHEDULED"], ["e", "7:30 PM"]]],
+          ["MON", "29", false, [["e", "9:10 AM"], ["g", "12:40 PM", "Small product changes add up", "SCHEDULED"], ["e", "4:15 PM"], ["e", "7:30 PM"]]],
+          ["TUE", "30", false, [["n", "9:10 AM", v.rewrite1, "SCHEDULED"], ["e", "12:40 PM"], ["e", "4:15 PM"], ["e", "7:30 PM"]]],
+        ];
+        const slotHTML = ([k, tm, tx, st]) => k === "e" ? '<div class="slot">' + tm + "<i>+</i></div>" : '<div class="slot ' + (k === "o" ? "o" : "g") + (k === "n" ? " newslot" : "") + '"><small>' + tm + '</small><div class="tt">' + tx + "</div><b>" + st + "</b></div>";
+        $("ccols").innerHTML = COLS.map(([d, n, today, slots], i) => '<div class="ccol' + (today ? " today" : "") + '" style="left:' + (32 + i * 348) + 'px"><div class="h"><span>' + d + "</span><span>" + n + "</span></div>" + slots.map(slotHTML).join("") + "</div>").join("");
+        const newSlot = $("ccols").querySelector(".newslot");
+        const emptyTue = document.createElement("div");
+        emptyTue.className = "slot";
+        emptyTue.innerHTML = "9:10 AM<i>+</i>";
+        Object.assign(emptyTue.style, { position: "absolute", left: "14px", right: "14px", top: "45px" });
+        newSlot.parentNode.appendChild(emptyTue);
+        const tick = document.createElement("div");
+        Object.assign(tick.style, { position: "absolute", right: "12px", top: "12px", width: "30px", height: "30px", borderRadius: "50%", background: "#3f8a4a", color: "#fff", font: "700 16px/30px Inter", textAlign: "center" });
+        tick.textContent = "✓";
+        newSlot.appendChild(tick);
+
+        // ---------- doc ----------
+        const TH1 = [
+          ["1 / 4", "Start where the attention already is. Pick a topic people already search for.", "Then say one thing about it that they have not heard.", "2 questions people ask"],
+          ["2 / 4", "Timing beats talent. Post when your people are awake, not when you are.", "This is tested. It works about 80% of the time.", "2 questions people ask"],
+          ["3 / 4", 'Second thing: <span class="mk">early replies matter more than late likes.</span>', "Get ten real replies in the first half hour and the post keeps travelling.", null, "How do I get replies that fast?<br>Reply to three people in your niche right before you post."],
+          ["4 / 4", "Third thing: answer the comments under your post.", "Every reply is a second post. Skip them and you stay stuck.", "2 questions people ask"],
+        ];
+        const TH2 = [["1 / 3", "Hook first. Then short chunks. Nothing else.", "Length is never the problem. Boring is.", "2 questions people ask"], ["2 / 3", "Say the important thing early. Do not save it for the end.", "Readers decide in the first line.", "1 question people ask"], ["3 / 3", "Cut every sentence that only sounds smart.", "If it would not survive being read aloud, rewrite it.", "3 questions people ask"]];
+        const thHTML = (items) => items.map(([n, a, b, q, bx], i) => '<div class="th">' + (i < items.length - 1 ? '<div class="vline"></div>' : "") + '<div class="a"></div><div class="h">@' + v.brand.toLowerCase() + "_coach<span>" + n + "</span></div><p>" + a + "</p><p>" + b + "</p>" + (q ? '<div class="q">' + q + "</div>" : "") + (bx ? '<div class="bx">' + bx + "</div>" : "") + "</div>").join("");
+        $("docInner").innerHTML = '<div class="dcard" style="top:0"><h5>How to get more views</h5><div class="sub">Tap a note. The questions people actually ask are underneath.</div>' + thHTML(TH1) + '</div><div class="dcard" style="top:1500px"><h5>How to write the post</h5><div class="sub">Tap a note. The questions people actually ask are underneath.</div>' + thHTML(TH2) + "</div>";
+
+        // ---------- logo ----------
+        $("wmark").textContent = v.brand;
+        $("dom").textContent = v.domain;
+
+        // ---------- canvas ----------
+        const fx = $("fx").getContext("2d");
+        const cx2 = $("chart").getContext("2d");
+        const gx = $("gchart").getContext("2d");
+        const ring = (c, x, y, r, w, col, a) => { if (a <= 0.01 || r <= 0) return; c.globalAlpha = Math.min(1, a); c.strokeStyle = col; c.lineWidth = w; c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.stroke(); c.globalAlpha = 1; };
+        const ticks = (c, t, t0, x, y, n, r0, r1, cols) => {
+          const u = P(t, t0, t0 + 0.45);
+          if (u <= 0 || u >= 1) return;
+          c.save(); c.lineCap = "round"; c.lineWidth = 4;
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * 6.2832 - 1.2;
+            const ra = L(r0, r1, E.outCubic(u)), len = L(30, 12, u);
+            c.globalAlpha = 1 - u; c.strokeStyle = cols[i % cols.length];
+            c.beginPath(); c.moveTo(x + Math.cos(a) * ra, y + Math.sin(a) * ra); c.lineTo(x + Math.cos(a) * (ra + len), y + Math.sin(a) * (ra + len)); c.stroke();
+          }
+          c.restore();
+        };
+        const clickRing = (t, t0, x, y) => { const u = P(t, t0, t0 + 0.4); if (u > 0 && u < 1) ring(fx, x, y, L(10, 60, E.outCubic(u)), 2.5, "#8f8279", 0.6 * (1 - u)); };
+
+        // flat chart with spike (scene 4)
+        const WOB = (i) => 712 + 10 * Math.sin(i * 1.7) + 6 * Math.sin(i * 0.9 + 1);
+        function drawChart(t) {
+          cx2.clearRect(0, 0, 1920, 1080);
+          if (t < 6.98 || t > 8.75) return;
+          const h = 1150 * E.outQuad(P(t, 7.0, 7.85));
+          const fade = 1 - P(t, 8.3, 8.6);
+          const drop = E.inCubic(P(t, 8.3, 8.6)) * 60;
+          const sx = (wx) => 1210 - (h - wx);
+          cx2.save();
+          cx2.globalAlpha = fade;
+          cx2.translate(0, drop);
+          // dotted baseline ahead of the head
+          cx2.fillStyle = "#b9ada2";
+          for (let x = 1230; x < 1560; x += 14) { cx2.beginPath(); cx2.arc(x, 714, 1.6, 0, 6.2832); cx2.fill(); }
+          cx2.strokeStyle = ACC; cx2.lineWidth = 5; cx2.lineJoin = "round"; cx2.lineCap = "round";
+          cx2.beginPath();
+          let first = true;
+          for (let i = 0; i <= 10; i++) {
+            const wx = i * 115;
+            if (wx > h) break;
+            const x = sx(wx), y = WOB(i);
+            if (first) { cx2.moveTo(x, y); first = false; } else cx2.lineTo(x, y);
+          }
+          const hi = h / 115, i0 = Math.floor(hi), f = hi - i0;
+          const headY = L(WOB(i0), WOB(i0 + 1), f);
+          cx2.lineTo(1210, headY);
+          const sp = E.outCubic(P(t, 7.86, 8.04));
+          if (sp > 0) cx2.lineTo(L(1210, 1270, sp), L(headY, 300, sp));
+          cx2.stroke();
+          for (let i = 0; i <= 10; i++) {
+            const wx = i * 115;
+            if (wx > h - 20) break;
+            cx2.fillStyle = "#f6f2ed"; cx2.strokeStyle = ACC; cx2.lineWidth = 3;
+            cx2.beginPath(); cx2.arc(sx(wx), WOB(i), 7, 0, 6.2832); cx2.fill(); cx2.stroke();
+          }
+          const hx = sp > 0 ? L(1210, 1270, sp) : 1210, hy = sp > 0 ? L(headY, 300, sp) : headY;
+          if (sp > 0.95) {
+            const g = cx2.createRadialGradient(hx, hy, 0, hx, hy, 70);
+            g.addColorStop(0, "rgba(214,120,60,0.35)"); g.addColorStop(1, "rgba(214,120,60,0)");
+            cx2.fillStyle = g; cx2.beginPath(); cx2.arc(hx, hy, 70, 0, 6.2832); cx2.fill();
+            ring(cx2, hx, hy, 50, 1.5, "#d49a78", 0.6);
+          }
+          cx2.fillStyle = ACC; cx2.beginPath(); cx2.arc(hx, hy, 11, 0, 6.2832); cx2.fill();
+          cx2.restore();
+          ticks(cx2, t, 8.02, 1270, 300, 8, 50, 110, [ACC, "#c9895f"]);
+        }
+
+        // growth chart on green (scene 11)
+        const GC = [];
+        for (let i = 0; i <= 60; i++) { const u = i / 60; GC.push([250 + u * 1340, 812 - 510 * Math.pow(u, 1.35) - 14 * Math.sin(u * 22) * u]); }
+        function drawGrowth(t) {
+          gx.clearRect(0, 0, 1920, 1080);
+          if (t < 19.4 || t > 21.2) return;
+          const a = P(t, 19.45, 19.6) * (1 - P(t, 20.85, 21.1));
+          const u = E.inOutCubic(P(t, 19.65, 20.55));
+          const n = u * 60, i0 = Math.floor(n);
+          const head = i0 >= 60 ? GC[60] : [L(GC[i0][0], GC[i0 + 1][0], n - i0), L(GC[i0][1], GC[i0 + 1][1], n - i0)];
+          gx.save();
+          gx.globalAlpha = a;
+          const z = 1 + 0.06 * E.inCubic(P(t, 20.8, 21.1));
+          gx.translate(960, 540); gx.scale(z, z); gx.translate(-960, -540);
+          gx.fillStyle = "rgba(255,255,255,0.55)";
+          for (let x = 250; x < 1640; x += 16) { gx.beginPath(); gx.arc(x, 836, 1.5, 0, 6.2832); gx.fill(); }
+          if (u > 0) {
+            const grd = gx.createLinearGradient(0, 300, 0, 836);
+            grd.addColorStop(0, "rgba(255,255,255,0.22)"); grd.addColorStop(1, "rgba(255,255,255,0)");
+            gx.fillStyle = grd;
+            gx.beginPath(); gx.moveTo(250, 836);
+            for (let i = 0; i <= i0 && i <= 60; i++) gx.lineTo(GC[i][0], GC[i][1]);
+            gx.lineTo(head[0], head[1]); gx.lineTo(head[0], 836); gx.closePath(); gx.fill();
+            gx.strokeStyle = "#fff"; gx.lineWidth = 5; gx.lineJoin = "round"; gx.lineCap = "round";
+            gx.beginPath(); gx.moveTo(GC[0][0], GC[0][1]);
+            for (let i = 1; i <= i0 && i <= 60; i++) gx.lineTo(GC[i][0], GC[i][1]);
+            gx.lineTo(head[0], head[1]); gx.stroke();
+            [15, 30, 45].forEach((k) => { if (k <= n) { gx.fillStyle = "#5d9557"; gx.strokeStyle = "#fff"; gx.lineWidth = 3; gx.beginPath(); gx.arc(GC[k][0], GC[k][1], 6, 0, 6.2832); gx.fill(); gx.stroke(); } });
+          }
+          const pulse = P(t, 20.55, 20.8);
+          if (pulse > 0 && pulse < 1) ring(gx, head[0], head[1], L(10, 44, pulse), 3, "#ffffff", 0.5 * (1 - pulse));
+          gx.fillStyle = "#fff"; gx.beginPath(); gx.arc(head[0], head[1], 10, 0, 6.2832); gx.fill();
+          const goal = parseInt(v.goal, 10) || 500;
+          gx.font = "700 36px Inter"; gx.textAlign = "center"; gx.fillStyle = "#fff";
+          gx.fillText(Math.round(goal * u) + " followers", head[0], head[1] - 36);
+          gx.font = "500 22px Inter"; gx.fillStyle = "rgba(255,255,255,0.8)";
+          gx.fillText("Day 1", 280, 890);
+          if (u > 0.85) { gx.globalAlpha = a * P(t, 20.35, 20.5); gx.fillText("Day 30", 1620, 890); }
+          gx.restore();
+        }
+
+        // ---------- cameras ----------
+        const modalCam = (t) => {
+          const sc = L(0.95, 1, E.outCubic(P(t, 1.88, 2.6)));
+          const top = L(L(L(220, 116, E.outCubic(P(t, 1.88, 2.6))), -358, E.inOutCubic(P(t, 3.25, 3.62))), -468, E.inOutCubic(P(t, 3.95, 4.35)));
+          return [960 - 630 * sc, top, 2 * sc];
+        };
+        const edCam = (t) => {
+          let ox = 120, oy = 180, blurx = 0, blury = 0;
+          if (t < 13.66) {
+            const w = E.inCubic(P(t, 13.5, 13.66));
+            ox = 120 - 900 * w; oy = L(180, 170, P(t, 11.3, 13.5)); blurx = 60 * w;
+          } else {
+            const en = E.outCubic(P(t, 14.62, 14.82));
+            ox = L(-934 + 700, -934, en); oy = 28; blurx = 60 * (1 - en);
+            const pan = E.inOutCubic(P(t, 16.86, 17.24));
+            ox = L(ox, -164, pan); oy = L(oy, -490, pan); blury = 12 * Math.sin(Math.PI * pan);
+            const out = E.inCubic(P(t, 17.72, 17.9));
+            oy -= out * 700; blury += 40 * out;
+          }
+          return [ox, oy, blurx, blury];
+        };
+        const offIn = (el, stop) => { let x = el.offsetWidth / 2, y = el.offsetHeight / 2, e = el; while (e && e !== stop) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return [x, y]; };
+        const inModal = (el, tc) => { const c = modalCam(tc), o = offIn(el, $("modal")); return [c[0] + o[0] * c[2], c[1] + o[1] * c[2]]; };
+        const inPost = (el) => { const o = offIn(el, $("post")); return [470 + o[0] * 2, 294 + o[1] * 2]; };
+        const inEd = (el, tc) => { const c = edCam(tc), o = offIn(el, $("ed")); return [c[0] + o[0], c[1] + o[1]]; };
+
+        // ---------- cursor ----------
+        const cursor = $("cursor");
+        const curAt = (x, y, press) => { cursor.style.transform = "translate(" + (x - 3).toFixed(1) + "px," + (y - 3).toFixed(1) + "px) scale(" + (press ? 0.85 : 1) + ")"; };
+        // [t0, t1, x0, y0, target(), clickAt]; the start of each move is where the last one ended
+        const CUR = [
+          [2.2, 2.46, 1560, 780, () => inModal(chipEls[3], 2.46), 2.46],
+          [2.62, 3.1, null, null, () => inModal($("disc"), 3.12), 3.12],
+          [4.3, 4.56, 1640, 960, () => inModal(trk0, 4.58), 4.58],
+          [9.28, 9.56, 1420, 1010, () => inPost($("acts").querySelector(".u")), 9.58],
+          [11.55, 11.98, 1500, 840, () => inEd(writeBtn, 12.0), 12.0],
+          [15.0, 15.3, 1300, 720, () => inEd($("runBtn"), 15.32), 15.32],
+          [17.08, 17.34, 1250, 1000, () => inEd(schBtn, 17.36), 17.36],
+        ];
+
+        function render(t) {
+          $("greenBg").style.display = t >= 19.18 && t < 22.3 ? "" : "none";
+
+          // ----- headline 1 -----
+          K.show($("h1"), t < 1.9);
+          wordsAnim(H1, t, 0.08, 0.1, 0);
+
+          // ----- modal -----
+          const mOn = t >= 1.88 && t < 5.05;
+          K.show($("modalWrap"), mOn);
+          if (mOn) {
+            const mc = modalCam(t);
+            $("modal").style.transform = "translate(" + mc[0].toFixed(1) + "px," + mc[1].toFixed(1) + "px) scale(" + mc[2].toFixed(4) + ")";
+            $("modal").style.opacity = P(t, 1.88, 1.98);
+            const ih = t >= 2.47;
+            chipEls[3].classList.toggle("on", ih);
+            ck3.style.opacity = ih ? 1 : 0;
+            $("niches").textContent = ih ? "2/3 niches" : "1/3 niches";
+            const run = t >= 3.13 && t < 4.0;
+            $("disc").textContent = run ? "Researching…" : "Discover creators";
+            $("disc").style.opacity = run && t < 4.0 ? 0.75 : 1;
+            const pOpen = E.outCubic(P(t, 3.18, 3.42)) * (1 - E.inCubic(P(t, 3.98, 4.18)));
+            $("prog").style.height = (pOpen * 128).toFixed(1) + "px";
+            $("prog").style.opacity = C(pOpen * 1.5);
+            $("prog").style.marginTop = (pOpen * 18).toFixed(1) + "px";
+            $("prog").style.borderWidth = pOpen > 0.02 ? "1px" : "0";
+            $("prog").style.paddingTop = $("prog").style.paddingBottom = (pOpen * 14).toFixed(1) + "px";
+            const pp = P(t, 3.2, 3.72);
+            $("pbar").style.width = (pp * 100).toFixed(1) + "%";
+            $("ppct").textContent = Math.round(pp * 100) + "% complete";
+            const stp = Math.min(3, Math.floor(pp * 4));
+            $("pstate").textContent = ["Searching", "Finding", "Scraping", "Validating"][stp];
+            stepIs.forEach((s, i) => s.classList.toggle("on", i <= stp));
+            crEls.forEach((c, i) => { const u = E.outCubic(P(t, 4.05 + i * 0.08, 4.35 + i * 0.08)); c.style.opacity = u; c.style.transform = "translateY(" + ((1 - u) * 14).toFixed(1) + "px)"; });
+            $("results").style.height = (E.outCubic(P(t, 3.98, 4.2)) * 258).toFixed(1) + "px";
+            const tracked = t >= 4.6;
+            trk0.classList.toggle("done", tracked);
+            trk0.textContent = tracked ? "Tracked" : "+ Track creator";
+          }
+
+          // ----- headline 2 -----
+          K.show($("h2"), t >= 5.05 && t < 7.15);
+          wordsAnim(H2, t, 5.1, 0.08, 6.86);
+          mblur($("h2"), "h2", 0, 14 * Math.sin(Math.PI * P(t, 6.86, 7.12)));
+
+          // ----- chart + post card -----
+          drawChart(t);
+          const pOn = t >= 7.95 && t < 9.96;
+          K.show($("postWrap"), pOn);
+          if (pOn) {
+            const pillIn = E.outBack(P(t, 7.98, 8.16), 2.4);
+            const g = E.outCubic(P(t, 8.62, 9.1));
+            const px = L(1270, 1392, g), py = L(232, 366, g), ps = L(1, 0.42, g) * pillIn;
+            $("pill").style.transform = "translate(" + (px - 108).toFixed(1) + "px," + (py - 40).toFixed(1) + "px) scale(" + ps.toFixed(3) + ")";
+            const cs = L(0.28, 1, g);
+            const cxp = L(1170, 960, g), cyp = L(292, 294, g);
+            $("post").style.transform = "translate(" + (cxp - 490 * cs).toFixed(1) + "px," + cyp.toFixed(1) + "px) scale(" + (2 * cs).toFixed(4) + ")";
+            $("post").style.opacity = C(P(t, 8.62, 8.72) * 3);
+            $("post").querySelectorAll(".hdr, p, .stats").forEach((el) => { el.style.opacity = P(t, 8.9, 9.1); });
+            $("acts").style.opacity = P(t, 9.18, 9.3);
+            $("acts").style.transform = "translateY(" + ((1 - P(t, 9.18, 9.3)) * 6).toFixed(1) + "px)";
+          }
+
+          // ----- headline 3 -----
+          K.show($("h3"), t >= 9.9 && t < 11.35);
+          wordsAnim(H3, t, 9.95, 0.09, 11.1);
+
+          // ----- editor world -----
+          const eOn = t >= 11.28 && t < 17.9 && !(t >= 13.66 && t < 14.62);
+          K.show($("edWrap"), eOn);
+          if (eOn) {
+            const [ox, oy, blurx, blury] = edCam(t);
+            $("ed").style.transform = "translate(" + ox.toFixed(1) + "px," + oy.toFixed(1) + "px)";
+            $("ed").style.opacity = P(t, 11.28, 11.42);
+            mblur($("ed"), "ed", blurx, blury);
+            setW(t >= 12.0 ? "go" : "idle");
+            const sel = P(t, 11.7, 11.9);
+            $("orig").querySelectorAll(".hlx").forEach((h) => { h.style.background = "rgba(214,150,110," + (0.28 * sel).toFixed(3) + ")"; });
+            $("orig").style.opacity = 1 - P(t, 12.3, 12.45);
+            $("rew").style.opacity = P(t, 12.4, 12.55);
+            const ty = P(t, 12.62, 13.4);
+            K.type($("rb"), v.rewrite2, ty);
+            $("caret2").style.opacity = ty > 0 && (ty < 1 || Math.floor(t * 2.5) % 2 === 0) ? 1 : 0;
+            $("left").textContent = (t < 12.45 ? 180 : Math.round(161 - 8 * ty)) + " left";
+            // coach
+            const run = t >= 15.34;
+            $("runBtn").style.display = t < 16.08 ? "" : "none";
+            $("runBtn").style.opacity = run ? 0.6 : 1;
+            const ok = E.outBack(P(t, 16.08, 16.3), 2.6);
+            $("okc").style.transform = "scale(" + ok.toFixed(3) + ")";
+            const sc = E.outCubic(P(t, 15.55, 16.05));
+            $("scoreN").textContent = t < 15.5 ? "—" : String(Math.round((parseInt(v.score, 10) || 92) * sc));
+            $("sb1").style.borderColor = t >= 16.05 ? "#cdbfb2" : "";
+            $("sb1").style.background = t >= 16.05 ? "#fbf8f4" : "";
+            const shipOn = t >= 16.05;
+            $("shipT").textContent = shipOn ? "Ship" : "—";
+            $("shipT").style.color = shipOn ? "#3f8a4a" : "#9a918a";
+            $("shipS").textContent = shipOn ? "0 flags" : "Score a draft";
+            [[0, 15.5, 15.85, "Clear", 530], [2, 15.62, 16.0, "Solid", 500]].forEach(([k, a, b, lab, w]) => {
+              const u = E.outCubic(P(t, a, b));
+              $("b" + k).style.width = L(40, w, u).toFixed(1) + "px";
+              $("b" + k).classList.toggle("f", u > 0);
+              $("l" + k).textContent = t < a ? "—" : u < 1 ? "Checking…" : lab;
+            });
+            $("reachB").style.opacity = 0.35 + 0.65 * P(t, 16.15, 16.4);
+            setS(t >= 17.45 ? "done" : "idle");
+          }
+
+          // ----- headline 4 -----
+          K.show($("h4"), t >= 13.66 && t < 14.72);
+          wordsAnim(H4, t, 13.7, 0.08, 0);
+          const w4 = E.inCubic(P(t, 14.55, 14.72));
+          $("h4").style.transform = "translateX(" + (-w4 * 700).toFixed(1) + "px)";
+          mblur($("h4"), "h4", 60 * w4, 0);
+
+          // ----- calendar -----
+          const cOn = t >= 17.78 && t < 19.22;
+          K.show($("calWrap"), cOn);
+          if (cOn) {
+            const en = E.outCubic(P(t, 17.78, 17.98)), out = E.inCubic(P(t, 19.05, 19.22));
+            $("cal").style.transform = "translate(" + (208 - out * 900).toFixed(1) + "px," + (200 + (1 - en) * 500).toFixed(1) + "px)";
+            mblur($("cal"), "cal", 70 * out, 40 * (1 - en));
+            const nu = E.outBack(P(t, 18.5, 18.7), 1.6);
+            newSlot.style.opacity = C(nu * 2);
+            newSlot.style.transform = "scale(" + L(0.9, 1, nu).toFixed(3) + ")";
+            emptyTue.style.opacity = 1 - P(t, 18.5, 18.6);
+            tick.style.transform = "scale(" + E.outBack(P(t, 18.66, 18.86), 3).toFixed(3) + ")";
+          }
+
+          // ----- promise -----
+          const prOn = t >= 19.18 && t < 22.3;
+          K.show($("promise"), prOn);
+          drawGrowth(t);
+          if (prOn) {
+            wordsAnim(P1, t, 21.0, 0.07, 0);
+            wordsAnim(P2, t, 21.3, 0.07, 0);
+          }
+
+          // ----- headline 5 -----
+          K.show($("h5"), t >= 22.3 && t < 24.32);
+          wordsAnim(H5, t, 22.45, 0.09, 0);
+
+          // ----- doc -----
+          const dOn = t >= 24.3 && t < 27.12;
+          K.show($("doc"), dOn);
+          if (dOn) {
+            const en = E.outCubic(P(t, 24.3, 24.72));
+            const jump = P(t, 26.2, 26.62), out = E.inCubic(P(t, 26.85, 27.1));
+            const y = (1 - en) * 900 - 300 * ioq(P(t, 24.7, 26.2)) - 1200 * E.inOutCubic(jump) - 900 * out;
+            const blurY = 20 * Math.sin(Math.PI * jump) + 30 * out;
+            const di = $("docInner");
+            di.style.transform = "translate(470px," + (300 + y).toFixed(1) + "px) rotateX(22deg) rotateZ(-4deg)";
+            mblur(di, "doc", 0, blurY);
+          }
+
+          // ----- logo -----
+          const lOn = t >= 27.05;
+          K.show($("logo"), lOn);
+          if (lOn) {
+            const fly = E.outCubic(P(t, 27.08, 27.52));
+            $("sL").style.transform = "translate(" + (-(1 - fly) * 520).toFixed(1) + "px,0)";
+            $("sR").style.transform = "translate(" + ((1 - fly) * 520).toFixed(1) + "px,0)";
+            mblur($("sL"), "sL", 40 * (1 - fly), 0);
+            mblur($("sR"), "sR", 40 * (1 - fly), 0);
+            const ti = E.outBack(P(t, 27.4, 27.62), 2);
+            const slide = E.inOutCubic(P(t, 27.86, 28.32));
+            const ix = L(960, 620, slide);
+            $("icon").style.background = ti > 0.01 ? "" : "transparent";
+            $("icon").style.boxShadow = ti > 0.01 ? "" : "none";
+            $("icon").style.transform = "translate(" + (ix - 120).toFixed(1) + "px,420px) scale(" + L(1, 1, ti).toFixed(3) + ")";
+            $("icon").style.opacity = 1;
+            const tileA = C(ti);
+            $("icon").style.backgroundImage = "linear-gradient(160deg, rgba(251,249,246," + tileA + "), rgba(239,232,224," + tileA + "))";
+            // wordmark emerges from behind the icon
+            const wx0 = 780;
+            $("wclip").style.transform = "translate(" + (ix + 120 + 30) + "px,448px)";
+            $("wclip").style.width = Math.max(0, 1000) + "px";
+            $("wmark").style.transform = "translateX(" + (L(-700, 0, E.outCubic(P(t, 27.95, 28.45)))).toFixed(1) + "px)";
+            $("wclip").style.clipPath = "inset(0 0 0 0)";
+            $("dom").style.opacity = P(t, 28.3, 28.6);
+            $("dom").style.transform = "translateY(" + ((1 - P(t, 28.3, 28.6)) * 10).toFixed(1) + "px)";
+          }
+
+          // ----- cursor -----
+          let cv = false;
+          fx.clearRect(0, 0, 1920, 1080);
+          CUR.forEach(([a, b, x0, y0, tg, ck], k) => {
+            const on = k === 1 ? t >= a && t < ck + 0.3 : t >= a - 0.15 && t < ck + 0.3;
+            if (on || (t >= ck && t < ck + 0.35)) {
+              const [x1, y1] = tg();
+              if (x0 === null) { const p = CUR[k - 1][4](); x0 = p[0]; y0 = p[1]; }
+              if (on) {
+                cv = true;
+                const m = E.inOutCubic(P(t, a, b));
+                curAt(L(x0, x1, m), L(y0, y1, m), t >= ck - 0.03 && t < ck + 0.06);
+                cursor.style.opacity = (k === 1 ? 1 : P(t, a - 0.15, a)) * (1 - P(t, ck + 0.18, ck + 0.3));
+              }
+              clickRing(t, ck, x1 + 2, y1 + 2);
+            }
+          });
+          K.show(cursor, cv);
+
+          // ----- fx -----
+          ticks(fx, t, 27.52, 960, 540, 12, 150, 230, [ACC, "#2c2622"]);
+        }
+
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

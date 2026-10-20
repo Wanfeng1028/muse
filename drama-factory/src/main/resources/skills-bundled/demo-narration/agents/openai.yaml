@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Narration"
+  short_description: "Write natural narration that explains visible product actions"
+  default_prompt: "Use $demo-narration to connect this approved storyboard into spoken narration."

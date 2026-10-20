@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Mockup Video"
+  short_description: "Animate readable product UI and causal interactions"
+  default_prompt: "Use $ui-mockup-video to animate a product interaction and render an editable demo clip."

@@ -1,0 +1,362 @@
+[
+  {
+    "id": "h3-launch",
+    "title": "MiniMax H3 launch",
+    "url": "https://www.minimax.io/blog/minimax-h3",
+    "kind": "official-documentation",
+    "published": "2026-07-31",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "h3-open",
+    "title": "MiniMax H3 weights release",
+    "url": "https://www.minimax.io/news/minimax-h3-open-source",
+    "kind": "official-documentation",
+    "published": "2026-08-03",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "h3-card",
+    "title": "MiniMax H3 model card",
+    "url": "https://huggingface.co/MiniMaxAI/MiniMax-H3",
+    "kind": "official-model-card",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "h3-fal",
+    "title": "H3 hosted modes and reference limits",
+    "url": "https://fal.ai/minimax-h3",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "h3max-launch",
+    "title": "H3 Max post-training release",
+    "url": "https://blog.fal.ai/introducing-h3-max-by-fal/",
+    "kind": "official-documentation",
+    "published": "2026-08-27",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "h3max-schema",
+    "title": "H3 Max reference-to-video endpoint schema",
+    "url": "https://fal.ai/models/minimax/h3-max/reference-to-video/api",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Current schema supersedes launch text: references exist; 1080P is latent refinement. Audio-only reference is allowed on this endpoint, unlike H3 base."
+  },
+  {
+    "id": "h3max-page",
+    "title": "H3 Max and Turbo surfaces",
+    "url": "https://fal.ai/minimax-h3-max",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Launch promotion is expired. Do not reuse its promotional prices. Some prose is older than the endpoint schema."
+  },
+  {
+    "id": "seed25-launch",
+    "title": "Seedance 2.5 announcement",
+    "url": "https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5",
+    "kind": "official-documentation",
+    "published": "2026-07-31",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "seed25-model",
+    "title": "Seedance 2.5 capabilities",
+    "url": "https://seed.bytedance.com/en/seedance2_5",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "seed25-schema",
+    "title": "BytePlus Seedance 2.5 capabilities and model ID",
+    "url": "https://docs.byteplus.com/zh-TW/docs/modelark/seedance-2-5",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "seed25-las",
+    "title": "BytePlus enhanced video generation",
+    "url": "https://docs.byteplus.com/en/docs/byteplus_las/video_gen_enhanced",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "LAS and ModelArk are separate provider surfaces; verify account-specific schema."
+  },
+  {
+    "id": "ltx25-release",
+    "title": "LTX 2.5 API release",
+    "url": "https://docs.ltx.io/api-changelog/2026/8/11",
+    "kind": "official-documentation",
+    "published": "2026-08-11",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "ltx25-api",
+    "title": "LTX 2.5 API support matrix",
+    "url": "https://docs.ltx.io/models/ltx-2-5",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "ltx-models",
+    "title": "LTX API model capability matrix",
+    "url": "https://docs.ltx.io/models",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "ltx25-card",
+    "title": "LTX 2.5 open-weight model card",
+    "url": "https://huggingface.co/Lightricks/LTX-2.5",
+    "kind": "official-model-card",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "ltx25-diffusers",
+    "title": "LTX 2.5 Diffusers model card",
+    "url": "https://huggingface.co/Lightricks/LTX-2.5-Diffusers",
+    "kind": "official-model-card",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "omni11-release",
+    "title": "Gemini Omni 1.1 Flash release",
+    "url": "https://blog.google/innovation-and-ai/technology/developers-tools/build-with-gemini-omni-1-1-flash/",
+    "kind": "official-documentation",
+    "published": "2026-08-27",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "omni-api",
+    "title": "Gemini Omni Interactions API",
+    "url": "https://ai.google.dev/gemini-api/docs/omni",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "flux3-release",
+    "title": "FLUX.3 announcement",
+    "url": "https://bfl.ai/blog/flux-3",
+    "kind": "official-documentation",
+    "published": "2026-07-23",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "flux3-api",
+    "title": "FLUX.3 video modes and draft enhancement",
+    "url": "https://help.bfl.ai/articles/7342522296-what-is-flux-3",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "wan-release-log",
+    "title": "Alibaba Model Studio release ledger",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/newly-released-models",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "wan3-release",
+    "title": "Wan 3.0 announcement",
+    "url": "https://modelstudio.alibabacloud.com/intl/blog/wan3-ai-video-generation-model/",
+    "kind": "official-documentation",
+    "published": "2026-08-06",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "wan3-schema",
+    "title": "Wan 3.0 Model Studio model surface",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/wan3-0-video",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "wan3prime-schema",
+    "title": "Wan 3.0 Prime model surface",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/wan3-0-video-prime",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "alibaba-matrix",
+    "title": "Alibaba generation, editing and performance-transfer matrix",
+    "url": "https://www.alibabacloud.com/help/en/model-studio/video-generate-edit-model",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "kling3-release",
+    "title": "Kuaishou Kling 3.0 release",
+    "url": "https://ir.kuaishou.com/zh-hant/news-releases/news-release-details/keling30xiliemoxingquanmianshangxian-0/",
+    "kind": "official-documentation",
+    "published": "2026-02-05",
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "kling3-fal",
+    "title": "Kling 3.0 provider capability guide",
+    "url": "https://fal.ai/kling-3",
+    "kind": "provider-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "kling3-turbo",
+    "title": "Kling 3.0 Turbo Standard endpoint",
+    "url": "https://fal.ai/models/fal-ai/kling-video/v3/turbo/standard/text-to-video",
+    "kind": "provider-schema",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "agent-skills",
+    "title": "Agent Skills specification",
+    "url": "https://agentskills.io/specification",
+    "kind": "specification",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "claude-skills",
+    "title": "Claude Code skills documentation",
+    "url": "https://code.claude.com/docs/en/skills",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "codex-skills",
+    "title": "OpenAI skills documentation",
+    "url": "https://developers.openai.com/codex/skills",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "opus55",
+    "title": "Anthropic Opus model page",
+    "url": "https://www.anthropic.com/claude/opus",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "astra",
+    "title": "GPT-6 Astra model announcement",
+    "url": "https://openai.com/index/gpt-6-astra/",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": ""
+  },
+  {
+    "id": "chatcut-video-contract",
+    "title": "Provider-owned skill contract: chatcut-inc--video-gen",
+    "url": "https://github.com/ChatCut-Inc/agent-plugin/blob/877b9177144feeecdef0da70f0e4d5cb760f6037/claude/skills/video-gen/SKILL.md",
+    "kind": "provider-skill-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Pinned provider adapter documentation; do not assume direct-API parity."
+  },
+  {
+    "id": "scenario-seedance-contract",
+    "title": "Provider-owned skill contract: scenario-labs--scenario-seedance",
+    "url": "https://github.com/scenario-labs/skills/blob/d87071d22edb5eb5871c9034f89cada518657891/skills/scenario-seedance/SKILL.md",
+    "kind": "provider-skill-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Pinned provider adapter documentation; do not assume direct-API parity."
+  },
+  {
+    "id": "ltx25-inout",
+    "title": "LTX 2.5 in/outpainting workflow",
+    "url": "https://docs.ltx.io/open-source-model/feature-guides/editing-effects/in-outpainting",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Primary documentation retrieved as search-visible text; full-page fetch was not consistently available."
+  },
+  {
+    "id": "ltx25-exr",
+    "title": "LTX 2.5 native EXR pipeline",
+    "url": "https://docs.ltx.io/open-source-model/usage-guides/working-with-exr-hdr",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Primary documentation retrieved as search-visible text; full-page fetch was not consistently available."
+  },
+  {
+    "id": "ltx25-restore",
+    "title": "LTX 2.5 generative refinement and restoration",
+    "url": "https://docs.ltx.io/open-source-model/vfx-post-production/refine-and-restore",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Primary documentation retrieved as search-visible text; full-page fetch was not consistently available."
+  },
+  {
+    "id": "ltx23-dubit",
+    "title": "Dub-It compatibility warning",
+    "url": "https://docs.ltx.io/open-source-model/feature-guides/audio/dub-it-beta",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Primary documentation retrieved as search-visible text; full-page fetch was not consistently available."
+  },
+  {
+    "id": "ltx23-foley",
+    "title": "Foley compatibility warning",
+    "url": "https://docs.ltx.io/open-source-model/feature-guides/audio/video-to-audio-foley",
+    "kind": "official-documentation",
+    "published": null,
+    "checked_at": "2026-10-01",
+    "note": "Primary documentation retrieved as search-visible text; full-page fetch was not consistently available."
+  }
+]

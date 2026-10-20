@@ -1,0 +1,32 @@
+# Example: QA repro of the "save spins forever when amount > 1000" bug on the fixture app.
+mode: bug-report
+url: http://localhost:8765
+viewport: [1280, 720]
+lang: vi
+title: "Lưu hoá đơn > 1000 USD bị treo"
+bug:
+  expected: "Hoá đơn được lưu, hiện thông báo Invoice saved"
+  actual: "Nút Save quay mãi, API trả 500, không có thông báo lỗi"
+  env: "Chromium 1280x720, fixture app"
+  reporter_version: "build a1b2c3 (staging)"
+  tested_version: "local fixture"
+steps:
+  - caption: "Đăng nhập"
+    hidden: true
+    do:
+      - goto /login
+      - 'fill #email | demo@example.com'
+      - 'fill #password | demo-pass'
+      - 'click [data-testid="sign-in"]'
+      - wait_url **/
+  - caption: "Bấm New invoice"
+    do: 'click [data-testid="new-invoice"]'
+  - caption: "Nhập khách hàng, số tiền 1500"
+    do:
+      - 'type #customer | Globex'
+      - 'type #amount | 1500'
+  - caption: "Bấm Save"
+    do: 'click [data-testid="save-invoice"]'
+    wait: 2500
+    bug: true
+    bug_target: "[data-testid=\"save-invoice\"]"

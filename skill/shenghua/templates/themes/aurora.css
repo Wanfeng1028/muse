@@ -1,0 +1,57 @@
+:root{--bg:var(--brand-bg);--s1:color-mix(in srgb,var(--brand-text) 7%,transparent);--s2:color-mix(in srgb,var(--brand-text) 12%,transparent);--border:color-mix(in srgb,var(--brand-text) 18%,transparent);--accent:var(--brand-primary);--ink:var(--brand-primary-ink);--accent2:var(--brand-secondary);--body:var(--brand-text);--muted:var(--brand-muted);--green:var(--brand-success);--red:var(--brand-error);--W:{{width}}px;--H:{{height}}px}
+:root{--panel:color-mix(in srgb,var(--brand-text) 10%,transparent);--panel-fg:var(--brand-text);--frame:color-mix(in srgb,var(--brand-text) 35%,transparent);--radius:36px;--display:"{{brand.fonts.display}}"}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:var(--W);height:var(--H);overflow:hidden;background:var(--bg);font-family:"{{brand.fonts.display}}",Arial,sans-serif;color:var(--body)}
+/* Aurora's character is three soft glows; the kit decides their colours */
+#world{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 18% 22%,color-mix(in srgb,var(--accent) 45%,transparent),transparent 42%),radial-gradient(circle at 85% 38%,color-mix(in srgb,var(--accent2) 45%,transparent),transparent 45%),radial-gradient(circle at 40% 88%,color-mix(in srgb,color-mix(in srgb,var(--accent) 50%,var(--accent2)) 32%,transparent),transparent 45%),var(--bg)}
+#cam{position:absolute;inset:0;transform-origin:50% 45%}
+.shot{position:absolute;inset:0;visibility:hidden;overflow:hidden}
+.abs{position:absolute}
+.cx{position:absolute;left:0;right:0;text-align:center}
+.mono{font-family:"{{brand.fonts.mono}}",monospace}
+.pink{color:var(--ink)}
+.green{color:var(--green)}
+.muted{color:var(--muted)}
+.xl{font-weight:800;letter-spacing:-.04em;line-height:.98;text-transform:none;color:var(--body);text-shadow:0 10px 60px color-mix(in srgb,var(--accent2) 45%,transparent)}
+.kick{font-family:"{{brand.fonts.mono}}",monospace;color:var(--muted);font-size:30px;letter-spacing:.24em;text-transform:uppercase}
+.card{background:color-mix(in srgb,var(--brand-text) 8%,transparent);border:1px solid color-mix(in srgb,var(--brand-text) 20%,transparent);border-radius:36px;backdrop-filter:blur(28px);box-shadow:0 40px 100px rgba(0,0,0,.35),inset 0 1px 0 color-mix(in srgb,var(--brand-text) 25%,transparent)}
+.gridbg{position:absolute;inset:-300px;background-image:radial-gradient(color-mix(in srgb,var(--brand-text) 12%,transparent) 2px,transparent 2px);background-size:60px 60px}
+.glow{position:absolute;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 40%,transparent),transparent 65%);filter:blur(20px)}
+.photo{position:absolute;overflow:hidden;border-radius:36px;border:1px solid color-mix(in srgb,var(--brand-text) 30%,transparent);box-shadow:0 40px 100px rgba(0,0,0,.45)}
+.photo img{width:100%;height:100%;object-fit:cover}
+.face{background:#000}
+.face>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.badge{display:inline-block;font-family:"{{brand.fonts.mono}}",monospace;font-size:30px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--body);background:color-mix(in srgb,var(--brand-text) 12%,transparent);border:1px solid color-mix(in srgb,var(--brand-text) 30%,transparent);border-radius:99px;padding:14px 32px;backdrop-filter:blur(20px)}
+.hl{position:relative;display:inline-block;padding:0 .12em}
+.hl i{position:absolute;inset:.08em 0 0;background:linear-gradient(90deg,var(--accent),var(--accent2));transform-origin:left;z-index:-1;border-radius:.2em}
+.strike{position:absolute;left:-4%;right:-4%;top:52%;height:.08em;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transform-origin:left}
+.stamp{border:6px solid currentColor;border-radius:99px;padding:12px 44px;font-weight:800;letter-spacing:.02em;line-height:1;backdrop-filter:blur(16px)}
+.scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 2px,transparent 2px 5px);pointer-events:none}
+.vhs{font-family:"{{brand.fonts.mono}}",monospace;font-weight:700;color:#fff;text-shadow:3px 0 0 var(--fx-chroma-a),-3px 0 0 var(--fx-chroma-b)}
+.track{position:absolute;left:0;right:0;height:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent);filter:blur(2px)}
+.term{position:absolute;left:70px;right:70px;border-radius:32px;background:color-mix(in srgb,var(--bg) 72%,transparent);border:1px solid color-mix(in srgb,var(--brand-text) 20%,transparent);backdrop-filter:blur(28px);box-shadow:0 40px 110px rgba(0,0,0,.5);overflow:hidden}
+.term .bar{height:70px;display:flex;align-items:center;gap:14px;padding-left:30px;border-bottom:1px solid color-mix(in srgb,var(--brand-text) 14%,transparent);font-family:"{{brand.fonts.mono}}",monospace;font-size:24px;color:var(--muted)}
+.term .bar i{width:18px;height:18px;border-radius:50%;background:color-mix(in srgb,var(--brand-text) 25%,transparent)}
+.term pre{font-family:"{{brand.fonts.mono}}",monospace;font-size:36px;line-height:1.55;padding:36px 40px;color:var(--body);white-space:pre-wrap}
+.err{color:var(--red)}
+.caret{display:inline-block;width:.55em;height:1em;background:var(--accent);vertical-align:-.12em;margin-left:4px;border-radius:3px}
+.logo{width:280px;height:280px;display:flex;align-items:center;justify-content:center;border-radius:36px;background:color-mix(in srgb,var(--brand-text) 8%,transparent);border:1px solid color-mix(in srgb,var(--brand-text) 20%,transparent);backdrop-filter:blur(20px)}
+.logo img{width:110px;height:110px;filter:invert(1)}
+.pkt{position:absolute;width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:0 0 30px var(--accent),0 0 60px var(--accent2)}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 85% 75% at 50% 45%,transparent 60%,rgba(0,0,0,.45));z-index:80}
+#grain{position:absolute;inset:0;width:var(--W);height:var(--H);opacity:.05;mix-blend-mode:screen;z-index:81;image-rendering:pixelated}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:82;mix-blend-mode:soft-light}
+#pinkflash{position:absolute;inset:0;background:var(--accent);opacity:0;z-index:82;mix-blend-mode:screen}
+#captions{position:absolute;left:60px;right:60px;top:{{captionTop}}px;z-index:90;display:flex;justify-content:center}
+#capbox{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:68px;font-weight:800;letter-spacing:-.02em;line-height:1.08;text-align:center;text-transform:none}
+#capbox span{color:var(--body);position:relative;text-shadow:0 6px 30px rgba(0,0,0,.8);opacity:.5}
+#capbox span.on,#capbox span.now{opacity:1}
+#capbox span.now{color:var(--brand-on-primary);text-shadow:none}
+#capbox span.now::before{content:"";position:absolute;inset:4px -12px -2px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 60%,var(--accent2)));border-radius:99px;z-index:-1}
+#prog{position:absolute;left:0;bottom:0;height:8px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--ink));z-index:95}
+#sig{position:absolute;left:0;right:0;top:92px;text-align:center;font-family:"{{brand.fonts.mono}}",monospace;font-size:28px;color:color-mix(in srgb,var(--brand-text) 60%,transparent);z-index:95}
+#sig b{color:var(--ink)}
+.quote cite{color:var(--body);opacity:.8}
+.logo-chip{background:color-mix(in srgb,var(--brand-text) 10%,transparent);border:1px solid color-mix(in srgb,var(--brand-text) 30%,transparent);border-radius:99px;backdrop-filter:blur(20px);box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.doc-frame{background:color-mix(in srgb,var(--brand-text) 8%,transparent);border:1px solid color-mix(in srgb,var(--brand-text) 25%,transparent);border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.doc-src{color:var(--muted)}

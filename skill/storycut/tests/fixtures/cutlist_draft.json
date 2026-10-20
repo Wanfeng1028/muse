@@ -1,0 +1,12 @@
+{
+  "title": "From almost quitting to our first user",
+  "audience": "Founders on LinkedIn",
+  "goal": "Tell a short, truthful lesson about customer discovery",
+  "target_seconds": 60,
+  "editor_notes": "Check whether the transition from the setback to the teacher needs a title card.",
+  "clips": [
+    {"order": 1, "title": "The setback", "role": "hook", "segment_ids": ["s0001", "s0002"], "quote": "We almost closed the company.", "reason": "Clear stakes"},
+    {"order": 2, "title": "Talk to users", "role": "turning point", "segment_ids": ["s0003", "s0004", "s0005"], "reason": "Specific change in behavior"},
+    {"order": 3, "title": "The lesson", "role": "payoff", "segment_ids": ["s0006", "s0007"], "quote": "We needed to listen before we built anything.", "reason": "Concrete result and insight"}
+  ]
+}

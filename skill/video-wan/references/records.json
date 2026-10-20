@@ -1,0 +1,182 @@
+[
+  {
+    "id": "wan-3-0",
+    "name": "Wan 3.0 / Model Studio",
+    "family": "wan",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-08-06",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "document-input",
+      "web-input",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "wan3.0-video"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "wan3-release",
+      "wan3-schema",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "30-second single-pass output",
+      "Document or webpage as creative context",
+      "Unified multimodal reference input"
+    ],
+    "limits": {
+      "min_seconds": 2,
+      "max_seconds": 30,
+      "fps": [
+        30
+      ],
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "max_documents": 1,
+      "max_document_pages": 50,
+      "max_document_mb": 100
+    },
+    "aliases": [
+      "wan3",
+      "wan-3",
+      "wan3.0"
+    ],
+    "notes": [
+      "Document and URL inputs are not assumed supported by resellers.",
+      "Release marketing discusses editing/extension, but this creation record does not approve those operations without their exact current schema.",
+      "Wan 3.0 is not interchangeable with the open-weight Wan 2.x ecosystem."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/wan.md",
+    "skill_id": "video-wan",
+    "model_version": "3.0"
+  },
+  {
+    "id": "wan-3-0-prime",
+    "name": "Wan 3.0 Prime / Model Studio",
+    "family": "wan",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-08-20",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "document-input",
+      "web-input",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "wan3.0-video-prime"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "wan3-release",
+      "wan3prime-schema",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "30-second single-pass output",
+      "Document or webpage as creative context",
+      "Unified multimodal reference input"
+    ],
+    "limits": {
+      "min_seconds": 2,
+      "max_seconds": 30,
+      "fps": [
+        30
+      ],
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "max_documents": 1,
+      "max_document_pages": 50,
+      "max_document_mb": 100
+    },
+    "aliases": [
+      "wan-prime"
+    ],
+    "notes": [
+      "Document and URL inputs are not assumed supported by resellers.",
+      "Release marketing discusses editing/extension, but this creation record does not approve those operations without their exact current schema.",
+      "Wan 3.0 is not interchangeable with the open-weight Wan 2.x ecosystem."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/wan.md",
+    "skill_id": "video-wan",
+    "model_version": "3.0"
+  },
+  {
+    "id": "wan-2-7-videoedit",
+    "name": "Wan 2.7 Video Edit / Model Studio",
+    "family": "wan",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "video-editing",
+      "motion-transfer"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "wan2.7-videoedit"
+    ],
+    "source_ids": [
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Dedicated effect and camera-motion replication"
+    ],
+    "limits": {
+      "min_seconds": 2,
+      "max_seconds": 10,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "wan2.7-edit"
+    ],
+    "notes": [
+      "Editing source duration must be validated separately from requested output duration."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/wan.md",
+    "skill_id": "video-wan",
+    "model_version": "2.7"
+  }
+]

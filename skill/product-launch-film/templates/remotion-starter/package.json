@@ -1,0 +1,36 @@
+{
+	"name": "launch-film",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Code-rendered product launch film (Remotion starter from the product-launch-film skill)",
+	"type": "module",
+	"scripts": {
+		"studio": "remotion studio",
+		"typecheck": "tsc --noEmit",
+		"check:layout": "node --no-warnings scripts/check-layout.ts",
+		"check:contrast": "node --no-warnings scripts/check-contrast.ts",
+		"check": "npm run typecheck && npm run check:layout && npm run check:contrast",
+		"audio": "python3 scripts/make-audio.py",
+		"stills": "node scripts/stills.mjs --named",
+		"audit": "node scripts/stills.mjs --audit",
+		"render:picture": "remotion render FilmPicture out/film-picture.mp4 --codec=h264 --muted --crf=18 --pixel-format=yuv420p --image-format=png",
+		"render": "remotion render Film out/film.raw.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --image-format=png --audio-codec=aac --audio-bitrate=320k && node scripts/master-audio.mjs out/film.raw.mp4 out/film.mp4"
+	},
+	"dependencies": {
+		"@remotion/bundler": "4.0.530",
+		"@remotion/cli": "4.0.530",
+		"@remotion/google-fonts": "4.0.530",
+		"@remotion/renderer": "4.0.530",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"remotion": "4.0.530"
+	},
+	"devDependencies": {
+		"@types/node": "22.15.30",
+		"@types/react": "19.1.8",
+		"typescript": "5.8.3"
+	},
+	"engines": {
+		"node": ">=22.18"
+	}
+}

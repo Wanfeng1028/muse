@@ -1,0 +1,33 @@
+{
+  "id": "21-ecg-device-film",
+  "title": "Medical device product film — hero reveal, seven feature scenes with live screens, a printout feeding out of the slot, hero end card",
+  "category": "product film / hardware",
+  "duration": 40.5,
+  "size": "1920x1080",
+  "demoBrand": "ORVICA CARDIA E12 (fictional)",
+  "source": {
+    "author": "@qwolfai",
+    "post": "https://x.com/qwolfai/status/2103056860366393504",
+    "note": "Remade from scratch in HyperFrames after an AI-made launch film for an ECG monitor; the scene list, the tag/title/line layout and the screen ideas follow it. The real maker, model, the third-party algorithm name, the compliance claim and the generator's watermark are left out. The original is rendered 3D video; this template uses four stills generated with the Claude Imagine MCP (one hero render and three edits of it, so the device stays identical) with a flat green screen, and every screen is drawn live on a canvas and mapped onto the still with a matrix3d homography."
+  },
+  "scenes": [
+    "the device comes out of a white haze under moving light rays; the screen sweeps a live ECG; name and line",
+    "DISPLAY: close on the screen — a point of light, a teal field, the grid, then a trace draws",
+    "WORKFLOW: the screen steps through monitor, patient list, analysis gauge, rhythm strip and a summary while the power button pulses",
+    "ENDURANCE: three-quarter view, a battery fills cell by cell",
+    "MONITORING: a long rhythm strip draws across red paper",
+    "INTELLIGENCE: a scan line sweeps the strip, labels the beats and fills in the measurements",
+    "SECURITY: a 12-lead report on screen and a glowing shield draws itself beside the device",
+    "REPORTING: a printout with three channels feeds out of the side slot in perspective",
+    "end card: the camera pulls back on the three-quarter view; name, line and maker"
+  ],
+  "variables": ["brand", "model", "modelSub", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "endSub", "battery", "tagColor", "ink", "subColor", "trace"],
+  "images": [
+    { "file": "assets/img/front.webp", "use": "intro, workflow, security (screen keyed out)", "model": "gpt-image-2.5 1k 16:9", "prompt": "Photorealistic studio product render of a modern white desktop ECG machine, viewed from above looking straight down onto its sloped top panel, so the panel faces the camera like a front view. The panel is taller than wide with softly rounded corners: in its upper half a landscape 8-inch touchscreen in a black glass frame, the screen is a uniform flat pure green (#00FF00) with no reflections; below the screen a horizontal row of four small round grey buttons and a red power button on the left; plain matte white panel below the buttons. The device sits in the centre of the frame, about a third of the frame wide, in a soft pale blue studio with gentle volumetric light rays falling from the top, on a glossy white floor. Premium medical product look. No text, no logos, no brand names." },
+    { "file": "assets/img/close.webp", "use": "display, monitoring, intelligence (screen keyed out)", "model": "gpt-image-2.5 edit of front", "prompt": "New photo of this exact device: an extreme close-up of its touchscreen seen straight on. The black glass screen frame fills about 80% of the frame width, the device's rounded white body visible around it at the edges and the red power button and grey buttons just visible at the bottom edge. The screen stays a uniform flat pure green (#00FF00) with no reflections. Same soft pale blue studio light. No text, no logos." },
+    { "file": "assets/img/three.webp", "use": "endurance and the end card (screen keyed out)", "model": "gpt-image-2.5 edit of front", "prompt": "New product render of this exact device (same white body, same black-framed screen, same red power button and four grey buttons) seen from a high three-quarter angle from the front left, showing that it is a low wedge-shaped desktop unit: the screen and the buttons sit on its sloped top surface, and its left side has a wide horizontal slot for thermal printer paper. The screen stays a uniform flat pure green (#00FF00) with no reflections. Same soft pale blue studio with volumetric light rays from the top and a glossy white floor. The device in the centre, about 40% of the frame wide. No text, no logos." },
+    { "file": "assets/img/slot.jpg", "use": "the printer scene", "model": "gpt-image-2.5 edit of front", "prompt": "New close-up product render of this exact device's white body from its left side at a low three-quarter angle: a wide, thin horizontal thermal printer paper slot runs across the side panel, the slot is empty (no paper), the sloped top edge with the corner of the black screen frame visible at the top right. Smooth matte white plastic with soft studio light and a pale blue background. No text, no logos." }
+  ],
+  "notes": "Each scene is a row in SC (start, end, still, camera from/to, screen function, light rays). To use your own device, generate one hero render with a flat green screen, make the other stills as edits of it, run `python3 tools/screen_quad.py still.png assets/img/still.webp` for each and paste the corners into QF/QC/QT; set S0/S1 to the slot's lower lip in slot.jpg. Screen content is plain canvas code (scrIntro, scrDisplay, scrWork, scrBattery, scrMonitor, scrAnalyze, scrReport). The default copy is placeholder marketing for a fictional device; replace every claim with ones your product can back. Credits used for the demo: 4 gpt-image-2.5 calls = 12.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

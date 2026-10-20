@@ -1,0 +1,33 @@
+{
+  "id": "25-ugc-product-reel",
+  "title": "UGC-style product reel from six photos — unboxing, the product in hand, swatch, on the lips, out in the world, still life",
+  "category": "product ad / UGC (vertical)",
+  "duration": 10,
+  "size": "1080x1920",
+  "demoBrand": "LUMÉ (fictional)",
+  "source": {
+    "author": "@aiwithmaha",
+    "post": "https://x.com/aiwithmaha/status/2102952087823044888",
+    "note": "Remade from scratch in HyperFrames after an AI-made lip gloss UGC ad; the shot list and cut rhythm follow it. The original is live-action-looking video; this template uses six still photos generated with the Claude Imagine MCP (one hero shot, five edits of it so the product stays the same) and fakes the camera with handheld sway, push-ins, a lift and cut kicks."
+  },
+  "scenes": [
+    "unboxing: hands open the box, the camera lifts with it",
+    "a tighter, tilted look at the product in the box",
+    "the cap comes off and the applicator rises",
+    "a swatch and a liner line on the back of the hand",
+    "the product on the lips, then a tighter close-up with a slow pout",
+    "the product on a café table",
+    "still life with the rest of the range"
+  ],
+  "variables": ["cap1", "cap2", "cap3", "endTag", "grain"],
+  "images": [
+    { "file": "assets/img/hero.jpg", "use": "last shot, and the reference for every other shot", "model": "gpt-image-2.5 1k 9:16", "prompt": "Vertical product photo, natural window light: on a white marble table, three unbranded makeup products stand upright side by side: a tall clear lip gloss bottle filled with shimmering rose-pink gloss with a faceted rose-gold cap, the words \"LUMÉ GLOSS\" printed small and vertical on the bottle; a slim nude-brown lip liner pencil; and a rose-gold lipstick with a deep rose bullet. Hard afternoon sunlight with soft window-frame shadows on a light grey wall behind, realistic UGC phone photo look. No other text." },
+    { "file": "assets/img/box.jpg", "use": "unboxing (two shots)", "model": "gpt-image-2.5 edit of hero", "prompt": "New vertical UGC phone photo using this exact lip gloss bottle (same faceted rose-gold cap, same shimmering rose-pink gloss, same small vertical \"LUMÉ GLOSS\" text): two hands opening a small kraft-paper box on a white table, the gloss bottle lying inside the box on a cardboard insert, a kraft bubble mailer beside it, hard sunlight with window-frame shadows. Remove the lip liner and the lipstick. No other text." },
+    { "file": "assets/img/wand.jpg", "use": "the cap comes off", "model": "gpt-image-2.5 edit of hero", "prompt": "New vertical UGC phone photo using this exact lip gloss bottle (...): a hand holds the open bottle in the lower half of the frame while the other hand lifts the cap upward, pulling out the doe-foot applicator wand coated in shimmering pink gloss; a blurred open kraft box on a white table in the background, bright sunlight. Remove the lip liner and the lipstick. No other text." },
+    { "file": "assets/img/swatch.jpg", "use": "swatch", "model": "gpt-image-2.5 edit of hero", "prompt": "New vertical UGC phone photo: the back of a woman's hand fills the frame, with a glossy, shimmering rose-pink swatch of this exact lip gloss and a thin line drawn next to it with this exact nude-brown lip liner pencil, which another hand is holding; soft blurred white background, bright natural sunlight. Keep the gloss colour and the pencil the same as in this photo. No text." },
+    { "file": "assets/img/lips.jpg", "use": "on the lips (two shots)", "model": "gpt-image-2.5 edit of hero", "prompt": "New vertical UGC phone photo: an extreme close-up of a woman's lower face, from the nose down to the chin, lips slightly parted and covered in this exact shimmering rose-pink gloss, very glossy and juicy, natural skin texture with freckles, warm sunlight. No eyes in the frame, no text." },
+    { "file": "assets/img/cafe.jpg", "use": "out in the world", "model": "gpt-image-2.5 edit of hero", "prompt": "New vertical UGC phone photo using this exact lip gloss bottle (...) standing upright on a round light-wood café table between two cups of latte art on saucers and a black phone lying flat, blurred café chairs and green plants behind, bright daylight. Remove the lip liner and the lipstick. No other text." }
+  ],
+  "notes": "Swap the product by generating one hero photo of yours and making the other five as edits of it (that keeps the product identical across shots). Each shot's crop, push and tilt is a row in SH (start, end, scale, focus point, rotation); the scale is clamped so no edge ever shows. Captions are optional and empty by default, like the original.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

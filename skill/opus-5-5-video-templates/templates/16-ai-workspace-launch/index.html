@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand","default":"Workgrove"},
+  {"id":"domain","type":"string","label":"Domain (end card)","default":"workgrove.app"},
+  {"id":"cta","type":"string","label":"End button","default":"Get started free"},
+  {"id":"endTag","type":"string","label":"End tagline","default":"One workspace for your team and its agents."},
+  {"id":"kicker1","type":"string","label":"Intro label","default":"Your work, today"},
+  {"id":"line1","type":"string","label":"Intro line 1","default":"Docs here."},
+  {"id":"line2","type":"string","label":"Intro line 2","default":"Chats there."},
+  {"id":"line3a","type":"string","label":"Intro line 3, white","default":"Tasks"},
+  {"id":"line3b","type":"string","label":"Intro line 3, blue","default":"everywhere."},
+  {"id":"whereA","type":"string","label":"Promise, line 1","default":"Where teams and"},
+  {"id":"whereB","type":"string","label":"Promise, line 2 before the pill","default":"agents"},
+  {"id":"whereC","type":"string","label":"Promise, line 2 after the pill","default":"together."},
+  {"id":"verbs","type":"string","label":"Pill words (;-separated)","default":"Think; Build; Ship"},
+  {"id":"introKicker","type":"string","label":"Product intro label","default":"Introducing the AI workspace"},
+  {"id":"titleA","type":"string","label":"Product title, line 1","default":"The AI workspace that"},
+  {"id":"titleB","type":"string","label":"Product title, italic word","default":"works"},
+  {"id":"titleC","type":"string","label":"Product title, rest of line 2","default":"for you."},
+  {"id":"space","type":"string","label":"Workspace name in the app","default":"Atlas"},
+  {"id":"agentsPill","type":"string","label":"Board pill","default":"Agents working on your board"},
+  {"id":"k2","type":"string","label":"Section 2 label","default":"Capture knowledge"},
+  {"id":"k2a","type":"string","label":"Section 2 title, line 1","default":"Bring everything"},
+  {"id":"k2b","type":"string","label":"Section 2 title, line 2 before blue","default":"into"},
+  {"id":"k2c","type":"string","label":"Section 2 title, blue","default":"one system"},
+  {"id":"k2d","type":"string","label":"Section 2 title, line 3","default":"of record."},
+  {"id":"k2sub","type":"string","label":"Section 2 subtitle (| = line break)","default":"AI meeting notes turn every call|into searchable docs."},
+  {"id":"meeting","type":"string","label":"Meeting being recorded","default":"Technical Design Review"},
+  {"id":"question","type":"string","label":"Question typed in the search","default":"What are our biggest opportunities in H2?"},
+  {"id":"dashboard","type":"string","label":"Dashboard card","default":"H2 Pipeline Dashboard"},
+  {"id":"ansA","type":"string","label":"Answer line 1","default":"Get answers, instantly."},
+  {"id":"ansB","type":"string","label":"Answer line 2, white","default":"With"},
+  {"id":"ansC","type":"string","label":"Answer line 2, blue","default":"citations."},
+  {"id":"k3","type":"string","label":"Section 3 label","default":"Automate busywork"},
+  {"id":"agentName","type":"string","label":"Agent page title","default":"Coding Agent"},
+  {"id":"boardName","type":"string","label":"Task board name","default":"Engineering Tasks"},
+  {"id":"allDay","type":"string","label":"Big blue number","default":"24/7"},
+  {"id":"keepLine","type":"string","label":"Line under the number","default":"Keep work moving with agents."},
+  {"id":"buildLead","type":"string","label":"Dark slide lead","default":"Build agents that"},
+  {"id":"buildUses","type":"string","label":"Four uses (;-separated)","default":"triage product feedback.; resolve tickets in chat.; answer security alerts.; automate weekly reports."},
+  {"id":"trustA","type":"string","label":"Logo wall title","default":"Trusted by teams that"},
+  {"id":"trustB","type":"string","label":"Logo wall title, blue","default":"ship."},
+  {"id":"logos","type":"string","label":"15 customer names (;-separated)","default":"Lumen; Arbor; Halcyon; Quanta; Brightline; Parcel; Mosaic; Tidal; Cobalt; Juniper; Vantage; Ember; Solstice; Keystone; Meridian"},
+  {"id":"stats","type":"string","label":"Three stats: value | label (;-separated)","default":"10M+ | people use it every week; 40K+ | teams on paid plans; 120+ | countries"},
+  {"id":"blue","type":"color","label":"Blue","default":"#2383e2"},
+  {"id":"ink","type":"color","label":"Ink","default":"#191919"},
+  {"id":"paper","type":"color","label":"Light background","default":"#f5f4f0"},
+  {"id":"night","type":"color","label":"Dark background","default":"#171717"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InstrumentSerif-italic-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --blue: #2383e2; --ink: #191919; --paper: #f5f4f0; --night: #171717; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Inter", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      .abs { position: absolute; left: 0; top: 0; }
+      .w { display: inline-block; white-space: pre; }
+      .bl { color: var(--blue); }
+      .serif { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; }
+      .mono { font-family: "IBM Plex Mono", monospace; }
+      .kick { position: absolute; font: 400 17px/1 "IBM Plex Mono"; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; color: #7d7c78; display: flex; align-items: center; gap: 12px; }
+      .kick i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+      .mask { position: absolute; overflow: hidden; white-space: nowrap; }
+      .mask > span { display: inline-block; white-space: pre; }
+      #scene { overflow: hidden; background: var(--paper); }
+      .card { position: absolute; background: #fff; border-radius: 16px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 24px 60px rgba(40, 36, 28, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.045); overflow: hidden; }
+      .dots { position: absolute; left: 22px; top: 16px; display: flex; gap: 8px; }
+      .dots i { width: 11px; height: 11px; border-radius: 50%; background: #dedcd8; }
+
+      /* A: dark intro */
+      #aL { background: radial-gradient(ellipse 60% 55% at 38% 52%, #252525 0%, var(--night) 60%, #111 100%); }
+      #aAll { transform-origin: 960px 540px; }
+      .al { position: absolute; left: 105px; height: 140px; font: 700 120px/140px "Inter"; letter-spacing: -0.04em; color: #fff; white-space: nowrap; }
+      .al .w { will-change: transform; }
+      .tile { position: absolute; left: 0; top: 0; border-radius: 26%; background: #f6f6f6; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.08); display: flex; align-items: center; justify-content: center; }
+      .tile svg { width: 68%; height: 68%; }
+
+      /* B: promise */
+      .mark { position: absolute; left: 0; top: 0; }
+      .pl { position: absolute; left: 0; top: 0; height: 132px; font: 700 116px/132px "Inter"; letter-spacing: -0.04em; white-space: nowrap; }
+      #pill { position: absolute; left: 0; top: 0; height: 124px; border-radius: 30px; background: #e3eefb; overflow: hidden; }
+      #pill .pw { position: absolute; left: 0; top: 0; height: 124px; display: flex; align-items: center; gap: 14px; padding-left: 24px; color: var(--blue); font: 700 110px/124px "Inter"; letter-spacing: -0.04em; white-space: nowrap; }
+      #pill .pw i { width: 16px; height: 16px; border-radius: 50%; background: var(--blue); flex: none; }
+      .doodle { position: absolute; left: 0; top: 0; }
+
+      /* C: product */
+      #cTitle1, #cTitle2 { position: absolute; left: 0; width: 1920px; text-align: center; white-space: nowrap; font: 700 124px/1 "Inter"; letter-spacing: -0.045em; }
+      #cTitle2 .serif { font-size: 138px; letter-spacing: -0.01em; margin-right: 0.08em; }
+      #win { left: 0; top: 0; width: 1600px; height: 1040px; transform-origin: 0 0; }
+      #bcL { z-index: 2; }
+      #fx { z-index: 1; }
+      #cursor { z-index: 5; }
+      #side { position: absolute; left: 0; top: 42px; width: 282px; bottom: 0; background: #f8f8f7; border-right: 1px solid #eeede9; }
+      .si { position: absolute; left: 20px; right: 16px; height: 30px; display: flex; align-items: center; gap: 12px; font: 400 18px/1 "Inter"; color: #37352f; white-space: nowrap; }
+      .si em { margin-left: auto; font-style: normal; font-size: 14px; color: #9b9a97; }
+      .si .ic { width: 20px; height: 20px; border-radius: 5px; flex: none; display: flex; align-items: center; justify-content: center; }
+      .sl { position: absolute; left: 20px; font: 500 15px/1 "Inter"; color: #91908c; }
+      .tb { position: absolute; top: 42px; left: 282px; right: 0; height: 44px; display: flex; align-items: center; gap: 22px; padding-left: 16px; font: 500 17px/1 "Inter"; color: #37352f; white-space: nowrap; }
+      .col { position: absolute; top: 400px; width: 273px; height: 700px; border-radius: 10px; }
+      .ch { position: absolute; left: 10px; top: 0; height: 26px; display: flex; align-items: center; gap: 8px; font: 500 17px/1 "Inter"; white-space: nowrap; }
+      .ch b { height: 26px; border-radius: 13px; padding: 0 11px 0 9px; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+      .ch b i { width: 8px; height: 8px; border-radius: 50%; }
+      .ch span { color: #9b9a97; }
+      .kc { position: absolute; left: 0; width: 273px; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.04); padding: 11px 14px; font: 500 17.5px/24px "Inter"; color: #2f2e2b; }
+      .kc.add { background: transparent; box-shadow: none; color: #a8a6a1; font-weight: 400; }
+      .kc .ag { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; height: 24px; padding: 0 9px 0 4px; border-radius: 12px; background: #eef4fc; color: var(--blue); font: 500 14px/1 "Inter"; }
+      .kc .ag i { width: 16px; height: 16px; border-radius: 50%; background: var(--blue); }
+      #agPill { position: absolute; left: 0; top: 0; height: 36px; padding: 0 16px 0 14px; border-radius: 18px; background: #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05); display: flex; align-items: center; gap: 10px; font: 500 17px/1 "Inter"; white-space: nowrap; }
+      #agPill i { width: 9px; height: 9px; border-radius: 50%; background: var(--blue); }
+
+      /* D: capture */
+      .dl { position: absolute; left: 97px; height: 92px; font: 700 84px/92px "Inter"; letter-spacing: -0.04em; white-space: nowrap; }
+      #dSub { position: absolute; left: 97px; top: 670px; font: 400 26px/42px "Inter"; color: #6d6c68; white-space: nowrap; }
+      #meet { left: 864px; top: 240px; width: 894px; height: 705px; }
+      .mr { position: absolute; left: 60px; right: 0; height: 52px; display: flex; align-items: center; font: 400 21px/1 "Inter"; color: #2f2e2b; white-space: nowrap; }
+      .mr .tt { position: absolute; left: 36px; display: flex; align-items: center; gap: 8px; }
+      .mr .tg { position: absolute; left: 532px; display: flex; gap: 8px; }
+      .tag { height: 32px; padding: 0 10px; border-radius: 6px; font: 400 19px/32px "Inter"; }
+      #rec { left: 795px; top: 202px; width: 725px; height: 86px; border-radius: 43px; }
+      #rec .rt { position: absolute; left: 30px; top: 0; width: 320px; height: 86px; font: 400 28px/86px "Inter"; color: #2f2e2b; white-space: nowrap; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent); mask-image: linear-gradient(90deg, #000 70%, transparent); }
+      #wave { position: absolute; left: 360px; top: 28px; width: 210px; height: 30px; }
+      #notes { position: absolute; left: 0; top: 0; height: 44px; padding: 0 16px 0 10px; border-radius: 22px; background: #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05); display: flex; align-items: center; gap: 9px; font: 600 19px/1 "Inter"; white-space: nowrap; }
+
+      /* E: search */
+      #srch { left: 0; top: 0; width: 1090px; height: 78px; border-radius: 39px; }
+      #srch .q { position: absolute; left: 70px; top: 0; height: 78px; font: 400 30px/78px "Inter"; color: #2a2926; white-space: pre; }
+      #srch .go { position: absolute; right: 16px; top: 17px; width: 44px; height: 44px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; }
+      #charts { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 1063px 560px; }
+      .chip { position: absolute; height: 50px; padding: 0 18px 0 12px; border-radius: 25px; background: #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05); display: flex; align-items: center; gap: 10px; font: 600 21px/1 "Inter"; white-space: nowrap; }
+      .chip svg { width: 22px; height: 22px; }
+      .al2 { position: absolute; left: 84px; height: 140px; font: 700 118px/140px "Inter"; letter-spacing: -0.045em; white-space: nowrap; }
+
+      /* F: automate */
+      #cwin { left: 156px; top: 140px; width: 766px; height: 715px; }
+      #ewin { left: 922px; top: 210px; width: 761px; height: 517px; }
+      .ecol { position: absolute; top: 142px; width: 318px; height: 400px; border-radius: 10px; }
+      .ec { position: absolute; left: 10px; width: 298px; border-radius: 10px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.05); padding: 13px 14px; font: 500 19px/1.2 "Inter"; color: #2f2e2b; }
+      .ec .who { display: flex; align-items: center; gap: 8px; margin-top: 9px; font: 400 17px/1 "Inter"; color: #555; }
+      .ec .who i { width: 20px; height: 20px; border-radius: 50%; }
+      .ec .pri { display: inline-block; margin-top: 9px; height: 26px; padding: 0 9px; border-radius: 5px; font: 400 16px/26px "Inter"; }
+      .ec .id { display: block; margin-top: 9px; font: 400 16px/1 "Inter"; color: #9b9a97; }
+      #big247 { position: absolute; left: 0; width: 1920px; top: 280px; text-align: center; font: 700 222px/250px "Inter"; letter-spacing: -0.05em; color: var(--blue); white-space: nowrap; }
+      #keep { position: absolute; left: 0; width: 1920px; top: 560px; text-align: center; font: 700 95px/110px "Inter"; letter-spacing: -0.04em; white-space: nowrap; }
+
+      /* G: dark uses */
+      #gL { background: radial-gradient(ellipse 55% 60% at 22% 88%, rgba(40, 90, 170, 0.22), rgba(40, 90, 170, 0) 70%), radial-gradient(ellipse 70% 70% at 50% 45%, #1d1d1d 0%, var(--night) 70%, #101010 100%); }
+      .gl { position: absolute; left: 165px; height: 130px; font: 700 110px/130px "Inter"; letter-spacing: -0.04em; white-space: nowrap; color: #f4f4f4; }
+      #track { position: absolute; left: 165px; top: 698px; width: 1185px; height: 2px; background: #2e2e2e; }
+      #fill { position: absolute; left: 0; top: 0; height: 2px; background: var(--blue); }
+      #track s { position: absolute; top: -5px; width: 2px; height: 12px; background: #3a3a3a; }
+      #cnt { position: absolute; left: 1380px; top: 688px; font: 400 17px/1 "IBM Plex Mono"; color: #6b6b6b; white-space: pre; }
+
+      /* H: trusted */
+      #hTitle { position: absolute; left: 0; width: 1920px; top: 130px; text-align: center; white-space: nowrap; font: 700 124px/130px "Inter"; letter-spacing: -0.045em; }
+      #logos { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 957px 546px; }
+      .lg { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 12px; white-space: nowrap; color: #55534e; }
+      .stat { position: absolute; top: 615px; width: 508px; height: 249px; border-radius: 14px; background: #eceef1; text-align: center; }
+      .stat b { display: block; margin-top: 38px; font: 700 128px/1 "Inter"; letter-spacing: -0.045em; color: var(--blue); }
+      .stat span { display: block; margin-top: 22px; font: 400 29px/1 "Inter"; color: #57565f; }
+
+      /* I: end */
+      #iLock { position: absolute; left: 0; top: 330px; height: 156px; display: flex; align-items: center; gap: 26px; white-space: nowrap; }
+      #iWm { font: 700 142px/1 "Inter"; letter-spacing: -0.04em; }
+      #iTag { position: absolute; left: 0; width: 1920px; top: 528px; height: 60px; text-align: center; font: 400 46px/60px "Inter"; color: #3a3935; white-space: nowrap; overflow: hidden; }
+      #iTag span { display: inline-block; }
+      #iBtn { position: absolute; left: 753px; top: 632px; width: 414px; height: 92px; border-radius: 46px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; font: 600 31px/1 "Inter"; }
+      #iDom { position: absolute; left: 0; width: 1920px; top: 783px; text-align: center; font: 400 20px/1 "IBM Plex Mono"; letter-spacing: 0.1em; color: #8c8b87; text-transform: uppercase; }
+      #cursor { position: absolute; left: 0; top: 0; width: 46px; height: 46px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="46" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="46" data-track-index="0">
+        <canvas id="bgc" class="layer" width="1920" height="1080"></canvas>
+
+        <div id="aL" class="layer">
+          <div id="aAll" class="layer">
+            <div id="aKick" class="kick" style="left: 105px; top: 104px"><i></i><span></span></div>
+            <div id="al1" class="al" style="top: 299px"></div>
+            <div id="al2" class="al" style="top: 439px"></div>
+            <div id="al3" class="al" style="top: 579px"></div>
+            <div id="tiles"></div>
+          </div>
+        </div>
+
+        <div id="bcL" class="layer">
+          <div id="bPan" class="layer">
+            <div id="bMark" class="mark"></div>
+            <div id="pl1" class="pl"></div>
+            <div id="pl2a" class="pl"></div>
+            <div id="pill"><div class="pw" id="pwA"><i></i><span></span></div><div class="pw" id="pwB"><i></i><span></span></div></div>
+            <div id="pl2c" class="pl"></div>
+            <div id="dLeft" class="doodle"></div>
+            <div id="dRight" class="doodle"></div>
+          </div>
+          <div id="cRise" class="layer">
+            <div id="cK" class="kick" style="top: 60px"></div>
+            <div id="cTitle1" style="top: 106px"></div>
+            <div id="cTitle2" style="top: 235px"></div>
+          </div>
+          <div id="agPill"><i></i><span></span></div>
+          <div id="win" class="card"></div>
+        </div>
+
+        <div id="dL" class="layer">
+          <div id="dK" class="kick" style="left: 100px; top: 322px"><i></i><span></span></div>
+          <div id="dl1" class="dl mask" style="top: 368px"><span></span></div>
+          <div id="dl2" class="dl mask" style="top: 461px"><span></span></div>
+          <div id="dl3" class="dl mask" style="top: 548px"><span></span></div>
+          <div id="dSub"></div>
+          <div id="meet" class="card"></div>
+          <div id="rec" class="card"><div class="rt"></div><canvas id="wave" width="210" height="30"></canvas><div id="recB"></div></div>
+          <div id="notes"></div>
+        </div>
+
+        <div id="eL" class="layer">
+          <div id="charts"></div>
+          <div id="srch" class="card"></div>
+          <div id="an1" class="al2 mask" style="top: 635px"><span></span></div>
+          <div id="an2" class="al2 mask" style="top: 770px"><span></span></div>
+        </div>
+
+        <div id="fL" class="layer">
+          <div id="fK" class="kick" style="left: 97px; top: 79px"><i></i><span></span></div>
+          <div id="fWins" class="layer"><div id="ewin" class="card"></div><div id="cwin" class="card"></div></div>
+          <div id="big247"></div>
+          <div id="keep"></div>
+        </div>
+
+        <div id="gL" class="layer">
+          <div id="gGlyph" class="abs" style="left: 165px; top: 268px"></div>
+          <div id="gl1" class="gl mask" style="top: 355px"><span></span></div>
+          <div id="gl2" class="gl mask" style="top: 505px"></div>
+          <div id="track"><div id="fill"></div></div>
+          <div id="cnt"></div>
+        </div>
+
+        <div id="hL" class="layer">
+          <div id="hTitle"></div>
+          <div id="logos"></div>
+          <div id="stats"></div>
+        </div>
+
+        <div id="iL" class="layer">
+          <div id="iLock"><div id="iMark"></div><div id="iWm"></div></div>
+          <div id="iTag"><span></span></div>
+          <div id="iBtn"></div>
+          <div id="iDom"></div>
+        </div>
+
+        <canvas id="fx" class="layer" width="1920" height="1080"></canvas>
+        <svg id="cursor" viewBox="0 0 24 24"><path d="M5 2.8v16.6l4.1-3.9 2.7 6.1 2.9-1.3-2.7-6h5.8z" fill="#111" stroke="#fff" stroke-width="1.3" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 46, TAU = Math.PI * 2;
+        const BLUE = v.blue, INK = v.ink, PAPER = v.paper;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const ios = (u) => -(Math.cos(Math.PI * u) - 1) / 2;
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const px = (n) => n.toFixed(1) + "px";
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const fade = (el, a) => { K.show(el, a > 0.002); el.style.opacity = C(a).toFixed(3); };
+        const hexA = (h, a) => { const n = parseInt(String(h).replace("#", ""), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
+        const list = (s) => String(s).split(";").map((x) => x.trim()).filter(Boolean);
+        const mk = (tag, cls, parent, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+        const place = (el, x, y) => { el.style.left = px(x); el.style.top = px(y); };
+        const words = (el, text, cls) => { el.innerHTML = String(text).split(" ").map((w) => '<span class="w' + (cls ? " " + cls : "") + '">' + esc(w) + "</span>").join('<span class="w"> </span>'); return [...el.querySelectorAll(".w")].filter((w) => w.textContent !== " "); };
+        // a word that blurs into place
+        const blurIn = (w, t, a, d, dy, s0) => { const u = E.outCubic(P(t, a, a + (d || 0.3))); w.style.opacity = C(u * 1.4).toFixed(3); w.style.filter = blurS(16 * (1 - u)); w.style.transform = "translateY(" + px((dy || 0) * (1 - u)) + ") scale(" + L(s0 || 1.04, 1, u).toFixed(3) + ")"; return u; };
+        // a masked line that rises into view
+        const riseIn = (span, t, a, d, h) => { const u = E.outExpo(P(t, a, a + (d || 0.55))); span.style.transform = "translateY(" + px((h || 100) * (1 - u)) + ")"; span.style.opacity = u > 0 ? "1" : "0"; return u; };
+        const cv = document.createElement("canvas").getContext("2d");
+        const textW = (s, font, ls) => { cv.font = font; return cv.measureText(s).width + (ls || 0) * [...s].length; };
+
+        // ---------- shared marks and icons ----------
+        const MARK = (s, col) => '<svg viewBox="0 0 100 100" style="width:' + s + "px;height:" + s + 'px;display:block"><rect x="3" y="3" width="94" height="94" rx="24" fill="' + (col || INK) + '"/><rect x="24" y="44" width="12" height="34" rx="6" fill="#fff"/><rect x="44" y="24" width="12" height="54" rx="6" fill="#fff"/><rect x="64" y="36" width="12" height="42" rx="6" fill="#fff"/></svg>';
+        const SPARK = (s, col) => '<svg viewBox="0 0 24 24" style="width:' + s + "px;height:" + s + 'px;display:block"><path d="M12 2.5c.6 4.4 2.9 7 7.5 7.6-4.6.6-6.9 3.2-7.5 7.6-.6-4.4-2.9-7-7.5-7.6 4.6-.6 6.9-3.2 7.5-7.6z" fill="none" stroke="' + col + '" stroke-width="1.8" stroke-linejoin="round"/><circle cx="19" cy="19.5" r="1.6" fill="' + col + '"/></svg>';
+        const ICON = {
+          chat: '<svg viewBox="0 0 48 48"><path d="M8 12a6 6 0 0 1 6-6h20a6 6 0 0 1 6 6v14a6 6 0 0 1-6 6H20l-8 7v-7.4A6 6 0 0 1 8 26z" fill="#fff" stroke="#3b3b3b" stroke-width="2.6" stroke-linejoin="round"/><circle cx="17" cy="19" r="3.2" fill="#e8a33d"/><circle cx="24" cy="19" r="3.2" fill="#3fa37a"/><circle cx="31" cy="19" r="3.2" fill="#d9486a"/></svg>',
+          mail: '<svg viewBox="0 0 48 48"><rect x="6" y="11" width="36" height="27" rx="5" fill="#fff" stroke="#e0533d" stroke-width="3"/><path d="M8 14l16 12 16-12" fill="none" stroke="#e0533d" stroke-width="3" stroke-linejoin="round"/></svg>',
+          mail2: '<svg viewBox="0 0 48 48"><rect x="6" y="11" width="36" height="27" rx="5" fill="#fff" stroke="#3a7ee0" stroke-width="3"/><path d="M8 14l16 12 16-12" fill="none" stroke="#3a7ee0" stroke-width="3" stroke-linejoin="round"/></svg>',
+          code: '<svg viewBox="0 0 48 48"><path d="M17 15l-9 9 9 9M31 15l9 9-9 9M27 11l-6 26" fill="none" stroke="#222" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+          hub: '<svg viewBox="0 0 48 48"><circle cx="26" cy="27" r="8" fill="none" stroke="#e8663d" stroke-width="3.6"/><path d="M26 19V9M19.5 31.5l-8 6M33 31l6 5" stroke="#e8663d" stroke-width="3.6" stroke-linecap="round"/><circle cx="26" cy="8" r="3.4" fill="#e8663d"/><circle cx="10.5" cy="38.5" r="3.4" fill="#e8663d"/></svg>',
+          pen: '<svg viewBox="0 0 48 48"><path d="M24 6l12 16-12 20L12 22z" fill="#fff" stroke="#7a5be0" stroke-width="3" stroke-linejoin="round"/><path d="M24 22v20" stroke="#7a5be0" stroke-width="3"/><circle cx="24" cy="21" r="3.4" fill="#7a5be0"/></svg>',
+          cal: '<svg viewBox="0 0 48 48"><rect x="8" y="10" width="32" height="30" rx="5" fill="#fff" stroke="#3a7ee0" stroke-width="3"/><path d="M8 18h32" stroke="#3a7ee0" stroke-width="3"/><path d="M16 6v8M32 6v8" stroke="#3a7ee0" stroke-width="3" stroke-linecap="round"/><rect x="15" y="24" width="7" height="6" rx="1.5" fill="#3a7ee0"/></svg>',
+        };
+        const CHECK = (c, s) => '<svg viewBox="0 0 24 24" style="width:' + s + "px;height:" + s + 'px;display:block"><circle cx="12" cy="12" r="11" fill="' + c + '"/><path d="M7 12.4l3.3 3.3L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        // ---------- background canvas ----------
+        const bg = $("bgc").getContext("2d");
+        function drawBg(t) {
+          bg.clearRect(0, 0, 1920, 1080);
+          bg.fillStyle = PAPER; bg.fillRect(0, 0, 1920, 1080);
+          const gr = bg.createRadialGradient(960, 480, 0, 960, 480, 1100); gr.addColorStop(0, "rgba(255,255,255,0.55)"); gr.addColorStop(1, "rgba(255,255,255,0)"); bg.fillStyle = gr; bg.fillRect(0, 0, 1920, 1080);
+          // faint ripples behind the search and the end card
+          const ra = t >= 20.3 && t < 26 ? P(t, 20.4, 20.8) * (1 - P(t, 25.8, 26)) : t >= 41.9 ? P(t, 42, 42.6) * (1 - P(t, 45.6, 46)) : 0;
+          if (ra > 0) {
+            const cy = t < 30 ? 560 : 520;
+            bg.strokeStyle = "rgba(0,0,0," + (0.035 * ra).toFixed(4) + ")"; bg.lineWidth = 1.5;
+            for (let k = 1; k <= 6; k++) { const r = ((k * 150 + t * 40) % 900) + 80; bg.beginPath(); bg.ellipse(960, cy, r * 1.35, r * 0.62, 0, 0, TAU); bg.stroke(); }
+          }
+          // the button's glow on the end card
+          const eg = P(t, 44.5, 45.3) * (1 - P(t, 45.55, 45.95));
+          if (eg > 0) { const g2 = bg.createRadialGradient(960, 700, 0, 960, 700, L(120, 460, E.outCubic(P(t, 44.5, 45.3)))); g2.addColorStop(0, hexA(BLUE, (0.26 * eg).toFixed(3))); g2.addColorStop(1, hexA(BLUE, 0)); bg.fillStyle = g2; bg.fillRect(0, 0, 1920, 1080); }
+        }
+
+        // ================= A: dark intro =================
+        $("aKick").querySelector("span").textContent = v.kicker1;
+        const aW1 = words($("al1"), v.line1), aW2 = words($("al2"), v.line2);
+        $("al3").innerHTML = v.line3a.split(" ").map((w) => '<span class="w">' + esc(w) + "</span>").join(" ") + ' <span class="w bl">' + esc(v.line3b) + "</span>";
+        const aW3 = [...$("al3").querySelectorAll(".w")];
+        const TILES = [["chat", 1530, 249, 150, -4, 0.72], ["mail", 1731, 510, 150, 5, 1.12], ["code", 1461, 795, 132, 3, 1.75], ["hub", 855, 174, 132, -6, 2.3], ["mail2", 1254, 165, 100, 4, 2.85], ["cal", 1122, 858, 104, -3, 2.95], ["pen", 1719, 834, 138, 4, 3.02]].map((d, k) => {
+          const el = mk("div", "tile", $("tiles"), ICON[d[0]]);
+          el.style.width = px(d[3]); el.style.height = px(d[3]);
+          return { el, x: d[1], y: d[2], s: d[3], rot: d[4], t0: d[5], k };
+        });
+        function sceneA(t) {
+          const on = t < 4.3;
+          K.show($("aL"), on);
+          if (!on) return;
+          $("aKick").style.opacity = P(t, 0.1, 0.35).toFixed(3);
+          aW1.forEach((w, k) => blurIn(w, t, 0.55 + k * 0.1, 0.34, 20));
+          aW2.forEach((w, k) => blurIn(w, t, 1.55 + k * 0.1, 0.34, 20));
+          aW3.forEach((w, k) => blurIn(w, t, 2.88 + k * 0.12, 0.34, 20));
+          TILES.forEach((ti) => {
+            const u = P(t, ti.t0, ti.t0 + 0.42);
+            K.show(ti.el, u > 0);
+            if (u <= 0) return;
+            const e = E.outBack(u, 2.2), f = t - ti.t0;
+            const fx = Math.sin(f * 1.3 + ti.k) * 6, fy = Math.cos(f * 1.1 + ti.k * 2) * 8;
+            ti.el.style.transform = "translate(" + px(ti.x - ti.s / 2 + fx) + "," + px(ti.y - ti.s / 2 + fy + 30 * (1 - C(e))) + ") rotate(" + (ti.rot + 14 * (1 - C(e)) + Math.sin(f * 0.9 + ti.k) * 2).toFixed(2) + "deg) scale(" + C(L(0.4, 1, e), 0, 1.2).toFixed(3) + ")";
+            ti.el.style.opacity = C(u * 3).toFixed(3);
+            ti.el.style.filter = blurS(10 * (1 - C(u * 2)));
+          });
+          // the whole desk shrinks into a dot
+          const z = E.inCubic(P(t, 3.6, 3.93));
+          const all = $("aAll");
+          all.style.transform = z > 0 ? "scale(" + L(1.0, 0.3, z).toFixed(4) + ")" : "scale(" + (1 + 0.012 * P(t, 0, 3.6)).toFixed(4) + ")";
+          all.style.filter = blurS(12 * z);
+          all.style.opacity = ((1 - 0.6 * z) * (1 - P(t, 3.9, 3.96))).toFixed(3);
+        }
+
+        // ================= B/C: promise, then the product =================
+        $("bMark").innerHTML = MARK(100);
+        const pl1W = words($("pl1"), v.whereA);
+        $("pl2a").textContent = v.whereB; $("pl2c").textContent = v.whereC;
+        const VERBS = list(v.verbs);
+        const VT = [5.66, 6.7, 7.3];
+        const pwA = $("pwA"), pwB = $("pwB");
+        const PLF = '700 116px "Inter"', PWF = '700 110px "Inter"';
+        const doodleL = '<svg viewBox="0 0 260 240" style="width:260px;height:240px;display:block">' +
+          '<rect x="8" y="18" width="46" height="46" rx="12" fill="#e5484d"/><path d="M20 38c3 5 11 5 14 0M22 30h.1M32 30h.1" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"/>' +
+          '<path d="M78 70c-10-40 40-62 70-44 26-10 52 14 44 42 14 20 4 52-18 60" fill="#1e1e1e"/>' +
+          '<circle cx="128" cy="118" r="54" fill="#fff" stroke="#1e1e1e" stroke-width="5"/>' +
+          '<path d="M86 96c18-18 52-24 84-10" fill="none" stroke="#1e1e1e" stroke-width="9" stroke-linecap="round"/>' +
+          '<circle cx="110" cy="116" r="4.5" fill="#1e1e1e"/><circle cx="146" cy="116" r="4.5" fill="#1e1e1e"/><path d="M112 140c10 9 24 9 32 0" fill="none" stroke="#1e1e1e" stroke-width="4.5" stroke-linecap="round"/>' +
+          '<path d="M96 170c10 22 54 24 66 0" fill="#fff" stroke="#1e1e1e" stroke-width="5"/>' +
+          '<rect x="190" y="160" width="46" height="46" rx="12" fill="' + BLUE + '"/><path d="M202 184l8 8 16-17" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<g transform="translate(196 30)">' + '<path d="M12 2.5c.6 4.4 2.9 7 7.5 7.6-4.6.6-6.9 3.2-7.5 7.6-.6-4.4-2.9-7-7.5-7.6 4.6-.6 6.9-3.2 7.5-7.6z" fill="#fff" stroke="#1e1e1e" stroke-width="2.2" transform="scale(1.6)"/></g>' +
+          '<g transform="translate(28 178)"><path d="M12 2.5c.6 4.4 2.9 7 7.5 7.6-4.6.6-6.9 3.2-7.5 7.6-.6-4.4-2.9-7-7.5-7.6 4.6-.6 6.9-3.2 7.5-7.6z" fill="#fff" stroke="#1e1e1e" stroke-width="2.2" transform="scale(1.4)"/></g></svg>';
+        const doodleR = '<svg viewBox="0 0 220 220" style="width:220px;height:220px;display:block"><circle cx="110" cy="110" r="100" fill="#fff" stroke="#e5484d" stroke-width="9"/>' +
+          '<path d="M52 92c4-40 60-58 96-36 18 10 26 28 24 44-10-14-26-20-40-18-20-16-54-14-80 10z" fill="#fff" stroke="#1e1e1e" stroke-width="5" stroke-linejoin="round"/>' +
+          '<path d="M60 96c-2 44 16 78 50 80 34-2 52-34 50-78" fill="#fff" stroke="#1e1e1e" stroke-width="5"/>' +
+          '<circle cx="88" cy="112" r="15" fill="none" stroke="#1e1e1e" stroke-width="4.5"/><circle cx="132" cy="112" r="15" fill="none" stroke="#1e1e1e" stroke-width="4.5"/><path d="M103 112h14" stroke="#1e1e1e" stroke-width="4.5"/>' +
+          '<circle cx="88" cy="113" r="3.5" fill="#1e1e1e"/><circle cx="132" cy="113" r="3.5" fill="#1e1e1e"/><path d="M96 146c8 6 20 6 28 0" fill="none" stroke="#1e1e1e" stroke-width="4.5" stroke-linecap="round"/></svg>';
+        $("dLeft").innerHTML = doodleL; $("dRight").innerHTML = doodleR;
+        $("cK").innerHTML = "<span>" + esc(v.introKicker) + "</span>";
+        const cT1W = words($("cTitle1"), v.titleA);
+        $("cTitle2").innerHTML = '<span class="w serif">' + esc(v.titleB) + "</span> " + v.titleC.split(" ").map((w) => '<span class="w">' + esc(w) + "</span>").join(" ");
+        const cT2W = [...$("cTitle2").querySelectorAll(".w")];
+        let lay = null;
+        function layoutB() {
+          const g = 32;
+          const wA = textW(v.whereB, PLF, -0.04 * 116), wC = textW(v.whereC, PLF, -0.04 * 116);
+          const pills = VERBS.map((w) => 24 + 16 + 14 + textW(w, PWF, -0.04 * 110) + 28);
+          lay = { wA, wC, pills, g };
+          const cw = textW(v.introKicker.toUpperCase(), '400 17px "IBM Plex Mono"', 0.08 * 17); $("cK").style.left = px(960 - cw / 2);
+        }
+        // app window content
+        const win = $("win");
+        (function buildWin() {
+          let h = '<div class="dots"><i></i><i></i><i></i></div>';
+          h += '<div id="side">';
+          h += '<div class="si" style="top:8px;gap:10px"><span style="display:flex;gap:7px"><i style="width:10px;height:10px;border-radius:50%;background:#e2e0dc"></i><i style="width:10px;height:10px;border-radius:50%;background:#e2e0dc"></i><i style="width:10px;height:10px;border-radius:50%;background:#e2e0dc"></i></span><span style="margin-left:34px;display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" style="width:19px;height:19px"><circle cx="12" cy="12" r="9" fill="none" stroke="#555" stroke-width="1.8"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18" fill="none" stroke="#555" stroke-width="1.5"/></svg>' + esc(v.space) + "</span></div>";
+          h += '<div class="si" style="top:52px"><span style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px 0 8px;border-radius:8px;background:#ebeae6;font-weight:500"><svg viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="#37352f" stroke-width="1.8" stroke-linejoin="round"/></svg>Home</span><span style="color:#8a8985;display:flex;gap:18px;margin-left:6px">◌ ▤ ✉</span><span style="margin-left:auto;color:#8a8985">⌕</span></div>';
+          const sec = (label, y) => '<div class="sl" style="top:' + y + 'px">' + label + "</div>";
+          const row = (y, ic, txt, em, icBg) => '<div class="si" style="top:' + y + 'px"><span class="ic" style="background:' + (icBg || "transparent") + '">' + ic + "</span>" + esc(txt) + (em ? "<em>" + em + "</em>" : "") + "</div>";
+          h += sec("Upcoming events", 108);
+          [["Design Weekly", "10–11AM"], ["Eng Kickoff", "12–1PM"], ["Product Updates", "4–5PM"]].forEach((r, k) => { h += row(136 + k * 33, "", r[0], r[1], "#4a8fe8"); });
+          h += sec("Agents", 254);
+          [["Task routing agent", "#9b5de5"], ["Q&A agent", "#e5484d"], ["Reporting agent", "#f2b544"], ["IT help desk", "#e56a9b"], ["Onboarding buddy", "#4a8fe8"]].forEach((r, k) => { h += row(282 + k * 32, '<i style="width:18px;height:18px;border-radius:50%;background:' + r[1] + ';display:block"></i>', r[0]); });
+          h += row(442, "···", "More");
+          h += sec("Teamspaces", 492);
+          [["Company HQ", "#e5484d"], ["Product", "#e5484d"], ["Engineering", "#e5484d"]].forEach((r, k) => { h += row(520 + k * 34, '<i style="width:17px;height:13px;border-radius:3px;background:' + r[1] + ';display:block"></i>', r[0]); });
+          h += row(622, "···", "More");
+          h += sec("Private", 672);
+          ["My OS", "1:1 Notes", "Tasks"].forEach((r, k) => { h += row(700 + k * 34, '<i style="width:15px;height:15px;border-radius:50%;background:#8a8985;display:block"></i>', r); });
+          h += row(802, "···", "More");
+          h += "</div>";
+          h += '<div class="tb"><span style="color:#b3b1ac;letter-spacing:10px">‹ ›</span><span style="display:flex;align-items:center;gap:9px;height:44px;padding:0 90px 0 18px;background:#fff;border-radius:8px 8px 0 0">' + MARK(20, INK) + esc(v.space) + ' HQ</span><span style="color:#b3b1ac">+</span></div>';
+          h += '<div class="abs" style="left:1440px;top:94px;display:flex;gap:22px;align-items:center;font:500 17px/1 Inter;color:#37352f">Share<span style="color:#8a8985">▭ ☆ ···</span></div>';
+          h += '<div class="abs" style="left:352px;top:204px;width:92px;height:92px;border-radius:50%;background:#f1f0ec;display:flex;align-items:center;justify-content:center">' + MARK(46, INK) + "</div>";
+          h += '<div class="abs" style="left:462px;top:226px;font:700 46px/1 Inter;letter-spacing:-0.03em;white-space:nowrap">' + esc(v.space) + " HQ</div>";
+          h += '<div class="abs" style="left:357px;top:337px;display:flex;align-items:center;gap:26px;font:500 17px/1 Inter;color:#6d6c68;white-space:nowrap"><span style="height:32px;padding:0 11px;border-radius:7px;background:#f1f0ec;color:#2f2e2b;display:flex;align-items:center">▦ Company tasks</span><span>◯ My tasks</span><span>⚡ Current sprint</span><span>▭ Timeline</span><span>+</span></div>';
+          h += '<div class="abs" style="left:1262px;top:340px;display:flex;align-items:center;gap:18px;font:500 16px/1 Inter;color:#9b9a97;letter-spacing:2px">⇅ ≡ ϟ ⌕ ⤢</div>';
+          h += '<div class="abs" style="left:1444px;top:336px;width:80px;height:32px;border-radius:7px;background:' + BLUE + ';color:#fff;font:600 17px/32px Inter;text-align:center">New ⌄</div>';
+          win.innerHTML = h;
+        })();
+        const COLS = [
+          { name: "To-do", c: "#8e5cc7", bg: "#efe7f7", tint: "rgba(142,92,199,0.05)", n: 10, cards: ["Update help center and office documentation", "Review campaign assets", "Customer stories", "Refresh product color palette", "Review latest marketing approach and sprints", "Code review for authentication service updates", "Office supplies reorder"] },
+          { name: "In progress", c: "#c98a1a", bg: "#fbefd6", tint: "rgba(201,138,26,0.05)", n: 5, cards: ["Sales demo sync", "Launch demo video", "Respond to beta test questions", "Engineering sync", "New features documentation", "+ New page"] },
+          { name: "In review", c: "#2f7fd6", bg: "#dfeefb", tint: "rgba(47,127,214,0.05)", n: 3, cards: ["Weekly sales status report", "Marketing campaign designs", "Latest features customer emails", "+ New page"] },
+          { name: "Complete", c: "#3f9a5b", bg: "#e1f1e5", tint: "rgba(63,154,91,0.05)", n: 34, cards: ["Project onboarding", "Finalize launch timeline", "All hands alignment", "Draft press release", "Report daily performance summaries", "Product launch weekly report", "Project kickoff", "Marketing team status report"] },
+        ];
+        const KC = [];
+        COLS.forEach((col, ci) => {
+          const x = 357 + ci * 297;
+          const c = mk("div", "col", win); c.style.left = px(x); c.style.background = "linear-gradient(180deg," + col.tint + ", rgba(255,255,255,0))";
+          const hd = mk("div", "ch", c, '<b style="background:' + col.bg + ';color:' + col.c + '"><i style="background:' + col.c + '"></i>' + col.name + "</b><span>" + col.n + "</span>");
+          col.cnt = hd.querySelector("span");
+          let y = 44;
+          col.cards.forEach((txt) => {
+            const add = txt[0] === "+";
+            const el = mk("div", "kc" + (add ? " add" : ""), win, esc(txt));
+            const lines = textW(txt, '500 17.5px "Inter"') > 240 ? 2 : 1;
+            const h = add ? 44 : 22 + lines * 24;
+            el.style.left = px(x); el.style.top = px(400 + y);
+            KC.push({ el, ci, x, y: 400 + y, h, txt });
+            y += h + 12;
+          });
+        });
+        // the agents move two cards
+        const MOVE = [{ txt: "Customer stories", to: 1, slot: 5, t0: 12.75 }, { txt: "Weekly sales status report", to: 3, slot: 0, t0: 13.15 }];
+        MOVE.forEach((m) => { m.card = KC.find((k) => k.txt === m.txt); m.card.el.innerHTML = esc(m.txt) + '<div class="ag" style="display:none"><i></i>' + (m.to === 1 ? "Task routing agent" : "Reporting agent") + "</div>"; m.ag = m.card.el.querySelector(".ag"); });
+        $("agPill").querySelector("span").textContent = v.agentsPill;
+
+        function sceneBC(t) {
+          const on = t >= 3.95 && t < 14.25;
+          K.show($("bcL"), on);
+          if (!on) return;
+          if (!lay) layoutB();
+          // until the light disc has opened, the product scene only shows inside it
+          const discR = 1300 * P(t, 3.93, 4.28);
+          $("bcL").style.clipPath = t < 4.32 ? "circle(" + Math.max(1, discR).toFixed(1) + "px at 960px 540px)" : "none";
+          // camera pan from the promise to the product title
+          const pan = -1100 * E.inQuad(P(t, 7.95, 8.36));
+          $("bPan").style.transform = "translateY(" + px(pan) + ")";
+          K.show($("bPan"), t < 8.38);
+          const rise = 900 * (1 - E.outExpo(P(t, 8.16, 8.5)));
+          $("cRise").style.transform = "translateY(" + px(rise) + ")";
+          K.show($("cRise"), t >= 8.1);
+          // logo
+          const mk_ = $("bMark");
+          const lz = ioq(P(t, 4.62, 5.05));
+          const ms = L(240, 138, lz), my = L(540, 283, lz);
+          mk_.style.transform = "translate(" + px(960 - ms / 2) + "," + px(my - ms / 2) + ") scale(" + (ms / 100).toFixed(4) + ")";
+          mk_.style.transformOrigin = "0 0";
+          mk_.style.filter = blurS(10 * (1 - P(t, 4.0, 4.18)));
+          mk_.style.opacity = L(0.35, 1, P(t, 4.0, 4.32)).toFixed(3);
+          K.show(mk_, t < 8.5);
+          // line 1
+          const l1 = $("pl1"), l1w = textW(v.whereA, PLF, -0.04 * 116);
+          place(l1, 960 - l1w / 2, 471 - 66);
+          pl1W.forEach((w, k) => blurIn(w, t, 5.05 + k * 0.12, 0.34, 0, 1.06));
+          // line 2 with the pill
+          let vi = 0; for (let k = 0; k < VT.length; k++) if (t >= VT[k]) vi = k;
+          const sw = ioq(P(t, VT[vi], VT[vi] + 0.24));
+          const pw = vi > 0 ? L(lay.pills[vi - 1], lay.pills[vi], sw) : lay.pills[0];
+          const tot = lay.wA + lay.g + pw + lay.g + lay.wC, x0 = 960 - tot / 2, y2 = 618 - 66;
+          place($("pl2a"), x0, y2); place($("pill"), x0 + lay.wA + lay.g, y2 + 4); place($("pl2c"), x0 + lay.wA + lay.g + pw + lay.g, y2);
+          $("pill").style.width = px(pw);
+          blurIn($("pl2a"), t, 5.5, 0.34, 0, 1.06);
+          const pu = blurIn($("pill"), t, 5.62, 0.34, 0, 1.06);
+          blurIn($("pl2c"), t, 5.74, 0.34, 0, 1.06);
+          pwA.querySelector("span").textContent = VERBS[vi]; pwB.querySelector("span").textContent = vi > 0 ? VERBS[vi - 1] : "";
+          pwA.style.transform = "translateY(" + px(vi > 0 ? 90 * (1 - sw) : 0) + ")"; pwA.style.opacity = (vi > 0 ? sw : 1).toFixed(3); pwA.style.filter = blurS(vi > 0 ? 10 * (1 - sw) : 0);
+          K.show(pwB, vi > 0 && sw < 1); pwB.style.transform = "translateY(" + px(-90 * sw) + ")"; pwB.style.opacity = (1 - sw).toFixed(3); pwB.style.filter = blurS(10 * sw);
+          // doodles
+          const dl = E.outBack(P(t, 6.05, 6.4), 1.8), dr = E.outBack(P(t, 6.15, 6.5), 1.8);
+          $("dLeft").style.transform = "translate(" + px(120) + "," + px(262) + ") scale(" + (1.3 * C(dl, 0, 1.2)).toFixed(3) + ") rotate(" + (8 * (1 - C(dl)) + 2 * Math.sin(t * 2)).toFixed(2) + "deg)";
+          $("dLeft").style.opacity = C(dl * 2).toFixed(3); $("dLeft").style.transformOrigin = "130px 120px";
+          $("dRight").style.transform = "translate(" + px(1540) + "," + px(300) + ") scale(" + C(dr, 0, 1.2).toFixed(3) + ") rotate(" + (-8 * (1 - C(dr)) - 2 * Math.sin(t * 2 + 1)).toFixed(2) + "deg)";
+          $("dRight").style.opacity = C(dr * 2).toFixed(3); $("dRight").style.transformOrigin = "110px 110px";
+          // product title
+          $("cK").style.opacity = P(t, 8.16, 8.3).toFixed(3);
+          cT1W.forEach((w, k) => blurIn(w, t, 7.9 + k * 0.04, 0.3, 0, 1.04));
+          cT2W.forEach((w, k) => blurIn(w, t, 8.9 + k * 0.1, 0.36, 0, 1.04));
+          const tOut = P(t, 10.3, 10.72);
+          ["cK", "cTitle1", "cTitle2"].forEach((id) => { const e = $(id); e.style.opacity = (id === "cK" ? P(t, 8.16, 8.3) : 1) * (1 - tOut); e.style.filter = blurS(8 * tOut); e.style.marginTop = px(-60 * E.inQuad(tOut)); });
+          // window
+          const wu = P(t, 8.3, 9.8), zu = E.outQuad(P(t, 10.2, 11.4));
+          let top = L(900, 460, wu), sc = L(0.94, 0.98, wu);
+          top = L(top, 150, zu); sc = L(sc, 1, zu);
+          top -= 8 * P(t, 11.4, 13.8);
+          const wx = 960 - 800 * sc;
+          win.style.transform = "translate(" + px(wx) + "," + px(top) + ") scale(" + sc.toFixed(4) + ")";
+          const wOut = E.inCubic(P(t, 13.85, 14.2));
+          win.style.opacity = (C(P(t, 8.2, 8.5)) * (1 - wOut)).toFixed(3);
+          win.style.filter = blurS(10 * wOut);
+          K.show(win, t >= 8.2);
+          // agents at work
+          const ap = $("agPill"), au = E.outBack(P(t, 12.35, 12.6), 1.8);
+          K.show(ap, au > 0 && wOut < 1);
+          ap.style.transform = "translate(" + px(wx + 20 * sc) + "," + px(top - 50) + ") scale(" + C(au, 0, 1.15).toFixed(3) + ")"; ap.style.transformOrigin = "0 50%";
+          ap.style.opacity = (C(au * 2) * (1 - wOut)).toFixed(3);
+          MOVE.forEach((m) => {
+            const c = m.card, u = ioq(P(t, m.t0, m.t0 + 0.55)), lift = bump(t, m.t0 - 0.1, m.t0 + 0.65);
+            m.ag.style.display = t >= m.t0 - 0.25 ? "inline-flex" : "none";
+            const tx = 357 + m.to * 297, ty = m.to === 1 ? 400 + 44 + 5 * 58 : 400 + 44;
+            c.el.style.transform = "translate(" + px((tx - c.x) * u) + "," + px((ty - c.y) * u - 8 * lift) + ") rotate(" + (2 * lift).toFixed(2) + "deg)";
+            c.el.style.boxShadow = lift > 0.02 ? "0 " + px(4 + 14 * lift) + " " + px(10 + 20 * lift) + " rgba(0,0,0," + (0.08 + 0.1 * lift).toFixed(3) + "), 0 0 0 1px rgba(35,131,226," + (0.6 * lift).toFixed(2) + ")" : "";
+            c.el.style.zIndex = lift > 0 ? "5" : "";
+          });
+          // the cards below make room
+          KC.forEach((c) => {
+            if (MOVE.some((m) => m.card === c)) return;
+            let dy = 0;
+            MOVE.forEach((m) => { const u = ioq(P(t, m.t0, m.t0 + 0.55)); if (c.ci === m.card.ci && c.y > m.card.y) dy -= (m.card.h + 12) * u; if (c.ci === m.to && (m.to === 3 || c.txt[0] === "+")) dy += (m.card.h + 12) * u; });
+            c.el.style.transform = dy ? "translateY(" + px(dy) + ")" : "";
+          });
+          const done1 = t >= MOVE[0].t0 + 0.3, done2 = t >= MOVE[1].t0 + 0.3;
+          COLS[0].cnt.textContent = String(COLS[0].n - (done1 ? 1 : 0)); COLS[1].cnt.textContent = String(COLS[1].n + (done1 ? 1 : 0));
+          COLS[2].cnt.textContent = String(COLS[2].n - (done2 ? 1 : 0)); COLS[3].cnt.textContent = String(COLS[3].n + (done2 ? 1 : 0));
+        }
+
+        // ================= D: capture knowledge =================
+        $("dK").querySelector("span").textContent = v.k2;
+        const dS = [$("dl1"), $("dl2"), $("dl3")].map((m) => m.children[0]);
+        dS[0].textContent = v.k2a; dS[1].innerHTML = esc(v.k2b) + ' <span class="bl">' + esc(v.k2c) + "</span>"; dS[2].textContent = v.k2d;
+        $("dSub").innerHTML = v.k2sub.split("|").map(esc).join("<br>");
+        const TAGC = { Growth: ["#eeeeec", "#55534e"], Infra: ["#ece4f7", "#6c4ba8"], Design: ["#f8eecb", "#8a6a12"], Mobile: ["#ddebf8", "#2f6fb0"], "Product Ops": ["#dfeee2", "#3d7a4d"], Platform: ["#eeeeec", "#55534e"] };
+        const ROWS = [[v.meeting, ["Growth", "Infra"], true], ["Product + Design Crit — Navigation & IA", ["Design", "Mobile"]], ["Engineering Standup — Web Platform", ["Design", "Mobile"]], ["Sprint Planning (Sprint 27)", ["Product Ops"]], ["Sprint Retro (Sprint 26)", ["Product Ops", "Design"]], ["Release Readiness — v2026.07", ["Product Ops", "Growth"]], ["Cross-functional Triage — Bugs + Paper…", ["Design", "Growth"]], ["UX Research Readout — Onboarding Flo…", ["Design", "Platform"]]];
+        (function buildMeet() {
+          const m = $("meet");
+          let h = '<div class="dots"><i></i><i></i><i></i></div>';
+          h += '<div class="abs" style="left:64px;top:92px;display:flex;align-items:center;gap:16px;font:700 44px/1 Inter;letter-spacing:-0.03em"><svg viewBox="0 0 24 24" style="width:34px;height:34px"><rect x="8" y="2.5" width="8" height="13" rx="4" fill="' + BLUE + '"/><path d="M5 11.5a7 7 0 0 0 14 0M12 18.5V22" fill="none" stroke="' + BLUE + '" stroke-width="2.2" stroke-linecap="round"/></svg>Meetings</div>';
+          h += '<div class="abs" style="left:84px;top:162px;display:flex;align-items:center;gap:24px;font:500 20px/1 Inter;color:#55534e;white-space:nowrap"><span style="height:38px;padding:0 14px;border-radius:8px;background:#f1f0ec;display:flex;align-items:center;gap:8px;color:#2f2e2b">★ EPD meetings</span><span>⌖ My meetings</span><span style="color:#b3b1ac">+</span></div>';
+          h += '<div class="abs" style="left:96px;top:236px;font:400 20px/1 Inter;color:#8a8985;white-space:nowrap">≡&nbsp; Meeting</div><div class="abs" style="left:592px;top:236px;font:400 20px/1 Inter;color:#8a8985;white-space:nowrap">⊙&nbsp; Team</div>';
+          h += '<div class="abs" style="left:60px;right:0;top:272px;border-top:1px solid #eeede9"></div><div class="abs" style="left:572px;top:220px;bottom:0;border-left:1px solid #eeede9"></div>';
+          ROWS.forEach((r, k) => {
+            h += '<div class="mr" id="mr' + k + '" style="top:' + (280 + k * 55) + 'px"><span class="tt"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="#8a8985" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 11h6M9 15h6" stroke="#8a8985" stroke-width="1.4"/></svg>' + esc(r[0]) + (r[2] ? '<span style="display:flex;margin-left:6px"><i style="width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #333"></i><i style="width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #333;margin-left:-6px"></i></span>' : "") + '</span><span class="tg">' + r[1].map((g) => '<span class="tag" style="background:' + TAGC[g][0] + ";color:" + TAGC[g][1] + '">' + g + "</span>").join("") + "</span></div>";
+            h += '<div class="abs" style="left:60px;right:0;top:' + (333 + k * 55) + 'px;border-top:1px solid #f3f2ef"></div>';
+          });
+          m.innerHTML = h;
+        })();
+        $("rec").querySelector(".rt").textContent = v.meeting;
+        $("recB").innerHTML = '<div class="abs" style="left:590px;top:19px;width:48px;height:48px;border-radius:50%;background:#f0efec;display:flex;align-items:center;justify-content:center;gap:6px"><i style="width:6px;height:18px;border-radius:2px;background:#8a8985"></i><i style="width:6px;height:18px;border-radius:2px;background:#8a8985"></i></div><div class="abs" style="left:650px;top:19px;width:48px;height:48px;border-radius:50%;background:#fbe4e4;display:flex;align-items:center;justify-content:center"><i style="width:20px;height:20px;border-radius:4px;background:#e03e3e"></i></div>';
+        $("notes").innerHTML = CHECK(BLUE, 24) + "<span>Notes captured</span>";
+        const wave = $("wave").getContext("2d");
+        function sceneD(t) {
+          const on = t >= 13.95 && t < 20.22;
+          K.show($("dL"), on);
+          if (!on) return;
+          $("dK").style.opacity = P(t, 14.05, 14.3).toFixed(3);
+          riseIn(dS[0], t, 14.5, 0.6, 96); riseIn(dS[1], t, 14.75, 0.6, 96); riseIn(dS[2], t, 15.85, 0.6, 96);
+          const su = E.outCubic(P(t, 17.6, 17.95));
+          $("dSub").style.opacity = su.toFixed(3); $("dSub").style.transform = "translateY(" + px(12 * (1 - su)) + ")"; $("dSub").style.filter = blurS(6 * (1 - su));
+          const mu = E.outCubic(P(t, 14.45, 15.1));
+          const m = $("meet"); m.style.opacity = mu.toFixed(3); m.style.transform = "translateY(" + px(50 * (1 - mu)) + ")"; m.style.filter = blurS(8 * (1 - mu));
+          const ru = E.outBack(P(t, 16.1, 16.4), 1.6), rec = $("rec");
+          fade(rec, C(ru * 2)); rec.style.transform = "scale(" + C(L(0.85, 1, ru), 0, 1.1).toFixed(3) + ")";
+          // waveform
+          wave.clearRect(0, 0, 210, 30);
+          for (let k = 0; k < 22; k++) { const hgt = 4 + 20 * Math.abs(Math.sin(t * 7 + k * 0.9) * Math.sin(t * 3.1 + k * 0.37)); wave.fillStyle = k > 13 ? "#c9c7c2" : "#8a8985"; wave.fillRect(k * 9.5 + 2, 15 - hgt / 2, 3.5, hgt); }
+          // notes captured
+          const nu = E.outBack(P(t, 17.55, 17.8), 1.8), nt = $("notes");
+          fade(nt, C(nu * 2)); nt.style.transform = "translate(1587px,521px) scale(" + C(nu, 0, 1.15).toFixed(3) + ")"; nt.style.transformOrigin = "0 50%";
+          $("mr0").style.background = t >= 17.5 ? "rgba(35,131,226," + (0.09 * P(t, 17.5, 17.7)).toFixed(3) + ")" : "";
+          const out = P(t, 19.98, 20.2);
+          $("dL").style.opacity = (1 - out).toFixed(3); $("dL").style.filter = blurS(10 * out);
+        }
+
+        // ================= E: search and charts =================
+        $("srch").innerHTML = '<div class="abs" style="left:26px;top:22px">' + SPARK(32, "#55534e") + '</div><div class="q"></div><div class="go"><svg viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M12 19V5M6 11l6-6 6 6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+        const qEl = $("srch").querySelector(".q");
+        (function buildCharts() {
+          const c = $("charts");
+          let h = "";
+          // donut card
+          h += '<div class="card abs" id="cDonut" style="left:297px;top:322px;width:438px;height:578px"><svg viewBox="0 0 438 578" style="position:absolute;left:0;top:0;width:438px;height:578px"><circle cx="138" cy="305" r="166" fill="none" stroke="#e7e6e2" stroke-width="18"/><circle id="dArc" cx="138" cy="305" r="166" fill="none" stroke="#56b56d" stroke-width="18" pathLength="1" transform="rotate(-205 138 305)"/></svg><div class="abs" style="left:98px;top:272px;width:80px;text-align:center;font:500 56px/1 Inter" id="dNum">12</div></div>';
+          // bar chart card
+          h += '<div class="card abs" id="cBars" style="left:672px;top:252px;width:553px;height:555px">';
+          [50, 200, 350, 504].forEach((y) => { h += '<div class="abs" style="left:40px;right:40px;top:' + y + 'px;border-top:1.5px dashed #ecebe7"></div>'; });
+          [[121, 303, "#e2b659"], [225, 241, "#3a8ee6"], [328, 349, "#4db06a"], [433, 81, "#d9534f"]].forEach((b, k) => { h += '<div class="abs bar" style="left:' + (b[0] - 10) + "px;top:" + b[1] + "px;width:20px;height:" + (504 - b[1]) + "px;background:" + b[2] + ';transform-origin:50% 100%"></div>'; });
+          h += "</div>";
+          // line chart card
+          h += '<div class="card abs" id="cLine" style="left:1147px;top:382px;width:428px;height:518px;transform:rotate(-3deg)"><svg viewBox="0 0 428 518" style="position:absolute;left:0;top:0;width:428px;height:518px">';
+          for (let k = 0; k < 6; k++) h += '<path d="M' + (40 + k * 70) + ' 20V500" stroke="#efeeea" stroke-width="1.5" stroke-dasharray="4 6"/>';
+          for (let k = 0; k < 7; k++) h += '<path d="M20 ' + (40 + k * 70) + 'H410" stroke="#efeeea" stroke-width="1.5" stroke-dasharray="4 6"/>';
+          h += '<path id="lnB" d="M40 110 C 60 160, 80 170, 110 175 S 150 210, 170 250 S 200 200, 225 225 S 260 170, 285 205 S 320 250, 345 260 S 380 300, 405 330" fill="none" stroke="#3a8ee6" stroke-width="3" pathLength="1"/>';
+          h += '<path id="lnY" d="M20 360 C 50 355, 80 365, 110 372 S 140 400, 160 390 S 190 350, 215 375 S 250 340, 275 360 S 300 250, 330 215 S 360 240, 380 280" fill="none" stroke="#e2b659" stroke-width="3" pathLength="1"/>';
+          h += "</svg></div>";
+          // dashboard card
+          h += '<div class="card abs" id="cDash" style="left:1282px;top:247px;width:548px;height:155px"><div class="abs" style="left:52px;top:52px;display:flex;align-items:center;gap:14px;font:700 32px/1 Inter;letter-spacing:-0.02em;white-space:nowrap"><svg viewBox="0 0 24 24" style="width:32px;height:32px"><path d="M7 4h10v4a5 5 0 0 1-10 0zM7 5H4v1.5A3.5 3.5 0 0 0 7.5 10M17 5h3v1.5A3.5 3.5 0 0 1 16.5 10M12 13v4M8 21h8M9.5 17h5v4h-5z" fill="#e5484d" stroke="#e5484d" stroke-width="1.2" stroke-linejoin="round"/></svg>' + esc(v.dashboard) + '</div><div class="abs" style="left:60px;top:104px;font:400 17px/1 Inter;color:#9b9a97">↻ Syncing</div></div>';
+          // floating app tiles and source chips
+          h += '<div class="tile abs" id="iCloud" style="width:78px;height:78px;background:#fff;box-shadow:0 10px 26px rgba(0,0,0,0.12)"><svg viewBox="0 0 48 48"><path d="M14 34a8 8 0 0 1-.6-16 11 11 0 0 1 21.2 2.4A7 7 0 0 1 35 34z" fill="#2fa8e0"/></svg></div>';
+          h += '<div class="tile abs" id="iAmp" style="width:92px;height:92px;background:#2f6fe0;box-shadow:0 10px 26px rgba(0,0,0,0.16)"><svg viewBox="0 0 48 48"><path d="M8 34c6-2 8-18 12-18s5 20 10 20 6-14 10-16" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg></div>';
+          h += '<div class="tile abs" id="iChat" style="width:84px;height:84px;background:#fff;box-shadow:0 10px 26px rgba(0,0,0,0.12)">' + ICON.chat + "</div>";
+          h += '<svg class="abs" id="links" viewBox="0 0 1920 1080" style="width:1920px;height:1080px"><path d="M1498 522 C 1560 522, 1590 480, 1660 480" fill="none" stroke="#3a8ee6" stroke-width="2"/><path d="M1528 646 C 1580 646, 1600 618, 1660 618" fill="none" stroke="#3a8ee6" stroke-width="2"/><path d="M1546 785 C 1580 785, 1600 755, 1630 755" fill="none" stroke="#3a8ee6" stroke-width="2"/><circle cx="1498" cy="522" r="6" fill="#3a8ee6"/><circle cx="1528" cy="646" r="6" fill="#3a8ee6"/><circle cx="1546" cy="785" r="6" fill="#3a8ee6"/></svg>';
+          [["chat", "Chat", 1660, 455], ["mail", "Mail", 1660, 593], ["code", "Code", 1630, 730]].forEach((s) => { h += '<div class="chip" id="ch_' + s[0] + '" style="left:' + s[2] + "px;top:" + s[3] + 'px">' + ICON[s[0]] + s[1] + "</div>"; });
+          c.innerHTML = h;
+        })();
+        const an1 = $("an1").children[0], an2 = $("an2").children[0];
+        an1.textContent = v.ansA; an2.innerHTML = esc(v.ansB) + ' <span class="bl">' + esc(v.ansC) + "</span>";
+        const CH = ["cDonut", "cBars", "cLine", "cDash", "iCloud", "iAmp", "iChat", "links", "ch_chat", "ch_mail", "ch_code"].map((id, k) => ({ el: $(id), t0: [22.55, 22.5, 22.7, 22.62, 22.85, 22.9, 22.95, 23.2, 23.25, 23.35, 23.45][k], id }));
+        const TPOS = { iCloud: [406, 291], iAmp: [619, 381], iChat: [1353, 345] };
+        function sceneE(t) {
+          const on = t >= 20.1 && t < 26.28;
+          K.show($("eL"), on);
+          if (!on) return;
+          // search pill
+          const s = $("srch"), su = E.outCubic(P(t, 20.12, 20.34)), mv = ioq(P(t, 22.0, 22.45));
+          const sc = L(0.96, 1, su) * L(1, 0.79, mv), cy = L(540, 180, mv);
+          s.style.transform = "translate(" + px(960 - 545) + "," + px(cy - 39) + ") scale(" + sc.toFixed(4) + ")";
+          s.style.opacity = su.toFixed(3);
+          const n = Math.max(0, Math.min(v.question.length, Math.floor((t - 20.16) / 0.04)));
+          qEl.innerHTML = esc(v.question.slice(0, n)) + (t < 22.0 ? '<i style="display:inline-block;width:2px;height:32px;background:#2a2926;vertical-align:-6px;opacity:' + (Math.floor(t * 3) % 2 || n < v.question.length ? 1 : 0) + '"></i>' : "");
+          const gl = bump(t, 22.2, 22.9);
+          s.querySelector(".go").style.boxShadow = gl > 0 ? "0 0 0 " + px(14 * gl) + " rgba(35,131,226," + (0.2 * gl).toFixed(3) + "), 0 0 " + px(60 * gl) + " " + px(10 * gl) + " rgba(35,131,226," + (0.55 * gl).toFixed(3) + ")" : "none";
+          // charts assemble
+          CH.forEach((c) => {
+            const u = E.outCubic(P(t, c.t0, c.t0 + 0.45));
+            K.show(c.el, u > 0);
+            if (u <= 0) return;
+            const tile = c.id[0] === "i";
+            if (tile) { const p = TPOS[c.id], e = E.outBack(P(t, c.t0, c.t0 + 0.4), 2); c.el.style.transform = "translate(" + px(p[0]) + "," + px(p[1] + 30 * (1 - C(e))) + ") scale(" + C(L(0.5, 1, e), 0, 1.2).toFixed(3) + ") rotate(" + (8 * (1 - C(e)) + Math.sin(t * 1.4 + c.t0 * 5) * 3).toFixed(2) + "deg)"; c.el.style.opacity = C(u * 2).toFixed(3); return; }
+            c.el.style.opacity = u.toFixed(3);
+            const base = c.id === "cLine" ? " rotate(-3deg)" : c.id === "cDonut" ? " rotate(-1.5deg)" : "";
+            c.el.style.transform = "translateY(" + px(60 * (1 - u)) + ")" + base;
+            c.el.style.filter = blurS(8 * (1 - u));
+          });
+          const arc = $("dArc"), au = E.outCubic(P(t, 22.8, 23.5)) * 0.38;
+          arc.style.strokeDasharray = au.toFixed(4) + " 1"; arc.style.visibility = au > 0.002 ? "visible" : "hidden";
+          $("dNum").textContent = String(Math.round(12 * E.outCubic(P(t, 22.8, 23.4))));
+          document.querySelectorAll("#cBars .bar").forEach((b, k) => { b.style.transform = "scaleY(" + E.outCubic(P(t, 22.75 + k * 0.08, 23.2 + k * 0.08)).toFixed(3) + ")"; });
+          K.draw($("lnB"), E.inOutCubic(P(t, 22.9, 23.6))); K.draw($("lnY"), E.inOutCubic(P(t, 23.0, 23.7)));
+          // everything moves up and right, the answer rises in
+          const g = ioq(P(t, 24.3, 24.85));
+          $("charts").style.transform = "translate(" + px(215 * g) + "," + px(-243 * g) + ") scale(" + L(1, 0.73, g).toFixed(4) + ")";
+          if (g > 0) s.style.transform = "translate(" + px(L(960, 1237, g) - 545) + "," + px(L(180, 81, g) - 39) + ") scale(" + L(0.79, 0.59, g).toFixed(4) + ")";
+          riseIn(an1, t, 24.45, 0.6, 130); riseIn(an2, t, 24.6, 0.6, 130);
+          const out = P(t, 26.08, 26.26);
+          $("eL").style.opacity = (1 - out).toFixed(3); $("eL").style.filter = blurS(10 * out);
+        }
+
+        // ================= F: automate busywork =================
+        $("fK").querySelector("span").textContent = v.k3;
+        (function buildAgent() {
+          const c = $("cwin");
+          let h = '<div class="abs" style="left:0;top:0;width:766px;height:190px;background:linear-gradient(180deg,#fbf0cf,#fdf6e4 70%,rgba(255,255,255,0))"></div><div class="dots"><i></i><i></i><i></i></div>';
+          h += '<div class="abs" style="left:50px;top:136px;width:92px;height:92px;border-radius:50%;background:#f5c95c;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -4px 0 rgba(0,0,0,0.08)"><svg viewBox="0 0 48 48" style="width:52px;height:52px"><rect x="10" y="14" width="28" height="22" rx="7" fill="#fff" stroke="#2a2926" stroke-width="2.6"/><circle cx="19" cy="25" r="2.6" fill="#2a2926"/><circle cx="29" cy="25" r="2.6" fill="#2a2926"/><path d="M24 14V8" stroke="#2a2926" stroke-width="2.6" stroke-linecap="round"/><circle cx="24" cy="7" r="2.6" fill="#2a2926"/></svg></div>';
+          h += '<div class="abs" style="left:49px;top:280px;font:700 40px/1 Inter;letter-spacing:-0.03em;white-space:nowrap">' + esc(v.agentName) + "</div>";
+          h += '<div class="abs" id="uBub" style="left:241px;top:343px;width:480px;padding:12px 18px;border-radius:14px;background:#efeeea;font:400 19px/27px Inter;color:#2f2e2b">Take a look at what’s in <b style="font-weight:600">▣ ' + esc(v.boardName) + "</b> to see if there’s anything you can take off our team’s plate</div>";
+          h += '<div class="abs" id="aRep" style="left:48px;top:440px;font:400 19px/1.4 Inter;color:#2f2e2b;white-space:nowrap"></div>';
+          h += '<div class="abs" id="aUpd" style="left:54px;top:488px;font:400 18px/1 Inter;color:#8a8985;white-space:nowrap">↗&nbsp; Updated 5 pages in <b style="font-weight:500;color:#55534e">▣ ' + esc(v.boardName) + "</b></div>";
+          h += '<div class="abs" id="aMore" style="left:48px;top:528px;width:680px;font:400 19px/1.45 Inter;color:#2f2e2b"></div>';
+          h += '<div class="abs" id="aPill" style="left:236px;top:652px;width:300px;height:58px;border-radius:29px;background:#fff;box-shadow:0 8px 22px rgba(0,0,0,0.1),0 0 0 1px rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;gap:12px;font:600 22px/1 Inter;white-space:nowrap"></div>';
+          c.innerHTML = h;
+          const e = $("ewin");
+          let g = '<div class="dots"><i></i><i></i><i></i></div>';
+          g += '<div class="abs" style="left:40px;top:66px;display:flex;align-items:center;gap:14px;font:700 39px/1 Inter;letter-spacing:-0.03em;white-space:nowrap"><svg viewBox="0 0 24 24" style="width:34px;height:34px"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z" fill="#d9a53a"/><circle cx="7" cy="17.5" r="2" fill="#fff" stroke="#d9a53a" stroke-width="1.6"/><circle cx="17" cy="17.5" r="2" fill="#fff" stroke="#d9a53a" stroke-width="1.6"/></svg>' + esc(v.boardName) + "</div>";
+          g += '<div class="abs" style="left:40px;top:112px;display:flex;align-items:center;gap:20px;font:500 18px/1 Inter;color:#55534e;white-space:nowrap"><span style="height:32px;padding:0 12px;border-radius:7px;background:#f1f0ec;color:#2f2e2b;display:flex;align-items:center">★ All Issues</span><span>◌ Untriaged</span><span style="color:#b3b1ac">+</span></div>';
+          g += '<div class="ecol" style="left:30px;background:linear-gradient(180deg,rgba(229,122,46,0.07),rgba(255,255,255,0))"><div class="ch" style="left:12px;top:12px"><b style="background:#fbe6d6;color:#c2621a"><i style="background:#e0782c"></i>New</b><span>2</span></div></div>';
+          g += '<div class="ecol" style="left:370px;background:linear-gradient(180deg,rgba(47,127,214,0.07),rgba(255,255,255,0))"><div class="ch" style="left:12px;top:12px"><b style="background:#dfeefb;color:#2f7fd6"><i style="background:#2f7fd6"></i>In progress</b><span>3</span></div></div>';
+          g += '<div class="ecol" style="left:710px;background:rgba(0,0,0,0.03)"></div>';
+          g += '<div class="ec" id="ec1" style="left:40px;top:196px">Fix wrap on H1<div class="who"><i style="background:#f5c95c"></i>' + esc(v.agentName) + '</div><span class="pri" style="background:#fbe4e4;color:#b93a3a">High priority</span><span class="id">ZEN-1201</span></div>';
+          g += '<div class="abs" id="asg" style="left:150px;top:352px;height:34px;padding:0 12px;border-radius:8px;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,0.12),0 0 0 1px rgba(0,0,0,0.05);display:flex;align-items:center;gap:6px;font:400 16px/1 Inter;color:#55534e;white-space:nowrap;z-index:3">Assigned to <b style="font-weight:500;color:' + BLUE + '">' + esc(v.agentName) + "</b></div>";
+          g += '<div class="ec" style="left:40px;top:382px">Animation refinements<div class="who"><i style="background:#555"></i>Ada</div></div>';
+          g += '<div class="ec" style="left:380px;top:196px">Create source map for debugging<div class="who"><i style="background:#555"></i>James</div><span class="pri" style="background:#f8eecb;color:#8a6a12">Medium priority</span><span class="id">ZEN-1202</span></div>';
+          g += '<div class="ec" style="left:380px;top:382px">Hover state for buttons<div class="who"><i style="background:#aaa"></i>Hana</div></div>';
+          e.innerHTML = g;
+        })();
+        const REPLY = "Let me take a quick look at what’s in flight and what’s new.";
+        $("big247").textContent = v.allDay;
+        const keepW = words($("keep"), v.keepLine);
+        function sceneF(t) {
+          const on = t >= 26.1 && t < 31.8;
+          K.show($("fL"), on);
+          if (!on) return;
+          $("fK").style.opacity = P(t, 26.2, 26.4).toFixed(3);
+          const cu = E.outCubic(P(t, 26.15, 26.55)), c = $("cwin");
+          c.style.opacity = cu.toFixed(3); c.style.transform = "translateY(" + px(40 * (1 - cu)) + ")"; c.style.filter = blurS(8 * (1 - cu));
+          const eu = E.outCubic(P(t, 26.75, 27.25)), e = $("ewin");
+          e.style.opacity = eu.toFixed(3); e.style.transform = "translateX(" + px(-300 * (1 - eu)) + ")"; e.style.filter = blurS(6 * (1 - eu));
+          const bu = E.outCubic(P(t, 26.3, 26.5));
+          $("uBub").style.opacity = bu.toFixed(3); $("uBub").style.transform = "translateY(" + px(10 * (1 - bu)) + ")";
+          const n = Math.max(0, Math.min(REPLY.length, Math.floor((t - 26.75) / 0.007)));
+          $("aRep").textContent = REPLY.slice(0, n);
+          const pill = $("aPill"), pu = E.outBack(P(t, 27.5, 27.75), 1.8);
+          fade(pill, C(pu * 2)); pill.style.transform = "scale(" + C(pu, 0, 1.15).toFixed(3) + ")";
+          const done = t >= 28.4;
+          pill.innerHTML = done ? CHECK(BLUE, 26) + "<span>Updated 5 pages</span>" : '<svg viewBox="0 0 24 24" style="width:22px;height:22px;transform:rotate(' + ((t * 400) % 360).toFixed(0) + 'deg)"><circle cx="12" cy="12" r="9" fill="none" stroke="#dcdad5" stroke-width="2.4"/><path d="M12 3a9 9 0 0 1 9 9" fill="none" stroke="#55534e" stroke-width="2.4" stroke-linecap="round"/></svg><span style="font-weight:500;color:#55534e">Working…</span>';
+          if (done) pill.style.transform = "scale(" + (1 + 0.06 * bump(t, 28.4, 28.6)).toFixed(3) + ")";
+          $("aUpd").style.opacity = E.outCubic(P(t, 28.45, 28.7)).toFixed(3);
+          const MORE = "I went ahead and assigned myself a few tasks. It looks like “Fix wrap on H1” is the highest priority there. Want me to go ahead and get started?";
+          $("aMore").textContent = MORE.slice(0, Math.max(0, Math.min(MORE.length, Math.floor((t - 28.95) / 0.006))));
+          const ag = E.outBack(P(t, 29.1, 29.35), 1.8), asg = $("asg");
+          fade(asg, C(ag * 2)); asg.style.transform = "scale(" + C(ag, 0, 1.15).toFixed(3) + ")"; asg.style.transformOrigin = "0 0";
+          const hi = E.outCubic(P(t, 28.5, 28.75)), ec = $("ec1");
+          ec.style.background = hi > 0 ? "rgba(35,131,226," + (0.08 * hi).toFixed(3) + ")" : "#fff";
+          ec.style.boxShadow = hi > 0 ? "0 0 0 " + px(2.5 * hi) + " " + BLUE + ", 0 6px 16px rgba(35,131,226," + (0.15 * hi).toFixed(3) + ")" : "";
+          // 24/7
+          const bl = E.outCubic(P(t, 29.5, 30.2)), wins = $("fWins");
+          wins.style.filter = blurS(5 * bl); wins.style.opacity = L(1, 0.42, bl).toFixed(3); wins.style.transform = "scale(" + L(1, 0.97, bl).toFixed(4) + ")"; wins.style.transformOrigin = "920px 500px";
+          const b = $("big247"), bu2 = E.outCubic(P(t, 29.45, 30.2));
+          b.style.opacity = bu2.toFixed(3); b.style.filter = blurS(24 * (1 - bu2)); b.style.transform = "scale(" + L(1.25, 1, bu2).toFixed(3) + ")";
+          keepW.forEach((w, k) => blurIn(w, t, 29.95 + k * 0.1, 0.34, 0, 1.05));
+          const out = P(t, 31.5, 31.72);
+          $("fL").style.opacity = (1 - out).toFixed(3);
+        }
+
+        // ================= G: dark, build agents =================
+        $("gGlyph").innerHTML = SPARK(46, "#d8d8d8");
+        const g1 = $("gl1").children[0]; g1.textContent = v.buildLead;
+        const USES = list(v.buildUses);
+        const UT = [32.25, 33.05, 33.85, 34.65];
+        const gl2 = $("gl2");
+        const uEls = USES.map((u) => { const s = mk("span", "", gl2, esc(u)); s.style.cssText = "position:absolute;left:0;top:0;color:#4a9af0;white-space:pre"; return s; });
+        for (let k = 1; k < 4; k++) { const s = mk("s", "", $("track")); s.style.left = px(1185 * k / 4); }
+        function sceneG(t) {
+          const on = t >= 31.6 && t < 36.0;
+          K.show($("gL"), on);
+          if (!on) return;
+          $("gL").style.opacity = P(t, 31.62, 31.8).toFixed(3);
+          const gu = E.outCubic(P(t, 31.85, 32.15));
+          $("gGlyph").style.opacity = gu.toFixed(3); $("gGlyph").style.transform = "rotate(" + (-40 * (1 - gu)).toFixed(1) + "deg)";
+          riseIn(g1, t, 31.9, 0.6, 130);
+          gl2.style.width = "1500px";
+          let cur = -1; UT.forEach((a, k) => { if (t >= a) cur = k; });
+          uEls.forEach((s, k) => {
+            const a = UT[k], inU = E.outExpo(P(t, a, a + 0.5)), outU = k < 3 ? E.inCubic(P(t, UT[k + 1] - 0.05, UT[k + 1] + 0.25)) : 0;
+            s.style.transform = "translateY(" + px(130 * (1 - inU) - 130 * outU) + ")"; s.style.opacity = (inU > 0 ? 1 - outU : 0).toFixed(3);
+            s.style.filter = blurS(8 * outU);
+          });
+          const tu = E.outCubic(P(t, 31.95, 32.3));
+          $("track").style.opacity = tu.toFixed(3); $("cnt").style.opacity = tu.toFixed(3);
+          const fp = UT.reduce((acc, a, k) => acc + ioq(P(t, a, a + 0.5)) / 4, 0);
+          $("fill").style.width = px(1185 * fp);
+          $("cnt").innerHTML = '<span style="color:#e8e8e8">' + String(Math.max(1, cur + 1)).padStart(2, "0") + "</span> / 04";
+          const out = P(t, 35.92, 36.0);
+          $("gL").style.opacity = (P(t, 31.62, 31.8) * (1 - out)).toFixed(3);
+        }
+
+        // ================= H: trusted =================
+        $("hTitle").innerHTML = v.trustA.split(" ").map((w) => '<span class="w">' + esc(w) + "</span>").join(" ") + ' <span class="w bl">' + esc(v.trustB) + "</span>";
+        const hW = [...$("hTitle").querySelectorAll(".w")];
+        const LOGOS = list(v.logos);
+        const GLY = [
+          '<svg viewBox="0 0 24 24" style="width:34px;height:34px"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>',
+          '<svg viewBox="0 0 24 24" style="width:30px;height:30px"><path d="M12 3l9 17H3z" fill="currentColor"/></svg>',
+          '<svg viewBox="0 0 24 24" style="width:30px;height:30px"><rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor"/><rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor"/><rect x="13" y="3" width="8" height="8" rx="4" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+          '<svg viewBox="0 0 24 24" style="width:32px;height:32px"><path d="M4 16c4-10 12-10 16 0" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M8 16c2-5 6-5 8 0" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
+          "",
+        ];
+        const LSTY = ['600 40px/1 "Inter"', '400 44px/1 "Inter"', '700 34px/1 "Inter"', '500 40px/1 "Inter"', '400 44px/1 "Instrument Serif"'];
+        const logoEls = LOGOS.slice(0, 15).map((name, k) => {
+          const r = Math.floor(k / 5), c = k % 5;
+          const el = mk("div", "lg", $("logos"), (GLY[(k * 3) % 5] || "") + "<span>" + esc(k % 5 === 2 ? name.toUpperCase() : name) + "</span>");
+          const sp = el.querySelector("span"); sp.style.font = LSTY[(k * 2 + r) % 5]; if (k % 5 === 2) sp.style.letterSpacing = "0.14em"; if ((k * 2 + r) % 5 === 4) sp.style.fontStyle = "italic";
+          return { el, x: 324 + c * 316.5, y: [423, 546, 666][r], r, k };
+        });
+        const STATS = list(v.stats).map((s) => { const [a, b] = s.split("|").map((x) => x.trim()); return { val: a || "", label: b || "" }; });
+        const statEls = STATS.slice(0, 3).map((s, k) => { const el = mk("div", "stat", $("stats"), "<b></b><span>" + esc(s.label) + "</span>"); el.style.left = px(168 + k * 540); return { el, b: el.querySelector("b"), s, t0: [39.3, 39.45, 40.15][k] }; });
+        const rollVal = (val, u) => { const m = String(val).match(/^([^\d]*)([\d.,]+)(.*)$/); if (!m) return val; const num = parseFloat(m[2].replace(/,/g, "")); const dec = (m[2].split(".")[1] || "").length; let x = num * u; const s = dec ? x.toFixed(dec) : String(Math.round(x)); return m[1] + (m[2].includes(",") ? s.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : s) + m[3]; };
+        let logoW = null;
+        function sceneH(t) {
+          const on = t >= 35.8 && t < 42.3;
+          K.show($("hL"), on);
+          if (!on) return;
+          if (!logoW) logoW = logoEls.map((l) => l.el.offsetWidth);
+          hW.forEach((w, k) => blurIn(w, t, 36.2 + k * 0.08, 0.4, 24, 1.04));
+          const sh = ioq(P(t, 38.4, 38.9));
+          $("logos").style.transform = "translateY(" + px(-126 * sh) + ") scale(" + L(1, 0.72, sh).toFixed(4) + ")";
+          logoEls.forEach((l, k) => {
+            const a = [36.6, 37.3, 37.6][l.r] + (k % 5) * 0.06, u = E.outCubic(P(t, a, a + 0.4));
+            l.el.style.transform = "translate(" + px(l.x - logoW[k] / 2) + "," + px(l.y - 22 + 20 * (1 - u)) + ")";
+            l.el.style.opacity = u.toFixed(3); l.el.style.filter = blurS(8 * (1 - u));
+          });
+          statEls.forEach((s) => {
+            const u = E.outCubic(P(t, s.t0, s.t0 + 0.4));
+            s.el.style.opacity = u.toFixed(3); s.el.style.transform = "translateY(" + px(30 * (1 - u)) + ")";
+            s.b.textContent = rollVal(s.s.val, E.outCubic(P(t, s.t0 + 0.05, s.t0 + 1.0)));
+          });
+          const out = P(t, 41.85, 42.2);
+          $("hL").style.opacity = (1 - out).toFixed(3); $("hL").style.filter = blurS(14 * out);
+          $("hL").style.transform = "translateY(" + px(-40 * out) + ")";
+        }
+
+        // ================= I: end =================
+        $("iMark").innerHTML = MARK(156);
+        $("iWm").textContent = v.brand;
+        $("iTag").children[0].textContent = v.endTag;
+        $("iBtn").textContent = v.cta;
+        $("iDom").textContent = v.domain;
+        let lockW = 0;
+        const CK = [[43.9, 1340, 860], [44.25, 1116, 708], [44.5, 1112, 704], [45.2, 1170, 768]];
+        const curAt = (t) => { for (let k = 0; k < CK.length - 1; k++) if (t < CK[k + 1][0]) { const u = ioq(P(t, CK[k][0], CK[k + 1][0])); return [L(CK[k][1], CK[k + 1][1], u), L(CK[k][2], CK[k + 1][2], u)]; } return [CK[CK.length - 1][1], CK[CK.length - 1][2]]; };
+        function sceneI(t) {
+          const on = t >= 41.95;
+          K.show($("iL"), on);
+          K.show($("cursor"), on && t >= 43.9 && t < 45.9);
+          if (!on) return;
+          if (!lockW) lockW = $("iLock").offsetWidth;
+          const lu = E.outCubic(P(t, 41.98, 42.45)), lk = $("iLock");
+          lk.style.left = px(960 - lockW / 2); lk.style.opacity = lu.toFixed(3); lk.style.filter = blurS(12 * (1 - lu)); lk.style.transform = "scale(" + L(0.92, 1, lu).toFixed(3) + ")"; lk.style.transformOrigin = "50% 50%";
+          riseIn($("iTag").children[0], t, 43.25, 0.55, 64);
+          const bu = E.outBack(P(t, 43.65, 43.95), 1.8), btn = $("iBtn");
+          const press = bump(t, 44.46, 44.66);
+          btn.style.opacity = C(bu * 2).toFixed(3); btn.style.transform = "scale(" + (C(bu, 0, 1.15) * (1 - 0.05 * press)).toFixed(3) + ")";
+          btn.style.boxShadow = t > 44.5 ? "0 " + px(20 * P(t, 44.5, 45.2)) + " " + px(80 * P(t, 44.5, 45.2)) + " rgba(35,131,226," + (0.35 * P(t, 44.5, 45.2)).toFixed(3) + ")" : "none";
+          $("iDom").style.opacity = E.outCubic(P(t, 44.25, 44.55)).toFixed(3);
+          const cp = curAt(t), cur = $("cursor");
+          cur.style.transform = "translate(" + px(cp[0] - 9) + "," + px(cp[1] - 5) + ") scale(" + (1 - 0.15 * press).toFixed(3) + ")";
+          cur.style.opacity = (P(t, 43.9, 44.0) * (1 - P(t, 45.6, 45.85))).toFixed(3);
+          const out = P(t, 45.55, 45.95);
+          $("iL").style.opacity = (1 - out).toFixed(3); $("iL").style.filter = blurS(10 * out);
+        }
+
+        // ================= fx: the dot and the light disc =================
+        const fx = $("fx").getContext("2d");
+        function drawFx(t) {
+          fx.clearRect(0, 0, 1920, 1080);
+          if (t >= 3.86 && t < 4.35) {
+            const du = P(t, 3.86, 3.95);
+            if (t < 3.97) { fx.fillStyle = "rgba(245,244,240," + du.toFixed(3) + ")"; fx.beginPath(); fx.arc(960, 540, 7, 0, TAU); fx.fill(); }
+            const r = 1300 * P(t, 3.93, 4.28);
+            if (r > 0) { fx.fillStyle = PAPER; fx.beginPath(); fx.arc(960, 540, Math.max(7, r), 0, TAU); fx.fill(); }
+          }
+          // the product scene, and the rest, start on a paper background drawn under them
+        }
+
+        function render(t) {
+          drawBg(t);
+          sceneA(t);
+          sceneBC(t);
+          sceneD(t);
+          sceneE(t);
+          sceneF(t);
+          sceneG(t);
+          sceneH(t);
+          sceneI(t);
+          drawFx(t);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lay = null; logoW = null; lockW = 0; render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

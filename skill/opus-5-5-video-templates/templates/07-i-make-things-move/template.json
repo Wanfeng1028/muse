@@ -1,0 +1,16 @@
+{
+  "id": "07-i-make-things-move",
+  "title": "I make things move — animation principles reel",
+  "category": "motion / brand reel",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "Claude Imagine",
+  "source": {
+    "author": "@himanshutwtxs",
+    "post": "https://x.com/himanshutwtxs/status/2103495232637882858",
+    "note": "Remade from scratch in HyperFrames after the original; structure and pacing follow it, all copy and brand are ours."
+  },
+  "scenes": ["bouncing ball with onion skin + notes", "kinetic headline drop", "bounce / stretch / spin / snap words", "easing graph + spacing", "follow-through", "anticipation loader", "final lockup"],
+  "variables": ["headline1", "headline2", "bounceWord", "stretchWord", "spinWord", "snapWord", "role", "name", "note", "accent", "alert", "ink"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"name\":\"ACME\",\"accent\":\"#ff5a1f\"}'"
+}

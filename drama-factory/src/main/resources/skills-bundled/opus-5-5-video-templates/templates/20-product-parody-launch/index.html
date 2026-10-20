@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"intro","type":"string","label":"Small line above the product","default":"Introducing"},
+  {"id":"name","type":"string","label":"Product name","default":"Baguette Pro."},
+  {"id":"f1a","type":"string","label":"Feature 1, black part","default":"Crust."},
+  {"id":"f1b","type":"string","label":"Feature 1, gold part","default":"Reimagined."},
+  {"id":"sizeFrom","type":"string","label":"Size counter, start","default":"58"},
+  {"id":"sizeTo","type":"string","label":"Size counter, end","default":"65"},
+  {"id":"sizeUnit","type":"string","label":"Size unit","default":"cm."},
+  {"id":"sizeNote","type":"string","label":"Line under the ruler","default":"The longest display we have ever baked."},
+  {"id":"c1","type":"string","label":"Close-up line 1","default":"Crackle."},
+  {"id":"c2","type":"string","label":"Close-up line 2","default":"In every bite."},
+  {"id":"batt","type":"string","label":"Battery headline","default":"Up to 24 hours of freshness."},
+  {"id":"battNote","type":"string","label":"Battery footnote","default":"(realistically, 6)"},
+  {"id":"z1","type":"string","label":"Card line 1","default":"Zero ports."},
+  {"id":"z2","type":"string","label":"Card line 2 (gold)","default":"One butter."},
+  {"id":"p1","type":"string","label":"Origin line","default":"Designed in Paris."},
+  {"id":"p2","type":"string","label":"Origin line 2 (gold)","default":"Baked every morning."},
+  {"id":"price","type":"string","label":"Price","default":"From €1.20."},
+  {"id":"avail","type":"string","label":"Availability line","default":"Tomorrow, 7 a.m. At your boulangerie."},
+  {"id":"gold","type":"color","label":"Gold","default":"#b1802c"},
+  {"id":"rule","type":"color","label":"Ruler colour","default":"#d0a450"},
+  {"id":"ink","type":"color","label":"Ink","default":"#181818"},
+  {"id":"paper","type":"color","label":"Background","default":"#f7faf9"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --gold: #b1802c; --rule: #d0a450; --ink: #181818; --paper: #f7faf9; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Inter", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      .abs { position: absolute; left: 0; top: 0; }
+      #scene { overflow: hidden; background: var(--paper); }
+      .ln { position: absolute; left: 0; width: 1920px; text-align: center; white-space: nowrap; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+      .mask { overflow: hidden; padding: 0.1em 0 0.24em; }
+      .mask > span { display: inline-block; white-space: pre; }
+      .gd { color: var(--gold); }
+      #bread { position: absolute; left: 0; top: 0; mix-blend-mode: multiply; transform-origin: 0 0; }
+      #macro { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      #macro img { position: absolute; left: 0; top: 0; width: 1920px; height: 1071px; transform-origin: 960px 540px; }
+      #cr { position: absolute; left: 164px; top: 0; font: 700 96px/110px "Inter"; letter-spacing: -0.03em; color: #fff; white-space: nowrap; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35); }
+      #cr div { overflow: hidden; height: 128px; padding-top: 6px; }
+      #cr span { display: inline-block; }
+      #battBox { position: absolute; left: 662px; top: 420px; width: 534px; height: 248px; border: 7px solid var(--ink); border-radius: 40px; }
+      #battNub { position: absolute; left: 1201px; top: 512px; width: 15px; height: 64px; border-radius: 0 9px 9px 0; background: var(--ink); }
+      #rule { position: absolute; left: 146px; top: 776px; width: 1626px; height: 22px; }
+      #rule i { position: absolute; top: 10px; left: 0; height: 2.5px; background: var(--rule); transform-origin: 0 50%; width: 1626px; }
+      #rule b { position: absolute; top: 0; width: 2.5px; height: 22px; background: var(--rule); }
+      #card { position: absolute; left: 0; top: 0; width: 620px; height: 696px; border-radius: 26px; overflow: hidden; background: #050505; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.18); }
+      #card img { position: absolute; left: 0; top: 0; width: 620px; height: 830px; object-fit: cover; }
+      .zl { position: absolute; left: 1044px; white-space: nowrap; font: 700 92px/1 "Inter"; letter-spacing: -0.03em; }
+      .zl.mask { padding: 0.08em 0 0.26em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="20" data-track-index="0">
+        <div id="stage" class="layer">
+          <img id="bread" src="assets/img/baguette.jpg" alt="" />
+          <canvas id="steam" class="layer" width="1920" height="1080"></canvas>
+          <div id="intro" class="ln" style="font: 500 37px/1 Inter; letter-spacing: -0.01em; color: #555"></div>
+          <div id="t1" class="ln mask" style="font-size: 136px"><span></span></div>
+          <div id="f1" class="ln mask" style="font-size: 82px"><span></span></div>
+          <div id="sz" class="ln mask" style="font-size: 170px"><span></span></div>
+          <div id="rule"><i></i><b style="left: 0"></b><b style="left: 1623.5px"></b></div>
+          <div id="szNote" class="ln" style="font: 500 33px/1 Inter; letter-spacing: -0.01em; color: #555"></div>
+        </div>
+        <div id="macro"><img src="assets/img/crust.jpg" alt="" /><div id="cr"><div><span></span></div><div><span></span></div></div></div>
+        <div id="battL" class="layer">
+          <div id="battT" class="ln mask" style="font-size: 75px"><span></span></div>
+          <div id="battBox"></div>
+          <div id="battNub"></div>
+          <div id="battN" class="ln" style="font: 500 26px/1 Inter; letter-spacing: -0.01em; color: #6e6e73"></div>
+        </div>
+        <div id="cardL" class="layer">
+          <div id="card"><img src="assets/img/stack.jpg" alt="" /></div>
+          <div id="z1" class="zl mask"><span></span></div>
+          <div id="z2" class="zl mask gd"><span></span></div>
+        </div>
+        <div id="parisL" class="layer">
+          <div id="p1" class="ln mask" style="font-size: 102px"><span></span></div>
+          <div id="p2" class="ln mask gd" style="font-size: 102px"><span></span></div>
+        </div>
+        <div id="endL" class="layer">
+          <div id="t2" class="ln mask" style="font-size: 120px"><span></span></div>
+          <div id="pr" class="ln" style="font: 600 52px/1 Inter; letter-spacing: -0.02em"></div>
+          <div id="av" class="ln" style="font: 500 28px/1 Inter; letter-spacing: -0.005em; color: #6e6e73"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 20;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const px = (n) => n.toFixed(1) + "px";
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const fade = (el, a) => { K.show(el, a > 0.002); el.style.opacity = C(a).toFixed(3); };
+        // a line sits in a mask; it rises in from below and can leave upwards
+        const line = (id, text, baseline, size) => { const el = $(id); el.children[0].innerHTML = text; el.style.top = px(baseline - size * 0.827 - size * 0.1); return el; };
+        const rise = (el, t, a, d, out0, outD) => {
+          const u = E.outCubic(P(t, a, a + (d || 0.4))), o = out0 ? ioq(P(t, out0, out0 + (outD || 0.35))) : 0;
+          K.show(el, u > 0 && o < 1);
+          el.children[0].style.transform = "translateY(" + (115 * (1 - u) - 115 * o).toFixed(2) + "%)";
+        };
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        // directional blur for fast horizontal moves
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) { const ns = "http://www.w3.org/2000/svg", f = document.createElementNS(ns, "filter"); f.setAttribute("id", "mb_" + key); f.setAttribute("x", "-40%"); f.setAttribute("y", "-20%"); f.setAttribute("width", "180%"); f.setAttribute("height", "140%"); g = document.createElementNS(ns, "feGaussianBlur"); f.appendChild(g); let defs = document.getElementById("mbDefs"); if (!defs) { const svg = document.createElementNS(ns, "svg"); svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.style.position = "absolute"; defs = document.createElementNS(ns, "defs"); defs.id = "mbDefs"; svg.appendChild(defs); document.body.appendChild(svg); } defs.appendChild(f); MBF[key] = g; }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+
+        // ---------- the product image: the bread spans 46..1954 of the 2000px file, its centre sits at 43.8% of the height ----------
+        const IMG = { w: 2000, h: 486, bx0: 46, bx1: 1954, cy: 0.438 };
+        const bread = $("bread");
+        const placeBread = (cx, cy, W, extra) => {
+          const iw = W * IMG.w / (IMG.bx1 - IMG.bx0), ih = iw * IMG.h / IMG.w;
+          const x = cx - iw * ((IMG.bx0 + IMG.bx1) / 2 / IMG.w), y = cy - ih * IMG.cy;
+          bread.style.width = px(iw); bread.style.height = px(ih);
+          bread.style.transform = "translate(" + px(x) + "," + px(y) + ")" + (extra || "");
+        };
+        // width of the bread over the first act (it keeps growing slowly)
+        const WK = [[0.55, 1250], [1.4, 1341], [3.0, 1428], [5.0, 1461], [6.0, 1560], [7.0, 1638], [9.0, 1701], [9.6, 1725]];
+        const keyed = (keys, t) => { if (t <= keys[0][0]) return keys[0][1]; for (let k = 0; k < keys.length - 1; k++) if (t < keys[k + 1][0]) return L(keys[k][1], keys[k + 1][1], (t - keys[k][0]) / (keys[k + 1][0] - keys[k][0])); return keys[keys.length - 1][1]; };
+
+        $("intro").textContent = v.intro; $("intro").style.top = px(356 - 37 * 0.727);
+        const t1 = line("t1", esc(v.name), 284, 136);
+        const f1 = line("f1", esc(v.f1a) + ' <span class="gd" style="display:inline">' + esc(v.f1b) + "</span>", 894, 82);
+        const sz = line("sz", "", 242, 170);
+        $("szNote").textContent = v.sizeNote; $("szNote").style.top = px(824 - 33 * 0.727);
+        const SF = parseFloat(v.sizeFrom) || 0, ST = parseFloat(v.sizeTo) || 0;
+        $("cr").children[0].children[0].textContent = v.c1; $("cr").children[1].children[0].textContent = v.c2;
+        $("cr").style.top = px(470 - 6 - 96 * 0.84);
+        const bt = line("battT", esc(v.batt), 329, 75);
+        $("battN").textContent = v.battNote; $("battN").style.top = px(728 - 26 * 0.727);
+        const z1 = $("z1"), z2 = $("z2");
+        z1.children[0].textContent = v.z1; z2.children[0].textContent = v.z2;
+        z1.style.top = px(507 - 92 * 0.827 - 92 * 0.08); z2.style.top = px(640 - 92 * 0.827 - 92 * 0.08);
+        const p1 = line("p1", esc(v.p1), 506, 102), p2 = line("p2", esc(v.p2), 644, 102);
+        const t2 = line("t2", esc(v.name), 325, 120);
+        $("pr").textContent = v.price; $("pr").style.top = px(852 - 52 * 0.727);
+        $("av").textContent = v.avail; $("av").style.top = px(908 - 28 * 0.727);
+
+        // ---------- steam ----------
+        const sc = $("steam").getContext("2d");
+        function steam(t, cx, cy, W) {
+          sc.clearRect(0, 0, 1920, 1080);
+          const a = Math.sin(Math.PI * P(t, 5.05, 6.4));
+          if (a <= 0) return;
+          sc.save(); sc.globalCompositeOperation = "source-over";
+          for (let k = 0; k < 7; k++) {
+            const x0 = cx - W * 0.18 + (R(k * 3.1) - 0.5) * W * 0.4, rise = (t - 5.05) * L(40, 90, R(k * 1.7));
+            const g = sc.createRadialGradient(x0, cy - 40 - rise, 0, x0, cy - 40 - rise, L(60, 130, R(k * 5.3)));
+            g.addColorStop(0, "rgba(255,255,255," + (0.42 * a * L(0.5, 1, R(k * 2.9))).toFixed(3) + ")"); g.addColorStop(1, "rgba(255,255,255,0)");
+            sc.fillStyle = g; sc.beginPath(); sc.ellipse(x0 + Math.sin(t * 2 + k) * 20, cy - 40 - rise, L(50, 110, R(k * 5.3)), L(90, 170, R(k * 7.7)), 0.3 * Math.sin(k), 0, Math.PI * 2); sc.fill();
+          }
+          sc.restore();
+        }
+
+        function render(t) {
+          // ---------- act 1: the product ----------
+          const act1 = t < 10.12, actE = t >= 15.6;
+          K.show($("stage"), act1 || actE);
+          if (act1) {
+            const W = keyed(WK, t);
+            // camera push into the crust at the end of the act
+            const z = Math.pow(P(t, 9.5, 10.05), 1.6);
+            const zs = L(1, 3.2, z), fx0 = 760, fy0 = 560;
+            // zoom about a point on the left half of the bread
+            placeBread(fx0 + (960 - fx0) * zs, fy0 + (530 - fy0) * zs, W * zs);
+            bread.style.filter = blurS(26 * z);
+            // reveal: a soft wipe from the left tip to the right
+            const rv = P(t, 0.55, 1.4), edge = L(-12, 112, ioq(rv));
+            const m = rv < 1 ? "linear-gradient(90deg, #000 " + (edge - 12).toFixed(1) + "%, transparent " + (edge + 6).toFixed(1) + "%)" : "none";
+            bread.style.webkitMaskImage = m; bread.style.maskImage = m;
+            bread.style.opacity = "1";
+            steam(t, 960, 530 + 30, W);
+            fade($("intro"), P(t, 0.85, 1.05) * (1 - P(t, 2.0, 2.25)));
+            rise(t1, t, 2.1, 0.5, 4.34, 0.38);
+            rise(f1, t, 5.62, 0.42, 7.85, 0.25);
+            const su = P(t, 8.18, 8.55);
+            sz.children[0].textContent = Math.round(L(SF, ST, su)) + " " + v.sizeUnit;
+            rise(sz, t, 8.08, 0.45, 9.45, 0.25);
+            const ru = E.outCubic(P(t, 7.95, 8.28)), ro = P(t, 9.45, 9.62);
+            K.show($("rule"), ru > 0 && ro < 1);
+            $("rule").querySelector("i").style.transform = "scaleX(" + ru.toFixed(4) + ")";
+            $("rule").style.opacity = (1 - ro).toFixed(3);
+            [...$("rule").querySelectorAll("b")].forEach((b, k) => { b.style.transform = "scaleY(" + C(k === 0 ? E.outBack(P(t, 7.93, 8.08), 2) : E.outBack(P(t, 8.22, 8.37), 2), 0, 1.3).toFixed(3) + ")"; });
+            fade($("szNote"), P(t, 8.45, 8.7) * (1 - ro));
+          }
+          // ---------- act 2: close-up, battery, card, origin ----------
+          const mOn = t >= 9.95 && t < 13.0;
+          K.show($("macro"), mOn);
+          if (mOn) {
+            const mac = $("macro"), img = mac.querySelector("img");
+            mac.style.opacity = P(t, 9.95, 10.08).toFixed(3);
+            img.style.transform = "scale(" + L(1.14, 1.0, E.outCubic(P(t, 9.95, 11.3))).toFixed(4) + ")";
+            img.style.filter = blurS(10 * (1 - P(t, 9.95, 10.15)));
+            // the photo folds into the battery
+            const mo = ioq(P(t, 11.22, 11.46));
+            const drain = ioq(P(t, 11.58, 11.86)), refill = ioq(P(t, 11.98, 12.36));
+            const fillR = L(1180, 690, drain * (1 - refill));
+            const ins = [L(0, 434, mo), L(0, 1920 - fillR, mo), L(0, 1080 - 654, mo), L(0, 676, mo)];
+            const rad = L(0, 26, mo);
+            mac.style.clipPath = mo > 0 ? "inset(" + ins.map((x) => px(x)).join(" ") + " round " + px(rad) + ")" : "none";
+            const push = E.inCubic(P(t, 12.6, 12.86));
+            mac.style.opacity = P(t, 9.95, 10.08).toFixed(3);
+            mac.style.transform = push > 0 ? "translateX(" + px(-1500 * push) + ")" : "none";
+            if (push > 0) mblur(mac, "mac", 46 * push, 0); else mac.style.filter = "none";
+            const cr = $("cr");
+            fade(cr, 1 - P(t, 11.18, 11.3));
+            [...cr.children].forEach((d, k) => { const a = [10.06, 10.42][k], u = E.outCubic(P(t, a, a + 0.38)); d.children[0].style.transform = "translateY(" + (115 * (1 - u)).toFixed(1) + "%)"; });
+            // with one line the block sits lower; it re-centres when the second line arrives
+            cr.style.transform = "translateY(" + px(173 * (1 - ioq(P(t, 10.4, 10.78)))) + ")";
+          }
+          const bOn = t >= 11.2 && t < 13.0;
+          K.show($("battL"), bOn);
+          if (bOn) {
+            const bu = P(t, 11.3, 11.46), push = E.inCubic(P(t, 12.6, 12.86));
+            $("battBox").style.opacity = bu.toFixed(3); $("battNub").style.opacity = bu.toFixed(3);
+            $("battL").style.transform = push > 0 ? "translateX(" + px(-1500 * push) + ")" : "none";
+            mblur($("battL"), "batt", 46 * push, 0);
+            rise(bt, t, 11.28, 0.38);
+            fade($("battN"), P(t, 12.1, 12.3));
+          }
+          const cOn = t >= 12.7 && t < 14.42;
+          K.show($("cardL"), cOn);
+          if (cOn) {
+            const ci = E.outCubic(P(t, 12.72, 13.02)), co = E.inCubic(P(t, 14.02, 14.34));
+            const card = $("card");
+            // it is pushed in from the right and leaves to the left
+            card.style.transform = "translate(" + px(L(1500, 260, ci) - 1100 * co) + ",192px)";
+            const cl = P(t, 12.72, 13.02);
+            mblur(card, "card", 60 * (1 - cl) + 46 * Math.sqrt(co), 4 * (1 - cl) + 4 * co);
+            card.querySelector("img").style.transform = "translateY(" + px(-60 * P(t, 12.72, 14.4)) + ")";
+            rise(z1, t, 12.96, 0.45, 14.08, 0.25); rise(z2, t, 13.14, 0.45, 14.12, 0.25);
+          }
+          const pOn = t >= 14.38 && t < 15.75;
+          K.show($("parisL"), pOn);
+          if (pOn) { rise(p1, t, 14.32, 0.42, 15.45, 0.25); rise(p2, t, 14.45, 0.42, 15.5, 0.25); }
+          // ---------- act 3: the end card ----------
+          K.show($("endL"), actE);
+          if (actE) {
+            const ek = [[15.62, 958, 760, 700], [15.8, 958, 666, 873], [16.2, 958, 583, 1008], [17.0, 958, 573, 1150], [20, 958, 568, 1215]];
+            let cx = 958, cy = 568, W = 1200;
+            for (let k = 0; k < ek.length - 1; k++) if (t >= ek[k][0] && t < ek[k + 1][0]) { const u = (t - ek[k][0]) / (ek[k + 1][0] - ek[k][0]), e = k < 2 ? u : E.outCubic(u); cy = L(ek[k][2], ek[k + 1][2], e); W = L(ek[k][3], ek[k + 1][3], e); }
+            placeBread(cx, cy, W);
+            bread.style.webkitMaskImage = "none"; bread.style.maskImage = "none";
+            const ea = P(t, 15.62, 15.8);
+            bread.style.opacity = ea.toFixed(3); bread.style.filter = blurS(10 * (1 - ea));
+            steam(t, 0, 0, 0);
+            rise(t2, t, 16.3, 0.42);
+            const pu = E.outCubic(P(t, 17.12, 17.42));
+            fade($("pr"), pu); $("pr").style.transform = "translateY(" + px(16 * (1 - pu)) + ")";
+            const au = E.outCubic(P(t, 17.48, 17.78));
+            fade($("av"), au); $("av").style.transform = "translateY(" + px(12 * (1 - au)) + ")";
+            ["intro", "t1", "f1", "sz", "rule", "szNote"].forEach((id) => K.show($(id), false));
+          }
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

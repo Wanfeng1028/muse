@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "source",
+      "duration_s": 2,
+      "heading": "Show the useful part",
+      "proof": {
+        "path": "example-source.svg",
+        "kind": "image",
+        "label": "Synthetic fixture · not factual evidence",
+        "verified": true
+      },
+      "captions": [
+        {"start_s": 0, "end_s": 2, "text": "USE A REAL SOURCE", "highlight": ["real", "source"]}
+      ]
+    },
+    {
+      "id": "close",
+      "duration_s": 2,
+      "heading": "Build once. Reuse often.",
+      "cta": {"eyebrow": "Make it yours", "text": "SAVE THIS", "subtitle": "Replace the fixture with your own footage"}
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+{
+  "name": "base",
+  "version": "0.1",
+  "extends": null,
+  "description": "风格令牌模板：列出组件会读取的全部键，取中性黑白值。新风格用 extends: \"base\" 只覆盖要改的键。组件只通过角色名取色取字（@accent、type.keyword），不写死任何颜色和字体。字体默认用可分发的开源字体（思源黑/宋、得意黑、霞鹜文楷、JetBrains Mono、Inter），本机未安装时退回系统字体并在渲染报告里标记为不可分发。",
+  "colors": {
+    "bg": "#000000",
+    "bg_glow": "#121212",
+    "panel": "#000000",
+    "panel_2": "#141414",
+    "text": "#FFFFFF",
+    "text_dim": "#9A9A9A",
+    "accent": "#FFFFFF",
+    "accent_hi": "#FFFFFF",
+    "accent_2": "#8A8A8A",
+    "hair": "#333333",
+    "stroke": "#4A4A4A",
+    "highlight_bg": "#FFFFFF",
+    "highlight_text": "#000000"
+  },
+  "fonts": {
+    "sans": {
+      "family": "XM Sans",
+      "fallback": "sans-serif",
+      "default_weight": 500,
+      "open": {
+        "name": "Source Han Sans SC 思源黑体",
+        "license": "SIL OFL 1.1",
+        "download": "https://github.com/adobe-fonts/source-han-sans/releases",
+        "faces": [
+          {
+            "weight": 400,
+            "ps": "SourceHanSansSC-Regular",
+            "files": [
+              "fonts/SourceHanSansSC-Regular.otf",
+              "~/Library/Fonts/SourceHanSansSC-Regular.otf",
+              "/Library/Fonts/SourceHanSansSC-Regular.otf"
+            ]
+          },
+          {
+            "weight": 500,
+            "ps": "SourceHanSansSC-Medium",
+            "files": [
+              "fonts/SourceHanSansSC-Medium.otf",
+              "~/Library/Fonts/SourceHanSansSC-Medium.otf",
+              "/Library/Fonts/SourceHanSansSC-Medium.otf"
+            ]
+          },
+          {
+            "weight": 700,
+            "ps": "SourceHanSansSC-Bold",
+            "files": [
+              "fonts/SourceHanSansSC-Bold.otf",
+              "~/Library/Fonts/SourceHanSansSC-Bold.otf",
+              "/Library/Fonts/SourceHanSansSC-Bold.otf"
+            ]
+          }
+        ]
+      },
+      "system_fallback": {
+        "note": "本机兜底（苹方），不可分发",
+        "faces": [
+          {
+            "weight": 400,
+            "ps": "PingFangSC-Regular"
+          },
+          {
+            "weight": 500,
+            "ps": "PingFangSC-Medium"
+          },
+          {
+            "weight": 600,
+            "ps": "PingFangSC-Semibold"
+          }
+        ],
+        "files": [
+          "/System/Library/Fonts/PingFang.ttc",
+          "/System/Library/AssetsV2/com_apple_MobileAsset_Font*/*/AssetData/PingFang.ttc"
+        ]
+      },
+      "subset": {
+        "enabled": false,
+        "file": null,
+        "chars": null,
+        "note": "预留：可分发字体子集（本期不做子集化）"
+      }
+    },
+    "serif": {
+      "family": "XM Serif",
+      "fallback": "serif",
+      "default_weight": 700,
+      "open": {
+        "name": "Source Han Serif SC 思源宋体",
+        "license": "SIL OFL 1.1",
+        "download": "https://github.com/adobe-fonts/source-han-serif/releases",
+        "faces": [
+          {
+            "weight": 700,
+            "ps": "SourceHanSerifSC-Bold",
+            "files": [
+              "fonts/SourceHanSerifSC-Bold.otf",
+              "~/Library/Fonts/SourceHanSerifSC-Bold.otf",
+              "/Library/Fonts/SourceHanSerifSC-Bold.otf"
+            ]
+          },
+          {
+            "weight": 900,
+            "ps": "SourceHanSerifSC-Heavy",
+            "files": [
+              "fonts/SourceHanSerifSC-Heavy.otf",
+              "~/Library/Fonts/SourceHanSerifSC-Heavy.otf",
+              "/Library/Fonts/SourceHanSerifSC-Heavy.otf"
+            ]
+          }
+        ]
+      },
+      "system_fallback": {
+        "note": "本机兜底（宋体-简），不可分发",
+        "faces": [
+          {
+            "weight": 700,
+            "ps": "STSongti-SC-Bold"
+          },
+          {
+            "weight": 900,
+            "ps": "STSongti-SC-Black"
+          }
+        ],
+        "files": [
+          "/System/Library/Fonts/Supplemental/Songti.ttc"
+        ]
+      },
+      "subset": {
+        "enabled": false,
+        "file": null,
+        "chars": null,
+        "note": "预留：可分发字体子集（本期不做子集化）"
+      }
+    },
+    "display": {
+      "family": "XM Display",
+      "fallback": "sans-serif",
+      "default_weight": 400,
+      "open": {
+        "name": "Smiley Sans 得意黑",
+        "license": "SIL OFL 1.1",
+        "download": "https://github.com/atelier-anchor/smiley-sans/releases",
+        "faces": [
+          {
+            "weight": 400,
+            "ps": "SmileySans-Oblique",
+            "files": [
+              "fonts/SmileySans-Oblique.otf",
+              "~/Library/Fonts/SmileySans-Oblique.otf",
+              "/Library/Fonts/SmileySans-Oblique.otf",
+              "fonts/SmileySans-Oblique.ttf",
+              "~/Library/Fonts/SmileySans-Oblique.ttf",
+              "/Library/Fonts/SmileySans-Oblique.ttf"
+            ]
+          }
+        ]
+      },
+      "system_fallback": {
+        "note": "本机兜底（苹方中粗），不可分发",
+        "faces": [
+          {
+            "weight": 400,
+            "ps": "PingFangSC-Semibold"
+          }
+        ],
+        "files": [
+          "/System/Library/Fonts/PingFang.ttc",
+          "/System/Library/AssetsV2/com_apple_MobileAsset_Font*/*/AssetData/PingFang.ttc"
+        ]
+      },
+      "subset": {
+        "enabled": false,
+        "file": null,
+        "chars": null,
+        "note": "预留：可分发字体子集（本期不做子集化）"
+      }
+    },
+    "kai": {
+      "family": "XM Kai",
+      "fallback": "serif",
+      "default_weight": 400,
+      "open": {
+        "name": "LXGW WenKai 霞鹜文楷",
+        "license": "SIL OFL 1.1",
+        "download": "https://github.com/lxgw/LxgwWenKai/releases",
+        "faces": [
+          {
+            "weight": 400,
+            "ps": "LXGWWenKai-Regular",
+            "files": [
+              "fonts/LXGWWenKai-Regular.ttf",
+              "~/Library/Fonts/LXGWWenKai-Regular.ttf",
+              "/Library/Fonts/LXGWWenKai-Regular.ttf"
+            ]
+          }
+        ]
+      },
+      "system_fallback": {
+        "note": "本机兜底（宋体-简），不可分发",
+        "faces": [
+          {
+            "weight": 400,
+            "ps": "STSongti-SC-Regular"
+          }
+        ],
+        "files": [
+          "/System/Library/Fonts/Supplemental/Songti.ttc"
+        ]
+      },
+      "subset": {
+        "enabled": false,
+        "file": null,
+        "chars": null,
+        "note": "预留：可分发字体子集（本期不做子集化）"
+      }
+    },
+    "mono": {
+      "family": "XM Mono",
+      "fallback": "Menlo, monospace",
+      "default_weight": 400,
+      "open": {
+        "name": "JetBrains Mono",
+        "license": "SIL OFL 1.1",
+        "download": "https://github.com/JetBrains/JetBrainsMono/releases",
+        "faces": [
+          {
+            "weight": "100 800",
+            "ps": null,
+            "files": [
+              "fonts/JetBrainsMono[wght].ttf",
+              "~/Library/Fonts/JetBrainsMono[wght].ttf",
+              "/Library/Fonts/JetBrainsMono[wght].ttf",
+              "fonts/JetBrainsMono-VariableFont_wght.ttf",
+              "~/Library/Fonts/JetBrainsMono-VariableFont_wght.ttf",
+              "/Library/Fonts/JetBrainsMono-VariableFont_wght.ttf"
+            ]
+          }
+        ]
+      },
+      "system_fallback": {
+        "note": "本机兜底（SF Mono），不可分发",
+        "faces": [
+          {
+            "weight": "295 900",
+            "ps": null
+          }
+        ],
+        "files": [
+          "/System/Library/Fonts/SFNSMono.ttf"
+        ]
+      },
+      "subset": {
+        "enabled": false,
+        "file": null,
+        "chars": null,
+        "note": "预留：可分发字体子集（本期不做子集化）"
+      }
+    },
+    "latin": {
+      "family": "XM Latin",
+      "fallback": "Helvetica Neue, sans-serif",
+      "default_weight": 500,
+      "open": {
+        "name": "Inter",
+        "license": "SIL OFL 1.1",
+        "download": "https://github.com/rsms/inter/releases",
+        "faces": [
+          {
+            "weight": "100 900",
+            "ps": null,
+            "files": [
+              "fonts/InterVariable.ttf",
+              "~/Library/Fonts/InterVariable.ttf",
+              "/Library/Fonts/InterVariable.ttf",
+              "fonts/Inter[opsz,wght].ttf",
+              "~/Library/Fonts/Inter[opsz,wght].ttf",
+              "/Library/Fonts/Inter[opsz,wght].ttf"
+            ]
+          }
+        ]
+      },
+      "system_fallback": {
+        "note": "本机兜底（SF Pro），不可分发",
+        "faces": [
+          {
+            "weight": "1 1000",
+            "ps": null
+          }
+        ],
+        "files": [
+          "/System/Library/Fonts/SFNS.ttf"
+        ]
+      },
+      "subset": {
+        "enabled": false,
+        "file": null,
+        "chars": null,
+        "note": "预留：可分发字体子集（本期不做子集化）"
+      }
+    }
+  },
+  "type": {
+    "keyword": {
+      "font": "sans",
+      "weight": 600,
+      "size": 92,
+      "tracking": 2
+    },
+    "chapter_num": {
+      "font": "mono",
+      "weight": 500,
+      "size": 26
+    },
+    "chapter_zh": {
+      "font": "sans",
+      "weight": 500,
+      "size": 32
+    },
+    "chapter_en": {
+      "font": "latin",
+      "weight": 600,
+      "size": 24,
+      "tracking_em": 0.18
+    },
+    "label": {
+      "font": "mono",
+      "weight": 400,
+      "size": 24
+    }
+  },
+  "motion": {
+    "stagger": 0.035,
+    "focus_dur": 0.42,
+    "focus_blur": 10,
+    "focus_dy": 18,
+    "out_dur": 0.26,
+    "ease_in": "expoOut",
+    "ease_out": "cubicIn"
+  },
+  "post": {
+    "bloom": [
+      1.0,
+      0.85
+    ],
+    "bloom_sigma": [
+      4.0,
+      8.0
+    ],
+    "glow_alpha": "additive",
+    "vignette": {
+      "opaque": 0.3,
+      "overlay": 0.0
+    },
+    "vignette_radius": [
+      0.3,
+      0.78
+    ],
+    "grain": {
+      "opaque": 1.0,
+      "overlay": 0.0
+    },
+    "shutter": 0.5,
+    "mb_max": 12
+  }
+}

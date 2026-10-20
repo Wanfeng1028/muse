@@ -1,0 +1,29 @@
+{
+  "name": "launch-film",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node tools/scaffold.mjs",
+    "scaffold": "node tools/scaffold.mjs",
+    "studio": "remotion studio",
+    "typecheck": "tsc --noEmit -p .",
+    "render": "remotion render Main out/film.mp4 --codec=h264 --crf=16 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=320k",
+    "render:4k": "remotion render Main out/film-4k.mp4 --scale=2 --codec=h264 --crf=18 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=320k",
+    "qa": "./tools/qa.sh film"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.532",
+    "@remotion/cli": "4.0.532",
+    "@remotion/google-fonts": "4.0.532",
+    "@remotion/renderer": "4.0.532",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.0",
+    "playwright": "^1.50.0"
+  }
+}

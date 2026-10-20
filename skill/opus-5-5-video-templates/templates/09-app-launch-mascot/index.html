@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"App name","default":"Pip"},
+  {"id":"tagline","type":"string","label":"Intro tagline","default":"your AI parenting assistant"},
+  {"id":"taglineHi","type":"string","label":"Intro tagline highlight (optional)","default":""},
+  {"id":"parent","type":"string","label":"Parent first name","default":"Sam"},
+  {"id":"count","type":"string","label":"Items sorted","default":"46"},
+  {"id":"inboxHead","type":"string","label":"Inbox headline (| = line break, {brand})","default":"{brand} reads every|school email…"},
+  {"id":"inboxHead2","type":"string","label":"Inbox follow-up headline","default":"…so you don&#39;t|have to."},
+  {"id":"inboxSub","type":"string","label":"Inbox sub line","default":"46 to-dos pulled from 6 emails, duplicates merged|and the noise filtered out."},
+  {"id":"swipeHead","type":"string","label":"Swipe headline","default":"Catch up|in a swipe."},
+  {"id":"swipeHi","type":"string","label":"Swipe highlight","default":"a swipe."},
+  {"id":"swipeSub","type":"string","label":"Swipe sub line","default":"Swipe right to add it to the calendar.|Swipe left to archive it."},
+  {"id":"doneHead","type":"string","label":"Done headline","default":"All caught up!"},
+  {"id":"doneSub","type":"string","label":"Done sub line","default":"Everything due in the next 3 days,|handled in under a minute."},
+  {"id":"todoHead","type":"string","label":"To-do headline","default":"Every to-do,|in one place."},
+  {"id":"todoHi","type":"string","label":"To-do highlight","default":"one place."},
+  {"id":"todoSub","type":"string","label":"To-do sub line","default":"When something&#39;s unclear, {brand} just asks.|One tap and it&#39;s sorted."},
+  {"id":"familyHead","type":"string","label":"Family headline","default":"Made for the|whole family."},
+  {"id":"familyHi","type":"string","label":"Family highlight","default":"whole family."},
+  {"id":"familySub","type":"string","label":"Family sub line","default":"Kids, parents and caregivers,|all on the same page."},
+  {"id":"conflictHead","type":"string","label":"Conflict headline","default":"Double-booked?|{brand} spots it."},
+  {"id":"conflictSub","type":"string","label":"Conflict sub line","default":"Clashing pickups are flagged|before they become a scramble."},
+  {"id":"darkHead","type":"string","label":"Dark mode headline","default":"Day or night,|easy on the eyes."},
+  {"id":"darkHi","type":"string","label":"Dark mode highlight","default":"easy on the eyes."},
+  {"id":"darkSub","type":"string","label":"Dark mode sub line","default":"A calm, low-glare theme for|late-night planning."},
+  {"id":"finalLine","type":"string","label":"Final line","default":"Made to make your life as a parent easy."},
+  {"id":"finalHi","type":"string","label":"Final highlight","default":"easy."},
+  {"id":"accent","type":"color","label":"Accent","default":"#2f7cf6"},
+  {"id":"ink","type":"color","label":"Ink","default":"#0f2440"},
+  {"id":"night","type":"color","label":"Night background","default":"#0b1322"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Nunito-normal-200-1000.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --accent: #2f7cf6; --ink: #0f2440; --night: #0b1322; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fdfaf2; font-family: Inter, sans-serif; }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .abs { position: absolute; }
+      .ch { display: inline-block; white-space: pre; }
+      #bg { background: #fdfaf2; }
+      .blob { position: absolute; border-radius: 50%; filter: blur(90px); }
+      #tintY { background: radial-gradient(ellipse 80% 70% at 30% 30%, rgba(250, 226, 140, 0.55), rgba(253, 246, 214, 0.35) 60%, rgba(253, 250, 242, 0) 100%); }
+      #tintB { background: radial-gradient(ellipse 90% 80% at 40% 40%, rgba(196, 220, 252, 0.7), rgba(226, 238, 252, 0.5) 60%, rgba(253, 250, 242, 0) 100%); }
+
+      /* text blocks */
+      .tb { position: absolute; top: 0; height: 1080px; width: 820px; display: flex; flex-direction: column; justify-content: center; padding-bottom: 60px; color: var(--ink); }
+      .lbl { font: 500 19px/1 "IBM Plex Mono", monospace; letter-spacing: 0.24em; color: var(--accent); margin-bottom: 20px; white-space: pre; min-height: 19px; }
+      .hs { display: grid; }
+      .hs > .hd { grid-area: 1 / 1; }
+      .hd { font: 900 88px/98px Nunito, sans-serif; letter-spacing: -0.02em; white-space: nowrap; }
+      .hl { border-radius: 14px; padding: 0 8px; margin: 0 -8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; background-repeat: no-repeat; background-size: 0% 86%; background-position: 0 62%; }
+      .sub { margin-top: 28px; font: 500 26px/38px Inter, sans-serif; color: #3a4658; white-space: nowrap; }
+      .tog { margin-top: 46px; width: 132px; height: 62px; border-radius: 40px; background: #e9eef6; box-shadow: inset 0 2px 6px rgba(15, 36, 64, 0.12); position: relative; }
+      .tog i { position: absolute; left: 6px; top: 6px; width: 50px; height: 50px; border-radius: 50%; background: #fff; box-shadow: 0 4px 10px rgba(15, 36, 64, 0.2); display: flex; align-items: center; justify-content: center; font-style: normal; }
+
+      /* intro */
+      #icon { left: 0; top: 0; width: 240px; height: 240px; filter: drop-shadow(0 18px 30px rgba(47, 124, 246, 0.25)); }
+      #icon svg, .ico svg { width: 100%; height: 100%; display: block; }
+      #meet { left: 0; top: 530px; width: 1920px; text-align: center; font: 900 128px/1 Nunito, sans-serif; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; }
+      #meetSub { left: 0; top: 700px; width: 1920px; text-align: center; font: 700 44px/1 Nunito, sans-serif; color: var(--ink); white-space: nowrap; }
+      .spark { position: absolute; left: 0; top: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+
+      /* phone */
+      .phone { position: absolute; left: 0; top: 0; width: 420px; height: 880px; border-radius: 66px; background: #0d0f14; padding: 11px; box-shadow: 0 50px 90px rgba(20, 40, 80, 0.22), 0 12px 28px rgba(0, 0, 0, 0.18), inset 0 0 0 2px #2c3038; transform-origin: 50% 50%; }
+      .scr { position: relative; width: 398px; height: 858px; border-radius: 56px; overflow: hidden; background: #f6f8fc; color: #101828; font-family: Inter, sans-serif; --card: #fff; --line: #e8edf5; --sub: #6b7688; --soft: #eef3fb; }
+      .scr.dk { background: #0f1522; color: #e8edf6; --card: #182033; --line: #253049; --sub: #8d97ab; --soft: #1b2438; }
+      .island { position: absolute; left: 50%; top: 21px; width: 124px; height: 36px; margin-left: -62px; border-radius: 20px; background: #000; z-index: 6; }
+      .sbar { position: absolute; left: 0; top: 0; width: 100%; height: 62px; display: flex; justify-content: space-between; align-items: center; padding: 10px 34px 0 46px; font: 600 16px/1 Inter; z-index: 5; }
+      .sbar svg { width: 70px; height: 14px; }
+      .view { position: absolute; inset: 0; }
+      .pad { position: absolute; left: 20px; right: 20px; }
+      .card { background: var(--card); border-radius: 18px; box-shadow: 0 6px 20px rgba(16, 24, 40, 0.07); }
+      .t11 { font-size: 11px; } .t12 { font-size: 12px; } .t13 { font-size: 13px; } .t14 { font-size: 14px; } .t15 { font-size: 15px; } .t17 { font-size: 17px; }
+      .b { font-weight: 700; } .sb { font-weight: 600; } .mu { color: var(--sub); } .ac { color: var(--accent); }
+      .av { width: 38px; height: 38px; border-radius: 50%; color: #fff; font: 700 13px/38px Inter; text-align: center; flex: none; }
+      .row { display: flex; align-items: center; gap: 12px; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+      .btn { position: absolute; left: 24px; right: 24px; bottom: 46px; height: 50px; border-radius: 14px; background: var(--accent); color: #fff; font: 600 15px/50px Inter; text-align: center; }
+      .tabbar { position: absolute; left: 20px; right: 20px; bottom: 30px; height: 62px; display: flex; align-items: center; gap: 12px; }
+      .tabbar .tabs { flex: 1; height: 62px; border-radius: 32px; background: var(--card); box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08); display: flex; justify-content: space-around; align-items: center; font-size: 10px; color: var(--sub); }
+      .tabbar .tabs span { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 12px; border-radius: 20px; }
+      .tabbar .tabs span.on { background: var(--soft); color: var(--accent); }
+      .tabbar .srch { width: 62px; height: 62px; border-radius: 50%; background: var(--card); box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08); display: flex; align-items: center; justify-content: center; }
+      svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+      .tabbar svg.i { font-size: 20px; }
+
+      /* email chips */
+      .chip { position: absolute; left: 0; top: 0; width: 350px; height: 82px; background: #fff; border-radius: 16px; box-shadow: 0 14px 30px rgba(16, 24, 40, 0.12); display: flex; align-items: center; gap: 12px; padding: 0 16px; font-family: Inter; color: #101828; }
+      .chip .av { width: 40px; height: 40px; line-height: 40px; font-size: 13px; }
+      .chip b { display: block; font-size: 14px; font-weight: 700; }
+      .chip span { display: block; font-size: 12.5px; color: #4b5565; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+      .chip em { position: absolute; right: 14px; top: 12px; font-style: normal; font-size: 10.5px; color: #98a2b3; }
+
+      /* night */
+      #night { background: radial-gradient(ellipse 70% 70% at 60% 45%, #16264a 0%, #0f1a33 45%, var(--night) 100%); }
+      #wipe { background: #fdfaf2; z-index: 5; }
+      #fx { z-index: 6; }
+
+      /* final */
+      .ico { position: absolute; left: 0; top: 0; width: 200px; height: 200px; filter: drop-shadow(0 16px 24px rgba(47, 124, 246, 0.22)); }
+      #word { left: 0; top: 440px; width: 1920px; display: flex; align-items: center; justify-content: center; gap: 26px; }
+      #tile { width: 124px; height: 124px; border-radius: 34px; background: linear-gradient(160deg, #cfe5ff, #8fc2ff); display: flex; align-items: center; justify-content: center; font: 900 88px/1 Nunito; color: var(--ink); box-shadow: 0 10px 24px rgba(47, 124, 246, 0.25); }
+      #wm { font: 900 136px/1 Nunito; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; }
+      #bird { width: 150px; height: 165px; }
+      #fin { left: 0; top: 644px; width: 1920px; text-align: center; font: 800 42px/1.2 Nunito; color: var(--ink); white-space: nowrap; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="18" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="18" data-track-index="0">
+        <div id="bg" class="layer">
+          <div class="blob" id="blobA" style="width: 720px; height: 720px; background: rgba(170, 206, 250, 0.55)"></div>
+          <div class="blob" id="blobB" style="width: 760px; height: 760px; background: rgba(250, 230, 150, 0.6)"></div>
+          <div class="blob" id="blobC" style="width: 700px; height: 700px; background: rgba(250, 190, 225, 0.5)"></div>
+        </div>
+        <div id="tintY" class="layer"></div>
+        <div id="tintB" class="layer"></div>
+
+        <div id="chips" class="layer"></div>
+        <div id="tbs" class="layer"></div>
+        <div id="phones" class="layer"></div>
+
+        <div id="intro" class="layer">
+          <div id="sparks"></div>
+          <div id="icon" class="abs"></div>
+          <div id="meet" class="abs"></div>
+          <div id="meetSub" class="abs"></div>
+        </div>
+
+        <div id="night" class="layer">
+          <canvas id="stars" class="layer" width="1920" height="1080"></canvas>
+          <div id="nightPhones" class="layer"></div>
+          <div id="tbNight"></div>
+        </div>
+
+        <div id="wipe" class="layer">
+          <div class="blob" id="blobD" style="width: 900px; height: 900px; background: rgba(190, 215, 250, 0.55)"></div>
+          <div id="fsparks"></div>
+          <div class="ico" id="ico0"></div><div class="ico" id="ico1"></div><div class="ico" id="ico2"></div>
+          <div id="word" class="abs"><div id="tile"></div><div id="wm"></div><div id="bird"></div></div>
+          <div id="fin" class="abs"></div>
+        </div>
+        <canvas id="fx" class="layer" width="1920" height="1080"></canvas>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 18;
+        const ACC = v.accent;
+        const fill = (s) => String(s).replace(/\{brand\}/g, v.brand);
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+
+        // ---------- icons ----------
+        const IC = {
+          bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+          cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+          home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+          fam: '<circle cx="8" cy="7" r="3"/><circle cx="17" cy="8" r="2.5"/><path d="M2 20a6 6 0 0 1 12 0M13 20a4.5 4.5 0 0 1 9 0"/>',
+          gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+          search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+          clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+          pin: '<path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+          check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+          x: '<path d="M6 6l12 12M18 6L6 18"/>',
+          warn: '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>',
+          merge: '<path d="M6 3v6a6 6 0 0 0 6 6h6M15 12l3 3-3 3M6 21v-6"/>',
+          filter: '<path d="M3 5h18l-7 8v6l-4 2v-8z"/>',
+          list: '<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+          arch: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/>',
+          sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+          moon: '<path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/>',
+          plus: '<path d="M12 5v14M5 12h14"/>',
+          chev: '<path d="M9 6l6 6-6 6"/>',
+          link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+        };
+        const ic = (n, st) => '<svg class="i" viewBox="0 0 24 24"' + (st ? ' style="' + st + '"' : "") + ">" + IC[n] + "</svg>";
+
+        // ---------- mascot ----------
+        let gid = 0;
+        const eye = (x, y, kind) => {
+          if (kind === "open") return '<ellipse cx="' + x + '" cy="' + y + '" rx="25" ry="28" fill="#fff"/><circle cx="' + (x + 4) + '" cy="' + (y + 4) + '" r="14" fill="#13243f"/><circle cx="' + (x + 9) + '" cy="' + (y - 2) + '" r="5" fill="#fff"/>';
+          return '<path d="M' + (x - 20) + " " + (y + 5) + " Q" + x + " " + (y - 18) + " " + (x + 20) + " " + (y + 5) + '" fill="none" stroke="#13243f" stroke-width="8" stroke-linecap="round"/>';
+        };
+        const face = (cx, cy, eyes) => {
+          const [l, r] = eyes === "wink" ? ["shut", "open"] : eyes === "happy" ? ["shut", "shut"] : ["open", "open"];
+          return eye(cx - 34, cy, l) + eye(cx + 34, cy, r) +
+            '<ellipse cx="' + (cx - 60) + '" cy="' + (cy + 30) + '" rx="12" ry="7" fill="#ff8fb4" opacity=".65"/><ellipse cx="' + (cx + 60) + '" cy="' + (cy + 30) + '" rx="12" ry="7" fill="#ff8fb4" opacity=".65"/>' +
+            '<path d="M' + (cx - 12) + " " + (cy + 24) + " Q" + cx + " " + (cy + 42) + " " + (cx + 12) + " " + (cy + 24) + " Q" + cx + " " + (cy + 18) + " " + (cx - 12) + " " + (cy + 24) + 'Z" fill="#ffb21f" stroke="#e8930a" stroke-width="2"/>';
+        };
+        const iconSVG = (eyes, dark) => {
+          const k = gid++;
+          return '<svg viewBox="0 0 200 200"><defs><linearGradient id="t' + k + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + (dark ? "#16305a" : "#d8ecff") + '"/><stop offset="1" stop-color="' + (dark ? "#0c1b36" : "#a7d2ff") + '"/></linearGradient>' +
+            '<linearGradient id="b' + k + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63b5ff"/><stop offset="1" stop-color="' + ACC + '"/></linearGradient><clipPath id="c' + k + '"><rect width="200" height="200" rx="48"/></clipPath></defs>' +
+            '<g clip-path="url(#c' + k + ')"><rect width="200" height="200" fill="url(#t' + k + ')"/>' +
+            (dark ? '<path d="M40 40l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#ffc83d"/>' : "") +
+            '<ellipse cx="100" cy="134" rx="86" ry="88" fill="url(#b' + k + ')"/><path d="M90 50 Q100 30 112 50" fill="url(#b' + k + ')"/>' +
+            '<ellipse cx="100" cy="210" rx="64" ry="46" fill="#fff"/>' + face(100, 116, eyes) +
+            '<path d="M158 34l2.5 7 7 2.5-7 2.5-2.5 7-2.5-7-7-2.5 7-2.5z" fill="#ffc83d"/></g></svg>';
+        };
+        const bodySVG = (eyes, pose) => {
+          const k = gid++;
+          const wave = pose === "wave";
+          return '<svg viewBox="0 0 200 220" style="overflow:visible"><defs><linearGradient id="b' + k + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#63b5ff"/><stop offset="1" stop-color="' + ACC + '"/></linearGradient></defs>' +
+            '<ellipse cx="78" cy="206" rx="18" ry="8" fill="#ffb21f"/><ellipse cx="122" cy="206" rx="18" ry="8" fill="#ffb21f"/>' +
+            '<g class="fl"><ellipse cx="32" cy="128" rx="16" ry="38" transform="rotate(24 32 128)" fill="url(#b' + k + ')"/></g>' +
+            '<g class="fr" style="transform-origin:162px 104px"><ellipse cx="168" cy="' + (wave ? 84 : 128) + '" rx="16" ry="38" transform="rotate(' + (wave ? -30 : -24) + " 168 " + (wave ? 84 : 128) + ')" fill="url(#b' + k + ')"/></g>' +
+            '<ellipse cx="100" cy="116" rx="76" ry="88" fill="url(#b' + k + ')"/><ellipse cx="100" cy="150" rx="52" ry="54" fill="#fff"/>' +
+            face(100, 84, eyes) + "</svg>";
+        };
+        const STAR = (col) => '<svg viewBox="-12 -12 24 24"><path d="M0 -11 C1.6 -2.2 2.2 -1.6 11 0 C2.2 1.6 1.6 2.2 0 11 C-1.6 2.2 -2.2 1.6 -11 0 C-2.2 -1.6 -1.6 -2.2 0 -11Z" fill="' + col + '"/></svg>';
+
+        // ---------- typing helpers ----------
+        // builds a headline with per-char spans; "|" breaks the line; hi = substring to highlight
+        const typeEl = (el, text, hi, hiCol) => {
+          text = fill(text);
+          el.textContent = "";
+          const hiAt = hi ? text.replace(/\|/g, "\n").lastIndexOf(fill(hi)) : -1;
+          const flat = text.replace(/\|/g, "\n");
+          const chars = [];
+          let hlSpan = null;
+          [...flat].forEach((c, i) => {
+            if (c === "\n") { el.appendChild(document.createElement("br")); return; }
+            let parent = el;
+            if (hiAt >= 0 && i >= hiAt && i < hiAt + fill(hi).length) {
+              if (!hlSpan) { hlSpan = document.createElement("span"); hlSpan.className = "hl"; hlSpan.style.backgroundImage = "linear-gradient(" + hiCol + "," + hiCol + ")"; el.appendChild(hlSpan); }
+              parent = hlSpan;
+            }
+            const s = document.createElement("span");
+            s.className = "ch";
+            s.textContent = c === " " ? " " : c;
+            parent.appendChild(s);
+            chars.push(s);
+          });
+          return { chars, hl: hlSpan };
+        };
+        // type in over [a,b], erase over [c,d]
+        const typing = (h, t, a, b, c, d) => {
+          const n = h.chars.length;
+          const shown = t < c ? Math.floor(n * P(t, a, b) + 1e-6) : Math.ceil(n * (1 - P(t, c, d)) - 1e-6);
+          h.chars.forEach((s, i) => { s.style.opacity = i < shown ? 1 : 0; });
+          return shown;
+        };
+        const hlReveal = (h, u) => {
+          if (!h.hl) return;
+          const full = h.chars.every((c) => c.style.opacity !== "0");
+          h.hl.style.backgroundSize = (full ? u * 100 : 0).toFixed(1) + "% 86%";
+        };
+        const fadeUp = (el, u, d) => { el.style.opacity = C(u); el.style.transform = "translateY(" + ((1 - u) * d).toFixed(1) + "px)"; };
+
+        // ---------- text blocks ----------
+        const mkBlock = (host, x, label, heads, sub, extra) => {
+          const b = document.createElement("div");
+          b.className = "tb";
+          b.style.left = x + "px";
+          const lb = document.createElement("div");
+          lb.className = "lbl";
+          b.appendChild(lb);
+          const hs = document.createElement("div");
+          hs.className = "hs";
+          b.appendChild(hs);
+          const hd = heads.map(([txt, hi, col]) => { const d = document.createElement("div"); d.className = "hd"; hs.appendChild(d); return typeEl(d, txt, hi, col); });
+          const subs = (Array.isArray(sub) ? sub : [sub]).map((sx) => { const d = document.createElement("div"); d.className = "sub"; d.innerHTML = esc(fill(sx)).replace(/\|/g, "<br>"); return d; });
+          if (subs.length) { const ss = document.createElement("div"); ss.className = "hs"; subs.forEach((d) => { d.style.gridArea = "1 / 1"; ss.appendChild(d); }); b.appendChild(ss); }
+          if (extra) b.insertAdjacentHTML("beforeend", extra);
+          $(host).appendChild(b);
+          return { el: b, lb, label, hd, subs, tog: b.querySelector(".tog") };
+        };
+        const PINK = "#ffd0e8", GREEN = "#cdf3c2", YEL = "#fde79a", BLUE = "#cfe2ff";
+        const B1 = mkBlock("tbs", 150, "SMART INBOX", [[v.inboxHead], [v.inboxHead2]], v.inboxSub);
+        const B2 = mkBlock("tbs", 150, "CATCH-UP", [[v.swipeHead, v.swipeHi, PINK], [v.doneHead]], [v.swipeSub, v.doneSub]);
+        const B3 = mkBlock("tbs", 1040, "TO-DO", [[v.todoHead, v.todoHi, GREEN]], v.todoSub);
+        const B4 = mkBlock("tbs", 150, "MY FAMILY", [[v.familyHead, v.familyHi, YEL]], v.familySub);
+        const B5 = mkBlock("tbs", 150, "CALENDAR", [[v.conflictHead]], v.conflictSub, '<div class="tog"><i>' + ic("sun", "font-size:26px;color:#f5a524") + "</i></div>");
+        const B6 = mkBlock("tbNight", 150, "DARK MODE", [[v.darkHead, v.darkHi, "#2e5fd6"]], v.darkSub, '<div class="tog" style="background:#1d2a47"><i style="left:76px;background:#dfe8ff">' + ic("moon", "font-size:24px;color:#2e5fd6") + "</i></div>");
+        B6.el.style.color = "#fff";
+        B6.subs[0].style.color = "#aeb9cf";
+
+        // ---------- phone screens ----------
+        const SBAR = '<div class="sbar"><span>9:41</span><svg viewBox="0 0 70 14"><rect x="0" y="9" width="3.5" height="5" rx="1" fill="currentColor"/><rect x="5.5" y="6.5" width="3.5" height="7.5" rx="1" fill="currentColor"/><rect x="11" y="4" width="3.5" height="10" rx="1" fill="currentColor"/><rect x="16.5" y="1.5" width="3.5" height="12.5" rx="1" fill="currentColor"/><path d="M29 5.5a9 9 0 0 1 12 0M31.5 8.2a5.3 5.3 0 0 1 7 0" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="35" cy="11.5" r="1.6" fill="currentColor"/><rect x="47" y="2" width="20" height="10.5" rx="3" stroke="currentColor" stroke-width="1.3" fill="none" opacity=".5"/><rect x="49" y="4" width="15" height="6.5" rx="1.5" fill="currentColor"/></svg></div>';
+        const avc = ["#4b8df8", "#f97316", "#10b981", "#8b5cf6", "#ec4899", "#eab308"];
+        const tabbar = (on) => '<div class="tabbar"><div class="tabs">' + [["home", "To-do"], ["cal", "Calendar"], ["fam", "Family"], ["gear", "Settings"]].map(([n, l], i) => '<span class="' + (i === on ? "on" : "") + '">' + ic(n) + l + "</span>").join("") + '</div><div class="srch">' + ic("search", "font-size:22px") + "</div></div>";
+        const scrInbox = () =>
+          '<div class="view" id="vA" style="background:linear-gradient(180deg,#d9e9ff 0%,#eaf2ff 38%,#f6f8fc 60%)">' +
+          '<div class="pad" style="top:120px;text-align:center"><div class="t14 sb ac">Hey ' + esc(v.parent) + ", I’ve been busy…</div>" +
+          '<div id="cnt46" style="font:900 72px/1 Nunito;color:#1f5fd6;margin-top:12px">46</div><div class="t14 sb ac" style="margin-top:8px">items sorted from 6 emails</div></div>' +
+          '<div class="pad card" style="top:300px;height:210px;border:2px solid #dce8ff;padding:18px">' +
+          [["merge", "Merged duplicates", 7], ["filter", "Filtered out irrelevant", 14], ["list", "Remaining to review", 25]].map(([n, l, c], i) =>
+            '<div class="row" style="height:58px;position:relative"><div class="skl" style="position:absolute;inset:14px 0;display:flex;gap:12px;align-items:center"><i style="width:20px;height:20px;border-radius:6px;background:#eef2f7"></i><i style="flex:1;height:12px;border-radius:6px;background:#eef2f7"></i><i style="width:26px;height:20px;border-radius:6px;background:#eef2f7"></i></div>' +
+            '<div class="rw row" style="width:100%;opacity:0"><span class="ac" style="font-size:18px">' + ic(n) + '</span><span class="t14 sb" style="flex:1">' + l + '</span><span class="pill" style="background:' + (i === 2 ? "#e0eaff;color:#1f5fd6" : "#f1f4f9;color:#475467") + '">' + c + "</span></div></div>").join("") +
+          '</div><div class="t11 mu" style="position:absolute;top:524px;width:100%;text-align:center">emails from the last 7 days</div><div class="btn">Let’s go through them!</div></div>';
+        const swipeCard = (id, top, tag, title, body, when, where) =>
+          '<div class="card" id="' + id + '" style="position:absolute;left:20px;right:20px;top:' + top + 'px;height:560px;overflow:hidden;transform-origin:50% 120%">' +
+          '<div style="height:62px;background:linear-gradient(90deg,#c9ecb4,#a9e08e);font-size:34px;line-height:62px;letter-spacing:6px;white-space:nowrap;overflow:hidden;padding-left:8px">🏀⚽🏀⚽🏀⚽🏀⚽</div>' +
+          '<div style="padding:16px 18px"><div class="t12 sb" style="color:#e2710b">☀ ' + tag + '</div><div class="row" style="margin-top:8px;align-items:flex-start"><div class="t17 b" style="flex:1;line-height:1.3">' + title + '</div><span style="display:flex">' + ["#f59e0b", "#6366f1", "#10b981"].map((c, i) => '<i style="width:22px;height:22px;border-radius:50%;background:' + c + ";border:2px solid #fff;margin-left:" + (i ? -8 : 0) + 'px"></i>').join("") + "</span></div>" +
+          '<div class="pill" style="margin-top:12px;background:#e8f0ff;color:#1f5fd6">' + ic("cal") + " Save the date</div>" +
+          '<div class="t12 mu" style="margin-top:14px;line-height:1.55">' + body + "</div>" +
+          '<div class="row" style="margin-top:16px;background:var(--soft);border-radius:12px;padding:10px 12px"><span class="mu">' + ic("clock") + '</span><div class="t12"><b>' + when[0] + '</b><div class="mu t11">' + when[1] + "</div></div></div>" +
+          '<div class="row" style="margin-top:10px;background:var(--soft);border-radius:12px;padding:10px 12px"><span class="mu">' + ic("pin") + '</span><div class="t12" style="flex:1"><b>' + where[0] + '</b><div class="ac t11">' + where[1] + '</div></div><i style="width:52px;height:34px;border-radius:8px;background:linear-gradient(135deg,#bfe3a8,#8fd0c8)"></i></div></div></div>';
+        const scrSwipe = () =>
+          '<div class="view" id="vB"><div class="pad row" style="top:76px;justify-content:space-between"><span class="mu" style="font-size:20px">' + ic("x") + '</span><span class="t15 b" id="left">2 left</span><span class="t14 mu">Undo</span></div>' +
+          swipeCard("sc2", 132, "Little Stars Ballet", "Spring Recital: dress rehearsal", "Dancers should arrive 30 minutes early with hair in a neat bun. Families enter through the side door; the main hall opens at 5:30.", ["Fri, Jun 13 · 4pm – 6pm", "Dancers arrive 3:30pm"], ["Maple Grove Hall", "12 min away"]) +
+          swipeCard("sc1", 120, "Rec Center Summer Camp", "Junior Basketball Camp: Week 1", "Summer basketball camp kicks off Monday! Drop-off is at the main gym by 8:45 AM. Pack sneakers, a water bottle, sunscreen and a labeled lunch for each day of camp.", ["Mon, Jun 9 · 9am – 3pm", "Daily until Fri, Jun 13"], ["Rec Center", "6 min away"]) +
+          '<div class="pad row" style="bottom:40px;justify-content:space-between"><span class="pill t13 mu" style="background:var(--soft)">' + ic("arch") + ' Archive</span><span class="pill t13" id="addCal" style="background:var(--soft)">Add to cal ' + ic("cal") + "</span></div></div>";
+        const scrDone = () =>
+          '<div class="view" id="vC" style="background:linear-gradient(180deg,#eef5ff,#f6f8fc 60%)"><div id="toast" style="position:absolute;left:50%;top:68px;transform:translateX(-50%);background:#101828;color:#fff;border-radius:22px;padding:11px 18px;font:600 13px/1 Inter;white-space:nowrap;display:flex;gap:8px;align-items:center;z-index:7"><span style="color:#4ade80">' + ic("check") + "</span>Added to Emma’s calendar</div>" +
+          '<div id="sleepBird" style="position:absolute;left:99px;top:210px;width:200px;height:220px">' + bodySVG("happy", "rest") + "</div>" +
+          '<div style="position:absolute;left:30px;right:30px;top:500px;text-align:center;font:800 23px/1.4 Nunito">You’re caught up on everything due in 3 days!</div><div class="btn">Continue reviewing · 12 items</div></div>';
+        const scrTodo = (dk) =>
+          '<div class="view"><div class="pad" style="top:74px;font:800 27px/1 Nunito">To-do</div>' +
+          '<div class="pad" style="top:122px;background:' + (dk ? "#1a2a4a" : "#e4efff") + ';border-radius:16px;padding:14px 16px"><div class="t13 b ac">Is Leo in Ms. Ortiz’s or Ms. Bell’s kindergarten class?</div><div class="t11 mu" style="margin-top:4px">Both class lists mention him.</div><div class="row" style="gap:8px;margin-top:12px">' +
+          ["Ms. Ortiz", "Ms. Bell", "Skip"].map((c, i) => '<span class="pill' + (i === 0 ? " tapme" : "") + '" style="background:var(--card);border:1px solid var(--line)">' + c + "</span>").join("") + "</div></div>" +
+          '<div class="pad row" style="top:282px;gap:8px"><span class="pill" style="background:var(--accent);color:#fff">All</span><span class="pill" style="background:var(--card);border:1px solid var(--line)">Assigned to me</span></div>' +
+          '<div class="pad card row" style="top:334px;height:50px;padding:0 16px;justify-content:space-between"><span class="t13 sb">FYI <span class="mu">1</span></span><span class="mu">' + ic("chev") + "</span></div>" +
+          '<div class="pad t13 sb" style="top:404px">Upcoming in 2 days <span class="mu">2</span></div>' +
+          [["5th grade camping trip", "Today at 3:00 PM"], ["Picture day: order forms due Friday", "Today at 3:00 PM"]].map(([a, b], i) =>
+            '<div class="pad card" style="top:' + (436 + i * 104) + 'px;height:92px;padding:14px 16px"><div class="row" style="justify-content:space-between"><span class="t13 sb">' + a + '</span><span style="display:flex"><i style="width:20px;height:20px;border-radius:50%;background:#f59e0b"></i><i style="width:20px;height:20px;border-radius:50%;background:#4b8df8;margin-left:-6px"></i></span></div><div class="t11 mu" style="margin-top:10px">' + ic("cal") + " " + b + "</div></div>").join("") +
+          '<div class="pad t11 ac" style="top:652px;background:' + (dk ? "#1a2a4a" : "#eaf1ff") + ';border-radius:10px;padding:8px 12px">' + esc(v.brand) + " updated this item’s details</div>" + tabbar(0) + "</div>";
+        const scrFamily = (dk) =>
+          '<div class="view"><div class="pad row" style="top:74px;justify-content:space-between"><span style="font:800 26px/1 Nunito">My Family</span><span class="pill" style="background:' + (dk ? "#1a2a4a" : "#e4efff") + ';color:var(--accent)">' + ic("plus") + " Add</span></div>" +
+          '<div class="pad t11 sb ac" style="top:122px;background:' + (dk ? "#1a2a4a" : "#eaf1ff") + ';border-radius:10px;padding:8px 12px">🎉 Your family saved 13 hours in the last 7 days!</div>' +
+          '<div class="pad t11 sb mu" style="top:170px;letter-spacing:.08em">KIDS</div>' +
+          [["Ava Rivera", "Maple Grove School", "Pre-K", 0], ["Leo Rivera", "Maple Grove School", "Grade K", 3], ["Emma Rivera", "Maple Grove School", "Grade 5", 2]].map(([n, s, g, c], i) =>
+            '<div class="pad card row" style="top:' + (194 + i * 76) + 'px;height:68px;padding:0 14px"><div class="av" style="width:46px;height:46px;line-height:46px;background:linear-gradient(135deg,' + avc[c] + "," + avc[(c + 1) % 6] + ')">' + n[0] + '</div><div><div class="t14 sb">' + n + '</div><div class="t11 mu">' + s + " · " + g + "</div></div></div>").join("") +
+          '<div class="pad t11 sb mu" style="top:432px;letter-spacing:.08em">ADULTS</div>' +
+          [[esc(v.parent) + " Rivera <span class=mu>(Me)</span>", "Parent", 4], ["Rosie Alvarez", "Nanny", 1]].map(([n, r, c], i) =>
+            '<div class="pad card row" style="top:' + (456 + i * 76) + 'px;height:68px;padding:0 14px"><div class="av" style="width:46px;height:46px;line-height:46px;background:' + avc[c] + '">' + n[0] + '</div><div><div class="t14 sb">' + n + '</div><div class="t11 mu">' + r + "</div></div></div>").join("") + tabbar(2) + "</div>";
+        const slot = (lab, t, time, col, warn) =>
+          '<div class="row" style="height:46px;gap:10px"><span class="t11 mu" style="width:46px">' + lab + '</span><div style="flex:1;border-left:3px solid ' + col + ";padding-left:10px;background:" + (col === "#22c55e" ? "rgba(34,197,94,.12)" : "transparent") + ';border-radius:0 8px 8px 0;padding-top:4px;padding-bottom:4px"><div class="t12 sb">' + t + '</div><div class="t11 mu">' + time + "</div></div>" + (warn ? '<span class="warnI" style="width:28px;height:28px;border-radius:50%;border:2px solid #ef4444;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:14px">' + ic("warn") + "</span>" : "") + "</div>";
+        const scrConflict = () =>
+          '<div class="view"><div class="pad row" style="top:70px;justify-content:space-between"><span class="pill" style="background:rgba(239,68,68,.12);color:#ef4444">' + ic("warn") + ' Conflict</span><span style="display:flex"><i style="width:22px;height:22px;border-radius:50%;background:#f59e0b"></i><i style="width:22px;height:22px;border-radius:50%;background:#4b8df8;margin-left:-6px"></i></span></div>' +
+          '<div class="pad" style="top:112px"><div style="font:800 21px/1.2 Nunito">Musical Screening</div><div class="t12 mu" style="margin-top:6px">Mon, Dec 19 · Two pickups at the same time</div><div class="t12 ac sb" style="margin-top:6px">' + ic("link") + ' Go to To-Do card</div>' +
+          '<div class="t11 mu" style="margin-top:14px">Adding to:</div><div class="row" style="gap:6px;margin-top:6px">' + [["Leo ✓", "#e0eaff", "#1f5fd6"], ["Emma ✓", "#fff1d6", "#b76e00"], ["Dad", "var(--soft)", "var(--sub)"], ["Nanny", "var(--soft)", "var(--sub)"]].map(([t, b, c]) => '<span class="pill" style="background:' + b + ";color:" + c + '">' + t + "</span>").join("") + "</div></div>" +
+          '<div class="pad card" style="top:292px;padding:12px 14px"><div class="t11" style="margin-bottom:6px"><span class="pill" style="padding:2px 8px;background:#e0eaff;color:#1f5fd6">Leo</span> <span class="mu">has a playdate with Maya</span></div>' +
+          slot("Before", "Playdate with Maya", "3:00–4:00 PM", "#ef4444", true) + slot("4:00 PM", "Musical Screening", "4:00–5:45 PM", "#22c55e") + slot("After", "Soccer Game Night", "8:30–9:45 PM", "#94a3b8") + "</div>" +
+          '<div class="pad card" style="top:490px;padding:12px 14px"><div class="t11" style="margin-bottom:6px"><span class="pill" style="padding:2px 8px;background:#fff1d6;color:#b76e00">Emma</span> <span class="mu">has Winter Concert</span></div>' +
+          slot("Before", "School pickup", "3:30–3:45 PM", "#94a3b8") + slot("4:00 PM", "Musical Screening", "4:00–5:45 PM", "#22c55e") + slot("After", "Winter Concert", "5:00–7:00 PM", "#ef4444", true) + "</div>" +
+          '<div class="pad row" style="top:700px"><span class="pill" style="background:#e0eaff;color:#1f5fd6;padding:9px 14px">' + ic("cal") + " Add to Dad’s Cal</span></div></div>";
+        const mkPhone = (host, views, dk) => {
+          const ph = document.createElement("div");
+          ph.className = "phone";
+          ph.innerHTML = '<div class="scr' + (dk ? " dk" : "") + '">' + views + SBAR + '<div class="island"></div></div>';
+          $(host).appendChild(ph);
+          return ph;
+        };
+        const ph = mkPhone("phones", scrInbox() + scrSwipe() + scrDone() + '<div id="vD">' + scrTodo(false) + '</div><div id="vE">' + scrFamily(false) + '</div><div id="vF">' + scrConflict() + "</div>");
+        const scr = ph.querySelector(".scr");
+        const views = ["vA", "vB", "vC", "vD", "vE", "vF"].map((id) => ph.querySelector("#" + id));
+        const phL = mkPhone("nightPhones", scrTodo(true), true), phR = mkPhone("nightPhones", scrFamily(true), true);
+        const cnt46 = ph.querySelector("#cnt46");
+        const skl = [...ph.querySelectorAll(".skl")], rws = [...ph.querySelectorAll(".rw")];
+        const sc1 = ph.querySelector("#sc1"), sc2 = ph.querySelector("#sc2"), leftLbl = ph.querySelector("#left"), addCal = ph.querySelector("#addCal");
+        const toast = ph.querySelector("#toast"), sleepBird = ph.querySelector("#sleepBird");
+        const tapChip = ph.querySelector(".tapme");
+        const warnIs = [...ph.querySelectorAll(".warnI")];
+        const N46 = parseInt(v.count, 10) || 46;
+
+        // ---------- email chips ----------
+        const CHIPS = [
+          ["MG", "Maple Grove School", "Picture day is Thursday! Order forms…", "8:02 AM", 820, 178, -5, -1],
+          ["RC", "Rec Center", "Basketball camp: drop-off moved to 8:45", "9:15 AM", 770, 478, 2, -1],
+          ["5G", "5th Grade Team", "Camping trip permission slip due", "Yesterday", 830, 818, -3, -1],
+          ["MO", "Ms. Ortiz", "Welcome to kindergarten, Leo! Supply list…", "7:45 AM", 1470, 128, 6, 1],
+          ["LS", "Little Stars Ballet", "Spring recital tickets are on sale now", "11:30 AM", 1500, 462, -3, 1],
+          ["PT", "Maple Grove PTA", "Pajama day is this Friday!", "4:05 PM", 1480, 812, 6, 1],
+        ];
+        const chipEls = CHIPS.map(([a, n, s, tm], i) => {
+          const d = document.createElement("div");
+          d.className = "chip";
+          d.innerHTML = '<div class="av" style="background:' + avc[i % 6] + '">' + a + "</div><div><b>" + n + "</b><span>" + s + "</span></div><em>" + tm + "</em>";
+          $("chips").appendChild(d);
+          return d;
+        });
+
+        // ---------- intro + final ----------
+        $("icon").innerHTML = iconSVG("open", false);
+        const iconWink = iconSVG("wink", false);
+        const iconOpen = $("icon").innerHTML;
+        const meet = typeEl($("meet"), "Meet " + v.brand);
+        const meetSub = typeEl($("meetSub"), v.tagline, v.taglineHi, BLUE);
+        const SPK = [[-150, -120, "#3b82f6", 1], [110, -150, "#ec4899", 0.8], [160, -60, "#3b82f6", 0.7], [-170, 40, "#f5b301", 1.1], [150, 110, "#f5b301", 1], [-110, 150, "#3b82f6", 0.6], [20, -190, "#f5b301", 0.7], [30, 175, "#ec4899", 0.7], [-160, -40, "#ec4899", 0.8], [190, 20, "#3b82f6", 0.6]];
+        const sparkEls = SPK.map((s) => { const d = document.createElement("div"); d.className = "spark"; d.innerHTML = STAR(s[2]); $("sparks").appendChild(d); return d; });
+        $("ico0").innerHTML = iconSVG("happy", true);
+        $("ico1").innerHTML = iconSVG("happy", false);
+        $("ico2").innerHTML = iconSVG("wink", false);
+        $("tile").textContent = (v.brand[0] || "P").toUpperCase();
+        const wmSpans = typeEl($("wm"), v.brand.toLowerCase());
+        $("bird").innerHTML = bodySVG("happy", "wave");
+        const waveArm = $("bird").querySelector(".fr");
+        const fin = typeEl($("fin"), v.finalLine, v.finalHi, BLUE);
+        const FSP = [[-560, -300, "#3b82f6", 1], [420, -340, "#3b82f6", 0.9], [-470, 150, "#3b82f6", 0.7], [460, 160, "#3b82f6", 0.7], [-440, 250, "#3b82f6", 0.6], [520, 30, "#3b82f6", 0.5]];
+        const fsparkEls = FSP.map((s) => { const d = document.createElement("div"); d.className = "spark"; d.innerHTML = STAR(s[2]); $("fsparks").appendChild(d); return d; });
+
+        // stars for the night scene
+        (function () {
+          const c = $("stars").getContext("2d");
+          for (let i = 0; i < 140; i++) { c.globalAlpha = L(0.15, 0.6, R(i + 0.3)); c.fillStyle = "#cfe0ff"; c.beginPath(); c.arc(R(i * 1.7) * 1920, R(i * 2.3 + 1) * 1080, L(0.6, 1.8, R(i + 5)), 0, 6.2832); c.fill(); }
+        })();
+
+        // ---------- canvas ----------
+        const fx = $("fx").getContext("2d");
+        const ring = (x, y, r, w, col, a) => { if (a <= 0.01) return; fx.globalAlpha = Math.min(1, a); fx.strokeStyle = col; fx.lineWidth = w; fx.beginPath(); fx.arc(x, y, r, 0, 6.2832); fx.stroke(); fx.globalAlpha = 1; };
+        const CONF = ["#3b82f6", "#ec4899", "#f5b301", "#22c55e", "#8b5cf6", "#f97316"];
+        const confetti = (t, t0, cx, cy, n, seed) => {
+          const dt = t - t0;
+          if (dt <= 0 || dt > 2.2) return;
+          for (let i = 0; i < n; i++) {
+            const k = seed + i * 1.13;
+            const a = -Math.PI / 2 + (R(k) - 0.5) * 2.6, sp = L(500, 1300, R(k + 0.2));
+            const x = cx + Math.cos(a) * sp * (1 - Math.exp(-2.2 * dt)) / 2.2 + Math.sin(dt * 3 + i) * 12;
+            const y = cy + Math.sin(a) * sp * (1 - Math.exp(-2.2 * dt)) / 2.2 + 260 * dt * dt;
+            const al = C(1 - (dt - 1.4) / 0.8);
+            fx.save(); fx.globalAlpha = al; fx.fillStyle = CONF[Math.floor(R(k + 0.5) * 6)];
+            fx.translate(x, y); fx.rotate(R(k + 0.7) * 6 + dt * L(-9, 9, R(k + 0.9)));
+            fx.scale(1, Math.abs(Math.cos(dt * L(4, 9, R(k + 1.1)) + i)));
+            fx.fillRect(-6, -3.5, 12, 7); fx.restore();
+          }
+        };
+
+        // ---------- layout helpers ----------
+        const SLOT_R = 1290, SLOT_L = 630;
+        const place = (el, cx, cy, s, rot) => { el.style.transform = "translate(" + (cx - 210).toFixed(1) + "px," + (cy - 440).toFixed(1) + "px) rotate(" + (rot || 0).toFixed(2) + "deg) scale(" + s.toFixed(4) + ")"; };
+        const block = (B, t, a, z) => { K.show(B.el, t >= a && t < z); };
+        const labelType = (B, t, a) => K.type(B.lb, B.label, P(t, a, a + 0.22));
+        const showView = (t) => {
+          // [view index, from, to]
+          const W = [[0, 2.3, 4.95], [1, 4.95, 7.38], [2, 7.38, 8.95], [3, 8.95, 11.15], [4, 11.15, 12.82], [5, 12.82, 99]];
+          W.forEach(([i, a, b]) => {
+            const inU = P(t, a - 0.08, a + 0.08), outU = P(t, b - 0.08, b + 0.08);
+            const o = i === 0 ? 1 - outU : inU * (1 - outU);
+            K.show(views[i], o > 0);
+            views[i].style.opacity = o;
+          });
+        };
+
+        function render(t) {
+          // background drift
+          $("blobA").style.transform = "translate(" + (-60 + 40 * Math.sin(t * 0.35)).toFixed(1) + "px," + (120 + 30 * Math.cos(t * 0.3)).toFixed(1) + "px)";
+          $("blobB").style.transform = "translate(" + (1300 + 50 * Math.cos(t * 0.3)).toFixed(1) + "px," + (-260 + 40 * Math.sin(t * 0.4)).toFixed(1) + "px)";
+          $("blobC").style.transform = "translate(" + (1350 + 40 * Math.sin(t * 0.33)).toFixed(1) + "px," + (560 + 30 * Math.cos(t * 0.37)).toFixed(1) + "px)";
+          $("tintY").style.opacity = P(t, 4.9, 5.4) * (1 - P(t, 7.3, 7.7));
+          $("tintB").style.opacity = P(t, 7.35, 7.75) * (1 - P(t, 8.9, 9.4));
+
+          // ----- intro -----
+          const inOn = t < 2.9;
+          K.show($("intro"), inOn);
+          if (inOn) {
+            const pop = E.outBack(P(t, 0.32, 0.72), 2.2), up = E.inOutCubic(P(t, 1.18, 1.55));
+            const out = E.inCubic(P(t, 2.42, 2.72));
+            const s = L(1, 170 / 240, up) * pop * (1 - out);
+            const cy = L(470, 320, up);
+            const ic0 = $("icon");
+            ic0.style.transform = "translate(" + (960 - 120) + "px," + (cy - 120).toFixed(1) + "px) scale(" + Math.max(0, s).toFixed(4) + ") rotate(" + ((1 - E.outCubic(P(t, 0.32, 0.8))) * -12).toFixed(2) + "deg)";
+            const wink = t >= 0.84;
+            if (ic0.dataset.w !== String(wink)) { ic0.dataset.w = String(wink); ic0.innerHTML = wink ? iconWink : iconOpen; }
+            sparkEls.forEach((el, i) => {
+              const a = 0.42 + i * 0.05, u = E.outBack(P(t, a, a + 0.25), 3);
+              const tw = 0.75 + 0.25 * Math.sin(t * 9 + i * 1.7);
+              const o = C(P(t, a, a + 0.1)) * (1 - P(t, 1.15, 1.4));
+              el.style.opacity = o;
+              el.style.transform = "translate(" + (960 + SPK[i][0]) + "px," + (470 + SPK[i][1]) + "px) scale(" + (u * tw * SPK[i][3]).toFixed(3) + ")";
+            });
+            typing(meet, t, 1.25, 1.52, 2.4, 2.62);
+            typing(meetSub, t, 1.45, 1.68, 2.4, 2.58);
+            hlReveal(meetSub, P(t, 1.7, 1.9) * (1 - P(t, 2.4, 2.5)));
+          }
+
+          // ----- phone -----
+          showView(t);
+          const rise = E.outCubic(P(t, 2.45, 2.98));
+          let cx = SLOT_R, cy = L(1500, 540, rise), s = 1, rot = (1 - rise) * 8;
+          const toL = E.inOutCubic(P(t, 8.92, 9.34)), toR = E.inOutCubic(P(t, 11.1, 11.46));
+          cx = L(L(SLOT_R, SLOT_L, toL), SLOT_R, toR);
+          const nightU = E.inOutCubic(P(t, 14.35, 14.8));
+          if (t >= 14.3) { cx = SLOT_R; s = L(1, 0.93, nightU); cy = L(540, 535, nightU); }
+          K.show(ph, t >= 2.4 && t < 16.4);
+          place(ph, cx, cy, s, rot);
+          scr.classList.toggle("dk", t >= 14.32);
+          // inbox details
+          cnt46.textContent = String(Math.round(N46 * E.outCubic(P(t, 2.8, 3.22))));
+          skl.forEach((el, i) => { el.style.opacity = 1 - P(t, 3.95 + i * 0.12, 4.1 + i * 0.12); });
+          rws.forEach((el, i) => fadeUp(el, P(t, 3.98 + i * 0.12, 4.18 + i * 0.12), 8));
+          // swipes
+          const sw1 = E.inCubic(P(t, 6.12, 6.52)), sw2 = E.inCubic(P(t, 6.95, 7.33));
+          sc1.style.transform = "translateX(" + (sw1 * 460).toFixed(1) + "px) rotate(" + (sw1 * 16).toFixed(2) + "deg)";
+          sc1.style.opacity = 1 - P(t, 6.38, 6.52);
+          sc1.style.filter = sw1 > 0.05 ? "blur(" + (sw1 * 5).toFixed(1) + "px)" : "none";
+          sc2.style.transform = "translateY(" + ((1 - E.outCubic(P(t, 6.3, 6.6))) * 12).toFixed(1) + "px) translateX(" + (sw2 * 460).toFixed(1) + "px) rotate(" + (sw2 * 16).toFixed(2) + "deg)";
+          sc2.style.filter = sw2 > 0.05 ? "blur(" + (sw2 * 5).toFixed(1) + "px)" : "none";
+          leftLbl.textContent = t < 6.42 ? "2 left" : "1 left";
+          const flash = Math.max(P(t, 6.08, 6.18) * (1 - P(t, 6.48, 6.6)), P(t, 6.9, 7.0) * (1 - P(t, 7.28, 7.38)));
+          addCal.style.background = flash > 0.5 ? "#dcfce7" : "var(--soft)";
+          addCal.style.color = flash > 0.5 ? "#15803d" : "";
+          // done
+          const tu = E.outBack(P(t, 7.5, 7.75), 1.6);
+          toast.style.opacity = C(tu);
+          toast.style.transform = "translate(-50%," + ((1 - tu) * -60).toFixed(1) + "px)";
+          const sb = E.outBack(P(t, 7.42, 7.8), 2);
+          sleepBird.style.transform = "scale(" + (0.6 + 0.4 * sb).toFixed(3) + ") rotate(" + (Math.sin(t * 3) * 3).toFixed(2) + "deg)";
+          // to-do tap
+          const tapped = t >= 10.45;
+          tapChip.style.background = tapped ? ACC : "var(--card)";
+          tapChip.style.color = tapped ? "#fff" : "";
+          // conflict warnings pulse
+          warnIs.forEach((w) => { w.style.transform = "scale(" + (1 + 0.12 * Math.max(0, Math.sin((t - 13) * 6))).toFixed(3) + ")"; });
+
+          // ----- email chips -----
+          K.show($("chips"), t >= 2.6 && t < 4.2);
+          chipEls.forEach((el, i) => {
+            const c = CHIPS[i], a = 2.72 + i * 0.07, u = E.outCubic(P(t, a, a + 0.35));
+            const suck = E.inCubic(P(t, 3.55 + (i % 3) * 0.08, 3.95 + (i % 3) * 0.08));
+            const x = L(c[4] + c[7] * 260 * (1 - u), SLOT_R - 175, suck) + Math.sin(t * 1.6 + i) * 6;
+            const y = L(c[5], 440, suck) + Math.cos(t * 1.3 + i) * 5;
+            el.style.opacity = C(u * 2) * (1 - P(t, 3.8 + (i % 3) * 0.08, 3.95 + (i % 3) * 0.08));
+            el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) rotate(" + (c[6] * (1 - suck)).toFixed(2) + "deg) scale(" + L(1, 0.4, suck).toFixed(3) + ")";
+          });
+
+          // ----- text blocks -----
+          block(B1, t, 2.6, 4.98);
+          labelType(B1, t, 2.62);
+          B1.lb.style.opacity = 1 - P(t, 4.86, 4.96);
+          typing(B1.hd[0], t, 2.72, 3.3, 3.84, 3.98);
+          typing(B1.hd[1], t, 4.0, 4.45, 4.84, 4.96);
+          fadeUp(B1.subs[0], P(t, 4.45, 4.7) * (1 - P(t, 4.84, 4.94)), 14);
+
+          block(B2, t, 4.96, 9.02);
+          labelType(B2, t, 4.98);
+          B2.lb.style.opacity = 1 - P(t, 8.9, 9.0);
+          typing(B2.hd[0], t, 5.02, 5.45, 7.3, 7.42);
+          hlReveal(B2.hd[0], P(t, 5.9, 6.15));
+          typing(B2.hd[1], t, 7.44, 7.8, 8.9, 9.0);
+          fadeUp(B2.subs[0], P(t, 5.38, 5.6) * (1 - P(t, 7.28, 7.38)), 14);
+          fadeUp(B2.subs[1], P(t, 7.85, 8.1) * (1 - P(t, 8.88, 8.98)), 14);
+
+          block(B3, t, 9.1, 11.22);
+          labelType(B3, t, 9.12);
+          B3.lb.style.opacity = 1 - P(t, 11.08, 11.2);
+          typing(B3.hd[0], t, 9.2, 9.75, 11.02, 11.18);
+          hlReveal(B3.hd[0], P(t, 9.8, 10.0));
+          fadeUp(B3.subs[0], P(t, 9.85, 10.1) * (1 - P(t, 11.02, 11.14)), 14);
+
+          block(B4, t, 11.28, 12.86);
+          labelType(B4, t, 11.3);
+          B4.lb.style.opacity = 1 - P(t, 12.74, 12.84);
+          typing(B4.hd[0], t, 11.36, 11.86, 12.7, 12.84);
+          hlReveal(B4.hd[0], P(t, 11.9, 12.1));
+          fadeUp(B4.subs[0], P(t, 11.95, 12.2) * (1 - P(t, 12.7, 12.8)), 14);
+
+          block(B5, t, 12.86, 14.8);
+          labelType(B5, t, 12.86);
+          typing(B5.hd[0], t, 12.9, 13.42, 99, 100);
+          fadeUp(B5.subs[0], P(t, 13.42, 13.66), 14);
+          fadeUp(B5.tog, P(t, 13.5, 13.72), 14);
+          const kn = E.inOutCubic(P(t, 14.02, 14.28));
+          const knob = B5.tog.querySelector("i");
+          knob.style.left = (6 + 70 * kn).toFixed(1) + "px";
+          B5.tog.style.background = kn > 0.5 ? "#1d2a47" : "#e9eef6";
+
+          // ----- night -----
+          const nOn = t >= 14.2 && t < 16.4;
+          K.show($("night"), nOn);
+          if (nOn) {
+            const w = E.inOutCubic(P(t, 14.2, 14.5));
+            $("night").style.clipPath = w < 1 ? "circle(" + (w * 2300).toFixed(0) + "px at 251px 703px)" : "none";
+            labelType(B6, t, 14.4);
+            typing(B6.hd[0], t, 14.45, 14.95, 99, 100);
+            hlReveal(B6.hd[0], P(t, 15.0, 15.2));
+            fadeUp(B6.subs[0], P(t, 15.05, 15.3), 14);
+            const sp = E.outCubic(P(t, 14.5, 14.95));
+            place(phL, L(1290, 980, sp), L(540, 590, sp), 0.86, L(0, -11, sp));
+            place(phR, L(1290, 1600, sp), L(540, 580, sp), 0.86, L(0, 10, sp));
+            phL.style.opacity = phR.style.opacity = C(sp * 3);
+          }
+          // the main phone sits above the side phones during the night scene
+          $("phones").style.zIndex = nOn ? 3 : "";
+          $("phones").style.transform = "";
+
+          // ----- final -----
+          const fOn = t >= 15.98;
+          K.show($("wipe"), fOn);
+          if (fOn) {
+            const w = E.inCubic(P(t, 16.0, 16.35));
+            $("wipe").style.clipPath = w < 1 ? "circle(" + (w * 1200).toFixed(0) + "px at 960px 540px)" : "none";
+            $("blobD").style.transform = "translate(510px,40px) scale(" + (1 + 0.05 * Math.sin(t * 2)).toFixed(3) + ")";
+            const shrink = E.inOutCubic(P(t, 16.95, 17.32));
+            [0, 1, 2].forEach((i) => {
+              const u = E.outBack(P(t, 16.25 + i * 0.1, 16.55 + i * 0.1), 2.2);
+              const size = L(200, 112, shrink), gap = L(232, 168, shrink);
+              const x = 960 + (i - 1) * gap, y = L(430, 285, shrink);
+              const el = $("ico" + i);
+              el.style.opacity = C(u * 3);
+              el.style.transform = "translate(" + (x - 100).toFixed(1) + "px," + (y - 100).toFixed(1) + "px) scale(" + (u * size / 200).toFixed(4) + ") rotate(" + ((i - 1) * 4 * (1 - shrink) + (i === 0 ? -6 : 0)).toFixed(2) + "deg)";
+            });
+            fsparkEls.forEach((el, i) => {
+              const u = E.outBack(P(t, 16.5 + i * 0.06, 16.8 + i * 0.06), 3);
+              el.style.transform = "translate(" + (960 + FSP[i][0]) + "px," + (540 + FSP[i][1]) + "px) scale(" + (u * FSP[i][3] * (0.75 + 0.25 * Math.sin(t * 8 + i))).toFixed(3) + ")";
+            });
+            const wu = E.outBack(P(t, 17.02, 17.3), 2);
+            $("tile").style.transform = "scale(" + wu.toFixed(3) + ")";
+            typing(wmSpans, t, 17.08, 17.38, 99, 100);
+            const bu = E.outBack(P(t, 17.18, 17.5), 1.8);
+            $("bird").style.opacity = C(bu * 3);
+            $("bird").style.transform = "translate(" + ((1 - bu) * 160).toFixed(1) + "px," + (-Math.abs(Math.sin((t - 17.2) * 7)) * 14 * (t > 17.2 ? 1 : 0)).toFixed(1) + "px) scale(" + bu.toFixed(3) + ")";
+            waveArm.style.transform = "rotate(" + (Math.sin(t * 14) * 18).toFixed(2) + "deg)";
+            typing(fin, t, 17.2, 17.62, 99, 100);
+            hlReveal(fin, P(t, 17.62, 17.8));
+          }
+
+          // ----- fx -----
+          fx.clearRect(0, 0, 1920, 1080);
+          confetti(t, 7.46, SLOT_R, 150, 80, 11);
+          if (t >= 10.4 && t < 10.9) { const u = P(t, 10.42, 10.85); ring(507, 325, L(8, 46, E.outCubic(u)), 2.5, ACC, 0.7 * (1 - u)); }
+        }
+
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

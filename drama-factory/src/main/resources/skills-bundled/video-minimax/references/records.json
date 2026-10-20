@@ -1,0 +1,379 @@
+[
+  {
+    "id": "minimax-h3-fal",
+    "name": "MiniMax H3 / fal",
+    "family": "minimax",
+    "provider": "fal",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "multishot",
+      "motion-transfer",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [
+      "audio-only-reference",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "minimax/h3/text-to-video",
+      "minimax/h3/image-to-video",
+      "minimax/h3/reference-to-video"
+    ],
+    "source_ids": [
+      "h3-launch",
+      "h3-fal"
+    ],
+    "novel_abilities": [
+      "Mixed image, video and audio context",
+      "Joint stereo audio and video",
+      "Reference-guided performance and camera motion"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "1440p"
+      ],
+      "max_reference_files": 12,
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audio": 3,
+      "audio_requires_visual": true,
+      "max_reference_video_seconds": 15,
+      "max_reference_audio_seconds": 15
+    },
+    "aliases": [
+      "h3",
+      "minimax-h3"
+    ],
+    "notes": [
+      "Hosted 2K output does not mean the base checkpoint generates native 2K.",
+      "Editing is documented at family level but must be routed to a separately verified edit endpoint; this record covers the three listed creation endpoints."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max"
+  },
+  {
+    "id": "minimax-h3-local-fl",
+    "name": "MiniMax H3 Base FL2VA / local",
+    "family": "minimax",
+    "provider": "self-hosted",
+    "variant": "FL2VA",
+    "release_date": "2026-08-03",
+    "release_date_kind": "weights-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [
+      "reference-to-video",
+      "audio-only-reference"
+    ],
+    "api_model_ids": [],
+    "source_ids": [
+      "h3-open",
+      "h3-card"
+    ],
+    "novel_abilities": [
+      "Open-weight audiovisual first/last-frame generation"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "768p"
+      ]
+    },
+    "aliases": [
+      "h3-local",
+      "minimax-h3-local"
+    ],
+    "notes": [
+      "Uses a different checkpoint from Ref2VA.",
+      "Custom model license and GPU capacity need review.",
+      "Full hosted Context-IR and 2K regeneration cannot be assumed present in this open release."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max",
+    "artifact_ids": [
+      "MiniMaxAI/MiniMax-H3:H3-Base-FL2VA"
+    ]
+  },
+  {
+    "id": "minimax-h3-local-ref",
+    "name": "MiniMax H3 Base Ref2VA / local",
+    "family": "minimax",
+    "provider": "self-hosted",
+    "variant": "Ref2VA",
+    "release_date": "2026-08-03",
+    "release_date_kind": "weights-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "reference-to-video",
+      "native-audio",
+      "motion-transfer",
+      "local-weights",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [
+      "audio-only-reference",
+      "first-last-frame"
+    ],
+    "api_model_ids": [],
+    "source_ids": [
+      "h3-open",
+      "h3-card"
+    ],
+    "novel_abilities": [
+      "Local multimodal reference-conditioned audiovisual generation"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "768p"
+      ],
+      "max_reference_files": 12,
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audio": 3,
+      "audio_requires_visual": true
+    },
+    "aliases": [
+      "h3-local",
+      "minimax-h3-local"
+    ],
+    "notes": [
+      "Do not apply FL2VA inputs to the Ref2VA checkpoint.",
+      "No guaranteed laptop VRAM minimum is asserted."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max",
+    "artifact_ids": [
+      "MiniMaxAI/MiniMax-H3:H3-Base-Ref2VA"
+    ]
+  },
+  {
+    "id": "h3-max-fal",
+    "name": "MiniMax H3 Max / fal",
+    "family": "minimax",
+    "provider": "fal",
+    "variant": "",
+    "release_date": "2026-08-27",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [
+      "video-editing",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "minimax/h3-max/text-to-video",
+      "minimax/h3-max/image-to-video",
+      "minimax/h3-max/reference-to-video"
+    ],
+    "source_ids": [
+      "h3max-launch",
+      "h3max-schema",
+      "h3max-page"
+    ],
+    "novel_abilities": [
+      "fal post-training rather than a renamed base checkpoint",
+      "Reference mode now available",
+      "1080P latent refinement from 768P"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "480p",
+        "768p",
+        "1080p"
+      ],
+      "max_reference_files": 12,
+      "audio_requires_visual": false,
+      "max_reference_video_seconds": 15,
+      "max_reference_audio_seconds": 15,
+      "resolution_origin": {
+        "1080p": "latent refinement from 768p"
+      }
+    },
+    "aliases": [
+      "h3-max",
+      "minimax-h3-max"
+    ],
+    "notes": [
+      "Reference availability is specific to fal; ChatCut's adapter documents a narrower surface.",
+      "Read the endpoint schema, not expired launch promotions.",
+      "No base-H3 reference limits are inherited unless the H3 Max schema states them."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max"
+  },
+  {
+    "id": "h3-max-turbo-fal",
+    "name": "MiniMax H3 Max Turbo / fal",
+    "family": "minimax",
+    "provider": "fal",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "minimax/h3-max-turbo/text-to-video",
+      "minimax/h3-max-turbo/image-to-video"
+    ],
+    "source_ids": [
+      "h3max-page",
+      "h3max-launch"
+    ],
+    "novel_abilities": [
+      "Faster draft-oriented post-trained variant"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "768p",
+        "1080p"
+      ],
+      "resolution_origin": {
+        "1080p": "refinement; verify endpoint"
+      }
+    },
+    "aliases": [
+      "h3-max-turbo"
+    ],
+    "notes": [
+      "Only text and keyframe modes are approved in this record. Reference mode is unverified, not asserted impossible.",
+      "Do not inherit Max's reference endpoint."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max Turbo"
+  },
+  {
+    "id": "h3-max-chatcut",
+    "name": "MiniMax H3 Max / ChatCut",
+    "family": "minimax",
+    "provider": "chatcut",
+    "variant": "",
+    "release_date": "2026-08-27",
+    "release_date_kind": "underlying-model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [
+      "reference-to-video",
+      "audio-only-reference"
+    ],
+    "api_model_ids": [
+      "minimax-h3-max"
+    ],
+    "source_ids": [
+      "chatcut-video-contract",
+      "h3max-launch"
+    ],
+    "novel_abilities": [
+      "Text/keyframe H3 Max integration inside ChatCut",
+      "Narrower reference and resolution support than fal"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "768p"
+      ]
+    },
+    "aliases": [
+      "h3-max",
+      "minimax-h3-max",
+      "chatcut-h3-max"
+    ],
+    "notes": [
+      "Release date refers to the underlying model, not verified adapter availability.",
+      "Resolve the live tool schema; direct-provider field names and capabilities must not be inherited."
+    ],
+    "evidence": "provider-skill-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "required_tools": [
+      "chatcut-mcp",
+      "chatcut-project"
+    ],
+    "surface_availability_date": null,
+    "model_version": "H3 Max"
+  }
+]

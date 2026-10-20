@@ -1,0 +1,4 @@
+interface:
+  display_name: "Demo Storyboard"
+  short_description: "Turn product proof into a clear scene-by-scene lesson"
+  default_prompt: "Use $demo-storyboard to build a grounded story before planning browser actions."

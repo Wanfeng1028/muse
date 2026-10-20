@@ -1,0 +1,4 @@
+interface:
+  display_name: "Slack Demo Video"
+  short_description: "Render editable Slack thread demos and clean footage"
+  default_prompt: "Use $slack-demo-video to create a readable Slack conversation video with editable source and editor notes."

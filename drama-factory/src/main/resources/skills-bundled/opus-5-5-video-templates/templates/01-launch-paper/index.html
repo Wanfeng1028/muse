@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"line1","type":"string","label":"Kinetic line 1 (caps)","default":"CLAUDE IMAGINE"},
+  {"id":"line2","type":"string","label":"Kinetic line 2 (caps)","default":"MAKES ALL OF IT"},
+  {"id":"note1","type":"string","label":"Note by the ball","default":"your Claude"},
+  {"id":"note2","type":"string","label":"Note, top left","default":"prompts"},
+  {"id":"note3","type":"string","label":"Note, top right","default":"references"},
+  {"id":"note4a","type":"string","label":"Note, bottom left, line 1","default":"the part Claude"},
+  {"id":"note4b","type":"string","label":"Note, bottom left, line 2","default":"can&#39;t render"},
+  {"id":"note5","type":"string","label":"Note, bottom right","default":"shot lists"},
+  {"id":"card1","type":"string","label":"Prompt card text","default":"Product shot: ceramic mug on linen, morning window light, soft shadow, 4:5."},
+  {"id":"stamp","type":"string","label":"Prompt card stamp","default":"TEXT ONLY"},
+  {"id":"sticky","type":"string","label":"Sticky note (| = line break)","default":"words, yes.|pixels, no."},
+  {"id":"axisY","type":"string","label":"Chart y label","default":"images shipped / week"},
+  {"id":"ceil","type":"string","label":"Chart: flat line note","default":"text only"},
+  {"id":"more","type":"string","label":"Chart: curve note","default":"images + video"},
+  {"id":"team","type":"string","label":"Chart: bracket note","default":"same chat"},
+  {"id":"wordmark","type":"string","label":"End card wordmark","default":"Claude Imagine"},
+  {"id":"tagline","type":"string","label":"End card tagline","default":"Image &amp; video generation, right inside Claude."},
+  {"id":"url","type":"string","label":"End card URL","default":"claudeimagine.com"},
+  {"id":"disclaimer","type":"string","label":"Small print","default":"Claude is a trademark of Anthropic, PBC. Claude Imagine is not affiliated with or endorsed by Anthropic."},
+  {"id":"iconColor","type":"color","label":"End card icon colour","default":"#6762f3"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Anton-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Caveat-600.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Caveat-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-600.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InterTight-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/SourceSerif4-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f5f6f2; }
+      #root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      #scene { transform: scale(1.5); transform-origin: 0 0; }
+      .layer { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+      svg.layer { overflow: visible; }
+
+      #paper { background: radial-gradient(ellipse 75% 70% at 50% 45%, #f6f7f3 0%, #eef0ea 48%, #d5d7d0 100%); }
+      #dark {
+        background:
+          radial-gradient(rgba(142, 144, 178, 0.28) 1px, transparent 1.4px) 0 0 / 18px 18px,
+          radial-gradient(ellipse 70% 65% at 50% 45%, #171820 0%, #0e0f15 55%, #07080b 100%);
+      }
+
+      .hand { font-family: Caveat, cursive; font-weight: 700; }
+      .mono { font-family: "IBM Plex Mono", monospace; }
+
+      /* paper cards */
+      .card {
+        position: absolute; left: 0; top: 0; transform-origin: 50% 50%;
+        background: #f7f8f4; border-radius: 4px; color: #333d37;
+        box-shadow: 0 12px 26px rgba(38, 44, 34, 0.16), 0 2px 5px rgba(38, 44, 34, 0.12);
+        font: 500 12px/1 Inter, system-ui, sans-serif; padding: 15px 16px;
+      }
+      .card .hd { display: flex; justify-content: space-between; align-items: baseline; }
+      .card .ttl { font-weight: 700; font-size: 11.5px; letter-spacing: 0.05em; }
+      .card .sm { font-size: 8.5px; color: #8a918a; letter-spacing: 0.04em; }
+      .card .rule { height: 1.5px; background: #333d37; margin-top: 7px; }
+      .card .row { display: flex; justify-content: space-between; align-items: center; margin-top: 11px; padding-bottom: 3px; border-bottom: 1px dotted #cfd4cb; }
+      .card .row i { display: block; height: 5px; border-radius: 3px; background: #c9cec5; }
+      .card .row small { font-size: 7.5px; color: #8a918a; margin-left: 4px; }
+      .card .tot { font-weight: 700; border-bottom: none; }
+      .card .tot i { background: #2f356e; height: 6px; }
+      .stamp {
+        position: absolute; right: 12px; bottom: 16px; transform: rotate(-14deg);
+        border: 2px solid rgba(163, 84, 74, 0.8); color: rgba(163, 84, 74, 0.85);
+        font: 700 11px/1 Inter, sans-serif; letter-spacing: 0.12em; padding: 5px 7px; border-radius: 3px;
+      }
+      .card .ptxt { margin-top: 11px; font: 400 13px/1.42 Inter, sans-serif; }
+      .card .ratio { font-size: 11px; font-weight: 600; color: #6f776f; }
+      .mb rect { fill: #e2e5de; } .mbi { fill: #bcc1b8; }
+      #cards.dark .mb rect { fill: #1d1f29; } #cards.dark .mbi { fill: #4a4d63; } #cards.dark .card .ratio { color: #a9adc4; }
+      #cSticky {
+        background: #ebe6cf; border-radius: 2px; padding: 22px 20px; color: #1f1a0e;
+        font: 700 29px/1.12 Caveat, cursive; padding-top: 34px; box-shadow: 0 14px 22px rgba(60, 52, 30, 0.2), 0 2px 4px rgba(60, 52, 30, 0.14);
+      }
+      .card svg { display: block; }
+
+      /* dark variants */
+      #cards.dark .card { background: #111219; color: #dfe6dc; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.6), 0 0 0 1px #34403a; }
+      #cards.dark .card .rule { background: #dfe6dc; }
+      #cards.dark .card .row { border-bottom-color: #2e3931; }
+      #cards.dark .card .row i { background: #56645a; }
+      #cards.dark .card .tot i { background: #bfe9da; }
+      #cards.dark .stamp { border-color: rgba(206, 116, 102, 0.85); color: rgba(206, 116, 102, 0.9); }
+      #cards.dark #cSticky { background: #231c0d; color: #eae3c9; }
+      #cards.dark .plan-ink { stroke: #d7ded5; }
+      #cards.dark .plan-fill { fill: #121913; }
+
+      /* ball */
+      #ball {
+        position: absolute; left: 0; top: 0; width: 60px; height: 60px; border-radius: 50%;
+        background: radial-gradient(circle at 36% 30%, #eceaff 0%, #aeaaff 18%, #7c78f8 45%, #6762f3 72%, #4843c9 100%);
+        box-shadow: inset -4px -6px 10px rgba(36, 30, 140, 0.35);
+        transform-origin: 50% 50%;
+      }
+      #glow {
+        position: absolute; left: 0; top: 0; width: 420px; height: 420px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(132, 128, 252, 0.36) 0%, rgba(132, 128, 252, 0.15) 32%, rgba(132, 128, 252, 0.04) 55%, rgba(132, 128, 252, 0) 70%);
+      }
+      #shadow {
+        position: absolute; left: 0; top: 0; width: 64px; height: 10px; border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(40, 46, 36, 0.28) 0%, rgba(40, 46, 36, 0) 70%);
+      }
+
+      /* kinetic type */
+      #type { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; }
+      .tline { position: absolute; left: 0; width: 1280px; text-align: center; white-space: nowrap; font: 400 147px/1 Anton, Impact, sans-serif; letter-spacing: 0.005em; }
+      .ch { display: inline-block; position: relative; transform-origin: 50% 70%; }
+      .ch .m { position: relative; color: #eff2e9; text-shadow: 3px 3px 0 #a0645a, 6px 6px 0 #25264f, 0 14px 30px rgba(0, 0, 0, 0.55); }
+      .ch .g { position: absolute; left: 0; top: 0; }
+      .ch .g1 { color: #4b47b5; }
+      .ch .g2 { color: #a0645a; }
+      .ch.sp { width: 0.26em; }
+
+      /* end card */
+      #word { position: absolute; left: 406px; top: 226px; font: 700 88px/1 Inter, sans-serif; letter-spacing: -0.03em; white-space: nowrap; }
+      #disc { position: absolute; left: 0; top: 672px; width: 1280px; text-align: center; font: 400 13px/1 Inter, sans-serif; color: #8e918a; }
+      #word span { display: inline-block; }
+      #tag { position: absolute; left: 0; top: 416px; width: 1280px; text-align: center; font: 400 35px/1 "Source Serif 4", Georgia, serif; color: #3e3f3a; letter-spacing: -0.005em; }
+      #url { position: absolute; left: 0; top: 480px; width: 1280px; text-align: center; font: 400 24px/1 "IBM Plex Mono", monospace; color: #485249; }
+
+      .band { position: absolute; left: 0; width: 1280px; height: 40px; background: #0e0f15; }
+      .glitch { position: absolute; background: #e9ebe5; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <div id="paper" class="layer"></div>
+        <div id="dark" class="layer"></div>
+
+        <!-- scene A/B drawing layer: line, onion skin, notes -->
+        <svg id="svgA" class="layer" viewBox="0 0 1280 720">
+          <defs>
+            <clipPath id="clipFirm"><rect id="rFirm" x="700" y="345" width="0" height="72" /></clipPath>
+            <clipPath id="clipPast"><rect id="rPast" x="425" y="112" width="0" height="60" /></clipPath>
+            <clipPath id="clipDraw"><rect id="rDraw" x="696" y="88" width="0" height="60" /></clipPath>
+            <clipPath id="clipRules"><rect id="rRules" x="425" y="538" width="0" height="84" /></clipPath>
+            <clipPath id="clipPrice"><rect id="rPrice" x="738" y="578" width="0" height="50" /></clipPath>
+          </defs>
+          <path id="floorLine" d="M390 506 C 520 504.5, 690 507.5, 836 505.5" fill="none" stroke="#22241f" stroke-width="2.2" stroke-linecap="round" pathLength="1" />
+          <path id="trailDots" d="" fill="none" stroke="#8d918a" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.1 7.5" />
+          <g id="ghostsA" fill="none" stroke="#aeb2ab" stroke-width="1.1"></g>
+          <g id="notesA">
+            <g clip-path="url(#clipFirm)"><text x="710" y="396" class="hand" font-size="42" fill="#8f4a40" data-var="note1"></text></g>
+            <path id="aFirm" d="M702 410 C 692 420, 680 432, 669 450 M669 450 l 1 -13 M669 450 l 12 -5" fill="none" stroke="#8f4a40" stroke-width="3" stroke-linecap="round" pathLength="1" />
+            <g clip-path="url(#clipPast)"><text x="430" y="152" class="hand" font-size="38" fill="#2f356e" data-var="note2"></text></g>
+            <path id="aPast" d="M462 176 C 452 196, 428 208, 398 210 M398 210 l 11 -8 M398 210 l 12 6" fill="none" stroke="#2f356e" stroke-width="2.8" stroke-linecap="round" pathLength="1" />
+            <g clip-path="url(#clipDraw)"><text x="700" y="128" class="hand" font-size="38" fill="#2f356e" data-var="note3"></text></g>
+            <path id="aDraw" d="M792 144 C 812 152, 828 170, 838 198 M838 198 l -10 -7 M838 198 l 4 -12" fill="none" stroke="#2f356e" stroke-width="2.8" stroke-linecap="round" pathLength="1" />
+            <g clip-path="url(#clipRules)"><text x="430" y="572" class="hand" font-size="35" fill="#8f4a40" data-var="note4a"></text><text x="430" y="606" class="hand" font-size="35" fill="#8f4a40" data-var="note4b"></text></g>
+            <path id="aRules" d="M422 568 C 410 558, 398 550, 388 536 M388 536 l 2 12 M388 536 l 11 3" fill="none" stroke="#8f4a40" stroke-width="2.8" stroke-linecap="round" pathLength="1" />
+            <g clip-path="url(#clipPrice)"><text x="743" y="612" class="hand" font-size="38" fill="#2f356e" data-var="note5"></text></g>
+            <path id="aPrice" d="M836 598 C 846 590, 855 578, 862 558 M862 558 l -10 6 M862 558 l 1 12" fill="none" stroke="#2f356e" stroke-width="2.8" stroke-linecap="round" pathLength="1" />
+          </g>
+        </svg>
+
+        <!-- cards -->
+        <div id="cards" class="layer">
+          <div class="card" id="cBid" style="width:208px;height:258px">
+            <div class="hd"><span class="ttl">PROMPT</span><span class="sm">draft 3</span></div>
+            <div class="rule"></div>
+            <div class="ptxt" data-var="card1"></div>
+            <div class="row"><span>Model</span><span class="ratio">&mdash;</span></div>
+            <div class="row tot"><span>Output</span><i style="width:46px"></i></div>
+            <div class="stamp" data-var="stamp"></div>
+          </div>
+          <div class="card" id="cFloor" style="width:280px;height:192px;padding:13px 14px">
+            <div class="hd"><span class="ttl">MOODBOARD</span><span class="sm">refs &middot; 04</span></div>
+            <div class="rule"></div>
+            <svg width="252" height="132" viewBox="0 0 252 132" style="margin-top:9px">
+              <g class="mb"><rect x="0" y="0" width="120" height="60" rx="4" /><rect x="132" y="0" width="120" height="60" rx="4" /><rect x="0" y="72" width="120" height="60" rx="4" /><rect x="132" y="72" width="120" height="60" rx="4" /></g>
+              <g class="mbi">
+                <g transform="translate(14 8)"><circle cx="16" cy="12" r="6" /><path d="M0 46 L26 20 L40 34 L58 14 L90 46 Z" /></g>
+                <g transform="translate(146 8)"><circle cx="70" cy="12" r="6" /><path d="M0 46 L30 16 L48 32 L62 22 L90 46 Z" /></g>
+                <g transform="translate(14 80)"><circle cx="40" cy="12" r="6" /><path d="M0 46 L22 26 L44 38 L66 16 L90 46 Z" /></g>
+                <g transform="translate(146 80)"><circle cx="20" cy="14" r="6" /><path d="M0 46 L34 18 L52 30 L70 20 L90 46 Z" /></g>
+              </g>
+            </svg>
+          </div>
+          <div class="card" id="cSticky" style="width:168px;height:162px"></div>
+          <div class="card" id="cUnit" style="width:256px;height:150px;padding:14px 16px">
+            <div class="hd"><span class="ttl">SHOT LIST</span><span class="sm">ratio</span></div>
+            <div class="rule"></div>
+            <div class="row"><span>Hero</span><span class="ratio">16:9</span></div>
+            <div class="row"><span>Lifestyle</span><span class="ratio">4:5</span></div>
+            <div class="row"><span>Detail</span><span class="ratio">1:1</span></div>
+            <div class="row"><span>Reel</span><span class="ratio">9:16</span></div>
+          </div>
+        </div>
+
+        <!-- starburst + chart layer -->
+        <svg id="svgC" class="layer" viewBox="0 0 1280 720">
+          <g id="burst" stroke="#e7efe9" stroke-linecap="round"></g>
+          <g id="chart">
+            <path id="axisY" d="M314 550 L314 150" stroke="#eef2ec" stroke-width="2" fill="none" pathLength="1" />
+            <path id="axisYh" d="M306 162 L314 150 L322 162" stroke="#eef2ec" stroke-width="2" fill="none" />
+            <path id="axisX" d="M314 550 L1046 550" stroke="#eef2ec" stroke-width="2" fill="none" pathLength="1" />
+            <path id="axisXh" d="M1034 542 L1046 550 L1034 558" stroke="#eef2ec" stroke-width="2" fill="none" />
+            <text id="lblY" x="332" y="156" class="mono" font-size="15" fill="#aeb8af" data-var="axisY"></text>
+            <text id="lblX" x="1046" y="582" class="mono" font-size="14" fill="#8f9a91" text-anchor="end">weeks</text>
+            <g id="ghostsFlat" fill="none" stroke="#3f4257" stroke-width="1.4"></g>
+            <path id="flat" d="" fill="none" stroke="#e9eee8" stroke-width="2.4" stroke-linecap="round" />
+            <path id="wave" d="" fill="none" stroke="#7a5446" stroke-width="2.2" stroke-linecap="round" />
+            <g id="ghostsCurve" fill="none" stroke="#3f4257" stroke-width="1.4"></g>
+            <path id="curve" d="" fill="none" stroke="#a3a0ff" stroke-width="3.2" stroke-linecap="round" />
+            <clipPath id="clipCeil"><rect id="rCeil" x="680" y="380" width="0" height="44" /></clipPath>
+            <g id="ceilG"><g clip-path="url(#clipCeil)"><text x="686" y="414" class="hand" font-size="27" fill="#c0776a" data-var="ceil"></text></g>
+              <path id="ceilStrike" d="M684 406 L 782 402" stroke="#c0776a" stroke-width="2.2" fill="none" pathLength="1" />
+              <path id="ceilArrow" d="M774 420 C 782 428, 784 436, 780 448 M780 448 l -6 -8 M780 448 l 8 -6" stroke="#c0776a" stroke-width="2.2" fill="none" stroke-linecap="round" pathLength="1" /></g>
+            <clipPath id="clipMore"><rect id="rMore" x="972" y="170" width="0" height="48" /></clipPath>
+            <g clip-path="url(#clipMore)"><text x="976" y="206" class="hand" font-size="31" fill="#f1f4ef" data-var="more"></text></g>
+            <path id="check" d="M1166 196 L1175 207 L1194 180" stroke="#f1f4ef" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" />
+            <path id="bracket" d="M344 566 C 344 574, 350 576, 360 576 L 636 576 C 646 576, 650 580, 652 588 C 654 580, 658 576, 668 576 L 944 576 C 954 576, 960 574, 960 566" stroke="#e3e8e2" stroke-width="2" fill="none" pathLength="1" />
+            <clipPath id="clipTeam"><rect id="rTeam" x="580" y="590" width="0" height="40" /></clipPath>
+            <g clip-path="url(#clipTeam)"><text x="584" y="616" class="hand" font-size="27" fill="#e9eee8" data-var="team"></text></g>
+          </g>
+          <g id="underlineG"><path id="underline" d="M380 390 C 480 386, 600 393, 700 389 S 840 386, 872 388" stroke="#d68a7a" stroke-width="5" fill="none" stroke-linecap="round" pathLength="1" /></g>
+        </svg>
+
+        <!-- end card drawing layer -->
+        <svg id="svgG" class="layer" viewBox="0 0 1280 720">
+          <g id="ghostsArc" fill="none" stroke="#a7aba3" stroke-width="1.2"></g>
+          <path id="arcDots" d="" fill="none" stroke="#9a9e97" stroke-width="2" stroke-linecap="round" stroke-dasharray="0.1 7" />
+          <g transform="translate(288.6 259.3) scale(0.62) translate(-370 -218)"><path id="ring" d="M368 176 C 396 175, 414 196, 413 220 C 412 246, 390 262, 366 261 C 342 260, 326 240, 327 217 C 328 194, 344 180, 372 178" stroke="#8f4a40" stroke-width="3.6" fill="none" stroke-linecap="round" pathLength="1" /></g>
+          <g id="mark">
+            <g id="iconWrap">
+              <rect x="244" y="206" width="128" height="128" rx="26" fill="var(--iconColor)" />
+              <g transform="translate(244 206) scale(0.147126)">
+                <path id="frame" d="M452 218 H 262 A 95 95 0 0 0 167 313 V 583 A 95 95 0 0 0 262 678 H 597 A 95 95 0 0 0 692 583 V 398" stroke="#ffffff" stroke-width="46" fill="none" stroke-linecap="round" pathLength="1" />
+                <g id="mountG"><path d="M190 610 L 273 500 Q 292 476 311 500 L 345 540 Q 362 560 380 540 L 473 420 Q 497 392 522 420 L 668 610 L 668 670 L 190 670 Z" fill="#ffffff" /></g>
+                <circle id="sunC" cx="303" cy="362" r="48" fill="#ffffff" />
+                <path id="spark" d="M637 125 C 645 205 665 232 760 245 C 665 258 645 285 637 370 C 629 285 609 258 515 245 C 609 232 629 205 637 125 Z" fill="#ffffff" />
+              </g>
+            </g>
+          </g>
+          <g transform="translate(640 0) scale(1.42 1) translate(-640 0)"><path id="urlRing" d="M560 474 C 600 464, 690 464, 734 474 C 752 480, 748 500, 720 507 C 680 516, 600 516, 560 507 C 530 500, 532 482, 566 470" stroke="#8f4a40" stroke-width="2.2" fill="none" stroke-linecap="round" pathLength="1" /></g>
+        </svg>
+        <div id="word"></div>
+        <div id="tag" data-var="tagline"></div>
+        <div id="url" data-var="url"></div>
+        <div id="disc" data-var="disclaimer"></div>
+
+        <div id="type"><div class="tline" id="tl1"></div><div class="tline" id="tl2"></div></div>
+
+        <div id="wipe" class="layer"></div>
+
+        <div id="shadow"></div>
+        <div id="glow"></div>
+        <div id="ball"></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const DUR = 15;
+        // template variables: defaults from <html data-composition-variables>, overrides from --variables
+        const V = {};
+        try { JSON.parse(document.documentElement.getAttribute("data-composition-variables") || "[]").forEach((d) => (V[d.id] = d.default)); } catch (e) {}
+        try { const o = window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables(); if (o) Object.assign(V, o); } catch (e) {}
+        document.querySelectorAll("[data-var]").forEach((el) => { el.textContent = V[el.dataset.var]; });
+        document.documentElement.style.setProperty("--iconColor", V.iconColor);
+        document.getElementById("cSticky").innerHTML = String(V.sticky).split("|").map((s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c])).join("<br />");
+        const $ = (id) => document.getElementById(id);
+        const NS = "http://www.w3.org/2000/svg";
+        const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+        const prog = (t, t0, t1) => clamp((t - t0) / (t1 - t0));
+        const lerp = (a, b, u) => a + (b - a) * u;
+        const E = {
+          outCubic: (u) => 1 - Math.pow(1 - u, 3),
+          inCubic: (u) => u * u * u,
+          inQuad: (u) => u * u,
+          outQuad: (u) => 1 - (1 - u) * (1 - u),
+          inOutCubic: (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2),
+          outBack: (u, s = 1.6) => 1 + (s + 1) * Math.pow(u - 1, 3) + s * Math.pow(u - 1, 2),
+        };
+        const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+        const vis = (el, on) => { el.style.visibility = on ? "visible" : "hidden"; };
+        // containers are toggled with display so a child's own visibility can never leak through
+        const show = (el, on) => { el.style.display = on ? "" : "none"; };
+        const draw = (el, u) => { el.style.strokeDasharray = "1"; el.style.strokeDashoffset = String(1 - clamp(u)); el.style.visibility = u > 0 ? "visible" : "hidden"; };
+        const reveal = (rect, u, w) => rect.setAttribute("width", String(Math.max(0, w * clamp(u))));
+
+        // ---------- ball trajectory, scene A (0 - 1.42s) ----------
+        const REST_Y = 476, LINE_Y = 506;
+        const REST_T = 1.42;
+        const segs = [
+          { t0: 0.0, t1: 0.62, x0: 292, x1: 424, fall: true, y0: -40 },
+          { t0: 0.62, t1: 1.0, x0: 424, x1: 552, h: 146 },
+          { t0: 1.0, t1: 1.26, x0: 552, x1: 612, h: 56 },
+          { t0: 1.26, t1: REST_T, x0: 612, x1: 640, h: 18 },
+        ];
+        const impacts = [0.62, 1.0, 1.26, REST_T];
+        function ballA(t) {
+          if (t >= REST_T) return { x: 640, y: REST_Y, vy: 0 };
+          for (const s of segs) {
+            if (t <= s.t1) {
+              const u = prog(t, s.t0, s.t1), T = s.t1 - s.t0;
+              const x = lerp(s.x0, s.x1, u);
+              if (s.fall) return { x, y: s.y0 + (REST_Y - s.y0) * u * u, vy: (2 * (REST_Y - s.y0) * u) / T };
+              return { x, y: REST_Y - 4 * s.h * u * (1 - u), vy: (-4 * s.h * (1 - 2 * u)) / T };
+            }
+          }
+          return { x: 640, y: REST_Y, vy: 0 };
+        }
+        function squashA(t, vy) {
+          let sy = 1 + Math.min(0.55, Math.abs(vy) / 2600), sx = 1 / Math.sqrt(sy);
+          for (const ti of impacts) {
+            const d = t - ti;
+            if (d >= -0.02 && d < 0.09) {
+              const k = d < 0 ? 1 + d / 0.02 : 1 - d / 0.09;
+              const amt = ti === REST_T ? 0.12 : 0.3;
+              sy = lerp(sy, 1 - amt, clamp(k)); sx = lerp(sx, 1 + amt * 0.9, clamp(k));
+            }
+          }
+          return { sx, sy };
+        }
+
+        // ---------- build onion-skin ghosts for scene A ----------
+        const ghostsA = $("ghostsA"), ghostTimes = [];
+        for (let gt = 0.06; gt < REST_T; gt += 0.072) ghostTimes.push(gt);
+        const ghostEls = ghostTimes.map((gt) => {
+          const e = document.createElementNS(NS, "ellipse");
+          const p = ballA(gt), s = squashA(gt, p.vy);
+          e.setAttribute("cx", p.x); e.setAttribute("cy", LINE_Y - 30 * s.sy + (p.y - REST_Y));
+          e.setAttribute("rx", 30 * s.sx); e.setAttribute("ry", 30 * s.sy);
+          ghostsA.appendChild(e); return e;
+        });
+        function trailPath(t1) {
+          let d = "";
+          for (let tt = 0; tt <= t1; tt += 0.01) { const p = ballA(tt); d += (d ? " L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); }
+          return d;
+        }
+
+        // ---------- cards ----------
+        const cards = {
+          bid: { el: $("cBid"), w: 208, h: 258 },
+          floor: { el: $("cFloor"), w: 280, h: 192 },
+          sticky: { el: $("cSticky"), w: 168, h: 162 },
+          unit: { el: $("cUnit"), w: 256, h: 150 },
+        };
+        // [enter from, enter t0, t1, paper final, dark pose]
+        const cardPlan = {
+          bid: { from: [-180, -140, -38], a: 2.6, b: 3.0, fin: [290, 236, -7], dk: [345, 246, -15], suck: [5.16, 5.45] },
+          floor: { from: [1480, 120, 34], a: 2.64, b: 3.06, fin: [990, 230, 3], dk: [955, 246, 4], suck: [5.2, 5.54] },
+          sticky: { from: [120, 860, -26], a: 2.8, b: 3.18, fin: [297, 500, -4], dk: [318, 498, 2], suck: [5.5, 5.84] },
+          unit: { from: [1460, 820, 28], a: 2.86, b: 3.24, fin: [980, 500, -3], dk: [953, 494, -2], suck: [5.3, 5.68] },
+        };
+        const BALL_DARK = [640, 312];
+        function placeCard(c, x, y, r, s) {
+          c.el.style.transform = `translate(${x - c.w / 2}px, ${y - c.h / 2}px) rotate(${r}deg) scale(${s})`;
+        }
+        function cardPose(key, t) {
+          const p = cardPlan[key];
+          if (t < 4.95) {
+            const u = prog(t, p.a, p.b), e = E.outBack(u, 1.25);
+            return { x: lerp(p.from[0], p.fin[0], e), y: lerp(p.from[1], p.fin[1], e), r: lerp(p.from[2], p.fin[2], e), s: lerp(0.82, 1, clamp(u * 1.4)), o: t >= p.a ? 1 : 0 };
+          }
+          const u1 = E.outCubic(prog(t, 4.95, 5.18));
+          let x = lerp(p.fin[0], p.dk[0], u1), y = lerp(p.fin[1], p.dk[1], u1), r = lerp(p.fin[2], p.dk[2], u1), s = 1;
+          const k = E.inCubic(prog(t, p.suck[0], p.suck[1]));
+          x = lerp(x, BALL_DARK[0], k); y = lerp(y, BALL_DARK[1], k); r = r + k * (key === "unit" || key === "sticky" ? -160 : 190); s = lerp(1, 0.04, k);
+          return { x, y, r, s, o: k < 0.98 ? 1 : 0 };
+        }
+
+        // ---------- starburst ----------
+        const burst = $("burst"), rays = [];
+        for (let i = 0; i < 96; i++) {
+          const l = document.createElementNS(NS, "line"); burst.appendChild(l);
+          const long = i % 31 === 7;
+          rays.push({ el: l, a: (i / 96) * Math.PI * 2 + rnd(i) * 0.2, len: long ? 120 + rnd(i + 5) * 60 : 6 + rnd(i + 7) * 34, long: false, w: long ? 0.9 : 0.6 + rnd(i + 11) * 0.9 });
+        }
+
+        // ---------- kinetic type ----------
+        const L1 = String(V.line1).toUpperCase(), L2 = String(V.line2).toUpperCase();
+        // left/right edge of line 2 ("MAKES ALL OF IT")
+        function line2Edges() { return [190, 1088]; } // measured once from a render at 147px Anton
+        const letters = [];
+        function buildLine(el, text, lineIdx) {
+          [...text].forEach((c, i) => {
+            const s = document.createElement("span");
+            if (c === " ") { s.className = "ch sp"; s.innerHTML = "&nbsp;"; el.appendChild(s); return; }
+            s.className = "ch";
+            s.innerHTML = `<span class="g g1">${c}</span><span class="g g2">${c}</span><span class="m">${c}</span>`;
+            el.appendChild(s);
+            letters.push({ el: s, g1: s.children[0], g2: s.children[1], line: lineIdx, idx: letters.length });
+          });
+        }
+        $("tl1").style.top = "114px"; $("tl2").style.top = "258px";
+        buildLine($("tl1"), L1, 0); buildLine($("tl2"), L2, 1);
+        let li1 = 0, li2 = 0;
+        letters.forEach((L) => { L.k = L.line === 0 ? li1++ : li2++; });
+        const FALL = 0.18, DROP = 520;
+        function letterStart(L) { return L.line === 0 ? 6.3 + L.k * 0.026 : 6.7 + L.k * 0.03; }
+
+        // ---------- chart helpers ----------
+        const CX0 = 360, CX1 = 946, CY = 464;
+        const sig = (s) => { const f = (v) => 1 / (1 + Math.exp(-10 * (v - 0.46))); return (f(s) - f(0)) / (f(1) - f(0)); };
+        const curvePt = (s) => ({ x: CX0 + (CX1 - CX0) * s, y: CY - 248 * sig(s) });
+        function polyline(fn, s1, n) {
+          let d = ""; const steps = Math.max(2, Math.round(n * s1));
+          for (let i = 0; i <= steps; i++) { const p = fn((s1 * i) / steps); d += (i ? " L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); }
+          return d;
+        }
+        const flatXs = [430, 506, 580, 654, 728, 800, 874];
+        const ghostsFlat = $("ghostsFlat");
+        const flatGhostEls = flatXs.map((x) => { const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", x); c.setAttribute("cy", CY); c.setAttribute("r", 11); ghostsFlat.appendChild(c); return c; });
+        const ghostsCurve = $("ghostsCurve"), curveGhostS = [];
+        for (let s = 0.04; s < 1; s += 0.075) curveGhostS.push(s);
+        const curveGhostEls = curveGhostS.map((s) => { const p = curvePt(s); const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", p.x); c.setAttribute("cy", p.y); c.setAttribute("r", 11); ghostsCurve.appendChild(c); return c; });
+
+        // ---------- end card arc ----------
+        const A0 = [946, 216], AC = [660, -40], A2 = [360, 196];
+        const SUN = [288.6, 259.3];
+        const arcPt = (u) => ({ x: (1 - u) * (1 - u) * A0[0] + 2 * (1 - u) * u * AC[0] + u * u * A2[0], y: (1 - u) * (1 - u) * A0[1] + 2 * (1 - u) * u * AC[1] + u * u * A2[1] });
+        const ghostsArc = $("ghostsArc"), arcGhostU = [];
+        for (let u = 0.03; u < 1; u += 0.045) arcGhostU.push(u);
+        const arcGhostEls = arcGhostU.map((u) => { const p = arcPt(u); const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", p.x); c.setAttribute("cy", p.y); c.setAttribute("r", 17); ghostsArc.appendChild(c); return c; });
+
+        // wordmark letters
+        const word = $("word");
+        const wordSpans = [...String(V.wordmark)].map((c) => { const s = document.createElement("span"); s.textContent = c === " " ? "\u00a0" : c; word.appendChild(s); return s; });
+
+        // wipe bands + glitch rects
+        const wipe = $("wipe"), bands = [];
+        for (let i = 0; i < 18; i++) {
+          const b = document.createElement("div"); b.className = "band"; b.style.top = i * 40 + "px"; wipe.appendChild(b);
+          bands.push({ el: b, s0: 11.14 + rnd(i + 200) * 0.24, d: 0.1 + rnd(i + 300) * 0.08, dir: rnd(i + 400) > 0.5 ? 1 : -1 });
+        }
+        const glitchSpec = [[0, 40, 104, 40, 11.05, 11.32], [1256, 70, 24, 60, 11.08, 11.3], [0, 160, 10, 60, 11.12, 11.28], [1180, 250, 100, 26, 11.1, 11.26]];
+        const glitches = glitchSpec.map((g) => { const d = document.createElement("div"); d.className = "glitch"; Object.assign(d.style, { left: g[0] + "px", top: g[1] + "px", width: g[2] + "px", height: g[3] + "px" }); wipe.appendChild(d); return d; });
+
+        const ball = $("ball"), glow = $("glow"), shadow = $("shadow");
+        function setBall(x, y, r, sx, sy, on) {
+          const k = r / 30;
+          ball.style.transform = `translate(${x - 30}px, ${y - 30}px) scale(${k * sx}, ${k * sy})`;
+          vis(ball, on);
+        }
+
+        // ---------------- render(t) ----------------
+        function render(t) {
+          const darkMode = t >= 4.95 && t < 11.18;
+          $("paper").style.opacity = darkMode ? 0 : 1;
+          $("dark").style.opacity = darkMode ? 1 : 0;
+
+          // ----- scene A/B layer -----
+          const sceneAB = t < 4.95;
+          show($("svgA"), sceneAB);
+          if (sceneAB) {
+            draw($("floorLine"), prog(t, 0.0, 0.5));
+            const tg = Math.min(t, REST_T);
+            $("trailDots").setAttribute("d", trailPath(tg));
+            const ghostFade = 1 - prog(t, 2.5, 2.95);
+            $("trailDots").style.opacity = ghostFade * 0.9;
+            ghostEls.forEach((e, i) => { e.style.opacity = ghostTimes[i] <= t - 0.02 ? ghostFade : 0; });
+            const firmOn = t < 2.52 ? 1 : 0;
+            reveal($("rFirm"), prog(t, 1.18, 1.5) * firmOn, 240); draw($("aFirm"), prog(t, 1.44, 1.62) * firmOn);
+            reveal($("rPast"), prog(t, 2.98, 3.26), 150); draw($("aPast"), prog(t, 3.2, 3.38));
+            reveal($("rDraw"), prog(t, 3.14, 3.46), 200); draw($("aDraw"), prog(t, 3.42, 3.6));
+            reveal($("rRules"), prog(t, 3.4, 3.98), 250); draw($("aRules"), prog(t, 3.88, 4.06));
+            reveal($("rPrice"), prog(t, 3.78, 4.04), 170); draw($("aPrice"), prog(t, 4.0, 4.18));
+          }
+
+          // ----- cards -----
+          $("cards").classList.toggle("dark", darkMode);
+          const cardsOn = t >= 2.6 && t < 5.86;
+          show($("cards"), cardsOn);
+          if (cardsOn) for (const key in cards) { const p = cardPose(key, t); placeCard(cards[key], p.x, p.y, p.r, p.s); cards[key].el.style.opacity = p.o; }
+
+          // ----- ball -----
+          let bx = 640, by = REST_Y, br = 30, sx = 1, sy = 1, bOn = true, glowA = 0, glowSize = 420, shadowA = 0;
+          if (t < 4.95) {
+            const p = ballA(t), s = squashA(t, p.vy);
+            bx = p.x; sx = s.sx; sy = s.sy; by = p.y;
+            if (p.y >= REST_Y - 0.5) by = LINE_Y - 30 * sy;
+            bOn = p.y > -60;
+            shadowA = clamp(1 - (REST_Y - p.y) / 160) * 0.9;
+          } else if (t < 6.45) {
+            const u = E.outCubic(prog(t, 4.95, 5.15));
+            bx = 640; by = lerp(REST_Y, BALL_DARK[1], u);
+            br = lerp(30, 37, u) + 6 * prog(t, 5.2, 5.9);
+            glowA = lerp(0.6, 1, prog(t, 5.2, 5.9)); glowSize = lerp(360, 460, prog(t, 5.2, 5.9));
+            const a = prog(t, 6.08, 6.2), l = prog(t, 6.2, 6.45);
+            if (t >= 6.08 && t < 6.2) { sy = 1 - 0.22 * Math.sin(a * Math.PI * 0.5); sx = 1 + 0.2 * Math.sin(a * Math.PI * 0.5); by = BALL_DARK[1] + br * (1 - sy); }
+            if (t >= 6.2) { const e = E.inQuad(l); by = lerp(BALL_DARK[1] + 6, -140, e); sy = 1 + 0.55 * Math.min(1, l * 3); sx = 1 / Math.sqrt(sy); glowA = 1 - l; }
+            bOn = t < 6.45;
+          } else if (t < 8.45) {
+            const u = prog(t, 7.84, 8.02);
+            bOn = t >= 7.84; br = 13; bx = line2Edges()[1] + 18; by = lerp(250, 380, E.inQuad(u));
+            if (t >= 8.02 && t < 8.1) { const k = 1 - prog(t, 8.02, 8.1); sy = 1 - 0.3 * k; sx = 1 + 0.25 * k; by = 380 + 13 * (1 - sy); }
+            glowA = u > 0 ? 0.6 : 0; glowSize = 120;
+          } else if (t < 11.5) {
+            br = 11; glowSize = 150;
+            if (t < 9.0) {
+              const u = E.inOutCubic(prog(t, 8.45, 9.0));
+              const px0 = line2Edges()[1] + 18; bx = (1 - u) * (1 - u) * px0 + 2 * (1 - u) * u * 600 + u * u * 430;
+              by = (1 - u) * (1 - u) * 380 + 2 * (1 - u) * u * 190 + u * u * CY; br = lerp(13, 11, u);
+            } else if (t < 9.45) { bx = lerp(430, CX1, E.inOutCubic(prog(t, 9.0, 9.45))); by = CY; }
+            else if (t < 9.62) { bx = CX1; by = CY; }
+            else if (t < 9.8) { bx = lerp(CX1, CX0, E.inOutCubic(prog(t, 9.62, 9.8))); by = CY; }
+            else { const s = E.inOutCubic(prog(t, 9.8, 10.45)); const p = curvePt(s); bx = p.x; by = p.y; }
+            glowA = t >= 11.18 ? 0 : 0.8;
+          } else {
+            br = 16;
+            if (t < 12.38) { const u = prog(t, 11.5, 12.38); const p = arcPt(u); bx = p.x; by = p.y; br = lerp(11, 17, prog(t, 11.5, 11.8)); }
+            else if (t < 12.5) { const u = E.inQuad(prog(t, 12.38, 12.5)); bx = lerp(A2[0], SUN[0], u); by = lerp(A2[1], SUN[1], u); br = 17; sy = 1.3; sx = 0.82; }
+            else { bx = SUN[0]; by = SUN[1]; br = lerp(17, 7, E.inQuad(prog(t, 12.5, 12.56))); }
+            bOn = t < 12.56;
+          }
+          setBall(bx, by, br, sx, sy, bOn);
+          glow.style.width = glow.style.height = glowSize + "px";
+          glow.style.transform = `translate(${bx - glowSize / 2}px, ${by - glowSize / 2}px)`;
+          glow.style.opacity = bOn ? glowA : 0;
+          shadow.style.transform = `translate(${bx - 32}px, ${LINE_Y - 5}px) scale(${1 + (1 - shadowA) * 0.5}, 1)`;
+          shadow.style.opacity = t < 4.95 ? shadowA : 0;
+
+          // ----- starburst -----
+          const bu = prog(t, 5.6, 6.18);
+          show(burst, bu > 0 && bu < 1);
+          if (bu > 0 && bu < 1) {
+            const grow = Math.sin(Math.min(1, bu * 1.8) * Math.PI * 0.5), fade = 1 - prog(t, 6.0, 6.18);
+            rays.forEach((r, i) => {
+              const r0 = br + 2, r1 = r0 + r.len * grow;
+              r.el.setAttribute("x1", BALL_DARK[0] + Math.cos(r.a) * r0); r.el.setAttribute("y1", BALL_DARK[1] + Math.sin(r.a) * r0);
+              r.el.setAttribute("x2", BALL_DARK[0] + Math.cos(r.a) * r1); r.el.setAttribute("y2", BALL_DARK[1] + Math.sin(r.a) * r1);
+              r.el.setAttribute("stroke-width", r.w); r.el.style.opacity = (0.5 + 0.5 * rnd(i + 21)) * fade;
+            });
+          }
+
+          // ----- kinetic type -----
+          const typeOn = t >= 6.28 && t < 9.4;
+          show($("type"), typeOn);
+          if (typeOn) {
+            letters.forEach((L) => {
+              const t0 = letterStart(L), tau = t - t0;
+              let dy = -DROP, dx = 0, rot = 0, v = 0, sq = 1;
+              if (tau >= 0 && tau < FALL) { const u = tau / FALL; dy = -DROP * (1 - u * u); v = (2 * DROP * u) / FALL; }
+              else if (tau >= FALL) {
+                const b = tau - FALL; dy = 0;
+                if (b < 0.12) dy = -20 * Math.sin((b / 0.12) * Math.PI);
+                if (b < 0.06) sq = 1 - 0.16 * Math.sin((b / 0.06) * Math.PI);
+              }
+              // jostle, then explode
+              const j0 = 8.4 + rnd(L.idx + 20) * 0.12, ju = prog(t, j0, j0 + 0.26);
+              if (ju > 0 && ju < 1) {
+                const amp = (rnd(L.idx + 30) - 0.35) * 60;
+                dy += -amp * Math.sin(ju * Math.PI); rot += (rnd(L.idx + 33) - 0.5) * 16 * Math.sin(ju * Math.PI);
+              }
+              const ts = (L.line ? 8.6 : 8.66) + rnd(L.idx + 50) * 0.08, st = t - ts;
+              if (st > 0) {
+                const vx = (rnd(L.idx + 40) - 0.5) * 170, vy = -(rnd(L.idx + 60) * 220), g = 3400;
+                dx = vx * st; dy = vy * st + 0.5 * g * st * st; rot = (rnd(L.idx + 80) - 0.5) * 240 * st;
+              }
+              L.el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(${1 / Math.sqrt(sq)}, ${sq})`;
+              L.el.style.visibility = tau >= 0 ? "visible" : "hidden";
+              const smear = v > 400 ? 1 : 0;
+              L.g1.style.transform = `translateY(${-Math.min(120, v * 0.028)}px)`; L.g2.style.transform = `translateY(${-Math.min(60, v * 0.014)}px)`;
+              L.g1.style.opacity = smear * 0.95; L.g2.style.opacity = smear;
+            });
+          }
+          // underline
+          const ulOn = t >= 7.5 && t < 9.4;
+          show($("underlineG"), ulOn);
+          if (ulOn) {
+            const [ux0, ux1] = line2Edges(), uw = ux1 - ux0;
+            $("underline").setAttribute("d", `M${ux0} 392 C ${ux0 + uw * 0.25} 388, ${ux0 + uw * 0.5} 395, ${ux0 + uw * 0.72} 391 S ${ux1 - 30} 388, ${ux1 + 6} 390`);
+            draw($("underline"), prog(t, 7.5, 7.9));
+            const ut = t - 8.74;
+            $("underlineG").style.transform = ut > 0 ? `translate(${ut * 40}px, ${0.5 * 3600 * ut * ut - 120 * ut}px) rotate(${ut * 6}deg)` : "none";
+          }
+
+          // ----- chart -----
+          const chartOn = t >= 8.5 && t < 11.18;
+          show($("chart"), chartOn);
+          if (chartOn) {
+            draw($("axisY"), E.outCubic(prog(t, 8.5, 8.9))); draw($("axisX"), E.outCubic(prog(t, 8.55, 8.95)));
+            $("axisYh").style.opacity = prog(t, 8.85, 8.92); $("axisXh").style.opacity = prog(t, 8.9, 8.97);
+            $("lblY").style.opacity = prog(t, 8.85, 9.05); $("lblX").style.opacity = prog(t, 8.9, 9.1);
+            const fx = t < 9.0 ? CX0 : t < 9.45 ? Math.max(CX0, bx) : CX1;
+            const wv = prog(t, 9.62, 10.0);
+            $("flat").setAttribute("d", t >= 9.0 ? `M${CX0} ${CY} L${fx} ${CY}` : "");
+            $("flat").style.opacity = 1 - wv;
+            if (wv > 0) {
+              const A = 11 * wv;
+              $("wave").setAttribute("d", polyline((s) => ({ x: CX0 + (CX1 - CX0) * s, y: CY + A * Math.sin(s * Math.PI * 2 * 7.5) }), 1, 160));
+              $("wave").style.opacity = wv;
+            } else $("wave").setAttribute("d", "");
+            flatGhostEls.forEach((c, i) => { c.style.opacity = t >= 9.0 && (t >= 9.45 || bx > flatXs[i] + 6) ? 1 : 0; });
+            reveal($("rCeil"), prog(t, 9.1, 9.34), 112); draw($("ceilArrow"), prog(t, 9.3, 9.4)); draw($("ceilStrike"), prog(t, 9.38, 9.48));
+            $("ceilG").style.opacity = 1 - 0.45 * prog(t, 9.8, 10.2);
+            const cs = t < 9.8 ? 0 : E.inOutCubic(prog(t, 9.8, 10.45));
+            $("curve").setAttribute("d", cs > 0.002 ? polyline(curvePt, cs, 90) : "");
+            curveGhostEls.forEach((c, i) => { c.style.opacity = cs > curveGhostS[i] + 0.02 ? 1 : 0; });
+            reveal($("rMore"), prog(t, 10.46, 10.78), 210); draw($("check"), prog(t, 10.7, 10.82));
+            draw($("bracket"), E.inOutCubic(prog(t, 10.0, 10.3))); reveal($("rTeam"), prog(t, 10.14, 10.46), 140);
+          }
+
+          // ----- wipe -----
+          const wipeOn = t >= 11.05 && t < 11.45;
+          show($("wipe"), wipeOn);
+          if (wipeOn) {
+            glitches.forEach((g, i) => { const s = glitchSpec[i]; g.style.opacity = t >= s[4] && t < s[5] && Math.floor(t * 60) % 3 !== 0 ? 1 : 0; });
+            bands.forEach((b) => {
+              const u = E.outQuad(prog(t, b.s0, b.s0 + b.d));
+              b.el.style.opacity = t >= 11.18 ? 1 : 0;
+              b.el.style.transform = `translateX(${b.dir * u * 1320}px)`;
+            });
+          }
+
+          // ----- end card -----
+          const endOn = t >= 11.18;
+          show($("svgG"), endOn); show($("word"), endOn); show($("tag"), endOn && t >= 12.9); show($("url"), endOn); show($("disc"), endOn);
+          if (endOn) {
+            const au = prog(t, 11.5, 12.38), ghostOut = 1 - prog(t, 12.8, 13.5);
+            arcGhostEls.forEach((c, i) => { c.style.opacity = au > arcGhostU[i] + 0.03 ? ghostOut : 0; });
+            let d = ""; const n = Math.round(60 * au);
+            for (let i = 0; i <= n; i++) { const p = arcPt(au * (i / Math.max(1, n))); d += (i ? " L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); }
+            $("arcDots").setAttribute("d", au > 0 ? d : ""); $("arcDots").style.opacity = ghostOut;
+            draw($("ring"), E.inOutCubic(prog(t, 11.66, 12.02))); $("ring").style.opacity = 1 - prog(t, 12.52, 12.62);
+            show($("mark"), t >= 12.48);
+            const iu = E.outBack(prog(t, 12.48, 12.74), 1.4);
+            $("iconWrap").style.transformOrigin = `${SUN[0]}px ${SUN[1]}px`;
+            $("iconWrap").style.transform = `scale(${Math.max(0.001, lerp(0.14, 1, iu))})`;
+            $("sunC").style.opacity = t >= 12.54 ? 1 : 0;
+            draw($("frame"), E.inOutCubic(prog(t, 12.6, 12.9)));
+            const mu = E.outBack(prog(t, 12.7, 12.9), 1.3);
+            $("mountG").style.transformOrigin = "430px 670px"; $("mountG").style.transform = `scaleY(${Math.max(0, mu)})`;
+            const su = E.outBack(prog(t, 12.86, 13.06), 2.2);
+            $("spark").style.transformOrigin = "637px 245px"; $("spark").style.transform = `scale(${Math.max(0, su)}) rotate(${(1 - clamp(su)) * -70}deg)`;
+            $("disc").style.opacity = prog(t, 13.9, 14.2);
+            wordSpans.forEach((s, i) => {
+              const u = prog(t, 12.56 + i * 0.038, 12.56 + i * 0.038 + 0.2);
+              s.style.opacity = u; const c = Math.round(lerp(190, 16, u));
+              s.style.color = `rgb(${c},${c + 1},${Math.max(12, c - 4)})`;
+              s.style.transform = `translateX(${(1 - E.outCubic(u)) * 14}px)`;
+            });
+            const tp = prog(t, 12.95, 13.55) * 125 - 15;
+            $("tag").style.webkitMaskImage = $("tag").style.maskImage = `linear-gradient(90deg, #000 ${tp}%, rgba(0,0,0,0.35) ${tp + 8}%, transparent ${tp + 16}%)`;
+            $("url").style.opacity = prog(t, 13.55, 13.78);
+            draw($("urlRing"), E.inOutCubic(prog(t, 13.76, 14.12)));
+          }
+        }
+
+        window.__render = render;
+        render(0);
+        const state = { t: 0 };
+        const tl = gsap.timeline({ paused: true });
+        tl.to(state, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(state.t) }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>

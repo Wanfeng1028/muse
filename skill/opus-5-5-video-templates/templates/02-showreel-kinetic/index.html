@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"word","type":"string","label":"Big word","default":"CLAUDE"},
+  {"id":"sub","type":"string","label":"Italic line","default":"imagine"},
+  {"id":"hud","type":"string","label":"Top-left label","default":"CLAUDE IMAGINE"},
+  {"id":"ringText","type":"string","label":"Orbit text","default":"CLAUDE IMAGINE · MOTION REEL · 2026 · IMAGES & VIDEO · "},
+  {"id":"meta","type":"string","label":"Final meta line","default":"CLAUDEIMAGINE.COM · 15 SECONDS · EVERY FRAME WRITTEN IN CODE · IMAGES & VIDEO INSIDE CLAUDE"},
+  {"id":"red","type":"color","label":"Red","default":"#ef4b36"},
+  {"id":"blue","type":"color","label":"Blue","default":"#2e36ef"},
+  {"id":"lime","type":"color","label":"Lime","default":"#dbf23a"},
+  {"id":"cream","type":"color","label":"Cream","default":"#f1efe8"},
+  {"id":"night","type":"color","label":"Dark","default":"#0e0e10"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Archivo-normal-100-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InstrumentSerif-italic-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --red: #ef4b36; --blue: #2e36ef; --lime: #dbf23a; --cream: #f1efe8; --night: #0e0e10; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--night); }
+      #root, .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      #bg { background: var(--night); }
+      .mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+      .wide { font-family: Archivo, sans-serif; font-variation-settings: "wdth" 125, "wght" 900; white-space: nowrap; line-height: 1; }
+      .serif { font-family: "Instrument Serif", serif; font-style: italic; font-weight: 400; }
+      .ch { display: inline-block; }
+      .hud { position: absolute; font-size: 15px; }
+      #big { position: absolute; left: 0; top: 380px; width: 1920px; text-align: center; font-size: 300px; letter-spacing: -0.01em; color: #111; }
+      #sub { position: absolute; left: 0; top: 740px; width: 1920px; text-align: center; font-size: 150px; color: #fff; }
+      .kw { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; }
+      .kw span.t { font-size: 470px; }
+      .dot { display: inline-block; width: 110px; height: 110px; border-radius: 50%; background: var(--red); margin-left: 56px; vertical-align: baseline; }
+      #finWord { position: absolute; left: 519px; top: 370px; font-size: 232px; color: #111; }
+      #finSub { position: absolute; left: 512px; top: 560px; font-size: 118px; color: #111; }
+      #finMeta { position: absolute; left: 512px; top: 748px; font-size: 15px; color: #111; letter-spacing: 0.12em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <div id="bg" class="layer"></div>
+
+        <!-- S1 identity burst -->
+        <svg id="s1" class="layer" viewBox="0 0 1920 1080">
+          <defs><path id="orbit" d="M960 540 m -290 0 a 290 290 0 1 1 580 0 a 290 290 0 1 1 -580 0" /></defs>
+          <circle id="bigRing" cx="960" cy="540" r="615" fill="none" stroke="#3a3a40" stroke-width="2" />
+          <circle id="smallRing" cx="960" cy="540" r="60" fill="none" stroke="#6a6a70" stroke-width="2" />
+          <circle id="redRing" cx="960" cy="540" r="340" fill="none" stroke="var(--red)" stroke-opacity="0.5" stroke-width="2" />
+          <g id="orbitG"><text class="mono" font-size="22" fill="#d8d6d0"><textPath id="orbitT" href="#orbit"></textPath></text></g>
+          <g id="rays" stroke="var(--red)" stroke-width="18" stroke-linecap="round"></g>
+          <circle id="seed" cx="960" cy="540" r="14" fill="var(--red)" />
+        </svg>
+
+        <!-- S2 wordmark -->
+        <div id="s2" class="layer">
+          <svg class="layer" viewBox="0 0 1920 1080"><line id="hrule" x1="141" y1="234" x2="1779" y2="234" stroke="#111" stroke-width="2" /></svg>
+          <div class="hud mono" style="left:141px;top:206px">N° 01</div>
+          <div class="hud mono" style="right:141px;top:206px">SHOWREEL — 2026</div>
+          <div id="big" class="wide"></div>
+          <div id="sub" class="serif" data-var="sub"></div>
+        </div>
+
+        <!-- S3 easing rows -->
+        <div id="s3" class="layer">
+          <div class="serif" style="position:absolute;left:150px;top:150px;font-size:70px;color:#161616">Six ways to get from A to B.</div>
+          <div class="hud mono" style="left:1335px;top:200px;color:#888">Same distance · same duration (0.84s)</div>
+          <svg id="rowsSvg" class="layer" viewBox="0 0 1920 1080"></svg>
+        </div>
+
+        <!-- S4 morphing -->
+        <svg id="s4" class="layer" viewBox="0 0 1920 1080">
+          <g stroke="#ffffff" stroke-opacity="0.28" stroke-width="2"><line x1="960" y1="120" x2="960" y2="960" /><line x1="660" y1="540" x2="1260" y2="540" /></g>
+          <circle cx="960" cy="540" r="330" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2" stroke-dasharray="3 9" />
+          <g id="ghostShapes" fill="none" stroke="var(--red)" stroke-width="3"></g>
+          <path id="shape" fill="var(--cream)" />
+          <g id="orbiters" fill="#ffffff"></g>
+          <text id="mLabel" x="261" y="572" class="mono" font-size="15" fill="#dfe2ff"></text>
+          <text x="1470" y="560" class="mono" font-size="15" fill="#dfe2ff" id="mT"></text>
+          <text x="1470" y="590" class="mono" font-size="15" fill="#9ea6ff">SPRING K=2.5 C=0.30</text>
+          <text x="420" y="520" class="mono" font-size="14" fill="#9ea6ff">270°</text><text x="1480" y="520" class="mono" font-size="14" fill="#9ea6ff">90°</text>
+        </svg>
+
+        <!-- S5 truchet -->
+        <svg id="s5" class="layer" viewBox="0 0 1920 1080"><g id="tiles" fill="none" stroke-linecap="butt"></g></svg>
+        <div id="s5lbl" class="hud mono" style="left:0;width:1920px;text-align:center;top:996px;color:#eee"><span style="background:#0e0e10;padding:6px 14px">Truchet × 144 · 3 waves · seed 0x2A</span></div>
+
+        <!-- S6 depth -->
+        <svg id="s6" class="layer" viewBox="0 0 1920 1080"><g id="mesh" stroke="#8a8a92" stroke-opacity="0.35" stroke-width="1.4" fill="none"></g><g id="pts"></g></svg>
+        <div id="s6lbl" class="hud mono" style="left:0;width:1920px;text-align:center;top:1000px;color:#bbb">Vertices 576 · focal 1400 · rot.y <span id="roty">0</span>°</div>
+
+        <!-- S7 kinetic words -->
+        <div id="s7" class="layer">
+          <div class="kw" id="k1" style="background:var(--red)"><span class="t wide" style="color:#111">EASE</span></div>
+          <div class="kw" id="k2" style="background:var(--night)"><span class="t wide" style="color:var(--cream)">IN</span><span class="dot"></span><div class="hud mono" style="left:150px;top:150px;color:#aaa">Accelerate +</div></div>
+          <div class="kw" id="k3" style="background:var(--cream)"><span class="t" style="font-family:Archivo;font-variation-settings:'wdth' 62,'wght' 900;font-size:720px;color:var(--blue);line-height:1">EASE</span></div>
+          <div class="kw" id="k4" style="background:var(--blue)"><span class="t wide" style="color:var(--cream)">OUT</span><span class="dot"></span><div class="hud mono" style="right:150px;top:150px;color:#dfe2ff">+ Decelerate</div></div>
+          <div class="kw" id="k5" style="background:var(--lime)"><span class="t wide" style="color:#111;font-size:300px">NEVER</span></div>
+          <div class="kw" id="k6" style="background:var(--lime);flex-direction:column;align-items:flex-start;justify-content:center"></div>
+          <div class="kw" id="k7" style="background:var(--night)"><span class="t wide" style="color:var(--cream);font-size:300px">LINEAR</span><span class="dot" style="width:80px;height:80px"></span>
+            <svg class="layer" viewBox="0 0 1920 1080" style="left:0;top:0"><line x1="180" y1="980" x2="440" y2="860" stroke="#666" stroke-width="2" /><circle id="linBall" cx="180" cy="980" r="8" fill="#ddd" /></svg></div>
+        </div>
+
+        <!-- S8 final -->
+        <div id="s8" class="layer">
+          <svg class="layer" viewBox="0 0 1920 1080">
+            <defs><radialGradient id="ringGlow"><stop offset="0.82" stop-color="#ffffff" stop-opacity="0" /><stop offset="0.95" stop-color="#ffd0c4" stop-opacity="0.9" /><stop offset="1" stop-color="#ffffff" stop-opacity="0" /></radialGradient></defs>
+            <circle id="shock" cx="960" cy="540" r="10" fill="url(#ringGlow)" />
+            <g id="parts"></g>
+            <path id="spark" d="M0 -120 C 8 -40 28 -13 123 0 C 28 13 8 40 0 125 C -8 40 -28 13 -122 0 C -28 -13 -8 -40 0 -120 Z" fill="#111" />
+            <line id="finRule" x1="512" y1="726" x2="1665" y2="726" stroke="#111" stroke-width="2" pathLength="1" />
+          </svg>
+          <div id="finWord" class="wide"></div>
+          <div id="finSub" class="serif" data-var="sub"></div>
+          <div id="finMeta" class="mono"></div>
+        </div>
+
+        <!-- HUD chrome -->
+        <div id="hudL" class="hud mono" style="left:84px;top:66px"><span data-var="hud"></span><span style="margin-left:40px;opacity:.6">Motion reel — 2026</span></div>
+        <div id="hudR" class="hud mono" style="right:84px;top:66px"></div>
+        <div id="hudBL" class="hud mono" style="left:84px;top:998px"></div>
+        <div id="hudBR" class="hud mono" style="right:84px;top:998px"></div>
+        <svg id="corners" class="layer" viewBox="0 0 1920 1080" fill="none" stroke-width="3">
+          <path d="M44 1010 L44 1040 L74 1040" /><path d="M1876 70 L1876 40 L1846 40" /><path d="M1876 1010 L1876 1040 L1846 1040" />
+          <line id="prog" x1="84" y1="1036" x2="84" y2="1036" stroke-width="2" />
+        </svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const { $, clamp, prog, lerp, E, rnd, show } = K;
+        const v = K.vars(); K.bind(v);
+        const NS = "http://www.w3.org/2000/svg", DUR = 15, C = [960, 540];
+        const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+
+        // S1 rays + orbit text
+        const rays = []; for (let i = 0; i < 12; i++) rays.push(el("line", {}, $("rays")));
+        $("orbitT").textContent = (v.ringText + v.ringText).toUpperCase();
+
+        // S2 wordmark letters
+        const big = K.chars($("big"), v.word);
+
+        // S3 easing rows
+        const eases = [["linear", E.linear, "#111"], ["ease-in-out", E.inOutCubic, "var(--blue)"], ["expo-out", E.outExpo, "var(--red)"], ["back-out", (u) => E.outBack(u, 2.6), "#111"], ["elastic", E.outElastic, "var(--blue)"], ["bounce", E.outBounce, "var(--red)"]];
+        const rowsSvg = $("rowsSvg"), rows = [];
+        const RY = [330, 420, 513, 606, 699, 789], AX = 660, BX = 1701;
+        el("text", { x: AX - 6, y: 268, class: "mono", "font-size": 15, fill: "#666" }, rowsSvg).textContent = "A";
+        el("text", { x: BX - 6, y: 268, class: "mono", "font-size": 15, fill: "#666" }, rowsSvg).textContent = "B";
+        eases.forEach(([name, f, col], i) => {
+          const y = RY[i], g = el("g", {}, rowsSvg);
+          el("text", { x: 150, y: y + 6, class: "mono", "font-size": 16, fill: "var(--red)" }, g).textContent = "0" + (i + 1);
+          el("text", { x: 195, y: y + 6, class: "mono", "font-size": 18, fill: "#222", style: "text-transform:none" }, g).textContent = name;
+          let d = ""; for (let k = 0; k <= 30; k++) { const u = k / 30; d += (k ? " L" : "M") + (480 + u * 58).toFixed(1) + " " + (y + 26 - f(u) * 52).toFixed(1); }
+          el("rect", { x: 476, y: y - 30, width: 66, height: 60, fill: "none", stroke: "#d4d1c8" }, g);
+          el("path", { d, fill: "none", stroke: "#222", "stroke-width": 2 }, g);
+          el("line", { x1: AX, y1: y, x2: BX, y2: y, stroke: "#cfccc3", "stroke-width": 2 }, g);
+          [0.2, 0.4, 0.6, 0.8].forEach((q) => el("line", { x1: AX + (BX - AX) * q, y1: y - 12, x2: AX + (BX - AX) * q, y2: y - 4, stroke: "#bdbab2", "stroke-width": 2 }, g));
+          const ghosts = [0, 1, 2, 3].map(() => el("circle", { r: 22, fill: "none", stroke: "#bdbab2", "stroke-width": 2 }, g));
+          const ring = el("circle", { r: 30, fill: "none", stroke: col, "stroke-width": 3 }, g);
+          const ball = el("ellipse", { rx: 24, ry: 24, fill: col }, g);
+          rows.push({ g, f, y, ball, ghosts, ring });
+        });
+
+        // S4 morph shapes via polar radius functions
+        const N = 180;
+        const polyR = (n, th, rot) => { const a = (Math.PI * 2) / n; const x = (((th - rot) % a) + a) % a - a / 2; return Math.cos(Math.PI / n) / Math.cos(x); };
+        const shapeR = {
+          circle: () => 1,
+          triangle: (th) => polyR(3, th, -Math.PI / 2) * 1.15,
+          star: (th) => { const a = (Math.PI * 2) / 5; const x = (((th + Math.PI / 2) % a) + a) % a; const k = Math.abs(x - a / 2) / (a / 2); return lerp(0.52, 1.18, Math.pow(k, 1.4)); },
+          squircle: (th) => 1.02 / Math.pow(Math.pow(Math.abs(Math.cos(th)), 4) + Math.pow(Math.abs(Math.sin(th)), 4), 0.25),
+        };
+        const seq = [["circle", 5.35], ["triangle", 6.1], ["star", 6.75], ["squircle", 7.12]];
+        function morphPath(t, rad, rotExtra) {
+          let i = 0; while (i < seq.length - 1 && t >= seq[i + 1][1]) i++;
+          const a = seq[i], b = seq[Math.min(i + 1, seq.length - 1)];
+          const u = b === a ? 0 : E.outBack(prog(t, b[1] - 0.28, b[1]), 1.3);
+          const rot = rotExtra + t * 0.6;
+          let d = "";
+          for (let k = 0; k < N; k++) { const th = (k / N) * Math.PI * 2; const r = rad * lerp(shapeR[a[0]](th), shapeR[b[0]](th), i < seq.length - 1 && t >= b[1] - 0.28 ? u : 0); const x = C[0] + Math.cos(th + rot) * r, y = C[1] + Math.sin(th + rot) * r; d += (k ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1); }
+          return { d: d + " Z", name: a[0], next: b[0] };
+        }
+        const ghostShapes = [0, 1, 2].map(() => el("path", {}, $("ghostShapes")));
+        const orbiters = []; for (let i = 0; i < 12; i++) orbiters.push(el("path", {}, $("orbiters")));
+        const miniShape = (kind, x, y, s) => {
+          if (kind === "circle") return `M${x - s} ${y} a${s} ${s} 0 1 0 ${2 * s} 0 a${s} ${s} 0 1 0 ${-2 * s} 0`;
+          if (kind === "triangle") return `M${x} ${y - s * 1.2} L${x + s * 1.1} ${y + s * 0.8} L${x - s * 1.1} ${y + s * 0.8} Z`;
+          if (kind === "star") { let d = ""; for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2 - Math.PI / 2, r = k % 2 ? s * 0.5 : s * 1.2; d += (k ? "L" : "M") + (x + Math.cos(a) * r).toFixed(1) + " " + (y + Math.sin(a) * r).toFixed(1); } return d + "Z"; }
+          return `M${x - s} ${y - s} h${2 * s} v${2 * s} h${-2 * s} Z`;
+        };
+
+        // S5 truchet tiles (120px cells)
+        const TS = 120, cols = 16, rowsN = 9, tiles = [];
+        for (let r = 0; r < rowsN; r++) for (let c = 0; c < cols; c++) {
+          const g = el("g", {}, $("tiles")); const cx = c * TS + TS / 2, cy = r * TS + TS / 2;
+          el("path", { d: `M${-TS / 2} 0 A${TS / 2} ${TS / 2} 0 0 0 0 ${-TS / 2} M${TS / 2} 0 A${TS / 2} ${TS / 2} 0 0 0 0 ${TS / 2}`, "stroke-width": 22 }, g);
+          tiles.push({ g, cx, cy, c, r, o: rnd(r * 31 + c * 7) > 0.5 ? 1 : 0 });
+        }
+
+        // S6 point cloud 24x24
+        const G = 24, pts = [], ptsG = $("pts");
+        for (let i = 0; i < G * G; i++) pts.push(el("circle", { r: 3.4, fill: rnd(i + 5) > 0.9 ? "var(--red)" : "#e8e8ea" }, ptsG));
+        const meshLines = []; for (let i = 0; i < 2 * G; i++) meshLines.push(el("path", {}, $("mesh")));
+        function surf(kind, i, j) {
+          const u = i / (G - 1), w = j / (G - 1);
+          if (kind === 0) return [(u - 0.5) * 900, 0, (w - 0.5) * 900];
+          const th = u * Math.PI * 2, ph = w * Math.PI;
+          if (kind === 1) return [Math.sin(ph) * Math.cos(th) * 360, Math.cos(ph) * 360, Math.sin(ph) * Math.sin(th) * 360];
+          if (kind === 2) { const rr = 300 + 60 * Math.sin(ph); return [Math.cos(th) * rr, (w - 0.5) * 560, Math.sin(th) * rr]; }
+          const R1 = 330, r1 = 120, ph2 = w * Math.PI * 2; return [(R1 + r1 * Math.cos(ph2)) * Math.cos(th), r1 * Math.sin(ph2), (R1 + r1 * Math.cos(ph2)) * Math.sin(th)];
+        }
+
+        // S7 NEVER echo rows
+        const echo = $("k6"); const echoRows = [];
+        for (let i = 0; i < 6; i++) { const d = document.createElement("div"); d.className = "wide"; d.style.cssText = `font-size:170px;white-space:nowrap;color:${i === 3 ? "#111" : "transparent"};-webkit-text-stroke:${i === 3 ? 0 : 3}px #111;line-height:1.05;margin-left:-200px`; d.textContent = "NEVER NEVER NEVER NEVER NEVER"; echo.appendChild(d); echoRows.push(d); }
+
+        // S8 particles + final letters
+        const parts = []; for (let i = 0; i < 70; i++) parts.push(el("circle", { r: 2 + rnd(i) * 5, fill: rnd(i + 2) > 0.6 ? "var(--blue)" : rnd(i + 4) > 0.5 ? "#111" : "#ffffff" }, $("parts")));
+        const fin = K.chars($("finWord"), v.word);
+        $("finMeta").textContent = v.meta;
+
+        const sections = [[0, "01 — Identity"], [3.4, "02 — Easing"], [5.35, "03 — Morphing"], [7.3, "04 — Systems"], [9.35, "05 — Depth"], [11.2, "06 — Kinetic type"], [12.95, "07 — Fin"]];
+        const scenes = [[0, "night"], [1.95, "red"], [3.4, "cream"], [5.35, "blue"], [7.3, "night"], [9.35, "night"], [11.2, "night"], [12.95, "red"]];
+
+        function render(t) {
+          const sc = scenes.filter((s) => t >= s[0]).pop()[1];
+          $("bg").style.background = `var(--${sc})`;
+          const light = sc === "cream" || sc === "red" || sc === "lime";
+          const hc = light ? "#1a1a1a" : "#d9d7d0";
+          ["hudL", "hudR", "hudBL", "hudBR"].forEach((id) => { $(id).style.color = hc; });
+          $("corners").setAttribute("stroke", hc);
+          $("hudR").textContent = sections.filter((s) => t >= s[0]).pop()[1];
+          const fr = Math.floor(t * 60); $("hudBL").textContent = `00:00:${String(Math.floor(fr / 60)).padStart(2, "0")}:${String(fr % 60).padStart(2, "0")}   60 fps`;
+          const beat = Math.floor(t * 2) % 4; $("hudBR").textContent = "120 BPM  " + [0, 1, 2, 3].map((k) => (k === beat ? "■" : "□")).join("") + `  BAR ${Math.min(8, 1 + Math.floor(t / 1.875))}/8`;
+          $("prog").setAttribute("x2", 84 + 560 * (t / DUR));
+
+          // S1
+          const s1 = t < 1.95; show($("s1"), s1);
+          if (s1) {
+            const burst = E.outBack(prog(t, 0.35, 0.8), 1.4), shrink = E.inCubic(prog(t, 1.45, 1.9));
+            const len = 240 * burst * (1 - shrink), spin = t * 40 + Math.pow(prog(t, 1.4, 1.9), 2) * 900;
+            rays.forEach((r, i) => { const a = ((i / 12) * 360 + spin) * Math.PI / 180; r.setAttribute("x1", C[0] + Math.cos(a) * 8); r.setAttribute("y1", C[1] + Math.sin(a) * 8); r.setAttribute("x2", C[0] + Math.cos(a) * (8 + len)); r.setAttribute("y2", C[1] + Math.sin(a) * (8 + len)); });
+            $("seed").setAttribute("r", t < 0.4 ? 14 : 14 * (1 - shrink));
+            $("smallRing").style.opacity = 1 - prog(t, 0.3, 0.5);
+            $("bigRing").setAttribute("r", 615 * E.outCubic(prog(t, 0.3, 0.9)));
+            const ro = prog(t, 0.85, 1.1) * (1 - prog(t, 1.55, 1.75)); $("orbitG").style.opacity = ro; $("redRing").style.opacity = ro;
+            $("orbitG").setAttribute("transform", `rotate(${t * 38} 960 540)`);
+            $("rays").style.filter = t > 1.45 ? `blur(${3 * prog(t, 1.45, 1.8)}px)` : "none";
+          }
+
+          // S2
+          const s2 = t >= 1.95 && t < 3.4; show($("s2"), s2);
+          if (s2) {
+            big.forEach((s, i) => { const u = E.inOutCubic(prog(t, 2.0 + i * 0.06, 2.55 + i * 0.06)); const wd = lerp(62, 125, u), wg = lerp(900, 900, u); s.style.fontVariationSettings = `"wdth" ${wd}, "wght" ${wg}`; s.style.transform = `translateY(${(1 - E.outCubic(prog(t, 1.95, 2.2))) * 140}px)`; });
+            const grow = E.inOutCubic(prog(t, 2.75, 3.05)); $("big").style.fontSize = lerp(300, 330, grow) + "px"; $("big").style.top = lerp(380, 320, grow) + "px";
+            const su = E.outCubic(prog(t, 2.85, 3.15)); $("sub").style.opacity = su; $("sub").style.transform = `translateY(${(1 - su) * 40}px)`;
+            $("hrule").setAttribute("x2", 141 + 1638 * E.outCubic(prog(t, 1.95, 2.4)));
+          }
+
+          // S3
+          const s3 = t >= 3.4 && t < 5.35; show($("s3"), s3);
+          if (s3) {
+            rows.forEach((r, i) => {
+              r.g.style.opacity = prog(t, 3.45 + i * 0.05, 3.6 + i * 0.05);
+              const u = prog(t, 4.26, 5.1), p = r.f(u), x = AX + (BX - AX) * p;
+              const up = r.f(clamp(u - 0.03)), sp = Math.abs(p - up) * 12;
+              r.ball.setAttribute("cx", x); r.ball.setAttribute("cy", r.y); r.ball.setAttribute("rx", 24 * (1 + Math.min(1.2, sp))); r.ball.setAttribute("ry", 24 / Math.sqrt(1 + Math.min(1.2, sp)));
+              r.ghosts.forEach((g, k) => { const gu = clamp(u - (k + 1) * 0.06); g.setAttribute("cx", AX + (BX - AX) * r.f(gu)); g.setAttribute("cy", r.y); g.style.opacity = u > 0.02 && u < 0.98 ? 0.7 - k * 0.15 : 0; });
+              const arrive = prog(t, 5.08, 5.3); r.ring.setAttribute("cx", BX); r.ring.setAttribute("cy", r.y); r.ring.setAttribute("r", 26 + 18 * arrive); r.ring.style.opacity = arrive > 0 ? 1 - arrive * 0.6 : 0;
+            });
+          }
+
+          // S4
+          const s4 = t >= 5.35 && t < 7.3; show($("s4"), s4);
+          if (s4) {
+            const intro = E.outBack(prog(t, 5.35, 5.6), 1.6), rad = 290 * intro;
+            const m = morphPath(t, rad, 0); $("shape").setAttribute("d", m.d);
+            ghostShapes.forEach((g, k) => { const mm = morphPath(t - 0.05 * (k + 1), rad * (1 + 0.04 * (k + 1)), 0.18 * (k + 1)); g.setAttribute("d", mm.d); g.style.opacity = 0.7 - k * 0.2; });
+            const kind = m.name, base = t * 0.5;
+            orbiters.forEach((o, i) => { const a = (i / 12) * Math.PI * 2 + base; const x = C[0] + Math.cos(a) * 400 * intro, y = C[1] + Math.sin(a) * 400 * intro; o.setAttribute("d", miniShape(i % 3 === 0 ? kind : i % 3 === 1 ? "circle" : "triangle", x, y, 14)); });
+            $("mLabel").textContent = `MORPH   ${m.name.toUpperCase()} → ${m.next.toUpperCase()}`;
+            $("mT").textContent = `T ${prog(t, 5.35, 7.3).toFixed(2)}   ROT ${((t * 0.6 * 180) / Math.PI % 360).toFixed(1)}°`;
+          }
+
+          // S5
+          const s5 = t >= 7.3 && t < 9.35; show($("s5"), s5); show($("s5lbl"), s5);
+          if (s5) {
+            const wipe = lerp(-300, 2300, E.inOutCubic(prog(t, 7.85, 8.9)));
+            tiles.forEach((tl) => {
+              const wave = Math.sin(tl.c * 0.45 + tl.r * 0.6 - t * 3.2); const flip = E.inOutCubic(clamp((wave + 0.2) * 2.2));
+              const ang = (tl.o * 90 + flip * 90);
+              const red = tl.cx < wipe;
+              tl.g.setAttribute("transform", `translate(${tl.cx} ${tl.cy}) rotate(${ang})`);
+              tl.g.setAttribute("stroke", red ? (tl.r % 2 ? "#f07e6e" : "var(--red)") : "#f2f0ea");
+              tl.g.setAttribute("stroke-dasharray", red ? "34 18" : "none");
+              tl.g.style.opacity = prog(t, 7.3 + (tl.c + tl.r) * 0.012, 7.45 + (tl.c + tl.r) * 0.012);
+            });
+          }
+
+          // S6
+          const s6 = t >= 9.35 && t < 11.1; show($("s6"), s6); show($("s6lbl"), s6);
+          if (s6) {
+            const k = prog(t, 9.35, 11.0) * 3; const ki = Math.min(2, Math.floor(k)), ku = E.inOutCubic(clamp((k - ki) * 1.6 - 0.3));
+            const roty = t * 1.4, rotx = -0.45, F = 1400;
+            const proj = (p) => { let [x, y, z] = p; const cy = Math.cos(roty), sy = Math.sin(roty); [x, z] = [x * cy - z * sy, x * sy + z * cy]; const cx = Math.cos(rotx), sx = Math.sin(rotx); [y, z] = [y * cx - z * sx, y * sx + z * cx]; const s = (F / (F + z + 600)) * 1.35; return [C[0] + x * s, C[1] + y * s, s]; };
+            const P = [];
+            for (let i = 0; i < G; i++) for (let j = 0; j < G; j++) { const a = surf(ki, i, j), b = surf(ki + 1, i, j); P.push(proj([lerp(a[0], b[0], ku), lerp(a[1], b[1], ku), lerp(a[2], b[2], ku)])); }
+            pts.forEach((c, n) => { c.setAttribute("cx", P[n][0].toFixed(1)); c.setAttribute("cy", P[n][1].toFixed(1)); c.setAttribute("r", (3.6 * P[n][2]).toFixed(2)); });
+            meshLines.forEach((l, i) => { let d = ""; for (let j = 0; j < G; j++) { const q = i < G ? P[i * G + j] : P[j * G + (i - G)]; d += (j ? " L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); } l.setAttribute("d", d); });
+            $("s6").style.opacity = prog(t, 9.35, 9.5) * (1 - prog(t, 10.95, 11.1));
+            $("roty").textContent = ((roty * 180) / Math.PI).toFixed(1);
+          }
+
+          // S7
+          const s7 = t >= 11.2 && t < 12.95; show($("s7"), s7);
+          if (s7) {
+            const segsW = [["k1", 11.2, 11.55], ["k2", 11.55, 11.8], ["k3", 11.8, 12.05], ["k4", 12.05, 12.25], ["k5", 12.25, 12.45], ["k6", 12.45, 12.65], ["k7", 12.65, 12.95]];
+            segsW.forEach(([id, a, b]) => {
+              const on = t >= a && t < b; show($(id), on); if (!on) return;
+              const u = prog(t, a, a + 0.08), span = $(id).querySelector(".t");
+              if (span) { const whip = (1 - E.outExpo(u)); span.style.transform = `translateX(${(id === "k3" ? 0 : 900) * whip}px) scaleX(${1 + whip * 1.5})`; span.style.filter = whip > 0.05 ? `blur(${whip * 16}px)` : "none"; if (id === "k3") span.style.transform = `scaleY(${lerp(0.2, 1, E.outBack(u, 2))})`; }
+            });
+            if (t >= 12.45 && t < 12.65) echoRows.forEach((r, i) => { r.style.transform = `translateX(${(i % 2 ? -1 : 1) * (t - 12.45) * 900}px)`; });
+            if (t >= 12.65) { const u = prog(t, 12.65, 12.95); $("linBall").setAttribute("cx", 180 + 260 * u); $("linBall").setAttribute("cy", 980 - 120 * u); }
+          }
+
+          // S8
+          const s8 = t >= 12.95; show($("s8"), s8);
+          if (s8) {
+            const sh = prog(t, 12.95, 13.45); $("shock").setAttribute("r", 20 + 900 * E.outCubic(sh)); $("shock").style.opacity = 1 - sh;
+            const ic = E.outBack(prog(t, 13.2, 13.5), 1.8), iconPos = [lerp(960, 345, E.inOutCubic(prog(t, 13.6, 13.95))), lerp(540, 472, E.inOutCubic(prog(t, 13.6, 13.95)))];
+            $("spark").setAttribute("transform", `translate(${iconPos[0]} ${iconPos[1]}) rotate(${(1 - ic) * -180 + (t - 13.2) * 10}) scale(${ic * lerp(1, 0.95, prog(t, 13.6, 13.95))})`);
+            const pu = prog(t, 13.25, 14.2);
+            parts.forEach((p, i) => { const a = rnd(i + 1) * Math.PI * 2, d = (60 + rnd(i + 8) * 700) * E.outCubic(pu); p.setAttribute("cx", 960 + Math.cos(a) * d); p.setAttribute("cy", 540 + Math.sin(a) * d * 0.7); p.style.opacity = pu > 0 ? 1 - pu : 0; });
+            fin.forEach((s, i) => { const u = E.outCubic(prog(t, 13.6 + i * 0.05, 13.95 + i * 0.05)); s.style.opacity = u; s.style.transform = `translate(${(1 - u) * (rnd(i + 30) - 0.5) * 500}px, ${(1 - u) * (rnd(i + 40) - 0.5) * 400}px) rotate(${(1 - u) * (rnd(i + 50) - 0.5) * 90}deg)`; });
+            const su = E.outCubic(prog(t, 13.9, 14.2)); $("finSub").style.opacity = su; $("finSub").style.transform = `translateX(${(1 - su) * -40}px)`;
+            $("finRule").style.strokeDasharray = "1"; $("finRule").style.strokeDashoffset = 1 - E.outCubic(prog(t, 14.05, 14.4));
+            const mu = prog(t, 14.15, 14.6); $("finMeta").textContent = v.meta.slice(0, Math.round(v.meta.length * mu));
+          }
+        }
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

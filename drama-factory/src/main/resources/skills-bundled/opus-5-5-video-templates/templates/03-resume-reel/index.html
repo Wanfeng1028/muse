@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"name","type":"string","label":"Name (final wordmark)","default":"Nova"},
+  {"id":"role","type":"string","label":"Role line","default":"MOTION DESIGNER"},
+  {"id":"line1","type":"string","label":"Kinetic word 1","default":"EVERY"},
+  {"id":"line2","type":"string","label":"Kinetic word 2 (bracketed)","default":"FRAME"},
+  {"id":"line3","type":"string","label":"Kinetic word 3","default":"ON"},
+  {"id":"skills1","type":"string","label":"Ticker row 1","default":"MOTION DESIGN • ANIMATION • ART DIRECTION • "},
+  {"id":"skills2","type":"string","label":"Ticker row 2","default":"TYPOGRAPHY • 3D • ILLUSTRATION • "},
+  {"id":"skills3","type":"string","label":"Ticker row 3","default":"RHYTHM • TIMING • EASING • "},
+  {"id":"skills4","type":"string","label":"Ticker row 4","default":"LINE • COLOR • SHAPE • "},
+  {"id":"meta","type":"string","label":"Meta line","default":"900 FRAMES · 60 FPS · 128 BPM · WRITTEN ENTIRELY IN CODE"},
+  {"id":"red","type":"color","label":"Red","default":"#e8412f"},
+  {"id":"blue","type":"color","label":"Blue","default":"#3140f0"},
+  {"id":"yellow","type":"color","label":"Yellow","default":"#f2c632"},
+  {"id":"cream","type":"color","label":"Cream","default":"#f0ede6"},
+  {"id":"night","type":"color","label":"Dark","default":"#121214"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Montserrat-normal-100-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/DMSerifDisplay-normal-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --red: #e8412f; --blue: #3140f0; --yellow: #f2c632; --cream: #f0ede6; --night: #121214; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--night); }
+      #root, .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.1em; }
+      .mont { font-family: Montserrat, sans-serif; font-weight: 900; }
+      .hud { position: absolute; font-size: 15px; }
+      #kin { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; }
+      #w1, #w2, #w3 { position: absolute; font-size: 200px; line-height: 1; color: #161616; white-space: nowrap; }
+      .ticker { position: absolute; left: 0; white-space: nowrap; font-family: Montserrat, sans-serif; font-weight: 800; }
+      .outline { color: transparent; -webkit-text-stroke: 2px #d9d6cf; }
+      #name { position: absolute; left: 0; top: 380px; width: 1920px; text-align: center; font: 400 230px/1 "DM Serif Display", serif; color: #161616; letter-spacing: -0.01em; }
+      #role { position: absolute; left: 0; top: 668px; width: 1920px; text-align: center; font: 700 28px/1 Montserrat, sans-serif; letter-spacing: 0.42em; color: #161616; }
+      #meta { position: absolute; left: 0; top: 740px; width: 1920px; text-align: center; font-size: 14px; color: #8a877f; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <div id="bg" class="layer"></div>
+
+        <svg id="s1" class="layer" viewBox="0 0 1920 1080"><g stroke="#5a5a60" stroke-width="2"><line x1="950" y1="540" x2="970" y2="540" /><line x1="960" y1="530" x2="960" y2="550" /></g><g id="orb" fill="var(--red)"></g></svg>
+
+        <div id="s2" class="layer">
+          <div id="kin">
+            <div id="w1" class="mont"></div>
+            <div id="w2" class="mont"></div>
+            <div id="w3" class="mont"></div>
+            <svg id="brk" class="layer" viewBox="0 0 1920 1080" fill="none" stroke="#3a1a14" stroke-width="7"></svg>
+          </div>
+          <svg class="layer" viewBox="0 0 1920 1080"><circle id="disc" cx="960" cy="540" r="0" fill="#141414" /><circle id="discDot" cx="960" cy="540" r="0" fill="var(--red)" /></svg>
+        </div>
+
+        <svg id="s3" class="layer" viewBox="0 0 1920 1080">
+          <g id="loops" fill="none" stroke="#3140f0" stroke-opacity="0.35" stroke-width="2"></g>
+          <path id="shp" />
+          <g id="box" fill="none" stroke="#d6d6da" stroke-width="2"><rect id="boxR" /><g id="handles" fill="#141414"></g></g>
+          <g stroke="#9aa6ff" stroke-width="2"><line x1="950" y1="540" x2="970" y2="540" /><line x1="960" y1="530" x2="960" y2="550" /></g>
+          <text id="rotT" class="mono" font-size="16" fill="#e6e6ea"></text><text id="shpT" class="mono" font-size="16" fill="#9a9aa2"></text>
+        </svg>
+
+        <svg id="s4" class="layer" viewBox="0 0 1920 1080"><g id="dotGrid"></g><g id="blob" fill="#161616"></g></svg>
+
+        <svg id="s5" class="layer" viewBox="0 0 1920 1080"><g id="streaks" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"></g><g id="torus" fill="#f4f4f8"></g><g id="cube" stroke="#ffffff" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round" fill="none"></g></svg>
+
+        <svg id="s6" class="layer" viewBox="0 0 1920 1080" fill="none" stroke-linecap="round">
+          <defs><filter id="mb"><feGaussianBlur stdDeviation="2" /></filter></defs>
+          <g id="tube"></g>
+        </svg>
+
+        <div id="s7" class="layer"></div>
+
+        <svg id="s8" class="layer" viewBox="0 0 1920 1080"><defs id="ringDefs"></defs><g id="rings"></g><circle cx="960" cy="540" r="26" fill="var(--red)" /></svg>
+
+        <div id="s9" class="layer">
+          <div id="name"></div>
+          <div id="role" data-var="role"></div>
+          <div id="meta" class="mono" data-var="meta"></div>
+          <svg class="layer" viewBox="0 0 1920 1080"><circle id="bdot" r="26" fill="var(--red)" /></svg>
+        </div>
+
+        <div id="hudL" class="hud mono" style="left:84px;top:78px"><b id="hudName"></b><span style="margin-left:22px;opacity:.55">MOTION REEL 2026</span></div>
+        <div id="hudR" class="hud mono" style="right:84px;top:78px"></div>
+        <div id="hudB" class="hud mono" style="right:84px;top:990px"></div>
+        <svg id="corners" class="layer" viewBox="0 0 1920 1080" fill="none" stroke-width="3"><path d="M54 1000 L54 1030 L84 1030" /><path d="M1866 64 L1866 40 L1842 40" /><path d="M1866 1006 L1866 1030 L1842 1030" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const { $, clamp, prog, lerp, E, rnd, show } = K;
+        const v = K.vars(); K.bind(v);
+        const NS = "http://www.w3.org/2000/svg", DUR = 15, C = [960, 540];
+        const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+        $("hudName").textContent = v.name.toUpperCase();
+
+        // S1 orbiting dots
+        const orb = []; for (let i = 0; i < 10; i++) orb.push(el("circle", { r: 18 }, $("orb")));
+
+        // S2 words
+        $("w1").textContent = v.line1; $("w2").textContent = v.line2; $("w3").textContent = v.line3;
+        const brk = $("brk"); const brkP = [0, 1, 2, 3].map(() => el("path", {}, brk));
+
+        // S3 shapes (polar)
+        const shapes = [
+          (th) => 1,
+          (th) => 1 / Math.pow(Math.pow(Math.abs(Math.cos(th)), 5) + Math.pow(Math.abs(Math.sin(th)), 5), 0.2),
+          (th) => 0.78 + 0.26 * Math.cos(3 * th),
+        ];
+        const colors = ["var(--red)", "var(--blue)", "#ff8a3d"], names = ["CIRCLE", "SQUARE", "FLOWER"];
+        const loops = [0, 1, 2, 3].map(() => el("path", {}, $("loops")));
+        const handles = []; for (let i = 0; i < 8; i++) handles.push(el("rect", { width: 14, height: 14, stroke: "#d6d6da", "stroke-width": 2 }, $("handles")));
+        const polar = (f, R, rot, cx, cy) => { let d = ""; for (let k = 0; k < 160; k++) { const th = (k / 160) * Math.PI * 2; const r = R * f(th); d += (k ? " L" : "M") + (cx + Math.cos(th + rot) * r).toFixed(1) + " " + (cy + Math.sin(th + rot) * r).toFixed(1); } return d + " Z"; };
+
+        // S4 dot grid 36 x 20
+        const gridDots = [];
+        for (let r = 0; r < 20; r++) for (let c = 0; c < 36; c++) gridDots.push({ e: el("circle", { cx: 52 + c * 52.6, cy: 42 + r * 52.6, r: 5 }, $("dotGrid")), c, r });
+        const blobDots = []; for (let i = 0; i < 220; i++) { const u = rnd(i) * Math.PI * 2, w = Math.acos(2 * rnd(i + 99) - 1); blobDots.push({ e: el("circle", { r: 5 }, $("blob")), u, w }); }
+
+        // S5 torus particles, streaks, cube
+        const tor = []; for (let i = 0; i < 520; i++) tor.push({ e: el("circle", { r: 5 }, $("torus")), a: rnd(i + 7) * Math.PI * 2, b: rnd(i + 17) * Math.PI * 2 });
+        const streaks = []; for (let i = 0; i < 60; i++) streaks.push({ e: el("line", {}, $("streaks")), x: rnd(i + 3), y: rnd(i + 5), s: 0.5 + rnd(i + 9) });
+        const cubeEdges = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]].map((pr) => ({ pr, e: el("line", {}, $("cube")) }));
+        const cubeV = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+        const P3 = (x, y, z, ry, rx, F, sc) => { const cy = Math.cos(ry), sy = Math.sin(ry); [x, z] = [x * cy - z * sy, x * sy + z * cy]; const cx = Math.cos(rx), sx = Math.sin(rx); [y, z] = [y * cx - z * sx, y * sx + z * cx]; const s = (F / (F + z)) * sc; return [C[0] + x * s, C[1] + y * s, s, z]; };
+
+        // S6 striped tube: layered strokes along a moving path window
+        const tubeLayers = [["#141414", 74], ["var(--red)", 58], ["#ffffff", 42], ["var(--blue)", 24], ["#ffffff", 8]].map(([c, w]) => el("path", { stroke: c, "stroke-width": w }, $("tube")));
+        const TP = [[-160, 1040], [300, 900], [760, 640], [1120, 380], [1200, 220], [1100, 130], [860, 170], [720, 330], [800, 520], [1060, 600], [1500, 640], [2200, 640]];
+        const tubePt = (s) => { // Catmull-Rom through TP: rise from lower-left, curl near the top, exit right
+          const n = TP.length - 1, f = clamp(s) * n, i = Math.min(n - 1, Math.floor(f)), u = f - i;
+          const p0 = TP[Math.max(0, i - 1)], p1 = TP[i], p2 = TP[i + 1], p3 = TP[Math.min(n, i + 2)];
+          const cr = (a, b, c, d) => 0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (-a + 3 * b - 3 * c + d) * u * u * u);
+          return [cr(p0[0], p1[0], p2[0], p3[0]), cr(p0[1], p1[1], p2[1], p3[1])];
+        };
+
+        // S7 tickers
+        const rowsCfg = [[v.skills1, 330, 64, false, 0.3, "#f2f2f0"], [v.skills2, 470, 60, true, -0.25, ""], [v.skills3, 600, 60, false, 0.35, "#f2f2f0"], [v.skills4, 730, 60, true, -0.3, ""]];
+        const tickers = rowsCfg.map(([txt, y, fs, outline, sp, col]) => { const d = document.createElement("div"); d.className = "ticker" + (outline ? " outline" : ""); d.style.top = y + "px"; d.style.fontSize = fs + "px"; d.style.letterSpacing = outline ? "0.02em" : "0.32em"; if (col) d.style.color = col; d.innerHTML = (txt.repeat(6)).replace(/•/g, '<span style="color:var(--red);-webkit-text-stroke:0">•</span>'); $("s7").appendChild(d); return { d, sp }; });
+
+        // S8 circular text rings
+        const ringTxt = [v.skills1, v.skills2, v.skills3, v.skills4];
+        const rings = [465, 355, 255, 160].map((R, i) => {
+          el("path", { id: "rp" + i, d: `M960 540 m -${R} 0 a ${R} ${R} 0 1 1 ${2 * R} 0 a ${R} ${R} 0 1 1 -${2 * R} 0` }, $("ringDefs"));
+          const g = el("g", {}, $("rings")); const tx = el("text", { class: "mont", "font-size": 54 - i * 7, fill: i % 2 ? "#d8d5cc" : "#ffffff", "letter-spacing": "4" }, g);
+          const tp = el("textPath", { href: "#rp" + i }, tx); tp.textContent = ringTxt[i].repeat(4); return g;
+        });
+
+        // S9 letters
+        const nm = K.chars($("name"), v.name);
+        const dotSpan = document.createElement("span"); dotSpan.className = "ch"; dotSpan.style.width = "70px"; $("name").appendChild(dotSpan);
+
+        const scenes = [[0, "night"], [1.95, "red"], [3.62, "night"], [5.35, "cream"], [7.35, "blue"], [9.4, "yellow"], [11.25, "night"], [12.95, "cream"]];
+        function render(t) {
+          const sc = scenes.filter((s) => t >= s[0]).pop()[1];
+          $("bg").style.background = `var(--${sc})`;
+          const light = sc !== "night" && sc !== "blue";
+          const hc = light ? "#1a1a1a" : "#e6e6e6";
+          ["hudL", "hudR", "hudB"].forEach((id) => { $(id).style.color = hc; }); $("corners").setAttribute("stroke", hc);
+          const beat = Math.floor(t * 128 / 60) % 4; $("hudR").textContent = [0, 1, 2, 3].map((k) => (k === beat ? "■" : "□")).join("") + `  BAR ${Math.min(8, 1 + Math.floor(t / 1.875))}/8   128 BPM`;
+          const fr = Math.floor(t * 60); $("hudB").textContent = `F${String(fr).padStart(4, "0")}   00:00:${String(Math.floor(fr / 60)).padStart(2, "0")}:${String(fr % 60).padStart(2, "0")}`;
+
+          const S = (id, a, b) => { const on = t >= a && t < b; show($(id), on); return on; };
+          // S1
+          if (S("s1", 0, 1.95)) {
+            const n = t < 0.5 ? 1 : t < 0.9 ? 2 : t < 1.55 ? 4 : 8;
+            const R = lerp(0, 105, E.outBack(prog(t, 0.25, 0.7), 1.6)) + 40 * prog(t, 1.2, 1.95);
+            orb.forEach((c, i) => { const on = i < n; const a = (i / n) * Math.PI * 2 + t * 2.6; c.setAttribute("cx", C[0] + Math.cos(a) * R); c.setAttribute("cy", C[1] + Math.sin(a) * R); c.style.opacity = on ? 1 : 0; });
+          }
+          // S2
+          if (S("s2", 1.95, 3.62)) {
+            const zoom = lerp(1, 1.6, E.inOutCubic(prog(t, 2.85, 3.2)));
+            $("kin").style.transform = `scale(${zoom}) translate(${lerp(0, 507, E.inOutCubic(prog(t, 2.85, 3.2)))}px, ${lerp(0, -122, E.inOutCubic(prog(t, 2.85, 3.2)))}px)`;
+            const u1 = E.outBack(prog(t, 1.98, 2.2), 1.4); Object.assign($("w1").style, { left: "190px", top: lerp(560, 400, u1) + "px", opacity: prog(t, 1.98, 2.05) });
+            const u2 = E.outBack(prog(t, 2.2, 2.45), 1.6); Object.assign($("w2").style, { left: "1000px", top: lerp(700, 440, u2) + "px", opacity: prog(t, 2.2, 2.26) });
+            const u3 = E.outBack(prog(t, 2.95, 3.15), 1.6); Object.assign($("w3").style, { left: "190px", top: lerp(900, 640, u3) + "px", opacity: prog(t, 2.95, 3.0) });
+            const bu = E.outCubic(prog(t, 2.35, 2.6)), x0 = 972, y0 = 425, x1 = 1760, y1 = 640, L = 60 * bu;
+            brkP[0].setAttribute("d", `M${x0} ${y0 + L} V${y0} H${x0 + L}`); brkP[1].setAttribute("d", `M${x1 - L} ${y0} H${x1} V${y0 + L}`);
+            brkP[2].setAttribute("d", `M${x0} ${y1 - L} V${y1} H${x0 + L}`); brkP[3].setAttribute("d", `M${x1 - L} ${y1} H${x1} V${y1 - L}`);
+            brk.style.opacity = bu;
+            const du = E.inCubic(prog(t, 3.25, 3.6)); $("disc").setAttribute("r", 1400 * du); $("discDot").setAttribute("r", du > 0 ? lerp(8, 30, du) : 0);
+          }
+          // S3
+          if (S("s3", 3.62, 5.35)) {
+            const phase = t < 4.25 ? 0 : t < 4.85 ? 1 : 2, u = E.outBack(prog(t, [3.62, 4.25, 4.85][phase], [3.62, 4.25, 4.85][phase] + 0.3), 1.5);
+            const prevF = shapes[Math.max(0, phase - 1)], curF = shapes[phase];
+            const f = (th) => lerp(prevF(th), curF(th), phase === 0 ? 1 : u);
+            const rot = t * 0.9, R = 190 * (phase === 0 ? E.outBack(prog(t, 3.62, 3.9), 1.6) : 1);
+            $("shp").setAttribute("d", polar(f, R, rot, 960, 540)); $("shp").setAttribute("fill", colors[phase]);
+            loops.forEach((l, k) => { l.setAttribute("d", polar(f, R * (1.12 + k * 0.05), rot - 0.2 * (k + 1), 960, 540)); });
+            const bw = 300 * (phase === 0 ? 0.95 : 1.05), ba = -12 + Math.sin(t * 2) * 6;
+            $("box").setAttribute("transform", `rotate(${ba} 960 540)`);
+            $("boxR").setAttribute("x", 960 - bw); $("boxR").setAttribute("y", 540 - bw); $("boxR").setAttribute("width", 2 * bw); $("boxR").setAttribute("height", 2 * bw);
+            [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]].forEach(([a, b], i) => { handles[i].setAttribute("x", 960 + a * bw - 7); handles[i].setAttribute("y", 540 + b * bw - 7); });
+            $("rotT").setAttribute("x", 1290); $("rotT").setAttribute("y", 238); $("rotT").textContent = `ROT ${((rot * 180) / Math.PI % 360).toFixed(1)}°`;
+            $("shpT").setAttribute("x", 1290); $("shpT").setAttribute("y", 264); $("shpT").textContent = `SHAPE ${names[phase]}`;
+          }
+          // S4
+          if (S("s4", 5.35, 7.35)) {
+            const gridOn = prog(t, 5.9, 6.1), blobOn = 1 - gridOn;
+            const band = lerp(-300, 2200, prog(t, 5.95, 7.3));
+            gridDots.forEach((d) => { const x = 52 + d.c * 52.6; const k = Math.exp(-Math.pow((x - band - 60 * Math.sin(d.r * 0.5 + t * 3)) / 70, 2)); d.e.setAttribute("r", (5 + 4 * k).toFixed(2)); d.e.setAttribute("fill", k > 0.35 ? "var(--red)" : "#1a1a1a"); d.e.style.opacity = gridOn; });
+            blobDots.forEach((b, i) => { const ry = t * 1.3; const x = Math.sin(b.w) * Math.cos(b.u + ry), y = Math.cos(b.w), z = Math.sin(b.w) * Math.sin(b.u + ry); const s = 1 + 0.25 * Math.sin(t * 6 + i); const R = 150 * E.outBack(prog(t, 5.35, 5.6), 1.5) * s; b.e.setAttribute("cx", 960 + x * R); b.e.setAttribute("cy", 540 + y * R); b.e.setAttribute("r", 4 + 2 * z); b.e.style.opacity = blobOn; });
+          }
+          // S5
+          if (S("s5", 7.35, 9.4)) {
+            const st = prog(t, 7.35, 7.9), tu = prog(t, 7.7, 8.9), cu = prog(t, 8.7, 9.4);
+            streaks.forEach((s) => { const x = 200 + s.x * 1520, y = 150 + s.y * 780, L = 160 * s.s * (1 - st); s.e.setAttribute("x1", x - L * 0.8 + 900 * st); s.e.setAttribute("y1", y + L * 0.6); s.e.setAttribute("x2", x + 900 * st); s.e.setAttribute("y2", y); s.e.style.opacity = 1 - st; });
+            tor.forEach((p) => { const R1 = 260, r1 = 90; const x = (R1 + r1 * Math.cos(p.b)) * Math.cos(p.a), y = r1 * Math.sin(p.b), z = (R1 + r1 * Math.cos(p.b)) * Math.sin(p.a); const q = P3(x, y, z, t * 1.1 + 0.6, 0.45 + Math.sin(t) * 0.08, 1200, 1.25 * E.outCubic(tu)); const za = -1.0, dx = q[0] - 960, dy = q[1] - 540; p.e.setAttribute("cx", (960 + dx * Math.cos(za) - dy * Math.sin(za)).toFixed(1)); p.e.setAttribute("cy", (540 + dx * Math.sin(za) + dy * Math.cos(za)).toFixed(1)); p.e.setAttribute("r", (5.5 * q[2]).toFixed(2)); p.e.style.opacity = tu > 0 ? (1 - cu) * (0.55 + 0.45 * q[2]) : 0; });
+            cubeEdges.forEach(({ pr, e }) => { const s = 260 * lerp(0.6, 1.9, E.inCubic(cu)); const a = cubeV[pr[0]].map((x) => x * s), b = cubeV[pr[1]].map((x) => x * s); const qa = P3(a[0], a[1], a[2], t * 0.8, 0.5, 1400, 1), qb = P3(b[0], b[1], b[2], t * 0.8, 0.5, 1400, 1); e.setAttribute("x1", qa[0]); e.setAttribute("y1", qa[1]); e.setAttribute("x2", qb[0]); e.setAttribute("y2", qb[1]); e.style.opacity = cu > 0 ? 1 : 0; });
+          }
+          // S6
+          if (S("s6", 9.4, 11.25)) {
+            const kt = [[9.42, 0.02], [10.0, 0.46], [10.5, 0.86], [11.15, 1.5]]; let head = 0.02; for (let k = 0; k < kt.length - 1; k++) if (t >= kt[k][0]) head = lerp(kt[k][1], kt[k + 1][1], E.inOutCubic(prog(t, kt[k][0], kt[k + 1][0]))); const tail = head - 0.45;
+            let d = ""; for (let k = 0; k <= 60; k++) { const s = lerp(Math.max(0, tail), Math.max(0, head), k / 60); const [x, y] = tubePt(s); d += (k ? " L" : "M") + x.toFixed(1) + " " + y.toFixed(1); }
+            tubeLayers.forEach((l) => l.setAttribute("d", d));
+          }
+          // S7
+          if (S("s7", 11.25, 12.0)) tickers.forEach((tk, i) => { tk.d.style.transform = `translateX(${-600 + (t - 11.25) * tk.sp * 1600}px)`; tk.d.style.opacity = prog(t, 11.25 + i * 0.05, 11.4 + i * 0.05); });
+          // S8
+          if (S("s8", 12.0, 12.95)) rings.forEach((g, i) => { g.setAttribute("transform", `rotate(${(i % 2 ? -1 : 1) * (t - 12) * 70 + i * 30} 960 540)`); g.style.opacity = prog(t, 12.0 + i * 0.06, 12.2 + i * 0.06) * (1 - prog(t, 12.8, 12.95)); });
+          // S9
+          if (S("s9", 12.95, 15.1)) {
+            const bu = prog(t, 13.0, 13.55); const dx = dotSpan.offsetLeft + 35, dy = 575;
+            const bx = lerp(960, dx, E.inOutCubic(prog(t, 13.4, 13.75))), by = t < 13.4 ? lerp(-60, 540, E.outBounce(bu * 1.4 > 1 ? 1 : bu * 1.4)) : lerp(540, dy, E.inOutCubic(prog(t, 13.4, 13.75)));
+            $("bdot").setAttribute("cx", bx); $("bdot").setAttribute("cy", by);
+            nm.forEach((s, i) => { const u = E.outCubic(prog(t, 13.45 + i * 0.045, 13.8 + i * 0.045)); s.style.opacity = u; s.style.transform = `translateY(${(1 - u) * 50}px)`; });
+            $("role").style.opacity = prog(t, 13.9, 14.2); $("role").style.letterSpacing = lerp(0.8, 0.42, E.outCubic(prog(t, 13.9, 14.3))) + "em";
+            $("meta").style.opacity = prog(t, 14.2, 14.5);
+          }
+        }
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

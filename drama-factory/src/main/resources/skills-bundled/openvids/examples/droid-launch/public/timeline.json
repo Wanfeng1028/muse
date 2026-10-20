@@ -1,0 +1,159 @@
+{
+ "fps": 30,
+ "total": 2250,
+ "scenes": [
+  {
+   "id": "S1",
+   "name": "Cursor → Rotor",
+   "from": 0,
+   "dur": 180
+  },
+  {
+   "id": "S2",
+   "name": "Same models",
+   "from": 180,
+   "dur": 300
+  },
+  {
+   "id": "S3",
+   "name": "Different harness",
+   "from": 480,
+   "dur": 300
+  },
+  {
+   "id": "S4",
+   "name": "Droid at work",
+   "from": 780,
+   "dur": 360
+  },
+  {
+   "id": "S5",
+   "name": "Plans + limits",
+   "from": 1140,
+   "dur": 300
+  },
+  {
+   "id": "S6",
+   "name": "Droid Core",
+   "from": 1440,
+   "dur": 360
+  },
+  {
+   "id": "S7",
+   "name": "The thesis",
+   "from": 1800,
+   "dur": 240
+  },
+  {
+   "id": "S8",
+   "name": "Receipt",
+   "from": 2040,
+   "dur": 210
+  }
+ ],
+ "cues": {
+  "S1": {
+   "keystrokes": [
+    30,
+    36,
+    41,
+    48,
+    54
+   ],
+   "enter": 66,
+   "rotorForm": 78,
+   "rotorSpin": 132
+  },
+  "S2": {
+   "chipLand": [
+    40,
+    52,
+    64,
+    76,
+    88
+   ],
+   "lanes": 130,
+   "headline": 20
+  },
+  "S3": {
+   "headline": 10,
+   "raceStart": 60,
+   "raceWin": 170,
+   "growToTerminal": 250
+  },
+  "S4": {
+   "keystrokes": [
+    20,
+    25,
+    29,
+    34,
+    38,
+    43,
+    47,
+    52,
+    56,
+    61,
+    65,
+    70
+   ],
+   "specOk": 100,
+   "fanOut": 150,
+   "checks": [
+    210,
+    222,
+    234,
+    246,
+    258
+   ],
+   "merge": 300
+  },
+  "S5": {
+   "cards": [
+    20,
+    32,
+    44
+   ],
+   "meterFill": 120,
+   "meterFull": 228,
+   "pageFlip": 252
+  },
+  "S6": {
+   "coreRise": 24,
+   "modelsPour": [
+    70,
+    82,
+    94,
+    106,
+    118,
+    130,
+    142,
+    154
+   ],
+   "caption": 200,
+   "merge": 318
+  },
+  "S7": {
+   "line1": 10,
+   "line2": 70,
+   "fallaway": [
+    110,
+    122,
+    134
+   ],
+   "zoom": 196
+  },
+  "S8": {
+   "printStart": 20,
+   "printLines": [
+    34,
+    46,
+    58,
+    70,
+    82,
+    94
+   ],
+   "stamp": 130,
+   "tear": 176
+  }
+ }
+}

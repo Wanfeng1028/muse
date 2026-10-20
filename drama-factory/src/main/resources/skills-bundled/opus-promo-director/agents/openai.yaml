@@ -1,0 +1,5 @@
+interface:
+  display_name: "Opus Promo Director"
+  short_description: "룩을 함께 고르고 끝까지 만드는 홍보 영상 감독"
+  default_prompt: "Use $opus-promo-director to make a 30-second promo video for this event, vertical and horizontal."
+

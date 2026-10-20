@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "name": "Lumen",
+  "handle": "lumen.example",
+  "colors": {
+    "primary": "#2156d9",
+    "secondary": "#11a39b",
+    "bg": "#f6f6f1",
+    "bgAlt": "#0e1726",
+    "text": "#15181e",
+    "textAlt": "#eef2f8"
+  },
+  "fonts": {
+    "display": { "google": "Manrope" },
+    "mono": { "google": "IBM Plex Mono" }
+  },
+  "logos": {
+    "mark": "logos/mark.svg",
+    "wordmark": { "onDark": "logos/wordmark-light.svg", "onLight": "logos/wordmark-dark.svg" }
+  },
+  "background": { "style": "solid" },
+  "rules": { "competitorLogos": false }
+}

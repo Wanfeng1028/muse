@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blender 프리비즈 기반 AI 영상"
+  short_description: "레퍼런스 분석·기본 도형 프리비즈·생성 결과 비교와 수정"
+  default_prompt: "$blender-previs-to-video를 사용해 원본의 구도와 동작을 분석하고 요청한 구간의 프리비즈를 제작하거나 수정해 주세요."

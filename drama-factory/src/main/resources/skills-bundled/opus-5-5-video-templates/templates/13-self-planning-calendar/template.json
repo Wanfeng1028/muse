@@ -1,0 +1,27 @@
+{
+  "id": "13-self-planning-calendar",
+  "title": "Self-planning calendar launch — now-line intro, pile-up hook, AI prompt, 3D replan, feature close-ups, tessellation end",
+  "category": "product launch / SaaS",
+  "duration": 33,
+  "size": "1920x1080",
+  "demoBrand": "slotwise (fictional)",
+  "source": {
+    "author": "@lexnlin",
+    "post": "https://x.com/lexnlin/status/2104148233106723099",
+    "note": "Remade from scratch in HyperFrames after the tessel launch video; structure and pacing follow it. The brand, logo, copy, people and events are fictional placeholders — replace them before publishing."
+  },
+  "scenes": [
+    "the frame is one red dot; it shrinks, draws the now-line, and a calendar grid grows out of it",
+    "meetings fly in and pile up; the hook headline blurs in, then everything collapses into the dot",
+    "dark lockup: two blocks and the now-dot assemble into the mark, wordmark and tagline slide out",
+    "the top block opens into the app window; the week fills with events and the clash badge counts them",
+    "camera pushes onto the prompt bar; the prompt is typed with live-highlighted chips; the send button floods the screen",
+    "the red collapses into a tilted now-line; the week reshuffles in 3D, protected blocks drop in, clashes count down to none",
+    "three split-screen close-ups: a meeting slides to a free slot, a morning block refuses an invite, an overrun pushes the afternoon down",
+    "the week becomes one tile among hundreds; the field tilts, blurs, and the dot lands as the period of the end line",
+    "the end line turns into blocks that fold into the mark; lockup with domain; everything shrinks back to the dot"
+  ],
+  "variables": ["brand", "tagline", "domain", "hook1", "hook2", "placeholder", "prompt", "clashes", "result", "resultSub", "feat1", "feat2", "feat3", "endA", "endB", "user", "role", "accent", "ink"],
+  "notes": "Square brackets in the prompt mark the phrases that turn into chips once typed. Feature captions take | as a line break. The week itself (titles, times, clashes, what moves where) lives in the EV array: each row has a messy slot, a planned slot (or null when it moves to next week) and a style (g gray, h personal/hatched, k protected, o task). The result line should agree with that array: the defaults (20 moved, 14 to next week, 12 clashes) are counted from it. Clash outlines stay red regardless of the accent colour.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

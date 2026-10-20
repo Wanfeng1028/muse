@@ -1,0 +1,143 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mark-driven ground — standalone demo</title>
+<!--
+  Runs ground.js on its own with a FAKE travelling dot. Open it directly
+  (file:// is fine) — no build, no server, no dependencies.
+
+    demo.html                  play from 0
+    demo.html?t=2.1            freeze one frame (what a renderer does)
+    demo.html?theme=dark       the dark ground
+    demo.html?t=9.9&theme=dark
+
+  The dot is positioned from GROUND.markAt(t) — the SAME sampler the
+  ground draws its rings and lit arc from, which is why they agree to
+  the pixel. Swap the dot for your logo and nothing else changes.
+-->
+<link rel="stylesheet" href="ground.css">
+<style>
+  :root{color-scheme:light dark}
+  html,body{margin:0;height:100%;background:#15121f;font:14px/1.4 system-ui,sans-serif;color:#cfc9de}
+  #wrap{padding:18px;max-width:1180px;margin:0 auto}
+  #stage{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;
+         box-shadow:0 30px 70px -30px #000}
+  /* everything below sits ABOVE the ground (.mg-ground is z-index 0) */
+  #fg{position:absolute;inset:0;z-index:2;pointer-events:none}
+  .mark{position:absolute;left:0;top:0;border-radius:50%;opacity:0;
+        background:radial-gradient(circle at 34% 30%, #fff 0 18%, var(--c,#7c3aed) 42%, #3b1d7a 100%);
+        box-shadow:0 10px 30px -8px rgba(0,0,0,.5)}
+  .card{position:absolute;left:26.5%;top:46%;opacity:0}
+  .kick{font:700 1.15vw/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--c,#7c3aed)}
+  .head{margin-top:.5vw;font:600 3.1vw/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.02em;color:var(--ink,#1c1633)}
+  .dark .head{color:#f6f4ff}
+  #bar{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  button,select{background:#251f36;color:#e8e3f5;border:1px solid #453b63;border-radius:7px;padding:6px 13px;font:inherit;cursor:pointer}
+  input[type=range]{flex:1;min-width:220px}
+  code{color:#b9a8ff}
+  #t{font-family:ui-monospace,monospace;min-width:5.5em;text-align:right}
+</style>
+
+<div id="wrap">
+  <div id="stage">
+    <div id="fg">
+      <i class="mark" id="dot"></i>
+      <div class="card" id="card"><div class="kick" id="kick">Section label</div>
+        <div class="head" id="head">A placeholder headline.</div></div>
+    </div>
+  </div>
+  <div id="bar">
+    <button id="play">Pause</button>
+    <input type="range" id="scrub" min="0" max="34" step="0.02" value="0">
+    <span id="t">0.00 s</span>
+    <select id="theme"><option value="light">light ground</option><option value="dark">dark ground</option></select>
+    <select id="strength"><option value="3">strength 3</option><option value="4">strength 4 (bold)</option>
+      <option value="2">strength 2</option><option value="1">strength 1 (tint)</option></select>
+  </div>
+  <p>Four marks fly in at <code>t = 1 · 9 · 17 · 25</code>, each holding its chapter until the next one lifts off.
+     Each draws its own rings, lights the arc behind itself, and blooms a colour field where it lands, while the
+     previous chapter's field fades. Outside the chapters (here <code>t &lt; 1</code> and <code>t &gt; 33</code>)
+     the three fields carry <code>C(t+12) / C(t) / C(t−9)</code> off the colour track instead.</p>
+</div>
+
+<script src="ground.js"></script>
+<script>
+(function(){
+  var Q = new URLSearchParams(location.search);
+  var W = 1600, H = 900;
+
+  /* four placeholder beats: id -> start point, landing point, colour, path */
+  var MARKS = {
+    one:   {S:{x:200,y:170}, LP:{x:350,y:478}, acc:'#3b7bf0', path:'zip',    t0:1,  dur:2.4, end:9},
+    two:   {S:{x:200,y:170}, LP:{x:348,y:479}, acc:'#c24fc0', path:'drop',   t0:9,  dur:2.4, end:17},
+    three: {S:{x:200,y:170}, LP:{x:352,y:478}, acc:'#8c57ff', path:'spiral', t0:17, dur:2.4, end:25},
+    four:  {S:{x:200,y:170}, LP:{x:340,y:479}, acc:'#2bb39a', path:'orbit',  t0:25, dur:2.4, end:33}
+  };
+  var COPY = {
+    one:   ['Section one', 'Find the shape first.'],
+    two:   ['Section two', 'Act on it, in the moment.'],
+    three: ['Section three', 'Hold the whole thing steady.'],
+    four:  ['Section four', 'Show your working.']
+  };
+  /* the colour track: piecewise-linear through the beat midpoints */
+  var TRACK = [[0,'#c4b5fd'],[2,'#a5c8ff'],[5,'#3b7bf0'],[10,'#7a6df0'],[13,'#c24fc0'],
+               [18,'#a06ae8'],[21,'#8c57ff'],[26,'#3fa3c8'],[29,'#2bb39a'],[33,'#a7b8f0'],[36,'#c4b5fd']];
+
+  var stage = document.getElementById('stage'), fg = document.getElementById('fg');
+  var dot = document.getElementById('dot'), card = document.getElementById('card');
+  var kick = document.getElementById('kick'), head = document.getElementById('head');
+  var scrub = document.getElementById('scrub'), tOut = document.getElementById('t');
+  var playBtn = document.getElementById('play'), themeSel = document.getElementById('theme');
+  var strSel = document.getElementById('strength');
+
+  function boot(){
+    GROUND.init({
+      stage: stage, w: W, h: H,
+      marks: MARKS, track: TRACK,
+      theme: themeSel.value,
+      strength: +strSel.value,
+      lead: 12, lag: 9
+    });
+    stage.classList.toggle('dark', themeSel.value === 'dark');
+  }
+
+  /* one frame: the ground, then the fake mark and its card — all from t */
+  function frame(t){
+    GROUND.update(t);
+    var m = GROUND.markAt(t);
+    if(m){
+      var s = m.size * (stage.clientWidth / W);          /* design px -> screen px */
+      dot.style.width = dot.style.height = s.toFixed(1)+'px';
+      dot.style.left = (m.x/W*100).toFixed(3)+'%';
+      dot.style.top  = (m.y/H*100).toFixed(3)+'%';
+      dot.style.transform = 'translate(-50%,-50%)';
+      dot.style.opacity = 1;
+      dot.style.setProperty('--c', m.acc);
+      var c = COPY[m.id]; kick.textContent = c[0]; head.textContent = c[1];
+      card.style.setProperty('--c', m.acc);
+      /* the card fades in just after the landing (placeholder for your own text motion) */
+      var lt = t - MARKS[m.id].t0;
+      card.style.opacity = Math.max(0, Math.min(1, (lt - 0.72) / 0.45)).toFixed(3);
+    } else { dot.style.opacity = 0; card.style.opacity = 0; }
+    tOut.textContent = t.toFixed(2) + ' s';
+    scrub.value = t;
+  }
+
+  /* logical clock: frame(t) is pure, so scrubbing and playing agree */
+  var t0 = performance.now()/1000, T = 0, playing = true;
+  if(Q.has('theme')) themeSel.value = Q.get('theme');
+  boot();
+  if(Q.has('t')){ T = parseFloat(Q.get('t'))||0; playing = false; playBtn.textContent='Play'; }
+  frame(T);
+
+  function tick(){
+    if(playing){ var now = performance.now()/1000; T = (now - t0) % 34; frame(T); }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  playBtn.onclick = function(){ playing = !playing; playBtn.textContent = playing ? 'Pause' : 'Play';
+    t0 = performance.now()/1000 - T; };
+  scrub.oninput = function(){ playing = false; playBtn.textContent='Play'; T = +scrub.value; frame(T); };
+  themeSel.onchange = strSel.onchange = function(){ boot(); frame(T); };
+})();
+</script>

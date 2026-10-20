@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1440, height=1440" />
+    <title>ui-morph</title>
+    <script>
+      // ui-morph CONFIG: every piece of on-screen text and every tunable.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs ui-morph <dir> --update` so the static timing attributes
+      // and the music bed follow; the timeline refuses to build if they disagree.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "buttonLabel": "Get started",
+        "trackTitle": "Midnight Drive",
+        "trackArtist": "Neon Coast",
+        "tabs": ["Daily", "Weekly", "Monthly"],
+        "chartTitle": "Active users",
+        "chartData": [12, 18, 15, 24, 21, 30, 27],
+        "paletteQuery": "new",
+        "paletteItems": ["New project", "Invite people", "Open settings", "Search docs"],
+        "toastText": "Project created",
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d",
+        "bpm": 120
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Geist";
+        src: url("assets/fonts/geist/Geist-Variable.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1440px; height: 1440px; overflow: hidden; background: var(--paper); }
+      #stage {
+        position: relative; width: 1440px; height: 1440px; overflow: hidden;
+        background: var(--paper); font-family: "Geist", sans-serif; color: var(--paper);
+      }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      /* camera: a 0x0 origin at frame centre, scaled. No will-change anywhere:
+         it would freeze the text raster at one scale and blur it when zoomed. */
+      #cam { position: absolute; left: 720px; top: 720px; width: 0; height: 0; transform-origin: 0 0; }
+      #shape { position: absolute; overflow: hidden; background: var(--charcoal); }
+      .layer { position: absolute; left: 50%; top: 50%; visibility: hidden; }
+      .txt { position: absolute; white-space: nowrap; line-height: 1; }
+      .icon { position: absolute; overflow: visible; fill: none; stroke: var(--paper); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .fill-red { background: var(--red); }
+      #tabs-a, #tabs-b { position: absolute; inset: 0; }
+      #knob { position: absolute; background: var(--paper); border-radius: 48px; visibility: hidden; }
+      #cursor { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 0 0; }
+      #cursor path { fill: var(--charcoal); stroke: var(--paper); stroke-width: 2; stroke-linejoin: round; }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG
+         (root data-duration and <audio> timing are read statically by the
+         engine, before any script runs). Do not hand-edit them. -->
+    <div id="stage" data-composition-id="main" data-start="0" data-duration="14" data-fps="30" data-width="1440" data-height="1440">
+      <section id="scene" class="clip" data-start="0" data-duration="14" data-track-index="0">
+        <div id="cam" data-layout-allow-overflow="true">
+          <div id="shape">
+            <div id="knob"></div>
+            <div id="L-button" class="layer">
+              <div id="btn-label" class="txt"></div>
+              <svg id="btn-arrow" class="icon" width="20" height="16" viewBox="-1 -8 20 16"><path d="M0 0H18M11 -7L18 0L11 7" /></svg>
+            </div>
+            <div id="L-loader" class="layer">
+              <svg class="icon" style="left:0;top:0" width="104" height="104" viewBox="-52 -52 104 104"><circle id="ring" r="24" /></svg>
+            </div>
+            <div id="L-check" class="layer">
+              <svg class="icon" style="left:0;top:0" width="104" height="104" viewBox="-52 -52 104 104"><path id="check" d="M-14 1L-4 11L15 -10" /></svg>
+            </div>
+            <div id="L-island" class="layer">
+              <div class="fill-red" style="position:absolute;left:24px;top:24px;width:48px;height:48px;border-radius:12px"></div>
+              <div id="isl-title" class="txt"></div>
+              <div id="isl-bars"></div>
+            </div>
+            <div id="L-player" class="layer">
+              <div class="fill-red" style="position:absolute;left:32px;top:32px;width:120px;height:120px;border-radius:22px"></div>
+              <div id="pl-title" class="txt"></div>
+              <div id="pl-artist" class="txt"></div>
+              <div id="pl-btn" style="position:absolute;left:442px;top:50px;width:84px;height:84px;border-radius:42px;background:var(--paper)">
+                <svg width="84" height="84" viewBox="-42 -42 84 84" style="position:absolute;left:0;top:0"><path id="pl-icon" fill="var(--charcoal)" /></svg>
+              </div>
+              <div id="pl-track" style="position:absolute;left:32px;top:242px;width:496px;height:8px;border-radius:4px;background:var(--paper)"></div>
+              <div id="pl-fill" class="fill-red" style="position:absolute;left:32px;top:242px;height:8px;border-radius:4px"></div>
+              <div id="pl-knob" class="fill-red" style="position:absolute;top:236px;width:20px;height:20px;border-radius:10px"></div>
+            </div>
+            <div id="L-volume" class="layer">
+              <svg class="icon" style="left:24px;top:40px" width="40" height="40" viewBox="-20 -20 40 40"><path d="M-16 -6H-10L-2 -13V13L-10 6H-16Z M5 -7Q10 0 5 7 M10 -13Q19 0 10 13" /></svg>
+              <div id="vol-track" style="position:absolute;left:90px;top:56px;height:8px;border-radius:4px;background:var(--paper)"></div>
+              <div id="vol-fill" class="fill-red" style="position:absolute;left:90px;top:56px;height:8px;border-radius:4px"></div>
+              <div id="vol-knob" class="fill-red" style="position:absolute;top:44px;width:32px;height:32px;border-radius:16px"></div>
+            </div>
+            <div id="L-tabs" class="layer">
+              <div id="tabs-a"></div>
+              <div id="tabs-b"></div>
+            </div>
+            <div id="L-chart" class="layer">
+              <div id="ch-title" class="txt"></div>
+              <svg id="ch-svg" width="640" height="460" viewBox="-320 -230 640 460" style="position:absolute;left:0;top:0;overflow:visible">
+                <line x1="-272" y1="170" x2="272" y2="170" stroke="var(--paper)" stroke-width="2" />
+                <defs><clipPath id="ch-reveal"><rect id="ch-reveal-rect" x="-300" y="-240" width="0" height="480" /></clipPath></defs>
+                <path id="ch-line" clip-path="url(#ch-reveal)" fill="none" stroke="var(--red)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                <line id="ch-guide" x1="0" y1="0" x2="0" y2="170" stroke="var(--paper)" stroke-width="2" />
+                <g id="ch-dots"></g>
+              </svg>
+              <div id="tip" style="position:absolute;height:40px;border-radius:12px;background:var(--paper)">
+                <div id="tip-a" class="txt" style="color:var(--charcoal)"></div>
+                <div id="tip-b" class="txt" style="color:var(--charcoal)"></div>
+              </div>
+            </div>
+            <div id="L-palette" class="layer">
+              <svg class="icon" style="left:22px;top:34px" width="28" height="28" viewBox="-14 -14 28 28"><circle cx="-2" cy="-2" r="9" /><path d="M5 5L12 12" /></svg>
+              <div id="pal-query" class="txt"></div>
+              <div id="pal-caret" class="fill-red" style="position:absolute;top:31px;width:3px;height:34px;border-radius:1.5px"></div>
+              <div id="pal-key" style="position:absolute;top:28px;height:40px;border-radius:10px;border:3px solid var(--paper)">
+                <div id="key-a" class="txt"></div>
+                <div id="key-b" class="txt"></div>
+              </div>
+              <div id="pal-div" style="position:absolute;left:0;top:95px;width:600px;height:2px;background:var(--paper);transform-origin:0 0"></div>
+              <div id="pal-hl" style="position:absolute;left:10px;width:580px;height:52px;border-radius:14px;background:var(--paper)"></div>
+              <div id="pal-rows"></div>
+            </div>
+            <div id="L-toast" class="layer">
+              <div class="fill-red" style="position:absolute;left:24px;top:22px;width:52px;height:52px;border-radius:26px"></div>
+              <svg class="icon" style="left:24px;top:22px" width="52" height="52" viewBox="-26 -26 52 52"><path d="M-10 1L-3 8L11 -7" /></svg>
+              <div id="toast-text" class="txt"></div>
+            </div>
+          </div>
+        </div>
+        <svg id="cursor" width="30" height="42" viewBox="0 0 30 42" data-layout-allow-overflow="true"><path d="M1 1V33L9 26L14.5 38.5L20.5 36L15 24H26Z" /></svg>
+      </section>
+      <audio id="music" src="assets/music.m4a" data-start="0" data-duration="14" data-track-index="10" data-volume="0.9"></audio>
+    </div>
+
+    <script>
+      const C = CONFIG;
+      const $ = (id) => document.getElementById(id);
+      const B = 60 / C.bpm; // one beat (s); the skeleton is 28 beats
+      const T = 28 * B; // the loop period
+      const at = (b) => b * B;
+      const FONT = "Geist";
+
+      // ---- guard: the static timing attributes must match CONFIG (same plan as recipe.mjs)
+      for (const id of ["stage", "scene", "music"]) {
+        const d = +$(id).dataset.duration;
+        if (Math.abs(d - T) > 1e-3) throw new Error(`ui-morph: #${id} lasts ${d}s but CONFIG implies ${T}s; re-run scaffold --update`);
+      }
+
+      // ---- palette: exactly three colours
+      const root = document.documentElement.style;
+      root.setProperty("--paper", C.paper);
+      root.setProperty("--charcoal", C.charcoal);
+      root.setProperty("--red", C.red);
+      const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+      const P = rgb(C.paper), K = rgb(C.charcoal), R = rgb(C.red);
+      const mix = (a, b, k) => { k = Math.min(1, Math.max(0, k)); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(",")})`; };
+
+      // ---- springs: closed-form step response of a damped spring (tiny overshoot)
+      const SPR = {
+        ui: [17, 0.8], // shape morphs, content
+        fast: [26, 0.8], // leading edges
+        slow: [11, 0.86], // trailing edges
+        cam: [11, 0.9], // camera zoom
+        cur: [13, 0.86], // cursor travel
+        press: [44, 0.9], // pointer down / up
+      };
+      const step = (x, [w, z]) => {
+        if (x <= 0) return 0;
+        const wd = w * Math.sqrt(1 - z * z);
+        return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + ((z * w) / wd) * Math.sin(wd * x));
+      };
+      // A value that changes target many times = base + one spring per change.
+      // Each change also contributes from the previous loop (t + T), so the
+      // function is periodic: value(T) === value(0), velocity included.
+      const track = (name, base, evs) => {
+        let last = base;
+        const steps = evs.slice().sort((a, b) => a[0] - b[0]).map(([s, v, sp]) => {
+          const d = v - last; last = v; return [s, d, SPR[sp || "ui"]];
+        }).filter((x) => x[1] !== 0);
+        if (Math.abs(last - base) > 1e-9) throw new Error(`ui-morph: track ${name} does not return to its start`);
+        return (t) => { let v = base; for (const [s, d, sp] of steps) v += d * (step(t - s, sp) + step(t + T - s, sp)); return v; };
+      };
+      const clamp01 = (x) => Math.min(1, Math.max(0, x));
+      const ease3 = (x) => { x = clamp01(x); return 1 - (1 - x) ** 3; };
+      // content window: springs in after the shape starts moving, cuts out fast
+      // before the next content enters, so swapped text never overlaps
+      const win = (a, b) => (t) => {
+        const f = (u) => (u < a ? 0 : clamp01(step(u - a - 0.08, SPR.ui)) * (1 - ease3((u - b) / 0.1)));
+        return f(t) + f(t + T);
+      };
+
+      // ---- the one shape: [beat, layer, w, h, radius, camera zoom]; base = button
+      const BASE = ["button", 340, 104, 52, 2.6];
+      const STATES = [
+        [1, "loader", 104, 104, 52, 3.6],
+        [3, "check", 104, 104, 52, 3.6],
+        [4, "island", 400, 96, 48, 2.8],
+        [5, "player", 560, 300, 44, 2.2],
+        [10, "volume", 560, 120, 60, 2.0],
+        [14, "toggle", 200, 112, 56, 3.0],
+        [16, "tabs", 600, 112, 56, 2.1],
+        [19, "chart", 640, 460, 40, 2.0],
+        [23, "palette", 600, 96, 28, 2.1],
+        [26, "toast", 460, 96, 48, 2.6],
+        [27, "button", 340, 104, 52, 2.6],
+      ];
+      const sw = track("w", BASE[1], STATES.map((s) => [at(s[0]), s[2]]));
+      const sh = track("h", BASE[2], STATES.map((s) => [at(s[0]), s[3]]));
+      const sr = track("r", BASE[3], STATES.map((s) => [at(s[0]), s[4]]));
+      const zoom = track("zoom", BASE[4], STATES.map((s) => [at(s[0]), s[5], "cam"]));
+      const red = track("red", 0, [[at(3), 1], [at(4), 0], [at(15), 1, "fast"], [at(16), 0]]);
+      const LAYERS = {}; // layer name -> visibility window
+      STATES.forEach(([b, name], i) => { LAYERS[name] = win(at(b), at(i + 1 < STATES.length ? STATES[i + 1][0] : 29)); });
+      LAYERS.button = win(at(27), at(29)); // wraps through the loop point
+      const knobWin = win(at(14), at(19));
+      const SIZE = { button: [340, 104], loader: [104, 104], check: [104, 104], island: [400, 96], player: [560, 300], volume: [560, 120], tabs: [600, 112], chart: [640, 460], palette: [600, 420], toast: [460, 96] };
+      for (const [name, [w, h]] of Object.entries(SIZE)) {
+        const el = $("L-" + name);
+        Object.assign(el.style, { width: w + "px", height: h + "px", marginLeft: -w / 2 + "px", marginTop: -h / 2 + "px" });
+      }
+      $("L-palette").style.top = "0"; $("L-palette").style.marginTop = "0"; // grows downward from its top edge
+
+      // ---- the pointer: [beat, x, y] world targets (shape centre = 0,0)
+      const REST = [40, 16]; // on the button, where every loop starts and ends
+      const PLAY = [212, -46];
+      const BAR = { x0: -248, w: 496 }; // player progress bar (world x)
+      const VOL = { x0: -190, w: 430 }; // volume bar
+      const TAB_W = 584 / 3;
+      const tabL = (i) => -292 + i * TAB_W;
+      const p0 = 0.22, rate = 0.035, playAt = at(6) + 0.1;
+      const knobAt8 = BAR.x0 + BAR.w * (p0 + rate * (at(8) - playAt));
+      const scrubTo = BAR.x0 + BAR.w * 0.72;
+      const v0 = 0.4;
+
+      // (chart geometry is needed for the hover targets)
+      const data = C.chartData.map(Number), n = data.length, vmax = Math.max(...data);
+      const pts = data.map((v, i) => [-272 + (544 * i) / (n - 1), 150 - (v / vmax) * 240]);
+      const hoverA = data.indexOf(vmax);
+      const hoverB = hoverA === n - 1 ? n - 2 : n - 1;
+
+      const PATH = [
+        [0.55, 150, 118],
+        [5.2, ...PLAY],
+        [7.0, knobAt8, 96],
+        [8.15, scrubTo, 96],
+        [9.3, VOL.x0 + VOL.w * v0, 0],
+        [11.1, VOL.x0 + VOL.w, 0],
+        [12.0, VOL.x0 + VOL.w + 100, 0],
+        [13.3, -44, 6],
+        [16.3, tabL(0) + TAB_W / 2, 8],
+        [17.35, tabL(2) + TAB_W / 2, 8],
+        [18.5, 250, 280],
+        [20.35, pts[hoverA][0] + 4, pts[hoverA][1] + 6],
+        [21.4, pts[hoverB][0] + 4, pts[hoverB][1] + 6],
+        [23.0, 250, 250],
+        [26.3, ...REST],
+      ];
+      const cx = track("cursor.x", REST[0], PATH.map(([b, x]) => [at(b), x, "cur"]));
+      const cy = track("cursor.y", REST[1], PATH.map(([b, , y]) => [at(b), y, "cur"]));
+      const CLICKS = [0, 6, 15, 17, 18];
+      const DRAGS = [[8, 9], [11, 13]];
+      const pressEv = [];
+      CLICKS.forEach((b) => pressEv.push([at(b), 1, "press"], [at(b) + 0.13, 0, "press"]));
+      DRAGS.forEach(([d, u]) => pressEv.push([at(d), 1, "press"], [at(u), 0, "press"]));
+      const press = track("press", 0, pressEv);
+      const squish = track("squish", 0, [0, 15].flatMap((b) => [[at(b), 1, "press"], [at(b) + 0.13, 0, "press"]]));
+
+      // ---- direct manipulation: while held the value follows the pointer,
+      // after release it springs back from wherever it was let go
+      const progress = (t) => {
+        if (t < playAt) return p0;
+        if (t < at(8)) return p0 + rate * (t - playAt);
+        const held = (u) => clamp01((cx(u) - BAR.x0) / BAR.w);
+        if (t < at(9)) return held(t);
+        return held(at(9)) + rate * (t - at(9));
+      };
+      const rubber = (over) => (0.7 * over) / (1 + over / 250);
+      const volRaw = (t) => (cx(t) - VOL.x0) / VOL.w;
+      const volume = (t) => (t < at(11) ? v0 : t < at(13) ? clamp01(volRaw(t)) : clamp01(volRaw(at(13))));
+      const stretchHeld = (t) => rubber(Math.max(0, (volRaw(t) - 1) * VOL.w));
+      const stretch = (t) => (t < at(11) ? 0 : t < at(13) ? stretchHeld(t) : stretchHeld(at(13)) * (1 - step(t - at(13), SPR.ui)));
+
+      // ---- toggle knob -> liquid tab indicator: its two edges ride different
+      // springs; the edge in the direction of travel leads on the fast one
+      const kL = track("knob.L", -92, [
+        [at(15), -4, "slow"], [at(16), tabL(1), "fast"], [at(17), tabL(0), "fast"], [at(18), tabL(2), "slow"], [at(22), -92],
+      ]);
+      const kR = track("knob.R", 4, [
+        [at(15), 92, "fast"], [at(16), tabL(1) + TAB_W, "slow"], [at(17), tabL(0) + TAB_W, "slow"], [at(18), tabL(2) + TAB_W, "fast"], [at(22), 4],
+      ]);
+
+      (async () => {
+        await Promise.all([500, 600].map((w) => document.fonts.load(`${w} 40px "${FONT}"`)));
+        const mc = document.createElement("canvas").getContext("2d");
+        const width = (text, px, w) => { mc.font = `${w} ${px}px "${FONT}"`; return mc.measureText(text).width; };
+        const fit = (text, px, maxW, w) => Math.min(px, Math.floor((px * maxW) / Math.max(1, width(text, px, w))));
+        // place one line of text: left edge x (or centre when centre=true), vertical centre y
+        const put = (el, text, px, maxW, w, x, y, centre = false) => {
+          const fs = fit(text, px, maxW, w);
+          el.textContent = text;
+          const tw = width(text, fs, w);
+          Object.assign(el.style, { fontSize: fs + "px", fontWeight: w, left: (centre ? x - tw / 2 : x) + "px", top: y - fs * 0.5 + "px" });
+          return tw;
+        };
+
+        // button: label + arrow, centred as a group
+        const bfs = fit(C.buttonLabel, 34, 230, 600);
+        const bw = width(C.buttonLabel, bfs, 600) + 14 + 18;
+        put($("btn-label"), C.buttonLabel, 34, 230, 600, 170 - bw / 2, 52);
+        Object.assign($("btn-arrow").style, { left: 170 + bw / 2 - 19 + "px", top: "44px" });
+
+        // island: art, title, four level bars
+        put($("isl-title"), C.trackTitle, 22, 230, 600, 88, 48);
+        const bars = [0, 1, 2, 3].map((i) => {
+          const d = document.createElement("div");
+          d.className = "fill-red";
+          Object.assign(d.style, { position: "absolute", left: 330 + i * 10 + "px", width: "5px", borderRadius: "2.5px" });
+          $("isl-bars").appendChild(d);
+          return d;
+        });
+
+        // player
+        put($("pl-title"), C.trackTitle, 30, 260, 600, 176, 74);
+        put($("pl-artist"), C.trackArtist, 22, 260, 500, 176, 112);
+        const PLAY_Q = [[[-11, -17], [3, -9], [3, 9], [-11, 17]], [[3, -9], [17, 0], [17, 0], [3, 9]]];
+        const PAUSE_Q = [[[-12, -15], [-4, -15], [-4, 15], [-12, 15]], [[4, -15], [12, -15], [12, 15], [4, 15]]];
+        const iconPath = (k) => PLAY_Q.map((q, j) => "M" + q.map(([x, y], i) => {
+          const [X, Y] = PAUSE_Q[j][i];
+          return `${(x + (X - x) * k).toFixed(2)} ${(y + (Y - y) * k).toFixed(2)}`;
+        }).join("L") + "Z").join("");
+        const playK = track("play", 0, [[at(6), 1], [at(27), 0]]);
+
+        // tabs: paper labels, plus charcoal labels clipped to the indicator
+        const tabRow = (host, colour) => C.tabs.map((label, i) => {
+          const d = document.createElement("div");
+          d.className = "txt";
+          d.style.color = colour;
+          d.setAttribute("data-layout-allow-overlap", "true"); // the clipped twin sits on top on purpose
+          host.appendChild(d);
+          put(d, label, 26, TAB_W - 28, 500, 8 + i * TAB_W + TAB_W / 2, 56, true);
+          return d;
+        });
+        tabRow($("tabs-a"), "var(--paper)");
+        tabRow($("tabs-b"), "var(--charcoal)");
+
+        // chart: smooth line through the points, dots, hover tooltip
+        put($("ch-title"), C.chartTitle, 26, 560, 600, 32, 46);
+        const cr = (i) => pts[Math.max(0, Math.min(n - 1, i))];
+        let d = `M${pts[0][0]} ${pts[0][1]}`;
+        for (let i = 0; i < n - 1; i++) { // Catmull-Rom -> cubic Bezier
+          const [p0x, p0y] = cr(i - 1), [p1x, p1y] = cr(i), [p2x, p2y] = cr(i + 1), [p3x, p3y] = cr(i + 2);
+          d += `C${p1x + (p2x - p0x) / 6} ${p1y + (p2y - p0y) / 6} ${p2x - (p3x - p1x) / 6} ${p2y - (p3y - p1y) / 6} ${p2x} ${p2y}`;
+        }
+        $("ch-line").setAttribute("d", d);
+        const dots = pts.map(([x, y]) => {
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("cx", x); c.setAttribute("cy", y);
+          Object.assign(c.style, { fill: "var(--paper)", stroke: "var(--red)", strokeWidth: 3 });
+          $("ch-dots").appendChild(c);
+          return c;
+        });
+        const fmt = (v) => String(v);
+        const tipW = Math.max(width(fmt(data[hoverA]), 22, 600), width(fmt(data[hoverB]), 22, 600)) + 32;
+        $("tip").style.width = tipW + "px";
+        put($("tip-a"), fmt(data[hoverA]), 22, 200, 600, tipW / 2, 20, true);
+        put($("tip-b"), fmt(data[hoverB]), 22, 200, 600, tipW / 2, 20, true);
+        const tipX = track("tip.x", pts[hoverA][0], [[at(22), pts[hoverB][0]], [at(23.5), pts[hoverA][0]]]);
+        const tipY = track("tip.y", pts[hoverA][1], [[at(22), pts[hoverB][1]], [at(23.5), pts[hoverA][1]]]);
+        const tipWin = win(at(21), at(23)), tipA = win(at(21), at(22)), tipB = win(at(22), at(23));
+        const drawStart = at(19) + 0.15, drawDur = at(1.6);
+
+        // palette: typed query filters the rows; first full match is highlighted
+        const q = C.paletteQuery, ql = q.toLowerCase();
+        const typeAt = (k) => at(24) + 0.2 + (k * at(1.2)) / q.length; // k-th character
+        const prefixW = [...Array(q.length + 1).keys()].map((k) => width(q.slice(0, k), fit(q, 28, 380, 500), 500));
+        put($("pal-query"), q, 28, 380, 500, 62, 48);
+        const KEY_A = "Cmd K", KEY_B = "Enter";
+        const kw = Math.max(width(KEY_A, 18, 600), width(KEY_B, 18, 600)) + 26;
+        Object.assign($("pal-key").style, { width: kw + "px", left: 600 - 24 - kw + "px" });
+        put($("key-a"), KEY_A, 18, 200, 600, kw / 2 - 3, 17, true);
+        put($("key-b"), KEY_B, 18, 200, 600, kw / 2 - 3, 17, true);
+        const keyAWin = win(at(23), at(25.25)), keyBWin = win(at(25.25), at(26));
+        const keyPress = track("key", 0, [[at(23) + 0.16, 1, "press"], [at(23) + 0.3, 0, "press"], [at(25.75), 1, "press"], [at(25.75) + 0.14, 0, "press"]]);
+        const ROW = 60;
+        const firstHit = C.paletteItems.findIndex((s) => s.toLowerCase().includes(ql));
+        const rows = C.paletteItems.map((label, i) => {
+          const el = document.createElement("div");
+          el.className = "txt";
+          el.setAttribute("data-layout-allow-overlap", "true"); // filtered rows collapse into their neighbours
+          $("pal-rows").appendChild(el);
+          put(el, label, 24, 520, 500, 32, 0);
+          let hide = null; // the keystroke after which the row no longer matches
+          for (let k = 1; k <= q.length; k++) if (!label.toLowerCase().includes(ql.slice(0, k))) { hide = typeAt(k - 1); break; }
+          const ev = [[at(24) + i * 0.04, ROW]];
+          if (hide !== null) ev.push([Math.max(hide, ev[0][0] + 0.05), 0]);
+          ev.push([at(26), 0]);
+          return { el, h: track("row" + i, 0, ev) };
+        });
+        const open = track("open", 0, [[at(24), 1], [at(26), 0]]);
+        const hl = track("hl", 0, [[at(25.25), 1, "fast"], [at(26), 0, "fast"]]);
+
+        // toast
+        put($("toast-text"), C.toastText, 26, 330, 500, 92, 48);
+
+        // ---- one frame = a pure function of t. No CSS transitions, no timers,
+        // nothing carried over from the previous frame.
+        const layer = (name, o, extra = "") => {
+          const el = $("L-" + name);
+          el.style.visibility = o > 0.002 ? "visible" : "hidden";
+          el.style.opacity = o.toFixed(4);
+          el.style.filter = o < 0.999 ? `blur(${((1 - o) * 8).toFixed(2)}px)` : "none";
+          el.style.transform = `${extra} scale(${(0.94 + 0.06 * o).toFixed(4)})`;
+        };
+        const render = (t) => {
+          const z = zoom(t), s = stretch(t);
+          $("cam").style.transform = `scale(${z.toFixed(5)})`;
+          const w = sw(t) + s, h = sh(t) + rows.reduce((a, r) => a + r.h(t), 0) + 12 * open(t);
+          const shape = $("shape");
+          Object.assign(shape.style, {
+            width: w + "px", height: h + "px", left: -w / 2 + s / 2 + "px", top: -h / 2 + "px",
+            borderRadius: Math.min(sr(t), h / 2, w / 2) + "px", background: mix(K, R, red(t)),
+            transform: `scale(${(1 - 0.035 * squish(t)).toFixed(4)})`,
+          });
+          for (const name of Object.keys(SIZE)) layer(name, LAYERS[name](t), name === "volume" ? `translateX(${(-s / 2).toFixed(2)}px)` : "");
+
+          // loader: arc spins, then closes into a full ring on beat 2
+          const circ = 2 * Math.PI * 24, arc = 0.26 + 0.74 * clamp01(step(t - at(2), SPR.ui));
+          $("ring").setAttribute("stroke-dasharray", `${(arc * circ).toFixed(2)} ${circ.toFixed(2)}`);
+          $("ring").setAttribute("transform", `rotate(${((t - at(1)) * 600 - 90).toFixed(2)})`);
+          // check draws itself on beat 3
+          $("check").setAttribute("stroke-dasharray", "60 60");
+          $("check").setAttribute("stroke-dashoffset", (60 * (1 - clamp01(step(t - at(3) - 0.06, SPR.ui)))).toFixed(2));
+          // island level bars bounce on every beat
+          bars.forEach((el, i) => {
+            const ph = t / B, k = Math.floor(ph), dec = Math.exp(-(ph - k) * 4);
+            const hh = 8 + 22 * dec * (0.55 + 0.45 * Math.sin(k * 2.1 + i * 1.7));
+            Object.assign(el.style, { height: hh + "px", top: 48 - hh / 2 + "px" });
+          });
+          // player: play -> pause, progress, scrub
+          $("pl-icon").setAttribute("d", iconPath(playK(t)));
+          const p = progress(t);
+          $("pl-fill").style.width = (BAR.w * p).toFixed(2) + "px";
+          const pk = 1 + 0.6 * (t > at(7) && t < at(10) ? press(t) : 0);
+          Object.assign($("pl-knob").style, { left: 32 + BAR.w * p - 10 + "px", transform: `scale(${pk.toFixed(4)})` });
+          // volume: value follows the pointer; past max the bar stretches
+          const v = volume(t), vw = VOL.w + s;
+          $("vol-track").style.width = vw + "px";
+          $("vol-fill").style.width = (v * vw).toFixed(2) + "px";
+          const vk = 1 + 0.25 * (t > at(10) && t < at(14) ? press(t) : 0);
+          Object.assign($("vol-knob").style, { left: 90 + v * vw - 16 + "px", transform: `scale(${vk.toFixed(4)})` });
+          // knob / indicator
+          const L = kL(t), Rr = kR(t), ko = knobWin(t);
+          Object.assign($("knob").style, {
+            visibility: ko > 0.002 ? "visible" : "hidden", opacity: ko.toFixed(4),
+            left: w / 2 - s / 2 + L + "px", top: h / 2 - 48 + "px", width: Rr - L + "px", height: "96px",
+            transform: `scale(${(1 - 0.06 * (t > at(14) && t < at(16) ? press(t) : 0)).toFixed(4)})`,
+          });
+          $("tabs-b").style.clipPath = `inset(0 ${(600 - (Rr + 300)).toFixed(2)}px 0 ${(L + 300).toFixed(2)}px round 48px)`;
+          // chart: the line draws left to right, dots pop as it passes them
+          const dr = clamp01((t - drawStart) / drawDur), rx = -272 + 544 * (dr < 1 ? 1 - (1 - dr) ** 2 : 1);
+          $("ch-reveal-rect").setAttribute("width", (rx + 300).toFixed(2));
+          const tx = tipX(t), ty = tipY(t), tw = tipWin(t);
+          dots.forEach((c, i) => {
+            const passed = pts[i][0] <= rx + 0.5;
+            const hov = i === hoverA ? tipA(t) : i === hoverB ? tipB(t) : 0;
+            c.setAttribute("r", (passed ? 6 * clamp01(step(t - drawStart - drawDur * (1 - Math.sqrt(1 - (pts[i][0] + 272) / 544)), SPR.fast)) : 0) * (1 + 0.4 * hov));
+          });
+          $("ch-guide").setAttribute("x1", tx); $("ch-guide").setAttribute("x2", tx); $("ch-guide").setAttribute("y1", ty + 10);
+          $("ch-guide").style.opacity = tw.toFixed(4);
+          Object.assign($("tip").style, {
+            left: 320 + tx - tipW / 2 + "px", top: 230 + ty - 62 + "px", opacity: tw.toFixed(4),
+            visibility: tw > 0.002 ? "visible" : "hidden",
+          });
+          [["tip-a", tipA], ["tip-b", tipB]].forEach(([id, f]) => {
+            const o = f(t); $(id).style.opacity = o.toFixed(4); $(id).style.filter = o < 0.999 ? `blur(${((1 - o) * 4).toFixed(2)}px)` : "none";
+          });
+          // palette: typing, caret, key hint, rows filtering
+          let typed = 0;
+          for (let k = 0; k < q.length; k++) if (t >= typeAt(k)) typed = k + 1;
+          $("pal-query").textContent = q.slice(0, typed);
+          const blink = t < at(25.5) || Math.floor(t / (B / 2)) % 2 === 0;
+          Object.assign($("pal-caret").style, { left: 62 + prefixW[typed] + 3 + "px", opacity: blink ? "1" : "0" });
+          $("pal-key").style.transform = `scale(${(1 - 0.12 * keyPress(t)).toFixed(4)})`;
+          [["key-a", keyAWin], ["key-b", keyBWin]].forEach(([id, f]) => {
+            const o = f(t); $(id).style.opacity = o.toFixed(4); $(id).style.filter = o < 0.999 ? `blur(${((1 - o) * 4).toFixed(2)}px)` : "none";
+          });
+          $("pal-div").style.transform = `scaleX(${clamp01(open(t)).toFixed(4)})`;
+          let y = 96 + 12 * open(t) - 6;
+          const hk = clamp01(hl(t));
+          rows.forEach((r, i) => {
+            const rh = Math.max(0, r.h(t)), o = clamp01(rh / ROW);
+            Object.assign(r.el.style, {
+              top: y + rh / 2 - 12 + "px", opacity: o.toFixed(4), filter: o < 0.999 ? `blur(${((1 - o) * 6).toFixed(2)}px)` : "none",
+              color: i === firstHit ? mix(P, K, hk) : "var(--paper)",
+            });
+            if (i === firstHit) Object.assign($("pal-hl").style, { top: y + rh / 2 - 26 + "px", opacity: hk.toFixed(4), transform: `scale(${(0.96 + 0.04 * hk).toFixed(4)})` });
+            y += rh;
+          });
+
+          // pointer: world target -> screen through the camera, constant size
+          const px = 720 + cx(t) * z, py = 720 + cy(t) * z;
+          $("cursor").style.transform = `translate(${(px - 1.5).toFixed(2)}px, ${(py - 1.5).toFixed(2)}px) scale(${(1.45 * (1 - 0.14 * press(t))).toFixed(4)})`;
+        };
+
+        const tl = gsap.timeline({ paused: true });
+        // the clock is a setter GSAP tweens: the runtime seeks with events
+        // suppressed, so an onUpdate callback would leave stale frames behind
+        let now = 0;
+        const clock = { get t() { return now; }, set t(v) { now = v; render(v); } };
+        tl.fromTo(clock, { t: 0 }, { t: T, duration: T, ease: "none" }, 0);
+        render(0);
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>

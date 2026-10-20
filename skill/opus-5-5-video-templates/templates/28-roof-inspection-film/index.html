@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand","default":"ROWAN"},
+  {"id":"fieldNote","type":"string","label":"Chip on the first shot","default":"01 / FIELD NOTES"},
+  {"id":"open1","type":"string","label":"Opening line (two parts, split by |)","default":"SMALL|DETAILS."},
+  {"id":"open1Sub","type":"string","label":"Line under the opening","default":"A closer look changes everything."},
+  {"id":"open2","type":"string","label":"Second card (split by |)","default":"BIG|DECISIONS."},
+  {"id":"layersLabel","type":"string","label":"Label over the cutaway","default":"BENEATH THE SURFACE"},
+  {"id":"layersTitle","type":"string","label":"Cutaway title (split by |)","default":"Built in|layers."},
+  {"id":"layers","type":"string","label":"Roof layers, top to bottom (split by |)","default":"Architectural shingles|Underlayment|Roof deck|Rafters"},
+  {"id":"scope1","type":"string","label":"Close-up 1: title|line","default":"Surface.|A careful look at the details."},
+  {"id":"scope2","type":"string","label":"Close-up 2: title|line","default":"Junctions.|Where materials meet."},
+  {"id":"scope3","type":"string","label":"Close-up 3: title|line","default":"Drainage.|How water leaves the roof."},
+  {"id":"context","type":"string","label":"Photos-on-the-house title (split by |)","default":"Every photo.|In context."},
+  {"id":"photos","type":"string","label":"Photo labels (split by |)","default":"Surface|Flashing|Drainage"},
+  {"id":"report","type":"string","label":"Report title","default":"Your roof, explained."},
+  {"id":"opt1","type":"string","label":"Option 1: title|line","default":"Maintain.|Plan ongoing care."},
+  {"id":"opt2","type":"string","label":"Option 2: title|line","default":"Repair.|Discuss targeted work."},
+  {"id":"opt3","type":"string","label":"Option 3: title|line","default":"Replace.|Explore a full roof project."},
+  {"id":"optLine","type":"string","label":"Line under the options","default":"The right approach starts with a conversation."},
+  {"id":"visit","type":"string","label":"Booking title (split by |)","default":"START WITH|A VISIT."},
+  {"id":"form","type":"string","label":"Form: title|choice|button","default":"Request an inspection|Morning|Request a visit"},
+  {"id":"touch","type":"string","label":"Confirmation title (split by |)","default":"WE’LL BE|IN TOUCH."},
+  {"id":"confirm","type":"string","label":"Confirmation card: title|line","default":"Visit requested.|Morning preferred."},
+  {"id":"hero","type":"string","label":"Over the house (split by |)","default":"CONFIDENCE|OVERHEAD."},
+  {"id":"tagline","type":"string","label":"End line","default":"Small details. Clear answers."},
+  {"id":"cta","type":"string","label":"End button","default":"Request a roof inspection"},
+  {"id":"lime","type":"color","label":"Accent","default":"#d7fa73"},
+  {"id":"forest","type":"color","label":"Dark","default":"#0a221a"},
+  {"id":"paper","type":"color","label":"Light background","default":"#f2efe2"},
+  {"id":"ink","type":"color","label":"Text","default":"#0b281e"},
+  {"id":"moss","type":"color","label":"Second title colour on light","default":"#3f6f3a"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InterTight-700.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Inter", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .abs { position: absolute; white-space: nowrap; }
+      .lime { background: var(--lime); }
+      .forest { background: var(--forest); }
+      .paper { background: var(--paper); }
+      .kb { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 50% 50%; }
+      .kb img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+      .ret { position: absolute; left: 0; top: 0; width: 116px; height: 116px; margin: -58px 0 0 -58px; border-radius: 50%; border: 3px solid var(--lime); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15); }
+      .ret::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 2px rgba(10, 34, 26, 0.6); }
+      .disp { font: 700 240px/0.86 "Inter Tight"; letter-spacing: -0.035em; text-transform: uppercase; }
+      .mask { position: absolute; overflow: hidden; padding: 0.04em 0.06em 0.02em; }
+      .mask > span { display: inline-block; }
+      .pill { display: inline-block; padding: 0 22px; height: 56px; border-radius: 4px; background: rgba(10, 34, 26, 0.86); color: #fff; font: 400 23px/56px "Inter"; }
+      .chip { display: inline-block; padding: 0 14px; height: 34px; border-radius: 3px; background: var(--forest); color: var(--lime); font: 600 14px/34px "Inter"; letter-spacing: 0.12em; text-transform: uppercase; }
+      .lab { font: 600 15px/1 "Inter"; letter-spacing: 0.16em; text-transform: uppercase; }
+      .brandmark { display: flex; align-items: center; gap: 12px; font: 700 17px/1 "Inter"; letter-spacing: 0.16em; }
+      .brandmark svg { width: 30px; height: 24px; }
+      .h-med { font: 500 112px/1.02 "Inter"; letter-spacing: -0.045em; }
+      .thumbs { position: absolute; left: 88px; top: 962px; display: flex; gap: 14px; }
+      .thumbs .t { position: relative; width: 136px; height: 78px; border-radius: 3px; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.55); }
+      .thumbs .t img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .thumbs .t b { position: absolute; left: 5px; top: 5px; font: 700 11px/18px "Inter"; padding: 0 5px; background: var(--lime); color: var(--forest); border-radius: 2px; }
+      .thumbs .t.on { border-color: var(--lime); }
+      #wipe { position: absolute; left: 0; top: 0; width: 70px; height: 1080px; background: var(--lime); }
+      svg.three { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+      .card { position: absolute; border-radius: 6px; overflow: hidden; background: #fff; }
+      .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .pcard { position: absolute; left: 0; top: 0; width: 380px; height: 214px; border-radius: 4px; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); transform-origin: 0 0; }
+      .pcard img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .pcard b { position: absolute; left: 8px; top: 8px; font: 600 12px/22px "Inter"; padding: 0 7px; background: rgba(255, 255, 255, 0.92); color: var(--ink); border-radius: 2px; letter-spacing: 0.02em; }
+      .row { position: absolute; left: 1030px; width: 802px; height: 86px; border-bottom: 1px solid rgba(11, 40, 30, 0.14); }
+      .row .n { position: absolute; left: 0; top: 18px; font: 500 15px/1 "Inter"; color: #6c7a70; }
+      .row .a { position: absolute; left: 56px; top: 16px; font: 600 22px/1 "Inter"; }
+      .row .b { position: absolute; left: 56px; top: 50px; font: 400 17px/1 "Inter"; color: #6c7a70; }
+      .row .hl { position: absolute; left: -14px; top: 0; right: 0; bottom: 0; background: var(--lime); transform-origin: 0 50%; }
+      .opt { position: absolute; top: 300px; width: 560px; height: 500px; border-radius: 4px; background: color-mix(in srgb, var(--forest) 82%, #2e6b4a); border: 1px solid rgba(215, 250, 115, 0.16); overflow: hidden; }
+      .opt svg { position: absolute; left: 0; top: 0; width: 560px; height: 360px; }
+      .opt .n { position: absolute; right: 18px; top: 14px; font: 500 14px/1 "Inter"; color: rgba(255, 255, 255, 0.55); }
+      .opt .a { position: absolute; left: 30px; top: 392px; font: 500 46px/1 "Inter"; letter-spacing: -0.03em; color: #fff; }
+      .opt .b { position: absolute; left: 30px; top: 448px; font: 400 17px/1 "Inter"; color: rgba(255, 255, 255, 0.6); }
+      .form { position: absolute; left: 1008px; top: 248px; width: 812px; height: 584px; border-radius: 10px; }
+      .btnd { position: absolute; left: 48px; width: 716px; height: 78px; border-radius: 6px; background: var(--forest); color: #fff; font: 500 23px/78px "Inter"; padding: 0 26px; }
+      #cur { position: absolute; left: 0; top: 0; width: 46px; height: 56px; overflow: visible; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="28.5" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="28.5" data-track-index="0">
+        <!-- 0 · field notes -->
+        <div id="s0" class="layer">
+          <div class="kb"><img src="assets/img/roof.jpg" alt="" /></div>
+          <div class="brandmark abs" style="left: 44px; top: 50px; color: #fff"><svg viewBox="0 0 30 24"><path d="M3 15 L15 4 L27 15" fill="none" stroke="currentColor" stroke-width="4" /><path d="M9 21 L15 15.5 L21 21" fill="none" stroke="var(--lime)" stroke-width="3.4" /></svg><span data-var="brand"></span></div>
+          <div class="abs" style="right: 68px; top: 48px"><span class="chip" style="color: #fff; height: 38px; line-height: 38px; font-size: 13px" data-var="fieldNote"></span></div>
+          <div id="o1a" class="mask disp" style="left: 92px; top: 150px"><span></span></div>
+          <div id="o1box" class="abs lime" style="left: 82px; top: 384px; height: 244px; width: 0"></div>
+          <div id="o1b" class="mask disp" style="left: 92px; top: 392px"><span></span></div>
+          <div id="o1sub" class="abs" style="left: 96px; top: 708px"><span class="pill"></span></div>
+          <div id="o1line" class="abs" style="left: 660px; top: 735px; height: 2px; width: 1010px; background: var(--lime); opacity: 0.75; transform-origin: 0 50%"></div>
+          <div id="o1num" class="abs" style="right: 92px; top: 950px; color: #fff; font: 300 46px/1 Inter">01 ↗</div>
+        </div>
+        <!-- 1 · big decisions -->
+        <div id="s1" class="layer lime">
+          <div id="o2a" class="mask disp" style="left: 76px; top: 232px; font-size: 250px"><span></span></div>
+          <div id="o2b" class="mask disp" style="left: 76px; top: 518px; font-size: 250px"><span></span></div>
+        </div>
+        <!-- 2 · built in layers -->
+        <div id="s2" class="layer paper">
+          <div class="lab abs" style="left: 90px; top: 62px; color: #55635a" data-var="layersLabel"></div>
+          <div id="lt1" class="h-med abs" style="left: 84px; top: 106px"></div>
+          <div id="lt2" class="h-med abs" style="left: 84px; top: 220px; color: var(--moss)"></div>
+          <svg id="hsA" class="three"></svg>
+          <svg id="callA" class="three"></svg>
+          <div class="abs" style="left: 90px; top: 1030px; font: 400 15px/1 Inter; color: #8a9289">Illustrative roof assembly</div>
+        </div>
+        <!-- 3–5 · inspection close-ups -->
+        <div id="s3" class="layer"><div class="kb"><img src="assets/img/measure.jpg" alt="" /><div class="ret" style="left: 952px; top: 470px"></div></div></div>
+        <div id="s4" class="layer"><div class="kb"><img src="assets/img/flashing.jpg" alt="" /><div class="ret" style="left: 1064px; top: 516px"></div></div></div>
+        <div id="s5" class="layer"><div class="kb"><img src="assets/img/gutter.jpg" alt="" /><div class="ret" style="left: 826px; top: 574px"></div></div></div>
+        <div id="scope" class="layer" style="overflow: visible">
+          <div id="scTag" class="abs" style="left: 90px; top: 118px"><span class="chip"></span></div>
+          <div id="scT" class="abs" style="left: 84px; top: 176px; font: 600 132px/1 Inter; letter-spacing: -0.045em; color: #fff; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.35)"></div>
+          <div id="scS" class="abs" style="left: 90px; top: 348px"><span class="pill" style="height: 46px; line-height: 46px; font-size: 20px; padding: 0 18px"></span></div>
+          <div class="thumbs" id="thumbs"></div>
+        </div>
+        <div id="wipe"></div>
+        <!-- 6 · every photo in context -->
+        <div id="s6" class="layer forest">
+          <svg id="hsB" class="three"></svg>
+          <svg id="leads" class="three"></svg>
+          <div id="ct1" class="abs" style="left: 84px; top: 58px; font: 500 76px/1.04 Inter; letter-spacing: -0.04em; color: #fff"></div>
+          <div id="ct2" class="abs" style="left: 84px; top: 138px; font: 500 76px/1.04 Inter; letter-spacing: -0.04em; color: var(--lime)"></div>
+          <div class="lab abs" style="right: 72px; top: 64px; color: rgba(215, 250, 115, 0.6); font-size: 13px">Inspection photos</div>
+          <div id="pcards"></div>
+        </div>
+        <!-- 7 · the report -->
+        <div id="s7" class="layer paper">
+          <div id="rpBg" class="layer forest" style="opacity: 0"></div>
+          <div id="rpUI">
+            <div class="brandmark abs" style="left: 90px; top: 52px; color: var(--ink); font-size: 14px"><svg viewBox="0 0 30 24"><path d="M3 15 L15 4 L27 15" fill="none" stroke="currentColor" stroke-width="4" /><path d="M9 21 L15 15.5 L21 21" fill="none" stroke="var(--moss)" stroke-width="3.4" /></svg><span>Example inspection summary</span></div>
+            <div id="rpArea" class="lab abs" style="right: 88px; top: 58px; color: #55635a; font-size: 14px"></div>
+            <div id="rpTitle" class="abs" style="left: 84px; top: 112px; font: 500 78px/1 Inter; letter-spacing: -0.045em"></div>
+            <div class="lab abs" style="left: 1030px; top: 252px; color: #6c7a70; font-size: 13px">Photo context</div>
+            <div class="abs" style="left: 1030px; top: 282px; font: 500 46px/1 Inter; letter-spacing: -0.035em">Details, in context.</div>
+            <div class="abs" style="left: 1030px; top: 346px; font: 400 21px/1 Inter; color: #6c7a70">Organized by area. Ready to discuss.</div>
+            <div class="abs" style="left: 1030px; top: 396px; width: 802px; height: 1px; background: rgba(11, 40, 30, 0.2)"></div>
+            <div id="rows"></div>
+            <div id="rpThumbs" class="abs" style="left: 88px; top: 760px; display: flex; gap: 16px"></div>
+            <div class="abs" style="left: 806px; top: 786px; font: 500 27px/1.3 Inter; letter-spacing: -0.02em">Clear evidence.<br />Better conversations.</div>
+            <div class="abs" style="left: 90px; top: 1034px; font: 400 14px/1 Inter; color: #8a9289">Illustrative service output · Photos and scope shown as examples</div>
+          </div>
+          <div id="rpPhoto" class="card" style="left: 88px; top: 236px; width: 880px; height: 498px">
+            <img id="rpImg0" src="assets/img/measure.jpg" alt="" style="position: absolute; left: 0; top: 0" /><img id="rpImg1" src="assets/img/flashing.jpg" alt="" style="position: absolute; left: 0; top: 0" />
+            <svg id="rpAnn" viewBox="0 0 880 498" style="position: absolute; left: 0; top: 0; width: 880px; height: 498px; overflow: visible"><path id="rpAnnL" d="M486 288 L 560 250 L 700 250" fill="none" stroke="var(--lime)" stroke-width="3" pathLength="1" /><circle id="rpAnnC" cx="486" cy="288" r="9" fill="var(--lime)" /></svg>
+            <div id="rpAnnT" class="abs" style="left: 600px; top: 222px"><span class="chip" style="height: 30px; line-height: 30px; font-size: 12px">Metal flashing</span></div>
+            <div id="rpCap" class="abs" style="left: 16px; bottom: 16px"><span class="chip" style="height: 30px; line-height: 30px; font-size: 12px"></span></div>
+          </div>
+        </div>
+        <!-- 8 · options -->
+        <div id="s8" class="layer forest">
+          <div id="opT" class="abs" style="left: 84px; top: 112px; font: 500 78px/1 Inter; letter-spacing: -0.045em; color: #fff">Talk through options.</div>
+          <div class="lab abs" style="left: 90px; top: 214px; color: var(--lime); font-size: 13px; opacity: 0.85">Context for your next conversation</div>
+          <div class="card" style="left: 1612px; top: 46px; width: 236px; height: 134px; border: 2px solid rgba(255, 255, 255, 0.8)"><img src="assets/img/flashing.jpg" alt="" /></div>
+          <div id="opts"></div>
+          <div id="opLine" class="abs" style="left: 88px; top: 870px; font: 400 25px/1 Inter; color: var(--lime)"></div>
+        </div>
+        <!-- 9 · booking -->
+        <div id="s9" class="layer lime">
+          <div id="v1a" class="mask disp" style="left: 76px; top: 300px; font-size: 118px; line-height: 0.94"><span></span></div>
+          <div id="v1b" class="mask disp" style="left: 76px; top: 418px; font-size: 118px; line-height: 0.94"><span></span></div>
+          <div id="vDiv" class="abs" style="left: 88px; top: 664px; width: 560px; height: 2px; background: rgba(11, 40, 30, 0.25); transform-origin: 0 50%"></div>
+          <div id="vNote" class="abs" style="left: 88px; top: 700px; font: 400 20px/1 Inter">To confirm a time that works for you.</div>
+          <div id="fWhite" class="form" style="background: #f7f8f1; box-shadow: 0 24px 60px rgba(10, 34, 26, 0.18)">
+            <div class="abs" style="left: 48px; top: 48px; font: 600 34px/1 Inter; letter-spacing: -0.02em"><span id="fTitle"></span> ↗</div>
+            <div class="abs" style="left: 48px; top: 112px; width: 716px; height: 1px; background: rgba(11, 40, 30, 0.16)"></div>
+            <div class="abs" style="left: 48px; top: 146px; font: 500 17px/1 Inter; color: #6c7a70">Preferred time</div>
+            <div id="fSel" class="abs" style="left: 48px; top: 178px; width: 716px; height: 66px; border: 2px solid var(--ink); border-radius: 6px; font: 400 23px/62px Inter; padding: 0 20px"><span id="fSelT"></span><span id="fChk" class="abs" style="right: 22px; top: 0; font-weight: 600">✓</span></div>
+            <div class="abs" style="left: 48px; top: 270px; font: 400 17px/1 Inter; color: #6c7a70">Choose a preference. We’ll arrange the details.</div>
+            <div id="fDrop" class="abs" style="left: 48px; top: 242px; width: 716px; border: 2px solid var(--ink); border-top: none; border-radius: 0 0 6px 6px; background: #fff; font: 400 22px/54px Inter; overflow: hidden; transform-origin: 50% 0"><div id="fOpt" style="padding: 0 20px; background: var(--lime)"></div><div style="padding: 0 20px">Afternoon</div><div style="padding: 0 20px">Evening</div></div>
+            <div id="fBtn" class="btnd" style="top: 452px"><span id="fBtnT"></span><span class="abs" style="right: 26px; top: 0">↗</span></div>
+          </div>
+          <div id="fDark" class="form forest" style="color: #fff">
+            <div class="abs" style="right: 42px; top: 42px; width: 40px; height: 40px; border-radius: 50%; background: var(--lime); color: var(--forest); font: 700 22px/40px Inter; text-align: center">✓</div>
+            <div id="cT" class="abs" style="left: 56px; top: 96px; font: 500 74px/1.06 Inter; letter-spacing: -0.04em; white-space: normal; width: 430px"></div>
+            <div id="cS" class="abs" style="left: 58px; top: 290px; font: 400 22px/1 Inter; color: var(--lime)"></div>
+            <div class="abs" style="left: 58px; top: 352px; width: 700px; height: 1px; background: rgba(255, 255, 255, 0.16)"></div>
+            <div id="cF" class="abs" style="left: 58px; top: 384px; font: 400 17px/1 Inter; color: rgba(255, 255, 255, 0.7)"></div>
+          </div>
+        </div>
+        <!-- 11 · hero house -->
+        <div id="s11" class="layer">
+          <div class="kb"><img src="assets/img/house.jpg" alt="" /></div>
+          <div id="h1a" class="mask disp" style="left: 76px; top: 700px; font-size: 112px; color: #fff"><span></span></div>
+          <div id="h1b" class="mask disp" style="left: 76px; top: 806px; font-size: 112px; color: var(--lime)"><span></span></div>
+        </div>
+        <!-- 12 · the mark -->
+        <div id="s12" class="layer paper">
+          <div class="lab abs" style="left: 90px; top: 58px; color: #55635a; font-size: 14px">Built around the details.</div>
+          <svg id="mk" class="three"></svg>
+          <div class="abs" style="left: 90px; top: 1030px; font: 400 15px/1 Inter; color: #6c7a70">The <span data-var="brand"></span> mark / Confidence overhead.</div>
+        </div>
+        <!-- 13 · end card -->
+        <div id="s13" class="layer lime">
+          <div id="eWord" class="disp abs" style="left: 62px; top: 196px; font-size: 446px; line-height: 0.9; display: flex"></div>
+          <div id="eLine" class="abs" style="left: 90px; top: 742px; font: 400 32px/1 Inter; letter-spacing: -0.01em" data-var="tagline"></div>
+          <div id="eBtn" class="abs" style="left: 88px; top: 800px; height: 66px; padding: 0 28px; border-radius: 4px; background: var(--forest); color: #fff; font: 500 23px/66px Inter"><span data-var="cta"></span> ↗</div>
+          <svg id="eMark" class="abs" viewBox="0 0 120 90" style="right: 92px; top: 718px; width: 132px; height: 99px; overflow: visible"><path id="eM1" d="M8 52 L60 8 L112 52" fill="none" stroke="var(--ink)" stroke-width="9" pathLength="1" /><path id="eM2" d="M30 82 L60 56 L90 82" fill="none" stroke="var(--ink)" stroke-width="8" pathLength="1" /></svg>
+          <div class="abs" style="left: 88px; top: 896px; width: 1744px; height: 2px; background: rgba(11, 40, 30, 0.2)"></div>
+          <div class="abs" style="left: 90px; top: 1030px; font: 400 14px/1 Inter; color: rgba(11, 40, 30, 0.6)">Concept film · AI-generated imagery</div>
+        </div>
+        <svg id="cur" viewBox="0 0 46 56"><path d="M4 3 L4 44 L14 35 L21 51 L29 47.5 L22 32 L35 32 Z" fill="#0d0d0d" stroke="#fff" stroke-width="3" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 28.5, NS = "http://www.w3.org/2000/svg";
+        const px = (n) => n.toFixed(1) + "px";
+        const blurS = (b) => (b > 0.3 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const ioc = E.inOutCubic, oc = E.outCubic, ox = E.outExpo;
+        const split = (s, n) => { const a = String(s || "").split("|"); while (a.length < n) a.push(""); return a; };
+        const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        const keyed = (keys, t, ease = ioc) => {
+          if (t <= keys[0][0]) return keys[0].slice(1);
+          for (let i = 0; i < keys.length - 1; i++) { const a = keys[i], b = keys[i + 1]; if (t <= b[0]) { const u = ease(P(t, a[0], b[0])); return a.slice(1).map((x, j) => L(x, b[j + 1], u)); } }
+          return keys[keys.length - 1].slice(1);
+        };
+        // a line of text rising out of a mask
+        const rise = (el, u) => { const s = el.firstElementChild; s.style.transform = "translateY(" + (105 * (1 - u)).toFixed(2) + "%)"; };
+        const setMask = (id, txt) => { $(id).firstElementChild.textContent = txt; };
+
+        // ---------- tiny orthographic 3D in SVG ----------
+        const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        const nrm = (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+        const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
+        const RGB = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+        function camera(phi, th, S, cx, cy) {
+          const p = phi * Math.PI / 180, q = th * Math.PI / 180, cp = Math.cos(p), sp = Math.sin(p), cq = Math.cos(q), sq = Math.sin(q);
+          return {
+            V: [sp * cq, cp * cq, sq],
+            depth: (a) => (a[0] * sp + a[1] * cp) * cq + a[2] * sq,
+            pr: (a) => { const xr = a[0] * cp - a[1] * sp, yr = a[0] * sp + a[1] * cp; return [cx + S * xr, cy + S * (yr * sq - a[2] * cq)]; },
+          };
+        }
+        function shade(c, n, k, lgt) { const d = Math.max(0, dot(n, lgt)); const f = 1 - k + k * (0.3 + 0.95 * d); return "rgb(" + c.map((x) => Math.round(Math.min(255, x * f))).join(",") + ")"; }
+        function pool(svg, n) { const ps = []; for (let i = 0; i < n; i++) { const p = document.createElementNS(NS, "path"); p.setAttribute("stroke-linejoin", "round"); svg.appendChild(p); ps.push(p); } return ps; }
+        const LGT = nrm([-0.45, 0.5, 0.78]);
+        function draw3d(ps, faces, cam, lgt = LGT) {
+          const out = [];
+          faces.forEach((f, idx) => {
+            const par = f.par || f;
+            if (!par.d2 && dot(par.n, cam.V) <= 0.0001) return;
+            if (par._cam !== cam) { par._cam = cam; let s = 0; par.p.forEach((q) => (s += cam.depth(q))); par._dep = (par.bias || 0) * 1000 + s / par.p.length; }
+            out.push([f.par ? par._dep + 1e-4 * (f.ord || 1) : par._dep, idx, f]);
+          });
+          out.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+          let i = 0;
+          for (const [, , f] of out) {
+            if (i >= ps.length) break;
+            const p = ps[i++];
+            let d = "";
+            if (f.segs) f.segs.forEach(([a, b]) => { const A = cam.pr(a), B = cam.pr(b); d += "M" + A[0].toFixed(1) + " " + A[1].toFixed(1) + "L" + B[0].toFixed(1) + " " + B[1].toFixed(1); });
+            else { f.p.forEach((q, j) => { const A = cam.pr(q); d += (j ? "L" : "M") + A[0].toFixed(1) + " " + A[1].toFixed(1); }); d += "Z"; }
+            p.setAttribute("d", d);
+            if (f.segs) { p.setAttribute("fill", "none"); p.setAttribute("stroke", f.sc); p.setAttribute("stroke-width", f.sw || 1); }
+            else { p.setAttribute("fill", f.fill || shade(f.c, f.n, f.k === undefined ? 0.35 : f.k, lgt)); p.setAttribute("stroke", f.sc || "none"); p.setAttribute("stroke-width", f.sw || 0); }
+            p.setAttribute("opacity", f.op === undefined ? 1 : f.op);
+          }
+          for (; i < ps.length; i++) ps[i].setAttribute("d", "");
+        }
+
+        // ---------- the house ----------
+        const HC = { wall: RGB("#f1ede1"), roof: RGB("#40444a"), wood: RGB("#b8854f"), ply: RGB("#d2a56c"), felt: RGB("#2e3936"), chim: RGB("#ebe4d3"), trim: RGB("#f8f7f2") };
+        const HH = 3.6, RZ = 6.2, EY = 3.5, EZ = 3.3, LX = 5, OX = 5.4, HW = 3;
+        const nF = nrm([0, RZ - EZ, EY]), nB = nrm([0, -(RZ - EZ), EY]);
+        const rp = (sg, f, x, lift) => add([x, sg * EY * f, RZ - (RZ - EZ) * f], sg > 0 ? nF : nB, lift);
+        // exploded layers fan out along the roof normal
+        const EXD = nF, rq = (f, x, lift, up) => add(rp(1, f, x, lift), EXD, up);
+        function house(ex, layered, groundCol) {
+          const F = [];
+          const face = (p, n, c, k, extra) => { const f = Object.assign({ p, n, c, k }, extra || {}); F.push(f); return f; };
+          if (groundCol) face([[-8.6, -6.4, 0], [8.6, -6.4, 0], [8.6, 6.4, 0], [-8.6, 6.4, 0]], [0, 0, 1], groundCol, 0.12, { bias: -9 });
+          const fw = face([[-LX, HW, 0], [LX, HW, 0], [LX, HW, HH], [-LX, HW, HH]], [0, 1, 0], HC.wall, 0.4);
+          const bw = face([[LX, -HW, 0], [-LX, -HW, 0], [-LX, -HW, HH], [LX, -HW, HH]], [0, -1, 0], HC.wall, 0.4);
+          const lg = face([[-LX, -HW, 0], [-LX, HW, 0], [-LX, HW, HH], [-LX, 0, RZ], [-LX, -HW, HH]], [-1, 0, 0], HC.wall, 0.4);
+          const rg = face([[LX, HW, 0], [LX, -HW, 0], [LX, -HW, HH], [LX, 0, RZ], [LX, HW, HH]], [1, 0, 0], HC.wall, 0.4);
+          [[fw, "y", HW], [bw, "y", -HW], [lg, "x", -LX], [rg, "x", LX]].forEach(([f, ax, w]) => {
+            const segs = [], o = w + Math.sign(w) * 0.01;
+            for (let z = 0.3; z < RZ - 0.25; z += 0.3) {
+              if (ax === "y") { if (z >= HH) break; segs.push([[-LX, o, z], [LX, o, z]]); }
+              else { const hw = z <= HH ? HW : (HW * (RZ - z)) / (RZ - HH); segs.push([[o, -hw, z], [o, hw, z]]); }
+            }
+            F.push({ segs, par: f, sc: "rgba(80,70,50,0.16)", sw: 1.1, ord: 1 });
+          });
+          const opening = (f, u, zc, w, h, door) => {
+            const isY = f.n[1] !== 0, s = isY ? f.n[1] : f.n[0];
+            const Pt = (a, z, o) => (isY ? [a, f.p[0][1] + s * o, z] : [f.p[0][0] + s * o, a, z]);
+            const rect = (u0, u1, z0, z1, fill, o, ord) => F.push({ p: [Pt(u0, z0, o), Pt(u1, z0, o), Pt(u1, z1, o), Pt(u0, z1, o)], par: f, fill, ord });
+            rect(u - w / 2 - 0.13, u + w / 2 + 0.13, zc - h / 2 - 0.13, zc + h / 2 + 0.13, "#fbfaf5", 0.03, 2);
+            rect(u - w / 2, u + w / 2, zc - h / 2, zc + h / 2, "#1d3a2b", 0.04, 3);
+            if (door) rect(u - w / 2 + 0.14, u + w / 2 - 0.14, zc + h / 2 - 0.75, zc + h / 2 - 0.16, "#53705f", 0.05, 4);
+            else {
+              rect(u - w / 2 + 0.09, u + w / 2 - 0.09, zc - h / 2 + 0.09, zc + h / 2 - 0.09, "#40564f", 0.05, 4);
+              F.push({ segs: [[Pt(u, zc - h / 2 + 0.09, 0.06), Pt(u, zc + h / 2 - 0.09, 0.06)], [Pt(u - w / 2 + 0.09, zc, 0.06), Pt(u + w / 2 - 0.09, zc, 0.06)]], par: f, sc: "#e8eee9", sw: 2, ord: 5 });
+            }
+          };
+          opening(fw, -3.3, 1.9, 1.1, 1.4); opening(fw, -1.3, 1.9, 1.1, 1.4); opening(fw, 1.1, 1.15, 1.0, 2.3, true); opening(fw, 3.3, 1.9, 1.1, 1.4);
+          opening(bw, -2.6, 1.9, 1.1, 1.4); opening(bw, 0.4, 1.9, 1.1, 1.4); opening(bw, 3.0, 1.9, 1.1, 1.4);
+          opening(lg, 0, 1.9, 1.1, 1.4); opening(lg, 0, 4.55, 0.7, 0.55);
+          opening(rg, -1.3, 1.9, 1.1, 1.4); opening(rg, 1.3, 1.9, 1.1, 1.4); opening(rg, 0, 4.55, 0.7, 0.55);
+          // roof planes: a slab with an edge, optional shingle rows
+          const slab = (sg, lift, col, bias, rows, edgeCol, th = 0.2, up = 0) => {
+            const n = sg > 0 ? nF : nB, Q = (f, x, l) => add(rp(sg, f, x, l), EXD, up);
+            const top = face([Q(0, -OX, lift), Q(0, OX, lift), Q(1, OX, lift), Q(1, -OX, lift)], n, col, 0.5, { bias });
+            const down = [-n[0] * th, -n[1] * th, -n[2] * th];
+            face([Q(1, -OX, lift), Q(1, OX, lift), add(Q(1, OX, lift), down), add(Q(1, -OX, lift), down)], [0, sg, -0.15], edgeCol, 0.3, { bias: bias + 0.01 });
+            [-1, 1].forEach((sx) => face([Q(0, sx * OX, lift), Q(1, sx * OX, lift), add(Q(1, sx * OX, lift), down), add(Q(0, sx * OX, lift), down)], [sx, 0, 0], edgeCol, 0.3, { bias: bias + 0.01 }));
+            if (rows) {
+              const segs = [];
+              for (let r = 1; r < rows; r++) {
+                const f = r / rows; segs.push([Q(f, -OX, lift + 0.01), Q(f, OX, lift + 0.01)]);
+                for (let x = -OX + (r % 2 ? 0.45 : 0.9); x < OX - 0.1; x += 0.9) segs.push([Q(f, x, lift + 0.01), Q(Math.min(1, f + 1 / rows), x, lift + 0.01)]);
+              }
+              F.push({ segs, par: top, sc: "rgba(14,17,18,0.6)", sw: 1.15, ord: 1 });
+            }
+            return top;
+          };
+          slab(-1, 0, HC.roof, 3, 13, HC.trim);
+          // chimney on the back plane
+          const cx0 = -3.6, cx1 = -2.6, cy0 = -1.75, cy1 = -0.75, cz0 = 4.6, cz1 = 7.25;
+          face([[cx0, cy1, cz0], [cx1, cy1, cz0], [cx1, cy1, cz1], [cx0, cy1, cz1]], [0, 1, 0], HC.chim, 0.4, { bias: 4 });
+          face([[cx1, cy0, cz0], [cx0, cy0, cz0], [cx0, cy0, cz1], [cx1, cy0, cz1]], [0, -1, 0], HC.chim, 0.4, { bias: 4 });
+          face([[cx0, cy0, cz0], [cx0, cy1, cz0], [cx0, cy1, cz1], [cx0, cy0, cz1]], [-1, 0, 0], HC.chim, 0.4, { bias: 4 });
+          face([[cx1, cy1, cz0], [cx1, cy0, cz0], [cx1, cy0, cz1], [cx1, cy1, cz1]], [1, 0, 0], HC.chim, 0.4, { bias: 4 });
+          face([[cx0 - 0.1, cy0 - 0.1, cz1], [cx1 + 0.1, cy0 - 0.1, cz1], [cx1 + 0.1, cy1 + 0.1, cz1], [cx0 - 0.1, cy1 + 0.1, cz1]], [0, 0, 1], HC.trim, 0.2, { bias: 4.01 });
+          if (!layered) slab(1, 0, HC.roof, 5, 13, HC.trim);
+          else {
+            // front plane taken apart: rafters, deck, underlayment, shingles
+            face([rp(1, 0, -OX + 0.3, -0.12), rp(1, 0, OX - 0.3, -0.12), rp(1, 1, OX - 0.3, -0.12), rp(1, 1, -OX + 0.3, -0.12)], nF, RGB("#2a2219"), 0.1, { bias: 5 });
+            for (let i = 0; i < 9; i++) {
+              const x = -5 + i * 1.25, a = x - 0.13, b = x + 0.13, dn = [-nF[0] * 0.32, -nF[1] * 0.32, -nF[2] * 0.32];
+              const top = face([rp(1, 0, a, 0), rp(1, 0, b, 0), rp(1, 1.04, b, 0), rp(1, 1.04, a, 0)], nF, HC.wood, 0.45, { bias: 5.1 });
+              face([rp(1, 0, b, 0), rp(1, 1.04, b, 0), add(rp(1, 1.04, b, 0), dn), add(rp(1, 0, b, 0), dn)], [1, 0, 0], HC.wood, 0.45, { bias: 5.1 });
+              face([rp(1, 0, a, 0), rp(1, 1.04, a, 0), add(rp(1, 1.04, a, 0), dn), add(rp(1, 0, a, 0), dn)], [-1, 0, 0], HC.wood, 0.45, { bias: 5.1 });
+              top.ord = i;
+            }
+            face([rp(1, 0, -OX, 0.02), rp(1, 0, OX, 0.02), rp(1, 0.07, OX, 0.02), rp(1, 0.07, -OX, 0.02)], nF, HC.wood, 0.4, { bias: 5.15 });
+            const deck = slab(1, 0.06, HC.ply, 5.2, 0, RGB("#b98b55"), 0.12, ex * 1.4);
+            F.push({ segs: [[rq(0.34, -OX, 0.07, ex * 1.4), rq(0.34, OX, 0.07, ex * 1.4)], [rq(0.67, -OX, 0.07, ex * 1.4), rq(0.67, OX, 0.07, ex * 1.4)], [rq(0, -1.8, 0.07, ex * 1.4), rq(0.34, -1.8, 0.07, ex * 1.4)], [rq(0.34, 0.6, 0.07, ex * 1.4), rq(0.67, 0.6, 0.07, ex * 1.4)], [rq(0.67, -0.6, 0.07, ex * 1.4), rq(1, -0.6, 0.07, ex * 1.4)], [rq(0, 2.6, 0.07, ex * 1.4), rq(0.34, 2.6, 0.07, ex * 1.4)]], par: deck, sc: "rgba(120,80,40,0.45)", sw: 1.4, ord: 1 });
+            const felt = slab(1, 0.1, HC.felt, 5.3, 0, RGB("#232c29"), 0.06, ex * 2.8);
+            F.push({ segs: [0.25, 0.5, 0.75].map((f) => [rq(f, -OX, 0.11, ex * 2.8), rq(f, OX, 0.11, ex * 2.8)]), par: felt, sc: "rgba(255,255,255,0.12)", sw: 1.3, ord: 1 });
+            slab(1, 0.14, HC.roof, 5.4, 13, RGB("#2b2f33"), 0.1, ex * 4.2);
+          }
+          return F;
+        }
+        const anchorsLayers = (ex) => [[0.14, 4.2], [0.1, 2.8], [0.06, 1.4], [0, 0]].map(([l, u], i) => rq(i === 3 ? 0.97 : 1, i === 3 ? 0 : 0.6, l + 0.02, ex * u));
+
+        // ---------- scene list ----------
+        const WIPE = { 4: [7.16, 7.46], 5: [8.61, 8.91] };
+        const S = [0, 2.45, 2.75, 6.45, 7.4, 8.85, 10.45, 14.45, 18.45, 20.65, 22.45, 23.25, 24.65, 26.85, 28.5];
+        const scn = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 11, 12, 13].map((k) => $("s" + k));
+        // copy
+        const o1 = split(v.open1, 2), o2 = split(v.open2, 2), lt = split(v.layersTitle, 2), lay = split(v.layers, 4);
+        setMask("o1a", o1[0]); setMask("o1b", o1[1]); setMask("o2a", o2[0]); setMask("o2b", o2[1]);
+        $("o1sub").firstElementChild.textContent = v.open1Sub;
+        $("lt1").textContent = lt[0]; $("lt2").textContent = lt[1];
+        const scopes = [split(v.scope1, 2), split(v.scope2, 2), split(v.scope3, 2)];
+        const photoNames = split(v.photos, 3), photoSrc = ["assets/img/measure.jpg", "assets/img/flashing.jpg", "assets/img/gutter.jpg"];
+        const ctx = split(v.context, 2); $("ct1").textContent = ctx[0]; $("ct2").textContent = ctx[1];
+        $("rpTitle").textContent = v.report;
+        const vis = split(v.visit, 2), frm = split(v.form, 3), tch = split(v.touch, 2), cfm = split(v.confirm, 2), hero = split(v.hero, 2);
+        setMask("v1a", vis[0]); setMask("v1b", vis[1]); setMask("h1a", hero[0]); setMask("h1b", hero[1]);
+        $("fTitle").textContent = frm[0]; $("fBtnT").textContent = frm[2];
+        $("cT").textContent = cfm[0]; $("cS").textContent = cfm[1]; $("cF").textContent = v.brand + " will confirm availability.";
+        $("opLine").textContent = v.optLine;
+
+        // thumbnails for the close-ups
+        const thumbs = $("thumbs");
+        const thEls = [0, 1, 2].map((i) => { const d = document.createElement("div"); d.className = "t"; d.innerHTML = '<img src="' + photoSrc[i] + '" alt="" /><b>0' + (i + 1) + "</b>"; thumbs.appendChild(d); return d; });
+
+        // the cutaway
+        const hsA = $("hsA"), poolA = pool(hsA, 420);
+        const callA = $("callA");
+        const calls = lay.map((name, i) => {
+          const g = document.createElementNS(NS, "g");
+          g.innerHTML = '<path fill="none" stroke="#0b281e" stroke-width="1.6" /><circle r="6" fill="var(--lime)" stroke="#0b281e" stroke-width="1.6" /><rect width="30" height="26" rx="2" fill="#0b281e" /><text font-family="Inter" font-weight="600" font-size="13" fill="#fff" text-anchor="middle">0' + (i + 1) + '</text><text font-family="Inter" font-weight="500" font-size="21" fill="#0b281e">' + esc(name) + "</text>";
+          callA.appendChild(g); return g;
+        });
+
+        // photos on the house
+        const hsB = $("hsB"), poolB = pool(hsB, 420), leads = $("leads");
+        const pc = $("pcards");
+        const anchorsB = [[1.6, 1.9, RZ - (RZ - EZ) * (1.9 / EY)], [-3.1, -0.75, 5.8], [-2.2, EY, EZ - 0.1]];
+        const pcards = [0, 1, 2].map((i) => {
+          const d = document.createElement("div"); d.className = "pcard"; d.innerHTML = '<img src="' + photoSrc[i] + '" alt="" /><b>0' + (i + 1) + " " + esc(photoNames[i]) + "</b>"; pc.appendChild(d);
+          const l = document.createElementNS(NS, "path"); l.setAttribute("fill", "none"); l.setAttribute("stroke", "var(--lime)"); l.setAttribute("stroke-width", "2"); leads.appendChild(l);
+          const c = document.createElementNS(NS, "circle"); c.setAttribute("r", "7"); c.setAttribute("fill", "var(--lime)"); leads.appendChild(c);
+          return { d, l, c };
+        });
+
+        // report
+        const rows = $("rows");
+        const rowTxt = [[["Area", "Roof surface"], ["Materials", "Asphalt shingles"], ["Talk through options", "Review with your inspector"]], [["Area", "Roof-to-wall junction"], ["Materials", "Shingles + metal flashing"], ["Talk through options", "Review with your inspector"]]];
+        const rowEls = [0, 1, 2].map((i) => { const d = document.createElement("div"); d.className = "row"; d.style.top = 412 + i * 86 + "px"; d.innerHTML = '<div class="hl"></div><span class="n">0' + (i + 1) + '</span><span class="a"></span><span class="b"></span>'; rows.appendChild(d); return d; });
+        const rpThumbs = $("rpThumbs");
+        const rpT = [0, 1, 2].map((i) => { const d = document.createElement("div"); d.className = "card"; d.style.cssText = "position:relative;width:214px;height:120px;border:3px solid transparent"; d.innerHTML = '<img src="' + photoSrc[i] + '" alt="" /><span class="chip" style="position:absolute;left:6px;top:6px;height:20px;line-height:20px;font-size:10px;padding:0 6px">0' + (i + 1) + " " + esc(photoNames[i]) + "</span>"; rpThumbs.appendChild(d); return d; });
+
+        // options with little roof tiles
+        const optsEl = $("opts"), optTxt = [split(v.opt1, 2), split(v.opt2, 2), split(v.opt3, 2)];
+        const tiles = optTxt.map((o, i) => {
+          const d = document.createElement("div"); d.className = "opt"; d.style.left = 72 + i * 600 + "px";
+          d.innerHTML = '<svg viewBox="0 0 560 360"></svg><span class="n">0' + (i + 1) + '</span><div class="a">' + esc(o[0]) + '</div><div class="b">' + esc(o[1]) + "</div>";
+          optsEl.appendChild(d); return { d, ps: pool(d.querySelector("svg"), 160) };
+        });
+        function tileFaces(kind, lt) {
+          const F = [], X = 3.3, Y = 2.3, T = 0.3;
+          const face = (p, n, c, k, extra) => { const f = Object.assign({ p, n, c, k }, extra || {}); F.push(f); return f; };
+          const slab = (z0, th, col, edge, bias, op, dx = 0, dz = 0) => {
+            const z1 = z0 + th + dz;
+            const top = face([[-X + dx, -Y, z1], [X + dx, -Y, z1], [X + dx, Y, z1], [-X + dx, Y, z1]], [0, 0, 1], col, 0.45, { bias, op });
+            face([[-X + dx, Y, z0 + dz], [X + dx, Y, z0 + dz], [X + dx, Y, z1], [-X + dx, Y, z1]], [0, 1, 0], edge, 0.4, { bias, op });
+            face([[X + dx, Y, z0 + dz], [X + dx, -Y, z0 + dz], [X + dx, -Y, z1], [X + dx, Y, z1]], [1, 0, 0], edge, 0.4, { bias, op });
+            face([[-X + dx, -Y, z0 + dz], [-X + dx, Y, z0 + dz], [-X + dx, Y, z1], [-X + dx, -Y, z1]], [-1, 0, 0], edge, 0.4, { bias, op });
+            face([[X + dx, -Y, z0 + dz], [-X + dx, -Y, z0 + dz], [-X + dx, -Y, z1], [X + dx, -Y, z1]], [0, -1, 0], edge, 0.4, { bias, op });
+            return { top, z1 };
+          };
+          const rows = (top, z, dx, op) => { const segs = []; for (let r = 1; r < 8; r++) { const y = -Y + (r * 2 * Y) / 8; segs.push([[-X + dx, y, z + 0.005], [X + dx, y, z + 0.005]]); for (let x = -X + (r % 2 ? 0.4 : 0.8); x < X - 0.1; x += 0.8) segs.push([[x + dx, y, z + 0.005], [x + dx, Math.min(Y, y + (2 * Y) / 8), z + 0.005]]); } F.push({ segs, par: top, sc: "rgba(10,12,13," + (0.6 * op).toFixed(2) + ")", sw: 1.1, ord: 1 }); };
+          const deck = slab(0, T, HC.ply, RGB("#a97c49"), 0, 1);
+          if (kind === 2) {
+            // replace: the old roof lifts away, a new one settles
+            const off = oc(P(lt, 0.5, 1.3)), back = oc(P(lt, 1.35, 1.9));
+            const op1 = 1 - P(lt, 0.9, 1.3);
+            if (op1 > 0) { const s1 = slab(T, 0.18, HC.roof, RGB("#2a2e33"), 1, op1, 2.6 * off, 2.2 * off); rows(s1.top, s1.z1, 2.6 * off, op1); }
+            if (back > 0) { const s2 = slab(T, 0.18, RGB("#4b5056"), RGB("#2a2e33"), 2, back, 0, 1.6 * (1 - back)); rows(s2.top, s2.z1, 0, back); }
+          } else {
+            const s1 = slab(T, 0.18, HC.roof, RGB("#2a2e33"), 1, 1); rows(s1.top, s1.z1, 0, 1);
+            const z = s1.z1 + 0.01;
+            if (kind === 0) {
+              const xs = -X + 2 * X * C(P(lt, 0.3, 1.9));
+              F.push({ p: [[xs - 0.06, -Y, z], [xs + 0.06, -Y, z], [xs + 0.06, Y, z], [xs - 0.06, Y, z]], par: s1.top, fill: v.lime, ord: 3 });
+              F.push({ p: [[-X, -Y, z], [xs, -Y, z], [xs, Y, z], [-X, Y, z]], par: s1.top, fill: v.lime, op: 0.16, ord: 2 });
+            } else {
+              const lift = 0.5 * Math.sin(Math.PI * P(lt, 0.6, 1.6)), cxr = 0.6, cyr = 0.2;
+              F.push({ p: [[cxr - 0.4, cyr - 0.29, z + lift], [cxr + 0.4, cyr - 0.29, z + lift], [cxr + 0.4, cyr + 0.29, z + lift], [cxr - 0.4, cyr + 0.29, z + lift]], par: s1.top, fill: "#59606a", ord: 2 });
+              const ring = []; const rr = 0.95 * (1 + 0.06 * Math.sin(lt * 5));
+              for (let a = 0; a <= 40; a++) { const q = (a / 40) * Math.PI * 2, q2 = ((a + 1) / 40) * Math.PI * 2; ring.push([[cxr + rr * Math.cos(q), cyr + rr * Math.sin(q), z], [cxr + rr * Math.cos(q2), cyr + rr * Math.sin(q2), z]]); }
+              F.push({ segs: ring, par: s1.top, sc: v.lime, sw: 3, ord: 4 });
+            }
+          }
+          return F;
+        }
+
+        // the mark: four extruded bars that fly together
+        const mk = $("mk"), poolM = pool(mk, 60);
+        function rotE(p, rx, ry, rz) {
+          let [x, y, z] = p, c, s, t;
+          c = Math.cos(rx); s = Math.sin(rx); t = y * c - z * s; z = y * s + z * c; y = t;
+          c = Math.cos(ry); s = Math.sin(ry); t = x * c + z * s; z = -x * s + z * c; x = t;
+          c = Math.cos(rz); s = Math.sin(rz); t = x * c - y * s; y = x * s + y * c; x = t;
+          return [x, y, z];
+        }
+        // [centre x, centre z, length, thickness, angle in the x–z plane (deg), colour, flight offset, flight spin]
+        const BARS = [
+          [-2.25, 0.9, 7.2, 1.3, 45, "#0b3a26", [-9, 0, 9], [1.2, 0.8, 2.4]],
+          [2.25, 0.9, 7.2, 1.3, 135, "#0b3a26", [13, 0, 8], [-0.9, 1.4, -2.0]],
+          [-1.25, -2.0, 4.0, 1.0, 45, "#cbea7e", [-10, 0, -7], [0.8, -1.6, 1.8]],
+          [1.25, -2.0, 4.0, 1.0, 135, "#cbea7e", [11, 0, -8], [-1.4, 0.7, -1.2]],
+        ];
+        function markFaces(t) {
+          const F = [];
+          BARS.forEach(([cx, cz, len, th, ang, col, off, spin], i) => {
+            const u = ox(P(t, 24.75 + i * 0.12, 25.75 + i * 0.12));
+            const a = (-ang * Math.PI) / 180, D = th;
+            const tf = (p) => { let q = rotE(p, 0, a, 0); q = rotE(q, spin[0] * (1 - u), spin[1] * (1 - u), spin[2] * (1 - u)); return [q[0] + cx + off[0] * (1 - u), q[1] + off[1] * (1 - u), q[2] + cz + off[2] * (1 - u)]; };
+            const nr = (n) => { let q = rotE(n, 0, a, 0); return rotE(q, spin[0] * (1 - u), spin[1] * (1 - u), spin[2] * (1 - u)); };
+            const hx = len / 2, hy = D / 2, hz = th / 2, c = RGB(col);
+            const V8 = [[-hx, -hy, -hz], [hx, -hy, -hz], [hx, hy, -hz], [-hx, hy, -hz], [-hx, -hy, hz], [hx, -hy, hz], [hx, hy, hz], [-hx, hy, hz]].map(tf);
+            [[[0, 1, 5, 4], [0, -1, 0]], [[3, 2, 6, 7], [0, 1, 0]], [[0, 3, 7, 4], [-1, 0, 0]], [[1, 2, 6, 5], [1, 0, 0]], [[4, 5, 6, 7], [0, 0, 1]], [[0, 1, 2, 3], [0, 0, -1]]].forEach(([ix, n]) => F.push({ p: ix.map((k) => V8[k]), n: nr(n), c, k: 0.55, op: C(u * 4) }));
+          });
+          return F;
+        }
+        const LGT2 = nrm([-0.55, 0.55, 0.62]);
+
+        // end card letters
+        const eWord = $("eWord");
+        const eLetters = [...String(v.brand)].map((ch) => { const m = document.createElement("span"); m.style.cssText = "display:inline-block;overflow:hidden;padding:0 0.005em"; const s = document.createElement("span"); s.style.display = "inline-block"; s.textContent = ch === " " ? "\u00a0" : ch; m.appendChild(s); eWord.appendChild(m); return s; });
+
+        const cur = $("cur");
+        function cursorAt(x, y, press, op) { K.show(cur, op > 0); cur.style.opacity = op.toFixed(3); cur.style.transform = "translate(" + px(x) + "," + px(y) + ") scale(" + (1 - 0.14 * press).toFixed(3) + ")"; }
+
+        function render(t) {
+          let si = 0; for (let k = 0; k < S.length - 1; k++) if (t >= S[k]) si = k;
+          const loc = t - S[si];
+          // which layers are up (close-ups overlap during the lime wipe)
+          const on = new Map();
+          scn.forEach((el, k) => on.set(el, (on.get(el) || false) || k === si));
+          // close-ups: a lime bar sweeps right to left and uncovers the next photo
+          let wipeQ = -1, barX = 0;
+          [4, 5].forEach((q) => { const [a, b] = WIPE[q]; if (t >= a && t < b) { wipeQ = q; barX = 1920 * (1 - oc(P(t, a, b))); on.set(scn[q], true); on.set(scn[q - 1], true); } });
+          on.forEach((vis, el) => K.show(el, vis));
+          K.show($("scope"), si >= 3 && si <= 5);
+          K.show($("wipe"), wipeQ > 0);
+          cursorAt(0, 0, 0, 0);
+
+          // ---------- 0 · field notes ----------
+          if (si === 0) {
+            const kb = $("s0").querySelector(".kb");
+            kb.style.transform = "scale(" + (1.04 + 0.05 * (t / 2.45)).toFixed(4) + ") translateX(" + px(-14 * t) + ")";
+            rise($("o1a"), ox(P(t, 0.0, 0.55)));
+            const bx = oc(P(t, 0.12, 0.6));
+            $("o1box").style.width = px(950 * bx);
+            rise($("o1b"), ox(P(t, 0.22, 0.75)));
+            const su = oc(P(t, 0.55, 0.95));
+            $("o1sub").style.opacity = su.toFixed(3); $("o1sub").style.transform = "translateY(" + px(14 * (1 - su)) + ")";
+            $("o1line").style.transform = "scaleX(" + ioc(P(t, 0.7, 1.5)).toFixed(4) + ")";
+            $("o1num").style.opacity = oc(P(t, 0.4, 0.9)).toFixed(3);
+          }
+          // ---------- 1 · big decisions ----------
+          if (si === 1) { rise($("o2a"), ox(P(loc, 0, 0.2))); rise($("o2b"), ox(P(loc, 0.04, 0.24))); }
+          // ---------- 2 · layers ----------
+          if (si === 2) {
+            const ex = ioc(P(loc, 0.6, 2.0));
+            const cam = camera(-73 + 5 * P(loc, 0, 3.7), 28, 80 + 4 * P(loc, 0, 3.7), 690, 960);
+            draw3d(poolA, house(ex, true, RGB("#e8e5d8")), cam);
+            // label rows sit level with where each layer ends up, at least 84px apart
+            const endY = anchorsLayers(1).map((q) => cam.pr(q)[1]);
+            const rowsY = []; endY.forEach((y, i) => rowsY.push(Math.max(y + 30, i ? rowsY[i - 1] + 84 : 0)));
+            [$("lt1"), $("lt2")].forEach((el, i) => { const u = oc(P(loc, 0.05 + i * 0.1, 0.6 + i * 0.1)); el.style.opacity = u.toFixed(3); el.style.transform = "translateY(" + px(24 * (1 - u)) + ")"; });
+            const an = anchorsLayers(ex);
+            calls.forEach((g, i) => {
+              const u = oc(P(loc, 1.35 + i * 0.16, 1.8 + i * 0.16));
+              K.show(g, u > 0); if (u <= 0) return;
+              const A = cam.pr(an[i]), ly = rowsY[i], lx = 1596;
+              const [path, circ, box, num, name] = g.children;
+              const kx = A[0] + 40, mid = L(A[0], lx - 18, u);
+              path.setAttribute("d", "M" + A[0].toFixed(1) + " " + A[1].toFixed(1) + " L" + Math.max(kx, A[0]).toFixed(1) + " " + L(A[1], ly, Math.min(1, u * 1.5)).toFixed(1) + " L" + mid.toFixed(1) + " " + L(A[1], ly, Math.min(1, u * 1.5)).toFixed(1));
+              circ.setAttribute("cx", A[0].toFixed(1)); circ.setAttribute("cy", A[1].toFixed(1));
+              box.setAttribute("x", lx); box.setAttribute("y", ly - 13); num.setAttribute("x", lx + 15); num.setAttribute("y", ly + 5);
+              name.setAttribute("x", lx + 42); name.setAttribute("y", ly + 7);
+              [box, num, name].forEach((e) => e.setAttribute("opacity", P(u, 0.5, 1).toFixed(3)));
+            });
+          }
+          // ---------- 3–5 · close-ups ----------
+          if (si >= 3 && si <= 5) {
+            const k = si - 3;
+            [3, 4, 5].forEach((q, j) => {
+              const el = scn[q]; if (el.style.display === "none") return;
+              const lt2 = t - S[q];
+              el.querySelector(".kb").style.transform = "scale(" + (1.06 + 0.06 * C(lt2 / 1.8)).toFixed(4) + ") translate(" + px(-10 * lt2) + "," + px(-4 * lt2) + ")";
+              const r = el.querySelector(".ret"), ru = oc(P(lt2, 0.05, 0.4));
+              r.style.opacity = ru.toFixed(3); r.style.transform = "scale(" + (1.5 - 0.5 * ru + 0.04 * Math.sin(lt2 * 4)).toFixed(3) + ")";
+              el.style.clipPath = q === wipeQ ? "inset(0 0 0 " + px(barX) + ")" : "none";
+            });
+            if (wipeQ > 0) $("wipe").style.transform = "translateX(" + px(barX - 35) + ")";
+            const sc = scopes[k];
+            const tagEl = $("scTag").firstElementChild;
+            if (tagEl.dataset.k !== String(k)) { tagEl.dataset.k = String(k); tagEl.textContent = "0" + (k + 1) + " / Inspection scope"; $("scT").textContent = sc[0]; $("scS").firstElementChild.textContent = sc[1]; }
+            const st = loc, u1 = oc(P(st, 0, 0.25)), u2 = oc(P(st, 0.03, 0.33)), u3 = oc(P(st, 0.08, 0.38));
+            $("scTag").style.opacity = u1.toFixed(3);
+            $("scT").style.opacity = u2.toFixed(3); $("scT").style.transform = "translateY(" + px(26 * (1 - u2)) + ")"; $("scT").style.filter = blurS(10 * (1 - u2));
+            $("scS").style.opacity = u3.toFixed(3);
+            const outU = P(t, S[si + 1] - 0.3, S[si + 1] - 0.14);
+            $("scope").querySelectorAll("#scTag,#scT,#scS").forEach((e) => (e.style.opacity = (parseFloat(e.style.opacity) * (1 - outU)).toFixed(3)));
+            thEls.forEach((d, i) => { const u = oc(P(t, S[3 + i] + 0.1, S[3 + i] + 0.45)); K.show(d, u > 0); d.style.opacity = u.toFixed(3); d.style.transform = "translateY(" + px(16 * (1 - u)) + ")"; d.classList.toggle("on", i === k); });
+          }
+          // ---------- 6 · photos on the house ----------
+          if (si === 6) {
+            const [phi, th, Sc, cx, cy] = keyed([[S[6], -30, 28, 92, 1000, 690], [12.3, -72, 36, 116, 900, 720], [S[7], -118, 30, 100, 880, 700]], t, (u) => 0.3 * u + 0.7 * ioc(u));
+            const cam = camera(phi, th, Sc, cx, cy);
+            draw3d(poolB, house(0, false, RGB("#e9e6da")), cam);
+            const tu = oc(P(loc, 0.0, 0.5));
+            const tOut = 1 - P(t, 11.85, 12.2);
+            $("ct1").style.opacity = (tu * tOut).toFixed(3); $("ct2").style.opacity = (oc(P(loc, 0.12, 0.62)) * tOut).toFixed(3);
+            pcards.forEach(({ d, l, c }, i) => {
+              const t0 = 10.95 + i * 0.75, u = oc(P(t, t0, t0 + 0.35)), mv = ioc(P(t, t0 + 0.55, t0 + 1.15));
+              K.show(d, u > 0); K.show(l, u > 0); K.show(c, u > 0); if (u <= 0) return;
+              const A = cam.pr(anchorsB[i]);
+              const x0 = A[0] + 30, y0 = A[1] - 240, x1 = 1474, y1 = 112 + i * 244, s = L(0.72, 1, mv);
+              const x = L(x0, x1, mv), y = L(y0, y1, mv);
+              d.style.transform = "translate(" + px(x) + "," + px(y) + ") scale(" + (s * (0.7 + 0.3 * u)).toFixed(3) + ")"; d.style.opacity = u.toFixed(3);
+              l.setAttribute("d", "M" + A[0].toFixed(1) + " " + A[1].toFixed(1) + " L" + x.toFixed(1) + " " + (y + 107 * s).toFixed(1));
+              l.setAttribute("opacity", (0.85 * u).toFixed(3)); c.setAttribute("cx", A[0].toFixed(1)); c.setAttribute("cy", A[1].toFixed(1));
+            });
+          }
+          // ---------- 7 · report ----------
+          if (si === 7) {
+            const sw = t >= 15.62 ? 1 : 0;
+            const ui = $("rpUI"), ph = $("rpPhoto");
+            const inU = oc(P(loc, 0, 0.5));
+            $("rpTitle").style.opacity = inU.toFixed(3); $("rpTitle").style.transform = "translateY(" + px(20 * (1 - inU)) + ")";
+            if ($("rpArea").dataset.k !== String(sw)) {
+              $("rpArea").dataset.k = String(sw); $("rpArea").textContent = sw ? "02 — Roof-to-wall" : "01 — Roof surface";
+              ph.querySelector("#rpCap span").textContent = sw ? "Photo 02 / Junction detail" : "Photo 01 / Surface detail";
+              rowEls.forEach((r, i) => { r.querySelector(".a").textContent = rowTxt[sw][i][0]; r.querySelector(".b").textContent = rowTxt[sw][i][1]; });
+              rpT.forEach((d, i) => (d.style.borderColor = i === sw ? v.lime : "transparent"));
+            }
+            rowEls.forEach((r, i) => { const u = oc(P(loc, 0.25 + i * 0.1, 0.65 + i * 0.1)); r.style.opacity = u.toFixed(3); r.style.transform = "translateX(" + px(20 * (1 - u)) + ")"; r.querySelector(".hl").style.transform = "scaleX(" + (i === 1 ? ioc(P(t, 16.85, 17.2)) : 0).toFixed(3) + ")"; });
+            const swU = P(t, 15.62, 15.9);
+            $("rpImg1").style.opacity = swU.toFixed(3); $("rpImg0").style.opacity = "1";
+            const an = P(t, 16.05, 16.55);
+            K.show($("rpAnn"), an > 0); K.show($("rpAnnT"), an > 0);
+            K.draw($("rpAnnL"), an); $("rpAnnC").setAttribute("opacity", C(an * 4).toFixed(3)); $("rpAnnT").style.opacity = P(an, 0.6, 1).toFixed(3);
+            // the photo grows into the next scene
+            const gx = ioc(P(t, 17.7, 18.45));
+            ph.style.transform = "translate(" + px((960 - 528) * gx) + "," + px((540 - 485) * gx) + ") scale(" + (1 + 1.25 * gx).toFixed(4) + ")";
+            ph.style.opacity = (1 - P(t, 18.2, 18.45)).toFixed(3);
+            ui.style.opacity = (inU * (1 - P(t, 17.65, 17.95))).toFixed(3);
+            $("rpBg").style.opacity = P(t, 17.9, 18.4).toFixed(3);
+            const phU = oc(P(loc, 0.1, 0.6)); if (gx === 0) { ph.style.opacity = phU.toFixed(3); }
+            // cursor picks the second photo
+            const [cx, cy] = keyed([[14.9, 1320, 980], [15.55, 425, 830], [16.3, 640, 760]], t);
+            cursorAt(cx, cy, Math.sin(Math.PI * P(t, 15.55, 15.72)), P(t, 14.85, 15.05) * (1 - P(t, 16.2, 16.45)));
+          }
+          // ---------- 8 · options ----------
+          if (si === 8) {
+            $("opT").style.opacity = oc(P(loc, 0, 0.45)).toFixed(3);
+            tiles.forEach((tl, i) => {
+              const u = oc(P(loc, 0.08 + i * 0.1, 0.6 + i * 0.1));
+              tl.d.style.opacity = u.toFixed(3); tl.d.style.transform = "translateY(" + px(40 * (1 - u)) + ")";
+              draw3d(tl.ps, tileFaces(i, loc), camera(-36, 31, 64, 280, 200), LGT);
+            });
+            $("opLine").style.opacity = oc(P(loc, 0.6, 1.0)).toFixed(3);
+          }
+          // ---------- 9/10 · booking ----------
+          if (si === 9 || si === 10) {
+            const b = t >= S[10];
+            const bt = t - S[9];
+            if ($("v1a").dataset.k !== String(b)) { $("v1a").dataset.k = String(b); setMask("v1a", b ? tch[0] : vis[0]); setMask("v1b", b ? tch[1] : vis[1]); }
+            const tl0 = b ? t - S[10] : bt;
+            rise($("v1a"), ox(P(tl0, 0, 0.42))); rise($("v1b"), ox(P(tl0, 0.07, 0.5)));
+            $("vDiv").style.transform = "scaleX(" + ioc(P(bt, 0.3, 0.9)).toFixed(3) + ")";
+            $("vNote").style.opacity = oc(P(bt, 0.5, 0.9)).toFixed(3);
+            const fu = oc(P(bt, 0.15, 0.6));
+            const picked = t >= 21.5, dr = P(t, 21.22, 21.32) * (1 - P(t, 21.5, 21.56));
+            K.show($("fDrop"), dr > 0); $("fDrop").style.transform = "scaleY(" + dr.toFixed(3) + ")"; $("fOpt").textContent = frm[1];
+            $("fSelT").textContent = picked ? frm[1] : "Choose a time"; $("fSelT").style.color = picked ? "" : "#7c877f"; K.show($("fChk"), picked);
+            const press = Math.sin(Math.PI * P(t, 21.82, 22.0));
+            $("fBtn").style.transform = "scale(" + (1 - 0.03 * press).toFixed(4) + ")"; $("fBtn").style.filter = press > 0 ? "brightness(" + (1 + 0.6 * press).toFixed(2) + ")" : "none";
+            // the form steps back, then the confirmation card comes forward — no overlap of the two
+            const off = P(t, S[10] - 0.1, S[10] + 0.04), sw = oc(P(t, S[10] + 0.04, S[10] + 0.32));
+            $("fWhite").style.opacity = (fu * (1 - off)).toFixed(3); $("fWhite").style.transform = "translate(" + px(30 * (1 - fu)) + ",0) scale(" + (1 - 0.04 * off).toFixed(3) + ")";
+            K.show($("fDark"), sw > 0); $("fDark").style.opacity = sw.toFixed(3); $("fDark").style.transform = "scale(" + (0.95 + 0.05 * sw).toFixed(4) + ")";
+            const [cx, cy] = keyed([[20.8, 1560, 980], [21.12, 1420, 462], [21.22, 1422, 464], [21.42, 1404, 524], [21.52, 1405, 526], [21.8, 1420, 740], [22.3, 1460, 800]], t);
+            cursorAt(cx, cy, Math.max(Math.sin(Math.PI * P(t, 21.13, 21.27)), Math.sin(Math.PI * P(t, 21.43, 21.56)), press), P(t, 20.75, 20.95) * (1 - P(t, 22.2, 22.4)));
+          }
+          // ---------- 11 · hero ----------
+          if (si === 11) {
+            $("s11").querySelector(".kb").style.transform = "scale(" + (1.05 + 0.05 * C(loc / 1.4)).toFixed(4) + ")";
+            rise($("h1a"), ox(P(loc, 0.1, 0.55))); rise($("h1b"), ox(P(loc, 0.18, 0.63)));
+          }
+          // ---------- 12 · mark ----------
+          if (si === 12) draw3d(poolM, markFaces(t), camera(-16 + 12 * ioc(P(t, 25.6, 26.85)), 9, 100, 960, 470), LGT2);
+          // ---------- 13 · end card ----------
+          if (si === 13) {
+            eLetters.forEach((s, i) => { const u = ox(P(loc, 0.02 + i * 0.05, 0.5 + i * 0.05)); s.style.transform = "translateY(" + (102 * (1 - u)).toFixed(2) + "%)"; });
+            const lu = oc(P(loc, 0.4, 0.8)), bu = oc(P(loc, 0.5, 0.9));
+            $("eLine").style.opacity = lu.toFixed(3); $("eBtn").style.opacity = bu.toFixed(3); $("eBtn").style.transform = "translateY(" + px(14 * (1 - bu)) + ")";
+            K.draw($("eM1"), ioc(P(loc, 0.3, 0.9))); K.draw($("eM2"), ioc(P(loc, 0.45, 1.0)));
+          }
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

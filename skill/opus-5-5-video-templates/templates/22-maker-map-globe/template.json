@@ -1,0 +1,26 @@
+{
+  "id": "22-maker-map-globe",
+  "title": "Community map app reel — one surface morphs from logo to sign-up, a dotted 3D globe, matches, stats, an event and search",
+  "category": "app promo / UI micro-interactions",
+  "duration": 20,
+  "size": "1080x1080",
+  "demoBrand": "Pinhive (fictional)",
+  "source": {
+    "author": "@verbove",
+    "post": "https://x.com/verbove/status/2103483957266268381",
+    "note": "Remade from scratch in HyperFrames after the MakerMap launch video; structure and pacing follow it. Brand, people, avatars, sites and numbers are fictional placeholders (drawn initials instead of photos). The land dots come from Natural Earth 110m land (public domain) via the world-atlas package, see tools/land.py."
+  },
+  "scenes": [
+    "logo pill becomes a 'Put me on the map' button, then a field where a handle is typed",
+    "an 'Is this you?' profile card; the tap turns it into a spinner, a check and an orange dot",
+    "'You're on the map' with a ripple; the dot grows into a white globe",
+    "a dotted Earth swings west to the Americas and back while maker dots pop in and the counter climbs",
+    "the globe collapses into the dot, which opens into a '6 matches' pill and a list of people",
+    "a stats card with a sliding segmented control and rolling numbers",
+    "an event card where 'I'm going' turns orange and the count goes up",
+    "a search that types itself and returns three people, then the logo pill with the domain"
+  ],
+  "variables": ["brand", "domain", "cta", "handle", "askLabel", "name", "followers", "bio", "country", "notMe", "thatsMe", "onMap", "homeLat", "homeLon", "makers", "makersWord", "matches", "matchesSub", "people", "city", "tabs", "stats", "statLabels", "eventTitle", "eventWhere", "eventDay", "eventDate", "eventMonth", "eventDesc", "going", "goingWord", "join", "joined", "query", "found", "results", "orange", "ink", "paper"],
+  "notes": "Every state is one shape: S holds each state's size, corner radius (-1 = fully round) and colour, M holds the morph timings, colour windows and blank beats, and each state's contents cross-fade and squash with the shape. Where the globe swings is set by GK (centre longitude/latitude over time); the maker dots cluster around the CITIES list. homeLat/homeLon place your dot. Avatars are gradient circles with initials; swap in real photos only with permission.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

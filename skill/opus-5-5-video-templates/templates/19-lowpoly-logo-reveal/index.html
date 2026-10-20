@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"wordmark","type":"string","label":"Wordmark (typed)","default":"Claude Imagine"},
+  {"id":"subtitle","type":"string","label":"Subtitle","default":"Images and video, inside Claude"},
+  {"id":"caret","type":"color","label":"Caret colour","default":"#e8703f"},
+  {"id":"glow","type":"color","label":"Glow and ring colour","default":"#ff8a5c"},
+  {"id":"wire","type":"color","label":"Wireframe colour","default":"#d4dbe8"},
+  {"id":"tile","type":"color","label":"Icon tile colour (match the logo tile)","default":"#270a0b"},
+  {"id":"bg","type":"color","label":"Background","default":"#09090d"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <script src="assets/mesh.js"></script>
+    <style>
+      :root { --caret: #e8703f; --glow: #ff8a5c; --wire: #d4dbe8; --tile: #270a0b; --bg: #09090d; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); font-family: Inter, sans-serif; }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .abs { position: absolute; left: 0; top: 0; }
+      #tileBox { width: 512px; height: 512px; border-radius: 22.5%; background: var(--tile); transform-origin: 256px 256px; box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55); }
+      #logo { width: 512px; height: 512px; transform-origin: 256px 256px; }
+      #word { left: 0; top: 0; white-space: pre; font: 700 132px/1 Inter, sans-serif; letter-spacing: -0.025em; color: #f5f5f7; }
+      #caretBar { display: inline-block; width: 7px; height: 118px; margin-left: 8px; vertical-align: -12px; background: var(--caret); border-radius: 2px; }
+      #sub { left: 0; top: 0; white-space: pre; font: 500 46px/1 Inter, sans-serif; letter-spacing: -0.01em; color: #a9adbd; }
+      #measure { position: absolute; left: -9999px; top: 0; white-space: pre; font: 700 132px/1 Inter, sans-serif; letter-spacing: -0.025em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="21" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="21" data-track-index="0">
+        <canvas id="back" class="layer" width="1920" height="1080"></canvas>
+        <div id="tileBox" class="abs"></div>
+        <canvas id="front" class="layer" width="1920" height="1080"></canvas>
+        <img id="logo" class="abs" src="assets/logo.png" alt="" />
+        <div id="word" class="abs"><span id="typed"></span><span id="caretBar"></span></div>
+        <div id="sub" class="abs"></div>
+        <div id="measure"></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 21, TAU = Math.PI * 2;
+        const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const back = $("back").getContext("2d"), front = $("front").getContext("2d");
+
+        // ---------------- mesh ----------------
+        const M = window.MESH;
+        const CX = 960, CY = 520, S0 = 1.25;
+        const toScr = (x, y, s, cx, cy) => [cx + (x - 256) * s, cy + (y - 256) * s];
+        const pieces = M.tris.map((t, i) => {
+          const pts = [[t[0], t[1]], [t[2], t[3]], [t[4], t[5]]];
+          const c = [(t[0] + t[2] + t[4]) / 3, (t[1] + t[3] + t[5]) / 3];
+          return { pts, c, col: t[6], i };
+        });
+        // pieces land from the bottom of the mark upward
+        const BOT = [242, 443];
+        pieces.forEach((p) => (p.key = Math.hypot(p.c[0] - BOT[0], p.c[1] - BOT[1]) + R(p.i * 3.1) * 70));
+        const order = pieces.slice().sort((a, b) => a.key - b.key);
+        const N = order.length;
+        order.forEach((p, k) => {
+          p.land = 3.9 + 9.3 * Math.pow(k / (N - 1), 0.82);
+          p.dur = 0.5 + R(p.i * 5.3) * 0.12;
+          const out = Math.atan2(p.c[1] - 256, p.c[0] - 256);
+          const ang = out + (R(p.i * 2.7) - 0.5) * 2.2;
+          const dist = 760 + R(p.i * 1.9) * 420;
+          p.from = [Math.cos(ang) * dist, Math.sin(ang) * dist];
+          p.spin = (R(p.i * 4.1) > 0.5 ? 1 : -1) * (200 + R(p.i * 6.7) * 340) * Math.PI / 180;
+        });
+        // unique edges for the wireframe
+        const ek = (a, b) => { const A = a[0].toFixed(1) + "," + a[1].toFixed(1), B = b[0].toFixed(1) + "," + b[1].toFixed(1); return A < B ? A + "|" + B : B + "|" + A; };
+        const EDGES = new Map();
+        pieces.forEach((p) => [[0, 1], [1, 2], [2, 0]].forEach(([i, j]) => { const k = ek(p.pts[i], p.pts[j]); if (!EDGES.has(k)) EDGES.set(k, [p.pts[i], p.pts[j]]); }));
+        const edges = [...EDGES.values()].map(([a, b], i) => {
+          // draw from the end nearer the bottom vertex
+          const da = Math.hypot(a[0] - BOT[0], a[1] - BOT[1]), db = Math.hypot(b[0] - BOT[0], b[1] - BOT[1]);
+          const [s, e] = da <= db ? [a, b] : [b, a];
+          return { s, e, d: Math.min(da, db), i };
+        });
+        const maxD = Math.max(...edges.map((e) => e.d));
+        edges.forEach((e) => (e.t0 = 0.3 + (e.d / maxD) * 1.9 + R(e.i * 1.7) * 0.25));
+        const NODES = new Map();
+        edges.forEach((e) => [e.s, e.e].forEach((p) => { const k = p[0].toFixed(1) + "," + p[1].toFixed(1); const t0 = e.t0 + (p === e.e ? 0.28 : 0); if (!NODES.has(k) || NODES.get(k).t0 > t0) NODES.set(k, { p, t0 }); }));
+
+        // ---------------- helpers ----------------
+        const tri = (g, pts, col, a) => {
+          g.globalAlpha = a; g.fillStyle = col; g.strokeStyle = col; g.lineWidth = 1.2; g.lineJoin = "round";
+          g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); g.lineTo(pts[1][0], pts[1][1]); g.lineTo(pts[2][0], pts[2][1]); g.closePath(); g.fill(); g.stroke();
+          g.globalAlpha = 1;
+        };
+        const pieceAt = (p, t, s, cx, cy) => {
+          const u = C((t - (p.land - p.dur)) / p.dur);
+          if (u <= 0) return null;
+          const e = 1 - Math.pow(1 - u, 3.4);
+          const c = toScr(p.c[0], p.c[1], s, cx, cy);
+          const ox = p.from[0] * (1 - e), oy = p.from[1] * (1 - e);
+          const rot = p.spin * (1 - e), sc = L(1.7, 1, e);
+          const cs = Math.cos(rot), sn = Math.sin(rot);
+          return p.pts.map(([x, y]) => { const q = toScr(x, y, s, cx, cy); const dx = (q[0] - c[0]) * sc, dy = (q[1] - c[1]) * sc; return [c[0] + ox + dx * cs - dy * sn, c[1] + oy + dx * sn + dy * cs]; });
+        };
+
+        // ---------------- text ----------------
+        const typed = $("typed"), caretBar = $("caretBar"), word = $("word"), sub = $("sub");
+        $("measure").textContent = v.wordmark;
+        let WW = 0;
+        const layout = () => { WW = $("measure").getBoundingClientRect().width; };
+        layout();
+        const ICON = 290, GAP = 66;
+
+        // ---------------- render ----------------
+        function render(t) {
+          const g = back, f = front;
+          g.clearRect(0, 0, 1920, 1080); f.clearRect(0, 0, 1920, 1080);
+          // background, faint rings, vignette
+          g.fillStyle = v.bg; g.fillRect(0, 0, 1920, 1080);
+          const cg = g.createRadialGradient(CX, CY, 0, CX, CY, 900);
+          cg.addColorStop(0, "rgba(18,19,30,0.9)"); cg.addColorStop(0.55, "rgba(12,13,20,0.5)"); cg.addColorStop(1, "rgba(0,0,0,0)");
+          g.fillStyle = cg; g.fillRect(0, 0, 1920, 1080);
+          [300, 420, 560, 720].forEach((r, k) => { g.strokeStyle = "rgba(120,130,170," + (0.018 - k * 0.003) + ")"; g.lineWidth = 60; g.beginPath(); g.arc(CX, CY, r, 0, TAU); g.stroke(); });
+
+          // icon position: centred reveal, then shrink to the lockup
+          layout();
+          const total = ICON + GAP + WW, left = 960 - total / 2;
+          const mv = E.inOutCubic(P(t, 15.65, 16.15));
+          const icx = L(CX, left + ICON / 2, mv), icy = L(CY, 540, mv);
+          const S = L(S0, ICON / 512, mv) * (1 + 0.012 * Math.sin(t * 1.8) * (1 - mv));
+
+          // glow behind the mark
+          const ga = P(t, 12.6, 14.1) * (1 - 0.6 * mv);
+          if (ga > 0) { const gg = g.createRadialGradient(icx, icy, 0, icx, icy, 520 * S / S0); gg.addColorStop(0, hexA(v.glow, 0.2 * ga)); gg.addColorStop(1, hexA(v.glow, 0)); g.fillStyle = gg; g.fillRect(0, 0, 1920, 1080); }
+
+          // wireframe
+          const wa = 1 - P(t, 13.2, 13.7);
+          if (wa > 0) {
+            g.lineCap = "round"; g.strokeStyle = hexA(v.wire, 0.55 * wa); g.lineWidth = 1.6;
+            edges.forEach((e) => {
+              const u = E.outCubic(P(t, e.t0, e.t0 + 0.28));
+              if (u <= 0) return;
+              const a = toScr(e.s[0], e.s[1], S0, CX, CY), b = toScr(e.e[0], e.e[1], S0, CX, CY);
+              g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(L(a[0], b[0], u), L(a[1], b[1], u)); g.stroke();
+            });
+            NODES.forEach(({ p, t0 }) => {
+              const u = P(t, t0, t0 + 0.12);
+              if (u <= 0) return;
+              const q = toScr(p[0], p[1], S0, CX, CY);
+              g.fillStyle = hexA(v.wire, 0.9 * wa * u); g.beginPath(); g.arc(q[0], q[1], 2.6, 0, TAU); g.fill();
+            });
+          }
+
+          // tile behind the mark
+          const tu = E.outBack(P(t, 14.62, 15.0), 1.4);
+          const tb = $("tileBox");
+          K.show(tb, tu > 0);
+          if (tu > 0) {
+            const ts = S * L(0.82, 1, C(tu, 0, 1.1));
+            tb.style.transform = "translate(" + (icx - 256).toFixed(1) + "px," + (icy - 256).toFixed(1) + "px) scale(" + ts.toFixed(4) + ")";
+            tb.style.opacity = C(P(t, 14.62, 14.76));
+          }
+
+          // flying and landed pieces
+          const fa = 1 - P(t, 14.8, 15.3);
+          if (fa > 0) {
+            order.forEach((p) => {
+              if (t > p.land) { tri(f, p.pts.map(([x, y]) => toScr(x, y, S, icx, icy)), p.col, fa); return; }
+              const q = pieceAt(p, t, S0, CX, CY);
+              if (!q) return;
+              for (let k = 4; k >= 1; k--) { const qq = pieceAt(p, t - k * 0.022, S0, CX, CY); if (qq) tri(f, qq, p.col, 0.16 * (1 - k / 5)); }
+              tri(f, q, p.col, 1);
+            });
+          }
+
+          // ring flash
+          const ru = P(t, 14.3, 14.72);
+          if (ru > 0 && ru < 1) {
+            const rr = L(290, 1000, Math.pow(ru, 1.6));
+            f.save(); f.lineWidth = L(4, 2, ru);
+            f.strokeStyle = hexA(v.glow, 0.7 * (1 - ru)); f.beginPath(); f.arc(CX, CY, rr, 0, TAU); f.stroke();
+            f.strokeStyle = hexA(v.glow, 0.4 * (1 - ru)); f.beginPath(); f.arc(CX, CY, rr + 22, 0, TAU); f.stroke();
+            f.restore();
+            const bl = g.createRadialGradient(CX, CY, 0, CX, CY, 760); const ba = bump(t, 14.18, 14.8);
+            bl.addColorStop(0, "rgba(255,220,205," + (0.5 * ba).toFixed(3) + ")"); bl.addColorStop(0.35, hexA(v.glow, 0.22 * ba)); bl.addColorStop(1, "rgba(0,0,0,0)");
+            g.fillStyle = bl; g.fillRect(0, 0, 1920, 1080);
+          }
+
+          // the real logo resolves over the low-poly mark
+          const lg = $("logo");
+          const la = P(t, 14.8, 15.3);
+          K.show(lg, la > 0);
+          if (la > 0) {
+            lg.style.opacity = la.toFixed(3);
+            lg.style.transform = "translate(" + (icx - 256).toFixed(1) + "px," + (icy - 256).toFixed(1) + "px) scale(" + S.toFixed(4) + ")";
+          }
+
+          // wordmark and subtitle
+          const tx = left + ICON + GAP;
+          const typing = P(t, 16.15, 17.55);
+          const n = Math.floor(v.wordmark.length * typing + 1e-6);
+          K.show(word, t >= 16.05);
+          typed.textContent = v.wordmark.slice(0, n);
+          word.style.transform = "translate(" + tx.toFixed(1) + "px,432px)";
+          const blinkOn = t < 17.6 || (t < 20.2 && Math.floor((t - 17.6) * 1.8) % 2 === 0);
+          caretBar.style.opacity = blinkOn ? 1 : 0;
+          const su = E.outCubic(P(t, 17.75, 18.25));
+          K.show(sub, su > 0);
+          sub.textContent = v.subtitle;
+          sub.style.opacity = su.toFixed(3);
+          sub.style.transform = "translate(" + (tx + 4).toFixed(1) + "px," + (604 + (1 - su) * 12).toFixed(1) + "px)";
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "subagents": 11,
+  "inputTokens": 773790,
+  "outputTokens": 445287,
+  "cacheReadTokens": 23241003,
+  "cacheWriteTokens": 3217198,
+  "thinkingTokens": 90171,
+  "totalTokens": 27767449,
+  "apiCostUsd": 36.16,
+  "maxPlanPercent": 6.1,
+  "approx": true,
+  "factoryCredits": 12200446
+}

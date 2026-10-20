@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="vendor/fonts.css">
+<link rel="stylesheet" href="kit/fonts.css">
+<style>{{theme.css}}
+/* Board layout only; every colour and type style comes from the theme and the kit */
+.board-label{position:absolute;font-family:"{{brand.fonts.mono}}",monospace;font-size:18px;letter-spacing:.18em;text-transform:uppercase;color:var(--brand-muted)}
+.swatches{position:absolute;left:1060px;top:700px;display:flex;gap:14px}
+.swatches div{width:96px;font-family:"{{brand.fonts.mono}}",monospace;font-size:14px;color:var(--brand-muted);text-align:center}
+.swatches i{display:block;height:64px;border-radius:12px;margin-bottom:8px;border:1px solid var(--brand-border)}
+.endcard{position:absolute;left:1060px;top:330px;width:780px;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+/* SVG logos often carry only a viewBox; a fixed height gives them a size, width follows the aspect ratio */
+.endcard img{height:96px;width:auto;max-width:600px;display:block}
+</style></head>
+<body>
+<div id="world"><div id="bg" class="bg-{{brand.background}}"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div><div id="cam">
+<section class="shot" style="visibility:visible">
+  <div class="kick" style="position:absolute;left:80px;top:120px;font-size:26px" id="boardName"></div>
+  <div class="xl" style="position:absolute;left:80px;top:170px;width:940px;font-size:92px;line-height:1;white-space:nowrap">Ship it <span class="hl"><i></i>faster</span></div>
+  <div class="card" style="position:absolute;left:80px;top:360px;width:900px;height:300px;padding:44px 52px">
+    <div style="font-size:44px;font-weight:800;color:var(--brand-text);line-height:1.1">Body text on a panel reads like this.</div>
+    <div style="font-size:30px;color:var(--brand-muted);margin-top:16px">Muted text carries the supporting detail.</div>
+    <div class="pink" style="font-size:34px;font-weight:800;margin-top:16px">Accent-coloured words use the ink tone.</div>
+    <span class="pill" style="position:absolute;left:52px;bottom:-30px">Term pill</span>
+    <div class="stamp" style="position:absolute;right:40px;bottom:-40px;font-size:40px;color:var(--brand-error)">Stamp</div>
+  </div>
+  <div class="lower" style="top:720px;left:80px"><div class="lower-name">Jane Doe</div><div class="lower-role">Lower third · role</div></div>
+  <div class="xl" style="position:absolute;left:1500px;top:110px;font-size:150px;line-height:1">484</div>
+  <div class="board-label" style="left:1506px;top:270px">stat · counter</div>
+  <div class="endcard card"><div id="boardLogo"></div><div class="xl" style="font-size:56px;line-height:1" id="boardTitle"></div><div class="mono" style="font-size:24px;color:var(--brand-muted)" id="boardHandle"></div></div>
+  <div class="swatches" id="boardSwatches"></div>
+</section>
+</div></div>
+<div id="vig"></div>
+<div id="captions"><div id="capbox"><span class="on">Captions</span><span class="on">follow</span><span class="now">the</span><span>spoken</span><span>word</span></div></div>
+<div id="sig">{{brand.signature}}</div>
+
+<script>
+const BRAND = {{brand.json}};
+const q = s => document.querySelector(s);
+q("#boardName").textContent = (BRAND.name || "Brand") + " · brand board";
+q("#boardTitle").textContent = BRAND.name || "";
+q("#boardHandle").textContent = BRAND.handle || "";
+const logo = BRAND.logos[BRAND.scheme === "dark" ? "wordmark.onDark" : "wordmark.onLight"] || BRAND.logos.wordmark || BRAND.logos.mark;
+q("#boardLogo").innerHTML = logo ? `<img src="${logo}" alt="">` : `<div class="board-label" style="position:static">no logo in this kit</div>`;
+const root = getComputedStyle(document.documentElement);
+q("#boardSwatches").innerHTML = ["primary","primary-ink","secondary","bg","surface2","text","muted","error"]
+  .map(name => `<div><i style="background:var(--brand-${name})"></i>${name}<br>${root.getPropertyValue("--brand-"+name).trim()}</div>`).join("");
+window.BRAND = BRAND;
+window.SFX = []; window.SHOTS = []; window.DURATION = {{duration}};
+window.renderAt = () => Promise.resolve();
+</script>
+</body></html>

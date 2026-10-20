@@ -1,0 +1,37 @@
+{
+  "id": "06-screen-to-wall-prints",
+  "title": "Photo-print store reel — wordmark to dot to button, shutter, photo grid, relight slider, lens, lock screen, drag to the web shop, order, the framed print on the wall",
+  "category": "e-commerce / photo prints",
+  "duration": 29,
+  "size": "1080x1080",
+  "demoBrand": "framed. (fictional)",
+  "source": {
+    "author": "@twoclipping",
+    "post": "https://x.com/twoclipping/status/2103835273813496100",
+    "note": "Remade from scratch in HyperFrames after the 'develop.' print-shop reel; structure and pacing follow it. Every photo was generated with the Claude Imagine MCP (see images); the browser, phone and shop UI are drawn in code. None of the original's images are used."
+  },
+  "scenes": [
+    "the wordmark blurs away and leaves its period; the dot travels to the centre and opens into a button",
+    "the button closes into a camera shutter that opens onto a photo, which grows into a large card",
+    "the card shrinks into the centre of a 3x3 photo grid; one photo is picked, the grid re-flows and the camera dives in",
+    "full-screen photo with a frosted word, a glass toolbar, a heart, then a 'Golden hour' slider that relights the photo",
+    "a glass lens opens over the photo and blooms into the next photo, which becomes a lock screen with frosted time and a now-playing widget",
+    "the lock screen shrinks into a phone on a desktop; a black pill flies out and becomes a browser window",
+    "the photo is dragged from the phone into the shop's drop zone; the site lays itself out around it",
+    "product page: frame colour, size, price; the order button runs through ordered, printing and shipping",
+    "the button becomes a black circle, a rounded square, then the frame on a wall; a shutter opens on the framed print",
+    "hands take the frame, the print develops, the camera dives into the photo; black shrinks back to the pill, the dot and the wordmark"
+  ],
+  "variables": ["brand", "tagline", "pill", "relight", "slider", "date", "time", "track", "trackSub", "favs", "nav", "siteCta", "hero1", "hero2", "desc1", "desc2", "drop", "prodTitle", "prodDesc1", "prodDesc2", "frameLabel", "sizeLabel", "sizes", "price", "order", "ordered", "printing", "shipping", "shipWhen", "ink", "paper"],
+  "images": [
+    { "file": "assets/img/door.jpg", "use": "first photo (shutter, big card, grid centre); cropped to the doorway", "model": "nano-banana-2 2k 1:1", "prompt": "A lone small figure in a long dark coat standing in a vast, dark, empty concrete hall, facing a tall glowing red-orange rectangular doorway in the far wall, warm red light spilling across the floor toward the camera, deep shadows, minimal and cinematic, moody atmosphere, square composition with the doorway slightly right of centre. No text." },
+    { "file": "assets/img/arch.jpg", "use": "the picked photo", "model": "nano-banana-2 2k 1:1", "prompt": "An ancient mossy stone arch standing alone on top of a rounded grassy hill, seen from slightly below, wildflowers and white daisies in the blurred foreground, bright blue sky with long wispy clouds and a few small birds, clear midday light, cinematic landscape photograph, square composition with the arch in the upper middle. No text." },
+    { "file": "assets/img/arch_gold.jpg", "use": "the relit version (cross-faded by the slider)", "model": "nano-banana-2 edit 2k of arch.jpg", "prompt": "Relight this exact photo to golden hour at sunset: a low, warm sun glowing right through the opening of the stone arch, orange, peach and pink sky with the same wispy clouds, warm rim light on the stones and grass, flowers in the foreground glowing warmly. Keep the arch, the hill, the flowers, the birds, the framing and the composition exactly the same; only the light and colours change." },
+    { "file": "assets/img/astro.jpg", "use": "lock screen, phone, shop, framed print (graded olive green in post)", "model": "nano-banana-2 2k 1:1, then an edit to remove a suit emblem", "prompt": "Cinematic photograph: an astronaut in a white spacesuit and helmet seen from behind, wearing a black backpack with two glowing orange vertical light strips, standing in a field of orange poppies in the lower left third of the frame, looking up at a misty green mountain ridge; above the ridge a thin, bright crescent of an eclipsed sun glows against a soft hazy green sky. Muted green tones with orange accents, atmospheric haze, square composition. No text." },
+    { "file": "assets/img/mountain.jpg, earth.jpg, cyclist.jpg, portrait.jpg, nebula.jpg, hills.jpg, hole.jpg", "use": "the other grid photos", "model": "gpt-image-2.5 1k 1:1", "prompt": "One short scene each: a mountain valley at sunrise; Earth's edge from orbit; a road cyclist in plain black kit with motion blur; a 1970s film portrait of a woman with round sunglasses on a train; a purple and orange nebula; pastel rolling hills with wildflowers; a top-down giant round hole in a grass field with a tiny person. No text." },
+    { "file": "assets/img/ribbon.jpg", "use": "desktop wallpaper", "model": "gpt-image-2.5 1k 1:1", "prompt": "Abstract desktop wallpaper: wide flowing glossy ribbons of deep blue and periwinkle silk sweeping in a long diagonal curve from the lower left to the upper right across a soft white and pale lavender background, fine parallel sheen lines along the ribbons, smooth gradients, clean and minimal. No text." },
+    { "file": "assets/img/wall.jpg + hands_cut.png", "use": "the frame on the wall, and the hands cut out of a second shot so they can slide in", "model": "nano-banana-2 2k 1:1, then an edit that removes the hands", "prompt": "Front-on photograph of two hands holding a black wooden picture frame with a wide white mat flat against a white textured plaster wall, the frame is portrait orientation and fills about half of the image height, centered; the picture area inside the mat is a plain flat mid-grey rectangle with nothing in it; soft shadows of leafy plant fronds fall across the wall; the person wears a beige ribbed knit sweater, sleeves visible at the bottom corners; natural soft daylight, square photo. No text." }
+  ],
+  "notes": "To use real customer photos, replace the files in assets/img with the same names (square images). The picture opening inside the frame on wall.jpg is fixed at 373.5,310 (333x452) in 1080 space; if you regenerate the wall photo, update #fgPhoto, #haze, FR and IN. The frosted word and lock-screen time use the *_blur.jpg copies of their photos; regenerate those if you swap the photos. The relight slider cross-fades arch.jpg into arch_gold.jpg, so the two must share the same framing.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

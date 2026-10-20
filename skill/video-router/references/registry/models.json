@@ -1,0 +1,1674 @@
+[
+  {
+    "id": "seedance-2-5-byteplus",
+    "name": "Seedance 2.5 / BytePlus",
+    "family": "seedance",
+    "provider": "byteplus",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "audio-driven-video",
+      "multishot",
+      "video-editing",
+      "extend",
+      "motion-transfer",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "dreamina-seedance-2-5-260628"
+    ],
+    "source_ids": [
+      "seed25-launch",
+      "seed25-model",
+      "seed25-schema",
+      "seed25-las"
+    ],
+    "novel_abilities": [
+      "Longer single-pass stories",
+      "Audio-only conditioning",
+      "Timestamp-guided editing and continuation",
+      "White-model and green-screen creative control"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 30
+    },
+    "aliases": [
+      "seedance",
+      "seedance-2-5",
+      "seedance2.5"
+    ],
+    "notes": [
+      "The checkpoint suffix is not the public launch date.",
+      "Reference count, output format and regional access must be checked on the chosen ModelArk or LAS surface.",
+      "Do not copy Seedance 2.0 limits into 2.5."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/seedance.md",
+    "skill_id": "video-seedance",
+    "model_version": "2.5"
+  },
+  {
+    "id": "minimax-h3-fal",
+    "name": "MiniMax H3 / fal",
+    "family": "minimax",
+    "provider": "fal",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "multishot",
+      "motion-transfer",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [
+      "audio-only-reference",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "minimax/h3/text-to-video",
+      "minimax/h3/image-to-video",
+      "minimax/h3/reference-to-video"
+    ],
+    "source_ids": [
+      "h3-launch",
+      "h3-fal"
+    ],
+    "novel_abilities": [
+      "Mixed image, video and audio context",
+      "Joint stereo audio and video",
+      "Reference-guided performance and camera motion"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "1440p"
+      ],
+      "max_reference_files": 12,
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audio": 3,
+      "audio_requires_visual": true,
+      "max_reference_video_seconds": 15,
+      "max_reference_audio_seconds": 15
+    },
+    "aliases": [
+      "h3",
+      "minimax-h3"
+    ],
+    "notes": [
+      "Hosted 2K output does not mean the base checkpoint generates native 2K.",
+      "Editing is documented at family level but must be routed to a separately verified edit endpoint; this record covers the three listed creation endpoints."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max"
+  },
+  {
+    "id": "minimax-h3-local-fl",
+    "name": "MiniMax H3 Base FL2VA / local",
+    "family": "minimax",
+    "provider": "self-hosted",
+    "variant": "FL2VA",
+    "release_date": "2026-08-03",
+    "release_date_kind": "weights-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [
+      "reference-to-video",
+      "audio-only-reference"
+    ],
+    "api_model_ids": [],
+    "source_ids": [
+      "h3-open",
+      "h3-card"
+    ],
+    "novel_abilities": [
+      "Open-weight audiovisual first/last-frame generation"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "768p"
+      ]
+    },
+    "aliases": [
+      "h3-local",
+      "minimax-h3-local"
+    ],
+    "notes": [
+      "Uses a different checkpoint from Ref2VA.",
+      "Custom model license and GPU capacity need review.",
+      "Full hosted Context-IR and 2K regeneration cannot be assumed present in this open release."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max",
+    "artifact_ids": [
+      "MiniMaxAI/MiniMax-H3:H3-Base-FL2VA"
+    ]
+  },
+  {
+    "id": "minimax-h3-local-ref",
+    "name": "MiniMax H3 Base Ref2VA / local",
+    "family": "minimax",
+    "provider": "self-hosted",
+    "variant": "Ref2VA",
+    "release_date": "2026-08-03",
+    "release_date_kind": "weights-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "reference-to-video",
+      "native-audio",
+      "motion-transfer",
+      "local-weights",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [
+      "audio-only-reference",
+      "first-last-frame"
+    ],
+    "api_model_ids": [],
+    "source_ids": [
+      "h3-open",
+      "h3-card"
+    ],
+    "novel_abilities": [
+      "Local multimodal reference-conditioned audiovisual generation"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "768p"
+      ],
+      "max_reference_files": 12,
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audio": 3,
+      "audio_requires_visual": true
+    },
+    "aliases": [
+      "h3-local",
+      "minimax-h3-local"
+    ],
+    "notes": [
+      "Do not apply FL2VA inputs to the Ref2VA checkpoint.",
+      "No guaranteed laptop VRAM minimum is asserted."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max",
+    "artifact_ids": [
+      "MiniMaxAI/MiniMax-H3:H3-Base-Ref2VA"
+    ]
+  },
+  {
+    "id": "h3-max-fal",
+    "name": "MiniMax H3 Max / fal",
+    "family": "minimax",
+    "provider": "fal",
+    "variant": "",
+    "release_date": "2026-08-27",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [
+      "video-editing",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "minimax/h3-max/text-to-video",
+      "minimax/h3-max/image-to-video",
+      "minimax/h3-max/reference-to-video"
+    ],
+    "source_ids": [
+      "h3max-launch",
+      "h3max-schema",
+      "h3max-page"
+    ],
+    "novel_abilities": [
+      "fal post-training rather than a renamed base checkpoint",
+      "Reference mode now available",
+      "1080P latent refinement from 768P"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "480p",
+        "768p",
+        "1080p"
+      ],
+      "max_reference_files": 12,
+      "audio_requires_visual": false,
+      "max_reference_video_seconds": 15,
+      "max_reference_audio_seconds": 15,
+      "resolution_origin": {
+        "1080p": "latent refinement from 768p"
+      }
+    },
+    "aliases": [
+      "h3-max",
+      "minimax-h3-max"
+    ],
+    "notes": [
+      "Reference availability is specific to fal; ChatCut's adapter documents a narrower surface.",
+      "Read the endpoint schema, not expired launch promotions.",
+      "No base-H3 reference limits are inherited unless the H3 Max schema states them."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max"
+  },
+  {
+    "id": "h3-max-turbo-fal",
+    "name": "MiniMax H3 Max Turbo / fal",
+    "family": "minimax",
+    "provider": "fal",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "minimax/h3-max-turbo/text-to-video",
+      "minimax/h3-max-turbo/image-to-video"
+    ],
+    "source_ids": [
+      "h3max-page",
+      "h3max-launch"
+    ],
+    "novel_abilities": [
+      "Faster draft-oriented post-trained variant"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "768p",
+        "1080p"
+      ],
+      "resolution_origin": {
+        "1080p": "refinement; verify endpoint"
+      }
+    },
+    "aliases": [
+      "h3-max-turbo"
+    ],
+    "notes": [
+      "Only text and keyframe modes are approved in this record. Reference mode is unverified, not asserted impossible.",
+      "Do not inherit Max's reference endpoint."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "model_version": "H3 Max Turbo"
+  },
+  {
+    "id": "ltx-2-5-fast-api",
+    "name": "LTX 2.5 Fast / LTX API",
+    "family": "ltx",
+    "provider": "ltx",
+    "variant": "",
+    "release_date": "2026-08-11",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "audio-driven-video",
+      "native-audio",
+      "first-last-frame",
+      "multishot",
+      "automatic-duration"
+    ],
+    "unsupported_capabilities": [
+      "retake",
+      "extend",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "ltx-2-5-fast"
+    ],
+    "source_ids": [
+      "ltx25-release",
+      "ltx25-api"
+    ],
+    "novel_abilities": [
+      "Audio-driven generation",
+      "Last-frame guidance",
+      "Model-predicted duration"
+    ],
+    "limits": {
+      "min_seconds": 6,
+      "max_seconds": 20,
+      "profiles": [
+        {
+          "resolutions": [
+            "720p",
+            "1080p"
+          ],
+          "fps": [
+            24,
+            25
+          ],
+          "seconds": [
+            6,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
+            20
+          ]
+        },
+        {
+          "resolutions": [
+            "720p",
+            "1080p"
+          ],
+          "fps": [
+            48,
+            50
+          ],
+          "seconds": [
+            6,
+            8,
+            10
+          ]
+        },
+        {
+          "resolutions": [
+            "1440p",
+            "2160p"
+          ],
+          "fps": [
+            24,
+            25,
+            48,
+            50
+          ],
+          "seconds": [
+            6,
+            8,
+            10
+          ]
+        }
+      ],
+      "auto_duration_forbidden_tasks": [
+        "transition"
+      ]
+    },
+    "aliases": [
+      "ltx-2-5",
+      "ltx2.5",
+      "ltx-2-5-fast"
+    ],
+    "notes": [
+      "Duration profiles describe text/image generation; audio-driven duration follows input audio and requires separate preflight.",
+      "Auto-duration does not mean unlimited duration.",
+      "For automatic duration on the API, duration must explicitly be null; omission is not equivalent. Auto-duration cannot be combined with last-frame anchoring on image-to-video."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "operation_limits": {
+      "audio-driven": {
+        "duration_follows_input_audio": true
+      }
+    }
+  },
+  {
+    "id": "ltx-2-5-pro-api",
+    "name": "LTX 2.5 Pro / LTX API",
+    "family": "ltx",
+    "provider": "ltx",
+    "variant": "",
+    "release_date": "2026-08-11",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "audio-driven-video",
+      "native-audio",
+      "first-last-frame",
+      "multishot",
+      "automatic-duration"
+    ],
+    "unsupported_capabilities": [
+      "retake",
+      "extend",
+      "local-weights"
+    ],
+    "api_model_ids": [
+      "ltx-2-5-pro"
+    ],
+    "source_ids": [
+      "ltx25-release",
+      "ltx25-api"
+    ],
+    "novel_abilities": [
+      "Higher-quality hosted tier with a distinct duration ceiling"
+    ],
+    "limits": {
+      "profiles": [
+        {
+          "resolutions": [
+            "720p",
+            "1080p",
+            "1440p",
+            "2160p"
+          ],
+          "fps": [
+            24,
+            25,
+            48,
+            50
+          ],
+          "seconds": [
+            6,
+            8,
+            10
+          ]
+        }
+      ],
+      "min_seconds": 6,
+      "max_seconds": 10,
+      "auto_duration_forbidden_tasks": [
+        "transition"
+      ]
+    },
+    "aliases": [
+      "ltx-2-5",
+      "ltx2.5",
+      "ltx-2-5-pro"
+    ],
+    "notes": [
+      "Do not copy the Fast 20-second mode into Pro.",
+      "A2V follows the source audio; inspect its endpoint separately.",
+      "For automatic duration on the API, duration must explicitly be null; omission is not equivalent. Auto-duration cannot be combined with last-frame anchoring on image-to-video."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "operation_limits": {
+      "audio-driven": {
+        "duration_follows_input_audio": true
+      }
+    }
+  },
+  {
+    "id": "ltx-2-5-local",
+    "name": "LTX 2.5 / local checkpoints",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "dev/distilled",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "native-audio",
+      "multishot",
+      "local-weights",
+      "lora-inference",
+      "lora-training",
+      "automatic-duration"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-card",
+      "ltx25-diffusers"
+    ],
+    "novel_abilities": [
+      "Connected multishot generation",
+      "New diffusion decoder and duration predictor",
+      "Specialized LoRA pipelines"
+    ],
+    "limits": {
+      "width_multiple": 32,
+      "height_multiple": 32,
+      "frame_count_modulus": 8,
+      "frame_count_remainder": 1
+    },
+    "aliases": [
+      "ltx-2-5",
+      "ltx2.5",
+      "ltx-local"
+    ],
+    "notes": [
+      "Open-weight release date is not inferred from the API release or repository update date.",
+      "Checkpoint, encoder, decoder, scheduler and LoRA compatibility must be locked together.",
+      "Int8 ComfyUI and Diffusers artifacts are not interchangeable.",
+      "VRAM and commercial license eligibility are preflight checks, not promises.",
+      "Specialized in/outpainting, EXR, restore, Dub-It and Foley routes are separate records; plain local weights do not establish adapter compatibility."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [
+      "Lightricks/LTX-2.5",
+      "Lightricks/LTX-2.5-Diffusers"
+    ]
+  },
+  {
+    "id": "ltx-2-3-pro-api",
+    "name": "LTX 2.3 Pro / retake and extension fallback",
+    "family": "ltx",
+    "provider": "ltx",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "audio-driven-video",
+      "native-audio",
+      "retake",
+      "extend"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "ltx-2-3-pro"
+    ],
+    "source_ids": [
+      "ltx-models"
+    ],
+    "novel_abilities": [
+      "Keep this older route when a new model lacks retake or extension"
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-3",
+      "ltx2.3"
+    ],
+    "notes": [
+      "Older capability-specific fallback, not the newest default.",
+      "Current API duration, retake window and output constraints must be checked before running."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.3"
+  },
+  {
+    "id": "gemini-omni-1-1-flash",
+    "name": "Gemini Omni 1.1 Flash / Gemini API",
+    "family": "gemini-omni",
+    "provider": "google",
+    "variant": "",
+    "release_date": "2026-08-27",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "video-editing",
+      "stateful-editing",
+      "extend",
+      "image-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "gemini-omni-1.1-flash"
+    ],
+    "source_ids": [
+      "omni11-release",
+      "omni-api"
+    ],
+    "novel_abilities": [
+      "Stateful editing through previous_interaction_id",
+      "Extension and first/last-frame interpolation",
+      "Low-resolution drafts and separate upscaling"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 10,
+      "resolutions": [
+        "360p",
+        "720p",
+        "1080p",
+        "2160p"
+      ],
+      "resolution_origin": {
+        "1080p": "upscaled",
+        "2160p": "upscaled"
+      }
+    },
+    "aliases": [
+      "omni",
+      "gemini-omni",
+      "omni-1-1"
+    ],
+    "notes": [
+      "The dated 1.1 announcement and 1.1 examples support extension/interpolation. An older cached limitations section still says they are unsupported; recheck the live 1.1 contract.",
+      "Native duration is not the length of a chain of extensions.",
+      "Uploaded-video editing may be region-restricted; check account and source-media restrictions.",
+      "Audio reference upload is not approved by this record."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/gemini-omni.md",
+    "skill_id": "video-gemini-omni",
+    "model_version": "1.1"
+  },
+  {
+    "id": "flux-3-video",
+    "name": "FLUX.3 Video / BFL",
+    "family": "flux",
+    "provider": "bfl",
+    "variant": "",
+    "release_date": "2026-07-23",
+    "release_date_kind": "early-access",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio",
+      "extend",
+      "draft-enhance"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "flux-3-video"
+    ],
+    "source_ids": [
+      "flux3-release",
+      "flux3-api"
+    ],
+    "novel_abilities": [
+      "A selected draft can be enhanced rather than resampled",
+      "Multiple keyframes in one creation request",
+      "Continuation as a distinct v2v mode"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 20,
+      "fps": [
+        24
+      ],
+      "resolutions": [
+        "720p",
+        "1080p"
+      ],
+      "max_keyframes": 10,
+      "extension_min_seconds": 5,
+      "extension_max_seconds": 15
+    },
+    "aliases": [
+      "flux3",
+      "flux-3",
+      "flux.3"
+    ],
+    "notes": [
+      "t2v, i2v and v2v are mode values, not separate model IDs.",
+      "Video-edit and video-upscale tools are distinct surfaces; do not attach their abilities to this endpoint.",
+      "The documented FHD canvas can be 1920x1088, not exactly 1920x1080.",
+      "No released local video weights are asserted."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/flux.md",
+    "skill_id": "video-flux",
+    "model_version": "3",
+    "operation_limits": {
+      "extend": {
+        "min_seconds": 5,
+        "max_seconds": 15,
+        "fps": [
+          24
+        ]
+      }
+    }
+  },
+  {
+    "id": "wan-3-0",
+    "name": "Wan 3.0 / Model Studio",
+    "family": "wan",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-08-06",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "document-input",
+      "web-input",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "wan3.0-video"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "wan3-release",
+      "wan3-schema",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "30-second single-pass output",
+      "Document or webpage as creative context",
+      "Unified multimodal reference input"
+    ],
+    "limits": {
+      "min_seconds": 2,
+      "max_seconds": 30,
+      "fps": [
+        30
+      ],
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "max_documents": 1,
+      "max_document_pages": 50,
+      "max_document_mb": 100
+    },
+    "aliases": [
+      "wan3",
+      "wan-3",
+      "wan3.0"
+    ],
+    "notes": [
+      "Document and URL inputs are not assumed supported by resellers.",
+      "Release marketing discusses editing/extension, but this creation record does not approve those operations without their exact current schema.",
+      "Wan 3.0 is not interchangeable with the open-weight Wan 2.x ecosystem."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/wan.md",
+    "skill_id": "video-wan",
+    "model_version": "3.0"
+  },
+  {
+    "id": "wan-3-0-prime",
+    "name": "Wan 3.0 Prime / Model Studio",
+    "family": "wan",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-08-20",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "document-input",
+      "web-input",
+      "image-reference",
+      "video-reference",
+      "audio-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "wan3.0-video-prime"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "wan3-release",
+      "wan3prime-schema",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "30-second single-pass output",
+      "Document or webpage as creative context",
+      "Unified multimodal reference input"
+    ],
+    "limits": {
+      "min_seconds": 2,
+      "max_seconds": 30,
+      "fps": [
+        30
+      ],
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ],
+      "max_documents": 1,
+      "max_document_pages": 50,
+      "max_document_mb": 100
+    },
+    "aliases": [
+      "wan-prime"
+    ],
+    "notes": [
+      "Document and URL inputs are not assumed supported by resellers.",
+      "Release marketing discusses editing/extension, but this creation record does not approve those operations without their exact current schema.",
+      "Wan 3.0 is not interchangeable with the open-weight Wan 2.x ecosystem."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/wan.md",
+    "skill_id": "video-wan",
+    "model_version": "3.0"
+  },
+  {
+    "id": "wan-2-7-videoedit",
+    "name": "Wan 2.7 Video Edit / Model Studio",
+    "family": "wan",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "video-editing",
+      "motion-transfer"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "wan2.7-videoedit"
+    ],
+    "source_ids": [
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Dedicated effect and camera-motion replication"
+    ],
+    "limits": {
+      "min_seconds": 2,
+      "max_seconds": 10,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "wan2.7-edit"
+    ],
+    "notes": [
+      "Editing source duration must be validated separately from requested output duration."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/wan.md",
+    "skill_id": "video-wan",
+    "model_version": "2.7"
+  },
+  {
+    "id": "happyhorse-1-1-t2v",
+    "name": "HappyHorse 1.1 T2V / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-06-22",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.1-t2v"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Recent dedicated audiovisual creation endpoints"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse",
+      "happyhorse-1.1"
+    ],
+    "notes": [
+      "June 22 is the International/Mainland availability entry; some global regions list June 26.",
+      "R2V here documents image references, not arbitrary audio/video references.",
+      "Use the separate 1.0 edit endpoint for edits."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.1"
+  },
+  {
+    "id": "happyhorse-1-1-i2v",
+    "name": "HappyHorse 1.1 I2V / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-06-22",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "image-to-video",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.1-i2v"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Recent dedicated audiovisual creation endpoints"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse",
+      "happyhorse-1.1"
+    ],
+    "notes": [
+      "June 22 is the International/Mainland availability entry; some global regions list June 26.",
+      "R2V here documents image references, not arbitrary audio/video references.",
+      "Use the separate 1.0 edit endpoint for edits."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.1"
+  },
+  {
+    "id": "happyhorse-1-1-r2v",
+    "name": "HappyHorse 1.1 R2V / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-06-22",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "reference-to-video",
+      "native-audio",
+      "image-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.1-r2v"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Recent dedicated audiovisual creation endpoints"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse",
+      "happyhorse-1.1"
+    ],
+    "notes": [
+      "June 22 is the International/Mainland availability entry; some global regions list June 26.",
+      "R2V here documents image references, not arbitrary audio/video references.",
+      "Use the separate 1.0 edit endpoint for edits."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.1"
+  },
+  {
+    "id": "happyhorse-1-0-edit",
+    "name": "HappyHorse 1.0 Video Edit / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-04-27",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "video-editing"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.0-video-edit"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Dedicated generative edit endpoint"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse-edit"
+    ],
+    "notes": [
+      "The edit version remains 1.0 while creation is 1.1; never synthesize happyhorse-1.1-video-edit."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.0"
+  },
+  {
+    "id": "kling-3-0",
+    "name": "Kling Video 3.0 / fal",
+    "family": "kling",
+    "provider": "fal",
+    "variant": "",
+    "release_date": "2026-02-05",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "native-audio",
+      "multishot"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "kling3-release",
+      "kling3-fal"
+    ],
+    "novel_abilities": [
+      "Explicit multi-shot storyboarding and reusable elements"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "kling",
+      "kling3",
+      "kling-3"
+    ],
+    "notes": [
+      "Outside the six-month release window; retain for explicit Kling requests and compatible existing projects.",
+      "Resolve v3 versus o3, Standard versus Pro, and the operation-specific endpoint before execution.",
+      "Kling VIDEO 3.0 and VIDEO 3.0 Omni are not the same API surface."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/kling.md",
+    "skill_id": "video-kling",
+    "model_version": "3.0"
+  },
+  {
+    "id": "kling-3-0-turbo-standard",
+    "name": "Kling 3.0 Turbo Standard / fal",
+    "family": "kling",
+    "provider": "fal",
+    "variant": "",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "native-audio",
+      "multishot"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "fal-ai/kling-video/v3/turbo/standard/text-to-video"
+    ],
+    "source_ids": [
+      "kling3-turbo"
+    ],
+    "novel_abilities": [
+      "Faster 720P creation tier"
+    ],
+    "limits": {
+      "resolutions": [
+        "720p"
+      ]
+    },
+    "aliases": [
+      "kling-turbo"
+    ],
+    "notes": [
+      "Exact variant release date is unverified; the family launch date is not substituted.",
+      "This record intentionally covers only the verified text-to-video endpoint."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/kling.md",
+    "skill_id": "video-kling",
+    "model_version": "3.0"
+  },
+  {
+    "id": "seedance-2-5-chatcut",
+    "name": "Seedance 2.5 / ChatCut",
+    "family": "seedance",
+    "provider": "chatcut",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "underlying-model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "image-reference",
+      "video-reference",
+      "audio-reference",
+      "video-editing",
+      "extend"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "seedance-2-5"
+    ],
+    "source_ids": [
+      "chatcut-video-contract",
+      "seed25-launch"
+    ],
+    "novel_abilities": [
+      "Seedance 2.5 integration with editor job tracking",
+      "Documented 50-reference adapter ceiling"
+    ],
+    "limits": {
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "max_reference_files": 50
+    },
+    "aliases": [
+      "seedance",
+      "seedance-2-5",
+      "chatcut-seedance"
+    ],
+    "notes": [
+      "Release date refers to the underlying model, not verified adapter availability.",
+      "Resolve the live tool schema; direct-provider field names and capabilities must not be inherited."
+    ],
+    "evidence": "provider-skill-documented",
+    "runtime_tested": false,
+    "playbook": "models/seedance.md",
+    "skill_id": "video-seedance",
+    "required_tools": [
+      "chatcut-mcp",
+      "chatcut-project"
+    ],
+    "surface_availability_date": null,
+    "model_version": "2.5"
+  },
+  {
+    "id": "h3-max-chatcut",
+    "name": "MiniMax H3 Max / ChatCut",
+    "family": "minimax",
+    "provider": "chatcut",
+    "variant": "",
+    "release_date": "2026-08-27",
+    "release_date_kind": "underlying-model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "first-last-frame",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [
+      "reference-to-video",
+      "audio-only-reference"
+    ],
+    "api_model_ids": [
+      "minimax-h3-max"
+    ],
+    "source_ids": [
+      "chatcut-video-contract",
+      "h3max-launch"
+    ],
+    "novel_abilities": [
+      "Text/keyframe H3 Max integration inside ChatCut",
+      "Narrower reference and resolution support than fal"
+    ],
+    "limits": {
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "768p"
+      ]
+    },
+    "aliases": [
+      "h3-max",
+      "minimax-h3-max",
+      "chatcut-h3-max"
+    ],
+    "notes": [
+      "Release date refers to the underlying model, not verified adapter availability.",
+      "Resolve the live tool schema; direct-provider field names and capabilities must not be inherited."
+    ],
+    "evidence": "provider-skill-documented",
+    "runtime_tested": false,
+    "playbook": "models/minimax.md",
+    "skill_id": "video-minimax",
+    "required_tools": [
+      "chatcut-mcp",
+      "chatcut-project"
+    ],
+    "surface_availability_date": null,
+    "model_version": "H3 Max"
+  },
+  {
+    "id": "seedance-2-5-scenario",
+    "name": "Seedance 2.5 / Scenario",
+    "family": "seedance",
+    "provider": "scenario",
+    "variant": "",
+    "release_date": "2026-07-31",
+    "release_date_kind": "underlying-model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "audio-only-reference",
+      "image-reference",
+      "video-reference",
+      "audio-reference",
+      "video-editing",
+      "extend"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "scenario-seedance-contract",
+      "seed25-launch"
+    ],
+    "novel_abilities": [
+      "Live discovery and schema-driven Seedance 2.5 workflow",
+      "Adapter-specific input and edit-duration semantics"
+    ],
+    "limits": {},
+    "aliases": [
+      "seedance",
+      "seedance-2-5",
+      "scenario-seedance"
+    ],
+    "notes": [
+      "Release date refers to the underlying model, not verified adapter availability.",
+      "Resolve the live tool schema; direct-provider field names and capabilities must not be inherited."
+    ],
+    "evidence": "provider-skill-documented",
+    "runtime_tested": false,
+    "playbook": "models/seedance.md",
+    "skill_id": "video-seedance",
+    "required_tools": [
+      "scenario-mcp",
+      "scenario-core-skill"
+    ],
+    "surface_availability_date": null,
+    "model_version": "2.5"
+  },
+  {
+    "id": "ltx-2-5-local-inout",
+    "name": "LTX 2.5 / ComfyUI in-outpainting",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "inpainting",
+      "outpainting",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-inout"
+    ],
+    "novel_abilities": [
+      "In/outpainting uses a task-specific IC-LoRA and mask, not the plain generation pipeline."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-5-local-inout",
+      "ltx-2-5"
+    ],
+    "notes": [
+      "In/outpainting uses a task-specific IC-LoRA and mask, not the plain generation pipeline.",
+      "The documented adapter is reused from LTX 2.3; pin it with the listed LTX 2.5 model stack."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "compatible-checkpoints"
+    ]
+  },
+  {
+    "id": "ltx-2-5-python-exr",
+    "name": "LTX 2.5 / Python native EXR pipeline",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "exr-hdr-roundtrip",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-exr"
+    ],
+    "novel_abilities": [
+      "Native EXR preservation uses the Python pipeline; no ComfyUI native EXR flow was documented."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-5-python-exr",
+      "ltx-2-5"
+    ],
+    "notes": [
+      "Native EXR preservation uses the Python pipeline; no ComfyUI native EXR flow was documented.",
+      "This is not the SDR-to-HDR IC-LoRA, whose 2.5 compatibility is still under development."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [],
+    "required_tools": [
+      "ltx-python-pipeline",
+      "compatible-checkpoints"
+    ]
+  },
+  {
+    "id": "ltx-2-5-local-restore",
+    "name": "LTX 2.5 / ComfyUI Restore and Refine Details",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "video-restoration",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx25-restore"
+    ],
+    "novel_abilities": [
+      "Use the TiledFusion Upscale workflow and the task-specific adapters."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-5-local-restore",
+      "ltx-2-5"
+    ],
+    "notes": [
+      "Use the TiledFusion Upscale workflow and the task-specific adapters.",
+      "Restored colors, detail and faces are generated interpretations, not recovered ground truth."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.5",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "task-specific-adapters"
+    ]
+  },
+  {
+    "id": "ltx-2-3-local-dubit",
+    "name": "LTX 2.3 / Dub-It IC-LoRA beta",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "dubbing",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx23-dubit"
+    ],
+    "novel_abilities": [
+      "The official guide validates this on 2.3; 2.5 support remains in development."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-3-local-dubit",
+      "ltx-2-3"
+    ],
+    "notes": [
+      "The official guide validates this on 2.3; 2.5 support remains in development.",
+      "Preserve authorized speaker identity and record consent; verify language and actual lip synchronization."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.3",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "dubit-adapter"
+    ]
+  },
+  {
+    "id": "ltx-2-3-local-foley",
+    "name": "LTX 2.3 / Foley LoRA",
+    "family": "ltx",
+    "provider": "self-hosted",
+    "variant": "specialized-local-workflow",
+    "release_date": null,
+    "release_date_kind": "unknown",
+    "checked_at": "2026-10-01",
+    "runtime": "local",
+    "capabilities": [
+      "video-to-audio",
+      "local-weights"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [],
+    "source_ids": [
+      "ltx23-foley"
+    ],
+    "novel_abilities": [
+      "Validated on 2.3, not 2.5; use a muted input clip and the dedicated Foley adapter."
+    ],
+    "limits": {},
+    "aliases": [
+      "ltx-2-3-local-foley",
+      "ltx-2-3"
+    ],
+    "notes": [
+      "Validated on 2.3, not 2.5; use a muted input clip and the dedicated Foley adapter.",
+      "This synthesizes sound effects, not speech or music, while preserving original video frames."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/ltx.md",
+    "skill_id": "video-ltx",
+    "model_version": "2.3",
+    "artifact_ids": [],
+    "required_tools": [
+      "comfyui",
+      "ltx-comfy-nodes",
+      "video-helper-suite",
+      "foley-adapter"
+    ]
+  }
+]

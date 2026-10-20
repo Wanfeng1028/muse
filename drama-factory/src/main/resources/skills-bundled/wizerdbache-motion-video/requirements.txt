@@ -1,0 +1,7 @@
+# Measuring instruments in scripts/ (also needs ffmpeg + ffprobe on PATH)
+numpy>=1.26
+opencv-python-headless>=4.8
+scipy>=1.11
+pillow>=10.0
+# Rendering a film frame by frame (the model writes the capture script; see references/build-and-export.md §2)
+playwright>=1.40

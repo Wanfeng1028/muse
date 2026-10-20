@@ -1,0 +1,12 @@
+{
+  "note": "v4 narration. start = absolute frame (60fps) in ConnectraV4; slot = last frame the line may reach. Square brackets are Eleven v4/v3 audio tags, stripped for multilingual_v2.",
+  "lines": [
+    {"id": "01-problem", "start": 100, "slot": 380, "text": "[wry] Ten machines. Ten terminals. And exactly one of you."},
+    {"id": "02-connect", "start": 432, "slot": 778, "text": "[confident] Put Connectra on each machine. Sign in once. That’s it — they all dial out and connect."},
+    {"id": "03-command", "start": 846, "slot": 1310, "text": "Now just ask. One chat finds every device, runs the update on each one, and tells you when it’s done."},
+    {"id": "04-agents", "start": 1478, "slot": 1868, "text": "[upbeat] And it’s not tied to one app. Web assistant, IDE, terminal — if it speaks MCP, it works."},
+    {"id": "05-anyone", "start": 1922, "slot": 2280, "text": "AI builders. Infra teams. Developers. [playful] Honestly? Anyone with a phone."},
+    {"id": "06-trust", "start": 2330, "slot": 2530, "text": "[firm] The cloud can ask. Your machine decides."},
+    {"id": "07-close", "start": 2712, "slot": 2975, "text": "[warm, confident] Every agent. Every device. Connected by Connectra."}
+  ]
+}

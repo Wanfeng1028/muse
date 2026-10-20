@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"pill","type":"string","label":"First button label","default":"Create Good Habit"},
+  {"id":"cardTitle","type":"string","label":"Form title","default":"Enter Habit..."},
+  {"id":"r1l","type":"string","label":"Row 1 label","default":"Repeat"},
+  {"id":"r1v","type":"string","label":"Row 1 value","default":"Everyday"},
+  {"id":"r2l","type":"string","label":"Row 2 label","default":"Goal"},
+  {"id":"r2v","type":"string","label":"Row 2 value","default":"1 time per day"},
+  {"id":"r3l","type":"string","label":"Row 3 label","default":"Time of day"},
+  {"id":"r3v","type":"string","label":"Row 3 value","default":"Anytime"},
+  {"id":"tab1","type":"string","label":"Tab 1","default":"Home"},
+  {"id":"tab2","type":"string","label":"Tab 2","default":"Friends"},
+  {"id":"tab3","type":"string","label":"Tab 3","default":"Progress"},
+  {"id":"tab4","type":"string","label":"Tab 4","default":"Settings"},
+  {"id":"weekTitle","type":"string","label":"Stats card title","default":"Last 7 Days"},
+  {"id":"dateFrom","type":"string","label":"Stats range start","default":"3 Feb"},
+  {"id":"dateTo","type":"string","label":"Stats range end","default":"Today"},
+  {"id":"h1","type":"string","label":"Habit 1","default":"Night Routine"},
+  {"id":"h2","type":"string","label":"Habit 2","default":"Hit the Gym"},
+  {"id":"h3","type":"string","label":"Habit 3","default":"Read a Book"},
+  {"id":"widSub","type":"string","label":"Widget subtitle","default":"1h remaining"},
+  {"id":"bookTitle","type":"string","label":"Book title","default":"The Quiet Hours"},
+  {"id":"coverA","type":"string","label":"Cover line 1","default":"THE QUIET"},
+  {"id":"coverB","type":"string","label":"Cover line 2","default":"HOURS"},
+  {"id":"author","type":"string","label":"Cover author","default":"M. OKAFOR"},
+  {"id":"progress","type":"string","label":"Book progress","default":"57% complete"},
+  {"id":"timeLeft","type":"string","label":"Book time left","default":"8 min left"},
+  {"id":"endText","type":"string","label":"End card text","default":"streakly"},
+  {"id":"accent","type":"color","label":"Accent blue","default":"#1a8cff"},
+  {"id":"iconBg","type":"color","label":"App icon background","default":"#0b0b33"},
+  {"id":"orangeA","type":"color","label":"Book card, top","default":"#f6a31b"},
+  {"id":"orangeB","type":"color","label":"Book card, bottom","default":"#e27a1c"},
+  {"id":"paper","type":"color","label":"Background","default":"#e4e4e9"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/SourceSerif4-normal-var.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --accent: #1a8cff; --iconBg: #0b0b33; --orangeA: #f6a31b; --orangeB: #e27a1c; --paper: #e4e4e9; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Inter", sans-serif; }
+      .layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; }
+      #scene { overflow: hidden; }
+      #bg { background: radial-gradient(ellipse 70% 70% at 50% 45%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 70%), var(--paper); }
+      #frame { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+      #shell { position: absolute; overflow: hidden; }
+      #shellO { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: linear-gradient(180deg, var(--orangeA), var(--orangeB)); }
+      #gloss { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: linear-gradient(115deg, rgba(255, 255, 255, 0) 38%, rgba(160, 170, 255, 0.35) 50%, rgba(255, 255, 255, 0) 62%); background-size: 300% 300%; }
+      .cont { position: absolute; color: #fff; white-space: nowrap; }
+      .cont svg { display: block; }
+      #c-icon, #c-plus, #c-check { display: flex; align-items: center; justify-content: center; }
+      .w { display: inline-block; white-space: pre; }
+      /* pill */
+      #c-pill { display: flex; align-items: center; gap: 18px; font: 600 38px/1 "Inter"; letter-spacing: -0.01em; }
+      #c-pill .box { width: 36px; height: 36px; border-radius: 9px; background: #fff; display: flex; align-items: center; justify-content: center; }
+      /* form card */
+      #cTitle { position: absolute; left: 42px; top: 30px; font: 700 38px/1.2 "Inter"; color: #4fa9ff; letter-spacing: -0.01em; }
+      .row { position: absolute; left: 0; width: 568px; height: 60px; font: 500 21px/60px "Inter"; }
+      .row svg { position: absolute; left: 40px; top: 12px; width: 36px; height: 36px; }
+      .row .l { position: absolute; left: 100px; }
+      .row .v { position: absolute; left: 240px; }
+      .row .ch { position: absolute; left: 508px; color: #9a9aa0; font-size: 26px; }
+      /* tab bar */
+      .tab { position: absolute; top: 22px; width: 150px; margin-left: -75px; text-align: center; font: 500 25px/1 "Inter"; color: #5d5d62; }
+      .tab svg { width: 60px; height: 60px; margin: 0 auto 8px; }
+      /* week card */
+      #wTitle { position: absolute; left: 34px; top: 26px; font: 700 34px/1.2 "Inter"; letter-spacing: -0.015em; }
+      #wRange { position: absolute; right: 34px; top: 40px; width: 330px; display: flex; align-items: center; font: 500 15px/1 "Inter"; color: #b5b5bb; }
+      #wRange i { flex: 1; margin: 0 14px; border-top: 2px dotted #3a3a3e; }
+      .hab { position: absolute; left: 0; width: 744px; height: 66px; }
+      .hab svg { position: absolute; left: 34px; top: 16px; width: 36px; height: 34px; }
+      .hab span { position: absolute; left: 84px; top: 0; font: 500 24px/66px "Inter"; }
+      .hab.sep { border-top: 1.5px dashed #242427; }
+      .sq { position: absolute; top: 15px; width: 36px; height: 36px; border-radius: 7px; background: #2a2a2d; }
+      /* widget */
+      #wiT { position: absolute; left: 40px; top: 38px; font: 700 31px/1.12 "Inter"; letter-spacing: -0.01em; }
+      #wiS { position: absolute; left: 40px; top: 118px; font: 500 17px/1 "Inter"; color: #8a8a90; }
+      #wiB { position: absolute; left: 238px; top: 40px; width: 80px; height: 64px; }
+      #wiP { position: absolute; left: 34px; top: 185px; width: 98px; height: 98px; border-radius: 50%; background: #2c2c30; }
+      #wiP svg { position: absolute; left: 0; top: 0; width: 98px; height: 98px; }
+      #wiA { position: absolute; left: 144px; top: 185px; width: 176px; height: 98px; border-radius: 49px; background: #2c2c30; }
+      #wiA svg { position: absolute; left: 60px; top: 21px; width: 56px; height: 56px; }
+      /* book card */
+      #bCover { position: absolute; left: 42px; top: 34px; width: 132px; height: 196px; background: #faf8f2; box-shadow: 0 6px 16px rgba(80, 30, 0, 0.25); color: #26262a; text-align: center; font-family: "Source Serif 4", serif; }
+      #bCover b { position: absolute; left: 0; width: 132px; top: 26px; font: 500 15px/1.35 "Source Serif 4"; letter-spacing: 0.16em; }
+      #bCover i { position: absolute; left: 30px; top: 100px; width: 72px; height: 3px; background: var(--orangeB); }
+      #bCover span { position: absolute; left: 0; width: 132px; top: 128px; font: 500 12px/1.3 "Source Serif 4"; letter-spacing: 0.18em; }
+      #bTitle { position: absolute; left: 214px; top: 88px; font: 600 29px/1 "Inter"; letter-spacing: -0.01em; }
+      #bProg { position: absolute; left: 214px; top: 136px; font: 500 21px/1 "Inter"; color: rgba(255, 255, 255, 0.5); }
+      #bTime { position: absolute; left: 44px; top: 278px; display: flex; align-items: center; gap: 10px; font: 500 20px/1 "Inter"; color: rgba(255, 255, 255, 0.55); }
+      #bTime i { width: 22px; height: 22px; border-radius: 50%; border: 6px solid #fff; }
+      #bIcon { position: absolute; left: 620px; top: 36px; width: 52px; height: 44px; }
+      /* end */
+      #endL { background: radial-gradient(ellipse 58% 52% at 50% 50%, #33332f 0%, #1b1b19 55%, #0d0d0c 100%); }
+      #endT { position: absolute; left: 0; top: 505px; width: 1080px; text-align: center; font: 700 68px/1 "Inter"; letter-spacing: -0.02em; color: #fff; }
+      #cursor { position: absolute; left: 0; top: 0; width: 76px; height: 76px; transform-origin: 28px 5px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="11.3" data-width="1080" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="11.3" data-track-index="0">
+        <div id="bg" class="layer"></div>
+        <div id="frame">
+          <div id="shell"><div id="shellO"></div><div id="gloss"></div></div>
+          <div id="c-icon" class="cont"></div>
+          <div id="c-plus" class="cont"></div>
+          <div id="c-pill" class="cont"></div>
+          <div id="c-card" class="cont"></div>
+          <div id="c-tabs" class="cont"></div>
+          <div id="c-week" class="cont"></div>
+          <div id="c-wid" class="cont"></div>
+          <div id="c-book" class="cont"></div>
+          <div id="c-check" class="cont"></div>
+        </div>
+        <div id="endL" class="layer"><div id="endT"></div></div>
+        <svg id="cursor" viewBox="0 0 32 32">
+          <g stroke="#111" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M12.4 2.2c-1.2 0-2.1.9-2.1 2.1v10.6l-1.2-1.1c-.9-.8-2.2-.8-3 0-.8.8-.8 2.1 0 2.9l5.3 5.9c1.4 1.6 3.4 2.5 5.6 2.5h2.6c4.1 0 7.3-3.3 7.3-7.3v-5c0-1.1-.9-2-2-2s-2 .9-2 2v-.9c0-1.1-.9-2-2-2s-2 .9-2 2v-.8c0-1.1-.9-2-2-2s-2 .9-2 2V4.3c0-1.2-.9-2.1-2.1-2.1z" fill="#fff" />
+            <path d="M14.5 11.6v5.2M18.5 12.4v4.4M22.5 13.2v3.6" fill="none" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 11.3;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const px = (n) => n.toFixed(1) + "px";
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) {
+            const ns = "http://www.w3.org/2000/svg", f = document.createElementNS(ns, "filter");
+            f.setAttribute("id", "mb_" + key); f.setAttribute("x", "-50%"); f.setAttribute("y", "-50%"); f.setAttribute("width", "200%"); f.setAttribute("height", "200%");
+            g = document.createElementNS(ns, "feGaussianBlur"); f.appendChild(g);
+            let defs = document.getElementById("mbDefs");
+            if (!defs) { const svg = document.createElementNS(ns, "svg"); svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.style.position = "absolute"; defs = document.createElementNS(ns, "defs"); defs.id = "mbDefs"; svg.appendChild(defs); document.body.appendChild(svg); }
+            defs.appendChild(f); MBF[key] = g;
+          }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+        const hex = (h) => { const n = parseInt(String(h).replace("#", ""), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+        const mixC = (a, b, u) => { const A = hex(a), B = hex(b); return "rgb(" + A.map((x, i) => Math.round(L(x, B[i], u))).join(",") + ")"; };
+        const words = (el, text) => { el.innerHTML = text.split(" ").map((w) => '<span class="w">' + esc(w) + "</span>").join('<span class="w"> </span>'); return [...el.querySelectorAll(".w")].filter((w) => w.textContent !== " "); };
+        const GL = "abcdefghijklmnopqrstuvwxyz";
+        const scr = (text, u, seed, t) => { const n = text.length, k = Math.floor(n * C(u)); let s = text.slice(0, k); for (let i = 0; i < Math.min(3, n - k); i++) s += text[k + i] === " " ? " " : GL[Math.floor(R(seed + i * 7.1 + Math.floor(t * 24)) * 26)]; return s; };
+        const ACC = v.accent;
+
+        // ---------- icons ----------
+        const I = {
+          mark: '<svg viewBox="0 0 100 100" style="width:118px;height:118px"><path d="M50 16a34 34 0 1 1-33.4 40.4" fill="none" stroke="' + ACC + '" stroke-width="15" stroke-linecap="round"/><circle cx="24.5" cy="31" r="9.5" fill="#6aa8ff"/></svg>',
+          plus: '<svg viewBox="0 0 100 100" style="width:84px;height:84px"><path d="M50 16v68M16 50h68" stroke="#fff" stroke-width="13" stroke-linecap="round"/></svg>',
+          check: (c, w) => '<svg viewBox="0 0 24 24" style="width:' + w + "px;height:" + w + 'px"><path d="M5.5 12.5l4.3 4.3L18.8 7.6" fill="none" stroke="' + c + '" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+          repeat: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M17.8 2.8v3.8h-3.8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+          goal: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="17" height="17" rx="4" fill="none" stroke="#fff" stroke-width="2"/><path d="M7 15l3.2-3.4 2.6 2.4L17 9.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="4.5" r="3" fill="#fff" stroke="#434346" stroke-width="1.5"/></svg>',
+          clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 7v5.3l3.4 2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+          home: '<svg viewBox="0 0 24 24"><path d="M3.5 11.2L12 4l8.5 7.2V20a1 1 0 0 1-1 1h-5v-5.5h-5V21h-5a1 1 0 0 1-1-1z" fill="currentColor"/></svg>',
+          friends: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.3"/><path d="M5.5 19.5c.6-3.4 3.3-5.3 6.5-5.3s5.9 1.9 6.5 5.3"/><circle cx="5.3" cy="9.3" r="2.3"/><circle cx="18.7" cy="9.3" r="2.3"/><path d="M1.5 17.5c.4-2.2 1.9-3.4 3.8-3.4M22.5 17.5c-.4-2.2-1.9-3.4-3.8-3.4"/></svg>',
+          progress: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="16.5" height="16.5" rx="4"/><path d="M7 15.5l3.2-3.4 2.6 2.4 4.2-4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19.5" cy="4.5" r="2.6" fill="currentColor" stroke="none"/></svg>',
+          settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2.8l1.7 1.5 2.3-.4.9 2.1 2.1.9-.4 2.3 1.5 1.7-1.5 1.7.4 2.3-2.1.9-.9 2.1-2.3-.4L12 21.2l-1.7-1.5-2.3.4-.9-2.1-2.1-.9.4-2.3L3.9 12l1.5-1.7-.4-2.3 2.1-.9.9-2.1 2.3.4z" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2"/></svg>',
+          bed: '<svg viewBox="0 0 26 24"><path d="M2 19V6M2 14h22v5M6.5 11.5h6a2 2 0 0 1 2 2V14H4.5v-.5a2 2 0 0 1 2-2zM15 10h7a2 2 0 0 1 2 2v2h-9z" fill="' + ACC + '" stroke="' + ACC + '" stroke-width="2" stroke-linejoin="round"/></svg>',
+          run: '<svg viewBox="0 0 24 24" fill="none" stroke="' + ACC + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="14.5" cy="4" r="2" fill="' + ACC + '"/><path d="M8 9.5l4-2 3 3.5 3 1M12 7.5l-1.5 6 3.5 3-1 5M10.5 13.5l-3 3-3.5-.5"/></svg>',
+          book: (c) => '<svg viewBox="0 0 28 22"><path d="M1.5 2.5c4.2-1.6 8.4-1 11.5 1.4V21c-3.1-2.3-7.3-2.9-11.5-1.4zM26.5 2.5c-4.2-1.6-8.4-1-11.5 1.4V21c3.1-2.3 7.3-2.9 11.5-1.4z" fill="' + c + '"/></svg>',
+          bookLine: '<svg viewBox="0 0 28 22"><path d="M2 3c4-1.5 8-.9 11 1.3v15.5c-3-2.2-7-2.8-11-1.3zM26 3c-4-1.5-8-.9-11 1.3v15.5c3-2.2 7-2.8 11-1.3z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>',
+        };
+
+        // ---------- contents ----------
+        const cIcon = $("c-icon"), cPlus = $("c-plus"), cPill = $("c-pill"), cCard = $("c-card"), cTabs = $("c-tabs"), cWeek = $("c-week"), cWid = $("c-wid"), cBook = $("c-book"), cCheck = $("c-check");
+        cIcon.innerHTML = I.mark;
+        cPlus.innerHTML = I.plus;
+        cPill.innerHTML = '<span class="w box">' + I.check("#5b5b5f", 28) + "</span>";
+        const pillW = [cPill.children[0]].concat((() => { const s = document.createElement("span"); cPill.appendChild(s); const ws = words(s, v.pill); return ws; })());
+        cCard.innerHTML = '<div id="cTitle"></div>' + [[I.repeat, v.r1l, v.r1v], [I.goal, v.r2l, v.r2v], [I.clock, v.r3l, v.r3v]].map((r, k) => '<div class="row" style="top:' + (80 + k * 66) + 'px">' + r[0] + '<span class="l"></span><span class="v"></span><span class="ch">›</span></div>').join("");
+        const cTitle = $("cTitle"), rowEls = [...cCard.querySelectorAll(".row")];
+        const ROWS = [[v.r1l, v.r1v], [v.r2l, v.r2v], [v.r3l, v.r3v]];
+        const TABX = [0.14, 0.38, 0.62, 0.86];
+        cTabs.innerHTML = [[I.home, v.tab1], [I.friends, v.tab2], [I.progress, v.tab3], [I.settings, v.tab4]].map((tb, k) => '<div class="tab" style="left:' + (TABX[k] * 848).toFixed(0) + 'px">' + tb[0] + "<div>" + esc(tb[1]) + "</div></div>").join("");
+        const tabEls = [...cTabs.children];
+        cWeek.innerHTML = '<div id="wTitle"></div><div id="wRange"><span>' + esc(v.dateFrom) + "</span><i></i><span>" + esc(v.dateTo) + "</span></div>" + [[I.bed, v.h1], [I.run, v.h2], [I.book(ACC), v.h3]].map((h, k) => '<div class="hab' + (k ? " sep" : "") + '" style="top:' + (92 + k * 70) + 'px">' + h[0] + "<span>" + esc(h[1]) + "</span></div>").join("");
+        const wTitleW = words($("wTitle"), v.weekTitle), habEls = [...cWeek.querySelectorAll(".hab")];
+        const FILL = [3, 4, 2], SQ = [];
+        habEls.forEach((h, r) => { for (let c = 0; c < 7; c++) { const s = document.createElement("div"); s.className = "sq"; s.style.left = px(345 + c * 53); h.appendChild(s); SQ.push({ el: s, r, c, on: c < FILL[r] }); } });
+        cWid.innerHTML = '<div id="wiT"></div><div id="wiS"></div><div id="wiB">' + I.book(ACC) + '</div><div id="wiP"><svg viewBox="0 0 98 98"><circle cx="49" cy="49" r="29" fill="none" stroke="#3d3d42" stroke-width="6"/><circle id="wiRing" cx="49" cy="49" r="29" fill="none" stroke="' + ACC + '" stroke-width="6" stroke-linecap="round" pathLength="1" transform="rotate(-90 49 49)"/><path d="M44 39.5v19l15-9.5z" fill="' + ACC + '"/></svg></div><div id="wiA"><svg viewBox="0 0 56 56"><rect x="6" y="6" width="44" height="44" rx="10" fill="none" stroke="' + ACC + '" stroke-width="4"/><path d="M28 17v22M17 28h22" stroke="' + ACC + '" stroke-width="4" stroke-linecap="round"/></svg></div>';
+        $("wiT").innerHTML = esc(v.h3).replace(/ (\S+)$/, "<br>$1");
+        cBook.innerHTML = '<div id="bCover"><b>' + esc(v.coverA) + "<br>" + esc(v.coverB) + "</b><i></i><span>" + esc(v.author) + '</span></div><div id="bTitle"></div><div id="bProg"></div><div id="bTime"><i></i><span></span></div><div id="bIcon">' + I.bookLine + "</div>";
+        const bTitleW = words($("bTitle"), v.bookTitle);
+        $("bProg").textContent = v.progress; $("bTime").querySelector("span").textContent = v.timeLeft;
+        cCheck.innerHTML = '<svg viewBox="0 0 24 24" style="width:110px;height:110px"><path id="ckP" d="M5.5 12.6l4.4 4.4L18.8 7.8" fill="none" stroke="#fff" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg>';
+        $("endT").textContent = v.endText;
+
+        // ---------- the morphing surface ----------
+        // [w, h, radius, colour] for each state
+        const S = {
+          icon: [240, 240, 54, v.iconBg], plus: [180, 180, -1, ACC], pill: [496, 100, -1, "#5b5b5f"], card: [568, 298, 38, "#434346"],
+          tabs: [848, 153, -1, "#b4b4b9"], week: [744, 314, 45, "#0a0a0b"], wid: [352, 334, 48, "#1c1c1e"], book: [710, 330, 45, "#ee8f1b"], check: [198, 198, -1, ACC],
+        };
+        const CONT = { icon: cIcon, plus: cPlus, pill: cPill, card: cCard, tabs: cTabs, week: cWeek, wid: cWid, book: cBook, check: cCheck };
+        Object.keys(CONT).forEach((k) => { const c = CONT[k], s = S[k]; c.style.width = px(s[0]); c.style.height = px(s[1]); c.style.left = px(-s[0] / 2); c.style.top = px(-s[1] / 2); });
+        cPill.style.justifyContent = "center";
+        // morphs: [from, to, t0, t1]
+        // [from, to, t0, t1, colour window as a fraction of the morph]
+        const M = [["icon", "plus", 1.0, 1.25], ["plus", "pill", 1.8, 2.05, 0.4, 0.75], ["pill", "card", 2.95, 3.26], ["card", "tabs", 4.12, 4.38], ["tabs", "week", 5.92, 6.2], ["week", "wid", 7.12, 7.4], ["wid", "book", 8.3, 8.56], ["book", "check", 9.0, 9.26, 0.45, 0.8]];
+        const shellAt = (t) => {
+          let a = "icon", b = "icon", ul = 0, c0 = 0, c1 = 0.45;
+          for (const m of M) { if (t >= m[3]) { a = b = m[1]; ul = 0; } else if (t >= m[2]) { a = m[0]; b = m[1]; ul = P(t, m[2], m[3]); if (m[4] != null) { c0 = m[4]; c1 = m[5]; } break; } else break; }
+          // size eases in and out; corner radius (and usually colour) lead so the new shape reads early
+          const A = S[a], B = S[b], u = ioq(ul), rU = E.outCubic(P(ul, 0, 0.35)), cU = E.outCubic(P(ul, c0, c1));
+          const w = L(A[0], B[0], u), h = L(A[1], B[1], u), half = Math.min(w, h) / 2;
+          const r = L(A[2] < 0 ? half : A[2], B[2] < 0 ? half : B[2], rU);
+          return { w, h, r, col: mixC(A[3], B[3], cU), orange: (a === "book" ? 1 - cU : 0) + (b === "book" ? cU : 0), a, b, u, ul };
+        };
+        // the frame's centre: the tab bar slides under the cursor, everything else sits in the middle
+        const TABC = [[4.12, 560], [4.38, 800], [4.5, 836], [4.62, 830], [4.78, 830], [4.95, 640], [5.1, 640], [5.28, 450], [5.92, 452], [6.2, 540]];
+        const frameX = (t) => {
+          if (t < TABC[0][0] || t >= TABC[TABC.length - 1][0]) return 540;
+          for (let k = 0; k < TABC.length - 1; k++) if (t < TABC[k + 1][0]) { const u = (t - TABC[k][0]) / (TABC[k + 1][0] - TABC[k][0]); return L(TABC[k][1], TABC[k + 1][1], k === 1 ? E.outCubic(u) : ioq(u)); }
+          return 540;
+        };
+        // cursor keyframes [t, x, y] (fingertip) and taps
+        const CK = [[0.9, 900, 830], [1.1, 812, 745], [1.3, 668, 625], [1.5, 616, 600], [1.62, 598, 590], [1.75, 590, 596], [1.9, 450, 607], [2.05, 392, 598], [2.25, 466, 457], [2.5, 540, 353], [2.75, 545, 450], [2.85, 545, 490], [2.95, 547, 600], [3.1, 553, 713], [3.4, 600, 736], [3.65, 690, 738], [3.9, 650, 700], [4.02, 566, 562], [4.2, 506, 443], [4.4, 560, 420], [4.62, 552, 530], [4.8, 556, 480], [5.0, 552, 530], [5.15, 556, 482], [5.33, 552, 530], [5.6, 556, 522], [5.9, 603, 592], [6.05, 670, 749], [6.4, 866, 623], [6.7, 974, 540], [7.0, 934, 540], [7.35, 353, 556], [7.6, 315, 556], [7.85, 430, 600], [7.95, 447, 606], [8.1, 472, 612], [8.4, 477, 619], [8.7, 670, 506], [8.9, 832, 432], [9.1, 770, 455], [9.3, 446, 675], [9.5, 330, 820]];
+        const TAPS = [1.62, 2.85, 4.02, 4.62, 5.0, 5.33, 7.95, 8.9];
+        const cursorAt = (t) => {
+          if (t <= CK[0][0]) return [CK[0][1], CK[0][2], 0];
+          for (let k = 0; k < CK.length - 1; k++) if (t < CK[k + 1][0]) { const u = ioq((t - CK[k][0]) / (CK[k + 1][0] - CK[k][0])); return [L(CK[k][1], CK[k + 1][1], u), L(CK[k][2], CK[k + 1][2], u), k]; }
+          const l = CK[CK.length - 1]; return [l[1], l[2], CK.length - 1];
+        };
+        const press = (t) => TAPS.reduce((m, a) => Math.max(m, bump(t, a - 0.02, a + 0.12)), 0);
+
+        function render(t) {
+          const endOn = t >= 10.02;
+          K.show($("endL"), endOn);
+          const sh = shellAt(t), frame = $("frame"), shell = $("shell");
+          // icon spins in
+          let rot = 0, sc = 1, fy = 540, op = 1, fb = 0;
+          if (t < 1.0) {
+            const u = P(t, 0, 0.95);
+            sc = L(0.5, 1, E.outQuad(u));
+            const key = (ks) => { for (let k = 0; k < ks.length - 1; k++) if (t < ks[k + 1][0]) return L(ks[k][1], ks[k + 1][1], (1 - Math.cos(Math.PI * P(t, ks[k][0], ks[k + 1][0]))) / 2); return ks[ks.length - 1][1]; };
+            rot = key([[0, -30], [0.1, -20], [0.3, 6], [0.5, -3], [0.7, 1], [0.9, 0]]);
+            fy = key([[0, 600], [0.1, 574], [0.3, 522], [0.5, 549], [0.8, 537], [1.0, 540]]);
+            op = C(0.35 + u * 2); fb = 7 * Math.pow(1 - C(u * 1.6), 2);
+          }
+          // pill arrives tilted
+          if (t >= 1.95 && t < 2.5) rot = -8 * bump(t, 1.95, 2.5) * (t < 2.22 ? 1 : 1);
+          const press1 = press(t) * (t > 1.5 ? 1 : 0);
+          sc *= 1 - 0.035 * press1;
+          const fx = frameX(t);
+          frame.style.transform = "translate(" + px(fx) + "," + px(fy) + ") rotate(" + rot.toFixed(2) + "deg) scale(" + sc.toFixed(4) + ")";
+          frame.style.opacity = t >= 10.02 ? "0" : op.toFixed(3);
+          const mb = M.reduce((m, x) => Math.max(m, bump(t, x[2], x[3])), 0);
+          shell.style.width = px(sh.w); shell.style.height = px(sh.h); shell.style.left = px(-sh.w / 2); shell.style.top = px(-sh.h / 2);
+          shell.style.borderRadius = px(sh.r); shell.style.background = sh.col;
+          $("shellO").style.opacity = sh.orange.toFixed(3);
+          const slide = t >= 4.12 && t < 6.3 ? Math.abs(frameX(t + 0.02) - frameX(t - 0.02)) / 0.04 : 0;
+          if (slide > 600) mblur(frame, "fr", Math.min(22, (slide - 600) / 120), 0); else frame.style.filter = blurS(fb + 9 * mb);
+          shell.style.boxShadow = sh.a === "tabs" || sh.b === "tabs" ? "none" : "0 " + px(10 + 8 * (sh.w / 700)) + " " + px(26) + " rgba(20,20,40," + (sh.a === "icon" ? 0.22 : 0.16) + ")";
+          // gloss sweep over the icon
+          $("gloss").style.opacity = t < 1.05 ? "1" : "0";
+          $("gloss").style.backgroundPosition = (L(120, -40, P(t, 0.25, 0.85))).toFixed(1) + "% 0";
+          // contents
+          Object.keys(CONT).forEach((k) => {
+            const c = CONT[k], N = S[k];
+            let o = 0;
+            if (sh.a === k && sh.b === k) o = 1;
+            else if (sh.a === k) o = 1 - P(sh.ul, 0.4, 0.85);
+            else if (sh.b === k) o = P(sh.ul, 0.3, 0.8);
+            K.show(c, o > 0.002);
+            if (o <= 0.002) return;
+            c.style.opacity = o.toFixed(3);
+            c.style.transform = sh.a === sh.b ? "none" : "scale(" + (sh.w / N[0]).toFixed(4) + "," + (sh.h / N[1]).toFixed(4) + ")";
+          });
+          // pill words drop in, tilted
+          pillW.forEach((w, k) => { const a = 1.98 + k * 0.06, u = E.outBack(P(t, a, a + 0.22), 1.4); w.style.transform = "translateY(" + px(-26 * (1 - C(u, 0, 1.2))) + ") rotate(" + (-12 * (1 - C(u))).toFixed(2) + "deg)"; w.style.opacity = C(u * 2).toFixed(3); w.style.filter = blurS(8 * (1 - C(u))); });
+          // form card: title types, rows scramble in
+          if (t >= 3.0 && t < 4.2) {
+            const tu = P(t, 3.08, 3.4);
+            const full = v.cardTitle, cut = full.indexOf(" ");
+            cTitle.innerHTML = esc(scr(full, tu, 3, t));
+            cTitle.style.transform = "scale(" + (1 + 0.06 * bump(t, 3.2, 3.42)).toFixed(3) + ")"; cTitle.style.transformOrigin = "0 50%";
+            ROWS.forEach((r, k) => {
+              const a = 3.1 + k * 0.05, u1 = P(t, a, a + 0.4), u2 = P(t, a + 0.12, a + 0.62);
+              rowEls[k].querySelector(".l").textContent = scr(r[0], u1, 11 + k, t);
+              rowEls[k].querySelector(".v").textContent = scr(r[1], u2, 21 + k, t);
+              rowEls[k].style.opacity = C(P(t, a - 0.04, a + 0.1)).toFixed(3);
+            });
+          }
+          // tab bar: the tab under the cursor lights up
+          const TT = [4.62, 5.0, 5.33], act = t >= TT[2] ? 2 : t >= TT[1] ? 1 : t >= TT[0] ? 0 : -1;
+          tabEls.forEach((tb, k) => { const on = k === act; tb.style.color = on ? "#fff" : "#5d5d62"; tb.style.transform = on ? "scale(" + (1 + 0.08 * bump(t, TT[k], TT[k] + 0.25)).toFixed(3) + ")" : "none"; });
+          // week card
+          if (t >= 6.05 && t < 7.2) {
+            wTitleW.forEach((w, k) => { const a = 6.14 + k * 0.07, u = E.outBack(P(t, a, a + 0.2), 1.6); w.style.transform = "translateY(" + px(-18 * (1 - C(u, 0, 1.2))) + ")"; w.style.opacity = C(u * 2).toFixed(3); w.style.filter = blurS(6 * (1 - C(u))); });
+            habEls.forEach((h, k) => { const u = E.outCubic(P(t, 6.24 + k * 0.08, 6.5 + k * 0.08)); h.querySelector("span").style.opacity = u.toFixed(3); h.querySelector("span").style.transform = "translateX(" + px(-14 * (1 - u)) + ")"; });
+            $("wRange").style.opacity = P(t, 6.3, 6.5).toFixed(3);
+            SQ.forEach((q) => { const a = 6.52 + q.c * 0.09 + q.r * 0.05, u = q.on ? E.outBack(P(t, a, a + 0.16), 2.2) : 0; q.el.style.background = q.on && u > 0 ? mixC("#2a2a2d", ACC, C(u)) : "#2a2a2d"; q.el.style.transform = "scale(" + (q.on ? L(0.8, 1, C(u, 0, 1.25)) : 1).toFixed(3) + ")"; q.el.style.opacity = C(P(t, 6.3 + q.c * 0.02, 6.45 + q.c * 0.02)).toFixed(3); });
+          }
+          // widget
+          if (t >= 7.3 && t < 8.4) {
+            const tu = P(t, 7.4, 7.62);
+            $("wiT").innerHTML = esc(scr(v.h3, tu, 5, t)).replace(/ (\S+)$/, "<br>$1");
+            $("wiS").textContent = scr(v.widSub, P(t, 7.55, 8.1), 9, t);
+            const bu = E.outBack(P(t, 7.38, 7.6), 1.8);
+            $("wiB").style.transform = "scale(" + C(bu, 0, 1.2).toFixed(3) + ")";
+            const ring = $("wiRing"), ru = E.outCubic(P(t, 7.96, 8.3)) * 0.72;
+            ring.style.strokeDasharray = "1"; ring.style.strokeDashoffset = String(1 - ru); ring.style.visibility = ru > 0.001 ? "visible" : "hidden";
+            $("wiP").style.transform = "scale(" + (1 - 0.08 * bump(t, 7.93, 8.08)).toFixed(3) + ")";
+          }
+          // book card
+          if (t >= 8.45 && t < 9.1) {
+            const cu = E.outCubic(P(t, 8.5, 8.72));
+            $("bCover").style.transform = "translateX(" + px(-30 * (1 - cu)) + ")"; $("bCover").style.opacity = cu.toFixed(3);
+            bTitleW.forEach((w, k) => { const a = 8.56 + k * 0.08, u = E.outBack(P(t, a, a + 0.2), 1.5); w.style.transform = "translateY(" + px(-16 * (1 - C(u, 0, 1.2))) + ")"; w.style.opacity = C(u * 2).toFixed(3); w.style.filter = blurS(6 * (1 - C(u))); });
+            $("bProg").style.opacity = P(t, 8.7, 8.85).toFixed(3); $("bTime").style.opacity = P(t, 8.72, 8.88).toFixed(3);
+            $("bIcon").style.transform = "scale(" + (1 - 0.1 * bump(t, 8.88, 9.0)).toFixed(3) + ")";
+          }
+          // check
+          if (t >= 9.1) {
+            const pu = E.outBack(P(t, 9.2, 9.42), 2.2);
+            cCheck.style.transform = "scale(" + C(L(0.6, 1, pu), 0, 1.2).toFixed(3) + ")";
+            K.draw($("ckP"), E.outCubic(P(t, 9.26, 9.46)));
+          }
+          // end card
+          if (endOn) {
+            const u = E.outCubic(P(t, 10.05, 10.5));
+            const e = $("endT");
+            e.style.opacity = u.toFixed(3); e.style.filter = blurS(12 * (1 - u));
+            e.style.transform = "scale(" + L(0.94, 1, u).toFixed(3) + ")";
+            const g = 0.55 + 0.15 * Math.sin((t - 10) * 3);
+            e.style.textShadow = "0 0 18px rgba(255,255,255," + (g * u).toFixed(3) + "), 0 0 46px rgba(255,255,255," + (0.3 * u).toFixed(3) + ")";
+          }
+          // cursor
+          const cur = $("cursor"), cp = cursorAt(t);
+          const con = t >= 0.9 && t < 9.52;
+          K.show(cur, con);
+          if (con) {
+            const d = cursorAt(t + 0.02), d0 = cursorAt(t - 0.02), vx = (d[0] - d0[0]) / 0.04, vy = (d[1] - d0[1]) / 0.04;
+            const s = 1 - 0.14 * press(t);
+            cur.style.transform = "translate(" + px(cp[0] - 28) + "," + px(cp[1] - 5) + ") scale(" + s.toFixed(3) + ")";
+            cur.style.opacity = (C(P(t, 0.9, 1.05)) * (1 - P(t, 9.3, 9.5))).toFixed(3);
+            mblur(cur, "cu", Math.min(10, Math.abs(vx) / 260), Math.min(10, Math.abs(vy) / 260));
+          }
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

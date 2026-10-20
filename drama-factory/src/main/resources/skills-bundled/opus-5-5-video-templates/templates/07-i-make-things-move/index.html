@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"headline1","type":"string","label":"Headline line 1","default":"I MAKE IDEAS"},
+  {"id":"headline2","type":"string","label":"Headline big word","default":"REAL"},
+  {"id":"bounceWord","type":"string","label":"Bounce word","default":"BOUNCE"},
+  {"id":"stretchWord","type":"string","label":"Stretch word","default":"STRETCH"},
+  {"id":"spinWord","type":"string","label":"Spin word","default":"SPIN"},
+  {"id":"snapWord","type":"string","label":"Snap word","default":"SNAP"},
+  {"id":"role","type":"string","label":"Final small line","default":"CLAUDE"},
+  {"id":"name","type":"string","label":"Final big word","default":"IMAGINE"},
+  {"id":"note","type":"string","label":"Final handwritten note","default":"claudeimagine.com"},
+  {"id":"accent","type":"color","label":"Accent","default":"#6762f3"},
+  {"id":"alert","type":"color","label":"Red notes","default":"#e5484d"},
+  {"id":"ink","type":"color","label":"Ink","default":"#1c1e22"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Anton-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Caveat-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --accent: #6762f3; --alert: #e5484d; --ink: #1c1e22; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #efefed; }
+      #root, .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      #paper { background: radial-gradient(ellipse 72% 70% at 50% 42%, #f6f6f4 0%, #ececea 55%, #d9d9d6 100%); }
+      #dark { background: radial-gradient(ellipse 70% 70% at 50% 45%, #2a2d33 0%, #212328 60%, #16171a 100%); }
+      #dots { background: radial-gradient(rgba(118, 146, 230, 0.62) 3.4px, transparent 4.2px) 32px 32px / 64px 64px; }
+      .hand { font-family: Caveat, cursive; font-weight: 700; }
+      .mono { font-family: "IBM Plex Mono", monospace; }
+      #tc { position: absolute; right: 150px; top: 44px; font: 500 22px/1 "IBM Plex Mono", monospace; letter-spacing: 0.02em; }
+      .tline { position: absolute; left: 0; width: 1920px; text-align: center; white-space: nowrap; font-family: Anton, sans-serif; color: var(--ink); }
+      .ch { display: inline-block; position: relative; transform-origin: 50% 80%; }
+      #l1 { top: 150px; font-size: 212px; line-height: 1; letter-spacing: -0.005em; }
+      #l2 { top: 330px; font-size: 540px; line-height: 1; letter-spacing: -0.01em; }
+      .word { position: absolute; left: 0; top: 262px; width: 1920px; text-align: center; font: 400 500px/1 Anton, sans-serif; white-space: nowrap; perspective: 1600px; color: #f2f2f0; }
+      .word .ch { transform-origin: 50% 50%; }
+      #wStretch { color: var(--accent); font-size: 590px; top: 220px; }
+      #snapFlash { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, #ff3a50 0%, #e32a41 70%, #c71f35 100%); }
+      #snapFlash div { position: absolute; left: 0; top: 150px; width: 1920px; text-align: center; font: 400 560px/1 Anton, sans-serif; color: #1c1e22; transform: rotate(-8deg); }
+      #wSnap { color: var(--alert); }
+      #f1 { top: 210px; font-size: 212px; line-height: 1; }
+      #f2 { top: 400px; font-size: 440px; line-height: 1; letter-spacing: -0.01em; }
+      #ball { position: absolute; left: 0; top: 0; width: 90px; height: 90px; border-radius: 50%; background: var(--accent); transform-origin: 50% 50%; }
+      #pct { position: absolute; left: 0; top: 860px; width: 1920px; text-align: center; font: 700 34px/1 Anton, sans-serif; color: #e9ebef; letter-spacing: 0.04em; }
+      .box { position: absolute; top: 765px; width: 105px; height: 105px; border-radius: 16px; border: 3px solid; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <div id="paper" class="layer"></div>
+        <div id="dark" class="layer"></div>
+        <div id="dots" class="layer"></div>
+
+        <!-- A: bounce with onion skin -->
+        <svg id="sA" class="layer" viewBox="0 0 1920 1080">
+          <defs>
+            <clipPath id="cSlow"><rect id="rSlow" x="350" y="180" width="0" height="80" /></clipPath>
+            <clipPath id="cSquash"><rect id="rSquash" x="770" y="855" width="0" height="80" /></clipPath>
+            <clipPath id="cStretch"><rect id="rStretch" x="1500" y="430" width="0" height="70" /></clipPath>
+          </defs>
+          <path id="ground" d="M135 813 C 600 811, 1200 815, 1785 812" stroke="var(--ink)" stroke-width="3" fill="none" pathLength="1" />
+          <path id="trail" d="" fill="none" stroke="#9a9ca3" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 11" />
+          <g id="ghosts" fill="none" stroke="var(--accent)" stroke-opacity="0.45" stroke-width="2"></g>
+          <g clip-path="url(#cSlow)"><text x="360" y="236" class="hand" font-size="60" fill="var(--accent)">slow in, slow out</text></g>
+          <path id="aSlow" d="M500 262 C 518 280, 530 296, 538 316 M538 316 l -12 -6 M538 316 l 2 -13" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+          <g clip-path="url(#cSquash)"><text x="786" y="912" class="hand" font-size="68" fill="var(--alert)">squash!</text></g>
+          <path id="aSquash" d="M778 880 C 768 862, 760 846, 752 828 M752 828 l -3 14 M752 828 l 12 6" stroke="var(--alert)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+          <g clip-path="url(#cStretch)"><text x="1510" y="476" class="hand" font-size="60" fill="var(--accent)">stretch</text></g>
+          <path id="aStretch" d="M1512 494 C 1494 512, 1470 528, 1440 540 M1440 540 l 13 1 M1440 540 l 8 -10" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+        </svg>
+
+        <!-- B: headline -->
+        <div id="sB" class="layer">
+          <div class="tline" id="l1"></div>
+          <div class="tline" id="l2"></div>
+          <svg class="layer" viewBox="0 0 1920 1080">
+            <defs><clipPath id="cStag"><rect id="rStag" x="1545" y="320" width="0" height="70" /></clipPath><clipPath id="cOver"><rect id="rOver" x="1500" y="880" width="0" height="70" /></clipPath></defs>
+            <path id="uline" d="M390 861 C 800 857, 1100 864, 1425 859" stroke="var(--accent)" stroke-width="12" fill="none" stroke-linecap="round" pathLength="1" />
+            <g clip-path="url(#cStag)"><text x="1554" y="370" class="hand" font-size="56" fill="var(--accent)">stagger: 45ms</text></g>
+            <path id="aStag" d="M1540 402 C 1480 412, 1400 404, 1335 390 M1335 390 l 12 -8 M1335 390 l 10 10" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+            <g clip-path="url(#cOver)"><text x="1506" y="926" class="hand" font-size="56" fill="var(--accent)">overlap</text></g>
+            <path id="aOver" d="M1530 885 C 1528 866, 1520 850, 1500 834 M1500 834 l 3 13 M1500 834 l 13 1" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+          </svg>
+        </div>
+
+        <!-- C: four principle words -->
+        <div id="sC" class="layer">
+          <div class="word" id="wBounce"></div>
+          <div class="word" id="wStretch"></div>
+          <div class="word" id="wSpin"></div>
+          <div id="snapFlash"><div data-var="snapWord"></div></div>
+          <div class="word" id="wSnap" data-var="snapWord"></div>
+          <svg id="guides" class="layer" viewBox="0 0 1920 1080" stroke="#ff4057" stroke-width="2" fill="none">
+            <line x1="0" y1="312" x2="1920" y2="312" /><line x1="0" y1="720" x2="1920" y2="720" />
+            <line x1="500" y1="0" x2="500" y2="1080" /><line x1="1420" y1="0" x2="1420" y2="1080" />
+            <g fill="#1c1e22" stroke-width="2"><rect x="494" y="306" width="12" height="12" /><rect x="954" y="306" width="12" height="12" /><rect x="1414" y="306" width="12" height="12" /><rect x="494" y="510" width="12" height="12" /><rect x="1414" y="510" width="12" height="12" /><rect x="494" y="714" width="12" height="12" /><rect x="954" y="714" width="12" height="12" /><rect x="1414" y="714" width="12" height="12" /></g>
+          </svg>
+          <svg class="layer" viewBox="0 0 1920 1080">
+            <defs><clipPath id="cC1"><rect id="rC1" x="1400" y="760" width="0" height="70" /></clipPath><clipPath id="cC2"><rect id="rC2" x="1530" y="760" width="0" height="70" /></clipPath>
+              <clipPath id="cC3"><rect id="rC3" x="1100" y="840" width="0" height="70" /></clipPath><clipPath id="cC4"><rect id="rC4" x="1030" y="760" width="0" height="70" /></clipPath></defs>
+            <g id="nC1" clip-path="url(#cC1)"><text x="1410" y="806" class="hand" font-size="46" fill="var(--accent)">gravity-ish</text></g>
+            <g id="nC2" clip-path="url(#cC2)"><text x="1540" y="806" class="hand" font-size="46" fill="var(--accent)">elastic</text></g>
+            <g id="nC3" clip-path="url(#cC3)"><text x="1110" y="886" class="hand" font-size="46" fill="var(--accent)">rotateY 450°</text></g>
+            <g id="nC4" clip-path="url(#cC4)"><text x="1040" y="806" class="hand" font-size="46" fill="var(--accent)">no ease. on purpose</text></g>
+          </svg>
+        </div>
+
+        <!-- D: easing graph + spacing -->
+        <svg id="sD" class="layer" viewBox="0 0 1920 1080">
+          <defs>
+            <clipPath id="cLin"><rect id="rLin" x="930" y="270" width="0" height="70" /></clipPath>
+            <clipPath id="cEase"><rect id="rEase" x="935" y="420" width="0" height="70" /></clipPath>
+            <clipPath id="cSpace"><rect id="rSpace" x="1500" y="620" width="0" height="70" /></clipPath>
+          </defs>
+          <g id="axes" stroke="var(--ink)" stroke-width="3" fill="none"><path id="axY" d="M180 180 L180 630" pathLength="1" /><path id="axX" d="M180 630 L870 630" pathLength="1" /></g>
+          <text x="196" y="210" class="hand" font-size="32" fill="#5b5e66">position</text>
+          <text x="800" y="672" class="hand" font-size="32" fill="#5b5e66">time</text>
+          <g id="grid" stroke="#cfd0d4" stroke-width="1.5"><line x1="216" y1="228" x2="825" y2="228" /><line x1="216" y1="591" x2="651" y2="591" /></g>
+          <line id="cursor" x1="651" y1="190" x2="651" y2="630" stroke="var(--accent)" stroke-opacity="0.25" stroke-width="10" />
+          <path id="linline" d="M216 591 L825 228" stroke="var(--accent)" stroke-width="5" fill="none" pathLength="1" />
+          <path id="ease" d="M216 591 C 651 591, 384 228, 825 228" stroke="var(--accent)" stroke-width="5" fill="none" pathLength="1" />
+          <circle id="h1" cx="651" cy="591" r="9" fill="var(--alert)" /><circle id="h2" cx="384" cy="228" r="9" fill="var(--alert)" />
+          <rect x="206" y="581" width="20" height="20" transform="rotate(45 216 591)" fill="var(--ink)" />
+          <rect x="815" y="218" width="20" height="20" transform="rotate(45 825 228)" fill="var(--ink)" />
+          <g clip-path="url(#cLin)"><text x="945" y="318" class="hand" font-size="56" fill="var(--alert)">linear = robotic</text></g>
+          <path id="linStrike" d="M940 304 L1320 298" stroke="var(--alert)" stroke-width="4" fill="none" pathLength="1" />
+          <path id="aLin" d="M935 300 C 850 300, 760 310, 612 324 M612 324 l 12 -9 M612 324 l 11 9" stroke="var(--alert)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+          <g clip-path="url(#cEase)"><text x="948" y="468" class="hand" font-size="56" fill="var(--accent)">ease in-out</text></g>
+          <path id="chk" d="M1238 452 L1252 468 L1276 432" stroke="var(--accent)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" />
+          <g clip-path="url(#cSpace)"><text x="1510" y="668" class="hand" font-size="56" fill="var(--accent)">spacing!</text></g>
+          <line x1="210" y1="870" x2="1700" y2="870" stroke="var(--ink)" stroke-width="3" />
+        </svg>
+        <div id="boxes" class="layer"></div>
+
+        <!-- E: follow-through -->
+        <svg id="sE" class="layer" viewBox="0 0 1920 1080">
+          <defs><clipPath id="cFollow"><rect id="rFollow" x="1180" y="740" width="0" height="70" /></clipPath></defs>
+          <g id="sparks" fill="var(--alert)"></g>
+          <g id="chain" fill="var(--accent)"></g>
+          <g clip-path="url(#cFollow)"><text x="1188" y="786" class="hand" font-size="56" fill="var(--accent)">follow-through</text></g>
+          <path id="aFollow" d="M1196 742 C 1180 722, 1166 706, 1146 692 M1146 692 l 13 1 M1146 692 l 3 13" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+        </svg>
+
+        <!-- F: anticipation loader -->
+        <svg id="sF" class="layer" viewBox="0 0 1920 1080">
+          <defs><clipPath id="cAnt"><rect id="rAnt" x="1080" y="360" width="0" height="70" /></clipPath></defs>
+          <circle id="ring" cx="960" cy="516" r="270" fill="none" stroke="#e9ebef" stroke-width="4" pathLength="1" transform="rotate(-90 960 516)" />
+          <circle cx="960" cy="516" r="270" fill="none" stroke="#e9ebef" stroke-opacity="0.12" stroke-width="4" />
+          <g id="ticks" stroke="#8d93a0" stroke-width="2"></g>
+          <g id="ringDots" fill="#e9ebef"></g>
+          <g clip-path="url(#cAnt)"><text x="1090" y="406" class="hand" font-size="56" fill="var(--accent)">anticipation</text></g>
+          <path id="aAnt" d="M1086 420 C 1060 440, 1030 470, 1004 492 M1004 492 l 5 -13 M1004 492 l 13 -3" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" />
+        </svg>
+        <div id="pct"></div>
+
+        <!-- G: final lockup -->
+        <div id="sG" class="layer">
+          <div class="tline" id="f1"></div>
+          <div class="tline" id="f2"></div>
+          <svg class="layer" viewBox="0 0 1920 1080"><defs><clipPath id="cNote"><rect id="rNote" x="1000" y="840" width="0" height="80" /></clipPath></defs>
+            <g clip-path="url(#cNote)"><text id="noteT" x="1520" y="890" text-anchor="end" class="hand" font-size="60" fill="var(--accent)"></text></g>
+            <path id="aNote" d="M1536 862 C 1546 846, 1548 826, 1540 806 M1540 806 l -6 13 M1540 806 l 13 7" stroke="var(--accent)" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="1" /></svg>
+        </div>
+
+        <div id="ball"></div>
+
+        <!-- HUD -->
+        <div id="tc"></div>
+        <svg id="hud" class="layer" viewBox="0 0 1920 1080">
+          <line id="rule" x1="75" y1="1029" x2="1785" y2="1029" stroke-width="2" />
+          <g id="dia"></g>
+          <path id="head" d="M0 -16 L0 0 M-8 -16 L8 -16" stroke-width="3" fill="none" />
+          <text id="lbl" x="90" y="1004" class="hand" font-size="30"></text>
+        </svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const { $, clamp, prog, lerp, E, rnd, show, draw, reveal } = K;
+        const v = K.vars(); K.bind(v);
+        const NS = "http://www.w3.org/2000/svg", DUR = 15;
+        const LINE = 813, R = 45;
+
+        // ---- scene A ball path: fall, two bounces, small hops to rest ----
+        const segs = [
+          { t0: 0, t1: 0.62, x0: 150, x1: 360, fall: true, y0: -80 },
+          { t0: 0.62, t1: 1.14, x0: 360, x1: 735, h: 420 },
+          { t0: 1.14, t1: 1.56, x0: 735, x1: 1060, h: 250 },
+          { t0: 1.56, t1: 1.8, x0: 1060, x1: 1230, h: 80 },
+        ];
+        const REST = LINE - R;
+        function ballA(t) {
+          for (const s of segs) if (t <= s.t1) {
+            const u = prog(t, s.t0, s.t1), T = s.t1 - s.t0, x = lerp(s.x0, s.x1, u);
+            if (s.fall) return { x, y: s.y0 + (REST - s.y0) * u * u, vy: (2 * (REST - s.y0) * u) / T };
+            return { x, y: REST - 4 * s.h * u * (1 - u), vy: (-4 * s.h * (1 - 2 * u)) / T };
+          }
+          return { x: 1230 + (t - 1.8) * 300, y: REST, vy: 0 };
+        }
+        const impacts = [0.62, 1.14, 1.56, 1.8];
+        function sq(t, vy) {
+          let sy = 1 + Math.min(0.5, Math.abs(vy) / 3600), sx = 1 / Math.sqrt(sy);
+          impacts.forEach((ti) => { const d = t - ti; if (d > -0.02 && d < 0.08) { const k = clamp(d < 0 ? 1 + d / 0.02 : 1 - d / 0.08); sy = lerp(sy, 0.68, k); sx = lerp(sx, 1.32, k); } });
+          return { sx, sy };
+        }
+        const gT = []; for (let t = 0.05; t < 1.9; t += 0.07) gT.push(t);
+        const gEl = gT.map((t) => { const p = ballA(t), s = sq(t, p.vy); const e = document.createElementNS(NS, "ellipse"); e.setAttribute("cx", p.x); e.setAttribute("cy", p.y >= REST - 1 ? LINE - R * s.sy : p.y); e.setAttribute("rx", R * s.sx); e.setAttribute("ry", R * s.sy); $("ghosts").appendChild(e); return e; });
+        function trailD(t1) { let d = ""; for (let t = 0; t <= t1; t += 0.012) { const p = ballA(t); d += (d ? " L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); } return d; }
+
+        // ---- type ----
+        const l1 = K.chars($("l1"), v.headline1), l2 = K.chars($("l2"), v.headline2);
+        const wB = K.chars($("wBounce"), v.bounceWord), wS = K.chars($("wStretch"), v.stretchWord), wP = K.chars($("wSpin"), v.spinWord);
+        for (let i = 0; i < 72; i++) { const a = (i / 72) * Math.PI * 2; const l = document.createElementNS(NS, "line"); l.setAttribute("x1", 960 + Math.cos(a) * 138); l.setAttribute("y1", 516 + Math.sin(a) * 138); l.setAttribute("x2", 960 + Math.cos(a) * (i % 6 ? 150 : 158)); l.setAttribute("y2", 516 + Math.sin(a) * (i % 6 ? 150 : 158)); $("ticks").appendChild(l); }
+        const f1 = K.chars($("f1"), v.role), f2 = K.chars($("f2"), v.name);
+        $("noteT").textContent = v.note;
+        function dropIn(spans, t0, stagger, fall, drop, t) {
+          spans.forEach((s, i) => {
+            const tau = t - (t0 + i * stagger);
+            let dy = -drop, blur = 0, sy = 1;
+            if (tau >= 0 && tau < fall) { const u = tau / fall; dy = -drop * (1 - u * u); blur = 6 * u; sy = 1 + 0.25 * u; }
+            else if (tau >= fall) { const b = tau - fall; dy = b < 0.14 ? -26 * Math.sin((b / 0.14) * Math.PI) : 0; sy = b < 0.07 ? 1 - 0.14 * Math.sin((b / 0.07) * Math.PI) : 1; }
+            s.style.visibility = tau >= 0 ? "visible" : "hidden";
+            s.style.transform = `translateY(${dy}px) scale(${1 / Math.sqrt(sy)}, ${sy})`;
+            s.style.filter = blur > 0.5 ? `blur(${blur}px)` : "none";
+          });
+        }
+
+        // ---- spacing boxes ----
+        const nB = 7, boxEls = [];
+        for (let i = 0; i < nB; i++) { const b = document.createElement("div"); b.className = "box"; $("boxes").appendChild(b); boxEls.push(b); }
+        const mover = document.createElement("div"); mover.className = "box"; Object.assign(mover.style, { background: "var(--ink)", borderColor: "var(--ink)" }); $("boxes").appendChild(mover);
+        const easeIO = E.inOutCubic;
+
+        // ---- follow-through chain ----
+        const chainEls = [], sparkEls = [];
+        for (let i = 0; i < 16; i++) { const c = document.createElementNS(NS, "circle"); c.setAttribute("r", 20 - i * 0.8); $("chain").appendChild(c); chainEls.push(c); }
+        for (let i = 0; i < 22; i++) { const c = document.createElementNS(NS, "circle"); c.setAttribute("r", 6 + rnd(i) * 4); $("sparks").appendChild(c); sparkEls.push(c); }
+        const headAt = (t) => { const k = t - 8.4; return { x: 960 + 560 * Math.sin(k * 2.4 + 2.2), y: 560 + 230 * Math.sin(k * 4.8 + 0.6) }; };
+
+        // ---- loader dots ----
+        const ringDots = [];
+        for (let i = 0; i < 18; i++) { const a = (i / 18) * Math.PI * 2 - Math.PI / 2; const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", 960 + Math.cos(a) * 190); c.setAttribute("cy", 516 + Math.sin(a) * 190); c.setAttribute("r", 7); $("ringDots").appendChild(c); ringDots.push(c); }
+
+        // ---- HUD ----
+        [75, 300, 735, 1065, 1395, 1620, 1785].forEach((x) => { const r = document.createElementNS(NS, "rect"); r.setAttribute("x", x - 7); r.setAttribute("y", 1022); r.setAttribute("width", 14); r.setAttribute("height", 14); r.setAttribute("transform", `rotate(45 ${x} 1029)`); r.setAttribute("fill", "none"); r.setAttribute("stroke-width", "2"); $("dia").appendChild(r); });
+        const labels = [[0, "spacing"], [1.95, "type"], [5.45, "easing"], [8.4, "follow-through"], [10.9, "anticipation"], [12.95, "hello"]];
+
+        const ball = $("ball");
+        function setBall(x, y, r, sx, sy, on) { ball.style.transform = `translate(${x - 45}px, ${y - 45}px) scale(${(r / 45) * sx}, ${(r / 45) * sy})`; ball.style.visibility = on ? "visible" : "hidden"; }
+
+        function render(t) {
+          const dark = (t >= 3.95 && t < 5.45) || (t >= 8.4 && t < 12.95);
+          $("paper").style.opacity = dark ? 0 : 1; $("dark").style.opacity = dark ? 1 : 0;
+          show($("dots"), t >= 8.4 && t < 10.9);
+          const hudCol = dark ? "#c9ccd3" : "#3a3c42";
+          $("hud").setAttribute("stroke", hudCol); $("rule").setAttribute("stroke", hudCol); $("lbl").setAttribute("fill", hudCol);
+          $("dia").setAttribute("stroke", hudCol); $("head").setAttribute("stroke", hudCol);
+          const px = lerp(75, 1785, t / DUR); $("head").setAttribute("transform", `translate(${px} 1029)`);
+          $("lbl").textContent = labels.filter((l) => t >= l[0]).pop()[1];
+          $("lbl").setAttribute("x", Math.max(90, px - 60));
+          const fr = Math.floor(t * 30); $("tc").textContent = `00:00:${String(Math.floor(fr / 30)).padStart(2, "0")}:${String(fr % 30).padStart(2, "0")}`;
+          $("tc").style.color = hudCol;
+
+          // A
+          const aOn = t < 1.95; show($("sA"), aOn);
+          let bx = 0, by = 0, br = R, sx = 1, sy = 1, bOn = false;
+          if (aOn) {
+            draw($("ground"), prog(t, 0, 0.4));
+            $("trail").setAttribute("d", trailD(Math.min(t, 1.9)));
+            gEl.forEach((e, i) => { e.style.opacity = gT[i] < t - 0.03 && gT[i] > t - 0.55 ? 1 : 0; });
+            reveal($("rSlow"), prog(t, 0.3, 0.62), 330); draw($("aSlow"), prog(t, 0.58, 0.72));
+            reveal($("rSquash"), prog(t, 1.14, 1.34), 190); draw($("aSquash"), prog(t, 1.12, 1.24));
+            reveal($("rStretch"), prog(t, 1.4, 1.62), 170); draw($("aStretch"), prog(t, 1.58, 1.72));
+            const p = ballA(t), s = sq(t, p.vy); bx = p.x; sx = s.sx; sy = s.sy; by = p.y >= REST - 1 ? LINE - R * sy : p.y; bOn = true;
+          }
+
+          // B
+          const bOnS = t >= 1.95 && t < 3.95; show($("sB"), bOnS);
+          if (bOnS) {
+            dropIn(l1, 1.95, 0.045, 0.2, 380, t); dropIn(l2, 2.18, 0.07, 0.24, 700, t);
+            draw($("uline"), E.outCubic(prog(t, 2.75, 3.1)));
+            reveal($("rStag"), prog(t, 2.55, 2.85), 320); draw($("aStag"), prog(t, 2.8, 2.95));
+            reveal($("rOver"), prog(t, 3.1, 3.35), 190); draw($("aOver"), prog(t, 3.02, 3.14));
+            // period dot bounces in after the big word
+            const u = prog(t, 2.55, 2.8); const last = l2[l2.length - 1];
+            const dx = last.offsetLeft + last.offsetWidth + 70;
+            bx = dx; br = 45; by = lerp(-100, 699, E.outBounce(u)); bOn = t >= 2.55;
+          }
+
+          // C: bounce, stretch, spin, snap
+          const cOn = t >= 3.95 && t < 5.45; show($("sC"), cOn);
+          if (cOn) {
+            const on = (a, b) => t >= a && t < b;
+            show($("wBounce"), on(3.95, 4.3)); show($("wStretch"), on(4.3, 4.65)); show($("wSpin"), on(4.65, 5.02));
+            show($("snapFlash"), on(5.02, 5.18)); show($("wSnap"), on(5.18, 5.45)); show($("guides"), on(5.18, 5.45));
+            show($("nC1"), on(3.95, 4.3)); show($("nC2"), on(4.3, 4.65)); show($("nC3"), on(4.65, 5.02)); show($("nC4"), on(5.18, 5.45));
+            wB.forEach((s, i) => { const u = prog(t, 3.95 + i * 0.025, 4.17 + i * 0.025); const y = -560 * (1 - E.outBounce(u)); const fall = u < 0.36; s.style.transform = `translateY(${y}px) scale(${fall ? 0.9 : 1}, ${fall ? 1.18 : 1})`; s.style.filter = fall && u > 0 ? "blur(5px)" : "none"; s.style.opacity = u > 0 ? 1 : 0; });
+            wS.forEach((s, i) => { const u = prog(t, 4.3 + i * 0.012, 4.56 + i * 0.012); const x = -900 * (1 - E.outElastic(u)); const sm = Math.abs(1 - E.outElastic(u)); s.style.transform = `translateX(${x}px) scaleX(${1 + Math.min(0.6, sm * 1.2)})`; s.style.filter = sm > 0.05 ? `blur(${Math.min(8, sm * 14)}px)` : "none"; s.style.opacity = u > 0 ? 1 : 0; });
+            wP.forEach((s, i) => { const u = prog(t, 4.65 + i * 0.06, 4.93 + i * 0.06); const a = 450 * (1 - E.outCubic(u)); s.style.transform = `rotateY(${a}deg)`; s.style.color = u > 0 && u < 0.9 ? "var(--accent)" : ""; s.style.filter = u < 0.9 ? `blur(${4 * (1 - u)}px)` : "none"; s.style.opacity = u > 0 ? 1 : 0; });
+            reveal($("rC1"), prog(t, 4.05, 4.25), 260); reveal($("rC2"), prog(t, 4.42, 4.6), 180); reveal($("rC3"), prog(t, 4.78, 4.98), 280); reveal($("rC4"), prog(t, 5.24, 5.42), 460);
+          }
+
+          // D
+          const dOn = t >= 5.45 && t < 8.4; show($("sD"), dOn); show($("boxes"), dOn);
+          if (dOn) {
+            draw($("axY"), E.outCubic(prog(t, 5.45, 5.7))); draw($("axX"), E.outCubic(prog(t, 5.5, 5.75)));
+            const lin = t < 6.9; show($("linline"), lin); show($("ease"), !lin); show($("h1"), !lin); show($("h2"), !lin);
+            draw($("linline"), E.outCubic(prog(t, 5.75, 6.1))); draw($("ease"), E.inOutCubic(prog(t, 6.9, 7.3)));
+            reveal($("rLin"), prog(t, 6.05, 6.35), 330); draw($("aLin"), prog(t, 6.3, 6.45)); draw($("linStrike"), prog(t, 6.55, 6.72));
+            reveal($("rEase"), prog(t, 7.25, 7.5), 240); draw($("chk"), prog(t, 7.5, 7.62));
+            reveal($("rSpace"), prog(t, 7.85, 8.1), 190);
+            const cyc = ((t - 5.8) % 1.1) / 1.1; $("cursor").setAttribute("x1", 216 + 609 * cyc); $("cursor").setAttribute("x2", 216 + 609 * cyc);
+            // spacing row: evenly spaced (linear) then eased
+            const eased = t >= 6.95, col = eased ? "var(--accent)" : "var(--alert)";
+            boxEls.forEach((b, i) => { const f = i / (nB - 1); const x = 210 + 1330 * (eased ? easeIO(f) : f); b.style.left = x + "px"; b.style.borderColor = col; b.style.opacity = prog(t, 5.9 + i * 0.03, 6.0 + i * 0.03); });
+            const m = ((t - 5.9) % 1.2) / 1.2; const mf = eased ? easeIO(clamp(m * 1.15)) : clamp(m * 1.15);
+            mover.style.left = 210 + 1330 * mf + "px"; mover.style.opacity = t > 5.9 ? 1 : 0;
+          }
+
+          // E
+          const eOn = t >= 8.4 && t < 10.9; show($("sE"), eOn);
+          if (eOn) {
+            chainEls.forEach((c, i) => { const p = headAt(t - i * 0.028); c.setAttribute("cx", p.x); c.setAttribute("cy", p.y); c.style.opacity = 1 - i * 0.045; });
+            const burst = [8.95, 9.9, 10.55].filter((b) => t >= b).pop();
+            if (burst) { const o = headAt(burst), k = t - burst; sparkEls.forEach((c, i) => { const a = (i / sparkEls.length) * Math.PI * 2 + rnd(i + 3); const d = 60 + 220 * E.outCubic(clamp(k / 0.6)) * (0.5 + rnd(i + 9)); c.setAttribute("cx", o.x + Math.cos(a) * d); c.setAttribute("cy", o.y + Math.sin(a) * d); c.style.opacity = clamp(1 - k / 0.7); }); }
+            else sparkEls.forEach((c) => { c.style.opacity = 0; });
+            reveal($("rFollow"), prog(t, 9.1, 9.4), 300); draw($("aFollow"), prog(t, 9.35, 9.5));
+          }
+
+          // F
+          const fOn = t >= 10.9 && t < 12.95; show($("sF"), fOn); show($("pct"), fOn && t >= 11.4);
+          if (fOn) {
+            const r0 = E.outBack(prog(t, 11.2, 11.5), 1.4);
+            $("ring").style.opacity = r0; draw($("ring"), prog(t, 11.4, 12.75));
+            const p = Math.round(100 * E.inOutCubic(prog(t, 11.4, 12.75))); $("pct").textContent = p + "%";
+            ringDots.forEach((c, i) => { c.style.opacity = r0 * (i / 18 < p / 100 ? 1 : 0.25); });
+            reveal($("rAnt"), prog(t, 12.2, 12.5), 280); draw($("aAnt"), prog(t, 12.45, 12.6));
+            // anticipation: squash down, then launch
+            bx = 960; br = lerp(10, 48, E.outBack(prog(t, 10.95, 11.25), 2)); bOn = true;
+            by = 516; if (t > 12.55) { const k = prog(t, 12.55, 12.72); sy = 1 - 0.3 * Math.sin(k * Math.PI * 0.5); sx = 1 + 0.25 * Math.sin(k * Math.PI * 0.5); by = 516 + 48 * (1 - sy); }
+            if (t > 12.72) { const k = E.inQuad(prog(t, 12.72, 12.95)); by = lerp(516, -140, k); sy = 1.4; sx = 0.8; }
+          }
+
+          // G
+          const gOn = t >= 12.95; show($("sG"), gOn);
+          if (gOn) {
+            dropIn(f1, 12.98, 0.045, 0.2, 380, t); dropIn(f2, 13.2, 0.06, 0.24, 700, t);
+            const last = f2[f2.length - 1]; const dx = last.offsetLeft + last.offsetWidth + 62;
+            const u = prog(t, 13.75, 14.0); bx = dx; br = 40; by = lerp(-100, 736, E.outBounce(u)); bOn = t >= 13.75;
+            reveal($("rNote"), prog(t, 14.05, 14.45), 540); draw($("aNote"), prog(t, 14.3, 14.45));
+          }
+          setBall(bx, by, br, sx, sy, bOn);
+        }
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

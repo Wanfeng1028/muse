@@ -1,0 +1,39 @@
+{
+  "version": "0.1",
+  "notes": "最小示例：合成渐变底片（无真人素材，ffmpeg lavfi 生成），chapter_tag + kinetic_keyword 两个组件、一次轻微镜头推近、scrapbook 风格令牌。从干净 clone 直接可跑，不需要 ASR / 外部素材。",
+  "canvas": { "w": 1080, "h": 1440, "fps": 30 },
+  "style": "scrapbook",
+  "duration": 6.0,
+  "base": [
+    { "id": "b1", "src": "base.mp4", "in": 0.0, "out": 6.0, "at": 0.0 }
+  ],
+  "camera": [
+    { "t": 0.0, "zoom": 1.0, "cx": 0.5, "cy": 0.5 },
+    { "t": 6.0, "zoom": 1.05, "cx": 0.5, "cy": 0.5, "ease": "sineInOut" }
+  ],
+  "shots": [
+    {
+      "id": "s01",
+      "component": "chapter_tag",
+      "start": 0.3,
+      "end": 4.0,
+      "params": { "n": "01", "zh": "最小示例", "en": "Minimal Demo", "index": 0, "count": 1 },
+      "sfx": [{ "id": "tick", "at": "start" }],
+      "layer": "front",
+      "depth": 0.0
+    },
+    {
+      "id": "s02",
+      "component": "kinetic_keyword",
+      "start": 1.5,
+      "end": { "dur": 2.3 },
+      "params": { "text": "最小示例", "y": 0.25 },
+      "sfx": [{ "id": "pop_soft", "at": "start" }],
+      "layer": "front",
+      "depth": 0.0
+    }
+  ],
+  "transitions": [],
+  "music": { "mode": "none" },
+  "qa": { "safe_zone": "xhs_3x4", "avoid": ["face", "captions"] }
+}

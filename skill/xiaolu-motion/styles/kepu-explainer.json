@@ -1,0 +1,27 @@
+{
+  "name": "kepu-explainer",
+  "version": "0.1",
+  "extends": "base",
+  "description": "科普讲解：亮灰白底、深板岩灰正文、亮蓝强调、冰蓝辉光（呼应演示里“换背景加人后发光字”的蓝光效果）。取自 library/ 的 kepu 演示（小Lin说式科普风格），是按演示视频的观感重新配的令牌起点，颜色未逐像素取自源素材，用前按自己的素材微调。比 base 更亮更干净，辉光和颗粒都调低，避免盖过讲解画面的可读性。",
+  "colors": {
+    "bg": "#F7F9FB",
+    "bg_glow": "#FFFFFF",
+    "panel": "#E8F0F5",
+    "panel_2": "#FFFFFF",
+    "text": "#1E2A33",
+    "text_dim": "#6B7A85",
+    "accent": "#2F8FE0",
+    "accent_hi": "#7FD4FF",
+    "accent_2": "#4A5B68",
+    "hair": "#D6E2E8",
+    "stroke": "#C2D2DA",
+    "highlight_bg": "#2F8FE0",
+    "highlight_text": "#FFFFFF"
+  },
+  "post": {
+    "bloom": [0.5, 0.35],
+    "bloom_sigma": [3.0, 6.0],
+    "grain": { "opaque": 0.4, "overlay": 0.0 },
+    "vignette": { "opaque": 0.15, "overlay": 0.0 }
+  }
+}

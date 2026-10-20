@@ -1,0 +1,4 @@
+# Optional local media-analysis tools; instructions-only use needs no Python packages.
+Pillow>=9.1
+numpy>=1.24
+scipy>=1.10

@@ -1,0 +1,47 @@
+{
+ "note": "Heli-Harness v1 narration. start = absolute frame (60fps) in HeliV1; slot = last frame the speech may reach. Square brackets are Eleven v4 audio tags.",
+ "lines": [
+  {
+   "id": "01-problem",
+   "start": 50,
+   "slot": 392,
+   "text": "[dry] Your agents can push, publish, and wipe a folder. Each one with its own rules."
+  },
+  {
+   "id": "02-install",
+   "start": 424,
+   "slot": 950,
+   "text": "[confident] Heli-Harness gives them one rulebook. Install it once, link your project, and it hooks into the agents you already use."
+  },
+  {
+   "id": "03-hook",
+   "start": 984,
+   "slot": 1490,
+   "text": "So an agent tries to push? Stopped, right at the hook. And it tells the agent exactly why, and who gets to say yes."
+  },
+  {
+   "id": "04-grant",
+   "start": 1520,
+   "slot": 2120,
+   "text": "[matter-of-fact] That’s you. In your own terminal. The agent can’t grant itself anything. It tried. Allow once, and once means once."
+  },
+  {
+   "id": "05-floor",
+   "start": 2154,
+   "slot": 2610,
+   "text": "[firm] Some lines don’t move at all. Hard resets. Recursive deletes. No grant, no YOLO gets past those."
+  },
+  {
+   "id": "06-hosts",
+   "start": 2640,
+   "slot": 3020,
+   "text": "Claude Code, Codex, Grok Build, OpenCode, Kimi. One set of rules."
+  },
+  {
+   "id": "07-close",
+   "start": 3056,
+   "slot": 3410,
+   "text": "[warm, confident] Heli-Harness. Let your agents move fast, and keep the keys."
+  }
+ ]
+}

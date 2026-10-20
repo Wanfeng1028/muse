@@ -1,0 +1,32 @@
+{
+  "name": "coldlight",
+  "version": "0.1",
+  "extends": "base",
+  "description": "冷光：取自《在我开口之前》前半段的冷色系（近黑蓝底、冰青强调、紫靛辅色、暖白正文）。仅作可插拔示例，不代表用户已拍板的品牌风格。",
+  "source": "在我开口之前_Claude自由创作/源码/画面/src/core.js COL（bg #05070C, bgGlow #0B1222, text #ECE9E2, text2 #7C8698, cyan #6EE7F5, iceX #E6FBFF, violet #8E7DFF, card #0C121D, stroke #2A3346, hair #1B2230）",
+  "colors": {
+    "bg": "#05070C",
+    "bg_glow": "#0B1222",
+    "panel": "#05070C",
+    "panel_2": "#0C121D",
+    "text": "#ECE9E2",
+    "text_dim": "#7C8698",
+    "accent": "#6EE7F5",
+    "accent_hi": "#E6FBFF",
+    "accent_2": "#8E7DFF",
+    "accent_3": "#2E3FBF",
+    "ice": "#CFF6FF",
+    "hair": "#1B2230",
+    "stroke": "#2A3346",
+    "dim": "#1A2130",
+    "highlight_bg": "#6EE7F5",
+    "highlight_text": "#05070C"
+  },
+  "type": {
+    "keyword": { "font": "sans", "weight": 600, "size": 92, "tracking": 3 }
+  },
+  "post": {
+    "bloom": [1.0, 0.85],
+    "bloom_sigma": [4.0, 8.0]
+  }
+}

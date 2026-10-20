@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand (logo pill)","default":"Pinhive"},
+  {"id":"domain","type":"string","label":"Domain under the end logo","default":"pinhive.app"},
+  {"id":"cta","type":"string","label":"First button","default":"Put me on the map"},
+  {"id":"handle","type":"string","label":"Handle typed into the field (no @)","default":"duarte"},
+  {"id":"askLabel","type":"string","label":"Profile card question","default":"Is this you?"},
+  {"id":"name","type":"string","label":"Profile name","default":"Ines Duarte"},
+  {"id":"followers","type":"string","label":"Profile follower line","default":"611 followers"},
+  {"id":"bio","type":"string","label":"Profile bio","default":"Designer by day & indie hacker at night."},
+  {"id":"country","type":"string","label":"Profile country","default":"Portugal"},
+  {"id":"notMe","type":"string","label":"Secondary button","default":"Not me"},
+  {"id":"thatsMe","type":"string","label":"Primary button","default":"That’s me"},
+  {"id":"onMap","type":"string","label":"Confirmation line","default":"You’re on the map"},
+  {"id":"homeLat","type":"string","label":"Your latitude (globe)","default":"38.7"},
+  {"id":"homeLon","type":"string","label":"Your longitude (globe)","default":"-9.1"},
+  {"id":"makers","type":"string","label":"Makers on the globe counter","default":"3393"},
+  {"id":"makersWord","type":"string","label":"Counter word","default":"makers"},
+  {"id":"matches","type":"string","label":"Matches line","default":"6 matches"},
+  {"id":"matchesSub","type":"string","label":"Matches subline","default":"all in Lisbon"},
+  {"id":"people","type":"string","label":"Three matches: name, site · role (;-separated)","default":"Rafael Moreno, noteflow.app · designer; Dana Whitfield, pixelcrate.dev · founder; Mika Sato, tinyforms.io · maker"},
+  {"id":"city","type":"string","label":"City tag on the matches","default":"Lisbon"},
+  {"id":"tabs","type":"string","label":"Three tabs (;-separated)","default":"Makers; Products; Meetups"},
+  {"id":"stats","type":"string","label":"Three stats (;-separated)","default":"3393; 2266; 119"},
+  {"id":"statLabels","type":"string","label":"Three stat captions (;-separated)","default":"makers on the map; products they’re building; countries to meet up in"},
+  {"id":"eventTitle","type":"string","label":"Event title","default":"Makers coffee"},
+  {"id":"eventWhere","type":"string","label":"Event place and time","default":"Lisbon · 10:00"},
+  {"id":"eventDay","type":"string","label":"Event weekday","default":"SAT"},
+  {"id":"eventDate","type":"string","label":"Event day","default":"3"},
+  {"id":"eventMonth","type":"string","label":"Event month","default":"OCT"},
+  {"id":"eventDesc","type":"string","label":"Event description","default":"Coffee with the makers near you on the map."},
+  {"id":"going","type":"string","label":"People going before you","default":"7"},
+  {"id":"goingWord","type":"string","label":"Going word","default":"going"},
+  {"id":"join","type":"string","label":"Event button","default":"I’m going"},
+  {"id":"joined","type":"string","label":"Event button after the tap","default":"You’re going"},
+  {"id":"query","type":"string","label":"Search typed","default":"ai founders in berlin"},
+  {"id":"found","type":"string","label":"Search count","default":"13 found"},
+  {"id":"results","type":"string","label":"Three results: name, site · city (;-separated)","default":"Lena Hoffmann, promptdeck.ai · Berlin; Jonas Weber, agentlab.dev · Berlin; Mira Schulz, vectorly.io · Berlin"},
+  {"id":"orange","type":"color","label":"Accent","default":"#e5532d"},
+  {"id":"ink","type":"color","label":"Ink","default":"#141414"},
+  {"id":"paper","type":"color","label":"Background","default":"#ebeae6"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InterTight-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <script src="assets/land.js"></script>
+    <style>
+      :root { --orange: #e5532d; --ink: #141414; --paper: #ebeae6; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "Inter", sans-serif; color: var(--ink); }
+      .layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1080px; }
+      #scene { overflow: hidden; }
+      #bg { background: radial-gradient(circle at 50% 44%, #f5f5f3 0%, #efeeeb 38%, var(--paper) 72%); }
+      #frame { position: absolute; left: 540px; top: 540px; width: 0; height: 0; }
+      #shell { position: absolute; }
+      .cont { position: absolute; white-space: nowrap; }
+      .abs { position: absolute; }
+      .av { position: absolute; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+      .caret { display: inline-block; width: 2.5px; background: var(--orange); vertical-align: middle; margin-left: 2px; }
+
+      /* logo + end */
+      .lg { position: absolute; left: 0; top: 0; width: 450px; height: 126px; display: flex; align-items: center; justify-content: center; gap: 18px; font: 700 50px/1 "Inter Tight"; color: #fff; letter-spacing: -0.01em; }
+      .lg i { width: 30px; height: 30px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 4px rgba(229, 83, 45, 0.18); }
+      #c-btn { display: flex; align-items: center; justify-content: center; font: 600 36px/1 "Inter"; color: #fff; }
+      /* input */
+      #inAt { position: absolute; left: 36px; top: 0; height: 104px; display: flex; align-items: center; font: 500 31px/1 "Inter"; color: #9a9a9a; }
+      #inAt b { font-weight: 500; color: var(--ink); }
+      #inKey { position: absolute; right: 21px; top: 20.5px; width: 63px; height: 63px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+      #inKey svg { width: 30px; height: 30px; }
+      /* profile card */
+      #pAsk { left: 38px; top: 36px; font: 500 22px/1 "Inter"; color: #6b6b6b; }
+      #pName { left: 171px; top: 104px; font: 700 36px/1 "Inter"; letter-spacing: -0.015em; }
+      #pHandle { left: 171px; top: 150px; font: 500 21px/1 "Inter"; color: #8a8a8a; }
+      #pBio { left: 38px; top: 222px; width: 540px; white-space: normal; font: 400 26px/34px "Inter"; color: #222; }
+      #pCountry { left: 38px; top: 327px; display: flex; align-items: center; gap: 10px; font: 500 22px/1 "Inter"; color: #666; height: 22px; }
+      #pCountry i { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+      #pNot { left: 288px; top: 327px; font: 500 22px/22px "Inter"; color: #666; }
+      #pYes { left: 387px; top: 304px; width: 193px; height: 68px; border-radius: 34px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font: 600 23px/1 "Inter"; }
+      /* confirmation */
+      #onMap { left: -300px; width: 681px; top: 118px; text-align: center; font: 600 36px/1 "Inter"; color: var(--ink); }
+      .ring { position: absolute; border-radius: 50%; border: 3px solid rgba(229, 83, 45, 0.35); }
+      /* globe counter */
+      #gCount { top: 0; left: 0; height: 50px; padding: 0 22px 0 18px; border-radius: 25px; background: var(--ink); display: flex; align-items: center; gap: 9px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18); }
+      #gCount i { width: 9px; height: 9px; border-radius: 50%; background: var(--orange); }
+      #gCount b { font: 700 22px/1 "Inter"; color: #fff; font-variant-numeric: tabular-nums; }
+      #gCount span { font: 500 20px/1 "Inter"; color: #9a9a9a; }
+      /* matches */
+      .mt b { display: block; font: 600 34px/1 "Inter"; color: #fff; letter-spacing: -0.01em; }
+      .mt span { display: block; margin-top: 8px; font: 500 22px/1 "Inter"; color: #8d8d8d; }
+      .mdot { position: absolute; width: 45px; height: 45px; border-radius: 50%; border: 2px solid #3a3a3a; display: flex; align-items: center; justify-content: center; }
+      .mdot i { width: 13px; height: 13px; border-radius: 50%; background: var(--orange); }
+      .lrow { position: absolute; left: 0; width: 576px; height: 97px; }
+      .lrow b { position: absolute; left: 101px; top: 26px; font: 600 26px/1 "Inter"; color: #fff; }
+      .lrow span { position: absolute; left: 101px; top: 60px; font: 400 20px/1 "Inter"; color: #8d8d8d; }
+      .lrow em { position: absolute; right: 34px; top: 38px; font: 400 18px/1 "IBM Plex Mono"; font-style: normal; color: #7d7d7d; }
+      .lrow.sep { border-top: 1px solid #262626; }
+      /* tabs */
+      #tSeg { left: 40px; top: 43px; width: 551px; height: 68px; border-radius: 34px; background: #f0f0ee; }
+      #tPill { position: absolute; left: 0; top: 5px; height: 58px; border-radius: 29px; background: var(--ink); }
+      .tl { position: absolute; top: 0; width: 184px; height: 68px; text-align: center; font: 500 21px/68px "Inter"; color: #6f6f6f; }
+      #tNum { left: 0; width: 630px; top: 150px; text-align: center; font: 700 96px/1 "Inter Tight"; letter-spacing: -0.02em; height: 100px; overflow: hidden; }
+      #tNum span { display: inline-block; position: relative; }
+      #tCap { left: 0; width: 630px; top: 266px; text-align: center; font: 500 22px/1 "Inter"; color: #6b6b6b; }
+      /* event */
+      #eDate { left: 40px; top: 42px; width: 90px; height: 90px; border-radius: 14px; background: #f3f3f2; text-align: center; }
+      #eDate s { display: block; text-decoration: none; margin-top: 12px; font: 700 14px/1 "Inter"; color: var(--orange); letter-spacing: 0.04em; }
+      #eDate b { display: block; margin-top: 4px; font: 800 34px/1 "Inter"; }
+      #eDate u { display: block; text-decoration: none; margin-top: 3px; font: 600 11px/1 "Inter"; color: #9a9a9a; letter-spacing: 0.06em; }
+      #eTitle { left: 158px; top: 52px; font: 700 40px/1 "Inter"; letter-spacing: -0.015em; }
+      #eWhere { left: 158px; top: 100px; font: 400 22px/1 "Inter"; color: #7a7a7a; }
+      #eLine { left: 40px; top: 162px; width: 548px; border-top: 1.5px solid #ececeb; }
+      #eDesc { left: 40px; top: 192px; font: 400 23px/1 "Inter"; color: #222; }
+      #eGo { left: 40px; top: 327px; display: flex; align-items: center; gap: 10px; font: 400 21px/1 "Inter"; color: #8a8a8a; height: 26px; }
+      #eGo b { font: 800 24px/1 "Inter"; color: var(--ink); }
+      #eGoAv { position: relative; width: 30px; height: 30px; border-radius: 50%; }
+      #eBtn { left: 0; top: 304px; height: 70px; border-radius: 35px; display: flex; align-items: center; justify-content: center; gap: 10px; font: 600 23px/1 "Inter"; color: #fff; }
+      /* search */
+      #sRow { left: 36px; top: 0; height: 104px; display: flex; align-items: center; gap: 16px; font: 400 29px/1 "Inter"; color: var(--ink); }
+      #sRow svg { width: 30px; height: 30px; }
+      #sFound { right: 34px; top: 42px; font: 400 16px/1 "IBM Plex Mono"; color: #9a9a9a; }
+      #sLine { left: 0; top: 104px; width: 666px; border-top: 1.5px solid #efefee; }
+      .srow { position: absolute; left: 13px; width: 640px; height: 76px; border-radius: 14px; }
+      .srow b { position: absolute; left: 90px; top: 14px; font: 600 23px/1 "Inter"; }
+      .srow span { position: absolute; left: 90px; top: 45px; font: 400 18px/1 "Inter"; color: #8a8a8a; }
+      .srow i { position: absolute; right: 16px; top: 16px; width: 44px; height: 44px; border-radius: 10px; background: var(--ink); display: flex; align-items: center; justify-content: center; }
+      #endDom { left: 0; top: 660px; width: 1080px; text-align: center; font: 400 34px/1 "IBM Plex Mono"; color: #7a7a7a; }
+      #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20" data-width="1080" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="20" data-track-index="0">
+        <div id="bg" class="layer"></div>
+        <div id="frame">
+          <div id="shell"></div>
+          <canvas id="globe" width="1080" height="1080" style="position: absolute; left: -540px; top: -540px"></canvas>
+          <div id="c-logo" class="cont"><div class="lg"><i></i><span class="bn"></span></div></div>
+          <div id="c-btn" class="cont"></div>
+          <div id="c-input" class="cont"><div id="inAt">@<b id="inTyped"></b><i class="caret" id="inCaret" style="height: 38px"></i></div><div id="inKey"></div></div>
+          <div id="c-card" class="cont">
+            <div id="pAsk" class="abs"></div><div id="pAv" class="av" style="left: 38px; top: 86px; width: 108px; height: 108px; font-size: 38px"></div>
+            <div id="pName" class="abs"></div><div id="pHandle" class="abs"></div><div id="pBio" class="abs"></div>
+            <div id="pCountry" class="abs"><i></i><span></span></div><div id="pNot" class="abs"></div><div id="pYes" class="abs"></div>
+          </div>
+          <div id="c-spin" class="cont"><svg viewBox="0 0 211 211" style="position: absolute; left: 0; top: 0; width: 211px; height: 211px"><circle id="spArc" cx="105.5" cy="105.5" r="46" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" /><path id="spCk" d="M82 107l16 16 32-34" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" pathLength="1" /><circle id="spDot" cx="105.5" cy="105.5" r="10" fill="var(--orange)" /></svg></div>
+          <div id="c-dot" class="cont"><div id="ring1" class="ring"></div><div id="onMap" class="abs"></div></div>
+          <div id="c-sphere" class="cont"><div id="ring2" class="ring"></div><div id="gCount" class="abs"><i></i><b></b><span></span></div></div>
+          <div id="c-mdot" class="cont"></div>
+          <div id="c-match" class="cont"></div>
+          <div id="c-list" class="cont"></div>
+          <div id="c-tabs" class="cont"><div id="tSeg" class="abs"><div id="tPill"></div></div><div id="tNum" class="abs"></div><div id="tCap" class="abs"></div></div>
+          <div id="c-event" class="cont">
+            <div id="eDate" class="abs"><s></s><b></b><u></u></div><div id="eTitle" class="abs"></div><div id="eWhere" class="abs"></div><div id="eLine" class="abs"></div><div id="eDesc" class="abs"></div>
+            <div id="eGo" class="abs"><div id="eGoAv" class="av"></div><b></b><span></span></div><div id="eBtn" class="abs"></div>
+          </div>
+          <div id="c-search" class="cont">
+            <div id="sRow" class="abs"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="#8a8a8a" stroke-width="2" /><path d="M15.5 15.5L20 20" stroke="#8a8a8a" stroke-width="2" stroke-linecap="round" /></svg><span><span id="sTyped"></span><i class="caret" id="sCaret" style="height: 34px"></i></span></div>
+            <div id="sFound" class="abs"></div><div id="sLine" class="abs"></div><div id="sRes"></div>
+          </div>
+          <div id="c-end" class="cont"><div class="lg"><i></i><span class="bn"></span></div></div>
+        </div>
+        <div id="endDom" class="abs"></div>
+        <svg id="cursor" viewBox="0 0 24 24"><path d="M5 2.8v16.6l4.1-3.9 2.7 6.1 2.9-1.3-2.7-6h5.8z" fill="#111" stroke="#fff" stroke-width="1.3" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 20, TAU = Math.PI * 2;
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const px = (n) => n.toFixed(1) + "px";
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const hex = (h) => { const n = parseInt(String(h).replace("#", ""), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+        const mixC = (a, b, u) => { const A = hex(a), B = hex(b); return "rgb(" + A.map((x, i) => Math.round(L(x, B[i], u))).join(",") + ")"; };
+        const list = (s) => String(s).split(";").map((x) => x.trim());
+        const fmtN = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        const OR = v.orange, INK = v.ink;
+        const AVC = [["#f2a65a", "#c2582e"], ["#7fb3e6", "#3b6fb0"], ["#e8c07a", "#9a6b2f"], ["#9fd3a9", "#3f8a58"], ["#d9a0c9", "#8d4a7c"], ["#a7b0f0", "#5563c7"]];
+        const avatar = (el, name, k) => { const c = AVC[k % AVC.length]; el.style.background = "linear-gradient(140deg," + c[0] + "," + c[1] + ")"; el.textContent = name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(); };
+        const RET = (c) => '<svg viewBox="0 0 24 24"><path d="M19 6v5.5a2 2 0 0 1-2 2H6.5M10 9.5l-4 4 4 4" fill="none" stroke="' + c + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        const CHK = (c, w) => '<svg viewBox="0 0 24 24" style="width:' + w + "px;height:" + w + 'px"><path d="M5.5 12.5l4.2 4.2L18.5 8" fill="none" stroke="' + c + '" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        // ---------- surface states: [w, h, radius (-1 = round), colour] ----------
+        const S = {
+          logo: [450, 126, -1, INK], btn: [585, 126, -1, INK], input: [702, 104, -1, "#ffffff"], card: [619, 416, 31, "#ffffff"],
+          spin: [211, 211, -1, INK], dot: [81, 81, -1, OR], sphere: [832, 832, -1, "#ffffff"], mdot: [76, 76, -1, OR],
+          match: [621, 126, -1, INK], list: [576, 450, 36, INK], tabs: [630, 351, 31, "#ffffff"], event: [630, 414, 31, "#ffffff"],
+          search: [666, 407, 31, "#ffffff"], end: [450, 126, -1, INK],
+        };
+        // [from, to, t0, t1, colour window start, colour window end, new-content delay]
+        const M = [
+          ["logo", "btn", 0.95, 1.22], ["btn", "input", 1.8, 2.08, 0.3, 0.9], ["input", "card", 3.24, 3.46], ["card", "spin", 4.5, 4.74, 0.1, 0.6, 0, null, 0.95],
+          ["spin", "dot", 5.62, 5.88, 0.5, 1, 0, "out"], ["dot", "sphere", 6.48, 6.62, 0, 0.45, 0, "out"], ["sphere", "mdot", 9.45, 9.95, 0.7, 1, 0, "out"], ["mdot", "match", 10.1, 10.34],
+          ["match", "list", 10.95, 11.22], ["list", "tabs", 12.1, 12.45, 0.4, 1], ["tabs", "event", 13.95, 14.2, 0, 0.45, 0.14],
+          ["event", "search", 15.6, 15.85, 0, 0.45, 0.22], ["search", "end", 18.15, 18.72, 0.55, 1],
+        ];
+        const shellAt = (t) => {
+          let a = "logo", b = "logo", ul = 0, c0 = 0, c1 = 0.45, dl = 0, ez = ioq, r1 = 0.35, win = false;
+          for (const m of M) { if (t >= m[3]) { a = b = m[1]; ul = 0; } else if (t >= m[2]) { a = m[0]; b = m[1]; ul = P(t, m[2], m[3]); if (m[4] != null) { c0 = m[4]; c1 = m[5]; win = true; } dl = m[6] || 0; if (m[7] === "out") ez = E.outQuad; if (m[8]) r1 = m[8]; break; } else break; }
+          const A = S[a], B = S[b], u = ez(ul), rU = r1 > 0.5 ? ioq(P(ul, 0, r1)) : E.outCubic(P(ul, 0, r1)), cU = win ? ioq(P(ul, c0, c1)) : E.outCubic(P(ul, c0, c1));
+          const w = L(A[0], B[0], u), h = L(A[1], B[1], u), half = Math.min(w, h) / 2;
+          return { w, h, r: L(A[2] < 0 ? half : A[2], B[2] < 0 ? half : B[2], rU), col: mixC(A[3], B[3], cU), a, b, u, ul, dl };
+        };
+
+        // ---------- contents ----------
+        const CONT = {};
+        Object.keys(S).forEach((k) => { const c = $("c-" + k); if (!c) return; CONT[k] = c; c.style.width = px(S[k][0]); c.style.height = px(S[k][1]); c.style.left = px(-S[k][0] / 2); c.style.top = px(-S[k][1] / 2); });
+        document.querySelectorAll(".bn").forEach((e) => { e.textContent = v.brand; });
+        $("c-btn").textContent = v.cta;
+        $("inKey").innerHTML = RET("#8d8d8d");
+        $("pAsk").textContent = v.askLabel; avatar($("pAv"), v.name, 0);
+        $("pName").textContent = v.name; $("pHandle").textContent = "@" + v.handle + " · " + v.followers; $("pBio").textContent = v.bio;
+        $("pCountry").querySelector("span").textContent = v.country; $("pNot").textContent = v.notMe; $("pYes").textContent = v.thatsMe;
+        $("onMap").textContent = v.onMap;
+        $("gCount").querySelector("span").textContent = v.makersWord;
+        const PEOPLE = list(v.people).map((s) => { const i = s.indexOf(","); return [s.slice(0, i).trim(), s.slice(i + 1).trim()]; });
+        const header = (w) => '<div class="av" style="left:29px;top:29px;width:68px;height:68px;font-size:22px;border:3px solid #141414"></div><div class="av" style="left:73px;top:29px;width:68px;height:68px;font-size:22px;border:3px solid #141414"></div><div class="av" style="left:117px;top:29px;width:68px;height:68px;font-size:22px;border:3px solid #141414"></div><div class="mt abs" style="left:212px;top:31px"><b>' + esc(v.matches) + "</b><span>" + esc(v.matchesSub) + '</span></div><div class="mdot" style="left:' + (w - 74) + 'px;top:40.5px"><i></i></div>';
+        $("c-match").innerHTML = header(621);
+        $("c-list").innerHTML = header(576) + PEOPLE.map((p, k) => '<div class="lrow' + (k ? " sep" : "") + '" style="top:' + (118 + k * 97) + 'px"><div class="av" style="left:27px;top:19px;width:58px;height:58px;font-size:20px"></div><b>' + esc(p[0]) + "</b><span>" + esc(p[1]) + "</span><em>" + esc(v.city) + "</em></div>").join("");
+        ["c-match", "c-list"].forEach((id) => { [...$(id).querySelectorAll(".av")].forEach((a, k) => avatar(a, k < 3 ? PEOPLE[k][0] : PEOPLE[(k - 3) % 3][0], k % 3)); });
+        const mAv = [...$("c-match").querySelectorAll(".av")], lRows = [...$("c-list").querySelectorAll(".lrow")];
+        const TABS = list(v.tabs), STATS = list(v.stats).map((x) => parseInt(x.replace(/\D/g, ""), 10) || 0), CAPS = list(v.statLabels);
+        TABS.forEach((tb, k) => { const d = document.createElement("div"); d.className = "tl"; d.style.left = px(k * 183.7); d.textContent = tb; $("tSeg").appendChild(d); });
+        const tabEls = [...$("tSeg").querySelectorAll(".tl")];
+        $("eDate").children[0].textContent = v.eventDay; $("eDate").children[1].textContent = v.eventDate; $("eDate").children[2].textContent = v.eventMonth;
+        $("eTitle").textContent = v.eventTitle; $("eWhere").textContent = v.eventWhere; $("eDesc").textContent = v.eventDesc;
+        avatar($("eGoAv"), v.name, 0); $("eGoAv").style.fontSize = "11px";
+        $("eGo").querySelector("span").textContent = v.goingWord;
+        const RES = list(v.results).map((s) => { const i = s.indexOf(","); return [s.slice(0, i).trim(), s.slice(i + 1).trim()]; });
+        $("sRes").innerHTML = RES.map((p, k) => '<div class="srow" style="top:' + (118 + k * 86) + 'px"><div class="av" style="left:22px;top:13px;width:50px;height:50px;font-size:17px"></div><b>' + esc(p[0]) + "</b><span>" + esc(p[1]) + "</span>" + (k === 0 ? "<i>" + RET("#fff").replace("<svg ", '<svg style="width:24px;height:24px" ') + "</i>" : "") + "</div>").join("");
+        const sRows = [...$("sRes").children];
+        sRows.forEach((r, k) => avatar(r.querySelector(".av"), RES[k][0], k + 3));
+        $("sFound").textContent = v.found;
+        $("endDom").textContent = v.domain;
+
+        // ---------- globe ----------
+        const gcv = $("globe"), g = gcv.getContext("2d");
+        const LAND = window.LAND || [];
+        const DEG = Math.PI / 180;
+        const HOME = [parseFloat(v.homeLat) || 38.7, parseFloat(v.homeLon) || -9.1];
+        // makers cluster around cities: [lat, lon, weight]
+        const CITIES = [[38.7, -9.1, 9], [41.1, -8.6, 3], [40.4, -3.7, 5], [41.4, 2.2, 5], [48.9, 2.3, 7], [51.5, -0.1, 9], [52.4, 4.9, 6], [52.5, 13.4, 8], [48.1, 11.6, 4], [47.4, 8.5, 3], [45.5, 9.2, 4], [41.9, 12.5, 3], [59.3, 18.1, 3], [55.7, 12.6, 3], [52.2, 21.0, 3], [50.1, 14.4, 3], [48.2, 16.4, 3], [53.3, -6.3, 4], [41.0, 29.0, 3], [6.5, 3.4, 3], [-1.3, 36.8, 2], [-33.9, 18.4, 2], [30.0, 31.2, 2], [25.2, 55.3, 3], [12.97, 77.6, 4], [19.1, 72.9, 3], [28.6, 77.2, 3], [1.35, 103.8, 3], [-6.2, 106.8, 2], [35.7, 139.7, 3], [37.6, 127.0, 2], [-33.9, 151.2, 3], [37.8, -122.4, 9], [34.1, -118.2, 5], [47.6, -122.3, 4], [49.3, -123.1, 3], [30.3, -97.7, 5], [39.7, -105.0, 3], [41.9, -87.6, 4], [43.7, -79.4, 4], [40.7, -74.0, 8], [42.4, -71.1, 4], [25.8, -80.2, 3], [19.4, -99.1, 3], [4.7, -74.1, 2], [-12.0, -77.0, 2], [-23.5, -46.6, 5], [-22.9, -43.2, 3], [-34.6, -58.4, 3], [-33.4, -70.6, 2], [45.5, -73.6, 3], [33.7, -84.4, 3], [-8.8, 13.2, 1], [-26.2, 28.0, 2], [14.7, -17.4, 1], [60.2, 24.9, 2], [59.9, 10.8, 2], [50.8, 4.4, 3], [44.4, 26.1, 2], [37.98, 23.7, 2]];
+        const MK = [];
+        CITIES.forEach((c, ci) => {
+          const n = 2 + c[2] * 2;
+          for (let k = 0; k < n; k++) {
+            const s = ci * 31.7 + k * 7.3, big = k === 0;
+            const sp = big ? 0 : L(0.4, 3.2, R(s)) * (c[2] > 6 ? 1.3 : 1);
+            const a = R(s + 1) * TAU;
+            MK.push({ lat: c[0] + Math.sin(a) * sp, lon: c[1] + Math.cos(a) * sp * 1.3, size: big ? L(7, 15, c[2] / 9) : L(2.5, 6.5, R(s + 2)), t0: 6.95 + (big ? R(s + 3) * 0.6 : 0.2 + R(s + 3) * 1.6) });
+          }
+        });
+        // globe view: centre longitude/latitude over time (swings west to the Americas and back)
+        const GK = [[6.5, HOME[1], HOME[0]], [6.95, -18, 30], [7.85, -72, 24], [8.4, -66, 22], [8.95, -26, 18], [9.45, -10, 20]];
+        const view = (t) => {
+          if (t <= GK[0][0]) return [GK[0][1], GK[0][2]];
+          for (let k = 0; k < GK.length - 1; k++) if (t < GK[k + 1][0]) { const u = ioq((t - GK[k][0]) / (GK[k + 1][0] - GK[k][0])); return [L(GK[k][1], GK[k + 1][1], u), L(GK[k][2], GK[k + 1][2], u)]; }
+          const l = GK[GK.length - 1]; return [l[1], l[2]];
+        };
+        const project = (lat, lon, c) => {
+          const la = lat * DEG, lo = (lon - c[0]) * DEG, la0 = c[1] * DEG;
+          const x = Math.cos(la) * Math.sin(lo);
+          const y = Math.cos(la0) * Math.sin(la) - Math.sin(la0) * Math.cos(la) * Math.cos(lo);
+          const z = Math.sin(la0) * Math.sin(la) + Math.cos(la0) * Math.cos(la) * Math.cos(lo);
+          return [x, -y, z];
+        };
+        function globe(t, sh) {
+          g.clearRect(0, 0, 1080, 1080);
+          const on = (sh.a === "sphere" || sh.b === "sphere") && t < 9.96;
+          if (!on) return null;
+          const Rg = sh.w / 2, cx = 540, cy = 540;
+          const c = view(t);
+          // shading on the white sphere
+          const sg = g.createRadialGradient(cx - Rg * 0.28, cy - Rg * 0.34, Rg * 0.05, cx, cy, Rg);
+          sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(0.72, "rgba(236,236,234,0.35)"); sg.addColorStop(1, "rgba(214,214,211,0.9)");
+          g.fillStyle = sg; g.beginPath(); g.arc(cx, cy, Rg, 0, TAU); g.fill();
+          const landA = P(t, 6.66, 6.86) * (1 - P(t, 9.45, 9.55));
+          if (landA > 0) {
+            const ds = Math.max(1.6, Rg * 0.0078);
+            for (let i = 0; i < LAND.length; i += 2) {
+              const p = project(LAND[i], LAND[i + 1], c);
+              if (p[2] <= 0.02) continue;
+              g.globalAlpha = landA * (0.22 + 0.68 * Math.sqrt(p[2]));
+              g.fillStyle = "#5f5f5f";
+              g.fillRect(cx + p[0] * Rg - ds / 2, cy + p[1] * Rg - ds / 2, ds, ds);
+            }
+            g.fillStyle = OR;
+            MK.forEach((m) => {
+              const u = E.outBack(P(t, m.t0, m.t0 + 0.28), 2);
+              if (u <= 0) return;
+              const p = project(m.lat, m.lon, c);
+              if (p[2] <= 0.02) return;
+              g.globalAlpha = landA * (0.35 + 0.65 * Math.sqrt(p[2])) * C(u * 3);
+              g.beginPath(); g.arc(cx + p[0] * Rg, cy + p[1] * Rg, Math.max(0.1, m.size * (Rg / 416) * C(u, 0, 1.3) / 2), 0, TAU); g.fill();
+            });
+            g.globalAlpha = 1;
+          }
+          // you: the home dot sits at the centre while the sphere grows, then rides the globe
+          const hp = project(HOME[0], HOME[1], c);
+          let hx = cx + hp[0] * Rg, hy = cy + hp[1] * Rg;
+          const back = ioq(P(t, 9.45, 9.62));
+          hx = L(hx, cx, back); hy = L(hy, cy, back);
+          const hr = t < 6.7 ? L(40.5, 14, E.outCubic(P(t, 6.5, 6.68))) : L(14, 36, E.outCubic(P(t, 9.5, 9.95)));
+          if (hp[2] > 0 || back > 0) { g.fillStyle = OR; g.beginPath(); g.arc(hx, hy, hr, 0, TAU); g.fill(); }
+          return { hx, hy, Rg };
+        }
+
+        // ---------- cursor ----------
+        const CK = [[0.45, 900, 940], [0.9, 704, 608], [1.1, 700, 588], [1.3, 666, 578], [1.55, 628, 570], [1.8, 630, 574], [2.05, 619, 576], [2.35, 731, 626], [2.65, 772, 660], [2.95, 824, 603], [3.1, 835, 567], [3.4, 837, 560], [3.75, 747, 637], [4.2, 716, 686], [4.45, 718, 686], [4.62, 747, 713], [4.9, 970, 911], [5.2, 1140, 1060],
+          [12.0, 960, 900], [12.25, 900, 821], [12.45, 869, 720], [12.65, 729, 623], [12.85, 563, 479], [13.1, 599, 457], [13.3, 698, 457], [13.6, 731, 457], [13.85, 743, 479], [14.1, 774, 583], [14.45, 776, 612], [14.75, 725, 671], [15.2, 720, 686], [15.6, 810, 788], [16.1, 806, 794], [16.6, 837, 835], [17.3, 837, 837], [17.6, 727, 731], [17.9, 592, 545], [18.2, 583, 513], [18.5, 644, 529]];
+        const TAPS = [0.95, 1.62, 3.1, 4.45, 12.85, 13.3, 14.75];
+        const cursorAt = (t) => {
+          for (let k = 0; k < CK.length - 1; k++) if (t < CK[k + 1][0]) { if (t < CK[k][0]) return [CK[k][1], CK[k][2]]; const u = ioq((t - CK[k][0]) / (CK[k + 1][0] - CK[k][0])); return [L(CK[k][1], CK[k + 1][1], u), L(CK[k][2], CK[k + 1][2], u)]; }
+          const l = CK[CK.length - 1]; return [l[1], l[2]];
+        };
+        const press = (t) => TAPS.reduce((m, a) => Math.max(m, bump(t, a - 0.03, a + 0.12)), 0);
+
+        // ---------- digits that roll to a new number ----------
+        const tNum = $("tNum");
+        function rollNum(t) {
+          const stage = t >= 13.45 ? 2 : t >= 12.9 ? 1 : 0;
+          const t0 = [0, 12.9, 13.45][stage];
+          const target = fmtN(STATS[stage]), prev = fmtN(STATS[Math.max(0, stage - 1)]);
+          const u = stage ? P(t, t0, t0 + 0.32) : 1;
+          let html = "";
+          for (let i = 0; i < target.length; i++) {
+            const ch = target[i];
+            const d = u >= 1 || ch === "," ? ch : String(Math.floor(R(i * 7.1 + Math.floor(t * 30)) * 10));
+            const off = u >= 1 ? 0 : (1 - E.outCubic(C((u - i * 0.06) * 1.5))) * 40;
+            html += '<span style="top:' + off.toFixed(1) + 'px;filter:' + (off > 2 ? "blur(" + (off / 10).toFixed(1) + "px)" : "none") + '">' + d + "</span>";
+          }
+          tNum.innerHTML = html;
+          $("tCap").textContent = CAPS[stage];
+        }
+
+        function render(t) {
+          const sh = shellAt(t), shell = $("shell");
+          // surface
+          const pr = press(t) * (t > 0.9 ? 1 : 0);
+          const sc = 1 - 0.035 * pr * (t > 4.3 && t < 4.6 ? 0 : 1);
+          $("frame").style.transform = "scale(" + sc.toFixed(4) + ")";
+          shell.style.width = px(sh.w); shell.style.height = px(sh.h); shell.style.left = px(-sh.w / 2); shell.style.top = px(-sh.h / 2);
+          shell.style.borderRadius = px(sh.r); shell.style.background = sh.col;
+          const white = sh.col.match(/\d+/g).reduce((a, x) => a + +x, 0) > 600;
+          const small = sh.w < 140 && (sh.a === "dot" || sh.b === "dot" || sh.a === "mdot" || sh.b === "mdot");
+          shell.style.boxShadow = small ? "0 0 0 " + px(16 * C((140 - sh.w) / 40)) + " rgba(229,83,45,0.16)" : sh.w > 700 ? "0 30px 80px rgba(0,0,0,0.12)" : "0 22px 50px rgba(0,0,0," + (white ? 0.08 : 0.2) + "), 0 0 0 1px rgba(0,0,0," + (white ? 0.04 : 0) + ")";
+          const mb = M.reduce((m, x) => Math.max(m, bump(t, x[2], x[3])), 0);
+          shell.style.filter = blurS(7 * mb);
+          const gl = globe(t, sh);
+          gcv.style.filter = blurS(7 * mb * (t > 9.4 ? 1 : 0));
+          // contents cross-fade and squash with the surface
+          Object.keys(CONT).forEach((k) => {
+            const c = CONT[k], N = S[k];
+            // some states stay blank for a beat after the surface settles, then their contents fade in
+            const mIn = M.find((m) => m[1] === k), delay = mIn && mIn[6] ? mIn[6] : 0;
+            let o = 0;
+            if (sh.a === k && sh.b === k) o = delay ? P(t, mIn[3] + delay - 0.14, mIn[3] + delay) : 1;
+            else if (sh.a === k) o = k === "spin" ? 1 - P(sh.ul, 0.5, 0.9) : 1 - P(sh.ul, 0, 0.3);
+            else if (sh.b === k) o = delay ? 0 : P(sh.ul, 0.55, 1);
+            K.show(c, o > 0.002);
+            if (o <= 0.002) return;
+            c.style.opacity = o.toFixed(3);
+            c.style.transform = sh.a === sh.b ? "none" : "scale(" + (sh.w / N[0]).toFixed(4) + "," + (sh.h / N[1]).toFixed(4) + ")";
+            c.style.filter = blurS(7 * mb);
+          });
+          // logo
+          // input typing
+          if (t >= 2.0 && t < 3.3) {
+            const n = Math.max(0, Math.min(v.handle.length, Math.floor((t - 2.16) / 0.1) + 1));
+            $("inTyped").textContent = v.handle.slice(0, t < 2.16 ? 0 : n);
+            $("inCaret").style.opacity = Math.floor(t * 3) % 2 === 0 || t < 3.0 ? "1" : "0";
+            const hot = P(t, 2.9, 2.98);
+            $("inKey").style.background = mixC("#ececec", INK, hot);
+            $("inKey").innerHTML = RET(hot > 0.5 ? "#fff" : "#8d8d8d");
+          }
+          // profile card
+          if (t >= 3.3 && t < 4.8) {
+            const ci = (el, a) => { const u = E.outCubic(P(t, a, a + 0.16)); el.style.opacity = u.toFixed(3); el.style.transform = "translateY(" + px(8 * (1 - u)) + ")"; };
+            ci($("pAsk"), 3.36); ci($("pAv"), 3.38); ci($("pName"), 3.39); ci($("pHandle"), 3.41); ci($("pBio"), 3.43); ci($("pCountry"), 3.45); ci($("pNot"), 3.46); ci($("pYes"), 3.47);
+            const yes = $("pYes");
+            yes.style.background = t >= 4.43 ? "#555" : INK;
+          }
+          // spinner → check → you
+          if (t >= 4.6 && t < 6.0) {
+            const arc = $("spArc"), ang = (t - 4.6) * 520;
+            const len = t < 5.2 ? L(0.18, 0.3, 0.5 + 0.5 * Math.sin(t * 6)) : L(0.3, 0, P(t, 5.2, 5.32));
+            arc.style.strokeDasharray = (len * 289).toFixed(1) + " 289"; arc.setAttribute("transform", "rotate(" + ang.toFixed(1) + " 105.5 105.5)");
+            arc.style.opacity = t < 5.32 ? "1" : "0";
+            K.draw($("spCk"), E.outCubic(P(t, 5.3, 5.46)));
+            $("spCk").style.opacity = (1 - P(t, 5.6, 5.68)).toFixed(3);
+            const du = E.outCubic(P(t, 5.6, 5.76));
+            $("spDot").setAttribute("r", (du * 20).toFixed(2));
+          }
+          // you're on the map
+          if (t >= 5.8 && t < 6.75) {
+            const tu = E.outCubic(P(t, 5.88, 6.06));
+            const oo = P(t, 6.42, 6.54), om = $("onMap"); om.style.opacity = (tu * (1 - oo)).toFixed(3); om.style.filter = blurS(8 * (1 - tu) + 8 * oo);
+            const r1 = $("ring1"), ru = P(t, 5.95, 6.45), rd = L(90, 230, E.outCubic(ru));
+            r1.style.width = px(rd); r1.style.height = px(rd); r1.style.left = px(40.5 - rd / 2); r1.style.top = px(40.5 - rd / 2); r1.style.opacity = (bump(t, 5.95, 6.45) * 0.9).toFixed(3);
+          }
+          // globe extras
+          if (gl) {
+            const cu = E.outBack(P(t, 7.05, 7.25), 1.8);
+            const gc = $("gCount");
+            const kf = [[7.05, 0], [7.3, 0.47], [7.8, 0.983], [8.4, 0.9989], [8.9, 1]];
+            let f = 0; for (let k = 0; k < kf.length - 1; k++) if (t >= kf[k][0]) f = t >= kf[k + 1][0] ? kf[k + 1][1] : L(kf[k][1], kf[k + 1][1], ioq((t - kf[k][0]) / (kf[k + 1][0] - kf[k][0])));
+            gc.querySelector("b").textContent = fmtN((parseInt(v.makers, 10) || 3393) * f);
+            gc.style.left = px(416 - gc.offsetWidth / 2); gc.style.top = px(416 + 362 - 25);
+            gc.style.transform = "scale(" + C(cu, 0, 1.2).toFixed(3) + ")"; gc.style.opacity = (C(cu * 2) * (1 - P(t, 9.4, 9.47))).toFixed(3);
+            const r2 = $("ring2"), ru = P(t, 7.0, 7.9), rd = L(40, 520, E.outCubic(ru));
+            r2.style.width = px(rd); r2.style.height = px(rd); r2.style.left = px(gl.hx - 540 + 416 - rd / 2); r2.style.top = px(gl.hy - 540 + 416 - rd / 2);
+            r2.style.opacity = (bump(t, 7.0, 7.9) * 0.9).toFixed(3); r2.style.borderWidth = "3px";
+          }
+          // matches pill and list
+          if (t >= 10.2 && t < 12.4) {
+            mAv.forEach((a, k) => { const u = E.outBack(P(t, 10.3 + k * 0.1, 10.46 + k * 0.1), 2.2); a.style.transform = "scale(" + C(u, 0, 1.25).toFixed(3) + ")"; a.style.opacity = C(u * 2).toFixed(3); });
+            lRows.forEach((r, k) => { const u = E.outCubic(P(t, 11.14 + k * 0.17, 11.36 + k * 0.17)); r.style.opacity = u.toFixed(3); r.style.transform = "translateY(" + px(12 * (1 - u)) + ")"; r.style.filter = blurS(6 * (1 - u)); });
+          }
+          // tabs
+          if (t >= 12.3 && t < 14.3) {
+            const stage = t >= 13.3 ? 2 : t >= 12.85 ? 1 : 0;
+            const ps = [0, 12.85, 13.3][stage], pu = stage ? ioq(P(t, ps, ps + 0.22)) : 1;
+            const px0 = [5, 188, 372][Math.max(0, stage - 1)], px1 = [5, 188, 372][stage];
+            const pl = $("tPill"); pl.style.left = px(L(px0, px1, pu)); pl.style.width = "174px";
+            pl.style.transform = "scaleX(" + (1 + 0.12 * Math.sin(Math.PI * pu)).toFixed(3) + ")";
+            tabEls.forEach((e, k) => { const on = k === stage && pu > 0.5; e.style.color = on ? "#fff" : "#6f6f6f"; e.style.fontWeight = on ? "600" : "500"; });
+            rollNum(t);
+          }
+          // event
+          if (t >= 14.25 && t < 15.9) {
+            const done = t >= 14.82, bu = E.outBack(P(t, 14.82, 15.02), 2);
+            const b = $("eBtn");
+            b.innerHTML = done ? CHK("#fff", 24) + "<span>" + esc(v.joined) + "</span>" : esc(v.join);
+            b.style.background = done ? OR : INK;
+            const w = done ? 255 : 198; b.style.width = px(w); b.style.left = px(590 - w);
+            b.style.transform = "scale(" + (done ? C(L(0.9, 1, bu), 0, 1.1) : 1 - 0.05 * bump(t, 14.72, 14.84)).toFixed(3) + ")";
+            const g0 = parseInt(v.going, 10) || 7;
+            $("eGo").querySelector("b").textContent = String(done ? g0 + 1 : g0);
+            K.show($("eGoAv"), done); $("eGoAv").style.transform = "scale(" + C(bu, 0, 1.2).toFixed(3) + ")";
+          }
+          // search
+          if (t >= 15.9 && t < 18.6) {
+            const n = Math.max(0, Math.min(v.query.length, Math.floor((t - 15.98) * 17.2)));
+            $("sTyped").textContent = v.query.slice(0, n);
+            $("sCaret").style.opacity = t < 17.4 || Math.floor(t * 3) % 2 === 0 ? "1" : "0";
+            const fu = E.outCubic(P(t, 17.4, 17.56));
+            $("sFound").style.opacity = fu.toFixed(3);
+            sRows.forEach((r, k) => { const u = E.outCubic(P(t, 17.4 + k * 0.06, 17.6 + k * 0.06)); r.style.opacity = u.toFixed(3); r.style.transform = "translateY(" + px(10 * (1 - u)) + ")"; r.style.background = k === 0 ? "#f2f2f1" : "transparent"; });
+            const out = P(t, 18.0, 18.12);
+            $("c-search").style.filter = blurS(Math.max(7 * mb, 5 * out));
+          }
+          // end domain
+          const du = E.outCubic(P(t, 18.62, 18.9));
+          K.show($("endDom"), du > 0);
+          $("endDom").style.opacity = du.toFixed(3); $("endDom").style.transform = "translateY(" + px(10 * (1 - du)) + ")"; $("endDom").style.filter = blurS(6 * (1 - du));
+          // cursor
+          const cur = $("cursor"), cp = cursorAt(t);
+          const con = (t >= 0.45 && t < 5.2) || (t >= 12.0 && t < 18.6);
+          K.show(cur, con);
+          if (con) {
+            const s = 1 - 0.16 * press(t);
+            cur.style.transform = "translate(" + px(cp[0] - 7) + "," + px(cp[1] - 4) + ") scale(" + s.toFixed(3) + ")";
+            cur.style.opacity = (C(P(t, 0.45, 0.55)) * (t < 5.2 ? 1 - P(t, 5.0, 5.2) : C(P(t, 12.0, 12.12)) * (1 - P(t, 18.45, 18.6)))).toFixed(3);
+          }
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "_doc": "QA 画面分区（比例 = 画布宽/高的分数）。exclusion 里的每一项都是门禁：任何叠层元素进入即判渲染失败。字幕带、嘴部规则按总控 2026-09-26 口径：字幕带 = 画面高 74%–86%，嘴 = 人脸框下 1/3。",
+  "xhs_3x4": {
+    "canvas": [1080, 1440],
+    "safe": { "x0": 0.05, "y0": 0.05, "x1": 0.95, "y1": 0.95 },
+    "caption_band": { "y0": 0.74, "y1": 0.86 },
+    "top_band": { "y1": 0.14 },
+    "mouth": "lower_third_of_face",
+    "face_pad": 0.0,
+    "min_font_px": 24,
+    "persistent_top": { "min_ratio": 0.8, "min_span_s": 10 }
+  },
+  "xhs_9x16": {
+    "canvas": [1080, 1920],
+    "safe": { "x0": 0.1, "y0": 0.08, "x1": 0.9, "y1": 0.85 },
+    "caption_band": { "y0": 0.74, "y1": 0.86 },
+    "top_band": { "y1": 0.12 },
+    "mouth": "lower_third_of_face",
+    "face_pad": 0.0,
+    "min_font_px": 24,
+    "persistent_top": { "min_ratio": 0.8, "min_span_s": 10 }
+  }
+}

@@ -1,0 +1,272 @@
+<meta charset="utf-8">
+<title>Marketing video scene</title>
+<style>
+/*FONTS*/
+html,body{margin:0;padding:0;overflow:hidden}
+#stage{position:fixed;inset:0;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.abs{position:absolute;left:0;top:0;white-space:nowrap}
+/* no transitions, no animations, no will-change: every value is set by seek(t) */
+#stage *{transition:none!important;animation:none!important}
+</style>
+<div id="stage">
+  <div id="shape" class="abs"></div>
+  <div id="label" class="abs"></div>
+  <svg id="ring" class="abs"><path id="ringArc" fill="none" stroke-linecap="round"/></svg>
+  <svg id="check" class="abs"><path id="checkPath" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div id="cardTitle" class="abs"></div>
+  <div id="rows" class="abs"></div>
+  <div id="cta" class="abs"></div>
+  <div id="ctaT" class="abs"></div>
+  <div id="toast" class="abs"></div>
+  <!-- the end card: replace with the brand's real SVG logo, pasted verbatim -->
+  <div id="logo" class="abs"></div>
+  <svg id="cursor" class="abs" viewBox="0 0 24 24">
+    <path d="M5 2.2 L5 20.4 L9.5 16.2 L12.2 22.4 L15.2 21.1 L12.5 15 L18.6 14.8 Z"
+          fill="#121212" stroke="#ffffff" stroke-width="1.7" stroke-linejoin="round"/>
+  </svg>
+</div>
+<script>
+"use strict";
+/* ============================================================== CONFIG
+   Everything brand- or edit-specific lives here. The engine below it is
+   generic; the scene after it is the example to replace. */
+const CONFIG = {
+  bpm: 120,
+  bars: 6,
+  loop: false,               // true: last frame == first frame. false: ends on the end card
+  font: "system-ui, sans-serif",   // put the brand family first; it must be listed in fonts.json
+  mono: "ui-monospace, monospace",
+  C: {                       // design system: replace with the brand's tokens
+    canvas: "#F1EEE9", ink: "#121212", white: "#FFFFFF", line: "#E3DFD8",
+    muted: "#8C877E", faint: "#B3AEA5", accent: "#5B5BF0", sunk: "#EFECE6",
+  },
+};
+
+/* ============================================================== ENGINE */
+const BEAT = 60 / CONFIG.bpm, DUR = CONFIG.bars * 4 * BEAT;
+const b = (bar, beat, six = 0) => ((bar - 1) * 4 + (beat - 1) + six * 0.25) * BEAT;
+const LEAD = 0.34, lead = (t) => t - LEAD;      // the pointer arrives before the hit lands
+const C = CONFIG.C;
+
+/* closed-form step response of a damped spring: a pure function of time */
+function step(x, w, z) {
+  if (x <= 0) return 0;
+  if (z < 0.999) {
+    const wd = w * Math.sqrt(1 - z * z);
+    return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x));
+  }
+  if (z < 1.001) return 1 - Math.exp(-w * x) * (1 + w * x);
+  const r = Math.sqrt(z * z - 1), a = -w * (z - r), c = -w * (z + r);
+  return 1 - (a * Math.exp(c * x) - c * Math.exp(a * x)) / (a - c);
+}
+const decay = (x, w, z) => (x <= 0 ? 1 : 1 - step(x, w, z));
+/* A value that retargets many times is the sum of one spring per retarget.
+   For a loop, summing the previous iterations too makes v(DUR) === v(0),
+   velocity included, provided every track returns to its start (close()). */
+const LOOPS = CONFIG.loop ? 3 : 1;
+class Track {
+  constructor(v0) { this.v0 = v0; this.ev = []; this.last = v0; }
+  to(t, v, w = 22, z = 0.86) { this.ev.push({ t, d: v - this.last, w, z }); this.last = v; return this; }
+  close(t, w = 18, z = 0.92) { return this.to(t, this.v0, w, z); }
+  at(t) {
+    let s = this.v0;
+    for (let k = 0; k < LOOPS; k++) {
+      const tt = t + k * DUR;
+      for (const e of this.ev) { const x = tt - e.t; if (x > 0) s += e.d * step(x, e.w, e.z); }
+    }
+    return s;
+  }
+  residual() { return this.ev.reduce((a, e) => a + e.d, 0); }
+}
+const clamp = (v, a, c) => (v < a ? a : v > c ? c : v);
+const lerp = (a, c, u) => a + (c - a) * u;
+const sstep = (u) => { u = clamp(u, 0, 1); return u * u * (3 - 2 * u); };
+function mixHex(a, c, u) {
+  u = clamp(u, 0, 1);
+  const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const x = p(a), y = p(c);
+  return "rgb(" + x.map((v, i) => Math.round(lerp(v, y[i], u))).join(",") + ")";
+}
+/* visibility window with its own enter and exit, so swapped text never overlaps */
+function win(t, t0, t1, fi = 0.13, fo = 0.11) {
+  let u = t;
+  if (CONFIG.loop && t1 > DUR && u < t1 - DUR) u += DUR;   // a window may cross a loop's seam
+  const o = clamp(Math.min(sstep((u - t0) / fi), 1 - sstep((u - (t1 - fo)) / fo)), 0, 1);
+  return { o, b: (1 - o) * 3.4 };
+}
+const enter = (t, t0, fi = .2) => { const o = sstep((t - t0) / fi); return { o, b: (1 - o) * 3.4 }; };
+
+/* World units: a 1000-unit square maps to the short side of the frame. No CSS
+   transform ever scales the layout: sizes are recomputed in pixels each frame,
+   so text is laid out at its true size and never rasterises blurry. */
+const $ = (id) => document.getElementById(id);
+let W = 0, H = 0, U = 0, camX = 0, camY = 0, OFF = 0;
+const sx = (x) => (x - camX) * U + W / 2;
+const sy = (y) => (y - camY) * U + H / 2 + OFF;
+function box(el, cx, cy, w, h, r) {
+  const s = el.style;
+  s.left = (sx(cx) - w * U / 2) + "px"; s.top = (sy(cy) - h * U / 2) + "px";
+  s.width = (w * U) + "px"; s.height = (h * U) + "px";
+  if (r !== undefined) s.borderRadius = (r * U) + "px";
+}
+/* Text is placed by measuring it. Force it visible first: a node hidden on the
+   previous frame measures zero-wide and lands in the wrong place. */
+function txt(el, cx, cy, size, align, weight, color) {
+  const s = el.style;
+  s.display = "block"; s.fontFamily = CONFIG.font;
+  s.fontSize = (size * U).toFixed(2) + "px"; s.lineHeight = (size * 1.2 * U).toFixed(2) + "px";
+  if (weight !== undefined) s.fontWeight = weight;
+  if (color !== undefined) s.color = color;
+  s.top = (sy(cy) - size * .6 * U) + "px"; s.left = "0px";
+  const w = el.offsetWidth;
+  s.left = (align === "c" ? sx(cx) - w / 2 : align === "r" ? sx(cx) - w : sx(cx)) + "px";
+  return w / U;
+}
+/* every element drawn in a frame must also be shown or hidden in that frame */
+function show(el, v) {
+  el.style.opacity = v.o;
+  el.style.filter = v.b > .02 ? "blur(" + (v.b * U).toFixed(2) + "px)" : "none";
+  el.style.display = v.o < .004 ? "none" : "block";
+}
+function svg(el, cx, cy, w, h) {
+  const s = el.style;
+  s.left = (sx(cx) - w * U / 2) + "px"; s.top = (sy(cy) - h * U / 2) + "px";
+  s.width = (w * U) + "px"; s.height = (h * U) + "px";
+  el.setAttribute("viewBox", [-w / 2, -h / 2, w, h].join(" ")); s.overflow = "visible";
+}
+
+/* ============================================================== SCENE
+   Example: a button presses into a loader, resolves to a check, opens into a
+   card, a click shares it, a toast confirms, the logo closes. Replace it. */
+const T = {
+  PRESS: b(1, 2), LOAD: b(1, 3), DONE: b(2, 1), CARD: b(2, 3),
+  SHARE: b(4, 1), TOAST: b(4, 2), LOGO: b(5, 3),
+};
+const SW = new Track(340), SH = new Track(96), SR = new Track(48), SY = new Track(0);
+const INK = new Track(0);                         // 0 = ink surface, 1 = white surface
+SW.to(T.PRESS, 326, 32, .82).to(T.LOAD, 200, 24, .85).to(T.CARD, 600, 22, .86)
+  .to(T.SHARE + .5, 420, 26, .82).to(T.LOGO, 140, 26, .86);
+SH.to(T.PRESS, 92, 32, .82).to(T.LOAD, 200, 24, .85).to(T.CARD, 360, 22, .86)
+  .to(T.SHARE + .5, 96, 26, .82).to(T.LOGO, 60, 26, .86);
+SR.to(T.PRESS, 46, 32, .82).to(T.LOAD, 100, 24, .85).to(T.CARD, 32, 22, .86)
+  .to(T.SHARE + .5, 48, 26, .82).to(T.LOGO, 30, 26, .86);
+SY.to(T.CARD, 40, 22, .86).to(T.SHARE + .5, 0, 26, .82);
+INK.to(T.CARD, 1, 22, .88).to(T.SHARE + .5, 0, 28, .84);
+
+const ZM = new Track(2.0), CY = new Track(0);
+ZM.to(T.LOAD, 2.9, 16, .97).to(T.CARD, 1.4, 15, .97).to(T.SHARE + .5, 1.8, 15, .97)
+  .to(T.LOGO - .16, 1.0, 15, .98).to(T.LOGO + .45, 1.05, 2.2, 1.0);
+CY.to(T.CARD, 40, 13, .98).to(T.SHARE + .5, 0, 13, .98);
+
+/* every click target, so the pointer and the button can never drift apart */
+const HIT = { button: [60, 0], share: [0, 160] };
+const PX = new Track(260), PY = new Track(-200);
+PX.to(lead(T.PRESS), HIT.button[0], 17, .92).to(T.LOAD + .1, 230, 12, .96)
+  .to(lead(T.SHARE), HIT.share[0], 16, .92).to(T.SHARE + .4, 260, 12, .96);
+PY.to(lead(T.PRESS), HIT.button[1], 17, .92).to(T.LOAD + .1, -180, 12, .96)
+  .to(lead(T.SHARE), HIT.share[1], 16, .92).to(T.SHARE + .4, 240, 12, .96);
+const CLICKS = [T.PRESS, T.SHARE];
+function cursorDip(t) {
+  let d = 0;
+  for (const c of CLICKS) { const x = t - c; if (x >= 0 && x < .17) d = Math.max(d, Math.sin(Math.PI * x / .17)); }
+  return 1 - .15 * d;
+}
+const ROWS = ["Weekly signups up 18%", "Churn down to 2.1%", "NPS 61, best quarter"];
+const rowIn = ROWS.map((_, i) => new Track(0).to(T.CARD + .25 + i * .09, 1, 20, .88));
+
+if (CONFIG.loop) for (const [n, tr] of Object.entries({ SW, SH, SR, SY, INK, ZM, CY, PX, PY }))
+  if (Math.abs(tr.residual()) > 1e-9) console.warn("track not periodic:", n);
+
+function seek(t) {
+  t = clamp(t, 0, DUR);
+  W = innerWidth; H = innerHeight;
+  U = (Math.min(W, H) / 1000) * ZM.at(t); camX = 0; camY = CY.at(t); OFF = 0;
+  document.getElementById("stage").style.background = C.canvas;
+
+  const sw = SW.at(t), sh = SH.at(t), scx = 0, scy = SY.at(t), PT = scy - sh / 2;
+  const ink = clamp(INK.at(t), 0, 1), surface = mixHex(C.ink, C.white, ink), on = mixHex(C.white, C.ink, ink);
+  box($("shape"), scx, scy, sw, sh, SR.at(t));
+  $("shape").style.background = surface;
+  $("shape").style.boxShadow = "inset 0 0 0 " + (1.7 * U).toFixed(2) + "px " + mixHex(surface, C.line, ink);
+  show($("shape"), win(t, -1, T.LOGO + .2, .1, .2));
+
+  const l = $("label"); l.textContent = "Get the report";
+  txt(l, scx, scy, 32, "c", 600, on); show(l, win(t, -1, T.LOAD - .04, .1, .12));
+
+  const vRing = win(t, T.LOAD - .04, T.DONE + .12, .09, .11);
+  const sweep = Math.max(2, 348 * step(Math.max(0, t - T.LOAD), 6.4, .96)), rot = -90 + 300 * clamp(t - T.LOAD, 0, 1);
+  const a0 = rot * Math.PI / 180, a1 = (rot + sweep) * Math.PI / 180, R = 70;
+  svg($("ring"), scx, scy, 200, 200);
+  $("ringArc").setAttribute("d", `M ${R * Math.cos(a0)} ${R * Math.sin(a0)} A ${R} ${R} 0 ${sweep > 180 ? 1 : 0} 1 ${R * Math.cos(a1)} ${R * Math.sin(a1)}`);
+  $("ringArc").setAttribute("stroke", C.accent); $("ringArc").setAttribute("stroke-width", 14);
+  show($("ring"), vRing);
+
+  const vChk = win(t, T.DONE - .01, T.CARD + .08, .07, .09), cp = $("checkPath");
+  svg($("check"), scx, scy, 200, 200);
+  cp.setAttribute("d", "M -36 4 L -10 30 L 38 -26"); cp.setAttribute("stroke", on); cp.setAttribute("stroke-width", 15);
+  const L = cp.getTotalLength();
+  cp.setAttribute("stroke-dasharray", L); cp.setAttribute("stroke-dashoffset", L * (1 - step(Math.max(0, t - T.DONE), 12, .99)));
+  show($("check"), vChk);
+
+  const vCard = win(t, T.CARD + .08, T.SHARE + .5, .16, .11);
+  const ct = $("cardTitle"); ct.textContent = "Your Q3 report is ready";
+  txt(ct, scx - 260, PT + 50, 30, "l", 600, C.ink); show(ct, vCard);
+  const rc = $("rows"); rc.style.cssText = "position:absolute;left:0;top:0";
+  if (rc.childElementCount !== ROWS.length) rc.innerHTML = ROWS.map(() => "<div></div>").join("");
+  [...rc.children].forEach((row, i) => {
+    const g = clamp(rowIn[i].at(t), 0, 1);
+    row.textContent = ROWS[i];
+    row.style.cssText = "position:absolute;white-space:nowrap;left:" + sx(scx - 260) + "px;top:" +
+      sy(PT + 112 + i * 52 + (1 - g) * 14) + "px;font-family:" + CONFIG.font + ";font-weight:500;font-size:" +
+      (24 * U).toFixed(2) + "px;color:" + C.muted + ";opacity:" + (g * vCard.o) + ";display:" + (g * vCard.o < .01 ? "none" : "block");
+  });
+  const pressed = sstep((t - T.SHARE) / .07);
+  box($("cta"), HIT.share[0], HIT.share[1], 200 - 8 * pressed, 60 - 3 * pressed, 30);
+  $("cta").style.background = mixHex(C.accent, C.ink, pressed * .4); show($("cta"), vCard);
+  const tt = $("ctaT"); tt.textContent = "Share";
+  txt(tt, HIT.share[0], HIT.share[1], 24, "c", 600, C.white); show(tt, vCard);
+
+  const to = $("toast"); to.textContent = "Shared with the team";
+  txt(to, scx, scy, 30, "c", 600, C.white); show(to, win(t, T.TOAST + .06, T.LOGO + .04, .14, .12));
+
+  const lg = $("logo"); lg.textContent = "acme";      // placeholder: use the brand SVG
+  txt(lg, 0, 0, 120, "c", 700, C.ink); show(lg, enter(t, T.LOGO + .06, .26));
+
+  const cu = $("cursor"), cs = 64 * cursorDip(t), tipX = sx(PX.at(t)), tipY = sy(PY.at(t));
+  cu.style.left = (tipX - cs * .21) + "px"; cu.style.top = (tipY - cs * .09) + "px";
+  cu.style.width = cs + "px"; cu.style.height = cs + "px";
+  const vCur = win(t, -1, T.TOAST + .3, .1, .3);
+  cu.style.opacity = vCur.o; cu.style.display = vCur.o < .004 ? "none" : "block";
+  window._tip = [tipX, tipY];
+}
+
+/* ============================================================== CONTRACT
+   What the scripts rely on: these globals, an element with id "cursor", and
+   seek() setting window._tip to the pointer tip in pixels (hitTest reads it).
+   META.endT is required when CONFIG.loop is false. */
+window.CONFIG = CONFIG;
+window.seek = seek;
+window.DUR = DUR;
+window.T = T;
+window.META = { bpm: CONFIG.bpm, bars: CONFIG.bars, dur: DUR, loop: CONFIG.loop, endT: CONFIG.loop ? null : T.LOGO };
+/* clicks: the pointer tip must be inside the element at that instant.
+   cover: the pointer must never overlap that text while it is meant to be read */
+window.CHECKS = {
+  clicks: [{ name: "press", t: T.PRESS, sel: "#shape" }, { name: "share", t: T.SHARE, sel: "#cta" }],
+  cover: [{ name: "the card rows", sel: "#rows", from: T.CARD + .3, to: T.SHARE - .4 }],
+};
+/* sound cues: audio.py places each sound so its measured peak lands on t */
+window.CUES = [
+  { t: T.PRESS, sound: "click", gain: .65 }, { t: T.LOAD, sound: "whoosh", gain: .3 },
+  { t: T.DONE, sound: "confirm", gain: .5 }, { t: T.CARD, sound: "whoosh", gain: .3 },
+  { t: T.SHARE, sound: "click", gain: .7 }, { t: T.TOAST, sound: "toast", gain: .45 },
+  { t: T.LOGO, sound: "confirm", gain: .34 },
+];
+window.hitTest = (t, sel) => {
+  seek(t);
+  const r = document.querySelector(sel).getBoundingClientRect(), [x, y] = window._tip;
+  const dx = Math.max(r.left - x, 0, x - r.right), dy = Math.max(r.top - y, 0, y - r.bottom);
+  return { inside: dx === 0 && dy === 0, dx: Math.round(dx), dy: Math.round(dy) };
+};
+seek(0);
+</script>

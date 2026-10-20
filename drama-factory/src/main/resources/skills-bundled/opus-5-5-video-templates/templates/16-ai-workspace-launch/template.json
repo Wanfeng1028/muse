@@ -1,0 +1,27 @@
+{
+  "id": "16-ai-workspace-launch",
+  "title": "AI workspace launch film — scattered tools, a promise with a cycling verb, the product board, meeting notes, answers with sources, agents at work, logo wall and stats",
+  "category": "product launch / SaaS (long form)",
+  "duration": 46,
+  "size": "1920x1080",
+  "demoBrand": "Workgrove (fictional)",
+  "source": {
+    "author": "@moritzkremb",
+    "post": "https://x.com/moritzkremb/status/2103066071838466494",
+    "note": "Remade from scratch in HyperFrames after a Notion launch film made with Opus 5.5; structure and pacing follow it. Every brand is replaced: the mark, the app icons (generic glyphs, no real logos), the workspace, the customer logo wall (made-up names) and all numbers are fictional placeholders."
+  },
+  "scenes": [
+    "dark: 'Docs here. Chats there. Tasks everywhere.' while app tiles pop in around the text, then everything collapses into a dot",
+    "a light disc opens around the logo; 'Where teams and agents • Think/Build/Ship together.' with two doodle avatars",
+    "the camera pans to 'The AI workspace that works for you.' and the product board rises and fills the frame; agents move two cards",
+    "'Bring everything into one system of record.' next to a meetings database, a recording pill and a 'Notes captured' chip",
+    "a question is typed, the answer assembles as a donut, bar and line chart with source chips; 'Get answers, instantly. With citations.'",
+    "an agent page and a task board: the agent works, updates five pages and takes a ticket; '24/7 — Keep work moving with agents.'",
+    "dark slide: 'Build agents that …' cycling through four uses with a progress track",
+    "'Trusted by teams that ship.' with a 5x3 wall of customer names and three counting stat cards",
+    "end card: mark and wordmark, tagline, a button the cursor clicks, domain"
+  ],
+  "variables": ["brand", "domain", "cta", "endTag", "kicker1", "line1", "line2", "line3a", "line3b", "whereA", "whereB", "whereC", "verbs", "introKicker", "titleA", "titleB", "titleC", "space", "agentsPill", "k2", "k2a", "k2b", "k2c", "k2d", "k2sub", "meeting", "question", "dashboard", "ansA", "ansB", "ansC", "k3", "agentName", "boardName", "allDay", "keepLine", "buildLead", "buildUses", "trustA", "trustB", "logos", "stats", "blue", "ink", "paper", "night"],
+  "notes": "The board (COLS), the meetings table (ROWS), the chart numbers, the agent's reply and the task cards are data arrays in the script; the mark is the MARK() SVG. Stats are 'value | label' and count up from zero, keeping any prefix or suffix. The customer names are made up: replace them with real customers only if you have permission to show their names, and replace the stats with real numbers or remove the slide.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

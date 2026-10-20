@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand","default":"Claude Imagine"},
+  {"id":"hud","type":"string","label":"HUD label","default":"CLAUDE IMAGINE / FILM 01"},
+  {"id":"ask","type":"string","label":"Prompt in the chat bubble","default":"Make a launch image for our new mug."},
+  {"id":"waitLine","type":"string","label":"Waiting status","default":"Opening another tool…"},
+  {"id":"counterLabel","type":"string","label":"Counter label","default":"TABS OPEN"},
+  {"id":"counterTo","type":"string","label":"Counter end value","default":"5"},
+  {"id":"word","type":"string","label":"Struck-out word","default":"SWITCHING"},
+  {"id":"waste","type":"string","label":"Punch word","default":"WASTE."},
+  {"id":"problem","type":"string","label":"Problem headline","default":"Most image work is switching tools."},
+  {"id":"gridNote","type":"string","label":"Grid caption","default":"ONE IMAGE · COPY · PASTE · EXPORT · UPLOAD · EACH SQUARE = ONE STEP"},
+  {"id":"fixLine","type":"string","label":"Turn line","default":"Not anymore."},
+  {"id":"fixCount","type":"string","label":"After count","default":"1 tab"},
+  {"id":"chips","type":"string","label":"Stream words (comma separated)","default":"hero,4:5,linen,morning light,mug,shadow,product,reel,9:16,logo,moodboard,video,cutout,studio,warm,soft,launch,detail,texture,edit,upscale,remix,poster,thumbnail"},
+  {"id":"cardLabel","type":"string","label":"Card label","default":"IN THIS CHAT"},
+  {"id":"cardUnit","type":"string","label":"Card unit","default":"images"},
+  {"id":"cardTo","type":"string","label":"Card end value","default":"12"},
+  {"id":"cardFoot","type":"string","label":"Card footer","default":"video 1 · tabs 1"},
+  {"id":"defKind","type":"string","label":"Dictionary kind","default":"VERB · ENGLISH"},
+  {"id":"defWord","type":"string","label":"Dictionary word","default":"imagine"},
+  {"id":"defKanji","type":"string","label":"Watermark / gloss characters","default":"想像"},
+  {"id":"defGloss","type":"string","label":"Gloss","default":"— imagination; to picture something."},
+  {"id":"defBody","type":"string","label":"Definition","default":"To form a mental image of something that isn’t there yet."},
+  {"id":"defAlso","type":"string","label":"Definition kicker","default":"Also: the part your Claude was missing."},
+  {"id":"claim1","type":"string","label":"Claim line 1","default":"We removed the tabs."},
+  {"id":"claim2","type":"string","label":"Claim line 2","default":"Now it’s one chat."},
+  {"id":"vertical","type":"string","label":"Vertical text","default":"想像する"},
+  {"id":"tagline","type":"string","label":"Tagline","default":"Images and video, right inside Claude."},
+  {"id":"stats","type":"string","label":"Mark footnote","default":"WEB · MCP · SKILL"},
+  {"id":"receiptA","type":"string","label":"Receipt line A","default":"THIS FILM"},
+  {"id":"receiptAv","type":"string","label":"Receipt value A","default":"26.000 s"},
+  {"id":"receiptB","type":"string","label":"Receipt line B","default":"TABS OPENED"},
+  {"id":"receiptBv","type":"string","label":"Receipt value B","default":"1"},
+  {"id":"receiptNote","type":"string","label":"Receipt note","default":"We never left the chat."},
+  {"id":"url","type":"string","label":"URL","default":"claudeimagine.com"},
+  {"id":"ink","type":"color","label":"Ink","default":"#0f2440"},
+  {"id":"accent","type":"color","label":"Accent","default":"#6a5cf6"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InterTight-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/SourceSerif4-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/NotoSerifJP-sozo-300.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --ink: #0f2440; --accent: #6a5cf6; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fff; }
+      #root, .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      .mono { font-family: "IBM Plex Mono", monospace; font-weight: 500; letter-spacing: 0.08em; }
+      .bold { font-family: "Inter Tight", Inter, sans-serif; font-weight: 700; letter-spacing: -0.035em; color: var(--ink); }
+      .hud { position: absolute; font-size: 15px; color: #6b7280; }
+      #pill { position: absolute; right: 200px; top: 300px; height: 96px; padding: 0 44px; border-radius: 48px; background: #f3f4f7; border: 2px solid #e6e8ee; display: flex; align-items: center; font: 500 34px/1 Inter, sans-serif; color: #1f2937; white-space: nowrap; }
+      #think { position: absolute; left: 190px; top: 486px; font: 400 26px/1 Inter, sans-serif; color: #6b7280; display: flex; align-items: center; gap: 16px; }
+      .skel { position: absolute; left: 190px; height: 22px; border-radius: 11px; background: linear-gradient(90deg, #eef0f4, #f6f7f9, #eef0f4); }
+      #counter { position: absolute; left: 190px; top: 800px; }
+      #counter .lbl { font-size: 15px; color: #9aa0ab; }
+      #counter .val { font: 400 64px/1.1 "IBM Plex Mono", monospace; color: var(--ink); letter-spacing: 0; }
+      .center { position: absolute; left: 0; width: 1920px; text-align: center; white-space: nowrap; }
+      #bigWord { top: 360px; font-size: 330px; line-height: 1; }
+      #waste { top: 330px; font-size: 360px; line-height: 1; color: #fff; }
+      .title { position: absolute; left: 225px; top: 150px; font-size: 66px; line-height: 1; }
+      .cell { position: absolute; width: 39px; height: 39px; border-radius: 6px; }
+      .tag { position: absolute; font-size: 13px; color: var(--ink); background: #fff; border: 1.5px solid var(--ink); padding: 4px 8px; border-radius: 4px; }
+      #bigR { position: absolute; right: 225px; top: 820px; text-align: right; }
+      #bigR .lbl { font-size: 14px; color: #6b7280; }
+      #bigR .val { font-family: "Inter Tight", sans-serif; font-weight: 700; font-size: 120px; line-height: 1; letter-spacing: -0.04em; }
+      .chipRow { position: absolute; left: 0; white-space: nowrap; }
+      .chip { display: inline-block; margin-right: 14px; padding: 12px 26px; border-radius: 30px; font: 500 22px/1 "IBM Plex Mono", monospace; color: #3b3f58; }
+      #card { position: absolute; left: 540px; top: 330px; width: 840px; height: 420px; background: #fff; border-radius: 26px; box-shadow: 0 30px 80px rgba(15, 36, 64, 0.18), 0 2px 8px rgba(15, 36, 64, 0.08); padding: 50px 60px; }
+      #card .num { font-family: "Inter Tight", sans-serif; font-weight: 700; font-size: 170px; line-height: 1; letter-spacing: -0.04em; color: var(--ink); }
+      #card .unit { font: 400 40px/1 Inter, sans-serif; color: #475569; margin-left: 12px; }
+      #defWord { position: absolute; left: 150px; top: 380px; font: 400 200px/1 "Source Serif 4", serif; color: var(--ink); letter-spacing: -0.02em; }
+      #gloss { position: absolute; left: 158px; top: 628px; font: 400 32px/1 Inter, sans-serif; color: var(--ink); }
+      #gloss .jp { font-family: "Noto Serif JP", serif; margin-right: 10px; }
+      #defBody { position: absolute; left: 158px; top: 718px; width: 760px; font: 400 26px/1.45 Inter, sans-serif; color: #7c8494; }
+      #defAlso { position: absolute; left: 158px; top: 808px; font: 600 26px/1 Inter, sans-serif; color: var(--accent); }
+      #wm { position: absolute; left: 880px; top: 470px; font: 300 640px/1 "Noto Serif JP", serif; color: #ece8fd; white-space: nowrap; }
+      #claim1, #claim2 { position: absolute; left: 150px; font-size: 150px; line-height: 1; }
+      #claim1 { top: 330px; } #claim2 { top: 540px; color: var(--accent); }
+      #vert { position: absolute; right: 110px; top: 180px; writing-mode: vertical-rl; font: 300 64px/1.1 "Noto Serif JP", serif; color: #dcd6fb; letter-spacing: 0.2em; }
+      #band { position: absolute; left: -200px; top: 250px; width: 2400px; height: 560px; background: linear-gradient(95deg, #d9e5ff 0%, #c9c3fb 30%, #e8e3ff 45%, #ffe1c7 70%, #ffd0e4 100%); transform: skewY(-9deg); filter: saturate(1.05); }
+      #mark { position: absolute; left: 0; top: 420px; width: 1920px; text-align: center; font-size: 170px; line-height: 1; white-space: nowrap; }
+      #tag { position: absolute; left: 0; top: 640px; width: 1920px; text-align: center; font: 400 34px/1 Inter, sans-serif; color: var(--ink); }
+      #stats { position: absolute; left: 0; top: 720px; width: 1920px; text-align: center; font-size: 15px; color: #475569; }
+      .rc { position: absolute; left: 540px; width: 840px; display: flex; justify-content: space-between; align-items: baseline; }
+      .rc .l { font-size: 18px; color: #6b7280; }
+      .rc .v { font: 400 60px/1 "IBM Plex Mono", monospace; letter-spacing: 0.02em; color: var(--ink); }
+      #endMark { position: absolute; left: 0; top: 470px; width: 1920px; text-align: center; font-size: 76px; line-height: 1; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="26" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="26" data-track-index="0">
+        <div id="bg" class="layer" style="background:#fff"></div>
+
+        <div id="s1" class="layer">
+          <div id="pill"><span id="askT"></span><span id="caret" style="display:inline-block;width:3px;height:40px;background:#1f2937;margin-left:4px"></span></div>
+          <div id="think"><svg width="30" height="30" viewBox="0 0 30 30"><circle id="spin" cx="15" cy="15" r="11" fill="none" stroke="#9aa0ab" stroke-width="3" stroke-dasharray="40 30" stroke-linecap="round" /></svg><span data-var="waitLine"></span></div>
+          <div class="skel" style="top:560px;width:1280px"></div><div class="skel" style="top:604px;width:1100px"></div><div class="skel" style="top:648px;width:720px"></div>
+          <div id="counter"><div class="lbl mono" data-var="counterLabel"></div><div class="val" id="cVal"></div></div>
+        </div>
+
+        <div id="s2" class="layer">
+          <div id="bigWord" class="center bold" data-var="word"></div>
+          <svg class="layer" viewBox="0 0 1920 1080"><line id="strike" x1="170" y1="532" x2="1750" y2="532" stroke="var(--accent)" stroke-width="26" stroke-linecap="round" pathLength="1" /></svg>
+        </div>
+        <div id="s3" class="layer" style="background:var(--accent)"><div id="waste" class="center bold" style="color:#fff" data-var="waste"></div></div>
+
+        <div id="s4" class="layer">
+          <div id="probT" class="title bold" data-var="problem"></div>
+          <div id="fixT" class="title bold" style="color:var(--accent)" data-var="fixLine"></div>
+          <div id="grid" class="layer"></div>
+          <div id="gridNote" class="hud mono" style="left:225px;top:862px;color:#7c8494" data-var="gridNote"></div>
+          <div id="bigR"><div class="lbl mono" id="bigRl"></div><div class="val" id="bigRv"></div></div>
+        </div>
+
+        <div id="s6" class="layer"><div id="chips" class="layer"></div>
+          <div id="card"><div class="mono" style="font-size:15px;color:#6b7280" data-var="cardLabel"></div><div style="margin-top:28px"><span class="num" id="cardN"></span><span class="unit" data-var="cardUnit"></span></div>
+            <div style="height:2px;background:#eef0f4;margin:34px 0 24px"></div><div class="mono" style="font-size:18px;color:#475569" data-var="cardFoot"></div></div></div>
+
+        <div id="s7" class="layer">
+          <div id="wm" data-var="defKanji"></div>
+          <div class="hud mono" style="left:158px;top:340px;color:#7c8494" data-var="defKind"></div>
+          <div id="defWord" data-var="defWord"></div>
+          <div id="gloss"><span class="jp" data-var="defKanji"></span><span data-var="defGloss"></span></div>
+          <div style="position:absolute;left:158px;top:690px;width:640px;height:2px;background:#e5e7eb"></div>
+          <div id="defBody" data-var="defBody"></div>
+          <div id="defAlso" data-var="defAlso"></div>
+          <svg class="layer" viewBox="0 0 1920 1080"><path id="enso" d="M1640 330 C 1760 400, 1790 560, 1700 680 C 1610 790, 1420 800, 1310 700 C 1200 600, 1220 430, 1330 350 C 1420 290, 1540 290, 1610 320" fill="none" stroke="var(--ink)" stroke-width="22" stroke-linecap="round" pathLength="1" /></svg>
+        </div>
+
+        <div id="s8" class="layer">
+          <div id="vert" data-var="vertical"></div>
+          <div id="claim1" class="bold"></div>
+          <div id="claim2" class="bold"></div>
+        </div>
+
+        <div id="s9" class="layer"><div id="band"></div><div id="mark" class="bold"></div><div id="tag" data-var="tagline"></div><div id="stats" class="mono" data-var="stats"></div></div>
+
+        <div id="s10" class="layer">
+          <div class="rc" style="top:420px"><span class="l mono" data-var="receiptA"></span><span class="v" data-var="receiptAv"></span></div>
+          <div style="position:absolute;left:540px;top:496px;width:840px;height:2px;background:var(--ink)"></div>
+          <div class="rc" style="top:540px"><span class="l mono" data-var="receiptB"></span><span class="v" style="color:var(--accent)" data-var="receiptBv"></span></div>
+          <div id="rNote" class="center" style="top:700px;font:400 26px/1 Inter,sans-serif;color:#7c8494" data-var="receiptNote"></div>
+        </div>
+
+        <div id="s11" class="layer"><div id="endMark" class="bold"></div><div class="center mono" style="top:580px;font-size:16px;color:#7c8494" data-var="url"></div></div>
+
+        <!-- HUD -->
+        <div class="hud mono" style="left:93px;top:52px">+ <span data-var="hud"></span></div>
+        <div class="hud mono" id="tPlus" style="right:93px;top:52px"></div>
+        <div class="hud mono" id="sec" style="left:93px;top:1016px"></div>
+        <div class="hud mono" style="right:93px;top:1016px">1920×1080 · 60 FPS · 120 BPM</div>
+        <svg class="layer" viewBox="0 0 1920 1080"><line x1="93" y1="1000" x2="1827" y2="1000" stroke="#e5e7eb" stroke-width="2" /><line id="pbar" x1="93" y1="1000" x2="93" y2="1000" stroke="var(--accent)" stroke-width="3" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const { $, clamp, prog, lerp, E, rnd, show } = K;
+        const v = K.vars(); K.bind(v);
+        const DUR = 26;
+        const brandDot = (el, text) => { el.innerHTML = ""; K.chars(el, text); const d = document.createElement("span"); d.textContent = "."; d.style.color = "var(--accent)"; el.appendChild(d); };
+        brandDot($("mark"), v.brand); brandDot($("endMark"), v.brand);
+
+        // grid 32 x 10
+        const cells = [], pastel = ["#f7c6d9", "#c7ecd5", "#c9dcfb", "#fbd9b5", "#d9cffc"];
+        for (let r = 0; r < 10; r++) for (let c = 0; c < 32; c++) {
+          const d = document.createElement("div"); d.className = "cell"; d.style.left = 225 + c * 46 + "px"; d.style.top = 300 + r * 46 + "px"; $("grid").appendChild(d);
+          cells.push({ d, busy: rnd(r * 32 + c) > 0.72, col: pastel[Math.floor(rnd(r * 7 + c * 3) * 5)], k: rnd(r * 11 + c) });
+        }
+        const tagsDef = [["COPY", 610, 262], ["PASTE", 1100, 262], ["EXPORT", 860, 772], ["UPLOAD", 1420, 772]];
+        const tags = tagsDef.map(([t, x, y]) => { const d = document.createElement("div"); d.className = "tag mono"; d.textContent = t; d.style.left = x + "px"; d.style.top = y + "px"; $("grid").appendChild(d); return d; });
+
+        // chip wall
+        const words = v.chips.split(",").map((s) => s.trim()).filter(Boolean);
+        const chipRows = [];
+        for (let r = 0; r < 13; r++) {
+          const row = document.createElement("div"); row.className = "chipRow"; row.style.top = 20 + r * 78 + "px";
+          let html = ""; for (let k = 0; k < 40; k++) { const w = words[Math.floor(rnd(r * 40 + k) * words.length)]; html += `<span class="chip" style="background:${pastel[(r + k) % 5]}">${w}</span>`; }
+          row.innerHTML = html; $("chips").appendChild(row); chipRows.push({ row, dir: r % 2 ? 1 : -1, sp: 60 + rnd(r) * 70 });
+        }
+
+        const claim1 = K.chars($("claim1"), v.claim1), claim2 = K.chars($("claim2"), v.claim2);
+        const secs = [[0, "01 — THE ASK"], [2.95, "02 — THE WORD"], [4.5, "03 — THE WORKFLOW"], [9, "04 — THE STREAM"], [12.95, "05 — THE NAME"], [16.95, "06 — THE CLAIM"], [20.4, "07 — THE MARK"], [23, "08 — THE RECEIPT"]];
+
+        function render(t) {
+          $("tPlus").textContent = `T+${t.toFixed(3).padStart(6, "0")}s`;
+          $("sec").textContent = secs.filter((s) => t >= s[0]).pop()[1];
+          $("pbar").setAttribute("x2", 93 + 1734 * (t / DUR));
+          const S = (id, a, b) => { const on = t >= a && t < b; show($(id), on); return on; };
+
+          if (S("s1", 0, 2.95)) {
+            const ty = prog(t, 0.1, 1.0); $("askT").textContent = v.ask.slice(0, Math.round(v.ask.length * ty));
+            $("caret").style.opacity = ty < 1 || Math.floor(t * 3) % 2 ? 1 : 0;
+            const th = prog(t, 1.1, 1.3); $("think").style.opacity = th; document.querySelectorAll(".skel").forEach((s, i) => { s.style.opacity = prog(t, 1.2 + i * 0.1, 1.4 + i * 0.1); });
+            $("spin").setAttribute("transform", `rotate(${t * 360} 15 15)`);
+            const n = parseInt(v.counterTo, 10) || 5; const cv = t < 1.3 ? 1 : 1 + Math.floor(prog(t, 1.3, 2.7) * (n - 1) + 0.0001); $("cVal").textContent = String(Math.min(n, cv));
+            $("counter").style.opacity = prog(t, 1.2, 1.4);
+          }
+          if (S("s2", 2.95, 4.0)) {
+            const u = E.outExpo(prog(t, 2.95, 3.15)); $("bigWord").style.transform = `scale(${lerp(1.25, 1, u)})`; $("bigWord").style.opacity = u;
+            K.draw($("strike"), E.inOutCubic(prog(t, 3.4, 3.6)));
+          }
+          if (S("s3", 4.0, 4.5)) { const u = E.outBack(prog(t, 4.0, 4.14), 2); $("waste").style.transform = `scale(${lerp(0.7, 1, u)})`; }
+          if (S("s4", 4.5, 8.95)) {
+            const fixed = t >= 7.9;
+            show($("probT"), !fixed); show($("fixT"), fixed);
+            const tp = prog(t, 4.5, 4.9); $("probT").style.clipPath = `inset(0 ${100 - tp * 100}% 0 0)`;
+            const tf = prog(t, 7.9, 8.2); $("fixT").style.clipPath = `inset(0 ${100 - tf * 100}% 0 0)`;
+            cells.forEach((c, i) => {
+              const appear = prog(t, 4.6 + c.k * 0.5, 4.8 + c.k * 0.5);
+              const fill = fixed ? prog(t, 7.95 + c.k * 0.5, 8.1 + c.k * 0.5) : 0;
+              const on = c.busy && Math.sin(t * 5 + c.k * 20) > -0.2;
+              c.d.style.background = fill > 0 ? c.col : on ? "#cbc5fb" : "transparent";
+              c.d.style.border = fill > 0 || on ? "none" : "2px dotted #d8dbe3";
+              c.d.style.opacity = appear;
+              c.d.style.transform = `scale(${fill > 0 ? lerp(0.6, 1, E.outBack(fill, 2)) : 1})`;
+            });
+            tags.forEach((g, i) => { g.style.opacity = fixed ? 0 : prog(t, 5.3 + i * 0.35, 5.45 + i * 0.35); });
+            $("bigRl").textContent = fixed ? "AFTER" : v.counterLabel; $("bigRv").textContent = fixed ? v.fixCount : v.counterTo + " tabs";
+            $("bigRv").style.color = fixed ? "var(--accent)" : "var(--ink)"; $("bigR").style.opacity = prog(t, 5.0, 5.3);
+          }
+          if (S("s6", 9.0, 12.95)) {
+            chipRows.forEach((c, i) => { c.row.style.transform = `translateX(${-400 + c.dir * (t - 9) * c.sp}px)`; c.row.style.opacity = prog(t, 9.0 + i * 0.03, 9.2 + i * 0.03); });
+            const cu = E.outBack(prog(t, 9.4, 9.7), 1.4); $("card").style.transform = `translateY(${(1 - cu) * 60}px) scale(${lerp(0.94, 1, cu)})`; $("card").style.opacity = prog(t, 9.4, 9.55);
+            const to = parseInt(v.cardTo, 10) || 12; $("cardN").textContent = String(Math.max(1, Math.round(to * E.inOutCubic(prog(t, 9.6, 12.2)))));
+          }
+          if (S("s7", 12.95, 16.95)) {
+            const f = (a, b) => prog(t, a, b);
+            $("defWord").style.opacity = f(13.1, 13.4); $("defWord").style.transform = `translateY(${(1 - E.outCubic(f(13.1, 13.4))) * 30}px)`;
+            $("gloss").style.opacity = f(13.5, 13.8); $("defBody").style.opacity = f(14.0, 14.3); $("defAlso").style.opacity = f(14.7, 15.0);
+            K.draw($("enso"), E.inOutCubic(f(13.2, 14.4)));
+            $("wm").style.opacity = f(13.0, 13.8); $("wm").style.transform = `translateX(${-(t - 13) * 12}px)`;
+          }
+          if (S("s8", 16.95, 20.4)) {
+            claim1.forEach((s, i) => { s.style.opacity = prog(t, 17.05 + i * 0.045, 17.12 + i * 0.045); });
+            claim2.forEach((s, i) => { s.style.opacity = prog(t, 18.4 + i * 0.05, 18.47 + i * 0.05); });
+            $("vert").style.opacity = prog(t, 17.2, 17.8);
+            const gl = t > 20.05 ? Math.floor(t * 40) % 3 : -1;
+            $("claim1").style.transform = gl >= 0 ? `translateX(${(gl - 1) * 16}px)` : "none"; $("claim2").style.transform = gl >= 0 ? `translateX(${(1 - gl) * 22}px)` : "none";
+          }
+          if (S("s9", 20.4, 23.0)) {
+            const bu = E.inOutCubic(prog(t, 20.4, 20.9)); $("band").style.transform = `skewY(-9deg) translateX(${lerp(-2400, 0, bu)}px)`;
+            [...$("mark").children].forEach((s, i) => { const u = E.outCubic(prog(t, 20.7 + i * 0.03, 20.95 + i * 0.03)); s.style.opacity = u; s.style.transform = `translateY(${(1 - u) * 40}px)`; });
+            $("tag").style.opacity = prog(t, 21.3, 21.6); $("stats").style.opacity = prog(t, 21.8, 22.1);
+          }
+          if (S("s10", 23.0, 25.0)) { $("s10").style.opacity = prog(t, 23.0, 23.2); $("rNote").style.opacity = prog(t, 23.9, 24.2); }
+          if (S("s11", 25.0, 26.1)) { $("s11").style.opacity = prog(t, 25.0, 25.3); }
+        }
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, render);
+      })();
+    </script>
+  </body>
+</html>

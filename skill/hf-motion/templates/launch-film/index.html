@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1440, height=1440" />
+    <title>launch-film</title>
+    <script>
+      // launch-film CONFIG: every on-screen string, the photos and the tunables.
+      // The block between the markers is strict JSON (no comments) because the
+      // hf-motion scaffold parses and rewrites it. After a hand edit, re-run
+      // `scaffold.mjs launch-film <dir> --update` so the static timing
+      // attributes and the music bed follow; the timeline refuses to build if
+      // they disagree with this block.
+      const CONFIG = /* CONFIG:BEGIN */{
+        "wordmark": "Create",
+        "openLabel": "Photos",
+        "glassWord": "Glass",
+        "photos": ["assets/photos/photo-01.jpg", "assets/photos/photo-02.jpg", "assets/photos/photo-03.jpg", "assets/photos/photo-04.jpg", "assets/photos/photo-05.jpg", "assets/photos/photo-06.jpg", "assets/photos/photo-07.jpg", "assets/photos/photo-08.jpg", "assets/photos/photo-09.jpg"],
+        "lockTime": "9:41",
+        "lockDate": "Monday 9 June",
+        "trackTitle": "Untitled",
+        "trackArtist": "Artist",
+        "landingHeadline": "Your photo, framed.",
+        "productName": "Framed print",
+        "frameColors": ["red", "charcoal", "paper"],
+        "sizes": ["S", "M", "L"],
+        "orderLabel": "Order print",
+        "steps": ["Ordered", "Printing", "On its way", "Delivered"],
+        "paper": "#f2eee6",
+        "charcoal": "#1e1e1e",
+        "red": "#e5322d",
+        "bpm": 120
+      }/* CONFIG:END */;
+    </script>
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: "Wordmark";
+        src: url("assets/fonts/archivo/archivo-latin-wdth-normal.woff2") format("woff2");
+        font-weight: 100 900;
+        font-stretch: 62% 125%;
+      }
+      @font-face {
+        font-family: "UI";
+        src: url("assets/fonts/geist/Geist-Variable.woff2") format("woff2");
+        font-weight: 100 900;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1440px; height: 1440px; overflow: hidden; background: var(--paper); }
+      #stage { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--paper); }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      #svg { position: absolute; left: 0; top: 0; display: block; }
+      text { font-kerning: normal; }
+    </style>
+  </head>
+  <body>
+    <!-- Timing attributes below are written by the scaffold from CONFIG (root
+         data-duration and <audio> timing are read statically by the engine,
+         before any script runs). Do not hand-edit them. -->
+    <div id="stage" data-composition-id="main" data-start="0" data-duration="27" data-fps="30" data-width="1440" data-height="1440">
+      <div id="film" class="clip" data-start="0" data-duration="27" data-track-index="0">
+        <svg id="svg" width="1440" height="1440" viewBox="0 0 1440 1440" aria-hidden="true">
+          <defs id="defs">
+            <filter id="goo" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="b" />
+              <feColorMatrix in="b" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 26 -11" result="g" />
+              <feComposite in="SourceGraphic" in2="g" operator="atop" />
+            </filter>
+            <filter id="warm" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" values="1.04 0.04 0 0 0.03 0.02 0.95 0.02 0 0.01 0 0.04 0.78 0 0 0 0 0 1 0" />
+            </filter>
+            <filter id="gshadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="b" />
+              <feOffset in="b" dy="8" result="o" />
+              <feFlood id="gshadow-c" flood-opacity="0.16" result="c" />
+              <feComposite in="c" in2="o" operator="in" />
+            </filter>
+            <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="22" />
+            </filter>
+          </defs>
+          <rect id="bgpaper" x="0" y="0" width="1440" height="1440" />
+          <g id="cam" data-layout-allow-overflow="true"></g>
+          <g id="screen" data-layout-allow-overflow="true"></g>
+        </svg>
+      </div>
+      <audio id="music" src="assets/music.m4a" data-start="0" data-duration="27" data-track-index="10" data-volume="1"></audio>
+    </div>
+    <script>
+      const C = CONFIG;
+      const NS = "http://www.w3.org/2000/svg";
+      const $ = (id) => document.getElementById(id);
+      const win = (id) => { const e = $(id); return { start: +e.dataset.start, dur: +e.dataset.duration }; };
+      const P = { paper: C.paper, charcoal: C.charcoal, red: C.red };
+      const B = 60 / C.bpm; // one beat in seconds; the skeleton is 54 beats
+      const BEATS = 54;
+      const TOTAL = BEATS * B;
+      document.documentElement.style.setProperty("--paper", C.paper);
+
+      // ---- guard: the static timing attributes must match CONFIG
+      for (const id of ["stage", "film"]) {
+        if (Math.abs(win(id).dur - TOTAL) > 1e-3) {
+          throw new Error(`launch-film: #${id} lasts ${win(id).dur}s but CONFIG implies ${TOTAL}s; re-run scaffold --update`);
+        }
+      }
+
+      // ---------------------------------------------------------------- helpers
+      const mk = (tag, a = {}, parent) => {
+        const e = document.createElementNS(NS, tag);
+        for (const k in a) e.setAttribute(k, a[k]);
+        if (parent) parent.appendChild(e);
+        return e;
+      };
+      const r3 = (v) => Math.round(v * 1000) / 1000;
+      const set = (e, a) => { for (const k in a) e.setAttribute(k, typeof a[k] === "number" ? r3(a[k]) : a[k]); };
+      const show = (e, on) => e.setAttribute("display", on ? "inline" : "none");
+      const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+      const lerp = (a, b, k) => a + (b - a) * k;
+      const lerpA = (a, b, k) => a.map((v, i) => lerp(v, b[i], k));
+      const rectA = (e, [x, y, w, h, rx = 0]) => set(e, { x, y, width: Math.max(0, w), height: Math.max(0, h), rx: clamp(rx, 0, Math.max(0, Math.min(w, h) / 2)) });
+      const inset = ([x, y, w, h, rx = 0], d) => [x + d, y + d, w - 2 * d, h - 2 * d, Math.max(0, rx - d)];
+
+      // One response per change; a value with many targets is the sum of them.
+      // Kinds: a spring preset (closed-form step response, time in beats so the
+      // skeleton scales with bpm), "set" (instant), n > 0 (sine ease in-out over
+      // n beats, lands exactly; peak speed 1.57x the mean, so floods never jump), n < 0 (ease out cubic over |n| beats).
+      const SPRING = { snap: [13, 0.75], pop: [11, 0.42], soft: [7, 0.9], cur: [8, 1], land: [14, 0.9], blob: [6, 0.5] };
+      function resp(d, kind) {
+        if (kind === "set") return d >= 0 ? 1 : 0; // a set applies on its own beat
+        if (d <= 0) return 0;
+        if (typeof kind === "number") {
+          const x = clamp(d / Math.abs(kind));
+          return kind > 0 ? 0.5 - 0.5 * Math.cos(Math.PI * x) : 1 - Math.pow(1 - x, 3);
+        }
+        const [w, z] = SPRING[kind];
+        const e = Math.exp(-z * w * d);
+        if (e < 1e-5) return 1; // settled: exact, so the last frame can equal the first
+        if (z >= 1) return 1 - e * (1 + w * d);
+        const wd = w * Math.sqrt(1 - z * z);
+        return 1 - e * (Math.cos(wd * d) + (z * w / wd) * Math.sin(wd * d));
+      }
+      // track = [v0, [beat, value, kind], ...]; values are numbers or arrays
+      function V(u, track) {
+        const arr = Array.isArray(track[0]);
+        let acc = arr ? track[0].slice() : track[0];
+        let prev = track[0];
+        for (let i = 1; i < track.length; i++) {
+          const [b, val, kind = "snap"] = track[i];
+          const k = resp(u - b, kind);
+          if (k !== 0) {
+            if (arr) for (let j = 0; j < acc.length; j++) acc[j] += (val[j] - prev[j]) * k;
+            else acc += (val - prev) * k;
+          }
+          prev = val;
+        }
+        return acc;
+      }
+      const inR = (u, ranges) => ranges.some(([a, b]) => u >= a && u < b);
+
+      // ---- text
+      const FONT = { wm: "Wordmark", ui: "UI" };
+      function txt(parent, str, o = {}) {
+        const e = mk("text", { "font-family": FONT[o.fam || "ui"], "font-weight": o.w || 600, "font-size": o.size || 40, fill: o.fill || P.charcoal, "text-anchor": o.anchor || "middle" }, parent);
+        if (o.stretch) e.style.fontStretch = o.stretch + "%";
+        e.textContent = str;
+        return e;
+      }
+      let meter;
+      function measure(str, o) { // advance width at font-size o.size
+        const e = txt(meter, str, o);
+        const w = e.getComputedTextLength();
+        e.remove();
+        return w;
+      }
+      const fit = (str, o, maxW) => Math.min(o.size, (o.size * maxW) / Math.max(1, measure(str, o)));
+
+      // ---- camera: world -> screen
+      let camNow = [720, 720, 1];
+      const toScreen = (x, y, c = camNow) => [(x - c[0]) * c[2] + 720, (y - c[1]) * c[2] + 720];
+      const toWorld = (x, y, c = camNow) => [(x - 720) / c[2] + c[0], (y - 720) / c[2] + c[1]];
+
+      // ---- liquid glass: the element holds its own clone of the scene behind
+      // it. The clone is masked by the glass shape, so the filter's SourceAlpha
+      // is the shape; blurred, it is a distance-like field whose gradient (two
+      // offset differences) is the displacement map. Three feDisplacementMaps
+      // at slightly different scales give chromatic edges; the map's own
+      // top-left / bottom-right slopes are the rim light. (A map fed through
+      // feImage is ignored by Chromium's feDisplacementMap, so it is derived
+      // in-filter instead.)
+      const defs = () => $("defs");
+      let glassN = 0;
+      function glass(parent, cloneId, { sigma, scale, goo = false, tint = "paper", tintA = 0.1 }) {
+        const id = "glass" + ++glassN;
+        const box = { maskUnits: "userSpaceOnUse", x: -4000, y: -4000, width: 12000, height: 12000 };
+        const m = mk("mask", { id: id + "-m", ...box }, defs());
+        const shape = mk("g", { id: id + "-shape", fill: "#fff" }, m);
+        if (goo) shape.setAttribute("filter", "url(#goo)");
+        // The clone is masked by the shape grown by D, so no displaced sample
+        // lands on a transparent pixel (that tints the edges); the filter
+        // erodes SourceAlpha by the same D to get the true shape back.
+        const D = Math.ceil(scale * 0.6);
+        const mi = mk("mask", { id: id + "-mi", ...box }, defs());
+        mk("filter", { id: id + "-dil", x: -1, y: -1, width: 3, height: 3 }, defs()).innerHTML = `<feMorphology operator="dilate" radius="${D}"/>`;
+        mk("use", { href: `#${id}-shape` }, mk("g", { filter: `url(#${id}-dil)` }, mi));
+        const f = mk("filter", { id: id + "-f", filterUnits: "userSpaceOnUse", "color-interpolation-filters": "sRGB" }, defs());
+        const p = [1, 2, 3].map((i) => (parseInt(C.paper.slice(2 * i - 1, 2 * i + 1), 16) / 255).toFixed(4));
+        const d = 4, G = 2.2;
+        f.innerHTML = `
+          <feMorphology in="SourceAlpha" operator="erode" radius="${D}" result="sa"/>
+          <feColorMatrix in="sa" type="matrix" values="0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 1" result="a"/>
+          <feGaussianBlur in="a" stdDeviation="${sigma}" result="f"/>
+          <feComponentTransfer in="f" result="fi"><feFuncR type="linear" slope="-1" intercept="1"/><feFuncG type="linear" slope="-1" intercept="1"/><feFuncB type="linear" slope="-1" intercept="1"/></feComponentTransfer>
+          <feOffset in="f" dx="-${d}" result="xp"/><feOffset in="fi" dx="${d}" result="xm"/>
+          <feOffset in="f" dy="-${d}" result="yp"/><feOffset in="fi" dy="${d}" result="ym"/>
+          <feComposite in="xp" in2="xm" operator="arithmetic" k2="0.5" k3="0.5" result="gx"/>
+          <feComposite in="yp" in2="ym" operator="arithmetic" k2="0.5" k3="0.5" result="gy"/>
+          <feColorMatrix in="gx" type="matrix" values="${G} 0 0 0 ${0.5 - 0.5 * G} 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1" result="rx"/>
+          <feColorMatrix in="gy" type="matrix" values="0 0 0 0 0 0 ${G} 0 0 ${0.5 - 0.5 * G} 0 0 0 0 0 0 0 0 0 1" result="ry"/>
+          <feComposite in="rx" in2="ry" operator="arithmetic" k2="1" k3="1" result="map"/>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="d1"/>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="${scale * 1.07}" xChannelSelector="R" yChannelSelector="G" result="d2"/>
+          <feDisplacementMap in="SourceGraphic" in2="map" scale="${scale * 1.14}" xChannelSelector="R" yChannelSelector="G" result="d3"/>
+          <feColorMatrix in="d1" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="c1"/>
+          <feColorMatrix in="d2" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="c2"/>
+          <feColorMatrix in="d3" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="c3"/>
+          <feComposite in="c1" in2="c2" operator="arithmetic" k2="1" k3="1" result="c12"/>
+          <feComposite in="c12" in2="c3" operator="arithmetic" k2="1" k3="1" result="disp"/>
+          <feColorMatrix in="map" type="matrix" values="0 0 0 0 ${p[0]} 0 0 0 0 ${p[1]} 0 0 0 0 ${p[2]} 3.4 3.4 0 0 -3.5" result="rimA"/>
+          <feColorMatrix in="map" type="matrix" values="0 0 0 0 ${p[0]} 0 0 0 0 ${p[1]} 0 0 0 0 ${p[2]} -1.3 -1.3 0 0 1.24" result="rimB"/>
+          <feMerge><feMergeNode in="disp"/><feMergeNode in="rimA"/><feMergeNode in="rimB"/></feMerge>`;
+        // a soft charcoal shadow under the glass (recoloured from its shape)
+        const root = mk("g", {}, parent);
+        mk("use", { href: `#${id}-shape`, filter: "url(#gshadow)" }, root);
+        const outer = mk("g", { mask: `url(#${id}-m)` }, root);
+        const inner = mk("g", { mask: `url(#${id}-mi)` }, mk("g", { filter: `url(#${id}-f)` }, outer));
+        mk("use", { href: "#" + cloneId }, inner);
+        mk("rect", { x: -4000, y: -4000, width: 12000, height: 12000, fill: P[tint], "fill-opacity": tintA }, outer);
+        const pad = sigma * 3 + scale + D;
+        const dm = [...f.querySelectorAll("feDisplacementMap")];
+        return {
+          shape, root,
+          region(x0, y0, x1, y1) { set(f, { x: x0 - pad, y: y0 - pad, width: x1 - x0 + 2 * pad, height: y1 - y0 + 2 * pad }); },
+          scale(s) { dm.forEach((e, i) => e.setAttribute("scale", r3(Math.min(scale, s) * [1, 1.07, 1.14][i]))); },
+        };
+      }
+
+      // ---- iris: 6 blades around a hexagonal aperture of circumradius a.
+      // Blade i = vertices v_i, v_i+1, the extension of edge i past v_i+1, the
+      // extension of edge i-1 past v_i, and the short arc between them.
+      function iris(parent, clipShape) {
+        const id = "iris" + parent.childElementCount + (++glassN);
+        const cp = mk("clipPath", { id }, defs());
+        cp.appendChild(clipShape);
+        const g = mk("g", { "clip-path": `url(#${id})` }, parent);
+        const blades = [0, 1, 2, 3, 4, 5].map(() => mk("path", { fill: P.charcoal }, g));
+        const seams = mk("path", { fill: "none", stroke: P.paper, "stroke-linecap": "round" }, g);
+        return {
+          g,
+          draw(cx, cy, R, a, rot) {
+            const f = (p) => `${r3(p[0])} ${r3(p[1])}`;
+            const v = (i) => { const t = rot + (i * Math.PI) / 3; return [cx + a * Math.cos(t), cy + a * Math.sin(t)]; };
+            const dir = (i) => { const t = rot + (i * Math.PI) / 3 + (2 * Math.PI) / 3; return [Math.cos(t), Math.sin(t)]; };
+            const hit = (p, d) => {
+              const ox = p[0] - cx, oy = p[1] - cy, b = ox * d[0] + oy * d[1];
+              const disc = b * b - (ox * ox + oy * oy - R * R);
+              if (disc < 0) return null;
+              const s = -b + Math.sqrt(disc);
+              return s >= 0 ? [p[0] + s * d[0], p[1] + s * d[1]] : null;
+            };
+            let seam = "";
+            blades.forEach((el, i) => {
+              const v0 = v(i), v1 = v(i + 1), Pp = hit(v1, dir(i)), Q = hit(v0, dir(i + 5));
+              if (!Pp || !Q) { el.setAttribute("d", ""); return; }
+              const cr = (Pp[0] - cx) * (Q[1] - cy) - (Pp[1] - cy) * (Q[0] - cx);
+              el.setAttribute("d", `M${f(v0)} L${f(v1)} L${f(Pp)} A${r3(R)} ${r3(R)} 0 0 ${cr > 0 ? 1 : 0} ${f(Q)} Z`);
+              seam += `M${f(v1)} L${f(Pp)} `;
+            });
+            set(seams, { d: seam, "stroke-width": 3 * clamp(a / 40) });
+          },
+        };
+      }
+
+      // ---------------------------------------------------------------- build
+      const cam = $("cam"), screen = $("screen");
+      set($("bgpaper"), { fill: P.paper });
+      set($("gshadow-c"), { "flood-color": P.charcoal });
+      const vis = []; // [element, ranges in beats]
+      const R = []; // per-frame render steps: (u) => void
+      const imgs = [];
+      const image = (parent, href, a) => { const e = mk("image", { href, preserveAspectRatio: "xMidYMid slice", ...a }, parent); imgs.push(e); return e; };
+      const clipRect = (parent, a = {}) => { const id = "cr" + ++glassN; const cp = mk("clipPath", { id }, defs()); const r = mk("rect", {}, cp); const g = mk("g", { "clip-path": `url(#${id})`, ...a }, parent); return { g, r }; };
+      const ph = (i) => C.photos[i % C.photos.length];
+
+      function build() {
+        meter = mk("g", { opacity: 0 }, $("svg"));
+        const L = {}; // layout numbers shared by tracks and render
+
+        // ========================================================== OPEN (0-12)
+        // Wordmark: one <text> per letter so each can squeeze toward the period.
+        const letters = [...C.wordmark];
+        const wo = { fam: "wm", w: 800, size: 100, stretch: 125 };
+        const at = (s) => letters.map((ch) => measure(ch, { ...wo, stretch: s }));
+        const STRETCH = [125, 115, 105, 95, 85, 75, 62];
+        const widths = STRETCH.map(at); // per stretch, per letter, at 100 px
+        const sum100 = widths[0].reduce((a, b) => a + b, 0);
+        // the period, as a shape: ink box of Archivo's "." at the same size
+        const cv = document.createElement("canvas"); cv.width = 400; cv.height = 400;
+        const cx2 = cv.getContext("2d"); cx2.font = '800 200px "Wordmark"'; cx2.fontStretch = "expanded";
+        const dm = cx2.measureText("."); const dotAdv = cx2.measureText(".").width / 2;
+        const dotW = (dm.actualBoundingBoxLeft + dm.actualBoundingBoxRight) / 2, dotH = (dm.actualBoundingBoxAscent + dm.actualBoundingBoxDescent) / 2;
+        const dotL = -dm.actualBoundingBoxLeft / 2;
+        const F = Math.min(230, (1150 * 100) / (sum100 + dotAdv * 1));
+        const k = F / 100;
+        const wmLeft = 720 - ((sum100 + dotAdv) * k) / 2;
+        const base = 720 + 0.36 * F;
+        L.dotX = wmLeft + sum100 * k; // left edge of the period's advance
+        L.dot = [L.dotX + dotL * k, base - (dm.actualBoundingBoxAscent / 2) * k, dotW * k, dotH * k, dotW * k * 0.1];
+        const lx = []; let acc = wmLeft;
+        widths[0].forEach((w) => { lx.push(acc); acc += w * k; });
+        const wmG = mk("g", {}, cam);
+        const wmEls = letters.map((ch) => { const e = txt(wmG, ch, { ...wo, size: F, anchor: "start" }); e.setAttribute("x", 0); e.setAttribute("y", 0); return e; });
+        // squeeze s in [0,1]: every letter moves toward the period by s and its
+        // drawn width follows: wdth narrows first (125 -> 62), scaleX does the rest.
+        const tSqueeze = [1, [0, 0, 0.95], [53, 1, "land"]];
+        R.push((u) => {
+          const s = V(u, tSqueeze);
+          show(wmG, s > 0.002);
+          wmEls.forEach((e, i) => {
+            const target = widths[0][i] * s;
+            let j = 0;
+            while (j < STRETCH.length - 1 && widths[j + 1][i] >= target) j++;
+            let st = STRETCH[j], wNow = widths[j][i];
+            if (j < STRETCH.length - 1 && widths[j][i] > target) {
+              const q = (widths[j][i] - target) / (widths[j][i] - widths[j + 1][i]);
+              st = lerp(STRETCH[j], STRETCH[j + 1], clamp(q)); wNow = lerp(widths[j][i], widths[j + 1][i], clamp(q));
+            }
+            e.style.fontStretch = r3(st) + "%";
+            const x = L.dotX - (L.dotX - lx[i]) * s;
+            set(e, { transform: `translate(${r3(x)} ${r3(base)}) scale(${r3(Math.max(1e-4, target / wNow))} 1)` });
+          });
+        });
+
+        // the black shape of the open: period -> pill -> circle (and back at the end)
+        const lo = { fam: "ui", w: 600, size: 84 };
+        const lsz = fit(C.openLabel, lo, 820);
+        const pillW = Math.min(1100, Math.max(440, measure(C.openLabel, { ...lo, size: lsz }) + 200));
+        L.pill = [720 - pillW / 2, 630, pillW, 180, 90];
+        L.disc = [460, 460, 520, 520, 260];
+        const inkO = mk("rect", { fill: P.charcoal }, cam);
+        const tInk = [L.dot, [0.9, L.pill, "pop"], [3, L.disc, "snap"], [52.9, L.pill, "set"], [52.92, L.dot, 0.2]];
+        vis.push([inkO, [[0, 4], [52.9, 99]]]);
+        R.push((u) => rectA(inkO, V(u, tInk)));
+        // label rises out of a mask line inside the pill
+        const lab = clipRect(cam);
+        rectA(lab.r, [L.pill[0], L.pill[1] + 20, L.pill[2], 98 + lsz * 0.18]);
+        const label = txt(lab.g, C.openLabel, { ...lo, size: lsz, fill: P.paper });
+        set(label, { x: 720, y: 720 + lsz * 0.35 });
+        const tLab = [130, [1.9, 0, "snap"]];
+        vis.push([lab.g, [[1.9, 4]]]);
+        R.push((u) => set(label, { transform: `translate(0 ${r3(V(u, tLab))})` }));
+
+        // ---- photo grid: the disc's photo becomes a square, a tile, a 3x3
+        // map unfolding from behind it (plus, then corners), then a bento.
+        const T0 = 300, GAP = 16;
+        const gridRect = (i, j) => [720 + (i - 1) * (T0 + GAP) - T0 / 2, 720 + (j - 1) * (T0 + GAP) - T0 / 2, T0, T0, 18];
+        const U = (1200 - 3 * GAP) / 4;
+        const bento = (c, r, w, h) => [120 + c * (U + GAP), 120 + r * (U + GAP), w * U + (w - 1) * GAP, h * U + (h - 1) * GAP, 18];
+        // photo k: grid cell, hinge (unfold axis), unfold beat, bento cell
+        const TILES = [
+          { g: [1, 1], b: [1, 1, 2, 2] },
+          { g: [1, 0], hinge: "bottom", at: 7, b: [0, 0, 2, 1] },
+          { g: [2, 1], hinge: "left", at: 7.12, b: [2, 0, 1, 1] },
+          { g: [1, 2], hinge: "top", at: 7.24, b: [3, 0, 1, 2] },
+          { g: [0, 1], hinge: "right", at: 7.36, b: [0, 1, 1, 1] },
+          { g: [0, 0], hinge: "right", at: 8, b: [0, 2, 1, 2] },
+          { g: [2, 0], hinge: "left", at: 8.12, b: [3, 2, 1, 1] },
+          { g: [2, 2], hinge: "left", at: 8.24, b: [1, 3, 1, 1] },
+          { g: [0, 2], hinge: "right", at: 8.36, b: [2, 3, 2, 1] },
+        ];
+        const tileG = mk("g", {}, cam);
+        L.hero = bento(1, 1, 2, 2);
+        TILES.forEach((tile, n) => {
+          const c = clipRect(tileG);
+          const im = image(c.g, ph(n), {});
+          const gr = gridRect(...tile.g), bn = bento(...tile.b);
+          let tRect, tFold = null;
+          if (n === 0) {
+            tRect = [L.disc, [5, [460, 460, 520, 520, 26], "snap"], [6, gr, "snap"], [9, bn, "soft"], [11, [...bn.slice(0, 4), 0], 1]];
+          } else {
+            tRect = [gr, [9 + n * 0.05, bn, "soft"]];
+            tFold = [0, [tile.at, 1, "pop"]];
+          }
+          vis.push([c.g, [[n === 0 ? 4 : tile.at, 12]]]);
+          R.push((u) => {
+            const r = V(u, tRect);
+            rectA(c.r, r);
+            set(im, { x: r[0], y: r[1], width: r[2], height: r[3] });
+            if (tFold) {
+              const f = Math.max(1e-4, V(u, tFold));
+              const hx = { left: gr[0], right: gr[0] + T0, top: 0, bottom: 0 }[tile.hinge];
+              const hy = { top: gr[1], bottom: gr[1] + T0, left: 0, right: 0 }[tile.hinge];
+              const hor = tile.hinge === "left" || tile.hinge === "right";
+              set(c.g, { transform: u < 9 ? `translate(${hx} ${hy}) scale(${hor ? r3(f) : 1} ${hor ? 1 : r3(f)}) translate(${-hx} ${-hy})` : "" });
+            }
+          });
+        });
+        // iris over the disc (open): closes over the label, snaps open on the photo
+        const irO = iris(cam, mk("circle", { cx: 720, cy: 720, r: 260 }));
+        const aOpen = (260 / 0.866) * 1.04;
+        const tAp = [aOpen, [3, 0, 0.85], [4, aOpen, "pop"]];
+        vis.push([irO.g, [[3, 5]]]);
+        R.push((u) => { const a = V(u, tAp); show(irO.g, u >= 3 && u < 5 && a < aOpen * 0.995); irO.draw(720, 720, 260, Math.max(0, a), (1 - clamp(a / aOpen)) * 0.9); });
+        L.vis = vis;
+
+        // ========================================================== GLASS (12-26)
+        const bg = mk("g", { id: "bgphoto" }, cam);
+        image(bg, ph(0), { x: 0, y: 0, width: 1440, height: 1440 });
+        const gold = clipRect(bg);
+        image(gold.g, ph(0), { x: 0, y: 0, width: 1440, height: 1440, filter: "url(#warm)" });
+        vis.push([bg, [[12, 24]]]);
+        // knob x (world) is driven by the cursor while it is held
+        L.track = [270, 1196, 900, 48, 24];
+        L.knob0 = [L.track[0] + 24, 1220];
+        L.knob1 = [L.track[0] + L.track[2] - 24, 1220];
+
+        // G1: glass word -> droplet -> toolbar -> slider (goo on its shape)
+        const G1 = glass(cam, "bgphoto", { sigma: 12, scale: 100, goo: true });
+        const gw = [...C.glassWord];
+        const go = { fam: "wm", w: 800, size: 300, stretch: 110 };
+        const gsz = fit(C.glassWord, go, 1050);
+        const gws = gw.map((ch) => measure(ch, { ...go, size: gsz }));
+        const gTot = gws.reduce((a, b) => a + b, 0);
+        let gx = 720 - gTot / 2;
+        const gEls = gw.map((ch, i) => { const e = txt(G1.shape, ch, { ...go, size: gsz, fill: "#fff" }); const cxl = gx + gws[i] / 2; gx += gws[i]; return { e, cx: cxl }; });
+        const gBase = 680 + gsz * 0.36;
+        const tMelt = [0, [14, 1, "blob"]];
+        const drop = mk("rect", {}, G1.shape);
+        L.toolbar = [340, 1140, 760, 150, 75];
+        const tDrop = [[720, 680, 0, 0, 0], [14.05, [600, 560, 240, 240, 120], "pop"], [15, L.toolbar, "blob"], [17, L.track, "snap"], [21, [L.track[0] + L.track[2] - 48, L.track[1], 48, 48, 24], "snap"], [21.3, [L.track[0] + L.track[2] - 24, L.track[1] + 24, 0, 0, 0], "snap"]];
+        vis.push([G1.root, [[13, 21.8]]]);
+        R.push((u) => {
+          const m = V(u, tMelt);
+          gEls.forEach(({ e, cx }, i) => {
+            const pop = V(u, [0, [13 + (i * 0.8) / gw.length, 1, "pop"]]) * lerp(1, 0.2, m);
+            const x = lerp(cx, 720, m), y = lerp(gBase, 680 + gsz * 0.07, m);
+            show(e, u < 15.2);
+            set(e, { transform: `translate(${r3(x)} ${r3(y)}) scale(${r3(Math.max(1e-4, pop))})` });
+          });
+          const d = V(u, tDrop);
+          rectA(drop, d);
+          G1.scale(u < 15 ? 100 : d[3] * 0.6);
+          G1.region(Math.min(d[0], 720 - gTot / 2), Math.min(d[1], 680 - gsz * 0.6), Math.max(d[0] + d[2], 720 + gTot / 2), Math.max(d[1] + d[3], 680 + gsz * 0.5));
+        });
+        // toolbar icons (paper strokes), one of them is "adjust"
+        const icons = mk("g", { fill: "none", stroke: P.paper, "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round" }, cam);
+        const ICON = [
+          "M-22 -14 L22 -14 M-22 14 L22 14 M-8 -24 L-8 -4 M10 4 L10 24", // adjust (sliders)
+          "M-14 -26 L-14 14 L26 14 M-26 -14 L14 -14 L14 26", // crop
+          "M-20 6 A21 21 0 1 0 -6 -19 M-8 -30 L-6 -19 L-17 -15", // rotate
+          "M0 22 L-20 2 A11 11 0 0 1 0 -14 A11 11 0 0 1 20 2 Z", // heart
+        ];
+        const iconX = [480, 640, 800, 960];
+        L.adjust = [iconX[0], 1215];
+        const iconEls = ICON.map((d) => mk("path", { d }, icons));
+        vis.push([icons, [[15.3, 17.6]]]);
+        R.push((u) => iconEls.forEach((e, i) => {
+          const s = V(u, [0, [15.35 + i * 0.12, 1, "pop"], [17, 0, "snap"]]);
+          set(e, { transform: `translate(${iconX[i]} 1215) scale(${r3(Math.max(1e-4, s))})` });
+        }));
+        // the adjust icon becomes the slider's knob
+        const knob = mk("circle", { fill: P.paper }, cam);
+        vis.push([knob, [[17, 18.4]]]);
+        R.push((u) => {
+          const k1 = V(u, [0, [17, 1, "snap"]]);
+          set(knob, { cx: lerp(L.adjust[0], L.knob0[0], k1), cy: lerp(1215, 1220, k1), r: Math.max(0, V(u, [0, [17, 30, "pop"], [18, 0, "snap"]])) });
+        });
+        // G2: the knob turns into a glass lens while held, lifts into an orb,
+        // the next photo opens inside it, and it expands into the lock screen
+        L.screen = [390, 40, 660, 1360, 96];
+        L.orb = [720 - 300, 620 - 300, 600, 600, 300];
+        const G2 = glass(cam, "bgphoto", { sigma: 18, scale: 90 });
+        const lens = mk("rect", {}, G2.shape);
+        vis.push([G2.root, [[18, 24]]]);
+        const knobX = (u) => clamp(toWorld(...cursorAt(u))[0], L.knob0[0], L.knob1[0]);
+        R.push((u) => {
+          const kx = u < 21 ? knobX(u) : knobX(21);
+          const lensR = Math.max(0, V(u, [0, [18, 95, "pop"]]));
+          const held = [kx - lensR, 1220 - lensR, 2 * lensR, 2 * lensR, lensR];
+          const r = u < 21 ? held : V(u, [held, [21, L.orb, "blob"], [23, L.screen, "soft"]].map((x, i) => (i === 0 ? x : x)));
+          rectA(lens, r);
+          G2.region(r[0], r[1], r[0] + r[2], r[1] + r[3]);
+          rectA(gold.r, [0, 0, u < 18 ? 0 : (1440 * (kx - L.knob0[0])) / (L.knob1[0] - L.knob0[0]), 1440]);
+          L.orbNow = r;
+        });
+        // ========================================================== LOCK SCREEN
+        const phoneBody = mk("rect", { fill: P.charcoal }, cam);
+        const lockClip = clipRect(cam);
+        const lockImg = mk("g", { id: "lockimg" }, lockClip.g);
+        image(lockImg, ph(1), { x: L.screen[0], y: L.screen[1], width: L.screen[2], height: L.screen[3] });
+        vis.push([lockClip.g, [[22, 36]]]);
+        vis.push([phoneBody, [[25.9, 36]]]);
+        const tP1 = [0, [22, 1, "pop"]];
+        const tInset = [24, [23, 0, "soft"]];
+        R.push((u) => {
+          const orb = L.orbNow;
+          const p = Math.max(0, V(u, tP1));
+          const ins = inset(orb, V(u, tInset));
+          const c = [orb[0] + orb[2] / 2, orb[1] + orb[3] / 2];
+          const r = u < 23 ? [c[0] - (ins[2] / 2) * p, c[1] - (ins[3] / 2) * p, ins[2] * p, ins[3] * p, ins[4] * p] : ins;
+          rectA(lockClip.r, u < 24 ? r : L.screen);
+          const bz = Math.max(0, V(u, [0, [26, 24, "soft"]]));
+          rectA(phoneBody, [L.screen[0] - bz, L.screen[1] - bz, L.screen[2] + 2 * bz, L.screen[3] + 2 * bz, L.screen[4] + bz]);
+        });
+        // date rises, glass digits pop
+        const ui = mk("g", {}, lockClip.g); // lock-screen UI exists only inside the screen shape
+        const dsz = fit(C.lockDate, { fam: "ui", w: 600, size: 34 }, 560);
+        const dateC = clipRect(ui); rectA(dateC.r, [400, 150, 640, 70]);
+        const dateT = txt(dateC.g, C.lockDate, { fam: "ui", w: 600, size: dsz, fill: P.paper }); set(dateT, { x: 720, y: 200 });
+        R.push((u) => set(dateT, { transform: `translate(0 ${r3(V(u, [60, [24.2, 0, "snap"]]))})` }));
+        const G3 = glass(ui, "lockimg", { sigma: 8, scale: 60 });
+        const co = { fam: "wm", w: 800, size: 230, stretch: 75 };
+        const csz = fit(C.lockTime, co, 580);
+        const cch = [...C.lockTime];
+        const cws = cch.map((ch) => measure(ch, { ...co, size: csz }));
+        let cxp = 720 - cws.reduce((a, b) => a + b, 0) / 2;
+        const cEls = cch.map((ch, i) => { const e = txt(G3.shape, ch, { ...co, size: csz, fill: "#fff" }); const x = cxp + cws[i] / 2; cxp += cws[i]; return { e, x }; });
+        G3.region(400, 210, 1040, 250 + csz);
+        R.push((u) => cEls.forEach(({ e, x }, i) => {
+          const s = Math.max(1e-4, V(u, [0, [24 + i * 0.12, 1, "pop"]]));
+          set(e, { transform: `translate(${r3(x)} ${r3(230 + csz * 0.72)}) scale(${r3(s)})` });
+        }));
+        // home bar -> glass music player
+        L.player = [430, 1070, 580, 240, 56];
+        const G4 = glass(ui, "lockimg", { sigma: 16, scale: 70, tint: "charcoal", tintA: 0.45 });
+        const pl = mk("rect", {}, G4.shape);
+        L.bar = [620, 1350, 200, 10, 5];
+        const tPl = [L.bar, [25, L.player, "blob"]];
+        R.push((u) => { const r = V(u, tPl); rectA(pl, r); G4.region(r[0], r[1], r[0] + r[2], r[1] + r[3]); });
+        const bar = mk("rect", { fill: P.paper }, ui);
+        R.push((u) => rectA(bar, V(u, [L.bar, [25, [670, 1088, 100, 8, 4], "blob"]])));
+        const pc = clipRect(ui); rectA(pc.r, [L.player[0] + 30, L.player[1] + 40, L.player[2] - 60, L.player[3] - 60]);
+        const tsz = fit(C.trackTitle, { fam: "ui", w: 600, size: 34 }, 360);
+        const asz = fit(C.trackArtist, { fam: "ui", w: 500, size: 28 }, 360);
+        const pIn = mk("g", {}, pc.g);
+        const tt = txt(pIn, C.trackTitle, { fam: "ui", w: 600, size: tsz, fill: P.paper, anchor: "start" }); set(tt, { x: 470, y: 1160 });
+        const ta = txt(pIn, C.trackArtist, { fam: "ui", w: 500, size: asz, fill: P.paper, anchor: "start" }); set(ta, { x: 470, y: 1205 });
+        mk("path", { d: "M920 1140 L920 1196 L966 1168 Z", fill: P.paper }, pIn);
+        mk("rect", { x: 470, y: 1250, width: 500, height: 6, rx: 3, fill: P.paper, "fill-opacity": 0.45 }, pIn);
+        const prog = mk("rect", { x: 470, y: 1250, height: 6, rx: 3, fill: P.paper }, pIn);
+        R.push((u) => {
+          set(pIn, { transform: `translate(0 ${r3(V(u, [260, [25.35, 0, "snap"]]))})` });
+          set(prog, { width: 40 + 60 * clamp((u - 25.4) / 4) });
+        });
+        vis.push([ui, [[22, 36]]]);
+        // Dynamic Island: stretches like liquid toward the cursor, pinches off,
+        // flies over and becomes the Mac window
+        L.island = [645, 66, 150, 44, 22];
+        L.win = [1500, 240, 1300, 960, 26];
+        L.winC = [2150, 720];
+        const islandG = mk("g", { filter: "url(#goo)" }, cam);
+        const island = mk("rect", { fill: P.charcoal }, islandG);
+        const neck = mk("line", { stroke: P.charcoal, "stroke-linecap": "round" }, islandG);
+        const blob = mk("circle", { fill: P.charcoal }, islandG);
+        vis.push([islandG, [[26.3, 29.05]]]);
+        R.push((u) => {
+          const s = V(u, [0, [26.3, 1, "pop"]]);
+          rectA(island, [720 - 75 * s, 88 - 22 * s, 150 * s, 44 * s, 22 * s]);
+          let bc, br;
+          if (u < 28) {
+            // held: the blob is under the cursor, joined to the island by a
+            // neck that thins as it stretches until the goo pinches it off
+            const w = toWorld(...cursorAt(u));
+            const hold = clamp((u - 26.95) * 6);
+            bc = [lerp(720, w[0], hold), lerp(88, w[1], hold)];
+            br = 22 * s;
+          } else {
+            const w28 = toWorld(...cursorAt(28), camAt(28));
+            const k = resp(u - 28, 1.0);
+            bc = [lerp(w28[0], L.winC[0], k), lerp(w28[1], L.winC[1], k) - 260 * Math.sin(Math.PI * k)];
+            br = lerp(22, 60, k);
+          }
+          const dist = Math.hypot(bc[0] - 720, bc[1] - 88);
+          show(neck, u < 28 && dist < 300);
+          set(neck, { x1: 720 + 40, y1: 88, x2: bc[0], y2: bc[1], "stroke-width": lerp(34, 3, clamp(dist / 300)) * s });
+          set(blob, { cx: bc[0], cy: bc[1], r: br });
+        });
+        // ========================================================== MAC WINDOW
+        const macRoot = mk("g", {}, cam);
+        vis.push([macRoot, [[29, 48.7]]]);
+        // the window exists only inside the growing blob/cover until it is full size
+        const coverFull = (u) => lerpA([L.winC[0] - 60, L.winC[1] - 60, 120, 120, 60], L.win, u < 29 ? 0 : resp(u - 29, "soft"));
+        const winC = clipRect(macRoot);
+        R.push((u) => rectA(winC.r, coverFull(u)));
+        const macG = winC.g;
+        const body = mk("rect", { fill: P.paper, stroke: P.charcoal, "stroke-width": 3 }, macG);
+        rectA(body, L.win);
+        const content = clipRect(macG);
+        rectA(content.r, [L.win[0], L.win[1] + 70, L.win[2], L.win[3] - 70, 0]);
+        const page1 = mk("g", {}, content.g), page2 = mk("g", {}, content.g);
+        // page 1: a gallery of the remaining photos
+        const head1 = txt(page1, C.openLabel, { fam: "wm", w: 800, size: 44, anchor: "start", stretch: 125 }); set(head1, { x: 1540, y: 380 });
+        const thumbs = C.photos.slice(2);
+        const tw = (1300 - 80 - 4 * 20) / 5;
+        thumbs.forEach((h, i) => {
+          const r = [1540 + (i % 5) * (tw + 20), 420 + Math.floor(i / 5) * (tw + 20), tw, tw, 12];
+          const c = clipRect(page1); rectA(c.r, r);
+          image(c.g, h, { x: r[0], y: r[1], width: r[2], height: r[3] });
+        });
+        // page 2: the landing page (nav, hero slot, headline, product)
+        L.nav = [2530, 324, 230, 58, 29];
+        L.heroR = [1540, 500, 1220, 400, 18];
+        const slot = mk("rect", { fill: "none", stroke: P.charcoal, "stroke-width": 3, "stroke-dasharray": "14 12" }, page2); rectA(slot, L.heroR);
+        const scroller = mk("g", {}, page2);
+        // sticky nav: a paper bar over the scrolling page
+        const navG = mk("g", {}, page2);
+        mk("rect", { x: L.win[0], y: L.win[1] + 70, width: L.win[2], height: 86, fill: P.paper }, navG);
+        const wmSmall = txt(navG, C.wordmark + ".", { fam: "wm", w: 800, size: 34, anchor: "start", stretch: 125 }); set(wmSmall, { x: 1540, y: 366, "data-layout-allow-overlap": "true" });
+        const hsz = fit(C.landingHeadline, { fam: "wm", w: 800, size: 72, stretch: 110 }, 1200);
+        const hc = clipRect(scroller); rectA(hc.r, [1520, 396, 1260, 100]);
+        const headline = txt(hc.g, C.landingHeadline, { fam: "wm", w: 800, size: hsz, anchor: "start", stretch: 110 }); set(headline, { x: 1540, y: 470 });
+        R.push((u) => set(headline, { transform: `translate(0 ${r3(V(u, [110, [34.4, 0, "snap"]]))})` }));
+        // product section (enters with the scroll)
+        const SCROLL = 420;
+        L.print = [1640, 1080, 300, 380, 0];
+        const psz = fit(C.productName, { fam: "wm", w: 800, size: 58, stretch: 110 }, 640);
+        const pnc = clipRect(scroller); rectA(pnc.r, [2060, 1060, 700, 90]);
+        const pname = txt(pnc.g, C.productName, { fam: "wm", w: 800, size: psz, anchor: "start", stretch: 110 }); set(pname, { x: 2080, y: 1130 });
+        R.push((u) => set(pname, { transform: `translate(0 ${r3(V(u, [90, [37, 0, "snap"]]))})` }));
+        const sw = C.frameColors.map((name, i) => {
+          const c = mk("circle", { cx: 2110 + i * 80, cy: 1220, fill: P[name], stroke: P.charcoal, "stroke-width": 3 }, scroller);
+          return c;
+        });
+        const ring = mk("circle", { fill: "none", stroke: P.charcoal, "stroke-width": 4 }, scroller);
+        R.push((u) => {
+          sw.forEach((c, i) => set(c, { r: Math.max(0, V(u, [0, [37.2 + i * 0.1, 26, "pop"]])) }));
+          set(ring, { cx: V(u, [2110, [38, 2190, "snap"]]), cy: 1220, r: Math.max(0, V(u, [0, [37.5, 38, "pop"]])) });
+        });
+        const chips = C.sizes.map((s, i) => {
+          const w = Math.max(84, measure(s, { fam: "ui", w: 600, size: 26 }) + 48);
+          return { s, w };
+        });
+        let chx = 2080;
+        chips.forEach((c) => { c.x = chx; chx += c.w + 16; });
+        L.chip1 = chips[1].x + chips[1].w / 2;
+        const chipEls = chips.map((c, i) => {
+          const g = mk("g", {}, scroller);
+          const o = mk("rect", { fill: "none", stroke: P.charcoal, "stroke-width": 3 }, g);
+          rectA(o, [c.x, 1290, c.w, 56, 28]);
+          const t1 = txt(g, c.s, { fam: "ui", w: 600, size: 26 }); set(t1, { x: c.x + c.w / 2, y: 1327 });
+          let fill = null;
+          if (i === 1) {
+            const fc = clipRect(g);
+            fill = { c: fc, r: mk("rect", { fill: P.charcoal }, fc.g) };
+            const t2 = txt(fc.g, c.s, { fam: "ui", w: 600, size: 26, fill: P.paper }); set(t2, { x: c.x + c.w / 2, y: 1327 });
+          }
+          return { g, fill, c };
+        });
+        R.push((u) => chipEls.forEach(({ g, fill, c }, i) => {
+          const s = Math.max(1e-4, V(u, [0, [37.5 + i * 0.1, 1, "pop"]]));
+          set(g, { transform: `translate(${r3(c.x + c.w / 2)} 1318) scale(${r3(s)}) translate(${r3(-c.x - c.w / 2)} -1318)` });
+          if (fill) {
+            const k = V(u, [0, [39, 1, 0.5]]);
+            rectA(fill.c.r, [c.x, 1290, c.w * k, 56, 0]);
+            rectA(fill.r, [c.x, 1290, c.w, 56, 28]);
+          }
+        }));
+        R.push((u) => set(scroller, { transform: `translate(0 ${r3(-V(u, [0, [35, SCROLL, "soft"]]))})` }));
+        vis.push([page1, [[29, 33.7]]]);
+        vis.push([page2, [[33, 48.7]]]);
+        R.push((u) => {
+          const k = resp(u - 33, 0.6);
+          set(page1, { transform: `translate(${r3(-1300 * k)} 0)` });
+          set(page2, { transform: `translate(${r3(1300 * (1 - k))} 0)` });
+          show(slot, u < 34.8);
+        });
+        // title bar (chrome) with tabs; the blind is the charcoal cover rolling up into it
+        const title = mk("path", { fill: P.charcoal }, macG);
+        set(title, { d: `M${L.win[0]} ${L.win[1] + 70} V${L.win[1] + 26} A26 26 0 0 1 ${L.win[0] + 26} ${L.win[1]} H${L.win[0] + L.win[2] - 26} A26 26 0 0 1 ${L.win[0] + L.win[2]} ${L.win[1] + 26} V${L.win[1] + 70} Z` });
+        [P.red, P.paper, P.paper].forEach((c, i) => mk("circle", { cx: L.win[0] + 34 + i * 30, cy: L.win[1] + 35, r: 9, fill: c }, macG));
+        L.tabs = [[1640, 254, 300, 44, 12], [1956, 254, 300, 44, 12]];
+        // tab labels: paper on the bar; the active tab (a paper shape sliding
+        // between tabs) carries charcoal copies through its own clip
+        const tabSz = (str) => fit(str, { fam: "ui", w: 600, size: 22 }, 260);
+        const tabTxt = (g, fill) => [C.openLabel, C.wordmark].forEach((str, i) => set(txt(g, str, { fam: "ui", w: 600, size: tabSz(str), fill }), { x: L.tabs[i][0] + 150, y: 284, "data-layout-allow-overlap": "true" }));
+        const outId = "tabout" + ++glassN; // everything except the active tab (even-odd)
+        const outPath = mk("path", { "clip-rule": "evenodd" }, mk("clipPath", { id: outId }, defs()));
+        tabTxt(mk("g", { "clip-path": `url(#${outId})` }, macG), P.paper);
+        const activeTab = mk("rect", { fill: P.paper }, macG);
+        const tabClip = clipRect(macG);
+        tabTxt(tabClip.g, P.charcoal);
+        R.push((u) => {
+          const at = V(u, [L.tabs[0], [33, L.tabs[1], "snap"]]);
+          rectA(activeTab, at); rectA(tabClip.r, at);
+          outPath.setAttribute("d", `M1400 200 H2900 V340 H1400 Z M${r3(at[0])} ${r3(at[1])} h${r3(at[2])} v${r3(at[3])} h${r3(-at[2])} Z`);
+        });
+        const cover = mk("rect", { fill: P.charcoal }, macRoot);
+        const roll = mk("rect", { fill: P.charcoal, stroke: P.paper, "stroke-width": 2 }, macRoot);
+        R.push((u) => {
+          const full = coverFull(u);
+          const h = lerp(full[3], 70, resp(u - 30, 0.9));
+          rectA(cover, [full[0], full[1], full[2], h, Math.min(full[4], h / 2)]);
+          const rh = 28 * clamp((u - 30) * 6) * (1 - resp(u - 30, 0.9)); // the roll winds into the title bar
+          show(roll, u >= 30 && u < 31);
+          rectA(roll, [full[0] - 6, full[1] + h - rh / 2, full[2] + 12, rh, rh / 2]);
+          show(cover, u < 31);
+        });
+        // ---- the dragged wallpaper card -> hero -> framed print
+        // once dropped, the card lives in the page: clipped below the sticky nav
+        const cw = clipRect(cam);
+        const mold = mk("rect", { fill: P[C.frameColors[0]] }, cw.g);
+        const mold2 = clipRect(cw.g);
+        const moldB = mk("rect", { fill: P[C.frameColors[1]] }, mold2.g);
+        const mat = mk("rect", { fill: P.paper, stroke: P.charcoal, "stroke-width": 1.5 }, cw.g);
+        const card = clipRect(cw.g);
+        const cardImg = image(card.g, ph(1), {});
+        R.push((u) => rectA(cw.r, u < 34 ? [-5000, -5000, 20000, 20000] : [L.win[0], 396, L.win[2], L.win[1] + L.win[3] - 396]));
+        vis.push([card.g, [[31.8, 48.7]]]);
+        vis.push([mold, [[36, 48.7]]]); vis.push([mold2.g, [[38, 48.7]]]); vis.push([mat, [[36, 48.7]]]);
+        R.push((u) => {
+          let r;
+          const follow = (uu) => {
+            const w = toWorld(...cursorAt(uu), camAt(uu));
+            const lift = resp(uu - 31.8, "snap");
+            const big = lerpA(L.screen, [w[0] - 110, w[1] - 225, 220, 450, 34], lift);
+            return big;
+          };
+          if (u < 34) r = follow(u);
+          else {
+            const f = follow(34);
+            const sc = V(u, [0, [35, SCROLL, "soft"]]);
+            const hero = [L.heroR[0], L.heroR[1] - sc, L.heroR[2], L.heroR[3], 18];
+            const pr = [L.print[0], L.print[1] - SCROLL, L.print[2], L.print[3], 0];
+            r = lerpA(lerpA(f, hero, resp(u - 34, "snap")), pr, resp(u - 35.1, "soft"));
+          }
+          rectA(card.r, r);
+          set(cardImg, { x: r[0], y: r[1], width: r[2], height: r[3] });
+          const m = V(u, [0, [36, 34, "snap"]]), fr = V(u, [0, [36.15, 22, "snap"]]);
+          rectA(mat, [r[0] - m, r[1] - m, r[2] + 2 * m, r[3] + 2 * m, 0]);
+          const o = [r[0] - m - fr, r[1] - m - fr, r[2] + 2 * (m + fr), r[3] + 2 * (m + fr), 3];
+          rectA(mold, o); rectA(moldB, o);
+          rectA(mold2.r, [o[0], o[1], o[2] * V(u, [0, [38, 1, 0.7]]), o[3]]);
+          L.frameO = o;
+        });
+        // ---- nav button flies down into the order button; the order shape
+        L.orderBtn = [2080, 1388 - SCROLL, 380, 84, 42];
+        L.bc = [L.orderBtn[0] + L.orderBtn[2] / 2, L.orderBtn[1] + L.orderBtn[3] / 2];
+        L.oc = [L.bc[0], L.bc[1] + 70]; // the order shape sits just below the button, clear of the chips
+        const D = 250;
+        const circ = [L.oc[0] - D / 2, L.oc[1] - D / 2, D, D, D / 2];
+        const tShape = [L.nav, [40, L.orderBtn, "soft"], [42, circ, "snap"], [43, [L.oc[0] - 280, L.oc[1] - 80, 560, 160, 80], "snap"], [45, [L.oc[0] - 310, L.oc[1] - 160, 620, 320, 44], "snap"], [47, circ, "snap"]];
+        // the nav button arrives with the pushed page, clipped to the window until it is in place
+        const orderC = clipRect(cam);
+        R.push((u) => rectA(orderC.r, u < 34 ? [L.win[0], L.win[1] + 70, L.win[2], L.win[3] - 70] : [-5000, -5000, 20000, 20000]));
+        const orderG = orderC.g;
+        const shape = mk("rect", { fill: P.charcoal }, orderG);
+        vis.push([orderG, [[33, 48.7]]]);
+        // Everything inside the morphing shape sits in its own masked group
+        // (clip = the shape now) and rises in from below / leaves upward, so
+        // no text or icon swaps in place.
+        const inShape = () => { const c = clipRect(orderG); const g = mk("g", {}, c.g); return { c, g }; };
+        const osz = fit(C.orderLabel, { fam: "ui", w: 600, size: 26 }, 300);
+        const og = inShape();
+        const olab = txt(og.g, C.orderLabel, { fam: "ui", w: 600, size: osz, fill: P.paper });
+        L.shapeNow = L.nav;
+        const STEP_AT = [42, 43, 45, 47], STEP_END = [43, 45, 47, 99];
+        const steps = C.steps.map((s, i) => {
+          const m = inShape();
+          const size = fit(s, { fam: "ui", w: 600, size: 34 }, i === 1 ? 300 : 210);
+          const e = txt(m.g, s, { fam: "ui", w: 600, size, fill: P.paper, anchor: i === 1 || i === 2 ? "start" : "middle" });
+          return { ...m, e, size, slide: [420, [STEP_AT[i] + 0.08, 0, "snap"], [STEP_END[i], -420, "snap"]] };
+        });
+        const checks = [0, 3].map((i) => mk("path", { fill: "none", stroke: P.paper, "stroke-width": 16, "stroke-linecap": "round", "stroke-linejoin": "round", pathLength: 1, "stroke-dasharray": 1 }, steps[i].g));
+        const pct = txt(steps[1].g, "0%", { fam: "ui", w: 600, size: 40, fill: P.paper, anchor: "end" });
+        const barBg = mk("rect", { fill: P.paper, "fill-opacity": 0.35 }, steps[1].g), barFg = mk("rect", { fill: P.paper }, steps[1].g);
+        const route = mk("path", { fill: "none", stroke: P.paper, "stroke-width": 6, "stroke-dasharray": "2 16", "stroke-linecap": "round" }, steps[2].g);
+        const rx0 = L.oc[0] - 250, rx1 = L.oc[0] + 250, ry = L.oc[1] + 60;
+        route.setAttribute("d", `M${rx0} ${ry} C${rx0 + 140} ${ry - 70} ${rx0 + 220} ${ry + 40} ${L.oc[0]} ${ry - 10} S${rx1 - 120} ${ry - 60} ${rx1} ${ry}`);
+        const pins = [rx0, rx1].map((x) => mk("circle", { cx: x, cy: ry, fill: P.red, stroke: P.paper, "stroke-width": 4 }, steps[2].g));
+        const van = mk("g", { fill: P.paper }, steps[2].g);
+        mk("path", { d: "M-40 -30 H14 V-22 H26 L40 -6 V12 H-40 Z" }, van);
+        [-22, 24].forEach((x) => mk("circle", { cx: x, cy: 14, r: 9, fill: P.paper, stroke: P.charcoal, "stroke-width": 5 }, van));
+        mk("rect", { x: 18, y: -18, width: 12, height: 10, rx: 2, fill: P.charcoal }, van);
+        const routeLen = route.getTotalLength();
+        R.push((u) => {
+          let r = V(u, tShape);
+          if (u < 34) r = [r[0] + 1300 * (1 - resp(u - 33, 0.6)), r[1], r[2], r[3], r[4]];
+          if (u >= 40 && u < 42) r = [r[0], r[1] - 220 * Math.sin(Math.PI * clamp(resp(u - 40, "soft"))), r[2], r[3], r[4]];
+          rectA(shape, r);
+          L.shapeNow = r;
+          rectA(og.c.r, r);
+          set(olab, { x: r[0] + r[2] / 2, y: r[1] + r[3] / 2 + osz * 0.36 });
+          set(og.g, { transform: `translate(0 ${r3(V(u, [0, [42, -420, "snap"]]))})` });
+          show(og.c.g, u < 43);
+          steps.forEach(({ c, g, e, size, slide }, i) => {
+            show(c.g, u >= STEP_AT[i] && u < STEP_END[i] + 0.6);
+            rectA(c.r, r);
+            set(g, { transform: `translate(0 ${r3(V(u, slide))})` });
+            const pos = i === 1 ? [r[0] + 50, r[1] + r[3] / 2 + size * 0.36 - 14] : i === 2 ? [r[0] + 46, r[1] + 70] : [r[0] + r[2] / 2, r[1] + r[3] * 0.74];
+            set(e, { x: pos[0], y: pos[1] });
+          });
+          // checks (ordered / delivered) draw on
+          const cx = r[0] + r[2] / 2, cy = r[1] + r[3] * 0.42;
+          checks.forEach((ck, j) => show(ck, u > [42.15, 47.15][j]));
+          checks.forEach((ck, j) => set(ck, { d: `M${r3(cx - 44)} ${r3(cy)} L${r3(cx - 12)} ${r3(cy + 32)} L${r3(cx + 48)} ${r3(cy - 34)}`, "stroke-dashoffset": 1 - resp(u - [42.15, 47.15][j], 0.5) }));
+          // printing %
+          const pr = clamp((u - 43.3) / 1.5);
+          pct.textContent = Math.round(pr * 100) + "%";
+          set(pct, { x: r[0] + r[2] - 50, y: r[1] + r[3] / 2 - 2 });
+          rectA(barBg, [r[0] + 50, r[1] + r[3] - 44, r[2] - 100, 10, 5]);
+          rectA(barFg, [r[0] + 50, r[1] + r[3] - 44, (r[2] - 100) * pr, 10, 5]);
+          // on its way: pins pop, the van drives the route
+          pins.forEach((p, i) => set(p, { r: Math.max(0, V(u, [0, [45.15 + i * 0.15, 13, "pop"]])) }));
+          const k = resp(u - 45.5, 1.4);
+          const la = Math.min(routeLen - 2, routeLen * k); // heading from a 2-unit chord that never collapses
+          const a = route.getPointAtLength(routeLen * k), a0 = route.getPointAtLength(la), b = route.getPointAtLength(la + 2);
+          const ang = clamp((Math.atan2(b.y - a0.y, b.x - a0.x) * 180) / Math.PI, -18, 18);
+          const vs = Math.max(1e-4, V(u, [0, [45.3, 1, "pop"]]));
+          set(van, { transform: `translate(${r3(a.x)} ${r3(a.y - 20)}) rotate(${r3(ang)}) scale(${r3(vs)})` });
+        });
+
+        // ========================================================== WALL (48.7-52.3)
+        const wall = mk("g", {}, cam);
+        vis.push([wall, [[48.7, 52.3]]]);
+        mk("rect", { x: -400, y: -400, width: 2240, height: 2240, fill: P.paper }, wall);
+        // procedural wall: soft plant shadows from off-frame left, a pure
+        // function of time (charcoal at low alpha over paper)
+        const shadows = mk("g", { filter: "url(#soft)", fill: P.charcoal, "fill-opacity": 0.14, stroke: P.charcoal, "stroke-opacity": 0.14 }, wall);
+        const BR = [[-90, 1250, 360, 260, 0], [-90, 1350, 300, 760, 1.7], [-90, 330, 430, -30, 3.1]];
+        const brEls = BR.map(() => {
+          const g = mk("g", {}, shadows);
+          const stem = mk("line", { "stroke-width": 9 }, g);
+          const leaves = [0.32, 0.5, 0.66, 0.82, 0.97].map(() => mk("ellipse", { rx: 105, ry: 36, stroke: "none" }, g));
+          return { g, stem, leaves };
+        });
+        R.push((u) => {
+          const t = u * B;
+          BR.forEach(([x0, y0, x1, y1, ph], j) => {
+            const { g, stem, leaves } = brEls[j];
+            set(g, { transform: `rotate(${r3(2.2 * Math.sin(t * 1.3 + ph) + 1.2 * Math.sin(t * 2.9 + 2 * ph))} ${x0} ${y0})` });
+            set(stem, { x1: x0, y1: y0, x2: x1, y2: y1 });
+            const ang = (Math.atan2(y1 - y0, x1 - x0) * 180) / Math.PI;
+            leaves.forEach((e, i) => {
+              const f = [0.32, 0.5, 0.66, 0.82, 0.97][i], side = i % 2 ? 1 : -1;
+              const cx = lerp(x0, x1, f) + side * 60 * Math.cos(((ang + 90) * Math.PI) / 180);
+              const cy = lerp(y0, y1, f) + side * 60 * Math.sin(((ang + 90) * Math.PI) / 180);
+              set(e, { cx, cy, transform: `rotate(${r3(ang + side * 42 + 6 * Math.sin(t * 2.1 + i + ph))} ${r3(cx)} ${r3(cy)})` });
+            });
+          });
+        });
+        L.wPhoto = [530, 400, 380, 520, 0];
+        const wr = L.wPhoto, M = 56, FR = 32;
+        L.wFrame = [wr[0] - M - FR, wr[1] - M - FR, wr[2] + 2 * (M + FR), wr[3] + 2 * (M + FR), 4];
+        mk("rect", { x: L.wFrame[0] + 18, y: L.wFrame[1] + 30, width: L.wFrame[2], height: L.wFrame[3], fill: P.charcoal, "fill-opacity": 0.22, filter: "url(#soft)" }, wall);
+        const wMold = mk("rect", { fill: P[C.frameColors[1]], stroke: P.charcoal, "stroke-width": 2 }, wall); rectA(wMold, L.wFrame);
+        const wMat = mk("rect", { fill: P.paper, stroke: P.charcoal, "stroke-width": 1.5 }, wall); rectA(wMat, inset(L.wFrame, FR));
+        const wc = clipRect(wall); rectA(wc.r, wr);
+        image(wc.g, ph(1), { x: wr[0], y: wr[1], width: wr[2], height: wr[3] });
+        L.wC = [wr[0] + wr[2] / 2, wr[1] + wr[3] / 2];
+        const RW = Math.hypot(L.wFrame[2], L.wFrame[3]) / 2;
+        const irW = iris(wall, mk("rect", { x: L.wFrame[0], y: L.wFrame[1], width: L.wFrame[2], height: L.wFrame[3], rx: 4 }));
+        const aW = (RW / 0.866) * 1.04;
+        const tApW = [0, [50.5, aW, "pop"], [51.5, 0, 0.4]];
+        R.push((u) => { const a = V(u, tApW); show(irW.g, a < aW * 0.995); irW.draw(L.wC[0], L.wC[1], RW, Math.max(0, a), (1 - clamp(a / aW)) * 0.9); });
+
+        // ========================================================== SCREEN SPACE
+        // the flood: one black shape in screen space for the two floods
+        const flood = mk("rect", { fill: P.charcoal }, screen);
+        vis.push([flood, [[48, 50], [51.9, 52.95]]]);
+        R.push((u) => {
+          let r;
+          if (u < 50) {
+            const c = toScreen(L.oc[0], L.oc[1], camAt(48));
+            const r0 = (D / 2) * camAt(48)[2];
+            const big = 1440 * 0.9;
+            const g = V(u, [r0, [48, big, 0.7]]);
+            const circle = [c[0] - g, c[1] - g, 2 * g, 2 * g, g];
+            r = lerpA(circle, L.wFrame, resp(u - 49.4, 0.6));
+          } else {
+            const f = L.wFrame.map((v, i) => (i < 2 ? v : v)); // wall camera is identity at 52
+            const fs = [...toScreen(f[0], f[1], camAt(51.9)), f[2] * camAt(51.9)[2], f[3] * camAt(51.9)[2], 4];
+            const over = [-220, -220, 1880, 1880, 0];
+            r = lerpA(lerpA(fs, over, resp(u - 51.9, 0.6)), L.pill, resp(u - 52.3, 0.6));
+          }
+          rectA(flood, r);
+        });
+        // long-press ring and the cursor
+        const ringP = mk("circle", { fill: "none", stroke: P.red, "stroke-width": 6, pathLength: 1, "stroke-dasharray": 1, "stroke-linecap": "round" }, screen);
+        vis.push([ringP, [[31, 31.95]]]);
+        const cursor = mk("g", {}, screen);
+        mk("path", { d: "M0 0 L0 40 L10 31 L17 47 L24 44 L17 28 L30 28 Z", fill: P.charcoal, stroke: P.paper, "stroke-width": 3, "stroke-linejoin": "round" }, cursor);
+        R.push((u) => {
+          const [x, y] = cursorAt(u);
+          const press = V(u, PRESS);
+          const sc = V(u, CURSCALE) * (1 - 0.16 * press);
+          set(cursor, { transform: `translate(${r3(x)} ${r3(y)}) scale(${r3(sc)})` });
+          set(ringP, { cx: x + 4, cy: y + 4, r: 34, "stroke-dashoffset": 1 - clamp((u - 31) / 0.8), transform: `rotate(-90 ${r3(x + 4)} ${r3(y + 4)})` });
+        });
+        L.vis = vis;
+        return L;
+      }
+
+      // ---------------------------------------------------------------- camera
+      const CAM = [
+        [720, 720, 1],
+        [11, [720, 720, 1440 / 592], 1],
+        [12, [720, 720, 1], "set"],
+        [16, [720, 864, 1.25], 0.9],
+        [21, [720, 720, 1], 1],
+        [23, [720, 400, 1440 / 640], 1],
+        [24.9, [720, 1060, 1440 / 640], 0.7],
+        [26, [720, 720, 0.98], 1],
+        [27.6, [1460, 720, 0.5], 1.4],
+        [34.6, [2150, 760, 1], 1],
+        [41, [2270, 1060, 2.1], 1],
+        [48.7, [720, 720, 1], "set"],
+        [50.5, [720, 660, 1.3], 0.6],
+        [51.6, [720, 720, 1], 0.4],
+        [52.3, [720, 720, 1], "set"],
+      ];
+      const camAt = (u) => V(u, CAM);
+
+      // ---------------------------------------------------------------- cursor
+      // Keys are screen positions; a target in the world is converted with the
+      // camera at the beat it is reached. Objects that are dragged follow the
+      // cursor, never the other way round.
+      let CUR, PRESS, CURSCALE;
+      function cursorTracks(L) {
+        const w = (x, y, b) => toScreen(x, y, camAt(b));
+        const rest = [1080, 1100];
+        const heroC = [L.hero[0] + L.hero[2] * 0.62, L.hero[1] + L.hero[3] * 0.6];
+        const knobScreen0 = w(L.knob0[0], L.knob0[1], 17.5), knobScreen1 = w(L.knob1[0] - 40, L.knob1[1], 19);
+        const keys = [
+          [1.8, [760, 760]], [4.4, [960, 1000]], [9.6, w(...heroC, 9.6)], [12.2, [1000, 1060]],
+          [15.4, w(L.adjust[0] + 4, L.adjust[1] + 4, 16)], [16.8, knobScreen0],
+          [18.25, knobScreen1, 2.5], [21.2, [1060, 1080]],
+          [24.4, w(720, 1356, 24.9)], [25.0, w(720, 1150, 25.2), 0.5], [25.8, w(900, 900, 26)],
+          [26.6, w(760, 88, 27)], [27.0, w(1010, 170, 27.6), 0.75], [27.75, w(1150, 320, 28), 0.25], [28.2, [900, 1160]],
+          [30.4, w(720, 1000, 31)], [32.0, w(2100, 276, 33), 1.0], [33.2, w(2150, 700, 34), 0.8],
+          [34.3, w(2350, 760, 35)], [35.0, w(2350, 700, 35.5), 0.5],
+          [37.4, w(2190 + 4, 1220 - SCROLLC + 4, 38)], [38.5, w(L.chip1, 1318 - SCROLLC, 39)],
+          [39.4, w(2560, 340, 40)], [40.4, w(L.bc[0] + 30, L.bc[1] + 10, 41)],
+          [42, [1060, 1080]], [47.4, [760, 760]], [48.4, [1000, 1060]],
+          [49.9, w(L.wC[0] + 40, L.wC[1] + 40, 50.5)], [52.3, rest],
+        ];
+        const track = [rest];
+        for (const [b, p, kind = "cur"] of keys) track.push([b, p, kind]);
+        CUR = track;
+        const clicks = [3, 11, 16, 38, 39, 40, 41, 48, 50.5, 51.5, 51.9];
+        const holds = [[18, 21], [25, 25.5], [27, 28], [31, 34], [35, 35.5]];
+        PRESS = [0];
+        const ev = [];
+        clicks.forEach((b) => { ev.push([b - 0.05, 1, 0.12]); ev.push([b + 0.15, 0, 0.2]); });
+        holds.forEach(([a, b]) => { ev.push([a - 0.05, 1, 0.12]); ev.push([b, 0, 0.2]); });
+        ev.sort((x, y) => x[0] - y[0]).forEach((e) => PRESS.push(e));
+        const zs = [[0, 1], [10.9, 1.5], [12.2, 1], [15.8, 1.12], [21, 1], [22.9, 1.4], [26, 1], [27.6, 0.75], [34.6, 1], [41, 1.4], [48.7, 1], [50.5, 1.12], [51.6, 1]];
+        CURSCALE = [1];
+        zs.slice(1).forEach(([b, s]) => CURSCALE.push([b, s, "soft"]));
+      }
+      const SCROLLC = 420;
+      const cursorAt = (u) => V(u, CUR);
+
+      // ---------------------------------------------------------------- frame
+      let L;
+      function render(u) {
+        camNow = camAt(u);
+        set(cam, { transform: `translate(720 720) scale(${r3(camNow[2])}) translate(${r3(-camNow[0])} ${r3(-camNow[1])})` });
+        for (const [e, ranges] of L.vis) show(e, inR(u, ranges));
+        for (const f of R) f(u);
+      }
+
+      // Register the timeline only after the fonts and every photo are ready,
+      // so no frame is captured with a fallback face or a missing image.
+      (async () => {
+        await Promise.all([document.fonts.load('800 100px "Wordmark"'), document.fonts.load('600 100px "UI"'), document.fonts.load('500 100px "UI"')]);
+        L = build();
+        cursorTracks(L);
+        await Promise.all(imgs.map((im) => new Promise((ok, bad) => {
+          im.addEventListener("load", ok, { once: true });
+          im.addEventListener("error", () => bad(new Error(`launch-film: cannot load photo '${im.getAttribute("href")}'`)), { once: true });
+        })));
+        const tl = gsap.timeline({ paused: true });
+        const clock = { _t: 0, get t() { return this._t; }, set t(v) { this._t = v; render(v / B); } };
+        tl.fromTo(clock, { t: 0 }, { t: TOTAL, duration: TOTAL, ease: "none" }, 0);
+        render(0);
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"Brand","default":"Chalkline"},
+  {"id":"domain","type":"string","label":"Domain","default":"chalkline.video"},
+  {"id":"tagline","type":"string","label":"Logo tagline (caps)","default":"Any document, drawn into a video"},
+  {"id":"endLine","type":"string","label":"End card line","default":"Turn any document into a hand-drawn explainer video."},
+  {"id":"cta","type":"string","label":"End button","default":"Free to try"},
+  {"id":"reel","type":"string","label":"HUD label","default":"Motion reel 2026"},
+  {"id":"chapter","type":"string","label":"Chapter number","default":"4.2"},
+  {"id":"chapterTitle","type":"string","label":"Chapter title","default":"The Water Cycle"},
+  {"id":"para","type":"string","label":"Paragraph ([word] = highlight: g green, b blue, p pink as [g:word])","default":"Every day, the [g:sun] heats the surface of the [b:ocean,] and a thin layer of liquid water turns into invisible water [p:vapour.] The vapour rises into the [g:sky,] where it cools and gathers into [b:clouds.] The salt, however, never makes the journey: it stays behind in the [b:sea,] so the sky only takes the [p:pure water.]"},
+  {"id":"pages1","type":"string","label":"Pages line 1","default":"Pages."},
+  {"id":"pages2","type":"string","label":"Pages line 2","default":"and pages."},
+  {"id":"pages3","type":"string","label":"Pages line 3 (blue)","default":"and pages."},
+  {"id":"lab1","type":"string","label":"Drawing label 1 (| = line break)","default":"Sun heats|the ocean"},
+  {"id":"lab2","type":"string","label":"Drawing label 2 ({b:…} = blue)","default":"Liquid water becomes|invisible {b:water vapour}|rising into the sky"},
+  {"id":"lab3","type":"string","label":"Drawing label 3","default":"A single drop|can stay airborne|for {b:10 days}"},
+  {"id":"lab4","type":"string","label":"Drawing label 4","default":"{b:Salt} stays|behind in|the sea"},
+  {"id":"lab5","type":"string","label":"Drawing label 5","default":"The sky only|takes the|{b:pure water}"},
+  {"id":"cap1","type":"string","label":"Caption 1","default":"the salt stays behind in the sea."},
+  {"id":"cap2","type":"string","label":"Caption 2","default":"The sky only takes the pure water."},
+  {"id":"scene","type":"string","label":"Editor scene name","default":"Evaporation"},
+  {"id":"script","type":"string","label":"Editor script","default":"In step one, the sun heats the ocean, and liquid water becomes invisible water vapour, rising into the sky. While a single drop can stay airborne for 10 days, the salt stays behind in the sea. The sky only takes the pure water."},
+  {"id":"note","type":"string","label":"Editor footnote","default":"Nothing is drawn until you approve the script."},
+  {"id":"generate","type":"string","label":"Editor button","default":"Generate video"},
+  {"id":"say1","type":"string","label":"Editor caption 1","default":"Read it."},
+  {"id":"say2","type":"string","label":"Editor caption 2","default":"Fix it."},
+  {"id":"say3","type":"string","label":"Editor caption 3 (blue)","default":"Generate."},
+  {"id":"langWord","type":"string","label":"Counter word","default":"narration languages"},
+  {"id":"styles","type":"string","label":"Three style names (;-separated)","default":"Chalk Classic; Doodle Pop; Ink Journal"},
+  {"id":"ex1","type":"string","label":"Example 1 title","default":"Photosynthesis"},
+  {"id":"ex2","type":"string","label":"Example 2 title","default":"Why is the sky blue?"},
+  {"id":"ratio","type":"string","label":"Vertical format label","default":"9:16"},
+  {"id":"gridA","type":"string","label":"Grid caption, first word","default":"Whiteboard"},
+  {"id":"gridB","type":"string","label":"Grid caption, middle","default":"or"},
+  {"id":"gridC","type":"string","label":"Grid caption, last word","default":"motion."},
+  {"id":"videos","type":"string","label":"Videos counter target","default":"2400"},
+  {"id":"videosWord","type":"string","label":"Counter label","default":"videos made"},
+  {"id":"creators","type":"string","label":"Counter label, second part","default":"by 1,800+ creators"},
+  {"id":"green","type":"color","label":"Green highlight","default":"#7fe3a0"},
+  {"id":"blue","type":"color","label":"Blue","default":"#3b6fe0"},
+  {"id":"pink","type":"color","label":"Pink","default":"#f07ac8"},
+  {"id":"navy","type":"color","label":"Dark background","default":"#141a2e"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Caveat-600.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Caveat-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/SourceSerif4-normal-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/IBMPlexMono-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/PatrickHand-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --green: #7fe3a0; --blue: #3b6fe0; --pink: #f07ac8; --navy: #141a2e; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #fbfbfa; font-family: "Inter", sans-serif; color: #1d2433; }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      .abs { position: absolute; left: 0; top: 0; }
+      .w { display: inline-block; white-space: pre; }
+      #scene { overflow: hidden; }
+      .hl { border-radius: 10px; background-repeat: no-repeat; background-position: 0 55%; background-size: 0% 78%; padding: 0 4px; margin: 0 -4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+      /* A: macro text */
+      .page { position: absolute; left: 0; top: 0; width: 2600px; font: 400 92px/1.6 "Source Serif 4"; color: #2b2b2b; transform-origin: 0 0; }
+      .page h1 { font: 700 132px/1.2 "Source Serif 4"; margin-bottom: 70px; letter-spacing: -0.01em; white-space: nowrap; }
+      .page h1 b { font: 700 120px/1 "Inter"; color: var(--blue); margin-right: 34px; letter-spacing: -0.02em; }
+      #aSharp { -webkit-mask-image: linear-gradient(180deg, transparent 6%, #000 30%, #000 60%, transparent 84%); mask-image: linear-gradient(180deg, transparent 6%, #000 30%, #000 60%, transparent 84%); }
+
+      /* B: book */
+      #book { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; perspective: 2400px; perspective-origin: 1150px 420px; }
+      #bookIn { position: absolute; left: 1150px; top: 600px; width: 0; height: 0; transform-style: preserve-3d; }
+      .bp { position: absolute; top: -380px; width: 560px; height: 760px; background: #fdfdfc; overflow: hidden; backface-visibility: visible; }
+      .bp .ln { position: absolute; left: 46px; height: 5px; border-radius: 3px; background: #c9ced6; }
+      #pgText { position: absolute; left: 100px; top: 0; font: 700 100px/120px "Inter"; letter-spacing: -0.04em; color: #1d2433; white-space: nowrap; }
+      #pgText div { height: 120px; }
+
+      /* C: logo on navy */
+      #cL { background: radial-gradient(ellipse 60% 60% at 50% 48%, #222c4f 0%, var(--navy) 62%, #0d1120 100%); }
+      #lock { position: absolute; left: 0; top: 0; height: 200px; display: flex; align-items: center; gap: 34px; white-space: nowrap; }
+      #lockWm { font: 700 196px/1 "Inter"; letter-spacing: -0.035em; color: #fff; }
+      #lockTag { position: absolute; left: 0; width: 1920px; top: 668px; text-align: center; font: 500 30px/1 "Inter"; letter-spacing: 0.3em; text-transform: uppercase; color: #9aa6c8; white-space: nowrap; }
+
+      /* D: paragraph */
+      #para { position: absolute; left: 216px; top: 386px; width: 1500px; font: 400 48px/66px "Source Serif 4"; color: #2a2a2a; }
+      #para .c { display: inline-block; white-space: pre; }
+      #para .wd { white-space: nowrap; }
+
+      /* E-G: board, card, editor */
+      #card { position: absolute; left: 0; top: 0; border-radius: 26px; background: #fff; box-shadow: 0 30px 80px rgba(30, 40, 70, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.04); overflow: hidden; }
+      #boardWrap { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+      #board { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+      .hand { font-family: "Patrick Hand", "Caveat", cursive; font-weight: 400; fill: #22252b; }
+      .hb { fill: var(--blue); }
+      #bar { position: absolute; left: 0; top: 0; width: 1404px; height: 74px; }
+      #caps { position: absolute; left: 0; width: 1920px; top: 912px; text-align: center; font: 700 52px/1 "Inter"; letter-spacing: -0.025em; white-space: nowrap; }
+      #editor { position: absolute; left: 0; top: 0; width: 1368px; height: 833px; }
+      #edBody { position: absolute; left: 90px; top: 196px; width: 1190px; font: 400 36px/64px "Inter"; color: #2a2f3a; }
+      #edBody .w { color: #aab0bb; }
+      #genBtn { position: absolute; left: 919px; top: 707px; width: 363px; height: 82px; border-radius: 41px; background: var(--blue); color: #fff; display: flex; align-items: center; justify-content: center; gap: 12px; font: 600 28px/1 "Inter"; box-shadow: 0 10px 26px rgba(59, 111, 224, 0.35); }
+      #say { position: absolute; left: 0; width: 1920px; top: 912px; text-align: center; font: 700 56px/1 "Inter"; letter-spacing: -0.03em; white-space: nowrap; }
+      #say span { display: inline-block; white-space: pre; }
+
+      /* H: languages */
+      #hL { background: radial-gradient(ellipse 70% 70% at 50% 45%, #1c2442 0%, var(--navy) 65%, #0e1222 100%); }
+      .lang { position: absolute; left: 0; width: 1920px; text-align: center; white-space: nowrap; font-family: "Inter", "Noto Sans Devanagari", sans-serif; color: #fff; letter-spacing: -0.03em; }
+      #langName { position: absolute; left: 0; width: 1920px; top: 160px; text-align: center; font: 500 24px/1 "Inter"; letter-spacing: 0.3em; color: #8e9bc4; text-transform: uppercase; }
+      #langCnt { position: absolute; left: 0; width: 1920px; top: 900px; text-align: center; font: 600 50px/1 "Inter"; color: #e8ebf5; white-space: nowrap; letter-spacing: -0.015em; }
+      #langCnt b { font: 800 108px/1 "Inter"; color: var(--pink); margin-right: 14px; letter-spacing: -0.03em; vertical-align: -0.12em; }
+
+      /* I-K: styles, examples, grid */
+      #iL { background: radial-gradient(ellipse 70% 70% at 50% 50%, #1b2340 0%, var(--navy) 65%, #0d1120 100%); perspective: 1800px; perspective-origin: 960px 520px; }
+      .thumb { position: absolute; left: 0; top: 0; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35); }
+      .thumb svg { display: block; width: 100%; height: 100%; }
+      #styleTag { position: absolute; left: 90px; top: 990px; display: flex; align-items: center; gap: 14px; font: 500 22px/1 "Inter"; color: #fff; white-space: nowrap; }
+      #styleTag b { height: 30px; padding: 0 10px; border-radius: 6px; background: #3b6fe0; font: 600 15px/30px "Inter"; letter-spacing: 0.12em; }
+      #ratio { position: absolute; left: 1480px; top: 880px; font: 800 150px/1 "Inter"; letter-spacing: -0.04em; color: var(--pink); white-space: nowrap; }
+      #gridCap { position: absolute; left: 0; width: 1920px; top: 506px; text-align: center; white-space: nowrap; }
+      #gridCap > div { display: inline-block; padding: 14px 30px 18px; border-radius: 18px; background: rgba(20, 26, 46, 0.86); font: 700 76px/1 "Inter"; letter-spacing: -0.035em; color: #fff; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); }
+      #gridCap span { display: inline-block; white-space: pre; }
+
+      /* L: counter */
+      #cnt { position: absolute; left: 0; width: 1920px; top: 380px; text-align: center; font: 800 210px/1 "Inter"; letter-spacing: -0.05em; color: #fff; white-space: nowrap; }
+      #cnt b { color: var(--pink); }
+      #cntSub { position: absolute; left: 0; width: 1920px; top: 612px; text-align: center; font: 600 40px/1 "Inter"; color: #e3e7f3; white-space: nowrap; letter-spacing: -0.02em; }
+      #cntSub span { color: var(--green); }
+
+      /* M: end */
+      #mLock { position: absolute; left: 0; top: 330px; height: 270px; display: flex; align-items: center; gap: 46px; white-space: nowrap; }
+      #mWm { font: 700 212px/1 "Inter"; letter-spacing: -0.04em; color: #1f2433; }
+      #mLine { position: absolute; left: 0; width: 1920px; top: 648px; text-align: center; font: 400 40px/1 "Inter"; color: #4b5162; white-space: nowrap; }
+      #mRow { position: absolute; left: 0; top: 790px; height: 88px; display: flex; align-items: center; gap: 30px; white-space: nowrap; }
+      #mBtn { height: 88px; padding: 0 42px; border-radius: 44px; background: var(--blue); color: #fff; font: 600 36px/88px "Inter"; box-shadow: 0 10px 24px rgba(59, 111, 224, 0.3); }
+      #mDom { font: 700 42px/1 "Inter"; color: #1f2433; }
+
+      /* HUD */
+      #hud { pointer-events: none; }
+      .hudt { position: absolute; font: 400 14px/1 "IBM Plex Mono"; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+      .brk { position: absolute; width: 18px; height: 18px; border-color: currentColor; border-style: solid; border-width: 0; }
+      #cursor { position: absolute; left: 0; top: 0; width: 52px; height: 52px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="40" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="40" data-track-index="0">
+        <canvas id="bgc" class="layer" width="1920" height="1080"></canvas>
+
+        <div id="aL" class="layer"><div id="aBlur" class="layer"></div><div id="aSharp" class="layer"></div></div>
+        <div id="bL" class="layer"><div id="book"><div id="bookIn"></div></div><div id="pgText"></div></div>
+        <div id="cL" class="layer"><div id="cPush" class="layer"><div id="lock"><div id="lockMark"></div><div id="lockWm"></div></div><div id="lockTag"></div></div></div>
+        <div id="dL" class="layer"><div id="para"></div></div>
+        <div id="eL" class="layer">
+          <div id="card"></div>
+          <div id="boardWrap"><svg id="board" viewBox="0 0 1920 1080"></svg></div>
+          <div id="bar"></div>
+          <div id="editor"></div>
+          <div id="caps"></div>
+          <div id="say"></div>
+        </div>
+        <div id="hL" class="layer"><div id="langName"></div><div id="langs"></div><div id="langCnt"></div></div>
+        <div id="iL" class="layer">
+          <div id="ring" class="layer"></div>
+          <div id="carousel" class="layer" style="transform-style: preserve-3d"></div>
+          <div id="styleTag"><b>MOTION</b><span></span></div>
+        </div>
+        <div id="jL" class="layer"><div id="exA" class="layer"></div><div id="exB" class="layer"></div><div id="exDim" class="layer" style="background: rgba(70, 76, 96, 0.66)"></div><div id="jTag" class="abs" style="left: 90px; top: 990px; display: flex; align-items: center; gap: 14px; font: 500 22px/1 Inter; color: #1d2433; white-space: nowrap"><b style="height: 30px; padding: 0 10px; border-radius: 6px; background: #3b6fe0; color: #fff; font: 600 15px/30px Inter; letter-spacing: 0.12em">MOTION</b><span style="height: 30px; padding: 0 10px; border-radius: 6px; background: #1d2433; color: #fff; font: 500 18px/30px Inter"></span></div><div id="vcard" class="thumb"></div><div id="ratio"></div></div>
+        <div id="kL" class="layer" style="background: var(--navy); perspective: 2000px; perspective-origin: 960px 540px"><div id="grid" class="layer" style="transform-style: preserve-3d"></div><div id="gridCap"></div></div>
+        <div id="lL" class="layer"><canvas id="dots" class="layer" width="1920" height="1080"></canvas><div id="cnt"></div><div id="cntSub"></div></div>
+        <div id="mL" class="layer"><div id="mLock"><div id="mMark"></div><div id="mWm"></div></div><div id="mLine"></div><div id="mRow"><div id="mBtn"></div><div id="mDom"></div></div></div>
+
+        <div id="hud" class="layer">
+          <div id="hTL" class="hudt" style="left: 40px; top: 34px"></div>
+          <div id="hTR" class="hudt" style="left: 1500px; top: 34px"></div>
+          <div id="hBR" class="hudt" style="left: 1640px; top: 1034px"></div>
+          <div class="brk" style="left: 22px; top: 22px; border-left-width: 1.5px; border-top-width: 1.5px"></div>
+          <div class="brk" style="left: 1880px; top: 22px; border-right-width: 1.5px; border-top-width: 1.5px"></div>
+          <div class="brk" style="left: 22px; top: 1040px; border-left-width: 1.5px; border-bottom-width: 1.5px"></div>
+          <div class="brk" style="left: 1880px; top: 1040px; border-right-width: 1.5px; border-bottom-width: 1.5px"></div>
+        </div>
+        <svg id="cursor" viewBox="0 0 24 24"><path d="M5 2.8v16.6l4.1-3.9 2.7 6.1 2.9-1.3-2.7-6h5.8z" fill="#111" stroke="#fff" stroke-width="1.3" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 40, TAU = Math.PI * 2;
+        const GREEN = v.green, BLUE = v.blue, PINK = v.pink, NAVY = v.navy;
+        const HCOL = { g: GREEN, b: "#a9c6f6", p: "#f5b0dc" };
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const px = (n) => n.toFixed(1) + "px";
+        const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+        const blurS = (b) => (b > 0.25 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const fade = (el, a) => { K.show(el, a > 0.002); el.style.opacity = C(a).toFixed(3); };
+        const hexA = (h, a) => { const n = parseInt(String(h).replace("#", ""), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
+        const list = (s) => String(s).split(";").map((x) => x.trim()).filter(Boolean);
+        const mk = (tag, cls, parent, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; if (parent) parent.appendChild(e); return e; };
+        const cv = document.createElement("canvas").getContext("2d");
+        const textW = (s, font, ls) => { cv.font = font; return cv.measureText(s).width + (ls || 0) * [...s].length; };
+        const blurIn = (w, t, a, d, dy, s0) => { const u = E.outCubic(P(t, a, a + (d || 0.3))); w.style.opacity = C(u * 1.4).toFixed(3); w.style.filter = blurS(14 * (1 - u)); w.style.transform = "translateY(" + px((dy || 0) * (1 - u)) + ") scale(" + L(s0 || 1.04, 1, u).toFixed(3) + ")"; return u; };
+        // "{b:word}" -> blue span (for handwriting labels, as SVG tspans)
+        const tspans = (s) => esc(s).replace(/\{b:(.*?)\}/g, '<tspan class="hb">$1</tspan>');
+        // "[g:word]" -> highlight spans
+        const PARA = [];
+        String(v.para).replace(/\[(g|b|p):([^\]]+)\]|([^\[]+)/g, (m, c, hw, plain) => { if (c) PARA.push({ t: hw, c }); else plain.split(/(\s+)/).forEach((x) => { if (x) PARA.push({ t: x, c: null }); }); return m; });
+
+        // ---------- mark ----------
+        const MARK = (s) => '<svg viewBox="0 0 200 200" style="width:' + s + "px;height:" + s + 'px;display:block;overflow:visible"><path class="mk" d="M34 56 C 70 40, 110 64, 166 48" fill="none" stroke="' + GREEN + '" stroke-width="30" stroke-linecap="round" pathLength="1"/><path class="mk" d="M34 104 C 76 88, 118 116, 150 100" fill="none" stroke="' + BLUE + '" stroke-width="30" stroke-linecap="round" pathLength="1"/><path class="mk" d="M34 152 C 64 140, 92 160, 120 148" fill="none" stroke="' + PINK + '" stroke-width="30" stroke-linecap="round" pathLength="1"/></svg>';
+
+        // ---------- illustration library (1600x900 artboards) ----------
+        const S = 'stroke="#2b2d33" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"';
+        const HAND = (x, y, s, txt, anchor, col) => '<text x="' + x + '" y="' + y + '" font-family="Patrick Hand" font-weight="400" font-size="' + s + '" fill="' + (col || "#2b2d33") + '" text-anchor="' + (anchor || "middle") + '">' + esc(txt) + "</text>";
+        const SUN = (x, y, r) => { let s = '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#ffd23f" ' + S + "/>"; for (let k = 0; k < 8; k++) { const a = (k / 8) * TAU; s += '<path d="M' + (x + Math.cos(a) * (r + 22)) + " " + (y + Math.sin(a) * (r + 22)) + "L" + (x + Math.cos(a) * (r + 50)) + " " + (y + Math.sin(a) * (r + 50)) + '" ' + S + "/>"; } return s; };
+        const ILL = {
+          photo: (title) => '<rect width="1600" height="900" fill="#fffdf4"/>' + HAND(800, 110, 84, title || "Photosynthesis") + SUN(250, 250, 90) +
+            '<path d="M800 760 C 560 700, 520 420, 820 300 C 1060 420, 1060 700, 800 760z" fill="#8fd67a" ' + S + '/><path d="M800 760 C 790 600, 800 470, 820 320M800 640 L 720 560M805 540 L 900 470M803 460 L 740 410" fill="none" ' + S + "/>" +
+            '<path d="M380 330 C 470 360, 520 400, 560 450" fill="none" stroke="#e8a33d" stroke-width="10" stroke-dasharray="4 22" stroke-linecap="round"/>' +
+            '<circle cx="330" cy="620" r="78" fill="#e9ecf2" ' + S + '/><text x="330" y="642" font-family="Inter" font-weight="800" font-size="52" text-anchor="middle" fill="#2b2d33">CO₂</text><path d="M420 620 L 560 600" fill="none" ' + S + '/><path d="M540 580 L 566 600 540 622" fill="none" ' + S + "/>" +
+            '<circle cx="1280" cy="420" r="78" fill="#dff2ff" ' + S + '/><text x="1280" y="442" font-family="Inter" font-weight="800" font-size="52" text-anchor="middle" fill="#2b2d33">O₂</text><path d="M1060 470 L 1190 440" fill="none" ' + S + '/><path d="M1170 420 L 1196 440 1170 462" fill="none" ' + S + "/>" +
+            '<path d="M1180 700 c 0 -40, 40 -80, 40 -110 c 0 30, 40 70, 40 110 a 40 40 0 0 1 -80 0z" fill="#7fb6f2" ' + S + '/><rect x="1330" y="640" width="110" height="110" rx="16" fill="#fff" ' + S + "/>" +
+            HAND(330, 750, 50, "carbon dioxide") + HAND(1280, 550, 50, "oxygen") + HAND(1220, 830, 50, "water") + HAND(1385, 800, 50, "sugar"),
+          sky: (title) => '<rect width="1600" height="900" fill="#f4f8ff"/>' + HAND(800, 110, 84, title || "Why is the sky blue?") + SUN(230, 260, 95) +
+            '<path d="M-20 900 C 400 640, 1200 640, 1620 900z" fill="#8fd67a" ' + S + '/><path d="M-20 820 C 420 560, 1180 560, 1620 820" fill="none" stroke="#9cc3f5" stroke-width="40" opacity="0.6"/>' +
+            [0, 1, 2].map((k) => '<path d="M' + (340 + k * 10) + " " + (320 + k * 40) + " L " + (760 + k * 60) + " " + (470 + k * 30) + '" fill="none" stroke="#e8a33d" stroke-width="9" stroke-linecap="round"/>').join("") +
+            [0, 1, 2, 3, 4].map((k) => '<path d="M' + (800 + k * 70) + " " + (480 + (k % 2) * 30) + " q 20 -30 40 0 t 40 0 t 40 0" + '" fill="none" stroke="#3b6fe0" stroke-width="8" stroke-linecap="round" transform="rotate(' + (-40 + k * 20) + " " + (800 + k * 70) + " " + (480 + (k % 2) * 30) + ')"/>').join("") +
+            '<circle cx="1160" cy="640" r="30" fill="#fff" ' + S + '/><path d="M1160 670 L 1160 740 M1160 690 L 1130 715 M1160 690 L 1190 715 M1160 740 L 1135 790 M1160 740 L 1185 790" fill="none" ' + S + '/>' + HAND(1300, 560, 50, "blue light scatters most", "start"),
+          gears: () => '<rect width="1600" height="900" fill="#fff6ee"/>' + [[560, 470, 200, "#f29b4b"], [900, 330, 140, "#4bb5a8"], [980, 650, 120, "#8b7be8"]].map((g) => { let d = ""; for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU; d += '<rect x="' + (g[0] - 22) + '" y="' + (g[1] - g[2] - 40) + '" width="44" height="70" rx="8" fill="' + g[3] + '" ' + S + ' transform="rotate(' + (k * 30) + " " + g[0] + " " + g[1] + ')"/>'; } return d + '<circle cx="' + g[0] + '" cy="' + g[1] + '" r="' + g[2] + '" fill="' + g[3] + '" ' + S + '/><circle cx="' + g[0] + '" cy="' + g[1] + '" r="' + g[2] * 0.3 + '" fill="#fff" ' + S + "/>"; }).join(""),
+          rocket: () => '<rect width="1600" height="900" fill="#f1eeff"/><circle cx="1250" cy="620" r="150" fill="#f7b267" ' + S + '/><ellipse cx="1250" cy="620" rx="250" ry="60" fill="none" ' + S + '/><path d="M700 700 C 700 480, 780 330, 830 260 C 880 330, 960 480, 960 700z" fill="#fff" ' + S + '/><circle cx="830" cy="480" r="50" fill="#9cc3f5" ' + S + '/><path d="M700 640 L 610 760 L 700 740z M960 640 L 1050 760 L 960 740z" fill="#ef5b73" ' + S + '/><path d="M760 700 C 770 800, 830 860, 830 860 C 830 860, 890 800, 900 700z" fill="#ffb13d" ' + S + '/>' + [[300, 200], [420, 520], [1400, 200], [260, 740], [1100, 160]].map((p) => '<path d="M' + p[0] + " " + (p[1] - 20) + " L " + (p[0] + 6) + " " + (p[1] - 6) + " L " + (p[0] + 20) + " " + p[1] + " L " + (p[0] + 6) + " " + (p[1] + 6) + " L " + p[0] + " " + (p[1] + 20) + " L " + (p[0] - 6) + " " + (p[1] + 6) + " L " + (p[0] - 20) + " " + p[1] + " L " + (p[0] - 6) + " " + (p[1] - 6) + 'z" fill="#ffd23f" stroke="#2b2d33" stroke-width="4"/>').join(""),
+          heart: () => '<rect width="1600" height="900" fill="#fff1f3"/><path d="M800 760 C 520 580, 420 420, 520 300 C 610 200, 740 240, 800 330 C 860 240, 990 200, 1080 300 C 1180 420, 1080 580, 800 760z" fill="#ef5b73" ' + S + '/><path d="M200 470 L 520 470 L 580 380 L 650 580 L 720 420 L 760 470 L 1400 470" fill="none" stroke="#fff" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>' + [[300, 250, 50], [1300, 700, 60], [1360, 260, 40]].map((c) => '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '" fill="#f7a8b6" ' + S + "/>").join(""),
+          volcano: () => '<rect width="1600" height="900" fill="#fff7ea"/><path d="M280 860 L 700 380 L 900 380 L 1320 860z" fill="#b07a50" ' + S + '/><path d="M700 380 C 720 460, 760 520, 740 620 C 800 560, 820 470, 900 380z" fill="#ef5b3a" ' + S + '/>' + [[800, 250, 90], [700, 190, 70], [920, 170, 80], [820, 110, 60]].map((c) => '<circle cx="' + c[0] + '" cy="' + c[1] + '" r="' + c[2] + '" fill="#d9dbe2" ' + S + "/>").join(""),
+          chart: () => '<rect width="1600" height="900" fill="#f0fbf5"/><path d="M280 760 L 1320 760" fill="none" ' + S + '/>' + [[380, 520, "#7fb6f2"], [560, 420, "#8fd67a"], [740, 470, "#7fb6f2"], [920, 300, "#8fd67a"], [1100, 200, "#f07ac8"]].map((b) => '<rect x="' + b[0] + '" y="' + b[1] + '" width="120" height="' + (760 - b[1]) + '" rx="12" fill="' + b[2] + '" ' + S + "/>").join("") + '<path d="M360 460 L 620 360 L 800 400 L 1160 150" fill="none" stroke="#ef5b3a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M1100 140 L 1170 145 L 1150 210" fill="none" stroke="#ef5b3a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>',
+          atom: () => '<rect width="1600" height="900" fill="#eff6ff"/>' + [0, 60, 120].map((r) => '<ellipse cx="800" cy="450" rx="360" ry="120" fill="none" ' + S + ' transform="rotate(' + r + ' 800 450)"/>').join("") + '<circle cx="800" cy="450" r="70" fill="#f07ac8" ' + S + '/><circle cx="1150" cy="450" r="30" fill="#7fb6f2" ' + S + '/><circle cx="620" cy="140" r="30" fill="#8fd67a" ' + S + '/><circle cx="620" cy="760" r="30" fill="#ffd23f" ' + S + "/>",
+          plant: () => '<rect width="1600" height="900" fill="#f4fbee"/>' + [[380, 0.4], [800, 0.7], [1220, 1]].map((p) => '<path d="M' + (p[0] - 110) + ' 640 L ' + (p[0] + 110) + ' 640 L ' + (p[0] + 80) + ' 800 L ' + (p[0] - 80) + ' 800z" fill="#d98c5f" ' + S + '/><path d="M' + p[0] + " 640 L " + p[0] + " " + (640 - 360 * p[1]) + '" fill="none" ' + S + '/><path d="M' + p[0] + " " + (640 - 200 * p[1]) + " C " + (p[0] - 120 * p[1]) + " " + (560 - 220 * p[1]) + ", " + (p[0] - 200 * p[1]) + " " + (640 - 200 * p[1]) + ", " + p[0] + " " + (640 - 200 * p[1]) + 'z" fill="#8fd67a" ' + S + "/>").join(""),
+          globe: () => '<rect width="1600" height="900" fill="#eef5ff"/><circle cx="800" cy="460" r="300" fill="#9cc3f5" ' + S + '/><path d="M620 300 C 700 260, 760 330, 720 400 C 680 470, 600 430, 620 300z M860 480 C 960 440, 1040 520, 980 600 C 920 680, 840 600, 860 480z M700 560 C 740 540, 780 600, 740 640 C 700 660, 680 600, 700 560z" fill="#8fd67a" ' + S + '/><path d="M500 300 C 700 120, 1000 150, 1150 360" fill="none" stroke="#ef5b3a" stroke-width="9" stroke-dasharray="20 18" stroke-linecap="round"/><circle cx="1150" cy="360" r="22" fill="#ef5b3a" ' + S + "/>",
+          bulb: () => '<rect width="1600" height="900" fill="#fffae6"/><path d="M800 180 C 640 180, 560 300, 580 420 C 600 520, 700 560, 700 660 L 900 660 C 900 560, 1000 520, 1020 420 C 1040 300, 960 180, 800 180z" fill="#ffd23f" ' + S + '/><rect x="700" y="660" width="200" height="90" rx="14" fill="#c9ced8" ' + S + '/><path d="M740 700 L 860 700" fill="none" ' + S + '/>' + [0, 1, 2, 3, 4, 5, 6].map((k) => { const a = -Math.PI + (k / 6) * Math.PI; return '<path d="M' + (800 + Math.cos(a) * 320) + " " + (420 + Math.sin(a) * 320) + " L " + (800 + Math.cos(a) * 400) + " " + (420 + Math.sin(a) * 400) + '" ' + S + "/>"; }).join(""),
+          water: () => '<rect width="1600" height="900" fill="#ffffff"/>' + SUN(260, 220, 80) + '<path d="M140 620 q 60 -30 120 0 t 120 0 t 120 0 t 120 0 t 120 0 t 120 0 L 860 820 L 140 820z" fill="#8fb0ef" ' + S + '/><path d="M1060 260 c -60 0, -80 -80, -20 -100 c 10 -70, 110 -80, 140 -20 c 60 -30, 130 20, 110 90 c 40 30, 10 90, -40 80z" fill="#fff" stroke="#3b6fe0" stroke-width="7" stroke-linejoin="round"/>' + [480, 580, 680].map((x) => '<path d="M' + x + ' 580 q -30 -40 0 -80 t 0 -80 t 0 -80" fill="none" stroke="#3b6fe0" stroke-width="8" stroke-linecap="round"/>').join(""),
+        };
+        const ILLK = Object.keys(ILL);
+        const art = (name, title) => '<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">' + ILL[name](title) + "</svg>";
+
+        // ---------- background ----------
+        const bg = $("bgc").getContext("2d");
+        function drawBg(t) {
+          const light = (t < 6.5) || (t >= 8.26 && t < 21.7) || t >= 36.5;
+          const mixHex = (a, b, u) => { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); return "rgb(" + [16, 8, 0].map((s) => Math.round(L((A >> s) & 255, (B >> s) & 255, u))).join(",") + ")"; };
+          const tint = t >= 2.35 && t < 6.5 ? mixHex("#fbfbfa", "#eaeef4", P(t, 2.35, 2.7)) : t >= 13.3 && t < 21.7 ? mixHex("#fbfbfa", "#e9ecf1", ioq(P(t, 13.35, 13.8))) : "#fbfbfa";
+          bg.fillStyle = light ? tint : NAVY; bg.fillRect(0, 0, 1920, 1080);
+          if (light) { const g = bg.createRadialGradient(960, 480, 0, 960, 480, 1100); g.addColorStop(0, "rgba(255,255,255,0.75)"); g.addColorStop(1, "rgba(255,255,255,0)"); bg.fillStyle = g; bg.fillRect(0, 0, 1920, 1080); }
+        }
+
+        // ================= A: macro text =================
+        const pageHTML = '<h1><b>' + esc(v.chapter) + "</b>" + esc(v.chapterTitle) + '</h1><p id="pA">' + PARA.map((w) => (w.c ? '<span class="hl" data-c="' + w.c + '" style="background-image:linear-gradient(' + HCOL[w.c] + "," + HCOL[w.c] + ')">' + esc(w.t) + "</span>" : esc(w.t))).join("") + "</p>";
+        $("aBlur").innerHTML = '<div class="page">' + pageHTML + "</div>"; $("aSharp").innerHTML = '<div class="page">' + pageHTML + "</div>";
+        const aPages = [...document.querySelectorAll("#aL .page")];
+        const aHL = aPages.map((p) => [...p.querySelectorAll(".hl")]);
+        function sceneA(t) {
+          const on = t < 2.42;
+          K.show($("aL"), on);
+          if (!on) return;
+          const u = P(t, 0, 2.3);
+          const x = L(170, -1080, ioq(u) * 0.35 + u * 0.65), y = L(150, -40, u);
+          const tr = "translate(" + px(x) + "," + px(y) + ") perspective(1700px) rotateY(-16deg) rotateX(10deg) rotateZ(-5deg)";
+          aPages.forEach((p) => { p.style.transform = tr; });
+          $("aBlur").style.filter = "blur(8px)";
+          aHL.forEach((arr) => arr.slice(0, 3).forEach((h, k) => { const a = [0.3, 1.02, 1.42][k], hu = E.outCubic(P(t, a, a + 0.2)); h.style.backgroundSize = (100 * hu).toFixed(1) + "% 78%"; }));
+          const out = E.inCubic(P(t, 2.12, 2.38));
+          const aL = $("aL");
+          aL.style.transform = out > 0 ? "scale(" + L(1, 0.45, out).toFixed(3) + ") rotate(" + (6 * out).toFixed(2) + "deg)" : "none"; aL.style.transformOrigin = "1100px 560px";
+          aL.style.filter = blurS(18 * out); aL.style.opacity = (1 - P(t, 2.25, 2.4)).toFixed(3);
+        }
+
+        // ================= B: book =================
+        const bookIn = $("bookIn");
+        const pageLines = (seed, chart) => { let s = ""; for (let k = 0; k < 24; k++) { const w = k % 7 === 6 ? 180 + R(seed + k) * 140 : 420 + R(seed + k) * 50; if (chart && k >= 12 && k < 18) continue; s += '<div class="ln" style="top:' + (64 + k * 27) + "px;width:" + w.toFixed(0) + 'px"></div>'; } if (chart) s += '<div class="abs" style="left:46px;top:420px;width:300px;height:130px;border-radius:8px;background:#eef1f6"><div class="abs" style="left:30px;top:70px;width:22px;height:46px;background:#a9c6f6"></div><div class="abs" style="left:70px;top:40px;width:22px;height:76px;background:#a9c6f6"></div><div class="abs" style="left:110px;top:60px;width:22px;height:56px;background:#a9c6f6"></div><div class="abs" style="left:150px;top:24px;width:22px;height:92px;background:#a9c6f6"></div></div>'; return s; };
+        // cover, page stack and the two open pages
+        const cover = mk("div", "abs", bookIn); cover.style.cssText = "position:absolute;left:-586px;top:-400px;width:1172px;height:800px;border-radius:10px;background:#6f9bef;transform:translateZ(-30px)";
+        for (let k = 0; k < 5; k++) { const s = mk("div", "abs", bookIn); s.style.cssText = "position:absolute;left:" + (-566 + k) + "px;top:" + (-384 + k) + "px;width:" + (1132 - 2 * k) + "px;height:768px;background:" + (k % 2 ? "#f1f2f4" : "#e3e6eb") + ";transform:translateZ(" + (-25 + k * 5) + "px)"; }
+        const pL = mk("div", "bp", bookIn, pageLines(3, true)); pL.style.left = "-560px"; pL.style.boxShadow = "inset -30px 0 40px -30px rgba(0,0,0,0.18)";
+        const pR = mk("div", "bp", bookIn, '<div class="abs" style="left:46px;top:40px;font:700 30px/1 Source Serif 4;color:#2b2b2b;white-space:nowrap"><b style="font-family:Inter;color:' + BLUE + '">' + esc(v.chapter) + "</b> " + esc(v.chapterTitle) + "</div>" + pageLines(9, false).replace(/top:64px/, "top:100px") + '<div class="abs" style="left:150px;top:118px;width:90px;height:16px;border-radius:5px;background:' + HCOL.b + '"></div><div class="abs" style="left:96px;top:145px;width:110px;height:16px;border-radius:5px;background:' + HCOL.p + '"></div><div class="abs" style="left:300px;top:199px;width:70px;height:16px;border-radius:5px;background:' + HCOL.g + '"></div>'); pR.style.left = "0px"; pR.style.boxShadow = "inset 30px 0 40px -30px rgba(0,0,0,0.18)";
+        const FT = [3.3, 3.62, 3.85, 4.05, 4.25, 4.4, 4.55, 4.68, 4.8, 4.9, 5.0, 5.08, 5.15, 5.22, 5.28, 5.34, 5.4, 5.45, 5.5, 5.55, 5.6, 5.65, 5.7, 5.75, 5.8, 5.85, 5.9];
+        const FLIPS = FT.map((t0, k) => { const el = mk("div", "bp", bookIn, pageLines(20 + k, k % 4 === 1)); el.style.left = "0px"; el.style.transformOrigin = "0 50%"; return { el, t0, d: k < 4 ? 0.62 : k < 10 ? 0.48 : 0.38 }; });
+        const pgs = [v.pages1, v.pages2, v.pages3];
+        $("pgText").innerHTML = pgs.map((s, k) => '<div style="' + (k === 2 ? "color:" + BLUE : "") + '"><span class="w">' + esc(s) + "</span></div>").join("");
+        const pgLines = [...$("pgText").querySelectorAll(".w")];
+        function sceneB(t) {
+          const on = t >= 2.35 && t < 6.7;
+          K.show($("bL"), on);
+          if (!on) return;
+          const inU = E.outCubic(P(t, 2.38, 2.95));
+          // the book slowly turns while the pages fly
+          const rz = L(-14, -8, P(t, 2.4, 6.0)), rx = L(56, 48, P(t, 2.4, 6.0));
+          let sc = L(1.5, 0.8, inU) * L(1, 1.08, P(t, 3, 6));
+          let bx = L(1100, 1180, P(t, 3, 6)), by = L(560, 600, inU);
+          const close = ioq(P(t, 6.0, 6.3)), fly = E.inCubic(P(t, 6.25, 6.55));
+          bx = L(bx, 860, close); by = L(by, 560, close); sc *= L(1, 0.62, close) * L(1, 0.7, fly);
+          bookIn.style.left = px(bx); bookIn.style.top = px(by);
+          bookIn.style.transform = "scale(" + sc.toFixed(4) + ") rotateX(" + L(rx, 18, close).toFixed(2) + "deg) rotateZ(" + L(rz, -12, close).toFixed(2) + "deg) rotateY(" + (180 * close).toFixed(1) + "deg)";
+          $("book").style.filter = blurS(12 * (1 - P(t, 2.4, 2.8)) + 10 * fly);
+          $("bL").style.opacity = (C(P(t, 2.36, 2.5)) * (1 - P(t, 6.45, 6.6))).toFixed(3);
+          // page flips
+          FLIPS.forEach((f) => {
+            const u = P(t, f.t0, f.t0 + f.d);
+            const a = -180 * ioq(u);
+            f.el.style.transform = "translateZ(" + px(2 + 30 * Math.sin(Math.PI * u)) + ") rotateY(" + a.toFixed(2) + "deg)";
+            f.el.style.filter = blurS(u > 0 && u < 1 ? (f.d < 0.4 ? 7 : f.d < 0.5 ? 4 : 2) * Math.sin(Math.PI * u) : 0);
+            f.el.style.background = "linear-gradient(90deg, rgba(0,0,0," + (0.12 * Math.sin(Math.PI * u)).toFixed(3) + "), #fdfdfc 40%)";
+            f.el.style.opacity = t >= f.t0 - 0.02 || f.t0 < 3.5 ? "1" : "0";
+          });
+          pL.style.transform = "rotateY(" + (180 * ioq(P(t, 6.0, 6.25))).toFixed(1) + "deg)"; pL.style.transformOrigin = "100% 50%";
+          // pages. and pages. and pages.
+          // the block re-centres as lines are added
+          const n = t >= 5.05 ? 3 : t >= 4.25 ? 2 : 1;
+          const top = L([435, 435, 435, 322][n], [435, 435, 322, 201][n], ioq(P(t, [0, 3.5, 4.25, 5.05][n], [0, 3.5, 4.25, 5.05][n] + 0.3)));
+          $("pgText").style.transform = "translateY(" + px(top) + ")";
+          pgLines.forEach((w, k) => blurIn(w, t, [3.5, 4.25, 5.05][k], 0.3, 24, 1.06));
+          $("pgText").style.opacity = (1 - P(t, 5.95, 6.15)).toFixed(3);
+        }
+
+        // ================= C: logo on navy =================
+        $("lockMark").innerHTML = MARK(240);
+        $("lockWm").textContent = v.brand;
+        $("lockTag").textContent = v.tagline;
+        const mkPaths = [...$("lockMark").querySelectorAll(".mk")];
+        let lockW = 0;
+        function sceneC(t) {
+          const on = t >= 6.42 && t < 8.3;
+          K.show($("cL"), on);
+          if (!on) return;
+          $("cL").style.opacity = P(t, 6.42, 6.6).toFixed(3);
+          if (!lockW) lockW = $("lock").offsetWidth;
+          const markOnly = 240, slide = E.outCubic(P(t, 6.98, 7.4));
+          const x0 = 960 - markOnly / 2, x1 = 960 - lockW / 2;
+          const lk = $("lock"); lk.style.left = px(L(x0, x1, slide)); lk.style.top = px(540 - 100 - 20);
+          mkPaths.forEach((p, k) => K.draw(p, E.outCubic(P(t, 6.55 + k * 0.08, 6.85 + k * 0.08))));
+          const wm = $("lockWm"), wu = E.outCubic(P(t, 7.0, 7.38));
+          wm.style.opacity = C(wu * 1.6).toFixed(3); wm.style.transform = "translateX(" + px(260 * (1 - wu)) + ")";
+          const rgb = 1 - wu;
+          wm.style.textShadow = rgb > 0.02 ? px(-26 * rgb) + " 0 rgba(255,60,120," + (0.8 * rgb).toFixed(2) + "), " + px(26 * rgb) + " 0 rgba(60,220,255," + (0.8 * rgb).toFixed(2) + ")" : "none";
+          wm.style.filter = blurS(12 * rgb);
+          const tg = $("lockTag"), tu = E.outCubic(P(t, 7.42, 7.8));
+          tg.style.opacity = tu.toFixed(3); tg.style.letterSpacing = (0.5 - 0.2 * tu).toFixed(3) + "em";
+          const push = L(1, 1.12, ios(P(t, 7.3, 8.3)));
+          $("cPush").style.transform = "scale(" + push.toFixed(4) + ")"; $("cPush").style.transformOrigin = "960px 540px";
+        }
+        function ios(u) { return -(Math.cos(Math.PI * u) - 1) / 2; }
+
+        // ================= D: paragraph that dissolves into the ocean =================
+        const para = $("para");
+        const CH = [];
+        PARA.forEach((w) => {
+          if (/^\s+$/.test(w.t)) { para.appendChild(document.createTextNode(" ")); return; }
+          const word = mk("span", w.c ? "hl wd" : "wd", para);
+          if (w.c) { word.style.backgroundImage = "linear-gradient(" + HCOL[w.c] + "," + HCOL[w.c] + ")"; word.dataset.c = w.c; }
+          [...w.t].forEach((ch) => { const c = mk("span", "c", word, esc(ch)); CH.push({ el: c, hl: !!w.c, i: CH.length }); });
+        });
+        const HLW = [...para.querySelectorAll(".hl")];
+        const HLT = [8.36, 8.46, 8.56, 8.76, 8.86, 9.28, 9.4];
+        let chPos = null;
+        function sceneD(t) {
+          const on = t >= 8.24 && t < 10.95;
+          K.show($("dL"), on);
+          if (!on) return;
+          if (!chPos) { CH.forEach((c) => { c.el.style.transform = ""; }); chPos = CH.map((c) => { const r = c.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }); }
+          HLW.forEach((h, k) => { const a = HLT[k] || 9.5, u = E.outCubic(P(t, a, a + 0.14)); h.style.backgroundSize = (100 * u).toFixed(1) + "% 82%"; });
+          const grey = P(t, 9.85, 10.1);
+          CH.forEach((c, k) => {
+            const d = c.hl ? 10.4 + R(k * 1.7) * 0.16 : 10.18 + R(k * 3.1) * 0.3, u = E.inCubic(P(t, d, d + 0.34));
+            if (!c.hl) c.el.style.color = grey > 0 ? "rgb(" + [42, 42, 42].map((x) => Math.round(L(x, 200, grey))).join(",") + ")" : "";
+            if (u <= 0) { c.el.style.transform = ""; c.el.style.opacity = ""; return; }
+            const ob = oceanBox(d + 0.34), tx = ob.bx + 40 + R(k * 7.7) * (ob.w - 80), ty = ob.by + 40 + R(k * 5.3) * (ob.h - 60), p0 = chPos[k];
+            c.el.style.transform = "translate(" + px((tx - p0[0]) * u) + "," + px((ty - p0[1]) * u - 120 * Math.sin(Math.PI * u) * R(k)) + ") rotate(" + ((R(k * 2.2) - 0.5) * 540 * u).toFixed(1) + "deg) scale(" + L(1, 0.4, u).toFixed(3) + ")";
+            c.el.style.opacity = (1 - P(u, 0.6, 1)).toFixed(3);
+          });
+          HLW.forEach((h) => { const u = P(t, 10.3, 10.6); h.style.backgroundImage = u > 0 ? "linear-gradient(" + hexA("#a9c6f6", (1 - u).toFixed(2)) + "," + hexA("#a9c6f6", (1 - u).toFixed(2)) + ")" : "linear-gradient(" + HCOL[h.dataset.c] + "," + HCOL[h.dataset.c] + ")"; });
+        }
+
+        // ================= E-G: drawing, player card, script editor =================
+        const board = $("board");
+        const lines = (s) => String(s).split("|");
+        const label = (x, y, s, size, lh, anchor, id) => '<g id="' + id + '">' + lines(s).map((l, k) => '<text class="hand hl' + k + '" x="' + x + '" y="' + (y + k * lh) + '" font-size="' + size + '" text-anchor="' + (anchor || "start") + '">' + tspans(l) + "</text>").join("") + "</g>";
+        const wavyUp = (x, y0, y1, amp) => { let d = "M" + x + " " + y0; const n = 6; for (let k = 1; k <= n; k++) { const y = y0 + (y1 - y0) * (k / n); d += " Q " + (x + (k % 2 ? amp : -amp)) + " " + (y0 + (y1 - y0) * ((k - 0.5) / n)) + " " + x + " " + y; } return d; };
+        (function buildBoard() {
+          let h = "";
+          h += '<defs><pattern id="hatch" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><path d="M0 0V16" stroke="#9cb6ee" stroke-width="5"/></pattern><clipPath id="oceanClip"><rect id="oceanR" x="100" y="700" width="1000" height="0"/></clipPath></defs>';
+          // ocean
+          h += '<g id="oceanG"><g clip-path="url(#oceanClip)"><path id="ocean" d="M127 790 q 45 -22 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 L 1027 972 L 127 972z" fill="#8fb0ef" stroke="#2b2d33" stroke-width="6" stroke-linejoin="round"/>';
+          h += '<path id="oceanTex" d="M127 790 q 45 -22 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 t 90 0 L 1027 972 L 127 972z" fill="url(#hatch)" opacity="0"/></g></g>';
+          for (let k = 0; k < 7; k++) { const x = 170 + (k % 4) * 210 + (k > 3 ? 100 : 0), y = 840 + (k > 3 ? 70 : 0); h += '<path class="dw" d="M' + x + " " + y + ' q 22 -14 44 0 t 44 0" fill="none" stroke="#4d6fc4" stroke-width="5" stroke-linecap="round" pathLength="1"/>'; }
+          // sun and rays
+          h += '<circle id="sunC" class="dw" cx="326" cy="240" r="78" fill="#fad93a" stroke="#2b2d33" stroke-width="6" pathLength="1"/>';
+          for (let k = 0; k < 9; k++) { const a = (k / 9) * TAU - 0.3; h += '<path class="dw ray" d="M' + (326 + Math.cos(a) * 102).toFixed(1) + " " + (240 + Math.sin(a) * 102).toFixed(1) + " L " + (326 + Math.cos(a) * 140).toFixed(1) + " " + (240 + Math.sin(a) * 140).toFixed(1) + '" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" pathLength="1"/>'; }
+          [[410, 350, 560], [455, 360, 580], [500, 350, 560]].forEach((z) => { let d = "M" + z[0] + " " + z[1]; for (let k = 1; k <= 6; k++) d += " L " + (z[0] + (k % 2 ? 22 : -4) + k * 8) + " " + (z[1] + ((z[2] - z[1]) * k) / 6); h += '<path class="dw sray" d="' + d + '" fill="none" stroke="#e8c31a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>'; });
+          // vapour
+          [700, 800, 900].forEach((x, k) => { h += '<path class="dw vap" d="' + wavyUp(x, 730, 460, 14) + '" fill="none" stroke="#4d6fc4" stroke-width="6" stroke-linecap="round" pathLength="1"/><path class="dw vap" d="M' + (x - 16) + " 482 L " + x + " 456 L " + (x + 16) + ' 482" fill="none" stroke="#4d6fc4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>'; });
+          for (let k = 0; k < 26; k++) h += '<circle class="vdot" cx="' + (660 + R(k * 3.3) * 300).toFixed(0) + '" cy="' + (480 + R(k * 5.1) * 250).toFixed(0) + '" r="' + (3 + R(k) * 3).toFixed(1) + '" fill="#7d95cf"/>';
+          // cloud
+          h += '<path id="cloud" class="dw" d="M1230 250 c -70 0, -90 -90, -20 -110 c 10 -80, 120 -90, 150 -25 c 60 -40, 150 10, 125 90 c 50 30, 20 105, -45 95z" fill="url(#hatch)" stroke="#3b6fe0" stroke-width="6" stroke-linejoin="round" pathLength="1"/>';
+          // drop circle
+          h += '<circle id="dropC" class="dw" cx="1259" cy="590" r="163" fill="#fff" stroke="#2b2d33" stroke-width="6" pathLength="1"/>';
+          h += '<path id="drop" d="M1259 470 c 0 0, -34 44, -34 70 a 34 34 0 0 0 68 0 c 0 -26, -34 -70, -34 -70z" fill="#5d8be6" stroke="#2b2d33" stroke-width="5"/>';
+          h += '<path class="dw" d="M975 600 Q 1030 560, 1080 560" fill="none" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" pathLength="1"/><path class="dw" d="M1060 540 L 1086 560 L 1060 582" fill="none" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/>';
+          // salt
+          for (let k = 0; k < 14; k++) h += '<circle class="salt" cx="' + (890 + R(k * 2.7) * 180).toFixed(0) + '" cy="' + (930 + R(k * 4.1) * 40).toFixed(0) + '" r="' + (6 + R(k) * 4).toFixed(1) + '" fill="#fff" stroke="#2b2d33" stroke-width="4"/>';
+          // labels
+          h += label(125, 440, v.lab1, 50, 50, "start", "lab1");
+          h += label(640, 300, v.lab2, 50, 50, "start", "lab2");
+          h += label(1259, 612, v.lab3, 44, 44, "middle", "lab3");
+          // later additions: salt note and the pure-water circle
+          h += '<g id="add1">' + label(1310, 790, v.lab4, 46, 46, "start", "lab4") + '<path class="dw" d="M1290 800 Q 1230 860, 1120 890" fill="none" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" pathLength="1"/><path class="dw" d="M1144 868 L 1116 890 L 1148 904" fill="none" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></g>';
+          h += '<g id="add2"><circle class="dw" cx="1680" cy="330" r="140" fill="#fff" stroke="#2b2d33" stroke-width="6" pathLength="1"/><path d="M1680 230 c 0 0, -26 34, -26 54 a 26 26 0 0 0 52 0 c 0 -20, -26 -54, -26 -54z" fill="#bcd2fa" stroke="#2b2d33" stroke-width="5"/>' + label(1680, 350, v.lab5, 40, 40, "middle", "lab5") + '<path class="dw" d="M1450 190 Q 1510 200, 1550 250" fill="none" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" pathLength="1"/><path class="dw" d="M1520 244 L 1552 254 L 1552 222" fill="none" stroke="#2b2d33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></g>';
+          board.innerHTML = h;
+        })();
+        const DW = [...board.querySelectorAll(".dw")];
+        // ocean box: from the paragraph block (216..1716 x 390..700) to its place (127..1027 x 770..972)
+        const oceanBox = (t) => { const u = ioq(P(t, 10.55, 11.1)); const x0 = L(216, 127, u), y0 = L(390, 770, u), w = L(1500, 900, u), hh = L(310, 202, u); const sx = w / 900, sy = hh / 202; return { x: x0 - 127 * sx, y: y0 - 770 * sy, sx, sy, bx: x0, by: y0, w, h: hh }; };
+        // when each stroke draws [start, dur]
+        const dwT = DW.map((el) => {
+          const g = el.closest("#add1") ? "a1" : el.closest("#add2") ? "a2" : el.id === "sunC" ? "sun" : el.classList.contains("ray") ? "ray" : el.classList.contains("sray") ? "sray" : el.classList.contains("vap") ? "vap" : el.id === "cloud" ? "cloud" : el.id === "dropC" ? "dropC" : el.getAttribute("stroke") === "#4d6fc4" ? "wave" : "arrow";
+          return g;
+        });
+        const DWS = { wave: [10.62, 0.3, 0.05], sun: [10.72, 0.3, 0], ray: [10.85, 0.16, 0.03], sray: [10.95, 0.35, 0.08], vap: [11.05, 0.32, 0.06], cloud: [11.0, 0.45, 0], dropC: [11.12, 0.4, 0], arrow: [11.95, 0.2, 0.08], a1: [14.0, 0.3, 0.12], a2: [17.05, 0.35, 0.1] };
+        const dwIdx = {};
+        const labEls = ["lab1", "lab2", "lab3", "lab4", "lab5"].map((id) => $(id));
+        const LABT = [[11.35, 0.45], [11.45, 0.6], [11.5, 0.6], [13.92, 0.36], [17.15, 0.4]];
+        // player bar and captions
+        $("bar").innerHTML = '<div class="abs" style="left:34px;top:24px;display:flex;gap:6px"><i style="width:7px;height:24px;border-radius:2px;background:#2b2d33"></i><i style="width:7px;height:24px;border-radius:2px;background:#2b2d33"></i></div><div class="abs" style="left:90px;top:34px;width:1080px;height:6px;border-radius:3px;background:#e3e6ec"><div id="prog" style="position:absolute;left:0;top:0;height:6px;border-radius:3px;background:' + BLUE + '"></div><div id="knob" style="position:absolute;top:-7px;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid ' + BLUE + '"></div></div><div id="ptime" class="abs" style="left:1200px;top:25px;font:500 22px/1 Inter;color:#2b2d33;white-space:nowrap"></div><div class="abs" style="left:1340px;top:22px;display:flex;gap:4px"><i style="width:7px;height:28px;border-radius:2px;background:' + GREEN + '"></i><i style="width:7px;height:28px;border-radius:2px;background:' + BLUE + '"></i><i style="width:7px;height:28px;border-radius:2px;background:' + PINK + '"></i></div>';
+        const capWords = [v.cap1, v.cap2].map((s) => s.split(" "));
+        const CAPT = [[13.95, 0.34], [17.1, 0.3]];
+        // editor
+        const SCRIPT = String(v.script).split(" ");
+        $("editor").innerHTML = '<div class="abs" style="left:90px;top:98px;display:flex;align-items:center;gap:22px;white-space:nowrap"><span style="height:34px;padding:0 12px;border-radius:7px;background:#e6edfb;color:' + BLUE + ';font:600 17px/34px Inter;letter-spacing:0.14em">NARRATION</span><span style="font:700 38px/1 Inter;letter-spacing:-0.02em;color:#1d2433">' + esc(v.scene) + '</span><span style="color:#b0b6c2;font-size:26px">✎</span></div><div class="abs" style="left:900px;top:108px;display:flex;align-items:center;gap:26px;font:500 22px/1 Inter;color:#9aa1ae;white-space:nowrap"><span id="wcount"></span><span style="color:#5a6272">✦ Rewrite</span></div><div id="edBody"></div><div class="abs" style="left:90px;top:738px;font:400 21px/1 Inter;color:#9aa1ae;white-space:nowrap">' + esc(v.note) + '</div><div id="genBtn"><span>✦</span><span>' + esc(v.generate) + "</span></div>";
+        $("edBody").innerHTML = SCRIPT.map((w) => '<span class="w">' + esc(w) + "</span>").join(" ");
+        const edW = [...$("edBody").querySelectorAll(".w")];
+        const fixI = SCRIPT.findIndex((w) => /^vapou?r,?$/.test(w));
+        $("say").innerHTML = [v.say1, v.say2, v.say3].map((s, k) => '<span style="' + (k === 2 ? "color:" + BLUE : "") + '">' + esc(s) + "</span>").join('<span>   </span>');
+        const sayW = [...$("say").querySelectorAll("span")].filter((s, k) => k % 2 === 0);
+        // card geometry: board full frame -> card (player) -> editor
+        const CARD1 = { x: 258, y: 23, w: 1404, h: 864 }, CARD2 = { x: 276, y: 45, w: 1368, h: 833 };
+        const clock = (s) => "0:" + String(s).padStart(2, "0") + " / 0:54";
+        function sceneEFG(t) {
+          const on = t >= 10.2 && t < 21.95;
+          K.show($("eL"), on);
+          if (!on) return;
+          // strokes
+          const cnt = {};
+          DW.forEach((el, i) => { const g = dwT[i], s = DWS[g], k = (cnt[g] = (cnt[g] || 0) + 1) - 1; K.draw(el, E.outCubic(P(t, s[0] + k * s[2], s[0] + k * s[2] + s[1]))); });
+          $("sunC").style.fill = "rgba(250,217,58," + P(t, 10.85, 11.0).toFixed(3) + ")";
+          $("cloud").style.fillOpacity = P(t, 11.35, 11.6).toFixed(3);
+          const dr = E.outBack(P(t, 11.35, 11.55), 2.2); $("drop").style.transform = "scale(" + C(dr, 0, 1.2).toFixed(3) + ")"; $("drop").style.transformOrigin = "1259px 540px"; $("drop").style.opacity = C(dr * 2).toFixed(3);
+          board.querySelectorAll(".vdot").forEach((d, k) => { d.style.opacity = P(t, 11.2 + (k % 9) * 0.04, 11.3 + (k % 9) * 0.04).toFixed(3); d.style.transform = "translateY(" + px(-12 * Math.sin(t * 2 + k)) + ")"; });
+          board.querySelectorAll(".salt").forEach((d, k) => { const u = E.outBack(P(t, 12.0 + k * 0.03, 12.15 + k * 0.03), 2); d.style.opacity = C(u * 2).toFixed(3); });
+          // ocean: wipes up, then gets its watercolour texture
+          $("oceanR").setAttribute("height", (380 * E.outCubic(P(t, 10.22, 10.42))).toFixed(1)); $("oceanR").setAttribute("y", (972 - 380 * E.outCubic(P(t, 10.22, 10.42))).toFixed(1));
+          // it starts as the paragraph's block and settles into its own place
+          const oc = oceanBox(t);
+          $("oceanG").setAttribute("transform", "translate(" + oc.x.toFixed(1) + " " + oc.y.toFixed(1) + ") scale(" + oc.sx.toFixed(4) + " " + oc.sy.toFixed(4) + ")");
+          $("oceanTex").setAttribute("opacity", (0.55 * P(t, 12.85, 13.25)).toFixed(3));
+          // handwriting: letters appear left to right through a growing clip
+          labEls.forEach((el, k) => { const [a, d] = LABT[k], u = P(t, a, a + d), ls = [...el.querySelectorAll("text")], n = ls.length; ls.forEach((l, j) => { const lu = C(u * n - j); l.style.opacity = lu > 0 ? "1" : "0"; l.style.clipPath = "inset(-20% " + (100 * (1 - lu)).toFixed(1) + "% -20% -2%)"; }); });
+          // the drawing becomes a video in a player card
+          const cu = ioq(P(t, 13.35, 13.8));
+          const s1 = L(1, CARD1.w / 1920, cu), ox = L(0, CARD1.x, cu), oy = L(0, CARD1.y, cu);
+          const bw = $("boardWrap"), card = $("card");
+          // the editor takes the card over
+          const eu = ioq(P(t, 19.62, 19.9));
+          const cx = L(ox, CARD2.x, eu), cyy = L(oy, CARD2.y, eu), cw = L(1920 * s1, CARD2.w, eu), chh = L(cu > 0 ? 1080 * s1 + 74 * cu : 1080, CARD2.h, eu);
+          bw.style.transform = "translate(" + px(ox) + "," + px(oy) + ") scale(" + s1.toFixed(4) + ")";
+          bw.style.opacity = (1 - P(t, 19.6, 19.74)).toFixed(3);
+          K.show(bw, t < 19.76);
+          fade(card, cu > 0.001 ? 1 : 0);
+          card.style.left = px(cx); card.style.top = px(cyy); card.style.width = px(cw); card.style.height = px(chh);
+          card.style.borderRadius = px(L(0, 26, cu));
+          const bar = $("bar");
+          fade(bar, P(t, 13.6, 13.85) * (1 - P(t, 19.58, 19.7)));
+          bar.style.left = px(CARD1.x); bar.style.top = px(CARD1.y + 790);
+          const secs = Math.min(19, 13 + Math.floor(Math.max(0, t - 13.6) / 1.0));
+          $("ptime").textContent = clock(secs);
+          const pp = L(0.24, 0.35, P(t, 13.6, 19.7));
+          $("prog").style.width = px(1080 * pp); $("knob").style.left = px(1080 * pp - 10);
+          // captions (karaoke)
+          const capOn = t >= 13.9 && t < 19.8;
+          const which = t >= 17.05 ? 1 : 0, [c0, cd] = CAPT[which];
+          const caps = $("caps");
+          fade(caps, capOn ? P(t, 13.9, 14.0) * (1 - P(t, 19.55, 19.68)) : 0);
+          if (capOn) caps.innerHTML = capWords[which].map((w, k) => { const a = c0 + k * cd; const col = t >= a + cd ? "#1d2433" : t >= a ? BLUE : "#a9b0c0"; return '<span style="color:' + col + '">' + esc(w) + "</span>"; }).join(" ");
+          // additions in the drawing
+          $("add1").style.opacity = t >= 13.98 ? "1" : "0"; $("add2").style.opacity = t >= 17.0 ? "1" : "0";
+          // editor
+          const ed = $("editor");
+          fade(ed, P(t, 19.72, 19.88));
+          ed.style.left = px(CARD2.x); ed.style.top = px(CARD2.y);
+          const rd = P(t, 19.85, 20.4);
+          edW.forEach((w, k) => { const on_ = rd * edW.length > k; w.style.color = on_ ? "#2a2f3a" : "#b5bac5"; });
+          $("wcount").textContent = "43 / 60 words";
+          if (fixI >= 0) {
+            const fw = edW[fixI];
+            const sel = t >= 20.58 && t < 20.78;
+            fw.textContent = t < 20.78 ? SCRIPT[fixI].replace("vapour", "vapor") : SCRIPT[fixI];
+            fw.style.background = sel ? "#cfe0fb" : t >= 20.78 && t < 21.1 ? "rgba(59,111,224," + (0.2 * (1 - P(t, 20.78, 21.1))).toFixed(3) + ")" : "transparent";
+            fw.style.borderRadius = "6px";
+          }
+          const gb = $("genBtn"), press = bump(t, 21.12, 21.3);
+          gb.style.transform = "scale(" + (1 - 0.05 * press).toFixed(3) + ")";
+          sayW.forEach((w, k) => blurIn(w, t, [20.25, 20.55, 20.98][k], 0.26, 14, 1.05));
+          const sayOn = t >= 20.25; K.show($("say"), sayOn);
+          // cursor
+          const cur = $("cursor"), con = t >= 20.85 && t < 21.6;
+          K.show(cur, con);
+          if (con) { const u = ioq(P(t, 20.85, 21.1)); cur.style.transform = "translate(" + px(L(1500, 1370, u)) + "," + px(L(1000, 790, u)) + ") scale(" + (1 - 0.15 * press).toFixed(3) + ")"; cur.style.opacity = (1 - P(t, 21.45, 21.58)).toFixed(3); }
+        }
+
+        // ================= H: languages =================
+        const LANGS = [["English (US)", "The sky only takes the pure water."], ["English (UK)", "The sky only takes the pure water."], ["Español", "El cielo solo toma el agua pura."], ["Français", "Le ciel ne prend que l’eau pure."], ["Deutsch", "Der Himmel nimmt nur das reine Wasser."], ["Italiano", "Il cielo prende solo l’acqua pura."], ["Português", "O céu só leva a água pura."], ["Nederlands", "De lucht neemt alleen het zuivere water."], ["Polski", "Niebo zabiera tylko czystą wodę."], ["Română", "Cerul ia doar apa pură."], ["Bahasa Indonesia", "Langit hanya mengambil air murni."], ["Türkçe", "Gökyüzü yalnızca saf suyu alır."], ["Svenska", "Himlen tar bara det rena vattnet."], ["Русский", "Небо забирает только чистую воду."], ["Suomi", "Taivas ottaa vain puhtaan veden."], ["Tiếng Việt", "Bầu trời chỉ lấy nước tinh khiết."], ["Українська", "Небо забирає лише чисту воду."], ["Ελληνικά", "Ο ουρανός παίρνει μόνο το καθαρό νερό."], ["हिन्दी", "आकाश केवल शुद्ध जल लेता है।"]];
+        const langEls = LANGS.map((l) => mk("div", "lang", $("langs"), esc(l[1])));
+        // [time, centre index]
+        const LK = [[21.9, 1], [22.4, 2], [22.8, 3], [23.2, 4], [23.6, 5], [24.0, 6], [24.4, 7], [24.8, 8], [25.2, 9], [25.6, 11], [26.0, 14], [26.4, 18]];
+        const centreAt = (t) => { if (t <= LK[0][0]) return LK[0][1]; for (let k = 0; k < LK.length - 1; k++) if (t < LK[k + 1][0]) return L(LK[k][1], LK[k + 1][1], ioq(C((t - LK[k][0]) / 0.26))); return LK[LK.length - 1][1]; };
+        function sceneH(t) {
+          const on = t >= 21.38 && t < 26.75;
+          K.show($("hL"), on);
+          if (!on) return;
+          // an iris of dark opens from the button
+          const ir = P(t, 21.38, 21.8), hl = $("hL");
+          const irR = 2400 * Math.pow(ir, 1.25), mask = ir < 1 ? "radial-gradient(circle at 1376px 793px, #000 " + px(irR) + ", transparent " + px(irR + 140) + ")" : "none";
+          hl.style.webkitMaskImage = mask; hl.style.maskImage = mask;
+          const c = centreAt(t);
+          const N = langEls.length;
+          langEls.forEach((el, k) => {
+            let d = k - c; if (d < -N / 2) d += N;
+            const ad = Math.abs(d);
+            if (ad > 2.6) { K.show(el, false); return; }
+            K.show(el, true);
+            const size = L(106, 78, C(ad / 2)), y = 540 + Math.sin(C(d / 2.6, -1, 1) * 1.25) * 310;
+            el.style.top = px(y - size * 0.62); el.style.fontSize = px(size); el.style.fontWeight = "800";
+            el.style.fontStyle = ad > 1.2 ? "italic" : "normal";
+            el.style.transform = "scaleY(" + L(1, 0.62, C(ad / 2.4)).toFixed(3) + ")";
+            el.style.opacity = (L(1, 0.25, C(ad / 2.4)) * P(t, 21.5, 21.8)).toFixed(3);
+            el.style.filter = blurS(ad > 1.2 ? (ad - 1.2) * 3 : 0);
+          });
+          const ci = ((Math.round(c) % N) + N) % N;
+          $("langName").textContent = LANGS[ci][0];
+          $("langName").style.opacity = P(t, 21.8, 22.0).toFixed(3);
+          const cu = E.outCubic(P(t, 23.3, 23.55));
+          $("langCnt").innerHTML = "<b>" + String(ci + 1).padStart(2, "0") + "</b>/ " + LANGS.length + " " + esc(v.langWord);
+          $("langCnt").style.opacity = cu.toFixed(3); $("langCnt").style.transform = "translateY(" + px(14 * (1 - cu)) + ")";
+          hl.style.opacity = (1 - P(t, 26.55, 26.72)).toFixed(3);
+        }
+
+        // ================= I: the orb, then a carousel of styles =================
+        const STY = list(v.styles);
+        const CAR = [];
+        for (let k = 0; k < 13; k++) { const el = mk("div", "thumb", $("carousel"), art(ILLK[(k * 5) % ILLK.length])); el.style.width = "760px"; el.style.height = "428px"; CAR.push(el); }
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) { const ns = "http://www.w3.org/2000/svg", f = document.createElementNS(ns, "filter"); f.setAttribute("id", "mb_" + key); f.setAttribute("x", "-30%"); f.setAttribute("y", "-30%"); f.setAttribute("width", "160%"); f.setAttribute("height", "160%"); g = document.createElementNS(ns, "feGaussianBlur"); f.appendChild(g); let defs = document.getElementById("mbDefs"); if (!defs) { const svg = document.createElementNS(ns, "svg"); svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.style.position = "absolute"; defs = document.createElementNS(ns, "defs"); defs.id = "mbDefs"; svg.appendChild(defs); document.body.appendChild(svg); } defs.appendChild(f); MBF[key] = g; }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+        function sceneI(t) {
+          const on = t >= 26.5 && t < 28.4;
+          K.show($("iL"), on);
+          if (!on) return;
+          $("iL").style.opacity = P(t, 26.5, 26.62).toFixed(3);
+          // orb and ring are drawn on the fx canvas
+          const cu = E.outCubic(P(t, 26.9, 27.3));
+          // a ring of cards seen from inside: the edges are closer than the middle
+          const spin = (t - 27.0) * 1.15 - 1.6 * E.outCubic(P(t, 26.9, 27.6)), vel = 1.15 + 1.6 * 2.6 * (1 - P(t, 26.9, 27.6));
+          CAR.forEach((el, k) => {
+            let a = (k - 6) * 0.56 - spin;
+            a = ((a + Math.PI) % TAU + TAU) % TAU - Math.PI;
+            const R0 = 1500, D = 1000;
+            const x = Math.sin(a) * R0, z = -Math.cos(a) * R0 + D;
+            el.style.transform = "translate3d(" + px(960 - 380 + x) + "," + px(540 - 214 + 30) + "," + px(z - 400 * (1 - cu)) + ") rotateY(" + ((-a * 180) / Math.PI).toFixed(2) + "deg)";
+            el.style.opacity = (cu * C(2.2 - Math.abs(a) * 1.6)).toFixed(3);
+            mblur(el, "c" + k, 2 + 5 * vel, 1);
+          });
+          const si = t >= 27.9 ? 2 : t >= 27.5 ? 1 : 0;
+          $("styleTag").querySelector("span").textContent = STY[si] || "";
+          $("styleTag").style.opacity = P(t, 27.1, 27.3).toFixed(3);
+          $("iL").style.filter = blurS(12 * P(t, 28.25, 28.4));
+        }
+
+        // ================= J: examples and the vertical crop =================
+        $("exA").innerHTML = '<div class="thumb" style="left:0;top:0;width:1920px;height:1080px;border-radius:0;box-shadow:none">' + art("photo", v.ex1) + "</div>";
+        $("exB").innerHTML = '<div class="thumb" style="left:0;top:0;width:1920px;height:1080px;border-radius:0;box-shadow:none">' + art("sky", v.ex2) + "</div>";
+        $("vcard").innerHTML = '<div id="vIn" style="position:absolute;left:0;top:0;width:1920px;height:1080px">' + art("sky", v.ex2) + "</div>";
+        $("ratio").textContent = v.ratio;
+        function sceneJ(t) {
+          const on = t >= 28.3 && t < 31.75;
+          K.show($("jL"), on);
+          if (!on) return;
+          const ain = E.outCubic(P(t, 28.3, 28.55));
+          const jt = $("jTag"); jt.querySelector("span").textContent = STY[t < 28.95 ? 2 : 1] || ""; jt.style.opacity = (P(t, 28.4, 28.55) * (1 - P(t, 30.1, 30.25))).toFixed(3);
+          $("exA").style.opacity = ain.toFixed(3); $("exA").style.transform = "scale(" + L(1.08, 1, ain).toFixed(3) + ")";
+          // page flip to the second example
+          const fl = ioq(P(t, 28.95, 29.45));
+          $("exA").style.transform += " perspective(2000px) rotateY(" + (-95 * fl).toFixed(1) + "deg)"; $("exA").style.transformOrigin = "0 50%";
+          K.show($("exA"), fl < 0.99);
+          const bin = P(t, 28.95, 29.3);
+          $("exB").style.opacity = bin.toFixed(3);
+          // vertical crop
+          const vc = ioq(P(t, 30.15, 30.45));
+          $("exDim").style.opacity = (0.9 * vc).toFixed(3);
+          const card = $("vcard");
+          fade(card, vc > 0 ? 1 : 0);
+          const pan = t < 30.8 ? 0 : t < 31.2 ? ioq(P(t, 30.8, 31.05)) : 1 - ioq(P(t, 31.2, 31.45)) * 2;
+          const cw = L(1920, 608, vc), ch = L(1080, 1040, vc);
+          const cx = 960 - cw / 2 + pan * 520 * vc, cy = 540 - ch / 2;
+          card.style.left = px(cx); card.style.top = px(cy); card.style.width = px(cw); card.style.height = px(ch);
+          card.style.borderRadius = px(22 * vc);
+          // the card is a window onto the picture behind it
+          $("vIn").style.transform = "translate(" + px(-cx) + "," + px(-cy) + ")";
+          const ru = E.outBack(P(t, 30.3, 30.55), 1.8), ro = $("ratio");
+          fade(ro, C(ru * 2) * (1 - P(t, 31.45, 31.6))); ro.style.transform = "scale(" + C(ru, 0, 1.15).toFixed(3) + ")"; ro.style.transformOrigin = "0 100%";
+          const shrink = ioq(P(t, 31.45, 31.72));
+          $("jL").style.transform = "scale(" + L(1, 0.28, shrink).toFixed(3) + ")"; $("jL").style.transformOrigin = "960px 540px";
+          $("jL").style.opacity = (1 - P(t, 31.6, 31.75)).toFixed(3);
+          $("exB").style.opacity = (bin * (1 - shrink)).toFixed(3);
+        }
+
+        // ================= K: the grid =================
+        const GR = [];
+        for (let k = 0; k < 16; k++) { const el = mk("div", "thumb", $("grid"), art(ILLK[(k * 7 + 2) % ILLK.length])); el.style.width = "400px"; el.style.height = "225px"; GR.push({ el, c: k % 4, r: Math.floor(k / 4) }); }
+        $("gridCap").innerHTML = '<div><span>' + esc(v.gridA) + '</span> <span style="color:#b8c1d9">' + esc(v.gridB) + "</span> <span>" + esc(v.gridC) + "</span></div>";
+        const gcW = [...$("gridCap").querySelectorAll("span")];
+        function sceneK(t) {
+          const on = t >= 31.55 && t < 33.75;
+          K.show($("kL"), on);
+          if (!on) return;
+          $("kL").style.opacity = P(t, 31.55, 31.7).toFixed(3);
+          const flat = ioq(P(t, 31.7, 32.3));
+          $("grid").style.transform = "rotateX(" + L(38, 0, flat).toFixed(2) + "deg) rotateZ(" + L(-10, 0, flat).toFixed(2) + "deg) scale(" + L(0.8, 1, flat).toFixed(3) + ")";
+          $("grid").style.transformOrigin = "960px 540px";
+          const sh = ioq(P(t, 33.35, 33.7));
+          GR.forEach((g) => {
+            const x = 960 + (g.c - 1.5) * 420, y = 540 + (g.r - 1.5) * 245, u = E.outCubic(P(t, 31.6 + (g.c + g.r) * 0.04, 31.95 + (g.c + g.r) * 0.04));
+            const s = L(1, 0.12, sh);
+            g.el.style.transform = "translate(" + px(x - 200) + "," + px(y - 112) + ") scale(" + (L(0.85, 1, u) * s).toFixed(3) + ")";
+            g.el.style.opacity = u.toFixed(3);
+          });
+          gcW.forEach((w, k) => blurIn(w, t, 32.3 + k * 0.1, 0.3, 16, 1.05));
+          const gb = $("gridCap").firstChild, gbu = E.outCubic(P(t, 32.25, 32.45)); gb.style.opacity = gbu.toFixed(3); gb.style.transform = "scale(" + L(0.94, 1, gbu).toFixed(3) + ")";
+          $("gridCap").style.opacity = (1 - P(t, 33.3, 33.45)).toFixed(3);
+        }
+
+        // ================= L: dots, the counter, the mark =================
+        const dots = $("dots").getContext("2d");
+        const NV = parseInt(String(v.videos).replace(/\D/g, ""), 10) || 2400;
+        function sceneL(t) {
+          const on = t >= 33.6 && t < 36.6;
+          K.show($("lL"), on);
+          if (!on) return;
+          const g = dots;
+          g.clearRect(0, 0, 1920, 1080);
+          const cols = 64, rows = 32, grow = E.outCubic(P(t, 33.7, 34.3)), scatter = P(t, 35.3, 35.75), swirl = P(t, 35.7, 36.45);
+          if (!mW) { const ml = $("mL"), pv = ml.style.display; ml.style.display = ""; mW = $("mLock").offsetWidth; rW = $("mRow").offsetWidth; ml.style.display = pv; }
+          const mx0 = 960 - mW / 2, my0 = 330 + (270 - MS) / 2, ms = MS / 200;
+          const ROWY = [56, 104, 152], ENDX = [166, 150, 120];
+          for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+            const k = j * cols + i;
+            let x = 90 + i * 27.6, y = 105 + j * 27.6;
+            // early: dots gathered into 16 clusters (the thumbnails)
+            const cl = (Math.floor(i / 16) + Math.floor(j / 8) * 4), cx = 960 + ((cl % 4) - 1.5) * 420, cy = 540 + (Math.floor(cl / 4) - 1.5) * 245;
+            x = L(cx + ((i % 16) - 7.5) * 3, x, grow); y = L(cy + ((j % 8) - 3.5) * 3, y, grow);
+            // bulge towards the viewer around the middle
+            const dx = x - 960, dy = y - 540, d = Math.hypot(dx / 960, dy / 540);
+            const bul = 0.3 * bump(t, 33.8, 34.6);
+            x += dx * bul * (1 - d); y += dy * bul * (1 - d);
+            if (scatter > 0) { x += (R(k * 1.3) - 0.5) * 70 * scatter; y += (R(k * 2.9) - 0.5) * 70 * scatter; }
+            const behind = (1 - C((Math.abs(dx) - 420) / 120)) * (1 - C((Math.abs(dy) - 170) / 80)) * (1 - P(t, 35.0, 35.3));
+            let col = "rgba(230,236,255,", a = L(0.55, 0.9, grow) * (1 - 0.65 * behind * P(t, 33.8, 33.95));
+            if (swirl > 0) {
+              // each dot streams into one of the mark's three strokes
+              const bar = k % 3, f = R(k * 4.4), tx = mx0 + (34 + (ENDX[bar] - 34) * f) * ms, ty = my0 + (ROWY[bar] + Math.sin(f * 3.4 + bar) * 7 + (R(k * 6.1) - 0.5) * 26) * ms;
+              const u = ioq(P(swirl, 0.25 * R(k * 9.3) + 0.35 * C((x - 300) / 1600), 0.4 + 0.25 * R(k * 9.3) + 0.35 * C((x - 300) / 1600)));
+              const px0 = x, py0 = y;
+              x = L(px0, tx, u); y = L(py0, ty, u) - 60 * Math.sin(Math.PI * u) * (R(k * 7.1) - 0.5);
+              col = bar === 0 ? hexA(GREEN, "").slice(0, -1) : bar === 1 ? hexA("#7fa6f5", "").slice(0, -1) : hexA(PINK, "").slice(0, -1);
+              a = L(a, 0.95, u);
+              if (u > 0.02 && u < 0.98) { const vx = tx - px0, vy = ty - py0, sp = Math.sin(Math.PI * u) * 0.06; g.strokeStyle = col + (a * 0.6).toFixed(3) + ")"; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x - vx * sp, y - vy * sp); g.stroke(); }
+            }
+            g.fillStyle = col + a.toFixed(3) + ")"; g.fillRect(x - 2.2, y - 2.2, 4.4, 4.4);
+          }
+          const cu = P(t, 33.75, 33.92), rollU = E.outCubic(P(t, 33.9, 34.6));
+          const n = Math.round(NV * L(0.55, 1, rollU));
+          $("cnt").innerHTML = n.toLocaleString("en-US") + "<b>+</b>";
+          $("cnt").style.opacity = (cu * (1 - P(t, 35.05, 35.35))).toFixed(3); $("cnt").style.filter = blurS(10 * (1 - cu) + 12 * P(t, 35.05, 35.35));
+          $("cntSub").innerHTML = esc(v.videosWord) + (t >= 34.7 ? ' <span style="opacity:' + P(t, 34.7, 34.9).toFixed(2) + '">' + esc(v.creators) + "</span>" : "");
+          $("cntSub").style.opacity = (P(t, 33.85, 34.05) * (1 - P(t, 35.05, 35.35))).toFixed(3);
+          $("lL").style.opacity = (1 - P(t, 36.4, 36.58)).toFixed(3);
+        }
+
+        // ================= M: end card =================
+        const MS = 270;
+        $("mMark").innerHTML = MARK(MS);
+        $("mWm").textContent = v.brand; $("mLine").textContent = v.endLine; $("mBtn").textContent = v.cta; $("mDom").textContent = v.domain;
+        let mW = 0, rW = 0;
+        function sceneM(t) {
+          const on = t >= 36.5;
+          K.show($("mL"), on);
+          if (!on) return;
+          if (!mW) { mW = $("mLock").offsetWidth; rW = $("mRow").offsetWidth; }
+          $("mLock").style.left = px(960 - mW / 2); $("mRow").style.left = px(960 - rW / 2);
+          const lu = E.outCubic(P(t, 36.5, 36.9));
+          $("mLock").style.opacity = lu.toFixed(3); $("mLock").style.transform = "scale(" + L(1.06, 1, lu).toFixed(3) + ")";
+          $("mMark").querySelectorAll(".mk").forEach((p) => K.draw(p, 1));
+          const tu = E.outCubic(P(t, 37.2, 37.55)); $("mLine").style.opacity = tu.toFixed(3); $("mLine").style.transform = "translateY(" + px(12 * (1 - tu)) + ")";
+          const bu = E.outBack(P(t, 38.9, 39.2), 1.8); $("mRow").style.opacity = C(bu * 2).toFixed(3); $("mRow").style.transform = "scale(" + C(bu, 0, 1.12).toFixed(3) + ")";
+        }
+
+        // ================= fx: the orb =================
+        const fx = mk("canvas", "layer", $("scene")); fx.width = 1920; fx.height = 1080; fx.style.pointerEvents = "none";
+        $("scene").insertBefore(fx, $("hud"));
+        const fxc = fx.getContext("2d");
+        function drawFx(t) {
+          fxc.clearRect(0, 0, 1920, 1080);
+          const oa = t >= 26.45 && t < 27.15 ? bump(t, 26.45, 27.15) : 0;
+          if (oa > 0) {
+            const r = L(80, 520, E.outCubic(P(t, 26.45, 27.0)));
+            const g = fxc.createRadialGradient(960, 520, 0, 960, 520, r); g.addColorStop(0, "rgba(210,225,255," + (0.95 * oa).toFixed(3) + ")"); g.addColorStop(0.35, "rgba(90,130,230," + (0.55 * oa).toFixed(3) + ")"); g.addColorStop(1, "rgba(40,60,140,0)");
+            fxc.fillStyle = g; fxc.fillRect(0, 0, 1920, 1080);
+            fxc.strokeStyle = "rgba(160,190,255," + (0.35 * oa).toFixed(3) + ")"; fxc.lineWidth = 2;
+            [1.1, 1.5].forEach((m) => { fxc.beginPath(); fxc.arc(960, 520, r * m, 0, TAU); fxc.stroke(); });
+          }
+          // a white flash from the logo to the paragraph
+          const fl = bump(t, 8.18, 8.36);
+          if (fl > 0) { fxc.fillStyle = "rgba(255,255,255," + fl.toFixed(3) + ")"; fxc.fillRect(0, 0, 1920, 1080); }
+        }
+
+        // ================= HUD =================
+        $("hTL").innerHTML = '<span style="font-weight:600;letter-spacing:0.16em">' + esc(v.brand.toUpperCase()) + "</span>&nbsp;&nbsp;" + esc(v.reel.toUpperCase());
+        function hud(t) {
+          const dark = (t >= 6.5 && t < 8.26) || (t >= 21.75 && t < 36.5);
+          const col = dark ? "rgba(170,182,215,0.75)" : "rgba(60,68,90,0.7)";
+          $("hud").style.color = col;
+          ["hTL", "hTR", "hBR"].forEach((id) => { $(id).style.color = col; });
+          const bar = 1 + (Math.floor(t * 2.4) % 24);
+          $("hTR").innerHTML = '<span style="display:inline-flex;gap:3px;vertical-align:-2px;margin-right:10px"><i style="width:4px;height:14px;background:' + GREEN + '"></i><i style="width:4px;height:14px;background:' + BLUE + '"></i><i style="width:4px;height:14px;background:' + PINK + '"></i></span>BAR ' + String(bar).padStart(2, "0") + "/24&nbsp;&nbsp;144 BPM";
+          const f = Math.floor(t * 30), ss = Math.floor(f / 30), ff = f % 30;
+          $("hBR").textContent = "FRAME 00:00:" + String(ss).padStart(2, "0") + ":" + String(ff).padStart(2, "0");
+        }
+
+        function render(t) {
+          drawBg(t);
+          sceneA(t);
+          sceneB(t);
+          sceneC(t);
+          sceneD(t);
+          sceneEFG(t);
+          sceneH(t);
+          sceneI(t);
+          sceneJ(t);
+          sceneK(t);
+          sceneL(t);
+          sceneM(t);
+          drawFx(t);
+          hud(t);
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lockW = 0; chPos = null; mW = 0; render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

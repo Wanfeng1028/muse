@@ -1,0 +1,25 @@
+{
+  "id": "26-pay-per-job-vs-pro",
+  "title": "Pay-per-use vs Pro pricing explainer — job-card pile-up, live price comparison, feature grid, the math, checkout, end card",
+  "category": "pricing / plan upgrade",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "CVtune (fictional)",
+  "source": {
+    "author": "@thayto_dev",
+    "post": "https://x.com/thayto_dev/status/2104200591278739735",
+    "note": "Remade from scratch in HyperFrames after the AjustaCV Pro video; structure and pacing follow it. Brand, prices, features and numbers are fictional placeholders in US dollars — replace every one with your real plan before publishing."
+  },
+  "scenes": [
+    "serif hook rises line by line while ten job cards fly in and stack up with a live counter",
+    "pay-per-job receipt fills row by row and its total counts up; the Pro card's price per job drops with every row; a green banner says when Pro has paid for itself",
+    "the total is struck through; the Pro card turns into the blue 'What you get with Pro' tile",
+    "five feature cards with small UI illustrations appear one by one and get a check",
+    "dark slide: what a week without the job costs, counted up, against what Pro costs per day",
+    "checkout card builds line by line; its button grows until it fills the screen",
+    "blue end card: mark, wordmark with plan badge, two-line tagline, URL pill"
+  ],
+  "variables": ["hookA", "hookB", "hookC", "jobs", "jobLabel", "countOne", "countMany", "cur", "dec", "perJob", "monthly", "payLabel", "paySub", "rowWord", "totalWord", "proLabel", "proUnit", "perJobWord", "proSub", "bannerA", "bannerB", "badge", "featA", "featB", "f1", "f2", "f3", "f4", "f5", "darkLabel", "darkA", "darkB", "weekFrom", "weekTo", "darkC", "daily", "foot", "coTitle", "coSub", "save", "button", "guarantee", "alt", "brand", "tag1", "tag2", "url", "blue", "ink", "night", "green", "paper"],
+  "notes": "Money is formatted from cur + dec (use cur 'R$ ' and dec ',' for Brazilian reais). The receipt total is perJob x rows and the Pro line is monthly / rows, so keep perJob, monthly, the banner, the savings pill and the checkout copy consistent with each other: the defaults are $2.90 per job, $29 for 6 months ($4.83 a month), $7.29 month to month (34% more). The small UI inside the feature cards is drawn in the ILL array; its labels are English and not variables. Long lines shrink to fit their space.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

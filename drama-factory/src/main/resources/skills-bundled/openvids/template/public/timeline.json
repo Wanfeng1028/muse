@@ -1,0 +1,47 @@
+{
+  "fps": 30,
+  "total": 330,
+  "scenes": [
+    {
+      "id": "S1",
+      "name": "Meet the product",
+      "from": 0,
+      "dur": 90
+    },
+    {
+      "id": "S2",
+      "name": "Idea to launch",
+      "from": 90,
+      "dur": 150
+    },
+    {
+      "id": "S3",
+      "name": "Make it yours",
+      "from": 240,
+      "dur": 90
+    }
+  ],
+  "cues": {
+    "S1": {
+      "mark": 4,
+      "headline": 8,
+      "wipe": 54,
+      "meter": 66
+    },
+    "S2": {
+      "headline": 4,
+      "chips": [
+        25,
+        29,
+        33
+      ],
+      "fill": 36,
+      "complete": 92,
+      "merge": 116
+    },
+    "S3": {
+      "lockup": 4,
+      "url": 22
+    }
+  }
+}

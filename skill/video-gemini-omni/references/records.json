@@ -1,0 +1,67 @@
+[
+  {
+    "id": "gemini-omni-1-1-flash",
+    "name": "Gemini Omni 1.1 Flash / Gemini API",
+    "family": "gemini-omni",
+    "provider": "google",
+    "variant": "",
+    "release_date": "2026-08-27",
+    "release_date_kind": "model-release",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "image-to-video",
+      "reference-to-video",
+      "first-last-frame",
+      "native-audio",
+      "video-editing",
+      "stateful-editing",
+      "extend",
+      "image-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "gemini-omni-1.1-flash"
+    ],
+    "source_ids": [
+      "omni11-release",
+      "omni-api"
+    ],
+    "novel_abilities": [
+      "Stateful editing through previous_interaction_id",
+      "Extension and first/last-frame interpolation",
+      "Low-resolution drafts and separate upscaling"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 10,
+      "resolutions": [
+        "360p",
+        "720p",
+        "1080p",
+        "2160p"
+      ],
+      "resolution_origin": {
+        "1080p": "upscaled",
+        "2160p": "upscaled"
+      }
+    },
+    "aliases": [
+      "omni",
+      "gemini-omni",
+      "omni-1-1"
+    ],
+    "notes": [
+      "The dated 1.1 announcement and 1.1 examples support extension/interpolation. An older cached limitations section still says they are unsupported; recheck the live 1.1 contract.",
+      "Native duration is not the length of a chain of extensions.",
+      "Uploaded-video editing may be region-restricted; check account and source-media restrictions.",
+      "Audio reference upload is not approved by this record."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/gemini-omni.md",
+    "skill_id": "video-gemini-omni",
+    "model_version": "1.1"
+  }
+]

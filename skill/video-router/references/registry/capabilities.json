@@ -1,0 +1,197 @@
+[
+  {
+    "id": "text-to-video",
+    "group": "generation",
+    "label": "text to video"
+  },
+  {
+    "id": "image-to-video",
+    "group": "generation",
+    "label": "image to video"
+  },
+  {
+    "id": "reference-to-video",
+    "group": "generation",
+    "label": "reference to video"
+  },
+  {
+    "id": "native-audio",
+    "group": "generation",
+    "label": "native audio"
+  },
+  {
+    "id": "multishot",
+    "group": "generation",
+    "label": "multishot"
+  },
+  {
+    "id": "first-last-frame",
+    "group": "conditioning",
+    "label": "first last frame"
+  },
+  {
+    "id": "audio-only-reference",
+    "group": "conditioning",
+    "label": "audio only reference"
+  },
+  {
+    "id": "audio-driven-video",
+    "group": "conditioning",
+    "label": "audio driven video"
+  },
+  {
+    "id": "motion-transfer",
+    "group": "conditioning",
+    "label": "motion transfer"
+  },
+  {
+    "id": "document-input",
+    "group": "conditioning",
+    "label": "document input"
+  },
+  {
+    "id": "web-input",
+    "group": "conditioning",
+    "label": "web input"
+  },
+  {
+    "id": "video-editing",
+    "group": "editing",
+    "label": "video editing"
+  },
+  {
+    "id": "stateful-editing",
+    "group": "editing",
+    "label": "stateful editing"
+  },
+  {
+    "id": "extend",
+    "group": "editing",
+    "label": "extend"
+  },
+  {
+    "id": "retake",
+    "group": "editing",
+    "label": "retake"
+  },
+  {
+    "id": "draft-enhance",
+    "group": "editing",
+    "label": "draft enhance"
+  },
+  {
+    "id": "motion-graphics",
+    "group": "procedural",
+    "label": "motion graphics"
+  },
+  {
+    "id": "editable-code",
+    "group": "procedural",
+    "label": "editable code"
+  },
+  {
+    "id": "exact-text",
+    "group": "procedural",
+    "label": "exact text"
+  },
+  {
+    "id": "math-animation",
+    "group": "procedural",
+    "label": "math animation"
+  },
+  {
+    "id": "product-visualization",
+    "group": "procedural",
+    "label": "product visualization"
+  },
+  {
+    "id": "sound-synthesis",
+    "group": "procedural",
+    "label": "sound synthesis"
+  },
+  {
+    "id": "subtitle-timing",
+    "group": "delivery",
+    "label": "subtitle timing"
+  },
+  {
+    "id": "batch-variants",
+    "group": "delivery",
+    "label": "batch variants"
+  },
+  {
+    "id": "alpha-output",
+    "group": "delivery",
+    "label": "alpha output"
+  },
+  {
+    "id": "quality-review",
+    "group": "delivery",
+    "label": "quality review"
+  },
+  {
+    "id": "local-weights",
+    "group": "local",
+    "label": "local weights"
+  },
+  {
+    "id": "lora-inference",
+    "group": "local",
+    "label": "lora inference"
+  },
+  {
+    "id": "lora-training",
+    "group": "local",
+    "label": "lora training"
+  },
+  {
+    "id": "image-reference",
+    "group": "conditioning",
+    "label": "image reference"
+  },
+  {
+    "id": "video-reference",
+    "group": "conditioning",
+    "label": "video reference"
+  },
+  {
+    "id": "audio-reference",
+    "group": "conditioning",
+    "label": "audio reference"
+  },
+  {
+    "id": "inpainting",
+    "group": "specialized-local",
+    "label": "inpainting"
+  },
+  {
+    "id": "outpainting",
+    "group": "specialized-local",
+    "label": "outpainting"
+  },
+  {
+    "id": "video-restoration",
+    "group": "specialized-local",
+    "label": "video restoration"
+  },
+  {
+    "id": "exr-hdr-roundtrip",
+    "group": "specialized-local",
+    "label": "exr hdr roundtrip"
+  },
+  {
+    "id": "dubbing",
+    "group": "specialized-local",
+    "label": "dubbing"
+  },
+  {
+    "id": "video-to-audio",
+    "group": "specialized-local",
+    "label": "video to audio"
+  },
+  {
+    "id": "automatic-duration",
+    "group": "generation",
+    "label": "model-predicted duration"
+  }
+]

@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brand","type":"string","label":"App name","default":"subline"},
+  {"id":"domain","type":"string","label":"Website","default":"subline.app"},
+  {"id":"getApp","type":"string","label":"Store line under the logo","default":"Free on iOS & Android"},
+  {"id":"cta","type":"string","label":"Button on the first clip","default":"Generate edit →"},
+  {"id":"before","type":"string","label":"Label on the raw clip","default":"Before"},
+  {"id":"after","type":"string","label":"Label on the edited clip","default":"After"},
+  {"id":"cap1","type":"string","label":"Captions on clip 1 (two lines, split by |)","default":"I had to learn|when it’s time to"},
+  {"id":"cap2","type":"string","label":"Captions on clip 2 (two lines, split by |)","default":"close my laptop|get out of the house."},
+  {"id":"cap3","type":"string","label":"Captions on clip 3 (two lines, split by |)","default":"this is my little|coffee corner"},
+  {"id":"styles","type":"string","label":"Caption styles in the picker (15, comma separated)","default":"Bold,Paper,Prime,Y2K,Chalk,Impact,Neon,Clarity,Grow,Retro,Pop,Mono,Glow,Script,Classic"},
+  {"id":"pick","type":"string","label":"Style that gets picked","default":"Chalk"},
+  {"id":"step1","type":"string","label":"Step 1 (working|done)","default":"Adding captions|Captions added"},
+  {"id":"step2","type":"string","label":"Step 2 (working|done)","default":"Applying b-roll|B-roll applied"},
+  {"id":"step3","type":"string","label":"Step 3 (working|done)","default":"Adding music|Music added"},
+  {"id":"done","type":"string","label":"Final chip","default":"Done!"},
+  {"id":"k1","type":"string","label":"Creator 1 captions (split by |)","default":"so I finally|opened my café|right here in town"},
+  {"id":"k2","type":"string","label":"Creator 2 captions (small line|big line)","default":"the best advice I got|JUST START"},
+  {"id":"k3","type":"string","label":"Creator 3 captions (split by |)","default":"THE SECRET IS|CONSISTENCY"},
+  {"id":"k4","type":"string","label":"Creator 4 captions (split by |)","default":"so I’m just gonna|pour it slowly"},
+  {"id":"accent","type":"color","label":"Accent","default":"#62d6e8"},
+  {"id":"accentText","type":"color","label":"Button text","default":"#4cb3d8"},
+  {"id":"ink","type":"color","label":"Logo colour","default":"#111111"},
+  {"id":"bgA","type":"color","label":"Background tint (cool)","default":"#8fd3ea"},
+  {"id":"bgB","type":"color","label":"Background tint (warm)","default":"#f1c2b2"},
+  {"id":"paper","type":"color","label":"Background","default":"#f5f4f2"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/DMSans-normal-100-1000.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/InstrumentSerif-italic-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Anton-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Montserrat-normal-100-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Caveat-700.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); font-family: "DM Sans", sans-serif; }
+      .layer { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+      #scene { overflow: hidden; background: var(--paper); }
+      #bg { overflow: hidden; background: var(--paper); }
+      #bg i { position: absolute; left: 0; top: 0; border-radius: 50%; }
+      #bg .g0 { width: 2200px; height: 2200px; background: radial-gradient(closest-side, color-mix(in srgb, var(--bgA) 95%, transparent), transparent); }
+      #bg .g1 { width: 2000px; height: 2000px; background: radial-gradient(closest-side, color-mix(in srgb, var(--bgB) 92%, transparent), transparent); }
+      #bg .g2 { width: 1300px; height: 1300px; background: radial-gradient(closest-side, color-mix(in srgb, var(--bgB) 60%, transparent), transparent); }
+      .w { display: inline-block; }
+      /* intro cards */
+      .card { position: absolute; left: 0; top: 0; overflow: hidden; border-radius: 30px; background: #cfd5d8; box-shadow: 0 26px 60px rgba(40, 50, 70, 0.17); transform-origin: 50% 50%; }
+      .card img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+      .lbl { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); height: 84px; padding: 0 44px; border-radius: 42px; background: #fff; color: var(--accentText); font: 500 40px/84px "DM Sans"; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); }
+      .trk { position: absolute; left: 30px; top: 30px; right: 30px; bottom: 30px; border: 3px solid var(--accent); border-radius: 22px; box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+      .capA { position: absolute; left: 0; width: 100%; top: 71%; text-align: center; font: italic 400 70px/1 "Instrument Serif"; color: #fff; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45); white-space: nowrap; }
+      #gen { position: absolute; left: 960px; top: 898px; height: 122px; padding: 0 92px; border-radius: 61px; background: #fff; color: var(--accentText); font: 400 47px/122px "DM Sans"; white-space: nowrap; box-shadow: 0 12px 34px rgba(40, 50, 70, 0.16); }
+      #bigmark { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; gap: 44px; color: #fff; filter: drop-shadow(0 6px 30px rgba(0, 0, 0, 0.28)); }
+      #bigmark .wm { font: 600 236px/1 "DM Sans"; letter-spacing: -0.035em; margin-top: -40px; }
+      #cur { position: absolute; left: 0; top: 0; width: 104px; height: 126px; overflow: visible; }
+      /* photo scenes */
+      .cam { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+      .cam img.key { position: absolute; left: 0; top: 0; }
+      .scr { position: absolute; left: 0; top: 0; width: 400px; height: 865px; overflow: hidden; background: #0b0c0f; transform-origin: 0 0; font-family: "Inter", sans-serif; color: #fff; }
+      .sb { position: absolute; left: 0; top: 0; width: 400px; height: 44px; z-index: 3; }
+      .sb .tm { position: absolute; left: 30px; top: 15px; font: 600 15px/1 "Inter"; }
+      .sb .ic { position: absolute; right: 26px; top: 16px; display: flex; gap: 5px; align-items: flex-end; }
+      .sb .ic i { display: block; width: 3px; background: #fff; border-radius: 1px; }
+      .sb .bat { width: 22px !important; height: 11px; border: 1.5px solid #fff; background: transparent !important; border-radius: 3px !important; position: relative; }
+      .sb .bat::after { content: ""; position: absolute; left: 1.5px; top: 1.5px; width: 13px; height: 5px; background: #fff; border-radius: 1px; }
+      /* template picker */
+      .gridwrap { position: absolute; left: 0; top: 0; width: 400px; }
+      .ghead { position: absolute; left: 18px; top: 56px; font: 700 26px/1 "Inter"; letter-spacing: -0.02em; }
+      .gtabs { position: absolute; left: 18px; top: 96px; display: flex; gap: 8px; }
+      .gtabs span { font: 600 12px/26px "Inter"; padding: 0 12px; border-radius: 13px; background: #1d2026; color: #aeb4bd; }
+      .gtabs span:first-child { background: #fff; color: #0b0c0f; }
+      .tile { position: absolute; width: 118.6px; height: 200px; border-radius: 11px; overflow: hidden; background: #222; }
+      .tile img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+      .tile .smp { position: absolute; left: 4px; right: 4px; top: 60%; text-align: center; white-space: nowrap; }
+      .tile .new { position: absolute; left: 7px; top: 7px; font: 700 8px/15px "Inter"; padding: 0 6px; border-radius: 8px; background: var(--accent); color: #062026; }
+      .tile .bm { position: absolute; right: 7px; top: 7px; width: 10px; height: 13px; border: 1.6px solid #fff; border-bottom: none; }
+      .tile .ring { position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-radius: 11px; border: 2.6px solid var(--accent); opacity: 0; }
+      .tname { position: absolute; width: 118.6px; text-align: center; font: 600 13px/1 "Inter"; color: #fff; }
+      .s-bold { font: 800 13px/1.05 "Montserrat"; text-transform: uppercase; color: #fff; text-shadow: 0 0 3px #000, 0 1px 2px #000; }
+      .s-paper span { font: 600 10px/1 "Inter"; color: #111; background: #fff; padding: 3px 5px; }
+      .s-prime { font: 800 12px/1 "Montserrat"; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
+      .s-prime b { color: #ffd23f; }
+      .s-y2k { font: 900 13px/1 "Montserrat"; color: #ff8be0; text-shadow: 0 0 0 #fff, 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff; }
+      .s-chalk { font: 700 19px/1 "Caveat"; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
+      .s-impact { font: 400 17px/1 "Anton"; color: #fff; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+      .s-neon { font: 700 12px/1 "Inter"; color: #8ff7ff; text-shadow: 0 0 6px #2fe8ff, 0 0 2px #2fe8ff; }
+      .s-clarity span { font: 600 10px/1 "Inter"; color: #fff; background: rgba(0, 0, 0, 0.62); padding: 3px 6px; border-radius: 4px; }
+      .s-grow { font: 800 12px/1 "Montserrat"; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
+      .s-grow b { background: #3ddc84; color: #06240f; padding: 0 3px; }
+      .s-retro { font: italic 400 18px/1 "Instrument Serif"; color: #ffe6ad; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
+      .s-pop { font: 400 17px/1 "Anton"; color: #ffe14d; text-transform: uppercase; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+      .s-mono { font: 600 9px/1 "Inter"; letter-spacing: 0.14em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 3px #000; }
+      .s-glow { font: 700 12px/1 "Montserrat"; color: #fff; text-shadow: 0 0 8px #ff4fb8, 0 0 3px #ff4fb8; }
+      .s-script { font: 700 18px/1 "Caveat"; color: #ffd2ea; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
+      .s-classic span { font: 700 11px/1 "Inter"; color: #fff; background: #000; padding: 3px 5px; }
+      /* editor */
+      .top { position: absolute; left: 0; top: 44px; width: 400px; height: 40px; }
+      .top .bk { position: absolute; left: 20px; top: 6px; width: 12px; height: 12px; border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff; transform: rotate(45deg); }
+      .top .ttl { position: absolute; left: 0; width: 400px; top: 6px; text-align: center; font: 600 13px/1 "Inter"; color: #9aa2ad; }
+      .top .exp { position: absolute; right: 18px; top: 0; font: 700 12px/26px "Inter"; padding: 0 14px; border-radius: 13px; background: var(--accent); color: #04191d; }
+      .pv { position: absolute; left: 28px; top: 88px; width: 344px; height: 520px; border-radius: 16px; overflow: hidden; background: #222; font-size: 16px; }
+      .pv img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+      .pv .trk2 { position: absolute; border: 2.5px solid var(--accent); border-radius: 12px; box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent); }
+      .pv .cap { position: absolute; left: 0; width: 100%; top: 70%; text-align: center; white-space: nowrap; }
+      .c-chalk { font: 700 40px/1 "Caveat"; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
+      .trow { position: absolute; left: 28px; top: 618px; width: 344px; height: 18px; font: 500 11px/18px "Inter"; color: #8b929c; }
+      .trow .pl { position: absolute; left: 164px; top: 3px; width: 0; height: 0; border-left: 11px solid #fff; border-top: 6.5px solid transparent; border-bottom: 6.5px solid transparent; }
+      .trow .r { position: absolute; right: 0; top: 0; }
+      .tscr { position: absolute; left: 28px; top: 644px; width: 344px; font: 500 10.5px/1.45 "Inter"; color: #7d848e; }
+      .tscr b { color: #fff; font-weight: 600; }
+      .strip { position: absolute; left: 0; top: 690px; width: 400px; height: 96px; }
+      .strip .th { position: absolute; top: 0; width: 41px; height: 56px; border-radius: 4px; overflow: hidden; background: #333; }
+      .strip .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .strip .th .hl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; border: 2px solid var(--accent); border-radius: 4px; opacity: 0; }
+      .strip .ctrack { position: absolute; left: 22px; top: 62px; width: 356px; height: 8px; border-radius: 4px; background: #6a4fd8; opacity: 0.85; }
+      .strip .wave { position: absolute; left: 22px; top: 76px; width: 356px; height: 16px; }
+      .strip .wave i { position: absolute; bottom: 0; width: 4px; border-radius: 2px; background: #e7a64a; transform-origin: 50% 100%; }
+      .strip .ph { position: absolute; left: 199px; top: -6px; width: 2.5px; height: 104px; background: #fff; border-radius: 2px; }
+      .tbar { position: absolute; left: 0; top: 786px; width: 400px; height: 60px; display: flex; justify-content: space-around; }
+      .tbar div { width: 60px; text-align: center; font: 500 9.5px/1 "Inter"; color: #9aa2ad; }
+      .tbar div i { display: block; margin: 0 auto 7px; width: 22px; height: 22px; border: 2px solid #c9ced6; border-radius: 7px; }
+      /* chips */
+      .chip { position: absolute; left: 196px; top: 0; height: 112px; display: flex; align-items: center; gap: 22px; padding: 0 58px 0 44px; border-radius: 56px; font: 500 50px/1 "DM Sans"; white-space: nowrap; }
+      .chip svg { width: 44px; height: 44px; flex: none; }
+      .chip.on { background: #fff; color: #444; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+      .chip.ok { background: rgba(22, 24, 26, 0.38); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+      /* creator wall */
+      .vc { position: absolute; top: 90px; width: 440px; height: 900px; border-radius: 26px; overflow: hidden; background: #222; box-shadow: 0 24px 60px rgba(40, 50, 70, 0.16); font-size: 20px; }
+      .vc img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 40%; }
+      .vc .cap, .pv .cap2 { position: absolute; left: 0; width: 100%; text-align: center; white-space: nowrap; }
+      .vc .pb { position: absolute; left: 74px; right: 34px; bottom: 40px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.4); }
+      .vc .pb i { position: absolute; left: 0; top: 0; height: 5px; border-radius: 3px; background: #fff; }
+      .vc .pz { position: absolute; left: 32px; bottom: 32px; width: 18px; height: 20px; border-left: 5px solid #fff; border-right: 5px solid #fff; }
+      .cs-cafe span.ln { font: italic 400 2.1em/1.12 "Instrument Serif"; color: #1d1a16; background: #efe3cd; padding: 0.06em 0.34em 0.1em; }
+      .cs-hall .sm { display: block; font: 600 0.9em/1 "Inter"; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); margin-bottom: 0.35em; }
+      .cs-hall .bg { display: block; font: 400 4.3em/0.94 "Anton"; color: #45d4d8; text-transform: uppercase; -webkit-text-stroke: 0.035em #0a2b2d; text-shadow: 0 0.05em 0 #0a2b2d, 0 0.1em 0.3em rgba(0, 0, 0, 0.35); white-space: normal; }
+      .cs-close { font: 800 1.75em/1.05 "Montserrat"; color: #fff; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); }
+      .cs-close .hot { color: #ff5130; }
+      .cs-resin { font: italic 400 2em/1 "Instrument Serif"; color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); }
+      /* logo */
+      .lg rect { fill: currentColor; }
+      #tl { position: absolute; left: 40px; top: 46px; color: var(--tlc, #111); filter: var(--tls, none); }
+      #tl .lg { position: absolute; left: 0; top: 14px; width: 54px; height: 45px; overflow: visible; }
+      #tl .wm { position: absolute; left: 66px; top: 0; font: 600 66px/1 "DM Sans"; letter-spacing: -0.03em; white-space: nowrap; }
+      #tl .row { position: absolute; left: 70px; top: 86px; display: flex; gap: 12px; align-items: center; white-space: nowrap; }
+      #tl .pill { font: 500 13px/24px "DM Sans"; padding: 0 9px; border-radius: 7px; border: 1.5px solid currentColor; opacity: 0.85; }
+      #tl .dom { font: 500 17px/1 "DM Sans"; opacity: 0.85; }
+      #end { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; color: var(--ink); }
+      #end .lg { position: absolute; left: 0; top: 0; width: 132px; height: 110px; overflow: visible; transform-origin: 50% 50%; }
+      #end .wm { position: absolute; top: 0; font: 600 212px/1 "DM Sans"; letter-spacing: -0.035em; white-space: nowrap; }
+      #end .row { position: absolute; top: 0; display: flex; gap: 26px; align-items: center; white-space: nowrap; }
+      #end .pill { font: 500 30px/62px "DM Sans"; padding: 0 22px; border-radius: 14px; border: 2.5px solid currentColor; }
+      #end .dom { font: 500 44px/1 "DM Sans"; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <div id="bg" class="layer"><i class="g0"></i><i class="g1"></i><i class="g2"></i></div>
+        <svg width="0" height="0" style="position: absolute">
+          <filter id="fB" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur id="gB" stdDeviation="0 0" /></filter>
+          <filter id="fA" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur id="gA" stdDeviation="0 0" /></filter>
+          <filter id="fE0" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur id="gE0" stdDeviation="0 0" /></filter>
+          <filter id="fE1" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur id="gE1" stdDeviation="0 0" /></filter>
+          <filter id="fE2" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur id="gE2" stdDeviation="0 0" /></filter>
+          <filter id="fE3" x="-30%" y="-5%" width="160%" height="110%"><feGaussianBlur id="gE3" stdDeviation="0 0" /></filter>
+        </svg>
+
+        <!-- 1 · before / after -->
+        <div id="sA" class="layer">
+          <div id="cB" class="card">
+            <img class="v0" src="assets/img/bbq.jpg" alt="" /><img class="v1" src="assets/img/grill.jpg" alt="" /><img class="v2" src="assets/img/cafe.jpg" alt="" />
+            <div class="lbl" data-var="before"></div>
+          </div>
+          <div id="cA" class="card">
+            <img class="v0" src="assets/img/bbq.jpg" alt="" /><img class="v1" src="assets/img/grill.jpg" alt="" /><img class="v2" src="assets/img/cafe.jpg" alt="" />
+            <div class="trk"></div>
+            <div class="capA"></div>
+            <div class="lbl" data-var="after"></div>
+          </div>
+          <div id="gen" data-var="cta"></div>
+          <div id="bigmark"><svg class="lg" viewBox="0 0 120 100" style="width: 236px; height: 197px; color: #fff"><rect x="16" y="4" width="88" height="24" rx="12" /><rect x="0" y="38" width="120" height="24" rx="12" /><rect x="25" y="72" width="70" height="24" rx="12" /></svg><div class="wm" data-var="brand"></div></div>
+        </div>
+
+        <!-- 2 · style picker in the hand -->
+        <div id="sB" class="layer">
+          <div id="camB" class="cam" style="width: 1672px; height: 941px">
+            <div id="uiGrid" class="scr"></div>
+            <img class="key" src="assets/img/hand_grid.webp" alt="" />
+          </div>
+        </div>
+
+        <!-- 3 · the edit runs -->
+        <div id="sC" class="layer">
+          <div id="camC" class="cam" style="width: 1672px; height: 941px">
+            <div id="uiEd" class="scr"></div>
+            <img class="key" src="assets/img/hand_party.webp" alt="" />
+          </div>
+          <div id="chips"></div>
+        </div>
+
+        <!-- 4 · finished edits on tables -->
+        <div id="sD" class="layer">
+          <div id="camD0" class="cam" style="width: 1280px; height: 720px"><div id="uiD0" class="scr"></div><img class="key" src="assets/img/t_cafe.webp" alt="" /></div>
+          <div id="camD1" class="cam" style="width: 1280px; height: 720px"><div id="uiD1" class="scr"></div><img class="key" src="assets/img/t_cafe.webp" alt="" style="transform: scaleX(-1)" /></div>
+          <div id="camD2" class="cam" style="width: 1280px; height: 720px"><div id="uiD2" class="scr"></div><img class="key" src="assets/img/t_desk.webp" alt="" /></div>
+          <div id="camD3" class="cam" style="width: 1280px; height: 720px"><div id="uiD3" class="scr"></div><img class="key" src="assets/img/t_craft.webp" alt="" /></div>
+        </div>
+
+        <!-- 5 · creator wall -->
+        <div id="sE" class="layer"></div>
+
+        <!-- 6 · lockup -->
+        <div id="end">
+          <svg class="lg" viewBox="0 0 120 100"><rect class="b0" x="16" y="4" width="88" height="24" rx="12" /><rect class="b1" x="0" y="38" width="120" height="24" rx="12" /><rect class="b2" x="25" y="72" width="70" height="24" rx="12" /></svg>
+          <div class="wm" data-var="brand"></div>
+          <div class="row"><span class="pill" data-var="getApp"></span><span class="dom" data-var="domain"></span></div>
+        </div>
+
+        <div id="tl">
+          <svg class="lg" viewBox="0 0 120 100"><rect x="16" y="4" width="88" height="24" rx="12" /><rect x="0" y="38" width="120" height="24" rx="12" /><rect x="25" y="72" width="70" height="24" rx="12" /></svg>
+          <div class="wm" data-var="brand"></div>
+          <div class="row"><span class="pill" data-var="getApp"></span><span class="dom" data-var="domain"></span></div>
+        </div>
+
+        <svg id="cur" viewBox="0 0 92 112" preserveAspectRatio="none"><path d="M8 6 L8 88 L28 70 L43 102 L60 95 L45 63 L72 63 Z" fill="#0d0d0d" stroke="#fff" stroke-width="6" stroke-linejoin="round" /></svg>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 15;
+        const px = (n) => n.toFixed(1) + "px";
+        const blurS = (b) => (b > 0.3 ? "blur(" + b.toFixed(1) + "px)" : "none");
+        const ioc = E.inOutCubic, oc = E.outCubic;
+        const split = (s, n) => { const a = String(s || "").split("|"); while (a.length < n) a.push(""); return a; };
+        const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        // horizontal motion blur through an SVG filter
+        const mb = (el, f, g, sx) => { if (sx > 0.4) { $(g).setAttribute("stdDeviation", sx.toFixed(2) + " 0"); el.style.filter = "url(#" + f + ")"; } else el.style.filter = "none"; };
+
+        // ---------- helpers ----------
+        // CSS matrix3d that maps a w×h box onto the quad TL,TR,BR,BL
+        function m3d(w, h, q) {
+          const [x0, y0] = q[0], [x1, y1] = q[1], [x2, y2] = q[2], [x3, y3] = q[3];
+          const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+          const den = dx1 * dy2 - dx2 * dy1, g = (dx3 * dy2 - dx2 * dy3) / den, k = (dx1 * dy3 - dx3 * dy1) / den;
+          const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+          return "matrix3d(" + [a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].join(",") + ")";
+        }
+        // grow the quad a touch so the screen rim sits under the bezel
+        const grow = (q, f) => { const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, cy = (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4; return q.map(([x, y]) => [cx + (x - cx) * f, cy + (y - cy) * f]); };
+        const mirror = (q, W) => [[W - q[1][0], q[1][1]], [W - q[0][0], q[0][1]], [W - q[3][0], q[3][1]], [W - q[2][0], q[2][1]]];
+        // camera on a photo layer: image point (cx, cy) at the frame centre, scale s, rotation r (deg); never shows an edge
+        function cam(el, W, H, cx, cy, s, r, dx = 0, dy = 0) {
+          const m = 1.012 + Math.abs(r) * 0.03;
+          const S = Math.max(s, Math.max(960 / cx, 960 / (W - cx), 540 / cy, 540 / (H - cy)) * m);
+          el.style.transform = "translate(" + px(960 + dx) + "," + px(540 + dy) + ") rotate(" + r.toFixed(3) + "deg) scale(" + S.toFixed(4) + ") translate(" + px(-cx) + "," + px(-cy) + ")";
+        }
+        const keyed = (keys, t, ease = ioc) => {
+          if (t <= keys[0][0]) return keys[0].slice(1);
+          for (let i = 0; i < keys.length - 1; i++) {
+            const a = keys[i], b = keys[i + 1];
+            if (t <= b[0]) { const u = ease(P(t, a[0], b[0])); return a.slice(1).map((x, j) => L(x, b[j + 1], u)); }
+          }
+          return keys[keys.length - 1].slice(1);
+        };
+        // word spans
+        function words(el, text) {
+          el.textContent = "";
+          return String(text).split(" ").filter(Boolean).map((w, i) => {
+            if (i) el.appendChild(document.createTextNode(" "));
+            const s = document.createElement("span"); s.className = "w"; s.textContent = w; el.appendChild(s); return s;
+          });
+        }
+        function pop(ws, t0, step, t) {
+          ws.forEach((s, i) => {
+            const u = P(t, t0 + i * step, t0 + i * step + 0.16);
+            s.style.opacity = C(u * 1.8).toFixed(3);
+            s.style.transform = "translateY(" + px(12 * (1 - oc(u))) + ") scale(" + (0.9 + 0.1 * E.outBack(u, 2.2)).toFixed(3) + ")";
+          });
+        }
+        const T = { click: 0.72, m1: 1.32, c2: 2.45, c3: 3.55, mk0: 3.3, mk1: 3.78, toB: 4.28, sc0: 4.42, sc1: 4.95, pick: 5.75, toC: 6.3, a: [6.42, 7.08, 7.68], d: [6.98, 7.58, 8.18], fin: 8.48, toD: 9.3, D: [9.3, 9.78, 10.22, 10.72], toE: 11.12, ic0: 12.62 };
+
+        // ---------- 1 · before / after ----------
+        const cB = $("cB"), cA = $("cA"), gen = $("gen"), cur = $("cur"), big = $("bigmark");
+        const clipImgs = (card) => [0, 1, 2].map((i) => card.querySelector(".v" + i));
+        const imB = clipImgs(cB), imA = clipImgs(cA);
+        // [object-position x, y, extra zoom] per clip
+        const posB = [[64, 50, 1.0], [50, 55, 1.0], [50, 34, 1.0]], posA = [[68, 44, 1.12], [56, 58, 1.1], [50, 30, 1.08]];
+        const capA = cA.querySelector(".capA"), trk = cA.querySelector(".trk");
+        const capSets = [split(v.cap1, 2), split(v.cap2, 2), split(v.cap3, 2)];
+        const clipT = [1.3, T.c2, T.c3, T.toB];
+
+        // ---------- 2 · style picker ----------
+        const IMG = { bbq: "assets/img/bbq.jpg", cafe: "assets/img/cafe.jpg", hall: "assets/img/hall.jpg", close: "assets/img/close.jpg", resin: "assets/img/resin.jpg", grill: "assets/img/grill.jpg" };
+        const styleNames = String(v.styles).split(",").map((s) => s.trim()).filter(Boolean);
+        while (styleNames.length < 15) styleNames.push("Style " + (styleNames.length + 1));
+        const cls = ["bold", "paper", "prime", "y2k", "chalk", "impact", "neon", "clarity", "grow", "retro", "pop", "mono", "glow", "script", "classic"];
+        const tileImg = [["hall", "50% 20%"], ["cafe", "50% 30%"], ["close", "50% 30%"], ["resin", "50% 25%"], ["bbq", "66% 40%"], ["close", "45% 40%"], ["hall", "40% 30%"], ["cafe", "50% 45%"], ["close", "55% 25%"], ["bbq", "60% 30%"], ["hall", "55% 45%"], ["resin", "40% 40%"], ["cafe", "45% 20%"], ["bbq", "70% 45%"], ["close", "50% 50%"]];
+        const phrases = ["know this one tip", "focus on the price", "here’s my <b>secret</b>", "wait for it", "when it’s time to", "grind mindset", "trust the process", "step by step", "watch me <b>grow</b>", "back in the day", "no way", "day one", "glow up", "dear diary", "the full story"];
+        const wrapPhrase = (c, p) => (c === "paper" || c === "clarity" || c === "classic" ? "<span>" + p + "</span>" : p);
+        let pickIdx = styleNames.findIndex((s) => s.toLowerCase() === String(v.pick).trim().toLowerCase());
+        if (pickIdx < 0) pickIdx = 4;
+        const TW = 118.6, TH = 200, GX = 12, GY = 132, RH = 240;
+        let gh = '<div class="gridwrap"><div class="ghead">Templates</div><div class="gtabs"><span>All</span><span>Trending</span><span>Minimal</span><span>Bold</span></div>';
+        for (let i = 0; i < 15; i++) {
+          const c = i % 3, r = Math.floor(i / 3), x = GX + c * (TW + 10), y = GY + r * RH;
+          gh += '<div class="tile" id="tile' + i + '" style="left:' + x + "px;top:" + y + 'px"><img src="' + IMG[tileImg[i][0]] + '" style="object-position:' + tileImg[i][1] + '" alt="" /><div class="smp s-' + cls[i] + '">' + wrapPhrase(cls[i], phrases[i]) + "</div>" + (i === 3 || i === 4 ? '<span class="new">NEW</span>' : "") + '<span class="bm"></span><div class="ring"></div></div><div class="tname" style="left:' + x + "px;top:" + (y + TH + 9) + 'px">' + esc(styleNames[i]) + "</div>";
+        }
+        gh += "</div>";
+        const sbar = '<div class="sb"><span class="tm">9:41</span><span class="ic"><i style="height:5px"></i><i style="height:7px"></i><i style="height:9px"></i><i style="height:11px"></i><i class="bat"></i></span></div>';
+        $("uiGrid").innerHTML = sbar + gh;
+        const gwrap = $("uiGrid").querySelector(".gridwrap"), ptile = $("tile" + pickIdx), pring = ptile.querySelector(".ring");
+        const QB = grow([[644.0, 54.9], [1021.3, 52.4], [1018.2, 867.5], [644.0, 866.7]], 1.012);
+        $("uiGrid").style.transform = m3d(400, 865, QB);
+
+        // ---------- 3 · editor ----------
+        function editor(id, main, pos, capCls) {
+          const el = $(id);
+          let th = "";
+          for (let i = 0; i < 8; i++) th += '<div class="th" style="left:' + (22 + i * 44.6) + 'px"><img src="' + main + '" style="object-position:' + (30 + i * 6) + '% 40%" alt="" /><div class="hl"></div></div>';
+          let wv = "";
+          for (let i = 0; i < 59; i++) wv += '<i style="left:' + i * 6.05 + "px;height:" + (4 + 12 * R(i * 3.3 + 1)).toFixed(1) + 'px"></i>';
+          el.innerHTML = sbar + '<div class="top"><span class="bk"></span><span class="ttl">My project</span><span class="exp">Export</span></div>' +
+            '<div class="pv"><img class="m" src="' + main + '" style="object-position:' + pos + '" alt="" /><img class="b" src="' + IMG.grill + '" style="object-position:50% 50%;display:none" alt="" /><div class="trk2"></div><div class="cap ' + capCls + '"></div></div>' +
+            '<div class="trow"><span>0:07</span><span class="pl"></span><span class="r">0:31</span></div>' +
+            '<div class="tscr"></div>' +
+            '<div class="strip">' + th + '<div class="ctrack"></div><div class="wave">' + wv + '</div><div class="ph"></div></div>' +
+            '<div class="tbar"><div><i></i>Captions</div><div><i></i>B-roll</div><div><i></i>Music</div><div><i></i>Edit</div><div><i></i>Style</div></div>';
+          return { el, pv: el.querySelector(".pv"), main: el.querySelector(".pv .m"), broll: el.querySelector(".pv .b"), trk: el.querySelector(".trk2"), cap: el.querySelector(".pv .cap"), tscr: el.querySelector(".tscr"), ths: [...el.querySelectorAll(".th")], wave: [...el.querySelectorAll(".wave i")], ctrack: el.querySelector(".ctrack") };
+        }
+        const ed = editor("uiEd", IMG.bbq, "64% 40%", "c-chalk");
+        const QC = grow([[1066.6, 164.6], [1340.9, 118.9], [1432.4, 711.0], [1157.5, 752.0]], 1.012);
+        ed.el.style.transform = m3d(400, 865, QC);
+        const scriptWords = (capSets[0].join(" ") + " " + capSets[1].join(" ")).split(" ").filter(Boolean);
+        const tsSpans = (() => { ed.tscr.textContent = ""; return scriptWords.map((w, i) => { if (i) ed.tscr.appendChild(document.createTextNode(" ")); const s = document.createElement("span"); s.textContent = w; ed.tscr.appendChild(s); return s; }); })();
+        // chips
+        const ICON = {
+          cc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 10.2a2.2 2.2 0 1 0 0 3.6M16.5 10.2a2.2 2.2 0 1 0 0 3.6"/></svg>',
+          br: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="11" height="15" rx="2"/><path d="M15 8h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-1"/><path d="M8 8l4 2.5L8 13z" fill="currentColor"/></svg>',
+          mu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+          ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.7 2.7L16.2 9.5"/></svg>',
+        };
+        const steps = [split(v.step1, 2), split(v.step2, 2), split(v.step3, 2)], icons = ["cc", "br", "mu"];
+        const chipsEl = $("chips");
+        const chips = steps.map((s, i) => {
+          const on = document.createElement("div"); on.className = "chip on"; on.innerHTML = ICON[icons[i]] + "<span>" + esc(s[0]) + "</span>";
+          const ok = document.createElement("div"); ok.className = "chip ok"; ok.innerHTML = ICON[icons[i]] + "<span>" + esc(s[1]) + "</span>";
+          chipsEl.appendChild(ok); chipsEl.appendChild(on); return { on, ok };
+        });
+        const doneChip = document.createElement("div"); doneChip.className = "chip on"; doneChip.innerHTML = ICON.ok + "<span>" + esc(v.done) + "</span>"; chipsEl.appendChild(doneChip);
+
+        // ---------- 4 · table shots ----------
+        const QD = [
+          [[409.9, 245.2], [641.7, 152.8], [923.8, 492.5], [679.3, 610.4]],
+          mirror([[409.9, 245.2], [641.7, 152.8], [923.8, 492.5], [679.3, 610.4]], 1280),
+          [[469.8, 140.4], [725.5, 95.9], [867.2, 567.6], [588.9, 624.3]],
+          [[322.0, 326.0], [553.6, 198.2], [1007.6, 446.7], [816.6, 624.0]],
+        ];
+        const kSets = [split(v.k1, 3), split(v.k2, 2), split(v.k3, 2), split(v.k4, 2)];
+        // caption markup per creator style
+        function capHTML(k, line) {
+          const s = kSets[k];
+          if (k === 0) return '<span class="ln">' + esc(s[line]) + "</span>";
+          if (k === 1) return '<span class="sm">' + esc(s[0]) + '</span><span class="bg">' + esc(s[1]).replace(" ", "<br>") + "</span>";
+          if (k === 2) return line === 0 ? esc(s[0]) : '<span class="hot">' + esc(s[1]) + "</span>";
+          return esc(s[line]);
+        }
+        const kCls = ["cs-cafe", "cs-hall", "cs-close", "cs-resin"], kImg = [IMG.cafe, IMG.hall, IMG.close, IMG.resin], kPos = ["50% 30%", "50% 30%", "50% 35%", "50% 30%"], kTop = ["66%", "44%", "68%", "70%"];
+        const tbl = [0, 1, 2, 3].map((k) => {
+          const e = editor("uiD" + k, kImg[k], kPos[k], "cap2 " + kCls[k]);
+          e.cap.style.top = kTop[k]; e.cap.style.fontSize = "12px"; e.cap.innerHTML = capHTML(k, 1);
+          e.trk.style.display = "none"; e.wave.forEach((w) => (w.style.transform = "scaleY(1)"));
+          e.el.style.transform = m3d(400, 865, grow(QD[k], 1.015));
+          return e;
+        });
+        const camD = [0, 1, 2, 3].map((k) => $("camD" + k));
+        // [cx, cy, scale, rot] from → to for each table shot (image px of the 1280×720 stills)
+        const DK = [[[650, 372, 1.5, -2], [660, 380, 1.66, 1]], [[628, 372, 1.52, 2], [622, 368, 1.68, -1]], [[648, 362, 1.5, -1.5], [656, 360, 1.66, 1]], [[648, 392, 1.5, 2], [658, 398, 1.64, 0]]];
+
+        // ---------- 5 · creator wall ----------
+        const sE = $("sE");
+        const vcs = [0, 1, 2, 3].map((k) => {
+          const d = document.createElement("div"); d.className = "vc"; d.style.left = 20 + k * 480 + "px";
+          d.innerHTML = '<img src="' + kImg[k] + '" style="object-position:' + kPos[k] + '" alt="" /><div class="cap ' + kCls[k] + '" style="top:' + kTop[k] + '"></div><span class="pz"></span><div class="pb"><i></i></div>';
+          sE.appendChild(d); return { d, img: d.querySelector("img"), cap: d.querySelector(".cap"), bar: d.querySelector(".pb i") };
+        });
+        // word timings on the wall: [line, start] pairs per creator
+        const wallLines = [[[0, 11.3], [1, 11.78], [2, 12.22]], [[1, 11.3]], [[0, 11.32], [1, 11.95]], [[0, 11.34], [1, 12.0]]];
+        vcs.forEach((c, k) => { c.lines = wallLines[k].map(([ln, t0]) => ({ ln, t0, html: capHTML(k, ln) })); });
+
+        // ---------- 6 · lockup ----------
+        const endEl = $("end"), endLg = endEl.querySelector(".lg"), endWm = endEl.querySelector(".wm"), endRow = endEl.querySelector(".row");
+        const bars = [0, 1, 2].map((i) => endEl.querySelector(".b" + i)), barW = [88, 120, 70];
+        let lay = null;
+        function layout() {
+          const was = endEl.style.display; endEl.style.display = "";
+          const wmW = endWm.getBoundingClientRect().width, total = 132 + 40 + wmW, left = 960 - total / 2;
+          endEl.style.display = was;
+          lay = { icx: left + 66, icy: 488, wmL: left + 172, rowL: left + 176 };
+          endWm.style.left = px(lay.wmL); endWm.style.top = px(488 - 128);
+          endRow.style.left = px(lay.rowL); endRow.style.top = px(612);
+        }
+        const tl = $("tl"), sA = $("sA"), sB = $("sB"), sC = $("sC"), sD = $("sD");
+        const camB = $("camB"), camC = $("camC");
+
+        const bgs = [0, 1, 2].map((i) => document.querySelector("#bg .g" + i));
+        function render(t) {
+          if (!lay) layout();
+          // background light: cool bottom-left and warm right at the start, warm top-left and cool right at the end
+          const late = t >= T.toE, dr = Math.sin(t * 0.6), dr2 = Math.cos(t * 0.45);
+          const g0 = late ? [2060 + 40 * dr, 240 + 30 * dr2] : [-150 + 40 * dr, 1130 + 30 * dr2];
+          const g1 = late ? [-120 + 30 * dr2, -170 + 40 * dr] : [2050 + 30 * dr2, 900 + 40 * dr];
+          const g2 = late ? [720 + 40 * dr, -330] : [1830 + 30 * dr, -90];
+          [[g0, 1100], [g1, 1000], [g2, 650]].forEach(([c, rr], i) => (bgs[i].style.transform = "translate(" + px(c[0] - rr) + "," + px(c[1] - rr) + ")"));
+          // ---------- scene switches ----------
+          const inA = t < T.toB, inB = t >= T.toB && t < T.toC, inC = t >= T.toC && t < T.toD, inD = t >= T.toD && t < T.toE, inE = t >= T.toE;
+          K.show(sA, inA); K.show(sB, inB); K.show(sC, inC); K.show(sD, inD); K.show(sE, inE && t < 13.0); K.show(cur, t < T.toB);
+          const photo = inB || inC || inD;
+          document.documentElement.style.setProperty("--tlc", photo ? "#ffffff" : v.ink);
+          document.documentElement.style.setProperty("--tls", photo ? "drop-shadow(0 2px 10px rgba(0,0,0,0.3))" : "none");
+          const tlo = 1 - P(t, T.toE - 0.12, T.toE + 0.02);
+          tl.style.opacity = tlo.toFixed(3); K.show(tl, tlo > 0);
+
+          // ---------- 1 · before / after ----------
+          if (inA) {
+            // the landscape clip leans in, then splits into "before" (left) and "after" (right)
+            const lean = ioc(P(t, 0.78, 1.0)), uB = P(t, 1.0, 1.3), uA = P(t, 1.02, 1.32), mu = oc(uB), mA = oc(uA);
+            const G0 = [960, 540, 1080 * (1 - 0.05 * lean), 800 * (1 - 0.05 * lean), -4.5 * lean];
+            const GB = [588, 588, 620, 850, -3.5], GA = [1385, 555, 640, 900, 4];
+            const gB = G0.map((x, i) => L(x, GB[i], mu)), gA = G0.map((x, i) => L(x, GA[i], mA));
+            cB.style.width = px(gB[2]); cB.style.height = px(gB[3]);
+            cB.style.transform = "translate(" + px(gB[0] - gB[2] / 2) + "," + px(gB[1] - gB[3] / 2) + ") rotate(" + gB[4].toFixed(2) + "deg)";
+            const lblB = cB.querySelector(".lbl"); K.show(lblB, mu > 0.5); lblB.style.opacity = P(mu, 0.5, 0.9).toFixed(3);
+            K.show(cA, mA > 0);
+            cA.style.width = px(gA[2]); cA.style.height = px(gA[3]);
+            cA.style.transform = "translate(" + px(gA[0] - gA[2] / 2) + "," + px(gA[1] - gA[3] / 2) + ") perspective(1800px) rotateY(" + (-9 * mA).toFixed(2) + "deg) rotate(" + gA[4].toFixed(2) + "deg)";
+            cA.style.opacity = C(mA * 5).toFixed(3);
+            mb(cB, "fB", "gB", uB > 0 && uB < 1 ? 24 * Math.pow(1 - uB, 1.3) : 0);
+            mb(cA, "fA", "gA", uA > 0 && uA < 1 ? 26 * Math.pow(1 - uA, 1.3) : 0);
+            // which clip is playing
+            const clip = t < T.c2 ? 0 : t < T.c3 ? 1 : 2;
+            const live = (t - clipT[clip]);
+            [imB, imA].forEach((ims, side) => ims.forEach((im, i) => {
+              K.show(im, i === clip);
+              if (i !== clip) return;
+              const p = (side ? posA : posB)[i];
+              const breathe = 1 + 0.012 * Math.sin(t * 2.3 + side) + 0.025 * C(live / 1.2);
+              const ox = clip === 0 && side === 0 ? L(50, p[0], mu) : p[0], oy = clip === 0 && side === 0 ? L(42, p[1], mu) : p[1];
+              im.style.objectPosition = ox.toFixed(1) + "% " + oy.toFixed(1) + "%";
+              im.style.transform = "scale(" + (p[2] * breathe).toFixed(4) + ") translate(" + px(2 * Math.sin(t * 7.1 + i)) + "," + px(1.5 * Math.sin(t * 5.3 + i)) + ")";
+            }));
+            // tracking frame drifts with the subject
+            trk.style.transform = "translate(" + px(6 * Math.sin(t * 1.7)) + "," + px(5 * Math.sin(t * 1.3 + 1)) + ") rotate(" + (1.2 * Math.sin(t * 1.1)).toFixed(2) + "deg)";
+            // captions in the "after" card
+            const ci = clip, pair = capSets[ci], t0 = Math.max(clipT[ci], T.m1 - 0.02), mid = [1.72, 2.56, 3.86][ci];
+            const line = t < mid ? 0 : 1, lt = line ? mid : t0;
+            if (capA.dataset.k !== ci + "-" + line) { capA.dataset.k = ci + "-" + line; capA._w = words(capA, pair[line]); }
+            pop(capA._w, lt + 0.02, 0.05, t);
+            // the button and the click
+            const press = 1 - 0.06 * Math.sin(Math.PI * P(t, T.click - 0.04, T.click + 0.14));
+            const gOut = P(t, 0.82, 0.95);
+            K.show(gen, gOut < 1);
+            gen.style.transform = "translate(-50%,-50%) scale(" + (press * (1 - 0.15 * gOut)).toFixed(4) + ")";
+            gen.style.opacity = (1 - gOut).toFixed(3);
+            // cursor path
+            const ck = [[0, 1190, 1000], [0.62, 1128, 958], [1.0, 1122, 962], [1.4, 1084, 986], [2.6, 1076, 1000], [3.6, 1068, 978], [4.3, 1060, 985]];
+            const [cx, cy] = keyed(ck, t);
+            const cp = 1 - 0.12 * Math.sin(Math.PI * P(t, T.click - 0.05, T.click + 0.1));
+            cur.style.transform = "translate(" + px(cx) + "," + px(cy) + ") scale(" + cp.toFixed(3) + ")";
+            // big wordmark over the cards
+            const mk = P(t, T.mk0, T.mk1), mke = oc(mk);
+            K.show(big, mk > 0);
+            big.style.clipPath = "inset(0 " + ((1 - mke) * 100).toFixed(2) + "% 0 0)";
+            big.style.opacity = (0.94 * C(mk * 2.2)).toFixed(3);
+            big.style.transform = "scale(" + (1.05 - 0.05 * mke).toFixed(4) + ")";
+            // whole scene blurs out into the next shot
+            const out = P(t, T.toB - 0.16, T.toB);
+            sA.style.filter = blurS(34 * out * out);
+          }
+
+          // ---------- 2 · style picker ----------
+          if (inB) {
+            const [cx, cy, s, r] = keyed([[T.toB, 838, 478, 1.92, 2.6], [5.1, 834, 466, 2.0, 0.6], [T.toC, 830, 458, 2.07, -1.0]], t);
+            cam(camB, 1672, 941, cx, cy, s, r, 4 * Math.sin(t * 2.1), 3 * Math.sin(t * 1.7 + 1));
+            const sc = oc(P(t, T.sc0, T.sc1)), settle = 6 * Math.sin(P(t, T.sc1 - 0.1, T.sc1 + 0.35) * Math.PI);
+            gwrap.style.transform = "translateY(" + px(14 - 90 * sc + settle) + ")";
+            const pk = P(t, T.pick, T.pick + 0.32), bump = Math.sin(Math.PI * P(t, T.pick, T.pick + 0.26));
+            pring.style.opacity = C(pk * 3).toFixed(3);
+            ptile.style.transform = "scale(" + (1 + 0.05 * bump + 0.02 * C(pk * 2)).toFixed(4) + ")";
+            sB.style.filter = blurS(34 * Math.pow(1 - P(t, T.toB, T.toB + 0.22), 2) + 26 * Math.pow(P(t, T.toC - 0.12, T.toC), 2));
+          }
+
+          // ---------- 3 · the edit runs ----------
+          if (inC) {
+            const [cx, cy, s, r] = keyed([[T.toC, 1068, 452, 1.6, 1.6], [T.toD, 1084, 440, 1.7, -0.6]], t, (u) => u);
+            const kick = 1 - oc(P(t, T.toC, T.toC + 0.25));
+            cam(camC, 1672, 941, cx, cy, s * (1 + 0.04 * kick), r, 5 * Math.sin(t * 1.9), 4 * Math.sin(t * 1.4 + 2));
+            sC.style.filter = blurS(26 * kick * kick);
+            // phone: tracking scan, then captions, then b-roll, then music
+            const scan = t < T.d[0];
+            ed.trk.style.left = px(70 + 22 * Math.sin(t * 3.1) * (scan ? 1 : 0.15)); ed.trk.style.top = px(52 + 14 * Math.sin(t * 2.3 + 1) * (scan ? 1 : 0.15));
+            ed.trk.style.width = "212px"; ed.trk.style.height = "300px";
+            ed.trk.style.opacity = (scan ? 1 : 0.85).toFixed(2);
+            const brollOn = t >= T.d[1] + 0.02;
+            K.show(ed.main, !brollOn); K.show(ed.broll, brollOn); K.show(ed.trk, !brollOn);
+            const bt = brollOn ? t - T.d[1] : t - T.toC;
+            (brollOn ? ed.broll : ed.main).style.transform = "scale(" + (1.04 + 0.03 * C(bt / 2)).toFixed(4) + ")";
+            // captions on the phone in the picked style
+            const capLines = [capSets[0][0], capSets[0][1], capSets[1][0], capSets[1][1]], capT = [T.d[0], 7.42, T.d[1] + 0.05, 8.5];
+            let li = -1; capT.forEach((ct, i) => { if (t >= ct) li = i; });
+            K.show(ed.cap, li >= 0);
+            if (li >= 0) { if (ed.cap.dataset.k !== String(li)) { ed.cap.dataset.k = String(li); ed.cap._w = words(ed.cap, capLines[li]); } pop(ed.cap._w, capT[li], 0.08, t); }
+            const hi = Math.floor(C(P(t, T.toC, T.toD)) * (tsSpans.length - 1));
+            tsSpans.forEach((s, i) => (s.style.color = i === hi ? "#fff" : ""));
+            ed.ths.forEach((th, i) => { const on = brollOn && (i === 3 || i === 4), im = th.querySelector("img"), src = on ? IMG.grill : IMG.bbq; if (im.dataset.s !== src) { im.dataset.s = src; im.src = src; } th.querySelector(".hl").style.opacity = on ? "1" : "0"; });
+            ed.ctrack.style.opacity = (0.85 * C(P(t, T.d[0] - 0.1, T.d[0] + 0.2))).toFixed(3);
+            ed.ctrack.style.transform = "scaleX(" + oc(P(t, T.d[0] - 0.1, T.d[0] + 0.4)).toFixed(3) + ")"; ed.ctrack.style.transformOrigin = "0 50%";
+            ed.wave.forEach((w, i) => { w.style.transform = "scaleY(" + E.outBack(P(t, T.d[2] - 0.2 + i * 0.008, T.d[2] + 0.1 + i * 0.008)).toFixed(3) + ")"; });
+            // chips on the left
+            const yOf = (k) => { let y = 870; if (t >= T.d[k]) y -= 160 * oc(P(t, T.d[k], T.d[k] + 0.26)); for (let j = k + 1; j < 3; j++) if (t >= T.d[j]) y -= 124 * oc(P(t, T.d[j], T.d[j] + 0.26)); if (t >= T.fin) y -= 40 * oc(P(t, T.fin, T.fin + 0.38)); return y; };
+            chips.forEach((c, k) => {
+              const ap = P(t, T.a[k], T.a[k] + 0.2), off = P(t, T.d[k], T.d[k] + 0.06), on = P(t, T.d[k] + 0.06, T.d[k] + 0.13);
+              const y = yOf(k) + 40 * (1 - oc(ap));
+              const sc = (0.9 + 0.1 * E.outBack(ap, 2)) * (1 + 0.06 * Math.sin(Math.PI * P(t, T.d[k], T.d[k] + 0.24)));
+              [c.on, c.ok].forEach((el) => { K.show(el, ap > 0); el.style.transform = "translate(0," + px(y - 56) + ") scale(" + sc.toFixed(4) + ")"; el.style.transformOrigin = "0 50%"; });
+              // swap the working chip for the finished one, no crossfade of the two labels
+              c.on.style.opacity = (C(ap * 2) * (1 - off)).toFixed(3);
+              c.ok.style.opacity = on.toFixed(3);
+            });
+            const fp = P(t, T.fin, T.fin + 0.3);
+            K.show(doneChip, fp > 0);
+            const okW = Math.max(...chips.map((c) => c.ok.offsetWidth)), dW = doneChip.offsetWidth;
+            doneChip.style.left = px(196 + okW / 2 - dW / 2);
+            doneChip.style.transform = "translate(0," + px(904 - 56 + 26 * (1 - oc(fp))) + ") scale(" + (0.85 + 0.15 * E.outBack(fp, 2.4)).toFixed(4) + ")";
+            doneChip.style.opacity = C(fp * 2).toFixed(3);
+            sC.style.filter = blurS(26 * kick * kick);
+          }
+
+          // ---------- 4 · finished edits on tables ----------
+          if (inD) {
+            let k = 0; for (let i = 0; i < 4; i++) if (t >= T.D[i]) k = i;
+            camD.forEach((c, i) => K.show(c, i === k));
+            const t0 = T.D[k], t1 = k < 3 ? T.D[k + 1] : T.toE, u = P(t, t0, t1), e = 0.4 * u + 0.6 * ioc(u);
+            const a = DK[k][0], b = DK[k][1], kick = 1 - oc(P(t, t0, t0 + 0.16));
+            cam(camD[k], 1280, 720, L(a[0], b[0], e), L(a[1], b[1], e), L(a[2], b[2], e) * (1 + 0.05 * kick), L(a[3], b[3], e), 3 * Math.sin(t * 2.3), 3 * Math.sin(t * 1.8));
+            tbl[k].main.style.transform = "scale(" + (1.03 + 0.03 * u).toFixed(4) + ")";
+            const out = k === 3 ? P(t, T.toE - 0.12, T.toE) : 0;
+            sD.style.filter = blurS(10 * kick * kick + 30 * out * out);
+          }
+
+          // ---------- 5 · creator wall ----------
+          if (inE && t < 13.0) {
+            sE.style.filter = blurS(30 * Math.pow(1 - P(t, T.toE, T.toE + 0.3), 2));
+            vcs.forEach((c, k) => {
+              const s0 = T.toE + 0.02 + [0, 0.06, 0.2, 0.4][k], u = P(t, s0, s0 + 0.42), e = E.outExpo(u);
+              const x = 20 + k * 480 + (1 - e) * (760 + k * 90);
+              c.d.style.transform = "translateX(" + px(x - (20 + k * 480)) + ")";
+              const vel = u > 0 && u < 1 ? (760 + k * 90) * 6.93 * Math.pow(2, -10 * u) / 0.42 : 0;
+              mb(c.d, "fE" + k, "gE" + k, Math.min(40, vel * 0.0045));
+              c.img.style.transform = "scale(" + (1.04 + 0.04 * P(t, T.toE, 12.9)).toFixed(4) + ") translateY(" + px(2 * Math.sin(t * 3 + k)) + ")";
+              c.bar.style.width = (100 * C(0.18 + 0.35 * k / 3 + (t - T.toE) * 0.32)).toFixed(1) + "%";
+              let cur = null; c.lines.forEach((ln) => { if (t >= ln.t0) cur = ln; });
+              K.show(c.cap, !!cur);
+              if (cur) {
+                if (c.cap.dataset.k !== String(cur.ln)) { c.cap.dataset.k = String(cur.ln); c.cap.innerHTML = cur.html; c._w = [...c.cap.querySelectorAll(".ln, .sm, .bg, .hot")]; if (!c._w.length) c._w = [c.cap]; }
+                const pu = P(t, cur.t0, cur.t0 + 0.2);
+                c.cap.style.opacity = C(pu * 2).toFixed(3);
+                c.cap.style.transform = "translateY(" + px(10 * (1 - oc(pu))) + ") scale(" + (0.92 + 0.08 * E.outBack(pu, 2)).toFixed(4) + ")";
+              }
+            });
+            sE.style.opacity = (1 - P(t, 12.6, 13.0)).toFixed(3);
+          }
+
+          // ---------- 6 · lockup ----------
+          const ia = P(t, T.ic0, T.ic0 + 0.4);
+          K.show(endEl, ia > 0);
+          if (ia > 0) {
+            const mv = oc(P(t, 12.98, 13.36));
+            const appear = E.outBack(ia, 1.9), wob = Math.exp(-3.2 * Math.max(0, t - T.ic0)) * (1 - mv);
+            const scl = L(2.15, 1, mv) * appear;
+            const x = L(960, lay.icx, mv), y = L(520, lay.icy, mv);
+            endLg.style.transform = "translate(" + px(x - 66) + "," + px(y - 55) + ") scale(" + (scl * (1 + 0.08 * wob * Math.sin((t - T.ic0) * 17))).toFixed(4) + "," + (scl * (1 - 0.1 * wob * Math.sin((t - T.ic0) * 17 + 0.6))).toFixed(4) + ")";
+            bars.forEach((b, i) => {
+              const w = barW[i] * (1 + 0.28 * wob * Math.sin((t - T.ic0) * 14 + i * 1.9));
+              b.setAttribute("width", w.toFixed(2)); b.setAttribute("x", (60 - w / 2).toFixed(2));
+            });
+            const wr = oc(P(t, 13.12, 13.6));
+            endWm.style.filter = blurS(18 * (1 - wr));
+            endWm.style.transform = "translateX(" + px(-36 * (1 - wr)) + ")";
+            endWm.style.opacity = (0.12 * C(P(t, 13.0, 13.1)) + 0.88 * wr).toFixed(3);
+            const rw = oc(P(t, 13.42, 13.8));
+            endRow.style.opacity = rw.toFixed(3);
+            endRow.style.transform = "translateY(" + px(18 * (1 - rw)) + ")";
+          }
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { lay = null; render(lastT); });
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

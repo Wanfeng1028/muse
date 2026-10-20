@@ -1,0 +1,32 @@
+{
+  "id": "12-launch-reel-ember",
+  "title": "One-shot launch reel — ember dark, pain to product",
+  "category": "product launch / brand reel",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "Claude Imagine",
+  "source": {
+    "author": "@robj3d3",
+    "post": "https://x.com/robj3d3/status/2103875898349088830",
+    "note": "Remade from scratch in HyperFrames after the SuperX launch reel; structure and pacing follow it. The original's growth numbers (creators, posts, impressions) are replaced with product facts, so the Claude Imagine version carries no invented metrics."
+  },
+  "facts": {
+    "stats": "5 image models (Nano Banana 2, GPT Image 2.5, Seedream 4.5, Flux 2 Pro, Z-Image), 6 video models (H3 Max Turbo, Grok Imagine, Seedance 1.5 Pro, Seedance 2.0 Mini, Veo 3.1 Fast, Kling 2.5 Turbo), up to 4K images — per src/config/ai-pricing.ts on 2026-10-01",
+    "grid": "resolution and duration chips per model come from the same file",
+    "gallery": "featured card text and all thumbnails are the site's own gallery images and their published prompts"
+  },
+  "scenes": [
+    "four kinetic words with a reply card whose copy counter ticks up",
+    "collapse to a line, ember ring, brand tile with sparks, wordmark with sheen",
+    "zoom into the tile, iris opens on a blurred wall of gallery cards",
+    "featured gallery prompt card + headline",
+    "chat composer typing a prompt, result chip, headline",
+    "composer collapses into a block that lands in the model grid",
+    "model grid tilts into 3D, image-topped bars rise, feature badges orbit",
+    "zoom and flash into three counting facts, vortex out",
+    "final lockup, tagline, button, domain"
+  ],
+  "variables": ["brand", "domain", "w1", "w2", "w3", "w4", "cardName", "cardText", "head1", "head1Hi", "featTitle", "featText", "featPill", "head2", "head2Hi", "prompt", "connector", "head3", "head3Hi", "gridTitle", "gridSub", "head4", "head4Hi", "stat1", "stat1Label", "stat2", "stat2Label", "stat3", "stat3Label", "tagline", "taglineHi", "cta", "accent", "ember"],
+  "notes": "The brand tile is assets/brand-mark.png (the warm logo variant proposed with the site restyle). Swap the file to change the logo; model names in the grid are hard-coded in the script.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

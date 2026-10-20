@@ -1,0 +1,7 @@
+# xlaudio runtime (all already present on the build Mac; no extra audio libraries needed)
+numpy>=2.0
+scipy>=1.13
+numba>=0.60
+matplotlib>=3.8      # analysis plots only
+pytest>=8            # tests only
+# external tool: ffmpeg >= 6 on PATH (decoding any input format, ebur128 measurement)

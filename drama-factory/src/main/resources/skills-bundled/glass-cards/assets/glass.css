@@ -1,0 +1,145 @@
+/* ===== Liquid-glass cards, animated background, and camera zoom ===== */
+/* Composes with the kinetic-typography skill (shares .cardstage / .lcard / .cardsin / .world). */
+
+/* --- Stage + animated background --- */
+/* A 16:9 container that establishes container-query units (cqw/cqh). */
+.stage{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px;container:stage / size;
+  background:
+    radial-gradient(135% 130% at 100% -8%, rgba(143,123,255,.26), rgba(143,123,255,.06) 34%, transparent 60%),
+    radial-gradient(120% 120% at -10% 112%, rgba(70,150,236,.14), transparent 55%),
+    linear-gradient(157deg,#0c0f20 0%,#080a14 52%,#0a0d1c 100%);
+  box-shadow:0 40px 120px -30px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,255,255,.04);}
+.bgfx{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.bgfx::before{content:"";position:absolute;inset:0;opacity:.42;             /* soft dot grid */
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);background-size:2.6cqw 2.6cqw;
+  -webkit-mask-image:radial-gradient(90% 90% at 65% 38%, #000 25%, transparent 80%);
+          mask-image:radial-gradient(90% 90% at 65% 38%, #000 25%, transparent 80%);}
+.wash{position:absolute;width:90cqw;height:90cqw;left:42%;top:-30%;border-radius:50%;pointer-events:none;   /* drifting glow orb */
+  background:radial-gradient(circle, rgba(127,108,255,.16), transparent 62%);animation:wash 26s ease-in-out infinite;}
+@keyframes wash{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-6cqw,4cqw) scale(1.08);}}
+
+/* per-scene accent palette (drives card edges/icons). Set on the scene element. */
+.scene{--accent:#8f7bff;--accent2:#c2b8ff;--edge:linear-gradient(140deg,#c6bcff,#8a6cff 62%,transparent);}
+
+/* --- Camera: "zoom in then settle" --- */
+/* Wrap all scenes in .world; set its transform from JS (applyCam): a touch of scale on enter,
+   then settle to 1.0 → reads as a gentle zoom-out/settle. The long transition does the move. */
+.world{position:absolute;inset:0;transform-origin:50% 50%;transition:transform 1.6s cubic-bezier(.62,0,.2,1);will-change:transform;}
+
+/* --- Liquid-glass card --- */
+.cardstage{position:relative;width:100%;height:80cqh;}
+.lcard{position:absolute;border-radius:1.3cqw;overflow:hidden;
+  background:linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04) 44%, rgba(255,255,255,.02));
+  -webkit-backdrop-filter:blur(15px) saturate(1.2);backdrop-filter:blur(15px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 26px 54px -34px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.34);
+  transition:left .55s cubic-bezier(.2,.8,.25,1),top .55s cubic-bezier(.2,.8,.25,1),
+    width .55s cubic-bezier(.2,.8,.25,1),height .55s cubic-bezier(.2,.8,.25,1),
+    opacity .4s,box-shadow .5s,border-color .5s,transform .35s;}
+.lcard::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;background:var(--edge);opacity:.5;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  pointer-events:none;transition:opacity .4s;}                                /* neon gradient border */
+.lcard::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(118deg, transparent 26%, rgba(255,255,255,.08) 46%, transparent 58%);}  /* glass shine */
+.lcard .pad{position:relative;z-index:1;padding:.62cqw .85cqw;height:100%;display:flex;flex-direction:column;justify-content:center;}
+
+/* --- Entrance: staggered rise + fade when the stage enters its card phase --- */
+@keyframes cardIn{from{opacity:0;transform:translateY(1.3cqw) scale(.965);}to{opacity:1;transform:none;}}
+.cardsin .lcard{animation:cardIn .55s cubic-bezier(.16,.8,.2,1) backwards;}
+.cardsin .lcard:nth-child(1){animation-delay:.04s;} .cardsin .lcard:nth-child(2){animation-delay:.11s;}
+.cardsin .lcard:nth-child(3){animation-delay:.18s;} .cardsin .lcard:nth-child(4){animation-delay:.25s;}
+.cardsin .lcard:nth-child(5){animation-delay:.32s;} .cardsin .lcard:nth-child(6){animation-delay:.39s;}
+.cardsin .lcard:nth-child(n+7){animation-delay:.45s;}
+
+/* --- Zoom forward to demo, fall back as the next rises --- */
+/* JS toggles .up on the active card and .dim on the rest (see glass.js raise()).
+   The width/height/left/top transition makes it zoom/rise forward; removing .up drops it back. */
+.lcard.dim{opacity:.28;filter:saturate(.6);}
+.cardstage .lcard.up{left:8%!important;width:84%!important;top:37%!important;height:25%!important;z-index:30;
+  border-color:color-mix(in srgb,var(--accent2) 50%,transparent);
+  box-shadow:0 50px 100px -34px rgba(0,0,0,.9), 0 0 64px -14px color-mix(in srgb,var(--accent) 75%,transparent), inset 0 1px 0 rgba(255,255,255,.5);}
+.cardstage .lcard.up{background:linear-gradient(140deg, rgba(13,16,27,.985), rgba(8,10,17,.995));}  /* dark + opaque so nothing shows through */
+.lcard.up::before{opacity:1;}
+.lcard.up .pad{justify-content:flex-start;}
+
+/* ===================================================================
+   LIQUID GLASS VARIANTS (v3–v6 tokens) — added Sep 2026 from the
+   walkthrough-film build. Three finished glass materials as custom
+   properties, plus two card variants that consume them. Nothing above
+   this line reads these tokens, so the default .lcard is unchanged.
+   =================================================================== */
+:root{
+  /* --- 1. DARK VIOLET LIQUID GLASS (on a dark ground) ------------- */
+  /* Clear violet glass: a violet→pink tint over a faint white base, a
+     bright highlight STREAK across the top 42 %, a soft inner glow, a
+     pale violet edge, and a strong blur. The streak is what makes it
+     read as glass rather than as a tinted rectangle. */
+  --lg-base:rgba(255,255,255,.07);
+  --lg-tint:linear-gradient(135deg, rgba(139,92,246,.34) 0%, rgba(124,58,237,.22) 55%, rgba(236,72,153,.16) 100%);
+  --lg-streak:linear-gradient(180deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,.05) 16%, rgba(255,255,255,0) 42%);
+  --lg-bg:var(--lg-streak), var(--lg-tint), var(--lg-base);
+  --lg-border:rgba(196,181,253,.30);
+  --lg-hi:inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 44px rgba(167,139,250,.14);
+  --lg-shadow:0 22px 54px rgba(0,0,0,.42);
+  --lg-blur:blur(40px) saturate(180%);
+  --lg-ink:#f6f4ff; --lg-ink-dim:#b3adcf; --lg-ink-faint:#7c7794;
+  --lg-line:rgba(255,255,255,.12); --lg-line2:rgba(255,255,255,.2);
+  --lg-fill:#8b5cf6;
+
+  /* --- 2. LIGHT GLASS (on a pale ground) -------------------------- */
+  --lgl-bg:linear-gradient(135deg, rgba(139,92,246,.16), rgba(245,184,232,.22)), rgba(255,255,255,.55);
+  --lgl-border:rgba(124,58,237,.18);
+  --lgl-hi:inset 0 1px 0 rgba(255,255,255,.8);
+  --lgl-shadow:0 18px 44px rgba(76,29,149,.12);
+  --lgl-blur:blur(30px) saturate(160%);
+  --lgl-ink:#1c1633; --lgl-ink-dim:#4c4668; --lgl-ink-faint:#7c7794;
+  --lgl-line:rgba(28,22,51,.12); --lgl-line2:rgba(28,22,51,.2);
+  --lgl-fill:#7c3aed;
+
+  /* --- 3. WHITE GLASS FLOATING ON A DARK GROUND ------------------- */
+  /* Near-opaque white with a violet hairline and a deep shadow, so the
+     card reads as a lit surface ABOVE the ground rather than a window
+     into it. Its ink is DARK — see the card-scoped block below. */
+  --lgw-bg:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.84));
+  --lgw-border:rgba(255,255,255,.9);
+  --lgw-hi:inset 0 1px 0 #fff, 0 0 0 1px rgba(124,58,237,.18);
+  --lgw-shadow:0 30px 70px rgba(20,8,60,.35);
+  --lgw-blur:blur(30px) saturate(160%);
+  --lgw-ink:#1c1633; --lgw-ink-dim:#4c4668; --lgw-ink-faint:#7c7794;
+  --lgw-line:rgba(28,22,51,.12); --lgw-line2:rgba(28,22,51,.2);
+  --lgw-fill:#7c3aed;
+}
+
+/* --- .lcard.violet — dark violet liquid glass -------------------- */
+.lcard.violet:not(.up){background:var(--lg-bg);}
+.lcard.violet{border:1px solid var(--lg-border);
+  box-shadow:var(--lg-shadow), var(--lg-hi);
+  -webkit-backdrop-filter:var(--lg-blur);backdrop-filter:var(--lg-blur);
+  --ink:var(--lg-ink); --ink-dim:var(--lg-ink-dim); --ink-faint:var(--lg-ink-faint);
+  --line:var(--lg-line); --line2:var(--lg-line2); --fill:var(--lg-fill);}
+.lcard.violet::after{background:linear-gradient(118deg,transparent 26%,rgba(255,255,255,.12) 46%,transparent 58%);}
+
+/* --- .lcard.white — WHITE glass floating on a dark ground --------
+   CARD-SCOPED INK: --ink is re-declared ON THE CARD, so the frame's ink
+   can stay light (pale headings on the dark ground) while everything
+   inside this surface stays dark. The declaration must sit on the card
+   element itself — put it on a wrapper and any ink token the ground
+   writes on :root will shadow it for the card's whole subtree. */
+.lcard.white:not(.up){background:var(--lgw-bg);}
+.lcard.white{border:1px solid var(--lgw-border);
+  box-shadow:var(--lgw-shadow), var(--lgw-hi);
+  -webkit-backdrop-filter:var(--lgw-blur);backdrop-filter:var(--lgw-blur);
+  --ink:var(--lgw-ink); --ink-dim:var(--lgw-ink-dim); --ink-faint:var(--lgw-ink-faint);
+  --line:var(--lgw-line); --line2:var(--lgw-line2); --fill:var(--lgw-fill);}
+.lcard.white::before{opacity:0;}                 /* no neon edge: the hairline is in --lgw-hi */
+.lcard.white::after{background:linear-gradient(118deg,transparent 30%,rgba(255,255,255,.5) 46%,transparent 56%);}
+
+/* the variants' own text colour (plain .lcard is untouched and keeps inheriting) */
+.lcard.violet .pad,.lcard.white .pad{color:var(--ink);}
+.lcard.violet .pad small,.lcard.white .pad small,
+.lcard.violet .pad .dim,.lcard.white .pad .dim{color:var(--ink-dim);}
+
+/* Render note: the three --*-blur tokens are the ONLY blur in this file.
+   Headless Chromium/Edge software-rasterizes backdrop-filter — drop it
+   at capture time (set the token to `none`); over a soft gradient ground
+   the tint + streak + edge carry the look on their own. */

@@ -1,0 +1,90 @@
+Droid film — cue report
+sr=48000 duration=75.000s seed=20261004
+silence window: 45.6500s .. 46.4000s (samples 2191200:2227200) maxabs=0.000e+00
+
+    time  cue                     local  sounds
+  1.0000  S1.keystrokes[0]           30  paper keystroke (body modes 1.8/3.4/6k + thock)
+  1.2000  S1.keystrokes[1]           36  paper keystroke (body modes 1.8/3.4/6k + thock)
+  1.3667  S1.keystrokes[2]           41  paper keystroke (body modes 1.8/3.4/6k + thock)
+  1.6000  S1.keystrokes[3]           48  paper keystroke (body modes 1.8/3.4/6k + thock)
+  1.8000  S1.keystrokes[4]           54  paper keystroke (body modes 1.8/3.4/6k + thock)
+  2.2000  S1.enter                   66  heavier enter key (lower thock, longer)
+  2.6000  S1.rotorForm               78  detent click + FM bell D3 ratio 1:1.4 (logo)
+  4.4000  S1.rotorSpin              132  blade-pass air 4->40 Hz, doppler pan, 1.33s
+  5.7333  S1.rotorSpin+40           172  shutter-close thump (frame to black)
+  6.6667  S2.headline                20  quiet A3 tone (no whoosh)
+  7.3333  S2.chipLand[0]             40  thread friction + wooden bar D4
+  7.7333  S2.chipLand[1]             52  thread friction + wooden bar E4
+  8.1333  S2.chipLand[2]             64  thread friction + wooden bar F#4
+  8.5333  S2.chipLand[3]             76  thread friction + wooden bar A4
+  8.9333  S2.chipLand[4]             88  thread friction + wooden bar B4
+ 10.3333  S2.lanes                  130  5 dry pen-ticks L->R as lanes draw
+ 16.3333  S3.headline                10  quiet Bb4 tone
+ 18.0000  S3.raceStart               60  granular ticks x3 streams + D4->A4 glide over 3.67s
+ 21.6667  S3.raceWin                170  fifth chord (D4+A4+D5) + two-transient latch click
+ 24.3333  S3.growToTerminal         250  short lowpassed-noise opening
+ 26.6667  S4.keystrokes[0]           20  terminal keystroke (tighter body, less room)
+ 26.8333  S4.keystrokes[1]           25  terminal keystroke (tighter body, less room)
+ 26.9667  S4.keystrokes[2]           29  terminal keystroke (tighter body, less room)
+ 27.1333  S4.keystrokes[3]           34  terminal keystroke (tighter body, less room)
+ 27.2667  S4.keystrokes[4]           38  terminal keystroke (tighter body, less room)
+ 27.4333  S4.keystrokes[5]           43  terminal keystroke (tighter body, less room)
+ 27.5667  S4.keystrokes[6]           47  terminal keystroke (tighter body, less room)
+ 27.7333  S4.keystrokes[7]           52  terminal keystroke (tighter body, less room)
+ 27.8667  S4.keystrokes[8]           56  terminal keystroke (tighter body, less room)
+ 28.0333  S4.keystrokes[9]           61  terminal keystroke (tighter body, less room)
+ 28.1667  S4.keystrokes[10]          65  terminal keystroke (tighter body, less room)
+ 28.3333  S4.keystrokes[11]          70  terminal keystroke (tighter body, less room)
+ 29.3333  S4.specOk                 100  D5 glass ping + small latch
+ 31.0000  S4.fanOut                 150  5 Karplus plucks D5-B5 panned L->R, 35ms apart
+ 33.0000  S4.checks[0]              210  glass ping D5 (Dmaj9 stack)
+ 33.4000  S4.checks[1]              222  glass ping F#5 (Dmaj9 stack)
+ 33.8000  S4.checks[2]              234  glass ping A5 (Dmaj9 stack)
+ 34.2000  S4.checks[3]              246  glass ping C#6 (Dmaj9 stack)
+ 34.6000  S4.checks[4]              258  glass ping E6 (Dmaj9 stack)
+ 36.0000  S4.merge                  300  reverse-swelled Dmaj9 tail collapsing into a tight thud
+ 38.6667  S5.cards[0]                20  felt-muted piano thump G4
+ 39.0667  S5.cards[1]                32  felt-muted piano thump A4
+ 39.4667  S5.cards[2]                44  felt-muted piano thump D5
+ 42.0000  S5.meterFill              120  clock '5h' 2.0->11.0 Hz (19 ticks) [listed once]
+ 42.0000  S5.meterFill              120  clock '7d' 1.2->7.5 Hz (13 ticks) [listed once]
+ 42.0000  S5.meterFill              120  clock '30d' 0.7->4.5 Hz (7 ticks) [listed once]
+ 45.6000  S5.meterFull              228  dry clack, then HARD SILENCE until pageFlip
+ 46.4000  S5.pageFlip               252  paper page-turn (swept bandpass + flutter AM + landing)
+ 48.8000  S6.coreRise                24  sub swell ~46 Hz + quiet D3->E3 (whole-step lift)
+ 50.3333  S6.modelsPour[0]           70  wooden drop D4 pan L
+ 50.7333  S6.modelsPour[1]           82  glass drop E4 pan R
+ 51.1333  S6.modelsPour[2]           94  wooden drop F#4 pan L
+ 51.5333  S6.modelsPour[3]          106  glass drop A4 pan R
+ 51.9333  S6.modelsPour[4]          118  wooden drop B4 pan L
+ 52.3333  S6.modelsPour[5]          130  glass drop D5 pan R
+ 52.7333  S6.modelsPour[6]          142  wooden drop E5 pan L
+ 53.1333  S6.modelsPour[7]          154  glass drop F#5 pan R
+ 54.6667  S6.caption                200  quiet logo bell D3 (under the line, not a sting)
+ 58.6000  S6.merge                  318  two latch clicks (one per bar) + logo bell D3
+ 60.3333  S7.line1                   10  single soft key-thock
+ 62.3333  S7.line2                   70  (no sound — the sentence is read, not scored)
+ 63.6667  S7.fallaway[0]            110  descending muted wood A4 + paper slide
+ 64.0667  S7.fallaway[1]            122  descending muted wood F#4 + paper slide
+ 64.4667  S7.fallaway[2]            134  descending muted wood D4 + paper slide
+ 66.5333  S7.zoom                   196  filtered-noise inhale 1.133s, hard cut at frame 230 (screen black)
+ 68.6667  S8.printStart              20  stepper motor spin-up
+ 69.1333  S8.printLines[0]           34  stepper burst 47 Hz + crackle
+ 69.5333  S8.printLines[1]           46  stepper burst 51 Hz + crackle
+ 69.9333  S8.printLines[2]           58  stepper burst 54 Hz + crackle
+ 70.3333  S8.printLines[3]           70  stepper burst 51 Hz + crackle
+ 70.7333  S8.printLines[4]           82  stepper burst 46 Hz + crackle
+ 71.1333  S8.printLines[5]           94  stepper burst 57 Hz + crackle
+ 72.3333  S8.stamp                  130  rubber stamp thump (damped body + noise slap)
+ 73.8667  S8.tear                   176  paper tear 0.35s (swept highpass + fiber snaps)
+ 74.1467  S8.outro                  176  logo bell D3 rings out, faded before 75.0s
+
+Scene bed:
+  S1  none (cream, dry)
+  S2  Dm9
+  S3  Bbmaj7
+  S4  F/A
+  S5  Gsus2, hard-cut at meterFull
+  S6  Esus2/D, brighter, whole step up
+  S7  Gsus4 -> D at fallaway
+  S8  sparse D5, fading

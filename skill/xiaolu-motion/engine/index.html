@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>xiaolu-motion engine</title>
+<style>html,body{margin:0;background:transparent;overflow:hidden}</style></head>
+<body>
+<script type="module">
+import { api } from './runtime.js';
+window.XM = api;
+window.XM_LOADED = true;
+</script>
+<script>
+window.addEventListener('error', e => { window.XM_ERROR = String(e.error && e.error.stack || e.message); });
+window.addEventListener('unhandledrejection', e => { window.XM_ERROR = String(e.reason && e.reason.stack || e.reason); });
+</script>
+</body></html>

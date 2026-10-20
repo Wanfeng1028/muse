@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "duration": 6,
+  "fps": 30,
+  "beats": [0, 1, 2, 3, 4, 5],
+  "sections": [
+    {"id": "spark", "start": 0, "end": 3},
+    {"id": "orbit", "start": 3, "end": 6}
+  ],
+  "lyrics": [
+    {"text": "A tiny spark draws a new sky", "start": 0.5, "end": 2.5},
+    {"text": "We turn in light and let it fly", "start": 3.5, "end": 5.5}
+  ],
+  "energy": {
+    "low": [{"t": 0, "value": 0.2}, {"t": 3, "value": 0.7}],
+    "mid": [{"t": 0, "value": 0.3}, {"t": 3, "value": 0.6}],
+    "high": [{"t": 0, "value": 0.1}, {"t": 3, "value": 0.8}]
+  }
+}

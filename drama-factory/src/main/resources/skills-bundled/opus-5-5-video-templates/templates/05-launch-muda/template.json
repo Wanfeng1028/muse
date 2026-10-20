@@ -1,0 +1,16 @@
+{
+  "id": "05-launch-muda",
+  "title": "Problem → reframe → proof → name → claim → mark: a 26-second startup launch",
+  "category": "launch / SaaS",
+  "duration": 26,
+  "size": "1920x1080",
+  "demoBrand": "Claude Imagine",
+  "source": {
+    "author": "@deedydas",
+    "post": "https://x.com/deedydas/status/2102787937482252537",
+    "note": "Remade from scratch in HyperFrames after the original's structure. The original's throughput and latency numbers are replaced by story-only counters (tabs, images in this chat) so the demo makes no performance claims."
+  },
+  "variables": ["brand", "hud", "ask", "waitLine", "counterLabel", "counterTo", "word", "waste", "problem", "gridNote", "fixLine", "fixCount", "chips", "cardLabel", "cardUnit", "cardTo", "cardFoot", "defKind", "defWord", "defKanji", "defGloss", "defBody", "defAlso", "claim1", "claim2", "vertical", "tagline", "stats", "receiptA", "receiptAv", "receiptB", "receiptBv", "receiptNote", "url", "ink", "accent"],
+  "limits": { "word": "one word, ≤ 10 letters", "defKanji": "characters must exist in the bundled Noto Serif JP subset — re-subset the font for new characters" },
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

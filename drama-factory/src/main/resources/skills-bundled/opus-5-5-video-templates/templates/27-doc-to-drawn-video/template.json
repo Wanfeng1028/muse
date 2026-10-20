@@ -1,0 +1,29 @@
+{
+  "id": "27-doc-to-drawn-video",
+  "title": "Document-to-explainer reel — a page of text, a flipping book, the logo, a paragraph that dissolves into a hand-drawn diagram, a script editor, 19 narration languages, styles, formats and a dot-field counter",
+  "category": "product launch / AI video tool",
+  "duration": 40,
+  "size": "1920x1080",
+  "demoBrand": "Chalkline (fictional)",
+  "source": {
+    "author": "@itisrazak",
+    "post": "https://x.com/itisrazak/status/2103517930424332386",
+    "note": "Remade from scratch in HyperFrames after the DistilBook motion reel; structure and pacing follow it. The brand, mark, numbers and every illustration are fictional placeholders; the original's painted example videos are replaced by simple drawn SVG scenes."
+  },
+  "scenes": [
+    "a tilted, out-of-focus close-up of a textbook page; key words get highlighter marks",
+    "the page becomes an open book; pages flip faster and faster while 'Pages. and pages. and pages.' builds up; the book closes and spins away",
+    "dark: the three-stroke mark draws itself, the wordmark slides out with an RGB split, the tagline tracks in",
+    "the paragraph returns with its highlights, greys out, and dissolves into a drawn ocean",
+    "a hand-drawn water-cycle diagram draws itself stroke by stroke with handwritten labels",
+    "the drawing becomes a video in a player card with karaoke captions and new labels",
+    "a script editor: read it, fix a word, generate; the button opens a dark iris",
+    "the same sentence rolls through 19 narration languages with a counter",
+    "an orb, a spinning ring of style thumbnails, two example videos, a 9:16 crop that pans",
+    "a 4x4 grid of videos, 'Whiteboard or motion.', then a dot field with a rolling counter",
+    "the dots stream into the mark; light end card with tagline, button and domain"
+  ],
+  "variables": ["brand", "domain", "tagline", "endLine", "cta", "reel", "chapter", "chapterTitle", "para", "pages1", "pages2", "pages3", "lab1", "lab2", "lab3", "lab4", "lab5", "cap1", "cap2", "scene", "script", "note", "generate", "say1", "say2", "say3", "langWord", "styles", "ex1", "ex2", "ratio", "gridA", "gridB", "gridC", "videos", "videosWord", "creators", "green", "blue", "pink", "navy"],
+  "notes": "In para, [g:word], [b:word] and [p:word] mark green, blue and pink highlights. Drawing labels take | for line breaks and {b:word} for blue. The 19 translations live in the LANGS array (edit them together if the sentence changes); Cyrillic, Greek, Vietnamese and Devanagari glyphs come from bundled Inter subsets and Noto Sans Devanagari. The diagram and the example thumbnails are SVG drawings in ILL and buildBoard(). The counter rolls up to the videos value; keep it true or remove it.",
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4"
+}

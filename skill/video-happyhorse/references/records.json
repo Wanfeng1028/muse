@@ -1,0 +1,194 @@
+[
+  {
+    "id": "happyhorse-1-1-t2v",
+    "name": "HappyHorse 1.1 T2V / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-06-22",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "text-to-video",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.1-t2v"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Recent dedicated audiovisual creation endpoints"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse",
+      "happyhorse-1.1"
+    ],
+    "notes": [
+      "June 22 is the International/Mainland availability entry; some global regions list June 26.",
+      "R2V here documents image references, not arbitrary audio/video references.",
+      "Use the separate 1.0 edit endpoint for edits."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.1"
+  },
+  {
+    "id": "happyhorse-1-1-i2v",
+    "name": "HappyHorse 1.1 I2V / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-06-22",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "image-to-video",
+      "native-audio"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.1-i2v"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Recent dedicated audiovisual creation endpoints"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse",
+      "happyhorse-1.1"
+    ],
+    "notes": [
+      "June 22 is the International/Mainland availability entry; some global regions list June 26.",
+      "R2V here documents image references, not arbitrary audio/video references.",
+      "Use the separate 1.0 edit endpoint for edits."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.1"
+  },
+  {
+    "id": "happyhorse-1-1-r2v",
+    "name": "HappyHorse 1.1 R2V / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-06-22",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "reference-to-video",
+      "native-audio",
+      "image-reference"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.1-r2v"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Recent dedicated audiovisual creation endpoints"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "480p",
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse",
+      "happyhorse-1.1"
+    ],
+    "notes": [
+      "June 22 is the International/Mainland availability entry; some global regions list June 26.",
+      "R2V here documents image references, not arbitrary audio/video references.",
+      "Use the separate 1.0 edit endpoint for edits."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.1"
+  },
+  {
+    "id": "happyhorse-1-0-edit",
+    "name": "HappyHorse 1.0 Video Edit / Model Studio",
+    "family": "happyhorse",
+    "provider": "alibaba",
+    "variant": "",
+    "release_date": "2026-04-27",
+    "release_date_kind": "provider-availability",
+    "checked_at": "2026-10-01",
+    "runtime": "cloud",
+    "capabilities": [
+      "video-editing"
+    ],
+    "unsupported_capabilities": [],
+    "api_model_ids": [
+      "happyhorse-1.0-video-edit"
+    ],
+    "source_ids": [
+      "wan-release-log",
+      "alibaba-matrix"
+    ],
+    "novel_abilities": [
+      "Dedicated generative edit endpoint"
+    ],
+    "limits": {
+      "min_seconds": 3,
+      "max_seconds": 15,
+      "resolutions": [
+        "720p",
+        "1080p"
+      ]
+    },
+    "aliases": [
+      "happyhorse-edit"
+    ],
+    "notes": [
+      "The edit version remains 1.0 while creation is 1.1; never synthesize happyhorse-1.1-video-edit."
+    ],
+    "evidence": "primary-source-documented",
+    "runtime_tested": false,
+    "playbook": "models/happyhorse.md",
+    "skill_id": "video-happyhorse",
+    "model_version": "1.0"
+  }
+]

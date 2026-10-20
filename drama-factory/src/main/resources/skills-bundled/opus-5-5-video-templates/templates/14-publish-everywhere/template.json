@@ -1,0 +1,24 @@
+{
+  "id": "14-publish-everywhere",
+  "title": "Create once, publish everywhere — cross-posting tool promo",
+  "category": "product launch / SaaS",
+  "duration": 15,
+  "size": "1920x1080",
+  "demoBrand": "fanout (fictional)",
+  "source": {
+    "author": "@jackfriks",
+    "post": "https://x.com/jackfriks/status/2103881791002357918",
+    "note": "Remade from scratch in HyperFrames after the Post Bridge promo; structure and pacing follow it. Brand, logo and copy are ours and fictional; the real platform logos are replaced with generic channel icons, and the platform names with channel types."
+  },
+  "scenes": [
+    "green line, headline letters rise through it",
+    "headline swings away, channel icons orbit a video card",
+    "card zooms into a composer: typed caption, channel chips, click with ripples",
+    "ten phones fill one by one while a counter climbs to 10/10",
+    "channel words cut on alternating backgrounds, then the payoff line",
+    "chat request, typing dots, week calendar, scheduled confirmation",
+    "white burst into the logo lockup, tagline and domain"
+  ],
+  "variables": ["brand", "domain", "head1a", "head1b", "head2a", "head2b", "draft1", "draft2", "button", "channels", "finale", "ask", "done", "slotDay", "slotTime", "tagA", "tagB", "accent", "night", "paper", "ink"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"brand\":\"relaykit\",\"accent\":\"#7c9cff\"}'"
+}

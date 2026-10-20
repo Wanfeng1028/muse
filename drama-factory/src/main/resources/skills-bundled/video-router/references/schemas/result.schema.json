@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Successful routing response v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "ready_to_execute",
+    "candidates",
+    "excluded",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "enum": [
+        "needs_brief",
+        "preflight_required",
+        "no_compatible_route"
+      ]
+    },
+    "ready_to_execute": {
+      "const": false
+    },
+    "candidates": {
+      "type": "array"
+    },
+    "excluded": {
+      "type": "array"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

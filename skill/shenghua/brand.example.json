@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "name": "Example",
+  "handle": "@yourhandle",
+  "colors": {
+    "primary": "#ff3d5a",
+    "bg": "#0f0f17",
+    "text": "#e8e8ee"
+  },
+  "fonts": {
+    "display": { "google": "Archivo", "axes": "wdth,wght@62..125,100..900" },
+    "mono": { "google": "Geist Mono" },
+    "fallback": { "google": "Noto Sans" }
+  },
+  "background": { "style": "theme" },
+  "output": { "dir": "~/shenghuas" }
+}

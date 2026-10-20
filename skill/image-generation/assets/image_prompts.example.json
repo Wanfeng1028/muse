@@ -1,0 +1,71 @@
+{
+  "notes": "Style v1, locked 2026-10-06. Never edit 'style' mid-project: bump the version and regenerate, or accept the seam.",
+  "style": "Flat vector illustration built from simple geometric shapes with crisp edges. Depth comes only from flat overlapping shapes: no gradients, no shading, no soft 3D, no drop shadows, no texture, no outlines. Bold, simple silhouettes. Faces are minimal: small dark dot eyes, short eyebrows, a simple mouth that shows the emotion. Palette: coral #F2545B, amber #F7B32B, teal #1B998B, sky #3E92CC, indigo #2E3192, ink #1A1A2E and cool white #F5F7FA; light areas use cool white, never cream or beige. Soft key light from upper left. No text, no letters, no numbers, no logos, no user-interface details, no border.",
+  "palette": ["#F2545B", "#F7B32B", "#1B998B", "#3E92CC", "#2E3192", "#1A1A2E", "#F5F7FA"],
+  "background": "white",
+  "size": "1536x1024",
+  "quality": "high",
+  "output_format": "png",
+  "images": {
+    "cast": {
+      "notes": "Approve this sheet before any scene; it is Image 1 (identity) of every shot.",
+      "prompt": "Character reference sheet of two people standing side by side, full body, front three-quarter view, evenly spaced, nothing overlapping, even light: (1) Lena, a woman in her early thirties, warm brown skin, short dark hair in a bob, amber sweater, indigo trousers, coral sneakers, calm smile; (2) Omar, a man in his late twenties, light olive skin, curly black hair and a short beard, teal shirt with rolled sleeves, ink-coloured trousers, sky-blue sneakers, friendly expression.",
+      "size": "1536x1024"
+    },
+    "set-office": {
+      "notes": "Empty background plate for a slow push-in: generated 20% larger than the 16:9 preset.",
+      "prompt": "An empty small home office seen straight on at eye level: a plain desk against a wall, a window on the left letting in daylight, a potted plant, a shelf with blank book spines. No people. Wide framing with generous space around the desk.",
+      "aspect": "16:9",
+      "overscan": 1.2,
+      "background": "none"
+    },
+    "shot-problem": {
+      "prompt": "Lena sitting at the desk from Image 2, seen from the front, rubbing her forehead with one hand, frowning at a laptop whose screen is a plain light rectangle with nothing on it. A tall stack of paper sheets leans next to the laptop. Lena: woman in her early thirties, warm brown skin, short dark hair in a bob, amber sweater, indigo trousers.",
+      "aspect": "16:9",
+      "background": "none",
+      "references": [
+        {"ref": "cast", "role": "identity and outfits for Lena; match face, hair, clothes and colours exactly"},
+        {"ref": "set-office", "role": "room layout and light only; ignore its framing"}
+      ]
+    },
+    "shot-problem-relief": {
+      "notes": "One-change iteration: the previous output is Image 1, the cast sheet keeps identity locked.",
+      "prompt": "Change only Lena's expression: eyebrows raised, a small relieved smile. Keep exactly her pose, hands, clothes, the desk, the laptop, the papers, the framing and the colours.",
+      "edit_of": "shot-problem",
+      "aspect": "16:9",
+      "background": "none",
+      "references": [{"ref": "cast", "role": "identity reference for Lena only"}]
+    },
+    "shot-problem-tidy": {
+      "notes": "Masked edit: white in the mask = region to change. The mask applies to Image 1 (edit_of). Run with --composite-back for a pixel-exact paste.",
+      "prompt": "Replace the leaning stack of papers with one neat closed folder lying flat on the desk. Change nothing else.",
+      "edit_of": "shot-problem",
+      "mask": "masks/shot-problem-papers.png",
+      "aspect": "16:9",
+      "background": "none"
+    },
+    "omar-cheer": {
+      "notes": "Native alpha cutout: needs a gpt-image-2.5 model; png/webp only; checked for real transparency after decode.",
+      "prompt": "Omar jumping with joy, both arms raised, mouth wide open in a happy cheer, full body, slightly off the ground, centred with 10% empty margin on every side, nothing cropped. Only Omar. Omar: man in his late twenties, light olive skin, curly black hair, short beard, teal shirt, ink-coloured trousers, sky-blue sneakers.",
+      "size": "1024x1536",
+      "background": "transparent",
+      "n": 2,
+      "references": [{"ref": "cast", "role": "identity and outfits for Omar"}]
+    },
+    "prop-mug": {
+      "notes": "White subject: generate on mid-grey so the matte keeps the mug, then run cutout.py.",
+      "prompt": "A plain white ceramic coffee mug seen from a slight three-quarter angle, handle on the right, filling about 70 percent of the frame with even margin. The mug has nothing printed on it.",
+      "size": "1024x1024",
+      "background": "grey"
+    },
+    "share-card": {
+      "notes": "Share image art: real title text is composited in code later, so the left 45% stays empty.",
+      "prompt": "Lena and Omar standing on the right side of the frame, smiling and looking toward the empty left side, as if presenting it. The left 45% of the image is a calm empty area of flat sky colour for a headline added later.",
+      "size": "1536x800",
+      "background": "color:#3E92CC",
+      "output_format": "webp",
+      "output_compression": 85,
+      "references": [{"ref": "cast", "role": "identity and outfits for both characters"}]
+    }
+  }
+}

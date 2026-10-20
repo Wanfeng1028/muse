@@ -1,0 +1,11 @@
+{
+ "note": "Narration. start = absolute frame; slot = frame by which speech must end. Text may use eleven_v4 audio tags.",
+ "lines": [
+  {
+   "id": "01-s1",
+   "start": 30,
+   "slot": 330,
+   "text": "[casual] You run one command, and you get the real thing back. No guessing."
+  }
+ ]
+}

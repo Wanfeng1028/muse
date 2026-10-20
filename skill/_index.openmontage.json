@@ -9,8 +9,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/3d-world-generation.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/3d-world-generation.md：构建连续可编辑 Three.js 三维场景，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animated-drawing",
@@ -21,8 +20,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/animated-drawing.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/animated-drawing.md：让简笔画或照片动起来，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-asset-director",
@@ -33,8 +31,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/asset-director.md：动画管线素材制作阶段，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-compose-director",
@@ -45,8 +42,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/compose-director.md：动画管线渲染合成阶段，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-edit-director",
@@ -57,8 +53,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/edit-director.md：动画管线剪辑决策阶段，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-executive-producer",
@@ -69,8 +64,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/executive-producer.md：动画管线总制片人角色，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-idea-director",
@@ -81,8 +75,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/idea-director.md：动画管线创意总监技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-pipeline",
@@ -93,8 +86,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/animation-pipeline.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/animation-pipeline.md：规定动画与动态图形制作标准，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-proposal-director",
@@ -105,8 +97,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/proposal-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/proposal-director.md：动画管线提案总监技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-publish-director",
@@ -117,8 +108,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/publish-director.md：动画管线发布总监技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-research-director",
@@ -129,8 +119,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/research-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/research-director.md：动画管线研究总监技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-runtime-selector",
@@ -141,8 +130,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/animation-runtime-selector.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/animation-runtime-selector.md：选择合成运行时与动画库，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-scene-director",
@@ -153,8 +141,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/scene-director.md：动画分镜导演技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-animation-script-director",
@@ -165,8 +152,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/animation/script-director.md：动画剧本导演技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-asset-director",
@@ -177,8 +163,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/asset-director.md：准备口播数字人核心素材，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-compose-director",
@@ -189,8 +174,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/compose-director.md：负责数字人口播最终渲染，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-edit-director",
@@ -201,8 +185,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/edit-director.md：剪辑数字人口播时间线，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-executive-producer",
@@ -213,8 +196,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/executive-producer.md：数字人口播流水线执行制片人，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-idea-director",
@@ -225,8 +207,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/idea-director.md：数字人口播创意总监技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-publish-director",
@@ -237,8 +218,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/publish-director.md：数字人口播发布总监技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-scene-director",
@@ -249,8 +229,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/scene-director.md：虚拟形象口播画面规划，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-avatar-spokesperson-script-director",
@@ -261,8 +240,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/avatar-spokesperson/script-director.md：口播文案分场景改写，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-bespoke-composition",
@@ -273,8 +251,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/bespoke-composition.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/bespoke-composition.md：从零手写合成工坊指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-bg-remove-usage",
@@ -285,8 +262,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/bg-remove-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/bg-remove-usage.md：抠图工具使用说明，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-broll-planning",
@@ -297,8 +273,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/broll-planning.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/broll-planning.md：B-roll需求梳理与素材取舍，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-capability-extension",
@@ -309,8 +284,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/capability-extension.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/capability-extension.md：能力缺口的结构化扩展协议，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-asset-director",
@@ -321,8 +295,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/asset-director.md：角色动画资产统筹，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-character-design-director",
@@ -333,8 +306,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/character-design-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/character-design-director.md：角色设定设计，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-compose-director",
@@ -345,8 +317,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/compose-director.md：角色动画渲染合成，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-edit-director",
@@ -357,8 +328,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/edit-director.md：表演节奏与动作时间线，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-executive-producer",
@@ -369,8 +339,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/executive-producer.md：角色动画全流程统筹，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-proposal-director",
@@ -381,8 +350,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/proposal-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/proposal-director.md：角色动画概念提案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-publish-director",
@@ -393,8 +361,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/publish-director.md：角色动画发布打包，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-research-director",
@@ -405,8 +372,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/research-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/research-director.md：角色动画参考调研，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-rig-plan-director",
@@ -417,8 +383,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/rig-plan-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/rig-plan-director.md：骨骼绑定与姿态库方案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-scene-director",
@@ -429,8 +394,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/scene-director.md：逐场绑定动画规划，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-character-animation-script-director",
@@ -441,8 +405,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/character-animation/script-director.md：姿态表演节拍编剧，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-checkpoint-protocol",
@@ -453,8 +416,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/checkpoint-protocol.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/checkpoint-protocol.md：检查点与人工审批协议，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic",
@@ -465,8 +427,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/cinematic.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/cinematic.md：电影感处理规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-asset-director",
@@ -477,8 +438,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/asset-director.md：电影感剪辑素材统筹，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-compose-director",
@@ -489,8 +449,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/compose-director.md：电影感作品后期渲染合成，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-edit-director",
@@ -501,8 +460,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/edit-director.md：节拍图转有节奏时间线，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-executive-producer",
@@ -513,8 +471,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/executive-producer.md：串行编排全流程并设质量门禁，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-idea-director",
@@ -525,8 +482,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/idea-director.md：影视化项目立项梳理，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-proposal-director",
@@ -537,8 +493,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/proposal-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/proposal-director.md：研究简报转可评审创意提案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-publish-director",
@@ -549,8 +504,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/publish-director.md：影视化成品发布打包，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-research-director",
@@ -561,8 +515,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/research-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/research-director.md：影视化项目视觉声音调研，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-scene-director",
@@ -573,8 +526,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/scene-director.md：剧本节拍转镜头视觉方案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-cinematic-script-director",
@@ -585,8 +537,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/cinematic/script-director.md：搭建节拍图台词与标题卡，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-asset-director",
@@ -597,8 +548,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/asset-director.md：批量短视频素材包构建，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-compose-director",
@@ -609,8 +559,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/compose-director.md：批量渲染片段与平台变体，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-edit-director",
@@ -621,8 +570,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/edit-director.md：剪辑通过审核的片段，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-executive-producer",
@@ -633,8 +581,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/executive-producer.md：剪辑工厂流水线编排与质量门，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-idea-director",
@@ -645,8 +592,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/idea-director.md：长视频拆解为片段组合，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-publish-director",
@@ -657,8 +603,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/publish-director.md：片段批量打包分发方案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-scene-director",
@@ -669,8 +614,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/scene-director.md：已选片段取景包装方案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-clip-factory-script-director",
@@ -681,8 +625,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/clip-factory/script-director.md：长视频转候选片段清单，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-color-grading",
@@ -693,8 +636,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/color-grading.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/core/color-grading.md：视频调色预设滤镜与LUT，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-creative-intake",
@@ -705,8 +647,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/creative-intake.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/creative-intake.md：对话式收集用户创作意图，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-data-visualization",
@@ -717,8 +658,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/data-visualization.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/data-visualization.md：视频数据可视化图表与动画，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-diagram-gen-usage",
@@ -729,8 +669,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/diagram-gen-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/diagram-gen-usage.md：视频 Mermaid 图表使用规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-documentary-montage-asset-director",
@@ -741,8 +680,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/documentary-montage/asset-director.md：分镜槽位素材采集，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-documentary-montage-compose-director",
@@ -753,8 +691,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/documentary-montage/compose-director.md：剪辑决策渲染成片，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-documentary-montage-edit-director",
@@ -765,8 +702,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/documentary-montage/edit-director.md：片段编排剪辑决策，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-documentary-montage-executive-producer",
@@ -777,8 +713,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/documentary-montage/executive-producer.md：流水线总制片统筹，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-documentary-montage-idea-director",
@@ -789,8 +724,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/documentary-montage/idea-director.md：需求转主题 brief，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-documentary-montage-scene-director",
@@ -801,8 +735,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/documentary-montage/scene-director.md：brief 拆解检索槽位，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-enhancement-strategy",
@@ -813,8 +746,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/enhancement-strategy.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/enhancement-strategy.md：口播视频增强策略指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-asset-director",
@@ -825,8 +757,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/asset-director.md：批量生成旁白图像等素材，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-compose-director",
@@ -837,8 +768,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/compose-director.md：渲染成片与后期校验，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-edit-director",
@@ -849,8 +779,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/edit-director.md：装配完整剪辑决策清单，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-executive-producer",
@@ -861,8 +790,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/executive-producer.md：串行调度各阶段导演，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-idea-director",
@@ -873,8 +801,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/idea-director.md：调研并产出创意 brief，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-proposal-director",
@@ -885,8 +812,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/proposal-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/proposal-director.md：简报转方案与成本估算，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-publish-director",
@@ -897,8 +823,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/publish-director.md：生成元数据与发布封装，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-research-director",
@@ -909,8 +834,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/research-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/research-director.md：网络搜索产出调研简报，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-scene-director",
@@ -921,8 +845,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/scene-director.md：脚本转可视化分镜方案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-explainer-script-director",
@@ -933,8 +856,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/explainer/script-director.md：撰写解说旁白脚本，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-face-restore-usage",
@@ -945,8 +867,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/face-restore-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/face-restore-usage.md：AI 面部修复工具指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-ffmpeg",
@@ -957,8 +878,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/ffmpeg.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/core/ffmpeg.md：FFmpeg 音视频工具汇总，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-grok-prompting",
@@ -969,8 +889,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/grok-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/prompting/grok-prompting.md：grok图像视频提示词规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hunyuan-prompting",
@@ -981,8 +900,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/hunyuan-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/prompting/hunyuan-prompting.md：混元视频提示词撰写规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-asset-director",
@@ -993,8 +911,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/asset-director.md：混合剪辑支撑资产统筹，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-compose-director",
@@ -1005,8 +922,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/compose-director.md：混合剪辑最终合成输出，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-edit-director",
@@ -1017,8 +933,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/edit-director.md：混合剪辑分层剪辑设计，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-executive-producer",
@@ -1029,8 +944,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/executive-producer.md：混合管线全流程总制片，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-idea-director",
@@ -1041,8 +955,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/idea-director.md：混合管线创意立项导演，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-publish-director",
@@ -1053,8 +966,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/publish-director.md：混合管线发布包整理，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-scene-director",
@@ -1065,8 +977,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/scene-director.md：混合管线视觉场景方案，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hybrid-script-director",
@@ -1077,8 +988,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/hybrid/script-director.md：混合管线剧本节拍分配，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-hyperframes",
@@ -1089,8 +999,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/hyperframes.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/core/hyperframes.md：HyperFrames选用与渲染指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-image-gen-usage",
@@ -1101,8 +1010,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/image-gen-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/image-gen-usage.md：AI图像生成使用指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-image-provider-usage",
@@ -1113,8 +1021,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/image-provider-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/image-provider-usage.md：图像提供商选择与路由，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-ink-theater",
@@ -1125,8 +1032,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/ink-theater.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/ink-theater.md：水墨风格动态艺术创作，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-lip-sync-usage",
@@ -1137,8 +1043,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/lip-sync-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/lip-sync-usage.md：lip_sync配音口型同步指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-asset-director",
@@ -1149,8 +1054,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/asset-director.md：本地化配音素材生产，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-compose-director",
@@ -1161,8 +1065,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/compose-director.md：本地化配音渲染合成，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-edit-director",
@@ -1173,8 +1076,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/edit-director.md：本地化配音剪辑编排，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-executive-producer",
@@ -1185,8 +1087,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/executive-producer.md：本地化配音全流程制片，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-idea-director",
@@ -1197,8 +1098,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/idea-director.md：本地化配音需求定义，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-publish-director",
@@ -1209,8 +1109,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/publish-director.md：本地化配音发布打包技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-scene-director",
@@ -1221,8 +1120,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/scene-director.md：本地化配音场景导演技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-localization-dub-script-director",
@@ -1233,8 +1131,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/localization-dub/script-director.md：本地化配音剧本导演技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-long-form",
@@ -1245,8 +1142,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/long-form.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/long-form.md：长视频留存优化管线，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-ltx-prompting",
@@ -1257,8 +1153,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/ltx-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/prompting/ltx-prompting.md：LTX-2 提示词撰写规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-manim-usage",
@@ -1269,8 +1164,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/manim-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/manim-usage.md：ManimCE 数学动画制作规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-music-gen-usage",
@@ -1281,8 +1175,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/music-gen-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/music-gen-usage.md：music_gen 背景音乐生成指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-onboarding",
@@ -1293,8 +1186,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/onboarding.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/onboarding.md：新用户引导与能力发现，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-asset-director",
@@ -1305,8 +1197,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/asset-director.md：播客再加工素材资产统筹，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-compose-director",
@@ -1317,8 +1208,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/compose-director.md：播客再加工合成渲染环节，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-edit-director",
@@ -1329,8 +1219,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/edit-director.md：播客再加工剪辑决策环节，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-executive-producer",
@@ -1341,8 +1230,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/executive-producer.md：播客二次创作执行制片人，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-idea-director",
@@ -1353,8 +1241,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/idea-director.md：播客二次创作创意导演，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-publish-director",
@@ -1365,8 +1252,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/publish-director.md：播客二次创作发布导演，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-scene-director",
@@ -1377,8 +1263,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/scene-director.md：播客二次创作场景导演，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-podcast-repurpose-script-director",
@@ -1389,8 +1274,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/podcast-repurpose/script-director.md：播客二次创作剧本导演，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-remotion",
@@ -1401,8 +1285,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/remotion.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/core/remotion.md：React 视频合成引擎指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-reviewer",
@@ -1413,8 +1296,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/reviewer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/reviewer.md：阶段质量把关审查技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-scene-detect-usage",
@@ -1425,8 +1307,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/scene-detect-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/scene-detect-usage.md：scene_detect 镜头切分指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-asset-director",
@@ -1437,8 +1318,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/asset-director.md：屏幕演示核心素材生成，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-compose-director",
@@ -1449,8 +1329,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/compose-director.md：渲染屏幕演示成片并保证UI可读节奏匹配平台规格，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-edit-director",
@@ -1461,8 +1340,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/edit-director.md：将演示计划转为符合schema的剪辑决策，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-executive-producer",
@@ -1473,8 +1351,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/executive-producer.md：总制片人串行调度七阶段把控质量，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-idea-director",
@@ -1485,8 +1362,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/idea-director.md：创意导演判断录屏或合成并产出制作brief，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-publish-director",
@@ -1497,8 +1373,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/publish-director.md：撰写标题关键词章节标记并打包发布物，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-scene-director",
@@ -1509,8 +1384,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/scene-director.md：为录屏规划镜头与注意力路径及裁剪策略，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-demo-script-director",
@@ -1521,8 +1395,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/screen-demo/script-director.md：将录屏素材转为带时间戳流程化脚本，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-screen-recording",
@@ -1533,8 +1406,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/screen-recording.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/screen-recording.md：屏幕录制视频完整制作规范与后期加工，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-seedance-prompting",
@@ -1545,8 +1417,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/seedance-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/prompting/seedance-prompting.md：Seedance 2.0 提示词八要素与多镜头写法，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-short-form",
@@ -1557,8 +1428,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/short-form.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/short-form.md：竖屏短视频制作规范与结构模板，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-skill-creator",
@@ -1569,8 +1439,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/skill-creator.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/skill-creator.md：动态创建新技能并注册到技能库，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-sora-prompting",
@@ -1581,8 +1450,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/sora-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/prompting/sora-prompting.md：Sora 2 提示词散文加摄影块模板与调色，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-sound-design",
@@ -1593,8 +1461,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/sound-design.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/sound-design.md：视频音频混音与声音设计电平响度规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-stock-sourcing-usage",
@@ -1605,8 +1472,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/stock-sourcing-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/stock-sourcing-usage.md：Pexels与Pixabay图库素材搜索下载指南，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-storytelling",
@@ -1617,8 +1483,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/storytelling.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/storytelling.md：解说视频叙事结构钩子与节奏原则，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-subtitle-sync",
@@ -1629,8 +1494,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/subtitle-sync.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/core/subtitle-sync.md：将转录数据转为精确计时字幕文件，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-asset-director",
@@ -1641,8 +1505,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/asset-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/asset-director.md：为口播生成字幕音频音乐叠加素材清单，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-compose-director",
@@ -1653,8 +1516,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/compose-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/compose-director.md：按剪辑决策渲染口播成片并完成质检，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-edit-director",
@@ -1665,8 +1527,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/edit-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/edit-director.md：为口播编排剪辑决策表与静音字幕处理，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-executive-producer",
@@ -1677,8 +1538,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/executive-producer.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/executive-producer.md：执行制片串行调度七阶段并做质量判断，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-gen-usage",
@@ -1689,8 +1549,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/talking-head-gen-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/talking-head-gen-usage.md：照片音频生成说话头像视频指导，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-idea-director",
@@ -1701,8 +1560,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/idea-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/idea-director.md：口播视频创意阶段与brief产出，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-publish-director",
@@ -1713,8 +1571,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/publish-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/publish-director.md：口播视频发布物料与记录收尾，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-scene-director",
@@ -1725,8 +1582,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/scene-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/scene-director.md：口播视频视觉叠加与场景计划，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-talking-head-script-director",
@@ -1737,8 +1593,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/script-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/pipelines/talking-head/script-director.md：口播素材转录结构化脚本产物，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-taste-direction",
@@ -1749,8 +1604,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/taste-direction.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/taste-direction.md：定义视频品味档案契约，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-typography",
@@ -1761,8 +1615,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/typography.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/typography.md：视频排版字体字幕动画规范，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-upscale-usage",
@@ -1773,8 +1626,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/upscale-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/upscale-usage.md：视频图像超分辨率放大参数，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-veo-prompting",
@@ -1785,8 +1637,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/veo-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/prompting/veo-prompting.md：VEO提示词写法与运镜光学，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-video-editing",
@@ -1797,8 +1648,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-editing.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/video-editing.md：口播视频剪辑决策与切点节奏，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-video-gen-prompting",
@@ -1809,8 +1659,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-gen-prompting.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/video-gen-prompting.md：视频生成提示词通用编写技能，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-video-reference-analyst",
@@ -1821,8 +1670,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/video-reference-analyst.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/video-reference-analyst.md：参考视频分析差异化与样片，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-video-stitching",
@@ -1833,8 +1681,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-stitching.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/video-stitching.md：多段视频拼接为成片策略，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-video-understand-usage",
@@ -1845,8 +1692,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-understand-usage.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/creative/video-understand-usage.md：调用video_understand进行画面理解，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-voice-performance-director",
@@ -1857,8 +1703,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/voice-performance-director.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/meta/voice-performance-director.md：让TTS旁白像被导演过，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     },
     {
       "id": "openmontage-whisperx",
@@ -1869,8 +1714,7 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/whisperx.md",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage openmontage/skills/core/whisperx.md：语音转文字词级时间戳与说话人分离，SKILL.md 为独立重写，未复制原文"
+      "rewritten": true
     }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "name": "07-i-make-things-move",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.96 preview",
+    "check": "npx --yes hyperframes@0.8.96 check",
+    "render": "npx --yes hyperframes@0.8.96 render",
+    "publish": "npx --yes hyperframes@0.8.96 publish"
+  }
+}

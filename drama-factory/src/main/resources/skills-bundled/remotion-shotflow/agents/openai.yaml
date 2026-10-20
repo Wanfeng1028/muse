@@ -1,0 +1,4 @@
+interface:
+  display_name: "ShotFlow for Remotion"
+  short_description: "Reference-guided Remotion shots and audio cue timing"
+  default_prompt: "Use $remotion-shotflow to design a Remotion video from my reference or content, with continuous shots, readable pacing and clearly documented audio cues."

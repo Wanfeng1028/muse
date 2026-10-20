@@ -1,0 +1,26 @@
+{
+  "id": "09-app-launch-mascot",
+  "title": "Mobile app launch with a mascot — seven phone screens",
+  "category": "app launch / mobile",
+  "duration": 18,
+  "size": "1920x1080",
+  "demoBrand": "Pip (fictional)",
+  "source": {
+    "author": "@likithareddy",
+    "post": "https://x.com/likithareddy/status/2104202329805467984",
+    "note": "Remade from scratch in HyperFrames after the Meet Peggy launch film; structure and pacing follow it. Mascot, brand, app screens and copy are ours and fictional."
+  },
+  "scenes": [
+    "app icon pops with sparkles and winks, Meet <brand>",
+    "phone rises, email chips get pulled into a smart inbox, counter",
+    "swipe-to-catch-up cards",
+    "all caught up, toast and confetti",
+    "to-do screen with a one-tap question",
+    "family screen",
+    "calendar conflict, toggle flips to dark mode (circle wipe)",
+    "dark mode: three phones",
+    "wipe back, three icon variants, wordmark, waving mascot, tagline"
+  ],
+  "variables": ["brand", "tagline", "taglineHi", "parent", "count", "inboxHead", "inboxHead2", "inboxSub", "swipeHead", "swipeHi", "swipeSub", "doneHead", "doneSub", "todoHead", "todoHi", "todoSub", "familyHead", "familyHi", "familySub", "conflictHead", "conflictSub", "darkHead", "darkHi", "darkSub", "finalLine", "finalHi", "accent", "ink", "night"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"brand\":\"Nesto\",\"accent\":\"#7c5cff\"}'"
+}

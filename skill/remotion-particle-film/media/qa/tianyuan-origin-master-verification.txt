@@ -1,0 +1,20 @@
+decoding ..\outputs\tianyuan-origin-1080x1920-60fps.mp4 -> 270x480 proxies ...
+decoded frames = 3600
+decoded samples = 3600   reference samples = 3600   compared = 3600
+mean |luma delta| = 0.9287   max |luma delta| = 1.2560 (frame 3217)
+brightest frame  reference 3217 / decoded 3217
+pearson correlation = 0.999954
+
+spot checks (frame : reference luma -> decoded luma)
+      0 :   1.1294 ->   0.1684
+    300 :   1.9891 ->   1.1126
+    600 :   8.1707 ->   7.2011
+    900 :   8.7565 ->   7.8112
+   1200 :   4.4478 ->   3.5081
+   1500 :   3.3841 ->   2.4450
+   1800 :   3.7380 ->   2.8228
+   2100 :   3.5679 ->   2.6364
+   2400 :   2.7096 ->   1.7589
+   2700 :   3.8543 ->   2.9183
+   3000 :   1.1231 ->   0.1717
+   3300 :   1.9766 ->   1.1151

@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"brandA","type":"string","label":"Wordmark, white part","default":"Tick"},
+  {"id":"brandB","type":"string","label":"Wordmark, accent part","default":"ly"},
+  {"id":"kicker","type":"string","label":"Line above the wordmark","default":"WHAT&#39;S NEW IN"},
+  {"id":"tagline","type":"string","label":"Final tagline","default":"A square for every day you showed up."},
+  {"id":"label1","type":"string","label":"Scene 1 label","default":"NEW WAYS TO TRACK"},
+  {"id":"seg1","type":"string","label":"Segment 1","default":"Yes / No"},
+  {"id":"seg2","type":"string","label":"Segment 2","default":"Count"},
+  {"id":"seg3","type":"string","label":"Segment 3","default":"Measure"},
+  {"id":"sub1","type":"string","label":"Segment 1 caption","default":"Did it or didn&#39;t"},
+  {"id":"sub2","type":"string","label":"Segment 2 caption","default":"Cups, reps, pages"},
+  {"id":"sub3","type":"string","label":"Segment 3 caption","default":"Miles, litres, minutes"},
+  {"id":"label2","type":"string","label":"Scene 2 label","default":"DECIMALS AND UNITS"},
+  {"id":"amount","type":"string","label":"Counter target","default":"7.5"},
+  {"id":"unit","type":"string","label":"Counter unit","default":"km"},
+  {"id":"head3a","type":"string","label":"Scene 3 line 1 (ends with ?)","default":"Done for today?"},
+  {"id":"head3b","type":"string","label":"Scene 3 line 2 (ends with .)","default":"Out of sight."},
+  {"id":"label4","type":"string","label":"Scene 4 label","default":"AUTOMATIC CLOUD BACKUP"},
+  {"id":"head4a","type":"string","label":"Scene 4 line 1","default":"Saved."},
+  {"id":"head4b","type":"string","label":"Scene 4 line 2","default":"Every night."},
+  {"id":"head5a","type":"string","label":"Scene 5 line 1","default":"New phone?"},
+  {"id":"head5b","type":"string","label":"Scene 5 line 2","default":"Nothing lost."},
+  {"id":"accent","type":"color","label":"Accent (lavender)","default":"#8b8cf7"},
+  {"id":"lime","type":"color","label":"Row colour 1","default":"#a2e745"},
+  {"id":"purple","type":"color","label":"Row colour 2","default":"#c084fb"},
+  {"id":"green","type":"color","label":"Row colour 3","default":"#48df83"},
+  {"id":"coral","type":"color","label":"Row colour 4","default":"#fb6f6c"}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="preload" href="assets/fonts/PlusJakartaSans-normal-200-800.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/Inter-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/kit.js"></script>
+    <style>
+      :root { --accent: #8b8cf7; --lime: #a2e745; --purple: #c084fb; --green: #48df83; --coral: #fb6f6c; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #09090c; font-family: Inter, sans-serif; color: #f0f0f3; }
+      .layer { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; }
+      .abs { position: absolute; }
+      .J { font-family: "Plus Jakarta Sans", sans-serif; }
+      .kick { position: absolute; left: 0; width: 1080px; text-align: center; font: 700 26px/1 "Plus Jakarta Sans"; letter-spacing: 0.42em; color: #c8c9ff; white-space: pre; padding-left: 0.42em; }
+      .head { position: absolute; left: 0; width: 1080px; text-align: center; font: 800 94px/1.02 "Plus Jakarta Sans"; letter-spacing: -0.035em; white-space: nowrap; }
+      .head .p { color: var(--accent); }
+      .head .w { display: inline-block; white-space: pre; }
+      svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+      /* tiles */
+      .tile { position: absolute; left: 0; top: 0; width: 78px; height: 78px; border-radius: 17px; }
+
+      /* wordmark */
+      #kicker { top: 1196px; }
+      #wm { position: absolute; left: 0; top: 1196px; width: 1080px; text-align: center; font: 800 206px/1 "Plus Jakarta Sans"; letter-spacing: -0.03em; white-space: nowrap; }
+      #wm .ch { display: inline-block; }
+      #wm .b { color: var(--accent); }
+      #tag { position: absolute; left: 0; top: 1420px; width: 1080px; text-align: center; font: 600 38px/1 "Plus Jakarta Sans"; color: #d8d8e0; white-space: pre; letter-spacing: -0.01em; }
+
+      /* phone */
+      .phone { position: absolute; left: 0; top: 0; width: 648px; height: 1400px; border-radius: 96px; background: #060607; padding: 13px; box-shadow: inset 0 0 0 3px #3b3b42, inset 0 0 0 7px #0d0d10, 0 40px 90px rgba(0, 0, 0, 0.6); transform-origin: 0 0; }
+      .scr { position: relative; width: 622px; height: 1374px; border-radius: 84px; background: #131316; overflow: hidden; }
+      .isl { position: absolute; left: 50%; top: 22px; width: 176px; height: 50px; margin-left: -88px; border-radius: 26px; background: #000; z-index: 9; }
+      .sbar { position: absolute; left: 0; top: 0; width: 100%; height: 90px; display: flex; justify-content: space-between; align-items: center; padding: 14px 58px 0 76px; font: 600 26px/1 Inter; z-index: 8; }
+      .sbar svg { width: 92px; height: 20px; }
+      .v { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+      .lbl { position: absolute; font: 600 15px/1 Inter; letter-spacing: 0.07em; color: #7b7e8b; text-transform: uppercase; }
+      .seg { position: absolute; left: 36px; right: 36px; height: 60px; border-radius: 16px; background: #1e1e23; display: flex; padding: 5px; }
+      .seg span { flex: 1; text-align: center; font: 500 19px/50px Inter; color: #a2a5b0; border-radius: 12px; }
+      .seg span.on { background: #34343c; color: #fff; font-weight: 600; }
+      .hint { position: absolute; left: 0; width: 100%; text-align: center; font: 400 15px/1 Inter; color: #6d707c; }
+      .fld { position: absolute; height: 60px; border-radius: 16px; background: #1e1e23; font: 500 19px/60px Inter; color: #c9cbd3; padding: 0 20px; display: flex; justify-content: space-between; }
+      .fld .m { color: #6d707c; }
+      .btnP { position: absolute; left: 44px; right: 44px; height: 76px; border-radius: 38px; background: #6a63d6; color: #fff; font: 600 23px/76px Inter; text-align: center; }
+      .card { position: absolute; left: 22px; right: 22px; border-radius: 26px; background: #1b1b20; }
+      .ico { position: absolute; width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+      .t1 { position: absolute; font: 600 22px/1.2 Inter; color: #f0f0f3; white-space: nowrap; }
+      .t2 { position: absolute; font: 400 16px/1.3 Inter; color: #7b7e8b; white-space: nowrap; }
+      .px { position: absolute; display: grid; gap: 3px; }
+      .px i { display: block; width: 8px; height: 8px; border-radius: 2px; }
+      .touch { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(200, 200, 210, 0.45); border: 3px solid rgba(255, 255, 255, 0.55); z-index: 20; }
+
+      /* header segmented */
+      #seg { position: absolute; left: 66px; top: 244px; width: 948px; height: 128px; border-radius: 64px; background: rgba(40, 40, 50, 0.72); border: 2px solid rgba(255, 255, 255, 0.05); overflow: hidden; }
+      #segHi { position: absolute; top: 11px; left: 11px; width: 292px; height: 106px; border-radius: 53px; background: linear-gradient(180deg, #a3a4ff, #7f80f0); box-shadow: 0 0 34px rgba(139, 140, 247, 0.55); }
+      .sl { position: absolute; top: 0; width: 314px; height: 128px; text-align: center; font: 700 50px/128px "Plus Jakarta Sans"; color: #8b8d99; letter-spacing: -0.02em; white-space: nowrap; }
+      .sub { position: absolute; left: 0; top: 432px; width: 1080px; text-align: center; font: 600 36px/1 "Plus Jakarta Sans"; color: #c3c5cf; white-space: nowrap; }
+
+      /* gauge */
+      #gauge { position: absolute; left: 400px; top: 196px; width: 280px; height: 280px; }
+      #gNum { position: absolute; left: 0; top: 76px; width: 280px; text-align: center; font: 700 88px/1 "IBM Plex Mono", Inter, monospace; letter-spacing: 0.02em; color: #eef2f6; }
+      #gUnit { position: absolute; left: 0; top: 176px; width: 280px; text-align: center; font: 500 24px/1 Inter; color: #9aa6b4; }
+      #gCheck { position: absolute; left: 20px; top: 20px; width: 240px; height: 240px; border-radius: 58px; background: linear-gradient(180deg, #3fe0f5, #10b6d8); box-shadow: 0 0 50px rgba(34, 211, 238, 0.55); display: flex; align-items: center; justify-content: center; }
+
+      /* pill scene 3 */
+      #pill3 { position: absolute; left: 238px; top: 402px; width: 604px; height: 88px; border-radius: 44px; background: rgba(40, 40, 50, 0.72); border: 2px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; gap: 26px; padding: 0 26px; color: #8b8d99; font: 600 34px/1 "Plus Jakarta Sans"; }
+      #pill3 .k { width: 74px; height: 64px; border-radius: 32px; display: flex; align-items: center; justify-content: center; }
+
+      /* cloud */
+      .cloud { position: absolute; width: 150px; height: 110px; }
+
+      #whip { background: #09090c; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1080" data-height="1920">
+      <div id="scene" class="clip layer" data-start="0" data-duration="15" data-track-index="0">
+        <svg width="0" height="0" style="position: absolute"><defs id="defs"></defs></svg>
+        <canvas id="bg" class="layer" width="1080" height="1920"></canvas>
+
+        <!-- scene 1 -->
+        <div id="s1" class="layer">
+          <div id="k1" class="kick" style="top: 178px"></div>
+          <div id="seg"><div id="segHi"></div><div class="sl" id="sl0" style="left: 0px"></div><div class="sl" id="sl1" style="left: 317px"></div><div class="sl" id="sl2" style="left: 634px"></div></div>
+          <div class="sub" id="sub0"></div><div class="sub" id="sub1"></div><div class="sub" id="sub2"></div>
+        </div>
+
+        <!-- scene 2 -->
+        <div id="s2" class="layer">
+          <div id="k2" class="kick" style="top: 150px"></div>
+          <div id="gauge">
+            <svg viewBox="0 0 280 280" style="position: absolute; inset: 0; overflow: visible">
+              <circle cx="140" cy="140" r="118" fill="#101820" stroke="#1d2a36" stroke-width="16" />
+              <circle id="gArc" cx="140" cy="140" r="118" fill="none" stroke="#22d3ee" stroke-width="16" stroke-linecap="round" pathLength="1" transform="rotate(-90 140 140)" style="filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.8))" />
+            </svg>
+            <div id="gNum"></div><div id="gUnit"></div>
+            <div id="gCheck"><svg viewBox="0 0 24 24" style="width: 130px; height: 130px"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#062a33" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" /></svg></div>
+          </div>
+        </div>
+
+        <!-- scene 3 -->
+        <div id="s3" class="layer">
+          <div id="h3" class="head" style="top: 150px"></div>
+          <div id="pill3"></div>
+        </div>
+
+        <!-- scene 4 / 5 headers -->
+        <div id="s4" class="layer">
+          <svg class="cloud" id="cl4" viewBox="0 0 150 110"></svg>
+          <div id="k4" class="kick" style="top: 284px"></div>
+          <div id="h4" class="head" style="top: 262px"></div>
+        </div>
+        <div id="s5" class="layer">
+          <div id="h5" class="head" style="top: 170px"></div>
+          <svg id="arc5" class="layer" viewBox="0 0 1080 1920"><path id="arcP" d="M226 700 C 250 520, 360 470, 470 470 M 620 470 C 700 470, 760 510, 790 640" fill="none" stroke="#9aa0b4" stroke-width="4" stroke-dasharray="2 14" stroke-linecap="round" /></svg>
+          <svg class="cloud" id="cl5" viewBox="0 0 150 110"></svg>
+        </div>
+
+        <div id="phones" class="layer"></div>
+
+        <div id="tilesL" class="layer"></div>
+        <div id="kicker" class="kick"></div>
+        <div id="wm"></div>
+        <div id="tag"></div>
+
+        <canvas id="fx" class="layer" width="1080" height="1920"></canvas>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const v = K.vars();
+        K.bind(v);
+        const $ = K.$, E = K.E, P = K.prog, C = K.clamp, L = K.lerp, R = K.rnd;
+        const DUR = 15, TAU = Math.PI * 2;
+        const ACC = v.accent;
+        const bump = (t, a, b) => (t <= a || t >= b ? 0 : Math.sin(Math.PI * (t - a) / (b - a)));
+        const ioq = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
+        const hexRGB = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+        const mix = (a, b, u) => { const A = hexRGB(a), B = hexRGB(b); return "rgb(" + A.map((x, i) => Math.round(L(x, B[i], u))).join(",") + ")"; };
+        const blur = (el, b) => { el.style.filter = b > 0.2 ? "blur(" + b.toFixed(1) + "px)" : "none"; };
+        const MBF = {};
+        const mblur = (el, key, sx, sy) => {
+          if (sx < 0.3 && sy < 0.3) { el.style.filter = "none"; return; }
+          let g = MBF[key];
+          if (!g) { const ns = "http://www.w3.org/2000/svg", f = document.createElementNS(ns, "filter"); f.setAttribute("id", "mb_" + key); f.setAttribute("x", "-20%"); f.setAttribute("y", "-20%"); f.setAttribute("width", "140%"); f.setAttribute("height", "140%"); g = document.createElementNS(ns, "feGaussianBlur"); f.appendChild(g); document.getElementById("defs").appendChild(f); MBF[key] = g; }
+          g.setAttribute("stdDeviation", sx.toFixed(1) + " " + sy.toFixed(1));
+          el.style.filter = "url(#mb_" + key + ")";
+        };
+        const fade = (el, a) => { el.style.opacity = C(a).toFixed(3); K.show(el, a > 0.001); };
+
+        const IC = {
+          x: '<path d="M6 6l12 12M18 6L6 18"/>', gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+          filter: '<path d="M4 6h16M7 12h10M10 18h4"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>', plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
+          list: '<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>', down: '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>', eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A9.8 9.8 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3.2 4M6.1 6.1C3.6 7.9 2 12 2 12s4 7 10 7a9.6 9.6 0 0 0 4.9-1.3"/>',
+          check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', back: '<path d="M15 6l-6 6 6 6"/>', chev: '<path d="M9 6l6 6-6 6"/>', cloud: '<path d="M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9a4.5 4.5 0 0 0 1 9z"/>',
+          refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>', restore: '<path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"/><path d="M12 8v4l3 2"/>', share: '<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>', file: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>',
+          book: '<path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4z"/><path d="M9 8h6M9 12h6"/>', dumb: '<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>', heart: '<path d="M12 20s-7-4.4-9.3-8.8A5 5 0 0 1 12 6.1a5 5 0 0 1 9.3 5.1C19 15.6 12 20 12 20z"/>',
+          run: '<circle cx="14" cy="4.5" r="2"/><path d="M8 21l3-6 3 2v5M6 11l3-3 4 1 3 4 3 1"/>', laptop: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/>', nosmoke: '<path d="M3 3l18 18M2 15h9M15 15h2v3h-5M18 15h4v3h-1"/>', bowl: '<path d="M3 12h18a9 9 0 0 1-18 0zM8 8c0-2 2-2 2-4M13 8c0-2 2-2 2-4"/>',
+          drop: '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>', lotus: '<path d="M12 20c-5 0-8-3-8-6 3 0 6 1 8 4 2-3 5-4 8-4 0 3-3 6-8 6zM12 18c-2-3-2-7 0-10 2 3 2 7 0 10z"/>', pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+        };
+        const ic = (n, st) => '<svg class="i" viewBox="0 0 24 24"' + (st ? ' style="' + st + '"' : "") + ">" + IC[n] + "</svg>";
+
+        // ================= background =================
+        const bg = $("bg").getContext("2d");
+        const DOTS = (() => { const c = document.createElement("canvas"); c.width = 1080; c.height = 1920; const g = c.getContext("2d"); g.fillStyle = "rgba(255,255,255,0.035)"; for (let y = 20; y < 1920; y += 40) for (let x = 20; x < 1080; x += 40) g.fillRect(x - 3, y - 3, 6, 6); return c; })();
+        const glow = (x, y, r, col, a) => { const g = bg.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col.replace("A", a)); g.addColorStop(1, col.replace("A", 0)); bg.fillStyle = g; bg.fillRect(0, 0, 1080, 1920); };
+        function drawBg(t) {
+          bg.fillStyle = "#09090c"; bg.fillRect(0, 0, 1080, 1920);
+          const s1 = t < 1.8 || t > 13.3 ? 1 : 0;
+          glow(260, 260, 900, "rgba(70,110,30,A)", 0.34 * (t < 1.8 ? 1 : t > 13.3 ? P(t, 13.3, 13.8) : 0.25));
+          glow(540, 1350, 800, "rgba(110,70,150,A)", 0.3);
+          glow(900, 1900, 700, "rgba(130,40,50,A)", 0.3);
+          if (t > 4.2 && t < 5.5) glow(540, 330, 520, "rgba(34,211,238,A)", 0.18);
+          if (t > 5.8 && t < 9.4) { glow(120, 1850, 700, "rgba(150,90,40,A)", 0.3); glow(1000, 1700, 700, "rgba(40,120,90,A)", 0.24); }
+          if (t > 9.4 && t < 13.3) glow(540, 700, 900, "rgba(40,70,140,A)", 0.3);
+          bg.drawImage(DOTS, 0, 0);
+          const vg = bg.createRadialGradient(540, 960, 500, 540, 960, 1250); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.55)");
+          bg.fillStyle = vg; bg.fillRect(0, 0, 1080, 1920);
+        }
+
+        // ================= tile grid =================
+        const ROWC = [v.lime, v.lime, v.purple, v.purple, v.green, v.green, v.coral, v.coral];
+        const DIMC = ["#45612f", "#45612f", "#31506e", "#31506e", "#2c604c", "#2c604c", "#613e48", "#613e48"];
+        const DIM = ["01000100", "00010000", "01101000", "00000011", "00111000", "01000100", "01001100", "00100011"];
+        const GL = 196, GT = 410, PITCH = 87;
+        const tiles = [];
+        for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+          const d = document.createElement("div");
+          d.className = "tile";
+          $("tilesL").appendChild(d);
+          tiles.push({ el: d, r, c, x: GL + c * PITCH, y: GT + r * 88, dim: DIM[r][c] === "1", lit: 14.25 + R(r * 8 + c + 0.5) * 0.6, sx: L(250, 830, R(r * 11.3 + c * 2.1)), sy: L(300 + r * 150, 700 + r * 150, R(r * 3.7 + c * 5.9)), sr: (R(r * 2.9 + c) - 0.5) * 200 });
+        }
+        const tileAt = (tl, x, y, s, rot, col, a) => { tl.el.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) rotate(" + rot.toFixed(1) + "deg) scale(" + s.toFixed(3) + ")"; tl.el.style.background = col; tl.el.style.opacity = C(a).toFixed(3); };
+        function drawTiles(t) {
+          const on = t < 1.95 || t >= 13.28;
+          K.show($("tilesL"), on);
+          if (!on) return;
+          tiles.forEach((tl) => {
+            let col = tl.dim ? DIMC[tl.r] : ROWC[tl.r];
+            if (t < 1.95) {
+              const a = 0.1 + (tl.c + tl.r) * 0.028, u = P(t, a, a + 0.3), e = E.outBack(u, 1.8);
+              const drift = 1 - E.outCubic(u);
+              let x = tl.x + drift * (22 + tl.c * 6), y = tl.y - drift * 30, s = C(e, 0, 1.2), rot = drift * 40;
+              // shuffle, then scatter away from the centre
+              const sc = E.inCubic(P(t, 1.62 + R(tl.r * 8 + tl.c) * 0.08, 1.9));
+              if (sc > 0) { const ang = Math.atan2(tl.y + 39 - 760, tl.x + 39 - 540); x += Math.cos(ang) * sc * 520; y += Math.sin(ang) * sc * 520; rot += sc * tl.sr; s *= 1 - sc * 0.3; }
+              tileAt(tl, x, y, s, rot, col, C(u * 3) * (1 - P(t, 1.8, 1.92)));
+            } else {
+              const a = 13.36 + tl.r * 0.035 + R(tl.c * 3.1 + tl.r) * 0.05, u = P(t, a, a + 0.34), e = E.outCubic(u);
+              const x = L(tl.sx, tl.x, e), y = L(tl.sy, tl.y, e), rot = (1 - e) * tl.sr, s = L(0.8, 1, e);
+              if (tl.dim && t >= tl.lit) col = mix(DIMC[tl.r], ROWC[tl.r], P(t, tl.lit, tl.lit + 0.25));
+              tileAt(tl, x, y, s, rot, col, P(t, 13.28, 13.42));
+              tl.el.style.boxShadow = t > 14.3 && !tl.dim ? "0 0 22px " + ROWC[tl.r] + "33" : "none";
+            }
+          });
+        }
+
+        // ================= wordmark =================
+        const wmChars = [];
+        [[v.brandA, ""], [v.brandB, "b"]].forEach(([txt, cls]) => [...txt].forEach((c) => { const s = document.createElement("span"); s.className = "ch " + cls; s.textContent = c === " " ? "\u00a0" : c; $("wm").appendChild(s); wmChars.push(s); }));
+        $("kicker").textContent = v.kicker;
+        function drawTitle(t) {
+          const on = t < 1.9 || t >= 13.5;
+          [$("kicker"), $("wm")].forEach((el) => K.show(el, on));
+          K.show($("tag"), t >= 14.0);
+          if (!on) return;
+          const t0 = t < 5 ? 0.78 : 13.58;
+          $("kicker").style.opacity = t < 5 ? P(t, 0.68, 0.84) * (1 - P(t, 1.55, 1.65)) : 0;
+          wmChars.forEach((s, i) => {
+            const a = t0 + i * 0.045, u = E.outCubic(P(t, a, a + 0.24));
+            let y = (1 - u) * 60, rot = 0, sc = L(0.7, 1, u), op = C(u * 2);
+            if (t < 5) { const x = P(t, 1.56 + i * 0.03, 1.72 + i * 0.03); if (x > 0) { rot = -x * 80; y -= x * 30; op *= 1 - x; sc *= 1 - x * 0.4; } }
+            s.style.opacity = op.toFixed(3);
+            s.style.transform = "translateY(" + y.toFixed(1) + "px) rotate(" + rot.toFixed(1) + "deg) scale(" + sc.toFixed(3) + ")";
+            s.style.filter = u < 0.9 ? "blur(" + ((1 - u) * 10).toFixed(1) + "px)" : "none";
+          });
+          if (t >= 14.0) {
+            const n = Math.floor(v.tagline.length * P(t, 14.08, 14.62) + 1e-6);
+            $("tag").textContent = v.tagline.slice(0, n);
+          }
+        }
+
+        // ================= phone factory =================
+        const SB = (tm) => '<div class="sbar"><span>' + tm + '</span><svg viewBox="0 0 92 20"><rect x="0" y="12" width="5" height="7" rx="1.2" fill="#fff"/><rect x="8" y="8" width="5" height="11" rx="1.2" fill="#fff"/><rect x="16" y="4" width="5" height="15" rx="1.2" fill="#fff"/><rect x="24" y="0" width="5" height="19" rx="1.2" fill="#fff"/><path d="M38 8a13 13 0 0 1 17 0M42 12a7 7 0 0 1 9 0" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="46.5" cy="16" r="2.2" fill="#fff"/><rect x="62" y="3" width="27" height="14" rx="4" stroke="#fff" stroke-width="1.6" fill="none" opacity=".5"/><rect x="64.5" y="5.5" width="20" height="9" rx="2" fill="#fff"/></svg></div><div class="isl"></div>';
+        const mkPhone = (tm, inner) => { const d = document.createElement("div"); d.className = "phone"; d.innerHTML = '<div class="scr">' + inner + SB(tm) + "</div>"; $("phones").appendChild(d); return d; };
+        const placePhone = (ph, x, y, s, extra) => { ph.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + s.toFixed(4) + ")" + (extra || ""); };
+        const pxGrid = (cols, rows, col, dimCol, seed, cell) => { let h = '<div class="px" style="grid-template-columns:repeat(' + cols + "," + (cell || 8) + 'px)">'; for (let i = 0; i < cols * rows; i++) h += '<i style="background:' + (R(seed + i * 1.3) > 0.32 ? col : dimCol) + (cell ? ";width:" + cell + "px;height:" + cell + "px" : "") + '"></i>'; return h + "</div>"; };
+
+        // ---- phone 1: new habit form ----
+        const SW = [["#f06a6a", "#f59a3e", "#f5c33e", "#f5d33a", "#a8e04a", "#4fd98a", "#3dd6b0"], ["#3dd6c4", "#22d3ee", "#38bdf8", "#60a5fa", "#818cf8", "#a78bfa", "#c084fc"], ["#e879f9", "#f472b6", "#fb7185", "#94a3b8", "#9ca3af", "#a3a3a3", "#a8a29e"]];
+        let p1 = '<div class="v">' +
+          '<div style="position:absolute;left:50%;top:92px;width:60px;height:6px;margin-left:-30px;border-radius:3px;background:#3a3a42"></div>' +
+          '<div class="ico" style="left:36px;top:128px;border-radius:50%;background:#26262c;color:#bbb;font-size:20px">' + ic("x") + "</div>" +
+          '<div class="t1" style="left:0;width:100%;text-align:center;top:138px;font-size:28px">New Habit</div>' +
+          '<div class="lbl" style="left:40px;top:196px">Color</div>';
+        SW.forEach((row, r) => row.forEach((c, k) => { p1 += '<div style="position:absolute;left:' + (40 + k * 78) + "px;top:" + (224 + r * 70) + "px;width:52px;height:52px;border-radius:15px;background:" + c + (r === 1 && k === 1 ? ";box-shadow:0 0 0 4px #131316,0 0 0 7px #e8e8ee" : "") + '"></div>'; }));
+        p1 += '<div class="lbl" style="left:40px;top:448px">Habit type</div><div class="seg" style="top:472px"><span class="on">Build A Habit</span><span>Quit A Habit</span></div>' +
+          '<div class="hint" style="top:548px">Mark each day you complete it.</div>' +
+          '<div class="lbl" style="left:40px;top:600px">Tracking</div><div class="seg" id="trk" style="top:624px"><span></span><span></span><span></span></div>' +
+          '<div class="hint" id="trkHint" style="top:700px"></div>' +
+          '<div id="dynY" class="v"><div class="lbl" style="left:40px;top:752px">Streak goal</div><div class="lbl" style="left:326px;top:752px">Reminder</div>' +
+          '<div class="fld" style="left:36px;top:776px;width:266px"><span>None</span><span class="m">›</span></div><div class="fld" style="left:322px;top:776px;width:264px"><span>No Reminders</span><span class="m">›</span></div>' +
+          '<div class="lbl" style="left:40px;top:866px">Categories</div><div class="fld" style="left:36px;top:890px;width:550px"><span>None</span><span class="m">›</span></div></div>' +
+          '<div id="dynC" class="v"><div class="lbl" style="left:40px;top:752px">Daily goal</div><div class="fld" style="left:36px;top:776px;width:330px"><span>1 <span class="m">/ Day</span></span></div>' +
+          '<div class="fld" style="left:380px;top:776px;width:96px;justify-content:center;color:#888">−</div><div class="fld" style="left:490px;top:776px;width:96px;justify-content:center">+</div>' +
+          '<div class="hint" style="top:856px">Reaching this amount completes the day</div><div class="lbl" style="left:40px;top:910px">On tap</div>' +
+          '<div class="seg" style="top:934px"><span class="on">Add 1</span><span>Enter total</span></div><div class="hint" style="top:1010px">Adds one. At your goal, opens the editor.</div></div>' +
+          '<div id="dynM" class="v"><div class="lbl" style="left:40px;top:752px">Unit</div><div class="fld" style="left:36px;top:776px;width:550px"><span class="m">km, pages, minutes…</span></div>' +
+          '<div class="lbl" style="left:40px;top:866px">Daily goal</div><div class="fld" style="left:36px;top:890px;width:330px"><span>1 <span class="m">/ Day</span></span></div>' +
+          '<div class="fld" style="left:380px;top:890px;width:96px;justify-content:center;color:#888">−</div><div class="fld" style="left:490px;top:890px;width:96px;justify-content:center">+</div>' +
+          '<div class="hint" style="top:970px">Reaching this amount completes the day</div><div class="lbl" style="left:40px;top:1024px">On tap</div>' +
+          '<div class="seg" style="top:1048px"><span class="on">Add 1</span><span>Enter total</span></div></div>' +
+          '<div class="btnP" style="top:1236px;background:#5b55b8;color:#c9c7f5">Save</div><div class="touch" id="tch1"></div></div>';
+        const ph1 = mkPhone("12:28", p1);
+        const trkSpans = [...ph1.querySelectorAll("#trk span")];
+        [v.seg1, v.seg2, v.seg3].forEach((s, i) => (trkSpans[i].textContent = s));
+        const HINTS = ["Check the day off: done or not done", "Count toward a daily goal: cups, sets, pages", "Log amounts with a unit: 2 L of water, 7.5 km"];
+
+        // ---- phone 2: list with counter ----
+        const p2 = '<div class="v" id="p2list">' +
+          '<div class="card" style="top:98px;height:262px"><div class="ico" style="left:22px;top:22px;background:#123a36;color:#2dd4bf">' + ic("pen") + '</div><div class="t1" style="left:84px;top:22px">Journal</div><div class="t2" style="left:84px;top:52px">Three lines about the day.</div>' +
+          '<div class="ico" style="right:22px;top:22px;background:#2dd4bf;color:#06302b">' + ic("check") + '</div><div style="position:absolute;left:24px;top:104px">' + pxGrid(40, 12, "#2dd4bf", "#154a44", 3, 11) + "</div></div>" +
+          '<div class="card" style="top:380px;height:262px"><div class="ico" style="left:22px;top:22px;background:#172a4a;color:#60a5fa">' + ic("laptop") + '</div><div class="t1" style="left:84px;top:22px">Deep Work</div><div class="t2" style="left:84px;top:52px">Four focused blocks, phone in a drawer.</div>' +
+          '<div class="ico" style="right:22px;top:22px;border:2px solid #3a3f4c;border-radius:50%;color:#8a90a0">' + ic("plus") + '</div><div style="position:absolute;left:24px;top:104px">' + pxGrid(40, 12, "#3b82f6", "#1a2b4a", 17, 11) + "</div></div>" +
+          '<div class="card" id="runCard" style="top:662px;height:262px"><div class="ico" style="left:22px;top:22px;background:#123a36;color:#22d3ee">' + ic("run") + '</div><div class="t1" style="left:84px;top:22px">Run</div><div class="t2" style="left:84px;top:52px">Seven and a half a day, rain or shine.</div>' +
+          '<div class="ico" id="runBtn" style="right:22px;top:22px;border:2px solid #3a3f4c;border-radius:50%;color:#8a90a0">' + ic("plus") + '</div><div style="position:absolute;left:24px;top:104px">' + pxGrid(40, 12, "#22d3ee", "#12394a", 29, 11) + "</div></div>" +
+          '<div class="card" style="top:944px;height:262px"><div class="ico" style="left:22px;top:22px;background:#3a1a1e;color:#fb7185">' + ic("nosmoke") + '</div><div class="t1" style="left:84px;top:22px">No Smoking</div><div class="t2" style="left:84px;top:52px">One day at a time.</div>' +
+          '<div class="ico" style="right:22px;top:22px;background:#fb7185;color:#3a0a12">' + ic("check") + '</div><div style="position:absolute;left:24px;top:104px">' + pxGrid(40, 12, "#fb7185", "#4a1c24", 41, 11) + "</div></div>" +
+          '<div class="card" style="top:1226px;height:120px"><div class="ico" style="left:22px;top:22px;background:#26380f;color:#a3e635">' + ic("bowl") + '</div><div class="t1" style="left:84px;top:22px">No Late Snacks</div><div class="t2" style="left:84px;top:52px">Kitchen closes after dinner.</div><div class="ico" style="right:22px;top:22px;background:#a3e635;color:#1d2a05">' + ic("check") + "</div></div>" +
+          "</div>" +
+          '<div class="card" id="sheet" style="top:780px;height:600px;background:#1f1f25;box-shadow:0 -20px 40px rgba(0,0,0,.5)">' +
+          '<div style="position:absolute;left:50%;top:12px;width:56px;height:5px;margin-left:-28px;border-radius:3px;background:#44444c"></div>' +
+          '<div class="ico" style="left:22px;top:34px;background:#123a36;color:#22d3ee">' + ic("run") + '</div><div class="t1" style="left:84px;top:34px">Run</div><div class="t2" style="left:84px;top:64px">Today · Sat, Sep 26</div>' +
+          '<div class="ico" style="right:22px;top:34px;border-radius:50%;background:#2c2c33;color:#bbb;font-size:18px">' + ic("x") + "</div>" +
+          '<div class="fld" style="left:22px;top:124px;width:96px;height:96px;justify-content:center;font-size:34px;line-height:96px;background:#28282f">−</div>' +
+          '<div class="fld" style="left:132px;top:124px;width:314px;height:96px;justify-content:center;font:700 44px/96px Inter;background:#28282f;color:#fff"><span id="cVal">0</span>&nbsp;<span class="m" style="font-size:22px">km</span></div>' +
+          '<div class="fld" style="left:460px;top:124px;width:96px;height:96px;justify-content:center;font-size:34px;line-height:96px;background:#16424c;color:#22d3ee">+</div>' +
+          '<div style="position:absolute;left:26px;right:26px;top:246px;height:8px;border-radius:4px;background:#2e2e36"><i id="cBar" style="display:block;height:100%;width:0;border-radius:4px;background:#22d3ee;box-shadow:0 0 12px #22d3ee"></i></div>' +
+          '<div class="t2" style="left:26px;top:268px;color:#9aa0ad">◎ Goal <span id="cGoal"></span></div><div class="t2" id="cPct" style="right:26px;top:268px;color:#22d3ee">0%</div>' +
+          '<div style="position:absolute;left:22px;right:22px;top:312px;display:flex;gap:12px">' + ["+1", "+5", "◎ 7.5", "↺ 0"].map((c, i) => '<div class="fld" style="position:relative;flex:1;justify-content:center;height:60px;line-height:60px;font-size:17px;' + (i === 2 ? "background:#16424c;color:#22d3ee" : "") + '">' + c + "</div>").join("") + "</div>" +
+          '<div class="fld" style="left:22px;top:404px;width:78px;height:78px;justify-content:center;line-height:78px">' + ic("pen") + '</div><div class="btnP" id="cSave" style="left:114px;right:22px;top:404px;height:78px;line-height:78px;background:#8b8cf7"></div>' +
+          "</div>";
+        const ph2 = mkPhone("12:29", p2);
+
+        // ---- phone 3: today list ----
+        const ROWS3 = [["drop", "Drink Water", "#22d3ee", "fffff", 1], ["book", "Read", "#f5c33e", "pr" + "pf" + "r", 0], ["lotus", "Meditate", "#a78bfa", "fffff", 1], ["dumb", "Workout", "#f59a3e", "eefee", 0], ["heart", "Gym Day", "#34d399", "effee", 0], ["run", "Push-Ups", "#fb7185", "prrrr", 0], ["laptop", "Deep Work", "#60a5fa", "rpfrp", 0], ["nosmoke", "No Smoking", "#fb7185", "fffff", 0], ["bowl", "No Late Snacks", "#a3e635", "fffff", 0]];
+        const cell = (k, col) => k === "f" ? '<i style="width:40px;height:40px;border-radius:11px;background:' + col + '"></i>' : k === "e" ? '<i style="width:40px;height:40px;border-radius:11px;background:#1f1f25"></i>' : '<i style="width:38px;height:38px;border-radius:50%;border:4px solid ' + col + "44;" + (k === "p" ? "border-top-color:" + col + ";" : "") + '"></i>';
+        let p3 = '<div class="v"><div class="ico" style="left:30px;top:104px;border-radius:50%;background:#1f1f25;color:#9aa0ad">' + ic("gear") + "</div>" +
+          '<div class="ico" style="right:150px;top:104px;border-radius:50%;background:#1f2a44;color:#60a5fa">' + ic("filter") + '</div><div class="ico" style="right:92px;top:104px;border-radius:50%;background:#1f1f25;color:#9aa0ad">' + ic("chart") + '</div><div class="ico" style="right:34px;top:104px;border-radius:50%;background:#8b8cf7;color:#fff">' + ic("plus") + "</div>" +
+          '<div id="mp3" style="position:absolute;left:30px;top:170px;height:50px;border-radius:25px;background:#1f1f25;display:flex;align-items:center;gap:14px;padding:0 18px;font:600 17px/1 Inter;color:#9aa0ad"></div>' +
+          '<div class="t2" style="left:34px;top:240px;font-size:15px">Quit habits stay visible.</div>' +
+          '<div style="position:absolute;left:30px;top:276px;height:44px;padding:0 16px;border-radius:14px;background:#1f1f25;font:600 16px/44px Inter">Last 5 days</div><div class="t2" style="right:34px;top:290px;font-size:13px;letter-spacing:.12em">SEP 22 — SEP 26</div>' +
+          '<div class="card" style="top:344px;height:1000px;background:#17171b"><div class="t2" id="hc3" style="left:22px;top:34px;font-size:13px;letter-spacing:.12em"></div>' +
+          ["Tu 22", "We 23", "Th 24", "Fr 25", "Sa 26"].map((d, i) => '<div class="t2" style="left:' + (340 + i * 48) + 'px;top:18px;width:40px;text-align:center;font-size:12px;line-height:1.25;color:' + (i === 4 ? "#fff" : "#7b7e8b") + '">' + d.replace(" ", "<br>") + "</div>").join("") +
+          '<div id="rows3"></div><div class="t2" id="showc" style="left:0;width:100%;text-align:center;font-size:15px;color:#9aa0ad">Show completed</div></div><div class="touch" id="tch3"></div></div>';
+        const ph3 = mkPhone("12:33", p3);
+        const rows3 = ROWS3.map(([icn, name, col, cells, done], i) => {
+          const d = document.createElement("div");
+          d.style.cssText = "position:absolute;left:0;right:0;height:72px;overflow:hidden";
+          d.innerHTML = '<div class="ico" style="left:20px;top:13px;background:' + col + "22;color:" + col + '">' + ic(icn) + '</div><div class="t1 nm" style="left:80px;top:24px;font-size:19px">' + name + '</div><div style="position:absolute;left:340px;top:16px;display:flex;gap:8px;align-items:center" class="cells">' + [...cells].map((k) => '<span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center">' + cell(k, col) + "</span>").join("") + "</div>";
+          ph3.querySelector("#rows3").appendChild(d);
+          return { el: d, done, col, last: d.querySelectorAll(".cells span")[4], name: d.querySelector(".nm") };
+        });
+        const mp3 = ph3.querySelector("#mp3");
+        mp3.innerHTML = ic("list") + ic("down") + '<span id="mp3k" style="width:40px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:#2c2c44;color:#aeb0ff">' + ic("eyeoff") + '</span><span id="mp3t">Show in place</span>';
+
+        // ---- phone 4: backup ----
+        const p4 = '<div class="v">' +
+          '<div style="position:absolute;left:50%;top:92px;width:60px;height:6px;margin-left:-30px;border-radius:3px;background:#3a3a42"></div>' +
+          '<div class="ico" style="left:30px;top:126px;border-radius:50%;background:#1f1f25;color:#9aa0ad">' + ic("back") + '</div><div class="t1" style="left:0;width:100%;text-align:center;top:136px;font-size:28px">Backup &amp; Restore</div>' +
+          '<div class="card" id="bk" style="top:200px;height:196px;background:#1b1b20"></div>' +
+          '<div id="bkBody" class="v" style="top:418px">' +
+          '<div id="auto" style="position:absolute;left:0;right:0;top:0;height:216px"><div class="lbl" style="left:34px;top:0">Automatic backup</div><div class="card" style="top:26px;height:170px"><div class="t1" style="left:22px;top:28px;font-size:19px">Daily backup</div>' +
+          '<div id="tog" style="position:absolute;right:22px;top:20px;width:66px;height:40px;border-radius:20px;background:#8b5cf6"><i style="position:absolute;right:4px;top:4px;width:32px;height:32px;border-radius:50%;background:#fff"></i></div>' +
+          '<div style="position:absolute;left:22px;right:22px;top:86px;height:1px;background:#2a2a30"></div><div class="t1" style="left:22px;top:112px;font-size:19px">Saved in</div><div class="t2" style="right:22px;top:114px;font-size:18px;color:#c9cbd3">Cloud Drive</div></div></div>' +
+          '<div id="rest" style="position:absolute;left:0;right:0;top:0"><div class="lbl" style="left:34px;top:0">Restore</div><div class="card" style="top:26px;height:96px"><div class="ico" style="left:18px;top:25px;background:#16382c;color:#34d399">' + ic("restore") + '</div><div class="t1" style="left:80px;top:24px;font-size:18px">Restore a backup</div><div class="t2" style="left:80px;top:52px">From the cloud, this phone or a file</div><div class="t2" style="right:24px;top:34px;font-size:22px">›</div></div>' +
+          '<div class="t2" style="left:34px;top:140px;font-size:14px;white-space:normal;width:540px">New phone? Install the app, sign in with the same account and tap Restore a backup.</div>' +
+          '<div class="lbl" style="left:34px;top:206px">Your own copy</div><div class="card" style="top:232px;height:96px"><div class="ico" style="left:18px;top:25px;background:#23234a;color:#8b8cf7">' + ic("file") + '</div><div class="t1" style="left:80px;top:24px;font-size:18px">Export a copy</div><div class="t2" style="left:80px;top:52px">Save a file anywhere you like</div><div class="t2" style="right:24px;top:30px;font-size:20px">' + ic("share") + "</div></div></div></div>" +
+          '<div class="btnP" id="saved" style="left:22px;right:22px;top:1250px;height:76px;line-height:76px;background:#8b3ff0;border-radius:20px">' + ic("check", "vertical-align:-3px") + " Backup saved</div>" +
+          '<div class="touch" id="tch4"></div></div>';
+        const ph4 = mkPhone("12:33", p4);
+        const bk = ph4.querySelector("#bk");
+        const BK = [
+          '<div class="ico" style="left:20px;top:22px;background:#26262c;color:#9aa0ad">' + ic("cloud") + '</div><div class="t1" style="left:84px;top:22px;font-size:19px">Back up your habits</div><div class="t2" style="left:84px;top:50px;font-size:14px;white-space:normal;width:480px">Keeps a copy in your cloud drive once a day, so a new phone never means starting over.</div><div class="btnP" style="left:20px;right:20px;top:112px;height:62px;line-height:62px;font-size:19px;background:#6d62f0">' + ic("cloud", "vertical-align:-3px") + " Turn on cloud backup</div>",
+          '<div class="ico" style="left:20px;top:22px;background:#26262c;color:#9aa0ad"><i id="spin" style="width:26px;height:26px;border-radius:50%;border:3px solid #3a3a44;border-top-color:#c9cbd3"></i></div><div class="t1" style="left:84px;top:24px;font-size:19px">Backing up…</div><div class="t2" style="left:84px;top:54px;font-size:14px">This takes a few seconds.</div>',
+          '<div class="ico" style="left:20px;top:22px;background:#15382b;color:#34d399;border-radius:50%">' + ic("check") + '</div><div class="t1" style="left:84px;top:22px;font-size:19px">Your habits are backed up</div><div class="t2" style="left:84px;top:50px;font-size:15px;color:#c9cbd3">Today at 12:33 · 11 habits</div><div class="t2" style="left:84px;top:74px;font-size:13px">In Cloud Drive · ' + v.brandA + v.brandB + '</div><div class="fld" style="left:20px;right:20px;top:118px;width:auto;height:58px;line-height:58px;justify-content:center;background:#26262c">' + ic("refresh", "vertical-align:-3px;margin-right:8px") + " Back up now</div>",
+        ];
+
+        // ---- phone 5: new phone ----
+        const p5 = '<div class="v"><div class="ico" style="left:30px;top:104px;border-radius:50%;background:#1f1f25;color:#9aa0ad">' + ic("gear") + '</div><div class="ico" style="right:92px;top:104px;border-radius:50%;background:#1f1f25;color:#9aa0ad">' + ic("chart") + '</div><div class="ico" style="right:34px;top:104px;border-radius:50%;background:#8b8cf7;color:#fff">' + ic("plus") + "</div>" +
+          '<div id="p5cards" class="v"></div>' +
+          '<div id="dlg" style="position:absolute;left:60px;right:60px;top:560px;height:440px;border-radius:34px;background:#26262c;box-shadow:0 30px 60px rgba(0,0,0,.6)"></div><div class="t2" id="gs" style="left:0;width:100%;text-align:center;top:1060px;font-size:16px;color:#55575f">Get started</div><div class="touch" id="tch5"></div></div>';
+        const ph5 = mkPhone("12:36", p5);
+        const cards5 = [["drop", "Drink Water", "#22d3ee", "#12394a", "Stay hydrated through the day."], ["book", "Read", "#f5c33e", "#4a3a10", "Read at least 30 pages."], ["lotus", "Meditate", "#a78bfa", "#2d2350", "Ten quiet minutes."], ["dumb", "Workout", "#f59a3e", "#4a2a10", "Strength or cardio."]];
+        ph5.querySelector("#p5cards").innerHTML = cards5.map(([icn, n, c, d, s], i) => '<div class="card" style="top:' + (170 + i * 280) + 'px;height:260px"><div class="ico" style="left:22px;top:22px;background:' + c + "22;color:" + c + '">' + ic(icn) + '</div><div class="t1" style="left:84px;top:22px">' + n + '</div><div class="t2" style="left:84px;top:52px">' + s + '</div><div class="ico" style="right:22px;top:22px;background:' + c + ';color:#111">' + ic("check") + '</div><div style="position:absolute;left:24px;top:102px">' + pxGrid(40, 12, c, d, 7 + i * 13, 11) + "</div></div>").join("");
+        const dlg = ph5.querySelector("#dlg");
+        const DLG = [
+          '<div class="ico" style="left:50%;margin-left:-28px;top:34px;width:56px;height:56px;border-radius:50%;background:#34344a;color:#aeb0ff">' + ic("cloud") + '</div><div class="t1" style="left:0;width:100%;text-align:center;top:112px;font-size:24px">Welcome back</div><div class="t2" style="left:40px;right:40px;top:154px;text-align:center;white-space:normal;font-size:16px">We found a backup in the cloud from today at 12:33 with 11 habits.</div><div class="btnP" style="left:30px;right:30px;top:236px;height:64px;line-height:64px;font-size:20px;background:#8b8cf7">Restore my habits</div><div class="t2" style="left:0;width:100%;text-align:center;top:322px;color:#aeb0ff">See all backups</div>',
+          '<div class="ico" style="left:50%;margin-left:-28px;top:34px;width:56px;height:56px;border-radius:50%;background:#34344a;color:#aeb0ff">' + ic("restore") + '</div><div class="t1" style="left:0;width:100%;text-align:center;top:112px;font-size:24px">Restore this backup?</div><div class="t2" style="left:40px;right:40px;top:154px;text-align:center;white-space:normal;font-size:16px">11 habits and 1,948 check-ins from today at 12:33 will be restored.</div><div class="btnP" style="left:30px;right:30px;top:236px;height:64px;line-height:64px;font-size:20px;background:#8b8cf7">Restore</div><div class="t2" style="left:0;width:100%;text-align:center;top:326px;color:#c9cbd3;font-size:18px">Cancel</div>',
+          '<div style="position:absolute;left:50%;top:90px;width:44px;height:44px;margin-left:-22px;border-radius:50%;border:4px solid #3a3a48;border-top-color:#aeb0ff" id="spin5"></div><div class="t1" style="left:0;width:100%;text-align:center;top:168px;font-size:24px">Restoring your habits…</div><div class="t2" style="left:40px;right:40px;top:210px;text-align:center;font-size:16px">Keep the app open until it’s done.</div>',
+          '<div class="ico" style="left:50%;margin-left:-28px;top:34px;width:56px;height:56px;border-radius:50%;background:#34344a;color:#aeb0ff">' + ic("check") + '</div><div class="t1" style="left:0;width:100%;text-align:center;top:112px;font-size:24px">11 habits restored</div><div class="t2" style="left:40px;right:40px;top:154px;text-align:center;white-space:normal;font-size:16px">Turn on cloud backup here too, so this phone is covered.</div><div class="btnP" style="left:30px;right:30px;top:236px;height:64px;line-height:64px;font-size:20px;background:#8b8cf7">Turn on cloud backup</div><div class="t2" style="left:0;width:100%;text-align:center;top:326px;color:#c9cbd3;font-size:18px">Not now</div>',
+        ];
+
+        // ================= headers =================
+        const words = (el, a, b) => { el.innerHTML = ""; const out = []; [[a, 0], [b, 1]].forEach(([txt, ln]) => { if (!txt) return; if (ln) el.appendChild(document.createElement("br")); const m = String(txt).match(/^(.*?)([?.!]?)$/); m[1].split(" ").forEach((w, i, arr) => { const s = document.createElement("span"); s.className = "w"; s.textContent = w + (i < arr.length - 1 ? " " : ""); el.appendChild(s); out.push([s, ln]); }); if (m[2]) { const p = document.createElement("span"); p.className = "w p"; p.textContent = m[2]; el.appendChild(p); out.push([p, ln]); } }); return out; };
+        const wordsIn = (ws, t, t0, t1, st) => ws.forEach(([s, ln], i) => { const j = ln ? i - ws.findIndex((w) => w[1] === 1) : i; const a = (ln ? t1 : t0) + j * st, u = E.outCubic(P(t, a, a + 0.26)); s.style.opacity = C(u * 1.6).toFixed(3); s.style.transform = "translateY(" + ((1 - u) * 34).toFixed(1) + "px) scale(" + L(1.12, 1, u).toFixed(3) + ")"; s.style.filter = u < 0.9 ? "blur(" + ((1 - u) * 12).toFixed(1) + "px)" : "none"; });
+        $("k1").textContent = v.label1; $("k2").textContent = v.label2; $("k4").textContent = v.label4;
+        [v.seg1, v.seg2, v.seg3].forEach((s, i) => ($("sl" + i).textContent = s));
+        [v.sub1, v.sub2, v.sub3].forEach((s, i) => ($("sub" + i).textContent = s));
+        const H3 = words($("h3"), v.head3a, v.head3b), H4 = words($("h4"), v.head4a, v.head4b), H5 = words($("h5"), v.head5a, v.head5b);
+        const cloudSVG = (mode) => '<defs><filter id="cg' + mode + '" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter></defs>' +
+          '<path d="M38 92h78a24 24 0 0 0 3-47.8A36 36 0 0 0 50 38a28 28 0 0 0-12 54z" fill="#0d3a52" stroke="#38d3ff" stroke-width="6" filter="url(#cg' + mode + ')" opacity=".8"/>' +
+          '<path d="M38 92h78a24 24 0 0 0 3-47.8A36 36 0 0 0 50 38a28 28 0 0 0-12 54z" fill="#0b2433" stroke="#5ee0ff" stroke-width="5"/>' +
+          '<g class="up" stroke="#e8fbff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M78 80V52M66 62l12-12 12 12"/></g>' +
+          '<g class="dn" stroke="#e8fbff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M78 50v28M66 68l12 12 12-12"/></g>' +
+          '<g class="ok" stroke="#e8fbff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M62 66l11 11 21-22"/></g>';
+        $("cl4").innerHTML = cloudSVG(4); $("cl5").innerHTML = cloudSVG(5);
+        const cloudMode = (el, m) => ["up", "dn", "ok"].forEach((k) => (el.querySelector("." + k).style.display = k === m ? "" : "none"));
+
+        // ================= canvas fx =================
+        const fx = $("fx").getContext("2d");
+        const BURST = ["#fb6f6c", "#f59a3e", "#f5c33e", "#a2e745", "#48df83", "#2dd4bf", "#22d3ee", "#60a5fa", "#a78bfa", "#c084fb", "#f472b6"];
+        const rr = (g, x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+        function burstFx(t) {
+          if (t < 5.3 || t > 5.95) return;
+          const S = 108, N = 10, M = 18;
+          for (let r = 0; r < M; r++) for (let c = 0; c < N; c++) {
+            const k = r * N + c, d = (c + r * 0.62) * 0.018;
+            const inU = E.outBack(P(t, 5.32 + d, 5.46 + d), 1.4), outU = E.inCubic(P(t, 5.62 + d * 0.9, 5.76 + d * 0.9));
+            const s = C(inU, 0, 1.1) * (1 - outU);
+            if (s <= 0.01) continue;
+            const x = c * S + S / 2, y = -12 + r * S + S / 2, w = (S - 5) * s;
+            fx.fillStyle = BURST[Math.floor(R(k * 1.7 + 3) * BURST.length)];
+            rr(fx, x - w / 2, y - w / 2, w, w, 20 * s); fx.fill();
+            fx.fillStyle = "#000"; fx.globalAlpha = 0.9 * C(s); fx.fillRect(x + S / 2 - 4, y + S / 2 - 4, 8, 8); fx.globalAlpha = 1;
+          }
+        }
+        function sparks(t, t0, x, y, n, seed) {
+          const dt = t - t0; if (dt <= 0 || dt > 0.7) return;
+          for (let i = 0; i < n; i++) { const a = R(seed + i) * TAU, sp = L(200, 700, R(seed + i * 2.3)); const d = sp * dt * (1 - dt * 0.6); fx.globalAlpha = 1 - dt / 0.7; fx.fillStyle = R(seed + i * 3.1) > 0.5 ? "#e8fbff" : "#22d3ee"; fx.fillRect(x + Math.cos(a) * d - 4, y + Math.sin(a) * d - 4, 8, 8); }
+          fx.globalAlpha = 1;
+        }
+        function arcTravel(t) {
+          if (t < 11.7 || t > 13.1) return;
+          const path = $("arcP");
+          const total = path.getTotalLength();
+          const cols = ["#22d3ee", "#a2e745", "#c084fb", "#f5c33e", "#fb6f6c", "#48df83"];
+          for (let i = 0; i < 12; i++) {
+            const t0 = 11.72 + i * 0.1, u = (t - t0) / 0.7;
+            if (u < 0 || u > 1) continue;
+            const p = path.getPointAtLength(u * total);
+            fx.save(); fx.translate(p.x, p.y); fx.rotate(u * 3 + i); fx.fillStyle = cols[i % cols.length]; fx.shadowColor = cols[i % cols.length]; fx.shadowBlur = 12;
+            fx.globalAlpha = Math.sin(Math.PI * u); rr(fx, -13, -13, 26, 26, 6); fx.fill(); fx.restore();
+          }
+        }
+
+        // ================= render =================
+        const touch = (el, t, a, b, x, y) => { const on = t >= a && t < b; K.show(el, on); if (!on) return; const u = P(t, a, b); el.style.left = x + "px"; el.style.top = y + "px"; el.style.opacity = (Math.min(1, u * 6) * (1 - P(t, b - 0.08, b))).toFixed(3); el.style.transform = "scale(" + (u > 0.45 && u < 0.7 ? 0.8 : 1) + ")"; };
+        function render(t) {
+          drawBg(t);
+          fx.clearRect(0, 0, 1080, 1920);
+          drawTiles(t);
+          drawTitle(t);
+
+          // ---- scene 1 (1.75 – 4.3) ----
+          const s1on = t >= 1.9 && t < 4.34;
+          K.show($("s1"), s1on);
+          K.show(ph1, t >= 1.7 && t < 4.34);
+          if (t >= 1.7 && t < 4.34) {
+            const pu = E.outCubic(P(t, 1.7, 1.92)), out = E.inCubic(P(t, 4.18, 4.34));
+            placePhone(ph1, 216 + (1 - pu) * 60, L(700, 594, pu) - out * 80, L(0.82, 1, pu));
+            ph1.style.opacity = (C(pu * 2) * (1 - out)).toFixed(3);
+            blur(ph1, out * 12);
+            const sel = t < 2.5 ? 0 : t < 3.34 ? 1 : 2;
+            trkSpans.forEach((s, i) => s.classList.toggle("on", i === sel));
+            ph1.querySelector("#trkHint").textContent = HINTS[sel];
+            K.show(ph1.querySelector("#dynY"), sel === 0); K.show(ph1.querySelector("#dynC"), sel === 1); K.show(ph1.querySelector("#dynM"), sel === 2);
+            const tc1 = ph1.querySelector("#tch1");
+            if (t < 2.9) touch(tc1, t, 2.26, 2.6, 311, 654); else touch(tc1, t, 3.1, 3.42, 490, 654);
+          }
+          if (s1on) {
+            const k1 = P(t, 1.92, 2.04) * (1 - P(t, 4.12, 4.26));
+            $("k1").style.opacity = k1;
+            const sg = $("seg"), hi = $("segHi");
+            const grow = E.outCubic(P(t, 1.98, 2.14));
+            sg.style.opacity = (C(grow * 2) * (1 - P(t, 4.12, 4.26))).toFixed(3);
+            sg.style.width = L(314, 948, grow).toFixed(1) + "px";
+            const pos = t < 2.42 ? 0 : t < 3.3 ? L(0, 1, E.inOutCubic(P(t, 2.42, 2.58))) : L(1, 2, E.inOutCubic(P(t, 3.3, 3.48)));
+            hi.style.left = (11 + pos * 317).toFixed(1) + "px";
+            [0, 1, 2].forEach((i) => { const on = 1 - C(Math.abs(pos - i)); const el = $("sl" + i); el.style.color = on > 0.5 ? "#fff" : "#8b8d99"; el.style.opacity = i === 0 ? 1 : P(t, 2.08, 2.16); });
+            const ring = t >= 3.18 && t < 3.36;
+            sg.style.boxShadow = "none";
+            [0, 1, 2].forEach((i) => { const a = i === 0 ? P(t, 2.1, 2.2) * (1 - P(t, 2.44, 2.52)) : i === 1 ? P(t, 2.52, 2.62) * (1 - P(t, 3.3, 3.4)) : P(t, 3.36, 3.46) * (1 - P(t, 4.12, 4.26)); const el = $("sub" + i); el.style.opacity = a.toFixed(3); el.style.transform = "translateY(" + ((1 - C(a * 1.5)) * 10).toFixed(1) + "px)"; el.style.filter = a < 1 ? "blur(" + ((1 - a) * 6).toFixed(1) + "px)" : "none"; });
+            $("sl2").style.outline = ring ? "3px solid rgba(255,255,255,.55)" : "none";
+            $("sl2").style.outlineOffset = "-8px";
+            $("sl2").style.borderRadius = "46px";
+          }
+
+          // ---- scene 2 (4.3 – 5.5) ----
+          const s2on = t >= 4.3 && t < 5.66;
+          K.show($("s2"), s2on);
+          K.show(ph2, s2on);
+          if (s2on) {
+            const inU = E.outCubic(P(t, 4.3, 4.46));
+            $("s2").style.opacity = inU.toFixed(3);
+            placePhone(ph2, 216, L(560, 500, inU), 1);
+            ph2.style.opacity = inU.toFixed(3);
+            const target = parseFloat(v.amount) || 7.5;
+            const val = Math.round(target * E.outQuad(P(t, 4.38, 4.86)) * 10) / 10;
+            const txt = String(val.toFixed(1)).replace(/\.0$/, "");
+            $("gNum").textContent = txt; $("gUnit").textContent = v.unit;
+            ph2.querySelector("#cVal").textContent = txt;
+            ph2.querySelector("#cGoal").textContent = String(target);
+            const pct = C(val / target);
+            K.draw($("gArc"), Math.max(0.001, pct));
+            ph2.querySelector("#cBar").style.width = (pct * 100).toFixed(1) + "%";
+            ph2.querySelector("#cPct").textContent = Math.round(pct * 100) + "%";
+            ph2.querySelector("#cSave").textContent = "Save " + txt + " " + v.unit;
+            // gauge becomes a check badge
+            const m = E.outBack(P(t, 5.12, 5.3), 2.2);
+            $("gCheck").style.transform = "scale(" + C(m, 0, 1.2).toFixed(3) + ")";
+            $("gCheck").style.opacity = C(P(t, 5.12, 5.2) * 2);
+            $("gauge").querySelector("svg").style.opacity = 1 - P(t, 5.1, 5.2);
+            $("gNum").style.opacity = $("gUnit").style.opacity = 1 - P(t, 5.1, 5.18);
+            const sh = ph2.querySelector("#sheet");
+            const close = E.inCubic(P(t, 5.02, 5.18));
+            sh.style.transform = "translateY(" + (close * 640).toFixed(0) + "px)";
+            ph2.querySelector("#p2list").style.transform = "translateY(" + (-E.inOutCubic(P(t, 5.14, 5.36)) * 120).toFixed(1) + "px)";
+            const done = t >= 5.2;
+            const rb = ph2.querySelector("#runBtn");
+            rb.style.background = done ? "#22d3ee" : "transparent"; rb.style.color = done ? "#06302b" : "#8a90a0"; rb.style.borderColor = done ? "transparent" : "#3a3f4c";
+            rb.innerHTML = ic(done ? "check" : "plus");
+          }
+          sparks(t, 5.16, 540, 336, 26, 90);
+          burstFx(t);
+
+          // ---- scene 3 (5.72 – 9.45) ----
+          const s3on = t >= 5.7 && t < 9.5;
+          K.show($("s3"), s3on);
+          K.show(ph3, s3on);
+          if (s3on) {
+            wordsIn(H3, t, 5.74, 6.02, 0.06);
+            const hide = t >= 6.3;
+            const pl = $("pill3");
+            pl.innerHTML = '<span style="font-size:30px;display:flex">' + ic("list") + '</span><span style="font-size:30px;display:flex">' + ic("down") + '</span><span class="k" style="background:' + (hide ? "#3a3b66" : "transparent") + ";color:" + (hide ? "#c8c9ff" : "#8b8d99") + '">' + ic("eyeoff", "font-size:32px") + '</span><span style="color:#f0f0f3">' + (hide ? "Hide" : "Show in place") + "</span>";
+            pl.style.opacity = P(t, 5.84, 5.98);
+            ph3.querySelector("#mp3t").textContent = hide ? "Hide" : "Show in place";
+            const pu = E.outCubic(P(t, 5.72, 5.94));
+            const wh = E.inCubic(P(t, 9.14, 9.34));
+            placePhone(ph3, 140, L(640, 560, pu) - wh * 260, 1.235);
+            ph3.style.opacity = (pu * (1 - P(t, 9.28, 9.42))).toFixed(3);
+            mblur(ph3, "p3", wh * 3, wh * 40);
+            $("s3").style.transform = "translateY(" + (-wh * 260).toFixed(1) + "px)";
+            mblur($("s3"), "s3", wh * 4, wh * 40);
+            $("s3").style.opacity = 1 - P(t, 9.28, 9.42);
+            // rows: done ones hide at 6.3; workout at 7.3, gym day at 8.2
+            const gone = (i) => (i === 0 || i === 2 ? P(t, 6.34, 6.58) : i === 3 ? P(t, 7.54, 7.78) : i === 4 ? P(t, 8.36, 8.6) : 0);
+            let y = 70, count = 0;
+            rows3.forEach((r, i) => {
+              const g = E.inOutCubic(gone(i));
+              r.el.style.top = y.toFixed(1) + "px";
+              r.el.style.height = (72 * (1 - g)).toFixed(1) + "px";
+              r.el.style.opacity = (1 - g).toFixed(3);
+              const mark = i === 3 ? bump(t, 7.3, 7.7) : i === 4 ? bump(t, 8.14, 8.52) : 0;
+              r.name.style.textDecoration = g > 0 || mark > 0.3 ? "line-through" : "none";
+              r.el.style.background = mark > 0 ? "rgba(255,255,255," + (0.07 * mark).toFixed(3) + ")" : "transparent";
+              r.el.style.borderRadius = "14px";
+              y += 72 * (1 - g);
+              if (g < 0.5) count++;
+            });
+            ph3.querySelector("#hc3").textContent = count + " HABITS";
+            const sc = ph3.querySelector("#showc"); sc.style.top = (y + 26).toFixed(1) + "px"; sc.style.opacity = P(t, 6.5, 6.7);
+            const fill = (i, t0) => { const c = rows3[i].last.firstChild; const u = P(t, t0, t0 + 0.1); c.style.background = u > 0.5 ? rows3[i].col : "#1f1f25"; c.style.transform = "scale(" + (1 + 0.25 * bump(t, t0, t0 + 0.2)).toFixed(3) + ")"; };
+            fill(3, 7.18); fill(4, 8.06);
+            const rowY = (i) => { let yy = 70; for (let k = 0; k < i; k++) yy += 72 * (1 - E.inOutCubic(gone(k))); return 344 + yy + 36; };
+            touch(ph3.querySelector("#tch3"), t, 7.04, 7.34, 548, rowY(3));
+            if (!(t >= 7.04 && t < 7.34)) touch(ph3.querySelector("#tch3"), t, 7.92, 8.22, 548, rowY(4));
+          }
+
+          // ---- scene 4 (9.45 – 11.4) ----
+          const s4on = t >= 9.44 && t < 11.5;
+          K.show($("s4"), s4on);
+          if (s4on) {
+            const inU = E.outCubic(P(t, 9.46, 9.62));
+            $("s4").style.opacity = (inU * (1 - P(t, 11.18, 11.34))).toFixed(3);
+            const c4 = $("cl4");
+            c4.style.left = "465px"; c4.style.top = (L(96, 60, E.inOutCubic(P(t, 10.08, 10.3)))).toFixed(1) + "px";
+            cloudMode(c4, t < 10.1 ? "up" : "ok");
+            c4.style.transform = "scale(" + (1 + 0.15 * bump(t, 10.08, 10.26)).toFixed(3) + ")";
+            $("k4").style.opacity = P(t, 9.5, 9.64) * (1 - P(t, 10.02, 10.12));
+            wordsIn(H4, t, 10.12, 10.36, 0.07);
+            K.show($("h4"), t >= 10.1);
+          }
+          const p4on = t >= 9.44 && t < 13.46;
+          K.show(ph4, p4on);
+          if (p4on) {
+            const inU = E.outCubic(P(t, 9.46, 9.62));
+            const mv = E.inOutCubic(P(t, 11.08, 11.38));
+            placePhone(ph4, L(216, 54, mv), L(L(660, 598, inU), 712, mv), L(1, 0.6, mv));
+            ph4.style.opacity = (inU * (1 - P(t, 13.24, 13.42))).toFixed(3);
+            const st = t < 9.8 ? 0 : t < 10.08 ? 1 : 2;
+            if (bk.dataset.s !== String(st)) { bk.dataset.s = String(st); bk.innerHTML = BK[st]; }
+            const sp = bk.querySelector("#spin"); if (sp) sp.style.transform = "rotate(" + (t * 720).toFixed(0) + "deg)";
+            const autoU = E.outCubic(P(t, 9.8, 9.92));
+            const auto = ph4.querySelector("#auto");
+            auto.style.opacity = autoU.toFixed(3);
+            ph4.querySelector("#rest").style.top = (autoU * 226).toFixed(1) + "px";
+            const sv = ph4.querySelector("#saved");
+            const su = E.outCubic(P(t, 10.16, 10.34));
+            sv.style.transform = "translateY(" + ((1 - su) * 140).toFixed(1) + "px)";
+            touch(ph4.querySelector("#tch4"), t, 9.62, 9.86, 311, 344);
+          }
+
+          // ---- scene 5 (11.1 – 13.4) ----
+          const s5on = t >= 11.1 && t < 13.46;
+          K.show($("s5"), s5on);
+          K.show(ph5, s5on);
+          if (s5on) {
+            wordsIn(H5, t, 11.3, 11.6, 0.07);
+            const out = P(t, 13.24, 13.42);
+            $("s5").style.opacity = (1 - out).toFixed(3);
+            const c5 = $("cl5");
+            const cu = E.outBack(P(t, 11.36, 11.56), 2);
+            c5.style.left = "437px"; c5.style.top = "414px";
+            c5.style.transform = "scale(" + C(cu, 0, 1.2).toFixed(3) + ")";
+            cloudMode(c5, t < 12.86 ? "dn" : "ok");
+            const ap = $("arcP"), len = ap.getTotalLength();
+            ap.style.strokeDashoffset = "0";
+            $("arc5").style.opacity = P(t, 11.5, 11.7) * (1 - out);
+            const inU = E.outCubic(P(t, 11.1, 11.38));
+            placePhone(ph5, L(1180, 442, inU), 626, 0.917);
+            ph5.style.opacity = (1 - out).toFixed(3);
+            ph5.style.filter = out > 0.02 ? "blur(" + (out * 10).toFixed(1) + "px)" : "none";
+            const st = t < 11.84 ? 0 : t < 12.14 ? 1 : t < 12.72 ? 2 : 3;
+            if (dlg.dataset.s !== String(st)) { dlg.dataset.s = String(st); dlg.innerHTML = DLG[st]; }
+            const sp5 = dlg.querySelector("#spin5"); if (sp5) sp5.style.transform = "rotate(" + (t * 720).toFixed(0) + "deg)";
+            const dOut = E.inCubic(P(t, 12.9, 13.06));
+            dlg.style.opacity = (1 - dOut).toFixed(3);
+            dlg.style.transform = "scale(" + L(1, 0.9, dOut).toFixed(3) + ")";
+            const cards = ph5.querySelector("#p5cards");
+            cards.style.opacity = P(t, 12.9, 13.06).toFixed(3);
+            ph5.querySelector("#gs").style.opacity = 1 - P(t, 12.9, 13.0);
+            touch(ph5.querySelector("#tch5"), t, 11.64, 11.86, 311, 828);
+            if (!(t >= 11.64 && t < 11.86)) touch(ph5.querySelector("#tch5"), t, 11.96, 12.16, 311, 828);
+          }
+          arcTravel(t);
+          ph4.style.filter = t >= 13.24 && t < 13.46 ? "blur(" + (P(t, 13.24, 13.42) * 10).toFixed(1) + "px)" : "none";
+        }
+
+        let lastT = 0;
+        const draw = (t) => { lastT = t; render(t); };
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(lastT));
+        window.__timelines = window.__timelines || {};
+        K.run("main", DUR, draw);
+      })();
+    </script>
+  </body>
+</html>

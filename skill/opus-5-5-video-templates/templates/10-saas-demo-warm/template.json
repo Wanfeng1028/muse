@@ -1,0 +1,27 @@
+{
+  "id": "10-saas-demo-warm",
+  "title": "SaaS product demo — warm paper UI walkthrough",
+  "category": "product demo / SaaS",
+  "duration": 30,
+  "size": "1920x1080",
+  "demoBrand": "Viewcraft (fictional)",
+  "source": {
+    "author": "@shownotover",
+    "post": "https://x.com/shownotover/status/2104124596957933687",
+    "note": "Remade from scratch in HyperFrames after the XFastest demo; structure and pacing follow it. Brand, logo, creators, posts and numbers are ours and fictional."
+  },
+  "scenes": [
+    "masked-word headline",
+    "research modal: pick niches, discover, progress, track creators",
+    "headline, then a flat chart that spikes to a multiplier",
+    "the spike becomes a post card, use this idea",
+    "editor: rewrite in your tone, typed line",
+    "whip to headline, whip to the coach panel: score, bars, reach range",
+    "pan to the bottom bar, schedule, calendar receives the post",
+    "green promise scene: follower chart and guarantee line",
+    "headline, tilted tutorial cards scroll",
+    "logo strokes fly in, wordmark slides out"
+  ],
+  "variables": ["brand", "domain", "head1", "head2", "head3", "head4", "promise1", "promise2", "goal", "head5", "spike", "author", "postA", "postB", "postC", "rewrite1", "rewrite2", "score", "reach", "accent", "ink", "paper", "green"],
+  "render": "npx hyperframes@0.8.96 render -f 60 -q high -w 4 -o out.mp4 --variables '{\"brand\":\"Signal\",\"accent\":\"#2459d6\"}'"
+}

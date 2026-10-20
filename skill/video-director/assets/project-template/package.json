@@ -1,0 +1,32 @@
+{
+  "name": "film",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "typecheck": "tsc --noEmit",
+    "compositions": "remotion compositions src/index.ts",
+    "cues": "tsx tools/export_cues.ts",
+    "render:wide": "remotion render Wide out/film-16x9.mp4",
+    "render:tall": "remotion render Tall out/film-9x16.mp4",
+    "script": "tsx tools/export_script.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.533",
+    "@remotion/fonts": "4.0.533",
+    "@remotion/google-fonts": "4.0.533",
+    "@remotion/media": "4.0.533",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "4.0.533",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

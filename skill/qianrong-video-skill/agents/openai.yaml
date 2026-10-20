@@ -1,0 +1,4 @@
+interface:
+  display_name: "千容AI · 拆书/知识短片流水线"
+  short_description: "用代码做拆书片与知识阐释视频，全流程机器可验收，支持 TTS 旁白"
+  default_prompt: "Use $qianrong-video-skill to build a book-breakdown / knowledge-explainer short video: pick one of four forms (15s feed ad / 60s minimal / 60s density-wall / 60s density + TTS narration), write the script, render, then run the adversarial audit."

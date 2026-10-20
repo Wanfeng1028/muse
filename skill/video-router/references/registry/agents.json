@@ -1,0 +1,43 @@
+[
+  {
+    "id": "opus-5-5",
+    "name": "Claude Opus 5.5",
+    "role": "controller-not-video-generator",
+    "aliases": [
+      "opus",
+      "opus5.5",
+      "claude-opus-5-5"
+    ],
+    "source_ids": [
+      "opus55"
+    ],
+    "guide": "agents.md",
+    "preferences": [
+      "For a short project launch without requested narration, inspect brag-slim.",
+      "For existing React/HTML pipelines preserve the existing renderer.",
+      "Treat generated code and rendered output as separate artifacts to test."
+    ]
+  },
+  {
+    "id": "astra",
+    "name": "GPT-6 Astra",
+    "role": "controller-not-video-generator",
+    "aliases": [
+      "gpt-6-astra",
+      "gpt6stra",
+      "gpt6astra",
+      "gpt-6stra",
+      "astra-pro"
+    ],
+    "source_ids": [
+      "astra",
+      "codex-skills"
+    ],
+    "guide": "agents.md",
+    "preferences": [
+      "Use the same capability router; do not interpret Astra as a video endpoint.",
+      "Select Remotion, Hyperframes, Canvas, Manim or Blender by deliverable and installed tools.",
+      "Load only the selected model playbook and provider schema for generated footage."
+    ]
+  }
+]
