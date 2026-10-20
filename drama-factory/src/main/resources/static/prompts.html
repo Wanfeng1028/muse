@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="light">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="prm.pageTitle">提示词库 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1 data-i18n="prm.heading">提示词库</h1>
+    <p class="text-secondary" data-i18n="prm.subtitle">收集的实测提示词与教程拆解：浏览、搜索、查看全文。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label" for="promptSearch" data-i18n="prm.search">搜索</label>
+          <input type="text" class="form-control" id="promptSearch" data-i18n-ph="prm.searchPh" placeholder="按标题、摘要搜索">
+        </div>
+      </div>
+      <div class="row g-3 mt-1" id="promptGrid"></div>
+      <div class="text-secondary text-center py-4" id="promptEmpty" data-i18n="prm.empty" hidden>没有找到匹配的提示词</div>
+      <div class="alert alert-danger mt-3" id="promptError" hidden></div>
+    </div>
+  </div>
+
+  <div class="card mt-3" id="promptDetailCard" hidden>
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title mb-0" id="promptDetailTitle"></h3>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="promptBackBtn" data-i18n="prm.back">返回列表</button>
+    </div>
+    <div class="card-body">
+      <div class="text-secondary small mb-2" id="promptDetailMeta"></div>
+      <pre id="promptDetailContent" style="white-space: pre-wrap;"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+  <div id="toast" class="alert alert-info" role="alert" hidden></div>
+</div>
+
+<script src="/i18n.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/prompts.js"></script>
+</body>
+</html>

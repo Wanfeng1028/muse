@@ -122,7 +122,7 @@
     send: 'send', spark: 'sparkles', sun: 'sun', moon: 'moon',
     runs: 'rocket', 'run-detail': 'rocket', agents: 'bot', settings: 'settings',
     images: 'image', music: 'music', avatar: 'scan-face', user: 'user',
-    layout: 'layout-grid', skills: 'puzzle', tools: 'wrench', review: 'clipboard-check',
+    layout: 'layout-grid', skills: 'puzzle', tools: 'wrench', review: 'clipboard-check', prompts: 'file-text',
   };
 
   function iconHtml(name) {
@@ -162,6 +162,7 @@
     { id: 'agents', href: '/agents.html', label: 'Agent 机队', i18n: 'nav.agents', icon: 'agents' },
     { id: 'skills', href: '/skills.html', label: 'Skill 市场', i18n: 'nav.skills', icon: 'skills' },
     { id: 'official-skills', href: '/official-skills.html', label: '官方 Skill 库', i18n: 'nav.officialSkills', icon: 'skills' },
+    { id: 'prompts', href: '/prompts.html', label: '提示词库', i18n: 'nav.prompts', icon: 'prompts' },
     { id: 'skillhub', href: '/skillhub.html', label: 'SkillHub', i18n: 'nav.skillhub', icon: 'skills' },
     { id: 'usage', href: '/usage.html', label: '用量统计', i18n: 'nav.usage', icon: 'chart' },
     { id: 'storyboard', href: '/storyboard.html', label: '分镜板', i18n: 'nav.storyboard', icon: 'film', kbd: 'G S' },
@@ -178,7 +179,7 @@
   /* 侧边栏分组 */
   var NAV_GROUPS = [
     { i18n: 'navgroup.create', label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
-    { i18n: 'navgroup.run', label: '运行', ids: ['runs', 'agents', 'skills', 'official-skills', 'skillhub', 'usage'] },
+    { i18n: 'navgroup.run', label: '运行', ids: ['runs', 'agents', 'skills', 'official-skills', 'prompts', 'skillhub', 'usage'] },
     { i18n: 'navgroup.produce', label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'review', 'pipeline', 'tools'] }
   ];
   function navById(id) {
@@ -362,7 +363,7 @@
       index: 'title.index', chat: 'title.chat', storyboard: 'title.storyboard',
       canvas: 'title.canvas',
       tasks: 'title.tasks', finals: 'title.finals', pipeline: 'title.pipeline',
-      runs: 'title.runs', 'run-detail': 'title.run-detail', agents: 'title.agents', skills: 'title.skills', 'official-skills': 'title.officialSkills', skillhub: 'title.skillhub', usage: 'title.usage', settings: 'title.settings',
+      runs: 'title.runs', 'run-detail': 'title.run-detail', agents: 'title.agents', skills: 'title.skills', 'official-skills': 'title.officialSkills', prompts: 'title.prompts', skillhub: 'title.skillhub', usage: 'title.usage', settings: 'title.settings',
       images: 'title.images', music: 'title.music', avatar: 'title.avatar',
       qc: 'title.qc',
       mv: 'title.mv', tools: 'title.tools', account: 'title.account'
@@ -375,7 +376,7 @@
       index: 'AI 工作区', chat: 'AI 对话', storyboard: '分镜板',
       canvas: '分镜画布',
       tasks: '任务队列', finals: '成片库', pipeline: '生产看板',
-      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', skills: 'Skill 市场', 'official-skills': '官方 Skill 库', skillhub: 'SkillHub', usage: '用量统计', settings: '设置',
+      runs: '运行列表', 'run-detail': '运行详情', agents: 'Agent 机队', skills: 'Skill 市场', 'official-skills': '官方 Skill 库', prompts: '提示词库', skillhub: 'SkillHub', usage: '用量统计', settings: '设置',
       images: 'AI 图片', music: 'AI 音乐', avatar: '数字人',
       qc: '成片质检',
       mv: 'AI MV', tools: '快捷工具', account: '账号'

@@ -1,13 +1,18 @@
 package com.dramafactory.service.skill;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -114,6 +119,29 @@ class SkillRegistryTest {
         // 非改写条目 sourceUrl 为空
         assertEquals("", registry.bundledOf("video-shots").orElseThrow().getSourceUrl());
         assertEquals("", registry.bundledOf("shorz-mcp").orElseThrow().getSourceUrl());
+    }
+
+    @Test
+    void bundledCountMatchesIndexEntries() throws Exception {
+        Set<String> ids = new HashSet<>();
+        ids.addAll(indexIds("/skills-bundled/_index.json"));
+        ids.addAll(indexIds("/skills-bundled/_index.openmontage.json"));
+
+        SkillRegistry registry = new SkillRegistry("nonexistent-dir-xyz");
+        assertEquals(ids.size(), registry.bundled().size());
+    }
+
+    private static Set<String> indexIds(String resource) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        Set<String> ids = new HashSet<>();
+        try (InputStream in = SkillRegistryTest.class.getResourceAsStream(resource)) {
+            org.junit.jupiter.api.Assertions.assertNotNull(in, "索引资源缺失: " + resource);
+            JsonNode skills = mapper.readTree(in).get("skills");
+            for (JsonNode entry : skills) {
+                ids.add(entry.get("id").asText());
+            }
+        }
+        return ids;
     }
 
     private static boolean containsId(List<SkillDescriptor> list, String id) {
