@@ -256,7 +256,11 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 				return ts, fmt.Errorf("读水位线失败: %w", err)
 			}
 			if wm != "" {
-				since[incrementalCol] = wm
+				// 非法水位线（如 "not-a-date"）按空处理，触发全量同步并自愈；
+				// 否则字符串比较会把所有正常日期行过滤掉。
+				if infer.IsDateTime(wm) {
+					since[incrementalCol] = wm
+				}
 			}
 		}
 	}
