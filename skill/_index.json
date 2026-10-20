@@ -332,7 +332,7 @@
       "source": "calesthio/OpenMontage",
       "sourceUrl": "https://github.com/calesthio/OpenMontage",
       "rewritten": false,
-      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及 references/ 附属文件，LICENSE 已放入目录）；原件位于上游仓库 .agents/skills/video-edit/（主 skills/ 树之外，上一轮收录时漏检）"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（正文逐字 + 注册表必需的 frontmatter 头，与全部 OpenMontage 条目同一处理；references/ 附属文件逐字，LICENSE 已放入目录）；原件位于上游仓库 .agents/skills/video-edit/（主 skills/ 树之外，上一轮收录时漏检）"
     },
     {
       "id": "video-social-editor",

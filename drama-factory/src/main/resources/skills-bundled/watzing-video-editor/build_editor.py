@@ -1,706 +1,652 @@
 #!/usr/bin/env python3
-"""Build a single-file HTML timeline editor for adjusting video cut points.
+"""Generate a static HTML editor page for adjusting video cut points.
 
 Usage:
     python3 build_editor.py <video_path> <transcript_json> <cuts_json> <output_html>
 
-The generated HTML embeds the video reference, the Whisper transcript and the
-current cut list. Open it in a browser, drag the keep-bands to adjust the
-segments, preview the result, then save the cuts back through the companion
-server (or export them as a file).
+The output is a single self-contained HTML file with the video, transcript, and
+proposed segments embedded. Open it in a browser, adjust segment start/end times
+visually, then click "Export cuts.json" to download the updated cut list.
 """
 import json
 import os
 import sys
 from pathlib import Path
 
-
-USAGE = __doc__
-
-
-def _die(msg=None):
-    if msg:
-        print(msg, file=sys.stderr)
-    print(USAGE, file=sys.stderr)
+if len(sys.argv) != 5:
+    print(__doc__, file=sys.stderr)
     sys.exit(1)
 
+video_path = Path(sys.argv[1]).resolve()
+transcript = json.loads(Path(sys.argv[2]).read_text())
+cuts_input = json.loads(Path(sys.argv[3]).read_text())
+output_html = Path(sys.argv[4]).resolve()
 
-def _coerce_segments(cuts_input):
-    """Accept either {"segments": [...]} or a bare list of segments."""
-    if isinstance(cuts_input, dict):
-        raw = cuts_input.get("segments", [])
-    else:
-        raw = cuts_input
-    out = []
-    for entry in raw:
-        out.append({"start": float(entry["start"]), "end": float(entry["end"])})
-    return out
+video_src = os.path.relpath(video_path, output_html.parent)
+segments = transcript.get("segments", [])
+duration = max((s.get("end", 0) for s in segments), default=0)
 
+cuts_list = cuts_input.get("segments", cuts_input) if isinstance(cuts_input, dict) else cuts_input
 
-def _collect_transcript(transcript):
-    segments = transcript.get("segments", [])
-    rows = []
-    for s in segments:
-        rows.append({
-            "start": s.get("start", 0),
-            "end": s.get("end", 0),
-            "text": s.get("text", ""),
-        })
-    return segments, rows
+data = {
+    "source": str(video_path),
+    "video_src": video_src,
+    "duration": duration,
+    "segments": [{"start": float(c["start"]), "end": float(c["end"])} for c in cuts_list],
+    "transcript": [{"start": s["start"], "end": s["end"], "text": s["text"]} for s in segments],
+    # Save endpoint writes the cuts back to this path (relative to project root)
+    "save_path": f"tmp/{video_path.stem}_cuts.json",
+}
 
-
-def _total_duration(segments):
-    if not segments:
-        return 0
-    return max((float(s.get("end", 0)) for s in segments), default=0)
-
-
-PAGE_SHELL = r"""<!DOCTYPE html>
+TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cut Timeline Editor</title>
+<title>Video Editor</title>
 <style>
-  :root {
-    --bg: #101114;
-    --panel: #191b1f;
-    --panel-2: #212429;
-    --line: #2b2f36;
-    --text: #e6e7e9;
-    --muted: #8a8f98;
-    --accent: #4caf50;
-    --accent-2: #ff9800;
-    --danger: #ef5350;
-    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #0e0e0e; color: #e0e0e0; font-size: 14px; }
+  header { padding: 12px 20px; background: #1a1a1a; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  header h1 { margin: 0; font-size: 16px; font-weight: 500; }
+  .stats { color: #888; font-size: 12px; }
+  .stats span { color: #4caf50; font-family: monospace; }
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+  video { width: 100%; max-height: 50vh; background: black; border-radius: 4px; display: block; }
+
+  .timeline-wrap { margin: 20px 0; }
+  .timeline-scroll {
+    overflow-x: auto; overflow-y: hidden;
+    background: #1a1a1a; border-radius: 4px;
   }
-  header {
-    display: flex; flex-wrap: wrap; gap: 12px;
-    justify-content: space-between; align-items: center;
-    padding: 12px 20px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--line);
+  .timeline-scroll::-webkit-scrollbar { height: 10px; }
+  .timeline-scroll::-webkit-scrollbar-track { background: #0e0e0e; }
+  .timeline-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  .timeline {
+    position: relative; height: 56px;
+    cursor: pointer; user-select: none;
+    /* width set via JS based on zoom */
   }
-  header h1 { font-size: 16px; margin: 0; font-weight: 500; }
-  .stats { font-size: 12px; color: var(--muted); }
-  .stats b { color: var(--accent); font-family: var(--mono); font-weight: 600; }
-  main { max-width: 1400px; margin: 0 auto; padding: 20px; }
-  video { display: block; width: 100%; max-height: 50vh; background: #000; border-radius: 4px; }
-
-  .tl-scroller { overflow-x: auto; overflow-y: hidden; background: var(--panel); border-radius: 4px; margin-top: 20px; }
-  .tl-scroller::-webkit-scrollbar { height: 10px; }
-  .tl-scroller::-webkit-scrollbar-track { background: var(--bg); }
-  .tl-scroller::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-  .tl { position: relative; height: 56px; user-select: none; cursor: pointer; }
-
-  .tick { position: absolute; top: 0; bottom: 14px; width: 1px; background: var(--line); }
-  .tick-label { position: absolute; bottom: 1px; font-family: var(--mono); font-size: 9px; color: #555; transform: translateX(2px); }
-
-  .band {
+  .keep-band {
     position: absolute; top: 6px; bottom: 18px;
-    background: rgba(76, 175, 80, 0.32);
-    border: 1px solid var(--accent);
-    border-radius: 3px;
-    cursor: grab;
+    background: rgba(76, 175, 80, 0.35);
+    border: 1px solid #4caf50;
+    border-radius: 3px; cursor: grab;
   }
-  .band:hover { background: rgba(76, 175, 80, 0.5); }
-  .band:active { cursor: grabbing; }
-  .band.is-selected { background: rgba(255, 152, 0, 0.42); border-color: var(--accent-2); }
-  .band .label {
-    position: absolute; top: 1px; left: 10px;
-    font-size: 10px; font-weight: 600; color: #fff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.85);
-    pointer-events: none;
+  .keep-band:active { cursor: grabbing; }
+  .keep-band:hover { background: rgba(76, 175, 80, 0.55); }
+  .keep-band.selected { background: rgba(255, 152, 0, 0.45); border-color: #ff9800; }
+  .keep-band-label {
+    position: absolute; top: 1px; left: 10px; font-size: 10px; color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8); pointer-events: none; font-weight: 600;
   }
-  .handle { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; background: transparent; }
-  .handle:hover { background: rgba(255,255,255,0.25); }
-  .handle.l { left: 0; border-radius: 3px 0 0 3px; }
-  .handle.r { right: 0; border-radius: 0 3px 3px 0; }
+  .resize-handle {
+    position: absolute; top: 0; bottom: 0; width: 8px;
+    cursor: ew-resize; background: rgba(255,255,255,0.0);
+  }
+  .resize-handle:hover { background: rgba(255,255,255,0.25); }
+  .resize-handle.left { left: 0; border-radius: 3px 0 0 3px; }
+  .resize-handle.right { right: 0; border-radius: 0 3px 3px 0; }
+  .playhead {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: #ff5722; pointer-events: none; z-index: 10;
+  }
+  .timeline-tick { position: absolute; top: 0; bottom: 14px; width: 1px; background: #2a2a2a; }
+  .timeline-tick-label {
+    position: absolute; bottom: 1px; font-size: 9px; color: #555;
+    font-family: monospace; transform: translateX(2px);
+  }
+  .timeline-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 6px; gap: 12px; flex-wrap: wrap;
+  }
+  .help { color: #555; font-size: 11px; }
+  .zoom-controls { display: flex; align-items: center; gap: 4px; }
+  .zoom-controls button {
+    padding: 4px 10px; font-size: 13px; min-width: 30px;
+  }
+  .zoom-level { color: #888; font-family: monospace; font-size: 11px; min-width: 50px; text-align: center; }
 
-  .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: #ff5722; pointer-events: none; z-index: 10; }
-
-  .tl-tools { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-top: 6px; }
-  .hint { font-size: 11px; color: #555; }
-  .zoom { display: flex; align-items: center; gap: 4px; }
-  .zoom button { min-width: 30px; padding: 4px 10px; font-size: 13px; }
-  .zoom .lvl { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 50px; text-align: center; }
-
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+  .controls { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; align-items: center; }
   button {
-    background: var(--panel-2); color: var(--text);
-    border: 1px solid #363a42; padding: 8px 14px; border-radius: 4px;
-    font-size: 13px; font-family: inherit; cursor: pointer;
+    background: #2a2a2a; color: #e0e0e0; border: 1px solid #3a3a3a;
+    padding: 8px 14px; border-radius: 4px; cursor: pointer;
+    font-size: 13px; font-family: inherit;
   }
-  button:hover { background: #2d3138; }
-  button:disabled { opacity: 0.4; cursor: default; }
-  button.primary { background: #2e7d32; border-color: var(--accent); color: #fff; }
+  button:hover { background: #3a3a3a; }
+  button.primary { background: #2e7d32; border-color: #4caf50; color: white; }
   button.primary:hover { background: #388e3c; }
-  button.danger { background: transparent; border-color: #d32f2f; color: var(--danger); padding: 4px 8px; font-size: 12px; }
-  button.danger:hover { background: rgba(211,47,47,0.15); }
+  button.danger { background: transparent; border-color: #d32f2f; color: #ef5350; padding: 4px 8px; font-size: 12px; }
+  button.danger:hover { background: rgba(211, 47, 47, 0.15); }
 
-  .rows { background: var(--panel); border-radius: 4px; overflow: hidden; margin-top: 12px; }
-  .row {
+  .segments { background: #1a1a1a; border-radius: 4px; overflow: hidden; }
+  .segment {
     display: grid;
     grid-template-columns: 32px 110px 110px 70px 1fr 80px 32px;
-    gap: 10px; align-items: center;
-    padding: 10px 14px;
+    gap: 10px; padding: 10px 14px; align-items: center;
     border-bottom: 1px solid #232323;
   }
-  .row:last-child { border-bottom: none; }
-  .row.is-selected { background: rgba(255, 152, 0, 0.08); }
-  .row .num { font-family: var(--mono); font-weight: 600; color: var(--accent); text-align: center; }
-  .row input {
-    width: 100%; padding: 6px 8px; font-family: var(--mono); font-size: 13px;
-    background: var(--bg); color: var(--text);
-    border: 1px solid var(--line); border-radius: 3px;
+  .segment:last-child { border-bottom: none; }
+  .segment.selected { background: rgba(255, 152, 0, 0.08); }
+  .segment.playing { background: rgba(76, 175, 80, 0.1); }
+  .seg-num { font-weight: 600; color: #4caf50; font-family: monospace; text-align: center; }
+  .seg-time {
+    background: #0e0e0e; color: #e0e0e0;
+    border: 1px solid #2a2a2a; padding: 6px 8px; border-radius: 3px;
+    font-family: monospace; font-size: 13px; width: 100%;
   }
-  .row input:focus { outline: none; border-color: var(--accent); }
-  .row .dur { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
-  .row .txt { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seg-time:focus { outline: none; border-color: #4caf50; }
+  .seg-dur { color: #888; font-family: monospace; font-size: 12px; text-align: right; }
+  .seg-text { color: #888; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .transcript {
-    margin-top: 24px; padding: 16px 20px;
-    background: var(--panel); border-radius: 4px;
-    font-size: 13px; line-height: 1.8;
+    margin-top: 24px; padding: 16px 20px; background: #1a1a1a;
+    border-radius: 4px; font-size: 13px; line-height: 1.8;
     max-height: 320px; overflow-y: auto;
   }
-  .ts { display: inline; }
-  .ts .t { font-family: var(--mono); font-size: 11px; color: #555; margin-right: 4px; }
-  .ts.kept .x { color: var(--accent); }
-  .ts.cut .x { color: #666; }
-  .ts .x { padding: 0 2px; border-radius: 2px; cursor: pointer; }
-  .ts .x:hover { background: rgba(255,255,255,0.1); }
-
-  .keys { margin-left: auto; font-size: 11px; color: #555; }
-  .keys code { background: var(--panel-2); padding: 1px 5px; border-radius: 2px; color: #aaa; font-size: 11px; }
+  .ts-segment { display: inline; }
+  .ts-time { color: #555; font-family: monospace; font-size: 11px; margin-right: 4px; }
+  .ts-segment.in-keep .ts-text { color: #4caf50; }
+  .ts-segment.out-keep .ts-text { color: #666; }
+  .ts-text { cursor: pointer; padding: 0 2px; border-radius: 2px; }
+  .ts-text:hover { background: rgba(255,255,255,0.1); }
 
   .toast {
     position: fixed; bottom: 24px; right: 24px;
-    background: #2e7d32; color: #fff;
-    padding: 12px 20px; border-radius: 4px;
-    opacity: 0; transition: opacity 0.3s;
+    background: #2e7d32; color: white; padding: 12px 20px;
+    border-radius: 4px; opacity: 0; transition: opacity 0.3s;
     pointer-events: none; z-index: 100;
   }
   .toast.show { opacity: 1; }
+  .kbd-help { color: #555; font-size: 11px; margin-left: auto; }
+  .kbd-help code { background: #2a2a2a; padding: 1px 5px; border-radius: 2px; color: #aaa; font-size: 11px; }
 </style>
 </head>
 <body>
 <header>
-  <h1 id="doc-title">Cut Timeline Editor</h1>
+  <h1 id="title">Video Editor</h1>
   <div class="stats">
-    Source <b id="stat-src">--</b>
-    &middot; Kept <b id="stat-kept">--</b>
-    &middot; <b id="stat-pct">--</b>
-    &middot; Segments <b id="stat-count">--</b>
+    Source: <span id="src-dur">--</span> &middot; Kept: <span id="kept-dur">--</span> (<span id="kept-pct">--</span>) &middot; Segments: <span id="seg-count">--</span>
   </div>
 </header>
 <main>
-  <video id="player" controls preload="metadata"></video>
+  <video id="player" controls></video>
 
-  <div class="tl-scroller" id="tl-scroller">
-    <div class="tl" id="tl"></div>
-  </div>
-  <div class="tl-tools">
-    <div class="hint">Drag a band to shift it. Grab its left/right edge to trim. Click empty space to seek.</div>
-    <div class="zoom">
-      <button id="zoom-out" title="Zoom out">&minus;</button>
-      <span class="lvl" id="zoom-lvl">100%</span>
-      <button id="zoom-in" title="Zoom in">+</button>
-      <button id="zoom-fit" title="Reset zoom">Fit</button>
+  <div class="timeline-wrap">
+    <div class="timeline-scroll" id="timeline-scroll">
+      <div class="timeline" id="timeline"></div>
+    </div>
+    <div class="timeline-toolbar">
+      <div class="help">Drag a band to move it. Drag its left/right edge to resize. Click empty area to seek.</div>
+      <div class="zoom-controls">
+        <button id="zoom-out" title="Zoom out">&minus;</button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button id="zoom-in" title="Zoom in">+</button>
+        <button id="zoom-reset" title="Fit to window">Fit</button>
+      </div>
     </div>
   </div>
 
-  <div class="actions">
-    <button class="primary" id="btn-preview">&#9654; Preview Final</button>
-    <button id="btn-add">+ Add segment at playhead</button>
-    <button id="btn-set-start">Set start = playhead</button>
-    <button id="btn-set-end">Set end = playhead</button>
-    <button id="btn-undo" disabled>&#x21A9; Undo</button>
-    <button class="primary" id="btn-save" style="margin-left:auto;">&#x1F4BE; Save</button>
-    <button id="btn-export" title="Download as file (no server needed)">&#x2B07; Export</button>
+  <div class="controls">
+    <button class="primary" id="preview-final">&#9654; Preview Final</button>
+    <button id="add-segment">+ Add segment at current time</button>
+    <button id="set-start">Set selected start = current time</button>
+    <button id="set-end">Set selected end = current time</button>
+    <button id="undo" disabled>&#x21A9; Undo</button>
+    <button class="primary" id="save" style="margin-left: auto;">&#x1F4BE; Save</button>
+    <button id="export" title="Download as file (no server needed)">&#x2B07; Export</button>
   </div>
-  <div class="keys">
-    Keys: <code>Space</code> play/pause &middot; <code>&larr;</code>/<code>&rarr;</code> seek 1s (Shift 0.1s) &middot;
-    <code>I</code> start &middot; <code>O</code> end &middot;
-    <code>&#8984;Z</code> undo &middot; <code>&#8984;S</code> save &middot; <code>&#8984;</code>+scroll zoom
+  <div class="kbd-help">
+    Keys: <code>Space</code> play/pause &middot; <code>&larr;</code>/<code>&rarr;</code> seek 1s (Shift = 0.1s) &middot;
+    <code>I</code> or <code>&#8984;&lt;</code> set start &middot; <code>O</code> or <code>&#8984;&gt;</code> set end &middot;
+    <code>&#8984;Z</code> undo &middot; <code>&#8984;S</code> save &middot; <code>&#8984;</code>+scroll to zoom
   </div>
 
-  <div class="rows" id="rows"></div>
+  <div class="segments" id="segments" style="margin-top: 12px;"></div>
+
   <div class="transcript" id="transcript"></div>
 </main>
 <div class="toast" id="toast"></div>
 <script>
-"use strict";
+const DATA = __DATA__;
 
-var DATA = __DATA__;
-var MIN_DUR = 0.05;
-var UNDO_LIMIT = 100;
+let segments = DATA.segments.map(function(s) { return { start: +s.start, end: +s.end }; });
+let selectedIdx = -1;
+let previewQueue = null;
+let segmentEndStop = null;
+let history = [];
+let zoomLevel = 1;
+let dragState = null;
+const HISTORY_MAX = 100;
+const MIN_SEG_DUR = 0.05;
 
-var bands = DATA.segments.map(function (s) {
-  return { start: Number(s.start), end: Number(s.end) };
-});
-var selected = -1;
-var undoStack = [];
-var zoom = 1;
-var drag = null;
-var stopAtEnd = null;
-var preview = null;
+function snapshot() {
+  history.push({
+    segments: segments.map(function(s) { return { start: s.start, end: s.end }; }),
+    selectedIdx: selectedIdx
+  });
+  if (history.length > HISTORY_MAX) history.shift();
+  updateUndoButton();
+}
 
-var player = document.getElementById("player");
+function undo() {
+  if (history.length === 0) return;
+  const prev = history.pop();
+  segments = prev.segments.map(function(s) { return { start: s.start, end: s.end }; });
+  selectedIdx = prev.selectedIdx;
+  updateUndoButton();
+  renderAll();
+  showToast('Undone (' + history.length + ' more)');
+}
+
+function updateUndoButton() {
+  const btn = document.getElementById('undo');
+  if (btn) btn.disabled = history.length === 0;
+}
+
+const player = document.getElementById('player');
 player.src = DATA.video_src;
 
-function fmtTime(sec) {
-  if (sec === null || sec === undefined || isNaN(sec)) return "--:--";
-  var m = Math.floor(sec / 60);
-  var s = (sec % 60).toFixed(2);
-  return m + ":" + (s.length < 5 ? "0" + s : s);
+const fmt = function(s) {
+  if (isNaN(s) || s === null) return '--:--';
+  const m = Math.floor(s / 60);
+  const sec = (s % 60).toFixed(2);
+  return m + ':' + (sec.length < 5 ? '0' + sec : sec);
+};
+
+const sortSegs = function() { segments.sort(function(a, b) { return a.start - b.start; }); };
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
 }
 
-function sortBands() {
-  bands.sort(function (a, b) { return a.start - b.start; });
+function totalKept() {
+  return segments.reduce(function(sum, s) { return sum + Math.max(0, s.end - s.start); }, 0);
 }
 
-function toast(msg) {
-  var el = document.getElementById("toast");
-  el.textContent = msg;
-  el.classList.add("show");
-  setTimeout(function () { el.classList.remove("show"); }, 2000);
+function findText(start, end) {
+  return DATA.transcript
+    .filter(function(t) { return t.end > start && t.start < end; })
+    .map(function(t) { return t.text.trim(); })
+    .join(' ')
+    .slice(0, 200);
 }
 
-function pushUndo() {
-  undoStack.push({
-    bands: bands.map(function (s) { return { start: s.start, end: s.end }; }),
-    selected: selected
-  });
-  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
-  document.getElementById("btn-undo").disabled = undoStack.length === 0;
-}
-
-function popUndo() {
-  if (!undoStack.length) return;
-  var snap = undoStack.pop();
-  bands = snap.bands.map(function (s) { return { start: s.start, end: s.end }; });
-  selected = snap.selected;
-  document.getElementById("btn-undo").disabled = undoStack.length === 0;
-  renderAll();
-  toast("Undone");
-}
-
-function keptSeconds() {
-  return bands.reduce(function (acc, s) { return acc + Math.max(0, s.end - s.start); }, 0);
-}
-
-function textFor(start, end) {
-  var parts = [];
-  for (var i = 0; i < DATA.transcript.length; i++) {
-    var t = DATA.transcript[i];
-    if (t.end > start && t.start < end) parts.push(t.text.trim());
-  }
-  return parts.join(" ").slice(0, 200);
-}
-
-function renderHeader() {
-  document.getElementById("stat-src").textContent = fmtTime(DATA.duration);
-  var kept = keptSeconds();
-  document.getElementById("stat-kept").textContent = fmtTime(kept);
-  var pct = DATA.duration > 0 ? (kept / DATA.duration * 100) : 0;
-  document.getElementById("stat-pct").textContent = pct.toFixed(0) + "%";
-  document.getElementById("stat-count").textContent = bands.length;
-  var name = DATA.source.split("/").pop();
-  document.getElementById("doc-title").textContent = "Cut Timeline Editor — " + name;
+function renderStats() {
+  document.getElementById('src-dur').textContent = fmt(DATA.duration);
+  const kept = totalKept();
+  document.getElementById('kept-dur').textContent = fmt(kept);
+  document.getElementById('kept-pct').textContent = (kept / DATA.duration * 100).toFixed(0) + '%';
+  document.getElementById('seg-count').textContent = segments.length;
+  document.getElementById('title').textContent = 'Video Editor — ' + DATA.source.split('/').pop();
 }
 
 function renderTimeline() {
-  var tl = document.getElementById("tl");
-  tl.style.width = (zoom * 100) + "%";
-  tl.innerHTML = "";
+  const tl = document.getElementById('timeline');
+  tl.style.width = (zoomLevel * 100) + '%';
+  tl.innerHTML = '';
 
-  var base;
-  if (DATA.duration > 600) base = 60;
-  else if (DATA.duration > 120) base = 30;
-  else base = 10;
-  var step = Math.max(1, base / Math.pow(2, Math.floor(Math.log2(zoom))));
-
-  for (var t = 0; t <= DATA.duration; t += step) {
-    var tick = document.createElement("div");
-    tick.className = "tick";
-    tick.style.left = (t / DATA.duration * 100) + "%";
+  // Tick density scales with zoom so labels stay readable
+  const baseInterval = DATA.duration > 600 ? 60 : (DATA.duration > 120 ? 30 : 10);
+  const tickInterval = Math.max(1, baseInterval / Math.pow(2, Math.floor(Math.log2(zoomLevel))));
+  for (let t = 0; t <= DATA.duration; t += tickInterval) {
+    const tick = document.createElement('div');
+    tick.className = 'timeline-tick';
+    tick.style.left = (t / DATA.duration * 100) + '%';
     tl.appendChild(tick);
-
-    var lbl = document.createElement("div");
-    lbl.className = "tick-label";
-    lbl.style.left = (t / DATA.duration * 100) + "%";
-    var mm = Math.floor(t / 60), ss = Math.floor(t % 60);
-    lbl.textContent = mm + ":" + (ss < 10 ? "0" + ss : ss);
-    tl.appendChild(lbl);
+    const label = document.createElement('div');
+    label.className = 'timeline-tick-label';
+    label.style.left = (t / DATA.duration * 100) + '%';
+    const m = Math.floor(t / 60), sec = Math.floor(t % 60);
+    label.textContent = m + ':' + (sec < 10 ? '0' + sec : sec);
+    tl.appendChild(label);
   }
 
-  bands.forEach(function (seg, i) {
-    var band = document.createElement("div");
-    band.className = "band" + (i === selected ? " is-selected" : "");
-    band.style.left = (seg.start / DATA.duration * 100) + "%";
-    band.style.width = ((seg.end - seg.start) / DATA.duration * 100) + "%";
+  segments.forEach(function(seg, i) {
+    const band = document.createElement('div');
+    band.className = 'keep-band' + (i === selectedIdx ? ' selected' : '');
+    band.style.left = (seg.start / DATA.duration * 100) + '%';
+    band.style.width = ((seg.end - seg.start) / DATA.duration * 100) + '%';
     band.dataset.idx = i;
 
-    var hl = document.createElement("div");
-    hl.className = "handle l";
-    var hr = document.createElement("div");
-    hr.className = "handle r";
-    var lab = document.createElement("div");
-    lab.className = "label";
-    lab.textContent = String(i + 1);
+    const leftHandle = document.createElement('div');
+    leftHandle.className = 'resize-handle left';
+    const rightHandle = document.createElement('div');
+    rightHandle.className = 'resize-handle right';
+    const label = document.createElement('div');
+    label.className = 'keep-band-label';
+    label.textContent = i + 1;
+    band.appendChild(leftHandle);
+    band.appendChild(rightHandle);
+    band.appendChild(label);
 
-    band.appendChild(hl);
-    band.appendChild(hr);
-    band.appendChild(lab);
-
-    band.addEventListener("mousedown", function (ev) {
-      if (ev.button !== 0) return;
-      var mode = "move";
-      if (ev.target === hl) mode = "start";
-      else if (ev.target === hr) mode = "end";
-      drag = {
-        mode: mode,
-        idx: i,
-        x0: ev.clientX,
-        orig: { start: seg.start, end: seg.end },
-        width: tl.offsetWidth,
+    band.addEventListener('mousedown', function(e) {
+      if (e.button !== 0) return;
+      let type = 'move';
+      if (e.target === leftHandle) type = 'start';
+      else if (e.target === rightHandle) type = 'end';
+      dragState = {
+        type: type, idx: i,
+        startX: e.clientX,
+        startSeg: { start: seg.start, end: seg.end },
+        innerWidth: tl.offsetWidth,
         moved: false,
-        snapshot: false
+        snapshotTaken: false
       };
-      ev.preventDefault();
-      ev.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
     });
-    band.addEventListener("click", function (ev) { ev.stopPropagation(); });
+    // Block the click event from reaching the timeline's seek handler —
+    // covers the band body, the label, and both resize handles.
+    band.addEventListener('click', function(e) { e.stopPropagation(); });
 
     tl.appendChild(band);
   });
 
-  var ph = document.createElement("div");
-  ph.className = "playhead";
-  ph.id = "playhead";
-  ph.style.left = (player.currentTime / DATA.duration * 100) + "%";
+  const ph = document.createElement('div');
+  ph.className = 'playhead';
+  ph.id = 'playhead';
+  ph.style.left = (player.currentTime / DATA.duration * 100) + '%';
   tl.appendChild(ph);
 }
 
-function renderRows() {
-  var box = document.getElementById("rows");
-  box.innerHTML = "";
-  bands.forEach(function (seg, i) {
-    var dur = seg.end - seg.start;
-    var txt = textFor(seg.start, seg.end);
-    var row = document.createElement("div");
-    row.className = "row" + (i === selected ? " is-selected" : "");
-    row.innerHTML =
-      '<div class="num">' + (i + 1) + '</div>' +
-      '<input data-field="start" data-idx="' + i + '" value="' + seg.start.toFixed(2) + '">' +
-      '<input data-field="end" data-idx="' + i + '" value="' + seg.end.toFixed(2) + '">' +
-      '<div class="dur">' + dur.toFixed(2) + 's</div>' +
-      '<div class="txt" title="' + txt.replace(/"/g, "&quot;") + '">' + (txt || "&mdash;") + '</div>' +
+function renderSegments() {
+  const container = document.getElementById('segments');
+  container.innerHTML = '';
+  segments.forEach(function(seg, i) {
+    const dur = seg.end - seg.start;
+    const text = findText(seg.start, seg.end);
+    const div = document.createElement('div');
+    div.className = 'segment' + (i === selectedIdx ? ' selected' : '');
+    div.innerHTML =
+      '<div class="seg-num">' + (i + 1) + '</div>' +
+      '<input class="seg-time" data-field="start" data-idx="' + i + '" value="' + seg.start.toFixed(2) + '">' +
+      '<input class="seg-time" data-field="end" data-idx="' + i + '" value="' + seg.end.toFixed(2) + '">' +
+      '<div class="seg-dur">' + dur.toFixed(2) + 's</div>' +
+      '<div class="seg-text" title="' + text.replace(/"/g, '&quot;') + '">' + (text || '&mdash;') + '</div>' +
       '<button data-action="play" data-idx="' + i + '">&#9654; Play</button>' +
-      '<button class="danger" data-action="del" data-idx="' + i + '">&#x2715;</button>';
-    box.appendChild(row);
+      '<button class="danger" data-action="delete" data-idx="' + i + '">&#x2715;</button>';
+    container.appendChild(div);
   });
 
-  box.querySelectorAll("input").forEach(function (inp) {
-    inp.addEventListener("change", function (ev) {
-      var idx = Number(ev.target.dataset.idx);
-      var field = ev.target.dataset.field;
-      var v = parseFloat(ev.target.value);
-      if (!isNaN(v) && bands[idx][field] !== v) {
-        pushUndo();
-        bands[idx][field] = v;
-        sortBands();
+  container.querySelectorAll('input.seg-time').forEach(function(inp) {
+    inp.addEventListener('change', function(e) {
+      const idx = +e.target.dataset.idx;
+      const field = e.target.dataset.field;
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && segments[idx][field] !== val) {
+        snapshot();
+        segments[idx][field] = val;
+        sortSegs();
         renderAll();
       }
     });
-    inp.addEventListener("focus", function (ev) {
-      selected = Number(ev.target.dataset.idx);
-      renderTimeline();
-      renderRows();
+    inp.addEventListener('focus', function(e) {
+      selectSegment(+e.target.dataset.idx);
     });
   });
 
-  box.querySelectorAll("button[data-action]").forEach(function (btn) {
-    btn.addEventListener("click", function (ev) {
-      var idx = Number(ev.target.dataset.idx);
-      var act = ev.target.dataset.action;
-      if (act === "play") playSegment(idx);
-      else if (act === "del") deleteSegment(idx);
+  container.querySelectorAll('button[data-action]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      const idx = +e.target.dataset.idx;
+      const action = e.target.dataset.action;
+      if (action === 'play') playSegment(idx);
+      else if (action === 'delete') deleteSegment(idx);
     });
   });
 }
 
 function renderTranscript() {
-  var box = document.getElementById("transcript");
-  box.innerHTML = "";
-  DATA.transcript.forEach(function (t) {
-    var kept = bands.some(function (s) { return t.end > s.start && t.start < s.end; });
-    var span = document.createElement("span");
-    span.className = "ts " + (kept ? "kept" : "cut");
-    var m = Math.floor(t.start / 60), s = Math.floor(t.start % 60);
-    var ts = m + ":" + (s < 10 ? "0" + s : s);
-    span.innerHTML = '<span class="t">[' + ts + ']</span><span class="x"> ' + t.text.trim() + '</span> ';
-    span.querySelector(".x").addEventListener("click", function () {
+  const container = document.getElementById('transcript');
+  container.innerHTML = '';
+  DATA.transcript.forEach(function(t) {
+    const inKeep = segments.some(function(s) { return t.end > s.start && t.start < s.end; });
+    const span = document.createElement('span');
+    span.className = 'ts-segment ' + (inKeep ? 'in-keep' : 'out-keep');
+    const m = Math.floor(t.start / 60), sec = Math.floor(t.start % 60);
+    const tStr = m + ':' + (sec < 10 ? '0' + sec : sec);
+    span.innerHTML = '<span class="ts-time">[' + tStr + ']</span><span class="ts-text"> ' + t.text.trim() + '</span> ';
+    span.querySelector('.ts-text').addEventListener('click', function() {
       player.currentTime = t.start;
       player.play();
     });
-    box.appendChild(span);
+    container.appendChild(span);
   });
 }
 
-function renderAll() {
-  renderHeader();
-  renderTimeline();
-  renderRows();
-  renderTranscript();
-}
+function renderAll() { renderStats(); renderTimeline(); renderSegments(); renderTranscript(); }
+
+function selectSegment(i) { selectedIdx = i; renderTimeline(); renderSegments(); }
 
 function playSegment(idx) {
-  selected = idx;
-  renderTimeline();
-  renderRows();
-  var seg = bands[idx];
+  selectSegment(idx);
+  const seg = segments[idx];
   player.currentTime = seg.start;
-  preview = null;
-  stopAtEnd = { end: seg.end };
+  segmentEndStop = { endTime: seg.end };
+  previewQueue = null;
   player.play();
 }
 
 function deleteSegment(idx) {
-  if (!confirm("Delete segment " + (idx + 1) + "?")) return;
-  pushUndo();
-  bands.splice(idx, 1);
-  if (selected === idx) selected = -1;
-  else if (selected > idx) selected--;
+  if (!confirm('Delete segment ' + (idx + 1) + '?')) return;
+  snapshot();
+  segments.splice(idx, 1);
+  if (selectedIdx === idx) selectedIdx = -1;
+  else if (selectedIdx > idx) selectedIdx--;
   renderAll();
 }
 
 function addSegment() {
-  pushUndo();
-  var t = player.currentTime;
-  var seg = { start: Math.max(0, t - 1), end: Math.min(DATA.duration, t + 1) };
-  bands.push(seg);
-  sortBands();
-  selected = bands.indexOf(seg);
+  snapshot();
+  const t = player.currentTime;
+  const newSeg = { start: Math.max(0, t - 1), end: Math.min(DATA.duration, t + 1) };
+  segments.push(newSeg);
+  sortSegs();
+  selectedIdx = segments.indexOf(newSeg);
   renderAll();
 }
 
-function setStart() {
-  if (selected < 0) { toast("Select a segment first"); return; }
-  var v = Number(player.currentTime.toFixed(2));
-  if (bands[selected].start === v) return;
-  pushUndo();
-  bands[selected].start = v;
-  sortBands();
-  renderAll();
+function setSelectedStart() {
+  if (selectedIdx < 0) { showToast('Select a segment first'); return; }
+  const v = +player.currentTime.toFixed(2);
+  if (segments[selectedIdx].start === v) return;
+  snapshot();
+  segments[selectedIdx].start = v;
+  sortSegs(); renderAll();
 }
 
-function setEnd() {
-  if (selected < 0) { toast("Select a segment first"); return; }
-  var v = Number(player.currentTime.toFixed(2));
-  if (bands[selected].end === v) return;
-  pushUndo();
-  bands[selected].end = v;
-  sortBands();
-  renderAll();
+function setSelectedEnd() {
+  if (selectedIdx < 0) { showToast('Select a segment first'); return; }
+  const v = +player.currentTime.toFixed(2);
+  if (segments[selectedIdx].end === v) return;
+  snapshot();
+  segments[selectedIdx].end = v;
+  sortSegs(); renderAll();
 }
 
 function previewFinal() {
-  if (!bands.length) return;
-  sortBands();
-  preview = { idx: 0 };
-  stopAtEnd = null;
-  player.currentTime = bands[0].start;
+  if (segments.length === 0) return;
+  sortSegs();
+  previewQueue = { idx: 0 };
+  segmentEndStop = null;
+  player.currentTime = segments[0].start;
   player.play();
 }
 
-function payload() {
-  sortBands();
+function buildCutsPayload() {
+  sortSegs();
   return {
     source: DATA.source,
     duration: DATA.duration,
-    segments: bands.map(function (s) {
-      return { start: Number(s.start.toFixed(2)), end: Number(s.end.toFixed(2)) };
+    segments: segments.map(function(s) {
+      return { start: +s.start.toFixed(2), end: +s.end.toFixed(2) };
     })
   };
 }
 
 function exportJSON() {
-  var out = payload();
-  var blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
+  const out = buildCutsPayload();
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
   a.href = url;
-  a.download = DATA.source.split("/").pop().replace(/\.[^.]+$/, "") + "_cuts.json";
+  a.download = DATA.source.split('/').pop().replace(/\.[^.]+$/, '') + '_cuts.json';
   a.click();
   URL.revokeObjectURL(url);
-  toast("Exported " + a.download);
+  showToast('Exported ' + a.download);
 }
 
 function saveJSON() {
-  var out = payload();
-  fetch("/api/save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const out = buildCutsPayload();
+  fetch('/api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path: DATA.save_path, data: out })
-  }).then(function (r) {
-    if (!r.ok) {
-      return r.text().then(function (txt) { throw new Error(txt || ("HTTP " + r.status)); });
-    }
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) { throw new Error(t || ('HTTP ' + r.status)); });
     return r.json();
-  }).then(function (j) {
-    toast("Saved to " + (j.path || DATA.save_path));
-  }).catch(function (err) {
-    toast("Save failed: " + err.message + " (try Export instead)");
+  }).then(function(j) {
+    showToast('Saved to ' + (j.path || DATA.save_path));
+  }).catch(function(err) {
+    showToast('Save failed: ' + err.message + ' (try Export instead)');
   });
 }
 
 function setZoom(z) {
-  zoom = Math.max(1, Math.min(32, z));
-  document.getElementById("zoom-lvl").textContent = Math.round(zoom * 100) + "%";
+  zoomLevel = Math.max(1, Math.min(32, z));
+  document.getElementById('zoom-level').textContent = Math.round(zoomLevel * 100) + '%';
   renderTimeline();
 }
 
-function applyDrag(ev) {
-  if (!drag) return;
-  var dx = ev.clientX - drag.x0;
-  if (!drag.moved && Math.abs(dx) < 3) return;
-  if (!drag.moved) {
-    drag.moved = true;
-    if (!drag.snapshot) { pushUndo(); drag.snapshot = true; }
+function applyDrag(e) {
+  if (!dragState) return;
+  const dx = e.clientX - dragState.startX;
+  if (!dragState.moved && Math.abs(dx) < 3) return;
+  if (!dragState.moved) {
+    dragState.moved = true;
+    if (!dragState.snapshotTaken) { snapshot(); dragState.snapshotTaken = true; }
   }
-  var dt = (dx / drag.width) * DATA.duration;
-  var seg = bands[drag.idx];
-  var orig = drag.orig;
-
-  if (drag.mode === "move") {
-    var dur = orig.end - orig.start;
-    var ns = Math.max(0, Math.min(DATA.duration - dur, orig.start + dt));
-    seg.start = ns;
-    seg.end = ns + dur;
-  } else if (drag.mode === "start") {
-    seg.start = Math.max(0, Math.min(orig.end - MIN_DUR, orig.start + dt));
-  } else {
-    seg.end = Math.max(orig.start + MIN_DUR, Math.min(DATA.duration, orig.end + dt));
+  const dt = (dx / dragState.innerWidth) * DATA.duration;
+  const orig = dragState.startSeg;
+  const seg = segments[dragState.idx];
+  if (dragState.type === 'move') {
+    const dur = orig.end - orig.start;
+    let newStart = Math.max(0, Math.min(DATA.duration - dur, orig.start + dt));
+    seg.start = newStart;
+    seg.end = newStart + dur;
+  } else if (dragState.type === 'start') {
+    seg.start = Math.max(0, Math.min(orig.end - MIN_SEG_DUR, orig.start + dt));
+  } else if (dragState.type === 'end') {
+    seg.end = Math.max(orig.start + MIN_SEG_DUR, Math.min(DATA.duration, orig.end + dt));
   }
-
   renderTimeline();
-
-  var sIn = document.querySelector('input[data-field="start"][data-idx="' + drag.idx + '"]');
-  var eIn = document.querySelector('input[data-field="end"][data-idx="' + drag.idx + '"]');
-  if (sIn) sIn.value = seg.start.toFixed(2);
-  if (eIn) eIn.value = seg.end.toFixed(2);
+  // update only this row's input fields without rebuilding the whole list
+  const sList = document.getElementById('segments');
+  const startInput = sList.querySelector('input[data-field="start"][data-idx="' + dragState.idx + '"]');
+  const endInput = sList.querySelector('input[data-field="end"][data-idx="' + dragState.idx + '"]');
+  if (startInput) startInput.value = seg.start.toFixed(2);
+  if (endInput) endInput.value = seg.end.toFixed(2);
 }
 
-function finishDrag() {
-  if (!drag) return;
-  var moved = drag.moved;
-  var idx = drag.idx;
-  drag = null;
-  if (!moved) {
+function endDrag() {
+  if (!dragState) return;
+  const wasMove = dragState.moved;
+  const idx = dragState.idx;
+  dragState = null;
+  if (!wasMove) {
+    // Treat as click: select + play the segment (auto-pauses at its end)
     playSegment(idx);
   } else {
-    sortBands();
+    sortSegs();
     renderAll();
   }
 }
 
-window.addEventListener("mousemove", applyDrag);
-window.addEventListener("mouseup", finishDrag);
+window.addEventListener('mousemove', applyDrag);
+window.addEventListener('mouseup', endDrag);
 
-player.addEventListener("timeupdate", function () {
-  var ph = document.getElementById("playhead");
-  if (ph) ph.style.left = (player.currentTime / DATA.duration * 100) + "%";
+player.addEventListener('timeupdate', function() {
+  const ph = document.getElementById('playhead');
+  if (ph) ph.style.left = (player.currentTime / DATA.duration * 100) + '%';
 
-  if (stopAtEnd && player.currentTime >= stopAtEnd.end) {
+  if (segmentEndStop && player.currentTime >= segmentEndStop.endTime) {
     player.pause();
-    stopAtEnd = null;
+    segmentEndStop = null;
   }
 
-  if (preview) {
-    var cur = bands[preview.idx];
+  if (previewQueue) {
+    const cur = segments[previewQueue.idx];
     if (cur && player.currentTime >= cur.end) {
-      preview.idx++;
-      if (preview.idx >= bands.length) {
+      previewQueue.idx++;
+      if (previewQueue.idx >= segments.length) {
         player.pause();
-        preview = null;
+        previewQueue = null;
       } else {
-        player.currentTime = bands[preview.idx].start;
+        player.currentTime = segments[previewQueue.idx].start;
       }
     }
   }
 });
 
-document.getElementById("tl").addEventListener("click", function (ev) {
-  if (ev.target.classList.contains("band") || ev.target.classList.contains("label")) return;
-  var rect = ev.currentTarget.getBoundingClientRect();
-  var pct = (ev.clientX - rect.left) / rect.width;
+document.getElementById('timeline').addEventListener('click', function(e) {
+  if (e.target.classList.contains('keep-band') || e.target.classList.contains('keep-band-label')) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
   player.currentTime = Math.max(0, Math.min(DATA.duration, pct * DATA.duration));
 });
 
-document.getElementById("btn-preview").addEventListener("click", previewFinal);
-document.getElementById("btn-add").addEventListener("click", addSegment);
-document.getElementById("btn-export").addEventListener("click", exportJSON);
-document.getElementById("btn-save").addEventListener("click", saveJSON);
-document.getElementById("btn-set-start").addEventListener("click", setStart);
-document.getElementById("btn-set-end").addEventListener("click", setEnd);
-document.getElementById("btn-undo").addEventListener("click", popUndo);
-document.getElementById("zoom-in").addEventListener("click", function () { setZoom(zoom * 2); });
-document.getElementById("zoom-out").addEventListener("click", function () { setZoom(zoom / 2); });
-document.getElementById("zoom-fit").addEventListener("click", function () { setZoom(1); });
+document.getElementById('preview-final').addEventListener('click', previewFinal);
+document.getElementById('add-segment').addEventListener('click', addSegment);
+document.getElementById('export').addEventListener('click', exportJSON);
+document.getElementById('save').addEventListener('click', saveJSON);
+document.getElementById('set-start').addEventListener('click', setSelectedStart);
+document.getElementById('set-end').addEventListener('click', setSelectedEnd);
+document.getElementById('undo').addEventListener('click', undo);
+document.getElementById('zoom-in').addEventListener('click', function() { setZoom(zoomLevel * 2); });
+document.getElementById('zoom-out').addEventListener('click', function() { setZoom(zoomLevel / 2); });
+document.getElementById('zoom-reset').addEventListener('click', function() { setZoom(1); });
 
-document.getElementById("tl-scroller").addEventListener("wheel", function (ev) {
-  if (!(ev.metaKey || ev.ctrlKey)) return;
-  ev.preventDefault();
-  var f = ev.deltaY < 0 ? 1.25 : 0.8;
-  setZoom(zoom * f);
+// Cmd/Ctrl + scroll on timeline to zoom
+document.getElementById('timeline-scroll').addEventListener('wheel', function(e) {
+  if (!(e.metaKey || e.ctrlKey)) return;
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.25 : 0.8;
+  setZoom(zoomLevel * factor);
 }, { passive: false });
 
-document.addEventListener("keydown", function (ev) {
-  if ((ev.metaKey || ev.ctrlKey) && ev.code === "KeyZ" && !ev.shiftKey) {
-    ev.preventDefault();
-    popUndo();
+document.addEventListener('keydown', function(e) {
+  // Undo works even from inputs
+  if ((e.metaKey || e.ctrlKey) && e.code === 'KeyZ' && !e.shiftKey) {
+    e.preventDefault();
+    undo();
     return;
   }
-  if ((ev.metaKey || ev.ctrlKey) && ev.code === "KeyS") {
-    ev.preventDefault();
+  // Save
+  if ((e.metaKey || e.ctrlKey) && e.code === 'KeyS') {
+    e.preventDefault();
     saveJSON();
     return;
   }
-  if ((ev.metaKey || ev.ctrlKey) && ev.code === "Comma") {
-    ev.preventDefault();
-    setStart();
+  // Set selected segment start/end to current playhead (Cmd/Ctrl + < or >)
+  if ((e.metaKey || e.ctrlKey) && e.code === 'Comma') {
+    e.preventDefault();
+    setSelectedStart();
     return;
   }
-  if ((ev.metaKey || ev.ctrlKey) && ev.code === "Period") {
-    ev.preventDefault();
-    setEnd();
+  if ((e.metaKey || e.ctrlKey) && e.code === 'Period') {
+    e.preventDefault();
+    setSelectedEnd();
     return;
   }
-  if (ev.target.tagName === "INPUT" || ev.target.tagName === "TEXTAREA") return;
-
-  if (ev.code === "Space") {
-    ev.preventDefault();
-    if (player.paused) player.play(); else player.pause();
-  } else if (ev.code === "ArrowLeft") {
-    ev.preventDefault();
-    player.currentTime = Math.max(0, player.currentTime - (ev.shiftKey ? 0.1 : 1));
-  } else if (ev.code === "ArrowRight") {
-    ev.preventDefault();
-    player.currentTime = Math.min(DATA.duration, player.currentTime + (ev.shiftKey ? 0.1 : 1));
-  } else if (ev.code === "KeyI") {
-    setStart();
-  } else if (ev.code === "KeyO") {
-    setEnd();
-  }
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space') { e.preventDefault(); player.paused ? player.play() : player.pause(); }
+  else if (e.code === 'ArrowLeft') { e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - (e.shiftKey ? 0.1 : 1)); }
+  else if (e.code === 'ArrowRight') { e.preventDefault(); player.currentTime = Math.min(DATA.duration, player.currentTime + (e.shiftKey ? 0.1 : 1)); }
+  else if (e.code === 'KeyI') setSelectedStart();
+  else if (e.code === 'KeyO') setSelectedEnd();
 });
 
 renderAll();
@@ -709,36 +655,7 @@ renderAll();
 </html>
 """
 
-
-def main():
-    if len(sys.argv) != 5:
-        _die()
-
-    video_path = Path(sys.argv[1]).resolve()
-    transcript = json.loads(Path(sys.argv[2]).read_text())
-    cuts_input = json.loads(Path(sys.argv[3]).read_text())
-    output_html = Path(sys.argv[4]).resolve()
-
-    transcript_segments, transcript_rows = _collect_transcript(transcript)
-    duration = _total_duration(transcript_segments)
-    cuts = _coerce_segments(cuts_input)
-
-    video_src = os.path.relpath(video_path, output_html.parent)
-
-    data = {
-        "source": str(video_path),
-        "video_src": video_src,
-        "duration": duration,
-        "segments": cuts,
-        "transcript": transcript_rows,
-        "save_path": "tmp/%s_cuts.json" % video_path.stem,
-    }
-
-    html = PAGE_SHELL.replace("__DATA__", json.dumps(data))
-    output_html.parent.mkdir(parents=True, exist_ok=True)
-    output_html.write_text(html)
-    print("Wrote %s" % output_html)
-
-
-if __name__ == "__main__":
-    main()
+html = TEMPLATE.replace("__DATA__", json.dumps(data))
+output_html.parent.mkdir(parents=True, exist_ok=True)
+output_html.write_text(html)
+print(f"Wrote {output_html}")

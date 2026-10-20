@@ -2,11 +2,10 @@
   "name": "video_effects",
   "version": "1.0.0",
   "private": true,
-  "description": "Remotion project for the jordantobyll-pan-3d-transition skill (DroneMontage + Pan3D swivel teaser).",
+  "description": "Remotion project for the pan-3d-transition skill (Pan3D swivel teaser).",
   "scripts": {
     "start": "remotion studio src/dynamic-index.ts",
-    "render": "remotion render src/dynamic-index.ts Pan3D out/video.mp4",
-    "render:montage": "remotion render src/dynamic-index.ts DroneMontage out/montage.mp4"
+    "render": "remotion render src/dynamic-index.ts Pan3D out/video.mp4"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.481",

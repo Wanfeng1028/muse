@@ -12,37 +12,35 @@ import {
 } from 'remotion';
 import {FPS, SEGMENTS, Segment, TRANSITION} from './montageConfig';
 
-// How many frames two neighbouring segments overlap during the swivel.
-const SWIVEL_FRAMES = Math.round(TRANSITION * FPS);
+const OVERLAP = Math.round(TRANSITION * FPS);
 
-// Convert the per-segment second durations into frames.
-const segmentFrames = SEGMENTS.map((s) => Math.round(s.duration * FPS));
-
-// Each segment starts after all previous ones, minus one swivel per boundary.
-const segmentOffsets = segmentFrames.map((_, i) =>
-  segmentFrames.slice(0, i).reduce((sum, n) => sum + n, 0) - i * SWIVEL_FRAMES
+// Per-segment frame counts and start positions. Consecutive segments overlap
+// by OVERLAP frames so the outgoing shot swivels away while the incoming shot
+// swivels in (a 3D card-flip transition).
+const durations = SEGMENTS.map((s) => Math.round(s.duration * FPS));
+const starts = durations.map((_, i) =>
+  durations.slice(0, i).reduce((acc, d) => acc + d, 0) - i * OVERLAP
 );
 
-export const getTotalFrames = () =>
-  segmentFrames.reduce((sum, n) => sum + n, 0) -
-  (SEGMENTS.length - 1) * SWIVEL_FRAMES;
+export const totalDurationInFrames = () =>
+  durations.reduce((acc, d) => acc + d, 0) - (SEGMENTS.length - 1) * OVERLAP;
 
-// Slow Ken Burns push for still photos. Direction alternates per index so the
-// montage does not feel like the same move repeated.
-const DriftingStill: React.FC<{src: string; frames: number; index: number}> = ({
+// Ken Burns: slow zoom + drift, alternating direction per still so the reel
+// doesn't feel mechanical.
+const KenBurnsImg: React.FC<{src: string; duration: number; index: number}> = ({
   src,
-  frames,
+  duration,
   index,
 }) => {
   const frame = useCurrentFrame();
   const {width, height} = useVideoConfig();
-  const drift = index % 2 === 0 ? -40 : 40;
+  const dir = index % 2 === 0 ? 1 : -1;
 
-  const zoom = interpolate(frame, [0, frames], [1.05, 1.18], {
+  const scale = interpolate(frame, [0, duration], [1.05, 1.18], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const offsetX = interpolate(frame, [0, frames], [0, drift], {
+  const translateX = interpolate(frame, [0, duration], [0, dir * -40], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -54,44 +52,42 @@ const DriftingStill: React.FC<{src: string; frames: number; index: number}> = ({
         width,
         height,
         objectFit: 'cover',
-        transform: `scale(${zoom}) translateX(${offsetX}px)`,
+        transform: `scale(${scale}) translateX(${translateX}px)`,
       }}
     />
   );
 };
 
-// One card in the montage. It flips in on entry (except the first) and flips
-// out on exit (except the last), producing the 3D swivel look.
-const SwivelCard: React.FC<{
+// Wraps a segment with the 3D swivel: rotates in from the left on entry (unless
+// it's the first segment) and out to the right on exit (unless it's the last).
+const SwivelSegment: React.FC<{
   segment: Segment;
-  frames: number;
+  duration: number;
   index: number;
   isFirst: boolean;
   isLast: boolean;
-}> = ({segment, frames, index, isFirst, isLast}) => {
+}> = ({segment, duration, index, isFirst, isLast}) => {
   const frame = useCurrentFrame();
   const {width, height} = useVideoConfig();
 
-  const entryAngle = isFirst
+  const enterRot = isFirst
     ? 0
-    : interpolate(frame, [0, SWIVEL_FRAMES], [-92, 0], {
+    : interpolate(frame, [0, OVERLAP], [-92, 0], {
         extrapolateLeft: 'clamp',
         extrapolateRight: 'clamp',
         easing: Easing.out(Easing.cubic),
       });
-
-  const exitAngle = isLast
+  const exitRot = isLast
     ? 0
-    : interpolate(frame, [frames - SWIVEL_FRAMES, frames], [0, 92], {
+    : interpolate(frame, [duration - OVERLAP, duration], [0, 92], {
         extrapolateLeft: 'clamp',
         extrapolateRight: 'clamp',
         easing: Easing.in(Easing.cubic),
       });
+  const rotateY = enterRot + exitRot;
 
-  const angle = entryAngle + exitAngle;
-
-  // Simple fake lighting: the more the card turns away, the darker it gets.
-  const shade = interpolate(Math.abs(angle), [0, 92], [1, 0.45], {
+  // Fake lighting: faces angled away from camera darken slightly.
+  const brightness = interpolate(Math.abs(rotateY), [0, 92], [1, 0.45], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -104,9 +100,9 @@ const SwivelCard: React.FC<{
             width,
             height,
             transformStyle: 'preserve-3d',
-            transform: `rotateY(${angle}deg)`,
+            transform: `rotateY(${rotateY}deg)`,
             transformOrigin: 'center center',
-            filter: `brightness(${shade})`,
+            filter: `brightness(${brightness})`,
             overflow: 'hidden',
             backfaceVisibility: 'hidden',
           }}
@@ -119,7 +115,7 @@ const SwivelCard: React.FC<{
               style={{width, height, objectFit: 'cover'}}
             />
           ) : (
-            <DriftingStill src={segment.src} frames={frames} index={index} />
+            <KenBurnsImg src={segment.src} duration={duration} index={index} />
           )}
         </div>
       </div>
@@ -133,13 +129,15 @@ export const Montage: React.FC = () => {
       {SEGMENTS.map((segment, i) => (
         <Sequence
           key={i}
-          from={segmentOffsets[i]}
-          durationInFrames={segmentFrames[i]}
+          from={starts[i]}
+          durationInFrames={durations[i]}
+          // Later segments render on top so the incoming swivel covers the
+          // outgoing one during the overlap.
           layout="none"
         >
-          <SwivelCard
+          <SwivelSegment
             segment={segment}
-            frames={segmentFrames[i]}
+            duration={durations[i]}
             index={i}
             isFirst={i === 0}
             isLast={i === SEGMENTS.length - 1}

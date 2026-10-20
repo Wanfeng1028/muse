@@ -1,9 +1,9 @@
 ---
-name: video-edit
-description: |
-  Edit videos locally using ffmpeg. Trim, concat, resize, speed, overlay, extract audio, compress, and convert.
-  Use when: (1) Trimming or cutting video segments, (2) Concatenating multiple clips, (3) Resizing video for social platforms,
-  (4) Extracting or replacing audio, (5) Compressing video, (6) Converting video formats, (7) Getting video info.
+name: openmontage-video-edit
+description: 面向视频剪辑日常任务的 ffmpeg 命令速查手册，覆盖裁剪、转码、缩放、变速、音视频处理、拼接、水印、画中画、滤镜、字幕、防抖、调色、压缩、幻灯片、章节标记、响度归一化等常见操作。
+version: "1.0.0"
+author: playhouse
+license: MIT
 ---
 
 # Video Edit

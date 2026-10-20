@@ -295,8 +295,8 @@
       "license": "MIT",
       "source": "watzing/claude-video-editor",
       "sourceUrl": "https://github.com/watzing/claude-video-editor",
-      "rewritten": true,
-      "rewriteNote": "改写自 watzing/claude-video-editor：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "jordantobyll-video-edit",
@@ -307,8 +307,8 @@
       "license": "MIT",
       "source": "jordantobyll/video-editing-skills",
       "sourceUrl": "https://github.com/jordantobyll/video-editing-skills",
-      "rewritten": true,
-      "rewriteNote": "改写自 jordantobyll/video-editing-skills（video-edit）：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "jordantobyll-pan-3d-transition",
@@ -319,8 +319,8 @@
       "license": "MIT",
       "source": "jordantobyll/video-editing-skills",
       "sourceUrl": "https://github.com/jordantobyll/video-editing-skills",
-      "rewritten": true,
-      "rewriteNote": "改写自 jordantobyll/video-editing-skills（pan-3d-transition）：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-video-edit",
@@ -331,8 +331,8 @@
       "license": "MIT",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "https://github.com/calesthio/OpenMontage",
-      "rewritten": true,
-      "rewriteNote": "改写自 calesthio/OpenMontage：操作清单功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（正文逐字 + 注册表必需的 frontmatter 头，与全部 OpenMontage 条目同一处理；references/ 附属文件逐字，LICENSE 已放入目录）；原件位于上游仓库 .agents/skills/video-edit/（主 skills/ 树之外，上一轮收录时漏检）"
     },
     {
       "id": "video-social-editor",
@@ -445,8 +445,8 @@
       "license": "NOASSERTION",
       "source": "ElSalvatore-sys/video-editor-plugin",
       "sourceUrl": "https://github.com/ElSalvatore-sys/video-editor-plugin",
-      "rewritten": true,
-      "rewriteNote": "改写自 https://github.com/ElSalvatore-sys/video-editor-plugin：功能对齐，SKILL.md 与脚本为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-3d-world-generation",
@@ -5625,9 +5625,9 @@
       "license": "Elastic License 2.0 (rewritten)",
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/creative-core/SKILL.md",
-      "rewritten": true,
+      "rewritten": false,
       "description": "剧坊全部专业创作能力的共同底座，规定目标确认、事实与推断的区分、续作状态锚定、范围控制和通用时长估算等通用推理规则。",
-      "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "waoowaoo-creative-direction",
@@ -5637,9 +5637,9 @@
       "license": "Elastic License 2.0 (rewritten)",
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/creative-direction/SKILL.md",
-      "rewritten": true,
+      "rewritten": false,
       "description": "为项目制定六领域呈现政策，冻结核心视觉方向，输出唯一最终创作方向 JSON，不涉及故事事实与资产生产。",
-      "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "waoowaoo-script-development",
@@ -5649,9 +5649,9 @@
       "license": "Elastic License 2.0 (rewritten)",
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/script-development/SKILL.md",
-      "rewritten": true,
+      "rewritten": false,
       "description": "为剧坊项目产出唯一权威源文本，覆盖故事剧本、广告脚本、品牌宣传与短视频脚本，含需求判定、访谈、构思、节奏、自检与合规。",
-      "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "waoowaoo-asset-development",
@@ -5661,9 +5661,9 @@
       "license": "Elastic License 2.0 (rewritten)",
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/asset-development/SKILL.md",
-      "rewritten": true,
+      "rewritten": false,
       "description": "从源文本与已采纳创作方向中筛选可复用角色、场景、道具，完成稳定身份设计并写出唯一最终生图 Prompt 与批次参数。",
-      "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "waoowaoo-video-direction",
@@ -5673,9 +5673,9 @@
       "license": "Elastic License 2.0 (rewritten)",
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/video-direction/SKILL.md",
-      "rewritten": true,
+      "rewritten": false,
       "description": "把整片时间线翻译成可执行的视频生成批次：内化导演、表演、声音与连续性，按工具 schema 组织参考素材并输出严格 video_generation_batch。",
-      "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "waoowaoo-music-direction",
@@ -5685,9 +5685,9 @@
       "license": "Elastic License 2.0 (rewritten)",
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/music-direction/SKILL.md",
-      "rewritten": true,
+      "rewritten": false,
       "description": "依据锁定剧情与真实成片时间线，判定配乐窗口并撰写 Eleven Music v2 作曲方案，产出可合成音频批次。",
-      "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "huobao-extractor",

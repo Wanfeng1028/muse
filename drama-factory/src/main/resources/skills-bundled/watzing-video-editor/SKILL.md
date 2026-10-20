@@ -1,84 +1,82 @@
 ---
-name: watzing-video-editor
-description: A collaborative video cutting pipeline for clips dropped into source/. Transcribes speech with word timings, proposes an edit plan alongside the user, and renders trimmed results. Trigger when a fresh clip lands in source/ or the user asks to cut, trim, clean up, or edit a video.
-version: "1.0.0"
-author: playhouse
-license: MIT
+name: video-editor
+description: Transcribe-and-trim workflow for videos in this folder. Use when the user drops a video file into source/ and wants it edited, trimmed, or "cleaned up" — including phrases like "edit this video", "trim this", "cut this down", or just "clean it up" when a new video appears in source/.
 ---
 
-# Collaborative video trimming
+# Video editor workflow
 
-Take a raw clip, turn its audio into a timed transcript, work out with the user which spans to keep, then produce a rendered cut.
+Transcribe a video, decide cuts collaboratively with the user, then render the trimmed result.
 
-## Workspace layout
+## Folder layout
 
-Everything lives under a fixed set of directories:
+This project uses a fixed structure:
 
 ```
-source/   input clips live here
-output/   finished renders land here as <basename>_final.mp4 (work-in-progress as <basename>_draft.mp4)
-tmp/      scratch space: extracted audio, transcript JSON, cut lists; wiped once finished
-editor/   generated HTML pages (one per clip) for adjusting cuts visually
+source/   <-- input videos go here
+output/   <-- rendered finals land here as <name>_final.mp4 (drafts as <name>_draft.mp4)
+tmp/      <-- intermediate audio + transcript + cuts.json; auto-cleaned at the end
+editor/   <-- generated HTML editor pages (one per video) for visual cut adjustment
 ```
 
-Filename rule: a clip named `source/demo.mp4` produces `output/demo_final.mp4`. Keep the original stem, add the `_final` suffix (or `_draft` while iterating), always write into `output/`. The source file is never modified.
+Naming: `source/checklist.mp4` → `output/checklist_final.mp4`. Preserve the original basename, append `_final` (or `_draft` while iterating), output to `output/`. Never overwrite the source.
 
-Create any missing directory with `mkdir -p`.
+If any of these dirs don't exist, create them with `mkdir -p`.
 
-## Dependencies
+## Tools required
 
-- `ffmpeg` plus `ffprobe`
-- `whisper` — the OpenAI CLI, installed via `pip install openai-whisper`
-- `python3` for reading transcript JSON
+- `ffmpeg` (and `ffprobe`)
+- `whisper` (OpenAI Whisper CLI — `pip install openai-whisper`)
+- `python3` for parsing the JSON transcript
 
-## Workflow
+## Steps
 
-### 1. Find the input clip
+### 1. Locate the video
 
-Run `ls source/`. If more than one file is present, ask the user which to work on. Grab its length:
+`ls source/`. If multiple videos exist, ask which one. Note duration with `ffprobe`:
 
 ```bash
 ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 source/<video>
 ```
 
-### 2. Pull out the audio track
+### 2. Extract audio
 
-Whisper expects 16 kHz mono PCM:
+16kHz mono WAV is what Whisper wants:
 
 ```bash
 ffmpeg -y -i source/<video> -vn -acodec pcm_s16le -ar 16000 -ac 1 tmp/audio.wav
 ```
 
-### 3. Run Whisper with word timings
+### 3. Transcribe with word-level timestamps
 
-`base.en` gives a good speed/accuracy balance for English screencasts. Enable `--word_timestamps True` so that later cuts can be snapped to individual word edges.
+`base.en` is fast and accurate enough for English screen recordings. Always use `--word_timestamps True` so cuts can land on word boundaries.
 
-Note: Whisper's CLI keeps only the last `--output_format` value, so pass it once. Use `json` and print the readable text yourself later:
+**Important:** pass `--output_format` only once. Whisper's CLI does not accumulate multiple `--output_format` flags — the last one wins. Use `json` (we'll print the text view ourselves from the JSON):
 
 ```bash
 whisper tmp/audio.wav --model base.en --output_format json --word_timestamps True --output_dir tmp
 ```
 
-If quality matters more than wall-clock time, bump to `small.en` or `medium`.
+If accuracy matters more than speed, escalate to `small.en` or `medium`.
 
-### 4. Show the transcript and propose an edit
+### 4. Present the transcript and propose cuts
 
-Print each segment with `[mm:ss.xx → mm:ss.xx]` markers. Read carefully — narrators frequently describe their own edits aloud ("take that out", "no, keep this bit", "skip ahead"), so treat those remarks as candidate cuts.
+Show the segment-level transcript with `[mm:ss.xx → mm:ss.xx]` timestamps. Read the content carefully — the user often narrates their own editing instructions inside the video itself ("remove this part", "no, grab that", "skip the next bit"). Surface those instructions as your proposed cut plan.
 
-Things to look for:
-- **Spoken removal cues** — "no", "scratch that", "redo", "start over"
-- **Repeat takes** — the same line said twice; usually the later take is better, but confirm the earlier one doesn't carry screen action that must stay in sync
-- **False starts and stumbles** — "so you, so you click", "the — the button"
-- **Long silent stretches** (>5 s) — often dead air worth removing, but sometimes it's a demo (loading, AI thinking); surface these instead of silently cutting
-- **Whisper mishears on jargon** — a term like "paste button" may be transcribed as "pause button"; trust what you hear over the transcript's spelling
+Watch for:
+- **Explicit removal cues** in narration ("no", "scratch that", "grab that", "let me re-do")
+- **Re-takes** — the speaker says roughly the same thing twice; usually the second take is the keeper, but check whether the first take has on-screen action that needs to stay synced
+- **Stutters and false starts** — "click, click", "from here you can either, from here you can…"
+- **Long silences** (>5s) — likely dead time worth trimming, but may also be a visual demo (loading, AI processing); flag these to the user rather than cutting silently
+- **Mistakes you should leave alone** — domain terms Whisper mishears ("pause button" might really be "paste button"); trust the audio over Whisper's spelling
 
-Present two views: a table of proposed cuts, and the inverse — the kept windows plus the concatenated transcript as one continuous script. Users want to sanity-check both before committing. Call out judgment calls (which take wins, how hard to trim silence) rather than deciding silently.
+Propose a table of cuts AND show the inverse — the keep windows + the final transcript reading as one continuous script. The user wants to verify both views before rendering. Flag judgment calls (which take to keep, how aggressively to trim silence) explicitly rather than guessing.
 
-### 5. Derive exact cut points from word data
+### 5. Pick precise cut points from word timestamps
 
-Read the JSON to find word boundaries near each cut, then pad:
-- roughly 0.1 s before the first word of a kept span
-- roughly 0.2–0.3 s past the last word so the final syllable isn't clipped
+Use the JSON to find word-level boundaries near each cut. Pad cuts slightly so words don't get clipped:
+
+- ~0.1s before the first word of a kept segment
+- ~0.2–0.3s after the last word (let the final word finish naturally)
 
 ```bash
 python3 << 'EOF'
@@ -94,7 +92,7 @@ EOF
 
 ### 6. Render
 
-**One continuous keep window** — re-encode so the cut lands on a clean frame:
+**Single contiguous keep window** — re-encode for clean (non-keyframe) cuts:
 
 ```bash
 ffmpeg -y -ss <start> -to <end> -i source/<video> \
@@ -102,21 +100,21 @@ ffmpeg -y -ss <start> -to <end> -i source/<video> \
   -c:a aac -b:a 192k -movflags +faststart output/<name>_final.mp4
 ```
 
-**Several keep windows** — cut each piece, then join. Re-encode all pieces with matching settings, then concatenate with a stream copy:
+**Multiple keep windows** — extract each segment, then concat. Re-encode the segments (so all share codec params), then stream-copy concat:
 
 ```bash
 SRC="source/<video>"
 OUT="output/<name>_final.mp4"
-# zsh array of "start end" strings
+# zsh-compatible: array of "start end" strings
 PAIRS=("4.10 9.16" "27.43 41.49" ...)
-# When reading from a saved cuts JSON (post-editor save):
+# Or, when reading from a saved cuts JSON (after a visual-editor save):
 # PAIRS=("${(@f)$(python3 -c "
 # import json
 # for s in json.load(open('tmp/<name>_cuts.json'))['segments']:
 #     print(f\"{s['start']} {s['end']}\")
 # ")}")
 
-# Clear stale intermediates (find avoids zsh "no matches" errors)
+# Clean any prior intermediates (zsh-safe — avoid bare globs)
 find tmp -maxdepth 1 -name 'seg_*.mp4' -delete 2>/dev/null
 rm -f tmp/concat.txt
 
@@ -124,7 +122,7 @@ i=0
 for pair in "${PAIRS[@]}"; do
   start="${pair%% *}"
   end="${pair##* }"
-  # -nostdin prevents ffmpeg from swallowing the loop's stdin
+  # IMPORTANT: -nostdin so ffmpeg doesn't eat the for-loop's stdin
   ffmpeg -nostdin -y -ss "$start" -to "$end" -i "$SRC" \
     -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p \
     -c:a aac -b:a 192k "tmp/seg_${i}.mp4" 2>&1 | tail -1
@@ -134,9 +132,9 @@ done
 
 ffmpeg -nostdin -y -f concat -safe 0 -i tmp/concat.txt -c copy tmp/_concat.mp4
 
-# Loudness normalize; video is copied untouched.
-# I=-16 LUFS / TP=-1.5 dBTP matches YouTube/Spotify/Apple Podcasts targets
-# so platforms won't re-level the upload. LRA=11 preserves natural dynamics.
+# Final pass: normalize audio loudness while copying video stream.
+# I=-16 LUFS / TP=-1.5 dBTP matches what YouTube/Spotify/Apple Podcasts target,
+# so the upload won't be re-leveled. LRA=11 keeps reasonable dynamic range.
 ffmpeg -nostdin -y -i tmp/_concat.mp4 \
   -c:v copy \
   -af "loudnorm=I=-16:TP=-1.5:LRA=11" \
@@ -146,7 +144,7 @@ ffmpeg -nostdin -y -i tmp/_concat.mp4 \
 rm -f tmp/_concat.mp4
 ```
 
-For a single-window render, fold `loudnorm` into the same call:
+For a single-window render (no concat), apply `loudnorm` directly in the same ffmpeg call:
 
 ```bash
 ffmpeg -nostdin -y -ss <start> -to <end> -i source/<video> \
@@ -155,25 +153,25 @@ ffmpeg -nostdin -y -ss <start> -to <end> -i source/<video> \
   -c:a aac -b:a 192k -movflags +faststart "$OUT"
 ```
 
-Alternative loudness targets if the user asks:
-- **-14 LUFS** — Spotify/Tidal preference (a touch hotter, popular for music-heavy shows)
-- **-16 LUFS** — YouTube/Apple Podcasts baseline (safest for voice)
-- **-23 LUFS** — EBU broadcast spec (quieter, used in TV)
+If the user wants different loudness targets:
+- **-14 LUFS** — Spotify/Tidal recommended (slightly louder, common for music podcasts)
+- **-16 LUFS** — YouTube/Apple Podcasts default (the safe pick for spoken content)
+- **-23 LUFS** — EBU broadcast standard (quieter, used in TV)
 
-**Shell pitfalls this avoids:**
-- `echo "$pairs" | while read start end; do ffmpeg ...` — the `while` runs in a subshell and ffmpeg without `-nostdin` drains the pipe, so later iterations vanish. Always iterate an array and pass `-nostdin`.
-- `mapfile` is a bash builtin, absent in zsh. Use `("${(@f)$(...)}")` to capture lines in zsh.
+**Bash gotchas this protects against:**
+- `echo "$pairs" | while read start end; do ffmpeg ...` — the `while` runs in a subshell AND ffmpeg without `-nostdin` consumes the pipe, dropping subsequent iterations. Always loop over an array, and always pass `-nostdin` to ffmpeg inside the loop.
+- `mapfile` is a bash builtin and does not exist in zsh. Use `("${(@f)$(...)}")` for line-by-line capture in zsh.
 
-CRF 18 is the default (near-lossless). Raise to 23 for smaller files on request.
+CRF 18 is the default (visually lossless-ish). Raise to 23 for smaller files if asked.
 
-### 7. Draft mode and the visual editor loop
+### 7. Draft vs. final, and the visual editor loop
 
-When the user wants to preview before locking cuts — phrases like "make a draft", "show me first", or any uncertainty — render to `output/<name>_draft.mp4` and leave `tmp/` in place. Then offer the visual editor.
+When the user wants to review before locking in cuts (which is the default — phrases like "make a draft", "let me see it first", or any uncertainty about the cut plan), render to `output/<name>_draft.mp4` and **don't** clean up `tmp/` yet. Then offer the visual editor.
 
-The editor is an HTML page served by a small local Python server. It loads the source clip, draws kept spans as draggable bands on a zoomable timeline, and posts edits back to `tmp/<name>_cuts.json` via `POST /api/save`.
+The visual editor is an HTML page served by a tiny local Python server. It loads the source video, displays kept segments as draggable bands on a zoomable timeline, and saves edited cuts directly back to `tmp/<name>_cuts.json` over a `POST /api/save` endpoint.
 
 ```bash
-# 1. Persist the current proposed cuts
+# 1. Save current proposed cuts to tmp/cuts.json first
 cat > tmp/cuts.json <<'EOF'
 [
   {"start": 80.50, "end": 89.20},
@@ -181,29 +179,29 @@ cat > tmp/cuts.json <<'EOF'
 ]
 EOF
 
-# 2. Generate the editor page (embeds video, transcript, cuts, save path into editor/<name>.html)
+# 2. Build the editor (writes editor/<name>.html with video, transcript, cuts, and save_path embedded)
 python3 build_editor.py \
   source/<video> tmp/audio.json tmp/cuts.json editor/<name>.html
 
-# 3. Launch the server in the background
+# 3. Start the server (background — will keep running until killed)
 python3 serve_editor.py &
-# Tell the user to open http://localhost:8765/editor/<name>.html
+# Then tell the user: open http://localhost:8765/editor/<name>.html
 ```
 
-Editor capabilities:
-- Scrub, click empty timeline space to seek, click a green band to select it
-- **Drag a band** to shift it; **drag either edge** to resize
-- **Zoom** via +/− buttons or `Cmd`+scroll; horizontal scrolling for long clips
-- Numeric `start` / `end` fields per span; a "Play" button that auto-pauses at span end
-- "Preview Final" plays all kept spans back-to-back
-- Add or remove spans
-- **Undo** (button or `Cmd+Z`) with full history, last 100 states
-- Transcript pane with click-to-seek; green inside a kept window, dimmed elsewhere
-- Keys: `Space` play/pause, `←`/`→` seek 1 s (Shift = 0.1 s), `I` or `Cmd+<` set selected start, `O` or `Cmd+>` set selected end, `Cmd+S` save, `Cmd+Z` undo
-- **Save** (button or `Cmd+S`) posts to `tmp/<name>_cuts.json` via the server
-- "Export" remains available as a fallback download when the server is off
+Features in the editor:
+- Scrub video, click empty timeline area to seek, click a green band to select that segment
+- **Drag a band** to move it; **drag its left/right edge** to resize start/end
+- **Zoom** with the +/− buttons or `Cmd`+scroll on the timeline; horizontal scroll for long videos
+- Per-segment numeric `start` / `end` inputs, "Play" button (auto-pauses at segment end)
+- "Preview Final" plays all kept segments in sequence
+- Add/Delete segments
+- **Undo** (button or `Cmd+Z`) — full history, last 100 states
+- Transcript view with click-to-jump; green if inside a keep window, dim if cut
+- Keyboard: `Space` play/pause, `←`/`→` seek 1s (Shift = 0.1s), `I` or `Cmd+<` set selected start, `O` or `Cmd+>` set selected end, `Cmd+S` save, `Cmd+Z` undo
+- **Save** (button or `Cmd+S`) writes to `tmp/<name>_cuts.json` via the local server
+- "Export" still available as a fallback download if the server isn't running
 
-After the user says they've saved, read `tmp/<name>_cuts.json` and re-render:
+When the user reports they've saved, read `tmp/<name>_cuts.json` directly and re-render:
 
 ```bash
 python3 -c "
@@ -217,27 +215,23 @@ for s in segs:
 done
 ```
 
-Iterate until the user approves, then produce `output/<name>_final.mp4` and clean up.
+Iterate until the user is happy, then render the final to `output/<name>_final.mp4` and clean up.
 
-### 8. Cleanup and report
+### 8. Clean up and report
 
-After final approval, remove everything in `tmp/` and the editor page:
+Once the user confirms the final is good, delete everything in `tmp/` and the editor page:
 
 ```bash
 find tmp -maxdepth 1 -type f ! -name '.gitkeep' -delete
 rm -f editor/<name>.html
 ```
 
-Report the output filename, duration, and size. Done.
+Report: final filename, duration, size. Done.
 
 ## Notes
 
-- Source clips are the user's input — never overwrite or delete them.
-- If `output/<name>_final.mp4` exists, ask before replacing it.
-- For "cut the long pause" requests that don't show in the transcript, use silence detection: `ffmpeg -i tmp/audio.wav -af silencedetect=n=-30dB:d=0.5 -f null - 2>&1 | grep silence`.
-- The first Whisper run downloads the model (~140 MB for `base.en`); later runs use the cache.
-- zsh quirk: a bare `rm tmp/seg_*.mp4` fails with "no matches found" when nothing matches. Prefer `find tmp -maxdepth 1 -name 'seg_*.mp4' -delete`.
-
-## 来源说明
-
-功能参考自 https://github.com/watzing/claude-video-editor。本文档及随附脚本为独立重写，未复制原始文本。
+- Source videos are the user's input — never overwrite or delete them.
+- If `output/<name>_final.mp4` already exists, ask before overwriting.
+- For "remove the long pause" requests not visible in the transcript, use silence detection: `ffmpeg -i tmp/audio.wav -af silencedetect=n=-30dB:d=0.5 -f null - 2>&1 | grep silence`.
+- Whisper's first run downloads the model (~140MB for `base.en`); subsequent runs are cached.
+- zsh quirk: bare `rm tmp/seg_*.mp4` errors with "no matches found" when no files exist. Use `find tmp -maxdepth 1 -name 'seg_*.mp4' -delete` instead.

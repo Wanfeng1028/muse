@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Local static server with a cuts-save API for the video editor pages.
+"""Local HTTP server for the video editor pages.
 
-Serves a project root directory over HTTP on 127.0.0.1 so the browser can
-load source/<video>.mp4 and editor/<name>.html. Adds Range support for video
-seeking and a POST /api/save endpoint that writes a cuts JSON file back to
-disk (path is validated to remain inside the project root).
+Serves the project root so the browser can fetch source/<video>.mp4 and
+editor/<name>.html. Adds a POST /api/save endpoint that writes a cuts JSON
+back to disk (path validated to stay within the project root).
 
 Usage:
-    python3 serve_editor.py                 # project root, port 8765
+    python3 serve_editor.py                # serves project root on :8765
     python3 serve_editor.py --port 9000
     python3 serve_editor.py --root /some/dir
 
@@ -22,93 +21,58 @@ import socketserver
 import sys
 from pathlib import Path
 
-
-CHUNK = 64 * 1024
-RANGE_RE = re.compile(r"bytes=(\d+)-(\d*)")
-DEFAULT_PORT = 8765
 DEFAULT_ROOT = Path(__file__).resolve().parent
+DEFAULT_PORT = 8765
 
 
-def _parse_range(header, size):
-    """Return (start, end) inclusive, or None if the range is unusable."""
-    m = RANGE_RE.match(header)
-    if not m:
-        return None
-    start = int(m.group(1))
-    end = int(m.group(2)) if m.group(2) else size - 1
-    if end >= size:
-        end = size - 1
-    if start >= size or start > end:
-        return None
-    return start, end
-
-
-def build_handler(root: Path):
-    root = root.resolve()
-
-    class EditorHandler(http.server.SimpleHTTPRequestHandler):
+def make_handler(root: Path):
+    class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(root), **kwargs)
 
-        # ----- helpers -----------------------------------------------------
-
-        def _write_json(self, status, body):
-            blob = json.dumps(body).encode("utf-8")
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(blob)))
-            self.end_headers()
-            self.wfile.write(blob)
-
-        def _read_body(self):
-            length = int(self.headers.get("Content-Length", 0))
-            raw = self.rfile.read(length) if length else b"{}"
-            return json.loads(raw or b"{}")
-
-        # ----- response tweaks ---------------------------------------------
-
         def end_headers(self):
+            # Avoid stale editor HTML during iteration
             self.send_header("Cache-Control", "no-store")
+            # Advertise range support so browsers will use it for video seeking
             self.send_header("Accept-Ranges", "bytes")
             super().end_headers()
 
-        # ----- GET (with Range) --------------------------------------------
-
         def do_GET(self):
+            # HTTP Range support — browsers need 206 Partial Content to scrub video.
+            # Falls through to default behavior when no Range header is present.
             range_header = self.headers.get("Range")
             if not range_header:
                 return super().do_GET()
-
             path = self.translate_path(self.path)
             if not os.path.isfile(path):
                 return super().do_GET()
-
             try:
                 size = os.path.getsize(path)
-                span = _parse_range(range_header, size)
-                if span is None:
+                m = re.match(r"bytes=(\d+)-(\d*)", range_header)
+                if not m:
+                    self.send_error(416, "Invalid Range header")
+                    return
+                start = int(m.group(1))
+                end = int(m.group(2)) if m.group(2) else size - 1
+                end = min(end, size - 1)
+                if start >= size or start > end:
                     self.send_response(416)
-                    self.send_header("Content-Range", "bytes */%d" % size)
+                    self.send_header("Content-Range", f"bytes */{size}")
                     self.end_headers()
                     return
-
-                start, end = span
                 length = end - start + 1
-
-                self.send_response(206)
-                self.send_header("Content-Type", self.guess_type(path))
-                self.send_header("Accept-Ranges", "bytes")
-                self.send_header(
-                    "Content-Range", "bytes %d-%d/%d" % (start, end, size)
-                )
-                self.send_header("Content-Length", str(length))
-                self.end_headers()
-
-                with open(path, "rb") as fh:
-                    fh.seek(start)
+                ctype = self.guess_type(path)
+                with open(path, "rb") as f:
+                    f.seek(start)
+                    self.send_response(206)
+                    self.send_header("Content-Type", ctype)
+                    self.send_header("Accept-Ranges", "bytes")
+                    self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+                    self.send_header("Content-Length", str(length))
+                    self.end_headers()
                     remaining = length
                     while remaining > 0:
-                        chunk = fh.read(min(CHUNK, remaining))
+                        chunk = f.read(min(64 * 1024, remaining))
                         if not chunk:
                             break
                         self.wfile.write(chunk)
@@ -116,71 +80,59 @@ def build_handler(root: Path):
             except (BrokenPipeError, ConnectionResetError):
                 pass
 
-        # ----- POST /api/save ----------------------------------------------
-
         def do_POST(self):
             if self.path != "/api/save":
                 self.send_error(404, "Not found")
                 return
-
+            length = int(self.headers.get("Content-Length", 0))
             try:
-                payload = self._read_body()
-            except json.JSONDecodeError as exc:
-                self._write_json(400, {"ok": False, "error": "bad JSON: %s" % exc})
+                payload = json.loads(self.rfile.read(length) or b"{}")
+            except json.JSONDecodeError as e:
+                self._json(400, {"ok": False, "error": f"bad JSON: {e}"})
                 return
-
             rel = payload.get("path")
             data = payload.get("data")
             if not rel or data is None:
-                self._write_json(
-                    400, {"ok": False, "error": "expected {path, data}"}
-                )
+                self._json(400, {"ok": False, "error": "expected {path, data}"})
                 return
-
             try:
                 target = (root / rel).resolve()
-                target.relative_to(root)
+                target.relative_to(root)  # raises if outside
             except ValueError:
-                self._write_json(
-                    403, {"ok": False, "error": "path outside project root"}
-                )
+                self._json(403, {"ok": False, "error": "path outside project root"})
                 return
-
             target.parent.mkdir(parents=True, exist_ok=True)
-            encoded = json.dumps(data, indent=2)
-            target.write_text(encoded)
-            print("saved %s (%d bytes)" % (rel, len(encoded)), flush=True)
-            self._write_json(200, {"ok": True, "path": rel})
+            target.write_text(json.dumps(data, indent=2))
+            print(f"saved {rel} ({len(json.dumps(data))} bytes)", flush=True)
+            self._json(200, {"ok": True, "path": rel})
 
-        # ----- quieter logging ---------------------------------------------
+        def _json(self, status, body):
+            payload = json.dumps(body).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
 
         def log_message(self, fmt, *args):
-            first = args[0] if args else ""
-            if "/api/" in str(first):
+            # Quieter than default
+            if "/api/" in (args[0] if args else ""):
                 sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
 
-    return EditorHandler
-
-
-def parse_args(argv=None):
-    ap = argparse.ArgumentParser(description="video editor local server")
-    ap.add_argument("--port", type=int, default=DEFAULT_PORT)
-    ap.add_argument("--root", type=Path, default=DEFAULT_ROOT)
-    return ap.parse_args(argv)
+    return Handler
 
 
 def main():
-    args = parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT)
+    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    args = parser.parse_args()
     root = args.root.resolve()
 
     socketserver.TCPServer.allow_reuse_address = True
-    handler = build_handler(root)
-
-    with socketserver.TCPServer(("127.0.0.1", args.port), handler) as httpd:
-        print("video-editor server: http://localhost:%d/  (root: %s)"
-              % (args.port, root))
-        print("open editors at:     http://localhost:%d/editor/<name>.html"
-              % args.port)
+    with socketserver.TCPServer(("127.0.0.1", args.port), make_handler(root)) as httpd:
+        print(f"video-editor server: http://localhost:{args.port}/  (root: {root})")
+        print(f"open editors at:    http://localhost:{args.port}/editor/<name>.html")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

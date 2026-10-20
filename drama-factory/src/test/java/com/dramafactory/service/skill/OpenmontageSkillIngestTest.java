@@ -109,10 +109,9 @@ class OpenmontageSkillIngestTest {
             // 2026-10-20 政策反转（用户指令）：OpenMontage skill 已恢复上游原版
             // （正文逐字 + 注册表必需的 frontmatter 头），索引必须标 rewritten=false；
             // LICENSE 携带由 SkillLicenseComplianceTest 锁定。
-            // 例外：openmontage-video-edit 上游无明确对应文件（仓库内有同名候选多个），
-            // 暂保留重写版与 rewritten=true，待人工裁决。
-            if (!"openmontage-video-edit".equals(id)
-                    && (!e.has("rewritten") || e.get("rewritten").asBoolean())) {
+            // openmontage-video-edit 的原件后在上游 .agents/skills/video-edit/ 找到
+            // （主 skills/ 树之外），已同样恢复原版，不再例外。
+            if (!e.has("rewritten") || e.get("rewritten").asBoolean()) {
                 mismatches.add(id + ": rewritten");
             }
         }
