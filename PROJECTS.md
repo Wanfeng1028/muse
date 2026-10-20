@@ -127,6 +127,7 @@
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 - **深耕轮 2026-10-21（已合入，72c3569）**：review API deep4 6 测试全绿（POST /queue 返回 400 非 405，行为已锁定）。
 - **遗留 2026-10-21 凌晨轮**：k-w10（focus-validation deep5）、k-w11（words-srs）重跑 6 次全部失败——step193plan 5 次只交思考过程（严厉 prompt 重试仍失败）、step150api 4 次纯思考/占位符；dpsk 全程 429。今晚双模型均处降级状态，顺延下轮。教训："只许输出 FILE 块"硬约束今晚反而触发模型的元思考，plain 短 prompt 出码率更高（待验证）。
+- **深耕轮 2026-10-21 早（已合入，2a06847）**：k-w10 解决——s193 用"脚手架+首个测试续写"式 prompt（assembly 风格）一次成功，focus-validation.deep5.test.ts 10/10 通过。模型出码率经验更新：①给完整可组装的代码片段（assembly）比"从零写 N 个测试"可靠得多；②s150 并发上限 5（超了 429），且今晨频繁超时；③t3c 证明"只要 8 个方法、不要 FILE 信封"能绕过元思考。k-w11 仍待生成（s150 两次超时、s193 未试）。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -238,6 +239,7 @@
 - **深耕轮 2026-10-20 深夜波次「v021 eval 回归 + 4 项目纵深」（19 批次实质 prompt，未 commit 待合入）**：dpsk 全天 429 硬停，step193plan 主力（116 次）+ step150api 备用。组 A｜docseek v021 加权排序 eval：旧二进制（pristine 树 d678e06）vs 新二进制 v07 语料全量双跑，文档级零回归（top-1 56/56=100%，MRR@10 0.9643，locate 1.0）；段落级 12 查询 A/B：top-1 文档 12/12 不变，2/12 重排方向均为正确文档段落更高、无一变差；s193 diff 评审 9 发现 0 BUG/CRITICAL。组 B｜drama-factory 提示词库纵深：分页非法值 400（新 InvalidPaginationException）、收藏幂等、前后端收藏联调、分页边缘，4 测试类 29/29 全绿；真机 Spring Boot 视觉验收通过（详情页"标题重叠"经放大+DOM 证伪为误读）。组 C｜sentinel+ledger：8 改动+5 新测试文件全真实；sentinel 真 bug 修复——profile.go MonthlySLA 未关闭事件按 min(now,月末) 裁剪（查过去月份不再把窗口外时长算入）；腾讯短信死代码打通；sentinel go test 13 包 1113/0/0，ledger 1356 通过（2 失败 stash 对照为既存）。组 D｜second-brain+linkshort+feedflow：9 新测试文件 67 函数全绿（推送/搜索/backlinks/遗忘曲线/阅后即焚/地域小时/去重阈值边界）；feedflow 真实截图亲眼验收。诚实声明：v09 eval（1440 pairs）跑一半被取消留待下轮；"提升多少"无法用现有 eval 量化（无段落级 relevance 标注，不编数字）。
 - **深耕轮 2026-10-21（已合入，72c3569）**：TD-004（canonical 字段，4 描述符 9 模型）+ TD-002（workers 可配锁定）已偿还；skillhub updatedAt 改为索引构建时间；PROMPT_LIBRARY.md 补齐 7 端点。
 - **遗留 2026-10-21 凌晨轮**：skillhub 分页 TD-003b 主实现 3 批次（s193 1 次 + s150 2 次）全部只产出思考/草稿，无可用代码；dpsk 429、s193/s150 双降级。顺延下轮。
+- **深耕轮 2026-10-21 早·TD-003b 主实现落地（后端+前端已合入 2a06847，测试 9/10）**：后端 SkillHubController——SkillHubIndex 新增 total/page/size/totalPages，q（id/name/description/author 包含，忽略大小写，Locale.ROOT）与 source（官方出品/社区收录精确）服务端过滤，无参数时向后兼容返回全量；mvn compile 通过。前端 skillhub.js——服务端分页条（上一页/下一页/数字页码/每页 24-48-96、搜索 300ms 防抖、skh.prev/next/perPage/pageInfo 双语），node --check 通过。测试 SkillHubPaginationTest 10 方法 9 通过：1 失败为 sourceFilter 的中文请求参数编码问题（待查），另 2 处为模型生成的类型小错（Integer→String，已修）。前置发现：既存 SkillHubIndexControllerTest#indexListsRealSkillsWithSourceLabels 的 1 个失败为 pre-existing（stash 对照在干净树同样失败：watzing-video-editor 的 source 标签期望与注册表实际数据不一致），与本轮改动无关。
 
 ## mini-os「网页操作系统」
 
