@@ -25,10 +25,31 @@ public class CostLedgerService {
     public record ProviderDailyCost(String provider, double estimatedUsd, double spentUsd, long entryCount) {
     }
 
-    private final CostLedgerEntryRepository repository;
+    /**
+     * 某天的成本趋势点，供看板画折线图。
+     * spentUsd 只统计 COMPLETED/FAILED 条目的 actualUsd（actualUsd 为 null 按 0）。
+     */
+    public record DailyTrendPoint(LocalDate date, double estimatedUsd, double spentUsd, long entryCount) {
+    }
 
-    public CostLedgerService(CostLedgerEntryRepository repository) {
+    /**
+     * 预算总览，供成本看板展示预算使用情况。
+     */
+    public record BudgetStatus(double budgetTotalUsd,
+                               double spentUsd,
+                               double reservedUsd,
+                               double usableUsd,
+                               double utilizationPct,
+                               String mode,
+                               boolean enabled) {
+    }
+
+    private final CostLedgerEntryRepository repository;
+    private final BillingProperties billingProperties;
+
+    public CostLedgerService(CostLedgerEntryRepository repository, BillingProperties billingProperties) {
         this.repository = repository;
+        this.billingProperties = billingProperties;
     }
 
     /**
@@ -70,10 +91,9 @@ public class CostLedgerService {
         BudgetPolicy safePolicy = policy == null
                 ? new BudgetPolicy(BudgetMode.WARN, 0d, 0d)
                 : policy;
-        double reservePct = clamp(safePolicy.reservePct(), 0d, 0.9d);
         double spent = sumActualForStatuses(List.of(CostLedgerStatus.COMPLETED, CostLedgerStatus.FAILED));
         double reserved = sumEstimatedForStatuses(List.of(CostLedgerStatus.RESERVED));
-        double usable = safePolicy.budgetTotalUsd() - spent - reserved - safePolicy.budgetTotalUsd() * reservePct;
+        double usable = usableBudget(safePolicy);
 
         if (entry.getEstimatedUsd() > usable) {
             if (safePolicy.mode() == BudgetMode.CAP) {
@@ -231,14 +251,92 @@ public class CostLedgerService {
     }
 
     /**
+     * 按天汇总最近 days 天的成本趋势，按日期升序返回。
+     * days 会被钳制到 [1, 90]。每一天都返回一条记录，无条目的天数值为 0。
+     * 条目按 createdAt 的 toLocalDate() 归属当天，createdAt 为 null 的条目忽略。
+     */
+    @Transactional(readOnly = true)
+    public List<DailyTrendPoint> summarizeTrend(int days) {
+        int clamped = (int) clamp(days, 1, 90);
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(clamped - 1L);
+
+        List<CostLedgerEntry> all = repository.findAll();
+
+        Map<LocalDate, Double> estimatedByDate = new LinkedHashMap<>();
+        Map<LocalDate, Double> spentByDate = new LinkedHashMap<>();
+        Map<LocalDate, Long> countByDate = new LinkedHashMap<>();
+
+        for (CostLedgerEntry entry : all) {
+            LocalDateTime createdAt = entry.getCreatedAt();
+            if (createdAt == null) {
+                continue;
+            }
+            LocalDate date = createdAt.toLocalDate();
+            if (date.isBefore(start) || date.isAfter(today)) {
+                continue;
+            }
+            countByDate.merge(date, 1L, Long::sum);
+
+            Double estimated = entry.getEstimatedUsd();
+            if (estimated != null) {
+                estimatedByDate.merge(date, estimated, Double::sum);
+            }
+
+            CostLedgerStatus status = entry.getStatus();
+            if (status == CostLedgerStatus.COMPLETED || status == CostLedgerStatus.FAILED) {
+                Double actual = entry.getActualUsd();
+                spentByDate.merge(date, actual == null ? 0d : actual, Double::sum);
+            }
+        }
+
+        List<DailyTrendPoint> result = new ArrayList<>();
+        for (int i = 0; i < clamped; i++) {
+            LocalDate date = start.plusDays(i);
+            double estimated = estimatedByDate.getOrDefault(date, 0d);
+            double spent = spentByDate.getOrDefault(date, 0d);
+            long count = countByDate.getOrDefault(date, 0L);
+            result.add(new DailyTrendPoint(date, estimated, spent, count));
+        }
+        return result;
+    }
+
+    /**
      * 按 id 查找条目，缺失时抛 IllegalArgumentException。
      */
+    /**
+     * 预算总览：总预算/已花费/冻结中/可用/使用率/模式/开关。
+     */
+    @Transactional(readOnly = true)
+    public BudgetStatus budgetStatus() {
+        BudgetPolicy policy = billingProperties.toBudgetPolicy();
+        double budgetTotalUsd = billingProperties.getBudgetTotalUsd();
+        double spent = sumActualForStatuses(List.of(CostLedgerStatus.COMPLETED, CostLedgerStatus.FAILED));
+        double reserved = sumEstimatedForStatuses(List.of(CostLedgerStatus.RESERVED));
+        double usable = usableBudget(policy);
+        double utilizationPct = budgetTotalUsd > 0 ? spent / budgetTotalUsd * 100 : 0;
+        return new BudgetStatus(budgetTotalUsd,
+                spent,
+                reserved,
+                usable,
+                utilizationPct,
+                billingProperties.getMode(),
+                billingProperties.isEnabled());
+    }
+
     public CostLedgerEntry requireEntry(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("entryId must not be null");
         }
         return repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("CostLedgerEntry not found: " + id));
+    }
+
+    private double usableBudget(BudgetPolicy policy) {
+        double reservePct = clamp(policy.reservePct(), 0d, 0.9d);
+        double spent = sumActualForStatuses(List.of(CostLedgerStatus.COMPLETED, CostLedgerStatus.FAILED));
+        double reserved = sumEstimatedForStatuses(List.of(CostLedgerStatus.RESERVED));
+        return policy.budgetTotalUsd() - spent - reserved - policy.budgetTotalUsd() * reservePct;
     }
 
     private double sumActualForStatuses(List<CostLedgerStatus> statuses) {

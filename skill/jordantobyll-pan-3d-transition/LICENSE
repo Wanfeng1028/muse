@@ -1,0 +1,11 @@
+No license declared by the upstream repository.
+
+The upstream repository jordantobyll/video-editing-skills does not declare a license: it ships
+no LICENSE file and contains no license statement in its README or
+sources (checked 2026-10-20). This file records that status so the
+bundled copy carries its provenance with it, per project policy.
+
+Inclusion decision (project owner, 2026-10-20): bundle the upstream
+original as-is for now; licensing to be revisited before any paid
+release of the product.
+Source: https://github.com/jordantobyll/video-editing-skills

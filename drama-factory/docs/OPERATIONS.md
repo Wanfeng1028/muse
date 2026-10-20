@@ -712,9 +712,13 @@ ffmpeg 瞬时重试突增：
 
 | 接口 | 说明 |
 | --- | --- |
-| `GET /api/cost-ledger/summary` | 汇总 |
-| `GET /api/cost-ledger/entries` | 明细，可按 status 过滤 |
+| `GET /api/cost-ledger/budget` | 预算总览：总额/已花费/冻结中/可用/使用率/模式/开关 |
+| `GET /api/cost-ledger/summary` | 汇总（可按 projectId/provider/from/to 过滤） |
+| `GET /api/cost-ledger/trend?days=N` | 最近 N 天趋势（默认14；非法400；超出[1,90]服务端钳制） |
+| `GET /api/cost-ledger/entries` | 明细，可按 status 过滤；limit 默认100、最大500，非法400 |
 | `GET /api/cost-ledger/daily?date=yyyy-MM-dd` | 按天按通道汇总，缺省今天 |
+
+看板页面：`cost-ledger.html`（导航"运行"→"成本账本"），截图见 `docs/screenshots/cost-ledger/dashboard.png`。
 
 ### 运维
 

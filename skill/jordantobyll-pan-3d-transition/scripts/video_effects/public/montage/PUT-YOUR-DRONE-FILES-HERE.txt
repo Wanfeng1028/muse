@@ -1,0 +1,2 @@
+Drop your own drone clips (.MP4) and photos (.JPG) in this folder,
+then edit ../../src/montageConfig.ts to list them in the order you want.

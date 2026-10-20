@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<script>try{var t=localStorage.getItem('df-theme');document.documentElement.setAttribute('data-bs-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-bs-theme','light');}</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="cl.pageTitle">成本账本 · AI 短剧工坊</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/harness.css">
+<style>
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 720px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.kpi-label { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
+.kpi-value { font-size: 28px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.section { margin-bottom: 28px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.section-head h2 { font-size: 16px; font-weight: 600; margin: 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1 data-i18n="cl.heading">成本账本</h1>
+    <p class="text-secondary" data-i18n="cl.subtitle">每一笔 AI 调用的钱花在哪：预算剩多少、每天花多少、明细可查。</p>
+  </div>
+
+  <section class="card" id="budgetCard">
+    <div class="card-body">
+      <div id="budgetTop" class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label" data-i18n="cl.kpiBudget">预算总额</div>
+          <div class="kpi-value" id="kpiBudget">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" data-i18n="cl.kpiSpent">已花费</div>
+          <div class="kpi-value" id="kpiSpent">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" data-i18n="cl.kpiReserved">冻结中</div>
+          <div class="kpi-value" id="kpiReserved">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" data-i18n="cl.kpiUsable">可用</div>
+          <div class="kpi-value" id="kpiUsable">-</div>
+        </div>
+      </div>
+
+      <div class="progress mt-3" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+        <div id="budgetBar" class="progress-bar" style="width:0%"></div>
+      </div>
+
+      <div class="d-flex align-items-center mt-2" style="gap:8px">
+        <span id="budgetMeta" class="text-secondary"></span>
+        <span id="budgetBadge" class="badge bg-secondary-lt"></span>
+      </div>
+
+      <div id="budgetError" class="alert alert-danger mt-2" hidden></div>
+    </div>
+  </section>
+
+  <div id="kpiRow" class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label" data-i18n="cl.kpiToday">今日花费</div>
+      <div class="kpi-value" id="kpiToday">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" data-i18n="cl.kpiWeek">近 7 天</div>
+      <div class="kpi-value" id="kpiWeek">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" data-i18n="cl.kpiEntries">累计条目</div>
+      <div class="kpi-value" id="kpiEntries">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" data-i18n="cl.kpiProviders">供应商数</div>
+      <div class="kpi-value" id="kpiProviders">-</div>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h3 class="card-title" data-i18n="cl.trend">花费趋势</h3>
+      <div id="trendDays" class="btn-group" role="group">
+        <button type="button" class="btn btn-sm" data-days="7">7</button>
+        <button type="button" class="btn btn-sm" data-days="14">14</button>
+        <button type="button" class="btn btn-sm" data-days="30">30</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="trendChart"></div>
+      <div id="trendEmpty" class="text-secondary" hidden data-i18n="cl.trendEmpty">这段时间没有调用记录。</div>
+      <div id="trendError" class="alert alert-danger" hidden></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3 class="card-title" data-i18n="cl.byProvider">按供应商</h3>
+    </div>
+    <div class="card-body">
+      <div id="providerBars"></div>
+      <div id="providerEmpty" class="text-secondary" hidden data-i18n="cl.providerEmpty">今天还没有调用记录。</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3 class="card-title" data-i18n="cl.recentEntries">最近明细</h3>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-vcenter">
+          <thead>
+            <tr>
+              <th data-i18n="cl.colTime">时间</th>
+              <th data-i18n="cl.colProvider">供应商</th>
+              <th data-i18n="cl.colModel">模型</th>
+              <th data-i18n="cl.colOperation">操作</th>
+              <th data-i18n="cl.colStatus">状态</th>
+              <th data-i18n="cl.colEstimated">预估 $</th>
+              <th data-i18n="cl.colActual">实际 $</th>
+            </tr>
+          </thead>
+          <tbody id="entryRows"></tbody>
+        </table>
+      </div>
+      <div id="entryEmpty" class="text-secondary" hidden data-i18n="cl.entryEmpty">还没有调用记录。</div>
+      <div id="entryError" class="alert alert-danger" hidden></div>
+    </div>
+  </section>
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+  <div id="toast" class="alert alert-info" role="alert" hidden></div>
+</div>
+
+<script src="/i18n.js"></script>
+<script src="/tabler.min.js"></script>
+<script src="/shell.js"></script>
+<script src="/cost-ledger.js"></script>
+</body>
+</html>

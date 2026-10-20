@@ -21,6 +21,8 @@
     'nav.officialSkills': { 'zh-CN': '官方 Skill 库', 'en': 'Official Skills' },
     'nav.skillhub': { 'zh-CN': 'SkillHub', 'en': 'SkillHub' },
     'nav.usage': { 'zh-CN': '用量统计', 'en': 'Usage' },
+    'nav.prompts': { 'zh-CN': '提示词库', 'en': 'Prompt Library' },
+    'nav.costLedger': { 'zh-CN': '成本账本', 'en': 'Cost Ledger' },
     'nav.storyboard': { 'zh-CN': '分镜板', 'en': 'Storyboard' },
     'nav.canvas': { 'zh-CN': '分镜画布', 'en': 'Shot Canvas' },
     'nav.tasks': { 'zh-CN': '任务队列', 'en': 'Task Queue' },
@@ -165,6 +167,7 @@
     { id: 'prompts', href: '/prompts.html', label: '提示词库', i18n: 'nav.prompts', icon: 'prompts' },
     { id: 'skillhub', href: '/skillhub.html', label: 'SkillHub', i18n: 'nav.skillhub', icon: 'skills' },
     { id: 'usage', href: '/usage.html', label: '用量统计', i18n: 'nav.usage', icon: 'chart' },
+    { id: 'cost-ledger', href: '/cost-ledger.html', label: '成本账本', i18n: 'nav.costLedger', icon: 'chart' },
     { id: 'storyboard', href: '/storyboard.html', label: '分镜板', i18n: 'nav.storyboard', icon: 'film', kbd: 'G S' },
     { id: 'canvas', href: '/canvas.html', label: '分镜画布', i18n: 'nav.canvas', icon: 'layout' },
     { id: 'tasks', href: '/tasks.html', label: '任务队列', i18n: 'nav.tasks', icon: 'tasks', kbd: 'G T' },
@@ -179,7 +182,7 @@
   /* 侧边栏分组 */
   var NAV_GROUPS = [
     { i18n: 'navgroup.create', label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
-    { i18n: 'navgroup.run', label: '运行', ids: ['runs', 'agents', 'skills', 'official-skills', 'prompts', 'skillhub', 'usage'] },
+    { i18n: 'navgroup.run', label: '运行', ids: ['runs', 'agents', 'skills', 'official-skills', 'prompts', 'skillhub', 'usage', 'cost-ledger'] },
     { i18n: 'navgroup.produce', label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'review', 'pipeline', 'tools'] }
   ];
   function navById(id) {

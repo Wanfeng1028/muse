@@ -29,7 +29,27 @@ Provider 做了接口抽象：
 
 ### 成本账本
 
-每次视频生成在提交前，系统会按通道估算费用，并做预算预留，避免超支。
+每次 AI 调用（视频生成、分镜、剧本）提交前，系统会估算费用并预留预算，完成后按实际结算，账本随时可查。
+
+看板页面：`cost-ledger.html`。入口在导航"运行"分组下的"成本账本"。页面包含：
+
+- 预算总览卡：总额、已花费、冻结中、可用，以及使用率进度条。
+- 今日与近 7 天 KPI。
+- 14 天花费趋势图，可切换 7/14/30 天。
+- 按供应商的条形图。
+- 当天明细表。
+
+![成本账本看板](docs/screenshots/cost-ledger/dashboard.png)
+
+接口：
+
+| 接口 | 参数 | 说明 |
+|---|---|---|
+| GET /api/cost-ledger/budget | 无 | 预算总览：budgetTotalUsd/spentUsd/reservedUsd/usableUsd/utilizationPct/mode/enabled |
+| GET /api/cost-ledger/summary | projectId/provider/from/to（可选） | 汇总：entryCount/totalEstimated/totalReserved/totalSpent/countByStatus |
+| GET /api/cost-ledger/daily | date=yyyy-MM-dd（可选，默认今天） | 当天按供应商汇总 |
+| GET /api/cost-ledger/trend | days（可选，默认14，非法400，超限[1,90]由服务端钳制） | 最近 N 天每天的 estimatedUsd/spentUsd/entryCount，按日期升序 |
+| GET /api/cost-ledger/entries | projectId/provider/status/from/to/limit（可选；limit 默认100、最大500，非法400） | 账本明细，按创建时间倒序 |
 
 预算模式有两种，由 `drama.billing.mode` 控制：
 
@@ -42,14 +62,6 @@ Provider 做了接口抽象：
 - `drama.billing.mode`：预算模式，取值 `WARN` 或 `CAP`。
 - `drama.billing.budget-total-usd`：总预算，单位美元。
 - `drama.billing.reserve-pct`：每次提交预留预算的比例。
-
-查账接口：
-
-```
-GET /api/cost-ledger/daily?date=yyyy-MM-dd
-```
-
-返回当天各通道的花费明细。
 
 注意：费用是提交时估算出来的，提供方不会返回真实费用，最终以提供方账单为准。
 

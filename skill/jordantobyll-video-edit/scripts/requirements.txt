@@ -1,0 +1,6 @@
+# Python dependencies for the video-edit skill (AI silence removal).
+# Install with:  pip install -r requirements.txt
+torch          # Silero neural voice-activity detection (silence removal)
+requests       # HTTP calls
+python-dotenv  # loads .env if present
+# Note: FFmpeg is also required but is a system tool — install via `brew install ffmpeg` (not pip).

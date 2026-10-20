@@ -54,6 +54,27 @@ public class CostLedgerController {
         return service.summarizeDaily(day);
     }
 
+    /**
+     * 按天汇总费用趋势。days 缺省为 14；非数字返回 400；超出 [1, 90] 由 service 钳制。
+     */
+    @GetMapping("/trend")
+    public List<CostLedgerService.DailyTrendPoint> trend(
+            @RequestParam(name = "days", required = false) String days) {
+        int parsed = parseDays(days);
+        return service.summarizeTrend(parsed);
+    }
+
+    private static int parseDays(String value) {
+        if (value == null || value.isBlank()) {
+            return 14;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            throw new BadRequestError("Invalid days: " + value);
+        }
+    }
+
     private static LocalDate parseDate(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -66,6 +87,14 @@ public class CostLedgerController {
     }
 
     /**
+     * 预算总览：总预算/已花费/冻结中/可用/使用率/模式/开关。
+     */
+    @GetMapping("/budget")
+    public CostLedgerService.BudgetStatus budget() {
+        return service.budgetStatus();
+    }
+
+    /**
      * 查询账本条目。status 为枚举名，非法值返回 400。
      */
     @GetMapping("/entries")
@@ -74,10 +103,12 @@ public class CostLedgerController {
             @RequestParam(name = "provider", required = false) String provider,
             @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "from", required = false) String from,
-            @RequestParam(name = "to", required = false) String to) {
+            @RequestParam(name = "to", required = false) String to,
+            @RequestParam(name = "limit", required = false) String limit) {
         LocalDateTime fromTime = parseTime(from);
         LocalDateTime toTime = parseTime(to);
         CostLedgerStatus statusEnum = parseStatus(status);
+        int max = parseLimit(limit);
 
         List<CostLedgerEntry> candidates;
         if (projectId != null) {
@@ -105,7 +136,26 @@ public class CostLedgerController {
             }
             result.add(entry);
         }
+        if (result.size() > max) {
+            return result.subList(0, max);
+        }
         return result;
+    }
+
+    private static int parseLimit(String value) {
+        if (value == null || value.isBlank()) {
+            return 100;
+        }
+        int parsed;
+        try {
+            parsed = Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            throw new BadRequestError("Invalid limit: " + value);
+        }
+        if (parsed <= 0) {
+            throw new BadRequestError("Invalid limit: " + value);
+        }
+        return Math.min(parsed, 500);
     }
 
     private static LocalDateTime parseTime(String value) {

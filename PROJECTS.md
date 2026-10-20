@@ -226,6 +226,8 @@
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
+- **深耕轮 2026-10-20 傍晚「成本账本看板」（已合入）**：后端新增 `CostLedgerService.summarizeTrend(days)`（[1,90]钳制、按日期升序、空天补零）+ `budgetStatus()`（构造器注入 BillingProperties，reserve() 复用抽出的 usableBudget）；Controller 新增 `GET /api/cost-ledger/trend?days`（默认14、非法400）、`GET /api/cost-ledger/budget`；`GET /api/cost-ledger/entries` 新增 limit（默认100、最大500、非法400）。前端 `cost-ledger.html` 看板页（导航"运行"→"成本账本"）：预算卡+使用率进度条、今日/近7天/累计/供应商数 KPI、14 天 SVG 趋势图（7/14/30 切换）、按供应商条形、明细表；中英双语、Tabler 原生。新增 6 个测试文件 24 例全绿；修 dpsk 测试 bug 1 个。视觉验收：36 条跨 14 天种子数据，真机截图亲眼验收（修 5 处真 bug：asset 路径/css-js 子目录、hidden/d-none 混用、PAGE_I18N 格式、key 命名不一致、"仅告警"重复）。文档：README/OPERATIONS/CHANGELOG 同步；截图 docs/screenshots/cost-ledger/。
+
 ## mini-os「网页操作系统」
 
 **定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。

@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-20 下午：成本账本看板）
+- 后端：`CostLedgerService.summarizeTrend(days)`（[1,90]钳制，含今天，按日期升序，每天一条）；`CostLedgerService.budgetStatus()`（budgetTotalUsd/spentUsd/reservedUsd/usableUsd/utilizationPct/mode/enabled，构造器注入 BillingProperties，reserve() 复用抽出的 usableBudget(BudgetPolicy)）；`CostLedgerController` 新增 `GET /api/cost-ledger/trend?days`（默认14，非法400，超限由 service 钳制）、`GET /api/cost-ledger/budget`；`GET /api/cost-ledger/entries` 新增 limit 参数（默认100、最大500，非法400）。
+- 前端：`cost-ledger.html` 看板页（导航"运行"→"成本账本"，shell.js 接入+nav.costLedger 中英 key）：预算卡（总额/已花费/冻结中/可用+使用率进度条，70%/90% 变色）、今日/近7天/累计条目/供应商数 KPI、14 天趋势 SVG 折线图（7/14/30 天切换，手写 SVG 零依赖）、按供应商条形、当天明细表（limit=20，状态 badge）；中英双语（PAGE_I18N 38+18 key）；Tabler 原生组件，无自创配色。
+- 测试：新增 6 个测试文件 24 例全绿；修 1 个 dpsk 测试 bug（failedCountsTowardSpentAndRefundedCountsTowardNothing 误调 complete，应调 refund，spent 口径以实现为准）。
+- 文档：README 成本账本节升级（含 5 接口表与看板截图）、OPERATIONS.md 查询接口表补齐 5 行、截图 docs/screenshots/cost-ledger/dashboard.png（36 条跨 14 天种子数据，亲眼验收：KPI/趋势/条形/明细全对）。
+- 附带修：shell.js 补 nav.prompts 中英 key（历史遗漏致导航显示 raw key）。
+
 ### Added（深耕轮 2026-10-20 凌晨，lane A：skillhub / HyperFrames 渲染 / Toonflow 二阶段）
 - 自有 SkillHub：`GET /api/skillhub/index`（hub=playhouse-skillhub，全部内置+社区收录 skills，来源标注"官方出品"/"社区收录"，含 installed 状态；异常时返回空列表 200，不 500）+ 前端 `skillhub.html`（搜索/来源筛选/一键安装到 data/skills/，挂载"运行"分组导航，Tabler 风格）。测试：SkillHubIndexControllerTest 5 例。
 - HtmlRenderVideoProvider 双引擎：`drama.video.htmlrender.engine=chromium|hyperframes`（默认 chromium）；hyperframes 引擎经 `--version` 探活后走 `hyperframes render -c composition.html -o out/video.mp4 --resolution 1080p --fps <fps> --no-browser-gpu`，CLI 不可用/渲染失败自动降级 chromium 并打 warn。测试：HtmlRenderEngineSelectionTest 7 例。运维：`scripts/hyperframes_probe.sh`（JSON 探活，输出 engine 推荐值）。文档：docs/DEGRADATION.md 新增"htmlrender 双引擎"小节；application.yml/.env.example 新增配置说明。
