@@ -1,0 +1,145 @@
+{
+  "contract_version": "4.0",
+  "delivery_scope": "prompt_only",
+  "execution": "plan-only; modules and models are not invoked",
+  "features": [
+    "combat",
+    "vfx"
+  ],
+  "frozen_paths": [
+    "/production_total_duration"
+  ],
+  "intent": "full",
+  "nodes": [
+    {
+      "attempt": 0,
+      "depends_on": [],
+      "frozen_paths": [],
+      "id": "story",
+      "owner": "story",
+      "phase": "story",
+      "reason": "story explicitly requested or absent",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "story"
+      ],
+      "frozen_paths": [],
+      "id": "shots",
+      "owner": "shots",
+      "phase": "shots",
+      "reason": "ShotSpec is required by selected output",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots"
+      ],
+      "frozen_paths": [],
+      "id": "performance",
+      "owner": "performance",
+      "phase": "performance",
+      "reason": "causal performance/action facts precede compilation",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "story",
+        "shots",
+        "performance"
+      ],
+      "frozen_paths": [],
+      "id": "assets",
+      "owner": "assets",
+      "phase": "assets",
+      "reason": "asset registry is requested or required",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots",
+        "performance"
+      ],
+      "frozen_paths": [
+        "/production_total_duration"
+      ],
+      "id": "effects",
+      "owner": "effects",
+      "phase": "effects",
+      "reason": "effects explicitly triggered; frozen paths remain outside production writes",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots",
+        "performance",
+        "assets",
+        "effects"
+      ],
+      "frozen_paths": [],
+      "id": "model:MECHA_SEG01",
+      "owner": "model",
+      "phase": "model",
+      "reason": "each Segment is an independent H3 compilation unit",
+      "segment_id": "MECHA_SEG01",
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "story",
+        "shots",
+        "performance",
+        "assets",
+        "effects",
+        "model:MECHA_SEG01"
+      ],
+      "frozen_paths": [],
+      "id": "continuity",
+      "owner": "continuity",
+      "phase": "continuity",
+      "reason": "replay and persist continuity after selected slice",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "story",
+        "shots",
+        "performance",
+        "assets",
+        "effects",
+        "model:MECHA_SEG01",
+        "continuity"
+      ],
+      "frozen_paths": [],
+      "id": "audit",
+      "owner": "continuity",
+      "phase": "audit",
+      "reason": "single delivery-integrity and claim-honesty receipt",
+      "segment_id": null,
+      "status": "PENDING"
+    }
+  ],
+  "pause_conditions": [
+    "missing user decision",
+    "missing irreplaceable material",
+    "missing permission",
+    "missing external capability"
+  ],
+  "plan_id": "plan_5620ac42d4e0e019",
+  "production_revision": "4cb2203aa74b0df0f60d3e18c022160713ca818573d5cf5d869d46d8fd7d3ed0",
+  "request_id": "DIRECTOR_REQUEST_01"
+}

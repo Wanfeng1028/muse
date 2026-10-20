@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Short Drama Production Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "greenlight",
+    "premise_contract",
+    "characters",
+    "locations",
+    "props",
+    "episodes"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "market", "format", "episode_duration_seconds", "planned_episodes"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "market": {"type": "string", "minLength": 1},
+        "format": {"type": "string", "minLength": 1},
+        "episode_duration_seconds": {"type": "number", "minimum": 15, "maximum": 180},
+        "planned_episodes": {"type": "integer", "minimum": 1, "maximum": 60}
+      }
+    },
+    "greenlight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hook_clarity",
+        "information_gap",
+        "payoff_frequency",
+        "escalation_room",
+        "character_engine",
+        "production_feasibility",
+        "freshness",
+        "seriality",
+        "total",
+        "decision",
+        "rationale"
+      ],
+      "properties": {
+        "hook_clarity": {"type": "integer", "minimum": 1, "maximum": 5},
+        "information_gap": {"type": "integer", "minimum": 1, "maximum": 5},
+        "payoff_frequency": {"type": "integer", "minimum": 1, "maximum": 5},
+        "escalation_room": {"type": "integer", "minimum": 1, "maximum": 5},
+        "character_engine": {"type": "integer", "minimum": 1, "maximum": 5},
+        "production_feasibility": {"type": "integer", "minimum": 1, "maximum": 5},
+        "freshness": {"type": "integer", "minimum": 1, "maximum": 5},
+        "seriality": {"type": "integer", "minimum": 1, "maximum": 5},
+        "total": {"type": "integer", "minimum": 8, "maximum": 40},
+        "decision": {"type": "string", "enum": ["greenlight", "revise", "reject"]},
+        "rationale": {"type": "string", "minLength": 1}
+      }
+    },
+    "premise_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public_identity", "hidden_truth", "engine", "season_question", "fresh_twist"],
+      "properties": {
+        "public_identity": {"type": "string", "minLength": 1},
+        "hidden_truth": {"type": "string", "minLength": 1},
+        "engine": {"type": "string", "minLength": 1},
+        "season_question": {"type": "string", "minLength": 1},
+        "fresh_twist": {"type": "string", "minLength": 1}
+      }
+    },
+    "characters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/character"}
+    },
+    "locations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/location"}
+    },
+    "props": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/prop"}
+    },
+    "episodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/episode"}
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "nonempty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "character": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "name", "public_identity", "hidden_truth", "desire",
+        "visual_anchor", "performance_anchor", "voice_anchor"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "name": {"$ref": "#/$defs/nonempty"},
+        "public_identity": {"$ref": "#/$defs/nonempty"},
+        "hidden_truth": {"$ref": "#/$defs/nonempty"},
+        "desire": {"$ref": "#/$defs/nonempty"},
+        "visual_anchor": {"$ref": "#/$defs/nonempty"},
+        "performance_anchor": {"$ref": "#/$defs/nonempty"},
+        "voice_anchor": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "visual_anchor"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "name": {"$ref": "#/$defs/nonempty"},
+        "visual_anchor": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "prop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "visual_anchor"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "name": {"$ref": "#/$defs/nonempty"},
+        "visual_anchor": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "debt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "due_episode"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "due_episode": {"type": "integer", "minimum": 1, "maximum": 60}
+      }
+    },
+    "dialogue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["speaker_id", "text", "performance"],
+      "properties": {
+        "speaker_id": {"$ref": "#/$defs/identifier"},
+        "text": {"$ref": "#/$defs/nonempty"},
+        "performance": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "shot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "duration_target", "frame_intent", "entities", "observable_action",
+        "camera", "audio", "dialogue", "continuity", "end_state", "negative"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "duration_target": {"type": "number", "minimum": 2, "maximum": 15},
+        "frame_intent": {"$ref": "#/$defs/nonempty"},
+        "entities": {"type": "array", "items": {"$ref": "#/$defs/identifier"}},
+        "observable_action": {"$ref": "#/$defs/nonempty"},
+        "camera": {"$ref": "#/$defs/nonempty"},
+        "audio": {"$ref": "#/$defs/nonempty"},
+        "dialogue": {"type": "array", "items": {"$ref": "#/$defs/dialogue"}},
+        "continuity": {"$ref": "#/$defs/nonempty"},
+        "end_state": {"$ref": "#/$defs/nonempty"},
+        "negative": {"$ref": "#/$defs/nonempty"}
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "purpose", "location_id", "characters", "state_before", "event",
+        "state_after", "turn", "end_hook", "shots"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "purpose": {"$ref": "#/$defs/nonempty"},
+        "location_id": {"$ref": "#/$defs/identifier"},
+        "characters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/identifier"}},
+        "state_before": {"$ref": "#/$defs/nonempty"},
+        "event": {"$ref": "#/$defs/nonempty"},
+        "state_after": {"$ref": "#/$defs/nonempty"},
+        "turn": {"$ref": "#/$defs/nonempty"},
+        "end_hook": {"$ref": "#/$defs/nonempty"},
+        "shots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/shot"}}
+      }
+    },
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "title", "hook", "turn", "payoff", "progress", "cliffhanger",
+        "characters", "locations", "state_delta", "debts_opened", "debts_paid",
+        "continuation_capsule", "scenes"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^ep_[0-9]{3}$"},
+        "title": {"$ref": "#/$defs/nonempty"},
+        "hook": {"$ref": "#/$defs/nonempty"},
+        "turn": {"$ref": "#/$defs/nonempty"},
+        "payoff": {"type": "string"},
+        "progress": {"type": "string"},
+        "cliffhanger": {"$ref": "#/$defs/nonempty"},
+        "characters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/identifier"}},
+        "locations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/identifier"}},
+        "state_delta": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonempty"}},
+        "debts_opened": {"type": "array", "items": {"$ref": "#/$defs/debt"}},
+        "debts_paid": {"type": "array", "items": {"$ref": "#/$defs/identifier"}},
+        "continuation_capsule": {"$ref": "#/$defs/nonempty"},
+        "scenes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/scene"}}
+      }
+    }
+  }
+}

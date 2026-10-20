@@ -1,0 +1,553 @@
+{
+  "version": "2.0",
+  "project_id": "EXAMPLE_SUSPENSE_WHISPER",
+  "fps_num": 24,
+  "fps_den": 1,
+  "prompt_detail_policy": {
+    "profile": "legacy_fixture"
+  },
+  "production_total_duration": 10,
+  "generation_clip_limit": 10,
+  "scene_registry": [
+    {
+      "id": "S01",
+      "name": "维修室",
+      "space": "The abandoned archive has tall metal shelves, a glass records room, a dusty tile floor, a dead emergency light and one narrow flashlight beam cutting from the doorway.",
+      "version": "v1",
+      "entrances": [
+        "west service route"
+      ],
+      "exits": [
+        "east service route"
+      ],
+      "landmarks": [
+        "The abandoned archive has tall metal shelves, a glass records room, a dusty tile floor, a dead emergency light and one narrow flashlight beam cutting from the doorway."
+      ],
+      "key_light": "the low flashlight beam and its reflected spill",
+      "prompt_description": "The abandoned archive has tall metal shelves, a glass records room, a dusty tile floor, a dead emergency light and one narrow flashlight beam cutting from the doorway."
+    }
+  ],
+  "character_registry": [
+    {
+      "id": "CHAR_NING",
+      "name": "Ning Yue",
+      "height_m": 1.8,
+      "identity": "Original design; appearance defined by the production prose, not by a franchise reference",
+      "prompt_description": "Ning Yue is an adult archivist with a narrow face, tied black hair, a dark raincoat and a small flashlight held low in her right hand."
+    },
+    {
+      "id": "CHAR_ECHO",
+      "name": "the reflected figure",
+      "height_m": 1.7,
+      "identity": "Original design; appearance defined by the production prose, not by a franchise reference",
+      "prompt_description": "The reflected figure is a pale human silhouette visible only as a delayed reflection in the archive glass; it never speaks or touches Ning Yue."
+    }
+  ],
+  "shots": [
+    {
+      "id": "FILM-S01-SH001",
+      "scene_id": "S01",
+      "start_frame": 0,
+      "end_frame": 120,
+      "visual": "Ning Yue begins in the stance and framing established by <Picture 1> at the left of the glass records room, listening with the flashlight held low. The reflection behind the glass is delayed by one breath and does not match her shoulders.",
+      "camera": {
+        "previs_id": "103",
+        "lens_mm": 65,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary on the established side of the action axis",
+        "target": "Ning Yue, the glass reflection and the low flashlight pool",
+        "adaptation": "project-specific amplitude and speed; source ID is a motion-family reference",
+        "description": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand."
+      },
+      "characters": [
+        {
+          "id": "CHAR_NING",
+          "position": [
+            0.35,
+            0.55
+          ],
+          "facing": "toward screen right",
+          "gaze": "toward the glass reflection",
+          "weapon_hand": "right hand holds the flashlight low",
+          "weapon_direction": "no weapon present in this scene"
+        },
+        {
+          "id": "CHAR_ECHO",
+          "position": [
+            0.7,
+            0.55
+          ],
+          "facing": "toward screen left",
+          "gaze": "a delayed reflection of Ning Yue; no independent physical presence",
+          "weapon_hand": "a reflected hand visible behind glass; no physical prop contact",
+          "weapon_direction": "no weapon present in this scene"
+        }
+      ],
+      "features": {
+        "core_emotion": true,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [],
+      "audio": {
+        "foley": [
+          "one ventilation tick followed by held breath"
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "The scene is driven by near-silent room tone, breath and a delayed glass movement rather than bass."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_NING": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_ECHO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "FLASHLIGHT": "CHAR_NING"
+        }
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_NING": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_ECHO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "FLASHLIGHT": "CHAR_NING"
+        }
+      },
+      "performance": {
+        "beat_id": "EX-S01-B01",
+        "dominant_track": "gaze",
+        "tracks": {
+          "gaze": {
+            "start": 0,
+            "end": 119,
+            "cue": "Ning Yue holds her shoulders still and stops breathing while keeping the flashlight low",
+            "visibility": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand."
+          }
+        },
+        "acting_design": {
+          "version": "1.0",
+          "mode": "observational",
+          "character_id": "CHAR_NING",
+          "objective": "confirm whether the reflection is following her or acting independently",
+          "tactic": "reduce movement until the mismatch becomes measurable",
+          "subtext": "she refuses to give the reflected figure a visible reaction to copy",
+          "trigger": "the reflection lags behind one breath",
+          "personality_signature": "fear is externalized as held breath, fixed shoulders and a tiny eye movement",
+          "action_units": [
+            {
+              "start": 0,
+              "end": 60,
+              "cause": "the reflection lags behind one breath",
+              "action": "Ning Yue holds her shoulders still and stops breathing while keeping the flashlight low",
+              "gaze": "toward the delayed reflection through the glass",
+              "face": "lips stay closed and the jaw firms",
+              "follow_through": "the beam remains on the floor after the breath stops",
+              "speech_anchor": "silent",
+              "delivery": "no speech; lips remain closed",
+              "prop": "the flashlight stays in her right hand",
+              "camera": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand.",
+              "sound": "one ventilation tick followed by held breath"
+            },
+            {
+              "start": 60,
+              "end": 119,
+              "cause": "the preceding visible action has reached its accent",
+              "action": "the beam remains on the floor after the breath stops",
+              "gaze": "toward the delayed reflection through the glass",
+              "face": "lips stay closed and the jaw firms",
+              "follow_through": "the flashlight stays in her right hand",
+              "speech_anchor": "silent",
+              "delivery": "no speech; lips remain closed",
+              "prop": "the flashlight stays in her right hand",
+              "camera": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand.",
+              "sound": "one ventilation tick followed by held breath"
+            }
+          ],
+          "motion_arc": {
+            "anticipation": "the reflection lags behind one breath",
+            "accent": "Ning Yue holds her shoulders still and stops breathing while keeping the flashlight low",
+            "follow_through": "the beam remains on the floor after the breath stops",
+            "settle": "the flashlight stays in her right hand"
+          },
+          "speech_delivery": {
+            "voice_timbre": "nearly inaudible adult whisper",
+            "pace": "no speech; breath controls the timing",
+            "pitch": "flat",
+            "volume": "silent",
+            "pauses": [],
+            "emphasis": []
+          },
+          "cut_behavior": [],
+          "continuity_in": "Ning Yue's flashlight is on and held low; her shoulders are still and the reflected figure's hand is down.",
+          "continuity_out": "the beam remains on the floor after the breath stops",
+          "exclusions": [
+            "added dialogue",
+            "new injuries",
+            "a prop changing hands",
+            "unwritten extra characters"
+          ]
+        },
+        "strategy": "selective"
+      },
+      "state_description": "Ning Yue's flashlight is on and held low; her shoulders are still and the reflected figure's hand is down."
+    },
+    {
+      "id": "FILM-S01-SH002",
+      "scene_id": "S01",
+      "start_frame": 120,
+      "end_frame": 240,
+      "visual": "The camera cuts to a closer angle on the glass. Ning Yue stops breathing and slowly turns her eyes without turning her head; the reflected figure raises one hand a beat later.",
+      "camera": {
+        "previs_id": "106",
+        "lens_mm": 85,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary on the established side of the action axis",
+        "target": "Ning Yue, the glass reflection and the low flashlight pool",
+        "adaptation": "project-specific amplitude and speed; source ID is a motion-family reference",
+        "description": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand."
+      },
+      "characters": [
+        {
+          "id": "CHAR_NING",
+          "position": [
+            0.35,
+            0.55
+          ],
+          "facing": "toward screen right",
+          "gaze": "toward the glass reflection",
+          "weapon_hand": "right hand holds the flashlight low",
+          "weapon_direction": "no weapon present in this scene"
+        },
+        {
+          "id": "CHAR_ECHO",
+          "position": [
+            0.7,
+            0.55
+          ],
+          "facing": "toward screen left",
+          "gaze": "a delayed reflection of Ning Yue; no independent physical presence",
+          "weapon_hand": "a reflected hand visible behind glass; no physical prop contact",
+          "weapon_direction": "no weapon present in this scene"
+        }
+      ],
+      "features": {
+        "core_emotion": true,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [],
+      "audio": {
+        "foley": [
+          "cloth tension settles into near-silence"
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "The scene is driven by near-silent room tone, breath and a delayed glass movement rather than bass."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_NING": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_ECHO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "FLASHLIGHT": "CHAR_NING"
+        }
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_NING": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_ECHO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "FLASHLIGHT": "CHAR_NING"
+        }
+      },
+      "performance": {
+        "beat_id": "EX-S01-B02",
+        "dominant_track": "gaze",
+        "tracks": {
+          "gaze": {
+            "start": 0,
+            "end": 119,
+            "cue": "Ning Yue turns only her eyes toward the rising reflected hand; her head and flashlight hand stay fixed",
+            "visibility": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand."
+          }
+        },
+        "acting_design": {
+          "version": "1.0",
+          "mode": "observational",
+          "character_id": "CHAR_NING",
+          "objective": "confirm whether the reflection is following her or acting independently",
+          "tactic": "reduce movement until the mismatch becomes measurable",
+          "subtext": "she refuses to give the reflected figure a visible reaction to copy",
+          "trigger": "the reflected hand rises after Ning Yue has stopped moving",
+          "personality_signature": "fear is externalized as held breath, fixed shoulders and a tiny eye movement",
+          "action_units": [
+            {
+              "start": 0,
+              "end": 60,
+              "cause": "the reflected hand rises after Ning Yue has stopped moving",
+              "action": "Ning Yue turns only her eyes toward the rising reflected hand; her head and flashlight hand stay fixed",
+              "gaze": "from the reflected shoulders to the raised hand",
+              "face": "a small tightening under the eyes; no spoken reaction",
+              "follow_through": "the reflection holds its raised hand while Ning Yue remains still",
+              "speech_anchor": "silent",
+              "delivery": "no speech; lips remain closed",
+              "prop": "the flashlight floor pool remains unchanged",
+              "camera": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand.",
+              "sound": "cloth tension settles into near-silence"
+            },
+            {
+              "start": 60,
+              "end": 119,
+              "cause": "the preceding visible action has reached its accent",
+              "action": "the reflection holds its raised hand while Ning Yue remains still",
+              "gaze": "from the reflected shoulders to the raised hand",
+              "face": "a small tightening under the eyes; no spoken reaction",
+              "follow_through": "the flashlight floor pool remains unchanged",
+              "speech_anchor": "silent",
+              "delivery": "no speech; lips remain closed",
+              "prop": "the flashlight floor pool remains unchanged",
+              "camera": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand.",
+              "sound": "cloth tension settles into near-silence"
+            }
+          ],
+          "motion_arc": {
+            "anticipation": "the reflected hand rises after Ning Yue has stopped moving",
+            "accent": "Ning Yue turns only her eyes toward the rising reflected hand; her head and flashlight hand stay fixed",
+            "follow_through": "the reflection holds its raised hand while Ning Yue remains still",
+            "settle": "the flashlight floor pool remains unchanged"
+          },
+          "speech_delivery": {
+            "voice_timbre": "nearly inaudible adult whisper",
+            "pace": "no speech; breath controls the timing",
+            "pitch": "flat",
+            "volume": "silent",
+            "pauses": [],
+            "emphasis": []
+          },
+          "cut_behavior": [],
+          "continuity_in": "Ning Yue remains frozen beside the glass; the delayed reflection has begun to raise one hand while the flashlight beam stays on the floor.",
+          "continuity_out": "the reflection holds its raised hand while Ning Yue remains still",
+          "exclusions": [
+            "added dialogue",
+            "new injuries",
+            "a prop changing hands",
+            "unwritten extra characters"
+          ]
+        },
+        "strategy": "selective"
+      },
+      "state_description": "Ning Yue remains frozen beside the glass; the delayed reflection has begun to raise one hand while the flashlight beam stays on the floor."
+    }
+  ],
+  "segments": [
+    {
+      "id": "SUSPENSE_SEG01",
+      "start_frame": 0,
+      "end_frame": 240,
+      "shot_ids": [
+        "FILM-S01-SH001",
+        "FILM-S01-SH002"
+      ],
+      "generation_clip_duration": 10,
+      "mode": "I2VA",
+      "style": "Low-key live-action suspense with restrained handheld drift, practical flashlight illumination and shallow depth of field.",
+      "overall_soundscape": "Sparse archive room tone, irregular ventilation ticks, cloth tension and a breath that stops before the delayed glass movement.",
+      "non_diegetic_music": "N/A",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "file": "media/PENDING-suspense-archive-approved.png",
+          "role": "opening composition anchor",
+          "asset_version": "planned-v1",
+          "entity_id": "S01",
+          "shot_ids": [
+            "FILM-S01-SH001"
+          ],
+          "preserve": "approved opening stance, archive geometry and low flashlight placement",
+          "exclude": "later reflected-hand motion and any unrelated figure or environment",
+          "definition": "<Picture 1> is the opening still for Ning Yue beside the glass records room with the flashlight held low.",
+          "retention": "<Picture 1> (appears at the 0.00-second mark): fully_preserved - preserve the opening stance and flashlight placement while extending the delayed reflection action."
+        }
+      ],
+      "motion_profile": {
+        "version": "1.0",
+        "medium": "live_action",
+        "fps": 24,
+        "exposure": "ones",
+        "timing_principle": "let the breath stop before the reflection begins its delayed movement",
+        "camera_principle": "drift closer only after the mismatch is visible, keeping the glass plane square to frame",
+        "staging_principle": "preserve the flashlight floor pool and the reflection's depth behind the glass",
+        "sound_principle": "make silence, breath and one delayed glass movement carry the beat",
+        "cut_style": "hard_cut"
+      }
+    }
+  ],
+  "unresolved_threads": [],
+  "dispatch_log": [
+    {
+      "contract": "B",
+      "target": "h3-prompt-writing",
+      "implementation": "bundled-guideline compiler"
+    },
+    {
+      "contract": "C",
+      "target": "im2-clean-image",
+      "source_repository": "im2-image-skills",
+      "status": "prompt-planned; no paid image generation"
+    }
+  ],
+  "ledger": {
+    "initial": {
+      "characters": {
+        "CHAR_NING": {
+          "ammo": 0,
+          "trauma_phase": null
+        },
+        "CHAR_ECHO": {
+          "ammo": 0,
+          "trauma_phase": null
+        }
+      },
+      "scenes": {
+        "S01": 0
+      },
+      "props": {
+        "FLASHLIGHT": "CHAR_NING"
+      }
+    },
+    "events": [],
+    "final": {
+      "characters": {
+        "CHAR_NING": {
+          "ammo": 0,
+          "trauma_phase": null
+        },
+        "CHAR_ECHO": {
+          "ammo": 0,
+          "trauma_phase": null
+        }
+      },
+      "scenes": {
+        "S01": 0
+      },
+      "props": {
+        "FLASHLIGHT": "CHAR_NING"
+      }
+    }
+  },
+  "asset_prompt": "Create a low-key live-action suspense keyframe in an abandoned archive. Ning Yue, an adult archivist in a dark raincoat with tied black hair, stands beside a glass records room holding a small flashlight low in her right hand. Tall metal shelves, dusty tile, a dead emergency light and a narrow doorway beam create clear depth. Her shoulders are held still while the glass reflection is subtly delayed and its hand remains down. Use one practical flashlight beam with readable falloff and quiet shadow planes. Keep the reflection behind the glass, never as a second physical person in the room. Avoid captions, horror typography, duplicate bodies and a bright fantasy glow.",
+  "story": {
+    "synopsis": "宁月停止呼吸和转头，只用眼睛核对玻璃倒影；倒影延迟抬手，手电光始终留在地面。"
+  },
+  "prompt_bindings": {
+    "S01": "the glass corridor",
+    "FLASHLIGHT": "the flashlight"
+  },
+  "asset_cards": [
+    {
+      "id": "ASSET_SUSPENSE_ARCHIVE",
+      "name": "废档案室·延迟倒影",
+      "target_skill": "im2-clean-image",
+      "source_repository": "im2-image-skills",
+      "recipe": "portrait",
+      "mode": "GENERATE",
+      "reference_policy": "none",
+      "references": [],
+      "heavy_scene": false,
+      "structure_lock": {
+        "camera": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand.",
+        "landmarks_topology": "The abandoned archive has tall metal shelves, a glass records room, a dusty tile floor, a dead emergency light and one narrow flashlight beam cutting from the doorway.",
+        "depth_occlusion": "Keep the stated foreground, subject and background planes separate.",
+        "mass_support": "Feet and load-bearing structures remain in physical contact with the stated ground plane."
+      },
+      "transaction": {
+        "change": "Create one opening keyframe before the exchange.",
+        "preserve": "The written identities, left-right placement, costume, material and opening prop ownership.",
+        "rebuild": "Render coherent anatomy, surfaces and shared world lighting from the written design."
+      },
+      "seven_steps": [
+        {
+          "step": 1,
+          "content": "Ning Yue is an adult archivist with a narrow face, tied black hair, a dark raincoat and a small flashlight held low in her right hand. The reflected figure is a pale human silhouette visible only as a delayed reflection in the archive glass; it never speaks or touches Ning Yue. Ning Yue's flashlight is on and held low; her shoulders are still and the reflected figure's hand is down."
+        },
+        {
+          "step": 2,
+          "content": "Low-key live-action suspense with restrained handheld drift, practical flashlight illumination and shallow depth of field."
+        },
+        {
+          "step": 3,
+          "content": "The camera holds the glass plane and flashlight pool; the second shot is closer to reveal the eye movement and delayed reflected hand."
+        },
+        {
+          "step": 4,
+          "content": "the low flashlight beam and its reflected spill; separate the described materials by their visible response."
+        },
+        {
+          "step": 5,
+          "content": "Concentrate visible detail on the subjects and current narrative object; keep the distant background quiet."
+        },
+        {
+          "step": 6,
+          "content": "Restrict wear, texture and small surface marks to the explicitly described near surfaces."
+        },
+        {
+          "step": 7,
+          "content": "Avoid extra limbs, disconnected supports, ghost texture and unrequested text."
+        }
+      ],
+      "prompt": "Create a low-key live-action suspense keyframe in an abandoned archive. Ning Yue, an adult archivist in a dark raincoat with tied black hair, stands beside a glass records room holding a small flashlight low in her right hand. Tall metal shelves, dusty tile, a dead emergency light and a narrow doorway beam create clear depth. Her shoulders are held still while the glass reflection is subtly delayed and its hand remains down. Use one practical flashlight beam with readable falloff and quiet shadow planes. Keep the reflection behind the glass, never as a second physical person in the room. Avoid captions, horror typography, duplicate bodies and a bright fantasy glow.",
+      "generation_status": "planned",
+      "actual_settings": null,
+      "asset_version": "v1.0",
+      "state_version": "listening-still"
+    }
+  ],
+  "example_delivery_expectation": "DRAFT_MISSING_REFERENCES",
+  "reference_review": "Correct archive opening frame pending. The unrelated ink bridge diagram is not a valid source."
+}

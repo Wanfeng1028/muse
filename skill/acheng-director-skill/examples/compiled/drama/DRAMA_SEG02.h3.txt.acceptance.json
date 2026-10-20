@@ -1,0 +1,17 @@
+{
+  "format_pass": "PASSED",
+  "validator": "h3_final_format/4.3.6",
+  "file": "DRAMA_SEG02.h3.txt",
+  "sha256": "153fb4ca8aedad373a4349c5083e2aa19fda50011eb54484a7836d964b4d7b04",
+  "contract_sha256": "bec4caabaa491ac87745cfb16d7d3360a6db631ab09cc0b7900ce48f591a0a07",
+  "mode": "T2VA",
+  "duration_seconds": 10.0,
+  "shot_count": 1,
+  "english_words": 1371,
+  "minimum_words": 0,
+  "dialogue_count": 1,
+  "references": [],
+  "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+  "visual_status": "UNVERIFIED",
+  "scope": "final-file structural validation; not creative, visual or audio acceptance"
+}

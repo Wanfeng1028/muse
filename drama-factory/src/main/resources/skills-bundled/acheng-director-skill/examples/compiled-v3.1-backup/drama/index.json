@@ -1,0 +1,28 @@
+{
+  "status": "compiled-not-generated",
+  "production_sha256": "ec69cbbc2b212f60968422c2b535f232595c2eb1c73b7c19deb5ebeca20a516a",
+  "segments": [
+    {
+      "segment_id": "DRAMA_SEG01",
+      "mode": "T2VA",
+      "file": "DRAMA_SEG01.h3.txt",
+      "generation_clip_duration": 10,
+      "speaker_map": {
+        "Lu Chuan": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "DRAMA_SEG02",
+      "mode": "T2VA",
+      "file": "DRAMA_SEG02.h3.txt",
+      "generation_clip_duration": 10,
+      "speaker_map": {
+        "Cen He": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    }
+  ]
+}

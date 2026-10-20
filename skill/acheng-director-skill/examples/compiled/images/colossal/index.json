@@ -1,0 +1,53 @@
+{
+  "asset_reference_contract": "1.0",
+  "status": "ready-to-submit-not-generated",
+  "input_sha256": "287615f19d89194ad514c2b9bc81aa70cba15400f03070489807e911bc124eaa",
+  "assets": [
+    {
+      "asset_id": "ASSET_03_COLOSSAL",
+      "display_name": "港湾中的两座巨体以列车和云带确立尺度",
+      "prompt_file": "ASSET_03_COLOSSAL.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "required",
+      "references": [
+        {
+          "image": 1,
+          "file": "references/028eee66c71c1f4148764ce5ed3c3d9d6d48570af091ff710b53346509c68826.png",
+          "role": "composition",
+          "subject": "the confrontation between Aer and Stone Sentinel",
+          "preserve": "only Panel 01's left-right placement and ground line; the left block marked A denotes Aer, and the right block marked B denotes Stone Sentinel",
+          "exclude": "the grid, letters, panel numbers, gray block anatomy and flat diagram shading; produce one full-frame image",
+          "sha256": "028eee66c71c1f4148764ce5ed3c3d9d6d48570af091ff710b53346509c68826",
+          "source_file": "media/colossal-contact.png",
+          "binding_status": "BOUND_LOCAL",
+          "platform_status": "NOT_UPLOADED"
+        }
+      ],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "287615f19d89194ad514c2b9bc81aa70cba15400f03070489807e911bc124eaa",
+      "resolved_card_sha256": "d5005f895543716bc333bc0cc4c245471c32e8e35486d116e50325b5031c4924",
+      "reference_count": 1,
+      "state_version": null,
+      "asset_version": null,
+      "prompt_sha256": "e11f206295ab426a4650cc0bb38ab028211cb3d280197f2a6df42b4afccf1453",
+      "upload_card": "ASSET_03_COLOSSAL.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "d9ff9a704af4a2df4a0ec85aad07daa4a77957fc1c68fe434b2642b63ee97d96"
+    }
+  ],
+  "asset_plan": null,
+  "style_policy": {
+    "status": "NOT_APPLICABLE",
+    "policy": null,
+    "reason": "single isolated asset; no cross-asset style lock required"
+  },
+  "style_lock": null
+}

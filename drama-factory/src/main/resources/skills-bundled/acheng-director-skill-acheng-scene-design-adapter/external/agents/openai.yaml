@@ -1,0 +1,4 @@
+interface:
+  display_name: "场景美术导演"
+  short_description: "结构化场景设计合同、独立提示词与视觉 QA"
+  default_prompt: "使用 $scene-concept-art-director 先判断模式，再生成可交接的场景设计合同、独立图像提示词和视觉 QA；如有 moodboard，先读取其已确认方向。"

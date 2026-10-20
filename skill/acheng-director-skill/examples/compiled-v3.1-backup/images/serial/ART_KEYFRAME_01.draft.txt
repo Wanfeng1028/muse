@@ -1,0 +1,11 @@
+DRAFT — required reference images are not yet supplied. Do not submit until the upload manifest is resolved.
+
+Reference image 1 supplies identity guidance for Meilin the adult archive clerk. Preserve her face, hair, adult proportions and blue cotton jacket. Do not inherit unrelated pose, crop and lighting; use the target composition described below.
+
+Reference image 2 supplies identity guidance for Bo the adult dock mechanic. Preserve his face, cheek scar and brown canvas vest. Do not inherit unrelated pose, crop and lighting; use the target composition described below.
+
+Reference image 3 supplies scene guidance for the archive room. Preserve the oak table, east window, north shelf and west door. Do not inherit unrelated pose, crop and lighting; use the target composition described below.
+
+Reference image 4 supplies composition guidance for the two original ledgers. Preserve the two cloth bindings and matching ink notches. Do not inherit unrelated pose, crop and lighting; use the target composition described below.
+
+Create one live-action medium two-shot before any gesture begins. Meilin is a 32-year-old woman with a narrow oval face, straight black eyebrows and chin-length dark hair tucked behind her left ear. She wears a faded blue cotton jacket, cream shirt and dark straight trousers; her hands are uninjured. Bo is a 40-year-old man with a broad face, short salt-and-pepper hair and a small pale scar on his left cheek. He wears a brown canvas vest over a rolled-sleeve gray shirt and dark work trousers; his hands are uninjured. The harbor archive has a waist-high oak reading table, one frosted east window, a north shelf of cloth-bound ledgers and a west door. Soft window light falls across the table; the shelf remains in broad shadow. Meilin stands left and Bo right, both looking down at two open ledgers lying flat between them. Their hands rest separately on the table edge. Use the stated world-space light source, keeping its direction consistent across the scene, with readable shadow planes and localized contact shadows. Keep the principal silhouette and functional details clear, with broad quiet background shapes. Separate the stated materials through their surface response. Avoid ghost texture, duplicated anatomy and unintended text.

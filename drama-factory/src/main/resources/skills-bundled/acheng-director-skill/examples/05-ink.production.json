@@ -1,0 +1,393 @@
+{
+  "version": "2.0",
+  "delivery_scope": "prompt_only",
+  "project_id": "INK_PAPER_CROSSING",
+  "fps_num": 24,
+  "fps_den": 1,
+  "production_total_duration": 36,
+  "generation_clip_min": 4,
+  "generation_clip_limit": 15,
+  "character_registry": [
+    {
+      "id": "CHAR_CRANE",
+      "name": "Paper crane",
+      "height_m": 0.12,
+      "identity": "Original folded-paper bird design",
+      "prompt_description": "A small cream folded-paper crane has a triangular body, a long folded neck, a pointed beak, one black ink eye and two thin black folded legs. Its broad paper surfaces stay quiet, with a few dark fold lines."
+    }
+  ],
+  "scene_registry": [
+    {
+      "id": "SC_BRIDGE",
+      "name": "墨桥",
+      "version": "v1.0",
+      "prompt_description": "A narrow dark wooden footbridge crosses pale green-gray water. Two supports descend below it, a thin rear rail slopes toward the right, and the warm paper background remains empty."
+    }
+  ],
+  "shots": [
+    {
+      "id": "INK_SHOT_1",
+      "scene_id": "SC_BRIDGE",
+      "start_frame": 0,
+      "end_frame": 288,
+      "visual": "The shot begins exactly from <Picture 1>, with the crane standing on the left part of the bridge and facing right. The crane makes three measured forward steps, lifting one folded foot at a time, then settles near the middle. Its body rocks lightly while the bridge and viewpoint stay fixed.",
+      "camera": {
+        "previs_id": "102",
+        "lens_mm": 50,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary side view",
+        "target": "the visible action and contact plane",
+        "adaptation": "composition-only",
+        "description": "The camera stays completely still in a wide side view; the whole crane and both bridge supports remain visible."
+      },
+      "characters": [
+        {
+          "id": "CHAR_CRANE",
+          "position": [
+            0.21875,
+            0.58
+          ],
+          "facing": "screen right",
+          "gaze": "toward the bridge ahead",
+          "weapon_hand": "no held object",
+          "weapon_direction": "no weapon present"
+        }
+      ],
+      "features": {
+        "core_emotion": false,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [],
+      "audio": {
+        "foley": [
+          "Dry paper makes a quiet crease sound as each folded limb moves; the footfalls touch wood lightly."
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "Small paper movement needs no bass accent."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_CRANE": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "SC_BRIDGE": 0
+        },
+        "props": {}
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_CRANE": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "SC_BRIDGE": 0
+        },
+        "props": {}
+      },
+      "state_description": "The bridge is intact, the water is calm and the folded-paper crane is dry; no damage or carried object is present."
+    },
+    {
+      "id": "INK_SHOT_2",
+      "scene_id": "SC_BRIDGE",
+      "start_frame": 288,
+      "end_frame": 576,
+      "visual": "The shot begins from Picture 1 with the crane standing near the middle of the bridge, facing right. It lowers its triangular body, takes two short steps and one small hop toward the right support, landing with both feet on the deck. It gradually settles into the exact pose and location of Picture 2 at the final moment.",
+      "camera": {
+        "previs_id": "102",
+        "lens_mm": 50,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary side view",
+        "target": "the visible action and contact plane",
+        "adaptation": "composition-only",
+        "description": "The camera stays completely still in a wide side view; the whole crane and both bridge supports remain visible."
+      },
+      "characters": [
+        {
+          "id": "CHAR_CRANE",
+          "position": [
+            0.4895833333333333,
+            0.58
+          ],
+          "facing": "screen right",
+          "gaze": "toward the bridge ahead",
+          "weapon_hand": "no held object",
+          "weapon_direction": "no weapon present"
+        }
+      ],
+      "features": {
+        "core_emotion": false,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [],
+      "audio": {
+        "foley": [
+          "Dry paper makes a quiet crease sound as each folded limb moves; the footfalls touch wood lightly."
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "Small paper movement needs no bass accent."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_CRANE": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "SC_BRIDGE": 0
+        },
+        "props": {}
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_CRANE": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "SC_BRIDGE": 0
+        },
+        "props": {}
+      },
+      "state_description": "The bridge is intact, the water is calm and the folded-paper crane is dry; no damage or carried object is present."
+    },
+    {
+      "id": "INK_SHOT_3",
+      "scene_id": "SC_BRIDGE",
+      "start_frame": 576,
+      "end_frame": 864,
+      "visual": "The crane begins on the right side of the bridge, its wings folded and feet planted. It takes one short step farther right, stops, and slowly unfolds its near paper wing while keeping its feet on the wood. The last moment converges to the exact crane pose, open wing, bridge framing and quiet background in <Picture 1>.",
+      "camera": {
+        "previs_id": "102",
+        "lens_mm": 50,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary side view",
+        "target": "the visible action and contact plane",
+        "adaptation": "composition-only",
+        "description": "The camera stays completely still in a wide side view; the whole crane and both bridge supports remain visible."
+      },
+      "characters": [
+        {
+          "id": "CHAR_CRANE",
+          "position": [
+            0.75,
+            0.58
+          ],
+          "facing": "screen right",
+          "gaze": "toward the bridge ahead",
+          "weapon_hand": "no held object",
+          "weapon_direction": "no weapon present"
+        }
+      ],
+      "features": {
+        "core_emotion": false,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [],
+      "audio": {
+        "foley": [
+          "Dry paper makes a quiet crease sound as each folded limb moves; the footfalls touch wood lightly."
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "Small paper movement needs no bass accent."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_CRANE": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "SC_BRIDGE": 0
+        },
+        "props": {}
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_CRANE": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "SC_BRIDGE": 0
+        },
+        "props": {}
+      },
+      "state_description": "The bridge is intact, the water is calm and the folded-paper crane is dry; no damage or carried object is present."
+    }
+  ],
+  "segments": [
+    {
+      "id": "INK_SEG_1",
+      "start_frame": 0,
+      "end_frame": 288,
+      "shot_ids": [
+        "INK_SHOT_1"
+      ],
+      "generation_clip_duration": 12,
+      "mode": "I2VA",
+      "style": "Two-dimensional ink-and-paper animation matches the supplied cream paper, dark folded contours, quiet background and muted water.",
+      "overall_soundscape": "Soft paper creaks and light wooden taps accompany the visible movement, with faint water below the bridge.",
+      "non_diegetic_music": "N/A",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "file": "media/ink-opening.png",
+          "role": "actual opening target frame"
+        }
+      ]
+    },
+    {
+      "id": "INK_SEG_2",
+      "start_frame": 288,
+      "end_frame": 576,
+      "shot_ids": [
+        "INK_SHOT_2"
+      ],
+      "generation_clip_duration": 12,
+      "mode": "FL2VA",
+      "style": "Two-dimensional ink-and-paper animation matches the supplied cream paper, dark folded contours, quiet background and muted water.",
+      "overall_soundscape": "Soft paper creaks and light wooden taps accompany the visible movement, with faint water below the bridge.",
+      "non_diegetic_music": "N/A",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "file": "media/ink-middle.png",
+          "role": "actual opening target frame"
+        },
+        {
+          "label": "<Picture 2>",
+          "file": "media/ink-right.png",
+          "role": "actual final target frame"
+        }
+      ]
+    },
+    {
+      "id": "INK_SEG_3",
+      "start_frame": 576,
+      "end_frame": 864,
+      "shot_ids": [
+        "INK_SHOT_3"
+      ],
+      "generation_clip_duration": 12,
+      "mode": "L2VA",
+      "style": "Two-dimensional ink-and-paper animation matches the supplied cream paper, dark folded contours, quiet background and muted water.",
+      "overall_soundscape": "Soft paper creaks and light wooden taps accompany the visible movement, with faint water below the bridge.",
+      "non_diegetic_music": "N/A",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "file": "media/ink-end.png",
+          "role": "actual final target frame"
+        }
+      ]
+    }
+  ],
+  "ledger": {
+    "initial": {
+      "characters": {
+        "CHAR_CRANE": {
+          "ammo": 0,
+          "trauma_phase": null
+        }
+      },
+      "scenes": {
+        "SC_BRIDGE": 0
+      },
+      "props": {}
+    },
+    "events": [],
+    "final": {
+      "characters": {
+        "CHAR_CRANE": {
+          "ammo": 0,
+          "trauma_phase": null
+        }
+      },
+      "scenes": {
+        "SC_BRIDGE": 0
+      },
+      "props": {}
+    }
+  },
+  "prompt_detail_policy": {
+    "profile": "legacy_fixture"
+  },
+  "asset_cards": [
+    {
+      "id": "INK_CHARACTER",
+      "name": "Create a neutral side-view asset in two-dimensional ink-and-paper animation",
+      "asset_version": "v1.0",
+      "target_skill": "im2-clean-image",
+      "source_repository": "im2-image-skills",
+      "recipe": "ink",
+      "mode": "GENERATE",
+      "reference_policy": "none",
+      "references": [],
+      "transaction": {
+        "change": "Create the single still specified in the complete prompt.",
+        "preserve": "The stated identity, object count, geometry and material distinctions.",
+        "rebuild": "Render the requested framing with coherent contact, shadows and visible surfaces."
+      },
+      "seven_steps": [
+        {
+          "step": 1,
+          "content": "Create a neutral side-view asset in two-dimensional ink-and-paper animation. A small cream folded-paper crane has a triangular body, a long folded neck, a pointed beak, one black ink eye and two thin black folded legs. Its broad paper surfaces stay quiet, with a few dark fold lines. The crane stands with both feet visible against warm empty paper; its wings remain folded."
+        },
+        {
+          "step": 2,
+          "content": "Use the explicitly stated visual medium."
+        },
+        {
+          "step": 3,
+          "content": "Keep the subject fully readable with quiet surrounding space."
+        },
+        {
+          "step": 4,
+          "content": "Use one broad upper-left light with readable shadow planes and localized contact shadows. Separate matte paper, cloth, wood and metal only where each is present."
+        },
+        {
+          "step": 5,
+          "content": "Keep detail at the identity features and functional contact points; simplify distant masses."
+        },
+        {
+          "step": 6,
+          "content": "Restrict fine texture to the visible scale and keep broad surfaces calm."
+        },
+        {
+          "step": 7,
+          "content": "Avoid ghost texture, duplicated objects and unintended text."
+        }
+      ],
+      "prompt": "Create a neutral side-view asset in two-dimensional ink-and-paper animation. A small cream folded-paper crane has a triangular body, a long folded neck, a pointed beak, one black ink eye and two thin black folded legs. Its broad paper surfaces stay quiet, with a few dark fold lines. The crane stands with both feet visible against warm empty paper; its wings remain folded. Use one broad upper-left light with readable shadow planes and localized contact shadows. Keep the principal silhouette and functional details clear, with broad quiet background shapes. Separate the stated materials through their surface response. Avoid ghost texture, duplicated anatomy and unintended text.",
+      "generation_status": "planned",
+      "actual_settings": null
+    }
+  ],
+  "prompt_bindings": {
+    "SC_BRIDGE": "the wooden bridge"
+  }
+}

@@ -1,0 +1,926 @@
+{
+  "asset_reference_contract": "1.0",
+  "status": "draft-dependencies-pending",
+  "input_sha256": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "assets": [
+    {
+      "asset_id": "ART_MEI",
+      "display_name": "Meilin · neutral_identity · 四视图角色身份基准 · v1.0",
+      "prompt_file": "ART_MEI.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": "character",
+      "character_name": "Meilin",
+      "state_label": "neutral_identity",
+      "view_layout": {
+        "type": "four_view_character_turnaround",
+        "views": [
+          "front_full_body",
+          "back_full_body",
+          "side_profile_full_body",
+          "front_face_close_up"
+        ],
+        "order": "left_to_right",
+        "same_subject": true,
+        "purpose": "identity, proportions, costume, hairstyle and face reference"
+      },
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "ef931051e280394839375b2e753a8c131e3608a711e53ac89ad1ed721835edde",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "7f57dec6a5e408d915b75169571a82c57c496491108ba61e0562feb88ba25b3d",
+      "upload_card": "ART_MEI.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "69c930fc449a33fce2dd596e1cea69709ffa7c2489f99a96d9b39db1559fce39"
+    },
+    {
+      "asset_id": "ART_BO",
+      "display_name": "Bo · neutral_identity · 四视图角色身份基准 · v1.0",
+      "prompt_file": "ART_BO.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": "character",
+      "character_name": "Bo",
+      "state_label": "neutral_identity",
+      "view_layout": {
+        "type": "four_view_character_turnaround",
+        "views": [
+          "front_full_body",
+          "back_full_body",
+          "side_profile_full_body",
+          "front_face_close_up"
+        ],
+        "order": "left_to_right",
+        "same_subject": true,
+        "purpose": "identity, proportions, costume, hairstyle and face reference"
+      },
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "dee64adfc4c0595fd24b870883cbf116b943a6e9ce1cec07a7f206c6c426b860",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "1a6a86e6cae6a8a9855379177725836eaf509eada63782fb632a9234a7c2d4aa",
+      "upload_card": "ART_BO.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "3d9d6ea35b468d22053595b634a70af937c1ee0c86eb8cee425c2e37ab22b950"
+    },
+    {
+      "asset_id": "ART_ARCHIVE",
+      "display_name": "潮汐档案室·空间母图 · v1.0",
+      "prompt_file": "ART_ARCHIVE.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "808dbbed927332ce84e7132aa271e8a92a2a4352b722661efab53eb74b5c5095",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "76535a520447b0a9c378b9da7e1a148045e4343bc4979382135adbed82a44824",
+      "upload_card": "ART_ARCHIVE.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "e6ffdef1ed4741d93f547eb7a3ab3f16d646b0f146d2569964fa610c051a4794"
+    },
+    {
+      "asset_id": "ART_DOCK",
+      "display_name": "码头值班亭·空间母图 · v1.0",
+      "prompt_file": "ART_DOCK.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "e9b31ba7e0af755ab1f56fb9ec4a971821dfbc0c0464e48c36f033c0f9a83e58",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "701a7c87a54727aa5230065279ac25b35d489656f6d283fe92b863fc8a278406",
+      "upload_card": "ART_DOCK.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "c10186d4a079e0ba2fadeb05e5491ab27593923d11f9a25cca152b64af37224b"
+    },
+    {
+      "asset_id": "ART_LEDGER",
+      "display_name": "两份潮汐原件·道具基准 · v1.0",
+      "prompt_file": "ART_LEDGER.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "c582c3abb913735f672a0d21f376c93060e82564096277dcfaa2f576733ea7ce",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "d91a979b14a79c122c7218936ea646397d7e9075cd872e500329d2e097c32290",
+      "upload_card": "ART_LEDGER.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "1f3bcc2ed36d438a5c334b3bfb4f5457ab2aa39a7e062f3fb69e524cf0601167"
+    },
+    {
+      "asset_id": "ART_TIDE",
+      "display_name": "潮汐表与航运单·道具基准 · v1.0",
+      "prompt_file": "ART_TIDE.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "54ded0ae390a5a8e752e8b0f645a696586d26a93b20fd905883ad724038ded51",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "e59a1ea965eb0d415bdf2b93acb4f6c13f257791a7558403a3a14082225a7791",
+      "upload_card": "ART_TIDE.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "d9ea6a906474d9b08672f0e20c2fd6c2222c397b6d4095164b8d65a36b0163a2"
+    },
+    {
+      "asset_id": "ART_NOTICE",
+      "display_name": "封存通知与异议·道具基准 · v1.0",
+      "prompt_file": "ART_NOTICE.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "588cf5106f0080282cad2f746b605250727603dca60b4367d08e09ce4d7e53bc",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "4a60bb88b4b6fe5392f9622a37f3edcd34303eb587deab93e4392a044f005d8b",
+      "upload_card": "ART_NOTICE.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "e114b8f5d982c3486d45bf8b9678e54781bfe34cf987e32febcbfb9a1ffb9f53"
+    },
+    {
+      "asset_id": "ART_SANDBAG",
+      "display_name": "门槛沙袋·道具基准 · v1.0",
+      "prompt_file": "ART_SANDBAG.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "49a3fac18d66a9fa9429a617f4737fb4bff64192422908e28ca5c412ba0fc7dc",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "e6929264dda171406f1503f72ed70504b4ed330474683f46ab7f9beb0f86151d",
+      "upload_card": "ART_SANDBAG.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "69dfde8d27662e1f2e7e135b071bf1fd86af1982d2ae8d2fe7ad9f0327460721"
+    },
+    {
+      "asset_id": "ART_STATIONERY",
+      "display_name": "铅笔纸签与独立比对页 · v1.0",
+      "prompt_file": "ART_STATIONERY.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "1b78a7ed3dda2c6661e8586bdfc824cd569ed8926b2d1d33e8d8d7be0fa4cf23",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "14648ad4b5911772c5edecb47962a43934f05047c44ad888c76c07156b63b8f2",
+      "upload_card": "ART_STATIONERY.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "34b61df5fea979298385c671bd1573ce07e000720e51f07d7dc9c6cdd41ad081"
+    },
+    {
+      "asset_id": "ART_KEYFRAME_01",
+      "display_name": "第一集开场·原件对照 · v1.0",
+      "prompt_file": "ART_KEYFRAME_01.draft.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "draft-missing-references",
+      "missing_references": [
+        {
+          "image": 1,
+          "asset_id": "ART_MEI",
+          "version": "v1.0",
+          "role": "identity"
+        },
+        {
+          "image": 2,
+          "asset_id": "ART_BO",
+          "version": "v1.0",
+          "role": "identity"
+        },
+        {
+          "image": 3,
+          "asset_id": "ART_ARCHIVE",
+          "version": "v1.0",
+          "role": "scene"
+        },
+        {
+          "image": 4,
+          "asset_id": "ART_LEDGER",
+          "version": "v1.0",
+          "role": "composition"
+        },
+        {
+          "image": 5,
+          "asset_id": "ART_STATIONERY",
+          "version": "v1.0",
+          "role": "composition"
+        }
+      ],
+      "reference_policy": "required",
+      "references": [],
+      "missing_reference_details": [
+        {
+          "image": 1,
+          "asset_id": "ART_MEI",
+          "asset_version": "v1.0",
+          "role": "identity",
+          "subject": "Meilin the adult archive clerk",
+          "preserve": "her face, hair, adult proportions and blue cotton jacket",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 2,
+          "asset_id": "ART_BO",
+          "asset_version": "v1.0",
+          "role": "identity",
+          "subject": "Bo the adult dock mechanic",
+          "preserve": "his face, cheek scar and brown canvas vest",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 3,
+          "asset_id": "ART_ARCHIVE",
+          "asset_version": "v1.0",
+          "role": "scene",
+          "subject": "the archive room",
+          "preserve": "the oak table, east window, north shelf and west door",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 4,
+          "asset_id": "ART_LEDGER",
+          "asset_version": "v1.0",
+          "role": "composition",
+          "subject": "the two original ledgers",
+          "preserve": "the two cloth bindings and matching ink notches",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 5,
+          "asset_id": "ART_STATIONERY",
+          "asset_version": "v1.0",
+          "role": "composition",
+          "subject": "the pencil and paper markers",
+          "preserve": "the short wooden pencil and narrow cream paper markers",
+          "exclude": "source background and camera position",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        }
+      ],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "bb75c1840981d9d278ddbb434b1938f9bca7f61243cceb6690807d1ac174f192",
+      "reference_count": 5,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "13e732cadaf6fc574ff23fbbe28515cf8265903a61e07debf5fa9e703e5ced5d",
+      "upload_card": "ART_KEYFRAME_01.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "a075f521e658f38eaef93f307d0dad975c14601c9b750b4bbdf123e53a9c50d9"
+    },
+    {
+      "asset_id": "ART_KEYFRAME_05",
+      "display_name": "第二集开场·保留异议 · v1.0",
+      "prompt_file": "ART_KEYFRAME_05.draft.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "draft-missing-references",
+      "missing_references": [
+        {
+          "image": 1,
+          "asset_id": "ART_MEI",
+          "version": "v1.0",
+          "role": "identity"
+        },
+        {
+          "image": 2,
+          "asset_id": "ART_BO",
+          "version": "v1.0",
+          "role": "identity"
+        },
+        {
+          "image": 3,
+          "asset_id": "ART_ARCHIVE",
+          "version": "v1.0",
+          "role": "scene"
+        },
+        {
+          "image": 4,
+          "asset_id": "ART_LEDGER",
+          "version": "v1.0",
+          "role": "composition"
+        },
+        {
+          "image": 5,
+          "asset_id": "ART_NOTICE",
+          "version": "v1.0",
+          "role": "composition"
+        }
+      ],
+      "reference_policy": "required",
+      "references": [],
+      "missing_reference_details": [
+        {
+          "image": 1,
+          "asset_id": "ART_MEI",
+          "asset_version": "v1.0",
+          "role": "identity",
+          "subject": "Meilin the adult archive clerk",
+          "preserve": "her face, hair, adult proportions and blue cotton jacket",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 2,
+          "asset_id": "ART_BO",
+          "asset_version": "v1.0",
+          "role": "identity",
+          "subject": "Bo the adult dock mechanic",
+          "preserve": "his face, cheek scar and brown canvas vest",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 3,
+          "asset_id": "ART_ARCHIVE",
+          "asset_version": "v1.0",
+          "role": "scene",
+          "subject": "the archive room",
+          "preserve": "the oak table, east window, north shelf and west door",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 4,
+          "asset_id": "ART_LEDGER",
+          "asset_version": "v1.0",
+          "role": "composition",
+          "subject": "the two original ledgers",
+          "preserve": "the two cloth bindings and matching ink notches",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 5,
+          "asset_id": "ART_NOTICE",
+          "asset_version": "v1.0",
+          "role": "composition",
+          "subject": "the closure notice and objection",
+          "preserve": "their paper format and ruled receipt fields",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        }
+      ],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "06cfe035575871fe1af81eea8900182a2ccc1a6234368922a9147050973b40fb",
+      "reference_count": 5,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "9b72e783c86fe350e0fdee56103df938f04933da39906e09ae0c3942d9ee7ae5",
+      "upload_card": "ART_KEYFRAME_05.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "544226fc7761291779fe81751954332ba7cd5b77fd7571d1a5c45ce250b025e7"
+    },
+    {
+      "asset_id": "ART_KEYFRAME_09",
+      "display_name": "第三集开场·独立佐证 · v1.0",
+      "prompt_file": "ART_KEYFRAME_09.draft.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "draft-missing-references",
+      "missing_references": [
+        {
+          "image": 1,
+          "asset_id": "ART_MEI",
+          "version": "v1.0",
+          "role": "identity"
+        },
+        {
+          "image": 2,
+          "asset_id": "ART_BO",
+          "version": "v1.0",
+          "role": "identity"
+        },
+        {
+          "image": 3,
+          "asset_id": "ART_ARCHIVE",
+          "version": "v1.0",
+          "role": "scene"
+        },
+        {
+          "image": 4,
+          "asset_id": "ART_LEDGER",
+          "version": "v1.0",
+          "role": "composition"
+        },
+        {
+          "image": 5,
+          "asset_id": "ART_STATIONERY",
+          "version": "v1.0",
+          "role": "composition"
+        }
+      ],
+      "reference_policy": "required",
+      "references": [],
+      "missing_reference_details": [
+        {
+          "image": 1,
+          "asset_id": "ART_MEI",
+          "asset_version": "v1.0",
+          "role": "identity",
+          "subject": "Meilin the adult archive clerk",
+          "preserve": "her face, hair, adult proportions and blue cotton jacket",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 2,
+          "asset_id": "ART_BO",
+          "asset_version": "v1.0",
+          "role": "identity",
+          "subject": "Bo the adult dock mechanic",
+          "preserve": "his face, cheek scar and brown canvas vest",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 3,
+          "asset_id": "ART_ARCHIVE",
+          "asset_version": "v1.0",
+          "role": "scene",
+          "subject": "the archive room",
+          "preserve": "the oak table, east window, north shelf and west door",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 4,
+          "asset_id": "ART_LEDGER",
+          "asset_version": "v1.0",
+          "role": "composition",
+          "subject": "the two original ledgers",
+          "preserve": "the two cloth bindings and matching ink notches",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        },
+        {
+          "image": 5,
+          "asset_id": "ART_STATIONERY",
+          "asset_version": "v1.0",
+          "role": "composition",
+          "subject": "the independent comparison sheet",
+          "preserve": "its two ruled columns and short wooden pencil",
+          "exclude": "unrelated pose, crop and lighting; use the target composition described below",
+          "file": "PENDING_APPROVED_ASSET",
+          "version": "v1.0"
+        }
+      ],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "resolved_card_sha256": "118aacde1be231dffb9d8a6095debf2254e965c967935149c7dca4d14009ba0b",
+      "reference_count": 5,
+      "state_version": null,
+      "asset_version": "v1.0",
+      "prompt_sha256": "3b911261e285c6f4afe8ef3179b6d48db3f176bf0a71185c93739b74a55fd78c",
+      "upload_card": "ART_KEYFRAME_09.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "0a130e4d1b3e576ab3f46f4881620a73434ce33db25eba0fc7da55b438b4393a"
+    }
+  ],
+  "asset_plan": {
+    "status": "PASS",
+    "scope": "declared requirements, versions and reference dependencies",
+    "production_order": [
+      "ART_MEI",
+      "ART_BO",
+      "ART_ARCHIVE",
+      "ART_DOCK",
+      "ART_LEDGER",
+      "ART_TIDE",
+      "ART_NOTICE",
+      "ART_SANDBAG",
+      "ART_STATIONERY",
+      "ART_KEYFRAME_01",
+      "ART_KEYFRAME_05",
+      "ART_KEYFRAME_09"
+    ],
+    "planned": [
+      "ART_MEI",
+      "ART_BO",
+      "ART_ARCHIVE",
+      "ART_DOCK",
+      "ART_LEDGER",
+      "ART_TIDE",
+      "ART_NOTICE",
+      "ART_SANDBAG",
+      "ART_STATIONERY",
+      "ART_KEYFRAME_01",
+      "ART_KEYFRAME_05",
+      "ART_KEYFRAME_09"
+    ],
+    "impact": {
+      "ART_MEI": {
+        "assets": [
+          "ART_KEYFRAME_01",
+          "ART_KEYFRAME_05",
+          "ART_KEYFRAME_09",
+          "ART_MEI"
+        ],
+        "shots": [
+          "SERIAL_SHOT_01",
+          "SERIAL_SHOT_02",
+          "SERIAL_SHOT_03",
+          "SERIAL_SHOT_04",
+          "SERIAL_SHOT_05",
+          "SERIAL_SHOT_06",
+          "SERIAL_SHOT_07",
+          "SERIAL_SHOT_08",
+          "SERIAL_SHOT_09",
+          "SERIAL_SHOT_10",
+          "SERIAL_SHOT_11",
+          "SERIAL_SHOT_12"
+        ],
+        "segments": [
+          "SERIAL_SEG_01",
+          "SERIAL_SEG_02",
+          "SERIAL_SEG_03",
+          "SERIAL_SEG_04",
+          "SERIAL_SEG_05",
+          "SERIAL_SEG_06",
+          "SERIAL_SEG_07",
+          "SERIAL_SEG_08",
+          "SERIAL_SEG_09",
+          "SERIAL_SEG_10",
+          "SERIAL_SEG_11",
+          "SERIAL_SEG_12"
+        ]
+      },
+      "ART_BO": {
+        "assets": [
+          "ART_BO",
+          "ART_KEYFRAME_01",
+          "ART_KEYFRAME_05",
+          "ART_KEYFRAME_09"
+        ],
+        "shots": [
+          "SERIAL_SHOT_01",
+          "SERIAL_SHOT_02",
+          "SERIAL_SHOT_03",
+          "SERIAL_SHOT_04",
+          "SERIAL_SHOT_05",
+          "SERIAL_SHOT_06",
+          "SERIAL_SHOT_07",
+          "SERIAL_SHOT_08",
+          "SERIAL_SHOT_09",
+          "SERIAL_SHOT_10",
+          "SERIAL_SHOT_11",
+          "SERIAL_SHOT_12"
+        ],
+        "segments": [
+          "SERIAL_SEG_01",
+          "SERIAL_SEG_02",
+          "SERIAL_SEG_03",
+          "SERIAL_SEG_04",
+          "SERIAL_SEG_05",
+          "SERIAL_SEG_06",
+          "SERIAL_SEG_07",
+          "SERIAL_SEG_08",
+          "SERIAL_SEG_09",
+          "SERIAL_SEG_10",
+          "SERIAL_SEG_11",
+          "SERIAL_SEG_12"
+        ]
+      },
+      "ART_ARCHIVE": {
+        "assets": [
+          "ART_ARCHIVE",
+          "ART_KEYFRAME_01",
+          "ART_KEYFRAME_05",
+          "ART_KEYFRAME_09"
+        ],
+        "shots": [
+          "SERIAL_SHOT_01",
+          "SERIAL_SHOT_03",
+          "SERIAL_SHOT_05",
+          "SERIAL_SHOT_07",
+          "SERIAL_SHOT_09",
+          "SERIAL_SHOT_11"
+        ],
+        "segments": [
+          "SERIAL_SEG_01",
+          "SERIAL_SEG_03",
+          "SERIAL_SEG_05",
+          "SERIAL_SEG_07",
+          "SERIAL_SEG_09",
+          "SERIAL_SEG_11"
+        ]
+      },
+      "ART_DOCK": {
+        "assets": [
+          "ART_DOCK"
+        ],
+        "shots": [
+          "SERIAL_SHOT_02",
+          "SERIAL_SHOT_04",
+          "SERIAL_SHOT_06",
+          "SERIAL_SHOT_08",
+          "SERIAL_SHOT_10",
+          "SERIAL_SHOT_12"
+        ],
+        "segments": [
+          "SERIAL_SEG_02",
+          "SERIAL_SEG_04",
+          "SERIAL_SEG_06",
+          "SERIAL_SEG_08",
+          "SERIAL_SEG_10",
+          "SERIAL_SEG_12"
+        ]
+      },
+      "ART_LEDGER": {
+        "assets": [
+          "ART_KEYFRAME_01",
+          "ART_KEYFRAME_05",
+          "ART_KEYFRAME_09",
+          "ART_LEDGER"
+        ],
+        "shots": [
+          "SERIAL_SHOT_01",
+          "SERIAL_SHOT_03",
+          "SERIAL_SHOT_05",
+          "SERIAL_SHOT_07",
+          "SERIAL_SHOT_09",
+          "SERIAL_SHOT_11"
+        ],
+        "segments": [
+          "SERIAL_SEG_01",
+          "SERIAL_SEG_03",
+          "SERIAL_SEG_05",
+          "SERIAL_SEG_07",
+          "SERIAL_SEG_09",
+          "SERIAL_SEG_11"
+        ]
+      },
+      "ART_TIDE": {
+        "assets": [
+          "ART_TIDE"
+        ],
+        "shots": [
+          "SERIAL_SHOT_02",
+          "SERIAL_SHOT_04",
+          "SERIAL_SHOT_06",
+          "SERIAL_SHOT_08",
+          "SERIAL_SHOT_10",
+          "SERIAL_SHOT_12"
+        ],
+        "segments": [
+          "SERIAL_SEG_02",
+          "SERIAL_SEG_04",
+          "SERIAL_SEG_06",
+          "SERIAL_SEG_08",
+          "SERIAL_SEG_10",
+          "SERIAL_SEG_12"
+        ]
+      },
+      "ART_NOTICE": {
+        "assets": [
+          "ART_KEYFRAME_05",
+          "ART_NOTICE"
+        ],
+        "shots": [
+          "SERIAL_SHOT_05",
+          "SERIAL_SHOT_11"
+        ],
+        "segments": [
+          "SERIAL_SEG_05",
+          "SERIAL_SEG_11"
+        ]
+      },
+      "ART_SANDBAG": {
+        "assets": [
+          "ART_SANDBAG"
+        ],
+        "shots": [
+          "SERIAL_SHOT_08",
+          "SERIAL_SHOT_10",
+          "SERIAL_SHOT_12"
+        ],
+        "segments": [
+          "SERIAL_SEG_08",
+          "SERIAL_SEG_10",
+          "SERIAL_SEG_12"
+        ]
+      },
+      "ART_STATIONERY": {
+        "assets": [
+          "ART_KEYFRAME_01",
+          "ART_KEYFRAME_09",
+          "ART_STATIONERY"
+        ],
+        "shots": [
+          "SERIAL_SHOT_01",
+          "SERIAL_SHOT_03",
+          "SERIAL_SHOT_07",
+          "SERIAL_SHOT_09",
+          "SERIAL_SHOT_11"
+        ],
+        "segments": [
+          "SERIAL_SEG_01",
+          "SERIAL_SEG_03",
+          "SERIAL_SEG_07",
+          "SERIAL_SEG_09",
+          "SERIAL_SEG_11"
+        ]
+      },
+      "ART_KEYFRAME_01": {
+        "assets": [
+          "ART_KEYFRAME_01"
+        ],
+        "shots": [
+          "SERIAL_SHOT_01"
+        ],
+        "segments": [
+          "SERIAL_SEG_01"
+        ]
+      },
+      "ART_KEYFRAME_05": {
+        "assets": [
+          "ART_KEYFRAME_05"
+        ],
+        "shots": [
+          "SERIAL_SHOT_05"
+        ],
+        "segments": [
+          "SERIAL_SEG_05"
+        ]
+      },
+      "ART_KEYFRAME_09": {
+        "assets": [
+          "ART_KEYFRAME_09"
+        ],
+        "shots": [
+          "SERIAL_SHOT_09"
+        ],
+        "segments": [
+          "SERIAL_SEG_09"
+        ]
+      }
+    },
+    "keyframe_coverage": {
+      "ART_KEYFRAME_01": {
+        "shot_ids": [
+          "SERIAL_SHOT_01"
+        ],
+        "required_asset_ids": [
+          "ART_ARCHIVE",
+          "ART_BO",
+          "ART_LEDGER",
+          "ART_MEI",
+          "ART_STATIONERY"
+        ]
+      },
+      "ART_KEYFRAME_05": {
+        "shot_ids": [
+          "SERIAL_SHOT_05"
+        ],
+        "required_asset_ids": [
+          "ART_ARCHIVE",
+          "ART_BO",
+          "ART_LEDGER",
+          "ART_MEI",
+          "ART_NOTICE"
+        ]
+      },
+      "ART_KEYFRAME_09": {
+        "shot_ids": [
+          "SERIAL_SHOT_09"
+        ],
+        "required_asset_ids": [
+          "ART_ARCHIVE",
+          "ART_BO",
+          "ART_LEDGER",
+          "ART_MEI",
+          "ART_STATIONERY"
+        ]
+      }
+    },
+    "visual_acceptance": "NOT_INFERRED_FROM_FILE_EXISTENCE"
+  },
+  "style_policy": {
+    "status": "STYLE_CONSISTENCY_WAIVED",
+    "policy": "legacy_unlocked",
+    "reason": "Historical 4.3.6 serial fixture predates STYLE_MOTHER; cross-asset style consistency is explicitly not guaranteed until the fixture is migrated."
+  },
+  "style_lock": null
+}

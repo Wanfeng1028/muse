@@ -1,0 +1,46 @@
+{
+  "segment_id": "DRAMA_SEG02",
+  "mode": "T2VA",
+  "file": "DRAMA_SEG02.h3.txt",
+  "generation_clip_duration": 10,
+  "start_frame": 240,
+  "end_frame": 480,
+  "summary": "",
+  "speaker_map": {
+    "Cen He": "S1"
+  },
+  "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+  "reference_labels": [],
+  "format_pass": "PASSED",
+  "sha256": "153fb4ca8aedad373a4349c5083e2aa19fda50011eb54484a7836d964b4d7b04",
+  "status": "READY_TO_UPLOAD",
+  "accepted": true,
+  "blockers": [],
+  "platform_status": "NOT_UPLOADED",
+  "binding_snapshot": {
+    "schema_version": "4.3.6",
+    "segment_id": "DRAMA_SEG02",
+    "mode": "T2VA",
+    "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+    "references": [],
+    "subjects": [],
+    "requirements": [],
+    "issues": [],
+    "legacy_fixture": true,
+    "binding_sha256": "b7cecf72549105eca6adb6207a4a3db25aac32f862623574ba782ea14770c6f8"
+  },
+  "h3_detail_policy": {
+    "profile": "legacy_fixture",
+    "minimum_words": 0,
+    "target_words": 0
+  },
+  "detailed_description_english_words": null,
+  "execution_capabilities": "UNVERIFIED: confirm actual platform mode, duration and slots",
+  "visual_status": "UNVERIFIED",
+  "references": [],
+  "upload_card": "DRAMA_SEG02.upload.md",
+  "delivery_manifest": "DRAMA_SEG02.h3.txt.delivery.json",
+  "format_contract": "DRAMA_SEG02.h3.txt.check.json",
+  "format_receipt": "DRAMA_SEG02.h3.txt.acceptance.json",
+  "upload_card_sha256": "1aebe29f577c337d1ced9ea41279cef9dd3a6ead24556807c69787286e104869"
+}

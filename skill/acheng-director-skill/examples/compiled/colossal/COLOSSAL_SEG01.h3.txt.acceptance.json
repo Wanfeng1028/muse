@@ -1,0 +1,24 @@
+{
+  "format_pass": "PASSED",
+  "validator": "h3_final_format/4.3.6",
+  "file": "COLOSSAL_SEG01.h3.txt",
+  "sha256": "2e80b460f4f9e894f0713cf928c8096cb54a80f71eb368b766414763430dfe7f",
+  "contract_sha256": "6806191b247cf202fa70dc9b5f174f18cc109cab38fb778121005324cc715328",
+  "mode": "Ref2VA",
+  "duration_seconds": 14.0,
+  "shot_count": 2,
+  "english_words": 3384,
+  "minimum_words": 0,
+  "dialogue_count": 0,
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "references/028eee66c71c1f4148764ce5ed3c3d9d6d48570af091ff710b53346509c68826.png",
+      "sha256": "028eee66c71c1f4148764ce5ed3c3d9d6d48570af091ff710b53346509c68826",
+      "role": "storyboard blocking and ordering only"
+    }
+  ],
+  "input_revision": "287615f19d89194ad514c2b9bc81aa70cba15400f03070489807e911bc124eaa",
+  "visual_status": "UNVERIFIED",
+  "scope": "final-file structural validation; not creative, visual or audio acceptance"
+}

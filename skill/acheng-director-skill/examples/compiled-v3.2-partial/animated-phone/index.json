@@ -1,0 +1,24 @@
+{
+  "status": "compiled-not-generated",
+  "production_sha256": "e7a2634ebf8a19f3aa3e8eb606a256a8aaacedaff834a5f368ca99d2840f435e",
+  "segments": [
+    {
+      "segment_id": "ANIME_PHONE_SEG01",
+      "mode": "Ref2VA",
+      "file": "ANIME_PHONE_SEG01.h3.txt",
+      "generation_clip_duration": 10,
+      "speaker_map": {
+        "Chen Qianyu": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "role": "first-frame composition and pose anchor",
+          "file": "references/1f162fe79a3b4683c7cfba91f380df1ba5d7866cfde201399e72044d130e550a.png",
+          "sha256": "1f162fe79a3b4683c7cfba91f380df1ba5d7866cfde201399e72044d130e550a"
+        }
+      ]
+    }
+  ]
+}

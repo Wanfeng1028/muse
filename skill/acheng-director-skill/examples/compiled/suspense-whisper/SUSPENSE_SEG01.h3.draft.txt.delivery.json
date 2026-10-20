@@ -1,0 +1,109 @@
+{
+  "segment_id": "SUSPENSE_SEG01",
+  "mode": "I2VA",
+  "file": "SUSPENSE_SEG01.h3.draft.txt",
+  "generation_clip_duration": 10,
+  "start_frame": 0,
+  "end_frame": 240,
+  "summary": "",
+  "speaker_map": {},
+  "input_revision": "b0d0f896cd1e4c304229987a50f443eecad42fe965c77d6e270a9f135fa0ad58",
+  "reference_labels": [
+    "<Picture 1>"
+  ],
+  "format_pass": "NOT_ACCEPTED",
+  "sha256": "f2735a5d3940903155fd3a194898ffcdd73bbe061029acf344e711d57062f2ec",
+  "status": "DRAFT_MISSING_REFERENCES",
+  "accepted": false,
+  "blockers": [
+    "<Picture 1>: missing or empty reference media: PENDING-suspense-archive-approved.png",
+    "h3_schema: missing reference file: media/PENDING-suspense-archive-approved.png"
+  ],
+  "platform_status": "NOT_UPLOADED",
+  "binding_snapshot": {
+    "schema_version": "4.3.6",
+    "segment_id": "SUSPENSE_SEG01",
+    "mode": "I2VA",
+    "input_revision": "b0d0f896cd1e4c304229987a50f443eecad42fe965c77d6e270a9f135fa0ad58",
+    "references": [
+      {
+        "label": "<Picture 1>",
+        "file": "media/PENDING-suspense-archive-approved.png",
+        "role": "opening composition anchor",
+        "asset_version": "planned-v1",
+        "entity_id": "S01",
+        "shot_ids": [
+          "FILM-S01-SH001"
+        ],
+        "preserve": "approved opening stance, archive geometry and low flashlight placement",
+        "exclude": "later reflected-hand motion and any unrelated figure or environment",
+        "definition": "<Picture 1> is the opening still for Ning Yue beside the glass records room with the flashlight held low.",
+        "retention": "<Picture 1> (appears at the 0.00-second mark): fully_preserved - preserve the opening stance and flashlight placement while extending the delayed reflection action.",
+        "upload_order": 1,
+        "sha256": null,
+        "active_ranges": [
+          {
+            "shot_id": "FILM-S01-SH001",
+            "start_frame": 0,
+            "end_frame": 120
+          }
+        ],
+        "binding_status": "PLANNED_OR_CONFLICTED",
+        "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+        "platform_status": "NOT_UPLOADED",
+        "issues": [
+          "missing or empty reference media: PENDING-suspense-archive-approved.png"
+        ]
+      }
+    ],
+    "subjects": [],
+    "requirements": [],
+    "issues": [
+      "<Picture 1>: missing or empty reference media: PENDING-suspense-archive-approved.png"
+    ],
+    "legacy_fixture": true,
+    "binding_sha256": "0de2bb927100f76588be86b209cea898be3fac307510be12ab16a089ebbf73d7"
+  },
+  "h3_detail_policy": {
+    "profile": "legacy_fixture",
+    "minimum_words": 0,
+    "target_words": 0
+  },
+  "detailed_description_english_words": null,
+  "execution_capabilities": "UNVERIFIED: confirm actual platform mode, duration and slots",
+  "visual_status": "UNVERIFIED",
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "media/PENDING-suspense-archive-approved.png",
+      "role": "opening composition anchor",
+      "asset_version": "planned-v1",
+      "entity_id": "S01",
+      "shot_ids": [
+        "FILM-S01-SH001"
+      ],
+      "preserve": "approved opening stance, archive geometry and low flashlight placement",
+      "exclude": "later reflected-hand motion and any unrelated figure or environment",
+      "definition": "<Picture 1> is the opening still for Ning Yue beside the glass records room with the flashlight held low.",
+      "retention": "<Picture 1> (appears at the 0.00-second mark): fully_preserved - preserve the opening stance and flashlight placement while extending the delayed reflection action.",
+      "upload_order": 1,
+      "sha256": null,
+      "active_ranges": [
+        {
+          "shot_id": "FILM-S01-SH001",
+          "start_frame": 0,
+          "end_frame": 120
+        }
+      ],
+      "binding_status": "PLANNED_OR_CONFLICTED",
+      "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+      "platform_status": "NOT_UPLOADED",
+      "issues": [
+        "missing or empty reference media: PENDING-suspense-archive-approved.png"
+      ]
+    }
+  ],
+  "upload_card": "SUSPENSE_SEG01.upload.md",
+  "delivery_manifest": "SUSPENSE_SEG01.h3.draft.txt.delivery.json",
+  "upload_card_sha256": "d104acd38cee7a637897495235c602581d785bdc50cc59f3e509ab121f97c7c1"
+}

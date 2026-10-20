@@ -1,0 +1,65 @@
+{
+  "package": "acheng-director-v4.3.6",
+  "version": "4.3.6",
+  "baseline": "acheng-director-v4.3.3",
+  "status": "PASS",
+  "scope": "software and local deliverable acceptance; not generated-media quality",
+  "verification": {
+    "syntax_and_import_scripts": 41,
+    "unittest_cases": 63,
+    "unittest_status": "PASS",
+    "package_contract": "PASS",
+    "h3_bundles": 23,
+    "per_segment_upload_cards": 23,
+    "ready_local_bundles": 21,
+    "honestly_blocked_drafts": 2,
+    "whitebox_media": "132/132 decoded frame/metadata and SHA PASS",
+    "creative_fields_preserved_in_examples": [
+      "01-mecha.production.json",
+      "02-drama.production.json",
+      "03-colossal.production.json",
+      "04-serial.production.json",
+      "05-ink.production.json",
+      "06-animated-phone.production.json",
+      "07-comedy-misunderstanding.production.json",
+      "08-suspense-whisper.production.json"
+    ],
+    "baseline_zip_sha256": "6216fb2005b6f6a0c9bbf293891b52a6c86da196ddb7684202eb675dc8148e9e",
+    "modules": 7,
+    "integrations": 19,
+    "terminology_categories": 9,
+    "terminology_terms": 88
+  },
+  "acceptance_criteria": {
+    "one_card_per_h3": "PASS",
+    "planned_bound_uploaded_separated": "PASS",
+    "body_card_manifest_one_snapshot": "PASS",
+    "missing_media_no_T2VA_fallback": "PASS",
+    "automatic_chat_cards_no_long_body_duplication": "PASS",
+    "creative_content_preserved": "PASS",
+    "tamper_and_stale_revision_rejected": "PASS",
+    "partial_commit_archive_restore": "PASS",
+    "state_window_event_replay": "PASS"
+  },
+  "evidence": [
+    "tests-v4.3.6.txt",
+    "package-acceptance-current.json",
+    "previs-media-acceptance-v4.3.6.json"
+  ],
+  "safety": {
+    "paid_media_models_called": false,
+    "installation_directories_updated": false,
+    "historical_packages_overwritten": false,
+    "user_projects_modified": false,
+    "platform_upload_performed": false,
+    "public_release_performed": false,
+    "visual_status": "UNVERIFIED"
+  },
+  "limitations": [
+    "No generated film/audio or live platform acceptance was performed.",
+    "Legacy fixture readiness is structural compatibility, not an identity or artistic approval.",
+    "Two formerly false-reference examples intentionally remain DRAFT_MISSING_REFERENCES.",
+    "Natural-language identity correctness and actual platform slots still require contextual review.",
+    "ZIP CRC/file-set and archive SHA are recorded in the sibling archive acceptance report after packaging."
+  ]
+}

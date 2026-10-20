@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI分镜导演"
+  short_description: "按题材设计电影摄影与专业光学，输出可读分镜或六模块视频提示词。"
+  default_prompt: "Use $ai-storyboard-director to choose story-driven cinematography and optical setups, then deliver the requested storyboard or six-module video prompt with visual style second and a final negative prompt."
+policy:
+  allow_implicit_invocation: true

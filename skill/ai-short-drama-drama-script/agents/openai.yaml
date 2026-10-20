@@ -1,0 +1,4 @@
+interface:
+  display_name: "爽剧短剧编剧"
+  short_description: "基于专业爽点模型，将想法或故事创作为可直接拍摄的完整爽剧剧本"
+  default_prompt: "Use $drama-script to turn my story idea into a production-ready high-impact Chinese vertical drama script."

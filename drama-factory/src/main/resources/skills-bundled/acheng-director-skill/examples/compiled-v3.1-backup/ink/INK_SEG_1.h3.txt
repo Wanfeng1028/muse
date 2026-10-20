@@ -1,0 +1,10 @@
+For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced.
+
+integrated_multimodal_description:
+[Shot 1] Two-dimensional ink-and-paper animation matches the supplied cream paper, dark folded contours, quiet background and muted water. A small cream folded-paper crane has a triangular body, a long folded neck, a pointed beak, one black ink eye and two thin black folded legs. Its broad paper surfaces stay quiet, with a few dark fold lines. A narrow dark wooden footbridge crosses pale green-gray water. Two supports descend below it, a thin rear rail slopes toward the right, and the warm paper background remains empty. The bridge is intact, the water is calm and the folded-paper crane is dry; no damage or carried object is present. The shot begins exactly from <Picture 1>, with the crane standing on the left part of the bridge and facing right. The crane makes three measured forward steps, lifting one folded foot at a time, then settles near the middle. Its body rocks lightly while the bridge and viewpoint stay fixed. The camera stays completely still in a wide side view; the whole crane and both bridge supports remain visible. Dry paper makes a quiet crease sound as each folded limb moves; the footfalls touch wood lightly.
+
+overall_soundscape:
+Soft paper creaks and light wooden taps accompany the visible movement, with faint water below the bridge.
+
+non_diegetic_music:
+N/A

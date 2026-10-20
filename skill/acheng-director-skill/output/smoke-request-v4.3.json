@@ -1,0 +1,7 @@
+{
+  "request_id": "SMOKE-43",
+  "intent": "h3-compile",
+  "features": ["h3", "combat"],
+  "segment_ids": ["MECHA_SEG01"],
+  "execution_mode": "1"
+}

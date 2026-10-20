@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "package_version": "4.0.4",
+  "package": "acheng-director-v4.0.4.zip",
+  "camera_entries": 132,
+  "modules": 7,
+  "integrations": 19,
+  "h3_modes": ["FL2VA", "I2VA", "L2VA", "Ref2VA", "T2VA"],
+  "scene_design": {
+    "specialist_contract": "scene-art-v1",
+    "usage_guide": "references/106-scene-design-usage-guide-v4.md",
+    "handoff_reference": "modules/assets/scene-design/external/references/acheng-handoff.md",
+    "owner": "assets",
+    "write_paths": [],
+    "prompt_status_default": "READY_TO_SUBMIT",
+    "visual_status_default": "UNVERIFIED"
+  },
+  "validation": {
+    "scene_skill_quick_validate": "PASS",
+    "scene_contract_tests": "5/5 PASS",
+    "director_workflow_tests": "5/5 PASS",
+    "director_contract_tests": "5/5 PASS",
+    "v3_contract_tests": "6/6 PASS",
+    "director_contract_acceptance": "PASS",
+    "zip_integrity": "PASS",
+    "usage_guide_templates": "PASS",
+    "paid_media_models_called": false,
+    "historical_packages_overwritten": false
+  },
+  "visual_verification": "No generated film or audio is claimed; visual_status remains UNVERIFIED."
+}

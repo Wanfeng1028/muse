@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "camera_entries": 132,
+  "original_emotions": 100,
+  "expanded_emotions": 100,
+  "required_references": 23,
+  "examples": [
+    {
+      "file": "examples/01-mecha.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 8,
+      "sha256": "fc218ad1153db21926243e389bbbe769343e990fca0ef20a2b14cc1a23fc435d"
+    },
+    {
+      "file": "examples/02-drama.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 9,
+      "sha256": "ec69cbbc2b212f60968422c2b535f232595c2eb1c73b7c19deb5ebeca20a516a"
+    },
+    {
+      "file": "examples/03-colossal.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 9,
+      "sha256": "b53ebd817fb82ba0619aeff80e1999acad0744216dd7a71c9b42cbff6d3447d0"
+    },
+    {
+      "file": "examples/04-serial.production.json",
+      "scope": "full_production",
+      "score": 100.0,
+      "applicable_gates": 8,
+      "sha256": "9eef501301481002743e1de8acb75bde85903594ca61628d72a57b1ff1b0cc3f"
+    },
+    {
+      "file": "examples/05-ink.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 6,
+      "sha256": "4aedb537ede742301eeb4a9844c5db8a3d6df0ad0a25168877305d37f31bdf50"
+    }
+  ],
+  "modules": 7,
+  "h3_modes": [
+    "FL2VA",
+    "I2VA",
+    "L2VA",
+    "Ref2VA",
+    "T2VA"
+  ],
+  "standalone_video_prompts": 19,
+  "image_prompt_designs": 16,
+  "ready_image_prompts": 13,
+  "draft_image_prompts": 3,
+  "visual_verification": "Authored blocking and ink reference images only; generated film and audio remain UNVERIFIED"
+}

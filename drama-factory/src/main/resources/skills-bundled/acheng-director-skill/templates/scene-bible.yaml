@@ -1,0 +1,17 @@
+scene_id: S01
+name: 维修室
+version: 1
+prompt_description: "The maintenance room contains one wooden desk, an east-facing window, a west doorway and a brass-key hook on the rear dark wall. Soft east-window light crosses the desk and falls off toward the west wall."
+space: rectangular_room_with_one_desk
+entrances: [west_doorway]
+exits: [west_doorway]
+landmarks: [east_window, brass_key_hook, maintenance_desk]
+world_light:
+  source: east_window
+  receiver: desk_and_faces
+  shadow: westward
+  fill: weak_wall_bounce
+damage_level: 0
+foreground: hands_and_key
+midground: two_seated_characters
+background: quiet_wall_with_single_hook

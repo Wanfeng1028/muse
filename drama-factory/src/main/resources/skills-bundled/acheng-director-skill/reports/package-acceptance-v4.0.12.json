@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "package_version": "4.0.12",
+  "package": "acheng-director-v4.0.12.zip",
+  "delivery_modes": {
+    "first_response": "fixed choice question before any long production output",
+    "interactive_segment": "one complete Segment per turn, then explicit continue signal and WAIT_FOR_USER_CONTINUE",
+    "autonomous_file_batch": "one independent artifact per Segment, manifest-only chat, requires workspace write capability",
+    "runtime_boundary": "batch mode is not infinite background execution; pause and persist on tool, permission, time or disk limits"
+  },
+  "changes": [
+    "standardized the user-facing name as Acheng Director while preserving acheng-director as the technical invocation name",
+    "added an explicit /goal multi-turn delivery contract and reusable interactive/file-batch templates",
+    "added a persistent Ref2VA artifact gate: short complete H3 files cannot become COMMITTED or accepted",
+    "resolved the generic 350-500 word H3 example conflict in favor of the Acheng Director 3000-word Ref2VA contract",
+    "preserved Ref2VA minimum 3000 English words, 4000+ target, no upper limit",
+    "preserved artifact hashing, partial cursor, stale revision and accepted gates"
+  ],
+  "validation": {
+    "skill_creator_quick_validate": "PASS",
+    "python_syntax_all_scripts": "PASS",
+    "director_contract_acceptance": "PASS",
+    "workflow_v4_tests": "7/7 PASS",
+    "director_contract_tests": "6/6 PASS",
+    "style_anchor_tests": "5/5 PASS",
+    "red_monkey_integration_tests": "6/6 PASS",
+    "delivery_integrity_tests": "4/4 PASS",
+    "liveliness_contract_tests": "5/5 PASS",
+    "prompt_delivery_tests": "6/6 PASS",
+    "v3_contract_tests": "6/6 PASS",
+    "scene_contract_tests": "5/5 PASS",
+    "zip_integrity": "PASS",
+    "zip_worktree_file_hash_parity": "PASS",
+    "paid_media_models_called": false,
+    "historical_packages_overwritten": false,
+    "installation_directories_updated": false,
+    "short_ref2va_complete_artifact_rejected": true,
+    "generic_h3_short_range_overridden_for_acheng_production": true
+  },
+  "visual_verification": "No generated film, image, or audio is claimed; visual_status remains UNVERIFIED."
+}

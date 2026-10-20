@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "package_version": "4.0.0",
+  "baseline": "3.5.4",
+  "visual_verification": "UNVERIFIED",
+  "new_contracts": [
+    "100-workflow-state-v4.md",
+    "101-artifact-commit-v4.md",
+    "102-orchestrator-adapter-v4.md",
+    "103-module-authority-v4.md",
+    "104-capability-map-and-master-prompt-v4.md"
+  ],
+  "new_scripts": [
+    "workflow_state.py",
+    "orchestrator_plan.py",
+    "orchestrator_commit.py",
+    "test_workflow_v4.py"
+  ],
+  "checks": {
+    "python_compile": "PASS",
+    "workflow_v4_tests": "PASS",
+    "style_combat_regression": "PASS",
+    "planning_smoke": "PASS"
+  },
+  "scope": "prompt_only and full_production remain explicit; no media generation claimed",
+  "install_directories": "unchanged",
+  "notes": [
+    "4.0 adds a thin orchestration layer; seven module ownership remains authoritative",
+    "3.5.4 formal package and 3.5.3 historical package were not overwritten"
+  ]
+}

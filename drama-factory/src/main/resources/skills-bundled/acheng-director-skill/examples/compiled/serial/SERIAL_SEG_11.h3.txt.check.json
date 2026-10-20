@@ -1,0 +1,19 @@
+{
+  "mode": "T2VA",
+  "duration_seconds": 15.0,
+  "shot_count": 1,
+  "references": [],
+  "subject_labels": [],
+  "speech_expectations": [
+    [
+      "S1",
+      "Chinese",
+      "更正记录，不撤掉异议。"
+    ]
+  ],
+  "minimum_words": 0,
+  "profile": "legacy_fixture",
+  "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "binding_sha256": "0313df9b4ce959ab0780264521bd06a42c7b954344b6d6775aee87d24905d7b4",
+  "expected_prompt_sha256": "cece2f392fbfdd2bf4537d92fe122c7d0a952348e3b54293209db041811312c6"
+}

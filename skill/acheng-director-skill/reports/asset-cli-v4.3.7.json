@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "assets": [
+    {
+      "asset_id": "ASSET_02_DRAMA",
+      "status": "PASS",
+      "prompt_sha256": "bf7e27e294178f1976cb610afc9079d865ba092b2c2d5c9c827e2f3eff326d7d",
+      "reference_count": 0
+    }
+  ],
+  "visual_status": "UNVERIFIED"
+}

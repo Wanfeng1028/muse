@@ -1,0 +1,7 @@
+interface:
+  display_name: "AI短剧导演改编"
+  short_description: "将小说改编成含分镜、运镜、表演调度与时长账本的AI短剧导演台本"
+  default_prompt: "请使用 $novel-to-ai-short-drama 将这段小说改编为可直接用于 AI 视频制作的短剧导演分镜台本。"
+
+policy:
+  allow_implicit_invocation: true

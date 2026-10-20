@@ -1,0 +1,18 @@
+character_id: CHAR_LU
+name: Lu Chuan
+version: 2
+age: 34
+prompt_description: "Lu Chuan is a 34-year-old man, 1.80 meters tall, with balanced adult proportions, naturally broad shoulders, a square jaw, short dark hair and a short scar above his right eyebrow. He wears a gray woven work jacket over a gray shirt and a functional waist belt."
+face:
+  jaw: squared_adult_jaw
+  scar: short_scar_above_right_eyebrow
+  hair: short_dark_hair
+costume:
+  inner: gray_woven_work_shirt
+  carrier: functional_waist_belt
+  outer: gray_work_jacket
+state:
+  right_wrist: bandaged_phase_1
+  brass_key: held_in_left_hand_at_scene_opening
+identity_source: written_original_design
+reference_policy: preserve_identity_and_costume_not_studio_light

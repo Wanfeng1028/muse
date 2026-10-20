@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "segments": [
+    {
+      "joint_status": "PASSED",
+      "segment_id": "INK_SEG_1",
+      "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+      "sha256": "78d70acee5d51d3e9b7a1f2225ada944e13e8418baca4f474d7fbf4e67c25262",
+      "binding_sha256": "a6798d7141cefd97f39d63bedde368014de63999623fe1a7e798353502c7a64f",
+      "upload_card_sha256": "08798b960e771af8f9a49eb6ce728ef88f8aa8d20994d73c0baf0b467497f2c5",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "INK_SEG_2",
+      "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+      "sha256": "d796e99ea0389e3016d616b2ade7d75e83638f0602474b333c7c2a5aff02fe1f",
+      "binding_sha256": "3c394cda1d023eb9cca3ae86091be4f9d9a7cbca2772f40130ef6baaf4ee4b8f",
+      "upload_card_sha256": "41701046823894f2a986c6db5a9c551504db50580892bf7fc70710a82db903e6",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "INK_SEG_3",
+      "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+      "sha256": "541674c3222cc522fb5023d700b2a22d6d7c63771a8c48147aef080227749c57",
+      "binding_sha256": "25a3b72a4d0fa4af0a67d055afddd0440e343a2195e9e0ea6991684b3ff7168c",
+      "upload_card_sha256": "5e1de23fc26929508fbe2dc729a114ee0eb450411cd248602a9a373a59482f21",
+      "visual_status": "UNVERIFIED"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "asset_prompt_delivery": {
+    "status": "PASS",
+    "assets": [
+      {
+        "asset_id": "INK_CHARACTER",
+        "status": "PASS",
+        "prompt_sha256": "f372c8f51daab35dfb04e0b0ae69ad04022872b320de0088817ceddec2214cb8",
+        "reference_count": 0
+      }
+    ],
+    "visual_status": "UNVERIFIED"
+  }
+}

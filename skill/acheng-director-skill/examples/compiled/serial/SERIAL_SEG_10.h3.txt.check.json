@@ -1,0 +1,19 @@
+{
+  "mode": "T2VA",
+  "duration_seconds": 15.0,
+  "shot_count": 1,
+  "references": [],
+  "subject_labels": [],
+  "speech_expectations": [
+    [
+      "S1",
+      "Chinese",
+      "三处对得上，错的是交班时刻。"
+    ]
+  ],
+  "minimum_words": 0,
+  "profile": "legacy_fixture",
+  "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "binding_sha256": "8203f1a97ee141df2e3e9c9737fdb92f644a3daad172de7da475401dd14906a9",
+  "expected_prompt_sha256": "2a7a6e83510eabccdbc3937cdace92747997d4138185f7d19dcd92bceeaf5596"
+}

@@ -1,0 +1,153 @@
+{
+  "segment_id": "INK_SEG_2",
+  "mode": "FL2VA",
+  "file": "INK_SEG_2.h3.txt",
+  "generation_clip_duration": 12,
+  "start_frame": 288,
+  "end_frame": 576,
+  "summary": "",
+  "speaker_map": {},
+  "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+  "reference_labels": [
+    "<Picture 1>",
+    "<Picture 2>"
+  ],
+  "format_pass": "PASSED",
+  "sha256": "d796e99ea0389e3016d616b2ade7d75e83638f0602474b333c7c2a5aff02fe1f",
+  "status": "READY_TO_UPLOAD",
+  "accepted": true,
+  "blockers": [],
+  "platform_status": "NOT_UPLOADED",
+  "binding_snapshot": {
+    "schema_version": "4.3.6",
+    "segment_id": "INK_SEG_2",
+    "mode": "FL2VA",
+    "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+    "references": [
+      {
+        "label": "<Picture 1>",
+        "file": "references/be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07.png",
+        "role": "actual opening target frame",
+        "upload_order": 1,
+        "sha256": "be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07",
+        "asset_version": "sha256:be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07",
+        "entity_id": null,
+        "shot_ids": [
+          "INK_SHOT_2"
+        ],
+        "active_ranges": [
+          {
+            "shot_id": "INK_SHOT_2",
+            "start_frame": 288,
+            "end_frame": 576
+          }
+        ],
+        "preserve": "See the authored retention relationship.",
+        "exclude": null,
+        "binding_status": "BOUND_LOCAL",
+        "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+        "platform_status": "NOT_UPLOADED",
+        "issues": [],
+        "source_file": "media/ink-middle.png"
+      },
+      {
+        "label": "<Picture 2>",
+        "file": "references/8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd.png",
+        "role": "actual final target frame",
+        "upload_order": 2,
+        "sha256": "8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd",
+        "asset_version": "sha256:8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd",
+        "entity_id": null,
+        "shot_ids": [
+          "INK_SHOT_2"
+        ],
+        "active_ranges": [
+          {
+            "shot_id": "INK_SHOT_2",
+            "start_frame": 288,
+            "end_frame": 576
+          }
+        ],
+        "preserve": "See the authored retention relationship.",
+        "exclude": null,
+        "binding_status": "BOUND_LOCAL",
+        "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+        "platform_status": "NOT_UPLOADED",
+        "issues": [],
+        "source_file": "media/ink-right.png"
+      }
+    ],
+    "subjects": [],
+    "requirements": [],
+    "issues": [],
+    "legacy_fixture": true,
+    "binding_sha256": "3c394cda1d023eb9cca3ae86091be4f9d9a7cbca2772f40130ef6baaf4ee4b8f"
+  },
+  "h3_detail_policy": {
+    "profile": "legacy_fixture",
+    "minimum_words": 0,
+    "target_words": 0
+  },
+  "detailed_description_english_words": null,
+  "execution_capabilities": "UNVERIFIED: confirm actual platform mode, duration and slots",
+  "visual_status": "UNVERIFIED",
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "references/be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07.png",
+      "role": "actual opening target frame",
+      "upload_order": 1,
+      "sha256": "be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07",
+      "asset_version": "sha256:be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07",
+      "entity_id": null,
+      "shot_ids": [
+        "INK_SHOT_2"
+      ],
+      "active_ranges": [
+        {
+          "shot_id": "INK_SHOT_2",
+          "start_frame": 288,
+          "end_frame": 576
+        }
+      ],
+      "preserve": "See the authored retention relationship.",
+      "exclude": null,
+      "binding_status": "BOUND_LOCAL",
+      "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+      "platform_status": "NOT_UPLOADED",
+      "issues": [],
+      "source_file": "media/ink-middle.png"
+    },
+    {
+      "label": "<Picture 2>",
+      "file": "references/8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd.png",
+      "role": "actual final target frame",
+      "upload_order": 2,
+      "sha256": "8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd",
+      "asset_version": "sha256:8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd",
+      "entity_id": null,
+      "shot_ids": [
+        "INK_SHOT_2"
+      ],
+      "active_ranges": [
+        {
+          "shot_id": "INK_SHOT_2",
+          "start_frame": 288,
+          "end_frame": 576
+        }
+      ],
+      "preserve": "See the authored retention relationship.",
+      "exclude": null,
+      "binding_status": "BOUND_LOCAL",
+      "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+      "platform_status": "NOT_UPLOADED",
+      "issues": [],
+      "source_file": "media/ink-right.png"
+    }
+  ],
+  "upload_card": "INK_SEG_2.upload.md",
+  "delivery_manifest": "INK_SEG_2.h3.txt.delivery.json",
+  "format_contract": "INK_SEG_2.h3.txt.check.json",
+  "format_receipt": "INK_SEG_2.h3.txt.acceptance.json",
+  "upload_card_sha256": "41701046823894f2a986c6db5a9c551504db50580892bf7fc70710a82db903e6"
+}

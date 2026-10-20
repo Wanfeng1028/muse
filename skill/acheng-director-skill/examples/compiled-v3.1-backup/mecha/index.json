@@ -1,0 +1,22 @@
+{
+  "status": "compiled-not-generated",
+  "production_sha256": "fc218ad1153db21926243e389bbbe769343e990fca0ef20a2b14cc1a23fc435d",
+  "segments": [
+    {
+      "segment_id": "MECHA_SEG01",
+      "mode": "Ref2VA",
+      "file": "MECHA_SEG01.h3.txt",
+      "generation_clip_duration": 14,
+      "speaker_map": {},
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "role": "storyboard blocking and ordering only",
+          "file": "references/e59d9fca54092bdb44496a15a925d362325c1c9478d7552551d56f856006d78a.png",
+          "sha256": "e59d9fca54092bdb44496a15a925d362325c1c9478d7552551d56f856006d78a"
+        }
+      ]
+    }
+  ]
+}

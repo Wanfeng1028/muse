@@ -1,0 +1,78 @@
+{
+  "status": "DRAFT_NOT_SUBMITTABLE",
+  "assets": [
+    {
+      "asset_id": "ART_MEI",
+      "status": "PASS",
+      "prompt_sha256": "7f57dec6a5e408d915b75169571a82c57c496491108ba61e0562feb88ba25b3d",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_BO",
+      "status": "PASS",
+      "prompt_sha256": "1a6a86e6cae6a8a9855379177725836eaf509eada63782fb632a9234a7c2d4aa",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_ARCHIVE",
+      "status": "PASS",
+      "prompt_sha256": "76535a520447b0a9c378b9da7e1a148045e4343bc4979382135adbed82a44824",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_DOCK",
+      "status": "PASS",
+      "prompt_sha256": "701a7c87a54727aa5230065279ac25b35d489656f6d283fe92b863fc8a278406",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_LEDGER",
+      "status": "PASS",
+      "prompt_sha256": "d91a979b14a79c122c7218936ea646397d7e9075cd872e500329d2e097c32290",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_TIDE",
+      "status": "PASS",
+      "prompt_sha256": "e59a1ea965eb0d415bdf2b93acb4f6c13f257791a7558403a3a14082225a7791",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_NOTICE",
+      "status": "PASS",
+      "prompt_sha256": "4a60bb88b4b6fe5392f9622a37f3edcd34303eb587deab93e4392a044f005d8b",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_SANDBAG",
+      "status": "PASS",
+      "prompt_sha256": "e6929264dda171406f1503f72ed70504b4ed330474683f46ab7f9beb0f86151d",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_STATIONERY",
+      "status": "PASS",
+      "prompt_sha256": "14648ad4b5911772c5edecb47962a43934f05047c44ad888c76c07156b63b8f2",
+      "reference_count": 0
+    },
+    {
+      "asset_id": "ART_KEYFRAME_01",
+      "status": "DRAFT_NOT_SUBMITTABLE",
+      "prompt_sha256": "13e732cadaf6fc574ff23fbbe28515cf8265903a61e07debf5fa9e703e5ced5d",
+      "reference_count": 5
+    },
+    {
+      "asset_id": "ART_KEYFRAME_05",
+      "status": "DRAFT_NOT_SUBMITTABLE",
+      "prompt_sha256": "9b72e783c86fe350e0fdee56103df938f04933da39906e09ae0c3942d9ee7ae5",
+      "reference_count": 5
+    },
+    {
+      "asset_id": "ART_KEYFRAME_09",
+      "status": "DRAFT_NOT_SUBMITTABLE",
+      "prompt_sha256": "3b911261e285c6f4afe8ef3179b6d48db3f176bf0a71185c93739b74a55fd78c",
+      "reference_count": 5
+    }
+  ],
+  "visual_status": "UNVERIFIED"
+}

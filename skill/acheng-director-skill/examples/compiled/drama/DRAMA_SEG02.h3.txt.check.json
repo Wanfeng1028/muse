@@ -1,0 +1,19 @@
+{
+  "mode": "T2VA",
+  "duration_seconds": 10.0,
+  "shot_count": 1,
+  "references": [],
+  "subject_labels": [],
+  "speech_expectations": [
+    [
+      "S1",
+      "Chinese",
+      "那就一起把门打开。"
+    ]
+  ],
+  "minimum_words": 0,
+  "profile": "legacy_fixture",
+  "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+  "binding_sha256": "b7cecf72549105eca6adb6207a4a3db25aac32f862623574ba782ea14770c6f8",
+  "expected_prompt_sha256": "153fb4ca8aedad373a4349c5083e2aa19fda50011eb54484a7836d964b4d7b04"
+}

@@ -1,0 +1,1040 @@
+{
+  "skill_name": "cinematic-director",
+  "version": "2.1.0",
+  "notes": "Behavior contract for the cinematic-director skill. Each case carries `mode` (the A-J output mode the request should trigger), `loads` (repo-relative reference/asset files the response should have consulted), and `assertions` (4-6 independently checkable claims about the response text, never about hidden reasoning). Every style-overlay case includes a copyright-safety assertion. How to run the suite, grade an assertion, and add a case: evals/run.md.",
+  "evals": [
+    {
+      "id": "rain-street-image-to-video",
+      "mode": "F",
+      "loads": [
+        "assets/video-prompt-template.md",
+        "references/prompt-lexicon.md",
+        "references/ai-video-tool-adapters.md"
+      ],
+      "prompt": "I have a keyframe of a Republican-era Chinese man in a crimson opera robe kneeling in a rainy old street. Write an image-to-video prompt that makes the scene move without changing identity.",
+      "expected_output": "A single image-to-video prompt with one camera behavior, a visible start state, one primary subject action with body mechanics, one environmental motion, an explicit end state, a verbatim invariant clause, and targeted negatives.",
+      "assertions": [
+        "The prompt states an explicit start state and an explicit end state for the action.",
+        "Exactly one dominant camera behavior is specified, or the camera is deliberately locked.",
+        "The clip carries one primary subject action plus at most one environmental motion.",
+        "An invariant clause names face, costume, location, and light direction as things that must not change.",
+        "The action is written as observable body mechanics rather than an emotional state such as 'he feels defeated'.",
+        "Negatives are limited to this shot's real risks (modern objects, text or watermark, extra people) rather than a long generic list."
+      ]
+    },
+    {
+      "id": "literary-scene-shot-plan",
+      "mode": "D",
+      "loads": [
+        "assets/shot-plan-template.md",
+        "references/cinematic-language.md",
+        "references/blocking-and-staging.md"
+      ],
+      "prompt": "Turn Lu Xun's short prose scene about a teacher explaining '立论' into a 30-second black-and-white film shot list.",
+      "expected_output": "A shot table driven by beats and subtext: visual thesis, per-shot story function, blocking, camera, lighting, continuity anchors, and AI generation notes, with durations that add up.",
+      "assertions": [
+        "The output states the subtext or dramatic core before the shot table.",
+        "Every shot row carries a story function stated in one clause.",
+        "The table includes blocking as start-to-end action and a camera movement column.",
+        "Shot count and per-shot durations sum to approximately 30 seconds.",
+        "Black and white is handled as a contrast and tonal-separation decision, not as the word 'black and white' dropped into a prompt.",
+        "The tone preserves the satire rather than converting the scene into generic horror spectacle."
+      ]
+    },
+    {
+      "id": "failed-video-repair",
+      "mode": "J",
+      "loads": [
+        "references/failure-modes.md",
+        "assets/qc-checklist.md"
+      ],
+      "prompt": "My AI video looks like a slideshow and the character never actually falls. I generated it from a keyframe of him standing at the top of a stone staircase, and this is the prompt I used: \"cinematic dramatic scene, a man falls down the stairs, emotional and intense atmosphere, beautiful lighting, 8K masterpiece, high quality\". Diagnose it and rewrite the prompt.",
+      "expected_output": "A named diagnosis (no-motion plus missing end state), the cheapest fix on the cost ladder, a revised prompt with visible falling mechanics and a defined endpoint, and a next move if it fails again.",
+      "assertions": [
+        "The output names the failure mechanism before rewriting anything, not just the symptom.",
+        "The revised prompt describes visible body mechanics of the fall, such as weight transfer, which knee gives, and what contacts the ground first.",
+        "The revised prompt carries one primary action and one camera behavior, not a list of simultaneous events.",
+        "The revised prompt states where the body finishes and in what pose.",
+        "The output places its fix on the cost ladder and stops at the cheapest level that addresses the named cause.",
+        "The output says what to change next if this generation also fails."
+      ]
+    },
+    {
+      "id": "symptom-only-no-artifact",
+      "mode": "J",
+      "loads": [
+        "references/failure-modes.md"
+      ],
+      "prompt": "My last batch came back as slideshows - nothing really moves. I'm away from my desk and don't have the prompts or the keyframes with me. What do I do?",
+      "expected_output": "Diagnosis of the no-motion mechanism with its code, the cost ladder in order, and the prompt shape to rewrite into - no finished prompt, because no prompt, keyframe, or clip was supplied - plus a single request for the original.",
+      "assertions": [
+        "The output names the failure mechanism and its code before proposing any rewrite.",
+        "No finished prompt is produced. What is delivered instead is a labelled prompt shape whose slots are left to be filled.",
+        "The response invents no shot content: no character, wardrobe, location, framing, or action is presented as though it were the user's.",
+        "The output asks for the original prompt and the input mode that produced it as a single request, and asks nothing else.",
+        "The fix ladder is given in cost order and the response stops where the missing artifact blocks further work.",
+        "The response stays within diagnosis, ladder, and that one request - no shot list, keyframe pack, sound plan, or continuity bible appears."
+      ]
+    },
+    {
+      "id": "sparse-brief-assumptions",
+      "mode": "A",
+      "loads": [
+        "assets/beat-sheet-template.md"
+      ],
+      "prompt": "Make me a short video about loneliness. That's all I've got right now.",
+      "expected_output": "A compact director analysis built on explicitly stated assumptions, a photographable visual thesis, and a first usable deliverable in the same reply, with at most one clarifying question.",
+      "assertions": [
+        "The output states its assumptions explicitly, covering at least duration, aspect ratio, and register.",
+        "The output asks at most one clarifying question.",
+        "The visual thesis is a concrete photographable change, not a theme statement such as 'isolation and modern life'.",
+        "A usable deliverable (beat outline or short shot list) appears in the same response rather than being deferred until the user answers.",
+        "Assumed values are marked as overturnable in one line, so the user can correct one without restarting.",
+        "The response stays proportional to a one-line brief and does not deliver a director's book, a continuity bible, and a full shot plan at once."
+      ]
+    },
+    {
+      "id": "one-line-ask-one-deliverable",
+      "mode": "F",
+      "loads": [
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "Give me one motion prompt: a hand pushes a coin across a bar counter until it stops against the base of a glass.",
+      "expected_output": "One motion prompt for the one shot asked for, at most three lines of rationale, and one tool-specific rule - nothing else.",
+      "assertions": [
+        "The response returns exactly one motion prompt for the one shot requested.",
+        "Rationale runs to at most three lines and at most one tool-specific rule is given.",
+        "A director's book, a continuity bible, and a full shot plan do not all appear - in fact none of the three does.",
+        "No neighbouring mode is volunteered: there is no beat sheet, sound plan, edit timeline, or QC section.",
+        "The prompt states the coin's end position against the base of the glass as an explicit end state.",
+        "Anything not supplied is handled as a one-line stated assumption rather than as a question back to the user."
+      ]
+    },
+    {
+      "id": "overloaded-single-clip-split",
+      "mode": "F",
+      "loads": [
+        "references/ai-video-tool-adapters.md",
+        "references/prompt-lexicon.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "One 5-second clip please: she runs into the kitchen, grabs the kettle, pours tea, spins around when the phone rings, answers it and laughs, while the camera orbits her and pushes in, and rain starts outside the window.",
+      "expected_output": "A motion-budget verdict showing the request is over limit, a split into two or three clips at a named pivot, and a compliant prompt per clip.",
+      "assertions": [
+        "The output says the request exceeds the one-action, one-camera-move budget and counts what is over: five subject actions, two simultaneous camera moves (orbit and push-in), and an environmental change.",
+        "The request is split into at least three clips, each cut at a named pivot moment.",
+        "Each resulting clip carries one primary subject action and one camera behavior, or a deliberately locked camera.",
+        "Adjacent split clips are separated by roughly two shot-size steps when the angle is unchanged, or by at least 30 degrees of angle plus one size step, so the join reads as coverage rather than as a stutter.",
+        "The output states the new total runtime and says plainly that the deliverable is no longer one 5-second clip.",
+        "The output does not compress the original action list into a single denser prompt."
+      ]
+    },
+    {
+      "id": "vertical-social-short",
+      "mode": "D",
+      "loads": [
+        "references/cinematic-language.md",
+        "references/genre-playbooks.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "9:16 for Reels: a barista notices someone they used to date walk past the shop window. About 20 seconds, three shots.",
+      "expected_output": "A three-shot vertical plan composed for 9:16 from the start: depth staging, larger subject scale, safe-area awareness, and durations that add to roughly 20 seconds.",
+      "assertions": [
+        "Framing is designed for 9:16 rather than described as a crop of a horizontal composition.",
+        "Staging uses foreground-midground-background depth or vertical stacking instead of lateral wide compositions.",
+        "Shot sizes are closer than the 16:9 equivalent, and any wide shot is explicitly justified.",
+        "Top and bottom safe margins for platform chrome are stated as numbers in the framing notes, with a note to confirm them against the current guide for the target platform.",
+        "Three shots are specified and their durations sum to approximately 20 seconds.",
+        "The output reconciles three shots across 20 seconds against the short-form register, either justifying the slower cut rate for a narrative beat or flagging that clips much over 4 seconds accumulate more identity and framing drift."
+      ]
+    },
+    {
+      "id": "two-hander-dialogue-coverage",
+      "mode": "F",
+      "loads": [
+        "assets/video-prompt-template.md",
+        "references/sound-and-dialogue.md",
+        "references/cinematic-language.md",
+        "references/ai-video-tool-adapters.md"
+      ],
+      "prompt": "Two detectives argue across a table in an interrogation room, about 30 seconds of back-and-forth. I want to generate it with an image-to-video tool that has native audio.",
+      "expected_output": "Single-speaker clips assembled as shot-reverse-shot, with the axis and eyelines specified, line lengths budgeted against clip duration, and at least one line moved off-screen or to reaction only.",
+      "assertions": [
+        "No generated clip contains two speaking characters.",
+        "The exchange is broken into single-speaker clips assembled as shot-reverse-shot.",
+        "The axis of action, screen direction, and eyeline directions are specified so the two singles cut together.",
+        "Line length is budgeted against clip duration at a stated speech rate of roughly 2.5 English words per second, and the arithmetic is shown for at least one line.",
+        "At least one line is converted to off-screen dialogue, a reaction-only shot, or voice-over."
+      ]
+    },
+    {
+      "id": "sound-and-music-plan",
+      "mode": "H",
+      "loads": [
+        "assets/sound-plan-template.md",
+        "references/sound-and-dialogue.md"
+      ],
+      "prompt": "The visuals for a 40-second sequence are done: a woman walks home through an empty parking garage and finds her car door standing open. Give me a sound and music plan.",
+      "expected_output": "A per-shot layered plan (room tone, ambience, foley, spot effects, score) with a continuous bed across shots, a placed silence, and a music brief stated by function and entry point.",
+      "assertions": [
+        "The plan is broken out per shot across room tone, ambience, foley, spot effects, and music layers.",
+        "At least one continuous ambience bed is specified to run across multiple shots as continuity glue.",
+        "A specific silence or drop-out is placed at a named moment and its function is stated.",
+        "The music brief specifies function, entry point, and exit point rather than only a genre or mood adjective.",
+        "Sound events are anchored to timecodes or shot numbers instead of described in general terms."
+      ]
+    },
+    {
+      "id": "eight-clip-assembly",
+      "mode": "I",
+      "loads": [
+        "assets/edit-timeline-template.md",
+        "references/editing-and-assembly.md"
+      ],
+      "prompt": "I generated eight clips for a chase scene, each between 4 and 9 seconds. How do I cut them together? The finished thing should land near 45 seconds.",
+      "expected_output": "A timeline with clip order, in/out points, head and tail handles trimmed, total runtime reconciled to 45 seconds, and the arithmetic conflict surfaced: eight cuts across 45 seconds is far slower than a chase register, so more than one segment has to come out of the longer clips or the register has to change.",
+      "assertions": [
+        "The output returns a timeline with clip order and in/out timecodes or trim amounts, with head and tail handles trimmed off each clip rather than clips laid end to end at full generated length.",
+        "Total runtime is computed and reconciled against the 45-second target, and any gap is closed by a named move rather than by rounding.",
+        "The output computes the implied average shot length and notes that eight cuts across 45 seconds is about 5.6 seconds each, far slower than the roughly 1.5 to 3 seconds an action or chase register wants.",
+        "That conflict is resolved: either more than one segment is cut out of the longer clips to raise the cut count, or the output states plainly that the sequence will read at a slower register than a chase.",
+        "Each cut names its transition and the motivation for cutting at that frame, with hard cut as the default.",
+        "Audio layers running under the cut are specified alongside the picture edit."
+      ]
+    },
+    {
+      "id": "recurring-character-continuity-bible",
+      "mode": "G",
+      "loads": [
+        "references/continuity-bible.md",
+        "references/image-model-adapters.md"
+      ],
+      "prompt": "I have a courier character named Lin appearing in six scenes across three locations. Set up whatever I need so she stays the same person throughout.",
+      "expected_output": "A continuity bible: a verbatim identity string, separate wardrobe/prop/location entries, an asset and seed naming convention, a state-change ledger, and the reference stills to build before any video.",
+      "assertions": [
+        "A reusable identity string is written out in a form that can be pasted verbatim into every prompt.",
+        "Wardrobe, props, and locations are tracked as entries separate from the character entry.",
+        "A naming and versioning convention for assets and seeds is specified.",
+        "State changes across scenes, such as dirt, damage, wardrobe change, or time of day, are tracked in a ledger rather than left implicit.",
+        "The output specifies which reference stills must exist before any video generation starts."
+      ]
+    },
+    {
+      "id": "beat-sheet-before-shots",
+      "mode": "B",
+      "loads": [
+        "assets/beat-sheet-template.md"
+      ],
+      "prompt": "Here's a one-page scene: a father and daughter repot a plant on a balcony while carefully not discussing the fact that she is moving away. Break it into beats before we talk about shots.",
+      "expected_output": "A beat map, not a shot list: per beat a story function, character state in and out, a photographable visual action, and a pressure delta, with the scene's turn identified.",
+      "assertions": [
+        "The output returns beats rather than shots, and assigns no shot sizes, lenses, or camera moves.",
+        "Each beat names a story function and a change in pressure or power.",
+        "Character state entering and leaving each beat is stated.",
+        "The beat where the balance actually changes is explicitly identified as the turn.",
+        "Each beat has a visual action attached that could be photographed."
+      ]
+    },
+    {
+      "id": "director-book-web-series",
+      "mode": "C",
+      "loads": [
+        "assets/director-book-template.md",
+        "references/lighting-and-color.md",
+        "references/genre-playbooks.md"
+      ],
+      "prompt": "I'm making a six-episode vertical web series set in a night market. Before we shoot anything, give me the rules everyone on the team should follow.",
+      "expected_output": "A director's book: lens and framing policy, allowed and forbidden camera moves, lighting logic and key direction, palette, performance register, target ASL, sound direction, and verbatim invariant clauses.",
+      "assertions": [
+        "The output defines lens policy, camera grammar, lighting logic, palette, and performance register as reusable rules rather than scene-specific choices.",
+        "Both an allowed move set and a forbidden move set are stated.",
+        "Invariant clauses are written out verbatim for pasting into every prompt.",
+        "A target average shot length or editing rhythm is given as a number or range.",
+        "The output does not jump into a shot list for one specific scene."
+      ]
+    },
+    {
+      "id": "face-drift-across-shots",
+      "mode": "J",
+      "loads": [
+        "references/failure-modes.md",
+        "assets/qc-checklist.md",
+        "references/image-model-adapters.md",
+        "references/continuity-bible.md"
+      ],
+      "prompt": "Same character in five shots, but her face changes in every clip - sometimes older, sometimes a different nose. My prompts are nearly identical each time.",
+      "expected_output": "An identity-drift diagnosis with the mechanism named, a fix at the keyframe and reference layer rather than the prompt-wording layer, and a duration/size change with numbers.",
+      "assertions": [
+        "The output identifies identity drift as the failure and names the mechanism rather than restating the symptom.",
+        "The fix operates on the keyframe or reference layer, not only on the video prompt wording.",
+        "A character sheet or reference-binding step is prescribed before anything is regenerated.",
+        "The fix carries numbers, not directions alone: a shorter clip duration in seconds for face-carrying shots, and a minimum face height as a share of frame for the reference still.",
+        "The output warns that adding phrases like 'consistent face, same person' to the prompt will not fix this."
+      ]
+    },
+    {
+      "id": "period-keyframes-anachronism",
+      "mode": "E",
+      "loads": [
+        "assets/keyframe-prompt-template.md",
+        "references/image-model-adapters.md",
+        "references/failure-modes.md"
+      ],
+      "prompt": "I need four keyframe prompts for a 1935 Shanghai tailor shop scene. Last attempt the model put a modern zipper on the garment, English printed signage on the wall, and an LED strip above the counter.",
+      "expected_output": "Four keyframe prompts with period-correct specifics named object by object, a repeated era-lock invariant, targeted anachronism exclusions, period-plausible practicals, and a pre-generation check.",
+      "assertions": [
+        "Each prompt names period-correct specifics such as fasteners, materials, signage, and light sources instead of relying on words like 'vintage' or 'period'.",
+        "An era-lock clause is repeated verbatim across all four prompts.",
+        "The three reported errors are tested against the period rather than all excluded on the user's say-so: English and bilingual shop signage was ordinary in 1930s Shanghai, so the real anachronisms are the LED strip and, on a Chinese-tailored garment, the metal zipper in place of frog closures.",
+        "Anachronism exclusions name specific objects rather than an unresolvable category such as 'no modern objects', and the list stays short.",
+        "Light sources are period-plausible and named as specific practicals rather than as a color temperature or a mood.",
+        "The output includes a pre-generation check for anachronisms before any video generation is spent."
+      ]
+    },
+    {
+      "id": "product-commercial-spot",
+      "mode": "D",
+      "loads": [
+        "references/genre-playbooks.md",
+        "references/product-and-macro.md",
+        "references/lighting-and-color.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "15-second spot for a stainless steel travel mug. The client keeps saying they want it to feel premium.",
+      "expected_output": "A commercial-playbook plan: product as protagonist, controlled specular lighting specified by source shape and size, a benefit demonstration, a placed hero shot, and durations budgeted to 15 seconds including the end card.",
+      "assertions": [
+        "The plan uses commercial defaults such as product hero framing and macro detail rather than character-drama coverage.",
+        "Lighting is specified as reflection control on a specular metal surface, naming source shape and size, not mood adjectives.",
+        "Screen time is reserved for a function or benefit demonstration and the hero shot is placed at a specific point.",
+        "Shot durations sum to 15 seconds with end card or logo time accounted for.",
+        "The word 'premium' is converted into concrete decisions instead of being repeated as a prompt adjective."
+      ]
+    },
+    {
+      "id": "shot-plan-risk-banding",
+      "mode": "D",
+      "loads": [
+        "assets/shot-plan-template.md",
+        "references/production-workflow.md",
+        "references/cinematic-language.md"
+      ],
+      "prompt": "Six shots I want to generate this week: a locked wide of an empty platform; a woman stepping onto the train; two men arguing across a table; a hand sliding a ticket under a glass window; a 10-second orbit around a parked car; a close-up of her face as the train pulls out. Give me the shot plan with a risk read on each so I know what to attempt first.",
+      "expected_output": "A shot table whose Risk cell carries the six scored dimensions, a 0-18 total, and a Green/Amber/Red band read off the published boundaries, with the order of work following the bands rather than the user's listing order.",
+      "assertions": [
+        "Every shot row is scored on the six named dimensions - action complexity, people in frame, camera movement, duration, physical interaction, continuity dependency - each on a 0 to 3 scale.",
+        "Each row's total sits on the 0 to 18 scale and is banded Green, Amber, or Red at the published boundaries 0-5, 6-11, and 12-18, not on an invented low/medium/high scale.",
+        "The ticket-under-the-window shot scores 3 on physical interaction, because a moving object has to land against a fixed surface at a specific place.",
+        "The 10-second orbit lands in Amber, driven by its camera and duration scores, and one of those two dimensions is simplified before the shot is attempted.",
+        "The order of work follows the bands - Green batched in parallel, Amber serial with one variable changed per version - rather than the order the user listed the shots in.",
+        "The rubric scores are kept separate from the per-clip motion budget: no rubric total is summed into or converted from a motion-budget score."
+      ]
+    },
+    {
+      "id": "horror-restraint",
+      "mode": "D",
+      "loads": [
+        "references/genre-playbooks.md",
+        "references/sound-and-dialogue.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "A woman hears something moving in the attic and climbs up to look. 25 seconds. It needs to actually be frightening.",
+      "expected_output": "A restrained horror plan: locked or barely-moving camera, a delayed reveal with a stated withholding duration, threat carried by off-screen and negative space, and sound leading the scene.",
+      "assertions": [
+        "The camera plan favors locked or barely-moving shots over continuous movement.",
+        "The reveal is delayed, and the output states what is withheld and for how long in seconds or shots.",
+        "Negative space or off-screen space carries the threat in at least one shot.",
+        "Sound is given a leading role, with at least one deliberate silence or drop-out placed at a named moment.",
+        "The key-to-fill ratio is given as a number in the low-key range rather than the lighting being described as 'dark' or 'moody'.",
+        "The output explicitly avoids constant handheld shake, orbits, and rapid cutting as default horror grammar."
+      ]
+    },
+    {
+      "id": "comedy-register",
+      "mode": "D",
+      "loads": [
+        "references/genre-playbooks.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "A man tries to return a sofa to a furniture store without a receipt. Make it funny. 30 seconds.",
+      "expected_output": "A comedy plan with wider framing, longer holds, at least one joke staged inside a single frame, flat performance register, even lighting, and the timing beat located in seconds.",
+      "assertions": [
+        "Framing is wider and held longer than a dramatic equivalent, and the output says so explicitly.",
+        "At least one joke is staged inside a single unbroken frame rather than assembled in the cut.",
+        "The performance register is specified as deadpan or committed-straight rather than expressive and emotional.",
+        "The lighting plan is even and high key, with the key-to-fill ratio given as a number, rather than low-key and moody.",
+        "The output locates the timing beat, naming the hold before or after the punchline in seconds."
+      ]
+    },
+    {
+      "id": "genre-versus-style-precedence",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/12_fincher.md",
+        "references/genre-playbooks.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "It's a romantic comedy scene - two people meet cute at a laundromat - but shoot it in the style of Fincher.",
+      "expected_output": "A plan that states the director lens outranks the genre playbook, applies the lens to camera, lens, and lighting, and names exactly what genre defaults were overridden and what was kept.",
+      "assertions": [
+        "The output states explicitly that the named director lens outranks the genre playbook.",
+        "Camera, lens choice, and lighting follow the director lens rather than the comedy defaults.",
+        "The output names which genre defaults were overridden and which were kept, such as the scene outcome or the performance register.",
+        "The two are not averaged into a neutral middle - the plan reads as one coherent lens applied to comedy material.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Fincher film."
+      ]
+    },
+    {
+      "id": "unknown-tool-capability-routing",
+      "mode": "F",
+      "loads": [
+        "references/ai-video-tool-adapters.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "My studio runs an in-house video model that was never released publicly and has no documentation I can share with you. Write me prompts for it - a woman opens a window and leans out over a wet street.",
+      "expected_output": "Capability-first routing: no invented feature claims, a short control-surface question set, a named prompt shape, and a prompt that degrades safely if a surface turns out to be missing.",
+      "assertions": [
+        "The output asserts no specific features, parameters, versions, or limits for the unfamiliar tool.",
+        "The output routes by control surface, asking which of a short list the tool exposes, such as first-frame slot, last-frame slot, negative field, camera control, motion strength, duration, and seed.",
+        "A usable prompt is delivered in the same reply rather than withheld pending the answer.",
+        "The output names which prompt shape it selected and what would change if a different surface turns out to exist.",
+        "Exclusions are given both as a negative-field version and as positive statements about the frame, in case no negative field exists."
+      ]
+    },
+    {
+      "id": "first-last-frame-pair-prompt",
+      "mode": "F",
+      "loads": [
+        "references/ai-video-tool-adapters.md",
+        "assets/video-prompt-template.md",
+        "references/prompt-lexicon.md"
+      ],
+      "prompt": "My tool takes a first frame and a last frame. I have two approved stills of the same woman at a workshop bench: in the first she is square to the bench and the desk lamp beside her is off, in the second she is turned three-quarters away and the lamp is on. Write the prompt.",
+      "expected_output": "An S3 keyframe-pair prompt: bridge statement, exactly one permitted transformation, camera path, easing, the identical-across-interpolation clause, and exclusions - with the two-change conflict caught and resolved.",
+      "assertions": [
+        "The prompt opens with a bridge statement naming the first image as the start and the second as the end.",
+        "The output catches that the two stills change both body orientation and light state, and resolves it - either by dropping one change or by building a middle keyframe and splitting into two clips - rather than asking for both in one interpolation.",
+        "The camera path between the two framings is stated, or the camera is explicitly held in position.",
+        "Timing and easing are stated, for example steady throughout or decelerating into the last frame.",
+        "A clause lists what is identical in both frames - face, wardrobe, set, light direction - as things the interpolation must not touch.",
+        "The output names the shape it selected as S3 and does not spend words re-describing the contents of the two approved stills."
+      ]
+    },
+    {
+      "id": "multi-shot-timestamped-sequence",
+      "mode": "F",
+      "loads": [
+        "references/ai-video-tool-adapters.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "My tool takes one prompt with timestamped segments and returns the whole sequence in a single generation. Write me a 10-second, three-segment prompt: a courier waits at a service counter, is handed a sealed envelope, and walks out.",
+      "expected_output": "An S4 multi-shot timestamped prompt: a global block carrying style, aspect, palette, identity locks, continuity rules and the cut rule; three timestamped segment lines carrying action and camera only; global exclusions once at the end.",
+      "assertions": [
+        "The prompt opens with a global block carrying style, aspect, palette, per-character identity locks, continuity rules, and a cut rule.",
+        "Every segment is timestamped in mm:ss-mm:ss form and the three segments tile the full ten seconds with no gap and no overlap.",
+        "Each segment line carries a shot size or angle, one action, one camera instruction, and at most one light or sound cue - and nothing else.",
+        "No segment line contains an emotion word such as nervous, anxious, impatient, or relieved; the segments carry behaviour only.",
+        "No segment line re-describes the courier's face, hair, or wardrobe, and no segment line restates a lighting fact - both live in the global block.",
+        "Exclusions are given once at the end as global exclusions rather than repeated inside each segment."
+      ]
+    },
+    {
+      "id": "three-strike-shot-replan",
+      "mode": "J",
+      "loads": [
+        "references/failure-modes.md",
+        "assets/qc-checklist.md",
+        "references/editing-and-assembly.md"
+      ],
+      "prompt": "I've rewritten this prompt three times and the shot still fails - she's supposed to catch a falling glass before it hits the floor. Rewrite it again for me.",
+      "expected_output": "A refusal to produce a fourth reword of the same shot, one three-strike move chosen and justified against the physics failure, and a concrete replanned shot or pair of shots.",
+      "assertions": [
+        "The output does not simply reword the same shot's prompt a fourth time, and says why a fourth rewrite is the wrong move.",
+        "Exactly one shot-changing move is chosen - shorter, closer, simplified, split, first-and-last frame, substituted, or off-screen.",
+        "The chosen move is justified against the specific failure of contact and physics rather than picked arbitrarily.",
+        "The replan is delivered as a concrete new shot specification or pair of shots with prompts, not as general advice.",
+        "The output says what the cut will do to sell the action that is no longer being generated."
+      ]
+    },
+    {
+      "id": "two-director-mix-must-pick-one",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/03_kubrick.md",
+        "references/director_styles/README.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct this in the style of Kubrick and Wong Kar-wai combined: a man waits alone in a hotel corridor for someone who is not coming.",
+      "expected_output": "One lens chosen and named, justified in one or two lines against the dramatic core, with a short statement of what the rejected lens would have changed, and a plan consistent with the chosen lens only.",
+      "assertions": [
+        "Exactly one style lens is chosen and named.",
+        "The choice is justified in one or two lines against the scene's dramatic core.",
+        "The output states specifically what the rejected lens would have changed in camera, palette, pacing, or sound.",
+        "The delivered plan is internally consistent with the chosen lens and does not blend both parameter sets.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Kubrick or Wong Kar-wai film."
+      ]
+    },
+    {
+      "id": "unlisted-director-fallback",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/README.md",
+        "references/director_styles/example_comparisons.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct this in the style of Andrei Zvyagintsev: a family sits through a lawyer's reading of a will in a cold municipal office.",
+      "expected_output": "A plain statement that no module exists for the named director, the nearest available module named with the axis it differs on, an explicit choice of what is actually being directed to, and a usable shot plan in the same reply.",
+      "assertions": [
+        "The output states plainly that the library carries no module for the named director, rather than proceeding as though one existed.",
+        "It names the nearest module from the twenty available and says which axis that module differs on - camera, palette, pacing, or sound.",
+        "It does not silently substitute the nearest module's parameters and present the result as the requested director's style.",
+        "It states in one line what the plan is actually directed to - the nearest module as a starting position, or genre and project tone - before delivering it.",
+        "A usable shot plan arrives in the same response rather than being withheld until the user picks a substitute.",
+        "The output does not copy specific shots, characters, or dialogue from any actual film by the named director or by the substitute."
+      ]
+    },
+    {
+      "id": "chinese-request-english-prompts",
+      "mode": "D",
+      "loads": [
+        "assets/shot-plan-template.md",
+        "references/prompt-lexicon.md",
+        "references/ai-video-tool-adapters.md"
+      ],
+      "prompt": "我要做一个 20 秒的国风短片分镜：雨夜青石巷，一位女子撑着油纸伞等人，最后转身离开。准备用 Runway 生成，帮我出分镜和提示词。",
+      "expected_output": "Chinese prose, headings, and rationale, with the generation prompts written in English because the named tool is English-first, craft terms glossed bilingually once, and durations summing to about 20 seconds.",
+      "assertions": [
+        "All prose, headings, and rationale are in Chinese, matching the user's input language.",
+        "The generation prompts themselves are in English, because the named tool is English-first.",
+        "Craft terms are glossed bilingually at least once so the reader can map the Chinese term to the English prompt word.",
+        "Shot count and per-shot durations sum to approximately 20 seconds.",
+        "Every English prompt carries the same invariant clause verbatim for identity, costume, and light direction."
+      ]
+    },
+    {
+      "id": "chinese-ui-tool-native-prompt",
+      "mode": "F",
+      "loads": [
+        "references/ai-video-tool-adapters.md",
+        "references/prompt-lexicon.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "我用即梦（Dreamina）做图生视频。素材是一张老太太站在灶台前擀面的图，想让她抬头看向门口。帮我写提示词。",
+      "expected_output": "Chinese prose and rationale, and the generation prompt written in Chinese only - the named tool's interface and documentation are Chinese and the user asked for no mirror - with camera and lighting terms in their standard Chinese trade forms and the language assumption stated in one line.",
+      "assertions": [
+        "The generation prompt is written in Chinese, and no English mirror is volunteered, because the named tool's interface is Chinese and the user did not ask for one.",
+        "Camera and lighting terms appear in their standard Chinese trade forms such as 推镜, 侧逆光, or 景深, rather than as transliterated English.",
+        "Culturally specific nouns such as 灶台 and 擀面杖 are named concretely in the prompt rather than generalized into an unspecified kitchen.",
+        "The head-lift carries a stated direction and duration and an explicit end state for the gaze, not just 'she looks up'.",
+        "The output asserts no version number, price, duration cap, or exact parameter name for the tool, and names its controls as capability classes to confirm in the current interface."
+      ]
+    },
+    {
+      "id": "spielberg-style-attic-hatch",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/01_spielberg.md",
+        "references/cinematic-language.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 20-second sequence in the style of Spielberg: a ten-year-old pushes open a hatch in her bedroom ceiling and a shaft of light comes down through it.",
+      "expected_output": "A shot plan that visibly applies the lens: the reaction shot cut before the reveal, camera dropped to the child's eyeline, three-plane depth, a visible hard beam through haze, and wonder written as muscle instructions.",
+      "assertions": [
+        "The reaction is staged and shot before the thing being reacted to is revealed, and the plan says which shot delivers each.",
+        "Camera height drops to the child's eyeline for the wonder beat, with the height stated in metres, and the camera is locked there.",
+        "At least one composition stacks three readable planes of depth, and a hard beam through haze is named as the light source.",
+        "Camera moves stay inside the lens's allowed set - slow dolly-in, walking-pace follow, crane down - with dutch angle and orbit excluded by name.",
+        "Wonder is written as executable muscle instructions such as brows lifting, lips parting, breath held, rather than as the word awe.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Spielberg film."
+      ]
+    },
+    {
+      "id": "hitchcock-style-stairwell-wait",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/02_hitchcock.md",
+        "references/cinematic-language.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 25-second suspense beat in the style of Hitchcock: a woman climbs a stairwell to collect a parcel she was told not to open, while the audience already knows someone is waiting on the landing above.",
+      "expected_output": "A plan built on shared knowledge rather than surprise: the look/what-is-seen/reaction structure on a held eyeline axis, foreground obstruction, a threat instructed not to move, delayed cutting, and one clock in the sound bed.",
+      "assertions": [
+        "The suspense is built by giving the audience information the character lacks, and the plan names the shot that delivers that information first.",
+        "The look, what-is-seen, reaction three-shot structure is used at least once, with the eyeline axis held across all three shots.",
+        "At least one shot uses a foreground obstruction occupying a stated fraction of the frame, or a doorway or stair frame-within-frame.",
+        "The threat is explicitly instructed not to move, and shot lengths stay in the delay range of roughly 4 to 9 seconds rather than cutting fast.",
+        "The sound plan names one recurring clock element carrying time, and drops music for the tightest few seconds.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Hitchcock film."
+      ]
+    },
+    {
+      "id": "kubrick-style-corporate-office",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/03_kubrick.md",
+        "references/cinematic-language.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 15-second opening in the style of Kubrick: a corporate CEO walks down a glass office corridor toward a glass meeting room where a board is waiting.",
+      "expected_output": "A shot plan and prompt that visibly applies the lens: symmetric one-point perspective, locked or pure slow dolly, cold controlled light, restrained cutting, wide lens stated in mm.",
+      "assertions": [
+        "Composition is symmetric and centered, or built on one-point perspective down the corridor.",
+        "The camera move is locked or a slow pure dolly - not handheld, not orbiting.",
+        "The lighting and color logic is cold, controlled, and formally motivated by named sources.",
+        "A wide focal length is named in mm, in the 18 to 25mm full-frame range this lens uses, and the one-point perspective is produced by squaring the camera to the corridor's end wall rather than credited to the lens alone.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Kubrick film."
+      ]
+    },
+    {
+      "id": "kurosawa-style-rain-formation",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/04_kurosawa.md",
+        "references/blocking-and-staging.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 20-second sequence in the style of Kurosawa: forty villagers wait in a downpour on a muddy slope for riders who have not arrived.",
+      "expected_output": "A plan where weather acts on bodies, long-lens compression stacks the crowd into lateral bands, the formation has a stated geometry, backlight turns rain into bright lines, and the camera stays lateral or locked.",
+      "assertions": [
+        "Rain is written as an effect on bodies - soaked cloth clinging, heavy gait, feet sinking - not as a particle layer over dry, upright people.",
+        "Long-lens compression stacks the crowd into lateral bands, with focal lengths named in mm.",
+        "The formation carries a stated geometry, and high ground versus low ground carries the power relationship.",
+        "Backlight is specified so rain, dust, or breath reads as bright lines, and the frame is checked to still separate tonally in black and white.",
+        "Camera moves are limited to lateral tracking or locked holds, with orbit and default handheld excluded by name.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Kurosawa film."
+      ]
+    },
+    {
+      "id": "scorsese-style-club-entrance",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/05_scorsese.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "I have a keyframe of a man in a sharkskin suit stepping through the service door into a crowded 1970s club. Write the image-to-video prompt, directed in the style of Scorsese.",
+      "expected_output": "A tracking prompt with an explicit stop point and holding composition, an explicit speed curve, background figures each given their own business, in-frame practicals allowed to blow out through haze, and diegetic source music.",
+      "assertions": [
+        "The camera move is written with an explicit stop point and the composition it holds on, not as open-ended drift through the space.",
+        "A speed curve is stated - slow start, faster middle, hard stop - rather than one constant glide.",
+        "Background figures are each given their own business rather than being described collectively as a crowd.",
+        "Practical sources are named in frame and allowed to blow out, with haze specified so each source shows a visible cone.",
+        "Any music is named as diegetic, coming from a visible or nameable in-world source.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Scorsese film."
+      ]
+    },
+    {
+      "id": "fellini-style-seaside-procession",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/06_fellini.md",
+        "references/blocking-and-staging.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 20-second sequence in the style of Fellini: a brass band and a straggle of townspeople parade down to a winter beach at dawn.",
+      "expected_output": "A plan with three to five individually named figures each with their own business, a drifting camera that hands off face to face, continuous entries from both frame edges, music setting the walking tempo, and wide focal lengths kept distorted.",
+      "assertions": [
+        "Between three and five individual figures are named, each with their own costume and their own ongoing action, instead of a generic crowd.",
+        "The camera drifts and hands off from one face to the next, reframing rather than settling, with the symmetric locked wide excluded by name.",
+        "Figures enter and exit continuously from both frame edges, and at least one foreground passer-by is specified with a frame share.",
+        "The music sets the tempo first and the walking is written to that beat.",
+        "Wide focal lengths are named in mm and the frontal distortion is kept rather than corrected with a longer lens.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Fellini film."
+      ]
+    },
+    {
+      "id": "bergman-style-two-face-confession",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/07_bergman.md",
+        "references/cinematic-language.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 90-second scene in the style of Bergman: a woman finally tells her sister something she has withheld for years, in a bare room.",
+      "expected_output": "A handful of very long takes rather than shot-reverse-shot, a two-face composition, a focus pull standing in for a cut, an imperceptible or absent camera move, a squarer aspect, and placed silences with stated durations.",
+      "assertions": [
+        "The scene is covered in a small number of very long takes, with an average shot length stated in the 20 to 90 second range, and standard shot-reverse-shot is excluded by name.",
+        "At least one two-face composition places one face frontal and one in profile, overlapping at their edges.",
+        "A cut is replaced by a focus pull between the two faces, with the pull's duration stated in seconds.",
+        "The camera is locked or moves at a rate the audience cannot perceive, and the aspect ratio is squarer than 16:9 so the face fills the frame vertically.",
+        "Silences are placed with stated durations, and the plan says whose face is on screen during each one.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Bergman film."
+      ]
+    },
+    {
+      "id": "tarkovsky-style-flooded-room",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/08_tarkovsky.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "I have a keyframe of a man sitting on the floor of a flooded, abandoned room while rain comes through the ceiling. Write an image-to-video prompt for it in the style of Tarkovsky.",
+      "expected_output": "A prompt that spends its budget on environment: minimal subject action, at least two named continuing environmental motions, a constant sub-metre camera move or none, the longest clip the tool allows, and soft low-contrast naturalistic light.",
+      "assertions": [
+        "The subject action is reduced to a minimum - one breath, one small movement - and most of the description budget goes to the environment.",
+        "At least two continuing environmental motion sources are named, so the clip cannot render as a photograph that breathes.",
+        "The camera is locked or moves at a constant, un-accelerated rate covering under one metre across the whole clip.",
+        "The clip length requested is at the long end of what the tool allows rather than split into several short shots.",
+        "The light is soft, naturalistic, and low-contrast, with hard-edged shadows and saturated colour excluded by name.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Tarkovsky film."
+      ]
+    },
+    {
+      "id": "wong-kar-wai-style-rain-street",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/09_wong_kar_wai.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "I have a keyframe of a Republican-era Chinese man in a crimson opera robe kneeling in a rainy old street. Write me an image-to-video prompt for it, but direct it in the style of Wong Kar-wai.",
+      "expected_output": "An image-to-video prompt whose camera, color, pacing, and sound choices visibly differ from the unstyled version: handheld or frame-within-frame, neon practicals on wet surfaces, one time-distorted beat, interior register.",
+      "assertions": [
+        "The framing uses a handheld feel or a narrow frame-within-frame composition.",
+        "Lighting includes neon or mixed-temperature practicals and wet reflective surfaces named as sources.",
+        "One beat is time-distorted through slow motion, step-print, or a stated shutter or frame-rate treatment.",
+        "Interior state is carried by voice-over or sound rather than by on-screen dialogue explaining it.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Wong Kar-wai film."
+      ]
+    },
+    {
+      "id": "nolan-style-countdown-crosscut",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/10_nolan.md",
+        "references/editing-and-assembly.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 30-second crosscut in the style of Nolan: a technician has to close a pressure valve on a rig while, elsewhere, a pilot is running out of fuel.",
+      "expected_output": "A crosscut structure with a tightening rotation interval, one new fact per return, scale written as named materials and dimensions, exposition delivered under pressure, and each line generated separately on a shared material vocabulary.",
+      "assertions": [
+        "The structure is a crosscut with a stated rotation interval that tightens as the sequence runs.",
+        "Each cut back to a line delivers one new piece of information rather than restating where that line already was.",
+        "Scale is written as named materials and dimensions rather than as the words epic, vast, or monumental.",
+        "Exposition is delivered under physical pressure, with no character stopping to explain the rules.",
+        "Each line is planned as its own generation sharing one material, colour-temperature, and grain vocabulary, and holographic or glowing-interface imagery is excluded by name.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Nolan film."
+      ]
+    },
+    {
+      "id": "villeneuve-style-desert-encounter",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/11_villeneuve.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "Direct a 10-second shot in the style of Villeneuve: a single figure in a long coat walks toward a half-buried monolithic structure across an orange-fog desert.",
+      "expected_output": "A prompt with monumental scale contrast, geometric framing, a slow lateral or push move, a single dust-dominated palette, low-frequency sound, and minimal or no dialogue.",
+      "assertions": [
+        "A scale contrast between the figure and the structure is established with a stated proportion or framing device.",
+        "The camera move is slow and geometric - lateral, push, or locked - not handheld or kinetic.",
+        "The color is one dominant palette carried by dust or fog atmosphere rather than mixed sources.",
+        "The sound brief names low-frequency rumble or sustained tones and keeps dialogue minimal or absent.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Villeneuve film."
+      ]
+    },
+    {
+      "id": "refn-style-corridor-ritual",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/13_refn.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "I have a keyframe of a woman standing dead centre at the end of a magenta-lit corridor. Write an image-to-video prompt for it in the style of Refn.",
+      "expected_output": "A prompt that locks camera and body and gives the entire motion budget to light: colour boundary placed first, a named colour shift with a duration, absolute symmetry, a long clip, and signage and text excluded.",
+      "assertions": [
+        "The prompt states explicitly that the camera does not move and the subject does not walk.",
+        "The only motion budgeted is a light change, written as a named colour shift with a duration in seconds.",
+        "The position of the hard-edged colour boundary in the frame is stated before the subject's pose is described.",
+        "Absolute bilateral symmetry is specified with the subject's centre line on the frame centre, and the requested clip length sits in the 8 to 15 second range.",
+        "Street signage, on-screen text, and cyberpunk crowd imagery are excluded by name.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Refn film."
+      ]
+    },
+    {
+      "id": "bi-gan-style-small-town-walk",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/14_bi_gan.md",
+        "references/blocking-and-staging.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a single long take in the style of Bi Gan: a young man walks through a misty Southwest-China small town at night, past a pool hall, a karaoke bar, and a bridge tunnel, looking for someone.",
+      "expected_output": "One continuous take with internal beats and timecodes, wet neon practicals, low-saturation humid palette, cassette-era sound texture or poetic voice-over, and an ending ambiguous between memory and reality.",
+      "assertions": [
+        "The output is structured as one continuous take rather than a cut shot list.",
+        "The take is broken into internal beats with timecodes so it can actually be generated or extended.",
+        "Lighting uses wet reflections and mixed neon and incandescent practicals named as sources.",
+        "The sound brief names cassette-era pop, ambient rain or drip, or a poetic voice-over.",
+        "The ending stays ambiguous between memory and reality rather than resolving cleanly.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Bi Gan film."
+      ]
+    },
+    {
+      "id": "zhang-yimou-style-dyed-cloth-courtyard",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/15_zhang_yimou.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 12-second sequence in the style of Zhang Yimou: dozens of workers hang lengths of dyed cloth to dry across a courtyard while one woman searches for someone among them.",
+      "expected_output": "A plan built on a single saturated color field, mass movement choreographed as graphic pattern with a stated count, one figure separated from the mass, and composed rather than handheld camera.",
+      "assertions": [
+        "The image is built on a single saturated dominant color field rather than a mixed palette.",
+        "Mass movement is choreographed as a graphic pattern - rows, waves, or repetition - with a count or scale stated.",
+        "One figure is separated from the mass by color, scale, or isolation so the eye has a subject.",
+        "The camera plan is composed and deliberate - locked, crane, or lateral track - not handheld.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Zhang Yimou film."
+      ]
+    },
+    {
+      "id": "hou-hsiao-hsien-style-kitchen-argument",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/16_hou_hsiao_hsien.md",
+        "references/blocking-and-staging.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a scene in the style of Hou Hsiao-hsien: a family eats and argues about money in a back kitchen while a child does homework at the same table.",
+      "expected_output": "One to three static long takes shot from outside the room through a doorway, three simultaneous planes of small activity, an explicit no-move instruction, a hold on the emptied room, and overlapping half-audible dialogue over a continuous ambience bed.",
+      "assertions": [
+        "The scene is covered in one to three shots, with no close-up and no shot-reverse-shot.",
+        "The camera is placed outside the room and shoots through a doorway or window frame, with a focal length named in the 50 to 100mm range.",
+        "Three simultaneous planes of activity are specified, each carrying its own small continuing motion.",
+        "The instruction that the camera does not move, does not zoom, and does not push in is stated explicitly, and the shot holds on the room after people have left it.",
+        "Dialogue is overlapping and partly unintelligible over a continuous location ambience bed, with no score.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Hou Hsiao-hsien film."
+      ]
+    },
+    {
+      "id": "park-chan-wook-style-parlour-interview",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/17_park_chan_wook.md",
+        "references/lighting-and-color.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 40-second scene in the style of Park Chan-wook: a young woman is interviewed for a position by the mistress of a large decorated house.",
+      "expected_output": "Three named patterns per interior frame with a coarse enough repeat to survive generation, exactly one choreographed impossible move written as start-path-end, frontal symmetry with one off-axis element, a delayed-change performance, and ironic chamber music with amplified foley.",
+      "assertions": [
+        "At least three distinct patterns are named as visible in the interior frame, with the repeating unit specified coarse enough to avoid moire.",
+        "Exactly one choreographed impossible camera move is planned for the scene, written as start point, path, and end point with the amounts stated, and every other shot is locked or restricted to a single slow axis.",
+        "Frontal symmetry is used with one deliberate off-axis element, and the reverse angle keeps the identical composition.",
+        "The performance holds a composed expression a beat or two longer than the situation allows before it changes.",
+        "The sound plan sets correctly played chamber music or a waltz against the content, with amplified precise foley and no stinger.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Park Chan-wook film."
+      ]
+    },
+    {
+      "id": "malick-style-field-walk",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/18_malick.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "I have a keyframe of two people walking side by side through waist-high wheat with the sun just above the horizon behind them. Write an image-to-video prompt for it in the style of Malick.",
+      "expected_output": "Handheld written as a drifting path rather than shake, light written as a physical fact rather than an orange grade, one gesture plus one drift plus one moving natural element, a huge foreground with the horizon behind, and a short clip figures may leave.",
+      "assertions": [
+        "The handheld quality is written as a drifting path at walking pace with a stated direction and rise, not as shake or jitter.",
+        "The light is written as a physical fact - the sun behind the subjects a few degrees above the horizon, faces lifted only by sky and ground bounce - rather than as an orange colour grade.",
+        "The clip carries one gesture, one continuing drift, and one moving natural element, and no plot action.",
+        "A large foreground element is placed with the horizon behind it, and centred symmetrical framing is excluded by name.",
+        "The requested clip length sits in the 3 to 5 second range, and the figures are allowed to drift out of or into frame.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Malick film."
+      ]
+    },
+    {
+      "id": "michael-mann-style-rooftop-call",
+      "mode": "F",
+      "loads": [
+        "references/director_styles/19_michael_mann.md",
+        "assets/video-prompt-template.md"
+      ],
+      "prompt": "Direct a 10-second shot in the style of Michael Mann: a man makes a phone call from a rooftop overlooking the city at 3am, then hangs up and just stands there.",
+      "expected_output": "The city treated as a cold luminous field, the figure isolated in wide negative space, named practical sources with no invented warm fill, restrained observational camera ending on a held stillness.",
+      "assertions": [
+        "The city is treated as a luminous field of named practical sources rather than as background dressing for a close-up.",
+        "The figure is isolated in wide negative space, with architecture or the horizon line carrying the isolation.",
+        "The palette is cold and sourced from named practicals, with no unmotivated warm fill added.",
+        "The camera behavior is restrained and observational - locked or a slow lateral - and the shot ends on a held stillness.",
+        "The sound brief favors sustained low tones or ambient city noise over score-driven emotion.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Michael Mann film."
+      ]
+    },
+    {
+      "id": "coen-brothers-style-clerk-scene",
+      "mode": "D",
+      "loads": [
+        "references/director_styles/20_coen_brothers.md",
+        "assets/shot-plan-template.md"
+      ],
+      "prompt": "Direct a 20-second scene in the style of the Coen Brothers: a man in a rented office tries to explain to a very calm clerk that a mistake has been made.",
+      "expected_output": "Wide flat-on symmetrical framing with a low camera and simple mechanical moves, deadpan register, at least one hold long enough to become the beat, and an outcome that reads as indifferent fate.",
+      "assertions": [
+        "Compositions are wide, flat-on, and symmetrical, with the camera mounted low - at or below chest height, and the height stated.",
+        "Camera moves are simple and mechanical - a straight dolly or a locked frame - rather than expressive or handheld.",
+        "The register is deadpan, with the joke staged in the frame and the hold rather than in performance or reaction cutting.",
+        "At least one shot holds long enough that the discomfort becomes the beat, with a duration stated in seconds.",
+        "The outcome reads as indifferent fate rather than as a character victory or defeat.",
+        "The output does not copy specific shots, characters, or dialogue from any actual Coen Brothers film."
+      ]
+    },
+    {
+      "id": "keyframe-ship-gate-perspective",
+      "mode": "E",
+      "loads": [
+        "assets/keyframe-prompt-template.md",
+        "references/image-model-adapters.md",
+        "assets/qc-checklist.md"
+      ],
+      "prompt": "Here's my keyframe brief: 85mm portrait lens, medium close-up of a man in a narrow hallway, doors receding behind him. Write the still prompt and tell me what to check before I spend a video generation on it.",
+      "expected_output": "A keyframe prompt built on the nine slots, followed by the pre-generation gate as an explicit checklist — including the perspective check, which is the one item that cannot be repaired once the still is animated.",
+      "assertions": [
+        "The still prompt is written slot by slot rather than as an undifferentiated paragraph of adjectives.",
+        "The output states that apparent perspective must match the stated focal length, and says an 85mm medium close-up compresses the receding doors rather than spreading them.",
+        "The output runs the pre-generation gate as a checklist the reader can tick, not as a general instruction to check quality.",
+        "The output says which gate items are unfixable once the still is animated and therefore have to pass now.",
+        "The output refuses to move to a video prompt until the still passes, or states plainly which item is failing."
+      ]
+    },
+    {
+      "id": "identity-string-from-recipe",
+      "mode": "E",
+      "loads": [
+        "references/continuity-bible.md",
+        "assets/keyframe-prompt-template.md"
+      ],
+      "prompt": "Write me an identity string for a recurring character: a night-shift nurse in her fifties who appears in nine shots across two scenes.",
+      "expected_output": "One noun phrase inside the 30-50 word budget, auditable slot by slot: demographic anchor, two or three face-structure facts, exactly one checkable landmark, one hair spec, and one wardrobe anchor last.",
+      "assertions": [
+        "The identity string carries at least two face-structure facts — such as jaw, eye set, brow, nose, or hairline — not only wardrobe and demeanour.",
+        "Exactly one unique checkable landmark is included, with a side or a measurement, and the output says it is the QC handle.",
+        "A hair specification is present as its own item, separate from any headwear.",
+        "Exactly one wardrobe anchor appears, and it is placed last in the string.",
+        "The output counts the words and states that the string is inside the 30-50 word budget.",
+        "The output says the string is pasted verbatim into every prompt and never paraphrased between shots."
+      ]
+    },
+    {
+      "id": "crosscut-two-line-assembly",
+      "mode": "I",
+      "loads": [
+        "assets/edit-timeline-template.md",
+        "references/editing-and-assembly.md"
+      ],
+      "prompt": "I have clips of two things happening at once: a woman running up a stairwell, and a phone ringing unanswered in an apartment. Cut them together so they feel simultaneous and then collide.",
+      "expected_output": "A cross-cut timeline: each line identifiable from its own first shot, each carrying its own average shot length, both tightening toward a named convergence beat, with the audio bed doing the simultaneity work.",
+      "assertions": [
+        "The output treats this as cross-cutting two lines of action rather than as one sequence of shots in story order.",
+        "Each line is made identifiable from its own first shot, and the output says how.",
+        "The two lines are given separate average shot lengths that tighten as the sequence approaches the collision.",
+        "A specific convergence beat is named — the first shared frame or the first shared sound — rather than left implicit.",
+        "The output notes that two locations that never share a frame carry no two-person identity drift and no shared axis, and says what the arrangement costs instead.",
+        "Audio is specified as what sells the simultaneity, not as a layer added after the picture cut."
+      ]
+    },
+    {
+      "id": "parallel-action-beat-map",
+      "mode": "B",
+      "loads": [
+        "assets/beat-sheet-template.md",
+        "references/editing-and-assembly.md"
+      ],
+      "prompt": "Break this into beats: while a boy hides in a wardrobe upstairs, his mother stalls two officials at the front door downstairs. It ends when one of them starts up the stairs.",
+      "expected_output": "A beat map covering both storylines, each beat assigned to its thread, ordered for the cut rather than only for one line's chronology, with the convergence beat marked.",
+      "assertions": [
+        "Every beat is assigned to a thread or line, so the two storylines are distinguishable in the table.",
+        "Both storylines get their own beats rather than one being compressed into a single background beat.",
+        "The output returns beats rather than shots, and assigns no shot sizes, lenses, or camera moves.",
+        "Each beat carries a story function and a change in pressure.",
+        "The beat where the two lines converge is explicitly identified.",
+        "The output defers the interleaving craft — how the two lines are cut against each other — rather than restating it here."
+      ]
+    },
+    {
+      "id": "sound-perspective-across-sizes",
+      "mode": "H",
+      "loads": [
+        "assets/sound-plan-template.md",
+        "references/sound-and-dialogue.md"
+      ],
+      "prompt": "Same scene, three shots: a wide of a kitchen with a television on in the next room, a medium of a man at the table, and a close-up of his hands. Plan the sound. The television has to stay present the whole time.",
+      "expected_output": "A per-shot layered plan in which the television's level, filtering and reverb move with the coverage and the partition, rather than sitting at one fixed setting across all three shots.",
+      "assertions": [
+        "Each shot carries a space entry naming the shot size and any source that is not in the camera's room.",
+        "The television is handled as a source through a partition, with a stated filter move as well as a level offset.",
+        "The television's treatment changes between the wide and the close-up rather than being identical across all three shots.",
+        "Levels are stated relative to dialogue rather than as absolute dBFS values.",
+        "Room tone is specified for every shot, including where the entry is that the bed simply continues.",
+        "Cells the plan decided against are written as none rather than left blank."
+      ]
+    },
+    {
+      "id": "director-book-world-space-invariant",
+      "mode": "C",
+      "loads": [
+        "assets/director-book-template.md",
+        "references/lighting-and-color.md",
+        "references/continuity-bible.md"
+      ],
+      "prompt": "Set the rules for a six-shot scene in a basement laundry lit by one fluorescent fixture over the machines. There are reverses on two characters.",
+      "expected_output": "A director's book whose lighting invariant is anchored in the room rather than to a camera position, so it survives the reverses, with the camera-relative direction derived per shot instead.",
+      "assertions": [
+        "The lighting invariant clause names the source and where it sits in the room, not a direction relative to camera.",
+        "The output states that a camera-relative phrase pasted into a reverse would flip the key, and that this is why the invariant is written in world space.",
+        "The per-shot camera-relative direction is assigned to the shot plan's light direction column rather than frozen into the pasted string.",
+        "The invariant is written out once in a form that can be pasted verbatim into every prompt in the scene.",
+        "A ratio is given as a stop difference, and the output says which shots may deliberately move it and why.",
+        "The book is specific enough that two people filling in shots from it would light the reverses compatibly."
+      ]
+    },
+    {
+      "id": "continuity-across-wardrobe-change",
+      "mode": "G",
+      "loads": [
+        "references/continuity-bible.md",
+        "references/image-model-adapters.md"
+      ],
+      "prompt": "My character wears a soaked coat for the first four shots and a dry borrowed sweater for the last five. How do I keep her the same person across the change?",
+      "expected_output": "A split of one identity string into a face half and a fitting entry, with the wardrobe change tracked as a state change in the ledger and new reference stills specified for the second fitting.",
+      "assertions": [
+        "The identity string is split into a face-only half that never changes and a separate wardrobe or fitting entry, rather than being rewritten for the second look.",
+        "The output states that editing the wardrobe inside a combined string silently rewrites the face.",
+        "The wardrobe change is recorded as a dated or shot-numbered state change in a ledger rather than left implicit.",
+        "New reference stills are specified for the second fitting, and the output says which values carry over from the first.",
+        "A naming or versioning convention distinguishes the two fittings while keeping one character identifier."
+      ]
+    },
+    {
+      "id": "relight-mismatch-on-delivered-clip",
+      "mode": "J",
+      "loads": [
+        "references/failure-modes.md",
+        "references/ai-video-tool-adapters.md"
+      ],
+      "prompt": "This clip is a keeper — the performance is exactly right — but the light doesn't match the shot before it. The key is coming from the wrong side. What do I do?",
+      "expected_output": "A named diagnosis of lighting drift, and a repair that keeps the take rather than regenerating it, placed on the cost ladder above rebuilding the keyframe.",
+      "assertions": [
+        "The output names the lighting or colour drift failure code before proposing anything.",
+        "The output proposes an edit pass over the delivered clip that keeps the approved take, rather than rebuilding the keyframe or regenerating the shot.",
+        "That option is placed explicitly on the cost ladder relative to rebuilding the keyframe and re-planning the shot.",
+        "The output states the precondition honestly: this pass inherits the take's blocking and timing and cannot change an action, an end state, or an angle.",
+        "The output says to confirm the target tool actually exposes that surface before committing to the plan.",
+        "The output says what to do instead if the surface is not available."
+      ]
+    },
+    {
+      "id": "non-narrative-brief-no-subtext",
+      "mode": "A",
+      "loads": [
+        "references/genre-playbooks.md"
+      ],
+      "prompt": "We're doing a 20-second spot for a cordless vacuum. What's this really about? Give me the direction rules before anyone shoots anything.",
+      "expected_output": "A director analysis that skips subtext derivation, because the format has none, and replaces it with the claim and the single visible proof of it, plus the genre's engine and audience contract.",
+      "assertions": [
+        "The output does not derive subtext, a dramatic question, or an emotional arc for a product, and says why that block does not apply to non-narrative work.",
+        "The output states one claim and the single visible proof of that claim, in place of a visual thesis.",
+        "The engine and audience contract for the commercial format are named rather than invented.",
+        "The direction rules cover camera, lens, lighting, palette, and editing as concrete decisions, not as adjectives.",
+        "The output stays at the size of the ask and does not deliver a shot plan, a keyframe pack, or a continuity bible."
+      ]
+    }
+  ]
+}

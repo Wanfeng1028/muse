@@ -1,0 +1,502 @@
+# Model Compiler（模型编译器）
+
+> **角色**：读取 Project State 中所有创意角色的产出，编译为目标 AI 视频模型的调用指令。不执行网络请求，不修改上游数据。
+> **边界声明**：本编译器产出模型调用指令**文本**（CLI 命令或 API JSON）。实际执行由 `volcengine-ark` skill 或用户手动完成。编译器是格式转换层，不是执行层。
+> **宪法位置**：`references/model-compiler.md` — 交叉关注点，非创意角色，放在 references 根目录。
+> **最后更新**：2026-09-29 | v0.35.0
+
+---
+
+## 边界声明
+
+1. **只读消费者**：编译器读取 Project State 的所有上游字段（script / cinematography / visual_dev / sound / storyboard），不修改任何上游产出。
+2. **不执行网络请求**：产出的 `arkcli_command` 是文本，不调用 `arkcli`。File Registry 中的 `file_id` 来自 Phase 3.5/6 或其他阶段的上传——编译器只引用，不上传。注册表双轨解析：优先读 Project State 顶层 `file_registry`（v0.31.0 起权威源），回退 `model_compilation.file_registry`（旧路径兼容）。
+3. **不替代创意判断**：编译器不会「修正」Writer 的场景描述或 DP 的运镜选择。它只做格式转换——中文术语→英文 prompt、分散字段→合并模板。
+4. **质量标记不阻塞**：遇到劣质输入时标记警告（GOOD/DEGRADED/INSUFFICIENT），但不回退上游阶段。`INSUFFICIENT` 级别暂停等用户确认。
+
+---
+
+## 输入（从 Project State 读取的字段）
+
+| 字段路径 | 用途 | 映射到 |
+|----------|------|--------|
+| `project.scene_type` | 选择分配策略 | slot_allocation 策略选择 |
+| `project.aspect_ratio` | 画面比例 | arkcli --ratio |
+| `director_notes.vision` | 创意方向校验 | 编译一致性参考 |
+| `director_notes.has_characters` | 角色存在性判定 | 选择 character_driven vs 其他分配策略 |
+| `script.scenes[]` | 场景描述（location / action / dialogue） | 六段式 Subject + Action + Scene 段 |
+| `script.scenes[].camera` | 镜头方向（shot_type / movement / lens / lighting） | 六段式 Camera + Lighting 段 + 术语翻译表 |
+| `visual_dev.palette[]` | 色调方案（含 visual_cause） | 六段式 Lighting 段 |
+| `visual_dev.mood` | 视觉情绪 | 六段式 Style 段 |
+| `visual_dev.style_direction` | 风格方向 | 六段式 Style 段 |
+| `visual_dev.characters[]` | 角色视觉设定（traits / consistency_notes） | 六段式 Subject 段细节 |
+| `visual_dev.scene_composition[]` | 场景空间布局 | 六段式 Scene 段细节 |
+| `cinematography.camera_style` | 全局摄影风格 | 术语翻译偏好 |
+| `cinematography.movement_language` | 运动语言偏好 | 术语翻译消歧 |
+| `sound.music_style` | 配乐风格 | audio_config |
+| `sound.narration_tone` | 旁白基调 | audio_prompt |
+| `sound.narration` | 旁白参数（对象，批次 F3） | 配音生成指引 |
+| `audio_gen.route` | 音频路线（native / external / mixed / none，批次 F3） | 音频编译分支（`--generate-audio` 已有 / 音频生成指引） |
+| `storyboard[]` | 分镜面板（含 prompt / camera_notes / vfx_notes / generated_url / refs_used） | multimodal_refs（first_frame_ref 解析）+ 编译交叉校验 |
+| 顶层 `file_registry`（回退 `model_compilation.file_registry`） | 参考图注册表（file_id / local_path / source 溯源；含 first_frame_p<panel_id> 生成图条目） | `multimodal_refs` 解析 + 干跑检查 |
+
+---
+
+## 输出（model_compilation JSON schema）
+
+输出写入 Project State 的 `model_compilation` 字段。完整 schema 见 `assets/schemas/project-state.json`。
+
+核心结构：
+```jsonc
+{
+  "model_compilation": {
+    "_meta": { "compiler_version": "1.0.0", "target_model": "...", "director_approved": false },
+    "target_model": "doubao-seedance-2-0-260128",
+    "file_registry": { /* 旧路径（双轨兼容）；权威源 = 顶层 file_registry */ },
+    "shots": [ /* 每镜编译结果 */ ],
+    "shot_chain": { /* video_ref 链 */ }
+  }
+}
+```
+
+每个 shot 含：`compiled_prompt`（六段式合并）、`prompt_trace`（逐段溯源）、`multimodal_refs`（文件引用）、`slot_allocation`（5 槽分配）、`arkcli_command`（可执行命令）、`estimated_tokens`（成本估算）、`_quality`（质量标记）。顶层另产出 `subtitles[]`（字幕合成 spec——批次 F2 / v0.34.0，见 §字幕合成 spec）。
+
+---
+
+## 通用编译流程
+
+```
+1. 读取 Project State → 提取所有输入字段（见上表）
+2. 检测 target_model → 跳转对应适配章节（当前仅 Seedance 2.0）
+3. 确定分配策略（character_driven / product_driven / graphic_driven）
+4. 逐镜编译：
+   a. 六段式 prompt 编译（保留 Narrative Anchor）→ compiled_prompt
+   b. 镜头运动术语翻译（双层查表：默认→场景覆盖→movement_language 消歧）
+   c. 5 槽分配（三套策略）
+   d. 多模态引用映射
+   e. 质量标记（GOOD/DEGRADED/INSUFFICIENT）
+   f. 成本估算
+5. 构建 video_ref 镜头链
+6. 生成 arkcli 命令（Windows 安全路径：Files API + --extra-body）
+7. 运行干跑验证清单
+8. 输出编译摘要给用户
+```
+
+---
+
+## 模型选择（编译前置）
+
+> **定位**：编译策略取决于目标模型（Seedance 用 ACT 分幕 + match 语法，其他模型 prompt 结构不同）——必须先定模型、再编译。执行时机：Phase 7 子步骤 6.5（见 default.md）。
+
+### 已适配模型
+
+从本文件「模型适配：<模型名>」章节标题解析。当前：**Seedance 2.0**（`doubao-seedance-2-0-260128`，见 §模型适配：Seedance 2.0）。
+
+### 选择流程
+
+1. **收录候选**：已适配模型 + 用户明确指定的模型
+2. **询问规则**：
+   - 已适配模型 ≥2 → 显式询问（最多 3 个候选 + 「帮我推荐」选项）
+   - 已适配模型仅 1 个（当前）→ 直接告知用户并确认，不追问
+   - 用户不确定 → 按 Project State 特征推荐：`has_characters = true` → Seedance 2.0（角色锚定 + video_ref 链）；简洁 prompt / 快速出片 → Kling / Pika 类（走下方未适配流程）
+   - 「帮我推荐」→ Agent 读取官方文档对比 ≤3 个候选 → 输出 1 个推荐 + 理由 → 用户确认后锁定
+3. **未适配模型处理**：读取官方文档的动作由 **Agent** 完成（web_extract / browser_navigate → 提炼 prompt 格式 / 多模态引用 / 分辨率与时长限制），提炼结果作为输入传入编译器构建临时策略模板；编译产出标记 `_quality.overall = DEGRADED` + 警告「策略模板基于文档推断，未经实测验证」。⚠️ 编译器自身保持「不执行网络请求」边界（见 §边界声明）
+4. **落点**：选定模型写入 `model_compilation.target_model`（同步 `_meta.target_model`）→ Phase 7.5 按此编译
+---
+
+## 稀疏输入处理
+
+六段式编译模板不强制 6 段全部非空：
+
+| 段 | 源字段 | 空值处理 |
+|----|--------|---------|
+| Subject | script.scenes[].action + visual_dev.characters | 空 → 标记 [OMITTED]，从 Scene 段开始 |
+| Action | script.scenes[].action | 空 → 标记 [OMITTED] |
+| Scene | script.scenes[].location + visual_dev.scene_composition | 空 → 填充 "Interior/Exterior scene" 占位 |
+| Camera | script.scenes[].camera + cinematography | 空 → 填充 "Static shot" 默认值，标记质量警告 |
+| Lighting | script.scenes[].camera.lighting + visual_dev.palette.visual_cause | 空 → 从 visual_dev.mood 推断，标记质量警告 |
+| Style | visual_dev.style_direction + visual_dev.mood | 空 → 填充 "Cinematic, photorealistic" 默认值 |
+
+空段 ≥3 个 → 该 shot 标记为 `_quality.overall = INSUFFICIENT`，编译暂停等用户确认。
+
+---
+
+## 质量标记
+
+每个 shot 编译后输出质量标记：
+
+```jsonc
+"_quality": {
+  "overall": "GOOD",          // GOOD | DEGRADED | INSUFFICIENT
+  "warnings": [
+    "camera.movement field is empty — using static default",
+    "visual_dev.palette has no visual_cause for scene 1 — Lighting segment may be generic"
+  ]
+}
+```
+
+| 级别 | 条件 | 行为 |
+|------|------|------|
+| GOOD | 所有段有足够源数据，≤1 个警告 | 正常产出 |
+| DEGRADED | 2 个警告或 1 个段使用了默认值 | 正常产出 + 警告列表 |
+| INSUFFICIENT | ≥3 段使用了默认值 | **暂停**，要求用户确认后继续 |
+
+---
+
+## 干跑验证清单
+
+编译完成后、执行前，逐项检查：
+
+- [ ] 所有 camera 术语在翻译表中有对应（或标记 `[TRANSLATION_AMBIGUITY]`）
+- [ ] 所有 image_ref file_id 在 file_registry 中可查
+- [ ] 所有已生成 panel 图均已登记（file_registry `first_frame_p<panel_id>`）
+- [ ] 所有 first_frame_ref 可解析（或已明示缺失并标注 `_quality` 警告）
+- [ ] 每镜 duration ≥ 4s（Seedance 2.0 硬下限）
+- [ ] resolution 值合法（`4k` / `1080p` / `720p` / `480p`）
+- [ ] `--extra-body` JSON 语法有效（无未闭合引号/括号）
+- [ ] 每镜 `compiled_prompt` 非空
+- [ ] video_ref 链中相邻镜头时长和分辨率一致
+
+---
+
+## 禁止事项
+
+- ❌ 修改上游任何角色的产出字段
+- ❌ 执行 arkcli 命令（只产出文本）
+- ❌ 在 prompt_trace 中改写原始文本（original 必须逐字复制，compiled 是翻译后版本）
+- ❌ 替 Director 做创意判断（比如「这个运镜描述不好，我换成更好的」）
+- ❌ 在没有用户确认的情况下跳过 INSUFFICIENT 镜头
+- ❌ 为不存在的 file_id 生成引用（必须先查 file_registry）
+- ❌ 使用 `--input @本地文件` 语法（Windows bug）——始终走 Files API file_id 路径
+
+---
+
+# 模型适配：Seedance 2.0
+
+> **模型 ID**：`doubao-seedance-2-0-260128`
+> **文档**：https://www.volcengine.com/docs/82379/2291680
+> **验证状态**：✅ 2026-06-23 实测通过（10s 4K 三幕结构）
+
+---
+
+## Seedance 2.0 多模态输入标签
+
+| 标签 | 用途 | Muse Video 映射来源 |
+|------|------|-------------------|
+| `first_frame_ref` | 指定视频起始画面 | Phase 6 生成图（file_registry `first_frame_p<panel_id>`，批次 D 起） |
+| `last_frame_ref` | 指定结束画面 | Phase 6 下一镜首帧 |
+| `image_ref_1..N` | 风格/角色/构图参考（最多 5 张） | file_registry（用户原照 / 搜索实景 / 生成 moodboard） |
+| `video_ref` | 前一个镜头的输出 → 风格继承 | Phase 6 上一镜视频产出 |
+| `audio_ref` | 音频驱动口型/节奏 | Phase 5 Sound Designer 参考音频 |
+
+---
+
+## Prompt 六段式编译模板
+
+Seedance 2.0 推荐结构：**Subject → Action → Scene → Camera → Lighting → Style**
+
+```
+<Subject>核心主体描述</Subject>
+<Action>主体的动作与细节</Action>
+<Scene>场景与环境</Scene>
+<Camera>镜头运动与景别</Camera>
+<Lighting>光影条件</Lighting>
+<Style>艺术风格</Style>
+```
+
+### 段映射规则
+
+| 段 | 源字段 | 编译规则 |
+|----|--------|---------|
+| Subject | `script.scenes[].action` 的主体部分 + `visual_dev.characters[].traits` | 提取角色外观特征。如含情绪锚点（愣住/迟疑/猛然/缓缓），**必须保留**到本段末尾（Narrative Anchor 规则） |
+| Action | `script.scenes[].action` 的动作部分 | 提取动作动词和时间副词。保持叙事张力 |
+| Scene | `script.scenes[].location` + `visual_dev.scene_composition[scene_id]` | 空间描述 + 关键道具 + 时间。如果 scene_composition 有「前中远景」描述→整合为环境细节 |
+| Camera | `script.scenes[].camera` + `cinematography` | 经术语翻译表（见下）转换为英文 |
+| Lighting | `script.scenes[].camera.lighting` + `visual_dev.palette[].visual_cause` | visual_cause 优先（已有光的方向/色温/强度参数）；如为空则从 palette 的 name + usage 推断 |
+| Style | `visual_dev.style_direction` + `visual_dev.mood` | 合并为 1-2 句风格描述 |
+
+### Narrative Anchor 规则
+
+Writer 的 `action` 字段常含情绪描述（愣住、迟疑、猛然转身、缓缓抬头等），这些在六段式的 Subject / Action 段中没有天然槽位，但它们是影片叙事张力的核心。
+
+**规则**：如果 Writer 的 `script.scenes[].action` 包含以下情绪锚点词，必须在 compiled prompt 的 Subject 段末尾保留：
+
+```
+情绪锚点词库：愣住 / 迟疑 / 猛然 / 缓缓 / 颤抖 / 凝视 / 屏息 / 倒退 / 冲 / 扑 / 僵 / 怔 / 呆
+```
+
+编译示例：
+- 原文：「他推开门，愣住了。房间空无一人，但桌上咖啡还冒着热气。」
+- 编译：`A man pushes open a door. He freezes, stunned. The room is empty except for a cup of coffee still steaming on the table.`
+- ❌ 错误编译：`A man enters a room. The room is empty.`（丢失了情绪和悬念）
+
+---
+
+## 镜头运动术语翻译表
+
+> **双层结构**：默认映射 + 场景覆盖。`cinematography.movement_language` 字段优先消歧。
+
+### 默认映射
+
+| DP 术语 | Seedance prompt 片段 | FLAG |
+|---------|---------------------|------|
+| 推（推进） | `Dolly in toward subject, smooth forward movement` | — |
+| 拉（拉远） | `Dolly back, camera retreating from subject` | — |
+| 摇（水平摇镜） | `Panning left` / `Panning right` | — |
+| 移（横移） | `Lateral tracking shot, camera moving sideways` | — |
+| 跟（跟拍） | `Following subject, steady tracking shot` | — |
+| 升（上升） | `Crane up, camera rising vertically` | — |
+| 降（下降） | `Crane down, camera descending vertically` | — |
+| 仰拍 | `Low angle shot, camera looking upward` | — |
+| 俯拍 | `High angle shot, camera looking downward` | — |
+| 特写 | `Extreme close-up shot` / `Close-up shot` | — |
+| 中景 | `Medium shot, waist-up framing` | — |
+| 全景 | `Wide establishing shot` | — |
+| 固定 | `Static camera, locked off tripod` | `--camera-fixed` |
+| 手持 | `Handheld camera, subtle natural camera shake` | — |
+| 环绕 | `Orbiting camera, circling around subject` | — |
+| 急推 | `Snap zoom, rapid push-in` | — |
+| 慢推 | `Slow creep zoom, barely perceptible forward motion` | — |
+| 过肩 | `Over-the-shoulder shot` | — |
+| POV | `POV subjective camera, first person perspective` | — |
+| 鸟瞰 | `Bird's eye view, top-down aerial shot` | — |
+
+### 场景覆盖（当默认映射与场景类型冲突时）
+
+| 场景类型 | 术语 | 覆盖 |
+|----------|------|------|
+| `product-demo` | 推 | `Smooth zoom in on product`（产品展示用变焦，不用 dolly） |
+| `product-demo` | 环绕 | `Product turntable rotation, camera orbiting slowly` |
+| `logo-animation` | 推 | `Elegant push-in toward logo center` |
+| `logo-animation` | 固定 | `Camera locked off, centered composition` + `--camera-fixed` |
+
+### movement_language 消歧
+
+如果 `cinematography.movement_language` 字段有值，翻译偏好向该风格靠拢：
+
+| movement_language | 对「跟」的翻译 | 对「手持」的翻译 |
+|-------------------|--------------|----------------|
+| `"dolly precision"` | `Precision dolly tracking` | 不使用（风格冲突，回退默认） |
+| `"handheld intimate"` | `Intimate handheld follow, slight bounce` | `Natural handheld, documentary-style micro-jitter` |
+| `"steadicam smooth"` | `Steadicam glide, floating tracking` | 不使用（回退默认） |
+
+未覆盖的术语 → 编译时附加 `[TRANSLATION_AMBIGUITY]` 标记提醒用户审查。
+
+---
+
+## 5 槽分配算法（三套策略）
+
+Seedance 2.0 每镜最多 5 张 `image_ref`。根据项目类型自动选择分配策略。
+
+### 策略选择
+
+| 策略 | 触发条件 |
+|------|---------|
+| `character_driven` | `director_notes.has_characters = true`（默认） |
+| `product_driven` | `project.scene_type = product-demo` |
+| `graphic_driven` | `project.scene_type = logo-animation` |
+
+### 策略 1：character_driven
+
+| 槽位 | 用途 | weight | 分配 |
+|------|------|--------|------|
+| P0 | 角色锚点 | 0.8-1.0 | 最多 2 个角色各占 1 槽。超过 2 个角色 → 选 screen_time 最多的 2 个。超过 3 个角色 → 选主角 + 关键配角 |
+| P1 | first_frame_ref | — | 分镜首帧（= Phase 6 生成图登记条目 `first_frame_p<panel_id>`；独立字段，占用 1 槽） |
+| P2 | 场景 mood | 0.5-0.7 | 1 张。多场景 → 选当前镜所在场景的 mood |
+| P3 | 风格参考 | 0.4-0.5 | 1 张。AD 的 moodboard 精选 |
+| P4 | 道具/服装 | 0.5 | 剩余的 image_ref 槽。道具优先取资产协议中的 canonical 道具图（`asset_type: "prop"` + `is_canonical: true`；无 asset 键回退既有命名约定）。无关键道具时留给 first_frame 的补充 |
+
+### 策略 2：product_driven
+
+| 槽位 | 用途 | weight | 分配 |
+|------|------|--------|------|
+| P0 | 产品参考 | 0.9 | 产品实物图 / 3D 渲染图 |
+| P1 | first_frame_ref | — | 分镜首帧 |
+| P2 | 场景 mood | 0.6 | 展示环境 mood |
+| P3 | 风格参考 | 0.4 | 品牌视觉风格 |
+| P4 | 材质参考 | 0.5 | 产品材质特写 |
+
+### 策略 3：graphic_driven
+
+| 槽位 | 用途 | weight | 分配 |
+|------|------|--------|------|
+| P0 | first_frame_ref | — | 分镜首帧（LOGO 动画的构图锚点） |
+| P1 | 风格参考 | 0.4 | 动画风格参考 |
+| P2 | 材质参考 | 0.5 | 金属/玻璃/发光材质 |
+| P3 | — | — | 空（LOGO 动画通常不需要 5 张图） |
+| P4 | — | — | 空 |
+
+### 溢出处理
+
+需求超过 5 张时，`slot_allocation` 列出两组：
+
+```jsonc
+"slot_allocation": {
+  "strategy": "character_driven",
+  "allocated": [ /* P0→P4 按优先级排列 */ ],
+  "overflow": [ /* 因上限未分配的参考图 */ ]
+}
+```
+
+用户可在 `overflow` 中手动调换到 `allocated`。
+
+---
+
+## 多模态引用映射（first_frame_ref 解析）
+
+> 批次 D（v0.32.0）：分镜生成图 → 顶层 `file_registry`（`first_frame_p<panel_id>`）→ 每镜首帧参考。登记规则见 `references/pipelines/default.md` Phase 6 步骤 5b。
+> 批次 F1（v0.33.0）：登记条目可按资产协议携带 `asset` 三键（asset_type / asset_id / is_canonical）——slot 分配优先取 canonical；无 asset 键 → 回退既有命名约定（双轨兼容）。协议见 `references/reference-image-over-text.md` §资产引用协议。
+
+### 解析规则
+
+1. 编译器逐镜生成 `shots[]` 时写入 `panel_id`（对应 storyboard panel 的稳定 id，不依赖顺序编号——Phase 7 选项 B 允许重排 panel）
+2. `multimodal_refs.first_frame_ref` = 查 `file_registry["first_frame_p<panel_id>"]`：命中 → 该逻辑名写入（执行期经 file_id 解析；`file_id: "PENDING"` → 执行前需上传，干跑提示）
+3. `last_frame_ref` 同规则（`last_frame_p<panel_id>`；当前无生成点——模式对称预留）
+4. 条目缺失（panel 未生成图 / 未登记）→ `_quality` 警告「shot S<XX> 无首帧（Phase 6 未生成或未登记）」，照常编译（非阻塞）
+
+### 分工澄清（first_frame vs reference_image）
+
+- `first_frame`（构图锚）：**分镜生成图**——确立镜头起始画面与构图
+- `reference_image`（角色/风格锚）：**优先用户原照**；生成的概念图仅作补充（无原照场景 / 非主角槽位）
+- §角色一致性策略「无需 Seedream 中转」条款的适用域：**禁止以生图角色图替代用户原照充当 image_ref**；不禁止生成分镜图本身（其走 first_frame 通道）
+
+---
+
+## 字幕合成 spec（批次 F2 / v0.34.0）
+
+> 字幕**不进 video prompt**（模型文字渲染不可控；与「AI 生图≠实景」「参考图不转述」同源纪律）——编译器把顶层 `subtitles[]` 编译为**字幕合成 spec**，供下游后期烧录（HyperFrames / ffmpeg 等）。
+
+1. 逐条输出 `model_compilation.subtitles[]`：`{subtitle_id, panel_id, start_s, end_s, text_zh, text_en, language_mode, font_family, position, style_note}`——时间轴按 shots 名义时长累计（**nominal**，panel 级颗粒度；实际时长以下游为准）
+2. 样式透传：font_family / position / language_mode 原样透传；双语排版默认建议（中文主、英文副；副行字号 ≈ 主行 80%）写入 `style_note`
+3. 挂载校验：`subtitle.panel_id` 无对应 shot → `_quality` 警告「字幕 sub_XX 挂载孤儿」（非阻塞）；未绑定（panel_id 空）条目跳过并在摘要提示
+4. 下游烧录指引：spec 交付时附「按实际时长对齐」提示；SRT/ASS 导出列为后续可选（v0.34.0 未实现）
+
+---
+
+## 音频编译（批次 F3 / v0.35.0）
+
+> 按 `audio_gen.route` 分支编译（路线选择见 `references/audio-gen-routing.md`）；**执行边界 = 仅编译指令、不代生成**（2026-09-29 裁定）——实际生成由用户/下游执行；与宪法「不生成实际音频」边界一致。
+
+1. `route: "native"` → arkcli 命令已含 `--generate-audio`（Seedance 音画同步；无需额外产出）
+2. `route: "external"` / `"mixed"` → 产出「音频生成指令 + 对轨指引」：音乐（sound.music_style → 音乐模型 prompt；段落级切分清单 `audio_gen.music.segments`）、配音（`sound.narration` 参数 + 台词清单 → TTS 调用指引）、音效（`sound.sfx_notes` → 素材库关键词）；附「按实际视频时长对轨」提示（不承诺帧级同步）
+3. `route: "none"` → 跳过
+4. 编译完成后按 `audio-gen-routing.md` §音频路线选择 第 3 条，询问引导用户选定音乐/配音模型（首批音乐适配：MiniMax Music 3.0；配音规划：火山方舟——专项待开）
+5. 音轨产物（生成后）登记顶层 `file_registry`：`asset_type: "audio"`、`asset_id: "audio_<slug>"`（协议见 `references/reference-image-over-text.md` §资产引用协议）
+
+---
+
+## 角色一致性策略（无需 Seedream 中转）
+
+> ⚠️ 这是 2026-06-23 实测验证的核心发现。
+
+**错误做法**：用 Seedream 以用户照片为参考生成角色设定图 → 再喂 Seedance。
+
+**正确做法**：直接用用户原始照片作为 Seedance 的 `image_ref`（`role: reference_image`, `weight: 0.9`）。Seedance 2.0 的 `reference_image_weight` 参数直接控制面部还原强度，效果优于 Seedream 中转。
+
+编译时：
+1. 角色参考图直接入 `file_registry` → `image_ref_1`，weight = 0.9
+2. `compiled_prompt` 中描述服装变化：`The character does NOT wear the clothes from the reference image — instead, he wears a...`
+3. 场景 mood 图走 Seedream 生成空镜（无人物），weight = 0.6
+
+---
+
+## arkcli 命令生成（Windows 安全路径）
+
+> ⚠️ `--input @本地文件` 在 Windows 上有路径解析 bug（v0.1.17-v1.0.1）。**禁止使用**。
+
+### 正确流程
+
+```bash
+# Step 1: 用火山引擎 Files API 上传所有参考图 → 获取 file_id
+# （此步骤由 Phase 3.5 或用户手动完成。编译器引用 file_registry 中的已有 file_id）
+
+# Step 2: 编译器生成 --extra-body 注入命令
+arkcli +gen \
+  --model doubao-seedance-2-0-260128 \
+  --duration {shot.duration} --resolution {shot.resolution} --ratio {project.aspect_ratio} \
+  --generate-audio \
+  --extra-body '{
+    "input":[
+      {"type":"input_image","image_url":"file-{character_file_id}","role":"reference_image","reference_image_weight":0.9},
+      {"type":"input_image","image_url":"file-{scene_mood_file_id}","role":"reference_image","reference_image_weight":0.6}
+    ]
+  }' \
+  --force --wait "{compiled_prompt}"
+```
+
+- **type**: `input_image`
+- **image_url**: file_id（优先，无需公网可达）或 HTTP URL
+- **role**: `reference_image` / `first_frame` / `last_frame`
+- **reference_image_weight**: 0.0-1.0
+- **--force**: 必须——extra-body 字段可能不在 arkcli 参数校验 schema 中
+- **--wait**: 阻塞直到生成完成
+
+### file_id 生命周期说明
+
+火山引擎 Files API 的 file_id 有效期未在官方文档中明确。实测中数小时内有效。`file_registry` 中每条记录保留 `local_path` 作为备份——如果 file_id 失效，可重新上传。
+
+### 分辨率与成本
+
+| resolution | 参数值 | 最短时长 | tokens/4s | 相对成本 | 建议场景 |
+|------------|--------|---------|-----------|---------|---------|
+| 4K | `4k` | 4s | ~785,700 | 4× | 最终出片 |
+| 1080p | `1080p` | 4s | ~196,425 | 1× | 分镜迭代 |
+| 720p | `720p` | 4s | ~98,000 | 0.5× | 快速原型 |
+| 480p | `480p` | 4s | ~49,000 | 0.25× | 极速草稿 |
+
+**建议**：分镜迭代用 1080p/720p，最终出片用 4K。
+
+---
+
+## 镜头间一致性控制（video_ref 链）
+
+Seedance 2.0 支持 `video_ref` 保持风格/角色一致：
+
+```
+shot_S01: first_frame_ref = storyboard_S01.png
+         ↓ 产出 shot_S01.mp4
+
+shot_S02: first_frame_ref = storyboard_S02.png
+         video_ref = shot_S01.mp4     ← 继承上一镜的风格/角色特征
+         ↓ 产出 shot_S02.mp4
+
+shot_S03: first_frame_ref = storyboard_S03.png
+         video_ref = shot_S02.mp4
+         ...
+```
+
+编译器在 `shot_chain` 中描述链接关系。仅在 Seedance 2.0 可用（1.5 Pro 不支持 video_ref）。
+
+---
+
+## 4K 分辨率验证
+
+| 参数值 | 结果 | 说明 |
+|--------|------|------|
+| `4k` | ✅ 成功 | 输出 3840×2160 HEVC |
+| `2160p` | ❌ 拒绝 | 不在有效枚举中 |
+| `3840x2160` | ❌ 拒绝 | 不接受 W×H 格式 |
+| `1440p` | ❌ 拒绝 | 2.0 不支持此分辨率 |
+
+---
+
+# 扩展指南
+
+> 新增模型支持时，在本文件末尾追加「模型适配：<模型名>」章节。
+
+## 新增模型需提供的必填项
+
+1. **Prompt 编译模板**：从 Project State 的哪些字段映射到模型的 prompt 格式（如 Seedance 的六段式、Kling 的自由文本）
+2. **多模态引用映射**：模型的参考图 API 如何对接 `multimodal_refs` 字段（如 Seedance 的 `image_ref + weight`、Kling 的首帧/尾帧上传）
+3. **执行命令/API 模板**：产出的可执行指令格式（CLI 命令字符串 或 REST API JSON body）
+4. **成本估算公式**：预估 tokens 或 credits
+
+## 可选项
+
+5. **镜头运动翻译表**：如果模型支持镜头控制（否则跳过）
+6. **参考图分配策略**：如果模型的参考图机制与 Seedance 的 5 槽不同（否则复用通用策略）
+7. **模型特有约束**：最小时长、分辨率限制、比例限制等
+
+## 测试要求
+
+8. **至少 1 个实测案例**：用实际 Creative Package 编译并验证

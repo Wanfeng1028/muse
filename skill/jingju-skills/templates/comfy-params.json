@@ -1,0 +1,15 @@
+{
+  "asset_type": "storyboard_image",
+  "episode_id": "",
+  "shot_id": "",
+  "workflow": "ipadapter_character_consistency",
+  "character_id": "",
+  "scene_id": "",
+  "positive_prompt": "",
+  "negative_prompt": "",
+  "reference_image": "",
+  "seed": 123456,
+  "denoise": 0.35,
+  "width": 1024,
+  "height": 1536
+}

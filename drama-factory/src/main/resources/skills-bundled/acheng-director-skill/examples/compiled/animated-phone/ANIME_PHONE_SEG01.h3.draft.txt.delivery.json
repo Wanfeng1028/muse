@@ -1,0 +1,168 @@
+{
+  "segment_id": "ANIME_PHONE_SEG01",
+  "mode": "Ref2VA",
+  "file": "ANIME_PHONE_SEG01.h3.draft.txt",
+  "generation_clip_duration": 10,
+  "start_frame": 0,
+  "end_frame": 240,
+  "summary": "[keyframe completion + reference generation] The target video starts from <Picture 1> and follows Chen Qianyu's smug phone performance through a hard cut to her back view.",
+  "speaker_map": {
+    "Chen Qianyu": "S1"
+  },
+  "input_revision": "4fa0f264d43a10c4cf11409905f576199fa0245c356d2eb89d211c4c74be2ec1",
+  "reference_labels": [
+    "<Picture 1>",
+    "<Subject 1>",
+    "<Subject 2>"
+  ],
+  "format_pass": "NOT_ACCEPTED",
+  "sha256": "5d246a7ac2d03004b6b20fe7c5374a02c126347de2905b480ddf7bb708da2776",
+  "status": "DRAFT_MISSING_REFERENCES",
+  "accepted": false,
+  "blockers": [
+    "<Picture 1>: missing or empty reference media: PENDING-anime-phone-approved.png",
+    "h3_schema: missing reference file: media/PENDING-anime-phone-approved.png"
+  ],
+  "platform_status": "NOT_UPLOADED",
+  "binding_snapshot": {
+    "schema_version": "4.3.6",
+    "segment_id": "ANIME_PHONE_SEG01",
+    "mode": "Ref2VA",
+    "input_revision": "4fa0f264d43a10c4cf11409905f576199fa0245c356d2eb89d211c4c74be2ec1",
+    "references": [
+      {
+        "label": "<Picture 1>",
+        "file": "media/PENDING-anime-phone-approved.png",
+        "role": "first-frame composition and pose anchor",
+        "shot_ids": [
+          "FILM-S01-SH001",
+          "FILM-S01-SH002"
+        ],
+        "anchor_shot_ids": [
+          "FILM-S01-SH001"
+        ],
+        "asset_version": "planned-v1",
+        "entity_ids": [
+          "CHAR_QIAN",
+          "S01"
+        ],
+        "preserve": "approved character identity and office layout across both shots; opening pose only in Shot 1",
+        "exclude": "source pose after the opening, future gestures, captions and unrelated characters",
+        "definition": "<Picture 1> is the first-frame pose and close composition for Chen Qianyu beside the office chair; it supplies the laughing expression, phone-at-left-ear placement and opening framing only.",
+        "retention": "<Picture 1> (appears in [Shot 1]): fully_preserved - retain the opening expression, phone hand and close framing while using the written office and character design.",
+        "upload_order": 1,
+        "sha256": null,
+        "entity_id": null,
+        "active_ranges": [
+          {
+            "shot_id": "FILM-S01-SH001",
+            "start_frame": 0,
+            "end_frame": 120
+          },
+          {
+            "shot_id": "FILM-S01-SH002",
+            "start_frame": 120,
+            "end_frame": 240
+          }
+        ],
+        "binding_status": "PLANNED_OR_CONFLICTED",
+        "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+        "platform_status": "NOT_UPLOADED",
+        "issues": [
+          "missing or empty reference media: PENDING-anime-phone-approved.png"
+        ]
+      }
+    ],
+    "subjects": [
+      {
+        "label": "<Subject 1>",
+        "entity_id": "CHAR_QIAN",
+        "definition": "<Subject 1> is Chen Qianyu in <Picture 1>, with dark horn ornaments, long black hair with a teal streak, red eyes, a white and sky-blue outfit, blue gloves, black knee boots and a long tail.",
+        "retention": "<Subject 1> (appears in [Shot 1] and [Shot 2]): fully_preserved - preserve identity, costume, hair, horns and tail across the cut.",
+        "shot_ids": [
+          "FILM-S01-SH001",
+          "FILM-S01-SH002"
+        ],
+        "source_labels": [
+          "<Picture 1>"
+        ],
+        "speaker_id": "S1"
+      },
+      {
+        "label": "<Subject 2>",
+        "entity_id": "S01",
+        "definition": "<Subject 2> is the futuristic office established by the written scene and the composition of <Picture 1>: glass window, green cliff, desk, chair, guide-lined floor, doorway and crates.",
+        "retention": "<Subject 2> (appears in [Shot 1] and [Shot 2]): fully_preserved - retain the landmark layout while allowing the background to soften in the close back view.",
+        "shot_ids": [
+          "FILM-S01-SH001",
+          "FILM-S01-SH002"
+        ],
+        "source_labels": [
+          "<Picture 1>"
+        ],
+        "speaker_id": null
+      }
+    ],
+    "requirements": [],
+    "issues": [
+      "<Picture 1>: missing or empty reference media: PENDING-anime-phone-approved.png"
+    ],
+    "legacy_fixture": true,
+    "binding_sha256": "bbfe17d564960bfdd0008e5994e8c380e96ecfb7a14c0bf28348c4039218356f"
+  },
+  "h3_detail_policy": {
+    "profile": "legacy_fixture",
+    "minimum_words": 0,
+    "target_words": 0
+  },
+  "detailed_description_english_words": 2877,
+  "execution_capabilities": "UNVERIFIED: confirm actual platform mode, duration and slots",
+  "visual_status": "UNVERIFIED",
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "media/PENDING-anime-phone-approved.png",
+      "role": "first-frame composition and pose anchor",
+      "shot_ids": [
+        "FILM-S01-SH001",
+        "FILM-S01-SH002"
+      ],
+      "anchor_shot_ids": [
+        "FILM-S01-SH001"
+      ],
+      "asset_version": "planned-v1",
+      "entity_ids": [
+        "CHAR_QIAN",
+        "S01"
+      ],
+      "preserve": "approved character identity and office layout across both shots; opening pose only in Shot 1",
+      "exclude": "source pose after the opening, future gestures, captions and unrelated characters",
+      "definition": "<Picture 1> is the first-frame pose and close composition for Chen Qianyu beside the office chair; it supplies the laughing expression, phone-at-left-ear placement and opening framing only.",
+      "retention": "<Picture 1> (appears in [Shot 1]): fully_preserved - retain the opening expression, phone hand and close framing while using the written office and character design.",
+      "upload_order": 1,
+      "sha256": null,
+      "entity_id": null,
+      "active_ranges": [
+        {
+          "shot_id": "FILM-S01-SH001",
+          "start_frame": 0,
+          "end_frame": 120
+        },
+        {
+          "shot_id": "FILM-S01-SH002",
+          "start_frame": 120,
+          "end_frame": 240
+        }
+      ],
+      "binding_status": "PLANNED_OR_CONFLICTED",
+      "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+      "platform_status": "NOT_UPLOADED",
+      "issues": [
+        "missing or empty reference media: PENDING-anime-phone-approved.png"
+      ]
+    }
+  ],
+  "upload_card": "ANIME_PHONE_SEG01.upload.md",
+  "delivery_manifest": "ANIME_PHONE_SEG01.h3.draft.txt.delivery.json",
+  "upload_card_sha256": "897e3dc6b5bc3add98a38bba793a99fcd41670c7c178ad727309351aaaf8f6bc"
+}

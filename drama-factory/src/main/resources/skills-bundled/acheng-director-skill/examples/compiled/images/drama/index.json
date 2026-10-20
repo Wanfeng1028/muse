@@ -1,0 +1,40 @@
+{
+  "asset_reference_contract": "1.0",
+  "status": "ready-to-submit-not-generated",
+  "input_sha256": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+  "assets": [
+    {
+      "asset_id": "ASSET_02_DRAMA",
+      "display_name": "受伤的陆川一开始仍攥着钥匙；岑禾没有抢夺，只留出接收的手",
+      "prompt_file": "ASSET_02_DRAMA.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+      "resolved_card_sha256": "40cf96f95ac2cac68d8456023b50279bd81fa3f2da2a0f2e9009ec9865eda7c5",
+      "reference_count": 0,
+      "state_version": null,
+      "asset_version": null,
+      "prompt_sha256": "bf7e27e294178f1976cb610afc9079d865ba092b2c2d5c9c827e2f3eff326d7d",
+      "upload_card": "ASSET_02_DRAMA.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "fe7e71259d7258488025ef0cc86ea2371068c643bf42620125022782e3890720"
+    }
+  ],
+  "asset_plan": null,
+  "style_policy": {
+    "status": "NOT_APPLICABLE",
+    "policy": null,
+    "reason": "single isolated asset; no cross-asset style lock required"
+  },
+  "style_lock": null
+}

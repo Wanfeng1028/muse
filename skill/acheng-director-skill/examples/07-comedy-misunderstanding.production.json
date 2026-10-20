@@ -1,0 +1,581 @@
+{
+  "version": "2.0",
+  "project_id": "EXAMPLE_COMEDY_MISUNDERSTANDING",
+  "fps_num": 24,
+  "fps_den": 1,
+  "prompt_detail_policy": {
+    "profile": "legacy_fixture"
+  },
+  "production_total_duration": 20,
+  "generation_clip_limit": 10,
+  "scene_registry": [
+    {
+      "id": "S01",
+      "name": "维修室",
+      "space": "The cramped prop workshop has a tilted worktable, hanging costume racks, a rolling ladder, a red umbrella hook and one warm ceiling lamp.",
+      "version": "v1",
+      "entrances": [
+        "west service route"
+      ],
+      "exits": [
+        "east service route"
+      ],
+      "landmarks": [
+        "The cramped prop workshop has a tilted worktable, hanging costume racks, a rolling ladder, a red umbrella hook and one warm ceiling lamp."
+      ],
+      "key_light": "one warm ceiling lamp",
+      "prompt_description": "The cramped prop workshop has a tilted worktable, hanging costume racks, a rolling ladder, a red umbrella hook and one warm ceiling lamp."
+    }
+  ],
+  "character_registry": [
+    {
+      "id": "CHAR_PEI",
+      "name": "Pei Jun",
+      "height_m": 1.8,
+      "identity": "Original design; appearance defined by the production prose, not by a franchise reference",
+      "prompt_description": "Pei Jun is a slim adult stage manager with a round face, cropped black hair, a mustard vest over a white shirt and oversized work gloves."
+    },
+    {
+      "id": "CHAR_TAO",
+      "name": "Tao Lin",
+      "height_m": 1.7,
+      "identity": "Original design; appearance defined by the production prose, not by a franchise reference",
+      "prompt_description": "Tao Lin is an adult performer with a compact build, a short bob haircut, a cobalt rehearsal jacket and a red scarf tied loosely at the neck."
+    }
+  ],
+  "shots": [
+    {
+      "id": "FILM-S01-SH001",
+      "scene_id": "S01",
+      "start_frame": 0,
+      "end_frame": 240,
+      "visual": "Pei Jun stands left of the tilted worktable, pointing at the fixed empty umbrella hook and looking at Tao Lin. Tao Lin stands right with both gloved hands raised, trying to appear innocent.",
+      "camera": {
+        "previs_id": "103",
+        "lens_mm": 65,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary on the established side of the action axis",
+        "target": "the empty hook, both faces and the floor beside the ladder",
+        "adaptation": "project-specific amplitude and speed; source ID is a motion-family reference",
+        "description": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path."
+      },
+      "characters": [
+        {
+          "id": "CHAR_PEI",
+          "position": [
+            0.35,
+            0.55
+          ],
+          "facing": "toward screen right",
+          "gaze": "toward Tao Lin",
+          "weapon_hand": "empty gloved hands; pointing gestures only",
+          "weapon_direction": "no weapon present in this scene"
+        },
+        {
+          "id": "CHAR_TAO",
+          "position": [
+            0.7,
+            0.55
+          ],
+          "facing": "toward screen left",
+          "gaze": "toward Pei Jun",
+          "weapon_hand": "empty gloved hands; pointing gestures only",
+          "weapon_direction": "no weapon present in this scene"
+        }
+      ],
+      "features": {
+        "core_emotion": true,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [
+        {
+          "speaker_id": "S1",
+          "speaker_name": "Pei Jun",
+          "language": "Chinese",
+          "text": "你说你没拿？",
+          "delivery": "accusing, then suddenly uncertain",
+          "start": 128,
+          "end": 220,
+          "voiceover": false
+        }
+      ],
+      "audio": {
+        "foley": [
+          "one glove squeak follows the point"
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "A quiet desk conversation has no designed bass event."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_PEI": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_TAO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "UMBRELLA": "S01"
+        }
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_PEI": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_TAO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "UMBRELLA": "S01"
+        }
+      },
+      "performance": {
+        "beat_id": "EX-S01-B01",
+        "dominant_track": "body_hands",
+        "tracks": {
+          "body_hands": {
+            "start": 0,
+            "end": 239,
+            "cue": "Pei Jun points at the fixed empty hook, then looks at Tao Lin without stepping closer",
+            "visibility": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path."
+          }
+        },
+        "acting_design": {
+          "version": "1.0",
+          "mode": "comic",
+          "character_id": "CHAR_PEI",
+          "objective": "win the accusation without being caught by the visible prop movement",
+          "tactic": "overcommit to a pose, wait for the prop to contradict it, then redirect blame",
+          "subtext": "both performers know the denial is weak but try to preserve a straight face",
+          "trigger": "the empty umbrella hook is visible",
+          "personality_signature": "a precise freeze is followed by one oversized gesture and a delayed reaction",
+          "action_units": [
+            {
+              "start": 0,
+              "end": 120,
+              "cause": "the empty umbrella hook is visible",
+              "action": "Pei Jun points at the fixed empty hook, then looks at Tao Lin without stepping closer",
+              "gaze": "from the empty hook to Tao Lin",
+              "face": "lips purse before the accusation",
+              "follow_through": "the pointing hand stays extended through the question",
+              "speech_anchor": "silent",
+              "delivery": "use the existing written line only",
+              "prop": "the umbrella stays behind the ladder; neither person holds it",
+              "camera": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path.",
+              "sound": "one glove squeak follows the point"
+            },
+            {
+              "start": 120,
+              "end": 239,
+              "cause": "the preceding visible action has reached its accent",
+              "action": "the pointing hand stays extended through the question",
+              "gaze": "from the empty hook to Tao Lin",
+              "face": "lips purse before the accusation",
+              "follow_through": "the umbrella stays behind the ladder; neither person holds it",
+              "speech_anchor": "silent",
+              "delivery": "use the existing written line only",
+              "prop": "the umbrella stays behind the ladder; neither person holds it",
+              "camera": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path.",
+              "sound": "one glove squeak follows the point"
+            }
+          ],
+          "motion_arc": {
+            "anticipation": "the empty umbrella hook is visible",
+            "accent": "Pei Jun points at the fixed empty hook, then looks at Tao Lin without stepping closer",
+            "follow_through": "the pointing hand stays extended through the question",
+            "settle": "the umbrella stays behind the ladder; neither person holds it"
+          },
+          "speech_delivery": {
+            "voice_timbre": "clear theatrical adult voice",
+            "pace": "quick setup with a deliberate pause before the excuse",
+            "pitch": "rises on the question or exclamation",
+            "volume": "medium indoor rehearsal volume",
+            "pauses": [],
+            "emphasis": []
+          },
+          "cut_behavior": [],
+          "continuity_in": "The umbrella hook is empty; Pei Jun's left hand points at it and Tao Lin's raised hands are empty.",
+          "continuity_out": "the pointing hand stays extended through the question",
+          "exclusions": [
+            "added dialogue",
+            "new injuries",
+            "a prop changing hands",
+            "unwritten extra characters"
+          ]
+        },
+        "strategy": "selective"
+      },
+      "state_description": "The umbrella hook is empty; Pei Jun's left hand points at it and Tao Lin's raised hands are empty."
+    },
+    {
+      "id": "FILM-S01-SH002",
+      "scene_id": "S01",
+      "start_frame": 240,
+      "end_frame": 480,
+      "visual": "The camera cuts wider as the red umbrella rolls out from behind the ladder by itself. Pei Jun freezes in disbelief while Tao Lin slowly points at the umbrella and then at the ceiling.",
+      "camera": {
+        "previs_id": "106",
+        "lens_mm": 85,
+        "sensor_basis": "full-frame equivalent",
+        "shutter_angle": 180,
+        "movement": "static",
+        "path": "stationary on the established side of the action axis",
+        "target": "the empty hook, both faces and the floor beside the ladder",
+        "adaptation": "project-specific amplitude and speed; source ID is a motion-family reference",
+        "description": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path."
+      },
+      "characters": [
+        {
+          "id": "CHAR_PEI",
+          "position": [
+            0.35,
+            0.55
+          ],
+          "facing": "toward screen right",
+          "gaze": "toward Tao Lin",
+          "weapon_hand": "empty gloved hands; pointing gestures only",
+          "weapon_direction": "no weapon present in this scene"
+        },
+        {
+          "id": "CHAR_TAO",
+          "position": [
+            0.7,
+            0.55
+          ],
+          "facing": "toward screen left",
+          "gaze": "toward Pei Jun",
+          "weapon_hand": "empty gloved hands; pointing gestures only",
+          "weapon_direction": "no weapon present in this scene"
+        }
+      ],
+      "features": {
+        "core_emotion": true,
+        "combat": false,
+        "supernatural_vfx": false,
+        "colossal": false
+      },
+      "dialogues": [
+        {
+          "speaker_id": "S2",
+          "speaker_name": "Tao Lin",
+          "language": "Chinese",
+          "text": "它自己跑了！",
+          "delivery": "dead serious while pointing at the moving umbrella",
+          "start": 72,
+          "end": 150,
+          "voiceover": false
+        }
+      ],
+      "audio": {
+        "foley": [
+          "a delayed umbrella roll and one ladder rattle"
+        ],
+        "low_frequency_hz": null,
+        "no_low_frequency_reason": "A quiet desk conversation has no designed bass event."
+      },
+      "outcome_events": [],
+      "state_in": {
+        "characters": {
+          "CHAR_PEI": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_TAO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "UMBRELLA": "S01"
+        }
+      },
+      "state_out": {
+        "characters": {
+          "CHAR_PEI": {
+            "ammo": 0,
+            "trauma_phase": null
+          },
+          "CHAR_TAO": {
+            "ammo": 0,
+            "trauma_phase": null
+          }
+        },
+        "scenes": {
+          "S01": 0
+        },
+        "props": {
+          "UMBRELLA": "S01"
+        }
+      },
+      "performance": {
+        "beat_id": "EX-S01-B02",
+        "dominant_track": "body_hands",
+        "tracks": {
+          "body_hands": {
+            "start": 0,
+            "end": 239,
+            "cue": "Tao Lin turns toward the umbrella, points after it, then redirects the same finger toward the ceiling",
+            "visibility": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path."
+          }
+        },
+        "acting_design": {
+          "version": "1.0",
+          "mode": "comic",
+          "character_id": "CHAR_TAO",
+          "objective": "win the accusation without being caught by the visible prop movement",
+          "tactic": "overcommit to a pose, wait for the prop to contradict it, then redirect blame",
+          "subtext": "both performers know the denial is weak but try to preserve a straight face",
+          "trigger": "the umbrella begins to roll into view",
+          "personality_signature": "a precise freeze is followed by one oversized gesture and a delayed reaction",
+          "action_units": [
+            {
+              "start": 0,
+              "end": 120,
+              "cause": "the umbrella begins to roll into view",
+              "action": "Tao Lin turns toward the umbrella, points after it, then redirects the same finger toward the ceiling",
+              "gaze": "umbrella, then ceiling, then Pei Jun",
+              "face": "an over-serious expression held through the excuse",
+              "follow_through": "the hand overshoots the ceiling target and settles; nobody catches the umbrella",
+              "speech_anchor": "silent",
+              "delivery": "use the existing written line only",
+              "prop": "the umbrella rolls along the workshop floor and remains there",
+              "camera": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path.",
+              "sound": "a delayed umbrella roll and one ladder rattle"
+            },
+            {
+              "start": 120,
+              "end": 239,
+              "cause": "the preceding visible action has reached its accent",
+              "action": "the hand overshoots the ceiling target and settles; nobody catches the umbrella",
+              "gaze": "umbrella, then ceiling, then Pei Jun",
+              "face": "an over-serious expression held through the excuse",
+              "follow_through": "the umbrella rolls along the workshop floor and remains there",
+              "speech_anchor": "silent",
+              "delivery": "use the existing written line only",
+              "prop": "the umbrella rolls along the workshop floor and remains there",
+              "camera": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path.",
+              "sound": "a delayed umbrella roll and one ladder rattle"
+            }
+          ],
+          "motion_arc": {
+            "anticipation": "the umbrella begins to roll into view",
+            "accent": "Tao Lin turns toward the umbrella, points after it, then redirects the same finger toward the ceiling",
+            "follow_through": "the hand overshoots the ceiling target and settles; nobody catches the umbrella",
+            "settle": "the umbrella rolls along the workshop floor and remains there"
+          },
+          "speech_delivery": {
+            "voice_timbre": "clear theatrical adult voice",
+            "pace": "quick setup with a deliberate pause before the excuse",
+            "pitch": "rises on the question or exclamation",
+            "volume": "medium indoor rehearsal volume",
+            "pauses": [],
+            "emphasis": []
+          },
+          "cut_behavior": [],
+          "continuity_in": "The umbrella is on the floor behind the ladder; both performers remain upright and the hook is still empty.",
+          "continuity_out": "the hand overshoots the ceiling target and settles; nobody catches the umbrella",
+          "exclusions": [
+            "added dialogue",
+            "new injuries",
+            "a prop changing hands",
+            "unwritten extra characters"
+          ]
+        },
+        "strategy": "selective"
+      },
+      "state_description": "The umbrella is on the floor behind the ladder; both performers remain upright and the hook is still empty."
+    }
+  ],
+  "segments": [
+    {
+      "id": "COMEDY_SEG01",
+      "start_frame": 0,
+      "end_frame": 240,
+      "shot_ids": [
+        "FILM-S01-SH001"
+      ],
+      "generation_clip_duration": 10,
+      "mode": "T2VA",
+      "style": "Live-action physical comedy with readable pauses, crisp prop timing and restrained handheld camera response.",
+      "overall_soundscape": "Workshop room tone continues under glove squeaks, a delayed umbrella roll and a small ladder rattle.",
+      "non_diegetic_music": "Short pizzicato strings at a brisk tempo punctuate the prop reveal.",
+      "references": [],
+      "motion_profile": {
+        "version": "1.0",
+        "medium": "live_action",
+        "fps": 24,
+        "exposure": "ones",
+        "timing_principle": "hold the false certainty one beat before the prop supplies the contradiction",
+        "camera_principle": "keep the face and prop entrance in the same readable axis",
+        "staging_principle": "preserve the empty hook, ladder and red umbrella path",
+        "sound_principle": "delay the rolling prop sound until after the accusation lands",
+        "cut_style": "continuous"
+      }
+    },
+    {
+      "id": "COMEDY_SEG02",
+      "start_frame": 240,
+      "end_frame": 480,
+      "shot_ids": [
+        "FILM-S01-SH002"
+      ],
+      "generation_clip_duration": 10,
+      "mode": "T2VA",
+      "style": "Live-action physical comedy with readable pauses, crisp prop timing and restrained handheld camera response.",
+      "overall_soundscape": "Workshop room tone continues under glove squeaks, a delayed umbrella roll and a small ladder rattle.",
+      "non_diegetic_music": "Short pizzicato strings at a brisk tempo punctuate the prop reveal.",
+      "references": [],
+      "motion_profile": {
+        "version": "1.0",
+        "medium": "live_action",
+        "fps": 24,
+        "exposure": "ones",
+        "timing_principle": "hold the false certainty one beat before the prop supplies the contradiction",
+        "camera_principle": "keep the face and prop entrance in the same readable axis",
+        "staging_principle": "preserve the empty hook, ladder and red umbrella path",
+        "sound_principle": "delay the rolling prop sound until after the accusation lands",
+        "cut_style": "continuous"
+      }
+    }
+  ],
+  "unresolved_threads": [],
+  "dispatch_log": [
+    {
+      "contract": "B",
+      "target": "h3-prompt-writing",
+      "implementation": "bundled-guideline compiler"
+    },
+    {
+      "contract": "C",
+      "target": "im2-clean-image",
+      "source_repository": "im2-image-skills",
+      "status": "prompt-planned; no paid image generation"
+    }
+  ],
+  "ledger": {
+    "initial": {
+      "characters": {
+        "CHAR_PEI": {
+          "ammo": 0,
+          "trauma_phase": null
+        },
+        "CHAR_TAO": {
+          "ammo": 0,
+          "trauma_phase": null
+        }
+      },
+      "scenes": {
+        "S01": 0
+      },
+      "props": {
+        "UMBRELLA": "S01"
+      }
+    },
+    "events": [],
+    "final": {
+      "characters": {
+        "CHAR_PEI": {
+          "ammo": 0,
+          "trauma_phase": null
+        },
+        "CHAR_TAO": {
+          "ammo": 0,
+          "trauma_phase": null
+        }
+      },
+      "scenes": {
+        "S01": 0
+      },
+      "props": {
+        "UMBRELLA": "S01"
+      }
+    }
+  },
+  "asset_prompt": "Create a live-action wide keyframe in a cramped prop workshop. Pei Jun, a slim adult stage manager in a mustard vest, points at an empty red umbrella hook beside a tilted worktable while Tao Lin, an adult performer in a cobalt rehearsal jacket and loose red scarf, raises both empty gloved hands in exaggerated innocence. A rolling ladder, costume racks and one warm ceiling lamp establish the space. Keep the empty hook visibly readable, leave a clear floor path behind the ladder for the later red umbrella reveal, and preserve grounded feet and contact shadows. Avoid captions, extra umbrellas, duplicated hands and frozen theatrical smiles.",
+  "story": {
+    "synopsis": "裴峻指着空伞钩质问陶林，红伞从梯后滚出；陶林指向伞再指天花板，试图保住无辜姿态。"
+  },
+  "prompt_bindings": {
+    "S01": "the workshop",
+    "UMBRELLA": "the red umbrella"
+  },
+  "asset_cards": [
+    {
+      "id": "ASSET_COMEDY_UMBRELLA",
+      "name": "红伞误会·工作坊",
+      "target_skill": "im2-clean-image",
+      "source_repository": "im2-image-skills",
+      "recipe": "portrait",
+      "mode": "GENERATE",
+      "reference_policy": "none",
+      "references": [],
+      "heavy_scene": false,
+      "structure_lock": {
+        "camera": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path.",
+        "landmarks_topology": "The cramped prop workshop has a tilted worktable, hanging costume racks, a rolling ladder, a red umbrella hook and one warm ceiling lamp.",
+        "depth_occlusion": "Keep the stated foreground, subject and background planes separate.",
+        "mass_support": "Feet and load-bearing structures remain in physical contact with the stated ground plane."
+      },
+      "transaction": {
+        "change": "Create one opening keyframe before the exchange.",
+        "preserve": "The written identities, left-right placement, costume, material and opening prop ownership.",
+        "rebuild": "Render coherent anatomy, surfaces and shared world lighting from the written design."
+      },
+      "seven_steps": [
+        {
+          "step": 1,
+          "content": "Pei Jun is a slim adult stage manager with a round face, cropped black hair, a mustard vest over a white shirt and oversized work gloves. Tao Lin is an adult performer with a compact build, a short bob haircut, a cobalt rehearsal jacket and a red scarf tied loosely at the neck. The umbrella hook is empty; Pei Jun's left hand points at it and Tao Lin's raised hands are empty."
+        },
+        {
+          "step": 2,
+          "content": "Live-action physical comedy with readable pauses, crisp prop timing and restrained handheld camera response."
+        },
+        {
+          "step": 3,
+          "content": "The camera holds a medium-wide view of both performers, the fixed hook and the ladder; the second shot is wider to expose the umbrella path."
+        },
+        {
+          "step": 4,
+          "content": "one warm ceiling lamp; separate the described materials by their visible response."
+        },
+        {
+          "step": 5,
+          "content": "Concentrate visible detail on the subjects and current narrative object; keep the distant background quiet."
+        },
+        {
+          "step": 6,
+          "content": "Restrict wear, texture and small surface marks to the explicitly described near surfaces."
+        },
+        {
+          "step": 7,
+          "content": "Avoid extra limbs, disconnected supports, ghost texture and unrequested text."
+        }
+      ],
+      "prompt": "Create a live-action wide keyframe in a cramped prop workshop. Pei Jun, a slim adult stage manager in a mustard vest, points at an empty red umbrella hook beside a tilted worktable while Tao Lin, an adult performer in a cobalt rehearsal jacket and loose red scarf, raises both empty gloved hands in exaggerated innocence. A rolling ladder, costume racks and one warm ceiling lamp establish the space. Keep the empty hook visibly readable, leave a clear floor path behind the ladder for the later red umbrella reveal, and preserve grounded feet and contact shadows. Avoid captions, extra umbrellas, duplicated hands and frozen theatrical smiles.",
+      "generation_status": "planned",
+      "actual_settings": null,
+      "asset_version": "v1.0"
+    }
+  ]
+}

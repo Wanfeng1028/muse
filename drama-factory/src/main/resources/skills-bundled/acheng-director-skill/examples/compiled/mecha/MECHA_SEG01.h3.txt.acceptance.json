@@ -1,0 +1,24 @@
+{
+  "format_pass": "PASSED",
+  "validator": "h3_final_format/4.3.6",
+  "file": "MECHA_SEG01.h3.txt",
+  "sha256": "f2b02ba418dcc16267ddb5e26151b3d27309ee8cbc4e9003056e7827f8dab677",
+  "contract_sha256": "0b1fd7012d55fa60cb9d0760efe282308e4f66b56f88b69b23880101b797ef1d",
+  "mode": "Ref2VA",
+  "duration_seconds": 14.0,
+  "shot_count": 2,
+  "english_words": 3236,
+  "minimum_words": 0,
+  "dialogue_count": 0,
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "references/6cb5eee882c10bd974b970f53d456ffed1c03c8fa82f964ba6210b841d88d4f2.png",
+      "sha256": "6cb5eee882c10bd974b970f53d456ffed1c03c8fa82f964ba6210b841d88d4f2",
+      "role": "storyboard blocking and ordering only"
+    }
+  ],
+  "input_revision": "10d2529be4d849e0485b2214651fd70565ba70cabfb3b525afe417ccb08e6e36",
+  "visual_status": "UNVERIFIED",
+  "scope": "final-file structural validation; not creative, visual or audio acceptance"
+}

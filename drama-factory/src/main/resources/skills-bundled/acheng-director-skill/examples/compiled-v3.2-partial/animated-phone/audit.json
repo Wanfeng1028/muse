@@ -1,0 +1,105 @@
+{
+  "project_id": "EXAMPLE_ANIMATED_PHONE",
+  "status": "PASS",
+  "score": 100.0,
+  "applicable_gates": 8,
+  "scope": "structural-contract-only",
+  "production_sha256": "e7a2634ebf8a19f3aa3e8eb606a256a8aaacedaff834a5f368ca99d2840f435e",
+  "gates": [
+    {
+      "gate": "timeline_closure",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "previs_index",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "buzzword_zero",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "micro_acting",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "combat_calculus",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "tri_state_vfx",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "colossal_proofs",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "h3_schema",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "acoustic_physics",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "continuity_ledger",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "narrative_contract",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "performance_handoff",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "asset_coverage",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "performance_liveliness",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "limitations": [
+    "Semantic truth, natural acting, visual identity and acoustic spectrum require generated-media inspection.",
+    "Feature declarations and descriptive evidence remain author assertions, not automatic visual proof."
+  ]
+}

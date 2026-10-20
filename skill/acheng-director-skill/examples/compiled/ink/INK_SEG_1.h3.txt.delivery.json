@@ -1,0 +1,100 @@
+{
+  "segment_id": "INK_SEG_1",
+  "mode": "I2VA",
+  "file": "INK_SEG_1.h3.txt",
+  "generation_clip_duration": 12,
+  "start_frame": 0,
+  "end_frame": 288,
+  "summary": "",
+  "speaker_map": {},
+  "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+  "reference_labels": [
+    "<Picture 1>"
+  ],
+  "format_pass": "PASSED",
+  "sha256": "78d70acee5d51d3e9b7a1f2225ada944e13e8418baca4f474d7fbf4e67c25262",
+  "status": "READY_TO_UPLOAD",
+  "accepted": true,
+  "blockers": [],
+  "platform_status": "NOT_UPLOADED",
+  "binding_snapshot": {
+    "schema_version": "4.3.6",
+    "segment_id": "INK_SEG_1",
+    "mode": "I2VA",
+    "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+    "references": [
+      {
+        "label": "<Picture 1>",
+        "file": "references/abb6a712458329c637e9c68654c59f88f73f546509aafe8eb6d85da2bbc8c05b.png",
+        "role": "actual opening target frame",
+        "upload_order": 1,
+        "sha256": "abb6a712458329c637e9c68654c59f88f73f546509aafe8eb6d85da2bbc8c05b",
+        "asset_version": "sha256:abb6a712458329c637e9c68654c59f88f73f546509aafe8eb6d85da2bbc8c05b",
+        "entity_id": null,
+        "shot_ids": [
+          "INK_SHOT_1"
+        ],
+        "active_ranges": [
+          {
+            "shot_id": "INK_SHOT_1",
+            "start_frame": 0,
+            "end_frame": 288
+          }
+        ],
+        "preserve": "See the authored retention relationship.",
+        "exclude": null,
+        "binding_status": "BOUND_LOCAL",
+        "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+        "platform_status": "NOT_UPLOADED",
+        "issues": [],
+        "source_file": "media/ink-opening.png"
+      }
+    ],
+    "subjects": [],
+    "requirements": [],
+    "issues": [],
+    "legacy_fixture": true,
+    "binding_sha256": "a6798d7141cefd97f39d63bedde368014de63999623fe1a7e798353502c7a64f"
+  },
+  "h3_detail_policy": {
+    "profile": "legacy_fixture",
+    "minimum_words": 0,
+    "target_words": 0
+  },
+  "detailed_description_english_words": null,
+  "execution_capabilities": "UNVERIFIED: confirm actual platform mode, duration and slots",
+  "visual_status": "UNVERIFIED",
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "references/abb6a712458329c637e9c68654c59f88f73f546509aafe8eb6d85da2bbc8c05b.png",
+      "role": "actual opening target frame",
+      "upload_order": 1,
+      "sha256": "abb6a712458329c637e9c68654c59f88f73f546509aafe8eb6d85da2bbc8c05b",
+      "asset_version": "sha256:abb6a712458329c637e9c68654c59f88f73f546509aafe8eb6d85da2bbc8c05b",
+      "entity_id": null,
+      "shot_ids": [
+        "INK_SHOT_1"
+      ],
+      "active_ranges": [
+        {
+          "shot_id": "INK_SHOT_1",
+          "start_frame": 0,
+          "end_frame": 288
+        }
+      ],
+      "preserve": "See the authored retention relationship.",
+      "exclude": null,
+      "binding_status": "BOUND_LOCAL",
+      "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+      "platform_status": "NOT_UPLOADED",
+      "issues": [],
+      "source_file": "media/ink-opening.png"
+    }
+  ],
+  "upload_card": "INK_SEG_1.upload.md",
+  "delivery_manifest": "INK_SEG_1.h3.txt.delivery.json",
+  "format_contract": "INK_SEG_1.h3.txt.check.json",
+  "format_receipt": "INK_SEG_1.h3.txt.acceptance.json",
+  "upload_card_sha256": "08798b960e771af8f9a49eb6ce728ef88f8aa8d20994d73c0baf0b467497f2c5"
+}

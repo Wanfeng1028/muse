@@ -1,0 +1,46 @@
+{
+  "segment_id": "SERIAL_SEG_11",
+  "mode": "T2VA",
+  "file": "SERIAL_SEG_11.h3.txt",
+  "generation_clip_duration": 15,
+  "start_frame": 3600,
+  "end_frame": 3960,
+  "summary": "",
+  "speaker_map": {
+    "Meilin": "S1"
+  },
+  "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "reference_labels": [],
+  "format_pass": "PASSED",
+  "sha256": "cece2f392fbfdd2bf4537d92fe122c7d0a952348e3b54293209db041811312c6",
+  "status": "READY_TO_UPLOAD",
+  "accepted": true,
+  "blockers": [],
+  "platform_status": "NOT_UPLOADED",
+  "binding_snapshot": {
+    "schema_version": "4.3.6",
+    "segment_id": "SERIAL_SEG_11",
+    "mode": "T2VA",
+    "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+    "references": [],
+    "subjects": [],
+    "requirements": [],
+    "issues": [],
+    "legacy_fixture": true,
+    "binding_sha256": "0313df9b4ce959ab0780264521bd06a42c7b954344b6d6775aee87d24905d7b4"
+  },
+  "h3_detail_policy": {
+    "profile": "legacy_fixture",
+    "minimum_words": 0,
+    "target_words": 0
+  },
+  "detailed_description_english_words": null,
+  "execution_capabilities": "UNVERIFIED: confirm actual platform mode, duration and slots",
+  "visual_status": "UNVERIFIED",
+  "references": [],
+  "upload_card": "SERIAL_SEG_11.upload.md",
+  "delivery_manifest": "SERIAL_SEG_11.h3.txt.delivery.json",
+  "format_contract": "SERIAL_SEG_11.h3.txt.check.json",
+  "format_receipt": "SERIAL_SEG_11.h3.txt.acceptance.json",
+  "upload_card_sha256": "739f85a2ebf5b8d0a059d2aab72f0b16283b4e8a6f95bbf637543320f2560cf7"
+}

@@ -1,0 +1,105 @@
+{
+  "project_id": "EXAMPLE_MECHA",
+  "status": "PASS",
+  "score": 100.0,
+  "applicable_gates": 8,
+  "scope": "structural-contract-only",
+  "production_sha256": "4cb2203aa74b0df0f60d3e18c022160713ca818573d5cf5d869d46d8fd7d3ed0",
+  "gates": [
+    {
+      "gate": "timeline_closure",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "previs_index",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "buzzword_zero",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "micro_acting",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "combat_calculus",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "tri_state_vfx",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "colossal_proofs",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "h3_schema",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "acoustic_physics",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "continuity_ledger",
+      "status": "PASS",
+      "score": 10,
+      "errors": []
+    },
+    {
+      "gate": "narrative_contract",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "performance_handoff",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "asset_coverage",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    },
+    {
+      "gate": "performance_liveliness",
+      "status": "N/A",
+      "score": null,
+      "errors": [],
+      "reason": "No applicable shots"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "limitations": [
+    "Semantic truth, natural acting, visual identity and acoustic spectrum require generated-media inspection.",
+    "Feature declarations and descriptive evidence remain author assertions, not automatic visual proof."
+  ]
+}

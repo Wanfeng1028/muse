@@ -1,0 +1,30 @@
+{
+  "format_pass": "PASSED",
+  "validator": "h3_final_format/4.3.6",
+  "file": "INK_SEG_2.h3.txt",
+  "sha256": "d796e99ea0389e3016d616b2ade7d75e83638f0602474b333c7c2a5aff02fe1f",
+  "contract_sha256": "4dc419023b031955200c85c9c7b88cb4bd13ca81aedef564ce39abb332d9b4c4",
+  "mode": "FL2VA",
+  "duration_seconds": 12.0,
+  "shot_count": 1,
+  "english_words": 513,
+  "minimum_words": 0,
+  "dialogue_count": 0,
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "references/be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07.png",
+      "sha256": "be982b87ce64d0427c76326a4a0c4b827865f9ee46c71970680b1bf1bc20ac07",
+      "role": "actual opening target frame"
+    },
+    {
+      "label": "<Picture 2>",
+      "file": "references/8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd.png",
+      "sha256": "8dc3c8c4085b1fa632d33d3ff6dc8132957c1719030c30c6672ac532198e44bd",
+      "role": "actual final target frame"
+    }
+  ],
+  "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+  "visual_status": "UNVERIFIED",
+  "scope": "final-file structural validation; not creative, visual or audio acceptance"
+}

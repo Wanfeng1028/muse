@@ -1,0 +1,138 @@
+{
+  "status": "compiled-not-generated",
+  "production_sha256": "9eef501301481002743e1de8acb75bde85903594ca61628d72a57b1ff1b0cc3f",
+  "segments": [
+    {
+      "segment_id": "SERIAL_SEG_01",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_01.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_02",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_02.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Bo": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_03",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_03.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_04",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_04.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Bo": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_05",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_05.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_06",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_06.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Bo": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_07",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_07.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_08",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_08.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Bo": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_09",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_09.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_10",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_10.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Bo": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_11",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_11.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    },
+    {
+      "segment_id": "SERIAL_SEG_12",
+      "mode": "T2VA",
+      "file": "SERIAL_SEG_12.h3.txt",
+      "generation_clip_duration": 15,
+      "speaker_map": {
+        "Meilin": "S1"
+      },
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": []
+    }
+  ]
+}

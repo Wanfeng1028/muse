@@ -1,0 +1,6 @@
+interface:
+  display_name: "Acheng Director｜Acheng 电影级导演综合引擎"
+  short_description: "从剧本、分镜、文武戏到资产与H3编译，保持跨镜事实和时间连续"
+  default_prompt: "使用 $acheng-director（Acheng Director）根据我的素材完成影视生产卡与对应模型提示词，并检查时间和连续性。"
+policy:
+  allow_implicit_invocation: true

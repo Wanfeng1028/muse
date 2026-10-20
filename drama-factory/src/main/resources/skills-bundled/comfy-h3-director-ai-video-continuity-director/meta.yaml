@@ -1,0 +1,19 @@
+display-name-zh: AI漫剧与全能影视导演
+version: 1.0.0
+tag-en: Video Production
+tag-cn: 视频制作
+complete-tags-en:
+- Video Production / Continuity
+- Video Production / Web-Novel Drama
+- Video Production / Batch Prompts
+complete-tags-cn:
+- 视频制作 / 连续性运镜
+- 视频制作 / AI漫剧短剧
+- 视频制作 / 全量提示词
+summary-en: Master comprehensive AI video cinematography, AI comic drama pipelines, and one-shot batch multi-shot continuity for MiniMax H3.
+summary-cn: 专为 MiniMax H3 本地工作流打造的 AI 漫剧与影视总导演，涵盖 Phase 0 资产决策、文武双轨时长规划、三位一体动作一致性与全集提示词一次性预制。
+desc-en: Master comprehensive AI video cinematography and multi-shot continuity for MiniMax H3. Integrates Phase 0 reusable asset preparation & audio strategy selector, asset pruning rules for disposable/one-off assets, dual-track duration engine (8-15s long-take dialogue vs 2-4s action cuts), motion continuity triple-lock (180-degree axis, limb/prop state lock, match-on-action handoff), all 5 official H3 generation modes (T2VA, I2VA, FL2VA, L2VA, Ref2VA), 8 specialized domain pipelines, specialized Web-Novel AI Comic Drama pipeline, 5D Style Matrix prompt engineering, dynamic narrative pacing engines, physics simulation dictionaries, one-shot batch prompt pre-generation, tail-to-head frame chaining, subject lock anti-distortion rules, and match-cut transition engineering.
+desc-cn: 专为 MiniMax H3 本地（ComfyUI等）工作流打造的影视级总导演与 AI 漫剧连续性量产 Skill。支持 Phase 0 资产前置盘点与龙套轻量化裁剪、网文改漫剧四步 SOP、文武双轨时长引擎（8~15s 文戏长镜头 / 2~4s 武戏快切）、三位一体动作一致性锁死（180° 轴线与 50% 动量交接）、五维风格修饰符拼装矩阵与爽点微表情词库。一次性输出全集结构化提示词包与 FFmpeg 尾帧/纯净音色归档命令。
+author-en: Community Contributor
+author-cn: 社区创作者
+source: community

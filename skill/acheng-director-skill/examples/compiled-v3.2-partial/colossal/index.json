@@ -1,0 +1,22 @@
+{
+  "status": "compiled-not-generated",
+  "production_sha256": "b53ebd817fb82ba0619aeff80e1999acad0744216dd7a71c9b42cbff6d3447d0",
+  "segments": [
+    {
+      "segment_id": "COLOSSAL_SEG01",
+      "mode": "Ref2VA",
+      "file": "COLOSSAL_SEG01.h3.txt",
+      "generation_clip_duration": 14,
+      "speaker_map": {},
+      "execution_capabilities": "UNVERIFIED: confirm duration, media limits and mode in the actual generation entry point",
+      "references": [
+        {
+          "label": "<Picture 1>",
+          "role": "storyboard blocking and ordering only",
+          "file": "references/4b83cbc11da3c06b490cced8f8ea854d871c596e41b76ee67149c16abef499b4.png",
+          "sha256": "4b83cbc11da3c06b490cced8f8ea854d871c596e41b76ee67149c16abef499b4"
+        }
+      ]
+    }
+  ]
+}

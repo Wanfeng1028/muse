@@ -1,0 +1,47 @@
+# Git
+.git/
+*.pyc
+__pycache__/
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project outputs (creative packs are deliverables, not source)
+output/
+*.mp4
+*.png
+*.jpg
+!assets/examples/**/*.png
+!assets/examples/**/*.jpg
+!references/cases/assets/**/*.jpg
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.mp4
+
+# Environment
+.env
+.env.local
+
+# Temp / working files (agent artifacts, logs)
+temp_videos/
+.hermes/
+*.log
+.pytest_cache/
+
+# Node (if HyperFrames integration is added later)
+node_modules/
+.hyperframes/
+*.bak
+projects/

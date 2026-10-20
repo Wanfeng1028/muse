@@ -1,0 +1,53 @@
+{
+  "asset_reference_contract": "1.0",
+  "status": "ready-to-submit-not-generated",
+  "input_sha256": "10d2529be4d849e0485b2214651fd70565ba70cabfb3b525afe417ccb08e6e36",
+  "assets": [
+    {
+      "asset_id": "ASSET_01_MECHA",
+      "display_name": "Forge试图穿过维修沟，Ward用盾面导走能量",
+      "prompt_file": "ASSET_01_MECHA.image.txt",
+      "mode": "GENERATE",
+      "asset_kind": null,
+      "character_name": null,
+      "state_label": null,
+      "view_layout": null,
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "required",
+      "references": [
+        {
+          "image": 1,
+          "file": "references/6cb5eee882c10bd974b970f53d456ffed1c03c8fa82f964ba6210b841d88d4f2.png",
+          "role": "composition",
+          "subject": "the confrontation between Forge and Ward",
+          "preserve": "only Panel 01's left-right placement and ground line; the left block marked A denotes Forge, and the right block marked B denotes Ward",
+          "exclude": "the grid, letters, panel numbers, gray block anatomy and flat diagram shading; produce one full-frame image",
+          "sha256": "6cb5eee882c10bd974b970f53d456ffed1c03c8fa82f964ba6210b841d88d4f2",
+          "source_file": "media/mecha-contact.png",
+          "binding_status": "BOUND_LOCAL",
+          "platform_status": "NOT_UPLOADED"
+        }
+      ],
+      "missing_reference_details": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point",
+      "input_revision": "10d2529be4d849e0485b2214651fd70565ba70cabfb3b525afe417ccb08e6e36",
+      "resolved_card_sha256": "3e36d4a9e933481258153bbe7925ffc0fbb19e8d0e420a4275c1f61dc58f372b",
+      "reference_count": 1,
+      "state_version": null,
+      "asset_version": null,
+      "prompt_sha256": "72c54a8e55e3f23e2934dd935b6dc19bcdd516ed5ef9293ac08286b4cd3cc61f",
+      "upload_card": "ASSET_01_MECHA.upload.md",
+      "platform_status": "NOT_UPLOADED",
+      "visual_status": "UNVERIFIED",
+      "upload_card_sha256": "54a8367dd9db1409841909cdbf4f3e7c0a33f94bfd08bfa5e9e1314d05eccd62"
+    }
+  ],
+  "asset_plan": null,
+  "style_policy": {
+    "status": "NOT_APPLICABLE",
+    "policy": null,
+    "reason": "single isolated asset; no cross-asset style lock required"
+  },
+  "style_lock": null
+}

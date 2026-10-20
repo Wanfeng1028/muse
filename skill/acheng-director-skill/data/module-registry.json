@@ -1,0 +1,169 @@
+{
+  "version": "4.3.8",
+  "modules": [
+    {
+      "id": "story",
+      "entry": "modules/story/SKILL.md",
+      "reads": [
+        "references/decisions/story.md",
+        "references/10-scriptwriter-engine.md",
+        "references/11-story-architecture.md",
+        "references/12-character-dialogue-revision.md"
+      ],
+      "owns": [
+        "/story",
+        "/script_scenes"
+      ],
+      "checks_with": [
+        "performance"
+      ],
+      "check_focus": "Character choices and speech remain supported by the screenplay."
+    },
+    {
+      "id": "shots",
+      "entry": "modules/shots/SKILL.md",
+      "reads": [
+        "references/decisions/shots.md",
+        "references/20-storyboard-compiler.md",
+        "references/21-genre-camera-capacity.md",
+        "references/114-reference-binding-delivery-v4.3.6.md"
+      ],
+      "owns": [
+        "/shots/*/camera",
+        "/shots/*/visual",
+        "/shots/*/characters",
+        "/shots/*/start_frame",
+        "/shots/*/end_frame",
+        "/shots/*/reference_requirements",
+        "/segments/*/shot_ids",
+        "/segments/*/start_frame",
+        "/segments/*/end_frame",
+        "/segments/*/generation_clip_duration",
+        "/shots/*/required_assets",
+        "/shots/*/required_prop_ids"
+      ],
+      "checks_with": [
+        "performance",
+        "assets"
+      ],
+      "check_focus": "Decisive reactions remain visible; Shot object/state reference requirements match approved asset versions."
+    },
+    {
+      "id": "performance",
+      "entry": "modules/performance/SKILL.md",
+      "reads": [
+        "references/decisions/performance.md",
+        "references/30-performance-adapter.md",
+        "references/40-action-choreography.md",
+        "references/31-performance-handoff.md",
+        "references/32-liveliness-performance-framework.md"
+      ],
+      "owns": [
+        "/shots/*/performance",
+        "/shots/*/combat"
+      ],
+      "checks_with": [
+        "shots",
+        "effects",
+        "model"
+      ],
+      "check_focus": "Blocking reveals the reaction; causal acting preserves personality, speech rhythm and action contact."
+    },
+    {
+      "id": "assets",
+      "entry": "modules/assets/SKILL.md",
+      "reads": [
+        "references/decisions/assets.md",
+        "references/50-character-morphology.md",
+        "references/60-assets-and-keyframes.md",
+        "references/61-asset-dependency-production.md",
+        "references/62-style-anchor.md",
+        "references/72-standalone-prompt-delivery.md",
+        "references/105-scene-design-adapter-v4.md",
+        "references/114-reference-binding-delivery-v4.3.6.md"
+      ],
+      "owns": [
+        "/asset_plan",
+        "/asset_cards",
+        "/character_registry/*/prompt_description",
+        "/scene_registry/*/prompt_description",
+        "/style_lock",
+        "/style_policy",
+        "/style_policy_reason"
+      ],
+      "checks_with": [
+        "shots",
+        "model"
+      ],
+      "check_focus": "Every numbered reference uses approved identity, version, state and retention scope; scene-art advice respects geometry."
+    },
+    {
+      "id": "effects",
+      "entry": "modules/effects/SKILL.md",
+      "reads": [
+        "references/decisions/effects.md",
+        "references/45-vfx-sakuga-engine.md",
+        "references/46-effect-families.md",
+        "references/00-visual-constitution.md"
+      ],
+      "owns": [
+        "/shots/*/vfx",
+        "/shots/*/scale_proofs"
+      ],
+      "checks_with": [
+        "performance"
+      ],
+      "check_focus": "Scale and effect readability preserve action cause and result."
+    },
+    {
+      "id": "model",
+      "entry": "modules/model/SKILL.md",
+      "reads": [
+        "references/decisions/model.md",
+        "references/70-minimax-h3-compiler.md",
+        "references/72-standalone-prompt-delivery.md",
+        "references/32-liveliness-performance-framework.md",
+        "references/113-animation-art-terminology-library-v4.3.md",
+        "references/114-reference-binding-delivery-v4.3.6.md"
+      ],
+      "owns": [
+        "/segments/*/style",
+        "/segments/*/motion_profile",
+        "/segments/*/mode",
+        "/segments/*/mode_lock",
+        "/segments/*/mode_selection_reason",
+        "/segments/*/references",
+        "/segments/*/subjects",
+        "/segments/*/summary",
+        "/segments/*/overall_soundscape",
+        "/segments/*/non_diegetic_music",
+        "/segments/*/animation_term_ids",
+        "/segments/*/animation_term_evidence"
+      ],
+      "checks_with": [
+        "assets",
+        "performance",
+        "continuity"
+      ],
+      "check_focus": "One binding snapshot connects actual media, stable objects, local labels, Shot scope, complete prose and upload cards; no detail is lost."
+    },
+    {
+      "id": "continuity",
+      "entry": "modules/continuity/SKILL.md",
+      "reads": [
+        "references/decisions/continuity.md",
+        "references/80-continuity-ledger.md",
+        "references/95-quality-gates.md",
+        "references/114-reference-binding-delivery-v4.3.6.md"
+      ],
+      "owns": [
+        "/ledger",
+        "/unresolved_threads"
+      ],
+      "checks_with": [
+        "model"
+      ],
+      "check_focus": "Replay physical state and verify referenced state/Shot ranges; preserve complete cold artifacts and reject stale delivery evidence."
+    }
+  ]
+}

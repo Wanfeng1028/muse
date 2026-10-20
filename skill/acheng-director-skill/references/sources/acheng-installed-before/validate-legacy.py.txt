@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Automation Quality & Contract Validation Script for Acheng Cinematic Director Engine.
+Validates directory structure, YAML schema parsing, reference links, examples,
+deep physical axioms, 132 Previs mappings, negative hygiene, and global mirror parity.
+"""
+
+import os
+import sys
+import shutil
+import yaml
+
+DESKTOP_DIR = r"C:\Users\dcf\Desktop\minimax\skill\ai影视导演助手\cinematic-director-engine"
+GLOBAL_ACHENG_DIR = r"C:\Users\dcf\.gemini\config\skills\acheng-director"
+GLOBAL_DIRECTOR_DIR = r"C:\Users\dcf\.gemini\config\skills\cinematic-director-engine"
+
+REQUIRED_REFERENCES = [
+    "00-visual-constitution.md",
+    "01-style-presets.md",
+    "10-scriptwriter-engine.md",
+    "20-storyboard-compiler.md",
+    "25-combat-video-deconstructor.md",
+    "30-performance-adapter.md",
+    "40-action-choreography.md",
+    "45-vfx-sakuga-engine.md",
+    "50-character-morphology.md",
+    "60-assets-and-keyframes.md",
+    "70-minimax-h3-compiler.md",
+    "71-seedance-legacy-compiler.md",
+    "80-continuity-ledger.md",
+]
+
+REQUIRED_TEMPLATES = [
+    "body-spec.yaml",
+    "character-bible.yaml",
+    "scene-bible.yaml",
+    "visual-bible.yaml",
+    "expression-shot-map.yaml",
+    "shot-spec.yaml",
+    "h3-prompt-package.md",
+    "seedance-2-prompt-package.md",
+]
+
+REQUIRED_EXAMPLES = [
+    "01-hollywood-mecha-combat-h3.md",
+    "02-dramatic-micro-acting-h3.md",
+    "03-colossal-scale-combat-h3.md",
+]
+
+DEEP_INSPECTION_RULES = [
+    ("references/00-visual-constitution.md", "公理 6：超巨构尺度证据链", "Axiom 6: Colossal Scale Proof Chains"),
+    ("references/00-visual-constitution.md", "公理 7：信息密度衰减与光路链守恒律", "Axiom 7: Information-Density Falloff"),
+    ("references/20-storyboard-compiler.md", "132 段带 2m 棋盘格与视差参考柱", "132 Camera Moves Whitebox Previs Taxonomy"),
+    ("references/60-assets-and-keyframes.md", "2.3 全盘深度接入 im2-image-skills", "Clean Material-Light Pass & im2-image-skills"),
+    ("references/60-assets-and-keyframes.md", "2.4 im2-image-skills 6 大电影级出图专精配方库", "The 6 Production Clean Prompt Recipes"),
+    ("references/70-minimax-h3-compiler.md", "负向提示词卫生守则与四维靶向防御块", "Negative Prompt Hygiene & 4-Vector Defense"),
+    ("references/80-continuity-ledger.md", "4. 分场场记冷存与防长文本失忆协议", "Scene Cold Archiving & Context Memory Armor"),
+    ("SKILL.md", "契约 C：总导演 ──▶ 图像资产总监支路", "Contract C: Image Asset Sub-Skill Integration"),
+    ("SKILL.md", "8. 反偷懒与强迫深度思考协议", "Relentless Depth & Anti-Laziness Protocol"),
+]
+
+def log(msg, success=True):
+    prefix = "[PASS]" if success else "[FAIL]"
+    print(f"{prefix} {msg}")
+
+def check_files_exist(base_dir, name):
+    print(f"\n--- Checking Files in {name} ---")
+    all_ok = True
+    
+    # Check SKILL.md & agents/openai.yaml
+    for rel_path in ["SKILL.md", os.path.join("agents", "openai.yaml")]:
+        p = os.path.join(base_dir, rel_path)
+        if os.path.exists(p):
+            log(f"Found {rel_path}")
+        else:
+            log(f"Missing {rel_path}", success=False)
+            all_ok = False
+            
+    # Check references
+    ref_dir = os.path.join(base_dir, "references")
+    for ref in REQUIRED_REFERENCES:
+        p = os.path.join(ref_dir, ref)
+        if os.path.exists(p):
+            log(f"Found references/{ref}")
+        else:
+            log(f"Missing references/{ref}", success=False)
+            all_ok = False
+            
+    # Check templates
+    tpl_dir = os.path.join(base_dir, "templates")
+    for tpl in REQUIRED_TEMPLATES:
+        p = os.path.join(tpl_dir, tpl)
+        if os.path.exists(p):
+            log(f"Found templates/{tpl}")
+        else:
+            log(f"Missing templates/{tpl}", success=False)
+            all_ok = False
+            
+    # Check examples
+    ex_dir = os.path.join(base_dir, "examples")
+    for ex in REQUIRED_EXAMPLES:
+        p = os.path.join(ex_dir, ex)
+        if os.path.exists(p):
+            log(f"Found examples/{ex}")
+        else:
+            log(f"Missing examples/{ex}", success=False)
+            all_ok = False
+            
+    return all_ok
+
+def validate_yaml_schemas(base_dir):
+    print("\n--- Validating YAML Schemas ---")
+    all_ok = True
+    for root, _, files in os.walk(base_dir):
+        for f in files:
+            if f.endswith(".yaml") or f.endswith(".yml"):
+                fpath = os.path.join(root, f)
+                rel = os.path.relpath(fpath, base_dir)
+                try:
+                    with open(fpath, "r", encoding="utf-8") as fp:
+                        content = fp.read()
+                        yaml.safe_load(content)
+                    log(f"Valid YAML: {rel}")
+                except Exception as e:
+                    log(f"Corrupt YAML {rel}: {e}", success=False)
+                    all_ok = False
+    return all_ok
+
+def validate_deep_inspection_rules(base_dir):
+    print("\n--- Validating Deep Architecture & Anti-Laziness Axioms ---")
+    all_ok = True
+    for rel_path, marker, label in DEEP_INSPECTION_RULES:
+        fpath = os.path.join(base_dir, rel_path)
+        if not os.path.exists(fpath):
+            log(f"File Missing for {label}: {rel_path}", success=False)
+            all_ok = False
+            continue
+        with open(fpath, "r", encoding="utf-8") as fp:
+            text = fp.read()
+            if marker in text:
+                log(f"Verified {label} present in {rel_path}")
+            else:
+                log(f"Missing {label} in {rel_path}", success=False)
+                all_ok = False
+    return all_ok
+
+def sync_to_global_mirror(source_dir, target_dir, label):
+    print(f"\n--- Synchronizing Desktop Project to {label} ---")
+    os.makedirs(target_dir, exist_ok=True)
+    for root, dirs, files in os.walk(source_dir):
+        rel = os.path.relpath(root, source_dir)
+        dest_root = os.path.join(target_dir, rel) if rel != "." else target_dir
+        os.makedirs(dest_root, exist_ok=True)
+        for f in files:
+            src_f = os.path.join(root, f)
+            dst_f = os.path.join(dest_root, f)
+            shutil.copy2(src_f, dst_f)
+    log(f"Successfully mirrored all files to {target_dir}")
+
+def validate_mirror_parity(source_dir, target_dir, label):
+    print(f"\n--- Validating Desktop vs {label} Mirror Parity ---")
+    all_ok = True
+    for root, _, files in os.walk(source_dir):
+        for f in files:
+            rel = os.path.relpath(os.path.join(root, f), source_dir)
+            global_f = os.path.join(target_dir, rel)
+            if not os.path.exists(global_f):
+                log(f"Mirror Missing in {label}: {rel}", success=False)
+                all_ok = False
+            else:
+                with open(os.path.join(root, f), "rb") as f1, open(global_f, "rb") as f2:
+                    if f1.read() == f2.read():
+                        pass
+                    else:
+                        log(f"Mirror Content Mismatch in {label}: {rel}", success=False)
+                        all_ok = False
+    if all_ok:
+        log(f"Desktop and {label} are 100% byte-for-byte identical!")
+    return all_ok
+
+def main():
+    print("=================================================================")
+    print(" ACHENG CINEMATIC DIRECTOR ENGINE CONTRACT & DEEP AUDIT")
+    print("=================================================================")
+    
+    # 1. Check Desktop
+    t_ok = check_files_exist(DESKTOP_DIR, "Desktop Project")
+    y_ok = validate_yaml_schemas(DESKTOP_DIR)
+    d_ok = validate_deep_inspection_rules(DESKTOP_DIR)
+    
+    # 2. Sync to both globals
+    sync_to_global_mirror(DESKTOP_DIR, GLOBAL_ACHENG_DIR, "Global [acheng-director]")
+    sync_to_global_mirror(DESKTOP_DIR, GLOBAL_DIRECTOR_DIR, "Global [cinematic-director-engine]")
+    
+    # 3. Validate mirror parities
+    m1_ok = validate_mirror_parity(DESKTOP_DIR, GLOBAL_ACHENG_DIR, "Global [acheng-director]")
+    m2_ok = validate_mirror_parity(DESKTOP_DIR, GLOBAL_DIRECTOR_DIR, "Global [cinematic-director-engine]")
+    
+    if t_ok and y_ok and d_ok and m1_ok and m2_ok:
+        print("\n>>> ALL AUDITS PASSED! Acheng Director Engine is 100% Production Ready. <<<\n")
+        sys.exit(0)
+    else:
+        print("\n>>> Validation Failed! Please inspect errors above. <<<\n")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

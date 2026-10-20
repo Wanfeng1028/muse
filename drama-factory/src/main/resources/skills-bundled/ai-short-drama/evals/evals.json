@@ -1,0 +1,71 @@
+{
+  "skill": "ai-short-drama",
+  "version": 1,
+  "cases": [
+    {
+      "id": "hidden-master-greenlight-pilot",
+      "prompt": "我想做一部假廢物真強者的 AI 短劇：主角是公司清潔工，其實是隱藏大佬。幫我評估並做三集 pilot，不要只是老套打臉。",
+      "assertions": [
+        "Chooses one primary engine and no more than two auxiliary engines.",
+        "Adds a concrete fresh mechanism beyond changing names or occupation.",
+        "Scores all eight Greenlight dimensions and labels the threshold as an internal heuristic.",
+        "Explains why the protagonist cannot immediately reveal or solve everything.",
+        "Creates three episodes with distinct dominant turns, payoff/progress, cliffhangers, and state deltas.",
+        "Opens and pays at least one explicit payoff debt within the pilot.",
+        "Does not expand directly into a full season before defining a pilot validation plan."
+      ]
+    },
+    {
+      "id": "rebirth-system-season-architecture",
+      "prompt": "把『重生回末日前七天，只有我看得到物資價格系統』規劃成 30 集 AI 漫劇，女主不能全知、系統不能無敵。",
+      "assertions": [
+        "Defines system capabilities, limits, costs, upgrade conditions, and blind spots.",
+        "Introduces information decay, butterfly effects, or another informed actor so rebirth knowledge is not omniscient.",
+        "Builds reveal, antagonist, competence, cost, and payoff ladders.",
+        "Groups the season into 3–5 episode micro-arcs that close one problem and open a higher-order one.",
+        "Separates audience knowledge from character knowledge.",
+        "Uses stable entity IDs and a continuation capsule for production continuity.",
+        "Routes visual/video/audio prompt execution to ai-media-generator instead of embedding one giant generation prompt."
+      ]
+    },
+    {
+      "id": "ai-drama-quality-audit",
+      "prompt": "我的 AI 短劇第一集點擊不差，但第二集開始掉很快；角色會換臉、配音像念稿，後半段變成靜態圖加旁白。請找原因並給最小修復順序。",
+      "assertions": [
+        "Separates concept, episode, series, production, and packaging evidence before assigning a cause.",
+        "Does not blame every retention problem on prompts.",
+        "Routes face drift to still anchors/entity registry, motion errors to I2V shots, and flat delivery to voice/performance direction.",
+        "Flags static zooms, lip-flap, full narration, and PPT degradation as low-quality patterns.",
+        "Preserves story turns and state continuity during repair.",
+        "Proposes one primary experimental variable with baseline and stop conditions.",
+        "Checks AI labeling, rights, likeness/voice consent, and destination-platform rules before publishing."
+      ]
+    },
+    {
+      "id": "one-line-autopilot-to-local-master",
+      "prompt": "全部你來：把『被當廢物的外送員其實能倒轉五秒，但每次都會失去一段記憶』自動做成三集 AI 短劇，斷線後也要續跑。",
+      "assertions": [
+        "Activates Auto mode and checks for the optional drama_autopilot runtime instead of assuming it exists.",
+        "Produces a schema-valid production pack and passes drama_lint.py --production-ready before media generation.",
+        "Compiles separate locked anchor tasks and Seedance shot tasks with dependencies, retries, acceptance criteria, and end states.",
+        "When the executor is installed, continues browser generation tasks autonomously and records completed or failed QC evidence in generation_queue.json.",
+        "When the executor is installed, builds each episode into one current.mp4 and verifies duration, resolution, video, audio, and a contact sheet; otherwise marks waiting_for_executor and delivers a validated handoff without claiming a finished video.",
+        "Stops for login, unexpected payment, unsupported model capability, exhausted retries, compliance uncertainty, or explicit public-publish confirmation.",
+        "Does not claim that a mock-only run proves a real provider or platform upload."
+      ]
+    },
+    {
+      "id": "studio-router-viral-one-take",
+      "prompt": "我要把『她準備報警，卻發現電話另一端的人就站在門後』做成 15 秒爆款一鏡到底，全部你來，角色後面還會重用。",
+      "assertions": [
+        "Routes the request to viral_one_take with single_high_impact_moment scope instead of expanding it into a complete micro-drama.",
+        "Creates a Studio Plan before compiling media prompts.",
+        "Records a verified model capability snapshot with duration and reference-asset limits, or stops for a probe if unverified.",
+        "Locks recurring character identity views as front close-up, front full-body, and side full-body with a consented voice anchor.",
+        "Builds a contiguous 15-second one-take beat timeline with no cut transitions and one dominant turn.",
+        "Uses stable asset IDs, inherited global settings, observable actions, dialogue performance, and sound per beat.",
+        "Defines deterministic variation and an editor handoff, then passes studio_lint.py --studio-ready before generation."
+      ]
+    }
+  ]
+}

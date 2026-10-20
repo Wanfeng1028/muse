@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "assets": [
+    {
+      "asset_id": "ASSET_COMEDY_UMBRELLA",
+      "status": "PASS",
+      "prompt_sha256": "943450b7fa1c7e310debe1304b7e872de7f19a9b098c232de7ab43dfa4816ef6",
+      "reference_count": 0
+    }
+  ],
+  "visual_status": "UNVERIFIED"
+}

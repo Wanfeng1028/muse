@@ -1,0 +1,27 @@
+{
+  "status": "DRAFT_NOT_SUBMITTABLE",
+  "segments": [
+    {
+      "joint_status": "DRAFT_VERIFIED_NOT_SUBMITTABLE",
+      "segment_id": "ANIME_PHONE_SEG01",
+      "input_revision": "4fa0f264d43a10c4cf11409905f576199fa0245c356d2eb89d211c4c74be2ec1",
+      "sha256": "5d246a7ac2d03004b6b20fe7c5374a02c126347de2905b480ddf7bb708da2776",
+      "binding_sha256": "bbfe17d564960bfdd0008e5994e8c380e96ecfb7a14c0bf28348c4039218356f",
+      "upload_card_sha256": "897e3dc6b5bc3add98a38bba793a99fcd41670c7c178ad727309351aaaf8f6bc",
+      "visual_status": "UNVERIFIED"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "asset_prompt_delivery": {
+    "status": "PASS",
+    "assets": [
+      {
+        "asset_id": "ASSET_ANIME_PHONE",
+        "status": "PASS",
+        "prompt_sha256": "e5fc6003f9200f9d8ae458326cecb1a639c22a735a88a5859773ff0e2cf8e384",
+        "reference_count": 0
+      }
+    ],
+    "visual_status": "UNVERIFIED"
+  }
+}

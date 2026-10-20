@@ -1,0 +1,98 @@
+{
+  "artifacts": [],
+  "blocked": [],
+  "continuation_required": false,
+  "created_at": "2026-09-23T15:50:56.361961+00:00",
+  "current_cursor": {},
+  "current_phase": "plan",
+  "evidence": [],
+  "execution_mode": "autonomous_file_batch",
+  "nodes": [
+    {
+      "attempt": 0,
+      "depends_on": [],
+      "frozen_paths": [],
+      "id": "shots",
+      "owner": "shots",
+      "phase": "shots",
+      "reason": "ShotSpec is required by selected output",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots"
+      ],
+      "frozen_paths": [],
+      "id": "performance",
+      "owner": "performance",
+      "phase": "performance",
+      "reason": "causal performance/action facts precede compilation",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots",
+        "performance"
+      ],
+      "frozen_paths": [],
+      "h3_density_policy": {
+        "complexity_addition": 0,
+        "duration_seconds": null,
+        "minimum_words_per_second": null,
+        "target_words_per_second": null
+      },
+      "h3_min_words": 0,
+      "h3_target_words": 0,
+      "id": "model:MECHA_SEG01",
+      "owner": "model",
+      "phase": "model",
+      "reason": "each Segment is an independent H3 compilation unit",
+      "segment_id": "MECHA_SEG01",
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots",
+        "performance",
+        "model:MECHA_SEG01"
+      ],
+      "frozen_paths": [],
+      "id": "continuity",
+      "owner": "continuity",
+      "phase": "continuity",
+      "reason": "replay and persist continuity after selected slice",
+      "segment_id": null,
+      "status": "PENDING"
+    },
+    {
+      "attempt": 0,
+      "depends_on": [
+        "shots",
+        "performance",
+        "model:MECHA_SEG01",
+        "continuity"
+      ],
+      "frozen_paths": [],
+      "id": "audit",
+      "owner": "continuity",
+      "phase": "audit",
+      "reason": "single delivery-integrity and claim-honesty receipt",
+      "segment_id": null,
+      "status": "PENDING"
+    }
+  ],
+  "plan_id": "plan_2c5a537bd0760aa2",
+  "production_revision": "a50b7f3cc80ff1e1e26bdefc6d2075e637aa380066f06357b4496a8b6e4d9f93",
+  "request_id": "SMOKE-43",
+  "retries": {},
+  "run_id": "run_b46adfe539c94361a0ad5817a0acdbd0",
+  "schema_version": "4.0",
+  "status": "PLANNED",
+  "unresolved": [],
+  "updated_at": "2026-09-23T15:50:56.361961+00:00"
+}

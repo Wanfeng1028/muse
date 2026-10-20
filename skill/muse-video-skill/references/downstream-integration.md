@@ -1,0 +1,66 @@
+# 下游工具对接 — Downstream Integration
+
+> **定位**：Muse Video 产出 Creative Package 后的下游工具路径。列出可选对接方案及选择指南。
+> **更新纪律**：新增下游工具时更新此文件，保持工具列表与实际配置一致。
+
+---
+
+## 合成渲染
+
+| 工具 | 类型 | 适用场景 | 前置条件 |
+|------|------|---------|---------|
+| **HyperFrames** | HTML 视频合成 | 场景动画、字幕、转场、配乐、渲染 MP4 | `npx hyperframes` 已安装 |
+| **FFmpeg** | 命令行合成 | 简单拼接、字幕烧录、手动后期 | `ffmpeg` binary（几乎总是可用） |
+| 手动制作 | — | 用导出的 HTML/Excel 作为拍摄参考 | 无 |
+
+## AI 视频生成
+
+| 工具 | 类型 | 适用场景 | 前置条件 |
+|------|------|---------|---------|
+| **火山引擎 arkcli** | 云端 CLI | Seedance 2.0 视频生成，逐镜精确控制 | `npm i -g @volcengine/ark-cli` + API key |
+| **Kling** | 云端 API | 高质量短视频 | API key |
+| **Runway Gen-4** | 云端 API | 电影级质量 | API key |
+| **Pika** | 云端 API | 快速原型 | API key |
+| **ComfyUI** | 本地/云端 | SDXL/Flux/Wan/Hunyuan 图片+视频 | GPU ≥6GB 或 Comfy Cloud |
+
+> **完整对接指南**：arkcli 安装/登录、路由决策、关键 flags、接入陷坑与计费，见 `references/volcano-engine-integration.md`。
+
+## AI 图片生成
+
+| 工具 | 类型 | 适用场景 | 前置条件 |
+|------|------|---------|---------|
+| **ComfyUI** | 本地/云端 | 分镜图、moodboard、角色概念图 | GPU ≥6GB |
+| **FAL.ai / image_gen** | 云端 API | 快速出图（FLUX 等） | API key |
+| **火山引擎 Seedream** | 云端 CLI | 高质量角色图/场景图 | `arkcli` + API key |
+
+> **生图模型路由**：模型选择 / 参考图注入 / 适配参数，见 `references/image-gen-routing.md`。
+
+## 音频
+
+| 工具 | 类型 | 适用场景 | 前置条件 |
+|------|------|---------|---------|
+| **HyperFrames Media** | 本地 | Kokoro TTS（54 种声音）+ Whisper 字幕 | HyperFrames 已安装 |
+| **Suno AI** | 云端 API | AI 音乐生成 | Suno 账号 |
+| **HeartMuLa** | 本地 | 开源音乐生成 | GPU ≥8GB |
+| 免版税素材 | 免费 | archive.org / Free Music Assembly | 无 |
+| **MiniMax Music 3.0** | 云端 API / 开源 | 音乐生成（**首批适配**·📄 文档已核实；⚠️ API 自 2026-08-20 不对新用户开放——替代：MiniMax Audio / 开源模型自部署） | 账号核验 / ModelScope·HF |
+| **火山方舟·豆包语音**（配音规划） | 云端 API | 音频生成 / TTS（`seed-audio-1.0`·📄 文档已核实；专项待开） | X-Api-Key（新版控制台） |
+
+> **音频路由**：路线选择（R1 原生 / R2 外部 / R4 混合 / R3 无）与模型适配，见 `references/audio-gen-routing.md`（批次 F3）；对轨纪律：按实际视频时长裁切 / loop，**不承诺帧级同步**。
+
+## 封面设计
+
+| 工具 | 类型 | 适用场景 | 前置条件 |
+|------|------|---------|---------|
+| **cover-design-guide** | HTML 模板 | 视频号 3:4 + 小红书 4:3 封面 | 见 `references/cover-design-guide.md` |
+
+> **触发时机**：Phase 7 确认分镜后（步骤 7 导出交付物）。所有封面数据（标题/标签/配色/配图）在 Phase 7 确认时已就绪，无需等待 Phase 7.5 编译。封面为本地 HTML 渲染，零费用。
+
+---
+
+## 选择指南
+
+1. **有分镜需求 → 火山引擎 arkcli**（Muse Video 精细分镜管线首选）
+2. **快速原型 → LibTV / ComfyUI**（"一句话出片"）
+3. **本地优先 → ComfyUI**（需 GPU）
+4. **零成本 → HyperFrames + 免版税素材 + Piper TTS**

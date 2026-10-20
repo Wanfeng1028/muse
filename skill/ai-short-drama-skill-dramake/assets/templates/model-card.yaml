@@ -1,0 +1,54 @@
+model_family: replace-me
+exact_model_id: replace-at-runtime
+provider: user-selected
+surface: api-or-web-or-local
+checked_at: YYYY-MM-DD
+fresh_until: YYYY-MM-DD
+availability_state: unknown
+schema_source: null
+official_product_source: null
+documented_capabilities:
+  modes: []
+  prompt_limit_characters: null
+  duration_seconds: {min: null, max: null}
+  frame_rate: null
+  resolutions: []
+  aspect_ratios: []
+  reference_images: null
+  reference_videos: null
+  reference_audio: null
+  reference_video_total_seconds: null
+  reference_audio_total_seconds: null
+  first_frame: false
+  last_frame: false
+  native_dialogue_or_audio: unknown
+  edit: false
+  extend: false
+mode_compatibility:
+  reference_media_with_first_frame: unknown
+  reference_media_with_last_frame: unknown
+  input_video_plus_output_duration_max_seconds: null
+audio_controls:
+  output_audio_switch: unknown
+  suppress_nondiegetic_music: unknown
+reference_bindings:
+  identity_and_wardrobe: []
+  motion_material_and_medium: []
+  character_voice: []
+pricing:
+  currency: null
+  unit: null
+  amount: null
+  source: null
+observations:
+  tested_at: null
+  dry_run_supported: unknown
+  task_recovery_method: unknown
+  queue_time: unknown
+  strongest_uses: []
+  known_failures: []
+  evidence_links: []
+data_policy:
+  upload_visibility: unknown
+  retention: unknown
+notes: Capability documentation and dated observations are not the same claim.

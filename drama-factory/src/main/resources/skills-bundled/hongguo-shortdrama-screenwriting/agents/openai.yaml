@@ -1,0 +1,5 @@
+interface:
+  display_name: "红果短剧编剧"
+  short_description: "红果/抖音爆款短剧工业化编剧引擎，从选题立项到分集正文全链路"
+  brand_color: "#D93025"
+  default_prompt: "Use $hongguo-shortdrama-screenwriting to 立项一个短剧并写出前 3 集剧本。"

@@ -1,0 +1,135 @@
+name: evals
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "evals/**"
+      - "SKILL.md"
+      - "references/**"
+      - "assets/**"
+      - ".github/workflows/evals.yml"
+  pull_request:
+    paths:
+      - "evals/**"
+      - "SKILL.md"
+      - "references/**"
+      - "assets/**"
+      - ".github/workflows/evals.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate evals.json and SKILL.md frontmatter
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys
+
+          errors = []
+          def bad(msg): errors.append(msg)
+
+          # ---- evals.json ----
+          try:
+              data = json.load(open("evals/evals.json", encoding="utf-8"))
+          except Exception as exc:
+              print(f"evals/evals.json does not parse: {exc}")
+              sys.exit(1)
+
+          cases = data.get("evals")
+          if not isinstance(cases, list) or not cases:
+              print("evals/evals.json: 'evals' must be a non-empty list")
+              sys.exit(1)
+
+          REQUIRED = {"id", "mode", "loads", "prompt", "expected_output", "assertions"}
+          MODES = set("ABCDEFGHIJ")
+          SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+          seen = set()
+
+          for i, c in enumerate(cases):
+              cid = c.get("id", f"<case {i}>")
+              missing = REQUIRED - set(c)
+              extra = set(c) - REQUIRED
+              if missing:
+                  bad(f"{cid}: missing field(s) {sorted(missing)}")
+              if extra:
+                  bad(f"{cid}: unexpected field(s) {sorted(extra)}")
+              if not SLUG.match(str(c.get("id", ""))):
+                  bad(f"{cid}: id must be a lowercase hyphenated slug")
+              if c.get("id") in seen:
+                  bad(f"{cid}: duplicate id")
+              seen.add(c.get("id"))
+              if c.get("mode") not in MODES:
+                  bad(f"{cid}: mode {c.get('mode')!r} is not one of A-J")
+              loads = c.get("loads")
+              if not isinstance(loads, list):
+                  bad(f"{cid}: loads must be a list")
+              else:
+                  for p in loads:
+                      if not isinstance(p, str) or not os.path.isfile(p):
+                          bad(f"{cid}: loads path does not exist: {p!r}")
+              a = c.get("assertions")
+              if not isinstance(a, list) or not 4 <= len(a) <= 6:
+                  bad(f"{cid}: needs 4-6 assertions, has {len(a) if isinstance(a, list) else 'none'}")
+              elif not all(isinstance(x, str) and x.strip() for x in a):
+                  bad(f"{cid}: every assertion must be a non-empty string")
+              for f in ("prompt", "expected_output"):
+                  if not isinstance(c.get(f), str) or not c.get(f, "").strip():
+                      bad(f"{cid}: {f} must be a non-empty string")
+
+          # ---- SKILL.md frontmatter ----
+          text = open("SKILL.md", encoding="utf-8").read()
+          m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+          if not m:
+              bad("SKILL.md: no --- delimited YAML frontmatter at the top of the file")
+          else:
+              block = m.group(1)
+              desc = None
+              try:
+                  import yaml  # present on some runners; the fallback below covers the rest
+                  fm = yaml.safe_load(block)
+                  if not isinstance(fm, dict):
+                      bad("SKILL.md: frontmatter is not a YAML mapping")
+                  else:
+                      for k in ("name", "description", "license"):
+                          if k not in fm:
+                              bad(f"SKILL.md: frontmatter is missing '{k}'")
+                      desc = fm.get("description")
+              except ImportError:
+                  lines, key, buf = block.split("\n"), None, []
+                  for line in lines:
+                      if not line.strip() or line.lstrip().startswith("#"):
+                          continue
+                      if re.match(r"^\S", line):
+                          if key == "description":
+                              desc = " ".join(x.strip() for x in buf if x.strip())
+                          km = re.match(r"^([A-Za-z_][\w-]*):\s*(.*)$", line)
+                          if not km:
+                              bad(f"SKILL.md: frontmatter line is not valid YAML: {line!r}")
+                              key, buf = None, []
+                              continue
+                          key, val = km.group(1), km.group(2).strip()
+                          buf = []
+                          if key == "description" and val not in (">-", ">", "|", "|-", ""):
+                              desc = val
+                              key = None
+                      elif key == "description":
+                          buf.append(line)
+                  if key == "description" and desc is None:
+                      desc = " ".join(x.strip() for x in buf if x.strip())
+              if not isinstance(desc, str) or not desc.strip():
+                  bad("SKILL.md: frontmatter 'description' is missing or empty")
+              elif len(desc) > 1024:
+                  bad(f"SKILL.md: description is {len(desc)} characters, over the 1024 limit")
+
+          if errors:
+              print(f"{len(errors)} problem(s):")
+              for e in errors:
+                  print(f"  - {e}")
+              sys.exit(1)
+          print(f"OK: {len(cases)} eval cases, all loads paths exist, SKILL.md frontmatter valid.")
+          PY

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(python3 *)",
+      "Bash(gh *)",
+      "Edit(*.py)",
+      "Edit(*.md)",
+      "Edit(db/**)",
+      "Edit(.claude/**)"
+    ]
+  }
+}

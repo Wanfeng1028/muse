@@ -1,0 +1,192 @@
+{
+  "status": "PASS",
+  "segments": [
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_01",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "4622a7b68ad48d63bc5c3329306f59a8053ae0789e588b86df4a921d94f9821f",
+      "binding_sha256": "5896d29895008d30e6445de5777a356b5b918878980393fab21b15061dc35ac5",
+      "upload_card_sha256": "e5e1e24e068e09e2242ceaf58e724f8fc6ed21c9302f5c408873c9cdd9ab4cbc",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_02",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "596e8c22bb73f697d674680c5a87f17a116ef8325f78e09009f88672970c1362",
+      "binding_sha256": "d6a7086c89360edf99cc8715dce0b949b9d4a1604ec7ed1bbd059d6dbdfe9636",
+      "upload_card_sha256": "7c858d7b2f28f7ca962d6f016e206a86b6404d4fff26bd73fa81e51aff7c1a01",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_03",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "f0446e8a48ed05bc151a89dd7cf64d89f864a493b6569c745c5f832712db905d",
+      "binding_sha256": "547d9270705666df8c75bc221c19bd78b529f17bb477030409da04ead79fb345",
+      "upload_card_sha256": "1b658cda7fce1e61e2cad50e11884b098b5cb52722db1d51af9e6ef1a5b5b789",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_04",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "d9a11aa752c186a1fc4bfc887e9353db60a540e7c26f0f043e32360800b83d0b",
+      "binding_sha256": "646f4f14fc5e09b9067fb84482ca5a7572512a16d52db7dfe4d762e3115002a1",
+      "upload_card_sha256": "b8efb3ae4da012cf88f9f268a85dc764df94141a7b662d9387527a11ee58d9db",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_05",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "60c445d475dfa9cd4249e10c21199457795f70356b0835f5ed901f29dd32e959",
+      "binding_sha256": "efb2302a1537d3d7f73437ceb069d89f3c766f7e5bbc874706c2b42807d75035",
+      "upload_card_sha256": "cb61bf49ca28ec44554d22ff16407f2b7f2a07a47dcd361c9e6d864d3a554323",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_06",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "83cbf49465b924671ce575c7e74eb52396e478fd3c7201989a97220597ba8f3c",
+      "binding_sha256": "cb28106b1ff99a1e3a2215abeeae9bbb744c9cb9f67bc72c55e0fe287b8e75e3",
+      "upload_card_sha256": "b3e114baf2ff8f48742fb8ca2fcad95271f90a06cb7a9eb0b45b0e4dcba9162a",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_07",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "8660ae5fe599aa11e4dd2d73fea63d4cdab314f5e1838ec3b0c74055d778267d",
+      "binding_sha256": "8e19b594b1c48c6b9259ab70d4ccd2ce4b9894a70fbf6248660cc6bd62d310c1",
+      "upload_card_sha256": "61eb71e34fe01472537172794bd1bc49c439bafa2d215b1548d68bac65448607",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_08",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "76afdbd83227e8e74385986cc8163ef8725c8ba6b031e8d23691da0d784a3981",
+      "binding_sha256": "e5c52a0d36caa48b70f5ea3b28c38f850e5467627ce6f3b84556b246e95c4e0c",
+      "upload_card_sha256": "716c4333d7a958902a0df2f490fee276533b77c4fa23171f676c07417aebdea0",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_09",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "3e9538c68bad0b6d907e651754f725b230700a1f94d5d770577b33965e0f16aa",
+      "binding_sha256": "e5266e226d8baf50650ab5a150d8de1a0ebfdffa81a0da012597375bd632c8be",
+      "upload_card_sha256": "3855e907859e245cb7617e7a0309926e2a6fda73732c06165c726da1084bfa00",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_10",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "2a7a6e83510eabccdbc3937cdace92747997d4138185f7d19dcd92bceeaf5596",
+      "binding_sha256": "8203f1a97ee141df2e3e9c9737fdb92f644a3daad172de7da475401dd14906a9",
+      "upload_card_sha256": "6e7ef45776245c8acfb6e6a05b5338b0e78c8f6d59acadf2448428f3f30db04c",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_11",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "cece2f392fbfdd2bf4537d92fe122c7d0a952348e3b54293209db041811312c6",
+      "binding_sha256": "0313df9b4ce959ab0780264521bd06a42c7b954344b6d6775aee87d24905d7b4",
+      "upload_card_sha256": "739f85a2ebf5b8d0a059d2aab72f0b16283b4e8a6f95bbf637543320f2560cf7",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "SERIAL_SEG_12",
+      "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+      "sha256": "ea9b6fffe75aa0f4851e41bda4096ab876776c2f8b307840899c663ffa7f8c43",
+      "binding_sha256": "1aa76d2af7718706563fe9358405731e1d4918237b8aaef73783d757521543e3",
+      "upload_card_sha256": "6aeb18cc711a20af0d9aad96f499ed3f03b13278b7ae138ddb19c6299c63a4ce",
+      "visual_status": "UNVERIFIED"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "asset_prompt_delivery": {
+    "status": "DRAFT_NOT_SUBMITTABLE",
+    "assets": [
+      {
+        "asset_id": "ART_MEI",
+        "status": "PASS",
+        "prompt_sha256": "7f57dec6a5e408d915b75169571a82c57c496491108ba61e0562feb88ba25b3d",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_BO",
+        "status": "PASS",
+        "prompt_sha256": "1a6a86e6cae6a8a9855379177725836eaf509eada63782fb632a9234a7c2d4aa",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_ARCHIVE",
+        "status": "PASS",
+        "prompt_sha256": "76535a520447b0a9c378b9da7e1a148045e4343bc4979382135adbed82a44824",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_DOCK",
+        "status": "PASS",
+        "prompt_sha256": "701a7c87a54727aa5230065279ac25b35d489656f6d283fe92b863fc8a278406",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_LEDGER",
+        "status": "PASS",
+        "prompt_sha256": "d91a979b14a79c122c7218936ea646397d7e9075cd872e500329d2e097c32290",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_TIDE",
+        "status": "PASS",
+        "prompt_sha256": "e59a1ea965eb0d415bdf2b93acb4f6c13f257791a7558403a3a14082225a7791",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_NOTICE",
+        "status": "PASS",
+        "prompt_sha256": "4a60bb88b4b6fe5392f9622a37f3edcd34303eb587deab93e4392a044f005d8b",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_SANDBAG",
+        "status": "PASS",
+        "prompt_sha256": "e6929264dda171406f1503f72ed70504b4ed330474683f46ab7f9beb0f86151d",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_STATIONERY",
+        "status": "PASS",
+        "prompt_sha256": "14648ad4b5911772c5edecb47962a43934f05047c44ad888c76c07156b63b8f2",
+        "reference_count": 0
+      },
+      {
+        "asset_id": "ART_KEYFRAME_01",
+        "status": "DRAFT_NOT_SUBMITTABLE",
+        "prompt_sha256": "77909e33761fa12820091fc5ffb0815b56bdcf55638e460224802e52b2d707ad",
+        "reference_count": 5
+      },
+      {
+        "asset_id": "ART_KEYFRAME_05",
+        "status": "DRAFT_NOT_SUBMITTABLE",
+        "prompt_sha256": "6c7625fe4c4de584aa3ff95c4f9c964b99971a8e46a8a161b26846406713e39f",
+        "reference_count": 5
+      },
+      {
+        "asset_id": "ART_KEYFRAME_09",
+        "status": "DRAFT_NOT_SUBMITTABLE",
+        "prompt_sha256": "c8ca1d9f6f9d92aea77928c7726e62766a34220ff3fd93257a5dd7dc0551bb2c",
+        "reference_count": 5
+      }
+    ],
+    "visual_status": "UNVERIFIED"
+  }
+}

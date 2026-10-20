@@ -1,0 +1,312 @@
+[
+  {
+    "file": "references/sources/acheng-installed-before/audit-legacy.py.txt",
+    "bytes": 11085,
+    "sha256": "a34dcb5b0d3b8b89a4264133e32192c402d896584f5b7eae5812fef22198697b"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/entrypoint.md",
+    "bytes": 23223,
+    "sha256": "911d317dd8c1cea5bc96328a25afe2d0654e219f7f5b1a359ed7f6a52112e05e"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/00-visual-constitution.md",
+    "bytes": 17349,
+    "sha256": "70fe2dc559a004d56a95cfae5dd77facf9fce3fcd105b8f027a5274abfb54053"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/01-style-presets.md",
+    "bytes": 7269,
+    "sha256": "e1c9cbf6df060ecbb7492fba03234277fd7ad64f8a9da714841c36f3d4a943f3"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/10-scriptwriter-engine.md",
+    "bytes": 10902,
+    "sha256": "8f73e33c6060a7479a872f11085b9d83cc6ab61326f600ec57899cfbd74f1099"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/20-storyboard-compiler.md",
+    "bytes": 27792,
+    "sha256": "966533184362617e9e7287617486abc2a5c6d7079fcb842046439bd330250f13"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/25-combat-video-deconstructor.md",
+    "bytes": 8478,
+    "sha256": "e3bfbc4c165660abe9bba56de6d838d3185c847b455b30c09a135d3889a37341"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/30-performance-adapter.md",
+    "bytes": 19985,
+    "sha256": "93e76131975536e45748fa584cc243422206c7f06483c9004bae0c77dd409033"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/40-action-choreography.md",
+    "bytes": 11226,
+    "sha256": "91b91f32a3c35bdd2c07544d584f82ffd5ed588effd730b2832a7ccff7d5f31d"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/45-vfx-sakuga-engine.md",
+    "bytes": 7501,
+    "sha256": "3caa920de759c34eb2a85c71ee530c5bef517173cb3ecd9744d1dabb395fba83"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/50-character-morphology.md",
+    "bytes": 8408,
+    "sha256": "64bbd7a7272a3fb3ca001fc8f26d4db0b628ac6c3d49c764623954bb8c17f999"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/60-assets-and-keyframes.md",
+    "bytes": 28217,
+    "sha256": "c23cb37b3d9e2ca5352c024865873f6c570029683cdd8ace03ed4dd0d38af752"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/70-minimax-h3-compiler.md",
+    "bytes": 14250,
+    "sha256": "852e71ffeac18c1ee979972347c91cb286f5ca74ca97a3dfae5b40a2105c503e"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/71-seedance-legacy-compiler.md",
+    "bytes": 2459,
+    "sha256": "80941bb287c6ec09c5c4a14a7a7d3254546cae073207690ee96e2bd5fce1f4fb"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/references/80-continuity-ledger.md",
+    "bytes": 7814,
+    "sha256": "9266aac47c54d3856a4cbff0f9dfd1be789abafad0b475ee94b52af103ddcd96"
+  },
+  {
+    "file": "references/sources/acheng-installed-before/validate-legacy.py.txt",
+    "bytes": 8428,
+    "sha256": "c275fb369e7dc98ccfb079ab4bfcfb293a5915c0f0737cb7c055d62c05fb4844"
+  },
+  {
+    "file": "references/sources/acheng-original/references/00-visual-contract.md",
+    "bytes": 16172,
+    "sha256": "5cc21b93a4d088b7f589d1ab012197033a58fec6566f48262c86022434f82d75"
+  },
+  {
+    "file": "references/sources/acheng-original/references/10-female-body-design.md",
+    "bytes": 25632,
+    "sha256": "db070bc18145abbede835c721dcc02bfc984db2fc7e28070dd5689afc4eac932"
+  },
+  {
+    "file": "references/sources/acheng-original/references/20-character-asset-design.md",
+    "bytes": 28516,
+    "sha256": "6a551e64a4323aabb4393c844bf2d690aa51c697d48befb443c0d15e1b38225e"
+  },
+  {
+    "file": "references/sources/acheng-original/references/30-scene-keyframe-design.md",
+    "bytes": 30883,
+    "sha256": "bb3bc97e1f764d91b81cca0f149061f4edeac58063ad3e613e0c39256936d5ee"
+  },
+  {
+    "file": "references/sources/acheng-original/references/40-continuity-and-handoff.md",
+    "bytes": 5963,
+    "sha256": "6d403fbe7b581eb8b8446480d9b9f8fe65d635af7aa33ff1af1b062e56337acd"
+  },
+  {
+    "file": "references/sources/acheng-original/references/action-choreography-compiler.md",
+    "bytes": 6851,
+    "sha256": "eba0aed6eeb7d9e3a004edd2754ad921a97fd3a62cb02fb71b9ef79de97f0b5b"
+  },
+  {
+    "file": "references/sources/acheng-original/references/assets.md",
+    "bytes": 30913,
+    "sha256": "1552a81b30eeb19713a9ebc800892181f78e80a52acd9b1b4b7d36ff9f304226"
+  },
+  {
+    "file": "references/sources/acheng-original/references/frame.md",
+    "bytes": 27517,
+    "sha256": "be5af735d9ae683bed137d2ac695ede07878bfcd8d8982d97f319e9c4cad2d1f"
+  },
+  {
+    "file": "references/sources/acheng-original/references/gpt-image-2-prompt-compiler.md",
+    "bytes": 5861,
+    "sha256": "e96897c624d0a0f11834cfb2cfd7697890d8a28222e58a5e5e1ccffc48e9190c"
+  },
+  {
+    "file": "references/sources/acheng-original/references/performance-adapter.md",
+    "bytes": 6491,
+    "sha256": "efe83bad7ef3da65793bdc10b07e75cb3b915e5c2716bb0b2efd266f7ada1ce3"
+  },
+  {
+    "file": "references/sources/acheng-original/references/prompt.md",
+    "bytes": 8075,
+    "sha256": "d82f68739154a5463fd1d4fdbbfdcaf0d04a948d38751b968b2b18a814d99880"
+  },
+  {
+    "file": "references/sources/acheng-original/references/scriptwriter.md",
+    "bytes": 55397,
+    "sha256": "941d0590db1f0a30ae26c33efb0ae37e86fc06f8e5eb91d11e1d1a15c05e91da"
+  },
+  {
+    "file": "references/sources/acheng-original/references/seedance-2-prompt-compiler.md",
+    "bytes": 7063,
+    "sha256": "6c903137a6feca0219641505f3652e9534d9dc739dab77fc50ff5b7ad67c0fc4"
+  },
+  {
+    "file": "references/sources/acheng-original/references/storyboard.md",
+    "bytes": 18830,
+    "sha256": "7ef49ce0900b256ea2e799c77e52661aaea2fa8126af15aa07c9a79404cdc5c3"
+  },
+  {
+    "file": "references/sources/camera/manifest.json",
+    "bytes": 48163,
+    "sha256": "b07a420316cfd59495b6f2e7cf49dce61f945215455c77d0d928319c28a8cb43"
+  },
+  {
+    "file": "references/sources/camera/SHOT-LIST.md",
+    "bytes": 11459,
+    "sha256": "15eddd9aba5e819de6327df4723783310a5abb8708014197c8ac3c5e3a0a8f69"
+  },
+  {
+    "file": "references/sources/colossal/field-guide.md",
+    "bytes": 6893,
+    "sha256": "ba50f95bc2d4231cb8c208f7ea96db94028bf1ed79621e41595041713012a525"
+  },
+  {
+    "file": "references/sources/colossal/upstream-skill.md",
+    "bytes": 9122,
+    "sha256": "2c12717dbe88876a08faad3a6afe9e39362fdf2fe8439f3fd7274069369e11d4"
+  },
+  {
+    "file": "references/sources/combat/Cinematic_Deconstructor_Pro_V2.5_战斗解析编导增强版.md",
+    "bytes": 21470,
+    "sha256": "072896b26f45a358dcb8f3feb55d70b6225815960b86407426663d3c805d3ec6"
+  },
+  {
+    "file": "references/sources/combat/Seedance打斗Prompt模板_v5.1_剧情锁定版.md",
+    "bytes": 88947,
+    "sha256": "7f9ba8a2c10646944bd9c077406f2b26af3ff82825496edd0f74f0c4ce3f1e86"
+  },
+  {
+    "file": "references/sources/combat/高动态打斗模板（运镜强化）_钉子整合优化版_加入打戏逻辑链(3).md",
+    "bytes": 54914,
+    "sha256": "bf75b81fad45babce142ca58ad880c872a57d28f894301ed5f18304562d799c2"
+  },
+  {
+    "file": "references/sources/emotions-original.md",
+    "bytes": 15632,
+    "sha256": "c0546ff3d8108f4e92884984e4fca2b1262bc71bec3a065a743e66482341ff91"
+  },
+  {
+    "file": "references/sources/h3/base-en.txt",
+    "bytes": 15773,
+    "sha256": "2cfebc096a6e08370f288d468d90b60f7f9bcb938f94bf090816e910e48e75fc"
+  },
+  {
+    "file": "references/sources/h3/ref-en.txt",
+    "bytes": 23553,
+    "sha256": "1e574f356716ad55612247ffb7bbccbcdb484ad96599d63c7dca1af186b1fab7"
+  },
+  {
+    "file": "references/sources/im2/references/clean-prompt-recipes.md",
+    "bytes": 7745,
+    "sha256": "0aba895d17f0fb765a221543dc945206966214f9d58f7e754d64b26de03e5a6a"
+  },
+  {
+    "file": "references/sources/im2/references/evidence-preserving-photo-restoration.md",
+    "bytes": 2794,
+    "sha256": "fdc50baed8f51380e6765c272e7362ffb999181b0c23aa161b3b1c41908c2895"
+  },
+  {
+    "file": "references/sources/im2/references/heavy-scene-structure-and-mass.md",
+    "bytes": 5265,
+    "sha256": "8a1efbb298d89c7c7dadda13949fe6975acb4e6355f649bb707c83d7a33d83d2"
+  },
+  {
+    "file": "references/sources/im2/references/negative-prompt-hygiene.md",
+    "bytes": 4735,
+    "sha256": "8721c9e803621d8d180f649c78aaaef68e93b8c0517abe96e73f896cf01d8d40"
+  },
+  {
+    "file": "references/sources/im2/references/real-scene-light-atmosphere.md",
+    "bytes": 8090,
+    "sha256": "240e0c2b924315300ad38619d2c57bed363118db7c6bdb291ac2c143ff566727"
+  },
+  {
+    "file": "references/sources/im2/upstream-skill.md",
+    "bytes": 23246,
+    "sha256": "e62e6f8300cc08f2c482008b71835c1050a01ad4ab34471ce3899a0da480be61"
+  },
+  {
+    "file": "references/sources/licenses/camera-moves-whitebox-LICENSE.txt",
+    "bytes": 1068,
+    "sha256": "118e58ab3dc92a50485e65a7d321089305a3b39421280aea0724ae62a389e3ae"
+  },
+  {
+    "file": "references/sources/licenses/codex-thread-cold-history-LICENSE.txt",
+    "bytes": 1075,
+    "sha256": "0c31f3798825c39f4ae939f0774fb96db3c6513b823c2a3839d47cbb57ff228b"
+  },
+  {
+    "file": "references/sources/licenses/colossal-scale-visual-director-LICENSE.txt",
+    "bytes": 1060,
+    "sha256": "989883967b844792b89dbdb01f4c9ab90034729937ebb96e59e58db59024ede1"
+  },
+  {
+    "file": "references/sources/licenses/im2-image-skills-LICENSE.txt",
+    "bytes": 1063,
+    "sha256": "8c3eb4a2f390f60d8f16222a05b8c026772a17782511b98a65c4cab2ea541644"
+  },
+  {
+    "file": "references/sources/licenses/minimax-h3-prompting-skill-public-LICENSE.txt",
+    "bytes": 1075,
+    "sha256": "0c31f3798825c39f4ae939f0774fb96db3c6513b823c2a3839d47cbb57ff228b"
+  },
+  {
+    "file": "references/sources/memory/codex-thread-cold-history.md",
+    "bytes": 6955,
+    "sha256": "18d03e089d491e48306486105793c75938892f5af5cbf9995d3590c41e9c313c"
+  },
+  {
+    "file": "references/sources/memory/hot-memory-system.md",
+    "bytes": 2571,
+    "sha256": "47f4a5860549127b5700dffa80521ce5765962203c6d3b2f5295f5d503950641"
+  },
+  {
+    "file": "references/sources/prompt-library/disassembly-template.md",
+    "bytes": 1926,
+    "sha256": "f1e966654309fecc5f40420d90cd9aeeedbe4b566f690207b491677c19f44a8a"
+  },
+  {
+    "file": "references/sources/prompt-library/quality-criteria.md",
+    "bytes": 4399,
+    "sha256": "b5e5d9a47aecd8b59d5de4df436ed11d39704b7a5f7f1bf8c28db054dab4f586"
+  },
+  {
+    "file": "references/sources/prompt-library/quality-matrix.md",
+    "bytes": 2579,
+    "sha256": "a8f436a26fe5f72c5fffbc47a17215d0d7e70f156d095e15681852747e3583db"
+  },
+  {
+    "file": "references/sources/prompt-library/techniques.md",
+    "bytes": 4531,
+    "sha256": "a2268c2cc3186965eb16454e6c6c8373f7708ec1575acbef2354a0cc3a9a7aab"
+  },
+  {
+    "file": "references/sources/prompt-library/upstream-skill.md",
+    "bytes": 3400,
+    "sha256": "1b9ece438e757666c972a5f1a6c2a4aef9a099d163a7ea484b93947118ab6c23"
+  },
+  {
+    "file": "references/sources/vfx-analysis-session.md",
+    "bytes": 123693,
+    "sha256": "30ff469f2acde8175c85a29b6fcff436f27f1cb2400fc11dba432041d685fcca"
+  },
+  {
+    "file": "references/sources/vfx-original.md",
+    "bytes": 17220,
+    "sha256": "c07e7770171415a85e2a7a3e6237765db57c1bfbc5e228321155fbc8ab18056c"
+  },
+  {
+    "file": "references/sources/user-director-libraries/15-master-director-inquiries.md",
+    "bytes": 32365,
+    "sha256": "ed49123192b57db115f451e97eac5d7cb28b3b3fca03b9bee4a37f289515abf2"
+  },
+  {
+    "file": "references/sources/user-director-libraries/16-master-visual-styles-and-textures.md",
+    "bytes": 24672,
+    "sha256": "e3d48d9bb92a45816ea38f3943eaf24b15071de7bad644ca10033d9cabbd5a87"
+  }
+]

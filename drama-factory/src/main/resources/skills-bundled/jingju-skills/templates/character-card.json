@@ -1,0 +1,40 @@
+{
+  "character_id": "",
+  "name": "",
+  "role": "",
+  "age": "",
+  "identity": "",
+  "personality": "",
+  "arc": "",
+  "relationships": [],
+  "appearance": {
+    "body_type": "",
+    "age_impression": "",
+    "face_shape": "",
+    "facial_features": "",
+    "hair": "",
+    "outfit": "",
+    "outfit_details": "",
+    "accessories": "",
+    "art_style": "",
+    "temperament": ""
+  },
+  "consistency": {
+    "lock_prompt": "",
+    "forbidden_changes": [
+      "face_shape",
+      "hair",
+      "outfit",
+      "outfit_details",
+      "body_type",
+      "age_impression",
+      "art_style"
+    ]
+  },
+  "reference_image": {
+    "status": "draft",
+    "selected_version": null,
+    "prompt": "",
+    "negative_prompt": "different face, different hairstyle, different outfit, props, handheld object, complex background, messy background, extra people"
+  }
+}

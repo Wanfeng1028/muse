@@ -1,0 +1,95 @@
+{
+  "status": "PASS",
+  "camera_entries": 132,
+  "original_emotions": 100,
+  "expanded_emotions": 100,
+  "required_references": 31,
+  "examples": [
+    {
+      "file": "examples/01-mecha.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 8,
+      "sha256": "10d2529be4d849e0485b2214651fd70565ba70cabfb3b525afe417ccb08e6e36"
+    },
+    {
+      "file": "examples/02-drama.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 9,
+      "sha256": "7ea16969988a3c1918218013bdcc7dfcaa9b301be546b5f2ef407868c98434ff"
+    },
+    {
+      "file": "examples/03-colossal.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 9,
+      "sha256": "287615f19d89194ad514c2b9bc81aa70cba15400f03070489807e911bc124eaa"
+    },
+    {
+      "file": "examples/04-serial.production.json",
+      "scope": "full_production",
+      "score": 100.0,
+      "applicable_gates": 8,
+      "sha256": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e"
+    },
+    {
+      "file": "examples/05-ink.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 6,
+      "sha256": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d"
+    },
+    {
+      "file": "examples/06-animated-phone.production.json",
+      "scope": "prompt_only",
+      "score": 87.5,
+      "applicable_gates": 8,
+      "sha256": "0574a7eb5599f48f9a739a849466b01afba265d47ba7ca56450366d04eceea9c"
+    },
+    {
+      "file": "examples/07-comedy-misunderstanding.production.json",
+      "scope": "prompt_only",
+      "score": 100.0,
+      "applicable_gates": 8,
+      "sha256": "e9ee4ef504775c6b684d9c260cebde471bd614d239e5faf90771f75c43c69e38"
+    },
+    {
+      "file": "examples/08-suspense-whisper.production.json",
+      "scope": "prompt_only",
+      "score": 87.5,
+      "applicable_gates": 8,
+      "sha256": "25e5dd0a1fdd60288e4cc5c2d26dc4929046a8793315461d03d1695a5b398b5c"
+    }
+  ],
+  "reference_libraries": {
+    "status": "PASS",
+    "inquiries": 36,
+    "visual_entries": 31,
+    "surface_entries": 7,
+    "scope": "catalog structure, source hashes, ownership, routes and generated views only",
+    "artistic_quality": "UNVERIFIED",
+    "production_mutated": false
+  },
+  "modules": 7,
+  "local_decision_guides": 7,
+  "asset_reference_contract": "1.0",
+  "integrations": 19,
+  "terminology_categories": 9,
+  "terminology_terms": 88,
+  "character_four_view_assets": 2,
+  "h3_modes": [
+    "FL2VA",
+    "I2VA",
+    "L2VA",
+    "Ref2VA",
+    "T2VA"
+  ],
+  "standalone_video_prompts": 23,
+  "image_prompt_designs": 19,
+  "ready_video_prompts": 21,
+  "draft_video_prompts": 2,
+  "ready_image_prompts": 16,
+  "draft_image_prompts": 3,
+  "visual_verification": "Authored blocking and ink reference images only; generated film and audio remain UNVERIFIED"
+}

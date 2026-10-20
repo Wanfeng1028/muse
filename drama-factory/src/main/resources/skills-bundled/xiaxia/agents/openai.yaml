@@ -1,0 +1,6 @@
+interface:
+  display_name: "夏夏"
+  short_description: "默认输出紧凑、完整、电影级且可生成的中文导演分镜"
+  default_prompt: "使用 $xiaxia，忠实依据已确认剧本直接输出完整文本分镜；强化构图、真实光影、表演、动作因果与连续性，不展示内部圣经或地图。"
+policy:
+  allow_implicit_invocation: true

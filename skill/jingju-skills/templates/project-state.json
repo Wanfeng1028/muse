@@ -1,0 +1,41 @@
+{
+  "project": {
+    "title": "",
+    "logline": "",
+    "story_environment": "",
+    "genre": [],
+    "drama_type": "",
+    "created_at": ""
+  },
+  "settings": {
+    "art_style": "",
+    "panel_style": "",
+    "voice_mode": "",
+    "episode_count": 0,
+    "episode_duration": 0
+  },
+  "comfyui": {
+    "enabled": false,
+    "server_url": "http://127.0.0.1:8188",
+    "mode": "optional",
+    "fallback": "prompts-only"
+  },
+  "video_generation": {
+    "enabled": false,
+    "mode": "optional",
+    "fallback": "video-prompts-only",
+    "requires_prompt_approval": true,
+    "requires_source_image_approval": true
+  },
+  "progress": {
+    "current_step": "project_setup",
+    "approval_required": true,
+    "pending_approval": [],
+    "approved_stages": [],
+    "locked_assets": [],
+    "selected_assets": [],
+    "completed_episodes": [],
+    "generated_assets": [],
+    "revision_notes": []
+  }
+}

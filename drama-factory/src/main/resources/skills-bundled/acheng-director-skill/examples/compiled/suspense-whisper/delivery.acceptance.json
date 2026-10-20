@@ -1,0 +1,27 @@
+{
+  "status": "DRAFT_NOT_SUBMITTABLE",
+  "segments": [
+    {
+      "joint_status": "DRAFT_VERIFIED_NOT_SUBMITTABLE",
+      "segment_id": "SUSPENSE_SEG01",
+      "input_revision": "b0d0f896cd1e4c304229987a50f443eecad42fe965c77d6e270a9f135fa0ad58",
+      "sha256": "f2735a5d3940903155fd3a194898ffcdd73bbe061029acf344e711d57062f2ec",
+      "binding_sha256": "0de2bb927100f76588be86b209cea898be3fac307510be12ab16a089ebbf73d7",
+      "upload_card_sha256": "d104acd38cee7a637897495235c602581d785bdc50cc59f3e509ab121f97c7c1",
+      "visual_status": "UNVERIFIED"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "asset_prompt_delivery": {
+    "status": "PASS",
+    "assets": [
+      {
+        "asset_id": "ASSET_SUSPENSE_ARCHIVE",
+        "status": "PASS",
+        "prompt_sha256": "b898bbb324cbf43fa950f79e438e29fcda5fb1ed2cbb2dc5aa6f60c8a45304b0",
+        "reference_count": 0
+      }
+    ],
+    "visual_status": "UNVERIFIED"
+  }
+}

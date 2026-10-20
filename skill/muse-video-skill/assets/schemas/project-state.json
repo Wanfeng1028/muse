@@ -1,0 +1,725 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hermes-agent.nousresearch.com/skills/muse-video/project-state",
+  "title": "Muse Video Project State",
+  "description": "Single source of truth flowing between all roles in the Muse Video creative pipeline. Every role reads from and writes to this schema.",
+  "type": "object",
+  "required": ["project", "director_notes"],
+  "properties": {
+    "project": {
+      "type": "object",
+      "description": "Core project metadata — populated during Phase 1 (需求沟通).",
+      "required": ["title", "scene_type"],
+      "properties": {
+        "title": { "type": "string", "description": "Project working title." },
+        "scene_type": { 
+          "type": "string", 
+          "enum": ["studio-ad", "logo-animation", "product-demo", "sci-fi", "custom"],
+          "description": "Scene type — determines which references/scenes/<type>.md to load."
+        },
+        "aspect_ratio": { "type": "string", "examples": ["16:9", "9:16", "1:1", "21:9"] },
+        "duration_est": { "type": "string", "description": "Estimated duration (e.g., '30s', '60s', '3min')." },
+        "genre": { "type": "string", "description": "Creative genre (e.g., 'cyberpunk', 'minimalist', 'cinematic')." },
+        "platform": { "type": "string", "description": "Target platform (e.g., 'douyin', 'youtube', 'website-hero', 'tv')." },
+        "language": { "type": "string", "default": "zh-CN", "description": "Primary content language." }
+      }
+    },
+    "director_notes": {
+      "type": "object",
+      "description": "Director's creative vision and decisions — the North Star for all roles.",
+      "required": ["vision"],
+      "properties": {
+        "vision": { "type": "string", "description": "One-paragraph creative vision statement." },
+        "tone": { "type": "string", "description": "Emotional tone keywords (e.g., 'epic, intimate, mysterious')." },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Hard constraints (e.g., 'must include product logo in first 3s', 'no rapid cuts')."
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "phase": { "type": "string" },
+              "decision": { "type": "string" },
+              "rationale": { "type": "string" }
+            }
+          },
+          "description": "Key creative decisions with rationale."
+        },
+        "has_characters": {
+          "type": ["boolean", "null"],
+          "description": "Character presence — tri-state: true / false / uncertain (=null). Extracted during Phase 1 from the vision template (default.md §Phase 1 step 4b)."
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "role": { "type": "string", "default": "director" },
+            "revision": { "type": "integer", "default": 1 },
+            "director_approved": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "script": {
+      "type": "object",
+      "description": "Script output from Writer + DP — populated during Phase 4 (脚本).",
+      "properties": {
+        "logline": { "type": "string", "description": "One-sentence story summary." },
+        "synopsis": { "type": "string", "description": "Expanded story synopsis (one short paragraph) — Writer Phase 2." },
+        "structure": { "type": "string", "description": "Narrative structure (e.g., '3-act', 'hero's journey', 'montage')." },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["scene_id", "duration"],
+            "properties": {
+              "scene_id": { "type": "integer" },
+              "scene_title": { "type": "string" },
+              "duration": { "type": "string", "description": "Duration in seconds or beats." },
+              "location": { "type": "string" },
+              "time_of_day": { "type": "string" },
+              "summary": { "type": "string", "description": "Scene summary — outline level (Phase 2; distinct from dialogue/action which are Phase 4)." },
+              "emotional_curve": { "type": "string", "description": "Emotional intensity marker for the scene (e.g., '3→5（好奇→期待）') — Writer annotation (optional)." },
+              "narrative_function": { "type": "string", "description": "The scene's narrative function (e.g., world-building / turning point / payoff) — Writer annotation (optional)." },
+              "dialogue": { "type": "string" },
+              "action": { "type": "string", "description": "Character actions and blocking." },
+              "camera": {
+                "type": "object",
+                "description": "DP's camera direction for this scene.",
+                "properties": {
+                  "shot_type": { "type": "string" },
+                  "movement": { "type": "string" },
+                  "lens": { "type": "string" },
+                  "lighting": { "type": "string" },
+                  "composition_notes": { "type": "string" }
+                }
+              },
+              "vfx_notes": { "type": "string", "description": "VFX-specific notes for this scene." },
+              "sound_notes": { "type": "string", "description": "Sound design notes for this scene." }
+            }
+          }
+        },
+        "character_bible": {
+          "type": "array",
+          "description": "Writer Phase 2 character identity definitions (identity + voice) — the authoritative source for AD visual translation (visual_dev.characters[]), Writer dialogue, and Sound voice signatures. Populated when director_notes.has_characters = true.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "character_id": { "type": "string", "description": "Stable character key (e.g., 'char_01') — matches visual_dev.characters[].character_id (cross-phase link)." },
+              "name": { "type": "string", "description": "Character name or label." },
+              "identity": {
+                "type": "object",
+                "description": "Identity template per writer.md §角色身份定义.",
+                "properties": {
+                  "archetype": { "type": "string" },
+                  "personality": { "type": "string" },
+                  "background": { "type": "string" },
+                  "motivation": { "type": "string" },
+                  "flaw": { "type": "string" },
+                  "role_arc": { "type": "string" }
+                }
+              },
+              "voice": {
+                "type": "object",
+                "description": "Voice profile — authoritative input for Sound Designer voice signatures.",
+                "properties": {
+                  "speech_style": { "type": "string" },
+                  "pace": { "type": "string" },
+                  "catchphrase": { "type": "string" },
+                  "vocal_quality": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "writer_revision": { "type": "integer", "default": 1 },
+            "dp_revision": { "type": "integer", "default": 1 },
+            "director_approved": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "visual_dev": {
+      "type": "object",
+      "description": "Visual development output from Art Director — populated during Phase 3 (美术定调+人物设定, now merged as '视觉开发'). Deprecated aliases (pre-v0.26, read-compat only): color_palette → palette, mood_references → style_refs, character_design → characters. New output must use the schema names.",
+      "properties": {
+        "palette": {
+          "type": "array",
+          "description": "Color scheme — swatch entries (name/hex/usage) and/or per-scene entries (scene_id + palette + color_temp + mood + rationale); both styles coexist across projects.",
+          "items": {
+            "type": "object",
+            "description": "Palette entry — swatch style (name/hex/usage) or per-scene style (scene_id/palette/color_temp/mood/rationale).",
+            "properties": {
+              "name": { "type": "string" },
+              "hex": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+              "usage": { "type": "string", "description": "How this color is used (e.g., 'primary bg', 'accent', 'text')." },
+              "visual_cause": { "type": "string", "description": "Mood → visual-cause translation (light direction / color temperature / intensity / atmospheric effects). Written by Art Director (Step 3b); consumed by DP and the model compiler." },
+              "scene_id": { "type": "integer", "description": "Scene number — for per-scene entries (matches script.scenes[].scene_id)." },
+              "scene_title": { "type": "string", "description": "Scene title — for per-scene entries." },
+              "color_temp": { "type": "string", "description": "Color temperature note (e.g., '5000K 晨光漫射' / '3200K golden backlight')." },
+              "mood": { "type": "string", "description": "Scene mood keywords for this palette entry." },
+              "palette": {
+                "type": "object",
+                "description": "Role → hex color map (per-scene style). Common roles: primary / secondary / accent / background / text_light / text_dark; domain-specific roles allowed.",
+                "properties": {
+                  "primary": { "type": "string" },
+                  "secondary": { "type": "string" },
+                  "accent": { "type": "string" },
+                  "background": { "type": "string" },
+                  "text_light": { "type": "string" },
+                  "text_dark": { "type": "string" }
+                },
+                "additionalProperties": true
+              },
+              "rationale": { "type": "string", "description": "Why this palette was chosen — narrative / emotional link." },
+              "reference": { "type": "string", "description": "Reference work cited for this palette (e.g., 'BR2049 — Los Angeles street tone')." }
+            }
+          }
+        },
+        "mood": { "type": "string", "description": "Visual mood description." },
+        "style_direction": { "type": "string", "description": "Style direction — feeds the 6-segment Style section (Phase 7.5 model compilation)." },
+        "visual_cause": { "type": "string", "description": "Project-level mood → visual-cause translation. Dual-write compatible with palette[].visual_cause — compilers read both (existing data compatibility)." },
+        "style_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ref_type": { "type": "string", "enum": ["film", "artist", "photographer", "game", "other"] },
+              "name": { "type": "string" },
+              "description": { "type": "string", "description": "What to borrow from this reference." }
+            }
+          }
+        },
+        "characters": {
+          "type": "array",
+          "description": "Character visual designs — simple entries (traits/consistency_notes) and/or rich entries (character_id + visual_profile + wardrobe + props + silhouette); both styles coexist across projects.",
+          "items": {
+            "type": "object",
+            "description": "Character entry — simple style or rich style (Art Director's visual translation of script.character_bible).",
+            "properties": {
+              "name": { "type": "string" },
+              "role": { "type": "string", "description": "Protagonist, antagonist, supporting, etc." },
+              "traits": { "type": "string", "description": "Visual traits (age, build, hair, clothing, accessories)." },
+              "mood": { "type": "string", "description": "Emotional expression direction." },
+              "ref_image_prompt": { "type": "string", "description": "AI image generation prompt for this character." },
+              "consistency_notes": { "type": "string", "description": "Key features to maintain across all panels." },
+              "character_id": { "type": "string", "description": "Stable character key (e.g., 'char_01') — matches script.character_bible[].character_id (cross-phase link)." },
+              "visual_profile": {
+                "type": ["object", "array"],
+                "description": "Physical appearance — Art Director's translation of character_bible identity into visual features. Object form for single characters; array form for grouped characters (tagged sub-profiles, one per member).",
+                "properties": {
+                  "age_range": { "type": "string" },
+                  "gender_presentation": { "type": "string" },
+                  "height_build": { "type": "string" },
+                  "face_features": { "type": "string" },
+                  "hair": { "type": "string" },
+                  "eyes": { "type": "string" },
+                  "skin_tone": { "type": "string" },
+                  "distinguishing_marks": { "type": "string", "description": "Scars / tattoos / prosthetics / signature features — drives close-up timing." }
+                },
+                "items": {
+                  "type": "object",
+                  "description": "Tagged sub-profile for grouped characters (e.g., one per crowd member).",
+                  "properties": {
+                    "tag": { "type": "string" },
+                    "age_range": { "type": "string" },
+                    "features": { "type": "string" },
+                    "clothing": { "type": "string" }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "wardrobe": {
+                "type": "object",
+                "description": "Costume design — DP consumes materials for lighting and color contrast; Sound consumes materials for Foley.",
+                "properties": {
+                  "style": { "type": "string" },
+                  "color_palette": { "type": "array", "items": { "type": "string" }, "description": "Costume colors (hex)." },
+                  "key_pieces": { "type": "array", "items": { "type": "string" } },
+                  "materials": { "type": "array", "items": { "type": "string" }, "description": "Fabric / material list." },
+                  "avoid": { "type": "array", "items": { "type": "string" } }
+                }
+              },
+              "props": { "type": "array", "items": { "type": "string" }, "description": "Character-specific props." },
+              "silhouette": { "type": "string", "description": "Overall silhouette / shape language." },
+              "generation_notes": { "type": "string", "description": "AI image generation guidance for this character (scale, consistency strategy)." }
+            }
+          }
+        },
+        "scene_composition": {
+          "type": "array",
+          "description": "Per-scene spatial arrangement — the 'missing layer' between palette and DP camera (Art Director Phase 3). Rendered by creative-pack.md and consumed by prompt_assembler.py.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "scene_id": { "type": "integer", "description": "Scene number — matches script.scenes[].scene_id." },
+              "scene_title": { "type": "string", "description": "Scene title (mirrors script.scenes[].scene_title)." },
+              "spatial_layout": {
+                "type": "object",
+                "description": "Layer structure — what is where in the frame.",
+                "properties": {
+                  "foreground": { "type": "string", "description": "Foreground elements — blur / framing / occlusion, providing depth." },
+                  "midground": { "type": "string", "description": "Midground subject — character / product / core action." },
+                  "background": { "type": "string", "description": "Background environment — atmosphere / buildings / sky / light source." }
+                }
+              },
+              "key_props": {
+                "type": "array",
+                "description": "Core props and their visual function.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "role": { "type": "string", "description": "Visual function: anchor / symbol / clue." },
+                    "material": { "type": "string" },
+                    "placement": { "type": "string", "description": "Position in frame (e.g., 'rule-of-thirds lower-right intersection')." }
+                  }
+                }
+              },
+              "visual_focus": {
+                "type": "object",
+                "description": "Fixation-point hierarchy.",
+                "properties": {
+                  "primary": { "type": "string", "description": "First fixation point — what the eye sees first." },
+                  "secondary": { "type": "string", "description": "Second fixation point." },
+                  "tertiary": { "type": "string", "description": "Third fixation point — environment / atmosphere elements." },
+                  "eye_path": { "type": "string", "description": "Eye path description (e.g., 'cup → up the arm → face → window light → back to cup')." }
+                }
+              },
+              "depth_strategy": { "type": "string", "description": "Depth strategy — shallow-DOF layering / linear perspective / color depth / atmospheric perspective / occlusion stacking." },
+              "rationale": { "type": "string", "description": "Why this spatial design — narrative / emotional link." }
+            }
+          }
+        },
+        "world_building": { "type": "object", "additionalProperties": true, "description": "World-building visual rules (sci-fi / fantasy), layered on top of scene_composition. Real data contains keys such as world_name / core_visual_principle. Tolerant definition — additionalProperties: true." },
+        "image_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "prompt": { "type": "string" },
+              "generated_url": { "type": "string" },
+              "approved": { "type": "boolean" },
+              "notes": { "type": "string" }
+            }
+          },
+          "description": "Generated reference images for art direction approval."
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "revision": { "type": "integer", "default": 1 },
+            "director_approved": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "cinematography": {
+      "type": "object",
+      "description": "DP's global cinematography direction.",
+      "properties": {
+        "camera_style": { "type": "string" },
+        "lighting_philosophy": { "type": "string" },
+        "lens_preference": { "type": "string" },
+        "color_grading": { "type": "string" },
+        "movement_language": { "type": "string", "description": "e.g., 'handheld intimate', 'steadicam smooth', 'dolly precision'." },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "revision": { "type": "integer", "default": 1 },
+            "director_approved": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "sound": {
+      "type": "object",
+      "description": "Sound Designer's direction.",
+      "properties": {
+        "music_style": { "type": "string" },
+        "music_refs": { "type": "array", "items": { "type": "string" } },
+        "sfx_notes": { "type": "array", "items": { "type": "string" } },
+        "narration_tone": { "type": "string" },
+        "narration_language": { "type": "string" },
+        "silence_usage": { "type": "string", "description": "How and when to use silence." },
+        "narration": {
+          "type": "object",
+          "description": "旁白参数对象（批次 F3 / v0.35.0；optional）——sound-designer.md §旁白参数模板的对象落点，供配音生成（TTS）消费。",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "voice_gender": { "type": "string" },
+            "voice_age": { "type": "string" },
+            "pace": { "type": "string" },
+            "tone": { "type": "string" },
+            "distance": { "type": "string" },
+            "reverb": { "type": "string" },
+            "language": { "type": "string" },
+            "special_processing": { "type": "string" }
+          }
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "revision": { "type": "integer", "default": 1 },
+            "director_approved": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "vfx": {
+      "type": "object",
+      "description": "VFX Supervisor's direction.",
+      "properties": {
+        "techniques": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "usage": { "type": "string" },
+              "scene_ids": { "type": "array", "items": { "type": "integer" } }
+            }
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_scene": { "type": "integer" },
+              "to_scene": { "type": ["integer", "null"], "description": "Target scene id — null for a closing transition with no target scene (e.g., final fade to white / end)." },
+              "type": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "properties": { "type": "string" },
+              "scene_ids": { "type": "array", "items": { "type": "integer" } }
+            }
+          }
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "revision": { "type": "integer", "default": 1 },
+            "director_approved": { "type": "boolean", "default": false }
+          }
+        }
+      }
+    },
+    "storyboard": {
+      "type": "array",
+      "description": "Final storyboard panels — the integration point of all prior phases.",
+      "items": {
+        "type": "object",
+        "required": ["panel_id", "scene_id"],
+        "properties": {
+          "panel_id": { "type": "integer" },
+          "scene_id": { "type": "integer" },
+          "layout": { "type": "string", "enum": ["wide", "close-up", "medium", "detail", "establishing", "extreme-wide", "extreme-close-up", "medium-close-up"], "description": "镜头景别标签 — v0.36.0 additive 扩展（extreme-wide / extreme-close-up / medium-close-up，按示例实测值；生成门禁仅依赖 wide / establishing）" },
+          "description": { "type": "string" },
+          "prompt": { "type": "string", "description": "AI image generation prompt for this panel." },
+          "character_ids": { "type": "array", "items": { "type": "integer" } },
+          "camera_notes": { "type": "string" },
+          "vfx_notes": { "type": "string" },
+          "generated_url": { "type": "string" },
+          "refs_used": { "type": "array", "items": { "type": "string" }, "description": "本 panel 生成时注入的参考图（顶层 file_registry 逻辑名列表）— 批次 D / v0.32.0，optional，溯源用" },
+          "approved": { "type": "boolean", "default": false },
+          "_meta": {
+            "type": "object",
+            "properties": {
+              "revision": { "type": "integer", "default": 1 },
+              "director_approved": { "type": "boolean", "default": false }
+            }
+          }
+        }
+      }
+    },
+    "creative_pack": {
+      "type": "object",
+      "description": "Final assembled output — ready for downstream tools.",
+      "properties": {
+        "comfyui_workflow": { "type": "object", "description": "ComfyUI-compatible workflow JSON." },
+        "hyperframes_config": { "type": "object", "description": "HyperFrames composition config." },
+        "kling_prompts": { "type": "array", "items": { "type": "string" } },
+        "runway_prompts": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "subtitles": {
+      "type": "array",
+      "description": "字幕层（批次 F2 / v0.34.0；optional）——与对白解耦的独立文本层：可单独迭代、可选择性存在；panel 为主挂载键（panel_id），scene_id 冗余兼容。编译产出字幕合成 spec（model_compilation.subtitles）；字幕不进 video prompt（模型文字渲染不可控，走后期烧录）。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subtitle_id": { "type": "string", "description": "字幕条目稳定 ID（如 sub_001）" },
+          "panel_id": { "type": "integer", "description": "挂载键——对应 storyboard panel 的 panel_id（一个 panel 可挂 0-N 条；Phase 6 绑定时填写；Phase 7 选项 B 重排时随 panel 移动）" },
+          "scene_id": { "type": "integer", "description": "冗余场景键（便于按场景过滤；可选）" },
+          "text_zh": { "type": "string", "description": "中文文本（language_mode 含 zh 时填写）" },
+          "text_en": { "type": "string", "description": "英文文本（language_mode 含 en 时填写）" },
+          "language_mode": { "type": "string", "enum": ["zh", "en", "bilingual"], "description": "语言模式（中 / 英 / 双语——双语时 text_zh + text_en 双填）" },
+          "font_family": { "type": "string", "enum": ["serif", "sans"], "description": "字体族（衬线 / 非衬线；预留扩展）" },
+          "position": { "type": "string", "enum": ["bottom", "top", "center"], "description": "视频出现位置（bottom 默认 / top / center）" },
+          "source": { "type": "string", "enum": ["dialogue", "narration", "design"], "description": "文案来源：dialogue 对白派生（默认；文本一致性纳入校验）/ narration 旁白同步 / design 手写设计性字幕" },
+          "timing_note": { "type": "string", "description": "时长备注（可选；最终时间轴为 panel 级颗粒度，下游按实际时长微调）" },
+          "speaker": { "type": "string", "description": "说话人/来源标注（可选，source=dialogue 时对应角色）" },
+          "_meta": {
+            "type": "object",
+            "properties": {
+              "revision": { "type": "integer", "default": 1 }
+            }
+          }
+        }
+      }
+    },
+    "file_registry": {
+      "type": "object",
+      "description": "全管线参考图注册表（v0.31.0 从 model_compilation.file_registry 提升；optional）— Phase 1 起登记，全管线按逻辑名引用（file_id / local_path），不再重述参考图已有内容。批次 D（v0.32.0）起生图产物同登记：source: \"generated\"；panel 生成图 → role: \"first_frame\"，命名 first_frame_p<panel_id>；moodboard → role: \"reference_image\"。批次 F1（v0.33.0）起资产化：条目可选 asset 元数据（asset_type / asset_id / is_canonical）；无 asset 键时按既有命名约定解析（双轨兼容），协议见 references/reference-image-over-text.md §资产引用协议。",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "file_id": { "type": "string", "description": "Volcengine Files API file_id（未上传时为 'PENDING'）" },
+          "local_path": { "type": "string", "description": "本地文件路径——缩略图渲染来源 + file_id 失效后重传备份" },
+          "role": { "type": "string", "enum": ["reference_image", "first_frame", "last_frame"] },
+          "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "reference_image_weight（0.0-1.0）：角色锚点 0.8-1.0 / 场景 mood 0.5-0.7 / 风格 0.4-0.5" },
+          "source": { "type": "string", "enum": ["user", "generated", "search"], "description": "来源分类：用户提供 / 生图生成 / 网络搜索（含免版权与公开图库，2026-09-28 决策 1）" },
+          "credit": { "type": "string", "description": "来源署名（搜索源：作者/平台，溯源元数据）" },
+          "origin_url": { "type": "string", "description": "来源页 URL（搜索源可选）" },
+          "asset": {
+            "type": "object",
+            "description": "资产化元数据（批次 F1 / v0.33.0；optional additive）——资产分类与代表图标记；无 asset 键的条目按既有命名约定解析（双轨兼容）。引用协议见 references/reference-image-over-text.md §资产引用协议。",
+            "properties": {
+              "asset_type": {
+                "type": "string",
+                "enum": ["character", "product", "key_shot", "prop", "audio"],
+                "description": "资产分类（分开枚举、不全部罗列、保持可扩展）：character 关键人物形象（三视图先行）/ product 产品主体（三视图、顶视图等）/ key_shot 关键分镜（含场景和道具）/ prop 关键道具（预留）"
+              },
+              "asset_id": { "type": "string", "description": "资产稳定 ID——前缀规范：char_ / prod_ / shot_ / prop_ / audio_（如 char_cat / prod_coffee_machine / shot_p3 / audio_music_main）" },
+              "is_canonical": { "type": "boolean", "description": "是否该资产的代表图（canonical）——每资产建议至多 1 张；角色资产优先级：用户原照 > 生成图（生成图不得顶替用户原照充当 image_ref）" }
+            }
+          }
+        }
+      }
+    },
+    "image_gen": {
+      "type": "object",
+      "description": "生图模型选择与生成配置（批次 D / v0.32.0；optional）— Phase 3.5 步骤 0 选定，Phase 6/7 复用；路由与适配见 references/image-gen-routing.md。target_model 为自由字符串（不设 enum，解耦）。",
+      "properties": {
+        "target_model": { "type": "string", "description": "选定生图模型/工具标识（如 'doubao-seedream-4-5-251128' / 'comfyui-flux-ipadapter'）" },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "selected_phase": { "type": "string", "description": "选择发生的阶段（如 '3.5'）" },
+            "selection_note": { "type": "string", "description": "选择依据/来源（探测结果 / 用户指定 / 帮我推荐）" },
+            "adapter_status": { "type": "string", "description": "适配状态：measured（✅实测）/ doc-inferred（📄文档推断·未实测）" }
+          }
+        }
+      }
+    },
+    "audio_gen": {
+      "type": "object",
+      "description": "音频生成配置与音轨清单（批次 F3 / v0.35.0；optional）——Phase 5 末尾选定音频路线（route），Phase 7.5 编译消费；音乐/配音模型路由与适配见 references/audio-gen-routing.md。执行边界＝仅编译指令（不代生成）。音轨文件登记顶层 file_registry（asset_type: \"audio\"）。",
+      "properties": {
+        "route": { "type": "string", "enum": ["native", "external", "mixed", "none"], "description": "音频路线：native 视频模型原生音画同步（Seedance --generate-audio）/ external 外部生成（音乐模型 + TTS）/ mixed 混合（分工见 _meta.selection_note）/ none 无音频" },
+        "music": {
+          "type": "object",
+          "properties": {
+            "target_model": { "type": "string", "description": "音乐生成模型标识（自由字符串，不设 enum；首批适配：MiniMax Music 3.0）" },
+            "brief": { "type": "string", "description": "音乐生成 brief（风格 / tempo / instrumentation——从 sound.music_style 提炼）" },
+            "segments": { "type": "array", "items": { "type": "object" }, "description": "段落级音乐清单（按 scene 段落生成；含 cue / scene_id / 状态）" }
+          }
+        },
+        "voice": {
+          "type": "object",
+          "properties": {
+            "target_tool": { "type": "string", "description": "配音工具/模型标识（规划：火山方舟——专项待开）" },
+            "params": { "type": "object", "description": "配音参数（来源 sound.narration）" },
+            "lines": { "type": "array", "items": { "type": "object" }, "description": "逐句配音清单（text / speaker / 状态）" }
+          }
+        },
+        "sfx": {
+          "type": "object",
+          "properties": {
+            "sources": { "type": "array", "items": { "type": "string" }, "description": "音效素材来源（素材库搜索关键词等）" }
+          }
+        },
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "selected_phase": { "type": "string" },
+            "selection_note": { "type": "string" },
+            "adapter_status": { "type": "string", "description": "适配状态：measured（✅实测）/ doc-inferred（📄 文档推断·未实测）" }
+          }
+        }
+      }
+    },
+    "model_compilation": {
+      "type": "object",
+      "description": "Model Compiler output — Phase 7.5. Compiles Creative Package into model-specific execution instructions. Read-only consumer of upstream data. Does not execute network requests.",
+      "properties": {
+        "_meta": {
+          "type": "object",
+          "properties": {
+            "compiler_version": { "type": "string", "default": "1.0.0" },
+            "target_model": { "type": "string" },
+            "source_phases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Phases whose outputs were consumed (e.g., [\"script\", \"cinematography\", \"visual_dev\", \"sound\", \"storyboard\"])"
+            },
+            "director_approved": { "type": "boolean", "default": false }
+          }
+        },
+        "target_model": {
+          "type": "string",
+          "description": "Target AI video model ID",
+          "enum": ["doubao-seedance-2-0-260128"]
+        },
+        "file_registry": {
+          "type": "object",
+          "description": "Uploaded reference image file_id registry. Each entry maps a logical name to its Files API file_id and local path backup. Legacy path — dual-read compatible: v0.31.0 promoted this registry to the top-level file_registry (authoritative); compilers read top-level first, falling back here.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "file_id": { "type": "string", "description": "Volcengine Files API file_id (e.g., file-20260623-xxx)" },
+              "local_path": { "type": "string", "description": "Local file path for re-upload if file_id expires" },
+              "role": { "type": "string", "enum": ["reference_image", "first_frame", "last_frame"] },
+              "weight": { "type": "number", "minimum": 0, "maximum": 1, "description": "reference_image_weight (0.0-1.0). Character anchor: 0.8-1.0, scene mood: 0.5-0.7, style: 0.4-0.5" }
+            }
+          }
+        },
+        "shots": {
+          "type": "array",
+          "description": "Compiled shot instructions",
+          "items": {
+            "type": "object",
+            "required": ["shot_id", "compiled_prompt"],
+            "properties": {
+              "shot_id": { "type": "string", "description": "Shot identifier (e.g., S01)" },
+              "scene_id": { "type": "integer", "description": "Corresponding scene in script.scenes[]" },
+              "panel_id": { "type": "integer", "description": "对应 storyboard panel 的 panel_id（编译器写入；批次 D / v0.32.0）— first_frame_ref 解析键：first_frame_p<panel_id>" },
+              "duration": { "type": "integer", "minimum": 4, "description": "Duration in seconds. Seedance 2.0 minimum: 4s" },
+              "resolution": { "type": "string", "enum": ["480p", "720p", "1080p", "4k"], "description": "Output resolution" },
+              "compiled_prompt": { "type": "string", "description": "Compiled 6-segment prompt ready for model consumption" },
+              "prompt_trace": {
+                "type": "object",
+                "description": "Optional — segment-level traceability from source fields to compiled text. Director may delete after review to reduce schema size.",
+                "properties": {
+                  "subject": { "$ref": "#/$defs/trace_entry" },
+                  "action": { "$ref": "#/$defs/trace_entry" },
+                  "scene": { "$ref": "#/$defs/trace_entry" },
+                  "camera": { "$ref": "#/$defs/trace_entry" },
+                  "lighting": { "$ref": "#/$defs/trace_entry" },
+                  "style": { "$ref": "#/$defs/trace_entry" }
+                }
+              },
+              "multimodal_refs": {
+                "type": "object",
+                "description": "Model-agnostic multimodal reference mapping. File IDs resolved via file_registry at execution time.",
+                "properties": {
+                  "first_frame_ref": { "type": "string" },
+                  "last_frame_ref": { "type": "string" },
+                  "image_refs": { "type": "array", "items": { "type": "string" } },
+                  "video_ref": { "type": "string" },
+                  "audio_ref": { "type": "string" }
+                }
+              },
+              "slot_allocation": {
+                "type": "object",
+                "description": "5-slot allocation result for Seedance 2.0 image_ref",
+                "properties": {
+                  "strategy": { "type": "string", "enum": ["character_driven", "product_driven", "graphic_driven"] },
+                  "allocated": {
+                    "type": "array",
+                    "description": "Allocated slots (P0→P4)",
+                    "items": { "type": "object" }
+                  },
+                  "overflow": {
+                    "type": "array",
+                    "description": "References that exceeded the 5-slot limit",
+                    "items": { "type": "object" }
+                  }
+                }
+              },
+              "arkcli_command": { "type": "string", "description": "Ready-to-execute arkcli command (text only, not auto-executed)" },
+              "estimated_tokens": { "type": "integer", "description": "Estimated token consumption for this shot" },
+              "estimated_cost_cny": { "type": "string", "description": "Estimated cost in CNY (approximate)" },
+              "_quality": {
+                "type": "object",
+                "description": "Compilation quality assessment",
+                "properties": {
+                  "overall": { "type": "string", "enum": ["GOOD", "DEGRADED", "INSUFFICIENT"] },
+                  "warnings": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "subtitles": {
+          "type": "array",
+          "description": "字幕合成 spec（批次 F2 / v0.34.0）——编译器将顶层 subtitles[] 编译为逐条时间轴+样式（不进 video prompt；下游后期烧录用）。时间轴按 shots 名义时长累计（panel 级颗粒度，nominal）。",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subtitle_id": { "type": "string" },
+              "panel_id": { "type": "integer", "description": "对应 shots[].panel_id（挂载校验用）" },
+              "start_s": { "type": "number", "description": "名义开始时间（秒，按 shots[].duration 累计）" },
+              "end_s": { "type": "number", "description": "名义结束时间（秒）" },
+              "text_zh": { "type": "string" },
+              "text_en": { "type": "string" },
+              "language_mode": { "type": "string", "enum": ["zh", "en", "bilingual"] },
+              "font_family": { "type": "string", "enum": ["serif", "sans"] },
+              "position": { "type": "string", "enum": ["bottom", "top", "center"] },
+              "style_note": { "type": "string", "description": "烧录样式建议（如双语排版：中文主/英文副，字号比 ≈ 100:80）" }
+            }
+          }
+        },
+        "shot_chain": {
+          "type": "object",
+          "description": "video_ref chain for shot-to-shot style consistency (Seedance 2.0 only)",
+          "properties": {
+            "strategy": { "type": "string", "description": "e.g., 'video_ref_chain'" },
+            "chain": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Ordered chain entries (e.g., 'S01 → S02 (video_ref=S01)')"
+            }
+          }
+        }
+      }
+    },
+    "tuning_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string", "enum": ["color", "pacing", "vfx", "sound", "composition", "other"] },
+          "note": { "type": "string" },
+          "priority": { "type": "string", "enum": ["critical", "high", "medium", "low", "nice-to-have"] }
+        }
+      },
+      "description": "Director's final tuning and optimization notes."
+    }
+  },
+  "$defs": {
+    "trace_entry": {
+      "type": "object",
+      "description": "Segment-level traceability: maps a compiled prompt segment back to its source field and original text.",
+      "properties": {
+        "source": { "type": "string", "description": "Project State field path (e.g., 'script.scenes[0].action')" },
+        "original": { "type": "string", "description": "Original text from source (verbatim)" },
+        "compiled": { "type": "string", "description": "Compiled/translated text for model consumption" }
+      }
+    }
+  }
+}

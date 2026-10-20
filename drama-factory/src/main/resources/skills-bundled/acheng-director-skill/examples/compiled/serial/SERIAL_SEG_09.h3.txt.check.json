@@ -1,0 +1,19 @@
+{
+  "mode": "T2VA",
+  "duration_seconds": 15.0,
+  "shot_count": 1,
+  "references": [],
+  "subject_labels": [],
+  "speech_expectations": [
+    [
+      "S1",
+      "Chinese",
+      "两张官表是一份底稿，第二列不是。"
+    ]
+  ],
+  "minimum_words": 0,
+  "profile": "legacy_fixture",
+  "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "binding_sha256": "e5266e226d8baf50650ab5a150d8de1a0ebfdffa81a0da012597375bd632c8be",
+  "expected_prompt_sha256": "3e9538c68bad0b6d907e651754f725b230700a1f94d5d770577b33965e0f16aa"
+}

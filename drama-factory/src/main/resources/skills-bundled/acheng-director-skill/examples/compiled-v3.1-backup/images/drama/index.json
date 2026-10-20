@@ -1,0 +1,17 @@
+{
+  "status": "ready-to-submit-not-generated",
+  "input_sha256": "ec69cbbc2b212f60968422c2b535f232595c2eb1c73b7c19deb5ebeca20a516a",
+  "assets": [
+    {
+      "asset_id": "ASSET_02_DRAMA",
+      "prompt_file": "ASSET_02_DRAMA.image.txt",
+      "mode": "GENERATE",
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point"
+    }
+  ],
+  "asset_plan": null
+}

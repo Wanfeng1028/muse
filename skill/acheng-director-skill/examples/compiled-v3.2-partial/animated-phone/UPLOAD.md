@@ -1,0 +1,13 @@
+# H3 逐段提交说明
+
+每段单独提交对应 .h3.txt 的全部正文。在生成入口设置本段时长，并上传该段所列全部素材；本地路径文字不能替代上传。
+
+## ANIME_PHONE_SEG01 · Ref2VA · 10 秒
+
+[完整提示词](ANIME_PHONE_SEG01.h3.txt)
+
+本段说话人编号按本次独立请求的首次发声顺序分配；作品角色身份保持不变。实际入口的模式、时长和参考数量仍需核对。
+
+必须上传的参考素材（标签含义已写入本段正文）：
+
+- `<Picture 1>` → [素材](references/1f162fe79a3b4683c7cfba91f380df1ba5d7866cfde201399e72044d130e550a.png)；用途：first-frame composition and pose anchor

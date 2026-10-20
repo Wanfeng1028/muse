@@ -1,0 +1,17 @@
+{
+  "format_pass": "PASSED",
+  "validator": "h3_final_format/4.3.6",
+  "file": "SERIAL_SEG_12.h3.txt",
+  "sha256": "ea9b6fffe75aa0f4851e41bda4096ab876776c2f8b307840899c663ffa7f8c43",
+  "contract_sha256": "2f42b6dabc08d9e183200b9b11a3b4a639b4a6b28c3ca6bd361cbe93eb61e982",
+  "mode": "T2VA",
+  "duration_seconds": 15.0,
+  "shot_count": 1,
+  "english_words": 676,
+  "minimum_words": 0,
+  "dialogue_count": 1,
+  "references": [],
+  "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "visual_status": "UNVERIFIED",
+  "scope": "final-file structural validation; not creative, visual or audio acceptance"
+}

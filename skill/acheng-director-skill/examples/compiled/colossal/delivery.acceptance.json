@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "segments": [
+    {
+      "joint_status": "PASSED",
+      "segment_id": "COLOSSAL_SEG01",
+      "input_revision": "287615f19d89194ad514c2b9bc81aa70cba15400f03070489807e911bc124eaa",
+      "sha256": "2e80b460f4f9e894f0713cf928c8096cb54a80f71eb368b766414763430dfe7f",
+      "binding_sha256": "bb1cfe061046a4ce476d15348f8445d8091c66153492ddd1f899aaf25ae82837",
+      "upload_card_sha256": "40117f4c97f75783530817a681e867ed344b57a5694a62d56f19f3ca182decc3",
+      "visual_status": "UNVERIFIED"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "asset_prompt_delivery": {
+    "status": "PASS",
+    "assets": [
+      {
+        "asset_id": "ASSET_03_COLOSSAL",
+        "status": "PASS",
+        "prompt_sha256": "e11f206295ab426a4650cc0bb38ab028211cb3d280197f2a6df42b4afccf1453",
+        "reference_count": 1
+      }
+    ],
+    "visual_status": "UNVERIFIED"
+  }
+}

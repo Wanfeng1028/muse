@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "package_version": "4.0.6",
+  "package": "acheng-director-v4.0.6.zip",
+  "user_guide": {
+    "path": "使用指南.md",
+    "reference_copy": "references/107-acheng-director-user-guide-v4.md",
+    "ability_trigger_wordpacks": [
+      "角色灵动表演", "微动作", "微表情", "五轨表演", "打戏逻辑链", "打戏因果链",
+      "combat timing", "direction_facts", "speed_profile", "空间位置关系", "身体朝向",
+      "180度轴线", "镜头实际路径", "场景美学", "氛围感", "连续性账本", "提醒校验逻辑",
+      "机器验收", "人工验收边界", "反省略", "独立可用"
+    ],
+    "each_function_has_template_and_example": true
+  },
+  "camera_entries": 132,
+  "modules": 7,
+  "integrations": 19,
+  "h3_modes": ["FL2VA", "I2VA", "L2VA", "Ref2VA", "T2VA"],
+  "validation": {
+    "scene_skill_quick_validate": "PASS",
+    "scene_contract_tests": "5/5 PASS",
+    "director_workflow_tests": "5/5 PASS",
+    "director_contract_tests": "5/5 PASS",
+    "v3_contract_tests": "6/6 PASS",
+    "director_contract_acceptance": "PASS",
+    "guide_marker_check": "PASS",
+    "zip_integrity": "PASS",
+    "paid_media_models_called": false,
+    "historical_packages_overwritten": false
+  },
+  "visual_verification": "No generated film or audio is claimed; visual_status remains UNVERIFIED."
+}

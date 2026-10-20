@@ -1,0 +1,40 @@
+{
+  "mode": "L2VA",
+  "duration_seconds": 12.0,
+  "shot_count": 1,
+  "references": [
+    {
+      "label": "<Picture 1>",
+      "file": "references/8f46b8472c8e0b0023743b271f9ecc88c5e80b72ea688fd2ac294c9d26443457.png",
+      "role": "actual final target frame",
+      "upload_order": 1,
+      "sha256": "8f46b8472c8e0b0023743b271f9ecc88c5e80b72ea688fd2ac294c9d26443457",
+      "asset_version": "sha256:8f46b8472c8e0b0023743b271f9ecc88c5e80b72ea688fd2ac294c9d26443457",
+      "entity_id": null,
+      "shot_ids": [
+        "INK_SHOT_3"
+      ],
+      "active_ranges": [
+        {
+          "shot_id": "INK_SHOT_3",
+          "start_frame": 576,
+          "end_frame": 864
+        }
+      ],
+      "preserve": "See the authored retention relationship.",
+      "exclude": null,
+      "binding_status": "BOUND_LOCAL",
+      "content_status": "LEGACY_FIXTURE_NOT_REVIEWED",
+      "platform_status": "NOT_UPLOADED",
+      "issues": [],
+      "source_file": "media/ink-end.png"
+    }
+  ],
+  "subject_labels": [],
+  "speech_expectations": [],
+  "minimum_words": 0,
+  "profile": "legacy_fixture",
+  "input_revision": "db30cbcbb00a39106f4369c37bab9155f0c976666843ca70d26c371271b7552d",
+  "binding_sha256": "25a3b72a4d0fa4af0a67d055afddd0440e343a2195e9e0ea6991684b3ff7168c",
+  "expected_prompt_sha256": "541674c3222cc522fb5023d700b2a22d6d7c63771a8c48147aef080227749c57"
+}

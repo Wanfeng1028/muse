@@ -1,0 +1,42 @@
+{
+  "package": "acheng-director-v4.0.13",
+  "baseline": "acheng-director-v4.0.12",
+  "release_scope": "delivery-mode correction and Antigravity IDE user-goal templates",
+  "user_visible_name": "Acheng Director",
+  "execution_modes": {
+    "1": "autonomous_file_batch",
+    "2": "interactive_segment",
+    "default": "autonomous_file_batch"
+  },
+  "antigravity_goal_templates": {
+    "included": true,
+    "path": "references/110-goal-multi-turn-delivery-v4.md",
+    "scope": "user-facing /goal templates only; core Skill remains host-agnostic"
+  },
+  "changes": [
+    "Default long-output mode is automatic file batching.",
+    "Interactive mode is explicit option 2 and submits at most one complete Segment per turn.",
+    "Antigravity IDE workspace, file, tool-loop, and pause rules are confined to user templates.",
+    "Ref2VA minimum detail and partial-cursor safeguards remain enabled."
+  ],
+  "verification": {
+    "python_syntax": "PASS",
+    "workflow_v4": "7/7 PASS",
+    "contracts_and_regressions": "PASS",
+    "validate_director_contract": "PASS",
+    "skill_creator_quick_validate": "PASS",
+    "zip_integrity": "PASS",
+    "sha256_manifest": "PASS"
+  },
+  "safety": {
+    "paid_media_models_called": false,
+    "historical_packages_overwritten": false,
+    "installation_directories_updated": false,
+    "real_media_claimed": false,
+    "visual_status": "UNVERIFIED"
+  },
+  "known_limits": [
+    "Autonomous file batching depends on Antigravity IDE tool availability, workspace permissions, disk capacity, context budget, and runtime limits.",
+    "A completed prompt package does not mean images, video, or audio were generated or artistically approved."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "segments": [
+    {
+      "joint_status": "PASSED",
+      "segment_id": "DRAMA_SEG01",
+      "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+      "sha256": "c6de183de6e6d260c5d690d37325f31e12e051ca67660081f2d97208bab7fdbb",
+      "binding_sha256": "bcb31862ae9d5cf759a3e71b2babf1c00ce86dcb5d5b115f3cb12d90cf421b96",
+      "upload_card_sha256": "d19b372ad5b72a6afaa01ff272d8c573f8c6cb2a705d69062a8549b926194125",
+      "visual_status": "UNVERIFIED"
+    },
+    {
+      "joint_status": "PASSED",
+      "segment_id": "DRAMA_SEG02",
+      "input_revision": "f9dfddefe7973e00ab3a88617a3ebc72a6e3d8ebd92b3af52fd56b15edb5d33f",
+      "sha256": "153fb4ca8aedad373a4349c5083e2aa19fda50011eb54484a7836d964b4d7b04",
+      "binding_sha256": "b7cecf72549105eca6adb6207a4a3db25aac32f862623574ba782ea14770c6f8",
+      "upload_card_sha256": "1aebe29f577c337d1ced9ea41279cef9dd3a6ead24556807c69787286e104869",
+      "visual_status": "UNVERIFIED"
+    }
+  ],
+  "visual_status": "UNVERIFIED",
+  "asset_prompt_delivery": {
+    "status": "PASS",
+    "assets": [
+      {
+        "asset_id": "ASSET_02_DRAMA",
+        "status": "PASS",
+        "prompt_sha256": "bf7e27e294178f1976cb610afc9079d865ba092b2c2d5c9c827e2f3eff326d7d",
+        "reference_count": 0
+      }
+    ],
+    "visual_status": "UNVERIFIED"
+  }
+}

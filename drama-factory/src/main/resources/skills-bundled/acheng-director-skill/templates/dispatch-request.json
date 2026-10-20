@@ -1,0 +1,23 @@
+{
+  "request_id": "DIRECTOR_REQUEST_01",
+  "stage": "full",
+  "features": [],
+  "completed_modules": [],
+  "shot_ids": [
+    "SERIAL_SHOT_01",
+    "SERIAL_SHOT_02",
+    "SERIAL_SHOT_03",
+    "SERIAL_SHOT_04",
+    "SERIAL_SHOT_05",
+    "SERIAL_SHOT_06",
+    "SERIAL_SHOT_07",
+    "SERIAL_SHOT_08",
+    "SERIAL_SHOT_09",
+    "SERIAL_SHOT_10",
+    "SERIAL_SHOT_11",
+    "SERIAL_SHOT_12"
+  ],
+  "frozen_paths": [
+    "/production_total_duration"
+  ]
+}

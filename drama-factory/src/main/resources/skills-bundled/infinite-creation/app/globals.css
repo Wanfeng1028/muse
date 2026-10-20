@@ -1,0 +1,60 @@
+/* 全局样式：Tailwind + HeroUI 主题令牌（明/暗双主题，主题配置见 tailwind.config.js） */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+  a { color: var(--heroui-colors-primary, #4f86ff); }
+}
+
+@layer components {
+  /* 纯布局辅助类（无主题色，浅色模式自动适配） */
+  .row { @apply flex gap-3 items-center flex-wrap; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+
+  /* 媒体类 */
+  .thumb { @apply w-full aspect-square object-cover bg-black rounded-lg; }
+  .video { @apply w-full max-h-[200px] bg-black rounded-lg; }
+
+  /* 主题感知类（用 HeroUI token，随明暗切换） */
+  .muted { @apply text-default-500 text-xs; }
+  .logbox {
+    @apply bg-default-50 text-default-foreground border border-default-200 rounded-lg p-2.5 font-mono text-xs;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+
+  .footer {
+    @apply max-w-[1100px] mx-auto px-5 py-5 text-center text-foreground-400 text-xs border-t border-default-200;
+    margin-top: 24px;
+  }
+  .footer a { @apply text-primary; text-decoration: none; }
+
+  /* GitHub logo：CSS mask 引用 public/github_logo.svg，颜色跟随 currentColor 自动适配明暗 */
+  .github-logo {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor;
+    -webkit-mask: url('/github_logo.svg') no-repeat center / contain;
+    mask: url('/github_logo.svg') no-repeat center / contain;
+    vertical-align: -0.125em;
+    text-decoration: none;
+  }
+  a.github-logo:hover { background-color: var(--heroui-colors-primary, #4f86ff); }
+  .footer a.github-logo { @apply text-foreground-400; }
+}
+
+/* toast 进入动画 */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
+.toast-in { animation: toast-in .16s ease-out; }

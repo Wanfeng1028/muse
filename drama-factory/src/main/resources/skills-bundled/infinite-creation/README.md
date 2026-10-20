@@ -1,0 +1,366 @@
+# Agent无限创作 · 把你的故事变成亿帧画面
+
+
+![](images/banner.jpg)
+
+
+中文 | [English](README_EN.md)
+
+## 项目简介
+- 免费开源本地Agent全自动视频生成的开源项目✨，不用演员、配音、导演和剪辑师就能本地一键生成超长视频。可以做小说生成视频、漫剧广告、故事类讲解视频，让你所想到的故事变成亿帧画面。
+- 小说一键生成视频，不限时长，输入小说/剧本通过本地ComfyUI-MiniMaxH3+Agent+Skill技能一键全自动无限生产视频
+
+## 生成样例
+- 《妈妈的时间》
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/3ace95ff-1ec1-46b0-abab-115c76734ee3" width="70%" poster=""> </video>
+</div>
+
+[更多样例](docs/run_demo.md)
+
+## 项目计划
+- [持续进行] 解决项目中存在的BUG
+- [计划中] 适配低显存的家用级显卡，博主的测试设备有限，需要更多的用户帮忙测试并反馈到仓库中的Issues多多反馈🙏🏻
+- [计划中] 解决并优化内部Agent存在的工具调用安全及上下文压缩等……问题
+- [计划中] 接入外部Agent，分为普通版和专业版，专业版调用外部Agent进行处理，普通版内置集成Agent模块
+- [计划中] 插件系统开发，支持插件上传、插件调用、插件框架……
+- [计划中] 自动流水线支持提示词自定义编排插件
+- [计划中] 收录更多高阶Skill技能，提升Agent技能视觉美感
+- [计划中] 工具Web页面美化工作，需要一个非常有美感的AI设计师
+- [计划中] 打包构建Docker部署、桌面端App
+- [计划中] 工作流接入视频超分，让生成的视频更加清晰
+- [计划中] 接入Seedance、kling、wan、MiniMax-H3在线版Api接口一键生成视频
+- [✅] 支持自动生成视频字幕：项目级开关，把分镜台词/旁白按时间轴烧录进成片（自动隐藏角色名），同时保留不带字幕版本与 SRT 字幕文件供下载
+- [✅] 支持背景音乐管理，接入 MiniMax Music3 本地/云端自动生成背景音乐并合成到视频中，含「背景音乐库」（手动生成/预览/选择/应用到章节）
+- [✅] 添加Agent安全审批策略，防止Agent越权操作，删除项目或执行危险命令
+- [✅] 接入在线RunningHub-ComfyUI工作流生成，会员MiniMax-H3夜间免费运行
+- [✅] 把项目装进Skill技能，支持Agent一键调用
+- [✅] 把文生图、图生图工作流进行整合使用最新Qwen-Image2.1的文生图+图生图工作流
+- [✅] 接入Qwen-Image-2.1文生图+图生图工作流
+- [✅] 支持提交参考素材，及Agent整理参考素材
+- [✅] 优化本地MiniMax H3人物语音电流声或者语音不清晰的问题
+- [✅] 上传小说/剧本生成视频本地全链路Agent全自动工作流生成方案
+- [✅] 优化图片素材生成的质量
+- [✅] 优化人物参考音频的声音设计
+- [✅] 支持人物服装管理，每个人物可以支持设计多套服装
+
+## 项目宗旨
+提供Agent生成超长视频全链路整合方案
+
+## 项目架构
+基于**本地 ComfyUI**（MiniMax H3 视频 GGUF 版 + Qwen-Image 2.1 文生图/图生图 + Krea2 文生图 + Qwen3-TTS + MiniMax Music3 背景音乐）的**全自动「小说/剧本 → 视频」Agent 工作流**。项目目前整理了27个Skill技能，其中包含MiniMax-H3提示词优化，分镜剧本生成，小说转剧本等。
+
+只要把一部小说/剧本粘贴进项目，点一下「开始」，Agent 会全自动完成：
+
+> 剧本/大纲 → 人物圣经 + 风格指南（一致性锚点）→ 人物/场景/道具/语音资产生成 → 分镜脚本 → 逐镜视频（MiniMax H3 Ref2VA）→ 背景音乐（MiniMax Music3）→ 自审重试 → ffmpeg 合并成片。
+
+**全程无需人工介入**，可以长时托管无需人工干预运行（跑一晚/一整天均可）；完成后可逐段**审查分镜**并对不满意的片段**单独重生成**。
+
+## 我的电脑运行配置
+```text
+系统：Windows 11（也支持在Linux/Mac上运行）
+CPU：12th Gen Intel(R) Core(TM) i5-12400F
+显卡：NVIDIA GeForce RTX 3080 20G 
+内存：32GB DDR4 3200 MT/s (16GBx2)
+```
+**具体本地的显卡配置需要多大的显存，我这边暂时还没有做详细测试，如果有相关测试的结果，欢迎加入群聊分享，理论上来说8GB以上显存都是可以运行的**
+
+**注意**：须先安装ffmpeg，否则可能会影响最后的合并成片的功能，下载地址：[https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
+
+## 核心能力
+
+- **无限视频时长**：支持生成任意时长的视频，无需手动调整分镜脚本或视频参数，上传小说/剧本自动生成长视频。
+- **自动分镜**：根据人物动作、场景变化、道具移动等自动分镜，无需人工干预。
+- **项目隔离**：每个项目的素材文件 + Agent 上下文（人物圣经/风格指南/连续性记录）完全隔离，资源按分类整理（人物/场景/道具/语音/音乐/音效/其他）。
+- **人物一致性**：每人物一张 canonical 参考图跨分镜复用 + 统一外观描述 + H3 参考标签规则。
+- **技能系统**：默认预装 MiniMax-H3 视频Skill技能 + 本项目 novel-to-video 主技能；支持把 SKILL.md 丢进 skills/ 目录扩展。
+- **自迭代（技能工厂）**：上传一个新的 ComfyUI 工作流 JSON，自动解析节点 → 生成工作流规格 + 起草对应技能，Agent 立即可调用。
+- **断点续跑**：任务持久化 + 幂等跳过，进程崩溃/重启后可继续，不重复生成。
+- **审查/重生成**：分镜级预览与重生成（换种子 / 按反馈改写提示词）。
+- **背景音乐**：视频阶段自动生成纯音乐背景音乐并合成到成片；另有「背景音乐库」支持手动生成（可填 caption/歌词/时长）、预览、选择，并一次性应用到多个已完成的章节。
+- **自动字幕**：项目设置可开关「自动添加字幕」，合并成片时把分镜台词/旁白按时间轴烧录进画面（自动去掉角色名），同时保留不带字幕版本与 SRT 字幕文件；「成片」页可分别下载带字幕、不带字幕视频与 SRT，并支持单个/批量删除。
+- **分阶段运行**：生成拆成 文本创作 / 资产生图 / 音色设计 / 分镜视频 四个独立阶段，可任意勾选单独跑或续跑 —— 按显存约束自动拆批，不需要的阶段不拉起对应进程。
+- **显存维护**：设置页可配「每 N 个生成后自动释放 ComfyUI 显存」（默认 3，0 = 关闭），覆盖文生图/图生图/换装/音色/视频全部渲染——AMD Dynamic VRAM 的显存累积不只在视频触发；未启用 Dynamic VRAM 时界面会提示关闭。
+- **在线预览**：成片/分镜视频经后端 Range 流式传输，进度条可随意拖动、即时跳转。
+
+# 截图演示
+
+1. 项目首页
+   ![项目首页](images/j1.jpg)
+2. 章节管理
+   ![章节管理](images/j2.jpg)
+3. 服务配置
+   ![服务配置](images/j3.jpg)
+4. 技能管理
+   ![技能管理](images/j4.png)
+5. 资产管理
+   ![资产管理](images/j5.jpg)
+6. 运行日志
+   ![运行日志](images/j6.png)
+7. 分镜审查
+   ![分镜审查](images/j7.png)
+8. 导出成片
+   ![导出成片](images/j8.png)
+
+## 技术栈
+
+- 后端：Node.js（Next.js 自定义 server）+ node:sqlite + ComfyUI REST/WebSocket + ffmpeg，零原生编译依赖。
+- Agent：自研 ReAct 循环（原生 function-calling，JSON 动作块兜底），工具注册表 + 技能引擎 + 技能工厂。
+- 前端：Next.js 15 + React 18（App Router）。
+- 结构：单包 —— `app/`（页面 + 30+ 个 API 端点）· `lib/`（core/agent/shared 复用逻辑）· `server.js`（自定义 server：WebSocket 进度推送 + `/files` 静态托管，支持 Range 流式播放视频）。
+
+## 目录结构
+
+```
+infinite-creation/
+├── app/                 # Next.js App Router（页面 + API 端点）
+├── lib/                 # 复用逻辑：core（ComfyUI/LLM/DB/ffmpeg）· agent（运行时+技能）· shared（常量）
+├── server.js            # 自定义 server（WebSocket 进度推送 + /files 静态托管，Range 流式）
+├── workflows/           # ComfyUI 工作流模板（MiniMax H3 视频 / Qwen-Image 2.1 图·文 / Krea2 / Qwen3-TTS，含 GGUF 量化版）
+├── start-infinite-creation.bat    # Windows 一键后台启动（自动装依赖 + 等服务就绪）
+├── stop-infinite-creation.bat     # Windows 停止服务
+├── skills/              # 技能库（9 官方 + novel-to-video + 自定义）
+├── scripts/install-skills.mjs   # 拉取 MiniMax-H3 官方技能
+├── tests/unit.test.mjs          # 单元测试
+├── vendor/openclaude/           # Agent 内核源码（dist/ 构建产物不入库，需本地构建）
+└── data/                # 运行时（gitignore）：SQLite + projects/<id>/…
+```
+
+> **关于 node_modules**：依赖不入库。pnpm 只在项目根目录生成一个 `node_modules`（真实依赖统一放在 `node_modules/.pnpm/`）。**只需在项目根目录执行一次 `pnpm install`**。
+
+## 快速开始
+
+**简单开始使用**
+- 打开Trae、豆包、CodeX等工具，打开豆包使用“工作模式”，并输入提示词
+
+```text
+帮我克隆这个项目https://github.com/SwotAtmk/infinite-creation.git到本地（这里填写要安装的项目目录），
+并且在本地部署启动这个项目。
+```
+
+- **国内使用：**
+```text
+帮我克隆这个项目https://gitcode.com/SwotAtmk/infinite-creation.git到本地（这里填写要安装的项目目录），
+并且在本地部署启动这个项目。
+```
+
+**使用Agent自动安装**
+```text
+请根据 https://gitcode.com/SwotAtmk/infinite-creation/releases/download/v1.0.0/install-skill.md，
+从GitHub（国外）或者GitCode（国内）上安装SwotAtmk/infinite-creation 安装 infinite-creation 技能，并根据技能描述启动这个项目。
+```
+
+
+**前置要求**
+
+- Node.js ≥ 22（后端使用内置 `node:sqlite`；Agent 内核要求 `>= 22`）
+- pnpm ≥ 9（`npm i -g pnpm`）
+- Bun（`pnpm install` 会自动用它构建一次 Agent 内核，安装见 <https://bun.sh>）
+
+**步骤**
+
+
+```bash
+# 克隆项目到本地
+git clone https://github.com/SwotAtmk/infinite-creation.git
+cd infinite-creation
+
+# 1. 安装全部依赖（仅需在根目录执行一次，会自动构建 Agent 内核）
+pnpm install
+
+# 2. 拉取 MiniMax-H3 官方技能（可选，仓库已含离线快照）
+pnpm run install:skills
+
+# 3. 开发模式：一条命令启动（单端口 4600，前端+API+WS+静态文件全托管）
+pnpm run dev
+# 浏览器打开 http://127.0.0.1:4600
+
+# 4. 生产模式：单端口 4600，由后端托管前端构建产物
+pnpm run build && pnpm start
+# 浏览器打开 http://127.0.0.1:4600
+```
+
+> Windows 用户也可直接双击根目录 `start-infinite-creation.bat` 一键后台启动（自动检测端口/安装依赖/等待就绪，并提示 ComfyUI 状态），停止用 `stop-infinite-creation.bat`。
+
+> Agent 内核 `vendor/openclaude/dist/` 是构建产物、不入库，`pnpm install` 会自动构建一次（幂等，已存在则跳过）。只有当你改动了 `vendor/openclaude/src/` 源码后，才需要手动重跑 `pnpm build:agent`。构建细节见 [docs/agent-architecture.md](docs/agent-architecture.md)。
+
+## 首次配置
+
+点右上角 ⚙ 设置：
+
+1. ComfyUI 服务地址：默认 `http://127.0.0.1:8188`，点「测试连接」确认。
+2. LLM（Agent 大脑，OpenAI 兼容）：填 Base URL（需以 `/v1` 结尾）、模型、API Key。默认使用 deepseek-v4-flash-vision-exp 模型。
+3. 生成维护（可选）：设置「每 N 个生成后释放 ComfyUI 显存」（默认开启 = 3，0 = 关闭），按**所有 ComfyUI 生成任务**计数（文生图/图生图/换装/音色/视频都计入——AMD 显卡 + Dynamic VRAM 下任意连续生成都会逐步变慢）。释放后下一个生成需重新加载模型（多花约 1~3 分钟）。检测到 ComfyUI 未启用 Dynamic VRAM 时界面会提示建议关闭。
+
+配置保存在根目录 config.json（不入库）。生成参数（超时分钟、并发、释放频率）可直接编辑 config.json 的 `generation` 节。
+
+### ComfyUI 所需工作流和模型
+
+在首次运行项目前，必须先安装ComfyUI工具，如果没有安装的可以先到Comfyui官网下载安装，或者使用我提供的网盘链接一键安装包进行安装（一键安装包中包含所有工作流中用到的模型和工作流），一键安装包目前仅支持Windows系统，Mac系统建议到官网进行手动安装，并下载模型和跑通所有示例工作流。
+
+**第三方服务免责声明：ComfyUI一键整合包是我花钱请第三方大佬做的，可能会包含第三方网站涉及的一些相关问题，请仔细查验以免被骗，不要相信任何加你联系方式的陌生人**
+```txt
+我用夸克网盘给你分享了「Windows无限创作-ComfyUI一键安装部署」，点击链接或复制整段内容，打开「夸克APP」即可获取。
+/~c2d03b8qfM~:/
+链接：https://pan.quark.cn/s/ed2afd0f6a4f?pwd=GVZe
+提取码：GVZe
+```
+建议如果有ComfyUI相关技术的可以自行安装并补全相关插件和模型，跑通comfyui_original_workflows文件夹下的相关工作流，注意：区分英伟达NVIDIA显卡和AMD显卡的工作流
+
+在使用此Agent项目工具之前，建议你先使用ComfyUI手动跑一遍所有工作流（即：跑通comfyui_original_workflows/目录下的所有工作流）之后使用Agent项目工具就能进行全自动生成。
+
+> 语音：MiniMax H3 依据「参考音色样本（flac 等，放 assets/voice/）+ 提示词对白」自行合成台词，无需单独 TTS。
+
+### 接入云端算力 - 接入RunningHub原生ComfyUI接口
+
+- 如果本地电脑配置比较低无法运行的话，可以选择使用云端算力免费试用
+
+**领取RunningHub免费云端算力试用**
+> 打开链接：https://www.runninghub.cn?inviteCode=6to0etcb 现在注册还能领500RH币，可以免费生成不少图片和视频哦！
+
+- 浏览器打开 [https://www.runninghub.cn/call-api/bill-task?tab=keys&type=consumer](https://www.runninghub.cn/call-api/bill-task?tab=keys&type=consumer&inviteCode=6to0etcb) 获取RunningHub Api-Key
+![r2.png](images/r2.png)
+
+- 配置RunningHub Api-Key
+![r1.png](images/r1.png)
+
+- 我的RunningHub工作流主页：[https://www.runninghub.cn/user-center/2013421139631808514/webapp?inviteCode=6to0etcb](https://www.runninghub.cn/user-center/2013421139631808514/webapp?inviteCode=6to0etcb)
+
+## 使用流程
+
+1. 新建项目 → 粘贴小说原文（或一句话想法）+ 风格。
+2. 在「章节管理」页点某章的「操作」，勾选要跑的阶段（文本创作 / 资产生图 / 音色设计 / 分镜视频，可只勾一部分用于续跑），点 ▶ 开始 → 控制台实时看进度（无需任何中途操作）。
+3. 视频阶段跑完自动生成背景音乐并合并成片；到「分镜审查」逐段预览，对不满意的镜头点 ↻ 重新生成（可填反馈）；「背景音乐」页可手动生成/预览/选择背景音乐并应用到多个章节。
+4. 到「成片」页在线预览（进度条可拖动），按需下载带字幕 / 不带字幕视频或 SRT 字幕文件；不再需要的成片可单个删除或勾选批量删除。
+
+## 自迭代：新工作流 → 新技能
+
+工作流 页粘贴新的 ComfyUI 工作流 JSON → 「分析节点/角色」→「注册工作流 + 生成技能」。系统会：解析节点（加载器/提示词/尺寸/种子/保存…）→ 推导工作流规格（roles/media/outputs）→ 注册到 workflows/ + DB → 调用 LLM 起草 SKILL.md 并安装为可路由技能 → Agent 即可把它当作新的「工作模式」调用。
+
+## API 一览
+
+| 方法       | 路径                                      | 说明              |
+| -------- | --------------------------------------- | --------------- |
+| GET/POST | /api/projects                           | 项目列表 / 创建       |
+| POST     | /api/projects/:id/run                   | 启动全自动生成         |
+| POST     | /api/projects/:id/stop                  | 停止运行中任务         |
+| GET      | /api/projects/:id/assets?category=      | 资产（分类）          |
+| GET      | /api/projects/:id/shots                 | 分镜              |
+| POST     | /api/projects/:id/shots/:sid/regenerate | 单分镜重生成          |
+| POST     | /api/projects/:id/export                | 合并导出成片（按项目开关烧录字幕，并生成无字幕副本与 SRT） |
+| GET/DELETE | /api/projects/:id/exports             | 成片列表 / 删除成片（支持批量，连带清理无字幕副本与 SRT） |
+| GET      | /api/projects/:id/stages                | 各阶段待办数 + 阶段定义  |
+| POST     | /api/projects/:id/stages                | 分阶段运行（勾选 llm/image/tts/video 起一批，含预检） |
+| POST     | /api/projects/:id/music                 | 生成背景音乐（新建 / 编辑后重新生成一条音乐资产） |
+| POST     | /api/projects/:id/music/apply           | 把背景音乐应用到多个章节并重新合成成片 |
+| GET/PUT  | /api/projects/:id/context               | 上下文：人物圣经 / 风格 / 连续性（同时落盘 context/*.md） |
+| PUT      | /api/projects/:id/chapters/:cid/storyboard | 整章批量写分镜（单次 ≤500 条） |
+| POST/DELETE | /api/projects/:id/shots              | 新建 / 删除单个分镜     |
+| PATCH    | /api/projects/:id/shots/:sid            | 改单个分镜正文（生成结果字段不可写） |
+| GET      | /api/projects/:id/logs                  | 变更日志：谁在什么时候改了什么（回滚依据） |
+| POST     | /api/projects/:id/logs/rollback         | 回滚：单条 / 整批 / 按时间点 |
+| GET      | /api/skills                             | 技能列表            |
+| GET/POST | /api/workflows                          | 工作流列表 / 注册（自迭代） |
+| GET/PUT  | /api/config                             | 配置              |
+| WS       | /ws                                     | 任务进度推送          |
+
+## 让 Claude Code / opencode 帮你写内容（外部写入）
+
+除了在界面里点，你也可以让本机的 AI 编程工具（Claude Code、opencode、Codex、Trae 等）直接把**文字内容**写进正在运行的项目：新建项目、写小说原文、写剧本、写分镜、写人物圣经/风格。典型场景是「手里已经有一部长篇小说，想批量导入并拆成章节」。
+
+它**只写文字**：不会帮你生图、生视频、配音、配乐、导出成片——那些仍然在界面里点。
+
+### 三步用起来
+
+```bash
+# 1. 装技能（只需一次；装完重启一下 AI 工具，它才会发现新技能）
+pnpm run install:ic-writer     # 默认装到 ~/.agents/skills/ic-writer/
+
+# 2. 起服务（地址默认 http://127.0.0.1:4600）
+pnpm run dev
+
+# 3. 对 AI 工具说人话，例如：
+#    「把这本小说写进 infinite-creation，一章一段」
+#    「给这个项目写 3 章剧本」
+#    「把第 2 章的分镜表重写一遍」
+```
+
+技能源就在仓库里：`harness-skills/ic-writer/SKILL.md`（`pnpm run install:ic-writer` 就是把它复制到技能目录）。想装到别处：`node scripts/install-writer-skill.mjs --target <你的技能目录>`。
+
+### 能写什么、不能写什么
+
+|  |  |
+|---|---|
+| ✅ 能写 | 项目属性、小说原文、剧本、分镜（台词/画面/镜头/时长等）、人物圣经/风格/连续性、素材提示词；**已经生成过的**这些内容也能改写覆盖 |
+| ❌ 不能写 | `status`、`video_path` 这类「生成结果」字段——写不进去，也伪造不出「已生成」 |
+| ❌ 不会碰 | 生图 / 生视频 / 配音 / 配乐 / 导出成片（`/run`、`/stages`、`/regenerate`、`/music`、`/export`） |
+| ❌ 没有 | 删除项目的接口（永远不提供） |
+
+### 限制与注意
+
+- **只对本机用**：默认只连 `127.0.0.1:4600`。这个实例**没有鉴权**——如果把 `config.json` 里的 `server.host` 改成 `0.0.0.0`，等于给局域网开了一个「能读全文、能改内容、能回滚」的入口，别这么配。
+- **项目正在跑任务时先别写**：`GET /api/projects/:id` 的 `status` 是 `running` 就等它跑完（删除类写入会被直接拒 409；内容类写入也可能被任务用旧数据覆盖，最后成片和分镜表对不上）。
+- **写进去的分镜要过业务校验**，否则接口直接 400：时长 1~15 秒；台词字数 ≤ 时长 × 5.5（超了会被压成听不清的模糊声）；单个分镜说话人 ≤ 2；分辨率 / 宽高比走固定枚举。
+- **只走 HTTP API**：读写一律通过 `{base}/api/...`。不要直连 `data/ic.db`（只读也不行）、不要手改 `data/` 里的文件和 `config.json`——绕过去就没有变更日志，写错了回滚不了。
+- **每一步都能回滚**：一次调用就是一个批次，可以单条、整批（`batch_id`）或按时间点回滚；回滚只恢复数据库里的内容，磁盘上的图片/视频文件不会跟着删（要重传）。
+- **换机器照样用**：上面的命令都不依赖具体目录，在项目根目录执行即可；技能默认装到用户主目录 `~/.agents/skills/`。
+
+细节见仓库根 [SKILL.md](SKILL.md) 第六节（给 Agent 的完整契约）与 [docs/writer-api-plan.md](docs/writer-api-plan.md)（设计取舍与逐轮记录）。
+
+## 测试
+
+pnpm test   # node --test tests/unit.test.mjs
+
+## 说明与限制
+
+- 视频逐镜串行生成（ComfyUI 单卡并发有限），单镜头数分钟级；整片耗时取决于镜头数与时长。
+- H3 参考上限：图 ≤9、音视频 ≤3（超出自动报错）。
+- 成片统一转码 H.264 + AAC（24fps），保证可播。
+- 任务为后台持久化任务，刷新页面/重启服务后可续跑（幂等跳过已完成项）。
+- 单视频任务超时默认 90 分钟（正常单镜远低于此，仅兜底），可在 config.json 的 `generation.videoTimeoutMinutes` 调整。
+- 每 N 个生成任务自动调用一次 ComfyUI `/free` 释放显存（`generation.freeAfterEvery`，默认 3、0 = 关闭；兼容旧键 `videoFreeAfterEvery`），覆盖全部渲染、对抗 AMD Dynamic VRAM 连续生成后的速度退化；清理在下一个任务完成后生效，失败不影响产物。
+- LLM 运行看门狗：模型输出被截断（`[Response truncated …]`）或上游停滞后，任务不再无限挂起——连续 3 次纯截断无进展、或 20 分钟无消息（工具渲染窗口不计入）会自动中止并标失败；慢速本地模型可调 `generation.agentStallMinutes`（默认 20）放宽无消息阈值。
+
+# 推荐一下我的工具站，里面有我收藏的很多实用小工具哦，感兴趣的可以了解一下\~
+- 可以获取最新的项目资讯和实用工具
+- [淘项Hub：https://tx3247.t.taoxiangyoushu.com/?f=0zv5vo2](https://tx3247.t.taoxiangyoushu.com/?f=0zv5vo2) 
+
+# 欢迎加入群聊，反馈问题或建议
+
+![jiaqun](images/jiaqun.png)
+
+## 参考项目，特别鸣谢
+
+- [nextjs](https://nextjs.org/) 提供了 Next.js 框架，用于构建 Web 应用
+- [MiniMax-H3 官方仓库:https://github.com/MiniMax-AI/MiniMax-H3](https://github.com/MiniMax-AI/MiniMax-H3) 提供了 H3 模型和Skill技能
+- [OpenClaude：https://github.com/Gitlawb/openclaude](https://github.com/Gitlawb/openclaude) 提供了 Agent 内核和工作流管理功能
+- [Comfy-Org/ComfyUI](https://github.com/Comfy-Org/ComfyUI) 提供了 ComfyUI 工作流和模型架构
+- [deepseek](https://www.deepseek.com/) 感谢Deepseek提供了 deepseek-v4-flash-vision-exp 模型
+
+感谢这些项目为我提供了帮助，使项目能够快速迭代和改进。
+
+## 作者致辞：
+本项目由个人开发者独立完成，欢迎各位同行多提提意见，多找找bug帮忙多多宣传，做出更好的产品让更多的人发现。项目刚开源里面可能会有很多地方需要调整优化的地方，欢迎各位提交issues或者在我的基础上做更多的优化，感谢每一位对这个项目做出贡献的人。
+
+## 致谢
+- 感谢开发者 [happymy](https://github.com/happymy) 为此项目提供了AMD+GGUF适配的解决方案以及解决项目中存在的部分bug
+- 感谢以下开发者为项目做出的贡献：[ghshhf](https://github.com/ghshhf)、[binonxia](https://github.com/binonxia)
+
+## Star 历史
+
+<a href="https://www.star-history.com/?repos=swotatmk%2Finfinite-creation&type=date&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=swotatmk/infinite-creation&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=swotatmk/infinite-creation&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=swotatmk/infinite-creation&type=date&legend=bottom-right" />
+ </picture>
+</a>
+
+## 开源协议
+
+本项目基于 [MIT License](LICENSE) 协议进行开源，MIT是自由度最高的开源协议，你可以拿去商用和二次开发，但是必须保留原版声明
+
+Copyright (c) 2026 SwotAtmk
+
+> 说明：`skills/` 目录中的一些技能来源于 MiniMax-H3 官方仓库，`vendor/` 目录为第三方代码，均不在本项目的 MIT 授权范围内，请遵循其各自的授权条款。
+

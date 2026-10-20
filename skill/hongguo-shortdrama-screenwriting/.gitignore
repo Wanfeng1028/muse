@@ -1,0 +1,9 @@
+# 第三方参考仓库克隆（仅本地复核用，不发布）
+_sources/
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

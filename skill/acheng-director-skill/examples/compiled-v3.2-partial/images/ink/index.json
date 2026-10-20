@@ -1,0 +1,18 @@
+{
+  "status": "ready-to-submit-not-generated",
+  "input_sha256": "4aedb537ede742301eeb4a9844c5db8a3d6df0ad0a25168877305d37f31bdf50",
+  "assets": [
+    {
+      "asset_id": "INK_CHARACTER",
+      "display_name": "Create a neutral side-view asset in two-dimensional ink-and-paper animation · v1.0",
+      "prompt_file": "INK_CHARACTER.image.txt",
+      "mode": "GENERATE",
+      "status": "ready-to-submit-not-generated",
+      "missing_references": [],
+      "reference_policy": "none",
+      "references": [],
+      "target": "GPT Image 2 / 2.5 natural-language prompt; select the actual available model in your entry point"
+    }
+  ],
+  "asset_plan": null
+}

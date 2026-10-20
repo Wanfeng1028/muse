@@ -1,0 +1,19 @@
+{
+  "mode": "T2VA",
+  "duration_seconds": 15.0,
+  "shot_count": 1,
+  "references": [],
+  "subject_labels": [],
+  "speech_expectations": [
+    [
+      "S1",
+      "Chinese",
+      "下一班，也留两个人的记录。"
+    ]
+  ],
+  "minimum_words": 0,
+  "profile": "legacy_fixture",
+  "input_revision": "461c7e9c9ddf932b0503b398e985860416fd80688752ca4e83338de02f4c1a5e",
+  "binding_sha256": "1aa76d2af7718706563fe9358405731e1d4918237b8aaef73783d757521543e3",
+  "expected_prompt_sha256": "ea9b6fffe75aa0f4851e41bda4096ab876776c2f8b307840899c663ffa7f8c43"
+}

@@ -1,0 +1,17 @@
+{
+  "unresolved_complete": {
+    "artifact_status": "COMMITTED",
+    "accepted": false,
+    "next": "model:S1"
+  },
+  "model_without_dependency_or_h3": {
+    "artifact_status": "COMMITTED",
+    "accepted": true
+  },
+  "same_artifact_partial_to_complete": "duplicate artifact_id with different content or input revision",
+  "before_resume": {
+    "segment_id": "S1",
+    "offset": 42
+  },
+  "after_resume": {}
+}

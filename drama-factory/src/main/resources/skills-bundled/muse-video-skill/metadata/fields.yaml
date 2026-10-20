@@ -1,0 +1,736 @@
+# Field Metadata — 字段级元数据
+
+# 每个字段一行，对应 project-state.json 中的路径。
+# 新增/修改/删除 Schema 字段必须同步更新此表。
+# 用途：回答 "改了 X 字段会影响到哪些角色和哪些阶段？"
+
+fields:
+  # --- project ---
+  - path: project.title
+    type: string
+    default: ""
+    description: "项目名称"
+    affected_roles: [director]
+    affected_phases: [1]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: project.scene_type
+    type: enum
+    default: "custom"
+    # enum_values auto-generated from SKILL.md routing tree — run `build_index.py --list-scenes`
+    description: "场景类型 — 决定加载哪个场景文档"
+    affected_roles: [director, writer, dp, sound-designer]
+    affected_phases: [1, 2, 4, 5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: project.aspect_ratio
+    type: string
+    default: "16:9"
+    description: "画面比例"
+    affected_roles: [dp, art-director]
+    affected_phases: [1, 3, 4, 6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: project.duration_est
+    type: string
+    default: "60s"
+    description: "预估时长"
+    affected_roles: [writer, director]
+    affected_phases: [1, 2, 4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: project.genre
+    type: string
+    default: ""
+    description: "创意类型"
+    affected_roles: [art-director, sound-designer]
+    affected_phases: [1, 3, 5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: project.platform
+    type: string
+    default: ""
+    description: "发布平台"
+    affected_roles: [director, dp]
+    affected_phases: [1, 4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: project.language
+    type: string
+    default: "zh-CN"
+    description: "内容语言"
+    affected_roles: [writer, sound-designer]
+    affected_phases: [2, 4, 5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  # --- director_notes ---
+  - path: director_notes.vision
+    type: string
+    default: ""
+    description: "导演创意愿景（一段话）"
+    affected_roles: [writer, dp, art-director, vfx, sound-designer]
+    affected_phases: [2, 3, 4, 5, 6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: director_notes.tone
+    type: string
+    default: ""
+    description: "情绪基调关键词"
+    affected_roles: [art-director, sound-designer, dp]
+    affected_phases: [3, 4, 5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: director_notes.constraints
+    type: array<string>
+    default: []
+    description: "硬性约束列表"
+    affected_roles: [writer, dp, art-director, vfx]
+    affected_phases: [2, 3, 4, 6, 7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: director_notes.decisions
+    type: array<object>
+    default: []
+    description: "关键创意决策记录"
+    affected_roles: [director]
+    affected_phases: [1, 2, 3, 4, 5, 6, 7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: director_notes.has_characters
+    type: boolean/null
+    default: null
+    description: "角色存在性三态（true/false/不确定=null）——Phase 1 从 vision 模板提取步骤 4b"
+    affected_roles: [director, writer]
+    affected_phases: [1, 2]
+    version_added: "0.26.3"
+    breaking_change: false
+
+  # --- script ---
+  - path: script.logline
+    type: string
+    default: ""
+    description: "一句话故事概括"
+    affected_roles: [writer]
+    affected_phases: [2, 4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.synopsis
+    type: string
+    default: ""
+    description: "故事梗概 — logline 的展开版；Writer P2 产出"
+    affected_roles: [writer]
+    affected_phases: [2, 4]
+    version_added: "0.2.0"
+    breaking_change: false
+
+  - path: script.structure
+    type: string
+    default: ""
+    description: "叙事结构类型"
+    affected_roles: [writer]
+    affected_phases: [2, 4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes
+    type: array<object>
+    default: []
+    description: "场景数组 — 核心数据结构"
+    affected_roles: [writer, dp, vfx, sound-designer]
+    affected_phases: [4, 6, 7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].scene_id
+    type: integer
+    default: null
+    description: "场景序号"
+    affected_roles: [writer]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].scene_title
+    type: string
+    default: ""
+    description: "场景标题"
+    affected_roles: [writer]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].duration
+    type: string
+    default: ""
+    description: "场景时长"
+    affected_roles: [writer, dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].location
+    type: string
+    default: ""
+    description: "场景地点 (INT/EXT)"
+    affected_roles: [writer, art-director]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].summary
+    type: string
+    default: ""
+    description: "场景概要（大纲层）— Phase 2 产出；与 P4 的 dialogue/action 区分"
+    affected_roles: [writer, art-director]
+    affected_phases: [2, 3]
+    version_added: "0.2.0"
+    breaking_change: false
+
+  - path: script.scenes[].emotional_curve
+    type: string
+    default: ""
+    description: "场景情绪曲线标注（如 3→5（好奇→期待））— Writer 产出"
+    affected_roles: [writer, sound-designer]
+    affected_phases: [2, 4, 5]
+    version_added: "0.2.0"
+    breaking_change: false
+
+  - path: script.scenes[].narrative_function
+    type: string
+    default: ""
+    description: "场景叙事功能（如 世界观建立/峰终释放）— Writer 产出"
+    affected_roles: [writer]
+    affected_phases: [2, 4]
+    version_added: "0.2.0"
+    breaking_change: false
+
+  - path: script.scenes[].dialogue
+    type: string
+    default: ""
+    description: "对白"
+    affected_roles: [writer]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].action
+    type: string
+    default: ""
+    description: "动作描述/舞台指示"
+    affected_roles: [writer, dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].camera
+    type: object
+    default: {}
+    description: "DP 的镜头方向"
+    affected_roles: [dp]
+    affected_phases: [4, 6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].camera.shot_type
+    type: string
+    default: ""
+    description: "景别 (ECU/CU/MS/WS/...)"
+    affected_roles: [dp]
+    affected_phases: [4, 6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].camera.movement
+    type: string
+    default: ""
+    description: "运镜方式"
+    affected_roles: [dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].camera.lens
+    type: string
+    default: ""
+    description: "镜头焦段"
+    affected_roles: [dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].camera.lighting
+    type: string
+    default: ""
+    description: "灯光方案"
+    affected_roles: [dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].vfx_notes
+    type: string
+    default: ""
+    description: "特效备注"
+    affected_roles: [vfx]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.scenes[].sound_notes
+    type: string
+    default: ""
+    description: "声音备注"
+    affected_roles: [sound-designer]
+    affected_phases: [5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: script.character_bible
+    type: array<object>
+    default: []
+    description: "角色身份定义（identity + voice）——Writer P2 产出，AD P3 翻译为视觉，Writer P4 + Sound P5 消费"
+    affected_roles: [writer, art-director, sound-designer]
+    affected_phases: [2, 3, 4, 5]
+    version_added: "0.27.0"
+    breaking_change: false
+
+  # --- visual_dev ---
+  - path: visual_dev.palette
+    type: array<object>
+    default: []
+    description: "色调方案 — swatch 条目（name+hex+usage）或场景级条目（scene_id+palette+color_temp 等），双风格并存"
+    affected_roles: [art-director, dp]
+    affected_phases: [3, 6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: visual_dev.palette[].visual_cause
+    type: string
+    default: ""
+    description: "（可选）情绪→视觉原因翻译（光的方向/色温/强度/大气效果）——供 DP 与模型编译器直接消费；与 visual_dev.visual_cause 双写兼容"
+    affected_roles: [art-director, dp, model-compiler]
+    affected_phases: [3, 6, 7.5]
+    version_added: "0.29.0"
+    breaking_change: false
+
+  - path: visual_dev.mood
+    type: string
+    default: ""
+    description: "视觉情绪描述"
+    affected_roles: [art-director]
+    affected_phases: [3]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: visual_dev.style_direction
+    type: string
+    default: ""
+    description: "风格方向——六段式 Style 段来源（模型编译器消费）"
+    affected_roles: [model-compiler]
+    affected_phases: [3, 7.5]
+    version_added: "0.2.0"
+    breaking_change: false
+
+  - path: visual_dev.style_refs
+    type: array<object>
+    default: []
+    description: "风格参考（影片/艺术家/摄影师）"
+    affected_roles: [art-director, dp]
+    affected_phases: [3]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: visual_dev.characters
+    type: array<object>
+    default: []
+    description: "角色设定 — 简结构（name/role/traits/consistency_notes）或富结构（character_id/visual_profile/wardrobe），双风格并存"
+    affected_roles: [art-director, writer, dp, sound-designer]
+    affected_phases: [3, 4, 5, 6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: visual_dev.image_refs
+    type: array<object>
+    default: []
+    description: "已生成的美术参考图（prompt + URL + approved）"
+    affected_roles: [art-director]
+    affected_phases: [3]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: visual_dev.scene_composition
+    type: array<object>
+    default: []
+    description: "场景搭建 — 每个场景的空间布局（前中远景）、核心道具、视觉重心、深度策略"
+    affected_roles: [art-director, dp, director]
+    affected_phases: [3, 4, 6, 7]
+    version_added: "0.26.1"
+    breaking_change: false
+
+  - path: visual_dev.world_building
+    type: object
+    default: {}
+    description: "世界观视觉规则 — sci-fi/fantasy 项目在 scene_composition 之上叠加"
+    affected_roles: [art-director, director]
+    affected_phases: [3, 6, 7]
+    version_added: "0.26.1"
+    breaking_change: false
+
+  # --- cinematography ---
+  - path: cinematography.camera_style
+    type: string
+    default: ""
+    description: "摄影风格"
+    affected_roles: [dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: cinematography.lighting_philosophy
+    type: string
+    default: ""
+    description: "灯光哲学"
+    affected_roles: [dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: cinematography.movement_language
+    type: string
+    default: ""
+    description: "运动语言 (handheld/steadicam/dolly/...) "
+    affected_roles: [dp]
+    affected_phases: [4]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  # --- sound ---
+  - path: sound.music_style
+    type: string
+    default: ""
+    description: "配乐风格"
+    affected_roles: [sound-designer]
+    affected_phases: [5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: sound.sfx_notes
+    type: array<string>
+    default: []
+    description: "音效设计笔记"
+    affected_roles: [sound-designer]
+    affected_phases: [5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: sound.narration_tone
+    type: string
+    default: ""
+    description: "旁白基调"
+    affected_roles: [sound-designer, writer]
+    affected_phases: [4, 5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: sound.music_refs
+    type: array<string>
+    default: []
+    description: "参考曲目/搜索关键词（v0.35.0 补注册——实现名；旧文档名 reference_tracks 不再使用）"
+    affected_roles: [sound-designer]
+    affected_phases: [5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: sound.narration_language
+    type: string
+    default: ""
+    description: "旁白语言（v0.35.0 补注册）"
+    affected_roles: [sound-designer]
+    affected_phases: [5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: sound.silence_usage
+    type: string
+    default: ""
+    description: "静默运用（v0.35.0 补注册——实现名；旧文档名 silence_strategy 不再使用）"
+    affected_roles: [sound-designer]
+    affected_phases: [5]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: sound.narration
+    type: object
+    default: {}
+    description: "旁白参数对象（批次 F3 / v0.35.0）：voice_gender / voice_age / pace / tone / distance / reverb / language / special_processing——sound-designer.md §旁白参数模板的对象落点，供配音生成消费"
+    affected_roles: [sound-designer, model-compiler]
+    affected_phases: [5, 7.5]
+    version_added: "0.35.0"
+    breaking_change: false
+
+  # --- vfx ---
+  - path: vfx.techniques
+    type: array<object>
+    default: []
+    description: "特效技法列表"
+    affected_roles: [vfx]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: vfx.transitions
+    type: array<object>
+    default: []
+    description: "转场设计（to_scene: null = 收官转场无目标场景；v0.32.1 起 schema 允许）"
+    affected_roles: [vfx]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: vfx.materials
+    type: array<object>
+    default: []
+    description: "材质库"
+    affected_roles: [vfx]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  # --- storyboard ---
+  - path: storyboard
+    type: array<object>
+    default: []
+    description: "分镜面板数组 — 集成所有前期产出"
+    affected_roles: [director, art-director, dp, vfx]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: storyboard[].panel_id
+    type: integer
+    default: null
+    description: "分镜编号"
+    affected_roles: [director]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: storyboard[].prompt
+    type: string
+    default: ""
+    description: "AI 生图提示词"
+    affected_roles: [art-director]
+    affected_phases: [6]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: storyboard[].refs_used
+    type: array<string>
+    default: []
+    description: "本 panel 生成时注入的参考图（顶层 file_registry 逻辑名列表）——溯源用"
+    affected_roles: [director, art-director]
+    affected_phases: [6, 7]
+    version_added: "0.32.0"
+    breaking_change: false
+
+  # --- creative_pack ---
+  - path: creative_pack.comfyui_workflow
+    type: object
+    default: {}
+    description: "ComfyUI 工作流 JSON"
+    affected_roles: [vfx]
+    affected_phases: [7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: creative_pack.hyperframes_config
+    type: object
+    default: {}
+    description: "HyperFrames 合成配置"
+    affected_roles: [director]
+    affected_phases: [7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  - path: creative_pack.kling_prompts
+    type: array<string>
+    default: []
+    description: "Kling 提示词"
+    affected_roles: [vfx]
+    affected_phases: [7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  # --- file_registry (顶层 · v0.31.0) ---
+  - path: file_registry
+    type: object
+    default: {}
+    description: "全管线参考图注册表（Phase 1 登记；条目含 file_id / local_path / role / weight / source / credit / origin_url；批次 D 起生图产物同登记——first_frame_p<panel_id> 等；批次 F1 起条目可含 asset 三键）"
+    affected_roles: [director, art-director, dp, model-compiler]
+    affected_phases: [1, 3, 3.5, 4, 6, 7.5]
+    version_added: "0.31.0"
+    breaking_change: false
+
+  # --- file_registry.asset (批次 F1 · v0.33.0) ---
+  - path: file_registry.asset
+    type: object
+    default: {}
+    description: "（每个注册条目的）资产化元数据（批次 F1 / v0.33.0）：asset_type（character / product / key_shot / prop / audio——分开枚举、可扩展）/ asset_id（char_ / prod_ / shot_ / prop_ / audio_ 前缀）/ is_canonical（代表图/代表资产标记，每资产至多 1；角色优先级：用户原照 > 生成图）"
+    affected_roles: [director, art-director, model-compiler]
+    affected_phases: [3.5, 6, 7.5]
+    version_added: "0.33.0"
+    breaking_change: false
+
+  # --- subtitles (顶层 · v0.34.0) ---
+  - path: subtitles
+    type: array<object>
+    default: []
+    description: "字幕层（批次 F2 / v0.34.0）：与对白解耦的独立文本层——panel 为主挂载（panel_id）+ scene_id 冗余；条目含 text_zh / text_en、language_mode（zh/en/bilingual）、font_family（serif/sans）、position（bottom/top/center）、source（dialogue/narration/design）"
+    affected_roles: [writer, director, model-compiler]
+    affected_phases: [4, 6, 7]
+    version_added: "0.34.0"
+    breaking_change: false
+
+  - path: model_compilation.subtitles
+    type: array<object>
+    default: []
+    description: "字幕合成 spec（编译器输出，批次 F2 / v0.34.0）：逐条时间轴（nominal，按 shots.duration 累计）+ 样式 + 烧录建议；字幕不进 video prompt"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.34.0"
+    breaking_change: false
+
+  # --- image_gen (顶层 · v0.32.0) ---
+  - path: image_gen
+    type: object
+    default: {}
+    description: "生图模型选择与生成配置（Phase 3.5 步骤 0 选定；路由与适配见 references/image-gen-routing.md）"
+    affected_roles: [director, art-director]
+    affected_phases: [3.5, 6, 7]
+    version_added: "0.32.0"
+    breaking_change: false
+
+  - path: image_gen.target_model
+    type: string
+    default: ""
+    description: "选定生图模型/工具标识（自由字符串，不设 enum——解耦；如 doubao-seedream-4-5-251128 / comfyui-flux-ipadapter）"
+    affected_roles: [director, art-director]
+    affected_phases: [3.5, 6, 7]
+    version_added: "0.32.0"
+    breaking_change: false
+  # --- audio_gen (批次 F3 · v0.35.0) ---
+  - path: audio_gen
+    type: object
+    default: {}
+    description: "音频生成配置与音轨清单（批次 F3 / v0.35.0）：route（native/external/mixed/none）+ music/voice/sfx 清单；路由与适配见 references/audio-gen-routing.md；音轨文件登记顶层 file_registry（asset_type: audio）"
+    affected_roles: [director, sound-designer, model-compiler]
+    affected_phases: [5, 7.5]
+    version_added: "0.35.0"
+    breaking_change: false
+
+  - path: audio_gen.route
+    type: enum
+    default: ""
+    description: "音频路线（Phase 5 末尾询问）：native 视频模型原生音画同步 / external 外部生成 / mixed 混合（须明示分工）/ none 无音频"
+    affected_roles: [director, sound-designer]
+    affected_phases: [5, 7.5]
+    version_added: "0.35.0"
+    breaking_change: false
+
+  - path: audio_gen.music.target_model
+    type: string
+    default: ""
+    description: "音乐生成模型标识（自由字符串，不设 enum；首批适配 MiniMax Music 3.0）"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.35.0"
+    breaking_change: false
+
+  - path: audio_gen.voice.target_tool
+    type: string
+    default: ""
+    description: "配音工具/模型标识（规划：火山方舟——专项待开）"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.35.0"
+    breaking_change: false
+
+  # --- model_compilation ---
+  - path: model_compilation.target_model
+    type: enum
+    default: "doubao-seedance-2-0-260128"
+    description: "目标 AI 视频模型 ID"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.30.0"
+    breaking_change: false
+
+  - path: model_compilation.file_registry
+    type: object
+    default: {}
+    description: "Files API 上传的 file_id 注册表（含 local_path 备份）——旧路径；v0.31.0 起权威源为顶层 file_registry（双轨读取兼容）"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.30.0"
+    breaking_change: false
+
+  - path: model_compilation.shots
+    type: array<object>
+    default: []
+    description: "编译后的镜头指令数组（含 compiled_prompt / prompt_trace / multimodal_refs / slot_allocation / arkcli_command）"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.30.0"
+    breaking_change: false
+
+  - path: model_compilation.shots[].panel_id
+    type: integer
+    default: null
+    description: "对应 storyboard panel 的 panel_id（编译器写入）——first_frame_ref 解析键：first_frame_p<panel_id>"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.32.0"
+    breaking_change: false
+
+  - path: model_compilation.shot_chain
+    type: object
+    default: {}
+    description: "video_ref 镜头链（跨镜风格继承，Seedance 2.0 专用）"
+    affected_roles: [model-compiler]
+    affected_phases: [7.5]
+    version_added: "0.30.0"
+    breaking_change: false
+
+  # --- tuning_notes ---
+  - path: tuning_notes
+    type: array<object>
+    default: []
+    description: "调优建议 (category + note + priority)"
+    affected_roles: [director]
+    affected_phases: [7]
+    version_added: "0.1.0"
+    breaking_change: false
+
+  # --- _meta (traceability) ---
+  # 通用约定：适用于所有顶层 section 的 _meta 子对象；schema 中各 section 内联定义。
+  # （本条不指向单一字段路径——各 section 具体 _meta 键以 assets/schemas/project-state.json 为准）
+  - path: _meta_per_section
+    type: object
+    default: { "revision": 1, "director_approved": false }
+    description: "追溯标记 — 每个 section 级的元信息。适用于所有顶层 section 的 _meta 子对象。"
+    affected_roles: [director]
+    affected_phases: [1, 2, 3, 4, 5, 6, 7]
+    version_added: "0.1.0"
+    breaking_change: false

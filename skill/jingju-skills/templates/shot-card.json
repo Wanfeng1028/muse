@@ -1,0 +1,32 @@
+{
+  "shot_id": "",
+  "episode_id": "",
+  "duration": "",
+  "scene_id": "",
+  "characters": [],
+  "story_purpose": "",
+  "shot_size": "",
+  "composition": "",
+  "action": "",
+  "expression": "",
+  "dialogue_or_caption": "",
+  "emotion": "",
+  "transition": "",
+  "image_prompt": {
+    "status": "draft",
+    "positive_prompt": "",
+    "negative_prompt": "",
+    "selected_image_version": null
+  },
+  "video_prompt": {
+    "status": "draft",
+    "source_image": "",
+    "duration": "",
+    "motion_description": "",
+    "camera_movement": "",
+    "expression_change": "",
+    "environment_motion": "",
+    "negative_prompt": "",
+    "selected_video_version": null
+  }
+}

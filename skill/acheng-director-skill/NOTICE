@@ -1,0 +1,25 @@
+AC Director（技术标识：acheng-director）
+Copyright (c) 2026 Acheng
+
+AC Director is the user-facing short name. "Acheng Director" and
+"acheng-director" identify the project and do not grant trademark rights.
+See TRADEMARKS.md and LICENSE-SCOPE.md.
+
+Original scripts, machine contracts and validation logic are distributed
+under Apache-2.0. Original guides, prompt text, production contracts and
+creative framework text are distributed under CC BY-NC-ND 4.0 as described
+in LICENSE-DOCS.md.
+
+Third-party materials retain their own terms. This package includes license
+records for the following upstream or integrated materials:
+
+- camera-moves-whitebox — MIT License — see references/sources/licenses/
+- codex-thread-cold-history — MIT License — see references/sources/licenses/
+- colossal-scale-visual-director — MIT License — see references/sources/licenses/
+- im2-image-skills — MIT License — see references/sources/licenses/
+- minimax-h3-prompting-skill-public — MIT License — see references/sources/licenses/
+
+Names of external models, tools, repositories, companies, characters and
+media remain the property of their respective owners. Their appearance in
+examples or adapters is descriptive and is not an endorsement or a transfer
+of rights.
