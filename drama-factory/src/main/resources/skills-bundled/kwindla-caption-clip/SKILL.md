@@ -1,48 +1,45 @@
 ---
-name: kwindla-caption-clip
-version: 1.0.0
-description: Download a YouTube clip, transcribe it with Deepgram, and burn styled subtitles into the video.
+name: caption-clip
+description: Download and caption YouTube clips. Use when the user asks to "caption a YouTube video", "download and add subtitles", "create captioned clips", "transcribe and caption a video", or mentions yt-dlp captioning workflows.
 ---
 
-# Caption Clip Workflow
+# Caption YouTube Clips
 
-Produce a short captioned video from a YouTube URL: pull a specific time range, send the audio through Deepgram for transcription, tidy the transcript, then render styled burned-in subtitles with ffmpeg.
+Download YouTube video clips with timestamps, transcribe with Deepgram, and burn styled captions.
 
-## Requirements
+## Prerequisites
 
-- `yt-dlp` on PATH (for slicing the video by time range)
-- `ffmpeg` on PATH (for transcoding and burning subtitles)
-- `DEEPGRAM_API_KEY` available in the environment or in a local `.env` file
-- Python 3 (to run the bundled JSON→SRT converter)
-- A caption-friendly font; the style below prefers Avenir Next Medium and degrades to Arial
+- yt-dlp installed
+- ffmpeg installed
+- DEEPGRAM_API_KEY in .env file (or environment variable)
+- Avenir Next font (falls back to Arial if unavailable)
 
-## Steps
+## Workflow
 
-### 1. Grab the clip section
+### Step 1: Download Clip
 
-Use yt-dlp's section downloader to fetch only the part of the video you need. The `*START-END` syntax accepts timestamps.
+Download a specific section of a YouTube video using yt-dlp:
 
 ```bash
 yt-dlp --download-sections "*START-END" -o "clip_name.%(ext)s" "YOUTUBE_URL"
 ```
 
-For example, a clip spanning 02:53 to 04:15:
-
+Example with timestamps `02:53-04:15`:
 ```bash
 yt-dlp --download-sections "*02:53-04:15" -o "clip_intro.%(ext)s" "https://www.youtube.com/watch?v=VIDEO_ID"
 ```
 
-### 2. Normalize the container
+### Step 2: Convert to MP4
 
-yt-dlp may produce a webm. Transcode to mp4 so downstream steps get a predictable container:
+Ensure consistent encoding with ffmpeg defaults:
 
 ```bash
 ffmpeg -i clip_name.webm -y clip_name.mp4
 ```
 
-### 3. Transcribe via Deepgram
+### Step 3: Transcribe with Deepgram
 
-Read the API key from `.env` (stripping surrounding quotes), then POST the media file to Deepgram's listen endpoint with Nova-2, smart formatting, punctuation, and utterance segmentation enabled. Save the raw response as JSON.
+Load API key from .env and call Deepgram API:
 
 ```bash
 DEEPGRAM_API_KEY=$(grep '^DEEPGRAM_API_KEY=' .env | cut -d'=' -f2 | tr -d '"' | tr -d "'")
@@ -54,29 +51,29 @@ curl -s --request POST \
   --data-binary @clip_name.mp4 > clip_transcript.json
 ```
 
-The `utterances=true` flag is required — the SRT converter consumes the `results.utterances` array.
+### Step 4: Generate SRT
 
-### 4. Convert JSON to SRT
-
-Run the bundled converter against the Deepgram response:
+Convert Deepgram JSON to SRT format using bundled script:
 
 ```bash
-python3 scripts/json-to-srt.py clip_transcript.json clip.srt
+python3 ~/.claude/skills/caption-clip/scripts/json-to-srt.py clip_transcript.json clip.srt
 ```
 
-### 5. Clean the subtitles
+### Step 5: Clean Up Transcription
 
-Open `clip.srt` and write a cleaned copy to `clip_clean.srt`. Apply these edits:
+Read the generated SRT file and create a cleaned version (`clip_clean.srt`):
 
-- Correct words the model misheard.
-- Drop filler phrases such as "like", "you know", "I'd say", "yeah", "um", "uh", "sort of", "kind of".
-- Join very short fragments into full sentences so lines read naturally.
-- Reword where spoken phrasing reads awkwardly on screen.
-- Sanity-check timestamps (a value like `00:00:60` must be rewritten as `00:01:00`).
+1. **Fix transcription errors** - Correct misheard words
+2. **Remove filler words** - Delete: "like", "you know", "I'd say", "yeah", "um", "uh", "sort of", "kind of"
+3. **Consolidate fragments** - Merge short utterances into complete sentences
+4. **Improve readability** - Adjust phrasing to flow better when read vs. heard
+5. **Fix timestamps** - Ensure no invalid times (e.g., `00:00:60` should be `00:01:00`)
 
-### 6. Burn in the captions
+Write the cleaned content to `clip_clean.srt`.
 
-Render the cleaned SRT onto the video with a semi-transparent background box:
+### Step 6: Burn Captions
+
+Apply styled subtitles with semi-transparent background:
 
 ```bash
 ffmpeg -i clip_name.mp4 \
@@ -84,32 +81,39 @@ ffmpeg -i clip_name.mp4 \
   -c:a copy -y clip_captioned.mp4
 ```
 
-## Style parameters
+## Caption Styling Reference
 
-| Parameter | Value | Meaning |
-|-----------|-------|---------|
+| Parameter | Value | Description |
+|-----------|-------|-------------|
 | FontSize | 24 | Point size |
-| FontName | Avenir Next Medium | Clean sans-serif; fall back to Arial |
-| PrimaryColour | &H00FFFFFF | White text (`AABBGGRR` hex) |
-| BackColour | &H80000000 | Half-transparent black box |
-| BorderStyle | 4 | Draws the opaque box using BackColour |
-| MarginV | 30 | Distance from bottom edge |
-| MarginL / MarginR | 40 | Left and right padding |
+| FontName | Avenir Next Medium | Clean sans-serif (use Arial as fallback) |
+| PrimaryColour | &H00FFFFFF | White text (AABBGGRR format) |
+| BackColour | &H80000000 | 50% transparent black background |
+| BorderStyle | 4 | Opaque box using BackColour |
+| MarginV | 30 | Vertical margin from bottom |
+| MarginL/R | 40 | Horizontal margins |
 
-## Font alternatives
+## Alternative Fonts
 
-If Avenir Next Medium isn't installed, these render well for captions: SF Pro Display, Helvetica Neue, Futura, or Arial as a universal fallback. List what's available:
+If Avenir Next is unavailable, these work well for captions:
+- SF Pro Display
+- Helvetica Neue
+- Futura
+- Arial (universal fallback)
 
+Check available fonts:
 ```bash
 fc-list : family | sort -u | grep -iE '(avenir|sf pro|helvetica|futura)'
 ```
 
-## Produced files
+## Output Files
 
-| File | Purpose |
-|------|---------|
-| `clip_name.mp4` | Downloaded source clip |
-| `clip_transcript.json` | Raw Deepgram response, kept for re-runs |
-| `clip.srt` | Auto-converted subtitles |
-| `clip_clean.srt` | Hand-edited subtitles |
+After completing the workflow:
+
+| File | Description |
+|------|-------------|
+| `clip_name.mp4` | Original downloaded clip |
+| `clip_transcript.json` | Raw Deepgram transcription (preserved for re-runs) |
+| `clip.srt` | Auto-generated subtitles |
+| `clip_clean.srt` | Cleaned/edited subtitles |
 | `clip_captioned.mp4` | Final video with burned-in captions |

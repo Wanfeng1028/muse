@@ -1,88 +1,49 @@
 #!/usr/bin/env python3
-"""Convert a Deepgram utterances transcript into an SRT subtitle file.
+"""
+Convert Deepgram JSON transcript to SRT subtitle format.
 
 Usage:
     python3 json-to-srt.py input.json output.srt
-
-The input must be a Deepgram response produced with the `utterances=true`
-option, so that `results.utterances` exists. Each utterance becomes one
-SRT cue.
 """
 
-import argparse
 import json
 import sys
 
 
-def seconds_to_timestamp(value):
-    """Render a float number of seconds as SRT time `HH:MM:SS,mmm`."""
-    if value < 0:
-        value = 0.0
-    total_ms = int(round(value * 1000))
-    hours, remainder = divmod(total_ms, 3600 * 1000)
-    minutes, remainder = divmod(remainder, 60 * 1000)
-    secs, millis = divmod(remainder, 1000)
-    return "{:02d}:{:02d}:{:02d},{:03d}".format(hours, minutes, secs, millis)
+def format_time(seconds: float) -> str:
+    """Convert seconds to SRT time format (HH:MM:SS,mmm)."""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    millis = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
-def load_utterances(path):
-    """Read the JSON file and return the list of utterances."""
-    with open(path, "r", encoding="utf-8") as handle:
-        payload = json.load(handle)
+def json_to_srt(json_path: str, srt_path: str) -> None:
+    """Convert Deepgram JSON transcript to SRT format."""
+    with open(json_path, 'r') as f:
+        data = json.load(f)
 
-    results = payload.get("results")
-    if not isinstance(results, dict):
-        raise ValueError("input JSON has no 'results' object")
+    # Extract utterances from Deepgram response
+    if 'results' not in data or 'utterances' not in data['results']:
+        print("Error: No utterances found in JSON. Ensure Deepgram was called with utterances=true")
+        sys.exit(1)
 
-    utterances = results.get("utterances")
-    if not utterances:
-        raise ValueError(
-            "input JSON has no 'results.utterances'; "
-            "re-run Deepgram with utterances=true"
-        )
-    return utterances
+    utterances = data['results']['utterances']
 
+    with open(srt_path, 'w') as f:
+        for i, utterance in enumerate(utterances, 1):
+            start = format_time(utterance['start'])
+            end = format_time(utterance['end'])
+            text = utterance['transcript']
+            f.write(f"{i}\n{start} --> {end}\n{text}\n\n")
 
-def write_srt(utterances, path):
-    """Write each utterance as a numbered SRT cue."""
-    count = 0
-    with open(path, "w", encoding="utf-8") as handle:
-        for index, item in enumerate(utterances, start=1):
-            start = item.get("start")
-            end = item.get("end")
-            text = (item.get("transcript") or "").strip()
-
-            if start is None or end is None or not text:
-                continue
-
-            handle.write("{}\n".format(index))
-            handle.write("{} --> {}\n".format(
-                seconds_to_timestamp(float(start)),
-                seconds_to_timestamp(float(end)),
-            ))
-            handle.write("{}\n\n".format(text))
-            count += 1
-    return count
+    print(f"Created {srt_path} with {len(utterances)} subtitles")
 
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Convert Deepgram utterances JSON to SRT subtitles."
-    )
-    parser.add_argument("input", help="path to the Deepgram JSON transcript")
-    parser.add_argument("output", help="path to write the SRT file")
-    args = parser.parse_args(argv)
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print("Usage: python3 json-to-srt.py input.json output.srt")
+        sys.exit(1)
 
-    try:
-        utterances = load_utterances(args.input)
-    except (OSError, ValueError, json.JSONDecodeError) as err:
-        print("Error: {}".format(err), file=sys.stderr)
-        return 1
-
-    written = write_srt(utterances, args.output)
-    print("Wrote {} cues to {}".format(written, args.output))
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    json_to_srt(sys.argv[1], sys.argv[2])

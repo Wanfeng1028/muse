@@ -1,120 +1,120 @@
 ---
 name: talking-head-guide
 description: |
-  Editing playbook for speech-driven footage — 口播、访谈、课程讲解、教程、播客等以人说话为主体的视频。Use when the user wants to edit talking footage: cutting/cleaning the spoken track (剪口播、去口癖、清理语气词、顺句), layering motion graphics onto a talking shot (口播加 MG), or inserting B-roll (加 B-roll). For motion-graphics work, pair this with whichever Motion Graphics skill/workflow is active in the current OpenChatCut environment; this guide contributes the talking-specific parts — rhythm tied to speech, frame-accurate placement, protecting the subject and captions, and verifying the placed result.
+  Guide for editing videos where the primary content is people talking — talking-head / 口播, interview / 访谈, lecture, tutorial, podcast, course content, and similar talking-driven formats. Use when the user wants speech editing on a talking video (剪口播 / 口播剪辑 / 去口癖 / clean up fillers / smooth speech), motion graphics layered onto talking video (口播加 MG / 加动画), or B-roll on a talking video (加 B-roll / add B-roll). For motion graphics specifically, use this together with the active Motion Graphics skill/workflow available in the current OpenChatCut environment — this skill adds talking-specific guidance (speech-rhythm timing, frame-aware placement, subject/caption protection, placement verification).
 user-invocable: true
 ---
 
-# 口播类视频剪辑指南
+# Talking Head Video Editing
 
-## 适用范围
+## What this skill covers
 
-**前置条件**：项目里已经有一段人对着镜头讲话的素材。如果用户想凭空做一段口播（比如直接生成人物讲话画面），那不属于本指南。
+**Required input**: an existing talking-head / 口播 video uploaded to the project. If the user wants to start without one (e.g., generate a fresh talking-head from scratch), this skill doesn't apply.
 
-**用户进入这个流程但还没上传素材时，用一个 widget 表单一次性收集**——把文件上传和治疗项（treatment）选择放进同一轮交互里，不要拆成两次对话，也不要写一句"把你的文件拖进来"就完事。具体用哪种表单宿主，查 `widget-forms`。绝不要叫用户"拖进编辑器"或"点素材库的上传按钮"，那是白白增加阻力。
+**When the user enters this workflow without a source video uploaded yet, ask via a widget surface — bundle the file upload with the treatment selection in one flow**, not two separate turns or a markdown "drag your file in" instruction. Load `widget-forms` for the host-specific route. Never tell the user to "拖进编辑器" / "点击素材库的上传按钮"; that's friction with no upside.
 
-只要本任务会创建或指向某个 OpenChatCut 项目，就尽早把编辑器链接给用户，方便他实时看进度；交付前再核对一次：用户眼前打开的编辑器确实就是这个项目。
+When the task creates or targets a OpenChatCut project for the user, surface the editor link early so they can watch progress, and re-confirm the visible editor matches the project before final delivery.
 
-下面这些是相互独立的处理方向，按用户实际想要的来选，不必每次都全上。
+Independent treatments that can be applied to talking-head videos. Pick the ones that match what the user wants — not all are needed every time.
 
-- **A-roll 剪辑**（中文叫**语音剪辑**，包含**去口癖、删停顿、删重复**）——以文字稿为基础的说话内容剪辑。常见操作有清理、抽高光、重排、做开头钩子等，看目标而定。
-- **动态图形叠加**（对用户用英文表述时写全 **Motion Graphics**，别缩成 "MG"；中文产品术语固定写作 **MG 动画**——不要用"动效""字幕条""动态字幕"这类说法）——用画面上的动态图形来强化关键信息、结构化内容和话题切换
-- **B-roll**（行业通用词，任何语言下都保留 "B-roll" 原文，不翻译）——用来盖住跳切，或把口述内容可视化
-- **背景音乐**——烘托情绪、抹平细碎空隙
-- **字幕**——为可访问性提供屏上文字
-- **AI 人声隔离**——用 DeepFilterNet3 把说话人声清理或单独分离出来，画面完全不动。参见 `voice-isolation` 技能。
+- **A-roll editing** (中文称 **语音剪辑** / 含 **去口癖、停顿、重复**) — transcript-based speech editing. Common operations include cleanup, highlight extraction, restructure, opening hook, and others as needed for the aligned outcome.
+- **Motion graphics overlay** (英文展示给用户时写全称 **Motion Graphics**，不要缩成 "MG"；中文产品术语固定为 **MG 动画**——不要叫"动效""字幕条""动态字幕"等其它说法) — reinforce key information, structured content, and topic transitions with on-screen motion graphics
+- **B-roll** (industry term — keep as "B-roll" in any language, do not translate) — cover jump cuts or visualize what's being said
+- **Background music** (中文 **背景音乐**) — set mood and smooth micro-gaps
+- **Captions** (中文 **字幕**) — on-screen text for accessibility
+- **AI Voice Isolation** (中文 **AI 人声隔离**) — clean or isolate spoken human voice with DeepFilterNet3, picture untouched. See the `voice-isolation` skill.
 
-> 当用户使用中文时，在 widget options / choices options / 对话文案里**严格套用上面括号中给出的产品术语**——不要自己另译一套，否则会和产品其它位置对不上。
+> 用户语言为中文时，在 widget options / choices options / 对话文案里**严格使用上面括号里的产品术语**——别自己再翻译一遍，会跟产品其它地方对不上。
 
-## 影响剪辑结果的几个维度
+## What shapes the edit
 
-除了选处理项，口播剪辑还受几个彼此独立的变量影响。用户的需求含糊时，优先澄清这几项：
+Beyond picking treatments, a talking-head edit is shaped by several orthogonal variables. When the user's ask is vague, these are what's worth clarifying first:
 
-- **投放目标**——平台（YouTube / TikTok / Shorts / …）、期望时长、画面比例
-- **要套哪些处理项**——上面那些都是可选项，别默认全都要做
-- **节奏与调性**——紧凑 / 有活力 / 正式 / 随性；用户若提到品牌或调性偏好也一并纳入。（MG 的视觉风格请遵循当前生效的 Motion Graphics 技能/工作流。）
+- **Target** — platform (YouTube / TikTok / Shorts / ...), desired length, aspect ratio
+- **Which treatments to apply** — the treatments above are optional; don't assume all of them apply
+- **Pacing / tone** — tight / energetic / formal / casual; brand or voice preferences if stated. (For MG visual style, follow the active Motion Graphics skill/workflow.)
 
-如果缺的变量不止一个，加载 `widget-forms` 后用一张表单一次问清。不要先写一串 markdown 编号问题、再只给其中某一部分补个 `<choices/>`。
+When more than one of these variables is missing, ask with one form after loading `widget-forms`. Do not ask markdown numbered questions and then append `<choices/>` for only one part of the same intake.
 
-## 执行顺序
+## Order of execution
 
-当用户已经确认要用多个处理项时，它们之间存在依赖，必须按依赖顺序逐个定稿。本节**只在达成一致之后才有意义**——它不是让你在新需求刚进来时决定先做什么。
+When multiple treatments have been aligned with the user, they depend on each other and must be finalized in dependency order. This section is **only relevant after alignment** — it doesn't tell you what to start with on a fresh request.
 
-语音时间轴（由 A-roll 剪辑确定）是下游一切的基准——MG 落点、B-roll 盖跳切、音乐时长、字幕对轴，全都参照剪辑后的最终语音时间线。
+The speech timing (set by A-roll editing) anchors everything downstream — MG placement, B-roll cut-covers, music duration, and caption sync all reference the final speech timeline.
 
-因此：先把 A-roll 剪辑定稿，再去落实任何画面、音频、文字层。不要在剪辑前的语音上写字幕，不要按剪辑前的长度切音乐，也不要把 MG 摆在一个之后还会移动的时间点上。
+So: finalize A-roll editing before committing any visual, audio, or text layer. Don't write captions against pre-edit speech, don't cut music to pre-edit length, don't place MG against timing that will shift.
 
-**每完成一个主要步骤，都要先跟用户确认结果，再进入下一步**，除非用户明确要求一口气跑完不停。多个处理项同时存在时的关键确认点：A-roll 剪辑把语音时间轴定稿之后；MG 生成之前（确认风格与方向，并在不明显时确认它是叠在画面上还是占满整屏）；MG 生成之后；B-roll、音乐、字幕同理。**不要把多个确认点塞进同一条回复里——一步一确认。** 上游出错会连累下游全部返工（例如 MG 是按清理前的时间点摆的，时间轴一变就得重做）。
+**You must confirm the result with the user after each major step before starting the next**, unless the user has explicitly asked to run end-to-end without stopping. Key checkpoints when multiple treatments apply: after A-roll editing finalizes the speech timing; before MG generation (confirm style and direction, and, when it isn't obvious, whether it sits over the video as an overlay or takes the whole frame); after MG generation; same pattern for B-roll, music, and captions. **Don't bundle multiple checkpoints into one response — confirm each step separately.** An upstream mistake forces redoing everything downstream (e.g., MG placed against pre-cleanup timing must be regenerated when the timeline shifts).
 
 ---
 
-## A-roll 剪辑
+## A-roll editing
 
-### 场景
+### Scenario
 
-在口播工作流里，第一步通常就是 A-roll 剪辑：处理原始讲话素材。
+In a talking-head workflow, the first step is usually A-roll editing: editing the original spoken footage.
 
-A-roll 的改动最终会落到时间线上，直接改变观众听到和看到的内容。但做决策时一般要从文字稿入手，因为核心问题是：哪些说话内容应该让观众听到，哪些应该删掉、压缩或调换顺序？
+A-roll edits are ultimately applied to the timeline and change what the viewer actually hears and sees. However, the editing decisions should usually start from the transcript, because the core question is: what spoken content should the viewer hear, and what should be removed, compressed, or reordered?
 
-### 常见的 A-roll 任务
+### Common A-roll tasks
 
-A-roll 不只是清理。先判断用户要的是哪种说话内容层面的任务，再决定剪辑策略和工具。
+A-roll editing is not only cleanup. First decide what spoken-content task the user is asking for, then choose the editing strategy and tools.
 
-常见任务：
+Common tasks:
 
-- **清理**——去掉说错的、反复重来的、口头习惯、语气词和无意义的停顿，让表达更清楚、更自然。
-- **抽高光**——从较长素材里挑出最有价值、最有观点、最有情绪或最切题的片段。
-- **重排**——调整说话内容的顺序，比如把结论提前、按主题归类，或把散落各处的部分拼成更清楚的结构。
-- **钩子 / 短版**——用素材里的一句强主张、一个结果、一处冲突或一个提问来开场，或把长内容压成更短的版本。
-- **按稿对齐**——依照用户给出的目标脚本、目标段落或期望内容，去匹配、保留并重排说话内容。
+- **Cleanup** — remove mistakes, repeated attempts, verbal habits, filler words, and meaningless pauses so the speech becomes clearer and more natural.
+- **Highlight extraction** — pull the most valuable, opinionated, emotional, or topic-relevant moments from longer footage.
+- **Restructure** — reorder spoken content, such as moving the conclusion earlier, grouping by topic, or combining scattered parts into a clearer structure.
+- **Hook / short version** — use a strong claim, result, conflict, or question from the source as the opening, or compress long content into a shorter version.
+- **Target-script / script alignment** — match, keep, and reorder spoken content according to a user-provided target script, target paragraph, or desired content.
 
-清理是最常见的任务，也最容易在边界判断上出错，下面会详细展开。其它任务给的规则更简短，但同样要遵守 A-roll 的通用原则：语义完整、边界清楚、听感自然。
+Cleanup is the most common task and the one most likely to fail from bad boundary decisions. It is described in detail below. Other tasks get shorter rules, but still follow the shared A-roll principles: complete meaning, clear boundaries, and natural listening flow.
 
-### A-roll 通用原则
+### Shared A-roll principles
 
-以下原则适用于所有 A-roll 任务，不只是清理。
+These principles apply to all A-roll tasks, not only cleanup.
 
-- **先定任务，再挑工具。** 不要让工具是否顺手反过来改变剪辑策略。
-- **按完整语义单位来剪。** 尽量整句、整块意思、整段回答、整个步骤地移动/删除/保留。不要因为几个词对上了就切掉半句话。
-- **任务点名了要保留什么时，就裁到那个边界。** 这是上一条的反向情形，适用于任何指定了保留范围的任务——还原某一句、对齐目标脚本、抽取指定高光、做某个版本：严格保留被要求的那一段。把保留区间裁到以要求的词开头、以要求的词收尾，并丢掉它所在 `[sN]` 段落中落在要求范围之外的头部/尾部；为了要一句话而整段保留，属于多保留，会把没要求的内容一起拖进来。这条只在任务点名了要保留什么时适用——绝不适用于开放式清理，那种情况按上面的规则保留完整单位。
-- **不要把没说完的碎片跨重来拼接。** 不要把来自不同尝试的不完整片段拼成一句人造的话。但这不代表前一次尝试就毫无价值：如果某段有用的引入、铺垫、对比、分类、评价或背景在后面没被重复，且能自然接到后面那次完整重来上，就保留它。
-- **保留连接组织。** 列表标签、转折词、主语、谓语，以及紧邻的原文词语，在删除后会让保留的意思变得不通顺、突兀或产生误导时，就不是废话。裁掉能让句子说得出口的最小范围即可。
-- **保持听感自然。** 结果应该仍有自然的断句和换气空间。不要为了"干净"把句子硬粘在一起。
-- **边界不确定时保守处理。** 如果拿不准某个剪切会不会伤到语义、逻辑或听感，就保留，或者切得更小。
-- **复杂改动先确认。** 涉及大改结构、激进缩短、结构性调整或生成式钩子时，动手前先跟用户确认目标时长、结构方向和必须保留的内容。
-- **解释内容，绝不说索引。** 你**不得**用 `[sN]`、`[cN]`、`[gap]`、词索引、clip id、segment id 这类内部地址向用户解释剪辑。用户看不到这些地址，也不会明白它们指什么。请改用实际说出的内容、一小段引用，或平实的描述来说明这次改动。
-- **提到面板时不要指方位。** 当你请用户查看或微调结果时，说"文字稿面板"（英文 "the Transcript panel"）——绝不要带方向（左 / 右 / 侧 / 左侧 / 右侧）。布局是可重排的，这个面板并不固定在某个角落。
+- **Decide the task before choosing the tool.** Do not let tool availability change the editing strategy.
+- **Edit by complete semantic units.** Whenever possible, move/delete/keep complete sentences, complete ideas, complete answers, or complete steps. Do not cut out a half-sentence just because a few words match.
+- **When the task names what to keep, trim to that boundary.** The inverse of the rule above, for any task that specifies which content to keep — restoring a specific sentence, matching a target script, pulling a named highlight, building a version: keep exactly the requested span. Trim the kept range to start and end at the requested words and drop the off-script head/tail of the source `[sN]` segment it sits in; keeping a whole segment for one requested sentence is over-keeping that drags in unrequested speech. This applies only when the task names what to keep — never to open-ended cleanup, where you keep complete units (above).
+- **Do not stitch unfinished fragments across retakes.** Do not combine incomplete pieces from different attempts into one artificial sentence. This does not make the earlier attempt disposable: keep a complete useful lead-in, setup, contrast, category, evaluation, or context if it is not repeated later and can naturally connect to the later complete retake.
+- **Preserve connective tissue.** List labels, contrast words, subjects, verbs, and adjacent source words are not filler when removing them makes a kept idea ungrammatical, abrupt, or misleading. Trim the smallest span that keeps the line speakable.
+- **Keep listening flow natural.** The result should still have natural phrasing and breathing room. Do not make sentences feel glued together just to make them "clean."
+- **Be conservative when boundaries are uncertain.** If unsure whether a cut harms meaning, logic, or listening flow, keep it or make a smaller cut.
+- **Confirm complex changes first.** For complex restructuring, aggressive shortening, structural changes, or generated hooks, confirm target length, structure direction, and what to preserve with the user before editing.
+- **Explain content, never indices.** You MUST NOT explain edits to the user with internal addresses such as `[sN]`, `[cN]`, `[gap]`, word indices, clip ids, or segment ids. The user cannot see those addresses and will not understand what they mean. Use the actual spoken content, a short quote, or a plain-language description of the edit.
+- **Never name a screen position for a panel.** When you invite the user to review or fine-tune the result, call it "the Transcript panel" (中文「文字稿面板」) — never a direction (left / right / side / 左侧 / 右侧). The layout is rearrangeable and the panel does not sit in a fixed corner.
 
-### 清理的目标与判断
+### Cleanup goals and decisions
 
-#### 好的清理意味着什么
+#### What good cleanup means
 
-好的清理不等于把视频做得越短越好，也不等于把说话人改写成另一套稿子。
+Good cleanup does not mean making the video as short as possible, and it does not mean rewriting the speaker into a different script.
 
-好的清理意味着：
+Good cleanup means:
 
-- 逻辑仍然连贯
-- 表达更清楚
-- 音频听起来自然
-- 明显的口误、反复重来、无意义卡顿和废话被去掉
-- 说话人的意图、语气和自然节奏被保留下来
+- The logic stays coherent
+- The expression becomes clearer
+- The audio feels natural
+- Obvious mistakes, repeated attempts, meaningless stalls, and filler are removed
+- The speaker's intent, tone, and natural rhythm are preserved
 
-糟糕的清理通常落入两种失败模式：
+Bad cleanup usually falls into two failure modes:
 
-- 清理不足：明显的口误、重复、长停顿或废话还留在里面。
-- 清理过度：句子被切断、意思缺失、节奏变得太赶，或结果听起来像拼凑出来的。
+- Under-cleaning: obvious mistakes, repetition, long pauses, or filler remain.
+- Over-cleaning: sentences are cut off, meaning is missing, rhythm becomes too hard, or the result sounds stitched together.
 
-默认原则：去掉瑕疵但不改意思；让话更顺而不是更硬；优先做小的局部裁切，而不是整句整段地删；拿不准某个剪切是否伤到意思时，就保留。
+Default principle: remove defects without changing meaning; make speech smoother, not harder; prefer small local cuts over whole-sentence or whole-segment deletion; when unsure whether a cut harms meaning, keep it.
 
-#### 常见清理情形怎么判断
+#### How to judge common cleanup cases
 
-以下是常见的清理类别，以及每类该怎么决策。
+Below are the common cleanup categories and how to make editing decisions for each.
 
-##### 无意义的语气词
+##### Meaningless filler words
 
-语气词分两类。
+Fillers fall into two categories.
 
-第一类是明显没有意义的犹豫音，通常可以放心删掉：
+The first category is clearly meaningless hesitation sounds. These are usually safe to remove:
 
 - `um`
 - `uh`
@@ -123,9 +123,9 @@ A-roll 不只是清理。先判断用户要的是哪种说话内容层面的任�
 - `呃`
 - `额`
 
-当它们不承载特殊含义时，先用 `clean_script` 做批量清理。
+When they do not carry special meaning, use `clean_script` first for bulk cleanup.
 
-第二类要看语境，绝不能只靠词表删：
+The second category depends on context and must not be removed by word list alone:
 
 - `so`
 - `like`
@@ -139,497 +139,497 @@ A-roll 不只是清理。先判断用户要的是哪种说话内容层面的任�
 - `所以`
 - `但是`
 
-怎么判断：
+How to decide:
 
-- 这个词如果只是犹豫或填充，就删。
-- 如果它承担顺序、承接、转折、因果、指代、应答、强调或自然语气，就留。
-- 如果删掉之后前后词语听起来像硬拼的，就留，或只压缩停顿。
-- 拿不准就留。
+- If the word is only hesitation or padding, remove it.
+- If it carries sequence, continuation, contrast, cause, reference, response, emphasis, or natural tone, keep it.
+- If removing it makes the surrounding words sound hard-spliced, keep it or only compress the pause.
+- If unsure, keep it.
 
-示例：
+Examples:
 
-- `um, I think this solves the main problem` → 删掉 `um`。
-- `It works like a checklist` → 保留 `like`，它是比喻。
-- `The upload failed, so we retried it` → 保留 `so`，它承担因果。
-- `right after the call, send the recap` → 保留 `right`，它修饰时间。
-- `然后我们再看第二点` → 保留 `然后`，它标记顺序。
+- `um, I think this solves the main problem` -> remove `um`.
+- `It works like a checklist` -> keep `like`; it is a comparison.
+- `The upload failed, so we retried it` -> keep `so`; it carries cause/result.
+- `right after the call, send the recap` -> keep `right`; it modifies timing.
+- `然后我们再看第二点` -> keep `然后`; it marks sequence.
 
-##### 重来与反复尝试
+##### Retakes and repeated attempts
 
-重来指说话人因为说错、卡住、忘词或重新起头，对同一个想说的意思又试了一遍。处理重来不是"把重复的文字删掉"，目标是留下这个意思的一个完整、自然、逻辑通顺的版本。
+A retake is when the speaker retries the same intended idea because they misspoke, got stuck, forgot words, or restarted. Retake cleanup is not "delete repeated text." The goal is to keep one complete, natural, logically coherent version of the intended idea.
 
-按这个判断路径走：
+Use this decision path:
 
-1. 先确认它是不是真的重来。
-   只有当多次尝试在表达同一个想说的意思时，才算重来。如果重复是刻意的强调、修辞上的停顿、结构标记，或是补充了新信息或语气的第二遍，就不要当成普通重来。
-2. 确定要保留的完整版本。
-   一个完整版本可能不止主干那句话，它可能需要引入、连接词、段落标记、话题铺垫、对比、限定语、主语、宾语或收尾。当保留的内容依赖它们时，这些都不是废话。
-3. 只切掉失败或被覆盖的部分。
-   只删掉那些说错的、悬空的、被放弃的，或已被保留版本完全覆盖的词。切点从重复或失败的那个意思开始，而不是自动从更早的过渡、铺垫或连续讲话处开始。如果更早的话里有保留版本没有重复的有用背景，就保留它。
-4. 挑最好的那次完整尝试。
-   如果多次尝试都完整，通常优先靠后的那次，因为它往往更接近说话人想要的版本。但不要机械地选最后一次。如果靠后那次缺少必要的背景、结构、主语、宾语或收尾，就保留更完整的那版，或把更早那次里缺失的引入部分接过来。
+1. Decide whether it is really a retake.
+   Treat it as a retake only when multiple attempts are trying to say the same intended idea. Do not treat it as a normal retake when the repetition is intentional emphasis, a rhetorical beat, a structural marker, or a second pass that adds new information or tone.
+2. Define the complete version to keep.
+   A complete version may include more than the main content sentence. It may need a lead-in, connector, section marker, topic setup, contrast, qualifier, subject, object, or conclusion. These are not filler when the kept content depends on them.
+3. Cut only the failed or covered part.
+   Remove only words that are wrong, dangling, abandoned, or fully covered by the kept version. The cut boundary starts at the repeated or failed idea, not automatically at the earlier transition, setup, or continuous speech. If earlier speech contains useful context that the kept version does not repeat, keep it.
+4. Choose the best complete attempt.
+   If several attempts are complete, usually prefer the later one because it is often closer to the speaker's intended take. But do not choose the last attempt mechanically. If the later attempt is missing needed context, structure, subject, object, or conclusion, keep the more complete version or preserve the missing lead-in from the earlier attempt.
 
-重复的引入只有在另有一份等效引入仍自然连着保留内容时，才算冗余。如果每一份都删掉会让结果失去结构或听起来突兀，就留一份自然的，只删掉多余的重起。不要把不同尝试里没说完的碎片拼成一句人造的话。
+A repeated lead-in is redundant only when another equivalent lead-in remains naturally connected to the kept content. If removing every copy makes the result lose structure or sound abrupt, keep one natural copy and remove only the extra restarts. Do not stitch unfinished fragments from different attempts into one artificial sentence.
 
-示例是模式，不是封闭清单：
+Examples are patterns, not a closed list:
 
-- 保留句内部的局部假起头：
+- Local false start inside a kept sentence:
   `There, there's no After Effects, no Premiere, no DaVinci Resolve learning.`
-  保留完整句，但删掉被放弃的重起：
+  Keep the complete sentence, but remove the abandoned restart:
   `There's no After Effects, no Premiere, no DaVinci Resolve learning.`
-  不要因为整句其它部分有用，就把那个多余的首词留下。
-- 重复的结构性引入：
+  Do not keep the stray first word just because the full sentence is otherwise useful.
+- Repeated structural lead-in:
   `And secondly, ... and secondly, we're introducing a brand new UI.`
-  删掉多余的重起，但保留一份自然连着保留内容的引入：
+  Remove the extra restart, but keep one natural lead-in attached to the kept content:
   `And secondly, we're introducing a brand new UI.`
-  不要把结构标记全删光只剩：
+  Do not delete every structural marker and leave only:
   `We're introducing a brand new UI.`
-- 失败结尾之前的有用铺垫：
+- Useful setup before a failed ending:
   `Then the next one is different from comedy. It is popular on Disney Plus. It is called...`
-  后面重来：
+  Later retake:
   `It is a popular Disney Plus show called Love Story.`
-  保留后面重来没有重复的有用铺垫，从失败点切开：
+  Keep useful setup that the later retake does not repeat, and cut from the failure point:
   `Then the next one is different from comedy. It is a popular Disney Plus show called Love Story.`
 
-##### 假起头与未完成碎片
+##### False starts and unfinished fragments
 
-这一类用 `假起头 / 未完成碎片` 来称呼。`假起头` 是剪辑和转写里更自然的说法，指说话人起了个头又重来或放弃；`未完成碎片` 则把那种半句话悬着的情形说得更明确。
+Use `false starts / unfinished fragments` for this category. `False start` is the more natural editing/transcription term for a speaker beginning a phrase and then restarting or abandoning it; `unfinished fragment` makes the dangling half-sentence case explicit.
 
-只有当某个碎片明显不构成有用信息时才删。
+Only remove a fragment when it clearly does not form useful information.
 
-可以放心删：
+Safe to remove:
 
-- 说话人放弃了这个念头，后面出现了完整版本。
-- 该片段只是一个悬空的短语，比如 "this is actually..." 后面没了。
-- 明显是失败尝试留下的开头残片。
+- The speaker abandons the thought and a complete version appears later.
+- The segment is only a dangling phrase, such as "this is actually..." with no completion.
+- It is clearly the leftover beginning of a failed attempt.
 
-不要删：
+Do not remove:
 
-- 不完美但含有用信息的句子。
-- 为后面提供主语、宾语或语境的引入。
-- 提供铺垫、对比、收尾、情绪或语气的内容。
+- A sentence that is imperfect but contains useful information.
+- A lead-in that provides the subject, object, or context needed later.
+- Content that provides setup, contrast, conclusion, emotion, or tone.
 
-如果一句话或一个片段只有部分出错，不要连周围有用的内容一起删。只去掉那个错的词、短语或停顿；如果局部裁切听起来不自然，就整段保留。
+If only part of a sentence or segment is wrong, do not delete the useful content around it. Remove only the bad word, phrase, or pause; if a local cut cannot sound natural, keep the segment.
 
-##### 停顿与换气
+##### Pauses and breaths
 
-停顿清理默认应该是压缩，而不是归零。口播视频需要自然的换气空间。
+Pause cleanup should default to compression, not zeroing out. Spoken video needs natural breathing room.
 
-默认规则：
+Default rules:
 
-- 明显超过 0.8–1s 的长停顿：通常压到约 0.3s。
-- 句与句之间：保留约 0.3–0.5s，让听众听到自然的断句。
-- 话题切换、对比或强调处：需要时保留稍长的停顿；不要把语速逼得太赶。
-- 一句话内部的短换气：如果是正常呼吸，不要删。
-- 一句话内部明显的长停顿：压缩它，但别压到相邻词听起来像粘在一起。
-- 重来之前的长停顿：如果它前后的失败尝试都删了，这个停顿一起删。
-- 如果用户给了明确阈值，照用户的来。比如用户说"只处理超过 0.8s 的停顿，且至少保留 0.3s"，那就不要动 0.8s 以下的自然停顿。
+- Obvious long pauses over 0.8-1s: usually compress to about 0.3s.
+- Between sentences: keep about 0.3-0.5s so listeners can hear natural phrasing.
+- Around topic shifts, contrast, or emphasis: keep slightly longer pauses when needed; do not make the delivery too rushed.
+- Short breaths inside one sentence: if they are normal breathing, do not remove them.
+- Clear long pauses inside one sentence: compress them, but not so tightly that adjacent words sound glued together.
+- Long pauses before a retake: if the failed attempts around it are removed, remove the pause with them.
+- If the user provides explicit thresholds, follow them. For example, if the user says "only process pauses over 0.8s and keep at least 0.3s", do not process natural pauses under 0.8s.
 
-停顿怎么操作：
+How to operate on pauses:
 
-- 对整条时间线或整条轨道做批量停顿清理，用 `clean_script`。这是压缩大量长停顿的默认路径。
-- 把用户常见说法翻译成 `clean_script` 的停顿规则：
-  - "换气再紧一点" / "压缩停顿" / "超过 0.3s 的都压到 0.3s" → `silence: "compress:300"`（或用户指定的上限）。
-  - "多留点气口" / "别太赶" / "至少留 0.5s" → `silence: "restore:500"`（或用户指定的下限）。
-  - "把所有停顿统一到 0.5s 左右" → `silence: "normalize:500"`。
-  - "停顿保持在 0.3s 到 0.8s 之间" → `silence: "range:300-800"`。
-    任何会把停顿变长的规则——`restore`、`normalize`，以及 `range` 的下界——都不会凭空造出静音。它只能把原始录音中那个位置本来就有的停顿时间找回来。如果原停顿短于请求值，就停在原停顿长度。
-- 批量停顿清理之前，不需要先调 `read_script({ showSilence: true })`。默认情况下 `timeline.md` 不显示静音标记，但 `clean_script` 内部仍能检测并改写静音。
-- 只有在需要查看或手动调整某个具体停顿时，才用 `read_script({ showSilence: true })`。然后编辑可见标记：`~~[silence=0.8s]~~` 是彻底切掉，`[silence=0.8s→0.2s]` 是压缩，不动就是保留。
-- 语义剪辑做完后，回看最终干净的 `timeline.md`。如果最终节奏里还有不少长停顿，跑一次 `clean_script only="silence"`；如果只有一两处停顿感觉不对，用 `showSilence: true` 手动调那几处。
+- For batch pause cleanup across the timeline or track, use `clean_script`. This is the default path for compressing many long pauses.
+- Translate common user wording into `clean_script` pause rules:
+  - "Tighter breaths" / "compress pauses" / "compress anything over 0.3s to 0.3s" → `silence: "compress:300"` (or the requested cap).
+  - "Restore some breathing room" / "do not make it too rushed" / "keep at least 0.5s" → `silence: "restore:500"` (or the requested minimum).
+  - "Make all pauses around 0.5s" → `silence: "normalize:500"`.
+  - "Keep pauses between 0.3s and 0.8s" → `silence: "range:300-800"`.
+    Any rule that makes a pause longer — `restore`, `normalize`, or the lower bound in `range` — never invents new silence. It only recovers pause time that already existed at that exact spot in the original recording. If the original pause was shorter than the requested value, it stops at the original pause length.
+- You do not need to call `read_script({ showSilence: true })` before batch pause cleanup. By default, `timeline.md` hides silence markers, but `clean_script` can still detect and rewrite silences internally.
+- Use `read_script({ showSilence: true })` only when you need to inspect or manually adjust a specific pause. Then edit the visible marker: `~~[silence=0.8s]~~` to fully cut it, `[silence=0.8s→0.2s]` to compress it, or leave it untouched to keep it.
+- After semantic edits, review the final clean `timeline.md`. If the final pacing still has many long pauses, run `clean_script only="silence"`; if only one or two pauses feel wrong, use `showSilence: true` and adjust those manually.
 
-Script 间隙原语注意事项：
+Script gap primitive note:
 
-- 不要在主要视频轨道上为了制造节奏停顿而意外生成 `[gap]`。Script 里的 `[gap]` 表示没有源在播放；在唯一可见的视频轨道上，它会渲染成黑屏。如果节奏需要气口，用 `clean_script` / `[silence=...]` 保留或恢复源静音，用 B-roll/MG/满屏视觉节拍盖住那一瞬，或者在方案里明确声明这是一个黑场节拍。
+- Do not create an accidental `[gap]` on the primary video track as a pacing pause. A Script `[gap]` means no source is playing; on the only visible video track it renders as black. If pacing needs breathing room, preserve or restore source silence with `clean_script` / `[silence=...]`, cover the moment with B-roll/MG/a full-frame visual beat, or intentionally declare the black beat in the plan.
 
-### 其它 A-roll 任务指引
+### Other A-roll task guidance
 
-#### 抽高光
+#### Highlight extraction
 
-抽高光不是把内容做得越短越好，而是按用户的标准挑出最有价值的说话内容。
+Highlight extraction is not about making the content as short as possible. It is about selecting the most valuable spoken content according to the user's criteria.
 
-规则：
+Rules:
 
-- 先明确高光标准：观点、结论、故事、情绪、冲突、教程步骤、数据点，还是某个具体话题。
-- 每段高光应该单独就能看懂。不要删掉理解它所必需的主语、铺垫、提问或结论。
-- 如果一段简短有力的话必须依赖上下文才成立，就不要只留那一句。
-- 用户点名要某个话题，就删掉其它话题。用户要"最好的"或"最精彩的"瞬间，就优先信息密度和表达力度。
-- 抽完高光后，通常还要清理保留下来的片段，让最终结果更精炼。
+- First identify the highlight standard: opinion, conclusion, story, emotion, conflict, tutorial step, data point, or a specific topic.
+- Each highlight should be understandable on its own. Do not remove the subject, setup, question, or conclusion needed to understand it.
+- Do not keep only a short punchy sentence if the surrounding context is required for it to make sense.
+- If the user asks for a specific topic, remove other topics. If the user asks for the "best" or "most exciting" moments, prioritize information density and expression strength.
+- After extracting highlights, usually clean up the kept segments so the final result is polished.
 
-#### 重排
+#### Restructure
 
-重排指改变说话内容的先后顺序，不是随意把句子拆开。
+Restructure means changing the order of spoken content. It does not mean freely breaking sentences apart.
 
-规则：
+Rules:
 
-- 先确认目标结构：时间顺序、按主题、按提问、结论先行、教程步骤，还是短视频节奏。
-- 移动完整的语义单位：完整的句子、意思、回答或步骤。
-- 不要把一个句子拆成前半段放一处、后半段放另一处。
-- 移动内容后，检查连接词是否还成立，比如 "so"、"but"、"next"、"this"。
-- 如果用户要求大改结构但没说目标结构，先确认再动手。
+- First confirm the target structure: chronological, by topic, by question, conclusion-first, tutorial steps, or short-form pacing.
+- Move complete semantic units: complete sentences, ideas, answers, or steps.
+- Do not split one sentence so the first half appears in one place and the second half elsewhere.
+- After moving content, check whether connectors still work, such as "so," "but," "next," or "this."
+- If the user asks for major restructuring without specifying the target structure, confirm before editing.
 
-#### 钩子 / 短版
+#### Hook / short version
 
-钩子 / 短版的目标是让开头更抓人，或把长内容压成一个更短但仍完整的版本。
+Hook / short version work aims to make the opening more compelling or compress long content into a shorter but still complete version.
 
-规则：
+Rules:
 
-- 优先从原始素材里取钩子：一句强主张、一个结果、一处冲突、一个提问、一个反直觉的说法，或情绪强烈的瞬间。
-- 如果需要生成新的钩子或新旁白，先跟用户确认方向。
-- 做短版时，不要只按时长来切。先找出必须保留的主线：问题、核心观点、关键理由和结论。
-- 短版可以删掉例子、重复和铺垫，但必须保住观点成立的逻辑。
-- 用户给了目标时长就尽量对齐。当时长和语义完整冲突时，把取舍讲清楚。
+- Prefer pulling the hook from the original footage: a strong claim, result, conflict, question, counterintuitive statement, or emotionally strong moment.
+- If a new hook or new narration must be generated, confirm the direction with the user first.
+- For short versions, do not cut only by duration. First identify the main line to preserve: problem, core point, key reasons, and conclusion.
+- Short versions can remove examples, repetition, and setup, but must keep the logic needed for the point to hold.
+- If the user gives a target duration, try to match it. If duration and semantic completeness conflict, explain the tradeoff.
 
-#### 按稿对齐
+#### Target-script / script alignment
 
-按稿对齐指按用户提供的脚本、目标段落或期望内容来切最终的说话内容。
+Target-script / script alignment means cutting the final spoken content according to a user-provided script, target paragraph, or desired content.
 
-规则：
+Rules:
 
-- 目标脚本是主要约束：优先选择与目标意思相符的内容。
-- 自然的同义口语表达可以接受，但不要把目标没要求的前后内容一并带进来。
-- 如果源里有多个相似版本，选最完整、最自然、最贴合目标的那一版。
-- 目标顺序和源顺序不一致时，按需重排，但移动完整的语义单位。
-- 如果目标脚本省略了源里的上下文，就照目标来。除非没有它结果完全看不懂，否则不要补上大段前后文。
+- The target script is the main constraint: prioritize content that matches the target meaning.
+- Natural spoken paraphrases are acceptable, but do not include surrounding content that the target does not ask for.
+- If the source has multiple similar versions, choose the most complete, natural, and target-aligned version.
+- If target order differs from source order, reorder as needed, but move complete semantic units.
+- If the target script omits source context, follow the target. Do not add long surrounding context unless the result would be incomprehensible without it.
 
-#### 做版本、高光、节选——都留在 Script 里
+#### Building versions, highlights, and excerpts — stay on Script
 
-高光、短版、节选、钩子、重排，以及做多个版本，都是文字稿内容层面的任务：用 Script 来驱动（`read_script` → 编辑 `timeline.md` → `apply_script`），绝不要去查时间戳再手动摆源片段。
+Highlight, short version, excerpt, hook, restructure, and making several versions are all transcript-content tasks: drive them through Script (`read_script` → edit `timeline.md` → `apply_script`), never by looking up timestamps and placing source clips manually.
 
-- 起点按内容从哪来选。基于当前时间线做版本：裁切或重排 `timeline.md` 然后 `apply_script`。要一个独立时间线上的版本（用户要求单独的时间线，或希望每个版本能独立编辑/导出）：`manage_timelines` action=duplicate——副本自带内容和它的 script，直接对它 `read_script` → 裁 → `apply_script`。从素材库从零搭：`manage_timelines` action=create，加入源素材，然后通过 Script 驱动它。
-- 要把当前剪辑已经不再显示的源内容拿回来（一句钩子、另一个版本需要的片段），读 `library/<filename>.md`，把需要的 `[sN]` 行复制到 `timeline.md` 里该在的位置，再 `apply_script`。这就是把源内容拉上时间线的方式——走 Script。
-- 同一条轨道上放多个版本：在 `timeline.md` 里按版本顺序把所有版本的 `[sN]` 段依次列出，一个版本接一个版本，然后 `apply_script` 一次。复用就是重复——同一个 `[sN]` 段可以出现在多个版本里，把那行重复一遍就会再播一次那段源。
-- 绝不要用 `find_transcript` 查时间戳、再用 `edit_item` / `split_item` 摆放说话内容。如果你正在把转写片段换算成源帧或秒区间，你就已经偏离了编辑界面——回到 Script。`edit_item` / `find_transcript` 只用于非转写的摆放，比如 MG 叠加和 B-roll 的视觉时间点。
+- Pick the starting point by where the content comes from. Versions on the current timeline: trim or reorder `timeline.md` and `apply_script`. A version on its own timeline (the user asked for separate timelines, or wants each version independently editable/exportable): `manage_timelines` action=duplicate — the copy carries the content and its script, so you immediately `read_script` → trim → `apply_script` on it. Building fresh from library assets: `manage_timelines` action=create, add the source asset, then drive it through Script.
+- To bring in source content the current cut no longer shows (a hook line, a segment needed for another version), read `library/<filename>.md`, copy the needed `[sN]` line(s) into `timeline.md` where they belong, and `apply_script`. This is how you pull source content onto the timeline — through Script.
+- For multiple versions on one track: list every version's `[sN]` segments in `timeline.md` in version order, one version after another, then `apply_script` once. Reuse is just repetition — the same `[sN]` segment may appear in more than one version, and repeating the line replays that source range again.
+- Never look up timestamps with `find_transcript` and place spoken content with `edit_item` / `split_item`. If you are converting transcript segments into source frame or second ranges, you are off the editing surface — return to Script. `edit_item` / `find_transcript` are only for non-transcript placement such as MG overlays and B-roll visual timing.
 
-**逐个版本对照需求检查。** 拼好一个版本、高光或节选后，从头到尾再读一遍，确认每一句被要求的内容都在、顺序正确、没有夹带多余的源。发现漏掉、重复或顺序错误的内容，在收尾前修好。
+**Check each version against its request.** After assembling a version, highlight, or excerpt, re-read the result end to end and confirm every requested sentence is present, in the requested order, with no extra source carried in. Fix any dropped, duplicated, or out-of-order content before finishing.
 
-### 基于文字稿的 A-roll 剪辑流程
+### A-roll / transcript-based editing workflow
 
-任何由文字稿语义驱动的 A-roll 任务，都走这条流程。
+Use this flow for any A-roll task driven by transcript meaning.
 
-1. 先建立整体认识。调 `read_script`，再读一遍 `timeline.md`，弄清用户目标、内容结构，以及是否存在固定语气词或长停顿。如果你打算跑 `clean_script`，就不要在这次清理前的阅读里把完整的语义剪辑方案定下来。
-2. 对清理类任务，当存在固定语气词或长停顿时，先跑机械清理，再做语义剪辑。固定犹豫音（`um`、`uh`、`er`、`ah`、`呃`、`额`）和批量停顿压缩都用 `clean_script`。两者都存在时，用默认的 `clean_script` 一次处理。这一步不要用于依赖语境的语气词、重来、重复句，或任何需要判断意思的内容。
-3. `clean_script` 之后，一定要先读刷新后的干净 `timeline.md`，再做语义剪辑。以这个刷新后的文件为准；`clean_script` 会改动规范时间线并重新生成 script，之前读到的文本可能已经过期。不要凭清理前 script 的记忆去编辑。然后用语义判断编辑 `timeline.md`：挑最好的那次重来、清理假起头、去掉重复或失败的尝试、保留有用的铺垫和上下文、需要时重排内容、保持说话自然。长文字稿可以按清晰的段落一段一段处理，判断会更准。
-4. 用 `apply_script` 应用改动。如果 apply 失败，修掉 markdown 错误或过期状态，必要时重新读当前的 `timeline.md`，再 apply 一次。
-5. 回看剪辑结果。真正跑过一次 `apply_script` 后，读重新生成的干净 `timeline.md`，检查观众实际会听到什么：逻辑断裂、上下文缺失、删过头、漏清理、顺序不对，或停顿太紧/太长。只修明确的问题。如果最终结果还需要批量停顿调整，用 `clean_script only="silence"`。只有在手动调整具体停顿时，才用 `read_script({ showSilence: true })`。
+1. Start with orientation. Call `read_script`, then read `timeline.md` once to understand the user's goal, the content structure, and whether fixed fillers or long pauses are present. If you will run `clean_script`, do not build the full semantic edit from this pre-clean read.
+2. For cleanup tasks, run the mechanical cleanup pass before semantic editing when fixed fillers or long pauses are present. Use `clean_script` for fixed hesitation sounds (`um`, `uh`, `er`, `ah`, `呃`, `额`) and batch pause compression. If both are present, use the default `clean_script` pass so both are handled together. Do not use this step for context-dependent fillers, retakes, repeated sentences, or anything that needs meaning.
+3. After `clean_script`, always read the refreshed clean `timeline.md` before semantic editing. Use this refreshed file as the source of truth; `clean_script` changes the canonical timeline and rematerializes the script, so previously read text may be stale. Do not edit from memory based on the pre-clean script. Then edit `timeline.md` with semantic judgment: choose the best retake, clean false starts, remove repeated or failed attempts, preserve useful setup and context, reorder content when needed, and keep the speech natural. For long transcripts, work one clear section at a time if that improves judgment accuracy.
+4. Apply the edit with `apply_script`. If apply fails, fix the markdown error or stale state, re-read the current `timeline.md` if needed, and apply again.
+5. Review the edited result. After a real `apply_script`, read the regenerated clean `timeline.md` and check what the viewer will actually hear: broken logic, missing context, over-deletion, missed cleanup, wrong order, or pauses that feel too tight or too long. Fix clear problems only. If the final result still needs batch pause adjustment, use `clean_script only="silence"`. Use `read_script({ showSilence: true })` only for manual adjustment of specific pauses.
 
-### 文字稿编辑实际改的是什么
+### What transcript editing actually changes
 
-编辑 `timeline.md` 不只是改显示出来的文字。它描述的是时间线上应该播放哪些源媒体区间。
+Editing `timeline.md` is not just changing displayed text. It describes which source media ranges should play on the timeline.
 
-`[sN]` 行是 ASR 分段，不是语义单位。一个完整的句子、意思、重来或过渡可能跨好几行 `[sN]`，而一行 `[sN]` 也可能只包含半句话。在决定删什么留什么之前，先在脑子里把相邻行拼回完整的口语句子或意思。
+`[sN]` rows are ASR segments, not semantic units. A complete sentence, idea, retake, or transition may span several `[sN]` rows, and one `[sN]` row may contain only part of a sentence. Before deciding what to delete or keep, mentally reconstruct the complete spoken sentence or idea across adjacent rows.
 
-- 每一行说话文字对应一段可播放的源区间。
-- 行内的 `~~...~~` 会移除对应的可听音频区间。
-- 删掉一整行会移除整段说话内容。
-- 移动/重排各行会改变播放顺序。
-- `apply_script` 把结果应用回时间线。
-- 首尾裁切可能保留为一个裁切后的 clip。
-- 在句子中间删词或删停顿，会把原 clip 拆成多个新 clip：删除点之前一段保留区间，之后一段保留区间。
-- 移动说话内容同样会在落点产生一个新 clip。
-- 中间删除或移动之后 clip 变多是正常且通常正确的。不要把这描述成"碎片化问题"，也不要拿它当作"不支持删词"的证据。
+- Each spoken-text line maps to a playable source range.
+- Inline `~~...~~` removes the corresponding audible audio range.
+- Deleting a whole line removes that whole spoken segment.
+- Moving/reordering lines changes playback order.
+- `apply_script` applies the result back to the timeline.
+- Start/end trims may remain as one trimmed clip.
+- Deleting words or pauses in the middle of a sentence splits the original clip into multiple new clips: one kept range before the deletion and one kept range after it.
+- Moving spoken content also creates a new clip at the destination.
+- More clips after middle deletions or moves are expected and usually correct. Do not describe that as a "fragmentation problem" or as proof that word deletion is unsupported.
 
-### 工具边界
+### Tool boundaries
 
-先定剪辑目标和内容边界，再挑工具。不要让工具是否顺手反过来改变剪辑策略。
+Choose the editing goal and content boundaries first, then choose the tool. Do not let tool availability change the editing strategy.
 
-- `clean_script`：用于机械的第一遍清理——批量删除固定无意义语气词，以及批量停顿压缩/调整。即使 `timeline.md` 当前渲染时不带静音标记，它也能处理静音。不要用它处理依赖语境的语气词、重来、重复句或语义判断。
-- `read_script` + `apply_script`：主要的基于文字稿的编辑界面。用于真正的语义剪辑：删词、删句、删停顿、重排，或把素材库内容拉到时间线上。
-- `manage_transcript` action `fix`：只修 ASR 识别错误或说话人归属。它不切音频，也不改变观众听到的内容。
-- 字幕**分页**（分句 / 在哪里断页）与文字稿**相互独立**，只由两个逐词原语控制：要把一张卡拆成两张，在应当**开始**新卡的那个词上设 `display_text` 的 `forcePageBreak:true`；要把一张卡并入上一张，在该卡的**第一个**词上设 `display_text` 的 `keepWithPrevious:true`（对任何断点都有效——不用调框宽，也不用折腾 wordsPerPage）。要丢弃一个重复或假起头的词，用 `display_text` 的 `hidden:true`。框宽 / fontSize / `wordsPerPage` 是样式与密度旋钮，**不是**逐断点的分页杠杆——不要为了合并或拆分某张卡去加宽框或调高 wordsPerPage。**绝不要**为了让字幕断行好看而去改文字稿——`manage_transcript fix` 只用于 ASR 听错的**词**（内容），不用于排版。`read_captions` 会显示每一页的 `break=` 原因，以及可供上述编辑使用的逐词键。
-- `find_transcript`：只用来定位某句话在哪里说的。它不做编辑。如果下一步是切说话内容，回到 Script。
-- `Edit` / `Write`：用来修改 `timeline.md`。改动只有在 `apply_script` 之后才会落到时间线。
+- `clean_script`: use for mechanical first-pass cleanup: bulk removal of fixed meaningless fillers and batch silence compression/adjustment. It can process silence even when `timeline.md` is currently rendered without silence markers. Do not use it for context-dependent fillers, retakes, repeated sentences, or semantic decisions.
+- `read_script` + `apply_script`: the main transcript-based editing surface. Use it for real semantic editing: deleting words, sentences, pauses, reordering, or pulling library content onto the timeline.
+- `manage_transcript` action `fix`: only fixes ASR mistakes or speaker attribution. It does not cut audio and does not change what the viewer hears.
+- Caption SEGMENTATION (分句 / where pages break) is INDEPENDENT of the transcript and controlled by two per-word primitives only: to SPLIT one card into two, set `display_text` `forcePageBreak:true` on the word that should START the new card; to MERGE a card up into the previous one, set `display_text` `keepWithPrevious:true` on that card's FIRST word (works for any break — no box resizing, no wordsPerPage fiddling). To drop a repeated/false-start word, use `display_text` `hidden:true`. Box width / fontSize / `wordsPerPage` are style & density knobs, NOT per-boundary segmentation levers — do not widen the box or raise wordsPerPage to merge or split a specific card. NEVER edit the transcript to fix a caption line break — `manage_transcript fix` is only for an ASR-misheard WORD (content), not layout. `read_captions` shows each page's `break=` reason and per-word keys for these edits.
+- `find_transcript`: only locates when a phrase is spoken. It does not edit. If the next step is cutting spoken content, return to Script.
+- `Edit` / `Write`: use these to modify `timeline.md`. The edit only reaches the timeline after `apply_script`.
 
-需要保留的 Script 细节：
+Script details to preserve:
 
-- `read_script` 会在工作区里生成 `timeline.md`（当前剪辑）和 `library/<filename>.md`（完整的只读源文字稿）。
-- 支持用行内删除线语法做单字级可听删除，例如 `[s1] 过去~~呢~~一个月`。
-- 静音标记默认隐藏。批量停顿清理用 `clean_script`。只有在需要精确手动编辑时才用 `read_script({ showSilence: true })` 暴露 `[silence=Ns]` 标记，比如 `~~[silence=0.8s]~~` 或 `[silence=0.8s→0.2s]`。
-- `find_transcript` 可以定位某句话用于视觉时间点；它不是编辑界面。不要用 `find_transcript` + `split_item` / `edit_item` 去切、摆、拼基于文字稿的片段——这包括高光、钩子、节选和多版本剪辑。所有说话内容的选取、摆放和复用都在 Script 里完成（`read_script` → 编辑 `timeline.md` → `apply_script`）。
+- `read_script` materializes `timeline.md` (current cut) and `library/<filename>.md` (full read-only source transcripts) in the workspace.
+- Single-word audible deletion is supported with inline strike syntax, such as `[s1] 过去~~呢~~一个月`.
+- Silence markers are hidden by default. Use `clean_script` for batch pause cleanup. Use `read_script({ showSilence: true })` only to expose `[silence=Ns]` markers for precise manual edits such as `~~[silence=0.8s]~~` or `[silence=0.8s→0.2s]`.
+- `find_transcript` can locate a phrase for visual timing; it is not the editing surface. Do not use `find_transcript` + `split_item` / `edit_item` to cut, place, or assemble transcript-based clips — this includes highlights, hooks, excerpts, and multi-version cuts. All spoken-content selection, placement, and reuse happens in Script (`read_script` → edit `timeline.md` → `apply_script`).
 
 ---
 
-## MG 叠加
+## MG Overlay
 
-### 目标
+### Goal
 
-叠在 A-roll 上的动态图形用来强化说话人正在传达的内容——加深观众对关键点的印象，帮他们抓住光靠说话难以落地的信息。先把 A-roll 剪辑做完；MG 的时间点基于剪辑后的时间线。
+Motion graphics layered into A-roll reinforce what the speaker is conveying — deepening the audience's impression of the key points and helping them grasp content that's hard to land through speech alone. Complete A-roll editing first; MG timing is based on the post-edit timeline.
 
-本节只补充口播特有的节奏、画面构图、主体/字幕保护和复核约束。视觉风格对齐、MG 的创建或编写、实现约束、可编辑属性、素材尺寸和验证，请使用当前 OpenChatCut 环境里生效的 Motion Graphics 技能/工作流。
+This section only adds talking-head timing, frame-composition, subject/caption protection, and review constraints. For visual style alignment, MG creation or authoring, implementation constraints, editable properties, asset sizing, and verification, use the active Motion Graphics skill/workflow available in the current OpenChatCut environment.
 
-### MG 工作流
+### MG workflow
 
-做口播 MG 时，把整支视频当作一个已剪好的作品，而不是一堆孤立的图形。
+For talking-head MG work, treat the video as one edited piece, not as isolated graphics.
 
-1. **理解视频**——读文字稿和代表性画面，了解主题、受众/平台、视觉调性和说话人在画面里的布局。
-2. **设定视觉语言**——使用当前生效的 Design Style、用户的风格/参考、已澄清的方向，或当前 MG 工作流里的视觉预设。
-3. **挑选有用的 MG 时刻**——只在画面层能改善理解、强调、定位或节奏的地方加 MG。
-4. **准备每个时刻**——在创建 MG 之前，先定下观众任务、内容、视觉机制、语音区间、稳定帧、阅读时长、形态、背景和构图关系。
-5. **通过当前生效的 MG 工作流创建**——把口播语境传入当前环境的 MG 创建/编写路径。不同的观众任务、信息结构或视觉形态，通常应该做成不同的 MG；只在有意复用时才共用组件。
-6. **摆放、复核、确认，再扩展**——检查人脸、字幕、可读性、尺寸和构图。第一个真实 MG 落到画面后，先跟用户确认效果再扩展，除非用户明确要求一口气做完。
+1. **Understand the video** — read the transcript and representative frames to learn topic, audience / platform, visual tone, and speaker layout.
+2. **Set the visual language** — use the active Design Style, the user's style / reference, a clarified direction, or visual presets from the active MG workflow.
+3. **Choose useful MG moments** — add MG only where a visual layer improves comprehension, emphasis, orientation, or pacing.
+4. **Prepare each moment** — decide the viewer job, content, visual mechanism, speech span, settled frame, read time, form, background, and composition relationship before creating the MG.
+5. **Create through the active MG workflow** — pass the talking-head context into the current environment's MG creation/authoring path. Different viewer jobs, information structures, or visual forms should usually become distinct MGs; reuse only intentionally recurring components.
+6. **Place, review, confirm, then extend** — check face, captions, readability, size, and composition. After the first real MG is placed in frame, confirm the effect with the user before expanding, unless they explicitly asked you to finish end-to-end.
 
-### 视觉识别
+### Visual identity
 
-Design Style 是这支视频已经确认的视觉语言。它给 MG 一个共同的调性、色彩逻辑、字体逻辑、视觉密度和动态语言，让不同的 MG 属于同一家族，又不被强求成同一个形状。它不决定哪些 MG 有用、什么时候出现、摆在哪里，也不决定是透明还是不透明；那些仍是逐个 MG 的剪辑决策。
+Design Style is the video's confirmed visual language. It gives MGs a shared tone, color logic, typography logic, visual density, and motion language. It keeps different MGs in one family without forcing them into the same shape. It does not decide which MGs are useful, when they appear, where they sit, or whether they are transparent / opaque; those remain per-MG editing decisions.
 
-在规划 MG 时刻之前，先确定视觉语言。真正的风格对齐交互和实现细节，用当前生效的 MG 工作流：
+Resolve the visual language before planning MG moments. Use the active MG workflow for the actual style-alignment interaction and implementation details:
 
-- **当前生效的 Design Style**——除非用户要求改整体风格，否则就用它。如果 Project Context 里写明了某个生效的 Design Style 但没给细节，在规划 MG 时刻之前先用 `manage_design_style action="get"` 查看一次。
-- **用户给出的具体风格 / 参考**——照做。如果是自定义且尚未为一批 MG 确认过，用户需要先看效果时，就用一个真实计划中的 MG 作为样例让他确认。
-- **笼统或模糊的方向**——clean、premium、modern、professional、polished，或 YouTube 式强调这类品质词是目标，不是视觉语言。遵循当前 MG 工作流的风格对齐关卡：优先给视觉预设选项，或在方向是文字/自定义时用一个代表性 MG 确认。
-- **完全没有视觉方向**——用当前 MG 工作流展示相关的视觉预设选项。口播可以作为目录筛选项（若有）。
-- **"直接做" / "别问"**——从文字稿和画面里挑一个具体的临时方向，然后不做用户风格确认就继续。不要基于这个未经确认的猜测去创建或更新 Design Style。
+- **Active Design Style** — use it unless the user asks to change the overall style. If Project Context names an active Design Style but does not show details, inspect it once with `manage_design_style action="get"` before planning MG moments.
+- **Specific user style / reference** — follow it. If it is custom and not yet confirmed for a batch, use a real planned MG as the sample when the user needs to approve the look.
+- **Generic or vague direction** — quality words such as clean, premium, modern, professional, polished, or YouTube-style emphasis are goals, not a visual language. Follow the active MG workflow's style-alignment gate: prefer visual preset options, or use one representative MG for confirmation when the direction is textual / custom.
+- **No visual direction** — use the active MG workflow to show relevant visual preset options. Talking-head can be used as a catalog filter when available.
+- **"Directly do" / "don't ask"** — choose a concrete temporary direction from the transcript and footage, then continue without user style confirmation. Do not create or update a Design Style from this unconfirmed guess.
 
-Picker 是可视化的 Design Style 选择器。它展示预设缩略图，让用户靠眼睛挑视觉方向，而不是用文字描述风格。
+Picker is a visual Design Style selector. It shows preset thumbnails so the user can choose a visual direction by sight, instead of describing style in words.
 
-1. 调 `manage_design_style`，`action: "list"`。目录返回 `presetId`、`name` 和一段风格摘要（当前构建里没有场景筛选，也没有缩略图）；按名称/摘要和实际视频语境筛出合理选项。
-2. 通过表单/widget 路径把入围预设渲染成简洁的编号选项（名称 + 一行摘要；当前构建没有预设缩略图）。
-3. Picker 是一个对话轮次边界：展示之后停下，等用户提交选择。
-4. 用户选定后，调 `manage_design_style`，`action: "apply"`，带上选中的 `presetId`，然后在编写前用 `action: "get"` 查看已应用的 Design Style。
-5. 如果用户用文字回复而不是点选，就把它当作用户方向，走自定义方向那条路径继续。
+1. Call `manage_design_style` with `action: "list"`. The catalog returns `presetId`, `name`, and a style summary (no scenario filter or thumbnails in this build); shortlist reasonable options by name/summary and the actual video context.
+2. Render the shortlisted presets as concise numbered options via the form/widget route (name + one-line summary; this build has no preset thumbnails).
+3. The picker is a turn boundary: after showing it, stop and wait for the user's submitted selection.
+4. When the user picks an option, call `manage_design_style` with `action: "apply"` and the selected `presetId`, then inspect the applied Design Style with `action: "get"` before authoring.
+5. If the user responds with text instead of picking, treat it as user direction and continue with the custom direction path.
 
-只持久化已确认的视觉语言：
+Persist only confirmed visual language:
 
-- **选定的预设**——用户通过选择视觉选项确认了它。调 `manage_design_style action="apply"`。
-- **自定义方向**——用户接受样例后，就把它当作当前 MG 工作已确认的方向。如果当前环境支持保存项目级 Design Style，且用户接受它作为共享的项目风格，就用商定好的风格事实保存/应用它。
-- **未经确认的猜测**——不要创建或更新 Design Style，包括用户说了"直接做"的情况。
+- **Picked preset** — the user confirmed it by choosing the visual option. Call `manage_design_style action="apply"`.
+- **Custom direction** — after the user accepts the sample, treat it as the confirmed direction for the current MG work. If the current environment supports saving project Design Styles and the user accepts it as the shared project style, save/apply it with the agreed style facts.
+- **Unconfirmed guess** — do not create or update a Design Style, including when the user said "directly do it".
 
-在应用预设、或把自定义方向确认为项目风格之后，用一两句自然的话告诉用户：这就是这支视频现在的视觉风格，之后这支视频里的 MG 默认都跟着它走，随时可以改。
+After applying a preset or confirming a custom direction as the project style, tell the user in one or two natural sentences that this is now the video's visual style, future MGs in this video will follow it by default, and it can be changed or adjusted later.
 
-### MG 在哪里有用
+### Where MG is useful
 
-当内容具备以下特征时，MG 能切实帮助理解或定位：
+MG meaningfully helps comprehension or orientation when the content has:
 
-- **身份 / 语境标签**——说话人姓名、职位、产品名、日期、来源，或一个小的常驻段落标签。
-- **关键信息 / 引语**——一个核心概念、定义、统计数字、结论，或一句值得强调的关键话。
-- **结构化信息**——多个要点、步骤、对比、排行、清单或流程。
-- **章节 / 话题标记**——开场标题、段落标题、话题切换，或段落之间的视觉分隔。
-- **抽象概念**——因果关系、循环、系统、框架，或其它光靠听难以跟上的想法。
+- **Identity / context labels** — speaker name, role, product name, date, source, or a small persistent section label.
+- **Key information / quotes** — a core concept, definition, statistic, conclusion, or key sentence worth emphasizing.
+- **Structured information** — multiple points, steps, comparisons, rankings, lists, or processes.
+- **Chapter / topic markers** — opening titles, section titles, topic transitions, or visual dividers between sections.
+- **Abstract concepts** — cause-effect relationships, cycles, systems, frameworks, or other ideas that are hard to follow verbally.
 
-### 重复使用的组件
+### Repeated Components
 
-一支视频通常应该只有一种视觉语言，但不应该只有一个万能 MG 形状。
+One video should usually have one visual language, but not one universal MG shape.
 
-只有当同一个组件被有意重复出现时才复用 MG 素材：相同的观众任务、相同的信息结构、相同的视觉形态，内容通过属性变化。重复的章节标记、反复出现的段落标签，或反复出现的状态徽章，可以共用一个素材。而开场标题、章节标记、引语、清单、图示、CTA 这类不同任务，通常应该是各自独立的素材，只是共享配色、字体、动态调性、间距和材质处理。
+Reuse a Motion Graphic asset only for intentionally recurring instances of the same component: same viewer task, same information structure, same visual form, and content changed through properties. Repeated chapter markers, recurring section labels, or a repeated status badge can share one asset. Different jobs such as an opening title, chapter marker, quote, list, diagram, and CTA should usually be separate assets that share palette, typography, motion tone, spacing, and material treatment.
 
-被接受的第一支 MG 证明了视觉语言在画面里成立，但它不会自动变成不相关 MG 的模板。
+An accepted first MG proves the visual language works in frame. It is not automatically a template for unrelated MGs.
 
-### 逐个 MG 的决策
+### Per-MG decisions
 
-对口播视频，不要只凭文字稿时间点就开始创建 MG。先看目标帧：文字稿告诉你是什么、什么时候；画面告诉你形态、位置和背景。
+For talking-head videos, do not start MG creation from transcript timing alone. Inspect the target frame first: transcript tells you what and when; the frame tells you form, placement, and background.
 
-在创建 MG 之前，先做四个相互关联的剪辑决策。它们为当前 MG 工作流和之后的时间线摆放做准备。
+Before creating the MG, make four linked editor decisions. They prepare the active MG workflow and the later timeline placement.
 
-| 决策 | 问题 | 产出 |
-| --- | --- | --- |
-| **内容** | 哪个想法值得加一层视觉？ | MG 要表达的信息或视觉事实。 |
-| **时间** | 它应该在语音的哪个点上出现？ | 时间线起点、时长、阅读时长，以及内部动态节拍。 |
-| **形态与位置** | 它是什么类型的 MG，能安全地待在哪里？ | MG 的形态/尺寸，然后在素材创建后做时间线摆放。 |
-| **背景** | 它是叠在口播画面上，还是独占一个时刻？ | 透明叠加，还是不透明/满屏节拍。 |
+| Decision               | Question                                                        | Output                                                          |
+| ---------------------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
+| **Content**            | What idea deserves a visual layer?                              | Message or visual fact expressed by the MG.                     |
+| **Timing**             | When should it land with the speech?                            | Timeline start, duration, read time, and internal motion beats. |
+| **Form and placement** | What kind of MG is it, and where can it live safely?            | MG form / size, then timeline placement after asset creation.   |
+| **Background**         | Is this an overlay on the talking-head shot, or its own moment? | Transparent overlay or opaque / full-screen beat.               |
 
-#### 仅适用于需要 brief 的生成式工作流
+#### Only for generator workflows that require a brief
 
-只有当当前生效的 Motion Graphics 工作流明确要求你为另一个模型或生成器（例如 Gemini / motion-graphic-gen）撰写生成 brief 或请求时，才用这一小节。
+Use this subsection only when the active Motion Graphics workflow explicitly asks you to write a generation brief or request for another model or generator, such as Gemini / motion-graphic-gen.
 
-直接编写类工作流请跳过本小节。如果你是用 `create_motion_graphic_from_code` / `edit_asset` 自己创建或编辑 JSX，就不要使用 `referenceAssetIds`、`:template`、`:style`、角色锚点或 Gemini brief 用语。
+Skip this subsection for direct-authoring workflows. If you are creating or editing JSX yourself with `create_motion_graphic_from_code` / `edit_asset`, do not use `referenceAssetIds`, `:template`, `:style`, role anchors, or Gemini brief language.
 
-对生成式工作流，把视觉语言带进工具调用。目前模板是生成参考，不是直接套用的目标。来自 Design Style 的模板引用和任何其它模板 ID 没有区别。对于新的 MG 素材，只传一个代码参考来源：只有当视觉任务、结构和画布角色都相同时，才用同角色的角色锚点并写 `referenceAssetIds: ["<roleAnchorAssetId>:template"]`；否则直接使用匹配到的模板 ID，例如 `referenceAssetIds: ["<templateId>:style"]`。如果没有模板匹配，就把已确认的 Direction 写进 brief，并且只把已接受的角色锚点用于相同角色。模板的槽位数量不是用户约束：如果用户要的条、行、项或数据点比模板显示的多或少，就生成一个新结构，而不是让用户去凑槽位。
+For generator workflows, carry the visual language into the tool call. For now, templates are generation references, not direct-apply targets. Template refs from a Design Style are no different from any other template ID. For new MG assets, pass one code reference source: same-role role anchor with `referenceAssetIds: ["<roleAnchorAssetId>:template"]` only when the visual job, structure, and canvas role are the same; otherwise use the matched template ID directly, for example `referenceAssetIds: ["<templateId>:style"]`. If no template matches, write the confirmed Direction in the brief and use any accepted role anchor only for the same role. Template slot counts are not user constraints: if the user asks for more/fewer bars, rows, items, or data points than the template shows, generate a new structure instead of asking them to fit the slots.
 
-传了模板或角色锚点时，让 Gemini brief 聚焦在内容、角色/大致形态、背景和画面约束上。细节风格和动态语言交给参考去承载。
+When a template or role anchor is passed, keep the Gemini brief focused on content, role / broad form, background, and frame constraints. Let the reference carry detailed style and motion language.
 
-把前面四个共同决策映射到生成 brief 里是这样：
+Map the four shared decisions into a generator brief like this:
 
-- **内容** → brief 里的 `Content`。
-- **时间** → 时间线起点，只有当 MG 自带节拍时才写内部 `Timing`。内部 `Timing` 说的是每个元素**何时**出现，不是**怎么**动；动态风格留给 Gemini。
-- **形态与位置** → brief 里的 `Size & shape`，不是最终画布摆放。不要把最终的 `left`、`top`、`right`、`bottom`、坐标，或"左下""右上"这类摆放锚点写进 Gemini brief。
-- **背景** → `Background: transparent` 或 `Background: opaque`。
+- **Content** -> `Content` in the brief.
+- **Timing** -> timeline start, plus internal `Timing` only when the MG has its own beats. Internal `Timing` values say _when_ each element appears, not _how_ it moves; leave the motion style to Gemini.
+- **Form and placement** -> `Size & shape` in the brief, not final canvas placement. Do not write final `left`, `top`, `right`, `bottom`, coordinates, or placement anchors such as "lower-left" / "top-right" into the Gemini brief.
+- **Background** -> `Background: transparent` or `Background: opaque`.
 
-#### 1. 内容
+#### 1. Content
 
-选 MG 要表达的东西，而不只是它要重复的文字。内容可以是说话人身份、提炼过的引语、关键术语、统计数字、清单、对比、关系图、章节标记，或该要点的其它视觉呈现。
+Choose what the MG expresses, not just what text it repeats. The content may be a speaker identity, distilled quote, key term, statistic, list, comparison, relationship diagram, chapter marker, or another visual representation of the point.
 
-#### 2. 时间
+#### 2. Timing
 
-先选时间线锚点。MG 应该落在相关语音节拍或段落边界上，而不是等说话人已经把观点说完才姗姗来迟。用 `find_transcript`；当 MG 有内部节奏（比如列表项逐个出现或多步揭示）时，传 `includeWordTimestamps: true`。
+Choose the timeline anchor first. The MG should land with the relevant speech beat or section boundary, not trail after the speaker has already made the point. Use `find_transcript`; pass `includeWordTimestamps: true` when the MG has internal rhythm such as list items appearing one by one or multi-step reveals.
 
-内部时间值相对于 MG 自身的起始时间书写。时间线 item 的起点是视频里的绝对位置；内部时间是那个起点之后 MG 内部的节奏。观点讲完就退出。
+Write internal timing values relative to the MG's own start time. The timeline item start is the absolute video position; internal timing is the MG-internal rhythm after that start. Exit when the point is fully made.
 
-#### 3. 形态与位置
+#### 3. Form and placement
 
-在创建素材之前，先定 MG 的形态和大概的摆放区域。当前 MG 工作流负责生成图形；生成完后把成品素材摆到视频画布上。
+Choose the MG form and likely placement region before creating the asset. The active MG workflow creates the graphic; place the finished asset on the video canvas afterward.
 
-摆放原则：
+Placement principles:
 
-- **保护主体和安全区。** 避开说话人的脸、头、头发、眼镜、嘴、下巴，重要的产品或物体，相关的手势，字幕/说明文字，以及已有的屏上元素。
-- **保持字幕区干净。** 如果可能出现字幕，底部叠加要位于字幕带上方，不要和字幕抢位或盖住字幕。
-- **把叠加和满屏 MG 区分开。** 主体/安全区保护针对的是叠在 A-roll 上的元素。满屏 MG 是一个有意的视觉节拍，在它持续的这段时间里取代 A-roll，所以它可以盖住说话人和背景。
-- **保持构图有意图。** MG 应该支撑说话人和信息。它不应该看起来像随手贴的贴纸、和脸抢注意力，或让画面失去平衡。
+- **Protect the subject and safe zones.** Avoid the speaker's face, head, hair, glasses, mouth, chin, important products or objects, relevant hand gestures, captions/subtitles, and existing on-screen elements.
+- **Keep the caption/subtitle area clear.** If captions may appear, bottom overlays must sit above the caption band, not compete with or cover subtitles.
+- **Separate overlays from full-screen MGs.** Subject/safe-zone protection applies to overlays on top of A-roll. A full-screen MG is an intentional visual beat that replaces the A-roll for its duration, so it may cover the speaker and background.
+- **Keep the composition intentional.** The MG should support the speaker and message. It should not look like a random sticker, compete with the face, or make the frame feel unbalanced.
 
-常见形态与区域：
+Common forms and areas:
 
-| 内容类型 | 常见形态 | 常见区域 |
-| --- | --- | --- |
-| **身份 / 语境** | 姓名条或小的语境标签 | 优先下三分之一；视镜头而定放左下或右下。 |
-| **关键信息 / 引语** | 排版式引语、拉引语或强调处理 | 下中/下三分之一；底部拥挤时用侧边区域；重大金句、结论或停顿可用满屏。 |
-| **结构化信息** | 清单、步骤堆叠、对比版式或紧凑图示 | 左/右侧边区域或底部横向区域；信息密到叠加放不下时用满屏。 |
-| **章节 / 话题标记** | 满屏标题、标题叠加或侧边标题面板 | 强开场或段落切换用满屏；轻提示用下三分之一；一侧明显留白时用侧边面板。 |
-| **抽象概念** | 概念视觉、关系图、循环、框架、图表 | 轻量且能在字幕上方读清时用下三分之一；更密时用侧边区域或满屏。 |
-| **微小辅助标签** | 徽章、状态标签、类 logo 标记、段落标记 | 只有这类才适合放在顶部角落。不要把左上/右上当作主要开场标题或章节标题的默认位置。 |
+| Content type                 | Common form                                               | Common area                                                                                                                     |
+| ---------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Identity / context**       | Name tag or small context label                           | Lower-third first; lower-left or lower-right depending on the shot.                                                             |
+| **Key information / quotes** | Typographic quote, pull quote, or emphasis treatment      | Lower-center / lower-third; side area if the bottom is crowded; full-screen for a major punchline, conclusion, or pause.        |
+| **Structured information**   | List, step stack, comparison layout, or compact diagram   | Left/right side areas or bottom horizontal area; full-screen if the information is too dense for an overlay.                    |
+| **Chapter / topic markers**  | Full-frame title, title overlay, or side title panel      | Full-screen for a strong intro or section break; lower-third for a light cue; side panel when one side has obvious open space.  |
+| **Abstract concepts**        | Concept visual, relationship map, cycle, framework, chart | Lower-third if light and readable above captions; side area or full-screen if denser.                                           |
+| **Tiny auxiliary labels**    | Badge, status label, logo-like mark, section marker       | Top corners can work here only. Do not use top-left/top-right as the default home for primary opening titles or chapter titles. |
 
-决定素材形状时，用 MG 自身的形态约束，而不是最终画布摆放。好的例子："下三分之一式姓名条""紧凑侧边处理""底部横向长条""满屏标题节拍"。除非 MG 就是有意做满屏，否则不要把最终画布坐标烘焙进素材。
+Use the MG's intrinsic form constraints, not final canvas placement, when deciding asset shape. Good examples: "lower-third-style name tag", "compact side treatment", "bottom horizontal strip", "full-screen title beat". Do not bake final canvas coordinates into the asset unless the MG is intentionally full-frame.
 
-对姓名条这类熟悉的形态，给出形态和内容，不要过早强加尺寸。对受约束的叠加，描述大概的目标形态或可用区域。对满屏 MG，在 **Size & shape** 里把形态写明确，并选 `Background: opaque`。
+For familiar forms like speaker name tags, give the form and content without forcing dimensions early. For constrained overlays, describe the intended rough form or usable area. For full-screen MGs, make the form explicit in **Size & shape** and choose `Background: opaque`.
 
-从目标截图中，只在影响可读性时带上画布调性，例如 `Other context: dark interior scene — keep the design bright/light enough to read clearly.`
+From the target screenshot, include canvas tone only when it affects legibility: for example, `Other context: dark interior scene — keep the design bright/light enough to read clearly.`
 
-#### 4. 背景
+#### 4. Background
 
-按形态选背景：
+Choose background from the form:
 
-- 口播叠加用 `Background: transparent`：下三分之一、侧边处理、引语处理、紧凑图示，以及其它叠在 A-roll 上的图形。透明根节点内部仍可以有半透明或实心面板。
-- 当 MG 本身就是一块视觉表面时用 `Background: opaque`：满屏开场标题、强章节节拍、满屏信息版式，以及满屏强调时刻。
-- 对满屏不透明 MG，不要在下面另加一个 `solid` item 当色垫。MG 自己拥有整个画面；改它的 `bgColor` / `transparentBackground` 属性即可。不要创建临时 solid 兜底；如果在用不透明生成式 MG 替换旧的"透明 MG + solid 兜底"时遇到它，两个兜底件都要删掉，而不只是删旧 MG。
+- Use `Background: transparent` for talking-head overlays: lower-thirds, side treatments, quote treatments, compact diagrams, and other graphics that sit over A-roll. A transparent root may still contain internal semi-transparent or solid panels.
+- Use `Background: opaque` when the MG is its own visual surface: full-screen opening titles, strong chapter beats, full-screen information layouts, and full-screen emphasis moments.
+- For full-screen opaque MGs, do not add a separate `solid` item underneath as a color matte. The MG owns the frame; change its `bgColor` / `transparentBackground` properties instead. Do not create temporary solid fallbacks; if you encounter an old transparent-MG-plus-solid fallback while replacing it with an opaque generated MG, delete both fallback pieces, not only the old MG.
 
-默认用透明叠加，除非确实要做一个满屏节拍——默默猜成满屏/不透明，正是会盖住说话人脸或让画面变空的原因。
+Default to a transparent overlay unless a full-screen beat is intended — guessing full-screen/opaque silently is what covers the speaker's face or blanks the frame.
 
-#### 摆放与复核
+#### Place and review
 
-- 用 `edit_item` 摆放（新增/更新）。一旦确定画面，优先用明确的矩形：`left/top/width/height` 直接定位，或在右/下边距更清楚时用 `right/bottom/width/height`。
-  - **`left`**——明确的 x 位置。**`right`**——距画布右边的边距。不要同时传。
-  - **`top`**——明确的 y 位置。**`bottom`**——距画布底边的边距，与 `right` 对称，例如 `{ right: 80, bottom: 150, width: 500, height: 350 }` 表示右下叠加。字幕安全默认值：`bottom: 162`（横屏 1080p）或 `bottom: 576`（竖屏 1080×1920）。不要同时传 `top` 和 `bottom`。
-- 叠加用自然尺寸素材：MG 素材的 `width` / `height` 应该紧贴局部可见构图，而不是项目画布。把这个局部素材摆到时间线上再缩放。只有当可见设计有意铺满整帧时，才用时间线尺寸的素材。
-- 来自 `track_progress` / 项目状态的素材尺寸是缩放和摆放的实用参考，不是最终判据。
-- 用截图验证。一次工具调用里传多帧——稳定状态会和任何瞬态中间帧一起出现。**下结论前先对比帧**：只在一部分帧里出现的截断、缺元素或"设计坏了"，那是动画，不是真缺陷。不清楚的话，先围绕可疑帧再截几帧，再动手调。以稳定帧为准。有多个已摆放的 MG 时，把它们的稳定帧批量放进一次调用。
-- 检查整帧：人脸/头部是否清楚，重要物体和手势是否清楚，需要时字幕区是否干净，MG 是否完整可见，MG 内容是否正确，文字是否可读，可读文字之间有没有重叠，构图是否平衡且有意图。
-- 如果不合格，先调位置和尺寸。位置/尺寸救不回来时，改素材或换设计形态。任何有意重复使用的组件，先在目标帧上验证，再铺开。
+- Place with `edit_item` (adds/updates). Prefer an explicit rectangle once you know the frame: `left/top/width/height` for direct placement, or `right/bottom/width/height` when right/bottom margins are clearer.
+  - **`left`** — explicit x position. **`right`** — margin from the canvas right edge. Do not pass both.
+  - **`top`** — explicit y position. **`bottom`** — margin from the canvas bottom edge, symmetric with `right`, e.g. `{ right: 80, bottom: 150, width: 500, height: 350 }` for a bottom-right overlay. Caption-safe defaults: `bottom: 162` (landscape 1080p) or `bottom: 576` (portrait 1080×1920). Do not pass both `top` and `bottom`.
+- Use a natural-box asset for overlays: the MG asset `width` / `height` should tightly bound the local visible composition, not the project canvas. Place and scale that local asset on the timeline. Use timeline-sized assets only when the visible design intentionally spans the whole frame.
+- Asset dimensions from `track_progress` / project state are practical aids for resizing and placement, not the final judge.
+- Verify with screenshots. Pass multiple frames in one tool call — settled state appears alongside any transient mid-animation frames. **Compare frames before concluding**: apparent truncation, missing elements, or "broken design" visible in only some of the batch is animation, not a real flaw. If unclear, re-capture more frames around the suspect one before adjusting anything. Judge from the settled frames. For multiple placed MGs, batch their settled frames into a single call.
+- Check the full frame: face/head is clear, important objects and gestures are clear, caption zone is clear when relevant, MG is fully visible, MG content is correct, text is legible, no readable text overlaps, and the composition feels balanced and intentional.
+- If it fails, first adjust position and size. If position/size cannot make it work, edit the asset or change the design form. Verify each intentionally recurring component on a target frame before expanding it.
 
 ---
 
 ## B-roll
 
-### 目标
+### Goal
 
-丰富画面层次，并盖住 A-roll 剪辑留下的跳切。
+Enrich visual layers and cover jump cuts left by A-roll editing.
 
-### B-roll 在哪里有用
+### Where B-roll is useful
 
-- **盖跳切**——A-roll 剪辑留下肉眼可见的跳切，用户想遮掉时
-- **把具体指涉可视化**——说话人提到某个物体或场景，展示出来有帮助时
+- **Cover jump cuts** — when A-roll editing leaves visible jump cuts the user wants to hide
+- **Visualize specific references** — when the speaker mentions objects or scenes that benefit from showing
 
-B-roll 依赖是否有合适的素材，而且增加制作成本——把它当作可选的增强项，而不是默认动作。只在用户主动选择，或确实有明确视觉问题要解决时才用。
+B-roll depends on having suitable footage and adds production effort — treat it as an optional enhancement, not a default. Apply only when the user opts in or there's a clear visual problem to solve.
 
-### 来源
+### Sources
 
-素材可以来自三个地方：项目素材库里已有的片段；通过 `search_stock_media` 搜索，再用返回的导入参数调 `push_asset` 引入的图库素材；或通过 `video-gen` 技能做 AI 生成（配置了 Seedance / Kling / Hailuo 时）。按用户需求选；不清楚就提前跟用户对齐。
+Footage can come from three places: clips already in the project library, stock via `search_stock_media` then `push_asset` with the returned import args, or AI generation via the `video-gen` skill (Seedance / Kling / Hailuo when configured). Pick based on the user's need; if unclear, align with the user upfront.
 
-### 怎么摆
+### How to place
 
-不要在开头或结尾 3 秒内切走。对密集跳切（间隔小于 3s），用一个长切镜一次盖住多处。默认不要和 MG 重叠。
+Don't cut away in the first or last 3 seconds. For dense jump cuts (<3s apart), use one long cutaway covering multiple. Don't overlap with MG by default.
 
-先决定 B-roll 的模式：
+First decide the B-roll mode:
 
-- **满屏切镜**：在该时刻取代说话人画面。用户要求把 B-roll 满屏展示、要盖跳切，或 B-roll 需要占满整帧才看得清时用它。
-- **PiP / 小窗叠加**：保持说话人可见。用户要求叠加/PiP、现有剪辑风格明显使用小窗 B-roll、用户说说话人可以保留可见，或 B-roll 只是一个快速辅助画面时用它。
+- **Full-screen cutaway** replaces the talking head for that moment. Use it when the user asks to show the B-roll full screen, cover jump cuts, or the B-roll needs the full frame to be readable.
+- **PiP / small-window overlay** keeps the talking head visible. Use it when the user asks for overlay/PiP, the existing edit style clearly uses small-window B-roll, the user says the talking head can remain visible, or the B-roll is a quick supporting visual.
 
-如果用户只说"加 B-roll"，而现有剪辑也没暗示模式，问一次："这些是要做成满屏切镜，还是圆角小窗 PiP 叠加？"
+If the user only says "add B-roll" and the mode is not implied by the existing edit, ask once: "Should these be full-screen cutaways or small rounded-corner PiP overlays?"
 
-对 **PiP / 小窗叠加**：
+For **PiP / small-window overlay**:
 
-1. 先看目标时间线画面。在实际镜头里比较候选落点矩形。排除会盖住 A-roll 人脸/头部、嘴、重要手势、字幕/说明文字、已有叠加、产品/logo 或其它可见主体的区域。在安全的候选里，选一个能把 B-roll 展示到有用可读尺寸的矩形，优先最大的空白或低信息区，同时保持构图平衡。
-2. 看 B-roll 源帧。识别主要主体/动作、受保护信息和可以牺牲的区域。任何可读的文字/UI、姓名/头衔、logo、品牌条、产品边缘、卡片、海报或文档边界，默认都受保护，除非用户明确同意牺牲那一处具体信息。
-3. 在选定的落点矩形内，把叠加摆到有用的尺寸。保持 B-roll 的受保护信息可见/可读，A-roll 的受保护内容不被遮挡。当另一个候选有更多可用空白时，不要默认用固定角落或下三分之一位置。
-4. 默认把媒体 item 的原生 `borderRadius` 设为 24–36，除非要求的是方形/直角风格。不要只为做普通圆角 PiP 就加 mask/effect；只有在特殊形状，或 item 类型无法使用原生 `borderRadius` 时才用 effect。
-5. 报告成功之前，先对受影响的那一帧截图。如果唯一不遮挡的 PiP 小到看不懂，就改满屏切镜、换一个源时刻/素材，或请用户在取舍之间做选择。
+1. Inspect the target timeline frame first. Compare candidate destination rectangles in the actual shot. Exclude areas that would cover the A-roll's face/head, mouth, important gestures, captions/subtitles, existing overlays, products/logos, or other visible subjects. Among safe candidates, choose a rectangle that can show the B-roll at a useful readable size, preferring the largest blank or low-information area while keeping the composition balanced.
+2. Inspect the B-roll source frame(s). Identify the primary subject/action, protected information, and safe-to-lose areas. Any readable text/UI, name/title, logo, brand strip, product edge, card, poster, or document boundary is protected by default unless the user explicitly approves losing that exact information.
+3. Place the overlay at a useful size inside the chosen destination rectangle. Keep the B-roll's protected information visible/readable and the A-roll's protected content unobstructed. Do not default to a fixed corner or lower-third position when another candidate has more usable empty area.
+4. Set the media item's native `borderRadius` to 24-36 by default unless the requested style is square/sharp. Do not add a mask/effect solely for ordinary rounded PiP corners; use effects only for special shapes or item types that cannot use native `borderRadius`.
+5. Screenshot the affected frame before reporting success. If the only non-obstructive PiP would be too small to understand, switch to full-screen cutaway, choose a different source moment/asset, or ask the user to choose the trade-off.
 
-对 **满屏切镜**：
+For **full-screen cutaway**:
 
-1. 选 fit 之前，先比较源宽高比和画布宽高比；不要跳过这一步直接默认 cover。宽高比接近时，比如竖屏源进竖屏画布，或横屏进横屏且差异小于约 30%，先用满画布 `fit:"cover"` 让 B-roll 独占这个视觉节拍。
-2. 宽高比差异较大时，比如横屏素材进竖屏画布、竖屏素材进横屏画布，不要直接用 cover 摆放。如果还没看过源，先用 `view_asset_frames` 查看源，再决定 fit。用 `read_script` 挑有代表性的视频时刻，当受保护区域不明显时，用 `view_asset_frames` 多采几帧。
-3. 判断受保护信息是否会分布在 cover 要裁掉的那部分区域上。任何可读的文字/UI、姓名/头衔、logo、品牌条、产品边缘、卡片、海报、文档边界，或分布在画面两侧的主体，默认都受保护。
-4. 查看之后，只有当受保护信息能挺过裁切时（比如单个居中主体、边缘低信息量），cover 或安全裁切才可接受。低信息量的情境素材，比如风景、人群镜头，或其它没有必须保留的具体文字或主体的氛围/情境素材，即使宽高比差异很大也可以用 cover。
-5. 如果受保护信息会丢失，比如边缘附近的文字/logo、两侧都有主体，或像赛程表、比赛海报这种宽幅信息版式，就给前景用 `fit:"contain"`，再加一层有意的满屏背景，比如与剪辑风格相符的不透明 MG 背景/色垫，或模糊/放大的复制背景层。如果尝试 cover 只会裁掉一个紧凑的主体/动作，且能在不遮住其它受保护信息的前提下补救，就试一个更安全的重构图/裁切，把源的受保护框完整移进画布、更靠近预期的视觉中心。
-6. fit 策略要按每个源素材单独应用，不能当成批量默认。即使用户要的是切镜，也不要没检查每个源的宽高比和受保护内容，就批量用 `fit:"cover"` 摆多个图片或片段。
-7. 对最终帧截图，和查看过的源帧对比。确认前景仍然保住了源的受保护信息，而不只是最终画布看起来被填满了。
+1. Compare the source aspect ratio with the canvas aspect ratio before choosing fit; do not default to cover without this check. For close aspect ratios, such as portrait source into portrait canvas or landscape into landscape with less than about 30% difference, use a full-canvas `fit:"cover"` first-pass so the B-roll owns the visual beat.
+2. For substantially different aspect ratios, such as landscape media in a vertical canvas or vertical media in a landscape canvas, do not place directly with cover. Inspect the source with `view_asset_frames` before choosing fit if you have not already viewed it. Use `read_script` to choose representative video moments and sample more frames with `view_asset_frames` when the protected region is not obvious.
+3. Identify whether protected information would be distributed across the area that cover would crop. Any readable text/UI, name/title, logo, brand strip, product edge, card, poster, document boundary, or subject on both sides of the frame is protected by default.
+4. After inspection, cover or safe crop is acceptable only if protected information would survive the crop, such as a single centered subject with low-information edges. Low-information contextual media, such as scenery, crowd shots, or other mood/context footage with no specific text or subject that must be preserved, can use cover even with a substantial aspect-ratio difference.
+5. If protected information would be lost, such as text/logos near edges, subjects on both sides, or a wide information layout like a fixture table or match poster, use `fit:"contain"` for the foreground and add a deliberate full-screen background such as an opaque MG background/matte that matches the edit or a blurred/enlarged duplicate/background layer. If a cover attempt only trims a compact subject/action that can be recovered without hiding other protected information, try a safer reframe/crop that moves the source protection frame fully into the canvas and closer to the intended center of attention.
+6. Apply the fit strategy per source asset, not as a batch default. Even when the user asks for cutaways, do not batch-place multiple images or clips with `fit:"cover"` without checking each source's aspect ratio and protected content first.
+7. Screenshot the final frame and compare it with the inspected source frame(s). Verify that the foreground still preserves the source's protected information, not just that the final canvas looks filled.
 
-剪辑完成后，回读你改过的确切 item id。素材出现在素材库里，不等于它在时间线上；`read_project` 必须显示新增/更新的 B-roll item。如果结果涉及裁切、fit、缩放、叠加摆放或满屏构图取舍，报告成功前先用截图或视觉分析验证受影响的帧，然后修掉失败的源/落点保护问题，或说明不可避免的取舍。目标 item 没有变化时，不要报告成功。
-
----
-
-## 多机位（同一次拍摄的多个机位）
-
-当用户有**两个或更多机位在录同一时刻**——线索如 "both angles"、"the same interview"、"multi angles"、"alternate angle"、"cut to the other angle"、"angle switch"、换角度、两个机位——切到另一个机位意味着画面变了，但**音频和口型必须仍然对齐**到那一条 take。
-
-**不要用 `edit_item` 手算源偏移去把各机位对上。** 手动偏移会在底层参考机位被剪过的任何位置产生漂移，而漂移只会在之后以口型不同步的形式暴露出来。改用 **`multicam_sync`** 工具：它跑编辑器的音频对齐引擎，重新定位每个机位片段，让它的画面匹配参考机位的音频。传入各机位片段的 `itemIds`（参考机位加上跟随机位）；可选地用 `referenceItemId` 指定参考。
-
-关键约束：**一个跨过参考机位剪切点的单独切镜片段**无法作为一整块被对齐——先用 `split_item` 在该剪切点切开，再把两块都传给 `multicam_sync`，让每块对应它下面的参考段落。
-
-`multicam_sync` 在用户的编辑器里运行（不走后端）：如果它报告编辑器没打开，请用户打开项目，然后重试。应用之后，回读项目确认对齐结果。
+After editing, read back the exact item ids you changed. An asset appearing in the library is not proof it is on the timeline; `read_project` must show the new/updated B-roll items. If the result involved crop, fit, scale, overlay placement, or a full-screen composition trade-off, verify the affected frame with a screenshot or visual analysis before reporting success, then fix failed source/destination protection or state the unavoidable trade-off. Do not report success if the target items are unchanged.
 
 ---
 
-## 轨道角色（开启自动闪避）
+## Multicam (multiple camera angles of the same take)
 
-轨道的 `role` 是驱动音频混音的单一声明。用 `edit_track` 设置它，引擎就会推导出无缝闪避——跟随轨在语音下压下去，在空隙里升回来——不需要你手动调任何音量。只有两种角色，外加关闭：
+When the user has **two or more cameras recording the same moment** — cues like "both angles", "the same interview", "multi angles", "alternate angle", "cut to the other angle", "angle switch", 换角度, 两个机位 — switching to another angle means the picture changes but the **audio and lip-sync must stay matched** to the take.
 
-- 说话 / 访谈 / 讲课轨道（以及任何旁白 / 解说）是**锚点**：把它的 `role` 设为 `anchor`。这是所有其它内容闪避的对象——设了它，才有东西可躲。
-- 背景音乐、环境底噪，以及应当压在语音下面的 b-roll 音频底 → **跟随轨**：设 `role: follower`（自动躲开每个锚点）。
-- 短音效（SFX）、重音、撞击、whoosh、点击等剪辑点缀，通常不参与闪避 → 除非用户明确想把这些点缀也压在语音下，否则它们的轨道角色留空。
-- 任何应当不参与闪避的内容 → `role` 留空（none）。
+**Do not hand-compute source offsets with `edit_item` to line angles up.** Manual offsets drift wherever the underlying reference angle was cut, and the drift only shows up later as out-of-sync lips. Use the **`multicam_sync`** tool instead: it runs the editor's audio-based alignment engine and repositions each angle clip so its picture matches the reference angle's audio. Pass the angle clips' `itemIds` (the reference plus the follower angle(s)); optionally name the `referenceItemId`.
 
-没有角色的轨道行为和现在完全一样——角色是增量且安全的，只在内容让职责显而易见的地方设置即可。
+Key constraint: a **single cutaway clip that spans a cut in the reference angle** can't be aligned as one piece — split it at that cut with `split_item` first, then pass both pieces to `multicam_sync` so each maps to the reference segment beneath it.
 
-**先读现有布局。** 在创建轨道或摆放新片段之前，先读当前的轨道名和角色——如果已经有一条轨道为这类内容打过标签（名为 "Music" 的 `follower`、名为 "VO" 的 `anchor`），就把新片段放进去并沿用它的角色；只有当没有合适的轨道时才新建。**先整理再分配——角色是按轨道的，所以目标是每条轨道一个角色。** 如果同类内容散在多条轨道上（比如人声同时在 A1 *和* A3），先把它合并到一条轨道上：用 `edit_item` 移动片段（`updates[].trackId`），再用 `edit_track` 按 id 删除清空的那条轨道。然后再分配一次角色。整理轨道时，按混音师读工程的习惯堆叠——**人声/VO 放在 A1，最上面的音频车道；音乐放它下面**——并给每条起个短名，比如 "VO" 或 "Music"，让说话内容容易找。这是合理默认，不是硬规则；当布局本该不同时，以用户意图为准。不过要保持有意的分隔——两个**不同**的说话人、时间上重叠的片段，或有意的分层，各自留在自己的轨道上（并且各自仍要拿到角色）。分配之后，回读项目，确认每条该锚定/闪避的轨道都到位，且没有动过音乐的基础音量。
+`multicam_sync` runs in the user's editor (no backend path): if it reports the editor isn't open, ask the user to open the project, then retry. After it applies, read the project back to confirm the alignment.
 
 ---
 
-## 背景音乐
+## Track roles (turn on auto-ducking)
 
-### 目标
+A track's `role` is the single declaration that drives the audio mix. Set it with `edit_track` and the engine derives a seamless duck — followers dip under speech, then rise back in the gaps — without you hand-adjusting any volume. There are only two roles, plus off:
 
-烘托情绪，并抹平语音里的细碎空隙。
+- The talking / interview / lecture track (and any voiceover / narration) is the **anchor**: set its `role` to `anchor`. This is the track everything else ducks under — set it, or nothing ducks.
+- Background music, ambient beds, and b-roll audio beds that should sit under speech → the **follower**: set `role: follower` (auto-ducks under every anchor).
+- Short sound effects (SFX), stingers, hits, whooshes, clicks, and other editorial accents usually stay out of ducking → leave their track role unset unless the user explicitly wants those accents tucked under speech.
+- Anything that should stay out of ducking → leave its `role` unset (none).
 
-### 原则
+A track with no role behaves exactly as today — roles are additive and safe, so you only set them where the content makes the job obvious.
 
-- 用 `edit_track` 把音乐轨道的 `role` 设为 `follower`（并把说话轨道的 `role` 设为 `anchor`）。这一对设置就开启了自动闪避——引擎在语音下压低音乐，在空隙里把它抬回来。
-- 让 `edit_track` 在可能时从当前时间线的响度初始化 `audioRouting.duckDepthDb`。只有当用户明确想让音乐在语音下更响或更轻时，才自己传 `audioRouting.duckDepthDb`。
-- 默认保持 BGM 片段的基础 `decibelAdjustment` 自然。不要先用很大的负向片段增益把音乐预先压下去，同时又设手动 `duckDepthDb`；只有用户明确要求整体底噪更低、且语音闪避更强/更弱时，才两者都做。
-- 默认不要把短音效（SFX）或重音放在跟随轨上。把它们放在剪辑上的对应时刻，只在明显过响或过轻时调 item 音量。
-- 不要有突出的人声歌词
-- 用 `audioFadeIn` / `audioFadeOut` 做 BGM 淡入淡出，单位是秒，通常 1–2 秒。不要给这些字段传帧数。
-- 调性要和内容相符
-
-### 对齐时长
-
-在 A-roll 时间定稿之后，把 BGM 对齐到最终视频范围。目标时长从 BGM 起点算到真实内容结束（视频 / 视觉 / 语音 item），不包括 BGM 本身，这样音乐永远不会把渲染拉长。
-
-- 除非用户指定了不同的 BGM 起点，否则从第 0 帧开始 BGM。
-- 生成的 BGM 比目标长时，在 BGM 起点放一个 `audio` item，把时长设成目标时长，再加淡出。不要让整段音乐素材跑到最后一个视觉 item 之后。
-- 生成的 BGM 比目标短时，不要把单个 audio item 拉伸到超过素材长度；它会以静音结尾。改用多个 `audio` item 平铺，直到覆盖目标。
-- 平铺 BGM 之前，先算清覆盖整个目标时长需要几段，把计划中的 1–2 秒重叠算进去。一次把所有段摆好，让整条时间线都被覆盖，然后裁最后一段到目标终点。
-- 平铺 BGM 时用交替的音频轨道（比如 A2/A3），让相邻重复段能重叠 1–2 秒。在重叠区给前一段做淡出、下一段做淡入。
-
-### 引擎如何闪避音乐
-
-音乐轨道的 `role` 是 `follower` 之后，闪避就是自动的：引擎在可听的 `anchor` 轨道（说话/人声）下压低该轨道，在停顿和结尾处抬回满音量。这需要两半都到位——音乐轨道有 `role: follower` **且**说话轨道有 `role: anchor`（见上文"轨道角色"）。如果没有任何东西被设为 `anchor`，就不会有闪避，音乐保持满音量。
-
-把音乐设到一个没有语音处听起来正常、可闻的基础音量。要调语音下的下压深度，改跟随轨道的 `audioRouting.duckDepthDb`；否则就不设它，让 `edit_track` 在可用时从时间线响度自动初始化。不要用大幅降低片段音量、同时手动加深闪避的方式去解决语音清晰度。要让某条轨道完全不参与闪避（比如一个应该冲出来的重音），把它的 `role` 留空（none）。
+**Read the existing layout first.** Before creating tracks or placing new clips, read the current track names and roles — if a track is already tagged for this content (a `follower` named "Music", an `anchor` named "VO"), put the new clip there and match its role; only make a new track when nothing fits. **Organize before you assign — roles are per-track, so aim for one role per track.** If the same kind of content is scattered across several tracks (e.g. the voice on A1 _and_ A3), consolidate it onto one track _first_: move the clips with `edit_item` (`updates[].trackId`), then delete the emptied track by id with `edit_track`. Then assign the role once. While you're laying tracks out, stack them the way a mixer reads a session — **voice/VO on A1, the top audio lane; music below it** — and give each a short name like "VO" or "Music" so the spoken word stays easy to find. A sensible default, not a rule; follow the user's intent when the layout should differ. Keep deliberate separation, though — two _different_ speakers, clips that overlap in time, or intentional layering each stay on their own track (and each still gets its role). After assigning, read the project back to confirm every track that should anchor/duck does, and that you left the music's base volume alone.
 
 ---
 
-## 字幕
+## Background Music
 
-### 目标
+### Goal
 
-用屏上文字提升可访问性和参与度。
+Set the mood and smooth over micro-gaps in speech.
 
-**字幕是从源音频转写出来的——永远和说话人的语言一致。不支持语言之间的翻译。** 不要问用户想要什么语言的字幕；按源音频语言 + 目标画面比例挑预设。
+### Principles
 
-### 预设
+- Set the music track's `role` to `follower` with `edit_track` (and the talking track's `role` to `anchor`). That single pair turns on auto-ducking — the engine dips the music under speech and lifts it back in the gaps.
+- Let `edit_track` initialize `audioRouting.duckDepthDb` from the current timeline loudness when it can. Pass `audioRouting.duckDepthDb` yourself only when the user explicitly wants the music louder or softer under speech.
+- Keep the BGM clip's base `decibelAdjustment` natural by default. Do not pre-duck music with a large negative clip gain, then also set manual `duckDepthDb`; only do both when the user explicitly asks for a lower overall bed and a stronger / weaker speech duck.
+- Do not put short sound effects (SFX) or stingers on follower tracks by default. Place them at their editorial moment and adjust item volume only if they are clearly too loud or too quiet.
+- No prominent lyrics
+- Fade BGM in/out with `audioFadeIn` / `audioFadeOut` in seconds, usually 1-2 seconds. Do not pass frame counts to these fields.
+- Tone matches content
 
-只用 `edit_captions` 内置的预设名。没有 `youtube` 或 `vox` 字幕预设；平台名描述的是目标视频，不是预设名。
+### Fit to duration
 
-| 源音频语言 | 画面比例 | 推荐预设 |
-| --- | --- | --- |
-| 英语 | 竖屏 9:16 | tiktok 或 submagic |
-| 英语 | 横屏 16:9 | studio 或 submagic |
-| 中文 | 任意 | netflix |
+Fit BGM to the final video extent after A-roll timing is finalized. The target duration runs from the BGM start to the real content end (video / visual / speech items), excluding the BGM itself so music never extends the render.
+
+- Unless the user specifies a different BGM start, start BGM at frame 0.
+- If generated BGM is longer than the target, place one `audio` item at the BGM start, set its duration to the target duration, and add a fade out. Do not let the full music asset run past the last visual item.
+- If generated BGM is shorter than the target, do not stretch one audio item past the asset length; it will end in silence. Instead, tile multiple `audio` items until the target is covered.
+- Before placing tiled BGM, calculate how many segments are needed to cover the full target duration, accounting for the planned 1-2 second overlaps. Place all segments in one pass so the whole timeline is covered, then trim the final segment to the target end.
+- For tiled BGM, use alternating audio tracks (for example A2/A3) so adjacent repeats can overlap by 1-2 seconds. Fade out the earlier segment and fade in the next segment over the overlap.
+
+### How the engine ducks music
+
+Ducking is automatic once the music track's `role` is `follower`: the engine dips the track under audible `anchor` tracks (the speech / voice), and lifts it back to full level in pauses and the outro. This needs both halves — the music track has `role: follower` **and** the talking track has `role: anchor` (see Track roles above). If nothing is set to `anchor`, nothing ducks and the music stays at full level.
+
+Set music to a normal, audible base level where there is no speech. To tune the dip under speech, update the follower track's `audioRouting.duckDepthDb`; otherwise leave it unset and let `edit_track` auto-initialize from timeline loudness when available. Do not solve speech clarity by heavily lowering the clip and also manually deepening the duck. To keep a track out of ducking entirely (for example a stinger that should punch through), leave its `role` unset (none).
+
+---
+
+## Captions
+
+### Goal
+
+Improve accessibility and engagement with on-screen text.
+
+**Captions are transcribed from the source audio — they always match the speaker's language. Translation between languages is not supported.** Don't ask the user what language they want captions in; pick the preset by source audio language + target aspect ratio.
+
+### Presets
+
+Use only built-in `edit_captions` preset names. There is no `youtube` or `vox` caption preset; platform names describe the target video, not a preset name.
+
+| Source audio language | Aspect Ratio   | Recommended Preset |
+| --------------------- | -------------- | ------------------ |
+| English               | Portrait 9:16  | tiktok or submagic |
+| English               | Landscape 16:9 | studio or submagic |
+| Chinese               | Any            | netflix            |
