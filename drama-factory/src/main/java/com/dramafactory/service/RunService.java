@@ -7,7 +7,9 @@ import com.dramafactory.model.DramaProject;
 import com.dramafactory.model.Episode;
 import com.dramafactory.model.FinalCut;
 import com.dramafactory.model.Run;
+import com.dramafactory.model.RunApproval;
 import com.dramafactory.model.RunStatus;
+import com.dramafactory.model.StepAttempt;
 import com.dramafactory.model.VideoTask;
 import com.dramafactory.model.VideoTaskStatus;
 
@@ -16,7 +18,9 @@ import com.dramafactory.repository.AgentStepRepository;
 import com.dramafactory.repository.DramaProjectRepository;
 import com.dramafactory.repository.EpisodeRepository;
 import com.dramafactory.repository.FinalCutRepository;
+import com.dramafactory.repository.RunApprovalRepository;
 import com.dramafactory.repository.RunRepository;
+import com.dramafactory.repository.StepAttemptRepository;
 import com.dramafactory.repository.VideoTaskRepository;
 
 import com.dramafactory.dto.Records;
@@ -27,8 +31,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +62,10 @@ public class RunService {
                     + "集数从目标里解析如\"3 集\"，默认 1 集，最多 6 集；不要输出多余文字。";
 
     private final RunRepository runRepository;
+    @Autowired(required = false)
+    private RunApprovalRepository runApprovalRepository;
+    @Autowired(required = false)
+    private StepAttemptRepository stepAttemptRepository;
     private final AgentStepRepository agentStepRepository;
     private final EpisodeRepository episodeRepository;
     private final FinalCutRepository finalCutRepository;
@@ -392,6 +400,18 @@ public class RunService {
         if (step.getRun() == null || !Objects.equals(step.getRun().getId(), runId)) {
             throw new IllegalArgumentException("步骤不属于该运行：stepId=" + stepId);
         }
+        if (stepAttemptRepository != null) {
+            long attemptNo = stepAttemptRepository.countByStepId(stepId) + 1;
+            StepAttempt attempt = new StepAttempt();
+            attempt.setStepId(stepId);
+            attempt.setAttemptNo((int) attemptNo);
+            attempt.setStatusBefore(step.getStatus() == null ? null : step.getStatus().name());
+            attempt.setStatusAfter(AgentStepStatus.PENDING.name());
+            attempt.setErrorMessage(step.getErrorMessage());
+            attempt.setStartedAt(step.getStartedAt());
+            attempt.setEndedAt(LocalDateTime.now());
+            stepAttemptRepository.save(attempt);
+        }
         step.setStatus(AgentStepStatus.PENDING);
         step.setErrorMessage(null);
         agentStepRepository.save(step);
@@ -426,6 +446,12 @@ public class RunService {
             }
             run.setStatus(RunStatus.RUNNING);
             runRepository.save(run);
+            RunApproval audit = new RunApproval();
+            audit.setRunId(runId);
+            audit.setApproved(true);
+            audit.setNote(note);
+            audit.setDecidedBy("operator"); // TODO: 接入登录用户后替换为真实操作人。
+            runApprovalRepository.save(audit);
         } else {
             finalCutService.qc(finalCutId, new Records.QcRequest("REJECTED", note));
             if (qcStep != null) {
@@ -436,6 +462,12 @@ public class RunService {
             }
             run.setStatus(RunStatus.FAILED);
             runRepository.save(run);
+            RunApproval audit = new RunApproval();
+            audit.setRunId(runId);
+            audit.setApproved(false);
+            audit.setNote(note);
+            audit.setDecidedBy("operator"); // TODO: 接入登录用户后替换为真实操作人。
+            runApprovalRepository.save(audit);
         }
     }
 

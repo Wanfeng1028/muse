@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -65,7 +66,9 @@ public class SkillHubController {
 
     @GetMapping("/index")
     @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装")
-    public ResponseEntity<SkillHubIndex> index() {
+    public ResponseEntity<SkillHubIndex> index(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         Instant loadedAt = registry.bundledLoadedAt();
         String updatedAt = loadedAt == null ? ""
                 : DateTimeFormatter.ISO_INSTANT.format(loadedAt.atOffset(ZoneOffset.UTC));
@@ -102,7 +105,15 @@ public class SkillHubController {
             log.error("skillhub index failed, returning empty list", e);
             items = new ArrayList<>();
         }
-        SkillHubIndex body = new SkillHubIndex(HUB_NAME, HUB_VERSION, updatedAt, items);
+        List<SkillHubItem> pageItems = items;
+        if (page != null || size != null) {
+            int p = page == null ? 0 : Math.max(0, page);
+            int s = size == null ? 50 : Math.min(200, Math.max(1, size));
+            int from = Math.min(p * s, items.size());
+            int to = Math.min(from + s, items.size());
+            pageItems = items.subList(from, to);
+        }
+        SkillHubIndex body = new SkillHubIndex(HUB_NAME, HUB_VERSION, updatedAt, pageItems);
         return ResponseEntity.ok(body);
     }
 

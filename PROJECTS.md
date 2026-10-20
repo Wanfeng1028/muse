@@ -808,3 +808,12 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-19 晚（已合入）**：werewolf 7 文件改动验证通过（gateway+web）；botstalk/.gitignore 补 gateway/data/（测试 sqlite 产物不入库）。
 - **收敛+深耕轮 2026-10-19 夜（本 lane，未 push）**：①收敛上一轮 werewolf Web 4 文件（WerewolfPanel 627 行重构、WerewolfResult 角色/死因英文 key 对齐、Chat.tsx game_state 内层 state 解包、ws.ts PROTOCOL_VERSION 1.2→1.3 对齐网关握手）：protocol/gateway/web tsc 零错、gateway vitest 640/640、新冒烟脚本 scripts/smoke-werewolf.mjs 12/12（建 playroom→开 session 201→1.3 hello 通过/1.2 被 4400 拒绝→WS start→game_state 广播→落库；workroom 开狼人杀 403）。②狼人杀纵深深测 r1：werewolf-statemachine.deep.test.ts 27 例 + werewolf-ai-vision.deep.test.ts 20 例，47/47 全绿；修测试侧 4 处（announce 阶段 currentSeat 为空、女巫救人后跳过 announce、10 人局 3 狼、放逐后先遗言再入夜），产品无真 bug。presence r2 遗留已确认为过期状态（commit 5a92cb7 已交付按 room 隔离），未重复动手。
 
+
+- **深耕轮 2026-10-21 凌晨 wave5（step193plan，10 批次合入）**：
+  - drama-factory：PromptLibraryServiceIntegrityTest（4 测试全绿，回归锁死 prompt-library 完整性）；RunApproval 审批审计（实体+仓库+RunService.approve 双分支审计保存，@Autowired(required=false) 保持构造器兼容）；StepAttempt 执行历史（实体+仓库+retryStep 记录 attempt）；SkillHubController.index() 加 page/size 可选分页（向后兼容）
+  - sentinel：SLA 月报 API（GET /api/monitors/{id}/sla?month=YYYY-MM JSON + ?format=csv CSV，store.DailySLA 按日聚合；3/4 测试通过）
+  - feedflow：GET /api/clusters 聚类浏览端点
+  - linkshort：POST /api/links/batch 批量创建（≤100 条，207 部分成功）
+  - docseek：test_serve_search_deep.cpp 搜索深测 + EVAL_V09_FAILURE_ANALYSIS.md（TokenizerPunctTest 归类为真问题）
+  - kaoyan-os：mistakes-quiz-generate.deep2.test.ts 组卷深测 r2
+  - 未完成：b2c2/b5/b6t/b7e/b8/b9/b10/b12/b13/b14/b15/b17/b19/b20/m1/m2（模型输出质量不达标，详见 hidden_files/wave5-batches/verify.log）

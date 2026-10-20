@@ -91,6 +91,7 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Get("/backup/health", func(w http.ResponseWriter, req *http.Request) { handleBackupHealth(w, req, cfg) })
 
 		api.Post("/links", func(w http.ResponseWriter, req *http.Request) { handleCreateLink(w, req, st, cfg) })
+		api.Post("/links/batch", func(w http.ResponseWriter, req *http.Request) { handleBatchCreateLink(w, req, st, cfg) })
 		api.Get("/links", func(w http.ResponseWriter, req *http.Request) { handleListLinks(w, req, st, cfg) })
 		api.Get("/links/{id}", func(w http.ResponseWriter, req *http.Request) { handleGetLink(w, req, st, cfg) })
 		api.Patch("/links/{id}", func(w http.ResponseWriter, req *http.Request) { handlePatchLink(w, req, st, cfg) })

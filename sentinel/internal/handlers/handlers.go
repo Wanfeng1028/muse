@@ -61,6 +61,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/monitors/{id}/check", s.handleCheckNow)
 	mux.HandleFunc("GET /api/monitors/{id}/checks", s.handleListChecks)
 	mux.HandleFunc("GET /api/monitors/{id}/stats", s.handleStats)
+	mux.HandleFunc("GET /api/monitors/{id}/sla", s.handleMonitorSLAJSON)
 
 	// 事件与概览
 	mux.HandleFunc("GET /api/incidents", s.handleListIncidents)

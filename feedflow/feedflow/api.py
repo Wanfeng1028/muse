@@ -163,6 +163,15 @@ def get_article(article_id: int):
     return jsonify(art)
 
 
+@bp.get("/clusters")
+def list_clusters():
+    """聚类浏览：同事件多源报道折叠视图（SimHash+Jaccard 两阶段聚类，非 LLM）。"""
+    from . import ranking
+    n = _int_arg("n", 10)
+    clusters = ranking.get_digest_clusters(_db(), n)
+    return jsonify({"clusters": clusters, "total": len(clusters)})
+
+
 @bp.post("/articles/<int:article_id>/read")
 def set_article_read(article_id: int):
     """设置文章已读/未读。"""
