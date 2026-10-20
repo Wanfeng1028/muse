@@ -265,6 +265,9 @@ add_executable(docseek_tests
   tests/test_ds_tokenizer_deep.cpp
   tests/test_ds_hybrid_deep.cpp
   tests/test_ds_locate_deep.cpp
+  tests/test_passage_weighted_deep.cpp
+  tests/test_docfrequency_deep.cpp
+  tests/test_v021_weighted_regression_deep.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core

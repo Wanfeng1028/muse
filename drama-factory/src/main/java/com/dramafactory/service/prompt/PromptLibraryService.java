@@ -46,6 +46,7 @@ public class PromptLibraryService {
 
     private final Map<String, PromptDetail> byId;
     private final Set<String> favorites = ConcurrentHashMap.newKeySet();
+    private final Object favoritesLock = new Object();
 
     public PromptLibraryService() {
 
@@ -158,27 +159,31 @@ public class PromptLibraryService {
 
 
     public boolean addFavorite(String id) {
-        if (id == null || !byId.containsKey(id)) {
-            return false;
-        }
-        if (favorites.contains(id)) {
+        synchronized (favoritesLock) {
+            if (id == null || !byId.containsKey(id)) {
+                return false;
+            }
+            if (favorites.contains(id)) {
+                return true;
+            }
+            favorites.add(id);
+            saveFavorites();
             return true;
         }
-        favorites.add(id);
-        saveFavorites();
-        return true;
     }
 
     public boolean removeFavorite(String id) {
-        if (id == null || !byId.containsKey(id)) {
-            return false;
-        }
-        if (!favorites.contains(id)) {
+        synchronized (favoritesLock) {
+            if (id == null || !byId.containsKey(id)) {
+                return false;
+            }
+            if (!favorites.contains(id)) {
+                return true;
+            }
+            favorites.remove(id);
+            saveFavorites();
             return true;
         }
-        favorites.remove(id);
-        saveFavorites();
-        return true;
     }
 
     public boolean isFavorite(String id) {
@@ -233,7 +238,10 @@ public class PromptLibraryService {
         }
         try {
             Files.createDirectories(file.getParent());
-            List<String> ids = new ArrayList<>(favorites);
+            List<String> ids;
+            synchronized (favoritesLock) {
+                ids = new ArrayList<>(favorites);
+            }
             Collections.sort(ids);
             ObjectMapper mapper = new ObjectMapper();
             Path tmp = Files.createTempFile(file.getParent(), "prompt-favorites", ".tmp");

@@ -79,12 +79,59 @@ size_t findFirst(const std::string& haystack, const std::string& needle) {
     if (needle.empty()) return std::string::npos;
     return haystack.find(needle);
 }
-
 }  // namespace
+
+double termLengthWeight(const std::string& term) {
+    std::size_t count = 0;
+    std::size_t i = 0;
+    while (i < term.size()) {
+        unsigned char c = static_cast<unsigned char>(term[i]);
+        if (c < 0x80) {
+            i += 1;
+        } else if ((c >> 5) == 0x6) {
+            if (i + 1 < term.size() && (static_cast<unsigned char>(term[i + 1]) >> 6) == 0x2) {
+                i += 2;
+            } else {
+                i += 1;
+            }
+        } else if ((c >> 4) == 0xE) {
+            if (i + 2 < term.size() && (static_cast<unsigned char>(term[i + 1]) >> 6) == 0x2 && (static_cast<unsigned char>(term[i + 2]) >> 6) == 0x2) {
+                i += 3;
+            } else {
+                i += 1;
+            }
+        } else if ((c >> 3) == 0x1E) {
+            if (i + 3 < term.size() && (static_cast<unsigned char>(term[i + 1]) >> 6) == 0x2 && (static_cast<unsigned char>(term[i + 2]) >> 6) == 0x2 && (static_cast<unsigned char>(term[i + 3]) >> 6) == 0x2) {
+                i += 4;
+            } else {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+        ++count;
+    }
+    if (count == 0 || count == 1) {
+        return 0.35;
+    } else if (count == 2) {
+        return 0.7;
+    } else {
+        return 1.0;
+    }
+}
+
+double TermWeights::weightOf(const std::string& lowerTerm) const {
+    auto it = weights.find(lowerTerm);
+    if (it != weights.end()) {
+        return it->second;
+    }
+    return 1.0;
+}
 
 std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                                   const std::string& content,
-                                  const ParsedQuery& pq, int topK) {
+                                  const ParsedQuery& pq, int topK,
+                                  const TermWeights& weights) {
     std::vector<Passage> result;
     if (topK <= 0) return result;
     if (content.empty()) return result;
@@ -139,7 +186,6 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         tryAddCompound(rc);
     }
 
-    const int totalKeywords = static_cast<int>(pq.keywords.size());
 
 
 
@@ -195,9 +241,9 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         }
         std::string windowLower = toLowerAscii(windowText);
 
-        // 计算命中。
-        int uniqueKeywordHits = 0;
-        int totalHits = 0;
+// 计算命中。
+        double uniqueHitWeight = 0;
+        double totalHitsWeighted = 0;
         int phraseHitCount = 0;
         std::vector<std::pair<size_t, std::string>> matched;  // (pos, term)
 
@@ -219,9 +265,9 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                 }
             }
             if (pos != std::string::npos) {
-                ++uniqueKeywordHits;
+                uniqueHitWeight += weights.weightOf(lower);
                 int cnt = countOccurrences(windowLower, lower);
-                totalHits += cnt;
+                totalHitsWeighted += cnt * weights.weightOf(lower);
                 matched.emplace_back(pos, pq.keywords[ki]);
             }
         }
@@ -231,15 +277,15 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
             if (pos != std::string::npos) {
                 ++phraseHitCount;
                 int cnt = countOccurrences(windowLower, lower);
-                totalHits += cnt * 2;
+                totalHitsWeighted += cnt * 2;
                 matched.emplace_back(pos, pq.phrases[pi]);
             }
         }
 
-        double coverage =
-            static_cast<double>(uniqueKeywordHits) /
-            static_cast<double>(std::max(1, totalKeywords));
-        double hitsTerm = std::min(1.0, static_cast<double>(totalHits) / 8.0);
+        double kwWeightSum = 0.0;
+        for (const auto& k : kwLower) kwWeightSum += weights.weightOf(k);
+        double coverage = uniqueHitWeight / std::max(1.0, kwWeightSum);
+        double hitsTerm = std::min(1.0, totalHitsWeighted / 8.0);
         double phraseTerm =
             std::min(1.0, static_cast<double>(phraseHitCount) / 2.0);
         double posTerm = 1.0 / (1.0 + 0.1 * static_cast<double>(windowIndex));
@@ -344,6 +390,12 @@ for (const auto& qc: queryCompounds) {
         result.resize(topK);
     }
     return result;
+}
+
+std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
+                                  const std::string& content,
+                                  const ParsedQuery& pq, int topK) {
+    return rankPassages(doc_id, path, content, pq, topK, TermWeights{});
 }
 
 }  // namespace docseek

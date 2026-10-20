@@ -1,6 +1,7 @@
 #include "docseek/locator.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -80,6 +81,34 @@ int pdfPageForOffset(const std::string& content, size_t pos) {
 
 }  // namespace
 
+namespace {
+
+TermWeights buildTermWeights(Database& db, const ParsedQuery& pq) {
+    TermWeights result;
+    const int64_t N = db.docCount();
+    std::unordered_set<std::string> seen;
+    for (const auto& kw : pq.keywords) {
+        std::string lower;
+        lower.reserve(kw.size());
+        for (char c : kw) {
+            lower.push_back(lowerAscii(c));
+        }
+        if (!seen.insert(lower).second) {
+            continue;
+        }
+        int64_t df = db.docFrequency(kw);
+        if (df > N) {
+            df = N;
+        }
+        double idf = std::log((N + 1.0) / (df + 1.0)) + 1.0;
+        double weight = idf * termLengthWeight(kw);
+        result.weights[lower] = weight;
+    }
+    return result;
+}
+
+}  // namespace
+
 Locator::Locator(Database& db, Searcher& searcher)
     : db_(db), searcher_(searcher) {}
 
@@ -126,11 +155,12 @@ std::vector<Passage> Locator::locate(const std::string& rawQuery,
         : searcher_.search(recallQuery, opts.recallDocs);
 
     std::vector<Passage> all;
+    TermWeights termWeights = buildTermWeights(db_, pq);
     for (const auto& h : hits) {
         std::optional<std::string> content = db_.getContentById(h.doc_id);
         if (!content.has_value()) continue;
         std::vector<Passage> passages =
-            rankPassages(h.doc_id, h.path, *content, pq, 3);
+            rankPassages(h.doc_id, h.path, *content, pq, 3, termWeights);
         if (hasPdfExt(h.path)) {
             // rankPassages 返回的是滑动窗口，line_start 是窗口起点；
             // 页码按窗口内首个命中词在全文中的实际偏移定位；

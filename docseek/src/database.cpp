@@ -793,6 +793,28 @@ std::vector<Hit> Database::searchFts(const std::string& match_query, int limit,
     return out;
 }
 
+int64_t Database::docFrequency(const std::string& term, const std::string& user) {
+    if (!impl_->db) {
+        throw std::runtime_error("database 未打开");
+    }
+    checkUserValid(user);
+    std::string escaped;
+    escaped.reserve(term.size() + 2);
+    escaped.push_back('"');
+    for (char c : term) {
+        if (c == '"') {
+            escaped.push_back('"');
+        }
+        escaped.push_back(c);
+    }
+    escaped.push_back('"');
+    Stmt s(impl_->db, "SELECT COUNT(DISTINCT documents_fts.rowid) FROM documents_fts JOIN documents d ON d.id=documents_fts.rowid WHERE d.user=? AND documents_fts MATCH ?;");
+    s.bindText(1, user);
+    s.bindText(2, escaped);
+    s.step();
+    return s.columnInt64(0);
+}
+
 int64_t Database::docCount(const std::string& user) {
     checkUserValid(user);
     sqlite3* db = impl_->db;

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "docseek/query_parser.h"
@@ -20,10 +21,28 @@ struct Passage {
     int page_no = 0;  // PDF 文档的页码（1-based）；非 PDF 为 0（不适用）
 };
 
+// 词长权重：1 个 Unicode 码点→0.35，2 个→0.7，3 个及以上→1.0。
+// 依据：单字中文词（如"算/能/点"）噪声大、信息量低，应降权；
+// 双字词半权；三字及以上完整概念词全权。
+double termLengthWeight(const std::string& term);
+
+// 词级权重表：键为小写词面，值为 idf 与词长权重的乘积。
+struct TermWeights {
+    std::unordered_map<std::string, double> weights;  // 键：小写词面
+    double weightOf(const std::string& lowerTerm) const;  // 缺失键返回 1.0
+};
+
 // 在单篇文档内滑动窗口打分，返回 topK 段落（score 降序，line_start 升序 tie-break）。
 std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                                   const std::string& content,
                                   const ParsedQuery& pq, int topK);
+
+// 加权版本：coverage 与 hitsTerm 按 weights 的词权重计算；
+// 缺失键按 1.0。全权重为 1.0 时分数与 5 参数版本逐位相同。
+std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
+                                  const std::string& content,
+                                  const ParsedQuery& pq, int topK,
+                                  const TermWeights& weights);
 
 // 带原文前后文的定位结果：context 是命中词首次出现位置前后各 60 个 Unicode
 // 字符的原文窗口（UTF-8 安全，不截断多字节字符）；highlights 是 matched_terms

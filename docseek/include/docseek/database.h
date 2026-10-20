@@ -84,6 +84,8 @@ public:
     std::vector<Hit> searchFts(const std::string& match_query, int limit, const std::string& user = kDefaultUser);
     // 返回指定用户的文档总数。user 默认 kDefaultUser。
     int64_t docCount(const std::string& user = kDefaultUser);
+    // 返回该用户文档中出现过该词的文档数（FTS5 MATCH 查询，走 jieba 分词；term 为空返回 0）。
+    int64_t docFrequency(const std::string& term, const std::string& user = kDefaultUser);
     // 按文档 id 取 FTS 全文 content；不存在返回 std::nullopt。
     std::optional<std::string> getContentById(int64_t doc_id);
     // 返回指定用户所有文档大小之和（字节）。user 默认 kDefaultUser。
