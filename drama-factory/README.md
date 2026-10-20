@@ -19,6 +19,19 @@
 ### 视频生成任务
 按分镜创建视频生成任务，对接 Agnes `agnes-video-2.5-flash`（https://apihub.agnes-ai.com）。任务走异步状态机：`PENDING → PROCESSING → DONE / FAILED`，后台定时轮询任务状态，失败按指数退避重试，遇到 429 限流时自动退避等待。
 
+每个视频通道有硬约束前置校验：提交前先按通道的 `constraints` 逐项核对分辨率、时长、fps、宽高比、镜头数，越界直接返回 400（错误体里带 `VIDEO_CONSTRAINT_VIOLATION` 和出处 `source`），不落到 provider。约束值必须能查到出处，不许瞎填。
+
+各通道约束值（核验日期 2026-10-20）：
+
+| 模型 | 分辨率 | 时长（秒） | fps | 宽高比 | 单次镜头数上限 |
+| --- | --- | --- | --- | --- | --- |
+| agnes-video-2.5-flash | 720p / 1080p | 3~10 | 24 | 16:9 / 9:16 | 1 |
+| minimax music-3.0 | 不适用（音频） | 不适用 | 不适用 | 不适用 | 不适用 |
+| hyperframes | 720p / 1080p | 1~60 | 24 / 30 | 任意 | 1 |
+| htmlrender（chromium） | 720p / 1080p | 1~60 | 24 / 30 | 任意 | 1 |
+
+出处：agnes 见 https://apihub.agnes-ai.com 接口说明；minimax 该通道为音频通道，视频约束不适用；hyperframes 见 `docs/HYPERFRAMES_CHANNELS.md` 与 `scripts/hyperframes_probe.sh` 探活输出；htmlrender 见 `docs/DEGRADATION.md` htmlrender 小节。约束值有变更时，先更新本表，再改通道的 `constraints`。
+
 Provider 做了接口抽象：
 
 - `AgnesVideoProvider`：真实调用 Agnes 接口。

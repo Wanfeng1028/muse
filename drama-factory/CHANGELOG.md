@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（视频通道硬约束前置校验，2026-10-20）
+- `docs/OPERATIONS.md` 新增「视频通道硬约束」一节：`constraints` 字段含义、提交前校验流程、违规 400 错误体格式（`VIDEO_CONSTRAINT_VIOLATION` + `channel`/`field`/`value`/`allowed`/`source`）、新通道补约束的步骤（出处必须能查证）。
+- `README.md` 视频生成任务章节补硬约束说明 + 4 个模型 × 核验值的约束表（agnes-video-2.5-flash / minimax music-3.0 / hyperframes / htmlrender（chromium）），核验日期 2026-10-20，每个值带出处。
+- 约束值必须能查到出处，不许瞎填；出处变更先更表再改通道 `constraints`。
+
 ### Added（深耕轮 2026-10-20 下午：成本账本看板）
 - 后端：`CostLedgerService.summarizeTrend(days)`（[1,90]钳制，含今天，按日期升序，每天一条）；`CostLedgerService.budgetStatus()`（budgetTotalUsd/spentUsd/reservedUsd/usableUsd/utilizationPct/mode/enabled，构造器注入 BillingProperties，reserve() 复用抽出的 usableBudget(BudgetPolicy)）；`CostLedgerController` 新增 `GET /api/cost-ledger/trend?days`（默认14，非法400，超限由 service 钳制）、`GET /api/cost-ledger/budget`；`GET /api/cost-ledger/entries` 新增 limit 参数（默认100、最大500，非法400）。
 - 前端：`cost-ledger.html` 看板页（导航"运行"→"成本账本"，shell.js 接入+nav.costLedger 中英 key）：预算卡（总额/已花费/冻结中/可用+使用率进度条，70%/90% 变色）、今日/近7天/累计条目/供应商数 KPI、14 天趋势 SVG 折线图（7/14/30 天切换，手写 SVG 零依赖）、按供应商条形、当天明细表（limit=20，状态 badge）；中英双语（PAGE_I18N 38+18 key）；Tabler 原生组件，无自创配色。

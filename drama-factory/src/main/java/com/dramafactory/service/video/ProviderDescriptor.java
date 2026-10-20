@@ -3,6 +3,7 @@ package com.dramafactory.service.video;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -133,6 +134,11 @@ public class ProviderDescriptor {
                 }
             }
         }
+        if (models != null) {
+            for (DescriptorModel model : models) {
+                model.validateConstraints();
+            }
+        }
     }
 
     /**
@@ -175,6 +181,7 @@ public class ProviderDescriptor {
         private String id;
         private String label;
         private String type;
+        private DescriptorConstraints constraints;
 
         public String getId() {
             return id;
@@ -198,6 +205,122 @@ public class ProviderDescriptor {
 
         public void setType(String type) {
             this.type = type;
+        }
+
+        public DescriptorConstraints getConstraints() {
+            return constraints;
+        }
+
+        public void setConstraints(DescriptorConstraints constraints) {
+            this.constraints = constraints;
+        }
+
+        public void validateConstraints() {
+            if (constraints == null) {
+                return;
+            }
+            Integer min = constraints.getMinDurationSeconds();
+            Integer max = constraints.getMaxDurationSeconds();
+            if (min != null && max != null && min > max) {
+                throw new IllegalArgumentException(
+                        "字段 constraints.minDurationSeconds 不能大于 constraints.maxDurationSeconds："
+                                + min + " > " + max);
+            }
+            Integer maxPromptChars = constraints.getMaxPromptChars();
+            if (maxPromptChars != null && maxPromptChars <= 0) {
+                throw new IllegalArgumentException(
+                        "字段 constraints.maxPromptChars 必须大于 0：" + maxPromptChars);
+            }
+            Integer maxReferenceImages = constraints.getMaxReferenceImages();
+            if (maxReferenceImages != null && maxReferenceImages < 0) {
+                throw new IllegalArgumentException(
+                        "字段 constraints.maxReferenceImages 不能小于 0：" + maxReferenceImages);
+            }
+        }
+
+        /**
+         * 视频模型硬约束声明。字段全部允许 null，表示没声明这条约束。
+         */
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class DescriptorConstraints {
+
+            private Integer maxPromptChars;
+            private Integer minDurationSeconds;
+            private Integer maxDurationSeconds;
+            private List<String> resolutions;
+            private List<String> aspectRatios;
+            private Integer maxReferenceImages;
+            private String source;
+
+            public Integer getMaxPromptChars() {
+                return maxPromptChars;
+            }
+
+            public void setMaxPromptChars(Integer maxPromptChars) {
+                this.maxPromptChars = maxPromptChars;
+            }
+
+            public Integer getMinDurationSeconds() {
+                return minDurationSeconds;
+            }
+
+            public void setMinDurationSeconds(Integer minDurationSeconds) {
+                this.minDurationSeconds = minDurationSeconds;
+            }
+
+            public Integer getMaxDurationSeconds() {
+                return maxDurationSeconds;
+            }
+
+            public void setMaxDurationSeconds(Integer maxDurationSeconds) {
+                this.maxDurationSeconds = maxDurationSeconds;
+            }
+
+            public List<String> getResolutions() {
+                return resolutions;
+            }
+
+            public void setResolutions(List<String> resolutions) {
+                this.resolutions = resolutions;
+            }
+
+            public List<String> getAspectRatios() {
+                return aspectRatios;
+            }
+
+            public void setAspectRatios(List<String> aspectRatios) {
+                this.aspectRatios = aspectRatios;
+            }
+
+            public Integer getMaxReferenceImages() {
+                return maxReferenceImages;
+            }
+
+            public void setMaxReferenceImages(Integer maxReferenceImages) {
+                this.maxReferenceImages = maxReferenceImages;
+            }
+
+            public String getSource() {
+                return source;
+            }
+
+            public void setSource(String source) {
+                this.source = source;
+            }
+
+            public List<String> violations(String prompt, int seconds) {
+                List<String> result = new ArrayList<>();
+                if (prompt != null && maxPromptChars != null && prompt.length() > maxPromptChars) {
+                    result.add("提示词过长：" + prompt.length() + " 字，通道上限 " + maxPromptChars + " 字");
+                }
+                if (minDurationSeconds != null && seconds < minDurationSeconds) {
+                    result.add("时长过短：" + seconds + " 秒，通道要求至少 " + minDurationSeconds + " 秒");
+                }
+                if (maxDurationSeconds != null && seconds > maxDurationSeconds) {
+                    result.add("时长过长：" + seconds + " 秒，通道上限 " + maxDurationSeconds + " 秒");
+                }
+                return result;
+            }
         }
     }
 

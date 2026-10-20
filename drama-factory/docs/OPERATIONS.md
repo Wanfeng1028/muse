@@ -108,9 +108,44 @@ docker compose logs -f drama-factory
 
 ---
 
-## 3. 备份与恢复
+## 3. 视频通道硬约束
 
-### 3.1 备份
+每个视频通道在提交任务前要做硬约束前置校验。约束信息写在通道的 `constraints` 字段里，字段内容按通道各自定义，常用的有：允许的分辨率、允许的时长范围、允许的 fps、允许的宽高比、单次提交的镜头数上限。
+
+提交前校验流程：
+
+1. 路由选定通道后，先读该通道的 `constraints`。
+2. 拿分镜/请求里的参数逐项和约束对：分辨率、时长、fps、宽高比、镜头数。
+3. 有任意一项越界，直接在提交前拦下，不落到 provider。
+4. 全部通过才发出去。
+
+违规时返回 400，错误信息格式固定：
+
+```json
+{
+  "error": "VIDEO_CONSTRAINT_VIOLATION",
+  "channel": "<通道名>",
+  "field": "<哪个字段越界>",
+  "value": "<实际值>",
+  "allowed": "<约束允许的范围>",
+  "source": "<该约束值的出处>"
+}
+```
+
+`source` 必须写清楚这个约束是从哪儿来的（官方文档 URL、接口返回、实测记录都行），不许空着，也不许写"经验值"。
+
+给新通道补约束：
+
+1. 先确定该通道真实支持的参数范围，出处要能查证。
+2. 把范围写进通道的 `constraints`，同时在 `source` 里写上出处。
+3. 补一条提交前校验的单测：越界返回 400 且错误体字段对得上。
+4. 没有查证到出处的项，宁可不写，不许瞎填。
+
+---
+
+## 4. 备份与恢复
+
+### 4.1 备份
 
 脚本：`scripts/backup.sh`。
 
@@ -134,7 +169,7 @@ docker compose logs -f drama-factory
 0 3 * * * cd /opt/drama-factory && BACKUP_KEEP=7 ./scripts/backup.sh >> ./backups/backup.log 2>&1
 ```
 
-### 3.2 恢复
+### 4.2 恢复
 
 脚本：`scripts/restore.sh`。
 
@@ -155,7 +190,7 @@ docker compose logs -f drama-factory
 
 参数是备份目录路径。恢复完成后按提示重启服务。
 
-### 3.3 备份恢复实测步骤
+### 4.3 备份恢复实测步骤
 
 本节给出一条从备份到恢复、再到失败回退的完整可复现路径。所有命令均以仓库根目录（`APP_HOME`）为当前目录，脚本内部会自行 `cd "$APP_HOME"`。脚本涉及的关键路径：
 
@@ -167,7 +202,7 @@ docker compose logs -f drama-factory
 
 日志前缀：`backup.sh` 输出 `[backup]`，`restore.sh` 输出 `[restore]`，均为 `[前缀] YYYY-MM-DD HH:MM:SS 消息` 格式。
 
-#### 3.3.1 前提检查
+#### 4.3.1 前提检查
 
 `backup.sh` 在执行前会做两项前置检查（见脚本"0. 前置检查"）：
 
@@ -185,7 +220,7 @@ ls -l data/drama-factory.mv.db
 
 若第二条不通过，说明应用尚未初始化，需先启动应用跑完 Flyway 迁移再备份。
 
-#### 3.3.2 完整实测流程
+#### 4.3.2 完整实测流程
 
 **第 1 步：手动触发一次备份**
 
@@ -341,7 +376,7 @@ ls -1t backups/pre-restore-*.tar.gz | head -n1
 mv "data/drama-factory.mv.db.pre-restore-<ts>.bak" data/drama-factory.mv.db
 ```
 
-#### 3.3.3 保留策略验证（`BACKUP_KEEP=2`）
+#### 4.3.3 保留策略验证（`BACKUP_KEEP=2`）
 
 连跑三次备份，断言 `backups/drama-factory-*.tar.gz` 只剩 2 个。
 
@@ -366,7 +401,7 @@ ls -1t backups/drama-factory-*.tar.gz
 
 第三次备份的日志中应出现 `应用保留策略: 仅保留最近 2 个备份包` 与 `删除过期备份: .../drama-factory-<最旧时间戳>.tar.gz`，且 `ls -1t` 只列出最新两个包。
 
-#### 3.3.4 常见失败对照表
+#### 4.3.4 常见失败对照表
 
 | 现象 | 脚本中的 fail 信息（原文） | 处理方式 |
 | --- | --- | --- |
@@ -379,7 +414,7 @@ ls -1t backups/drama-factory-*.tar.gz
 
 ---
 
-## 4. 升级
+## 5. 升级
 
 标准动作，照做：
 
@@ -399,7 +434,7 @@ ls -1t backups/drama-factory-*.tar.gz
 
 ---
 
-## 5. 日志
+## 6. 日志
 
 - 日志配置在 `logback-spring.xml`。
 - 默认输出到 `./logs/` 目录（按天切）。
@@ -414,7 +449,7 @@ ls -1t backups/drama-factory-*.tar.gz
 
 ---
 
-## 6. 监控告警
+## 7. 监控告警
 
 - Prometheus 抓取端点：`GET /actuator/prometheus`（无鉴权，`JwtAuthFilter` 只拦 `/api/**`）。
 - 抓取配置示例：`prometheus/prometheus.yml`（job 名 `drama-factory`，15s 间隔，目标 `localhost:8081/actuator/prometheus`）。
@@ -443,7 +478,7 @@ Gauge 类指标由 `@Scheduled(30s)` 刷内存快照，抓取时不打 DB。
 
 ---
 
-## 7. API 文档
+## 8. API 文档
 
 - Swagger UI：`http://<host>:<port>/swagger-ui.html`。
 - OpenAPI JSON：`http://<host>:<port>/v3/api-docs`（YAML 把后缀换成 `.yaml`）。
@@ -452,7 +487,7 @@ Gauge 类指标由 `@Scheduled(30s)` 刷内存快照，抓取时不打 DB。
 
 ---
 
-## 8. 故障排查
+## 9. 故障排查
 
 ### 8.1 端口被占
 
@@ -663,7 +698,7 @@ ffmpeg 瞬时重试突增：
     description: "结合任务积压一起看，如果积压不降，用 jstack 查 poll 线程是否卡死。"
 ---
 
-## 9. 已知限制
+## 10. 已知限制
 
 - **单实例部署**：熔断、限流都是 Resilience4j 内存级实现，多实例各自为政。要真正集群化得换 Redis 版或网关层做。
 - **H2 单机**：数据文件就在本机磁盘上，不支持多节点共享。想上集群得换 PostgreSQL / MySQL，Flyway 脚本要过一遍方言。
@@ -727,4 +762,4 @@ ffmpeg 瞬时重试突增：
 
 ---
 
-*最后更新：v2.5（2026-10-14）*
+*最后更新：v2.5（2026-10-20）*

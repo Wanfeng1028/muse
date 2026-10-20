@@ -28,7 +28,11 @@
     'task.countSuffix': { 'zh-CN': ' 条', en: ' items' },
     'task.shotSizeCloseUp': { 'zh-CN': '特写', en: 'Close-up' },
     'task.shotSizeMedium': { 'zh-CN': '中景', en: 'Medium' },
-    'task.shotSizeWide': { 'zh-CN': '全景', en: 'Wide' }
+    'task.shotSizeWide': { 'zh-CN': '全景', en: 'Wide' },
+    'task.constraintHint': { 'zh-CN': '通道硬约束', en: 'Channel limits' },
+    'task.promptLimit': { 'zh-CN': '提示词≤', en: 'Prompt ≤' },
+    'task.durationRange': { 'zh-CN': '时长', en: 'Duration' },
+    'task.resolutions': { 'zh-CN': '分辨率', en: 'Resolutions' }
   };
 
   if (window.DFI18N) DFI18N.register(PAGE_I18N);
@@ -56,6 +60,45 @@
 
   function $(id) {
     return document.getElementById(id);
+  }
+
+  // 通道硬约束提示：取第一个描述符通道的第一个 video 模型约束展示。
+  // 接口失败时静默不展示。
+  async function loadConstraintHint() {
+    var hintEl = $("hint");
+    if (!hintEl) return;
+    try {
+      var resp = await fetch("/api/descriptor-providers");
+      if (!resp.ok) return;
+      var providers = await resp.json();
+      if (!Array.isArray(providers) || providers.length === 0) return;
+      var shown = false;
+      for (var i = 0; i < providers.length && !shown; i++) {
+        var models = providers[i].models || [];
+        for (var j = 0; j < models.length; j++) {
+          var m = models[j];
+          if (m.type !== "video" || !m.constraints) continue;
+          var c = m.constraints;
+          var parts = [];
+          if (c.maxPromptChars) parts.push(_t("task.promptLimit", "提示词≤") + c.maxPromptChars + "字");
+          if (c.minDurationSeconds != null && c.maxDurationSeconds != null) {
+            parts.push(_t("task.durationRange", "时长") + c.minDurationSeconds + "–" + c.maxDurationSeconds + "秒");
+          }
+          if (Array.isArray(c.resolutions) && c.resolutions.length > 0) {
+            parts.push(_t("task.resolutions", "分辨率") + c.resolutions.join("/"));
+          }
+          if (parts.length === 0) continue;
+          var label = providers[i].label || providers[i].id;
+          hintEl.textContent = _t("task.constraintHint", "通道硬约束")
+            + "（" + label + " / " + (m.label || m.id) + "）：" + parts.join(" · ");
+          hintEl.style.display = "";
+          shown = true;
+          break;
+        }
+      }
+    } catch (e) {
+      // 静默：约束提示是增值信息，不许干扰主流程
+    }
   }
 
   async function api(path, options) {
@@ -387,6 +430,7 @@
   }
 
   function init() {
+    loadConstraintHint();
     $("projectSelect").addEventListener("change", async (e) => {
       state.currentProjectId = e.target.value ? Number(e.target.value) : null;
       await loadEpisodes(state.currentProjectId);

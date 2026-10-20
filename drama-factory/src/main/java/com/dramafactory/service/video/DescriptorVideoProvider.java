@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -65,14 +66,21 @@ public class DescriptorVideoProvider implements VideoProvider {
         if (prompt == null) {
             prompt = "";
         }
-        String model = "";
+        ProviderDescriptor.DescriptorModel chosen = null;
         if (descriptor.getModels() != null) {
             for (ProviderDescriptor.DescriptorModel m : descriptor.getModels()) {
                 if ("video".equals(m.getType())) {
-                    model = m.getId() == null ? "" : m.getId();
+                    chosen = m;
                     break;
                 }
             }
+        }
+        String model = chosen == null || chosen.getId() == null ? "" : chosen.getId();
+
+        List<String> violations = new VideoRequestValidator().validate(chosen, prompt, seconds);
+        if (!violations.isEmpty()) {
+            throw new VideoRequestConstraintException(
+                    "视频请求参数违反通道硬约束：" + String.join("；", violations), violations);
         }
 
         Map<String, String> vars = new HashMap<>();
