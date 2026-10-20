@@ -125,6 +125,7 @@
 - **深耕轮 2026-10-19 深夜·搜索/复习/图谱三纵深（已合入）**：①搜索 P2-7 收尾——`GET /api/search` AND 无结果且分词≥2 时自动降级 OR 语义（新增 `search.RankOr` + `store.SearchNotesAny`，响应 `"fallback": true`，`?format=legacy` 同样生效；README 已同步）；**修真 bug**：`SearchWithFallback` 的 hitCounts 用追加前原索引做 key、原地 sort 后比较错位（RankedNote 新增 HitCount 字段根治），回归测试 `TestRankOrHitCountRegression3` 用 3 元素用例实证旧实现确会错排（旧 [2,1,3] vs 新 [2,3,1]）；②复习引擎纵深——`sm2_deep4_test.go`（连续 10 次忘记 EF 不降/间隔恒 1、EF 下限 1.3 钳制、连续简单单调增长、非法评分原样返回、闰日 2028-02-29/时区 Asia/Shanghai 边界）+ `review_deep3_test.go` 真实 HTTP（到期队列 due_date ASC 确定性、limit 0/999 边界、跨用户评分互不污染、非法 grade 400/404）；③图谱边界——`graph_deep3_test.go`（环保留双边/自引用跳过/重复边去重/悬空链接无边/大小写不敏感/空库/标签附着）+ api 三例（空库 `[]` 非 null）。`go test ./...` 10 包全绿，`-race` 抽跑 search/review 通过，`go vet`/`gofmt` 全洁；真实进程冒烟（OR 降级 fallback=true、legacy 数组、AND 不降级、graph、review queue）全通。TECH_DEBT.md P2-7 标已交付。
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+- **深耕轮 2026-10-21（已合入，72c3569）**：review API deep4 6 测试全绿（POST /queue 返回 400 非 405，行为已锁定）。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -234,6 +235,7 @@
 - **深耕轮 2026-10-20 深夜收尾「收藏并发安全 + 7 项目深测」（已合入 b83767a，全绿）**：`PromptLibraryService` 收藏操作加 `favoritesLock` 同步（add/remove/saveFavorites 三处，修复并发测试暴露的竞态）；5 个新测试类 23/23 全绿（收藏 REST/并发/损坏恢复/分页边界/分页 REST）。多项目深测 7 文件全绿：feedflow 18、linkshort 小时分布 7、kaoyan-os 20、mini-os 26。诚实声明：docseek 全量 11 失败与 drama-factory PromptRecipeService 2 失败均经 stash/pristine 对照确认为既存问题（与本轮无关），recipe 2 失败已单独立项修复（见下条）。
 - **fix 2026-10-20 深夜「修 2 个既存测试失败」（已合入 75c03c0，33/33 全绿）**：step193plan 生成 PATCH（dpsk 持续 429 限流）+ 编排机械修复 1 处。`PromptRecipeServiceTest#apply_incrementsUsageCountAndReturnsModelParams`：apply 的计数递增是 DB 端 @Modifying 批量更新（刻意设计，防并发 lost update），mock 下实体字段不变属预期；测试改断言为 `verify(repository).incrementUsageCount(3L)`，删无用 save stub（Mockito 严格模式 UnnecessaryStubbingException，由编排删 1 行+1 import）。`PromptRecipeServiceBranchTest#branch_apply_usageCountNull_becomesOne`：@Modifying 绕过持久化上下文致 findById 读过期缓存；reload 前加 `em.clear()`（TestEntityManager），DB 行确为 1，产品行为正确。两处均为测试债，非产品 bug；stash 对照确认失败在干净树同样存在。
 - **深耕轮 2026-10-20 深夜波次「v021 eval 回归 + 4 项目纵深」（19 批次实质 prompt，未 commit 待合入）**：dpsk 全天 429 硬停，step193plan 主力（116 次）+ step150api 备用。组 A｜docseek v021 加权排序 eval：旧二进制（pristine 树 d678e06）vs 新二进制 v07 语料全量双跑，文档级零回归（top-1 56/56=100%，MRR@10 0.9643，locate 1.0）；段落级 12 查询 A/B：top-1 文档 12/12 不变，2/12 重排方向均为正确文档段落更高、无一变差；s193 diff 评审 9 发现 0 BUG/CRITICAL。组 B｜drama-factory 提示词库纵深：分页非法值 400（新 InvalidPaginationException）、收藏幂等、前后端收藏联调、分页边缘，4 测试类 29/29 全绿；真机 Spring Boot 视觉验收通过（详情页"标题重叠"经放大+DOM 证伪为误读）。组 C｜sentinel+ledger：8 改动+5 新测试文件全真实；sentinel 真 bug 修复——profile.go MonthlySLA 未关闭事件按 min(now,月末) 裁剪（查过去月份不再把窗口外时长算入）；腾讯短信死代码打通；sentinel go test 13 包 1113/0/0，ledger 1356 通过（2 失败 stash 对照为既存）。组 D｜second-brain+linkshort+feedflow：9 新测试文件 67 函数全绿（推送/搜索/backlinks/遗忘曲线/阅后即焚/地域小时/去重阈值边界）；feedflow 真实截图亲眼验收。诚实声明：v09 eval（1440 pairs）跑一半被取消留待下轮；"提升多少"无法用现有 eval 量化（无段落级 relevance 标注，不编数字）。
+- **深耕轮 2026-10-21（已合入，72c3569）**：TD-004（canonical 字段，4 描述符 9 模型）+ TD-002（workers 可配锁定）已偿还；skillhub updatedAt 改为索引构建时间；PROMPT_LIBRARY.md 补齐 7 端点。
 
 ## mini-os「网页操作系统」
 
@@ -337,6 +339,7 @@
 - **深耕轮 2026-10-19 夜（本 lane）**：新增账本平衡审计（services.audit_ledger() + GET /api/audit + main.py 注册）：复式恒等式 Σ余额==Σ期初+Σ收入-Σ支出（转账在账户间抵消；转入/转出和按账户归属统计，与 account_balance 语义对齐）+ 引用完整性检查（transfer 缺 to/转入悬空/自转/转入已归档警告/跨币种警告；income/expense 缺分类/分类 kind 不一致/账户悬空；SQLite 未开 FK=0 脏数据真实可存在）；tests/test_audit_deep.py 9 例全绿；修实现 1 处（转入和曾按行统计致悬空转入漏报恒等式破裂）；真实服务冒烟：干净库 ok=true，转入账户悬空脏数据 → TRANSFER_TO_ACCOUNT_NOT_FOUND + IDENTITY_BROKEN（diff=-5000）。侦探匹配纵深（tests/test_matching_deep5.py 24 例：模糊互包含误判边界/规则子串/历史票数合并计票/候选置信度/归一化指纹/贪心配对/别名精确语义；pytest 24/24、ruff 全洁）；修测试侧 1 处（C2 漏算模糊分支合并计票）；诚实记录已知边界：“现金贷”类商户名含账户名会被误判为转账建议、“星巴克代购”类会被模糊历史误分类（测试注释已记录，本轮不改匹配逻辑）。
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+- **深耕轮 2026-10-21（已合入，72c3569）**：report helpers 12 测试全绿。
 
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
@@ -387,6 +390,7 @@
 
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+- **深耕轮 2026-10-21（已合入，72c3569）**：notify dispatch fallback r3（7 测试）+ public surface r3（5 测试）全绿。
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
@@ -491,6 +495,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 - **深耕轮 2026-10-20 晚「否定语境感知」（已合入，单元全绿；eval 09d 未完全翻转，根因已定位）**：v0.14 遗留 v08-qa-09d「多久备份一回数据才算合适，能给点建议不」攻坚——`stripTrailingQuestionBu()`（src/query_parser.cpp 匿名 namespace，stripTrailingPredicates 同风格）：只剥字符串尾部句尾语气词「不」（等价于吗），「得不」（不得不）与句中否定（不建议/不能/不要）一律不动；parseNaturalQuery 2.6 与 stripFillerWords 双路径对齐；tests 新增 QueryParserV016 3 例。step193plan 生成函数体（dpsk 当轮 429 限流切换；模型两轮只交思考过程未交 PATCH，第 3 版从 reasoning 抢救出完整函数体后机械应用——教训：复杂任务必须把全部原文逐字贴进 prompt，不许让模型"自己摘取"锚定）。验证：QueryParser* 19/19 全绿；全量 ctest 零新增失败（45 失败全为 pre-existing，stash 对照确认：ServeFixture 夹具重名/Tokenizer 系列/HybridSearchVsQR2）；改前改后实测对照：locate 关键词 10→9（去不）、tok_05_mixed passage 分 0.595→0.530、search 路径 Top-1=qa_05_backup.md。locate 仍未翻转的精确根因：passage_ranker 的 coverage 未加权，单字噪音（算/能/点）+ 高频「建议」主导评分，与文档级 BM25 脱钩——下轮独立里程碑做 passage 评分 IDF/词长加权（含全量 eval 回归）。
 - **深耕轮 2026-10-20 深夜「v021 段落评分 IDF×词长加权」（已合入 b83767a，新测试全绿）**：兑现上一轮立的里程碑——`Database::docFrequency(term)`（FTS5 MATCH 走 jieba 分词，空词/未知词返回 0）+ `termLengthWeight`（1 码点 0.35 / 2 码点 0.7 / 3+ 码点 1.0，压单字噪音）+ `TermWeights`（idf×词长权重表，idf=log((N+1)/(df+1))+1）+ `rankPassages` 加权重载（全 1.0 权重时与旧版逐位相同）；`Locator::locate` 改走加权版。3 个深测文件（docfrequency 10 例/passage 加权/v021 回归）。验证：cmake 零错；新测试全绿；全量套件 11 失败经 pristine 树 stash 对照确认为既存环境问题（TokenizerPunctTest/ServeErrParamR2 在干净树同样失败，与本轮无关）。eval 质量回归（新旧二进制 NDCG/MRR 对照）已排入深夜波次由协调员执行。
+- **深耕轮 2026-10-21（已合入，72c3569）**：QueryParser V017"不/没"边界 6 测试全绿（否定词尾缀保护）。
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
@@ -539,6 +544,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-19 夜（本 lane）**：去重聚类纵深（tests/test_dedup_deep5.py 34 例：标题党变体/英文大小写、跨源同事件异述、近似重复、14 天窗口边界、短文本 Jaccard、簇代表多候选、backfill 幂等；pytest 34/34、ruff 全洁）+ FTS5 搜索边界纵深（tests/test_fts5_boundary_deep.py 26 例：全角引号/书名号/emoji、AND/OR/NOT 退化、列名冒号、连字符、超长查询、trigram 长度边界、OperationalError 回退；pytest 26/26、ruff 全洁）；修**真 bug**：store.py 缺 `import sqlite3` 致 FTS5 MATCH 回退路径 NameError→500（上一轮加的回退保护从未被实际执行过，E1 mock 测试抓出），另清 highlight_snippet 未使用变量；真实服务冒烟：/search 对"苹果"/iPhone-17/O'Brien/AND/全角引号/**\* 全 200 无 500，正常词命中验证通过。诚实记录：跨源同事件不同写法 Jaccard 仅约 0.09 < 0.35 阈值会被漏聚，为当前两阶段算法已知边界（测试注释已记录）。
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+- **深耕轮 2026-10-21（已合入，72c3569）**：dedup tokenize deep8（10 测试）+ ranking score deep3（10 测试）全绿。
 
 ## linkshort「短链 LinkShort · 自托管短链服务」
 
