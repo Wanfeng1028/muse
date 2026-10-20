@@ -217,6 +217,51 @@ add_executable(docseek_tests
   tests/test_bigram_tokenizer.cpp
   tests/test_locate_context.cpp
   tests/test_http_contract.cpp
+  tests/test_hybrid_r2_weights.cpp
+  tests/test_hybrid_r2_matchquery.cpp
+  tests/test_hybrid_r2_emptyquery.cpp
+  tests/test_hybrid_r2_emptyindex.cpp
+  tests/test_hybrid_r2_topk.cpp
+  tests/test_hybrid_r2_longquery.cpp
+  tests/test_hybrid_r2_orfallback.cpp
+  tests/test_hybrid_r2_phraseboost.cpp
+  tests/test_hybrid_r2_explain.cpp
+  tests/test_hybrid_r2_searchquestion.cpp
+  tests/test_hybrid_r2_searchvsq.cpp
+  tests/test_hybrid_r2_titleboost0.cpp
+  tests/test_hybrid_r2_stopwords.cpp
+  tests/test_hybrid_r2_weightsmid.cpp
+  tests/test_tokenizer_neologism_r2.cpp
+  tests/test_tokenizer_mixed_r2.cpp
+  tests/test_tokenizer_punct_r2.cpp
+  tests/test_tokenizer_single_r2.cpp
+  tests/test_tokenizer_number_r2.cpp
+  tests/test_tokenizer_trad_r2.cpp
+  tests/test_tokenizer_long_r2.cpp
+  tests/test_tokenizer_repeat_r2.cpp
+  tests/test_tokenizer_phrase_r2.cpp
+  tests/test_tokenizer_english_r2.cpp
+  tests/test_bigram_tokenizer_r2.cpp
+  tests/test_tokenizer_singleton_r2.cpp
+  tests/test_serve_r2_limit.cpp
+  tests/test_serve_r2_errparam.cpp
+  tests/test_serve_r2_concurrent.cpp
+  tests/test_serve_r2_explain.cpp
+  tests/test_serve_r2_boost.cpp
+  tests/test_serve_r2_snippet.cpp
+  tests/test_serve_r2_locate.cpp
+  tests/test_serve_r2_locatelimit.cpp
+  tests/test_serve_r2_health.cpp
+  tests/test_serve_r2_metrics.cpp
+  tests/test_locate_r2_precision.cpp
+  tests/test_locate_r2_context.cpp
+  tests/test_locate_r2_nonsense.cpp
+  tests/test_locate_r2_bigdoc.cpp
+  tests/test_locate_r2_limit.cpp
+  tests/test_locate_r2_matched.cpp
+  tests/test_locate_r2_linebase.cpp
+  tests/test_locate_r2_punctfail.cpp
+  tests/test_locate_r2_multidoc.cpp
 )
 target_link_libraries(docseek_tests PRIVATE
   docseek_core
