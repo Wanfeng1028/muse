@@ -2338,8 +2338,8 @@
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/canvas/SKILL.md",
       "version": "2.1.0",
       "author": "playhouse",
-      "rewritten": true,
-      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/canvas：功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "与上游原文相似度 91%-98%（2026-10-20 difflib 实测），按近乎原文收录，已补上游 MIT LICENSE"
     },
     {
       "id": "toonflow-workflow",
@@ -2350,8 +2350,8 @@
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/workflow/SKILL.md",
       "version": "2.7.0",
       "author": "playhouse",
-      "rewritten": true,
-      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "与上游原文相似度 91%-98%（2026-10-20 difflib 实测），按近乎原文收录，已补上游 MIT LICENSE"
     },
     {
       "id": "toonflow-v118workflow",
@@ -2362,8 +2362,8 @@
       "sourceUrl": "https://github.com/HBAI-Ltd/Toonflow-app/blob/master/packages/skills/v118workflow/SKILL.md",
       "version": "1.1.0",
       "author": "playhouse",
-      "rewritten": true,
-      "rewriteNote": "改写自 HBAI-Ltd/Toonflow-app packages/skills/v118workflow：功能对齐，SKILL.md 为独立重写，未复制原文"
+      "rewritten": false,
+      "rewriteNote": "与上游原文相似度 91%-98%（2026-10-20 difflib 实测），按近乎原文收录，已补上游 MIT LICENSE"
     },
     {
       "id": "hyperframes-embedded-captions",
@@ -2553,6 +2553,24 @@
       "author": "heygen-com",
       "license": "Apache-2.0",
       "source": "heygen-com/hyperframes"
+    },
+    {
+      "id": "lemo-opuscar",
+      "name": "lemo-opuscar",
+      "version": "1.0.0",
+      "author": "LemoLab",
+      "license": "MIT",
+      "source": "lemomo-ai/lemo-opuscar",
+      "description": "Direct and produce a short film made entirely in code, in one of the styles of the Lemo-Opuscar library (e.g. Impasto Oil Painting 油画厚涂, Watercolor Brush 水彩笔刷, Ukiyo-e 浮世绘, Satellite Briefing 卫星简报, Exploded Teardown 产品拆解, Microscope Story 显微叙事). Use when the user asks for a video, film, short, promo, explainer or animation (视频、短片、动画、宣传片) in a named style, including data, science and product explainers built from real material such as satellite imagery, laser scans, CAD files or archive scans (数据解说、科普、产品拆解); when they want a film made about their own topic and haven't chosen a style (help them choose); when they want to change a style and keep it as their own (改风格、做自己的风格); or when they ask which film styles there are. Not for editing or converting existing video files."
+    },
+    {
+      "id": "kinetic-reel",
+      "name": "kinetic-reel",
+      "version": "1.0.0",
+      "author": "tuzhechen2005",
+      "license": "MIT",
+      "source": "tuzhechen2005/painted-animation",
+      "description": "Make kinetic-typography motion reels (MP4) in code: showreels, portfolio or work reels, product promos, intro films, \"motion design\"-style videos with bold condensed type, HUD micro-type, black/cream/lime palette, three.js generative layers (particle terrain, liquid marble, chrome knot, particle clouds), shape-continuity transitions and a synthesized, beat-locked score. Canvas 2D + WebGL rendered frame by frame in headless Chrome, encoded with ffmpeg. Use when the user asks for a reel, showreel, motion-graphics / kinetic-type video, a \"Work Reel\" in this style, or to extend/re-cut the Work Reel ’26."
     }
   ]
 }
