@@ -226,6 +226,8 @@
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
+- **深耕轮 2026-10-20 晚「UI 审计 #20 P1 双修」（已合入，全绿）**：step193plan 生成 PATCH（dpsk 当轮 429 限流，按用户亲定模型链自动切换）——①settings.html `<head>` 补内联主题脚本（全站 22 页唯一缺失，浅色模式曾渲染深色）；②auth.css 登录主按钮 `background: #4176E6` 改 `var(--ink)`/`var(--ink-text)`（DESIGN_SYSTEM.md §4 墨色规范，随主题反转）；route 拦截截图 harness（绕 Chromium 152 LNA）抓 settings/login × 深/浅 4 张亲眼验收：data-bs-theme 正确落位、浅色按钮 rgb(17,17,17)/深色反转 rgb(255,255,255)。DoD 缺口复核（docs/dod-gap-report.md）：G1 失败注入 4 项核实已全覆盖（VideoProviderRouterFailureDeepTest/AuthProxyControllerTest T13·T18·T19/FfmpegServiceMissingBinaryTest/VideoTaskServiceTest:649 断言 fallbackReason 落库）、G2 resolveExtension 死分支早在 f4fa998 已删（报告误判，关闭）；剩余 G3（Agnes/Qwen 录制回放，无外部 API，声明已知限制）、G4（h2c 锁定待用户一句话拍板）。
+
 - **深耕轮 2026-10-20 傍晚「成本账本看板」（已合入）**：后端新增 `CostLedgerService.summarizeTrend(days)`（[1,90]钳制、按日期升序、空天补零）+ `budgetStatus()`（构造器注入 BillingProperties，reserve() 复用抽出的 usableBudget）；Controller 新增 `GET /api/cost-ledger/trend?days`（默认14、非法400）、`GET /api/cost-ledger/budget`；`GET /api/cost-ledger/entries` 新增 limit（默认100、最大500、非法400）。前端 `cost-ledger.html` 看板页（导航"运行"→"成本账本"）：预算卡+使用率进度条、今日/近7天/累计/供应商数 KPI、14 天 SVG 趋势图（7/14/30 切换）、按供应商条形、明细表；中英双语、Tabler 原生。新增 6 个测试文件 24 例全绿；修 dpsk 测试 bug 1 个。视觉验收：36 条跨 14 天种子数据，真机截图亲眼验收（修 5 处真 bug：asset 路径/css-js 子目录、hidden/d-none 混用、PAGE_I18N 格式、key 命名不一致、"仅告警"重复）。文档：README/OPERATIONS/CHANGELOG 同步；截图 docs/screenshots/cost-ledger/。
 
 ## mini-os「网页操作系统」
@@ -481,6 +483,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-19 晚（已合入）**：v0.5 结构化日志 + request_id 全链路、backup/restore 子命令、docs/OPERATIONS.md、失败注入测试（词典缺失/DB 损坏）、故障演练文档（docs/DRILL-2026-10-19.md）；query_parser/searcher 改动验证通过。
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：索引性能攻坚——O(n²) 索引修复，90KB 文档 46s→1s，292KB hang→1s；3 个 GAP 工单确认关闭；ctest 652 pass。r2 深测 12 文件（修 bigram_tokenizer.h include 缺失、Database 无默认构造改 std::optional+emplace）。
+
+- **深耕轮 2026-10-20 晚「否定语境感知」（已合入，单元全绿；eval 09d 未完全翻转，根因已定位）**：v0.14 遗留 v08-qa-09d「多久备份一回数据才算合适，能给点建议不」攻坚——`stripTrailingQuestionBu()`（src/query_parser.cpp 匿名 namespace，stripTrailingPredicates 同风格）：只剥字符串尾部句尾语气词「不」（等价于吗），「得不」（不得不）与句中否定（不建议/不能/不要）一律不动；parseNaturalQuery 2.6 与 stripFillerWords 双路径对齐；tests 新增 QueryParserV016 3 例。step193plan 生成函数体（dpsk 当轮 429 限流切换；模型两轮只交思考过程未交 PATCH，第 3 版从 reasoning 抢救出完整函数体后机械应用——教训：复杂任务必须把全部原文逐字贴进 prompt，不许让模型"自己摘取"锚定）。验证：QueryParser* 19/19 全绿；全量 ctest 零新增失败（45 失败全为 pre-existing，stash 对照确认：ServeFixture 夹具重名/Tokenizer 系列/HybridSearchVsQR2）；改前改后实测对照：locate 关键词 10→9（去不）、tok_05_mixed passage 分 0.595→0.530、search 路径 Top-1=qa_05_backup.md。locate 仍未翻转的精确根因：passage_ranker 的 coverage 未加权，单字噪音（算/能/点）+ 高频「建议」主导评分，与文档级 BM25 脱钩——下轮独立里程碑做 passage 评分 IDF/词长加权（含全量 eval 回归）。
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
