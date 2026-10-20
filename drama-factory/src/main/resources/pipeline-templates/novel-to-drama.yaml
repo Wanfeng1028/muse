@@ -1,0 +1,96 @@
+name: novel-to-drama
+version: "1.0"
+description: 把网络小说改编为竖屏短剧的七阶段流水线，从剧本改写、资产建库到成片导出逐段把控。
+category: drama
+stages:
+  - name: rewrite
+    produces: [screenplay]
+    requiredArtifactsIn: [source_text]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 是否保留原著主线与核心角色关系
+      - 是否按集切分并标注每集时长与集尾钩子
+      - 台词是否可直接表演而非小说叙述语言
+    successCriteria:
+      - 剧本标注每集对应的原文章节范围
+      - 每集结尾均设有悬念或反转钩子
+      - 全部台词为角色口语，无旁白式心理描写
+  - name: extract
+    produces: [asset_bible]
+    requiredArtifactsIn: [screenplay]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 角色清单是否去重并合并同一人物的别名
+      - 每个角色是否给出可复现的外貌锚点
+      - 场景与道具是否标注首次出场集数
+    successCriteria:
+      - 资产圣经中无重复角色条目
+      - 每个角色含发型、服装、体态等外貌锚点
+      - 每个场景附空间布局说明与道具规格
+  - name: storyboard
+    produces: [storyboard]
+    requiredArtifactsIn: [screenplay, asset_bible]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每段时长是否落在 8 至 15 秒区间
+      - 每段是否全程不跨场景
+      - 每段是否标注台词与氛围描述
+    successCriteria:
+      - 每个分镜段落标注明确时长且均在区间内
+      - 无单段跨越两个场景的情况
+      - 每段含台词文本与氛围关键词
+  - name: prompt_gen
+    produces: [prompt_pack]
+    requiredArtifactsIn: [storyboard, asset_bible]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 角色提示词是否含正脸特写与三视图锚点
+      - 场景提示词是否明确为无人物广角空镜
+      - 道具提示词是否统一为白底单品规格
+    successCriteria:
+      - 每个角色至少含一条正脸与一条三视图提示词
+      - 全部场景提示词注明无人出现
+      - 道具提示词均标注白底与单品构图
+  - name: media_gen
+    produces: [media_manifest]
+    requiredArtifactsIn: [prompt_pack]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 锚点图是否先于视频片段生成完成
+      - 同一角色是否全程引用同一锚点图
+      - 每段任务是否记录状态并支持重试
+    successCriteria:
+      - 媒体清单含每个锚点图的生成状态
+      - 同一角色的视频片段引用同一锚点图编号
+      - 每段视频标注成功或失败及重试次数
+  - name: audio
+    produces: [audio_tracks, subtitles]
+    requiredArtifactsIn: [storyboard, media_manifest]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 配音是否按分镜台词逐段对齐
+      - 字幕时间轴是否与配音一致
+      - 配乐窗口是否避开台词密集段落
+    successCriteria:
+      - 每段配音与对应分镜段落时长匹配
+      - 字幕时间轴与配音偏差在可接受范围内
+      - 配乐窗口标注起止时间且不压台词
+  - name: compose
+    produces: [final_cut, render_report]
+    requiredArtifactsIn: [media_manifest, audio_tracks, subtitles]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 单镜头合成与整集拼接是否无黑帧
+      - 字幕是否正确烧录且不遮挡主体
+      - 响度与竖屏画幅是否通过校验
+    successCriteria:
+      - 成片各集无黑帧与音画不同步
+      - 字幕全程可读且未遮挡人物面部
+      - 渲染报告注明响度与画幅均达标
