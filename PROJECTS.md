@@ -72,6 +72,8 @@
 
 - **深耕轮 2026-10-19 晚（已合入）**：2 个遗留 deep2 测试验证通过（mistakes-summary/plans-autoschedule）；深测 r-next（focus/words/exams/backup 纵深）；2 篇发版 DoD 对照报告（docs/PRODUCTION_CHECKLIST_REPORT_v1.9.0.md、v1.10.0.md）。
 
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+
 ## second-brain「第二大脑」
 
 **定位**：个人知识库系统，支持笔记、标签、搜索、双链与知识图谱，构建可生长的个人知识网络。**灵魂功能**：会主动帮你复习的第二大脑——SM-2 遗忘曲线调度 + 抽认卡复习流 + 每日回顾推送。
@@ -121,6 +123,8 @@
 
 - **深耕轮 2026-10-19 晚（已合入）**：attachments/export/push/review/search/metrics 六包 deep2 纵深测试；search_cjk_boundary 深测验证通过。
 - **深耕轮 2026-10-19 深夜·搜索/复习/图谱三纵深（已合入）**：①搜索 P2-7 收尾——`GET /api/search` AND 无结果且分词≥2 时自动降级 OR 语义（新增 `search.RankOr` + `store.SearchNotesAny`，响应 `"fallback": true`，`?format=legacy` 同样生效；README 已同步）；**修真 bug**：`SearchWithFallback` 的 hitCounts 用追加前原索引做 key、原地 sort 后比较错位（RankedNote 新增 HitCount 字段根治），回归测试 `TestRankOrHitCountRegression3` 用 3 元素用例实证旧实现确会错排（旧 [2,1,3] vs 新 [2,3,1]）；②复习引擎纵深——`sm2_deep4_test.go`（连续 10 次忘记 EF 不降/间隔恒 1、EF 下限 1.3 钳制、连续简单单调增长、非法评分原样返回、闰日 2028-02-29/时区 Asia/Shanghai 边界）+ `review_deep3_test.go` 真实 HTTP（到期队列 due_date ASC 确定性、limit 0/999 边界、跨用户评分互不污染、非法 grade 400/404）；③图谱边界——`graph_deep3_test.go`（环保留双边/自引用跳过/重复边去重/悬空链接无边/大小写不敏感/空库/标签附着）+ api 三例（空库 `[]` 非 null）。`go test ./...` 10 包全绿，`-race` 抽跑 search/review 通过，`go vet`/`gofmt` 全洁；真实进程冒烟（OR 降级 fallback=true、legacy 数组、AND 不降级、graph、review queue）全通。TECH_DEBT.md P2-7 标已交付。
+
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -218,6 +222,8 @@
 
 - **深耕轮 2026-10-19 晚（已合入 commit 5acd746）**：13 个新 *DeepTest 文件（RunExecutor 失败注入 16 用例、CostLedger 并发、ProviderRouting 评分、CutRhythmChecker、ShotVideoRouter、VideoProviderRouterFailure 等）；修真 bug：Toonflow 集成误用已存在的 Flyway V10 版本号（V10__prompt_recipe.sql 已存在），重命名为 V20__shot_video_params.sql；3 篇发版 DoD 对照报告（docs/dod-toonflow-integration.md、dod-openmontage-integration.md、dod-hyperframes-integration.md，诚实标注未通过项）；skill/ 镜像同步 3 个 toonflow skills（之前遗漏）、修索引 4 处（3 版本号+1 缺 name）、openmontage 156 条补 rewriteNote（来源如实标注）。
 - **深耕轮 2026-10-19 深夜（已合入，全绿）**：ShotContinuityChecker 9 行改动 + 7 个测试文件 + OPERATIONS.md 的稳定性验证——限范围 mvn -o 6 个测试类 **111/111** 全过（ShotContinuityCheckerDeepTest 17、CutRhythmCheckerDeepTest 27、VideoNormalizationServiceDeepTest 16、PromptFileServiceDeepTest 16、CinematographyVocabularyDeepTest 17、VideoProviderRouterFailureDeepTest 18），离线构建一次成功。
+
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
 ## mini-os「网页操作系统」
 
@@ -320,6 +326,8 @@
 - **深耕轮 2026-10-19 晚（已合入）**：银行账单导入/自动分类匹配深测（test_import_idempotency_deep.py 等）；services.py 改动验证通过；README 补全（功能/快速开始/配置）。
 - **深耕轮 2026-10-19 夜（本 lane）**：新增账本平衡审计（services.audit_ledger() + GET /api/audit + main.py 注册）：复式恒等式 Σ余额==Σ期初+Σ收入-Σ支出（转账在账户间抵消；转入/转出和按账户归属统计，与 account_balance 语义对齐）+ 引用完整性检查（transfer 缺 to/转入悬空/自转/转入已归档警告/跨币种警告；income/expense 缺分类/分类 kind 不一致/账户悬空；SQLite 未开 FK=0 脏数据真实可存在）；tests/test_audit_deep.py 9 例全绿；修实现 1 处（转入和曾按行统计致悬空转入漏报恒等式破裂）；真实服务冒烟：干净库 ok=true，转入账户悬空脏数据 → TRANSFER_TO_ACCOUNT_NOT_FOUND + IDENTITY_BROKEN（diff=-5000）。侦探匹配纵深（tests/test_matching_deep5.py 24 例：模糊互包含误判边界/规则子串/历史票数合并计票/候选置信度/归一化指纹/贪心配对/别名精确语义；pytest 24/24、ruff 全洁）；修测试侧 1 处（C2 漏算模糊分支合并计票）；诚实记录已知边界：“现金贷”类商户名含账户名会被误判为转账建议、“星巴克代购”类会被模糊历史误分类（测试注释已记录，本轮不改匹配逻辑）。
 
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+
 ## sentinel「哨兵 Sentinel · 站点可用性监控」
 
 **定位**：站点与服务可用性监控系统，覆盖监控目标管理、定时检查、停机事件与可用率统计的完整运维流程。**灵魂功能**：站点健康档案——每个站点可用性画像、月度 SLA 报告、一键生成公开状态页。
@@ -367,6 +375,8 @@
 
 - **v0.8.4（2026-10-20）**：①修真 bug——`POST /api/monitors` 创建时忽略 `is_public`：`monitorInput` 新增 `IsPublic *int`（0/1，非法值 400；不传按 0），`PUT` 未传时保留原值不再静默重置；回归测试 `is_public_regression_test.go`（建 true/false/默认/更新保留）；控制台新建表单新增"公开（状态页可见）"复选框 + 列表"公开"徽标；真实截图亲眼验收。②`GET /api/incidents` 分页参数新增 `per_page`（优先级 per_page > page_size > limit，钳制 1~100，非法回退默认 20）+ `incidents_perpage_test.go`。③附带清理 HEAD 预存污染：monitors.html 首行 ` ```html ` 围栏 + 4 处 `--- END PATCH ===`/`=== PATCH:` 标记行（上一轮 PATCH 应用泄漏，已清除）。`go test ./...` 15 包全绿。已知：incidents.html 顶部品牌仍为预存 "Muse"（非本轮引入，排期后续统一）。
 
+
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
 ## docseek「文溯 DocSeek · 本地全文检索引擎」
 
@@ -467,6 +477,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 - **深耕轮 2026-10-19 晚（已合入）**：v0.5 结构化日志 + request_id 全链路、backup/restore 子命令、docs/OPERATIONS.md、失败注入测试（词典缺失/DB 损坏）、故障演练文档（docs/DRILL-2026-10-19.md）；query_parser/searcher 改动验证通过。
 
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：索引性能攻坚——O(n²) 索引修复，90KB 文档 46s→1s，292KB hang→1s；3 个 GAP 工单确认关闭；ctest 652 pass。r2 深测 12 文件（修 bigram_tokenizer.h include 缺失、Database 无默认构造改 std::optional+emplace）。
+
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
 **定位**：自托管 RSS 阅读器，覆盖订阅管理、定时抓取、正文提取、三栏阅读、全文搜索与 OPML 导入导出的完整流程。
@@ -512,6 +524,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 - **深耕轮 2026-10-19 晚（已合入）**：去重聚类/重要性排序/API 分页搜索深测（test_dedup_deep4.py、test_api_pagination_search_deep2.py 等）；store.py 改动验证通过。
 - **深耕轮 2026-10-19 夜（本 lane）**：去重聚类纵深（tests/test_dedup_deep5.py 34 例：标题党变体/英文大小写、跨源同事件异述、近似重复、14 天窗口边界、短文本 Jaccard、簇代表多候选、backfill 幂等；pytest 34/34、ruff 全洁）+ FTS5 搜索边界纵深（tests/test_fts5_boundary_deep.py 26 例：全角引号/书名号/emoji、AND/OR/NOT 退化、列名冒号、连字符、超长查询、trigram 长度边界、OperationalError 回退；pytest 26/26、ruff 全洁）；修**真 bug**：store.py 缺 `import sqlite3` 致 FTS5 MATCH 回退路径 NameError→500（上一轮加的回退保护从未被实际执行过，E1 mock 测试抓出），另清 highlight_snippet 未使用变量；真实服务冒烟：/search 对"苹果"/iPhone-17/O'Brien/AND/全角引号/**\* 全 200 无 500，正常词命中验证通过。诚实记录：跨源同事件不同写法 Jaccard 仅约 0.09 < 0.35 阈值会被漏聚，为当前两阶段算法已知边界（测试注释已记录）。
+
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
 ## linkshort「短链 LinkShort · 自托管短链服务」
 
@@ -563,6 +577,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-19 晚（已合入）**：burn 彻底删除选项（API+store+测试）；burn 竞态/访问画像深测验证通过。
 - **深耕 lane（linkshort/mortisedb/mini-os，2026-10-19 晚）**：①原子限次/原子阅后即焚——修掉已知的并发超发竞态：store.TryBurn（`UPDATE … WHERE burn=1 AND enabled=1` 原子抢占）+ TryConsumeVisit（`UPDATE … WHERE max_visits IS NULL OR clicks<max_visits` 原子消费并计数）+ RecordVisitNoCount（已计数路径只插 visits 行防双计）；finishRedirect 删掉 Clicks 快照检查；旧 TestBurnRaceConcurrentGet 的"放任超发"断言收紧为精确语义（burn 链 32 并发恰 1 次 302、max_visits=5 链 20 并发恰 5 次 302）；`go test ./... -race` 全绿；真实服务冒烟（burn 302→410→410、max2 302→302→410→410）。②时段统计 API：store.HourlyStats（UTC 24 小时分布 + 星期分布，`strftime('%H'/'%w')`，days 过滤）+ `GET /api/stats/hourly`（days 仅允许 1/7/30）；真实服务冒烟验证（6 次访问落 hours[13]=6）。
 
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
 **定位**：NAS 玩家/小团队的本地多源数据拼装层——把 SQLite/CSV/JSON/本地目录声明式映射成表，增量同步 + 冲突策略 + 类 SQL 查询视图 + 本地优先（数据落文件、可 Git 版本化）。Airbyte/dbt 对个人太重，Metabase 只读不解决拼装，这是真空位。
@@ -603,6 +619,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕 lane（linkshort/mortisedb/mini-os，2026-10-19 晚）**：pgsource 只读 SQL 白名单安全加固——AssertReadOnlySQL 升级为字面量/注释感知扫描（单引号含 `''` 转义/双引号标识符/dollar-quoted/行+块注释全部剥离为空格），新增拒绝：WITH 体内 DML（INSERT/UPDATE/DELETE/MERGE，如 `WITH d AS (DELETE…) SELECT`）、`SELECT … INTO` 建表、危险函数（pg_sleep/pg_terminate_backend/pg_cancel_backend/dblink_exec/dblink_connect）；旧 TestGuardBoundaryEvasion 三处旧断言同步翻转（WITH 夹带 DELETE 改为拒绝、注释开头与字符串内分号改为通过并重写注释）；新增 guard_hardening_deep_test.go 20+ 对抗用例（含注释分隔关键字、大小写混杂、多 CTE、内部 columnsSQL/primaryKeySQL 回归）；设计文档第 4 节第一层小节重写（四条规则+误伤面声明+与只读事务/只读账号的诚实分工）；`go test ./...` 15 包全绿。
 - **深耕轮 2026-10-19 深夜（已合入，全绿）**：pgsource 白名单对抗纵深——新增 pgsource_whitelist_adversarial_deep_test.go 18 例（注释拆分关键字、dollar-quoted 藏 DML、字符串不误杀、WITH 体内 DML、SELECT INTO、全角 Unicode、堆叠分号、pg_sleep 嵌套）+ strip_literals_unit_deep_test.go（引号转义/自定义 tag/未闭合容错/位置对齐）；修测试侧 6 处 want 空格数 off-by-one（实现零改动）；go test ./... 15 包全绿。
 
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
+
 ## voxloom「声纹工坊 VoxLoom · 中文播客文字剪辑工作站」
 
 **定位**：中文播客/有声书创作者的文字剪辑工作站——转写稿当时间轴，文字删改自动生成音频剪辑方案（保留呼吸节奏），语气词一键弱化，EDL 导出供 Premiere/Reaper 精修。Descript 闭源英文优先，开源侧中文文字剪辑是空位。
@@ -639,6 +657,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 - **深耕轮 2026-10-19 晚（已合入）**：LOADTEST.md + LoadTest/Program.cs 改动验证；docs/OPERATIONS.md、敏感数据策略。
 - **深耕轮 2026-10-19 夜（本 lane，未 push）**：v2.x「多轨口误自动推荐最自然一版」：Editing/TakeRecommender.cs（TakeInput/TakeScore/Rank/RecommendBest/Explain；自然度=语气词密度+语气词时长占比×50+长停顿密度×2，长停顿阈值 1.5s）+ TakeRecommenderDeepTests 14 例；dotnet build 零错（1 warning 为既有 VoxLogger），SmokeRunner 反射直跑 366/366 全绿。
+
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
 ## interlude「幕间 Interlude · 分支叙事的 linter」
 
@@ -677,6 +697,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - ~~v2：玩家路径热力分析~~（已在 2026-10-17 交付）
 
 - **深耕轮 2026-10-19 晚（已合入）**：AggregateMarkdownBoundaryTest 验证通过；docs/OPS.md 更新；CHANGELOG 补全。
+
+- **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
 ## stagecue「舞监台 StageCue」
 
