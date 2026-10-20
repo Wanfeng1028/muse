@@ -3,9 +3,12 @@ package com.dramafactory.billing;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +17,13 @@ import java.util.Map;
  */
 @Service
 public class CostLedgerService {
+
+    /**
+     * 某提供方某天的费用汇总。
+     * spentUsd 只统计 COMPLETED/FAILED 条目的 actualUsd。
+     */
+    public record ProviderDailyCost(String provider, double estimatedUsd, double spentUsd, long entryCount) {
+    }
 
     private final CostLedgerEntryRepository repository;
 
@@ -172,6 +182,52 @@ public class CostLedgerService {
             }
         }
         return new CostSummary(entryCount, totalEstimated, totalReserved, totalSpent, countByStatus);
+    }
+
+    /**
+     * 按天汇总各提供方费用。date 为 null 时使用今天；
+     * 按 provider 分组（null/空白归入 unknown），返回按 provider 名称排序的列表。
+     */
+    @Transactional(readOnly = true)
+    public List<ProviderDailyCost> summarizeDaily(LocalDate date) {
+        LocalDate day = date != null ? date : LocalDate.now();
+        LocalDateTime start = day.atStartOfDay();
+        LocalDateTime end = day.plusDays(1).atStartOfDay();
+
+        Map<String, double[]> accumulator = new LinkedHashMap<>();
+        Map<String, Long> counts = new LinkedHashMap<>();
+
+        for (CostLedgerEntry entry : repository.findAll()) {
+            LocalDateTime createdAt = entry.getCreatedAt();
+            if (createdAt == null) {
+                continue;
+            }
+            if (createdAt.isBefore(start) || !createdAt.isBefore(end)) {
+                continue;
+            }
+            String provider = entry.getProvider();
+            if (provider == null || provider.isBlank()) {
+                provider = "unknown";
+            }
+            double[] values = accumulator.computeIfAbsent(provider, key -> new double[2]);
+            values[0] += entry.getEstimatedUsd();
+            CostLedgerStatus status = entry.getStatus();
+            if (status == CostLedgerStatus.COMPLETED || status == CostLedgerStatus.FAILED) {
+                Double actualUsd = entry.getActualUsd();
+                values[1] += actualUsd != null ? actualUsd : 0.0;
+            }
+            counts.merge(provider, 1L, Long::sum);
+        }
+
+        List<ProviderDailyCost> result = new ArrayList<>();
+        for (Map.Entry<String, double[]> e : accumulator.entrySet()) {
+            String provider = e.getKey();
+            double[] values = e.getValue();
+            long count = counts.getOrDefault(provider, 0L);
+            result.add(new ProviderDailyCost(provider, values[0], values[1], count));
+        }
+        result.sort(Comparator.comparing(ProviderDailyCost::provider));
+        return result;
     }
 
     /**

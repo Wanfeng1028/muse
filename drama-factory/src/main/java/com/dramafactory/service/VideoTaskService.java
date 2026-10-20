@@ -1,5 +1,7 @@
 package com.dramafactory.service;
 
+import com.dramafactory.billing.CostLedgerEntry;
+import com.dramafactory.billing.CostLedgerService;
 import com.dramafactory.dto.Records;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.metrics.DramaMetrics;
@@ -31,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +64,9 @@ public class VideoTaskService {
     private final String storageDir;
     private final DramaMetrics dramaMetrics;
 
+    /** 成本账本服务，可为 null（测试/未装配时跳过结算） */
+    private final CostLedgerService costLedgerService;
+
     /** 轮询方法是否正在执行中，用于关闭时等待在途任务收尾。 */
     private final AtomicBoolean pollInFlight = new AtomicBoolean(false);
 
@@ -76,6 +82,25 @@ public class VideoTaskService {
                             @Value("${drama.video.max-attempts:8}") int maxAttempts,
                             @Value("${drama.storage:./data/media}") String storageDir,
                             DramaMetrics dramaMetrics) {
+        this(videoTaskRepository, shotRepository, ffmpegService, applicationContext, episodeStatusFlowService,
+                environment, videoProviderRouter, providerName, pollIntervalMs, maxAttempts, storageDir,
+                dramaMetrics, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public VideoTaskService(VideoTaskRepository videoTaskRepository,
+                            ShotRepository shotRepository,
+                            FfmpegService ffmpegService,
+                            ApplicationContext applicationContext,
+                            EpisodeStatusFlowService episodeStatusFlowService,
+                            Environment environment,
+                            VideoProviderRouter videoProviderRouter,
+                            @Value("${drama.video.provider:mock}") String providerName,
+                            @Value("${drama.video.poll-interval-ms:10000}") long pollIntervalMs,
+                            @Value("${drama.video.max-attempts:8}") int maxAttempts,
+                            @Value("${drama.storage:./data/media}") String storageDir,
+                            DramaMetrics dramaMetrics,
+                            CostLedgerService costLedgerService) {
         this.videoTaskRepository = videoTaskRepository;
         this.shotRepository = shotRepository;
         this.ffmpegService = ffmpegService;
@@ -88,6 +113,7 @@ public class VideoTaskService {
         this.maxAttempts = maxAttempts;
         this.storageDir = storageDir;
         this.dramaMetrics = dramaMetrics;
+        this.costLedgerService = costLedgerService;
     }
 
     /**
@@ -265,6 +291,7 @@ public class VideoTaskService {
         }
         task.setProvider(result.providerName());
         task.setProviderTaskId(result.providerTaskId());
+        task.setLedgerEntryId(result.ledgerEntryId());
         task.setStatus(VideoTaskStatus.PROCESSING);
         task.setNextRetryAt(LocalDateTime.now().plusNanos((pollIntervalMs) * 1_000_000L));
     }
@@ -278,10 +305,12 @@ public class VideoTaskService {
         switch (result.status()) {
             case COMPLETED -> {
                 log.info("视频任务完成：taskId={}，shotId={}", task.getId(), task.getShot().getId());
+                settleLedgerComplete(task);
                 downloadVideo(task, result.videoUrl());
             }
             case FAILED -> {
                 log.warn("视频任务提供方返回失败：taskId={}，shotId={}，原因={}", task.getId(), task.getShot().getId(), result.errorMessage());
+                settleLedgerFail(task, result.errorMessage());
                 failOrRetry(task, result.errorMessage(), false);
             }
             case QUEUED, PROCESSING -> task.setNextRetryAt(LocalDateTime.now().plusNanos((pollIntervalMs) * 1_000_000L));
@@ -332,6 +361,59 @@ public class VideoTaskService {
             episodeStatusFlowService.refreshAfterTaskDone(episodeId);
         } catch (Exception e) {
             log.warn("刷新剧集状态失败（不影响任务完成）: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 账本结算（提供方成功）：RESERVED → COMPLETED，实际费用按提交时的估算值结算。
+     * 结算后把任务上的条目 id 置空，保证幂等；任何异常只记日志，不影响主流程。
+     */
+    private void settleLedgerComplete(VideoTask task) {
+        Long entryId = task.getLedgerEntryId();
+        if (entryId == null || costLedgerService == null) {
+            return;
+        }
+        try {
+            CostLedgerEntry entry = costLedgerService.requireEntry(entryId);
+            costLedgerService.complete(entryId, entry.getEstimatedUsd(), durationMsOf(task));
+            task.setLedgerEntryId(null);
+        } catch (RuntimeException e) {
+            log.warn("账本结算（完成）失败，不影响主流程：taskId={}，entryId={}，原因={}",
+                    task.getId(), entryId, e.getMessage());
+        }
+    }
+
+    /**
+     * 账本结算（提供方失败）：RESERVED → FAILED，实际费用记 0。
+     * 结算后把任务上的条目 id 置空，保证幂等；任何异常只记日志，不影响主流程。
+     */
+    private void settleLedgerFail(VideoTask task, String reason) {
+        Long entryId = task.getLedgerEntryId();
+        if (entryId == null || costLedgerService == null) {
+            return;
+        }
+        try {
+            String note = "提供方任务失败：" + (reason == null ? "" : reason);
+            costLedgerService.fail(entryId, 0d, durationMsOf(task), note);
+            task.setLedgerEntryId(null);
+        } catch (RuntimeException e) {
+            log.warn("账本结算（失败）失败，不影响主流程：taskId={}，entryId={}，原因={}",
+                    task.getId(), entryId, e.getMessage());
+        }
+    }
+
+    /**
+     * 任务从创建到现在的耗时毫秒数，异常时返回 0。
+     */
+    private long durationMsOf(VideoTask task) {
+        try {
+            if (task.getCreatedAt() == null) {
+                return 0L;
+            }
+            long ms = Duration.between(task.getCreatedAt(), LocalDateTime.now()).toMillis();
+            return Math.max(ms, 0L);
+        } catch (RuntimeException e) {
+            return 0L;
         }
     }
 

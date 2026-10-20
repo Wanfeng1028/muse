@@ -94,9 +94,9 @@ class VideoProviderRouterTest {
     void chainOrderAgnesFirstThenDefaultFallbacks() {
         VideoProviderRouter router = new VideoProviderRouter(contextWithAll(), environmentWithPreferred(AGNES), null);
 
-        // 2026-10-16 起 qwen 因额度耗尽摘除；本地兜底通道 htmlrender/painted 仍在
-        // DEFAULT_ORDER，链：agnes → minimax → novai → doubao → htmlrender → painted
-        assertEquals(List.of(AGNES, MINIMAX, NOVAI, DOUBAO, "htmlrender", PAINTED), router.chain());
+        // 2026-10-16 起 qwen 因额度耗尽摘除；2026-10-19 起 hyperframes（本地 HTML 渲染 CLI）加入降级链
+        // DEFAULT_ORDER，链：agnes → minimax → novai → doubao → hyperframes → htmlrender → painted
+        assertEquals(List.of(AGNES, MINIMAX, NOVAI, DOUBAO, "hyperframes", "htmlrender", PAINTED), router.chain());
     }
 
     @Test

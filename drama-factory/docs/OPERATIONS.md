@@ -668,8 +668,58 @@ ffmpeg 瞬时重试突增：
 - **单实例部署**：熔断、限流都是 Resilience4j 内存级实现，多实例各自为政。要真正集群化得换 Redis 版或网关层做。
 - **H2 单机**：数据文件就在本机磁盘上，不支持多节点共享。想上集群得换 PostgreSQL / MySQL，Flyway 脚本要过一遍方言。
 - **`/actuator/prometheus` 无鉴权**：不在 `/api/**` 前缀下，`JwtAuthFilter` 不管。生产别直接暴露公网。
+- **构建必须用 UTF-8 locale**：`src/main/resources` 下有中文文件名（如 `prompt-library/pdoom-video/README-存档说明.md`）。在 POSIX locale（`LC_ALL` 未设置）下跑 Maven，`maven-resources-plugin` 会静默跳过这些文件，导致 classpath 扫描漏文件、测试莫名失败（2026-10-20 实测：PromptLibraryServiceTest 期望 26 实得 25）。构建/测试前务必 `export LC_ALL=C.UTF-8 LANG=C.UTF-8`；CI 已在 workflow 里固定。
 - **`/v3/api-docs` 与 `/swagger-ui/**` 无鉴权**：同上，默认公开。要暴露给外部用必须先套反向代理认证。
 - **agnes provider 排队拥堵**：外部服务排队严重时视频任务会长时间 PENDING，走 mock 降级（`VIDEO_PROVIDER=mock`）先把流程跑通。
+
+---
+
+## 成本账本（视频生成计费）
+
+视频每次提交生成任务时，路由会按提供方估算费用并做预算预留，轮询到结果后结算。账本表是 cost_ledger_entry，状态机为 ESTIMATED → RESERVED → COMPLETED / FAILED / REFUNDED。
+
+### 环境变量
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `drama.billing.enabled` | `true` | 总开关，关掉后不做估算也不写账本 |
+| `drama.billing.mode` | `WARN` | `WARN` 只告警继续执行；`CAP` 超预算直接跳过该通道并降级 |
+| `drama.billing.budget-total-usd` | `100.0` | 总预算，单位美元 |
+| `drama.billing.reserve-pct` | `0.1` | 预留比例，范围 0~0.9 |
+
+非法值启动即报错退出，不会带着错配置跑起来。
+
+### 单通道费率覆盖
+
+用 `drama.billing.cost-per-sec.<通道名>` 覆盖某个通道的费率，单位美元/秒。通道名里非字母数字的字符换成 `-`。
+
+默认费率表（2026-10 按公开定价估算，仅供预算参考，实际以提供方账单为准）：
+
+| 通道 | 美元/秒 |
+| --- | --- |
+| agnes | 0.08 |
+| minimax | 0.05 |
+| novai | 0.03 |
+| qwen | 0.02 |
+| doubao | 0 |
+| hyperframes | 0 |
+| htmlrender | 0 |
+| painted | 0 |
+| mock | 0 |
+| 本地通道 | 0 |
+
+### 查询接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /api/cost-ledger/summary` | 汇总 |
+| `GET /api/cost-ledger/entries` | 明细，可按 status 过滤 |
+| `GET /api/cost-ledger/daily?date=yyyy-MM-dd` | 按天按通道汇总，缺省今天 |
+
+### 运维
+
+1. 每天看一眼 daily 接口。spent 异常增高时，查 entries 定位是哪个通道。
+2. 已知限制：实际费用按提交时估算结算（提供方不返回真实费用）。RESERVED 长期不结算的条目是"在途任务"，重启或轮询停滞时会有残留，可在 entries 里按 status=RESERVED 查。
 
 ---
 

@@ -13,6 +13,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 构建强制 UTF-8 locale：resources 下有中文文件名（如 prompt-library/pdoom-video/README-存档说明.md），
+    # POSIX locale 下 maven-resources-plugin 会静默跳过这些文件，导致 classpath 扫描漏文件。
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     defaults:
       run:
         working-directory: drama-factory

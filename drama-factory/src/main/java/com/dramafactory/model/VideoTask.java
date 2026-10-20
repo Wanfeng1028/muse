@@ -97,6 +97,10 @@ public class VideoTask {
     @Column(name = "model_used", length = 100)
     private String modelUsed;
 
+    /** 关联的成本账本条目 id（cost_ledger_entry.id），可空：计费关闭或老数据时为 null */
+    @Column(name = "ledger_entry_id")
+    private Long ledgerEntryId;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 
@@ -265,6 +269,14 @@ public class VideoTask {
 
     public void setModelUsed(String modelUsed) {
         this.modelUsed = modelUsed;
+    }
+
+    public Long getLedgerEntryId() {
+        return ledgerEntryId;
+    }
+
+    public void setLedgerEntryId(Long ledgerEntryId) {
+        this.ledgerEntryId = ledgerEntryId;
     }
 
     public LocalDateTime getCreatedAt() {

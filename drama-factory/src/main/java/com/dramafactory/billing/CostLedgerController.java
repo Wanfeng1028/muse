@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -41,6 +42,27 @@ public class CostLedgerController {
         LocalDateTime fromTime = parseTime(from);
         LocalDateTime toTime = parseTime(to);
         return service.summarize(projectId, provider, fromTime, toTime);
+    }
+
+    /**
+     * 按天汇总各提供方费用。date 格式 yyyy-MM-dd，缺省为今天；非法返回 400。
+     */
+    @GetMapping("/daily")
+    public List<CostLedgerService.ProviderDailyCost> daily(
+            @RequestParam(name = "date", required = false) String date) {
+        LocalDate day = parseDate(date);
+        return service.summarizeDaily(day);
+    }
+
+    private static LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException e) {
+            throw new BadRequestError("Invalid date: " + value);
+        }
     }
 
     /**

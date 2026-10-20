@@ -27,6 +27,32 @@ Provider 做了接口抽象：
 - `HtmlRenderVideoProvider`：HTML 渲染降级通道，v2.33 起支持双引擎（`drama.video.htmlrender.engine`）：`chromium`（默认，无头截图 + ffmpeg 合成）或 `hyperframes`（CLI 不可用时自动降级回 chromium）。探活：`scripts/hyperframes_probe.sh`。
 ![Skill 详情（含版本管理/评分/发布新版本）](docs/screenshots/skills-detail-light.png)
 
+### 成本账本
+
+每次视频生成在提交前，系统会按通道估算费用，并做预算预留，避免超支。
+
+预算模式有两种，由 `drama.billing.mode` 控制：
+
+- `WARN`：只告警，不拦截，照常提交。
+- `CAP`：超过预算时自动降级，换成更便宜的通道。
+
+相关环境变量：
+
+- `drama.billing.enabled`：是否开启成本账本。
+- `drama.billing.mode`：预算模式，取值 `WARN` 或 `CAP`。
+- `drama.billing.budget-total-usd`：总预算，单位美元。
+- `drama.billing.reserve-pct`：每次提交预留预算的比例。
+
+查账接口：
+
+```
+GET /api/cost-ledger/daily?date=yyyy-MM-dd
+```
+
+返回当天各通道的花费明细。
+
+注意：费用是提交时估算出来的，提供方不会返回真实费用，最终以提供方账单为准。
+
 ### SkillHub（自有 skillhub，v2.33）
 我们自己的 skillhub 入口（挂在官方区导航"运行"分组下）：`GET /api/skillhub/index` 返回自有索引（hub=`playhouse-skillhub`，含全部内置与社区收录 skills，来源标注"官方出品"/"社区收录"，含安装状态），页面支持搜索、按来源筛选、一键安装到本地 `data/skills/`（走既有 `/api/official-skills/install/{id}`）。远端官网 skillhub 接入时客户端直接从官网下载（约定见 `docs/skillhub-server-convention.md`）。
 

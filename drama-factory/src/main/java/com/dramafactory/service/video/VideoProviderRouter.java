@@ -1,5 +1,9 @@
 package com.dramafactory.service.video;
 
+import com.dramafactory.billing.BillingProperties;
+import com.dramafactory.billing.BudgetExceededException;
+import com.dramafactory.billing.CostLedgerService;
+import com.dramafactory.billing.ProviderCostEstimator;
 import com.dramafactory.model.Shot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +37,21 @@ public class VideoProviderRouter {
     private volatile LastFallback lastFallback;
 
     /**
+     * 成本账本服务，计费关闭或未装配时为 null。
+     */
+    private final CostLedgerService costLedgerService;
+
+    /**
+     * 提供方成本估算器，计费关闭或未装配时为 null。
+     */
+    private final ProviderCostEstimator costEstimator;
+
+    /**
+     * 计费配置，计费关闭或未装配时为 null。
+     */
+    private final BillingProperties billingProperties;
+
+    /**
      * 最近的路由决策日志，最多保留 50 条，超出时丢弃最旧记录。
      */
     private final Deque<RoutingDecision> decisionLog = new ArrayDeque<>();
@@ -41,11 +60,24 @@ public class VideoProviderRouter {
 
     @org.springframework.beans.factory.annotation.Autowired
     public VideoProviderRouter(ApplicationContext applicationContext, Environment environment,
-                               ShotVideoRouter shotVideoRouter, ProviderDescriptorRegistry descriptorRegistry) {
+                               ShotVideoRouter shotVideoRouter, ProviderDescriptorRegistry descriptorRegistry,
+                               CostLedgerService costLedgerService, ProviderCostEstimator costEstimator,
+                               BillingProperties billingProperties) {
         this.applicationContext = applicationContext;
         this.environment = environment;
         this.shotVideoRouter = shotVideoRouter;
         this.descriptorRegistry = descriptorRegistry;
+        this.costLedgerService = costLedgerService;
+        this.costEstimator = costEstimator;
+        this.billingProperties = billingProperties;
+    }
+
+    /**
+     * 兼容构造器：不接入成本账本，计费视为关闭。
+     */
+    public VideoProviderRouter(ApplicationContext applicationContext, Environment environment,
+                               ShotVideoRouter shotVideoRouter, ProviderDescriptorRegistry descriptorRegistry) {
+        this(applicationContext, environment, shotVideoRouter, descriptorRegistry, null, null, null);
     }
 
     /**
@@ -57,7 +89,15 @@ public class VideoProviderRouter {
     }
 
 
-    public record RouteResult(String providerName, String providerTaskId, String fallbackReason) {
+    /**
+     * 视频通道路由结果。
+     *
+     * @param providerName   最终提交成功的通道名
+     * @param providerTaskId 通道返回的任务 id
+     * @param fallbackReason 降级原因，首选通道成功时为 null
+     * @param ledgerEntryId  成本账本条目 id，可为 null（计费关闭或未启用时）
+     */
+    public record RouteResult(String providerName, String providerTaskId, String fallbackReason, Long ledgerEntryId) {
     }
 
     public record LastFallback(String from, String to, String reason, LocalDateTime at) {
@@ -164,25 +204,43 @@ public class VideoProviderRouter {
     }
 
     public RouteResult submit(Shot shot, int seconds) {
+        Long projectId = extractProjectId(shot);
+        boolean billingOn = billingEnabled();
         List<String> chain = chain(shot);
         List<String> failures = new ArrayList<>();
         for (int i = 0; i < chain.size(); i++) {
             String current = chain.get(i);
+            Long entryId = null;
+            if (billingOn) {
+                double estimated = costEstimator.estimate(current, seconds);
+                entryId = costLedgerService.recordEstimate(projectId, current, current, "video-generate", estimated,
+                        "shotId=" + (shot == null ? "null" : String.valueOf(shot.getId()))
+                                + ";seconds=" + seconds + ";估算值，提供方未上报真实费用");
+                try {
+                    costLedgerService.reserve(entryId, billingProperties.toBudgetPolicy());
+                } catch (BudgetExceededException e) {
+                    failures.add("预算超限(CAP)，跳过" + current);
+                    log.warn("视频通道因预算超限跳过：{}", current);
+                    continue;
+                }
+            }
             try {
                 String providerTaskId = providerFor(current).submit(shot, seconds);
                 if (i == 0) {
-                    return new RouteResult(current, providerTaskId, null);
+                    return new RouteResult(current, providerTaskId, null, entryId);
                 }
                 String from = chain.get(0);
                 String reason = failures.isEmpty() ? null : failures.get(failures.size() - 1);
                 log.warn("视频通道降级：{}→{}，原因={}", from, current, reason);
                 lastFallback = new LastFallback(from, current, reason, LocalDateTime.now());
-                return new RouteResult(current, providerTaskId, reason);
+                return new RouteResult(current, providerTaskId, reason, entryId);
             } catch (RateLimitedException e) {
+                safeRefund(entryId);
                 String reason = "限流(429)，" + e.getRetryAfterSeconds() + "秒后可重试";
                 failures.add(reason);
                 log.warn("视频通道降级：{}→{}，原因={}", current, nextName(chain, i), reason);
             } catch (RuntimeException e) {
+                safeRefund(entryId);
                 String reason;
                 String msg = e.getMessage();
                 if (msg != null && msg.contains("超时")) {
@@ -199,6 +257,39 @@ public class VideoProviderRouter {
             }
         }
         throw new RuntimeException("所有视频通道均失败：" + String.join("；", failures));
+    }
+
+    /**
+     * 判断成本账本是否可用：配置开启且账本服务与估算器均已装配。
+     */
+    private boolean billingEnabled() {
+        return billingProperties != null && billingProperties.isEnabled()
+                && costLedgerService != null && costEstimator != null;
+    }
+
+    /**
+     * 安全退款：账本条目为空时直接返回；退款异常只记告警，绝不向上抛出。
+     */
+    private void safeRefund(Long entryId) {
+        if (entryId == null) {
+            return;
+        }
+        try {
+            costLedgerService.refund(entryId);
+        } catch (RuntimeException e) {
+            log.warn("账本退款失败，不影响主流程：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 从分镜提取项目 id：任何异常（含懒加载异常）或为空时返回 null。
+     */
+    private Long extractProjectId(Shot shot) {
+        try {
+            return shot.getEpisode().getProject().getId();
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     /**

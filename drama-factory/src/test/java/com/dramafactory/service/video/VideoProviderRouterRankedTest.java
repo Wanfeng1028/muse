@@ -46,7 +46,7 @@ class VideoProviderRouterRankedTest {
 
         List<String> chain = router.rankedChain(null, scores);
         assertEquals(
-                List.of("agnes", "minimax", "novai", "doubao", "htmlrender", "painted"),
+                List.of("agnes", "minimax", "novai", "doubao", "hyperframes", "htmlrender", "painted"),
                 chain);
     }
 
@@ -62,10 +62,10 @@ class VideoProviderRouterRankedTest {
 
         // agnes 有分排最前，其余无分保持 DEFAULT_ORDER 原顺序
         assertEquals("agnes", chain.get(0));
-        assertEquals(6, chain.size());
+        assertEquals(7, chain.size());
         assertEquals(
-                List.of("minimax", "novai", "doubao", "htmlrender", "painted"),
-                chain.subList(1, 6));
+                List.of("minimax", "novai", "doubao", "hyperframes", "htmlrender", "painted"),
+                chain.subList(1, 7));
     }
 
     /** 空打分 map 时，rankedChain 应与 chain(null) 一致。 */

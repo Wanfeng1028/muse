@@ -94,7 +94,7 @@ class ProcessDueTasksSingleFlightTest {
         when(router.submit(any(Shot.class), anyInt())).thenAnswer(inv -> {
             entered.countDown();
             assertTrue(release.await(10, TimeUnit.SECONDS), "submit 不应被卡住超过 10 秒");
-            return new VideoProviderRouter.RouteResult("mock", "mock-task-1", null);
+            return new VideoProviderRouter.RouteResult("mock", "mock-task-1", null, null);
         });
 
         AtomicReference<Throwable> errorA = new AtomicReference<>();

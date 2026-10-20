@@ -104,7 +104,7 @@ class ChunkedVideoWorkflowTest {
     @Test
     void run_nullProviderName_usesRouterChain() {
         VideoProviderRouter.RouteResult route =
-                new VideoProviderRouter.RouteResult("minimax", "task-chain", null);
+                new VideoProviderRouter.RouteResult("minimax", "task-chain", null, null);
         when(router.submit(anyShot(), eq(6))).thenReturn(route);
         when(router.providerFor("minimax")).thenReturn(mockProvider);
         when(mockProvider.poll("task-chain")).thenReturn(completed("http://cdn/c.mp4"));

@@ -98,7 +98,7 @@ class VideoTaskServiceTest {
         when(router.providerFor(anyString())).thenReturn(mockProvider);
         when(router.submit(any(Shot.class), anyInt())).thenAnswer(inv ->
                 new VideoProviderRouter.RouteResult("mock",
-                        mockProvider.submit(inv.getArgument(0), inv.getArgument(1)), null));
+                        mockProvider.submit(inv.getArgument(0), inv.getArgument(1)), null, null));
     }
 
     private Episode newEpisode() {
@@ -623,7 +623,7 @@ class VideoTaskServiceTest {
         Shot s = newShot(11L, 5);
         VideoTask t = newTask(21L, s, VideoTaskStatus.PENDING, 0);
         stubDue(t);
-        when(router.submit(s, 5)).thenReturn(new VideoProviderRouter.RouteResult("agnes", "a1", null));
+        when(router.submit(s, 5)).thenReturn(new VideoProviderRouter.RouteResult("agnes", "a1", null, null));
 
         service.processDueTasks();
 
@@ -639,7 +639,7 @@ class VideoTaskServiceTest {
         VideoTask t = newTask(21L, s, VideoTaskStatus.PENDING, 0);
         stubDue(t);
         when(router.submit(s, 5)).thenReturn(
-                new VideoProviderRouter.RouteResult("qwen", "q1", "限流(429)，60秒后可重试"));
+                new VideoProviderRouter.RouteResult("qwen", "q1", "限流(429)，60秒后可重试", null));
 
         service.processDueTasks();
 
