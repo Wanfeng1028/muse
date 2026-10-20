@@ -23,7 +23,7 @@
 .auth-page .field .fi { width: 19px; height: 19px; color: #9AA0AA; }
 .auth-page .field .eye-btn { background: transparent; border: none; cursor: pointer; padding: 0; color: #9AA0AA; display: inline-flex; align-items: center; justify-content: center; }
 .auth-page .field .eye-btn .icon { width: 19px; height: 19px; }
-.auth-page .btn-primary { height: 52px; border-radius: 999px; background: #4176E6; color: #fff; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; width: 100%; border: none; cursor: pointer; }
+.auth-page .btn-primary { height: 52px; border-radius: 999px; background: var(--ink); color: var(--ink-text); font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; width: 100%; border: none; cursor: pointer; }
 .auth-page .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
 .auth-page .forgot-row { text-align: right; margin-top: 10px; font-size: 13px; }
 .auth-page .forgot-row a { color: #4176E6; text-decoration: none; font-weight: 600; }
