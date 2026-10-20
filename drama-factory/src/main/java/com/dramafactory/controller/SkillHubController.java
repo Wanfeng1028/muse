@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/skillhub")
@@ -45,6 +45,10 @@ public class SkillHubController {
             String hub,
             int version,
             String updatedAt,
+            int total,
+            int page,
+            int size,
+            int totalPages,
             List<SkillHubItem> skills
     ) {
     }
@@ -68,7 +72,9 @@ public class SkillHubController {
     @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装")
     public ResponseEntity<SkillHubIndex> index(
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String source) {
         Instant loadedAt = registry.bundledLoadedAt();
         String updatedAt = loadedAt == null ? ""
                 : DateTimeFormatter.ISO_INSTANT.format(loadedAt.atOffset(ZoneOffset.UTC));
@@ -105,15 +111,62 @@ public class SkillHubController {
             log.error("skillhub index failed, returning empty list", e);
             items = new ArrayList<>();
         }
-        List<SkillHubItem> pageItems = items;
-        if (page != null || size != null) {
-            int p = page == null ? 0 : Math.max(0, page);
-            int s = size == null ? 50 : Math.min(200, Math.max(1, size));
-            int from = Math.min(p * s, items.size());
-            int to = Math.min(from + s, items.size());
-            pageItems = items.subList(from, to);
+
+        String keyword = q == null ? null : q.trim();
+        boolean hasQ = keyword != null && !keyword.isEmpty();
+        boolean hasSource = "官方出品".equals(source) || "社区收录".equals(source);
+
+        List<SkillHubItem> filtered = items;
+        if (hasQ || hasSource) {
+            filtered = new ArrayList<>();
+            for (SkillHubItem item : items) {
+                boolean match = true;
+                if (hasQ) {
+                    String lowerKeyword = keyword.toLowerCase(Locale.ROOT);
+                    match = item.id().toLowerCase(Locale.ROOT).contains(lowerKeyword)
+                            || item.name().toLowerCase(Locale.ROOT).contains(lowerKeyword)
+                            || item.description().toLowerCase(Locale.ROOT).contains(lowerKeyword)
+                            || item.author().toLowerCase(Locale.ROOT).contains(lowerKeyword);
+                }
+                if (match && hasSource) {
+                    match = source.equals(item.source());
+                }
+                if (match) {
+                    filtered.add(item);
+                }
+            }
         }
-        SkillHubIndex body = new SkillHubIndex(HUB_NAME, HUB_VERSION, updatedAt, pageItems);
+
+        int total = filtered.size();
+        int effectivePage;
+        int effectiveSize;
+        int totalPages;
+        List<SkillHubItem> pageItems;
+
+        if (page == null && size == null && q == null && source == null) {
+            effectivePage = 0;
+            effectiveSize = total;
+            totalPages = total == 0 ? 0 : 1;
+            pageItems = filtered;
+        } else {
+            effectivePage = page == null ? 0 : Math.max(0, page);
+            effectiveSize = size == null ? 50 : Math.min(200, Math.max(1, size));
+            totalPages = total == 0 ? 0 : (total + effectiveSize - 1) / effectiveSize;
+            int from = Math.min(effectivePage * effectiveSize, total);
+            int to = Math.min(from + effectiveSize, total);
+            pageItems = filtered.subList(from, to);
+        }
+
+        SkillHubIndex body = new SkillHubIndex(
+                HUB_NAME,
+                HUB_VERSION,
+                updatedAt,
+                total,
+                effectivePage,
+                effectiveSize,
+                totalPages,
+                pageItems
+        );
         return ResponseEntity.ok(body);
     }
 
