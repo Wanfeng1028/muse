@@ -4,5 +4,5 @@
 
 | 文件 | 内容 | 来源 |
 |---|---|---|
-| yuai-deepseek-prompt.md | 用 DeepSeek 做《雨爱》视频的完整提示词转录 | 抖音 千Bright Future 讲解视频 |
+| yuai-deepseek-prompt.md | DeepSeek 做《雨爱》视频的提示词（部分转录，16 页 Word 只抓到第 1 页+分镜片段） | 抖音 千Bright Future 讲解视频 |
 | xiaozheng-mv-tutorial.md | "不会画画也不会剪辑"的 AI MV 七步教程拆解 | 抖音 小政zzzzz |
