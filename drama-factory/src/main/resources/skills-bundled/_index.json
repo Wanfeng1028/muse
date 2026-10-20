@@ -5626,7 +5626,7 @@
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/creative-core/SKILL.md",
       "rewritten": true,
-      "description": "为剧坊全部专业创作提供通用底座：锁定用户目标与既定事实，区分推断与创作补充，锚定续作状态，规范时长估算与交付自检，确保产出可直接执行。",
+      "description": "剧坊全部专业创作能力的共同底座，规定目标确认、事实与推断的区分、续作状态锚定、范围控制和通用时长估算等通用推理规则。",
       "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5638,7 +5638,7 @@
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/creative-direction/SKILL.md",
       "rewritten": true,
-      "description": "为剧坊项目确立统一的视觉、叙事、导演、剪辑、声音与资产政策，产出一份可直接执行的创作方向。在剧本确定后、生成资产与镜头前使用。",
+      "description": "为项目制定六领域呈现政策，冻结核心视觉方向，输出唯一最终创作方向 JSON，不涉及故事事实与资产生产。",
       "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5650,7 +5650,7 @@
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/script-development/SKILL.md",
       "rewritten": true,
-      "description": "把用户的想法、产品资料或已有素材写成项目源文本，覆盖故事剧本、广告脚本、品牌宣传片与短视频脚本，并按需完成方向候选、自检与时长核算。",
+      "description": "为剧坊项目产出唯一权威源文本，覆盖故事剧本、广告脚本、品牌宣传与短视频脚本，含需求判定、访谈、构思、节奏、自检与合规。",
       "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5662,7 +5662,7 @@
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/asset-development/SKILL.md",
       "rewritten": true,
-      "description": "从剧本等精确源文本中筛选值得复用的角色、场景、道具资产，完成稳定可见设计并生成最终图片 Prompt 批次，用于后续视频生产前的资产准备阶段。",
+      "description": "从源文本与已采纳创作方向中筛选可复用角色、场景、道具，完成稳定身份设计并写出唯一最终生图 Prompt 与批次参数。",
       "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5674,7 +5674,7 @@
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/video-direction/SKILL.md",
       "rewritten": true,
-      "description": "把已确定的剧情或脚本事实转成可执行的导演设计，为每个生成分段写出唯一的结构化提示词，并最终交付严格的 video_generation_batch。适用于需要统筹镜头、表演、声音、连续性与装段的视频生成任务。",
+      "description": "把整片时间线翻译成可执行的视频生成批次：内化导演、表演、声音与连续性，按工具 schema 组织参考素材并输出严格 video_generation_batch。",
       "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5686,7 +5686,7 @@
       "source": "waooAI/waoowaoo",
       "sourceUrl": "https://github.com/waooAI/waoowaoo/blob/HEAD/src/lib/creative-skills/skills/music-direction/SKILL.md",
       "rewritten": true,
-      "description": "依据已锁定的剧情、成片时间线与剪辑事实，判断何处需要配乐并逐窗口撰写 Eleven Music v2 Composition Plan；在作品视觉就绪后发起配乐方向确认，输出可直接执行的音频生成批次。",
+      "description": "依据锁定剧情与真实成片时间线，判定配乐窗口并撰写 Eleven Music v2 作曲方案，产出可合成音频批次。",
       "rewriteNote": "独立重写自 waooAI/waoowaoo（Elastic License 2.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5734,7 +5734,7 @@
       "source": "chatfire-AI/huobao-drama",
       "sourceUrl": "https://github.com/chatfire-AI/huobao-drama/blob/HEAD/backend/workspace/skills/prompt-generator/character-prompt/SKILL.md",
       "rewritten": true,
-      "description": "用于生成角色形象锚点设定图，输出左侧正脸特写加右侧正面、90度侧面、背面三视图，确保后续图片与视频生成中角色脸、发型、服装保持一致。",
+      "description": "定义角色设定参考图的最终提示词写法，规定左脸特写加右三视图的构图、描述排序、一致性要求与禁用项。",
       "rewriteNote": "独立重写自 chatfire-AI/huobao-drama（CC BY-NC-SA 4.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5746,7 +5746,7 @@
       "source": "chatfire-AI/huobao-drama",
       "sourceUrl": "https://github.com/chatfire-AI/huobao-drama/blob/HEAD/backend/workspace/skills/prompt-generator/scene-prompt/SKILL.md",
       "rewritten": true,
-      "description": "用于生成无人物广角建立镜头的场景提示词，固化空间布局与光影，作为该场景所有分镜的可复用背景锚点。",
+      "description": "规定场景空镜图的最终提示词写法，覆盖分层构图、空间连贯性、出入口与陈设定位、无人物硬约束及保存方式。",
       "rewriteNote": "独立重写自 chatfire-AI/huobao-drama（CC BY-NC-SA 4.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
@@ -5758,7 +5758,7 @@
       "source": "chatfire-AI/huobao-drama",
       "sourceUrl": "https://github.com/chatfire-AI/huobao-drama/blob/HEAD/backend/workspace/skills/prompt-generator/prop-prompt/SKILL.md",
       "rewritten": true,
-      "description": "用于生成道具白底单品图的最终提示词，规范标准产品摄影视角、比例准确与边缘完整，产出可直接送图的道具产品图提示词。",
+      "description": "规定道具最终提示词的组装结构与生成规则，确保输出白底单品产品图提示词，比例准确、边缘完整、背景不叙事。",
       "rewriteNote": "独立重写自 chatfire-AI/huobao-drama（CC BY-NC-SA 4.0）：功能对齐，SKILL.md 为独立改写，未复制原文/代码"
     },
     {
