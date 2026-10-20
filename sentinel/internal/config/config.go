@@ -61,6 +61,8 @@ type Config struct {
 	SMSTencentTemplateID string
 	// SMSTencentRegion 腾讯云短信地域，默认 ap-guangzhou。
 	SMSTencentRegion string
+	// SMSTencentEndpoint 腾讯云短信接入点，默认 sms.tencentcloudapi.com。
+	SMSTencentEndpoint string
 
 	NotifyChannels []string
 
@@ -161,13 +163,13 @@ func Load() (Config, error) {
 	}
 	cfg.WeComMentionAll = mentionAll
 
-	// SENTINEL_SMS_MODE：默认 mock；仅支持 mock/aliyun。
+	// SENTINEL_SMS_MODE：默认 mock；仅支持 mock/aliyun/tencent。
 	smsMode := strings.ToLower(strings.TrimSpace(os.Getenv("SENTINEL_SMS_MODE")))
 	if smsMode == "" {
 		smsMode = "mock"
 	}
-	if smsMode != "mock" && smsMode != "aliyun" {
-		return Config{}, fmt.Errorf("环境变量 SENTINEL_SMS_MODE 取值 %q 非法：仅支持 mock/aliyun", smsMode)
+	if smsMode != "mock" && smsMode != "aliyun" && smsMode != "tencent" {
+		return Config{}, fmt.Errorf("环境变量 SENTINEL_SMS_MODE 取值 %q 非法：仅支持 mock/aliyun/tencent", smsMode)
 	}
 	cfg.SMSMode = smsMode
 
@@ -193,6 +195,7 @@ func Load() (Config, error) {
 	cfg.SMSTencentSignName = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_SIGN_NAME"))
 	cfg.SMSTencentTemplateID = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_TEMPLATE_ID"))
 	cfg.SMSTencentRegion = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_REGION"))
+	cfg.SMSTencentEndpoint = strings.TrimSpace(os.Getenv("SENTINEL_SMS_TENCENT_ENDPOINT"))
 
 	// aliyun 模式要求 AK、签名、模板四项齐全，缺一不可（启动即校验）。
 	if smsMode == "aliyun" {
@@ -201,6 +204,13 @@ func Load() (Config, error) {
 		}
 		if cfg.SMSSignName == "" || cfg.SMSTemplateCode == "" {
 			return Config{}, errors.New("环境变量 SENTINEL_SMS_MODE=aliyun 时必须同时设置 SENTINEL_SMS_SIGN_NAME 与 SENTINEL_SMS_TEMPLATE_CODE")
+		}
+	}
+
+	// tencent 模式要求密钥、应用、签名、模板五项齐全，缺一不可（启动即校验）。
+	if smsMode == "tencent" {
+		if cfg.SMSTencentSecretID == "" || cfg.SMSTencentSecretKey == "" || cfg.SMSTencentSdkAppID == "" || cfg.SMSTencentSignName == "" || cfg.SMSTencentTemplateID == "" {
+			return Config{}, errors.New("环境变量 SENTINEL_SMS_MODE=tencent 时必须同时设置 SENTINEL_SMS_TENCENT_SECRET_ID、SENTINEL_SMS_TENCENT_SECRET_KEY、SENTINEL_SMS_TENCENT_SDK_APP_ID、SENTINEL_SMS_TENCENT_SIGN_NAME 与 SENTINEL_SMS_TENCENT_TEMPLATE_ID")
 		}
 	}
 

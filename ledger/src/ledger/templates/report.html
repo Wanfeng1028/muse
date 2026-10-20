@@ -299,7 +299,17 @@
       + '.delta-red{color:#dc2626;}'
       + '.delta-green{color:#059669;}'
       + '.muted{color:#999;}'
-      + '@media print{.no-print{display:none !important;}}';
+      + '@media print{.no-print{display:none !important;}}'
+      + '@media (max-width:768px){'
+      + 'body{margin:12px;}'
+      + 'h1{font-size:16px;}'
+      + '.summary{flex-wrap:wrap;gap:12px;}'
+      + '.summary-item{min-width:40%;}'
+      + '.summary-value{font-size:18px;}'
+      + '.bar-label{width:84px;}'
+      + 'table{display:block;overflow-x:auto;}'
+      + 'th,td{padding:5px 6px;font-size:12px;white-space:nowrap;}'
+      + '}';
 
     var barsHtml = '';
     var expenses = (currentData.by_category || []).filter(function (c) { return c.kind === 'expense'; });
@@ -345,6 +355,7 @@
 
     return '<!DOCTYPE html>\n'
       + '<html lang="zh-CN"><head><meta charset="utf-8">'
+      + '<meta name="viewport" content="width=device-width, initial-scale=1">'
       + '<title>钱迹月度报告 · ' + esc(ym) + '</title>'
       + '<style>' + css + '</style></head><body>'
       + '<h1>钱迹月度报告 · ' + esc(ym) + '</h1>'

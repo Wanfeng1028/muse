@@ -68,18 +68,43 @@ class PromptControllerPagedApiTest {
     }
 
     /**
-     * 非法分页参数应被规范化为合法值。
+     * 非法分页参数应返回 400 并携带错误码。
      */
     @Test
-    void pageNegativeAndSizeZeroNormalized() throws Exception {
-        // given: 非法分页参数
+    void pageNegativeAndSizeZeroReturns400() throws Exception {
+        // given: 非法分页参数 page=-1, size=0
         // when: 请求分页接口
         mockMvc.perform(get("/api/prompts/page").param("page", "-1").param("size", "0"))
-                // then: 返回 200，page 大于等于 0，size 大于等于 1，content 为数组
+                // then: 返回 400，错误码为 invalid_pagination
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("invalid_pagination"))
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    /**
+     * 超大 size 应返回 400。
+     */
+    @Test
+    void pageSizeTooLargeReturns400() throws Exception {
+        // given: size=10000 超出上限
+        // when: 请求分页接口
+        mockMvc.perform(get("/api/prompts/page").param("size", "10000"))
+                // then: 返回 400，错误码为 invalid_pagination
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("invalid_pagination"));
+    }
+
+    /**
+     * 边界合法 size=100 应返回 200。
+     */
+    @Test
+    void pageSizeBoundary100IsOk() throws Exception {
+        // given: size 取上限边界 100
+        // when: 请求分页接口
+        mockMvc.perform(get("/api/prompts/page").param("page", "0").param("size", "100"))
+                // then: 返回 200 且 size 回显 100
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.page").value(greaterThanOrEqualTo(0)))
-                .andExpect(jsonPath("$.size").value(greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.content").isArray());
+                .andExpect(jsonPath("$.size").value(100));
     }
 
     /**

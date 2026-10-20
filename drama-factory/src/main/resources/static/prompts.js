@@ -27,6 +27,8 @@
     'prm.emptyFiltered': { 'zh-CN': '没有找到与当前筛选匹配的提示词，换个关键词或清空筛选试试。', en: 'No prompts match the current filters. Try a different keyword or clear the filters.' },
     'prm.emptyAll': { 'zh-CN': '提示词库现在是空的。提示词由后端自动从 resources/prompt-library/ 目录下的 Markdown 文件加载（子目录名即来源分类），新增 .md 文件后重启服务即可收录。', en: 'The prompt library is currently empty. Prompts are loaded automatically by the backend from Markdown files under resources/prompt-library/ (subdirectory names become source categories). Add a new .md file and restart the service to include it.' },
     'prm.favTitle': { 'zh-CN': '收藏/取消收藏', en: 'Add to / remove from favorites' },
+    'prm.favDetailAdd': { 'zh-CN': '收藏', en: 'Favorite' },
+    'prm.favDetailRemove': { 'zh-CN': '取消收藏', en: 'Unfavorite' },
     'prm.copyBtn': { 'zh-CN': '一键复制全文', en: 'Copy full text' }
   };
 
@@ -50,18 +52,19 @@
     const res = await fetch(path, Object.assign({
       headers: { 'Content-Type': 'application/json' }
     }, options || {}));
+    const text = await res.text();
     if (!res.ok) {
       let msg = _t('prm.requestFailed', '请求失败');
       try {
-        const data = await res.json();
+        const data = text ? JSON.parse(text) : null;
         if (data && (data.detail || data.message)) msg = data.detail || data.message;
       } catch (e) {}
       var err = new Error(msg);
       err.status = res.status;
       throw err;
     }
-    if (res.status === 204) return null;
-    return res.json();
+    if (!text) return null;
+    return JSON.parse(text);
   }
 
   let toastTimer = null;
@@ -100,7 +103,8 @@
     totalPages: 0,
     usePaging: true,
     favoritesOnly: false,
-    favorites: {}
+    favorites: {},
+    favBusy: {}
   };
 
   function cardHtml(p) {
@@ -302,7 +306,24 @@
     }
   }
 
-  async function toggleFavorite(id) {
+  function setFavButtonsDisabled(id, disabled) {
+    var selector = '[data-action="fav"][data-id="' + id + '"]';
+    var btns = document.querySelectorAll(selector);
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].disabled = disabled;
+      btns[i].style.opacity = disabled ? '0.45' : '';
+    }
+    var detailBtn = document.getElementById('promptDetailFavBtn');
+    if (detailBtn && detailBtn.dataset.currentId === id) {
+      detailBtn.disabled = disabled;
+      detailBtn.style.opacity = disabled ? '0.45' : '';
+    }
+  }
+
+  async function toggleFavorite(id, afterToggle) {
+    if (state.favBusy[id]) return;
+    state.favBusy[id] = true;
+    setFavButtonsDisabled(id, true);
     var isFav = state.favorites[id] ? true : false;
     try {
       if (isFav) {
@@ -314,9 +335,17 @@
         state.favorites[id] = true;
         showToast(_t('prm.favAdd', '已加入收藏'));
       }
+      if (state.favoritesOnly) {
+        state.prompts = state.prompts.filter(function (p) { return p && (p.id !== id || state.favorites[p.id]); });
+        state.totalElements = state.prompts.length;
+      }
       renderGrid();
+      if (typeof afterToggle === 'function') afterToggle(state.favorites[id] ? true : false);
     } catch (e) {
       showToast((e && e.message ? e.message : _t('prm.requestFailed', '请求失败')));
+    } finally {
+      delete state.favBusy[id];
+      setFavButtonsDisabled(id, false);
     }
   }
 
@@ -378,6 +407,18 @@
       var copyBtn = document.getElementById('copyPromptBtn');
       if (copyBtn) {
         copyBtn.onclick = function () { copyDetailText(); };
+      }
+      var favBtn = document.getElementById('promptDetailFavBtn');
+      if (favBtn) {
+        favBtn.dataset.currentId = id;
+        var syncDetailFavBtn = function (favNow) {
+          var on = typeof favNow === 'boolean' ? favNow : (state.favorites[id] ? true : false);
+          favBtn.textContent = on ? _t('prm.favDetailRemove', '取消收藏') : _t('prm.favDetailAdd', '收藏');
+          favBtn.classList.toggle('btn-outline-warning', !on);
+          favBtn.classList.toggle('btn-warning', on);
+        };
+        syncDetailFavBtn();
+        favBtn.onclick = function () { toggleFavorite(id, syncDetailFavBtn); };
       }
     } catch (e) {
       showToast((e && e.message ? e.message : _t('prm.requestFailed', '请求失败')));

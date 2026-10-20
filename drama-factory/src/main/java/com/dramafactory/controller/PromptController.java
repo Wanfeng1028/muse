@@ -5,8 +5,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -50,7 +53,8 @@ public class PromptController {
     }
 
     @GetMapping("/page")
-    @Operation(summary = "提示词分页列表")
+    @Operation(summary = "提示词分页列表",
+            description = "page 从 0 开始计数；size 取值范围 1 到 100；page 为负数或 size 越界时返回 400，错误码 invalid_pagination")
     public ResponseEntity<PageDto<PromptSummaryDto>> page(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String tag,
@@ -58,6 +62,12 @@ public class PromptController {
             @RequestParam(required = false) Integer size) {
         int pageNum = page == null ? 0 : page;
         int sizeNum = size == null ? 20 : size;
+        if (pageNum < 0) {
+            throw new InvalidPaginationException("page 不能为负数");
+        }
+        if (sizeNum < 1 || sizeNum > 100) {
+            throw new InvalidPaginationException("size 必须在 1 到 100 之间");
+        }
         PromptLibraryService.Page<PromptLibraryService.PromptSummary> result = promptLibraryService.list(q, tag, pageNum, sizeNum);
         List<PromptSummaryDto> content = result.content().stream()
                 .map(this::toDto)
@@ -94,8 +104,18 @@ public class PromptController {
                 });
     }
 
+    /**
+     * 收藏提示词（幂等）：
+     * <ul>
+     *   <li>目标存在且未收藏：加入收藏，返回 200；</li>
+     *   <li>目标存在且已收藏：不做任何变更，仍返回 200，不会重复收藏；</li>
+     *   <li>目标不存在：返回 404。</li>
+     * </ul>
+     * 并发收藏同一 id 时串行执行，最终只保留一条收藏记录。
+     */
     @PostMapping("/{id}/favorite")
-    @Operation(summary = "收藏提示词")
+    @Operation(summary = "收藏提示词",
+            description = "幂等：重复收藏同一提示词仍返回 200，且收藏列表中只保留一条记录；提示词不存在时返回 404")
     public ResponseEntity<Void> addFavorite(@PathVariable String id) {
         if (promptLibraryService.addFavorite(id)) {
             return ResponseEntity.ok().build();
@@ -104,14 +124,29 @@ public class PromptController {
         return ResponseEntity.notFound().build();
     }
 
+    /**
+     * 取消收藏提示词（幂等）：
+     * <ul>
+     *   <li>目标存在且已收藏：移除收藏，返回 200；</li>
+     *   <li>目标存在但未收藏：不做任何变更，仍返回 200；</li>
+     *   <li>目标不存在：返回 404。</li>
+     * </ul>
+     */
     @DeleteMapping("/{id}/favorite")
-    @Operation(summary = "取消收藏提示词")
+    @Operation(summary = "取消收藏提示词",
+            description = "幂等：对未收藏的提示词重复取消仍返回 200；提示词不存在时返回 404")
     public ResponseEntity<Void> removeFavorite(@PathVariable String id) {
         if (promptLibraryService.removeFavorite(id)) {
             return ResponseEntity.ok().build();
         }
         log.warn("取消收藏的提示词不存在：{}", id);
         return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(InvalidPaginationException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPagination(InvalidPaginationException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("code", "invalid_pagination", "message", e.getMessage()));
     }
 }
 

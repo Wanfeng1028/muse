@@ -1,3 +1,9 @@
+## 修复状态（2026-10-20 深耕轮）
+
+本文记录的三处不一致已修复：config.Load 接受 SENTINEL_SMS_MODE=tencent 并对 5 个必填变量启动 fail-fast；新增 SENTINEL_SMS_TENCENT_ENDPOINT 环境变量读取并经 main.go 透传；docs/OPERATIONS_SMS.md 变量名已与 config.go 对齐。
+
+---
+
 # 腾讯云短信通道：文档与代码不一致现状记录
 
 本文只记录当前代码和文档对不上的地方，不改代码、不改口径。

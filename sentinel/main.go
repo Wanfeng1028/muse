@@ -79,7 +79,7 @@ func main() {
 	}
 
 	// 通知器封装
-	// 短信发送器：mock 模式内存记录不真发，aliyun 模式走阿里云短信；构造失败（未配置）直接退出。
+	// 短信发送器：mock 模式内存记录不真发，aliyun/tencent 模式走对应云短信；构造失败（未配置）直接退出。
 	smsCfg := notify.SMSConfig{
 		Mode:   cfg.SMSMode,
 		Phones: cfg.SMSPhones,
@@ -96,6 +96,7 @@ func main() {
 			SignName:    cfg.SMSTencentSignName,
 			TemplateId:  cfg.SMSTencentTemplateID,
 			Region:      cfg.SMSTencentRegion,
+			Endpoint:    cfg.SMSTencentEndpoint,
 		},
 	}
 	smsSender, err := smsCfg.BuildSender()

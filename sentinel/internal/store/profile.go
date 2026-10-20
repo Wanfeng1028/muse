@@ -295,10 +295,16 @@ func (s *Store) MonthlySLA(monitorID int64, year, month int) (SLAReport, error) 
 				severity.P3++
 			}
 		} else {
-			// 未关闭：按 now - started_at 估算。
+			// 未关闭：按查询时刻估算并裁剪到月份窗口（min(now, 月末) - started_at），
+			// 避免查询过去月份时把窗口外的持续时间也算进来；查当前月时 end > now，行为不变。
+			// started_at 必在窗口内（SQL 已保证 started_at >= start），只需裁剪上界。
 			openCount++
 			if t, perr := time.Parse(time.RFC3339, startedAt); perr == nil {
-				secs := int64(now.Sub(t).Seconds())
+				effEnd := now
+				if effEnd.After(end) {
+					effEnd = end
+				}
+				secs := int64(effEnd.Sub(t).Seconds())
 				if secs > 0 {
 					sumDown += secs
 					switch classifySeverity(secs) {

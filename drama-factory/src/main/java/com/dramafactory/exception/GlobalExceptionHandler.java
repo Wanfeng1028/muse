@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -55,6 +56,21 @@ public class GlobalExceptionHandler {
         if (fieldError != null && fieldError.getDefaultMessage() != null) {
             message = fieldError.getDefaultMessage();
         }
+        Records.ErrorResponse body = new Records.ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                message,
+                LocalDateTime.now(),
+                MDC.get("request_id")
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseBody
+    public ResponseEntity<Records.ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = "参数类型错误：" + ex.getName() + " 应为 " +
+                (ex.getRequiredType() == null ? "合法值" : ex.getRequiredType().getSimpleName()) + " 类型";
         Records.ErrorResponse body = new Records.ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "Bad Request",

@@ -4,17 +4,17 @@
 
 ## 1. 环境变量清单
 
-7 个变量，前缀都是 `SENTINEL_SMS_TENCENT_`。填错、填空、填了非法值，`NewTencentSMSSender` 会返回 error，进程启动阶段就会失败，不会带着坏配置跑起来。
+7 个变量，前缀都是 `SENTINEL_SMS_TENCENT_`，由 `internal/config/config.go` 的 `Load()` 读取。5 个必填项空值时 `Load()` 在启动阶段直接报错退出，不会带着坏配置跑起来；`NewTencentSMSSender` 另对 SecretId/SecretKey 做二次校验。
 
 | 变量名 | 必填/选填 | 默认值 | 非法值行为 |
 | --- | --- | --- | --- |
-| `SENTINEL_SMS_TENCENT_SECRETID` | 必填 | 无 | 空值时 `NewTencentSMSSender` 返回 error，启动失败 |
-| `SENTINEL_SMS_TENCENT_SECRETKEY` | 必填 | 无 | 空值时 `NewTencentSMSSender` 返回 error，启动失败 |
-| `SENTINEL_SMS_TENCENT_SMSSDKAPPID` | 必填 | 无 | 空值时 `NewTencentSMSSender` 返回 error，启动失败 |
-| `SENTINEL_SMS_TENCENT_SIGNNAME` | 必填 | 无 | 空值时 `NewTencentSMSSender` 返回 error，启动失败 |
-| `SENTINEL_SMS_TENCENT_TEMPLATEID` | 必填 | 无 | 空值时 `NewTencentSMSSender` 返回 error，启动失败 |
-| `SENTINEL_SMS_TENCENT_REGION` | 选填 | 见第 2 节 | 填了不支持的 Region，腾讯云接口返回错误，`Send` 报错，记录写进 `sms_log` |
-| `SENTINEL_SMS_TENCENT_ENDPOINT` | 选填 | 腾讯云短信默认接入点 | 填了不可达地址，`Send` 报网络错误，记录写进 `sms_log` |
+| `SENTINEL_SMS_TENCENT_SECRET_ID` | 必填 | 无 | 空值时 `config.Load` 启动失败 |
+| `SENTINEL_SMS_TENCENT_SECRET_KEY` | 必填 | 无 | 空值时 `config.Load` 启动失败 |
+| `SENTINEL_SMS_TENCENT_SDK_APP_ID` | 必填 | 无 | 空值时 `config.Load` 启动失败 |
+| `SENTINEL_SMS_TENCENT_SIGN_NAME` | 必填 | 无 | 空值时 `config.Load` 启动失败 |
+| `SENTINEL_SMS_TENCENT_TEMPLATE_ID` | 必填 | 无 | 空值时 `config.Load` 启动失败 |
+| `SENTINEL_SMS_TENCENT_REGION` | 选填 | `ap-guangzhou` | 填了不支持的 Region，腾讯云接口返回错误，`Send` 报错，记录写进 `sms_log` |
+| `SENTINEL_SMS_TENCENT_ENDPOINT` | 选填 | `sms.tencentcloudapi.com` | 填了不可达地址，`Send` 报网络错误，记录写进 `sms_log` |
 
 SecretId、SecretKey 属于敏感信息，别写进仓库、别贴到工单里。轮换密钥后要重启进程才会生效。
 
@@ -22,9 +22,9 @@ SecretId、SecretKey 属于敏感信息，别写进仓库、别贴到工单里�
 
 在腾讯云控制台先把这三件套备齐，缺一个都发不出去：
 
-- 短信签名（SignName）：对应 `SENTINEL_SMS_TENCENT_SIGNNAME`，控制台审核通过后才能用。
-- 短信模板（TemplateId）：对应 `SENTINEL_SMS_TENCENT_TEMPLATEID`，模板内容要和实际发送内容对得上。
-- 短信应用 ID（SmsSdkAppId）：对应 `SENTINEL_SMS_TENCENT_SMSSDKAPPID`，在短信控制台的应用管理里能看到。
+- 短信签名（SignName）：对应 `SENTINEL_SMS_TENCENT_SIGN_NAME`，控制台审核通过后才能用。
+- 短信模板（TemplateId）：对应 `SENTINEL_SMS_TENCENT_TEMPLATE_ID`，模板内容要和实际发送内容对得上。
+- 短信应用 ID（SmsSdkAppId）：对应 `SENTINEL_SMS_TENCENT_SDK_APP_ID`，在短信控制台的应用管理里能看到。
 
 Region 目前支持的值：`ap-guangzhou`、`ap-nanjing`、`ap-beijing`、`ap-shanghai`、`ap-hongkong`、`ap-singapore`。填别的地方腾讯云会拒绝，具体以腾讯云短信文档里列出的可用地域为准。
 
@@ -86,7 +86,7 @@ LIMIT 50;
 签名报错时按这三步走：
 
 1. 打开腾讯云短信控制台，看签名列表里对应签名是不是"已通过"。审核中或被打回都不行。
-2. 拿控制台里显示的签名文本，和进程里 `SENTINEL_SMS_TENCENT_SIGNNAME` 的值逐字对比，前后空格、全半角、大小写都算差异。
+2. 拿控制台里显示的签名文本，和进程里 `SENTINEL_SMS_TENCENT_SIGN_NAME` 的值逐字对比，前后空格、全半角、大小写都算差异。
 3. 确认签名用途和短信内容匹配。腾讯云对签名和模板有配对要求，对不上也会拒。
 
 ## 4. 成本与限流
