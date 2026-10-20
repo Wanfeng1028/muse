@@ -228,6 +228,41 @@ std::string stripTrailingPredicates(const std::string& s) {
     return out;
 }
 
+// 句尾疑问语气词「不」剥离（否定语境感知，v08-qa-09d）。
+// 「能给点建议不」句尾的「不」等价于「吗」，是检索噪音；但「不」全局擦除会把
+// 「不建议」反转成「建议」（语义灾难），故只处理字符串尾部这一个「不」。
+// 以「得不」结尾（如「不得不」）时不动，剥掉会语义反转。
+std::string stripTrailingQuestionBu(const std::string& s) {
+    std::string out = s;
+    static const std::string trailingPunct[] = {
+        " ", "\t", "\r", "\n",
+        "，", "。", "？", "！", "、", "；", "：", "「", "」", "（", "）",
+        ",", ".", "?", "!", ":", ";", "\"", "'", "(", ")"
+    };
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (const auto& w : trailingPunct) {
+            if (w.empty()) continue;
+            if (out.size() >= w.size() &&
+                out.compare(out.size() - w.size(), w.size(), w) == 0) {
+                out.resize(out.size() - w.size());
+                changed = true;
+                break;
+            }
+        }
+    }
+    const std::string bu = "\xE4\xB8\x8D";
+    if (out.size() > 3 && out.compare(out.size() - 3, 3, bu) == 0) {
+        const std::string debu = "\xE5\xBE\x97\xE4\xB8\x8D";
+        if (out.size() >= 6 && out.compare(out.size() - 6, 6, debu) == 0) {
+            return out;
+        }
+        out.resize(out.size() - 3);
+    }
+    return out;
+}
+
 // passageIntent 触发词。
 bool detectPassageIntent(const std::string& raw) {
     static const std::vector<std::string> kTriggers = {
@@ -357,6 +392,7 @@ std::string stripFillerWords(const std::string& raw) {
         rest = replaceAllWithSpace(rest, w);
     }
     rest = squeezeWhitespace(rest);
+    rest = stripTrailingQuestionBu(rest);
     return rest;
 }
 
@@ -512,6 +548,10 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     // 2.5 尾部谓语/动词残留剥离（只剥尾部，保护串中间名词）。
     // 处理 "写在"/"写"/"说明"/"申请" 等问句谓语，避免其进入 keywords。
     rest = stripTrailingPredicates(rest);
+    rest = squeezeWhitespace(rest);
+
+    // 2.6 句尾疑问语气词「不」剥离（否定语境感知，v08-qa-09d，只动尾部）。
+    rest = stripTrailingQuestionBu(rest);
     rest = squeezeWhitespace(rest);
 
     // 3. jieba 分词 + 过滤。

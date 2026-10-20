@@ -163,5 +163,21 @@ TEST(QueryParserV015, NegationBuIsPreserved) {
     EXPECT_TRUE(contains(k, "不建议") || contains(k, "不"));
 }
 
+TEST(QueryParserV016, TrailingQuestionBuStripped) {
+    auto k = parseNaturalQuery("多久备份一回数据才算合适，能给点建议不").keywords;
+    EXPECT_FALSE(contains(k, "不"));
+    EXPECT_TRUE(contains(k, "备份"));
+}
+
+TEST(QueryParserV016, BuDeBuProtected) {
+    auto k = parseNaturalQuery("你不得不去").keywords;
+    EXPECT_TRUE(contains(k, "不得不") || contains(k, "不"));
+}
+
+TEST(QueryParserV016, MidStringBuUntouched) {
+    auto k = parseNaturalQuery("手机不能开机怎么办").keywords;
+    EXPECT_TRUE(contains(k, "不能") || contains(k, "不"));
+}
+
 }  // namespace
 }  // namespace docseek
