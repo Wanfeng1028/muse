@@ -9,7 +9,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/3d-world-generation.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animated-drawing",
@@ -20,7 +21,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/animated-drawing.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-asset-director",
@@ -31,7 +33,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-compose-director",
@@ -42,7 +45,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-edit-director",
@@ -53,7 +57,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-executive-producer",
@@ -64,7 +69,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-idea-director",
@@ -75,7 +81,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-pipeline",
@@ -86,7 +93,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/animation-pipeline.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-proposal-director",
@@ -97,7 +105,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/proposal-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-publish-director",
@@ -108,7 +117,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-research-director",
@@ -119,7 +129,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/research-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-runtime-selector",
@@ -130,7 +141,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/animation-runtime-selector.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-scene-director",
@@ -141,7 +153,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-animation-script-director",
@@ -152,7 +165,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/animation/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-asset-director",
@@ -163,7 +177,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-compose-director",
@@ -174,7 +189,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-edit-director",
@@ -185,7 +201,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-executive-producer",
@@ -196,7 +213,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-idea-director",
@@ -207,7 +225,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-publish-director",
@@ -218,7 +237,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-scene-director",
@@ -229,7 +249,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-avatar-spokesperson-script-director",
@@ -240,7 +261,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/avatar-spokesperson/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-bespoke-composition",
@@ -251,7 +273,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/bespoke-composition.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-bg-remove-usage",
@@ -262,7 +285,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/bg-remove-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-broll-planning",
@@ -273,7 +297,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/broll-planning.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-capability-extension",
@@ -284,7 +309,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/capability-extension.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-asset-director",
@@ -295,7 +321,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-character-design-director",
@@ -306,7 +333,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/character-design-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-compose-director",
@@ -317,7 +345,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-edit-director",
@@ -328,7 +357,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-executive-producer",
@@ -339,7 +369,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-proposal-director",
@@ -350,7 +381,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/proposal-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-publish-director",
@@ -361,7 +393,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-research-director",
@@ -372,7 +405,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/research-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-rig-plan-director",
@@ -383,7 +417,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/rig-plan-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-scene-director",
@@ -394,7 +429,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-character-animation-script-director",
@@ -405,7 +441,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/character-animation/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-checkpoint-protocol",
@@ -416,7 +453,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/checkpoint-protocol.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic",
@@ -427,7 +465,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/cinematic.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-asset-director",
@@ -438,7 +477,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-compose-director",
@@ -449,7 +489,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-edit-director",
@@ -460,7 +501,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-executive-producer",
@@ -471,7 +513,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-idea-director",
@@ -482,7 +525,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-proposal-director",
@@ -493,7 +537,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/proposal-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-publish-director",
@@ -504,7 +549,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-research-director",
@@ -515,7 +561,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/research-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-scene-director",
@@ -526,7 +573,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-cinematic-script-director",
@@ -537,7 +585,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/cinematic/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-asset-director",
@@ -548,7 +597,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-compose-director",
@@ -559,7 +609,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-edit-director",
@@ -570,7 +621,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-executive-producer",
@@ -581,7 +633,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-idea-director",
@@ -592,7 +645,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-publish-director",
@@ -603,7 +657,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-scene-director",
@@ -614,7 +669,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-clip-factory-script-director",
@@ -625,7 +681,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/clip-factory/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-color-grading",
@@ -636,7 +693,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/color-grading.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-creative-intake",
@@ -647,7 +705,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/creative-intake.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-data-visualization",
@@ -658,7 +717,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/data-visualization.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-diagram-gen-usage",
@@ -669,7 +729,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/diagram-gen-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-documentary-montage-asset-director",
@@ -680,7 +741,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-documentary-montage-compose-director",
@@ -691,7 +753,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-documentary-montage-edit-director",
@@ -702,7 +765,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-documentary-montage-executive-producer",
@@ -713,7 +777,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-documentary-montage-idea-director",
@@ -724,7 +789,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-documentary-montage-scene-director",
@@ -735,7 +801,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/documentary-montage/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-enhancement-strategy",
@@ -746,7 +813,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/enhancement-strategy.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-asset-director",
@@ -757,7 +825,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-compose-director",
@@ -768,7 +837,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-edit-director",
@@ -779,7 +849,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-executive-producer",
@@ -790,7 +861,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-idea-director",
@@ -801,7 +873,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-proposal-director",
@@ -812,7 +885,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/proposal-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-publish-director",
@@ -823,7 +897,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-research-director",
@@ -834,7 +909,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/research-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-scene-director",
@@ -845,7 +921,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-explainer-script-director",
@@ -856,7 +933,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/explainer/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-face-restore-usage",
@@ -867,7 +945,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/face-restore-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-ffmpeg",
@@ -878,7 +957,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/ffmpeg.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-grok-prompting",
@@ -889,7 +969,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/grok-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hunyuan-prompting",
@@ -900,7 +981,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/hunyuan-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-asset-director",
@@ -911,7 +993,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-compose-director",
@@ -922,7 +1005,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-edit-director",
@@ -933,7 +1017,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-executive-producer",
@@ -944,7 +1029,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-idea-director",
@@ -955,7 +1041,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-publish-director",
@@ -966,7 +1053,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-scene-director",
@@ -977,7 +1065,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hybrid-script-director",
@@ -988,7 +1077,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/hybrid/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-hyperframes",
@@ -999,7 +1089,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/hyperframes.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-image-gen-usage",
@@ -1010,7 +1101,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/image-gen-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-image-provider-usage",
@@ -1021,7 +1113,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/image-provider-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-ink-theater",
@@ -1032,7 +1125,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/ink-theater.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-lip-sync-usage",
@@ -1043,7 +1137,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/lip-sync-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-asset-director",
@@ -1054,7 +1149,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-compose-director",
@@ -1065,7 +1161,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-edit-director",
@@ -1076,7 +1173,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-executive-producer",
@@ -1087,7 +1185,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-idea-director",
@@ -1098,7 +1197,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-publish-director",
@@ -1109,7 +1209,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-scene-director",
@@ -1120,7 +1221,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-localization-dub-script-director",
@@ -1131,7 +1233,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/localization-dub/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-long-form",
@@ -1142,7 +1245,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/long-form.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-ltx-prompting",
@@ -1153,7 +1257,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/ltx-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-manim-usage",
@@ -1164,7 +1269,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/manim-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-music-gen-usage",
@@ -1175,7 +1281,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/music-gen-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-onboarding",
@@ -1186,7 +1293,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/onboarding.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-asset-director",
@@ -1197,7 +1305,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-compose-director",
@@ -1208,7 +1317,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-edit-director",
@@ -1219,7 +1329,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-executive-producer",
@@ -1230,7 +1341,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-idea-director",
@@ -1241,7 +1353,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-publish-director",
@@ -1252,7 +1365,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-scene-director",
@@ -1263,7 +1377,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-podcast-repurpose-script-director",
@@ -1274,7 +1389,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/podcast-repurpose/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-remotion",
@@ -1285,7 +1401,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/remotion.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-reviewer",
@@ -1296,7 +1413,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/reviewer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-scene-detect-usage",
@@ -1307,7 +1425,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/scene-detect-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-asset-director",
@@ -1318,7 +1437,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-compose-director",
@@ -1329,7 +1449,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-edit-director",
@@ -1340,7 +1461,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-executive-producer",
@@ -1351,7 +1473,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-idea-director",
@@ -1362,7 +1485,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-publish-director",
@@ -1373,7 +1497,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-scene-director",
@@ -1384,7 +1509,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-demo-script-director",
@@ -1395,7 +1521,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/screen-demo/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-screen-recording",
@@ -1406,7 +1533,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/screen-recording.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-seedance-prompting",
@@ -1417,7 +1545,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/seedance-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-short-form",
@@ -1428,7 +1557,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/short-form.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-skill-creator",
@@ -1439,7 +1569,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/skill-creator.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-sora-prompting",
@@ -1450,7 +1581,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/sora-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-sound-design",
@@ -1461,7 +1593,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/sound-design.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-stock-sourcing-usage",
@@ -1472,7 +1605,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/stock-sourcing-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-storytelling",
@@ -1483,7 +1617,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/storytelling.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-subtitle-sync",
@@ -1494,7 +1629,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/subtitle-sync.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-asset-director",
@@ -1505,7 +1641,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/asset-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-compose-director",
@@ -1516,7 +1653,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/compose-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-edit-director",
@@ -1527,7 +1665,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/edit-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-executive-producer",
@@ -1538,7 +1677,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/executive-producer.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-gen-usage",
@@ -1549,7 +1689,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/talking-head-gen-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-idea-director",
@@ -1560,7 +1701,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/idea-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-publish-director",
@@ -1571,7 +1713,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/publish-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-scene-director",
@@ -1582,7 +1725,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/scene-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-talking-head-script-director",
@@ -1593,7 +1737,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/pipelines/talking-head/script-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-taste-direction",
@@ -1604,7 +1749,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/taste-direction.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-typography",
@@ -1615,7 +1761,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/typography.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-upscale-usage",
@@ -1626,7 +1773,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/upscale-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-veo-prompting",
@@ -1637,7 +1785,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/prompting/veo-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-video-editing",
@@ -1648,7 +1797,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-editing.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-video-gen-prompting",
@@ -1659,7 +1809,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-gen-prompting.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-video-reference-analyst",
@@ -1670,7 +1821,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/video-reference-analyst.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-video-stitching",
@@ -1681,7 +1833,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-stitching.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-video-understand-usage",
@@ -1692,7 +1845,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/creative/video-understand-usage.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-voice-performance-director",
@@ -1703,7 +1857,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/meta/voice-performance-director.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     },
     {
       "id": "openmontage-whisperx",
@@ -1714,7 +1869,8 @@
       "license": "AGPL-3.0",
       "source": "calesthio/OpenMontage",
       "sourceUrl": "openmontage/skills/core/whisperx.md",
-      "rewritten": true
+      "rewritten": false,
+      "rewriteNote": "2026-10-20 按用户指令恢复上游原版（逐字复制上游 SKILL.md 及附属文件，LICENSE 已放入目录）"
     }
   ]
 }
