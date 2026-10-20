@@ -128,7 +128,7 @@
 
 ## drama-factory「AI 短剧工坊」
 
-**定位**：短剧生产管理与剧本生成系统，v2 打通从剧本到成片的完整生产管线（剧本→分镜→AI 视频生成→ffmpeg 剪辑成片）。**AI MV 模式**：一句话主题出一支完整 AI MV（作词→作曲→分镜→视频生成→剪辑→质检），灵魂一页纸见 `drama-factory/docs/SOUL-mv.md`。**2026-10-14 v2「时间轴对齐」已落地**：歌词行时间戳驱动分镜时长 + 逐行 SRT 字幕（替代 estSeconds 估算），对照报告见 `drama-factory/docs/dod-mv-v2.md`，真实截图见 `drama-factory/docs/screenshots/mv-v2-*.png`。
+**定位**：短剧生产管理与剧本生成系统，v2 打通从剧本到成片的完整生产管线（剧本→分镜→AI 视频生成→ffmpeg 剪辑成片）。**AI MV 模式**：一句话主题出一支完整 AI MV（作词→作曲→分镜→视频生成→剪辑→质检），灵魂一页纸见 `drama-factory/docs/SOUL-mv.md`。**2026-10-14 v2「时间轴对齐」已落地**：歌词行时间戳驱动分镜时长 + 逐行 SRT 字幕（替代 estSeconds 估算），对照报告见 `drama-factory/docs/dod-mv-v2.md`，真实截图见 `drama-factory/docs/screenshots/mv-v2-*.png`。**2026-10-20 晚间轮「视频通道硬约束前置校验」上线**（commit d445874）：描述符通道声明模型硬约束（提示词上限/时长区间/分辨率/宽高比/参考图数，4 通道 9 模型值经 Keenable 核验 2026 文档），提交前拦截非法参数（400），`GET /api/descriptor-providers` 查询，任务队列页展示约束提示；技能库索引许可证一致性修复（14 条 `(rewritten)` 后缀清理、3 条无许可证改 NOASSERTION）；资产圣经设计文档 `docs/ASSET_BIBLE_DESIGN.md`；89 个新测试全绿。
 
 **技术栈**：Java 21 + Spring Boot 3.3.5 + Maven；Spring Data JPA + H2 文件库（可平滑切换 PostgreSQL/MySQL）；企业级分层 controller / service / repository / model / dto；内置 Web 控制台由 Spring 静态托管；JUnit 5 集成测试（含 TestRestTemplate 全链路）；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 drama-factory/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
