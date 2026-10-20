@@ -179,6 +179,7 @@ public class ProviderDescriptor {
     public static class DescriptorModel {
 
         private String id;
+        private String canonical;
         private String label;
         private String type;
         private DescriptorConstraints constraints;
@@ -189,6 +190,14 @@ public class ProviderDescriptor {
 
         public void setId(String id) {
             this.id = id;
+        }
+
+        public String getCanonical() {
+            return canonical;
+        }
+
+        public void setCanonical(String canonical) {
+            this.canonical = canonical;
         }
 
         public String getLabel() {

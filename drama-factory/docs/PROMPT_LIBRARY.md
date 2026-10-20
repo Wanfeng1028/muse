@@ -31,17 +31,27 @@
 
 ## REST API
 
-当前只有两个 GET 端点，没有写操作。
+共 7 个端点：浏览 5 个（列表/分页/标签/收藏列表/详情），写操作 2 个（收藏/取消收藏，均为幂等）。
 
 | 方法 | 路径 | 参数 | 返回体 | 状态码 |
 |---|---|---|---|---|
-| GET | `/api/prompts` | `q`（可选，query 参数，字符串） | `List<PromptSummaryDto>` | 200 |
-| GET | `/api/prompts/{id}` | `id`（path 参数，字符串） | `PromptDetailDto` | 200 / 404 |
+| GET | `/api/prompts` | `q`（可选） | `List<PromptSummaryDto>` | 200 |
+| GET | `/api/prompts/page` | `q`/`tag`/`page`/`size`（均可选） | `PageDto<PromptSummaryDto>` | 200 / 400 |
+| GET | `/api/prompts/tags` | 无 | `List<String>`（自然排序去重） | 200 |
+| GET | `/api/prompts/favorites` | 无 | `List<PromptSummaryDto>` | 200 |
+| GET | `/api/prompts/{id}` | `id`（path 参数） | `PromptDetailDto` | 200 / 404 |
+| POST | `/api/prompts/{id}/favorite` | `id`（path 参数） | 空 | 200 / 404 |
+| DELETE | `/api/prompts/{id}/favorite` | `id`（path 参数） | 空 | 200 / 404 |
 
 ### 行为说明
 
 - `GET /api/prompts`：`q` 为空时返回全部；非空时转小写后做子串匹配，只匹配 `title` 和 `summary`，不匹配全文 `content`。
+- `GET /api/prompts/page`：`page` 从 0 开始计数，缺省 0；`size` 缺省 20，取值范围 1 到 100；`tag` 按 `source` 精确过滤。`page` 为负数或 `size` 越界时返回 400，body 为 `{"code":"invalid_pagination","message":"..."}`。
+- `GET /api/prompts/tags`：返回所有 `source` 去重后按自然排序的数组。
+- `GET /api/prompts/favorites`：返回已收藏的提示词，按库内顺序排列。
 - `GET /api/prompts/{id}`：按 `id` 精确查，查不到返回 404。
+- `POST /api/prompts/{id}/favorite`：幂等。目标存在且未收藏→加入收藏返回 200；已收藏→不做变更仍返回 200；目标不存在→404。
+- `DELETE /api/prompts/{id}/favorite`：幂等。已收藏→移除返回 200；未收藏→不做变更仍返回 200；目标不存在→404。
 
 ### curl 示例
 
@@ -52,8 +62,18 @@ curl http://localhost:8080/api/prompts
 # 搜索（q 需 URL 编码）
 curl "http://localhost:8080/api/prompts?q=video"
 
+# 分页：第 2 页，每页 10 条，按标签过滤
+curl "http://localhost:8080/api/prompts/page?page=1&size=10&tag=%E6%A0%B9%E7%9B%AE%E5%BD%95"
+
+# 标签列表
+curl http://localhost:8080/api/prompts/tags
+
 # 查看详情
 curl http://localhost:8080/api/prompts/opus-video-prompts__prompts__01-inference-startup-launch
+
+# 收藏与取消收藏
+curl -X POST http://localhost:8080/api/prompts/yuai-deepseek-prompt/favorite
+curl -X DELETE http://localhost:8080/api/prompts/yuai-deepseek-prompt/favorite
 ```
 
 ## 前端页面 prompts.html

@@ -190,6 +190,7 @@ add_executable(docseek_tests
   tests/test_office_pptx.cpp
   tests/test_office_index.cpp
   tests/test_query_parser.cpp
+  tests/test_query_parser_v017.cpp
   tests/test_tokenizer_neologism.cpp
   tests/test_tokenizer_mixed.cpp
   tests/test_tokenizer_number.cpp

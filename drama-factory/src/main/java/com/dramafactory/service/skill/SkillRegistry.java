@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,6 +44,8 @@ public class SkillRegistry {
 
     private final List<SkillDescriptor> bundled = new ArrayList<>();
 
+    private Instant bundledLoadedAt;
+
     private final Map<String, CachedInstalled> cache = new HashMap<>();
 
     private record CachedInstalled(Path dir, long mtime, InstalledSkill skill) {
@@ -51,6 +54,7 @@ public class SkillRegistry {
     public SkillRegistry(@Value("${drama.skills.dir:data/skills}") String skillsDir) {
         this.skillsDir = Paths.get(skillsDir);
         loadBundled();
+        this.bundledLoadedAt = Instant.now();
     }
 
     private void loadBundled() {
@@ -132,6 +136,10 @@ public class SkillRegistry {
 
     public List<SkillDescriptor> bundled() {
         return List.copyOf(bundled);
+    }
+
+    public Instant bundledLoadedAt() {
+        return bundledLoadedAt;
     }
 
     public Optional<SkillDescriptor> bundledOf(String id) {

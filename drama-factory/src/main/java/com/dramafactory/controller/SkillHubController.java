@@ -66,7 +66,9 @@ public class SkillHubController {
     @GetMapping("/index")
     @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装")
     public ResponseEntity<SkillHubIndex> index() {
-        String updatedAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now().atOffset(ZoneOffset.UTC));
+        Instant loadedAt = registry.bundledLoadedAt();
+        String updatedAt = loadedAt == null ? ""
+                : DateTimeFormatter.ISO_INSTANT.format(loadedAt.atOffset(ZoneOffset.UTC));
         List<SkillHubItem> items = new ArrayList<>();
         try {
             Map<String, String> installedMap = new HashMap<>();
