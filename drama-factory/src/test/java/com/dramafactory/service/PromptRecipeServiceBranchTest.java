@@ -28,6 +28,9 @@ class PromptRecipeServiceBranchTest {
     @Autowired
     private PromptRecipeRepository repository;
 
+    @Autowired
+    private org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager em;
+
     private PromptRecipe createValid(String name, String category, String content,
                                      RecipeVisibility visibility) {
         return service.create(name, category, content, null, visibility, null, null);
@@ -234,6 +237,7 @@ class PromptRecipeServiceBranchTest {
         repository.save(existing);
 
         service.apply(existing.getId(), Map.of(), "SCRIPT");
+        em.clear();
 
         PromptRecipe reloaded = repository.findById(existing.getId()).orElseThrow();
         assertThat(reloaded.getUsageCount()).isEqualTo(1L);

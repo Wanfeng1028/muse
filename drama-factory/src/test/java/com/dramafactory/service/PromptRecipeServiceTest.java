@@ -16,7 +16,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -93,14 +93,13 @@ class PromptRecipeServiceTest {
         recipe.setModelParams("{\"temperature\":0.8}");
         recipe.setUsageCount(5L);
         when(repository.findById(3L)).thenReturn(Optional.of(recipe));
-        when(repository.save(any(PromptRecipe.class))).thenAnswer(inv -> inv.getArgument(0));
 
         PromptRecipeService.ApplyResult result = service.apply(3L, Map.of("主体", "机器人"), "SCRIPT");
 
         assertEquals("机器人", result.renderedContent());
         assertEquals("{\"temperature\":0.8}", result.modelParams());
         assertEquals("SCRIPT", result.target());
-        assertEquals(6L, recipe.getUsageCount());
+        verify(repository).incrementUsageCount(3L);
     }
 
     @Test
