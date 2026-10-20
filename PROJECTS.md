@@ -126,7 +126,7 @@
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 - **深耕轮 2026-10-21（已合入，72c3569）**：review API deep4 6 测试全绿（POST /queue 返回 400 非 405，行为已锁定）。
-- **遗留 2026-10-21 待下轮**：k-w10（focus-validation deep5）、k-w11（words-srs）两批次因 step193plan 输出混入思考过程被污染，已删除文件未合入；下轮重跑时 prompt 须加"只许输出 FILE 块"硬约束。
+- **遗留 2026-10-21 凌晨轮**：k-w10（focus-validation deep5）、k-w11（words-srs）重跑 6 次全部失败——step193plan 5 次只交思考过程（严厉 prompt 重试仍失败）、step150api 4 次纯思考/占位符；dpsk 全程 429。今晚双模型均处降级状态，顺延下轮。教训："只许输出 FILE 块"硬约束今晚反而触发模型的元思考，plain 短 prompt 出码率更高（待验证）。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -237,7 +237,7 @@
 - **fix 2026-10-20 深夜「修 2 个既存测试失败」（已合入 75c03c0，33/33 全绿）**：step193plan 生成 PATCH（dpsk 持续 429 限流）+ 编排机械修复 1 处。`PromptRecipeServiceTest#apply_incrementsUsageCountAndReturnsModelParams`：apply 的计数递增是 DB 端 @Modifying 批量更新（刻意设计，防并发 lost update），mock 下实体字段不变属预期；测试改断言为 `verify(repository).incrementUsageCount(3L)`，删无用 save stub（Mockito 严格模式 UnnecessaryStubbingException，由编排删 1 行+1 import）。`PromptRecipeServiceBranchTest#branch_apply_usageCountNull_becomesOne`：@Modifying 绕过持久化上下文致 findById 读过期缓存；reload 前加 `em.clear()`（TestEntityManager），DB 行确为 1，产品行为正确。两处均为测试债，非产品 bug；stash 对照确认失败在干净树同样存在。
 - **深耕轮 2026-10-20 深夜波次「v021 eval 回归 + 4 项目纵深」（19 批次实质 prompt，未 commit 待合入）**：dpsk 全天 429 硬停，step193plan 主力（116 次）+ step150api 备用。组 A｜docseek v021 加权排序 eval：旧二进制（pristine 树 d678e06）vs 新二进制 v07 语料全量双跑，文档级零回归（top-1 56/56=100%，MRR@10 0.9643，locate 1.0）；段落级 12 查询 A/B：top-1 文档 12/12 不变，2/12 重排方向均为正确文档段落更高、无一变差；s193 diff 评审 9 发现 0 BUG/CRITICAL。组 B｜drama-factory 提示词库纵深：分页非法值 400（新 InvalidPaginationException）、收藏幂等、前后端收藏联调、分页边缘，4 测试类 29/29 全绿；真机 Spring Boot 视觉验收通过（详情页"标题重叠"经放大+DOM 证伪为误读）。组 C｜sentinel+ledger：8 改动+5 新测试文件全真实；sentinel 真 bug 修复——profile.go MonthlySLA 未关闭事件按 min(now,月末) 裁剪（查过去月份不再把窗口外时长算入）；腾讯短信死代码打通；sentinel go test 13 包 1113/0/0，ledger 1356 通过（2 失败 stash 对照为既存）。组 D｜second-brain+linkshort+feedflow：9 新测试文件 67 函数全绿（推送/搜索/backlinks/遗忘曲线/阅后即焚/地域小时/去重阈值边界）；feedflow 真实截图亲眼验收。诚实声明：v09 eval（1440 pairs）跑一半被取消留待下轮；"提升多少"无法用现有 eval 量化（无段落级 relevance 标注，不编数字）。
 - **深耕轮 2026-10-21（已合入，72c3569）**：TD-004（canonical 字段，4 描述符 9 模型）+ TD-002（workers 可配锁定）已偿还；skillhub updatedAt 改为索引构建时间；PROMPT_LIBRARY.md 补齐 7 端点。
-- **遗留 2026-10-21 待下轮**：skillhub 分页 TD-003b 只产出了测试文件、缺主实现，已回退未合入；下轮先写主实现再补测试。
+- **遗留 2026-10-21 凌晨轮**：skillhub 分页 TD-003b 主实现 3 批次（s193 1 次 + s150 2 次）全部只产出思考/草稿，无可用代码；dpsk 429、s193/s150 双降级。顺延下轮。
 
 ## mini-os「网页操作系统」
 
@@ -498,7 +498,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-20 晚「否定语境感知」（已合入，单元全绿；eval 09d 未完全翻转，根因已定位）**：v0.14 遗留 v08-qa-09d「多久备份一回数据才算合适，能给点建议不」攻坚——`stripTrailingQuestionBu()`（src/query_parser.cpp 匿名 namespace，stripTrailingPredicates 同风格）：只剥字符串尾部句尾语气词「不」（等价于吗），「得不」（不得不）与句中否定（不建议/不能/不要）一律不动；parseNaturalQuery 2.6 与 stripFillerWords 双路径对齐；tests 新增 QueryParserV016 3 例。step193plan 生成函数体（dpsk 当轮 429 限流切换；模型两轮只交思考过程未交 PATCH，第 3 版从 reasoning 抢救出完整函数体后机械应用——教训：复杂任务必须把全部原文逐字贴进 prompt，不许让模型"自己摘取"锚定）。验证：QueryParser* 19/19 全绿；全量 ctest 零新增失败（45 失败全为 pre-existing，stash 对照确认：ServeFixture 夹具重名/Tokenizer 系列/HybridSearchVsQR2）；改前改后实测对照：locate 关键词 10→9（去不）、tok_05_mixed passage 分 0.595→0.530、search 路径 Top-1=qa_05_backup.md。locate 仍未翻转的精确根因：passage_ranker 的 coverage 未加权，单字噪音（算/能/点）+ 高频「建议」主导评分，与文档级 BM25 脱钩——下轮独立里程碑做 passage 评分 IDF/词长加权（含全量 eval 回归）。
 - **深耕轮 2026-10-20 深夜「v021 段落评分 IDF×词长加权」（已合入 b83767a，新测试全绿）**：兑现上一轮立的里程碑——`Database::docFrequency(term)`（FTS5 MATCH 走 jieba 分词，空词/未知词返回 0）+ `termLengthWeight`（1 码点 0.35 / 2 码点 0.7 / 3+ 码点 1.0，压单字噪音）+ `TermWeights`（idf×词长权重表，idf=log((N+1)/(df+1))+1）+ `rankPassages` 加权重载（全 1.0 权重时与旧版逐位相同）；`Locator::locate` 改走加权版。3 个深测文件（docfrequency 10 例/passage 加权/v021 回归）。验证：cmake 零错；新测试全绿；全量套件 11 失败经 pristine 树 stash 对照确认为既存环境问题（TokenizerPunctTest/ServeErrParamR2 在干净树同样失败，与本轮无关）。eval 质量回归（新旧二进制 NDCG/MRR 对照）已排入深夜波次由协调员执行。
 - **深耕轮 2026-10-21（已合入，72c3569）**：QueryParser V017"不/没"边界 6 测试全绿（否定词尾缀保护）。
-- **遗留 2026-10-21 待下轮**：v09 eval 1440 pairs 中 134 项失败未分类；下轮先做失败分类（回归/环境/真问题），再决定修不修。eval 产物在 ~/workspace/muse-build/nightwave-2026-10-20/docseek-eval/out/（eval_v09_old/new.log）。
+- **深耕轮 2026-10-21 凌晨「v09 eval 全量重跑 + 失败分类」（已完成）**：上轮被取消的 v09 eval 全量重跑完成——**1306/1440 通过（90.7%），134 失败**，较 2026-10-18 基线 1228/1440（85.3%）净提升 78 对（v021 加权排序 + 否定语境感知生效）。134 项失败已分类（回归/环境/真问题）：**回归 0、环境 0**；真问题 134 = 期望/措辞错位 8（查询字在期望文档中 0 次，eval pair 质量问题，不修产品）+ 真召回问题 4（A类候选）+ 排序错位 122（search 57 为 C类候选、locate 长问句 64 为 D类候选、短问句 1）。基线 26 个已记录失败中 22 已修复、4 持续（t006-q11/t013-q05/t019-q12/t021-q09，均有已知分类）。决策：8 个错位修 eval pair；其余按 EVAL_V09.md 既有排期（A类 v0.15、D类 fillerWords、B/C类单独排期）。分类文档 `docseek/docs/EVAL_V09_WAVE6_CLASSIFICATION.md`，全量清单 `~/workspace/muse-build/wave-2026-10-21/v09_fails_confirmed.json`。诚实声明：精确到 pair 的回归判定需补跑基线二进制全量，本轮未做（待办）；分类为机械初分（查询字缺失检测 + 基线样本对照），未过模型复核。
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 
