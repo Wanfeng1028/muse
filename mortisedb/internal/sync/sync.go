@@ -281,10 +281,20 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 		}
 	}
 
-	// 记录水位线最大值
-	maxWatermark := ""
+	// 记录水位线最大值（规范化后比较）。
+	// 若本批存在可解析的日期时间：水位线取其规范化最大值，不可解析/空值不参与
+	// （防 "not-a-date" 之类字典序更大的非法值污染水位线，导致增量同步永久停滞）；
+	// 纯文本列（无一可解析）保持原字符串 max 语义。
+	maxDateWatermark := ""
+	maxRawWatermark := ""
+	hasDateVal := false
 	if incrementalCol != "" && len(since) > 0 {
-		maxWatermark = since[incrementalCol]
+		if infer.IsDateTime(since[incrementalCol]) {
+			hasDateVal = true
+			maxDateWatermark = infer.NormalizeComparable(since[incrementalCol])
+		} else {
+			maxRawWatermark = since[incrementalCol]
+		}
 	}
 
 	// 批量事务：每 batchSize 行提交一次，大幅减少 WAL fsync 次数。
@@ -460,15 +470,23 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 			delete(seenPKs, pk)
 		}
 
-		// 更新水位线最大值（字符串比较，要求 ISO8601）
-		if incrementalCol != "" {
-			if v, ok := row[incrementalCol]; ok && v != nil {
-				sv := infer.Stringify(v)
-				if sv > maxWatermark {
-					maxWatermark = sv
+		// 更新水位线最大值：先规范化再比较；空值/不可解析值按列语义处理（见声明处注释）。
+			if incrementalCol != "" {
+				if v, ok := row[incrementalCol]; ok && v != nil {
+					sv := infer.Stringify(v)
+					switch {
+					case sv == "":
+						// 空值不参与水位线
+					case infer.IsDateTime(sv):
+						hasDateVal = true
+						if nv := infer.NormalizeComparable(sv); nv > maxDateWatermark {
+							maxDateWatermark = nv
+						}
+					case sv > maxRawWatermark:
+						maxRawWatermark = sv
+					}
 				}
 			}
-		}
 
 		// 批量提交
 		processed++
@@ -506,7 +524,11 @@ func syncOneTable(cfg *config.Config, st *store.Store, src connector.Source, sc 
 	// 冲突 webhook：提交成功后扫描本表本次新增的冲突（pending/自动解决）异步投递；
 	// 投递失败只记日志+指标，永不阻塞同步
 	webhookNotifier.FireTableConflicts(st, ti.Name, tableStartedAt)
-	// 写回水位线
+	// 写回水位线：有可解析日期时取日期规范化最大值，否则取纯文本最大值。
+	maxWatermark := maxRawWatermark
+	if hasDateVal {
+		maxWatermark = maxDateWatermark
+	}
 	if incrementalCol != "" && maxWatermark != "" {
 		if err := st.SetWatermark(sc.Name, ti.Name, incrementalCol, maxWatermark); err != nil {
 			return ts, fmt.Errorf("写水位线失败: %w", err)

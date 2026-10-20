@@ -334,6 +334,13 @@ func parseDatetime(s string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("解析 DATETIME 失败 %q", s)
 }
 
+// IsDateTime 判断字符串是否能按支持的布局解析为日期时间（与 NormalizeComparable 同口径），
+// 供水位线计算区分"可解析日期"与"纯文本/非法值"。
+func IsDateTime(v string) bool {
+	_, err := parseDatetime(v)
+	return err == nil
+}
+
 // NormalizeComparable 将可比值规范化：能解析为日期时间的统一转 RFC3339，
 // 使水位线比较不受 "2006-01-02 15:04:05" 与 RFC3339 两种写法的影响；不可解析则原样返回。
 func NormalizeComparable(v string) string {

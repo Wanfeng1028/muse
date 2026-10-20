@@ -715,7 +715,8 @@ func hasColumn(cols []infer.Column, name string) bool {
 	return false
 }
 
-// matchSince 使用字符串比较判断行是否超过水位线。
+// matchSince 使用规范化后比较判断行是否超过水位线。
+// 增量列值为空时无法排序，按"未知时间=有变更"放行，避免静默丢行。
 func matchSince(row Row, since map[string]string) bool {
 	if len(since) == 0 {
 		return true
@@ -725,6 +726,9 @@ func matchSince(row Row, since map[string]string) bool {
 			continue
 		}
 		v := infer.NormalizeComparable(infer.Stringify(row[col]))
+		if v == "" {
+			continue
+		}
 		if v <= infer.NormalizeComparable(wm) {
 			return false
 		}

@@ -16,6 +16,9 @@ import java.util.concurrent.atomic.AtomicLong
  * 背压策略（v0.3 决策）：队列满时丢弃最旧（DROP_OLDEST），不断开慢消费者。
  * 理由：演出中慢端短暂卡顿可接受，断开会导致黑屏/失联更危险；cue 事件"最新覆盖旧"，
  * 优先送达最新；丢弃数经 stagecue_ws_broadcast_dropped_total 可观测。
+ *
+ * 序列号为每客户端独立（per-slot），缺口法只统计真正进入该客户端队列后被挤掉的消息；
+ * 迟注册与被排除的广播不产生幽灵丢弃计数。
  */
 class BroadcastHub(
     private val metrics: StageMetrics,
@@ -34,10 +37,10 @@ class BroadcastHub(
     ) {
         var job: Job? = null
         var lastDeliveredSeq: Long = 0L
+        val seq = AtomicLong(0L)
     }
 
     private val slots = ConcurrentHashMap<String, Slot>()
-    private val seq = AtomicLong(0L)
 
     /**
      * 注册客户端并启动其专属发送协程（作为 scope 的子协程，scope 结束自动取消）。
@@ -80,9 +83,9 @@ class BroadcastHub(
 
     /** 广播文本给除 exceptClientId 外的所有客户端；永不挂起。 */
     fun broadcastExcept(exceptClientId: String?, text: String) {
-        val s = seq.incrementAndGet()
         for ((id, slot) in slots) {
             if (id == exceptClientId) continue
+            val s = slot.seq.incrementAndGet()
             slot.channel.trySend(Sequenced(s, text))
         }
     }

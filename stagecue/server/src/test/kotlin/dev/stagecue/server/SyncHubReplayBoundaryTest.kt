@@ -114,8 +114,8 @@ class SyncHubReplayBoundaryTest {
         val hub = SyncHub(opLog = second)
         val result = hub.missedOps(1L)
 
-        assertEquals(2, result.size)
-        assertEquals(listOf(2L, 3L), result.map { it.seq })
+        assertEquals(3, result.size)
+        assertEquals(listOf(2L, 3L, 4L), result.map { it.seq })
     }
 
     @Test

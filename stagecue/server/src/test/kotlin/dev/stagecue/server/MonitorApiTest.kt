@@ -36,13 +36,12 @@ class MonitorApiTest {
         val ds = Database.init(tempDir)
         val store = SqliteShowStore(ds)
         val settings = SettingsStore(ds)
-        val hub = SyncHub()
+        val fixedNow = 1750000000000L
+        val hub = SyncHub(clock = { fixedNow })
         application { module(store, hub, settings) }
-        val before = System.currentTimeMillis()
         val response = client.get("/api/monitor")
         assertEquals(HttpStatusCode.OK, response.status)
         val body = response.bodyAsText()
-        val after = System.currentTimeMillis()
         // 根因：服务端 ContentNegotiation 配了 prettyPrint = true，字符串 contains 断言依赖空格格式必挂；
         // 改为解析 JSON 后断言结构，不再依赖序列化格式。
         val snapshot = Json { ignoreUnknownKeys = true }.decodeFromString<MonitorState>(body)
@@ -51,8 +50,7 @@ class MonitorApiTest {
         assertEquals("cue-001", snapshot.next?.id)
         assertNull(snapshot.remainingMs)
         assertFalse(snapshot.rehearsal)
-        assertTrue(snapshot.serverTimeMs in before..after,
-            "serverTimeMs=${snapshot.serverTimeMs} not in [$before, $after]")
+        assertEquals(fixedNow, snapshot.serverTimeMs)
     }
 
     @Test

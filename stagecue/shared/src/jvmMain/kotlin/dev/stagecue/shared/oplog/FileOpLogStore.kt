@@ -73,9 +73,11 @@ class FileOpLogStore(private val dir: File) : OpLogStore {
 
     override fun clear() {
         synchronized(lock) {
+            if (file.exists() && !file.delete()) {
+                throw IllegalStateException("FileOpLogStore: 无法删除日志文件 ${file.path}，clear 未完成")
+            }
             entries.clear()
             nextSeq = 1
-            if (file.exists()) file.delete()
         }
     }
 }

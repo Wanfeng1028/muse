@@ -137,4 +137,228 @@ class FileOpLogStoreTest {
             assertFalse(entry.eventId.isEmpty())
         }
     }
+
+    @Test
+    fun `mid-file corrupted line is skipped and neighbors keep order`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        store.append("CUE_FIRED", "cue-2", "eventId=e2")
+        store.append("CUE_FIRED", "cue-3", "eventId=e3")
+
+        val file = File(dir, "oplog.jsonl")
+        val lines = file.readLines().filter { it.isNotBlank() }
+        assertEquals(3, lines.size)
+        file.writeText(lines[0] + "\n" + "THIS IS NOT JSON {{{" + "\n" + lines[1] + "\n" + lines[2] + "\n")
+
+        val store2 = FileOpLogStore(dir)
+        val all = store2.readAll()
+        assertEquals(3, all.size)
+        assertEquals(listOf(1L, 2L, 3L), all.map { it.seq })
+        assertEquals(listOf("cue-1", "cue-2", "cue-3"), all.map { it.cueId })
+    }
+
+    @Test
+    fun `fully corrupted file starts empty without throwing`(@TempDir dir: File) {
+        val file = File(dir, "oplog.jsonl")
+        file.writeText("not json at all\n{{{\n<<<garbage>>>\n")
+
+        val store = FileOpLogStore(dir)
+        assertTrue(store.readAll().isEmpty())
+
+        val first = store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        assertEquals(1L, first.seq)
+        assertEquals(1, store.readAll().size)
+    }
+
+    @Test
+    fun `blank lines are ignored on load`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        store.append("CUE_FIRED", "cue-2", "eventId=e2")
+
+        val file = File(dir, "oplog.jsonl")
+        file.appendText("\n   \n\t\n")
+
+        val store2 = FileOpLogStore(dir)
+        val all = store2.readAll()
+        assertEquals(2, all.size)
+        assertEquals(listOf(1L, 2L), all.map { it.seq })
+        assertEquals(listOf("cue-1", "cue-2"), all.map { it.cueId })
+    }
+
+    @Test
+    fun `nonexistent nested directory is created on construction`(@TempDir dir: File) {
+        val nested = File(dir, "a/b")
+        assertFalse(nested.exists())
+
+        val store = FileOpLogStore(nested)
+        assertTrue(nested.exists())
+
+        val entry = store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        assertEquals(1L, entry.seq)
+        assertTrue(File(nested, "oplog.jsonl").exists())
+        assertEquals(1, store.readAll().size)
+    }
+
+    @Test
+    fun `clear deletes the backing file from disk`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        store.append("CUE_FIRED", "cue-2", "eventId=e2")
+
+        store.clear()
+        assertFalse(File(dir, "oplog.jsonl").exists())
+        assertTrue(store.readAll().isEmpty())
+    }
+
+    @Test
+    fun `append after clear restarts at seq 1 and old lines are gone`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        store.append("CUE_FIRED", "cue-2", "eventId=e2")
+
+        store.clear()
+        val entry = store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        assertEquals(1L, entry.seq)
+
+        val lines = File(dir, "oplog.jsonl").readLines().filter { it.isNotBlank() }
+        assertEquals(1, lines.size)
+        val decoded = WsJson.json.decodeFromString<OpLogEntry>(lines[0])
+        assertEquals(1L, decoded.seq)
+        assertEquals("cue-1", decoded.cueId)
+    }
+
+    @Test
+    fun `readAll returns defensive copy`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        store.append("CUE_FIRED", "cue-1", "eventId=e1")
+        store.append("CUE_FIRED", "cue-2", "eventId=e2")
+
+        val snapshot = store.readAll() as MutableList
+        assertEquals(2, snapshot.size)
+        snapshot.clear()
+        assertEquals(0, snapshot.size)
+
+        val after = store.readAll()
+        assertEquals(2, after.size)
+        assertEquals(listOf(1L, 2L), after.map { it.seq })
+    }
+
+    @Test
+    fun `utf8 detail round-trips through restart`(@TempDir dir: File) {
+        val detail = "灯光 cue 触发 @ 排练模式 #3"
+        val store1 = FileOpLogStore(dir)
+        store1.append("CUE_FIRED", "cue-1", detail)
+
+        val store2 = FileOpLogStore(dir)
+        val all = store2.readAll()
+        assertEquals(1, all.size)
+        assertEquals(detail, all[0].detail)
+    }
+
+    @Test
+    fun `large replay preserves exact order`(@TempDir dir: File) {
+        val store1 = FileOpLogStore(dir)
+        repeat(500) { i ->
+            store1.append("CUE_FIRED", "cue-$i", "eventId=e-$i")
+        }
+
+        val store2 = FileOpLogStore(dir)
+        val all = store2.readAll()
+        assertEquals(500, all.size)
+        assertEquals((1L..500L).toList(), all.map { it.seq })
+        assertEquals("cue-0", all.first().cueId)
+        assertEquals("cue-499", all.last().cueId)
+    }
+
+    @Test
+    fun `eventIds are unique across appends`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        repeat(100) { i ->
+            store.append("CUE_FIRED", "cue-$i", "eventId=e-$i")
+        }
+
+        val all = store.readAll()
+        assertEquals(100, all.size)
+        assertEquals(100, all.map { it.eventId }.toSet().size)
+    }
+
+    @Test
+    fun `concurrent append and readAll never throws`(@TempDir dir: File) {
+        val store = FileOpLogStore(dir)
+        val writers = 4
+        val perWriter = 50
+        val total = writers * perWriter
+        val readers = 2
+        val readsPerReader = 100
+        val start = CountDownLatch(1)
+        val done = CountDownLatch(writers + readers)
+        val readErrors = arrayOfNulls<Throwable>(1)
+        val lock = Any()
+
+        repeat(writers) { w ->
+            Thread {
+                start.await()
+                try {
+                    repeat(perWriter) { i ->
+                        store.append("CUE_FIRED", "cue-$w-$i", "eventId=e-$w-$i")
+                    }
+                } catch (t: Throwable) {
+                    synchronized(lock) {
+                        if (readErrors[0] == null) readErrors[0] = t
+                    }
+                } finally {
+                    done.countDown()
+                }
+            }.start()
+        }
+
+        repeat(readers) {
+            Thread {
+                start.await()
+                try {
+                    repeat(readsPerReader) {
+                        val snapshot = store.readAll()
+                        assertTrue(snapshot.size >= 0)
+                    }
+                } catch (t: Throwable) {
+                    synchronized(lock) {
+                        if (readErrors[0] == null) readErrors[0] = t
+                    }
+                } finally {
+                    done.countDown()
+                }
+            }.start()
+        }
+
+        start.countDown()
+        assertTrue(done.await(60, TimeUnit.SECONDS))
+
+        synchronized(lock) {
+            assertEquals(null, readErrors[0])
+        }
+
+        val all = store.readAll()
+        assertEquals(total, all.size)
+        assertEquals((1L..total.toLong()).toSet(), all.map { it.seq }.toSet())
+    }
+
+    @Test
+    fun `all fields survive restart`(@TempDir dir: File) {
+        val store1 = FileOpLogStore(dir)
+        val appended = store1.append("CUE_FIRED", "cue-9", "d9")
+        val eventId = appended.eventId
+        val atMs = appended.atMs
+
+        val store2 = FileOpLogStore(dir)
+        val all = store2.readAll()
+        assertEquals(1, all.size)
+        val restored = all[0]
+        assertEquals(appended.seq, restored.seq)
+        assertEquals("CUE_FIRED", restored.type)
+        assertEquals("cue-9", restored.cueId)
+        assertEquals("d9", restored.detail)
+        assertEquals(eventId, restored.eventId)
+        assertEquals(atMs, restored.atMs)
+    }
 }
