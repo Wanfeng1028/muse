@@ -209,3 +209,19 @@ test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gat
 **影响**：
 - 新增测试：protocol/test/approval.test.ts（5 例）、gateway/test/approvals.test.ts（8 例：挂起/批准/驳回/防自批/未知 id/过期清扫/off 直达/配置解析）。全量回归：protocol 159 例、gateway 681 例全绿。
 - web 前端尚未接审批 UI（approval_request 帧已广播到房间，UI 渲染与放行按钮为下一阶段）；BYO agent 入驻、工作流引擎不在本次范围（见 kylon-research 对照表）。
+
+## 2026-10-21：BYO agent 入驻桥接（借鉴 Kylon 一次性链接 + ACP 本机驱动，独立实现）
+
+**背景**：kylon-cli（npm 公开包 0.7.9）静态分析（报告见 muse-repo/kylon-research/kylon-cli-npm-analysis-2026-10-21.md）确认了 Kylon 让本机 agent 入驻的四个可迁移概念：一次性入驻链接（30 分钟、单次兑换、同安装幂等）、每 agent 独立的本地 profile、经公开标准 ACP 以 stdio 驱动本机 agent 进程、任务流式回传与取消。BotsTalk 此前只有服务端 adapter（echo/deepseek），用户本机的 Claude Code/Codex 类 agent 没有以成员身份进房间的路径，本次补齐。实现为独立编写，未复制 kylon-cli 代码；rea 对其混淆 bundle 未能保留结构图，分析结论以包内公开文档为主证据。
+
+**决策**：
+- 新增 workspace 包 `adapters/byo-bridge`（`@botstalk/adapter-byo-bridge`），桥接本身是普通 adapter：复用 adapter-base 的 AdapterClient（hello/capability/心跳/重连补发），不新增协议帧、不改网关，任务台账与人工审批门对 BYO agent 与其他 adapter 一视同仁。
+- 入驻链接为 BotsTalk 自有格式（`botstalk://` 或 `https://` 链接，参数 gateway/room/agent/token/exp）。兑换在本地记账：只落盘令牌的 sha256 摘要（`byo-link.json`），原文不落盘；过期报 link_expired，同链接同安装重跑返回 already，异链接报 link_already_used。服务端签发/吊销链接不在本次范围（下一阶段）。
+- profile 存 `~/.botstalk/byo/<agentId>/profile.json`（BOTSTALK_BYO_DIR 或 XDG_CONFIG_HOME 可覆盖，文件 0600），含网关、房间、provider 启动命令（command/args/cwd）。
+- ACP 客户端（src/acp.ts）只实现桥接子集：NDJSON 承载 JSON-RPC 2.0，initialize / session/new / session/prompt / session/cancel + session/update 接收；agent_message_chunk 转 BotsTalk stream 帧，stopReason 属 end_turn/stop_sequence/max_tokens 记 done、其余记 failed。agent 侧反向请求（fs/*、session/request_permission 等）v1 统一回 -32601，不静默挂起。
+- 会话模型 v1：单桥接实例懒启动一个 provider 进程、复用一个 ACP 会话；进程异常后会话作废，下个任务重拉。聊天只响应 mentions 点名本 agent 的消息。
+- CLI：`byo-bridge link --url <link> [--cwd <dir>] -- <启动命令...>`、`run [--agent <id>]`、`status`；无 profile 时支持 BYO_COMMAND/BYO_ARGS/BYO_CWD 环境变量临时组装，与其他 adapter 的环境变量约定一致。
+
+**影响**：
+- 新增测试 28 例（link 12、profile 8、acp 5、bridge 3，含假 ACP agent 与假网关端到端任务流），全绿；全量回归不回退：protocol 159、gateway 681、adapter-base 85、adapter-deepseek 84、web 228 全绿。
+- 代码生成通道：dpsk 实测 429、step193plan 输出思考泄漏+截断不满足整文件交付，最终由编排侧按事先写死的规格逐字落盘并以类型检查 + 全量测试验收（细节见分析报告第 10 节）。
