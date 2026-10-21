@@ -1,0 +1,138 @@
+.app-shell.r6-shell {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  grid-template-rows: 58px minmax(0, 1fr) 48px;
+  height: 100dvh;
+  min-height: 0;
+  background: linear-gradient(125deg, #ecf2f6, #e7edf2 54%, #edf1f4);
+}
+.r6-titlebar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* The bar used to be sized by the mark and title text it contained. Those
+     were removed at the user's request, so the 58px from the source titlebar
+     is now declared here — otherwise the drag region collapses to zero. */
+  height: 58px;
+  flex: 0 0 58px;
+  padding: 0 28px 0 100px;
+  border-bottom: 1px solid rgb(255 255 255 / 75%);
+  background: rgb(255 255 255 / 18.823529%);
+  backdrop-filter: blur(40px);
+  color: #384a57;
+  font-size: 14px;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.r6-shell > .app-rail {
+  grid-column: 1;
+  grid-row: 2;
+  padding: 34px 9px 18px;
+  gap: 0;
+  height: 100%;
+  background: rgb(239 245 248 / 38%);
+  box-shadow: none;
+}
+.r6-shell .brand-mark,
+.r6-shell .rail-core {
+  display: none;
+}
+.r6-shell .rail-primary {
+  gap: 12px;
+}
+.r6-shell button.rail-button {
+  border-radius: 8px;
+  width: 60px;
+  min-height: 70px;
+  height: 70px;
+}
+.r6-shell button.rail-button.active {
+  border: 1px solid rgb(130 156 173 / 42%);
+  background: rgb(158 178 194 / 22%);
+}
+.r6-shell button.rail-button.active::before {
+  display: none;
+}
+.r6-shell > .app-content {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  background: transparent;
+}
+.r6-shell .r6-home {
+  padding: 28px 40px 20px;
+}
+.r6-shell .r6-home-heading {
+  height: 41px;
+  margin-bottom: 16px;
+}
+.r6-shell .r6-home-heading .r6-button {
+  height: 38px;
+  min-height: 38px;
+  min-width: 90px;
+  font-size: 14px;
+  background: white;
+}
+.r6-home-overview > header > .r6-button,
+.r6-home-runtime > .r6-button {
+  min-height: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+.r6-home-apps {
+  min-height: 366px;
+}
+.r6-shell-footer {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  background: rgb(255 255 255 / 15%);
+}
+/* The existing drag layer remains outside interactive content, over the title. */
+.desktop-frame:has(.r6-shell, .onboarding-r6) > .desktop-frame-content {
+  height: 100dvh;
+}
+@media (max-width: 1200px) {
+  .r6-shell .r6-home {
+    padding: 24px;
+  }
+  /* Only 首页 tightens here; 设置 keeps its 40px until 700px, so the footer
+     stays on the 40px vertical rather than matching one page and breaking the
+     other. The packaged window is 1440 wide, where both pages are at 40px. */
+}
+@media (max-width: 600px) {
+  .app-shell.r6-shell {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+  .r6-shell > .app-rail {
+    padding: 12px 4px;
+  }
+  .r6-titlebar {
+    padding-left: 24px;
+  }
+  .r6-shell .r6-home {
+    padding: 20px 16px;
+  }
+  .r6-shell-footer {
+    padding-inline: 16px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .r6-titlebar,
+  .r6-shell > .app-rail,
+  .r6-shell-footer {
+    background: #edf3f6;
+    backdrop-filter: none;
+  }
+}
+[data-native-reduce-transparency="true"]
+  :is(.r6-titlebar, .r6-shell > .app-rail, .r6-shell-footer) {
+  background: #edf3f6;
+  backdrop-filter: none;
+}

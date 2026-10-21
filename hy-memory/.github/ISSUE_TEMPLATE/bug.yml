@@ -1,0 +1,35 @@
+name: Bug
+description: 报告可复现的问题
+title: "[Bug] "
+body:
+  - type: textarea
+    id: impact
+    attributes:
+      label: 用户影响
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本与平台
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期与实际结果
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私确认
+      options:
+        - label: 内容不含密钥、真实对话或个人信息
+          required: true

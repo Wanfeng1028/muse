@@ -1,0 +1,240 @@
+.import-strip,
+.import-strip .import-strip-body {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.import-strip-operation {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.import-strip-total {
+  flex: 1 1 100%;
+  overflow-wrap: anywhere;
+}
+
+.import-strip[data-stale="true"] {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.import-strip[data-stale="true"] .import-strip-body {
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
+
+.import-strip-snapshot {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+  color: var(--tx2, #5a6169);
+}
+
+.import-strip-snapshot strong {
+  color: var(--tx, #262a2e);
+  font-weight: 600;
+}
+
+.import-strip-confirmed-time {
+  color: var(--meta-reading, #63707b);
+  font-variant-numeric: tabular-nums;
+}
+
+.import-strip-refresh-error {
+  padding: 6px 8px;
+  color: var(--dg, #96453e);
+  background: var(--dg-bg, #f8eeec);
+  border-radius: 6px;
+}
+
+.import-strip-actions:empty {
+  display: none;
+}
+.import-strip-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.import-strip-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.import-strip-actions svg {
+  flex: 0 0 16px;
+}
+
+.import-strip-job-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .import-strip .import-strip-pulse {
+    animation: none;
+  }
+}
+
+.import-strip[data-stale="true"] .import-strip-pulse {
+  display: none;
+  animation: none;
+}
+
+.import-strip[data-feedback="compact"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  align-items: start;
+}
+
+.import-strip-headline {
+  grid-column: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.import-strip-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.import-strip-heading strong {
+  color: var(--tx);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.import-strip-counts {
+  font-variant-numeric: tabular-nums;
+  color: var(--tx2);
+}
+
+.import-strip-support {
+  display: block;
+  font-size: 12px;
+  color: var(--tx2);
+}
+
+.import-strip[data-feedback="compact"] .import-strip-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.import-strip[data-feedback="compact"] .import-strip-actions button {
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.import-strip[data-feedback="compact"] .import-strip-headline > button {
+  display: inline-flex;
+  flex-shrink: 0;
+  min-width: max-content;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.memory-feedback-details {
+  min-width: 0;
+  color: var(--tx2);
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.memory-feedback-details summary {
+  cursor: pointer;
+  width: fit-content;
+  max-width: 100%;
+  color: var(--tx2);
+}
+
+.memory-feedback-details summary:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 3px;
+}
+
+.memory-feedback-details ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.memory-feedback-details code {
+  display: block;
+  color: var(--tx2);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.import-strip-details {
+  grid-column: 1;
+}
+
+.import-strip-details[open] {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+.import-strip[data-feedback="compact"] .import-strip-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 8px;
+}
+
+.import-strip[data-feedback="compact"] .import-strip-failed,
+.import-strip[data-feedback="compact"] .import-strip-refresh-error {
+  color: var(--tx2);
+  background: transparent;
+  padding: 0;
+}
+
+.memory-arrival.memory-arrival-neutral[data-phase] .memory-arrival-heading {
+  color: var(--tx);
+}
+
+.memory-arrival-neutral .memory-feedback-details {
+  margin-top: 7px;
+}
+
+@media (max-width: 600px) {
+  .import-strip[data-feedback="compact"] {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 12px;
+  }
+
+  .import-strip[data-feedback="compact"] .import-strip-actions {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .import-strip-details[open] {
+    grid-row: auto;
+  }
+}

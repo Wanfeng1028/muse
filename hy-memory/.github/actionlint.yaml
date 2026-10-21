@@ -1,0 +1,7 @@
+paths:
+  .github/workflows/release.yml:
+    ignore:
+      # GitHub added this standard Intel runner label in September 2025.
+      # actionlint v1.7.7 predates it; keep the workflow on the official
+      # native-Intel runner instead of weakening the architecture matrix.
+      - 'label "macos-15-intel" is unknown'

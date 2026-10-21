@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="630" viewBox="0 0 1120 630" font-family="Helvetica, Arial, PingFang SC, Microsoft YaHei, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<rect width="1120" height="630" fill="#fff"/>
+<text x="560.0" y="34" text-anchor="middle" font-size="20" font-weight="700" fill="#111827">HY Memory Architecture</text>
+<rect x="310.0" y="54" width="200" height="40" rx="20" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+<text x="410.0" y="78.5" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">add()  /  search()</text>
+<rect x="590.0" y="54" width="220" height="40" rx="20" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+<text x="700.0" y="69.0" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">Scene router</text>
+<text x="700.0" y="85.0" text-anchor="middle" font-size="11.5" fill="#4b5563">explicit scene or LLM judge</text>
+<line x1="510.0" y1="74" x2="588.0" y2="74" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="30" y="128" width="510" height="440" rx="14" fill="#fafafa" stroke="#d1d5db" stroke-width="1.2"/>
+<text x="285.0" y="154" text-anchor="middle" font-size="15.5" font-weight="700" fill="#111827">Chat  ·  7-layer cognitive memory</text>
+<rect x="580" y="128" width="510" height="440" rx="14" fill="#fafafa" stroke="#d1d5db" stroke-width="1.2"/>
+<text x="835.0" y="154" text-anchor="middle" font-size="15.5" font-weight="700" fill="#111827">Working / Coding  ·  two-layer memory</text>
+<line x1="650.0" y1="94" x2="285.0" y2="126" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="750.0" y1="94" x2="835.0" y2="126" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="245.0" y="118" font-size="12" fill="#4b5563">chat</text>
+<text x="843.0" y="112" font-size="12" fill="#4b5563">working / coding</text>
+<text x="46" y="182" font-size="12" font-weight="700" fill="#4a6fd1" letter-spacing="0.5">WRITE</text>
+<text x="46" y="292" font-size="12" font-weight="700" fill="#6b7280" letter-spacing="0.5">STORE</text>
+<text x="46" y="402" font-size="12" font-weight="700" fill="#2f8f55" letter-spacing="0.5">SEARCH</text>
+<rect x="46" y="190" width="118" height="46" rx="8" fill="#e8f0fe" stroke="#4a6fd1" stroke-width="1.5"/>
+<text x="105.0" y="208.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Embed + raw</text>
+<text x="105.0" y="224.0" text-anchor="middle" font-size="11.5" fill="#4b5563">L1_RAW</text>
+<rect x="190" y="190" width="186" height="46" rx="8" fill="#e8f0fe" stroke="#4a6fd1" stroke-width="1.5"/>
+<text x="283.0" y="208.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">LLM extraction</text>
+<text x="283.0" y="224.0" text-anchor="middle" font-size="11.5" fill="#4b5563">facts · summaries · intentions</text>
+<rect x="402" y="190" width="122" height="46" rx="8" fill="#e8f0fe" stroke="#4a6fd1" stroke-width="1.5"/>
+<text x="463.0" y="208.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Reconcile</text>
+<text x="463.0" y="224.0" text-anchor="middle" font-size="11.5" fill="#4b5563">supersedes chain</text>
+<line x1="164" y1="213.0" x2="188" y2="213.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="376" y1="213.0" x2="400" y2="213.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="46" y="300" width="230" height="46" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.5"/>
+<text x="161.0" y="318.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Vector store</text>
+<text x="161.0" y="334.0" text-anchor="middle" font-size="11.5" fill="#4b5563">L0–L4 · L7</text>
+<rect x="294" y="300" width="230" height="46" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="409.0" y="318.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Graph store</text>
+<text x="409.0" y="334.0" text-anchor="middle" font-size="11.5" fill="#4b5563">optional · L6 schemas</text>
+<rect x="46" y="410" width="150" height="46" rx="8" fill="#e7f6ec" stroke="#2f8f55" stroke-width="1.5"/>
+<text x="121.0" y="428.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Recall</text>
+<text x="121.0" y="444.0" text-anchor="middle" font-size="11.5" fill="#4b5563">vector · BM25 · graph</text>
+<rect x="222" y="410" width="112" height="46" rx="8" fill="#e7f6ec" stroke="#2f8f55" stroke-width="1.5"/>
+<text x="278.0" y="428.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Fusion</text>
+<text x="278.0" y="444.0" text-anchor="middle" font-size="11.5" fill="#4b5563">+ chain expansion</text>
+<rect x="360" y="410" width="164" height="46" rx="8" fill="#e7f6ec" stroke="#2f8f55" stroke-width="1.5"/>
+<text x="442.0" y="428.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Response</text>
+<text x="442.0" y="444.0" text-anchor="middle" font-size="11.5" fill="#4b5563">profile · normal · proactive</text>
+<line x1="196" y1="433.0" x2="220" y2="433.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="334" y1="433.0" x2="358" y2="433.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="105.0" y1="236" x2="105.0" y2="298" stroke="#4a6fd1" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="463.0" y1="236" x2="201.0" y2="298" stroke="#4a6fd1" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="121.0" y1="346" x2="101.0" y2="408" stroke="#2f8f55" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="409.0" y1="346" x2="161.0" y2="408" stroke="#2f8f55" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="46" y="494" font-size="12" font-weight="700" fill="#7b52c7" letter-spacing="0.5">SYSTEM 2  ·  ultra</text>
+<rect x="46" y="502" width="96" height="44" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+<text x="94.0" y="528.5" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">evolve()</text>
+<rect x="154" y="502" width="154" height="44" rx="8" fill="#f1ebfb" stroke="#7b52c7" stroke-width="1.5"/>
+<text x="231.0" y="519.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Schema induction</text>
+<text x="231.0" y="535.0" text-anchor="middle" font-size="11.5" fill="#4b5563">L6 basic</text>
+<rect x="320" y="502" width="188" height="44" rx="8" fill="#f1ebfb" stroke="#7b52c7" stroke-width="1.5"/>
+<text x="414.0" y="519.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Cross-domain sweeper</text>
+<text x="414.0" y="535.0" text-anchor="middle" font-size="11.5" fill="#4b5563">L6 core</text>
+<line x1="142" y1="524.0" x2="152" y2="524.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="308" y1="524.0" x2="318" y2="524.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M508,524 L532,524 L532,323 L526,323" fill="none" stroke="#7b52c7" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="596" y="182" font-size="12" font-weight="700" fill="#4a6fd1" letter-spacing="0.5">WRITE</text>
+<text x="596" y="292" font-size="12" font-weight="700" fill="#6b7280" letter-spacing="0.5">STORE</text>
+<text x="596" y="402" font-size="12" font-weight="700" fill="#2f8f55" letter-spacing="0.5">SEARCH</text>
+<rect x="596" y="190" width="140" height="46" rx="8" fill="#e8f0fe" stroke="#4a6fd1" stroke-width="1.5"/>
+<text x="666.0" y="208.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">LLM extraction</text>
+<text x="666.0" y="224.0" text-anchor="middle" font-size="11.5" fill="#4b5563">fact + experiences</text>
+<rect x="762" y="190" width="170" height="46" rx="8" fill="#e8f0fe" stroke="#4a6fd1" stroke-width="1.5"/>
+<text x="847.0" y="208.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Reconcile</text>
+<text x="847.0" y="224.0" text-anchor="middle" font-size="11.5" fill="#4b5563">ADD/UPDATE · SUPERSEDE</text>
+<rect x="958" y="190" width="116" height="46" rx="8" fill="#fdf1e4" stroke="#d9822b" stroke-width="1.5"/>
+<text x="1016.0" y="208.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Diff capture</text>
+<text x="1016.0" y="224.0" text-anchor="middle" font-size="11.5" fill="#4b5563">zero LLM</text>
+<line x1="736" y1="213.0" x2="760" y2="213.0" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="932" y1="213.0" x2="956" y2="213.0" stroke="#d9822b" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="596" y="300" width="230" height="46" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="1.5"/>
+<text x="711.0" y="318.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Facts ↔ Experiences</text>
+<text x="711.0" y="334.0" text-anchor="middle" font-size="11.5" fill="#4b5563">superseded facts → task chain</text>
+<rect x="844" y="300" width="230" height="46" rx="8" fill="#fdf1e4" stroke="#d9822b" stroke-width="1.5"/>
+<text x="959.0" y="318.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Version chain</text>
+<text x="959.0" y="334.0" text-anchor="middle" font-size="11.5" fill="#4b5563">said + diff per revision</text>
+<rect x="596" y="410" width="128" height="46" rx="8" fill="#e7f6ec" stroke="#2f8f55" stroke-width="1.5"/>
+<text x="660.0" y="428.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Recall</text>
+<text x="660.0" y="444.0" text-anchor="middle" font-size="11.5" fill="#4b5563">facts + experiences</text>
+<rect x="748" y="410" width="122" height="46" rx="8" fill="#fdf1e4" stroke="#d9822b" stroke-width="1.5"/>
+<text x="809.0" y="428.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Chain decorate</text>
+<text x="809.0" y="444.0" text-anchor="middle" font-size="11.5" fill="#4b5563">attach revisions</text>
+<rect x="894" y="410" width="180" height="46" rx="8" fill="#e7f6ec" stroke="#2f8f55" stroke-width="1.5"/>
+<text x="984.0" y="428.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111827">Response</text>
+<text x="984.0" y="444.0" text-anchor="middle" font-size="10.5" fill="#4b5563">facts · experiences · chain_block</text>
+<line x1="724" y1="433" x2="746" y2="433" stroke="#d9822b" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="870" y1="433" x2="892" y2="433" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="666.0" y1="236" x2="681.0" y2="298" stroke="#4a6fd1" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="847.0" y1="236" x2="761.0" y2="298" stroke="#4a6fd1" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="1016.0" y1="236" x2="989.0" y2="298" stroke="#d9822b" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="671.0" y1="346" x2="660.0" y2="408" stroke="#2f8f55" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="959.0" y1="346" x2="809.0" y2="408" stroke="#d9822b" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="596" y="506" font-size="12.5" fill="#374151">• One LLM call extracts both layers; reads need one embedding, no LLM.</text>
+<text x="596" y="528" font-size="12.5" fill="#374151">• Superseded facts are kept and linked into a task-progress chain.</text>
+<text x="596" y="550" font-size="12.5" fill="#374151">• Working and coding use separate stores.</text>
+<rect x="260.0" y="596" width="15" height="15" rx="3" fill="#fdf1e4" stroke="#d9822b" stroke-width="1.5"/>
+<text x="282.0" y="608" font-size="13" fill="#374151">coding only (working = same pipeline without it)</text>
+<line x1="630.0" y1="604" x2="666.0" y2="604" stroke="#6b7280" stroke-width="1.6" stroke-dasharray="5 4"/>
+<text x="674.0" y="608" font-size="13" fill="#374151">optional (graph: pro opt-in, ultra on)</text>
+</svg>

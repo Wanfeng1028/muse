@@ -1,0 +1,637 @@
+name: Fully automated release (Apple secrets required)
+
+on:
+  # Optional future path for repositories that configure Apple signing and
+  # notarization secrets in GitHub. The current hybrid release deliberately
+  # pushes v* tags without invoking this workflow: Linux artifacts come from
+  # Linux lifecycle, while macOS artifacts come from the Tencent pipeline and
+  # the final GitHub Release is assembled manually.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: memhub
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      build_number: ${{ steps.release.outputs.build_number }}
+      channel: ${{ steps.release.outputs.channel }}
+      npm_tag: ${{ steps.release.outputs.npm_tag }}
+      source_date_epoch: ${{ steps.release.outputs.source_date_epoch }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - name: Refuse a tag that is not public-release ready
+        env:
+          MEMHUB_PUBLIC_NPM_PACKAGE: memhub-cli
+          MEMHUB_PUBLIC_REPOSITORY: ${{ github.repository }}
+          MEMHUB_PUBLIC_BUNDLE_ID: io.github.tencent-hunyuan.hy-memory.memhub
+        run: python3 scripts/verify_public_release_ready.py --source-only --json
+      - name: Export and scan the exact public source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot="$RUNNER_TEMP/memhub-public-snapshot"
+          python3 scripts/export_public_snapshot.py "$snapshot"
+          python3 scripts/verify_public_snapshot.py "$snapshot" --json
+      - id: release
+        name: Verify tag, version and build contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          build_number=$(node -p "require('./package.json').release.build_number")
+          source_date_epoch=$(git show -s --format=%ct "$GITHUB_SHA")
+          if [[ "$version" == *-* ]]; then
+            channel=prerelease
+            if [[ "$version" == *-internal.* ]]; then npm_tag=internal; else npm_tag=next; fi
+          else
+            channel=stable
+            npm_tag=latest
+          fi
+          node scripts/verify-release-version.mjs \
+            --version "$version" \
+            --tag "$GITHUB_REF_NAME" \
+            --channel "$channel" \
+            --build-number "$build_number"
+          {
+            echo "version=$version"
+            echo "build_number=$build_number"
+            echo "channel=$channel"
+            echo "npm_tag=$npm_tag"
+            echo "source_date_epoch=$source_date_epoch"
+          } >> "$GITHUB_OUTPUT"
+
+  linux-runtime:
+    needs: contract
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: memhub/apps/core/uv.lock
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Build native Linux Runtime
+        env:
+          SOURCE_DATE_EPOCH: ${{ needs.contract.outputs.source_date_epoch }}
+        run: node scripts/platform/linux/build-linux-runtime.mjs "dist-runtime-linux-${{ matrix.arch }}"
+      - name: Run complete Linux lifecycle
+        env:
+          ONE_MEMORY_LINUX_VERIFY_ROOT: ${{ runner.temp }}/memhub-lifecycle-${{ matrix.arch }}
+          ONE_MEMORY_CORE_PORT: "28785"
+          ONE_MEMORY_RUNTIME_PORT: "28786"
+        run: node scripts/platform/linux/verify-linux-lifecycle.mjs "dist-runtime-linux-${{ matrix.arch }}"
+      - name: Verify packaged Runtime is independent of system Python and SQLite
+        run: >-
+          node scripts/platform/linux/verify-self-contained-runtime.mjs
+          --distribution "dist-runtime-linux-${{ matrix.arch }}"
+          --verify-root "${{ runner.temp }}/memhub-self-contained-${{ matrix.arch }}"
+          --core-port 28885
+          --runtime-port 28886
+      - name: Verify HTTPS proxy and NO_PROXY behavior
+        if: matrix.arch == 'x64'
+        run: >-
+          node scripts/platform/linux/verify-release-proxy.mjs
+          --receipt "${{ runner.temp }}/memhub-release-proxy/evidence/release-proxy-receipt.json"
+      - name: Preserve executable modes for artifact transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf "runtime-linux-${{ matrix.arch }}.transport.tar.gz" \
+            "dist-runtime-linux-${{ matrix.arch }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-linux-${{ matrix.arch }}
+          path: |
+            memhub/runtime-linux-${{ matrix.arch }}.transport.tar.gz
+            memhub/dist-runtime-linux-${{ matrix.arch }}.build-receipt.json
+            ${{ runner.temp }}/memhub-lifecycle-${{ matrix.arch }}/evidence/linux-lifecycle-receipt.json
+            ${{ runner.temp }}/memhub-self-contained-${{ matrix.arch }}/evidence/self-contained-runtime-receipt.json
+            ${{ runner.temp }}/memhub-release-proxy/evidence/release-proxy-receipt.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  macos-runtime-app:
+    needs: contract
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: memhub/apps/core/uv.lock
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Import Developer ID certificate into an ephemeral keychain
+        shell: bash
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          CSC_NAME: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_CERTIFICATE_BASE64"
+          test -n "$APPLE_CERTIFICATE_PASSWORD"
+          test -n "$CSC_NAME"
+          keychain="$RUNNER_TEMP/memhub-signing.keychain-db"
+          certificate="$RUNNER_TEMP/memhub-developer-id.p12"
+          developer_id_g2="$RUNNER_TEMP/DeveloperIDG2CA.cer"
+          apple_root="$RUNNER_TEMP/AppleRootCA.pem"
+          password=$(openssl rand -hex 24)
+          CERTIFICATE_PATH="$certificate" python3 -c '
+          import base64, os
+          from pathlib import Path
+          Path(os.environ["CERTIFICATE_PATH"]).write_bytes(
+              base64.b64decode(os.environ["APPLE_CERTIFICATE_BASE64"], validate=True)
+          )
+          '
+          chmod 600 "$certificate"
+          curl --fail --location --silent --show-error \
+            https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer \
+            --output "$developer_id_g2"
+          security find-certificate -c "Apple Root CA" -p \
+            /System/Library/Keychains/SystemRootCertificates.keychain > "$apple_root"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$apple_root" -k "$keychain" -T /usr/bin/codesign
+          security import "$developer_id_g2" -k "$keychain" -T /usr/bin/codesign
+          security import "$certificate" -k "$keychain" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain"
+          {
+            echo "CSC_NAME=$CSC_NAME"
+            echo "CSC_KEYCHAIN=$keychain"
+          } >> "$GITHUB_ENV"
+      - name: Materialize App Store Connect API key
+        shell: bash
+        env:
+          APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_API_KEY_P8_BASE64"
+          test -n "$APPLE_API_KEY_ID"
+          test -n "$APPLE_API_ISSUER"
+          key="$RUNNER_TEMP/memhub-notary-key.p8"
+          NOTARY_KEY_PATH="$key" python3 -c '
+          import base64, os
+          from pathlib import Path
+          Path(os.environ["NOTARY_KEY_PATH"]).write_bytes(
+              base64.b64decode(os.environ["APPLE_API_KEY_P8_BASE64"], validate=True)
+          )
+          '
+          chmod 600 "$key"
+          {
+            echo "APPLE_NOTARY_KEY_PATH=$key"
+            echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID"
+            echo "APPLE_API_ISSUER=$APPLE_API_ISSUER"
+          } >> "$GITHUB_ENV"
+      - name: Build native signed Runtime and App
+        env:
+          MEMHUB_PUBLIC_BUNDLE_ID: io.github.tencent-hunyuan.hy-memory.memhub
+          SOURCE_DATE_EPOCH: ${{ needs.contract.outputs.source_date_epoch }}
+        run: >-
+          node scripts/platform/macos/build-macos-release.mjs
+          --output "macos-release-${{ matrix.arch }}"
+          --arch "${{ matrix.arch }}"
+          --mode public
+      - name: Run native macOS Runtime lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/platform/macos/service-lifecycle.mjs \
+            --dist "macos-release-${{ matrix.arch }}/memhub-runtime-darwin-${{ matrix.arch }}" \
+            --app "macos-release-${{ matrix.arch }}/MemHub.app" \
+            --work "$RUNNER_TEMP/memhub-macos-lifecycle-${{ matrix.arch }}" \
+            --json | tee "macos-release-${{ matrix.arch }}/evidence/macos-lifecycle-receipt.json"
+      - name: Notarize and staple App and DMG
+        run: >-
+          node scripts/platform/macos/notarize-macos-release.mjs
+          --app "macos-release-${{ matrix.arch }}/MemHub.app"
+          --dmg "macos-release-${{ matrix.arch }}/MemHub-v${{ needs.contract.outputs.version }}-macos-${{ matrix.arch }}.dmg"
+          --receipt "macos-release-${{ matrix.arch }}/macos-public-gate-receipt.json"
+      - name: Preserve Runtime executable modes for artifact transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf "macos-release-${{ matrix.arch }}/runtime-darwin-${{ matrix.arch }}.transport.tar.gz" \
+            -C "macos-release-${{ matrix.arch }}" \
+            "memhub-runtime-darwin-${{ matrix.arch }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-app-darwin-${{ matrix.arch }}
+          path: |
+            memhub/macos-release-${{ matrix.arch }}/runtime-darwin-${{ matrix.arch }}.transport.tar.gz
+            memhub/macos-release-${{ matrix.arch }}/MemHub-v${{ needs.contract.outputs.version }}-macos-${{ matrix.arch }}.dmg
+            memhub/macos-release-${{ matrix.arch }}/macos-build-receipt.json
+            memhub/macos-release-${{ matrix.arch }}/macos-public-gate-receipt.json
+            memhub/macos-release-${{ matrix.arch }}/evidence/macos-lifecycle-receipt.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Remove temporary Apple signing credentials
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          security delete-keychain "$RUNNER_TEMP/memhub-signing.keychain-db" \
+            >/dev/null 2>&1 || true
+          rm -f "$RUNNER_TEMP/memhub-developer-id.p12"
+          rm -f "$RUNNER_TEMP/memhub-notary-key.p8"
+
+  public-gate:
+    needs:
+      - contract
+      - macos-runtime-app
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: runtime-app-darwin-arm64
+          path: memhub/incoming/darwin-arm64
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: runtime-app-darwin-x64
+          path: memhub/incoming/darwin-x64
+      - name: Verify both native macOS public-gate receipts
+        env:
+          MEMHUB_PUBLIC_NPM_PACKAGE: memhub-cli
+          MEMHUB_PUBLIC_REPOSITORY: ${{ github.repository }}
+          MEMHUB_PUBLIC_BUNDLE_ID: io.github.tencent-hunyuan.hy-memory.memhub
+          MEMHUB_MACOS_PUBLIC_GATE_RECEIPT: ${{ github.workspace }}/memhub/incoming/darwin-arm64/macos-public-gate-receipt.json:${{ github.workspace }}/memhub/incoming/darwin-x64/macos-public-gate-receipt.json
+        run: python3 scripts/verify_public_release_ready.py --json
+
+  github-release:
+    needs:
+      - contract
+      - linux-runtime
+      - macos-runtime-app
+      - public-gate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: memhub/apps/core/uv.lock
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --directory apps/core --all-groups --locked
+      - name: Regenerate final SBOM and notices from the release environment
+        env:
+          SOURCE_DATE_EPOCH: ${{ needs.contract.outputs.source_date_epoch }}
+        run: pnpm run sbom
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: runtime-linux-x64
+          path: memhub/incoming/linux-x64
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: runtime-linux-arm64
+          path: memhub/incoming/linux-arm64
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: runtime-app-darwin-arm64
+          path: memhub/incoming/darwin-arm64
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: runtime-app-darwin-x64
+          path: memhub/incoming/darwin-x64
+      - name: Restore verified Runtime distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p distributions
+          tar -xzf incoming/linux-x64/runtime-linux-x64.transport.tar.gz -C distributions
+          tar -xzf incoming/linux-arm64/runtime-linux-arm64.transport.tar.gz -C distributions
+          tar -xzf incoming/darwin-arm64/runtime-darwin-arm64.transport.tar.gz -C distributions
+          tar -xzf incoming/darwin-x64/runtime-darwin-x64.transport.tar.gz -C distributions
+      - name: Build final Release assets
+        shell: bash
+        env:
+          VERSION: ${{ needs.contract.outputs.version }}
+          CHANNEL: ${{ needs.contract.outputs.channel }}
+        run: |
+          set -euo pipefail
+          published_at=$(git show -s --format=%cI "$GITHUB_SHA" | node -e \
+            "let value=''; process.stdin.on('data', chunk => value += chunk); process.stdin.on('end', () => process.stdout.write(new Date(value.trim()).toISOString()))")
+          node scripts/build-release-assets.mjs \
+            --output release-assets \
+            --version "$VERSION" \
+            --channel "$CHANNEL" \
+            --published-at "$published_at" \
+            --asset-base-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
+            --distribution distributions/dist-runtime-linux-x64 \
+            --distribution distributions/dist-runtime-linux-arm64 \
+            --distribution distributions/memhub-runtime-darwin-arm64 \
+            --distribution distributions/memhub-runtime-darwin-x64 \
+            --desktop "arm64=incoming/darwin-arm64/MemHub-v${VERSION}-macos-arm64.dmg" \
+            --desktop "x64=incoming/darwin-x64/MemHub-v${VERSION}-macos-x64.dmg"
+          (cd release-assets && sha256sum -c checksums.txt)
+      - uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        with:
+          subject-path: memhub/release-assets/*
+      - name: Create immutable GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ needs.contract.outputs.channel }}
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists; refusing to replace immutable assets." >&2
+            exit 1
+          fi
+          flags=(--verify-tag --generate-notes --title "$GITHUB_REF_NAME")
+          if [[ "$CHANNEL" == prerelease ]]; then flags+=(--prerelease --latest=false); fi
+          gh release create "$GITHUB_REF_NAME" release-assets/* \
+            --repo "$GITHUB_REPOSITORY" \
+            "${flags[@]}"
+
+  verify-published-release:
+    needs:
+      - contract
+      - github-release
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - platform: linux
+            arch: x64
+            kind: runtime
+          - platform: linux
+            arch: arm64
+            kind: runtime
+          - platform: darwin
+            arch: x64
+            kind: runtime
+          - platform: darwin
+            arch: arm64
+            kind: runtime
+          - platform: darwin
+            arch: x64
+            kind: desktop
+          - platform: darwin
+            arch: arm64
+            kind: desktop
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - name: Download and verify the complete published Runtime
+        shell: bash
+        env:
+          VERSION: ${{ needs.contract.outputs.version }}
+          CHANNEL: ${{ needs.contract.outputs.channel }}
+        run: |
+          set -euo pipefail
+          manifest_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/release-manifest.json"
+          for attempt in 1 2 3 4 5; do
+            if node scripts/verify-published-release.mjs \
+              --manifest-url "$manifest_url" \
+              --version "$VERSION" \
+              --git-commit "$GITHUB_SHA" \
+              --channel "$CHANNEL" \
+              --kind "${{ matrix.kind }}" \
+              --platform "${{ matrix.platform }}" \
+              --arch "${{ matrix.arch }}" \
+              --allowed-host release-assets.githubusercontent.com \
+              --allowed-host objects.githubusercontent.com \
+              --allowed-host github-releases.githubusercontent.com; then
+              exit 0
+            fi
+            if [[ "$attempt" == 5 ]]; then exit 1; fi
+            sleep 10
+          done
+
+  npm-publish:
+    needs:
+      - contract
+      - verify-published-release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          registry-url: ${{ vars.NPM_REGISTRY_URL || 'https://registry.npmjs.org/' }}
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Publish thin CLI only after Runtime verification
+        shell: bash
+        env:
+          MEMHUB_NPM_PACKAGE: memhub-cli
+          MEMHUB_DEFAULT_RELEASE_MANIFEST_URL_TEMPLATE: https://github.com/${{ github.repository }}/releases/download/v{version}/release-manifest.json
+          NPM_REGISTRY_URL: ${{ vars.NPM_REGISTRY_URL || 'https://registry.npmjs.org/' }}
+          VERSION: ${{ needs.contract.outputs.version }}
+          BUILD_NUMBER: ${{ needs.contract.outputs.build_number }}
+          CHANNEL: ${{ needs.contract.outputs.channel }}
+          NPM_TAG: ${{ needs.contract.outputs.npm_tag }}
+        run: |
+          set -euo pipefail
+          test -n "$MEMHUB_NPM_PACKAGE"
+          node scripts/publish-cli-after-release.mjs \
+            --manifest-url "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/release-manifest.json" \
+            --version "$VERSION" \
+            --git-commit "$GITHUB_SHA" \
+            --channel "$CHANNEL" \
+            --tag "$GITHUB_REF_NAME" \
+            --build-number "$BUILD_NUMBER" \
+            --platform linux \
+            --arch x64 \
+            --allowed-host release-assets.githubusercontent.com \
+            --allowed-host objects.githubusercontent.com \
+            --allowed-host github-releases.githubusercontent.com \
+            --registry "$NPM_REGISTRY_URL" \
+            --npm-tag "$NPM_TAG" \
+            --access public \
+            --provenance
+
+  npm-registry-smoke:
+    needs:
+      - contract
+      - npm-publish
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          registry-url: ${{ vars.NPM_REGISTRY_URL || 'https://registry.npmjs.org/' }}
+      - name: Reinstall the published package from the registry
+        shell: bash
+        env:
+          MEMHUB_NPM_PACKAGE: memhub-cli
+          NPM_REGISTRY_URL: ${{ vars.NPM_REGISTRY_URL || 'https://registry.npmjs.org/' }}
+          VERSION: ${{ needs.contract.outputs.version }}
+        run: |
+          set -euo pipefail
+          test -n "$MEMHUB_NPM_PACKAGE"
+          prefix="$RUNNER_TEMP/npm-global"
+          for attempt in 1 2 3 4 5; do
+            if npm install --global --prefix "$prefix" \
+              "$MEMHUB_NPM_PACKAGE@$VERSION" \
+              --registry "$NPM_REGISTRY_URL" \
+              --ignore-scripts --no-audit --no-fund; then
+              break
+            fi
+            if [[ "$attempt" == 5 ]]; then exit 1; fi
+            sleep 10
+          done
+          "$prefix/bin/memhub" --version
+          test "$("$prefix/bin/memhub" --version)" = "memhub $VERSION"
+      - name: Install the Runtime through the registry CLI
+        shell: bash
+        env:
+          MEMHUB_NPM_PACKAGE: memhub-cli
+          VERSION: ${{ needs.contract.outputs.version }}
+          HOME: ${{ runner.temp }}/memhub-registry-smoke/home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/memhub-registry-smoke/home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/memhub-registry-smoke/home/.local/share
+          ONE_MEMORY_DATA_DIR: ${{ runner.temp }}/memhub-registry-smoke/data
+          ONE_MEMORY_CORE_PORT: "28785"
+          ONE_MEMORY_RUNTIME_PORT: "28786"
+          ONE_MEMORY_PORT: "28785"
+          ONE_MEMORY_TEST_ISOLATED: "1"
+          MEMHUB_RELEASE_ALLOWED_HOSTS: release-assets.githubusercontent.com,objects.githubusercontent.com,github-releases.githubusercontent.com
+          NO_COLOR: "1"
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/memhub-registry-smoke"
+          cli="$RUNNER_TEMP/npm-global/bin/memhub"
+          manifest_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/release-manifest.json"
+          mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$ONE_MEMORY_DATA_DIR" "$root/bin"
+          install_receipt="$root/install.json"
+          "$cli" install \
+            --release-manifest-url "$manifest_url" \
+            --install-root "$root/install" \
+            --home "$HOME" \
+            --bin-dir "$root/bin" \
+            --data-dir "$ONE_MEMORY_DATA_DIR" \
+            --xdg-config-home "$XDG_CONFIG_HOME" \
+            --no-shell-path \
+            --yes \
+            --json | tee "$install_receipt"
+          core_port=$(node -e '
+            const fs = require("fs");
+            const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            function find(value) {
+              if (!value || typeof value !== "object") return null;
+              if (Number.isSafeInteger(value.core_port)) return value.core_port;
+              for (const nested of Object.values(value)) {
+                const result = find(nested);
+                if (result !== null) return result;
+              }
+              return null;
+            }
+            const port = find(value);
+            if (!Number.isSafeInteger(port) || port < 1024 || port > 65535) process.exit(1);
+            process.stdout.write(String(port));
+          ' "$install_receipt")
+          export ONE_MEMORY_CORE_PORT="$core_port"
+          export ONE_MEMORY_PORT="$core_port"
+          {
+            echo "ONE_MEMORY_CORE_PORT=$core_port"
+            echo "ONE_MEMORY_PORT=$core_port"
+          } >> "$GITHUB_ENV"
+          "$root/bin/memhub" status --json
+      - name: Remove the smoke Runtime and preserve its data
+        if: ${{ always() }}
+        shell: bash
+        env:
+          HOME: ${{ runner.temp }}/memhub-registry-smoke/home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/memhub-registry-smoke/home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/memhub-registry-smoke/home/.local/share
+          ONE_MEMORY_DATA_DIR: ${{ runner.temp }}/memhub-registry-smoke/data
+          ONE_MEMORY_CORE_PORT: "28785"
+          ONE_MEMORY_RUNTIME_PORT: "28786"
+          ONE_MEMORY_PORT: "28785"
+          ONE_MEMORY_TEST_ISOLATED: "1"
+          MEMHUB_RELEASE_ALLOWED_HOSTS: release-assets.githubusercontent.com,objects.githubusercontent.com,github-releases.githubusercontent.com
+          NO_COLOR: "1"
+        run: |
+          root="$RUNNER_TEMP/memhub-registry-smoke"
+          cli="$root/bin/memhub"
+          if [[ -x "$cli" ]]; then
+            "$cli" uninstall \
+              --install-root "$root/install" \
+              --home "$HOME" \
+              --bin-dir "$root/bin" \
+              --data-dir "$ONE_MEMORY_DATA_DIR" \
+              --xdg-config-home "$XDG_CONFIG_HOME" \
+              --no-shell-path \
+              --yes \
+              --json || true
+          fi

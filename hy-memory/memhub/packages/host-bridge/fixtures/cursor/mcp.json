@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "fixture-existing-server": {
+      "command": "/fixture/existing-mcp",
+      "args": ["--fixture"],
+      "env": {
+        "FIXTURE_ONLY": "true"
+      }
+    }
+  },
+  "fixtureSetting": "must-survive-one-memory-install"
+}

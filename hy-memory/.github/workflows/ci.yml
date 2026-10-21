@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ci.yml"
+      - "hy_memory/**"
+      - "tests/**"
+      - "plugins/**"
+      - "docs/**"
+      - "pyproject.toml"
+      - "memhub/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ci.yml"
+      - "hy_memory/**"
+      - "tests/**"
+      - "plugins/**"
+      - "docs/**"
+      - "pyproject.toml"
+      - "memhub/**"
+
+permissions:
+  contents: read
+
+jobs:
+  sdk:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --extra dev --extra faiss --extra qdrant
+      - run: uv run pytest tests/ -q -o log_cli=false
+
+  memhub:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: memhub
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: memhub/apps/core/uv.lock
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --directory apps/core --all-groups --locked
+      - name: Verify public source structure and privacy boundaries
+        run: |
+          python3 scripts/verify_structure.py
+          python3 scripts/generate_core_test_index.py --check
+          python3 scripts/verify_zero_collection.py
+          python3 scripts/verify_zero_collection.py --self-test
+      - name: Lint Node workspaces
+        run: pnpm lint
+      - name: Typecheck Node workspaces
+        run: pnpm typecheck
+      - name: Test Node workspaces
+        run: pnpm test
+      - name: Test release tooling
+        run: pnpm test:release-scripts
+      - name: Fetch and verify the pinned embedding model
+        run: |
+          pnpm fetch:embedding-model
+          uv run --directory apps/core python -c \
+            "from one_memory.embedding_assets import assets_present, verify_assets; assert assets_present(); verify_assets()"
+      - name: Test public Core smoke suite
+        run: >-
+          bash scripts/run-tests-isolated.sh core-pr
+          tests/test_core_test_reporting.py
+          tests/test_import_api.py
+          tests/test_recent_first_import.py
+          tests/test_source_session_count_api.py
+          tests/test_schema_migrations.py

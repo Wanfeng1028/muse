@@ -1,0 +1,220 @@
+{
+  "id": "openclaw-hy-memory",
+  "name": "Memory (HY Memory)",
+  "description": "HY Memory — self-hosted intelligent agent memory with LLM-driven extraction, evolution chains, and multi-layer recall. Supports OpenAI, DeepSeek, Ollama for LLM/embedding, and Qdrant, Chroma, FAISS for vector storage.",
+  "version": "0.1.0",
+  "kind": "memory",
+  "commandAliases": [
+    {
+      "name": "hy-memory",
+      "cliCommand": "hy-memory"
+    }
+  ],
+  "contracts": {
+    "tools": [
+      "memory_search",
+      "memory_add",
+      "memory_get",
+      "memory_update",
+      "memory_delete"
+    ]
+  },
+  "uiHints": {
+    "serverUrl": {
+      "label": "Server URL",
+      "placeholder": "http://127.0.0.1:19527",
+      "help": "URL of the HY Memory server. Default: auto-start on localhost:19527"
+    },
+    "userId": {
+      "label": "User ID",
+      "placeholder": "default",
+      "help": "User ID for scoping memories"
+    },
+    "agentId": {
+      "label": "Agent ID",
+      "placeholder": "default_agent",
+      "help": "Agent ID for second-level isolation"
+    },
+    "mode": {
+      "label": "Memory Mode",
+      "placeholder": "pro",
+      "help": "lite: embedding only | pro: LLM extraction (default) | ultra: pro + System 2 cognitive layer with embedded Kuzu graph"
+    },
+    "autoRecall": {
+      "label": "Auto-Recall",
+      "help": "Automatically inject relevant memories before each agent turn"
+    },
+    "autoCapture": {
+      "label": "Auto-Capture",
+      "help": "Automatically store conversation context after each agent turn"
+    },
+    "pythonPath": {
+      "label": "Python Path",
+      "placeholder": "auto",
+      "help": "Python executable, or leave default (python on Windows, python3 on Linux/macOS) to use auto-managed venv at ~/.openclaw/hy-memory-venv"
+    },
+    "autoStartServer": {
+      "label": "Auto-Start Server",
+      "help": "Automatically start the Python memory server when the plugin loads"
+    },
+    "serverPort": {
+      "label": "Server Port",
+      "placeholder": "19527",
+      "help": "Port for the local Python memory server"
+    },
+    "topK": {
+      "label": "Top K Results",
+      "placeholder": "10",
+      "help": "Maximum number of memories to retrieve in search"
+    },
+    "searchThreshold": {
+      "label": "Search Threshold",
+      "placeholder": "0.3",
+      "help": "Minimum similarity score for search results (0-1)"
+    },
+    "llm": {
+      "label": "LLM Configuration",
+      "advanced": true,
+      "help": "Configure the LLM for memory extraction (default: OpenAI gpt-4.1-nano)"
+    },
+    "llm.provider": {
+      "label": "LLM Provider",
+      "placeholder": "openai",
+      "help": "LLM provider: openai, ollama, anthropic"
+    },
+    "llm.apiKey": {
+      "label": "LLM API Key",
+      "sensitive": true,
+      "help": "API key for the LLM provider"
+    },
+    "embedder": {
+      "label": "Embedding Configuration",
+      "advanced": true,
+      "help": "Configure the embedding model (default: OpenAI text-embedding-3-small)"
+    },
+    "embedder.provider": {
+      "label": "Embedder Provider",
+      "placeholder": "openai",
+      "help": "Embedding provider: openai, ollama"
+    },
+    "embedder.apiKey": {
+      "label": "Embedder API Key",
+      "sensitive": true,
+      "help": "API key for the embedder provider (defaults to LLM key if same provider)"
+    },
+    "vectorStore": {
+      "label": "Vector Store Configuration",
+      "advanced": true,
+      "help": "Configure the vector database (default: Chroma local)"
+    },
+    "vectorStore.provider": {
+      "label": "Vector Store Provider",
+      "placeholder": "chroma",
+      "help": "Vector store: chroma (local, default), qdrant, faiss"
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "serverUrl": {
+        "type": "string",
+        "description": "URL of the HY Memory server"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "agentId": {
+        "type": "string"
+      },
+      "sessionId": {
+        "type": "string"
+      },
+      "mode": {
+        "type": "string",
+        "enum": ["lite", "pro", "ultra"],
+        "default": "pro",
+        "description": "SDK processing mode. ultra enables System 2 and embedded Kuzu graph (local files under ~/.hy_memory, no external graph service)."
+      },
+      "autoRecall": {
+        "type": "boolean",
+        "default": false,
+        "description": "Inject relevant memories before each agent turn"
+      },
+      "autoCapture": {
+        "type": "boolean",
+        "default": false,
+        "description": "Store conversation context after each agent turn"
+      },
+      "topK": {
+        "type": "number",
+        "default": 10
+      },
+      "searchThreshold": {
+        "type": "number",
+        "default": 0.3
+      },
+      "pythonPath": {
+        "type": "string",
+        "description": "Use python (Windows) or python3 (Unix), or a full path. Default triggers auto venv."
+      },
+      "autoStartServer": {
+        "type": "boolean",
+        "default": true
+      },
+      "serverPort": {
+        "type": "number",
+        "default": 19527
+      },
+      "memoryWriteTurnWindow": {
+        "type": "number",
+        "default": 5,
+        "description": "Number of agent turns between each auto-capture write (lower = more frequent writes, higher = batch more turns together)"
+      },
+      "logLevel": {
+        "type": "string",
+        "default": "INFO",
+        "description": "Python server log level: DEBUG, INFO, WARNING, ERROR"
+      },
+      "llm": {
+        "type": "object",
+        "description": "LLM provider configuration for memory extraction and reconciliation",
+        "properties": {
+          "provider": { "type": "string", "description": "openai | ollama | anthropic" },
+          "model": { "type": "string", "description": "Model name (e.g. gpt-4.1-nano, deepseek-chat)" },
+          "apiKey": { "type": "string", "sensitive": true },
+          "baseUrl": { "type": "string", "description": "API base URL override" },
+          "temperature": { "type": "number" },
+          "maxTokens": { "type": "number" },
+          "thinkingMode": { "type": "string", "description": "disabled | enabled | auto" }
+        }
+      },
+      "embedder": {
+        "type": "object",
+        "description": "Embedding provider configuration",
+        "properties": {
+          "provider": { "type": "string", "description": "openai | ollama" },
+          "model": { "type": "string", "description": "Model name (e.g. text-embedding-3-small)" },
+          "apiKey": { "type": "string", "sensitive": true },
+          "baseUrl": { "type": "string", "description": "API base URL override" },
+          "dims": { "type": "number", "description": "Embedding dimensions" },
+          "extraHeaders": { "type": "object", "description": "Extra HTTP headers (JSON object)" },
+          "extraBody": { "type": "object", "description": "Extra request body fields (JSON object)" }
+        }
+      },
+      "vectorStore": {
+        "type": "object",
+        "description": "Vector store backend configuration",
+        "properties": {
+          "provider": { "type": "string", "description": "chroma | qdrant | faiss" },
+          "host": { "type": "string" },
+          "port": { "type": "number" },
+          "apiKey": { "type": "string", "sensitive": true },
+          "collectionName": { "type": "string" },
+          "persistDirectory": { "type": "string" }
+        }
+      }
+    },
+    "required": []
+  }
+}

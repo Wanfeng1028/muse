@@ -1,0 +1,125 @@
+.model-setup-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-block: 16px 24px;
+  padding-block: 16px;
+  border-block: 1px solid var(--bd, #d3d9e0);
+  color: var(--tx, #262a2e);
+  letter-spacing: 0;
+}
+
+.model-setup-next > div {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.model-setup-next p {
+  margin: 6px 0 0;
+  color: var(--tx2, #5a6169);
+  overflow-wrap: anywhere;
+}
+
+.model-setup-next button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+.model-setup-next button svg {
+  flex-shrink: 0;
+}
+
+.model-settings .model-saved-card {
+  margin-block: 16px 24px;
+  padding: 20px;
+  border: 1px solid var(--bd, #d3d9e0);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--tx, #262a2e);
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+
+.model-settings .model-saved-card:focus-visible {
+  outline: 2px solid #4e6478;
+  outline-offset: 3px;
+}
+
+.model-settings .model-saved-heading,
+.model-settings .model-saved-card button,
+.model-settings .model-refresh-notice button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-settings .model-saved-heading {
+  color: #4e6478;
+}
+
+.model-settings .model-saved-heading svg,
+.model-settings .model-saved-card button svg,
+.model-settings .model-refresh-notice button svg {
+  flex-shrink: 0;
+}
+
+.model-settings .model-saved-card h3 {
+  margin: 16px 0 6px;
+  font-size: 16px;
+}
+
+.model-settings .model-saved-card p {
+  margin: 6px 0 14px;
+  color: #5a6169;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.model-settings .model-field-error,
+.model-settings .model-save-error {
+  color: #96453e;
+  overflow-wrap: anywhere;
+}
+
+.model-settings .model-save-error {
+  grid-column: 1 / -1;
+  padding: 12px;
+  margin: 0;
+  background: #f8eeec;
+}
+
+.model-settings input[aria-invalid="true"] {
+  border-color: #96453e;
+}
+
+.model-settings .model-test-notice {
+  grid-column: 1 / -1;
+  flex-basis: 100%;
+  color: #63707b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.model-settings .model-refresh-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 16px;
+  color: #5a6169;
+}
+
+.model-settings .model-refresh-notice p {
+  flex: 1 1 300px;
+  margin: 0;
+}
+
+.model-settings .model-saved-card .source-actions,
+.model-settings .preset-profile .source-actions {
+  flex-wrap: wrap;
+}

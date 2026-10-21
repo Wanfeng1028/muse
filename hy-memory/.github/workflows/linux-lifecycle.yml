@@ -1,0 +1,166 @@
+name: Linux lifecycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_lifecycle:
+        description: Run build and lifecycle verification on a real Linux runner
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: memhub
+
+jobs:
+  matrix:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff
+        with:
+          enable-cache: true
+          cache-dependency-glob: memhub/apps/core/uv.lock
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Report Linux support matrix
+        run: node scripts/platform/linux/verify-linux-support.mjs
+      - name: Build Linux runtime
+        if: ${{ inputs.run_lifecycle }}
+        run: node scripts/platform/linux/build-linux-runtime.mjs "dist-runtime-linux-${{ matrix.arch }}"
+      - name: Verify lifecycle
+        if: ${{ inputs.run_lifecycle }}
+        env:
+          ONE_MEMORY_LINUX_VERIFY_ROOT: ${{ runner.temp }}/memhub-lifecycle-${{ matrix.arch }}
+          ONE_MEMORY_CORE_PORT: "28785"
+          ONE_MEMORY_RUNTIME_PORT: "28786"
+        run: node scripts/platform/linux/verify-linux-lifecycle.mjs "dist-runtime-linux-${{ matrix.arch }}"
+      - name: Verify Runtime is independent of system Python and SQLite
+        if: ${{ inputs.run_lifecycle }}
+        run: >-
+          node scripts/platform/linux/verify-self-contained-runtime.mjs
+          --distribution "dist-runtime-linux-${{ matrix.arch }}"
+          --verify-root "${{ runner.temp }}/memhub-self-contained-${{ matrix.arch }}"
+          --core-port 28885
+          --runtime-port 28886
+      - id: release
+        name: Read release version
+        if: ${{ inputs.run_lifecycle }}
+        shell: bash
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Build release-ready Runtime archive
+        if: ${{ inputs.run_lifecycle }}
+        shell: bash
+        env:
+          ARCH: ${{ matrix.arch }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          distribution="dist-runtime-linux-${ARCH}"
+          archive="memhub-runtime-v${VERSION}-linux-${ARCH}.tar.gz"
+          DIST="$distribution" ARCHIVE="$archive" node --input-type=module <<'NODE'
+          import { readdir } from "node:fs/promises";
+          import * as tar from "tar";
+          const entries = (await readdir(process.env.DIST)).sort();
+          await tar.c({
+            cwd: process.env.DIST,
+            file: process.env.ARCHIVE,
+            gzip: true,
+            portable: true,
+            noMtime: true,
+          }, entries);
+          NODE
+          sha256sum "$archive" > "$archive.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ inputs.run_lifecycle }}
+        with:
+          name: memhub-runtime-linux-${{ matrix.arch }}
+          path: |
+            memhub/memhub-runtime-v*-linux-${{ matrix.arch }}.tar.gz
+            memhub/memhub-runtime-v*-linux-${{ matrix.arch }}.tar.gz.sha256
+            memhub/dist-runtime-linux-${{ matrix.arch }}.build-receipt.json
+            ${{ runner.temp }}/memhub-lifecycle-${{ matrix.arch }}/evidence/linux-lifecycle-receipt.json
+            ${{ runner.temp }}/memhub-self-contained-${{ matrix.arch }}/evidence/self-contained-runtime-receipt.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+  publish-draft-release:
+    if: ${{ inputs.run_lifecycle && startsWith(github.ref, 'refs/tags/v') }}
+    needs: matrix
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: memhub-runtime-linux-*
+          path: memhub/release-assets
+          merge-multiple: true
+      - name: Verify tag and Linux release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          node scripts/verify-release-version.mjs \
+            --channel stable \
+            --version "$version" \
+            --build-number "$(node -p 'require("./package.json").release.build_number')" \
+            --tag "$GITHUB_REF_NAME"
+          for arch in x64 arm64; do
+            archive="release-assets/memhub-runtime-v${version}-linux-${arch}.tar.gz"
+            test -f "$archive"
+            test -f "$archive.sha256"
+            (
+              cd release-assets
+              sha256sum -c "$(basename "$archive.sha256")"
+            )
+          done
+      - name: Upload Linux assets to a draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            test "$(
+              gh release view "$GITHUB_REF_NAME" \
+                --repo "$GITHUB_REPOSITORY" \
+                --json isDraft \
+                --jq .isDraft
+            )" = "true"
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --draft \
+              --generate-notes \
+              --title "$GITHUB_REF_NAME"
+          fi
+          gh release upload "$GITHUB_REF_NAME" \
+            release-assets/memhub-runtime-v*-linux-*.tar.gz \
+            release-assets/memhub-runtime-v*-linux-*.tar.gz.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber

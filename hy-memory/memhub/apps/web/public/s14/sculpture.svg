@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+<title>One Memory · 接续环</title>
+<defs>
+<linearGradient id="shell" x1="146" y1="75" x2="883" y2="975" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset=".44" stop-color="#EDF3F6"/><stop offset="1" stop-color="#B8C9D5"/></linearGradient>
+<linearGradient id="ribbonA" x1="273" y1="282" x2="637" y2="738" gradientUnits="userSpaceOnUse"><stop stop-color="#9DAFBF"/><stop offset=".18" stop-color="#678398"/><stop offset=".5" stop-color="#36566F"/><stop offset=".81" stop-color="#193447"/><stop offset="1" stop-color="#0E2232"/></linearGradient>
+<linearGradient id="ribbonB" x1="395" y1="766" x2="723" y2="298" gradientUnits="userSpaceOnUse"><stop stop-color="#41657E"/><stop offset=".24" stop-color="#91ACBF"/><stop offset=".55" stop-color="#D4E4ED"/><stop offset=".73" stop-color="#6C8EA6"/><stop offset="1" stop-color="#24475F"/></linearGradient>
+<linearGradient id="edge" x1="148" y1="88" x2="900" y2="962" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset=".48" stop-color="white" stop-opacity=".65"/><stop offset="1" stop-color="#8CABB9" stop-opacity=".5"/></linearGradient>
+<filter id="shadow" x="120" y="125" width="785" height="810" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="25" stdDeviation="18" flood-color="#1A394D" flood-opacity=".23"/></filter>
+</defs>
+
+
+<g filter="url(#shadow)">
+<path d="M606 250C440 170 252 305 252 493C252 635 363 731 513 731C630 731 734 651 759 544L647 508C627 576 582 617 517 617C432 617 370 560 370 481C370 383 450 317 548 352L606 250Z" fill="url(#ribbonA)"/>
+<path d="M424 774C590 854 778 719 778 531C778 389 667 293 517 293C400 293 296 373 271 480L383 516C403 448 448 407 513 407C598 407 660 464 660 543C660 641 580 707 482 672L424 774Z" fill="url(#ribbonB)"/>
+<path d="M279 478C303 378 402 300 518 300C662 300 770 391 771 531" stroke="white" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>
+<path d="M601 254C438 179 260 309 260 491" stroke="#B8CFDE" stroke-opacity=".58" stroke-width="4" stroke-linecap="round"/>
+</g>
+</svg>

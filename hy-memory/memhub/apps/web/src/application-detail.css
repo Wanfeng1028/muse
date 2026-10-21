@@ -1,0 +1,226 @@
+.r6-app-detail {
+  position: relative;
+  padding: 28px 46px;
+  color: #304757;
+  width: 100%;
+  min-width: 0;
+}
+.r6-app-detail-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 45px;
+  font-weight: 600;
+}
+.r6-app-detail > .r6-button:first-of-type {
+  position: absolute;
+  z-index: 3;
+  top: 28px;
+  right: 108px;
+  width: 132px;
+  min-height: 44px;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+.r6-app-detail > header {
+  margin: 39px 96px 28px 34px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.r6-app-detail-icon {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 56px;
+}
+.r6-app-detail > header img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.r6-app-detail-initial {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c6d4de;
+  border-radius: 12px;
+  background: #e7eef3;
+  color: #4f6373;
+  font-size: 20px;
+  font-weight: 600;
+}
+.r6-app-detail > header h2 {
+  font-size: 28px;
+  line-height: 48px;
+  font-weight: 600;
+  margin: 0;
+}
+.r6-app-detail > header p {
+  font-size: 14px;
+  color: #5e6e7a;
+  margin: 0;
+}
+.r6-app-settings {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #c7d6e0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0 96px 0 34px;
+}
+.r6-app-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 112px;
+  padding: 20px 0;
+  border-bottom: 1px solid #c7d6e0;
+}
+.r6-app-setting > .r6-switch {
+  width: 72px;
+  min-width: 72px;
+  height: 64px;
+  min-height: 64px;
+  margin: -10px -14px -10px 0;
+}
+.r6-app-setting .recall-permission-switch {
+  min-height: 64px;
+  padding: 0 14px;
+  margin-right: -14px;
+}
+.r6-app-setting .recall-permission-switch input {
+  width: 46px;
+  height: 28px;
+}
+.r6-app-setting:nth-child(3) {
+  min-height: 142px;
+}
+.r6-app-setting:last-child {
+  border-bottom: 0;
+}
+.r6-app-setting > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.r6-app-setting h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+.r6-app-setting p,
+.r6-app-setting small {
+  font-size: 13px;
+  color: #637786;
+  line-height: 1.8;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.r6-app-detail-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.r6-app-detail-status {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #637786;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.8;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.r6-app-detail-status .r6-button-spinner {
+  position: static;
+  width: 14px;
+  height: 14px;
+}
+.r6-app-setting .source-sync-control,
+.r6-app-setting .recall-permission-control {
+  margin: 0;
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  text-align: right;
+}
+.r6-app-setting .source-sync-control > div:first-of-type {
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+.r6-app-setting .source-sync-control .source-counts,
+.r6-app-setting .source-sync-control .source-receipt-meta,
+.r6-app-setting .source-sync-control > :not(div:first-of-type) {
+  display: none;
+}
+.recall-permission-compact {
+  display: flex;
+  justify-content: flex-end;
+}
+.recall-permission-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.recall-permission-switch input {
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  accent-color: #4e6478;
+  cursor: pointer;
+}
+.r6-detail-unavailable {
+  max-width: 370px;
+  text-align: right;
+}
+.r6-app-history {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid white;
+  border-radius: 26px;
+  background: rgb(255 255 255 / 27%);
+}
+@media (max-width: 1100px) {
+  .r6-app-detail {
+    padding: 24px;
+  }
+  .r6-app-setting {
+    flex-wrap: wrap;
+  }
+  .r6-app-setting > div:first-child {
+    flex-basis: 100%;
+  }
+  .r6-detail-unavailable {
+    text-align: left;
+  }
+}
+@media (max-width: 700px) {
+  .r6-app-detail {
+    padding: 20px 16px;
+  }
+  .r6-app-settings {
+    padding: 0 18px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .r6-app-history {
+    background: #edf3f6;
+  }
+}
+[data-native-reduce-transparency="true"] .r6-app-history {
+  background: #edf3f6;
+}

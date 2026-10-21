@@ -1,0 +1,331 @@
+/* Approved shared control tokens for the native desktop layout. */
+:root {
+  --r6-text: #384a57;
+  --r6-muted: #5e6e7a;
+  --r6-action: #4f6373;
+  --r6-action-hover: #435966;
+  --r6-control-edge: #c6d2da;
+  --r6-field-fill: #f0f5f6;
+  --r6-selected: rgb(158 178 194 / 22%);
+  --r6-focus: #557c93;
+  --r6-fast: 140ms;
+}
+
+button.r6-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 20px;
+  gap: 0;
+  border: 1px solid var(--r6-control-edge);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 20%);
+  color: var(--r6-text);
+  font:
+    500 13px / 21px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    background-color var(--r6-fast),
+    border-color var(--r6-fast),
+    transform 90ms var(--motion-enter);
+  transform: none;
+}
+
+button.r6-button[data-variant="primary"] {
+  font-size: 14px;
+  line-height: 23px;
+  background: var(--r6-action);
+  border-color: #5b6f7e;
+  color: white;
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 24%),
+    0 3px 8px -2px rgb(64 87 102 / 12%);
+}
+
+button.r6-button[data-variant="quiet"] {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 8px;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 26px;
+  color: var(--r6-muted);
+}
+
+button.r6-button:hover:not(:disabled) {
+  background: rgb(231 239 244 / 60%);
+  border-color: #aabcc8;
+}
+button.r6-button[data-variant="primary"]:hover:not(:disabled) {
+  background: var(--r6-action-hover);
+}
+/* The quiet variant is borderless with square corners, so inheriting the
+   shared hover above drew a hard-edged bordered box around a text link on
+   hover. It gets its own tint and keeps its edge transparent. */
+button.r6-button[data-variant="quiet"]:hover:not(:disabled) {
+  background: rgb(231 239 244 / 70%);
+  border-color: transparent;
+  border-radius: 6px;
+  color: var(--r6-text);
+}
+/* Pressed feedback existed only as `transform: none`, i.e. nothing at all. */
+button.r6-button:active:not(:disabled) {
+  transform: scale(0.985);
+  background: rgb(214 226 234 / 75%);
+}
+button.r6-button[data-variant="primary"]:active:not(:disabled) {
+  background: #3d4f5d;
+}
+button.r6-button:disabled {
+  cursor: default;
+  color: #687b88;
+  background: #d2dde4;
+  border-color: var(--r6-control-edge);
+  box-shadow: none;
+  opacity: 1;
+}
+button.r6-button[data-variant="quiet"]:disabled {
+  background: transparent;
+  border-color: transparent;
+}
+.r6-button-label {
+  min-width: 0;
+}
+.r6-button-spinner {
+  position: absolute;
+  right: 5px;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: r6-spin 1.8s linear infinite;
+}
+
+.r6-stepper {
+  width: 288px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.r6-stepper ol {
+  display: flex;
+  gap: 18px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.r6-stepper li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-sizing: border-box;
+  width: 84px;
+  height: 40px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #cbd6de;
+  color: var(--r6-muted);
+  font:
+    400 11px / 24px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+  transition: color 220ms ease;
+}
+/* The active rail is drawn as an overlay that wipes in, rather than by
+   recolouring the shared border instantly. The border underneath stays the
+   inactive rail, so geometry is unchanged. */
+.r6-stepper li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--r6-action);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms ease;
+}
+.r6-stepper li[aria-current="step"] {
+  color: var(--r6-text);
+  border-color: var(--r6-action);
+  font-weight: 600;
+}
+.r6-stepper li[aria-current="step"]::after {
+  transform: scaleX(1);
+}
+.r6-stepper li > span {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+button.r6-switch {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+}
+button.r6-switch:hover:not(:disabled),
+button.r6-switch:active:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+}
+.r6-switch-track {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  background: #aebfcc;
+  transition: background-color var(--r6-fast);
+}
+button.r6-switch:hover:not(:disabled) .r6-switch-track {
+  background: #9cb0bf;
+}
+button.r6-switch:hover:not(:disabled)[aria-checked="true"] .r6-switch-track {
+  background: #5d7d90;
+}
+.r6-switch-thumb {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--r6-fast);
+}
+.r6-switch[aria-checked="true"] .r6-switch-track {
+  background: #6c8b9d;
+}
+.r6-switch[aria-checked="true"] .r6-switch-thumb {
+  transform: translateX(16px);
+}
+button.r6-switch:disabled {
+  cursor: default;
+  opacity: 1;
+}
+button.r6-switch:disabled .r6-switch-track {
+  opacity: 0.62;
+}
+
+.r6-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: var(--r6-muted);
+}
+.r6-field > label {
+  font-size: 13px;
+  line-height: 24px;
+}
+.r6-field > input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 54px;
+  padding: 14px 16px;
+  border: 1px solid #c0ccd5;
+  border-radius: 8px;
+  background: var(--r6-field-fill);
+  color: var(--r6-text);
+  font:
+    400 15px / 26px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  letter-spacing: 0;
+}
+.r6-field > input[aria-invalid="true"] {
+  border-color: #a85050;
+}
+.r6-field-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 22px;
+  color: #953f3f;
+}
+.r6-local-storage {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 26px;
+  font-size: 12px;
+  color: var(--r6-muted);
+}
+.r6-local-storage > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #23856a;
+}
+button.r6-button:focus-visible,
+button.r6-switch:focus-visible,
+.r6-field > input:focus-visible {
+  outline: 2px solid var(--r6-focus);
+  outline-offset: 3px;
+}
+@keyframes r6-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .r6-button-spinner {
+    animation: none;
+  }
+  button.r6-button,
+  .r6-switch-track,
+  .r6-switch-thumb {
+    transition: none;
+  }
+  .r6-stepper li,
+  .r6-stepper li::after {
+    transition: none;
+  }
+}
+[data-native-reduce-motion="true"] .r6-button-spinner {
+  animation: none;
+}
+[data-native-reduce-motion="true"]
+  :is(.r6-button, .r6-switch-track, .r6-switch-thumb) {
+  transition: none;
+}
+[data-native-reduce-motion="true"] :is(.r6-stepper li, .r6-stepper li::after) {
+  transition: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  button.r6-button[data-variant="secondary"] {
+    background: #edf2f5;
+  }
+}
+[data-native-reduce-transparency="true"]
+  button.r6-button[data-variant="secondary"] {
+  background: #edf2f5;
+}

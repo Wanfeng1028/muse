@@ -1,0 +1,207 @@
+.recall-permission-control {
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+
+.recall-permission-control .recall-permission-status {
+  margin: 0 0 8px;
+  color: var(--text, #262a2e);
+  font-size: 13px;
+}
+
+.recall-permission-entry-actions,
+.recall-permission-sheet .recall-permission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.recall-permission-backdrop .recall-permission-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(680px, 100%);
+  max-height: min(840px, calc(100dvh - 48px));
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+  color: #262a2e;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+
+.recall-permission-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.recall-permission-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.recall-permission-heading .eyebrow {
+  margin: 0 0 6px;
+  letter-spacing: 0;
+}
+
+.recall-permission-sheet .recall-permission-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.recall-permission-sheet .recall-permission-icon,
+.recall-permission-control .recall-permission-icon {
+  display: inline-flex;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.recall-permission-body {
+  min-height: 0;
+  padding: 16px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  line-height: 1.65;
+  font-size: 14px;
+}
+
+.recall-permission-body > p:first-child {
+  margin-top: 0;
+}
+
+.recall-permission-sheet .recall-permission-options {
+  min-width: 0;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.recall-permission-options legend,
+.recall-permission-summary h3 {
+  margin: 0;
+  padding: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.recall-permission-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.recall-permission-sheet .recall-permission-choice input[type="checkbox"] {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 4px 0 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.recall-permission-choice > span {
+  min-width: 0;
+}
+
+.recall-permission-choice small,
+.recall-permission-control .recall-permission-meta,
+.recall-permission-sheet .recall-permission-meta {
+  display: block;
+  color: #58636b;
+  font-size: 12px;
+}
+
+.recall-permission-summary,
+.recall-permission-final {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.recall-permission-sheet .recall-permission-scope-list {
+  margin: 8px 0;
+  border: 0;
+  background: #fff;
+}
+
+.recall-permission-scope-list code,
+.recall-permission-sheet code {
+  font-size: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.recall-permission-error {
+  margin: 16px 0 0;
+  padding: 12px;
+  border-radius: 6px;
+  color: #96453e;
+  background: #f8eeec;
+}
+
+.recall-permission-sheet .recall-permission-actions {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+.recall-permission-sheet button,
+.recall-permission-entry-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.recall-permission-sheet button svg,
+.recall-permission-entry-actions button svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .recall-permission-backdrop {
+    padding: 12px;
+  }
+
+  .recall-permission-backdrop .recall-permission-sheet {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .recall-permission-heading,
+  .recall-permission-body,
+  .recall-permission-sheet .recall-permission-actions {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-permission-backdrop .recall-permission-sheet,
+  .recall-permission-sheet * {
+    animation: none;
+    transition: none;
+  }
+}

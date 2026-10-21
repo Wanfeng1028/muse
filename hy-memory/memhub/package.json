@@ -1,0 +1,73 @@
+{
+  "name": "one-memory",
+  "version": "1.0.4",
+  "release": {
+    "build_number": 13,
+    "macos_min_version": "13.0",
+    "app_update": "manual",
+    "runtime_manifest_schema": 1,
+    "cli_protocol": 1,
+    "cli_supported_runtime_protocol": {
+      "min": 1,
+      "max": 1
+    },
+    "runtime_protocol": 1,
+    "runtime_supported_cli_protocol": {
+      "min": 1,
+      "max": 1
+    }
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tencent-Hunyuan/Hy-Memory.git",
+    "directory": "memhub"
+  },
+  "homepage": "https://github.com/Tencent-Hunyuan/Hy-Memory/tree/main/memhub",
+  "bugs": {
+    "url": "https://github.com/Tencent-Hunyuan/Hy-Memory/issues"
+  },
+  "packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev:core": "ONE_MEMORY_API_TOKEN=one-memory-dev-token uv run --directory apps/core one-memory",
+    "dev:web": "concurrently -k -n core,web \"pnpm dev:core\" \"VITE_CORE_API_TOKEN=one-memory-dev-token pnpm --filter @one-memory/web dev\"",
+    "dev:desktop": "concurrently -k -s command-desktop -n web,desktop \"pnpm --filter @one-memory/web dev\" \"wait-on http://127.0.0.1:5173 && pnpm --filter @one-memory/desktop dev\"",
+    "fetch:embedding-model": "uv run --directory apps/core python ../../scripts/fetch_embedding_model.py",
+    "build:core:mac": "pnpm fetch:embedding-model && ONE_MEMORY_CORE_LAYOUT=folder uv run --directory apps/core pyinstaller --noconfirm one-memory.spec",
+    "build:runtime:dist": "node scripts/build_runtime_distribution.cjs",
+    "package:mac:dev": "pnpm build:core:mac && pnpm --filter @one-memory/web build && pnpm --filter @one-memory/desktop build && bash scripts/run-desktop-package-mac-dir.sh",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "bash scripts/run-tests-isolated.sh workspace",
+    "test:release-scripts": "node --test scripts/*.test.cjs scripts/*.test.mjs scripts/platform/linux/fake-release-bootstrap.test.mjs scripts/platform/linux/linux-runtime-scripts.test.mjs scripts/platform/linux/linux-upgrade-rollback.test.mjs scripts/platform/linux/release-proxy.test.mjs scripts/platform/linux/self-contained-runtime.test.mjs scripts/platform/macos/macos-release-scripts.test.mjs scripts/platform/macos/service-lifecycle.test.mjs",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check:structure": "python3 scripts/verify_structure.py",
+    "check:privacy": "python3 scripts/verify_zero_collection.py",
+    "check": "bash scripts/run-tests-isolated.sh check",
+    "sbom": "apps/core/.venv/bin/python scripts/generate_sbom.py",
+    "release:check": "apps/core/.venv/bin/python scripts/verify_release_ready.py",
+    "release:public:check": "python3 scripts/verify_public_release_ready.py",
+    "release:version:check": "node scripts/verify-release-version.mjs --channel development",
+    "release:version:set": "node scripts/set-release-version.mjs",
+    "release:assets:build": "node scripts/build-release-assets.mjs",
+    "release:fake-bootstrap:linux": "node scripts/platform/linux/verify-fake-release-bootstrap.mjs",
+    "release:upgrade-rollback:linux": "node scripts/platform/linux/verify-linux-upgrade-rollback.mjs",
+    "release:proxy:linux": "node scripts/platform/linux/verify-release-proxy.mjs",
+    "release:self-contained:linux": "node scripts/platform/linux/verify-self-contained-runtime.mjs",
+    "release:build:macos": "node scripts/platform/macos/build-macos-release.mjs",
+    "release:notarize:macos": "node scripts/platform/macos/notarize-macos-release.mjs",
+    "release:published:verify": "node scripts/verify-published-release.mjs",
+    "release:cli:publish": "node scripts/publish-cli-after-release.mjs",
+    "export:public": "python3 scripts/export_public_snapshot.py"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.11",
+    "concurrently": "^10.0.5",
+    "tar": "7.5.22",
+    "wait-on": "^9.1.0"
+  }
+}

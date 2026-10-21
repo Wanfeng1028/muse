@@ -1,0 +1,53 @@
+{
+  "name": "@one-memory/cli",
+  "version": "1.0.4",
+  "description": "MemHub bootstrap CLI for installing and managing the local-first shared memory runtime",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tencent-Hunyuan/Hy-Memory.git",
+    "directory": "memhub/apps/cli"
+  },
+  "homepage": "https://github.com/Tencent-Hunyuan/Hy-Memory#readme",
+  "bugs": {
+    "url": "https://github.com/Tencent-Hunyuan/Hy-Memory/issues"
+  },
+  "keywords": [
+    "memhub",
+    "memory",
+    "ai",
+    "cli"
+  ],
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "bin": {
+    "memhub": "dist/one-memory.cjs",
+    "memhub-cli": "dist/one-memory.cjs",
+    "one-memory": "dist/one-memory.cjs"
+  },
+  "scripts": {
+    "build": "tsup",
+    "pack:publish": "tsup && node scripts/prepare-publish-manifest.mjs && mkdir -p dist-publish/dist dist-publish/scripts dist-cli && cp dist/one-memory.cjs dist-publish/dist/ && cp scripts/*.mjs dist-publish/scripts/ && cd dist-publish && npm pack --pack-destination ../dist-cli",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test": "node ../../scripts/assert-test-isolation.mjs && tsup && vitest run"
+  },
+  "dependencies": {
+    "@one-memory/contracts": "workspace:*",
+    "@one-memory/operations": "workspace:*",
+    "@one-memory/runtime-control": "workspace:*",
+    "axios": "^1.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

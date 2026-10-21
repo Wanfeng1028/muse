@@ -1,0 +1,272 @@
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: var(--font-sans);
+  font-size: var(--t-body);
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--ac-bg);
+  color: var(--ac-strong);
+}
+
+:where(a):focus-visible,
+:where(button):focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 3px;
+  border-radius: var(--r-btn);
+}
+
+.page {
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: var(--s8);
+}
+
+/* Sections are separated by a hairline and generous space, never by a colour
+ * change. Alternating bands is the usual way to chunk a landing page and it is
+ * exactly what makes one look like every other landing page; the app earns its
+ * layering from 0.5px lines, so the site does too. */
+.band {
+  padding-block: var(--s12);
+  border-top: 0.5px solid var(--bd);
+}
+
+.band:first-of-type {
+  border-top: none;
+}
+
+.eyebrow {
+  margin: 0 0 var(--s5);
+  color: var(--tx3);
+  font-size: var(--t-tag);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--t-display);
+  line-height: 1.16;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: var(--t-h2);
+  line-height: 1.28;
+}
+
+h3 {
+  font-size: var(--t-h3);
+  line-height: 1.5;
+}
+
+.lead {
+  max-width: var(--measure);
+  margin: var(--s7) 0 0;
+  color: var(--tx2);
+  font-size: var(--t-lead);
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.prose {
+  max-width: var(--measure);
+  color: var(--tx2);
+  text-wrap: pretty;
+}
+
+/* ---- hero ---- */
+
+.hero {
+  padding-block: var(--s12) var(--s11);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  margin-top: var(--s10);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s7);
+  border: 0.5px solid transparent;
+  border-radius: var(--r-btn);
+  font: inherit;
+  font-size: var(--t-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.btn-primary {
+  background: var(--ac);
+  border-color: var(--ac-strong);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--ac-strong);
+}
+
+.btn-quiet {
+  background: transparent;
+  border-color: var(--bd2);
+  color: var(--tx);
+}
+
+.btn-quiet:hover {
+  background: var(--hover);
+}
+
+/* ---- the refusal list ---- */
+
+/* Fixed at three columns rather than auto-fit, because the list has six items
+ * and auto-fit resolves to four at desktop width: the last row then holds two
+ * cards and a gap wide enough to read as a rendering fault. A grid whose final
+ * row is short undercuts the one thing this section is for, which is looking
+ * like a complete and closed list. */
+.refusals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-top: var(--s10);
+  border: 0.5px solid var(--bd);
+  border-radius: var(--r-box);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.refusal {
+  padding: var(--s7) var(--s7) var(--s8);
+  border-top: 0.5px solid var(--bd);
+  border-left: 0.5px solid var(--bd);
+}
+
+.refusal:nth-child(-n + 3) {
+  border-top: none;
+}
+
+.refusal:nth-child(3n + 1) {
+  border-left: none;
+}
+
+@media (max-width: 880px) {
+  .refusals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .refusal:nth-child(-n + 3) {
+    border-top: 0.5px solid var(--bd);
+  }
+
+  .refusal:nth-child(3n + 1) {
+    border-left: 0.5px solid var(--bd);
+  }
+
+  .refusal:nth-child(-n + 2) {
+    border-top: none;
+  }
+
+  .refusal:nth-child(odd) {
+    border-left: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .refusals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .refusal {
+    border-left: none;
+  }
+
+  .refusal:first-child {
+    border-top: none;
+  }
+
+  .refusal:nth-child(2) {
+    border-top: 0.5px solid var(--bd);
+  }
+}
+
+.refusal-name {
+  color: var(--tx);
+  font-size: var(--t-body);
+}
+
+.refusal-note {
+  margin: var(--s2) 0 0;
+  color: var(--tx3);
+  font-size: var(--t-meta);
+  line-height: 1.6;
+}
+
+.gate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s3);
+  margin-top: var(--s7);
+  padding: var(--s5) var(--s6);
+  border: 0.5px solid var(--ok-bd);
+  border-radius: var(--r-btn);
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-size: var(--t-meta);
+}
+
+.gate code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.95em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    scroll-behavior: auto;
+    transition-duration: 0.01ms;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-inline: var(--s6);
+  }
+
+  .band {
+    padding-block: var(--s11);
+  }
+}

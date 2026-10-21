@@ -1,0 +1,36 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+*.tgz
+.eggs/
+*.so
+.env
+scripts/publish.conf
+.venv/
+venv/
+ENV/
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+data/
+node_modules/
+package-lock.json
+!plugins/openclaw/package-lock.json
+.cursor/
+.DS_Store
+ui_walkthrough_*/
+
+# Internal release/open-source coordination must never enter the public tree.
+OPEN_SOURCE_TODO.md
+release_todo.md
+
+# 本地评测数据集 / 大文件（不入库）
+agent_open_dataset/
+marvis_eval_data/
+open_agent_data.zip
+few_show_mem0.txt

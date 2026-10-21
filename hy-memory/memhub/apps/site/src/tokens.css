@@ -1,0 +1,80 @@
+/* Palette lifted verbatim from apps/web/src/styles.css.
+ *
+ * The site does not get its own colours. A marketing page that is warmer or
+ * cooler than the product it sells makes the product feel like a different,
+ * worse thing on first launch, and that gap is the one visitors read as a
+ * broken promise. So every hex below is a copy, not a choice, and the only
+ * thing this file adds is a larger type and space scale — a page read at
+ * arm's length needs sizes the three-column workbench never needed.
+ */
+
+:root {
+  color-scheme: light;
+
+  --bg: #fbfaf7;
+  --card: #ffffff;
+  --panel: #f4f2ed;
+  --hover: #efece5;
+
+  --tx: #2c2c2a;
+  --tx-rgb: 44, 44, 42;
+  --tx2: #5f5e5a;
+  --tx3: #8d8b83;
+
+  --bd: #e4e1d9;
+  --bd2: #cdcac0;
+
+  --ac: #534ab7;
+  --ac-rgb: 83, 74, 183;
+  --ac-strong: #3c3489;
+  --ac-bg: #eeedfe;
+  --ac-bd: #cecbf6;
+
+  --dg: #a32d2d;
+  --wn: #854f0b;
+  --ok: #0f6e56;
+  --ok-bg: #e1f5ee;
+  --ok-bd: #9fe1cb;
+  --idle: #b4b2a9;
+
+  --shadow-pop: 0 2px 8px rgba(var(--tx-rgb), 0.06);
+  --shadow-modal: 0 8px 32px rgba(var(--tx-rgb), 0.12);
+
+  --font-sans:
+    "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Hiragino Sans GB", sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", Georgia, serif;
+
+  /* Site-only type scale. The app tops out at 15px body because it is a dense
+   * instrument; a page has room to breathe and needs a real display size. */
+  --t-display: clamp(2.25rem, 1.2rem + 3.4vw, 3.75rem);
+  --t-h2: clamp(1.5rem, 1.1rem + 1.3vw, 2.125rem);
+  --t-h3: 1.1875rem;
+  --t-lead: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
+  --t-body: 0.9375rem;
+  --t-meta: 0.78125rem;
+  --t-tag: 0.6875rem;
+
+  /* Same 4/6/8/11/13/16/18/24 gradient the app uses, continued upward for
+   * section rhythm rather than restarted with round numbers. */
+  --s1: 4px;
+  --s2: 6px;
+  --s3: 8px;
+  --s4: 11px;
+  --s5: 13px;
+  --s6: 16px;
+  --s7: 18px;
+  --s8: 24px;
+  --s9: 34px;
+  --s10: 48px;
+  --s11: 68px;
+  --s12: 96px;
+
+  --measure: 34rem;
+  --page: 1180px;
+
+  --r-tag: 10px;
+  --r-btn: 7px;
+  --r-card: 10px;
+  --r-box: 12px;
+}

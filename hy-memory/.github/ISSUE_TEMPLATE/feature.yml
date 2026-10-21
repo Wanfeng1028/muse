@@ -1,0 +1,22 @@
+name: Feature
+description: 提议 MVP 范围内的能力
+title: "[Feature] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 用户问题
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 可验收结果
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 数据与权限范围
+    validations:
+      required: true

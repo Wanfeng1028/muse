@@ -1,0 +1,149 @@
+.sync-hook-control {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+.sync-hook-control .sync-hook-status {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text, #262a2e);
+}
+.sync-hook-control .sync-hook-note,
+.sync-hook-sheet .sync-hook-note {
+  margin: 6px 0 12px;
+  font-size: 12px;
+  color: var(--muted, #58636b);
+  line-height: 1.6;
+}
+.sync-hook-actions,
+.sync-hook-sheet .sync-hook-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.sync-hook-control button,
+.sync-hook-sheet button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  white-space: normal;
+}
+.sync-hook-control button svg,
+.sync-hook-sheet button svg {
+  flex-shrink: 0;
+}
+.sync-hook-control .sync-hook-icon,
+.sync-hook-sheet .sync-hook-icon {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+.sync-hook-backdrop .sync-hook-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(680px, 100%);
+  max-height: min(820px, calc(100dvh - 48px));
+  padding: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+.sync-hook-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.sync-hook-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+.sync-hook-heading .eyebrow {
+  margin: 0 0 6px;
+  letter-spacing: 0;
+}
+.sync-hook-sheet .sync-hook-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.sync-hook-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 24px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.sync-hook-body > p:first-child {
+  margin-top: 0;
+}
+.sync-hook-sheet .sync-hook-files {
+  margin: 16px 0;
+}
+.sync-hook-sheet .sync-hook-files li {
+  min-width: 0;
+}
+.sync-hook-sheet code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.sync-hook-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.sync-hook-sheet .sync-hook-confirm input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 4px 0 0;
+  accent-color: var(--accent);
+}
+.sync-hook-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f8eeec;
+  color: #96453e;
+  font-size: 13px;
+}
+.sync-hook-receipt {
+  color: var(--text, #262a2e);
+}
+.sync-hook-sheet .sync-hook-footer {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 600px) {
+  .sync-hook-backdrop {
+    padding: 12px;
+  }
+  .sync-hook-backdrop .sync-hook-sheet {
+    max-height: calc(100dvh - 24px);
+  }
+  .sync-hook-heading,
+  .sync-hook-body,
+  .sync-hook-sheet .sync-hook-footer {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sync-hook-backdrop .sync-hook-sheet {
+    animation: none;
+    transition: none;
+  }
+}

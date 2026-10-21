@@ -1,0 +1,16 @@
+packages:
+  - apps/cli
+  - apps/web
+  - apps/desktop
+  - apps/site
+  - packages/*
+
+allowBuilds:
+  electron: true
+  electron-winstaller: false
+  esbuild: true
+
+disallowWorkspaceCycles: true
+
+overrides:
+  "@electron/get": 5.1.0

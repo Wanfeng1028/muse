@@ -1,0 +1,4 @@
+
+# Generated publish staging (never commit the packed output).
+dist-publish/
+dist-cli/

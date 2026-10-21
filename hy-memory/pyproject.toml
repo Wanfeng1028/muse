@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hy-memory"
+version = "2.0.4"
+description = "HY Memory - Industrial-grade dual-system cognitive memory framework"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+authors = [
+    {name = "alvinfei"},
+]
+
+dependencies = [
+    "pydantic",
+    "numpy",
+    "openai>=1.40,<3",
+    "python-dotenv",
+    "pyyaml",
+    "chromadb>=1.5.9",
+    "kuzu",
+    "langdetect",
+    "scikit-learn",
+    "tiktoken",
+    "json-repair",
+    # Working 记忆（coding 链路）的事实层词面通道。rank_bm25 缺失时该通道
+    # 静默降级为纯稠密（lexical.py 的 except 兜住，不报错）——功能缺失而非
+    # 故障，线上不易察觉，所以进主依赖而不是 optional。
+    # jieba 只在文本含 CJK 时 lazy import，缺了退化为 bigram，同理。
+    "rank-bm25",
+    "jieba",
+]
+
+[project.optional-dependencies]
+qdrant = ["qdrant-client", "fastembed"]
+faiss = ["faiss-cpu"]
+graph = ["neo4j"]
+mysql = ["aiomysql"]
+rerank = ["torch", "transformers"]
+all = [
+    "chromadb>=1.5.9",
+    "qdrant-client",
+    "fastembed",
+    "faiss-cpu",
+    "kuzu",
+    "neo4j",
+    "aiomysql",
+    "torch",
+    "transformers",
+]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+include = ["hy_memory*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+asyncio_mode = "auto"
+addopts = "-v --tb=short -m 'not integration'"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+    "asyncio: marks tests as async",
+]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.ruff]
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

@@ -1,0 +1,9 @@
+prune tests
+prune docs
+prune scripts
+prune eval
+prune opti
+prune plugins
+prune package
+prune tmp_analysis
+global-exclude __pycache__ *.py[cod] *.db *.sqlite *.jsonl

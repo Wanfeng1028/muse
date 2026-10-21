@@ -1,0 +1,289 @@
+.r6-shell .view.r6-memory {
+  width: 100%;
+  max-width: none;
+  padding: 28px 40px 20px;
+  background: transparent;
+  min-height: 0;
+  flex: 1;
+}
+.r6-memory .memory-instrument-header {
+  padding: 0;
+  margin: 0 0 24px;
+  min-height: 46px;
+  gap: 18px;
+  flex-wrap: wrap;
+  border: 0;
+}
+.r6-memory .memory-instrument-header h1 {
+  font-size: 26px;
+  font-weight: 600;
+}
+.r6-memory .memory-loaded-count {
+  font-size: 13px;
+  color: #637786;
+}
+.r6-memory .memory-pending-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -8px 0 20px;
+  padding: 12px 14px;
+  border: 1px solid #d5dfe8;
+  border-radius: 8px;
+  background: #f1f5f8;
+  color: #304757;
+  font-size: 13px;
+  line-height: 22px;
+}
+.r6-memory .memory-pending-note span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.r6-memory .memory-pending-note button {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #b7c7d3;
+  border-radius: 8px;
+  background: #fff;
+  color: #304757;
+  font: inherit;
+  cursor: pointer;
+}
+.r6-memory .memory-note-trigger {
+  margin-left: auto;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 0 22px;
+  justify-content: center;
+  gap: 0;
+}
+.r6-memory .memory-note-trigger > svg {
+  display: none;
+}
+.r6-memory .core-memory-map {
+  grid-template-columns: 280px minmax(260px, 1fr) 418px;
+  border: 1px solid #d5dfe8;
+  border-radius: 16px;
+  min-height: 500px;
+}
+.r6-memory .map-library {
+  background: #f1f5f8;
+  padding: 20px 16px;
+  border-right: 1px solid #d5dfe8;
+  scrollbar-gutter: stable;
+}
+.r6-memory .map-library-pane {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 16px;
+}
+.r6-memory .map-library-pane button {
+  padding: 0 0 6px;
+  border: 0;
+  background: transparent;
+  color: #637786;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+  box-shadow: inset 0 -2px 0 transparent;
+}
+.r6-memory .map-library-pane button[aria-selected="true"] {
+  color: #304757;
+  font-weight: 500;
+  box-shadow: inset 0 -2px 0 #405e75;
+}
+.r6-memory .map-library-pane button:focus-visible {
+  outline: 2px solid #557c93;
+  outline-offset: 3px;
+}
+.r6-memory .map-dialogue-reading {
+  overflow: auto;
+  padding: 4px 8px 24px;
+}
+.r6-memory .map-dialogue-reading .map-transcript {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.r6-memory .map-dialogue-reading .map-transcript li {
+  padding: 16px 0;
+  border-bottom: 1px solid #d8e2ea;
+}
+.r6-memory .map-dialogue-reading .map-transcript small {
+  display: block;
+  margin-bottom: 6px;
+  color: #637786;
+  font-size: 12px;
+}
+.r6-memory .map-dialogue-reading .map-transcript p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.r6-memory .map-memory-list,
+.r6-memory .map-inspector {
+  scrollbar-gutter: stable;
+}
+.r6-memory .map-stage {
+  background: rgb(241 246 249 / 70%);
+}
+.r6-memory .map-inspector {
+  background: #fff;
+  border-left: 1px solid #d5dfe8;
+  padding: 24px;
+}
+.r6-memory .map-memory-item {
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 12px;
+  transform: none;
+  transition: none;
+}
+.r6-memory button.map-memory-item:hover:not(:disabled),
+.r6-memory button.map-memory-item:active:not(:disabled) {
+  transform: none;
+}
+.r6-shell .r6-memory .map-memory-item[aria-pressed="true"] {
+  background: #e1eaf0;
+  border-color: #c2ced8;
+}
+.r6-memory .map-search {
+  border-radius: 8px;
+  background: #f0f5f6;
+  border: 1px solid #c0ccd5;
+}
+.r6-memory .map-search input {
+  font-size: 14px;
+  min-height: 44px;
+}
+.r6-shell .r6-memory .map-memory-reading {
+  font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.r6-memory .map-inspector .wb-detail-actions {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.r6-memory .map-inspector .wb-detail-actions button {
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 6px 14px;
+  justify-content: center;
+}
+.r6-memory .map-evidence {
+  border: 0;
+  border-top: 1px solid #d8e2ea;
+  border-radius: 0;
+  background: none;
+  padding: 18px 0;
+}
+.r6-memory .map-quote {
+  font-size: 15px;
+  line-height: 1.8;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.r6-memory .wb-detail textarea {
+  background: #f0f5f6;
+  border: 1px solid #c0ccd5;
+  border-radius: 8px;
+  min-height: 180px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.r6-memory .memory-processing-details {
+  margin: 0 0 16px;
+}
+.r6-memory .memory-library-layout {
+  min-height: 0;
+  overflow: auto;
+}
+.r6-memory .map-stage-heading {
+  padding: 20px 24px;
+}
+.r6-memory .map-stage-heading h2 {
+  font-size: 20px;
+}
+.r6-memory .map-axis {
+  border-radius: 8px;
+}
+.r6-memory .map-axis button {
+  border-radius: 6px;
+}
+@media (max-width: 1280px) {
+  .r6-shell .r6-memory {
+    padding: 24px;
+  }
+  .r6-memory .core-memory-map {
+    grid-template-columns: 230px minmax(220px, 1fr) 340px;
+  }
+  .r6-memory .map-inspector {
+    padding: 20px;
+  }
+}
+@media (max-width: 1100px) {
+  .r6-memory .core-memory-map {
+    grid-template-columns: 240px minmax(220px, 1fr);
+  }
+  .r6-memory .map-inspector {
+    width: min(452px, calc(100vw - 32px));
+    background: #f7fafc;
+  }
+  .r6-memory .memory-instrument-header {
+    margin-bottom: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .r6-shell .r6-memory {
+    padding: 20px 16px;
+  }
+  .r6-memory .core-memory-map {
+    grid-template-columns: 170px minmax(150px, 1fr);
+    min-height: 500px;
+  }
+  .r6-memory .map-library {
+    padding: 16px 10px;
+  }
+  .r6-memory .memory-note-trigger {
+    margin-left: 0;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .r6-memory .map-stage {
+    background: #edf3f6;
+  }
+}
+[data-native-reduce-transparency="true"] .r6-memory .map-stage {
+  background: #edf3f6;
+}
+.memory-backlog-upgrade-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(55, 65, 81, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.memory-backlog-upgrade-copy {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.memory-backlog-upgrade-notice .icon-button {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}

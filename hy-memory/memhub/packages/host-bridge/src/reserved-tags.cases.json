@@ -1,0 +1,45 @@
+{
+  "about": "Read by recall-injection.test.ts and apps/core/tests/test_derived_echo.py, so the hook and Core agree on what a reserved tag is.",
+  "reserved": [
+    "<memhub_memory_context>",
+    "</memhub_memory_context>",
+    "< /memhub_memory_context>",
+    "</MEMHUB_MEMORY_CONTEXT >",
+    "<\n/memhub_session_notice\n>",
+    "＜/memhub_memory_context＞",
+    "﹤/memhub_session_notice﹥",
+    "＜／ｍｅｍｈｕｂ＿ｍｅｍｏｒｙ＿ｃｏｎｔｅｘｔ＞",
+    "<Memhub_Session_Notice>",
+    "<system-reminder>",
+    "</system-reminder>",
+    "<system_reminder data-role=\"hook\">",
+    "﹤SYSTEM-REMINDER﹥",
+    "<　/memhub_memory_context>"
+  ],
+  "ordinary": [
+    "a < b && c > d",
+    "Array<string>",
+    "Map<K, V>",
+    "<div class=\"x\">",
+    "</div>",
+    "x<5 and y>3",
+    "if (i<n) { j>>=1; }",
+    "<memhub_memory_contexts>",
+    "<memhub>",
+    "<memhub_memory_context/>",
+    "<!-- memhub_memory_context -->",
+    "<system-reminders>",
+    "1 ≤ 2 ≥ 0 ≮ 3",
+    "＜全角比较＞",
+    "<﻿/memhub_memory_context>",
+    "<\u001c/memhub_memory_context>",
+    "</memhub_memory_context>",
+    "<memhub_memory_context >"
+  ],
+  "blocks": [
+    "<memhub_memory_context>\n召回\n</memhub_memory_context>",
+    "<MEMHUB_SESSION_NOTICE >通知</ memhub_session_notice>",
+    "＜ｍｅｍｈｕｂ＿ｍｅｍｏｒｙ＿ｃｏｎｔｅｘｔ＞召回＜／ｍｅｍｈｕｂ＿ｍｅｍｏｒｙ＿ｃｏｎｔｅｘｔ＞",
+    "﹤memhub_session_notice﹥通知﹤/memhub_session_notice﹥"
+  ]
+}

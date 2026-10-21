@@ -1,0 +1,90 @@
+{
+  "name": "@one-memory/desktop",
+  "version": "1.0.4",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "pnpm build && electron .",
+    "build": "pnpm --filter @one-memory/host-bridge build && pnpm --filter @one-memory/runtime-control build && pnpm --filter @one-memory/cli build && tsup",
+    "package:mac:dir": "test -n \"$ONE_MEMORY_BUILD_NUMBER\" && export ONE_MEMORY_VERSION=$(node -p \"require('../../package.json').version\") && export ONE_MEMORY_COMMIT=$(git -C ../.. rev-parse HEAD) && pnpm --dir ../.. build:core:mac && pnpm --dir ../.. --filter @one-memory/web build && pnpm build && electron-builder --mac dir --arm64 -c.mac.identity=null -c.extraMetadata.version=$ONE_MEMORY_VERSION -c.buildVersion=$ONE_MEMORY_BUILD_NUMBER",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test": "node ../../scripts/assert-test-isolation.mjs && vitest run --maxWorkers=1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "build": {
+    "appId": "com.tencent.onememory",
+    "productName": "MemHub",
+    "asar": true,
+    "files": [
+      "dist/main.js",
+      "dist/preload.js",
+      "package.json",
+      "!node_modules/**"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "afterPack": "scripts/after-pack.cjs",
+    "extraResources": [
+      {
+        "from": "assets/icon.png",
+        "to": "desktop/icon.png"
+      },
+      {
+        "from": "../web/dist",
+        "to": "web"
+      },
+      {
+        "from": "../core/dist/one-memory-runtime",
+        "to": "core"
+      },
+      {
+        "from": "../../packages/host-bridge/dist",
+        "to": "host-bridge"
+      },
+      {
+        "from": "../../packages/runtime-control/dist",
+        "to": "runtime"
+      },
+      {
+        "from": "../cli/dist",
+        "to": "cli"
+      }
+    ],
+    "mac": {
+      "icon": "assets/icon.icns",
+      "minimumSystemVersion": "13.0",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements/entitlements.mac.plist",
+      "entitlementsInherit": "entitlements/entitlements.mac.inherit.plist",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  },
+  "dependencies": {
+    "@one-memory/contracts": "workspace:*",
+    "@one-memory/host-bridge": "workspace:*",
+    "@one-memory/runtime-control": "workspace:*",
+    "axios": "^1.20.0"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "openclaw-hy-memory",
+  "version": "1.1.10",
+  "type": "module",
+  "description": "HY Memory backend for OpenClaw — self-hosted intelligent agent memory with LLM-driven extraction, evolution chains, and multi-layer recall",
+  "license": "Apache-2.0",
+  "keywords": [
+    "openclaw",
+    "plugin",
+    "memory",
+    "hy-memory",
+    "long-term-memory",
+    "agent-memory"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.4.0",
+    "@sinclair/typebox": "0.34.47"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.3.28",
+      "minGatewayVersion": ">=2026.3.28"
+    },
+    "install": {
+      "npmSpec": "openclaw-hy-memory"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.18"
+  }
+}

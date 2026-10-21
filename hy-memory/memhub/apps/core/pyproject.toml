@@ -1,0 +1,85 @@
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[project]
+name = "one-memory"
+version = "1.0.4"
+description = "MemHub local-first memory core"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.141.1",
+    "filelock>=3.32.4",
+    # Public SDK version validated against MemHub's permission and recall contracts.
+    "hy-memory==2.0.4",
+    # Retrieval's derived vector index directly consumes these locked versions.
+    "chromadb==1.5.9",
+    "numpy==2.5.2",
+    "httpx>=0.28.1",
+    "keyring>=25.7.0",
+    # Both already arrive transitively through the HY SDK's chromadb, so
+    # declaring them costs nothing on disk. Declared anyway for the same reason
+    # as watchfiles below: built-in embedding runs on them directly now, and a
+    # transitive version we do not ask for is one an unrelated upgrade could
+    # drop. Deliberately NOT sentence-transformers or torch: those would take
+    # the installer past 2GB, and onnxruntime alone runs the exported model.
+    "onnxruntime==1.23.2",
+    "tokenizers>=0.21.0",
+    "pydantic-settings>=2.15.0",
+    "uvicorn[standard]>=0.52.4",
+    # Already present transitively through uvicorn[standard]; declared directly
+    # because live sync now depends on it, and a transitive version we do not
+    # ask for is one an unrelated upgrade could drop.
+    "watchfiles>=1.2.0",
+    "zstandard>=0.25.0",
+    "aiomysql>=0.3.2",
+]
+
+[project.scripts]
+one-memory = "one_memory.cli:main"
+one-memory-core = "one_memory.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.1",
+    "pyinstaller>=6.22.2",
+    "pytest>=9.1.1",
+    "pytest-xdist>=3.8.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.16.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# test_training_extraction_and_baseline imports helpers from a sibling test
+# module, which needs apps/core itself importable as the `tests` package root.
+# Without it the whole suite stops at collection, so no test runs at all.
+pythonpath = [".", "../.."]
+markers = [
+    "unit: deterministic isolated unit tests",
+    "contract: adapter, schema, persistence, permission and protocol contracts",
+    "integration: multi-component lifecycle and recovery tests",
+    "performance: scale, latency, contention, soak and query-plan tests",
+    "live: explicitly authorized machine or external-service tests",
+    "serial: must not run concurrently with another test worker",
+    "slow: compatibility marker for tests that need performance classification",
+    "real_volume: writes a few thousand records and takes seconds; too slow for the standing suite",
+    "macos: requires macOS-specific behavior",
+    "linux: requires Linux-specific behavior",
+    "mysql: requires a configured MySQL service",
+    "requires_embedding_assets: requires the repository-pinned embedding assets",
+    "xdist_group(name): tests sharing a named resource group",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["one_memory"]

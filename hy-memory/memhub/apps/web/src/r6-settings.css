@@ -1,0 +1,676 @@
+/* R6 source 139:5728 / 6765 / 7176 / 7585. Overrides stay inside settings. */
+.r6-settings {
+  box-sizing: border-box;
+  padding: 26px 40px 46px;
+  color: #262a2e;
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+  letter-spacing: 0;
+}
+.r6-settings > h1 {
+  height: 44px;
+  font:
+    500 28px / 44px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  margin: 0 0 28px;
+}
+.r6-settings .r6-settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.r6-settings .r6-settings-layout > nav {
+  box-sizing: border-box;
+  min-height: 710px;
+  padding: 13px 11px;
+  background: rgb(255 255 255 / 27.45%);
+  border: 1px solid white;
+  border-radius: 16px;
+  box-shadow: inset 0 1px white;
+  backdrop-filter: blur(72px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.r6-settings .r6-settings-layout > nav > button {
+  box-sizing: border-box;
+  padding: 8px 16px;
+  height: 46px;
+  min-height: 46px;
+  text-align: left;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #262a2e;
+  font:
+    400 16px / 28px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  box-shadow: none;
+  transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.r6-settings .r6-settings-layout > nav > button[aria-current="page"] {
+  background: #e1eaf0;
+}
+.r6-settings .r6-settings-layout > nav > button:hover:not(:disabled) {
+  background: rgb(225 234 240 / 65%);
+  transform: none;
+}
+.r6-settings .r6-settings-content {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 710px;
+  padding: 25px 31px;
+  background: #fff;
+  border: 1px solid #dce4eb;
+  border-radius: 16px;
+  overflow-wrap: anywhere;
+}
+.r6-settings .r6-settings-content > section[hidden] {
+  display: none;
+}
+.r6-settings .r6-settings-content > section > h2 {
+  min-height: 36px;
+  font:
+    500 22px / 36px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  margin: 0;
+}
+.r6-settings .r6-setting-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 0 25px;
+  border-bottom: 1px solid #d8e2ea;
+  min-height: 132px;
+}
+.r6-settings .r6-setting-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.r6-settings .r6-setting-row > button {
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+.r6-settings .r6-setting-row h3 {
+  font:
+    400 18px / 28px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  margin: 0 0 10px;
+}
+.r6-settings .r6-setting-row p {
+  font-size: 14px;
+  line-height: 26px;
+  color: #63707b;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.r6-settings .r6-setting-row > span {
+  font-size: 13px;
+  color: #63707b;
+}
+.r6-settings .r6-setting-row:last-of-type {
+  border-bottom: 0;
+}
+.r6-settings .r6-settings-privacy .r6-setting-row {
+  min-height: 123px;
+  padding: 30px 0 16px;
+}
+.r6-settings .r6-settings-privacy .r6-setting-row > button {
+  max-width: 192px;
+}
+/* S-background 139:6765: right-hand controls are a 206-wide column, and the
+   last row's exit control is the taller 44px variant. */
+.r6-settings .r6-settings-background .r6-setting-row > button {
+  min-width: 206px;
+}
+.r6-settings .r6-settings-background .r6-setting-row:last-of-type > button {
+  min-height: 44px;
+}
+.r6-settings .r6-settings-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.r6-settings details {
+  border: 0;
+  padding: 0;
+}
+.r6-settings summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: #4f6373;
+}
+.r6-settings .r6-settings-error {
+  color: #953f3f;
+  font-size: 14px;
+  line-height: 24px;
+}
+.r6-settings .r6-settings-note {
+  color: #5e6e7a;
+  font-size: 13px;
+  line-height: 22px;
+  margin: 8px 0 0;
+}
+.r6-settings .r6-settings-read-status {
+  color: #63707b;
+  font-size: 13px;
+  line-height: 24px;
+}
+.r6-settings .r6-model-overview {
+  padding: 32px 0 24px;
+  border-bottom: 0;
+}
+.r6-settings .r6-model-caption {
+  font-size: 13px;
+  line-height: 28px;
+  color: #63707b;
+  margin: 0 0 6px;
+}
+.r6-settings .r6-current-model {
+  font:
+    400 24px / 40px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  margin: 0 0 7px;
+}
+.r6-settings .r6-model-state {
+  font-size: 14px;
+  line-height: 28px;
+  color: #63707b;
+  margin: 0 0 13px;
+}
+.r6-settings .r6-model-recipient {
+  font-size: 14px;
+  line-height: 28px;
+  color: #63707b;
+  margin: 0;
+}
+.r6-settings .r6-model-embedding {
+  font-size: 13px;
+  line-height: 24px;
+  color: #63707b;
+  margin: 0;
+}
+.r6-settings .r6-model-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+}
+.r6-settings .r6-model-actions > .r6-button[data-variant="primary"] {
+  min-width: 140px;
+}
+.r6-settings .r6-model-revoke {
+  margin-top: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  /* DESIGN.md --ok. A bare button would otherwise take the dark action fill. */
+  color: #0f6e56;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.r6-settings .r6-model-revoke:hover:not(:disabled) {
+  border-color: transparent;
+  background: rgb(158 178 194 / 22%);
+  color: #0f6e56;
+}
+.r6-settings-dialog-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgb(46 66 82 / 18%);
+  backdrop-filter: blur(8px);
+}
+.r6-settings-dialog {
+  width: min(420px, calc(100vw - 40px));
+  padding: 28px;
+  border: 1px solid white;
+  border-radius: 16px;
+  background: #f3f7f9;
+  box-shadow: 0 24px 64px rgb(38 59 74 / 18%);
+}
+.r6-settings-dialog h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+.r6-settings-dialog p {
+  margin: 0 0 24px;
+  color: #63707b;
+}
+.r6-settings-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.r6-settings .r6-model-maintenance {
+  margin-top: 24px;
+}
+.r6-settings .r6-model-maintenance > summary {
+  min-height: 36px;
+  font-size: 16px;
+  line-height: 28px;
+}
+.r6-settings .r6-model-owner {
+  padding-top: 24px;
+  border-top: 1px solid #d8e2ea;
+}
+.r6-settings .r6-model-owner[hidden] {
+  display: none;
+}
+.r6-settings .r6-model-owner .model-policy-review,
+.r6-settings .r6-model-owner .profile-list,
+.r6-settings .r6-model-owner .model-saved-card {
+  display: none;
+}
+.r6-settings .r6-model-owner .form-submit {
+  grid-column: 1 / -1;
+}
+.r6-settings .r6-model-owner .form-submit > button:first-child {
+  min-width: 190px;
+  min-height: 44px;
+  background: #4f6373;
+  border-color: #5b6f7e;
+  color: white;
+}
+.r6-settings .r6-settings-background .r6-setting-row {
+  align-items: center;
+  min-height: 92px;
+  padding: 22px 0;
+}
+.r6-settings .r6-settings-background .r6-setting-row h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.r6-settings .r6-settings-background .r6-switch {
+  width: 72px;
+  min-width: 72px;
+  height: 64px;
+  min-height: 64px;
+  margin-right: -14px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.r6-settings .r6-settings-help .r6-setting-row {
+  display: flex;
+  min-height: 132px;
+  padding: 30px 0 25px;
+  align-items: center;
+  gap: 32px;
+}
+.r6-settings .r6-settings-help .r6-setting-row h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.r6-settings .r6-settings-help .r6-setting-row p {
+  font-size: 14px;
+}
+.r6-settings .r6-settings-help .r6-setting-row > button {
+  min-width: 132px;
+  margin-top: 0;
+  margin-left: auto;
+}
+.r6-settings .r6-settings-help .r6-settings-about {
+  min-height: 0;
+  padding-bottom: 24px;
+}
+.r6-settings .r6-settings-about dl {
+  display: grid;
+  gap: 8px;
+  max-width: 440px;
+  margin: 0;
+}
+.r6-settings .r6-settings-about dl > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+}
+.r6-settings .r6-settings-about dt {
+  color: #63707b;
+  font-size: 13px;
+}
+.r6-settings .r6-settings-about dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #25353f;
+  font:
+    13px / 22px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.r6-settings .r6-settings-help-footer {
+  margin-top: 89px;
+}
+.r6-settings .r6-settings-help-footer h3 {
+  font:
+    400 16px / 28px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  margin: 0 0 7px;
+}
+/* S-help 139:7787: the footer carries a 13px caption under the product name. */
+.r6-settings .r6-settings-help-footer > p {
+  font-size: 13px;
+  line-height: 26px;
+  color: #63707b;
+  margin: 0;
+}
+.r6-settings .r6-settings-help-footer .r6-settings-actions {
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+/* Preserve the one existing owner; restyle only within this surface. */
+.r6-settings .model-settings {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  max-width: none;
+}
+.r6-settings .model-settings > .section-heading {
+  display: none;
+}
+.r6-settings .model-form {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.r6-settings .model-form input:not([type="checkbox"]),
+.r6-settings .model-form select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  border: 1px solid #c0ccd5;
+  border-radius: 8px;
+  background: #f0f5f6;
+  color: #262a2e;
+  font-size: 15px;
+  padding: 14px 16px;
+}
+.r6-settings .model-advanced {
+  grid-column: 1 / -1;
+}
+.r6-settings .model-advanced label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+.r6-settings .profile-list,
+.r6-settings .profile-row,
+.r6-settings .preset-profile,
+.r6-settings .model-saved-card {
+  min-width: 0;
+  max-width: 100%;
+}
+.r6-settings .source-actions {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.r6-settings .source-actions button {
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.r6-settings button {
+  max-width: 100%;
+}
+.r6-settings button.r6-button {
+  white-space: normal;
+}
+.r6-settings .r6-button-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.r6-settings .r6-settings-confirm {
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 40px));
+  padding: 28px;
+  border: 1px solid white;
+  border-radius: 16px;
+  background: #edf3f6;
+  color: #384a57;
+  box-shadow: 0 22px 56px #314b6530;
+}
+.r6-settings .r6-settings-confirm::backdrop {
+  background: #30475755;
+}
+.r6-settings .r6-settings-confirm h2 {
+  font-size: 22px;
+  margin: 0 0 18px;
+}
+.r6-settings .r6-settings-confirm p {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.r6-settings .r6-settings-layout > nav > button:focus-visible,
+.r6-settings summary:focus-visible {
+  outline: 2px solid #557c93;
+  outline-offset: 2px;
+}
+@media (max-width: 1200px) {
+  .r6-settings {
+    padding: 26px 24px 40px;
+  }
+  .r6-settings .r6-settings-layout {
+    grid-template-columns: 176px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .r6-settings .r6-settings-content {
+    padding: 25px 23px;
+  }
+  .r6-settings .r6-setting-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .r6-settings .r6-setting-row > div {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 700px) {
+  .r6-settings {
+    padding: 20px 16px;
+  }
+  .r6-settings .r6-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .r6-settings .r6-settings-layout > nav {
+    min-height: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .r6-settings .r6-settings-layout > nav > button {
+    font-size: 14px;
+  }
+  .r6-settings .model-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .r6-settings .r6-settings-layout > nav {
+    background: #edf3f6;
+    backdrop-filter: none;
+  }
+}
+[data-native-reduce-transparency="true"]
+  .r6-settings
+  .r6-settings-layout
+  > nav {
+  background: #edf3f6;
+  backdrop-filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .r6-settings *,
+  .r6-settings *::before,
+  .r6-settings *::after {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+}
+[data-native-reduce-motion="true"] .r6-settings * {
+  animation: none;
+  transition: none;
+  scroll-behavior: auto;
+}
+
+/* 运行诊断 139:7980. Reached from 帮助与诊断, and the source puts it on the
+   same white 1038x710 content card rather than the old boxed sub-panels:
+   22px Medium title, 16px row label, 16px verdict, 13px timing note, and a
+   974px divider between rows. Markup is unchanged; only this surface is
+   restyled, so every line still comes from the reading it already had. */
+.r6-shell .health-view {
+  box-sizing: border-box;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid #dce4eb;
+  border-radius: 16px;
+  margin-top: 12px;
+}
+.r6-shell .health-view > .view-header {
+  padding: 0;
+  margin: 0 0 44px;
+  border: 0;
+  background: none;
+}
+.r6-shell .health-view > .view-header h1 {
+  font:
+    500 22px / 36px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  margin: 0;
+  color: #33424d;
+}
+.r6-shell .health-view .health-block {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 16px 0;
+  min-height: 100px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #d8e2ea;
+  border-radius: 0;
+  display: grid;
+  /* 139:7980 lays each row out as 名称 / 状态 / 时间 at x32 / x390 / x748
+     inside the 974px content width. */
+  grid-template-columns: 300px minmax(0, 1fr) 250px;
+  column-gap: 58px;
+  align-items: baseline;
+}
+.r6-shell .health-view .health-block h2 {
+  font:
+    400 16px / 28px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  color: #33424d;
+  margin: 0;
+}
+.r6-shell .health-view .health-block > :not(h2) {
+  grid-column: 2;
+}
+/* The read receipt is the row's third column, not another status line. */
+.r6-shell .health-view .health-block > .health-stamp {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: start;
+}
+.r6-shell .health-view .health-block > .health-stamp ~ .health-stamp {
+  grid-row: 2;
+}
+.r6-shell .health-view .health-block p {
+  font-size: 16px;
+  line-height: 28px;
+  color: #33424d;
+  margin: 0;
+}
+/* Timing and in-flight notices stay subordinate to the verdict, matching the
+   13px timing column in the source rather than competing with it. */
+.r6-shell .health-view .health-block .health-stamp,
+.r6-shell .health-view .health-block p[role="status"] {
+  font-size: 13px;
+  line-height: 26px;
+  color: #63707b;
+}
+.r6-shell .health-view .health-block .health-stamp > time {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.r6-shell .health-view .health-block dl {
+  gap: 4px;
+}
+.r6-shell .health-view .health-block dt,
+.r6-shell .health-view .health-block dd,
+.r6-shell .health-view .health-block li {
+  font-size: 15px;
+  line-height: 28px;
+  color: #33424d;
+}
+.r6-shell .health-view .health-block dt {
+  color: #63707b;
+}
+.r6-shell .health-view > .r6-button,
+.r6-shell .health-view .health-actions {
+  margin-top: 36px;
+}
+.r6-shell .health-view .health-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.r6-shell .health-view .health-actions .r6-button {
+  min-width: 200px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.r6-shell .health-view .health-diagnostic-message {
+  margin: 12px 0 0;
+  color: #63707b;
+}
+@media (max-width: 860px) {
+  .r6-shell .health-view .health-block {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .r6-shell .health-view .health-block > :not(h2),
+  .r6-shell .health-view .health-block > .health-stamp,
+  .r6-shell .health-view .health-block > .health-stamp ~ .health-stamp {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}

@@ -1,0 +1,53 @@
+.source-snapshot-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bd, #dbe3ea);
+  color: var(--meta-reading, #63707b);
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.source-snapshot-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.source-snapshot-copy strong {
+  color: var(--dg, #96453e);
+  font-weight: 550;
+}
+
+.source-snapshot-copy time {
+  font-variant-numeric: tabular-nums;
+}
+
+.source-snapshot-status .source-snapshot-refresh {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--ac, #4e6478);
+}
+
+.source-snapshot-refresh:focus-visible {
+  outline: 2px solid var(--ac, #4e6478);
+  outline-offset: 2px;
+}
+
+.rail-core[data-stale="true"] > span {
+  background: var(--meta-reading, #63707b);
+}

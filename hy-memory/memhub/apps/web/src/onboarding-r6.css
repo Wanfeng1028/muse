@@ -1,0 +1,860 @@
+/* Approved onboarding geometry. Dimensions are CSS pixels, never scaled text. */
+.onboarding-r6 {
+  box-sizing: border-box;
+  border: 1px solid #d0dbe5;
+  width: 100%;
+  min-height: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+  color: #2d4354;
+  letter-spacing: 0;
+  background:
+    radial-gradient(ellipse at 100% 85%, #c6d7e675 0%, transparent 48%),
+    radial-gradient(ellipse at 7% 10%, #dae8f3 0%, transparent 42%),
+    linear-gradient(140deg, #f1f5f9, #e9eff4 55%, #edf2f6);
+}
+.onboarding-r6 *,
+.onboarding-r6 *::before,
+.onboarding-r6 *::after {
+  box-sizing: border-box;
+}
+.onboarding-r6 [hidden] {
+  display: none;
+}
+.onboarding-r6-titlebar {
+  position: relative;
+  flex: 0 0 58px;
+  border-bottom: 1px solid #ffffffa8;
+  background: #ffffff30;
+  backdrop-filter: blur(40px);
+  user-select: none;
+  -webkit-app-region: drag;
+}
+.onboarding-r6
+  :is(
+    button,
+    input,
+    select,
+    textarea,
+    a,
+    [role="button"],
+    [role="option"],
+    [role="listbox"]
+  ) {
+  -webkit-app-region: no-drag;
+}
+.onboarding-r6-stage {
+  flex: 1;
+  min-height: 852px;
+  padding: 32px 24px 2px;
+}
+.onboarding-r6-shell {
+  width: 1120px;
+  max-width: 100%;
+  height: 820px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 26px;
+  border: 1px solid #ffffffe0;
+  background: #ffffff46;
+  backdrop-filter: blur(72px);
+  box-shadow:
+    0 28px 80px #314b651a,
+    0 3px 10px #314b650a,
+    inset 0 1px 0 #fff,
+    inset 0 -1px 0 #adc0d22e;
+}
+.onboarding-r6-head {
+  min-height: 0;
+  flex: 0 0 123.7px;
+  position: relative;
+  border-bottom: 1px solid #ffffffc4;
+  background: linear-gradient(115deg, #ffffff57, #ffffff0a);
+  padding: 28px 36px;
+  border-radius: 25px 25px 0 0;
+}
+.onboarding-r6-head > div {
+  width: 450px;
+  max-width: calc(100% - 320px);
+}
+.onboarding-r6-head p {
+  margin: 0 0 10px;
+  font-size: 11px;
+  line-height: 18.1px;
+  color: #5e7689;
+}
+.onboarding-r6-head h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 43px;
+}
+.onboarding-r6-head .r6-stepper {
+  position: absolute;
+  top: 42px;
+  right: 36px;
+}
+.onboarding-r6-head .r6-stepper li {
+  height: 36px;
+  padding: 0 0 12px;
+  align-items: flex-start;
+  line-height: 18px;
+}
+.onboarding-r6-body {
+  flex: 1;
+  min-height: 0;
+  padding: 26px 36px;
+}
+.onboarding-r6-foot {
+  min-height: 0;
+  flex: 0 0 82.1px;
+  padding: 20px 36px 18px;
+  border-top: 1px solid #ffffffc4;
+  background: #ffffff38;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 0 0 25px 25px;
+}
+.onboarding-r6-local-footer {
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  justify-content: flex-start;
+}
+.onboarding-r6-local-footer > * {
+  width: auto;
+}
+@media (min-width: 761px) and (max-height: 959px) {
+  .onboarding-r6-stage {
+    min-height: 0;
+    display: flex;
+    padding: 16px 24px;
+  }
+  .onboarding-r6-shell {
+    height: 100%;
+  }
+  .onboarding-r6-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}
+.onboarding-r6-discovery {
+  height: 560.2px;
+  display: grid;
+  grid-template-columns: minmax(0, 738px) 278px;
+  gap: 30px;
+}
+.onboarding-r6-apps {
+  position: relative;
+  min-width: 0;
+}
+.onboarding-r6-intro {
+  margin: 0;
+  font-size: 13px;
+  line-height: 24.05px;
+  color: #5a6169;
+}
+.onboarding-r6-intro p {
+  margin: 0;
+}
+.onboarding-r6-list-heading {
+  position: absolute;
+  inset: 96px 0 auto;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.onboarding-r6-list-heading h2 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24.8px;
+  margin: 0;
+  color: #262a2e;
+}
+.onboarding-r6 .onboarding-r6-quiet {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 5px 11px;
+  font:
+    400 12px / 20px "Noto Sans SC",
+    "PingFang SC",
+    sans-serif;
+  color: #4e6478;
+  min-height: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+.onboarding-r6 .onboarding-r6-quiet:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.onboarding-r6-list-area {
+  position: absolute;
+  inset: 142px 0 auto;
+}
+.onboarding-r6-list-area::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 40px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, #f7fafc 92%);
+}
+.onboarding-r6-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  height: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #8198a5 #c8d5dd;
+  overflow-anchor: none;
+  scroll-padding-block: 0 36px;
+}
+.onboarding-r6-list::-webkit-scrollbar {
+  width: 3px;
+}
+.onboarding-r6-list::-webkit-scrollbar-track {
+  background: #c8d5dd;
+  border-radius: 2px;
+}
+.onboarding-r6-list::-webkit-scrollbar-thumb {
+  background: #8198a5;
+  border-radius: 2px;
+}
+.onboarding-r6-row {
+  flex: 0 0 96px;
+  border: 1px solid #ffffff73;
+  border-radius: 14px;
+  background: #ffffff1f;
+  box-shadow:
+    inset 0 1px #fff,
+    0 3px 10px #3b53620a;
+  animation: onboarding-source-reveal 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--source-order, 0) * 90ms);
+}
+@keyframes onboarding-source-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.onboarding-r6-list[data-many="true"] .onboarding-r6-row {
+  flex-basis: 96px;
+}
+.onboarding-r6-row.is-selected {
+  background: #e7edf2;
+  border-color: #c2ced8;
+}
+.onboarding-r6-row > label {
+  height: 100%;
+  padding: 20px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.onboarding-r6-row input {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: 0 0 16px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #7a8f9e;
+  border-radius: 3px;
+  background: #edf3f6;
+}
+.onboarding-r6-row input::after {
+  content: "";
+  width: 8px;
+  height: 5px;
+  margin-top: -2px;
+  border-left: 1.5px solid white;
+  border-bottom: 1.5px solid white;
+  opacity: 0;
+  transform: rotate(-45deg);
+}
+.onboarding-r6-row input:checked {
+  background: #4e6478;
+  border-color: #4e6478;
+}
+.onboarding-r6-row input:checked::after {
+  opacity: 1;
+}
+.onboarding-r6-source-icon {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: grid;
+  place-items: center;
+  background: #f6f8fa;
+  border: 1px solid #dee7ee;
+  border-radius: 10px;
+}
+.onboarding-r6-source-icon img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.onboarding-r6-row-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.onboarding-r6-row-info strong {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 27px;
+  color: #262a2e;
+}
+.onboarding-r6-row-info small {
+  font-size: 11px;
+  line-height: 19px;
+  color: #63707b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.onboarding-r6-badge {
+  flex: 0 0 auto;
+  min-width: 84px;
+  height: 32px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #ffffff33;
+  border: 1px solid #ffffffbf;
+  border-radius: 16px;
+  color: #63707b;
+  font-size: 12px;
+  line-height: 20px;
+}
+.onboarding-r6-badge[data-found="true"] {
+  background: rgb(220 239 231 / 58%);
+  color: #246b54;
+  border-color: rgb(130 177 157 / 28%);
+  backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px rgb(255 255 255 / 62%);
+}
+.onboarding-r6-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.onboarding-r6-row-scanning .onboarding-r6-badge i {
+  animation: onboarding-r6-dot-breath 1.2s ease-in-out infinite;
+}
+.onboarding-r6-list-status {
+  width: 100%;
+  height: 22px;
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #376656;
+  font-size: 12px;
+  line-height: 20px;
+}
+.onboarding-r6-list-status > span[data-scroll-hint="true"]::before {
+  content: "↓";
+  margin-right: 6px;
+}
+.onboarding-r6-import {
+  position: absolute;
+  top: 498px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #6a7988;
+}
+/* 143:2085 puts 导入历史包 first and the "没有本机历史？" sentence after it; the
+   markup keeps the sentence first so it stays the accessible label order for
+   the control that follows. Reordering visually only, rather than moving the
+   DOM, keeps that reading order intact. */
+.onboarding-r6-import > p {
+  order: 2;
+}
+.onboarding-r6-import > .history-import,
+.onboarding-r6-import > .history-import-trigger {
+  order: 1;
+}
+.onboarding-r6-import > p {
+  margin: 0;
+}
+.onboarding-r6-import .history-import-trigger {
+  font: inherit;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #4e6478;
+  padding: 5px 11px;
+  min-height: 30px;
+  box-shadow: none;
+}
+.onboarding-r6-import .history-import-trigger > svg {
+  display: none;
+}
+.onboarding-r6-summary {
+  border-radius: 22px;
+  border: 1px solid #ffffffe0;
+  padding: 26px;
+  background: linear-gradient(155deg, #ffffffce, #f0f6fb70);
+  box-shadow:
+    inset 0 1px #fff,
+    0 12px 32px #314b650a;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.onboarding-r6-summary p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 22px;
+  color: #63707b;
+}
+.onboarding-r6-summary .onboarding-r6-count {
+  font-size: 56px;
+  line-height: 68px;
+  color: #4e6478;
+  font-variant-numeric: tabular-nums;
+}
+.onboarding-r6-summary .onboarding-r6-count[data-unknown="true"] {
+  font-size: 30px;
+  line-height: 68px;
+  color: #63707b;
+}
+.onboarding-r6-summary h2 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 32px;
+  font-weight: 600;
+  color: #262a2e;
+}
+.onboarding-r6-summary .onboarding-r6-value {
+  font-size: 13px;
+  line-height: 23px;
+  color: #5a6169;
+  white-space: pre-line;
+}
+.onboarding-r6-summary .onboarding-r6-signoff {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  color: #4e6478;
+}
+.onboarding-r6-submit {
+  width: 138px;
+  margin-left: auto;
+}
+.onboarding-r6 .r6-button[data-variant="primary"]:not(:disabled) {
+  background: #4f6373;
+  border-color: #5b6f7e;
+  color: #fff;
+}
+.onboarding-r6-error {
+  color: #944242;
+  font-size: 12px;
+  line-height: 20px;
+  margin: 0;
+}
+.onboarding-r6-empty {
+  margin: 0;
+  padding: 28px 18px;
+  font-size: 13px;
+  color: #63707b;
+}
+.onboarding-r6-skeleton {
+  position: relative;
+  flex: 0 0 102px;
+  border-radius: 14px;
+  border: 1px solid #ffffff73;
+  background: #ffffff1f;
+  overflow: hidden;
+}
+.onboarding-r6-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(255 255 255 / 52%) 45%,
+    transparent 70%
+  );
+  transform: translateX(-110%);
+  animation: onboarding-skeleton-sweep 1.45s cubic-bezier(0.4, 0, 0.2, 1)
+    infinite;
+}
+.onboarding-r6-skeleton:nth-child(3)::after {
+  animation-delay: -480ms;
+}
+@keyframes onboarding-skeleton-sweep {
+  to {
+    transform: translateX(110%);
+  }
+}
+.onboarding-r6-skeleton i,
+.onboarding-r6-skeleton span,
+.onboarding-r6-skeleton small {
+  position: absolute;
+  background: #a3baca29;
+}
+.onboarding-r6-skeleton i {
+  width: 46px;
+  height: 46px;
+  left: 50px;
+  top: 28px;
+}
+.onboarding-r6-skeleton span {
+  width: 135px;
+  height: 14px;
+  left: 112px;
+  top: 30px;
+}
+.onboarding-r6-skeleton small {
+  width: 220px;
+  max-width: calc(100% - 130px);
+  height: 10px;
+  left: 112px;
+  top: 58px;
+}
+/* Measured from 143:2114/2115/2116: radius 12 / 5 / 4 and three separate
+   alphas over #A3BAC9 (0.16 / 0.20 / 0.12). An earlier pass rounded these by
+   eye and used one alpha for all three. */
+.onboarding-r6-skeleton i {
+  border-radius: 12px;
+  background: rgb(163 186 201 / 16%);
+}
+.onboarding-r6-skeleton span {
+  border-radius: 5px;
+  background: rgb(163 186 201 / 20%);
+}
+.onboarding-r6-skeleton small {
+  border-radius: 4px;
+  background: rgb(163 186 201 / 12%);
+}
+.onboarding-r6-head .r6-stepper li > span {
+  font-size: 11px;
+}
+.onboarding-r6 :is(button, [tabindex]):focus-visible {
+  outline: 2px solid #557c93;
+  outline-offset: 3px;
+}
+.onboarding-r6 input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+/* The step-1 heading carries tabindex="-1" only so the flow can move focus to
+   it on mount for screen-reader announcement. It is not operable, and the
+   shared rule above drew a focus ring around 本机 AI 应用 on first paint. The
+   focus move still happens; only the ring on a non-operable element is
+   suppressed, and every real control keeps its ring. */
+.onboarding-r6 [tabindex="-1"]:focus-visible {
+  outline: none;
+}
+.onboarding-r6 :is(button, input)[tabindex="-1"]:focus-visible {
+  outline: 2px solid #557c93;
+}
+@media (max-width: 1150px) {
+  .onboarding-r6-discovery {
+    grid-template-columns: minmax(0, 1fr) 278px;
+    gap: 24px;
+  }
+  .onboarding-r6-head h1 {
+    font-size: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .onboarding-r6 {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+  .onboarding-r6-stage {
+    flex: 0 0 auto;
+    min-height: 0;
+    padding: 18px 12px;
+  }
+  .onboarding-r6-shell {
+    height: auto;
+  }
+  .onboarding-r6-head {
+    padding: 24px 20px;
+    flex-basis: auto;
+  }
+  .onboarding-r6-head > div {
+    max-width: 100%;
+    width: auto;
+  }
+  .onboarding-r6-head .r6-stepper {
+    position: static;
+    margin-top: 22px;
+  }
+  .onboarding-r6-body {
+    padding: 24px 20px;
+  }
+  .onboarding-r6-discovery {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .onboarding-r6-apps {
+    min-height: 590px;
+  }
+  .onboarding-r6-list-heading {
+    top: 110px;
+  }
+  .onboarding-r6-list-area {
+    top: 154px;
+  }
+  .onboarding-r6-import {
+    top: 552px;
+    flex-wrap: wrap;
+  }
+  .onboarding-r6-row > label {
+    padding: 14px 10px;
+    gap: 10px;
+  }
+  .onboarding-r6-row-info strong {
+    font-size: 14px;
+  }
+  .onboarding-r6-badge {
+    min-width: 0;
+    padding: 6px;
+  }
+  .onboarding-r6-badge i {
+    display: none;
+  }
+  .onboarding-r6-foot {
+    padding: 18px 20px;
+    flex-wrap: wrap;
+    flex-basis: auto;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .onboarding-r6-shell {
+    background: #edf3f7;
+    backdrop-filter: none;
+  }
+}
+[data-native-reduce-transparency="true"] .onboarding-r6-shell {
+  background: #edf3f7;
+  backdrop-filter: none;
+}
+@media (min-width: 761px) and (max-height: 959px) {
+  .onboarding-r6-body:has(> .onboarding-r6-discovery) {
+    overflow: hidden;
+  }
+  .onboarding-r6-body > .onboarding-r6-discovery {
+    height: 100%;
+    min-height: 0;
+  }
+  .onboarding-r6-discovery > .onboarding-r6-apps {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 30px minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .onboarding-r6-apps > .onboarding-r6-list-heading,
+  .onboarding-r6-apps > .onboarding-r6-list-area,
+  .onboarding-r6-apps > .onboarding-r6-import {
+    position: static;
+    min-height: 0;
+  }
+  .onboarding-r6-apps > .onboarding-r6-list-area {
+    display: flex;
+    flex-direction: column;
+  }
+  .onboarding-r6-list-area > .onboarding-r6-list {
+    min-height: 0;
+    height: auto;
+    flex: 1;
+    overscroll-behavior: contain;
+  }
+  .onboarding-r6-list-area > .onboarding-r6-list-status {
+    flex: 0 0 30px;
+  }
+  .onboarding-r6-discovery > .onboarding-r6-summary {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .onboarding-r6-summary > * {
+    flex-shrink: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Motion and pointer feedback for the R6 cold start (area 143:1942).
+
+   This file previously contained no `:hover`, `transition` or `@keyframes` at
+   all, so the discovery step was entirely static: rows that are clickable gave
+   no pointer feedback, the two "still looking" placeholders were flat grey
+   rectangles that never moved, and an app that had just been detected appeared
+   instantly with no arrival. What follows is only feedback and arrival — no
+   layout, colour or copy from the source is changed by it, and every piece has
+   a reduced-motion escape so the accessibility branch stays truthful.
+   --------------------------------------------------------------------------- */
+
+.onboarding-r6-row {
+  transition:
+    background-color var(--r6-fast, 140ms),
+    border-color var(--r6-fast, 140ms),
+    box-shadow var(--r6-fast, 140ms);
+}
+/* Only rows the user can actually act on light up. A row whose checkbox is
+   disabled (unreadable location, revoked grant) must not look pressable. */
+.onboarding-r6-row:has(> label input:not(:disabled)):hover {
+  background: #ffffff45;
+  border-color: #c9d6de;
+  box-shadow:
+    inset 0 1px #fff,
+    0 4px 14px #3b536214;
+}
+.onboarding-r6-row.is-selected:has(> label input:not(:disabled)):hover {
+  background: #dfe7ee;
+}
+.onboarding-r6-row > label {
+  cursor: pointer;
+}
+.onboarding-r6-row:has(> label input:disabled) > label {
+  cursor: default;
+}
+
+.onboarding-r6 .onboarding-r6-quiet {
+  transition:
+    background-color var(--r6-fast, 140ms),
+    color var(--r6-fast, 140ms);
+}
+.onboarding-r6 .onboarding-r6-quiet:hover:not(:disabled) {
+  background: #ffffff5c;
+  border-radius: 6px;
+  color: #33424d;
+}
+
+/* Rows stay spatially fixed while detection updates; status dots carry change. */
+
+/* The placeholders stand in for apps not yet found, so they breathe rather
+   than sit still, and their inner bars are rounded like the real row's icon
+   and text instead of being sharp rectangles. */
+.onboarding-r6-skeleton {
+  animation: onboarding-r6-skeleton-breath 1.9s ease-in-out infinite;
+}
+@keyframes onboarding-r6-skeleton-breath {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 143:2126 is named "状态点 / 新发现呼吸" — the breathing dot is the one piece
+   of motion this step names outright, and it was not implemented. Scoped to
+   the found state, because that is what the source name says; a 未发现 or
+   无法访问 dot must stay still rather than imply activity. */
+.onboarding-r6-badge[data-found="true"] i {
+  animation: onboarding-r6-dot-breath 2.2s ease-in-out infinite;
+}
+@keyframes onboarding-r6-dot-breath {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+.onboarding-r6-list-status {
+  transition: opacity var(--r6-fast, 140ms);
+}
+
+/* Step transition. Each step renders its own R6ColdStartFrame, so a frame
+   entering the stage animates once on mount.
+
+   Honest limitation: step 2 -> step 3 does not replay this, because
+   OnboardingFlow keeps the model step mounted behind `hidden` to preserve the
+   user's draft, and a CSS animation cannot re-run without a remount. Re-keying
+   that subtree would discard the draft, which is worse than a missing
+   transition, so this covers entering step 1 and step 2 only. */
+.onboarding-r6-shell {
+  animation: onboarding-r6-shell-in 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes onboarding-r6-shell-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.onboarding-r6-head,
+.onboarding-r6-body {
+  animation: onboarding-r6-step-in 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.onboarding-r6-body {
+  animation-delay: 60ms;
+}
+@keyframes onboarding-r6-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-r6-row,
+  .onboarding-r6-skeleton,
+  .onboarding-r6-shell,
+  .onboarding-r6-head,
+  .onboarding-r6-body,
+  .onboarding-r6-badge[data-found="true"] i {
+    animation: none;
+  }
+  .onboarding-r6-row,
+  .onboarding-r6 .onboarding-r6-quiet,
+  .onboarding-r6-list-status {
+    transition: none;
+  }
+}
+[data-native-reduce-motion="true"]
+  :is(
+    .onboarding-r6-row,
+    .onboarding-r6-skeleton,
+    .onboarding-r6-shell,
+    .onboarding-r6-head,
+    .onboarding-r6-body,
+    .onboarding-r6-badge[data-found="true"] i
+  ) {
+  animation: none;
+}
+[data-native-reduce-motion="true"]
+  :is(.onboarding-r6-row, .onboarding-r6-quiet, .onboarding-r6-list-status) {
+  transition: none;
+}
