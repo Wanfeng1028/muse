@@ -2,6 +2,7 @@ import pytest
 from datetime import UTC, datetime, timedelta
 
 from feedflow import store, db
+from feedflow.cluster_scoring import cluster_importance_score
 from feedflow.ranking import get_digest_clusters
 
 
@@ -88,4 +89,12 @@ def test_cluster_score_matches_rep(tmp_db):
     assert len(groups) == 1
 
     g = groups[0]
-    assert g["cluster_score"] == g["representative"]["score_info"]["score"]
+    rep = g["representative"]
+    expected = cluster_importance_score(
+        float(rep["score_info"]["score"]),
+        g["members"],
+        g["sources"],
+        g["unread"],
+        g["latest_at"],
+    )
+    assert g["cluster_score"] == pytest.approx(expected, abs=1e-9)

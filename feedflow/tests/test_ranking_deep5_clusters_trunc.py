@@ -54,6 +54,7 @@ def test_score_tie_larger_cluster_first(tmp_db):
     groups = get_digest_clusters(tmp_db, 10)
 
     assert len(groups) == 2
-    assert groups[0]["cluster_score"] == groups[1]["cluster_score"]
+    # 两篇同标题同发布时间：分数仅差 fetched_at 微秒级时效因子，用近似相等
+    assert groups[0]["cluster_score"] == pytest.approx(groups[1]["cluster_score"], abs=1e-6)
     assert groups[0]["cluster_id"] > groups[1]["cluster_id"]
     assert {groups[0]["cluster_id"], groups[1]["cluster_id"]} == {id1, id2}
