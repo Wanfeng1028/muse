@@ -128,6 +128,7 @@
 - **深耕轮 2026-10-21（已合入，72c3569）**：review API deep4 6 测试全绿（POST /queue 返回 400 非 405，行为已锁定）。
 - **遗留 2026-10-21 凌晨轮**：k-w10（focus-validation deep5）、k-w11（words-srs）重跑 6 次全部失败——step193plan 5 次只交思考过程（严厉 prompt 重试仍失败）、step150api 4 次纯思考/占位符；dpsk 全程 429。今晚双模型均处降级状态，顺延下轮。教训："只许输出 FILE 块"硬约束今晚反而触发模型的元思考，plain 短 prompt 出码率更高（待验证）。
 - **深耕轮 2026-10-21 早（已合入，2a06847）**：k-w10 解决——s193 用"脚手架+首个测试续写"式 prompt（assembly 风格）一次成功，focus-validation.deep5.test.ts 10/10 通过。模型出码率经验更新：①给完整可组装的代码片段（assembly）比"从零写 N 个测试"可靠得多；②s150 并发上限 5（超了 429），且今晨频繁超时；③t3c 证明"只要 8 个方法、不要 FILE 信封"能绕过元思考。k-w11 仍待生成（s150 两次超时、s193 未试）。
+- **深耕轮 2026-10-21 07:07 集中收尾（已合入，2cb5ab9）**：k-w11 解决——words-srs.deep5.test.ts 10/10 全绿；新增 api-route-parity.deep5.test.ts 5/5（前后端 API 路由对齐）。凌晨轮 k-w10/k-w11 双降级遗留正式清零。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -240,6 +241,7 @@
 - **深耕轮 2026-10-21（已合入，72c3569）**：TD-004（canonical 字段，4 描述符 9 模型）+ TD-002（workers 可配锁定）已偿还；skillhub updatedAt 改为索引构建时间；PROMPT_LIBRARY.md 补齐 7 端点。
 - **遗留 2026-10-21 凌晨轮**：skillhub 分页 TD-003b 主实现 3 批次（s193 1 次 + s150 2 次）全部只产出思考/草稿，无可用代码；dpsk 429、s193/s150 双降级。顺延下轮。
 - **深耕轮 2026-10-21 早·TD-003b 主实现落地（后端+前端已合入 2a06847，测试 9/10）**：后端 SkillHubController——SkillHubIndex 新增 total/page/size/totalPages，q（id/name/description/author 包含，忽略大小写，Locale.ROOT）与 source（官方出品/社区收录精确）服务端过滤，无参数时向后兼容返回全量；mvn compile 通过。前端 skillhub.js——服务端分页条（上一页/下一页/数字页码/每页 24-48-96、搜索 300ms 防抖、skh.prev/next/perPage/pageInfo 双语），node --check 通过。测试 SkillHubPaginationTest 10 方法 9 通过：1 失败为 sourceFilter 的中文请求参数编码问题（待查），另 2 处为模型生成的类型小错（Integer→String，已修）。前置发现：既存 SkillHubIndexControllerTest#indexListsRealSkillsWithSourceLabels 的 1 个失败为 pre-existing（stash 对照在干净树同样失败：watzing-video-editor 的 source 标签期望与注册表实际数据不一致），与本轮改动无关。
+- **深耕轮 2026-10-21 07:07 集中收尾（已合入，2cb5ab9）**：SkillHubQueryFilterTest 新 12/12 全绿（q/source 过滤器纵深边界）；watzing-video-editor source 标签期望修正（pre-existing 既存失败，stash 对照确认与分页改动无关，顺手修掉）。
 
 ## mini-os「网页操作系统」
 
@@ -286,6 +288,7 @@
 
 - **深耕轮 2026-10-19 晚（已合入）**：mig006_expiry/plugin_rollback 深测验证通过；新增深测文件；备份演练脚本。
 - **深耕 lane（linkshort/mortisedb/mini-os，2026-10-19 晚）**：①VFS 同级同名冲突 409——create_fs/update_fs 在同 user_id+同 parent_id（`IS ?` NULL 安全比较）下重名（文件↔文件夹互斥）→ 409"同名文件已存在"；9 例边界测试（跨目录/跨用户放行、trim 后判重、重命名自身幂等 200、无 name 更新不触发）；修 dpsk 测试侧编造 1 处（CreateNodeRequest 是 camelCase，`parent_id` 应为 `parentId`）。②插件 install/uninstall/preview API 边界深测 12 例（重复安装 400、卸载不存在 404、装→卸→重装、恶意 manifest id、缺 plugin.json、zip slip preview 400、viewer 403×2、空 body 400；每测试独立数据目录+ENV_LOCK 串行）；用测试锁定产品行为：set_user_role 会吊销该用户全部旧会话（旧会话后续请求是 401 而非 403），viewer 用例改为重新登录后断言 403；修 dpsk 测试侧 3 处（register 201 非 200、id 取 as_i64 非 as_str、http_body_util 未引入改 axum::body::to_bytes）。
+- **深耕轮 2026-10-21 07:07 集中收尾（已合入，2cb5ab9）**：TECH_DEBT P1-6 终端大输出背压交付——`terminal.rs` 新增 `read_chunk_limited`（按会话输出预算，超限首次 TruncatedNotice、之后持续排空 Drained，write/interrupt 重置预算）+ `MINIOS_TERM_OUTPUT_LIMIT`（默认 1MiB，非法值 fail-fast exit 2）+ 指标 `minios_term_output_truncated_total` + WS 接线；真实 WS 冒烟（300KB cat → 提示 1 次、转发 61491B、新命令后恢复、指标=1）全过。P1-9 迁移注册表交付（`migrate::MIGRATIONS` 注册表，硬编码 assert 改动态派生）。`cargo test` 709/0、`cargo fmt --check` 通过、clippy 零新增（与 pristine 基线 49 行既存警告逐行一致）。
 
 ## ledger「钱迹 · 个人财务管家」
 
@@ -501,6 +504,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 - **深耕轮 2026-10-20 深夜「v021 段落评分 IDF×词长加权」（已合入 b83767a，新测试全绿）**：兑现上一轮立的里程碑——`Database::docFrequency(term)`（FTS5 MATCH 走 jieba 分词，空词/未知词返回 0）+ `termLengthWeight`（1 码点 0.35 / 2 码点 0.7 / 3+ 码点 1.0，压单字噪音）+ `TermWeights`（idf×词长权重表，idf=log((N+1)/(df+1))+1）+ `rankPassages` 加权重载（全 1.0 权重时与旧版逐位相同）；`Locator::locate` 改走加权版。3 个深测文件（docfrequency 10 例/passage 加权/v021 回归）。验证：cmake 零错；新测试全绿；全量套件 11 失败经 pristine 树 stash 对照确认为既存环境问题（TokenizerPunctTest/ServeErrParamR2 在干净树同样失败，与本轮无关）。eval 质量回归（新旧二进制 NDCG/MRR 对照）已排入深夜波次由协调员执行。
 - **深耕轮 2026-10-21（已合入，72c3569）**：QueryParser V017"不/没"边界 6 测试全绿（否定词尾缀保护）。
 - **深耕轮 2026-10-21 凌晨「v09 eval 全量重跑 + 失败分类」（已完成）**：上轮被取消的 v09 eval 全量重跑完成——**1306/1440 通过（90.7%），134 失败**，较 2026-10-18 基线 1228/1440（85.3%）净提升 78 对（v021 加权排序 + 否定语境感知生效）。134 项失败已分类（回归/环境/真问题）：**回归 0、环境 0**；真问题 134 = 期望/措辞错位 8（查询字在期望文档中 0 次，eval pair 质量问题，不修产品）+ 真召回问题 4（A类候选）+ 排序错位 122（search 57 为 C类候选、locate 长问句 64 为 D类候选、短问句 1）。基线 26 个已记录失败中 22 已修复、4 持续（t006-q11/t013-q05/t019-q12/t021-q09，均有已知分类）。决策：8 个错位修 eval pair；其余按 EVAL_V09.md 既有排期（A类 v0.15、D类 fillerWords、B/C类单独排期）。分类文档 `docseek/docs/EVAL_V09_WAVE6_CLASSIFICATION.md`，全量清单 `~/workspace/muse-build/wave-2026-10-21/v09_fails_confirmed.json`。诚实声明：精确到 pair 的回归判定需补跑基线二进制全量，本轮未做（待办）；分类为机械初分（查询字缺失检测 + 基线样本对照），未过模型复核。
+- **深耕轮 2026-10-21 07:07 集中收尾（已合入，2cb5ab9）**：v09 eval 批次调整——`src/searcher.cpp` 搜索路径微调 + `eval/eval_pairs_v09.json` 32 行调整（eval pair 质量修正，对齐 wave6 失败分类决策）。
 
 ## feedflow「信流 FeedFlow · 自托管 RSS 阅读器」
 

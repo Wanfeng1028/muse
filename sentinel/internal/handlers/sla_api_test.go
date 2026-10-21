@@ -30,7 +30,7 @@ func newSLATestServer(t *testing.T) (*Server, *store.Store, *sql.DB) {
 // insertMonitor 往 monitors 表插入一条记录，返回自增 ID
 func insertMonitor(t *testing.T, database *sql.DB) int64 {
 	t.Helper()
-	res, err := database.Exec("INSERT INTO monitors (name) VALUES (?)", "test-monitor")
+	res, err := database.Exec("INSERT INTO monitors (name, target, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))", "test-monitor", "https://example.com")
 	if err != nil {
 		t.Fatalf("插入 monitor 失败: %v", err)
 	}
@@ -69,14 +69,11 @@ func TestSLAAPI_JSON(t *testing.T) {
 	monitorID := insertMonitor(t, database)
 	insertChecks(t, database, monitorID, 10, true)
 
-	ts := httptest.NewServer(http.HandlerFunc(srv.handleMonitorSLAJSON))
-	defer ts.Close()
-
-	url := fmt.Sprintf("%s/api/monitors/%d/sla?month=2024-03", ts.URL, monitorID)
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatalf("请求失败: %v", err)
-	}
+	req := httptest.NewRequest("GET", "/api/monitors/" + fmt.Sprintf("%d", monitorID) + "/sla?month=2024-03", nil)
+	req.SetPathValue("id", fmt.Sprintf("%d", monitorID))
+	rec := httptest.NewRecorder()
+	srv.handleMonitorSLAJSON(rec, req)
+	resp := rec.Result()
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -103,14 +100,11 @@ func TestSLAAPI_CSV(t *testing.T) {
 	monitorID := insertMonitor(t, database)
 	insertChecks(t, database, monitorID, 10, true)
 
-	ts := httptest.NewServer(http.HandlerFunc(srv.handleMonitorSLAJSON))
-	defer ts.Close()
-
-	url := fmt.Sprintf("%s/api/monitors/%d/sla?month=2024-03&format=csv", ts.URL, monitorID)
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatalf("请求失败: %v", err)
-	}
+	req := httptest.NewRequest("GET", "/api/monitors/" + fmt.Sprintf("%d", monitorID) + "/sla?month=2024-03&format=csv", nil)
+	req.SetPathValue("id", fmt.Sprintf("%d", monitorID))
+	rec := httptest.NewRecorder()
+	srv.handleMonitorSLAJSON(rec, req)
+	resp := rec.Result()
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -146,14 +140,11 @@ func TestSLAAPI_BadMonth(t *testing.T) {
 
 	monitorID := insertMonitor(t, database)
 
-	ts := httptest.NewServer(http.HandlerFunc(srv.handleMonitorSLAJSON))
-	defer ts.Close()
-
-	url := fmt.Sprintf("%s/api/monitors/%d/sla?month=13", ts.URL, monitorID)
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatalf("请求失败: %v", err)
-	}
+	req := httptest.NewRequest("GET", "/api/monitors/" + fmt.Sprintf("%d", monitorID) + "/sla?month=13", nil)
+	req.SetPathValue("id", fmt.Sprintf("%d", monitorID))
+	rec := httptest.NewRecorder()
+	srv.handleMonitorSLAJSON(rec, req)
+	resp := rec.Result()
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusBadRequest {
@@ -165,18 +156,15 @@ func TestSLAAPI_NotFound(t *testing.T) {
 	srv, _, database := newSLATestServer(t)
 	defer database.Close()
 
-	ts := httptest.NewServer(http.HandlerFunc(srv.handleMonitorSLAJSON))
-	defer ts.Close()
+	// 直调 handler：必须用 SetPathValue 注入路径参数，否则 PathValue 为空、
+	// parsePathID 失败，永远走不到 404 分支（httptest.NewServer 包 handler
+	// 没有路由 pattern 匹配，PathValue 恒为空）。
+	req := httptest.NewRequest("GET", "/api/monitors/999/sla?month=2024-03", nil)
+	req.SetPathValue("id", "999")
+	rec := httptest.NewRecorder()
+	srv.handleMonitorSLAJSON(rec, req)
 
-	// 使用不存在的 monitor ID
-	url := fmt.Sprintf("%s/api/monitors/999/sla?month=2024-03", ts.URL)
-	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatalf("请求失败: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("期望状态码 404, 得到 %d", resp.StatusCode)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("期望状态码 404, 得到 %d", rec.Code)
 	}
 }
