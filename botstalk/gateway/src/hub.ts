@@ -28,6 +28,7 @@ import type {
   TaskEventPayload,
   GameActionPayload,
   GameStatePayload,
+  ApprovalDecisionPayload,
 } from "@botstalk/protocol";
 import * as store from "./db.js";
 import type { Db } from "./db.js";
@@ -67,6 +68,7 @@ export class Hub {
   private resendQueues = new Map<string, ResendQueue>();
   private adapterRooms = new Map<string, string>();
   public onMessage: ((env: Envelope<MessagePayload>) => void) | null = null;
+  public onApprovalDecision: ((env: Envelope<ApprovalDecisionPayload>) => void) | null = null;
 
   private readonly gameBroadcastThrottleMs: number;
   private readonly gameEngines = new Map<string, GameEngine>();
@@ -325,6 +327,12 @@ export class Hub {
         store.saveMessage(this.db, { room: env.room, sender: env.sender, seq: env.seq, type: "message", payload: JSON.stringify(m), ts: env.ts });
         if (this.onMessage) {
           this.onMessage(env as Envelope<MessagePayload>);
+        }
+        break;
+      }
+      case "approval_decision": {
+        if (this.onApprovalDecision) {
+          this.onApprovalDecision(env as Envelope<ApprovalDecisionPayload>);
         }
         break;
       }

@@ -1,9 +1,22 @@
-import { makeEnvelope } from "@botstalk/protocol";
-import type { Envelope, MessagePayload, StreamPayload, TaskEventPayload, TaskStatus } from "@botstalk/protocol";
+import { makeEnvelope, APPROVAL_TTL_MS } from "@botstalk/protocol";
+import type { ApprovalDecisionPayload, ApprovalRequestPayload, Envelope, MessagePayload, StreamPayload, TaskEventPayload, TaskStatus } from "@botstalk/protocol";
 import { randomUUID } from "node:crypto";
 import type { Hub } from "./hub.js";
 import type { Db } from "./db.js";
 import { saveMessage, upsertTaskDispatch, updateTaskStatus, getRoomType } from "./db.js";
+import { PendingApprovals } from "./approvals.js";
+
+let approvalMode: "off" | "all" = "off";
+const pendingApprovals = new PendingApprovals();
+
+/** 由 server 启动时按配置注入。默认 "off"：任务直达派发，行为与无审批门时一致。 */
+export function setTaskApprovalMode(mode: "off" | "all"): void {
+  approvalMode = mode;
+}
+
+export function getPendingApprovals(): PendingApprovals {
+  return pendingApprovals;
+}
 
 export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): void {
   const roomType = getRoomType(db, env.room);
@@ -89,6 +102,45 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
     const bareTitle = p.text.replace(/^(?:@\S+\s*)+/, "").trim();
     const title = bareTitle.length > 80 ? bareTitle.slice(0, 80) + "…" : bareTitle;
     if (pick !== undefined) {
+      if (approvalMode === "all") {
+        const approvalId = randomUUID();
+        const expiresAtMs = Date.now() + APPROVAL_TTL_MS;
+        pendingApprovals.put({
+          approval_id: approvalId,
+          task_id: taskId,
+          room: env.room,
+          requester: env.sender,
+          assignee: pick,
+          title,
+          env,
+          expires_at_ms: expiresAtMs,
+        });
+        upsertTaskDispatch(db, {
+          task_id: taskId,
+          room: env.room,
+          owner: env.sender,
+          assignee: pick,
+          title,
+          status: "pending_approval",
+        });
+        hub.broadcastTaskEvent(env.room, { task_id: taskId, status: "pending_approval", assignee: pick, title });
+        hub.broadcast(env.room, makeEnvelope<ApprovalRequestPayload>(
+          "approval_request",
+          "gateway",
+          env.room,
+          hub.nextSeq(),
+          0,
+          {
+            approval_id: approvalId,
+            task_id: taskId,
+            requester: env.sender,
+            assignee: pick,
+            title,
+            expires_at_ms: expiresAtMs,
+          },
+        ));
+        return;
+      }
       upsertTaskDispatch(db, {
         task_id: taskId,
         room: env.room,
@@ -143,6 +195,93 @@ export function routeStream(hub: Hub, env: Envelope<StreamPayload>, db: Db): voi
       payload: JSON.stringify({ stream_id: env.payload.stream_id }),
       ts: env.ts,
     });
+  }
+}
+
+/** 处理 approval_decision 帧：放行则按原派发流程把任务帧发给执行者；驳回则终止并回告提出者。 */
+export function routeApprovalDecision(hub: Hub, env: Envelope<ApprovalDecisionPayload>, db: Db): void {
+  const pending = pendingApprovals.get(env.payload.approval_id);
+  if (pending === undefined) {
+    return;
+  }
+  if (env.room !== pending.room) {
+    return;
+  }
+  // 执行者不能给自己的任务放行。
+  if (env.sender === pending.assignee) {
+    return;
+  }
+  pendingApprovals.take(env.payload.approval_id);
+  if (env.payload.decision === "approve") {
+    upsertTaskDispatch(db, {
+      task_id: pending.task_id,
+      room: pending.room,
+      owner: pending.requester,
+      assignee: pending.assignee,
+      title: pending.title,
+      status: "dispatched",
+    });
+    hub.broadcastTaskEvent(pending.room, { task_id: pending.task_id, status: "dispatched", assignee: pending.assignee, title: pending.title });
+    hub.sendTo(pending.assignee, pending.env);
+    return;
+  }
+  updateTaskStatus(db, pending.task_id, "failed");
+  hub.broadcastTaskEvent(pending.room, {
+    task_id: pending.task_id,
+    status: "failed",
+    assignee: pending.assignee,
+    title: pending.title,
+    note: env.payload.note ?? "approval rejected",
+  });
+  if (hub.getConn(pending.requester)) {
+    const reply = makeEnvelope<MessagePayload>(
+      "message",
+      "gateway",
+      pending.room,
+      hub.nextSeq(),
+      0,
+      {
+        msg_id: randomUUID(),
+        text: "TASK_APPROVAL_REJECTED: " + pending.title,
+        mentions: [],
+        intent: "task",
+        task_id: pending.task_id,
+        task_status: "failed",
+      },
+    );
+    hub.sendTo(pending.requester, reply);
+  }
+}
+
+/** 清扫过期未决的审批：台账置 cancelled，广播事件并回告提出者。由 server 的定时器周期调用。 */
+export function sweepApprovals(hub: Hub, db: Db, now: number): void {
+  for (const pending of pendingApprovals.sweepExpired(now)) {
+    updateTaskStatus(db, pending.task_id, "cancelled");
+    hub.broadcastTaskEvent(pending.room, {
+      task_id: pending.task_id,
+      status: "cancelled",
+      assignee: pending.assignee,
+      title: pending.title,
+      note: "approval expired",
+    });
+    if (hub.getConn(pending.requester)) {
+      const reply = makeEnvelope<MessagePayload>(
+        "message",
+        "gateway",
+        pending.room,
+        hub.nextSeq(),
+        0,
+        {
+          msg_id: randomUUID(),
+          text: "TASK_APPROVAL_EXPIRED: " + pending.title,
+          mentions: [],
+          intent: "task",
+          task_id: pending.task_id,
+          task_status: "failed",
+        },
+      );
+      hub.sendTo(pending.requester, reply);
+    }
   }
 }
 // 自查：红线 1-5 逐条通过

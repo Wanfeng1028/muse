@@ -290,7 +290,7 @@ export function getArtifact(db: Db, id: string): ArtifactRow | undefined {
   return row as unknown as ArtifactRow | undefined;
 }
 
-export type TaskStatus = "dispatched" | "running" | "done" | "failed" | "unsupported" | "cancelled";
+export type TaskStatus = "dispatched" | "running" | "done" | "failed" | "unsupported" | "cancelled" | "pending_approval";
 
 export interface TaskRow {
   task_id: string;

@@ -11,7 +11,7 @@ import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
 import { DoudizhuGameEngine } from "./doudizhu-game.js";
 import { WerewolfGameEngine } from "./werewolf-game.js";
-import { routeMessage, routeStream } from "./router.js";
+import { routeMessage, routeStream, routeApprovalDecision, setTaskApprovalMode, sweepApprovals } from "./router.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
 import { createArtifactService } from "./artifacts.js";
@@ -623,12 +623,16 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
   hub.onMessage = (env: Envelope<MessagePayload>) => {
     routeMessage(hub, env, db);
   };
+  setTaskApprovalMode(config.taskApprovalMode ?? "off");
+  hub.onApprovalDecision = (env) => {
+    routeApprovalDecision(hub, env, db);
+  };
 
   wss.on("connection", (ws) => {
     hub.handleConnection(ws);
   });
 
-  const timer = setInterval(() => hub.sweep(), ZOMBIE_SWEEP_MS);
+  const timer = setInterval(() => { hub.sweep(); sweepApprovals(hub, db, Date.now()); }, ZOMBIE_SWEEP_MS);
   timer.unref?.();
 
   httpServer.listen(config.port);

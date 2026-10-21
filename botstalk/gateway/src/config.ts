@@ -12,6 +12,8 @@ export interface GatewayConfig {
   roomMaxMembersPlayroom: number;
   /** 小游戏状态广播节流毫秒数。 */
   gameBroadcastThrottleMs: number;
+  /** 任务审批门模式："off" 关闭（默认，派发直达）；"all" 全部任务先经人工放行。缺省视为 "off"。 */
+  taskApprovalMode?: "off" | "all";
 }
 
 
@@ -49,6 +51,17 @@ function readInt(
     throw new Error(`[config] invalid ${key}=${raw}; expected integer in [${min}, ${max}]`);
   }
   return parsed;
+}
+
+function readApprovalMode(env: NodeJS.ProcessEnv): "off" | "all" {
+  const raw = env.TASK_APPROVAL_MODE;
+  if (raw === undefined || raw === "") {
+    return "off";
+  }
+  if (raw !== "off" && raw !== "all") {
+    throw new Error(`[config] invalid TASK_APPROVAL_MODE=${raw}; expected 'off' or 'all'`);
+  }
+  return raw;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, pkgDir?: string): GatewayConfig {
@@ -98,6 +111,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, pkgDir?: string
     roomMaxMembersWorkroom,
     roomMaxMembersPlayroom,
     gameBroadcastThrottleMs,
+    taskApprovalMode: readApprovalMode(env),
   };
 }
 

@@ -194,3 +194,18 @@ test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gat
 **影响**：
 - `gateway/test/presence-usage.r2.test.ts` 中 6a/6b/7a/7b 的“语义锁定（DECISIONS 2026-10-18 presence 全局）”注释删除，改为按 room 过滤的新语义；新增用例 15（房间迁移隔离）、用例 16（db 层 COALESCE 与 listPresence 全量含 room）。
 - 老调用方不传 `room` 仍可编译、仍向后兼容；不传时不清空已有 room 值。
+
+## 2026-10-21：人工审批门（借鉴 Kylon "keep the last call with a person"）
+
+**背景**：Kylon（闭源商业产品，调研笔记见 muse-repo/kylon-research/）的核心特征之一是人工审批门——凡改变房间之外世界的操作先停在审批，由人放行。BotsTalk 的 task intent 派发后执行 adapter（尤其 DeepSeek body 模式，dsh 本体可在用户电脑上真实执行）直接执行，无任何确认环节，本次补齐。
+
+**决策**：
+- 协议新增两个帧类型：`approval_request`（网关→房间广播，payload 含 approval_id/task_id/requester/assignee/title/expires_at_ms）与 `approval_decision`（成员→网关，decision 为 approve/reject，可带 note）；`task_event` 状态新增 `pending_approval`；codec 同步校验。协议版本串不升（仍 "1.3"），新帧为加法扩展，旧端忽略即可。
+- 网关配置 `TASK_APPROVAL_MODE`：`off`（默认，派发直达，行为与此前一致）/ `all`（全部任务派发前先经审批）。`GatewayConfig.taskApprovalMode` 为可选字段，缺省视为 off，不破坏既有配置字面量。
+- 挂起态存内存登记表 `PendingApprovals`（gateway/src/approvals.ts），原始任务帧整帧保留，放行后原样派发；网关重启即丢，与 resendQueue 同为已知内存态边界。TTL 5 分钟（APPROVAL_TTL_MS），由 server 既有 15 秒定时器顺带清扫：过期置台账 cancelled、广播 task_event、回告提出者。
+- 决策规则：执行 assignee 本人不能放行自己的任务（防自批）；decision 帧 room 必须与挂起房间一致；未知 approval_id 静默忽略。驳回置台账 failed 并给提出者回 TASK_APPROVAL_REJECTED 回执帧。
+- 台账先行：挂起时即以 `pending_approval` 状态 upsert tasks 表（db 侧 TaskStatus 同步扩枚举），批准转 dispatched、驳回转 failed、过期转 cancelled，全程可查。
+
+**影响**：
+- 新增测试：protocol/test/approval.test.ts（5 例）、gateway/test/approvals.test.ts（8 例：挂起/批准/驳回/防自批/未知 id/过期清扫/off 直达/配置解析）。全量回归：protocol 159 例、gateway 681 例全绿。
+- web 前端尚未接审批 UI（approval_request 帧已广播到房间，UI 渲染与放行按钮为下一阶段）；BYO agent 入驻、工作流引擎不在本次范围（见 kylon-research 对照表）。

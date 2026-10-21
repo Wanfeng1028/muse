@@ -15,7 +15,9 @@ export type FrameType =
   | "capability_update"
   | "task_event"
   | "game_action"
-  | "game_state";
+  | "game_state"
+  | "approval_request"
+  | "approval_decision";
 
 /** type=game_action 的 payload（客户端→网关：玩家动作）。 */
 export interface GameActionPayload {
@@ -51,9 +53,32 @@ export type TaskStatus = "running" | "done" | "failed" | "unsupported";
 /** type=task_event 的 payload（网关向房间广播的任务状态事件）。 */
 export interface TaskEventPayload {
   task_id: string;
-  status: "dispatched" | TaskStatus | "cancelled";
+  status: "dispatched" | TaskStatus | "cancelled" | "pending_approval";
   assignee?: string;
   title?: string;
+  note?: string;
+}
+
+/** type=approval_request 的 payload（网关→房间广播：有任务在等人工放行）。 */
+export interface ApprovalRequestPayload {
+  approval_id: string;
+  task_id: string;
+  /** 提出任务的发送方 id。 */
+  requester: string;
+  /** 将执行任务的 adapter id。 */
+  assignee: string;
+  title: string;
+  /** Unix 毫秒：超过此时刻未决策视为过期。 */
+  expires_at_ms: number;
+}
+
+/** 审批决定。 */
+export type ApprovalDecision = "approve" | "reject";
+
+/** type=approval_decision 的 payload（成员→网关：放行或驳回一个待审批任务）。 */
+export interface ApprovalDecisionPayload {
+  approval_id: string;
+  decision: ApprovalDecision;
   note?: string;
 }
 

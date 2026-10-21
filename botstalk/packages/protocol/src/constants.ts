@@ -21,6 +21,9 @@ export const GAP_RESEND_MS = 5000;
 
 export const UPLOAD_URL_WINDOW_MS = 300000;
 
+/** 审批门：任务挂起等待人工放行的最长毫秒数，超时自动取消。 */
+export const APPROVAL_TTL_MS = 300000;
+
 /**
  * 指数退避：attempt 从 0 起，delay = min(30000, 1000 * 2^attempt)。
  * 抖动由调用方在此结果上叠加，本函数不加抖动。

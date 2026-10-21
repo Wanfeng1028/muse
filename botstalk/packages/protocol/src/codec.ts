@@ -14,6 +14,8 @@ import type {
   Intent,
   TaskStatus,
   TaskEventPayload,
+  ApprovalRequestPayload,
+  ApprovalDecisionPayload,
 } from "./types.js";
 import { PROTOCOL_VERSION } from "./constants.js";
 
@@ -27,6 +29,8 @@ const FRAME_TYPES: readonly FrameType[] = [
   "task_event",
   "game_action",
   "game_state",
+  "approval_request",
+  "approval_decision",
 ];
 
 const INTENTS: readonly Intent[] = ["chat", "task"];
@@ -209,6 +213,12 @@ export function validateEnvelope(env: Envelope): string[] {
     case "task_event":
       errors.push(...validateTaskEventPayload(payload));
       break;
+    case "approval_request":
+      errors.push(...validateApprovalRequestPayload(payload));
+      break;
+    case "approval_decision":
+      errors.push(...validateApprovalDecisionPayload(payload));
+      break;
   }
 
   return errors;
@@ -218,11 +228,32 @@ function validateTaskEventPayload(payload: unknown): string[] {
   const errors: string[] = [];
   if (!isPlainObject(payload)) { errors.push("payload: expected object"); return errors; }
   if (!isNonEmptyString(payload["task_id"])) errors.push("payload.task_id: must be a non-empty string");
-  const ok = ["dispatched","running","done","failed","unsupported","cancelled"];
+  const ok = ["dispatched","running","done","failed","unsupported","cancelled","pending_approval"];
   if (typeof payload["status"] !== "string" || !ok.includes(payload["status"])) errors.push("payload.status: invalid task event status");
   for (const k of ["assignee","title","note"]) {
     if (payload[k] !== undefined && typeof payload[k] !== "string") errors.push("payload." + k + ": must be a string");
   }
+  return errors;
+}
+
+function validateApprovalRequestPayload(payload: unknown): string[] {
+  const errors: string[] = [];
+  if (!isPlainObject(payload)) { errors.push("payload: expected object"); return errors; }
+  if (!isNonEmptyString(payload["approval_id"])) errors.push("payload.approval_id: must be a non-empty string");
+  if (!isNonEmptyString(payload["task_id"])) errors.push("payload.task_id: must be a non-empty string");
+  if (!isNonEmptyString(payload["requester"])) errors.push("payload.requester: must be a non-empty string");
+  if (!isNonEmptyString(payload["assignee"])) errors.push("payload.assignee: must be a non-empty string");
+  if (typeof payload["title"] !== "string") errors.push("payload.title: must be a string");
+  if (!isFiniteInteger(payload["expires_at_ms"])) errors.push("payload.expires_at_ms: must be an integer");
+  return errors;
+}
+
+function validateApprovalDecisionPayload(payload: unknown): string[] {
+  const errors: string[] = [];
+  if (!isPlainObject(payload)) { errors.push("payload: expected object"); return errors; }
+  if (!isNonEmptyString(payload["approval_id"])) errors.push("payload.approval_id: must be a non-empty string");
+  if (payload["decision"] !== "approve" && payload["decision"] !== "reject") errors.push("payload.decision: must be 'approve' or 'reject'");
+  if (payload["note"] !== undefined && typeof payload["note"] !== "string") errors.push("payload.note: must be a string");
   return errors;
 }
 
