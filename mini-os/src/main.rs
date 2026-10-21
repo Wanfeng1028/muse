@@ -391,6 +391,8 @@ async fn cmd_serve(config: Config) -> i32 {
         config.login_rps,
         config.login_burst,
     );
+    // 终端输出背压上限走 MINIOS_TERM_OUTPUT_LIMIT（默认 1MiB，非法值已在 from_env fail-fast）。
+    state.terminals.set_output_limit(config.term_output_limit);
 
     let app = build_app(state);
 

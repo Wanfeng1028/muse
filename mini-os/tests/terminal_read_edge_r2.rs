@@ -1,6 +1,6 @@
+use mini_os::terminal::{TermError, TerminalManager};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use mini_os::terminal::{TermError, TerminalManager};
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -25,11 +25,19 @@ fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: D
                 }
             }
             Err(e) => {
-                panic!("read_chunk failed: {:?}, accumulated so far: {:?}", e, String::from_utf8_lossy(&acc));
+                panic!(
+                    "read_chunk failed: {:?}, accumulated so far: {:?}",
+                    e,
+                    String::from_utf8_lossy(&acc)
+                );
             }
         }
     }
-    panic!("timeout waiting for {:?}, accumulated so far: {:?}", needle, String::from_utf8_lossy(&acc));
+    panic!(
+        "timeout waiting for {:?}, accumulated so far: {:?}",
+        needle,
+        String::from_utf8_lossy(&acc)
+    );
 }
 
 // 测什么：零长度缓冲 read_chunk 返回 Ok(0)，且空 buf 路径依然校验会话归属（未知 id 返回 NotFound）。
@@ -44,7 +52,11 @@ fn read_empty_buf_returns_zero() {
     assert_eq!(r, Ok(0), "empty buffer read must return Ok(0)");
 
     let r2 = m.read_chunk(1, "deadbeefdeadbeefdeadbeefdeadbeef", &mut buf);
-    assert_eq!(r2, Err(TermError::NotFound), "empty buffer read must still validate session ownership");
+    assert_eq!(
+        r2,
+        Err(TermError::NotFound),
+        "empty buffer read must still validate session ownership"
+    );
 
     m.close(1, &sid).expect("close session should succeed");
 }
@@ -55,11 +67,15 @@ fn read_empty_buf_returns_zero() {
 fn open_clamps_dimensions() {
     let m = mgr("open-clamp", 8, 3600);
 
-    let sid1 = m.open(1, 0, 0).expect("open with 0x0 must clamp and succeed");
+    let sid1 = m
+        .open(1, 0, 0)
+        .expect("open with 0x0 must clamp and succeed");
     assert!(!sid1.is_empty(), "session id should be non-empty");
     m.close(1, &sid1).expect("close session1 should succeed");
 
-    let sid2 = m.open(1, 9999, 9999).expect("open with 9999x9999 must clamp and succeed");
+    let sid2 = m
+        .open(1, 9999, 9999)
+        .expect("open with 9999x9999 must clamp and succeed");
     assert!(!sid2.is_empty(), "session id should be non-empty");
     m.close(1, &sid2).expect("close session2 should succeed");
 

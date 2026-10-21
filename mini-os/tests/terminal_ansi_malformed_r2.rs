@@ -1,6 +1,6 @@
+use mini_os::terminal::{TermError, TerminalManager};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use mini_os::terminal::{TermError, TerminalManager};
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -25,11 +25,19 @@ fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: D
                 }
             }
             Err(e) => {
-                panic!("read_chunk failed: {:?}, accumulated so far: {:?}", e, String::from_utf8_lossy(&acc));
+                panic!(
+                    "read_chunk failed: {:?}, accumulated so far: {:?}",
+                    e,
+                    String::from_utf8_lossy(&acc)
+                );
             }
         }
     }
-    panic!("timeout waiting for {:?}, accumulated so far: {:?}", needle, String::from_utf8_lossy(&acc));
+    panic!(
+        "timeout waiting for {:?}, accumulated so far: {:?}",
+        needle,
+        String::from_utf8_lossy(&acc)
+    );
 }
 
 // 测什么：向 PTY 写入畸形/超长 CSI 参数序列后，shell 仍存活并能继续执行命令。

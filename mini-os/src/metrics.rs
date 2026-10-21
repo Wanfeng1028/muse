@@ -47,6 +47,8 @@ pub struct Metrics {
     terminal_opened: AtomicU64,
     /// minios_terminal_sessions：当前存活终端会话数。
     terminal_sessions: AtomicI64,
+    /// minios_term_output_truncated_total：终端输出被背压截断的累计次数。
+    term_output_truncated: AtomicU64,
 }
 
 impl Metrics {
@@ -61,6 +63,7 @@ impl Metrics {
             share_ratelimited: AtomicU64::new(0),
             terminal_opened: AtomicU64::new(0),
             terminal_sessions: AtomicI64::new(0),
+            term_output_truncated: AtomicU64::new(0),
         }
     }
 
@@ -115,6 +118,11 @@ impl Metrics {
     /// 当前终端会话数 -1。
     pub fn term_session_dec(&self) {
         self.terminal_sessions.fetch_sub(1, Ordering::SeqCst);
+    }
+
+    /// 终端输出被背压截断计数 +1。
+    pub fn term_output_truncated(&self) {
+        self.term_output_truncated.fetch_add(1, Ordering::Relaxed);
     }
 
     /// 渲染为 Prometheus exposition 文本。
@@ -181,6 +189,14 @@ impl Metrics {
         out.push_str(&format!(
             "minios_share_rate_limited_total {}\n",
             self.share_ratelimited.load(Ordering::Relaxed)
+        ));
+
+        // minios_term_output_truncated_total
+        out.push_str("# HELP minios_term_output_truncated_total Total number of times terminal output was truncated by backpressure.\n");
+        out.push_str("# TYPE minios_term_output_truncated_total counter\n");
+        out.push_str(&format!(
+            "minios_term_output_truncated_total {}\n",
+            self.term_output_truncated.load(Ordering::Relaxed)
         ));
 
         // http_request_duration_seconds

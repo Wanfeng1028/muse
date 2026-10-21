@@ -1383,14 +1383,16 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: i64, us
 
                                             // 为该会话 spawn 一个阻塞读任务
                                             let mgr = state.terminals.clone();
+                                            let metrics = state.metrics.clone();
                                             let tx_clone = tx.clone();
                                             let sid_for_task = session_id.clone();
                                             let handle = tokio::task::spawn_blocking(move || {
                                                 let mut buf = [0u8; 8192];
+                                                // 截断提示里的上限（KB），取自服务端配置。
+                                                let limit_kb = mgr.output_limit() / 1024;
                                                 loop {
-                                                    match mgr.read_chunk(user_id, &sid_for_task, &mut buf) {
-                                                        Ok(0) => break,
-                                                        Ok(n) => {
+                                                    match mgr.read_chunk_limited(user_id, &sid_for_task, &mut buf) {
+                                                        Ok(crate::terminal::ReadOutcome::Data(n)) => {
                                                             let data = String::from_utf8_lossy(&buf[..n]).into_owned();
                                                             let out = json!({
                                                                 "type": "term_output",
@@ -1402,7 +1404,23 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: i64, us
                                                                 break;
                                                             }
                                                         }
-                                                        Err(_) => break,
+                                                        Ok(crate::terminal::ReadOutcome::TruncatedNotice) => {
+                                                            metrics.term_output_truncated();
+                                                            let notice = json!({
+                                                                "type": "term_output",
+                                                                "session_id": sid_for_task,
+                                                                "data": format!("\r\n[输出过长，已截断：单次连续输出超过 {} KB 已停止推送，输入新命令可继续]\r\n", limit_kb)
+                                                            })
+                                                            .to_string();
+                                                            if tx_clone.blocking_send(notice).is_err() {
+                                                                break;
+                                                            }
+                                                        }
+                                                        Ok(crate::terminal::ReadOutcome::Drained) => {
+                                                            // 截断后持续排空 PTY，不向客户端发送任何内容，
+                                                            // 避免子进程因 PTY 缓冲区满而永久阻塞。
+                                                        }
+                                                        Ok(crate::terminal::ReadOutcome::Closed) | Err(_) => break,
                                                     }
                                                 }
                                                 // 自然退出：仅通知，不动 metrics

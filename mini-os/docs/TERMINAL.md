@@ -80,8 +80,9 @@ Ctrl+C 不走应用层自定义逻辑，而是向 PTY master 写 0x03。这个�
 | --- | --- | --- |
 | `minios_terminal_opened_total` | counter | 累计打开的会话数 |
 | `minios_terminal_sessions` | gauge | 当前会话数 |
+| `minios_term_output_truncated_total` | counter | 终端输出被背压截断的累计次数 |
 
 ## 9. 已知限制
 
 - Windows 下未验证。
-- 超大输出的背压策略是直接推送，极端情况下可能占内存。
+- 超大输出背压（v1.10 已交付）：服务端按会话做输出预算（`read_chunk_limited`），超 `MINIOS_TERM_OUTPUT_LIMIT`（默认 1MiB）后截断推送并提示"[输出过长，已截断]"，持续排空 PTY 防子进程阻塞；客户端输入新命令重置预算。指标 `minios_term_output_truncated_total`。

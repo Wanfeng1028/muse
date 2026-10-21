@@ -16,27 +16,52 @@ async fn test_app() -> (Router, String) {
 async fn register(app: &Router, username: &str, password: &str) -> (StatusCode, Value, String) {
     let payload = json!({ "username": username, "password": password });
     let request = Request::builder()
-        .method("POST").uri("/api/auth/register")
+        .method("POST")
+        .uri("/api/auth/register")
         .header("content-type", "application/json")
-        .body(axum::body::Body::from(payload.to_string())).unwrap();
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
-    let cookie = response.headers().get("set-cookie").and_then(|v| v.to_str().ok())
-        .map(|s| s.split(';').next().unwrap_or("").to_string()).unwrap_or_default();
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(';').next().unwrap_or("").to_string())
+        .unwrap_or_default();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let value: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (status, value, cookie)
 }
 
-async fn req(app: &Router, method: &str, uri: &str, body: Option<Value>, cookie: &str) -> (StatusCode, Value) {
+async fn req(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<Value>,
+    cookie: &str,
+) -> (StatusCode, Value) {
     let payload = body.unwrap_or(Value::Null);
-    let builder = Request::builder().method(method).uri(uri).header("content-type", "application/json");
-    let builder = if cookie.is_empty() { builder } else { builder.header("cookie", cookie) };
-    let request = builder.body(axum::body::Body::from(payload.to_string())).unwrap();
+    let builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header("content-type", "application/json");
+    let builder = if cookie.is_empty() {
+        builder
+    } else {
+        builder.header("cookie", cookie)
+    };
+    let request = builder
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let value: Value = if bytes.is_empty() { Value::Null } else { serde_json::from_slice(&bytes).unwrap_or(Value::Null) };
+    let value: Value = if bytes.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null)
+    };
     (status, value)
 }
 
@@ -74,7 +99,11 @@ async fn move_into_self_400() {
 
     let (get_status, node) = req(&app, "GET", &format!("/api/fs/{}", me), None, &cookie).await;
     assert_eq!(get_status, StatusCode::OK);
-    assert_eq!(node["parentId"], Value::Null, "拒绝后节点 parentId 必须保持 null");
+    assert_eq!(
+        node["parentId"],
+        Value::Null,
+        "拒绝后节点 parentId 必须保持 null"
+    );
 }
 
 #[tokio::test]
@@ -98,7 +127,11 @@ async fn move_into_descendant_400() {
 
     let (get_status, node) = req(&app, "GET", &format!("/api/fs/{}", p), None, &cookie).await;
     assert_eq!(get_status, StatusCode::OK);
-    assert_eq!(node["parentId"], Value::Null, "拒绝后 p 必须仍位于根，parentId 为 null");
+    assert_eq!(
+        node["parentId"],
+        Value::Null,
+        "拒绝后 p 必须仍位于根，parentId 为 null"
+    );
     assert_eq!(node["name"], "p");
     assert_eq!(node["kind"], "folder");
 }
@@ -120,7 +153,11 @@ async fn move_to_file_and_missing_target() {
         &cookie,
     )
     .await;
-    assert_eq!(status, StatusCode::BAD_REQUEST, "目标不是文件夹必须返回 400");
+    assert_eq!(
+        status,
+        StatusCode::BAD_REQUEST,
+        "目标不是文件夹必须返回 400"
+    );
 
     let (missing_status, _missing_body) = req(
         &app,
@@ -130,7 +167,11 @@ async fn move_to_file_and_missing_target() {
         &cookie,
     )
     .await;
-    assert_eq!(missing_status, StatusCode::NOT_FOUND, "目标不存在必须返回 404");
+    assert_eq!(
+        missing_status,
+        StatusCode::NOT_FOUND,
+        "目标不存在必须返回 404"
+    );
 
     let (get_status, node) = req(&app, "GET", &format!("/api/fs/{}", f1), None, &cookie).await;
     assert_eq!(get_status, StatusCode::OK);

@@ -1,6 +1,6 @@
+use mini_os::terminal::{TermError, TerminalManager};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use mini_os::terminal::{TermError, TerminalManager};
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -25,11 +25,19 @@ fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: D
                 }
             }
             Err(e) => {
-                panic!("read_chunk failed: {:?}, accumulated so far: {:?}", e, String::from_utf8_lossy(&acc));
+                panic!(
+                    "read_chunk failed: {:?}, accumulated so far: {:?}",
+                    e,
+                    String::from_utf8_lossy(&acc)
+                );
             }
         }
     }
-    panic!("timeout waiting for {:?}, accumulated so far: {:?}", needle, String::from_utf8_lossy(&acc));
+    panic!(
+        "timeout waiting for {:?}, accumulated so far: {:?}",
+        needle,
+        String::from_utf8_lossy(&acc)
+    );
 }
 
 #[test]
@@ -41,7 +49,11 @@ fn open_close_cycle_releases_quota() {
     let m = mgr("quota-cycle", 1, 3600);
 
     let s1 = m.open(1, 80, 24).expect("first open should succeed");
-    assert_eq!(m.session_count(1), 1, "after first open, session_count(1) must be 1");
+    assert_eq!(
+        m.session_count(1),
+        1,
+        "after first open, session_count(1) must be 1"
+    );
 
     let second = m.open(1, 80, 24);
     assert_eq!(
@@ -51,14 +63,26 @@ fn open_close_cycle_releases_quota() {
     );
     assert_eq!(m.session_count(1), 1, "failed open must not add a session");
 
-    m.close(1, &s1).expect("close of existing session should succeed");
-    assert_eq!(m.session_count(1), 0, "after close, session_count(1) must be 0");
+    m.close(1, &s1)
+        .expect("close of existing session should succeed");
+    assert_eq!(
+        m.session_count(1),
+        0,
+        "after close, session_count(1) must be 0"
+    );
 
-    let s2 = m.open(1, 80, 24).expect("re-open after close should succeed");
+    let s2 = m
+        .open(1, 80, 24)
+        .expect("re-open after close should succeed");
     assert_ne!(s1, s2, "re-opened session should get a fresh id");
-    assert_eq!(m.session_count(1), 1, "after re-open, session_count(1) must be 1");
+    assert_eq!(
+        m.session_count(1),
+        1,
+        "after re-open, session_count(1) must be 1"
+    );
 
-    m.close(1, &s2).expect("close of re-opened session should succeed");
+    m.close(1, &s2)
+        .expect("close of re-opened session should succeed");
     assert_eq!(m.session_count(1), 0, "final close must release quota");
 }
 
@@ -73,11 +97,25 @@ fn set_last_active_unknown_sid_no_panic() {
     let unknown_sid = "ffffffffffffffffffffffffffffffff";
     m.set_last_active_for_test(unknown_sid, Instant::now());
 
-    assert_eq!(m.session_count(1), 0, "unknown sid hook call must not create sessions for uid 1");
-    assert_eq!(m.session_count(0), 0, "unknown sid hook call must not create sessions for uid 0");
+    assert_eq!(
+        m.session_count(1),
+        0,
+        "unknown sid hook call must not create sessions for uid 1"
+    );
+    assert_eq!(
+        m.session_count(0),
+        0,
+        "unknown sid hook call must not create sessions for uid 0"
+    );
 
     // 再确认钩子对未知 sid 之后，管理器仍能正常 open，证明状态未被破坏。
-    let s = m.open(1, 80, 24).expect("manager must still work after unknown-sid hook call");
-    assert_eq!(m.session_count(1), 1, "session_count(1) must be 1 after successful open");
+    let s = m
+        .open(1, 80, 24)
+        .expect("manager must still work after unknown-sid hook call");
+    assert_eq!(
+        m.session_count(1),
+        1,
+        "session_count(1) must be 1 after successful open"
+    );
     m.close(1, &s).expect("close should succeed");
 }

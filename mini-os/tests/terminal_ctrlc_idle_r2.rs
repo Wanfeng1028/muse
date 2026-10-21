@@ -1,6 +1,6 @@
+use mini_os::terminal::{TermError, TerminalManager};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use mini_os::terminal::{TermError, TerminalManager};
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -25,11 +25,19 @@ fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: D
                 }
             }
             Err(e) => {
-                panic!("read_chunk failed: {:?}, accumulated so far: {:?}", e, String::from_utf8_lossy(&acc));
+                panic!(
+                    "read_chunk failed: {:?}, accumulated so far: {:?}",
+                    e,
+                    String::from_utf8_lossy(&acc)
+                );
             }
         }
     }
-    panic!("timeout waiting for {:?}, accumulated so far: {:?}", needle, String::from_utf8_lossy(&acc));
+    panic!(
+        "timeout waiting for {:?}, accumulated so far: {:?}",
+        needle,
+        String::from_utf8_lossy(&acc)
+    );
 }
 
 #[test]
@@ -43,14 +51,25 @@ fn interrupt_on_idle_shell_is_harmless() {
 
     // 空转 shell 上发 Ctrl+C：不应报错。
     let r = m.interrupt(1, &sid);
-    assert_eq!(r, Ok(()), "interrupt on idle shell must succeed, got {:?}", r);
+    assert_eq!(
+        r,
+        Ok(()),
+        "interrupt on idle shell must succeed, got {:?}",
+        r
+    );
 
     // 会话必须仍然存活。
     let alive = m.is_alive(1, &sid);
-    assert_eq!(alive, Ok(true), "session must stay alive after idle Ctrl+C, got {:?}", alive);
+    assert_eq!(
+        alive,
+        Ok(true),
+        "session must stay alive after idle Ctrl+C, got {:?}",
+        alive
+    );
 
     // 之后仍可交互：写入命令并读回回显。
-    m.write(1, &sid, b"echo idle-ctrlc-4\n").expect("write after idle interrupt");
+    m.write(1, &sid, b"echo idle-ctrlc-4\n")
+        .expect("write after idle interrupt");
     let out = read_until(&m, 1, &sid, "idle-ctrlc-4", Duration::from_secs(10));
     assert!(
         out.contains("idle-ctrlc-4"),
@@ -61,5 +80,9 @@ fn interrupt_on_idle_shell_is_harmless() {
     // 收尾：会话仍在计数中，close 后计数归零。
     assert_eq!(m.session_count(1), 1, "session should still be tracked");
     m.close(1, &sid).expect("close session");
-    assert_eq!(m.session_count(1), 0, "session count should drop to zero after close");
+    assert_eq!(
+        m.session_count(1),
+        0,
+        "session count should drop to zero after close"
+    );
 }

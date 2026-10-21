@@ -1,6 +1,6 @@
+use mini_os::terminal::{TermError, TerminalManager};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use mini_os::terminal::{TermError, TerminalManager};
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -26,11 +26,19 @@ fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: D
                 }
             }
             Err(e) => {
-                panic!("read_chunk failed: {:?}, accumulated so far: {:?}", e, String::from_utf8_lossy(&acc));
+                panic!(
+                    "read_chunk failed: {:?}, accumulated so far: {:?}",
+                    e,
+                    String::from_utf8_lossy(&acc)
+                );
             }
         }
     }
-    panic!("timeout waiting for {:?}, accumulated so far: {:?}", needle, String::from_utf8_lossy(&acc));
+    panic!(
+        "timeout waiting for {:?}, accumulated so far: {:?}",
+        needle,
+        String::from_utf8_lossy(&acc)
+    );
 }
 
 // 测什么：子进程通过 write(b"exit\n") 退出后，reap_idle 必须把该会话从表中移除并返回 1，
@@ -58,10 +66,21 @@ fn reap_reaps_exited_child() {
         }
         std::thread::sleep(Duration::from_millis(50));
     }
-    assert!(!alive, "child did not exit within 10s after write(b\"exit\\n\")");
+    assert!(
+        !alive,
+        "child did not exit within 10s after write(b\"exit\\n\")"
+    );
 
-    assert_eq!(m.reap_idle(), 1, "exited child session must be reaped exactly once");
-    assert_eq!(m.session_count(1), 0, "reaped session must not count toward quota");
+    assert_eq!(
+        m.reap_idle(),
+        1,
+        "exited child session must be reaped exactly once"
+    );
+    assert_eq!(
+        m.session_count(1),
+        0,
+        "reaped session must not count toward quota"
+    );
 
     match m.write(1, &sid, b"x") {
         Err(TermError::NotFound) => {}

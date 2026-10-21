@@ -1,10 +1,21 @@
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use portable_pty::{native_pty_system, Child, CommandBuilder, MasterPty, PtySize};
+
+pub const DEFAULT_TERM_OUTPUT_LIMIT: u64 = 1024 * 1024;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReadOutcome {
+    Data(usize),
+    TruncatedNotice,
+    Drained,
+    Closed,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TermError {
@@ -22,6 +33,10 @@ struct TermSession {
     reader: Mutex<Box<dyn Read + Send>>,
     child: Mutex<Box<dyn Child + Send + Sync>>,
     last_active: Mutex<Instant>,
+    /// 自上次客户端输入起已转发的输出字节数。
+    output_used: AtomicU64,
+    /// 是否已进入截断状态（超限后持续丢弃，直到客户端输入重置）。
+    truncated: AtomicBool,
 }
 
 pub struct TerminalManager {
@@ -29,6 +44,8 @@ pub struct TerminalManager {
     data_dir: String,
     max_per_user: usize,
     idle_timeout: Duration,
+    /// 单会话连续输出上限（字节），默认 DEFAULT_TERM_OUTPUT_LIMIT，可配置。
+    output_limit: AtomicU64,
 }
 
 impl TerminalManager {
@@ -38,7 +55,16 @@ impl TerminalManager {
             data_dir,
             max_per_user,
             idle_timeout: Duration::from_secs(idle_timeout_secs),
+            output_limit: AtomicU64::new(DEFAULT_TERM_OUTPUT_LIMIT),
         }
+    }
+    /// 设置单会话连续输出上限（字节）。服务端启动时从配置写入。
+    pub fn set_output_limit(&self, bytes: u64) {
+        self.output_limit.store(bytes, Ordering::Relaxed);
+    }
+    /// 当前单会话连续输出上限（字节）。
+    pub fn output_limit(&self) -> u64 {
+        self.output_limit.load(Ordering::Relaxed)
     }
 
     pub fn open(&self, user_id: i64, cols: u16, rows: u16) -> Result<String, TermError> {
@@ -99,6 +125,8 @@ impl TerminalManager {
             reader: Mutex::new(reader),
             child: Mutex::new(child),
             last_active: Mutex::new(Instant::now()),
+            output_used: AtomicU64::new(0),
+            truncated: AtomicBool::new(false),
         });
 
         {
@@ -131,7 +159,13 @@ impl TerminalManager {
             w.flush().map_err(|_| TermError::Io)?;
         }
         self.touch(&session);
+        self.reset_output_budget(&session);
         Ok(())
+    }
+    /// 重置某会话的输出预算（客户端输入/中断后调用，恢复转发）。
+    fn reset_output_budget(&self, session: &TermSession) {
+        session.output_used.store(0, Ordering::Relaxed);
+        session.truncated.store(false, Ordering::Relaxed);
     }
 
     pub fn resize(
@@ -169,6 +203,7 @@ impl TerminalManager {
             w.flush().map_err(|_| TermError::Io)?;
         }
         self.touch(&session);
+        self.reset_output_budget(&session);
         Ok(())
     }
 
@@ -190,6 +225,45 @@ impl TerminalManager {
         drop(r);
         self.touch(&session);
         Ok(n)
+    }
+    /// 限流版读取：自上次客户端输入起累计输出超过 output_limit 后，
+    /// 首次返回 TruncatedNotice（调用方发一次截断提示），之后持续排空 PTY
+    /// 并返回 Drained，直到客户端输入（write/interrupt）重置预算。
+    /// 注意：这是阻塞读，调用方必须放到 spawn_blocking 里（与 read_chunk 同约束）。
+    pub fn read_chunk_limited(
+        &self,
+        user_id: i64,
+        session_id: &str,
+        buf: &mut [u8],
+    ) -> Result<ReadOutcome, TermError> {
+        if buf.is_empty() {
+            let _ = self.get_session(user_id, session_id)?;
+            return Ok(ReadOutcome::Drained);
+        }
+        let session = self.get_session(user_id, session_id)?;
+        let limit = self.output_limit.load(Ordering::Relaxed);
+        // 只锁该会话的 reader；这是阻塞读，调用方负责放到 spawn_blocking 里。
+        let n = {
+            let mut r = session.reader.lock().map_err(|_| TermError::Io)?;
+            r.read(buf).map_err(|_| TermError::Io)?
+        };
+        if n == 0 {
+            return Ok(ReadOutcome::Closed);
+        }
+        if session.truncated.load(Ordering::Relaxed) {
+            // 已截断：字节已从 PTY 读出（排空，防止子进程因 PTY 缓冲区满而阻塞），直接丢弃。
+            self.touch(&session);
+            return Ok(ReadOutcome::Drained);
+        }
+        let used = session.output_used.fetch_add(n as u64, Ordering::Relaxed) + n as u64;
+        self.touch(&session);
+        if used > limit {
+            session.truncated.store(true, Ordering::Relaxed);
+            // 本次读到的数据一并丢弃，不转发。
+            Ok(ReadOutcome::TruncatedNotice)
+        } else {
+            Ok(ReadOutcome::Data(n))
+        }
     }
 
     pub fn is_alive(&self, user_id: i64, session_id: &str) -> Result<bool, TermError> {

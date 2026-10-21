@@ -16,27 +16,52 @@ async fn test_app() -> (Router, String) {
 async fn register(app: &Router, username: &str, password: &str) -> (StatusCode, Value, String) {
     let payload = json!({ "username": username, "password": password });
     let request = Request::builder()
-        .method("POST").uri("/api/auth/register")
+        .method("POST")
+        .uri("/api/auth/register")
         .header("content-type", "application/json")
-        .body(axum::body::Body::from(payload.to_string())).unwrap();
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
-    let cookie = response.headers().get("set-cookie").and_then(|v| v.to_str().ok())
-        .map(|s| s.split(';').next().unwrap_or("").to_string()).unwrap_or_default();
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(';').next().unwrap_or("").to_string())
+        .unwrap_or_default();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let value: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (status, value, cookie)
 }
 
-async fn req(app: &Router, method: &str, uri: &str, body: Option<Value>, cookie: &str) -> (StatusCode, Value) {
+async fn req(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<Value>,
+    cookie: &str,
+) -> (StatusCode, Value) {
     let payload = body.unwrap_or(Value::Null);
-    let builder = Request::builder().method(method).uri(uri).header("content-type", "application/json");
-    let builder = if cookie.is_empty() { builder } else { builder.header("cookie", cookie) };
-    let request = builder.body(axum::body::Body::from(payload.to_string())).unwrap();
+    let builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header("content-type", "application/json");
+    let builder = if cookie.is_empty() {
+        builder
+    } else {
+        builder.header("cookie", cookie)
+    };
+    let request = builder
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let value: Value = if bytes.is_empty() { Value::Null } else { serde_json::from_slice(&bytes).unwrap_or(Value::Null) };
+    let value: Value = if bytes.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null)
+    };
     (status, value)
 }
 
@@ -47,12 +72,26 @@ async fn note_title_length_boundary() {
     let (app, cookie) = test_app().await;
 
     let ok_title = "a".repeat(200);
-    let (status, body) = req(&app, "POST", "/api/notes", Some(json!({ "title": ok_title })), &cookie).await;
+    let (status, body) = req(
+        &app,
+        "POST",
+        "/api/notes",
+        Some(json!({ "title": ok_title })),
+        &cookie,
+    )
+    .await;
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(body["title"].as_str().unwrap().len(), 200);
 
     let bad_title = "a".repeat(201);
-    let (status, _body) = req(&app, "POST", "/api/notes", Some(json!({ "title": bad_title })), &cookie).await;
+    let (status, _body) = req(
+        &app,
+        "POST",
+        "/api/notes",
+        Some(json!({ "title": bad_title })),
+        &cookie,
+    )
+    .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
 }
 
@@ -62,10 +101,24 @@ async fn note_blank_title_400_and_trim() {
     // 为什么：空白标题会变成列表里的幽灵条目，trim 后入库能保持数据干净。
     let (app, cookie) = test_app().await;
 
-    let (status, _body) = req(&app, "POST", "/api/notes", Some(json!({ "title": "   " })), &cookie).await;
+    let (status, _body) = req(
+        &app,
+        "POST",
+        "/api/notes",
+        Some(json!({ "title": "   " })),
+        &cookie,
+    )
+    .await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
 
-    let (status, body) = req(&app, "POST", "/api/notes", Some(json!({ "title": "  padded  " })), &cookie).await;
+    let (status, body) = req(
+        &app,
+        "POST",
+        "/api/notes",
+        Some(json!({ "title": "  padded  " })),
+        &cookie,
+    )
+    .await;
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(body["title"].as_str().unwrap(), "padded");
 }
@@ -76,7 +129,14 @@ async fn note_partial_update_body_only() {
     // 为什么：部分更新若把未传字段清空，会造成前端 PATCH 式更新的数据丢失。
     let (app, cookie) = test_app().await;
 
-    let (status, created) = req(&app, "POST", "/api/notes", Some(json!({ "title": "T-keep", "body": "B1" })), &cookie).await;
+    let (status, created) = req(
+        &app,
+        "POST",
+        "/api/notes",
+        Some(json!({ "title": "T-keep", "body": "B1" })),
+        &cookie,
+    )
+    .await;
     assert_eq!(status, StatusCode::CREATED);
     let id = created["id"].as_i64().unwrap();
 
@@ -97,7 +157,14 @@ async fn note_delete_missing_and_cross_user_404() {
     let (status, _body) = req(&app, "DELETE", "/api/notes/999999", None, &cookie).await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 
-    let (status, created) = req(&app, "POST", "/api/notes", Some(json!({ "title": "secret" })), &cookie).await;
+    let (status, created) = req(
+        &app,
+        "POST",
+        "/api/notes",
+        Some(json!({ "title": "secret" })),
+        &cookie,
+    )
+    .await;
     assert_eq!(status, StatusCode::CREATED);
     let id = created["id"].as_i64().unwrap();
 

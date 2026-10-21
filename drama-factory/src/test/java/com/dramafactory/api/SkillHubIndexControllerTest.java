@@ -56,7 +56,7 @@ class SkillHubIndexControllerTest {
                 .andExpect(jsonPath("$.skills[?(@.id=='video-shots')].source", contains("社区收录")))
                 .andExpect(jsonPath("$.skills[?(@.id=='video-shots')].license", contains("Apache-2.0")))
                 .andExpect(jsonPath("$.skills[?(@.id=='toonflow-canvas')].source", contains("社区收录")))
-                .andExpect(jsonPath("$.skills[?(@.id=='watzing-video-editor')].source", contains("官方出品")))
+                .andExpect(jsonPath("$.skills[?(@.id=='watzing-video-editor')].source", contains("社区收录")))
                 .andReturn();
         com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper()
                 .readTree(result.getResponse().getContentAsString());

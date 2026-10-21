@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use mini_os::migrate::{applied_versions, run_migrations};
+use mini_os::migrate::{applied_versions, run_migrations, MIGRATIONS};
 use rusqlite::Connection;
 
 fn temp_db_path(tag: &str) -> PathBuf {
@@ -64,7 +64,7 @@ fn run_migrations_repairs_dropped_005() {
     run_migrations(&conn).unwrap();
 
     let versions = applied_versions(&conn).unwrap();
-    assert_eq!(versions.len(), 7);
+    assert_eq!(versions.len(), MIGRATIONS.len());
     assert_eq!(versions[4], "005");
     assert_eq!(versions[5], "006");
     assert_eq!(versions[6], "007");
@@ -101,7 +101,7 @@ fn open_db_migrates_foreign_sqlite_file() {
     assert_eq!(count, 1);
 
     let versions = applied_versions(&conn).unwrap();
-    assert_eq!(versions.len(), 7);
+    assert_eq!(versions.len(), MIGRATIONS.len());
     assert_eq!(versions[0], "001");
     assert_eq!(versions[4], "005");
     assert_eq!(versions[5], "006");

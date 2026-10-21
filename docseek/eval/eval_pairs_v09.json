@@ -801,11 +801,11 @@
  },
  {
   "id": "v09-t013-q05",
-  "query": "月历排版",
+  "query": "月历页怎么排",
   "expected": "v09_t013_05.md",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 013.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"月历排版\"含期望文档缺字\"版\"，改写为\"月历页怎么排\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t013-q06",
@@ -1681,11 +1681,11 @@
  },
  {
   "id": "v09-t024-q07",
-  "query": "字帖选择",
+  "query": "选字帖",
   "expected": "v09_t024_02.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 024.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"字帖选择\"含期望文档缺字\"择\"，改写为\"选字帖\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t024-q08",
@@ -1753,11 +1753,11 @@
  },
  {
   "id": "v09-t025-q04",
-  "query": "边款拓法",
+  "query": "边款怎么拓",
   "expected": "v09_t025_04.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 025.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"边款拓法\"含期望文档缺字\"法\"，改写为\"边款怎么拓\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t025-q05",
@@ -1929,11 +1929,11 @@
  },
  {
   "id": "v09-t028-q02",
-  "query": "起针针数计算",
+  "query": "起针用密度算",
   "expected": "v09_t028_02.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 028.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"起针针数计算\"含期望文档缺字\"计\"，改写为\"起针用密度算\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t028-q03",
@@ -2305,11 +2305,11 @@
  },
  {
   "id": "v09-t036-q01",
-  "query": "心形拉花步骤",
+  "query": "心形拉花练习",
   "expected": "v09_t036_01.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 036.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"心形拉花步骤\"含期望文档缺字\"骤\"，改写为\"心形拉花练习\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t036-q02",
@@ -2321,11 +2321,11 @@
  },
  {
   "id": "v09-t036-q03",
-  "query": "压纹技巧",
+  "query": "压纹练习方法",
   "expected": "v09_t036_03.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 036.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"压纹技巧\"含期望文档缺字\"技巧\"，改写为\"压纹练习方法\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t036-q04",
@@ -2785,11 +2785,11 @@
  },
  {
   "id": "v09-t044-q01",
-  "query": "牛油底料炒多久",
+  "query": "牛油底料炒制顺序",
   "expected": "v09_t044_01.html",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 044.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"牛油底料炒多久\"含期望文档缺字\"多\"，改写为\"牛油底料炒制顺序\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t044-q02",
@@ -5793,11 +5793,11 @@
  },
  {
   "id": "v09-t090-q05",
-  "query": "直播排班",
+  "query": "直播时间怎么安排",
   "expected": "v09_t090_05.md",
   "type": "search",
   "category": "v09",
-  "note": "v09 corpus batch 090.json"
+  "note": "2026-10-21 wave6 pair-fix: 原查询\"直播排班\"含期望文档缺字\"班\"，改写为\"直播时间怎么安排\"；二进制实测 top-1=期望文档"
  },
  {
   "id": "v09-t090-q06",

@@ -20,6 +20,8 @@ pub struct Config {
     pub share_read_burst: u64,
     /// 来自 MINIOS_SHARE_RATE_LIMIT_ENABLED，默认开启
     pub share_ratelimit_enabled: bool,
+    /// 终端单会话连续输出上限（字节），来自 MINIOS_TERM_OUTPUT_LIMIT，默认 1MiB
+    pub term_output_limit: u64,
 }
 
 impl Config {
@@ -70,6 +72,14 @@ impl Config {
                 std::process::exit(2);
             }
         };
+        // 终端输出背压：MINIOS_TERM_OUTPUT_LIMIT，默认 1MiB，非法值 fail-fast（与限流配置同规格）。
+        let term_output_limit = match parse_term_output_limit() {
+            Ok(v) => v,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
 
         Config {
             data_dir,
@@ -84,8 +94,33 @@ impl Config {
             share_read_rps: share_limit.rps,
             share_read_burst: share_limit.burst,
             share_ratelimit_enabled: share_limit.enabled,
+            term_output_limit,
         }
     }
+}
+
+/// 解析终端输出上限：缺失时默认 1MiB；空串/非数字/0 视为非法。
+/// 纯函数（方便单测），from_env 用 env 读取后调它。
+fn parse_term_output_limit_raw(raw: Option<&str>) -> Result<u64, String> {
+    match raw {
+        None => Ok(1024 * 1024),
+        Some(s) => {
+            let v: u64 = s.trim().parse().map_err(|_| {
+                format!(
+                    "MINIOS_TERM_OUTPUT_LIMIT 非法：{:?}，必须是正整数（字节）",
+                    s
+                )
+            })?;
+            if v == 0 {
+                return Err("MINIOS_TERM_OUTPUT_LIMIT 非法：不能为 0".to_string());
+            }
+            Ok(v)
+        }
+    }
+}
+/// 从环境变量读取终端输出上限。
+fn parse_term_output_limit() -> Result<u64, String> {
+    parse_term_output_limit_raw(std::env::var("MINIOS_TERM_OUTPUT_LIMIT").ok().as_deref())
 }
 
 fn compute_data_dir() -> String {
@@ -102,4 +137,28 @@ fn compute_data_dir() -> String {
         }
     }
     "data".to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn term_output_limit_default() {
+        assert_eq!(parse_term_output_limit_raw(None).unwrap(), 1024 * 1024);
+    }
+
+    #[test]
+    fn term_output_limit_valid() {
+        assert_eq!(parse_term_output_limit_raw(Some("65536")).unwrap(), 65536);
+        assert_eq!(parse_term_output_limit_raw(Some("  2048  ")).unwrap(), 2048);
+    }
+
+    #[test]
+    fn term_output_limit_invalid() {
+        assert!(parse_term_output_limit_raw(Some("")).is_err());
+        assert!(parse_term_output_limit_raw(Some("0")).is_err());
+        assert!(parse_term_output_limit_raw(Some("abc")).is_err());
+        assert!(parse_term_output_limit_raw(Some("-5")).is_err());
+    }
 }

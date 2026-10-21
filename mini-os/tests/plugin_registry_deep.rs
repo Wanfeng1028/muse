@@ -1,8 +1,15 @@
 use mini_os::plugins::{PluginManifest, PluginRegistry};
 
 fn manifest(id: &str) -> PluginManifest {
-    PluginManifest { id: id.to_string(), name: format!("n-{}", id), version: "1.0.0".to_string(),
-        entry: "/static/plugins/index.js".to_string(), description: String::new(), icon: String::new(), permissions: vec!["fs.read".to_string()] }
+    PluginManifest {
+        id: id.to_string(),
+        name: format!("n-{}", id),
+        version: "1.0.0".to_string(),
+        entry: "/static/plugins/index.js".to_string(),
+        description: String::new(),
+        icon: String::new(),
+        permissions: vec!["fs.read".to_string()],
+    }
 }
 
 #[test]

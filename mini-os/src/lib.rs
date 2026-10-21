@@ -134,7 +134,7 @@ pub fn init_state_with(
 /// 初始化全局状态：打开数据库并做种子数据
 pub fn init_state(database_path: &str, static_dir: &str) -> Arc<AppState> {
     let cfg = crate::config::Config::from_env();
-    init_state_with_full(
+    let state = init_state_with_full(
         database_path,
         static_dir,
         cfg.upload_max_bytes,
@@ -144,7 +144,11 @@ pub fn init_state(database_path: &str, static_dir: &str) -> Arc<AppState> {
         cfg.share_read_rps,
         cfg.share_read_burst,
         cfg.share_ratelimit_enabled,
-    )
+    );
+    // 终端输出背压上限走 MINIOS_TERM_OUTPUT_LIMIT（默认 1MiB）；测试走
+    // init_state_with 系列，沿用 manager 内置默认值，不受环境变量影响。
+    state.terminals.set_output_limit(cfg.term_output_limit);
+    state
 }
 
 /// 无需登录的公开路径。

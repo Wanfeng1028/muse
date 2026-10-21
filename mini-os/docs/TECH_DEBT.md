@@ -45,7 +45,8 @@
 
 - P1-6：终端大输出背压。`term_output` 目前是 PTY 输出多少就推多少，
   `cat` 大文件时内存与带宽无上限。出路：服务端按会话加环形缓冲 +
-  超限丢弃并提示"[输出过长，已截断]"。出处：docs/TERMINAL.md 已知限制。
+  超限丢弃并提示"[输出过长，已截断]"。
+  **已偿还（2026-10-21）**：`read_chunk_limited` 按会话输出预算 + `MINIOS_TERM_OUTPUT_LIMIT`（默认 1MiB）+ 截断提示 + 持续排空 + 指标 `minios_term_output_truncated_total`；测试 `tests/terminal_backpressure_test.rs`。出处：docs/TERMINAL.md 已知限制。
 - P1-7：xterm.js `allowProposedApi` 的 Ctrl+C 拦截在真实浏览器长期行为未验证。
   目前用 attachCustomKeyEventHandler 拦截，出路：补一个浏览器实测用例
   （playwright 真浏览器按 Ctrl+C，看 shell 是否收到 SIGINT）。
@@ -54,7 +55,13 @@
 - P1-9：迁移单测的版本号是硬编码（`assert_eq!(count, 7)` 这类）。
   每次加迁移都要改 3 个文件的 7 处断言。出路：单测里用
   `migrate::MIGRATIONS.len()` 动态断言。
+  **已偿还（2026-10-21）**：`migrate::MIGRATIONS` 注册表，`run_migrations` 与单测期望全部从注册表派生。
 - P1-10：`spawn_reaper` 在无 runtime 时退化为独立 OS 线程（v1.9 已修 panic），
   但该线程的 runtime 生命周期与进程绑定，单测里每次 `init_state` 都起一个，
   线程数随测试增长。出路：reaper 线程加 Once/static 去重，或测试用
   `set_last_active_for_test` + 手动 `reap_idle` 代替。
+
+## 2026-10-21 偿还
+
+- P1-6 终端大输出背压：已交付（见本条标注）。
+- P1-9 迁移版本号硬编码断言：已交付（见本条标注）。

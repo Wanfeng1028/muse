@@ -5,8 +5,15 @@ use std::path::{Path, PathBuf};
 use zip::write::FileOptions;
 
 fn tmp_dir(tag: &str) -> PathBuf {
-    let base = std::env::temp_dir().join(format!("mini-os-plugin-test-{}-{}-{}", tag, std::process::id(),
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+    let base = std::env::temp_dir().join(format!(
+        "mini-os-plugin-test-{}-{}-{}",
+        tag,
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
     fs::create_dir_all(&base).unwrap();
     base
 }
@@ -15,7 +22,8 @@ fn make_zip(entries: &[(&str, &[u8])]) -> Vec<u8> {
     let mut buf = Vec::new();
     {
         let mut zw = zip::ZipWriter::new(std::io::Cursor::new(&mut buf));
-        let opts: FileOptions = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        let opts: FileOptions =
+            FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
         for (name, data) in entries {
             zw.start_file(*name, opts).unwrap();
             zw.write_all(data).unwrap();
@@ -26,11 +34,17 @@ fn make_zip(entries: &[(&str, &[u8])]) -> Vec<u8> {
 }
 
 fn manifest_json(id: &str) -> String {
-    format!(r#"{{"id":"{}","name":"n-{}","version":"1.0.0","entry":"index.js","description":"d","icon":"x","permissions":["fs.read"]}}"#, id, id)
+    format!(
+        r#"{{"id":"{}","name":"n-{}","version":"1.0.0","entry":"index.js","description":"d","icon":"x","permissions":["fs.read"]}}"#,
+        id, id
+    )
 }
 
 fn install_one(data_dir: &Path, id: &str) {
-    let zip = make_zip(&[("plugin.json", manifest_json(id).as_bytes()), ("index.js", b"console.log(1);")]);
+    let zip = make_zip(&[
+        ("plugin.json", manifest_json(id).as_bytes()),
+        ("index.js", b"console.log(1);"),
+    ]);
     install_from_zip(&zip, data_dir).unwrap();
 }
 

@@ -213,41 +213,33 @@ fn apply_003(conn: &Connection) -> rusqlite::Result<()> {
     Ok(())
 }
 
+/// 单个迁移：版本号 + 应用函数。
+pub type Migration = (&'static str, fn(&Connection) -> rusqlite::Result<()>);
+
+/// 迁移注册表：版本号与应用函数的唯一对应。
+/// 新增迁移时只改这里；run_migrations 与单测期望都从它派生，避免硬编码版本号漂移。
+pub const MIGRATIONS: &[Migration] = &[
+    ("001", apply_001),
+    ("002", apply_002),
+    ("003", apply_003),
+    ("004", apply_004),
+    ("005", apply_005),
+    ("006", apply_006),
+    ("007", apply_007),
+];
+
 /// 运行所有迁移。幂等：对同一文件重复调用不会报错，schema_migrations 行数不变。
 pub fn run_migrations(conn: &Connection) -> rusqlite::Result<()> {
     ensure_migrations_table(conn)?;
 
-    if !is_applied(conn, "001")? {
-        apply_001(conn)?;
-    }
-
-    if !is_applied(conn, "002")? {
-        apply_002(conn)?;
-    }
-
-    if !is_applied(conn, "003")? {
-        apply_003(conn)?;
-    }
-
-    if !is_applied(conn, "004")? {
-        apply_004(conn)?;
-    }
-
-    if !is_applied(conn, "005")? {
-        apply_005(conn)?;
-    }
-
-    if !is_applied(conn, "006")? {
-        apply_006(conn)?;
-    }
-
-    if !is_applied(conn, "007")? {
-        apply_007(conn)?;
+    for (version, apply) in MIGRATIONS {
+        if !is_applied(conn, version)? {
+            apply(conn)?;
+        }
     }
 
     Ok(())
 }
-
 /// 迁移 007：notes（速记便签）与 events（日程）表。
 /// 幂等：CREATE TABLE IF NOT EXISTS + schema_migrations 记账（风格与 006 一致）。
 fn apply_007(conn: &Connection) -> rusqlite::Result<()> {
@@ -411,15 +403,10 @@ mod tests {
         let versions = applied_versions(&conn).expect("applied versions");
         assert_eq!(
             versions,
-            vec![
-                "001".to_string(),
-                "002".to_string(),
-                "003".to_string(),
-                "004".to_string(),
-                "005".to_string(),
-                "006".to_string(),
-                "007".to_string()
-            ]
+            MIGRATIONS
+                .iter()
+                .map(|(v, _)| (*v).to_string())
+                .collect::<Vec<String>>()
         );
 
         let count: i64 = conn
@@ -427,7 +414,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 7);
+        assert_eq!(count, MIGRATIONS.len() as i64);
 
         let blob_cols: i64 = conn
 
@@ -519,22 +506,17 @@ mod tests {
         let versions = applied_versions(&conn).expect("versions");
         assert_eq!(
             versions,
-            vec![
-                "001".to_string(),
-                "002".to_string(),
-                "003".to_string(),
-                "004".to_string(),
-                "005".to_string(),
-                "006".to_string(),
-                "007".to_string()
-            ]
+            MIGRATIONS
+                .iter()
+                .map(|(v, _)| (*v).to_string())
+                .collect::<Vec<String>>()
         );
         let count: i64 = conn
             .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 7);
+        assert_eq!(count, MIGRATIONS.len() as i64);
     }
 
     #[test]
@@ -611,7 +593,7 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 7);
+        assert_eq!(count, MIGRATIONS.len() as i64);
     }
 
     #[test]
@@ -680,6 +662,6 @@ mod tests {
                 row.get(0)
             })
             .expect("count");
-        assert_eq!(count, 7);
+        assert_eq!(count, MIGRATIONS.len() as i64);
     }
 }

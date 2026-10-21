@@ -1431,11 +1431,49 @@ std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, s
             // （那会复活 v07-038"超导材料制备"误命中"材料"文档的回归），
             // 而是尝试 DF-zero 子词单字分解 + 全字精滤的第二击。
             // 第二击仍空则 orHits 为空（严格精度语义）。
+            const std::vector<Hit> rawOrHits = orHits;  // 第三击用未过滤候选，先留档
             orHits = std::move(filtered);
             if (orHits.empty()) {
                 std::vector<Hit> second;
                 if (tryCharDecomposedSingle(tokens[0], db_, limit, second)) {
                     orHits = std::move(second);
+                }
+            }
+            // 第三击（v09 A类真召回）：字覆盖回退。第一击（word-substring 精滤）与
+            // 第二击（DF-zero 子词单字分解）都全空时，退到"hay 包含查询全部非停用字"。
+            // 覆盖场景：jieba CutForSearch 切词粒度与文档错位，如"拆旧毛衣"切出"拆旧"
+            // （DF>0 故第二击不触发）而期望文档中"拆…旧毛衣"分开出现；"马术课内容"/
+            // "球杆分类"/"涨粉复盘"同理（查询词在文档中有字无词）。
+            // 精度守卫：仍要求全部非停用字出现（不是 OR 宽松语义）；neg 类
+            // v07-037「量子纠缠」/v07-038「超导材料制备」因语料无全字覆盖文档而不受影响。
+            // 仅单 token 路径触发，多 token 与已有结果的路径一字不动。
+            std::vector<std::string> needCps;
+            for (size_t i = 0; i < tokens[0].size();) {
+                unsigned char c = static_cast<unsigned char>(tokens[0][i]);
+                size_t len = 1;
+                if (c >= 0xF0) len = 4;
+                else if (c >= 0xE0) len = 3;
+                else if (c >= 0xC0) len = 2;
+                if (i + len > tokens[0].size()) len = tokens[0].size() - i;
+                std::string cp = tokens[0].substr(i, len);
+                i += len;
+                if (isSingleCharStopword(cp)) continue;
+                needCps.push_back(cp);
+            }
+            if (orHits.empty() && !needCps.empty()) {
+                for (const Hit& h : rawOrHits) {
+                    std::string hay = h.title;
+                    if (auto content = db_.getContentById(h.doc_id)) {
+                        hay.push_back('\n');
+                        hay += *content;
+                    } else {
+                        hay += h.snippet;
+                    }
+                    bool ok = true;
+                    for (const std::string& cp : needCps) {
+                        if (!containsFolded(hay, cp)) { ok = false; break; }
+                    }
+                    if (ok) orHits.push_back(h);
                 }
             }
         }

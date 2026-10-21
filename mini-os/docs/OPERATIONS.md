@@ -425,6 +425,7 @@ IP 桶 + 账号（username）桶，任一耗尽即 429。IP 提取优先级：`X
 - `MINIOS_SHARE_RPS`：每秒补充 token 数，默认 `5`。读多写少场景阈值宽松但有界：默认可持续 300 次/分钟。
 - `MINIOS_SHARE_BURST`：桶容量（突发上限），默认 `30`。覆盖"1 次元数据 + 多次目录浏览 + 下载"的正常浏览。
 - `MINIOS_SHARE_RATE_LIMIT_ENABLED`：总开关，默认 `true`。`1/true/yes/on` 开，`0/false/no/off` 关（大小写不敏感）；设为 `false` 时分享读请求直接放行，不计数不记桶。
+- `MINIOS_TERM_OUTPUT_LIMIT`：终端单会话连续输出上限（字节），默认 `1048576`（1MiB）。`cat` 大文件等场景下，单会话自上次客户端输入起累计输出超过该值后，服务端截断推送并向客户端发送"[输出过长，已截断]"提示，之后持续排空 PTY（不阻塞子进程）；客户端输入新命令后预算重置、恢复推送。指标 `minios_term_output_truncated_total` 计数截断次数。非法值（非数字/0/空）启动时 stderr 点名并 `exit(2)`。
 
 非法值（解析失败、rps ≤ 0/NaN/无穷大、burst 非整数或 0、非法布尔值）会在启动时由 stderr 点名变量并 `exit(2)`，服务不起（fail-fast）；未设置则用默认值。
 

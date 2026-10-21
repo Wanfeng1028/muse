@@ -16,27 +16,52 @@ async fn test_app() -> (Router, String) {
 async fn register(app: &Router, username: &str, password: &str) -> (StatusCode, Value, String) {
     let payload = json!({ "username": username, "password": password });
     let request = Request::builder()
-        .method("POST").uri("/api/auth/register")
+        .method("POST")
+        .uri("/api/auth/register")
         .header("content-type", "application/json")
-        .body(axum::body::Body::from(payload.to_string())).unwrap();
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
-    let cookie = response.headers().get("set-cookie").and_then(|v| v.to_str().ok())
-        .map(|s| s.split(';').next().unwrap_or("").to_string()).unwrap_or_default();
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(';').next().unwrap_or("").to_string())
+        .unwrap_or_default();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let value: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (status, value, cookie)
 }
 
-async fn req(app: &Router, method: &str, uri: &str, body: Option<Value>, cookie: &str) -> (StatusCode, Value) {
+async fn req(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<Value>,
+    cookie: &str,
+) -> (StatusCode, Value) {
     let payload = body.unwrap_or(Value::Null);
-    let builder = Request::builder().method(method).uri(uri).header("content-type", "application/json");
-    let builder = if cookie.is_empty() { builder } else { builder.header("cookie", cookie) };
-    let request = builder.body(axum::body::Body::from(payload.to_string())).unwrap();
+    let builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header("content-type", "application/json");
+    let builder = if cookie.is_empty() {
+        builder
+    } else {
+        builder.header("cookie", cookie)
+    };
+    let request = builder
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let value: Value = if bytes.is_empty() { Value::Null } else { serde_json::from_slice(&bytes).unwrap_or(Value::Null) };
+    let value: Value = if bytes.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null)
+    };
     (status, value)
 }
 
@@ -52,7 +77,8 @@ async fn concurrent_rename_same_node_all_ok() {
         "/api/fs",
         Some(json!({ "name": "base.txt", "kind": "file" })),
         &cookie,
-    ).await;
+    )
+    .await;
     assert_eq!(status, StatusCode::CREATED);
     let id = node.get("id").and_then(|v| v.as_i64()).expect("id");
 
@@ -86,17 +112,15 @@ async fn concurrent_rename_same_node_all_ok() {
         assert_eq!(*status, StatusCode::OK);
     }
 
-    let (get_status, get_node) = req(
-        &app,
-        "GET",
-        &format!("/api/fs/{}", id),
-        None,
-        &cookie,
-    ).await;
+    let (get_status, get_node) = req(&app, "GET", &format!("/api/fs/{}", id), None, &cookie).await;
     assert_eq!(get_status, StatusCode::OK);
     let final_name = get_node.get("name").and_then(|v| v.as_str()).expect("name");
     let expected: Vec<String> = (0..10).map(|i| format!("n{}.txt", i)).collect();
-    assert!(expected.iter().any(|n| n == final_name), "unexpected final name: {}", final_name);
+    assert!(
+        expected.iter().any(|n| n == final_name),
+        "unexpected final name: {}",
+        final_name
+    );
 }
 
 #[tokio::test]
@@ -111,9 +135,13 @@ async fn concurrent_move_same_name_one_wins() {
         "/api/fs",
         Some(json!({ "name": "A", "kind": "folder" })),
         &cookie,
-    ).await;
+    )
+    .await;
     assert_eq!(status_a, StatusCode::CREATED);
-    let id_a_folder = folder_a.get("id").and_then(|v| v.as_i64()).expect("folder A id");
+    let id_a_folder = folder_a
+        .get("id")
+        .and_then(|v| v.as_i64())
+        .expect("folder A id");
 
     let (status_b, folder_b) = req(
         &app,
@@ -121,9 +149,13 @@ async fn concurrent_move_same_name_one_wins() {
         "/api/fs",
         Some(json!({ "name": "B", "kind": "folder" })),
         &cookie,
-    ).await;
+    )
+    .await;
     assert_eq!(status_b, StatusCode::CREATED);
-    let id_b_folder = folder_b.get("id").and_then(|v| v.as_i64()).expect("folder B id");
+    let id_b_folder = folder_b
+        .get("id")
+        .and_then(|v| v.as_i64())
+        .expect("folder B id");
 
     let (status_dup_a, node_dup_a) = req(
         &app,
@@ -131,9 +163,13 @@ async fn concurrent_move_same_name_one_wins() {
         "/api/fs",
         Some(json!({ "name": "dup.txt", "kind": "file", "parentId": id_a_folder })),
         &cookie,
-    ).await;
+    )
+    .await;
     assert_eq!(status_dup_a, StatusCode::CREATED);
-    let id_a = node_dup_a.get("id").and_then(|v| v.as_i64()).expect("dup a id");
+    let id_a = node_dup_a
+        .get("id")
+        .and_then(|v| v.as_i64())
+        .expect("dup a id");
 
     let (status_dup_b, node_dup_b) = req(
         &app,
@@ -141,9 +177,13 @@ async fn concurrent_move_same_name_one_wins() {
         "/api/fs",
         Some(json!({ "name": "dup.txt", "kind": "file", "parentId": id_b_folder })),
         &cookie,
-    ).await;
+    )
+    .await;
     assert_eq!(status_dup_b, StatusCode::CREATED);
-    let id_b = node_dup_b.get("id").and_then(|v| v.as_i64()).expect("dup b id");
+    let id_b = node_dup_b
+        .get("id")
+        .and_then(|v| v.as_i64())
+        .expect("dup b id");
 
     let app_a = app.clone();
     let cookie_a = cookie.clone();

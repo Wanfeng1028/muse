@@ -16,27 +16,52 @@ async fn test_app() -> (Router, String) {
 async fn register(app: &Router, username: &str, password: &str) -> (StatusCode, Value, String) {
     let payload = json!({ "username": username, "password": password });
     let request = Request::builder()
-        .method("POST").uri("/api/auth/register")
+        .method("POST")
+        .uri("/api/auth/register")
         .header("content-type", "application/json")
-        .body(axum::body::Body::from(payload.to_string())).unwrap();
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
-    let cookie = response.headers().get("set-cookie").and_then(|v| v.to_str().ok())
-        .map(|s| s.split(';').next().unwrap_or("").to_string()).unwrap_or_default();
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.split(';').next().unwrap_or("").to_string())
+        .unwrap_or_default();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let value: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (status, value, cookie)
 }
 
-async fn req(app: &Router, method: &str, uri: &str, body: Option<Value>, cookie: &str) -> (StatusCode, Value) {
+async fn req(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<Value>,
+    cookie: &str,
+) -> (StatusCode, Value) {
     let payload = body.unwrap_or(Value::Null);
-    let builder = Request::builder().method(method).uri(uri).header("content-type", "application/json");
-    let builder = if cookie.is_empty() { builder } else { builder.header("cookie", cookie) };
-    let request = builder.body(axum::body::Body::from(payload.to_string())).unwrap();
+    let builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header("content-type", "application/json");
+    let builder = if cookie.is_empty() {
+        builder
+    } else {
+        builder.header("cookie", cookie)
+    };
+    let request = builder
+        .body(axum::body::Body::from(payload.to_string()))
+        .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
     let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let value: Value = if bytes.is_empty() { Value::Null } else { serde_json::from_slice(&bytes).unwrap_or(Value::Null) };
+    let value: Value = if bytes.is_empty() {
+        Value::Null
+    } else {
+        serde_json::from_slice(&bytes).unwrap_or(Value::Null)
+    };
     (status, value)
 }
 
@@ -61,8 +86,14 @@ async fn parent_path_traversal_rejected() {
     assert_eq!(status1, StatusCode::BAD_REQUEST);
     assert_eq!(body1["error"], json!("非法路径"));
 
-    let (_s0, b0) = req(&app, "POST", "/api/fs",
-        Some(json!({ "name": "docs", "kind": "folder" })), &cookie).await;
+    let (_s0, b0) = req(
+        &app,
+        "POST",
+        "/api/fs",
+        Some(json!({ "name": "docs", "kind": "folder" })),
+        &cookie,
+    )
+    .await;
     assert_eq!(_s0, StatusCode::CREATED);
     let _docs_id = b0["id"].as_i64().expect("docs id");
     let (status2, body2) = req(
