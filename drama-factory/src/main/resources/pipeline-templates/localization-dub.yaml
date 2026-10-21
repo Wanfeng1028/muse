@@ -1,0 +1,89 @@
+name: localization-dub
+version: "1.0"
+description: 以转写文本为先的本地化流水线，基于现有源视频产出翻译字幕、配音音频及可选的口型同步语言版本。EP 编排为翻译准确性、时序保持与各语言版本一致性增加质量关卡。
+category: custom
+stages:
+  - name: idea
+    produces: [brief, decision_log]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 源语言与目标语言已明确
+      - 每种语言的交付模式已明确
+      - 已记录审校与术语表要求
+    successCriteria:
+      - 简报产物符合 schema 校验
+      - 简报记录了本地化范围与配音模式
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [brief, source_media_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 转写文本的真实性足以支撑下游本地化
+      - 术语表与受保护词汇已保留
+      - 目标语言脚本包在合成前可审阅
+    successCriteria:
+      - 脚本产物符合 schema 校验
+      - 脚本包含源转写结构与译文段落
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每种交付物都选择了切合实际的配音模式
+      - 已梳理时序漂移与屏幕文字风险
+      - 口型同步仅用于可支撑的镜头
+    successCriteria:
+      - 场景规划产物符合 schema 校验
+      - 每种交付物都有明确的本地化处理方案
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每种语言都有字幕与配音音频素材
+      - 已记录时序与发音风险
+      - 口型同步保持可选并已清晰标注
+    successCriteria:
+      - 素材清单产物符合 schema 校验
+      - 所有引用的素材文件均存在于磁盘
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [asset_manifest, script]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 除本地化时序迫使变更外，源结构保持不变
+      - 行动号召与法律文本在翻译后保持清晰
+      - 各语言版本的组织方式保持一致
+    successCriteria:
+      - 剪辑决策产物符合 schema 校验
+      - 剪辑决策覆盖所有计划的语言输出
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 每种语言输出均可理解且时序正确
+      - 字幕与配音时序符合所选处理方案
+      - 版本标注无歧义
+    successCriteria:
+      - 渲染报告产物符合 schema 校验
+      - 输出文件存在且通过 ffprobe 校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, brief, script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个语言包都包含正确的素材与元数据
+      - 语言标签与标题保持一致
+      - 审校备注仍附于已发布包中
+    successCriteria:
+      - 发布日志产物符合 schema 校验
+      - 导出包包含本地化视频与元数据输出

@@ -1,0 +1,91 @@
+name: hybrid
+version: "1.0"
+description: "混合流水线，用于将原始素材与设计或生成的支持性资产相结合的视频：访谈加图示、产品画面加叠加层、录屏加配套图形，或带支持性插入镜头的蒙太奇剪辑。EP 编排增加了针对源素材与支持素材平衡、叠加层密度以及跨媒介一致性的质量门禁。"
+category: hybrid
+stages:
+  - name: idea
+    produces: [brief, decision_log]
+    requiredArtifactsIn: [source_media_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 锚定媒介已明确识别
+      - 支持层有充分依据且切实可行
+      - 输出组合与源素材清单相匹配
+    successCriteria:
+      - 符合 schema 的 brief 产物
+      - brief 区分了以源素材为主和以支持素材为主的元素
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 以源素材为主的节拍与以支持素材为主的节拍已清晰区分
+      - 旁白或对白方案切实可行
+      - 脚本未在未说明的情况下依赖不受支持的资产
+    successCriteria:
+      - 符合 schema 的 script 产物
+      - 脚本各部分对应可行的混合结构
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 在需要时源内容保持视觉主导
+      - 叠加层与支持层不会使画面过载
+      - 平台或画幅变体经过审慎规划
+    successCriteria:
+      - 符合 schema 的 scene_plan 产物
+      - 每个场景都有明确的源素材/支持素材处理方式
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, script, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 支持资产清晰对应真实的叙事缺口
+      - 共享模板资产得到复用
+      - 可选的生成插入内容不会遮蔽源素材事实
+    successCriteria:
+      - 符合 schema 的 asset_manifest 产物
+      - 所有引用的资产文件均存在于磁盘上
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [asset_manifest, script]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 在添加支持层之前，锚定剪辑保持连贯
+      - 支持性视觉元素起澄清作用而非分散注意力
+      - 各交付物之间的变体逻辑保持一致
+    successCriteria:
+      - 符合 schema 的 edit_decisions 产物
+      - 剪辑决策覆盖所有计划的交付物
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 源素材层与支持素材层保持平衡
+      - 画幅变体保持可读性
+      - 音频在实拍素材与生成元素之间保持连贯
+      - "edit_decisions 中的 render_runtime 与 proposal_packet 保持一致——静默替换属于严重治理违规"
+      - "混合流水线通常使用 render_runtime='remotion'，以便源素材与 React 支持叠加层一次性合成；仅当支持层为 HTML/GSAP 原生时才选择 'hyperframes'"
+    successCriteria:
+      - 符合 schema 的 render_report 产物
+      - 输出文件存在且通过 ffprobe 校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, brief, script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 主剪辑与衍生剪辑组织清晰
+      - 元数据反映真实的源素材组合
+      - 导出包无需手动清理即可使用
+    successCriteria:
+      - 符合 schema 的 publish_log 产物
+      - 导出包包含视频与元数据输出

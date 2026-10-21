@@ -3,10 +3,13 @@ package com.dramafactory.controller;
 import com.dramafactory.dto.Records;
 import com.dramafactory.exception.ResourceNotFoundException;
 import com.dramafactory.model.Episode;
+import com.dramafactory.model.Shot;
 import com.dramafactory.repository.EpisodeRepository;
+import com.dramafactory.repository.ShotRepository;
 import com.dramafactory.service.ReviewService;
 import com.dramafactory.service.ScriptSplitterService;
 import com.dramafactory.service.ShotContinuityChecker;
+import com.dramafactory.service.SlideshowRiskScorer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +27,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 剧本与分镜审核流 REST 控制器。
@@ -42,19 +47,26 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final EpisodeRepository episodeRepository;
     private final ScriptSplitterService scriptSplitterService;
+    private final ShotRepository shotRepository;
+    private final SlideshowRiskScorer slideshowRiskScorer;
 
     /**
      * 构造器注入。
      *
-     * @param reviewService     审核流核心服务
-     * @param episodeRepository 剧集仓储，仅用于校验 path 归属
+     * @param reviewService       审核流核心服务
+     * @param episodeRepository   剧集仓储，仅用于校验 path 归属
      * @param scriptSplitterService 分镜拆分服务（含连续性检查入口）
+     * @param shotRepository      分镜仓储
+     * @param slideshowRiskScorer 幻灯片风险评分器
      */
     public ReviewController(ReviewService reviewService, EpisodeRepository episodeRepository,
-                            ScriptSplitterService scriptSplitterService) {
+                            ScriptSplitterService scriptSplitterService,
+                            ShotRepository shotRepository, SlideshowRiskScorer slideshowRiskScorer) {
         this.reviewService = reviewService;
         this.episodeRepository = episodeRepository;
         this.scriptSplitterService = scriptSplitterService;
+        this.shotRepository = shotRepository;
+        this.slideshowRiskScorer = slideshowRiskScorer;
     }
 
     /**
@@ -310,5 +322,58 @@ public class ReviewController {
      */
     public record ContinuityReportDto(int shotsChecked, boolean hasWarnings,
                                        List<ContinuityIssueDto> issues) {
+    }
+
+    /**
+     * 幻灯片风险评分（计划层）。
+     *
+     * @param projectId      项目主键
+     * @param episodeId      剧集主键
+     * @param rendererFamily 渲染器家族（可选，用于电影感声明校验）
+     * @param renderRuntime  渲染运行时（可选，随报告回传记录）
+     * @return 幻灯片风险评分报告
+     */
+    @GetMapping("/slideshow-risk")
+    @Operation(summary = "幻灯片风险评分（计划层）")
+    public SlideshowRiskDto slideshowRisk(@Parameter(description = "项目主键") @PathVariable Long projectId,
+                                          @Parameter(description = "剧集主键") @PathVariable Long episodeId,
+                                          @RequestParam(required = false) String rendererFamily,
+                                          @RequestParam(required = false) String renderRuntime) {
+        assertEpisodeBelongsToProject(projectId, episodeId);
+        try {
+            List<Shot> shots = shotRepository.findByEpisodeIdOrderByShotNoAsc(episodeId);
+            SlideshowRiskScorer.SlideshowRiskReport report = slideshowRiskScorer.scoreShots(shots, rendererFamily);
+            Map<String, DimensionScoreDto> dims = new LinkedHashMap<>();
+            report.dimensions().forEach((k, v) -> dims.put(k, new DimensionScoreDto(v.score(), v.reason())));
+            return new SlideshowRiskDto(report.average(), report.verdict(), report.verdictLabel(),
+                    report.scenesChecked(), dims, renderRuntime);
+        } catch (Exception e) {
+            log.warn("幻灯片风险评分失败，降级返回不通过报告：episodeId={}", episodeId, e);
+            return new SlideshowRiskDto(5.0, "fail", "不通过", 0, Map.of(), renderRuntime);
+        }
+    }
+
+    /**
+     * 幻灯片风险评分报告 DTO。
+     *
+     * @param average       六维平均分（0-5，越低越好）
+     * @param verdict       结论：strong/acceptable/revise/fail
+     * @param verdictLabel  结论中文标签
+     * @param scenesChecked 已评分的分镜数
+     * @param dimensions    各维度评分（键为维度名）
+     * @param renderRuntime 渲染运行时（请求回传）
+     */
+    public record SlideshowRiskDto(double average, String verdict, String verdictLabel,
+                                   int scenesChecked, Map<String, DimensionScoreDto> dimensions,
+                                   String renderRuntime) {
+    }
+
+    /**
+     * 单维度评分 DTO。
+     *
+     * @param score  分数（0-5，越低越好）
+     * @param reason 评分理由
+     */
+    public record DimensionScoreDto(double score, String reason) {
     }
 }

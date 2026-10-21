@@ -1,0 +1,142 @@
+name: animation
+version: "1.0"
+description: "面向动态图形、图解说明、动态排版、数学可视化、显式 Three.js 场景及风格化插画序列的动画优先流水线。采用研究先行的前期制作阶段：代理先研究主题与动画技术，提出包含动画模式选择与成本估算的概念方案，并在生成任何资产前获得用户明确批准。"
+category: animation
+stages:
+  - name: research
+    produces: [research_brief]
+    requiredArtifactsIn: []
+    checkpointRequired: false
+    humanApprovalDefault: false
+    reviewFocus:
+      - 已梳理内容领域，至少涵盖 3 个现有作品
+      - 数据点具体且有来源，不含糊
+      - 已研究动画技术参考（至少 2 项）
+      - 已发现至少 3 个真正不同的角度，并标注动画适配性
+      - 所有角度均基于具体研究发现
+    successCriteria:
+      - 研究简报符合 schema 规范，且包含至少 3 个数据点
+      - 至少包含 3 个发现的角度，每个均有 grounded_in 引用
+      - 至少引用 5 个来源并附 URL
+  - name: proposal
+    produces: [proposal_packet, decision_log]
+    requiredArtifactsIn: [research_brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 概念选项在动画模式、结构与钩子上真正不同
+      - 动画模式选择基于技术研究与工具可用性
+      - 每个概念均包含复用策略（母题、模板、转场族）
+      - 制作计划反映预检中的实际工具可用性
+      - 成本估算逐项列明且诚实
+      - 在适用处突出免费/本地工具选项
+      - "已确定音频架构：单一旁白 / 角色对话 / 旁白+角色"
+      - 提供商选择以成本对比表呈现——代理推荐但用户决定
+      - "显式选择渲染运行时——React 场景栈用 remotion，HTML/GSAP 动态图形用 hyperframes，简单拼接用 ffmpeg。参见 skills/core/hyperframes.md 与 skills/meta/animation-runtime-selector.md 的决策矩阵。在 decision_log 中以 render_runtime_selection 类别记录。"
+    successCriteria:
+      - 提案包符合 schema 规范，且包含至少 3 个概念选项
+      - 选定概念包含 animation_mode 与 reuse_strategy
+      - "选定概念包含 audio_architecture（single_narrator | character_dialogue | narrator_plus_characters）"
+      - 成本估算包含逐项 line_items 及各工具成本
+      - 成本估算包含至少 2 个提供商选项的对比表
+      - "继续前 approval.status 为 \"approved\" 或 \"approved_with_changes\""
+    subStages:
+      - name: sample
+        description: 面向参考驱动制作的 10-15 秒动画预览
+        condition: 存在视频分析简报
+        humanApprovalDefault: true
+        reviewFocus:
+          - 样片忠实呈现已批准的动画模式
+          - 视觉标识与已批准的 playbook 及风格一致
+          - 节奏与参考灵感一致
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [proposal_packet, research_brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 剧本节拍简洁且适合动画
+      - 屏幕文字保持可读且克制
+      - 时间结构为视觉停留留出空间
+      - 旁白主导的剧本包含具体的配音表演提示
+      - 字数与选定概念的时长目标偏差在 ±10% 以内
+      - 剧本在相关处融入研究数据点
+    successCriteria:
+      - 剧本产物符合 schema 规范
+      - 剧本章节映射到不同的动画节拍
+      - 总时长与选定概念目标偏差在 10% 以内
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script, proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 场景系统连贯，并遵循提案中的复用策略
+      - 每个场景均指定动画模式，且与提案一致
+      - 转场逻辑有限且有意义
+      - 每个场景均有可行的工具路径
+    successCriteria:
+      - 场景计划产物符合 schema 规范
+      - 每个场景均包含动画模式与视觉处理
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个场景的资产生产路径明确
+      - 可复用母题与模板已准备并被引用
+      - 缺失的工具路径被如实暴露
+      - 旁白资产应用已批准的配音表演计划与样本设置
+      - 总成本在提案包批准的预算内
+      - 在写提示词前，已为每个生成工具读取 Layer 3 技能（检查 agent_skills 字段）
+      - 片段时长最大化（优先 10 秒而非 5 秒），以减少 API 调用与成本
+      - 使用选择器工具（video_selector、tts_selector、image_selector）——绝不直接调用提供商工具
+      - 在阅读源码前，先为每个工具读取 Layer 2 技能——技能包含使用指导，源码是实现细节
+    successCriteria:
+      - 资产清单产物符合 schema 规范
+      - 所有引用的资产文件均存在于磁盘
+      - layer3_skills_read 列表存在，且包含所有用于生成的工具
+      - 真实 3D 世界简报在合成前包含语义或线框诊断审查
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [asset_manifest, script]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 保留停留时间与错落揭示
+      - 动效服务于层级而非装饰
+      - 时间线逻辑跨场景一致
+      - 为旁白片段配置音频闪避
+    successCriteria:
+      - 剪辑决策产物符合 schema 规范
+      - 剪辑决策覆盖所有计划的动画节拍
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 文字与图表在最终分辨率下保持清晰
+      - 动效时间在最终渲染中得以保留
+      - 音频同步符合动态分镜意图
+      - 时长与目标偏差在 ±5% 以内
+      - "edit_decisions 中的 render_runtime 与 proposal_packet 锁定的 render_runtime 一致——任何更换都需要在 decision_log 中记录 render_runtime_selection 决策"
+      - "HyperFrames 渲染必须在渲染步骤前通过 `hyperframes lint` 与 `hyperframes validate`——绝不跳过验证"
+      - "渲染后自检为强制项：提取关键帧，逐场景目视检查，在呈现给用户前标记弱帧"
+    successCriteria:
+      - 渲染报告产物符合 schema 规范
+      - 输出文件存在且通过 ffprobe 验证
+      - self_review_completed 为 true，并附逐场景质量备注
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, proposal_packet, script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 平台包装与动画风格匹配
+      - 元数据反映实际主题、动画模式与视觉系统
+      - 缩略图概念与最终视觉语言匹配
+    successCriteria:
+      - 发布日志产物符合 schema 规范
+      - 导出包包含视频与元数据输出

@@ -1,0 +1,141 @@
+name: character-animation
+version: "1.0"
+description: 面向本地可复用卡通角色的角色动画流水线，将剧本与场景规划转化为角色设定、绑定方案、姿势库、动作时间线及浏览器端 SVG/Canvas/Remotion/HyperFrames 动画。该流水线专注于确定性本地运动，而非远程视频生成。
+category: animation
+stages:
+  - name: research
+    produces: [research_brief]
+    requiredArtifactsIn: []
+    checkpointRequired: false
+    humanApprovalDefault: false
+    reviewFocus:
+      - 存在参考时，研究参考风格与角色动画技术
+      - 至少总结 3 个可对比的角色动画示例或技术
+      - 可行性分析区分绑定式本地动画与逐帧传统动画
+    successCriteria:
+      - 研究简报通过 schema 校验
+      - 技术笔记明确可复用绑定、姿势库与特效需求
+  - name: proposal
+    produces: [proposal_packet, decision_log]
+    requiredArtifactsIn: [research_brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 概念之间有区分度，不是任何参考的复制品
+      - 角色数量、动作复杂度与复用策略明确
+      - 渲染运行时选择在两者可用时同时提供 Remotion 与 HyperFrames
+      - 保留运动需求；角色表演不提出仅用 FFmpeg 的降级方案
+      - 包含先制作样片再全面投产的计划
+    successCriteria:
+      - 提案包通过 schema 校验
+      - 选定概念包含 character_count、rig_complexity、reuse_strategy 与 render_runtime
+      - 在生成角色资产前记录用户审批
+    subStages:
+      - name: sample
+        description: 全面投产前的 10-15 秒角色动画验证
+        condition: 已存在获批概念
+        humanApprovalDefault: true
+        reviewFocus:
+          - 样片验证角色风格、绑定完整性、姿势可读性与动作节奏
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [proposal_packet, research_brief, video_analysis_brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 剧本以动作节拍撰写，而非仅叙述
+      - 对白/叙述架构已锁定
+      - 每个情绪转折都能用姿势与动作表达
+    successCriteria:
+      - 剧本通过 schema 校验
+      - 角色节拍与音频架构明确
+  - name: character_design
+    produces: [character_design]
+    requiredArtifactsIn: [script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每个角色具有独特定位、剪影、情绪范围与动作清单
+      - 角色数量对本地绑定而言现实可行
+      - 风格锚点可跨场景复用
+    successCriteria:
+      - 角色设计通过 schema 校验
+      - 每个主要角色具备所需情绪、动作与视角
+  - name: rig_plan
+    produces: [rig_plan, pose_library]
+    requiredArtifactsIn: [character_design]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 部件、枢轴、图层、约束、视角与所需姿势完整
+      - 绑定方案避免按角色写代码路径；角色差异以数据表达
+      - 已知高风险动作在资产生成前被标出
+    successCriteria:
+      - 绑定方案通过 schema 校验
+      - 姿势库通过 schema 校验
+      - 每个所需动作至少对应一个姿势或动作策略
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [rig_plan, proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 场景使用 character_scene 或 animation 类型并带定时动作
+      - 每个场景包含角色、动作、镜头/构图、背景与特效
+      - 场景复杂度符合已获批样片与预算
+    successCriteria:
+      - 场景规划通过 schema 校验
+      - 每个场景映射到已绑定角色与所需资产
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, script, proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 角色部件、背景、道具、音频与特效均关联到场景
+      - 每个生成或动画运行时工具都读取 Layer 3 技能
+      - 记录资产来源与提示词
+      - 缺失的绑定资产被拦截而非隐藏
+    successCriteria:
+      - 资产清单通过 schema 校验
+      - 所有引用的资产文件存在
+      - 角色资产组织在 projects/<name>/assets/characters 下
+  - name: edit
+    produces: [edit_decisions, action_timeline]
+    requiredArtifactsIn: [asset_manifest, script, rig_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 动作时间线保留表演节拍与情绪可读性
+      - 姿势过渡带有关键帧停留、预备动作与跟随动作的时序
+      - render_runtime 从提案原样带入
+    successCriteria:
+      - 剪辑决策通过 schema 校验
+      - 动作时间线通过 schema 校验
+      - 每个场景都有定时动作
+  - name: compose
+    produces: [render_report, final_review, character_qa_report]
+    requiredArtifactsIn: [edit_decisions, rig_plan, pose_library, proposal_packet]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 实际使用的运行时与提案中选定的一致
+      - 浏览器预览在可用时通过 Playwright/截图检查
+      - 最终 MP4 通过 ffprobe、帧采样、角色 QA 与视觉自检
+      - 不静默降级为静态图片运动
+    successCriteria:
+      - 渲染报告通过 schema 校验
+      - 最终审查通过 schema 校验
+      - 角色 QA 报告通过 schema 校验
+      - 输出文件存在并通过技术校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, proposal_packet, script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 元数据如实描述角色动画风格
+      - 缩略图/海报帧突出主要角色与情绪钩子
+      - 任何限制在交付说明中明确标出
+    successCriteria:
+      - 发布日志通过 schema 校验

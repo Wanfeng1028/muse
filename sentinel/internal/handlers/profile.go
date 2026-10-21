@@ -41,7 +41,7 @@ import (
 //	POST   /api/status/{slug}/unsubscribe   （公开，执行退订）
 func (s *Server) RegisterSoulRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/monitors/{id}/profile", s.handleMonitorProfile)
-	mux.HandleFunc("GET /api/monitors/{id}/sla", s.handleMonitorSLA)
+	mux.HandleFunc("GET /api/monitors/{id}/sla", s.handleMonitorSLAJSON)
 	mux.HandleFunc("GET /api/monitors/{id}/sla.html", s.handleMonitorSLAHTML)
 	mux.HandleFunc("PUT /api/monitors/{id}/public", s.handleMonitorSetPublic)
 
@@ -138,43 +138,6 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 		"jitter_level":   jl,
 		"timeline":       tl,
 	})
-}
-
-// handleMonitorSLA 返回指定月份的 SLA 报告。
-func (s *Server) handleMonitorSLA(w http.ResponseWriter, r *http.Request) {
-	id, ok := parsePathID(r, "id")
-	if !ok {
-		return
-	}
-	if _, err := s.store.GetMonitor(id); err != nil {
-		writeErr(w, http.StatusNotFound, "monitor 不存在")
-		return
-	}
-
-	month := r.URL.Query().Get("month")
-	now := time.Now().UTC()
-	year, mon := now.Year(), int(now.Month())
-	if month != "" {
-		parts := strings.SplitN(month, "-", 2)
-		if len(parts) != 2 {
-			writeErr(w, http.StatusBadRequest, "month 格式应为 YYYY-MM")
-			return
-		}
-		y, err1 := strconv.Atoi(parts[0])
-		mn, err2 := strconv.Atoi(parts[1])
-		if err1 != nil || err2 != nil || mn < 1 || mn > 12 || y < 1970 || y > 9999 {
-			writeErr(w, http.StatusBadRequest, "month 格式应为 YYYY-MM")
-			return
-		}
-		year, mon = y, mn
-	}
-
-	rep, err := s.store.MonthlySLA(id, year, mon)
-	if err != nil {
-		writeErr(w, http.StatusInternalServerError, "生成 SLA 报告失败")
-		return
-	}
-	writeJSON(w, http.StatusOK, rep)
 }
 
 // handleMonitorSetPublic 更新 monitor 的公开可见性。

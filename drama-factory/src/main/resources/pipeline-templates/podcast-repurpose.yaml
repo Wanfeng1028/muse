@@ -1,0 +1,89 @@
+name: podcast-repurpose
+version: "1.0"
+description: 播客转视频再利用流水线，将播客音频或视频播客转化为声波图片段、字幕片段、金句社交素材，并在源素材与预算允许时产出全集伴生视频，同时通过质量关卡保障音频保真、片段筛选与多交付物一致性。
+category: custom
+stages:
+  - name: idea
+    produces: [brief, decision_log]
+    requiredArtifactsIn: [source_media_review]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 已识别源播客形式（单人、访谈、圆桌）
+      - 已明确输出类型（声波图片段、金句片段、伴生视频）
+      - 平台目标与片段数量切合实际
+    successCriteria:
+      - 简报产物符合模式校验
+      - 简报明确了输出交付物类型与平台目标
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 全集已转写并完成说话人分离
+      - 已识别金句时刻与高光片段
+      - 话题转换已映射为章节标记
+    successCriteria:
+      - 脚本产物符合模式校验
+      - 转写文本各段带有说话人标签与时间戳
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每段视觉处理已规划（源视频、字幕主导、金句主导、声波图）
+      - 高光片段具有强独立吸引力
+      - 全集伴生视频在现有源素材下保持可行
+    successCriteria:
+      - 场景规划产物符合模式校验
+      - 每个交付物（片段+全集）均有场景规划
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 已为所有片段与全集生成字幕
+      - 金句卡/说话人卡素材符合风格规范
+      - 可选话题图形具有相关性且未超预算
+    successCriteria:
+      - 素材清单产物符合模式校验
+      - 所有引用的素材文件均存在于磁盘
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [asset_manifest, script]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 片段开场迅速且来源标注清晰
+      - 金句卡与字幕在正确时机出现
+      - 全集伴生视频采用轻量视觉而非虚假复杂
+    successCriteria:
+      - 剪辑决策产物符合模式校验
+      - 剪辑决策覆盖所有规划交付物
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 所有交付物已渲染（片段+全集，如已规划）
+      - 音频质量保持原播客水准
+      - 声波或动态处理与预期布局一致
+    successCriteria:
+      - 渲染报告产物符合模式校验
+      - 所有输出文件存在且通过 ffprobe 校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 每段素材的元数据已针对目标平台优化
+      - 已建议片段分发发布时间表
+      - 全集视频元数据包含章节标记
+    successCriteria:
+      - 发布日志产物符合模式校验
+      - 导出目录包含所有带元数据的交付物

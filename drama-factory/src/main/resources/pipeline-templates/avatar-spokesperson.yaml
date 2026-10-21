@@ -1,0 +1,89 @@
+name: avatar-spokesperson
+version: "1.0"
+description: 面向发言人视频、内部通报、新人入职、销售介绍及短脚本讲解的虚拟主播流水线。适用于数字主播为核心、辅助图形保持简洁的项目，EP 编排会为口型同步质量、主播构图与 CTA 落地增设质量门。
+category: custom
+stages:
+  - name: idea
+    produces: [brief, decision_log]
+    requiredArtifactsIn: []
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 虚拟主播路径与素材来源是否明确
+      - CTA 与受众是否契合发言人视频形式
+      - 脚本撰写前是否已暴露缺失的能力
+    successCriteria:
+      - 产出符合 Schema 的 brief 产物
+      - brief 中记录了虚拟主播路径、旁白来源与输出形态
+  - name: script
+    produces: [script]
+    requiredArtifactsIn: [brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 口播文案是否简洁自然
+      - 场景切换是否符合虚拟主播的播报实际
+      - 屏幕文字是否保持克制
+    successCriteria:
+      - 产出符合 Schema 的 script 产物
+      - 脚本分段映射到适合主播出镜的节拍
+  - name: scene_plan
+    produces: [scene_plan]
+    requiredArtifactsIn: [script, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 主播布局与背景系统是否协调
+      - 辅助图形是否始终让位于主播
+      - 画幅变体规划是否切实可行
+    successCriteria:
+      - 产出符合 Schema 的 scene_plan 产物
+      - 每个场景都定义了主播与辅助处理方式
+  - name: assets
+    produces: [asset_manifest]
+    requiredArtifactsIn: [scene_plan, brief]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 虚拟主播生成路径是否明确且诚实（如适用，包含无主播的备选方案）
+      - 旁白、字幕与背景素材是否对齐
+      - 受阻路径是否被记录而非隐藏
+    successCriteria:
+      - 产出符合 Schema 的 asset_manifest 产物
+      - 所有引用的素材文件均存在于磁盘上
+  - name: edit
+    produces: [edit_decisions]
+    requiredArtifactsIn: [asset_manifest, script]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 主播是否保持视觉主体地位
+      - 图形与字幕是强化而非干扰
+      - CTA 出现时机是否清晰
+    successCriteria:
+      - 产出符合 Schema 的 edit_decisions 产物
+      - 剪辑决策覆盖了所有计划交付物
+  - name: compose
+    produces: [render_report, final_review]
+    requiredArtifactsIn: [edit_decisions, scene_plan]
+    checkpointRequired: true
+    humanApprovalDefault: false
+    reviewFocus:
+      - 口型同步或嘴部时序在所选路径下是否可接受
+      - 字幕位置与画面构图是否干净
+      - 音频是否清晰且以主播为中心
+    successCriteria:
+      - 产出符合 Schema 的 render_report 产物
+      - 输出文件存在且通过 ffprobe 校验
+  - name: publish
+    produces: [publish_log]
+    requiredArtifactsIn: [render_report, brief, script]
+    checkpointRequired: true
+    humanApprovalDefault: true
+    reviewFocus:
+      - 主交付物与衍生版本是否标注清晰
+      - 元数据是否与发言人主张及受众匹配
+      - 封面或海报帧是否干净地突出主播
+    successCriteria:
+      - 产出符合 Schema 的 publish_log 产物
+      - 导出包包含视频与元数据输出
