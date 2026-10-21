@@ -129,6 +129,7 @@
 - **遗留 2026-10-21 凌晨轮**：k-w10（focus-validation deep5）、k-w11（words-srs）重跑 6 次全部失败——step193plan 5 次只交思考过程（严厉 prompt 重试仍失败）、step150api 4 次纯思考/占位符；dpsk 全程 429。今晚双模型均处降级状态，顺延下轮。教训："只许输出 FILE 块"硬约束今晚反而触发模型的元思考，plain 短 prompt 出码率更高（待验证）。
 - **深耕轮 2026-10-21 早（已合入，2a06847）**：k-w10 解决——s193 用"脚手架+首个测试续写"式 prompt（assembly 风格）一次成功，focus-validation.deep5.test.ts 10/10 通过。模型出码率经验更新：①给完整可组装的代码片段（assembly）比"从零写 N 个测试"可靠得多；②s150 并发上限 5（超了 429），且今晨频繁超时；③t3c 证明"只要 8 个方法、不要 FILE 信封"能绕过元思考。k-w11 仍待生成（s150 两次超时、s193 未试）。
 - **深耕轮 2026-10-21 07:07 集中收尾（已合入，2cb5ab9）**：k-w11 解决——words-srs.deep5.test.ts 10/10 全绿；新增 api-route-parity.deep5.test.ts 5/5（前后端 API 路由对齐）。凌晨轮 k-w10/k-w11 双降级遗留正式清零。
+- **深耕轮 2026-10-21 09:07（已合入，774d70b）**：wave5 b18 收尾——mistakes-quiz-generate.deep2.test.ts 9/9 全绿（测试侧修复：用户名合规/裸数组响应/uidOf动态查询；产品代码零改动）。
 
 ## drama-factory「AI 短剧工坊」
 
@@ -247,7 +248,7 @@
 
 **定位**：浏览器里的桌面操作系统，后端提供虚拟文件系统、设置持久化与应用注册表，前端实现可拖拽多窗口桌面。
 
-**技术栈**：Rust + Axum 0.7（含 WebSocket + multipart）+ Tokio + rusqlite 0.32（bundled SQLite + backup feature）；前端原生 HTML/CSS/JS（无框架）；cargo test 28 例（单元 4 + 集成 16 + 失败注入 8）、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
+**技术栈**：Rust + Axum 0.7（含 WebSocket + multipart）+ Tokio + rusqlite 0.32（bundled SQLite + backup feature）；前端原生 HTML/CSS/JS（无框架）；cargo test 40 例（单元 4 + 集成 16 + 失败注入 8 + 2026-10-21 ws_term_deep3 12）、cargo clippy 零警告；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 mini-os/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。
 
 **功能模块**：
 
@@ -374,6 +375,7 @@
 - 工程化 v1（2026-10-13）：单二进制架构落地，检查器/调度器/事件流、内嵌 Web UI、CI 与多阶段构建就绪
 - 生产级 v0.2.0（2026-10-13）：全量生产级改造（可观测性/可靠性/数据/部署/安全/可维护性）+ 灵魂功能（健康档案/月度 SLA/公开状态页）；CHANGELOG 见 sentinel/CHANGELOG.md
 - v0.3.0 状态页主题与订阅通知（2026-10-16）：迁移 v3（status_pages 加 theme/accent_color，老库自动补列）+ v4（status_subscriptions 表）；`PUT /api/status-pages/{id}/theme`；公开接口透出主题；订阅全链路 `POST /api/status/{slug}/subscribe`→确认邮件 token→`GET .../confirm`→`GET/POST .../unsubscribe`，down/recovered 事件经 `notify.NotifySubscribers` 扇出给已确认订阅者（同邮箱多页去重，退订链接带 token）；`SENTINEL_PUBLIC_URL` 配邮件链接基地址；状态页 UI 重写（CSS 变量双主题+访客切换器+主色取色器+订阅卡片，去 AI 味）；72 测试全过（新增 30）；真实冒烟：fake SMTP 捕获确认邮件→点链接确认→二次故障→订阅者收到宕机通知；三主题真实截图亲眼验收；修 v0.2 遗留 bug：可用性文字 span 与状态圆点共用 `.up` 类名致 querySelector 误命中圆点（改名 `.uptime`）。README/CHANGELOG 已同步，截图落 docs/screenshots/status*.png
+- **深耕轮 2026-10-21 09:07（已合入，774d70b/878f3e6）**：wave5 b4 收尾——TestSLAAPI_* 4/4 全绿（测试侧：SetPathValue直调/insertMonitor补非空列）；新增 checker_deep3_test.go 全绿（Check/CheckWithRetry/CheckWithRetryCtx 纵深）。
 - **v0.4.0「Webhook 持久化投递队列」（2026-10-16）**：`webhook_deliveries` 表（迁移 v5，pending/retrying/done/failed）+ 入队幂等去重 + worker 指数退避重投（默认 8 次/基数 60s/15s 扫描）+ 管理 API（列表/手动重试）+ `/deliveries` 控制台页（真数据）；`go test` **97/97**（新增 12）、go vet 全洁；真实冒烟（必失败 webhook：pending→retrying→failed，手动 retry 闭环）；投递队列表截图亲眼验收；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md`。已知限制：单实例；~~故障演练排期 v0.5~~（已在 2026-10-17 交付）
 - **v0.5「故障演练」（2026-10-17）**：`scripts/fault-drill.sh`（探针目标全挂→事件→webhook 通知→恢复闭环），真实跑通 **13/13**；`docs/FAULT_DRILL.md`（步骤+预期+实测结果+未覆盖项声明）；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.5.md`（依赖扫描/真实负载改排期 v0.6）
 - **v0.6「告警规则+依赖扫描+真实负载」（2026-10-17）**：`prometheus/rules/sentinel.yml` 6 条告警规则（实例 down / 调度停滞 / 队列积压>50 / 投递失败率>20% / 检查失败激增 / 自身 API 5xx 率>5%）+ `prometheus/prometheus.yml` 抓取示例；`RenderQueueBacklog` 指标缺口补齐（`sentinel_webhook_queue_backlog{status="pending"|"retrying"}`）；OPERATIONS.md 第 10 章（阈值依据、静默/值班建议）+ §5.2 订正；`scripts/depscan.sh` 实跑（23 个模块，OSV 3 个 + govulncheck 46 个 = 49 个漏洞，全在 Go 标准库 go1.23.4 与 x/mod、x/sys，因 go1.23.4 过旧，无第三方业务依赖漏洞，退出码 1）；`scripts/load_check.sh` 实跑（40 轮检查，p50=6.0ms、p99=14.8ms，4 down 事件全对、无误报，webhook 4/4，积压峰值 2 并排空，耗时 73s）；`go test` **141/141**、vet/gofmt 全洁、fault-drill 13/13；发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.6.md` 关闭全部 v0.5 排期项。诚实缺口（排期 v0.7）：入队限流、投递熔断、Go 工具链升级后复扫、incidents.html 模拟数据债
@@ -510,7 +512,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 **定位**：自托管 RSS 阅读器，覆盖订阅管理、定时抓取、正文提取、三栏阅读、全文搜索与 OPML 导入导出的完整流程。
 
-**技术栈**：Python 3.11+ + Flask 3.1.3 + feedparser 6.0.14（RSS/Atom 解析）+ trafilatura 2.2.0（正文提取）+ APScheduler 3.11.3（进程内定时调度）+ SQLite FTS5（trigram tokenizer，中英文全文搜索）；pytest（35 例）、ruff、Dockerfile、GitHub Actions CI（暂置 feedflow/.github，待 token 补齐 workflow 权限后迁移至仓库根目录）。选型经三步调研：dpsk 出候选清单与对比维度 → Keenable 核验版本时效性（Flask 3.1.3 / feedparser 6.0.14 / trafilatura 2.2.0 / APScheduler 3.11.3 均为 2026 年内最新稳定版）→ venv 实际安装验证通过。选 Flask 而非 FastAPI：单进程自托管阅读器，Flask + Jinja2 直出三栏阅读器页面足够轻，异步抓取并非瓶颈。
+**技术栈**：Python 3.11+ + Flask 3.1.3 + feedparser 6.0.14（RSS/Atom 解析）+ trafilatura 2.2.0（正文提取）+ APScheduler 3.11.3（进程内定时调度）+ SQLite FTS5（trigram tokenizer，中英文全文搜索）；pytest（43 例，含 2026-10-21 clusters API 深测 8）、ruff、Dockerfile、GitHub Actions CI（暂置 feedflow/.github，待 token 补齐 workflow 权限后迁移至仓库根目录）。选型经三步调研：dpsk 出候选清单与对比维度 → Keenable 核验版本时效性（Flask 3.1.3 / feedparser 6.0.14 / trafilatura 2.2.0 / APScheduler 3.11.3 均为 2026 年内最新稳定版）→ venv 实际安装验证通过。选 Flask 而非 FastAPI：单进程自托管阅读器，Flask + Jinja2 直出三栏阅读器页面足够轻，异步抓取并非瓶颈。
 
 **功能模块**：
 
@@ -559,7 +561,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 **定位**：自托管短链服务，把长链接变成短地址；单二进制 + SQLite + 内嵌 Web UI，跑起来就能用。
 
-**技术栈**：Go 1.23 单二进制；chi v5.3.2 路由（组件库多元化：与 second-brain/sentinel 的标准库 net/http 错开），modernc.org/sqlite v1.34.5（纯 Go SQLite 驱动，无需 cgo）；skip2/go-qrcode 服务端生成二维码 PNG；go:embed 内嵌 Web UI；go test（58 例，-race 全过）、go vet、gofmt；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 linkshort/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。选型经三步调研：dpsk 出候选清单与对比维度（chi/gin/echo/fiber、skip2/go-qrcode/boombuler/yeqown）→ Keenable 核验时效性（chi v5.3.2 2026-09 发布、活跃维护；qrcode 为短链场景事实标准）→ go get 实际安装验证通过。选 chi 而非 gin/echo：一句话——单二进制小服务，chi 零第三方依赖、纯 net/http 兼容，与"一个二进制跑起来"的气质最贴合。
+**技术栈**：Go 1.23 单二进制；chi v5.3.2 路由（组件库多元化：与 second-brain/sentinel 的标准库 net/http 错开），modernc.org/sqlite v1.34.5（纯 Go SQLite 驱动，无需 cgo）；skip2/go-qrcode 服务端生成二维码 PNG；go:embed 内嵌 Web UI；go test（68 例，含 2026-10-21 batch API 深测 10，-race 全过）、go vet、gofmt；Dockerfile 多阶段构建；GitHub Actions CI 暂置于 linkshort/.github，待 token 补齐 workflow 权限后迁移至仓库根目录。选型经三步调研：dpsk 出候选清单与对比维度（chi/gin/echo/fiber、skip2/go-qrcode/boombuler/yeqown）→ Keenable 核验时效性（chi v5.3.2 2026-09 发布、活跃维护；qrcode 为短链场景事实标准）→ go get 实际安装验证通过。选 chi 而非 gin/echo：一句话——单二进制小服务，chi 零第三方依赖、纯 net/http 兼容，与"一个二进制跑起来"的气质最贴合。
 
 **功能模块**：
 
@@ -788,6 +790,7 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 **里程碑记录**：
 
 - protocol v1.1（2026-10-16）：gseq、last_seen_seq 重定义、自激风暴修复，e2e 6/6
+- **深耕轮 2026-10-21 09:07（已合入，f682d1d/d1d1f3c）**：新增 doudizhu-ai-deep.test.ts 10/10 全绿（choosePlay 纵深）；新增 werewolf-r2.deep.test.ts 10/10 全绿（视角隔离/AI/错误码/首夜/投票流；修测试侧：10人局有守卫/接住新state/发言轮）。
 - **v0.2.0（2026-10-17）**：补发语义收敛 + usage 可观测 + 重启持久化。
 - **v0.3.0（2026-10-17）**：见"状态"节。
 - **v0.4.0「房间类型」（2026-10-17）**：protocol rooms-types + 网关三表（rooms/room_members/game_sessions，老库自动建表）+ 3 个 env（非法值 fail-fast）+ 房间感知路由 + 12 个 REST 端点 + Web 房间列表/徽标/设置；测试 protocol 79/79、gateway 104/104（新增 38）；真实网关冒烟 + 3 张真实截图亲眼验收；发版对照报告 docs/PRODUCTION_CHECKLIST_REPORT_v0.4.0.md。
