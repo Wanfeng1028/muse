@@ -16,6 +16,7 @@ import math
 from datetime import UTC, datetime
 
 from . import db
+from .cluster_scoring import cluster_importance_score
 
 RECENCY_HALFLIFE_HOURS = 48
 WEIGHTS = {
@@ -555,7 +556,9 @@ def get_digest_clusters(db_path, n: int = 10, now=None) -> list[dict]:
                 "source_titles": seen_titles,
                 "unread": unread_count,
                 "representative": rep,
-                "cluster_score": rep_score,
+                "cluster_score": cluster_importance_score(
+                    rep_score, members_count, sources_count, unread_count, latest_at_str
+                ),
                 "cluster_reasons": cluster_reasons,
                 "latest_at": latest_at_str,
             }

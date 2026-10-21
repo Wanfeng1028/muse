@@ -191,5 +191,18 @@ TEST(QueryParserPunct, NormalTrailingStripUnchanged) {
     EXPECT_EQ(stripFillerWords(""), "");
 }
 
+TEST(QueryParserFillerD, NewNoiseWordsStripped) {
+    std::string r = stripFillerWords("长期不弹琴的话，琴弦应该怎么处理比较好？");
+    EXPECT_EQ(r.find("应该怎么"), std::string::npos);
+    EXPECT_EQ(r.find("的话"), std::string::npos);
+    EXPECT_NE(r.find("琴弦"), std::string::npos);
+    std::string r2 = stripFillerWords("豆瓣酱下锅后多长时间才能出红油？");
+    EXPECT_EQ(r2.find("多长时间"), std::string::npos);
+    EXPECT_NE(r2.find("豆瓣酱"), std::string::npos);
+    std::string r3 = stripFillerWords("弹力带用久了出现什么情况就该换新的了？");
+    EXPECT_EQ(r3.find("什么情况"), std::string::npos);
+    EXPECT_NE(r3.find("弹力带"), std::string::npos);
+}
+
 }  // namespace
 }  // namespace docseek
