@@ -179,5 +179,17 @@ TEST(QueryParserV016, MidStringBuUntouched) {
     EXPECT_TRUE(contains(k, "不能") || contains(k, "不"));
 }
 
+TEST(QueryParserPunct, PurePunctuationQueryPreserved) {
+    EXPECT_EQ(stripFillerWords("，"), "，");
+    EXPECT_EQ(stripFillerWords(";"), ";");
+    EXPECT_EQ(stripFillerWords("！"), "！");
+    EXPECT_EQ(stripFillerWords("？？？"), "？？？");
+}
+TEST(QueryParserPunct, NormalTrailingStripUnchanged) {
+    EXPECT_EQ(stripFillerWords("数据备份怎么办？"), "数据备份");
+    EXPECT_EQ(stripFillerWords("检索，引擎"), "检索，引擎");
+    EXPECT_EQ(stripFillerWords(""), "");
+}
+
 }  // namespace
 }  // namespace docseek

@@ -260,6 +260,12 @@ std::string stripTrailingQuestionBu(const std::string& s) {
         }
         out.resize(out.size() - 3);
     }
+    // 纯标点查询保护：尾部剥离不能把整个查询剥空。查询本身就是纯标点
+    // （如 "，" ";" "！" "？？？"）时剥离会得到空串，导致 Searcher::search()
+    // 直接返回 0 结果，而 FTS5 层原本能命中含该标点的文档。剥空时原样返回。
+    if (out.empty()) {
+        return s;
+    }
     return out;
 }
 
