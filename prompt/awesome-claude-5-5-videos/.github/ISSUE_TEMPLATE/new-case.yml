@@ -1,0 +1,42 @@
+name: New video case
+description: Suggest an original Claude 5.5 video or a stronger source for an existing entry.
+title: "Case: "
+labels: [case-review]
+body:
+  - type: input
+    id: original-post
+    attributes:
+      label: Original X post
+      description: Link to the creator's own post, rather than a repost or quote.
+      placeholder: https://x.com/creator/status/1234567890
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and access evidence
+      description: Exact model/version, displayed label, and source for access. Mark suspected Fable routing as unverified.
+      placeholder: Creator reports Fable 5.5; UI says Fable 5.1; backend unverified.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Prompt, workflow, or source evidence
+      description: Link creator replies, a public prompt, project files, or a making-of account. Distinguish what the creator says from what a source demonstrates.
+    validations:
+      required: true
+  - type: textarea
+    id: production
+    attributes:
+      label: Inputs and production roles
+      description: What assets were supplied? What did Claude do? Which program or model rendered the pixels and audio?
+    validations:
+      required: true
+  - type: textarea
+    id: distinction
+    attributes:
+      label: Why this case belongs
+      description: Name the distinct technique or evidence it adds. Note limitations or unresolved claims.
+    validations:
+      required: true
