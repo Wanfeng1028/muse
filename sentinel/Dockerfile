@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # 构建阶段：编译 Go 二进制文件
-FROM golang:1.23-bookworm AS build
+FROM golang:1.25-bookworm AS build
 WORKDIR /src
 
 # 先复制依赖清单，利用缓存下载模块
