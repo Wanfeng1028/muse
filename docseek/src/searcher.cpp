@@ -1307,8 +1307,10 @@ std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, s
         return {};
     }
 
-    // 防御：超长/纯标点查询直接返回空（历史 hang：TokenizerLong.VeryLongPunctuationQueryReturnsEmpty）。
+    // 防御：超长查询直接返回空（历史 hang：TokenizerLong.VeryLongPunctuationQueryReturnsEmpty）。
     // 此类查询在分词与 FTS5 匹配阶段会退化为病态扫描，导致线程长时间占用。
+    // 注意：std::ispunct 仅识别 ASCII 标点，短纯标点查询（如 "," "." ";" "@" "#"）不应被误拒，
+    // 因此仅当纯标点查询长度超过 32 字符时才拦截；短纯标点查询走正常检索路径。
     {
         constexpr std::size_t kMaxQueryChars = 2000;
         std::size_t char_count = 0;
@@ -1321,7 +1323,7 @@ std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, s
                 has_non_punct_non_space = true;
             }
         }
-        if (char_count > kMaxQueryChars || !has_non_punct_non_space) {
+        if (char_count > kMaxQueryChars || (!has_non_punct_non_space && char_count > 32)) {
             return {};
         }
     }
