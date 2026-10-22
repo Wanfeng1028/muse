@@ -4,6 +4,11 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.1] - 2026-10-22
+
+### 测试
+- 新增关键路径 E2E 冒烟 `scripts/e2e-keypaths-smoke.mjs`：注册登录、备份导出、备份合并回导、非法备份导入 400、单词播种幂等、热力图、周报，共 7 步；真实服务全绿（`KEYPATHS E2E OK`）。
+
 ## [1.12.0] - 2026-10-20
 
 ### Added

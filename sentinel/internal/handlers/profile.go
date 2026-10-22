@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html"
 	"net/http"
 	"regexp"
@@ -59,6 +60,7 @@ func (s *Server) RegisterSoulRoutes(mux *http.ServeMux) {
 
 	// 公开路由。
 	mux.HandleFunc("GET /api/status/{slug}", s.handlePublicStatus)
+	mux.HandleFunc("GET /api/status/{slug}/badge.svg", s.handleStatusBadge)
 	mux.HandleFunc("POST /api/status/{slug}/subscribe", s.handleSubscribe)
 	mux.HandleFunc("GET /api/status/{slug}/confirm", s.handleConfirm)
 	mux.HandleFunc("GET /api/status/{slug}/unsubscribe", s.handleUnsubscribePage)
@@ -411,6 +413,65 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleUpdateStatusPageTheme 更新状态页主题（需鉴权）。
+
+// handleStatusBadge 公开 SLA 徽章（shields.io flat 风格 SVG），可直接嵌入 README。
+// 右侧文案：全部 up 显示 "up · 99.95%" 形式（当月平均可用性）；任一 down 显示 "down"；无检查数据则 "unknown"。
+func (s *Server) handleStatusBadge(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	if slug == "" {
+		writeErr(w, http.StatusNotFound, "状态页不存在")
+		return
+	}
+	page, err := s.store.GetStatusPageBySlug(slug)
+	if err != nil {
+		writeErr(w, http.StatusNotFound, "状态页不存在")
+		return
+	}
+	mons, err := s.store.ListPageMonitors(page.ID)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "查询失败")
+		return
+	}
+	now := time.Now().UTC()
+	var sumPct float64
+	var n int
+	overall := "up"
+	for _, m := range mons {
+		last, lerr := s.store.LastCheck(m.ID)
+		if lerr == nil && last != nil && last.Ok != 1 {
+			overall = "down"
+		}
+		rep, rerr := s.store.MonthlySLA(m.ID, now.Year(), int(now.Month()))
+		if rerr == nil && rep.TotalChecks > 0 {
+			sumPct += rep.UptimePct
+			n++
+		}
+	}
+	label := "status"
+	var msg, color string
+	switch {
+	case len(mons) == 0 || n == 0:
+		msg, color = "unknown", "#9f9f9f"
+	case overall == "down":
+		msg, color = "down", "#e05d44"
+	default:
+		msg, color = fmt.Sprintf("up %.2f%%", sumPct/float64(n)), "#4c1"
+	}
+	// shields.io flat 风格：左段 #555 右段按状态变色，圆角 3，每字符约 6px 宽、左右各留 10px。
+	labelW := len(label)*6 + 10
+	msgW := len(msg)*6 + 10
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="20">`+
+		`<rect width="%d" height="20" fill="#555" rx="3"/>`+
+		`<rect x="%d" width="%d" height="20" fill="%s" rx="3"/>`+
+		`<rect x="%d" width="%d" height="20" fill="%s"/>`+
+		`<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">`+
+		`<text x="%d" y="14">%s</text><text x="%d" y="14">%s</text></g></svg>`,
+		labelW+msgW, labelW, labelW, msgW, color, labelW, msgW, color,
+		labelW/2+1, label, labelW+msgW/2+1, msg)
+	w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	_, _ = w.Write([]byte(svg))
+}
 func (s *Server) handleUpdateStatusPageTheme(w http.ResponseWriter, r *http.Request) {
 	id, ok := parsePathID(r, "id")
 	if !ok {

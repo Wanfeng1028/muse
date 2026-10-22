@@ -840,3 +840,10 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
   - 41 个新深测全绿：MediaProfileServiceDeepTest 12（ffmpeg 参数精确序列/纵横一致性/不可变列表）、SlideshowRiskScorerDeepTest 12（3 文字卡 average 3.17→revise 精确断言、fromShot 映射全分支）、StylePlaybookDeepTest 10（5 册真实 YAML 全加载、loader 非法输入矩阵）、PipelineTemplateIntegrityTest 7（13 模板 fail-fast 完整性锁死）；另加 docs/pipeline-templates.md（13 模板+5 手册+9 预设一览）。
   - 批次质量：b1/b3 首版带前言+fence 污染（已提取干净文件）、b3 首版 token 截断（加严"禁前言"后重派通过）、b4 首版只交思考不交代码（修 prompt 歧义后重派通过）、b4 曾撞 s193 并发上限 429（单跑通过）。
   - sentinel SLA 3/4 之谜已解：实为上述重复注册 panic，非测试本身问题；修后 7/7 全绿。
+
+- **深耕轮 2026-10-22 18:07（OpenRouter lane 第二轮，7 调用 + s193 补 1）**：
+  - feedflow：`GET /api/articles/<id>/score` 排序可解释性端点（score/五因子 parts[heat/keyword/recency/source/unread]/reasons/cluster_size/age_hours；不存在 404）；真实服务冒烟通过；pytest 32 例全绿；CHANGELOG v1.8.0。
+  - sentinel：公开 SLA 徽章 `GET /api/status/{slug}/badge.svg`（shields.io flat 风格 SVG；up 绿/down 红/unknown 灰；免鉴权；补 fmt import）；status_badge_test.go 3 例全绿；CHANGELOG 0.10.0。
+  - kaoyan-os：`scripts/e2e-keypaths-smoke.mjs` 关键路径 E2E（注册登录/备份导出/合并回导/非法导入 400/播种幂等/热力图/周报）真实服务 7 步全绿 KEYPATHS E2E OK；修模型漏传 cookie 7 处；CHANGELOG 1.12.1。
+  - linkshort：访问画像端点边界深测 handler_analytics_deep_test.go 6 例全绿（daily 真实跳转计数/referer TopN/UA 分组/参数钳制/overview/非法 id 400）；CHANGELOG v1.12.1。
+  - 模型观测：dpsk 探活仍 429（预期，已停用）；minimax-m3.1-flash:free 7 调用中 4 次首轮成功——b1 PATCH3 因模型 OLD 少一层 Tab 锚定失败（编排按正确锚定手工应用，gofmt 洁）、C 首轮只交 49KB 思考过程零代码、C2 输出截断、D 首轮输出截断（D 重试通过）；C 切 s193 单 FILE 一次成功。OpenRouter 当日计数 18→25。

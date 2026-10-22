@@ -5,6 +5,11 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.12.1] - 2026-10-22
+
+### 测试
+- 访问画像端点边界深测 `internal/handler/handler_analytics_deep_test.go` 6 例全绿：按日 PV/UV 真实跳转计数、referer TopN 分组、UA 家族分组求和、days/n 参数钳制、stats/overview 烟雾、非法 id 400。
+
 ## [v1.12.0] - 2026-10-22
 
 ### 新增

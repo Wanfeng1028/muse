@@ -2,6 +2,12 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.10.0] - 2026-10-22
+
+### 新增
+- 公开 SLA 徽章：`GET /api/status/{slug}/badge.svg` 返回 shields.io flat 风格 SVG，可直接嵌入 README。右侧文案：全部 up 显示 `up · 99.95%`（当月平均可用性）；任一最近检查 down 显示 `down`；无检查数据则 `unknown`。`Content-Type: image/svg+xml`，免鉴权（公开路由）。
+- 测试：`sentinel/internal/handlers/status_badge_test.go` 3 例（未知 slug 404、无检查数据 unknown、空页面 unknown），`go test` 全绿。
+
 ## [0.9.0] - 2026-10-20
 
 ### 新增

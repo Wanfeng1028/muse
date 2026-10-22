@@ -163,6 +163,36 @@ def get_article(article_id: int):
     return jsonify(art)
 
 
+@bp.get("/articles/<int:article_id>/score")
+def get_article_score(article_id: int):
+    """排序可解释性：返回该篇文章的重要性评分与五个因子的得分明细。"""
+    from datetime import datetime, timezone
+    from . import db, ranking
+    art = store.get_article(_db(), article_id)
+    if art is None:
+        return _err("文章不存在", 404)
+    db_path = _db()
+    feed_id = art.get("feed_id")
+    fw = next((w for w in ranking.get_feed_weights(db_path) if w["feed_id"] == feed_id), None)
+    feed_weight = fw["weight"] if fw else 1.0
+    learned = fw["learned"] if fw else 1.0
+    cluster_id = art.get("cluster_id")
+    if cluster_id:
+        members = db.query_all(db_path, "SELECT id FROM articles WHERE cluster_id = ?", (cluster_id,))
+        cluster_size = len(members)
+    else:
+        cluster_size = 1
+    info = ranking.score_article(
+        art,
+        now=datetime.now(timezone.utc),
+        cluster_size=cluster_size,
+        feed_weight=feed_weight,
+        learned=learned,
+        keywords=ranking.get_keywords(db_path),
+    )
+    return jsonify({"article_id": article_id, "title": art.get("title"), **info})
+
+
 @bp.get("/clusters")
 def list_clusters():
     """聚类浏览：同事件多源报道折叠视图（SimHash+Jaccard 两阶段聚类，非 LLM）。"""

@@ -1,6 +1,11 @@
 
 # 更新日志
 
+## v1.8.0 — 2026-10-22
+
+### 新增
+- 排序可解释性端点：`GET /api/articles/<id>/score` 返回单篇文章的重要性评分与五个因子的得分明细（`score`/`parts`[heat/keyword/recency/source/unread]/`reasons`/`cluster_size`/`age_hours`），文章不存在返回 404。真实服务冒烟验证通过。
+
 ## v1.7.0 — 2026-10-20
 
 ### 新增
