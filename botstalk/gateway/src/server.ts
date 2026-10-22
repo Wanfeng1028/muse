@@ -11,7 +11,7 @@ import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
 import { DoudizhuGameEngine } from "./doudizhu-game.js";
 import { WerewolfGameEngine } from "./werewolf-game.js";
-import { routeMessage, routeStream, routeApprovalDecision, setTaskApprovalMode, sweepApprovals } from "./router.js";
+import { routeMessage, routeStream, routeApprovalDecision, setTaskApprovalMode, sweepApprovals, getPendingApprovals } from "./router.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
 import { createArtifactService } from "./artifacts.js";
@@ -201,6 +201,32 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
           total: { input_tokens: totalIn, output_tokens: totalOut },
         }),
       );
+      return;
+    }
+
+    // GET /api/rooms/:room/approvals —— 当前房间待人工审批的任务列表（内存态，网关重启即丢）
+    const approvalsMatch = url.match(/^\/api\/rooms\/([^/?]+)\/approvals(?:\?|$)/);
+    if (approvalsMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(approvalsMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      const approvals = getPendingApprovals()
+        .list()
+        .filter((p) => p.room === room)
+        .map((p) => ({
+          approval_id: p.approval_id,
+          task_id: p.task_id,
+          requester: p.requester,
+          assignee: p.assignee,
+          title: p.title,
+          expires_at_ms: p.expires_at_ms,
+        }));
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ approvals }));
       return;
     }
 

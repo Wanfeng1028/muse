@@ -956,3 +956,199 @@ textarea {
   color: var(--ink-muted);
   font-size: 12px;
 }
+
+/* ---------- 审批中心 ---------- */
+.appr-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 92vw);
+  background: var(--paper-raised);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+}
+
+.appr-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.appr-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.appr-stats {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.appr-close {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.appr-close:hover {
+  color: var(--ink);
+}
+
+.appr-hint {
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.appr-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--sp-2);
+}
+
+.appr-card {
+  margin-bottom: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.appr-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.appr-title-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.appr-countdown {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.appr-countdown.is-expired {
+  color: var(--danger);
+}
+
+.appr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 4px 0 var(--sp-2);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.appr-note {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.appr-note:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.appr-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.appr-approve {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.appr-approve:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.appr-reject {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--danger);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.appr-reject:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.appr-warn {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.appr-submitted {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.appr-expired-note {
+  margin-top: var(--sp-1);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.appr-empty {
+  padding: var(--sp-4) 0;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.appr-empty svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto var(--sp-2);
+  color: var(--ink-soft);
+}
+
+.appr-empty-sub {
+  font-size: 12px;
+}

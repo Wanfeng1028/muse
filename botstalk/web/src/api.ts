@@ -205,3 +205,13 @@ export interface GameStatePayload {
   state?: unknown;
   state_hash?: string;
 }
+
+import type { ApprovalRequest } from './components/ApprovalQueue';
+export type { ApprovalRequest };
+
+export async function fetchPendingApprovals(room: string): Promise<ApprovalRequest[]> {
+  const res = await fetch(`${BASE}/api/rooms/${encodeURIComponent(room)}/approvals`);
+  if (!res.ok) throw new Error(`approvals ${res.status}`);
+  const data = (await res.json()) as { approvals: ApprovalRequest[] };
+  return data.approvals ?? [];
+}

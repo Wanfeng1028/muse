@@ -225,3 +225,19 @@ test/hub.test.ts 里用 `process.cwd()` 建临时目录，跑测试时会在 gat
 **影响**：
 - 新增测试 28 例（link 12、profile 8、acp 5、bridge 3，含假 ACP agent 与假网关端到端任务流），全绿；全量回归不回退：protocol 159、gateway 681、adapter-base 85、adapter-deepseek 84、web 228 全绿。
 - 代码生成通道：dpsk 实测 429、step193plan 输出思考泄漏+截断不满足整文件交付，最终由编排侧按事先写死的规格逐字落盘并以类型检查 + 全量测试验收（细节见分析报告第 10 节）。
+
+## 2026-10-22：审批中心 Web UI（关闭"人工审批 web UI 未做"缺口）
+
+**背景**：人工审批门（TASK_APPROVAL_MODE=all）此前只有网关侧：任务挂起、approval_request 帧广播、approval_decision 帧决策，DECISIONS 明确记录"web 前端尚未接审批 UI…为下一阶段"。本轮即该下一阶段。
+
+**决策**：
+- Web 顶栏新增"审批"按钮（待审批数徽标）+ 右侧抽屉式审批队列（ApprovalQueue.tsx），样式沿用 task-panel 视觉体系（CSS 变量、无新色系、无紫渐变）。
+- 队列项要素：标题、派发人→执行者、任务短码、5 分钟倒计时（每秒刷新）、可选备注输入框、放行/驳回按钮。点击后本地"已提交"态，实际移除由网关 task_event（dispatched/failed/cancelled）驱动。
+- 防自批双重拦截：网关 routeApprovalDecision 早已拒绝 assignee 自批；UI 侧 nick===assignee 时按钮禁用并明示规则。
+- 刷新页面恢复：网关新增 `GET /api/rooms/:room/approvals`（只返回 approval_id/task_id/requester/assignee/title/expires_at_ms 元数据，不返回 env 原始帧）；Chat 挂载时拉取一次，之后靠 WS 帧增量维护。
+- 待审批登记表仍是网关内存态（PendingApprovals，新增 list() 方法），重启即丢——与 resendQueue 同为已知边界，不在本轮改变。
+
+**影响**：
+- 新增测试 gateway/test/approvals_rest.test.ts（3 例：按房间过滤+不泄露 env、空房间 []、take 后移除）；网关全量 704 例全绿；web/gateway tsc 零错。
+- scripts/smoke-approval.mjs：真实网关 E2E 16/16（挂起→REST→放行→执行者收到原任务帧→驳回→防自批忽略）。
+- 视觉验收：2 张真实截图（docs/screenshots/approvals/approval-queue-pending.png 待审批态、approval-queue-empty.png 空态），console 零错误；验收修 1 处真 UI bug（.appr-meta 双 span 无间距致文字粘连）。

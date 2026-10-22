@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardList, Gamepad2, LogOut, Moon, Settings, Spade } from 'lucide-react';
+import { ClipboardList, Gamepad2, LogOut, Moon, Settings, ShieldCheck, Spade } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
-import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload } from '../api';
+import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload, fetchPendingApprovals } from '../api';
 import MessageList, { ChatItem } from './MessageList';
 import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
 import TaskPanel from './TaskPanel';
+import ApprovalQueue, { ApprovalRequest } from './ApprovalQueue';
 import GamePanel from './GamePanel';
 import DoudizhuPanel, { isDoudizhuState } from '../doudizhu/DoudizhuPanel';
 import DoudizhuResult from '../doudizhu/DoudizhuResult';
@@ -34,6 +35,8 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [showTasks, setShowTasks] = useState(false);
+  const [showApprovals, setShowApprovals] = useState(false);
+  const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [showGame, setShowGame] = useState(false);
   const [showDoudizhuLobby, setShowDoudizhuLobby] = useState(false);
   const [doudizhuErr, setDoudizhuErr] = useState<string | null>(null);
@@ -84,6 +87,29 @@ export default function Chat({ nick, room, onLeave }: Props) {
     }
     if (frame.type === 'task_event') {
       setTaskRefreshKey((k) => k + 1);
+      const tid = String(frame.payload.task_id ?? '');
+      const st = String(frame.payload.status ?? '');
+      if (tid && (st === 'dispatched' || st === 'failed' || st === 'cancelled')) {
+        setApprovals((prev) => prev.filter((a) => a.task_id !== tid));
+      }
+      return;
+    }
+    if (frame.type === 'approval_request') {
+      if (frame.room !== room) return;
+      const p = frame.payload as Record<string, unknown>;
+      const approvalId = String(p.approval_id ?? '');
+      if (!approvalId) return;
+      const item: ApprovalRequest = {
+        approval_id: approvalId,
+        task_id: String(p.task_id ?? ''),
+        requester: String(p.requester ?? ''),
+        assignee: String(p.assignee ?? ''),
+        title: String(p.title ?? ''),
+        expires_at_ms: Number(p.expires_at_ms ?? 0),
+      };
+      setApprovals((prev) =>
+        prev.some((a) => a.approval_id === approvalId) ? prev : [...prev, item],
+      );
       return;
     }
     if (frame.type === 'game_state') {
@@ -115,7 +141,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
     if (showTasksRef.current && frame.sender !== nick) {
       setUnreadCount((c) => c + 1);
     }
-  }, [nick]);
+  }, [nick, room]);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +193,14 @@ export default function Chat({ nick, room, onLeave }: Props) {
       onFrame: ingestFrame,
     });
     socketRef.current = sock;
+    (async () => {
+      try {
+        const pending = await fetchPendingApprovals(room);
+        if (!cancelled) setApprovals(pending);
+      } catch {
+        /* 拉不到不阻塞聊天 */
+      }
+    })();
     sock.connect();
 
     return () => {
@@ -262,6 +296,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
         <button className="btn-ghost" type="button" onClick={() => setShowTasks((v) => !v)} title="任务追踪">
           <ClipboardList size={16} strokeWidth={2} />
           <span>任务</span>
+        </button>
+        <button className="btn-ghost" type="button" onClick={() => setShowApprovals((v) => !v)} title="审批中心">
+          <ShieldCheck size={16} strokeWidth={2} />
+          <span>审批{approvals.length > 0 ? ` (${approvals.length})` : ''}</span>
         </button>
         <button className="btn-ghost" type="button" onClick={onLeave} title="退出">
           <LogOut size={16} strokeWidth={2} />
@@ -405,6 +443,16 @@ export default function Chat({ nick, room, onLeave }: Props) {
           refreshKey={taskRefreshKey}
           onClose={markReadAndCloseTasks}
           onJumpToTask={jumpToTask}
+        />
+      )}
+      {showApprovals && (
+        <ApprovalQueue
+          approvals={approvals}
+          nick={nick}
+          onClose={() => setShowApprovals(false)}
+          onDecide={(approvalId, decision, note) =>
+            socketRef.current?.sendApprovalDecision(approvalId, decision, note)
+          }
         />
       )}
     </div>

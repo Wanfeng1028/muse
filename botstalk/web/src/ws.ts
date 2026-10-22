@@ -93,6 +93,14 @@ export class ChatSocket {
     });
   }
 
+  sendApprovalDecision(approvalId: string, decision: 'approve' | 'reject', note?: string): void {
+    const payload: Record<string, unknown> = { approval_id: approvalId, decision };
+    if (note !== undefined && note.trim() !== '') {
+      payload.note = note.trim();
+    }
+    this.send('approval_decision', payload);
+  }
+
   private openSocket(): void {
     this.events.onStatus('connecting');
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';

@@ -35,6 +35,11 @@ export class PendingApprovals {
     return p;
   }
 
+  /** 返回全部待审批项的数组快照（只读遍历用）。 */
+  list(): PendingApproval[] {
+    return [...this.map.values()];
+  }
+
   /** 删除全部已过期条目并返回它们。 */
   sweepExpired(now: number): PendingApproval[] {
     const expired: PendingApproval[] = [];

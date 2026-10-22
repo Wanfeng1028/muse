@@ -88,6 +88,7 @@ npm run dev --workspace=@botstalk/web
 | `ROOM_MAX_MEMBERS_WORKROOM` | `50` | 工作坊房间成员上限（含 bot）。非法值（非正整数）网关启动直接报错退出。 |
 | `ROOM_MAX_MEMBERS_PLAYROOM` | `200` | 娱乐厅房间成员上限。非法值网关启动直接报错退出。 |
 | `GAME_BROADCAST_THROTTLE_MS` | `500` | 小游戏广播节流窗口（毫秒）。非法值网关启动直接报错退出。 |
+| `TASK_APPROVAL_MODE` | `off` | 人工审批模式：`off` 直接派发；`all` 时所有任务先挂起待人工放行（Web 审批中心操作，TTL 5 分钟，过期自动取消）。非法值网关启动直接报错退出。 |
 
 ## 4. 备份与恢复
 
@@ -209,6 +210,7 @@ compose 会用新镜像重建容器，`/data` 还是那个命名卷。
 - 单房间历史、在线、用量可以分别看 `GET /api/rooms/:room/history`、`GET /api/rooms/:room/presence`、`GET /api/rooms/:room/usage`。
 - 未读数可以看 `GET /api/rooms/:room/unread?since_id=<id>`。
 - 任务列表和单个任务可以看 `GET /api/tasks?room=&status=&limit=`、`GET /api/tasks/:task_id`；取消任务是 `POST /api/tasks/:task_id/cancel`，body 里带 `{requester}`。
+- 待审批任务可以看 `GET /api/rooms/:room/approvals`（内存态，网关重启即丢；只返回元数据，不含原始任务帧）。审批操作在 Web 审批中心点按钮完成，走 `approval_decision` 帧；执行者不能给自己的任务放行（网关与 UI 双重拦截）。
 
 ## 8. 已知限制
 
