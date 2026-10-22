@@ -103,9 +103,10 @@ services:
 | `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7` |
 | `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用）（v1.6 新增） |
 | `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期（v1.6 新增） |
-| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 告警 webhook：backup.sh 备份失败时 POST JSON 通知（v1.6 新增）；v1.10 起密码失败高告警复用该地址 |
+| `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 告警 webhook：backup.sh 备份失败时 POST JSON 通知（v1.6 新增）；v1.10 起密码失败高告警复用该地址；v1.12 起支持逗号分隔多个 URL（空格 trim、空项剔除、去重保序），逐个 POST |
 | `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` | `10` | 密码失败高告警阈值：单个短链滑动窗口内密码失败达到该次数触发告警（v1.10 新增），`<=0` 回 `10` |
 | `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` | `5m` | 密码失败滑动窗口时长（v1.10 新增），duration 格式，解析失败或 `<=0` 回 `5m` |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD` | `20` | 密码失败高告警 IP 维度阈值：同一 IP 滑动窗口内密码失败达到该次数触发告警（v1.12 新增），`<=0` 回 `20` |
 
 
 限流按 IP + API Key 两个维度分别做令牌桶；`/metrics`、`/api/health`、`/api/readyz` 三个路径免限流。
@@ -287,6 +288,7 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 
 - 机制：`internal/passalert.Tracker` 按 slug 做滑动窗口计数，窗口 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW`（默认 5m），窗口内失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD`（默认 10）时触发一次；只在从阈值下方跨越到阈值及以上的那次触发，持续超阈值不重复触发，计数回落到阈值下方后重新布防。
 - 触发后三件事：打 warn 日志（含 slug、窗口内失败次数、阈值）；指标 `linkshort_password_fail_alerts_total` +1；若配了 `LINKSHORT_ALERT_WEBHOOK_URL` 则异步 POST JSON：`{"source":"linkshort","event":"password_fail_alert","host":"...","slug":"...","fail_count":N,"window_seconds":300,"threshold":10,"time":"..."}`，HTTP 10 秒超时，通知失败只记日志不影响主流程；URL 留空则不通知。
+- IP 维度（v1.12 新增）：同一 IP（clientIP 口径：X-Forwarded-For 首个 → X-Real-IP → RemoteAddr）在窗口内密码失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD`（默认 20）时触发一次；webhook payload 中 `scope` 为 `"ip"`、`slug` 为空、`ip_hash` 为该 IP 的 sha256 hex 前 16 位；日志中不出现 IP 明文。
 - 与限流的关系：密码尝试先走全局 IP 令牌桶（429 挡掉的不计入本告警，只统计真正打到密码校验的失败）。
 - 排障：告警触发后先查日志里的 slug，再看该 slug 的 `linkshort_password_attempts_total{result="fail"}` 速率；误报就调大阈值/窗口。
 

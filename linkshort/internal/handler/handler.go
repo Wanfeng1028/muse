@@ -42,8 +42,12 @@ var webFS embed.FS
 func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	r := chi.NewRouter()
 
+	// 兼容直接构造 Config 的调用方：只填了 AlertWebhookURL 时自动解析出 AlertWebhookURLs。
+	if len(cfg.AlertWebhookURLs) == 0 && cfg.AlertWebhookURL != "" {
+		cfg.AlertWebhookURLs = config.SplitWebhookURLs(cfg.AlertWebhookURL)
+	}
 	// 密码失败告警计数器按配置初始化。
-	passalert.Configure(cfg.PasswordFailAlertThreshold, cfg.PasswordFailAlertWindow)
+	passalert.ConfigureWithIP(cfg.PasswordFailAlertThreshold, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertIPThreshold)
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -315,8 +319,17 @@ func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Stor
 			failCount := passalert.Default.FailCount(slug, time.Now())
 			metrics.Default.IncPasswordFailAlert()
 			log.Printf("[passalert] 短链 %s 密码失败高告警：窗口内失败 %d 次（阈值 %d）", slug, failCount, cfg.PasswordFailAlertThreshold)
-			if cfg.AlertWebhookURL != "" {
-				go passalert.NotifyPasswordFailAlert(cfg.AlertWebhookURL, r.Host, slug, failCount, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertThreshold)
+			for _, u := range cfg.AlertWebhookURLs {
+				go passalert.NotifyPasswordFailAlert(u, r.Host, slug, failCount, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertThreshold)
+			}
+		}
+		ip := clientIP(r)
+		if passalert.Default.RecordIPFail(ip, time.Now()) {
+			ipFailCount := passalert.Default.IPFailCount(ip, time.Now())
+			metrics.Default.IncPasswordFailAlert()
+			log.Printf("[passalert] IP %s 密码失败高告警：窗口内失败 %d 次（阈值 %d）", passalert.HashIP(ip), ipFailCount, cfg.PasswordFailAlertIPThreshold)
+			for _, u := range cfg.AlertWebhookURLs {
+				go passalert.NotifyPasswordFailAlertIP(u, r.Host, ip, ipFailCount, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertIPThreshold)
 			}
 		}
 		renderPasswordPage(w, slug, "密码错误，请重试", http.StatusUnauthorized)

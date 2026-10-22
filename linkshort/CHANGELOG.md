@@ -5,6 +5,19 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.12.0] - 2026-10-22
+
+### 新增
+- 密码失败告警新增 IP 维度聚合：`Tracker.RecordIPFail` 按客户端 IP 做独立滑动窗口计数（窗口复用 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW`），同一 IP 在窗口内密码失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD`（默认 20）时触发一次；跨越触发/不重复/回落重布防语义与 slug 维度一致，两维度互不干扰。
+- webhook 支持多地址：`LINKSHORT_ALERT_WEBHOOK_URL` 支持逗号分隔多个 URL（空格自动 trim、空项剔除、去重保序），告警逐个 POST；单个地址失败只记日志不影响其他地址。
+- webhook payload 新增 `scope`（"slug"/"ip"）与 `ip_hash`（IP 的 sha256 hex 前 16 位，`omitempty`）；IP 维度告警的 `slug` 为空。日志与 payload 中不出现原始 IP 明文。
+
+### 测试
+- 新增 `passalert_ip_test.go`（8 例）、`notify_ip_test.go`（4 例）、`config_webhook_test.go`（6 例）、`password_alert_ip_test.go`（3 例）。
+
+### 已知缺口
+- IP 维度聚合基于 `clientIP`（X-Forwarded-For 首个 → X-Real-IP → RemoteAddr）；若前置代理未 strip 不可信的 XFF，攻击者可伪造 IP 稀释计数（与既有限流同假设）。
+
 ## [v1.11.0] - 2026-10-20
 
 ### 新增

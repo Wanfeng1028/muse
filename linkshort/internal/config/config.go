@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -28,9 +29,11 @@ type Config struct {
 	BackupDir        string // 备份目录路径
 	BackupMaxAgeDays int    // 备份最大允许天数；0 表示不检查过期
 
-	PasswordFailAlertThreshold int           // 滑动窗口内单个短链密码失败触发告警的次数阈值
-	PasswordFailAlertWindow    time.Duration // 滑动窗口时长
-	AlertWebhookURL            string        // 告警 webhook 地址，复用备份告警的 LINKSHORT_ALERT_WEBHOOK_URL
+	PasswordFailAlertThreshold   int           // 滑动窗口内单个短链密码失败触发告警的次数阈值
+	PasswordFailAlertWindow      time.Duration // 滑动窗口时长
+	PasswordFailAlertIPThreshold int           // 同一 IP 滑动窗口内密码失败触发告警的次数阈值
+	AlertWebhookURL              string        // 告警 webhook 地址，复用备份告警的 LINKSHORT_ALERT_WEBHOOK_URL
+	AlertWebhookURLs             []string      // 由 LINKSHORT_ALERT_WEBHOOK_URL 按逗号解析的多地址
 }
 
 // 环境变量名。
@@ -52,9 +55,10 @@ const (
 	envBackupDir        = "LINKSHORT_BACKUP_DIR"
 	envBackupMaxAgeDays = "LINKSHORT_BACKUP_MAX_AGE_DAYS"
 
-	envPasswordFailAlertThreshold = "LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD"
-	envPasswordFailAlertWindow    = "LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW"
-	envAlertWebhookURL            = "LINKSHORT_ALERT_WEBHOOK_URL"
+	envPasswordFailAlertThreshold   = "LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD"
+	envPasswordFailAlertWindow      = "LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW"
+	envPasswordFailAlertIPThreshold = "LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD"
+	envAlertWebhookURL              = "LINKSHORT_ALERT_WEBHOOK_URL"
 )
 
 // getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
@@ -109,6 +113,25 @@ func getenvDurationDefault(key string, def time.Duration) time.Duration {
 	return d
 }
 
+// SplitWebhookURLs 把逗号分隔的 webhook 地址解析为去重保序的 slice。
+// 每项 TrimSpace，丢弃空项，重复地址只保留首次出现；无有效项返回 nil。
+func SplitWebhookURLs(s string) []string {
+	var out []string
+	seen := make(map[string]struct{})
+	for _, part := range strings.Split(s, ",") {
+		u := strings.TrimSpace(part)
+		if u == "" {
+			continue
+		}
+		if _, ok := seen[u]; ok {
+			continue
+		}
+		seen[u] = struct{}{}
+		out = append(out, u)
+	}
+	return out
+}
+
 // FromEnv 从环境变量加载配置，缺省值在文档中说明。
 // 当 LINKSHORT_ADMIN_KEY 为空时，自动生成 32 位 hex 并打印提示。
 func FromEnv() *Config {
@@ -130,9 +153,11 @@ func FromEnv() *Config {
 		BackupDir:        getenvDefault(envBackupDir, "./backups"),
 		BackupMaxAgeDays: getenvIntDefault(envBackupMaxAgeDays, 7),
 
-		PasswordFailAlertThreshold: getenvIntDefault(envPasswordFailAlertThreshold, 10),
-		PasswordFailAlertWindow:    getenvDurationDefault(envPasswordFailAlertWindow, 5*time.Minute),
-		AlertWebhookURL:            getenvDefault(envAlertWebhookURL, ""),
+		PasswordFailAlertThreshold:   getenvIntDefault(envPasswordFailAlertThreshold, 10),
+		PasswordFailAlertWindow:      getenvDurationDefault(envPasswordFailAlertWindow, 5*time.Minute),
+		PasswordFailAlertIPThreshold: getenvIntDefault(envPasswordFailAlertIPThreshold, 20),
+		AlertWebhookURL:              getenvDefault(envAlertWebhookURL, ""),
+		AlertWebhookURLs:             SplitWebhookURLs(getenvDefault(envAlertWebhookURL, "")),
 	}
 	if cfg.PurgeInterval <= 0 {
 		cfg.PurgeInterval = 24 * time.Hour
@@ -145,6 +170,9 @@ func FromEnv() *Config {
 	}
 	if cfg.PasswordFailAlertThreshold <= 0 {
 		cfg.PasswordFailAlertThreshold = 10
+	}
+	if cfg.PasswordFailAlertIPThreshold <= 0 {
+		cfg.PasswordFailAlertIPThreshold = 20
 	}
 	if cfg.PasswordFailAlertWindow <= 0 {
 		cfg.PasswordFailAlertWindow = 5 * time.Minute
