@@ -1,3 +1,25 @@
+## v0.23.0（2026-10-23）——结构加分精度收紧（三档渐变）
+
+### 新增
+- 新增 `include/docseek/structural_precision.h` 与 `src/structural_precision.cpp`，提供结构精度判定函数：
+  - `isEntryLikeLineStart`：判断行是否为条目起始（列表符号 / ≤40 码点 / 查询词后 3 码点内有冒号或破折号）。
+  - `digitConsistentWithQuery`：查询词无数字时，行首数字须在查询词后 10 码点内；查询词本身有数字时恒为真（空真语义）。
+  - `r1StartsWithBonusForToken`：三档渐变——标题以 token 开头且 ≤token+2 码点给 1.5；开头但超长给 0.75；仅包含给 0.25。
+- `query_parser.cpp` 的 `isQuestionGlueWord` 新增"后"、"到底"、"一个"（"时候"曾加入后因误伤"什么时候"疑问词而移除）。
+
+### 修复
+- 修复 v09 search 回归：
+  - t050-q08（肩膀疼）
+  - t064-q08（训练频率）
+  - t085-q03（忘词）
+  - t009-q06（一个人 安全）
+- 已知回归：
+  - t004-q06（背包 重量，与另一文档并列相关，属平局）
+  - t052-q10（滑板轴承，硬语义缺口，需区分滑板轴承与洗衣机轴承）
+
+### 测试
+- `tests/test_structural_precision.cpp` 19/19 通过。
+
 ## v0.22.0（2026-10-23）——单 token 查询的词级 DF 剪枝回退（阶段 1.55）
 
 ### 新增

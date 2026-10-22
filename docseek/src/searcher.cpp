@@ -1,5 +1,6 @@
 #include "docseek/searcher.h"
 
+#include "docseek/structural_precision.h"
 #include "docseek/token_locate.h"
 
 #include "docseek/query_parser.h"
@@ -920,7 +921,9 @@ static void scoreOneHit(Hit& hit,
             }
         }
         if (startsWith) {
-            r1Gain += 1.5;
+            // R1 精度收紧（2026-10-23）：标题须与查询词强对应才给 1.5，
+            // 标题过长时降为包含级 0.25。见 structural_precision.h。
+            r1Gain += r1StartsWithBonusForToken(headings, tok);
         } else if (contains) {
             // R1 收紧：仅“包含”不再给满 titleBoost，降为 0.25，
             // 避免通用词（如“拉伸”）把非目标文档抬进 top10 后反超。
@@ -1061,8 +1064,10 @@ static void scoreOneHit(Hit& hit,
                     continue;
                 }
                 std::string t2 = trimStr(stripListMarker(t));
+                bool hadListMarker = (t2.size() != t.size());
                 if (t2.size() >= longQuery.size() &&
-                    t2.compare(0, longQuery.size(), longQuery) == 0) {
+                    t2.compare(0, longQuery.size(), longQuery) == 0 &&
+                    isEntryLikeLineStart(t2, hadListMarker, longQuery.size())) {
                     finalScore += 1.0;
                     bd.structuralBonus += 1.0;
                     break;
@@ -1160,7 +1165,9 @@ static void scoreOneHit(Hit& hit,
                         ci += clen;
                     }
                 }
-                if (hasDigit) {
+                // R6' 精度收紧（2026-10-23）：数字须与查询语义一致，
+                // 偶然数字（如"一点"里的"一"）不再触发。见 structural_precision.h。
+                if (hasDigit && digitConsistentWithQuery(t2, longQuery)) {
                     finalScore += 2.5;
                     bd.structuralBonus += 2.5;
                     break;

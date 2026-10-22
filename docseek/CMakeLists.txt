@@ -76,6 +76,7 @@ add_library(docseek_core STATIC
   src/database.cpp
   src/indexer.cpp
   src/searcher.cpp
+  src/structural_precision.cpp
   src/http_server.cpp
   src/watcher.cpp
   src/service.cpp
@@ -166,6 +167,7 @@ add_executable(docseek_tests
   tests/test_database.cpp
   tests/test_indexer.cpp
   tests/test_searcher.cpp
+  tests/test_structural_precision.cpp
   tests/test_adjacent_probe_v018.cpp
   tests/test_synonyms_v018.cpp
   tests/test_wave5_v0181.cpp
