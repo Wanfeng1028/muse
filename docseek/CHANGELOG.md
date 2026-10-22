@@ -1,3 +1,16 @@
+## v0.22.0（2026-10-23）——单 token 查询的词级 DF 剪枝回退（阶段 1.55）
+
+### 新增
+- `src/searcher.cpp` 新增静态函数 `tryWordLevelDfPrune`，并在 `Searcher::searchDetailed` 末尾（阶段 4，编号 1.55）接入：仅当 hits 为空且查询是单 token 时触发。
+- 机制：单 token 查询的 AND 为空时，用 jieba `CutForSearch` 把 token 按词粒度拆开，探测每个词展开式（`expandTokenOrQuery`）的 DF（`db.searchFts(expanded, 50).size()`），按 DF 从高到低逐个丢词，用剩余词重建 AND（各词展开式以 `" AND "` 连接）再查，首次非空即停，取 `limit*2` 条。
+- 位置选定实测依据（2026-10-22 实测）：必须放在最后，OR/子串阶段的精度过滤与排序更优；曾实测放 1.5 后会抢占 OR 阶段，导致 t040-q01/t114-q01 排序回退。
+- 保证：fail-open（无 jieba/异常一律返回 false）；已有结果的查询行为一字不变。
+- 测试文件：`tests/test_v022_wordlevel_prune.cpp`（已在 CMakeLists.txt 注册）。
+
+### 测试
+- 新增 3 例全绿：`WordLevelDfPrune.DropsMissingWordAndRecovers`（缺词剪枝后召回并排第一）、`WordLevelDfPrune.UntouchedWhenAndAlreadyHits`（已有结果不触发）、`WordLevelDfPrune.FailOpenWhenPruneExhausted`（剪枝耗尽仍为空）。
+- 全量套件：失败数与干净树（git stash 对照）完全一致（38 个，Tokenizer* r2 与 ServeFixture fixture 类名冲突，均为 pre-existing，v0.21.2 条目已记录）；新功能引入零回归。
+
 ## v0.21.2（2026-10-20）——三缺口工单关闭验证 + 索引 O(n^2) 修复
 
 ### 缺口工单关闭验证（零缺口代码改动）

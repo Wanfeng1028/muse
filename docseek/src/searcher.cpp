@@ -434,6 +434,60 @@ static bool tryDfPrunedAnd(const std::vector<std::string>& tokens, Database& db,
     return true;
 }
 
+// 词级 DF 剪枝回退（v0.22.0，A类真召回；调用点为 searchDetailed 最后阶段 4）：
+// 单 token 查询的 AND 为空时，在 CutForSearch 词粒度上探测每个词展开式的 DF，
+// 按 DF 从高到低逐个丢弃，用剩余词重建 AND 再查，首次非空即停。
+// 只在 hits.empty() 且 tokens.size()==1 时触发；已有结果的查询行为一字不变。
+static bool tryWordLevelDfPrune(const std::string& token, Database& db,
+                                int limit, std::vector<Hit>& hits) {
+  const cppjieba::Jieba* jieba = jiebaInstance();
+  if (jieba == nullptr) return false;
+  std::vector<std::string> words;
+  try {
+    jieba->CutForSearch(token, words);
+  } catch (...) {
+    return false;
+  }
+  std::vector<std::string> uniq;
+  for (const auto& w : words) {
+    if (w.empty()) continue;
+    if (std::find(uniq.begin(), uniq.end(), w) == uniq.end()) uniq.push_back(w);
+  }
+  if (uniq.size() < 2) return false;
+  struct WordDf {
+    std::string word;
+    size_t df;
+  };
+  std::vector<WordDf> table;
+  for (const auto& w : uniq) {
+    const std::string expanded = expandTokenOrQuery(w);
+    if (expanded.empty()) continue;
+    table.push_back({w, db.searchFts(expanded, 50).size()});
+  }
+  if (table.size() < 2) return false;
+  std::sort(table.begin(), table.end(),
+            [](const WordDf& a, const WordDf& b) { return a.df > b.df; });
+  std::vector<std::string> remaining;
+  for (const auto& item : table) remaining.push_back(item.word);
+  while (remaining.size() > 1) {
+    remaining.erase(remaining.begin());
+    std::string joined;
+    for (const auto& w : remaining) {
+      const std::string expanded = expandTokenOrQuery(w);
+      if (expanded.empty()) continue;
+      if (!joined.empty()) joined += " AND ";
+      joined += expanded;
+    }
+    if (joined.empty()) continue;
+    std::vector<Hit> refill = db.searchFts(joined, limit * 2);
+    if (!refill.empty()) {
+      hits = std::move(refill);
+      return true;
+    }
+  }
+  return false;
+}
+
 std::string Searcher::buildMatchQuery(const std::string& query) {
     const std::vector<std::string> tokens = splitTokens(query);
     std::string out;
@@ -1504,6 +1558,15 @@ std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, s
                 if (substringRecallPass(hay, tokens)) hits.push_back(h);
             }
         }
+    }
+
+    // 4. 词级 DF 剪枝回退（v0.22.0，A类真召回）：单 token 查询在上述全部阶段
+    //    都为空时，在 CutForSearch 词粒度上按 DF 从高到低逐个丢弃词重建 AND。
+    //    必须放在最后：OR/子串阶段的精度过滤与排序更优，1.55 只做最终兜底
+    //    （2026-10-22 实测：放 1.5 后会抢占 OR 阶段，导致 t040-q01/t114-q01 排序回退）。
+    //    只在 hits.empty() 时触发；已有结果一字不变。
+    if (hits.empty() && tokens.size() == 1) {
+        tryWordLevelDfPrune(tokens[0], db_, limit, hits);
     }
 
     hits = filterByPhrases(std::move(hits), db_, phrases);

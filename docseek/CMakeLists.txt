@@ -208,6 +208,7 @@ add_executable(docseek_tests
   tests/test_v015_substring_recall.cpp
   tests/test_v015_expand_fix_a.cpp
   tests/test_d4_dfdrop.cpp
+  tests/test_v022_wordlevel_prune.cpp
   tests/test_v015_filler_words.cpp
   tests/test_v015_search_question.cpp
   tests/test_v015_single_token_precision.cpp
