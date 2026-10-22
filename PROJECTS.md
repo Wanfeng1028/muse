@@ -74,6 +74,8 @@
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
+- **深耕轮 2026-10-23 02:07（s193 主力；OpenRouter 免费 lane 50/日限额已用尽，08:00 CST 重置）**：kaoyan-os TECH_DEBT 第 1 轮「P0 同类问题全盘点」完成——apps/web/src/api.ts 全部 47 个调用逐一对照后端 48 条路由：方法+路径 MISS=0；参数级 6 组 s193 逐条对照源码（plans/mistakes/words/focus+stats/settings+auth/backup）+ exams 组 7 个端点起真实服务实证 sweep（正常/非法 subject/缺字段/非数字 id/不存在 id 全分支）；结论：0 真实 bug，无 PATCH；唯一孤儿路由 POST /api/words/import（后端预留，前端未调用，非 bug）。报告 docs/API_PARITY_AUDIT_2026-10-23.md；TECH_DEBT 第 1 轮已标记完成。验收：基线 vitest 115 文件 840 例全绿（api-route-parity.deep5 5/5）；dpsk 探活仍 429（预期）。批次质量：b1/b3/b5 首轮思考过程外溢或占位表（打回重派，改行号标注+最高指令后通过）；exams 组两次整批失败后改 7 个微批次仍外溢，最终由编排实证 sweep 覆盖。
+
 ## second-brain「第二大脑」
 
 **定位**：个人知识库系统，支持笔记、标签、搜索、双链与知识图谱，构建可生长的个人知识网络。**灵魂功能**：会主动帮你复习的第二大脑——SM-2 遗忘曲线调度 + 抽认卡复习流 + 每日回顾推送。
