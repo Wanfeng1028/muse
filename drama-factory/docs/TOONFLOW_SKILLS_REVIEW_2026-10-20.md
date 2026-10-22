@@ -60,3 +60,37 @@ _index.json 现状：3 条目均为 rewritten:true，rewriteNote 均为"独立�
 - 内容质量复审（术语一致性）：通过。
 - 内容质量复审（可执行性）：未验证。
 - 补强建议跟踪：不适用（建议项已列出，待排期执行）。
+
+## 2026-10-22 增补：重写可行性验证与 references 附属文件补齐
+
+### 一、TD-001 独立重写可行性验证（2026-10-22）
+
+执行方：助理编排 + step193plan 模型，共 5 次尝试。
+
+1. toonflow-canvas 全文重写：difflib 相似度 0.8929，且输出含"略"占位符（有丢内容嫌疑），拒收。
+2. toonflow-canvas 加严重写（加"不许连续 6 字相同、表格重写"等硬约束）：模型调用 274 秒后返回空输出，失败。
+3. toonflow-workflow 头部切片重写：相似度 0.8759，拒收。
+4. toonflow-v118workflow 重写：模型陷入"改为：## 主流程与确认关口"无限重复循环，输出 3 万字符垃圾，拒收。
+5. toonflow-v118workflow 换"全新撰写"框架重写：相似度 0.8768，且 6 个章节丢了 5 个（标题改得无法对应），拒收。
+
+**结论**：现有免费模型对这类 API 手册型文档做相似度 <0.5 的独立重写不可达，实测下限约 0.87-0.89；强行压相似度只会损伤文档质量（丢章节、造占位符、循环）。
+
+**处置**：保留 rewritten=false + 上游 MIT LICENSE 的诚实标注状态（该状态本身符合 2026-10-19 用户政策"能直接拿的直接拿"，合规）；独立重写继续排期，待更强模型或人工介入后再做。
+
+### 二、references 附属文件补齐
+
+实测发现三个 skill 的 SKILL.md 引用的 references/*.md 附属文件在包内全部缺失：toonflow-canvas 缺 1 个（videoProduction.md）、toonflow-workflow 缺 8 个（含 methods/ 下 4 个）、toonflow-v118workflow 缺 22 个（含 knowledge/ 下 7 个），共 31 个。
+
+已按用户"直接抄"政策（2026-10-20：skill/文档存原件）从上游 HBAI-Ltd/Toonflow-app 原样补入各 skill 的 references/ 目录。
+
+补入后复测：workflow 15 处引用 0 悬空、v118workflow 26 处引用 0 悬空、canvas 5 处引用剩 2 处悬空（../script/references/assetGuide.md 与 productionGuide.md，这两处在上游原文里就悬空，上游没有 script 这个 skill，属上游继承问题）。
+
+新增回归测试 SkillReferenceIntegrityTest.java（src/test/java/com/dramafactory/service/skill/）锁定三 skill 的引用完整性，2 处上游悬空链接在测试中列为已知例外。
+
+### 三、DoD 小结更新
+
+- **许可证合规**：通过（维持）。
+- **标注真实性**：通过（维持）。
+- **独立重写**：未通过，2026-10-22 已验证不可达，继续排期（待更强模型/人工）。
+- **附属文件完整性**：通过（31 个文件已补齐 + 回归测试锁定）。
+- **上游继承悬空链接**：2 处，已记录为例外。
