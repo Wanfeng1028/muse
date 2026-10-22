@@ -6,12 +6,16 @@ import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
 import { getRoomHistory, listPresenceForRoom, listTasks, getTask, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
+import { createScheduledTask, listScheduledTasks, getScheduledTask, updateScheduledTask, deleteScheduledTask, validateScheduledTaskInput, createTriggerRule, listTriggerRules, getTriggerRule, updateTriggerRule, deleteTriggerRule, validateTriggerRuleInput } from "./workflows.js";
+import type { ScheduledTaskPatch, TriggerRulePatch } from "./workflows.js";
 import type { TaskStatus } from "./db.js";
 import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
 import { DoudizhuGameEngine } from "./doudizhu-game.js";
 import { WerewolfGameEngine } from "./werewolf-game.js";
 import { routeMessage, routeStream, routeApprovalDecision, setTaskApprovalMode, sweepApprovals, getPendingApprovals } from "./router.js";
+import { sweepScheduledTasks } from "./scheduler.js";
+import { checkTriggers } from "./triggers.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
 import { createArtifactService } from "./artifacts.js";
@@ -227,6 +231,357 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         }));
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ approvals }));
+      return;
+    }
+
+    // ---- 定时任务 CRUD（workflows）----
+    const schedulesMatch = url.match(/^\/api\/rooms\/([^/?]+)\/schedules(?:\?|$)/);
+    if (schedulesMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(schedulesMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      const schedules = listScheduledTasks(db, room);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ schedules }));
+      return;
+    }
+
+    const scheduleIdMatch = url.match(/^\/api\/rooms\/([^/?]+)\/schedules\/([^/?]+)(?:\?|$)/);
+    if (scheduleIdMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(scheduleIdMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      const id = decodeURIComponent(scheduleIdMatch[2]);
+      if (!id) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"id required"}');
+        return;
+      }
+      const s = getScheduledTask(db, id);
+      if (!s || s.room !== room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end('{"error":"not found"}');
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ schedule: s }));
+      return;
+    }
+
+    const schedulesPostMatch = url.match(/^\/api\/rooms\/([^/?]+)\/schedules(?:\?|$)/);
+    if (schedulesPostMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(schedulesPostMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      const raw = await readJsonBody(req);
+      if (typeof raw !== "object" || raw === null) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"invalid body"}');
+        return;
+      }
+      const body = raw as Record<string, unknown>;
+      const name = body.name;
+      const intervalSec = body.interval_sec;
+      const prompt = body.prompt;
+      const err = validateScheduledTaskInput({ name, interval_sec: intervalSec, prompt });
+      if (err) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: err }));
+        return;
+      }
+      const ownerRaw = body.owner;
+      const owner = typeof ownerRaw === "string" && ownerRaw.trim() ? ownerRaw.trim() : "web";
+      const agentRaw = body.agent_id;
+      const titleRaw = body.task_title;
+      const schedule = createScheduledTask(db, {
+        room,
+        name: String(name).trim(),
+        interval_sec: intervalSec as number,
+        agent_id: typeof agentRaw === "string" && agentRaw ? agentRaw : null,
+        task_title: typeof titleRaw === "string" && titleRaw.trim() ? titleRaw.trim() : undefined,
+        prompt: String(prompt).trim(),
+        owner,
+      });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ schedule }));
+      return;
+    }
+
+    const schedulePatchMatch = url.match(/^\/api\/rooms\/([^/?]+)\/schedules\/([^/?]+)(?:\?|$)/);
+    if (schedulePatchMatch && method === "PATCH") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(schedulePatchMatch[1]);
+      const id = decodeURIComponent(schedulePatchMatch[2]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      if (!id) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"id required"}');
+        return;
+      }
+      const existing = getScheduledTask(db, id);
+      if (!existing || existing.room !== room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end('{"error":"not found"}');
+        return;
+      }
+      const raw = await readJsonBody(req);
+      if (!raw || typeof raw !== "object" || raw === null) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"invalid body"}');
+        return;
+      }
+      const body = raw as Record<string, unknown>;
+      const merged = {
+        name: body.name ?? existing.name,
+        interval_sec: body.interval_sec ?? existing.interval_sec,
+        prompt: body.prompt ?? existing.prompt,
+      };
+      const validationError = validateScheduledTaskInput(merged);
+      if (validationError) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(`{"error":"${validationError}"}`);
+        return;
+      }
+      const patch: ScheduledTaskPatch = {};
+      if (body.name !== undefined) patch.name = String(body.name).trim();
+      if (body.interval_sec !== undefined) patch.interval_sec = body.interval_sec as number;
+      if (body.prompt !== undefined) patch.prompt = String(body.prompt).trim();
+      if (body.enabled !== undefined) patch.enabled = body.enabled === true || body.enabled === 1 || body.enabled === "1" || body.enabled === "true";
+      if (body.agent_id !== undefined) patch.agent_id = typeof body.agent_id === "string" && body.agent_id ? body.agent_id : null;
+      if (body.task_title !== undefined) patch.task_title = typeof body.task_title === "string" && body.task_title.trim() ? body.task_title.trim() : undefined;
+      const updated = updateScheduledTask(db, id, patch);
+      if (!updated) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end('{"error":"not found"}');
+        return;
+      }
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify({ schedule: updated }));
+      return;
+    }
+    const scheduleDeleteMatch = url.match(/^\/api\/rooms\/([^/?]+)\/schedules\/([^/?]+)(?:\?|$)/);
+    if (scheduleDeleteMatch && method === "DELETE") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(scheduleDeleteMatch[1]);
+      const id = decodeURIComponent(scheduleDeleteMatch[2]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      if (!id) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"id required"}');
+        return;
+      }
+      const existing = getScheduledTask(db, id);
+      if (!existing || existing.room !== room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end('{"error":"not found"}');
+        return;
+      }
+      deleteScheduledTask(db, id);
+      res.setHeader("content-type", "application/json");
+      res.end('{"ok":true}');
+      return;
+    }
+
+    // ---- 触发规则 CRUD（workflows）----
+    const triggerTrigMatch = url.match(/^\/api\/rooms\/([^/?]+)\/triggers(?:\?|$)/);
+    if (triggerTrigMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(triggerTrigMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      const triggers = listTriggerRules(db, room);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ triggers }));
+      return;
+    }
+
+    const triggerTrigIdMatch = url.match(/^\/api\/rooms\/([^/?]+)\/triggers\/([^/?]+)(?:\?|$)/);
+    if (triggerTrigIdMatch && method === "GET") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(triggerTrigIdMatch[1]);
+      const id = decodeURIComponent(triggerTrigIdMatch[2]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      if (!id) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"id required"}');
+        return;
+      }
+      const t = getTriggerRule(db, id);
+      if (!t || t.room !== room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end('{"error":"not found"}');
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ trigger: t }));
+      return;
+    }
+
+    const triggerPostMatch = url.match(/^\/api\/rooms\/([^/?]+)\/triggers(?:\?|$)/);
+    if (triggerPostMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(triggerPostMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+
+      const raw = await readJsonBody(req);
+      if (typeof raw !== "object" || raw === null) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"invalid body"}');
+        return;
+      }
+
+      const body = raw as Record<string, unknown>;
+      const err = validateTriggerRuleInput({
+        name: body.name,
+        match_type: body.match_type,
+        pattern: body.pattern,
+        prompt: body.prompt,
+        cooldown_sec: body.cooldown_sec,
+      });
+      if (err) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: err }));
+        return;
+      }
+
+      const ownerRaw = body.owner;
+      const owner = typeof ownerRaw === "string" && ownerRaw.trim() ? ownerRaw.trim() : "web";
+      const agentRaw = body.agent_id;
+      const titleRaw = body.task_title;
+      const coolRaw = body.cooldown_sec;
+
+      const trigger = createTriggerRule(db, {
+        room,
+        name: String(body.name).trim(),
+        match_type: body.match_type as "keyword" | "sender" | "event",
+        pattern: String(body.pattern).trim(),
+        agent_id: typeof agentRaw === "string" && agentRaw ? agentRaw : null,
+        task_title: typeof titleRaw === "string" && titleRaw.trim() ? titleRaw.trim() : undefined,
+        prompt: String(body.prompt).trim(),
+        owner,
+        cooldown_sec: typeof coolRaw === "number" && Number.isInteger(coolRaw) ? coolRaw : undefined,
+      });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ trigger }));
+      return;
+    }
+
+    const triggerPatchMatch = url.match(/^\/api\/rooms\/([^/?]+)\/triggers\/([^/?]+)(?:\?|$)/);
+    if (triggerPatchMatch && method === "PATCH") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(triggerPatchMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room required" }));
+        return;
+      }
+      const id = decodeURIComponent(triggerPatchMatch[2]);
+      if (!id) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "id required" }));
+        return;
+      }
+      const t = getTriggerRule(db, id);
+      if (!t || t.room !== room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "not found" }));
+        return;
+      }
+      const raw = await readJsonBody(req);
+      if (typeof raw !== "object" || raw === null) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "invalid body" }));
+        return;
+      }
+      const body = raw as Record<string, unknown>;
+      const merged = {
+        name: body.name ?? t.name,
+        match_type: body.match_type ?? t.match_type,
+        pattern: body.pattern ?? t.pattern,
+        prompt: body.prompt ?? t.prompt,
+        cooldown_sec: body.cooldown_sec ?? t.cooldown_sec,
+      } as Parameters<typeof validateTriggerRuleInput>[0];
+      const err = validateTriggerRuleInput(merged);
+      if (err) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: err }));
+        return;
+      }
+      const patch: TriggerRulePatch = {};
+      if (body.name !== undefined) patch.name = String(body.name).trim();
+      if (body.match_type !== undefined) patch.match_type = body.match_type as "keyword" | "sender" | "event";
+      if (body.pattern !== undefined) patch.pattern = String(body.pattern).trim();
+      if (body.prompt !== undefined) patch.prompt = String(body.prompt).trim();
+      if (body.cooldown_sec !== undefined) patch.cooldown_sec = body.cooldown_sec as number;
+      if (body.enabled !== undefined) patch.enabled = body.enabled === true || body.enabled === 1 || body.enabled === "1" || body.enabled === "true";
+      if (body.agent_id !== undefined) patch.agent_id = typeof body.agent_id === "string" && body.agent_id ? body.agent_id : null;
+      if (body.task_title !== undefined) patch.task_title = typeof body.task_title === "string" && body.task_title.trim() ? body.task_title.trim() : undefined;
+      const updated = updateTriggerRule(db, id, patch);
+      if (!updated) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "not found" }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ trigger: updated }));
+      return;
+    }
+
+    const triggerDeleteMatch = url.match(/^\/api\/rooms\/([^/?]+)\/triggers\/([^/?]+)(?:\?|$)/);
+    if (triggerDeleteMatch && method === "DELETE") {
+      res.setHeader("access-control-allow-origin", "*");
+      const room = decodeURIComponent(triggerDeleteMatch[1]);
+      if (!room) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room required" }));
+        return;
+      }
+      const id = decodeURIComponent(triggerDeleteMatch[2]);
+      if (!id) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "id required" }));
+        return;
+      }
+      const t = getTriggerRule(db, id);
+      if (!t || t.room !== room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "not found" }));
+        return;
+      }
+      deleteTriggerRule(db, id);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
       return;
     }
 
@@ -648,6 +1003,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
 
   hub.onMessage = (env: Envelope<MessagePayload>) => {
     routeMessage(hub, env, db);
+    checkTriggers(hub, db, env);
   };
   setTaskApprovalMode(config.taskApprovalMode ?? "off");
   hub.onApprovalDecision = (env) => {
@@ -658,7 +1014,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     hub.handleConnection(ws);
   });
 
-  const timer = setInterval(() => { hub.sweep(); sweepApprovals(hub, db, Date.now()); }, ZOMBIE_SWEEP_MS);
+  const timer = setInterval(() => { hub.sweep(); sweepApprovals(hub, db, Date.now()); sweepScheduledTasks(hub, db, Date.now()); }, ZOMBIE_SWEEP_MS);
   timer.unref?.();
 
   httpServer.listen(config.port);

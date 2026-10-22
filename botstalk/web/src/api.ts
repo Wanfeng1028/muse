@@ -215,3 +215,67 @@ export async function fetchPendingApprovals(room: string): Promise<ApprovalReque
   const data = (await res.json()) as { approvals: ApprovalRequest[] };
   return data.approvals ?? [];
 }
+export interface ScheduledTask {
+  id: string; room: string; name: string; enabled: 0 | 1; interval_sec: number;
+  agent_id: string | null; task_title: string; prompt: string; owner: string;
+  next_run_ms: number; last_run_ms: number | null; created_at_ms: number; updated_at_ms: number;
+}
+export interface NewScheduledTask { name: string; interval_sec: number; agent_id?: string; task_title?: string; prompt: string; }
+export interface ScheduledTaskPatch { name?: string; enabled?: boolean; interval_sec?: number; agent_id?: string | null; task_title?: string; prompt?: string; }
+
+export interface TriggerRule {
+  id: string; room: string; name: string; enabled: 0 | 1; match_type: 'keyword' | 'sender' | 'event';
+  pattern: string; agent_id: string | null; task_title: string; prompt: string; owner: string;
+  cooldown_sec: number; last_fired_ms: number | null; created_at_ms: number; updated_at_ms: number;
+}
+export interface NewTriggerRule { name: string; match_type: 'keyword' | 'sender' | 'event'; pattern: string; agent_id?: string; task_title?: string; prompt: string; cooldown_sec?: number; }
+export interface TriggerRulePatch { name?: string; enabled?: boolean; match_type?: 'keyword' | 'sender' | 'event'; pattern?: string; agent_id?: string | null; task_title?: string; prompt?: string; cooldown_sec?: number; }
+
+async function apiJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    let msg = `${res.status}`;
+    try { const d = (await res.json()) as { error?: string }; if (d.error) msg = d.error; } catch { /* 忽略 */ }
+    throw new Error(msg);
+  }
+  return (await res.json()) as T;
+}
+
+export async function fetchSchedules(room: string): Promise<ScheduledTask[]> {
+  const data = await apiJson<{ schedules: ScheduledTask[] }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/schedules`);
+  return data.schedules ?? [];
+}
+export async function createSchedule(room: string, input: NewScheduledTask): Promise<ScheduledTask> {
+  const data = await apiJson<{ schedule: ScheduledTask }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/schedules`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, owner: 'web' }),
+  });
+  return data.schedule;
+}
+export async function updateSchedule(room: string, id: string, patch: ScheduledTaskPatch): Promise<ScheduledTask> {
+  const data = await apiJson<{ schedule: ScheduledTask }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/schedules/${encodeURIComponent(id)}`, {
+    method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch),
+  });
+  return data.schedule;
+}
+export async function deleteSchedule(room: string, id: string): Promise<void> {
+  await apiJson<{ ok: boolean }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+export async function fetchTriggers(room: string): Promise<TriggerRule[]> {
+  const data = await apiJson<{ triggers: TriggerRule[] }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/triggers`);
+  return data.triggers ?? [];
+}
+export async function createTrigger(room: string, input: NewTriggerRule): Promise<TriggerRule> {
+  const data = await apiJson<{ trigger: TriggerRule }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/triggers`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...input, owner: 'web' }),
+  });
+  return data.trigger;
+}
+export async function updateTrigger(room: string, id: string, patch: TriggerRulePatch): Promise<TriggerRule> {
+  const data = await apiJson<{ trigger: TriggerRule }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/triggers/${encodeURIComponent(id)}`, {
+    method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch),
+  });
+  return data.trigger;
+}
+export async function deleteTrigger(room: string, id: string): Promise<void> {
+  await apiJson<{ ok: boolean }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/triggers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}

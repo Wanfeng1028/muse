@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardList, Gamepad2, LogOut, Moon, Settings, ShieldCheck, Spade } from 'lucide-react';
+import { CalendarClock, ClipboardList, Gamepad2, LogOut, Moon, Settings, ShieldCheck, Spade } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
 import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload, fetchPendingApprovals } from '../api';
 import MessageList, { ChatItem } from './MessageList';
@@ -7,6 +7,7 @@ import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
 import TaskPanel from './TaskPanel';
 import ApprovalQueue, { ApprovalRequest } from './ApprovalQueue';
+import Workflows from './Workflows';
 import GamePanel from './GamePanel';
 import DoudizhuPanel, { isDoudizhuState } from '../doudizhu/DoudizhuPanel';
 import DoudizhuResult from '../doudizhu/DoudizhuResult';
@@ -36,6 +37,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [hasMore, setHasMore] = useState(true);
   const [showTasks, setShowTasks] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
+  const [showWorkflows, setShowWorkflows] = useState(false);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [showGame, setShowGame] = useState(false);
   const [showDoudizhuLobby, setShowDoudizhuLobby] = useState(false);
@@ -301,6 +303,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
           <ShieldCheck size={16} strokeWidth={2} />
           <span>审批{approvals.length > 0 ? ` (${approvals.length})` : ''}</span>
         </button>
+        <button className="btn-ghost" type="button" onClick={() => setShowWorkflows((v) => !v)} title="定时与触发">
+          <CalendarClock size={16} strokeWidth={2} />
+          <span>工作流</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={onLeave} title="退出">
           <LogOut size={16} strokeWidth={2} />
           <span>退出</span>
@@ -454,6 +460,9 @@ export default function Chat({ nick, room, onLeave }: Props) {
             socketRef.current?.sendApprovalDecision(approvalId, decision, note)
           }
         />
+      )}
+      {showWorkflows && (
+        <Workflows room={room} onClose={() => setShowWorkflows(false)} />
       )}
     </div>
   );

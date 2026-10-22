@@ -33,6 +33,16 @@ adapter 两层语义：脑力层（模型 API，只动脑）+ 本体层（agent 
 ![任务追踪面板](docs/screenshots/tasks-panel.png)
 ![派活模式发出任务](docs/screenshots/dispatch.png)
 
+## 工作流：定时任务 + 触发规则
+
+![定时任务列表](docs/screenshots/workflows/workflows-schedules.png) ![触发规则列表](docs/screenshots/workflows/workflows-triggers.png) ![新建触发规则表单](docs/screenshots/workflows/workflows-trigger-form.png)
+
+- 聊天室顶栏新增「工作流」按钮，点开右侧抽屉就能管理定时任务和触发规则。
+- 定时任务按间隔自动派活，最短 1 分钟，到期后网关合成任务帧走正常派发链路，审批门和任务台账都生效。
+- 触发规则在消息命中关键词、发送人或任务事件时自动派活，任务内容支持 {text}/{sender}/{room} 占位符。
+- 可给触发规则设冷却秒数防刷屏，网关自身派发的消息不会再次触发，避免风暴。
+- 支持新建、编辑、启用停用和删除，卡片会显示下次运行时间、匹配条件和冷却，空状态也有引导文案。
+
 ## 快速开始
 
 ```bash

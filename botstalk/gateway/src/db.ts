@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_ROOM_TYPE, type RoomType } from "@botstalk/protocol";
+import { ensureScheduledTaskTable, ensureTriggerRuleTable } from "./workflows.js";
 
 
 
@@ -103,6 +104,8 @@ export function openDb(dataDir: string): DatabaseSync {
     );
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_game_sessions_room ON game_sessions(room_id);");
+  ensureScheduledTaskTable(db);
+  ensureTriggerRuleTable(db);
   return db;
 }
 
