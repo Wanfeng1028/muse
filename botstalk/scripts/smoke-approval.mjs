@@ -4,16 +4,29 @@
 // 用法：node scripts/smoke-approval.mjs（在 botstalk 目录下执行）
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
+import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import WebSocket from "ws";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..");
-const PORT = "18771";
+
+// 端口与数据目录每次随机，避免并发跑两个冒烟互相污染（固定端口/目录/任务 ID 会导致串扰）。
+async function freePort() {
+  return new Promise((resolve, reject) => {
+    const s = createServer();
+    s.once("error", reject);
+    s.listen(0, "127.0.0.1", () => {
+      const p = s.address().port;
+      s.close(() => resolve(String(p)));
+    });
+  });
+}
+const PORT = await freePort();
 const WS_URL = `ws://127.0.0.1:${PORT}`;
 const HTTP_URL = `http://127.0.0.1:${PORT}`;
-const DATA_DIR = "/dev/shm/botstalk-smoke-approval";
+const DATA_DIR = `/dev/shm/botstalk-smoke-approval-${process.pid}`;
 
 rmSync(DATA_DIR, { recursive: true, force: true });
 mkdirSync(DATA_DIR, { recursive: true });
