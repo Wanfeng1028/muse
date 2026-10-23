@@ -19,6 +19,7 @@ import { checkTriggers } from "./triggers.js";
 import type { GatewayConfig } from "./config.js";
 import type { Envelope, MessagePayload, StreamPayload } from "@botstalk/protocol";
 import { createArtifactService } from "./artifacts.js";
+import { handleRegistryRoutes } from "./registry-routes.js";
 import { randomUUID } from "node:crypto";
 
 // 排序规则：online 在前，其余按 adapter_id 字典序
@@ -90,6 +91,9 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     if (method === "GET" && !url.startsWith("/api/") && url !== "/healthz") {
       if (serveStatic(config.publicDir, url, res)) return;
     }
+
+    // GET /api/registry/agents* —— agent registry 目录（白名单字段，不含敏感信息）
+    if (handleRegistryRoutes(req, res, url, method)) return;
 
     // GET /api/rooms/:room/history
     const TASK_STATUSES: readonly string[] = ["dispatched", "running", "done", "failed", "unsupported", "cancelled"];

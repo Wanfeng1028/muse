@@ -2,6 +2,7 @@
 
 ## Unreleased
 ### 新增
+- OpenAgents 移植第 1 轮（抄清单 1）：`@botstalk/registry`（22 个 agent 描述符 JSON 原样移植自 openagents-org/openagents（Apache-2.0）+ Registry 类 TS 重实现：featured 按 order 排序/其余按 label 字母序/support 空对象补 DEFAULT_SUPPORT，行为与原版逐项对照测试锁定）+ `@botstalk/cli-template`（CliAdapter 基类：按描述符 spawn CLI 子进程执行任务，`{agent_name}` 模板替换，checkReady/probe/runTask/stopCurrent，进程组杀+SIGNT→SIGKILL 升级，stdout 1MB 截断）+ claude/codex 两个开箱即用 adapter + 网关 `GET /api/registry/agents`（白名单字段）/`/:name`。测试：registry 6/6、cli-template 14/14（含失败注入抓出的真 bug：孙进程占管道致 close 挂起，已修为进程组杀+exit 兜底）、网关全量 826/826 零回归、真实网关冒烟通过。移植规格见 docs/OPENAGENTS_ROUND1.md。
 - 审批中心 Web UI（关闭"人工审批 web UI 未做"缺口）：顶栏"审批"按钮（待审批数徽标）+ 右侧抽屉审批队列——待审批项显示标题/派发人→执行者/任务短码/5 分钟倒计时、可选备注、放行/驳回按钮；执行者本人按钮禁用并提示防自批规则；过期显示"已过期，等待网关清扫…"；放行/驳回/过期后收到网关 task_event 自动从队列移除；刷新页面后经 GET /api/rooms/:room/approvals 恢复列表。网关新增该 REST 端点（只返回元数据，不泄露 env 原始帧）+ PendingApprovals.list()。测试：gateway/test/approvals_rest.test.ts 3 例；网关全量 704 例全绿；web/gateway tsc 零错；scripts/smoke-approval.mjs 真实网关 E2E 16/16（挂起→REST→放行→执行者收到原任务帧→驳回→防自批）；2 张真实截图亲眼验收（docs/screenshots/approvals/，console 零错误）。
 - 狼人杀纵深测试 r1：werewolf-statemachine.deep.test.ts 27 例（createGame 配置 7/夜晚状态机 11/白天与胜负 9）+ werewolf-ai-vision.deep.test.ts 20 例（AI 决策 10/视角隔离 10），47/47 全绿；修测试侧 4 处误解（announce 阶段 currentSeat 为空、女巫救人后跳过 announce、10 人局 3 狼、放逐后先遗言再入夜），产品无真 bug。
 - 狼人杀 E2E 冒烟脚本 scripts/smoke-werewolf.mjs：建 playroom→开 werewolf session（201）→WS hello 1.3 通过/1.2 被 4400 拒绝→game_action start→game_state 广播→状态落库；workroom 开狼人杀 403；12/12。

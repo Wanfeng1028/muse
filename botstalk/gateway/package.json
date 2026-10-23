@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@botstalk/protocol": "^0.1.0",
+    "@botstalk/registry": "^0.1.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
