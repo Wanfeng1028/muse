@@ -164,7 +164,9 @@ class DeconstructionAnalyzerTest {
         assertTrue(report.contains("Seedance 版"));
         assertTrue(report.contains("## 创作剧本模板"));
         assertTrue(report.contains("## 数据口径说明"));
-        assertTrue(report.contains("未覆盖：逐字稿"));
+        assertTrue(report.contains("## 逐字稿（内嵌字幕提取）"));
+        assertTrue(report.contains("未检测到内嵌字幕轨道"));
+        assertTrue(report.contains("语音转写（ASR）"));
         assertTrue(report.contains("shot-001.jpg"));
         assertTrue(report.contains("| 待AI增强 |"));
     }

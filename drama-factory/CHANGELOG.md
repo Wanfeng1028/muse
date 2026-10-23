@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-24 05:07：视频拆解「逐字稿（内嵌字幕提取）」）
+- 新服务 `SubtitleTranscriptService`：ffprobe 列字幕流（优先 chi/zho/zh）→ ffmpeg 抽取为 SRT → 解析为分段时间轴；无字幕轨道/提取失败时诚实降级（found=false），不炸拆解流水线。
+- 流水线接入：`DeconstructionService.runPipeline` 在关键帧抽取后提取逐字稿；逐镜按时段重叠映射字幕文本（`video_deconstruction_shots.transcript_text`）；任务表新增 `transcript_status`（EMBEDDED/NONE）/`transcript_track_info`/`transcript_json`（Flyway V23）。
+- 报告：`DeconstructionReportBuilder` 新增 4 参重载，报告新增「## 逐字稿（内嵌字幕提取）」节；口径说明更新——逐字稿改标注"内嵌字幕轨道离线提取"，ASR 语音转写仍未接入（诚实标注，不冒充）。
+- API：`DetailDto` 新增 transcriptStatus/transcriptTrackInfo/transcriptSegments；`ShotDto` 新增 transcriptText；`SummaryDto` 新增 transcriptStatus。
+- 前端 `deconstruct.html/js`：详情页新增逐字稿区（轨道信息+条数+时间戳列表，无字幕时诚实提示"未检测到内嵌字幕轨道；语音转写（ASR）尚未接入"），逐镜卡片新增"本镜字幕"行；中英双语。
+- 测试 9 例全绿：`SubtitleTranscriptServiceTest` 6 例（SRT/VTT 解析：多行/坏块/空/CRLF/NOTE）+ `SubtitleTranscriptExtractIT` 2 例（真实 ffmpeg 生成带字幕/无字幕视频走 extract）+ `DeconstructionTranscriptApiTest` 1 例（MockMvc 全链路：上传带字幕视频→EMBEDDED→3 段→逐镜字幕→报告含逐字稿）；另修 `DeconstructionAnalyzerTest.reportContainsAllSections` 断言以匹配新口径。
+- 附带修复生产启动阻断：`RunApproval`/`StepAttempt` 实体此前已存在但无建表迁移，`ddl-auto: validate` 下启动即报 missing table；新增 Flyway V24 补建 `run_approvals`/`step_attempts` 两表，生产 jar 真实启动验证通过。
+- 视觉验收：`docs/screenshots/deconstruct-transcript.png`（真实 6 秒 3 镜带字幕视频：逐字稿区 3 条+逐镜本镜字幕+关键帧，零 console 错误）。
+
 ### Added（深耕轮 2026-10-20 晚：DoD 未通过项 F2/F3/F4 部署运维补齐）
 - F4 依赖更新机制：`.github/dependabot.yml` 升级——maven / github-actions / docker 三生态，每周一（Asia/Shanghai）检查，open-pull-requests-limit 5，commit 前缀 `chore(deps)`，reviewer Wanfeng1028；新增 `spring-boot` 依赖分组（`org.springframework.boot:*` 同批升级）；springdoc 继续钉死 2.6.x（2.7+ 要求 Spring Framework 6.2，本项目 Spring Boot 3.3.5 对应 Spring 6.1.x，见 docs/DEPENDENCY_POLICY.md 附录 B）；npm 生态未启用（仓库无根 package.json，src/main/resources/skills-bundled/ 下约 90 个 package.json 均为 vendored 第三方模板，不适合 dependabot 跟踪）。
 - F2 一键部署事实核验：`Dockerfile`（多阶段：maven:3.9-eclipse-temurin-21 构建 → eclipse-temurin:21-jre 运行，内置 ffmpeg；HEALTHCHECK 用 wget 探 http://localhost:8081/api/health）、`compose.yml`（单服务一键部署：docker compose up -d --build）、`docker-compose.yml`（auth + app + nginx 全栈）、`.env.example`（全部环境变量占位齐全）逐项与 `src/main/resources/application.yml`（端口 ${PORT:8081}，默认 8081）、`HealthController`（@RequestMapping("/api") + @GetMapping("/health") 即 /api/health）、`target/drama-factory-1.0.0.jar`（实际构建产物名）核对一致；`compose.yml` 的 healthcheck 由 curl 改为 wget（eclipse-temurin:21-jre 镜像不带 curl，与 Dockerfile 自带 HEALTHCHECK 一致）；`docker-compose.yml` 的 app 服务补 healthcheck（wget 探 /api/health）与 mem_limit: 1g。

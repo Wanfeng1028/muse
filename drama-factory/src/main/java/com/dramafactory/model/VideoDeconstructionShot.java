@@ -71,6 +71,9 @@ public class VideoDeconstructionShot {
     @Column(name = "prompt_seedance", columnDefinition = "CLOB")
     private String promptSeedance;
 
+    @Column(name = "transcript_text", columnDefinition = "CLOB")
+    private String transcriptText;
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -188,6 +191,14 @@ public class VideoDeconstructionShot {
 
     public void setPromptSeedance(String promptSeedance) {
         this.promptSeedance = promptSeedance;
+    }
+
+    public String getTranscriptText() {
+        return transcriptText;
+    }
+
+    public void setTranscriptText(String transcriptText) {
+        this.transcriptText = transcriptText;
     }
 
     public LocalDateTime getCreatedAt() {

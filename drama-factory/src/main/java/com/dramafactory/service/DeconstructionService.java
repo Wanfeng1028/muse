@@ -48,6 +48,7 @@ public class DeconstructionService {
     private final DeconstructionAnalyzer analyzer;
     private final DeconstructionReportBuilder reportBuilder;
     private final DeconstructionVisionEnricher visionEnricher;
+    private final SubtitleTranscriptService transcriptService;
     private final ObjectMapper objectMapper;
     private final String storageDir;
     private final double sceneThreshold;
@@ -73,6 +74,7 @@ public class DeconstructionService {
             DeconstructionAnalyzer analyzer,
             DeconstructionReportBuilder reportBuilder,
             DeconstructionVisionEnricher visionEnricher,
+            SubtitleTranscriptService transcriptService,
             ObjectMapper objectMapper,
             @Value("${drama.storage:./data/media}") String storageDir,
             @Value("${drama.deconstruction.scene-threshold:0.35}") double sceneThreshold,
@@ -90,6 +92,7 @@ public class DeconstructionService {
         this.analyzer = analyzer;
         this.reportBuilder = reportBuilder;
         this.visionEnricher = visionEnricher;
+        this.transcriptService = transcriptService;
         this.objectMapper = objectMapper;
         this.storageDir = storageDir;
         this.sceneThreshold = sceneThreshold;
@@ -326,6 +329,7 @@ public class DeconstructionService {
             d.getCutsPerMinute(),
             d.getRhythmClass(),
             d.getHookEndSec(),
+            d.getTranscriptStatus(),
             d.getCreatedAt(),
             d.getUpdatedAt()
         );
@@ -354,7 +358,8 @@ public class DeconstructionService {
                 r.getShotSizeLabel(),
                 r.getCameraMoveLabel(),
                 r.getPromptGeneric(),
-                r.getPromptSeedance()
+                r.getPromptSeedance(),
+                r.getTranscriptText()
             )
         ).collect(Collectors.toList());
 
@@ -378,8 +383,30 @@ public class DeconstructionService {
             d.getCreatedAt(),
             d.getUpdatedAt(),
             d.getResultJson(),
+            d.getTranscriptStatus(),
+            d.getTranscriptTrackInfo(),
+            toTranscriptDtos(d.getTranscriptJson()),
             shotDtos
         );
+    }
+
+    private List<DeconstructionDtos.TranscriptSegmentDto> toTranscriptDtos(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            List<DeconstructionDtos.TranscriptSegmentDto> out = new ArrayList<>();
+            for (JsonNode n : objectMapper.readTree(json)) {
+                out.add(new DeconstructionDtos.TranscriptSegmentDto(
+                    n.path("startSec").asDouble(),
+                    n.path("endSec").asDouble(),
+                    n.path("text").asText("")));
+            }
+            return out;
+        } catch (JsonProcessingException e) {
+            log.warn("逐字稿 JSON 解析失败", e);
+            return List.of();
+        }
     }
 
     private void submitProcess(Long id) {
@@ -461,7 +488,12 @@ public class DeconstructionService {
             }
         }
 
-        String report = reportBuilder.buildReport(row.getSourceName(), analysis, keyframePaths);
+        Path transcriptDir = framesDir.getParent().resolve("transcript");
+        SubtitleTranscriptService.TranscriptResult transcript = transcriptService.extract(src, transcriptDir);
+        log.info("逐字稿提取 id={} found={} track={} segments={}", id, transcript.found(),
+            transcript.trackInfo(), transcript.segments().size());
+
+        String report = reportBuilder.buildReport(row.getSourceName(), analysis, keyframePaths, transcript);
         shotRowRepository.deleteByDeconstructionId(id);
 
         List<VideoDeconstructionShot> shotRows = new ArrayList<>();
@@ -485,6 +517,8 @@ public class DeconstructionService {
                 s.setShotSizeLabel(enrich.shotSizeLabel());
                 s.setCameraMoveLabel(enrich.cameraMoveLabel());
             }
+            s.setTranscriptText(transcriptTextFor(analyzedShot.segment().startSec(),
+                analyzedShot.segment().endSec(), transcript.segments()));
             shotRows.add(s);
         }
         shotRowRepository.saveAll(shotRows);
@@ -500,10 +534,38 @@ public class DeconstructionService {
         row.setRhythmClass(analysis.rhythmClass());
         row.setHookEndSec(analysis.hookEndSec());
         row.setResultJson(buildResultJson(analysis));
+        row.setTranscriptStatus(transcript.found() ? "EMBEDDED" : "NONE");
+        row.setTranscriptTrackInfo(transcript.trackInfo());
+        row.setTranscriptJson(transcriptJsonOf(transcript.segments()));
         row.setReportMd(report);
         row.setStatus(DeconstructionStatus.DONE);
         row.setErrorMessage(null);
         deconstructionRepository.save(row);
+    }
+
+    private static String transcriptTextFor(double startSec, double endSec,
+            List<SubtitleTranscriptService.TranscriptSegment> segments) {
+        String joined = segments.stream()
+            .filter(sg -> sg.startSec() < endSec && sg.endSec() > startSec)
+            .map(SubtitleTranscriptService.TranscriptSegment::text)
+            .collect(Collectors.joining("\n"));
+        return joined.isEmpty() ? null : joined;
+    }
+
+    private String transcriptJsonOf(List<SubtitleTranscriptService.TranscriptSegment> segments) {
+        try {
+            List<Map<String, Object>> list = segments.stream().map(sg -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("startSec", sg.startSec());
+                m.put("endSec", sg.endSec());
+                m.put("text", sg.text());
+                return m;
+            }).collect(Collectors.toList());
+            return objectMapper.writeValueAsString(list);
+        } catch (JsonProcessingException e) {
+            log.warn("逐字稿 JSON 序列化失败", e);
+            return null;
+        }
     }
 
     private String buildResultJson(DeconstructionAnalyzer.Analysis a) {

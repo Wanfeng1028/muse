@@ -24,6 +24,9 @@
       "dc.structureTitle": "全片结构",
       "dc.formulaTitle": "爆款公式（规则提炼）",
       "dc.shotsTitle": "逐镜拆解",
+      "dc.transcriptTitle": "逐字稿（内嵌字幕提取）",
+      "dc.noTranscript": "未检测到内嵌字幕轨道",
+      "dc.shotTranscript": "本镜字幕",
       "dc.scriptTitle": "创作剧本模板",
       "dc.basisNote": "口径说明：时长/切分/关键帧为实测数据；结构与公式为规则推断；画面主体、景别、运镜等视觉字段待 AI 增强，当前以占位标注，不冒充识别结果。",
       "status.PENDING": "等待中",
@@ -64,6 +67,9 @@
       "dc.structureTitle": "Overall Structure",
       "dc.formulaTitle": "Viral Formula (rule-derived)",
       "dc.shotsTitle": "Shot-by-Shot Breakdown",
+      "dc.transcriptTitle": "Transcript (embedded subtitles)",
+      "dc.noTranscript": "No embedded subtitle track found",
+      "dc.shotTranscript": "Subtitles in this shot",
       "dc.scriptTitle": "Reusable Script Template",
       "dc.basisNote": "Basis: durations/cuts/keyframes are measured data; structure and formula are rule-derived; visual fields (subject, shot size, camera movement) await AI enrichment and are marked as placeholders, not recognition results.",
       "status.PENDING": "Pending",
@@ -444,6 +450,20 @@
           <ul>${(formula.notes || []).map(n => `<li>${esc(n)}</li>`).join('')}</ul>
         `;
         
+        // Transcript
+        const segs = detail.transcriptSegments || [];
+        const transcriptEl = document.getElementById('dcTranscript');
+        if (detail.transcriptStatus === 'EMBEDDED' && segs.length > 0) {
+          transcriptEl.innerHTML =
+            `<div class="text-secondary mb-2">字幕轨道：${esc(detail.transcriptTrackInfo || '')} · ${segs.length} 条</div>` +
+            '<ol class="mb-0">' + segs.map(s =>
+              `<li><span class="dc-meta">${fmtTime(s.startSec)}–${fmtTime(s.endSec)}</span> ${esc(s.text)}</li>`
+            ).join('') + '</ol>';
+        } else {
+          transcriptEl.innerHTML =
+            `<div class="text-secondary">${esc(_t('dc.noTranscript'))}（${esc(detail.transcriptTrackInfo || '')}）；语音转写（ASR）尚未接入。</div>`;
+        }
+
         // Script
         document.getElementById('dcScript').textContent = result.scriptTemplate || '';
         
@@ -469,6 +489,7 @@
                 <div class="dc-prompt small mt-2">
                   <span class="dc-prompt-text">${esc(shot.promptSeedance || shot.promptGeneric)}</span>
                 </div>
+                ${shot.transcriptText ? `<div class="small mt-2"><span class="dc-label">${esc(_t('dc.shotTranscript'))}：</span>${esc(shot.transcriptText)}</div>` : ''}
                 <button class="btn btn-sm btn-outline-secondary mt-2" data-copy="${idx}">复制 Seedance 提示词</button>
               </div>
             </div>

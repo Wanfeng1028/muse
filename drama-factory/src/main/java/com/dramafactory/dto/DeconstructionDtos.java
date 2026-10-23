@@ -29,6 +29,7 @@ public final class DeconstructionDtos {
      * @param cameraMoveLabel 运镜标签
      * @param promptGeneric  通用提示词
      * @param promptSeedance Seedance 提示词
+     * @param transcriptText 该镜时段内字幕文本（无字幕则为 null）
      */
     public static record ShotDto(
             Long id,
@@ -43,7 +44,8 @@ public final class DeconstructionDtos {
             String shotSizeLabel,
             String cameraMoveLabel,
             String promptGeneric,
-            String promptSeedance
+            String promptSeedance,
+            String transcriptText
     ) {
     }
 
@@ -66,6 +68,7 @@ public final class DeconstructionDtos {
      * @param cutsPerMinute       每分钟切镜数
      * @param rhythmClass         节奏分类
      * @param hookEndSec          钩子结束秒数
+     * @param transcriptStatus    逐字稿状态（EMBEDDED/NONE）
      * @param createdAt           创建时间
      * @param updatedAt           更新时间
      */
@@ -86,6 +89,7 @@ public final class DeconstructionDtos {
             Double cutsPerMinute,
             String rhythmClass,
             Double hookEndSec,
+            String transcriptStatus,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -113,6 +117,9 @@ public final class DeconstructionDtos {
      * @param createdAt           创建时间
      * @param updatedAt           更新时间
      * @param resultJson          完整结果 JSON
+     * @param transcriptStatus    逐字稿状态（EMBEDDED/NONE）
+     * @param transcriptTrackInfo 字幕轨道信息
+     * @param transcriptSegments  逐字稿分段
      * @param shots               镜头列表
      */
     public static record DetailDto(
@@ -135,7 +142,24 @@ public final class DeconstructionDtos {
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
             String resultJson,
+            String transcriptStatus,
+            String transcriptTrackInfo,
+            List<TranscriptSegmentDto> transcriptSegments,
             List<ShotDto> shots
+    ) {
+    }
+
+    /**
+     * 逐字稿分段 DTO。
+     *
+     * @param startSec 起始秒数
+     * @param endSec   结束秒数
+     * @param text     字幕文本
+     */
+    public static record TranscriptSegmentDto(
+            Double startSec,
+            Double endSec,
+            String text
     ) {
     }
 

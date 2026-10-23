@@ -8,6 +8,12 @@ import java.util.Map;
 public class DeconstructionReportBuilder {
 
     public String buildReport(String sourceName, DeconstructionAnalyzer.Analysis a, List<String> keyframePaths) {
+        return buildReport(sourceName, a, keyframePaths,
+            new SubtitleTranscriptService.TranscriptResult(false, "无内嵌字幕轨道", List.of()));
+    }
+
+    public String buildReport(String sourceName, DeconstructionAnalyzer.Analysis a, List<String> keyframePaths,
+            SubtitleTranscriptService.TranscriptResult transcript) {
         StringBuilder sb = new StringBuilder();
 
         // 1. 标题
@@ -102,12 +108,29 @@ public class DeconstructionReportBuilder {
           .append(a.scriptTemplate())
           .append("\n\n");
 
+        // 7b. 逐字稿（内嵌字幕提取）
+        sb.append("## 逐字稿（内嵌字幕提取）\n\n");
+        if (transcript.found() && !transcript.segments().isEmpty()) {
+            sb.append("- 字幕轨道：").append(transcript.trackInfo()).append("\n");
+            sb.append("- 字幕条数：").append(transcript.segments().size()).append("\n\n");
+            for (SubtitleTranscriptService.TranscriptSegment seg : transcript.segments()) {
+                sb.append("- [")
+                  .append(fmt(seg.startSec())).append("s–").append(fmt(seg.endSec())).append("s] ")
+                  .append(seg.text().replace("\n", " / ")).append("\n");
+            }
+        } else {
+            sb.append("未检测到内嵌字幕轨道（").append(transcript.trackInfo())
+              .append("）；语音转写（ASR）尚未接入。\n");
+        }
+        sb.append("\n");
+
         // 8. 数据口径说明
         sb.append("## 数据口径说明\n\n");
         sb.append("- 实测数据：ffprobe 元数据、场景切分点、关键帧与时长指标（真实测量）。\n");
         sb.append("- 规则推断：节奏分类、结构段划分、镜头构成与公式提炼（确定性规则）。\n");
         sb.append("- 待 AI 增强：主体、画面描述、景别、运镜、光线、调色（需视觉模型，当前以占位标注）。\n");
-        sb.append("- 未覆盖：逐字稿/屏幕文案（ASR/OCR 未接入）、链接导入（抖音/TikTok/小红书未接入）。\n");
+        sb.append("- 逐字稿：内嵌字幕轨道离线提取；语音转写（ASR）/屏幕文案（OCR）未接入。\n");
+        sb.append("- 未覆盖：链接导入（抖音/TikTok/小红书未接入）。\n");
 
         return sb.toString();
     }

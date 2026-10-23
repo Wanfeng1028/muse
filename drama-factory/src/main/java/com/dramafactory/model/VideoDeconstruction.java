@@ -90,6 +90,15 @@ public class VideoDeconstruction {
     @Column(name = "report_md", columnDefinition = "CLOB")
     private String reportMd;
 
+    @Column(name = "transcript_status", length = 16)
+    private String transcriptStatus;
+
+    @Column(name = "transcript_track_info", length = 200)
+    private String transcriptTrackInfo;
+
+    @Column(name = "transcript_json", columnDefinition = "CLOB")
+    private String transcriptJson;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -255,6 +264,30 @@ public class VideoDeconstruction {
 
     public void setReportMd(String reportMd) {
         this.reportMd = reportMd;
+    }
+
+    public String getTranscriptStatus() {
+        return transcriptStatus;
+    }
+
+    public void setTranscriptStatus(String transcriptStatus) {
+        this.transcriptStatus = transcriptStatus;
+    }
+
+    public String getTranscriptTrackInfo() {
+        return transcriptTrackInfo;
+    }
+
+    public void setTranscriptTrackInfo(String transcriptTrackInfo) {
+        this.transcriptTrackInfo = transcriptTrackInfo;
+    }
+
+    public String getTranscriptJson() {
+        return transcriptJson;
+    }
+
+    public void setTranscriptJson(String transcriptJson) {
+        this.transcriptJson = transcriptJson;
     }
 
     public LocalDateTime getCreatedAt() {
