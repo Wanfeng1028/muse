@@ -12,6 +12,7 @@ struct ParsedQuery {
     std::vector<std::string> reconstructedCompounds;  // 理解层重构的复合概念候选，去重保序
     bool passageIntent = false;         // 是否明确要"段落/原文"
     bool hasRecurrence = false;         // 查询是否含"过去状态→近期复现"结构（过去标记与复现标记同时出现）
+    bool asksRange = false;             // 查询是否为"索取数值范围/数量"型问句（在 raw 上判定，见 detectRangeIntent）
 };
 
 // 解析自然语言查询：抽取引号短语、删除疑问/语气词、jieba 分词过滤、兜底切分。

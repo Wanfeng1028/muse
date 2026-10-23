@@ -147,6 +147,7 @@ TEST(R7TimeOrdinal, R7_NonTimeTokenUnaffected) {
 TEST(RangeAnswerBonus, RangeBonus_Applies) {
     docseek::ParsedQuery pq;
     pq.keywords = {"弦距", "范围"};
+    pq.asksRange = true;  // v0.29.0：意图改由 parseNaturalQuery 在 raw 上判定并置位，手工构造 pq 时显式置位
 
     const std::string pathA = "/range/a.md";
     const std::string contentA =
@@ -222,6 +223,7 @@ TEST(RangeAnswerBonus, RangeBonus_NoRangeWordNoTrigger) {
 TEST(RangeAnswerBonus, RangeBonus_BareRangeApplies) {
     docseek::ParsedQuery pq;
     pq.keywords = {"弦距", "范围"};
+    pq.asksRange = true;  // v0.29.0：意图改由 parseNaturalQuery 在 raw 上判定并置位，手工构造 pq 时显式置位
 
     const std::string pathA = "/range/a.md";
     const std::string contentA =
@@ -243,6 +245,7 @@ TEST(RangeAnswerBonus, RangeBonus_BareRangeApplies) {
 TEST(RangeAnswerBonus, RangeBonus_BareRangeDashForm) {
     docseek::ParsedQuery pq;
     pq.keywords = {"弦距", "范围"};
+    pq.asksRange = true;  // v0.29.0：意图改由 parseNaturalQuery 在 raw 上判定并置位，手工构造 pq 时显式置位
 
     const std::string pathA = "/range/a.md";
     const std::string contentA =

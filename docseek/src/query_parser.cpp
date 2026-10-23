@@ -279,6 +279,19 @@ bool detectPassageIntent(const std::string& raw) {
     return false;
 }
 
+// 范围索取意图判定：raw 含范围类疑问词时，视为"索取数值范围/数量"型问句。
+// 在 raw（而非过滤后的 keywords）上判定——"多少""几"等疑问词会被疑问词过滤删掉，
+// 但它们恰恰是范围意图的信号；意图判定只读 raw，不影响匹配行为。
+// 提示词全为中文，无需大小写折叠。
+bool detectRangeIntent(const std::string& raw) {
+    static const char* kRangeHints[] = {"范围", "多少", "多久", "多长", "多大",
+                                        "几", "多高", "多宽", "多厚"};
+    for (const char* hint : kRangeHints) {
+        if (raw.find(hint) != std::string::npos) return true;
+    }
+    return false;
+}
+
 // 复现结构判定：raw 同时含过去状态标记与复现标记时，视为"过去状态→近期复现"型问句
 // （如"孩子之前已经学会上厕所了，最近又频繁尿裤子是怎么回事"）。
 // 过去标记闭集：已经/曾经/本来/原本/以前/过去。不含"之前"——"在…之前"是程序性表述
@@ -506,6 +519,7 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
 
     pq.passageIntent = detectPassageIntent(raw);
     pq.hasRecurrence = detectRecurrence(raw);
+    pq.asksRange = detectRangeIntent(raw);
 
     // 1. 抽取引号短语。
     std::string rest;

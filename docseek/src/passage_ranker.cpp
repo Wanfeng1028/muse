@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -21,8 +22,10 @@ constexpr double kCompoundPhraseBonus = 0.25;
 // 数值范围答案加成：当问句索取数值范围/数量，且窗口含“阿拉伯数字+紧邻计量单位”或
 // “无单位裸数值区间（A到B/A-B/A~B，A、B 为阿拉伯数字）”时，视为该窗口承载了可量化的答案，
 // 故对排序给固定加成。适用于可被数值区间直接回答的问句；
-// 边界与局限：加成是固定值，不随命中个数变化；对“单位与数字不相邻”、“答案以文字数词
-// （如四十二）表达”、“区间端点为中文数字”的情形不触发；要求至少 2 个命中以排除单点提及。
+// 边界与局限：加成是固定值，不随命中个数变化；对“单位与数字不相邻”的情形不触发；
+// 中文数字（如四十二）+紧邻计量单位同样视为量化答案信号；因中文数字词在正文中出现
+// 频率远高于阿拉伯数字，中文路径要求至少 3 个命中才给加成（阿拉伯数字路径仍为 2 个）。
+// 边界与局限：中文数字的无单位区间形式（如"三到五"）暂不识别。
 constexpr double kRangeAnswerBonus = 0.08;
 constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：query 词以同义词变体在窗口命中时，视为概念级相关信号，对排序给固定加成。适用于同义词表可覆盖的查询词；边界与局限：加成是固定值，不随命中次数或同义词距离变化；触发词表是字面枚举，未登录的同义表达不触发。
 // 标题信号加成（v0.25.0）：query 关键词在文档标题（传入的 title，如 HTML <title>）
@@ -458,24 +461,11 @@ for (const auto& qc: queryCompounds) {
     }
 }
 
-        // 数值范围答案加成：query 含范围类疑问词，且窗口含“阿拉伯数字+紧邻计量单位”或“无单位裸数值区间（A到B/A-B/A~B）”。
+        // 数值范围答案加成：query 为范围/数量索取型问句（pq.asksRange，在 raw 上判定），
+        // 且窗口含“阿拉伯数字+紧邻计量单位”/“无单位裸数值区间”或“中文数字+单位（至少 3 命中）”时给固定加成。
+        // 中文数字+单位路径：至少 3 个命中（中文数字词高频出现，需更高密度证据）。
         {
-            bool queryAsksRange = false;
-            {
-                std::string queryJoined;
-                for (const auto& kw : pq.keywords) queryJoined += kw;
-                std::transform(queryJoined.begin(), queryJoined.end(), queryJoined.begin(),
-                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                static const char* kRangeHints[] = {"范围", "多少", "多久", "多长", "多大",
-                                                    "几", "多高", "多宽", "多厚"};
-                for (const char* hint : kRangeHints) {
-                    if (queryJoined.find(hint) != std::string::npos) {
-                        queryAsksRange = true;
-                        break;
-                    }
-                }
-            }
-            if (queryAsksRange) {
+            if (pq.asksRange) {
                 static const std::string kUnits[] = {"毫米", "厘米", "mm", "cm", "米", "寸",
                                                      "英寸", "克", "kg", "分钟", "小时", "秒"};
                 int hitCount = 0;
@@ -528,8 +518,49 @@ for (const auto& qc: queryCompounds) {
                     }
                     i = j + 1;
                 }
+
+                // 中文数字+单位扫描：数字短语为连续的中文数字字符（如"四十二""零点五""两三个"），
+                // 其后紧邻计量单位即计一次命中；同一短语只计一次。
+                int chineseHitCount = 0;
+                static const char* kChineseNumerals[] = {
+                    "零", "一", "二", "三", "四", "五", "六", "七", "八", "九",
+                    "十", "百", "千", "万", "亿", "两", "点"
+                };
+                std::size_t i = 0;
+                while (i < windowLower.size()) {
+                    bool isChineseNum = false;
+                    for (auto* cn : kChineseNumerals) {
+                        if (windowLower.compare(i, std::strlen(cn), cn) == 0) {
+                            isChineseNum = true;
+                            std::size_t j = i + std::strlen(cn);
+                            while (j < windowLower.size()) {
+                                bool any = false;
+                                for (auto* cn2 : kChineseNumerals) {
+                                    if (windowLower.compare(j, std::strlen(cn2), cn2) == 0) {
+                                        any = true;
+                                        j += std::strlen(cn2);
+                                        break;
+                                    }
+                                }
+                                if (!any) break;
+                            }
+                            for (const auto& u : kUnits) {
+                                if (windowLower.compare(j, u.size(), u) == 0) {
+                                    ++chineseHitCount;
+                                    break;
+                                }
+                            }
+                            i = j;
+                            break;
+                        }
+                    }
+                    if (!isChineseNum) {
+                        ++i;
+                    }
+                }
+
                 // 范围答案常给上下界，要求至少 2 个命中，排除“1毫米”这类单点提及
-                if (hitCount >= 2) score += kRangeAnswerBonus;
+                if (hitCount >= 2 || chineseHitCount >= 3) score += kRangeAnswerBonus;
             }
         }
         // 同义词命中加成：文档用变体词回应 query 概念是强相关信号。
