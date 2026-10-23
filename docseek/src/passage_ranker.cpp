@@ -31,6 +31,16 @@ constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：query 词�
 // 不乘 idf：idf 已在段落级 coverage/hitsTerm 的 weights 中体现；标题先验只打断
 // 平局、不压倒段落证据（v0.25.0 初版用 weightOf 致加成可达 1.4+，评测 -29，已修正）。
 constexpr double kTitleTermBonus = 0.1;
+// 稀有词命中加成（v0.26.0）：idf>=6.2 约对应 960 文档中 df<=4 的关键词；
+// 阈值取 6.2 而非 6.0：df=5 的词（如"青旅"idf=6.08）在主题聚类语料里常为主题词
+// 而非查询区分词——v09-t048-q09 实测其加成把厨房礼仪段落推过了直接答案（去走廊），
+// 故收紧到 df<=4；"继承"(df=3,idf=6.48) 等真超稀有词不受影响。
+// 触发条件为 kwHit 的字面认领 span，不含同义词变体；量级与 0.08 加成家族同量级，
+// 单个超稀有词 +0.05 后得分即可超过两个常见词；对同一窗口累计加成封顶，防止长查询
+// 中多个稀有词叠加后失控。
+constexpr double kRareTermIdfThreshold = 6.2;
+constexpr double kRareTermBonus = 0.05;
+constexpr double kRareTermBonusCap = 0.15;
 
 // 取 content 首个非空行的 markdown 标题文本：剥离行首全部 '#' 与空白后返回；
 // 首个非空行不是标题行（行首非 '#'）时返回空串。用于 .md 文档补充标题信号
@@ -375,10 +385,16 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                 kwFirstClaimedPos[s.ki] = s.start;
             }
         }
+        double rareTermBonus = 0.0;
         for (size_t ki = 0; ki < pq.keywords.size(); ++ki) {
             if (kwHit[ki]) {
                 uniqueHitWeight += weights.weightOf(kwLower[ki]);
                 matched.emplace_back(kwFirstClaimedPos[ki], pq.keywords[ki]);
+                auto itw = weights.weights.find(kwLower[ki]);
+                if (itw != weights.weights.end()) {
+                    double idf = itw->second / termLengthWeight(pq.keywords[ki]);
+                    if (idf >= kRareTermIdfThreshold) rareTermBonus += kRareTermBonus;
+                }
             } else if (kwSynonymHit[ki]) {
                 uniqueHitWeight += weights.weightOf(kwLower[ki]);
                 matched.emplace_back(kwSynonymPos[ki], pq.keywords[ki]);
@@ -405,6 +421,8 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         double score =
             0.5 * coverage + 0.3 * hitsTerm + 0.15 * phraseTerm + 0.05 * posTerm;
         score += titleBonus;  // v0.25.0 标题信号：文档级先验，全部窗口同享
+        if (rareTermBonus > kRareTermBonusCap) rareTermBonus = kRareTermBonusCap;
+        score += rareTermBonus;  // v0.26.0 稀有词命中加成
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
 
