@@ -12,11 +12,12 @@ import (
 )
 
 type batchItemResp struct {
-	Index int    `json:"index"`
-	OK    bool   `json:"ok"`
-	ID    int64  `json:"id,omitempty"`
-	Slug  string `json:"slug,omitempty"`
-	Error string `json:"error,omitempty"`
+	Index    int    `json:"index"`
+	OK       bool   `json:"ok"`
+	ID       int64  `json:"id,omitempty"`
+	Slug     string `json:"slug,omitempty"`
+	ShortURL string `json:"short_url,omitempty"`
+	Error    string `json:"error,omitempty"`
 }
 
 type batchResp struct {
@@ -41,6 +42,7 @@ func handleBatchCreateLink(w http.ResponseWriter, r *http.Request, st *store.Sto
 		return
 	}
 
+	base := shortBaseURL(r, cfg)
 	items := make([]batchItemResp, 0, len(reqs))
 	okCount := 0
 	seenSlugs := make(map[string]bool)
@@ -127,9 +129,16 @@ func handleBatchCreateLink(w http.ResponseWriter, r *http.Request, st *store.Sto
 			continue
 		}
 
+		created, gerr := st.GetLink(id)
+		if gerr != nil {
+			item.Error = gerr.Error()
+			items = append(items, item)
+			continue
+		}
 		item.OK = true
 		item.ID = id
-		item.Slug = req.Slug
+		item.Slug = created.Slug
+		item.ShortURL = base + "/" + created.Slug
 		okCount++
 		items = append(items, item)
 	}

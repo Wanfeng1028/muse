@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.13.0] - 2026-10-24
+
+### 新增
+- 批量建链 Web UI（`/ui/bulk.html`）：textarea 每行一条 URL（URL 后空一格可加自定义短码），调用 `POST /api/links/batch`，逐项展示短链/状态/错误，支持一键复制全部成功短链；207 部分成功按项如实展示。
+- 公开 API 文档页补 `POST /api/links/batch` 端点说明（上限 100 条、201/207/400 语义、暂不支持密码）。
+
+### 修复
+- 批量 API 成功项新增 `short_url`（服务端用 `shortBaseURL` 拼好，与单条创建接口一致）；修复此前成功项返回请求原文 slug、自动生成短码时返回空字符串的 bug（改为 `GetLink` 取真实值），前端不再依赖 `location.origin` 拼地址。
+
+### 说明
+- 批量 API 本体（wave5，2026-10-21）与深测此前已合入，本轮补齐迟到的文档与 Web UI。
+
 ## [v1.12.1] - 2026-10-22
 
 ### 测试

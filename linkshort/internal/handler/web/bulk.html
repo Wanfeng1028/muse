@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>批量建链 · 短链</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<div id="key-banner" class="key-banner" hidden>
+  还没有设置访问密钥。请到终端查看服务启动日志里的 Admin Key，然后点这里输入。
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path>
+        <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path>
+      </svg>
+      <span>短链</span>
+    </div>
+    <nav>
+      <a href="index.html" data-nav="dashboard">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        仪表盘
+      </a>
+      <a href="links.html" data-nav="links">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+        链接管理
+      </a>
+      <a href="new.html" data-nav="new">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+        新建短链
+      </a>
+      <a href="bulk.html" data-nav="bulk">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        批量建链
+      </a>
+      <a href="geo.html" data-nav="geo">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3c2.5 2.5 3.5 6 3.5 9s-1 6.5-3.5 9"></path><path d="M12 3c-2.5 2.5-3.5 6-3.5 9s1 6.5 3.5 9"></path></svg>
+        地域分布
+      </a>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="link-btn" id="change-key">更换密钥</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">批量建链</div>
+      <div class="topbar-meta">一次粘贴，多条生成</div>
+    </header>
+
+    <section class="panel">
+      <form id="bulk-form" class="form">
+        <div class="field">
+          <label for="bulk-input">批量输入 <span class="req">*</span></label>
+          <textarea id="bulk-input" rows="8" class="input mono" placeholder="https://example.com/活动页&#10;https://example.com/手册 自定义短码"></textarea>
+          <div class="hint">每行一条；URL 后面空一格可加自定义短码；最多 100 行</div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="bulk-submit">批量生成短链</button>
+          <span class="form-err" id="bulk-err"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" id="bulk-result" hidden>
+      <div class="panel-head"><h2>生成结果</h2></div>
+      <p id="bulk-summary"></p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>目标 URL</th>
+            <th>短链</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="bulk-rows"></tbody>
+      </table>
+      <div class="form-actions">
+        <button type="button" class="btn" id="copy-all">复制全部短链</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/bulk.js"></script>
+</body>
+</html>
