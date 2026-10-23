@@ -31,7 +31,7 @@ VideoLens 是「视频反推提示词」工具：粘贴抖音/TikTok/小红书�
 ## rea 静态分析结果（如实）
 
 - 对象：落地页公开分发的 Next.js chunks（11 个文件，约 1MB，2026-10-23 下载自 videolens.cc）。
-- 全目录分析：分析器对大型共享 chunk 逐个 180 秒超时，零文件保留（与此前混淆/压缩 bundle 的经验一致）。
+- 全目录分析：后台完整运行约 309 秒跑完，11 个 chunk 全部解析、语义图构建并封存（evidence id `ev_f24b9a3a0a46eb3399b86d0bb5e2289124fe056ee819749c3cc1b1d9a846ba7f`）。此前前台逐个尝试时曾在 180 秒超时零保留，本条以完整跑完的结果为准（2026-10-23 更正）。
 - 单文件分析（仅落地页 page chunk）：**成功建图**（graph id 前缀 jag_5f28dd62，输出约 1.1MB）。但落地页是纯营销页：图中无 API 端点、无业务调用——真正的应用在登录后，公开产物里拿不到其拆解管线实现。
 - 从公开产物可确认的功能级事实（字符串层）：站点路由含 /image-to-prompt、/showcase、/pricing、/mcp、/blog、/faq、/changelog；API 域名为 api.videolens.cc，媒体资产走 r2.videolens.cc（Cloudflare R2）。仅作功能理解，未据此克隆其服务接口。
 
