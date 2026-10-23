@@ -93,5 +93,25 @@ TEST(StructuralPrecision, R1StartsWithBeatsContains) {
     EXPECT_DOUBLE_EQ(r1StartsWithBonusForToken({"无关标题含肩膀疼字样", "肩膀疼"}, "肩膀疼"), 1.5);
 }
 
+TEST(StructuralPrecision, R1SingleCharStrongDemoted) {
+    // 回归用例：查询「篆书山字怎么写」的单字 token「写」，标题「写什么」以它开头但只能给包含档
+    EXPECT_DOUBLE_EQ(r1StartsWithBonusForToken({"写什么"}, "写"), 0.25);
+}
+TEST(StructuralPrecision, R1SingleCharLongHeadingZero) {
+    // 单字 token + 超长标题：中间档也被禁，但包含则给 0.25
+    EXPECT_DOUBLE_EQ(r1StartsWithBonusForToken({"写博客的五个技巧"}, "写"), 0.25);
+}
+TEST(StructuralPrecision, R1SingleCharNoMatch) {
+    EXPECT_DOUBLE_EQ(r1StartsWithBonusForToken({"饮食指南"}, "写"), 0.0);
+}
+TEST(StructuralPrecision, R1TwoCharStillStrong) {
+    // 双字 token 不受影响：标题「篆书入门」（4 码点 <= 2+2）仍给 1.5
+    EXPECT_DOUBLE_EQ(r1StartsWithBonusForToken({"篆书入门"}, "篆书"), 1.5);
+}
+TEST(StructuralPrecision, R1TwoCharMidTier) {
+    // 双字 token 中间档不受影响
+    EXPECT_DOUBLE_EQ(r1StartsWithBonusForToken({"训练频率和注意"}, "训练频率"), 0.75);
+}
+
 }  // namespace
 }  // namespace docseek

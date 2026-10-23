@@ -195,17 +195,22 @@ double r1StartsWithBonusForToken(const std::vector<std::string>& headings,
     const auto tokenLen = token.size();
     const auto tokenCodepoints = countCodepoints(token);
 
+    // 单字 token 主题区分度极低（如查询'篆书山字怎么写'中的'写'），不给顶格加成
+    const bool tokenIsSingleChar = (tokenCodepoints < 2);
+
     bool hasPrefixLonger = false;
     bool hasSubstring = false;
 
     for (const auto& h : headings) {
         // b) 强对应：标题以 token 开头，且标题码点数不超出查询词 2 个码点。
         if (h.size() >= tokenLen && h.compare(0, tokenLen, token) == 0) {
-            if (countCodepoints(h) <= tokenCodepoints + 2) {
+            if (!tokenIsSingleChar && countCodepoints(h) <= tokenCodepoints + 2) {
                 return 1.5;
             }
             // b1) 中间档：标题以 token 开头，但标题码点数超出查询词 2 个码点。
-            hasPrefixLonger = true;
+            if (!tokenIsSingleChar) {
+                hasPrefixLonger = true;
+            }
         }
 
         // c) 记录是否存在包含 token 的标题；即使是以 token 开头但超长，也属于包含。
