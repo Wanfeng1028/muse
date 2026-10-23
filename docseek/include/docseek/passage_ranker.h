@@ -43,6 +43,15 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                                   const std::string& content,
                                   const ParsedQuery& pq, int topK,
                                   const TermWeights& weights);
+// 标题信号版本：title 为文档标题（如 HTML <title>）；另自动取 content 首行
+// markdown '# ' 标题行作补充标题源。query 关键词在任一标题中字面命中时，
+// 按 kTitleTermBonus * 词权重给文档级加成（该文档全部窗口同享）；同一词在
+// 两处同时命中只计一次。title 为空串时退化为无标题信号。
+std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
+                                  const std::string& content,
+                                  const ParsedQuery& pq, int topK,
+                                  const TermWeights& weights,
+                                  const std::string& title);
 
 // 带原文前后文的定位结果：context 是命中词首次出现位置前后各 60 个 Unicode
 // 字符的原文窗口（UTF-8 安全，不截断多字节字符）；highlights 是 matched_terms

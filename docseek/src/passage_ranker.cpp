@@ -24,6 +24,36 @@ constexpr double kCompoundPhraseBonus = 0.25;
 // 或答案以文字数词表达的情形不触发。
 constexpr double kRangeAnswerBonus = 0.08;
 constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：query 词以同义词变体在窗口命中时，视为概念级相关信号，对排序给固定加成。适用于同义词表可覆盖的查询词；边界与局限：加成是固定值，不随命中次数或同义词距离变化；触发词表是字面枚举，未登录的同义表达不触发。
+// 标题信号加成（v0.25.0）：query 关键词在文档标题（传入的 title，如 HTML <title>）
+// 或 content 首行 markdown 标题中字面出现时，视为文档级主题信号，对该文档全部
+// 窗口给固定加成。取值依据：与 passageIntent 标题行加成（0.1）同量级；仅按词长
+// 权重 termLengthWeight 缩放（单字 0.35/双字 0.7/三字+ 1.0）——单字噪声词自然降权。
+// 不乘 idf：idf 已在段落级 coverage/hitsTerm 的 weights 中体现；标题先验只打断
+// 平局、不压倒段落证据（v0.25.0 初版用 weightOf 致加成可达 1.4+，评测 -29，已修正）。
+constexpr double kTitleTermBonus = 0.1;
+
+// 取 content 首个非空行的 markdown 标题文本：剥离行首全部 '#' 与空白后返回；
+// 首个非空行不是标题行（行首非 '#'）时返回空串。用于 .md 文档补充标题信号
+// （其 DB title 为文件名 stem、无语义）；HTML 文档标题由调用方经 title 参数传入。
+std::string firstMarkdownHeading(const std::string& content) {
+    size_t i = 0;
+    const size_t n = content.size();
+    while (i < n) {
+        size_t eol = content.find('\n', i);
+        if (eol == std::string::npos) eol = n;
+        size_t s = i;
+        while (s < eol && (content[s] == ' ' || content[s] == '\t' || content[s] == '\r')) ++s;
+        if (s < eol) {
+            size_t t = s;
+            while (t < eol && content[t] == '#') ++t;
+            if (t == s) return "";
+            while (t < eol && (content[t] == ' ' || content[t] == '\t')) ++t;
+            return content.substr(t, eol - t);
+        }
+        i = eol + 1;
+    }
+    return "";
+}
 
 // 计算 UTF-8 码点数（非法字节按 1 推进，绝不死循环）。
 int countUtf8Codepoints(const std::string& s) {
@@ -131,7 +161,8 @@ double TermWeights::weightOf(const std::string& lowerTerm) const {
 std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                                   const std::string& content,
                                   const ParsedQuery& pq, int topK,
-                                  const TermWeights& weights) {
+                                  const TermWeights& weights,
+                                  const std::string& title) {
     std::vector<Passage> result;
     if (topK <= 0) return result;
     if (content.empty()) return result;
@@ -159,6 +190,27 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
     std::vector<std::string> phLower;
     phLower.reserve(pq.phrases.size());
     for (const auto& p : pq.phrases) phLower.push_back(toLowerAscii(p));
+
+    // 标题信号（v0.25.0）：文档级主题先验，计算一次、该文档全部窗口同享。
+    // 命中判定：kwLower 在 titleLower 或 headingLower 中的字面出现；同一词在
+    // 两处同时出现只计一次。glue 词已在 query_parser 层剔除出 keywords；
+    // 仅按词长权重缩放（不用 weights：idf 已在段落级计分中体现）。
+    double titleBonus = 0.0;
+    {
+        const std::string titleLower = toLowerAscii(title);
+        const std::string headingLower = toLowerAscii(firstMarkdownHeading(content));
+        for (size_t ki = 0; ki < kwLower.size(); ++ki) {
+            const std::string& lower = kwLower[ki];
+            if (lower.empty()) continue;
+            const bool inTitle = !titleLower.empty() &&
+                                 titleLower.find(lower) != std::string::npos;
+            const bool inHeading = !headingLower.empty() &&
+                                   headingLower.find(lower) != std::string::npos;
+            if (inTitle || inHeading) {
+                titleBonus += kTitleTermBonus * termLengthWeight(pq.keywords[ki]);
+            }
+        }
+    }
 
     // 复合短语候选集（两路并集）：
     // ① 全关键词按序拼接（历史行为）：短查询的全部关键词拼接后若在窗口连续出现，
@@ -352,6 +404,7 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         double posTerm = 1.0 / (1.0 + 0.1 * static_cast<double>(windowIndex));
         double score =
             0.5 * coverage + 0.3 * hitsTerm + 0.15 * phraseTerm + 0.05 * posTerm;
+        score += titleBonus;  // v0.25.0 标题信号：文档级先验，全部窗口同享
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
 
@@ -456,7 +509,14 @@ for (const auto& qc: queryCompounds) {
 std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                                   const std::string& content,
                                   const ParsedQuery& pq, int topK) {
-    return rankPassages(doc_id, path, content, pq, topK, TermWeights{});
+    return rankPassages(doc_id, path, content, pq, topK, TermWeights{}, "");
+}
+
+std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
+                                  const std::string& content,
+                                  const ParsedQuery& pq, int topK,
+                                  const TermWeights& weights) {
+    return rankPassages(doc_id, path, content, pq, topK, weights, "");
 }
 
 }  // namespace docseek

@@ -160,7 +160,7 @@ std::vector<Passage> Locator::locate(const std::string& rawQuery,
         std::optional<std::string> content = db_.getContentById(h.doc_id);
         if (!content.has_value()) continue;
         std::vector<Passage> passages =
-            rankPassages(h.doc_id, h.path, *content, pq, 3, termWeights);
+            rankPassages(h.doc_id, h.path, *content, pq, 3, termWeights, h.title);
         if (hasPdfExt(h.path)) {
             // rankPassages 返回的是滑动窗口，line_start 是窗口起点；
             // 页码按窗口内首个命中词在全文中的实际偏移定位；
