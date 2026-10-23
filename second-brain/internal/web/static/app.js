@@ -1178,12 +1178,14 @@ function bindEvents() {
 // ---------- 复习统计 ----------
 async function loadReviewStatsView() {
   try {
-    const [trendRes, masteryRes] = await Promise.all([
+    const [trendRes, masteryRes, heatmapRes] = await Promise.all([
       api("/api/review/trend?days=7"),
       api("/api/review/mastery"),
+      api("/api/review/heatmap?days=365").catch(() => { console.error("热力图加载失败"); return null; }),
     ]);
     drawTrend(trendRes && trendRes.trend ? trendRes.trend : []);
     renderMastery(masteryRes && masteryRes.mastery ? masteryRes.mastery : []);
+    renderHeatmap(heatmapRes && heatmapRes.heatmap ? heatmapRes.heatmap : null);
   } catch (e) {
     console.error("复习统计加载失败", e);
   }
@@ -1313,3 +1315,54 @@ if (document.readyState === "loading") {
   graph-canvas
   stat-notes, stat-tags, stat-links, stat-words
 */
+function renderHeatmap(data) {
+  const container = document.getElementById("heatmap");
+  const legend = document.querySelector(".heatmap-legend");
+  const emptyEl = document.getElementById("heatmap-empty");
+
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  if (!Array.isArray(data)) data = [];
+
+  const hasActivity = data.some(d => d.reviewed > 0 || d.added > 0);
+  if (!hasActivity) {
+    container.style.display = "none";
+    legend.style.display = "none";
+    emptyEl.hidden = false;
+    return;
+  }
+  container.style.display = "";
+  legend.style.display = "";
+  emptyEl.hidden = true;
+
+  const getColor = (reviewed) => {
+    if (reviewed === 0) return "#eef1f4";
+    if (reviewed <= 2) return "#bcd6f5";
+    if (reviewed <= 5) return "#7aa9ec";
+    if (reviewed <= 9) return "#2b7de9";
+    return "#1558b0";
+  };
+
+  if (data.length > 0) {
+    const firstDate = new Date(data[0].date + "T00:00:00Z");
+    const offset = (firstDate.getUTCDay() + 6) % 7;
+    for (let i = 0; i < offset; i++) {
+      const ph = document.createElement("span");
+      ph.className = "heatmap-placeholder";
+      container.appendChild(ph);
+    }
+  }
+
+  for (const d of data) {
+    const rv = d.reviewed || 0, ad = d.added || 0;
+    const cell = document.createElement("span");
+    cell.className = "heatmap-cell";
+    cell.style.background = getColor(rv);
+    let tip = d.date + "：复习 " + rv + " 篇";
+    if (ad > 0) {
+      tip += "，新增 " + ad + " 篇";
+    }
+    cell.title = tip;
+    container.appendChild(cell);
+  }
+}

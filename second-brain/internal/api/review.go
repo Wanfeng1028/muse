@@ -189,6 +189,30 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 		})
 	})
 
+	// 复习热力图（年度贡献图数据源，默认 365 天、上限 366 天）
+	mux.HandleFunc("GET /api/review/heatmap", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		days := parseIntDefault(r.URL.Query().Get("days"), 365)
+		if days <= 0 {
+			days = 365
+		}
+		if days > 366 {
+			days = 366
+		}
+		heatmap, err := st.ReviewHeatmap(time.Now(), CurrentUser(r), days)
+		if err != nil {
+			writeError(w, r, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"days":    days,
+			"heatmap": heatmap,
+		})
+	})
+
 	// 各科掌握度（按标签聚合）
 	mux.HandleFunc("GET /api/review/mastery", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

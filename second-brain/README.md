@@ -305,6 +305,7 @@ SM-2 四档说明：
 | `POST /api/review/{id}` | 提交某条笔记的复习评价，body 形如 `{"grade":4}`（按 `X-User`/`?user=` 隔离） | `{ef,intervalDays,repetitions,dueDate,reviewedCount}`；grade 非法 → 400；笔记不存在 → 404 |
 | `GET /api/review/stats` | 复习统计（按 `X-User`/`?user=` 隔离） | `{dueToday,totalNotes,reviewed7d,avgEf,streakDays}` |
 | `GET /api/review/digest?n=5` | 每日回顾：到期优先，不足时用最久未复习的补足（按 `X-User`/`?user=` 隔离） | `{notes:[{id,title,snippet,tags,dueDate}]}` |
+| `GET /api/review/heatmap?days=365` | 年度热力图数据：最近 N 天每日复习/新增数（默认 365，上限 366；按 `X-User`/`?user=` 隔离） | `{days,heatmap:[{date,reviewed,added}]}`，日期升序 |
 
 `grade` 取值：0 = 忘记，3 = 困难，4 = 良好，5 = 简单。
 
@@ -349,6 +350,10 @@ SM-2 四档说明：
 复习统计页（v0.15）：
 
 ![复习统计](docs/screenshots/review-stats.png)
+
+年度热力图（v0.16，统计页新增区）：
+
+![年度热力图](docs/screenshots/review-heatmap.png)
 
 知识图谱（v0.15 力导向布局）：
 
