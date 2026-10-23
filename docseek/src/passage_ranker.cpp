@@ -248,13 +248,39 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         std::vector<std::pair<size_t, std::string>> matched;  // (pos, term)
 
         bool synonymFired = false;
+        // 重叠感知计分（v0.24.0）：jieba CutForSearch 会把复合词展开成重叠关键词
+        // （如"过敏反应"→"过敏"+"反应"+"过敏反应"）。旧逻辑对同一文本 span
+        // 重复计分，导致错误文档靠三重计分反超（v09-t173-q11 实测：错误文档
+        // uniqueHitWeight 14.28 > 期望文档 14.24）。
+        // 新逻辑：枚举每个关键词的全部字面命中 span，按 span 长度降序贪心认领
+        // 字节区间——重叠区间只归最长者；关键词有 >=1 个被认领 span 即计入
+        // uniqueHitWeight，被认领 span 个数计入 totalHitsWeighted。
+        // 同义词回退语义与旧逻辑一致：字面零命中才试同义词，只补
+        // uniqueHitWeight、不计 totalHitsWeighted，matched_terms 记原 query 词。
+        struct KwSpan {
+            size_t start;
+            size_t end;  // 不含
+            size_t ki;
+        };
+        std::vector<KwSpan> kwSpans;
+        kwSpans.reserve(pq.keywords.size() * 4);
+        std::vector<size_t> kwFirstClaimedPos(pq.keywords.size(), std::string::npos);
+        std::vector<char> kwSynonymHit(pq.keywords.size(), 0);
+        std::vector<size_t> kwSynonymPos(pq.keywords.size(), std::string::npos);
         for (size_t ki = 0; ki < pq.keywords.size(); ++ki) {
             const std::string& lower = kwLower[ki];
-            size_t pos = findFirst(windowLower, lower);
-            // 同义词回退：query 词字面未命中时，试其同义词展开（如"琴弦"→"弦"）。
-            // 只补计数，不改变分母；matched_terms 仍记原 query 词。
-            // 命中同义词时置 synonymFired，用于后续轻量加成（变体词回应概念是强相关信号）。
-            if (pos == std::string::npos) {
+            const size_t spansBefore = kwSpans.size();
+            if (!lower.empty()) {
+                size_t from = 0;
+                while (from < windowLower.size()) {
+                    const size_t found = windowLower.find(lower, from);
+                    if (found == std::string::npos) break;
+                    kwSpans.push_back(KwSpan{found, found + lower.size(), ki});
+                    from = found + lower.size();
+                }
+            }
+            if (kwSpans.size() == spansBefore) {
+                size_t pos = std::string::npos;
                 if (const SynonymEntry* e = findSynonyms(pq.keywords[ki].c_str())) {
                     for (int k = 0; k < e->expansionCount && pos == std::string::npos; ++k) {
                         pos = findFirst(windowLower, toLowerAscii(e->expansions[k]));
@@ -263,12 +289,47 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                         }
                     }
                 }
+                if (pos != std::string::npos) {
+                    kwSynonymHit[ki] = 1;
+                    kwSynonymPos[ki] = pos;
+                }
             }
-            if (pos != std::string::npos) {
-                uniqueHitWeight += weights.weightOf(lower);
-                int cnt = countOccurrences(windowLower, lower);
-                totalHitsWeighted += cnt * weights.weightOf(lower);
-                matched.emplace_back(pos, pq.keywords[ki]);
+        }
+        std::sort(kwSpans.begin(), kwSpans.end(),
+                  [](const KwSpan& a, const KwSpan& b) {
+                      const size_t lena = a.end - a.start;
+                      const size_t lenb = b.end - b.start;
+                      if (lena != lenb) return lena > lenb;
+                      return a.ki < b.ki;
+                  });
+        std::vector<char> kwHit(pq.keywords.size(), 0);
+        std::vector<std::pair<size_t, size_t>> claimed;
+        claimed.reserve(kwSpans.size());
+        for (size_t si = 0; si < kwSpans.size(); ++si) {
+            const KwSpan& s = kwSpans[si];
+            bool overlap = false;
+            for (size_t ci = 0; ci < claimed.size(); ++ci) {
+                if (s.start < claimed[ci].second && claimed[ci].first < s.end) {
+                    overlap = true;
+                    break;
+                }
+            }
+            if (overlap) continue;
+            claimed.emplace_back(s.start, s.end);
+            kwHit[s.ki] = 1;
+            totalHitsWeighted += weights.weightOf(kwLower[s.ki]);
+            if (kwFirstClaimedPos[s.ki] == std::string::npos ||
+                s.start < kwFirstClaimedPos[s.ki]) {
+                kwFirstClaimedPos[s.ki] = s.start;
+            }
+        }
+        for (size_t ki = 0; ki < pq.keywords.size(); ++ki) {
+            if (kwHit[ki]) {
+                uniqueHitWeight += weights.weightOf(kwLower[ki]);
+                matched.emplace_back(kwFirstClaimedPos[ki], pq.keywords[ki]);
+            } else if (kwSynonymHit[ki]) {
+                uniqueHitWeight += weights.weightOf(kwLower[ki]);
+                matched.emplace_back(kwSynonymPos[ki], pq.keywords[ki]);
             }
         }
         for (size_t pi = 0; pi < pq.phrases.size(); ++pi) {
