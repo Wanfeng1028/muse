@@ -345,14 +345,21 @@ func (s *Store) OpenIncident(monitorID int64, startedAt, startError string) (int
 	return id, false, nil
 }
 
-// CloseOpenIncident 关闭某 monitor 的未关闭 incident（ended_at IS NULL）。
-func (s *Store) CloseOpenIncident(monitorID int64, endedAt string, downtimeSec int64) error {
-	_, err := s.db.Exec(
+// CloseOpenIncident 关闭某 monitor 的未关闭 incident（ended_at IS NULL），返回 closed 表示是否实际关闭了一个未关闭 incident。
+func (s *Store) CloseOpenIncident(monitorID int64, endedAt string, downtimeSec int64) (bool, error) {
+	res, err := s.db.Exec(
 		`UPDATE incidents SET ended_at = ?, downtime_sec = ?
 		 WHERE monitor_id = ? AND ended_at IS NULL`,
 		endedAt, downtimeSec, monitorID,
 	)
-	return err
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
 }
 
 // ListIncidents 按 started_at 降序返回 incident 列表。

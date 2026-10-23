@@ -2,6 +2,11 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.10.1] - 2026-10-23
+
+### 修复
+- 并发恢复通知去重：`CloseOpenIncident` 改为返回 `(closed bool, err)`，调度器仅在真正关闭了一个未关闭 incident 时才发送 `recovered` 通知。修复手动检查与调度 tick 并发恢复时重复发送恢复通知的竞态（v0.8 已知限制）。`go test -race` 下 20 并发恢复仅 1 次通知；`go test ./...` 全绿。
+
 ## [0.10.0] - 2026-10-22
 
 ### 新增

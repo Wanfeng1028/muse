@@ -26,7 +26,7 @@ func TestR2_SLAAttributionPctRounding(t *testing.T) {
 	if !opened {
 		t.Fatalf("OpenIncident first: expected opened true")
 	}
-	if err := st.CloseOpenIncident(mid, "2026-04-03T10:01:00Z", 60); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-04-03T10:01:00Z", 60); err != nil {
 		t.Fatalf("CloseOpenIncident first: %v", err)
 	}
 
@@ -37,7 +37,7 @@ func TestR2_SLAAttributionPctRounding(t *testing.T) {
 	if !opened {
 		t.Fatalf("OpenIncident second: expected opened true")
 	}
-	if err := st.CloseOpenIncident(mid, "2026-04-04T10:01:00Z", 60); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-04-04T10:01:00Z", 60); err != nil {
 		t.Fatalf("CloseOpenIncident second: %v", err)
 	}
 
@@ -48,7 +48,7 @@ func TestR2_SLAAttributionPctRounding(t *testing.T) {
 	if !opened {
 		t.Fatalf("OpenIncident third: expected opened true")
 	}
-	if err := st.CloseOpenIncident(mid, "2026-04-05T10:01:00Z", 60); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-04-05T10:01:00Z", 60); err != nil {
 		t.Fatalf("CloseOpenIncident third: %v", err)
 	}
 

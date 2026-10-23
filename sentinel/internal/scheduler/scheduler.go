@@ -220,10 +220,12 @@ func (s *Scheduler) record(m store.Monitor, c store.Check, prevOk, hasPrev bool)
 				}
 			}
 		}
-		if err := s.store.CloseOpenIncident(m.ID, at, secs); err != nil {
+		closed, err := s.store.CloseOpenIncident(m.ID, at, secs)
+		if err != nil {
 			log.Logger().Error("关闭事件失败", "monitorID", m.ID, "err", err)
+		} else if closed {
+			s.notifyUnlessSilenced(m, "recovered", m.Name, m.Target, at, "")
 		}
-		s.notifyUnlessSilenced(m, "recovered", m.Name, m.Target, at, "")
 	}
 }
 

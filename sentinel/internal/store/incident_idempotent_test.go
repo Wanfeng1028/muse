@@ -127,7 +127,7 @@ func TestOpenIncident_ReopenAfterClose(t *testing.T) {
 	}
 
 	t2 := time.Now().UTC().Add(time.Second).Format(time.RFC3339Nano)
-	if err := st.CloseOpenIncident(mid, t2, 60); err != nil {
+	if _, err := st.CloseOpenIncident(mid, t2, 60); err != nil {
 		t.Fatalf("CloseOpenIncident failed: %v", err)
 	}
 
@@ -218,7 +218,7 @@ func TestCloseOpenIncident_ClosesSingleOpen(t *testing.T) {
 	}
 
 	t2 := time.Now().UTC().Add(time.Second).Format(time.RFC3339Nano)
-	if err := st.CloseOpenIncident(mid, t2, 60); err != nil {
+	if _, err := st.CloseOpenIncident(mid, t2, 60); err != nil {
 		t.Fatalf("CloseOpenIncident failed: %v", err)
 	}
 

@@ -96,7 +96,7 @@ func TestR2_SLAClipDoesNotAffectMTTR(t *testing.T) {
 	if _, _, err := st.OpenIncident(mid, "2026-06-05T00:00:00Z", "boom"); err != nil {
 		t.Fatalf("OpenIncident failed: %v", err)
 	}
-	if err := st.CloseOpenIncident(mid, "2026-06-05T00:10:00Z", 600); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-06-05T00:10:00Z", 600); err != nil {
 		t.Fatalf("CloseOpenIncident failed: %v", err)
 	}
 	if _, _, err := st.OpenIncident(mid, "2026-06-10T00:00:00Z", "boom2"); err != nil {

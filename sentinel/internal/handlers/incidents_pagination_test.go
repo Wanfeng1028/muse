@@ -21,7 +21,7 @@ func seedIncidents(t *testing.T, st *store.Store, n int) int64 {
 		if _, _, err := st.OpenIncident(mid, start, "err"); err != nil {
 			t.Fatalf("open incident %d: %v", i, err)
 		}
-		if err := st.CloseOpenIncident(mid, end, 60); err != nil {
+		if _, err := st.CloseOpenIncident(mid, end, 60); err != nil {
 			t.Fatalf("close incident %d: %v", i, err)
 		}
 	}
@@ -151,7 +151,7 @@ func TestHandleListIncidents_MonitorFilter(t *testing.T) {
 		if _, _, err := st.OpenIncident(midA, start, "err"); err != nil {
 			t.Fatalf("open a %d: %v", i, err)
 		}
-		if err := st.CloseOpenIncident(midA, end, 60); err != nil {
+		if _, err := st.CloseOpenIncident(midA, end, 60); err != nil {
 			t.Fatalf("close a %d: %v", i, err)
 		}
 	}
@@ -161,7 +161,7 @@ func TestHandleListIncidents_MonitorFilter(t *testing.T) {
 		if _, _, err := st.OpenIncident(midB, start, "err"); err != nil {
 			t.Fatalf("open b %d: %v", i, err)
 		}
-		if err := st.CloseOpenIncident(midB, end, 60); err != nil {
+		if _, err := st.CloseOpenIncident(midB, end, 60); err != nil {
 			t.Fatalf("close b %d: %v", i, err)
 		}
 	}

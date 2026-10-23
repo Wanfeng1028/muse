@@ -38,7 +38,7 @@ func TestCountIncidents(t *testing.T) {
 		if _, _, err := st.OpenIncident(mid1, start, "err"); err != nil {
 			t.Fatalf("open incident1 %d: %v", i, err)
 		}
-		if err := st.CloseOpenIncident(mid1, end, 60); err != nil {
+		if _, err := st.CloseOpenIncident(mid1, end, 60); err != nil {
 			t.Fatalf("close incident1 %d: %v", i, err)
 		}
 	}
@@ -48,7 +48,7 @@ func TestCountIncidents(t *testing.T) {
 		if _, _, err := st.OpenIncident(mid2, start, "err"); err != nil {
 			t.Fatalf("open incident2 %d: %v", i, err)
 		}
-		if err := st.CloseOpenIncident(mid2, end, 60); err != nil {
+		if _, err := st.CloseOpenIncident(mid2, end, 60); err != nil {
 			t.Fatalf("close incident2 %d: %v", i, err)
 		}
 	}

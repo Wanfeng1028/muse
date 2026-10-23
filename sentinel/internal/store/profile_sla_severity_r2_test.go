@@ -34,7 +34,7 @@ func TestR2_SLASeverityBoundary(t *testing.T) {
 		if _, opened, err := st.OpenIncident(mid, c.startedAt, "x"); err != nil || !opened {
 			t.Fatalf("OpenIncident %d: err=%v opened=%v", i, err, opened)
 		}
-		if err := st.CloseOpenIncident(mid, c.endedAt, c.downtime); err != nil {
+		if _, err := st.CloseOpenIncident(mid, c.endedAt, c.downtime); err != nil {
 			t.Fatalf("CloseOpenIncident %d: %v", i, err)
 		}
 	}

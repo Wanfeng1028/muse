@@ -26,7 +26,7 @@ func TestR2_OpenIncidentReopenAfterClose(t *testing.T) {
 		t.Fatalf("expected first OpenIncident to create a new incident")
 	}
 
-	if err := st.CloseOpenIncident(mid, "2026-01-01T01:00:00Z", 3600); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-01-01T01:00:00Z", 3600); err != nil {
 		t.Fatalf("CloseOpenIncident returned error: %v", err)
 	}
 

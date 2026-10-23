@@ -29,7 +29,7 @@ func TestListOpenIncidentsAndClose(t *testing.T) {
 		t.Fatalf("incident %d not found in open list", incID)
 	}
 
-	if err := st.CloseOpenIncident(mid, "2026-10-16T01:00:00Z", 3600); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-10-16T01:00:00Z", 3600); err != nil {
 		t.Fatalf("close incident: %v", err)
 	}
 

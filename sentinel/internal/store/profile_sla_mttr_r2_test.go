@@ -24,14 +24,14 @@ func TestR2_SLAMTTR(t *testing.T) {
 	if _, _, err := st.OpenIncident(mid, "2026-05-01T10:00:00Z", "x"); err != nil {
 		t.Fatalf("OpenIncident first: %v", err)
 	}
-	if err := st.CloseOpenIncident(mid, "2026-05-01T10:01:00Z", 60); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-05-01T10:01:00Z", 60); err != nil {
 		t.Fatalf("CloseOpenIncident first: %v", err)
 	}
 
 	if _, _, err := st.OpenIncident(mid, "2026-05-02T10:00:00Z", "x"); err != nil {
 		t.Fatalf("OpenIncident second: %v", err)
 	}
-	if err := st.CloseOpenIncident(mid, "2026-05-02T10:03:00Z", 180); err != nil {
+	if _, err := st.CloseOpenIncident(mid, "2026-05-02T10:03:00Z", 180); err != nil {
 		t.Fatalf("CloseOpenIncident second: %v", err)
 	}
 

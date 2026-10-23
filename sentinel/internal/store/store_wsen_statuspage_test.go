@@ -369,7 +369,7 @@ func TestWsen_IncidentTimeline(t *testing.T) {
 			t.Fatalf("OpenIncident %d: expected created=true", i)
 		}
 		endedAt := st.Add(5 * time.Minute).Format(time.RFC3339)
-		if err := s.CloseOpenIncident(monID, endedAt, int64(300)); err != nil {
+		if _, err := s.CloseOpenIncident(monID, endedAt, int64(300)); err != nil {
 			t.Fatalf("CloseOpenIncident %d: %v", i, err)
 		}
 		_ = id
@@ -464,7 +464,7 @@ func TestWsen_IncidentTimeline(t *testing.T) {
 
 	// days filter: create an incident 40 days ago.
 	// 先关闭之前打开的未关闭事件，否则 OpenIncident 幂等返回 created=false
-	if err := s.CloseOpenIncident(monID, now.Format(time.RFC3339), 1800); err != nil {
+	if _, err := s.CloseOpenIncident(monID, now.Format(time.RFC3339), 1800); err != nil {
 		t.Fatalf("CloseOpenIncident before old: %v", err)
 	}
 	oldStart := now.AddDate(0, 0, -40)
@@ -475,7 +475,7 @@ func TestWsen_IncidentTimeline(t *testing.T) {
 	if !created {
 		t.Fatal("expected created=true for old incident")
 	}
-	if err := s.CloseOpenIncident(monID, oldStart.Add(time.Minute).Format(time.RFC3339), 60); err != nil {
+	if _, err := s.CloseOpenIncident(monID, oldStart.Add(time.Minute).Format(time.RFC3339), 60); err != nil {
 		t.Fatalf("CloseOpenIncident old: %v", err)
 	}
 
@@ -581,7 +581,7 @@ func TestWsen_OpenIncidentIdempotent(t *testing.T) {
 	}
 
 	// Close A, then open again -> new id
-	if err := s.CloseOpenIncident(idA, now.Format(time.RFC3339), 600); err != nil {
+	if _, err := s.CloseOpenIncident(idA, now.Format(time.RFC3339), 600); err != nil {
 		t.Fatalf("CloseOpenIncident A: %v", err)
 	}
 	id3, created, err := s.OpenIncident(idA, now.Add(-1*time.Minute).Format(time.RFC3339), "third")

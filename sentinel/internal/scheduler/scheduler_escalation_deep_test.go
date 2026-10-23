@@ -253,7 +253,7 @@ func TestEsc_ClosedIncidentIgnored(t *testing.T) {
 	escOpenIncident(t, st, mid, 10*time.Minute, "brief")
 
 	endedAt := time.Now().UTC().Format(time.RFC3339)
-	if err := st.CloseOpenIncident(mid, endedAt, 600); err != nil {
+	if _, err := st.CloseOpenIncident(mid, endedAt, 600); err != nil {
 		t.Fatalf("CloseOpenIncident 失败: %v", err)
 	}
 
