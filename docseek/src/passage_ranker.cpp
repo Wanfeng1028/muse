@@ -41,6 +41,13 @@ constexpr double kTitleTermBonus = 0.1;
 constexpr double kRareTermIdfThreshold = 6.2;
 constexpr double kRareTermBonus = 0.05;
 constexpr double kRareTermBonusCap = 0.15;
+// 复现结构对齐加成（v0.27.0）：当查询本身具有"过去状态→近期复现"结构
+// （pq.hasRecurrence，由 query_parser 的 detectRecurrence 设置）且当前窗口同时含
+// 过去状态标记与复现标记时，视为窗口在复现叙事结构上与查询对齐，给固定加成。
+// 适用：复现型问句（"本来已经X，最近又Y"）的段落排序；
+// 边界与局限：加成是固定值，只看标记共现、不看语义角色；触发词表是字面枚举的闭集
+// （与 src/query_parser.cpp 的 detectRecurrence 保持一致），未登录的复现表达不触发。
+constexpr double kRecurrenceAlignBonus = 0.08;
 
 // 取 content 首个非空行的 markdown 标题文本：剥离行首全部 '#' 与空白后返回；
 // 首个非空行不是标题行（行首非 '#'）时返回空串。用于 .md 文档补充标题信号
@@ -423,6 +430,22 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
         score += titleBonus;  // v0.25.0 标题信号：文档级先验，全部窗口同享
         if (rareTermBonus > kRareTermBonusCap) rareTermBonus = kRareTermBonusCap;
         score += rareTermBonus;  // v0.26.0 稀有词命中加成
+
+        // v0.27.0 复现结构对齐：查询有复现结构、且窗口同时含两类标记时加成一次。
+        if (pq.hasRecurrence) {
+            static const std::vector<std::string> kPast = {
+                "已经", "曾经", "本来", "原本", "以前", "过去"};
+            static const std::vector<std::string> kRecur = {
+                "又", "再次", "重新", "反复", "再度", "突然", "忽然"};
+            bool hasPast = false, hasRecur = false;
+            for (const auto& t : kPast) {
+                if (windowLower.find(t) != std::string::npos) { hasPast = true; break; }
+            }
+            for (const auto& t : kRecur) {
+                if (windowLower.find(t) != std::string::npos) { hasRecur = true; break; }
+            }
+            if (hasPast && hasRecur) score += kRecurrenceAlignBonus;
+        }
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
 

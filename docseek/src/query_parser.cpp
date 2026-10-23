@@ -279,6 +279,28 @@ bool detectPassageIntent(const std::string& raw) {
     return false;
 }
 
+// 复现结构判定：raw 同时含过去状态标记与复现标记时，视为"过去状态→近期复现"型问句
+// （如"孩子之前已经学会上厕所了，最近又频繁尿裤子是怎么回事"）。
+// 过去标记闭集：已经/曾经/本来/原本/以前/过去。不含"之前"——"在…之前"是程序性表述
+// （如"在靠近他之前应该先做什么"），不是过去状态语义。
+// 复现标记闭集：又/再次/重新/反复/再度/突然/忽然。
+// 注意：与 src/passage_ranker.cpp 窗口侧的复现标记闭集保持一致。
+bool detectRecurrence(const std::string& raw) {
+    static const std::vector<std::string> kPast = {
+        "已经", "曾经", "本来", "原本", "以前", "过去"};
+    static const std::vector<std::string> kRecur = {
+        "又", "再次", "重新", "反复", "再度", "突然", "忽然"};
+    bool hasPast = false;
+    for (const auto& t : kPast) {
+        if (raw.find(t) != std::string::npos) { hasPast = true; break; }
+    }
+    if (!hasPast) return false;
+    for (const auto& t : kRecur) {
+        if (raw.find(t) != std::string::npos) return true;
+    }
+    return false;
+}
+
 // 方位/时间单字封闭集（封闭语言学类）。
 bool isDirectionTimeChar(const std::string& s) {
     // 集合：前 后 上 下 左 右 里 外 内 中（10 个单字）。
@@ -483,6 +505,7 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     }
 
     pq.passageIntent = detectPassageIntent(raw);
+    pq.hasRecurrence = detectRecurrence(raw);
 
     // 1. 抽取引号短语。
     std::string rest;
