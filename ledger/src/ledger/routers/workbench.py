@@ -48,11 +48,12 @@ class ResolvePayload(BaseModel):
 
 
 class ResolveBatchPayload(BaseModel):
-    """批量条目处理入参。"""
+    """批量条目处理入参。dry_run 为 True 时只做前置校验、不写库。"""
 
     item_ids: list[int] = Field(default_factory=list)
     action: str
     category_id: Optional[int] = None
+    dry_run: bool = False
 
 
 async def _get_item_or_404(session: AsyncSession, item_id: int) -> StatementItem:
@@ -237,6 +238,30 @@ async def _do_ignore(
     }
 
 
+async def _dry_run_single(
+    session: AsyncSession,
+    item_id: int,
+    action: str,
+    category_id: Optional[int],
+) -> None:
+    """批量预检：执行与 _resolve_single 相同的前置校验，只读不写。
+
+    校验链：条目存在（404"条目不存在"）→ status 必须为 pending（400"仅可处理 pending 状态的条目"）→ 批次存在（404"批次不存在"）→ confirm 时分类存在且方向匹配（400"缺少 category_id"/"分类不存在"/"分类类型与收支方向不匹配"）；ignore 无额外校验；其他动作 422"批量仅支持 confirm 或 ignore"。
+    """
+    item = await _get_item_or_404(session, item_id)
+    if item.status != "pending":
+        raise HTTPException(status_code=400, detail="仅可处理 pending 状态的条目")
+    await _get_batch_or_404(session, item.batch_id)
+    if action == "confirm":
+        category = await _load_category_or_400(session, category_id)
+        if not _direction_matches_kind(item.direction, category.kind):
+            raise HTTPException(status_code=400, detail="分类类型与收支方向不匹配")
+    elif action == "ignore":
+        pass
+    else:
+        raise HTTPException(status_code=422, detail="批量仅支持 confirm 或 ignore")
+
+
 async def _resolve_single(
     session: AsyncSession,
     item_id: int,
@@ -376,7 +401,7 @@ async def resolve_batch(
     payload: ResolveBatchPayload,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
-    """批量处理条目，逐条处理并返回部分成功语义。"""
+    """批量处理条目，逐条处理并返回部分成功语义。dry_run=True 时只做前置校验、不写库。"""
     if payload.action not in {"confirm", "ignore"}:
         raise HTTPException(status_code=422, detail="批量仅支持 confirm 或 ignore")
 
@@ -387,17 +412,71 @@ async def resolve_batch(
 
     for item_id in payload.item_ids:
         try:
-            await _resolve_single(
-                session,
-                item_id,
-                payload.action,
-                payload.category_id,
-                None,
-                False,
-            )
+            if payload.dry_run:
+                await _dry_run_single(session, item_id, payload.action, payload.category_id)
+            else:
+                await _resolve_single(
+                    session,
+                    item_id,
+                    payload.action,
+                    payload.category_id,
+                    None,
+                    False,
+                )
             ok_ids.append(item_id)
         except HTTPException as exc:
-            await session.rollback()
+            if not payload.dry_run:
+                await session.rollback()
             failed.append({"id": item_id, "reason": str(exc.detail)})
 
-    return {"ok": ok_ids, "failed": failed}
+    return {"dry_run": payload.dry_run, "ok": ok_ids, "failed": failed}
+
+
+@router.post("/batches/{batch_id}/failures-export")
+async def export_batch_failures(
+    batch_id: int,
+    payload: ResolveBatchPayload,
+    session: AsyncSession = Depends(get_session),
+):
+    """批量预检并导出失败明细 CSV。只做前置校验，不写库。"""
+    import csv
+    import io
+
+    from fastapi import Response
+
+    if payload.action not in {"confirm", "ignore"}:
+        raise HTTPException(status_code=422, detail="批量仅支持 confirm 或 ignore")
+
+    await _get_batch_or_404(session, batch_id)
+
+    rows: list[dict[str, Any]] = []
+    for item_id in payload.item_ids:
+        try:
+            await _dry_run_single(session, item_id, payload.action, payload.category_id)
+        except HTTPException as exc:
+            item = await session.get(StatementItem, item_id)
+            rows.append(
+                {
+                    "id": item_id,
+                    "occurred_on": item.occurred_on if item else "",
+                    "counterparty": item.counterparty if item else "",
+                    "summary": item.summary if item else "",
+                    "amount_yuan": f"{(item.amount_cents or 0) / 100:.2f}" if item else "",
+                    "direction": item.direction if item else "",
+                    "reason": str(exc.detail),
+                }
+            )
+
+    buf = io.StringIO()
+    writer = csv.DictWriter(
+        buf,
+        fieldnames=["id", "occurred_on", "counterparty", "summary", "amount_yuan", "direction", "reason"],
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    content = "\ufeff" + buf.getvalue()
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename=workbench-failures-{batch_id}.csv"},
+    )

@@ -2,6 +2,23 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.11.1 - 2026-10-24
+
+### 新增
+
+- 新增回滚脚本 scripts/rollback_v6_to_v5.py（v6→v5）：默认 dry-run 只打印计划；--yes 真实执行（自动备份 backups/ledger-<时间戳>.pre-rollback.sqlite3）；冲突检测（report_schemes 非空、规则列偏离默认值、suggested_rule_id 非空、(keyword, direction) 重复组）命中时写.rollback_conflicts.json 并 exit 3、中止且不写入；退出码 0 成功 / 1 执行失败 / 2 前置或参数失败 / 3 发现冲突。关闭 v2.11 发版报告"迁移回滚路径：未通过"项。
+- POST /api/workbench/batches/{batch_id}/resolve-batch 新增 dry_run 入参：True 时逐条只做与真实处理相同的前置校验、不写库，返回 {"dry_run": true, "ok": [...], "failed": [...]}。关闭 v2.11 发版报告"批量对账失败明细：未通过"项的预检部分。
+- 新增 POST /api/workbench/batches/{batch_id}/failures-export：批量预检并导出失败明细 CSV（BOM + 表头 id,occurred_on,counterparty,summary,amount_yuan,direction,reason），只做校验不写库。
+
+### 测试
+
+- 新增 tests/test_rollback_v6_to_v5.py 11 例：dry-run 默认/显式、flag 互斥、非 v6 拒绝、文件缺失、4 类冲突检测、--db 优先于 LEDGER_DB、真实回滚 happy path（schema 精确回到 v5、数据保留、备份落盘）。
+- 新增 tests/test_workbench_dryrun_export.py 6 例：dry-run 不写库、失败上报、方向不匹配、非法动作 422、CSV 导出形状与金额格式、无失败时仅表头、批次 404。
+
+### 说明
+
+- v2.11 已知限制第 6-9 条标注的"（v2.11.1 关闭本项）"至此全部有名有实：正则防护（v2.11.0 已合入 matching.py）、批量预检与失败明细 CSV 导出（本轮）、preview 跳过原因（v2.11.0 已合入）、v6→v5 回滚脚本（本轮）。
+
 ## v2.11 - 2026-10-20
 
 ### 新增

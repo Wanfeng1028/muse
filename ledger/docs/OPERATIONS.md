@@ -311,17 +311,17 @@ macOS：
 
 ### 回滚脚本位置
 
-- 脚本：`scripts/rollback_migration.py`
+- 脚本：`scripts/rollback_v6_to_v5.py`
 - 依赖：项目 `.venv` 环境，需在仓库根目录执行。
 
 ### 用法
 
 ```bash
 # 默认 dry-run：只打印将执行的操作，不修改任何数据
-.venv/bin/python scripts/rollback_migration.py
+.venv/bin/python scripts/rollback_v6_to_v5.py
 
 # 实际执行回滚（会先自动备份，再落库）
-.venv/bin/python scripts/rollback_migration.py --yes
+.venv/bin/python scripts/rollback_v6_to_v5.py --yes
 ```
 
 行为说明：
