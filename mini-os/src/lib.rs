@@ -8,10 +8,13 @@ pub mod metrics;
 pub mod migrate;
 pub mod models;
 pub mod notes;
+pub mod password;
 pub mod plugins;
 pub mod ratelimit;
 pub mod rbac;
 pub mod terminal;
+pub mod totp;
+pub mod twofa;
 
 use std::sync::{Arc, Mutex};
 
@@ -168,6 +171,7 @@ fn is_public_path(path: &str) -> bool {
             | "/metrics"
             | "/api/auth/register"
             | "/api/auth/login"
+            | "/api/auth/2fa"
             | "/api/auth/logout"
             | "/api/auth/setup-needed"
             | "/api/share/list"
@@ -433,6 +437,15 @@ pub fn build_app(state: Arc<AppState>) -> Router {
                 crate::ratelimit::share_ratelimit_middleware,
             )),
         )
+        .route("/api/2fa/status", get(crate::twofa::status))
+        .route("/api/2fa/setup", post(crate::twofa::setup))
+        .route("/api/2fa/enable", post(crate::twofa::enable))
+        .route("/api/2fa/disable", post(crate::twofa::disable))
+        .route(
+            "/api/2fa/backup-codes/regenerate",
+            post(crate::twofa::regenerate_backup_codes),
+        )
+        .route("/api/auth/2fa", post(crate::twofa::verify_login))
         // route_layer 只包装已注册路由，必须在所有 .route() 之后、fallback_service 之前，
         // 这样中间件在路由匹配之后执行，才能拿到 MatchedPath。
         //

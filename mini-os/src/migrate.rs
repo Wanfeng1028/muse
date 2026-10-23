@@ -213,6 +213,70 @@ fn apply_003(conn: &Connection) -> rusqlite::Result<()> {
     Ok(())
 }
 
+/// 迁移 008：TOTP 两步验证。
+/// users 新增 totp_secret（AES-256-GCM 加密后的 hex，可空）与 totp_enabled（0/1，默认 0）；
+/// 新建 tfa_backup_codes（备用码 argon2 哈希，一次一码）与 tfa_challenges（登录二次验证挑战，5 分钟有效）表。
+/// 幂等：列用 PRAGMA table_info 判存在，表用 CREATE TABLE IF NOT EXISTS。
+fn apply_008(conn: &Connection) -> rusqlite::Result<()> {
+    let tx = conn.unchecked_transaction()?;
+
+    for (col, ddl) in [
+        (
+            "totp_secret",
+            "ALTER TABLE users ADD COLUMN totp_secret TEXT NULL",
+        ),
+        (
+            "totp_enabled",
+            "ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0",
+        ),
+    ] {
+        let mut has = false;
+        {
+            let mut stmt = tx.prepare("PRAGMA table_info(users)")?;
+            let mut rows = stmt.query([])?;
+            while let Some(row) = rows.next()? {
+                let name: String = row.get(1)?;
+                if name == col {
+                    has = true;
+                }
+            }
+        }
+        if !has {
+            tx.execute(ddl, [])?;
+        }
+    }
+
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS tfa_backup_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            code_hash TEXT NOT NULL,
+            used_at TEXT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS idx_tfa_backup_codes_user ON tfa_backup_codes(user_id)",
+        [],
+    )?;
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS tfa_challenges (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )",
+        [],
+    )?;
+
+    tx.execute("INSERT INTO schema_migrations(version) VALUES ('008')", [])?;
+    tx.commit()?;
+    Ok(())
+}
+
 /// 单个迁移：版本号 + 应用函数。
 pub type Migration = (&'static str, fn(&Connection) -> rusqlite::Result<()>);
 
@@ -226,6 +290,7 @@ pub const MIGRATIONS: &[Migration] = &[
     ("005", apply_005),
     ("006", apply_006),
     ("007", apply_007),
+    ("008", apply_008),
 ];
 
 /// 运行所有迁移。幂等：对同一文件重复调用不会报错，schema_migrations 行数不变。

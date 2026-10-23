@@ -1601,8 +1601,8 @@ pub async fn register(
     if let Err(msg) = auth::validate_username(&req.username) {
         return Err(err(StatusCode::BAD_REQUEST, msg));
     }
-    if req.password.chars().count() < 8 {
-        return Err(err(StatusCode::BAD_REQUEST, "密码至少 8 个字符"));
+    if let Err(msg) = crate::password::validate_password(&req.password, &req.username) {
+        return Err(err(StatusCode::BAD_REQUEST, &msg));
     }
 
     let hash = auth::hash_password(&req.password)
@@ -1674,6 +1674,23 @@ pub async fn login(State(state): State<Arc<AppState>>, Json(req): Json<LoginRequ
     };
     if !auth::verify_password(&req.password, &hash) {
         return Err(bad());
+    }
+
+    // 两步验证：已启用的用户不直接发 session，先签发一次性 challenge（5 分钟有效），
+    // 前端凭 challenge + 6 位验证码/备用码调 /api/auth/2fa 换 session。
+    let tfa_on: i64 = conn
+        .query_row(
+            "SELECT totp_enabled FROM users WHERE id = ?1",
+            params![user_id],
+            |r| r.get(0),
+        )
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()))?;
+    if tfa_on == 1 {
+        let challenge = crate::twofa::create_tfa_challenge(&conn, user_id)
+            .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+        state.metrics.inc_auth("2fa_challenge");
+        let body = Json(json!({"requires2fa": true, "challenge": challenge}));
+        return Ok((StatusCode::ACCEPTED, body).into_response());
     }
 
     let token = auth::create_session(&conn, user_id, ttl as i64)

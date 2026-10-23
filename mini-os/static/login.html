@@ -150,7 +150,7 @@
 (function () {
   "use strict";
 
-  var state = { mode: "login" };
+  var state = { mode: "login", challenge: null, useBackup: false };
 
   var elTitle = document.getElementById("title");
   var elHint = document.getElementById("hint");
@@ -201,7 +201,7 @@
     clearError();
     if (state.mode === "setup") {
       elTitle.textContent = "创建管理员账号";
-      elHint.textContent = "这是这台 mini-os 的第一个用户，会成为管理员。用户名 3-32 个字符，密码至少 8 位。";
+      elHint.textContent = "这是这台 mini-os 的第一个用户，会成为管理员。用户名 3-32 个字符，密码至少 8 位，要同时有字母和数字。";
       elSubmit.textContent = "创建账号";
       elPass.setAttribute("autocomplete", "new-password");
       elSwitch.innerHTML = "";
@@ -209,7 +209,7 @@
     }
     if (state.mode === "register") {
       elTitle.textContent = "注册新账号";
-      elHint.textContent = "用户名 3-32 个字符，只能用字母、数字、下划线、点或短横线。密码至少 8 位。";
+      elHint.textContent = "用户名 3-32 个字符，只能用字母、数字、下划线、点或短横线。密码至少 8 位，要同时有字母和数字。";
       elSubmit.textContent = "注册";
       elPass.setAttribute("autocomplete", "new-password");
       elSwitch.innerHTML = '已经有账号了？<a id="to-login">去登录</a>';
@@ -221,6 +221,35 @@
     elHint.textContent = "";
     elSubmit.textContent = "登录";
     elPass.setAttribute("autocomplete", "current-password");
+    if (state.mode === "2fa") {
+      elTitle.textContent = "两步验证";
+      elHint.textContent = state.useBackup ? "输入一张备用码（8 位，中间可带横线）" : "打开手机上的验证器 App，输入 6 位验证码";
+      elSubmit.textContent = "验证";
+      elPass.setAttribute("autocomplete", "one-time-code");
+      elPass.value = "";
+      elPass.placeholder = state.useBackup ? "备用码" : "6 位验证码";
+      var pl = document.querySelector('label[for="password"]');
+      if (pl) pl.textContent = state.useBackup ? "备用码" : "验证码";
+      elPass.setAttribute("inputmode", state.useBackup ? "text" : "numeric");
+      elUser.disabled = true;
+      elUser.style.display = "none";
+      var ul = document.querySelector('label[for="username"]');
+      if (ul) ul.style.display = "none";
+      elSwitch.innerHTML = state.useBackup
+        ? '有验证器了？<a id="to-code">用验证码</a>'
+        : '验证器不在身边？<a id="to-backup">用备用码</a>';
+      var t = document.getElementById(state.useBackup ? "to-code" : "to-backup");
+      if (t) t.addEventListener("click", function () { state.useBackup = !state.useBackup; render(); });
+      return;
+    }
+    elUser.disabled = false;
+    elUser.style.display = "";
+    var pl2 = document.querySelector('label[for="password"]');
+    if (pl2) pl2.textContent = "密码";
+    var ul = document.querySelector('label[for="username"]');
+    if (ul) ul.style.display = "";
+    elPass.placeholder = "";
+    elPass.setAttribute("inputmode", "");
     elSwitch.innerHTML = '没有账号？<a id="to-register">去注册</a>';
     var r = document.getElementById("to-register");
     if (r) r.addEventListener("click", function () { state.mode = "register"; render(); });
@@ -248,6 +277,20 @@
       credentials: "same-origin",
       body: JSON.stringify({ username: username, password: password })
     }).then(function (res) {
+      if (res.status === 202) {
+        return res.json().catch(function () { return null; }).then(function (data) {
+          if (data && data.challenge) {
+            state.challenge = data.challenge;
+            state.useBackup = false;
+            state.mode = "2fa";
+            render();
+            elPass.focus();
+          } else {
+            showError("服务器返回异常，稍后再试");
+            elSubmit.disabled = false;
+          }
+        });
+      }
       if (res.ok) {
         location.replace("/");
         return null;
@@ -268,10 +311,62 @@
     ev.preventDefault();
     if (state.mode === "register" || state.mode === "setup") {
       submit("/api/auth/register");
+    } else if (state.mode === "2fa") {
+      submit2fa();
     } else {
       submit("/api/auth/login");
     }
   });
+
+  function submit2fa() {
+    var code = elPass.value.trim();
+    if (!code) { showError("请输入验证码"); elPass.focus(); return; }
+    if (!state.challenge) { showError("验证已过期，请重新登录"); state.mode = "login"; render(); return; }
+    clearError();
+    elSubmit.disabled = true;
+    fetch("/api/auth/2fa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ challenge: state.challenge, code: code })
+    }).then(function (res) {
+      if (res.ok) { location.replace("/"); return null; }
+      return res.json().catch(function () { return null; }).then(function (data) {
+        if (res.status === 429) { startRateLimitCountdown(data); return; }
+        var msg = data && typeof data.error === "string" ? data.error : "";
+        if (res.status === 410) {
+          showError(msg || "验证已过期，请重新登录");
+          state.mode = "login"; state.challenge = null; render();
+          elSubmit.disabled = false;
+          return;
+        }
+        showError(msg || friendlyError(res.status, ""));
+        elSubmit.disabled = false;
+      });
+    }).catch(function () {
+      showError(friendlyError(0, ""));
+      elSubmit.disabled = false;
+    });
+  }
+
+  function startRateLimitCountdown(data) {
+    var msg = data && typeof data.error === "string" ? data.error : "尝试次数过多，请稍后再试";
+    showError(msg);
+    elSubmit.disabled = true;
+    var sec = 30;
+    var orig = elSubmit.textContent;
+    elSubmit.textContent = orig + " (" + sec + ")";
+    var iv = setInterval(function () {
+      sec--;
+      if (sec <= 0) {
+        clearInterval(iv);
+        elSubmit.disabled = false;
+        elSubmit.textContent = orig;
+        return;
+      }
+      elSubmit.textContent = orig + " (" + sec + ")";
+    }, 1000);
+  }
 
   fetch("/api/auth/setup-needed", { credentials: "same-origin" })
     .then(function (res) { return res.json(); })

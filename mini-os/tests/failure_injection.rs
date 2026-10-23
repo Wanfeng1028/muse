@@ -260,35 +260,21 @@ fn migrations_idempotent_on_same_file() {
     {
         let conn = db::open_db(db_path.to_str().unwrap()).unwrap();
         let versions = migrate::applied_versions(&conn).unwrap();
-        assert_eq!(
-            versions,
-            vec![
-                "001".to_string(),
-                "002".to_string(),
-                "003".to_string(),
-                "004".to_string(),
-                "005".to_string(),
-                "006".to_string(),
-                "007".to_string()
-            ]
-        );
+        let expected: Vec<String> = mini_os::migrate::MIGRATIONS
+            .iter()
+            .map(|(v, _)| v.to_string())
+            .collect();
+        assert_eq!(versions, expected);
     }
 
     {
         let conn = db::open_db(db_path.to_str().unwrap()).unwrap();
         let versions = migrate::applied_versions(&conn).unwrap();
-        assert_eq!(
-            versions,
-            vec![
-                "001".to_string(),
-                "002".to_string(),
-                "003".to_string(),
-                "004".to_string(),
-                "005".to_string(),
-                "006".to_string(),
-                "007".to_string()
-            ]
-        );
+        let expected: Vec<String> = mini_os::migrate::MIGRATIONS
+            .iter()
+            .map(|(v, _)| v.to_string())
+            .collect();
+        assert_eq!(versions, expected);
         db::seed(&conn).unwrap();
         let count: i64 = conn
             .query_row(
@@ -323,18 +309,11 @@ fn migrations_upgrade_legacy_db() {
     let conn = db::open_db(db_path.to_str().unwrap()).unwrap();
 
     let versions = migrate::applied_versions(&conn).unwrap();
-    assert_eq!(
-        versions,
-        vec![
-            "001".to_string(),
-            "002".to_string(),
-            "003".to_string(),
-            "004".to_string(),
-            "005".to_string(),
-            "006".to_string(),
-            "007".to_string()
-        ]
-    );
+    let expected: Vec<String> = mini_os::migrate::MIGRATIONS
+        .iter()
+        .map(|(v, _)| v.to_string())
+        .collect();
+    assert_eq!(versions, expected);
 
     let mut has_content_blob = false;
     let mut has_mime_type = false;

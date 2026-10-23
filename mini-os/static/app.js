@@ -1377,6 +1377,117 @@ function renderSettings(body) {
       alert('保存失败: ' + e.message);
     }
   });
+
+  initTfa(body);
+}
+
+// 两步验证（TOTP）设置区：状态查询 → 启用向导（密码→二维码→验证码→备用码）/ 停用 / 重生成备用码。
+function initTfa(body) {
+  if (!document.getElementById('tfa-css')) {
+    var st = document.createElement('style');
+    st.id = 'tfa-css';
+    st.textContent = '.tfa-qr{background:#fff;padding:8px;display:inline-block;border:1px solid #e2e2e2;border-radius:4px}.tfa-qr svg{display:block;width:180px;height:180px}.tfa-codes{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.tfa-codes code{font-family:ui-monospace,monospace;background:#f4f4f5;padding:4px 8px;border-radius:4px}.tfa-btn{margin-right:8px}.tfa-btn.danger{color:#c0392b}';
+    document.head.appendChild(st);
+  }
+  var wrap = document.createElement('div');
+  wrap.className = 'settings';
+  wrap.innerHTML = '<div class="settings-row"><label>两步验证</label><span class="tfa-status">加载中…</span></div><div class="tfa-area"></div><div class="settings-hint">开启后，登录时除了密码，还要输入手机验证器上的 6 位验证码。密钥经加密保存在本机数据库。</div>';
+  body.appendChild(wrap);
+  var statusEl = wrap.querySelector('.tfa-status');
+  var area = wrap.querySelector('.tfa-area');
+
+  function errLine(msg) {
+    area.innerHTML = '<div class="settings-hint" style="color:#c0392b">' + escapeHtml(msg) + '</div>';
+  }
+
+  async function refresh() {
+    area.innerHTML = '';
+    var st;
+    try {
+      st = await api('/api/2fa/status');
+    } catch (e) { statusEl.textContent = '加载失败'; errLine(e.message); return; }
+    if (st.enabled) {
+      statusEl.textContent = '已启用';
+      area.innerHTML = '<div class="settings-row"><button class="tfa-btn" data-act="regen">重新生成备用码</button><button class="tfa-btn danger" data-act="disable">停用</button></div>';
+    } else {
+      statusEl.textContent = '未启用';
+      area.innerHTML = '<div class="settings-row"><button class="tfa-btn primary" data-act="start">启用两步验证</button></div>';
+    }
+    area.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () { onAction(b.dataset.act); });
+    });
+  }
+
+  function pwdRow(hint) {
+    return '<div class="settings-row"><label>登录密码</label><input type="password" class="tfa-pwd" autocomplete="current-password" placeholder="' + escapeHtml(hint || '确认是本人操作') + '"/></div>';
+  }
+
+  async function onAction(act) {
+    if (act === 'start') {
+      area.innerHTML = pwdRow('') + '<div class="settings-row"><button class="tfa-btn primary" data-go="setup">下一步</button></div>';
+      area.querySelector('[data-go="setup"]').addEventListener('click', doSetup);
+    } else if (act === 'disable') {
+      area.innerHTML = pwdRow('停用需要确认密码') + '<div class="settings-row"><button class="tfa-btn danger" data-go="disable">确认停用</button></div>';
+      area.querySelector('[data-go="disable"]').addEventListener('click', doDisable);
+    } else if (act === 'regen') {
+      area.innerHTML = pwdRow('重新生成需要确认密码') + '<div class="settings-row"><button class="tfa-btn primary" data-go="regen">生成新的备用码</button></div>';
+      area.querySelector('[data-go="regen"]').addEventListener('click', doRegen);
+    }
+  }
+
+  async function doSetup() {
+    var pwd = area.querySelector('.tfa-pwd').value;
+    if (!pwd) { errLine('请输入登录密码'); return; }
+    var data;
+    try {
+      data = await api('/api/2fa/setup', { method: 'POST', body: JSON.stringify({ password: pwd }) });
+    } catch (e) { errLine(e.message); return; }
+    area.innerHTML = '<div class="settings-row"><label>1. 扫码</label></div><div class="tfa-qr"><!-- 服务端生成的 SVG，可信 --></div><div class="settings-hint">扫不上？手动添加：<code class="tfa-secret"></code> <button class="tfa-btn" data-copy>复制</button></div><div class="settings-row"><label>2. 输入验证码</label><input type="text" class="tfa-code" inputmode="numeric" maxlength="12" placeholder="6 位验证码"/></div><div class="settings-row"><button class="tfa-btn primary" data-go="enable">启用</button></div>';
+    area.querySelector('.tfa-qr').innerHTML = data.qrSvg;
+    area.querySelector('.tfa-secret').textContent = data.secret;
+    area.querySelector('[data-copy]').addEventListener('click', function () {
+      navigator.clipboard.writeText(data.secret).catch(function () {});
+    });
+    area.querySelector('[data-go="enable"]').addEventListener('click', async function () {
+      var code = area.querySelector('.tfa-code').value.trim();
+      if (!code) { errLine('请输入验证器上的 6 位验证码'); return; }
+      var out;
+      try {
+        out = await api('/api/2fa/enable', { method: 'POST', body: JSON.stringify({ code: code }) });
+      } catch (e) { errLine(e.message); return; }
+      showBackupCodes(out.backupCodes, '两步验证已启用！下面是 10 个备用码，验证器不在身边时用，每个只能用一次。请现在抄下来，离开这个页面就再也看不到了。');
+      refresh();
+    });
+  }
+
+  function showBackupCodes(codes, title) {
+    var list = codes.map(function (c) { return '<code>' + escapeHtml(c) + '</code>'; }).join(' ');
+    area.innerHTML = '<div class="settings-row"><label>' + escapeHtml(title) + '</label></div><div class="tfa-codes">' + list + '</div><div class="settings-row"><button class="tfa-btn" data-copyall>复制全部</button></div>';
+    area.querySelector('[data-copyall]').addEventListener('click', function () {
+      navigator.clipboard.writeText(codes.join('\n')).catch(function () {});
+    });
+  }
+
+  async function doDisable() {
+    var pwd = area.querySelector('.tfa-pwd').value;
+    if (!pwd) { errLine('请输入登录密码'); return; }
+    try {
+      await api('/api/2fa/disable', { method: 'POST', body: JSON.stringify({ password: pwd }) });
+    } catch (e) { errLine(e.message); return; }
+    refresh();
+  }
+
+  async function doRegen() {
+    var pwd = area.querySelector('.tfa-pwd').value;
+    if (!pwd) { errLine('请输入登录密码'); return; }
+    var out;
+    try {
+      out = await api('/api/2fa/backup-codes/regenerate', { method: 'POST', body: JSON.stringify({ password: pwd }) });
+    } catch (e) { errLine(e.message); return; }
+    showBackupCodes(out.backupCodes, '新的备用码已生成，旧的全部作废：');
+  }
+
+  refresh();
 }
 
 // ================= 关于 =================

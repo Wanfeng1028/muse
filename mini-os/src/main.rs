@@ -1,7 +1,9 @@
 // 程序入口：子命令解析（serve/backup/restore）、优雅关闭、结构化日志
 use std::time::Duration;
 
-use mini_os::{auth, build_app, config::Config, db, init_state_with, log::log_event, rbac};
+use mini_os::{
+    auth, build_app, config::Config, db, init_state_with, log::log_event, password, rbac,
+};
 
 use serde_json::json;
 
@@ -177,9 +179,9 @@ fn cmd_useradd(args: &Args) -> i32 {
         return 2;
     }
 
-    // 密码长度下限
-    if password.chars().count() < 8 {
-        eprintln!("密码至少 8 个字符");
+    // 密码强度策略（与 /api/auth/register 同口径）
+    if let Err(msg) = password::validate_password(password, username) {
+        eprintln!("{}", msg);
         return 2;
     }
 

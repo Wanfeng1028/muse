@@ -49,7 +49,7 @@ async fn register(app: &Router, username: &str) {
         app.clone(),
         "POST",
         "/api/auth/register",
-        Some(json!({ "username": username, "password": "correct-horse-battery" })),
+        Some(json!({ "username": username, "password": "correct-horse-battery1" })),
         &[],
     )
     .await;
@@ -91,7 +91,7 @@ async fn login_under_limit_ok() {
     let app = test_app(1.0, 5);
     register(&app, "rl_user1").await;
 
-    let (status, headers, body) = login(&app, "rl_user1", "correct-horse-battery", None).await;
+    let (status, headers, body) = login(&app, "rl_user1", "correct-horse-battery1", None).await;
     assert_eq!(
         status,
         StatusCode::OK,
@@ -169,13 +169,13 @@ async fn login_window_recovers() {
 
     let a1 = app.clone();
     let h1 = tokio::spawn(async move {
-        login(&a1, "rl_user3", "correct-horse-battery", None)
+        login(&a1, "rl_user3", "correct-horse-battery1", None)
             .await
             .0
     });
     let a2 = app.clone();
     let h2 = tokio::spawn(async move {
-        login(&a2, "rl_user3", "correct-horse-battery", None)
+        login(&a2, "rl_user3", "correct-horse-battery1", None)
             .await
             .0
     });
@@ -195,7 +195,7 @@ async fn login_window_recovers() {
 
     tokio::time::sleep(Duration::from_millis(12_000)).await;
 
-    let (status, _, body) = login(&app, "rl_user3", "correct-horse-battery", None).await;
+    let (status, _, body) = login(&app, "rl_user3", "correct-horse-battery1", None).await;
     assert_eq!(
         status,
         StatusCode::OK,
