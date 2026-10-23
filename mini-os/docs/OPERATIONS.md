@@ -86,11 +86,13 @@ journalctl -u mini-os -f
 | `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
 | `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒）。只约束收到 SIGTERM/Ctrl+C 后的排空阶段，不掐正常服务（已回归验证） |
 | `SESSION_TTL_SECS` | `604800`（7 天） | 登录 session 有效期（秒）；非法/≤0 回落默认值 |
+| `MINIOS_SESSION_SLIDING` | `true` | 会话滑动续期开关：开启时，活跃请求在剩余寿命 < TTL/2 时自动顺延 expires_at 并重发 Cookie；取值为 true/false/1/0/yes/no/on/off，非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_RPS` | `1` | 登录限流每秒补充 token 数；非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_BURST` | `5` | 登录限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |
 
 补充说明：
 - `SHUTDOWN_TIMEOUT_SECS` 是 v1.2.0 新增。它只管"排空在途请求"这一段，不限制服务运行时长。v1.1.0 曾把它错误地当成整个服务生命周期超时，v1.2.0 已修复。
+- `MINIOS_SESSION_SLIDING` 是 v1.10.0 新增。滑动续期只顺延过期时间，不轮换 token；关闭后退回固定 TTL 行为。
 - 数据库路径、监听地址等如未在表中列出，以实际启动参数 / 现有配置为准；未验证项不在此处臆测。
 
 多用户说明：首个注册的用户自动成为管理员；`users` 表存 argon2id 密码哈希（PHC 字符串），`sessions` 表只存 token 的 SHA-256（不明文存 token）；Cookie 名 `mini_os_session`（HttpOnly）。老库升级后旧数据归属不可登录的占位用户 `legacy`，首个注册用户登录后调 `POST /api/auth/migrate-legacy` 一次性领走（只能执行一次）。

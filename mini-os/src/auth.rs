@@ -96,11 +96,12 @@ pub fn create_session(
     Ok(token)
 }
 
-/// 校验 token：查到且未过期返回 Some(CurrentUser)；过期会顺手删除该行。
-pub fn verify_session(
+/// 查找有效会话：按 token_hash 查 sessions JOIN users，返回 (expires_at, CurrentUser)；
+/// token 为空或查不到或已过期（顺手删除该行）均返回 Ok(None)。
+fn lookup_valid_session(
     conn: &rusqlite::Connection,
     token: &str,
-) -> Result<Option<CurrentUser>, String> {
+) -> Result<Option<(i64, CurrentUser)>, String> {
     if token.is_empty() {
         return Ok(None);
     }
@@ -142,12 +143,59 @@ pub fn verify_session(
         return Ok(None);
     }
 
-    Ok(Some(CurrentUser {
-        id,
-        username,
-        is_admin: is_admin != 0,
-        role,
-    }))
+    Ok(Some((
+        expires_at,
+        CurrentUser {
+            id,
+            username,
+            is_admin: is_admin != 0,
+            role,
+        },
+    )))
+}
+
+/// 校验 token：查到且未过期返回 Some(CurrentUser)；过期会顺手删除该行。
+pub fn verify_session(
+    conn: &rusqlite::Connection,
+    token: &str,
+) -> Result<Option<CurrentUser>, String> {
+    Ok(lookup_valid_session(conn, token)?.map(|(_, user)| user))
+}
+
+/// 滑动续期会话结果：包含当前用户及是否已续期。
+#[derive(Debug, Clone)]
+pub struct SlidingSession {
+    /// 当前用户信息。
+    pub user: CurrentUser,
+    /// 是否因剩余寿命不足半衰期而自动续期。
+    pub renewed: bool,
+}
+
+/// 校验 token 并可选滑动续期：活跃用户在剩余寿命小于半衰期（ttl_secs/2）时自动顺延 expires_at。
+/// sliding_enabled 为 false 或 ttl_secs <= 0 时不续期。
+pub fn verify_session_sliding(
+    conn: &rusqlite::Connection,
+    token: &str,
+    ttl_secs: i64,
+    sliding_enabled: bool,
+) -> Result<Option<SlidingSession>, String> {
+    let Some((expires_at, user)) = lookup_valid_session(conn, token)? else {
+        return Ok(None);
+    };
+    let now = now_epoch_secs();
+    let renewed = if sliding_enabled && ttl_secs > 0 && expires_at - now < ttl_secs / 2 {
+        let new_exp = now.saturating_add(ttl_secs);
+        let n = conn
+            .execute(
+                "UPDATE sessions SET expires_at = ?1 WHERE token_hash = ?2",
+                rusqlite::params![new_exp, hash_token(token)],
+            )
+            .map_err(|e| format!("renew session failed: {e}"))?;
+        n > 0
+    } else {
+        false
+    };
+    Ok(Some(SlidingSession { user, renewed }))
 }
 
 /// 删除指定 token 对应的会话（幂等）。

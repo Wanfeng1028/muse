@@ -31,6 +31,8 @@ pub struct AppState {
     pub static_dir: String,
     pub max_upload_bytes: u64,
     pub session_ttl_secs: u64,
+    /// 会话滑动续期开关，来自 MINIOS_SESSION_SLIDING，默认开启。
+    pub session_sliding: bool,
     pub metrics: Arc<crate::metrics::Metrics>,
     /// 登录限流器（IP + 账号双维度令牌桶）
     pub login_limiter: Arc<crate::ratelimit::RateLimiter>,
@@ -98,6 +100,12 @@ pub fn init_state_with_full(
         static_dir: static_dir.to_string(),
         max_upload_bytes,
         session_ttl_secs,
+        // 生产路径 init_state 已先经 Config::from_env 做 fail-fast 校验；
+        // 此处供测试直接调 init_state_with_full 时给默认值 true。
+        session_sliding: crate::config::parse_session_sliding_raw(
+            std::env::var("MINIOS_SESSION_SLIDING").ok().as_deref(),
+        )
+        .unwrap_or(true),
         metrics: Arc::new(crate::metrics::Metrics::new()),
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
         share_limiter: Arc::new(crate::ratelimit::ShareReadLimiter::new(&share_limiter_cfg)),
@@ -183,7 +191,7 @@ async fn auth_middleware(
         .get(axum::http::header::COOKIE)
         .and_then(|v| v.to_str().ok());
 
-    let user = match crate::auth::extract_session_token(cookie) {
+    let (user, renewed, token) = match crate::auth::extract_session_token(cookie) {
         Some(token) => {
             let conn = match state.db.lock() {
                 Ok(c) => c,
@@ -195,8 +203,13 @@ async fn auth_middleware(
                         .into_response();
                 }
             };
-            match crate::auth::verify_session(&conn, &token) {
-                Ok(Some(u)) => u,
+            match crate::auth::verify_session_sliding(
+                &conn,
+                &token,
+                state.session_ttl_secs as i64,
+                state.session_sliding,
+            ) {
+                Ok(Some(s)) => (s.user, s.renewed, token),
                 Ok(None) => {
                     return (
                         axum::http::StatusCode::UNAUTHORIZED,
@@ -224,7 +237,17 @@ async fn auth_middleware(
 
     let mut req = req;
     req.extensions_mut().insert(user);
-    next.run(req).await
+    let mut resp = next.run(req).await;
+    if renewed {
+        // 滑动续期命中：重发 Cookie，让浏览器端的 Max-Age 与服务端顺延保持一致。
+        let cookie_val =
+            crate::auth::set_session_cookie_value(&token, state.session_ttl_secs as i64);
+        if let Ok(hv) = axum::http::HeaderValue::from_str(&cookie_val) {
+            resp.headers_mut()
+                .append(axum::http::header::SET_COOKIE, hv);
+        }
+    }
+    resp
 }
 
 /// 根据 HTTP 方法与匹配到的路由路径，返回该请求所需的 RBAC 权限。

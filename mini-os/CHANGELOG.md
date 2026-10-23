@@ -1,6 +1,16 @@
 
 # Changelog
 
+## [1.10.0] - 2026-10-23
+
+### 新增
+- 会话滑动续期：`verify_session_sliding`（剩余寿命 < TTL/2 时自动顺延 `expires_at`）+ 中间件续期后重发 `Set-Cookie`（Max-Age 与服务端一致）；开关 `MINIOS_SESSION_SLIDING`（默认开启，非法值启动 exit(2)）；旧 `verify_session` 行为不变。
+- 测试：`tests/session_sliding_test.rs` 8 例（续期/新鲜不续期/半衰期边界/开关关闭/过期清理/未知与空 token/开关解析真值表）+ `tests/session_sliding_http_test.rs` 1 例（中间件续期后重发 Set-Cookie、新鲜会话不重发）。
+
+### 已知限制
+- 滑动续期按请求触发；并发请求下后写覆盖前写，均为顺延，无正确性问题。
+- `MINIOS_SESSION_SLIDING=false` 时退回固定 TTL 行为。
+
 ## [1.9.0] - 2026-10-20
 
 ### 新增

@@ -2,7 +2,11 @@ use mini_os::terminal::{ReadOutcome, TerminalManager};
 use std::time::{Duration, Instant};
 
 fn mgr(data_suffix: &str) -> TerminalManager {
-    let dir = std::env::temp_dir().join(format!("minios-term-d3-{}-{}", data_suffix, std::process::id()));
+    let dir = std::env::temp_dir().join(format!(
+        "minios-term-d3-{}-{}",
+        data_suffix,
+        std::process::id()
+    ));
     let _ = std::fs::remove_dir_all(&dir);
     TerminalManager::new(dir.to_string_lossy().into_owned(), 4, 3600)
 }
