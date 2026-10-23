@@ -18,10 +18,11 @@ constexpr int kWindowStep = 3;
 // 复合短语加成权重；取值依据：大于位置项（0.05）、小于覆盖度主项（0.5）；
 // 实测 v07-024：主题文档 0.688+0.25=0.938 > 干扰文档 0.845。
 constexpr double kCompoundPhraseBonus = 0.25;
-// 数值范围答案加成：当问句索取数值范围/数量，且窗口同时含阿拉伯数字与紧邻计量单位时，
-// 视为该窗口承载了可量化的答案，故对排序给固定加成。适用于可被“数字+单位”直接回答的问句；
-// 边界与局限：加成是固定值，不随命中数字或单位个数变化；对无单位、单位与数字不相邻、
-// 或答案以文字数词表达的情形不触发。
+// 数值范围答案加成：当问句索取数值范围/数量，且窗口含“阿拉伯数字+紧邻计量单位”或
+// “无单位裸数值区间（A到B/A-B/A~B，A、B 为阿拉伯数字）”时，视为该窗口承载了可量化的答案，
+// 故对排序给固定加成。适用于可被数值区间直接回答的问句；
+// 边界与局限：加成是固定值，不随命中个数变化；对“单位与数字不相邻”、“答案以文字数词
+// （如四十二）表达”、“区间端点为中文数字”的情形不触发；要求至少 2 个命中以排除单点提及。
 constexpr double kRangeAnswerBonus = 0.08;
 constexpr double kSynonymHitBonus = 0.08;  // 同义词命中加成：query 词以同义词变体在窗口命中时，视为概念级相关信号，对排序给固定加成。适用于同义词表可覆盖的查询词；边界与局限：加成是固定值，不随命中次数或同义词距离变化；触发词表是字面枚举，未登录的同义表达不触发。
 // 标题信号加成（v0.25.0）：query 关键词在文档标题（传入的 title，如 HTML <title>）
@@ -457,7 +458,7 @@ for (const auto& qc: queryCompounds) {
     }
 }
 
-        // 数值范围答案加成：query 含范围类疑问词，且窗口含“阿拉伯数字+紧邻单位”。
+        // 数值范围答案加成：query 含范围类疑问词，且窗口含“阿拉伯数字+紧邻计量单位”或“无单位裸数值区间（A到B/A-B/A~B）”。
         {
             bool queryAsksRange = false;
             {
@@ -493,11 +494,44 @@ for (const auto& qc: queryCompounds) {
                     }
                     i = j;
                 }
-                // 范围答案常给上下界，要求至少 2 个数值+单位，排除“1毫米”这类单点提及
+                // 裸数值区间：无单位但形如“9到10”“7.5-8.5”“3~5”的区间表达同样是范围答案信号。
+                // 与上一轮"数字+单位"扫描互斥：同一数字串只计一次。
+                for (std::size_t i = 0; i < windowLower.size(); ) {
+                    if (windowLower[i] < '0' || windowLower[i] > '9') { ++i; continue; }
+                    std::size_t j = i;
+                    while (j < windowLower.size() &&
+                           ((windowLower[j] >= '0' && windowLower[j] <= '9') || windowLower[j] == '.')) {
+                        ++j;
+                    }
+                    bool hasUnit = false;
+                    for (const std::string& u : kUnits) {
+                        if (windowLower.compare(j, u.size(), u) == 0) { hasUnit = true; break; }
+                    }
+                    if (!hasUnit) {
+                        std::size_t k = j;
+                        std::size_t sepLen = 0;
+                        if (windowLower.compare(k, 3, "到") == 0) { sepLen = 3; }
+                        else if (k < windowLower.size() && (windowLower[k] == '-' || windowLower[k] == '~')) { sepLen = 1; }
+                        else if (windowLower.compare(k, 3, "～") == 0) { sepLen = 3; }
+                        if (sepLen > 0) {
+                            std::size_t m = k + sepLen;
+                            if (m < windowLower.size() && windowLower[m] >= '0' && windowLower[m] <= '9') {
+                                ++hitCount;
+                                while (m < windowLower.size() &&
+                                       ((windowLower[m] >= '0' && windowLower[m] <= '9') || windowLower[m] == '.')) {
+                                    ++m;
+                                }
+                                i = m;
+                                continue;
+                            }
+                        }
+                    }
+                    i = j + 1;
+                }
+                // 范围答案常给上下界，要求至少 2 个命中，排除“1毫米”这类单点提及
                 if (hitCount >= 2) score += kRangeAnswerBonus;
             }
         }
-
         // 同义词命中加成：文档用变体词回应 query 概念是强相关信号。
         if (synonymFired) score += kSynonymHitBonus;
 

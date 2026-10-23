@@ -219,6 +219,69 @@ TEST(RangeAnswerBonus, RangeBonus_NoRangeWordNoTrigger) {
     EXPECT_LT(std::abs(psNum[0].score - psPlain[0].score), 0.001);
 }
 
+TEST(RangeAnswerBonus, RangeBonus_BareRangeApplies) {
+    docseek::ParsedQuery pq;
+    pq.keywords = {"弦距", "范围"};
+
+    const std::string pathA = "/range/a.md";
+    const std::string contentA =
+        "弦距范围：2.5到3.5，另一处7到8，可根据手感调整。";
+    const std::string pathB = "/range/b.md";
+    const std::string contentB =
+        "弦距范围：因琴而异，需视手感与演奏风格而定。";
+
+    std::vector<docseek::Passage> psA =
+        rankPassages(1, pathA, contentA, pq, 1);
+    std::vector<docseek::Passage> psB =
+        rankPassages(2, pathB, contentB, pq, 1);
+
+    ASSERT_FALSE(psA.empty());
+    ASSERT_FALSE(psB.empty());
+    EXPECT_NEAR(psA[0].score - psB[0].score, 0.08, 0.001);
+}
+
+TEST(RangeAnswerBonus, RangeBonus_BareRangeDashForm) {
+    docseek::ParsedQuery pq;
+    pq.keywords = {"弦距", "范围"};
+
+    const std::string pathA = "/range/a.md";
+    const std::string contentA =
+        "弦距范围：3-5，另一处6-8，可根据手感调整。";
+    const std::string pathB = "/range/b.md";
+    const std::string contentB =
+        "弦距范围：因琴而异，需视手感与演奏风格而定。";
+
+    std::vector<docseek::Passage> psA =
+        rankPassages(1, pathA, contentA, pq, 1);
+    std::vector<docseek::Passage> psB =
+        rankPassages(2, pathB, contentB, pq, 1);
+
+    ASSERT_FALSE(psA.empty());
+    ASSERT_FALSE(psB.empty());
+    EXPECT_NEAR(psA[0].score - psB[0].score, 0.08, 0.001);
+}
+
+TEST(RangeAnswerBonus, RangeBonus_BareRangeSingleNoTrigger) {
+    docseek::ParsedQuery pq;
+    pq.keywords = {"弦距", "范围"};
+
+    const std::string pathOne = "/range/one.md";
+    const std::string contentOne =
+        "弦距范围：9到10。";
+    const std::string pathPlain = "/range/plain.md";
+    const std::string contentPlain =
+        "弦距范围：因琴而异。";
+
+    std::vector<docseek::Passage> psOne =
+        rankPassages(1, pathOne, contentOne, pq, 1);
+    std::vector<docseek::Passage> psPlain =
+        rankPassages(2, pathPlain, contentPlain, pq, 1);
+
+    ASSERT_FALSE(psOne.empty());
+    ASSERT_FALSE(psPlain.empty());
+    EXPECT_LT(std::abs(psOne[0].score - psPlain[0].score), 0.001);
+}
+
 // ---------------------------------------------------------------------------
 // Suite SynonymPassage：同义词表 + rankPassages 回退
 // ---------------------------------------------------------------------------
