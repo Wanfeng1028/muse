@@ -29,6 +29,10 @@ OPML：导入导出订阅清单。
 
 ![OPML](docs/screenshots/opml.png)
 
+阅读器里的"为什么排前面"：打开文章自动算出重要性总分，五个分项一条条摆出来，每条理由都是大白话。
+
+![为什么排前面](docs/screenshots/reader-score.png)
+
 ## 重要性排序与今日必读
 
 订阅一多，时间线根本刷不完，最后往往变成"收藏夹吃灰"。今日必读每天只挑最重要的 N 篇给你，默认 20 篇，想多看几篇就去兴趣设置里改数字。
@@ -148,4 +152,39 @@ OPML：导入导出订阅清单。
 ## 快速开始
 
 安装：
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# 或
+make install
+```
+
+运行：
+
+```bash
+make run
+# 等价于 .venv/bin/python -m feedflow serve
+```
+
+然后浏览器打开 http://127.0.0.1:8300（监听地址与端口可用 FEEDFLOW_HOST / FEEDFLOW_PORT 环境变量修改）。
+
+手动抓一次订阅：
+
+```bash
+make fetch
+```
+
+跑测试：
+
+```bash
+make test
+```
+
+Docker 一把梭：
+
+```bash
+docker compose up --build
+```
+
+容器内监听 8300 并映射到宿主机 8300；数据库与备份落在宿主机 ./data 目录（挂载为 /app/data），重建容器不丢数据。启动后同样打开 http://127.0.0.1:8300。
 

@@ -160,6 +160,7 @@ function initReader() {
     try { a = await api("/api/articles/" + id); } catch (e) { return; }
     state.selectedId = id;
     renderReader(a);
+    loadScoreCard(id);
     requestAnimationFrame(() => {
       if (elScroller) elScroller.scrollTop = a.scroll_pos || 0;
     });
@@ -182,12 +183,47 @@ function initReader() {
     html += `<button id="btn-star" class="btn">${star}</button>`;
     if (a.link) html += `<a class="btn" href="${escapeAttr(a.link)}" target="_blank" rel="noopener">查看原文</a>`;
     html += `</div></div>`;
+    html += `<div id="score-card" class="score-card is-loading"><span class="score-loading">正在算这篇为什么值得读…</span></div>`;
     html += `<div class="content">${a.content_html || a.content_text || a.summary || ""}</div>`;
     elReader.innerHTML = html;
     const btnRead = document.getElementById("btn-read");
     const btnStar = document.getElementById("btn-star");
     if (btnRead) btnRead.addEventListener("click", () => markRead(a.id, a.is_read ? 0 : 1));
     if (btnStar) btnStar.addEventListener("click", () => toggleStar(a.id, a.is_starred ? 0 : 1));
+  }
+
+  const SCORE_FACTORS = [["recency","时效"],["heat","事件热度"],["source","来源权重"],["keyword","关键词"],["unread","未读加成"]];
+  async function loadScoreCard(id) {
+    const card = document.getElementById("score-card");
+    if (!card) return;
+    let data;
+    try { data = await api("/api/articles/" + id + "/score"); } catch (e) { card.remove(); return; }
+    if (state.selectedId !== id) return;
+    if (!data || typeof data.score !== "number" || !data.parts) { card.remove(); return; }
+    let html = '<div class="score-head"><span class="score-title">' + escapeHtml("为什么排前面") + '</span><span class="score-num">' + data.score.toFixed(2) + '</span></div>';
+    html += '<div class="score-factors">';
+    const parts = data.parts;
+    for (const [key, label] of SCORE_FACTORS) {
+      const v = Math.max(0, Math.min(1, Number(parts[key]) || 0));
+      const pct = Math.round(v * 100);
+      html += '<div class="score-factor"><span class="factor-label">' + escapeHtml(label) + '</span><span class="factor-bar"><i style="width:' + pct + '%"></i></span><span class="factor-val">' + v.toFixed(2) + '</span></div>';
+    }
+    html += '</div>';
+    if (Array.isArray(data.reasons) && data.reasons.length > 0) {
+      html += '<ul class="score-reasons">';
+      for (const r of data.reasons) {
+        html += '<li>' + escapeHtml(r) + '</li>';
+      }
+      html += '</ul>';
+    }
+    const reasonsArr = Array.isArray(data.reasons) ? data.reasons : [];
+    const hasAgeReason = reasonsArr.some(function (r) { return /发布|刚刚/.test(String(r)); });
+    if (!hasAgeReason && typeof data.age_hours === "number" && isFinite(data.age_hours)) {
+      const ageText = data.age_hours < 1 ? "刚刚发布" : "约 " + Math.round(data.age_hours) + " 小时前发布";
+      html += '<div class="score-foot">' + escapeHtml(ageText) + '</div>';
+    }
+    card.classList.remove("is-loading");
+    card.innerHTML = html;
   }
 
   // 标记已读/未读
