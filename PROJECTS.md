@@ -132,6 +132,7 @@
 - **深耕轮 2026-10-21 早（已合入，2a06847）**：k-w10 解决——s193 用"脚手架+首个测试续写"式 prompt（assembly 风格）一次成功，focus-validation.deep5.test.ts 10/10 通过。模型出码率经验更新：①给完整可组装的代码片段（assembly）比"从零写 N 个测试"可靠得多；②s150 并发上限 5（超了 429），且今晨频繁超时；③t3c 证明"只要 8 个方法、不要 FILE 信封"能绕过元思考。k-w11 仍待生成（s150 两次超时、s193 未试）。
 - **深耕轮 2026-10-21 07:07 集中收尾（已合入，2cb5ab9）**：k-w11 解决——words-srs.deep5.test.ts 10/10 全绿；新增 api-route-parity.deep5.test.ts 5/5（前后端 API 路由对齐）。凌晨轮 k-w10/k-w11 双降级遗留正式清零。
 - **深耕轮 2026-10-21 09:07（已合入，774d70b）**：wave5 b18 收尾——mistakes-quiz-generate.deep2.test.ts 9/9 全绿（测试侧修复：用户名合规/裸数组响应/uidOf动态查询；产品代码零改动）。
+- **深耕轮 2026-10-23 21:07（智谱 Coding Plan lane 主力 glm-4.7；轮换铁律：上一轮 feedflow，本轮按队列轮到 second-brain）**：v0.16.0「年度复习热力图」——复习统计页补齐长期连续性视角：`GET /api/review/heatmap?days=`（默认 365、上限 366，口径与 trend 一致）；store 聚合抽为 `reviewTrendCore`（ReviewTrend/ReviewHeatmap 共用，搬移体逐字节核验一致）；前端 GitHub 贡献图式日历（周一对齐、5 档蓝、tooltip 大白话、失败静默）。新增 7 测试（store 4 + API 3）全绿；`go test ./...` **795 全绿**、`go vet`/gofmt 全洁；真实服务冒烟（365 行、首尾日期正确、days=400→366）；截图亲眼验收通过。验收修 2 真问题：renderHeatmap 的 hidden 属性被 `#heatmap{display:grid}` 覆盖（v0.2.0 同类教训，改 style.display）、测试固定假 today 致 Added 断言错。发版对照报告 `docs/PRODUCTION_CHECKLIST_REPORT_v0.16.md`（结论可发版）。commit 6c4ce24d 已 push。模型链：智谱 glm-4.7 共 6 调用——batchA 首版因大输出连续 3 次 urllib 传输异常（与 egress 代理截断 chunked 老毛病一致），拆小后一次成功；OpenRouter cohere/north-mini-code:free 试跑 1 次只交思考过程、块全空作废；A3 首版乱码作废、拆小重派一次成功。dpsk 未探活（17:07 轮已确认仍停用）。
 
 ## drama-factory「AI 短剧工坊」
 
