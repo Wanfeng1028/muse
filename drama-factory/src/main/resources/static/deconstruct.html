@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh" data-bs-theme="dark">
+<head>
+<!-- 字体用 Tabler 系统字体栈、配色沿用 theme.css 变量、实色无渐变、8px 间距基准、左对齐 -->
+<script>
+document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('theme') || window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="dc.pageTitle">视频拆解 · AI 短剧工坊</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" href="/tabler.min.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/app.css">
+<style>
+.dc-kicker { font-family: var(--tblr-font-sans-serif); font-size: 11px; letter-spacing: 0.12em; color: var(--tblr-muted); text-transform: uppercase; margin-bottom: 8px; }
+.dc-shot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.dc-frame { width: 100%; aspect-ratio: 16/9; object-fit: cover; background-color: #111; display: block; }
+.dc-timeline { display: flex; height: 28px; overflow: hidden; border: 1px solid var(--tblr-border-color); }
+.dc-timeline > div { height: 100%; }
+.dc-meta { font-family: var(--tblr-font-mono); font-size: 12px; color: var(--tblr-muted); }
+.dc-prompt { font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <p class="dc-kicker" data-i18n="dc.kicker">VIDEO DECONSTRUCTION · 反推爆款结构</p>
+    <h1 data-i18n="dc.heading">视频拆解</h1>
+    <p class="text-secondary" data-i18n="dc.subtitle">看到喜欢的视频、想学它的拍法时，把它拆开看：分镜、节奏、结构公式与逐镜反推提示词，一键变成你项目里的同款分镜草稿。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title" data-i18n="dc.createTitle">发起拆解</h3>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <label class="form-label" data-i18n="dc.project">项目</label>
+          <select class="form-select" id="dcProject"></select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" data-i18n="dc.episode">目标剧集（生成同款用）</label>
+          <select class="form-select" id="dcEpisode"></select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" data-i18n="dc.asset">已有视频素材</label>
+          <select class="form-select" id="dcAsset"></select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <label class="form-label" data-i18n="dc.file">上传本地视频</label>
+          <input type="file" class="form-control" id="dcFile" accept="video/*">
+        </div>
+        <div class="col-md-6">
+          <button class="btn btn-primary mt-4" id="dcUploadBtn" data-i18n="dc.uploadBtn">上传并发起拆解</button>
+          <button class="btn btn-outline-primary mt-4" id="dcAssetBtn" data-i18n="dc.assetBtn">用所选素材拆解</button>
+        </div>
+      </div>
+      <p class="text-secondary small mt-3" data-i18n="dc.linkNote">链接导入（抖音 / TikTok / 小红书）为后续功能，尚未接入；当前请先把视频下载到本地再上传，或选择素材库里已有的视频。</p>
+      <div id="dcError" class="alert alert-danger mt-3" hidden></div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">
+      <h3 data-i18n="dc.listTitle">本项目的拆解</h3>
+    </div>
+    <div class="card-body">
+      <div id="dcList"></div>
+      <div id="dcEmpty" class="text-secondary py-3" hidden data-i18n="dc.empty">还没有拆解记录，先在上面发起一个。</div>
+    </div>
+  </div>
+
+  <div class="card mt-3" id="dcDetailCard" hidden>
+    <div class="card-header d-flex justify-content-between">
+      <h3 id="dcDetailTitle"></h3>
+      <div>
+        <a class="btn btn-sm btn-outline-secondary" id="dcReportBtn" data-i18n="dc.reportBtn">导出 Markdown 报告</a>
+        <button class="btn btn-sm btn-primary" id="dcGenBtn" data-i18n="dc.genBtn">生成同款分镜</button>
+        <button class="btn btn-sm btn-outline-danger" id="dcDeleteBtn" data-i18n="dc.deleteBtn">删除</button>
+        <button class="btn btn-sm btn-outline-secondary" id="dcBackBtn" data-i18n="dc.backBtn">返回</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="dcMetrics" class="row g-2"></div>
+      <h4 data-i18n="dc.structureTitle">全片结构</h4>
+      <div id="dcTimeline" class="dc-timeline"></div>
+      <ul id="dcStructureList" class="small"></ul>
+      <h4 data-i18n="dc.formulaTitle">爆款公式（规则提炼）</h4>
+      <div id="dcFormula"></div>
+      <h4 data-i18n="dc.shotsTitle">逐镜拆解</h4>
+      <div id="dcShots" class="dc-shot-grid"></div>
+      <h4 data-i18n="dc.scriptTitle">创作剧本模板</h4>
+      <pre id="dcScript" class="dc-prompt"></pre>
+      <p class="text-secondary small" data-i18n="dc.basisNote">口径说明：时长/切分/关键帧为实测数据；结构与公式为规则推断；画面主体、景别、运镜等视觉字段待 AI 增强，当前以占位标注，不冒充识别结果。</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="toast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script src="/tabler.min.js"></script>
+<script src="/i18n.js"></script>
+<script src="/shell.js"></script>
+<script src="/deconstruct.js"></script>
+</body>
+</html>

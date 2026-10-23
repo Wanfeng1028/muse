@@ -98,6 +98,13 @@ drama:
   ffmpeg-retry-backoff-ms: ${FFMPEG_RETRY_BACKOFF_MS:2000}
   # v2.31 flaky 收尾：单次成片构建内所有 ffmpeg 步骤共享退避预算，总睡眠不超过预算
   ffmpeg-retry-total-budget-ms: ${FFMPEG_RETRY_TOTAL_BUDGET_MS:20000}
+  # 视频拆解：ffmpeg 场景切分阈值、镜数上限、最短镜合并、回退采样段长；vision-enabled 打开后才把关键帧送视觉增强（默认关，未接视觉模型前报告中视觉字段标注待 AI 增强）
+  deconstruction:
+    scene-threshold: ${DRAMA_DECON_SCENE_THRESHOLD:0.35}
+    max-shots: ${DRAMA_DECON_MAX_SHOTS:120}
+    min-shot-sec: ${DRAMA_DECON_MIN_SHOT_SEC:0.4}
+    fallback-segment-sec: ${DRAMA_DECON_FALLBACK_SEG_SEC:2.5}
+    vision-enabled: ${DRAMA_DECON_VISION_ENABLED:false}
 
 logging:
   # JSON 结构化日志：设置环境变量 SPRING_PROFILES_ACTIVE=json 即切换为 Logstash JSON 输出（含 request_id）

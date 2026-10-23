@@ -62,6 +62,7 @@
     'title.qc': { 'zh-CN': '成片质检', 'en': 'QC Review' },
     'title.review': { 'zh-CN': '审核队列', 'en': 'Review Queue' },
     'nav.review': { 'zh-CN': '审核队列', 'en': 'Review Queue' },
+    'nav.deconstruct': { 'zh-CN': '视频拆解', 'en': 'Video Deconstruction' },
 
     'pal.pages': { 'zh-CN': '页面', 'en': 'Pages' },
     'pal.actions': { 'zh-CN': '操作', 'en': 'Actions' },
@@ -173,6 +174,7 @@
     { id: 'tasks', href: '/tasks.html', label: '任务队列', i18n: 'nav.tasks', icon: 'tasks', kbd: 'G T' },
     { id: 'finals', href: '/finals.html', label: '成片库', i18n: 'nav.finals', icon: 'check', kbd: 'G F' },
     { id: 'review', href: '/review.html', label: '审核队列', i18n: 'nav.review', icon: 'review' },
+    { id: 'deconstruct', href: '/deconstruct.html', label: '视频拆解', i18n: 'nav.deconstruct', icon: 'search' },
     { id: 'pipeline', href: '/pipeline.html', label: '生产看板', i18n: 'nav.pipeline', icon: 'chart', kbd: 'G P' },
     { id: 'tools', href: '/tools.html', label: '快捷工具', i18n: 'nav.tools', icon: 'tools' },
     { id: 'settings', href: '/settings.html', label: '设置', i18n: 'nav.settings', icon: 'settings' },
@@ -183,7 +185,7 @@
   var NAV_GROUPS = [
     { i18n: 'navgroup.create', label: '创作', ids: ['index', 'chat', 'images', 'music', 'mv', 'avatar'] },
     { i18n: 'navgroup.run', label: '运行', ids: ['runs', 'agents', 'skills', 'official-skills', 'prompts', 'skillhub', 'usage', 'cost-ledger'] },
-    { i18n: 'navgroup.produce', label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'review', 'pipeline', 'tools'] }
+    { i18n: 'navgroup.produce', label: '生产', ids: ['storyboard', 'canvas', 'tasks', 'finals', 'review', 'deconstruct', 'pipeline', 'tools'] }
   ];
   function navById(id) {
     for (var i = 0; i < NAV.length; i++) { if (NAV[i].id === id) return NAV[i]; }
