@@ -314,6 +314,29 @@ bool detectRecurrence(const std::string& raw) {
     return false;
 }
 
+// 科目编号检测（v0.31.0）：在 raw 上按字面匹配"科目N"/"科N"（N=一..十），
+// 如"科目一考试…"→"一"。"科目"与"科"两种写法都认（"科目一"不含子串"科一"，
+// 不会重复计数）。命中多个不同编号时视为歧义，返回空串（fail-safe，不触发
+// 矛盾检测）。全中文提示词，无需大小写折叠。
+std::string detectSubjectNo(const std::string& raw) {
+    static const char* kNums[] = {"一", "二", "三", "四", "五",
+                                  "六", "七", "八", "九", "十"};
+    static const char* kPres[] = {"科目", "科"};
+    std::string found;
+    for (const char* n : kNums) {
+        for (const char* pre : kPres) {
+            if (raw.find(std::string(pre) + n) != std::string::npos) {
+                if (found.empty()) {
+                    found = n;
+                } else if (found != n) {
+                    return "";
+                }
+            }
+        }
+    }
+    return found;
+}
+
 // 方位/时间单字封闭集（封闭语言学类）。
 bool isDirectionTimeChar(const std::string& s) {
     // 集合：前 后 上 下 左 右 里 外 内 中（10 个单字）。
@@ -520,6 +543,7 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     pq.passageIntent = detectPassageIntent(raw);
     pq.hasRecurrence = detectRecurrence(raw);
     pq.asksRange = detectRangeIntent(raw);
+    pq.querySubjectNo = detectSubjectNo(raw);
 
     // 1. 抽取引号短语。
     std::string rest;

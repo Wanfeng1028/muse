@@ -13,6 +13,7 @@ struct ParsedQuery {
     bool passageIntent = false;         // 是否明确要"段落/原文"
     bool hasRecurrence = false;         // 查询是否含"过去状态→近期复现"结构（过去标记与复现标记同时出现）
     bool asksRange = false;             // 查询是否为"索取数值范围/数量"型问句（在 raw 上判定，见 detectRangeIntent）
+    std::string querySubjectNo;         // 查询中的明确科目编号（"一".."十"），如"科目一"→"一"；无则空串（v0.31.0，见 detectSubjectNo）
 };
 
 // 解析自然语言查询：抽取引号短语、删除疑问/语气词、jieba 分词过滤、兜底切分。

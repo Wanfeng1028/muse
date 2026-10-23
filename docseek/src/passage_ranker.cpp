@@ -52,6 +52,12 @@ constexpr double kRareTermBonusCap = 0.15;
 // 边界与局限：加成是固定值，只看标记共现、不看语义角色；触发词表是字面枚举的闭集
 // （与 src/query_parser.cpp 的 detectRecurrence 保持一致），未登录的复现表达不触发。
 constexpr double kRecurrenceAlignBonus = 0.08;
+// 科目编号矛盾惩罚（v0.31.0）：查询含明确科目编号（pq.querySubjectNo，由
+// query_parser 的 detectSubjectNo 设置）时，窗口含冲突编号（如查询"科目一"
+// 而窗口出现"科目二"）视为主题矛盾，给固定扣分。取值 -0.08：与 0.08 加成
+// 家族对称；边界与局限：只认"科目N"/"科N"字面（N=一..十），窗口同时含查询
+// 编号时以一致为准不扣分；扣分只作用于窗口级 score，不叠加。
+constexpr double kSubjectConflictPenalty = -0.08;
 
 // 取 content 首个非空行的 markdown 标题文本：剥离行首全部 '#' 与空白后返回；
 // 首个非空行不是标题行（行首非 '#'）时返回空串。用于 .md 文档补充标题信号
@@ -449,6 +455,35 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                 if (windowLower.find(t) != std::string::npos) { hasRecur = true; break; }
             }
             if (hasPast && hasRecur) score += kRecurrenceAlignBonus;
+        }
+
+        // v0.31.0 科目编号矛盾检测：查询含明确科目编号、且窗口含冲突编号
+        // 但不含查询编号时扣分一次（不叠加）。
+        if (!pq.querySubjectNo.empty()) {
+            static const char* kNums[] = {"一", "二", "三", "四", "五",
+                                          "六", "七", "八", "九", "十"};
+            static const char* kPres[] = {"科目", "科"};
+            bool hasQueryNo = false;
+            for (const char* pre : kPres) {
+                if (windowLower.find(std::string(pre) + pq.querySubjectNo) != std::string::npos) {
+                    hasQueryNo = true;
+                    break;
+                }
+            }
+            bool hasConflictNo = false;
+            if (!hasQueryNo) {
+                for (const char* n : kNums) {
+                    if (std::string(n) == pq.querySubjectNo) continue;
+                    for (const char* pre : kPres) {
+                        if (windowLower.find(std::string(pre) + n) != std::string::npos) {
+                            hasConflictNo = true;
+                            break;
+                        }
+                    }
+                    if (hasConflictNo) break;
+                }
+            }
+            if (hasConflictNo) score += kSubjectConflictPenalty;
         }
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
