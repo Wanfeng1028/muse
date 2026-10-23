@@ -35,7 +35,7 @@
 按 DoD 第 8 条"每若干轮强制一轮技术债清理"，未来 3 轮只排 P0/P1：
 
 - 第 1 轮：已完成（2026-10-23，见 docs/API_PARITY_AUDIT_2026-10-23.md：47 调用全对照，0 真 bug）。原计划：先扫 P0-1 / P0-2 / P0-3 的同类问题——这三条都是"前端传参或方法跟后端对不上导致 400/404"，v1.2.0 已单点修掉；本轮把所有 api 调用与后端路由、参数类型做了一次对照盘点，无漏网。
-- 第 2 轮：处理 P1-1，把截图 harness 固化下来（服务就绪判断 + route 拦截），确保后续每轮发版截图不再出空白页。出处：里程碑记录 v1.1.0。
+- 第 2 轮：**已完成（2026-10-24）**——`scripts/shots/` 落地：shot-harness.mjs（spawnServer→waitForHealth→registerAndLogin→seedDemoData→createShotContext→runShotPlan→shutdown）+ shot-plan.mjs（9 页）+ run-shots.mjs（一键入口）+ self-check.mjs（5 项断言全过）；`docs/SCREENSHOT_HARNESS.md`；package.json `shot`/`shot:build`；一键跑出 9 张真实截图亲眼验收通过、零 console 错误。出处：里程碑记录 v1.1.0。
 - 第 3 轮：处理 P1-2，把 Playwright 多 route 注册顺序的坑写进文档或加注释，避免下个人再被吞 /api。出处：里程碑记录 v1.1.0。
 
 （P2 不占强制清理轮次，随词库扩充功能一起做即可。）

@@ -16,3 +16,5 @@ coverage/
 .vscode/*
 !.vscode/extensions.json
 *.tsbuildinfo
+
+scripts/shots/.shot-demo.db

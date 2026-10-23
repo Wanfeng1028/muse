@@ -12,7 +12,9 @@
     "dev:web": "pnpm --filter @kaoyan/web run dev",
     "build": "pnpm -r run build",
     "test": "pnpm -r --if-present run test",
-    "lint": "pnpm -r --if-present run lint"
+    "lint": "pnpm -r --if-present run lint",
+    "shot": "node scripts/shots/run-shots.mjs",
+    "shot:build": "pnpm --filter @kaoyan/web run build && pnpm --filter @kaoyan/server run build"
   },
   "devDependencies": {
     "typescript": "^5.7.0"
