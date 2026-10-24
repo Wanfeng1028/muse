@@ -23,7 +23,16 @@ export interface PresenceMember {
   usage_out?: number;
 }
 
-export type TaskStatus = 'dispatched' | 'running' | 'done' | 'failed' | 'unsupported' | 'cancelled';
+export type TaskStatus = 'dispatched' | 'running' | 'done' | 'failed' | 'unsupported' | 'cancelled' | 'timed_out';
+
+export interface TaskProgressReport {
+  task_id: string;
+  seq: number;
+  reporter: string;
+  message: string;
+  data_json: string | null;
+  created_at_ms: number;
+}
 
 export interface TaskItem {
   task_id: string;
@@ -34,6 +43,9 @@ export interface TaskItem {
   status: TaskStatus;
   created_at_ms: number;
   updated_at_ms: number;
+  deadline_ms: number | null;
+  error: string | null;
+  progress_count: number;
 }
 
 export interface TaskEventPayload {
@@ -71,6 +83,13 @@ export async function cancelTask(taskId: string, requester: string): Promise<Tas
   }
   const data = (await res.json()) as { task: TaskItem };
   return data.task;
+}
+
+export async function fetchTaskDetail(taskId: string): Promise<{ task: TaskItem; progress: TaskProgressReport[] }> {
+  const res = await fetch(`${BASE}/api/tasks/${encodeURIComponent(taskId)}`);
+  if (!res.ok) throw new Error(`task ${res.status}`);
+  const data = (await res.json()) as { task: TaskItem; progress: TaskProgressReport[] };
+  return { task: data.task, progress: data.progress ?? [] };
 }
 
 export async function fetchUnread(room: string, sinceId: number): Promise<{ unread: number; latest_id: number | null }> {

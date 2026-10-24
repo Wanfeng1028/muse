@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X, ClipboardList, RotateCcw } from 'lucide-react';
-import { fetchTasks, fetchTaskStats, cancelTask, TaskItem, TaskStatus } from '../api';
+import { fetchTasks, fetchTaskStats, cancelTask, fetchTaskDetail, TaskItem, TaskStatus, TaskProgressReport } from '../api';
 
 interface Props {
   room: string;
@@ -10,7 +10,7 @@ interface Props {
   onJumpToTask: (taskId: string) => void;
 }
 
-type Filter = 'all' | 'active' | 'done' | 'failed' | 'cancelled' | 'unsupported';
+type Filter = 'all' | 'active' | 'done' | 'failed' | 'cancelled' | 'unsupported' | 'timed_out';
 
 const STATUS_TEXT: Record<TaskStatus, string> = {
   dispatched: '已派发',
@@ -19,6 +19,7 @@ const STATUS_TEXT: Record<TaskStatus, string> = {
   failed: '失败',
   unsupported: '无可用',
   cancelled: '已取消',
+  timed_out: '已超时',
 };
 
 function statusClass(status: TaskStatus): string {
@@ -58,7 +59,22 @@ export default function TaskPanel({ room, nick, refreshKey, onClose, onJumpToTas
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<TaskItem | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState<boolean>(false);
+  const [progress, setProgress] = useState<TaskProgressReport[]>([]);
+
+  useEffect(() => {
+    if (selected) {
+      const fresh = tasks.find((t) => t.task_id === selected.task_id);
+      if (fresh) setSelected(fresh);
+    }
+  }, [tasks, selected]);
+  useEffect(() => {
+    if (!selected) { setProgress([]); return; }
+    let alive = true;
+    fetchTaskDetail(selected.task_id)
+      .then((d) => { if (alive) setProgress(d.progress); })
+      .catch(() => { if (alive) setProgress([]); });
+    return () => { alive = false; };
+  }, [selected]);  const [cancelling, setCancelling] = useState<boolean>(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,6 +146,7 @@ export default function TaskPanel({ room, nick, refreshKey, onClose, onJumpToTas
     { key: 'active', label: '进行中' },
     { key: 'done', label: '已完成' },
     { key: 'failed', label: '失败' },
+    { key: 'timed_out', label: '已超时' },
     { key: 'cancelled', label: '已取消' },
     { key: 'unsupported', label: '无可用' },
   ];
@@ -140,7 +157,7 @@ export default function TaskPanel({ room, nick, refreshKey, onClose, onJumpToTas
         <div>
           <div>任务追踪</div>
           <div className="task-panel-stats">
-            进行中 {activeCount} · 已完成 {counts.done ?? 0} · 失败 {counts.failed ?? 0}
+            进行中 {activeCount} · 已完成 {counts.done ?? 0} · 失败 {counts.failed ?? 0} · 已超时 {counts.timed_out ?? 0}
           </div>
         </div>
         <button type="button" onClick={onClose} aria-label="关闭">
@@ -233,6 +250,31 @@ export default function TaskPanel({ room, nick, refreshKey, onClose, onJumpToTas
             <span>更新时间</span>
             <span>{formatFull(selected.updated_at_ms)}</span>
           </div>
+          <div className="task-detail-row">
+            <span>超时期限</span>
+            <span>{selected.deadline_ms === null ? '无超时限制' : formatFull(selected.deadline_ms)}</span>
+          </div>
+          {selected.error !== null && (
+            <div className="task-detail-row">
+              <span>失败原因</span>
+              <span>{selected.error}</span>
+            </div>
+          )}
+          <div className="task-detail-row">
+            <span>进度上报</span>
+            <span>{selected.progress_count} 次</span>
+          </div>
+          {progress.length > 0 && (
+            <div className="task-progress-list">
+              {progress.map((pr) => (
+                <div key={pr.seq} className="task-progress-item">
+                  <span className="task-progress-seq">#{pr.seq}</span>
+                  <span className="task-progress-msg">{pr.message}</span>
+                  <span className="task-progress-time">{formatFull(pr.created_at_ms)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {cancelError && <div className="task-error">{cancelError}</div>}
 

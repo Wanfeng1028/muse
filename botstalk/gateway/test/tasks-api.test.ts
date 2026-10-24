@@ -56,6 +56,18 @@ describe("tasks http api", () => {
     expect(body.tasks[0]!.task_id).toBe("t2");
   });
 
+  it("GET /api/tasks?status=timed_out returns 200 (whitelist includes new status)", async () => {
+    const res = await fetch(`${base}/api/tasks?status=timed_out`);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { tasks: unknown[] };
+    expect(body.tasks).toHaveLength(0);
+  });
+
+  it("GET /api/tasks?status=pending_approval returns 200", async () => {
+    const res = await fetch(`${base}/api/tasks?status=pending_approval`);
+    expect(res.status).toBe(200);
+  });
+
   it("GET /api/tasks?status=bogus returns 400", async () => {
     const res = await fetch(`${base}/api/tasks?status=bogus`);
     expect(res.status).toBe(400);

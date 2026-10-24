@@ -50,13 +50,37 @@ export type Intent = "chat" | "task";
 /** task 回执状态。 */
 export type TaskStatus = "running" | "done" | "failed" | "unsupported";
 
+/** 任务进度上报内容。 */
+export interface TaskProgress {
+  message: string;
+  data?: unknown;
+}
+
+/** 进度上报 message 最大字符数。 */
+export const TASK_PROGRESS_MESSAGE_MAX = 2000;
+
+/** 校验 TaskProgress，返回错误列表（空表示通过）。 */
+export function validateTaskProgress(p: unknown): string[] {
+  const errs: string[] = [];
+  if (typeof p !== "object" || p === null) return ["progress: expected object"];
+  const o = p as Record<string, unknown>;
+  if (typeof o.message !== "string" || o.message.length === 0 || o.message.length > TASK_PROGRESS_MESSAGE_MAX) {
+    errs.push("progress.message: must be a non-empty string of at most 2000 chars");
+  }
+  return errs;
+}
+
 /** type=task_event 的 payload（网关向房间广播的任务状态事件）。 */
 export interface TaskEventPayload {
   task_id: string;
-  status: "dispatched" | TaskStatus | "cancelled" | "pending_approval";
+  status: "dispatched" | TaskStatus | "cancelled" | "pending_approval" | "progress" | "timed_out";
   assignee?: string;
   title?: string;
   note?: string;
+  /** status=progress 时必填。 */
+  progress?: TaskProgress;
+  /** status=progress 时为累计上报次数。 */
+  progress_count?: number;
 }
 
 /** type=approval_request 的 payload（网关→房间广播：有任务在等人工放行）。 */
@@ -129,6 +153,8 @@ export interface MessagePayload {
   task_id?: string;
   /** task 回执状态。 */
   task_status?: TaskStatus;
+  /** 进度上报：assignee→网关，仅 intent=task 时有效。帧顶层 task_id 仍必填（codec 对 intent=task 帧强制要求），须与此处 task_id 一致。 */
+  task_progress?: { task_id: string; message: string; data?: unknown };
 }
 
 /** type=stream 的 payload（增量流式帧）。 */

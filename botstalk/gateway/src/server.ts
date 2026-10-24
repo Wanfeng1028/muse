@@ -5,7 +5,7 @@ import type { ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
-import { getRoomHistory, listPresenceForRoom, listTasks, getTask, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
+import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
 import { createScheduledTask, listScheduledTasks, getScheduledTask, updateScheduledTask, deleteScheduledTask, validateScheduledTaskInput, createTriggerRule, listTriggerRules, getTriggerRule, updateTriggerRule, deleteTriggerRule, validateTriggerRuleInput } from "./workflows.js";
 import type { ScheduledTaskPatch, TriggerRulePatch } from "./workflows.js";
 import type { TaskStatus } from "./db.js";
@@ -13,7 +13,7 @@ import type { IncomingMessage } from "node:http";
 import { Hub } from "./hub.js";
 import { DoudizhuGameEngine } from "./doudizhu-game.js";
 import { WerewolfGameEngine } from "./werewolf-game.js";
-import { routeMessage, routeStream, routeApprovalDecision, setTaskApprovalMode, sweepApprovals, getPendingApprovals } from "./router.js";
+import { routeMessage, routeStream, routeApprovalDecision, setTaskApprovalMode, sweepApprovals, getPendingApprovals, setTaskTimeoutMs, sweepTaskTimeouts } from "./router.js";
 import { sweepScheduledTasks } from "./scheduler.js";
 import { checkTriggers } from "./triggers.js";
 import type { GatewayConfig } from "./config.js";
@@ -96,7 +96,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     if (handleRegistryRoutes(req, res, url, method)) return;
 
     // GET /api/rooms/:room/history
-    const TASK_STATUSES: readonly string[] = ["dispatched", "running", "done", "failed", "unsupported", "cancelled"];
+    const TASK_STATUSES: readonly string[] = ["dispatched", "running", "done", "failed", "unsupported", "cancelled", "pending_approval", "timed_out"];
     function readJsonBody(req: IncomingMessage): Promise<unknown> {
       return new Promise((resolve) => {
         const chunks: Buffer[] = [];
@@ -654,7 +654,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         return;
       }
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ task }));
+      res.end(JSON.stringify({ task, progress: getTaskProgress(db, taskId) }));
       return;
     }
 
@@ -1010,6 +1010,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     checkTriggers(hub, db, env);
   };
   setTaskApprovalMode(config.taskApprovalMode ?? "off");
+  setTaskTimeoutMs(config.taskTimeoutMs ?? 300000);
   hub.onApprovalDecision = (env) => {
     routeApprovalDecision(hub, env, db);
   };
@@ -1018,7 +1019,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     hub.handleConnection(ws);
   });
 
-  const timer = setInterval(() => { hub.sweep(); sweepApprovals(hub, db, Date.now()); sweepScheduledTasks(hub, db, Date.now()); }, ZOMBIE_SWEEP_MS);
+  const timer = setInterval(() => { hub.sweep(); sweepApprovals(hub, db, Date.now()); sweepTaskTimeouts(hub, db, Date.now()); sweepScheduledTasks(hub, db, Date.now()); }, ZOMBIE_SWEEP_MS);
   timer.unref?.();
 
   httpServer.listen(config.port);

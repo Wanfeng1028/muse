@@ -74,6 +74,26 @@ export function openDb(dataDir: string): DatabaseSync {
   db.exec(
     "CREATE INDEX IF NOT EXISTS idx_tasks_room_updated ON tasks(room, updated_at_ms DESC);",
   );
+  // 任务 deadline_ms（NULL=无超时限制）、error（超时/失败原因）、progress_count（上报次数冗余）+ 进度上报明细表。
+  {
+    const cols = db.prepare("PRAGMA table_info(tasks)").all() as unknown as Array<{ name: string }>;
+    const names = new Set(cols.map((c) => c.name));
+    if (!names.has("deadline_ms")) db.exec("ALTER TABLE tasks ADD COLUMN deadline_ms INTEGER");
+    if (!names.has("error")) db.exec("ALTER TABLE tasks ADD COLUMN error TEXT");
+    if (!names.has("progress_count")) db.exec("ALTER TABLE tasks ADD COLUMN progress_count INTEGER NOT NULL DEFAULT 0");
+  }
+  db.exec(
+    `CREATE TABLE IF NOT EXISTS task_progress_reports (
+       task_id TEXT NOT NULL,
+       seq INTEGER NOT NULL,
+       reporter TEXT NOT NULL,
+       message TEXT NOT NULL,
+       data_json TEXT,
+       created_at_ms INTEGER NOT NULL,
+       PRIMARY KEY (task_id, seq)
+     );`,
+  );
+  db.exec("CREATE INDEX IF NOT EXISTS idx_progress_task ON task_progress_reports(task_id);");
   db.exec(`
       CREATE TABLE IF NOT EXISTS rooms (
         id TEXT PRIMARY KEY,
@@ -293,7 +313,7 @@ export function getArtifact(db: Db, id: string): ArtifactRow | undefined {
   return row as unknown as ArtifactRow | undefined;
 }
 
-export type TaskStatus = "dispatched" | "running" | "done" | "failed" | "unsupported" | "cancelled" | "pending_approval";
+export type TaskStatus = "dispatched" | "running" | "done" | "failed" | "unsupported" | "cancelled" | "pending_approval" | "timed_out";
 
 export interface TaskRow {
   task_id: string;
@@ -304,22 +324,75 @@ export interface TaskRow {
   status: TaskStatus;
   created_at_ms: number;
   updated_at_ms: number;
+  /** Unix 毫秒 deadline；null 表示无超时限制。 */
+  deadline_ms: number | null;
+  /** 超时/失败原因。 */
+  error: string | null;
+  /** 进度上报累计次数。 */
+  progress_count: number;
 }
 
-/** 任务派发时登记；同一 task_id 重复派发则更新（幂等）。 */
+/** 任务派发时登记；同一 task_id 重复派发则更新（幂等）。deadline_ms 不传视为无超时限制；重派发刷新 deadline。 */
 export function upsertTaskDispatch(
   db: Db,
-  t: { task_id: string; room: string; owner: string; assignee: string | null; title: string; status: TaskStatus },
+  t: { task_id: string; room: string; owner: string; assignee: string | null; title: string; status: TaskStatus; deadline_ms?: number | null },
 ): void {
   const now = Date.now();
   const stmt = db.prepare(
-    `INSERT INTO tasks (task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO tasks (task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms, deadline_ms, error, progress_count)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(task_id) DO UPDATE SET
        room = excluded.room, owner = excluded.owner, assignee = excluded.assignee,
-       title = excluded.title, status = excluded.status, updated_at_ms = excluded.updated_at_ms`,
+       title = excluded.title, status = excluded.status, updated_at_ms = excluded.updated_at_ms,
+       deadline_ms = excluded.deadline_ms`,
   );
-  stmt.run(t.task_id, t.room, t.owner, t.assignee, t.title, t.status, now, now);
+  stmt.run(t.task_id, t.room, t.owner, t.assignee, t.title, t.status, now, now, t.deadline_ms ?? null, null, 0);
+}
+
+/** 单条进度上报记录。 */
+export interface TaskProgressReport {
+  task_id: string;
+  seq: number;
+  reporter: string;
+  message: string;
+  data_json: string | null;
+  created_at_ms: number;
+}
+
+/** 追加一条进度上报；seq 自增；同步 tasks.progress_count；返回新 seq（即累计上报次数）。 */
+export function recordTaskProgress(db: Db, task_id: string, reporter: string, message: string, dataJson: string | null): number {
+  const now = Date.now();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const r = db.prepare("SELECT COALESCE(MAX(seq), 0) AS m FROM task_progress_reports WHERE task_id = ?").get(task_id) as unknown as { m: number };
+    const seq = r.m + 1;
+    db.prepare("INSERT INTO task_progress_reports (task_id, seq, reporter, message, data_json, created_at_ms) VALUES (?, ?, ?, ?, ?, ?)").run(task_id, seq, reporter, message, dataJson, now);
+    db.prepare("UPDATE tasks SET progress_count = ?, updated_at_ms = ? WHERE task_id = ?").run(seq, now, task_id);
+    db.exec("COMMIT");
+    return seq;
+  } catch (e) {
+    try { db.exec("ROLLBACK"); } catch { /* ignore */ }
+    throw e;
+  }
+}
+
+/** 取某任务的进度上报，按 seq 升序；limit 默认 100、上限 500。 */
+export function getTaskProgress(db: Db, task_id: string, limit?: number): TaskProgressReport[] {
+  const n = Math.min(Math.max(limit ?? 100, 1), 500);
+  return db.prepare("SELECT task_id, seq, reporter, message, data_json, created_at_ms FROM task_progress_reports WHERE task_id = ? ORDER BY seq ASC LIMIT ?").all(task_id, n) as unknown as TaskProgressReport[];
+}
+
+/** 超时清扫候选：状态为 dispatched/running、有 deadline 且已过期（deadline_ms 严格小于 nowMs，对标原版 elapsed > timeout_seconds）。按 deadline 升序。 */
+export function listExpiredTasks(db: Db, nowMs: number): TaskRow[] {
+  return db.prepare(
+    "SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms, deadline_ms, error, progress_count FROM tasks WHERE status IN ('dispatched','running') AND deadline_ms IS NOT NULL AND deadline_ms < ? ORDER BY deadline_ms ASC",
+  ).all(nowMs) as unknown as TaskRow[];
+}
+
+/** 把任务标记为超时；仅当当前状态仍为 dispatched/running 时生效（防并发重复标记），返回是否实际标记。 */
+export function markTaskTimedOut(db: Db, task_id: string, error: string, nowMs: number): boolean {
+  const info = db.prepare("UPDATE tasks SET status = 'timed_out', error = ?, updated_at_ms = ? WHERE task_id = ? AND status IN ('dispatched','running')").run(error, nowMs, task_id);
+  return Number(info.changes) > 0;
 }
 
 /** 任务状态流转；不存在的 task_id 返回 false。 */
@@ -330,7 +403,7 @@ export function updateTaskStatus(db: Db, task_id: string, status: TaskStatus): b
 }
 
 export function getTask(db: Db, task_id: string): TaskRow | undefined {
-  const stmt = db.prepare("SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms FROM tasks WHERE task_id = ?");
+  const stmt = db.prepare("SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms, deadline_ms, error, progress_count FROM tasks WHERE task_id = ?");
   return stmt.get(task_id) as unknown as TaskRow | undefined;
 }
 
@@ -347,7 +420,7 @@ export function listTasks(db: Db, opts: { room?: string; status?: TaskStatus; li
   const where = conds.length > 0 ? "WHERE " + conds.join(" AND ") : "";
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const stmt = db.prepare(
-    `SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms FROM tasks ${where} ORDER BY updated_at_ms DESC, task_id ASC LIMIT ?`,
+    `SELECT task_id, room, owner, assignee, title, status, created_at_ms, updated_at_ms, deadline_ms, error, progress_count FROM tasks ${where} ORDER BY updated_at_ms DESC, task_id ASC LIMIT ?`,
   );
   return stmt.all(...args, limit) as unknown as TaskRow[];
 }

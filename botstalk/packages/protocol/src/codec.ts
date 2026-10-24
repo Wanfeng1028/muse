@@ -17,6 +17,7 @@ import type {
   ApprovalRequestPayload,
   ApprovalDecisionPayload,
 } from "./types.js";
+import { validateTaskProgress, TASK_PROGRESS_MESSAGE_MAX } from "./types.js";
 import { PROTOCOL_VERSION } from "./constants.js";
 
 const FRAME_TYPES: readonly FrameType[] = [
@@ -228,10 +229,18 @@ function validateTaskEventPayload(payload: unknown): string[] {
   const errors: string[] = [];
   if (!isPlainObject(payload)) { errors.push("payload: expected object"); return errors; }
   if (!isNonEmptyString(payload["task_id"])) errors.push("payload.task_id: must be a non-empty string");
-  const ok = ["dispatched","running","done","failed","unsupported","cancelled","pending_approval"];
+  const ok = ["dispatched","running","done","failed","unsupported","cancelled","pending_approval","progress","timed_out"];
   if (typeof payload["status"] !== "string" || !ok.includes(payload["status"])) errors.push("payload.status: invalid task event status");
   for (const k of ["assignee","title","note"]) {
     if (payload[k] !== undefined && typeof payload[k] !== "string") errors.push("payload." + k + ": must be a string");
+  }
+  if (payload["status"] === "progress") {
+    if (payload["progress"] === undefined) errors.push("payload.progress: required when status is 'progress'");
+    else errors.push(...validateTaskProgress(payload["progress"]));
+    const pc = payload["progress_count"];
+    if (pc !== undefined && (!Number.isInteger(pc) || (pc as number) < 0)) errors.push("payload.progress_count: must be a non-negative integer");
+  } else if (payload["progress"] !== undefined) {
+    errors.push("payload.progress: only allowed when status is 'progress'");
   }
   return errors;
 }
@@ -295,6 +304,17 @@ function validateMessagePayload(payload: unknown): string[] {
       errors.push(
         "payload.task_status: must be 'running' | 'done' | 'failed' | 'unsupported'",
       );
+    }
+  }
+
+  const tp = payload["task_progress"];
+  if (tp !== undefined) {
+    if (!isPlainObject(tp)) {
+      errors.push("payload.task_progress: expected object");
+    } else {
+      if (!isNonEmptyString(tp["task_id"])) errors.push("payload.task_progress.task_id: must be a non-empty string");
+      const msg = tp["message"];
+      if (typeof msg !== "string" || msg.length === 0 || msg.length > TASK_PROGRESS_MESSAGE_MAX) errors.push("payload.task_progress.message: must be a non-empty string of at most 2000 chars");
     }
   }
 

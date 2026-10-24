@@ -14,6 +14,8 @@ export interface GatewayConfig {
   gameBroadcastThrottleMs: number;
   /** 任务审批门模式："off" 关闭（默认，派发直达）；"all" 全部任务先经人工放行。缺省视为 "off"。 */
   taskApprovalMode?: "off" | "all";
+  /** 任务默认超时毫秒数：派发时 deadline=now+该值；对标原版默认 300 秒。环境变量 BOTSTALK_TASK_TIMEOUT_MS，范围 [1000, 86400000]。缺省 300000。 */
+  taskTimeoutMs?: number;
 }
 
 
@@ -23,6 +25,7 @@ const DEFAULT_DATA_DIR = "./data";
 const DEFAULT_ROOM_MAX_MEMBERS_WORKROOM = 50;
 const DEFAULT_ROOM_MAX_MEMBERS_PLAYROOM = 200;
 const DEFAULT_GAME_BROADCAST_THROTTLE_MS = 500;
+const DEFAULT_TASK_TIMEOUT_MS = 300000;
 
 
 
@@ -103,11 +106,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, pkgDir?: string
     0,
     60000,
   );
+  const taskTimeoutMs = readInt(
+    env,
+    "BOTSTALK_TASK_TIMEOUT_MS",
+    DEFAULT_TASK_TIMEOUT_MS,
+    1000,
+    86400000,
+  );
 
   return {
     port,
     dataDir,
     publicDir,
+    taskTimeoutMs,
     roomMaxMembersWorkroom,
     roomMaxMembersPlayroom,
     gameBroadcastThrottleMs,

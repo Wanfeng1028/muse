@@ -3,7 +3,7 @@ import type { ApprovalDecisionPayload, ApprovalRequestPayload, Envelope, Message
 import { randomUUID } from "node:crypto";
 import type { Hub } from "./hub.js";
 import type { Db } from "./db.js";
-import { saveMessage, upsertTaskDispatch, updateTaskStatus, getRoomType } from "./db.js";
+import { saveMessage, upsertTaskDispatch, updateTaskStatus, getRoomType, getTask, recordTaskProgress, listExpiredTasks, markTaskTimedOut } from "./db.js";
 import { PendingApprovals } from "./approvals.js";
 
 let approvalMode: "off" | "all" = "off";
@@ -12,6 +12,13 @@ const pendingApprovals = new PendingApprovals();
 /** 由 server 启动时按配置注入。默认 "off"：任务直达派发，行为与无审批门时一致。 */
 export function setTaskApprovalMode(mode: "off" | "all"): void {
   approvalMode = mode;
+}
+
+/** 任务默认超时毫秒数（对标原版 300 秒）；由 server 按配置注入，默认 300000。 */
+let taskTimeoutMs = 300000;
+/** 由 server 启动时按配置注入。 */
+export function setTaskTimeoutMs(ms: number): void {
+  taskTimeoutMs = ms;
 }
 
 export function getPendingApprovals(): PendingApprovals {
@@ -86,6 +93,12 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
     return;
   }
 
+  // 进度上报（task_progress 已设置）：仅 assignee 可上报 → 记台账 → 广播 task_event(progress) → 回执上报者
+  if (intent === "task" && p.task_progress !== undefined) {
+    handleTaskProgress(hub, env, db);
+    return;
+  }
+
   if (intent === "task") {
     const online = hub.getOnlineAdapters();
     let candidates = online.filter((id) => {
@@ -148,6 +161,7 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
         assignee: pick,
         title,
         status: "dispatched",
+        deadline_ms: Date.now() + taskTimeoutMs,
       });
       hub.broadcastTaskEvent(env.room, { task_id: taskId, status: "dispatched", assignee: pick, title });
       hub.sendTo(pick, env);
@@ -220,6 +234,7 @@ export function routeApprovalDecision(hub: Hub, env: Envelope<ApprovalDecisionPa
       assignee: pending.assignee,
       title: pending.title,
       status: "dispatched",
+      deadline_ms: Date.now() + taskTimeoutMs,
     });
     hub.broadcastTaskEvent(pending.room, { task_id: pending.task_id, status: "dispatched", assignee: pending.assignee, title: pending.title });
     hub.sendTo(pending.assignee, pending.env);
@@ -285,3 +300,58 @@ export function sweepApprovals(hub: Hub, db: Db, now: number): void {
   }
 }
 // 自查：红线 1-5 逐条通过
+
+/** assignee 上报任务进度。对标原版 task.report：仅 assignee 可上报；任务须为 dispatched/running；dispatched 首次上报转 running；上报记台账并广播 task_event(progress) 通知房间（含 owner）。 */
+export function handleTaskProgress(hub: Hub, env: Envelope<MessagePayload>, db: Db): void {
+  const tp = env.payload.task_progress!;
+  const taskId = tp.task_id;
+  // 帧级 task_id（codec 对 intent=task 帧强制要求）与 task_progress.task_id 不一致时拒绝，避免串任务。
+  if (env.payload.task_id !== undefined && env.payload.task_id !== taskId) {
+    if (hub.getConn(env.sender)) {
+      hub.sendTo(env.sender, makeEnvelope<MessagePayload>("message", "gateway", env.room, hub.nextSeq(), 0, {
+        msg_id: randomUUID(), text: "TASK_PROGRESS_REJECTED: task_id mismatch", mentions: [], intent: "task", task_id: taskId,
+      }));
+    }
+    return;
+  }
+  const reply = (text: string): void => {
+    if (hub.getConn(env.sender)) {
+      hub.sendTo(env.sender, makeEnvelope<MessagePayload>("message", "gateway", env.room, hub.nextSeq(), 0, {
+        msg_id: randomUUID(), text, mentions: [], intent: "task", task_id: taskId,
+      }));
+    }
+  };
+  const task = getTask(db, taskId);
+  if (task === undefined) { reply("TASK_PROGRESS_NOT_FOUND: task " + taskId + " not found"); return; }
+  if (task.assignee !== env.sender) { reply("TASK_PROGRESS_UNAUTHORIZED: only assignee can report progress"); return; }
+  if (task.status !== "dispatched" && task.status !== "running") { reply("TASK_PROGRESS_REJECTED: task status is " + task.status); return; }
+  if (tp.message.length === 0) { reply("TASK_PROGRESS_REJECTED: empty progress message"); return; }
+  if (task.status === "dispatched") updateTaskStatus(db, taskId, "running");
+  const dataJson = tp.data === undefined ? null : JSON.stringify(tp.data);
+  const seq = recordTaskProgress(db, taskId, env.sender, tp.message, dataJson);
+  hub.broadcastTaskEvent(env.room, {
+    task_id: taskId, status: "progress", assignee: env.sender, title: task.title,
+    progress: { message: tp.message, data: tp.data }, progress_count: seq,
+  });
+  reply("TASK_PROGRESS_OK: progress #" + seq + " recorded");
+}
+
+/** 超时清扫：把 dispatched/running 中已过期的任务标 timed_out，广播 task_event(timed_out)，并通知 owner 与 assignee 双方（对标原版 task.notification.timeout 双通知）。 */
+export function sweepTaskTimeouts(hub: Hub, db: Db, nowMs: number): void {
+  for (const task of listExpiredTasks(db, nowMs)) {
+    const marked = markTaskTimedOut(db, task.task_id, "Task timed out", nowMs);
+    if (!marked) continue;
+    hub.broadcastTaskEvent(task.room, {
+      task_id: task.task_id, status: "timed_out", assignee: task.assignee ?? undefined,
+      title: task.title, note: "task timed out",
+    });
+    for (const target of [task.owner, task.assignee]) {
+      if (target !== null && hub.getConn(target)) {
+        hub.sendTo(target, makeEnvelope<MessagePayload>("message", "gateway", task.room, hub.nextSeq(), 0, {
+          msg_id: randomUUID(), text: "TASK_TIMEOUT: " + task.title, mentions: [],
+          intent: "task", task_id: task.task_id,
+        }));
+      }
+    }
+  }
+}

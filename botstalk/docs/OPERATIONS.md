@@ -89,6 +89,7 @@ npm run dev --workspace=@botstalk/web
 | `ROOM_MAX_MEMBERS_PLAYROOM` | `200` | 娱乐厅房间成员上限。非法值网关启动直接报错退出。 |
 | `GAME_BROADCAST_THROTTLE_MS` | `500` | 小游戏广播节流窗口（毫秒）。非法值网关启动直接报错退出。 |
 | `TASK_APPROVAL_MODE` | `off` | 人工审批模式：`off` 直接派发；`all` 时所有任务先挂起待人工放行（Web 审批中心操作，TTL 5 分钟，过期自动取消）。非法值网关启动直接报错退出。 |
+| `BOTSTALK_TASK_TIMEOUT_MS` | `300000` | 任务默认超时毫秒数：派发时 deadline=now+该值；过期后网关超时清扫标 timed_out 并通知 owner 与 assignee。范围 [1000, 86400000]，非法值网关启动直接报错退出。 |
 
 ## 4. 备份与恢复
 
