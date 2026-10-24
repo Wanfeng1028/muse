@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
-from flask import Blueprint, current_app, redirect, render_template, request, session
+from flask import Blueprint, current_app, make_response, redirect, render_template, request, session
 from werkzeug.security import check_password_hash
 
 SESSION_KEY = "feedflow_authed"
@@ -63,14 +63,29 @@ def login():
 
 @auth_bp.post("/login")
 def login_post():
-    """提交密码：正确则建会话并跳回 next；错误则重渲表单并提示（状态 200，不用 401）。"""
+    """提交密码：正确则建会话并跳回 next；错误则重渲表单并提示（未达锁定阈值时状态 200；锁定中或达到阈值时状态 429 并带 Retry-After）。"""
     cfg = current_app.config["FEEDFLOW"]
     if not is_auth_enabled(cfg):
         return redirect("/")
     next_value = safe_next(request.form.get("next", "/"))
+    extensions = getattr(current_app, "extensions", None) or {}
+    lockout = extensions.get("FEEDFLOW_LOGIN_LOCKOUT")
+    key = request.remote_addr or "unknown"
+    if lockout is not None and lockout.is_locked(key):
+        resp = make_response(render_template("login.html", error="尝试次数过多，请稍后再试", next_value=next_value), 429)
+        resp.headers["Retry-After"] = str(lockout.retry_after(key))
+        return resp
     if verify_password(cfg, request.form.get("password", "")):
+        if lockout is not None:
+            lockout.record_success(key)
         mark_logged_in()
         return redirect(next_value)
+    if lockout is not None:
+        locked, _ = lockout.record_failure(key)
+        if locked:
+            resp = make_response(render_template("login.html", error="尝试次数过多，请稍后再试", next_value=next_value), 429)
+            resp.headers["Retry-After"] = str(lockout.retry_after(key))
+            return resp
     return render_template("login.html", error="密码不正确", next_value=next_value)
 
 

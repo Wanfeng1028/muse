@@ -22,6 +22,9 @@ DEFAULT_RATE_LIMIT_RPS = 1.0
 DEFAULT_RATE_LIMIT_BURST = 60
 DEFAULT_RATE_LIMIT_ENABLED = True
 DEFAULT_FEED_DEAD_AFTER = 10
+DEFAULT_AUTH_MAX_ATTEMPTS = 5
+DEFAULT_AUTH_LOCK_MINUTES = 15
+DEFAULT_AUTH_WINDOW_MINUTES = 15
 
 
 
@@ -126,6 +129,16 @@ def load() -> dict:
     if feed_dead_after < 1:
         feed_dead_after = DEFAULT_FEED_DEAD_AFTER
 
+    auth_max_attempts = _parse_int(
+        os.environ.get("FEEDFLOW_AUTH_MAX_ATTEMPTS"), DEFAULT_AUTH_MAX_ATTEMPTS
+    )
+    auth_lock_minutes = _parse_int(
+        os.environ.get("FEEDFLOW_AUTH_LOCK_MINUTES"), DEFAULT_AUTH_LOCK_MINUTES
+    )
+    auth_window_minutes = _parse_int(
+        os.environ.get("FEEDFLOW_AUTH_WINDOW_MINUTES"), DEFAULT_AUTH_WINDOW_MINUTES
+    )
+
     auth_password_hash = os.environ.get("FEEDFLOW_AUTH_PASSWORD_HASH", "") or ""
     if not auth_password_hash:
         _plain = os.environ.get("FEEDFLOW_AUTH_PASSWORD", "") or ""
@@ -153,6 +166,9 @@ def load() -> dict:
     "rate_limit_burst": rate_limit_burst,
     "rate_limit_enabled": rate_limit_enabled,
     "feed_dead_after": feed_dead_after,
+    "auth_max_attempts": auth_max_attempts,
+    "auth_lock_seconds": auth_lock_minutes * 60,
+    "auth_window_seconds": auth_window_minutes * 60,
     "auth_password_hash": auth_password_hash,
     "secret_key": secret_key,
 }
@@ -187,6 +203,9 @@ def validate(cfg: dict) -> None:
     cfg.setdefault("rate_limit_burst", DEFAULT_RATE_LIMIT_BURST)
     cfg.setdefault("rate_limit_enabled", DEFAULT_RATE_LIMIT_ENABLED)
     cfg.setdefault("feed_dead_after", DEFAULT_FEED_DEAD_AFTER)
+    cfg.setdefault("auth_max_attempts", DEFAULT_AUTH_MAX_ATTEMPTS)
+    cfg.setdefault("auth_lock_seconds", DEFAULT_AUTH_LOCK_MINUTES * 60)
+    cfg.setdefault("auth_window_seconds", DEFAULT_AUTH_WINDOW_MINUTES * 60)
     cfg.setdefault("auth_password_hash", "")
     cfg.setdefault("secret_key", "")
 
@@ -201,6 +220,30 @@ def validate(cfg: dict) -> None:
         or feed_dead_after < 1
     ):
         _fail(f"FEEDFLOW_FEED_DEAD_AFTER 必须是大于等于 1 的整数，当前为 {feed_dead_after!r}")
+
+    auth_max_attempts = cfg.get("auth_max_attempts")
+    if (
+        not isinstance(auth_max_attempts, int)
+        or isinstance(auth_max_attempts, bool)
+        or auth_max_attempts < 1
+    ):
+        _fail(f"FEEDFLOW_AUTH_MAX_ATTEMPTS 必须大于等于 1 的整数，当前为 {auth_max_attempts!r}")
+
+    auth_lock_seconds = cfg.get("auth_lock_seconds")
+    if (
+        not isinstance(auth_lock_seconds, int)
+        or isinstance(auth_lock_seconds, bool)
+        or auth_lock_seconds < 60
+    ):
+        _fail(f"FEEDFLOW_AUTH_LOCK_MINUTES 对应 auth_lock_seconds 必须大于等于 60 的整数，当前为 {auth_lock_seconds!r}")
+
+    auth_window_seconds = cfg.get("auth_window_seconds")
+    if (
+        not isinstance(auth_window_seconds, int)
+        or isinstance(auth_window_seconds, bool)
+        or auth_window_seconds < 60
+    ):
+        _fail(f"FEEDFLOW_AUTH_WINDOW_MINUTES 对应 auth_window_seconds 必须大于等于 60 的整数，当前为 {auth_window_seconds!r}")
 
     # 校验 port 范围
     port = cfg.get("port")

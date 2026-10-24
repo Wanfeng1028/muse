@@ -246,4 +246,6 @@ python -c "from werkzeug.security import generate_password_hash; print(generate_
 
 门禁范围：全部 Web 页与 `/api/*` 需登录会话；放行 `/healthz`、`/metrics`、`/login`、`/logout`、`/static/*`、`/fever/*`。Fever 仍用自己的 api_key 鉴权，不受密码门影响；`feed.xml` 走 Web 页逻辑，需登录会话，RSS 阅读器请走 Fever。登录页 `/login`、登出 `/logout`（GET/POST 均可）；登录失败重渲并提示“密码不正确”；next 只接受站内相对路径，站外地址一律跳 `/`。
 
-已知限制：单用户单密码，无多用户、无登录失败锁定（防爆破只靠 HTTP 限流默认 1 请求/秒 + 60 突发）；登出支持 GET，登出 CSRF 影响仅限本人会话；会话 cookie 未设 Secure，反代后如需 HTTPS-only 请在代理层设置。
+登录失败锁定（v1.11.0 起）：密码门开启后，按客户端 IP 内存计数，默认窗口 15 分钟内连续失败 5 次即锁定 15 分钟；达到阈值的当次失败与锁定期间的提交（含正确密码）回 429，页面提示"尝试次数过多，请稍后再试"并带 Retry-After 头；成功登录清零该 IP 计数；未达阈值的失败仍提示"密码不正确"。可调环境变量：FEEDFLOW_AUTH_MAX_ATTEMPTS（默认 5）、FEEDFLOW_AUTH_LOCK_MINUTES（默认 15）、FEEDFLOW_AUTH_WINDOW_MINUTES（默认 15），非法值启动即退出。
+
+已知限制：单用户单密码，无多用户；锁定计数只存内存，进程重启清零，单进程有效；反代后所有请求同 IP 时共享计数（与 HTTP 限流同款限制）；登出支持 GET，登出 CSRF 影响仅限本人会话；会话 cookie 未设 Secure，反代后如需 HTTPS-only 请在代理层设置。

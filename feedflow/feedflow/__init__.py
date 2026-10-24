@@ -56,6 +56,15 @@ def create_app(cfg=None) -> Flask:
     if cfg.get("secret_key"):
         app.secret_key = cfg["secret_key"]
 
+    # 登录失败锁定器（内存计数，每应用实例独立；测试用 create_app 各自独立不串计数）。
+    from .login_lockout import LoginLockout
+
+    app.extensions["FEEDFLOW_LOGIN_LOCKOUT"] = LoginLockout(
+        max_attempts=int(cfg.get("auth_max_attempts", 5)),
+        window_seconds=int(cfg.get("auth_window_seconds", 900)),
+        lock_seconds=int(cfg.get("auth_lock_seconds", 900)),
+    )
+
     # HTTP 层 IP 限流器（内存令牌桶），create_app 内只创建一次，闭包引用。
     from .ratelimit import RateLimiter
 
