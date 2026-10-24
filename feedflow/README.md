@@ -33,6 +33,10 @@ OPML：导入导出订阅清单。
 
 ![为什么排前面](docs/screenshots/reader-score.png)
 
+设了密码后先过登录页，默认不设密码、行为不变。
+
+![登录页](docs/screenshots/login.png)
+
 ## 重要性排序与今日必读
 
 订阅一多，时间线根本刷不完，最后往往变成"收藏夹吃灰"。今日必读每天只挑最重要的 N 篇给你，默认 20 篇，想多看几篇就去兴趣设置里改数字。
@@ -148,6 +152,7 @@ OPML：导入导出订阅清单。
 - OPML 导入导出，从别的阅读器搬过来不折腾。
 - 支持 ETag 和 Last-Modified，源没更新就不重复拉。
 - 后台调度器每 60 秒检查一次到期源。
+- 可选单用户密码门：默认关闭；设 FEEDFLOW_AUTH_PASSWORD_HASH（推荐）或 FEEDFLOW_AUTH_PASSWORD 即开启，开启时必须同时设 FEEDFLOW_SECRET_KEY；探针与 Fever 不受影响，详见 OPERATIONS.md 第 11 节。
 
 ## 快速开始
 

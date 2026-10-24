@@ -230,4 +230,20 @@ docker compose logs -f
 - 先手动点「抓取」验证一下源到底能不能通，再决定要不要点「重新激活」。
 - 阈值别设太小，波动大的源容易误杀。
 
+## 11. 可选单用户密码门
 
+默认关闭：不设 `FEEDFLOW_AUTH_PASSWORD` / `FEEDFLOW_AUTH_PASSWORD_HASH` 时，行为与旧版完全一致。
+
+开启方法（二选一，推荐哈希）：
+
+```bash
+python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('你的密码'))"
+```
+
+把输出的哈希填入 `FEEDFLOW_AUTH_PASSWORD_HASH`；或直接设 `FEEDFLOW_AUTH_PASSWORD` 明文，服务启动时当场哈希进内存，不落盘、不进配置字典。
+
+开启时必须同时设 `FEEDFLOW_SECRET_KEY`（一串随机长字符串，会话签名用），否则启动即 fail-fast 退出并提示原因。
+
+门禁范围：全部 Web 页与 `/api/*` 需登录会话；放行 `/healthz`、`/metrics`、`/login`、`/logout`、`/static/*`、`/fever/*`。Fever 仍用自己的 api_key 鉴权，不受密码门影响；`feed.xml` 走 Web 页逻辑，需登录会话，RSS 阅读器请走 Fever。登录页 `/login`、登出 `/logout`（GET/POST 均可）；登录失败重渲并提示“密码不正确”；next 只接受站内相对路径，站外地址一律跳 `/`。
+
+已知限制：单用户单密码，无多用户、无登录失败锁定（防爆破只靠 HTTP 限流默认 1 请求/秒 + 60 突发）；登出支持 GET，登出 CSRF 影响仅限本人会话；会话 cookie 未设 Secure，反代后如需 HTTPS-only 请在代理层设置。

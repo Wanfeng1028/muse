@@ -13,8 +13,9 @@ import math
 import os
 import uuid
 
-from flask import Flask, Response, g, request
+from flask import Flask, Response, g, jsonify, redirect, request, url_for
 
+from . import auth as _auth
 from . import config as _config
 from . import db as _db
 from . import scheduler as _scheduler
@@ -52,6 +53,9 @@ def create_app(cfg=None) -> Flask:
     # 将配置挂到 app.config，供蓝图内通过 current_app 读取
     app.config["FEEDFLOW"] = cfg
 
+    if cfg.get("secret_key"):
+        app.secret_key = cfg["secret_key"]
+
     # HTTP 层 IP 限流器（内存令牌桶），create_app 内只创建一次，闭包引用。
     from .ratelimit import RateLimiter
 
@@ -68,6 +72,9 @@ def create_app(cfg=None) -> Flask:
     app.register_blueprint(web_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(fever_bp)
+    from .auth import auth_bp
+
+    app.register_blueprint(auth_bp)
 
     @app.before_request
     def _bind_request_id() -> None:
@@ -75,6 +82,22 @@ def create_app(cfg=None) -> Flask:
         request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
         set_request_id(request_id)
         g.request_id = request_id
+
+    @app.before_request
+    def _check_auth_gate():
+        """密码门：未开启直接放行；放行 /healthz、/metrics、/login、/logout、/static/*、/fever/*；其余未登录时 /api/* 回 401 JSON，其他页重定向到登录页。"""
+        cfg = app.config["FEEDFLOW"]
+        if not _auth.is_auth_enabled(cfg):
+            return None
+        if request.path in ("/healthz", "/metrics", "/login", "/logout"):
+            return None
+        if request.path.startswith(("/static/", "/fever/")):
+            return None
+        if _auth.is_logged_in():
+            return None
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "需要登录"}), 401
+        return redirect(url_for("auth.login", next=request.path))
 
     @app.before_request
     def _check_rate_limit():

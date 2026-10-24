@@ -1,6 +1,16 @@
 
 # 更新日志
 
+## v1.10.0 — 2026-10-24
+
+### 新增
+- 可选单用户密码门：默认关闭，不设密码相关环境变量时行为与旧版完全一致；设 `FEEDFLOW_AUTH_PASSWORD_HASH`（推荐，werkzeug 哈希）或 `FEEDFLOW_AUTH_PASSWORD`（启动时当场哈希，不落盘）即开启，开启时必须同时设 `FEEDFLOW_SECRET_KEY`，否则启动 fail-fast 退出。门禁覆盖全部 Web 页与 `/api/*`（登录会话），放行 `/healthz`、`/metrics`、`/login`、`/logout`、`/static/*`、`/fever/*`；Fever 仍用自己的 api_key 鉴权；`feed.xml` 需登录会话，RSS 阅读器请走 Fever。登录失败重渲提示“密码不正确”；next 只接受站内相对路径。
+- 登录页（`/login`）与顶栏退出入口（登录后显示）；登出 `/logout`（GET/POST 均可）。
+- 测试：`tests/test_auth.py` 8 例（默认关闭行为、门禁 401/302、探针放行、登录登出全流程、next 站外跳转拦截、配置 fail-fast）。
+
+### 已知限制
+- 单用户单密码，无多用户、无登录失败锁定（防爆破只靠 HTTP 限流）；登出支持 GET；会话 cookie 未设 Secure。
+
 ## v1.9.1 — 2026-10-24
 
 ### 技术债清理

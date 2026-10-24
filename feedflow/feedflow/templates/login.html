@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}登录 · 信流 FeedFlow{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="panel-title">登录后才能看你的订阅</div>
+  <p>这是你自己的阅读器，设了密码就要先登录。</p>
+  <form method="post" action="{{ url_for('auth.login') }}">
+    <input type="hidden" name="next" value="{{ next_value }}">
+    <label for="password">密码</label>
+    <input id="password" name="password" type="password" required autocomplete="current-password">
+    <button type="submit" class="btn primary">登录</button>
+  </form>
+  {% if error %}
+  <p class="empty">{{ error }}</p>
+  {% endif %}
+</div>
+{% endblock %}

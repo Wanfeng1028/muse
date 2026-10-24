@@ -126,6 +126,15 @@ def load() -> dict:
     if feed_dead_after < 1:
         feed_dead_after = DEFAULT_FEED_DEAD_AFTER
 
+    auth_password_hash = os.environ.get("FEEDFLOW_AUTH_PASSWORD_HASH", "") or ""
+    if not auth_password_hash:
+        _plain = os.environ.get("FEEDFLOW_AUTH_PASSWORD", "") or ""
+        if _plain:
+            from werkzeug.security import generate_password_hash
+
+            auth_password_hash = generate_password_hash(_plain)
+    secret_key = os.environ.get("FEEDFLOW_SECRET_KEY", "") or ""
+
     return {
 
         "db_path": str(db_path),
@@ -144,6 +153,8 @@ def load() -> dict:
     "rate_limit_burst": rate_limit_burst,
     "rate_limit_enabled": rate_limit_enabled,
     "feed_dead_after": feed_dead_after,
+    "auth_password_hash": auth_password_hash,
+    "secret_key": secret_key,
 }
 
 
@@ -176,6 +187,11 @@ def validate(cfg: dict) -> None:
     cfg.setdefault("rate_limit_burst", DEFAULT_RATE_LIMIT_BURST)
     cfg.setdefault("rate_limit_enabled", DEFAULT_RATE_LIMIT_ENABLED)
     cfg.setdefault("feed_dead_after", DEFAULT_FEED_DEAD_AFTER)
+    cfg.setdefault("auth_password_hash", "")
+    cfg.setdefault("secret_key", "")
+
+    if cfg.get("auth_password_hash") and not cfg.get("secret_key"):
+        _fail("开启密码门时必须同时设置 FEEDFLOW_SECRET_KEY，否则会话无法签名")
 
     # 校验死源阈值
     feed_dead_after = cfg.get("feed_dead_after")
