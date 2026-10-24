@@ -10,6 +10,8 @@
 - [ ] 未通过：未做故障演练（杀进程/断网）
 - [ ] 未通过：未做真实负载压测
 - [ ] 未通过：v1.11.0 合入时全量套件红（tests/mig006_expiry_deep.rs 11 例：密码策略收紧后旧测试弱密码 pw-alice 注册返回 400 而非 201）；本轮已机械修复（7 处 pw-alice→pw-alice9）并重跑验证通过
+- [ ] 未通过：v1.11.0 合入时另有 4 例迁移 fixture 失败（tests/mig006_expiry_deep.rs A 组：手写 legacy-005 fixture 只建了 shares 表，真实 005 时代库已有 users 表，008 的 ALTER TABLE users 报 no such table；属 fixture 未随迁移注册表同步，非产品迁移 bug）；本轮已修复（fixture 补建 users 表最小列集，a2 断言 7→8，a1 加 008 断言）并重跑验证通过
+- [ ] 未通过：v1.11.0 合入时另有 2 例迁移版本硬编码断言失败（tests/migrate_deep.rs 两处断言写死"共 7 个版本"，008 加入后应为 8，上一轮只改了 failure_injection.rs 漏了此处）；本轮已改为从 MIGRATIONS 注册表派生并重跑验证通过
 
 ## 2. 安全
 
@@ -68,3 +70,4 @@
 - E2E为HTTP集成测试，无浏览器端到端：未排期
 - SIGTERM排空与就绪探针沿用既有实现，未验证：未排期
 - tests/mig006_expiry_deep.rs 11 例失败（v1.11.0 密码策略回归）：本轮已修复（测试密码合规化为 pw-alice9），重跑 11/11 通过
+- tests/mig006_expiry_deep.rs A 组 4 例 + tests/migrate_deep.rs 2 例（迁移 fixture/断言随版本漂移）：本轮已修复（fixture 同步/注册表派生），重跑验证通过
