@@ -5,6 +5,20 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.14.0] - 2026-10-25
+
+### 新增
+
+- `store.BackfillBurnedAt()`：在定时清理每轮删除前先执行，回填口径为 `burn = 1 AND enabled = 0 AND burned_at IS NULL`；回填值取该链最后一次访问时间，若无访问记录则回退 `updated_at`；回填失败记日志并跳过本轮删除（fail-closed），回填成功记一条回填日志；删除仍按保留期 cutoff 执行，不会立即删除刚回填的行。由此关闭自 v1.5 挂账的已知缺口：v1.5 之前销毁的 burn 链缺少 burned_at，导致定时清理永远跳过它们。
+
+### 测试
+- 新增 `internal/store/backfill_test.go`（5 例）：
+- `TestBackfillBurnedAtUsesLastVisit`：回填返回 1，BurnedAt 等于较晚的访问时间 t2，再调一次返回 0。
+- `TestBackfillBurnedAtFallsBackToUpdatedAt`：回填返回 1，BurnedAt 非空（只断言非空，不声称等于 updated_at）。
+- `TestBackfillBurnedAtSkipsEnabledBurnLink`：回填返回 0，BurnedAt 仍为 nil。
+- `TestBackfillBurnedAtSkipsNonBurnLink`：回填返回 0。
+- `TestBackfillBurnedAtKeepsExistingAndIdempotent`：已有 burned_at 的行回填返回 0 且 BurnedAt 不变，二次调用返回 0。
+
 ## [v1.13.1] - 2026-10-24
 
 ### 安全
@@ -144,7 +158,7 @@
 
 ### 已知缺口
 
-- v1.5 之前销毁的 burn 链没有 `burned_at`，定时清理仍跳过它们（v1.5 起已知）。
+- ~~v1.5 之前销毁的 burn 链没有 `burned_at`，定时清理仍跳过它们（v1.5 起已知）。~~（v1.14.0 已关闭：定时清理每轮先回填 burned_at，历史行进入正常保留期口径）
 - PATCH 把 burn 设为 false 时若该链 `purge=true` 会 400，需先把 purge 设 false（严格校验，有意为之）。
 
 ## [v1.6.0] - 2026-10-16
@@ -178,7 +192,7 @@
 
 ### 已知缺口
 
-- v1.5 之前销毁的 burn 链没有 `burned_at`，定时清理跳过它们；如需清理请手动删除或等后续版本补回填脚本。
+- ~~v1.5 之前销毁的 burn 链没有 `burned_at`，定时清理跳过它们；如需清理请手动删除或等后续版本补回填脚本。~~（v1.14.0 已关闭：定时清理每轮先回填 burned_at，历史行进入正常保留期口径）
 - OPERATIONS.md 5.2 指标列表历史欠账：`linkshort_burn_links_purged_total`（v1.3）、`linkshort_password_attempts_total`（v1.4）之前漏记，本轮仅补记 v1.5 新增指标。
 
 ## [v1.4.0] - 2026-10-16

@@ -211,7 +211,10 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 
 ### 3.7 定时清理已销毁 burn 链（v1.5）
 
-后台 goroutine 按 `LINKSHORT_PURGE_INTERVAL` 轮询，删除 `burned_at` 早于"现在 − `LINKSHORT_PURGE_RETENTION_DAYS` 天"的已销毁 burn 链。`burned_at` 为 NULL 的历史行（v1.5 之前销毁的）跳过不删；visits 通过外键级联清除。
+后台 goroutine 按 `LINKSHORT_PURGE_INTERVAL` 轮询，删除 `burned_at` 早于"现在 − `LINKSHORT_PURGE_RETENTION_DAYS` 天"的已销毁 burn 链。`burned_at` 为 NULL 的历史行（v1.5 之前销毁的）在 v1.14.0 之前跳过不删，v1.14.0 起先回填再按保留期删（见下）；visits 通过外键级联清除。
+
+自 v1.14.0 起，每轮定时清理在执行删除前会先回填历史行的 burned_at；历史行回填后即进入正常保留期口径。
+排障时在日志中搜索 [purge] 可见回填日志；若回填失败，本轮删除会被跳过。
 
 - 数据影响：被清理的链接 clicks 会从总览统计里消失（与 v1.3 的立即 purge 一致）。审计需求强就把保留天数设大（如 `365`），不要设 `0`。
 - 排障：日志里搜 `[purge]` 看每轮清理结果；`linkshort_links_purged_total` 持续为 0 先查 `GET /api/meta` 的 `purge_interval` / `purge_retention_days` 是否符合预期，再看是否有 burn 链真的到了保留期。

@@ -17,6 +17,15 @@ func Start(ctx context.Context, st *store.Store, cfg *config.Config) {
 	log.Printf("[purge] 定时清理已启动：interval=%s，retention=%dd，目标=已销毁的 burn 短链 + 过期的时间链", cfg.PurgeInterval, cfg.PurgeRetentionDays)
 
 	sweep := func() {
+		nb, err := st.BackfillBurnedAt()
+		if err != nil {
+			log.Printf("[purge] 回填失败：%v", err)
+			return
+		}
+		if nb > 0 {
+			log.Printf("[purge] 回填完成：为 %d 条已销毁 burn 短链补齐 burned_at", nb)
+		}
+
 		cutoff := time.Now().Add(-retention)
 		n, err := st.PurgeExpiredBurned(cutoff)
 		if err != nil {
