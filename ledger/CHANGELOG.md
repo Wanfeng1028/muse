@@ -2,7 +2,21 @@
 
 本项目更新日志遵循 Keep a Changelog 风格。
 
+## v2.12.0 - 2026-10-24
+
+### 新增
+
+- 真实负载验证：新增 scripts/load_test.py——确定性仿真账单生成器（24 个月、约 110 笔/月，商户池覆盖餐饮/购物/交通/日用/医疗/工资/转账，种子 20261024 可复现，BOM+UTF-8 仿真真实导出）+ 真实 HTTP 全链路压测 harness（子进程起 uvicorn，逐月上传→确认计时、自动匹配率、去重探针、并发探针、内存与库大小、阈值判定、JSON 报告）。关闭 v2.11.1 对照报告"真实负载验证：待执行"项。
+- 新增 tests/test_load_statement.py（CI 版）：两月上传确认、重传去重、建规则后自动匹配率≥0.5、命中正确性抽查、确认耗时 <60s 共 5 例。
+- 新增 docs/LOAD_TEST.md 方法论文档；make load-test / make load-test-quick 快捷目标。
+
+### 测试
+
+- pytest 全量 1393 通过、1 跳过（2 失败为干净树既存 wlfl_t14/t15，非本轮引入）；新增 tests/test_load_statement.py 4 例全过；ruff check + format 全洁。
+- 真实负载实测结论见 docs/LOAD_TEST_REPORT.md：24 个月 2664 笔走真实 HTTP，上传 5.14s / 确认 15.14s，自动匹配率 85.5%，去重精确命中，3 路并发上传零 5xx，阈值判定通过。
+
 ## v2.11.1 - 2026-10-24
+
 
 ### 新增
 

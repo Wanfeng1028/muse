@@ -42,3 +42,12 @@ restore:
 # 依赖扫描：过期依赖 + OSV 已知漏洞（每周 workflow 也会跑）
 deps-scan:
 	.venv/bin/python scripts/deps_scan.py
+
+# 真实负载验证：仿真账单走真实 HTTP 全链路压测（默认 24 个月）
+load-test:
+	.venv/bin/python scripts/load_test.py
+
+# 真实负载验证快速版（6 个月）
+load-test-quick:
+	.venv/bin/python scripts/load_test.py --quick
+
