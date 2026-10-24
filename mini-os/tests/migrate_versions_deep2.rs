@@ -24,21 +24,12 @@ fn column_names(conn: &Connection, table: &str) -> Vec<String> {
 }
 
 #[test]
-fn applied_versions_returns_sorted_seven() {
+fn applied_versions_returns_sorted_all() {
     let conn = mini_os::db::open_db(":memory:").unwrap();
     let versions = applied_versions(&conn).unwrap();
-    assert_eq!(
-        versions,
-        vec![
-            "001".to_string(),
-            "002".to_string(),
-            "003".to_string(),
-            "004".to_string(),
-            "005".to_string(),
-            "006".to_string(),
-            "007".to_string()
-        ]
-    );
+    // 从 MIGRATIONS 注册表派生，不硬编码版本号（008 加入后"seven"已过时）。
+    let expected: Vec<String> = MIGRATIONS.iter().map(|(v, _)| v.to_string()).collect();
+    assert_eq!(versions, expected);
 }
 
 #[test]

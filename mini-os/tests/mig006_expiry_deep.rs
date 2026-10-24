@@ -183,6 +183,13 @@ fn open_legacy_005_db() -> Connection {
         [],
     )
     .expect("create legacy shares");
+    // 008（TOTP）要 ALTER users 表；真实 005 时代库里 003 已建过 users，
+    // 手写 fixture 必须补上，否则 008 会报 no such table: users。
+    conn.execute(
+        "CREATE TABLE users (id INTEGER PRIMARY KEY)",
+        [],
+    )
+    .expect("create legacy users");
     conn
 }
 
@@ -221,7 +228,7 @@ fn a1_apply_006_adds_expires_at_column() {
         .expect("legacy expires_at");
     assert_eq!(legacy_expires, None, "旧分享行 expires_at 应为 NULL");
 
-    // applied_versions() 包含 "006" 与 "007"。
+    // applied_versions() 包含 "006"、"007" 与 "008"。
     let versions = mini_os::migrate::applied_versions(&conn).expect("applied_versions");
     assert!(
         versions.contains(&"006".to_string()),
@@ -230,6 +237,10 @@ fn a1_apply_006_adds_expires_at_column() {
     assert!(
         versions.contains(&"007".to_string()),
         "007（notes/events 表）应在版本列表中，实际是 {versions:?}"
+    );
+    assert!(
+        versions.contains(&"008".to_string()),
+        "008（TOTP 两步验证）应在版本列表中，实际是 {versions:?}"
     );
 }
 
@@ -246,13 +257,13 @@ fn a2_run_migrations_is_idempotent() {
     mini_os::migrate::run_migrations(&conn).expect("first run");
     mini_os::migrate::run_migrations(&conn).expect("second run");
 
-    // schema_migrations 总行数还是 7。
+    // schema_migrations 总行数还是 8（含 008）。
     let count: i64 = conn
         .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
             row.get(0)
         })
         .expect("count schema_migrations");
-    assert_eq!(count, 7, "连跑两遍后 schema_migrations 应还是 7 行");
+    assert_eq!(count, 8, "连跑两遍后 schema_migrations 应还是 8 行");
 
     // expires_at 列还是只有一个。
     let cols: i64 = conn
@@ -325,7 +336,7 @@ fn a4_new_row_defaults_expires_at_to_null() {
 async fn b1_null_expires_at_never_expires() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
     let file_id = create_text_file(&app, &cookie, None, "keep.txt", "hello").await;
 
     // 不传 expiresAt。
@@ -343,7 +354,7 @@ async fn b1_null_expires_at_never_expires() {
 async fn b2_future_expires_at_is_accessible() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
     let file_id = create_text_file(&app, &cookie, None, "future.txt", "hello").await;
 
     let future = now_secs() + 3600;
@@ -365,7 +376,7 @@ async fn b2_future_expires_at_is_accessible() {
 async fn b3_past_expires_at_rejected_on_create() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
     let file_id = create_text_file(&app, &cookie, None, "past.txt", "hello").await;
 
     let past = now_secs() - 3600;
@@ -378,7 +389,7 @@ async fn b3_past_expires_at_rejected_on_create() {
 async fn b4_expires_at_now_rejected_on_create() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
     let file_id = create_text_file(&app, &cookie, None, "now.txt", "hello").await;
 
     // create_share 里 ts <= now_unix() 就拒绝，所以创建要求严格未来时间。
@@ -392,7 +403,7 @@ async fn b4_expires_at_now_rejected_on_create() {
 async fn b5_share_expires_at_current_second_returns_gone() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
     let file_id = create_text_file(&app, &cookie, None, "expire.txt", "hello").await;
 
     let future = now_secs() + 3600;
@@ -422,7 +433,7 @@ async fn b5_share_expires_at_current_second_returns_gone() {
 async fn b6_expired_dir_share_gone_in_all_three_endpoints() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
 
     let dir_id = create_folder(&app, &cookie, "docs").await;
     let _file_id = create_text_file(&app, &cookie, Some(dir_id), "note.txt", "hi").await;
@@ -469,7 +480,7 @@ async fn b6_expired_dir_share_gone_in_all_three_endpoints() {
 async fn b7_admin_list_exposes_expires_at() {
     let state = fresh_state();
     let app = app_for(&state);
-    let cookie = register(&app, "alice", "pw-alice").await;
+    let cookie = register(&app, "alice", "pw-alice9").await;
 
     let file_a = create_text_file(&app, &cookie, None, "a.txt", "a").await;
     let future = now_secs() + 3600;

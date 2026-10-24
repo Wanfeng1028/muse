@@ -117,21 +117,18 @@ fn run_migrations_is_idempotent_on_repeat_calls() {
     run_migrations(&conn).expect("second run_migrations");
     run_migrations(&conn).expect("third run_migrations");
 
-    // 断言点 1：版本记录没有重复插入（当前共 6 个版本：001-006）。
-    assert_eq!(migration_count(&conn, "001"), 1);
-    assert_eq!(migration_count(&conn, "002"), 1);
-    assert_eq!(migration_count(&conn, "003"), 1);
-    assert_eq!(migration_count(&conn, "004"), 1);
-    assert_eq!(migration_count(&conn, "005"), 1);
-    assert_eq!(migration_count(&conn, "006"), 1);
+    // 断言点 1：版本记录没有重复插入（从 MIGRATIONS 注册表派生，不硬编码版本号）。
+    for (v, _) in mini_os::migrate::MIGRATIONS {
+        assert_eq!(migration_count(&conn, v), 1, "版本 {v} 应恰好一条记录");
+    }
 
-    // 断言点 2：总行数就是七个版本，没有多余记录。
+    // 断言点 2：总行数就是注册表版本数，没有多余记录。
     let total: i64 = conn
         .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
             row.get(0)
         })
         .expect("count all migrations");
-    assert_eq!(total, 7);
+    assert_eq!(total, mini_os::migrate::MIGRATIONS.len() as i64);
 }
 
 // ---------------------------------------------------------------------------
@@ -418,21 +415,18 @@ fn concurrent_run_migrations_applies_each_version_once() {
 
     let guard = shared.lock().expect("lock db");
 
-    // 断言点 1：每个版本恰好一条记录（当前共 6 个版本：001-006）。
-    assert_eq!(migration_count(&guard, "001"), 1);
-    assert_eq!(migration_count(&guard, "002"), 1);
-    assert_eq!(migration_count(&guard, "003"), 1);
-    assert_eq!(migration_count(&guard, "004"), 1);
-    assert_eq!(migration_count(&guard, "005"), 1);
-    assert_eq!(migration_count(&guard, "006"), 1);
+    // 断言点 1：每个版本恰好一条记录（从 MIGRATIONS 注册表派生，不硬编码版本号）。
+    for (v, _) in mini_os::migrate::MIGRATIONS {
+        assert_eq!(migration_count(&guard, v), 1, "版本 {v} 应恰好一条记录");
+    }
 
-    // 断言点 2：总记录数就是七个版本。
+    // 断言点 2：总记录数就是注册表版本数。
     let total: i64 = guard
         .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| {
             row.get(0)
         })
         .expect("count all migrations");
-    assert_eq!(total, 7);
+    assert_eq!(total, mini_os::migrate::MIGRATIONS.len() as i64);
 }
 
 // ---------------------------------------------------------------------------
