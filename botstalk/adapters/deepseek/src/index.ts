@@ -285,6 +285,7 @@ export function createHandlers(cfg: DeepSeekRuntimeConfig, client: AdapterClient
   async function onMessage(env: Envelope<MessagePayload>): Promise<void> {
     if (env.sender === cfg.adapterId) return;
     const chat = env.payload;
+    const prompt = chat.thread_context ? chat.thread_context + chat.text : chat.text;
     if (cfg.apiKey === "") {
       const streamId = await sink.start();
       await sink.error(streamId, 0, "upstream_error: missing DEEPSEEK_API_KEY");
@@ -295,7 +296,7 @@ export function createHandlers(cfg: DeepSeekRuntimeConfig, client: AdapterClient
     let buffer = "";
     try {
       const usage = await chatCompletionStream(
-        chat.text,
+        prompt,
         (delta) => {
           buffer += delta;
         },
@@ -321,6 +322,7 @@ export function createHandlers(cfg: DeepSeekRuntimeConfig, client: AdapterClient
     if (env.sender === cfg.adapterId) return;
     if (env.payload.task_status !== undefined) return;
     const task = env.payload;
+    const prompt = task.thread_context ? task.thread_context + task.text : task.text;
     const taskId = task.task_id ?? randomUUID();
     const label = cfg.bodyMode ? "body" : "brain";
     client.sendMessage(`[deepseek:${label}] task accepted`, {
@@ -344,7 +346,7 @@ export function createHandlers(cfg: DeepSeekRuntimeConfig, client: AdapterClient
     if (cfg.bodyMode) {
       try {
         const sessionId = `botstalk-${cfg.adapterId}`;
-        const result = await runDshTask(cfg.dshCmd, sessionId, task.text);
+        const result = await runDshTask(cfg.dshCmd, sessionId, prompt);
         const CHUNK = 256;
         if (result.text.length === 0) {
           await sink.final(streamId, 0);
@@ -375,7 +377,7 @@ export function createHandlers(cfg: DeepSeekRuntimeConfig, client: AdapterClient
     let buffer = "";
     try {
       const usage = await chatCompletionStream(
-        task.text,
+        prompt,
         (delta) => {
           buffer += delta;
         },
@@ -424,6 +426,7 @@ async function main(): Promise<void> {
     gatewayUrl,
     room,
     intents: ["chat", "task"],
+    threadContext: { enabled: true },
     onMessage: (env) => handlersRef.current!.onMessage(env),
     onTask: (env) => handlersRef.current!.onTask(env),
   });

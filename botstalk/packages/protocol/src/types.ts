@@ -155,6 +155,8 @@ export interface MessagePayload {
   task_status?: TaskStatus;
   /** 进度上报：assignee→网关，仅 intent=task 时有效。帧顶层 task_id 仍必填（codec 对 intent=task 帧强制要求），须与此处 task_id 一致。 */
   task_progress?: { task_id: string; message: string; data?: unknown };
+  /** Shared thread context for the current turn (local-only). Set by AdapterClient on the inbound envelope AFTER wire validation, from gateway room history; never sent on the wire by any adapter. Empty/absent means no context was available (fetch failed, timed out, or feature disabled) and the handler must proceed with text alone. */
+  thread_context?: string;
 }
 
 /** type=stream 的 payload（增量流式帧）。 */

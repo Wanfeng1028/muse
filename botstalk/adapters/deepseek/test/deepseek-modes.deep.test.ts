@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { mkdirSync, writeFileSync, chmodSync } from "node:fs";
+import { mkdirSync, writeFileSync, chmodSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { AdapterClient } from "@botstalk/adapter-base";
 import type { Envelope, MessagePayload } from "@botstalk/protocol";
@@ -324,5 +324,110 @@ exit 0
     expect(trimmedOver).toBe("x".repeat(500));
 
     expect(summarize(" hi ", 10)).toBe("hi");
+  });
+
+  it("brain onMessage prepends thread_context", async () => {
+    let capturedContent = "";
+    const server = createServer((req, res) => {
+      let data = "";
+      req.on("data", (chunk) => { data += chunk.toString(); });
+      req.on("end", () => {
+        const body = JSON.parse(data);
+        capturedContent = body.messages[0].content;
+        res.writeHead(200, { "Content-Type": "text/event-stream" });
+        res.write(sseChunk("Hello"));
+        res.write("data: [DONE]\n\n");
+        res.end();
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const port = (server.address() as AddressInfo).port;
+    const baseUrl = `http://127.0.0.1:${port}`;
+    try {
+      const mockClient = makeMockClient();
+      const cfg = { ...readRuntimeConfig(), apiKey: "test-key", baseUrl, model: "deepseek-chat", bodyMode: false as const };
+      const handlers = createHandlers(cfg, mockClient);
+      const env = makeChatEnv();
+      env.payload.thread_context = "CTX-HEADER\n";
+      env.payload.text = "hello";
+      await handlers.onMessage(env);
+      expect(capturedContent).toBe("CTX-HEADER\nhello");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it("brain onMessage without thread_context sends plain text", async () => {
+    let capturedContent = "";
+    const server = createServer((req, res) => {
+      let data = "";
+      req.on("data", (chunk) => { data += chunk.toString(); });
+      req.on("end", () => {
+        const body = JSON.parse(data);
+        capturedContent = body.messages[0].content;
+        res.writeHead(200, { "Content-Type": "text/event-stream" });
+        res.write(sseChunk("Hello"));
+        res.write("data: [DONE]\n\n");
+        res.end();
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const port = (server.address() as AddressInfo).port;
+    const baseUrl = `http://127.0.0.1:${port}`;
+    try {
+      const mockClient = makeMockClient();
+      const cfg = { ...readRuntimeConfig(), apiKey: "test-key", baseUrl, model: "deepseek-chat", bodyMode: false as const };
+      const handlers = createHandlers(cfg, mockClient);
+      const env = makeChatEnv();
+      await handlers.onMessage(env);
+      expect(capturedContent).toBe("hello");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it("brain onTask prepends thread_context", async () => {
+    let capturedContent = "";
+    const server = createServer((req, res) => {
+      let data = "";
+      req.on("data", (chunk) => { data += chunk.toString(); });
+      req.on("end", () => {
+        const body = JSON.parse(data);
+        capturedContent = body.messages[0].content;
+        res.writeHead(200, { "Content-Type": "text/event-stream" });
+        res.write(sseChunk("Hello"));
+        res.write("data: [DONE]\n\n");
+        res.end();
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const port = (server.address() as AddressInfo).port;
+    const baseUrl = `http://127.0.0.1:${port}`;
+    try {
+      const mockClient = makeMockClient();
+      const cfg = { ...readRuntimeConfig(), apiKey: "test-key", baseUrl, model: "deepseek-chat", bodyMode: false as const };
+      const handlers = createHandlers(cfg, mockClient);
+      const env = makeTaskEnv();
+      env.payload.thread_context = "CTX-TASK\n";
+      await handlers.onTask(env);
+      expect(capturedContent).toBe("CTX-TASK\ndo the thing");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it("body onTask passes thread_context to dsh", async () => {
+    mkdirSync(TEST_TMP, { recursive: true });
+    const outPath = join(TEST_TMP, "fake-dsh-ctx.out");
+    const scriptPath = join(TEST_TMP, "fake-dsh-ctx.sh");
+    writeFileSync(scriptPath, `#!/bin/sh\nfor last in "$@"; do :; done; printf '%s' "$last" > "${outPath}"\necho '{"type":"final","text":"ctx-final"}'\nexit 0\n`);
+    chmodSync(scriptPath, 0o755);
+    const mockClient = makeMockClient();
+    const cfg = { ...readRuntimeConfig(), apiKey: "", baseUrl: "http://127.0.0.1:1", model: "deepseek-chat", bodyMode: true as const, dshCmd: splitDshCommand(scriptPath) };
+    const handlers = createHandlers(cfg, mockClient);
+    const env = makeTaskEnv();
+    env.payload.thread_context = "CTX-BODY\n";
+    await handlers.onTask(env);
+    expect(readFileSync(outPath, "utf8")).toBe("CTX-BODY\ndo the thing");
   });
 });

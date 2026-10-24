@@ -15,6 +15,8 @@ import {
   backoffDelay,
   BACKOFF_MAX_MS,
 } from "@botstalk/protocol";
+import { buildThreadContext, THREAD_CONTEXT_FETCH_LIMIT, THREAD_CONTEXT_FETCH_TIMEOUT_MS } from "./thread-context.js";
+import type { ThreadHistoryMessage } from "./thread-context.js";
 import type {
   Envelope,
   MessagePayload,
@@ -36,6 +38,21 @@ export interface AdapterOptions {
   heartbeatMs?: number;
   /** gseq 水位持久化目录，默认取环境变量 BOTSTALK_STATE_DIR 或 ./.botstalk-state。 */
   stateDir?: string;
+  /**
+   * 共享线程上下文注入（OpenAgents agent-connector "Shared thread context" 的 TS 重实现）。
+   * enabled=true 时，AdapterClient 在把 message 帧交给 onMessage/onTask 之前，先拉取本房间近史、
+   * 用 buildThreadContext 拼成上下文块，写进 env.payload.thread_context 再交给 handler；deepseek 等
+   * LLM adapter 把它拼在当前请求之前发给上游。fetch 失败或超时一律降级：直接用原始帧调 handler，
+   * 绝不抛错、绝不阻塞超过 timeoutMs。默认关闭（不改变现有 adapter 行为），由各 adapter 显式开启。
+   * fetchHistory 可注入（测试用）；不提供时用默认 HTTP 实现拉网关 /api/rooms/:room/history。
+   * httpBaseUrl 可覆盖默认 HTTP 基地址；不提供时从 gatewayUrl 推导（ws://->http://，wss://->https://）。
+   */
+  threadContext?: {
+    enabled?: boolean;
+    timeoutMs?: number;
+    fetchHistory?: (room: string, trigger: { msgId: string; ts: number }) => Promise<ThreadHistoryMessage[]>;
+    httpBaseUrl?: string;
+  };
 }
 
 interface SendOptions {
@@ -265,7 +282,58 @@ export class AdapterClient {
     }
   }
 
+  private async fetchThreadHistoryDefault(room: string): Promise<ThreadHistoryMessage[]> {
+    const rawBase = this.opts.threadContext?.httpBaseUrl ?? this.gatewayUrl.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
+    const base = rawBase.replace(/\/+$/, "");
+    const timeoutMs = this.opts.threadContext?.timeoutMs ?? THREAD_CONTEXT_FETCH_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`${base}/api/rooms/${encodeURIComponent(room)}/history?limit=${THREAD_CONTEXT_FETCH_LIMIT}`, { signal: controller.signal });
+      if (!res.ok) throw new Error(`history fetch failed: HTTP ${res.status}`);
+      const body: unknown = await res.json();
+      if (typeof body !== "object" || body === null || !Array.isArray((body as { messages?: unknown }).messages)) throw new Error("invalid history response");
+      const rows = (body as { messages: unknown[] }).messages;
+      const out: ThreadHistoryMessage[] = [];
+      for (const row of rows) {
+        if (typeof row !== "object" || row === null) continue;
+        const r = row as { sender?: unknown; type?: unknown; ts?: unknown; payload?: unknown };
+        const p = (typeof r.payload === "object" && r.payload !== null) ? (r.payload as { text?: unknown; msg_id?: unknown; task_status?: unknown }) : undefined;
+        const tsNum = Number(r.ts);
+        out.push({
+          sender: String(r.sender ?? ""),
+          text: typeof p?.text === "string" ? p.text : "",
+          ts: Number.isFinite(tsNum) ? tsNum : 0,
+          msgId: typeof p?.msg_id === "string" ? p.msg_id : undefined,
+          frameType: typeof r.type === "string" ? r.type : undefined,
+          taskStatus: typeof p?.task_status === "string" ? p.task_status : undefined,
+        });
+      }
+      return out;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   private async dispatchMessage(env: Envelope<MessagePayload>): Promise<void> {
+    const tc = this.opts.threadContext;
+    if (
+      tc?.enabled === true &&
+      env.sender !== this.opts.adapterId &&
+      !env.room.startsWith("dm:") &&
+      env.payload.task_status === undefined &&
+      env.payload.task_progress === undefined
+    ) {
+      try {
+        const history = tc.fetchHistory
+          ? await tc.fetchHistory(env.room, { msgId: env.payload.msg_id, ts: env.ts })
+          : await this.fetchThreadHistoryDefault(env.room);
+        const block = buildThreadContext(history, { msgId: env.payload.msg_id, sender: env.sender, ts: env.ts });
+        if (block !== "") env.payload.thread_context = block;
+      } catch {
+        // Degrade silently: handler runs with the original frame.
+      }
+    }
     const intent = env.payload.intent ?? "chat";
     if (intent === "task") {
       if (this.opts.onTask) await this.opts.onTask(env);
