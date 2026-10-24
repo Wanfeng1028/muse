@@ -3,7 +3,9 @@ package config
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"log"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -34,6 +36,7 @@ type Config struct {
 	PasswordFailAlertIPThreshold int           // 同一 IP 滑动窗口内密码失败触发告警的次数阈值
 	AlertWebhookURL              string        // 告警 webhook 地址，复用备份告警的 LINKSHORT_ALERT_WEBHOOK_URL
 	AlertWebhookURLs             []string      // 由 LINKSHORT_ALERT_WEBHOOK_URL 按逗号解析的多地址
+	TrustedProxies               []net.IPNet   // 可信反向代理 IP/CIDR；为空表示不信任任何代理的 XFF 头
 }
 
 // 环境变量名。
@@ -59,6 +62,7 @@ const (
 	envPasswordFailAlertWindow      = "LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW"
 	envPasswordFailAlertIPThreshold = "LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD"
 	envAlertWebhookURL              = "LINKSHORT_ALERT_WEBHOOK_URL"
+	envTrustedProxies               = "LINKSHORT_TRUSTED_PROXIES"
 )
 
 // getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
@@ -132,6 +136,53 @@ func SplitWebhookURLs(s string) []string {
 	return out
 }
 
+// ParseTrustedProxies 解析逗号分隔的可信代理列表：每项为单个 IP（视为 /32 或 /128）
+// 或 CIDR（如 10.0.0.0/8）。空字符串返回 nil；任一项非法返回指明该项的 error。
+func ParseTrustedProxies(s string) ([]net.IPNet, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil, nil
+	}
+	var out []net.IPNet
+	for _, part := range strings.Split(s, ",") {
+		item := strings.TrimSpace(part)
+		if item == "" {
+			continue
+		}
+		if strings.Contains(item, "/") {
+			_, ipnet, err := net.ParseCIDR(item)
+			if err != nil {
+				return nil, fmt.Errorf("无效的可信代理 %q: %v", item, err)
+			}
+			out = append(out, *ipnet)
+			continue
+		}
+		ip := net.ParseIP(item)
+		if ip == nil {
+			return nil, fmt.Errorf("无效的可信代理 %q: 不是合法 IP 或 CIDR", item)
+		}
+		bits := 128
+		if ip.To4() != nil {
+			bits = 32
+		}
+		out = append(out, net.IPNet{IP: ip, Mask: net.CIDRMask(bits, bits)})
+	}
+	return out, nil
+}
+
+// IsTrustedProxy 判定给定 IP 是否落在可信代理名单内；名单为空时恒为 false。
+func (c *Config) IsTrustedProxy(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	for _, ipnet := range c.TrustedProxies {
+		if ipnet.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
 // FromEnv 从环境变量加载配置，缺省值在文档中说明。
 // 当 LINKSHORT_ADMIN_KEY 为空时，自动生成 32 位 hex 并打印提示。
 func FromEnv() *Config {
@@ -159,7 +210,13 @@ func FromEnv() *Config {
 		AlertWebhookURL:              getenvDefault(envAlertWebhookURL, ""),
 		AlertWebhookURLs:             SplitWebhookURLs(getenvDefault(envAlertWebhookURL, "")),
 	}
+	trusted, err := ParseTrustedProxies(os.Getenv(envTrustedProxies))
+	if err != nil {
+		log.Fatalf("LINKSHORT_TRUSTED_PROXIES 解析失败: %v", err)
+	}
+	cfg.TrustedProxies = trusted
 	if cfg.PurgeInterval <= 0 {
+
 		cfg.PurgeInterval = 24 * time.Hour
 	}
 	if cfg.PurgeRetentionDays < 0 {

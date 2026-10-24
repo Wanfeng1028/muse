@@ -5,7 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.13.1] - 2026-10-24
+
+### 安全
+- 可信代理配置 `LINKSHORT_TRUSTED_PROXIES`（逗号分隔的 IP/CIDR，默认空）：`clientIP` 只在直连接入方（RemoteAddr）落在可信名单内时才信任 `X-Forwarded-For`/`X-Real-IP`，否则一律回退到 `RemoteAddr`；关闭 v1.12.0 已知缺口"攻击者伪造 XFF 稀释 IP 告警计数"。非法配置项导致启动直接报错退出（fail-closed）。
+- 默认行为变更：此前无条件信任 XFF/X-Real-IP；升级后若服务跑在反向代理之后，必须把代理 IP 配进 `LINKSHORT_TRUSTED_PROXIES`，否则地域统计与 IP 告警将按代理 IP 聚合。
+- **真 bug 修复**：chi 的 `middleware.RealIP` 会无条件用 XFF 改写 `RemoteAddr`，导致上述可信代理检查在中间件阶段即被绕过（冒烟实测：伪造 XFF 的请求在日志里显示 `from <伪造IP>`），且限流器按被污染的 RemoteAddr 分桶、可被 XFF 轮换绕过。已移除该中间件；限流器改走调用方注入的信任代理感知 IP 函数（`rl.IPFunc = clientIP`），与告警/统计口径统一。
+
+### 测试
+- 新增 17 例：config 7（空输入/混合 IP+CIDR/非法项指明/空项跳过/nil 名单/FromEnv 默认/FromEnv 解析）、handler 7（不可信对端忽略伪造 XFF/可信对端取 XFF 首段/可信对端 X-Real-IP 回退/非法头回退/nil cfg/CIDR 范围判定）、ratelimit 3（IPFunc 合并分桶/默认忽略伪造 XFF/nil 回退）；旧 `TestClientIPHeaderPrecedence` 2 处调用点适配新签名；`go test ./... -race` 14 包全绿。
+
 ## [v1.13.0] - 2026-10-24
+
 
 ### 新增
 - 批量建链 Web UI（`/ui/bulk.html`）：textarea 每行一条 URL（URL 后空一格可加自定义短码），调用 `POST /api/links/batch`，逐项展示短链/状态/错误，支持一键复制全部成功短链；207 部分成功按项如实展示。
@@ -33,7 +44,8 @@
 - 新增 `passalert_ip_test.go`（8 例）、`notify_ip_test.go`（4 例）、`config_webhook_test.go`（6 例）、`password_alert_ip_test.go`（3 例）。
 
 ### 已知缺口
-- IP 维度聚合基于 `clientIP`（X-Forwarded-For 首个 → X-Real-IP → RemoteAddr）；若前置代理未 strip 不可信的 XFF，攻击者可伪造 IP 稀释计数（与既有限流同假设）。
+
+- ~~IP 维度聚合基于 `clientIP`（X-Forwarded-For 首个 → X-Real-IP → RemoteAddr）；若前置代理未 strip 不可信的 XFF，攻击者可伪造 IP 稀释计数（与既有限流同假设）。~~（v1.13.1 已关闭：引入 `LINKSHORT_TRUSTED_PROXIES` 可信代理名单，默认不再信任 XFF 头）
 
 ## [v1.11.0] - 2026-10-20
 

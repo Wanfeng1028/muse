@@ -30,6 +30,9 @@ type Limiter struct {
 	rps     float64
 	burst   int
 	enabled bool
+	// IPFunc 取限流用的客户端 IP；为 nil 时回退到 RemoteAddr 去端口。
+	// 调用方应传入信任代理感知的函数（如 handler.clientIP），不可直接信任 XFF。
+	IPFunc func(r *http.Request) string
 }
 
 // New 创建限流器。
@@ -71,16 +74,25 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 // clientKey 组装限流 key：clientIP + "|" + apiKey。
 // 当未配置 AdminKey（本地开发模式）时，仅使用 clientIP。
 func (l *Limiter) clientKey(r *http.Request) string {
-	ip := r.RemoteAddr
-	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-		ip = host
-	}
+	ip := l.ipOf(r)
+
 	apiKey := r.Header.Get("X-API-Key")
 	if apiKey == "" {
 		apiKey = r.URL.Query().Get("key")
 	}
 	// apiKey 为空时 key 退化为 "ip|"，等价于纯 IP 维度。
 	return ip + "|" + apiKey
+}
+
+// ipOf 取限流用的客户端 IP：优先用调用方注入的 IPFunc，否则回退 RemoteAddr 去端口。
+func (l *Limiter) ipOf(r *http.Request) string {
+	if l.IPFunc != nil {
+		return l.IPFunc(r)
+	}
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
+	}
+	return r.RemoteAddr
 }
 
 // allow 尝试从桶中取一个 token。

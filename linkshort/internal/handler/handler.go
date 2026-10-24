@@ -50,14 +50,20 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	passalert.ConfigureWithIP(cfg.PasswordFailAlertThreshold, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertIPThreshold)
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
+	// 注意：刻意不用 chi 的 middleware.RealIP——它无条件用 X-Forwarded-For 改写
+	// RemoteAddr，公网攻击者伪造 XFF 即可绕过限流/污染统计；IP 判定统一走 clientIP
+	//（仅 LINKSHORT_TRUSTED_PROXIES 名单内的直连对端才信任代理头）。
 	r.Use(middleware.Logger)
+
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 	// metrics 放在最外层，以便统计到包括 429 在内的所有请求。
 	r.Use(metrics.Default.Middleware)
 	// 限流：按 IP+API Key 双维度令牌桶；/metrics 与健康检查免限流。
-	r.Use(ratelimit.New(cfg.RateLimitRPS, cfg.RateLimitBurst, cfg.RateLimitEnabled).Middleware)
+	// IP 口径与 clientIP 一致（仅信任名单内的代理头），防 XFF 伪造绕过限流。
+	rl := ratelimit.New(cfg.RateLimitRPS, cfg.RateLimitBurst, cfg.RateLimitEnabled)
+	rl.IPFunc = func(r *http.Request) string { return clientIP(r, cfg) }
+	r.Use(rl.Middleware)
 
 	// 根路径跳转到 UI。
 	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
@@ -323,7 +329,8 @@ func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Stor
 				go passalert.NotifyPasswordFailAlert(u, r.Host, slug, failCount, cfg.PasswordFailAlertWindow, cfg.PasswordFailAlertThreshold)
 			}
 		}
-		ip := clientIP(r)
+		ip := clientIP(r, cfg)
+
 		if passalert.Default.RecordIPFail(ip, time.Now()) {
 			ipFailCount := passalert.Default.IPFailCount(ip, time.Now())
 			metrics.Default.IncPasswordFailAlert()
@@ -339,28 +346,40 @@ func handlePasswordUnlock(w http.ResponseWriter, r *http.Request, st *store.Stor
 	finishRedirect(w, r, link, st, cfg)
 }
 
-// clientIP 取客户端 IP：X-Forwarded-For 首个 → X-Real-IP → RemoteAddr 去端口。
-// X-Forwarded-For 可能含多个 IP（客户端, 代理1, 代理2），取第一段；非法值则继续回退。
-// 信任假设：服务部署在受信任反向代理之后，由代理负责清洗/设置这两个头；
-// 若直接暴露公网，调用方应确保前置层已 strip 不可信的 X-Forwarded-For。
-func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if first := strings.TrimSpace(strings.Split(xff, ",")[0]); net.ParseIP(first) != nil {
-			return first
+// clientIP 取客户端 IP。X-Forwarded-For / X-Real-IP 只在直连接入方（RemoteAddr）
+// 落在 cfg.TrustedProxies（LINKSHORT_TRUSTED_PROXIES）内时才被信任；
+// 未配置可信代理（默认）或直连方不在名单中时一律回退到 RemoteAddr，
+// 防止公网攻击者伪造 XFF 稀释 IP 维度的密码失败告警计数。
+// X-Forwarded-For 可能含多个 IP（客户端, 代理1, 代理2），信任时取第一段；非法值则继续回退。
+func clientIP(r *http.Request, cfg *config.Config) string {
+	if trustedPeer(r.RemoteAddr, cfg) {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			if first := strings.TrimSpace(strings.Split(xff, ",")[0]); net.ParseIP(first) != nil {
+				return first
+			}
+		}
+		if xrip := strings.TrimSpace(r.Header.Get("X-Real-IP")); net.ParseIP(xrip) != nil {
+			return xrip
 		}
 	}
-	if xrip := strings.TrimSpace(r.Header.Get("X-Real-IP")); net.ParseIP(xrip) != nil {
-		return xrip
-	}
 	return clientHost(r.RemoteAddr)
+}
+
+// trustedPeer 判定直连接入方是否为已配置的可信代理；cfg 为 nil 时视为不可信。
+func trustedPeer(remoteAddr string, cfg *config.Config) bool {
+	if cfg == nil {
+		return false
+	}
+	return cfg.IsTrustedProxy(net.ParseIP(clientHost(remoteAddr)))
 }
 
 // finishRedirect 执行跳转前的最终检查（限次访问）并完成跳转。
 // 只有成功解锁（密码正确或无密码）才会走到这里：记访问、处理阅后即焚、302。
 func finishRedirect(w http.ResponseWriter, r *http.Request, link *model.Link, st *store.Store, cfg *config.Config) {
 	// 统一准备访问上下文。失败只记日志不阻断跳转。
-	// clientIP 优先取 X-Forwarded-For / X-Real-IP（反向代理部署的常见形态），直连时退化为 RemoteAddr。
-	cip := clientIP(r)
+	// clientIP 只在可信代理后才取 XFF/X-Real-IP，直连时退化为 RemoteAddr。
+	cip := clientIP(r, cfg)
+
 	ipHash := hashIP(cip)
 	ua := truncate(r.UserAgent(), 256)
 	referer := truncate(r.Referer(), 512)

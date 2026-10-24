@@ -288,11 +288,21 @@ cp data/linkshort.db backup-$(date +%Y%m%d-%H%M%S).db
 
 - 机制：`internal/passalert.Tracker` 按 slug 做滑动窗口计数，窗口 `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW`（默认 5m），窗口内失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD`（默认 10）时触发一次；只在从阈值下方跨越到阈值及以上的那次触发，持续超阈值不重复触发，计数回落到阈值下方后重新布防。
 - 触发后三件事：打 warn 日志（含 slug、窗口内失败次数、阈值）；指标 `linkshort_password_fail_alerts_total` +1；若配了 `LINKSHORT_ALERT_WEBHOOK_URL` 则异步 POST JSON：`{"source":"linkshort","event":"password_fail_alert","host":"...","slug":"...","fail_count":N,"window_seconds":300,"threshold":10,"time":"..."}`，HTTP 10 秒超时，通知失败只记日志不影响主流程；URL 留空则不通知。
-- IP 维度（v1.12 新增）：同一 IP（clientIP 口径：X-Forwarded-For 首个 → X-Real-IP → RemoteAddr）在窗口内密码失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD`（默认 20）时触发一次；webhook payload 中 `scope` 为 `"ip"`、`slug` 为空、`ip_hash` 为该 IP 的 sha256 hex 前 16 位；日志中不出现 IP 明文。
+- IP 维度（v1.12 新增，v1.13.1 加固）：同一 IP（clientIP 口径：直连接入方在 `LINKSHORT_TRUSTED_PROXIES` 名单内时才信任 X-Forwarded-For 首个/X-Real-IP，否则按 RemoteAddr；默认不信任任何代理头）在窗口内密码失败达到 `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD`（默认 20）时触发一次；webhook payload 中 `scope` 为 `"ip"`、`slug` 为空、`ip_hash` 为该 IP 的 sha256 hex 前 16 位；日志中不出现 IP 明文。
+
 - 与限流的关系：密码尝试先走全局 IP 令牌桶（429 挡掉的不计入本告警，只统计真正打到密码校验的失败）。
 - 排障：告警触发后先查日志里的 slug，再看该 slug 的 `linkshort_password_attempts_total{result="fail"}` 速率；误报就调大阈值/窗口。
 
+### 3.11 可信代理与客户端 IP 判定（v1.13.1）
+
+- 背景：v1.12 之前 `clientIP` 无条件信任 `X-Forwarded-For`/`X-Real-IP`，公网攻击者伪造 XFF 即可稀释 IP 维度的密码失败告警计数、污染地域统计。
+- 配置：`LINKSHORT_TRUSTED_PROXIES`，逗号分隔的 IP（视为 /32 或 /128）或 CIDR（如 `127.0.0.1,10.0.0.0/8`）；留空=不信任任何代理头（默认，最安全）；非法项启动时直接报错退出。
+- 判定规则：只有直连接入方（`RemoteAddr` 去端口后）落在名单内时，才取 XFF 首段/X-Real-IP；否则一律用 RemoteAddr。典型部署：linkshort 监听 127.0.0.1:8080、Nginx/Caddy 反代 → 配 `LINKSHORT_TRUSTED_PROXIES=127.0.0.1`（代理与服务同机）或代理所在网段 CIDR。
+- 影响面：跳转访问日志的 ip_hash、地域统计、密码失败 IP 告警的 IP 口径统一走新判定；Nginx 侧建议同时 `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` 并确保公网入口已 strip 客户端自带的 XFF（否则名单内的代理会把伪造值向后传递）。
+- 升级注意：从 ≤v1.13.0 升级且跑在反代之后时，必须补配该变量，否则统计/告警将按代理 IP 聚合（功能不受影响，只是 IP 维度失真）。
+
 ## 4. 升级
+
 
 
 

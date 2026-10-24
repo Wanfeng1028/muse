@@ -89,14 +89,14 @@ func TestBurnRaceConcurrentGet(t *testing.T) {
 func TestClientIPHeaderPrecedence(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/x", nil)
 	r.Header.Set("X-Forwarded-For", "1.2.3.4, 5.6.7.8")
-	if got := clientIP(r); got != "1.2.3.4" {
+	if got := clientIP(r, trustedProxyTestConfig(t, "192.0.2.1/32")); got != "1.2.3.4" {
 		t.Fatalf("XFF 取第一个合法 IP，got=%q 期望 1.2.3.4", got)
 	}
 
 	r2 := httptest.NewRequest(http.MethodGet, "/x", nil)
 	r2.Header.Set("X-Forwarded-For", "garbage")
 	r2.Header.Set("X-Real-IP", "9.9.9.9")
-	if got := clientIP(r2); got != "9.9.9.9" {
+	if got := clientIP(r2, trustedProxyTestConfig(t, "192.0.2.1/32")); got != "9.9.9.9" {
 		t.Fatalf("XFF 非法时回落到 X-Real-IP，got=%q 期望 9.9.9.9", got)
 	}
 
