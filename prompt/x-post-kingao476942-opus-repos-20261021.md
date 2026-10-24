@@ -17,6 +17,7 @@
 
 备注：
 
+- 2026-10-24 复核（yihui-dev/awesome-opus5-5-videos）：存档在位且与上游逐字节一致（707 文件 sha256 全对）；上游自 2026-10-13 后无新提交，**无增量**（star 7479 → 9919，为热度增长、内容未变）；云盘存档已补：`awesome-opus5-5-videos-source-20261024.tar.gz`（Google Drive「02项目/Muse」，回查确认）。
 - 大文件规则（单个 >50MB 不入库、留 EXCLUDED-MEDIA.md 清单）：本批 6 个新仓均无单个超过 50MB 的文件（最大的为 mg-styles-15 的演示视频，约 38MB），故全部完整复制，无排除项。
 - mg-styles-15 本地 clone 位于 ~/workspace/mg-styles-15（因仓库体积大、网络慢，采用 --depth 1 浅克隆，工作树文件完整；其余 5 仓为完整克隆，位于 ~/workspace/ 下同名目录）。
 - lemo-opuscar 仓内 plugin/skills/lemo-opuscar/SKILL.md 是"运行时拉取库"的版本，与技能库里已收录的"自包含插件版"同源同名、内容组织不同；技能库不重复收录，本轮只补全索引登记。
