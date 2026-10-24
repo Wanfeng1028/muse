@@ -1,0 +1,165 @@
+import { createServer } from 'node:http';
+import { once } from 'node:events';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { expect, it } from 'vitest';
+import { createProductionCapabilityRegistry } from '../harness/production-capabilities.js';
+import { createBuiltInWorkProfileRegistry } from '../harness/builtin-profiles.js';
+import { CreativeHarnessRuntime } from '../harness/runtime.js';
+import { CreativeEpisodeStore } from '../harness/episode-store.js';
+import { loadWorkManifest, createWorkManifest, saveWorkManifest } from '../harness/work-store.js';
+import { syncWorkSourceArtifacts } from '../harness/source-sync.js';
+import { createLLMClient } from '../llm/provider.js';
+import { PipelineRunner } from '../pipeline/runner.js';
+import { actionResultFacts } from '../harness/action-observation.js';
+import { createTurnCompletionTool, TurnArtifactDeliveries } from '../agent/turn-completion.js';
+
+it('produces and edits a composed Work by its capabilities while protecting existing production and source revisions', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'inkos-first-production-'));
+  let requests = 0;
+  let failReview = false;
+  let executionFindingOnly = false;
+  let scopeFinding = false;
+  const bodies: Array<{tools:Array<{function:{name:string}}>;messages:Array<{role:string;content:string}>}> = [];
+  const sourceText = 'The volunteer returns the borrowed blue flashlight.\n';
+  const manuscript = '| Shot | Duration | Action |\n|---|---|---|\n| 1 | 10s | Return the borrowed light. |\n';
+  const server = createServer(async (request, response) => {
+    const chunks: Buffer[]=[]; for await (const chunk of request) chunks.push(Buffer.from(chunk));
+    const body = JSON.parse(Buffer.concat(chunks).toString('utf8')); bodies.push(body);
+    requests++;
+    const toolName = body.tools[0].function.name;
+    const reviewInput=toolName==='submit_artifact_review'?JSON.parse(body.messages.findLast((message:{role:string})=>message.role==='user').content):undefined;
+    if (failReview) {response.writeHead(403, {'Content-Type':'application/json'});response.end(JSON.stringify({error:{message:'Fixture provider unavailable'}}));return;}
+    const args = toolName==='submit_storyboard_package' ? {storyboard: manuscript, imagePrompts: ['A museum volunteer returning a blue flashlight.']}
+      : {summary:'Scoped review',observations:[scopeFinding
+        ? {code:'FIXTURE_SCOPE',category:'scope',assessment:'issue',summary:'The fixture reviewer identifies a change outside the selected region.',sourceRefs:[{sourceId:reviewInput.sources[0].sourceId,startLine:1,endLine:1},{sourceId:reviewInput.comparison.sourceId,startLine:1,endLine:1}]}
+        : executionFindingOnly
+        ? {code:'EXPORT_RECEIPT_NOT_SUPPLIED',category:'execution',assessment:'unavailable',summary:'No completed export receipt is supplied to this review.',sourceRefs:[]}
+        : {code:'EXTERNAL_HISTORY_UNAVAILABLE',category:'quality',assessment:'unavailable',summary:'External comparison requires its source.',sourceRefs:[]}]};
+    response.writeHead(200, {'Content-Type':'text/event-stream'});
+    response.write(`data: ${JSON.stringify({id:'production',object:'chat.completion.chunk',choices:[{index:0,delta:{role:'assistant',tool_calls:[{index:0,id:'production-call',type:'function',function:{name:toolName,arguments:JSON.stringify(args)}}]},finish_reason:null}]})}\n\n`);
+    response.end(`data: ${JSON.stringify({id:'production',object:'chat.completion.chunk',choices:[{index:0,delta:{},finish_reason:'tool_calls'}]})}\n\ndata: [DONE]\n\n`);
+  });
+  server.listen(0,'127.0.0.1'); await once(server,'listening');
+  let ledger: CreativeEpisodeStore | undefined;
+  try {
+    const client = createLLMClient({service:'custom',provider:'openai',configSource:'studio',model:'fixture',apiKey:'fixture',baseUrl:`http://127.0.0.1:${(server.address() as {port:number}).port}/v1`,apiFormat:'chat',stream:true,temperature:0,thinkingBudget:0});
+    const pipeline = new PipelineRunner({client,model:'fixture',projectRoot:root});
+    const profileId='mixed-board';
+    await mkdir(join(root,'.inkos/profiles'),{recursive:true});
+    const combined={...createBuiltInWorkProfileRegistry().require('storyboard'),id:profileId,capabilityIds:['workspace','storyboard','longform','adaptation','visual']};
+    await writeFile(join(root,'.inkos/profiles',profileId+'.json'),JSON.stringify(combined));
+    const registry = createProductionCapabilityRegistry({pipeline,projectRoot:root,sessionId:'creation',profileId:'workspace-default',work:null,language:'en',playWorldExists:false,sameSessionProposal:false,allowSystemFileRead:false});
+    expect(registry.get('visual')!.actions.map(action=>action.id)).toEqual([]);
+    const profiles = createBuiltInWorkProfileRegistry(root);
+    ledger = new CreativeEpisodeStore(join(root,'.inkos/harness.sqlite'));
+    const runtime = new CreativeHarnessRuntime(root,registry,profiles,ledger);
+    await saveWorkManifest(root,createWorkManifest({id:'origin',title:'Original',profileId:'script',language:'en'}));
+    await mkdir(join(root,'works/origin/source'),{recursive:true});
+    const parent = await syncWorkSourceArtifacts({projectRoot:root,workId:'origin',accept:true,writes:[{relativePath:'works/origin/source/script.md',content:sourceText}]});
+    const source = {workId:parent.id,artifactId:parent.artifacts[0]!.id,revisionId:parent.artifacts[0]!.currentRevisionId!};
+    const handle = runtime.startEpisode({profileId:'workspace-default',work:null});
+    await runtime.executeAction({handle,capabilityId:'workspace',actionId:'create_work',source:'agent',parameters:{workId:'derived',profileId,title:'Museum light',intent:'One shot showing a returned flashlight.',language:'en',source}});
+    const created = await loadWorkManifest(root,'derived');
+    expect(created.status).toBe('active');
+    expect(created.profileId).toBe(profileId);
+    expect(created.lineage).toEqual([{relation:'derived-from',sourceWorkId:source.workId,sourceArtifactId:source.artifactId,sourceRevisionId:source.revisionId}]);
+    await syncWorkSourceArtifacts({projectRoot:root,workId:'origin',accept:true,writes:[{relativePath:'works/origin/source/script.md',content:'A later source revision.'}]});
+    const brief = await readFile(join(root,'works/derived/source/brief.md'));
+    const staged=await syncWorkSourceArtifacts({projectRoot:root,workId:'derived',accept:false,writes:[{relativePath:'works/derived/source/notes.md',content:'An unrelated candidate.'}]});
+    const notes=staged.artifacts.find(a=>a.revisions.some(r=>r.path==='source/notes.md'))!;
+    runtime.finishEpisode(handle,'completed');
+    const boundRegistry = createProductionCapabilityRegistry({pipeline,projectRoot:root,sessionId:'production',profileId:created.profileId,work:created,language:'en',playWorldExists:false,sameSessionProposal:false,allowSystemFileRead:false});
+    expect(boundRegistry.get('visual')!.actions.map(action=>action.id)).toContain('generate_cover');
+    const sourceParameters=boundRegistry.get('storyboard')!.actions.find(action=>action.id==='generate')!.parameters.properties;
+    expect(sourceParameters.sourceText).toBeUndefined();
+    expect(sourceParameters.sourcePath).toBeUndefined();
+    const bound = new CreativeHarnessRuntime(root,boundRegistry,profiles,ledger);
+    const production = bound.startEpisode({profileId,work:created});
+    const parameters = {maxShots:1};
+    await expect(bound.executeAction({handle:production,capabilityId:'storyboard',actionId:'generate',source:'agent',parameters:{...parameters,projectId:'other',title:'Other'}})).rejects.toThrow();
+    expect(requests).toBe(0);
+    const result = await bound.executeAction({handle:production,capabilityId:'storyboard',actionId:'generate',source:'agent',parameters});
+    expect(result.status).toBe('success');
+    expect(await readFile(join(root,'works/derived/source/brief.md'))).toEqual(brief);
+    expect(await readFile(join(root,'works/derived/source/storyboard.md'),'utf8')).toBe(manuscript);
+    expect(await readFile(join(root,'works/derived/source/source-material.md'),'utf8')).toBe(sourceText);
+    expect(bodies[0]!.messages.filter(message=>message.role==='user').some(message=>message.content.includes(sourceText.trim()))).toBe(true);
+    expect(await readFile(join(root,'works/derived/source/storyboard-spec.md'),'utf8')).toContain('One shot showing a returned flashlight.');
+    const produced = await loadWorkManifest(root,'derived');
+    expect(produced.artifacts.find(a=>a.id===notes.id)?.currentRevisionId).toBeNull();
+    const artifact = produced.artifacts.find(item=>item.revisions.some(revision=>revision.path==='source/storyboard.md'))!;
+    expect(artifact.currentRevisionId).not.toBeNull();
+    const deliveryParameters = {artifactId:artifact.id,instruction:'Review and export this production package.'};
+    const reviewed = await bound.executeAction({handle:production,capabilityId:'workspace',actionId:'review_and_export_work_artifact',source:'agent',parameters:deliveryParameters});
+    const deliveries = new TurnArtifactDeliveries();
+    deliveries.observe(reviewed, deliveryParameters);
+    const finish = createTurnCompletionTool({state:()=>({activeActions:0,hasDelivery:true,deliveryFailed:false}),
+      validateDelivery:()=>deliveries.validate(root),complete:()=>{}});
+    await finish.execute('finish', {status:'delivered',message:'Reviewed and exported.'});
+    const reviewInput = JSON.parse([...bodies[1]!.messages].reverse().find(message=>message.role==='user')!.content);
+    expect(new Set(reviewInput.sources.map((source:{path:string})=>source.path))).toEqual(new Set(['source/storyboard.md','source/storyboard-spec.md','source/source-material.md','source/image-prompts.md']));
+    expect(reviewed.data).toMatchObject({kind:'artifact_delivered',reviewedReferences:expect.any(Array),observations:[{assessment:'unavailable',sourceRefs:[]}],delivery:{status:'unverified',review:{status:'completed',revisionId:artifact.currentRevisionId},export:{status:'completed',revisionId:artifact.currentRevisionId}}});
+    const exportPath=join(root,'works/derived',(reviewed.data as {path:string}).path);
+    expect(await readFile(exportPath,'utf8')).toBe(manuscript);
+    const deliveredWork=await loadWorkManifest(root,'derived');
+    const exportedArtifact=deliveredWork.artifacts.find(item=>item.revisions.some(revision=>revision.path===(reviewed.data as {path:string}).path))!;
+    for(const parameters of [{actionId:'replace_work_artifact',content:'An invalid edit to a delivery copy.'},{actionId:'revise_work_artifact',instruction:'Change this delivery copy.'}]) {
+      const {actionId,...args}=parameters;
+      await expect(bound.executeAction({handle:production,capabilityId:'workspace',actionId,source:'agent',parameters:{artifactId:exportedArtifact.id,...args}})).rejects.toMatchObject({code:'ARTIFACT_DERIVED',authorityPath:'source/storyboard.md',recovery:{action:'workspace__read',parameters:{workId:'derived',artifactId:artifact.id,revisionId:artifact.currentRevisionId}}});
+    }
+    expect(requests).toBe(2);
+    expect(await readFile(exportPath,'utf8')).toBe(manuscript);
+    expect((reviewed.data as {reviewedReferences:unknown[]}).reviewedReferences).toHaveLength(3);
+    await expect(bound.executeAction({handle:production,capabilityId:'storyboard',actionId:'generate',source:'agent',parameters})).rejects.toMatchObject({code:'WORK_ALREADY_PRODUCED',recovery:{parameters:{workId:'derived'}}});
+    expect(await readFile(join(root,'works/derived/source/storyboard.md'),'utf8')).toBe(manuscript);
+    expect(requests).toBe(2);
+    bound.finishEpisode(production,'completed');
+    const revisionEpisode=bound.startEpisode({profileId,work:deliveredWork});
+    await bound.executeAction({handle:revisionEpisode,capabilityId:'workspace',actionId:'replace_work_artifact',source:'agent',parameters:{artifactId:artifact.id,content:manuscript+'\nA changed final shot.\n',expectedRevisionId:artifact.currentRevisionId}});
+    await expect(finish.execute('finish-stale', {status:'delivered',message:'Reviewed and exported.'})).rejects.toMatchObject({code:'TURN_DELIVERY_STALE'});
+    failReview = true;
+    await expect(bound.executeAction({handle:revisionEpisode,capabilityId:'workspace',actionId:'review_and_export_work_artifact',source:'agent',parameters:deliveryParameters})).rejects.toThrow();
+    expect(await readFile(exportPath,'utf8')).toBe(manuscript);
+    const intermediate=await loadWorkManifest(root,'derived');
+    const intermediateId=intermediate.artifacts.find(item=>item.id===artifact.id)!.currentRevisionId!;
+    await bound.executeAction({handle:revisionEpisode,capabilityId:'workspace',actionId:'replace_work_artifact',source:'agent',parameters:{artifactId:artifact.id,content:manuscript+'\nThe final shot follows the hand.\n',expectedRevisionId:intermediateId}});
+    failReview=false;
+    scopeFinding=true;
+    const outsideScope=await bound.executeAction({handle:revisionEpisode,capabilityId:'workspace',actionId:'review_and_export_work_artifact',source:'agent',parameters:deliveryParameters});
+    deliveries.observe(outsideScope,deliveryParameters);
+    await expect(finish.execute('finish-outside-scope',{status:'delivered',message:'Export completed.'})).rejects.toMatchObject({code:'TURN_REVISION_SCOPE_UNRESOLVED'});
+    scopeFinding=false;
+    executionFindingOnly=true;
+    const delivered=await bound.executeAction({handle:revisionEpisode,capabilityId:'workspace',actionId:'review_and_export_work_artifact',source:'agent',parameters:deliveryParameters});
+    deliveries.observe(delivered, deliveryParameters);
+    await finish.execute('finish-refreshed', {status:'delivered',message:'Reviewed and exported.'});
+    const facts=actionResultFacts(delivered.data);
+    expect(facts.delivery).toMatchObject({status:'passed',review:{status:'completed'},export:{status:'completed'}});
+    expect(delivered.observations).toEqual([]);
+    expect(delivered.data).toMatchObject({reviewExecutionObservations:[{category:'execution',assessment:'unavailable'}]});
+    const revised=await loadWorkManifest(root,'derived');
+    const revisedId=revised.artifacts.find(item=>item.id===artifact.id)!.currentRevisionId!;
+    expect(facts.comparison).toMatchObject({scope:'episode_start',before:{revisionId:artifact.currentRevisionId},after:{revisionId:revisedId}});
+    const comparisonRequest=[...bodies].reverse().find(body=>body.tools[0]!.function.name==='submit_artifact_review')!;
+    const comparisonInput=JSON.parse([...comparisonRequest.messages].reverse().find(message=>message.role==='user')!.content);
+    expect(comparisonInput.comparison).toEqual(facts.comparison);
+    const priorSource=comparisonInput.sources.find((source:{role:string})=>source.role==='comparison');
+    expect(priorSource.sourceId).toBe(`${artifact.id}@${artifact.currentRevisionId}`);
+    expect((facts.reviewedReferences as Array<{revisionId:string}>).some(reference=>reference.revisionId===intermediateId)).toBe(false);
+    const reviewPath=(facts.delivery as {review:{path:string}}).review.path;
+    const savedReview=JSON.parse(await readFile(join(root,'works/derived',reviewPath),'utf8'));
+    expect(savedReview.comparison).toEqual(facts.comparison);
+    expect(savedReview.observations).toMatchObject([{category:'execution',assessment:'unavailable'}]);
+    bound.finishEpisode(revisionEpisode,'completed');
+    const nextEpisode=bound.startEpisode({profileId,work:revised});
+    const nextReview=await bound.executeAction({handle:nextEpisode,capabilityId:'workspace',actionId:'review_work_artifact',source:'agent',parameters:{artifactId:artifact.id,instruction:'Review the current version.'}});
+    expect(actionResultFacts(nextReview.data).comparison).toMatchObject({scope:'episode_start',before:{revisionId:revisedId},after:{revisionId:revisedId},changedRegion:{before:{lineCount:0},after:{lineCount:0}}});
+    bound.finishEpisode(nextEpisode,'completed');
+  } finally {
+    ledger?.close(); server.closeAllConnections();
+    await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
+    await rm(root,{recursive:true,force:true});
+  }
+},15000);

@@ -1,0 +1,47 @@
+{
+  "name": "inkos",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Story Creation AI Agent for novels, short fiction, scripts, interactive worlds, and multilingual translation",
+  "keywords": [
+    "story-creation-ai-agent",
+    "story-agent",
+    "ai-novel-writing",
+    "ai-writing-agent",
+    "novel-generator",
+    "interactive-fiction",
+    "ip-content",
+    "ai-storytelling",
+    "litrpg",
+    "progression-fantasy",
+    "creative-writing-ai",
+    "openclaw-skill",
+    "cli"
+  ],
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Narcooo/inkos"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "test:flows": "pnpm -r --if-present test:flows",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "audit:semantic-patterns": "node scripts/audit-semantic-patterns.mjs",
+    "verify:publish-manifests": "node scripts/verify-no-workspace-protocol.mjs packages/core packages/cli packages/studio",
+    "release": "pnpm build && pnpm test"
+  },
+  "engines": {
+    "node": ">=22.16.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@mariozechner/pi-ai": "0.67.1",
+      "@mariozechner/pi-agent-core": "0.67.1"
+    }
+  }
+}

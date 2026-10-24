@@ -13508,6 +13508,226 @@
       "source": "UnderleveledBuilder/awesome-short-drama-skills",
       "sourceUrl": "https://github.com/UnderleveledBuilder/awesome-short-drama-skills/blob/HEAD/skills/short-drama-skill-finder/SKILL.md",
       "rewritten": false
+    },
+    {
+      "author": "",
+      "description": "从导入正文重建正典与运行时状态，并在原续写或系列新作边界内继续创作。",
+      "id": "inkos-continuation-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-continuation-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "基于外部正典创作同人作品，管理正典边界、角色声音与允许偏离。",
+      "id": "inkos-fanfic-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-fanfic-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "从参考文本提取可迁移的文体方法，为全新故事建立可执行风格指纹。",
+      "id": "inkos-imitation-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-imitation-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "互动影游的剧情树、变量旗标、可拍节点、多结局与资产连续性方法。Used for creation and authoring of interactive-film projects.",
+      "id": "inkos-interactive-film",
+      "license": "AGPL-3.0",
+      "name": "inkos-interactive-film",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "长篇网文市场、榜单、平台趋势与对标研究。Use for evidence-based long-form fiction market research, not for ordinary drafting.",
+      "id": "inkos-long-market-research",
+      "license": "AGPL-3.0",
+      "name": "inkos-long-market-research",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "长篇小说拆稿、文风分析与可迁移机制提炼。Use when analyzing a full novel or long sample without copying its expression.",
+      "id": "inkos-long-story-analysis",
+      "license": "AGPL-3.0",
+      "name": "inkos-long-story-analysis",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "长篇小说的场景构造、人物因果、信息释放与连载节奏。Used by InkOS long-form workers as their shared craft method.",
+      "id": "inkos-long-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-long-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "互动世界场景和实体的插画方法，保持画面与当前事实一致，避免把游戏规则画成虚构界面。",
+      "id": "inkos-play-illustration",
+      "license": "AGPL-3.0",
+      "name": "inkos-play-illustration",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "品类中立的开放世界与分支互动推进方法。Used by InkOS Play workers for coherent action, state, time, and scene progression.",
+      "id": "inkos-play-world",
+      "license": "AGPL-3.0",
+      "name": "inkos-play-world",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "小说、创意与大纲到可演剧本的改编方法。Used for script and short-drama production.",
+      "id": "inkos-script-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-script-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "商业短篇市场、平台样本、标题与移动端阅读趋势研究。Use for evidence-based short-fiction market research.",
+      "id": "inkos-short-market-research",
+      "license": "AGPL-3.0",
+      "name": "inkos-short-market-research",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "商业短篇拆稿、情绪链、证据链和反转机制分析。Use to deconstruct a short story into transferable craft.",
+      "id": "inkos-short-story-analysis",
+      "license": "AGPL-3.0",
+      "name": "inkos-short-story-analysis",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "商业短篇的构思、一次写完、整篇审改与包装。Use for confirmed standalone short-fiction production.",
+      "id": "inkos-short-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-short-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "从既有 Work 正典派生番外，保持母本事实同时建立独立的侧篇弧线。",
+      "id": "inkos-spinoff-writing",
+      "license": "AGPL-3.0",
+      "name": "inkos-spinoff-writing",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "根据作品、平台与用户视觉要求设计或生成封面。Use for story-cover direction and confirmed cover generation.",
+      "id": "inkos-story-cover",
+      "license": "AGPL-3.0",
+      "name": "inkos-story-cover",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "识别并修复空泛、模板化、总结腔和其他AI写作痕迹，同时保留作者声音。Use for semantic prose cleanup, not keyword deletion.",
+      "id": "inkos-story-deslop",
+      "license": "AGPL-3.0",
+      "name": "inkos-story-deslop",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "导入已有小说、逆向重建设定与续写工程，并区分母本参考。Use for importing manuscripts or attaching external canon safely.",
+      "id": "inkos-story-import",
+      "license": "AGPL-3.0",
+      "name": "inkos-story-import",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "按题材、目标读者和用户标准审稿，展示具体问题并协作修订。Use for chapter or manuscript review with transparent criteria.",
+      "id": "inkos-story-review",
+      "license": "AGPL-3.0",
+      "name": "inkos-story-review",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "剧本与叙事文本到可拍、可画、可生图分镜的视觉拆解方法。Used for storyboard and image-prompt production.",
+      "id": "inkos-storyboard",
+      "license": "AGPL-3.0",
+      "name": "inkos-storyboard",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
+    },
+    {
+      "author": "",
+      "description": "长文任意语言互译、术语一致性、分段续跑与章节审校方法。Used by InkOS translation workers.",
+      "id": "inkos-translation",
+      "license": "AGPL-3.0",
+      "name": "inkos-translation",
+      "rewritten": false,
+      "source": "Narcooo/inkos",
+      "sourceUrl": "https://github.com/Narcooo/inkos",
+      "version": "1.0.0"
     }
   ]
 }

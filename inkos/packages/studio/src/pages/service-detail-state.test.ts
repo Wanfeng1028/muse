@@ -1,0 +1,483 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  deleteServiceConfig,
+  matchServiceConfigEntryForDetail,
+  mergeServiceDetailModels,
+  rehydrateServiceConnectionStatus,
+  resolveModelsToPersist,
+  saveServiceConfig,
+} from "./service-detail-state";
+
+describe("mergeServiceDetailModels", () => {
+  it("keeps discovered and user-added models in one stable catalog", () => {
+    expect(mergeServiceDetailModels(
+      [{ id: "MiniMax-M2.7" }],
+      ["minimax-m2.7", "MiniMax-M2.8"],
+    )).toEqual([
+      { id: "MiniMax-M2.7" },
+      { id: "MiniMax-M2.8" },
+    ]);
+  });
+});
+
+describe("resolveModelsToPersist", () => {
+  it("keeps the on-screen live catalog when a later probe only returns the bank fallback", () => {
+    expect(resolveModelsToPersist({
+      displayedModels: [
+        { id: "google/gemini-3.7-flash" },
+        { id: "openrouter/auto" },
+      ],
+      probeModels: [{ id: "openrouter/auto" }],
+      modelsSource: "fallback",
+    }).map((model) => model.id)).toEqual([
+      "google/gemini-3.7-flash",
+      "openrouter/auto",
+    ]);
+  });
+
+  it("uses live probe results as the snapshot when modelsSource is api", () => {
+    expect(resolveModelsToPersist({
+      displayedModels: [{ id: "openrouter/auto" }],
+      probeModels: [
+        { id: "google/gemini-3.7-flash" },
+        { id: "openrouter/auto" },
+      ],
+      modelsSource: "api",
+    }).map((model) => model.id)).toEqual([
+      "google/gemini-3.7-flash",
+      "openrouter/auto",
+    ]);
+  });
+
+  it("falls back to the probe catalog when the screen has no models yet", () => {
+    expect(resolveModelsToPersist({
+      displayedModels: [],
+      probeModels: [{ id: "openrouter/auto" }],
+      modelsSource: "fallback",
+    }).map((model) => model.id)).toEqual(["openrouter/auto"]);
+  });
+});
+
+describe("rehydrateServiceConnectionStatus", () => {
+  it("loads saved key without probing models on page load", async () => {
+    const fetchJsonImpl = vi.fn(async (path: string) => {
+      if (path === "/services/openai/secret") {
+        return { apiKey: "sk-live" };
+      }
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    const result = await rehydrateServiceConnectionStatus({
+      effectiveServiceId: "openai",
+      shouldVerify: true,
+      isCustom: false,
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(fetchJsonImpl).toHaveBeenCalledTimes(1);
+    expect(fetchJsonImpl).toHaveBeenCalledWith("/services/openai/secret");
+    expect(result).toMatchObject({
+      apiKey: "sk-live",
+      detectedModel: "",
+      detectedConfig: null,
+      status: { state: "idle" },
+    });
+  });
+});
+
+describe("matchServiceConfigEntryForDetail", () => {
+  const entries = [
+    { service: "moonshot", temperature: 0.5 },
+    { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
+    { service: "custom", name: "本地Ollama", baseUrl: "http://localhost:11434/v1" },
+  ];
+
+  it("matches concrete custom services without treating bare custom as an existing config", () => {
+    expect(matchServiceConfigEntryForDetail(entries, "custom")).toBeUndefined();
+    expect(matchServiceConfigEntryForDetail(entries, "custom:内网GPT")).toEqual(entries[1]);
+  });
+
+  it("matches non-custom services by service id", () => {
+    expect(matchServiceConfigEntryForDetail(entries, "moonshot")).toEqual(entries[0]);
+  });
+});
+
+describe("saveServiceConfig", () => {
+  it("shows a plain error when API key is empty", async () => {
+    await expect(saveServiceConfig({
+      effectiveServiceId: "openai",
+      serviceId: "openai",
+      isCustom: false,
+      resolvedCustomName: "",
+      apiKey: "",
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "",
+    })).resolves.toMatchObject({
+      status: {
+        state: "error",
+        message: "请先输入 API Key",
+      },
+    });
+  });
+
+  it("allows a built-in local service to validate and save without an API key", async () => {
+    const calls: string[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string) => {
+      calls.push(path);
+      if (path === "/services/lmstudio/test") {
+        return {
+          ok: true,
+          models: [{ id: "qwen3-30b" }],
+          selectedModel: "qwen3-30b",
+          detected: { apiFormat: "chat", stream: true },
+        };
+      }
+      if (path === "/services/lmstudio/secret") return { ok: true };
+      if (path === "/services/config") return { ok: true };
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    const result = await saveServiceConfig({
+      effectiveServiceId: "lmstudio",
+      serviceId: "lmstudio",
+      isCustom: false,
+      apiKeyOptional: true,
+      resolvedCustomName: "",
+      apiKey: "",
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "",
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(calls).toEqual([
+      "/services/lmstudio/test",
+      "/services/lmstudio/secret",
+      "/services/config",
+    ]);
+    expect(result).toMatchObject({
+      status: { state: "connected", models: [{ id: "qwen3-30b" }] },
+      detectedModel: "qwen3-30b",
+    });
+  });
+
+  it("validates the upstream service before persisting secrets/config", async () => {
+    const calls: string[] = [];
+    const bodies: unknown[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string, init?: { body?: string }) => {
+      calls.push(path);
+      if (init?.body) bodies.push(JSON.parse(init.body));
+      if (path === "/services/openai/test") {
+        return {
+          ok: true,
+          models: [{ id: "gpt-5.5" }],
+          selectedModel: "gpt-5.5",
+          detected: { apiFormat: "chat", stream: true },
+        };
+      }
+      if (path === "/services/openai/secret") return { ok: true };
+      if (path === "/services/config") return { ok: true };
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    const result = await saveServiceConfig({
+      effectiveServiceId: "openai",
+      serviceId: "openai",
+      isCustom: false,
+      resolvedCustomName: "",
+      apiKey: "sk-live",
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "",
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(calls).toEqual([
+      "/services/openai/test",
+      "/services/openai/secret",
+      "/services/config",
+    ]);
+    expect(bodies).toEqual([
+      { apiKey: "sk-live", apiFormat: "chat", stream: true },
+      { apiKey: "sk-live" },
+      {
+        service: "openai",
+        defaultModel: "gpt-5.5",
+        services: [
+          { service: "openai", temperature: 0.7, apiFormat: "chat", stream: true, models: ["gpt-5.5"] },
+        ],
+      },
+    ]);
+    expect(result).toEqual({
+      detectedModel: "gpt-5.5",
+      detectedConfig: { apiFormat: "chat", stream: true },
+      status: { state: "connected", models: [{ id: "gpt-5.5" }] },
+    });
+  });
+
+  it("persists Anthropic Messages after a verified custom connection", async () => {
+    const bodies: unknown[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string, init?: { body?: string }) => {
+      if (init?.body) bodies.push(JSON.parse(init.body));
+      if (path === "/services/custom%3AAnthropic%20Gateway/secret") return { ok: true };
+      if (path === "/services/config") return { ok: true };
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    await saveServiceConfig({
+      effectiveServiceId: "custom:Anthropic Gateway",
+      serviceId: "custom",
+      isCustom: true,
+      resolvedCustomName: "Anthropic Gateway",
+      apiKey: "",
+      baseUrl: "https://gateway.example",
+      apiFormat: "anthropic",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "claude-compatible-model",
+      verifiedProbe: {
+        apiKey: "",
+        baseUrl: "https://gateway.example",
+        apiFormat: "anthropic",
+        stream: true,
+        models: [{ id: "claude-compatible-model" }],
+        selectedModel: "claude-compatible-model",
+        detected: { apiFormat: "anthropic", stream: true, baseUrl: "https://gateway.example" },
+      },
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(bodies).toEqual([
+      { apiKey: "" },
+      {
+        service: "custom:Anthropic Gateway",
+        defaultModel: "claude-compatible-model",
+        services: [{
+          service: "custom",
+          temperature: 0.7,
+          apiFormat: "anthropic",
+          stream: true,
+          models: ["claude-compatible-model"],
+          name: "Anthropic Gateway",
+          baseUrl: "https://gateway.example",
+        }],
+      },
+    ]);
+  });
+
+  it("reuses a matching successful test result when saving", async () => {
+    const calls: string[] = [];
+    const bodies: unknown[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string, init?: { body?: string }) => {
+      calls.push(path);
+      if (init?.body) bodies.push(JSON.parse(init.body));
+      if (path === "/services/openai/secret") return { ok: true };
+      if (path === "/services/config") return { ok: true };
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    const result = await saveServiceConfig({
+      effectiveServiceId: "openai",
+      serviceId: "openai",
+      isCustom: false,
+      resolvedCustomName: "",
+      apiKey: "sk-live",
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "",
+      verifiedProbe: {
+        apiKey: "sk-live",
+        baseUrl: "",
+        apiFormat: "chat",
+        stream: true,
+        models: [{ id: "gpt-5.5" }],
+        selectedModel: "gpt-5.5",
+        detected: { apiFormat: "chat", stream: true },
+      },
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(calls).toEqual([
+      "/services/openai/secret",
+      "/services/config",
+    ]);
+    expect(bodies).toEqual([
+      { apiKey: "sk-live" },
+      {
+        service: "openai",
+        defaultModel: "gpt-5.5",
+        services: [
+          { service: "openai", temperature: 0.7, apiFormat: "chat", stream: true, models: ["gpt-5.5"] },
+        ],
+      },
+    ]);
+    expect(result).toEqual({
+      detectedModel: "gpt-5.5",
+      detectedConfig: { apiFormat: "chat", stream: true },
+      status: { state: "connected", models: [{ id: "gpt-5.5" }] },
+    });
+  });
+
+  it("does not replace a tested live catalog with a bank-only fallback on save", async () => {
+    const bodies: unknown[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string, init?: { body?: string }) => {
+      if (init?.body) bodies.push(JSON.parse(init.body));
+      if (path === "/services/openrouter/test") {
+        return {
+          ok: true,
+          models: [{ id: "openrouter/auto" }],
+          selectedModel: "openrouter/auto",
+          detected: { apiFormat: "chat", stream: true, modelsSource: "fallback" },
+        };
+      }
+      if (path === "/services/openrouter/secret") return { ok: true };
+      if (path === "/services/config") return { ok: true };
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    await saveServiceConfig({
+      effectiveServiceId: "openrouter",
+      serviceId: "openrouter",
+      isCustom: false,
+      resolvedCustomName: "",
+      apiKey: "sk-or",
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "",
+      configuredModels: [
+        { id: "google/gemini-3.7-flash" },
+        { id: "openrouter/auto" },
+      ],
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(bodies[2]).toMatchObject({
+      services: [{
+        service: "openrouter",
+        models: ["google/gemini-3.7-flash", "openrouter/auto"],
+      }],
+    });
+  });
+
+  it("does not persist secrets/config when validation fails", async () => {
+    const calls: string[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string, init?: { body?: string }) => {
+      calls.push(path);
+      if (path === "/services/openai/test") {
+        expect(init?.body ? JSON.parse(init.body) : null).toEqual({
+          apiKey: "sk-bad",
+          apiFormat: "chat",
+          stream: true,
+        });
+        return { ok: false, error: "invalid key" };
+      }
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    await expect(saveServiceConfig({
+      effectiveServiceId: "openai",
+      serviceId: "openai",
+      isCustom: false,
+      resolvedCustomName: "",
+      apiKey: "sk-bad",
+      baseUrl: "",
+      apiFormat: "chat",
+      stream: true,
+      temperature: "0.7",
+      detectedModel: "",
+      fetchJsonImpl: fetchJsonImpl as never,
+    })).resolves.toEqual({
+      detectedModel: "",
+      detectedConfig: null,
+      status: { state: "error", message: "invalid key" },
+    });
+
+    expect(calls).toEqual(["/services/openai/test"]);
+  });
+
+  it("allows local custom services to validate and save without an API key", async () => {
+    const calls: string[] = [];
+    const bodies: unknown[] = [];
+    const fetchJsonImpl = vi.fn(async (path: string, init?: { body?: string }) => {
+      calls.push(path);
+      if (init?.body) bodies.push(JSON.parse(init.body));
+      if (path === "/services/custom%3ALocal/test") {
+        return {
+          ok: true,
+          models: [{ id: "qwen3.6:35b-a3b" }],
+          selectedModel: "qwen3.6:35b-a3b",
+          detected: { apiFormat: "chat", stream: false, baseUrl: "http://127.0.0.1:8001/v1" },
+        };
+      }
+      if (path === "/services/custom%3ALocal/secret") return { ok: true };
+      if (path === "/services/config") return { ok: true };
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    const result = await saveServiceConfig({
+      effectiveServiceId: "custom:Local",
+      serviceId: "custom",
+      isCustom: true,
+      resolvedCustomName: "Local",
+      apiKey: "",
+      baseUrl: "http://127.0.0.1:8001/v1",
+      apiFormat: "chat",
+      stream: false,
+      temperature: "0.7",
+      detectedModel: "",
+      fetchJsonImpl: fetchJsonImpl as never,
+    });
+
+    expect(calls).toEqual([
+      "/services/custom%3ALocal/test",
+      "/services/custom%3ALocal/secret",
+      "/services/config",
+    ]);
+    expect(bodies).toEqual([
+      { apiKey: "", apiFormat: "chat", stream: false, baseUrl: "http://127.0.0.1:8001/v1" },
+      { apiKey: "" },
+      {
+        service: "custom:Local",
+        defaultModel: "qwen3.6:35b-a3b",
+        services: [
+          {
+            service: "custom",
+            temperature: 0.7,
+            apiFormat: "chat",
+            stream: false,
+            models: ["qwen3.6:35b-a3b"],
+            name: "Local",
+            baseUrl: "http://127.0.0.1:8001/v1",
+          },
+        ],
+      },
+    ]);
+    expect(result.status).toEqual({ state: "connected", models: [{ id: "qwen3.6:35b-a3b" }] });
+  });
+});
+
+describe("deleteServiceConfig", () => {
+  it("deletes a configured service through the service endpoint", async () => {
+    const fetchJsonImpl = vi.fn(async () => ({ ok: true }));
+
+    await deleteServiceConfig("custom:Local", { fetchJsonImpl: fetchJsonImpl as never });
+
+    expect(fetchJsonImpl).toHaveBeenCalledWith("/services/custom%3ALocal", {
+      method: "DELETE",
+    });
+  });
+});
