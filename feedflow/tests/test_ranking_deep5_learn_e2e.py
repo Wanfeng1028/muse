@@ -1,12 +1,9 @@
-import pytest
 
-from feedflow import store, db
+from feedflow import db, store
 from feedflow.ranking import (
-    learn_source_weights,
+    SOURCE_NORM,
     rank_articles,
     score_article,
-    SOURCE_NORM,
-    WEIGHTS,
 )
 
 

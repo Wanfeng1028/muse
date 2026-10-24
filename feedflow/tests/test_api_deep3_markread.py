@@ -1,7 +1,5 @@
-import pytest
 
-from feedflow import db
-from feedflow import store
+from feedflow import db, store
 
 
 def _make_feed(db_path, feed_url, title):

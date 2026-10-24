@@ -18,7 +18,6 @@ import pytest
 from feedflow import ratelimit
 from feedflow.ratelimit import RateLimiter
 
-
 # ---------------------------------------------------------------------------
 # 基础令牌桶语义
 # ---------------------------------------------------------------------------
@@ -169,7 +168,7 @@ def test_evict_idle_threshold_boundary():
 
     # assert: 边界桶保留；桶内容未被篡改。
     assert boundary_key in limiter._buckets
-    tokens, last = limiter._buckets[boundary_key]
+    tokens, _last = limiter._buckets[boundary_key]
     assert tokens == 0.5
 
 

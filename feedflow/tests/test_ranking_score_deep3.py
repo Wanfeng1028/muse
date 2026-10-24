@@ -1,7 +1,8 @@
 from datetime import UTC, datetime, timedelta
-from feedflow import ranking
-import math
+
 import pytest
+
+from feedflow import ranking
 
 NOW = datetime(2026, 10, 21, 12, 0, 0, tzinfo=UTC)
 

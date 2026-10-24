@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from feedflow import create_app, db, store
+from feedflow import create_app, db
 
 
 @pytest.fixture

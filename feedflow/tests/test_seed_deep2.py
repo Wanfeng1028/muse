@@ -1,5 +1,4 @@
 import re
-import sqlite3
 
 from feedflow.db import execute_write, query_all, query_one
 from feedflow.seed import FEED_SPECS, ensure_seed
@@ -105,6 +104,6 @@ def test_starred_articles_are_second_per_feed(tmp_db):
     feed_count = query_one(tmp_db, "SELECT COUNT(*) AS c FROM feeds")["c"]
     assert len(by_feed) == feed_count
 
-    for feed_id, guids in by_feed.items():
+    for guids in by_feed.values():
         assert len(guids) == 1
         assert guids[0].endswith("-2")

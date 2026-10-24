@@ -8,14 +8,8 @@
 from __future__ import annotations
 
 import sqlite3
-import time
 
-import pytest
-
-from feedflow import db as db_mod
 from feedflow import fetcher as fetcher_mod
-from feedflow import store
-
 
 # ---------------------------------------------------------------------------
 # 工具

@@ -1,7 +1,8 @@
-import pytest
 from datetime import UTC, datetime, timedelta
 
-from feedflow import store, db
+import pytest
+
+from feedflow import db, store
 from feedflow.ranking import get_digest_clusters
 
 

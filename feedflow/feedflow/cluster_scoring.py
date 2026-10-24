@@ -8,7 +8,7 @@ source diversity, unread count, and recency.
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def cluster_importance_score(
@@ -59,9 +59,9 @@ def cluster_importance_score(
 
     # Determine current time
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
     elif now.tzinfo is None:
-        now = now.replace(tzinfo=timezone.utc)
+        now = now.replace(tzinfo=UTC)
 
     # Determine recency factor
     recency_factor = 0.75
@@ -69,7 +69,7 @@ def cluster_importance_score(
         try:
             latest_dt = datetime.fromisoformat(latest_at)
             if latest_dt.tzinfo is None:
-                latest_dt = latest_dt.replace(tzinfo=timezone.utc)
+                latest_dt = latest_dt.replace(tzinfo=UTC)
             age_hours = (now - latest_dt).total_seconds() / 3600.0
             recency_factor = 0.5 + 0.5 * math.exp(-age_hours / 72.0)
         except (ValueError, TypeError):

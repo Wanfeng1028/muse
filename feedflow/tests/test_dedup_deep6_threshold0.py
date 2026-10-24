@@ -1,9 +1,8 @@
-import pytest
+from feedflow import store
 from feedflow.dedup import (
     find_or_create_cluster,
     hamming,
 )
-from feedflow import store
 
 
 def test_threshold0_exact_match(tmp_db):

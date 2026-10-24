@@ -2,7 +2,6 @@ import math
 from datetime import UTC, datetime, timedelta
 
 from feedflow.ranking import (
-    KEYWORD_HIT_CAP,
     RECENCY_HALFLIFE_HOURS,
     SOURCE_NORM,
     WEIGHTS,
@@ -84,7 +83,7 @@ def test_parts_rounded():
     )
 
     parts = info["parts"]
-    for k, v in parts.items():
+    for v in parts.values():
         assert v == round(v, 4)
 
     score = info["score"]

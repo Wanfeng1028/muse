@@ -5,7 +5,6 @@
 与真实 flask 测试客户端，断言真实返回值。
 """
 
-import os
 import stat
 import subprocess
 import sys
@@ -15,8 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-import feedflow.config as config
-
+from feedflow import config
 
 ENV_KEYS = [
     "FEEDFLOW_DB",
@@ -188,6 +186,7 @@ def _run_validate_in_subprocess(cfg_literal):
         cwd=str(ROOT),
         capture_output=True,
         text=True,
+        check=False,
     )
     return proc.returncode, proc.stdout, proc.stderr
 
@@ -205,7 +204,7 @@ def test_validate_accepts_valid_config(clean_env, tmp_path):
 
 def test_validate_rejects_port_out_of_range(clean_env):
     """port 越界触发 SystemExit，错误信息含中文提示。"""
-    rc, out, err = _run_validate_in_subprocess(
+    rc, _out, err = _run_validate_in_subprocess(
         "{'port': 70000, 'fetch_interval': 30}"
     )
     assert rc != 0
@@ -225,7 +224,7 @@ def test_validate_rejects_non_positive_interval(clean_env):
 
 def test_validate_rejects_negative_retries(clean_env):
     """fetch_retries < 0 触发失败，错误信息含具体值。"""
-    rc, out, err = _run_validate_in_subprocess(
+    rc, _out, err = _run_validate_in_subprocess(
         "{'port': 8300, 'fetch_interval': 30, 'fetch_retries': -1}"
     )
     assert rc != 0
@@ -235,7 +234,7 @@ def test_validate_rejects_negative_retries(clean_env):
 
 def test_validate_rejects_bool_rps(clean_env):
     """bool 是 int 子类，但 rate_limit_rps 不允许 bool。"""
-    rc, out, err = _run_validate_in_subprocess(
+    rc, _out, err = _run_validate_in_subprocess(
         "{'port': 8300, 'fetch_interval': 30, 'rate_limit_rps': True}"
     )
     assert rc != 0

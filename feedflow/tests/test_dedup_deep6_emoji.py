@@ -1,7 +1,6 @@
-import pytest
-from feedflow.dedup import tokenize, simhash, get_text_for, find_or_create_cluster
 from feedflow import store
 from feedflow.db import get_conn
+from feedflow.dedup import find_or_create_cluster, get_text_for, simhash, tokenize
 
 
 def test_emoji_tokens_identical():

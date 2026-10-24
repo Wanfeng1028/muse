@@ -20,13 +20,14 @@ from __future__ import annotations
 
 import argparse
 import gc
+import math
 import os
 import random
 import sqlite3
 import statistics
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from xml.sax.saxutils import escape as xml_escape
 
@@ -35,11 +36,10 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from feedflow import db as ff_db  # noqa: E402
-from feedflow import dedup as ff_dedup  # noqa: E402
-from feedflow import fetcher as ff_fetcher  # noqa: E402
-from feedflow import store as ff_store  # noqa: E402
-
+from feedflow import db as ff_db
+from feedflow import dedup as ff_dedup
+from feedflow import fetcher as ff_fetcher
+from feedflow import store as ff_store
 
 # ---------------------------------------------------------------------------
 # 词库：科技 / 财经 / 体育 / 生活 四类，每类 40+ 词。
@@ -179,7 +179,7 @@ def _stats(data: list[float]) -> dict:
 
 
 def _fmt_ms(x: float) -> str:
-    if x != x:  # NaN
+    if math.isnan(x):  # NaN
         return "未测"
     return f"{x:.2f}"
 
@@ -205,7 +205,7 @@ def main() -> int:
     # ---- Phase 0：生成 RSS ----
     print(f"[Phase 0] 生成 {n_feeds} 个 RSS 文件，每源 {per_feed} 条 ...", flush=True)
     rss_dir.mkdir(parents=True, exist_ok=True)
-    base_dt = datetime(2026, 10, 16, 12, 0, 0, tzinfo=timezone.utc)
+    base_dt = datetime(2026, 10, 16, 12, 0, 0, tzinfo=UTC)
     rss_paths: list[Path] = []
     t0 = time.perf_counter()
     for i in range(n_feeds):
@@ -227,7 +227,7 @@ def main() -> int:
 
     conn = ff_db.get_conn(db_path)
     try:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         # 直接 SQL 插入 feeds（不使用 store.create_feed，避免潜在网络）。
         for i, p in enumerate(rss_paths):
             conn.execute(
@@ -420,7 +420,7 @@ def main() -> int:
 
     # Flask 主页渲染
     os.environ["FEEDFLOW_NO_SCHEDULER"] = "1"
-    from feedflow import create_app  # noqa: E402
+    from feedflow import create_app
     application = create_app({
         "db_path": db_path, "host": "127.0.0.1", "port": 8300,
         "fetch_interval": 30, "user_agent": "FeedFlow-test",
@@ -437,7 +437,7 @@ def main() -> int:
 
     # due_feeds 计时 1 次
     ts = time.perf_counter()
-    ff_store.due_feeds(db_path, datetime.now(timezone.utc).isoformat(), 60)
+    ff_store.due_feeds(db_path, datetime.now(UTC).isoformat(), 60)
     due_sec = time.perf_counter() - ts
 
     # stats 计时 5 次取均值
@@ -576,24 +576,19 @@ def main() -> int:
     bottlenecks: list[tuple[float, str]] = []
     # fetch_feed 每轮全量调用
     bottlenecks.append((fetch_stats["p50"] * len(fetch_times),
-                        f"fetch_feed：本批实测 {len(fetch_times)} 个源，"
-                        f"p50={_fmt_ms(fetch_stats['p50'])}ms"))
+                        f"fetch_feed：本批实测 {len(fetch_times)} 个源，p50={_fmt_ms(fetch_stats['p50'])}ms"))
     # insert_article 每新文章一次
     bottlenecks.append((insert_stats["p50"] * fetch_added,
-                        f"insert_article：本批新增 {fetch_added} 篇各一次，"
-                        f"p50={_fmt_ms(insert_stats['p50'])}ms"))
+                        f"insert_article：本批新增 {fetch_added} 篇各一次，p50={_fmt_ms(insert_stats['p50'])}ms"))
     # list_articles 前端每次翻页一次
     bottlenecks.append((list_stats["p50"] * 200,
-                        f"list_articles：本批 {list_stats['n']} 次，"
-                        f"p50={_fmt_ms(list_stats['p50'])}ms"))
+                        f"list_articles：本批 {list_stats['n']} 次，p50={_fmt_ms(list_stats['p50'])}ms"))
     # 搜索总体
     bottlenecks.append((search_all_stats["p50"] * len(all_search),
-                        f"search_articles：本批 {len(all_search)} 次，"
-                        f"p50={_fmt_ms(search_all_stats['p50'])}ms"))
+                        f"search_articles：本批 {len(all_search)} 次，p50={_fmt_ms(search_all_stats['p50'])}ms"))
     # 去重扫描
     bottlenecks.append((cluster_stats["p50"] * 10,
-                        f"find_or_create_cluster：本批 {cluster_stats['n']} 次，"
-                        f"p50={_fmt_ms(cluster_stats['p50'])}ms"))
+                        f"find_or_create_cluster：本批 {cluster_stats['n']} 次，p50={_fmt_ms(cluster_stats['p50'])}ms"))
     bottlenecks.sort(reverse=True, key=lambda x: x[0])
     for rank, (score, desc) in enumerate(bottlenecks[:3], start=1):
         lines.append(f"{rank}. {desc}（综合指标 {score:.1f} ms·次）")

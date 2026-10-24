@@ -1,10 +1,7 @@
-import time
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
 from feedflow import opml, scheduler, store
-from feedflow.db import execute_write, get_conn
+from feedflow.db import get_conn
 
 
 def _iso_minutes_ago(minutes: float) -> str:

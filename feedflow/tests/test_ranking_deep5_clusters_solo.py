@@ -1,8 +1,6 @@
-import pytest
 
-from feedflow import store, db
+from feedflow import db, store
 from feedflow.ranking import get_digest_clusters
-
 
 EXPECTED_KEYS = {
     "cluster_id",

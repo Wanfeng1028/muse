@@ -13,8 +13,6 @@ import os
 import sys
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
@@ -66,8 +64,8 @@ HUGE_FEED_TEMPLATE = (
     "<?xml version='1.0' encoding='UTF-8'?>"
     "<rss version='2.0'><channel><title>巨源</title>"
     + "".join(
-        "<item><title>条目{0}</title><link>https://ex.test/{0}</link>"
-        "<description>描述{0}</description></item>".format(i)
+        f"<item><title>条目{i}</title><link>https://ex.test/{i}</link>"
+        f"<description>描述{i}</description></item>"
         for i in range(300)
     )
     + "</channel></rss>"

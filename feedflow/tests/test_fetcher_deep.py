@@ -6,14 +6,11 @@
 from __future__ import annotations
 
 import io
-import socket
 import urllib.error
 
 import pytest
 
-from feedflow import db as db_mod
 from feedflow import fetcher
-from feedflow import store
 
 
 def _mk_http_error(url: str, code: int, headers: dict | None = None) -> urllib.error.HTTPError:
@@ -92,7 +89,7 @@ def test_iso_converts_struct_time_to_utc():
 
 def test_classify_error_for_timeout_and_dns():
     """超时归类为 timeout，DNS 失败归类为 dns。"""
-    assert fetcher.classify_error(socket.timeout("timed out")) == "timeout"
+    assert fetcher.classify_error(TimeoutError("timed out")) == "timeout"
     assert fetcher.classify_error(TimeoutError("timed out")) == "timeout"
     dns = urllib.error.URLError("Name or service not known")
     assert fetcher.classify_error(dns) == "dns"
@@ -144,7 +141,7 @@ def test_fetch_remote_idempotent_on_304(monkeypatch):
         raise _mk_http_error(req.full_url, 304, headers={"ETag": "e1"})
 
     monkeypatch.setattr(fetcher.urllib.request, "urlopen", _fake_urlopen)
-    body, etag, modified, not_modified = fetcher._http_get(
+    body, etag, _modified, not_modified = fetcher._http_get(
         "http://example.com/feed", "FeedFlow-test", 5.0, "e0", None
     )
     assert body is None

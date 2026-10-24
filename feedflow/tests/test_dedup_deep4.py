@@ -1,7 +1,7 @@
-import hashlib
 import time
 from datetime import UTC, datetime, timedelta
 
+from feedflow.db import get_conn, write_lock
 from feedflow.dedup import (
     CLUSTER_WINDOW_DAYS,
     DEFAULT_THRESHOLD,
@@ -17,8 +17,6 @@ from feedflow.dedup import (
     simhash_features,
     tokenize,
 )
-from feedflow.db import get_conn, write_lock
-
 
 _HEX_CHARS = set("0123456789abcdef")
 
@@ -133,7 +131,7 @@ def test_is_near_dup_threshold_boundary_above_is_false(tmp_db):
 def test_find_or_create_cluster_hit_same_cluster(tmp_db):
     text = "深度学习模型在图像识别任务中取得了显著进展，研究者们提出了多种新架构。"
     sh = simhash(text)
-    art_id = _insert_article(
+    _art_id = _insert_article(
         tmp_db,
         guid="hit-1",
         title=text,
@@ -253,7 +251,7 @@ def test_backfill_clusters_idempotent(tmp_db):
         ids.append(
             _insert_article(
                 tmp_db,
-                guid="idem-%d" % i,
+                guid=f"idem-{i:d}",
                 title=c,
                 content_text=c,
                 simhash_hex="",
@@ -268,8 +266,7 @@ def test_backfill_clusters_idempotent(tmp_db):
         before = {
             r["id"]: r["simhash"]
             for r in conn.execute(
-                "SELECT id, simhash FROM articles WHERE id IN (%s)"
-                % ",".join("?" * len(ids)),
+                "SELECT id, simhash FROM articles WHERE id IN ({})".format(",".join("?" * len(ids))),
                 ids,
             ).fetchall()
         }
@@ -285,8 +282,7 @@ def test_backfill_clusters_idempotent(tmp_db):
         after = {
             r["id"]: r["simhash"]
             for r in conn.execute(
-                "SELECT id, simhash FROM articles WHERE id IN (%s)"
-                % ",".join("?" * len(ids)),
+                "SELECT id, simhash FROM articles WHERE id IN ({})".format(",".join("?" * len(ids))),
                 ids,
             ).fetchall()
         }

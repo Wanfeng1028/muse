@@ -1,20 +1,16 @@
 import xml.etree.ElementTree as ET
 
-import pytest
-
-from feedflow import db as db_mod
-from feedflow import opml
-from feedflow import store
+from feedflow import opml, store
 
 
 def _make_feed(feed_url, title="", site_url=""):
     xml = (
         '<?xml version="1.0" encoding="utf-8"?>'
         '<opml version="2.0"><head><title>t</title></head><body>'
-        '<outline text="{title}" title="{title}" type="rss" '
-        'xmlUrl="{url}" htmlUrl="{site}"/>'
+        f'<outline text="{title}" title="{title}" type="rss" '
+        f'xmlUrl="{feed_url}" htmlUrl="{site_url}"/>'
         "</body></opml>"
-    ).format(title=title, url=feed_url, site=site_url)
+    )
     return xml
 
 

@@ -1,5 +1,5 @@
-import pytest
 from datetime import UTC, datetime
+
 from feedflow.db import get_conn
 from feedflow.store import insert_article
 
@@ -44,7 +44,7 @@ def _insert(tmp_db, feed_id, title, content_text="", summary=""):
     # 适配器：把模型写的 (db, feed_id, title, ...) 调用转接到真实签名
     # insert_article(db_path, feed_id, guid, title, author, link, summary, content_html, content_text, published_at)
     _guid_seq[0] += 1
-    guid = "g%d" % _guid_seq[0]
+    guid = f"g{_guid_seq[0]:d}"
     insert_article(
         tmp_db,
         feed_id,

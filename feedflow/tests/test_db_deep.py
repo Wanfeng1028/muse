@@ -355,7 +355,7 @@ def test_concurrent_writes_serialized_by_lock(tmp_db):
     def worker(idx):
         try:
             _insert_article(tmp_db, feed_id, f"thr-{idx}", title=f"并发条目 {idx}")
-        except Exception as exc:  # pragma: no cover - 用于捕获线程内异常
+        except Exception as exc:  # noqa: BLE001 - collect thread errors; pragma: no cover - 用于捕获线程内异常
             errors.append(exc)
 
     threads = [threading.Thread(target=worker, args=(i,)) for i in range(20)]

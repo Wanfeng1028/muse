@@ -1,5 +1,5 @@
-import pytest
 from datetime import UTC, datetime, timedelta
+
 from feedflow.ranking import score_article
 
 

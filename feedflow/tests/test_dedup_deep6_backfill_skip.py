@@ -1,8 +1,8 @@
-import pytest
 from datetime import UTC, datetime
+
 from feedflow import store
-from feedflow.dedup import simhash, backfill_clusters
 from feedflow.db import get_conn
+from feedflow.dedup import backfill_clusters, simhash
 
 
 def _insert_prefilled(tmp_db, feed_id, guid, text):

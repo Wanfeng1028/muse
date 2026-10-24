@@ -1,4 +1,3 @@
-import pytest
 from feedflow.dedup import simhash_features
 
 

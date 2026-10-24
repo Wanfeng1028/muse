@@ -1,4 +1,3 @@
-import pytest
 
 from feedflow.ranking import score_article
 

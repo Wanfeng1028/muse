@@ -18,15 +18,14 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import importlib.util
-import os
 import random
 import sqlite3
 import statistics
 import subprocess
 import sys
 import time
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Callable, List, Sequence, Tuple
 
 # ---------------------------------------------------------------------------
 # Locate the repo root so that `feedflow` is importable and so we can load
@@ -38,8 +37,8 @@ _REPO_ROOT = _THIS_FILE.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from feedflow import db as ff_db  # noqa: E402
-from feedflow import store as ff_store  # noqa: E402
+from feedflow import db as ff_db
+from feedflow import store as ff_store
 
 
 def _load_loadtest_module():
@@ -53,7 +52,7 @@ def _load_loadtest_module():
     mod = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(mod)
-    except Exception:
+    except Exception:  # noqa: BLE001 - loader may raise anything at import time
         return None
     return mod
 
@@ -128,7 +127,7 @@ def _random_text(words: Sequence[str], n: int, rng: random.Random) -> str:
     return " ".join(rng.choice(words) for _ in range(n))
 
 
-def _write_rss(path: Path, title: str, items: List[Tuple[str, str]], rng: random.Random) -> None:
+def _write_rss(path: Path, title: str, items: list[tuple[str, str]], rng: random.Random) -> None:
     rendered = []
     for guid, desc in items:
         rendered.append(
@@ -150,7 +149,7 @@ def build_fixture(
     n_feeds: int,
     n_articles: int,
     seed: int = 20261016,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Create a zero-network fixture DB.
 
     Returns (n_feeds, n_articles) actually inserted.
@@ -242,7 +241,7 @@ class TimeoutError(Exception):
     pass
 
 
-def _percentile(samples: List[float], pct: float) -> float:
+def _percentile(samples: list[float], pct: float) -> float:
     if not samples:
         return float("nan")
     s = sorted(samples)
@@ -269,8 +268,8 @@ def run_repeated(
     fn: Callable[[], object],
     iterations: int,
     timeout_s: float = 120.0,
-) -> Tuple[List[float], bool]:
-    samples: List[float] = []
+) -> tuple[list[float], bool]:
+    samples: list[float] = []
     t_start = time.perf_counter()
     for _ in range(iterations):
         if time.perf_counter() - t_start > timeout_s:
@@ -328,12 +327,12 @@ def measure_b(
 ) -> dict:
     max_offset_probe = 1000
 
-    lock_errors: List[str] = []
-    other_errors: List[str] = []
+    lock_errors: list[str] = []
+    other_errors: list[str] = []
 
-    def _worker(seed: int) -> List[float]:
+    def _worker(seed: int) -> list[float]:
         rng = random.Random(seed)
-        local: List[float] = []
+        local: list[float] = []
         for _ in range(per_thread):
             offset = rng.randint(0, max_offset_probe)
             t0 = time.perf_counter()
@@ -347,14 +346,14 @@ def measure_b(
                     lock_errors.append(msg)
                 else:
                     other_errors.append(msg)
-            except Exception as exc:  # pragma: no cover - defensive
+            except Exception as exc:  # noqa: BLE001 - collect all worker errors; pragma: no cover - defensive
                 other_errors.append(f"{type(exc).__name__}: {exc}")
             finally:
                 local.append((time.perf_counter() - t0) * 1000.0)
         return local
 
     t_start = time.perf_counter()
-    samples: List[float] = []
+    samples: list[float] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as ex:
         futs = [ex.submit(_worker, i * 7919 + 13) for i in range(threads)]
         for fut in concurrent.futures.as_completed(futs):
@@ -398,8 +397,8 @@ _CHILD_SNIPPET = (
 
 
 def measure_c(db_path: Path, rounds: int, timeout_s: float) -> dict:
-    cold: List[float] = []
-    warm: List[float] = []
+    cold: list[float] = []
+    warm: list[float] = []
 
     for _ in range(rounds):
         # Cold: fresh interpreter, first call to stats().
@@ -450,7 +449,7 @@ def measure_c(db_path: Path, rounds: int, timeout_s: float) -> dict:
 # Reporting
 # ---------------------------------------------------------------------------
 
-def _summary_row(label: str, samples: List[float], note: str = "") -> str:
+def _summary_row(label: str, samples: list[float], note: str = "") -> str:
     if not samples:
         return f"| {label} | — | — | — | {note or 'no samples'} |"
     return (
@@ -468,7 +467,7 @@ def render_report(
     c: dict,
     quick: bool,
 ) -> str:
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append("# Phase 6 Load-Test Results (loadtest_phase6.py)")
     lines.append("")
     lines.append(f"- Mode: `{'--quick' if quick else 'full'}`")

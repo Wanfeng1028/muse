@@ -154,7 +154,7 @@ def test_clusters_source_titles_dedup_cap_5(tmp_db):
     fid2 = _make_feed(tmp_db, "https://example.com/b.xml")
     ids = []
     for i in range(4):
-        aid = _make_article(tmp_db, fid1, "ga%d" % i, "同源标题%d" % i, _pub(now, i + 1))
+        aid = _make_article(tmp_db, fid1, f"ga{i:d}", f"同源标题{i:d}", _pub(now, i + 1))
         ids.append(aid)
     aid2 = _make_article(tmp_db, fid2, "gb", "另一源标题", _pub(now, 1))
     ids.append(aid2)

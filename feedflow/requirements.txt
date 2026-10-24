@@ -11,7 +11,7 @@ trafilatura==2.3.1
 apscheduler==3.11.3
 
 # 测试框架，用于编写和运行单元测试与集成测试
-pytest
+pytest==9.1.1
 
 # Python 代码检查与格式化工具，用于静态分析和风格检查
-ruff
+ruff==0.17.0

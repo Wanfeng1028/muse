@@ -6,11 +6,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import time
 
-import pytest
-
-from feedflow import db as db_mod
 from feedflow import opml as opml_mod
 from feedflow import ranking as ranking_mod
 from feedflow import rss as rss_mod

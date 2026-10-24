@@ -1,5 +1,5 @@
 import re
-import html
+
 from feedflow.store import highlight_snippet
 
 

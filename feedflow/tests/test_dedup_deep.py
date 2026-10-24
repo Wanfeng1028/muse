@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 """dedup 深度测试：RSS 解析边界、去重聚类、失败注入、幂等、排序稳定性。
 
 只测 feedflow.dedup 的纯函数与数据库交互，不 mock 被测模块核心逻辑。
@@ -13,8 +15,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from feedflow import dedup
 from feedflow import db as db_mod
+from feedflow import dedup
 
 
 def _insert_article(db_path, title, content_text="", simhash_hex=None, cluster_id=None,
@@ -227,7 +229,7 @@ def test_fetch_404_status_recorded(monkeypatch, tmp_db):
 def test_fetch_rate_limited_status(monkeypatch):
     class Resp:
         status_code = 429
-        headers = {"Retry-After": "60"}
+        headers: ClassVar[dict] = {"Retry-After": "60"}
     monkeypatch.setattr(dedup, "_fake_get2", lambda url: Resp(), raising=False)
     resp = dedup._fake_get2("http://x")
     assert resp.status_code == 429

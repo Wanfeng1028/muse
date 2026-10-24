@@ -1,6 +1,13 @@
 
 # 更新日志
 
+## v1.9.1 — 2026-10-24
+
+### 技术债清理
+- `requirements.txt` 钉版本：`pytest==9.1.1`、`ruff==0.17.0`（2026-10-23 轮记录的"ruff 未钉版本"技术债关闭）。
+- ruff 0.17.0 全量问题清零：从 197 处降到 0（`ruff check` 全洁）。143 处走 ruff 安全自动修复（未使用 import/导入排序/PEP585 注解/datetime.timezone.utc 等）；剩余 59 处机械修复：UP031 printf→f-string（28）、ISC004 隐式拼接合并（5）、RUF059 未使用解包变量改 `_` 前缀（9）、F841 未使用局部变量改 `_` 前缀（2）、PERF102 只用值时改 `.values()`（2）、RUF015 单元素切片改 `next()`（2）、FURB192 `sorted()[-1]` 改 `max()`（1）、BLE001 三处确为意图内全捕获加 `noqa` 注释（2 脚本+1 线程错误收集）、PLR0124 `x != x` 改 `math.isnan`（1）、PLW1510 subprocess 显式 `check=False`（1）、RUF012 可变类属性默认值加 `ClassVar` 注解（1）、EXE001 两脚本加执行位（2）。语义零改动，pytest 全量通过。
+- `scripts/loadtest.py` / `scripts/loadtest_phase6.py` 加执行位（shebang 与权限对齐）。
+
 ## v1.9.0 — 2026-10-23
 
 ### 新增

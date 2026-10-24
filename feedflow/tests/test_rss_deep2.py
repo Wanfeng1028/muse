@@ -37,7 +37,7 @@ _FEED_SEQ = [0]
 def _make_feed(db_path, name="f", url=None):
     _FEED_SEQ[0] += 1
     if url is None:
-        url = "http://f/%d/" % _FEED_SEQ[0]
+        url = f"http://f/{_FEED_SEQ[0]:d}/"
     return db.execute_write(
         db_path,
         "INSERT INTO feeds (title, feed_url, position, created_at) VALUES (?, ?, 0, ?)",
@@ -106,12 +106,12 @@ def test_pubdate_invalid_omitted_and_fetched_fallback(tmp_db):
     root = ET.fromstring(xml_text)
     items = root.findall("./channel/item")
     assert len(items) == 2
-    bad_item = [i for i in items if i.findtext("title") == "bad"][0]
+    bad_item = next(i for i in items if i.findtext("title") == "bad")
     bad_pub = bad_item.findtext("pubDate")
     assert bad_pub is not None
     assert "06 May 2024" in bad_pub
     assert "07:08:09" in bad_pub
-    fb_item = [i for i in items if i.findtext("title") == "fb"][0]
+    fb_item = next(i for i in items if i.findtext("title") == "fb")
     pub = fb_item.findtext("pubDate")
     assert pub is not None
     assert "06 May 2024" in pub

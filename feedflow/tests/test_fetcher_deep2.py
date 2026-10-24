@@ -5,8 +5,7 @@ import urllib.request
 
 import pytest
 
-from feedflow import db
-from feedflow import fetcher
+from feedflow import db, fetcher
 
 
 def _make_http_error(url, code, msg, headers=None, fp=None):

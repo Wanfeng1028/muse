@@ -1,7 +1,5 @@
-import math
 from datetime import UTC, datetime
 
-from feedflow import store
 from feedflow.ranking import score_article
 
 

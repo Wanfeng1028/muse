@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import UTC
 
 from flask import Blueprint, current_app, jsonify, request
 
@@ -166,7 +167,8 @@ def get_article(article_id: int):
 @bp.get("/articles/<int:article_id>/score")
 def get_article_score(article_id: int):
     """排序可解释性：返回该篇文章的重要性评分与五个因子的得分明细。"""
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     from . import db, ranking
     art = store.get_article(_db(), article_id)
     if art is None:
@@ -184,7 +186,7 @@ def get_article_score(article_id: int):
         cluster_size = 1
     info = ranking.score_article(
         art,
-        now=datetime.now(timezone.utc),
+        now=datetime.now(UTC),
         cluster_size=cluster_size,
         feed_weight=feed_weight,
         learned=learned,

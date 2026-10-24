@@ -1,7 +1,6 @@
-import pytest
 
-from feedflow.dedup import find_or_create_cluster, get_text_for, simhash
 from feedflow import store
+from feedflow.dedup import find_or_create_cluster, get_text_for, simhash
 
 
 def test_tie_picks_largest_id(tmp_db):

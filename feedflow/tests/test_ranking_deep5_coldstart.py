@@ -1,4 +1,3 @@
-import pytest
 
 from feedflow import db
 from feedflow.ranking import rank_articles

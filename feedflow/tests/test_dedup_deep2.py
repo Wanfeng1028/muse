@@ -1,11 +1,9 @@
-import hashlib
 from datetime import UTC, datetime, timedelta
 
 from feedflow import db as db_module
 from feedflow.dedup import (
     DEFAULT_THRESHOLD,
     PREFILTER_HAMMING,
-    backfill_clusters,
     find_or_create_cluster,
     get_text_for,
     hamming,

@@ -1,9 +1,6 @@
-import os
 
-import pytest
 
-from feedflow import db
-from feedflow import store
+from feedflow import db, store
 
 
 def _insert_article(db_path, feed_id, guid, title="T", published_at="2024-01-01T00:00:00"):
@@ -22,7 +19,7 @@ def _insert_article(db_path, feed_id, guid, title="T", published_at="2024-01-01T
 
 
 def _make_feed(db_path, feed_url="http://example.com/feed", title="F"):
-    db_conn = store.get_db(db_path) if hasattr(store, "get_db") else None
+    _db_conn = store.get_db(db_path) if hasattr(store, "get_db") else None
     db.execute_write(
         db_path,
         "INSERT INTO feeds (title, feed_url, position, created_at) VALUES (?, ?, 0, ?)",
@@ -35,9 +32,9 @@ def _make_feed(db_path, feed_url="http://example.com/feed", title="F"):
 def _write_rss(tmp_path, name="feed.xml", title="T"):
     path = tmp_path / name
     path.write_text(
-        '<?xml version="1.0"?><rss version="2.0"><channel><title>%s</title>'
+        f'<?xml version="1.0"?><rss version="2.0"><channel><title>{title}</title>'
         "<item><title>I</title><link>http://x/1</link><guid>g1</guid></item>"
-        "</channel></rss>" % title,
+        "</channel></rss>",
         encoding="utf-8",
     )
     return str(path)
@@ -90,7 +87,7 @@ def test_json_array_body_treated_as_empty(client, tmp_db):
 def test_put_folder_invalid_position(client, tmp_db):
     created = client.post("/api/folders", json={"name": "grp"}).get_json()
     folder_id = created["id"]
-    resp = client.put("/api/folders/%d" % folder_id, json={"name": "grp2", "position": "abc"})
+    resp = client.put(f"/api/folders/{folder_id:d}", json={"name": "grp2", "position": "abc"})
     assert resp.status_code == 400
     body = resp.get_json()
     assert body.get("error") == "position 非法"
@@ -99,7 +96,7 @@ def test_put_folder_invalid_position(client, tmp_db):
 def test_articles_pagination_edge_cases(client, tmp_db):
     feed_id = _make_feed(tmp_db)
     for i in range(3):
-        _insert_article(tmp_db, feed_id, "guid-%d" % i, title="T%d" % i)
+        _insert_article(tmp_db, feed_id, f"guid-{i:d}", title=f"T{i:d}")
 
     r1 = client.get("/api/articles?limit=abc")
     assert r1.status_code == 200
@@ -132,10 +129,10 @@ def test_read_invalid_is_read(client, tmp_db):
     rows = db.query_all(tmp_db, "SELECT id FROM articles ORDER BY id DESC LIMIT 1")
     article_id = rows[0]["id"]
 
-    resp = client.post("/api/articles/%d/read" % article_id, json={"is_read": "yes"})
+    resp = client.post(f"/api/articles/{article_id:d}/read", json={"is_read": "yes"})
     assert resp.status_code == 400
 
-    resp2 = client.post("/api/articles/%d/read" % article_id, json={})
+    resp2 = client.post(f"/api/articles/{article_id:d}/read", json={})
     assert resp2.status_code == 400
 
 
@@ -145,7 +142,7 @@ def test_star_string_one_ok(client, tmp_db):
     rows = db.query_all(tmp_db, "SELECT id FROM articles ORDER BY id DESC LIMIT 1")
     article_id = rows[0]["id"]
 
-    resp = client.post("/api/articles/%d/star" % article_id, json={"is_starred": "1"})
+    resp = client.post(f"/api/articles/{article_id:d}/star", json={"is_starred": "1"})
     assert resp.status_code == 200
     assert resp.get_json()["is_starred"] == 1
 
@@ -156,7 +153,7 @@ def test_progress_negative_rejected(client, tmp_db):
     rows = db.query_all(tmp_db, "SELECT id FROM articles ORDER BY id DESC LIMIT 1")
     article_id = rows[0]["id"]
 
-    resp = client.post("/api/articles/%d/progress" % article_id, json={"scroll_pos": -1})
+    resp = client.post(f"/api/articles/{article_id:d}/progress", json={"scroll_pos": -1})
     assert resp.status_code == 400
 
 
@@ -166,7 +163,7 @@ def test_progress_clamped_to_max(client, tmp_db):
     rows = db.query_all(tmp_db, "SELECT id FROM articles ORDER BY id DESC LIMIT 1")
     article_id = rows[0]["id"]
 
-    resp = client.post("/api/articles/%d/progress" % article_id, json={"scroll_pos": 200000})
+    resp = client.post(f"/api/articles/{article_id:d}/progress", json={"scroll_pos": 200000})
     assert resp.status_code == 200
     assert resp.get_json()["scroll_pos"] == 100000.0
 
@@ -177,7 +174,7 @@ def test_progress_missing_scroll_pos(client, tmp_db):
     rows = db.query_all(tmp_db, "SELECT id FROM articles ORDER BY id DESC LIMIT 1")
     article_id = rows[0]["id"]
 
-    resp = client.post("/api/articles/%d/progress" % article_id, json={})
+    resp = client.post(f"/api/articles/{article_id:d}/progress", json={})
     assert resp.status_code == 400
 
 

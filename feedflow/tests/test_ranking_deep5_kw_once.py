@@ -1,8 +1,8 @@
-import pytest
+
+from datetime import UTC, datetime
 
 from feedflow import store
 from feedflow.ranking import add_keyword, get_keywords, score_article
-from datetime import UTC, datetime
 
 
 def test_title_body_hit_counts_once(tmp_db):

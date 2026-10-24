@@ -1,6 +1,5 @@
-import pytest
 
-from feedflow.dedup import tokenize, simhash
+from feedflow.dedup import simhash, tokenize
 
 
 def test_fullwidth_en_tokens():

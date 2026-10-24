@@ -1,4 +1,3 @@
-import pytest
 
 from feedflow.dedup import _is_cjk, tokenize
 

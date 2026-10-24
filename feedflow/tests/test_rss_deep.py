@@ -90,7 +90,7 @@ def test_malformed_xml_bytes_does_not_break_build(tmp_db):
         content_text="body with ]]> cdata terminator and <script>alert(1)</script>",
     )
     xml_text, etag = rss.build_rss(tmp_db)
-    root, channel, items = _parse(xml_text)
+    root, _channel, items = _parse(xml_text)
     assert root.tag == "rss"
     assert len(items) == 1
     body = items[0].find("description").text
@@ -102,7 +102,7 @@ def test_malformed_xml_bytes_does_not_break_build(tmp_db):
 
 def test_empty_feed_returns_valid_channel_without_items(tmp_db):
     xml_text, etag = rss.build_rss(tmp_db)
-    root, channel, items = _parse(xml_text)
+    _root, channel, items = _parse(xml_text)
     assert channel.find("title").text == "FeedFlow 全文 RSS"
     assert channel.find("link").text == "/"
     assert items == []
@@ -113,10 +113,10 @@ def test_limit_capped_at_50_and_default_50(tmp_db):
     for i in range(60):
         _add_article(
             tmp_db,
-            title="t%d" % i,
-            link="http://x/%d" % i,
-            content_text="c%d" % i,
-            fetched_at="2024-01-01T00:00:%02d" % (i % 60),
+            title=f"t{i:d}",
+            link=f"http://x/{i:d}",
+            content_text=f"c{i:d}",
+            fetched_at=f"2024-01-01T00:00:{i % 60:02d}",
         )
     xml_text, _ = rss.build_rss(tmp_db, limit=500)
     _, _, items = _parse(xml_text)
@@ -136,7 +136,7 @@ def test_non_utf8_control_chars_are_safe_in_cdata(tmp_db):
         content_text=weird,
     )
     xml_text, _ = rss.build_rss(tmp_db)
-    root, channel, items = _parse(xml_text)
+    _root, _channel, items = _parse(xml_text)
     assert len(items) == 1
     desc = items[0].find("description").text
     assert "\u00e9\u4e2d\u6587" in desc
@@ -196,7 +196,7 @@ def test_fetch_404_raises_and_leaves_db_empty(tmp_db):
 
     def not_found(url, *a, **k):
         calls["n"] += 1
-        raise RuntimeError("HTTP 404 for %s" % url)
+        raise RuntimeError(f"HTTP 404 for {url}")
 
     original = fetcher.fetch_feed
     fetcher.fetch_feed = not_found
@@ -263,10 +263,10 @@ def test_importance_ordering_is_stable_for_same_pubdate(tmp_db):
     for i in range(5):
         _add_article(
             tmp_db,
-            title="t%d" % i,
-            link="http://x/%d" % i,
-            guid="g%d" % i,
-            content_text="c%d" % i,
+            title=f"t{i:d}",
+            link=f"http://x/{i:d}",
+            guid=f"g{i:d}",
+            content_text=f"c{i:d}",
             published_at="2024-03-03T12:00:00",
         )
     x1, _ = rss.build_rss(tmp_db)

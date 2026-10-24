@@ -9,8 +9,6 @@ from __future__ import annotations
 import os
 import sqlite3
 
-import pytest
-
 from feedflow import db as db_module
 from feedflow import seed
 

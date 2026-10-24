@@ -1,8 +1,7 @@
-import pytest
 from datetime import UTC, datetime
 
-from feedflow.dedup import hamming, get_text_for, find_or_create_cluster
-from feedflow import store, db
+from feedflow import db, store
+from feedflow.dedup import find_or_create_cluster, get_text_for, hamming
 
 
 def test_hamming_construction():

@@ -46,9 +46,9 @@ def test_keep_boundary_three_stage(tmp_db, tmp_path):
     assert len(names_8) == 7
     assert oldest not in names_8
     # 最新一份仍在
-    assert names_8[-1] == sorted(
+    assert names_8[-1] == max(
         p.name for p in backup_dir.glob(f"{_PREFIX}*.db") if p.is_file()
-    )[-1]
+    )
 
 
 def test_restore_rejects_tampered_backup(tmp_db, tmp_path):

@@ -109,7 +109,7 @@ def test_search_pagination_first_page(client, tmp_db):
     finally:
         conn.close()
 
-    entries = [("t%d" % i, "common keyword here %d" % i) for i in range(30)]
+    entries = [(f"t{i:d}", f"common keyword here {i:d}") for i in range(30)]
     _insert_entries(tmp_db, feed_id, entries)
 
     resp = client.get("/search?q=keyword&page=1")
@@ -130,7 +130,7 @@ def test_search_pagination_second_page(client, tmp_db):
     finally:
         conn.close()
 
-    entries = [("t%d" % i, "common keyword here %d" % i) for i in range(30)]
+    entries = [(f"t{i:d}", f"common keyword here {i:d}") for i in range(30)]
     _insert_entries(tmp_db, feed_id, entries)
 
     resp = client.get("/search?q=keyword&page=2")
@@ -151,7 +151,7 @@ def test_search_pagination_beyond_last_page(client, tmp_db):
     finally:
         conn.close()
 
-    entries = [("t%d" % i, "common keyword here %d" % i) for i in range(5)]
+    entries = [(f"t{i:d}", f"common keyword here {i:d}") for i in range(5)]
     _insert_entries(tmp_db, feed_id, entries)
 
     resp = client.get("/search?q=keyword&page=999")
