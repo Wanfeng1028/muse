@@ -58,6 +58,11 @@ constexpr double kRecurrenceAlignBonus = 0.08;
 // 家族对称；边界与局限：只认"科目N"/"科N"字面（N=一..十），窗口同时含查询
 // 编号时以一致为准不扣分；扣分只作用于窗口级 score，不叠加。
 constexpr double kSubjectConflictPenalty = -0.08;
+// 后果答案加成（v0.32.0）：查询为后果/结果索取型（pq.asksConsequence，由
+// query_parser 的 detectConsequenceIntent 设置）且窗口含结果/因果标记时，视为窗口
+// 承载了后果答案而非仅复述问句，给固定加成。取值 0.08：与加成家族对称；
+// 边界与局限：只看标记字面出现，不判语义角色；标记为字面闭集，未登录的因果表达不触发。
+constexpr double kConsequenceAnswerBonus = 0.08;
 
 // 取 content 首个非空行的 markdown 标题文本：剥离行首全部 '#' 与空白后返回；
 // 首个非空行不是标题行（行首非 '#'）时返回空串。用于 .md 文档补充标题信号
@@ -484,6 +489,19 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
                 }
             }
             if (hasConflictNo) score += kSubjectConflictPenalty;
+        }
+
+        // v0.32.0 后果答案加成：查询为后果/结果索取型且窗口含结果/因果标记时加成一次（不叠加）。
+        // 仅复述问句、无结果标记的窗口不触发；标记闭集与常量注释一致。
+        if (pq.asksConsequence) {
+            static const char* kConsequenceMarkers[] = {
+                "会让", "导致", "造成", "引起", "致使", "使得", "结果是"};
+            for (const char* m : kConsequenceMarkers) {
+                if (windowLower.find(m) != std::string::npos) {
+                    score += kConsequenceAnswerBonus;
+                    break;
+                }
+            }
         }
 
         if (pq.passageIntent && windowHasHeading) score += 0.1;
