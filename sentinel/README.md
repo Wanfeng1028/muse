@@ -26,6 +26,7 @@
 - **状态页主题**：每页可配浅色/深色/自定义主色，`PUT /api/status-pages/{id}/theme`，访客可在页面上切换预览
 - **订阅通知**：访客在状态页留邮箱订阅，宕机/恢复时收邮件；订阅需点确认链接（含退订），防滥用
 - **告警投递队列**：webhook 告警先入 SQLite 队列表，后台 worker 按指数退避重投（默认最多 8 次），`/deliveries` 页可看投递状态、手动重投，失败不再丢告警
+- **短信告警**：mock/阿里云/腾讯云三通道，监控可配短信渠道与接收号码，发送记录持久化到 sms_log 表，`/sms-log` 页可查每条短信的发送结果
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -34,6 +35,7 @@
 - 站点健康档案：`docs/screenshots/profile.png`
 - 公开状态页（浅色 / 深色 / 自定义主色三主题）：`docs/screenshots/status.png`、`docs/screenshots/status-dark.png`、`docs/screenshots/status-custom.png`
 - 投递队列：`docs/screenshots/deliveries.png`
+- 短信记录：`docs/screenshots/sms-log.png`
 - 可用性画像 v1（抖动评分 + 故障时间线）：`docs/screenshots/profile-v2-20261020.png`
 - SLA 月报 HTML 导出：`docs/screenshots/sla-html-20261020.png`
 - 一键发布的公开状态页静态站：`docs/screenshots/status-published-20261020.png`

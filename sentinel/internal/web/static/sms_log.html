@@ -111,8 +111,8 @@
       tr.appendChild(tdStatus);
 
       var tdContent = document.createElement("td");
-      tdContent.textContent = truncate(r.content, 60);
-      tdContent.title = r.content || "";
+      tdContent.textContent = truncate(r.message, 60);
+      tdContent.title = r.message || "";
       tr.appendChild(tdContent);
 
       var tdError = document.createElement("td");
@@ -142,10 +142,26 @@
     if (status) params.push("status=" + encodeURIComponent(status));
     var url = "/api/sms/log?" + params.join("&");
 
-    fetch(url)
-      .then(function (resp) { return resp.json(); })
+    var headers = {};
+    try {
+      var saved = sessionStorage.getItem("sentinel_token");
+      if (saved) headers["Authorization"] = "Bearer " + saved;
+    } catch (e) {}
+    fetch(url, { headers: headers })
+      .then(function (resp) {
+        if (resp.status === 401) {
+          var t = prompt("需要 API Token 才能访问（SENTINEL_API_TOKEN），请输入：");
+          if (t) {
+            try { sessionStorage.setItem("sentinel_token", t.trim()); } catch (e) {}
+            load();
+            return null;
+          }
+        }
+        return resp.json();
+      })
       .then(function (data) {
-        var rows = data.rows || data.items || data || [];
+        if (!data) return;
+        var rows = data.logs || [];
         if (typeof data.total === "number") {
           total = data.total;
         } else {

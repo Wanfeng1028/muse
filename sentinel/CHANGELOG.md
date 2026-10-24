@@ -2,6 +2,20 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.12.0] - 2026-10-25
+
+### 新增
+- 短信告警通道正式发版：mock/aliyun/tencent 三发送器、目标级 sms_phones 优先、全局 SENTINEL_SMS_PHONES 回退、手机号格式校验、aliyun/tencent 模式缺配置启动即报错退出；短信记录持久化（sms_log 表）与查询 API GET /api/sms/log、控制台页 /sms-log。
+- .env.example 补齐腾讯云短信 7 个变量，模式注释改成 mock/aliyun/tencent。
+
+### 修复
+- main.go 通知器接线缺失：Notifier 字面量从未设置 SMSLogger，线上短信只进 mock 内存、永不写入 sms_log 表；抽出 buildNotifier(cfg, st) 并加 SMSLogger: st，真实告警的短信记录现可落库查询。
+- /sms-log 页部署后 404：原 handler 用 http.ServeFile 加工作目录相对路径，Docker 运行镜像里只有二进制没有源码树；改成与其他页一致的内嵌资源 serveStaticFile。
+- /sms-log 页有记录也渲染不出：页 JS 按 data.rows/data.items 与 r.content 取数，真实 API 返回 {"logs":[...]} 且字段是 message；改成 data.logs 与 r.message；并把 /sms-log 加进鉴权精确白名单（与 /monitors、/incidents、/deliveries、/snapshots 一致），fetch 接上 sessionStorage sentinel_token（与 monitors.html 同款）。
+
+### 测试
+- 新增 sentinel/main_test.go 2 例与 internal/handlers/sms_log_page_test.go 1 例，全绿；go vet 全洁；真服务冒烟：死链监控手动检查失败后 incident open 1 条、/api/sms/log 出现 mock/sent 记录 1 条、修后 /sms-log 页 200。
+
 ## [0.11.1] - 2026-10-24
 
 ### 新增
@@ -183,16 +197,6 @@
 - 46 个标准库漏洞源于工具链 go1.23.4 过旧，排期 v0.7 升级 Go 工具链后复扫
 - 入队侧限流、投递侧熔断仍未做（v0.5 已排期），继续排期 v0.7
 - `incidents.html` 模拟数据债（v0.4.0 记）仍挂账
-
-## [Unreleased]
-
-### 新增
-
-- **短信告警通道（sms）**：`internal/notify/sms.go`，`SmsSender` 接口 + `MockSmsSender`（内存记录，演示/测试用）+ 阿里云短信 HTTP 实现（SendSms，HMAC-SHA1 签名，模板变量固定 `${msg}`）；失败重试一次（共 2 次）
-- **通知目标可配短信**：`notify_channels` 支持 `sms`；监控项新增 `sms_phones` 字段（迁移 v8），目标级号码优先、全局 `SENTINEL_SMS_PHONES` 回退；手机号格式校验（大陆 11 位 / 国际 +E.164），非法返回 400
-- **配置**：`SENTINEL_SMS_MODE`（mock/aliyun，默认 mock）、`SENTINEL_SMS_PHONES`、`SENTINEL_SMS_ACCESS_KEY_ID`、`SENTINEL_SMS_ACCESS_KEY_SECRET`、`SENTINEL_SMS_SIGN_NAME`、`SENTINEL_SMS_TEMPLATE_CODE`；aliyun 模式四项缺一启动即报错退出
-- **文档**：`docs/ALERTING_CHANNELS.md`（四通道对比、短信配置 step-by-step、费用限流、故障排查）；`.env.example` 补齐短信变量
-- **前端**：监控表单新增"短信告警"配置区（通知渠道多选 + 接收号码输入）
 
 ## [v0.4.0] - 2026-10-16
 

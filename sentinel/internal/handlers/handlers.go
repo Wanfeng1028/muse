@@ -90,7 +90,7 @@ func (s *Server) Routes() http.Handler {
 
 	// 中间件链：RequestID -> Logging -> Auth -> mux
 	exact := []string{"/healthz", "/readyz", "/api/healthz", "/api/readyz", "/api/health",
-		"/", "/monitors", "/incidents", "/profile", "/deliveries", "/snapshots"}
+		"/", "/monitors", "/incidents", "/profile", "/deliveries", "/snapshots", "/sms-log"}
 	prefix := []string{"/api/status/", "/status/", "/static/"}
 	return middleware.RequestID(middleware.Logging(s.auth.Middleware(exact, prefix)(mux)))
 }
@@ -377,7 +377,7 @@ func (s *Server) handleSnapshotsPage(w http.ResponseWriter, r *http.Request) {
 
 // handleProfilePage 渲染用户资料页。
 func (s *Server) handleSMSLogPage(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "internal/web/static/sms_log.html")
+	s.serveStaticFile(w, "sms_log.html", "text/html; charset=utf-8")
 }
 
 func (s *Server) handleSMSLogAPI(w http.ResponseWriter, r *http.Request) {

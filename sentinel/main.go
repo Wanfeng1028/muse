@@ -78,49 +78,10 @@ func main() {
 		logger.Info("已创建默认 admin 用户")
 	}
 
-	// 通知器封装
-	// 短信发送器：mock 模式内存记录不真发，aliyun/tencent 模式走对应云短信；构造失败（未配置）直接退出。
-	smsCfg := notify.SMSConfig{
-		Mode:   cfg.SMSMode,
-		Phones: cfg.SMSPhones,
-		Aliyun: notify.AliyunConfig{
-			AccessKeyID:     cfg.SMSAccessKeyID,
-			AccessKeySecret: cfg.SMSAccessKeySecret,
-			SignName:        cfg.SMSSignName,
-			TemplateCode:    cfg.SMSTemplateCode,
-		},
-		Tencent: notify.TencentConfig{
-			SecretId:    cfg.SMSTencentSecretID,
-			SecretKey:   cfg.SMSTencentSecretKey,
-			SmsSdkAppId: cfg.SMSTencentSdkAppID,
-			SignName:    cfg.SMSTencentSignName,
-			TemplateId:  cfg.SMSTencentTemplateID,
-			Region:      cfg.SMSTencentRegion,
-			Endpoint:    cfg.SMSTencentEndpoint,
-		},
-	}
-	smsSender, err := smsCfg.BuildSender()
+	ntf, err := buildNotifier(cfg, st)
 	if err != nil {
 		logger.Error("初始化短信通道失败", "err", err)
 		os.Exit(1)
-	}
-	ntf := notify.Notifier{
-		WebhookURL: cfg.WebhookURL,
-		SMTP: notify.SMTPConfig{
-			Host:     cfg.SMTPHost,
-			Port:     cfg.SMTPPort,
-			Username: cfg.SMTPUsername,
-			Password: cfg.SMTPPassword,
-			From:     cfg.SMTPFrom,
-			To:       cfg.SMTPTo,
-		},
-		WeCom: notify.WeComConfig{
-			WebhookURL: cfg.WeComWebhookURL,
-			MentionAll: cfg.WeComMentionAll,
-		},
-		Channels:  cfg.NotifyChannels,
-		SMS:       smsCfg,
-		SMSSender: smsSender,
 	}
 
 	subMailer := notify.SMTPMailer{Notifier: notify.SMTPNotifier{Config: ntf.SMTP}}
@@ -231,4 +192,50 @@ func main() {
 		logger.Error("优雅关闭失败", "err", err)
 	}
 	logger.Info("服务已优雅关闭")
+}
+
+func buildNotifier(cfg config.Config, st *store.Store) (notify.Notifier, error) {
+	smsCfg := notify.SMSConfig{
+		Mode:   cfg.SMSMode,
+		Phones: cfg.SMSPhones,
+		Aliyun: notify.AliyunConfig{
+			AccessKeyID:     cfg.SMSAccessKeyID,
+			AccessKeySecret: cfg.SMSAccessKeySecret,
+			SignName:        cfg.SMSSignName,
+			TemplateCode:    cfg.SMSTemplateCode,
+		},
+		Tencent: notify.TencentConfig{
+			SecretId:    cfg.SMSTencentSecretID,
+			SecretKey:   cfg.SMSTencentSecretKey,
+			SmsSdkAppId: cfg.SMSTencentSdkAppID,
+			SignName:    cfg.SMSTencentSignName,
+			TemplateId:  cfg.SMSTencentTemplateID,
+			Region:      cfg.SMSTencentRegion,
+			Endpoint:    cfg.SMSTencentEndpoint,
+		},
+	}
+	smsSender, err := smsCfg.BuildSender()
+	if err != nil {
+		return notify.Notifier{}, err
+	}
+	ntf := notify.Notifier{
+		WebhookURL: cfg.WebhookURL,
+		SMTP: notify.SMTPConfig{
+			Host:     cfg.SMTPHost,
+			Port:     cfg.SMTPPort,
+			Username: cfg.SMTPUsername,
+			Password: cfg.SMTPPassword,
+			From:     cfg.SMTPFrom,
+			To:       cfg.SMTPTo,
+		},
+		WeCom: notify.WeComConfig{
+			WebhookURL: cfg.WeComWebhookURL,
+			MentionAll: cfg.WeComMentionAll,
+		},
+		Channels:  cfg.NotifyChannels,
+		SMS:       smsCfg,
+		SMSSender: smsSender,
+		SMSLogger: st,
+	}
+	return ntf, nil
 }
