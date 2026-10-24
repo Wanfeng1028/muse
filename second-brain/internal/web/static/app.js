@@ -1178,18 +1178,20 @@ function bindEvents() {
 // ---------- 复习统计 ----------
 async function loadReviewStatsView() {
   try {
-    const [trendRes, masteryRes, heatmapRes, healthRes, streakRes] = await Promise.all([
+    const [trendRes, masteryRes, heatmapRes, healthRes, streakRes, forecastRes] = await Promise.all([
       api("/api/review/trend?days=7"),
       api("/api/review/mastery"),
       api("/api/review/heatmap?days=365").catch(() => { console.error("热力图加载失败"); return null; }),
       api("/api/review/health").catch(() => { console.error("记忆健康加载失败"); return null; }),
       api("/api/review/streak").catch(() => { console.error("打卡连续加载失败"); return null; }),
+      api("/api/review/forecast?days=7").catch(() => { console.error("未来到期预测加载失败"); return null; }),
     ]);
     drawTrend(trendRes && trendRes.trend ? trendRes.trend : []);
     renderMastery(masteryRes && masteryRes.mastery ? masteryRes.mastery : []);
     renderHeatmap(heatmapRes && heatmapRes.heatmap ? heatmapRes.heatmap : null);
     renderHealth(healthRes);
     renderStreak(streakRes);
+    renderForecast(forecastRes);
   } catch (e) {
     console.error("复习统计加载失败", e);
   }
@@ -1227,6 +1229,86 @@ function renderStreak(data) {
     summary.appendChild(chip);
   }
 }
+function renderForecast(data) {
+  const summary = document.getElementById("forecast-summary");
+  const list = document.getElementById("forecast-list");
+  const empty = document.getElementById("forecast-empty");
+  if (!summary || !list) return;
+  while (summary.firstChild) summary.removeChild(summary.firstChild);
+  while (list.firstChild) list.removeChild(list.firstChild);
+  if (data == null) {
+    summary.style.display = "none";
+    if (empty) empty.hidden = true;
+    return;
+  }
+  if (data.total === 0 || !data.forecast || data.forecast.length === 0) {
+    summary.style.display = "none";
+    empty.hidden = false;
+    return;
+  }
+  summary.style.display = "";
+  empty.hidden = true;
+  const chip1 = document.createElement("div");
+  chip1.className = "health-chip";
+  const num1 = document.createElement("span");
+  num1.className = "health-chip-num";
+  num1.textContent = data.overdue + " 条";
+  const label1 = document.createElement("span");
+  label1.className = "health-chip-label";
+  label1.textContent = "已逾期";
+  chip1.appendChild(num1);
+  chip1.appendChild(label1);
+  summary.appendChild(chip1);
+  const totalDue = data.forecast.reduce((s, d) => s + d.due, 0);
+  const chip2 = document.createElement("div");
+  chip2.className = "health-chip";
+  const num2 = document.createElement("span");
+  num2.className = "health-chip-num";
+  num2.textContent = totalDue + " 条";
+  const label2 = document.createElement("span");
+  label2.className = "health-chip-label";
+  label2.textContent = "未来 7 天到期";
+  chip2.appendChild(num2);
+  chip2.appendChild(label2);
+  summary.appendChild(chip2);
+  const chip3 = document.createElement("div");
+  chip3.className = "health-chip";
+  const num3 = document.createElement("span");
+  num3.className = "health-chip-num";
+  num3.textContent = data.total + " 条";
+  const label3 = document.createElement("span");
+  label3.className = "health-chip-label";
+  label3.textContent = "待处理合计";
+  chip3.appendChild(num3);
+  chip3.appendChild(label3);
+  summary.appendChild(chip3);
+  const maxDue = Math.max(...data.forecast.map(d => d.due));
+  const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  for (const item of data.forecast) {
+    const row = document.createElement("div");
+    row.className = "forecast-row";
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "forecast-date";
+    const dayIdx = new Date(item.date + "T00:00:00").getDay();
+    dateSpan.textContent = item.date.slice(5) + " " + weekdays[dayIdx];
+    row.appendChild(dateSpan);
+    const barWrap = document.createElement("div");
+    barWrap.className = "forecast-bar-wrap";
+    const bar = document.createElement("div");
+    bar.className = "forecast-bar";
+    const pct = maxDue === 0 ? 0 : Math.round(item.due / maxDue * 100);
+    bar.style.width = pct + "%";
+    barWrap.appendChild(bar);
+    row.appendChild(barWrap);
+    const countSpan = document.createElement("span");
+    countSpan.className = "forecast-count";
+    countSpan.textContent = item.due + " 条";
+    row.appendChild(countSpan);
+    list.appendChild(row);
+  }
+}
+
+
 // 记忆健康：汇总数字 + EF 分布条 + 需关注卡片 + 大白话建议
 function renderHealth(data) {
   const summaryEl = document.getElementById("health-summary");

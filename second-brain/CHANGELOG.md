@@ -7,6 +7,22 @@
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-25
+### 未来到期预测
+### 新增
+- GET /api/review/forecast?days=（默认 7，钳制上限 30），按 X-User/?user= 隔离，返回 {days, overdue, total, forecast:[{date, due}]}，forecast 按日期升序、首日为今天；overdue 为 due_date 早于今天的行数；total = overdue + 窗口内各日 due 之和；无 schema 变更。
+- 前端：复习统计页新增「未来到期预测」区块——三枚数字（已逾期 / 未来 7 天到期 / 待处理合计）+ 逐日条形（日期 MM-DD + 星期 + 条数，条长按当日最大值归一）。
+- internal/store/review_forecast.go 新增 ReviewForecast 聚合；internal/api/review_forecast.go；前端 index.html 新区块、app.js 取数渲染、style.css 六个 forecast-* 规则。
+### 测试
+- Store 层 4 组（空库 / 计数与窗口 / 用户隔离 / 钳制）。
+- API 层 3 组（空库默认 / 钳制 / POST 405）。
+- go test ./... 全绿；go vet 全洁。
+- app.js 经 node --check 通过。
+- 真实服务冒烟：3 条笔记评分后预测为次日 3 条、逾期 0、合计 3，days=30 同样正确。
+- 截图 docs/screenshots/forecast-v019.png 已验收通过。
+### 已知限制
+- 基准日为传入 today 的 dateOnly，与既有 streak / heatmap 口径一致。
+
 ## [0.18.0] - 2026-10-24
 ### 打卡连续详情
 

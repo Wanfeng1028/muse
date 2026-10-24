@@ -1748,6 +1748,49 @@ code {
   color: var(--text-3);
   margin-top: 2px;
 }
+
+.forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.forecast-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.forecast-date {
+  width: 72px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--text-3);
+}
+
+.forecast-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.forecast-bar {
+  height: 100%;
+  background: #2b7de9;
+  border-radius: var(--radius-sm);
+}
+
+.forecast-count {
+  width: 40px;
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--text);
+}
 .health-ef {
   margin-bottom: 14px;
 }
