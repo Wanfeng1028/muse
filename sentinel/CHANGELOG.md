@@ -2,6 +2,16 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.11.1] - 2026-10-24
+
+### 新增
+- GET /api/incidents 新增 status 查询参数，取 open 表示未关闭事件（ended_at IS NULL）、closed 表示已恢复事件（ended_at IS NOT NULL）、不传表示全部、非法值返回 400。
+- 控制台事件页新增状态下拉框（全部状态/进行中/已恢复），切换后回到第 1 页重新加载。
+- Store 层新增 CountIncidentsByStatus 与 ListIncidentsPagedByStatus 函数。
+
+### 修复
+- 补齐 v0.8.0 曾承诺但未落地的事件页状态筛选，之前事件页只能按监控筛选。
+
 ## [0.11.0] - 2026-10-24
 
 ### 新增

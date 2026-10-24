@@ -762,6 +762,12 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	status := r.URL.Query().Get("status")
+	if status != "" && status != "open" && status != "closed" {
+		writeErr(w, http.StatusBadRequest, "状态参数非法")
+		return
+	}
+
 	page := 1
 	if v := r.URL.Query().Get("page"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
@@ -803,14 +809,14 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 		pageSize = 100
 	}
 
-	total, err := s.store.CountIncidents(monitorID)
+	total, err := s.store.CountIncidentsByStatus(monitorID, status)
 	if err != nil {
 		logErr(r, "handleListIncidents", err)
 		writeErr(w, http.StatusInternalServerError, "读取事件失败")
 		return
 	}
 
-	incidents, err := s.store.ListIncidentsPaged(monitorID, (page-1)*pageSize, pageSize)
+	incidents, err := s.store.ListIncidentsPagedByStatus(monitorID, status, (page-1)*pageSize, pageSize)
 	if err != nil {
 		logErr(r, "handleListIncidents", err)
 		writeErr(w, http.StatusInternalServerError, "读取事件失败")

@@ -38,6 +38,7 @@
 - SLA 月报 HTML 导出：`docs/screenshots/sla-html-20261020.png`
 - 一键发布的公开状态页静态站：`docs/screenshots/status-published-20261020.png`
 - 快照归档管理页（定时计划/立即生成/下载/删除）：`docs/screenshots/snapshots-20261024.png`
+- 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
 
 ## 快速开始
 
