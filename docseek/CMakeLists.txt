@@ -218,6 +218,7 @@ add_executable(docseek_tests
   tests/test_v029_chinese_numeral.cpp
   tests/test_v031_subject_conflict.cpp
   tests/test_v032_consequence.cpp
+  tests/test_v033_safety.cpp
   tests/test_v015_filler_words.cpp
   tests/test_v015_search_question.cpp
   tests/test_v015_single_token_precision.cpp

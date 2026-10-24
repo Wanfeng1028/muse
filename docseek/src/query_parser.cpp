@@ -305,6 +305,17 @@ bool detectConsequenceIntent(const std::string& raw) {
     return false;
 }
 
+// 安全关切意图判定：raw 含"不安全"或"危险"时，视为"安全关切"型问句。
+// 在 raw 上判定——"不安全"是"安全"的否定形态，疑问词过滤后无法还原；意图判定只读 raw，不影响匹配行为。
+// 触发表是闭集字面匹配，不做语义泛化；"马场安全规则"这类不含"不安全"/"危险"的查询不触发。
+bool detectSafetyConcern(const std::string& raw) {
+    static const char* kSafetyHints[] = {"不安全", "危险"};
+    for (const char* hint : kSafetyHints) {
+        if (raw.find(hint) != std::string::npos) return true;
+    }
+    return false;
+}
+
 // 复现结构判定：raw 同时含过去状态标记与复现标记时，视为"过去状态→近期复现"型问句
 // （如"孩子之前已经学会上厕所了，最近又频繁尿裤子是怎么回事"）。
 // 过去标记闭集：已经/曾经/本来/原本/以前/过去。不含"之前"——"在…之前"是程序性表述
@@ -557,6 +568,7 @@ ParsedQuery parseNaturalQuery(const std::string& raw) {
     pq.hasRecurrence = detectRecurrence(raw);
     pq.asksRange = detectRangeIntent(raw);
     pq.asksConsequence = detectConsequenceIntent(raw);
+    pq.asksSafety = detectSafetyConcern(raw);
     pq.querySubjectNo = detectSubjectNo(raw);
 
     // 1. 抽取引号短语。

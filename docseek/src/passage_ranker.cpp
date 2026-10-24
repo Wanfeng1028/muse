@@ -63,6 +63,11 @@ constexpr double kSubjectConflictPenalty = -0.08;
 // 承载了后果答案而非仅复述问句，给固定加成。取值 0.08：与加成家族对称；
 // 边界与局限：只看标记字面出现，不判语义角色；标记为字面闭集，未登录的因果表达不触发。
 constexpr double kConsequenceAnswerBonus = 0.08;
+// 安全关切答案加成（v0.33.0）：查询为安全关切型（pq.asksSafety，由
+// query_parser 的 detectSafetyConcern 设置）且窗口含危险标记时，视为窗口
+// 承载了危险答案而非仅提及主题词，给固定加成。取值 0.08：与加成家族对称；
+// 边界与局限：只看标记字面出现，不判语义角色；标记为字面闭集，未登录的危险表达不触发。
+constexpr double kSafetyAnswerBonus = 0.08;
 
 // 取 content 首个非空行的 markdown 标题文本：剥离行首全部 '#' 与空白后返回；
 // 首个非空行不是标题行（行首非 '#'）时返回空串。用于 .md 文档补充标题信号
@@ -499,6 +504,18 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
             for (const char* m : kConsequenceMarkers) {
                 if (windowLower.find(m) != std::string::npos) {
                     score += kConsequenceAnswerBonus;
+                    break;
+                }
+            }
+        }
+
+        // v0.33.0 安全关切答案加成：查询为安全关切型且窗口含危险标记时加成一次（不叠加）。
+        // 仅提及主题词、无危险标记的窗口不触发；标记闭集与常量注释一致。
+        if (pq.asksSafety) {
+            static const char* kSafetyMarkers[] = {"危险"};
+            for (const char* m : kSafetyMarkers) {
+                if (windowLower.find(m) != std::string::npos) {
+                    score += kSafetyAnswerBonus;
                     break;
                 }
             }

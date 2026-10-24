@@ -14,6 +14,7 @@ struct ParsedQuery {
     bool hasRecurrence = false;         // 查询是否含"过去状态→近期复现"结构（过去标记与复现标记同时出现）
     bool asksRange = false;             // 查询是否为"索取数值范围/数量"型问句（在 raw 上判定，见 detectRangeIntent）
     bool asksConsequence = false;       // 查询是否为"索取后果/结果"型问句（在 raw 上判定，见 detectConsequenceIntent）
+    bool asksSafety = false;            // 查询是否为"安全关切"型问句（在 raw 上判定，见 detectSafetyConcern）
     std::string querySubjectNo;         // 查询中的明确科目编号（"一".."十"），如"科目一"→"一"；无则空串（v0.31.0，见 detectSubjectNo）
 };
 
