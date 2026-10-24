@@ -360,6 +360,10 @@ SM-2 四档说明：
 
 ![记忆健康](docs/screenshots/health-v017.png)
 
+打卡连续（v0.18，统计页新增区）：
+
+![打卡连续](docs/screenshots/streak-v018.png)
+
 知识图谱（v0.15 力导向布局）：
 
 ![知识图谱](docs/screenshots/graph.png)

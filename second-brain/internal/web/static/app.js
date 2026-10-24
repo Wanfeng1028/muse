@@ -1178,21 +1178,55 @@ function bindEvents() {
 // ---------- 复习统计 ----------
 async function loadReviewStatsView() {
   try {
-    const [trendRes, masteryRes, heatmapRes, healthRes] = await Promise.all([
+    const [trendRes, masteryRes, heatmapRes, healthRes, streakRes] = await Promise.all([
       api("/api/review/trend?days=7"),
       api("/api/review/mastery"),
       api("/api/review/heatmap?days=365").catch(() => { console.error("热力图加载失败"); return null; }),
       api("/api/review/health").catch(() => { console.error("记忆健康加载失败"); return null; }),
+      api("/api/review/streak").catch(() => { console.error("打卡连续加载失败"); return null; }),
     ]);
     drawTrend(trendRes && trendRes.trend ? trendRes.trend : []);
     renderMastery(masteryRes && masteryRes.mastery ? masteryRes.mastery : []);
     renderHeatmap(heatmapRes && heatmapRes.heatmap ? heatmapRes.heatmap : null);
     renderHealth(healthRes);
+    renderStreak(streakRes);
   } catch (e) {
     console.error("复习统计加载失败", e);
   }
 }
 
+function renderStreak(data) {
+  const summary = document.getElementById("streak-summary");
+  const empty = document.getElementById("streak-empty");
+  if (!summary) return;
+  while (summary.firstChild) summary.removeChild(summary.firstChild);
+  if (!data || !data.totalDays) {
+    summary.style.display = "none";
+    if (empty) empty.hidden = false;
+    return;
+  }
+  summary.style.display = "";
+  if (empty) empty.hidden = true;
+  const items = [
+    { num: (data.currentStreak || 0) + " 天", label: "当前连续" },
+    { num: (data.longestStreak || 0) + " 天", label: "历史最长" },
+    { num: String(data.totalDays || 0), label: "累计复习天数" },
+    { num: data.lastReviewedDate || "还没有记录", label: "最近复习日" }
+  ];
+  for (const item of items) {
+    const chip = document.createElement("div");
+    chip.className = "health-chip";
+    const numSpan = document.createElement("span");
+    numSpan.className = "health-chip-num";
+    numSpan.textContent = item.num;
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "health-chip-label";
+    labelSpan.textContent = item.label;
+    chip.appendChild(numSpan);
+    chip.appendChild(labelSpan);
+    summary.appendChild(chip);
+  }
+}
 // 记忆健康：汇总数字 + EF 分布条 + 需关注卡片 + 大白话建议
 function renderHealth(data) {
   const summaryEl = document.getElementById("health-summary");

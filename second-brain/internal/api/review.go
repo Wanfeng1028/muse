@@ -15,6 +15,7 @@ import (
 // RegisterReviewRoutes 注册复习相关的路由。
 func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 	registerReviewHealthRoutes(mux, st)
+	registerReviewStreakRoutes(mux, st)
 
 	// 获取待复习队列
 	mux.HandleFunc("GET /api/review/queue", func(w http.ResponseWriter, r *http.Request) {
